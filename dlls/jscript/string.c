@@ -1366,6 +1366,7 @@ static HRESULT String_substr(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DIS
     INT start=0, len;
     DWORD length;
     VARIANT v;
+    double d;
     HRESULT hres;
 
     TRACE("\n");
@@ -1381,15 +1382,9 @@ static HRESULT String_substr(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DIS
             return hres;
         }
 
-        if(V_VT(&v) == VT_I4) {
-            start = V_I4(&v);
-            if(start < 0)
-                start = 0;
-            else if(start >= length)
-                start = length;
-        }else {
-            start = V_R8(&v) < 0.0 ? 0 : length;
-        }
+        d = num_val(&v);
+        if(d >= 0)
+            start = is_int32(d) ? min(length, d) : length;
     }
 
     if(arg_cnt(dp) >= 2) {
@@ -1399,15 +1394,11 @@ static HRESULT String_substr(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DIS
             return hres;
         }
 
-        if(V_VT(&v) == VT_I4) {
-            len = V_I4(&v);
-            if(len < 0)
-                len = 0;
-            else if(len > length-start)
-                len = length-start;
-        }else {
-            len = V_R8(&v) < 0.0 ? 0 : length-start;
-        }
+        d = num_val(&v);
+        if(d >= 0.0)
+            len = is_int32(d) ? min(length-start, d) : length-start;
+        else
+            len = 0;
     }else {
         len = length-start;
     }
