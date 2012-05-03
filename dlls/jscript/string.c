@@ -302,15 +302,13 @@ static HRESULT String_charAt(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DIS
         return hres;
 
     if(arg_cnt(dp)) {
-        VARIANT num;
         double d;
 
-        hres = to_integer(ctx, get_arg(dp, 0), ei, &num);
+        hres = to_integer(ctx, get_arg(dp, 0), ei, &d);
         if(FAILED(hres)) {
             SysFreeString(val_str);
             return hres;
         }
-        d = num_val(&num);
         pos = is_int32(d) ? d : -1;
     }
 
@@ -349,16 +347,13 @@ static HRESULT String_charCodeAt(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
         return hres;
 
     if(arg_cnt(dp) > 0) {
-        VARIANT v;
         double d;
 
-        hres = to_integer(ctx, get_arg(dp, 0), ei, &v);
+        hres = to_integer(ctx, get_arg(dp, 0), ei, &d);
         if(FAILED(hres)) {
             SysFreeString(val_str);
             return hres;
         }
-
-        d = num_val(&v);
 
         if(!is_int32(d) || d < 0 || d >= length) {
             SysFreeString(val_str);
@@ -493,15 +488,11 @@ static HRESULT String_indexOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DI
     }
 
     if(arg_cnt(dp) >= 2) {
-        VARIANT ival;
         double d;
 
-        hres = to_integer(ctx, get_arg(dp,1), ei, &ival);
-        if(SUCCEEDED(hres)) {
-            d = num_val(&ival);
-            if(d > 0.0)
-                pos = is_int32(d) ? min((int)d, length) : length;
-        }
+        hres = to_integer(ctx, get_arg(dp,1), ei, &d);
+        if(SUCCEEDED(hres) && d > 0.0)
+            pos = is_int32(d) ? min(length, d) : length;
     }
 
     if(SUCCEEDED(hres)) {
@@ -567,15 +558,11 @@ static HRESULT String_lastIndexOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
     search_len = SysStringLen(search_str);
 
     if(arg_cnt(dp) >= 2) {
-        VARIANT ival;
         double d;
 
-        hres = to_integer(ctx, get_arg(dp,1), ei, &ival);
-        if(SUCCEEDED(hres)) {
-            d = num_val(&ival);
-            if(d > 0)
-                pos = is_int32(d) ? min((int)d, length) : length;
-        }
+        hres = to_integer(ctx, get_arg(dp,1), ei, &d);
+        if(SUCCEEDED(hres) && d > 0)
+            pos = is_int32(d) ? min(length, d) : length;
     }else {
         pos = length;
     }
@@ -1072,7 +1059,6 @@ static HRESULT String_slice(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
     DWORD length;
     INT start=0, end;
     double d;
-    VARIANT v;
     HRESULT hres;
 
     TRACE("\n");
@@ -1082,13 +1068,11 @@ static HRESULT String_slice(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
         return hres;
 
     if(arg_cnt(dp)) {
-        hres = to_integer(ctx, get_arg(dp,0), ei, &v);
+        hres = to_integer(ctx, get_arg(dp,0), ei, &d);
         if(FAILED(hres)) {
             SysFreeString(val_str);
             return hres;
         }
-
-        d = num_val(&v);
 
         if(is_int32(d)) {
             start = d;
@@ -1105,13 +1089,11 @@ static HRESULT String_slice(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
     }
 
     if(arg_cnt(dp) >= 2) {
-        hres = to_integer(ctx, get_arg(dp,1), ei, &v);
+        hres = to_integer(ctx, get_arg(dp,1), ei, &d);
         if(FAILED(hres)) {
             SysFreeString(val_str);
             return hres;
         }
-
-        d = num_val(&v);
 
         if(is_int32(d)) {
             end = d;
@@ -1301,7 +1283,6 @@ static HRESULT String_substring(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
     BSTR val_str;
     INT start=0, end;
     DWORD length;
-    VARIANT v;
     double d;
     HRESULT hres;
 
@@ -1312,27 +1293,25 @@ static HRESULT String_substring(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
         return hres;
 
     if(arg_cnt(dp) >= 1) {
-        hres = to_integer(ctx, get_arg(dp,0), ei, &v);
+        hres = to_integer(ctx, get_arg(dp,0), ei, &d);
         if(FAILED(hres)) {
             SysFreeString(val_str);
             return hres;
         }
 
-        d = num_val(&v);
         if(d >= 0)
-            start = is_int32(d) ? min((int)d, length) : length;
+            start = is_int32(d) ? min(length, d) : length;
     }
 
     if(arg_cnt(dp) >= 2) {
-        hres = to_integer(ctx, get_arg(dp,1), ei, &v);
+        hres = to_integer(ctx, get_arg(dp,1), ei, &d);
         if(FAILED(hres)) {
             SysFreeString(val_str);
             return hres;
         }
 
-        d = num_val(&v);
         if(d >= 0)
-            end = is_int32(d) ? min((int)d, length) : length;
+            end = is_int32(d) ? min(length, d) : length;
         else
             end = 0;
     }else {
@@ -1365,7 +1344,6 @@ static HRESULT String_substr(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DIS
     const WCHAR *str;
     INT start=0, len;
     DWORD length;
-    VARIANT v;
     double d;
     HRESULT hres;
 
@@ -1376,25 +1354,23 @@ static HRESULT String_substr(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DIS
         return hres;
 
     if(arg_cnt(dp) >= 1) {
-        hres = to_integer(ctx, get_arg(dp,0), ei, &v);
+        hres = to_integer(ctx, get_arg(dp,0), ei, &d);
         if(FAILED(hres)) {
             SysFreeString(val_str);
             return hres;
         }
 
-        d = num_val(&v);
         if(d >= 0)
             start = is_int32(d) ? min(length, d) : length;
     }
 
     if(arg_cnt(dp) >= 2) {
-        hres = to_integer(ctx, get_arg(dp,1), ei, &v);
+        hres = to_integer(ctx, get_arg(dp,1), ei, &d);
         if(FAILED(hres)) {
             SysFreeString(val_str);
             return hres;
         }
 
-        d = num_val(&v);
         if(d >= 0.0)
             len = is_int32(d) ? min(length-start, d) : length-start;
         else

@@ -254,7 +254,7 @@ typedef enum {
 HRESULT to_primitive(script_ctx_t*,VARIANT*,jsexcept_t*,VARIANT*, hint_t) DECLSPEC_HIDDEN;
 HRESULT to_boolean(VARIANT*,VARIANT_BOOL*) DECLSPEC_HIDDEN;
 HRESULT to_number(script_ctx_t*,VARIANT*,jsexcept_t*,double*) DECLSPEC_HIDDEN;
-HRESULT to_integer(script_ctx_t*,VARIANT*,jsexcept_t*,VARIANT*) DECLSPEC_HIDDEN;
+HRESULT to_integer(script_ctx_t*,VARIANT*,jsexcept_t*,double*) DECLSPEC_HIDDEN;
 HRESULT to_int32(script_ctx_t*,VARIANT*,jsexcept_t*,INT*) DECLSPEC_HIDDEN;
 HRESULT to_uint32(script_ctx_t*,VARIANT*,jsexcept_t*,DWORD*) DECLSPEC_HIDDEN;
 HRESULT to_string(script_ctx_t*,VARIANT*,jsexcept_t*,BSTR*) DECLSPEC_HIDDEN;
