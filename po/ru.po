@@ -3734,7 +3734,7 @@ msgid "Too many commands.\n"
 msgstr "Слишком много команд NetBIOS.\n"
 
 #: winerror.mc:251
-msgid "Adaptor hardware error.\n"
+msgid "Adapter hardware error.\n"
 msgstr "Аппаратная ошибка сетевой карты.\n"
 
 #: winerror.mc:256
@@ -3746,7 +3746,7 @@ msgid "Unexpected network error.\n"
 msgstr "Неожиданная сетевая ошибка.\n"
 
 #: winerror.mc:266
-msgid "Bad remote adaptor.\n"
+msgid "Bad remote adapter.\n"
 msgstr "Несовместимая удалённая сетевая карта.\n"
 
 #: winerror.mc:271
@@ -4358,7 +4358,7 @@ msgid "Invalid flags.\n"
 msgstr "Неверные флаги.\n"
 
 #: winerror.mc:1041
-msgid "Unrecognised volume.\n"
+msgid "Unrecognized volume.\n"
 msgstr "Нераспознанная файловая система.\n"
 
 #: winerror.mc:1046
@@ -5014,7 +5014,7 @@ msgid "Continue work in progress.\n"
 msgstr "Выполняется продолжение работы.\n"
 
 #: winerror.mc:1866
-msgid "Already initialised.\n"
+msgid "Already initialized.\n"
 msgstr "Инициализация уже выполнена.\n"
 
 #: winerror.mc:1871
@@ -6046,7 +6046,7 @@ msgid "Invalid authentication identity.\n"
 msgstr "Неверное удостоверение.\n"
 
 #: winerror.mc:3166
-msgid "Unknown authorisation service.\n"
+msgid "Unknown authorization service.\n"
 msgstr "Неизвестная служба авторизации.\n"
 
 #: winerror.mc:3171
@@ -6182,7 +6182,7 @@ msgid "Invalid user buffer.\n"
 msgstr "Неподходящий пользовательский буфер.\n"
 
 #: winerror.mc:3336
-msgid "Unrecognised media.\n"
+msgid "Unrecognized media.\n"
 msgstr "Нераспознанный носитель.\n"
 
 #: winerror.mc:3341
@@ -6327,7 +6327,7 @@ msgid "RPC comm failure.\n"
 msgstr "Сбой RPC-обмена.\n"
 
 #: winerror.mc:3516
-msgid "Unsupported authorisation level.\n"
+msgid "Unsupported authorization level.\n"
 msgstr "Неподдерживаемый уровень авторизации.\n"
 
 #: winerror.mc:3521
@@ -6355,7 +6355,7 @@ msgid "Invalid handle operation.\n"
 msgstr "Неверная операция с дескриптором.\n"
 
 #: winerror.mc:3551
-msgid "Wrong serialising package version.\n"
+msgid "Wrong serializing package version.\n"
 msgstr "Неверная версия пакета сериализации.\n"
 
 #: winerror.mc:3556

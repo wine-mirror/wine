@@ -3759,7 +3759,7 @@ msgid "Too many commands.\n"
 msgstr "Massa ordres.\n"
 
 #: winerror.mc:251
-msgid "Adaptor hardware error.\n"
+msgid "Adapter hardware error.\n"
 msgstr "Error de maquinari d'adaptador.\n"
 
 #: winerror.mc:256
@@ -3771,7 +3771,7 @@ msgid "Unexpected network error.\n"
 msgstr "Error de xarxa inesperat.\n"
 
 #: winerror.mc:266
-msgid "Bad remote adaptor.\n"
+msgid "Bad remote adapter.\n"
 msgstr "Adaptador remot dolent.\n"
 
 #: winerror.mc:271
@@ -4383,7 +4383,7 @@ msgid "Invalid flags.\n"
 msgstr "Banderes invàlides.\n"
 
 #: winerror.mc:1041
-msgid "Unrecognised volume.\n"
+msgid "Unrecognized volume.\n"
 msgstr "Volum no reconegut.\n"
 
 #: winerror.mc:1046
@@ -5039,7 +5039,7 @@ msgid "Continue work in progress.\n"
 msgstr "Continua treball en curs.\n"
 
 #: winerror.mc:1866
-msgid "Already initialised.\n"
+msgid "Already initialized.\n"
 msgstr "Ja inicialitzat.\n"
 
 #: winerror.mc:1871
@@ -6071,7 +6071,7 @@ msgid "Invalid authentication identity.\n"
 msgstr "Identitat d'autenticació invàlid.\n"
 
 #: winerror.mc:3166
-msgid "Unknown authorisation service.\n"
+msgid "Unknown authorization service.\n"
 msgstr "Servei d'autorització desconegut.\n"
 
 #: winerror.mc:3171
@@ -6207,7 +6207,7 @@ msgid "Invalid user buffer.\n"
 msgstr "Memòria intermèdia d'usuari invàlida.\n"
 
 #: winerror.mc:3336
-msgid "Unrecognised media.\n"
+msgid "Unrecognized media.\n"
 msgstr "Mitjà no reconegut.\n"
 
 #: winerror.mc:3341
@@ -6353,7 +6353,7 @@ msgid "RPC comm failure.\n"
 msgstr "Fallada de comunicació RPC.\n"
 
 #: winerror.mc:3516
-msgid "Unsupported authorisation level.\n"
+msgid "Unsupported authorization level.\n"
 msgstr "Nivell d'autorització incompatible.\n"
 
 #: winerror.mc:3521
@@ -6381,7 +6381,7 @@ msgid "Invalid handle operation.\n"
 msgstr "Operació de mànec invàlida.\n"
 
 #: winerror.mc:3551
-msgid "Wrong serialising package version.\n"
+msgid "Wrong serializing package version.\n"
 msgstr "Versió de paquet serialitzador incorrecta.\n"
 
 #: winerror.mc:3556

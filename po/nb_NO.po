@@ -3900,7 +3900,7 @@ msgid "Too many commands.\n"
 msgstr "For mange kommandoer.\n"
 
 #: winerror.mc:251
-msgid "Adaptor hardware error.\n"
+msgid "Adapter hardware error.\n"
 msgstr "Maskinvarefeil i omformer.\n"
 
 #: winerror.mc:256
@@ -3912,7 +3912,7 @@ msgid "Unexpected network error.\n"
 msgstr "Uventet nettverksfeil.\n"
 
 #: winerror.mc:266
-msgid "Bad remote adaptor.\n"
+msgid "Bad remote adapter.\n"
 msgstr "Ugyldig ekstern omformer.\n"
 
 #: winerror.mc:271
@@ -4526,7 +4526,7 @@ msgid "Invalid flags.\n"
 msgstr "Ugyldige flagg.\n"
 
 #: winerror.mc:1041
-msgid "Unrecognised volume.\n"
+msgid "Unrecognized volume.\n"
 msgstr "Volumet gjenkjennes ikke.\n"
 
 #: winerror.mc:1046
@@ -5199,7 +5199,7 @@ msgid "Continue work in progress.\n"
 msgstr "Fortsettelsesarbeid pågår.\n"
 
 #: winerror.mc:1866
-msgid "Already initialised.\n"
+msgid "Already initialized.\n"
 msgstr "Allerede lastet.\n"
 
 #: winerror.mc:1871
@@ -6280,7 +6280,7 @@ msgid "Invalid authentication identity.\n"
 msgstr "Ukjent godkjenningsidentitet.\n"
 
 #: winerror.mc:3166
-msgid "Unknown authorisation service.\n"
+msgid "Unknown authorization service.\n"
 msgstr "Ukjent godkjenningstjeneste.\n"
 
 #: winerror.mc:3171
@@ -6416,7 +6416,7 @@ msgid "Invalid user buffer.\n"
 msgstr "Ugyldig lagringsplass for brukerminne.\n"
 
 #: winerror.mc:3336
-msgid "Unrecognised media.\n"
+msgid "Unrecognized media.\n"
 msgstr "Mediet gjenkjennes ikke.\n"
 
 #: winerror.mc:3341
@@ -6561,7 +6561,7 @@ msgid "RPC comm failure.\n"
 msgstr "Kommunikasjonsfeil i RPC.\n"
 
 #: winerror.mc:3516
-msgid "Unsupported authorisation level.\n"
+msgid "Unsupported authorization level.\n"
 msgstr "Godkjenningsnivået støttes ikke.\n"
 
 #: winerror.mc:3521
@@ -6589,7 +6589,7 @@ msgid "Invalid handle operation.\n"
 msgstr "Ugyldig operasjon på referanse.\n"
 
 #: winerror.mc:3551
-msgid "Wrong serialising package version.\n"
+msgid "Wrong serializing package version.\n"
 msgstr "Ugyldig pakkeversjon for serialisering.\n"
 
 #: winerror.mc:3556

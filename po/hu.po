@@ -3751,7 +3751,7 @@ msgid "Too many commands.\n"
 msgstr "Túl sok parancs.\n"
 
 #: winerror.mc:251
-msgid "Adaptor hardware error.\n"
+msgid "Adapter hardware error.\n"
 msgstr "Adapter hardver hiba.\n"
 
 #: winerror.mc:256
@@ -3763,7 +3763,7 @@ msgid "Unexpected network error.\n"
 msgstr "Nem várt hálózati hiba.\n"
 
 #: winerror.mc:266
-msgid "Bad remote adaptor.\n"
+msgid "Bad remote adapter.\n"
 msgstr "Rossz távoli adapter.\n"
 
 #: winerror.mc:271
@@ -4375,7 +4375,7 @@ msgid "Invalid flags.\n"
 msgstr "Érvénytelen flag-ek.\n"
 
 #: winerror.mc:1041
-msgid "Unrecognised volume.\n"
+msgid "Unrecognized volume.\n"
 msgstr "Felismerhetetlen kötetl.\n"
 
 #: winerror.mc:1046
@@ -5031,7 +5031,7 @@ msgid "Continue work in progress.\n"
 msgstr "Munka folytatás folyamatban.\n"
 
 #: winerror.mc:1866
-msgid "Already initialised.\n"
+msgid "Already initialized.\n"
 msgstr "Már létezik.\n"
 
 #: winerror.mc:1871
@@ -6063,7 +6063,7 @@ msgid "Invalid authentication identity.\n"
 msgstr "Kliens hitelesítés érvénytelen.\n"
 
 #: winerror.mc:3166
-msgid "Unknown authorisation service.\n"
+msgid "Unknown authorization service.\n"
 msgstr "Ismeretlen hitelesítési szolgáltatás.\n"
 
 #: winerror.mc:3171
@@ -6199,7 +6199,7 @@ msgid "Invalid user buffer.\n"
 msgstr "Érvénytelen felhasználói puffer.\n"
 
 #: winerror.mc:3336
-msgid "Unrecognised media.\n"
+msgid "Unrecognized media.\n"
 msgstr "Felismerhetetlen lemez.\n"
 
 #: winerror.mc:3341
@@ -6343,7 +6343,7 @@ msgid "RPC comm failure.\n"
 msgstr "RPC kommunikáci hiba.\n"
 
 #: winerror.mc:3516
-msgid "Unsupported authorisation level.\n"
+msgid "Unsupported authorization level.\n"
 msgstr "Nem támogatott hitelesítési szint.\n"
 
 #: winerror.mc:3521
@@ -6371,7 +6371,7 @@ msgid "Invalid handle operation.\n"
 msgstr "Érvénytelen kezelő művelet.\n"
 
 #: winerror.mc:3551
-msgid "Wrong serialising package version.\n"
+msgid "Wrong serializing package version.\n"
 msgstr "Rossz csomag verzió.\n"
 
 #: winerror.mc:3556

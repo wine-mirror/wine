@@ -3614,7 +3614,7 @@ msgid "Too many commands.\n"
 msgstr "Too many commands.\n"
 
 #: winerror.mc:251
-msgid "Adaptor hardware error.\n"
+msgid "Adapter hardware error.\n"
 msgstr "Adaptor hardware error.\n"
 
 #: winerror.mc:256
@@ -3626,7 +3626,7 @@ msgid "Unexpected network error.\n"
 msgstr "Unexpected network error.\n"
 
 #: winerror.mc:266
-msgid "Bad remote adaptor.\n"
+msgid "Bad remote adapter.\n"
 msgstr "Bad remote adaptor.\n"
 
 #: winerror.mc:271
@@ -4238,7 +4238,7 @@ msgid "Invalid flags.\n"
 msgstr "Invalid flags.\n"
 
 #: winerror.mc:1041
-msgid "Unrecognised volume.\n"
+msgid "Unrecognized volume.\n"
 msgstr "Unrecognised volume.\n"
 
 #: winerror.mc:1046
@@ -4894,7 +4894,7 @@ msgid "Continue work in progress.\n"
 msgstr "Continue work in progress.\n"
 
 #: winerror.mc:1866
-msgid "Already initialised.\n"
+msgid "Already initialized.\n"
 msgstr "Already initialised.\n"
 
 #: winerror.mc:1871
@@ -5926,7 +5926,7 @@ msgid "Invalid authentication identity.\n"
 msgstr "Invalid authentication identity.\n"
 
 #: winerror.mc:3166
-msgid "Unknown authorisation service.\n"
+msgid "Unknown authorization service.\n"
 msgstr "Unknown authorisation service.\n"
 
 #: winerror.mc:3171
@@ -6062,7 +6062,7 @@ msgid "Invalid user buffer.\n"
 msgstr "Invalid user buffer.\n"
 
 #: winerror.mc:3336
-msgid "Unrecognised media.\n"
+msgid "Unrecognized media.\n"
 msgstr "Unrecognised media.\n"
 
 #: winerror.mc:3341
@@ -6206,7 +6206,7 @@ msgid "RPC comm failure.\n"
 msgstr "RPC comm failure.\n"
 
 #: winerror.mc:3516
-msgid "Unsupported authorisation level.\n"
+msgid "Unsupported authorization level.\n"
 msgstr "Unsupported authorisation level.\n"
 
 #: winerror.mc:3521
@@ -6234,7 +6234,7 @@ msgid "Invalid handle operation.\n"
 msgstr "Invalid handle operation.\n"
 
 #: winerror.mc:3551
-msgid "Wrong serialising package version.\n"
+msgid "Wrong serializing package version.\n"
 msgstr "Wrong serialising package version.\n"
 
 #: winerror.mc:3556
@@ -9839,7 +9839,7 @@ msgstr "Error: Unknown or invalid command line parameters specified\n"
 
 #: ipconfig.rc:29
 msgid "%1 adapter %2\n"
-msgstr "%1 adapter %2\n"
+msgstr "%1 adaptor %2\n"
 
 #: ipconfig.rc:30
 msgid "Ethernet"
