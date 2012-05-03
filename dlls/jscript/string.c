@@ -303,19 +303,15 @@ static HRESULT String_charAt(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DIS
 
     if(arg_cnt(dp)) {
         VARIANT num;
+        double d;
 
         hres = to_integer(ctx, get_arg(dp, 0), ei, &num);
         if(FAILED(hres)) {
             SysFreeString(val_str);
             return hres;
         }
-
-        if(V_VT(&num) == VT_I4) {
-            pos = V_I4(&num);
-        }else {
-            WARN("pos = %lf\n", V_R8(&num));
-            pos = -1;
-        }
+        d = num_val(&num);
+        pos = is_int32(d) ? d : -1;
     }
 
     if(!retv) {

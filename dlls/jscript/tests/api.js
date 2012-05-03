@@ -308,6 +308,8 @@ tmp = "abc".charAt(0,2);
 ok(tmp === "a", "'abc',charAt(0.2) = " + tmp);
 tmp = "abc".charAt(NaN);
 ok(tmp === "a", "'abc',charAt(NaN) = " + tmp);
+tmp = "abc".charAt(bigInt);
+ok(tmp === "", "'abc',charAt(bigInt) = " + tmp);
 
 tmp = "abc".charCodeAt(0);
 ok(tmp === 0x61, "'abc'.charCodeAt(0) = " + tmp);
