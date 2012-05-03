@@ -178,6 +178,48 @@ static BOOL proxy_active(void)
     return proxy_enable != 0;
 }
 
+#define test_status_code(a,b) _test_status_code(__LINE__,a,b)
+static void _test_status_code(unsigned line, HINTERNET req, DWORD excode)
+{
+    DWORD code, size, index;
+    char exbuf[10], bufa[10];
+    BOOL res;
+
+    code = 0xdeadbeef;
+    size = sizeof(code);
+    res = HttpQueryInfo(req, HTTP_QUERY_STATUS_CODE|HTTP_QUERY_FLAG_NUMBER, &code, &size, NULL);
+    ok_(__FILE__,line)(res, "HttpQueryInfo(HTTP_QUERY_STATUS_CODE|number) failed: %u\n", GetLastError());
+    ok_(__FILE__,line)(code == excode, "code = %d, expected %d\n", code, excode);
+
+    code = 0xdeadbeef;
+    index = 0;
+    size = sizeof(code);
+    res = HttpQueryInfo(req, HTTP_QUERY_STATUS_CODE|HTTP_QUERY_FLAG_NUMBER, &code, &size, &index);
+    ok_(__FILE__,line)(res, "HttpQueryInfo(HTTP_QUERY_STATUS_CODE|number index) failed: %u\n", GetLastError());
+    ok_(__FILE__,line)(code == excode, "code = %d, expected %d\n", code, excode);
+    ok_(__FILE__,line)(!index, "index = %d, expected 0\n", code);
+
+    sprintf(exbuf, "%u", excode);
+
+    size = sizeof(bufa);
+    res = HttpQueryInfo(req, HTTP_QUERY_STATUS_CODE, bufa, &size, NULL);
+    ok_(__FILE__,line)(res, "HttpQueryInfo(HTTP_QUERY_STATUS_CODE) failed: %u\n", GetLastError());
+    ok_(__FILE__,line)(!strcmp(bufa, exbuf), "unexpected status code %s, expected %s", bufa, exbuf);
+
+    code = 0xdeadbeef;
+    index = 1;
+    size = sizeof(code);
+    res = HttpQueryInfo(req, HTTP_QUERY_STATUS_CODE||HTTP_QUERY_FLAG_NUMBER, &code, &size, &index);
+    ok_(__FILE__,line)(!res && GetLastError() == ERROR_HTTP_HEADER_NOT_FOUND,
+                       "HttpQueryInfo failed: %x(%d)\n", res, GetLastError());
+
+    code = 0xdeadbeef;
+    size = sizeof(code);
+    res = HttpQueryInfo(req, HTTP_QUERY_STATUS_CODE||HTTP_QUERY_FLAG_REQUEST_HEADERS, &code, &size, NULL);
+    ok_(__FILE__,line)(!res && GetLastError() == ERROR_HTTP_HEADER_NOT_FOUND,
+                       "HttpQueryInfo failed: %x(%d)\n", res, GetLastError());
+}
+
 static int close_handle_cnt;
 
 static VOID WINAPI callback(
@@ -1848,7 +1890,7 @@ static void test_last_error(int port)
 static void test_proxy_indirect(int port)
 {
     HINTERNET hi, hc, hr;
-    DWORD r, sz, val;
+    DWORD r, sz;
     char buffer[0x40];
 
     hi = InternetOpen(NULL, 0, NULL, NULL, 0);
@@ -1873,15 +1915,7 @@ static void test_proxy_indirect(int port)
     }
     ok(!strcmp(buffer, "Basic realm=\"placebo\""), "proxy auth info wrong\n");
 
-    sz = sizeof buffer;
-    r = HttpQueryInfo(hr, HTTP_QUERY_STATUS_CODE, buffer, &sz, NULL);
-    ok(r, "HttpQueryInfo failed\n");
-    ok(!strcmp(buffer, "407"), "proxy code wrong\n");
-
-    sz = sizeof val;
-    r = HttpQueryInfo(hr, HTTP_QUERY_STATUS_CODE|HTTP_QUERY_FLAG_NUMBER, &val, &sz, NULL);
-    ok(r, "HttpQueryInfo failed\n");
-    ok(val == 407, "proxy code wrong\n");
+    test_status_code(hr, 407);
 
     sz = sizeof buffer;
     r = HttpQueryInfo(hr, HTTP_QUERY_STATUS_TEXT, buffer, &sz, NULL);
@@ -1931,11 +1965,7 @@ static void test_proxy_direct(int port)
     r = HttpSendRequest(hr, NULL, 0, NULL, 0);
     ok(r, "HttpSendRequest failed\n");
 
-    sz = sizeof buffer;
-    r = HttpQueryInfo(hr, HTTP_QUERY_STATUS_CODE, buffer, &sz, NULL);
-    ok(r, "HttpQueryInfo failed\n");
-    ok(!strcmp(buffer, "407"), "proxy code wrong\n");
-
+    test_status_code(hr, 407);
 
     /* set the user + password then try again */
     todo_wine {
@@ -1986,11 +2016,7 @@ static void test_header_handling_order(int port)
     ret = HttpSendRequest(request, NULL, 0, NULL, 0);
     ok(ret, "HttpSendRequest failed\n");
 
-    status = 0;
-    size = sizeof(status);
-    ret = HttpQueryInfo( request, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, &status, &size, NULL );
-    ok(ret, "HttpQueryInfo failed\n");
-    ok(status == 200, "request failed with status %u\n", status);
+    test_status_code(request, 200);
 
     InternetCloseHandle(request);
 
@@ -2031,7 +2057,6 @@ static void test_header_handling_order(int port)
 static void test_connection_header(int port)
 {
     HINTERNET ses, con, req;
-    DWORD size, status;
     BOOL ret;
 
     ses = InternetOpen("winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
@@ -2046,11 +2071,7 @@ static void test_connection_header(int port)
     ret = HttpSendRequest(req, NULL, 0, NULL, 0);
     ok(ret, "HttpSendRequest failed\n");
 
-    status = 0;
-    size = sizeof(status);
-    ret = HttpQueryInfo(req, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, &status, &size, NULL);
-    ok(ret, "HttpQueryInfo failed\n");
-    ok(status == 200, "request failed with status %u\n", status);
+    test_status_code(req, 200);
 
     InternetCloseHandle(req);
 
@@ -2060,11 +2081,7 @@ static void test_connection_header(int port)
     ret = HttpSendRequest(req, NULL, 0, NULL, 0);
     ok(ret, "HttpSendRequest failed\n");
 
-    status = 0;
-    size = sizeof(status);
-    ret = HttpQueryInfo(req, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, &status, &size, NULL);
-    ok(ret, "HttpQueryInfo failed\n");
-    ok(status == 200, "request failed with status %u\n", status);
+    test_status_code(req, 200);
 
     InternetCloseHandle(req);
 
@@ -2074,11 +2091,7 @@ static void test_connection_header(int port)
     ret = HttpSendRequest(req, NULL, 0, NULL, 0);
     ok(ret, "HttpSendRequest failed\n");
 
-    status = 0;
-    size = sizeof(status);
-    ret = HttpQueryInfo(req, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, &status, &size, NULL);
-    ok(ret, "HttpQueryInfo failed\n");
-    ok(status == 200, "request failed with status %u\n", status);
+    test_status_code(req, 200);
 
     InternetCloseHandle(req);
 
@@ -2088,11 +2101,7 @@ static void test_connection_header(int port)
     ret = HttpSendRequest(req, NULL, 0, NULL, 0);
     ok(ret, "HttpSendRequest failed\n");
 
-    status = 0;
-    size = sizeof(status);
-    ret = HttpQueryInfo(req, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, &status, &size, NULL);
-    ok(ret, "HttpQueryInfo failed\n");
-    ok(status == 200, "request failed with status %u\n", status);
+    test_status_code(req, 200);
 
     InternetCloseHandle(req);
     InternetCloseHandle(con);
@@ -2301,7 +2310,7 @@ static void test_HttpSendRequestW(int port)
 static void test_cookie_header(int port)
 {
     HINTERNET ses, con, req;
-    DWORD size, status, error;
+    DWORD size, error;
     BOOL ret;
     char buffer[64];
 
@@ -2336,11 +2345,7 @@ static void test_cookie_header(int port)
     ret = HttpSendRequest(req, NULL, 0, NULL, 0);
     ok(ret, "HttpSendRequest failed: %u\n", GetLastError());
 
-    status = 0;
-    size = sizeof(status);
-    ret = HttpQueryInfo(req, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, &status, &size, NULL);
-    ok(ret, "HttpQueryInfo failed\n");
-    ok(status == 200, "request failed with status %u\n", status);
+    test_status_code(req, 200);
 
     buffer[0] = 0;
     size = sizeof(buffer);
@@ -2356,7 +2361,6 @@ static void test_cookie_header(int port)
 static void test_basic_authentication(int port)
 {
     HINTERNET session, connect, request;
-    DWORD size, status;
     BOOL ret;
 
     session = InternetOpen("winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
@@ -2371,11 +2375,7 @@ static void test_basic_authentication(int port)
     ret = HttpSendRequest(request, NULL, 0, NULL, 0);
     ok(ret, "HttpSendRequest failed %u\n", GetLastError());
 
-    status = 0;
-    size = sizeof(status);
-    ret = HttpQueryInfo( request, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, &status, &size, NULL );
-    ok(ret, "HttpQueryInfo failed\n");
-    ok(status == 200, "request failed with status %u\n", status);
+    test_status_code(request, 200);
 
     InternetCloseHandle(request);
     InternetCloseHandle(connect);
@@ -2385,7 +2385,7 @@ static void test_basic_authentication(int port)
 static void test_invalid_response_headers(int port)
 {
     HINTERNET session, connect, request;
-    DWORD size, status;
+    DWORD size;
     BOOL ret;
     char buffer[256];
 
@@ -2401,11 +2401,7 @@ static void test_invalid_response_headers(int port)
     ret = HttpSendRequest(request, NULL, 0, NULL, 0);
     ok(ret, "HttpSendRequest failed %u\n", GetLastError());
 
-    status = 0;
-    size = sizeof(status);
-    ret = HttpQueryInfo( request, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, &status, &size, NULL );
-    ok(ret, "HttpQueryInfo failed\n");
-    ok(status == 401, "unexpected status %u\n", status);
+    test_status_code(request, 401);
 
     buffer[0] = 0;
     size = sizeof(buffer);
@@ -2545,17 +2541,7 @@ static void test_HttpQueryInfo(int port)
     ok(ret, "HttpQueryInfo failed %u\n", GetLastError());
     ok(index == 0, "expected 0 got %u\n", index);
 
-    index = 0;
-    size = sizeof(buffer);
-    ret = HttpQueryInfo(hr, HTTP_QUERY_STATUS_CODE, buffer, &size, &index);
-    ok(ret, "HttpQueryInfo failed %u\n", GetLastError());
-    ok(index == 0, "expected 0 got %u\n", index);
-
-    index = 0;
-    size = sizeof(buffer);
-    ret = HttpQueryInfo(hr, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, buffer, &size, &index);
-    ok(ret, "HttpQueryInfo failed %u\n", GetLastError());
-    ok(index == 0, "expected 0 got %u\n", index);
+    test_status_code(hr, 200);
 
     index = 0xdeadbeef;
     size = sizeof(buffer);
