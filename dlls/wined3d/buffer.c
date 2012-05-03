@@ -302,8 +302,14 @@ static BOOL buffer_check_attribute(struct wined3d_buffer *This, const struct win
 
         if (!is_ffp_color) FIXME("Test for non-color fixed function WINED3DFMT_B8G8R8A8_UNORM format\n");
     }
-    else if (is_ffp_position && format == WINED3DFMT_R32G32B32A32_FLOAT)
+    else if (is_ffp_position && si->position_transformed)
     {
+        if (format != WINED3DFMT_R32G32B32A32_FLOAT)
+        {
+            FIXME("Unexpected format %s for transformed position.\n", debug_d3dformat(format));
+            return FALSE;
+        }
+
         ret = buffer_process_converted_attribute(This, CONV_POSITIONT, attrib, stride_this_run);
     }
     else if (This->conversion_map)
