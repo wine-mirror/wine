@@ -496,6 +496,8 @@ tmp = "aaaa".lastIndexOf("a",2);
 ok(tmp == 2, "lastIndexOf = " + tmp);
 tmp = strObj.lastIndexOf("b");
 ok(tmp === 1, "lastIndexOf = " + tmp);
+tmp = "bbb".lastIndexOf("b", bigInt);
+ok(tmp === 2, "lastIndexOf = " + tmp);
 
 tmp = "".toLowerCase();
 ok(tmp === "", "''.toLowerCase() = " + tmp);
