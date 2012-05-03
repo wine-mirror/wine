@@ -9153,7 +9153,7 @@ msgid "Filter Error"
 msgstr "Помилка фільтру"
 
 #: wldap32.rc:115
-msgid "User Cancelled"
+msgid "User Canceled"
 msgstr "Відмінено користувачем"
 
 #: wldap32.rc:116

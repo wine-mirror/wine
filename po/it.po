@@ -9202,7 +9202,7 @@ msgid "Filter Error"
 msgstr "Errore del filtro"
 
 #: wldap32.rc:115
-msgid "User Cancelled"
+msgid "User Canceled"
 msgstr "Utente eliminato"
 
 #: wldap32.rc:116

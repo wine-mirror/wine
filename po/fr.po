@@ -9221,7 +9221,7 @@ msgid "Filter Error"
 msgstr "Erreur de filtrage"
 
 #: wldap32.rc:115
-msgid "User Cancelled"
+msgid "User Canceled"
 msgstr "Annulation par l'utilisateur"
 
 #: wldap32.rc:116

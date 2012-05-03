@@ -9123,7 +9123,7 @@ msgid "Filter Error"
 msgstr "Szűrő hiba"
 
 #: wldap32.rc:115
-msgid "User Cancelled"
+msgid "User Canceled"
 msgstr "Felhasználó megszakította"
 
 #: wldap32.rc:116
