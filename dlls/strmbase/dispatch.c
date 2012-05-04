@@ -21,14 +21,11 @@
 #define COBJMACROS
 
 #include "dshow.h"
-#include "wine/debug.h"
 #include "wine/unicode.h"
 #include "wine/strmbase.h"
 #include "uuids.h"
 #include "vfwmsgs.h"
 #include <assert.h>
-
-WINE_DEFAULT_DEBUG_CHANNEL(strmbase);
 
 HRESULT WINAPI BaseDispatch_Init(BaseDispatch *This, REFIID riid)
 {
