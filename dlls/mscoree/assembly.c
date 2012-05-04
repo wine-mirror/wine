@@ -92,7 +92,7 @@ static inline LPWSTR strdupW(LPCWSTR src)
     return dest;
 }
 
-void* assembly_rva_to_va(ASSEMBLY *assembly, ULONG rva)
+static void* assembly_rva_to_va(ASSEMBLY *assembly, ULONG rva)
 {
     if (assembly->is_mapped_file)
         return ImageRvaToVa(assembly->nthdr, assembly->data, rva, NULL);
@@ -190,7 +190,7 @@ static HRESULT parse_pe_header(ASSEMBLY *assembly)
     return S_OK;
 }
 
-HRESULT parse_headers(ASSEMBLY *assembly)
+static HRESULT parse_headers(ASSEMBLY *assembly)
 {
     HRESULT hr;
 

@@ -35,7 +35,6 @@ typedef struct _VTableFixup {
 
 typedef struct tagASSEMBLY ASSEMBLY;
 
-extern void* assembly_rva_to_va(ASSEMBLY *assembly, ULONG rva) DECLSPEC_HIDDEN;
 extern HRESULT assembly_create(ASSEMBLY **out, LPCWSTR file) DECLSPEC_HIDDEN;
 extern HRESULT assembly_from_hmodule(ASSEMBLY **out, HMODULE hmodule) DECLSPEC_HIDDEN;
 extern HRESULT assembly_release(ASSEMBLY *assembly) DECLSPEC_HIDDEN;
