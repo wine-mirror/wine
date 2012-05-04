@@ -1016,15 +1016,17 @@ tmp = arr.splice(-bigInt);
 ok(tmp.toString() == "", "arr.splice(-bigInt) returned " + tmp.toString());
 ok(arr.toString() == "1,2,3,4,5", "arr.splice(-bigInt) is " + arr.toString());
 
-arr = [1,2,3,4,5];
-tmp = arr.splice(2, bigInt);
-ok(tmp.toString() == "3,4,5", "arr.splice(2, bigInt) returned " + tmp.toString());
-ok(arr.toString() == "1,2", "arr.splice(2, bigInt) is " + arr.toString());
+if(invokeVersion >= 2) {
+    arr = [1,2,3,4,5];
+    tmp = arr.splice(2, bigInt);
+    ok(tmp.toString() == "3,4,5", "arr.splice(2, bigInt) returned " + tmp.toString());
+    ok(arr.toString() == "1,2", "arr.splice(2, bigInt) is " + arr.toString());
+}
 
 arr = [1,2,3,4,5];
 tmp = arr.splice(2, -bigInt);
-ok(tmp.toString() == "", "arr.splice(2, bigInt) returned " + tmp.toString());
-ok(arr.toString() == "1,2,3,4,5", "arr.splice(2, bigInt) is " + arr.toString());
+ok(tmp.toString() == "", "arr.splice(2, -bigInt) returned " + tmp.toString());
+ok(arr.toString() == "1,2,3,4,5", "arr.splice(2, -bigInt) is " + arr.toString());
 
 obj = new Object();
 obj.length = 3;
