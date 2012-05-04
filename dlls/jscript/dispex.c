@@ -342,8 +342,10 @@ static HRESULT convert_params(const DISPPARAMS *dp, VARIANT *buf, DISPPARAMS *re
 
     *ret = *dp;
 
-    for(i = 0; i < ret->cArgs; i++) {
-        if(V_VT(get_arg(dp, i)) == VT_I2) {
+    for(i = 0; i < ret->cArgs && !need_conversion; i++) {
+        switch(V_VT(get_arg(dp, i))) {
+        case VT_I2:
+        case VT_INT:
             need_conversion = TRUE;
             break;
         }
@@ -367,6 +369,10 @@ static HRESULT convert_params(const DISPPARAMS *dp, VARIANT *buf, DISPPARAMS *re
         case VT_I2:
             V_VT(d) = VT_I4;
             V_I4(d) = V_I2(s);
+            break;
+        case VT_INT:
+            V_VT(d) = VT_I4;
+            V_I4(d) = V_INT(s);
             break;
         default:
             *d = *s;
@@ -1015,6 +1021,10 @@ static void ensure_retval_type(VARIANT *v)
     case VT_I2:
         V_VT(v) = VT_I4;
         V_I4(v) = V_I2(v);
+        break;
+    case VT_INT:
+        V_VT(v) = VT_I4;
+        V_I4(v) = V_INT(v);
     }
 }
 

@@ -263,6 +263,7 @@ HRESULT to_primitive(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, VARIANT *ret
         return throw_type_error(ctx, ei, JS_E_TO_PRIMITIVE, NULL);
     }
     case VT_I2:
+    case VT_INT:
         assert(0);
     default:
         FIXME("Unimplemented for vt %d\n", V_VT(v));
@@ -447,6 +448,7 @@ HRESULT to_number(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, double *ret)
         *ret = V_BOOL(v) ? 1 : 0;
         break;
     case VT_I2:
+    case VT_INT:
         assert(0);
     default:
         FIXME("unimplemented for vt %d\n", V_VT(v));
