@@ -4487,7 +4487,7 @@ static void test_history(IHTMLWindow2 *window)
     ok(hres == S_OK, "get_history failed: %08x\n", hres);
     ok(history != NULL, "history = NULL\n");
 
-    test_disp((IUnknown*)history, &DIID_DispHTMLHistory, "[object]");
+    test_disp2((IUnknown*)history, &DIID_DispHTMLHistory, &IID_IOmHistory, "[object]");
 
     history2 = NULL;
     hres = IHTMLWindow2_get_history(window, &history2);
