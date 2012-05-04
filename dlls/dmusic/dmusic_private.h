@@ -214,8 +214,7 @@ struct IDirectMusicCollectionImpl {
  */
 struct IDirectMusicInstrumentImpl {
   /* IUnknown fields */
-  const IUnknownVtbl *UnknownVtbl;
-  const IDirectMusicInstrumentVtbl *InstrumentVtbl;
+  IDirectMusicInstrument IDirectMusicInstrument_iface;
   LONG           ref;
 
   /* IDirectMusicInstrumentImpl fields */
@@ -225,6 +224,11 @@ struct IDirectMusicInstrumentImpl {
   WCHAR wszName[DMUS_MAX_NAME];
   /* instrument data */
 };
+
+static inline IDirectMusicInstrumentImpl *impl_from_IDirectMusicInstrument(IDirectMusicInstrument *iface)
+{
+    return CONTAINING_RECORD(iface, IDirectMusicInstrumentImpl, IDirectMusicInstrument_iface);
+}
 
 /* custom :) */
 extern HRESULT IDirectMusicInstrumentImpl_Custom_Load (LPDIRECTMUSICINSTRUMENT iface, LPSTREAM pStm) DECLSPEC_HIDDEN;

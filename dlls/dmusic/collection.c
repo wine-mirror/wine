@@ -142,7 +142,7 @@ static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_EnumInst
 	LIST_FOR_EACH (listEntry, &This->Instruments) {
 		tmpEntry = LIST_ENTRY(listEntry, DMUS_PRIVATE_INSTRUMENTENTRY, entry);
 		if (r == dwIndex) {
-			ICOM_NAME_MULTI (IDirectMusicInstrumentImpl, InstrumentVtbl, tmpEntry->pInstrument, pInstrument);
+			IDirectMusicInstrumentImpl *pInstrument = impl_from_IDirectMusicInstrument(tmpEntry->pInstrument);
 			IDirectMusicInstrument_GetPatch (tmpEntry->pInstrument, pdwPatch);
                        if (pwszName) {
                                dwLen = min(strlenW(pInstrument->wszName),dwNameLen-1);
@@ -606,7 +606,7 @@ static HRESULT WINAPI IDirectMusicCollectionImpl_IPersistStream_Load (LPPERSISTS
 															TRACE_(dmfile)(": instrument list\n");
 															DMUSIC_CreateDirectMusicInstrumentImpl (&IID_IDirectMusicInstrument, (LPVOID*)&pNewInstrument->pInstrument, NULL); /* only way to create this one... even M$ does it discretely */
                                                                                                                         {
-                                                                                                                            ICOM_NAME_MULTI (IDirectMusicInstrumentImpl, InstrumentVtbl, pNewInstrument->pInstrument, pInstrument);
+                                                                                                                            IDirectMusicInstrumentImpl *pInstrument = impl_from_IDirectMusicInstrument(pNewInstrument->pInstrument);
                                                                                                                             liMove.QuadPart = 0;
                                                                                                                             IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, &dlibInstrumentPosition);
                                                                                                                             pInstrument->liInstrumentPosition.QuadPart = dlibInstrumentPosition.QuadPart - (2*sizeof(FOURCC) + sizeof(DWORD)); /* store offset, it'll be needed later */

@@ -1,4 +1,5 @@
-/* IDirectMusicInstrument Implementation
+/*
+ * IDirectMusicInstrument Implementation
  *
  * Copyright (C) 2003-2004 Rok Mandeljc
  *
@@ -21,41 +22,42 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 
-static const GUID IID_IDirectMusicInstrumentPRIVATE = {0xbcb20080,0xa40c,0x11d1,{0x86,0xbc,0x00,0xc0,0x4f,0xbf,0x8f,0xef}};
-
-static ULONG WINAPI IDirectMusicInstrumentImpl_IUnknown_AddRef (LPUNKNOWN iface);
-static ULONG WINAPI IDirectMusicInstrumentImpl_IDirectMusicInstrument_AddRef (LPDIRECTMUSICINSTRUMENT iface);
+static const GUID IID_IDirectMusicInstrumentPRIVATE = { 0xbcb20080, 0xa40c, 0x11d1, { 0x86, 0xbc, 0x00, 0xc0, 0x4f, 0xbf, 0x8f, 0xef } };
 
 /* IDirectMusicInstrument IUnknown part: */
-static HRESULT WINAPI IDirectMusicInstrumentImpl_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj) {
-	ICOM_THIS_MULTI(IDirectMusicInstrumentImpl, UnknownVtbl, iface);
-	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
-	
-	if (IsEqualIID (riid, &IID_IUnknown)) {
-		*ppobj = &This->UnknownVtbl;
-		IDirectMusicInstrumentImpl_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
-		return S_OK;	
-	} else if (IsEqualIID (riid, &IID_IDirectMusicInstrument)) {
-		*ppobj = &This->InstrumentVtbl;
-		IDirectMusicInstrumentImpl_IDirectMusicInstrument_AddRef ((LPDIRECTMUSICINSTRUMENT)&This->InstrumentVtbl);
-		return S_OK;
-	} else if (IsEqualIID (riid, &IID_IDirectMusicInstrumentPRIVATE)) {	
-		/* it seems to me that this interface is only basic IUnknown, without any
-			other inherited functions... *sigh* this is the worst scenario, since it means 
-			that whoever calls it knows the layout of original implementation table and therefore
-			tries to get data by direct access... expect crashes */
-		FIXME("*sigh*... requested private/unspecified interface\n");
-		*ppobj = &This->UnknownVtbl;
-		IDirectMusicInstrumentImpl_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
-		return S_OK;	
-	}
-	
-	WARN("(%p, %s, %p): not found\n", This, debugstr_dmguid(riid), ppobj);
-	return E_NOINTERFACE;
+static HRESULT WINAPI IDirectMusicInstrumentImpl_QueryInterface(LPDIRECTMUSICINSTRUMENT iface, REFIID riid, LPVOID *ret_iface)
+{
+    TRACE("(%p)->(%s, %p)\n", iface, debugstr_dmguid(riid), ret_iface);
+
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IDirectMusicInstrument))
+    {
+        *ret_iface = iface;
+        IDirectMusicInstrument_AddRef(iface);
+        return S_OK;
+    }
+    else if (IsEqualIID(riid, &IID_IDirectMusicInstrumentPRIVATE))
+    {
+        /* it seems to me that this interface is only basic IUnknown, without any
+         * other inherited functions... *sigh* this is the worst scenario, since it means
+         * that whoever calls it knows the layout of original implementation table and therefore
+         * tries to get data by direct access... expect crashes
+         */
+        FIXME("*sigh*... requested private/unspecified interface\n");
+
+        *ret_iface = iface;
+        IDirectMusicInstrument_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("(%p)->(%s, %p): not found\n", iface, debugstr_dmguid(riid), ret_iface);
+
+    return E_NOINTERFACE;
 }
 
-static ULONG WINAPI IDirectMusicInstrumentImpl_IUnknown_AddRef (LPUNKNOWN iface) {
-	ICOM_THIS_MULTI(IDirectMusicInstrumentImpl, UnknownVtbl, iface);
+static ULONG WINAPI IDirectMusicInstrumentImpl_AddRef(LPDIRECTMUSICINSTRUMENT iface)
+{
+	IDirectMusicInstrumentImpl *This = impl_from_IDirectMusicInstrument(iface);
 	ULONG refCount = InterlockedIncrement(&This->ref);
 
 	TRACE("(%p)->(ref before=%u)\n", This, refCount - 1);
@@ -65,8 +67,9 @@ static ULONG WINAPI IDirectMusicInstrumentImpl_IUnknown_AddRef (LPUNKNOWN iface)
 	return refCount;
 }
 
-static ULONG WINAPI IDirectMusicInstrumentImpl_IUnknown_Release (LPUNKNOWN iface) {
-	ICOM_THIS_MULTI(IDirectMusicInstrumentImpl, UnknownVtbl, iface);
+static ULONG WINAPI IDirectMusicInstrumentImpl_Release(LPDIRECTMUSICINSTRUMENT iface)
+{
+	IDirectMusicInstrumentImpl *This = impl_from_IDirectMusicInstrument(iface);
 	ULONG refCount = InterlockedDecrement(&This->ref);
 
 	TRACE("(%p)->(ref before=%u)\n", This, refCount + 1);
@@ -80,48 +83,36 @@ static ULONG WINAPI IDirectMusicInstrumentImpl_IUnknown_Release (LPUNKNOWN iface
 	return refCount;
 }
 
-static const IUnknownVtbl DirectMusicInstrument_Unknown_Vtbl = {
-	IDirectMusicInstrumentImpl_IUnknown_QueryInterface,
-	IDirectMusicInstrumentImpl_IUnknown_AddRef,
-	IDirectMusicInstrumentImpl_IUnknown_Release
-};
-
 /* IDirectMusicInstrumentImpl IDirectMusicInstrument part: */
-static HRESULT WINAPI IDirectMusicInstrumentImpl_IDirectMusicInstrument_QueryInterface (LPDIRECTMUSICINSTRUMENT iface, REFIID riid, LPVOID *ppobj) {
-	ICOM_THIS_MULTI(IDirectMusicInstrumentImpl, InstrumentVtbl, iface);
-	return IDirectMusicInstrumentImpl_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
+static HRESULT WINAPI IDirectMusicInstrumentImpl_GetPatch(LPDIRECTMUSICINSTRUMENT iface, DWORD* pdwPatch)
+{
+    IDirectMusicInstrumentImpl *This = impl_from_IDirectMusicInstrument(iface);
+
+    TRACE("(%p)->(%p)\n", This, pdwPatch);
+
+    *pdwPatch = MIDILOCALE2Patch(&This->pHeader->Locale);
+
+    return S_OK;
 }
 
-static ULONG WINAPI IDirectMusicInstrumentImpl_IDirectMusicInstrument_AddRef (LPDIRECTMUSICINSTRUMENT iface) {
-	ICOM_THIS_MULTI(IDirectMusicInstrumentImpl, InstrumentVtbl, iface);
-	return IDirectMusicInstrumentImpl_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
+static HRESULT WINAPI IDirectMusicInstrumentImpl_SetPatch(LPDIRECTMUSICINSTRUMENT iface, DWORD dwPatch)
+{
+    IDirectMusicInstrumentImpl *This = impl_from_IDirectMusicInstrument(iface);
+
+    TRACE("(%p)->(%d): stub\n", This, dwPatch);
+
+    Patch2MIDILOCALE(dwPatch, &This->pHeader->Locale);
+
+    return S_OK;
 }
 
-static ULONG WINAPI IDirectMusicInstrumentImpl_IDirectMusicInstrument_Release (LPDIRECTMUSICINSTRUMENT iface) {
-	ICOM_THIS_MULTI(IDirectMusicInstrumentImpl, InstrumentVtbl, iface);
-	return IDirectMusicInstrumentImpl_IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
-}
-
-static HRESULT WINAPI IDirectMusicInstrumentImpl_IDirectMusicInstrument_GetPatch (LPDIRECTMUSICINSTRUMENT iface, DWORD* pdwPatch) {
-	ICOM_THIS_MULTI(IDirectMusicInstrumentImpl, InstrumentVtbl, iface);
-	TRACE("(%p, %p)\n", This, pdwPatch);	
-	*pdwPatch = MIDILOCALE2Patch(&This->pHeader->Locale);
-	return S_OK;
-}
-
-static HRESULT WINAPI IDirectMusicInstrumentImpl_IDirectMusicInstrument_SetPatch (LPDIRECTMUSICINSTRUMENT iface, DWORD dwPatch) {
-	ICOM_THIS_MULTI(IDirectMusicInstrumentImpl, InstrumentVtbl, iface);
-	TRACE("(%p, %d): stub\n", This, dwPatch);
-	Patch2MIDILOCALE(dwPatch, &This->pHeader->Locale);
-	return S_OK;
-}
-
-static const IDirectMusicInstrumentVtbl DirectMusicInstrument_Instrument_Vtbl = {
-	IDirectMusicInstrumentImpl_IDirectMusicInstrument_QueryInterface,
-	IDirectMusicInstrumentImpl_IDirectMusicInstrument_AddRef,
-	IDirectMusicInstrumentImpl_IDirectMusicInstrument_Release,
-	IDirectMusicInstrumentImpl_IDirectMusicInstrument_GetPatch,
-	IDirectMusicInstrumentImpl_IDirectMusicInstrument_SetPatch
+static const IDirectMusicInstrumentVtbl DirectMusicInstrument_Vtbl =
+{
+    IDirectMusicInstrumentImpl_QueryInterface,
+    IDirectMusicInstrumentImpl_AddRef,
+    IDirectMusicInstrumentImpl_Release,
+    IDirectMusicInstrumentImpl_GetPatch,
+    IDirectMusicInstrumentImpl_SetPatch
 };
 
 /* for ClassFactory */
@@ -133,11 +124,10 @@ HRESULT DMUSIC_CreateDirectMusicInstrumentImpl (LPCGUID lpcGUID, LPVOID* ppobj, 
 		*ppobj = NULL;
 		return E_OUTOFMEMORY;
 	}
-	dminst->UnknownVtbl = &DirectMusicInstrument_Unknown_Vtbl;
-	dminst->InstrumentVtbl = &DirectMusicInstrument_Instrument_Vtbl;
+	dminst->IDirectMusicInstrument_iface.lpVtbl = &DirectMusicInstrument_Vtbl;
 	dminst->ref = 0; /* will be inited by QueryInterface */
 	
-	return IDirectMusicInstrumentImpl_IUnknown_QueryInterface ((LPUNKNOWN)&dminst->UnknownVtbl, lpcGUID, ppobj);
+	return IDirectMusicInstrument_QueryInterface(&dminst->IDirectMusicInstrument_iface, lpcGUID, ppobj);
 }
 
 static HRESULT read_from_stream(IStream *stream, void *data, ULONG size)
@@ -238,9 +228,9 @@ static HRESULT load_instrument(IDirectMusicInstrumentImpl *This, IStream *stream
 
 /* aux. function that completely loads instrument; my tests indicate that it's 
    called somewhere around IDirectMusicCollection_GetInstrument */
-HRESULT IDirectMusicInstrumentImpl_Custom_Load (LPDIRECTMUSICINSTRUMENT iface, LPSTREAM stream)
+HRESULT IDirectMusicInstrumentImpl_Custom_Load(LPDIRECTMUSICINSTRUMENT iface, LPSTREAM stream)
 {
-    ICOM_THIS_MULTI(IDirectMusicInstrumentImpl, InstrumentVtbl, iface);
+    IDirectMusicInstrumentImpl *This = impl_from_IDirectMusicInstrument(iface);
     LARGE_INTEGER move;
     FOURCC fourcc;
     DWORD bytes;
