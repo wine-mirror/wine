@@ -109,7 +109,7 @@ static HRESULT WINAPI IDirectMusicBufferImpl_PackStructured(LPDIRECTMUSICBUFFER 
     if (new_write_pos > This->size)
         return DMUS_E_BUFFER_FULL;
 
-    /* Channel_message 0xZZYYXX is a midi message where XX = status byte, YY = byte 1 and ZZ = byte 2 */
+    /* Channel_message 0xZZYYXX (3 bytes) is a midi message where XX = status byte, YY = byte 1 and ZZ = byte 2 */
 
     if (!(channel_message & 0x80))
     {
@@ -120,7 +120,7 @@ static HRESULT WINAPI IDirectMusicBufferImpl_PackStructured(LPDIRECTMUSICBUFFER 
     if (!This->write_pos)
         This->start_time = ref_time;
 
-    header.cbEvent = sizeof(channel_message);
+    header.cbEvent = 3; /* Midi message takes 4 bytes space but only 3 are relevant */
     header.dwChannelGroup = channel_group;
     header.rtDelta = ref_time - This->start_time;
     header.dwFlags = DMUS_EVENT_STRUCTURED;

@@ -29,13 +29,23 @@
 #include "dmusici.h"
 #include "dmksctrl.h"
 
-static inline char* debugstr_guid(CONST GUID *id)
+static inline const char* debugstr_guid(CONST GUID *id)
 {
     static char string[39];
     sprintf(string, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
             id->Data1, id->Data2, id->Data3,
             id->Data4[0], id->Data4[1], id->Data4[2], id->Data4[3],
             id->Data4[4], id->Data4[5], id->Data4[6], id->Data4[7] );
+    return string;
+}
+
+static inline const char* debugstr_longlong(ULONGLONG ll)
+{
+    static char string[17];
+    if (sizeof(ll) > sizeof(unsigned long) && ll >> 32)
+        sprintf(string, "%lx%08lx", (unsigned long)(ll >> 32), (unsigned long)ll);
+    else
+        sprintf(string, "%lx", (unsigned long)ll);
     return string;
 }
 
@@ -127,6 +137,7 @@ static void test_dmbuffer(void)
     DWORD size;
     DWORD bytes;
     REFERENCE_TIME time;
+    LPBYTE data;
 
     hr = CoCreateInstance(&CLSID_DirectMusic, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusic, (LPVOID*)&dmusic);
     if (hr != S_OK)
@@ -161,18 +172,49 @@ static void test_dmbuffer(void)
     ok(hr == DMUS_E_INVALID_EVENT, "IDirectMusicBuffer_PackStructured returned %x\n", hr);
     hr = IDirectMusicBuffer_PackStructured(dmbuffer, 20, 0, 0x000090); /* note on : chan 0, note 0 & vel 0 */
     ok(hr == S_OK, "IDirectMusicBuffer_PackStructured returned %x\n", hr);
+    hr = IDirectMusicBuffer_PackStructured(dmbuffer, 30, 0, 0x000080); /* note off : chan 0, note 0 & vel 0 */
+    ok(hr == S_OK, "IDirectMusicBuffer_PackStructured returned %x\n", hr);
     hr = IDirectMusicBuffer_GetUsedBytes(dmbuffer, &bytes);
     ok(hr == S_OK, "IDirectMusicBuffer_GetUsedBytes returned %x\n", hr);
-    ok(bytes == 24, "Buffer size is %u instead of 0\n", bytes);
+    ok(bytes == 48, "Buffer size is %u instead of 48\n", bytes);
 
     hr = IDirectMusicBuffer_GetStartTime(dmbuffer, &time);
     ok(hr == S_OK, "IDirectMusicBuffer_GetStartTime returned %x\n", hr);
     ok(time == 20, "Buffer start time is wrong\n");
-    hr = IDirectMusicBuffer_SetStartTime(dmbuffer, 30);
+    hr = IDirectMusicBuffer_SetStartTime(dmbuffer, 40);
     ok(hr == S_OK, "IDirectMusicBuffer_GetStartTime returned %x\n", hr);
     hr = IDirectMusicBuffer_GetStartTime(dmbuffer, &time);
     ok(hr == S_OK, "IDirectMusicBuffer_GetStartTime returned %x\n", hr);
-    ok(time == 30, "Buffer start time is wrong\n");
+    ok(time == 40, "Buffer start time is wrong\n");
+
+    hr = IDirectMusicBuffer_GetRawBufferPtr(dmbuffer, &data);
+    ok(hr == S_OK, "IDirectMusicBuffer_GetRawBufferPtr returned %x\n", hr);
+    if (hr == S_OK)
+    {
+        DMUS_EVENTHEADER* header;
+        DWORD message;
+
+        /* Check message 1 */
+        header = (DMUS_EVENTHEADER*)data;
+        data += sizeof(DMUS_EVENTHEADER);
+        ok(header->cbEvent == 3, "cbEvent is %u instead of 3\n", header->cbEvent);
+        ok(header->dwChannelGroup == 0, "dwChannelGroup is %u instead of 0\n", header->dwChannelGroup);
+        ok(header->rtDelta == 0, "rtDelta is %s instead of 0\n", debugstr_longlong(header->rtDelta));
+        ok(header->dwFlags == DMUS_EVENT_STRUCTURED, "dwFlags is %x instead of %x\n", header->dwFlags, DMUS_EVENT_STRUCTURED);
+        message = *(DWORD*)data & 0xffffff; /* Only 3 bytes are relevant */
+        data += sizeof(DWORD);
+        ok(message == 0x000090, "Message is %0x instead of 0x000090\n", message);
+
+        /* Check message 2 */
+        header = (DMUS_EVENTHEADER*)data;
+        data += sizeof(DMUS_EVENTHEADER);
+        ok(header->cbEvent == 3, "cbEvent is %u instead of 3\n", header->cbEvent);
+        ok(header->dwChannelGroup == 0, "dwChannelGroup is %u instead of 0\n", header->dwChannelGroup);
+        ok(header->rtDelta == 10, "rtDelta is %s instead of 0\n", debugstr_longlong(header->rtDelta));
+        ok(header->dwFlags == DMUS_EVENT_STRUCTURED, "dwFlags is %x instead of %x\n", header->dwFlags, DMUS_EVENT_STRUCTURED);
+        message = *(DWORD*)data & 0xffffff; /* Only 3 bytes are relevant */
+        ok(message == 0x000080, "Message 2 is %0x instead of 0x000080\n", message);
+    }
 
     if (dmbuffer)
         IDirectMusicBuffer_Release(dmbuffer);
