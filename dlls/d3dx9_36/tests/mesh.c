@@ -10173,7 +10173,7 @@ static void test_optimize_faces(void)
                                tc[i].num_vertices, tc[i].indices_are_32bit,
                                face_remap);
         ok(hr == D3D_OK, "D3DXOptimizeFaces test case %d failed. "
-           "Got %x\n, expected D3D_OK", i, hr);
+           "Got %x\n, expected D3D_OK\n", i, hr);
 
         /* Compare face remap with expected face remap */
         for (j = 0; j < tc[i].num_faces; j++)
