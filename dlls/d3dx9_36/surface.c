@@ -1527,14 +1527,60 @@ HRESULT WINAPI D3DXSaveSurfaceToFileW(const WCHAR *dst_filename, D3DXIMAGE_FILEF
                 IWICBitmapFrameEncode_WritePixels(frame, height,
                     locked_rect.Pitch, height * locked_rect.Pitch, locked_rect.pBits);
                 IDirect3DSurface9_UnlockRect(src_surface);
-                hr = IWICBitmapFrameEncode_Commit(frame);
             }
         }
-        else FIXME("Unsupported pixel format conversion %#x -> %#x\n", src_surface_desc.Format, d3d_pixel_format);
+        else /* Pixel format conversion */
+        {
+            const PixelFormatDesc *src_format_desc, *dst_format_desc;
+            SIZE size;
+            DWORD dst_pitch;
+            void *dst_data;
+
+            src_format_desc = get_format_info(src_surface_desc.Format);
+            dst_format_desc = get_format_info(d3d_pixel_format);
+            if (src_format_desc->format == D3DFMT_UNKNOWN || dst_format_desc->format == D3DFMT_UNKNOWN)
+            {
+                FIXME("Unsupported pixel format conversion %#x -> %#x\n",
+                    src_format_desc->format, dst_format_desc->format);
+                hr = E_NOTIMPL;
+                goto cleanup;
+            }
+
+            if (src_format_desc->bytes_per_pixel > 4
+                || dst_format_desc->bytes_per_pixel > 4
+                || src_format_desc->block_height != 1 || src_format_desc->block_width != 1
+                || dst_format_desc->block_height != 1 || dst_format_desc->block_width != 1)
+            {
+                hr = E_NOTIMPL;
+                goto cleanup;
+            }
+
+            size.cx = width;
+            size.cy = height;
+            dst_pitch = width * dst_format_desc->bytes_per_pixel;
+            dst_data = HeapAlloc(GetProcessHeap(), 0, dst_pitch * height);
+            if (!dst_data)
+            {
+                hr = E_OUTOFMEMORY;
+                goto cleanup;
+            }
+
+            hr = IDirect3DSurface9_LockRect(src_surface, &locked_rect, src_rect, D3DLOCK_READONLY);
+            if (SUCCEEDED(hr))
+            {
+                copy_simple_data(locked_rect.pBits, locked_rect.Pitch, size, src_format_desc,
+                    dst_data, dst_pitch, size, dst_format_desc, 0);
+                IDirect3DSurface9_UnlockRect(src_surface);
+            }
+
+            IWICBitmapFrameEncode_WritePixels(frame, height, dst_pitch, dst_pitch * height, dst_data);
+            HeapFree(GetProcessHeap(), 0, dst_data);
+        }
+
+        hr = IWICBitmapFrameEncode_Commit(frame);
+        if (SUCCEEDED(hr)) hr = IWICBitmapEncoder_Commit(encoder);
     }
     else WARN("Unsupported pixel format %#x\n", src_surface_desc.Format);
-
-    if (SUCCEEDED(hr)) hr = IWICBitmapEncoder_Commit(encoder);
 
 cleanup_err:
     if (FAILED(hr)) hr = D3DERR_INVALIDCALL;
