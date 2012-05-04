@@ -1364,11 +1364,27 @@ HRESULT WINAPI D3DXLoadSurfaceFromSurface(LPDIRECT3DSURFACE9 pDestSurface,
 }
 
 
-HRESULT WINAPI D3DXSaveSurfaceToFileA(LPCSTR pDestFile, D3DXIMAGE_FILEFORMAT DestFormat,
-        LPDIRECT3DSURFACE9 pSrcSurface, const PALETTEENTRY* pSrcPalette, const RECT* pSrcRect)
+HRESULT WINAPI D3DXSaveSurfaceToFileA(const char *dst_filename, D3DXIMAGE_FILEFORMAT file_format,
+        IDirect3DSurface9 *src_surface, const PALETTEENTRY *src_palette, const RECT *src_rect)
 {
-    FIXME("(%p, %d, %p, %p, %p): stub\n", pDestFile, DestFormat, pSrcSurface, pSrcPalette, pSrcRect);
-    return D3DERR_INVALIDCALL;
+    int len;
+    WCHAR *filename;
+    HRESULT hr;
+
+    TRACE("(%s, %#x, %p, %p, %s): relay\n",
+            wine_dbgstr_a(dst_filename), file_format, src_surface, src_palette, wine_dbgstr_rect(src_rect));
+
+    if (!dst_filename) return D3DERR_INVALIDCALL;
+
+    len = MultiByteToWideChar(CP_ACP, 0, dst_filename, -1, NULL, 0);
+    filename = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    if (!filename) return E_OUTOFMEMORY;
+    MultiByteToWideChar(CP_ACP, 0, dst_filename, -1, filename, len);
+
+    hr = D3DXSaveSurfaceToFileW(filename, file_format, src_surface, src_palette, src_rect);
+
+    HeapFree(GetProcessHeap(), 0, filename);
+    return hr;
 }
 
 HRESULT WINAPI D3DXSaveSurfaceToFileW(LPCWSTR pDestFile, D3DXIMAGE_FILEFORMAT DestFormat,
