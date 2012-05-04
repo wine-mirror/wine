@@ -43,3 +43,9 @@ void __cdecl CrtImplementationDetails_DoDllLanguageSupportValidation(void)
 {
     FIXME("stub\n");
 }
+
+/* void __cdecl <CrtImplementationDetails>::RegisterModuleUninitializer(System.EventHandler^) */
+void __cdecl CrtImplementationDetails_RegisterModuleUninitializer(void* handler)
+{
+    FIXME("%p: stub\n", handler);
+}

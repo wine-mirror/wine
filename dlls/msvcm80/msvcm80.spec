@@ -1,8 +1,8 @@
 @ stub -arch=win32 ?DoCallBackInDefaultDomain@<CrtImplementationDetails>@@YAXP6GJPAX@Z0@Z
 @ stub -arch=win64 ?DoCallBackInDefaultDomain@<CrtImplementationDetails>@@YAXP6AJPEAX@Z0@Z
 @ cdecl ?DoDllLanguageSupportValidation@<CrtImplementationDetails>@@YAXXZ() CrtImplementationDetails_DoDllLanguageSupportValidation
-@ stub -arch=win32 ?RegisterModuleUninitializer@<CrtImplementationDetails>@@YAXP$AAVEventHandler@System@@@Z
-@ stub -arch=win64 ?RegisterModuleUninitializer@<CrtImplementationDetails>@@YAXPE$AAVEventHandler@System@@@Z
+@ cdecl -arch=win32 ?RegisterModuleUninitializer@<CrtImplementationDetails>@@YAXP$AAVEventHandler@System@@@Z(ptr) CrtImplementationDetails_RegisterModuleUninitializer
+@ cdecl -arch=win64 ?RegisterModuleUninitializer@<CrtImplementationDetails>@@YAXPE$AAVEventHandler@System@@@Z(ptr) CrtImplementationDetails_RegisterModuleUninitializer
 @ stub -arch=win32 ?ThrowModuleLoadException@<CrtImplementationDetails>@@YAXP$AAVString@System@@@Z
 @ stub -arch=win64 ?ThrowModuleLoadException@<CrtImplementationDetails>@@YAXPE$AAVString@System@@@Z
 @ stub -arch=win32 ?ThrowModuleLoadException@<CrtImplementationDetails>@@YAXP$AAVString@System@@P$AAVException@3@@Z
