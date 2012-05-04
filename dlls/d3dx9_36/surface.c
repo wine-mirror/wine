@@ -59,6 +59,19 @@ static D3DFORMAT wic_guid_to_d3dformat(const GUID *guid)
     return D3DFMT_UNKNOWN;
 }
 
+static const GUID *d3dformat_to_wic_guid(D3DFORMAT format)
+{
+    int i;
+
+    for (i = 0; i < sizeof(wic_pixel_formats) / sizeof(wic_pixel_formats[0]); i++)
+    {
+        if (wic_pixel_formats[i].d3dformat == format)
+            return wic_pixel_formats[i].wic_guid;
+    }
+
+    return NULL;
+}
+
 /* dds_header.flags */
 #define DDS_CAPS 0x1
 #define DDS_HEIGHT 0x2
@@ -1387,9 +1400,154 @@ HRESULT WINAPI D3DXSaveSurfaceToFileA(const char *dst_filename, D3DXIMAGE_FILEFO
     return hr;
 }
 
-HRESULT WINAPI D3DXSaveSurfaceToFileW(LPCWSTR pDestFile, D3DXIMAGE_FILEFORMAT DestFormat,
-        LPDIRECT3DSURFACE9 pSrcSurface, const PALETTEENTRY* pSrcPalette, const RECT* pSrcRect)
+HRESULT WINAPI D3DXSaveSurfaceToFileW(const WCHAR *dst_filename, D3DXIMAGE_FILEFORMAT file_format,
+        IDirect3DSurface9 *src_surface, const PALETTEENTRY *src_palette, const RECT *src_rect)
 {
-    FIXME("(%p, %d, %p, %p, %p): stub\n", pDestFile, DestFormat, pSrcSurface, pSrcPalette, pSrcRect);
-    return D3DERR_INVALIDCALL;
+    IWICImagingFactory *factory;
+    IWICBitmapEncoder *encoder = NULL;
+    IWICBitmapFrameEncode *frame = NULL;
+    IPropertyBag2 *encoder_options = NULL;
+    IWICStream *stream = NULL;
+    HRESULT hr;
+    HRESULT initresult;
+    const CLSID *encoder_clsid;
+    const GUID *pixel_format_guid;
+    WICPixelFormatGUID wic_pixel_format;
+    D3DFORMAT d3d_pixel_format;
+    D3DSURFACE_DESC src_surface_desc;
+    D3DLOCKED_RECT locked_rect;
+    int width, height;
+
+    TRACE("(%s, %#x, %p, %p, %s)\n",
+        wine_dbgstr_w(dst_filename), file_format, src_surface, src_palette, wine_dbgstr_rect(src_rect));
+
+    if (!dst_filename || !src_surface) return D3DERR_INVALIDCALL;
+
+    if (src_palette)
+    {
+        FIXME("Saving surfaces with palettized pixel formats not implemented yet\n");
+        return D3DERR_INVALIDCALL;
+    }
+
+    switch (file_format)
+    {
+        case D3DXIFF_BMP:
+            encoder_clsid = &CLSID_WICBmpEncoder;
+            break;
+        case D3DXIFF_PNG:
+            encoder_clsid = &CLSID_WICPngEncoder;
+            break;
+        case D3DXIFF_JPG:
+            encoder_clsid = &CLSID_WICJpegEncoder;
+            break;
+        case D3DXIFF_DDS:
+        case D3DXIFF_DIB:
+        case D3DXIFF_HDR:
+        case D3DXIFF_PFM:
+        case D3DXIFF_TGA:
+        case D3DXIFF_PPM:
+            FIXME("File format %#x is not supported yet\n", file_format);
+            return E_NOTIMPL;
+        default:
+            return D3DERR_INVALIDCALL;
+    }
+
+    IDirect3DSurface9_GetDesc(src_surface, &src_surface_desc);
+    if (src_rect)
+    {
+        if (src_rect->left == src_rect->right || src_rect->top == src_rect->bottom)
+            return D3D_OK;
+        if (src_rect->left < 0 || src_rect->top < 0)
+            return D3DERR_INVALIDCALL;
+        if (src_rect->left > src_rect->right || src_rect->top > src_rect->bottom)
+            return D3DERR_INVALIDCALL;
+        if (src_rect->right > src_surface_desc.Width || src_rect->bottom > src_surface_desc.Height)
+            return D3DERR_INVALIDCALL;
+
+        width = src_rect->right - src_rect->left;
+        height = src_rect->bottom - src_rect->top;
+    }
+    else
+    {
+        width = src_surface_desc.Width;
+        height = src_surface_desc.Height;
+    }
+
+    initresult = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IWICImagingFactory, (void **)&factory);
+    if (FAILED(hr)) goto cleanup_err;
+
+    hr = IWICImagingFactory_CreateStream(factory, &stream);
+    IWICImagingFactory_Release(factory);
+    if (FAILED(hr)) goto cleanup_err;
+
+    hr = IWICStream_InitializeFromFilename(stream, dst_filename, GENERIC_WRITE);
+    if (FAILED(hr)) goto cleanup_err;
+
+    hr = CoCreateInstance(encoder_clsid, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IWICBitmapEncoder, (void **)&encoder);
+    if (FAILED(hr)) goto cleanup_err;
+
+    hr = IWICBitmapEncoder_Initialize(encoder, (IStream *)stream, WICBitmapEncoderNoCache);
+    IStream_Release((IStream *)stream);
+    stream = NULL;
+    if (FAILED(hr)) goto cleanup_err;
+
+    hr = IWICBitmapEncoder_CreateNewFrame(encoder, &frame, &encoder_options);
+    if (FAILED(hr)) goto cleanup_err;
+
+    hr = IWICBitmapFrameEncode_Initialize(frame, encoder_options);
+    if (FAILED(hr)) goto cleanup_err;
+
+    hr = IWICBitmapFrameEncode_SetSize(frame, width, height);
+    if (FAILED(hr)) goto cleanup_err;
+
+    pixel_format_guid = d3dformat_to_wic_guid(src_surface_desc.Format);
+    if (!pixel_format_guid)
+    {
+        FIXME("Pixel format %#x is not supported yet\n", src_surface_desc.Format);
+        hr = E_NOTIMPL;
+        goto cleanup;
+    }
+
+    memcpy(&wic_pixel_format, pixel_format_guid, sizeof(GUID));
+    hr = IWICBitmapFrameEncode_SetPixelFormat(frame, &wic_pixel_format);
+    d3d_pixel_format = wic_guid_to_d3dformat(&wic_pixel_format);
+    if (SUCCEEDED(hr) && d3d_pixel_format != D3DFMT_UNKNOWN)
+    {
+        TRACE("Using pixel format %s %#x\n", debugstr_guid(&wic_pixel_format), d3d_pixel_format);
+
+        if (src_surface_desc.Format == d3d_pixel_format) /* Simple copy */
+        {
+            hr = IDirect3DSurface9_LockRect(src_surface, &locked_rect, src_rect, D3DLOCK_READONLY);
+            if (SUCCEEDED(hr))
+            {
+                IWICBitmapFrameEncode_WritePixels(frame, height,
+                    locked_rect.Pitch, height * locked_rect.Pitch, locked_rect.pBits);
+                IDirect3DSurface9_UnlockRect(src_surface);
+                hr = IWICBitmapFrameEncode_Commit(frame);
+            }
+        }
+        else FIXME("Unsupported pixel format conversion %#x -> %#x\n", src_surface_desc.Format, d3d_pixel_format);
+    }
+    else WARN("Unsupported pixel format %#x\n", src_surface_desc.Format);
+
+    if (SUCCEEDED(hr)) hr = IWICBitmapEncoder_Commit(encoder);
+
+cleanup_err:
+    if (FAILED(hr)) hr = D3DERR_INVALIDCALL;
+
+cleanup:
+    if (stream) IStream_Release((IStream *)stream);
+
+    if (frame) IWICBitmapFrameEncode_Release(frame);
+    if (encoder_options) IPropertyBag2_Release(encoder_options);
+
+    if (encoder) IWICBitmapEncoder_Release(encoder);
+
+    if (SUCCEEDED(initresult)) CoUninitialize();
+
+    return hr;
 }
