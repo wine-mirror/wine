@@ -31,6 +31,34 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 /* Wine-specific WIC GUIDs */
 DEFINE_GUID(GUID_WineContainerFormatTga, 0x0c44fda1,0xa5c5,0x4298,0x96,0x85,0x47,0x3f,0xc1,0x7c,0xd3,0x22);
 
+static const struct
+{
+    const GUID *wic_guid;
+    D3DFORMAT d3dformat;
+} wic_pixel_formats[] = {
+    { &GUID_WICPixelFormat8bppIndexed, D3DFMT_L8 },
+    { &GUID_WICPixelFormat1bppIndexed, D3DFMT_L8 },
+    { &GUID_WICPixelFormat4bppIndexed, D3DFMT_L8 },
+    { &GUID_WICPixelFormat16bppBGR555, D3DFMT_X1R5G5B5 },
+    { &GUID_WICPixelFormat16bppBGR565, D3DFMT_R5G6B5 },
+    { &GUID_WICPixelFormat24bppBGR, D3DFMT_R8G8B8 },
+    { &GUID_WICPixelFormat32bppBGR, D3DFMT_X8R8G8B8 },
+    { &GUID_WICPixelFormat32bppBGRA, D3DFMT_A8R8G8B8 }
+};
+
+static D3DFORMAT wic_guid_to_d3dformat(const GUID *guid)
+{
+    int i;
+
+    for (i = 0; i < sizeof(wic_pixel_formats) / sizeof(wic_pixel_formats[0]); i++)
+    {
+        if (IsEqualGUID(wic_pixel_formats[i].wic_guid, guid))
+            return wic_pixel_formats[i].d3dformat;
+    }
+
+    return D3DFMT_UNKNOWN;
+}
+
 /* dds_header.flags */
 #define DDS_CAPS 0x1
 #define DDS_HEIGHT 0x2
@@ -370,21 +398,8 @@ HRESULT WINAPI D3DXGetImageInfoFromFileInMemory(LPCVOID data, UINT datasize, D3D
 
                 hr = IWICBitmapFrameDecode_GetPixelFormat(frame, &pixel_format);
                 if (SUCCEEDED(hr)) {
-                    if (IsEqualGUID(&pixel_format, &GUID_WICPixelFormat1bppIndexed))
-                        info->Format = D3DFMT_L8;
-                    else if (IsEqualGUID(&pixel_format, &GUID_WICPixelFormat4bppIndexed))
-                        info->Format = D3DFMT_L8;
-                    else if (IsEqualGUID(&pixel_format, &GUID_WICPixelFormat8bppIndexed))
-                        info->Format = D3DFMT_L8;
-                    else if (IsEqualGUID(&pixel_format, &GUID_WICPixelFormat16bppBGR555))
-                        info->Format = D3DFMT_X1R5G5B5;
-                    else if (IsEqualGUID(&pixel_format, &GUID_WICPixelFormat24bppBGR))
-                        info->Format = D3DFMT_R8G8B8;
-                    else if (IsEqualGUID(&pixel_format, &GUID_WICPixelFormat32bppBGR))
-                        info->Format = D3DFMT_X8R8G8B8;
-                    else if (IsEqualGUID(&pixel_format, &GUID_WICPixelFormat32bppBGRA))
-                        info->Format = D3DFMT_A8R8G8B8;
-                    else {
+                    info->Format = wic_guid_to_d3dformat(&pixel_format);
+                    if (info->Format == D3DFMT_UNKNOWN) {
                         WARN("Unsupported pixel format %s\n", debugstr_guid(&pixel_format));
                         hr = D3DXERR_INVALIDDATA;
                     }
