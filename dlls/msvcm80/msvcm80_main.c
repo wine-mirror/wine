@@ -49,3 +49,10 @@ void __cdecl CrtImplementationDetails_RegisterModuleUninitializer(void* handler)
 {
     FIXME("%p: stub\n", handler);
 }
+
+/* handler is a "method" with signature int32 (*handler)(_exception*), but I'm
+ * not sure what that means */
+void __cdecl __setusermatherr_m(void *handler)
+{
+    FIXME("%p: stub\n", handler);
+}

@@ -300,7 +300,7 @@
 @ stub -arch=win64 ?setw@std@@YA?AU?$_Smanip@_J@1@_J@Z
 @ stub ?signal@@YAP6MXH@ZHH@Z
 @ stub ?signal@@YAP6MXH@ZHP6MXH@Z@Z
-@ stub __setusermatherr_m
+@ cdecl __setusermatherr_m(ptr)
 @ stub towctrans
 @ stub wctrans
 @ stub wctype
