@@ -6675,7 +6675,7 @@ msgstr ""
 "Windows Installer %s\n"
 "\n"
 "Aufruf:\n"
-"msiexec Befehl {Parameter} [Zusätzliche Parameter]\n"
+"msiexec Befehl {erforderliche Parameter} [zusätzliche Parameter]\n"
 "\n"
 "Produkt installieren:\n"
 "\t/i {Paket|Produktcode} [Eigenschaft]\n"
@@ -6698,7 +6698,7 @@ msgstr ""
 "\t/y\n"
 "Registrierung des MSI Service aufheben:\n"
 "\t/z\n"
-"Hilfe anzeigen:\n"
+"Diese Hilfe anzeigen:\n"
 "\t/help\n"
 "\t/?\n"
 
@@ -9165,11 +9165,11 @@ msgstr "Nicht genügend Speicher"
 
 #: wldap32.rc:118
 msgid "Can't connect to the LDAP server"
-msgstr "Kann nicht zum LDAP Server verbinden"
+msgstr "Kann nicht zum LDAP-Server verbinden"
 
 #: wldap32.rc:119
 msgid "Operation not supported by this version of the LDAP protocol"
-msgstr "Die Operation wird durch dieses LDAP Protokoll nicht unterstützt"
+msgstr "Operation durch diese Version des LDAP-Protokoll nicht unterstützt"
 
 #: wldap32.rc:120
 msgid "Specified control was not found in message"
@@ -11272,7 +11272,7 @@ msgstr "Befehle zum Bearbeiten der ganzen Registry"
 
 #: regedit.rc:135
 msgid "Contains commands for editing values or keys"
-msgstr "Befehle zum Ändern von Schlüsseln oder Werten"
+msgstr "Befehle zum Ändern von Schlüsseln oder Datenwerten"
 
 #: regedit.rc:136
 msgid "Contains commands for customizing the registry window"
@@ -11280,16 +11280,16 @@ msgstr "Befehle zum Anpassen des Fensters"
 
 #: regedit.rc:137
 msgid "Contains commands for accessing frequently used keys"
-msgstr "Befehle für die Favoriten"
+msgstr "Befehle zum Zugriff auf häufig benutzte Schlüssel"
 
 #: regedit.rc:138
 msgid ""
 "Contains commands for displaying help and information about registry editor"
-msgstr "Befehle zum Anzeigen von Hilfe oder Informationen über das Programm"
+msgstr "Befehle zum Anzeigen der Hilfe oder Informationen über das Programm"
 
 #: regedit.rc:139
 msgid "Contains commands for creating new keys or values"
-msgstr "Befehle zum Erstellen von neuen Schlüsseln oder Daten"
+msgstr "Befehle zum Erstellen von neuen Schlüsseln oder Datenwerten"
 
 #: regedit.rc:124
 msgid "Data"
@@ -11325,7 +11325,7 @@ msgstr "(Wert nicht gesetzt)"
 
 #: regedit.rc:203
 msgid "(cannot display value)"
-msgstr "(kann Wert nicht darstellen)"
+msgstr "(Wert kann nicht dargestellt werden)"
 
 #: regedit.rc:204
 msgid "(unknown %d)"
@@ -11341,7 +11341,7 @@ msgstr "Fügt Schlüssel zu den Favoriten hinzu"
 
 #: regedit.rc:162
 msgid "Removes keys from the favorites list"
-msgstr "Löscht Schlüssel von den Favoriten"
+msgstr "Entfernt Schlüssel aus den Favoriten"
 
 #: regedit.rc:163
 msgid "Shows or hides the status bar"
@@ -11409,15 +11409,15 @@ msgstr "Druckt Teile oder die gesamte Registry aus"
 
 #: regedit.rc:155
 msgid "Displays program information, version number and copyright"
-msgstr "Zeigt Programmname, Version und Copyright an"
+msgstr "Zeigt Programminformationen, Version und Copyright an"
 
 #: regedit.rc:178
 msgid "Can't query value '%s'"
-msgstr "Kann den Wert '%s' nicht lesen"
+msgstr "Der Wert '%s' kann nicht gelesen werden"
 
 #: regedit.rc:179
 msgid "Can't edit keys of this type (%u)"
-msgstr "Kann Schlüssel von diesem Typ (%u) nicht ändern"
+msgstr "Schlüssel von diesem Typ (%u) können nicht geändert werden"
 
 #: regedit.rc:180
 msgid "Value is too big (%u)"
@@ -11429,7 +11429,7 @@ msgstr "Bitte bestätigen"
 
 #: regedit.rc:182
 msgid "Are you sure you want to delete value '%s'?"
-msgstr "Wollen Sie '%s' wirklich löschen?"
+msgstr "Möchten Sie den Wert '%s' wirklich löschen?"
 
 #: regedit.rc:186
 msgid "Search string '%s' not found"
@@ -11437,7 +11437,7 @@ msgstr "Suchfolge '%s' wurde nicht gefunden"
 
 #: regedit.rc:183
 msgid "Are you sure you want to delete these values?"
-msgstr "Wollen Sie diese Werte wirklich löschen?"
+msgstr "Möchten Sie diese Werte wirklich löschen?"
 
 #: regedit.rc:184
 msgid "New Key #%d"
@@ -11449,7 +11449,7 @@ msgstr "Neuer Wert #%d"
 
 #: regedit.rc:177
 msgid "Can't query key '%s'"
-msgstr "Kann den Schlüssel '%s' nicht lesen"
+msgstr "Der Schlüssel '%s' kann nicht gelesen werden"
 
 #: regedit.rc:149
 msgid "Adds a new multi string value"
@@ -11467,13 +11467,13 @@ msgid ""
 msgstr ""
 "Es konnte keine Anwendung gestartet werden, oder es ist keine Anwendung mit "
 "der angegebenen Datei verknüpft.\n"
-"ShellExecuteEx gescheitert"
+"ShellExecuteEx fehlgeschlagen"
 
 #: start.rc:43
 msgid "Could not translate the specified Unix filename to a DOS filename."
 msgstr ""
-"Der angegebene Unix Dateiname konnte nicht in einen DOS Dateinamen "
-"umgewandelt werden."
+"Der angegebene Unix-Dateiname konnte nicht in einen DOS-Dateinamen übersetzt "
+"werden."
 
 #: taskkill.rc:27
 msgid "Usage: taskkill [/?] [/f] [/im ProcessName | /pid ProcessID]\n"
