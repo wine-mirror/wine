@@ -245,8 +245,8 @@ int __cdecl MSVCRT__set_new_mode(int mode);
 void* __cdecl MSVCRT_operator_new(MSVCRT_size_t);
 void __cdecl MSVCRT_operator_delete(void*);
 
-typedef void* (*__cdecl malloc_func_t)(MSVCRT_size_t);
-typedef void  (*__cdecl free_func_t)(void*);
+typedef void* (__cdecl *malloc_func_t)(MSVCRT_size_t);
+typedef void  (__cdecl *free_func_t)(void*);
 
 extern char* __cdecl __unDName(char *,const char*,int,malloc_func_t,free_func_t,unsigned short int);
 extern char* __cdecl __unDNameEx(char *,const char*,int,malloc_func_t,free_func_t,void *,unsigned short int);
