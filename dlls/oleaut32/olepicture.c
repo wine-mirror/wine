@@ -1228,16 +1228,34 @@ static HRESULT OLEPictureImpl_LoadIcon(OLEPictureImpl *This, BYTE *xbuf, ULONG x
 	}
 	if (i==cifd->idCount) i=0;
     }
-
-    hicon = CreateIconFromResourceEx(
-		xbuf+cifd->idEntries[i].dwDIBOffset,
-		cifd->idEntries[i].dwDIBSize,
-		TRUE, /* is icon */
-		0x00030000,
-		cifd->idEntries[i].bWidth,
-		cifd->idEntries[i].bHeight,
-		0
-    );
+    if (cifd->idType == 2)
+    {
+        LPBYTE buf = HeapAlloc(GetProcessHeap(), 0, cifd->idEntries[i].dwDIBSize + 4);
+        memcpy(buf, &cifd->idEntries[i].xHotspot, 4);
+        memcpy(buf + 4, xbuf+cifd->idEntries[i].dwDIBOffset, cifd->idEntries[i].dwDIBSize);
+        hicon = CreateIconFromResourceEx(
+		    buf,
+		    cifd->idEntries[i].dwDIBSize + 4,
+		    FALSE, /* is cursor */
+		    0x00030000,
+		    cifd->idEntries[i].bWidth,
+		    cifd->idEntries[i].bHeight,
+		    0
+	);
+	HeapFree(GetProcessHeap(), 0, buf);
+    }
+    else
+    {
+        hicon = CreateIconFromResourceEx(
+		    xbuf+cifd->idEntries[i].dwDIBOffset,
+		    cifd->idEntries[i].dwDIBSize,
+		    TRUE, /* is icon */
+		    0x00030000,
+		    cifd->idEntries[i].bWidth,
+		    cifd->idEntries[i].bHeight,
+		    0
+	);
+    }
     if (!hicon) {
 	ERR("CreateIcon failed.\n");
 	return E_FAIL;
@@ -1322,7 +1340,7 @@ static HRESULT OLEPictureImpl_LoadAPM(OLEPictureImpl *This,
  * 	DWORD magic;
  * 	DWORD len;
  *
- * Currently implemented: BITMAP, ICON, JPEG, GIF, WMF, EMF
+ * Currently implemented: BITMAP, ICON, CURSOR, JPEG, GIF, WMF, EMF
  */
 static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface, IStream *pStm) {
   HRESULT	hr;
@@ -1477,7 +1495,7 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface, IStream *pStm) 
   case BITMAP_FORMAT_APM: /* APM */
     hr = OLEPictureImpl_LoadAPM(This, xbuf, xread);
     break;
-  case 0x0000: { /* ICON , first word is dwReserved */
+  case 0x0000: { /* ICON or CURSOR, first word is dwReserved */
     hr = OLEPictureImpl_LoadIcon(This, xbuf, xread);
     break;
   }
