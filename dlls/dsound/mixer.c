@@ -40,6 +40,7 @@
 #include "ks.h"
 #include "ksmedia.h"
 #include "dsound_private.h"
+#include "fir.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 
@@ -128,6 +129,24 @@ void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb)
 	if ((pwfxe->Format.wFormatTag == WAVE_FORMAT_IEEE_FLOAT) || ((pwfxe->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE)
 	    && (IsEqualGUID(&pwfxe->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT))))
 		ieee = TRUE;
+
+	/**
+	 * Recalculate FIR step and gain.
+	 *
+	 * firstep says how many points of the FIR exist per one
+	 * sample in the secondary buffer. firgain specifies what
+	 * to multiply the FIR output by in order to attenuate it correctly.
+	 */
+	if (dsb->freqAdjust > 1.0f) {
+		/**
+		 * Yes, round it a bit to make sure that the
+		 * linear interpolation factor never changes.
+		 */
+		dsb->firstep = ceil(fir_step / dsb->freqAdjust);
+	} else {
+		dsb->firstep = fir_step;
+	}
+	dsb->firgain = (float)dsb->firstep / fir_step;
 
 	/* calculate the 10ms write lead */
 	dsb->writelead = (dsb->freq / 100) * dsb->pwfx->nBlockAlign;
@@ -228,28 +247,97 @@ static inline float get_current_sample(const IDirectSoundBufferImpl *dsb,
     return dsb->get(dsb, mixpos % dsb->buflen, channel);
 }
 
-/**
- * Copy frames from the given input buffer to the given output buffer.
- * Translate 8 <-> 16 bits and mono <-> stereo
- */
-static inline void cp_fields(IDirectSoundBufferImpl *dsb,
+static UINT cp_fields_noresample(IDirectSoundBufferImpl *dsb,
+        UINT ostride, UINT count)
+{
+    UINT istride = dsb->pwfx->nBlockAlign;
+    DWORD channel, i;
+    for (i = 0; i < count; i++)
+        for (channel = 0; channel < dsb->mix_channels; channel++)
+            dsb->put(dsb, i * ostride, channel, get_current_sample(dsb,
+                    dsb->sec_mixpos + i * istride, channel));
+    return count;
+}
+
+static UINT cp_fields_resample(IDirectSoundBufferImpl *dsb,
         UINT ostride, UINT count, float *freqAcc)
 {
-    DWORD ipos = dsb->sec_mixpos;
-    UINT istride = dsb->pwfx->nBlockAlign, i;
-    DWORD opos = 0;
+    UINT i, channel;
+    UINT istride = dsb->pwfx->nBlockAlign;
 
-    for (i = 0; i < count; ++i){
-        DWORD channel;
-        for (channel = 0; channel < dsb->mix_channels; channel++)
-            dsb->put(dsb, opos, channel,
-                get_current_sample(dsb, ipos, channel));
-        *freqAcc += dsb->freqAdjust;
-        ipos += ((DWORD)*freqAcc) * istride;
-        *freqAcc -= truncf(*freqAcc);
-        opos += ostride;
+    float freqAdjust = dsb->freqAdjust;
+    float freqAcc_start = *freqAcc;
+    float freqAcc_end = freqAcc_start + count * freqAdjust;
+    UINT dsbfirstep = dsb->firstep;
+    UINT channels = dsb->mix_channels;
+    UINT max_ipos = freqAcc_start + count * freqAdjust;
+
+    UINT fir_cachesize = (fir_len + dsbfirstep - 2) / dsbfirstep;
+    UINT required_input = max_ipos + fir_cachesize;
+
+    float* intermediate = HeapAlloc(GetProcessHeap(), 0,
+            sizeof(float) * required_input * channels);
+
+    float* fir_copy = HeapAlloc(GetProcessHeap(), 0,
+            sizeof(float) * fir_cachesize);
+
+    /* Important: this buffer MUST be non-interleaved
+     * if you want -msse3 to have any effect.
+     * This is good for CPU cache effects, too.
+     */
+    float* itmp = intermediate;
+    for (channel = 0; channel < channels; channel++)
+        for (i = 0; i < required_input; i++)
+            *(itmp++) = get_current_sample(dsb,
+                    dsb->sec_mixpos + i * istride, channel);
+
+    for(i = 0; i < count; ++i) {
+        float total_fir_steps = (freqAcc_start + i * freqAdjust) * dsbfirstep;
+        UINT int_fir_steps = total_fir_steps;
+        UINT ipos = int_fir_steps / dsbfirstep;
+
+        UINT idx = (ipos + 1) * dsbfirstep - int_fir_steps - 1;
+        float rem = int_fir_steps + 1.0 - total_fir_steps;
+
+        int fir_used = 0;
+        while (idx < fir_len - 1) {
+            fir_copy[fir_used++] = fir[idx] * (1.0 - rem) + fir[idx + 1] * rem;
+            idx += dsb->firstep;
+        }
+
+        assert(fir_used <= fir_cachesize);
+        assert(ipos + fir_used <= required_input);
+
+        for (channel = 0; channel < dsb->mix_channels; channel++) {
+            int j;
+            float sum = 0.0;
+            float* cache = &intermediate[channel * required_input + ipos];
+            for (j = 0; j < fir_used; j++)
+                sum += fir_copy[j] * cache[j];
+            dsb->put(dsb, i * ostride, channel, sum * dsb->firgain);
+        }
     }
 
+    freqAcc_end -= (int)freqAcc_end;
+    *freqAcc = freqAcc_end;
+
+    HeapFree(GetProcessHeap(), 0, fir_copy);
+    HeapFree(GetProcessHeap(), 0, intermediate);
+
+    return max_ipos;
+}
+
+static void cp_fields(IDirectSoundBufferImpl *dsb,
+        UINT ostride, UINT count, float *freqAcc)
+{
+    DWORD ipos, adv;
+
+    if (dsb->freqAdjust == 1.0)
+        adv = cp_fields_noresample(dsb, ostride, count); /* *freqAcc is unmodified */
+    else
+        adv = cp_fields_resample(dsb, ostride, count, freqAcc);
+
+    ipos = dsb->sec_mixpos + adv * dsb->pwfx->nBlockAlign;
     if (ipos >= dsb->buflen) {
         if (dsb->playflags & DSBPLAY_LOOPING)
             ipos %= dsb->buflen;

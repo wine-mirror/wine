@@ -183,7 +183,8 @@ struct IDirectSoundBufferImpl
     DSBUFFERDESC                dsbd;
     /* used for frequency conversion (PerfectPitch) */
     ULONG                       freqneeded;
-    float freqAcc, freqAdjust;
+    DWORD                       firstep;
+    float freqAcc, freqAdjust, firgain;
     /* used for mixing */
     DWORD                       primary_mixpos, sec_mixpos;
 
