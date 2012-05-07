@@ -602,13 +602,12 @@ static HRESULT WINAPI dom_pi_put_data(
     BSTR data)
 {
     dom_pi *This = impl_from_IXMLDOMProcessingInstruction( iface );
-    VARIANT val;
     BSTR target;
     HRESULT hr;
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(data) );
 
-    /* Cannot set data to a PI node whose target is 'xml' */
+    /* cannot set data to a PI node whose target is 'xml' */
     hr = IXMLDOMProcessingInstruction_get_nodeName(iface, &target);
     if(hr == S_OK)
     {
@@ -622,10 +621,7 @@ static HRESULT WINAPI dom_pi_put_data(
         SysFreeString(target);
     }
 
-    V_VT(&val) = VT_BSTR;
-    V_BSTR(&val) = data;
-
-    return IXMLDOMProcessingInstruction_put_nodeValue( iface, val );
+    return node_set_content(&This->node, data);
 }
 
 static const struct IXMLDOMProcessingInstructionVtbl dom_pi_vtbl =

@@ -554,13 +554,8 @@ static HRESULT WINAPI domcomment_put_data(
     BSTR data)
 {
     domcomment *This = impl_from_IXMLDOMComment( iface );
-    VARIANT val;
-
-    TRACE("(%p)->(%s)\n", This, debugstr_w(data) );
-
-    V_VT(&val) = VT_BSTR;
-    V_BSTR(&val) = data;
-    return node_put_value(&This->node, &val);
+    TRACE("(%p)->(%s)\n", This, debugstr_w(data));
+    return node_set_content(&This->node, data);
 }
 
 static HRESULT WINAPI domcomment_get_length(
