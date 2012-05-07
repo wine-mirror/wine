@@ -183,6 +183,26 @@ static LRESULT WID_Close(HWAVEIN hwave);
 
 void WINMM_DeleteWaveform(void)
 {
+    UINT i, j;
+
+    for(i = 0; i < g_outmmdevices_count; ++i){
+        WINMM_MMDevice *mmdevice = &g_out_mmdevices[i];
+        for(j = 0; j < MAX_DEVICES && mmdevice->devices[j]; ++j){
+            WINMM_Device *device = mmdevice->devices[j];
+            if(device->open)
+                SendMessageW(g_devices_hwnd, WODM_CLOSE, (WPARAM)device->handle, 0);
+        }
+    }
+
+    for(i = 0; i < g_inmmdevices_count; ++i){
+        WINMM_MMDevice *mmdevice = &g_in_mmdevices[i];
+        for(j = 0; j < MAX_DEVICES && mmdevice->devices[j]; ++j){
+            WINMM_Device *device = mmdevice->devices[j];
+            if(device->open)
+                SendMessageW(g_devices_hwnd, WIDM_CLOSE, (WPARAM)device->handle, 0);
+        }
+    }
+
     /* FIXME: Free g_(in,out)_mmdevices? */
     DeleteCriticalSection(&g_devthread_lock);
 }
