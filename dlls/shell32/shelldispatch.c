@@ -40,9 +40,9 @@
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
 typedef struct {
-    IShellDispatch IShellDispatch_iface;
+    IShellDispatch2 IShellDispatch2_iface;
     LONG ref;
-    ITypeInfo *iTypeInfo;
+    ITypeInfo *typeinfo;
 } ShellDispatch;
 
 typedef struct {
@@ -59,9 +59,9 @@ typedef struct {
     VARIANT dir;
 } FolderItemImpl;
 
-static inline ShellDispatch *impl_from_IShellDispatch(IShellDispatch *iface)
+static inline ShellDispatch *impl_from_IShellDispatch2(IShellDispatch2 *iface)
 {
-    return CONTAINING_RECORD(iface, ShellDispatch, IShellDispatch_iface);
+    return CONTAINING_RECORD(iface, ShellDispatch, IShellDispatch2_iface);
 }
 
 static inline FolderImpl *impl_from_Folder(Folder3 *iface)
@@ -734,10 +734,10 @@ static HRESULT Folder_Constructor(VARIANT *dir, Folder **ppsdf)
     return ret;
 }
 
-static HRESULT WINAPI ShellDispatch_QueryInterface(IShellDispatch *iface,
+static HRESULT WINAPI ShellDispatch_QueryInterface(IShellDispatch2 *iface,
         REFIID riid, LPVOID *ppv)
 {
-    ShellDispatch *This = impl_from_IShellDispatch(iface);
+    ShellDispatch *This = impl_from_IShellDispatch2(iface);
 
     TRACE("(%p,%p,%p)\n", iface, riid, ppv);
 
@@ -745,7 +745,8 @@ static HRESULT WINAPI ShellDispatch_QueryInterface(IShellDispatch *iface,
 
     if (IsEqualIID(&IID_IUnknown, riid) ||
         IsEqualIID(&IID_IDispatch, riid) ||
-        IsEqualIID(&IID_IShellDispatch, riid))
+        IsEqualIID(&IID_IShellDispatch, riid) ||
+        IsEqualIID(&IID_IShellDispatch2, riid))
         *ppv = This;
     else
     {
@@ -753,13 +754,14 @@ static HRESULT WINAPI ShellDispatch_QueryInterface(IShellDispatch *iface,
         *ppv = NULL;
         return E_NOINTERFACE;
     }
-    IUnknown_AddRef((IUnknown*)*ppv);
+
+    IShellDispatch2_AddRef(iface);
     return S_OK;
 }
 
-static ULONG WINAPI ShellDispatch_AddRef(IShellDispatch *iface)
+static ULONG WINAPI ShellDispatch_AddRef(IShellDispatch2 *iface)
 {
-    ShellDispatch *This = impl_from_IShellDispatch(iface);
+    ShellDispatch *This = impl_from_IShellDispatch2(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p), new refcount=%i\n", iface, ref);
@@ -767,22 +769,22 @@ static ULONG WINAPI ShellDispatch_AddRef(IShellDispatch *iface)
     return ref;
 }
 
-static ULONG WINAPI ShellDispatch_Release(IShellDispatch *iface)
+static ULONG WINAPI ShellDispatch_Release(IShellDispatch2 *iface)
 {
-    ShellDispatch *This = impl_from_IShellDispatch(iface);
+    ShellDispatch *This = impl_from_IShellDispatch2(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p), new refcount=%i\n", iface, ref);
 
     if (!ref)
     {
-        ITypeInfo_Release(This->iTypeInfo);
+        ITypeInfo_Release(This->typeinfo);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
 }
 
-static HRESULT WINAPI ShellDispatch_GetTypeInfoCount(IShellDispatch *iface,
+static HRESULT WINAPI ShellDispatch_GetTypeInfoCount(IShellDispatch2 *iface,
         UINT *pctinfo)
 {
     TRACE("(%p,%p)\n", iface, pctinfo);
@@ -791,44 +793,44 @@ static HRESULT WINAPI ShellDispatch_GetTypeInfoCount(IShellDispatch *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI ShellDispatch_GetTypeInfo(IShellDispatch *iface,
+static HRESULT WINAPI ShellDispatch_GetTypeInfo(IShellDispatch2 *iface,
         UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
 {
-    ShellDispatch *This = impl_from_IShellDispatch(iface);
+    ShellDispatch *This = impl_from_IShellDispatch2(iface);
 
     TRACE("(%p,%u,%d,%p)\n", iface, iTInfo, lcid, ppTInfo);
 
-    ITypeInfo_AddRef(This->iTypeInfo);
-    *ppTInfo = This->iTypeInfo;
+    ITypeInfo_AddRef(This->typeinfo);
+    *ppTInfo = This->typeinfo;
     return S_OK;
 }
 
-static HRESULT WINAPI ShellDispatch_GetIDsOfNames(IShellDispatch *iface,
+static HRESULT WINAPI ShellDispatch_GetIDsOfNames(IShellDispatch2 *iface,
         REFIID riid, LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
 {
-    ShellDispatch *This = impl_from_IShellDispatch(iface);
+    ShellDispatch *This = impl_from_IShellDispatch2(iface);
 
     TRACE("(%p,%p,%p,%u,%d,%p)\n", iface, riid, rgszNames, cNames, lcid,
             rgDispId);
 
-    return ITypeInfo_GetIDsOfNames(This->iTypeInfo, rgszNames, cNames, rgDispId);
+    return ITypeInfo_GetIDsOfNames(This->typeinfo, rgszNames, cNames, rgDispId);
 }
 
-static HRESULT WINAPI ShellDispatch_Invoke(IShellDispatch *iface,
+static HRESULT WINAPI ShellDispatch_Invoke(IShellDispatch2 *iface,
         DISPID dispIdMember, REFIID riid, LCID lcid, WORD wFlags,
         DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo,
         UINT *puArgErr)
 {
-    ShellDispatch *This = impl_from_IShellDispatch(iface);
+    ShellDispatch *This = impl_from_IShellDispatch2(iface);
 
     TRACE("(%p,%d,%p,%d,%u,%p,%p,%p,%p)\n", iface, dispIdMember, riid, lcid,
             wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
-    return ITypeInfo_Invoke(This->iTypeInfo, This, dispIdMember, wFlags,
+    return ITypeInfo_Invoke(This->typeinfo, This, dispIdMember, wFlags,
             pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
-static HRESULT WINAPI ShellDispatch_get_Application(IShellDispatch *iface,
+static HRESULT WINAPI ShellDispatch_get_Application(IShellDispatch2 *iface,
         IDispatch **ppid)
 {
     FIXME("(%p,%p)\n", iface, ppid);
@@ -837,7 +839,7 @@ static HRESULT WINAPI ShellDispatch_get_Application(IShellDispatch *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ShellDispatch_get_Parent(IShellDispatch *iface,
+static HRESULT WINAPI ShellDispatch_get_Parent(IShellDispatch2 *iface,
         IDispatch **ppid)
 {
     FIXME("(%p,%p)\n", iface, ppid);
@@ -846,7 +848,7 @@ static HRESULT WINAPI ShellDispatch_get_Parent(IShellDispatch *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ShellDispatch_NameSpace(IShellDispatch *iface,
+static HRESULT WINAPI ShellDispatch_NameSpace(IShellDispatch2 *iface,
         VARIANT vDir, Folder **ppsdf)
 {
     TRACE("(%p,%p)\n", iface, ppsdf);
@@ -854,7 +856,7 @@ static HRESULT WINAPI ShellDispatch_NameSpace(IShellDispatch *iface,
     return Folder_Constructor(&vDir, ppsdf);
 }
 
-static HRESULT WINAPI ShellDispatch_BrowseForFolder(IShellDispatch *iface,
+static HRESULT WINAPI ShellDispatch_BrowseForFolder(IShellDispatch2 *iface,
         LONG Hwnd, BSTR Title, LONG Options, VARIANT RootFolder, Folder **ppsdf)
 {
     FIXME("(%p,%x,%s,%x,%p)\n", iface, Hwnd, debugstr_w(Title), Options, ppsdf);
@@ -863,7 +865,7 @@ static HRESULT WINAPI ShellDispatch_BrowseForFolder(IShellDispatch *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ShellDispatch_Windows(IShellDispatch *iface,
+static HRESULT WINAPI ShellDispatch_Windows(IShellDispatch2 *iface,
         IDispatch **ppid)
 {
     FIXME("(%p,%p)\n", iface, ppid);
@@ -872,126 +874,126 @@ static HRESULT WINAPI ShellDispatch_Windows(IShellDispatch *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ShellDispatch_Open(IShellDispatch *iface, VARIANT vDir)
+static HRESULT WINAPI ShellDispatch_Open(IShellDispatch2 *iface, VARIANT vDir)
 {
     FIXME("(%p)\n", iface);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ShellDispatch_Explore(IShellDispatch *iface, VARIANT vDir)
+static HRESULT WINAPI ShellDispatch_Explore(IShellDispatch2 *iface, VARIANT vDir)
 {
     FIXME("(%p)\n", iface);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ShellDispatch_MinimizeAll(IShellDispatch *iface)
+static HRESULT WINAPI ShellDispatch_MinimizeAll(IShellDispatch2 *iface)
 {
     FIXME("(%p)\n", iface);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ShellDispatch_UndoMinimizeALL(IShellDispatch *iface)
+static HRESULT WINAPI ShellDispatch_UndoMinimizeALL(IShellDispatch2 *iface)
 {
     FIXME("(%p)\n", iface);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ShellDispatch_FileRun(IShellDispatch *iface)
+static HRESULT WINAPI ShellDispatch_FileRun(IShellDispatch2 *iface)
 {
     FIXME("(%p)\n", iface);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ShellDispatch_CascadeWindows(IShellDispatch *iface)
+static HRESULT WINAPI ShellDispatch_CascadeWindows(IShellDispatch2 *iface)
 {
     FIXME("(%p)\n", iface);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ShellDispatch_TileVertically(IShellDispatch *iface)
+static HRESULT WINAPI ShellDispatch_TileVertically(IShellDispatch2 *iface)
 {
     FIXME("(%p)\n", iface);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ShellDispatch_TileHorizontally(IShellDispatch *iface)
+static HRESULT WINAPI ShellDispatch_TileHorizontally(IShellDispatch2 *iface)
 {
     FIXME("(%p)\n", iface);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ShellDispatch_ShutdownWindows(IShellDispatch *iface)
+static HRESULT WINAPI ShellDispatch_ShutdownWindows(IShellDispatch2 *iface)
 {
     FIXME("(%p)\n", iface);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ShellDispatch_Suspend(IShellDispatch *iface)
+static HRESULT WINAPI ShellDispatch_Suspend(IShellDispatch2 *iface)
 {
     FIXME("(%p)\n", iface);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ShellDispatch_EjectPC(IShellDispatch *iface)
+static HRESULT WINAPI ShellDispatch_EjectPC(IShellDispatch2 *iface)
 {
     FIXME("(%p)\n", iface);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ShellDispatch_SetTime(IShellDispatch *iface)
+static HRESULT WINAPI ShellDispatch_SetTime(IShellDispatch2 *iface)
 {
     FIXME("(%p)\n", iface);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ShellDispatch_TrayProperties(IShellDispatch *iface)
+static HRESULT WINAPI ShellDispatch_TrayProperties(IShellDispatch2 *iface)
 {
     FIXME("(%p)\n", iface);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ShellDispatch_Help(IShellDispatch *iface)
+static HRESULT WINAPI ShellDispatch_Help(IShellDispatch2 *iface)
 {
     FIXME("(%p)\n", iface);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ShellDispatch_FindFiles(IShellDispatch *iface)
+static HRESULT WINAPI ShellDispatch_FindFiles(IShellDispatch2 *iface)
 {
     FIXME("(%p)\n", iface);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ShellDispatch_FindComputer(IShellDispatch *iface)
+static HRESULT WINAPI ShellDispatch_FindComputer(IShellDispatch2 *iface)
 {
     FIXME("(%p)\n", iface);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ShellDispatch_RefreshMenu(IShellDispatch *iface)
+static HRESULT WINAPI ShellDispatch_RefreshMenu(IShellDispatch2 *iface)
 {
     FIXME("(%p)\n", iface);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ShellDispatch_ControlPanelItem(IShellDispatch *iface,
+static HRESULT WINAPI ShellDispatch_ControlPanelItem(IShellDispatch2 *iface,
         BSTR szDir)
 {
     FIXME("(%p,%s)\n", iface, debugstr_w(szDir));
@@ -999,7 +1001,62 @@ static HRESULT WINAPI ShellDispatch_ControlPanelItem(IShellDispatch *iface,
     return E_NOTIMPL;
 }
 
-static const IShellDispatchVtbl ShellDispatch_Vtbl = {
+static HRESULT WINAPI ShellDispatch_IsRestricted(IShellDispatch2 *iface, BSTR group, BSTR restriction, LONG *value)
+{
+    FIXME("(%s, %s, %p): stub\n", debugstr_w(group), debugstr_w(restriction), value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellDispatch_ShellExecute(IShellDispatch2 *iface, BSTR file, VARIANT args, VARIANT dir,
+        VARIANT op, VARIANT show)
+{
+    FIXME("(%s): stub\n", debugstr_w(file));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellDispatch_FindPrinter(IShellDispatch2 *iface, BSTR name, BSTR location, BSTR model)
+{
+    FIXME("(%s, %s, %s): stub\n", debugstr_w(name), debugstr_w(location), debugstr_w(model));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellDispatch_GetSystemInformation(IShellDispatch2 *iface, BSTR name, VARIANT *ret)
+{
+    FIXME("(%s, %p): stub\n", debugstr_w(name), ret);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellDispatch_ServiceStart(IShellDispatch2 *iface, BSTR service, VARIANT persistent, VARIANT *ret)
+{
+    FIXME("(%s, %p): stub\n", debugstr_w(service), ret);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellDispatch_ServiceStop(IShellDispatch2 *iface, BSTR service, VARIANT persistent, VARIANT *ret)
+{
+    FIXME("(%s, %p): stub\n", debugstr_w(service), ret);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellDispatch_IsServiceRunning(IShellDispatch2 *iface, BSTR service, VARIANT *running)
+{
+    FIXME("(%s, %p): stub\n", debugstr_w(service), running);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellDispatch_CanStartStopService(IShellDispatch2 *iface, BSTR service, VARIANT *ret)
+{
+    FIXME("(%s, %p): stub\n", debugstr_w(service), ret);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellDispatch_ShowBrowserBar(IShellDispatch2 *iface, BSTR clsid, VARIANT show, VARIANT *ret)
+{
+    FIXME("(%s, %p): stub\n", debugstr_w(clsid), ret);
+    return E_NOTIMPL;
+}
+
+static const IShellDispatch2Vtbl ShellDispatch2Vtbl = {
     ShellDispatch_QueryInterface,
     ShellDispatch_AddRef,
     ShellDispatch_Release,
@@ -1029,34 +1086,42 @@ static const IShellDispatchVtbl ShellDispatch_Vtbl = {
     ShellDispatch_FindFiles,
     ShellDispatch_FindComputer,
     ShellDispatch_RefreshMenu,
-    ShellDispatch_ControlPanelItem
+    ShellDispatch_ControlPanelItem,
+    ShellDispatch_IsRestricted,
+    ShellDispatch_ShellExecute,
+    ShellDispatch_FindPrinter,
+    ShellDispatch_GetSystemInformation,
+    ShellDispatch_ServiceStart,
+    ShellDispatch_ServiceStop,
+    ShellDispatch_IsServiceRunning,
+    ShellDispatch_CanStartStopService,
+    ShellDispatch_ShowBrowserBar
 };
 
-HRESULT WINAPI IShellDispatch_Constructor(IUnknown *pUnkOuter, REFIID riid,
-        LPVOID *ppv)
+HRESULT WINAPI IShellDispatch_Constructor(IUnknown *outer, REFIID riid, void **ppv)
 {
     ShellDispatch *This;
     HRESULT ret;
 
-    TRACE("(%p,%s)\n", pUnkOuter, debugstr_guid(riid));
+    TRACE("(%p, %s)\n", outer, debugstr_guid(riid));
 
     *ppv = NULL;
 
-    if (pUnkOuter) return CLASS_E_NOAGGREGATION;
+    if (outer) return CLASS_E_NOAGGREGATION;
 
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(ShellDispatch));
     if (!This) return E_OUTOFMEMORY;
-    This->IShellDispatch_iface.lpVtbl = &ShellDispatch_Vtbl;
+    This->IShellDispatch2_iface.lpVtbl = &ShellDispatch2Vtbl;
     This->ref = 1;
 
-    ret = load_type_info(&IID_IShellDispatch, &This->iTypeInfo);
+    ret = load_type_info(&IID_IShellDispatch2, &This->typeinfo);
     if (FAILED(ret))
     {
         HeapFree(GetProcessHeap(), 0, This);
         return ret;
     }
 
-    ret = ShellDispatch_QueryInterface(&This->IShellDispatch_iface, riid, ppv);
-    ShellDispatch_Release(&This->IShellDispatch_iface);
+    ret = IShellDispatch2_QueryInterface(&This->IShellDispatch2_iface, riid, ppv);
+    IShellDispatch2_Release(&This->IShellDispatch2_iface);
     return ret;
 }

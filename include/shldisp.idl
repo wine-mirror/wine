@@ -22,6 +22,10 @@ import "ocidl.idl";
 
 #include <shdispid.h>
 
+cpp_quote("#ifdef WINE_NO_UNICODE_MACROS")
+cpp_quote("#undef ShellExecute")
+cpp_quote("#endif")
+
 /*****************************************************************************
  * IEnumACString interface
  */
@@ -449,11 +453,32 @@ interface IShellDispatch : IDispatch
 }
 
 [
+    object,
+    uuid(a4c6892c-3ba9-11d2-9dea-00c04fb16162),
+    oleautomation,
+    hidden,
+    dual,
+]
+interface IShellDispatch2 : IShellDispatch
+{
+    HRESULT IsRestricted([in] BSTR group, [in] BSTR restriction, [out, retval] long *value);
+    HRESULT ShellExecute([in] BSTR file, [in, optional] VARIANT args, [in, optional] VARIANT dir,
+        [in, optional] VARIANT op, [in, optional] VARIANT show);
+    HRESULT FindPrinter([in, optional] BSTR name, [in, optional] BSTR location, [in, optional] BSTR model);
+    HRESULT GetSystemInformation([in] BSTR name, [out, retval] VARIANT *ret);
+    HRESULT ServiceStart([in] BSTR service, [in] VARIANT persistent, [out, retval] VARIANT *ret);
+    HRESULT ServiceStop([in] BSTR service, [in] VARIANT persistent, [out, retval] VARIANT *ret);
+    HRESULT IsServiceRunning([in] BSTR service, [out, retval] VARIANT *running);
+    HRESULT CanStartStopService([in] BSTR service, [out, retval] VARIANT *ret);
+    HRESULT ShowBrowserBar([in] BSTR clsid, [in] VARIANT show, [out, retval] VARIANT *ret);
+}
+
+[
     uuid(13709620-c279-11ce-a49e-444553540000)
 ]
 coclass Shell
 {
-    [default] interface IShellDispatch;
+    [default] interface IShellDispatch2;
 }
 
 [
