@@ -177,6 +177,7 @@ static HRESULT load_mono(CLRRuntimeInfo *This, loaded_mono **result)
         LOAD_MONO_FUNCTION(mono_jit_exec);
         LOAD_MONO_FUNCTION(mono_jit_init);
         LOAD_MONO_FUNCTION(mono_jit_set_trace_options);
+        LOAD_MONO_FUNCTION(mono_marshal_get_vtfixup_ftnptr);
         LOAD_MONO_FUNCTION(mono_object_get_domain);
         LOAD_MONO_FUNCTION(mono_object_new);
         LOAD_MONO_FUNCTION(mono_object_unbox);

@@ -19,6 +19,7 @@
 
 #define COBJMACROS
 
+#include <assert.h>
 #include <stdarg.h>
 
 #include "windef.h"
@@ -39,6 +40,7 @@
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
+#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL( mscoree );
 
@@ -50,6 +52,21 @@ struct DomainEntry
 {
     struct list entry;
     MonoDomain *domain;
+};
+
+static HANDLE dll_fixup_heap; /* using a separate heap so we can have execute permission */
+
+static struct list dll_fixups;
+
+struct dll_fixup
+{
+    struct list entry;
+    int done;
+    HMODULE dll;
+    void *thunk_code; /* pointer into dll_fixup_heap */
+    VTableFixup *fixup;
+    void *vtable;
+    void *tokens; /* pointer into process heap */
 };
 
 static HRESULT RuntimeHost_AddDomain(RuntimeHost *This, MonoDomain **result)
@@ -803,19 +820,207 @@ static void get_utf8_args(int *argc, char ***argv)
     HeapFree(GetProcessHeap(), 0, argvw);
 }
 
+#if __i386__
+
+# define CAN_FIXUP_VTABLE 1
+
+#include "pshpack1.h"
+
+struct vtable_fixup_thunk
+{
+    /* sub $0x4,%esp */
+    BYTE i1[3];
+    /* mov fixup,(%esp) */
+    BYTE i2[3];
+    struct dll_fixup *fixup;
+    /* mov function,%eax */
+    BYTE i3;
+    void (CDECL *function)(struct dll_fixup *);
+    /* call *%eax */
+    BYTE i4[2];
+    /* pop %eax */
+    BYTE i5;
+    /* jmp *vtable_entry */
+    BYTE i6[2];
+    void *vtable_entry;
+};
+
+static const struct vtable_fixup_thunk thunk_template = {
+    {0x83,0xec,0x04},
+    {0xc7,0x04,0x24},
+    NULL,
+    0xb8,
+    NULL,
+    {0xff,0xd0},
+    0x58,
+    {0xff,0x25},
+    NULL
+};
+
+#include "poppack.h"
+
+#else /* !defined(__i386__) */
+
+# define CAN_FIXUP_VTABLE 0
+
+struct vtable_fixup_thunk
+{
+    struct dll_fixup *fixup;
+    void (CDECL *function)(struct dll_fixup *fixup);
+    void *vtable_entry;
+};
+
+static const struct vtable_fixup_thunk thunk_template = {0};
+
+#endif
+
+static void CDECL ReallyFixupVTable(struct dll_fixup *fixup)
+{
+    HRESULT hr=S_OK;
+    WCHAR filename[MAX_PATH];
+    ICLRRuntimeInfo *info=NULL;
+    RuntimeHost *host;
+    char *filenameA;
+    MonoImage *image=NULL;
+    MonoAssembly *assembly=NULL;
+    MonoImageOpenStatus status=0;
+    MonoDomain *domain;
+
+    if (fixup->done) return;
+
+    /* It's possible we'll have two threads doing this at once. This is
+     * considered preferable to the potential deadlock if we use a mutex. */
+
+    GetModuleFileNameW(fixup->dll, filename, MAX_PATH);
+
+    TRACE("%p,%p,%s\n", fixup, fixup->dll, debugstr_w(filename));
+
+    filenameA = WtoA(filename);
+    if (!filenameA)
+        hr = E_OUTOFMEMORY;
+
+    if (SUCCEEDED(hr))
+        hr = get_runtime_info(filename, NULL, NULL, 0, 0, FALSE, &info);
+
+    if (SUCCEEDED(hr))
+        hr = ICLRRuntimeInfo_GetRuntimeHost(info, &host);
+
+    if (SUCCEEDED(hr))
+        hr = RuntimeHost_GetDefaultDomain(host, &domain);
+
+    if (SUCCEEDED(hr))
+    {
+        host->mono->mono_thread_attach(domain);
+
+        image = host->mono->mono_image_open_from_module_handle(fixup->dll,
+            filenameA, 1, &status);
+    }
+
+    if (image)
+        assembly = host->mono->mono_assembly_load_from(image, filenameA, &status);
+
+    if (assembly)
+    {
+        int i;
+
+        /* Mono needs an image that belongs to an assembly. */
+        image = host->mono->mono_assembly_get_image(assembly);
+
+        if (fixup->fixup->type & COR_VTABLE_32BIT)
+        {
+            DWORD *vtable = fixup->vtable;
+            DWORD *tokens = fixup->tokens;
+            for (i=0; i<fixup->fixup->count; i++)
+            {
+                TRACE("%x\n", tokens[i]);
+                vtable[i] = PtrToUint(host->mono->mono_marshal_get_vtfixup_ftnptr(
+                    image, tokens[i], fixup->fixup->type));
+            }
+        }
+
+        fixup->done = 1;
+    }
+
+    if (info != NULL)
+        ICLRRuntimeHost_Release(info);
+
+    HeapFree(GetProcessHeap(), 0, filenameA);
+
+    if (!fixup->done)
+    {
+        ERR("unable to fixup vtable, hr=%x, status=%d\n", hr, status);
+        /* If we returned now, we'd get an infinite loop. */
+        assert(0);
+    }
+}
+
+static void FixupVTableEntry(HMODULE hmodule, VTableFixup *vtable_fixup)
+{
+    /* We can't actually generate code for the functions without loading mono,
+     * and loading mono inside DllMain is a terrible idea. So we make thunks
+     * that call ReallyFixupVTable, which will load the runtime and fill in the
+     * vtable, then do an indirect jump using the (now filled in) vtable. Note
+     * that we have to keep the thunks around forever, as one of them may get
+     * called while we're filling in the table, and we can never be sure all
+     * threads are clear. */
+    struct dll_fixup *fixup;
+
+    fixup = HeapAlloc(GetProcessHeap(), 0, sizeof(*fixup));
+
+    fixup->dll = hmodule;
+    fixup->thunk_code = HeapAlloc(dll_fixup_heap, 0, sizeof(struct vtable_fixup_thunk) * vtable_fixup->count);
+    fixup->fixup = vtable_fixup;
+    fixup->vtable = (BYTE*)hmodule + vtable_fixup->rva;
+    fixup->done = 0;
+
+    if (vtable_fixup->type & COR_VTABLE_32BIT)
+    {
+        DWORD *vtable = fixup->vtable;
+        DWORD *tokens;
+        int i;
+        struct vtable_fixup_thunk *thunks = fixup->thunk_code;
+
+        if (sizeof(void*) > 4)
+            ERR("32-bit fixup in 64-bit mode; broken image?\n");
+
+        tokens = fixup->tokens = HeapAlloc(GetProcessHeap(), 0, sizeof(*tokens) * vtable_fixup->count);
+        memcpy(tokens, vtable, sizeof(*tokens) * vtable_fixup->count);
+        for (i=0; i<vtable_fixup->count; i++)
+        {
+            memcpy(&thunks[i], &thunk_template, sizeof(thunk_template));
+            thunks[i].fixup = fixup;
+            thunks[i].function = ReallyFixupVTable;
+            thunks[i].vtable_entry = &vtable[i];
+            vtable[i] = PtrToUint(&thunks[i]);
+        }
+    }
+    else
+    {
+        ERR("unsupported vtable fixup flags %x\n", vtable_fixup->type);
+        HeapFree(dll_fixup_heap, 0, fixup->thunk_code);
+        HeapFree(GetProcessHeap(), 0, fixup);
+        return;
+    }
+
+    list_add_tail(&dll_fixups, &fixup->entry);
+}
+
 static void FixupVTable(HMODULE hmodule)
 {
     ASSEMBLY *assembly;
     HRESULT hr;
     VTableFixup *vtable_fixups;
-    ULONG vtable_fixup_count;
+    ULONG vtable_fixup_count, i;
 
     hr = assembly_from_hmodule(&assembly, hmodule);
     if (SUCCEEDED(hr))
     {
         hr = assembly_get_vtable_fixups(assembly, &vtable_fixups, &vtable_fixup_count);
-        if (vtable_fixup_count)
-            FIXME("vtable fixups are not implemented; expect a crash\n");
+        if (CAN_FIXUP_VTABLE)
+            for (i=0; i<vtable_fixup_count; i++)
+                FixupVTableEntry(hmodule, &vtable_fixups[i]);
+        else if (vtable_fixup_count)
+            FIXME("cannot fixup vtable; expect a crash\n");
 
         assembly_release(assembly);
     }
@@ -909,9 +1114,30 @@ BOOL WINAPI _CorDllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         FixupVTable(hinstDLL);
         break;
     case DLL_PROCESS_DETACH:
+        /* FIXME: clean up the vtables */
         break;
     }
     return TRUE;
+}
+
+/* called from DLL_PROCESS_ATTACH */
+void runtimehost_init(void)
+{
+    dll_fixup_heap = HeapCreate(HEAP_CREATE_ENABLE_EXECUTE, 0, 0);
+    list_init(&dll_fixups);
+}
+
+/* called from DLL_PROCESS_DETACH */
+void runtimehost_uninit(void)
+{
+    struct dll_fixup *fixup, *fixup2;
+
+    HeapDestroy(dll_fixup_heap);
+    LIST_FOR_EACH_ENTRY_SAFE(fixup, fixup2, &dll_fixups, struct dll_fixup, entry)
+    {
+        HeapFree(GetProcessHeap(), 0, fixup->tokens);
+        HeapFree(GetProcessHeap(), 0, fixup);
+    }
 }
 
 HRESULT RuntimeHost_Construct(const CLRRuntimeInfo *runtime_version,

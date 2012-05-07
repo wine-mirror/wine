@@ -159,6 +159,7 @@ struct loaded_mono
     int (CDECL *mono_jit_exec)(MonoDomain *domain, MonoAssembly *assembly, int argc, char *argv[]);
     MonoDomain* (CDECL *mono_jit_init)(const char *file);
     int (CDECL *mono_jit_set_trace_options)(const char* options);
+    void* (CDECL *mono_marshal_get_vtfixup_ftnptr)(MonoImage *image, DWORD token, WORD type);
     MonoDomain* (CDECL *mono_object_get_domain)(MonoObject *obj);
     MonoObject* (CDECL *mono_object_new)(MonoDomain *domain, MonoClass *klass);
     void* (CDECL *mono_object_unbox)(MonoObject *obj);
@@ -199,5 +200,8 @@ HRESULT WINAPI CLRMetaHost_GetRuntime(ICLRMetaHost* iface, LPCWSTR pwzVersion, R
 extern HRESULT CorDebug_Create(ICLRRuntimeHost *runtimehost, IUnknown** ppUnk) DECLSPEC_HIDDEN;
 
 extern HRESULT create_monodata(REFIID riid, LPVOID *ppObj) DECLSPEC_HIDDEN;
+
+extern void runtimehost_init(void);
+extern void runtimehost_uninit(void);
 
 #endif   /* __MSCOREE_PRIVATE__ */
