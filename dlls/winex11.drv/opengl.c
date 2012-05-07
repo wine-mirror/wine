@@ -123,8 +123,7 @@ typedef struct wine_glcontext {
     HDC read_hdc;
     Drawable drawables[2];
     BOOL refresh_drawables;
-    struct wine_glcontext *next;
-    struct wine_glcontext *prev;
+    struct list entry;
 } Wine_GLContext;
 
 typedef struct wine_glpbuffer {
@@ -146,7 +145,7 @@ typedef struct wine_glpbuffer {
     int        texture_level;
 } Wine_GLPBuffer;
 
-static Wine_GLContext *context_list;
+static struct list context_list = LIST_INIT( context_list );
 static struct WineGLInfo WineGLInfo = { 0 };
 static int use_render_texture_emulation = 1;
 static int use_render_texture_ati = 0;
@@ -611,34 +610,16 @@ failed:
     return FALSE;
 }
 
-static inline Wine_GLContext *alloc_context(void)
-{
-    Wine_GLContext *ret;
-
-    if ((ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(Wine_GLContext))))
-    {
-        ret->next = context_list;
-        if (context_list) context_list->prev = ret;
-        context_list = ret;
-    }
-    return ret;
-}
-
 static inline void free_context(Wine_GLContext *context)
 {
-    if (context->next != NULL) context->next->prev = context->prev;
-    if (context->prev != NULL) context->prev->next = context->next;
-    else context_list = context->next;
-
-    if (context->vis) XFree(context->vis);
-    HeapFree(GetProcessHeap(), 0, context);
 }
 
 static inline BOOL is_valid_context( Wine_GLContext *ctx )
 {
     Wine_GLContext *ptr;
-    for (ptr = context_list; ptr; ptr = ptr->next) if (ptr == ctx) break;
-    return (ptr != NULL);
+    LIST_FOR_EACH_ENTRY( ptr, &context_list, struct wine_glcontext, entry )
+        if (ptr == ctx) return TRUE;
+    return FALSE;
 }
 
 static int describeContext(Wine_GLContext* ctx) {
@@ -1124,7 +1105,8 @@ int pixelformat_from_fbconfig_id(XID fbconfig_id)
 void mark_drawable_dirty(Drawable old, Drawable new)
 {
     Wine_GLContext *ctx;
-    for (ctx = context_list; ctx; ctx = ctx->next) {
+    LIST_FOR_EACH_ENTRY( ctx, &context_list, struct wine_glcontext, entry )
+    {
         if (old == ctx->drawables[0]) {
             ctx->drawables[0] = new;
             ctx->refresh_drawables = TRUE;
@@ -1719,15 +1701,17 @@ HGLRC X11DRV_wglCreateContext(PHYSDEV dev)
         return NULL;
     }
 
-    wine_tsx11_lock();
-    ret = alloc_context();
+    if (!(ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ret)))) return 0;
+
     ret->hdc = hdc;
     ret->fmt = fmt;
     ret->has_been_current = FALSE;
     ret->sharing = FALSE;
 
+    wine_tsx11_lock();
     ret->vis = pglXGetVisualFromFBConfig(gdi_display, fmt->fbconfig);
     ret->ctx = create_glxcontext(gdi_display, ret, NULL);
+    list_add_head( &context_list, &ret->entry );
     wine_tsx11_unlock();
 
     TRACE(" creating context %p (GL context creation delayed)\n", ret);
@@ -1766,14 +1750,13 @@ BOOL X11DRV_wglDeleteContext(HGLRC hglrc)
     if (ctx == NtCurrentTeb()->glContext)
         wglMakeCurrent(ctx->hdc, NULL);
 
-    if (ctx->ctx)
-    {
-        wine_tsx11_lock();
-        pglXDestroyContext(gdi_display, ctx->ctx);
-        wine_tsx11_unlock();
-    }
+    wine_tsx11_lock();
+    list_remove( &ctx->entry );
+    if (ctx->ctx) pglXDestroyContext( gdi_display, ctx->ctx );
+    if (ctx->vis) XFree( ctx->vis );
+    wine_tsx11_unlock();
 
-    free_context(ctx);
+    HeapFree( GetProcessHeap(), 0, ctx );
     return TRUE;
 }
 
@@ -2280,9 +2263,8 @@ HGLRC X11DRV_wglCreateContextAttribsARB(PHYSDEV dev, HGLRC hShareContext, const 
         return NULL;
     }
 
-    wine_tsx11_lock();
-    ret = alloc_context();
-    wine_tsx11_unlock();
+    if (!(ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ret)))) return 0;
+
     ret->hdc = dev->hdc;
     ret->fmt = fmt;
     ret->vis = NULL; /* glXCreateContextAttribsARB requires a fbconfig instead of a visual */
@@ -2336,11 +2318,12 @@ HGLRC X11DRV_wglCreateContextAttribsARB(PHYSDEV dev, HGLRC hShareContext, const 
     {
         /* In the future we should convert the GLX error to a win32 one here if needed */
         ERR("Context creation failed\n");
-        free_context(ret);
+        HeapFree( GetProcessHeap(), 0, ret );
         wine_tsx11_unlock();
         return NULL;
     }
 
+    list_add_head( &context_list, &ret->entry );
     wine_tsx11_unlock();
     TRACE(" creating context %p\n", ret);
     return (HGLRC) ret;
