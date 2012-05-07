@@ -30,6 +30,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
+#include "winsvc.h"
 #include "shlwapi.h"
 #include "shlobj.h"
 #include "shldisp.h"
@@ -1038,10 +1039,48 @@ static HRESULT WINAPI ShellDispatch_ServiceStop(IShellDispatch2 *iface, BSTR ser
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ShellDispatch_IsServiceRunning(IShellDispatch2 *iface, BSTR service, VARIANT *running)
+static HRESULT WINAPI ShellDispatch_IsServiceRunning(IShellDispatch2 *iface, BSTR name, VARIANT *running)
 {
-    FIXME("(%s, %p): stub\n", debugstr_w(service), running);
-    return E_NOTIMPL;
+    SERVICE_STATUS_PROCESS status;
+    SC_HANDLE scm, service;
+    DWORD dummy;
+
+    TRACE("(%s, %p)\n", debugstr_w(name), running);
+
+    V_VT(running) = VT_BOOL;
+    V_BOOL(running) = VARIANT_FALSE;
+
+    scm = OpenSCManagerW(NULL, NULL, SC_MANAGER_CONNECT);
+    if (!scm)
+    {
+        ERR("failed to connect to service manager\n");
+        return S_OK;
+    }
+
+    service = OpenServiceW(scm, name, SERVICE_QUERY_STATUS);
+    if (!service)
+    {
+        ERR("Failed to open service %s (%u)\n", debugstr_w(name), GetLastError());
+        CloseServiceHandle(service);
+        return S_OK;
+    }
+
+    if (!QueryServiceStatusEx(service, SC_STATUS_PROCESS_INFO, (BYTE *)&status,
+             sizeof(SERVICE_STATUS_PROCESS), &dummy))
+    {
+        TRACE("failed to query service status (%u)\n", GetLastError());
+        CloseServiceHandle(service);
+        CloseServiceHandle(scm);
+        return S_OK;
+    }
+
+    if (status.dwCurrentState == SERVICE_RUNNING)
+       V_BOOL(running) = VARIANT_TRUE;
+
+    CloseServiceHandle(service);
+    CloseServiceHandle(scm);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ShellDispatch_CanStartStopService(IShellDispatch2 *iface, BSTR service, VARIANT *ret)
