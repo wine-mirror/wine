@@ -353,13 +353,14 @@ static INT X11DRV_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_d
                     physDev->current_pf = pixelformat_from_fbconfig_id( data->fbconfig_id );
                     physDev->gl_drawable = data->gl_drawable;
                     physDev->pixmap = data->pixmap;
-                    physDev->gl_copy = data->gl_copy;
+                    physDev->gl_type = data->gl_type;
                     wine_tsx11_lock();
                     XSetSubwindowMode( gdi_display, physDev->gc, data->mode );
                     wine_tsx11_unlock();
-                    TRACE( "SET_DRAWABLE hdc %p drawable %lx gl_drawable %lx pf %u dc_rect %s drawable_rect %s\n",
+                    TRACE( "SET_DRAWABLE hdc %p drawable %lx gl_drawable %lx pf %u gl %u dc_rect %s drawable_rect %s\n",
                            dev->hdc, physDev->drawable, physDev->gl_drawable, physDev->current_pf,
-                           wine_dbgstr_rect(&physDev->dc_rect), wine_dbgstr_rect(&physDev->drawable_rect) );
+                           physDev->gl_type, wine_dbgstr_rect(&physDev->dc_rect),
+                           wine_dbgstr_rect(&physDev->drawable_rect) );
                     return TRUE;
                 }
                 break;

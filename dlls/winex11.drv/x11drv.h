@@ -115,6 +115,16 @@ typedef struct
     BOOL         trueColor;
 } X_PHYSBITMAP;
 
+enum dc_gl_type
+{
+    DC_GL_NONE,       /* no GL support (pixel format not set yet) */
+    DC_GL_WINDOW,     /* normal top-level window */
+    DC_GL_CHILD_WIN,  /* child window using XComposite */
+    DC_GL_PIXMAP_WIN, /* child window using intermediate pixmap */
+    DC_GL_BITMAP,     /* memory DC with a standard bitmap */
+    DC_GL_PBUFFER     /* pseudo memory DC using a PBuffer */
+};
+
   /* X physical device */
 typedef struct
 {
@@ -134,7 +144,7 @@ typedef struct
     int           current_pf;
     Drawable      gl_drawable;
     Pixmap        pixmap;      /* Pixmap for a GLXPixmap gl_drawable */
-    int           gl_copy;
+    enum dc_gl_type gl_type;  /* type of GL device context */
 } X11DRV_PDEVICE;
 
 static inline X11DRV_PDEVICE *get_x11drv_dev( PHYSDEV dev )
@@ -345,7 +355,7 @@ struct x11drv_escape_set_drawable
     XID                      fbconfig_id;  /* fbconfig id used by the GL drawable */
     Drawable                 gl_drawable;  /* GL drawable */
     Pixmap                   pixmap;       /* Pixmap for a GLXPixmap gl_drawable */
-    int                      gl_copy;      /* whether the GL contents need explicit copying */
+    enum dc_gl_type          gl_type;      /* type of GL device context */
 };
 
 /**************************************************************************

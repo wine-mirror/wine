@@ -1624,6 +1624,7 @@ static BOOL internal_SetPixelFormat(X11DRV_PDEVICE *physDev,
             return FALSE;
         }
         physDev->current_pf = iPixelFormat;
+        physDev->gl_type = DC_GL_BITMAP;
     }
     else {
         FIXME("called on a non-window, non-bitmap object?\n");
@@ -1839,7 +1840,6 @@ BOOL X11DRV_wglMakeCurrent(PHYSDEV dev, HGLRC hglrc)
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
     BOOL ret;
     HDC hdc = dev->hdc;
-    DWORD type = GetObjectType(hdc);
     Wine_GLContext *ctx = (Wine_GLContext *) hglrc;
 
     TRACE("(%p,%p)\n", hdc, hglrc);
@@ -1894,7 +1894,7 @@ BOOL X11DRV_wglMakeCurrent(PHYSDEV dev, HGLRC hglrc)
             ctx->drawables[1] = physDev->gl_drawable;
             ctx->refresh_drawables = FALSE;
 
-            if (type == OBJ_MEMDC) pglDrawBuffer(GL_FRONT_LEFT);
+            if (physDev->gl_type == DC_GL_BITMAP) pglDrawBuffer(GL_FRONT_LEFT);
         }
         else
             SetLastError(ERROR_INVALID_HANDLE);
@@ -2200,19 +2200,19 @@ static void WINAPI X11DRV_wglGetIntegerv(GLenum pname, GLint* params)
 
 void flush_gl_drawable(X11DRV_PDEVICE *physDev)
 {
-    int w, h;
     RECT rect;
+    int w = physDev->dc_rect.right - physDev->dc_rect.left;
+    int h = physDev->dc_rect.bottom - physDev->dc_rect.top;
+    Drawable src = physDev->gl_drawable;
 
-    if (!physDev->gl_copy || !physDev->gl_drawable)
-        return;
+    if (w <= 0 || h <= 0) return;
 
-    w = physDev->dc_rect.right - physDev->dc_rect.left;
-    h = physDev->dc_rect.bottom - physDev->dc_rect.top;
-
-    if(w > 0 && h > 0) {
-        Drawable src = physDev->pixmap;
-        if(!src) src = physDev->gl_drawable;
-
+    switch (physDev->gl_type)
+    {
+    case DC_GL_PIXMAP_WIN:
+        src = physDev->pixmap;
+        /* fall through */
+    case DC_GL_CHILD_WIN:
         /* The GL drawable may be lagged behind if we don't flush first, so
          * flush the display make sure we copy up-to-date data */
         wine_tsx11_lock();
@@ -2223,6 +2223,8 @@ void flush_gl_drawable(X11DRV_PDEVICE *physDev)
         wine_tsx11_unlock();
         SetRect( &rect, 0, 0, w, h );
         add_device_bounds( physDev, &rect );
+    default:
+        break;
     }
 }
 
@@ -2622,6 +2624,7 @@ HDC X11DRV_wglGetPbufferDCARB(PHYSDEV dev, HPBUFFERARB hPbuffer)
     physDev->current_pf = object->fmt->iPixelFormat;
     physDev->drawable = object->drawable;
     physDev->gl_drawable = object->drawable;
+    physDev->gl_type = DC_GL_PBUFFER;
     SetRect( &physDev->drawable_rect, 0, 0, object->width, object->height );
     physDev->dc_rect = physDev->drawable_rect;
 
@@ -3756,7 +3759,9 @@ BOOL X11DRV_SwapBuffers(PHYSDEV dev)
 
   wine_tsx11_lock();
   sync_context(ctx);
-  if(physDev->pixmap) {
+  switch (physDev->gl_type)
+  {
+  case DC_GL_PIXMAP_WIN:
       if(pglXCopySubBufferMESA) {
           int w = physDev->dc_rect.right - physDev->dc_rect.left;
           int h = physDev->dc_rect.bottom - physDev->dc_rect.top;
@@ -3767,12 +3772,13 @@ BOOL X11DRV_SwapBuffers(PHYSDEV dev)
           pglFlush();
           if(w > 0 && h > 0)
               pglXCopySubBufferMESA(gdi_display, physDev->gl_drawable, 0, 0, w, h);
+          break;
       }
-      else
-          pglXSwapBuffers(gdi_display, physDev->gl_drawable);
-  }
-  else
+      /* fall through */
+  default:
       pglXSwapBuffers(gdi_display, physDev->gl_drawable);
+      break;
+  }
 
   flush_gl_drawable(physDev);
   wine_tsx11_unlock();

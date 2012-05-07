@@ -2267,7 +2267,7 @@ void CDECL X11DRV_GetDC( HDC hdc, HWND hwnd, HWND top, const RECT *win_rect,
     escape.fbconfig_id = 0;
     escape.gl_drawable = 0;
     escape.pixmap      = 0;
-    escape.gl_copy     = FALSE;
+    escape.gl_type     = DC_GL_NONE;
 
     escape.dc_rect.left         = win_rect->left - top_rect->left;
     escape.dc_rect.top          = win_rect->top - top_rect->top;
@@ -2289,6 +2289,7 @@ void CDECL X11DRV_GetDC( HDC hdc, HWND hwnd, HWND top, const RECT *win_rect,
         else
             escape.drawable = escape.gl_drawable;
 
+        if (escape.gl_drawable) escape.gl_type = DC_GL_WINDOW;
         /* special case: when repainting the root window, clip out top-level windows */
         if (data && data->whole_window == root_window) escape.mode = ClipByChildren;
     }
@@ -2310,7 +2311,7 @@ void CDECL X11DRV_GetDC( HDC hdc, HWND hwnd, HWND top, const RECT *win_rect,
         escape.fbconfig_id = data ? data->fbconfig_id : (XID)GetPropA( hwnd, fbconfig_id_prop );
         escape.gl_drawable = data ? data->gl_drawable : (Drawable)GetPropA( hwnd, gl_drawable_prop );
         escape.pixmap      = data ? data->pixmap : (Pixmap)GetPropA( hwnd, pixmap_prop );
-        escape.gl_copy     = (escape.gl_drawable != 0);
+        if (escape.gl_drawable) escape.gl_type = escape.pixmap ? DC_GL_PIXMAP_WIN : DC_GL_CHILD_WIN;
         if (flags & DCX_CLIPCHILDREN) escape.mode = ClipByChildren;
     }
 
@@ -2335,6 +2336,7 @@ void CDECL X11DRV_ReleaseDC( HWND hwnd, HDC hdc )
     escape.fbconfig_id = 0;
     escape.gl_drawable = 0;
     escape.pixmap = 0;
+    escape.gl_type = DC_GL_NONE;
     ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
 }
 
