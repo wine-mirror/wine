@@ -62,7 +62,7 @@ static HRESULT DEVENUM_CreateSpecialCategories(void);
 static HRESULT WINAPI DEVENUM_ICreateDevEnum_QueryInterface(ICreateDevEnum *iface, REFIID riid,
         void **ppv)
 {
-    TRACE("\n\tIID:\t%s\n",debugstr_guid(riid));
+    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppv);
 
     if (!ppv)
         return E_POINTER;
@@ -463,8 +463,7 @@ static HRESULT WINAPI DEVENUM_ICreateDevEnum_CreateClassEnumerator(
     HKEY hbasekey;
     HRESULT hr;
 
-    TRACE("(%p)->(%s, %p, %x)\n\tDeviceClass:\t%s\n", iface, debugstr_guid(clsidDeviceClass),
-          ppEnumMoniker, dwFlags, debugstr_guid(clsidDeviceClass));
+    TRACE("(%p)->(%s, %p, %x)\n", iface, debugstr_guid(clsidDeviceClass), ppEnumMoniker, dwFlags);
 
     if (!ppEnumMoniker)
         return E_POINTER;

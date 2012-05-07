@@ -31,7 +31,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(devenum);
 static HRESULT WINAPI DEVENUM_IClassFactory_QueryInterface(IClassFactory *iface, REFIID riid,
     void **ppvObj)
 {
-    TRACE("\n\tIID:\t%s\n",debugstr_guid(riid));
+    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppvObj);
 
     if (ppvObj == NULL) return E_POINTER;
 
@@ -81,7 +81,7 @@ static ULONG WINAPI DEVENUM_IClassFactory_Release(IClassFactory *iface)
 static HRESULT WINAPI DEVENUM_IClassFactory_CreateInstance(IClassFactory *iface,
         IUnknown *pUnkOuter, REFIID riid, void **ppvObj)
 {
-    TRACE("\n\tIID:\t%s\n",debugstr_guid(riid));
+    TRACE("(%p)->(%p, %s, %p)\n", iface, pUnkOuter, debugstr_guid(riid), ppvObj);
 
     if (ppvObj == NULL) return E_POINTER;
 
