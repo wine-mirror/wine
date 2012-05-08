@@ -100,7 +100,6 @@ HBITMAP X11DRV_SelectBitmap( PHYSDEV dev, HBITMAP hbitmap )
 
     physDev->bitmap = physBitmap;
     physDev->drawable = physBitmap->pixmap;
-    physDev->gl_drawable = physBitmap->glxpixmap;
     physDev->color_shifts = physBitmap->trueColor ? &physBitmap->color_shifts : NULL;
     SetRect( &physDev->drawable_rect, 0, 0, bitmap.bmWidth, bitmap.bmHeight );
     physDev->dc_rect = physDev->drawable_rect;

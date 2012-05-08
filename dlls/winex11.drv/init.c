@@ -354,16 +354,11 @@ static INT X11DRV_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_d
                     physDev->dc_rect = data->dc_rect;
                     physDev->drawable = data->drawable;
                     physDev->drawable_rect = data->drawable_rect;
-                    physDev->current_pf = pixelformat_from_fbconfig_id( data->fbconfig_id );
-                    physDev->gl_drawable = data->gl_drawable;
-                    physDev->pixmap = data->pixmap;
-                    physDev->gl_type = data->gl_type;
                     wine_tsx11_lock();
                     XSetSubwindowMode( gdi_display, physDev->gc, data->mode );
                     wine_tsx11_unlock();
-                    TRACE( "SET_DRAWABLE hdc %p drawable %lx gl_drawable %lx pf %u gl %u dc_rect %s drawable_rect %s\n",
-                           dev->hdc, physDev->drawable, physDev->gl_drawable, physDev->current_pf,
-                           physDev->gl_type, wine_dbgstr_rect(&physDev->dc_rect),
+                    TRACE( "SET_DRAWABLE hdc %p drawable %lx dc_rect %s drawable_rect %s\n",
+                           dev->hdc, physDev->drawable, wine_dbgstr_rect(&physDev->dc_rect),
                            wine_dbgstr_rect(&physDev->drawable_rect) );
                     return TRUE;
                 }
@@ -428,9 +423,8 @@ static INT X11DRV_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_d
                     return TRUE;
                 }
                 break;
-            case X11DRV_FLUSH_GL_DRAWABLE:
-                flush_gl_drawable(physDev);
-                return TRUE;
+            default:
+                break;
             }
         }
         break;

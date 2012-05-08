@@ -141,10 +141,6 @@ typedef struct
     int           depth;       /* bit depth of the DC */
     ColorShifts  *color_shifts; /* color shifts of the DC */
     int           exposures;   /* count of graphics exposures operations */
-    int           current_pf;
-    Drawable      gl_drawable;
-    Pixmap        pixmap;      /* Pixmap for a GLXPixmap gl_drawable */
-    enum dc_gl_type gl_type;  /* type of GL device context */
 } X11DRV_PDEVICE;
 
 static inline X11DRV_PDEVICE *get_x11drv_dev( PHYSDEV dev )
@@ -602,11 +598,9 @@ extern struct x11drv_win_data *X11DRV_create_win_data( HWND hwnd ) DECLSPEC_HIDD
 extern Window X11DRV_get_whole_window( HWND hwnd ) DECLSPEC_HIDDEN;
 extern XIC X11DRV_get_ic( HWND hwnd ) DECLSPEC_HIDDEN;
 
-extern int pixelformat_from_fbconfig_id( XID fbconfig_id ) DECLSPEC_HIDDEN;
 extern XVisualInfo *visual_from_fbconfig_id( XID fbconfig_id ) DECLSPEC_HIDDEN;
 extern void mark_drawable_dirty( Drawable old, Drawable new ) DECLSPEC_HIDDEN;
 extern Drawable create_glxpixmap( Display *display, XVisualInfo *vis, Pixmap parent ) DECLSPEC_HIDDEN;
-extern void flush_gl_drawable( X11DRV_PDEVICE *physDev ) DECLSPEC_HIDDEN;
 
 extern void wait_for_withdrawn_state( Display *display, struct x11drv_win_data *data, BOOL set ) DECLSPEC_HIDDEN;
 extern Window init_clip_window(void) DECLSPEC_HIDDEN;
