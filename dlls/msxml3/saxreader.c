@@ -319,7 +319,13 @@ static inline int has_content_handler(const saxlocator *locator)
            (!locator->vbInterface && locator->saxreader->contentHandler);
 }
 
-static inline BOOL has_error_handler(const saxlocator *locator)
+static inline int has_lexical_handler(const saxlocator *locator)
+{
+    return  (locator->vbInterface && locator->saxreader->vblexicalHandler) ||
+           (!locator->vbInterface && locator->saxreader->lexicalHandler);
+}
+
+static inline int has_error_handler(const saxlocator *locator)
 {
     return (locator->vbInterface && locator->saxreader->vberrorHandler) ||
           (!locator->vbInterface && locator->saxreader->errorHandler);
@@ -1587,8 +1593,7 @@ static void libxmlComment(void *ctx, const xmlChar *value)
     for(; p>=This->pParserCtxt->input->base && *p!='\n' && *p!='\r'; p--)
         This->column++;
 
-    if(!This->vbInterface && !This->saxreader->lexicalHandler) return;
-    if(This->vbInterface && !This->saxreader->vblexicalHandler) return;
+    if (!has_lexical_handler(This)) return;
 
     bValue = pooled_bstr_from_xmlChar(&This->saxreader->pool, value);
 
@@ -1678,10 +1683,13 @@ static void libxmlCDataBlock(void *ctx, const xmlChar *value, int len)
     for(; beg>=This->pParserCtxt->input->base && *beg!='\n' && *beg!='\r'; beg--)
         This->column++;
 
-    if(This->vbInterface && This->saxreader->vblexicalHandler)
-        hr = IVBSAXLexicalHandler_startCDATA(This->saxreader->vblexicalHandler);
-    if(!This->vbInterface && This->saxreader->lexicalHandler)
-        hr = ISAXLexicalHandler_startCDATA(This->saxreader->lexicalHandler);
+    if (has_lexical_handler(This))
+    {
+       if (This->vbInterface)
+           hr = IVBSAXLexicalHandler_startCDATA(This->saxreader->vblexicalHandler);
+       else
+           hr = ISAXLexicalHandler_startCDATA(This->saxreader->lexicalHandler);
+    }
 
     if(FAILED(hr))
     {
@@ -1731,10 +1739,13 @@ static void libxmlCDataBlock(void *ctx, const xmlChar *value, int len)
         cur = end;
     }
 
-    if(This->vbInterface && This->saxreader->vblexicalHandler)
-        hr = IVBSAXLexicalHandler_endCDATA(This->saxreader->vblexicalHandler);
-    if(!This->vbInterface && This->saxreader->lexicalHandler)
-        hr = ISAXLexicalHandler_endCDATA(This->saxreader->lexicalHandler);
+    if (has_lexical_handler(This))
+    {
+        if (This->vbInterface)
+            hr = IVBSAXLexicalHandler_endCDATA(This->saxreader->vblexicalHandler);
+        else
+            hr = ISAXLexicalHandler_endCDATA(This->saxreader->lexicalHandler);
+    }
 
     if(FAILED(hr))
         format_error_message_from_id(This, hr);
