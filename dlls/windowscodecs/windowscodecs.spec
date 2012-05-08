@@ -41,8 +41,8 @@
 @ stub IWICBitmapFrameEncode_SetSize_Proxy
 @ stub IWICBitmapFrameEncode_SetThumbnail_Proxy
 @ stub IWICBitmapFrameEncode_WriteSource_Proxy
-@ stub IWICBitmapLock_GetDataPointer_STA_Proxy
-@ stub IWICBitmapLock_GetStride_Proxy
+@ stdcall IWICBitmapLock_GetDataPointer_STA_Proxy(ptr ptr ptr) IWICBitmapLock_GetDataPointer_Proxy_W
+@ stdcall IWICBitmapLock_GetStride_Proxy(ptr ptr) IWICBitmapLock_GetStride_Proxy_W
 @ stub IWICBitmapScaler_Initialize_Proxy
 @ stdcall IWICBitmapSource_CopyPalette_Proxy(ptr ptr) IWICBitmapSource_CopyPalette_Proxy_W
 @ stdcall IWICBitmapSource_CopyPixels_Proxy(ptr ptr long long ptr) IWICBitmapSource_CopyPixels_Proxy_W

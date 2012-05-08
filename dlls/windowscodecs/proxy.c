@@ -36,6 +36,18 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
+HRESULT WINAPI IWICBitmapLock_GetDataPointer_Proxy_W(IWICBitmapLock *iface,
+    UINT *pcbBufferSize, BYTE **ppbData)
+{
+    return IWICBitmapLock_GetDataPointer(iface, pcbBufferSize, ppbData);
+}
+
+HRESULT WINAPI IWICBitmapLock_GetStride_Proxy_W(IWICBitmapLock *iface,
+    UINT *pcbStride)
+{
+    return IWICBitmapLock_GetStride(iface, pcbStride);
+}
+
 HRESULT WINAPI IWICBitmapSource_GetSize_Proxy_W(IWICBitmapSource *iface,
     UINT *puiWidth, UINT *puiHeight)
 {
