@@ -209,6 +209,13 @@ BOOL record_sampler(struct bwriter_shader *shader, DWORD samptype, DWORD mod, DW
 
 #define MESSAGEBUFFER_INITIAL_SIZE 256
 
+enum parse_status
+{
+    PARSE_SUCCESS = 0,
+    PARSE_WARN = 1,
+    PARSE_ERR = 2
+};
+
 struct asm_parser {
     /* The function table of the parser implementation */
     const struct asmparser_backend *funcs;
@@ -217,11 +224,7 @@ struct asm_parser {
     struct bwriter_shader *shader;
     unsigned int m3x3pad_count;
 
-    enum parse_status {
-        PARSE_SUCCESS = 0,
-        PARSE_WARN = 1,
-        PARSE_ERR = 2
-    } status;
+    enum parse_status status;
     char *messages;
     unsigned int messagesize;
     unsigned int messagecapacity;
@@ -253,7 +256,13 @@ struct bwriter_shader *parse_asm_shader(char **messages) DECLSPEC_HIDDEN;
 #endif
 
 void asmparser_message(struct asm_parser *ctx, const char *fmt, ...) PRINTF_ATTR(2,3) DECLSPEC_HIDDEN;
-void set_parse_status(struct asm_parser *ctx, enum parse_status status) DECLSPEC_HIDDEN;
+static inline void set_parse_status(enum parse_status *current, enum parse_status update)
+{
+    if (update == PARSE_ERR)
+        *current = PARSE_ERR;
+    else if (update == PARSE_WARN && *current == PARSE_SUCCESS)
+        *current = PARSE_WARN;
+}
 
 /* A reasonable value as initial size */
 #define BYTECODEBUFFER_INITIAL_SIZE 32

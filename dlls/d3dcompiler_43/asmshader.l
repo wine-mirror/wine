@@ -480,7 +480,7 @@ false                   {
 
 {ANY}                   {
                             asmparser_message(&asm_ctx, "Line %u: Unexpected input %s\n", asm_ctx.line_no, yytext);
-                            set_parse_status(&asm_ctx, PARSE_ERR);
+                            set_parse_status(&asm_ctx.status, PARSE_ERR);
                         }
 
 %%

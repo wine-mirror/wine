@@ -1,4 +1,4 @@
-/*
+ /*
  * Direct3D shader assembler
  *
  * Copyright 2008 Stefan Dösinger
@@ -73,7 +73,7 @@ void asmparser_message(struct asm_parser *ctx, const char *fmt, ...) {
 
 static void asmshader_error(char const *s) {
     asmparser_message(&asm_ctx, "Line %u: Error \"%s\" from bison\n", asm_ctx.line_no, s);
-    set_parse_status(&asm_ctx, PARSE_ERR);
+    set_parse_status(&asm_ctx.status, PARSE_ERR);
 }
 
 static void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
@@ -623,13 +623,13 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                                 if($3.shift != 0) {
                                     asmparser_message(&asm_ctx, "Line %u: Shift modifier not allowed here\n",
                                                       asm_ctx.line_no);
-                                    set_parse_status(&asm_ctx, PARSE_ERR);
+                                    set_parse_status(&asm_ctx.status,  PARSE_ERR);
                                 }
                                 if(asm_ctx.shader->version == BWRITERPS_VERSION(2, 0) ||
                                     asm_ctx.shader->version == BWRITERPS_VERSION(2, 1)) {
                                     asmparser_message(&asm_ctx, "Line %u: Declaration not supported in PS 2\n",
                                                       asm_ctx.line_no);
-                                    set_parse_status(&asm_ctx, PARSE_ERR);
+                                    set_parse_status(&asm_ctx.status,  PARSE_ERR);
                                 }
                                 ZeroMemory(&reg, sizeof(reg));
                                 reg.type = $4.type;
@@ -646,13 +646,13 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                                 if($3.shift != 0) {
                                     asmparser_message(&asm_ctx, "Line %u: Shift modifier not allowed here\n",
                                                       asm_ctx.line_no);
-                                    set_parse_status(&asm_ctx, PARSE_ERR);
+                                    set_parse_status(&asm_ctx.status,  PARSE_ERR);
                                 }
                                 if(asm_ctx.shader->version == BWRITERPS_VERSION(2, 0) ||
                                     asm_ctx.shader->version == BWRITERPS_VERSION(2, 1)) {
                                     asmparser_message(&asm_ctx, "Line %u: Declaration not supported in PS 2\n",
                                                       asm_ctx.line_no);
-                                    set_parse_status(&asm_ctx, PARSE_ERR);
+                                    set_parse_status(&asm_ctx.status,  PARSE_ERR);
                                 }
                                 ZeroMemory(&reg, sizeof(reg));
                                 reg.type = $4.type;
@@ -669,12 +669,12 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                                 if($2.shift != 0) {
                                     asmparser_message(&asm_ctx, "Line %u: Shift modifier not allowed here\n",
                                                       asm_ctx.line_no);
-                                    set_parse_status(&asm_ctx, PARSE_ERR);
+                                    set_parse_status(&asm_ctx.status,  PARSE_ERR);
                                 }
                                 if(asm_ctx.shader->type != ST_PIXEL) {
                                     asmparser_message(&asm_ctx, "Line %u: Declaration needs a semantic\n",
                                                       asm_ctx.line_no);
-                                    set_parse_status(&asm_ctx, PARSE_ERR);
+                                    set_parse_status(&asm_ctx.status,  PARSE_ERR);
                                 }
                                 ZeroMemory(&reg, sizeof(reg));
                                 reg.type = $3.type;
@@ -691,12 +691,12 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                                 if($2.shift != 0) {
                                     asmparser_message(&asm_ctx, "Line %u: Shift modifier not allowed here\n",
                                                       asm_ctx.line_no);
-                                    set_parse_status(&asm_ctx, PARSE_ERR);
+                                    set_parse_status(&asm_ctx.status,  PARSE_ERR);
                                 }
                                 if(asm_ctx.shader->type != ST_PIXEL) {
                                     asmparser_message(&asm_ctx, "Line %u: Declaration needs a semantic\n",
                                                       asm_ctx.line_no);
-                                    set_parse_status(&asm_ctx, PARSE_ERR);
+                                    set_parse_status(&asm_ctx.status,  PARSE_ERR);
                                 }
                                 ZeroMemory(&reg, sizeof(reg));
                                 reg.type = $3.type;
@@ -712,7 +712,7 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                                 if($3.shift != 0) {
                                     asmparser_message(&asm_ctx, "Line %u: Shift modifier not allowed here\n",
                                                       asm_ctx.line_no);
-                                    set_parse_status(&asm_ctx, PARSE_ERR);
+                                    set_parse_status(&asm_ctx.status,  PARSE_ERR);
                                 }
                                 asm_ctx.funcs->dcl_sampler(&asm_ctx, $2, $3.mod, $4, asm_ctx.line_no);
                             }
@@ -722,12 +722,12 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                                 if($2.shift != 0) {
                                     asmparser_message(&asm_ctx, "Line %u: Shift modifier not allowed here\n",
                                                       asm_ctx.line_no);
-                                    set_parse_status(&asm_ctx, PARSE_ERR);
+                                    set_parse_status(&asm_ctx.status,  PARSE_ERR);
                                 }
                                 if(asm_ctx.shader->type != ST_PIXEL) {
                                     asmparser_message(&asm_ctx, "Line %u: Declaration needs a sampler type\n",
                                                       asm_ctx.line_no);
-                                    set_parse_status(&asm_ctx, PARSE_ERR);
+                                    set_parse_status(&asm_ctx.status,  PARSE_ERR);
                                 }
                                 asm_ctx.funcs->dcl_sampler(&asm_ctx, BWRITERSTT_UNKNOWN, $2.mod, $3, asm_ctx.line_no);
                             }
@@ -736,14 +736,14 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                                 TRACE("Error rule: sampler decl of input reg\n");
                                 asmparser_message(&asm_ctx, "Line %u: Sampler declarations of input regs is not valid\n",
                                                   asm_ctx.line_no);
-                                set_parse_status(&asm_ctx, PARSE_WARN);
+                                set_parse_status(&asm_ctx.status,  PARSE_WARN);
                             }
                     | INSTR_DCL sampdcl omods REG_OUTPUT
                             {
                                 TRACE("Error rule: sampler decl of output reg\n");
                                 asmparser_message(&asm_ctx, "Line %u: Sampler declarations of output regs is not valid\n",
                                                   asm_ctx.line_no);
-                                set_parse_status(&asm_ctx, PARSE_WARN);
+                                set_parse_status(&asm_ctx.status,  PARSE_WARN);
                             }
                     | INSTR_DEF REG_CONSTFLOAT ',' IMMVAL ',' IMMVAL ',' IMMVAL ',' IMMVAL
                             {
@@ -1049,19 +1049,19 @@ dreg_name:            REG_TEMP
                         {
                             asmparser_message(&asm_ctx, "Line %u: Register c%u is not a valid destination register\n",
                                               asm_ctx.line_no, $1);
-                            set_parse_status(&asm_ctx, PARSE_WARN);
+                            set_parse_status(&asm_ctx.status,  PARSE_WARN);
                         }
                     | REG_CONSTINT
                         {
                             asmparser_message(&asm_ctx, "Line %u: Register i%u is not a valid destination register\n",
                                               asm_ctx.line_no, $1);
-                            set_parse_status(&asm_ctx, PARSE_WARN);
+                            set_parse_status(&asm_ctx.status,  PARSE_WARN);
                         }
                     | REG_CONSTBOOL
                         {
                             asmparser_message(&asm_ctx, "Line %u: Register b%u is not a valid destination register\n",
                                               asm_ctx.line_no, $1);
-                            set_parse_status(&asm_ctx, PARSE_WARN);
+                            set_parse_status(&asm_ctx.status,  PARSE_WARN);
                         }
                     | REG_TEXTURE
                         {
@@ -1075,7 +1075,7 @@ dreg_name:            REG_TEMP
                         {
                             asmparser_message(&asm_ctx, "Line %u: Register s%u is not a valid destination register\n",
                                               asm_ctx.line_no, $1);
-                            set_parse_status(&asm_ctx, PARSE_WARN);
+                            set_parse_status(&asm_ctx.status,  PARSE_WARN);
                         }
                     | REG_OPOS
                         {
@@ -1109,13 +1109,13 @@ dreg_name:            REG_TEMP
                         {
                             asmparser_message(&asm_ctx, "Line %u: Register vPos is not a valid destination register\n",
                                               asm_ctx.line_no);
-                            set_parse_status(&asm_ctx, PARSE_WARN);
+                            set_parse_status(&asm_ctx.status,  PARSE_WARN);
                         }
                     | REG_VFACE
                         {
                             asmparser_message(&asm_ctx, "Line %u: Register vFace is not a valid destination register\n",
                                               asm_ctx.line_no);
-                            set_parse_status(&asm_ctx, PARSE_WARN);
+                            set_parse_status(&asm_ctx.status,  PARSE_WARN);
                         }
                     | REG_ADDRESS
                         {
@@ -1126,7 +1126,7 @@ dreg_name:            REG_TEMP
                         {
                             asmparser_message(&asm_ctx, "Line %u: Register aL is not a valid destination register\n",
                                               asm_ctx.line_no);
-                            set_parse_status(&asm_ctx, PARSE_WARN);
+                            set_parse_status(&asm_ctx.status,  PARSE_WARN);
                         }
 
 writemask:            '.' wm_components
@@ -1134,7 +1134,7 @@ writemask:            '.' wm_components
                             if($2.writemask == SWIZZLE_ERR) {
                                 asmparser_message(&asm_ctx, "Line %u: Invalid writemask specified\n",
                                                   asm_ctx.line_no);
-                                set_parse_status(&asm_ctx, PARSE_ERR);
+                                set_parse_status(&asm_ctx.status,  PARSE_ERR);
                                 /* Provide a correct writemask to prevent following complaints */
                                 $$ = BWRITERSP_WRITEMASK_ALL;
                             }
@@ -1175,7 +1175,7 @@ swizzle:              /* empty */
                             if($2.swizzle == SWIZZLE_ERR) {
                                 asmparser_message(&asm_ctx, "Line %u: Invalid swizzle\n",
                                                   asm_ctx.line_no);
-                                set_parse_status(&asm_ctx, PARSE_ERR);
+                                set_parse_status(&asm_ctx.status,  PARSE_ERR);
                                 /* Provide a correct swizzle to prevent following complaints */
                                 $$ = BWRITERVS_NOSWIZZLE;
                             }
@@ -1221,7 +1221,7 @@ omods:                 /* Empty */
                             if($1.shift && $2.shift) {
                                 asmparser_message(&asm_ctx, "Line %u: More than one shift flag\n",
                                                   asm_ctx.line_no);
-                                set_parse_status(&asm_ctx, PARSE_ERR);
+                                set_parse_status(&asm_ctx.status,  PARSE_ERR);
                                 $$.shift = $1.shift;
                             } else {
                                 $$.shift = $1.shift | $2.shift;
@@ -1284,7 +1284,7 @@ sregs:                sreg
                             if($$.count == MAX_SRC_REGS){
                                 asmparser_message(&asm_ctx, "Line %u: Too many source registers in this instruction\n",
                                                   asm_ctx.line_no);
-                                set_parse_status(&asm_ctx, PARSE_ERR);
+                                set_parse_status(&asm_ctx.status,  PARSE_ERR);
                             }
                             else
                                 $$.reg[$$.count++] = $3;
@@ -1327,12 +1327,12 @@ sreg:                   sreg_name rel_reg swizzle
                                 case BWRITERSPSM_DZ:
                                     asmparser_message(&asm_ctx, "Line %u: Incompatible source modifiers: NEG and DZ\n",
                                                       asm_ctx.line_no);
-                                    set_parse_status(&asm_ctx, PARSE_ERR);
+                                    set_parse_status(&asm_ctx.status,  PARSE_ERR);
                                     break;
                                 case BWRITERSPSM_DW:
                                     asmparser_message(&asm_ctx, "Line %u: Incompatible source modifiers: NEG and DW\n",
                                                       asm_ctx.line_no);
-                                    set_parse_status(&asm_ctx, PARSE_ERR);
+                                    set_parse_status(&asm_ctx.status,  PARSE_ERR);
                                     break;
                                 default:
                                     FIXME("Unhandled combination of NEGATE and %u\n", $4);
@@ -1344,7 +1344,7 @@ sreg:                   sreg_name rel_reg swizzle
                             if($1.val != 1.0 || (!$1.integer)) {
                                 asmparser_message(&asm_ctx, "Line %u: Only \"1 - reg\" is valid for D3DSPSM_COMP, "
                                                   "%g - reg found\n", asm_ctx.line_no, $1.val);
-                                set_parse_status(&asm_ctx, PARSE_ERR);
+                                set_parse_status(&asm_ctx.status,  PARSE_ERR);
                             }
                             /* Complement - not compatible with other source modifiers */
                             $$.type = $3.type;
@@ -1359,12 +1359,12 @@ sreg:                   sreg_name rel_reg swizzle
                             if($1.val != 1.0 || (!$1.integer)) {
                                 asmparser_message(&asm_ctx, "Line %u: Only \"1 - reg\" is valid for D3DSPSM_COMP\n",
                                                   asm_ctx.line_no);
-                                set_parse_status(&asm_ctx, PARSE_ERR);
+                                set_parse_status(&asm_ctx.status,  PARSE_ERR);
                             } else {
                                 asmparser_message(&asm_ctx, "Line %u: Incompatible source modifiers: D3DSPSM_COMP and %s\n",
                                                   asm_ctx.line_no,
                                                   debug_print_srcmod($5));
-                                set_parse_status(&asm_ctx, PARSE_ERR);
+                                set_parse_status(&asm_ctx.status,  PARSE_ERR);
                             }
                         }
                     | SMOD_NOT sreg_name swizzle
@@ -1424,7 +1424,7 @@ immsum:               IMMVAL
                             if(!$1.integer) {
                                 asmparser_message(&asm_ctx, "Line %u: Unexpected float %f\n",
                                                   asm_ctx.line_no, $1.val);
-                                set_parse_status(&asm_ctx, PARSE_ERR);
+                                set_parse_status(&asm_ctx.status,  PARSE_ERR);
                             }
                             $$.val = $1.val;
                         }
@@ -1433,7 +1433,7 @@ immsum:               IMMVAL
                             if(!$3.integer) {
                                 asmparser_message(&asm_ctx, "Line %u: Unexpected float %f\n",
                                                   asm_ctx.line_no, $3.val);
-                                set_parse_status(&asm_ctx, PARSE_ERR);
+                                set_parse_status(&asm_ctx.status,  PARSE_ERR);
                             }
                             $$.val = $1.val + $3.val;
                         }
@@ -1480,7 +1480,7 @@ sreg_name:            REG_TEMP
                         {
                             asmparser_message(&asm_ctx, "Line %u: Register o%u is not a valid source register\n",
                                               asm_ctx.line_no, $1);
-                            set_parse_status(&asm_ctx, PARSE_WARN);
+                            set_parse_status(&asm_ctx.status,  PARSE_WARN);
                         }
                     | REG_INPUT
                         {
@@ -1506,7 +1506,7 @@ sreg_name:            REG_TEMP
                         {
                             asmparser_message(&asm_ctx, "Line %u: Register oT%u is not a valid source register\n",
                                               asm_ctx.line_no, $1);
-                            set_parse_status(&asm_ctx, PARSE_WARN);
+                            set_parse_status(&asm_ctx.status,  PARSE_WARN);
                         }
                     | REG_SAMPLER
                         {
@@ -1516,31 +1516,31 @@ sreg_name:            REG_TEMP
                         {
                             asmparser_message(&asm_ctx, "Line %u: Register oPos is not a valid source register\n",
                                               asm_ctx.line_no);
-                            set_parse_status(&asm_ctx, PARSE_WARN);
+                            set_parse_status(&asm_ctx.status,  PARSE_WARN);
                         }
                     | REG_OFOG
                         {
                             asmparser_message(&asm_ctx, "Line %u: Register oFog is not a valid source register\n",
                                               asm_ctx.line_no);
-                            set_parse_status(&asm_ctx, PARSE_WARN);
+                            set_parse_status(&asm_ctx.status,  PARSE_WARN);
                         }
                     | REG_VERTEXCOLOR
                         {
                             asmparser_message(&asm_ctx, "Line %u: Register oD%u is not a valid source register\n",
                                               asm_ctx.line_no, $1);
-                            set_parse_status(&asm_ctx, PARSE_WARN);
+                            set_parse_status(&asm_ctx.status,  PARSE_WARN);
                         }
                     | REG_FRAGCOLOR
                         {
                             asmparser_message(&asm_ctx, "Line %u: Register oC%u is not a valid source register\n",
                                               asm_ctx.line_no, $1);
-                            set_parse_status(&asm_ctx, PARSE_WARN);
+                            set_parse_status(&asm_ctx.status,  PARSE_WARN);
                         }
                     | REG_FRAGDEPTH
                         {
                             asmparser_message(&asm_ctx, "Line %u: Register oDepth is not a valid source register\n",
                                               asm_ctx.line_no);
-                            set_parse_status(&asm_ctx, PARSE_WARN);
+                            set_parse_status(&asm_ctx.status, PARSE_WARN);
                         }
                     | REG_PREDICATE
                         {
@@ -1703,12 +1703,6 @@ predicate:            '(' REG_PREDICATE swizzle ')'
                         }
 
 %%
-
-/* New status is the worst between current status and parameter value */
-void set_parse_status(struct asm_parser *ctx, enum parse_status status) {
-    if(status == PARSE_ERR) ctx->status = PARSE_ERR;
-    else if(status == PARSE_WARN && ctx->status == PARSE_SUCCESS) ctx->status = PARSE_WARN;
-}
 
 struct bwriter_shader *parse_asm_shader(char **messages) {
     struct bwriter_shader *ret = NULL;
