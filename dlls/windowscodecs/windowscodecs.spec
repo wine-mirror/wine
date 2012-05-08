@@ -55,11 +55,11 @@
 @ stdcall IWICColorContext_InitializeFromMemory_Proxy(ptr ptr long) IWICColorContext_InitializeFromMemory_Proxy_W
 @ stub IWICComponentFactory_CreateMetadataWriterFromReader_Proxy
 @ stub IWICComponentFactory_CreateQueryWriterFromBlockWriter_Proxy
-@ stub IWICComponentInfo_GetAuthor_Proxy
-@ stub IWICComponentInfo_GetCLSID_Proxy
-@ stub IWICComponentInfo_GetFriendlyName_Proxy
-@ stub IWICComponentInfo_GetSpecVersion_Proxy
-@ stub IWICComponentInfo_GetVersion_Proxy
+@ stdcall IWICComponentInfo_GetAuthor_Proxy(ptr long ptr ptr) IWICComponentInfo_GetAuthor_Proxy_W
+@ stdcall IWICComponentInfo_GetCLSID_Proxy(ptr ptr) IWICComponentInfo_GetCLSID_Proxy_W
+@ stdcall IWICComponentInfo_GetFriendlyName_Proxy(ptr long ptr ptr) IWICComponentInfo_GetFriendlyName_Proxy_W
+@ stdcall IWICComponentInfo_GetSpecVersion_Proxy(ptr long ptr ptr) IWICComponentInfo_GetSpecVersion_Proxy_W
+@ stdcall IWICComponentInfo_GetVersion_Proxy(ptr long ptr ptr) IWICComponentInfo_GetVersion_Proxy_W
 @ stdcall IWICFastMetadataEncoder_Commit_Proxy(ptr) IWICFastMetadataEncoder_Commit_Proxy_W
 @ stdcall IWICFastMetadataEncoder_GetMetadataQueryWriter_Proxy(ptr ptr) IWICFastMetadataEncoder_GetMetadataQueryWriter_Proxy_W
 @ stub IWICFormatConverter_Initialize_Proxy

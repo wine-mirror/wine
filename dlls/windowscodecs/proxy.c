@@ -108,6 +108,36 @@ HRESULT WINAPI IWICColorContext_InitializeFromMemory_Proxy_W(IWICColorContext *i
     return IWICColorContext_InitializeFromMemory(iface, pbBuffer, cbBufferSize);
 }
 
+HRESULT WINAPI IWICComponentInfo_GetCLSID_Proxy_W(IWICComponentInfo *iface,
+    CLSID *pclsid)
+{
+    return IWICComponentInfo_GetCLSID(iface, pclsid);
+}
+
+HRESULT WINAPI IWICComponentInfo_GetAuthor_Proxy_W(IWICComponentInfo *iface,
+    UINT cchAuthor, WCHAR *wzAuthor, UINT *pcchActual)
+{
+    return IWICComponentInfo_GetAuthor(iface, cchAuthor, wzAuthor, pcchActual);
+}
+
+HRESULT WINAPI IWICComponentInfo_GetVersion_Proxy_W(IWICComponentInfo *iface,
+    UINT cchVersion, WCHAR *wzVersion, UINT *pcchActual)
+{
+    return IWICComponentInfo_GetVersion(iface, cchVersion, wzVersion, pcchActual);
+}
+
+HRESULT WINAPI IWICComponentInfo_GetSpecVersion_Proxy_W(IWICComponentInfo *iface,
+    UINT cchSpecVersion, WCHAR *wzSpecVersion, UINT *pcchActual)
+{
+    return IWICComponentInfo_GetSpecVersion(iface, cchSpecVersion, wzSpecVersion, pcchActual);
+}
+
+HRESULT WINAPI IWICComponentInfo_GetFriendlyName_Proxy_W(IWICComponentInfo *iface,
+    UINT cchFriendlyName, WCHAR *wzFriendlyName, UINT *pcchActual)
+{
+    return IWICComponentInfo_GetFriendlyName(iface, cchFriendlyName, wzFriendlyName, pcchActual);
+}
+
 HRESULT WINAPI IWICFastMetadataEncoder_Commit_Proxy_W(IWICFastMetadataEncoder *iface)
 {
     return IWICFastMetadataEncoder_Commit(iface);
