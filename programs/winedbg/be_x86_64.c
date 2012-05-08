@@ -70,6 +70,14 @@ static void be_x86_64_single_step(CONTEXT* ctx, unsigned enable)
     else ctx->EFlags &= ~STEP_FLAG;
 }
 
+static inline long double m128a_to_longdouble(const M128A m)
+{
+    /* gcc uses the same IEEE-754 representation as M128A for long double
+     * but 16 byte aligned (hence only the first 10 bytes out of the 16 are used)
+     */
+    return *(long double*)&m;
+}
+
 static void be_x86_64_print_context(HANDLE hThread, const CONTEXT* ctx,
                                     int all_regs)
 {
@@ -144,16 +152,12 @@ static void be_x86_64_print_context(HANDLE hThread, const CONTEXT* ctx,
 
     for (i = 0; i < 4; i++)
     {
-        long double st;
-        memcpy(&st, &ctx->u.FltSave.FloatRegisters[i * 10], 10);
-        dbg_printf(" st%u:%-16Lg ", i, st);
+        dbg_printf(" st%u:%-16Lg ", i, m128a_to_longdouble(ctx->u.FltSave.FloatRegisters[i]));
     }
     dbg_printf("\n");
     for (i = 4; i < 8; i++)
     {
-        long double st;
-        memcpy(&st, &ctx->u.FltSave.FloatRegisters[i * 10], 10);
-        dbg_printf(" st%u:%-16Lg ", i, st);
+        dbg_printf(" st%u:%-16Lg ", i, m128a_to_longdouble(ctx->u.FltSave.FloatRegisters[i]));
     }
     dbg_printf("\n");
 
