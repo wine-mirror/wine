@@ -44,17 +44,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(asmshader);
  *  NULL in case of an allocation failure
  */
 struct instruction *alloc_instr(unsigned int srcs) {
-    struct instruction *ret = asm_alloc(sizeof(*ret));
+    struct instruction *ret = d3dcompiler_alloc(sizeof(*ret));
     if(!ret) {
         ERR("Failed to allocate memory for an instruction structure\n");
         return NULL;
     }
 
     if(srcs) {
-        ret->src = asm_alloc(srcs * sizeof(*ret->src));
+        ret->src = d3dcompiler_alloc(srcs * sizeof(*ret->src));
         if(!ret->src) {
             ERR("Failed to allocate memory for instruction registers\n");
-            asm_free(ret);
+            d3dcompiler_free(ret);
             return NULL;
         }
         ret->num_srcs = srcs;
@@ -80,14 +80,14 @@ BOOL add_instruction(struct bwriter_shader *shader, struct instruction *instr) {
     if(!shader) return FALSE;
 
     if(shader->instr_alloc_size == 0) {
-        shader->instr = asm_alloc(sizeof(*shader->instr) * INSTRARRAY_INITIAL_SIZE);
+        shader->instr = d3dcompiler_alloc(sizeof(*shader->instr) * INSTRARRAY_INITIAL_SIZE);
         if(!shader->instr) {
             ERR("Failed to allocate the shader instruction array\n");
             return FALSE;
         }
         shader->instr_alloc_size = INSTRARRAY_INITIAL_SIZE;
     } else if(shader->instr_alloc_size == shader->num_instrs) {
-        new_instructions = asm_realloc(shader->instr,
+        new_instructions = d3dcompiler_realloc(shader->instr,
                                        sizeof(*shader->instr) * (shader->instr_alloc_size) * 2);
         if(!new_instructions) {
             ERR("Failed to grow the shader instruction array\n");
@@ -110,7 +110,7 @@ BOOL add_constF(struct bwriter_shader *shader, DWORD reg, float x, float y, floa
 
     if(shader->num_cf) {
         struct constant **newarray;
-        newarray = asm_realloc(shader->constF,
+        newarray = d3dcompiler_realloc(shader->constF,
                                sizeof(*shader->constF) * (shader->num_cf + 1));
         if(!newarray) {
             ERR("Failed to grow the constants array\n");
@@ -118,14 +118,14 @@ BOOL add_constF(struct bwriter_shader *shader, DWORD reg, float x, float y, floa
         }
         shader->constF = newarray;
     } else {
-        shader->constF = asm_alloc(sizeof(*shader->constF));
+        shader->constF = d3dcompiler_alloc(sizeof(*shader->constF));
         if(!shader->constF) {
             ERR("Failed to allocate the constants array\n");
             return FALSE;
         }
     }
 
-    newconst = asm_alloc(sizeof(*newconst));
+    newconst = d3dcompiler_alloc(sizeof(*newconst));
     if(!newconst) {
         ERR("Failed to allocate a new constant\n");
         return FALSE;
@@ -146,7 +146,7 @@ BOOL add_constI(struct bwriter_shader *shader, DWORD reg, INT x, INT y, INT z, I
 
     if(shader->num_ci) {
         struct constant **newarray;
-        newarray = asm_realloc(shader->constI,
+        newarray = d3dcompiler_realloc(shader->constI,
                                sizeof(*shader->constI) * (shader->num_ci + 1));
         if(!newarray) {
             ERR("Failed to grow the constants array\n");
@@ -154,14 +154,14 @@ BOOL add_constI(struct bwriter_shader *shader, DWORD reg, INT x, INT y, INT z, I
         }
         shader->constI = newarray;
     } else {
-        shader->constI = asm_alloc(sizeof(*shader->constI));
+        shader->constI = d3dcompiler_alloc(sizeof(*shader->constI));
         if(!shader->constI) {
             ERR("Failed to allocate the constants array\n");
             return FALSE;
         }
     }
 
-    newconst = asm_alloc(sizeof(*newconst));
+    newconst = d3dcompiler_alloc(sizeof(*newconst));
     if(!newconst) {
         ERR("Failed to allocate a new constant\n");
         return FALSE;
@@ -182,7 +182,7 @@ BOOL add_constB(struct bwriter_shader *shader, DWORD reg, BOOL x) {
 
     if(shader->num_cb) {
         struct constant **newarray;
-        newarray = asm_realloc(shader->constB,
+        newarray = d3dcompiler_realloc(shader->constB,
                                sizeof(*shader->constB) * (shader->num_cb + 1));
         if(!newarray) {
             ERR("Failed to grow the constants array\n");
@@ -190,14 +190,14 @@ BOOL add_constB(struct bwriter_shader *shader, DWORD reg, BOOL x) {
         }
         shader->constB = newarray;
     } else {
-        shader->constB = asm_alloc(sizeof(*shader->constB));
+        shader->constB = d3dcompiler_alloc(sizeof(*shader->constB));
         if(!shader->constB) {
             ERR("Failed to allocate the constants array\n");
             return FALSE;
         }
     }
 
-    newconst = asm_alloc(sizeof(*newconst));
+    newconst = d3dcompiler_alloc(sizeof(*newconst));
     if(!newconst) {
         ERR("Failed to allocate a new constant\n");
         return FALSE;
@@ -228,7 +228,7 @@ BOOL record_declaration(struct bwriter_shader *shader, DWORD usage,
     }
 
     if(*num == 0) {
-        *decl = asm_alloc(sizeof(**decl));
+        *decl = d3dcompiler_alloc(sizeof(**decl));
         if(!*decl) {
             ERR("Error allocating declarations array\n");
             return FALSE;
@@ -242,7 +242,7 @@ BOOL record_declaration(struct bwriter_shader *shader, DWORD usage,
             }
         }
 
-        newdecl = asm_realloc(*decl,
+        newdecl = d3dcompiler_realloc(*decl,
                               sizeof(**decl) * ((*num) + 1));
         if(!newdecl) {
             ERR("Error reallocating declarations array\n");
@@ -267,7 +267,7 @@ BOOL record_sampler(struct bwriter_shader *shader, DWORD samptype, DWORD mod, DW
     if(!shader) return FALSE;
 
     if(shader->num_samplers == 0) {
-        shader->samplers = asm_alloc(sizeof(*shader->samplers));
+        shader->samplers = d3dcompiler_alloc(sizeof(*shader->samplers));
         if(!shader->samplers) {
             ERR("Error allocating samplers array\n");
             return FALSE;
@@ -284,7 +284,7 @@ BOOL record_sampler(struct bwriter_shader *shader, DWORD samptype, DWORD mod, DW
             }
         }
 
-        newarray = asm_realloc(shader->samplers,
+        newarray = d3dcompiler_realloc(shader->samplers,
                                sizeof(*shader->samplers) * (shader->num_samplers + 1));
         if(!newarray) {
             ERR("Error reallocating samplers array\n");
@@ -310,13 +310,13 @@ BOOL record_sampler(struct bwriter_shader *shader, DWORD samptype, DWORD mod, DW
 static struct bytecode_buffer *allocate_buffer(void) {
     struct bytecode_buffer *ret;
 
-    ret = asm_alloc(sizeof(*ret));
+    ret = d3dcompiler_alloc(sizeof(*ret));
     if(!ret) return NULL;
 
     ret->alloc_size = BYTECODEBUFFER_INITIAL_SIZE;
-    ret->data = asm_alloc(sizeof(DWORD) * ret->alloc_size);
+    ret->data = d3dcompiler_alloc(sizeof(DWORD) * ret->alloc_size);
     if(!ret->data) {
-        asm_free(ret);
+        d3dcompiler_free(ret);
         return NULL;
     }
     ret->state = S_OK;
@@ -329,7 +329,7 @@ static void put_dword(struct bytecode_buffer *buffer, DWORD value) {
     if(buffer->alloc_size == buffer->size) {
         DWORD *newarray;
         buffer->alloc_size *= 2;
-        newarray = asm_realloc(buffer->data,
+        newarray = d3dcompiler_realloc(buffer->data,
                                sizeof(DWORD) * buffer->alloc_size);
         if(!newarray) {
             ERR("Failed to grow the buffer data memory\n");
@@ -2405,7 +2405,7 @@ static void init_ps30_dx9_writer(struct bc_writer *writer) {
 }
 
 static struct bc_writer *create_writer(DWORD version, DWORD dxversion) {
-    struct bc_writer *ret = asm_alloc(sizeof(*ret));
+    struct bc_writer *ret = d3dcompiler_alloc(sizeof(*ret));
 
     if(!ret) {
         WARN("Failed to allocate a bytecode writer instance\n");
@@ -2517,7 +2517,7 @@ static struct bc_writer *create_writer(DWORD version, DWORD dxversion) {
     return ret;
 
 fail:
-    asm_free(ret);
+    d3dcompiler_free(ret);
     return NULL;
 }
 
@@ -2611,7 +2611,7 @@ DWORD SlWriteBytecode(const struct bwriter_shader *shader, int dxversion, DWORD 
     }
 
     /* Cut off unneeded memory from the result buffer */
-    *result = asm_realloc(buffer->data,
+    *result = d3dcompiler_realloc(buffer->data,
                          sizeof(DWORD) * buffer->size);
     if(!*result) {
         *result = buffer->data;
@@ -2621,10 +2621,10 @@ DWORD SlWriteBytecode(const struct bwriter_shader *shader, int dxversion, DWORD 
 
 error:
     if(buffer) {
-        asm_free(buffer->data);
-        asm_free(buffer);
+        d3dcompiler_free(buffer->data);
+        d3dcompiler_free(buffer);
     }
-    asm_free(writer);
+    d3dcompiler_free(writer);
     return hr;
 }
 
@@ -2634,30 +2634,30 @@ void SlDeleteShader(struct bwriter_shader *shader) {
     TRACE("Deleting shader %p\n", shader);
 
     for(i = 0; i < shader->num_cf; i++) {
-        asm_free(shader->constF[i]);
+        d3dcompiler_free(shader->constF[i]);
     }
-    asm_free(shader->constF);
+    d3dcompiler_free(shader->constF);
     for(i = 0; i < shader->num_ci; i++) {
-        asm_free(shader->constI[i]);
+        d3dcompiler_free(shader->constI[i]);
     }
-    asm_free(shader->constI);
+    d3dcompiler_free(shader->constI);
     for(i = 0; i < shader->num_cb; i++) {
-        asm_free(shader->constB[i]);
+        d3dcompiler_free(shader->constB[i]);
     }
-    asm_free(shader->constB);
+    d3dcompiler_free(shader->constB);
 
-    asm_free(shader->inputs);
-    asm_free(shader->outputs);
-    asm_free(shader->samplers);
+    d3dcompiler_free(shader->inputs);
+    d3dcompiler_free(shader->outputs);
+    d3dcompiler_free(shader->samplers);
 
     for(i = 0; i < shader->num_instrs; i++) {
         for(j = 0; j < shader->instr[i]->num_srcs; j++) {
-            asm_free(shader->instr[i]->src[j].rel_reg);
+            d3dcompiler_free(shader->instr[i]->src[j].rel_reg);
         }
-        asm_free(shader->instr[i]->src);
-        asm_free(shader->instr[i]);
+        d3dcompiler_free(shader->instr[i]->src);
+        d3dcompiler_free(shader->instr[i]);
     }
-    asm_free(shader->instr);
+    d3dcompiler_free(shader->instr);
 
-    asm_free(shader);
+    d3dcompiler_free(shader);
 }

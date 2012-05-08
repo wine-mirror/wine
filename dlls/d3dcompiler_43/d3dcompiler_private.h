@@ -2,6 +2,7 @@
  * Copyright 2008 Stefan Dösinger
  * Copyright 2009 Matteo Bruni
  * Copyright 2010 Rico Schüller
+ * Copyright 2012 Matteo Bruni for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -138,15 +139,18 @@ struct bwriter_shader {
     unsigned int            num_instrs, instr_alloc_size;
 };
 
-static inline LPVOID asm_alloc(SIZE_T size) {
+static inline void *d3dcompiler_alloc(SIZE_T size)
+{
     return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
 }
 
-static inline LPVOID asm_realloc(LPVOID ptr, SIZE_T size) {
+static inline void *d3dcompiler_realloc(void *ptr, SIZE_T size)
+{
     return HeapReAlloc(GetProcessHeap(), 0, ptr, size);
 }
 
-static inline BOOL asm_free(LPVOID ptr) {
+static inline BOOL d3dcompiler_free(void *ptr)
+{
     return HeapFree(GetProcessHeap(), 0, ptr);
 }
 

@@ -51,7 +51,7 @@ static void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
     if(!rel->has_rel_reg) {
         reg->rel_reg = NULL;
     } else {
-        reg->rel_reg = asm_alloc(sizeof(*reg->rel_reg));
+        reg->rel_reg = d3dcompiler_alloc(sizeof(*reg->rel_reg));
         if(!reg->rel_reg) {
             return;
         }
@@ -1693,16 +1693,22 @@ struct bwriter_shader *parse_asm_shader(char **messages)
         if (asm_ctx.messages.size)
         {
             /* Shrink the buffer to the used size */
-            *messages = asm_realloc(asm_ctx.messages.string, asm_ctx.messages.size + 1);
-            if(!*messages) {
+            *messages = d3dcompiler_realloc(asm_ctx.messages.string, asm_ctx.messages.size + 1);
+            if (!*messages)
+            {
                 ERR("Out of memory, no messages reported\n");
-                asm_free(asm_ctx.messages.string);
+                d3dcompiler_free(asm_ctx.messages.string);
             }
-        } else {
+        }
+        else
+        {
             *messages = NULL;
         }
-    } else {
-        if(asm_ctx.messages.capacity) asm_free(asm_ctx.messages.string);
+    }
+    else
+    {
+        if (asm_ctx.messages.capacity)
+            d3dcompiler_free(asm_ctx.messages.string);
     }
 
     return ret;
