@@ -6082,6 +6082,11 @@ static UINT ITERATE_InstallODBCDriver( MSIRECORD *rec, LPVOID param )
     ptr += lstrlenW(ptr) + 1;
     *ptr = '\0';
 
+    if (!driver_file->TargetPath)
+    {
+        const WCHAR *dir = msi_get_target_folder( package, driver_file->Component->Directory );
+        driver_file->TargetPath = msi_build_directory_name( 2, dir, driver_file->FileName );
+    }
     driver_path = strdupW(driver_file->TargetPath);
     ptr = strrchrW(driver_path, '\\');
     if (ptr) *ptr = '\0';
