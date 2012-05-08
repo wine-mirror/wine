@@ -36,6 +36,17 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
+HRESULT WINAPI IWICFastMetadataEncoder_Commit_Proxy_W(IWICFastMetadataEncoder *iface)
+{
+    return IWICFastMetadataEncoder_Commit(iface);
+}
+
+HRESULT WINAPI IWICFastMetadataEncoder_GetMetadataQueryWriter_Proxy_W(IWICFastMetadataEncoder *iface,
+    IWICMetadataQueryWriter **ppIMetadataQueryWriter)
+{
+    return IWICFastMetadataEncoder_GetMetadataQueryWriter(iface, ppIMetadataQueryWriter);
+}
+
 HRESULT WINAPI IWICImagingFactory_CreateBitmapClipper_Proxy_W(IWICImagingFactory *pFactory,
     IWICBitmapClipper **ppIBitmapClipper)
 {
