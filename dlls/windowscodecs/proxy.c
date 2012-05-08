@@ -305,6 +305,18 @@ HRESULT WINAPI IWICColorContext_InitializeFromMemory_Proxy_W(IWICColorContext *i
     return IWICColorContext_InitializeFromMemory(iface, pbBuffer, cbBufferSize);
 }
 
+HRESULT WINAPI IWICComponentFactory_CreateMetadataWriterFromReader_Proxy_W(IWICComponentFactory *iface,
+    IWICMetadataReader *pIReader, const GUID *pguidVendor, IWICMetadataWriter **ppIWriter)
+{
+    return IWICComponentFactory_CreateMetadataWriterFromReader(iface, pIReader, pguidVendor, ppIWriter);
+}
+
+HRESULT WINAPI IWICComponentFactory_CreateQueryWriterFromBlockWriter_Proxy_W(IWICComponentFactory *iface,
+    IWICMetadataBlockWriter *pIBlockWriter, IWICMetadataQueryWriter **ppIQueryWriter)
+{
+    return IWICComponentFactory_CreateQueryWriterFromBlockWriter(iface, pIBlockWriter, ppIQueryWriter);
+}
+
 HRESULT WINAPI IWICComponentInfo_GetCLSID_Proxy_W(IWICComponentInfo *iface,
     CLSID *pclsid)
 {
