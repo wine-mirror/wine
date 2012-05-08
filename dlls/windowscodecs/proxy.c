@@ -36,6 +36,54 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
+HRESULT WINAPI IWICBitmapCodecInfo_GetContainerFormat_Proxy_W(IWICBitmapCodecInfo *iface,
+    GUID *pguidContainerFormat)
+{
+    return IWICBitmapCodecInfo_GetContainerFormat(iface, pguidContainerFormat);
+}
+
+HRESULT WINAPI IWICBitmapCodecInfo_GetDeviceManufacturer_Proxy_W(IWICBitmapCodecInfo *iface,
+    UINT cchDeviceManufacturer, WCHAR *wzDeviceManufacturer, UINT *pcchActual)
+{
+    return IWICBitmapCodecInfo_GetDeviceManufacturer(iface, cchDeviceManufacturer, wzDeviceManufacturer, pcchActual);
+}
+
+HRESULT WINAPI IWICBitmapCodecInfo_GetDeviceModels_Proxy_W(IWICBitmapCodecInfo *iface,
+    UINT cchDeviceModels, WCHAR *wzDeviceModels, UINT *pcchActual)
+{
+    return IWICBitmapCodecInfo_GetDeviceModels(iface, cchDeviceModels, wzDeviceModels, pcchActual);
+}
+
+HRESULT WINAPI IWICBitmapCodecInfo_GetMimeTypes_Proxy_W(IWICBitmapCodecInfo *iface,
+    UINT cchMimeTypes, WCHAR *wzMimeTypes, UINT *pcchActual)
+{
+    return IWICBitmapCodecInfo_GetMimeTypes(iface, cchMimeTypes, wzMimeTypes, pcchActual);
+}
+
+HRESULT WINAPI IWICBitmapCodecInfo_GetFileExtensions_Proxy_W(IWICBitmapCodecInfo *iface,
+    UINT cchFileExtensions, WCHAR *wzFileExtensions, UINT *pcchActual)
+{
+    return IWICBitmapCodecInfo_GetFileExtensions(iface, cchFileExtensions, wzFileExtensions, pcchActual);
+}
+
+HRESULT WINAPI IWICBitmapCodecInfo_DoesSupportAnimation_Proxy_W(IWICBitmapCodecInfo *iface,
+    BOOL *pfSupportAnimation)
+{
+    return IWICBitmapCodecInfo_DoesSupportAnimation(iface, pfSupportAnimation);
+}
+
+HRESULT WINAPI IWICBitmapCodecInfo_DoesSupportLossless_Proxy_W(IWICBitmapCodecInfo *iface,
+    BOOL *pfSupportLossless)
+{
+    return IWICBitmapCodecInfo_DoesSupportLossless(iface, pfSupportLossless);
+}
+
+HRESULT WINAPI IWICBitmapCodecInfo_DoesSupportMultiframe_Proxy_W(IWICBitmapCodecInfo *iface,
+    BOOL *pfSupportMultiframe)
+{
+    return IWICBitmapCodecInfo_DoesSupportMultiframe(iface, pfSupportMultiframe);
+}
+
 HRESULT WINAPI IWICBitmapFlipRotator_Initialize_Proxy_W(IWICBitmapFlipRotator *iface,
     IWICBitmapSource *pISource, WICBitmapTransformOptions options)
 {
