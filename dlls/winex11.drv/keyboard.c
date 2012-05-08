@@ -2220,7 +2220,11 @@ UINT CDECL X11DRV_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl)
                          * in order to produce a locale dependent numeric separator.
                          */
 			if (wCode == VK_DECIMAL || wCode == VK_SEPARATOR)
-			  e.keycode = XKeysymToKeycode(e.display, XK_KP_Separator);
+                        {
+                            e.keycode = XKeysymToKeycode(e.display, XK_KP_Separator);
+                            if (!e.keycode)
+                                e.keycode = XKeysymToKeycode(e.display, XK_KP_Decimal);
+                        }
 
 			if (!e.keycode)
 			{
@@ -2558,7 +2562,11 @@ INT CDECL X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState
      * in order to produce a locale dependent numeric separator.
      */
     if (virtKey == VK_DECIMAL || virtKey == VK_SEPARATOR)
+    {
         e.keycode = XKeysymToKeycode(e.display, XK_KP_Separator);
+        if (!e.keycode)
+            e.keycode = XKeysymToKeycode(e.display, XK_KP_Decimal);
+    }
 
     if (!e.keycode && virtKey != VK_NONAME)
       {
