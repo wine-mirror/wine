@@ -247,6 +247,54 @@ HRESULT WINAPI IWICImagingFactory_CreateStream_Proxy_W(IWICImagingFactory *pFact
     return IWICImagingFactory_CreateStream(pFactory, ppIWICStream);
 }
 
+HRESULT WINAPI IWICPalette_InitializePredefined_Proxy_W(IWICPalette *iface,
+    WICBitmapPaletteType ePaletteType, BOOL fAddTransparentColor)
+{
+    return IWICPalette_InitializePredefined(iface, ePaletteType, fAddTransparentColor);
+}
+
+HRESULT WINAPI IWICPalette_InitializeCustom_Proxy_W(IWICPalette *iface,
+    WICColor *pColors, UINT colorCount)
+{
+    return IWICPalette_InitializeCustom(iface, pColors, colorCount);
+}
+
+HRESULT WINAPI IWICPalette_InitializeFromBitmap_Proxy_W(IWICPalette *iface,
+    IWICBitmapSource *pISurface, UINT colorCount, BOOL fAddTransparentColor)
+{
+    return IWICPalette_InitializeFromBitmap(iface, pISurface, colorCount, fAddTransparentColor);
+}
+
+HRESULT WINAPI IWICPalette_InitializeFromPalette_Proxy_W(IWICPalette *iface,
+    IWICPalette *pIPalette)
+{
+    return IWICPalette_InitializeFromPalette(iface, pIPalette);
+}
+
+HRESULT WINAPI IWICPalette_GetType_Proxy_W(IWICPalette *iface,
+    WICBitmapPaletteType *pePaletteType)
+{
+    return IWICPalette_GetType(iface, pePaletteType);
+}
+
+HRESULT WINAPI IWICPalette_GetColorCount_Proxy_W(IWICPalette *iface,
+    UINT *pcCount)
+{
+    return IWICPalette_GetColorCount(iface, pcCount);
+}
+
+HRESULT WINAPI IWICPalette_GetColors_Proxy_W(IWICPalette *iface,
+    UINT colorCount, WICColor *pColors, UINT *pcActualColors)
+{
+    return IWICPalette_GetColors(iface, colorCount, pColors, pcActualColors);
+}
+
+HRESULT WINAPI IWICPalette_HasAlpha_Proxy_W(IWICPalette *iface,
+    BOOL *pfHasAlpha)
+{
+    return IWICPalette_HasAlpha(iface, pfHasAlpha);
+}
+
 HRESULT WINAPI WICCreateImagingFactory_Proxy(UINT SDKVersion, IWICImagingFactory **ppIImagingFactory)
 {
     TRACE("%x, %p\n", SDKVersion, ppIImagingFactory);

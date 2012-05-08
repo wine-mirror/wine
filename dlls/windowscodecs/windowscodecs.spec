@@ -91,14 +91,14 @@
 @ stub IWICMetadataQueryReader_GetMetadataByName_Proxy
 @ stub IWICMetadataQueryWriter_RemoveMetadataByName_Proxy
 @ stub IWICMetadataQueryWriter_SetMetadataByName_Proxy
-@ stub IWICPalette_GetColorCount_Proxy
-@ stub IWICPalette_GetColors_Proxy
-@ stub IWICPalette_GetType_Proxy
-@ stub IWICPalette_HasAlpha_Proxy
-@ stub IWICPalette_InitializeCustom_Proxy
-@ stub IWICPalette_InitializeFromBitmap_Proxy
-@ stub IWICPalette_InitializeFromPalette_Proxy
-@ stub IWICPalette_InitializePredefined_Proxy
+@ stdcall IWICPalette_GetColorCount_Proxy(ptr ptr) IWICPalette_GetColorCount_Proxy_W
+@ stdcall IWICPalette_GetColors_Proxy(ptr long ptr ptr) IWICPalette_GetColors_Proxy_W
+@ stdcall IWICPalette_GetType_Proxy(ptr ptr) IWICPalette_GetType_Proxy_W
+@ stdcall IWICPalette_HasAlpha_Proxy(ptr ptr) IWICPalette_HasAlpha_Proxy_W
+@ stdcall IWICPalette_InitializeCustom_Proxy(ptr ptr long) IWICPalette_InitializeCustom_Proxy_W
+@ stdcall IWICPalette_InitializeFromBitmap_Proxy(ptr ptr long long) IWICPalette_InitializeFromBitmap_Proxy_W
+@ stdcall IWICPalette_InitializeFromPalette_Proxy(ptr ptr) IWICPalette_InitializeFromPalette_Proxy_W
+@ stdcall IWICPalette_InitializePredefined_Proxy(ptr long long) IWICPalette_InitializePredefined_Proxy_W
 @ stub IWICPixelFormatInfo_GetBitsPerPixel_Proxy
 @ stub IWICPixelFormatInfo_GetChannelCount_Proxy
 @ stub IWICPixelFormatInfo_GetChannelMask_Proxy
