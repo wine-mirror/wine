@@ -301,6 +301,18 @@ HRESULT WINAPI IWICMetadataQueryReader_GetEnumerator_Proxy_W(IWICMetadataQueryRe
     return IWICMetadataQueryReader_GetEnumerator(iface, ppIEnumString);
 }
 
+HRESULT WINAPI IWICMetadataQueryWriter_SetMetadataByName_Proxy_W(IWICMetadataQueryWriter *iface,
+    LPCWSTR wzName, const PROPVARIANT *pvarValue)
+{
+    return IWICMetadataQueryWriter_SetMetadataByName(iface, wzName, pvarValue);
+}
+
+HRESULT WINAPI IWICMetadataQueryWriter_RemoveMetadataByName_Proxy_W(IWICMetadataQueryWriter *iface,
+    LPCWSTR wzName)
+{
+    return IWICMetadataQueryWriter_RemoveMetadataByName(iface, wzName);
+}
+
 HRESULT WINAPI IWICPalette_InitializePredefined_Proxy_W(IWICPalette *iface,
     WICBitmapPaletteType ePaletteType, BOOL fAddTransparentColor)
 {

@@ -89,8 +89,8 @@
 @ stdcall IWICMetadataQueryReader_GetEnumerator_Proxy(ptr ptr) IWICMetadataQueryReader_GetEnumerator_Proxy_W
 @ stdcall IWICMetadataQueryReader_GetLocation_Proxy(ptr long ptr ptr) IWICMetadataQueryReader_GetLocation_Proxy_W
 @ stdcall IWICMetadataQueryReader_GetMetadataByName_Proxy(ptr wstr ptr) IWICMetadataQueryReader_GetMetadataByName_Proxy_W
-@ stub IWICMetadataQueryWriter_RemoveMetadataByName_Proxy
-@ stub IWICMetadataQueryWriter_SetMetadataByName_Proxy
+@ stdcall IWICMetadataQueryWriter_RemoveMetadataByName_Proxy(ptr wstr) IWICMetadataQueryWriter_RemoveMetadataByName_Proxy_W
+@ stdcall IWICMetadataQueryWriter_SetMetadataByName_Proxy(ptr wstr ptr) IWICMetadataQueryWriter_SetMetadataByName_Proxy_W
 @ stdcall IWICPalette_GetColorCount_Proxy(ptr ptr) IWICPalette_GetColorCount_Proxy_W
 @ stdcall IWICPalette_GetColors_Proxy(ptr long ptr ptr) IWICPalette_GetColors_Proxy_W
 @ stdcall IWICPalette_GetType_Proxy(ptr ptr) IWICPalette_GetType_Proxy_W
