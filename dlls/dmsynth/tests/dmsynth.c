@@ -53,7 +53,7 @@ static void test_dmsynth(void)
     hr = IDirectMusicSynth_QueryInterface(dmsynth, &IID_IKsControl, (LPVOID*)&control_synth);
     ok(hr == S_OK, "IDirectMusicSynth_QueryInterface returned: %x\n", hr);
     hr = IDirectMusicSynthSink_QueryInterface(dmsynth_sink, &IID_IKsControl, (LPVOID*)&control_sink);
-    todo_wine ok(hr == S_OK, "IDirectMusicSynthSink_QueryInterface returned: %x\n", hr);
+    ok(hr == S_OK, "IDirectMusicSynthSink_QueryInterface returned: %x\n", hr);
 
     /* Synth has no default clock */
     hr = IDirectMusicSynth_GetLatencyClock(dmsynth, &clock_synth);

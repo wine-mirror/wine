@@ -75,6 +75,7 @@ struct IDirectMusicSynth8Impl {
 struct IDirectMusicSynthSinkImpl {
     /* IUnknown fields */
     IDirectMusicSynthSink IDirectMusicSynthSink_iface;
+    IKsControl IKsControl_iface;
     LONG ref;
 
     /* IDirectMusicSynthSinkImpl fields */
