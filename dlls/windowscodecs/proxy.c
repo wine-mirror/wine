@@ -36,6 +36,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
+HRESULT WINAPI IWICBitmapClipper_Initialize_Proxy_W(IWICBitmapClipper *iface,
+    IWICBitmapSource *pISource, const WICRect *prc)
+{
+    return IWICBitmapClipper_Initialize(iface, pISource, prc);
+}
+
 HRESULT WINAPI IWICBitmapCodecInfo_GetContainerFormat_Proxy_W(IWICBitmapCodecInfo *iface,
     GUID *pguidContainerFormat)
 {

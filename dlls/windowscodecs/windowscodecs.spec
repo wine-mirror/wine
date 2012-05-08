@@ -5,7 +5,7 @@
 @ stub IEnumString_Next_WIC_Proxy
 @ stub IEnumString_Reset_WIC_Proxy
 @ stub IPropertyBag2_Write_Proxy
-@ stub IWICBitmapClipper_Initialize_Proxy
+@ stdcall IWICBitmapClipper_Initialize_Proxy(ptr ptr ptr) IWICBitmapClipper_Initialize_Proxy_W
 @ stdcall IWICBitmapCodecInfo_DoesSupportAnimation_Proxy(ptr ptr) IWICBitmapCodecInfo_DoesSupportAnimation_Proxy_W
 @ stdcall IWICBitmapCodecInfo_DoesSupportLossless_Proxy(ptr ptr) IWICBitmapCodecInfo_DoesSupportLossless_Proxy_W
 @ stdcall IWICBitmapCodecInfo_DoesSupportMultiframe_Proxy(ptr ptr) IWICBitmapCodecInfo_DoesSupportMultiframe_Proxy_W
