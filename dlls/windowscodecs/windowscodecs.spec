@@ -14,14 +14,14 @@
 @ stdcall IWICBitmapCodecInfo_GetDeviceModels_Proxy(ptr long ptr ptr) IWICBitmapCodecInfo_GetDeviceModels_Proxy_W
 @ stdcall IWICBitmapCodecInfo_GetFileExtensions_Proxy(ptr long ptr ptr) IWICBitmapCodecInfo_GetFileExtensions_Proxy_W
 @ stdcall IWICBitmapCodecInfo_GetMimeTypes_Proxy(ptr long ptr ptr) IWICBitmapCodecInfo_GetMimeTypes_Proxy_W
-@ stub IWICBitmapDecoder_CopyPalette_Proxy
-@ stub IWICBitmapDecoder_GetColorContexts_Proxy
-@ stub IWICBitmapDecoder_GetDecoderInfo_Proxy
-@ stub IWICBitmapDecoder_GetFrameCount_Proxy
-@ stub IWICBitmapDecoder_GetFrame_Proxy
-@ stub IWICBitmapDecoder_GetMetadataQueryReader_Proxy
-@ stub IWICBitmapDecoder_GetPreview_Proxy
-@ stub IWICBitmapDecoder_GetThumbnail_Proxy
+@ stdcall IWICBitmapDecoder_CopyPalette_Proxy(ptr ptr) IWICBitmapDecoder_CopyPalette_Proxy_W
+@ stdcall IWICBitmapDecoder_GetColorContexts_Proxy(ptr long ptr ptr) IWICBitmapDecoder_GetColorContexts_Proxy_W
+@ stdcall IWICBitmapDecoder_GetDecoderInfo_Proxy(ptr ptr) IWICBitmapDecoder_GetDecoderInfo_Proxy_W
+@ stdcall IWICBitmapDecoder_GetFrameCount_Proxy(ptr ptr) IWICBitmapDecoder_GetFrameCount_Proxy_W
+@ stdcall IWICBitmapDecoder_GetFrame_Proxy(ptr long ptr) IWICBitmapDecoder_GetFrame_Proxy_W
+@ stdcall IWICBitmapDecoder_GetMetadataQueryReader_Proxy(ptr ptr) IWICBitmapDecoder_GetMetadataQueryReader_Proxy_W
+@ stdcall IWICBitmapDecoder_GetPreview_Proxy(ptr ptr) IWICBitmapDecoder_GetPreview_Proxy_W
+@ stdcall IWICBitmapDecoder_GetThumbnail_Proxy(ptr ptr) IWICBitmapDecoder_GetThumbnail_Proxy_W
 @ stub IWICBitmapEncoder_Commit_Proxy
 @ stub IWICBitmapEncoder_CreateNewFrame_Proxy
 @ stub IWICBitmapEncoder_GetEncoderInfo_Proxy

@@ -84,6 +84,54 @@ HRESULT WINAPI IWICBitmapCodecInfo_DoesSupportMultiframe_Proxy_W(IWICBitmapCodec
     return IWICBitmapCodecInfo_DoesSupportMultiframe(iface, pfSupportMultiframe);
 }
 
+HRESULT WINAPI IWICBitmapDecoder_GetDecoderInfo_Proxy_W(IWICBitmapDecoder *iface,
+    IWICBitmapDecoderInfo **ppIDecoderInfo)
+{
+    return IWICBitmapDecoder_GetDecoderInfo(iface, ppIDecoderInfo);
+}
+
+HRESULT WINAPI IWICBitmapDecoder_CopyPalette_Proxy_W(IWICBitmapDecoder *iface,
+    IWICPalette *pIPalette)
+{
+    return IWICBitmapDecoder_CopyPalette(iface, pIPalette);
+}
+
+HRESULT WINAPI IWICBitmapDecoder_GetMetadataQueryReader_Proxy_W(IWICBitmapDecoder *iface,
+    IWICMetadataQueryReader **ppIMetadataQueryReader)
+{
+    return IWICBitmapDecoder_GetMetadataQueryReader(iface, ppIMetadataQueryReader);
+}
+
+HRESULT WINAPI IWICBitmapDecoder_GetPreview_Proxy_W(IWICBitmapDecoder *iface,
+    IWICBitmapSource **ppIBitmapSource)
+{
+    return IWICBitmapDecoder_GetPreview(iface, ppIBitmapSource);
+}
+
+HRESULT WINAPI IWICBitmapDecoder_GetColorContexts_Proxy_W(IWICBitmapDecoder *iface,
+    UINT cCount, IWICColorContext **ppIColorContexts, UINT *pcActualCount)
+{
+    return IWICBitmapDecoder_GetColorContexts(iface, cCount, ppIColorContexts, pcActualCount);
+}
+
+HRESULT WINAPI IWICBitmapDecoder_GetThumbnail_Proxy_W(IWICBitmapDecoder *iface,
+    IWICBitmapSource **ppIThumbnail)
+{
+    return IWICBitmapDecoder_GetThumbnail(iface, ppIThumbnail);
+}
+
+HRESULT WINAPI IWICBitmapDecoder_GetFrameCount_Proxy_W(IWICBitmapDecoder *iface,
+    UINT *pCount)
+{
+    return IWICBitmapDecoder_GetFrameCount(iface, pCount);
+}
+
+HRESULT WINAPI IWICBitmapDecoder_GetFrame_Proxy_W(IWICBitmapDecoder *iface,
+    UINT index, IWICBitmapFrameDecode **ppIBitmapFrame)
+{
+    return IWICBitmapDecoder_GetFrame(iface, index, ppIBitmapFrame);
+}
+
 HRESULT WINAPI IWICBitmapFlipRotator_Initialize_Proxy_W(IWICBitmapFlipRotator *iface,
     IWICBitmapSource *pISource, WICBitmapTransformOptions options)
 {
