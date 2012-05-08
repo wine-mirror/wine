@@ -62,7 +62,7 @@
 @ stdcall IWICComponentInfo_GetVersion_Proxy(ptr long ptr ptr) IWICComponentInfo_GetVersion_Proxy_W
 @ stdcall IWICFastMetadataEncoder_Commit_Proxy(ptr) IWICFastMetadataEncoder_Commit_Proxy_W
 @ stdcall IWICFastMetadataEncoder_GetMetadataQueryWriter_Proxy(ptr ptr) IWICFastMetadataEncoder_GetMetadataQueryWriter_Proxy_W
-@ stub IWICFormatConverter_Initialize_Proxy
+@ stdcall IWICFormatConverter_Initialize_Proxy(ptr ptr ptr long ptr double long) IWICFormatConverter_Initialize_Proxy_W
 @ stdcall IWICImagingFactory_CreateBitmapClipper_Proxy(ptr ptr) IWICImagingFactory_CreateBitmapClipper_Proxy_W
 @ stdcall IWICImagingFactory_CreateBitmapFlipRotator_Proxy(ptr ptr) IWICImagingFactory_CreateBitmapFlipRotator_Proxy_W
 @ stdcall IWICImagingFactory_CreateBitmapFromHBITMAP_Proxy(ptr ptr ptr long ptr) IWICImagingFactory_CreateBitmapFromHBITMAP_Proxy_W

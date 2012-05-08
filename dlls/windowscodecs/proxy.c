@@ -351,6 +351,14 @@ HRESULT WINAPI IWICBitmapFrameDecode_GetThumbnail_Proxy_W(IWICBitmapFrameDecode 
     return IWICBitmapFrameDecode_GetThumbnail(iface, ppIThumbnail);
 }
 
+HRESULT WINAPI IWICFormatConverter_Initialize_Proxy_W(IWICFormatConverter *iface,
+    IWICBitmapSource *pISource, REFWICPixelFormatGUID dstFormat, WICBitmapDitherType dither,
+    IWICPalette *pIPalette, double alphaThresholdPercent, WICBitmapPaletteType paletteTranslate)
+{
+    return IWICFormatConverter_Initialize(iface, pISource, dstFormat, dither,
+        pIPalette, alphaThresholdPercent, paletteTranslate);
+}
+
 HRESULT WINAPI IWICImagingFactory_CreateBitmapClipper_Proxy_W(IWICImagingFactory *pFactory,
     IWICBitmapClipper **ppIBitmapClipper)
 {
