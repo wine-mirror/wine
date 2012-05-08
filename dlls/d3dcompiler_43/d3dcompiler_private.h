@@ -216,7 +216,15 @@ enum parse_status
     PARSE_ERR = 2
 };
 
-struct asm_parser {
+struct compilation_messages
+{
+    char *string;
+    unsigned int size;
+    unsigned int capacity;
+};
+
+struct asm_parser
+{
     /* The function table of the parser implementation */
     const struct asmparser_backend *funcs;
 
@@ -225,9 +233,7 @@ struct asm_parser {
     unsigned int m3x3pad_count;
 
     enum parse_status status;
-    char *messages;
-    unsigned int messagesize;
-    unsigned int messagecapacity;
+    struct compilation_messages messages;
     unsigned int line_no;
 };
 
@@ -255,6 +261,7 @@ struct bwriter_shader *parse_asm_shader(char **messages) DECLSPEC_HIDDEN;
 #define PRINTF_ATTR(fmt,args)
 #endif
 
+void compilation_message(struct compilation_messages *msg, const char *fmt, va_list args) DECLSPEC_HIDDEN;
 void asmparser_message(struct asm_parser *ctx, const char *fmt, ...) PRINTF_ATTR(2,3) DECLSPEC_HIDDEN;
 static inline void set_parse_status(enum parse_status *current, enum parse_status update)
 {

@@ -26,49 +26,17 @@
 
 #include "d3dcompiler_private.h"
 
-#include <stdio.h>
-
 WINE_DEFAULT_DEBUG_CHANNEL(asmshader);
 
 struct asm_parser asm_ctx;
 
-/* Error reporting function */
-void asmparser_message(struct asm_parser *ctx, const char *fmt, ...) {
+void asmparser_message(struct asm_parser *ctx, const char *fmt, ...)
+{
     va_list args;
-    char* newbuffer;
-    int rc, newsize;
 
-    if(ctx->messagecapacity == 0) {
-        ctx->messages = asm_alloc(MESSAGEBUFFER_INITIAL_SIZE);
-        if(ctx->messages == NULL) {
-            ERR("Error allocating memory for parser messages\n");
-            return;
-        }
-        ctx->messagecapacity = MESSAGEBUFFER_INITIAL_SIZE;
-    }
-
-    while(1) {
-        va_start(args, fmt);
-        rc = vsnprintf(ctx->messages + ctx->messagesize,
-                       ctx->messagecapacity - ctx->messagesize, fmt, args);
-        va_end(args);
-
-        if (rc < 0 ||                                           /* C89 */
-            rc >= ctx->messagecapacity - ctx->messagesize) {    /* C99 */
-            /* Resize the buffer */
-            newsize = ctx->messagecapacity * 2;
-            newbuffer = asm_realloc(ctx->messages, newsize);
-            if(newbuffer == NULL){
-                ERR("Error reallocating memory for parser messages\n");
-                return;
-            }
-            ctx->messages = newbuffer;
-            ctx->messagecapacity = newsize;
-        } else {
-            ctx->messagesize += rc;
-            return;
-        }
-    }
+    va_start(args, fmt);
+    compilation_message(&ctx->messages, fmt, args);
+    va_end(args);
 }
 
 static void asmshader_error(char const *s) {
@@ -1704,32 +1672,37 @@ predicate:            '(' REG_PREDICATE swizzle ')'
 
 %%
 
-struct bwriter_shader *parse_asm_shader(char **messages) {
+struct bwriter_shader *parse_asm_shader(char **messages)
+{
     struct bwriter_shader *ret = NULL;
 
     asm_ctx.shader = NULL;
     asm_ctx.status = PARSE_SUCCESS;
-    asm_ctx.messagesize = asm_ctx.messagecapacity = 0;
+    asm_ctx.messages.size = asm_ctx.messages.capacity = 0;
     asm_ctx.line_no = 1;
 
     asmshader_parse();
 
-    if(asm_ctx.status != PARSE_ERR) ret = asm_ctx.shader;
-    else if(asm_ctx.shader) SlDeleteShader(asm_ctx.shader);
+    if (asm_ctx.status != PARSE_ERR)
+        ret = asm_ctx.shader;
+    else if (asm_ctx.shader)
+        SlDeleteShader(asm_ctx.shader);
 
-    if(messages) {
-        if(asm_ctx.messagesize) {
+    if (messages)
+    {
+        if (asm_ctx.messages.size)
+        {
             /* Shrink the buffer to the used size */
-            *messages = asm_realloc(asm_ctx.messages, asm_ctx.messagesize + 1);
+            *messages = asm_realloc(asm_ctx.messages.string, asm_ctx.messages.size + 1);
             if(!*messages) {
                 ERR("Out of memory, no messages reported\n");
-                asm_free(asm_ctx.messages);
+                asm_free(asm_ctx.messages.string);
             }
         } else {
             *messages = NULL;
         }
     } else {
-        if(asm_ctx.messagecapacity) asm_free(asm_ctx.messages);
+        if(asm_ctx.messages.capacity) asm_free(asm_ctx.messages.string);
     }
 
     return ret;

@@ -23,6 +23,8 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <stdio.h>
+
 #include "d3dcompiler_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dcompiler);
@@ -714,4 +716,45 @@ HRESULT dxbc_write_blob(struct dxbc *dxbc, ID3DBlob **blob)
     *blob = object;
 
     return S_OK;
+}
+
+void compilation_message(struct compilation_messages *msg, const char *fmt, va_list args)
+{
+    char* buffer;
+    int rc, size;
+
+    if (msg->capacity == 0)
+    {
+        msg->string = asm_alloc(MESSAGEBUFFER_INITIAL_SIZE);
+        if (msg->string == NULL)
+        {
+            ERR("Error allocating memory for parser messages\n");
+            return;
+        }
+        msg->capacity = MESSAGEBUFFER_INITIAL_SIZE;
+    }
+
+    while (1)
+    {
+        rc = vsnprintf(msg->string + msg->size,
+                msg->capacity - msg->size, fmt, args);
+
+        if (rc < 0 || rc >= msg->capacity - msg->size)
+        {
+            size = msg->capacity * 2;
+            buffer = asm_realloc(msg->string, size);
+            if (buffer == NULL)
+            {
+                ERR("Error reallocating memory for parser messages\n");
+                return;
+            }
+            msg->string = buffer;
+            msg->capacity = size;
+        }
+        else
+        {
+            msg->size += rc;
+            return;
+        }
+    }
 }
