@@ -170,6 +170,15 @@ static inline INT GDI_ROUND(double val)
 #define GET_DC_PHYSDEV(dc,func) \
     get_physdev_entry_point( (dc)->physDev, FIELD_OFFSET(struct gdi_dc_funcs,func))
 
+static inline PHYSDEV pop_dc_driver( DC *dc, PHYSDEV dev )
+{
+    PHYSDEV *pdev = &dc->physDev;
+    while (*pdev && *pdev != dev) pdev = &(*pdev)->next;
+    if (!*pdev) return NULL;
+    *pdev = dev->next;
+    return dev;
+}
+
 /* bitmap object */
 
 typedef struct tagBITMAPOBJ

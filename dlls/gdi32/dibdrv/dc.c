@@ -742,4 +742,6 @@ const struct gdi_dc_funcs dib_driver =
     dibdrv_wglShareLists,               /* pwglShareLists */
     dibdrv_wglUseFontBitmapsA,          /* pwglUseFontBitmapsA */
     dibdrv_wglUseFontBitmapsW,          /* pwglUseFontBitmapsW */
+
+    GDI_PRIORITY_DIB_DRV                /* priority */
 };

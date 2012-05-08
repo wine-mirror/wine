@@ -232,7 +232,20 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     MFDRV_StrokePath,                /* pStrokePath */
     NULL,                            /* pSwapBuffers */
     NULL,                            /* pUnrealizePalette */
-    MFDRV_WidenPath                  /* pWidenPath */
+    MFDRV_WidenPath,                 /* pWidenPath */
+    NULL,                            /* pwglCopyContext */
+    NULL,                            /* pwglCreateContext */
+    NULL,                            /* pwglCreateContextAttribsARB */
+    NULL,                            /* pwglDeleteContext */
+    NULL,                            /* pwglGetPbufferDCARB */
+    NULL,                            /* pwglGetProcAddress */
+    NULL,                            /* pwglMakeContextCurrentARB */
+    NULL,                            /* pwglMakeCurrent */
+    NULL,                            /* pwglSetPixelFormatWINE */
+    NULL,                            /* pwglShareLists */
+    NULL,                            /* pwglUseFontBitmapsA */
+    NULL,                            /* pwglUseFontBitmapsW */
+    GDI_PRIORITY_GRAPHICS_DRV        /* priority */
 };
 
 

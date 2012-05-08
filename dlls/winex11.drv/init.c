@@ -583,6 +583,7 @@ static const struct gdi_dc_funcs x11drv_funcs =
     X11DRV_wglShareLists,               /* pwglShareLists */
     X11DRV_wglUseFontBitmapsA,          /* pwglUseFontBitmapsA */
     X11DRV_wglUseFontBitmapsW,          /* pwglUseFontBitmapsW */
+    GDI_PRIORITY_GRAPHICS_DRV           /* priority */
 };
 
 

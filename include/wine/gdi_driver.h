@@ -196,8 +196,6 @@ struct gdi_dc_funcs
     BOOL     (*pSwapBuffers)(PHYSDEV);
     BOOL     (*pUnrealizePalette)(HPALETTE);
     BOOL     (*pWidenPath)(PHYSDEV);
-
-    /* OpenGL32 */
     BOOL     (*pwglCopyContext)(HGLRC,HGLRC,UINT);
     HGLRC    (*pwglCreateContext)(PHYSDEV);
     HGLRC    (*pwglCreateContextAttribsARB)(PHYSDEV,HGLRC,const int*);
@@ -210,10 +208,19 @@ struct gdi_dc_funcs
     BOOL     (*pwglShareLists)(HGLRC,HGLRC);
     BOOL     (*pwglUseFontBitmapsA)(PHYSDEV,DWORD,DWORD,DWORD);
     BOOL     (*pwglUseFontBitmapsW)(PHYSDEV,DWORD,DWORD,DWORD);
+
+    /* priority order for the driver on the stack */
+    UINT       priority;
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 26
+#define WINE_GDI_DRIVER_VERSION 27
+
+#define GDI_PRIORITY_NULL_DRV        0  /* null driver */
+#define GDI_PRIORITY_FONT_DRV      100  /* any font driver */
+#define GDI_PRIORITY_GRAPHICS_DRV  200  /* any graphics driver */
+#define GDI_PRIORITY_DIB_DRV       300  /* the DIB driver */
+#define GDI_PRIORITY_PATH_DRV      400  /* the path driver */
 
 static inline PHYSDEV get_physdev_entry_point( PHYSDEV dev, size_t offset )
 {
@@ -226,17 +233,11 @@ static inline PHYSDEV get_physdev_entry_point( PHYSDEV dev, size_t offset )
 
 static inline void push_dc_driver( PHYSDEV *dev, PHYSDEV physdev, const struct gdi_dc_funcs *funcs )
 {
+    while ((*dev)->funcs->priority > funcs->priority) dev = &(*dev)->next;
     physdev->funcs = funcs;
     physdev->next = *dev;
     physdev->hdc = (*dev)->hdc;
     *dev = physdev;
-}
-
-static inline PHYSDEV pop_dc_driver( PHYSDEV *dev )
-{
-    PHYSDEV ret = *dev;
-    *dev = ret->next;
-    return ret;
 }
 
 #endif /* __WINE_WINE_GDI_DRIVER_H */

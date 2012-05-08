@@ -103,9 +103,7 @@ static inline struct path_physdev *get_path_physdev( PHYSDEV dev )
 
 static inline void pop_path_driver( DC *dc, struct path_physdev *physdev )
 {
-    PHYSDEV *dev = &dc->physDev;
-    while (*dev != &physdev->dev) dev = &(*dev)->next;
-    *dev = physdev->dev.next;
+    pop_dc_driver( dc, &physdev->dev );
     HeapFree( GetProcessHeap(), 0, physdev );
 }
 
@@ -2369,5 +2367,17 @@ const struct gdi_dc_funcs path_driver =
     NULL,                               /* pSwapBuffers */
     NULL,                               /* pUnrealizePalette */
     NULL,                               /* pWidenPath */
-    /* OpenGL not supported */
+    NULL,                               /* pwglCopyContext */
+    NULL,                               /* pwglCreateContext */
+    NULL,                               /* pwglCreateContextAttribsARB */
+    NULL,                               /* pwglDeleteContext */
+    NULL,                               /* pwglGetPbufferDCARB */
+    NULL,                               /* pwglGetProcAddress */
+    NULL,                               /* pwglMakeContextCurrentARB */
+    NULL,                               /* pwglMakeCurrent */
+    NULL,                               /* pwglSetPixelFormatWINE */
+    NULL,                               /* pwglShareLists */
+    NULL,                               /* pwglUseFontBitmapsA */
+    NULL,                               /* pwglUseFontBitmapsW */
+    GDI_PRIORITY_PATH_DRV               /* priority */
 };

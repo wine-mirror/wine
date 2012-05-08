@@ -156,7 +156,8 @@ void free_dc_ptr( DC *dc )
 
     while (dc->physDev != &dc->nulldrv)
     {
-        PHYSDEV physdev = pop_dc_driver( &dc->physDev );
+        PHYSDEV physdev = dc->physDev;
+        dc->physDev = physdev->next;
         physdev->funcs->pDeleteDC( physdev );
         if (physdev == dc->dibdrv) dc->dibdrv = NULL;
     }

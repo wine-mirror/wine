@@ -875,6 +875,8 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_wglShareLists,              /* pwglShareLists */
     nulldrv_wglUseFontBitmapsA,         /* pwglUseFontBitmapsA */
     nulldrv_wglUseFontBitmapsW,         /* pwglUseFontBitmapsW */
+
+    GDI_PRIORITY_NULL_DRV               /* priority */
 };
 
 
