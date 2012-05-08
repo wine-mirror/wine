@@ -107,7 +107,7 @@
 @ stdcall WICConvertBitmapSource(ptr ptr ptr)
 @ stub WICCreateBitmapFromSection
 @ stub WICCreateColorContext_Proxy
-@ stub WICCreateImagingFactory_Proxy
+@ stdcall WICCreateImagingFactory_Proxy(long ptr)
 @ stub WICGetMetadataContentSize
 @ stub WICMapGuidToShortName
 @ stub WICMapSchemaToName

@@ -22,6 +22,7 @@ C_SRCS = \
 	palette.c \
 	pngformat.c \
 	propertybag.c \
+	proxy.c \
 	regsvr.c \
 	stream.c \
 	tgaformat.c \
