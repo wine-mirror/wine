@@ -2371,7 +2371,6 @@ const struct gdi_dc_funcs path_driver =
     NULL,                               /* pwglCreateContext */
     NULL,                               /* pwglCreateContextAttribsARB */
     NULL,                               /* pwglDeleteContext */
-    NULL,                               /* pwglGetPbufferDCARB */
     NULL,                               /* pwglGetProcAddress */
     NULL,                               /* pwglMakeContextCurrentARB */
     NULL,                               /* pwglMakeCurrent */

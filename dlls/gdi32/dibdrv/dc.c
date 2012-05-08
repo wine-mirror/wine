@@ -523,15 +523,6 @@ static BOOL dibdrv_wglDeleteContext( HGLRC ctx )
 }
 
 /***********************************************************************
- *           dibdrv_wglGetPbufferDCARB
- */
-static HDC dibdrv_wglGetPbufferDCARB( PHYSDEV dev, void *buffer )
-{
-    FIXME( "Not supported on DIB section\n" );
-    return 0;
-}
-
-/***********************************************************************
  *           dibdrv_wglGetProcAddress
  */
 static PROC dibdrv_wglGetProcAddress( LPCSTR name )
@@ -734,7 +725,6 @@ const struct gdi_dc_funcs dib_driver =
     dibdrv_wglCreateContext,            /* pwglCreateContext */
     dibdrv_wglCreateContextAttribsARB,  /* pwglCreateContextAttribsARB */
     dibdrv_wglDeleteContext,            /* pwglDeleteContext */
-    dibdrv_wglGetPbufferDCARB,          /* pwglGetPbufferDCARB */
     dibdrv_wglGetProcAddress,           /* pwglGetProcAddress */
     dibdrv_wglMakeContextCurrentARB,    /* pwglMakeContextCurrentARB */
     dibdrv_wglMakeCurrent,              /* pwglMakeCurrent */

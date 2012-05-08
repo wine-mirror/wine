@@ -237,7 +237,6 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     NULL,                            /* pwglCreateContext */
     NULL,                            /* pwglCreateContextAttribsARB */
     NULL,                            /* pwglDeleteContext */
-    NULL,                            /* pwglGetPbufferDCARB */
     NULL,                            /* pwglGetProcAddress */
     NULL,                            /* pwglMakeContextCurrentARB */
     NULL,                            /* pwglMakeCurrent */

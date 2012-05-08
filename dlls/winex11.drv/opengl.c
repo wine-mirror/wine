@@ -2589,34 +2589,37 @@ static GLboolean WINAPI X11DRV_wglDestroyPbufferARB(HPBUFFERARB hPbuffer)
 }
 
 /**
- * glxdrv_wglGetPbufferDCARB
+ * X11DRV_wglGetPbufferDCARB
  *
  * WGL_ARB_pbuffer: wglGetPbufferDCARB
- * The function wglGetPbufferDCARB returns a device context for a pbuffer.
- * Gdi32 implements the part of this function which creates a device context.
- * This part associates the physDev with the X drawable of the pbuffer.
  */
-static HDC glxdrv_wglGetPbufferDCARB(PHYSDEV dev, HPBUFFERARB hPbuffer)
+static HDC WINAPI X11DRV_wglGetPbufferDCARB(HPBUFFERARB hPbuffer)
 {
-    X11DRV_PDEVICE *physDev = get_glxdrv_dev( dev )->x11dev;
+    struct x11drv_escape_set_drawable escape;
     Wine_GLPBuffer* object = hPbuffer;
+    HDC hdc;
 
     if (NULL == object) {
         SetLastError(ERROR_INVALID_HANDLE);
         return NULL;
     }
 
-    /* The function wglGetPbufferDCARB returns a DC to which the pbuffer can be connected.
-     * All formats in our pixelformat list are compatible with each other and the main drawable. */
-    physDev->current_pf = object->fmt->iPixelFormat;
-    physDev->drawable = object->drawable;
-    physDev->gl_drawable = object->drawable;
-    physDev->gl_type = DC_GL_PBUFFER;
-    SetRect( &physDev->drawable_rect, 0, 0, object->width, object->height );
-    physDev->dc_rect = physDev->drawable_rect;
+    hdc = CreateDCA( "DISPLAY", NULL, NULL, NULL );
+    if (!hdc) return 0;
 
-    TRACE("(%p)->(%p)\n", hPbuffer, dev->hdc);
-    return dev->hdc;
+    escape.code = X11DRV_SET_DRAWABLE;
+    escape.drawable = object->drawable;
+    escape.mode = IncludeInferiors;
+    SetRect( &escape.drawable_rect, 0, 0, object->width, object->height );
+    escape.dc_rect = escape.drawable_rect;
+    escape.fbconfig_id = object->fmt->fmt_id;
+    escape.gl_drawable = object->drawable;
+    escape.pixmap = 0;
+    escape.gl_type = DC_GL_PBUFFER;
+    ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
+
+    TRACE( "(%p)->(%p)\n", hPbuffer, hdc );
+    return hdc;
 }
 
 /**
@@ -3552,7 +3555,7 @@ static const WineGLExtension WGL_ARB_pbuffer =
   {
     { "wglCreatePbufferARB", X11DRV_wglCreatePbufferARB },
     { "wglDestroyPbufferARB", X11DRV_wglDestroyPbufferARB },
-    { "wglGetPbufferDCARB", (void *)1 /* not called directly */ },
+    { "wglGetPbufferDCARB", X11DRV_wglGetPbufferDCARB },
     { "wglQueryPbufferARB", X11DRV_wglQueryPbufferARB },
     { "wglReleasePbufferDCARB", X11DRV_wglReleasePbufferDCARB },
     { "wglSetPbufferAttribARB", X11DRV_wglSetPbufferAttribARB },
@@ -3992,7 +3995,6 @@ static const struct gdi_dc_funcs glxdrv_funcs =
     glxdrv_wglCreateContext,            /* pwglCreateContext */
     glxdrv_wglCreateContextAttribsARB,  /* pwglCreateContextAttribsARB */
     glxdrv_wglDeleteContext,            /* pwglDeleteContext */
-    glxdrv_wglGetPbufferDCARB,          /* pwglGetPbufferDCARB */
     glxdrv_wglGetProcAddress,           /* pwglGetProcAddress */
     glxdrv_wglMakeContextCurrentARB,    /* pwglMakeContextCurrentARB */
     glxdrv_wglMakeCurrent,              /* pwglMakeCurrent */

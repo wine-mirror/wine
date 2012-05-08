@@ -500,15 +500,6 @@ static PROC X11DRV_wglGetProcAddress( LPCSTR proc )
 }
 
 /***********************************************************************
- *		X11DRV_wglGetPbufferDCARB
- */
-static HDC X11DRV_wglGetPbufferDCARB( PHYSDEV dev, void *hPbuffer )
-{
-    opengl_error();
-    return NULL;
-}
-
-/***********************************************************************
  *		X11DRV_wglSetPixelFormatWINE
  */
 static BOOL X11DRV_wglSetPixelFormatWINE( PHYSDEV dev, int fmt, const PIXELFORMATDESCRIPTOR *ppfd )
@@ -658,7 +649,6 @@ static const struct gdi_dc_funcs x11drv_funcs =
     X11DRV_wglCreateContext,            /* pwglCreateContext */
     X11DRV_wglCreateContextAttribsARB,  /* pwglCreateContextAttribsARB */
     NULL,                               /* pwglDeleteContext */
-    X11DRV_wglGetPbufferDCARB,          /* pwglGetPbufferDCARB */
     X11DRV_wglGetProcAddress,           /* pwglGetProcAddress */
     NULL,                               /* pwglMakeContextCurrentARB */
     NULL,                               /* pwglMakeCurrent */

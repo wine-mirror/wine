@@ -692,11 +692,6 @@ static PROC nulldrv_wglGetProcAddress( LPCSTR name )
     return NULL;
 }
 
-static HDC nulldrv_wglGetPbufferDCARB( PHYSDEV dev, void *pbuffer )
-{
-    return 0;
-}
-
 static BOOL nulldrv_wglMakeCurrent( PHYSDEV dev, HGLRC ctx )
 {
     return FALSE;
@@ -867,7 +862,6 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_wglCreateContext,           /* pwglCreateContext */
     nulldrv_wglCreateContextAttribsARB, /* pwglCreateContextAttribsARB */
     nulldrv_wglDeleteContext,           /* pwglDeleteContext */
-    nulldrv_wglGetPbufferDCARB,         /* pwglGetPbufferDCARB */
     nulldrv_wglGetProcAddress,          /* pwglGetProcAddress */
     nulldrv_wglMakeContextCurrentARB,   /* pwglMakeContextCurrentARB */
     nulldrv_wglMakeCurrent,             /* pwglMakeCurrent */

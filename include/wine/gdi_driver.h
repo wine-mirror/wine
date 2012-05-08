@@ -200,7 +200,6 @@ struct gdi_dc_funcs
     HGLRC    (*pwglCreateContext)(PHYSDEV);
     HGLRC    (*pwglCreateContextAttribsARB)(PHYSDEV,HGLRC,const int*);
     BOOL     (*pwglDeleteContext)(HGLRC);
-    HDC      (*pwglGetPbufferDCARB)(PHYSDEV,void*);
     PROC     (*pwglGetProcAddress)(LPCSTR);
     BOOL     (*pwglMakeContextCurrentARB)(PHYSDEV,PHYSDEV,HGLRC);
     BOOL     (*pwglMakeCurrent)(PHYSDEV,HGLRC);
@@ -214,7 +213,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 27
+#define WINE_GDI_DRIVER_VERSION 28
 
 #define GDI_PRIORITY_NULL_DRV        0  /* null driver */
 #define GDI_PRIORITY_FONT_DRV      100  /* any font driver */

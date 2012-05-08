@@ -179,34 +179,6 @@ HDC WINAPI wglGetCurrentDC(void)
 }
 
 /***********************************************************************
- *		wglGetPbufferDCARB
- */
-static HDC WINAPI wglGetPbufferDCARB(void *pbuffer)
-{
-    HDC ret = 0;
-
-    /* Create a device context to associate with the pbuffer */
-    HDC hdc = CreateDCA("DISPLAY", NULL, NULL, NULL);
-    DC *dc = get_dc_ptr(hdc);
-
-    TRACE("(%p)\n", pbuffer);
-
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pwglGetPbufferDCARB );
-
-        /* The display driver has to do the rest of the work because
-         * we need access to lowlevel datatypes which we can't access here
-         */
-        ret = physdev->funcs->pwglGetPbufferDCARB( physdev, pbuffer );
-        release_dc_ptr( dc );
-    }
-    TRACE("(%p), hdc=%p\n", pbuffer, ret);
-    if (!ret) DeleteDC( hdc );
-    return ret;
-}
-
-/***********************************************************************
  *		wglMakeCurrent (OPENGL32.@)
  */
 BOOL WINAPI wglMakeCurrent(HDC hdc, HGLRC hglrc)
@@ -388,8 +360,6 @@ PROC WINAPI wglGetProcAddress(LPCSTR func)
         return (PROC)wglCreateContextAttribsARB;
     else if(ret && strcmp(func, "wglMakeContextCurrentARB") == 0)
         return (PROC)wglMakeContextCurrentARB;
-    else if(ret && strcmp(func, "wglGetPbufferDCARB") == 0)
-        return (PROC)wglGetPbufferDCARB;
     else if(ret && strcmp(func, "wglSetPixelFormatWINE") == 0)
         return (PROC)wglSetPixelFormatWINE;
 
