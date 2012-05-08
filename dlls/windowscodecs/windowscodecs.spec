@@ -102,8 +102,8 @@
 @ stub IWICPixelFormatInfo_GetBitsPerPixel_Proxy
 @ stub IWICPixelFormatInfo_GetChannelCount_Proxy
 @ stub IWICPixelFormatInfo_GetChannelMask_Proxy
-@ stub IWICStream_InitializeFromIStream_Proxy
-@ stub IWICStream_InitializeFromMemory_Proxy
+@ stdcall IWICStream_InitializeFromIStream_Proxy(ptr ptr) IWICStream_InitializeFromIStream_Proxy_W
+@ stdcall IWICStream_InitializeFromMemory_Proxy(ptr ptr long) IWICStream_InitializeFromMemory_Proxy_W
 @ stdcall WICConvertBitmapSource(ptr ptr ptr)
 @ stub WICCreateBitmapFromSection
 @ stub WICCreateColorContext_Proxy

@@ -608,6 +608,18 @@ HRESULT WINAPI IWICPalette_HasAlpha_Proxy_W(IWICPalette *iface,
     return IWICPalette_HasAlpha(iface, pfHasAlpha);
 }
 
+HRESULT WINAPI IWICStream_InitializeFromIStream_Proxy_W(IWICStream *iface,
+    IStream *pIStream)
+{
+    return IWICStream_InitializeFromIStream(iface, pIStream);
+}
+
+HRESULT WINAPI IWICStream_InitializeFromMemory_Proxy_W(IWICStream *iface,
+    BYTE *pbBuffer, DWORD cbBufferSize)
+{
+    return IWICStream_InitializeFromMemory(iface, pbBuffer, cbBufferSize);
+}
+
 HRESULT WINAPI WICCreateImagingFactory_Proxy(UINT SDKVersion, IWICImagingFactory **ppIImagingFactory)
 {
     TRACE("%x, %p\n", SDKVersion, ppIImagingFactory);
