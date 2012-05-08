@@ -633,7 +633,6 @@ static void process_detach(void)
 
     /* cleanup GDI */
     X11DRV_GDI_Finalize();
-    X11DRV_OpenGL_Cleanup();
 
     IME_UnregisterClasses();
     DeleteCriticalSection( &X11DRV_CritSection );

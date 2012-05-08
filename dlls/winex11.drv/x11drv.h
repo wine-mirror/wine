@@ -216,32 +216,9 @@ extern COLORREF X11DRV_SetDCPenColor( PHYSDEV dev, COLORREF crColor ) DECLSPEC_H
 extern void X11DRV_SetDeviceClipping( PHYSDEV dev, HRGN rgn ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_SetDeviceGammaRamp( PHYSDEV dev, LPVOID ramp ) DECLSPEC_HIDDEN;
 extern COLORREF X11DRV_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color ) DECLSPEC_HIDDEN;
-extern BOOL X11DRV_SetPixelFormat(PHYSDEV dev, int iPixelFormat, const PIXELFORMATDESCRIPTOR *ppfd) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
                                PHYSDEV src_dev, struct bitblt_coords *src, DWORD rop ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_UnrealizePalette( HPALETTE hpal ) DECLSPEC_HIDDEN;
-extern BOOL X11DRV_wglCopyContext( HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask ) DECLSPEC_HIDDEN;
-extern HGLRC X11DRV_wglCreateContext( PHYSDEV dev ) DECLSPEC_HIDDEN;
-extern HGLRC X11DRV_wglCreateContextAttribsARB( PHYSDEV dev, HGLRC hShareContext, const int* attribList ) DECLSPEC_HIDDEN;
-extern BOOL X11DRV_wglDeleteContext( HGLRC hglrc ) DECLSPEC_HIDDEN;
-extern PROC X11DRV_wglGetProcAddress( LPCSTR proc ) DECLSPEC_HIDDEN;
-extern HDC X11DRV_wglGetPbufferDCARB( PHYSDEV dev, void *pbuffer ) DECLSPEC_HIDDEN;
-extern BOOL X11DRV_wglMakeContextCurrentARB( PHYSDEV draw_dev, PHYSDEV read_dev, HGLRC hglrc ) DECLSPEC_HIDDEN;
-extern BOOL X11DRV_wglMakeCurrent( PHYSDEV dev, HGLRC hglrc ) DECLSPEC_HIDDEN;
-extern BOOL X11DRV_wglSetPixelFormatWINE( PHYSDEV dev, int iPixelFormat, const PIXELFORMATDESCRIPTOR *ppfd ) DECLSPEC_HIDDEN;
-extern BOOL X11DRV_wglShareLists( HGLRC hglrc1, HGLRC hglrc2 ) DECLSPEC_HIDDEN;
-extern BOOL X11DRV_wglUseFontBitmapsA( PHYSDEV dev, DWORD first, DWORD count, DWORD listBase ) DECLSPEC_HIDDEN;
-extern BOOL X11DRV_wglUseFontBitmapsW( PHYSDEV dev, DWORD first, DWORD count, DWORD listBase ) DECLSPEC_HIDDEN;
-
-/* OpenGL / X11 driver functions */
-extern int X11DRV_ChoosePixelFormat(PHYSDEV dev,
-		                      const PIXELFORMATDESCRIPTOR *pppfd) DECLSPEC_HIDDEN;
-extern int X11DRV_DescribePixelFormat(PHYSDEV dev,
-		                        int iPixelFormat, UINT nBytes,
-					PIXELFORMATDESCRIPTOR *ppfd) DECLSPEC_HIDDEN;
-extern int X11DRV_GetPixelFormat(PHYSDEV dev) DECLSPEC_HIDDEN;
-extern BOOL X11DRV_SwapBuffers(PHYSDEV dev) DECLSPEC_HIDDEN;
-extern void X11DRV_OpenGL_Cleanup(void) DECLSPEC_HIDDEN;
 
 /* X11 driver internal functions */
 
@@ -280,6 +257,7 @@ extern int client_side_antialias_with_render DECLSPEC_HIDDEN;
 extern const struct gdi_dc_funcs *X11DRV_XRender_Init(void) DECLSPEC_HIDDEN;
 extern void X11DRV_XRender_Finalize(void) DECLSPEC_HIDDEN;
 
+extern const struct gdi_dc_funcs *get_glx_driver(void) DECLSPEC_HIDDEN;
 extern BOOL destroy_glxpixmap(Display *display, XID glxpixmap) DECLSPEC_HIDDEN;
 
 /* IME support */

@@ -145,6 +145,19 @@ typedef struct wine_glpbuffer {
     int        texture_level;
 } Wine_GLPBuffer;
 
+struct glx_physdev
+{
+    struct gdi_physdev dev;
+    X11DRV_PDEVICE    *x11dev;
+};
+
+static const struct gdi_dc_funcs glxdrv_funcs;
+
+static inline struct glx_physdev *get_glxdrv_dev( PHYSDEV dev )
+{
+    return (struct glx_physdev *)dev;
+}
+
 static struct list context_list = LIST_INIT( context_list );
 static struct WineGLInfo WineGLInfo = { 0 };
 static int use_render_texture_emulation = 1;
@@ -422,12 +435,6 @@ done:
     return ret;
 }
 
-void X11DRV_OpenGL_Cleanup(void)
-{
-    HeapFree(GetProcessHeap(), 0, WineGLInfo.glExtensions);
-    infoInitialized = FALSE;
-}
-
 static BOOL has_opengl(void)
 {
     static int init_done;
@@ -608,10 +615,6 @@ failed:
     wine_dlclose(opengl_handle, NULL, 0);
     opengl_handle = NULL;
     return FALSE;
-}
-
-static inline void free_context(Wine_GLContext *context)
-{
 }
 
 static inline BOOL is_valid_context( Wine_GLContext *ctx )
@@ -1180,13 +1183,13 @@ static XID create_bitmap_glxpixmap(X11DRV_PDEVICE *physDev, WineGLPixelFormat *f
 }
 
 /**
- * X11DRV_ChoosePixelFormat
+ * glxdrv_ChoosePixelFormat
  *
  * Equivalent to glXChooseVisual.
  */
-int X11DRV_ChoosePixelFormat(PHYSDEV dev, const PIXELFORMATDESCRIPTOR *ppfd)
+static int glxdrv_ChoosePixelFormat(PHYSDEV dev, const PIXELFORMATDESCRIPTOR *ppfd)
 {
-    X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
+    X11DRV_PDEVICE *physDev = get_glxdrv_dev( dev )->x11dev;
     WineGLPixelFormat *list;
     int onscreen_size;
     int ret = 0;
@@ -1377,15 +1380,16 @@ int X11DRV_ChoosePixelFormat(PHYSDEV dev, const PIXELFORMATDESCRIPTOR *ppfd)
 
     return ret;
 }
+
 /**
- * X11DRV_DescribePixelFormat
+ * glxdrv_DescribePixelFormat
  *
  * Get the pixel-format descriptor associated to the given id
  */
-int X11DRV_DescribePixelFormat(PHYSDEV dev, int iPixelFormat,
-                               UINT nBytes, PIXELFORMATDESCRIPTOR *ppfd)
+static int glxdrv_DescribePixelFormat(PHYSDEV dev, int iPixelFormat,
+                                      UINT nBytes, PIXELFORMATDESCRIPTOR *ppfd)
 {
-  X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
+  X11DRV_PDEVICE *physDev = get_glxdrv_dev( dev )->x11dev;
   /*XVisualInfo *vis;*/
   int value;
   int rb,gb,bb,ab;
@@ -1522,13 +1526,13 @@ int X11DRV_DescribePixelFormat(PHYSDEV dev, int iPixelFormat,
 }
 
 /**
- * X11DRV_GetPixelFormat
+ * glxdrv_GetPixelFormat
  *
  * Get the pixel-format id used by this DC
  */
-int X11DRV_GetPixelFormat(PHYSDEV dev)
+static int glxdrv_GetPixelFormat(PHYSDEV dev)
 {
-  X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
+  X11DRV_PDEVICE *physDev = get_glxdrv_dev( dev )->x11dev;
   WineGLPixelFormat *fmt;
   int tmp;
   TRACE("(%p)\n", physDev);
@@ -1634,13 +1638,13 @@ static BOOL internal_SetPixelFormat(X11DRV_PDEVICE *physDev,
 
 
 /**
- * X11DRV_SetPixelFormat
+ * glxdrv_SetPixelFormat
  *
  * Set the pixel-format id used by this DC
  */
-BOOL X11DRV_SetPixelFormat(PHYSDEV dev, int iPixelFormat, const PIXELFORMATDESCRIPTOR *ppfd)
+static BOOL glxdrv_SetPixelFormat(PHYSDEV dev, int iPixelFormat, const PIXELFORMATDESCRIPTOR *ppfd)
 {
-    X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
+    X11DRV_PDEVICE *physDev = get_glxdrv_dev( dev )->x11dev;
 
     TRACE("(%p,%d,%p)\n", physDev, iPixelFormat, ppfd);
 
@@ -1653,11 +1657,11 @@ BOOL X11DRV_SetPixelFormat(PHYSDEV dev, int iPixelFormat, const PIXELFORMATDESCR
 }
 
 /**
- * X11DRV_wglCopyContext
+ * glxdrv_wglCopyContext
  *
  * For OpenGL32 wglCopyContext.
  */
-BOOL X11DRV_wglCopyContext(HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask)
+static BOOL glxdrv_wglCopyContext(HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask)
 {
     Wine_GLContext *src = (Wine_GLContext*)hglrcSrc;
     Wine_GLContext *dst = (Wine_GLContext*)hglrcDst;
@@ -1677,9 +1681,9 @@ BOOL X11DRV_wglCopyContext(HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask)
  *
  * For OpenGL32 wglCreateContext.
  */
-HGLRC X11DRV_wglCreateContext(PHYSDEV dev)
+static HGLRC glxdrv_wglCreateContext(PHYSDEV dev)
 {
-    X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
+    X11DRV_PDEVICE *physDev = get_glxdrv_dev( dev )->x11dev;
     Wine_GLContext *ret;
     WineGLPixelFormat *fmt;
     int hdcPF = physDev->current_pf;
@@ -1719,11 +1723,11 @@ HGLRC X11DRV_wglCreateContext(PHYSDEV dev)
 }
 
 /**
- * X11DRV_wglDeleteContext
+ * glxdrv_wglDeleteContext
  *
  * For OpenGL32 wglDeleteContext.
  */
-BOOL X11DRV_wglDeleteContext(HGLRC hglrc)
+static BOOL glxdrv_wglDeleteContext(HGLRC hglrc)
 {
     Wine_GLContext *ctx = (Wine_GLContext *) hglrc;
 
@@ -1777,11 +1781,11 @@ static HDC WINAPI X11DRV_wglGetCurrentReadDCARB(void)
 }
 
 /**
- * X11DRV_wglGetProcAddress
+ * glxdrv_wglGetProcAddress
  *
  * For OpenGL32 wglGetProcAddress.
  */
-PROC X11DRV_wglGetProcAddress(LPCSTR lpszProc)
+static PROC glxdrv_wglGetProcAddress(LPCSTR lpszProc)
 {
     int i, j;
     const WineGLExtension *ext;
@@ -1814,13 +1818,13 @@ PROC X11DRV_wglGetProcAddress(LPCSTR lpszProc)
 }
 
 /**
- * X11DRV_wglMakeCurrent
+ * glxdrv_wglMakeCurrent
  *
  * For OpenGL32 wglMakeCurrent.
  */
-BOOL X11DRV_wglMakeCurrent(PHYSDEV dev, HGLRC hglrc)
+static BOOL glxdrv_wglMakeCurrent(PHYSDEV dev, HGLRC hglrc)
 {
-    X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
+    X11DRV_PDEVICE *physDev = get_glxdrv_dev( dev )->x11dev;
     BOOL ret;
     HDC hdc = dev->hdc;
     Wine_GLContext *ctx = (Wine_GLContext *) hglrc;
@@ -1888,14 +1892,14 @@ BOOL X11DRV_wglMakeCurrent(PHYSDEV dev, HGLRC hglrc)
 }
 
 /**
- * X11DRV_wglMakeContextCurrentARB
+ * glxdrv_wglMakeContextCurrentARB
  *
  * For OpenGL32 wglMakeContextCurrentARB
  */
-BOOL X11DRV_wglMakeContextCurrentARB( PHYSDEV draw_dev, PHYSDEV read_dev, HGLRC hglrc )
+static BOOL glxdrv_wglMakeContextCurrentARB( PHYSDEV draw_dev, PHYSDEV read_dev, HGLRC hglrc )
 {
-    X11DRV_PDEVICE *pDrawDev = get_x11drv_dev( draw_dev );
-    X11DRV_PDEVICE *pReadDev = get_x11drv_dev( read_dev );
+    X11DRV_PDEVICE *pDrawDev = get_glxdrv_dev( draw_dev )->x11dev;
+    X11DRV_PDEVICE *pReadDev = get_glxdrv_dev( read_dev )->x11dev;
     BOOL ret;
 
     TRACE("(%p,%p,%p)\n", pDrawDev, pReadDev, hglrc);
@@ -1950,11 +1954,11 @@ BOOL X11DRV_wglMakeContextCurrentARB( PHYSDEV draw_dev, PHYSDEV read_dev, HGLRC 
 }
 
 /**
- * X11DRV_wglShareLists
+ * glxdrv_wglShareLists
  *
  * For OpenGL32 wglShareLists.
  */
-BOOL X11DRV_wglShareLists(HGLRC hglrc1, HGLRC hglrc2)
+static BOOL glxdrv_wglShareLists(HGLRC hglrc1, HGLRC hglrc2)
 {
     Wine_GLContext *org  = (Wine_GLContext *) hglrc1;
     Wine_GLContext *dest = (Wine_GLContext *) hglrc2;
@@ -2119,11 +2123,11 @@ static BOOL internal_wglUseFontBitmaps(HDC hdc, DWORD first, DWORD count, DWORD 
 }
 
 /**
- * X11DRV_wglUseFontBitmapsA
+ * glxdrv_wglUseFontBitmapsA
  *
  * For OpenGL32 wglUseFontBitmapsA.
  */
-BOOL X11DRV_wglUseFontBitmapsA(PHYSDEV dev, DWORD first, DWORD count, DWORD listBase)
+static BOOL glxdrv_wglUseFontBitmapsA(PHYSDEV dev, DWORD first, DWORD count, DWORD listBase)
 {
      TRACE("(%p, %d, %d, %d)\n", dev->hdc, first, count, listBase);
 
@@ -2132,11 +2136,11 @@ BOOL X11DRV_wglUseFontBitmapsA(PHYSDEV dev, DWORD first, DWORD count, DWORD list
 }
 
 /**
- * X11DRV_wglUseFontBitmapsW
+ * glxdrv_wglUseFontBitmapsW
  *
  * For OpenGL32 wglUseFontBitmapsW.
  */
-BOOL X11DRV_wglUseFontBitmapsW(PHYSDEV dev, DWORD first, DWORD count, DWORD listBase)
+static BOOL glxdrv_wglUseFontBitmapsW(PHYSDEV dev, DWORD first, DWORD count, DWORD listBase)
 {
      TRACE("(%p, %d, %d, %d)\n", dev->hdc, first, count, listBase);
 
@@ -2237,13 +2241,13 @@ static void WINAPI X11DRV_wglFlush(void)
 }
 
 /**
- * X11DRV_wglCreateContextAttribsARB
+ * glxdrv_wglCreateContextAttribsARB
  *
  * WGL_ARB_create_context: wglCreateContextAttribsARB
  */
-HGLRC X11DRV_wglCreateContextAttribsARB(PHYSDEV dev, HGLRC hShareContext, const int* attribList)
+static HGLRC glxdrv_wglCreateContextAttribsARB(PHYSDEV dev, HGLRC hShareContext, const int* attribList)
 {
-    X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
+    X11DRV_PDEVICE *physDev = get_glxdrv_dev( dev )->x11dev;
     Wine_GLContext *ret;
     WineGLPixelFormat *fmt;
     int hdcPF = physDev->current_pf;
@@ -2585,16 +2589,16 @@ static GLboolean WINAPI X11DRV_wglDestroyPbufferARB(HPBUFFERARB hPbuffer)
 }
 
 /**
- * X11DRV_wglGetPbufferDCARB
+ * glxdrv_wglGetPbufferDCARB
  *
  * WGL_ARB_pbuffer: wglGetPbufferDCARB
  * The function wglGetPbufferDCARB returns a device context for a pbuffer.
  * Gdi32 implements the part of this function which creates a device context.
  * This part associates the physDev with the X drawable of the pbuffer.
  */
-HDC X11DRV_wglGetPbufferDCARB(PHYSDEV dev, HPBUFFERARB hPbuffer)
+static HDC glxdrv_wglGetPbufferDCARB(PHYSDEV dev, HPBUFFERARB hPbuffer)
 {
-    X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
+    X11DRV_PDEVICE *physDev = get_glxdrv_dev( dev )->x11dev;
     Wine_GLPBuffer* object = hPbuffer;
 
     if (NULL == object) {
@@ -3434,14 +3438,14 @@ static void WINAPI X11DRV_wglFreeMemoryNV(GLvoid* pointer) {
 }
 
 /**
- * X11DRV_wglSetPixelFormatWINE
+ * glxdrv_wglSetPixelFormatWINE
  *
  * WGL_WINE_pixel_format_passthrough: wglSetPixelFormatWINE
  * This is a WINE-specific wglSetPixelFormat which can set the pixel format multiple times.
  */
-BOOL X11DRV_wglSetPixelFormatWINE(PHYSDEV dev, int iPixelFormat, const PIXELFORMATDESCRIPTOR *ppfd)
+static BOOL glxdrv_wglSetPixelFormatWINE(PHYSDEV dev, int iPixelFormat, const PIXELFORMATDESCRIPTOR *ppfd)
 {
-    X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
+    X11DRV_PDEVICE *physDev = get_glxdrv_dev( dev )->x11dev;
 
     TRACE("(%p,%d,%p)\n", physDev, iPixelFormat, ppfd);
 
@@ -3516,7 +3520,7 @@ static const WineGLExtension WGL_ARB_create_context =
 {
   "WGL_ARB_create_context",
   {
-    { "wglCreateContextAttribsARB", X11DRV_wglCreateContextAttribsARB },
+    { "wglCreateContextAttribsARB", (void *)1 /* not called directly */ },
   }
 };
 
@@ -3533,7 +3537,7 @@ static const WineGLExtension WGL_ARB_make_current_read =
   "WGL_ARB_make_current_read",
   {
     { "wglGetCurrentReadDCARB", X11DRV_wglGetCurrentReadDCARB },
-    { "wglMakeContextCurrentARB", X11DRV_wglMakeContextCurrentARB },
+    { "wglMakeContextCurrentARB", (void *)1 /* not called directly */ },
   }
 };
 
@@ -3548,7 +3552,7 @@ static const WineGLExtension WGL_ARB_pbuffer =
   {
     { "wglCreatePbufferARB", X11DRV_wglCreatePbufferARB },
     { "wglDestroyPbufferARB", X11DRV_wglDestroyPbufferARB },
-    { "wglGetPbufferDCARB", X11DRV_wglGetPbufferDCARB },
+    { "wglGetPbufferDCARB", (void *)1 /* not called directly */ },
     { "wglQueryPbufferARB", X11DRV_wglQueryPbufferARB },
     { "wglReleasePbufferDCARB", X11DRV_wglReleasePbufferDCARB },
     { "wglSetPbufferAttribARB", X11DRV_wglSetPbufferAttribARB },
@@ -3604,7 +3608,7 @@ static const WineGLExtension WGL_WINE_pixel_format_passthrough =
 {
   "WGL_WINE_pixel_format_passthrough",
   {
-    { "wglSetPixelFormatWINE", X11DRV_wglSetPixelFormatWINE },
+    { "wglSetPixelFormatWINE", (void *)1 /* not called directly */ },
   }
 };
 
@@ -3713,13 +3717,13 @@ BOOL destroy_glxpixmap(Display *display, XID glxpixmap)
 }
 
 /**
- * X11DRV_SwapBuffers
+ * glxdrv_SwapBuffers
  *
  * Swap the buffers of this DC
  */
-BOOL X11DRV_SwapBuffers(PHYSDEV dev)
+static BOOL glxdrv_SwapBuffers(PHYSDEV dev)
 {
-  X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
+  X11DRV_PDEVICE *physDev = get_glxdrv_dev( dev )->x11dev;
   Wine_GLContext *ctx = NtCurrentTeb()->glContext;
 
   if (!has_opengl()) return FALSE;
@@ -3803,16 +3807,212 @@ XVisualInfo *visual_from_fbconfig_id( XID fbconfig_id )
     return ret;
 }
 
-#else  /* no OpenGL includes */
-
-void X11DRV_OpenGL_Cleanup(void)
+static BOOL create_glx_dc( PHYSDEV *pdev )
 {
+    /* assume that only the main x11 device implements GetDeviceCaps */
+    X11DRV_PDEVICE *x11dev = get_x11drv_dev( GET_NEXT_PHYSDEV( *pdev, pGetDeviceCaps ));
+    struct glx_physdev *physdev = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*physdev) );
+
+    if (!physdev) return FALSE;
+    physdev->x11dev = x11dev;
+    push_dc_driver( pdev, &physdev->dev, &glxdrv_funcs );
+    return TRUE;
 }
 
-static inline void opengl_error(void)
+/**********************************************************************
+ *	     glxdrv_CreateDC
+ */
+static BOOL glxdrv_CreateDC( PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
+                             LPCWSTR output, const DEVMODEW* initData )
 {
-    static int warned;
-    if (!warned++) ERR("No OpenGL support compiled in.\n");
+    return create_glx_dc( pdev );
+}
+
+/**********************************************************************
+ *	     glxdrv_CreateCompatibleDC
+ */
+static BOOL glxdrv_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
+{
+    if (orig)  /* chain to next driver first */
+    {
+        orig = GET_NEXT_PHYSDEV( orig, pCreateCompatibleDC );
+        if (!orig->funcs->pCreateCompatibleDC( orig, pdev )) return FALSE;
+    }
+    /* otherwise we have been called by x11drv */
+    return create_glx_dc( pdev );
+}
+
+/**********************************************************************
+ *	     glxdrv_DeleteDC
+ */
+static BOOL glxdrv_DeleteDC( PHYSDEV dev )
+{
+    struct glx_physdev *physdev = get_glxdrv_dev( dev );
+    HeapFree( GetProcessHeap(), 0, physdev );
+    return TRUE;
+}
+
+static const struct gdi_dc_funcs glxdrv_funcs =
+{
+    NULL,                               /* pAbortDoc */
+    NULL,                               /* pAbortPath */
+    NULL,                               /* pAlphaBlend */
+    NULL,                               /* pAngleArc */
+    NULL,                               /* pArc */
+    NULL,                               /* pArcTo */
+    NULL,                               /* pBeginPath */
+    NULL,                               /* pBlendImage */
+    glxdrv_ChoosePixelFormat,           /* pChoosePixelFormat */
+    NULL,                               /* pChord */
+    NULL,                               /* pCloseFigure */
+    NULL,                               /* pCopyBitmap */
+    NULL,                               /* pCreateBitmap */
+    glxdrv_CreateCompatibleDC,          /* pCreateCompatibleDC */
+    glxdrv_CreateDC,                    /* pCreateDC */
+    NULL,                               /* pDeleteBitmap */
+    glxdrv_DeleteDC,                    /* pDeleteDC */
+    NULL,                               /* pDeleteObject */
+    glxdrv_DescribePixelFormat,         /* pDescribePixelFormat */
+    NULL,                               /* pDeviceCapabilities */
+    NULL,                               /* pEllipse */
+    NULL,                               /* pEndDoc */
+    NULL,                               /* pEndPage */
+    NULL,                               /* pEndPath */
+    NULL,                               /* pEnumFonts */
+    NULL,                               /* pEnumICMProfiles */
+    NULL,                               /* pExcludeClipRect */
+    NULL,                               /* pExtDeviceMode */
+    NULL,                               /* pExtEscape */
+    NULL,                               /* pExtFloodFill */
+    NULL,                               /* pExtSelectClipRgn */
+    NULL,                               /* pExtTextOut */
+    NULL,                               /* pFillPath */
+    NULL,                               /* pFillRgn */
+    NULL,                               /* pFlattenPath */
+    NULL,                               /* pFontIsLinked */
+    NULL,                               /* pFrameRgn */
+    NULL,                               /* pGdiComment */
+    NULL,                               /* pGdiRealizationInfo */
+    NULL,                               /* pGetBoundsRect */
+    NULL,                               /* pGetCharABCWidths */
+    NULL,                               /* pGetCharABCWidthsI */
+    NULL,                               /* pGetCharWidth */
+    NULL,                               /* pGetDeviceCaps */
+    NULL,                               /* pGetDeviceGammaRamp */
+    NULL,                               /* pGetFontData */
+    NULL,                               /* pGetFontUnicodeRanges */
+    NULL,                               /* pGetGlyphIndices */
+    NULL,                               /* pGetGlyphOutline */
+    NULL,                               /* pGetICMProfile */
+    NULL,                               /* pGetImage */
+    NULL,                               /* pGetKerningPairs */
+    NULL,                               /* pGetNearestColor */
+    NULL,                               /* pGetOutlineTextMetrics */
+    NULL,                               /* pGetPixel */
+    glxdrv_GetPixelFormat,              /* pGetPixelFormat */
+    NULL,                               /* pGetSystemPaletteEntries */
+    NULL,                               /* pGetTextCharsetInfo */
+    NULL,                               /* pGetTextExtentExPoint */
+    NULL,                               /* pGetTextExtentExPointI */
+    NULL,                               /* pGetTextFace */
+    NULL,                               /* pGetTextMetrics */
+    NULL,                               /* pGradientFill */
+    NULL,                               /* pIntersectClipRect */
+    NULL,                               /* pInvertRgn */
+    NULL,                               /* pLineTo */
+    NULL,                               /* pModifyWorldTransform */
+    NULL,                               /* pMoveTo */
+    NULL,                               /* pOffsetClipRgn */
+    NULL,                               /* pOffsetViewportOrg */
+    NULL,                               /* pOffsetWindowOrg */
+    NULL,                               /* pPaintRgn */
+    NULL,                               /* pPatBlt */
+    NULL,                               /* pPie */
+    NULL,                               /* pPolyBezier */
+    NULL,                               /* pPolyBezierTo */
+    NULL,                               /* pPolyDraw */
+    NULL,                               /* pPolyPolygon */
+    NULL,                               /* pPolyPolyline */
+    NULL,                               /* pPolygon */
+    NULL,                               /* pPolyline */
+    NULL,                               /* pPolylineTo */
+    NULL,                               /* pPutImage */
+    NULL,                               /* pRealizeDefaultPalette */
+    NULL,                               /* pRealizePalette */
+    NULL,                               /* pRectangle */
+    NULL,                               /* pResetDC */
+    NULL,                               /* pRestoreDC */
+    NULL,                               /* pRoundRect */
+    NULL,                               /* pSaveDC */
+    NULL,                               /* pScaleViewportExt */
+    NULL,                               /* pScaleWindowExt */
+    NULL,                               /* pSelectBitmap */
+    NULL,                               /* pSelectBrush */
+    NULL,                               /* pSelectClipPath */
+    NULL,                               /* pSelectFont */
+    NULL,                               /* pSelectPalette */
+    NULL,                               /* pSelectPen */
+    NULL,                               /* pSetArcDirection */
+    NULL,                               /* pSetBkColor */
+    NULL,                               /* pSetBkMode */
+    NULL,                               /* pSetBoundsRect */
+    NULL,                               /* pSetDCBrushColor */
+    NULL,                               /* pSetDCPenColor */
+    NULL,                               /* pSetDIBitsToDevice */
+    NULL,                               /* pSetDeviceClipping */
+    NULL,                               /* pSetDeviceGammaRamp */
+    NULL,                               /* pSetLayout */
+    NULL,                               /* pSetMapMode */
+    NULL,                               /* pSetMapperFlags */
+    NULL,                               /* pSetPixel */
+    glxdrv_SetPixelFormat,              /* pSetPixelFormat */
+    NULL,                               /* pSetPolyFillMode */
+    NULL,                               /* pSetROP2 */
+    NULL,                               /* pSetRelAbs */
+    NULL,                               /* pSetStretchBltMode */
+    NULL,                               /* pSetTextAlign */
+    NULL,                               /* pSetTextCharacterExtra */
+    NULL,                               /* pSetTextColor */
+    NULL,                               /* pSetTextJustification */
+    NULL,                               /* pSetViewportExt */
+    NULL,                               /* pSetViewportOrg */
+    NULL,                               /* pSetWindowExt */
+    NULL,                               /* pSetWindowOrg */
+    NULL,                               /* pSetWorldTransform */
+    NULL,                               /* pStartDoc */
+    NULL,                               /* pStartPage */
+    NULL,                               /* pStretchBlt */
+    NULL,                               /* pStretchDIBits */
+    NULL,                               /* pStrokeAndFillPath */
+    NULL,                               /* pStrokePath */
+    glxdrv_SwapBuffers,                 /* pSwapBuffers */
+    NULL,                               /* pUnrealizePalette */
+    NULL,                               /* pWidenPath */
+    glxdrv_wglCopyContext,              /* pwglCopyContext */
+    glxdrv_wglCreateContext,            /* pwglCreateContext */
+    glxdrv_wglCreateContextAttribsARB,  /* pwglCreateContextAttribsARB */
+    glxdrv_wglDeleteContext,            /* pwglDeleteContext */
+    glxdrv_wglGetPbufferDCARB,          /* pwglGetPbufferDCARB */
+    glxdrv_wglGetProcAddress,           /* pwglGetProcAddress */
+    glxdrv_wglMakeContextCurrentARB,    /* pwglMakeContextCurrentARB */
+    glxdrv_wglMakeCurrent,              /* pwglMakeCurrent */
+    glxdrv_wglSetPixelFormatWINE,       /* pwglSetPixelFormatWINE */
+    glxdrv_wglShareLists,               /* pwglShareLists */
+    glxdrv_wglUseFontBitmapsA,          /* pwglUseFontBitmapsA */
+    glxdrv_wglUseFontBitmapsW,          /* pwglUseFontBitmapsW */
+    GDI_PRIORITY_GRAPHICS_DRV + 20      /* priority */
+};
+
+const struct gdi_dc_funcs *get_glx_driver(void)
+{
+    return &glxdrv_funcs;
+}
+
+#else  /* no OpenGL includes */
+
+const struct gdi_dc_funcs *get_glx_driver(void)
+{
+    return NULL;
 }
 
 int pixelformat_from_fbconfig_id(XID fbconfig_id)
@@ -3833,173 +4033,6 @@ Drawable create_glxpixmap(Display *display, XVisualInfo *vis, Pixmap parent)
     return 0;
 }
 
-/***********************************************************************
- *		ChoosePixelFormat (X11DRV.@)
- */
-int X11DRV_ChoosePixelFormat(PHYSDEV dev, const PIXELFORMATDESCRIPTOR *ppfd)
-{
-  opengl_error();
-  return 0;
-}
-
-/***********************************************************************
- *		DescribePixelFormat (X11DRV.@)
- */
-int X11DRV_DescribePixelFormat(PHYSDEV dev, int iPixelFormat, UINT nBytes, PIXELFORMATDESCRIPTOR *ppfd)
-{
-  opengl_error();
-  return 0;
-}
-
-/***********************************************************************
- *		GetPixelFormat (X11DRV.@)
- */
-int X11DRV_GetPixelFormat(PHYSDEV dev)
-{
-  opengl_error();
-  return 0;
-}
-
-/***********************************************************************
- *		SetPixelFormat (X11DRV.@)
- */
-BOOL X11DRV_SetPixelFormat(PHYSDEV dev, int iPixelFormat, const PIXELFORMATDESCRIPTOR *ppfd)
-{
-  opengl_error();
-  return FALSE;
-}
-
-/***********************************************************************
- *		SwapBuffers (X11DRV.@)
- */
-BOOL X11DRV_SwapBuffers(PHYSDEV dev)
-{
-  opengl_error();
-  return FALSE;
-}
-
-/**
- * X11DRV_wglCopyContext
- *
- * For OpenGL32 wglCopyContext.
- */
-BOOL X11DRV_wglCopyContext(HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask)
-{
-    opengl_error();
-    return FALSE;
-}
-
-/**
- * X11DRV_wglCreateContext
- *
- * For OpenGL32 wglCreateContext.
- */
-HGLRC X11DRV_wglCreateContext(PHYSDEV dev)
-{
-    opengl_error();
-    return NULL;
-}
-
-/**
- * X11DRV_wglCreateContextAttribsARB
- *
- * WGL_ARB_create_context: wglCreateContextAttribsARB
- */
-HGLRC X11DRV_wglCreateContextAttribsARB(PHYSDEV dev, HGLRC hShareContext, const int* attribList)
-{
-    opengl_error();
-    return NULL;
-}
-
-/**
- * X11DRV_wglDeleteContext
- *
- * For OpenGL32 wglDeleteContext.
- */
-BOOL X11DRV_wglDeleteContext(HGLRC hglrc)
-{
-    opengl_error();
-    return FALSE;
-}
-
-/**
- * X11DRV_wglGetProcAddress
- *
- * For OpenGL32 wglGetProcAddress.
- */
-PROC X11DRV_wglGetProcAddress(LPCSTR lpszProc)
-{
-    opengl_error();
-    return NULL;
-}
-
-HDC X11DRV_wglGetPbufferDCARB(PHYSDEV dev, void *hPbuffer)
-{
-    opengl_error();
-    return NULL;
-}
-
-BOOL X11DRV_wglMakeContextCurrentARB(PHYSDEV draw_dev, PHYSDEV read_dev, HGLRC hglrc)
-{
-    opengl_error();
-    return FALSE;
-}
-
-/**
- * X11DRV_wglMakeCurrent
- *
- * For OpenGL32 wglMakeCurrent.
- */
-BOOL X11DRV_wglMakeCurrent(PHYSDEV dev, HGLRC hglrc)
-{
-    opengl_error();
-    return FALSE;
-}
-
-/**
- * X11DRV_wglShareLists
- *
- * For OpenGL32 wglShareLists.
- */
-BOOL X11DRV_wglShareLists(HGLRC hglrc1, HGLRC hglrc2)
-{
-    opengl_error();
-    return FALSE;
-}
-
-/**
- * X11DRV_wglUseFontBitmapsA
- *
- * For OpenGL32 wglUseFontBitmapsA.
- */
-BOOL X11DRV_wglUseFontBitmapsA(PHYSDEV dev, DWORD first, DWORD count, DWORD listBase)
-{
-    opengl_error();
-    return FALSE;
-}
-
-/**
- * X11DRV_wglUseFontBitmapsW
- *
- * For OpenGL32 wglUseFontBitmapsW.
- */
-BOOL X11DRV_wglUseFontBitmapsW(PHYSDEV dev, DWORD first, DWORD count, DWORD listBase)
-{
-    opengl_error();
-    return FALSE;
-}
-
-/**
- * X11DRV_wglSetPixelFormatWINE
- *
- * WGL_WINE_pixel_format_passthrough: wglSetPixelFormatWINE
- * This is a WINE-specific wglSetPixelFormat which can set the pixel format multiple times.
- */
-BOOL X11DRV_wglSetPixelFormatWINE(PHYSDEV dev, int iPixelFormat, const PIXELFORMATDESCRIPTOR *ppfd)
-{
-    opengl_error();
-    return FALSE;
-}
 
 BOOL destroy_glxpixmap(Display *display, XID glxpixmap)
 {
