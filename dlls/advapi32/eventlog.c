@@ -834,7 +834,9 @@ ULONG WINAPI UnregisterTraceGuids( TRACEHANDLE RegistrationHandle )
 ULONG WINAPI EventRegister( LPCGUID provider, PENABLECALLBACK callback, PVOID context, PREGHANDLE handle )
 {
     FIXME("%s, %p, %p, %p\n", debugstr_guid(provider), callback, context, handle);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+
+    *handle = 0xdeadbeef;
+    return ERROR_SUCCESS;
 }
 
 /******************************************************************************
