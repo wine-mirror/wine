@@ -313,7 +313,7 @@ static BOOL is_namespaces_enabled(const saxreader *reader)
     return (reader->version < MSXML4) || (reader->features & Namespaces);
 }
 
-static inline BOOL has_content_handler(const saxlocator *locator)
+static inline int has_content_handler(const saxlocator *locator)
 {
     return  (locator->vbInterface && locator->saxreader->vbcontentHandler) ||
            (!locator->vbInterface && locator->saxreader->contentHandler);
@@ -1288,6 +1288,7 @@ static void libxmlStartElementNS(
     saxlocator *This = ctx;
     element_entry *element;
     HRESULT hr = S_OK;
+    BSTR uri;
 
     update_position(This, TRUE);
     if(*(This->pParserCtxt->input->cur) == '/')
@@ -1298,63 +1299,57 @@ static void libxmlStartElementNS(
     element = alloc_element_entry(localname, prefix, nb_namespaces, namespaces);
     push_element_ns(This, element);
 
-    if (has_content_handler(This))
+    if (is_namespaces_enabled(This->saxreader))
     {
-        BSTR uri;
+        int i;
 
-        if (is_namespaces_enabled(This->saxreader))
+        for (i = 0; i < nb_namespaces && has_content_handler(This); i++)
         {
-            int i;
-
-            for (i = 0; i < nb_namespaces; i++)
-            {
-                if (This->vbInterface)
-                    hr = IVBSAXContentHandler_startPrefixMapping(
-                            This->saxreader->vbcontentHandler,
-                            &element->ns[i].prefix,
-                            &element->ns[i].uri);
-                else
-                    hr = ISAXContentHandler_startPrefixMapping(
-                            This->saxreader->contentHandler,
-                            element->ns[i].prefix,
-                            SysStringLen(element->ns[i].prefix),
-                            element->ns[i].uri,
-                            SysStringLen(element->ns[i].uri));
-
-                if (sax_callback_failed(This, hr))
-                {
-                    format_error_message_from_id(This, hr);
-                    return;
-                }
-            }
-        }
-
-        uri = find_element_uri(This, URI);
-
-        hr = SAXAttributes_populate(This, nb_namespaces, namespaces, nb_attributes, attributes);
-        if (hr == S_OK)
-        {
-            BSTR local;
-
-            if (is_namespaces_enabled(This->saxreader))
-                local = element->local;
-            else
-                uri = local = NULL;
-
             if (This->vbInterface)
-                hr = IVBSAXContentHandler_startElement(This->saxreader->vbcontentHandler,
-                        &uri, &local, &element->qname, &This->IVBSAXAttributes_iface);
+                hr = IVBSAXContentHandler_startPrefixMapping(
+                        This->saxreader->vbcontentHandler,
+                        &element->ns[i].prefix,
+                        &element->ns[i].uri);
             else
-                hr = ISAXContentHandler_startElement(This->saxreader->contentHandler,
-                        uri, SysStringLen(uri),
-                        local, SysStringLen(local),
-                        element->qname, SysStringLen(element->qname),
-                        &This->ISAXAttributes_iface);
+                hr = ISAXContentHandler_startPrefixMapping(
+                        This->saxreader->contentHandler,
+                        element->ns[i].prefix,
+                        SysStringLen(element->ns[i].prefix),
+                        element->ns[i].uri,
+                        SysStringLen(element->ns[i].uri));
+
+            if (sax_callback_failed(This, hr))
+            {
+                format_error_message_from_id(This, hr);
+                return;
+            }
         }
     }
 
-    if (sax_callback_failed(This, hr))
-        format_error_message_from_id(This, hr);
+    uri = find_element_uri(This, URI);
+    hr = SAXAttributes_populate(This, nb_namespaces, namespaces, nb_attributes, attributes);
+    if (hr == S_OK && has_content_handler(This))
+    {
+        BSTR local;
+
+        if (is_namespaces_enabled(This->saxreader))
+            local = element->local;
+        else
+            uri = local = NULL;
+
+        if (This->vbInterface)
+            hr = IVBSAXContentHandler_startElement(This->saxreader->vbcontentHandler,
+                    &uri, &local, &element->qname, &This->IVBSAXAttributes_iface);
+        else
+            hr = ISAXContentHandler_startElement(This->saxreader->contentHandler,
+                    uri, SysStringLen(uri),
+                    local, SysStringLen(local),
+                    element->qname, SysStringLen(element->qname),
+                    &This->ISAXAttributes_iface);
+
+       if (sax_callback_failed(This, hr))
+           format_error_message_from_id(This, hr);
+    }
 }
 
 static void libxmlEndElementNS(
@@ -1435,7 +1430,7 @@ static void libxmlEndElementNS(
     if (is_namespaces_enabled(This->saxreader))
     {
         int i = -1;
-        while (iterate_endprefix_index(This, element, &i))
+        while (iterate_endprefix_index(This, element, &i) && has_content_handler(This))
         {
             if (This->vbInterface)
                 hr = IVBSAXContentHandler_endPrefixMapping(
@@ -1447,10 +1442,10 @@ static void libxmlEndElementNS(
 
             if (sax_callback_failed(This, hr)) break;
        }
-    }
 
-    if (sax_callback_failed(This, hr))
-        format_error_message_from_id(This, hr);
+       if (sax_callback_failed(This, hr))
+           format_error_message_from_id(This, hr);
+    }
 
     free_element_entry(element);
 }
@@ -1587,6 +1582,7 @@ static void libxmlComment(void *ctx, const xmlChar *value)
             This->line--;
         p--;
     }
+
     This->column = 0;
     for(; p>=This->pParserCtxt->input->base && *p!='\n' && *p!='\r'; p--)
         This->column++;
