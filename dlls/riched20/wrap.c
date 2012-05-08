@@ -753,6 +753,7 @@ void ME_InvalidateMarkedParagraphs(ME_TextEditor *editor)
                       + item->member.para.nHeight - ofs,
                       c.rcView.bottom);
       ITextHost_TxInvalidateRect(editor->texthost, &rc, TRUE);
+      item->member.para.nFlags &= ~MEPF_REPAINT;
     }
     item = item->member.para.next_para;
   }
