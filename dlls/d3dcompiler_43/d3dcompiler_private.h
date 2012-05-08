@@ -44,11 +44,11 @@ const char *debug_d3dcompiler_d3d_blob_part(D3D_BLOB_PART part) DECLSPEC_HIDDEN;
 const char *debug_d3dcompiler_shader_variable_class(D3D_SHADER_VARIABLE_CLASS c) DECLSPEC_HIDDEN;
 const char *debug_d3dcompiler_shader_variable_type(D3D_SHADER_VARIABLE_TYPE t) DECLSPEC_HIDDEN;
 
-/* Shader assembler definitions */
-typedef enum _shader_type {
+enum shader_type
+{
     ST_VERTEX,
     ST_PIXEL,
-} shader_type;
+};
 
 typedef enum BWRITER_COMPARISON_TYPE {
     BWRITER_COMPARISON_NONE,
@@ -111,7 +111,7 @@ struct samplerdecl {
 
 #define INSTRARRAY_INITIAL_SIZE 8
 struct bwriter_shader {
-    shader_type             type;
+    enum shader_type        type;
 
     /* Shader version selected */
     DWORD                   version;
