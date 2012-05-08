@@ -238,6 +238,12 @@ HRESULT WINAPI IWICBitmapLock_GetStride_Proxy_W(IWICBitmapLock *iface,
     return IWICBitmapLock_GetStride(iface, pcbStride);
 }
 
+HRESULT WINAPI IWICBitmapScaler_Initialize_Proxy_W(IWICBitmapScaler *iface,
+    IWICBitmapSource *pISource, UINT uiWidth, UINT uiHeight, WICBitmapInterpolationMode mode)
+{
+    return IWICBitmapScaler_Initialize(iface, pISource, uiWidth, uiHeight, mode);
+}
+
 HRESULT WINAPI IWICBitmapSource_GetSize_Proxy_W(IWICBitmapSource *iface,
     UINT *puiWidth, UINT *puiHeight)
 {
