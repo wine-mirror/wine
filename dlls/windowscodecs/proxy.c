@@ -36,6 +36,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
+HRESULT WINAPI IWICBitmapFlipRotator_Initialize_Proxy_W(IWICBitmapFlipRotator *iface,
+    IWICBitmapSource *pISource, WICBitmapTransformOptions options)
+{
+    return IWICBitmapFlipRotator_Initialize(iface, pISource, options);
+}
+
 HRESULT WINAPI IWICBitmapLock_GetDataPointer_Proxy_W(IWICBitmapLock *iface,
     UINT *pcbBufferSize, BYTE **ppbData)
 {
