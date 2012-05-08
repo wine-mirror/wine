@@ -277,6 +277,30 @@ HRESULT WINAPI IWICImagingFactory_CreateStream_Proxy_W(IWICImagingFactory *pFact
     return IWICImagingFactory_CreateStream(pFactory, ppIWICStream);
 }
 
+HRESULT WINAPI IWICMetadataQueryReader_GetContainerFormat_Proxy_W(IWICMetadataQueryReader *iface,
+    GUID *pguidContainerFormat)
+{
+    return IWICMetadataQueryReader_GetContainerFormat(iface, pguidContainerFormat);
+}
+
+HRESULT WINAPI IWICMetadataQueryReader_GetLocation_Proxy_W(IWICMetadataQueryReader *iface,
+    UINT cchMaxLength, WCHAR *wzNamespace, UINT *pcchActualLength)
+{
+    return IWICMetadataQueryReader_GetLocation(iface, cchMaxLength, wzNamespace, pcchActualLength);
+}
+
+HRESULT WINAPI IWICMetadataQueryReader_GetMetadataByName_Proxy_W(IWICMetadataQueryReader *iface,
+    LPCWSTR wzName, PROPVARIANT *pvarValue)
+{
+    return IWICMetadataQueryReader_GetMetadataByName(iface, wzName, pvarValue);
+}
+
+HRESULT WINAPI IWICMetadataQueryReader_GetEnumerator_Proxy_W(IWICMetadataQueryReader *iface,
+    IEnumString **ppIEnumString)
+{
+    return IWICMetadataQueryReader_GetEnumerator(iface, ppIEnumString);
+}
+
 HRESULT WINAPI IWICPalette_InitializePredefined_Proxy_W(IWICPalette *iface,
     WICBitmapPaletteType ePaletteType, BOOL fAddTransparentColor)
 {
