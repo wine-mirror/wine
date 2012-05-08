@@ -594,6 +594,7 @@ static void call_continue(PROTOCOLDATA *protocol_data)
             SET_EXPECT(OnResponse);
             if(tested_protocol == HTTPS_TEST || test_redirect || test_abort || empty_file)
                 SET_EXPECT(ReportProgress_ACCEPTRANGES);
+            SET_EXPECT(ReportProgress_ENCODING);
             SET_EXPECT(ReportProgress_MIMETYPEAVAILABLE);
             if(bindf & BINDF_NEEDFILE)
                 SET_EXPECT(ReportProgress_CACHEFILENAMEAVAILABLE);
@@ -627,6 +628,7 @@ static void call_continue(PROTOCOLDATA *protocol_data)
                     CHECK_CALLED(ReportProgress_ACCEPTRANGES);
                 else if(test_redirect || test_abort)
                     CLEAR_CALLED(ReportProgress_ACCEPTRANGES);
+                CLEAR_CALLED(ReportProgress_ENCODING);
                 CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE);
                 if(bindf & BINDF_NEEDFILE)
                     CHECK_CALLED(ReportProgress_CACHEFILENAMEAVAILABLE);
@@ -751,7 +753,7 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
 
     switch(ulStatusCode) {
     case BINDSTATUS_MIMETYPEAVAILABLE:
-        CHECK_EXPECT(ReportProgress_MIMETYPEAVAILABLE);
+        CHECK_EXPECT2(ReportProgress_MIMETYPEAVAILABLE);
         if(tested_protocol != FILE_TEST && tested_protocol != ITS_TEST && !mimefilter_test && (pi & PI_MIMEVERIFICATION)) {
             if(!short_read || !direct_read)
                 CHECK_CALLED(Read); /* set in Continue */
@@ -831,7 +833,7 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
         ok(!lstrcmpW(szStatusText, null_guid), "unexpected classid %s\n", wine_dbgstr_w(szStatusText));
         break;
     case BINDSTATUS_COOKIE_SENT:
-        CHECK_EXPECT(ReportProgress_COOKIE_SENT);
+        CHECK_EXPECT2(ReportProgress_COOKIE_SENT);
         ok(szStatusText == NULL, "szStatusText != NULL\n");
         break;
     case BINDSTATUS_REDIRECTING:
