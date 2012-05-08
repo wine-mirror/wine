@@ -346,6 +346,7 @@ struct GpImageAttributes{
 };
 
 struct GpFont{
+    GpFontFamily *family;
     LOGFONTW lfw;
     REAL emSize;
     REAL pixel_size;

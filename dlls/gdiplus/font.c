@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2007 Google (Evan Stade)
+ * Copyright (C) 2012 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -158,6 +159,13 @@ GpStatus WINGDIPAPI GdipCreateFont(GDIPCONST GpFontFamily *fontFamily,
     (*font)->height = otm->otmEMSquare;
     (*font)->line_spacing = otm->otmTextMetrics.tmAscent + otm->otmTextMetrics.tmDescent + otm->otmTextMetrics.tmExternalLeading;
 
+    stat = GdipCloneFontFamily((GpFontFamily *)fontFamily, &(*font)->family);
+    if (stat != Ok)
+    {
+        GdipFree(*font);
+        return stat;
+    }
+
     TRACE("<-- %p\n", *font);
 
     return Ok;
@@ -171,6 +179,7 @@ GpStatus WINGDIPAPI GdipCreateFontFromLogfontW(HDC hdc,
 {
     HFONT hfont, oldfont;
     TEXTMETRICW textmet;
+    GpStatus stat;
 
     TRACE("(%p, %p, %p)\n", hdc, logfont, font);
 
@@ -205,6 +214,13 @@ GpStatus WINGDIPAPI GdipCreateFontFromLogfontW(HDC hdc,
 
     SelectObject(hdc, oldfont);
     DeleteObject(hfont);
+
+    stat = GdipCreateFontFamilyFromName(logfont->lfFaceName, NULL, &(*font)->family);
+    if (stat != Ok)
+    {
+        GdipFree(*font);
+        return NotTrueTypeFont;
+    }
 
     TRACE("<-- %p\n", *font);
 
@@ -242,6 +258,7 @@ GpStatus WINGDIPAPI GdipDeleteFont(GpFont* font)
     if(!font)
         return InvalidParameter;
 
+    GdipDeleteFontFamily(font->family);
     GdipFree(font);
 
     return Ok;
@@ -290,7 +307,7 @@ GpStatus WINGDIPAPI GdipGetFamily(GpFont *font, GpFontFamily **family)
     if (!(font && family))
         return InvalidParameter;
 
-    return GdipCreateFontFamilyFromName(font->lfw.lfFaceName, NULL, family);
+    return GdipCloneFontFamily(font->family, family);
 }
 
 /******************************************************************************
@@ -424,6 +441,8 @@ GpStatus WINGDIPAPI GdipGetLogFontW(GpFont *font, GpGraphics *graphics,
  */
 GpStatus WINGDIPAPI GdipCloneFont(GpFont *font, GpFont **cloneFont)
 {
+    GpStatus stat;
+
     TRACE("(%p, %p)\n", font, cloneFont);
 
     if(!font || !cloneFont)
@@ -433,8 +452,10 @@ GpStatus WINGDIPAPI GdipCloneFont(GpFont *font, GpFont **cloneFont)
     if(!*cloneFont)    return OutOfMemory;
 
     **cloneFont = *font;
+    stat = GdipCloneFontFamily(font->family, &(*cloneFont)->family);
+    if (stat != Ok) GdipFree(*cloneFont);
 
-    return Ok;
+    return stat;
 }
 
 /*******************************************************************************
