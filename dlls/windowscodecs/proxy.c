@@ -138,6 +138,53 @@ HRESULT WINAPI IWICBitmapFlipRotator_Initialize_Proxy_W(IWICBitmapFlipRotator *i
     return IWICBitmapFlipRotator_Initialize(iface, pISource, options);
 }
 
+HRESULT WINAPI IWICBitmapFrameEncode_Initialize_Proxy_W(IWICBitmapFrameEncode *iface,
+    IPropertyBag2 *pIEncoderOptions)
+{
+    return IWICBitmapFrameEncode_Initialize(iface, pIEncoderOptions);
+}
+
+HRESULT WINAPI IWICBitmapFrameEncode_SetSize_Proxy_W(IWICBitmapFrameEncode *iface,
+    UINT uiWidth, UINT uiHeight)
+{
+    return IWICBitmapFrameEncode_SetSize(iface, uiWidth, uiHeight);
+}
+
+HRESULT WINAPI IWICBitmapFrameEncode_SetResolution_Proxy_W(IWICBitmapFrameEncode *iface,
+    double dpiX, double dpiY)
+{
+    return IWICBitmapFrameEncode_SetResolution(iface, dpiX, dpiY);
+}
+
+HRESULT WINAPI IWICBitmapFrameEncode_SetColorContexts_Proxy_W(IWICBitmapFrameEncode *iface,
+    UINT cCount, IWICColorContext **ppIColorContext)
+{
+    return IWICBitmapFrameEncode_SetColorContexts(iface, cCount, ppIColorContext);
+}
+
+HRESULT WINAPI IWICBitmapFrameEncode_SetThumbnail_Proxy_W(IWICBitmapFrameEncode *iface,
+    IWICBitmapSource *pIThumbnail)
+{
+    return IWICBitmapFrameEncode_SetThumbnail(iface, pIThumbnail);
+}
+
+HRESULT WINAPI IWICBitmapFrameEncode_WriteSource_Proxy_W(IWICBitmapFrameEncode *iface,
+    IWICBitmapSource *pIBitmapSource, WICRect *prc)
+{
+    return IWICBitmapFrameEncode_WriteSource(iface, pIBitmapSource, prc);
+}
+
+HRESULT WINAPI IWICBitmapFrameEncode_Commit_Proxy_W(IWICBitmapFrameEncode *iface)
+{
+    return IWICBitmapFrameEncode_Commit(iface);
+}
+
+HRESULT WINAPI IWICBitmapFrameEncode_GetMetadataQueryWriter_Proxy_W(IWICBitmapFrameEncode *iface,
+    IWICMetadataQueryWriter **ppIMetadataQueryWriter)
+{
+    return IWICBitmapFrameEncode_GetMetadataQueryWriter(iface, ppIMetadataQueryWriter);
+}
+
 HRESULT WINAPI IWICBitmapLock_GetDataPointer_Proxy_W(IWICBitmapLock *iface,
     UINT *pcbBufferSize, BYTE **ppbData)
 {
