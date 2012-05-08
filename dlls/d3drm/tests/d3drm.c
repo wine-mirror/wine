@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Christian Costa
+ * Copyright 2010, 2012 Christian Costa
  * Copyright 2012 André Hentschel
  *
  * This library is free software; you can redistribute it and/or
@@ -62,6 +62,13 @@ static int get_refcount(IUnknown *object)
     IUnknown_AddRef( object );
     return IUnknown_Release( object );
 }
+
+static D3DRMMATRIX4D identity = {
+    { 1.0f, 0.0f, 0.0f, 0.0f },
+    { 0.0f, 1.0f, 0.0f, 0.0f },
+    { 0.0f, 0.0f, 1.0f, 0.0f },
+    { 0.0f, 0.0f, 0.0f, 1.0f }
+};
 
 static char data_bad_version[] =
 "xof 0302txt 0064\n"
@@ -741,6 +748,26 @@ static void test_Light(void)
     IDirect3DRM_Release(pD3DRM);
 }
 
+static void test_frame_transform(void)
+{
+    HRESULT hr;
+    LPDIRECT3DRM d3drm;
+    LPDIRECT3DRMFRAME frame;
+    D3DRMMATRIX4D matrix;
+
+    hr = pDirect3DRMCreate(&d3drm);
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DRM interface (hr = %x)\n", hr);
+
+    hr = IDirect3DRM_CreateFrame(d3drm, NULL, &frame);
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DRMFrame interface (hr = %x)\n", hr);
+
+    hr = IDirect3DRMFrame_GetTransform(frame, matrix);
+    ok(hr == D3DRM_OK, "IDirect3DRMFrame_GetTransform returned hr = %x\n", hr);
+    ok(!memcmp(matrix, identity, sizeof(D3DRMMATRIX4D)), "Returned matrix is not identity\n");
+
+    IDirect3DRM_Release(d3drm);
+}
+
 static int nb_objects = 0;
 static const GUID* refiids[] =
 {
@@ -785,6 +812,7 @@ START_TEST(d3drm)
     test_MeshBuilder3();
     test_Frame();
     test_Light();
+    test_frame_transform();
     test_d3drm_load();
 
     FreeLibrary(d3drm_handle);

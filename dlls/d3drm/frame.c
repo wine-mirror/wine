@@ -30,6 +30,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3drm);
 
+static D3DRMMATRIX4D identity = {
+    { 1.0f, 0.0f, 0.0f, 0.0f },
+    { 0.0f, 1.0f, 0.0f, 0.0f },
+    { 0.0f, 0.0f, 1.0f, 0.0f },
+    { 0.0f, 0.0f, 0.0f, 1.0f }
+};
+
 typedef struct IDirect3DRMFrameImpl IDirect3DRMFrameImpl;
 
 struct IDirect3DRMFrameImpl {
@@ -46,6 +53,7 @@ struct IDirect3DRMFrameImpl {
     ULONG nb_lights;
     ULONG lights_capacity;
     IDirect3DRMLight** lights;
+    D3DRMMATRIX4D transform;
 };
 
 typedef struct {
@@ -420,9 +428,11 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_GetTransform(IDirect3DRMFrame2* ifac
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
 
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, return_matrix);
+    TRACE("(%p/%p)->(%p)\n", iface, This, return_matrix);
 
-    return E_NOTIMPL;
+    memcpy(&return_matrix[0][0], &This->transform[0][0], sizeof(D3DRMMATRIX4D));
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMFrame2Impl_GetVelocity(IDirect3DRMFrame2* iface,
@@ -1430,9 +1440,14 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_GetTransform(IDirect3DRMFrame3* ifac
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
 
-    FIXME("(%p/%p)->(%p,%p): stub\n", iface, This, reference, return_matrix);
+    TRACE("(%p/%p)->(%p,%p)\n", iface, This, reference, return_matrix);
 
-    return E_NOTIMPL;
+    if (reference)
+        FIXME("Specifying a frame as the root of the scene different from the current root frame is not supported yet\n");
+
+    memcpy(&return_matrix[0][0], &This->transform[0][0], sizeof(D3DRMMATRIX4D));
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMFrame3Impl_GetVelocity(IDirect3DRMFrame3* iface,
@@ -2219,6 +2234,8 @@ HRESULT Direct3DRMFrame_create(REFIID riid, IUnknown** ppObj)
     object->IDirect3DRMFrame2_iface.lpVtbl = &Direct3DRMFrame2_Vtbl;
     object->IDirect3DRMFrame3_iface.lpVtbl = &Direct3DRMFrame3_Vtbl;
     object->ref = 1;
+
+    memcpy(&object->transform[0][0], &identity[0][0], sizeof(D3DRMMATRIX4D));
 
     if (IsEqualGUID(riid, &IID_IDirect3DRMFrame3))
         *ppObj = (IUnknown*)&object->IDirect3DRMFrame3_iface;
