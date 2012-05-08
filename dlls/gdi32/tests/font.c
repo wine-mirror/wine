@@ -2842,7 +2842,7 @@ out:
     return r;
 }
 
-static void test_text_metrics(const LOGFONTA *lf)
+static void test_text_metrics(const LOGFONT *lf, const NEWTEXTMETRIC *ntm)
 {
     HDC hdc;
     HFONT hfont, hfont_old;
@@ -2851,6 +2851,7 @@ static void test_text_metrics(const LOGFONTA *lf)
     LONG size, ret;
     const char *font_name = lf->lfFaceName;
     DWORD cmap_first = 0, cmap_last = 0;
+    UINT ascent, descent, cell_height;
     cmap_type cmap_type;
     BOOL sys_lang_non_english;
 
@@ -2878,6 +2879,12 @@ static void test_text_metrics(const LOGFONTA *lf)
     memset(&tt_os2, 0, sizeof(tt_os2));
     ret = GetFontData(hdc, MS_OS2_TAG, 0, &tt_os2, size);
     ok(ret == size, "GetFontData should return %u not %u\n", size, ret);
+
+    ascent = GET_BE_WORD(tt_os2.usWinAscent);
+    descent = GET_BE_WORD(tt_os2.usWinDescent);
+    cell_height = ascent + descent;
+    ok(ntm->ntmCellHeight == cell_height, "%s: ntmCellHeight %u != %u, os2.usWinAscent/os2.usWinDescent %u/%u\n",
+       font_name, ntm->ntmCellHeight, cell_height, ascent, descent);
 
     SetLastError(0xdeadbeef);
     ret = GetTextMetricsA(hdc, &tmA);
@@ -3067,7 +3074,7 @@ static INT CALLBACK enum_truetype_font_proc(const LOGFONT *lf, const TEXTMETRIC 
     if (type == TRUETYPE_FONTTYPE)
     {
         (*enumed)++;
-        test_text_metrics(lf);
+        test_text_metrics(lf, (const NEWTEXTMETRIC *)ntm);
     }
     return 1;
 }
