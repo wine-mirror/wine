@@ -52,7 +52,7 @@
 @ stub IWICBitmap_Lock_Proxy
 @ stub IWICBitmap_SetPalette_Proxy
 @ stub IWICBitmap_SetResolution_Proxy
-@ stub IWICColorContext_InitializeFromMemory_Proxy
+@ stdcall IWICColorContext_InitializeFromMemory_Proxy(ptr ptr long) IWICColorContext_InitializeFromMemory_Proxy_W
 @ stub IWICComponentFactory_CreateMetadataWriterFromReader_Proxy
 @ stub IWICComponentFactory_CreateQueryWriterFromBlockWriter_Proxy
 @ stub IWICComponentInfo_GetAuthor_Proxy

@@ -36,6 +36,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
+HRESULT WINAPI IWICColorContext_InitializeFromMemory_Proxy_W(IWICColorContext *iface,
+    const BYTE *pbBuffer, UINT cbBufferSize)
+{
+    return IWICColorContext_InitializeFromMemory(iface, pbBuffer, cbBufferSize);
+}
+
 HRESULT WINAPI IWICFastMetadataEncoder_Commit_Proxy_W(IWICFastMetadataEncoder *iface)
 {
     return IWICFastMetadataEncoder_Commit(iface);
