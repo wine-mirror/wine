@@ -22,13 +22,13 @@
 @ stdcall IWICBitmapDecoder_GetMetadataQueryReader_Proxy(ptr ptr) IWICBitmapDecoder_GetMetadataQueryReader_Proxy_W
 @ stdcall IWICBitmapDecoder_GetPreview_Proxy(ptr ptr) IWICBitmapDecoder_GetPreview_Proxy_W
 @ stdcall IWICBitmapDecoder_GetThumbnail_Proxy(ptr ptr) IWICBitmapDecoder_GetThumbnail_Proxy_W
-@ stub IWICBitmapEncoder_Commit_Proxy
-@ stub IWICBitmapEncoder_CreateNewFrame_Proxy
-@ stub IWICBitmapEncoder_GetEncoderInfo_Proxy
-@ stub IWICBitmapEncoder_GetMetadataQueryWriter_Proxy
-@ stub IWICBitmapEncoder_Initialize_Proxy
-@ stub IWICBitmapEncoder_SetPalette_Proxy
-@ stub IWICBitmapEncoder_SetThumbnail_Proxy
+@ stdcall IWICBitmapEncoder_Commit_Proxy(ptr) IWICBitmapEncoder_Commit_Proxy_W
+@ stdcall IWICBitmapEncoder_CreateNewFrame_Proxy(ptr ptr ptr) IWICBitmapEncoder_CreateNewFrame_Proxy_W
+@ stdcall IWICBitmapEncoder_GetEncoderInfo_Proxy(ptr ptr) IWICBitmapEncoder_GetEncoderInfo_Proxy_W
+@ stdcall IWICBitmapEncoder_GetMetadataQueryWriter_Proxy(ptr ptr) IWICBitmapEncoder_GetMetadataQueryWriter_Proxy_W
+@ stdcall IWICBitmapEncoder_Initialize_Proxy(ptr ptr long) IWICBitmapEncoder_Initialize_Proxy_W
+@ stdcall IWICBitmapEncoder_SetPalette_Proxy(ptr ptr) IWICBitmapEncoder_SetPalette_Proxy_W
+@ stdcall IWICBitmapEncoder_SetThumbnail_Proxy(ptr ptr) IWICBitmapEncoder_SetThumbnail_Proxy_W
 @ stdcall IWICBitmapFlipRotator_Initialize_Proxy(ptr ptr long) IWICBitmapFlipRotator_Initialize_Proxy_W
 @ stdcall IWICBitmapFrameDecode_GetColorContexts_Proxy(ptr long ptr ptr) IWICBitmapFrameDecode_GetColorContexts_Proxy_W
 @ stdcall IWICBitmapFrameDecode_GetMetadataQueryReader_Proxy(ptr ptr) IWICBitmapFrameDecode_GetMetadataQueryReader_Proxy_W

@@ -132,6 +132,47 @@ HRESULT WINAPI IWICBitmapDecoder_GetFrame_Proxy_W(IWICBitmapDecoder *iface,
     return IWICBitmapDecoder_GetFrame(iface, index, ppIBitmapFrame);
 }
 
+HRESULT WINAPI IWICBitmapEncoder_Initialize_Proxy_W(IWICBitmapEncoder *iface,
+    IStream *pIStream, WICBitmapEncoderCacheOption cacheOption)
+{
+    return IWICBitmapEncoder_Initialize(iface, pIStream, cacheOption);
+}
+
+HRESULT WINAPI IWICBitmapEncoder_GetEncoderInfo_Proxy_W(IWICBitmapEncoder *iface,
+    IWICBitmapEncoderInfo **ppIEncoderInfo)
+{
+    return IWICBitmapEncoder_GetEncoderInfo(iface, ppIEncoderInfo);
+}
+
+HRESULT WINAPI IWICBitmapEncoder_SetPalette_Proxy_W(IWICBitmapEncoder *iface,
+    IWICPalette *pIPalette)
+{
+    return IWICBitmapEncoder_SetPalette(iface, pIPalette);
+}
+
+HRESULT WINAPI IWICBitmapEncoder_SetThumbnail_Proxy_W(IWICBitmapEncoder *iface,
+    IWICBitmapSource *pIThumbnail)
+{
+    return IWICBitmapEncoder_SetThumbnail(iface, pIThumbnail);
+}
+
+HRESULT WINAPI IWICBitmapEncoder_CreateNewFrame_Proxy_W(IWICBitmapEncoder *iface,
+    IWICBitmapFrameEncode **ppIFrameEncode, IPropertyBag2 **ppIEncoderOptions)
+{
+    return IWICBitmapEncoder_CreateNewFrame(iface, ppIFrameEncode, ppIEncoderOptions);
+}
+
+HRESULT WINAPI IWICBitmapEncoder_Commit_Proxy_W(IWICBitmapEncoder *iface)
+{
+    return IWICBitmapEncoder_Commit(iface);
+}
+
+HRESULT WINAPI IWICBitmapEncoder_GetMetadataQueryWriter_Proxy_W(IWICBitmapEncoder *iface,
+    IWICMetadataQueryWriter **ppIMetadataQueryWriter)
+{
+    return IWICBitmapEncoder_GetMetadataQueryWriter(iface, ppIMetadataQueryWriter);
+}
+
 HRESULT WINAPI IWICBitmapFlipRotator_Initialize_Proxy_W(IWICBitmapFlipRotator *iface,
     IWICBitmapSource *pISource, WICBitmapTransformOptions options)
 {
