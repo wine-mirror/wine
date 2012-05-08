@@ -84,6 +84,24 @@ HRESULT WINAPI IWICBitmapSource_CopyPixels_Proxy_W(IWICBitmapSource *iface,
     return IWICBitmapSource_CopyPixels(iface, prc, cbStride, cbBufferSize, pbBuffer);
 }
 
+HRESULT WINAPI IWICBitmap_Lock_Proxy_W(IWICBitmap *iface,
+    const WICRect *prcLock, DWORD flags, IWICBitmapLock **ppILock)
+{
+    return IWICBitmap_Lock(iface, prcLock, flags, ppILock);
+}
+
+HRESULT WINAPI IWICBitmap_SetPalette_Proxy_W(IWICBitmap *iface,
+    IWICPalette *pIPalette)
+{
+    return IWICBitmap_SetPalette(iface, pIPalette);
+}
+
+HRESULT WINAPI IWICBitmap_SetResolution_Proxy_W(IWICBitmap *iface,
+    double dpiX, double dpiY)
+{
+    return IWICBitmap_SetResolution(iface, dpiX, dpiY);
+}
+
 HRESULT WINAPI IWICColorContext_InitializeFromMemory_Proxy_W(IWICColorContext *iface,
     const BYTE *pbBuffer, UINT cbBufferSize)
 {

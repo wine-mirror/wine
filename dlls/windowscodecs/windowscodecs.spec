@@ -49,9 +49,9 @@
 @ stdcall IWICBitmapSource_GetPixelFormat_Proxy(ptr ptr) IWICBitmapSource_GetPixelFormat_Proxy_W
 @ stdcall IWICBitmapSource_GetResolution_Proxy(ptr ptr ptr) IWICBitmapSource_GetResolution_Proxy_W
 @ stdcall IWICBitmapSource_GetSize_Proxy(ptr ptr ptr) IWICBitmapSource_GetSize_Proxy_W
-@ stub IWICBitmap_Lock_Proxy
-@ stub IWICBitmap_SetPalette_Proxy
-@ stub IWICBitmap_SetResolution_Proxy
+@ stdcall IWICBitmap_Lock_Proxy(ptr ptr long ptr) IWICBitmap_Lock_Proxy_W
+@ stdcall IWICBitmap_SetPalette_Proxy(ptr ptr) IWICBitmap_SetPalette_Proxy_W
+@ stdcall IWICBitmap_SetResolution_Proxy(ptr double double) IWICBitmap_SetResolution_Proxy_W
 @ stdcall IWICColorContext_InitializeFromMemory_Proxy(ptr ptr long) IWICColorContext_InitializeFromMemory_Proxy_W
 @ stub IWICComponentFactory_CreateMetadataWriterFromReader_Proxy
 @ stub IWICComponentFactory_CreateQueryWriterFromBlockWriter_Proxy
