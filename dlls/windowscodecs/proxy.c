@@ -29,6 +29,7 @@
 #include "winbase.h"
 #include "objbase.h"
 #include "wincodec.h"
+#include "wincodecsdk.h"
 
 #include "wincodecs_private.h"
 
@@ -497,6 +498,18 @@ HRESULT WINAPI IWICImagingFactory_CreateStream_Proxy_W(IWICImagingFactory *pFact
     IWICStream **ppIWICStream)
 {
     return IWICImagingFactory_CreateStream(pFactory, ppIWICStream);
+}
+
+HRESULT WINAPI IWICMetadataBlockReader_GetCount_Proxy_W(IWICMetadataBlockReader *iface,
+    UINT *pcCount)
+{
+    return IWICMetadataBlockReader_GetCount(iface, pcCount);
+}
+
+HRESULT WINAPI IWICMetadataBlockReader_GetReaderByIndex_Proxy_W(IWICMetadataBlockReader *iface,
+    UINT nIndex, IWICMetadataReader **ppIMetadataReader)
+{
+    return IWICMetadataBlockReader_GetReaderByIndex(iface, nIndex, ppIMetadataReader);
 }
 
 HRESULT WINAPI IWICMetadataQueryReader_GetContainerFormat_Proxy_W(IWICMetadataQueryReader *iface,
