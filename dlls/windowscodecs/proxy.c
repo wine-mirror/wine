@@ -36,6 +36,36 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
+HRESULT WINAPI IWICBitmapSource_GetSize_Proxy_W(IWICBitmapSource *iface,
+    UINT *puiWidth, UINT *puiHeight)
+{
+    return IWICBitmapSource_GetSize(iface, puiWidth, puiHeight);
+}
+
+HRESULT WINAPI IWICBitmapSource_GetPixelFormat_Proxy_W(IWICBitmapSource *iface,
+    WICPixelFormatGUID *pPixelFormat)
+{
+    return IWICBitmapSource_GetPixelFormat(iface, pPixelFormat);
+}
+
+HRESULT WINAPI IWICBitmapSource_GetResolution_Proxy_W(IWICBitmapSource *iface,
+    double *pDpiX, double *pDpiY)
+{
+    return IWICBitmapSource_GetResolution(iface, pDpiX, pDpiY);
+}
+
+HRESULT WINAPI IWICBitmapSource_CopyPalette_Proxy_W(IWICBitmapSource *iface,
+    IWICPalette *pIPalette)
+{
+    return IWICBitmapSource_CopyPalette(iface, pIPalette);
+}
+
+HRESULT WINAPI IWICBitmapSource_CopyPixels_Proxy_W(IWICBitmapSource *iface,
+    const WICRect *prc, UINT cbStride, UINT cbBufferSize, BYTE *pbBuffer)
+{
+    return IWICBitmapSource_CopyPixels(iface, prc, cbStride, cbBufferSize, pbBuffer);
+}
+
 HRESULT WINAPI IWICColorContext_InitializeFromMemory_Proxy_W(IWICColorContext *iface,
     const BYTE *pbBuffer, UINT cbBufferSize)
 {

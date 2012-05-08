@@ -44,11 +44,11 @@
 @ stub IWICBitmapLock_GetDataPointer_STA_Proxy
 @ stub IWICBitmapLock_GetStride_Proxy
 @ stub IWICBitmapScaler_Initialize_Proxy
-@ stub IWICBitmapSource_CopyPalette_Proxy
-@ stub IWICBitmapSource_CopyPixels_Proxy
-@ stub IWICBitmapSource_GetPixelFormat_Proxy
-@ stub IWICBitmapSource_GetResolution_Proxy
-@ stub IWICBitmapSource_GetSize_Proxy
+@ stdcall IWICBitmapSource_CopyPalette_Proxy(ptr ptr) IWICBitmapSource_CopyPalette_Proxy_W
+@ stdcall IWICBitmapSource_CopyPixels_Proxy(ptr ptr long long ptr) IWICBitmapSource_CopyPixels_Proxy_W
+@ stdcall IWICBitmapSource_GetPixelFormat_Proxy(ptr ptr) IWICBitmapSource_GetPixelFormat_Proxy_W
+@ stdcall IWICBitmapSource_GetResolution_Proxy(ptr ptr ptr) IWICBitmapSource_GetResolution_Proxy_W
+@ stdcall IWICBitmapSource_GetSize_Proxy(ptr ptr ptr) IWICBitmapSource_GetSize_Proxy_W
 @ stub IWICBitmap_Lock_Proxy
 @ stub IWICBitmap_SetPalette_Proxy
 @ stub IWICBitmap_SetResolution_Proxy
