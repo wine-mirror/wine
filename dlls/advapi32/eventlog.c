@@ -840,6 +840,15 @@ ULONG WINAPI EventRegister( LPCGUID provider, PENABLECALLBACK callback, PVOID co
 }
 
 /******************************************************************************
+ * EventUnregister [ADVAPI32.@]
+ */
+ULONG WINAPI EventUnregister( REGHANDLE handle )
+{
+    FIXME("%s: stub\n", wine_dbgstr_longlong(handle));
+    return ERROR_SUCCESS;
+}
+
+/******************************************************************************
  * EventEnabled [ADVAPI32.@]
  *
  */
@@ -847,6 +856,16 @@ BOOLEAN WINAPI EventEnabled( REGHANDLE handle, PCEVENT_DESCRIPTOR descriptor )
 {
     FIXME("(%s, %p): stub\n", wine_dbgstr_longlong(handle), descriptor);
     return FALSE;
+}
+
+/******************************************************************************
+ * EventWrite [ADVAPI32.@]
+ */
+ULONG WINAPI EventWrite( REGHANDLE handle, PCEVENT_DESCRIPTOR descriptor, ULONG count,
+                         PEVENT_DATA_DESCRIPTOR data )
+{
+    FIXME("%s, %p, %u, %p: stub\n", wine_dbgstr_longlong(handle), descriptor, count, data);
+    return ERROR_SUCCESS;
 }
 
 /******************************************************************************
