@@ -149,6 +149,24 @@ HRESULT WINAPI IWICFastMetadataEncoder_GetMetadataQueryWriter_Proxy_W(IWICFastMe
     return IWICFastMetadataEncoder_GetMetadataQueryWriter(iface, ppIMetadataQueryWriter);
 }
 
+HRESULT WINAPI IWICBitmapFrameDecode_GetMetadataQueryReader_Proxy_W(IWICBitmapFrameDecode *iface,
+    IWICMetadataQueryReader **ppIMetadataQueryReader)
+{
+    return IWICBitmapFrameDecode_GetMetadataQueryReader(iface, ppIMetadataQueryReader);
+}
+
+HRESULT WINAPI IWICBitmapFrameDecode_GetColorContexts_Proxy_W(IWICBitmapFrameDecode *iface,
+    UINT cCount, IWICColorContext **ppIColorContexts, UINT *pcActualCount)
+{
+    return IWICBitmapFrameDecode_GetColorContexts(iface, cCount, ppIColorContexts, pcActualCount);
+}
+
+HRESULT WINAPI IWICBitmapFrameDecode_GetThumbnail_Proxy_W(IWICBitmapFrameDecode *iface,
+    IWICBitmapSource **ppIThumbnail)
+{
+    return IWICBitmapFrameDecode_GetThumbnail(iface, ppIThumbnail);
+}
+
 HRESULT WINAPI IWICImagingFactory_CreateBitmapClipper_Proxy_W(IWICImagingFactory *pFactory,
     IWICBitmapClipper **ppIBitmapClipper)
 {

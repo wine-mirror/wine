@@ -30,9 +30,9 @@
 @ stub IWICBitmapEncoder_SetPalette_Proxy
 @ stub IWICBitmapEncoder_SetThumbnail_Proxy
 @ stdcall IWICBitmapFlipRotator_Initialize_Proxy(ptr ptr long) IWICBitmapFlipRotator_Initialize_Proxy_W
-@ stub IWICBitmapFrameDecode_GetColorContexts_Proxy
-@ stub IWICBitmapFrameDecode_GetMetadataQueryReader_Proxy
-@ stub IWICBitmapFrameDecode_GetThumbnail_Proxy
+@ stdcall IWICBitmapFrameDecode_GetColorContexts_Proxy(ptr long ptr ptr) IWICBitmapFrameDecode_GetColorContexts_Proxy_W
+@ stdcall IWICBitmapFrameDecode_GetMetadataQueryReader_Proxy(ptr ptr) IWICBitmapFrameDecode_GetMetadataQueryReader_Proxy_W
+@ stdcall IWICBitmapFrameDecode_GetThumbnail_Proxy(ptr ptr) IWICBitmapFrameDecode_GetThumbnail_Proxy_W
 @ stub IWICBitmapFrameEncode_Commit_Proxy
 @ stub IWICBitmapFrameEncode_GetMetadataQueryWriter_Proxy
 @ stub IWICBitmapFrameEncode_Initialize_Proxy
