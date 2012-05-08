@@ -207,7 +207,7 @@ void ME_MarkAllForWrapping(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 void ME_SetDefaultParaFormat(PARAFORMAT2 *pFmt) DECLSPEC_HIDDEN;
 
 /* paint.c */
-void ME_PaintContent(ME_TextEditor *editor, HDC hDC, BOOL bOnlyNew, const RECT *rcUpdate) DECLSPEC_HIDDEN;
+void ME_PaintContent(ME_TextEditor *editor, HDC hDC, const RECT *rcUpdate) DECLSPEC_HIDDEN;
 void ME_Repaint(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 void ME_RewrapRepaint(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 void ME_UpdateRepaint(ME_TextEditor *editor, BOOL update_now) DECLSPEC_HIDDEN;

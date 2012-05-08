@@ -4463,7 +4463,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
         ps.rcPaint.right = editor->rcFormat.right;
       }
 
-      ME_PaintContent(editor, hDC, FALSE, &ps.rcPaint);
+      ME_PaintContent(editor, hDC, &ps.rcPaint);
       EndPaint(editor->hWnd, &ps);
       return 0;
     }
