@@ -44,6 +44,7 @@
 #include "rpc_message.h"
 #include "rpc_defs.h"
 #include "ncastatus.h"
+#include "secext.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(rpc);
 
@@ -1454,6 +1455,45 @@ RPC_STATUS WINAPI RpcServerRegisterAuthInfoW( RPC_WSTR ServerPrincName, ULONG Au
     list_add_tail(&server_registered_auth_info, &auth_info->entry);
     LeaveCriticalSection(&server_auth_info_cs);
 
+    return RPC_S_OK;
+}
+
+/******************************************************************************
+ * RpcServerInqDefaultPrincNameA   (rpcrt4.@)
+ */
+RPC_STATUS RPC_ENTRY RpcServerInqDefaultPrincNameA(ULONG AuthnSvc, RPC_CSTR *PrincName)
+{
+    RPC_STATUS ret;
+    RPC_WSTR principalW;
+
+    TRACE("%u, %p\n", AuthnSvc, PrincName);
+
+    if ((ret = RpcServerInqDefaultPrincNameW( AuthnSvc, &principalW )) == RPC_S_OK)
+    {
+        if (!(*PrincName = (RPC_CSTR)RPCRT4_strdupWtoA( principalW ))) return RPC_S_OUT_OF_MEMORY;
+        RpcStringFreeW( &principalW );
+    }
+    return ret;
+}
+
+/******************************************************************************
+ * RpcServerInqDefaultPrincNameW   (rpcrt4.@)
+ */
+RPC_STATUS RPC_ENTRY RpcServerInqDefaultPrincNameW(ULONG AuthnSvc, RPC_WSTR *PrincName)
+{
+    ULONG len = 0;
+
+    FIXME("%u, %p\n", AuthnSvc, PrincName);
+
+    if (AuthnSvc != RPC_C_AUTHN_WINNT) return RPC_S_UNKNOWN_AUTHN_SERVICE;
+
+    GetUserNameExW( NameSamCompatible, NULL, &len );
+    if (GetLastError() != ERROR_MORE_DATA) return RPC_S_INTERNAL_ERROR;
+
+    if (!(*PrincName = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
+        return RPC_S_OUT_OF_MEMORY;
+
+    GetUserNameExW( NameSamCompatible, *PrincName, &len );
     return RPC_S_OK;
 }
 

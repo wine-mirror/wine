@@ -427,8 +427,8 @@
 @ stdcall RpcServerInqBindings(ptr)
 @ stub RpcServerInqCallAttributesA # wxp
 @ stub RpcServerInqCallAttributesW # wxp
-@ stub RpcServerInqDefaultPrincNameA
-@ stub RpcServerInqDefaultPrincNameW
+@ stdcall RpcServerInqDefaultPrincNameA(long ptr)
+@ stdcall RpcServerInqDefaultPrincNameW(long ptr)
 @ stub RpcServerInqIf
 @ stdcall RpcServerListen(long long long)
 @ stdcall RpcServerRegisterAuthInfoA(str  long ptr ptr)
