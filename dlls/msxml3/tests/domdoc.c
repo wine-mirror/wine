@@ -2061,7 +2061,11 @@ static void test_domdoc( void )
     LONG code, ref;
     LONG nLength = 0;
     WCHAR buff[100];
+    char path[MAX_PATH];
     int index;
+
+    GetTempPathA(MAX_PATH, path);
+    strcat(path, "leading_spaces.xml");
 
     /* Load document with leading spaces
      *
@@ -2087,13 +2091,24 @@ static void test_domdoc( void )
         i = 0;
         while (*data_ptr) {
             BSTR data = _bstr_(*data_ptr);
+            DWORD written;
+            HANDLE file;
+
+            file = CreateFileA(path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
+            ok(file != INVALID_HANDLE_VALUE, "can't create file %s: %u\n", path, GetLastError());
+
+            WriteFile(file, data, lstrlenW(data)*sizeof(WCHAR), &written, NULL);
+            CloseHandle(file);
 
             b = 0xc;
             V_VT(&var) = VT_BSTR;
-            V_BSTR(&var) = data;
+            V_BSTR(&var) = _bstr_(path);
             hr = IXMLDOMDocument_load(doc, var, &b);
+        todo_wine {
             EXPECT_HR(hr, class_ptr->ret[0].hr);
             ok(b == class_ptr->ret[0].b, "%d:%d, got %d, expected %d\n", index, i, b, class_ptr->ret[0].b);
+        }
+            DeleteFileA(path);
 
             b = 0xc;
             hr = IXMLDOMDocument_loadXML(doc, data, &b);
@@ -2103,8 +2118,10 @@ static void test_domdoc( void )
             data_ptr++;
             i++;
         }
+
         class_ptr++;
         index++;
+        free_bstrs();
     }
 
     doc = create_document(&IID_IXMLDOMDocument);
