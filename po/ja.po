@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-03-06 22:28+0900\n"
+"PO-Revision-Date: 2012-05-09 21:38+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Japanese\n"
@@ -1192,15 +1192,15 @@ msgstr "Caps Lock がオン"
 
 #: crypt32.rc:27
 msgid "Authority Key Identifier"
-msgstr "認証局鍵識別子"
+msgstr "認証局キー識別子"
 
 #: crypt32.rc:28
 msgid "Key Attributes"
-msgstr "鍵の属性"
+msgstr "キーの属性"
 
 #: crypt32.rc:29
 msgid "Key Usage Restriction"
-msgstr "鍵の利用制限"
+msgstr "キー使用法の制限"
 
 #: crypt32.rc:30
 msgid "Subject Alternative Name"
@@ -1216,7 +1216,7 @@ msgstr "基本制約"
 
 #: crypt32.rc:33
 msgid "Key Usage"
-msgstr "鍵の使用法"
+msgstr "キー使用法"
 
 #: crypt32.rc:34
 msgid "Certificate Policies"
@@ -1224,7 +1224,7 @@ msgstr "証明書ポリシー"
 
 #: crypt32.rc:35
 msgid "Subject Key Identifier"
-msgstr "サブジェクト鍵識別子"
+msgstr "サブジェクト キー識別子"
 
 #: crypt32.rc:36
 msgid "CRL Reason Code"
@@ -1236,7 +1236,7 @@ msgstr "CRL 配布先"
 
 #: crypt32.rc:38
 msgid "Enhanced Key Usage"
-msgstr "拡張鍵の使用法"
+msgstr "拡張されたキー使用法"
 
 #: crypt32.rc:39
 msgid "Authority Information Access"
@@ -1305,7 +1305,7 @@ msgstr ""
 
 #: crypt32.rc:55
 msgid "On-line Certificate Status Protocol"
-msgstr ""
+msgstr "オンライン証明書状態プロトコル"
 
 #: crypt32.rc:56
 msgid "Certification Authority Issuer"
@@ -1357,55 +1357,55 @@ msgstr "Netscape コメント"
 
 #: crypt32.rc:68
 msgid "Country/Region"
-msgstr ""
+msgstr "国/地域"
 
 #: crypt32.rc:69
 msgid "Organization"
-msgstr ""
+msgstr "組織"
 
 #: crypt32.rc:70
 msgid "Organizational Unit"
-msgstr ""
+msgstr "組織単位"
 
 #: crypt32.rc:71
 msgid "Common Name"
-msgstr ""
+msgstr "一般名"
 
 #: crypt32.rc:72
 msgid "Locality"
-msgstr ""
+msgstr "市区町村"
 
 #: crypt32.rc:73
 msgid "State or Province"
-msgstr ""
+msgstr "都道府県"
 
 #: crypt32.rc:74
 msgid "Title"
-msgstr ""
+msgstr "役職"
 
 #: crypt32.rc:75
 msgid "Given Name"
-msgstr ""
+msgstr "名"
 
 #: crypt32.rc:76
 msgid "Initials"
-msgstr ""
+msgstr "イニシャル"
 
 #: crypt32.rc:77
 msgid "Surname"
-msgstr ""
+msgstr "姓"
 
 #: crypt32.rc:78
 msgid "Domain Component"
-msgstr ""
+msgstr "ドメイン構成要素"
 
 #: crypt32.rc:79
 msgid "Street Address"
-msgstr ""
+msgstr "番地"
 
 #: crypt32.rc:80
 msgid "Serial Number"
-msgstr ""
+msgstr "シリアル番号"
 
 #: crypt32.rc:81
 msgid "CA Version"
@@ -1565,11 +1565,11 @@ msgstr ""
 
 #: crypt32.rc:120
 msgid "Encrypted Private Key"
-msgstr ""
+msgstr "暗号化された秘密鍵"
 
 #: crypt32.rc:121
 msgid "Published CRL Locations"
-msgstr ""
+msgstr "公開された CRL の場所"
 
 #: crypt32.rc:122
 msgid "Enforce Certificate Chain Policy"
@@ -1577,35 +1577,35 @@ msgstr ""
 
 #: crypt32.rc:123
 msgid "Transaction Id"
-msgstr ""
+msgstr "処理識別子"
 
 #: crypt32.rc:124
 msgid "Sender Nonce"
-msgstr ""
+msgstr "送信者使い捨て値"
 
 #: crypt32.rc:125
 msgid "Recipient Nonce"
-msgstr ""
+msgstr "受領者使い捨て値"
 
 #: crypt32.rc:126
 msgid "Reg Info"
-msgstr ""
+msgstr "登録情報"
 
 #: crypt32.rc:127
 msgid "Get Certificate"
-msgstr ""
+msgstr "証明書の取得"
 
 #: crypt32.rc:128
 msgid "Get CRL"
-msgstr ""
+msgstr "CRL の取得"
 
 #: crypt32.rc:129
 msgid "Revoke Request"
-msgstr ""
+msgstr "失効要求"
 
 #: crypt32.rc:130
 msgid "Query Pending"
-msgstr ""
+msgstr "問い合わせ処理中"
 
 #: crypt32.rc:131 cryptui.rc:92
 msgid "Certificate Trust List"
@@ -1613,15 +1613,15 @@ msgstr "証明書信頼リスト"
 
 #: crypt32.rc:132
 msgid "Archived Key Certificate Hash"
-msgstr ""
+msgstr "アーカイブされたキー証明書ハッシュ"
 
 #: crypt32.rc:133
 msgid "Private Key Usage Period"
-msgstr ""
+msgstr "秘密鍵使用期限"
 
 #: crypt32.rc:134
 msgid "Client Information"
-msgstr ""
+msgstr "クライアント情報"
 
 #: crypt32.rc:135
 msgid "Server Authentication"
@@ -1769,31 +1769,31 @@ msgstr "信頼されない証明書"
 
 #: crypt32.rc:179
 msgid "KeyID="
-msgstr ""
+msgstr "鍵ID="
 
 #: crypt32.rc:180
 msgid "Certificate Issuer"
-msgstr ""
+msgstr "証明書発行者"
 
 #: crypt32.rc:181
 msgid "Certificate Serial Number="
-msgstr ""
+msgstr "証明書シリアル番号="
 
 #: crypt32.rc:182
 msgid "Other Name="
-msgstr ""
+msgstr "他の名前="
 
 #: crypt32.rc:183
 msgid "Email Address="
-msgstr ""
+msgstr "電子メール アドレス="
 
 #: crypt32.rc:184
 msgid "DNS Name="
-msgstr ""
+msgstr "DNS 名="
 
 #: crypt32.rc:185
 msgid "Directory Address"
-msgstr ""
+msgstr "ディレクトリ アドレス"
 
 #: crypt32.rc:186
 msgid "URL="
@@ -1801,23 +1801,23 @@ msgstr "URL="
 
 #: crypt32.rc:187
 msgid "IP Address="
-msgstr ""
+msgstr "IP アドレス="
 
 #: crypt32.rc:188
 msgid "Mask="
-msgstr ""
+msgstr "マスク="
 
 #: crypt32.rc:189
 msgid "Registered ID="
-msgstr ""
+msgstr "登録済 ID="
 
 #: crypt32.rc:190
 msgid "Unknown Key Usage"
-msgstr ""
+msgstr "未知のキー使用法"
 
 #: crypt32.rc:191
 msgid "Subject Type="
-msgstr ""
+msgstr "目的の種類="
 
 #: crypt32.rc:192
 msgctxt "Certificate Authority"
@@ -1830,7 +1830,7 @@ msgstr ""
 
 #: crypt32.rc:194
 msgid "Path Length Constraint="
-msgstr ""
+msgstr "パス長の制限="
 
 #: crypt32.rc:195
 msgctxt "path length"
@@ -1839,15 +1839,15 @@ msgstr "なし"
 
 #: crypt32.rc:196
 msgid "Information Not Available"
-msgstr ""
+msgstr "該当情報なし"
 
 #: crypt32.rc:197
 msgid "Authority Info Access"
-msgstr ""
+msgstr "認証情報のアクセス"
 
 #: crypt32.rc:198
 msgid "Access Method="
-msgstr ""
+msgstr "アクセス手段="
 
 #: crypt32.rc:199
 msgctxt "Online Certificate Status Protocol"
@@ -1856,67 +1856,67 @@ msgstr "OCSP"
 
 #: crypt32.rc:200
 msgid "CA Issuers"
-msgstr ""
+msgstr "CA 発行者"
 
 #: crypt32.rc:201
 msgid "Unknown Access Method"
-msgstr ""
+msgstr "アクセス手段不明"
 
 #: crypt32.rc:202
 msgid "Alternative Name"
-msgstr ""
+msgstr "代替名"
 
 #: crypt32.rc:203
 msgid "CRL Distribution Point"
-msgstr ""
+msgstr "CRL 配布点"
 
 #: crypt32.rc:204
 msgid "Distribution Point Name"
-msgstr ""
+msgstr "配布点名"
 
 #: crypt32.rc:205
 msgid "Full Name"
-msgstr ""
+msgstr "フル ネーム"
 
 #: crypt32.rc:206
 msgid "RDN Name"
-msgstr ""
+msgstr "RDN 名"
 
 #: crypt32.rc:207
 msgid "CRL Reason="
-msgstr ""
+msgstr "CRL 理由="
 
 #: crypt32.rc:208
 msgid "CRL Issuer"
-msgstr ""
+msgstr "CRL 発行者"
 
 #: crypt32.rc:209
 msgid "Key Compromise"
-msgstr ""
+msgstr "キーの危殆化"
 
 #: crypt32.rc:210
 msgid "CA Compromise"
-msgstr ""
+msgstr "CA の危殆化"
 
 #: crypt32.rc:211
 msgid "Affiliation Changed"
-msgstr ""
+msgstr "所属変更"
 
 #: crypt32.rc:212
 msgid "Superseded"
-msgstr ""
+msgstr "取り替え"
 
 #: crypt32.rc:213
 msgid "Operation Ceased"
-msgstr ""
+msgstr "運用廃止"
 
 #: crypt32.rc:214
 msgid "Certificate Hold"
-msgstr ""
+msgstr "証明書保留中"
 
 #: crypt32.rc:215
 msgid "Financial Information="
-msgstr ""
+msgstr "財務情報="
 
 #: crypt32.rc:216 taskmgr.rc:397
 msgid "Available"
@@ -1924,11 +1924,11 @@ msgstr "利用可能"
 
 #: crypt32.rc:217
 msgid "Not Available"
-msgstr ""
+msgstr "利用不可"
 
 #: crypt32.rc:218
 msgid "Meets Criteria="
-msgstr ""
+msgstr "基準の適合="
 
 #: crypt32.rc:219 cryptui.rc:163 oleaut32.rc:29 wininet.rc:80 ipconfig.rc:44
 msgid "Yes"
@@ -2008,11 +2008,11 @@ msgstr "署名認証局"
 
 #: cryptdlg.rc:27
 msgid "Certificate Policy"
-msgstr ""
+msgstr "証明書ポリシー"
 
 #: cryptdlg.rc:28
 msgid "Policy Identifier: "
-msgstr ""
+msgstr "ポリシー識別子: "
 
 #: cryptdlg.rc:29
 msgid "Policy Qualifier Info"
@@ -2028,19 +2028,19 @@ msgstr ""
 
 #: cryptdlg.rc:34
 msgid "Notice Reference"
-msgstr ""
+msgstr "通知の参照"
 
 #: cryptdlg.rc:35
 msgid "Organization="
-msgstr ""
+msgstr "組織="
 
 #: cryptdlg.rc:36
 msgid "Notice Number="
-msgstr ""
+msgstr "通知番号="
 
 #: cryptdlg.rc:37
 msgid "Notice Text="
-msgstr ""
+msgstr "通知テキスト="
 
 #: cryptui.rc:177 cryptui.rc:232 inetcpl.rc:43
 msgid "General"
@@ -2508,7 +2508,7 @@ msgstr "SHA1 ハッシュ"
 
 #: cryptui.rc:60
 msgid "Enhanced key usage (property)"
-msgstr "拡張鍵の使用法 (プロパティ)"
+msgstr "拡張されたキー使用法 (プロパティ)"
 
 #: cryptui.rc:61
 msgid "Friendly name"
@@ -3458,7 +3458,7 @@ msgstr "ループ外で continue は使えません"
 
 #: jscript.rc:40
 msgid "Label redefined"
-msgstr ""
+msgstr "ラベルが再定義されました"
 
 #: jscript.rc:41
 msgid "Label not found"
@@ -6664,17 +6664,17 @@ msgstr ""
 "\t/i {パッケージ|製品コード} [プロパティ]\n"
 "\t/package {パッケージ|製品コード} [プロパティ]\n"
 "\t/a パッケージ [プロパティ]\n"
-"インストールの修復:\n"
+"インストール済み製品の修復:\n"
 "\t/f[p|o|e|d|c|a|u|m|s|v] {パッケージ|製品コード}\n"
 "製品のアンインストール:\n"
 "\t/uninstall {パッケージ|製品コード} [プロパティ]\n"
 "\t/x {パッケージ|製品コード} [プロパティ]\n"
-"パッケージのアドバタイズ:\n"
+"製品のアドバタイズ:\n"
 "\t/j[u|m] パッケージ [/t トランスフォーム] [/g 言語ID]\n"
 "パッチの適用:\n"
 "\t/p パッチパッケージ [プロパティ]\n"
 "\t/p パッチパッケージ /a パッケージ [プロパティ]\n"
-"上記コマンドのログと UI の変更:\n"
+"上記コマンドのログとユーザ インタフェースの変更:\n"
 "\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] ログファイル\n"
 "\t/q{|n|b|r|f|n+|b+|b-}\n"
 "MSI サービスの登録:\n"
@@ -9782,7 +9782,7 @@ msgstr ""
 "ATTRIB\t\tDOSファイルの属性を表示または変更\n"
 "CALL\t\t外部のバッチファイルを呼び出し\n"
 "CD (CHDIR)\tカレントディレクトリを変更\n"
-"CHOISE\t\t選択リストのキー入力を待機\n"
+"CHOICE\t\t選択リストのキー入力を待機\n"
 "CLS\t\tコンソール画面をクリア\n"
 "COPY\t\tファイルをコピー\n"
 "CTTY\t\t入力/出力デバイスを変更\n"
