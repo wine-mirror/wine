@@ -108,7 +108,6 @@ typedef struct
 {
     HBITMAP      hbitmap;
     Pixmap       pixmap;
-    XID          glxpixmap;
     int          depth;             /* depth of the X pixmap */
     int          format;            /* color format (used by XRender) */
     ColorShifts  color_shifts;      /* color shifts of the X pixmap */

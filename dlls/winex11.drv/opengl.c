@@ -1172,24 +1172,6 @@ Drawable create_glxpixmap(Display *display, XVisualInfo *vis, Pixmap parent)
 }
 
 
-static XID create_bitmap_glxpixmap(X11DRV_PDEVICE *physDev, WineGLPixelFormat *fmt)
-{
-    GLXPixmap ret = 0;
-    XVisualInfo *vis;
-
-    wine_tsx11_lock();
-
-    vis = pglXGetVisualFromFBConfig(gdi_display, fmt->fbconfig);
-    if(vis) {
-        if(vis->depth == physDev->bitmap->depth)
-            ret = pglXCreateGLXPixmap(gdi_display, vis, physDev->bitmap->pixmap);
-        XFree(vis);
-    }
-    wine_tsx11_unlock();
-    TRACE("return %lx\n", ret);
-    return ret;
-}
-
 /**
  * glxdrv_ChoosePixelFormat
  *
@@ -1610,16 +1592,6 @@ static BOOL internal_SetPixelFormat( struct glx_physdev *physdev,
             return FALSE;
         }
 
-        if (physdev->x11dev->bitmap->hbitmap == GetCurrentObject( physdev->dev.hdc, OBJ_BITMAP ))
-        {
-            physdev->x11dev->bitmap->glxpixmap = create_bitmap_glxpixmap(physdev->x11dev, fmt);
-            if(!physdev->x11dev->bitmap->glxpixmap) {
-                WARN("Couldn't create glxpixmap for pixel format %d\n", iPixelFormat);
-                return FALSE;
-            }
-        }
-        /* otherwise we have a DIB section */
-
         physdev->pixel_format = iPixelFormat;
         physdev->type = DC_GL_BITMAP;
     }
@@ -1830,17 +1802,11 @@ static PROC glxdrv_wglGetProcAddress(LPCSTR lpszProc)
 
 static GLXPixmap get_context_pixmap( struct glx_physdev *physdev, struct wine_glcontext *ctx )
 {
-    HBITMAP bitmap = GetCurrentObject( physdev->dev.hdc, OBJ_BITMAP );
-
-    if (physdev->x11dev->bitmap->hbitmap == bitmap) return physdev->x11dev->bitmap->glxpixmap;
-
-    /* otherwise we have a DIB section */
-
     if (!ctx->pixmap)
     {
         BITMAP bmp;
 
-        GetObjectW( bitmap, sizeof(bmp), &bmp );
+        GetObjectW( GetCurrentObject( physdev->dev.hdc, OBJ_BITMAP ), sizeof(bmp), &bmp );
 
         wine_tsx11_lock();
         ctx->pixmap = XCreatePixmap( gdi_display, root_window,
@@ -3974,24 +3940,6 @@ static BOOL glxdrv_DeleteDC( PHYSDEV dev )
     return TRUE;
 }
 
-/***********************************************************************
- *           glxdrv_SelectBitmap
- */
-static HBITMAP glxdrv_SelectBitmap( PHYSDEV dev, HBITMAP hbitmap )
-{
-    HBITMAP ret;
-    struct glx_physdev *physdev = get_glxdrv_dev( dev );
-
-    dev = GET_NEXT_PHYSDEV( dev, pSelectBitmap );
-    ret = dev->funcs->pSelectBitmap( dev, hbitmap );
-    if (ret)
-    {
-        if (hbitmap == BITMAP_stock_phys_bitmap.hbitmap) physdev->drawable = 0;
-        else physdev->drawable = X11DRV_get_phys_bitmap(hbitmap)->glxpixmap;
-    }
-    return ret;
-}
-
 /**********************************************************************
  *           glxdrv_ExtEscape
  */
@@ -4122,7 +4070,7 @@ static const struct gdi_dc_funcs glxdrv_funcs =
     NULL,                               /* pSaveDC */
     NULL,                               /* pScaleViewportExt */
     NULL,                               /* pScaleWindowExt */
-    glxdrv_SelectBitmap,                /* pSelectBitmap */
+    NULL,                               /* pSelectBitmap */
     NULL,                               /* pSelectBrush */
     NULL,                               /* pSelectClipPath */
     NULL,                               /* pSelectFont */
