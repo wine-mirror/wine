@@ -851,7 +851,6 @@ static void test_MapViewOfFile(void)
     ret = VirtualQuery(ptr, &info, sizeof(info));
     ok(ret, "VirtualQuery error %d\n", GetLastError());
     ok(info.BaseAddress == ptr, "got %p != expected %p\n", info.BaseAddress, ptr);
-    ok(info.RegionSize != MAPPING_SIZE, "got size %#lx\n", info.RegionSize);
     ok(info.Protect == PAGE_NOACCESS, "got %#x != expected PAGE_NOACCESS\n", info.Protect);
     ok(info.AllocationBase == NULL, "%p != NULL\n", info.AllocationBase);
     ok(info.AllocationProtect == 0, "%#x != 0\n", info.AllocationProtect);
@@ -932,7 +931,6 @@ static void test_MapViewOfFile(void)
     ret = VirtualQuery(ptr, &info, sizeof(info));
     ok(ret, "VirtualQuery error %d\n", GetLastError());
     ok(info.BaseAddress == ptr, "got %p != expected %p\n", info.BaseAddress, ptr);
-    ok(info.RegionSize != MAPPING_SIZE, "got size %#lx\n", info.RegionSize);
     ok(info.Protect == PAGE_NOACCESS, "got %#x != expected PAGE_NOACCESS\n", info.Protect);
     ok(info.AllocationBase == NULL, "%p != NULL\n", info.AllocationBase);
     ok(info.AllocationProtect == 0, "%#x != 0\n", info.AllocationProtect);
