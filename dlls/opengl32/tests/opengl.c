@@ -571,7 +571,7 @@ static void test_bitmap_rendering(void)
     {
         SetPixelFormat(hdcDst, iPixelFormat, &pfd);
         hglrc = wglCreateContext(hdcDst);
-        todo_wine ok(hglrc != NULL, "Unable to create a context\n");
+        ok(hglrc != NULL, "Unable to create a context\n");
 
         if(hglrc)
         {
@@ -583,7 +583,7 @@ static void test_bitmap_rendering(void)
             glFinish();
 
             /* Note apparently the alpha channel is not supported by the software renderer (bitmap only works using software) */
-            ok(dstBuffer[0] == 0x223344, "Expected color=0x223344, received color=%x\n", dstBuffer[0]);
+            ok(dstBuffer[0] == 0x223344 || dstBuffer[0] == 0x11223344, "Received color=%x\n", dstBuffer[0]);
 
             wglMakeCurrent(NULL, NULL);
             wglDeleteContext(hglrc);
