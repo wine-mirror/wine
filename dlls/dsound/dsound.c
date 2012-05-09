@@ -1255,11 +1255,6 @@ ULONG DirectSoundDevice_Release(DirectSoundDevice * device)
                 secondarybuffer_destroy(device->buffers[i]);
         }
 
-        if (device->primary) {
-            WARN("primary buffer not released\n");
-            IDirectSoundBuffer8_Release((LPDIRECTSOUNDBUFFER8)device->primary);
-        }
-
         hr = DSOUND_PrimaryDestroy(device);
         if (hr != DS_OK)
             WARN("DSOUND_PrimaryDestroy failed\n");

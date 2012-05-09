@@ -258,6 +258,13 @@ HRESULT DSOUND_PrimaryDestroy(DirectSoundDevice *device)
 	EnterCriticalSection(&(device->mixlock));
 
 	DSOUND_PrimaryClose(device);
+
+	if(device->primary && (device->primary->ref || device->primary->numIfaces))
+		WARN("Destroying primary buffer while references held (%u %u)\n", device->primary->ref, device->primary->numIfaces);
+
+	HeapFree(GetProcessHeap(), 0, device->primary);
+	device->primary = NULL;
+
 	HeapFree(GetProcessHeap(),0,device->pwfx);
 	device->pwfx=NULL;
 
@@ -756,21 +763,31 @@ static ULONG WINAPI PrimaryBufferImpl_AddRef(IDirectSoundBuffer *iface)
     return ref;
 }
 
-void primarybuffer_destroy(IDirectSoundBufferImpl *This)
+/* Decreases *out by 1 to no less than 0.
+ * Returns the new value of *out. */
+LONG capped_refcount_dec(LONG *out)
 {
-    This->device->primary = NULL;
-    HeapFree(GetProcessHeap(), 0, This);
-    TRACE("(%p) released\n", This);
+    LONG ref, oldref;
+    do {
+        ref = *out;
+        if(!ref)
+            return 0;
+        oldref = InterlockedCompareExchange(out, ref - 1, ref);
+    } while(oldref != ref);
+    return ref - 1;
 }
 
 static ULONG WINAPI PrimaryBufferImpl_Release(IDirectSoundBuffer *iface)
 {
     IDirectSoundBufferImpl *This = impl_from_IDirectSoundBuffer(iface);
-    DWORD ref = InterlockedDecrement(&(This->ref));
-    TRACE("(%p) ref was %d\n", This, ref + 1);
+    ULONG ref;
 
-    if (!ref && !InterlockedDecrement(&This->numIfaces))
-        primarybuffer_destroy(This);
+    ref = capped_refcount_dec(&This->ref);
+    if(!ref)
+        capped_refcount_dec(&This->numIfaces);
+
+    TRACE("(%p) primary ref is now %d\n", This, ref);
+
     return ref;
 }
 

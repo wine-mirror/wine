@@ -699,12 +699,13 @@ static ULONG WINAPI IDirectSound3DListenerImpl_AddRef(IDirectSound3DListener *if
 static ULONG WINAPI IDirectSound3DListenerImpl_Release(IDirectSound3DListener *iface)
 {
     IDirectSoundBufferImpl *This = impl_from_IDirectSound3DListener(iface);
-    ULONG ref = InterlockedDecrement(&This->ref3D);
+    ULONG ref;
 
-    TRACE("(%p) ref was %d\n", This, ref + 1);
+    ref = capped_refcount_dec(&This->ref3D);
+    if(!ref)
+        capped_refcount_dec(&This->numIfaces);
 
-    if (!ref && !InterlockedDecrement(&This->numIfaces))
-            primarybuffer_destroy(This);
+    TRACE("(%p) ref is now %d\n", This, ref);
 
     return ref;
 }

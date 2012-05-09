@@ -493,6 +493,15 @@ static HRESULT test_primary(LPGUID lpGuid)
                     !(dscaps.dwFlags & DSCAPS_EMULDRIVER),5.0,0,0,0,0,FALSE,0);
 
         ref=IDirectSoundBuffer_Release(primary);
+        ok(ref==0,"IDirectSoundBuffer_Release() primary has %d references\n",ref);
+
+        ref=IDirectSoundBuffer_AddRef(primary);
+        ok(ref==1,"IDirectSoundBuffer_AddRef() primary has %d references\n",ref);
+
+        ref=IDirectSoundBuffer_Release(primary);
+        ok(ref==0,"IDirectSoundBuffer_Release() primary has %d references\n",ref);
+
+        ref=IDirectSoundBuffer_Release(primary);
         ok(ref==0,"IDirectSoundBuffer_Release() primary has %d references, "
            "should have 0\n",ref);
     }
