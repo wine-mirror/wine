@@ -1992,7 +1992,7 @@ static void test_saxreader(void)
         IStream_Write(stream, testXML, strlen(testXML), &written);
         pos.QuadPart = 0;
         IStream_Seek(stream, pos, STREAM_SEEK_SET, NULL);
-        V_VT(&var) = VT_UNKNOWN|VT_DISPATCH;
+        V_VT(&var) = VT_UNKNOWN;
         V_UNKNOWN(&var) = (IUnknown*)stream;
 
         set_expected_seq(test_seq);
@@ -2008,7 +2008,7 @@ static void test_saxreader(void)
         IStream_Write(stream, test_attributes, strlen(test_attributes), &written);
         pos.QuadPart = 0;
         IStream_Seek(stream, pos, STREAM_SEEK_SET, NULL);
-        V_VT(&var) = VT_UNKNOWN|VT_DISPATCH;
+        V_VT(&var) = VT_UNKNOWN;
         V_UNKNOWN(&var) = (IUnknown*)stream;
 
         if (IsEqualGUID(table->clsid, &CLSID_SAXXMLReader40))
@@ -2151,7 +2151,7 @@ static void test_saxreader(void)
         IStream_Write(stream, test_attributes, strlen(test_attributes), &written);
         pos.QuadPart = 0;
         IStream_Seek(stream, pos, STREAM_SEEK_SET, NULL);
-        V_VT(&var) = VT_UNKNOWN|VT_DISPATCH;
+        V_VT(&var) = VT_UNKNOWN;
         V_UNKNOWN(&var) = (IUnknown*)stream;
 
         if (IsEqualGUID(table->clsid, &CLSID_SAXXMLReader40) ||
@@ -2179,7 +2179,7 @@ static void test_saxreader(void)
         IStream_Write(stream, test_attributes, strlen(test_attributes), &written);
         pos.QuadPart = 0;
         IStream_Seek(stream, pos, STREAM_SEEK_SET, NULL);
-        V_VT(&var) = VT_UNKNOWN|VT_DISPATCH;
+        V_VT(&var) = VT_UNKNOWN;
         V_UNKNOWN(&var) = (IUnknown*)stream;
 
         if (IsEqualGUID(table->clsid, &CLSID_SAXXMLReader40) ||
@@ -2205,7 +2205,7 @@ static void test_saxreader(void)
         IStream_Write(stream, attribute_normalize, strlen(attribute_normalize), &written);
         pos.QuadPart = 0;
         IStream_Seek(stream, pos, STREAM_SEEK_SET, NULL);
-        V_VT(&var) = VT_UNKNOWN|VT_DISPATCH;
+        V_VT(&var) = VT_UNKNOWN;
         V_UNKNOWN(&var) = (IUnknown*)stream;
 
         if (IsEqualGUID(table->clsid, &CLSID_SAXXMLReader40) ||
