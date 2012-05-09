@@ -73,13 +73,7 @@ void ME_PaintContent(ME_TextEditor *editor, HDC hDC, const RECT *rcUpdate)
 
     /* Draw the paragraph if any of the paragraph is in the update region. */
     if (ys < rcUpdate->bottom && ye > rcUpdate->top)
-    {
       ME_DrawParagraph(&c, item);
-      /* Clear the repaint flag if the whole paragraph is in the
-       * update region. */
-      if (rcUpdate->top <= ys && rcUpdate->bottom >= ye)
-        item->member.para.nFlags &= ~MEPF_REPAINT;
-    }
     item = item->member.para.next_para;
   }
   if (c.pt.y + editor->nTotalLength < c.rcView.bottom)
@@ -1263,7 +1257,8 @@ void ME_EnsureVisible(ME_TextEditor *editor, ME_Cursor *pCursor)
 void
 ME_InvalidateSelection(ME_TextEditor *editor)
 {
-  ME_DisplayItem *para1, *para2;
+  ME_DisplayItem *sel_start, *sel_end;
+  ME_DisplayItem *repaint_start = NULL, *repaint_end = NULL;
   int nStart, nEnd;
   int len = ME_GetTextLength(editor);
 
@@ -1273,32 +1268,39 @@ ME_InvalidateSelection(ME_TextEditor *editor)
   if (nStart == nEnd && editor->nLastSelStart == editor->nLastSelEnd)
     return;
   ME_WrapMarkedParagraphs(editor);
-  ME_GetSelectionParas(editor, &para1, &para2);
-  assert(para1->type == diParagraph);
-  assert(para2->type == diParagraph);
+  ME_GetSelectionParas(editor, &sel_start, &sel_end);
+  assert(sel_start->type == diParagraph);
+  assert(sel_end->type == diParagraph);
   /* last selection markers aren't always updated, which means
    * they can point past the end of the document */
   if (editor->nLastSelStart > len || editor->nLastSelEnd > len) {
-    ME_MarkForPainting(editor,
-        ME_FindItemFwd(editor->pBuffer->pFirst, diParagraph),
-        editor->pBuffer->pLast);
+    repaint_start = ME_FindItemFwd(editor->pBuffer->pFirst, diParagraph);
+    repaint_end = editor->pBuffer->pLast;
+    ME_MarkForPainting(editor, repaint_start, repaint_end);
   } else {
     /* if the start part of selection is being expanded or contracted... */
     if (nStart < editor->nLastSelStart) {
-      ME_MarkForPainting(editor, para1, editor->pLastSelStartPara->member.para.next_para);
+      repaint_start = sel_start;
+      repaint_end = editor->pLastSelStartPara->member.para.next_para;
     } else if (nStart > editor->nLastSelStart) {
-      ME_MarkForPainting(editor, editor->pLastSelStartPara, para1->member.para.next_para);
+      repaint_start = editor->pLastSelStartPara;
+      repaint_end = sel_start->member.para.next_para;
     }
+    ME_MarkForPainting(editor, repaint_start, repaint_end);
 
     /* if the end part of selection is being contracted or expanded... */
     if (nEnd < editor->nLastSelEnd) {
-      ME_MarkForPainting(editor, para2, editor->pLastSelEndPara->member.para.next_para);
+      if (!repaint_start) repaint_start = sel_end;
+      repaint_end = editor->pLastSelEndPara->member.para.next_para;
+      ME_MarkForPainting(editor, sel_end, repaint_end);
     } else if (nEnd > editor->nLastSelEnd) {
-      ME_MarkForPainting(editor, editor->pLastSelEndPara, para2->member.para.next_para);
+      if (!repaint_start) repaint_start = editor->pLastSelEndPara;
+      repaint_end = sel_end->member.para.next_para;
+      ME_MarkForPainting(editor, editor->pLastSelEndPara, repaint_end);
     }
   }
 
-  ME_InvalidateMarkedParagraphs(editor);
+  ME_InvalidateMarkedParagraphs(editor, repaint_start, repaint_end);
   /* remember the last invalidated position */
   ME_GetSelectionOfs(editor, &editor->nLastSelStart, &editor->nLastSelEnd);
   ME_GetSelectionParas(editor, &editor->pLastSelStartPara, &editor->pLastSelEndPara);
