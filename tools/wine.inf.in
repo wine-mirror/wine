@@ -658,6 +658,7 @@ HKLM,%MciExtStr%,"wmx",,"MPEGVideo"
 HKLM,%MciExtStr%,"wvx",,"MPEGVideo"
 
 [Misc]
+HKCU,Control Panel\Mouse,"Beep",2,"No"
 HKLM,Software\Borland\Database Engine\Settings\SYSTEM\INIT,SHAREDMEMLOCATION,,9000
 HKLM,Software\Clients\Mail,,2,"Native Mail Client"
 HKLM,Software\Clients\Mail\Native Mail Client,,2,"Native Mail Client"
