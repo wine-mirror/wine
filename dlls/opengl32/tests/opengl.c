@@ -515,36 +515,48 @@ static void test_acceleration(HDC hdc)
     }
 }
 
-static void test_bitmap_rendering(void)
+static void test_bitmap_rendering( BOOL use_dib )
 {
     PIXELFORMATDESCRIPTOR pfd;
-    int i, iPixelFormat=0;
+    int i, ret, bpp, iPixelFormat=0;
     unsigned int nFormats;
-    HGLRC hglrc;
+    HGLRC hglrc, hglrc2;
     BITMAPINFO biDst;
-    HBITMAP bmpDst, oldDst;
+    HBITMAP bmpDst, oldDst, bmp2;
     HDC hdcDst, hdcScreen;
-    UINT32 *dstBuffer;
-
-    memset(&biDst, 0, sizeof(BITMAPINFO));
-    biDst.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-    biDst.bmiHeader.biWidth = 2;
-    biDst.bmiHeader.biHeight = -2;
-    biDst.bmiHeader.biPlanes = 1;
-    biDst.bmiHeader.biBitCount = 32;
-    biDst.bmiHeader.biCompression = BI_RGB;
+    UINT *dstBuffer = NULL;
 
     hdcScreen = CreateCompatibleDC(0);
-    if(GetDeviceCaps(hdcScreen, BITSPIXEL) != 32)
+    hdcDst = CreateCompatibleDC(0);
+
+    if (use_dib)
     {
-        DeleteDC(hdcScreen);
-        trace("Skipping bitmap rendering test\n");
-        return;
+        bpp = 32;
+        memset(&biDst, 0, sizeof(BITMAPINFO));
+        biDst.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+        biDst.bmiHeader.biWidth = 4;
+        biDst.bmiHeader.biHeight = -4;
+        biDst.bmiHeader.biPlanes = 1;
+        biDst.bmiHeader.biBitCount = 32;
+        biDst.bmiHeader.biCompression = BI_RGB;
+
+        bmpDst = CreateDIBSection(0, &biDst, DIB_RGB_COLORS, (void**)&dstBuffer, NULL, 0);
+
+        biDst.bmiHeader.biWidth = 12;
+        biDst.bmiHeader.biHeight = -12;
+        biDst.bmiHeader.biBitCount = 16;
+        bmp2 = CreateDIBSection(0, &biDst, DIB_RGB_COLORS, NULL, NULL, 0);
+    }
+    else
+    {
+        bpp = GetDeviceCaps( hdcScreen, BITSPIXEL );
+        bmpDst = CreateBitmap( 4, 4, 1, bpp, NULL );
+        bmp2 = CreateBitmap( 12, 12, 1, bpp, NULL );
     }
 
-    hdcDst = CreateCompatibleDC(hdcScreen);
-    bmpDst = CreateDIBSection(hdcDst, &biDst, DIB_RGB_COLORS, (void**)&dstBuffer, NULL, 0);
     oldDst = SelectObject(hdcDst, bmpDst);
+
+    trace( "testing on %s\n", use_dib ? "DIB" : "DDB" );
 
     /* Pick a pixel format by hand because ChoosePixelFormat is unreliable */
     nFormats = DescribePixelFormat(hdcDst, 0, 0, NULL);
@@ -555,7 +567,7 @@ static void test_bitmap_rendering(void)
 
         if((pfd.dwFlags & PFD_DRAW_TO_BITMAP) &&
            (pfd.dwFlags & PFD_SUPPORT_OPENGL) &&
-           (pfd.cColorBits == 32) &&
+           (pfd.cColorBits == bpp) &&
            (pfd.cAlphaBits == 8) )
         {
             iPixelFormat = i;
@@ -569,31 +581,85 @@ static void test_bitmap_rendering(void)
     }
     else
     {
-        SetPixelFormat(hdcDst, iPixelFormat, &pfd);
+        ret = SetPixelFormat(hdcDst, iPixelFormat, &pfd);
+        ok( ret, "SetPixelFormat failed\n" );
+        ret = GetPixelFormat( hdcDst );
+        ok( ret == iPixelFormat, "GetPixelFormat returned %d/%d\n", ret, iPixelFormat );
+        ret = SetPixelFormat(hdcDst, iPixelFormat + 1, &pfd);
+        ok( !ret, "SetPixelFormat succeeded\n" );
         hglrc = wglCreateContext(hdcDst);
         ok(hglrc != NULL, "Unable to create a context\n");
 
         if(hglrc)
         {
+            GLint viewport[4];
             wglMakeCurrent(hdcDst, hglrc);
+            hglrc2 = wglCreateContext(hdcDst);
+            ok(hglrc2 != NULL, "Unable to create a context\n");
 
             /* Note this is RGBA but we read ARGB back */
             glClearColor((float)0x22/0xff, (float)0x33/0xff, (float)0x44/0xff, (float)0x11/0xff);
             glClear(GL_COLOR_BUFFER_BIT);
+            glGetIntegerv( GL_VIEWPORT, viewport );
             glFinish();
 
+            ok( viewport[0] == 0 && viewport[1] == 0 && viewport[2] == 4 && viewport[3] == 4,
+                "wrong viewport %d,%d,%d,%d\n", viewport[0], viewport[1], viewport[2], viewport[3] );
             /* Note apparently the alpha channel is not supported by the software renderer (bitmap only works using software) */
-            ok(dstBuffer[0] == 0x223344 || dstBuffer[0] == 0x11223344, "Received color=%x\n", dstBuffer[0]);
+            if (dstBuffer)
+                for (i = 0; i < 16; i++)
+                    ok(dstBuffer[i] == 0x223344 || dstBuffer[i] == 0x11223344, "Received color=%x at %u\n",
+                       dstBuffer[i], i);
+
+            SelectObject(hdcDst, bmp2);
+            ret = GetPixelFormat( hdcDst );
+            ok( ret == iPixelFormat, "GetPixelFormat returned %d/%d\n", ret, iPixelFormat );
+            ret = SetPixelFormat(hdcDst, iPixelFormat + 1, &pfd);
+            ok( !ret, "SetPixelFormat succeeded\n" );
+
+            /* context still uses the old pixel format and viewport */
+            glClearColor((float)0x44/0xff, (float)0x33/0xff, (float)0x22/0xff, (float)0x11/0xff);
+            glClear(GL_COLOR_BUFFER_BIT);
+            glFinish();
+            glGetIntegerv( GL_VIEWPORT, viewport );
+            ok( viewport[0] == 0 && viewport[1] == 0 && viewport[2] == 4 && viewport[3] == 4,
+                "wrong viewport %d,%d,%d,%d\n", viewport[0], viewport[1], viewport[2], viewport[3] );
 
             wglMakeCurrent(NULL, NULL);
-            wglDeleteContext(hglrc);
+            wglMakeCurrent(hdcDst, hglrc);
+            glClearColor((float)0x44/0xff, (float)0x55/0xff, (float)0x66/0xff, (float)0x11/0xff);
+            glClear(GL_COLOR_BUFFER_BIT);
+            glFinish();
+            glGetIntegerv( GL_VIEWPORT, viewport );
+            ok( viewport[0] == 0 && viewport[1] == 0 && viewport[2] == 4 && viewport[3] == 4,
+                "wrong viewport %d,%d,%d,%d\n", viewport[0], viewport[1], viewport[2], viewport[3] );
+
+            wglMakeCurrent(hdcDst, hglrc2);
+            glGetIntegerv( GL_VIEWPORT, viewport );
+            ok( viewport[0] == 0 && viewport[1] == 0 && viewport[2] == 12 && viewport[3] == 12,
+                "wrong viewport %d,%d,%d,%d\n", viewport[0], viewport[1], viewport[2], viewport[3] );
+
+            wglMakeCurrent(hdcDst, hglrc);
+            glGetIntegerv( GL_VIEWPORT, viewport );
+            ok( viewport[0] == 0 && viewport[1] == 0 && viewport[2] == 4 && viewport[3] == 4,
+                "wrong viewport %d,%d,%d,%d\n", viewport[0], viewport[1], viewport[2], viewport[3] );
+
+            SelectObject(hdcDst, bmpDst);
+            ret = GetPixelFormat( hdcDst );
+            ok( ret == iPixelFormat, "GetPixelFormat returned %d/%d\n", ret, iPixelFormat );
+            ret = SetPixelFormat(hdcDst, iPixelFormat + 1, &pfd);
+            ok( !ret, "SetPixelFormat succeeded\n" );
+            wglMakeCurrent(hdcDst, hglrc2);
+            glGetIntegerv( GL_VIEWPORT, viewport );
+            ok( viewport[0] == 0 && viewport[1] == 0 && viewport[2] == 12 && viewport[3] == 12,
+                "wrong viewport %d,%d,%d,%d\n", viewport[0], viewport[1], viewport[2], viewport[3] );
         }
     }
 
     SelectObject(hdcDst, oldDst);
+    DeleteObject(bmp2);
     DeleteObject(bmpDst);
     DeleteDC(hdcDst);
-
     DeleteDC(hdcScreen);
 }
 
@@ -1305,7 +1371,8 @@ START_TEST(opengl)
         res = SetPixelFormat(hdc, iPixelFormat, &pfd);
         ok(res, "SetPixelformat failed: %x\n", GetLastError());
 
-        test_bitmap_rendering();
+        test_bitmap_rendering( TRUE );
+        test_bitmap_rendering( FALSE );
         test_minimized();
         test_window_dc();
         test_dc(hwnd, hdc);
