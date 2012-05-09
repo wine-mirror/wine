@@ -611,6 +611,12 @@ RPCRTAPI unsigned short RPC_ENTRY
 RPCRTAPI int RPC_ENTRY
   UuidIsNil( UUID* Uuid, RPC_STATUS* Status_ );
 
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcServerInqDefaultPrincNameA( ULONG AuthnSvc, RPC_CSTR *PrincName );
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcServerInqDefaultPrincNameW( ULONG AuthnSvc, RPC_WSTR *PrincName );
+#define RpcServerInqDefaultPrincName WINELIB_NAME_AW(RpcServerInqDefaultPrincName)
+
 #ifdef __cplusplus
 }
 #endif
