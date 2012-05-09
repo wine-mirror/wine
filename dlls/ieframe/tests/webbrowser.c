@@ -3315,7 +3315,7 @@ static void test_WebBrowser(BOOL do_download, BOOL do_close)
 
     IWebBrowser2_Release(wb);
     ref = IUnknown_Release(unk);
-    ok(ref == 0, "ref=%d, expected 0\n", ref);
+    ok(ref == 0 || broken(do_download && !do_close && ref == 1), "ref=%d, expected 0\n", ref);
 }
 
 static void test_WebBrowserV1(void)
