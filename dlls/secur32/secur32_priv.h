@@ -85,6 +85,18 @@ typedef struct _NegoHelper {
     } crypt;
 } NegoHelper, *PNegoHelper;
 
+typedef struct _NtlmCredentials
+{
+    HelperMode mode;
+
+    /* these are all in the Unix codepage */
+    char *username_arg;
+    char *domain_arg;
+    char *password; /* not nul-terminated */
+    int pwlen;
+    int no_cached_credentials; /* don't try to use cached Samba credentials */
+} NtlmCredentials, *PNtlmCredentials;
+
 typedef enum _sign_direction {
     NTLM_SEND,
     NTLM_RECV
@@ -176,6 +188,24 @@ void SECUR32_arc4Cleanup(arc4_info *a4i) DECLSPEC_HIDDEN;
 #define NTLMSSP_NEGOTIATE_KEY_EXCHANGE              0x40000000
 #define NTLMSSP_NEGOTIATE_56                        0x80000000
 
+SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(SEC_WCHAR *, SEC_WCHAR *,
+    ULONG, PLUID, PVOID, SEC_GET_KEY_FN, PVOID, PCredHandle, PTimeStamp) DECLSPEC_HIDDEN;
+SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(PCredHandle, PCtxtHandle,
+    SEC_WCHAR *, ULONG fContextReq, ULONG, ULONG, PSecBufferDesc, ULONG, PCtxtHandle,
+    PSecBufferDesc, ULONG *, PTimeStamp) DECLSPEC_HIDDEN;
+SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(PCredHandle, PCtxtHandle, PSecBufferDesc,
+    ULONG, ULONG, PCtxtHandle, PSecBufferDesc, ULONG *, PTimeStamp) DECLSPEC_HIDDEN;
+SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesA(PCtxtHandle, ULONG, void *) DECLSPEC_HIDDEN;
+SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle, ULONG, void *) DECLSPEC_HIDDEN;
+SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle, ULONG, PSecBufferDesc, ULONG) DECLSPEC_HIDDEN;
+SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle, PSecBufferDesc, ULONG, PULONG) DECLSPEC_HIDDEN;
+SECURITY_STATUS SEC_ENTRY ntlm_FreeCredentialsHandle(PCredHandle) DECLSPEC_HIDDEN;
+SECURITY_STATUS SEC_ENTRY ntlm_DeleteSecurityContext(PCtxtHandle) DECLSPEC_HIDDEN;
+SECURITY_STATUS SEC_ENTRY ntlm_MakeSignature(PCtxtHandle, ULONG, PSecBufferDesc, ULONG) DECLSPEC_HIDDEN;
+SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(PCtxtHandle, PSecBufferDesc, ULONG, PULONG) DECLSPEC_HIDDEN;
+
+SecPkgInfoW *ntlm_package_infoW;
+SecPkgInfoA *ntlm_package_infoA;
 
 /* schannel internal interface */
 typedef struct schan_imp_session_opaque *schan_imp_session;

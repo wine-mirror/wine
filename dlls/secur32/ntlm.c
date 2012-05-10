@@ -43,18 +43,6 @@ WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 static CHAR ntlm_auth[] = "ntlm_auth";
 
-typedef struct _NtlmCredentials
-{
-    HelperMode mode;
-
-    /* these are all in the Unix codepage */
-    char *username_arg;
-    char *domain_arg;
-    char *password; /* not nul-terminated */
-    int pwlen;
-    int no_cached_credentials; /* don't try to use cached Samba credentials */
-} NtlmCredentials, *PNtlmCredentials;
-
 /***********************************************************************
  *              QueryCredentialsAttributesA
  */
@@ -136,7 +124,7 @@ static char *ntlm_GetDomainArg(LPCWSTR domainW, INT domainW_length)
 /***********************************************************************
  *              AcquireCredentialsHandleW
  */
-static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
+SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
  SEC_WCHAR *pszPrincipal, SEC_WCHAR *pszPackage, ULONG fCredentialUse,
  PLUID pLogonID, PVOID pAuthData, SEC_GET_KEY_FN pGetKeyFn,
  PVOID pGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
@@ -425,7 +413,7 @@ static BOOL ntlm_GetCachedCredential(const SEC_WCHAR *pszTargetName, PCREDENTIAL
 /***********************************************************************
  *              InitializeSecurityContextW
  */
-static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
+SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
  PCredHandle phCredential, PCtxtHandle phContext, SEC_WCHAR *pszTargetName, 
  ULONG fContextReq, ULONG Reserved1, ULONG TargetDataRep, 
  PSecBufferDesc pInput, ULONG Reserved2, PCtxtHandle phNewContext, 
@@ -970,7 +958,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextA(
 /***********************************************************************
  *              AcceptSecurityContext
  */
-static SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(
+SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(
  PCredHandle phCredential, PCtxtHandle phContext, PSecBufferDesc pInput,
  ULONG fContextReq, ULONG TargetDataRep, PCtxtHandle phNewContext, 
  PSecBufferDesc pOutput, ULONG *pfContextAttr, PTimeStamp ptsExpiry)
@@ -1343,7 +1331,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_CompleteAuthToken(PCtxtHandle phContext,
 /***********************************************************************
  *              DeleteSecurityContext
  */
-static SECURITY_STATUS SEC_ENTRY ntlm_DeleteSecurityContext(PCtxtHandle phContext)
+SECURITY_STATUS SEC_ENTRY ntlm_DeleteSecurityContext(PCtxtHandle phContext)
 {
     PNegoHelper helper;
 
@@ -1372,7 +1360,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_DeleteSecurityContext(PCtxtHandle phContex
 /***********************************************************************
  *              QueryContextAttributesW
  */
-static SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phContext,
+SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phContext,
  ULONG ulAttribute, void *pBuffer)
 {
     TRACE("%p %d %p\n", phContext, ulAttribute, pBuffer);
@@ -1427,7 +1415,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phCont
 /***********************************************************************
  *              QueryContextAttributesA
  */
-static SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesA(PCtxtHandle phContext,
+SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesA(PCtxtHandle phContext,
  ULONG ulAttribute, void *pBuffer)
 {
     return ntlm_QueryContextAttributesW(phContext, ulAttribute, pBuffer);
@@ -1607,8 +1595,8 @@ static SECURITY_STATUS ntlm_CreateSignature(PNegoHelper helper, PSecBufferDesc p
 /***********************************************************************
  *              MakeSignature
  */
-static SECURITY_STATUS SEC_ENTRY ntlm_MakeSignature(PCtxtHandle phContext, ULONG fQOP,
- PSecBufferDesc pMessage, ULONG MessageSeqNo)
+SECURITY_STATUS SEC_ENTRY ntlm_MakeSignature(PCtxtHandle phContext,
+    ULONG fQOP, PSecBufferDesc pMessage, ULONG MessageSeqNo)
 {
     PNegoHelper helper;
     int token_idx;
@@ -1642,8 +1630,8 @@ static SECURITY_STATUS SEC_ENTRY ntlm_MakeSignature(PCtxtHandle phContext, ULONG
 /***********************************************************************
  *              VerifySignature
  */
-static SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(PCtxtHandle phContext,
- PSecBufferDesc pMessage, ULONG MessageSeqNo, PULONG pfQOP)
+SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(PCtxtHandle phContext,
+    PSecBufferDesc pMessage, ULONG MessageSeqNo, PULONG pfQOP)
 {
     PNegoHelper helper;
     ULONG fQOP = 0;
@@ -1714,8 +1702,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(PCtxtHandle phContext,
 /***********************************************************************
  *             FreeCredentialsHandle
  */
-static SECURITY_STATUS SEC_ENTRY ntlm_FreeCredentialsHandle(
-        PCredHandle phCredential)
+SECURITY_STATUS SEC_ENTRY ntlm_FreeCredentialsHandle(PCredHandle phCredential)
 {
     SECURITY_STATUS ret;
 
@@ -1740,8 +1727,8 @@ static SECURITY_STATUS SEC_ENTRY ntlm_FreeCredentialsHandle(
 /***********************************************************************
  *             EncryptMessage
  */
-static SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext,
-        ULONG fQOP, PSecBufferDesc pMessage, ULONG MessageSeqNo)
+SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext,
+    ULONG fQOP, PSecBufferDesc pMessage, ULONG MessageSeqNo)
 {
     PNegoHelper helper;
     int token_idx, data_idx;
@@ -1811,8 +1798,8 @@ static SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext,
 /***********************************************************************
  *             DecryptMessage
  */
-static SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext,
-        PSecBufferDesc pMessage, ULONG MessageSeqNo, PULONG pfQOP)
+SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext,
+    PSecBufferDesc pMessage, ULONG MessageSeqNo, PULONG pfQOP)
 {
     SECURITY_STATUS ret;
     ULONG ntlmssp_flags_save;
@@ -1971,50 +1958,8 @@ static const SecPkgInfoA infoA = {
     ntlm_comment_A
 };
 
-#define NEGO_COMMENT { 'M', 'i', 'c', 'r', 'o', 's', 'o', 'f', 't', ' ', \
-    'P', 'a', 'c', 'k', 'a', 'g', 'e', ' ', \
-    'N', 'e', 'g', 'o', 't', 'i', 'a', 't', 'o', 'r', 0}
-
-static CHAR nego_comment_A[] = NEGO_COMMENT;
-static WCHAR nego_comment_W[] = NEGO_COMMENT;
-
-#define NEGO_NAME {'N', 'e', 'g', 'o', 't', 'i', 'a', 't', 'e', 0}
-
-static CHAR nego_name_A[] = NEGO_NAME;
-static WCHAR nego_name_W[] = NEGO_NAME;
-
-#define NEGO_CAPS (\
-    SECPKG_FLAG_INTEGRITY | \
-    SECPKG_FLAG_PRIVACY | \
-    SECPKG_FLAG_CONNECTION | \
-    SECPKG_FLAG_MULTI_REQUIRED | \
-    SECPKG_FLAG_EXTENDED_ERROR | \
-    SECPKG_FLAG_IMPERSONATION | \
-    SECPKG_FLAG_ACCEPT_WIN32_NAME | \
-    SECPKG_FLAG_READONLY_WITH_CHECKSUM )
-
-/* Not used for now, just kept here for completeness sake. We need to use the
- * NTLM_MAX_BUF value. If the hack works, we might want to refactor the code a
- * bit. */
-#define NEGO_MAX_TOKEN 12000
-
-static const SecPkgInfoW nego_infoW = {
-    NEGO_CAPS,
-    1,
-    RPC_C_AUTHN_GSS_NEGOTIATE,
-    NTLM_MAX_BUF,
-    nego_name_W,
-    nego_comment_W
-};
-
-static const SecPkgInfoA nego_infoA = {
-    NEGO_CAPS,
-    1,
-    RPC_C_AUTHN_GSS_NEGOTIATE,
-    NTLM_MAX_BUF,
-    nego_name_A,
-    nego_comment_A
-};
+SecPkgInfoA *ntlm_package_infoA = (SecPkgInfoA *)&infoA;
+SecPkgInfoW *ntlm_package_infoW = (SecPkgInfoW *)&infoW;
 
 void SECUR32_initNTLMSP(void)
 {
@@ -2040,11 +1985,7 @@ void SECUR32_initNTLMSP(void)
           helper->micro >= MIN_NTLM_AUTH_MICRO_VERSION)) )
     {
         SecureProvider *provider = SECUR32_addProvider(&ntlmTableA, &ntlmTableW, NULL);
-        SecureProvider *nego_provider = SECUR32_addProvider(&ntlmTableA, &ntlmTableW, NULL);
-
-        SECUR32_addPackages(provider, 1L, &infoA, &infoW);
-        /* HACK: Also pretend this is the Negotiate provider */
-        SECUR32_addPackages(nego_provider, 1L, &nego_infoA, &nego_infoW);
+        SECUR32_addPackages(provider, 1L, ntlm_package_infoA, ntlm_package_infoW);
     }
     else
     {
