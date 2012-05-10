@@ -779,7 +779,7 @@ static const GUID* refiids[] =
 static void __cdecl object_load_callback(LPDIRECT3DRMOBJECT object, REFIID objectguid, LPVOID arg)
 {
     ok(object != NULL, "Arg 1 should not be null\n");
-    ok(IsEqualGUID(objectguid, refiids[nb_objects]), "Arg 2 should is incorrect\n");
+    ok(IsEqualGUID(objectguid, refiids[nb_objects]), "Arg 2 is incorrect\n");
     ok(arg == (LPVOID)0xdeadbeef, "Arg 3 should be 0xdeadbeef (got %p)\n", arg);
     nb_objects++;
 }
