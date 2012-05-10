@@ -48,6 +48,7 @@ typedef struct {
     IDirect3DRMMeshBuilder2 IDirect3DRMMeshBuilder2_iface;
     IDirect3DRMMeshBuilder3 IDirect3DRMMeshBuilder3_iface;
     LONG ref;
+    char* name;
     DWORD nb_vertices;
     D3DVECTOR* pVertices;
     DWORD nb_normals;
@@ -344,6 +345,7 @@ static ULONG WINAPI IDirect3DRMMeshBuilder2Impl_Release(IDirect3DRMMeshBuilder2*
 
     if (!ref)
     {
+        HeapFree(GetProcessHeap(), 0, This->name);
         HeapFree(GetProcessHeap(), 0, This->pVertices);
         HeapFree(GetProcessHeap(), 0, This->pNormals);
         HeapFree(GetProcessHeap(), 0, This->pFaceData);
@@ -408,23 +410,23 @@ static DWORD WINAPI IDirect3DRMMeshBuilder2Impl_GetAppData(IDirect3DRMMeshBuilde
 }
 
 static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_SetName(IDirect3DRMMeshBuilder2* iface,
-                                                          LPCSTR pName)
+                                                          LPCSTR name)
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder2(iface);
 
-    FIXME("(%p)->(%s): stub\n", This, pName);
+    TRACE("(%p)->(%s)\n", This, debugstr_a(name));
 
-    return E_NOTIMPL;
+    return IDirect3DRMMeshBuilder3_SetName(&This->IDirect3DRMMeshBuilder3_iface, name);
 }
 
 static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_GetName(IDirect3DRMMeshBuilder2* iface,
-                                                          LPDWORD lpdwSize, LPSTR lpName)
+                                                          LPDWORD size, LPSTR name)
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder2(iface);
 
-    FIXME("(%p)->(%p,%p): stub\n", This, lpdwSize, lpName);
+    TRACE("(%p)->(%p,%p)\n", This, size, name);
 
-    return E_NOTIMPL;
+    return IDirect3DRMMeshBuilder3_GetName(&This->IDirect3DRMMeshBuilder3_iface, size, name);
 }
 
 static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_GetClassName(IDirect3DRMMeshBuilder2* iface,
@@ -1002,23 +1004,48 @@ static DWORD WINAPI IDirect3DRMMeshBuilder3Impl_GetAppData(IDirect3DRMMeshBuilde
 }
 
 static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_SetName(IDirect3DRMMeshBuilder3* iface,
-                                                          LPCSTR pName)
+                                                          LPCSTR name)
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder3(iface);
+    char *string = NULL;
 
-    FIXME("(%p)->(%s): stub\n", This, pName);
+    TRACE("(%p)->(%s)\n", This, debugstr_a(name));
 
-    return E_NOTIMPL;
+    if (name)
+    {
+        string = HeapAlloc(GetProcessHeap(), 0, strlen(name) + 1);
+        if (!string) return E_OUTOFMEMORY;
+        strcpy(string, name);
+    }
+    HeapFree(GetProcessHeap(), 0, This->name);
+    This->name = string;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_GetName(IDirect3DRMMeshBuilder3* iface,
-                                                          LPDWORD lpdwSize, LPSTR lpName)
+                                                          LPDWORD size, LPSTR name)
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder3(iface);
 
-    FIXME("(%p)->(%p,%p): stub\n", This, lpdwSize, lpName);
+    TRACE("(%p)->(%p,%p)\n", This, size, name);
 
-    return E_NOTIMPL;
+    if (!size)
+        return E_POINTER;
+
+    if (!This->name)
+    {
+        *size = 0;
+        return D3DRM_OK;
+    }
+
+    if (*size < (strlen(This->name) + 1))
+        return E_INVALIDARG;
+
+    strcpy(name, This->name);
+    *size = strlen(This->name) + 1;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_GetClassName(IDirect3DRMMeshBuilder3* iface,
@@ -1051,6 +1078,29 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3* iface, LPDIRECTXFILEDATA pData)
     DWORD i;
 
     TRACE("(%p)->(%p)\n", This, pData);
+
+    /* Remove previous name */
+    HeapFree(GetProcessHeap(), 0, This->name);
+    This->name = NULL;
+    hr = IDirectXFileData_GetName(pData, NULL, &size);
+    if (hr != DXFILE_OK)
+        return hr;
+    if (size)
+    {
+        This->name = HeapAlloc(GetProcessHeap(), 0, size);
+        if (!This->name)
+            return E_OUTOFMEMORY;
+
+        hr = IDirectXFileData_GetName(pData, This->name, &size);
+        if (hr != DXFILE_OK)
+        {
+            HeapFree(GetProcessHeap(), 0, This->name);
+            This->name = NULL;
+            return hr;
+        }
+    }
+
+    TRACE("Mesh name is '%s'\n", This->name ? This->name : "");
 
     hr = IDirectXFileData_GetData(pData, NULL, &size, (void**)&ptr);
     if (hr != DXFILE_OK)

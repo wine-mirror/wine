@@ -179,6 +179,8 @@ static void test_MeshBuilder(void)
     D3DVECTOR v[3];
     D3DVECTOR n[3];
     DWORD f[8];
+    char name[10];
+    DWORD size;
 
     hr = pDirect3DRMCreate(&pD3DRM);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRM interface (hr = %x)\n", hr);
@@ -200,6 +202,26 @@ static void test_MeshBuilder(void)
     info.dSize = strlen(data_ok);
     hr = IDirect3DRMMeshBuilder_Load(pMeshBuilder, &info, NULL, D3DRMLOAD_FROMMEMORY, NULL, NULL);
     ok(hr == D3DRM_OK, "Cannot load mesh data (hr = %x)\n", hr);
+
+    size = sizeof(name);
+    hr = IDirect3DRMMeshBuilder_GetName(pMeshBuilder, &size, name);
+    ok(hr == D3DRM_OK, "IDirect3DRMMeshBuilder_GetName returned hr = %x\n", hr);
+    ok(!strcmp(name, "Object"), "Retreived name '%s' instead of 'Object'\n", name);
+    size = strlen("Object"); /* No space for null character */
+    hr = IDirect3DRMMeshBuilder_GetName(pMeshBuilder, &size, name);
+    ok(hr == E_INVALIDARG, "IDirect3DRMMeshBuilder_GetName returned hr = %x\n", hr);
+    hr = IDirect3DRMMeshBuilder_SetName(pMeshBuilder, NULL);
+    ok(hr == D3DRM_OK, "IDirect3DRMMeshBuilder_SetName returned hr = %x\n", hr);
+    size = sizeof(name);
+    hr = IDirect3DRMMeshBuilder_GetName(pMeshBuilder, &size, name);
+    ok(hr == D3DRM_OK, "IDirect3DRMMeshBuilder_GetName returned hr = %x\n", hr);
+    ok(size == 0, "Size should be 0 instead of %u\n", size);
+    hr = IDirect3DRMMeshBuilder_SetName(pMeshBuilder, "");
+    ok(hr == D3DRM_OK, "IDirect3DRMMeshBuilder_SetName returned hr = %x\n", hr);
+    size = sizeof(name);
+    hr = IDirect3DRMMeshBuilder_GetName(pMeshBuilder, &size, name);
+    ok(hr == D3DRM_OK, "IDirect3DRMMeshBuilder_GetName returned hr = %x\n", hr);
+    ok(!strcmp(name, ""), "Retreived name '%s' instead of ''\n", name);
 
     val = IDirect3DRMMeshBuilder_GetVertexCount(pMeshBuilder);
     ok(val == 4, "Wrong number of vertices %d (must be 4)\n", val);
