@@ -1938,14 +1938,16 @@ static WCHAR ntlm_name_W[] = NTLM_NAME;
 
 /* According to Windows, NTLM has the following capabilities.  */
 #define CAPS ( \
-        SECPKG_FLAG_INTEGRITY | \
-        SECPKG_FLAG_PRIVACY | \
-        SECPKG_FLAG_TOKEN_ONLY | \
-        SECPKG_FLAG_CONNECTION | \
-        SECPKG_FLAG_MULTI_REQUIRED | \
-        SECPKG_FLAG_IMPERSONATION | \
-        SECPKG_FLAG_ACCEPT_WIN32_NAME | \
-        SECPKG_FLAG_READONLY_WITH_CHECKSUM)
+    SECPKG_FLAG_INTEGRITY  | \
+    SECPKG_FLAG_PRIVACY    | \
+    SECPKG_FLAG_TOKEN_ONLY | \
+    SECPKG_FLAG_CONNECTION | \
+    SECPKG_FLAG_MULTI_REQUIRED    | \
+    SECPKG_FLAG_IMPERSONATION     | \
+    SECPKG_FLAG_ACCEPT_WIN32_NAME | \
+    SECPKG_FLAG_NEGOTIABLE        | \
+    SECPKG_FLAG_LOGON             | \
+    SECPKG_FLAG_RESTRICTED_TOKENS )
 
 static const SecPkgInfoW infoW = {
     CAPS,
