@@ -139,6 +139,8 @@ static UINT g_inmmdevices_count;
 
 static IMMDeviceEnumerator *g_devenum;
 
+#define WINMM_WM_QUIT WM_USER
+
 static CRITICAL_SECTION g_devthread_lock;
 static CRITICAL_SECTION_DEBUG g_devthread_lock_debug =
 {
@@ -185,25 +187,64 @@ void WINMM_DeleteWaveform(void)
 {
     UINT i, j;
 
-    for(i = 0; i < g_outmmdevices_count; ++i){
-        WINMM_MMDevice *mmdevice = &g_out_mmdevices[i];
-        for(j = 0; j < MAX_DEVICES && mmdevice->devices[j]; ++j){
-            WINMM_Device *device = mmdevice->devices[j];
-            if(device->open)
+    if(g_devices_hwnd){
+        for(i = 0; i < g_outmmdevices_count; ++i){
+            WINMM_MMDevice *mmdevice = &g_out_mmdevices[i];
+            for(j = 0; j < MAX_DEVICES && mmdevice->devices[j]; ++j){
+                WINMM_Device *device = mmdevice->devices[j];
                 SendMessageW(g_devices_hwnd, WODM_CLOSE, (WPARAM)device->handle, 0);
+            }
         }
-    }
 
-    for(i = 0; i < g_inmmdevices_count; ++i){
-        WINMM_MMDevice *mmdevice = &g_in_mmdevices[i];
-        for(j = 0; j < MAX_DEVICES && mmdevice->devices[j]; ++j){
-            WINMM_Device *device = mmdevice->devices[j];
-            if(device->open)
+        for(i = 0; i < g_inmmdevices_count; ++i){
+            WINMM_MMDevice *mmdevice = &g_in_mmdevices[i];
+            for(j = 0; j < MAX_DEVICES && mmdevice->devices[j]; ++j){
+                WINMM_Device *device = mmdevice->devices[j];
                 SendMessageW(g_devices_hwnd, WIDM_CLOSE, (WPARAM)device->handle, 0);
+            }
         }
+
+        SendMessageW(g_devices_hwnd, WINMM_WM_QUIT, 0, 0);
+
+        for(i = 0; i < g_outmmdevices_count; ++i){
+            WINMM_MMDevice *mmdevice = &g_out_mmdevices[i];
+
+            for(j = 0; j < MAX_DEVICES && mmdevice->devices[j]; ++j){
+                WINMM_Device *device = mmdevice->devices[j];
+                if(device->handle)
+                    CloseHandle(device->handle);
+                DeleteCriticalSection(&device->lock);
+            }
+
+            if(mmdevice->volume)
+                ISimpleAudioVolume_Release(mmdevice->volume);
+            CoTaskMemFree(mmdevice->dev_id);
+            DeleteCriticalSection(&mmdevice->lock);
+        }
+
+        for(i = 0; i < g_inmmdevices_count; ++i){
+            WINMM_MMDevice *mmdevice = &g_in_mmdevices[i];
+
+            for(j = 0; j < MAX_DEVICES && mmdevice->devices[j]; ++j){
+                WINMM_Device *device = mmdevice->devices[j];
+                if(device->handle)
+                    CloseHandle(device->handle);
+                DeleteCriticalSection(&device->lock);
+            }
+
+            if(mmdevice->volume)
+                ISimpleAudioVolume_Release(mmdevice->volume);
+            CoTaskMemFree(mmdevice->dev_id);
+            DeleteCriticalSection(&mmdevice->lock);
+        }
+
+        HeapFree(GetProcessHeap(), 0, g_out_mmdevices);
+        HeapFree(GetProcessHeap(), 0, g_in_mmdevices);
+
+        HeapFree(GetProcessHeap(), 0, g_device_handles);
+        HeapFree(GetProcessHeap(), 0, g_handle_devices);
     }
 
-    /* FIXME: Free g_(in,out)_mmdevices? */
     DeleteCriticalSection(&g_devthread_lock);
 }
 
@@ -2146,6 +2187,13 @@ static LRESULT CALLBACK WINMM_DevicesMsgProc(HWND hwnd, UINT msg, WPARAM wparam,
     case DRV_QUERYDEVICEINTERFACESIZE:
     case DRV_QUERYDEVICEINTERFACE:
         return DRV_QueryDeviceInterface((WINMM_QueryInterfaceInfo*)wparam);
+    case WINMM_WM_QUIT:
+        TRACE("QUIT message received\n");
+        DestroyWindow(g_devices_hwnd);
+        g_devices_hwnd = NULL;
+        IMMDeviceEnumerator_Release(g_devenum);
+        CoUninitialize();
+        return 0;
     }
     return DefWindowProcW(hwnd, msg, wparam, lparam);
 }
@@ -2200,6 +2248,8 @@ static DWORD WINAPI WINMM_DevicesThreadProc(void *arg)
             MSG msg;
             if(PeekMessageW(&msg, g_devices_hwnd, 0, 0, PM_REMOVE))
                 WARN("Unexpected message: 0x%x\n", msg.message);
+            if(!g_devices_hwnd)
+                break;
         }else if(wait < g_devhandle_count + WAIT_OBJECT_0){
             WINMM_Device *device = g_handle_devices[wait - WAIT_OBJECT_0];
             if(device->render)
@@ -2210,12 +2260,6 @@ static DWORD WINAPI WINMM_DevicesThreadProc(void *arg)
             WARN("Unexpected MsgWait result 0x%x, GLE: %d\n", wait,
                     GetLastError());
     }
-
-    DestroyWindow(g_devices_hwnd);
-
-    IMMDeviceEnumerator_Release(g_devenum);
-
-    CoUninitialize();
 
     return 0;
 }

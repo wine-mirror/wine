@@ -82,18 +82,6 @@ static	BOOL	WINMM_CreateIData(HINSTANCE hInstDLL)
     return TRUE;
 }
 
-/**************************************************************************
- * 			WINMM_DeleteIData			[internal]
- */
-static	void WINMM_DeleteIData(void)
-{
-    TIME_MMTimeStop();
-
-    WINMM_DeleteWaveform();
-    CloseHandle(psLastEvent);
-    DeleteCriticalSection(&WINMM_cs);
-}
-
 /******************************************************************
  *             WINMM_ErrorToString
  */
@@ -153,20 +141,17 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
 	    return FALSE;
 	break;
     case DLL_PROCESS_DETACH:
-        /* close all opened MCI drivers */
+        if(fImpLoad)
+            break;
+
         MCI_SendCommand(MCI_ALL_DEVICE_ID, MCI_CLOSE, MCI_WAIT, 0L);
         MMDRV_Exit();
-        /* There's no guarantee the drivers haven't already been unloaded on
-         * process shutdown.
-         */
-        if (!fImpLoad)
-        {
-            /* now unload all remaining drivers... */
-            DRIVER_UnloadAll();
-        }
-
-	WINMM_DeleteIData();
-	break;
+        DRIVER_UnloadAll();
+        WINMM_DeleteWaveform();
+        TIME_MMTimeStop();
+        CloseHandle(psLastEvent);
+        DeleteCriticalSection(&WINMM_cs);
+        break;
     }
     return TRUE;
 }
