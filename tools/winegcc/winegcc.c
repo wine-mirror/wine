@@ -395,10 +395,10 @@ static char *get_lib_dir( struct options *opts )
 static void compile(struct options* opts, const char* lang)
 {
     strarray* comp_args = strarray_alloc();
-    unsigned int j;
+    unsigned int i, j;
     int gcc_defs = 0;
-    char* gcc;
-    char* gpp;
+    strarray* gcc;
+    strarray* gpp;
 
     strarray_addall(comp_args, get_translator(opts));
     switch(opts->processor)
@@ -409,16 +409,19 @@ static void compile(struct options* opts, const char* lang)
 	/* mixing different C and C++ compilers isn't supported in configure anyway */
 	case proc_cc:
 	case proc_cxx:
-            gcc = build_tool_name(opts, "gcc", CC);
-            gpp = build_tool_name(opts, "g++", CXX);
+            gcc = strarray_fromstring(build_tool_name(opts, "gcc", CC), " ");
+            gpp = strarray_fromstring(build_tool_name(opts, "g++", CXX), " ");
             for ( j = 0; !gcc_defs && j < comp_args->size; j++ )
             {
                 const char *cc = comp_args->base[j];
 
-                gcc_defs = strendswith(cc, gcc) || strendswith(cc, gpp);
+                for (i = 0; !gcc_defs && i < gcc->size; i++)
+                    gcc_defs = gcc->base[i][0] != '-' && strendswith(cc, gcc->base[i]);
+                for (i = 0; !gcc_defs && i < gpp->size; i++)
+                    gcc_defs = gpp->base[i][0] != '-' && strendswith(cc, gpp->base[i]);
             }
-            free(gcc);
-            free(gpp);
+            strarray_free(gcc);
+            strarray_free(gpp);
             break;
     }
 
