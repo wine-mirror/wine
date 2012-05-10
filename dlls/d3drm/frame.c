@@ -224,11 +224,9 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_AddChild(IDirect3DRMFrame2* iface,
                                                      LPDIRECT3DRMFRAME child)
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-    IDirect3DRMFrameImpl *frame;
+    IDirect3DRMFrameImpl *frame = unsafe_impl_from_IDirect3DRMFrame2((LPDIRECT3DRMFRAME2)child);
 
     TRACE("(%p/%p)->(%p)\n", iface, This, child);
-
-    frame = unsafe_impl_from_IDirect3DRMFrame2((LPDIRECT3DRMFRAME2)child);
 
     if (!frame)
         return D3DRMERR_BADOBJECT;
@@ -524,11 +522,9 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_DeleteChild(IDirect3DRMFrame2* iface
                                                         LPDIRECT3DRMFRAME frame)
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
-    IDirect3DRMFrameImpl *child;
+    IDirect3DRMFrameImpl *child = unsafe_impl_from_IDirect3DRMFrame2((LPDIRECT3DRMFRAME2)frame);
 
     TRACE("(%p/%p)->(%p)\n", iface, This, frame);
-
-    child = unsafe_impl_from_IDirect3DRMFrame2((LPDIRECT3DRMFRAME2)frame);
 
     if (!child)
         return D3DRMERR_BADOBJECT;
