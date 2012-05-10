@@ -142,7 +142,6 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
 {
     SECURITY_STATUS ret;
     PNtlmCredentials ntlm_cred = NULL;
-    SEC_WCHAR *username = NULL, *domain = NULL;
 
     TRACE("(%s, %s, 0x%08x, %p, %p, %p, %p, %p, %p)\n",
      debugstr_w(pszPrincipal), debugstr_w(pszPackage), fCredentialUse,
@@ -222,10 +221,6 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
             phCredential = NULL;
             ret = SEC_E_UNKNOWN_CREDENTIALS;
     }
-
-    HeapFree(GetProcessHeap(), 0, username);
-    HeapFree(GetProcessHeap(), 0, domain);
-
     return ret;
 }
 
@@ -433,7 +428,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
  PSecBufferDesc pOutput, ULONG *pfContextAttr, PTimeStamp ptsExpiry)
 {
     SECURITY_STATUS ret;
-    PNtlmCredentials ntlm_cred = NULL;
+    PNtlmCredentials ntlm_cred;
     PNegoHelper helper = NULL;
     ULONG ctxt_attr = 0;
     char* buffer, *want_flags = NULL;
@@ -1783,9 +1778,6 @@ static SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext,
         if(helper->neg_flags & NTLMSSP_NEGOTIATE_KEY_EXCHANGE)
             SECUR32_arc4Process(helper->crypt.ntlm2.send_a4i,
                     ((BYTE *)pMessage->pBuffers[token_idx].pvBuffer)+4, 8);
-
-
-        return SEC_E_OK;
     }
     else
     {
@@ -1808,9 +1800,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext,
 
         if(helper->neg_flags & NTLMSSP_NEGOTIATE_ALWAYS_SIGN || helper->neg_flags == 0)
             memset(sig+4, 0, 4);
-
     }
-
     return SEC_E_OK;
 }
 
