@@ -825,7 +825,6 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
         ret = SEC_E_BUFFER_TOO_SMALL;
         if ((phContext == NULL) && (pInput == NULL))
         {
-            HeapFree(GetProcessHeap(), 0, helper->session_key);
             cleanup_helper(helper);
             phNewContext->dwUpper = 0;
             phNewContext->dwLower = 0;
@@ -844,7 +843,6 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
         ret = SEC_E_BUFFER_TOO_SMALL;
         if ((phContext == NULL) && (pInput == NULL))
         {
-            HeapFree(GetProcessHeap(), 0, helper->session_key);
             cleanup_helper(helper);
             phNewContext->dwUpper = 0;
             phNewContext->dwLower = 0;
@@ -858,7 +856,6 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
         ret = SEC_E_INTERNAL_ERROR;
         if ((phContext == NULL) && (pInput == NULL))
         {
-            HeapFree(GetProcessHeap(), 0, helper->session_key);
             cleanup_helper(helper);
             phNewContext->dwUpper = 0;
             phNewContext->dwLower = 0;
@@ -907,8 +904,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
             helper->session_key = HeapAlloc(GetProcessHeap(), 0, bin_len);
             if(!helper->session_key)
             {
-                TRACE("Failed to allocate memory for session key\n");
-                ret = SEC_E_INTERNAL_ERROR;
+                ret = SEC_E_INSUFFICIENT_MEMORY;
                 goto isc_end;
             }
             memcpy(helper->session_key, bin, bin_len);
@@ -1288,7 +1284,13 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(
             if(strncmp(buffer, "BH ", 3) == 0)
             {
                 TRACE("Helper sent %s\n", debugstr_a(buffer+3));
+                HeapFree(GetProcessHeap(), 0, helper->session_key);
                 helper->session_key = HeapAlloc(GetProcessHeap(), 0, 16);
+                if (!helper->session_key)
+                {
+                    ret = SEC_E_INSUFFICIENT_MEMORY;
+                    goto asc_end;
+                }
                 /*FIXME: Generate the dummy session key = MD4(MD4(password))*/
                 memset(helper->session_key, 0 , 16);
             }
@@ -1300,11 +1302,11 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(
                     TRACE("Failed to decode session key\n");
                 }
                 TRACE("Session key is %s\n", debugstr_a(buffer+3));
+                HeapFree(GetProcessHeap(), 0, helper->session_key);
                 helper->session_key = HeapAlloc(GetProcessHeap(), 0, 16);
                 if(!helper->session_key)
                 {
-                    TRACE("Failed to allocate memory for session key\n");
-                    ret = SEC_E_INTERNAL_ERROR;
+                    ret = SEC_E_INSUFFICIENT_MEMORY;
                     goto asc_end;
                 }
                 memcpy(helper->session_key, bin, 16);
@@ -1356,7 +1358,6 @@ static SECURITY_STATUS SEC_ENTRY ntlm_DeleteSecurityContext(PCtxtHandle phContex
     phContext->dwLower = 0;
 
     SECUR32_arc4Cleanup(helper->crypt.ntlm.a4i);
-    HeapFree(GetProcessHeap(), 0, helper->session_key);
     SECUR32_arc4Cleanup(helper->crypt.ntlm2.send_a4i);
     SECUR32_arc4Cleanup(helper->crypt.ntlm2.recv_a4i);
     HeapFree(GetProcessHeap(), 0, helper->crypt.ntlm2.send_sign_key);
