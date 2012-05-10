@@ -2627,6 +2627,8 @@ static void test_sorting(void)
 
 static void test_ownerdata(void)
 {
+    static char test_str[] = "test";
+
     HWND hwnd;
     LONG_PTR style, ret;
     DWORD res;
@@ -2711,7 +2713,7 @@ static void test_ownerdata(void)
     expect(1, res);
     DestroyWindow(hwnd);
 
-    /* LVM_SETITEM is unsupported on LVS_OWNERDATA */
+    /* LVM_SETITEM and LVM_SETITEMTEXT is unsupported on LVS_OWNERDATA */
     hwnd = create_listview_control(LVS_OWNERDATA | LVS_REPORT);
     ok(hwnd != NULL, "failed to create a listview window\n");
     res = SendMessageA(hwnd, LVM_SETITEMCOUNT, 1, 0);
@@ -2724,6 +2726,10 @@ static void test_ownerdata(void)
     item.stateMask = LVIS_SELECTED;
     item.state     = LVIS_SELECTED;
     res = SendMessageA(hwnd, LVM_SETITEM, 0, (LPARAM)&item);
+    expect(FALSE, res);
+    memset(&item, 0, sizeof(item));
+    item.pszText = test_str;
+    res = SendMessageA(hwnd, LVM_SETITEMTEXT, 0, (LPARAM)&item);
     expect(FALSE, res);
     DestroyWindow(hwnd);
 
