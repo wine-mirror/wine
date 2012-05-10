@@ -52,6 +52,7 @@ typedef struct _NtlmCredentials
     char *domain_arg;
     char *password; /* not nul-terminated */
     int pwlen;
+    int no_cached_credentials; /* don't try to use cached Samba credentials */
 } NtlmCredentials, *PNtlmCredentials;
 
 /***********************************************************************
@@ -141,7 +142,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
  PVOID pGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
     SECURITY_STATUS ret;
-    PNtlmCredentials ntlm_cred = NULL;
+    PNtlmCredentials ntlm_cred;
 
     TRACE("(%s, %s, 0x%08x, %p, %p, %p, %p, %p, %p)\n",
      debugstr_w(pszPrincipal), debugstr_w(pszPackage), fCredentialUse,
@@ -160,6 +161,8 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
                 ntlm_cred->domain_arg = NULL;
                 ntlm_cred->password = NULL;
                 ntlm_cred->pwlen = 0;
+                ntlm_cred->no_cached_credentials = 0;
+
                 phCredential->dwUpper = fCredentialUse;
                 phCredential->dwLower = (ULONG_PTR)ntlm_cred;
                 ret = SEC_E_OK;
@@ -178,6 +181,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
                 ntlm_cred->domain_arg = NULL;
                 ntlm_cred->password = NULL;
                 ntlm_cred->pwlen = 0;
+                ntlm_cred->no_cached_credentials = 0;
 
                 if(pAuthData != NULL)
                 {
@@ -539,7 +543,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
             else
             {
                 status = NetWkstaUserGetInfo(NULL, 1, (LPBYTE *)&ui);
-                if (status != NERR_Success || ui == NULL)
+                if (status != NERR_Success || ui == NULL || ntlm_cred->no_cached_credentials)
                 {
                     ret = SEC_E_NO_CREDENTIALS;
                     goto isc_end;
