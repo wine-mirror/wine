@@ -53,32 +53,32 @@ static HRESULT WINAPI IDirectMusicSynthSinkImpl_QueryInterface(LPDIRECTMUSICSYNT
 
 static ULONG WINAPI IDirectMusicSynthSinkImpl_AddRef(LPDIRECTMUSICSYNTHSINK iface)
 {
-	IDirectMusicSynthSinkImpl *This = impl_from_IDirectMusicSynthSink(iface);
-	ULONG refCount = InterlockedIncrement(&This->ref);
+    IDirectMusicSynthSinkImpl *This = impl_from_IDirectMusicSynthSink(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
 
-	TRACE("(%p)->(ref before=%u)\n", This, refCount - 1);
+    TRACE("(%p)->(): new ref = %u\n", This, ref);
 
-	DMSYNTH_LockModule();
+    DMSYNTH_LockModule();
 
-	return refCount;
+    return ref;
 }
 
 static ULONG WINAPI IDirectMusicSynthSinkImpl_Release(LPDIRECTMUSICSYNTHSINK iface)
 {
-	IDirectMusicSynthSinkImpl *This = impl_from_IDirectMusicSynthSink(iface);
-	ULONG refCount = InterlockedDecrement(&This->ref);
+    IDirectMusicSynthSinkImpl *This = impl_from_IDirectMusicSynthSink(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
 
-	TRACE("(%p)->(ref before=%u)\n", This, refCount + 1);
+    TRACE("(%p)->(): new ref = %u\n", This, ref);
 
-	if (!refCount) {
-		if (This->latency_clock)
-			IReferenceClock_Release(This->latency_clock);
-		HeapFree(GetProcessHeap(), 0, This);
-	}
+    if (!ref) {
+        if (This->latency_clock)
+            IReferenceClock_Release(This->latency_clock);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
 
-	DMSYNTH_UnlockModule();
+    DMSYNTH_UnlockModule();
 
-	return refCount;
+    return ref;
 }
 
 /* IDirectMusicSynthSinkImpl IDirectMusicSynthSink part: */
