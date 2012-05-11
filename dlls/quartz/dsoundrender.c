@@ -750,6 +750,36 @@ static ULONG WINAPI DSoundRender_Release(IBaseFilter * iface)
         return refCount;
 }
 
+static HRESULT WINAPI DSoundRender_Pause(IBaseFilter * iface)
+{
+    HRESULT hr = S_OK;
+    DSoundRenderImpl *This = (DSoundRenderImpl *)iface;
+
+    TRACE("(%p/%p)->()\n", This, iface);
+
+    EnterCriticalSection(&This->renderer.csRenderLock);
+    if (This->renderer.filter.state != State_Paused)
+    {
+        if (This->renderer.filter.state == State_Stopped)
+        {
+            if (This->renderer.pInputPin->pin.pConnectedTo)
+                ResetEvent(This->renderer.evComplete);
+            This->renderer.pInputPin->end_of_stream = 0;
+        }
+
+        hr = IDirectSoundBuffer_Stop(This->dsbuffer);
+        if (SUCCEEDED(hr))
+            This->renderer.filter.state = State_Paused;
+
+        ResetEvent(This->blocked);
+        ResetEvent(This->renderer.RenderEvent);
+    }
+    ResetEvent(This->renderer.ThreadSignal);
+    LeaveCriticalSection(&This->renderer.csRenderLock);
+
+    return hr;
+}
+
 static const IBaseFilterVtbl DSoundRender_Vtbl =
 {
     DSoundRender_QueryInterface,
@@ -757,7 +787,7 @@ static const IBaseFilterVtbl DSoundRender_Vtbl =
     DSoundRender_Release,
     BaseFilterImpl_GetClassID,
     BaseRendererImpl_Stop,
-    BaseRendererImpl_Pause,
+    DSoundRender_Pause,
     BaseRendererImpl_Run,
     BaseRendererImpl_GetState,
     BaseRendererImpl_SetSyncSource,
