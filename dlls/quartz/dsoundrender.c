@@ -243,9 +243,6 @@ end:
 
 static HRESULT DSoundRender_HandleEndOfStream(DSoundRenderImpl *This)
 {
-    HRESULT hr;
-    IMediaEventSink *pEventSink;
-
     while (1)
     {
         DWORD pos1, pos2;
@@ -260,23 +257,9 @@ static HRESULT DSoundRender_HandleEndOfStream(DSoundRenderImpl *This)
         EnterCriticalSection(&This->renderer.filter.csFilter);
         EnterCriticalSection(&This->renderer.csRenderLock);
         This->in_loop = 0;
-        if (This->renderer.pInputPin->flushing ||
-            This->renderer.filter.state != State_Running) {
-            SetEvent(This->renderer.evComplete);
-            return S_FALSE;
-        }
     }
 
-    if (!This->renderer.filter.filterInfo.pGraph)
-        return S_OK;
-
-    hr = IFilterGraph_QueryInterface(This->renderer.filter.filterInfo.pGraph, &IID_IMediaEventSink, (LPVOID*)&pEventSink);
-    if (SUCCEEDED(hr))
-    {
-        hr = IMediaEventSink_Notify(pEventSink, EC_COMPLETE, S_OK, (LONG_PTR)This);
-        IMediaEventSink_Release(pEventSink);
-    }
-    return hr;
+    return S_OK;
 }
 
 static HRESULT DSoundRender_SendSampleData(DSoundRenderImpl* This, REFERENCE_TIME tStart, REFERENCE_TIME tStop, const BYTE *data, DWORD size)
@@ -300,7 +283,6 @@ static HRESULT DSoundRender_SendSampleData(DSoundRenderImpl* This, REFERENCE_TIM
             This->in_loop = 0;
             if (This->renderer.pInputPin->flushing ||
                 This->renderer.filter.state == State_Stopped) {
-                SetEvent(This->renderer.evComplete);
                 return This->renderer.filter.state == State_Paused ? S_OK : VFW_E_WRONG_STATE;
             }
             if (ret != WAIT_TIMEOUT)
@@ -478,11 +460,6 @@ static VOID WINAPI DSoundRender_OnStartStreaming(BaseRenderer * iface)
             /* Unblock our thread, state changing from paused to running doesn't need a reset for state change */
             SetEvent(This->blocked);
         }
-        else if (This->renderer.filter.state == State_Stopped)
-        {
-            ResetEvent(This->renderer.evComplete);
-            This->renderer.pInputPin->end_of_stream = 0;
-        }
         IDirectSoundBuffer_Play(This->dsbuffer, 0, 0, DSBPLAY_LOOPING);
         ResetEvent(This->blocked);
     }
@@ -597,16 +574,6 @@ static HRESULT WINAPI DSoundRender_EndFlush(BaseRenderer* iface)
     TRACE("\n");
 
     BaseRendererImpl_EndFlush(iface);
-    if (This->in_loop) {
-        ResetEvent(This->renderer.evComplete);
-        LeaveCriticalSection(This->renderer.pInputPin->pin.pCritSec);
-        LeaveCriticalSection(&This->renderer.filter.csFilter);
-        LeaveCriticalSection(&This->renderer.csRenderLock);
-        WaitForSingleObject(This->renderer.evComplete, -1);
-        EnterCriticalSection(This->renderer.pInputPin->pin.pCritSec);
-        EnterCriticalSection(&This->renderer.filter.csFilter);
-        EnterCriticalSection(&This->renderer.csRenderLock);
-    }
     if (This->renderer.filter.state != State_Stopped)
         ResetEvent(This->blocked);
 
