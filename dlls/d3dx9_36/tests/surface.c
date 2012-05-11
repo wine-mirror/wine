@@ -833,90 +833,6 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
     if(testbitmap_ok) DeleteFileA("testbitmap.bmp");
 }
 
-static void test_D3DXCreateCubeTexture(IDirect3DDevice9 *device)
-{
-    HRESULT hr;
-    ULONG ref;
-    DWORD levelcount;
-    IDirect3DCubeTexture9 *cube_texture;
-    D3DSURFACE_DESC surface_desc;
-
-    todo_wine {
-        hr = D3DXCreateCubeTextureFromFileInMemory(NULL, dds_cube_map, sizeof(dds_cube_map), &cube_texture);
-        ok(hr == D3DERR_INVALIDCALL, "D3DXCreateCubeTextureFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
-
-        hr = D3DXCreateCubeTextureFromFileInMemory(device, NULL, sizeof(dds_cube_map), &cube_texture);
-        ok(hr == D3DERR_INVALIDCALL, "D3DXCreateCubeTextureFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
-
-        hr = D3DXCreateCubeTextureFromFileInMemory(device, dds_cube_map, 0, &cube_texture);
-        ok(hr == D3DERR_INVALIDCALL, "D3DXCreateCubeTextureFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
-
-        hr = D3DXCreateCubeTextureFromFileInMemory(device, dds_cube_map, sizeof(dds_cube_map), NULL);
-        ok(hr == D3DERR_INVALIDCALL, "D3DXCreateCubeTextureFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
-
-        hr = D3DXCreateCubeTextureFromFileInMemory(device, dds_cube_map, sizeof(dds_cube_map), &cube_texture);
-        if(SUCCEEDED(hr)) {
-            levelcount = IDirect3DCubeTexture9_GetLevelCount(cube_texture);
-            ok(levelcount == 3, "GetLevelCount returned %u, expected 3\n", levelcount);
-
-            hr = IDirect3DCubeTexture9_GetLevelDesc(cube_texture, 0, &surface_desc);
-            ok(hr == D3D_OK, "GetLevelDesc returned %#x, expected %#x\n", hr, D3D_OK);
-            ok(surface_desc.Width == 4, "Got width %u, expected 4\n", surface_desc.Width);
-            ok(surface_desc.Height == 4, "Got height %u, expected 4\n", surface_desc.Height);
-
-            hr = IDirect3DCubeTexture9_GetLevelDesc(cube_texture, 3, &surface_desc);
-            ok(hr == D3DERR_INVALIDCALL, "GetLevelDesc returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
-
-            ref = IDirect3DCubeTexture9_Release(cube_texture);
-            ok(ref == 0, "Invalid reference count. Got %u, expected 0\n", ref);
-        } else skip("Couldn't create cube texture\n");
-    }
-}
-
-static void test_D3DXCreateVolumeTexture(IDirect3DDevice9 *device)
-{
-    HRESULT hr;
-    ULONG ref;
-    DWORD levelcount;
-    IDirect3DVolumeTexture9 *volume_texture;
-    D3DVOLUME_DESC volume_desc;
-
-    todo_wine {
-        hr = D3DXCreateVolumeTextureFromFileInMemory(NULL, dds_volume_map, sizeof(dds_volume_map), &volume_texture);
-        ok(hr == D3DERR_INVALIDCALL, "D3DXCreateVolumeTextureFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
-
-        hr = D3DXCreateVolumeTextureFromFileInMemory(device, NULL, sizeof(dds_volume_map), &volume_texture);
-        ok(hr == D3DERR_INVALIDCALL, "D3DXCreateVolumeTextureFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
-
-        hr = D3DXCreateVolumeTextureFromFileInMemory(device, dds_volume_map, 0, &volume_texture);
-        ok(hr == D3DERR_INVALIDCALL, "D3DXCreateVolumeTextureFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
-
-        hr = D3DXCreateVolumeTextureFromFileInMemory(device, dds_volume_map, sizeof(dds_volume_map), NULL);
-        ok(hr == D3DERR_INVALIDCALL, "D3DXCreateVolumeTextureFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
-
-        hr = D3DXCreateVolumeTextureFromFileInMemory(device, dds_volume_map, sizeof(dds_volume_map), &volume_texture);
-        if(SUCCEEDED(hr)) {
-            levelcount = IDirect3DVolumeTexture9_GetLevelCount(volume_texture);
-            ok(levelcount == 3, "GetLevelCount returned %u, expected 3\n", levelcount);
-
-            hr = IDirect3DVolumeTexture9_GetLevelDesc(volume_texture, 0, &volume_desc);
-            ok(hr == D3D_OK, "GetLevelDesc returend %#x, expected %#x\n", hr, D3D_OK);
-            ok(volume_desc.Width == 4, "Got width %u, expected 4\n", volume_desc.Width);
-            ok(volume_desc.Height == 4, "Got height %u, expected 4\n", volume_desc.Height);
-            ok(volume_desc.Depth == 2, "Got depth %u, expected 2\n", volume_desc.Depth);
-
-            hr = IDirect3DVolumeTexture9_GetLevelDesc(volume_texture, 1, &volume_desc);
-            ok(hr == D3D_OK, "GetLevelDesc returned %#x, expected %#x\n", hr, D3D_OK);
-            ok(volume_desc.Width == 2, "Got width %u, expected 2\n", volume_desc.Width);
-            ok(volume_desc.Height == 2, "Got height %u, expected 2\n", volume_desc.Height);
-            ok(volume_desc.Depth == 1, "Got depth %u, expected 1\n", volume_desc.Depth);
-
-            ref = IDirect3DVolumeTexture9_Release(volume_texture);
-            ok(ref == 0, "Invalid reference count. Got %u, expected 0\n", ref);
-        }
-    }
-}
-
 static void test_D3DXSaveSurfaceToFile(IDirect3DDevice9 *device)
 {
     HRESULT hr;
@@ -1033,8 +949,6 @@ START_TEST(surface)
 
     test_D3DXGetImageInfo();
     test_D3DXLoadSurface(device);
-    test_D3DXCreateCubeTexture(device);
-    test_D3DXCreateVolumeTexture(device);
     test_D3DXSaveSurfaceToFile(device);
 
     check_release((IUnknown*)device, 0);
