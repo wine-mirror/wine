@@ -937,6 +937,16 @@ static void free_ximage_bits( struct gdi_image_bits *bits )
     wine_tsx11_unlock();
 }
 
+/* only for use on sanitized BITMAPINFO structures */
+static inline int get_dib_info_size( const BITMAPINFO *info, UINT coloruse )
+{
+    if (info->bmiHeader.biCompression == BI_BITFIELDS)
+        return sizeof(BITMAPINFOHEADER) + 3 * sizeof(DWORD);
+    if (coloruse == DIB_PAL_COLORS)
+        return sizeof(BITMAPINFOHEADER) + info->bmiHeader.biClrUsed * sizeof(WORD);
+    return FIELD_OFFSET( BITMAPINFO, bmiColors[info->bmiHeader.biClrUsed] );
+}
+
 /* store the palette or color mask data in the bitmap info structure */
 static void set_color_info( const XVisualInfo *vis, BITMAPINFO *info )
 {
@@ -1460,6 +1470,122 @@ DWORD X11DRV_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
     XDestroyImage( image );
     wine_tsx11_unlock();
     return ret;
+}
+
+
+/***********************************************************************
+ *           put_pixmap_image
+ *
+ * Simplified equivalent of X11DRV_PutImage that writes directly to a pixmap.
+ */
+static DWORD put_pixmap_image( Pixmap pixmap, const XVisualInfo *vis,
+                               BITMAPINFO *info, const struct gdi_image_bits *bits )
+{
+    DWORD ret;
+    XImage *image;
+    struct bitblt_coords coords;
+    struct gdi_image_bits dst_bits;
+    const XPixmapFormatValues *format = pixmap_formats[vis->depth];
+    const int *mapping = NULL;
+
+    if (!format) return ERROR_INVALID_PARAMETER;
+    if (info->bmiHeader.biPlanes != 1) goto update_format;
+    if (info->bmiHeader.biBitCount != format->bits_per_pixel) goto update_format;
+    /* FIXME: could try to handle 1-bpp using XCopyPlane */
+    if (!matching_color_info( vis, info )) goto update_format;
+    if (!bits) return ERROR_SUCCESS;  /* just querying the format */
+
+    coords.x = 0;
+    coords.y = 0;
+    coords.width = info->bmiHeader.biWidth;
+    coords.height = abs( info->bmiHeader.biHeight );
+    SetRect( &coords.visrect, 0, 0, coords.width, coords.height );
+
+    wine_tsx11_lock();
+    image = XCreateImage( gdi_display, visual, vis->depth, ZPixmap, 0, NULL,
+                          coords.width, coords.height, 32, 0 );
+    wine_tsx11_unlock();
+    if (!image) return ERROR_OUTOFMEMORY;
+
+    if (image->bits_per_pixel == 4 || image->bits_per_pixel == 8)
+        mapping = X11DRV_PALETTE_PaletteToXPixel;
+
+    if (!(ret = copy_image_bits( info, is_r8g8b8(vis), image, bits, &dst_bits, &coords, mapping, ~0u )))
+    {
+        image->data = dst_bits.ptr;
+        wine_tsx11_lock();
+        XPutImage( gdi_display, pixmap, get_bitmap_gc( vis->depth ),
+                   image, 0, 0, 0, 0, coords.width, coords.height );
+        wine_tsx11_unlock();
+        image->data = NULL;
+    }
+
+    wine_tsx11_lock();
+    XDestroyImage( image );
+    wine_tsx11_unlock();
+    if (dst_bits.free) dst_bits.free( &dst_bits );
+    return ret;
+
+update_format:
+    info->bmiHeader.biPlanes   = 1;
+    info->bmiHeader.biBitCount = format->bits_per_pixel;
+    if (info->bmiHeader.biHeight > 0) info->bmiHeader.biHeight = -info->bmiHeader.biHeight;
+    set_color_info( vis, info );
+    return ERROR_BAD_FORMAT;
+}
+
+
+/***********************************************************************
+ *           create_pixmap_from_image
+ */
+Pixmap create_pixmap_from_image( HDC hdc, const XVisualInfo *vis, const BITMAPINFO *info,
+                                 const struct gdi_image_bits *bits, UINT coloruse )
+{
+    static const RGBQUAD default_colortable[2] = { { 0x00, 0x00, 0x00 }, { 0xff, 0xff, 0xff } };
+    char dst_buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+    char src_buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+    BITMAPINFO *dst_info = (BITMAPINFO *)dst_buffer;
+    BITMAPINFO *src_info = (BITMAPINFO *)src_buffer;
+    struct gdi_image_bits dst_bits;
+    Pixmap pixmap;
+    DWORD err;
+    HBITMAP dib;
+
+    wine_tsx11_lock();
+    pixmap = XCreatePixmap( gdi_display, root_window,
+                            info->bmiHeader.biWidth, abs(info->bmiHeader.biHeight), vis->depth );
+    wine_tsx11_unlock();
+    if (!pixmap) return 0;
+
+    memcpy( src_info, info, get_dib_info_size( info, coloruse ));
+    memcpy( dst_info, info, get_dib_info_size( info, coloruse ));
+
+    if (coloruse == DIB_PAL_COLORS ||
+        (err = put_pixmap_image( pixmap, vis, dst_info, bits )) == ERROR_BAD_FORMAT)
+    {
+        if (dst_info->bmiHeader.biBitCount == 1)  /* set a default color table for 1-bpp */
+            memcpy( dst_info->bmiColors, default_colortable, sizeof(default_colortable) );
+        dib = CreateDIBSection( hdc, dst_info, coloruse, &dst_bits.ptr, 0, 0 );
+        if (dib)
+        {
+            if (src_info->bmiHeader.biBitCount == 1 && !src_info->bmiHeader.biClrUsed)
+                memcpy( src_info->bmiColors, default_colortable, sizeof(default_colortable) );
+            SetDIBits( hdc, dib, 0, abs(info->bmiHeader.biHeight), bits->ptr, src_info, coloruse );
+            dst_bits.free = NULL;
+            dst_bits.is_copy = TRUE;
+            err = put_pixmap_image( pixmap, vis, dst_info, &dst_bits );
+            DeleteObject( dib );
+        }
+        else err = ERROR_OUTOFMEMORY;
+    }
+
+    if (!err) return pixmap;
+
+    wine_tsx11_lock();
+    XFreePixmap( gdi_display, pixmap );
+    wine_tsx11_unlock();
+    return 0;
+
 }
 
 
