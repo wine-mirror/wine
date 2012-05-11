@@ -2,6 +2,7 @@
  * Unit test suite for fonts
  *
  * Copyright (C) 2007 Google (Evan Stade)
+ * Copyright (C) 2012 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -90,12 +91,17 @@ static void test_logfont(void)
 {
     LOGFONTA lfa, lfa2;
     GpFont *font;
+    GpFontFamily *family;
     GpStatus stat;
     GpGraphics *graphics;
     HDC hdc = GetDC(0);
     INT style;
+    REAL rval;
+    UINT16 em_height, line_spacing;
+    Unit unit;
 
     GdipCreateFromHDC(hdc, &graphics);
+
     memset(&lfa, 0, sizeof(LOGFONTA));
     memset(&lfa2, 0xff, sizeof(LOGFONTA));
 
@@ -161,6 +167,60 @@ static void test_logfont(void)
     expect(Ok, stat);
     ok (style == (FontStyleItalic | FontStyleUnderline | FontStyleStrikeout),
             "Expected , got %d\n", style);
+
+    stat = GdipGetFontUnit(font, &unit);
+    expect(Ok, stat);
+    expect(UnitWorld, unit);
+
+    stat = GdipGetFontHeight(font, graphics, &rval);
+    expect(Ok, stat);
+    expectf(25.347656, rval);
+    stat = GdipGetFontSize(font, &rval);
+    expect(Ok, stat);
+    expectf(21.0, rval);
+
+    stat = GdipGetFamily(font, &family);
+    expect(Ok, stat);
+    stat = GdipGetEmHeight(family, FontStyleRegular, &em_height);
+    expect(Ok, stat);
+    expect(2048, em_height);
+    stat = GdipGetLineSpacing(family, FontStyleRegular, &line_spacing);
+    expect(Ok, stat);
+    expect(2472, line_spacing);
+    GdipDeleteFontFamily(family);
+
+    GdipDeleteFont(font);
+
+    memset(&lfa, 0, sizeof(lfa));
+    lfa.lfHeight = -25;
+    lstrcpyA(lfa.lfFaceName, "Tahoma");
+    stat = GdipCreateFontFromLogfontA(hdc, &lfa, &font);
+    expect(Ok, stat);
+    memset(&lfa2, 0xff, sizeof(lfa2));
+    stat = GdipGetLogFontA(font, graphics, &lfa2);
+    expect(Ok, stat);
+    expect(lfa.lfHeight, lfa2.lfHeight);
+
+    stat = GdipGetFontUnit(font, &unit);
+    expect(Ok, stat);
+    expect(UnitWorld, unit);
+
+    stat = GdipGetFontHeight(font, graphics, &rval);
+    expect(Ok, stat);
+    expectf(30.175781, rval);
+    stat = GdipGetFontSize(font, &rval);
+    expect(Ok, stat);
+    expectf(25.0, rval);
+
+    stat = GdipGetFamily(font, &family);
+    expect(Ok, stat);
+    stat = GdipGetEmHeight(family, FontStyleRegular, &em_height);
+    expect(Ok, stat);
+    expect(2048, em_height);
+    stat = GdipGetLineSpacing(family, FontStyleRegular, &line_spacing);
+    expect(Ok, stat);
+    expect(2472, line_spacing);
+    GdipDeleteFontFamily(family);
 
     GdipDeleteFont(font);
 
@@ -343,6 +403,7 @@ static void test_heightgivendpi(void)
     GpFont* font = NULL;
     GpFontFamily* fontfamily = NULL;
     REAL height;
+    Unit unit;
 
     stat = GdipCreateFontFamilyFromName(Tahoma, NULL, &fontfamily);
     expect(Ok, stat);
@@ -364,6 +425,11 @@ static void test_heightgivendpi(void)
     height = 12345;
     stat = GdipCreateFont(fontfamily, 30, FontStyleRegular, UnitWorld, &font);
     expect(Ok, stat);
+
+    stat = GdipGetFontUnit(font, &unit);
+    expect(Ok, stat);
+    expect(UnitWorld, unit);
+
     stat = GdipGetFontHeightGivenDPI(font, 96, &height);
     expect(Ok, stat);
     expectf(36.210938, height);
@@ -380,6 +446,11 @@ static void test_heightgivendpi(void)
     height = 12345;
     stat = GdipCreateFont(fontfamily, 30, FontStyleRegular, UnitInch, &font);
     expect(Ok, stat);
+
+    stat = GdipGetFontUnit(font, &unit);
+    expect(Ok, stat);
+    expect(UnitInch, unit);
+
     stat = GdipGetFontHeightGivenDPI(font, 96, &height);
     expect(Ok, stat);
     expectf(3476.250000, height);
@@ -388,6 +459,11 @@ static void test_heightgivendpi(void)
     height = 12345;
     stat = GdipCreateFont(fontfamily, 30, FontStyleRegular, UnitDocument, &font);
     expect(Ok, stat);
+
+    stat = GdipGetFontUnit(font, &unit);
+    expect(Ok, stat);
+    expect(UnitDocument, unit);
+
     stat = GdipGetFontHeightGivenDPI(font, 96, &height);
     expect(Ok, stat);
     expectf(11.587500, height);
@@ -396,12 +472,254 @@ static void test_heightgivendpi(void)
     height = 12345;
     stat = GdipCreateFont(fontfamily, 30, FontStyleRegular, UnitMillimeter, &font);
     expect(Ok, stat);
+
+    stat = GdipGetFontUnit(font, &unit);
+    expect(Ok, stat);
+    expect(UnitMillimeter, unit);
+
     stat = GdipGetFontHeightGivenDPI(font, 96, &height);
     expect(Ok, stat);
     expectf(136.860245, height);
     GdipDeleteFont(font);
 
     GdipDeleteFontFamily(fontfamily);
+}
+
+static int CALLBACK font_enum_proc(const LOGFONTW *lfe, const TEXTMETRICW *ntme,
+                                   DWORD type, LPARAM lparam)
+{
+    NEWTEXTMETRICW *ntm = (NEWTEXTMETRICW *)lparam;
+
+    if (type != TRUETYPE_FONTTYPE) return 1;
+
+    *ntm = *(NEWTEXTMETRICW *)ntme;
+    return 0;
+}
+
+struct font_metrics
+{
+    UINT16 em_height, line_spacing, ascent, descent;
+    REAL font_height, font_size;
+    INT lfHeight;
+};
+
+static void gdi_get_font_metrics(LOGFONTW *lf, struct font_metrics *fm)
+{
+    HDC hdc;
+    HFONT hfont;
+    NEWTEXTMETRICW ntm;
+    OUTLINETEXTMETRICW otm;
+    int ret;
+
+    hdc = CreateCompatibleDC(0);
+
+    /* it's the only way to get extended NEWTEXTMETRIC fields */
+    ret = EnumFontFamiliesExW(hdc, lf, font_enum_proc, (LPARAM)&ntm, 0);
+    ok(!ret, "EnumFontFamiliesExW failed to find %s\n", wine_dbgstr_w(lf->lfFaceName));
+
+    hfont = CreateFontIndirectW(lf);
+    SelectObject(hdc, hfont);
+
+    otm.otmSize = sizeof(otm);
+    ret = GetOutlineTextMetricsW(hdc, otm.otmSize, &otm);
+    ok(ret, "GetOutlineTextMetrics failed\n");
+
+    DeleteDC(hdc);
+    DeleteObject(hfont);
+
+    fm->lfHeight = -otm.otmTextMetrics.tmAscent;
+    fm->line_spacing = ntm.ntmCellHeight;
+    fm->font_size = (REAL)otm.otmTextMetrics.tmAscent;
+    fm->font_height = (REAL)fm->line_spacing * fm->font_size / (REAL)ntm.ntmSizeEM;
+    fm->em_height = ntm.ntmSizeEM;
+    fm->ascent = ntm.ntmSizeEM;
+    fm->descent = ntm.ntmCellHeight - ntm.ntmSizeEM;
+}
+
+static void gdip_get_font_metrics(GpFont *font, struct font_metrics *fm)
+{
+    INT style;
+    GpFontFamily *family;
+    GpStatus stat;
+
+    stat = GdipGetFontStyle(font, &style);
+    expect(Ok, stat);
+
+    stat = GdipGetFontHeight(font, NULL, &fm->font_height);
+    expect(Ok, stat);
+    stat = GdipGetFontSize(font, &fm->font_size);
+    expect(Ok, stat);
+
+    fm->lfHeight = (INT)(fm->font_size * -1.0);
+
+    stat = GdipGetFamily(font, &family);
+    expect(Ok, stat);
+
+    stat = GdipGetEmHeight(family, style, &fm->em_height);
+    expect(Ok, stat);
+    stat = GdipGetLineSpacing(family, style, &fm->line_spacing);
+    expect(Ok, stat);
+    stat = GdipGetCellAscent(family, style, &fm->ascent);
+    expect(Ok, stat);
+    stat = GdipGetCellDescent(family, style, &fm->descent);
+    expect(Ok, stat);
+
+    GdipDeleteFontFamily(family);
+}
+
+static void cmp_font_metrics(struct font_metrics *fm1, struct font_metrics *fm2, int line)
+{
+    ok_(__FILE__, line)(fm1->lfHeight == fm2->lfHeight, "lfHeight %d != %d\n", fm1->lfHeight, fm2->lfHeight);
+    ok_(__FILE__, line)(fm1->em_height == fm2->em_height, "em_height %u != %u\n", fm1->em_height, fm2->em_height);
+    ok_(__FILE__, line)(fm1->line_spacing == fm2->line_spacing, "line_spacing %u != %u\n", fm1->line_spacing, fm2->line_spacing);
+    ok_(__FILE__, line)(abs(fm1->ascent - fm2->ascent) <= 1, "ascent %u != %u\n", fm1->ascent, fm2->ascent);
+    ok_(__FILE__, line)(abs(fm1->descent - fm2->descent) <= 1, "descent %u != %u\n", fm1->descent, fm2->descent);
+    ok(fm1->font_height > 0.0, "fm1->font_height should be positive, got %f\n", fm1->font_height);
+    ok(fm2->font_height > 0.0, "fm2->font_height should be positive, got %f\n", fm2->font_height);
+    ok_(__FILE__, line)(fm1->font_height == fm2->font_height, "font_height %f != %f\n", fm1->font_height, fm2->font_height);
+    ok(fm1->font_size > 0.0, "fm1->font_size should be positive, got %f\n", fm1->font_size);
+    ok(fm2->font_size > 0.0, "fm2->font_size should be positive, got %f\n", fm2->font_size);
+    ok_(__FILE__, line)(fm1->font_size == fm2->font_size, "font_size %f != %f\n", fm1->font_size, fm2->font_size);
+}
+
+static void test_font_metrics(void)
+{
+    LOGFONTW lf;
+    GpFont *font;
+    GpFontFamily *family;
+    GpGraphics *graphics;
+    GpStatus stat;
+    Unit unit;
+    struct font_metrics fm_gdi, fm_gdip;
+    HDC hdc;
+
+    hdc = CreateCompatibleDC(0);
+    stat = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, stat);
+
+    memset(&lf, 0, sizeof(lf));
+
+    /* Tahoma,-13 */
+    lstrcpyW(lf.lfFaceName, Tahoma);
+    lf.lfHeight = -13;
+    stat = GdipCreateFontFromLogfontW(hdc, &lf, &font);
+    expect(Ok, stat);
+
+    stat = GdipGetFontUnit(font, &unit);
+    expect(Ok, stat);
+    expect(UnitWorld, unit);
+
+    gdip_get_font_metrics(font, &fm_gdip);
+    trace("gdiplus:\n");
+    trace("%s,%d: EmHeight %u, LineSpacing %u, CellAscent %u, CellDescent %u, FontHeight %f, FontSize %f\n",
+          wine_dbgstr_w(lf.lfFaceName), lf.lfHeight,
+          fm_gdip.em_height, fm_gdip.line_spacing, fm_gdip.ascent, fm_gdip.descent,
+          fm_gdip.font_height, fm_gdip.font_size);
+
+    gdi_get_font_metrics(&lf, &fm_gdi);
+    trace("gdi:\n");
+    trace("%s,%d: EmHeight %u, LineSpacing %u, CellAscent %u, CellDescent %u, FontHeight %f, FontSize %f\n",
+          wine_dbgstr_w(lf.lfFaceName), lf.lfHeight,
+          fm_gdi.em_height, fm_gdi.line_spacing, fm_gdi.ascent, fm_gdi.descent,
+          fm_gdi.font_height, fm_gdi.font_size);
+
+    cmp_font_metrics(&fm_gdip, &fm_gdi, __LINE__);
+
+    stat = GdipGetLogFontW(font, graphics, &lf);
+    expect(Ok, stat);
+    ok(lf.lfHeight < 0, "lf.lfHeight should be negative, got %d\n", lf.lfHeight);
+    gdi_get_font_metrics(&lf, &fm_gdi);
+    trace("gdi:\n");
+    trace("%s,%d: EmHeight %u, LineSpacing %u, CellAscent %u, CellDescent %u, FontHeight %f, FontSize %f\n",
+          wine_dbgstr_w(lf.lfFaceName), lf.lfHeight,
+          fm_gdi.em_height, fm_gdi.line_spacing, fm_gdi.ascent, fm_gdi.descent,
+          fm_gdi.font_height, fm_gdi.font_size);
+    ok((REAL)lf.lfHeight * -1.0 == fm_gdi.font_size, "expected %f, got %f\n", (REAL)lf.lfHeight * -1.0, fm_gdi.font_size);
+
+    cmp_font_metrics(&fm_gdip, &fm_gdi, __LINE__);
+
+    GdipDeleteFont(font);
+
+    /* Tahoma,13 */
+    lstrcpyW(lf.lfFaceName, Tahoma);
+    lf.lfHeight = 13;
+    stat = GdipCreateFontFromLogfontW(hdc, &lf, &font);
+    expect(Ok, stat);
+
+    stat = GdipGetFontUnit(font, &unit);
+    expect(Ok, stat);
+    expect(UnitWorld, unit);
+
+    gdip_get_font_metrics(font, &fm_gdip);
+    trace("gdiplus:\n");
+    trace("%s,%d: EmHeight %u, LineSpacing %u, CellAscent %u, CellDescent %u, FontHeight %f, FontSize %f\n",
+          wine_dbgstr_w(lf.lfFaceName), lf.lfHeight,
+          fm_gdip.em_height, fm_gdip.line_spacing, fm_gdip.ascent, fm_gdip.descent,
+          fm_gdip.font_height, fm_gdip.font_size);
+
+    gdi_get_font_metrics(&lf, &fm_gdi);
+    trace("gdi:\n");
+    trace("%s,%d: EmHeight %u, LineSpacing %u, CellAscent %u, CellDescent %u, FontHeight %f, FontSize %f\n",
+          wine_dbgstr_w(lf.lfFaceName), lf.lfHeight,
+          fm_gdi.em_height, fm_gdi.line_spacing, fm_gdi.ascent, fm_gdi.descent,
+          fm_gdi.font_height, fm_gdi.font_size);
+
+    cmp_font_metrics(&fm_gdip, &fm_gdi, __LINE__);
+
+    stat = GdipGetLogFontW(font, graphics, &lf);
+    expect(Ok, stat);
+    ok(lf.lfHeight < 0, "lf.lfHeight should be negative, got %d\n", lf.lfHeight);
+    gdi_get_font_metrics(&lf, &fm_gdi);
+    trace("gdi:\n");
+    trace("%s,%d: EmHeight %u, LineSpacing %u, CellAscent %u, CellDescent %u, FontHeight %f, FontSize %f\n",
+          wine_dbgstr_w(lf.lfFaceName), lf.lfHeight,
+          fm_gdi.em_height, fm_gdi.line_spacing, fm_gdi.ascent, fm_gdi.descent,
+          fm_gdi.font_height, fm_gdi.font_size);
+    ok((REAL)lf.lfHeight * -1.0 == fm_gdi.font_size, "expected %f, got %f\n", (REAL)lf.lfHeight * -1.0, fm_gdi.font_size);
+
+    cmp_font_metrics(&fm_gdip, &fm_gdi, __LINE__);
+
+    GdipDeleteFont(font);
+
+    stat = GdipCreateFontFamilyFromName(Tahoma, NULL, &family);
+    expect(Ok, stat);
+
+    /* Tahoma,13 */
+    stat = GdipCreateFont(family, 13.0, FontStyleRegular, UnitPixel, &font);
+    expect(Ok, stat);
+
+    gdip_get_font_metrics(font, &fm_gdip);
+    trace("gdiplus:\n");
+    trace("%s,%d: EmHeight %u, LineSpacing %u, CellAscent %u, CellDescent %u, FontHeight %f, FontSize %f\n",
+          wine_dbgstr_w(lf.lfFaceName), lf.lfHeight,
+          fm_gdip.em_height, fm_gdip.line_spacing, fm_gdip.ascent, fm_gdip.descent,
+          fm_gdip.font_height, fm_gdip.font_size);
+
+    stat = GdipGetLogFontW(font, graphics, &lf);
+    expect(Ok, stat);
+    ok(lf.lfHeight < 0, "lf.lfHeight should be negative, got %d\n", lf.lfHeight);
+    gdi_get_font_metrics(&lf, &fm_gdi);
+    trace("gdi:\n");
+    trace("%s,%d: EmHeight %u, LineSpacing %u, CellAscent %u, CellDescent %u, FontHeight %f, FontSize %f\n",
+          wine_dbgstr_w(lf.lfFaceName), lf.lfHeight,
+          fm_gdi.em_height, fm_gdi.line_spacing, fm_gdi.ascent, fm_gdi.descent,
+          fm_gdi.font_height, fm_gdi.font_size);
+    ok((REAL)lf.lfHeight * -1.0 == fm_gdi.font_size, "expected %f, got %f\n", (REAL)lf.lfHeight * -1.0, fm_gdi.font_size);
+
+    cmp_font_metrics(&fm_gdip, &fm_gdi, __LINE__);
+
+    stat = GdipGetLogFontW(font, NULL, &lf);
+    expect(InvalidParameter, stat);
+
+    GdipDeleteFont(font);
+
+    stat = GdipCreateFont(family, -13.0, FontStyleRegular, UnitPixel, &font);
+    expect(InvalidParameter, stat);
+
+    GdipDeleteFontFamily(family);
+
+    GdipDeleteGraphics(graphics);
+    DeleteDC(hdc);
 }
 
 START_TEST(font)
@@ -416,6 +734,7 @@ START_TEST(font)
 
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
+    test_font_metrics();
     test_createfont();
     test_logfont();
     test_fontfamily();
