@@ -1541,7 +1541,7 @@ HRESULT WINAPI D3DXSaveSurfaceToFileW(const WCHAR *dst_filename, D3DXIMAGE_FILEF
             if (src_format_desc->format == D3DFMT_UNKNOWN || dst_format_desc->format == D3DFMT_UNKNOWN)
             {
                 FIXME("Unsupported pixel format conversion %#x -> %#x\n",
-                    src_format_desc->format, dst_format_desc->format);
+                    src_surface_desc.Format, d3d_pixel_format);
                 hr = E_NOTIMPL;
                 goto cleanup;
             }
