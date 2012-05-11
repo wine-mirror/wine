@@ -504,14 +504,26 @@ GpStatus WINGDIPAPI GdipGetFontHeight(GDIPCONST GpFont *font,
  */
 GpStatus WINGDIPAPI GdipGetFontHeightGivenDPI(GDIPCONST GpFont *font, REAL dpi, REAL *height)
 {
-    REAL font_height;
+    GpStatus stat;
+    INT style;
+    UINT16 line_spacing, em_height;
+    REAL font_height, font_size;
+
+    if (!font || !height) return InvalidParameter;
 
     TRACE("%p (%s), %f, %p\n", font,
-            debugstr_w(font->lfw.lfFaceName), dpi, height);
+            debugstr_w(font->family->FamilyName), dpi, height);
 
-    if (!(font && height)) return InvalidParameter;
+    stat = GdipGetFontSize((GpFont *)font, &font_size);
+    if (stat != Ok) return stat;
+    stat = GdipGetFontStyle((GpFont *)font, &style);
+    if (stat != Ok) return stat;
+    stat = GdipGetLineSpacing(font->family, style, &line_spacing);
+    if (stat != Ok) return stat;
+    stat = GdipGetEmHeight(font->family, style, &em_height);
+    if (stat != Ok) return stat;
 
-    font_height = font->line_spacing * (font->emSize / font->height);
+    font_height = (REAL)line_spacing * font_size / (REAL)em_height;
 
     switch (font->unit)
     {
