@@ -1461,3 +1461,62 @@ DWORD X11DRV_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
     wine_tsx11_unlock();
     return ret;
 }
+
+
+/***********************************************************************
+ *           get_pixmap_image
+ *
+ * Equivalent of X11DRV_GetImage that reads directly from a pixmap.
+ */
+DWORD get_pixmap_image( Pixmap pixmap, int width, int height, const XVisualInfo *vis,
+                        BITMAPINFO *info, struct gdi_image_bits *bits )
+{
+    DWORD ret = ERROR_SUCCESS;
+    XImage *image;
+    struct gdi_image_bits src_bits;
+    struct bitblt_coords coords;
+    const XPixmapFormatValues *format = pixmap_formats[vis->depth];
+    const int *mapping = NULL;
+
+    if (!format) return ERROR_INVALID_PARAMETER;
+
+    info->bmiHeader.biSize          = sizeof(info->bmiHeader);
+    info->bmiHeader.biWidth         = width;
+    info->bmiHeader.biHeight        = -height;
+    info->bmiHeader.biPlanes        = 1;
+    info->bmiHeader.biBitCount      = format->bits_per_pixel;
+    info->bmiHeader.biXPelsPerMeter = 0;
+    info->bmiHeader.biYPelsPerMeter = 0;
+    info->bmiHeader.biClrImportant  = 0;
+    set_color_info( vis, info );
+
+    if (!bits) return ERROR_SUCCESS;  /* just querying the color information */
+
+    coords.x = 0;
+    coords.y = 0;
+    coords.width = width;
+    coords.height = height;
+    SetRect( &coords.visrect, 0, 0, width, height );
+
+    wine_tsx11_lock();
+    image = XGetImage( gdi_display, pixmap, 0, 0, width, height, AllPlanes, ZPixmap );
+    wine_tsx11_unlock();
+    if (!image) return ERROR_OUTOFMEMORY;
+
+    info->bmiHeader.biSizeImage = height * image->bytes_per_line;
+
+    src_bits.ptr     = image->data;
+    src_bits.is_copy = TRUE;
+    ret = copy_image_bits( info, is_r8g8b8(vis), image, &src_bits, bits, &coords, mapping,
+                           zeropad_masks[(width * image->bits_per_pixel) & 31] );
+
+    if (!ret && bits->ptr == image->data)
+    {
+        bits->free = free_ximage_bits;
+        image->data = NULL;
+    }
+    wine_tsx11_lock();
+    XDestroyImage( image );
+    wine_tsx11_unlock();
+    return ret;
+}

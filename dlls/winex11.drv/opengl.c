@@ -2199,68 +2199,14 @@ static void flush_pixmap( struct wine_glcontext *ctx )
 {
     char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
     BITMAPINFO *info = (BITMAPINFO *)buffer;
-    XImage *image;
-    struct gdi_image_bits src_bits, bits;
-    struct bitblt_coords coords;
-    DWORD *masks;
-    BOOL is_r8g8b8 = FALSE;
-    const XPixmapFormatValues *format = pixmap_formats[ctx->vis->depth];
+    struct gdi_image_bits bits;
 
-    coords.x = 0;
-    coords.y = 0;
-    coords.width = ctx->pixmap_size.cx;
-    coords.height = ctx->pixmap_size.cy;
-    SetRect( &coords.visrect, 0, 0, coords.width, coords.height );
-
-    info->bmiHeader.biSize          = sizeof(info->bmiHeader);
-    info->bmiHeader.biWidth         = coords.width;
-    info->bmiHeader.biHeight        = -coords.height;
-    info->bmiHeader.biPlanes        = 1;
-    info->bmiHeader.biBitCount      = format->bits_per_pixel;
-    info->bmiHeader.biCompression   = BI_RGB;
-    info->bmiHeader.biClrUsed       = 0;
-    switch (info->bmiHeader.biBitCount)
-    {
-    case 16:
-        masks = (DWORD *)info->bmiColors;
-        masks[0] = ctx->vis->red_mask;
-        masks[1] = ctx->vis->green_mask;
-        masks[2] = ctx->vis->blue_mask;
-        info->bmiHeader.biCompression = BI_BITFIELDS;
-        break;
-    case 24:
-        is_r8g8b8 = (ctx->vis->red_mask == 0xff0000 && ctx->vis->blue_mask == 0x0000ff);
-        break;
-    case 32:
-        masks = (DWORD *)info->bmiColors;
-        masks[0] = ctx->vis->red_mask;
-        masks[1] = ctx->vis->green_mask;
-        masks[2] = ctx->vis->blue_mask;
-        if (masks[0] != 0xff0000 || masks[1] != 0x00ff00 || masks[2] != 0x0000ff)
-            info->bmiHeader.biCompression = BI_BITFIELDS;
-        break;
-    default:
-        FIXME( "depth %u not supported\n", info->bmiHeader.biBitCount );
-        return;
-    }
-
-    wine_tsx11_lock();
-    image = XGetImage( gdi_display, ctx->pixmap, 0, 0, coords.width, coords.height, AllPlanes, ZPixmap );
-    wine_tsx11_unlock();
-    if (!image) return;
-
-    src_bits.ptr     = image->data;
-    src_bits.is_copy = TRUE;
-    if (!copy_image_bits( info, is_r8g8b8, image, &src_bits, &bits, &coords, NULL, ~0u ))
+    if (!get_pixmap_image( ctx->pixmap, ctx->pixmap_size.cx, ctx->pixmap_size.cy, ctx->vis, info, &bits ))
     {
         HBITMAP bitmap = GetCurrentObject( ctx->hdc, OBJ_BITMAP );
-        TRACE( "drawable %lx -> hdc %p bitmap %p\n", ctx->pixmap, ctx->hdc, bitmap );
-        SetDIBits( 0, bitmap, 0, coords.height, bits.ptr, info, DIB_RGB_COLORS );
+        SetDIBits( 0, bitmap, 0, ctx->pixmap_size.cy, bits.ptr, info, DIB_RGB_COLORS );
         if (bits.free) bits.free( &bits );
     }
-    wine_tsx11_lock();
-    XDestroyImage( image );
-    wine_tsx11_unlock();
 }
 
 static void flush_gl_drawable( struct glx_physdev *physdev )
