@@ -280,6 +280,45 @@ HBITMAP create_brush_bitmap( X11DRV_PDEVICE *physDev, const struct brush_pattern
     return bitmap;
 }
 
+static BOOL select_pattern_brush( X11DRV_PDEVICE *physdev, const struct brush_pattern *pattern )
+{
+    XVisualInfo vis;
+    Pixmap pixmap;
+    const BITMAPINFO *info = pattern->info;
+
+    memset( &vis, 0, sizeof(vis) );
+    vis.visual     = visual;
+    vis.visualid   = visual->visualid;
+
+    if (physdev->depth > 1 && info->bmiHeader.biBitCount > 1)
+    {
+        vis.depth      = screen_depth;
+        vis.red_mask   = visual->red_mask;
+        vis.green_mask = visual->green_mask;
+        vis.blue_mask  = visual->blue_mask;
+    }
+    else vis.depth = 1;
+
+    pixmap = create_pixmap_from_image( physdev->dev.hdc, &vis, info, &pattern->bits, pattern->usage );
+    if (!pixmap) return FALSE;
+
+    wine_tsx11_lock();
+    if (physdev->brush.pixmap) XFreePixmap( gdi_display, physdev->brush.pixmap );
+    physdev->brush.pixmap = pixmap;
+
+    if (vis.depth == 1)
+    {
+	physdev->brush.fillStyle = FillOpaqueStippled;
+	physdev->brush.pixel = -1;  /* Special case (see DC_SetupGCForBrush) */
+    }
+    else
+    {
+	physdev->brush.fillStyle = FillTiled;
+	physdev->brush.pixel = 0;  /* Ignored */
+    }
+    wine_tsx11_unlock();
+    return TRUE;
+}
 
 /***********************************************************************
  *           SelectBrush   (X11DRV.@)
@@ -293,18 +332,14 @@ HBRUSH X11DRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct brush_patter
     {
         X_PHYSBITMAP *physbitmap;
         HBITMAP bitmap = pattern->bitmap;
-        BOOL delete_bitmap = FALSE;
 
         if (!bitmap || !(physbitmap = X11DRV_get_phys_bitmap( bitmap )))
         {
-            if (!(bitmap = create_brush_bitmap( physDev, pattern ))) return 0;
-            physbitmap = X11DRV_get_phys_bitmap( bitmap );
-            delete_bitmap = TRUE;
+            if (!select_pattern_brush( physDev, pattern )) return 0;
         }
-        BRUSH_SelectPatternBrush( physDev, bitmap, physbitmap );
+        else BRUSH_SelectPatternBrush( physDev, bitmap, physbitmap );
         TRACE("BS_PATTERN\n");
         physDev->brush.style = BS_PATTERN;
-        if (delete_bitmap) DeleteObject( bitmap );
         return hbrush;
     }
 
