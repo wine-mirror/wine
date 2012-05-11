@@ -1758,7 +1758,6 @@ static HANDLE X11DRV_CLIPBOARD_ExportString(Display *display, Window requestor, 
 static HANDLE X11DRV_CLIPBOARD_ExportXAPIXMAP(Display *display, Window requestor, Atom aTarget, Atom rprop,
     LPWINE_CLIPDATA lpdata, LPDWORD lpBytes)
 {
-    HDC hdc, memdc;
     HANDLE hData;
     unsigned char* lpData;
 
@@ -1770,33 +1769,26 @@ static HANDLE X11DRV_CLIPBOARD_ExportXAPIXMAP(Display *display, Window requestor
 
     if (!lpdata->drvData) /* If not already rendered */
     {
-        /* Create a DDB from the DIB */
-
-        Pixmap pixmap = 0;
-        X_PHYSBITMAP *physBitmap;
-        HBITMAP hBmp;
+        Pixmap pixmap;
+        XVisualInfo vis;
         LPBITMAPINFO pbmi;
+        struct gdi_image_bits bits;
 
-        hdc = GetDC(0);
+        memset( &vis, 0, sizeof(vis) );
+        vis.visual     = visual;
+        vis.depth      = screen_depth;
+        vis.visualid   = visual->visualid;
+        vis.class      = visual->class;
+        vis.red_mask   = visual->red_mask;
+        vis.green_mask = visual->green_mask;
+        vis.blue_mask  = visual->blue_mask;
+
         pbmi = GlobalLock( lpdata->hData );
-        hBmp = CreateDIBitmap( hdc, &pbmi->bmiHeader, CBM_INIT,
-                               (LPBYTE)pbmi + bitmap_info_size( pbmi, DIB_RGB_COLORS ),
-                               pbmi, DIB_RGB_COLORS );
+        bits.ptr = (LPBYTE)pbmi + bitmap_info_size( pbmi, DIB_RGB_COLORS );
+        bits.free = NULL;
+        bits.is_copy = FALSE;
+        pixmap = create_pixmap_from_image( 0, &vis, pbmi, &bits, DIB_RGB_COLORS );
         GlobalUnlock( lpdata->hData );
-
-        /* make sure it's owned by x11drv */
-        memdc = CreateCompatibleDC( hdc );
-        SelectObject( memdc, hBmp );
-        DeleteDC( memdc );
-
-        /* clear the physBitmap so that we can steal its pixmap */
-        if ((physBitmap = X11DRV_get_phys_bitmap( hBmp )))
-        {
-            pixmap = physBitmap->pixmap;
-            physBitmap->pixmap = 0;
-        }
-        DeleteObject( hBmp );
-        ReleaseDC( 0, hdc );
         lpdata->drvData = pixmap;
     }
 
