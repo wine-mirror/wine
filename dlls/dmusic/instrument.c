@@ -57,30 +57,29 @@ static HRESULT WINAPI IDirectMusicInstrumentImpl_QueryInterface(LPDIRECTMUSICINS
 
 static ULONG WINAPI IDirectMusicInstrumentImpl_AddRef(LPDIRECTMUSICINSTRUMENT iface)
 {
-	IDirectMusicInstrumentImpl *This = impl_from_IDirectMusicInstrument(iface);
-	ULONG refCount = InterlockedIncrement(&This->ref);
+    IDirectMusicInstrumentImpl *This = impl_from_IDirectMusicInstrument(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
 
-	TRACE("(%p)->(ref before=%u)\n", This, refCount - 1);
+    TRACE("(%p)->(): new ref = %u\n", iface, ref);
 
-	DMUSIC_LockModule();
+    DMUSIC_LockModule();
 
-	return refCount;
+    return ref;
 }
 
 static ULONG WINAPI IDirectMusicInstrumentImpl_Release(LPDIRECTMUSICINSTRUMENT iface)
 {
-	IDirectMusicInstrumentImpl *This = impl_from_IDirectMusicInstrument(iface);
-	ULONG refCount = InterlockedDecrement(&This->ref);
+    IDirectMusicInstrumentImpl *This = impl_from_IDirectMusicInstrument(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
 
-	TRACE("(%p)->(ref before=%u)\n", This, refCount + 1);
+    TRACE("(%p)->(): new ref = %u\n", iface, ref);
 
-	if (!refCount) {
-		HeapFree(GetProcessHeap(), 0, This);
-	}
+    if (!ref)
+        HeapFree(GetProcessHeap(), 0, This);
 
-	DMUSIC_UnlockModule();
-	
-	return refCount;
+    DMUSIC_UnlockModule();
+
+    return ref;
 }
 
 /* IDirectMusicInstrumentImpl IDirectMusicInstrument part: */
