@@ -132,16 +132,16 @@ HRESULT DMUSIC_CreateDirectMusicInstrumentImpl (LPCGUID lpcGUID, LPVOID* ppobj, 
 
 static HRESULT read_from_stream(IStream *stream, void *data, ULONG size)
 {
-    ULONG readed;
+    ULONG bytes_read;
     HRESULT hr;
 
-    hr = IStream_Read(stream, data, size, &readed);
+    hr = IStream_Read(stream, data, size, &bytes_read);
     if(FAILED(hr)){
         TRACE("IStream_Read failed: %08x\n", hr);
         return hr;
     }
-    if(readed < size){
-        TRACE("Didn't read full chunk: %u < %u\n", readed, size);
+    if (bytes_read < size) {
+        TRACE("Didn't read full chunk: %u < %u\n", bytes_read, size);
         return E_FAIL;
     }
 
