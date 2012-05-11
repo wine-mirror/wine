@@ -1328,10 +1328,10 @@ static HANDLE X11DRV_CLIPBOARD_ImportXAPIXMAP(Display *display, Window w, Atom p
 
     if (X11DRV_CLIPBOARD_ReadProperty(display, w, prop, &lpdata, &cbytes))
     {
-        HDC hdcMem;
-        X_PHYSBITMAP *physBitmap;
-        Pixmap orig_pixmap;
-        HBITMAP hBmp = 0;
+        XVisualInfo vis;
+        char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+        BITMAPINFO *info = (BITMAPINFO *)buffer;
+        struct gdi_image_bits bits;
         Window root;
         int x,y;               /* Unused */
         unsigned border_width; /* Unused */
@@ -1349,37 +1349,54 @@ static HANDLE X11DRV_CLIPBOARD_ImportXAPIXMAP(Display *display, Window w, Atom p
         TRACE("\tPixmap properties: width=%d, height=%d, depth=%d\n",
               width, height, depth);
 
-        /*
-         * Create an HBITMAP with the same dimensions and BPP as the pixmap,
-         * and make it a container for the pixmap passed.
-         */
-        if (!(hBmp = CreateBitmap( width, height, 1, pixmap_formats[depth]->bits_per_pixel, NULL )))
+        memset( &vis, 0, sizeof(vis) );
+        vis.depth = depth;
+        if (depth == screen_depth)
+        {
+            vis.visual     = visual;
+            vis.visualid   = visual->visualid;
+            vis.class      = visual->class;
+            vis.red_mask   = visual->red_mask;
+            vis.green_mask = visual->green_mask;
+            vis.blue_mask  = visual->blue_mask;
+        }
+        else switch (pixmap_formats[depth]->bits_per_pixel)
+        {
+        case 1:
+        case 4:
+        case 8:
+            break;
+        case 16:  /* assume R5G5B5 */
+            vis.red_mask   = 0x7c00;
+            vis.green_mask = 0x03e0;
+            vis.blue_mask  = 0x001f;
+            break;
+        case 24:  /* assume R8G8B8 */
+        case 32:  /* assume A8R8G8B8 */
+            vis.red_mask   = 0xff0000;
+            vis.green_mask = 0x00ff00;
+            vis.blue_mask  = 0x0000ff;
+            break;
+        default:
             return 0;
+        }
 
-        /* force bitmap to be owned by a screen DC */
-        hdcMem = CreateCompatibleDC( 0 );
-        SelectObject( hdcMem, SelectObject( hdcMem, hBmp ));
-        DeleteDC( hdcMem );
+        if (!get_pixmap_image( *pPixmap, width, height, &vis, info, &bits ))
+        {
+            DWORD info_size = bitmap_info_size( info, DIB_RGB_COLORS );
+            BYTE *ptr;
 
-        physBitmap = X11DRV_get_phys_bitmap( hBmp );
-
-        /* swap the new pixmap in */
-        orig_pixmap = physBitmap->pixmap;
-        physBitmap->pixmap = *pPixmap;
-
-        /*
-         * Create a packed DIB from the Pixmap wrapper bitmap created above.
-         * A packed DIB contains a BITMAPINFO structure followed immediately by
-         * an optional color palette and the pixel data.
-         */
-        hClipData = create_dib_from_bitmap( hBmp );
-
-        /* we can now get rid of the HBITMAP and its original pixmap */
-        physBitmap->pixmap = orig_pixmap;
-        DeleteObject(hBmp);
-
-        /* Free the retrieved property data */
-        HeapFree(GetProcessHeap(), 0, lpdata);
+            hClipData = GlobalAlloc( GMEM_MOVEABLE | GMEM_DDESHARE,
+                                     info_size + info->bmiHeader.biSizeImage );
+            if (hClipData)
+            {
+                ptr = GlobalLock( hClipData );
+                memcpy( ptr, info, info_size );
+                memcpy( ptr + info_size, bits.ptr, info->bmiHeader.biSizeImage );
+                GlobalUnlock( hClipData );
+            }
+            if (bits.free) bits.free( &bits );
+        }
     }
 
     return hClipData;
