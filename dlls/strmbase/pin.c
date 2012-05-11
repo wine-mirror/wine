@@ -580,27 +580,23 @@ HRESULT WINAPI BaseOutputPinImpl_GetDeliveryBuffer(BaseOutputPin *This, IMediaSa
 
     TRACE("(%p, %p, %p, %x)\n", ppSample, tStart, tStop, dwFlags);
 
-    EnterCriticalSection(This->pin.pCritSec);
+    if (!This->pin.pConnectedTo)
+        hr = VFW_E_NOT_CONNECTED;
+    else
     {
-        if (!This->pin.pConnectedTo)
-            hr = VFW_E_NOT_CONNECTED;
-        else
-        {
-            IMemAllocator * pAlloc = NULL;
+        IMemAllocator * pAlloc = NULL;
 
-            hr = IMemInputPin_GetAllocator(This->pMemInputPin, &pAlloc);
+        hr = IMemInputPin_GetAllocator(This->pMemInputPin, &pAlloc);
 
-            if (SUCCEEDED(hr))
-                hr = IMemAllocator_GetBuffer(pAlloc, ppSample, tStart, tStop, dwFlags);
+        if (SUCCEEDED(hr))
+            hr = IMemAllocator_GetBuffer(pAlloc, ppSample, tStart, tStop, dwFlags);
 
-            if (SUCCEEDED(hr))
-                hr = IMediaSample_SetTime(*ppSample, tStart, tStop);
+        if (SUCCEEDED(hr))
+            hr = IMediaSample_SetTime(*ppSample, tStart, tStop);
 
-            if (pAlloc)
-                IMemAllocator_Release(pAlloc);
-        }
+        if (pAlloc)
+            IMemAllocator_Release(pAlloc);
     }
-    LeaveCriticalSection(This->pin.pCritSec);
 
     return hr;
 }
