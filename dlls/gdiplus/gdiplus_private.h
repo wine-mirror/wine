@@ -375,8 +375,9 @@ struct GpFontCollection{
 };
 
 struct GpFontFamily{
-    OUTLINETEXTMETRICW otm;
     WCHAR FamilyName[LF_FACESIZE];
+    UINT16 em_height, ascent, descent, line_spacing; /* in font units */
+    int dpi;
 };
 
 /* internal use */

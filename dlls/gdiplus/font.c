@@ -34,20 +34,92 @@ WINE_DEFAULT_DEBUG_CHANNEL (gdiplus);
 #include "gdiplus.h"
 #include "gdiplus_private.h"
 
+/* PANOSE is 10 bytes in size, need to pack the structure properly */
+#include "pshpack2.h"
+typedef struct
+{
+    USHORT version;
+    SHORT xAvgCharWidth;
+    USHORT usWeightClass;
+    USHORT usWidthClass;
+    SHORT fsType;
+    SHORT ySubscriptXSize;
+    SHORT ySubscriptYSize;
+    SHORT ySubscriptXOffset;
+    SHORT ySubscriptYOffset;
+    SHORT ySuperscriptXSize;
+    SHORT ySuperscriptYSize;
+    SHORT ySuperscriptXOffset;
+    SHORT ySuperscriptYOffset;
+    SHORT yStrikeoutSize;
+    SHORT yStrikeoutPosition;
+    SHORT sFamilyClass;
+    PANOSE panose;
+    ULONG ulUnicodeRange1;
+    ULONG ulUnicodeRange2;
+    ULONG ulUnicodeRange3;
+    ULONG ulUnicodeRange4;
+    CHAR achVendID[4];
+    USHORT fsSelection;
+    USHORT usFirstCharIndex;
+    USHORT usLastCharIndex;
+    /* According to the Apple spec, original version didn't have the below fields,
+     * version numbers were taken from the OpenType spec.
+     */
+    /* version 0 (TrueType 1.5) */
+    USHORT sTypoAscender;
+    USHORT sTypoDescender;
+    USHORT sTypoLineGap;
+    USHORT usWinAscent;
+    USHORT usWinDescent;
+    /* version 1 (TrueType 1.66) */
+    ULONG ulCodePageRange1;
+    ULONG ulCodePageRange2;
+    /* version 2 (OpenType 1.2) */
+    SHORT sxHeight;
+    SHORT sCapHeight;
+    USHORT usDefaultChar;
+    USHORT usBreakChar;
+    USHORT usMaxContext;
+} TT_OS2_V2;
+
+typedef struct
+{
+    ULONG Version;
+    SHORT Ascender;
+    SHORT Descender;
+    SHORT LineGap;
+    USHORT advanceWidthMax;
+    SHORT minLeftSideBearing;
+    SHORT minRightSideBearing;
+    SHORT xMaxExtent;
+    SHORT caretSlopeRise;
+    SHORT caretSlopeRun;
+    SHORT caretOffset;
+    SHORT reserved[4];
+    SHORT metricDataFormat;
+    USHORT numberOfHMetrics;
+} TT_HHEA;
+#include "poppack.h"
+
+#ifdef WORDS_BIGENDIAN
+#define GET_BE_WORD(x) (x)
+#define GET_BE_DWORD(x) (x)
+#else
+#define GET_BE_WORD(x) MAKEWORD(HIBYTE(x), LOBYTE(x))
+#define GET_BE_DWORD(x) MAKELONG(GET_BE_WORD(HIWORD(x)), GET_BE_WORD(LOWORD(x)));
+#endif
+
+#define MS_MAKE_TAG(ch0, ch1, ch2, ch3) \
+                    ((DWORD)(BYTE)(ch0) | ((DWORD)(BYTE)(ch1) << 8) | \
+                    ((DWORD)(BYTE)(ch2) << 16) | ((DWORD)(BYTE)(ch3) << 24))
+#define MS_OS2_TAG MS_MAKE_TAG('O','S','/','2')
+#define MS_HHEA_TAG MS_MAKE_TAG('h','h','e','a')
+
 static const REAL mm_per_inch = 25.4;
 static const REAL inch_per_point = 1.0/72.0;
 
 static GpFontCollection installedFontCollection = {0};
-
-static inline LONG get_dpi(void)
-{
-    LONG dpi;
-    HDC hdc = GetDC(0);
-    dpi = GetDeviceCaps(hdc, LOGPIXELSY);
-    ReleaseDC (0, hdc);
-
-    return dpi;
-}
 
 static LONG em_size_to_pixel(REAL em_size, Unit unit, LONG dpi)
 {
@@ -121,7 +193,7 @@ GpStatus WINGDIPAPI GdipCreateFont(GDIPCONST GpFontFamily *fontFamily,
     stat = GdipGetFamilyName(fontFamily, lfw.lfFaceName, LANG_NEUTRAL);
     if (stat != Ok) return stat;
 
-    lfw.lfHeight = -em_size_to_pixel(emSize, unit, get_dpi());
+    lfw.lfHeight = -em_size_to_pixel(emSize, unit, fontFamily->dpi);
     lfw.lfWeight = style & FontStyleBold ? FW_BOLD : FW_REGULAR;
     lfw.lfItalic = style & FontStyleItalic;
     lfw.lfUnderline = style & FontStyleUnderline;
@@ -466,12 +538,15 @@ GpStatus WINGDIPAPI GdipGetFontHeight(GDIPCONST GpFont *font,
 
     TRACE("%p %p %p\n", font, graphics, height);
 
-    stat = GdipGetDpiY((GpGraphics*)graphics, &dpi);
+    if (graphics)
+    {
+        stat = GdipGetDpiY((GpGraphics*)graphics, &dpi);
+        if (stat != Ok) return stat;
+    }
+    else
+        dpi = font->family->dpi;
 
-    if (stat == Ok)
-        stat = GdipGetFontHeightGivenDPI(font, dpi, height);
-
-    return stat;
+    return GdipGetFontHeightGivenDPI(font, dpi, height);
 }
 
 /*******************************************************************************
@@ -550,35 +625,84 @@ GpStatus WINGDIPAPI GdipGetFontHeightGivenDPI(GDIPCONST GpFont *font, REAL dpi, 
 static INT CALLBACK is_font_installed_proc(const LOGFONTW *elf,
                             const TEXTMETRICW *ntm, DWORD type, LPARAM lParam)
 {
-    if (!ntm || type == RASTER_FONTTYPE)
-    {
+    if (type != TRUETYPE_FONTTYPE)
         return 1;
-    }
 
     *(LOGFONTW *)lParam = *elf;
 
     return 0;
 }
 
-static BOOL find_installed_font(const WCHAR *name, OUTLINETEXTMETRICW *otm)
+struct font_metrics
+{
+    UINT16 em_height, ascent, descent, line_spacing; /* in font units */
+    int dpi;
+};
+
+static BOOL get_font_metrics(HDC hdc, struct font_metrics *fm)
+{
+    OUTLINETEXTMETRICW otm;
+    TT_OS2_V2 tt_os2;
+    TT_HHEA tt_hori;
+    LONG size;
+    UINT16 line_gap;
+
+    otm.otmSize = sizeof(otm);
+    if (!GetOutlineTextMetricsW(hdc, otm.otmSize, &otm)) return FALSE;
+
+    fm->em_height = otm.otmEMSquare;
+    fm->dpi = GetDeviceCaps(hdc, LOGPIXELSY);
+
+    memset(&tt_hori, 0, sizeof(tt_hori));
+    if (GetFontData(hdc, MS_HHEA_TAG, 0, &tt_hori, sizeof(tt_hori)) != GDI_ERROR)
+    {
+        fm->ascent = GET_BE_WORD(tt_hori.Ascender);
+        fm->descent = -GET_BE_WORD(tt_hori.Descender);
+        TRACE("hhea: ascent %d, descent %d\n", fm->ascent, fm->descent);
+        line_gap = GET_BE_WORD(tt_hori.LineGap);
+        fm->line_spacing = fm->ascent + fm->descent + line_gap;
+        TRACE("line_gap %u, line_spacing %u\n", line_gap, fm->line_spacing);
+        if (fm->ascent + fm->descent != 0) return TRUE;
+    }
+
+    size = GetFontData(hdc, MS_OS2_TAG, 0, NULL, 0);
+    if (size == GDI_ERROR) return FALSE;
+
+    if (size > sizeof(tt_os2)) size = sizeof(tt_os2);
+
+    memset(&tt_os2, 0, sizeof(tt_os2));
+    if (GetFontData(hdc, MS_OS2_TAG, 0, &tt_os2, size) != size) return FALSE;
+
+    fm->ascent = GET_BE_WORD(tt_os2.usWinAscent);
+    fm->descent = GET_BE_WORD(tt_os2.usWinDescent);
+    TRACE("usWinAscent %u, usWinDescent %u\n", fm->ascent, fm->descent);
+    if (fm->ascent + fm->descent == 0)
+    {
+        fm->ascent = GET_BE_WORD(tt_os2.sTypoAscender);
+        fm->descent = GET_BE_WORD(tt_os2.sTypoDescender);
+        TRACE("sTypoAscender %u, sTypoDescender %u\n", fm->ascent, fm->descent);
+    }
+    line_gap = GET_BE_WORD(tt_os2.sTypoLineGap);
+    fm->line_spacing = fm->ascent + fm->descent + line_gap;
+    TRACE("line_gap %u, line_spacing %u\n", line_gap, fm->line_spacing);
+    return TRUE;
+}
+
+static GpStatus find_installed_font(const WCHAR *name, struct font_metrics *fm)
 {
     LOGFONTW lf;
     HDC hdc = CreateCompatibleDC(0);
-    BOOL ret = FALSE;
+    GpStatus ret = FontFamilyNotFound;
 
     if(!EnumFontFamiliesW(hdc, name, is_font_installed_proc, (LPARAM)&lf))
     {
-        HFONT hfont;
+        HFONT hfont, old_font;
 
-        lf.lfHeight = -2048;
         hfont = CreateFontIndirectW(&lf);
-        hfont = SelectObject(hdc, hfont);
-
-        otm->otmSize = sizeof(*otm);
-        if (GetOutlineTextMetricsW(hdc, otm->otmSize, otm))
-            ret = TRUE;
-
-        DeleteObject(SelectObject(hdc, hfont));
+        old_font = SelectObject(hdc, hfont);
+        ret = get_font_metrics(hdc, fm) ? Ok : NotTrueTypeFont;
+        SelectObject(hdc, old_font);
+        DeleteObject(hfont);
     }
 
     DeleteDC(hdc);
@@ -609,8 +733,9 @@ GpStatus WINGDIPAPI GdipCreateFontFamilyFromName(GDIPCONST WCHAR *name,
                                         GpFontCollection *fontCollection,
                                         GpFontFamily **FontFamily)
 {
+    GpStatus stat;
     GpFontFamily* ffamily;
-    OUTLINETEXTMETRICW otm;
+    struct font_metrics fm;
 
     TRACE("%s, %p %p\n", debugstr_w(name), fontCollection, FontFamily);
 
@@ -619,14 +744,18 @@ GpStatus WINGDIPAPI GdipCreateFontFamilyFromName(GDIPCONST WCHAR *name,
     if (fontCollection)
         FIXME("No support for FontCollections yet!\n");
 
-    if (!find_installed_font(name, &otm))
-        return FontFamilyNotFound;
+    stat = find_installed_font(name, &fm);
+    if (stat != Ok) return stat;
 
     ffamily = GdipAlloc(sizeof (GpFontFamily));
     if (!ffamily) return OutOfMemory;
 
-    ffamily->otm = otm;
     lstrcpynW(ffamily->FamilyName, name, LF_FACESIZE);
+    ffamily->em_height = fm.em_height;
+    ffamily->ascent = fm.ascent;
+    ffamily->descent = fm.descent;
+    ffamily->line_spacing = fm.line_spacing;
+    ffamily->dpi = fm.dpi;
 
     *FontFamily = ffamily;
 
@@ -730,8 +859,8 @@ GpStatus WINGDIPAPI GdipGetCellAscent(GDIPCONST GpFontFamily *family,
 {
     if (!(family && CellAscent)) return InvalidParameter;
 
-    *CellAscent = family->otm.otmTextMetrics.tmAscent;
-    TRACE("%d => %u\n", family->otm.otmTextMetrics.tmHeight, *CellAscent);
+    *CellAscent = family->ascent;
+    TRACE("%s => %u\n", debugstr_w(family->FamilyName), *CellAscent);
 
     return Ok;
 }
@@ -743,8 +872,8 @@ GpStatus WINGDIPAPI GdipGetCellDescent(GDIPCONST GpFontFamily *family,
 
     if (!(family && CellDescent)) return InvalidParameter;
 
-    *CellDescent = family->otm.otmTextMetrics.tmDescent;
-    TRACE("%d => %u\n", family->otm.otmTextMetrics.tmHeight, *CellDescent);
+    *CellDescent = family->descent;
+    TRACE("%s => %u\n", debugstr_w(family->FamilyName), *CellDescent);
 
     return Ok;
 }
@@ -769,8 +898,8 @@ GpStatus WINGDIPAPI GdipGetEmHeight(GDIPCONST GpFontFamily *family, INT style, U
 
     TRACE("%p (%s), %d, %p\n", family, debugstr_w(family->FamilyName), style, EmHeight);
 
-    *EmHeight = family->otm.otmEMSquare;
-    TRACE("%d => %u\n", family->otm.otmTextMetrics.tmHeight, *EmHeight);
+    *EmHeight = family->em_height;
+    TRACE("%s => %u\n", debugstr_w(family->FamilyName), *EmHeight);
 
     return Ok;
 }
@@ -800,8 +929,8 @@ GpStatus WINGDIPAPI GdipGetLineSpacing(GDIPCONST GpFontFamily *family,
 
     if (style) FIXME("ignoring style\n");
 
-    *LineSpacing = family->otm.otmTextMetrics.tmAscent + family->otm.otmTextMetrics.tmDescent + family->otm.otmTextMetrics.tmExternalLeading;
-    TRACE("%d => %u\n", family->otm.otmTextMetrics.tmHeight, *LineSpacing);
+    *LineSpacing = family->line_spacing;
+    TRACE("%s => %u\n", debugstr_w(family->FamilyName), *LineSpacing);
 
     return Ok;
 }
