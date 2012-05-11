@@ -942,6 +942,7 @@ GpStatus WINGDIPAPI GdipAddPathString(GpPath* path, GDIPCONST WCHAR* string, INT
 {
     GpFont *font;
     GpStatus status;
+    LOGFONTW lfw;
     HANDLE hfont;
     HDC dc;
     GpPath *backup;
@@ -956,7 +957,9 @@ GpStatus WINGDIPAPI GdipAddPathString(GpPath* path, GDIPCONST WCHAR* string, INT
     if (status != Ok)
         return status;
 
-    hfont = CreateFontIndirectW(&font->lfw);
+    status = GdipGetLogFontW((GpFont *)font, NULL, &lfw);
+    if (status != Ok) return status;
+    hfont = CreateFontIndirectW(&lfw);
     if (!hfont)
     {
         WARN("Failed to create font\n");
