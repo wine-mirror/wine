@@ -562,6 +562,10 @@ static inline unsigned get_op_uint(exec_ctx_t *ctx, int i){
     return i ? ctx->code->instrs[ctx->ip].arg2.uint : ctx->code->instrs[ctx->ip].arg1.uint;
 }
 
+static inline unsigned get_op_int(exec_ctx_t *ctx, int i){
+    return i ? ctx->code->instrs[ctx->ip].arg2.lng : ctx->code->instrs[ctx->ip].arg1.lng;
+}
+
 /* ECMA-262 3rd Edition    12.2 */
 static HRESULT interp_var_set(exec_ctx_t *ctx)
 {
@@ -901,7 +905,7 @@ static HRESULT interp_member(exec_ctx_t *ctx)
 /* ECMA-262 3rd Edition    11.2.1 */
 static HRESULT interp_memberid(exec_ctx_t *ctx)
 {
-    const unsigned arg = ctx->code->instrs[ctx->ip].arg1.lng;
+    const unsigned arg = get_op_uint(ctx, 0);
     VARIANT *objv, *namev;
     IDispatch *obj;
     BSTR name;
@@ -983,7 +987,7 @@ static void jsstack_to_dp(exec_ctx_t *ctx, unsigned arg_cnt, DISPPARAMS *dp)
 /* ECMA-262 3rd Edition    11.2.2 */
 static HRESULT interp_new(exec_ctx_t *ctx)
 {
-    const LONG arg = ctx->code->instrs[ctx->ip].arg1.lng;
+    const LONG arg = get_op_int(ctx, 0);
     VARIANT *constr, v;
     DISPPARAMS dp;
     HRESULT hres;
@@ -1015,7 +1019,7 @@ static HRESULT interp_new(exec_ctx_t *ctx)
 static HRESULT interp_call(exec_ctx_t *ctx)
 {
     const unsigned argn = get_op_uint(ctx, 0);
-    const int do_ret = ctx->code->instrs[ctx->ip].arg2.lng;
+    const int do_ret = get_op_int(ctx, 1);
     VARIANT v, *objv;
     DISPPARAMS dp;
     HRESULT hres;
@@ -1041,7 +1045,7 @@ static HRESULT interp_call(exec_ctx_t *ctx)
 static HRESULT interp_call_member(exec_ctx_t *ctx)
 {
     const unsigned argn = get_op_uint(ctx, 0);
-    const int do_ret = ctx->code->instrs[ctx->ip].arg2.lng;
+    const int do_ret = get_op_int(ctx, 1);
     IDispatch *obj;
     DISPPARAMS dp;
     VARIANT v;
@@ -1149,7 +1153,7 @@ static HRESULT interp_null(exec_ctx_t *ctx)
 /* ECMA-262 3rd Edition    7.8.2 */
 static HRESULT interp_bool(exec_ctx_t *ctx)
 {
-    const LONG arg = ctx->code->instrs[ctx->ip].arg1.lng;
+    const int arg = get_op_int(ctx, 0);
 
     TRACE("%s\n", arg ? "true" : "false");
 
@@ -1159,7 +1163,7 @@ static HRESULT interp_bool(exec_ctx_t *ctx)
 /* ECMA-262 3rd Edition    7.8.3 */
 static HRESULT interp_int(exec_ctx_t *ctx)
 {
-    const LONG arg = ctx->code->instrs[ctx->ip].arg1.lng;
+    const int arg = get_op_int(ctx, 0);
     VARIANT v;
 
     TRACE("%d\n", arg);
@@ -1202,7 +1206,7 @@ static HRESULT interp_str(exec_ctx_t *ctx)
 static HRESULT interp_regexp(exec_ctx_t *ctx)
 {
     const WCHAR *source = ctx->code->instrs[ctx->ip].arg1.str;
-    const LONG flags = ctx->code->instrs[ctx->ip].arg2.lng;
+    const LONG flags = get_op_int(ctx, 1);
     jsdisp_t *regexp;
     VARIANT v;
     HRESULT hres;
@@ -1898,7 +1902,7 @@ static HRESULT interp_tonum(exec_ctx_t *ctx)
 /* ECMA-262 3rd Edition    11.3.1 */
 static HRESULT interp_postinc(exec_ctx_t *ctx)
 {
-    const int arg = ctx->code->instrs[ctx->ip].arg1.lng;
+    const int arg = get_op_int(ctx, 0);
     IDispatch *obj;
     DISPID id;
     VARIANT v;
@@ -1933,7 +1937,7 @@ static HRESULT interp_postinc(exec_ctx_t *ctx)
 /* ECMA-262 3rd Edition    11.4.4, 11.4.5 */
 static HRESULT interp_preinc(exec_ctx_t *ctx)
 {
-    const int arg = ctx->code->instrs[ctx->ip].arg1.lng;
+    const int arg = get_op_int(ctx, 0);
     IDispatch *obj;
     DISPID id;
     VARIANT v;
