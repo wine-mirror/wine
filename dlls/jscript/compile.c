@@ -87,9 +87,6 @@ static void dump_instr_arg(instr_arg_type_t type, instr_arg_t *arg)
     case ARG_ADDR:
         TRACE_(jscript_disas)("\t%u", arg->uint);
         break;
-    case ARG_DBL:
-        TRACE_(jscript_disas)("\t%lf", *arg->dbl);
-        break;
     case ARG_FUNC:
     case ARG_NONE:
         break;
@@ -104,8 +101,12 @@ static void dump_code(compiler_ctx_t *ctx, unsigned off)
 
     for(instr = ctx->code->instrs+off; instr < ctx->code->instrs+ctx->code_off; instr++) {
         TRACE_(jscript_disas)("%d:\t%s", (int)(instr-ctx->code->instrs), instr_info[instr->op].op_str);
-        dump_instr_arg(instr_info[instr->op].arg1_type, &instr->arg1);
-        dump_instr_arg(instr_info[instr->op].arg2_type, &instr->arg2);
+        if(instr_info[instr->op].arg1_type == ARG_DBL) {
+            TRACE_(jscript_disas)("\t%lf", instr->u.dbl);
+        }else {
+            dump_instr_arg(instr_info[instr->op].arg1_type, instr->u.arg);
+            dump_instr_arg(instr_info[instr->op].arg2_type, instr->u.arg+1);
+        }
         TRACE_(jscript_disas)("\n");
     }
 }
@@ -188,7 +189,7 @@ static HRESULT push_instr_int(compiler_ctx_t *ctx, jsop_t op, LONG arg)
     if(!instr)
         return E_OUTOFMEMORY;
 
-    instr_ptr(ctx, instr)->arg1.lng = arg;
+    instr_ptr(ctx, instr)->u.arg->lng = arg;
     return S_OK;
 }
 
@@ -205,7 +206,7 @@ static HRESULT push_instr_str(compiler_ctx_t *ctx, jsop_t op, const WCHAR *arg)
     if(!instr)
         return E_OUTOFMEMORY;
 
-    instr_ptr(ctx, instr)->arg1.str = str;
+    instr_ptr(ctx, instr)->u.arg->str = str;
     return S_OK;
 }
 
@@ -222,7 +223,7 @@ static HRESULT push_instr_bstr(compiler_ctx_t *ctx, jsop_t op, const WCHAR *arg)
     if(!instr)
         return E_OUTOFMEMORY;
 
-    instr_ptr(ctx, instr)->arg1.bstr = str;
+    instr_ptr(ctx, instr)->u.arg->bstr = str;
     return S_OK;
 }
 
@@ -239,8 +240,8 @@ static HRESULT push_instr_bstr_uint(compiler_ctx_t *ctx, jsop_t op, const WCHAR 
     if(!instr)
         return E_OUTOFMEMORY;
 
-    instr_ptr(ctx, instr)->arg1.bstr = str;
-    instr_ptr(ctx, instr)->arg2.uint = arg2;
+    instr_ptr(ctx, instr)->u.arg[0].bstr = str;
+    instr_ptr(ctx, instr)->u.arg[1].uint = arg2;
     return S_OK;
 }
 
@@ -257,27 +258,26 @@ static HRESULT push_instr_uint_str(compiler_ctx_t *ctx, jsop_t op, unsigned arg1
     if(!instr)
         return E_OUTOFMEMORY;
 
-    instr_ptr(ctx, instr)->arg1.uint = arg1;
-    instr_ptr(ctx, instr)->arg2.str = str;
+    instr_ptr(ctx, instr)->u.arg[0].uint = arg1;
+    instr_ptr(ctx, instr)->u.arg[1].str = str;
     return S_OK;
 }
 
 static HRESULT push_instr_double(compiler_ctx_t *ctx, jsop_t op, double arg)
 {
     unsigned instr;
-    DOUBLE *dbl;
-
-    dbl = compiler_alloc(ctx->code, sizeof(arg));
-    if(!dbl)
-        return E_OUTOFMEMORY;
-    *dbl = arg;
 
     instr = push_instr(ctx, op);
     if(!instr)
         return E_OUTOFMEMORY;
 
-    instr_ptr(ctx, instr)->arg1.dbl = dbl;
+    instr_ptr(ctx, instr)->u.dbl = arg;
     return S_OK;
+}
+
+static inline void set_arg_uint(compiler_ctx_t *ctx, unsigned instr, unsigned arg)
+{
+    instr_ptr(ctx, instr)->u.arg->uint = arg;
 }
 
 static HRESULT push_instr_uint(compiler_ctx_t *ctx, jsop_t op, unsigned arg)
@@ -288,7 +288,7 @@ static HRESULT push_instr_uint(compiler_ctx_t *ctx, jsop_t op, unsigned arg)
     if(!instr)
         return E_OUTOFMEMORY;
 
-    instr_ptr(ctx, instr)->arg1.uint = arg;
+    set_arg_uint(ctx, instr, arg);
     return S_OK;
 }
 
@@ -463,7 +463,7 @@ static HRESULT compile_logical_expression(compiler_ctx_t *ctx, binary_expression
     if(FAILED(hres))
         return hres;
 
-    instr_ptr(ctx, instr)->arg1.uint = ctx->code_off;
+    set_arg_uint(ctx, instr, ctx->code_off);
     return S_OK;
 }
 
@@ -489,7 +489,7 @@ static HRESULT compile_conditional_expression(compiler_ctx_t *ctx, conditional_e
     if(!jmp_end)
         return E_OUTOFMEMORY;
 
-    instr_ptr(ctx, jmp_false)->arg1.uint = ctx->code_off;
+    set_arg_uint(ctx, jmp_false, ctx->code_off);
     if(!push_instr(ctx, OP_pop))
         return E_OUTOFMEMORY;
 
@@ -497,7 +497,7 @@ static HRESULT compile_conditional_expression(compiler_ctx_t *ctx, conditional_e
     if(FAILED(hres))
         return hres;
 
-    instr_ptr(ctx, jmp_end)->arg1.uint = ctx->code_off;
+    set_arg_uint(ctx, jmp_end, ctx->code_off);
     return S_OK;
 }
 
@@ -551,8 +551,8 @@ static HRESULT compile_call_expression(compiler_ctx_t *ctx, call_expression_t *e
     if(!instr)
         return E_OUTOFMEMORY;
 
-    instr_ptr(ctx, instr)->arg1.uint = arg_cnt;
-    instr_ptr(ctx, instr)->arg2.lng = no_ret == NULL;
+    instr_ptr(ctx, instr)->u.arg[0].uint = arg_cnt;
+    instr_ptr(ctx, instr)->u.arg[1].lng = no_ret == NULL;
     if(no_ret)
         *no_ret = TRUE;
     return S_OK;
@@ -732,8 +732,8 @@ static HRESULT compile_literal(compiler_ctx_t *ctx, literal_t *literal)
         if(!instr)
             return E_OUTOFMEMORY;
 
-        instr_ptr(ctx, instr)->arg1.str = str;
-        instr_ptr(ctx, instr)->arg2.uint = literal->u.regexp.flags;
+        instr_ptr(ctx, instr)->u.arg[0].str = str;
+        instr_ptr(ctx, instr)->u.arg[1].uint = literal->u.regexp.flags;
         return S_OK;
     }
     default:
@@ -810,7 +810,7 @@ static HRESULT compile_object_literal(compiler_ctx_t *ctx, property_value_expres
         if(!instr)
             return E_OUTOFMEMORY;
 
-        instr_ptr(ctx, instr)->arg1.bstr = name;
+        instr_ptr(ctx, instr)->u.arg->bstr = name;
     }
 
     return S_OK;
@@ -1075,7 +1075,7 @@ static HRESULT compile_if_statement(compiler_ctx_t *ctx, if_statement_t *stat)
     if(!jmp_end)
         return E_OUTOFMEMORY;
 
-    instr_ptr(ctx, jmp_else)->arg1.uint = ctx->code_off;
+    set_arg_uint(ctx, jmp_else, ctx->code_off);
 
     if(stat->else_stat) {
         hres = compile_statement(ctx, NULL, stat->else_stat);
@@ -1087,7 +1087,7 @@ static HRESULT compile_if_statement(compiler_ctx_t *ctx, if_statement_t *stat)
             return E_OUTOFMEMORY;
     }
 
-    instr_ptr(ctx, jmp_end)->arg1.uint = ctx->code_off;
+    set_arg_uint(ctx, jmp_end, ctx->code_off);
     return S_OK;
 }
 
@@ -1539,11 +1539,11 @@ static HRESULT compile_switch_statement(compiler_ctx_t *ctx, switch_statement_t 
     i = 0;
     for(iter = stat->case_list; iter; iter = iter->next) {
         while(iter->next && iter->next->stat == iter->stat) {
-            instr_ptr(ctx, iter->expr ? case_jmps[i++] : default_jmp)->arg1.uint = ctx->code_off;
+            set_arg_uint(ctx, iter->expr ? case_jmps[i++] : default_jmp, ctx->code_off);
             iter = iter->next;
         }
 
-        instr_ptr(ctx, iter->expr ? case_jmps[i++] : default_jmp)->arg1.uint = ctx->code_off;
+        set_arg_uint(ctx, iter->expr ? case_jmps[i++] : default_jmp, ctx->code_off);
 
         for(stat_iter = iter->stat; stat_iter && (!iter->next || iter->next->stat != stat_iter); stat_iter = stat_iter->next) {
             hres = compile_statement(ctx, &stat_ctx, stat_iter);
@@ -1568,7 +1568,7 @@ static HRESULT compile_switch_statement(compiler_ctx_t *ctx, switch_statement_t 
         hres = push_instr_uint(ctx, OP_jmp, stat_ctx.break_label);
         if(FAILED(hres))
             return hres;
-        instr_ptr(ctx, default_jmp)->arg1.uint = ctx->code_off;
+        set_arg_uint(ctx, default_jmp, ctx->code_off);
         if(!push_instr(ctx, OP_undefined))
             return E_OUTOFMEMORY;
     }
@@ -1610,7 +1610,7 @@ static HRESULT compile_try_statement(compiler_ctx_t *ctx, try_statement_t *stat)
         ident = NULL;
     }
 
-    instr_ptr(ctx, push_except)->arg2.bstr = ident;
+    instr_ptr(ctx, push_except)->u.arg[1].bstr = ident;
 
     if(!stat->catch_block)
         try_ctx.stack_use = 2;
@@ -1629,7 +1629,7 @@ static HRESULT compile_try_statement(compiler_ctx_t *ctx, try_statement_t *stat)
         if(!jmp_finally)
             return E_OUTOFMEMORY;
 
-        instr_ptr(ctx, push_except)->arg1.uint = ctx->code_off;
+        instr_ptr(ctx, push_except)->u.arg[0].uint = ctx->code_off;
 
         hres = compile_statement(ctx, &catch_ctx, stat->catch_block->statement);
         if(FAILED(hres))
@@ -1638,9 +1638,9 @@ static HRESULT compile_try_statement(compiler_ctx_t *ctx, try_statement_t *stat)
         if(!push_instr(ctx, OP_pop_scope))
             return E_OUTOFMEMORY;
 
-        instr_ptr(ctx, jmp_finally)->arg1.uint = ctx->code_off;
+        set_arg_uint(ctx, jmp_finally, ctx->code_off);
     }else {
-        instr_ptr(ctx, push_except)->arg1.uint = ctx->code_off;
+        set_arg_uint(ctx, push_except, ctx->code_off);
     }
 
     if(stat->finally_statement) {
@@ -1735,9 +1735,9 @@ static void resolve_labels(compiler_ctx_t *ctx, unsigned off)
     instr_t *instr;
 
     for(instr = ctx->code->instrs+off; instr < ctx->code->instrs+ctx->code_off; instr++) {
-        if(instr_info[instr->op].arg1_type == ARG_ADDR && (instr->arg1.uint & LABEL_FLAG)) {
-            assert((instr->arg1.uint & ~LABEL_FLAG) < ctx->labels_cnt);
-            instr->arg1.uint = ctx->labels[instr->arg1.uint & ~LABEL_FLAG];
+        if(instr_info[instr->op].arg1_type == ARG_ADDR && (instr->u.arg->uint & LABEL_FLAG)) {
+            assert((instr->u.arg->uint & ~LABEL_FLAG) < ctx->labels_cnt);
+            instr->u.arg->uint = ctx->labels[instr->u.arg->uint & ~LABEL_FLAG];
         }
         assert(instr_info[instr->op].arg2_type != ARG_ADDR);
     }

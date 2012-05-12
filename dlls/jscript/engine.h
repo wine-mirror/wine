@@ -119,7 +119,6 @@ OP_LIST
 
 typedef union {
     BSTR bstr;
-    double *dbl;
     LONG lng;
     WCHAR *str;
     unsigned uint;
@@ -138,8 +137,10 @@ typedef enum {
 
 typedef struct {
     jsop_t op;
-    instr_arg_t arg1;
-    instr_arg_t arg2;
+    union {
+        instr_arg_t arg[2];
+        double dbl;
+    } u;
 } instr_t;
 
 typedef struct _function_code_t {

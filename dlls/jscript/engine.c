@@ -555,23 +555,23 @@ static HRESULT identifier_eval(script_ctx_t *ctx, BSTR identifier, exprval_t *re
 }
 
 static inline BSTR get_op_bstr(exec_ctx_t *ctx, int i){
-    return i ? ctx->code->instrs[ctx->ip].arg2.bstr : ctx->code->instrs[ctx->ip].arg1.bstr;
+    return ctx->code->instrs[ctx->ip].u.arg[i].bstr;
 }
 
 static inline unsigned get_op_uint(exec_ctx_t *ctx, int i){
-    return i ? ctx->code->instrs[ctx->ip].arg2.uint : ctx->code->instrs[ctx->ip].arg1.uint;
+    return ctx->code->instrs[ctx->ip].u.arg[i].uint;
 }
 
 static inline unsigned get_op_int(exec_ctx_t *ctx, int i){
-    return i ? ctx->code->instrs[ctx->ip].arg2.lng : ctx->code->instrs[ctx->ip].arg1.lng;
+    return ctx->code->instrs[ctx->ip].u.arg[i].lng;
 }
 
 static inline const WCHAR *get_op_str(exec_ctx_t *ctx, int i){
-    return i ? ctx->code->instrs[ctx->ip].arg2.str : ctx->code->instrs[ctx->ip].arg1.str;
+    return ctx->code->instrs[ctx->ip].u.arg[i].str;
 }
 
 static inline double get_op_double(exec_ctx_t *ctx){
-    return *ctx->code->instrs[ctx->ip].arg1.dbl;
+    return ctx->code->instrs[ctx->ip].u.dbl;
 }
 
 /* ECMA-262 3rd Edition    12.2 */
