@@ -354,6 +354,11 @@ static unsigned be_i386_is_function_return(const void* insn)
     BYTE ch;
 
     if (!dbg_read_memory(insn, &ch, sizeof(ch))) return FALSE;
+    if (ch == 0xF3) /* REP */
+    {
+        insn = (const char*)insn + 1;
+        if (!dbg_read_memory(insn, &ch, sizeof(ch))) return FALSE;
+    }
     return (ch == 0xC2) || (ch == 0xC3);
 }
 
