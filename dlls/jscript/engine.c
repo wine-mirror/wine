@@ -1206,7 +1206,7 @@ static HRESULT interp_str(exec_ctx_t *ctx)
 static HRESULT interp_regexp(exec_ctx_t *ctx)
 {
     const WCHAR *source = ctx->code->instrs[ctx->ip].arg1.str;
-    const LONG flags = get_op_int(ctx, 1);
+    const unsigned flags = get_op_uint(ctx, 1);
     jsdisp_t *regexp;
     VARIANT v;
     HRESULT hres;

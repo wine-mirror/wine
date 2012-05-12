@@ -90,7 +90,7 @@ typedef struct {
     X(preinc,     1, ARG_INT,    0)        \
     X(push_except,1, ARG_ADDR,   ARG_BSTR) \
     X(push_scope, 1, 0,0)                  \
-    X(regexp,     1, ARG_STR,    ARG_INT)  \
+    X(regexp,     1, ARG_STR,    ARG_UINT) \
     X(rshift,     1, 0,0)                  \
     X(rshift2,    1, 0,0)                  \
     X(str,        1, ARG_STR,    0)        \

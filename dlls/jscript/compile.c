@@ -733,7 +733,7 @@ static HRESULT compile_literal(compiler_ctx_t *ctx, literal_t *literal)
             return E_OUTOFMEMORY;
 
         instr_ptr(ctx, instr)->arg1.str = str;
-        instr_ptr(ctx, instr)->arg2.lng = literal->u.regexp.flags;
+        instr_ptr(ctx, instr)->arg2.uint = literal->u.regexp.flags;
         return S_OK;
     }
     default:
