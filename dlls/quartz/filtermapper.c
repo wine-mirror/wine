@@ -485,24 +485,24 @@ static HRESULT FM2_WriteFilterData(const REGFILTER2 * prf2, BYTE **ppData, ULONG
 
     rrf.dwVersion = prf2->dwVersion;
     rrf.dwMerit = prf2->dwMerit;
-    rrf.dwPins = prf2->u.s1.cPins2;
+    rrf.dwPins = prf2->u.s2.cPins2;
     rrf.dwUnused = 0;
 
     add_data(&mainStore, (LPBYTE)&rrf, sizeof(rrf));
 
-    for (i = 0; i < prf2->u.s1.cPins2; i++)
+    for (i = 0; i < prf2->u.s2.cPins2; i++)
     {
         size += sizeof(struct REG_RFP);
-        if (prf2->u.s1.rgPins2[i].clsPinCategory)
+        if (prf2->u.s2.rgPins2[i].clsPinCategory)
             size += sizeof(DWORD);
-        size += prf2->u.s1.rgPins2[i].nMediaTypes * sizeof(struct REG_TYPE);
-        size += prf2->u.s1.rgPins2[i].nMediums * sizeof(DWORD);
+        size += prf2->u.s2.rgPins2[i].nMediaTypes * sizeof(struct REG_TYPE);
+        size += prf2->u.s2.rgPins2[i].nMediums * sizeof(DWORD);
     }
 
-    for (i = 0; i < prf2->u.s1.cPins2; i++)
+    for (i = 0; i < prf2->u.s2.cPins2; i++)
     {
         struct REG_RFP rrfp;
-        REGFILTERPINS2 rgPin2 = prf2->u.s1.rgPins2[i];
+        REGFILTERPINS2 rgPin2 = prf2->u.s2.rgPins2[i];
         unsigned int j;
 
         rrfp.signature[0] = '0';
@@ -604,9 +604,9 @@ static HRESULT FM2_ReadFilterData(BYTE *pData, REGFILTER2 * prf2)
 
         prf2->dwVersion = prrf->dwVersion;
         prf2->dwMerit = prrf->dwMerit;
-        prf2->u.s1.cPins2 = prrf->dwPins;
+        prf2->u.s2.cPins2 = prrf->dwPins;
         rgPins2 = CoTaskMemAlloc(prrf->dwPins * sizeof(*rgPins2));
-        prf2->u.s1.rgPins2 = rgPins2;
+        prf2->u.s2.rgPins2 = rgPins2;
         pCurrent += sizeof(struct REG_RF);
 
         for (i = 0; i < prrf->dwPins; i++)
@@ -688,21 +688,21 @@ static HRESULT FM2_ReadFilterData(BYTE *pData, REGFILTER2 * prf2)
 static void FM2_DeleteRegFilter(REGFILTER2 * prf2)
 {
     UINT i;
-    for (i = 0; i < prf2->u.s1.cPins2; i++)
+    for (i = 0; i < prf2->u.s2.cPins2; i++)
     {
         UINT j;
-        if (prf2->u.s1.rgPins2[i].clsPinCategory)
-            CoTaskMemFree((LPVOID)prf2->u.s1.rgPins2[i].clsPinCategory);
+        if (prf2->u.s2.rgPins2[i].clsPinCategory)
+            CoTaskMemFree((LPVOID)prf2->u.s2.rgPins2[i].clsPinCategory);
 
-        for (j = 0; j < prf2->u.s1.rgPins2[i].nMediaTypes; j++)
+        for (j = 0; j < prf2->u.s2.rgPins2[i].nMediaTypes; j++)
         {
-            CoTaskMemFree((LPVOID)prf2->u.s1.rgPins2[i].lpMediaType[j].clsMajorType);
-            CoTaskMemFree((LPVOID)prf2->u.s1.rgPins2[i].lpMediaType[j].clsMinorType);
+            CoTaskMemFree((LPVOID)prf2->u.s2.rgPins2[i].lpMediaType[j].clsMajorType);
+            CoTaskMemFree((LPVOID)prf2->u.s2.rgPins2[i].lpMediaType[j].clsMinorType);
         }
-        CoTaskMemFree((LPVOID)prf2->u.s1.rgPins2[i].lpMediaType);
-        CoTaskMemFree((LPVOID)prf2->u.s1.rgPins2[i].lpMedium);
+        CoTaskMemFree((LPVOID)prf2->u.s2.rgPins2[i].lpMediaType);
+        CoTaskMemFree((LPVOID)prf2->u.s2.rgPins2[i].lpMedium);
     }
-    CoTaskMemFree((LPVOID)prf2->u.s1.rgPins2);
+    CoTaskMemFree((LPVOID)prf2->u.s2.rgPins2);
 }
 
 static HRESULT WINAPI FilterMapper3_RegisterFilter(
@@ -747,24 +747,24 @@ static HRESULT WINAPI FilterMapper3_RegisterFilter(
         /* REGFILTER2 structure is converted from version 1 to 2. Tested on Win2k. */
         regfilter2.dwVersion = 2;
         regfilter2.dwMerit = prf2->dwMerit;
-        regfilter2.u.s1.cPins2 = prf2->u.s.cPins;
-        pregfp2 = CoTaskMemAlloc(prf2->u.s.cPins * sizeof(REGFILTERPINS2));
-        regfilter2.u.s1.rgPins2 = pregfp2;
-        for (i = 0; i < prf2->u.s.cPins; i++)
+        regfilter2.u.s2.cPins2 = prf2->u.s1.cPins;
+        pregfp2 = CoTaskMemAlloc(prf2->u.s1.cPins * sizeof(REGFILTERPINS2));
+        regfilter2.u.s2.rgPins2 = pregfp2;
+        for (i = 0; i < prf2->u.s1.cPins; i++)
         {
             flags = 0;
-            if (prf2->u.s.rgPins[i].bRendered)
+            if (prf2->u.s1.rgPins[i].bRendered)
                 flags |= REG_PINFLAG_B_RENDERER;
-            if (prf2->u.s.rgPins[i].bOutput)
+            if (prf2->u.s1.rgPins[i].bOutput)
                 flags |= REG_PINFLAG_B_OUTPUT;
-            if (prf2->u.s.rgPins[i].bZero)
+            if (prf2->u.s1.rgPins[i].bZero)
                 flags |= REG_PINFLAG_B_ZERO;
-            if (prf2->u.s.rgPins[i].bMany)
+            if (prf2->u.s1.rgPins[i].bMany)
                 flags |= REG_PINFLAG_B_MANY;
             pregfp2[i].dwFlags = flags;
             pregfp2[i].cInstances = 1;
-            pregfp2[i].nMediaTypes = prf2->u.s.rgPins[i].nMediaTypes;
-            pregfp2[i].lpMediaType = prf2->u.s.rgPins[i].lpMediaType;
+            pregfp2[i].nMediaTypes = prf2->u.s1.rgPins[i].nMediaTypes;
+            pregfp2[i].lpMediaType = prf2->u.s1.rgPins[i].lpMediaType;
             pregfp2[i].nMediums = 0;
             pregfp2[i].lpMedium = NULL;
             pregfp2[i].clsPinCategory = NULL;
@@ -1106,9 +1106,9 @@ static HRESULT WINAPI FilterMapper3_EnumMatchingFilters(
                     /* determine whether filter meets requirements */
                     if (SUCCEEDED(hrSub) && (rf2.dwMerit >= dwMerit))
                     {
-                        for (i = 0; (i < rf2.u.s1.cPins2) && (!bInputMatch || !bOutputMatch); i++)
+                        for (i = 0; (i < rf2.u.s2.cPins2) && (!bInputMatch || !bOutputMatch); i++)
                         {
-                            const REGFILTERPINS2 * rfp2 = rf2.u.s1.rgPins2 + i;
+                            const REGFILTERPINS2 * rfp2 = rf2.u.s2.rgPins2 + i;
 
                             bInputMatch = bInputMatch || (!(rfp2->dwFlags & REG_PINFLAG_B_OUTPUT) &&
                                 (!bRender || (rfp2->dwFlags & REG_PINFLAG_B_RENDERER)) &&

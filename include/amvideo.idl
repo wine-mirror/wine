@@ -204,7 +204,7 @@ typedef struct tagVIDEOINFO
         RGBQUAD bmiColors[iPALETTE_COLORS];
         DWORD dwBitMasks[iMASK_COLORS];
         TRUECOLORINFO TrueColorInfo;
-    } DUMMYUNIONNAME;
+    };
 } VIDEOINFO;
 
 typedef struct tagMPEG1VIDEOINFO

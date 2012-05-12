@@ -143,8 +143,8 @@ HRESULT WINAPI AMovieSetupRegisterFilter2(const AMOVIESETUP_FILTER *pFilter, IFi
             REGFILTER2 rf2;
             rf2.dwVersion = 1;
             rf2.dwMerit = pFilter->merit;
-            rf2.u.s.cPins = pFilter->pins;
-            rf2.u.s.rgPins = pFilter->pPin;
+            rf2.u.s1.cPins = pFilter->pins;
+            rf2.u.s1.rgPins = pFilter->pPin;
 
             return IFilterMapper2_RegisterFilter(pIFM2, pFilter->clsid, pFilter->name, NULL, &CLSID_LegacyAmFilterCategory, NULL, &rf2);
         }

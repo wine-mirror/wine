@@ -236,18 +236,18 @@ typedef struct
             {
                 ULONG cPins;
                 [size_is(cPins)] const REGFILTERPINS *rgPins;
-            } DUMMYSTRUCTNAME;
+            };
 
         [case(2)]
             struct
             {
                 ULONG cPins2;
                 [size_is(cPins2)] const REGFILTERPINS2 *rgPins2;
-            } DUMMYSTRUCTNAME1;
+            };
 
         [default]
             ;
-    } DUMMYUNIONNAME;
+    };
 
 } REGFILTER2;
 

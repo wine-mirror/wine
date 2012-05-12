@@ -435,7 +435,7 @@ interface ISMTPCallback : ITransportCallback
         {
         [case(SMTP_SEND_STREAM)]    SMTPSTREAM rStreamInfo;
         [default];
-        } DUMMYUNIONNAME;
+        };
     } SMTPRESPONSE, *LPSMTPRESPONSE;
 
     HRESULT OnResponse(
@@ -606,7 +606,7 @@ interface IPOP3Callback : ITransportCallback
         [case(POP3_RETR)] POP3RETR rRetrInfo;
         [case(POP3_TOP)]  POP3TOP rTopInfo;
         [default];
-        } DUMMYUNIONNAME;
+        };
     } POP3RESPONSE, *LPPOP3RESPONSE;
 
     HRESULT OnResponse(

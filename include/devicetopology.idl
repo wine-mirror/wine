@@ -57,12 +57,12 @@ typedef struct
     union
     {
         struct {
-           GUID Set;
+            GUID Set;
             ULONG Id;
             ULONG Flags;
-        } DUMMYSTRUCTNAME;
+        };
         LONGLONG Alignment;
-    } DUMMYUNIONNAME;
+    };
 } KSIDENTIFIER;
 
 typedef KSIDENTIFIER KSPROPERTY, *PKSPROPERTY;
