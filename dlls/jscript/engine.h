@@ -78,7 +78,7 @@ typedef struct {
     X(neg,        1, 0,0)                  \
     X(neq,        1, 0,0)                  \
     X(neq2,       1, 0,0)                  \
-    X(new,        1, ARG_INT,    0)        \
+    X(new,        1, ARG_UINT,   0)        \
     X(new_obj,    1, 0,0)                  \
     X(null,       1, 0,0)                  \
     X(obj_prop,   1, ARG_BSTR,   0)        \

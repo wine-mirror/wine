@@ -518,7 +518,7 @@ static HRESULT compile_new_expression(compiler_ctx_t *ctx, call_expression_t *ex
         arg_cnt++;
     }
 
-    return push_instr_int(ctx, OP_new, arg_cnt);
+    return push_instr_uint(ctx, OP_new, arg_cnt);
 }
 
 static HRESULT compile_call_expression(compiler_ctx_t *ctx, call_expression_t *expr, BOOL *no_ret)

@@ -987,7 +987,7 @@ static void jsstack_to_dp(exec_ctx_t *ctx, unsigned arg_cnt, DISPPARAMS *dp)
 /* ECMA-262 3rd Edition    11.2.2 */
 static HRESULT interp_new(exec_ctx_t *ctx)
 {
-    const LONG arg = get_op_int(ctx, 0);
+    const unsigned arg = get_op_uint(ctx, 0);
     VARIANT *constr, v;
     DISPPARAMS dp;
     HRESULT hres;
