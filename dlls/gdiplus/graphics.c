@@ -2136,7 +2136,7 @@ void get_font_hfont(GpGraphics *graphics, GDIPCONST GpFont *font, HFONT *hfont)
     rel_height = sqrt((pt[2].Y-pt[0].Y)*(pt[2].Y-pt[0].Y)+
                       (pt[2].X-pt[0].X)*(pt[2].X-pt[0].X));
 
-    GdipGetLogFontW((GpFont *)font, graphics, &lfw);
+    get_log_fontW(font, graphics, &lfw);
     lfw.lfHeight = roundr(lfw.lfHeight * rel_height);
     unscaled_font = CreateFontIndirectW(&lfw);
 
@@ -4931,8 +4931,7 @@ GpStatus WINGDIPAPI GdipMeasureCharacterRanges(GpGraphics* graphics,
     if (regionCount < stringFormat->range_count)
         return InvalidParameter;
 
-    stat = GdipGetLogFontW((GpFont *)font, graphics, &lfw);
-    if (stat != Ok) return stat;
+    get_log_fontW(font, graphics, &lfw);
 
     if(!graphics->hdc)
     {

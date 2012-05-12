@@ -116,6 +116,8 @@ typedef struct
 #define MS_OS2_TAG MS_MAKE_TAG('O','S','/','2')
 #define MS_HHEA_TAG MS_MAKE_TAG('h','h','e','a')
 
+static GpStatus clone_font_family(const GpFontFamily *, GpFontFamily **);
+
 static const REAL mm_per_inch = 25.4;
 static const REAL inch_per_point = 1.0/72.0;
 
@@ -216,7 +218,7 @@ GpStatus WINGDIPAPI GdipCreateFont(GDIPCONST GpFontFamily *fontFamily,
     (*font)->emSize = emSize;
     (*font)->otm = otm;
 
-    stat = GdipCloneFontFamily((GpFontFamily *)fontFamily, &(*font)->family);
+    stat = clone_font_family(fontFamily, &(*font)->family);
     if (stat != Ok)
     {
         GdipFree(*font);
@@ -355,6 +357,11 @@ GpStatus WINGDIPAPI GdipGetFamily(GpFont *font, GpFontFamily **family)
     return GdipCloneFontFamily(font->family, family);
 }
 
+static REAL get_font_size(const GpFont *font)
+{
+    return font->emSize;
+}
+
 /******************************************************************************
  * GdipGetFontSize [GDIPLUS.@]
  *
@@ -377,10 +384,28 @@ GpStatus WINGDIPAPI GdipGetFontSize(GpFont *font, REAL *size)
 
     if (!(font && size)) return InvalidParameter;
 
-    *size = font->emSize;
+    *size = get_font_size(font);
     TRACE("%s,%d => %f\n", debugstr_w(font->family->FamilyName), font->otm.otmTextMetrics.tmHeight, *size);
 
     return Ok;
+}
+
+static INT get_font_style(const GpFont *font)
+{
+    INT style;
+
+    if (font->otm.otmTextMetrics.tmWeight > FW_REGULAR)
+        style = FontStyleBold;
+    else
+        style = FontStyleRegular;
+    if (font->otm.otmTextMetrics.tmItalic)
+        style |= FontStyleItalic;
+    if (font->otm.otmTextMetrics.tmUnderlined)
+        style |= FontStyleUnderline;
+    if (font->otm.otmTextMetrics.tmStruckOut)
+        style |= FontStyleStrikeout;
+
+    return style;
 }
 
 /*******************************************************************************
@@ -403,16 +428,8 @@ GpStatus WINGDIPAPI GdipGetFontStyle(GpFont *font, INT *style)
     if (!(font && style))
         return InvalidParameter;
 
-    if (font->otm.otmTextMetrics.tmWeight > FW_REGULAR)
-        *style = FontStyleBold;
-    else
-        *style = FontStyleRegular;
-    if (font->otm.otmTextMetrics.tmItalic)
-        *style |= FontStyleItalic;
-    if (font->otm.otmTextMetrics.tmUnderlined)
-        *style |= FontStyleUnderline;
-    if (font->otm.otmTextMetrics.tmStruckOut)
-        *style |= FontStyleStrikeout;
+    *style = get_font_style(font);
+    TRACE("%s,%d => %d\n", debugstr_w(font->family->FamilyName), font->otm.otmTextMetrics.tmHeight, *style);
 
     return Ok;
 }
@@ -463,6 +480,25 @@ GpStatus WINGDIPAPI GdipGetLogFontA(GpFont *font, GpGraphics *graphics,
     return Ok;
 }
 
+void get_log_fontW(const GpFont *font, GpGraphics *graphics, LOGFONTW *lf)
+{
+    /* FIXME: use graphics */
+    lf->lfHeight = -font->otm.otmTextMetrics.tmAscent;
+    lf->lfWidth = 0;
+    lf->lfEscapement = 0;
+    lf->lfOrientation = 0;
+    lf->lfWeight = font->otm.otmTextMetrics.tmWeight;
+    lf->lfItalic = font->otm.otmTextMetrics.tmItalic ? 1 : 0;
+    lf->lfUnderline = font->otm.otmTextMetrics.tmUnderlined ? 1 : 0;
+    lf->lfStrikeOut = font->otm.otmTextMetrics.tmStruckOut ? 1 : 0;
+    lf->lfCharSet = font->otm.otmTextMetrics.tmCharSet;
+    lf->lfOutPrecision = OUT_DEFAULT_PRECIS;
+    lf->lfClipPrecision = CLIP_DEFAULT_PRECIS;
+    lf->lfQuality = DEFAULT_QUALITY;
+    lf->lfPitchAndFamily = 0;
+    strcpyW(lf->lfFaceName, font->family->FamilyName);
+}
+
 /*******************************************************************************
  * GdipGetLogFontW [GDIPLUS.@]
  */
@@ -471,25 +507,10 @@ GpStatus WINGDIPAPI GdipGetLogFontW(GpFont *font, GpGraphics *graphics,
 {
     TRACE("(%p, %p, %p)\n", font, graphics, lfw);
 
-    /* FIXME: use graphics */
     if(!font || !graphics || !lfw)
         return InvalidParameter;
 
-    lfw->lfHeight = -font->otm.otmTextMetrics.tmAscent;
-    lfw->lfWidth = 0;
-    lfw->lfEscapement = 0;
-    lfw->lfOrientation = 0;
-    lfw->lfWeight = font->otm.otmTextMetrics.tmWeight;
-    lfw->lfItalic = font->otm.otmTextMetrics.tmItalic ? 1 : 0;
-    lfw->lfUnderline = font->otm.otmTextMetrics.tmUnderlined ? 1 : 0;
-    lfw->lfStrikeOut = font->otm.otmTextMetrics.tmStruckOut ? 1 : 0;
-    lfw->lfCharSet = font->otm.otmTextMetrics.tmCharSet;
-    lfw->lfOutPrecision = OUT_DEFAULT_PRECIS;
-    lfw->lfClipPrecision = CLIP_DEFAULT_PRECIS;
-    lfw->lfQuality = DEFAULT_QUALITY;
-    lfw->lfPitchAndFamily = 0;
-    strcpyW(lfw->lfFaceName, font->family->FamilyName);
-
+    get_log_fontW(font, graphics, lfw);
     TRACE("=> %s,%d\n", debugstr_w(lfw->lfFaceName), lfw->lfHeight);
 
     return Ok;
@@ -576,10 +597,8 @@ GpStatus WINGDIPAPI GdipGetFontHeightGivenDPI(GDIPCONST GpFont *font, REAL dpi, 
     TRACE("%p (%s), %f, %p\n", font,
             debugstr_w(font->family->FamilyName), dpi, height);
 
-    stat = GdipGetFontSize((GpFont *)font, &font_size);
-    if (stat != Ok) return stat;
-    stat = GdipGetFontStyle((GpFont *)font, &style);
-    if (stat != Ok) return stat;
+    font_size = get_font_size(font);
+    style = get_font_style(font);
     stat = GdipGetLineSpacing(font->family, style, &line_spacing);
     if (stat != Ok) return stat;
     stat = GdipGetEmHeight(font->family, style, &em_height);
@@ -764,6 +783,16 @@ GpStatus WINGDIPAPI GdipCreateFontFamilyFromName(GDIPCONST WCHAR *name,
     return Ok;
 }
 
+static GpStatus clone_font_family(const GpFontFamily *family, GpFontFamily **clone)
+{
+    *clone = GdipAlloc(sizeof(GpFontFamily));
+    if (!*clone) return OutOfMemory;
+
+    **clone = *family;
+
+    return Ok;
+}
+
 /*******************************************************************************
  * GdipCloneFontFamily [GDIPLUS.@]
  *
@@ -778,16 +807,15 @@ GpStatus WINGDIPAPI GdipCreateFontFamilyFromName(GDIPCONST WCHAR *name,
  */
 GpStatus WINGDIPAPI GdipCloneFontFamily(GpFontFamily* FontFamily, GpFontFamily** clonedFontFamily)
 {
+    GpStatus status;
+
     if (!(FontFamily && clonedFontFamily)) return InvalidParameter;
 
     TRACE("%p (%s), %p\n", FontFamily,
             debugstr_w(FontFamily->FamilyName), clonedFontFamily);
 
-    *clonedFontFamily = GdipAlloc(sizeof(GpFontFamily));
-    if (!*clonedFontFamily) return OutOfMemory;
-
-    **clonedFontFamily = *FontFamily;
-    lstrcpyW((*clonedFontFamily)->FamilyName, FontFamily->FamilyName);
+    status = clone_font_family(FontFamily, clonedFontFamily);
+    if (status != Ok) return status;
 
     TRACE("<-- %p\n", *clonedFontFamily);
 

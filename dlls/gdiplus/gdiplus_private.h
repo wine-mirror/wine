@@ -436,4 +436,6 @@ GpStatus gdip_format_string(HDC hdc,
     GDIPCONST RectF *rect, GDIPCONST GpStringFormat *format,
     gdip_format_string_callback callback, void *user_data) DECLSPEC_HIDDEN;
 
+void get_log_fontW(const GpFont *, GpGraphics *, LOGFONTW *) DECLSPEC_HIDDEN;
+
 #endif

@@ -957,8 +957,7 @@ GpStatus WINGDIPAPI GdipAddPathString(GpPath* path, GDIPCONST WCHAR* string, INT
     if (status != Ok)
         return status;
 
-    status = GdipGetLogFontW((GpFont *)font, NULL, &lfw);
-    if (status != Ok) return status;
+    get_log_fontW(font, NULL, &lfw);
     hfont = CreateFontIndirectW(&lfw);
     if (!hfont)
     {
