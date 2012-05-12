@@ -566,6 +566,14 @@ static inline unsigned get_op_int(exec_ctx_t *ctx, int i){
     return i ? ctx->code->instrs[ctx->ip].arg2.lng : ctx->code->instrs[ctx->ip].arg1.lng;
 }
 
+static inline const WCHAR *get_op_str(exec_ctx_t *ctx, int i){
+    return i ? ctx->code->instrs[ctx->ip].arg2.str : ctx->code->instrs[ctx->ip].arg1.str;
+}
+
+static inline double get_op_double(exec_ctx_t *ctx){
+    return *ctx->code->instrs[ctx->ip].arg1.dbl;
+}
+
 /* ECMA-262 3rd Edition    12.2 */
 static HRESULT interp_var_set(exec_ctx_t *ctx)
 {
@@ -731,7 +739,7 @@ static HRESULT interp_throw_ref(exec_ctx_t *ctx)
 static HRESULT interp_throw_type(exec_ctx_t *ctx)
 {
     const HRESULT hres = get_op_uint(ctx, 0);
-    const WCHAR *str = ctx->code->instrs[ctx->ip].arg2.str;
+    const WCHAR *str = get_op_str(ctx, 1);
 
     TRACE("%08x %s\n", hres, debugstr_w(str));
 
@@ -1176,7 +1184,7 @@ static HRESULT interp_int(exec_ctx_t *ctx)
 /* ECMA-262 3rd Edition    7.8.3 */
 static HRESULT interp_double(exec_ctx_t *ctx)
 {
-    const double arg = *ctx->code->instrs[ctx->ip].arg1.dbl;
+    const double arg = get_op_double(ctx);
     VARIANT v;
 
     TRACE("%lf\n", arg);
@@ -1189,7 +1197,7 @@ static HRESULT interp_double(exec_ctx_t *ctx)
 /* ECMA-262 3rd Edition    7.8.4 */
 static HRESULT interp_str(exec_ctx_t *ctx)
 {
-    const WCHAR *str = ctx->code->instrs[ctx->ip].arg1.str;
+    const WCHAR *str = get_op_str(ctx, 0);
     VARIANT v;
 
     TRACE("%s\n", debugstr_w(str));
@@ -1205,7 +1213,7 @@ static HRESULT interp_str(exec_ctx_t *ctx)
 /* ECMA-262 3rd Edition    7.8 */
 static HRESULT interp_regexp(exec_ctx_t *ctx)
 {
-    const WCHAR *source = ctx->code->instrs[ctx->ip].arg1.str;
+    const WCHAR *source = get_op_str(ctx, 0);
     const unsigned flags = get_op_uint(ctx, 1);
     jsdisp_t *regexp;
     VARIANT v;
