@@ -1215,7 +1215,7 @@ ok(tmp === 5, "testFunc4(1) = " + tmp);
 tmp = function testFunc4(x) { return x+4; };
 ok(testFunc4 === 1, "testFunc4 = " + testFunc4);
 
-function testEmbededFunctions() {
+function testEmbeddedFunctions() {
     ok(typeof(testFunc5) === "function", "typeof(testFunc5) = " + typeof(testFunc5));
     tmp = testFunc5(1);
     ok(tmp === 3, "testFunc5(1) = " + tmp);
@@ -1231,7 +1231,7 @@ function testEmbededFunctions() {
     ok(testFunc6 === 1, "testFunc4 = " + testFunc6);
 }
 
-testEmbededFunctions();
+testEmbeddedFunctions();
 
 date = new Date();
 date.toString = function() { return "toString"; }
