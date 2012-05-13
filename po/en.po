@@ -15,13 +15,15 @@ msgstr ""
 
 #: appwiz.rc:55
 msgid "Install/Uninstall"
-msgstr ""
+msgstr "Install/Uninstall"
 
 #: appwiz.rc:58
 msgid ""
 "To install a new program from a floppy disk, CD-ROM drive, or your hard "
 "drive, click Install."
 msgstr ""
+"To install a new program from a floppy disk, CD-ROM drive, or your hard "
+"drive, click Install."
 
 #: appwiz.rc:59
 msgid "&Install..."
@@ -33,6 +35,9 @@ msgid ""
 "to modify its installed components, select it from the list and click Change/"
 "Remove."
 msgstr ""
+"The following software can be automatically removed. To remove a program or "
+"to modify its installed components, select it from the list and click Change/"
+"Remove."
 
 #: appwiz.rc:64
 msgid "&Support Information"
@@ -71,7 +76,7 @@ msgstr "OK"
 
 #: appwiz.rc:76
 msgid "The following information can be used to get technical support for %s:"
-msgstr ""
+msgstr "The following information can be used to get technical support for %s:"
 
 #: appwiz.rc:77
 msgid "Publisher:"
@@ -91,11 +96,11 @@ msgstr "Support Information:"
 
 #: appwiz.rc:81
 msgid "Support Telephone:"
-msgstr ""
+msgstr "Support Telephone:"
 
 #: appwiz.rc:82
 msgid "Readme:"
-msgstr ""
+msgstr "Readme:"
 
 #: appwiz.rc:83
 msgid "Product Updates:"
@@ -119,6 +124,13 @@ msgid ""
 "href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> for "
 "details."
 msgstr ""
+"Wine could not find a Gecko package which is needed for applications "
+"embedding HTML to work correctly. Wine can automatically download and "
+"install it for you.\n"
+"\n"
+"Note: it is recommended to use your distribution's packages instead. See <a "
+"href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> for "
+"details."
 
 #: appwiz.rc:106
 msgid "&Install"
@@ -146,13 +158,15 @@ msgstr "Cancel"
 
 #: appwiz.rc:28
 msgid "Add/Remove Programs"
-msgstr ""
+msgstr "Add/Remove Programs"
 
 #: appwiz.rc:29
 msgid ""
 "Allows you to install new software, or remove existing software from your "
 "computer."
 msgstr ""
+"Allows you to install new software, or remove existing software from your "
+"computer."
 
 #: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:30
 msgid "Applications"
@@ -184,16 +198,16 @@ msgstr "Version"
 
 #: appwiz.rc:38
 msgid "Installation programs"
-msgstr ""
+msgstr "Installation programs"
 
 #: appwiz.rc:39
 msgid "Programs (*.exe)"
-msgstr ""
+msgstr "Programs (*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:196 notepad.rc:73
 #: oleview.rc:101 progman.rc:79 regedit.rc:195 winedbg.rc:39 winhlp32.rc:87
 msgid "All files (*.*)"
-msgstr ""
+msgstr "All files (*.*)"
 
 #: appwiz.rc:43
 msgid "&Modify/Remove"
@@ -201,17 +215,19 @@ msgstr "&Modify/Remove"
 
 #: appwiz.rc:48
 msgid "Downloading..."
-msgstr ""
+msgstr "Downloading..."
 
 #: appwiz.rc:49
 msgid "Installing..."
-msgstr ""
+msgstr "Installing..."
 
 #: appwiz.rc:50
 msgid ""
 "Unexpected checksum of downloaded file. Aborting installation of corrupted "
 "file."
 msgstr ""
+"Unexpected checksum of downloaded file. Aborting installation of corrupted "
+"file."
 
 #: avifil32.rc:39
 msgid "Compress options"
@@ -219,7 +235,7 @@ msgstr "Compress options"
 
 #: avifil32.rc:42
 msgid "&Choose a stream:"
-msgstr ""
+msgstr "&Choose a stream:"
 
 #: avifil32.rc:45 wordpad.rc:73
 msgid "&Options..."
@@ -227,11 +243,11 @@ msgstr "&Options..."
 
 #: avifil32.rc:46
 msgid "&Interleave every"
-msgstr ""
+msgstr "&Interleave every"
 
 #: avifil32.rc:48 msvfw32.rc:48
 msgid "frames"
-msgstr ""
+msgstr "frames"
 
 #: avifil32.rc:49
 msgid "Current format:"
@@ -239,31 +255,31 @@ msgstr "Current format:"
 
 #: avifil32.rc:27
 msgid "Waveform: %s"
-msgstr ""
+msgstr "Waveform: %s"
 
 #: avifil32.rc:28
 msgid "Waveform"
-msgstr ""
+msgstr "Waveform"
 
 #: avifil32.rc:29
 msgid "All multimedia files"
-msgstr ""
+msgstr "All multimedia files"
 
 #: avifil32.rc:31
 msgid "video"
-msgstr ""
+msgstr "video"
 
 #: avifil32.rc:32
 msgid "audio"
-msgstr ""
+msgstr "audio"
 
 #: avifil32.rc:33
 msgid "Wine AVI-default-filehandler"
-msgstr ""
+msgstr "Wine AVI-default-filehandler"
 
 #: avifil32.rc:34
 msgid "uncompressed"
-msgstr ""
+msgstr "uncompressed"
 
 #: browseui.rc:25
 msgid "Canceling..."
@@ -283,7 +299,7 @@ msgstr "Help"
 
 #: comctl32.rc:62
 msgid "Wizard"
-msgstr ""
+msgstr "Wizard"
 
 #: comctl32.rc:65
 msgid "< &Back"
@@ -291,24 +307,24 @@ msgstr "< &Back"
 
 #: comctl32.rc:66
 msgid "&Next >"
-msgstr ""
+msgstr "&Next >"
 
 #: comctl32.rc:67
 msgid "Finish"
-msgstr ""
+msgstr "Finish"
 
 #: comctl32.rc:78
 msgid "Customize Toolbar"
-msgstr ""
+msgstr "Customise Toolbar"
 
 #: comctl32.rc:81 cryptui.rc:348 ieframe.rc:40 oleview.rc:80 oleview.rc:185
 #: oleview.rc:198 oleview.rc:210 taskmgr.rc:139
 msgid "&Close"
-msgstr ""
+msgstr "&Close"
 
 #: comctl32.rc:82
 msgid "R&eset"
-msgstr ""
+msgstr "R&eset"
 
 #: comctl32.rc:83 comdlg32.rc:166 comdlg32.rc:188 comdlg32.rc:259
 #: comdlg32.rc:323 comdlg32.rc:343 comdlg32.rc:355 comdlg32.rc:472
@@ -334,7 +350,7 @@ msgstr "A&vailable buttons:"
 
 #: comctl32.rc:88
 msgid "&Add ->"
-msgstr ""
+msgstr "&Add ->"
 
 #: comctl32.rc:89
 msgid "<- &Remove"
@@ -346,7 +362,7 @@ msgstr "&Toolbar buttons:"
 
 #: comctl32.rc:39
 msgid "Separator"
-msgstr ""
+msgstr "Separator"
 
 #: comctl32.rc:44 progman.rc:78
 msgctxt "hotkey"
@@ -356,15 +372,15 @@ msgstr "None"
 #: comctl32.rc:28 cryptui.rc:227 regedit.rc:234 taskmgr.rc:434 winedbg.rc:57
 #: winedbg.rc:72 wordpad.rc:169
 msgid "Close"
-msgstr ""
+msgstr "Close"
 
 #: comctl32.rc:33
 msgid "Today:"
-msgstr ""
+msgstr "Today:"
 
 #: comctl32.rc:34
 msgid "Go to today"
-msgstr ""
+msgstr "Go to today"
 
 #: comdlg32.rc:151 comdlg32.rc:164 comdlg32.rc:453 comdlg32.rc:478
 #: shell32.rc:164 oleview.rc:99
@@ -385,11 +401,11 @@ msgstr "List Files of &Type:"
 
 #: comdlg32.rc:162 comdlg32.rc:184
 msgid "Dri&ves:"
-msgstr ""
+msgstr "Dri&ves:"
 
 #: comdlg32.rc:167 comdlg32.rc:189 winefile.rc:173
 msgid "&Read Only"
-msgstr ""
+msgstr "&Read Only"
 
 #: comdlg32.rc:173
 msgid "Save As..."
@@ -414,7 +430,7 @@ msgstr "Print range"
 
 #: comdlg32.rc:201 comdlg32.rc:378 regedit.rc:216
 msgid "&All"
-msgstr ""
+msgstr "&All"
 
 #: comdlg32.rc:202
 msgid "S&election"
@@ -430,15 +446,15 @@ msgstr "&Setup"
 
 #: comdlg32.rc:207
 msgid "&From:"
-msgstr ""
+msgstr "&From:"
 
 #: comdlg32.rc:208
 msgid "&To:"
-msgstr ""
+msgstr "&To:"
 
 #: comdlg32.rc:209
 msgid "Print &Quality:"
-msgstr ""
+msgstr "Print &Quality:"
 
 #: comdlg32.rc:211
 msgid "Print to Fi&le"
@@ -446,7 +462,7 @@ msgstr "Print to Fi&le"
 
 #: comdlg32.rc:212
 msgid "Condensed"
-msgstr ""
+msgstr "Condensed"
 
 #: comdlg32.rc:218 comdlg32.rc:389
 msgid "Print Setup"
@@ -462,11 +478,11 @@ msgstr "&Default Printer"
 
 #: comdlg32.rc:223
 msgid "[none]"
-msgstr ""
+msgstr "[none]"
 
 #: comdlg32.rc:224
 msgid "Specific &Printer"
-msgstr ""
+msgstr "Specific &Printer"
 
 #: comdlg32.rc:229 comdlg32.rc:415 comdlg32.rc:434 wineps.rc:31
 msgid "Orientation"
@@ -474,15 +490,15 @@ msgstr "Orientation"
 
 #: comdlg32.rc:230
 msgid "Po&rtrait"
-msgstr ""
+msgstr "Po&rtrait"
 
 #: comdlg32.rc:231 comdlg32.rc:436 wineps.rc:34
 msgid "&Landscape"
-msgstr ""
+msgstr "&Landscape"
 
 #: comdlg32.rc:234 comdlg32.rc:409 comdlg32.rc:429 wineps.rc:25
 msgid "Paper"
-msgstr ""
+msgstr "Paper"
 
 #: comdlg32.rc:235
 msgid "Si&ze"
@@ -584,19 +600,19 @@ msgstr "&Define Custom Colours >>"
 
 #: comdlg32.rc:310 regedit.rc:223 regedit.rc:233
 msgid "Find"
-msgstr ""
+msgstr "Find"
 
 #: comdlg32.rc:313 comdlg32.rc:332
 msgid "Fi&nd What:"
-msgstr ""
+msgstr "Fi&nd What:"
 
 #: comdlg32.rc:315 comdlg32.rc:336
 msgid "Match &Whole Word Only"
-msgstr ""
+msgstr "Match &Whole Word Only"
 
 #: comdlg32.rc:316 comdlg32.rc:337
 msgid "Match &Case"
-msgstr ""
+msgstr "Match &Case"
 
 #: comdlg32.rc:317
 msgid "Direction"
@@ -604,11 +620,11 @@ msgstr "Direction"
 
 #: comdlg32.rc:318 view.rc:39
 msgid "&Up"
-msgstr ""
+msgstr "&Up"
 
 #: comdlg32.rc:319 view.rc:40
 msgid "&Down"
-msgstr ""
+msgstr "&Down"
 
 #: comdlg32.rc:321 comdlg32.rc:339
 msgid "&Find Next"
@@ -616,15 +632,15 @@ msgstr "&Find Next"
 
 #: comdlg32.rc:329
 msgid "Replace"
-msgstr ""
+msgstr "Replace"
 
 #: comdlg32.rc:334
 msgid "Re&place With:"
-msgstr ""
+msgstr "Re&place With:"
 
 #: comdlg32.rc:340
 msgid "&Replace"
-msgstr ""
+msgstr "&Replace"
 
 #: comdlg32.rc:341
 msgid "Replace &All"
@@ -649,11 +665,11 @@ msgstr "Status:"
 
 #: comdlg32.rc:364 comdlg32.rc:402
 msgid "Type:"
-msgstr ""
+msgstr "Type:"
 
 #: comdlg32.rc:366 comdlg32.rc:404
 msgid "Where:"
-msgstr ""
+msgstr "Where:"
 
 #: comdlg32.rc:368 comdlg32.rc:406
 msgid "Comment:"
@@ -661,19 +677,19 @@ msgstr "Comment:"
 
 #: comdlg32.rc:371
 msgid "Copies"
-msgstr ""
+msgstr "Copies"
 
 #: comdlg32.rc:372
 msgid "Number of &copies:"
-msgstr ""
+msgstr "Number of &copies:"
 
 #: comdlg32.rc:374
 msgid "C&ollate"
-msgstr ""
+msgstr "C&ollate"
 
 #: comdlg32.rc:379
 msgid "Pa&ges"
-msgstr ""
+msgstr "Pa&ges"
 
 #: comdlg32.rc:380
 msgid "&Selection"
@@ -681,11 +697,11 @@ msgstr "&Selection"
 
 #: comdlg32.rc:383
 msgid "&from:"
-msgstr ""
+msgstr "&from:"
 
 #: comdlg32.rc:384
 msgid "&to:"
-msgstr ""
+msgstr "&to:"
 
 #: comdlg32.rc:410 winecfg.rc:286
 msgid "Si&ze:"
@@ -697,23 +713,23 @@ msgstr "&Source:"
 
 #: comdlg32.rc:417
 msgid "P&ortrait"
-msgstr ""
+msgstr "P&ortrait"
 
 #: comdlg32.rc:418
 msgid "L&andscape"
-msgstr ""
+msgstr "L&andscape"
 
 #: comdlg32.rc:423
 msgid "Setup Page"
-msgstr ""
+msgstr "Setup Page"
 
 #: comdlg32.rc:432
 msgid "&Tray:"
-msgstr ""
+msgstr "&Tray:"
 
 #: comdlg32.rc:435 wineps.rc:32
 msgid "&Portrait"
-msgstr ""
+msgstr "&Portrait"
 
 #: comdlg32.rc:437
 msgid "Borders"
@@ -729,7 +745,7 @@ msgstr "&Right:"
 
 #: comdlg32.rc:442
 msgid "T&op:"
-msgstr ""
+msgstr "T&op:"
 
 #: comdlg32.rc:444 notepad.rc:111
 msgid "&Bottom:"
@@ -741,7 +757,7 @@ msgstr "P&rinter..."
 
 #: comdlg32.rc:456
 msgid "Look &in:"
-msgstr ""
+msgstr "Look &in:"
 
 #: comdlg32.rc:462
 msgid "File &name:"
@@ -753,7 +769,7 @@ msgstr "Files of &type:"
 
 #: comdlg32.rc:468
 msgid "Open as &read-only"
-msgstr ""
+msgstr "Open as &read-only"
 
 #: comdlg32.rc:470 comdlg32.rc:488 shdoclc.rc:124 shell32.rc:96
 msgid "&Open"
@@ -773,73 +789,79 @@ msgstr "File not found"
 
 #: comdlg32.rc:30
 msgid "Please verify that the correct file name was given"
-msgstr ""
+msgstr "Please verify that the correct file name was given"
 
 #: comdlg32.rc:31
 msgid ""
 "File does not exist.\n"
 "Do you want to create file?"
 msgstr ""
+"File does not exist.\n"
+"Do you want to create file?"
 
 #: comdlg32.rc:32
 msgid ""
 "File already exists.\n"
 "Do you want to replace it?"
 msgstr ""
+"File already exists.\n"
+"Do you want to replace it?"
 
 #: comdlg32.rc:33
 msgid "Invalid character(s) in path"
-msgstr ""
+msgstr "Invalid character(s) in path"
 
 #: comdlg32.rc:34
 msgid ""
 "A filename cannot contain any of the following characters:\n"
 "                          / : < > |"
 msgstr ""
+"A filename cannot contain any of the following characters:\n"
+"                          / : < > |"
 
 #: comdlg32.rc:35
 msgid "Path does not exist"
-msgstr ""
+msgstr "Path does not exist"
 
 #: comdlg32.rc:36
 msgid "File does not exist"
-msgstr ""
+msgstr "File does not exist"
 
 #: comdlg32.rc:41
 msgid "Up One Level"
-msgstr ""
+msgstr "Up One Level"
 
 #: comdlg32.rc:42
 msgid "Create New Folder"
-msgstr ""
+msgstr "Create New Folder"
 
 #: comdlg32.rc:43
 msgid "List"
-msgstr ""
+msgstr "List"
 
 #: comdlg32.rc:44 cryptui.rc:193
 msgid "Details"
-msgstr ""
+msgstr "Details"
 
 #: comdlg32.rc:45
 msgid "Browse to Desktop"
-msgstr ""
+msgstr "Browse to Desktop"
 
 #: comdlg32.rc:109
 msgid "Regular"
-msgstr ""
+msgstr "Regular"
 
 #: comdlg32.rc:110
 msgid "Bold"
-msgstr ""
+msgstr "Bold"
 
 #: comdlg32.rc:111
 msgid "Italic"
-msgstr ""
+msgstr "Italic"
 
 #: comdlg32.rc:112
 msgid "Bold Italic"
-msgstr ""
+msgstr "Bold Italic"
 
 #: comdlg32.rc:117 wordpad.rc:114
 msgid "Black"
@@ -907,27 +929,31 @@ msgstr "White"
 
 #: comdlg32.rc:52
 msgid "Unreadable Entry"
-msgstr ""
+msgstr "Unreadable Entry"
 
 #: comdlg32.rc:54
 msgid ""
 "This value does not lie within the page range.\n"
 "Please enter a value between %1!d! and %2!d!."
 msgstr ""
+"This value does not lie within the page range.\n"
+"Please enter a value between %1!d! and %2!d!."
 
 #: comdlg32.rc:56
 msgid "The 'from' entry cannot exceed the 'to' entry."
-msgstr ""
+msgstr "The 'from' entry cannot exceed the 'to' entry."
 
 #: comdlg32.rc:58
 msgid ""
 "Margins overlap or fall outside Paper boundaries.\n"
 "Please reenter margins."
 msgstr ""
+"Margins overlap or fall outside Paper boundaries.\n"
+"Please reenter margins."
 
 #: comdlg32.rc:60
 msgid "The 'Number of copies' field cannot be empty."
-msgstr ""
+msgstr "The 'Number of copies' field cannot be empty."
 
 #: comdlg32.rc:62
 msgid ""
@@ -937,15 +963,15 @@ msgstr ""
 
 #: comdlg32.rc:63
 msgid "A printer error occurred."
-msgstr ""
+msgstr "A printer error occurred."
 
 #: comdlg32.rc:64
 msgid "No default printer defined."
-msgstr ""
+msgstr "No default printer defined."
 
 #: comdlg32.rc:65
 msgid "Cannot find the printer."
-msgstr ""
+msgstr "Cannot find the printer."
 
 #: comdlg32.rc:66 progman.rc:73
 msgid "Out of memory."
@@ -964,14 +990,16 @@ msgid ""
 "Before you can perform printer-related tasks such as page setup or printing "
 "a document, you need to install a printer. Please install one and retry."
 msgstr ""
+"Before you can perform printer-related tasks such as page setup or printing "
+"a document, you need to install a printer. Please install one and retry."
 
 #: comdlg32.rc:137
 msgid "Select a font size between %1!d! and %2!d! points."
-msgstr ""
+msgstr "Select a font size between %1!d! and %2!d! points."
 
 #: comdlg32.rc:138 ieframe.rc:32
 msgid "&Save"
-msgstr ""
+msgstr "&Save"
 
 #: comdlg32.rc:139
 msgid "Save &in:"
@@ -987,11 +1015,11 @@ msgstr "Open File"
 
 #: comdlg32.rc:79 oleview.rc:95
 msgid "Ready"
-msgstr ""
+msgstr "Ready"
 
 #: comdlg32.rc:80
 msgid "Paused; "
-msgstr ""
+msgstr "Paused; "
 
 #: comdlg32.rc:81
 msgid "Error; "
@@ -999,11 +1027,11 @@ msgstr "Error; "
 
 #: comdlg32.rc:82
 msgid "Pending deletion; "
-msgstr ""
+msgstr "Pending deletion; "
 
 #: comdlg32.rc:83
 msgid "Paper jam; "
-msgstr ""
+msgstr "Paper jam; "
 
 #: comdlg32.rc:84
 msgid "Out of paper; "
@@ -1015,15 +1043,15 @@ msgstr ""
 
 #: comdlg32.rc:86
 msgid "Paper problem; "
-msgstr ""
+msgstr "Paper problem; "
 
 #: comdlg32.rc:87
 msgid "Printer offline; "
-msgstr ""
+msgstr "Printer offline; "
 
 #: comdlg32.rc:88
 msgid "I/O Active; "
-msgstr ""
+msgstr "I/O Active; "
 
 #: comdlg32.rc:89
 msgid "Busy; "
@@ -1035,7 +1063,7 @@ msgstr "Printing; "
 
 #: comdlg32.rc:91
 msgid "Output tray is full; "
-msgstr ""
+msgstr "Output tray is full; "
 
 #: comdlg32.rc:92
 msgid "Not available; "
@@ -1043,11 +1071,11 @@ msgstr "Not available; "
 
 #: comdlg32.rc:93
 msgid "Waiting; "
-msgstr ""
+msgstr "Waiting; "
 
 #: comdlg32.rc:94
 msgid "Processing; "
-msgstr ""
+msgstr "Processing; "
 
 #: comdlg32.rc:95
 msgid "Initializing; "
@@ -1055,15 +1083,15 @@ msgstr "Initialising; "
 
 #: comdlg32.rc:96
 msgid "Warming up; "
-msgstr ""
+msgstr "Warming up; "
 
 #: comdlg32.rc:97
 msgid "Toner low; "
-msgstr ""
+msgstr "Toner low; "
 
 #: comdlg32.rc:98
 msgid "No toner; "
-msgstr ""
+msgstr "No toner; "
 
 #: comdlg32.rc:99
 msgid "Page punt; "
@@ -1071,7 +1099,7 @@ msgstr "Page punt; "
 
 #: comdlg32.rc:100
 msgid "Interrupted by user; "
-msgstr ""
+msgstr "Interrupted by user; "
 
 #: comdlg32.rc:101
 msgid "Out of memory; "
@@ -1079,7 +1107,7 @@ msgstr "Out of memory; "
 
 #: comdlg32.rc:102
 msgid "The printer door is open; "
-msgstr ""
+msgstr "The printer door is open; "
 
 #: comdlg32.rc:103
 msgid "Print server unknown; "
@@ -1087,7 +1115,7 @@ msgstr ""
 
 #: comdlg32.rc:104
 msgid "Power save mode; "
-msgstr ""
+msgstr "Power save mode; "
 
 #: comdlg32.rc:73
 msgid "Default Printer; "
@@ -1099,16 +1127,16 @@ msgstr "There are %d documents in the queue"
 
 #: comdlg32.rc:75
 msgid "Margins [inches]"
-msgstr ""
+msgstr "Margins [inches]"
 
 #: comdlg32.rc:76
 msgid "Margins [mm]"
-msgstr ""
+msgstr "Margins [mm]"
 
 #: comdlg32.rc:77 sane.rc:33
 msgctxt "unit: millimeters"
 msgid "mm"
-msgstr ""
+msgstr "mm"
 
 #: credui.rc:42
 msgid "&User name:"
@@ -1120,15 +1148,15 @@ msgstr "&Password:"
 
 #: credui.rc:47
 msgid "&Remember my password"
-msgstr ""
+msgstr "&Remember my password"
 
 #: credui.rc:27
 msgid "Connect to %s"
-msgstr ""
+msgstr "Connect to %s"
 
 #: credui.rc:28
 msgid "Connecting to %s"
-msgstr ""
+msgstr "Connecting to %s"
 
 #: credui.rc:29
 msgid "Logon unsuccessful"
@@ -1139,6 +1167,8 @@ msgid ""
 "Make sure that your user name\n"
 "and password are correct."
 msgstr ""
+"Make sure that your user name\n"
+"and password are correct."
 
 #: credui.rc:32
 msgid ""
@@ -1147,10 +1177,14 @@ msgid ""
 "Press the Caps Lock key on your keyboard to turn off Caps Lock before\n"
 "entering your password."
 msgstr ""
+"Having Caps Lock on may cause you to enter your password incorrectly.\n"
+"\n"
+"Press the Caps Lock key on your keyboard to turn off Caps Lock before\n"
+"entering your password."
 
 #: credui.rc:31
 msgid "Caps Lock is On"
-msgstr ""
+msgstr "Caps Lock is On"
 
 #: crypt32.rc:27
 msgid "Authority Key Identifier"
@@ -2046,7 +2080,7 @@ msgstr "Certificate &status:"
 
 #: cryptui.rc:221
 msgid "Disclaimer"
-msgstr ""
+msgstr "Disclaimer"
 
 #: cryptui.rc:228
 msgid "More &Info"
@@ -2066,15 +2100,15 @@ msgstr "Certificate purposes"
 
 #: cryptui.rc:241
 msgid "&Enable all purposes for this certificate"
-msgstr ""
+msgstr "&Enable all purposes for this certificate"
 
 #: cryptui.rc:243
 msgid "D&isable all purposes for this certificate"
-msgstr ""
+msgstr "D&isable all purposes for this certificate"
 
 #: cryptui.rc:245
 msgid "Enable &only the following purposes for this certificate:"
-msgstr ""
+msgstr "Enable &only the following purposes for this certificate:"
 
 #: cryptui.rc:250
 msgid "Add &Purpose..."
@@ -2082,12 +2116,13 @@ msgstr "Add &Purpose..."
 
 #: cryptui.rc:254
 msgid "Add Purpose"
-msgstr ""
+msgstr "Add Purpose"
 
 #: cryptui.rc:257
 msgid ""
 "Add the object identifier (OID) for the certificate purpose you wish to add:"
 msgstr ""
+"Add the object identifier (OID) for the certificate purpose you wish to add:"
 
 #: cryptui.rc:265 cryptui.rc:66
 msgid "Select Certificate Store"
@@ -2099,7 +2134,7 @@ msgstr "Select the certificate store you want to use:"
 
 #: cryptui.rc:271
 msgid "&Show physical stores"
-msgstr ""
+msgstr "&Show physical stores"
 
 #: cryptui.rc:277 cryptui.rc:288 cryptui.rc:305 cryptui.rc:319 cryptui.rc:68
 msgid "Certificate Import Wizard"
@@ -2121,6 +2156,15 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
+"This wizard helps you import certificates, certificate revocation lists, and "
+"certificate trust lists from a file to a certificate store.\n"
+"\n"
+"A certificate can be used to identify you or the computer with which you are "
+"communicating. It can also be used for authentication, and to sign messages. "
+"Certificate stores are collections of certificates, certificate revocation "
+"lists, and certificate trust lists.\n"
+"\n"
+"To continue, click Next."
 
 #: cryptui.rc:291 cryptui.rc:427
 msgid "&File name:"
@@ -2135,24 +2179,28 @@ msgid ""
 "Note: The following file formats may contain more than one certificate, "
 "certificate revocation list, or certificate trust list:"
 msgstr ""
+"Note: The following file formats may contain more than one certificate, "
+"certificate revocation list, or certificate trust list:"
 
 #: cryptui.rc:296
 msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (*.p7b)"
-msgstr ""
+msgstr "Cryptographic Message Syntax Standard/PKCS #7 Messages (*.p7b)"
 
 #: cryptui.rc:298
 msgid "Personal Information Exchange/PKCS #12 (*.pfx; *.p12)"
-msgstr ""
+msgstr "Personal Information Exchange/PKCS #12 (*.pfx; *.p12)"
 
 #: cryptui.rc:300 cryptui.rc:78 cryptui.rc:159
 msgid "Microsoft Serialized Certificate Store (*.sst)"
-msgstr ""
+msgstr "Microsoft Serialised Certificate Store (*.sst)"
 
 #: cryptui.rc:308
 msgid ""
 "Wine can automatically select the certificate store, or you can specify a "
 "location for the certificates."
 msgstr ""
+"Wine can automatically select the certificate store, or you can specify a "
+"location for the certificates."
 
 #: cryptui.rc:310
 msgid "&Automatically select certificate store"
@@ -2160,7 +2208,7 @@ msgstr "&Automatically select certificate store"
 
 #: cryptui.rc:312
 msgid "&Place all certificates in the following store:"
-msgstr ""
+msgstr "&Place all certificates in the following store:"
 
 #: cryptui.rc:322
 msgid "Completing the Certificate Import Wizard"
@@ -2168,11 +2216,11 @@ msgstr "Completing the Certificate Import Wizard"
 
 #: cryptui.rc:324
 msgid "You have successfully completed the Certificate Import Wizard."
-msgstr ""
+msgstr "You have successfully completed the Certificate Import Wizard."
 
 #: cryptui.rc:326 cryptui.rc:440
 msgid "You have specified the following settings:"
-msgstr ""
+msgstr "You have specified the following settings:"
 
 #: cryptui.rc:334 cryptui.rc:119 inetcpl.rc:108
 msgid "Certificates"
@@ -2180,7 +2228,7 @@ msgstr "Certificates"
 
 #: cryptui.rc:337
 msgid "I&ntended purpose:"
-msgstr ""
+msgstr "I&ntended purpose:"
 
 #: cryptui.rc:341
 msgid "&Import..."
@@ -2192,7 +2240,7 @@ msgstr "&Export..."
 
 #: cryptui.rc:344
 msgid "&Advanced..."
-msgstr ""
+msgstr "&Advanced..."
 
 #: cryptui.rc:345
 msgid "Certificate intended purposes"
@@ -2216,6 +2264,7 @@ msgstr "Certificate purpose"
 msgid ""
 "Select one or more purposes to be listed when Advanced Purposes is selected."
 msgstr ""
+"Select one or more purposes to be listed when Advanced Purposes is selected."
 
 #: cryptui.rc:358
 msgid "&Certificate purposes:"
@@ -2242,16 +2291,27 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
+"This wizard helps you export certificates, certificate revocation lists, and "
+"certificate trust lists from a certificate store to a file.\n"
+"\n"
+"A certificate can be used to identify you or the computer with which you are "
+"communicating. It can also be used for authentication, and to sign messages. "
+"Certificate stores are collections of certificates, certificate revocation "
+"lists, and certificate trust lists.\n"
+"\n"
+"To continue, click Next."
 
 #: cryptui.rc:381
 msgid ""
 "If you choose to export the private key, you will be prompted for a password "
 "to protect the private key on a later page."
 msgstr ""
+"If you choose to export the private key, you will be prompted for a password "
+"to protect the private key on a later page."
 
 #: cryptui.rc:382
 msgid "Do you wish to export the private key?"
-msgstr ""
+msgstr "Do you wish to export the private key?"
 
 #: cryptui.rc:383
 msgid "&Yes, export the private key"
@@ -2259,7 +2319,7 @@ msgstr "&Yes, export the private key"
 
 #: cryptui.rc:385
 msgid "N&o, do not export the private key"
-msgstr ""
+msgstr "N&o, do not export the private key"
 
 #: cryptui.rc:396
 msgid "&Confirm password:"
@@ -2267,39 +2327,39 @@ msgstr "&Confirm password:"
 
 #: cryptui.rc:404
 msgid "Select the format you want to use:"
-msgstr ""
+msgstr "Select the format you want to use:"
 
 #: cryptui.rc:405
 msgid "&DER-encoded X.509 (*.cer)"
-msgstr ""
+msgstr "&DER-encoded X.509 (*.cer)"
 
 #: cryptui.rc:407
 msgid "Ba&se64-encoded X.509 (*.cer):"
-msgstr ""
+msgstr "Ba&se64-encoded X.509 (*.cer):"
 
 #: cryptui.rc:409
 msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (*.p7b)"
-msgstr ""
+msgstr "&Cryptographic Message Syntax Standard/PKCS #7 Message (*.p7b)"
 
 #: cryptui.rc:411
 msgid "&Include all certificates in the certification path if possible"
-msgstr ""
+msgstr "&Include all certificates in the certification path if possible"
 
 #: cryptui.rc:413
 msgid "&Personal Information Exchange/PKCS #12 (*.pfx)"
-msgstr ""
+msgstr "&Personal Information Exchange/PKCS #12 (*.pfx)"
 
 #: cryptui.rc:415
 msgid "Incl&ude all certificates in the certification path if possible"
-msgstr ""
+msgstr "Incl&ude all certificates in the certification path if possible"
 
 #: cryptui.rc:417
 msgid "&Enable strong encryption"
-msgstr ""
+msgstr "&Enable strong encryption"
 
 #: cryptui.rc:419
 msgid "Delete the private &key if the export is successful"
-msgstr ""
+msgstr "Delete the private &key if the export is successful"
 
 #: cryptui.rc:436
 msgid "Completing the Certificate Export Wizard"
@@ -2307,7 +2367,7 @@ msgstr "Completing the Certificate Export Wizard"
 
 #: cryptui.rc:438
 msgid "You have successfully completed the Certificate Export Wizard."
-msgstr ""
+msgstr "You have successfully completed the Certificate Export Wizard."
 
 #: cryptui.rc:27 cryptui.rc:90
 msgid "Certificate"
@@ -2322,12 +2382,16 @@ msgid ""
 "This certificate has an invalid signature. The certificate may have been "
 "altered or corrupted."
 msgstr ""
+"This certificate has an invalid signature. The certificate may have been "
+"altered or corrupted."
 
 #: cryptui.rc:30
 msgid ""
 "This root certificate is not trusted. To trust it, add it to your system's "
 "trusted root certificate store."
 msgstr ""
+"This root certificate is not trusted. To trust it, add it to your system's "
+"trusted root certificate store."
 
 #: cryptui.rc:31
 msgid "This certificate could not be validated to a trusted root certificate."
@@ -2335,47 +2399,47 @@ msgstr ""
 
 #: cryptui.rc:32
 msgid "This certificate's issuer could not be found."
-msgstr ""
+msgstr "This certificate's issuer could not be found."
 
 #: cryptui.rc:33
 msgid "All the intended purposes of this certificate could not be verified."
-msgstr ""
+msgstr "All the intended purposes of this certificate could not be verified."
 
 #: cryptui.rc:34
 msgid "This certificate is intended for the following purposes:"
-msgstr ""
+msgstr "This certificate is intended for the following purposes:"
 
 #: cryptui.rc:35
 msgid "Issued to: "
-msgstr ""
+msgstr "Issued to: "
 
 #: cryptui.rc:36
 msgid "Issued by: "
-msgstr ""
+msgstr "Issued by: "
 
 #: cryptui.rc:37
 msgid "Valid from "
-msgstr ""
+msgstr "Valid from "
 
 #: cryptui.rc:38
 msgid " to "
-msgstr ""
+msgstr " to "
 
 #: cryptui.rc:39
 msgid "This certificate has an invalid signature."
-msgstr ""
+msgstr "This certificate has an invalid signature."
 
 #: cryptui.rc:40
 msgid "This certificate has expired or is not yet valid."
-msgstr ""
+msgstr "This certificate has expired or is not yet valid."
 
 #: cryptui.rc:41
 msgid "This certificate's validity period exceeds that of its issuer."
-msgstr ""
+msgstr "This certificate's validity period exceeds that of its issuer."
 
 #: cryptui.rc:42
 msgid "This certificate was revoked by its issuer."
-msgstr ""
+msgstr "This certificate was revoked by its issuer."
 
 #: cryptui.rc:43
 msgid "This certificate is OK."
@@ -2383,19 +2447,19 @@ msgstr "This certificate is OK."
 
 #: cryptui.rc:44
 msgid "Field"
-msgstr ""
+msgstr "Field"
 
 #: cryptui.rc:45
 msgid "Value"
-msgstr ""
+msgstr "Value"
 
 #: cryptui.rc:46 cryptui.rc:99 cryptui.rc:105
 msgid "<All>"
-msgstr ""
+msgstr "<All>"
 
 #: cryptui.rc:47
 msgid "Version 1 Fields Only"
-msgstr ""
+msgstr "Version 1 Fields Only"
 
 #: cryptui.rc:48
 msgid "Extensions Only"
@@ -2419,7 +2483,7 @@ msgstr "Issuer"
 
 #: cryptui.rc:54
 msgid "Valid from"
-msgstr ""
+msgstr "Valid from"
 
 #: cryptui.rc:55
 msgid "Valid to"
@@ -2431,15 +2495,15 @@ msgstr "Subject"
 
 #: cryptui.rc:57
 msgid "Public key"
-msgstr ""
+msgstr "Public key"
 
 #: cryptui.rc:58
 msgid "%1 (%2!d! bits)"
-msgstr ""
+msgstr "%1 (%2!d! bits)"
 
 #: cryptui.rc:59
 msgid "SHA1 hash"
-msgstr ""
+msgstr "SHA1 hash"
 
 #: cryptui.rc:60
 msgid "Enhanced key usage (property)"
@@ -2447,7 +2511,7 @@ msgstr "Enhanced key usage (property)"
 
 #: cryptui.rc:61
 msgid "Friendly name"
-msgstr ""
+msgstr "Friendly name"
 
 #: cryptui.rc:62 shell32.rc:239 ipconfig.rc:41
 msgid "Description"
@@ -2459,15 +2523,15 @@ msgstr "Certificate Properties"
 
 #: cryptui.rc:64
 msgid "Please enter an OID in the form 1.2.3.4"
-msgstr ""
+msgstr "Please enter an OID in the form 1.2.3.4"
 
 #: cryptui.rc:65
 msgid "The OID you entered already exists."
-msgstr ""
+msgstr "The OID you entered already exists."
 
 #: cryptui.rc:67
 msgid "Please select a certificate store."
-msgstr ""
+msgstr "Please select a certificate store."
 
 #: cryptui.rc:69
 msgid ""
@@ -2479,11 +2543,11 @@ msgstr ""
 
 #: cryptui.rc:70
 msgid "File to Import"
-msgstr ""
+msgstr "File to Import"
 
 #: cryptui.rc:71
 msgid "Specify the file you want to import."
-msgstr ""
+msgstr "Specify the file you want to import."
 
 #: cryptui.rc:72 cryptui.rc:95
 msgid "Certificate Store"
@@ -2494,14 +2558,16 @@ msgid ""
 "Certificate stores are collections of certificates, certificate revocation "
 "lists, and certificate trust lists."
 msgstr ""
+"Certificate stores are collections of certificates, certificate revocation "
+"lists, and certificate trust lists."
 
 #: cryptui.rc:74
 msgid "X.509 Certificate (*.cer; *.crt)"
-msgstr ""
+msgstr "X.509 Certificate (*.cer; *.crt)"
 
 #: cryptui.rc:75
 msgid "Personal Information Exchange (*.pfx; *.p12)"
-msgstr ""
+msgstr "Personal Information Exchange (*.pfx; *.p12)"
 
 #: cryptui.rc:76 cryptui.rc:155
 msgid "Certificate Revocation List (*.crl)"
@@ -2513,11 +2579,11 @@ msgstr "Certificate Trust List (*.stl)"
 
 #: cryptui.rc:79
 msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
-msgstr ""
+msgstr "CMS/PKCS #7 Messages (*.spc; *.p7b)"
 
 #: cryptui.rc:81
 msgid "Please select a file."
-msgstr ""
+msgstr "Please select a file."
 
 #: cryptui.rc:82
 msgid "The file format is not recognized. Please select another file."
@@ -2529,11 +2595,11 @@ msgstr "Could not open "
 
 #: cryptui.rc:84
 msgid "Determined by the program"
-msgstr ""
+msgstr "Determined by the program"
 
 #: cryptui.rc:85
 msgid "Please select a store"
-msgstr ""
+msgstr "Please select a store"
 
 #: cryptui.rc:86
 msgid "Certificate Store Selected"
@@ -2541,7 +2607,7 @@ msgstr "Certificate Store Selected"
 
 #: cryptui.rc:87
 msgid "Automatically determined by the program"
-msgstr ""
+msgstr "Automatically determined by the program"
 
 #: cryptui.rc:88 shell32.rc:134
 msgid "File"
@@ -2557,11 +2623,11 @@ msgstr "Certificate Revocation List"
 
 #: cryptui.rc:93
 msgid "CMS/PKCS #7 Message"
-msgstr ""
+msgstr "CMS/PKCS #7 Message"
 
 #: cryptui.rc:94
 msgid "Personal Information Exchange"
-msgstr ""
+msgstr "Personal Information Exchange"
 
 #: cryptui.rc:96
 msgid "The import was successful."
@@ -2569,23 +2635,23 @@ msgstr "The import was successful."
 
 #: cryptui.rc:97
 msgid "The import failed."
-msgstr ""
+msgstr "The import failed."
 
 #: cryptui.rc:98
 msgid "Arial"
-msgstr ""
+msgstr "Arial"
 
 #: cryptui.rc:100
 msgid "<Advanced Purposes>"
-msgstr ""
+msgstr "<Advanced Purposes>"
 
 #: cryptui.rc:101
 msgid "Issued To"
-msgstr ""
+msgstr "Issued To"
 
 #: cryptui.rc:102
 msgid "Issued By"
-msgstr ""
+msgstr "Issued By"
 
 #: cryptui.rc:103
 msgid "Expiration Date"
@@ -2605,6 +2671,9 @@ msgid ""
 "sign messages with it.\n"
 "Are you sure you want to remove this certificate?"
 msgstr ""
+"You will no longer be able to decrypt messages with this certificate, or "
+"sign messages with it.\n"
+"Are you sure you want to remove this certificate?"
 
 #: cryptui.rc:108
 msgid ""
@@ -2612,6 +2681,9 @@ msgid ""
 "sign messages with them.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
+"You will no longer be able to decrypt messages with these certificates, or "
+"sign messages with them.\n"
+"Are you sure you want to remove these certificates?"
 
 #: cryptui.rc:109
 msgid ""
@@ -2619,6 +2691,9 @@ msgid ""
 "verify messages signed with it.\n"
 "Are you sure you want to remove this certificate?"
 msgstr ""
+"You will no longer be able to encrypt messages with this certificate, or "
+"verify messages signed with it.\n"
+"Are you sure you want to remove this certificate?"
 
 #: cryptui.rc:110
 msgid ""
@@ -2626,6 +2701,9 @@ msgid ""
 "verify messages signed with it.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
+"You will no longer be able to encrypt messages with these certificates, or "
+"verify messages signed with it.\n"
+"Are you sure you want to remove these certificates?"
 
 #: cryptui.rc:111
 msgid ""
@@ -2633,6 +2711,9 @@ msgid ""
 "trusted.\n"
 "Are you sure you want to remove this certificate?"
 msgstr ""
+"Certificates issued by this certification authority will no longer be "
+"trusted.\n"
+"Are you sure you want to remove this certificate?"
 
 #: cryptui.rc:112
 msgid ""
@@ -2640,6 +2721,9 @@ msgid ""
 "trusted.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
+"Certificates issued by these certification authorities will no longer be "
+"trusted.\n"
+"Are you sure you want to remove these certificates?"
 
 #: cryptui.rc:113
 msgid ""
@@ -2647,6 +2731,9 @@ msgid ""
 "certification authorities it issued, will no longer be trusted.\n"
 "Are you sure you want to remove this trusted root certificate?"
 msgstr ""
+"Certificates issued by this root certification authority, or any "
+"certification authorities it issued, will no longer be trusted.\n"
+"Are you sure you want to remove this trusted root certificate?"
 
 #: cryptui.rc:114
 msgid ""
@@ -2654,60 +2741,69 @@ msgid ""
 "certification authorities they issued, will no longer be trusted.\n"
 "Are you sure you want to remove these trusted root certificates?"
 msgstr ""
+"Certificates issued by these root certification authorities, or any "
+"certification authorities they issued, will no longer be trusted.\n"
+"Are you sure you want to remove these trusted root certificates?"
 
 #: cryptui.rc:115
 msgid ""
 "Software signed by this publisher will no longer be trusted.\n"
 "Are you sure you want to remove this certificate?"
 msgstr ""
+"Software signed by this publisher will no longer be trusted.\n"
+"Are you sure you want to remove this certificate?"
 
 #: cryptui.rc:116
 msgid ""
 "Software signed by these publishers will no longer be trusted.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
+"Software signed by these publishers will no longer be trusted.\n"
+"Are you sure you want to remove these certificates?"
 
 #: cryptui.rc:117
 msgid "Are you sure you want to remove this certificate?"
-msgstr ""
+msgstr "Are you sure you want to remove this certificate?"
 
 #: cryptui.rc:118
 msgid "Are you sure you want to remove these certificates?"
-msgstr ""
+msgstr "Are you sure you want to remove these certificates?"
 
 #: cryptui.rc:121
 msgid "Ensures the identity of a remote computer"
-msgstr ""
+msgstr "Ensures the identity of a remote computer"
 
 #: cryptui.rc:122
 msgid "Proves your identity to a remote computer"
-msgstr ""
+msgstr "Proves your identity to a remote computer"
 
 #: cryptui.rc:123
 msgid ""
 "Ensures software came from software publisher\n"
 "Protects software from alteration after publication"
 msgstr ""
+"Ensures software came from software publisher\n"
+"Protects software from alteration after publication"
 
 #: cryptui.rc:124
 msgid "Protects e-mail messages"
-msgstr ""
+msgstr "Protects e-mail messages"
 
 #: cryptui.rc:125
 msgid "Allows secure communication over the Internet"
-msgstr ""
+msgstr "Allows secure communication over the Internet"
 
 #: cryptui.rc:126
 msgid "Allows data to be signed with the current time"
-msgstr ""
+msgstr "Allows data to be signed with the current time"
 
 #: cryptui.rc:127
 msgid "Allows you to digitally sign a certificate trust list"
-msgstr ""
+msgstr "Allows you to digitally sign a certificate trust list"
 
 #: cryptui.rc:128
 msgid "Allows data on disk to be encrypted"
-msgstr ""
+msgstr "Allows data on disk to be encrypted"
 
 #: cryptui.rc:144
 msgid "Private Key Archival"
@@ -2719,35 +2815,35 @@ msgstr "Export Format"
 
 #: cryptui.rc:149
 msgid "Choose the format in which the content will be saved."
-msgstr ""
+msgstr "Choose the format in which the content will be saved."
 
 #: cryptui.rc:150
 msgid "Export Filename"
-msgstr ""
+msgstr "Export Filename"
 
 #: cryptui.rc:151
 msgid "Specify the name of the file in which the content will be saved."
-msgstr ""
+msgstr "Specify the name of the file in which the content will be saved."
 
 #: cryptui.rc:152
 msgid "The specified file already exists. Do you want to replace it?"
-msgstr ""
+msgstr "The specified file already exists. Do you want to replace it?"
 
 #: cryptui.rc:153
 msgid "DER-Encoded Binary X.509 (*.cer)"
-msgstr ""
+msgstr "DER-Encoded Binary X.509 (*.cer)"
 
 #: cryptui.rc:154
 msgid "Base64-Encoded X.509 (*.cer)"
-msgstr ""
+msgstr "Base64-Encoded X.509 (*.cer)"
 
 #: cryptui.rc:157
 msgid "CMS/PKCS #7 Messages (*.p7b)"
-msgstr ""
+msgstr "CMS/PKCS #7 Messages (*.p7b)"
 
 #: cryptui.rc:158
 msgid "Personal Information Exchange (*.pfx)"
-msgstr ""
+msgstr "Personal Information Exchange (*.pfx)"
 
 #: cryptui.rc:160
 msgid "File Format"
@@ -2759,7 +2855,7 @@ msgstr ""
 
 #: cryptui.rc:162
 msgid "Export keys"
-msgstr ""
+msgstr "Export keys"
 
 #: cryptui.rc:165
 msgid "The export was successful."
@@ -2767,7 +2863,7 @@ msgstr "The export was successful."
 
 #: cryptui.rc:166
 msgid "The export failed."
-msgstr ""
+msgstr "The export failed."
 
 #: cryptui.rc:167
 msgid "Export Private Key"
@@ -2778,6 +2874,8 @@ msgid ""
 "The certificate contains a private key which may be exported along with the "
 "certificate."
 msgstr ""
+"The certificate contains a private key which may be exported along with the "
+"certificate."
 
 #: cryptui.rc:169
 msgid "Enter Password"
@@ -2785,15 +2883,15 @@ msgstr "Enter Password"
 
 #: cryptui.rc:170
 msgid "You may password-protect a private key."
-msgstr ""
+msgstr "You may password-protect a private key."
 
 #: cryptui.rc:171
 msgid "The passwords do not match."
-msgstr ""
+msgstr "The passwords do not match."
 
 #: cryptui.rc:172
 msgid "Note: The private key for this certificate could not be opened."
-msgstr ""
+msgstr "Note: The private key for this certificate could not be opened."
 
 #: cryptui.rc:173
 msgid "Note: The private key for this certificate is not exportable."
@@ -2821,7 +2919,7 @@ msgstr "Configure Devices"
 
 #: dinput.rc:45
 msgid "Reset"
-msgstr ""
+msgstr "Reset"
 
 #: dinput.rc:48
 msgid "Player"
@@ -2829,7 +2927,7 @@ msgstr "Player"
 
 #: dinput.rc:49
 msgid "Device"
-msgstr ""
+msgstr "Device"
 
 #: dinput.rc:50
 msgid "Actions"
@@ -2857,19 +2955,19 @@ msgstr "Regional Setting"
 
 #: dxdiagn.rc:26
 msgid "%1!u!MB used, %2!u!MB available"
-msgstr ""
+msgstr "%1!u!MB used, %2!u!MB available"
 
 #: gdi32.rc:25
 msgid "Western"
-msgstr ""
+msgstr "Western"
 
 #: gdi32.rc:26
 msgid "Central European"
-msgstr ""
+msgstr "Central European"
 
 #: gdi32.rc:27
 msgid "Cyrillic"
-msgstr ""
+msgstr "Cyrillic"
 
 #: gdi32.rc:28
 msgid "Greek"
@@ -2877,55 +2975,55 @@ msgstr "Greek"
 
 #: gdi32.rc:29
 msgid "Turkish"
-msgstr ""
+msgstr "Turkish"
 
 #: gdi32.rc:30
 msgid "Hebrew"
-msgstr ""
+msgstr "Hebrew"
 
 #: gdi32.rc:31
 msgid "Arabic"
-msgstr ""
+msgstr "Arabic"
 
 #: gdi32.rc:32
 msgid "Baltic"
-msgstr ""
+msgstr "Baltic"
 
 #: gdi32.rc:33
 msgid "Vietnamese"
-msgstr ""
+msgstr "Vietnamese"
 
 #: gdi32.rc:34
 msgid "Thai"
-msgstr ""
+msgstr "Thai"
 
 #: gdi32.rc:35
 msgid "Japanese"
-msgstr ""
+msgstr "Japanese"
 
 #: gdi32.rc:36
 msgid "CHINESE_GB2312"
-msgstr ""
+msgstr "CHINESE_GB2312"
 
 #: gdi32.rc:37
 msgid "Hangul"
-msgstr ""
+msgstr "Hangul"
 
 #: gdi32.rc:38
 msgid "CHINESE_BIG5"
-msgstr ""
+msgstr "CHINESE_BIG5"
 
 #: gdi32.rc:39
 msgid "Hangul(Johab)"
-msgstr ""
+msgstr "Hangul(Johab)"
 
 #: gdi32.rc:40
 msgid "Symbol"
-msgstr ""
+msgstr "Symbol"
 
 #: gdi32.rc:41
 msgid "OEM/DOS"
-msgstr ""
+msgstr "OEM/DOS"
 
 #: gphoto2.rc:27
 msgid "Files on Camera"
@@ -2941,23 +3039,23 @@ msgstr "Preview"
 
 #: gphoto2.rc:33
 msgid "Import All"
-msgstr ""
+msgstr "Import All"
 
 #: gphoto2.rc:34
 msgid "Skip This Dialog"
-msgstr ""
+msgstr "Skip This Dialog"
 
 #: gphoto2.rc:35
 msgid "Exit"
-msgstr ""
+msgstr "Exit"
 
 #: gphoto2.rc:40
 msgid "Transferring"
-msgstr ""
+msgstr "Transferring"
 
 #: gphoto2.rc:43
 msgid "Transferring... Please Wait"
-msgstr ""
+msgstr "Transferring... Please Wait"
 
 #: gphoto2.rc:48
 msgid "Connecting to camera"
@@ -2965,7 +3063,7 @@ msgstr "Connecting to camera"
 
 #: gphoto2.rc:52
 msgid "Connecting to camera... Please Wait"
-msgstr ""
+msgstr "Connecting to camera... Please Wait"
 
 #: hhctrl.rc:56
 msgid "S&ync"
@@ -3073,7 +3171,7 @@ msgstr "&New"
 
 #: ieframe.rc:29 winefile.rc:70
 msgid "&Window"
-msgstr ""
+msgstr "&Window"
 
 #: ieframe.rc:31 view.rc:30 winhlp32.rc:29
 msgid "&Open..."
@@ -3097,11 +3195,11 @@ msgstr "Print previe&w"
 
 #: ieframe.rc:44
 msgid "&Toolbars"
-msgstr ""
+msgstr "&Toolbars"
 
 #: ieframe.rc:46
 msgid "&Standard bar"
-msgstr ""
+msgstr "&Standard bar"
 
 #: ieframe.rc:47
 msgid "&Address bar"
@@ -3125,7 +3223,7 @@ msgstr "Open URL"
 
 #: ieframe.rc:90
 msgid "Specify the URL you wish to open in Internet Explorer"
-msgstr ""
+msgstr "Specify the URL you wish to open in Internet Explorer"
 
 #: ieframe.rc:91
 msgid "Open:"
@@ -3150,11 +3248,11 @@ msgstr "Searching for %s"
 
 #: ieframe.rc:79
 msgid "Start downloading %s"
-msgstr ""
+msgstr "Start downloading %s"
 
 #: ieframe.rc:80
 msgid "Downloading %s"
-msgstr ""
+msgstr "Downloading %s"
 
 #: ieframe.rc:81
 msgid "Asking for %s"
@@ -3166,7 +3264,7 @@ msgstr "Home page"
 
 #: inetcpl.rc:47
 msgid "You can choose the address that will be used as your home page."
-msgstr ""
+msgstr "You can choose the address that will be used as your home page."
 
 #: inetcpl.rc:50
 msgid "&Current page"
@@ -3178,19 +3276,19 @@ msgstr "&Default page"
 
 #: inetcpl.rc:52
 msgid "&Blank page"
-msgstr ""
+msgstr "&Blank page"
 
 #: inetcpl.rc:53
 msgid "Browsing history"
-msgstr ""
+msgstr "Browsing history"
 
 #: inetcpl.rc:54
 msgid "You can delete cached pages, cookies and other data."
-msgstr ""
+msgstr "You can delete cached pages, cookies and other data."
 
 #: inetcpl.rc:56
 msgid "Delete &files..."
-msgstr ""
+msgstr "Delete &files..."
 
 #: inetcpl.rc:57
 msgid "&Settings..."
@@ -3198,13 +3296,15 @@ msgstr "&Settings..."
 
 #: inetcpl.rc:65
 msgid "Delete browsing history"
-msgstr ""
+msgstr "Delete browsing history"
 
 #: inetcpl.rc:68
 msgid ""
 "Temporary internet files\n"
 "Cached copies of webpages, images and certificates."
 msgstr ""
+"Temporary internet files\n"
+"Cached copies of web pages, images and certificates."
 
 #: inetcpl.rc:70
 msgid ""
@@ -3212,24 +3312,33 @@ msgid ""
 "Files saved on your computer by websites, which store things like user "
 "preferences and login information."
 msgstr ""
+"Cookies\n"
+"Files saved on your computer by websites, which store things like user "
+"preferences and login information."
 
 #: inetcpl.rc:72
 msgid ""
 "History\n"
 "List of websites you have accessed."
 msgstr ""
+"History\n"
+"List of websites you have accessed."
 
 #: inetcpl.rc:74
 msgid ""
 "Form data\n"
 "Usernames and other information you have entered into forms."
 msgstr ""
+"Form data\n"
+"Usernames and other information you have entered into forms."
 
 #: inetcpl.rc:76
 msgid ""
 "Passwords\n"
 "Saved passwords you have entered into forms."
 msgstr ""
+"Passwords\n"
+"Saved passwords you have entered into forms."
 
 #: inetcpl.rc:79 progman.rc:64
 msgid "Delete"
@@ -3244,6 +3353,8 @@ msgid ""
 "Certificates are used for your personal identification and to identify "
 "certificate authorities and publishers."
 msgstr ""
+"Certificates are used for your personal identification and to identify "
+"certificate authorities and publishers."
 
 #: inetcpl.rc:111
 msgid "Certificates..."
@@ -3255,15 +3366,15 @@ msgstr "Publishers..."
 
 #: inetcpl.rc:28
 msgid "Internet Settings"
-msgstr ""
+msgstr "Internet Settings"
 
 #: inetcpl.rc:29
 msgid "Configure Wine Internet Browser and related settings"
-msgstr ""
+msgstr "Configure Wine Internet Browser and related settings"
 
 #: inetcpl.rc:30
 msgid "Security settings for zone: "
-msgstr ""
+msgstr "Security settings for zone: "
 
 #: inetcpl.rc:31
 msgid "Custom"
@@ -3271,23 +3382,23 @@ msgstr "Custom"
 
 #: inetcpl.rc:32
 msgid "Very Low"
-msgstr ""
+msgstr "Very Low"
 
 #: inetcpl.rc:33
 msgid "Low"
-msgstr ""
+msgstr "Low"
 
 #: inetcpl.rc:34
 msgid "Medium"
-msgstr ""
+msgstr "Medium"
 
 #: inetcpl.rc:35
 msgid "Increased"
-msgstr ""
+msgstr "Increased"
 
 #: inetcpl.rc:36
 msgid "High"
-msgstr ""
+msgstr "High"
 
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
@@ -3347,15 +3458,15 @@ msgstr "Unterminated string constant"
 
 #: jscript.rc:39
 msgid "Can't have 'break' outside of loop"
-msgstr ""
+msgstr "Can't have 'break' outside of loop"
 
 #: jscript.rc:40
 msgid "Can't have 'continue' outside of loop"
-msgstr ""
+msgstr "Can't have 'continue' outside of loop"
 
 #: jscript.rc:41
 msgid "Label redefined"
-msgstr ""
+msgstr "Label redefined"
 
 #: jscript.rc:42
 msgid "Label not found"
@@ -4171,7 +4282,7 @@ msgstr "Read/WriteProcessMemory partially completed.\n"
 
 #: winerror.mc:956
 msgid "The oplock wasn't granted.\n"
-msgstr ""
+msgstr "The oplock wasn't granted.\n"
 
 #: winerror.mc:961
 msgid "Invalid oplock message received.\n"
@@ -4427,7 +4538,7 @@ msgstr "Different service account.\n"
 
 #: winerror.mc:1276
 msgid "Driver failure cannot be detected.\n"
-msgstr ""
+msgstr "Driver failure cannot be detected.\n"
 
 #: winerror.mc:1281
 msgid "Process abort cannot be detected.\n"
@@ -4435,7 +4546,7 @@ msgstr "Process abort cannot be detected.\n"
 
 #: winerror.mc:1286
 msgid "No recovery program for service.\n"
-msgstr ""
+msgstr "No recovery program for service.\n"
 
 #: winerror.mc:1291
 msgid "Service not implemented by exe.\n"
@@ -4623,11 +4734,11 @@ msgstr "Out of user handles.\n"
 
 #: winerror.mc:1521
 msgid "Message can only be used in synchronous calls.\n"
-msgstr ""
+msgstr "Message can only be used in synchronous calls.\n"
 
 #: winerror.mc:1526
 msgid "The source element is empty.\n"
-msgstr ""
+msgstr "The source element is empty.\n"
 
 #: winerror.mc:1531
 msgid "The destination element is full.\n"
@@ -4639,7 +4750,7 @@ msgstr "The element address is invalid.\n"
 
 #: winerror.mc:1541
 msgid "The magazine is not present.\n"
-msgstr ""
+msgstr "The magazine is not present.\n"
 
 #: winerror.mc:1546
 msgid "The device needs reinitialization.\n"
@@ -4683,15 +4794,15 @@ msgstr "No such volume ID.\n"
 
 #: winerror.mc:1596
 msgid "Unable to remove the file to be replaced.\n"
-msgstr ""
+msgstr "Unable to remove the file to be replaced.\n"
 
 #: winerror.mc:1601
 msgid "Unable to move the replacement file into place.\n"
-msgstr ""
+msgstr "Unable to move the replacement file into place.\n"
 
 #: winerror.mc:1606
 msgid "Moving the replacement file failed.\n"
-msgstr ""
+msgstr "Moving the replacement file failed.\n"
 
 #: winerror.mc:1611
 msgid "The journal is being deleted.\n"
@@ -4703,11 +4814,11 @@ msgstr "The journal is not active.\n"
 
 #: winerror.mc:1621
 msgid "Potential matching file found.\n"
-msgstr ""
+msgstr "Potential matching file found.\n"
 
 #: winerror.mc:1626
 msgid "The journal entry was deleted.\n"
-msgstr ""
+msgstr "The journal entry was deleted.\n"
 
 #: winerror.mc:1631
 msgid "Invalid device name.\n"
@@ -4915,7 +5026,7 @@ msgstr "Supported only when connected.\n"
 
 #: winerror.mc:1891
 msgid "Perform operation even when nothing changed.\n"
-msgstr ""
+msgstr "Perform operation even when nothing changed.\n"
 
 #: winerror.mc:1896
 msgid "The user profile is invalid.\n"
@@ -4923,7 +5034,7 @@ msgstr "The user profile is invalid.\n"
 
 #: winerror.mc:1901
 msgid "Not supported on Small Business Server.\n"
-msgstr ""
+msgstr "Not supported on Small Business Server.\n"
 
 #: winerror.mc:1906
 msgid "Not all privileges assigned.\n"
@@ -5311,7 +5422,7 @@ msgstr "Mutual authentication failed.\n"
 
 #: winerror.mc:2391
 msgid "Time skew between client and server.\n"
-msgstr ""
+msgstr "Time skew between client and server.\n"
 
 #: winerror.mc:2396
 msgid "Invalid window handle.\n"
@@ -5551,7 +5662,7 @@ msgstr "Hook type not allowed.\n"
 
 #: winerror.mc:2691
 msgid "Interactive window station required.\n"
-msgstr ""
+msgstr "Interactive window station required.\n"
 
 #: winerror.mc:2696
 msgid "Timeout.\n"
@@ -5591,7 +5702,7 @@ msgstr "Installation failure.\n"
 
 #: winerror.mc:2741
 msgid "Installation suspended.\n"
-msgstr ""
+msgstr "Installation suspended.\n"
 
 #: winerror.mc:2746
 msgid "Unknown product.\n"
@@ -5619,7 +5730,7 @@ msgstr "Bad configuration.\n"
 
 #: winerror.mc:2776
 msgid "Index is missing.\n"
-msgstr ""
+msgstr "Index is missing.\n"
 
 #: winerror.mc:2781
 msgid "Installation source is missing.\n"
@@ -5651,19 +5762,19 @@ msgstr "Installation already running.\n"
 
 #: winerror.mc:2816
 msgid "Installation package failed to open.\n"
-msgstr ""
+msgstr "Installation package failed to open.\n"
 
 #: winerror.mc:2821
 msgid "Installation package is invalid.\n"
-msgstr ""
+msgstr "Installation package is invalid.\n"
 
 #: winerror.mc:2826
 msgid "Installer user interface failed.\n"
-msgstr ""
+msgstr "Installer user interface failed.\n"
 
 #: winerror.mc:2831
 msgid "Failed to open installation log file.\n"
-msgstr ""
+msgstr "Failed to open installation log file.\n"
 
 #: winerror.mc:2836
 msgid "Installation language not supported.\n"
@@ -5671,11 +5782,11 @@ msgstr "Installation language not supported.\n"
 
 #: winerror.mc:2841
 msgid "Installation transform failed to apply.\n"
-msgstr ""
+msgstr "Installation transform failed to apply.\n"
 
 #: winerror.mc:2846
 msgid "Installation package rejected.\n"
-msgstr ""
+msgstr "Installation package rejected.\n"
 
 #: winerror.mc:2851
 msgid "Function could not be called.\n"
@@ -5735,11 +5846,11 @@ msgstr "Invalid command line.\n"
 
 #: winerror.mc:2921
 msgid "Remote installation not allowed.\n"
-msgstr ""
+msgstr "Remote installation not allowed.\n"
 
 #: winerror.mc:2926
 msgid "Reboot initiated after successful install.\n"
-msgstr ""
+msgstr "Reboot initiated after successful install.\n"
 
 #: winerror.mc:2931
 msgid "Invalid string binding.\n"
@@ -6331,7 +6442,7 @@ msgstr "RPC pipe closed.\n"
 
 #: winerror.mc:3671
 msgid "Discipline error on RPC pipe.\n"
-msgstr ""
+msgstr "Discipline error on RPC pipe.\n"
 
 #: winerror.mc:3676
 msgid "No data on RPC pipe.\n"
@@ -6343,7 +6454,7 @@ msgstr "No site name available.\n"
 
 #: winerror.mc:3686
 msgid "The file cannot be accessed.\n"
-msgstr ""
+msgstr "The file cannot be accessed.\n"
 
 #: winerror.mc:3691
 msgid "The filename cannot be resolved.\n"
@@ -6399,23 +6510,23 @@ msgstr "Add a Local Port"
 
 #: localui.rc:39
 msgid "&Enter the port name to add:"
-msgstr ""
+msgstr "&Enter the port name to add:"
 
 #: localui.rc:48
 msgid "Configure LPT Port"
-msgstr ""
+msgstr "Configure LPT Port"
 
 #: localui.rc:51
 msgid "Timeout (seconds)"
-msgstr ""
+msgstr "Timeout (seconds)"
 
 #: localui.rc:52
 msgid "&Transmission Retry:"
-msgstr ""
+msgstr "&Transmission Retry:"
 
 #: localui.rc:29
 msgid "'%s' is not a valid port name"
-msgstr ""
+msgstr "'%s' is not a valid port name"
 
 #: localui.rc:30
 msgid "Port %s already exists"
@@ -6423,7 +6534,7 @@ msgstr "Port %s already exists"
 
 #: localui.rc:31
 msgid "This port has no options to configure"
-msgstr ""
+msgstr "This port has no options to configure"
 
 #: mapi32.rc:28
 msgid "Mail sending failed as you do not have a MAPI mail client installed."
@@ -6443,7 +6554,7 @@ msgstr "Please enter your username and password:"
 
 #: mpr.rc:36 wininet.rc:38
 msgid "Proxy"
-msgstr ""
+msgstr "Proxy"
 
 #: mpr.rc:38 wininet.rc:40 wininet.rc:60
 msgid "User"
@@ -6459,7 +6570,7 @@ msgstr ""
 
 #: mpr.rc:27
 msgid "Entire Network"
-msgstr ""
+msgstr "Entire Network"
 
 #: msacm32.rc:27
 msgid "Sound Selection"
@@ -6479,7 +6590,7 @@ msgstr "&Attributes:"
 
 #: mshtml.rc:37
 msgid "Hyperlink"
-msgstr ""
+msgstr "Hyperlink"
 
 #: mshtml.rc:40
 msgid "Hyperlink Information"
@@ -6487,15 +6598,15 @@ msgstr "Hyperlink Information"
 
 #: mshtml.rc:41 winecfg.rc:236
 msgid "&Type:"
-msgstr ""
+msgstr "&Type:"
 
 #: mshtml.rc:43
 msgid "&URL:"
-msgstr ""
+msgstr "&URL:"
 
 #: mshtml.rc:31
 msgid "HTML rendering is currently disabled."
-msgstr ""
+msgstr "HTML rendering is currently disabled."
 
 #: mshtml.rc:32
 msgid "HTML Document"
@@ -6503,11 +6614,11 @@ msgstr "HTML Document"
 
 #: mshtml.rc:26
 msgid "Downloading from %s..."
-msgstr ""
+msgstr "Downloading from %s..."
 
 #: mshtml.rc:25
 msgid "Done"
-msgstr ""
+msgstr "Done"
 
 #: msi.rc:27
 msgid ""
@@ -6637,7 +6748,7 @@ msgstr "&About"
 
 #: msvfw32.rc:44
 msgid "Compression &Quality:"
-msgstr ""
+msgstr "Compression &Quality:"
 
 #: msvfw32.rc:46
 msgid "&Key Frame Every"
@@ -6649,11 +6760,11 @@ msgstr "&Data Rate"
 
 #: msvfw32.rc:52
 msgid "kB/s"
-msgstr ""
+msgstr "kB/s"
 
 #: msvfw32.rc:25
 msgid "Full Frames (Uncompressed)"
-msgstr ""
+msgstr "Full Frames (Uncompressed)"
 
 #: msvidc32.rc:26
 msgid "Wine Video 1 video codec"
@@ -6661,7 +6772,7 @@ msgstr "Wine Video 1 video codec"
 
 #: oleacc.rc:27
 msgid "unknown object"
-msgstr ""
+msgstr "unknown object"
 
 #: oleacc.rc:28
 msgid "title bar"
@@ -6669,7 +6780,7 @@ msgstr "title bar"
 
 #: oleacc.rc:29
 msgid "menu bar"
-msgstr ""
+msgstr "menu bar"
 
 #: oleacc.rc:30
 msgid "scroll bar"
@@ -6677,23 +6788,23 @@ msgstr "scroll bar"
 
 #: oleacc.rc:31
 msgid "grip"
-msgstr ""
+msgstr "grip"
 
 #: oleacc.rc:32
 msgid "sound"
-msgstr ""
+msgstr "sound"
 
 #: oleacc.rc:33
 msgid "cursor"
-msgstr ""
+msgstr "cursor"
 
 #: oleacc.rc:34
 msgid "caret"
-msgstr ""
+msgstr "caret"
 
 #: oleacc.rc:35
 msgid "alert"
-msgstr ""
+msgstr "alert"
 
 #: oleacc.rc:36
 msgid "window"
@@ -6701,15 +6812,15 @@ msgstr "window"
 
 #: oleacc.rc:37
 msgid "client"
-msgstr ""
+msgstr "client"
 
 #: oleacc.rc:38
 msgid "popup menu"
-msgstr ""
+msgstr "popup menu"
 
 #: oleacc.rc:39
 msgid "menu item"
-msgstr ""
+msgstr "menu item"
 
 #: oleacc.rc:40
 msgid "tool tip"
@@ -6725,27 +6836,27 @@ msgstr "document"
 
 #: oleacc.rc:43
 msgid "pane"
-msgstr ""
+msgstr "pane"
 
 #: oleacc.rc:44
 msgid "chart"
-msgstr ""
+msgstr "chart"
 
 #: oleacc.rc:45
 msgid "dialog"
-msgstr ""
+msgstr "dialog"
 
 #: oleacc.rc:46
 msgid "border"
-msgstr ""
+msgstr "border"
 
 #: oleacc.rc:47
 msgid "grouping"
-msgstr ""
+msgstr "grouping"
 
 #: oleacc.rc:48
 msgid "separator"
-msgstr ""
+msgstr "separator"
 
 #: oleacc.rc:49
 msgid "tool bar"
@@ -6753,7 +6864,7 @@ msgstr ""
 
 #: oleacc.rc:50
 msgid "status bar"
-msgstr ""
+msgstr "status bar"
 
 #: oleacc.rc:51
 msgid "table"
@@ -6761,11 +6872,11 @@ msgstr "Table"
 
 #: oleacc.rc:52
 msgid "column header"
-msgstr ""
+msgstr "column header"
 
 #: oleacc.rc:53
 msgid "row header"
-msgstr ""
+msgstr "row header"
 
 #: oleacc.rc:54
 msgid "column"
@@ -6773,83 +6884,83 @@ msgstr "column"
 
 #: oleacc.rc:55
 msgid "row"
-msgstr ""
+msgstr "row"
 
 #: oleacc.rc:56
 msgid "cell"
-msgstr ""
+msgstr "cell"
 
 #: oleacc.rc:57
 msgid "link"
-msgstr ""
+msgstr "link"
 
 #: oleacc.rc:58
 msgid "help balloon"
-msgstr ""
+msgstr "help balloon"
 
 #: oleacc.rc:59
 msgid "character"
-msgstr ""
+msgstr "character"
 
 #: oleacc.rc:60
 msgid "list"
-msgstr ""
+msgstr "list"
 
 #: oleacc.rc:61
 msgid "list item"
-msgstr ""
+msgstr "list item"
 
 #: oleacc.rc:62
 msgid "outline"
-msgstr ""
+msgstr "outline"
 
 #: oleacc.rc:63
 msgid "outline item"
-msgstr ""
+msgstr "outline item"
 
 #: oleacc.rc:64
 msgid "page tab"
-msgstr ""
+msgstr "page tab"
 
 #: oleacc.rc:65
 msgid "property page"
-msgstr ""
+msgstr "property page"
 
 #: oleacc.rc:66
 msgid "indicator"
-msgstr ""
+msgstr "indicator"
 
 #: oleacc.rc:67
 msgid "graphic"
-msgstr ""
+msgstr "graphic"
 
 #: oleacc.rc:68
 msgid "static text"
-msgstr ""
+msgstr "static text"
 
 #: oleacc.rc:69
 msgid "text"
-msgstr ""
+msgstr "text"
 
 #: oleacc.rc:70
 msgid "push button"
-msgstr ""
+msgstr "push button"
 
 #: oleacc.rc:71
 msgid "check button"
-msgstr ""
+msgstr "check button"
 
 #: oleacc.rc:72
 msgid "radio button"
-msgstr ""
+msgstr "radio button"
 
 #: oleacc.rc:73
 msgid "combo box"
-msgstr ""
+msgstr "combo box"
 
 #: oleacc.rc:74
 msgid "drop down"
-msgstr ""
+msgstr "drop down"
 
 #: oleacc.rc:75
 msgid "progress bar"
@@ -6857,7 +6968,7 @@ msgstr "progress bar"
 
 #: oleacc.rc:76
 msgid "dial"
-msgstr ""
+msgstr "dial"
 
 #: oleacc.rc:77
 msgid "hot key field"
@@ -6865,15 +6976,15 @@ msgstr ""
 
 #: oleacc.rc:78
 msgid "slider"
-msgstr ""
+msgstr "slider"
 
 #: oleacc.rc:79
 msgid "spin box"
-msgstr ""
+msgstr "spin box"
 
 #: oleacc.rc:80
 msgid "diagram"
-msgstr ""
+msgstr "diagram"
 
 #: oleacc.rc:81
 msgid "animation"
@@ -6889,7 +7000,7 @@ msgstr ""
 
 #: oleacc.rc:84
 msgid "menu button"
-msgstr ""
+msgstr "menu button"
 
 #: oleacc.rc:85
 msgid "grid drop down button"
@@ -6897,11 +7008,11 @@ msgstr ""
 
 #: oleacc.rc:86
 msgid "white space"
-msgstr ""
+msgstr "white space"
 
 #: oleacc.rc:87
 msgid "page tab list"
-msgstr ""
+msgstr "page tab list"
 
 #: oleacc.rc:88
 msgid "clock"
@@ -6909,7 +7020,7 @@ msgstr "clock"
 
 #: oleacc.rc:89
 msgid "split button"
-msgstr ""
+msgstr "split button"
 
 #: oleacc.rc:90 ipconfig.rc:33
 msgid "IP address"
@@ -6917,7 +7028,7 @@ msgstr "IP address"
 
 #: oleacc.rc:91
 msgid "outline button"
-msgstr ""
+msgstr "outline button"
 
 #: oleaut32.rc:27 oleview.rc:144
 msgid "True"
@@ -6945,7 +7056,7 @@ msgstr "Object Type:"
 
 #: oledlg.rc:57 oledlg.rc:95
 msgid "Result"
-msgstr ""
+msgstr "Result"
 
 #: oledlg.rc:58
 msgid "Create New"
@@ -6965,7 +7076,7 @@ msgstr "&Add Control..."
 
 #: oledlg.rc:66
 msgid "Display As Icon"
-msgstr ""
+msgstr "Display As Icon"
 
 #: oledlg.rc:68 setupapi.rc:58
 msgid "Browse..."
@@ -6977,7 +7088,7 @@ msgstr "File:"
 
 #: oledlg.rc:75
 msgid "Paste Special"
-msgstr ""
+msgstr "Paste Special"
 
 #: oledlg.rc:78 setupapi.rc:40
 msgid "Source:"
@@ -6994,25 +7105,27 @@ msgstr "Paste &Link"
 
 #: oledlg.rc:83
 msgid "&As:"
-msgstr ""
+msgstr "&As:"
 
 #: oledlg.rc:90
 msgid "&Display As Icon"
-msgstr ""
+msgstr "&Display As Icon"
 
 #: oledlg.rc:92
 msgid "Change &Icon..."
-msgstr ""
+msgstr "Change &Icon..."
 
 #: oledlg.rc:25
 msgid "Insert a new %s object into your document"
-msgstr ""
+msgstr "Insert a new %s object into your document"
 
 #: oledlg.rc:26
 msgid ""
 "Insert the contents of the file as an object into your document so that you "
 "may activate it using the program which created it."
 msgstr ""
+"Insert the contents of the file as an object into your document so that you "
+"may activate it using the program which created it."
 
 #: oledlg.rc:27 shell32.rc:194
 msgid "Browse"
@@ -7023,6 +7136,8 @@ msgid ""
 "File does not appear to be a valid OLE module. Unable to register OLE "
 "control."
 msgstr ""
+"File does not appear to be a valid OLE module. Unable to register OLE "
+"control."
 
 #: oledlg.rc:29
 msgid "Add Control"
@@ -7030,19 +7145,23 @@ msgstr "Add Control"
 
 #: oledlg.rc:34
 msgid "Inserts the contents of the clipboard into your document as %s."
-msgstr ""
+msgstr "Inserts the contents of the clipboard into your document as %s."
 
 #: oledlg.rc:35
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s."
 msgstr ""
+"Inserts the contents of the clipboard into your document so that you can "
+"activate it using %s."
 
 #: oledlg.rc:36
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s. It will be displayed as an icon."
 msgstr ""
+"Inserts the contents of the clipboard into your document so that you can "
+"activate it using %s. It will be displayed as an icon."
 
 #: oledlg.rc:37
 msgid ""
@@ -7050,6 +7169,9 @@ msgid ""
 "linked to the source file so that changes to the file will be reflected in "
 "your document."
 msgstr ""
+"Inserts the contents of the clipboard into your document as %s. The data is "
+"linked to the source file so that changes to the file will be reflected in "
+"your document."
 
 #: oledlg.rc:38
 msgid ""
@@ -7057,6 +7179,9 @@ msgid ""
 "is linked to the source file so that changes to the file will be reflected "
 "in your document."
 msgstr ""
+"Inserts a picture of the clipboard contents into your document. The picture "
+"is linked to the source file so that changes to the file will be reflected "
+"in your document."
 
 #: oledlg.rc:39
 msgid ""
@@ -7064,10 +7189,13 @@ msgid ""
 "The shortcut is linked to the source file so that changes to the file will "
 "be reflected in your document."
 msgstr ""
+"Inserts a shortcut which points to the location of the clipboard contents. "
+"The shortcut is linked to the source file so that changes to the file will "
+"be reflected in your document."
 
 #: oledlg.rc:40
 msgid "Inserts the contents of the clipboard into your document."
-msgstr ""
+msgstr "Inserts the contents of the clipboard into your document."
 
 #: oledlg.rc:41
 msgid "Unknown Type"
@@ -7079,35 +7207,35 @@ msgstr "Unknown Source"
 
 #: oledlg.rc:43
 msgid "the program which created it"
-msgstr ""
+msgstr "the program which created it"
 
 #: sane.rc:41
 msgid "Scanning"
-msgstr ""
+msgstr "Scanning"
 
 #: sane.rc:44
 msgid "SCANNING... Please Wait"
-msgstr ""
+msgstr "SCANNING... Please Wait"
 
 #: sane.rc:31
 msgctxt "unit: pixels"
 msgid "px"
-msgstr ""
+msgstr "px"
 
 #: sane.rc:32
 msgctxt "unit: bits"
 msgid "b"
-msgstr ""
+msgstr "b"
 
 #: sane.rc:34 winecfg.rc:174
 msgctxt "unit: dots/inch"
 msgid "dpi"
-msgstr ""
+msgstr "dpi"
 
 #: sane.rc:35
 msgctxt "unit: percent"
 msgid "%"
-msgstr ""
+msgstr "%"
 
 #: sane.rc:36
 msgctxt "unit: microseconds"
@@ -7120,11 +7248,11 @@ msgstr "Settings for %s"
 
 #: serialui.rc:28
 msgid "Baud Rate"
-msgstr ""
+msgstr "Baud Rate"
 
 #: serialui.rc:30
 msgid "Parity"
-msgstr ""
+msgstr "Parity"
 
 #: serialui.rc:32
 msgid "Flow Control"
@@ -7140,7 +7268,7 @@ msgstr "Stop Bits"
 
 #: setupapi.rc:36
 msgid "Copying Files..."
-msgstr ""
+msgstr "Copying Files..."
 
 #: setupapi.rc:42
 msgid "Destination:"
@@ -7158,11 +7286,11 @@ msgstr ""
 
 #: setupapi.rc:54
 msgid "Copy manufacturer's files from:"
-msgstr ""
+msgstr "Copy manufacturer's files from:"
 
 #: setupapi.rc:28
 msgid "The file '%1' on %2 is needed"
-msgstr ""
+msgstr "The file '%1' on %2 is needed"
 
 #: setupapi.rc:29 ipconfig.rc:31
 msgid "Unknown"
@@ -7170,11 +7298,11 @@ msgstr "Unknown"
 
 #: setupapi.rc:30
 msgid "Copy files from:"
-msgstr ""
+msgstr "Copy files from:"
 
 #: setupapi.rc:31
 msgid "Type the path where the file is located, and then click OK."
-msgstr ""
+msgstr "Type the path where the file is located, and then click OK."
 
 #: shdoclc.rc:39
 msgid "F&orward"
@@ -7470,25 +7598,25 @@ msgstr "&w&bPage &p"
 #: shell32.rc:27 shell32.rc:42 shell32.rc:119 shell32.rc:159 taskmgr.rc:65
 #: taskmgr.rc:110 taskmgr.rc:252
 msgid "Lar&ge Icons"
-msgstr ""
+msgstr "Lar&ge Icons"
 
 #: shell32.rc:28 shell32.rc:43 shell32.rc:120 shell32.rc:160 taskmgr.rc:66
 #: taskmgr.rc:111 taskmgr.rc:253
 msgid "S&mall Icons"
-msgstr ""
+msgstr "S&mall Icons"
 
 #: shell32.rc:29 shell32.rc:44 shell32.rc:121 shell32.rc:161
 msgid "&List"
-msgstr ""
+msgstr "&List"
 
 #: shell32.rc:30 shell32.rc:45 shell32.rc:122 shell32.rc:162 taskmgr.rc:67
 #: taskmgr.rc:112 taskmgr.rc:254
 msgid "&Details"
-msgstr ""
+msgstr "&Details"
 
 #: shell32.rc:48 winefile.rc:75
 msgid "Arrange &Icons"
-msgstr ""
+msgstr "Arrange &Icons"
 
 #: shell32.rc:50
 msgid "By &Name"
@@ -7496,11 +7624,11 @@ msgstr "By &Name"
 
 #: shell32.rc:51
 msgid "By &Type"
-msgstr ""
+msgstr "By &Type"
 
 #: shell32.rc:52
 msgid "By &Size"
-msgstr ""
+msgstr "By &Size"
 
 #: shell32.rc:53
 msgid "By &Date"
@@ -7508,23 +7636,23 @@ msgstr "By &Date"
 
 #: shell32.rc:55
 msgid "&Auto Arrange"
-msgstr ""
+msgstr "&Auto Arrange"
 
 #: shell32.rc:57
 msgid "Line up Icons"
-msgstr ""
+msgstr "Line up Icons"
 
 #: shell32.rc:62
 msgid "Paste as Link"
-msgstr ""
+msgstr "Paste as Link"
 
 #: shell32.rc:64 progman.rc:97 wordpad.rc:210
 msgid "New"
-msgstr ""
+msgstr "New"
 
 #: shell32.rc:66
 msgid "New &Folder"
-msgstr ""
+msgstr "New &Folder"
 
 #: shell32.rc:67
 msgid "New &Link"
@@ -7537,23 +7665,23 @@ msgstr "Properties"
 #: shell32.rc:82
 msgctxt "recycle bin"
 msgid "&Restore"
-msgstr ""
+msgstr "&Restore"
 
 #: shell32.rc:83
 msgid "&Erase"
-msgstr ""
+msgstr "&Erase"
 
 #: shell32.rc:95
 msgid "E&xplore"
-msgstr ""
+msgstr "E&xplore"
 
 #: shell32.rc:98
 msgid "C&ut"
-msgstr ""
+msgstr "C&ut"
 
 #: shell32.rc:101
 msgid "Create &Link"
-msgstr ""
+msgstr "Create &Link"
 
 #: shell32.rc:103 regedit.rc:91
 msgid "&Rename"
@@ -7570,15 +7698,15 @@ msgstr "&About Control Panel"
 
 #: shell32.rc:270 shell32.rc:285
 msgid "Browse for Folder"
-msgstr ""
+msgstr "Browse for Folder"
 
 #: shell32.rc:290
 msgid "Folder:"
-msgstr ""
+msgstr "Folder:"
 
 #: shell32.rc:296
 msgid "&Make New Folder"
-msgstr ""
+msgstr "&Make New Folder"
 
 #: shell32.rc:303
 msgid "Message"
@@ -7586,15 +7714,15 @@ msgstr "Message"
 
 #: shell32.rc:306 shlwapi.rc:43 user32.rc:82
 msgid "&Yes"
-msgstr ""
+msgstr "&Yes"
 
 #: shell32.rc:307
 msgid "Yes to &all"
-msgstr ""
+msgstr "Yes to &all"
 
 #: shell32.rc:308 shlwapi.rc:44 user32.rc:83
 msgid "&No"
-msgstr ""
+msgstr "&No"
 
 #: shell32.rc:316
 msgid "About %s"
@@ -7606,17 +7734,19 @@ msgstr "Wine &licence"
 
 #: shell32.rc:325
 msgid "Running on %s"
-msgstr ""
+msgstr "Running on %s"
 
 #: shell32.rc:326
 msgid "Wine was brought to you by:"
-msgstr ""
+msgstr "Wine was brought to you by:"
 
 #: shell32.rc:334
 msgid ""
 "Type the name of a program, folder, document, or Internet resource, and Wine "
 "will open it for you."
 msgstr ""
+"Type the name of a program, folder, document, or Internet resource, and Wine "
+"will open it for you."
 
 #: shell32.rc:335
 msgid "&Open:"
@@ -7629,15 +7759,15 @@ msgstr "&Browse..."
 
 #: shell32.rc:135 shell32.rc:139 winefile.rc:105
 msgid "Size"
-msgstr ""
+msgstr "Size"
 
 #: shell32.rc:136 regedit.rc:123
 msgid "Type"
-msgstr ""
+msgstr "Type"
 
 #: shell32.rc:137
 msgid "Modified"
-msgstr ""
+msgstr "Modified"
 
 #: shell32.rc:138 winefile.rc:172 winefile.rc:111
 msgid "Attributes"
@@ -7653,11 +7783,11 @@ msgstr "Comments"
 
 #: shell32.rc:143
 msgid "Owner"
-msgstr ""
+msgstr "Owner"
 
 #: shell32.rc:144
 msgid "Group"
-msgstr ""
+msgstr "Group"
 
 #: shell32.rc:145
 msgid "Original location"
@@ -7674,7 +7804,7 @@ msgstr "Desktop"
 
 #: shell32.rc:154 regedit.rc:200
 msgid "My Computer"
-msgstr ""
+msgstr "My Computer"
 
 #: shell32.rc:156
 msgid "Control Panel"
@@ -7686,23 +7816,23 @@ msgstr "Select"
 
 #: shell32.rc:186
 msgid "Restart"
-msgstr ""
+msgstr "Restart"
 
 #: shell32.rc:187
 msgid "Do you want to simulate a Windows reboot?"
-msgstr ""
+msgstr "Do you want to simulate a Windows reboot?"
 
 #: shell32.rc:188
 msgid "Shutdown"
-msgstr ""
+msgstr "Shutdown"
 
 #: shell32.rc:189
 msgid "Do you want to shutdown your Wine session?"
-msgstr ""
+msgstr "Do you want to shutdown your Wine session?"
 
 #: shell32.rc:200 progman.rc:80
 msgid "Programs"
-msgstr ""
+msgstr "Programs"
 
 #: shell32.rc:201
 msgid "My Documents"
@@ -7714,19 +7844,19 @@ msgstr "Favourites"
 
 #: shell32.rc:203
 msgid "StartUp"
-msgstr ""
+msgstr "StartUp"
 
 #: shell32.rc:204
 msgid "Start Menu"
-msgstr ""
+msgstr "Start Menu"
 
 #: shell32.rc:205
 msgid "My Music"
-msgstr ""
+msgstr "My Music"
 
 #: shell32.rc:206
 msgid "My Videos"
-msgstr ""
+msgstr "My Videos"
 
 #: shell32.rc:207
 msgctxt "directory"
@@ -7735,11 +7865,11 @@ msgstr "Desktop"
 
 #: shell32.rc:208
 msgid "NetHood"
-msgstr ""
+msgstr "NetHood"
 
 #: shell32.rc:209
 msgid "Templates"
-msgstr ""
+msgstr "Templates"
 
 #: shell32.rc:210
 msgid "PrintHood"
@@ -7751,7 +7881,7 @@ msgstr "History"
 
 #: shell32.rc:212
 msgid "Program Files"
-msgstr ""
+msgstr "Program Files"
 
 #: shell32.rc:214
 msgid "My Pictures"
@@ -7767,11 +7897,11 @@ msgstr "Documents"
 
 #: shell32.rc:217
 msgid "Administrative Tools"
-msgstr ""
+msgstr "Administrative Tools"
 
 #: shell32.rc:218
 msgid "Music"
-msgstr ""
+msgstr "Music"
 
 #: shell32.rc:219
 msgid "Pictures"
@@ -7779,11 +7909,11 @@ msgstr "Pictures"
 
 #: shell32.rc:220
 msgid "Videos"
-msgstr ""
+msgstr "Videos"
 
 #: shell32.rc:213
 msgid "Program Files (x86)"
-msgstr ""
+msgstr "Program Files (x86)"
 
 #: shell32.rc:221
 msgid "Contacts"
@@ -7791,11 +7921,11 @@ msgstr "Contacts"
 
 #: shell32.rc:222 winefile.rc:110
 msgid "Links"
-msgstr ""
+msgstr "Links"
 
 #: shell32.rc:223
 msgid "Slide Shows"
-msgstr ""
+msgstr "Slide Shows"
 
 #: shell32.rc:224
 msgid "Playlists"
@@ -7803,7 +7933,7 @@ msgstr "Playlists"
 
 #: shell32.rc:148 taskmgr.rc:326
 msgid "Status"
-msgstr ""
+msgstr "Status"
 
 #: shell32.rc:149
 msgid "Location"
@@ -7811,7 +7941,7 @@ msgstr "Location"
 
 #: shell32.rc:150
 msgid "Model"
-msgstr ""
+msgstr "Model"
 
 #: shell32.rc:225
 msgid "Sample Music"
@@ -7823,7 +7953,7 @@ msgstr "Sample Pictures"
 
 #: shell32.rc:227
 msgid "Sample Playlists"
-msgstr ""
+msgstr "Sample Playlists"
 
 #: shell32.rc:228
 msgid "Sample Videos"
@@ -7843,35 +7973,35 @@ msgstr "Users"
 
 #: shell32.rc:233
 msgid "Downloads"
-msgstr ""
+msgstr "Downloads"
 
 #: shell32.rc:166
 msgid "Unable to create new Folder: Permission denied."
-msgstr ""
+msgstr "Unable to create new Folder: Permission denied."
 
 #: shell32.rc:167
 msgid "Error during creation of a new folder"
-msgstr ""
+msgstr "Error during creation of a new folder"
 
 #: shell32.rc:168
 msgid "Confirm file deletion"
-msgstr ""
+msgstr "Confirm file deletion"
 
 #: shell32.rc:169
 msgid "Confirm folder deletion"
-msgstr ""
+msgstr "Confirm folder deletion"
 
 #: shell32.rc:170
 msgid "Are you sure you want to delete '%1'?"
-msgstr ""
+msgstr "Are you sure you want to delete '%1'?"
 
 #: shell32.rc:171
 msgid "Are you sure you want to delete these %1 items?"
-msgstr ""
+msgstr "Are you sure you want to delete these %1 items?"
 
 #: shell32.rc:178
 msgid "Confirm file overwrite"
-msgstr ""
+msgstr "Confirm file overwrite"
 
 #: shell32.rc:177
 msgid ""
@@ -7879,27 +8009,32 @@ msgid ""
 "\n"
 "Do you want to replace it?"
 msgstr ""
+"This folder already contains a file called '%1'.\n"
+"\n"
+"Do you want to replace it?"
 
 #: shell32.rc:172
 msgid "Are you sure you want to delete the selected item(s)?"
-msgstr ""
+msgstr "Are you sure you want to delete the selected item(s)?"
 
 #: shell32.rc:174
 msgid ""
 "Are you sure that you want to send '%1' and all its content to the Trash?"
 msgstr ""
+"Are you sure that you want to send '%1' and all its content to the Trash?"
 
 #: shell32.rc:173
 msgid "Are you sure that you want to send '%1' to the Trash?"
-msgstr ""
+msgstr "Are you sure that you want to send '%1' to the Trash?"
 
 #: shell32.rc:175
 msgid "Are you sure that you want to send these %1 items to the Trash?"
-msgstr ""
+msgstr "Are you sure that you want to send these %1 items to the Trash?"
 
 #: shell32.rc:176
 msgid "The item '%1' can't be sent to Trash. Do you want to delete it instead?"
 msgstr ""
+"The item '%1' can't be sent to Trash. Do you want to delete it instead?"
 
 #: shell32.rc:183
 msgid ""
@@ -7909,42 +8044,47 @@ msgid ""
 "selected folder they will be replaced. Do you still want to move or copy\n"
 "the folder?"
 msgstr ""
+"This folder already contains a folder named '%1'.\n"
+"\n"
+"If the files in the destination folder have the same names as files in the\n"
+"selected folder they will be replaced. Do you still want to move or copy\n"
+"the folder?"
 
 #: shell32.rc:235
 msgid "New Folder"
-msgstr ""
+msgstr "New Folder"
 
 #: shell32.rc:237
 msgid "Wine Control Panel"
-msgstr ""
+msgstr "Wine Control Panel"
 
 #: shell32.rc:192
 msgid "Unable to display Run File dialog box (internal error)"
-msgstr ""
+msgstr "Unable to display Run File dialog box (internal error)"
 
 #: shell32.rc:193
 msgid "Unable to display Browse dialog box (internal error)"
-msgstr ""
+msgstr "Unable to display Browse dialog box (internal error)"
 
 #: shell32.rc:195
 msgid "Executable files (*.exe)"
-msgstr ""
+msgstr "Executable files (*.exe)"
 
 #: shell32.rc:241
 msgid "There is no Windows program configured to open this type of file."
-msgstr ""
+msgstr "There is no Windows program configured to open this type of file."
 
 #: shell32.rc:243
 msgid "Are you sure you wish to permanently delete '%1'?"
-msgstr ""
+msgstr "Are you sure you wish to permanently delete '%1'?"
 
 #: shell32.rc:244
 msgid "Are you sure you wish to permanently delete these %1 items?"
-msgstr ""
+msgstr "Are you sure you wish to permanently delete these %1 items?"
 
 #: shell32.rc:245
 msgid "Confirm deletion"
-msgstr ""
+msgstr "Confirm deletion"
 
 #: shell32.rc:246
 msgid ""
@@ -7952,6 +8092,9 @@ msgid ""
 "\n"
 "Do you want to replace it?"
 msgstr ""
+"A file already exists at the path %1.\n"
+"\n"
+"Do you want to replace it?"
 
 #: shell32.rc:247
 msgid ""
@@ -7959,10 +8102,13 @@ msgid ""
 "\n"
 "Do you want to replace it?"
 msgstr ""
+"A folder already exists at the path %1.\n"
+"\n"
+"Do you want to replace it?"
 
 #: shell32.rc:248
 msgid "Confirm overwrite"
-msgstr ""
+msgstr "Confirm overwrite"
 
 #: shell32.rc:265
 msgid ""
@@ -8008,11 +8154,11 @@ msgstr "Error"
 
 #: shlwapi.rc:40
 msgid "Don't show me th&is message again"
-msgstr ""
+msgstr "Don't show me th&is message again"
 
 #: shlwapi.rc:27
 msgid "%d bytes"
-msgstr ""
+msgstr "%d bytes"
 
 #: shlwapi.rc:28
 msgctxt "time unit: hours"
@@ -8022,17 +8168,17 @@ msgstr ""
 #: shlwapi.rc:29
 msgctxt "time unit: minutes"
 msgid " min"
-msgstr ""
+msgstr " min"
 
 #: shlwapi.rc:30
 msgctxt "time unit: seconds"
 msgid " sec"
-msgstr ""
+msgstr " sec"
 
 #: user32.rc:27 user32.rc:40 taskmgr.rc:138
 msgctxt "window"
 msgid "&Restore"
-msgstr ""
+msgstr "&Restore"
 
 #: user32.rc:28 user32.rc:41
 msgid "&Move"
@@ -8052,11 +8198,11 @@ msgstr "Ma&ximise"
 
 #: user32.rc:33
 msgid "&Close\tAlt+F4"
-msgstr ""
+msgstr "&Close\tAlt+F4"
 
 #: user32.rc:35
 msgid "&About Wine"
-msgstr ""
+msgstr "&About Wine"
 
 #: user32.rc:46
 msgid "&Close\tCtrl+F4"
@@ -8072,15 +8218,15 @@ msgstr "&Abort"
 
 #: user32.rc:80
 msgid "&Retry"
-msgstr ""
+msgstr "&Retry"
 
 #: user32.rc:81
 msgid "&Ignore"
-msgstr ""
+msgstr "&Ignore"
 
 #: user32.rc:84
 msgid "&Try Again"
-msgstr ""
+msgstr "&Try Again"
 
 #: user32.rc:85
 msgid "&Continue"
@@ -8096,19 +8242,19 @@ msgstr "&More Windows..."
 
 #: wineps.rc:28
 msgid "Paper Si&ze:"
-msgstr ""
+msgstr "Paper Si&ze:"
 
 #: wineps.rc:36
 msgid "Duplex:"
-msgstr ""
+msgstr "Duplex:"
 
 #: wininet.rc:39 wininet.rc:59
 msgid "Realm"
-msgstr ""
+msgstr "Realm"
 
 #: wininet.rc:46 wininet.rc:66
 msgid "&Save this password (insecure)"
-msgstr ""
+msgstr "&Save this password (insecure)"
 
 #: wininet.rc:54
 msgid "Authentication Required"
@@ -8128,15 +8274,15 @@ msgstr "There is a problem with the certificate for this site."
 
 #: wininet.rc:79
 msgid "Do you want to continue anyway?"
-msgstr ""
+msgstr "Do you want to continue anyway?"
 
 #: wininet.rc:25
 msgid "LAN Connection"
-msgstr ""
+msgstr "LAN Connection"
 
 #: wininet.rc:26
 msgid "The certificate is issued by an unknown or untrusted publisher."
-msgstr ""
+msgstr "The certificate is issued by an unknown or untrusted publisher."
 
 #: wininet.rc:27
 msgid "The date on the certificate is invalid."
@@ -8144,12 +8290,13 @@ msgstr "The date on the certificate is invalid."
 
 #: wininet.rc:28
 msgid "The name on the certificate does not match the site."
-msgstr ""
+msgstr "The name on the certificate does not match the site."
 
 #: wininet.rc:29
 msgid ""
 "There is at least one unspecified security problem with this certificate."
 msgstr ""
+"There is at least one unspecified security problem with this certificate."
 
 #: winmm.rc:28
 msgid "The specified command was carried out."
@@ -8756,11 +8903,11 @@ msgstr "&Output File Name:"
 
 #: winspool.rc:28
 msgid "The output file already exists. Click OK to overwrite."
-msgstr ""
+msgstr "The output file already exists. Click OK to overwrite."
 
 #: winspool.rc:29
 msgid "Unable to create the output file."
-msgstr ""
+msgstr "Unable to create the output file."
 
 #: wldap32.rc:27
 msgid "Success"
@@ -9035,6 +9182,24 @@ msgid ""
 "  /S  Processes matching files in the current folder and all subfolders.\n"
 "  /D  Processes folders as well.\n"
 msgstr ""
+"ATTRIB - Displays or changes file attributes.\n"
+"\n"
+"Syntax:\n"
+"ATTRIB [+R | -R] [+A | -A ] [+S | -S] [+H | -H] [drive:][path][filename]\n"
+"       [/S [/D]]\n"
+"\n"
+"Where:\n"
+"\n"
+"  +   Sets an attribute.\n"
+"  -   Clears an attribute.\n"
+"  R   Read-only file attribute.\n"
+"  A   Archive file attribute.\n"
+"  S   System file attribute.\n"
+"  H   Hidden file attribute.\n"
+"  [drive:][path][filename]\n"
+"      Specifies a file or files for attrib to process.\n"
+"  /S  Processes matching files in the current folder and all subfolders.\n"
+"  /D  Processes folders as well.\n"
 
 #: clock.rc:29
 msgid "Ana&log"
@@ -9527,6 +9692,14 @@ msgid ""
 "Specifying no file type after the equal sign removes the current "
 "association, if any.\n"
 msgstr ""
+"ASSOC shows or modifies file extension associations.\n"
+"\n"
+"Syntax: ASSOC [.ext[=[fileType]]]\n"
+"\n"
+"ASSOC without parameters displays current file associations.\n"
+"If used with only a file extension, displays the current association.\n"
+"Specifying no file type after the equal sign removes the current "
+"association, if any.\n"
 
 #: cmd.rc:256
 msgid ""
@@ -9541,6 +9714,16 @@ msgid ""
 "Specifying no open command after the equal sign removes the command string "
 "associated to the specified file type.\n"
 msgstr ""
+"FTYPE shows or modifies open commands associated with file types.\n"
+"\n"
+"Syntax: FTYPE [fileType[=[openCommand]]]\n"
+"\n"
+"Without parameters, shows the file types for which open command strings are "
+"currently defined.\n"
+"If used with only a file type, displays the associated open command string, "
+"if any.\n"
+"Specifying no open command after the equal sign removes the command string "
+"associated to the specified file type.\n"
 
 #: cmd.rc:258
 msgid "MORE displays output of files or piped input in pages.\n"
@@ -9801,11 +9984,11 @@ msgstr " (Yes|No|All)"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
-msgstr ""
+msgstr "DirectX Diagnostic Tool"
 
 #: dxdiag.rc:28
 msgid "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
-msgstr ""
+msgstr "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
 
 #: explorer.rc:28
 msgid "Wine Explorer"
@@ -9817,7 +10000,7 @@ msgstr "Location:"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"
-msgstr ""
+msgstr "Usage: hostname\n"
 
 #: hostname.rc:28
 msgid "Error: Invalid option '%c'.\n"
@@ -9828,6 +10011,8 @@ msgid ""
 "Error: Setting the system hostname is not possible with the hostname "
 "utility.\n"
 msgstr ""
+"Error: Setting the system hostname is not possible with the hostname "
+"utility.\n"
 
 #: ipconfig.rc:27
 msgid "Usage: ipconfig [ /? | /all ]\n"
@@ -9916,6 +10101,12 @@ msgid ""
 "Displays the list of running services if 'service' is omitted. Otherwise "
 "'service' is the name of the service to start.\n"
 msgstr ""
+"The syntax of this command is:\n"
+"\n"
+"NET START [service]\n"
+"\n"
+"Displays the list of running services if 'service' is omitted. Otherwise "
+"'service' is the name of the service to start.\n"
 
 #: net.rc:29
 msgid ""
@@ -9925,6 +10116,11 @@ msgid ""
 "\n"
 "Where 'service' is the name of the service to stop.\n"
 msgstr ""
+"The syntax of this command is:\n"
+"\n"
+"NET STOP service\n"
+"\n"
+"Where 'service' is the name of the service to stop.\n"
 
 #: net.rc:30
 msgid "Stopping dependent service: %1\n"
@@ -9986,7 +10182,7 @@ msgstr "%1      %2      %3      Open resources: %4!u!\n"
 
 #: net.rc:45
 msgid "Paused"
-msgstr ""
+msgstr "Paused"
 
 #: net.rc:46
 msgid "Disconnected"
@@ -10010,19 +10206,19 @@ msgstr "The following services are running:\n"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
-msgstr ""
+msgstr "&New\tCtrl+N"
 
 #: notepad.rc:28 wordpad.rc:29
 msgid "&Open...\tCtrl+O"
-msgstr ""
+msgstr "&Open...\tCtrl+O"
 
 #: notepad.rc:29 wordpad.rc:30
 msgid "&Save\tCtrl+S"
-msgstr ""
+msgstr "&Save\tCtrl+S"
 
 #: notepad.rc:32 regedit.rc:36 wordpad.rc:33
 msgid "&Print...\tCtrl+P"
-msgstr ""
+msgstr "&Print...\tCtrl+P"
 
 #: notepad.rc:33 wordpad.rc:35
 msgid "Page Se&tup..."
@@ -10030,7 +10226,7 @@ msgstr "Page Se&tup..."
 
 #: notepad.rc:34
 msgid "P&rinter Setup..."
-msgstr ""
+msgstr "P&rinter Setup..."
 
 #: notepad.rc:38 regedit.rc:40 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
 msgid "&Edit"
@@ -10038,15 +10234,15 @@ msgstr "&Edit"
 
 #: notepad.rc:39 wordpad.rc:41
 msgid "&Undo\tCtrl+Z"
-msgstr ""
+msgstr "&Undo\tCtrl+Z"
 
 #: notepad.rc:41 wordpad.rc:44
 msgid "Cu&t\tCtrl+X"
-msgstr ""
+msgstr "Cu&t\tCtrl+X"
 
 #: notepad.rc:42 wordpad.rc:45
 msgid "&Copy\tCtrl+C"
-msgstr ""
+msgstr "&Copy\tCtrl+C"
 
 #: notepad.rc:43 wordpad.rc:46
 msgid "&Paste\tCtrl+V"
@@ -10063,15 +10259,15 @@ msgstr "Select &all\tCtrl+A"
 
 #: notepad.rc:47
 msgid "&Time/Date\tF5"
-msgstr ""
+msgstr "&Time/Date\tF5"
 
 #: notepad.rc:49
 msgid "&Wrap long lines"
-msgstr ""
+msgstr "&Wrap long lines"
 
 #: notepad.rc:53
 msgid "&Search...\tCtrl+F"
-msgstr ""
+msgstr "&Search...\tCtrl+F"
 
 #: notepad.rc:54
 msgid "&Search next\tF3"
@@ -10079,7 +10275,7 @@ msgstr "&Search next\tF3"
 
 #: notepad.rc:55 wordpad.rc:52
 msgid "&Replace...\tCtrl+H"
-msgstr ""
+msgstr "&Replace...\tCtrl+H"
 
 #: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:80
 msgid "&Contents\tF1"
@@ -10087,7 +10283,7 @@ msgstr "&Contents\tF1"
 
 #: notepad.rc:59
 msgid "&About Notepad"
-msgstr ""
+msgstr "&About Notepad"
 
 #: notepad.rc:97
 msgid "Page Setup"
@@ -10095,15 +10291,15 @@ msgstr "Page Setup"
 
 #: notepad.rc:99
 msgid "&Header:"
-msgstr ""
+msgstr "&Header:"
 
 #: notepad.rc:101
 msgid "&Footer:"
-msgstr ""
+msgstr "&Footer:"
 
 #: notepad.rc:104
 msgid "Margins (millimeters)"
-msgstr ""
+msgstr "Margins (millimetres)"
 
 #: notepad.rc:105
 msgid "&Left:"
@@ -10111,7 +10307,7 @@ msgstr "&Left:"
 
 #: notepad.rc:107
 msgid "&Top:"
-msgstr ""
+msgstr "&Top:"
 
 #: notepad.rc:123
 msgid "Encoding:"
@@ -10178,11 +10374,11 @@ msgstr "Page &p"
 
 #: notepad.rc:68
 msgid "Notepad"
-msgstr ""
+msgstr "Notepad"
 
 #: notepad.rc:69 progman.rc:61 winhlp32.rc:79
 msgid "ERROR"
-msgstr ""
+msgstr "ERROR"
 
 #: notepad.rc:71
 msgid "Untitled"
@@ -10190,7 +10386,7 @@ msgstr "Untitled"
 
 #: notepad.rc:74 winedbg.rc:38
 msgid "Text files (*.txt)"
-msgstr ""
+msgstr "Text files (*.txt)"
 
 #: notepad.rc:77
 msgid ""
@@ -10198,6 +10394,9 @@ msgid ""
 "\n"
 "Do you want to create a new file?"
 msgstr ""
+"File '%s' does not exist.\n"
+"\n"
+"Do you want to create a new file?"
 
 #: notepad.rc:79
 msgid ""
@@ -10205,22 +10404,25 @@ msgid ""
 "\n"
 "Would you like to save the changes?"
 msgstr ""
+"File '%s' has been modified.\n"
+"\n"
+"Would you like to save the changes?"
 
 #: notepad.rc:80
 msgid "'%s' could not be found."
-msgstr ""
+msgstr "'%s' could not be found."
 
 #: notepad.rc:82
 msgid "Unicode (UTF-16)"
-msgstr ""
+msgstr "Unicode (UTF-16)"
 
 #: notepad.rc:83
 msgid "Unicode (UTF-16 big-endian)"
-msgstr ""
+msgstr "Unicode (UTF-16 big-endian)"
 
 #: notepad.rc:84
 msgid "Unicode (UTF-8)"
-msgstr ""
+msgstr "Unicode (UTF-8)"
 
 #: notepad.rc:91
 msgid ""
@@ -10231,6 +10433,12 @@ msgid ""
 "one of the Unicode options in the Encoding drop down list.\n"
 "Continue?"
 msgstr ""
+"%1\n"
+"This file contains Unicode characters which will be lost if\n"
+"you save this file in the %2 encoding.\n"
+"To keep these characters, click Cancel, and then select\n"
+"one of the Unicode options in the Encoding drop down list.\n"
+"Continue?"
 
 #: oleview.rc:29
 msgid "&Bind to file..."
@@ -10238,7 +10446,7 @@ msgstr "&Bind to file..."
 
 #: oleview.rc:30
 msgid "&View TypeLib..."
-msgstr ""
+msgstr "&View TypeLib..."
 
 #: oleview.rc:32
 msgid "&System Configuration"
@@ -10246,7 +10454,7 @@ msgstr "&System Configuration"
 
 #: oleview.rc:33
 msgid "&Run the Registry Editor"
-msgstr ""
+msgstr "&Run the Registry Editor"
 
 #: oleview.rc:37
 msgid "&Object"
@@ -10254,15 +10462,15 @@ msgstr "&Object"
 
 #: oleview.rc:39
 msgid "&CoCreateInstance Flag"
-msgstr ""
+msgstr "&CoCreateInstance Flag"
 
 #: oleview.rc:41
 msgid "&In-process server"
-msgstr ""
+msgstr "&In-process server"
 
 #: oleview.rc:42
 msgid "In-process &handler"
-msgstr ""
+msgstr "In-process &handler"
 
 #: oleview.rc:43
 msgid "&Local server"
@@ -10282,31 +10490,31 @@ msgstr "Create &Instance"
 
 #: oleview.rc:50
 msgid "Create Instance &On..."
-msgstr ""
+msgstr "Create Instance &On..."
 
 #: oleview.rc:51
 msgid "&Release Instance"
-msgstr ""
+msgstr "&Release Instance"
 
 #: oleview.rc:53
 msgid "Copy C&LSID to clipboard"
-msgstr ""
+msgstr "Copy C&LSID to clipboard"
 
 #: oleview.rc:54
 msgid "Copy &HTML object Tag to clipboard"
-msgstr ""
+msgstr "Copy &HTML object Tag to clipboard"
 
 #: oleview.rc:60
 msgid "&Expert mode"
-msgstr ""
+msgstr "&Expert mode"
 
 #: oleview.rc:62
 msgid "&Hidden component categories"
-msgstr ""
+msgstr "&Hidden component categories"
 
 #: oleview.rc:64 oleview.rc:86 winefile.rc:62 wordpad.rc:68 wordpad.rc:261
 msgid "&Toolbar"
-msgstr ""
+msgstr "&Toolbar"
 
 #: oleview.rc:65 oleview.rc:87 winefile.rc:64
 msgid "&Status Bar"
@@ -10326,15 +10534,15 @@ msgstr "&Save as..."
 
 #: oleview.rc:84
 msgid "&Group by type kind"
-msgstr ""
+msgstr "&Group by type kind"
 
 #: oleview.rc:154
 msgid "Connect to another machine"
-msgstr ""
+msgstr "Connect to another machine"
 
 #: oleview.rc:157
 msgid "&Machine name:"
-msgstr ""
+msgstr "&Machine name:"
 
 #: oleview.rc:165
 msgid "System Configuration"
@@ -10346,17 +10554,19 @@ msgstr "System Settings"
 
 #: oleview.rc:169
 msgid "&Enable Distributed COM"
-msgstr ""
+msgstr "&Enable Distributed COM"
 
 #: oleview.rc:170
 msgid "Enable &Remote Connections (Win95 only)"
-msgstr ""
+msgstr "Enable &Remote Connections (Win95 only)"
 
 #: oleview.rc:171
 msgid ""
 "These settings change only registry values.\n"
 "They have no effect on Wine performance."
 msgstr ""
+"These settings change only registry values.\n"
+"They have no effect on Wine performance."
 
 #: oleview.rc:178
 msgid "Default Interface Viewer"
@@ -10368,7 +10578,7 @@ msgstr "Interface"
 
 #: oleview.rc:183
 msgid "IID:"
-msgstr ""
+msgstr "IID:"
 
 #: oleview.rc:186
 msgid "&View Type Info"
@@ -10376,7 +10586,7 @@ msgstr "&View Type Info"
 
 #: oleview.rc:191
 msgid "IPersist Interface Viewer"
-msgstr ""
+msgstr "IPersist Interface Viewer"
 
 #: oleview.rc:194 oleview.rc:206
 msgid "Class Name:"
@@ -10384,11 +10594,11 @@ msgstr "Class Name:"
 
 #: oleview.rc:196 oleview.rc:208
 msgid "CLSID:"
-msgstr ""
+msgstr "CLSID:"
 
 #: oleview.rc:203
 msgid "IPersistStream Interface Viewer"
-msgstr ""
+msgstr "IPersistStream Interface Viewer"
 
 #: oleview.rc:93 oleview.rc:94
 msgid "OleView"
@@ -10396,11 +10606,11 @@ msgstr "OleView"
 
 #: oleview.rc:98
 msgid "ITypeLib viewer"
-msgstr ""
+msgstr "ITypeLib viewer"
 
 #: oleview.rc:96
 msgid "OleView - OLE/COM Object Viewer"
-msgstr ""
+msgstr "OleView - OLE/COM Object Viewer"
 
 #: oleview.rc:97
 msgid "version 1.0"
@@ -10408,15 +10618,15 @@ msgstr "version 1.0"
 
 #: oleview.rc:100
 msgid "TypeLib files (*.tlb; *.olb; *.dll; *.ocx; *.exe)"
-msgstr ""
+msgstr "TypeLib files (*.tlb; *.olb; *.dll; *.ocx; *.exe)"
 
 #: oleview.rc:103
 msgid "Bind to file via a File Moniker"
-msgstr ""
+msgstr "Bind to file via a File Moniker"
 
 #: oleview.rc:104
 msgid "Open a TypeLib file and view the contents"
-msgstr ""
+msgstr "Open a TypeLib file and view the "
 
 #: oleview.rc:105
 msgid "Change machine wide Distributed COM settings"
@@ -10424,72 +10634,73 @@ msgstr ""
 
 #: oleview.rc:106
 msgid "Run the Wine registry editor"
-msgstr ""
+msgstr "Run the Wine registry editor"
 
 #: oleview.rc:107
 msgid "Quit the application. Prompts to save changes"
-msgstr ""
+msgstr "Quit the application. Prompts to save changes"
 
 #: oleview.rc:108
 msgid "Create an instance of the selected object"
-msgstr ""
+msgstr "Create an instance of the selected object"
 
 #: oleview.rc:109
 msgid "Create an instance of the selected object on a specific machine"
-msgstr ""
+msgstr "Create an instance of the selected object on a specific machine"
 
 #: oleview.rc:110
 msgid "Release the currently selected object instance"
-msgstr ""
+msgstr "Release the currently selected object instance"
 
 #: oleview.rc:111
 msgid "Copy the GUID of the currently selected item to the clipboard"
-msgstr ""
+msgstr "Copy the GUID of the currently selected item to the clipboard"
 
 #: oleview.rc:112
 msgid "Display the viewer for the selected item"
-msgstr ""
+msgstr "Display the viewer for the selected item"
 
 #: oleview.rc:117
 msgid "Toggle between expert and novice display mode"
-msgstr ""
+msgstr "Toggle between expert and novice display mode"
 
 #: oleview.rc:118
 msgid ""
 "Toggle the display of component categories that are not meant to be visible"
 msgstr ""
+"Toggle the display of component categories that are not meant to be visible"
 
 #: oleview.rc:119
 msgid "Show or hide the toolbar"
-msgstr ""
+msgstr "Show or hide the toolbar"
 
 #: oleview.rc:120
 msgid "Show or hide the status bar"
-msgstr ""
+msgstr "Show or hide the status bar"
 
 #: oleview.rc:121
 msgid "Refresh all lists"
-msgstr ""
+msgstr "Refresh all lists"
 
 #: oleview.rc:122
 msgid "Display program information, version number and copyright"
-msgstr ""
+msgstr "Display program information, version number and copyright"
 
 #: oleview.rc:113
 msgid "Ask for an in-process server when calling CoGetClassObject"
-msgstr ""
+msgstr "Ask for an in-process server when calling CoGetClassObject"
 
 #: oleview.rc:114
 msgid "Ask for an in-process handler when calling CoGetClassObject"
-msgstr ""
+msgstr "Ask for an in-process handler when calling CoGetClassObject"
 
 #: oleview.rc:115
 msgid "Ask for a local server when calling CoGetClassObject"
-msgstr ""
+msgstr "Ask for a local server when calling CoGetClassObject"
 
 #: oleview.rc:116
 msgid "Ask for a remote server when calling CoGetClassObject"
-msgstr ""
+msgstr "Ask for a remote server when calling CoGetClassObject"
 
 #: oleview.rc:128
 msgid "ObjectClasses"
@@ -10497,7 +10708,7 @@ msgstr "ObjectClasses"
 
 #: oleview.rc:129
 msgid "Grouped by Component Category"
-msgstr ""
+msgstr "Grouped by Component Category"
 
 #: oleview.rc:130
 msgid "OLE 1.0 Objects"
@@ -10505,7 +10716,7 @@ msgstr "OLE 1.0 Objects"
 
 #: oleview.rc:131
 msgid "COM Library Objects"
-msgstr ""
+msgstr "COM Library Objects"
 
 #: oleview.rc:132
 msgid "All Objects"
@@ -10517,15 +10728,15 @@ msgstr "Application IDs"
 
 #: oleview.rc:134
 msgid "Type Libraries"
-msgstr ""
+msgstr "Type Libraries"
 
 #: oleview.rc:135
 msgid "ver."
-msgstr ""
+msgstr "ver."
 
 #: oleview.rc:136
 msgid "Interfaces"
-msgstr ""
+msgstr "Interfaces"
 
 #: oleview.rc:138
 msgid "Registry"
@@ -10533,7 +10744,7 @@ msgstr "Registry"
 
 #: oleview.rc:139
 msgid "Implementation"
-msgstr ""
+msgstr "Implementation"
 
 #: oleview.rc:140
 msgid "Activation"
@@ -10541,7 +10752,7 @@ msgstr "Activation"
 
 #: oleview.rc:142
 msgid "CoGetClassObject failed."
-msgstr ""
+msgstr "CoGetClassObject failed."
 
 #: oleview.rc:143
 msgid "Unknown error"
@@ -10549,19 +10760,19 @@ msgstr "Unknown error"
 
 #: oleview.rc:146
 msgid "bytes"
-msgstr ""
+msgstr "bytes"
 
 #: oleview.rc:148
 msgid "LoadTypeLib( %1 ) failed ($%2!x!)"
-msgstr ""
+msgstr "LoadTypeLib( %1 ) failed ($%2!x!)"
 
 #: oleview.rc:149
 msgid "Inherited Interfaces"
-msgstr ""
+msgstr "Inherited Interfaces"
 
 #: oleview.rc:124
 msgid "Save as an .IDL or .H file"
-msgstr ""
+msgstr "Save as an .IDL or .H file"
 
 #: oleview.rc:125
 msgid "Close window"
@@ -10573,11 +10784,11 @@ msgstr ""
 
 #: progman.rc:30
 msgid "&New..."
-msgstr ""
+msgstr "&New..."
 
 #: progman.rc:31
 msgid "O&pen\tEnter"
-msgstr ""
+msgstr "O&pen\tEnter"
 
 #: progman.rc:32 winefile.rc:27
 msgid "&Move...\tF7"
@@ -10593,7 +10804,7 @@ msgstr "&Properties\tAlt+Enter"
 
 #: progman.rc:37
 msgid "&Execute..."
-msgstr ""
+msgstr "&Execute..."
 
 #: progman.rc:39
 msgid "E&xit Windows"
@@ -10605,7 +10816,7 @@ msgstr "&Options"
 
 #: progman.rc:42
 msgid "&Arrange automatically"
-msgstr ""
+msgstr "&Arrange automatically"
 
 #: progman.rc:43
 msgid "&Minimize on run"
@@ -10613,27 +10824,27 @@ msgstr "&Minimise on run"
 
 #: progman.rc:44 winefile.rc:67
 msgid "&Save settings on exit"
-msgstr ""
+msgstr "&Save settings on exit"
 
 #: progman.rc:46 taskmgr.rc:78 taskmgr.rc:255
 msgid "&Windows"
-msgstr ""
+msgstr "&Windows"
 
 #: progman.rc:47
 msgid "&Overlapped\tShift+F5"
-msgstr ""
+msgstr "&Overlapped\tShift+F5"
 
 #: progman.rc:48
 msgid "&Side by side\tShift+F4"
-msgstr ""
+msgstr "&Side by side\tShift+F4"
 
 #: progman.rc:49
 msgid "&Arrange Icons"
-msgstr ""
+msgstr "&Arrange Icons"
 
 #: progman.rc:54
 msgid "&About Program Manager"
-msgstr ""
+msgstr "&About Program Manager"
 
 #: progman.rc:100
 msgid "Program &group"
@@ -10653,11 +10864,11 @@ msgstr "Move program:"
 
 #: progman.rc:117 progman.rc:135
 msgid "From group:"
-msgstr ""
+msgstr "From group:"
 
 #: progman.rc:119 progman.rc:137
 msgid "&To group:"
-msgstr ""
+msgstr "&To group:"
 
 #: progman.rc:131
 msgid "Copy Program"
@@ -10673,7 +10884,7 @@ msgstr "Program Group Attributes"
 
 #: progman.rc:153
 msgid "&Group file:"
-msgstr ""
+msgstr "&Group file:"
 
 #: progman.rc:165
 msgid "Program Attributes"
@@ -10685,11 +10896,11 @@ msgstr "&Command line:"
 
 #: progman.rc:171
 msgid "&Working directory:"
-msgstr ""
+msgstr "&Working directory:"
 
 #: progman.rc:173
 msgid "&Key combination:"
-msgstr ""
+msgstr "&Key combination:"
 
 #: progman.rc:176 progman.rc:212
 msgid "&Minimize at launch"
@@ -10697,11 +10908,11 @@ msgstr "&Minimise at launch"
 
 #: progman.rc:180
 msgid "Change &icon..."
-msgstr ""
+msgstr "Change &icon..."
 
 #: progman.rc:189
 msgid "Change Icon"
-msgstr ""
+msgstr "Change Icon"
 
 #: progman.rc:191
 msgid "&Filename:"
@@ -10709,19 +10920,19 @@ msgstr "&Filename:"
 
 #: progman.rc:193
 msgid "Current &icon:"
-msgstr ""
+msgstr "Current &icon:"
 
 #: progman.rc:207
 msgid "Execute Program"
-msgstr ""
+msgstr "Execute Program"
 
 #: progman.rc:60
 msgid "Program Manager"
-msgstr ""
+msgstr "Program Manager"
 
 #: progman.rc:62 winhlp32.rc:80
 msgid "WARNING"
-msgstr ""
+msgstr "WARNING"
 
 #: progman.rc:63 winhlp32.rc:81
 msgid "Information"
@@ -10729,11 +10940,11 @@ msgstr "Information"
 
 #: progman.rc:65
 msgid "Delete group `%s'?"
-msgstr ""
+msgstr "Delete group `%s'?"
 
 #: progman.rc:66
 msgid "Delete program `%s'?"
-msgstr ""
+msgstr "Delete program `%s'?"
 
 #: progman.rc:67
 msgid "Not implemented"
@@ -10741,17 +10952,19 @@ msgstr "Not implemented"
 
 #: progman.rc:68
 msgid "Error reading `%s'."
-msgstr ""
+msgstr "Error reading `%s'."
 
 #: progman.rc:69
 msgid "Error writing `%s'."
-msgstr ""
+msgstr "Error writing `%s'."
 
 #: progman.rc:72
 msgid ""
 "The group file `%s' cannot be opened.\n"
 "Should it be tried further on?"
 msgstr ""
+"The group file `%s' cannot be opened.\n"
+"Should it be tried further on?"
 
 #: progman.rc:74
 msgid "Help not available."
@@ -10759,27 +10972,27 @@ msgstr "Help not available."
 
 #: progman.rc:75
 msgid "Unknown feature in %s"
-msgstr ""
+msgstr "Unknown feature in %s"
 
 #: progman.rc:76
 msgid "File `%s' exists. Not overwritten."
-msgstr ""
+msgstr "File `%s' exists. Not overwritten."
 
 #: progman.rc:77
 msgid "Save group as `%s to prevent overwriting original files."
-msgstr ""
+msgstr "Save group as `%s to prevent overwriting original files."
 
 #: progman.rc:81
 msgid "Libraries (*.dll)"
-msgstr ""
+msgstr "Libraries (*.dll)"
 
 #: progman.rc:82
 msgid "Icon files"
-msgstr ""
+msgstr "Icon files"
 
 #: progman.rc:83
 msgid "Icons (*.ico)"
-msgstr ""
+msgstr "Icons (*.ico)"
 
 #: reg.rc:27
 msgid ""
@@ -10901,7 +11114,7 @@ msgstr "&About Registry Editor"
 
 #: regedit.rc:88
 msgid "Modify Binary Data..."
-msgstr ""
+msgstr "Modify Binary Data..."
 
 #: regedit.rc:215
 msgid "Export registry"
@@ -10909,19 +11122,19 @@ msgstr "Export registry"
 
 #: regedit.rc:217
 msgid "S&elected branch:"
-msgstr ""
+msgstr "S&elected branch:"
 
 #: regedit.rc:226
 msgid "Find:"
-msgstr ""
+msgstr "Find:"
 
 #: regedit.rc:228
 msgid "Find in:"
-msgstr ""
+msgstr "Find in:"
 
 #: regedit.rc:229
 msgid "Keys"
-msgstr ""
+msgstr "Keys"
 
 #: regedit.rc:230
 msgid "Value names"
@@ -10933,7 +11146,7 @@ msgstr "Value content"
 
 #: regedit.rc:232
 msgid "Whole string only"
-msgstr ""
+msgstr "Whole string only"
 
 #: regedit.rc:239
 msgid "Add Favorite"
@@ -10957,23 +11170,23 @@ msgstr "Value name:"
 
 #: regedit.rc:266 regedit.rc:279 regedit.rc:295 regedit.rc:308
 msgid "Value data:"
-msgstr ""
+msgstr "Value data:"
 
 #: regedit.rc:274
 msgid "Edit DWORD"
-msgstr ""
+msgstr "Edit DWORD"
 
 #: regedit.rc:281
 msgid "Base"
-msgstr ""
+msgstr "Base"
 
 #: regedit.rc:282
 msgid "Hexadecimal"
-msgstr ""
+msgstr "Hexadecimal"
 
 #: regedit.rc:283
 msgid "Decimal"
-msgstr ""
+msgstr "Decimal"
 
 #: regedit.rc:290
 msgid "Edit Binary"
@@ -11030,7 +11243,7 @@ msgstr "Registry files (*.reg)"
 
 #: regedit.rc:194
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
-msgstr ""
+msgstr "Win9x/NT4 Registry files (REGEDIT4)"
 
 #: regedit.rc:201
 msgid "(Default)"
@@ -11038,11 +11251,11 @@ msgstr "(Default)"
 
 #: regedit.rc:202
 msgid "(value not set)"
-msgstr ""
+msgstr "(value not set)"
 
 #: regedit.rc:203
 msgid "(cannot display value)"
-msgstr ""
+msgstr "(cannot display value)"
 
 #: regedit.rc:204
 msgid "(unknown %d)"
@@ -11094,35 +11307,35 @@ msgstr "Finds next occurrence of text specified in previous search"
 
 #: regedit.rc:144
 msgid "Modifies the value's data"
-msgstr ""
+msgstr "Modifies the value's data"
 
 #: regedit.rc:145
 msgid "Adds a new key"
-msgstr ""
+msgstr "Adds a new key"
 
 #: regedit.rc:146
 msgid "Adds a new string value"
-msgstr ""
+msgstr "Adds a new string value"
 
 #: regedit.rc:147
 msgid "Adds a new binary value"
-msgstr ""
+msgstr "Adds a new binary value"
 
 #: regedit.rc:148
 msgid "Adds a new double word value"
-msgstr ""
+msgstr "Adds a new double word value"
 
 #: regedit.rc:150
 msgid "Imports a text file into the registry"
-msgstr ""
+msgstr "Imports a text file into the registry"
 
 #: regedit.rc:152
 msgid "Exports all or part of the registry to a text file"
-msgstr ""
+msgstr "Exports all or part of the registry to a text file"
 
 #: regedit.rc:153
 msgid "Prints all or part of the registry"
-msgstr ""
+msgstr "Prints all or part of the registry"
 
 #: regedit.rc:155
 msgid "Displays program information, version number and copyright"
@@ -11130,15 +11343,15 @@ msgstr ""
 
 #: regedit.rc:178
 msgid "Can't query value '%s'"
-msgstr ""
+msgstr "Can't query value '%s'"
 
 #: regedit.rc:179
 msgid "Can't edit keys of this type (%u)"
-msgstr ""
+msgstr "Can't edit keys of this type (%u)"
 
 #: regedit.rc:180
 msgid "Value is too big (%u)"
-msgstr ""
+msgstr "Value is too big (%u)"
 
 #: regedit.rc:181
 msgid "Confirm Value Delete"
@@ -11146,7 +11359,7 @@ msgstr ""
 
 #: regedit.rc:182
 msgid "Are you sure you want to delete value '%s'?"
-msgstr ""
+msgstr "Are you sure you want to delete value '%s'?"
 
 #: regedit.rc:186
 msgid "Search string '%s' not found"
@@ -11154,19 +11367,19 @@ msgstr "Search string '%s' not found"
 
 #: regedit.rc:183
 msgid "Are you sure you want to delete these values?"
-msgstr ""
+msgstr "Are you sure you want to delete these values?"
 
 #: regedit.rc:184
 msgid "New Key #%d"
-msgstr ""
+msgstr "New Key #%d"
 
 #: regedit.rc:185
 msgid "New Value #%d"
-msgstr ""
+msgstr "New Value #%d"
 
 #: regedit.rc:177
 msgid "Can't query key '%s'"
-msgstr ""
+msgstr "Can't query key '%s'"
 
 #: regedit.rc:149
 msgid "Adds a new multi string value"
@@ -11250,11 +11463,11 @@ msgstr "Error: Process self-termination is not permitted.\n"
 
 #: taskmgr.rc:37 taskmgr.rc:108
 msgid "&New Task (Run...)"
-msgstr ""
+msgstr "&New Task (Run...)"
 
 #: taskmgr.rc:39
 msgid "E&xit Task Manager"
-msgstr ""
+msgstr "E&xit Task Manager"
 
 #: taskmgr.rc:45
 msgid "&Minimize On Use"
@@ -11266,7 +11479,7 @@ msgstr "&Hide When Minimised"
 
 #: taskmgr.rc:49 taskmgr.rc:257
 msgid "&Show 16-bit tasks"
-msgstr ""
+msgstr "&Show 16-bit tasks"
 
 #: taskmgr.rc:54
 msgid "&Refresh Now"
@@ -11274,51 +11487,51 @@ msgstr "&Refresh Now"
 
 #: taskmgr.rc:55
 msgid "&Update Speed"
-msgstr ""
+msgstr "&Update Speed"
 
 #: taskmgr.rc:57 taskmgr.rc:158
 msgid "&High"
-msgstr ""
+msgstr "&High"
 
 #: taskmgr.rc:58 taskmgr.rc:162
 msgid "&Normal"
-msgstr ""
+msgstr "&Normal"
 
 #: taskmgr.rc:60 taskmgr.rc:166
 msgid "&Low"
-msgstr ""
+msgstr "&Low"
 
 #: taskmgr.rc:61
 msgid "&Paused"
-msgstr ""
+msgstr "&Paused"
 
 #: taskmgr.rc:68 taskmgr.rc:256
 msgid "&Select Columns..."
-msgstr ""
+msgstr "&Select Columns..."
 
 #: taskmgr.rc:69 taskmgr.rc:258
 msgid "&CPU History"
-msgstr ""
+msgstr "&CPU History"
 
 #: taskmgr.rc:71 taskmgr.rc:259
 msgid "&One Graph, All CPUs"
-msgstr ""
+msgstr "&One Graph, All CPUs"
 
 #: taskmgr.rc:73 taskmgr.rc:260
 msgid "One Graph &Per CPU"
-msgstr ""
+msgstr "One Graph &Per CPU"
 
 #: taskmgr.rc:76 taskmgr.rc:261
 msgid "&Show Kernel Times"
-msgstr ""
+msgstr "&Show Kernel Times"
 
 #: taskmgr.rc:80 taskmgr.rc:96 taskmgr.rc:123 winefile.rc:73
 msgid "Tile &Horizontally"
-msgstr ""
+msgstr "Tile &Horizontally"
 
 #: taskmgr.rc:81 taskmgr.rc:97 taskmgr.rc:124
 msgid "Tile &Vertically"
-msgstr ""
+msgstr "Tile &Vertically"
 
 #: taskmgr.rc:82 taskmgr.rc:98 taskmgr.rc:125
 msgid "&Minimize"
@@ -11326,23 +11539,23 @@ msgstr "&Minimise"
 
 #: taskmgr.rc:84 taskmgr.rc:100 taskmgr.rc:127
 msgid "&Cascade"
-msgstr ""
+msgstr "&Cascade"
 
 #: taskmgr.rc:85 taskmgr.rc:101 taskmgr.rc:121
 msgid "&Bring To Front"
-msgstr ""
+msgstr "&Bring To Front"
 
 #: taskmgr.rc:90
 msgid "&About Task Manager"
-msgstr ""
+msgstr "&About Task Manager"
 
 #: taskmgr.rc:120 taskmgr.rc:352
 msgid "&Switch To"
-msgstr ""
+msgstr "&Switch To"
 
 #: taskmgr.rc:129 taskmgr.rc:353
 msgid "&End Task"
-msgstr ""
+msgstr "&End Task"
 
 #: taskmgr.rc:130
 msgid "&Go To Process"
@@ -11350,11 +11563,11 @@ msgstr "&Go To Process"
 
 #: taskmgr.rc:149 taskmgr.rc:363
 msgid "&End Process"
-msgstr ""
+msgstr "&End Process"
 
 #: taskmgr.rc:150
 msgid "End Process &Tree"
-msgstr ""
+msgstr "End Process &Tree"
 
 #: taskmgr.rc:152 winedbg.rc:29
 msgid "&Debug"
@@ -11362,11 +11575,11 @@ msgstr "&Debug"
 
 #: taskmgr.rc:154
 msgid "Set &Priority"
-msgstr ""
+msgstr "Set &Priority"
 
 #: taskmgr.rc:156
 msgid "&Realtime"
-msgstr ""
+msgstr "&Realtime"
 
 #: taskmgr.rc:160
 msgid "&Above Normal"
@@ -11378,23 +11591,23 @@ msgstr "&Below Normal"
 
 #: taskmgr.rc:169
 msgid "Set &Affinity..."
-msgstr ""
+msgstr "Set &Affinity..."
 
 #: taskmgr.rc:170
 msgid "Edit Debug &Channels..."
-msgstr ""
+msgstr "Edit Debug &Channels..."
 
 #: taskmgr.rc:338 taskmgr.rc:180 taskmgr.rc:181
 msgid "Task Manager"
-msgstr ""
+msgstr "Task Manager"
 
 #: taskmgr.rc:351
 msgid "&New Task..."
-msgstr ""
+msgstr "&New Task..."
 
 #: taskmgr.rc:364
 msgid "&Show processes from all users"
-msgstr ""
+msgstr "&Show processes from all users"
 
 #: taskmgr.rc:372
 msgid "CPU usage"
@@ -11406,7 +11619,7 @@ msgstr "MEM usage"
 
 #: taskmgr.rc:374
 msgid "Totals"
-msgstr ""
+msgstr "Totals"
 
 #: taskmgr.rc:375
 msgid "Commit charge (K)"
@@ -11422,27 +11635,27 @@ msgstr ""
 
 #: taskmgr.rc:378 taskmgr.rc:290
 msgid "Handles"
-msgstr ""
+msgstr "Handles"
 
 #: taskmgr.rc:379 taskmgr.rc:291
 msgid "Threads"
-msgstr ""
+msgstr "Threads"
 
 #: taskmgr.rc:380 taskmgr.rc:263
 msgid "Processes"
-msgstr ""
+msgstr "Processes"
 
 #: taskmgr.rc:387 taskmgr.rc:396 taskmgr.rc:405
 msgid "Total"
-msgstr ""
+msgstr "Total"
 
 #: taskmgr.rc:388
 msgid "Limit"
-msgstr ""
+msgstr "Limit"
 
 #: taskmgr.rc:389
 msgid "Peak"
-msgstr ""
+msgstr "Peak"
 
 #: taskmgr.rc:398
 msgid "System Cache"
@@ -11454,7 +11667,7 @@ msgstr "Paged"
 
 #: taskmgr.rc:407
 msgid "Nonpaged"
-msgstr ""
+msgstr "Nonpaged"
 
 #: taskmgr.rc:414
 msgid "CPU usage history"
@@ -11466,145 +11679,147 @@ msgstr "Memory usage history"
 
 #: taskmgr.rc:428 taskmgr.rc:327
 msgid "Debug Channels"
-msgstr ""
+msgstr "Debug Channels"
 
 #: taskmgr.rc:439
 msgid "Processor Affinity"
-msgstr ""
+msgstr "Processor Affinity"
 
 #: taskmgr.rc:444
 msgid ""
 "The Processor Affinity setting controls which CPUs the process will be "
 "allowed to execute on."
 msgstr ""
+"The Processor Affinity setting controls which CPUs the process will be "
+"allowed to execute on."
 
 #: taskmgr.rc:446
 msgid "CPU 0"
-msgstr ""
+msgstr "CPU 0"
 
 #: taskmgr.rc:448
 msgid "CPU 1"
-msgstr ""
+msgstr "CPU 1"
 
 #: taskmgr.rc:450
 msgid "CPU 2"
-msgstr ""
+msgstr "CPU 2"
 
 #: taskmgr.rc:452
 msgid "CPU 3"
-msgstr ""
+msgstr "CPU 3"
 
 #: taskmgr.rc:454
 msgid "CPU 4"
-msgstr ""
+msgstr "CPU 4"
 
 #: taskmgr.rc:456
 msgid "CPU 5"
-msgstr ""
+msgstr "CPU 5"
 
 #: taskmgr.rc:458
 msgid "CPU 6"
-msgstr ""
+msgstr "CPU 6"
 
 #: taskmgr.rc:460
 msgid "CPU 7"
-msgstr ""
+msgstr "CPU 7"
 
 #: taskmgr.rc:462
 msgid "CPU 8"
-msgstr ""
+msgstr "CPU 8"
 
 #: taskmgr.rc:464
 msgid "CPU 9"
-msgstr ""
+msgstr "CPU 9"
 
 #: taskmgr.rc:466
 msgid "CPU 10"
-msgstr ""
+msgstr "CPU 10"
 
 #: taskmgr.rc:468
 msgid "CPU 11"
-msgstr ""
+msgstr "CPU 11"
 
 #: taskmgr.rc:470
 msgid "CPU 12"
-msgstr ""
+msgstr "CPU 12"
 
 #: taskmgr.rc:472
 msgid "CPU 13"
-msgstr ""
+msgstr "CPU 13"
 
 #: taskmgr.rc:474
 msgid "CPU 14"
-msgstr ""
+msgstr "CPU 14"
 
 #: taskmgr.rc:476
 msgid "CPU 15"
-msgstr ""
+msgstr "CPU 15"
 
 #: taskmgr.rc:478
 msgid "CPU 16"
-msgstr ""
+msgstr "CPU 16"
 
 #: taskmgr.rc:480
 msgid "CPU 17"
-msgstr ""
+msgstr "CPU 17"
 
 #: taskmgr.rc:482
 msgid "CPU 18"
-msgstr ""
+msgstr "CPU 18"
 
 #: taskmgr.rc:484
 msgid "CPU 19"
-msgstr ""
+msgstr "CPU 19"
 
 #: taskmgr.rc:486
 msgid "CPU 20"
-msgstr ""
+msgstr "CPU 20"
 
 #: taskmgr.rc:488
 msgid "CPU 21"
-msgstr ""
+msgstr "CPU 21"
 
 #: taskmgr.rc:490
 msgid "CPU 22"
-msgstr ""
+msgstr "CPU 22"
 
 #: taskmgr.rc:492
 msgid "CPU 23"
-msgstr ""
+msgstr "CPU 23"
 
 #: taskmgr.rc:494
 msgid "CPU 24"
-msgstr ""
+msgstr "CPU 24"
 
 #: taskmgr.rc:496
 msgid "CPU 25"
-msgstr ""
+msgstr "CPU 25"
 
 #: taskmgr.rc:498
 msgid "CPU 26"
-msgstr ""
+msgstr "CPU 26"
 
 #: taskmgr.rc:500
 msgid "CPU 27"
-msgstr ""
+msgstr "CPU 27"
 
 #: taskmgr.rc:502
 msgid "CPU 28"
-msgstr ""
+msgstr "CPU 28"
 
 #: taskmgr.rc:504
 msgid "CPU 29"
-msgstr ""
+msgstr "CPU 29"
 
 #: taskmgr.rc:506
 msgid "CPU 30"
-msgstr ""
+msgstr "CPU 30"
 
 #: taskmgr.rc:508
 msgid "CPU 31"
-msgstr ""
+msgstr "CPU 31"
 
 #: taskmgr.rc:514
 msgid "Select Columns"
@@ -11614,6 +11829,7 @@ msgstr "Select Columns"
 msgid ""
 "Select the columns that will appear on the Process page of the Task Manager."
 msgstr ""
+"Select the columns that will appear on the Process page of the Task Manager."
 
 #: taskmgr.rc:521
 msgid "&Image Name"
@@ -11629,7 +11845,7 @@ msgstr "&CPU Usage"
 
 #: taskmgr.rc:527
 msgid "CPU Tim&e"
-msgstr ""
+msgstr "CPU Tim&e"
 
 #: taskmgr.rc:529
 msgid "&Memory Usage"
@@ -11653,11 +11869,11 @@ msgstr "&USER Objects"
 
 #: taskmgr.rc:539 taskmgr.rc:281
 msgid "I/O Reads"
-msgstr ""
+msgstr "I/O Reads"
 
 #: taskmgr.rc:541 taskmgr.rc:282
 msgid "I/O Read Bytes"
-msgstr ""
+msgstr "I/O Read Bytes"
 
 #: taskmgr.rc:543
 msgid "&Session ID"
@@ -11673,7 +11889,7 @@ msgstr "Page F&aults Delta"
 
 #: taskmgr.rc:549
 msgid "&Virtual Memory Size"
-msgstr ""
+msgstr "&Virtual Memory Size"
 
 #: taskmgr.rc:551
 msgid "Pa&ged Pool"
@@ -11685,27 +11901,27 @@ msgstr "N&on-paged Pool"
 
 #: taskmgr.rc:555
 msgid "Base P&riority"
-msgstr ""
+msgstr "Base P&riority"
 
 #: taskmgr.rc:557
 msgid "&Handle Count"
-msgstr ""
+msgstr "&Handle Count"
 
 #: taskmgr.rc:559
 msgid "&Thread Count"
-msgstr ""
+msgstr "&Thread Count"
 
 #: taskmgr.rc:561 taskmgr.rc:292
 msgid "GDI Objects"
-msgstr ""
+msgstr "GDI Objects"
 
 #: taskmgr.rc:563 taskmgr.rc:293
 msgid "I/O Writes"
-msgstr ""
+msgstr "I/O Writes"
 
 #: taskmgr.rc:565 taskmgr.rc:294
 msgid "I/O Write Bytes"
-msgstr ""
+msgstr "I/O Write Bytes"
 
 #: taskmgr.rc:567 taskmgr.rc:295
 msgid "I/O Other"
@@ -11713,15 +11929,15 @@ msgstr "I/O Other"
 
 #: taskmgr.rc:569 taskmgr.rc:296
 msgid "I/O Other Bytes"
-msgstr ""
+msgstr "I/O Other Bytes"
 
 #: taskmgr.rc:182
 msgid "Create New Task"
-msgstr ""
+msgstr "Create New Task"
 
 #: taskmgr.rc:187
 msgid "Runs a new program"
-msgstr ""
+msgstr "Runs a new program"
 
 #: taskmgr.rc:188
 msgid "Task Manager remains in front of all other windows unless minimized"
@@ -11737,23 +11953,23 @@ msgstr "Hide the Task Manager when it is minimised"
 
 #: taskmgr.rc:192
 msgid "Force Task Manager to update now, regardless of Update Speed setting"
-msgstr ""
+msgstr "Force Task Manager to update now, regardless of Update Speed setting"
 
 #: taskmgr.rc:193
 msgid "Displays tasks by using large icons"
-msgstr ""
+msgstr "Displays tasks by using large icons"
 
 #: taskmgr.rc:194
 msgid "Displays tasks by using small icons"
-msgstr ""
+msgstr "Displays tasks by using small icons"
 
 #: taskmgr.rc:195
 msgid "Displays information about each task"
-msgstr ""
+msgstr "Displays information about each task"
 
 #: taskmgr.rc:196
 msgid "Updates the display twice per second"
-msgstr ""
+msgstr "Updates the display twice per second"
 
 #: taskmgr.rc:197
 msgid "Updates the display every two seconds"
@@ -11761,19 +11977,19 @@ msgstr ""
 
 #: taskmgr.rc:198
 msgid "Updates the display every four seconds"
-msgstr ""
+msgstr "Updates the display every four seconds"
 
 #: taskmgr.rc:203
 msgid "Does not automatically update"
-msgstr ""
+msgstr "Does not automatically update"
 
 #: taskmgr.rc:205
 msgid "Tiles the windows horizontally on the desktop"
-msgstr ""
+msgstr "Tiles the windows horizontally on the desktop"
 
 #: taskmgr.rc:206
 msgid "Tiles the windows vertically on the desktop"
-msgstr ""
+msgstr "Tiles the windows vertically on the desktop"
 
 #: taskmgr.rc:207
 msgid "Minimizes the windows"
@@ -11785,7 +12001,7 @@ msgstr "Maximises the windows"
 
 #: taskmgr.rc:209
 msgid "Cascades the windows diagonally on the desktop"
-msgstr ""
+msgstr "Cascades the windows diagonally on the desktop"
 
 #: taskmgr.rc:210
 msgid "Brings the window front, but does not switch to it"
@@ -11793,95 +12009,95 @@ msgstr ""
 
 #: taskmgr.rc:211
 msgid "Displays Task Manager help topics"
-msgstr ""
+msgstr "Displays Task Manager help topics"
 
 #: taskmgr.rc:212
 msgid "Displays program information, version number, and copyright"
-msgstr ""
+msgstr "Displays program information, version number, and copyright"
 
 #: taskmgr.rc:213
 msgid "Exits the Task Manager application"
-msgstr ""
+msgstr "Exits the Task Manager application"
 
 #: taskmgr.rc:215
 msgid "Shows 16-bit tasks under the associated ntvdm.exe"
-msgstr ""
+msgstr "Shows 16-bit tasks under the associated ntvdm.exe"
 
 #: taskmgr.rc:216
 msgid "Select which columns will be visible on the Process page"
-msgstr ""
+msgstr "Select which columns will be visible on the Process page"
 
 #: taskmgr.rc:217
 msgid "Displays kernel time in the performance graphs"
-msgstr ""
+msgstr "Displays kernel time in the performance graphs"
 
 #: taskmgr.rc:219
 msgid "A single history graph shows total CPU usage"
-msgstr ""
+msgstr "A single history graph shows total CPU usage"
 
 #: taskmgr.rc:220
 msgid "Each CPU has its own history graph"
-msgstr ""
+msgstr "Each CPU has its own history graph"
 
 #: taskmgr.rc:222
 msgid "Brings a task to the foreground, switch focus to that task"
-msgstr ""
+msgstr "Brings a task to the foreground, switch focus to that task"
 
 #: taskmgr.rc:227
 msgid "Tells the selected tasks to close"
-msgstr ""
+msgstr "Tells the selected tasks to close"
 
 #: taskmgr.rc:228
 msgid "Switches the focus to the process of the selected task"
-msgstr ""
+msgstr "Switches the focus to the process of the selected task"
 
 #: taskmgr.rc:229
 msgid "Restores the Task Manager from its hidden state"
-msgstr ""
+msgstr "Restores the Task Manager from its hidden state"
 
 #: taskmgr.rc:230
 msgid "Removes the process from the system"
-msgstr ""
+msgstr "Removes the process from the system"
 
 #: taskmgr.rc:232
 msgid "Removes this process and all descendants from the system"
-msgstr ""
+msgstr "Removes this process and all descendants from the system"
 
 #: taskmgr.rc:233
 msgid "Attaches the debugger to this process"
-msgstr ""
+msgstr "Attaches the debugger to this process"
 
 #: taskmgr.rc:235
 msgid "Controls which processors the process will be allowed to run on"
-msgstr ""
+msgstr "Controls which processors the process will be allowed to run on"
 
 #: taskmgr.rc:237
 msgid "Sets process to the REALTIME priority class"
-msgstr ""
+msgstr "Sets process to the REALTIME priority class"
 
 #: taskmgr.rc:238
 msgid "Sets process to the HIGH priority class"
-msgstr ""
+msgstr "Sets process to the HIGH priority class"
 
 #: taskmgr.rc:240
 msgid "Sets process to the ABOVE NORMAL priority class"
-msgstr ""
+msgstr "Sets process to the ABOVE NORMAL priority class"
 
 #: taskmgr.rc:242
 msgid "Sets process to the NORMAL priority class"
-msgstr ""
+msgstr "Sets process to the NORMAL priority class"
 
 #: taskmgr.rc:244
 msgid "Sets process to the BELOW NORMAL priority class"
-msgstr ""
+msgstr "Sets process to the BELOW NORMAL priority class"
 
 #: taskmgr.rc:245
 msgid "Sets process to the LOW priority class"
-msgstr ""
+msgstr "Sets process to the LOW priority class"
 
 #: taskmgr.rc:247
 msgid "Controls Debug Channels"
-msgstr ""
+msgstr "Controls Debug Channels"
 
 #: taskmgr.rc:264
 msgid "Performance"
@@ -11889,15 +12105,15 @@ msgstr "Performance"
 
 #: taskmgr.rc:265
 msgid "CPU Usage: %3d%%"
-msgstr ""
+msgstr "CPU Usage: %3d%%"
 
 #: taskmgr.rc:266
 msgid "Processes: %d"
-msgstr ""
+msgstr "Processes: %d"
 
 #: taskmgr.rc:267
 msgid "Mem Usage: %1!u!kB / %2!u!kB"
-msgstr ""
+msgstr "Mem Usage: %1!u!kB / %2!u!kB"
 
 #: taskmgr.rc:272
 msgid "Image Name"
@@ -11905,7 +12121,7 @@ msgstr "Image Name"
 
 #: taskmgr.rc:273
 msgid "PID"
-msgstr ""
+msgstr "PID"
 
 #: taskmgr.rc:274
 msgid "CPU"
@@ -11913,7 +12129,7 @@ msgstr "CPU"
 
 #: taskmgr.rc:275
 msgid "CPU Time"
-msgstr ""
+msgstr "CPU Time"
 
 #: taskmgr.rc:276
 msgid "Mem Usage"
@@ -11921,7 +12137,7 @@ msgstr "Mem Usage"
 
 #: taskmgr.rc:277
 msgid "Mem Delta"
-msgstr ""
+msgstr "Mem Delta"
 
 #: taskmgr.rc:278
 msgid "Peak Mem Usage"
@@ -11945,11 +12161,11 @@ msgstr "Username"
 
 #: taskmgr.rc:285
 msgid "PF Delta"
-msgstr ""
+msgstr "PF Delta"
 
 #: taskmgr.rc:286
 msgid "VM Size"
-msgstr ""
+msgstr "VM Size"
 
 #: taskmgr.rc:287
 msgid "Paged Pool"
@@ -11957,15 +12173,15 @@ msgstr "Paged Pool"
 
 #: taskmgr.rc:288
 msgid "NP Pool"
-msgstr ""
+msgstr "NP Pool"
 
 #: taskmgr.rc:289
 msgid "Base Pri"
-msgstr ""
+msgstr "Base Pri"
 
 #: taskmgr.rc:301
 msgid "Task Manager Warning"
-msgstr ""
+msgstr "Task Manager Warning"
 
 #: taskmgr.rc:304
 msgid ""
@@ -11973,10 +12189,13 @@ msgid ""
 "cause undesired results including system instability. Are you\n"
 "sure you want to change the priority class?"
 msgstr ""
+"WARNING: Changing the priority class of this process may\n"
+"cause undesired results including system instability. Are you\n"
+"sure you want to change the priority class?"
 
 #: taskmgr.rc:305
 msgid "Unable to Change Priority"
-msgstr ""
+msgstr "Unable to Change Priority"
 
 #: taskmgr.rc:310
 msgid ""
@@ -11986,6 +12205,11 @@ msgid ""
 "data before it is terminated. Are you sure you want to\n"
 "terminate the process?"
 msgstr ""
+"WARNING: Terminating a process can cause undesired\n"
+"results including loss of data and system instability. The\n"
+"process will not be given the chance to save its state or\n"
+"data before it is terminated. Are you sure you want to\n"
+"terminate the process?"
 
 #: taskmgr.rc:311
 msgid "Unable to Terminate Process"
@@ -11996,14 +12220,16 @@ msgid ""
 "WARNING: Debugging this process may result in loss of data.\n"
 "Are you sure you wish to attach the debugger?"
 msgstr ""
+"WARNING: Debugging this process may result in loss of data.\n"
+"Are you sure you wish to attach the debugger?"
 
 #: taskmgr.rc:314
 msgid "Unable to Debug Process"
-msgstr ""
+msgstr "Unable to Debug Process"
 
 #: taskmgr.rc:315
 msgid "The process must have affinity with at least one processor"
-msgstr ""
+msgstr "The process must have affinity with at least one processor"
 
 #: taskmgr.rc:316
 msgid "Invalid Option"
@@ -12011,23 +12237,23 @@ msgstr "Invalid Option"
 
 #: taskmgr.rc:317
 msgid "Unable to Access or Set Process Affinity"
-msgstr ""
+msgstr "Unable to Access or Set Process Affinity"
 
 #: taskmgr.rc:322
 msgid "System Idle Process"
-msgstr ""
+msgstr "System Idle Process"
 
 #: taskmgr.rc:323
 msgid "Not Responding"
-msgstr ""
+msgstr "Not Responding"
 
 #: taskmgr.rc:324
 msgid "Running"
-msgstr ""
+msgstr "Running"
 
 #: taskmgr.rc:325
 msgid "Task"
-msgstr ""
+msgstr "Task"
 
 #: uninstaller.rc:26
 msgid "Wine Application Uninstaller"
@@ -12045,15 +12271,15 @@ msgstr ""
 
 #: view.rc:33
 msgid "&Pan"
-msgstr ""
+msgstr "&Pan"
 
 #: view.rc:35
 msgid "&Scale to Window"
-msgstr ""
+msgstr "&Scale to Window"
 
 #: view.rc:37
 msgid "&Left"
-msgstr ""
+msgstr "&Left"
 
 #: view.rc:38
 msgid "&Right"
@@ -12061,7 +12287,7 @@ msgstr "&Right"
 
 #: view.rc:46
 msgid "Regular Metafile Viewer"
-msgstr ""
+msgstr "Regular Metafile Viewer"
 
 #: wineboot.rc:28
 msgid "Waiting for Program"
@@ -12078,6 +12304,10 @@ msgid ""
 "\n"
 "If you terminate the process you may lose all unsaved data."
 msgstr ""
+"A simulated log-off or shutdown is in progress, but this program isn't "
+"responding.\n"
+"\n"
+"If you terminate the process you may lose all unsaved data."
 
 #: wineboot.rc:39
 msgid "Wine"
@@ -12085,7 +12315,7 @@ msgstr "Wine"
 
 #: wineboot.rc:43
 msgid "The Wine configuration in %s is being updated, please wait..."
-msgstr ""
+msgstr "The Wine configuration in %s is being updated, please wait..."
 
 #: winecfg.rc:132
 msgid ""
@@ -12121,6 +12351,9 @@ msgid ""
 "linked to the Libraries and Graphics tabs to allow you to change systemwide "
 "or per-application settings in those tabs as well."
 msgstr ""
+"Wine can mimic different Windows versions for each application. This tab is "
+"linked to the Libraries and Graphics tabs to allow you to change system-wide "
+"or per-application settings in those tabs as well."
 
 #: winecfg.rc:150
 msgid "&Add application..."
@@ -12140,19 +12373,19 @@ msgstr "Window settings"
 
 #: winecfg.rc:161
 msgid "Automatically capture the &mouse in full-screen windows"
-msgstr ""
+msgstr "Automatically capture the &mouse in full-screen windows"
 
 #: winecfg.rc:162
 msgid "Allow the window manager to &decorate the windows"
-msgstr ""
+msgstr "Allow the window manager to &decorate the windows"
 
 #: winecfg.rc:163
 msgid "Allow the &window manager to control the windows"
-msgstr ""
+msgstr "Allow the &window manager to control the windows"
 
 #: winecfg.rc:164
 msgid "&Emulate a virtual desktop"
-msgstr ""
+msgstr "&Emulate a virtual desktop"
 
 #: winecfg.rc:166
 msgid "Desktop &size:"
@@ -12160,11 +12393,11 @@ msgstr "Desktop &size:"
 
 #: winecfg.rc:171
 msgid "Screen resolution"
-msgstr ""
+msgstr "Screen resolution"
 
 #: winecfg.rc:175
 msgid "This is a sample text using 10 point Tahoma"
-msgstr ""
+msgstr "This is a sample text using 10 point Tahoma"
 
 #: winecfg.rc:182
 msgid "DLL overrides"
@@ -12176,18 +12409,21 @@ msgid ""
 "(provided by Wine) or native (taken from Windows or provided by the "
 "application)."
 msgstr ""
+"Dynamic Link Libraries can be specified individually to be either builtin "
+"(provided by Wine) or native (taken from Windows or provided by the "
+"application)."
 
 #: winecfg.rc:185
 msgid "&New override for library:"
-msgstr ""
+msgstr "&New override for library:"
 
 #: winecfg.rc:187 wordpad.rc:244
 msgid "&Add"
-msgstr ""
+msgstr "&Add"
 
 #: winecfg.rc:188
 msgid "Existing &overrides:"
-msgstr ""
+msgstr "Existing &overrides:"
 
 #: winecfg.rc:190
 msgid "&Edit..."
@@ -12199,11 +12435,11 @@ msgstr "Edit Override"
 
 #: winecfg.rc:199
 msgid "Load order"
-msgstr ""
+msgstr "Load order"
 
 #: winecfg.rc:200
 msgid "&Builtin (Wine)"
-msgstr ""
+msgstr "&Builtin (Wine)"
 
 #: winecfg.rc:201
 msgid "&Native (Windows)"
@@ -12211,11 +12447,11 @@ msgstr "&Native (Windows)"
 
 #: winecfg.rc:202
 msgid "Bui&ltin then Native"
-msgstr ""
+msgstr "Bui&ltin then Native"
 
 #: winecfg.rc:203
 msgid "Nati&ve then Builtin"
-msgstr ""
+msgstr "Nati&ve then Builtin"
 
 #: winecfg.rc:204
 msgid "&Disable"
@@ -12234,14 +12470,16 @@ msgid ""
 "Failed to connect to the mount manager, the drive configuration cannot be "
 "edited."
 msgstr ""
+"Failed to connect to the mount manager, the drive configuration cannot be "
+"edited."
 
 #: winecfg.rc:227
 msgid "&Add..."
-msgstr ""
+msgstr "&Add..."
 
 #: winecfg.rc:229
 msgid "Auto&detect"
-msgstr ""
+msgstr "Auto&detect"
 
 #: winecfg.rc:232
 msgid "&Path:"
@@ -12249,11 +12487,11 @@ msgstr "&Path:"
 
 #: winecfg.rc:239 winecfg.rc:35
 msgid "Show &Advanced"
-msgstr ""
+msgstr "Show &Advanced"
 
 #: winecfg.rc:240
 msgid "De&vice:"
-msgstr ""
+msgstr "De&vice:"
 
 #: winecfg.rc:242
 msgid "Bro&wse..."
@@ -12261,11 +12499,11 @@ msgstr "Bro&wse..."
 
 #: winecfg.rc:244
 msgid "&Label:"
-msgstr ""
+msgstr "&Label:"
 
 #: winecfg.rc:246
 msgid "S&erial:"
-msgstr ""
+msgstr "S&erial:"
 
 #: winecfg.rc:249
 msgid "Show &dot files"
@@ -12273,7 +12511,7 @@ msgstr "Show &dot files"
 
 #: winecfg.rc:256
 msgid "Driver diagnostics"
-msgstr ""
+msgstr "Driver diagnostics"
 
 #: winecfg.rc:258
 msgid "Defaults"
@@ -12285,19 +12523,19 @@ msgstr "Output device:"
 
 #: winecfg.rc:260
 msgid "Voice output device:"
-msgstr ""
+msgstr "Voice output device:"
 
 #: winecfg.rc:261
 msgid "Input device:"
-msgstr ""
+msgstr "Input device:"
 
 #: winecfg.rc:262
 msgid "Voice input device:"
-msgstr ""
+msgstr "Voice input device:"
 
 #: winecfg.rc:267
 msgid "&Test Sound"
-msgstr ""
+msgstr "&Test Sound"
 
 #: winecfg.rc:274
 msgid "Appearance"
@@ -12329,39 +12567,39 @@ msgstr "&Link to:"
 
 #: winecfg.rc:31
 msgid "Libraries"
-msgstr ""
+msgstr "Libraries"
 
 #: winecfg.rc:32
 msgid "Drives"
-msgstr ""
+msgstr "Drives"
 
 #: winecfg.rc:33
 msgid "Select the Unix target directory, please."
-msgstr ""
+msgstr "Select the Unix target directory, please."
 
 #: winecfg.rc:34
 msgid "Hide &Advanced"
-msgstr ""
+msgstr "Hide &Advanced"
 
 #: winecfg.rc:36
 msgid "(No Theme)"
-msgstr ""
+msgstr "(No Theme)"
 
 #: winecfg.rc:37
 msgid "Graphics"
-msgstr ""
+msgstr "Graphics"
 
 #: winecfg.rc:38
 msgid "Desktop Integration"
-msgstr ""
+msgstr "Desktop Integration"
 
 #: winecfg.rc:39
 msgid "Audio"
-msgstr ""
+msgstr "Audio"
 
 #: winecfg.rc:40
 msgid "About"
-msgstr ""
+msgstr "About"
 
 #: winecfg.rc:41
 msgid "Wine configuration"
@@ -12369,7 +12607,7 @@ msgstr "Wine configuration"
 
 #: winecfg.rc:43
 msgid "Theme files (*.msstyles; *.theme)"
-msgstr ""
+msgstr "Theme files (*.msstyles; *.theme)"
 
 #: winecfg.rc:44
 msgid "Select a theme file"
@@ -12377,11 +12615,11 @@ msgstr "Select a theme file"
 
 #: winecfg.rc:45
 msgid "Folder"
-msgstr ""
+msgstr "Folder"
 
 #: winecfg.rc:46
 msgid "Links to"
-msgstr ""
+msgstr "Links to"
 
 #: winecfg.rc:42
 msgid "Wine configuration for %s"
@@ -12389,45 +12627,47 @@ msgstr "Wine configuration for %s"
 
 #: winecfg.rc:81
 msgid "Selected driver: %s"
-msgstr ""
+msgstr "Selected driver: %s"
 
 #: winecfg.rc:82
 msgid "(None)"
-msgstr ""
+msgstr "(None)"
 
 #: winecfg.rc:83
 msgid "Audio test failed!"
-msgstr ""
+msgstr "Audio test failed!"
 
 #: winecfg.rc:85
 msgid "(System default)"
-msgstr ""
+msgstr "(System default)"
 
 #: winecfg.rc:51
 msgid ""
 "Changing the load order of this library is not recommended.\n"
 "Are you sure you want to do this?"
 msgstr ""
+"Changing the load order of this library is not recommended.\n"
+"Are you sure you want to do this?"
 
 #: winecfg.rc:52
 msgid "Warning: system library"
-msgstr ""
+msgstr "Warning: system library"
 
 #: winecfg.rc:53
 msgid "native"
-msgstr ""
+msgstr "native"
 
 #: winecfg.rc:54
 msgid "builtin"
-msgstr ""
+msgstr "builtin"
 
 #: winecfg.rc:55
 msgid "native, builtin"
-msgstr ""
+msgstr "native, builtin"
 
 #: winecfg.rc:56
 msgid "builtin, native"
-msgstr ""
+msgstr "builtin, native"
 
 #: winecfg.rc:57
 msgid "disabled"
@@ -12439,35 +12679,35 @@ msgstr "Default Settings"
 
 #: winecfg.rc:59
 msgid "Wine Programs (*.exe; *.exe.so)"
-msgstr ""
+msgstr "Wine Programs (*.exe; *.exe.so)"
 
 #: winecfg.rc:60
 msgid "Use global settings"
-msgstr ""
+msgstr "Use global settings"
 
 #: winecfg.rc:61
 msgid "Select an executable file"
-msgstr ""
+msgstr "Select an executable file"
 
 #: winecfg.rc:66
 msgid "Autodetect"
-msgstr ""
+msgstr "Autodetect"
 
 #: winecfg.rc:67
 msgid "Local hard disk"
-msgstr ""
+msgstr "Local hard disk"
 
 #: winecfg.rc:68
 msgid "Network share"
-msgstr ""
+msgstr "Network share"
 
 #: winecfg.rc:69
 msgid "Floppy disk"
-msgstr ""
+msgstr "Floppy disk"
 
 #: winecfg.rc:70
 msgid "CD-ROM"
-msgstr ""
+msgstr "CD-ROM"
 
 #: winecfg.rc:71
 msgid ""
@@ -12475,10 +12715,13 @@ msgid ""
 "\n"
 "Each drive must have a letter, from A to Z, so you cannot have more than 26."
 msgstr ""
+"You cannot add any more drives.\n"
+"\n"
+"Each drive must have a letter, from A to Z, so you cannot have more than 26."
 
 #: winecfg.rc:72
 msgid "System drive"
-msgstr ""
+msgstr "System drive"
 
 #: winecfg.rc:73
 msgid ""
@@ -12487,11 +12730,15 @@ msgid ""
 "Most Windows applications expect drive C to exist, and will die messily if "
 "it doesn't. If you proceed remember to recreate it!"
 msgstr ""
+"Are you sure you want to delete drive C?\n"
+"\n"
+"Most Windows applications expect drive C to exist, and will die messily if "
+"it doesn't. If you proceed remember to recreate it!"
 
 #: winecfg.rc:74
 msgctxt "Drive letter"
 msgid "Letter"
-msgstr ""
+msgstr "Letter"
 
 #: winecfg.rc:75
 msgid "Drive Mapping"
@@ -12503,6 +12750,9 @@ msgid ""
 "\n"
 "Remember to click 'Add' in the Drives tab to create one!\n"
 msgstr ""
+"You don't have a drive C. This is not so great.\n"
+"\n"
+"Remember to click 'Add' in the Drives tab to create one!\n"
 
 #: winecfg.rc:90
 msgid "Controls Background"
@@ -12630,7 +12880,7 @@ msgstr "Menu Bar"
 
 #: wineconsole.rc:60
 msgid "Cursor size"
-msgstr ""
+msgstr "Cursor size"
 
 #: wineconsole.rc:61
 msgid "&Small"
@@ -12638,7 +12888,7 @@ msgstr "&Small"
 
 #: wineconsole.rc:62
 msgid "&Medium"
-msgstr ""
+msgstr "&Medium"
 
 #: wineconsole.rc:63
 msgid "&Large"
@@ -12650,7 +12900,7 @@ msgstr "Control"
 
 #: wineconsole.rc:66
 msgid "Popup menu"
-msgstr ""
+msgstr "Popup menu"
 
 #: wineconsole.rc:67
 msgid "&Control"
@@ -12658,11 +12908,11 @@ msgstr "&Control"
 
 #: wineconsole.rc:68
 msgid "S&hift"
-msgstr ""
+msgstr "S&hift"
 
 #: wineconsole.rc:69
 msgid "Quick edit"
-msgstr ""
+msgstr "Quick edit"
 
 #: wineconsole.rc:70
 msgid "&enable"
@@ -12670,11 +12920,11 @@ msgstr "&enable"
 
 #: wineconsole.rc:72
 msgid "Command history"
-msgstr ""
+msgstr "Command history"
 
 #: wineconsole.rc:73
 msgid "&Number of recalled commands:"
-msgstr ""
+msgstr "&Number of recalled commands:"
 
 #: wineconsole.rc:76
 msgid "&Remove doubles"
@@ -12698,7 +12948,7 @@ msgstr "Buffer zone"
 
 #: wineconsole.rc:101
 msgid "&Width:"
-msgstr ""
+msgstr "&Width:"
 
 #: wineconsole.rc:104
 msgid "&Height:"
@@ -12710,7 +12960,7 @@ msgstr "Window size"
 
 #: wineconsole.rc:109
 msgid "W&idth:"
-msgstr ""
+msgstr "W&idth:"
 
 #: wineconsole.rc:112
 msgid "H&eight:"
@@ -12734,11 +12984,11 @@ msgstr "Console parameters"
 
 #: wineconsole.rc:128
 msgid "Retain these settings for later sessions"
-msgstr ""
+msgstr "Retain these settings for later sessions"
 
 #: wineconsole.rc:129
 msgid "Modify only current session"
-msgstr ""
+msgstr "Modify only current session"
 
 #: wineconsole.rc:26
 msgid "Set &Defaults"
@@ -12746,7 +12996,7 @@ msgstr "Set &Defaults"
 
 #: wineconsole.rc:28
 msgid "&Mark"
-msgstr ""
+msgstr "&Mark"
 
 #: wineconsole.rc:31
 msgid "&Select all"
@@ -12762,11 +13012,11 @@ msgstr "S&earch"
 
 #: wineconsole.rc:36
 msgid "Setup - Default settings"
-msgstr ""
+msgstr "Setup - Default settings"
 
 #: wineconsole.rc:37
 msgid "Setup - Current settings"
-msgstr ""
+msgstr "Setup - Current settings"
 
 #: wineconsole.rc:38
 msgid "Configuration error"
@@ -12778,19 +13028,19 @@ msgstr ""
 
 #: wineconsole.rc:34
 msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
-msgstr ""
+msgstr "Each character is %1!u! pixels wide and %2!u! pixels high"
 
 #: wineconsole.rc:35
 msgid "This is a test"
-msgstr ""
+msgstr "This is a test"
 
 #: wineconsole.rc:41
 msgid "wineconsole: Couldn't parse event id\n"
-msgstr ""
+msgstr "wineconsole: Couldn't parse event id\n"
 
 #: wineconsole.rc:42
 msgid "wineconsole: Invalid backend\n"
-msgstr ""
+msgstr "wineconsole: Invalid backend\n"
 
 #: wineconsole.rc:43
 msgid "wineconsole: Unrecognized command line option\n"
@@ -12798,13 +13048,15 @@ msgstr "wineconsole: Unrecognised command line option\n"
 
 #: wineconsole.rc:44
 msgid "Starts a program in a Wine console\n"
-msgstr ""
+msgstr "Starts a program in a Wine console\n"
 
 #: wineconsole.rc:45
 msgid ""
 "wineconsole: Starting program %s failed.\n"
 "The command is invalid.\n"
 msgstr ""
+"wineconsole: Starting program %s failed.\n"
+"The command is invalid.\n"
 
 #: wineconsole.rc:47
 msgid ""
@@ -12814,6 +13066,11 @@ msgid ""
 "\n"
 "Options:\n"
 msgstr ""
+"\n"
+"Usage:\n"
+"  wineconsole [options] <command>\n"
+"\n"
+"Options:\n"
 
 #: wineconsole.rc:49
 msgid ""
@@ -12822,10 +13079,15 @@ msgid ""
 "                           try to setup the current terminal as a Wine "
 "console.\n"
 msgstr ""
+"  --backend={user|curses}  Choosing user will spawn a new window, curses "
+"will\n"
+"                           try to setup the current terminal as a Wine "
+"console.\n"
 
 #: wineconsole.rc:50
 msgid "  <command>                The Wine program to launch in the console.\n"
 msgstr ""
+"  <command>                The Wine program to launch in the console.\n"
 
 #: wineconsole.rc:51
 msgid ""
@@ -12835,6 +13097,11 @@ msgid ""
 "Starts the Wine command prompt in a Wine console.\n"
 "\n"
 msgstr ""
+"\n"
+"Example:\n"
+"  wineconsole cmd\n"
+"Starts the Wine command prompt in a Wine console.\n"
+"\n"
 
 #: winedbg.rc:46
 msgid "Program Error"
@@ -12845,6 +13112,8 @@ msgid ""
 "The program %s has encountered a serious problem and needs to close. We are "
 "sorry for the inconvenience."
 msgstr ""
+"The program %s has encountered a serious problem and needs to close. We are "
+"sorry for the inconvenience."
 
 #: winedbg.rc:55
 msgid ""
@@ -12852,6 +13121,9 @@ msgid ""
 "may want to check the <a href=\"http://appdb.winehq.org\">Application "
 "Database</a> for tips about running this application."
 msgstr ""
+"This can be caused by a problem in the program or a deficiency in Wine. You "
+"may want to check the <a href=\"http://appdb.winehq.org\">Application "
+"Database</a> for tips about running this application."
 
 #: winedbg.rc:58
 msgid "Show &Details"
@@ -12868,18 +13140,22 @@ msgid ""
 "button, then <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a> "
 "and attach that file to the report."
 msgstr ""
+"If this problem is not present under Windows and has not been reported yet, "
+"you can save the detailed information to a file using the \"Save As\" "
+"button, then <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a> "
+"and attach that file to the report."
 
 #: winedbg.rc:35
 msgid "Wine program crash"
-msgstr ""
+msgstr "Wine program crash"
 
 #: winedbg.rc:36
 msgid "Internal errors - invalid parameters received"
-msgstr ""
+msgstr "Internal errors - invalid parameters received"
 
 #: winedbg.rc:37
 msgid "(unidentified)"
-msgstr ""
+msgstr "(unidentified)"
 
 #: winedbg.rc:40
 msgid "Saving failed"
@@ -12887,7 +13163,7 @@ msgstr "Saving failed"
 
 #: winedbg.rc:41
 msgid "Loading detailed information, please wait..."
-msgstr ""
+msgstr "Loading detailed information, please wait..."
 
 #: winefile.rc:26
 msgid "&Open\tEnter"
@@ -12903,23 +13179,23 @@ msgstr "Propert&ies\tAlt+Enter"
 
 #: winefile.rc:33
 msgid "&Run..."
-msgstr ""
+msgstr "&Run..."
 
 #: winefile.rc:35
 msgid "Cr&eate Directory..."
-msgstr ""
+msgstr "Cr&eate Directory..."
 
 #: winefile.rc:40
 msgid "&Disk"
-msgstr ""
+msgstr "&Disk"
 
 #: winefile.rc:41
 msgid "Connect &Network Drive..."
-msgstr ""
+msgstr "Connect &Network Drive..."
 
 #: winefile.rc:42
 msgid "&Disconnect Network Drive"
-msgstr ""
+msgstr "&Disconnect Network Drive"
 
 #: winefile.rc:48
 msgid "&Name"
@@ -12927,7 +13203,7 @@ msgstr "&Name"
 
 #: winefile.rc:49
 msgid "&All File Details"
-msgstr ""
+msgstr "&All File Details"
 
 #: winefile.rc:51
 msgid "&Sort by Name"
@@ -12935,15 +13211,15 @@ msgstr "&Sort by Name"
 
 #: winefile.rc:52
 msgid "Sort &by Type"
-msgstr ""
+msgstr "Sort &by Type"
 
 #: winefile.rc:53
 msgid "Sort by Si&ze"
-msgstr ""
+msgstr "Sort by Si&ze"
 
 #: winefile.rc:54
 msgid "Sort by &Date"
-msgstr ""
+msgstr "Sort by &Date"
 
 #: winefile.rc:56
 msgid "Filter by&..."
@@ -12951,11 +13227,11 @@ msgstr "Filter by&..."
 
 #: winefile.rc:63
 msgid "&Drivebar"
-msgstr ""
+msgstr "&Drivebar"
 
 #: winefile.rc:65
 msgid "F&ull Screen\tCtrl+Shift+S"
-msgstr ""
+msgstr "F&ull Screen\tCtrl+Shift+S"
 
 #: winefile.rc:71
 msgid "New &Window"
@@ -12963,7 +13239,7 @@ msgstr "New &Window"
 
 #: winefile.rc:72
 msgid "Cascading\tCtrl+F5"
-msgstr ""
+msgstr "Cascading\tCtrl+F5"
 
 #: winefile.rc:74
 msgid "Tile &Vertically\tCtrl+F4"
@@ -12979,7 +13255,7 @@ msgstr "Select destination"
 
 #: winefile.rc:135
 msgid "By File Type"
-msgstr ""
+msgstr "By File Type"
 
 #: winefile.rc:140
 msgid "File type"
@@ -13003,7 +13279,7 @@ msgstr "&Other files"
 
 #: winefile.rc:149
 msgid "Show Hidden/&System Files"
-msgstr ""
+msgstr "Show Hidden/&System Files"
 
 #: winefile.rc:160
 msgid "&File Name:"
@@ -13015,7 +13291,7 @@ msgstr "Full &Path:"
 
 #: winefile.rc:164
 msgid "Last Change:"
-msgstr ""
+msgstr "Last Change:"
 
 #: winefile.rc:168
 msgid "Cop&yright:"
@@ -13023,15 +13299,15 @@ msgstr "Cop&yright:"
 
 #: winefile.rc:170
 msgid "Size:"
-msgstr ""
+msgstr "Size:"
 
 #: winefile.rc:174
 msgid "H&idden"
-msgstr ""
+msgstr "H&idden"
 
 #: winefile.rc:175
 msgid "&Archive"
-msgstr ""
+msgstr "&Archive"
 
 #: winefile.rc:176
 msgid "&System"
@@ -13052,27 +13328,27 @@ msgstr "S"
 
 #: winefile.rc:87
 msgid "Applying font settings"
-msgstr ""
+msgstr "Applying font settings"
 
 #: winefile.rc:88
 msgid "Error while selecting new font."
-msgstr ""
+msgstr "Error while selecting new font."
 
 #: winefile.rc:93
 msgid "Wine File Manager"
-msgstr ""
+msgstr "Wine File Manager"
 
 #: winefile.rc:95
 msgid "root fs"
-msgstr ""
+msgstr "root fs"
 
 #: winefile.rc:96
 msgid "unixfs"
-msgstr ""
+msgstr "unixfs"
 
 #: winefile.rc:98
 msgid "Shell"
-msgstr ""
+msgstr "Shell"
 
 #: winefile.rc:99 winhlp32.rc:107 winhlp32.rc:82
 msgid "Not yet implemented"
@@ -13092,50 +13368,50 @@ msgstr "MDate"
 
 #: winefile.rc:109
 msgid "Index/Inode"
-msgstr ""
+msgstr "Index/Inode"
 
 #: winefile.rc:114
 msgid "%1 of %2 free"
-msgstr ""
+msgstr "%1 of %2 free"
 
 #: winefile.rc:115
 msgctxt "unit kilobyte"
 msgid "kB"
-msgstr ""
+msgstr "kB"
 
 #: winefile.rc:116
 msgctxt "unit megabyte"
 msgid "MB"
-msgstr ""
+msgstr "MB"
 
 #: winefile.rc:117
 msgctxt "unit gigabyte"
 msgid "GB"
-msgstr ""
+msgstr "GB"
 
 #: winemine.rc:34
 msgid "&Game"
-msgstr ""
+msgstr "&Game"
 
 #: winemine.rc:35
 msgid "&New\tF2"
-msgstr ""
+msgstr "&New\tF2"
 
 #: winemine.rc:37
 msgid "Question &Marks"
-msgstr ""
+msgstr "Question &Marks"
 
 #: winemine.rc:39
 msgid "&Beginner"
-msgstr ""
+msgstr "&Beginner"
 
 #: winemine.rc:40
 msgid "&Advanced"
-msgstr ""
+msgstr "&Advanced"
 
 #: winemine.rc:41
 msgid "&Expert"
-msgstr ""
+msgstr "&Expert"
 
 #: winemine.rc:42
 msgid "&Custom..."
@@ -13143,7 +13419,7 @@ msgstr "&Custom..."
 
 #: winemine.rc:44
 msgid "&Fastest Times"
-msgstr ""
+msgstr "&Fastest Times"
 
 #: winemine.rc:49
 msgid "&About WineMine"
@@ -13151,7 +13427,7 @@ msgstr "&About WineMine"
 
 #: winemine.rc:56
 msgid "Fastest Times"
-msgstr ""
+msgstr "Fastest Times"
 
 #: winemine.rc:58
 msgid "Fastest times"
@@ -13159,15 +13435,15 @@ msgstr "Fastest times"
 
 #: winemine.rc:59
 msgid "Beginner"
-msgstr ""
+msgstr "Beginner"
 
 #: winemine.rc:60
 msgid "Advanced"
-msgstr ""
+msgstr "Advanced"
 
 #: winemine.rc:61
 msgid "Expert"
-msgstr ""
+msgstr "Expert"
 
 #: winemine.rc:74
 msgid "Congratulations!"
@@ -13183,7 +13459,7 @@ msgstr "Custom Game"
 
 #: winemine.rc:86
 msgid "Rows"
-msgstr ""
+msgstr "Rows"
 
 #: winemine.rc:87
 msgid "Columns"
@@ -13191,19 +13467,19 @@ msgstr "Columns"
 
 #: winemine.rc:88
 msgid "Mines"
-msgstr ""
+msgstr "Mines"
 
 #: winemine.rc:27
 msgid "WineMine"
-msgstr ""
+msgstr "WineMine"
 
 #: winemine.rc:28
 msgid "Nobody"
-msgstr ""
+msgstr "Nobody"
 
 #: winemine.rc:29
 msgid "Copyright 2000 Joshua Thielen"
-msgstr ""
+msgstr "Copyright 2000 Joshua Thielen"
 
 #: winhlp32.rc:32
 msgid "Printer &setup..."
@@ -13271,11 +13547,11 @@ msgstr "Wine Help"
 
 #: winhlp32.rc:83
 msgid "Error while reading the help file `%s'"
-msgstr ""
+msgstr "Error while reading the help file `%s'"
 
 #: winhlp32.rc:85
 msgid "Summary"
-msgstr ""
+msgstr "Summary"
 
 #: winhlp32.rc:84
 msgid "&Index"
@@ -13283,23 +13559,23 @@ msgstr "&Index"
 
 #: winhlp32.rc:88
 msgid "Help files (*.hlp)"
-msgstr ""
+msgstr "Help files (*.hlp)"
 
 #: winhlp32.rc:89
 msgid "Cannot find '%s'. Do you want to find this file yourself?"
-msgstr ""
+msgstr "Cannot find '%s'. Do you want to find this file yourself?"
 
 #: winhlp32.rc:90
 msgid "Cannot find a richedit implementation... Aborting"
-msgstr ""
+msgstr "Cannot find a richedit implementation... Aborting"
 
 #: winhlp32.rc:91
 msgid "Help topics: "
-msgstr ""
+msgstr "Help topics: "
 
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
-msgstr ""
+msgstr "&New...\tCtrl+N"
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"
@@ -13315,19 +13591,19 @@ msgstr "&Select all\tCtrl+A"
 
 #: wordpad.rc:51
 msgid "Find &next\tF3"
-msgstr ""
+msgstr "Find &next\tF3"
 
 #: wordpad.rc:54
 msgid "Read-&only"
-msgstr ""
+msgstr "Read-&only"
 
 #: wordpad.rc:55
 msgid "&Modified"
-msgstr ""
+msgstr "&Modified"
 
 #: wordpad.rc:57
 msgid "E&xtras"
-msgstr ""
+msgstr "E&xtras"
 
 #: wordpad.rc:59
 msgid "Selection &info"
@@ -13335,39 +13611,39 @@ msgstr "Selection &info"
 
 #: wordpad.rc:60
 msgid "Character &format"
-msgstr ""
+msgstr "Character &format"
 
 #: wordpad.rc:61
 msgid "&Def. char format"
-msgstr ""
+msgstr "&Def. char format"
 
 #: wordpad.rc:62
 msgid "Paragrap&h format"
-msgstr ""
+msgstr "Paragrap&h format"
 
 #: wordpad.rc:63
 msgid "&Get text"
-msgstr ""
+msgstr "&Get text"
 
 #: wordpad.rc:69 wordpad.rc:262
 msgid "&Formatbar"
-msgstr ""
+msgstr "&Formatbar"
 
 #: wordpad.rc:70 wordpad.rc:263
 msgid "&Ruler"
-msgstr ""
+msgstr "&Ruler"
 
 #: wordpad.rc:71 wordpad.rc:264
 msgid "&Statusbar"
-msgstr ""
+msgstr "&Statusbar"
 
 #: wordpad.rc:75
 msgid "&Insert"
-msgstr ""
+msgstr "&Insert"
 
 #: wordpad.rc:77
 msgid "&Date and time..."
-msgstr ""
+msgstr "&Date and time..."
 
 #: wordpad.rc:79
 msgid "F&ormat"
@@ -13375,7 +13651,7 @@ msgstr "F&ormat"
 
 #: wordpad.rc:82 wordpad.rc:105
 msgid "&Bullet points"
-msgstr ""
+msgstr "&Bullet points"
 
 #: wordpad.rc:83 wordpad.rc:106
 msgid "&Paragraph..."
@@ -13403,7 +13679,7 @@ msgstr "&About Wine Wordpad"
 
 #: wordpad.rc:130
 msgid "Automatic"
-msgstr ""
+msgstr "Automatic"
 
 #: wordpad.rc:199
 msgid "Date and time"
@@ -13435,11 +13711,11 @@ msgstr "Right"
 
 #: wordpad.rc:229
 msgid "First line"
-msgstr ""
+msgstr "First line"
 
 #: wordpad.rc:231
 msgid "Alignment"
-msgstr ""
+msgstr "Alignment"
 
 #: wordpad.rc:239
 msgid "Tabs"
@@ -13447,7 +13723,7 @@ msgstr "Tabs"
 
 #: wordpad.rc:242
 msgid "Tab stops"
-msgstr ""
+msgstr "Tab stops"
 
 #: wordpad.rc:248
 msgid "Remove al&l"
@@ -13463,11 +13739,11 @@ msgstr "&No line wrapping"
 
 #: wordpad.rc:258
 msgid "Wrap text by the &window border"
-msgstr ""
+msgstr "Wrap text by the &window border"
 
 #: wordpad.rc:259
 msgid "Wrap text by the &margin"
-msgstr ""
+msgstr "Wrap text by the &margin"
 
 #: wordpad.rc:260
 msgid "Toolbars"
@@ -13476,17 +13752,17 @@ msgstr "Toolbars"
 #: wordpad.rc:273
 msgctxt "accelerator Align Left"
 msgid "L"
-msgstr ""
+msgstr "L"
 
 #: wordpad.rc:274
 msgctxt "accelerator Align Center"
 msgid "E"
-msgstr ""
+msgstr "E"
 
 #: wordpad.rc:275
 msgctxt "accelerator Align Right"
 msgid "R"
-msgstr ""
+msgstr "R"
 
 #: wordpad.rc:282
 msgctxt "accelerator Redo"
@@ -13496,49 +13772,49 @@ msgstr "Y"
 #: wordpad.rc:283
 msgctxt "accelerator Bold"
 msgid "B"
-msgstr ""
+msgstr "B"
 
 #: wordpad.rc:284
 msgctxt "accelerator Italic"
 msgid "I"
-msgstr ""
+msgstr "I"
 
 #: wordpad.rc:285
 msgctxt "accelerator Underline"
 msgid "U"
-msgstr ""
+msgstr "U"
 
 #: wordpad.rc:136
 msgid "All documents (*.*)"
-msgstr ""
+msgstr "All documents (*.*)"
 
 #: wordpad.rc:137
 msgid "Text documents (*.txt)"
-msgstr ""
+msgstr "Text documents (*.txt)"
 
 #: wordpad.rc:138
 msgid "Unicode text document (*.txt)"
-msgstr ""
+msgstr "Unicode text document (*.txt)"
 
 #: wordpad.rc:139
 msgid "Rich text format (*.rtf)"
-msgstr ""
+msgstr "Rich text format (*.rtf)"
 
 #: wordpad.rc:140
 msgid "Rich text document"
-msgstr ""
+msgstr "Rich text document"
 
 #: wordpad.rc:141
 msgid "Text document"
-msgstr ""
+msgstr "Text document"
 
 #: wordpad.rc:142
 msgid "Unicode text document"
-msgstr ""
+msgstr "Unicode text document"
 
 #: wordpad.rc:143
 msgid "Printer files (*.prn)"
-msgstr ""
+msgstr "Printer files (*.prn)"
 
 #: wordpad.rc:150
 msgid "Center"
@@ -13546,27 +13822,27 @@ msgstr "Centre"
 
 #: wordpad.rc:156
 msgid "Text"
-msgstr ""
+msgstr "Text"
 
 #: wordpad.rc:157
 msgid "Rich text"
-msgstr ""
+msgstr "Rich text"
 
 #: wordpad.rc:163
 msgid "Next page"
-msgstr ""
+msgstr "Next page"
 
 #: wordpad.rc:164
 msgid "Previous page"
-msgstr ""
+msgstr "Previous page"
 
 #: wordpad.rc:165
 msgid "Two pages"
-msgstr ""
+msgstr "Two pages"
 
 #: wordpad.rc:166
 msgid "One page"
-msgstr ""
+msgstr "One page"
 
 #: wordpad.rc:167
 msgid "Zoom in"
@@ -13587,21 +13863,21 @@ msgstr "Pages"
 #: wordpad.rc:172
 msgctxt "unit: centimeter"
 msgid "cm"
-msgstr ""
+msgstr "cm"
 
 #: wordpad.rc:173
 msgctxt "unit: inch"
 msgid "in"
-msgstr ""
+msgstr "in"
 
 #: wordpad.rc:174
 msgid "inch"
-msgstr ""
+msgstr "inch"
 
 #: wordpad.rc:175
 msgctxt "unit: point"
 msgid "pt"
-msgstr ""
+msgstr "pt"
 
 #: wordpad.rc:180
 msgid "Document"
@@ -13609,21 +13885,23 @@ msgstr "Document"
 
 #: wordpad.rc:181
 msgid "Save changes to '%s'?"
-msgstr ""
+msgstr "Save changes to '%s'?"
 
 #: wordpad.rc:182
 msgid "Finished searching the document."
-msgstr ""
+msgstr "Finished searching the document."
 
 #: wordpad.rc:183
 msgid "Failed to load the RichEdit library."
-msgstr ""
+msgstr "Failed to load the RichEdit library."
 
 #: wordpad.rc:184
 msgid ""
 "You have chosen to save in plain text format, which will cause all "
 "formatting to be lost. Are you sure that you wish to do this?"
 msgstr ""
+"You have chosen to save in plain text format, which will cause all "
+"formatting to be lost. Are you sure that you wish to do this?"
 
 #: wordpad.rc:187
 msgid "Invalid number format."
@@ -13639,7 +13917,7 @@ msgstr "Could not save the file."
 
 #: wordpad.rc:190
 msgid "You do not have access to save the file."
-msgstr ""
+msgstr "You do not have access to save the file."
 
 #: wordpad.rc:191
 msgid "Could not open the file."
@@ -13647,7 +13925,7 @@ msgstr "Could not open the file."
 
 #: wordpad.rc:192
 msgid "You do not have access to open the file."
-msgstr ""
+msgstr "You do not have access to open the file."
 
 #: wordpad.rc:193
 msgid "Printing not implemented."
@@ -13655,7 +13933,7 @@ msgstr "Printing not implemented."
 
 #: wordpad.rc:194
 msgid "Cannot add more than 32 tab stops."
-msgstr ""
+msgstr "Cannot add more than 32 tab stops."
 
 #: write.rc:27
 msgid "Starting Wordpad failed"
