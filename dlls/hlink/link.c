@@ -528,7 +528,7 @@ static HRESULT WINAPI IHlink_fnNavigate(IHlink* iface, DWORD grfHLNF, LPBC pbc,
     return r;
 }
 
-static HRESULT WINAPI IHlink_fnSetAdditonalParams(IHlink* iface,
+static HRESULT WINAPI IHlink_fnSetAdditionalParams(IHlink* iface,
         LPCWSTR pwzAdditionalParams)
 {
     TRACE("Not implemented in native IHlink\n");
@@ -559,7 +559,7 @@ static const IHlinkVtbl hlvt =
     IHlink_fnGetTargetFrameName,
     IHlink_fnGetMiscStatus,
     IHlink_fnNavigate,
-    IHlink_fnSetAdditonalParams,
+    IHlink_fnSetAdditionalParams,
     IHlink_fnGetAdditionalParams
 };
 
