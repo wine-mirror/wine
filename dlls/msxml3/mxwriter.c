@@ -39,17 +39,32 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
-static const WCHAR utf16W[] = {'U','T','F','-','1','6',0};
 static const WCHAR emptyW[] = {0};
 static const WCHAR spaceW[] = {' '};
 static const WCHAR quotW[]  = {'\"'};
 
+/* should be ordered as encoding names are sorted */
 typedef enum
 {
+    XmlEncoding_UTF16 = 0,
     XmlEncoding_UTF8,
-    XmlEncoding_UTF16,
     XmlEncoding_Unknown
 } xml_encoding;
+
+struct xml_encoding_data
+{
+    const WCHAR *encoding;
+    xml_encoding enc;
+    UINT cp;
+};
+
+static const WCHAR utf16W[] = {'U','T','F','-','1','6',0};
+static const WCHAR utf8W[] = {'U','T','F','-','8',0};
+
+static const struct xml_encoding_data xml_encoding_map[] = {
+    { utf16W, XmlEncoding_UTF16, ~0 }, /* there's no codepage for this case */
+    { utf8W,  XmlEncoding_UTF8,  CP_UTF8 }
+};
 
 typedef enum
 {
@@ -169,9 +184,25 @@ static HRESULT mxattributes_grow(mxattributes *This)
 
 static xml_encoding parse_encoding_name(const WCHAR *encoding)
 {
-    static const WCHAR utf8W[]  = {'U','T','F','-','8',0};
-    if (!strcmpiW(encoding, utf8W))  return XmlEncoding_UTF8;
-    if (!strcmpiW(encoding, utf16W)) return XmlEncoding_UTF16;
+    int min, max, n, c;
+
+    min = 0;
+    max = sizeof(xml_encoding_map)/sizeof(struct xml_encoding_data) - 1;
+
+    while (min <= max)
+    {
+        n = (min+max)/2;
+
+        c = strcmpiW(xml_encoding_map[n].encoding, encoding);
+        if (!c)
+            return xml_encoding_map[n].enc;
+
+        if (c > 0)
+            max = n-1;
+        else
+            min = n+1;
+    }
+
     return XmlEncoding_Unknown;
 }
 
@@ -195,18 +226,16 @@ static void free_encoded_buffer(encoded_buffer *buffer)
 
 static HRESULT get_code_page(xml_encoding encoding, UINT *cp)
 {
-    switch (encoding)
+    const struct xml_encoding_data *data;
+
+    if (encoding == XmlEncoding_Unknown)
     {
-    case XmlEncoding_UTF8:
-        *cp = CP_UTF8;
-        break;
-    case XmlEncoding_UTF16:
-        *cp = ~0;
-        break;
-    default:
         FIXME("unsupported encoding %d\n", encoding);
         return E_NOTIMPL;
     }
+
+    data = &xml_encoding_map[encoding];
+    *cp = data->cp;
 
     return S_OK;
 }
