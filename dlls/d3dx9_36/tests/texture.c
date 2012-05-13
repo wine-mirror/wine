@@ -1149,6 +1149,22 @@ static void test_D3DXCreateTextureFromFileInMemory(IDirect3DDevice9 *device)
     ok(hr == D3DXERR_INVALIDDATA, "D3DXCreateTextureFromFileInMemory returned %#x, expected %#x\n", hr, D3DXERR_INVALIDDATA);
 }
 
+static void test_D3DXCreateTextureFromFileInMemoryEx(IDirect3DDevice9 *device)
+{
+    HRESULT hr;
+    IDirect3DTexture9 *texture;
+
+    hr = D3DXCreateTextureFromFileInMemoryEx(device, dds_16bit, sizeof(dds_16bit), D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT,
+        0, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, NULL, &texture);
+    ok(hr == D3D_OK, "D3DXCreateTextureFromFileInMemoryEx returned %#x, expected %#x\n", hr, D3D_OK);
+    if (SUCCEEDED(hr)) IDirect3DTexture9_Release(texture);
+
+    hr = D3DXCreateTextureFromFileInMemoryEx(device, dds_16bit, sizeof(dds_16bit), D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT,
+        D3DUSAGE_DYNAMIC, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, NULL, &texture);
+    ok(hr == D3D_OK, "D3DXCreateTextureFromFileInMemoryEx returned %#x, expected %#x\n", hr, D3D_OK);
+    if (SUCCEEDED(hr)) IDirect3DTexture9_Release(texture);
+}
+
 static void test_D3DXCreateCubeTextureFromFileInMemory(IDirect3DDevice9 *device)
 {
     HRESULT hr;
@@ -1273,6 +1289,7 @@ START_TEST(texture)
     test_D3DXFillCubeTexture(device);
     test_D3DXFillVolumeTexture(device);
     test_D3DXCreateTextureFromFileInMemory(device);
+    test_D3DXCreateTextureFromFileInMemoryEx(device);
     test_D3DXCreateCubeTextureFromFileInMemory(device);
     test_D3DXCreateVolumeTextureFromFileInMemory(device);
 
