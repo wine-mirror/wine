@@ -104,6 +104,7 @@ static const GUID *d3dformat_to_wic_guid(D3DFORMAT format)
 #define DDS_PF_RGB 0x40
 #define DDS_PF_YUV 0x200
 #define DDS_PF_LUMINANCE 0x20000
+#define DDS_PF_BUMPDUDV 0x80000
 
 struct dds_pixel_format
 {
@@ -217,6 +218,8 @@ static D3DFORMAT dds_luminance_to_d3dformat(const struct dds_pixel_format *pixel
     }
     if (pixel_format->bpp == 16)
     {
+        if (pixel_format->rmask == 0xffff)
+            return D3DFMT_L16;
         if ((pixel_format->flags & DDS_PF_ALPHA) && pixel_format->rmask == 0x00ff && pixel_format->amask == 0xff00)
             return D3DFMT_A8L8;
     }
@@ -235,6 +238,18 @@ static D3DFORMAT dds_alpha_to_d3dformat(const struct dds_pixel_format *pixel_for
     return D3DFMT_UNKNOWN;
 }
 
+static D3DFORMAT dds_bump_to_d3dformat(const struct dds_pixel_format *pixel_format)
+{
+    if (pixel_format->bpp == 16 && pixel_format->rmask == 0x00ff && pixel_format->gmask == 0xff00)
+        return D3DFMT_V8U8;
+    if (pixel_format->bpp == 32 && pixel_format->rmask == 0x0000ffff && pixel_format->gmask == 0xffff0000)
+        return D3DFMT_V16U16;
+
+    WARN("Unknown bump pixel format (%#x, %#x, %#x, %#x, %#x)\n", pixel_format->bpp,
+        pixel_format->rmask, pixel_format->gmask, pixel_format->bmask, pixel_format->amask);
+    return D3DFMT_UNKNOWN;
+}
+
 static D3DFORMAT dds_pixel_format_to_d3dformat(const struct dds_pixel_format *pixel_format)
 {
     if (pixel_format->flags & DDS_PF_FOURCC)
@@ -245,10 +260,12 @@ static D3DFORMAT dds_pixel_format_to_d3dformat(const struct dds_pixel_format *pi
         return dds_luminance_to_d3dformat(pixel_format);
     if (pixel_format->flags & DDS_PF_ALPHA_ONLY)
         return dds_alpha_to_d3dformat(pixel_format);
+    if (pixel_format->flags & DDS_PF_BUMPDUDV)
+        return dds_bump_to_d3dformat(pixel_format);
 
-    WARN("Unknown pixel format (fourcc %#x, bpp %#x, r %#x, g %#x, b %#x, a %#x)\n",
-        pixel_format->fourcc, pixel_format->bpp, pixel_format->rmask, pixel_format->gmask,
-        pixel_format->bmask, pixel_format->amask);
+    WARN("Unknown pixel format (flags %#x, fourcc %#x, bpp %#x, r %#x, g %#x, b %#x, a %#x)\n",
+        pixel_format->flags, pixel_format->fourcc, pixel_format->bpp,
+        pixel_format->rmask, pixel_format->gmask, pixel_format->bmask, pixel_format->amask);
     return D3DFMT_UNKNOWN;
 }
 
