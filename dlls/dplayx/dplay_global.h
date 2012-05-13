@@ -67,7 +67,7 @@ typedef struct tagDP_MSG_REPLY_STRUCT
 
 typedef struct tagDP_MSG_REPLY_STRUCT_LIST
 {
-  DPQ_ENTRY(tagDP_MSG_REPLY_STRUCT_LIST) replysExpected;
+  DPQ_ENTRY(tagDP_MSG_REPLY_STRUCT_LIST) repliesExpected;
   DP_MSG_REPLY_STRUCT replyExpected;
 } DP_MSG_REPLY_STRUCT_LIST, *LPDP_MSG_REPLY_STRUCT_LIST;
 
@@ -193,7 +193,7 @@ typedef struct tagDirectPlay2Data
   enum SPSTATE connectionInitialized;
 
   /* Expected messages queue */
-  DPQ_HEAD( tagDP_MSG_REPLY_STRUCT_LIST ) replysExpected;
+  DPQ_HEAD( tagDP_MSG_REPLY_STRUCT_LIST ) repliesExpected;
 } DirectPlay2Data;
 
 typedef struct tagDirectPlay3Data

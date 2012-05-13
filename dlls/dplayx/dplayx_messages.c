@@ -172,7 +172,7 @@ HANDLE DP_MSG_BuildAndLinkReplyStruct( IDirectPlay2Impl* This,
 
   /* Insert into the message queue while locked */
   EnterCriticalSection( &This->unk->DP_lock );
-    DPQ_INSERT( This->dp2->replysExpected, lpReplyStructList, replysExpected );
+    DPQ_INSERT( This->dp2->repliesExpected, lpReplyStructList, repliesExpected );
   LeaveCriticalSection( &This->unk->DP_lock );
 
   return lpReplyStructList->replyExpected.hReceipt;
@@ -433,7 +433,7 @@ void DP_MSG_ReplyReceived( IDirectPlay2AImpl* This, WORD wCommandId,
    * avoid problems.
    */
   EnterCriticalSection( &This->unk->DP_lock );
-    DPQ_REMOVE_ENTRY( This->dp2->replysExpected, replysExpected, replyExpected.wExpectedReply,
+    DPQ_REMOVE_ENTRY( This->dp2->repliesExpected, repliesExpected, replyExpected.wExpectedReply,
                      ==, wCommandId, lpReplyList );
   LeaveCriticalSection( &This->unk->DP_lock );
 

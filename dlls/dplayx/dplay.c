@@ -278,7 +278,7 @@ static BOOL DP_CreateDirectPlay2( LPVOID lpDP )
 
   DPQ_INIT(This->dp2->receiveMsgs);
   DPQ_INIT(This->dp2->sendMsgs);
-  DPQ_INIT(This->dp2->replysExpected);
+  DPQ_INIT(This->dp2->repliesExpected);
 
   if( !NS_InitializeSessionCache( &This->dp2->lpNameServerData ) )
   {
