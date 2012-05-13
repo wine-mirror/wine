@@ -377,8 +377,28 @@ static HRESULT get_image_info_from_dds(const void *buffer, UINT length, D3DXIMAG
    return D3D_OK;
 }
 
+static HRESULT load_surface_from_dds(IDirect3DSurface9 *dst_surface, const PALETTEENTRY *dst_palette,
+    const RECT *dst_rect, const void *src_data, const RECT *src_rect, DWORD filter, D3DCOLOR color_key,
+    const D3DXIMAGE_INFO *src_info)
+{
+    UINT size;
+    UINT src_pitch;
+    const struct dds_header *header = src_data;
+    const BYTE *pixels = (BYTE *)(header + 1);
+
+    if (src_info->ResourceType != D3DRTYPE_TEXTURE)
+        return D3DXERR_INVALIDDATA;
+
+    if (FAILED(calculate_dds_surface_size(src_info, src_info->Width, src_info->Height, &src_pitch, &size)))
+        return E_NOTIMPL;
+
+    return D3DXLoadSurfaceFromMemory(dst_surface, dst_palette, dst_rect, pixels, src_info->Format,
+        src_pitch, NULL, src_rect, filter, color_key);
+}
+
 HRESULT load_texture_from_dds(IDirect3DTexture9 *texture, const void *src_data, const PALETTEENTRY *palette,
     DWORD filter, D3DCOLOR color_key, const D3DXIMAGE_INFO *src_info)
+
 {
     HRESULT hr;
     RECT src_rect;
@@ -772,6 +792,32 @@ HRESULT WINAPI D3DXLoadSurfaceFromFileInMemory(LPDIRECT3DSURFACE9 pDestSurface,
     if (FAILED(hr))
         return hr;
 
+    if (pSrcRect)
+    {
+        wicrect.X = pSrcRect->left;
+        wicrect.Y = pSrcRect->top;
+        wicrect.Width = pSrcRect->right - pSrcRect->left;
+        wicrect.Height = pSrcRect->bottom - pSrcRect->top;
+    }
+    else
+    {
+        wicrect.X = 0;
+        wicrect.Y = 0;
+        wicrect.Width = imginfo.Width;
+        wicrect.Height = imginfo.Height;
+    }
+
+    SetRect(&rect, 0, 0, wicrect.Width, wicrect.Height);
+
+    if (imginfo.ImageFileFormat == D3DXIFF_DDS)
+    {
+        hr = load_surface_from_dds(pDestSurface, pDestPalette, pDestRect, pSrcData, &rect,
+            dwFilter, Colorkey, &imginfo);
+        if (SUCCEEDED(hr) && pSrcInfo)
+            *pSrcInfo = imginfo;
+        return hr;
+    }
+
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     if (FAILED(CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER, &IID_IWICImagingFactory, (void**)&factory)))
@@ -797,23 +843,6 @@ HRESULT WINAPI D3DXLoadSurfaceFromFileInMemory(LPDIRECT3DSURFACE9 pDestSurface,
 
     if (FAILED(hr))
         goto cleanup_bmp;
-
-    if (pSrcRect)
-    {
-        wicrect.X = pSrcRect->left;
-        wicrect.Y = pSrcRect->top;
-        wicrect.Width = pSrcRect->right - pSrcRect->left;
-        wicrect.Height = pSrcRect->bottom - pSrcRect->top;
-    }
-    else
-    {
-        wicrect.X = 0;
-        wicrect.Y = 0;
-        wicrect.Width = imginfo.Width;
-        wicrect.Height = imginfo.Height;
-    }
-
-    SetRect(&rect, 0, 0, wicrect.Width, wicrect.Height);
 
     formatdesc = get_format_info(imginfo.Format);
 
