@@ -95,6 +95,9 @@ static const GUID *d3dformat_to_wic_guid(D3DFORMAT format)
 #define DDS_CAPS2_CUBEMAP_NEGATIVEY 0x2000
 #define DDS_CAPS2_CUBEMAP_POSITIVEZ 0x4000
 #define DDS_CAPS2_CUBEMAP_NEGATIVEZ 0x8000
+#define DDS_CAPS2_CUBEMAP_ALL_FACES ( DDS_CAPS2_CUBEMAP_POSITIVEX | DDS_CAPS2_CUBEMAP_NEGATIVEX \
+                                    | DDS_CAPS2_CUBEMAP_POSITIVEY | DDS_CAPS2_CUBEMAP_NEGATIVEY \
+                                    | DDS_CAPS2_CUBEMAP_POSITIVEZ | DDS_CAPS2_CUBEMAP_NEGATIVEZ )
 #define DDS_CAPS2_VOLUME 0x200000
 
 /* dds_pixel_format.flags */
@@ -372,6 +375,59 @@ static HRESULT get_image_info_from_dds(const void *buffer, UINT length, D3DXIMAG
    info->ImageFileFormat = D3DXIFF_DDS;
 
    return D3D_OK;
+}
+
+HRESULT load_cube_texture_from_dds(IDirect3DCubeTexture9 *cube_texture, const void *src_data,
+    const PALETTEENTRY *palette, DWORD filter, DWORD color_key, const D3DXIMAGE_INFO *src_info)
+{
+    HRESULT hr;
+    int face;
+    int mip_level;
+    UINT size;
+    RECT src_rect;
+    UINT src_pitch;
+    UINT mip_levels;
+    UINT mip_level_size;
+    IDirect3DSurface9 *surface;
+    const struct dds_header *header = src_data;
+    const BYTE *pixels = (BYTE *)(header + 1);
+
+    if (src_info->ResourceType != D3DRTYPE_CUBETEXTURE)
+        return D3DXERR_INVALIDDATA;
+
+    if ((header->caps2 & DDS_CAPS2_CUBEMAP_ALL_FACES) != DDS_CAPS2_CUBEMAP_ALL_FACES)
+    {
+        WARN("Only full cubemaps are supported\n");
+        return D3DXERR_INVALIDDATA;
+    }
+
+    mip_levels = min(src_info->MipLevels, IDirect3DCubeTexture9_GetLevelCount(cube_texture));
+    for (face = D3DCUBEMAP_FACE_POSITIVE_X; face <= D3DCUBEMAP_FACE_NEGATIVE_Z; face++)
+    {
+        size = src_info->Width;
+        for (mip_level = 0; mip_level < src_info->MipLevels; mip_level++)
+        {
+            hr = calculate_dds_surface_size(src_info, size, size, &src_pitch, &mip_level_size);
+            if (FAILED(hr)) return hr;
+
+            /* if texture has fewer mip levels than DDS file, skip excessive mip levels */
+            if (mip_level < mip_levels)
+            {
+                SetRect(&src_rect, 0, 0, size, size);
+
+                IDirect3DCubeTexture9_GetCubeMapSurface(cube_texture, face, mip_level, &surface);
+                hr = D3DXLoadSurfaceFromMemory(surface, palette, NULL, pixels, src_info->Format, src_pitch,
+                    NULL, &src_rect, filter, color_key);
+                IDirect3DSurface9_Release(surface);
+                if (FAILED(hr)) return hr;
+            }
+
+            pixels += mip_level_size;
+            size = max(1, size / 2);
+        }
+    }
+
+    return D3D_OK;
 }
 
 /************************************************************
