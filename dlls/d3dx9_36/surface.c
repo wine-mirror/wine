@@ -334,6 +334,8 @@ static HRESULT get_image_info_from_dds(const void *buffer, UINT length, D3DXIMAG
    if (info->Format == D3DFMT_UNKNOWN)
        return D3DXERR_INVALIDDATA;
 
+   TRACE("Pixel format is %#x\n", info->Format);
+
    if (header->caps2 & DDS_CAPS2_VOLUME)
    {
        info->Depth = header->depth;
@@ -528,8 +530,10 @@ HRESULT WINAPI D3DXGetImageInfoFromFileInMemory(LPCVOID data, UINT datasize, D3D
     if (!info)
         return D3D_OK;
 
-    if ((datasize >= 4) && !strncmp(data, "DDS ", 4))
+    if ((datasize >= 4) && !strncmp(data, "DDS ", 4)) {
+        TRACE("File type is DDS\n");
         return get_image_info_from_dds(data, datasize, info);
+    }
 
     initresult = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
