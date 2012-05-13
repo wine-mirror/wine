@@ -1088,6 +1088,138 @@ HRESULT WINAPI D3DXCreateCubeTextureFromFileInMemoryEx(LPDIRECT3DDEVICE9 pDevice
     return E_NOTIMPL;
 }
 
+HRESULT WINAPI D3DXCreateCubeTextureFromFileA(IDirect3DDevice9 *device,
+                                              const char *src_filename,
+                                              IDirect3DCubeTexture9 **cube_texture)
+{
+    int len;
+    HRESULT hr;
+    WCHAR *filename;
+    void *data;
+    DWORD data_size;
+
+    TRACE("(%p, %s, %p): relay\n", device, wine_dbgstr_a(src_filename), cube_texture);
+
+    if (!src_filename) return D3DERR_INVALIDCALL;
+
+    len = MultiByteToWideChar(CP_ACP, 0, src_filename, -1, NULL, 0);
+    filename = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    if (!filename) return E_OUTOFMEMORY;
+    MultiByteToWideChar(CP_ACP, 0, src_filename, -1, filename, len);
+
+    hr = map_view_of_file(filename, &data, &data_size);
+    if (FAILED(hr))
+    {
+        HeapFree(GetProcessHeap(), 0, filename);
+        return D3DXERR_INVALIDDATA;
+    }
+
+    hr = D3DXCreateCubeTextureFromFileInMemoryEx(device, data, data_size, D3DX_DEFAULT, D3DX_DEFAULT,
+        0, D3DFMT_UNKNOWN, D3DPOOL_MANAGED, D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, NULL, cube_texture);
+
+    UnmapViewOfFile(data);
+    HeapFree(GetProcessHeap(), 0, filename);
+    return hr;
+}
+
+HRESULT WINAPI D3DXCreateCubeTextureFromFileW(IDirect3DDevice9 *device,
+                                              const WCHAR *src_filename,
+                                              IDirect3DCubeTexture9 **cube_texture)
+{
+    HRESULT hr;
+    void *data;
+    DWORD data_size;
+
+    TRACE("(%p, %s, %p): relay\n", device, wine_dbgstr_w(src_filename), cube_texture);
+
+    hr = map_view_of_file(src_filename, &data, &data_size);
+    if (FAILED(hr)) return D3DXERR_INVALIDDATA;
+
+    hr = D3DXCreateCubeTextureFromFileInMemoryEx(device, data, data_size, D3DX_DEFAULT, D3DX_DEFAULT,
+        0, D3DFMT_UNKNOWN, D3DPOOL_MANAGED, D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, NULL, cube_texture);
+
+    UnmapViewOfFile(data);
+    return hr;
+}
+
+HRESULT WINAPI D3DXCreateCubeTextureFromFileExA(IDirect3DDevice9 *device,
+                                                const char *src_filename,
+                                                UINT size,
+                                                UINT mip_levels,
+                                                DWORD usage,
+                                                D3DFORMAT format,
+                                                D3DPOOL pool,
+                                                DWORD filter,
+                                                DWORD mip_filter,
+                                                D3DCOLOR color_key,
+                                                D3DXIMAGE_INFO *image_info,
+                                                PALETTEENTRY *palette,
+                                                IDirect3DCubeTexture9 **cube_texture)
+{
+    int len;
+    HRESULT hr;
+    WCHAR *filename;
+    void *data;
+    DWORD data_size;
+
+    TRACE("(%p, %s, %u, %u, %#x, %#x, %#x, %#x, %#x, %#x, %p, %p, %p): relay\n",
+            device, wine_dbgstr_a(src_filename), size, mip_levels, usage, format,
+            pool, filter, mip_filter, color_key, image_info, palette, cube_texture);
+
+    if (!src_filename) return D3DERR_INVALIDCALL;
+
+    len = MultiByteToWideChar(CP_ACP, 0, src_filename, -1, NULL, 0);
+    filename = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    if (!filename) return E_OUTOFMEMORY;
+    MultiByteToWideChar(CP_ACP, 0, src_filename, -1, filename, len);
+
+    hr = map_view_of_file(filename, &data, &data_size);
+    if (FAILED(hr))
+    {
+        HeapFree(GetProcessHeap(), 0, filename);
+        return D3DXERR_INVALIDDATA;
+    }
+
+    hr = D3DXCreateCubeTextureFromFileInMemoryEx(device, data, data_size, size, mip_levels,
+        usage, format, pool, filter, mip_filter, color_key, image_info, palette, cube_texture);
+
+    UnmapViewOfFile(data);
+    HeapFree(GetProcessHeap(), 0, filename);
+    return hr;
+}
+
+HRESULT WINAPI D3DXCreateCubeTextureFromFileExW(IDirect3DDevice9 *device,
+                                                const WCHAR *src_filename,
+                                                UINT size,
+                                                UINT mip_levels,
+                                                DWORD usage,
+                                                D3DFORMAT format,
+                                                D3DPOOL pool,
+                                                DWORD filter,
+                                                DWORD mip_filter,
+                                                D3DCOLOR color_key,
+                                                D3DXIMAGE_INFO *image_info,
+                                                PALETTEENTRY *palette,
+                                                IDirect3DCubeTexture9 **cube_texture)
+{
+    HRESULT hr;
+    void *data;
+    DWORD data_size;
+
+    TRACE("(%p, %s, %u, %u, %#x, %#x, %#x, %#x, %#x, %#x, %p, %p, %p): relay\n",
+            device, wine_dbgstr_w(src_filename), size, mip_levels, usage, format,
+            pool, filter, mip_filter, color_key, image_info, palette, cube_texture);
+
+    hr = map_view_of_file(src_filename, &data, &data_size);
+    if (FAILED(hr)) return D3DXERR_INVALIDDATA;
+
+    hr = D3DXCreateCubeTextureFromFileInMemoryEx(device, data, data_size, size, mip_levels,
+        usage, format, pool, filter, mip_filter, color_key, image_info, palette, cube_texture);
+
+    UnmapViewOfFile(data);
+    return hr;
+}
+
 enum cube_coord
 {
     XCOORD = 0,
