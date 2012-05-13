@@ -6868,7 +6868,7 @@ msgstr "status bar"
 
 #: oleacc.rc:51
 msgid "table"
-msgstr "Table"
+msgstr "table"
 
 #: oleacc.rc:52
 msgid "column header"
@@ -8127,16 +8127,16 @@ msgid ""
 "Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 msgstr ""
 "Wine is free software; you can redistribute it and/or modify it under the "
-"terms of the GNU Lesser General Public License as published by the Free "
-"Software Foundation; either version 2.1 of the License, or (at your option) "
+"terms of the GNU Lesser General Public Licence as published by the Free "
+"Software Foundation; either version 2.1 of the Licence, or (at your option) "
 "any later version.\n"
 "\n"
 "Wine is distributed in the hope that it will be useful, but WITHOUT ANY "
 "WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS "
-"FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more "
+"FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public Licence for more "
 "details.\n"
 "\n"
-"You should have received a copy of the GNU Lesser General Public License "
+"You should have received a copy of the GNU Lesser General Public Licence "
 "along with Wine; if not, write to the Free Software Foundation, Inc., 51 "
 "Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 
@@ -10626,7 +10626,7 @@ msgstr "Bind to file via a File Moniker"
 
 #: oleview.rc:104
 msgid "Open a TypeLib file and view the contents"
-msgstr "Open a TypeLib file and view the "
+msgstr "Open a TypeLib file and view the contents"
 
 #: oleview.rc:105
 msgid "Change machine wide Distributed COM settings"
@@ -12325,8 +12325,8 @@ msgid ""
 "option) any later version."
 msgstr ""
 "This program is free software; you can redistribute it and/or modify it "
-"under the terms of the GNU Lesser General Public License as published by the "
-"Free Software Foundation; either version 2.1 of the License, or (at your "
+"under the terms of the GNU Lesser General Public Licence as published by the "
+"Free Software Foundation; either version 2.1 of the Licence, or (at your "
 "option) any later version."
 
 #: winecfg.rc:134
