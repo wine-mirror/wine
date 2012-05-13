@@ -4196,7 +4196,7 @@ static inline Uri* impl_from_IUri(IUri *iface)
     return CONTAINING_RECORD(iface, Uri, IUri_iface);
 }
 
-static inline void destory_uri_obj(Uri *This)
+static inline void destroy_uri_obj(Uri *This)
 {
     SysFreeString(This->raw_uri);
     heap_free(This->canon_uri);
@@ -4254,7 +4254,7 @@ static ULONG WINAPI Uri_Release(IUri *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref)
-        destory_uri_obj(This);
+        destroy_uri_obj(This);
 
     return ref;
 }
