@@ -269,6 +269,29 @@ static D3DFORMAT dds_pixel_format_to_d3dformat(const struct dds_pixel_format *pi
     return D3DFMT_UNKNOWN;
 }
 
+static HRESULT calculate_dds_surface_size(const D3DXIMAGE_INFO *img_info,
+    UINT width, UINT height, UINT *pitch, UINT *size)
+{
+    const PixelFormatDesc *format_desc = get_format_info(img_info->Format);
+    if (format_desc->format == D3DFMT_UNKNOWN)
+        return E_NOTIMPL;
+
+    if (format_desc->block_width != 1 || format_desc->block_height != 1)
+    {
+        *pitch = format_desc->block_byte_count
+            * max(1, (width + format_desc->block_width - 1) / format_desc->block_width);
+        *size = *pitch
+            * max(1, (height + format_desc->block_height - 1) / format_desc->block_height);
+    }
+    else
+    {
+        *pitch = width * format_desc->bytes_per_pixel;
+        *size = *pitch * height;
+    }
+
+    return D3D_OK;
+}
+
 /************************************************************
 * get_image_info_from_dds
 *
@@ -285,9 +308,13 @@ static D3DFORMAT dds_pixel_format_to_d3dformat(const struct dds_pixel_format *pi
 *   Failure: D3DXERR_INVALIDDATA
 *
 */
-static HRESULT get_image_info_from_dds(const void *buffer, DWORD length, D3DXIMAGE_INFO *info)
+static HRESULT get_image_info_from_dds(const void *buffer, UINT length, D3DXIMAGE_INFO *info)
 {
+   UINT i;
+   UINT faces = 0;
+   UINT width, height;
    const struct dds_header *header = buffer;
+   UINT expected_length = 0;
 
    if (length < sizeof(*header) || !info)
        return D3DXERR_INVALIDDATA;
@@ -311,12 +338,36 @@ static HRESULT get_image_info_from_dds(const void *buffer, DWORD length, D3DXIMA
    }
    else if (header->caps2 & DDS_CAPS2_CUBEMAP)
    {
+       DWORD face;
+       for (face = DDS_CAPS2_CUBEMAP_POSITIVEX; face <= DDS_CAPS2_CUBEMAP_NEGATIVEZ; face <<= 1)
+       {
+           if (header->caps2 & face)
+               faces++;
+       }
        info->ResourceType = D3DRTYPE_CUBETEXTURE;
    }
    else
    {
+       faces = 1;
        info->ResourceType = D3DRTYPE_TEXTURE;
    }
+
+   /* calculate the expected length */
+   width = info->Width;
+   height = info->Height;
+   for (i = 0; i < info->MipLevels; i++)
+   {
+       UINT pitch, size = 0;
+       calculate_dds_surface_size(info, width, height, &pitch, &size);
+       expected_length += size;
+       width = max(1, width / 2);
+       height = max(1, width / 2);
+   }
+
+   expected_length *= faces;
+   expected_length += sizeof(*header);
+   if (length < expected_length)
+       return D3DXERR_INVALIDDATA;
 
    info->ImageFileFormat = D3DXIFF_DDS;
 
