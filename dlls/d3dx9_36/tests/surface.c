@@ -839,6 +839,72 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
         check_release((IUnknown*)surf, 0);
     }
 
+    /* DXT1, DXT2, DXT3, DXT4, DXT5 */
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 2, 2, D3DFMT_R8G8B8, D3DPOOL_SYSTEMMEM, &surf, NULL);
+    if (FAILED(hr))
+        skip("Failed to create R8G8B8 surface, hr %#x.\n", hr);
+    else
+    {
+        hr = D3DXLoadSurfaceFromFileInMemory(surf, NULL, NULL, dds_24bit, sizeof(dds_24bit), NULL, D3DX_FILTER_NONE, 0, NULL);
+        ok(SUCCEEDED(hr), "Failed to load surface, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 2, 2, D3DFMT_DXT2, D3DPOOL_SYSTEMMEM, &newsurf, NULL);
+        if (FAILED(hr))
+            skip("Failed to create DXT2 surface, hr %#x.\n", hr);
+        else
+        {
+            hr = D3DXLoadSurfaceFromSurface(newsurf, NULL, NULL, surf, NULL, NULL, D3DX_FILTER_NONE, 0);
+            todo_wine ok(SUCCEEDED(hr), "Failed to convert pixels to DXT2 format.\n");
+            check_release((IUnknown*)newsurf, 0);
+        }
+
+        hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 2, 2, D3DFMT_DXT3, D3DPOOL_SYSTEMMEM, &newsurf, NULL);
+        if (FAILED(hr))
+            skip("Failed to create DXT3 surface, hr %#x.\n", hr);
+        else
+        {
+            hr = D3DXLoadSurfaceFromSurface(newsurf, NULL, NULL, surf, NULL, NULL, D3DX_FILTER_NONE, 0);
+            todo_wine ok(SUCCEEDED(hr), "Failed to convert pixels to DXT3 format.\n");
+            check_release((IUnknown*)newsurf, 0);
+        }
+
+        hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 2, 2, D3DFMT_DXT4, D3DPOOL_SYSTEMMEM, &newsurf, NULL);
+        if (FAILED(hr))
+            skip("Failed to create DXT4 surface, hr %#x.\n", hr);
+        else
+        {
+            hr = D3DXLoadSurfaceFromSurface(newsurf, NULL, NULL, surf, NULL, NULL, D3DX_FILTER_NONE, 0);
+            todo_wine ok(SUCCEEDED(hr), "Failed to convert pixels to DXT4 format.\n");
+            check_release((IUnknown*)newsurf, 0);
+        }
+
+        hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 2, 2, D3DFMT_DXT5, D3DPOOL_SYSTEMMEM, &newsurf, NULL);
+        if (FAILED(hr))
+            skip("Failed to create DXT5 surface, hr %#x.\n", hr);
+        else
+        {
+            hr = D3DXLoadSurfaceFromSurface(newsurf, NULL, NULL, surf, NULL, NULL, D3DX_FILTER_NONE, 0);
+            todo_wine ok(SUCCEEDED(hr), "Failed to convert pixels to DXT5 format.\n");
+            check_release((IUnknown*)newsurf, 0);
+        }
+
+        hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 2, 2, D3DFMT_DXT1, D3DPOOL_SYSTEMMEM, &newsurf, NULL);
+        if (FAILED(hr))
+            skip("Failed to create DXT1 surface, hr %#x.\n", hr);
+        else
+        {
+            hr = D3DXLoadSurfaceFromSurface(newsurf, NULL, NULL, surf, NULL, NULL, D3DX_FILTER_NONE, 0);
+            todo_wine ok(SUCCEEDED(hr), "Failed to convert pixels to DXT1 format.\n");
+
+            hr = D3DXLoadSurfaceFromSurface(surf, NULL, NULL, newsurf, NULL, NULL, D3DX_FILTER_NONE, 0);
+            todo_wine ok(SUCCEEDED(hr), "Failed to convert pixels from DXT1 format.\n");
+
+            check_release((IUnknown*)newsurf, 0);
+        }
+
+        check_release((IUnknown*)surf, 0);
+    }
+
     /* cleanup */
     if(testdummy_ok) DeleteFileA("testdummy.bmp");
     if(testbitmap_ok) DeleteFileA("testbitmap.bmp");
