@@ -62,6 +62,8 @@ HRESULT load_resource_into_memory(HMODULE module, HRSRC resinfo, LPVOID *buffer,
 const PixelFormatDesc *get_format_info(D3DFORMAT format) DECLSPEC_HIDDEN;
 const PixelFormatDesc *get_format_info_idx(int idx) DECLSPEC_HIDDEN;
 
+HRESULT load_texture_from_dds(IDirect3DTexture9 *texture, const void *src_data, const PALETTEENTRY *palette,
+    DWORD filter, D3DCOLOR color_key, const D3DXIMAGE_INFO *src_info) DECLSPEC_HIDDEN;
 HRESULT load_cube_texture_from_dds(IDirect3DCubeTexture9 *cube_texture, const void *src_data,
     const PALETTEENTRY *palette, DWORD filter, D3DCOLOR color_key, const D3DXIMAGE_INFO *src_info) DECLSPEC_HIDDEN;
 

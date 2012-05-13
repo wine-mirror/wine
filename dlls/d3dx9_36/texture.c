@@ -504,6 +504,7 @@ HRESULT WINAPI D3DXCreateTextureFromFileInMemoryEx(LPDIRECT3DDEVICE9 device,
     BOOL file_width = FALSE, file_height = FALSE;
     BOOL file_format = FALSE, file_miplevels = FALSE;
     D3DXIMAGE_INFO imginfo;
+    UINT loaded_miplevels;
     D3DCAPS9 caps;
     HRESULT hr;
 
@@ -571,6 +572,12 @@ HRESULT WINAPI D3DXCreateTextureFromFileInMemoryEx(LPDIRECT3DDEVICE9 device,
         return hr;
     }
 
+    if (imginfo.MipLevels < miplevels && (D3DFMT_DXT1 <= imginfo.Format && imginfo.Format <= D3DFMT_DXT5))
+    {
+        FIXME("Generation of mipmaps for compressed pixel formats is not implemented yet\n");
+        miplevels = imginfo.MipLevels;
+    }
+
     if (((file_width) && (width != imginfo.Width))    ||
         ((file_height) && (height != imginfo.Height)) ||
         ((file_format) && (format != imginfo.Format)) ||
@@ -601,9 +608,16 @@ HRESULT WINAPI D3DXCreateTextureFromFileInMemoryEx(LPDIRECT3DDEVICE9 device,
     }
 
     /* Load the file */
-    IDirect3DTexture9_GetSurfaceLevel(*texptr, 0, &surface);
-    hr = D3DXLoadSurfaceFromFileInMemory(surface, palette, NULL, srcdata, srcdatasize, NULL, filter, colorkey, NULL);
-    IDirect3DSurface9_Release(surface);
+    if (imginfo.ImageFileFormat != D3DXIFF_DDS)
+    {
+        IDirect3DTexture9_GetSurfaceLevel(*texptr, 0, &surface);
+        hr = D3DXLoadSurfaceFromFileInMemory(surface, palette, NULL, srcdata, srcdatasize, NULL, filter, colorkey, NULL);
+        IDirect3DSurface9_Release(surface);
+    }
+    else
+    {
+        hr = load_texture_from_dds(*texptr, srcdata, palette, filter, colorkey, &imginfo);
+    }
 
     if (FAILED(hr))
     {
@@ -612,7 +626,8 @@ HRESULT WINAPI D3DXCreateTextureFromFileInMemoryEx(LPDIRECT3DDEVICE9 device,
         return hr;
     }
 
-    hr = D3DXFilterTexture((IDirect3DBaseTexture9*) *texptr, palette, 0, mipfilter);
+    loaded_miplevels = min(miplevels, imginfo.MipLevels);
+    hr = D3DXFilterTexture((IDirect3DBaseTexture9*) *texptr, palette, loaded_miplevels - 1, mipfilter);
 
     if (FAILED(hr))
     {
