@@ -484,7 +484,7 @@ BOOL WINAPI GetUserObjectInformationA( HANDLE handle, INT index, LPVOID info, DW
         if (needed) *needed = lenA;
         if (lenA > len)
         {
-            SetLastError( ERROR_MORE_DATA );
+            SetLastError( ERROR_INSUFFICIENT_BUFFER );
             return FALSE;
         }
         if (info) WideCharToMultiByte( CP_ACP, 0, buffer, -1, info, len, NULL, NULL );
@@ -541,7 +541,7 @@ BOOL WINAPI GetUserObjectInformationW( HANDLE handle, INT index, LPVOID info, DW
                 if (needed) *needed = size;
                 if (len < size)
                 {
-                    SetLastError( ERROR_MORE_DATA );
+                    SetLastError( ERROR_INSUFFICIENT_BUFFER );
                     ret = FALSE;
                 }
                 else memcpy( info, reply->is_desktop ? desktopW : winstationW, size );
@@ -567,7 +567,7 @@ BOOL WINAPI GetUserObjectInformationW( HANDLE handle, INT index, LPVOID info, DW
                     if (needed) *needed = size;
                     if (len < size)
                     {
-                        SetLastError( ERROR_MORE_DATA );
+                        SetLastError( ERROR_INSUFFICIENT_BUFFER );
                         ret = FALSE;
                     }
                     else memcpy( info, buffer, size );
