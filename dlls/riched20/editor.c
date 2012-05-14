@@ -2687,7 +2687,6 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
   ed->nLastTotalLength = ed->nTotalLength = 0;
   ed->nLastTotalWidth = ed->nTotalWidth = 0;
   ed->nUDArrowX = -1;
-  ed->nSequence = 0;
   ed->rgbBackColor = -1;
   ed->hbrBackground = GetSysColorBrush(COLOR_WINDOW);
   ed->bCaretAtEnd = FALSE;

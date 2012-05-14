@@ -41,7 +41,6 @@ void ME_PaintContent(ME_TextEditor *editor, HDC hDC, const RECT *rcUpdate)
   IntersectClipRect(hDC, rcUpdate->left, rcUpdate->top,
                      rcUpdate->right, rcUpdate->bottom);
 
-  editor->nSequence++;
   ME_InitContext(&c, editor, hDC);
   SetBkMode(hDC, TRANSPARENT);
   ME_MoveCaret(editor);
