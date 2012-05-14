@@ -796,7 +796,7 @@ static void dumpmem(unsigned char *mem, int len)
         p = hex;
         c = txt;
         do {
-            p += sprintf(p, "%02hhx ", mem[x]);
+            p += sprintf(p, "%02x ", mem[x]);
             *c++ = (mem[x] >= 32 && mem[x] <= 127) ? mem[x] : '.';
         } while (++x % 16 && x < len);
         *c = '\0';
