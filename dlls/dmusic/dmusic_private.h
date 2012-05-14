@@ -166,13 +166,13 @@ extern HRESULT DMUSIC_CreateDirectMusicPortImpl (LPCGUID lpcGUID, LPVOID *ppobj,
  * IReferenceClockImpl implementation structure
  */
 struct IReferenceClockImpl {
-  /* IUnknown fields */
-  const IReferenceClockVtbl *lpVtbl;
-  LONG           ref;
+    /* IUnknown fields */
+    IReferenceClock IReferenceClock_iface;
+    LONG ref;
 
-  /* IReferenceClockImpl fields */
-  REFERENCE_TIME rtTime;
-  DMUS_CLOCKINFO pClockInfo;
+    /* IReferenceClockImpl fields */
+    REFERENCE_TIME rtTime;
+    DMUS_CLOCKINFO pClockInfo;
 };
 
 typedef struct _DMUS_PRIVATE_INSTRUMENT_ENTRY {
