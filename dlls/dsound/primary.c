@@ -537,7 +537,6 @@ opened:
 
 			(*dsb)->freqAdjust = (*dsb)->freq / (float)device->pwfx->nSamplesPerSec;
 			DSOUND_RecalcFormat((*dsb));
-			(*dsb)->primary_mixpos = 0;
 
 			RtlReleaseResource(&(*dsb)->lock);
 			/* **** */

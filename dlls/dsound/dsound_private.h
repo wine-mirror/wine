@@ -186,7 +186,7 @@ struct IDirectSoundBufferImpl
     DWORD                       firstep;
     float freqAcc, freqAdjust, firgain;
     /* used for mixing */
-    DWORD                       primary_mixpos, sec_mixpos;
+    DWORD                       sec_mixpos;
 
     /* IDirectSoundNotify fields */
     LPDSBPOSITIONNOTIFY         notifies;

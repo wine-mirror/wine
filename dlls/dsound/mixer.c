@@ -520,10 +520,6 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWO
 		DSOUND_CheckEvent(dsb, oldpos, ilen);
 	}
 
-	/* increase mix position */
-	dsb->primary_mixpos += len;
-	dsb->primary_mixpos %= dsb->device->buflen;
-
 	return len;
 }
 
@@ -541,55 +537,34 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWO
  */
 static DWORD DSOUND_MixOne(IDirectSoundBufferImpl *dsb, DWORD writepos, DWORD mixlen)
 {
-	/* The buffer's primary_mixpos may be before or after the device
-	 * buffer's mixpos, but both must be ahead of writepos. */
-	DWORD primary_done;
+	DWORD primary_done = 0;
 
 	TRACE("(%p,%d,%d)\n",dsb,writepos,mixlen);
-	TRACE("writepos=%d, primary_mixpos=%d, mixlen=%d\n", writepos, dsb->primary_mixpos, mixlen);
+	TRACE("writepos=%d, mixlen=%d\n", writepos, mixlen);
 	TRACE("looping=%d, leadin=%d\n", dsb->playflags, dsb->leadin);
 
 	/* If leading in, only mix about 20 ms, and 'skip' mixing the rest, for more fluid pointer advancement */
-	if (dsb->leadin && dsb->state == STATE_STARTING)
-	{
-		if (mixlen > 2 * dsb->device->fraglen)
-		{
-			dsb->primary_mixpos += mixlen - 2 * dsb->device->fraglen;
-			dsb->primary_mixpos %= dsb->device->buflen;
+	/* FIXME: Is this needed? */
+	if (dsb->leadin && dsb->state == STATE_STARTING) {
+		if (mixlen > 2 * dsb->device->fraglen) {
+			primary_done = mixlen - 2 * dsb->device->fraglen;
+			mixlen = 2 * dsb->device->fraglen;
+			writepos += primary_done;
+			dsb->sec_mixpos += (primary_done / dsb->device->pwfx->nBlockAlign) *
+				dsb->pwfx->nBlockAlign * dsb->freqAdjust;
 		}
 	}
+
 	dsb->leadin = FALSE;
 
-	/* calculate how much pre-buffering has already been done for this buffer */
-	primary_done = DSOUND_BufPtrDiff(dsb->device->buflen, dsb->primary_mixpos, writepos);
-
-	/* sanity */
-	if(mixlen < primary_done)
-	{
-		/* Should *NEVER* happen */
-		ERR("Fatal error. Under/Overflow? primary_done=%d, mixpos=%d/%d, primary_mixpos=%d, writepos=%d, mixlen=%d\n", primary_done,dsb->sec_mixpos, dsb->buflen, dsb->primary_mixpos, writepos, mixlen);
-		dsb->primary_mixpos = writepos + mixlen;
-		dsb->primary_mixpos %= dsb->device->buflen;
-		return mixlen;
-	}
-
-	/* take into account already mixed data */
-	mixlen -= primary_done;
-
-	TRACE("primary_done=%d, mixlen (primary) = %i\n", primary_done, mixlen);
-
-	if (!mixlen)
-		return primary_done;
+	TRACE("mixlen (primary) = %i\n", mixlen);
 
 	/* First try to mix to the end of the buffer if possible
 	 * Theoretically it would allow for better optimization
 	*/
-	DSOUND_MixInBuffer(dsb, dsb->primary_mixpos, mixlen);
+	primary_done += DSOUND_MixInBuffer(dsb, writepos, mixlen);
 
-	/* re-calculate the primary done */
-	primary_done = DSOUND_BufPtrDiff(dsb->device->buflen, dsb->primary_mixpos, writepos);
-
-	TRACE("new primary_mixpos=%d, total mixed data=%d\n", dsb->primary_mixpos, primary_done);
+	TRACE("total mixed data=%d\n", primary_done);
 
 	/* Report back the total prebuffered amount for this buffer */
 	return primary_done;
@@ -631,11 +606,6 @@ static void DSOUND_MixToPrimary(const DirectSoundDevice *device, DWORD writepos,
 				dsb->state = STATE_STOPPED;
 				DSOUND_CheckEvent(dsb, 0, 0);
 			} else if (dsb->state != STATE_STOPPED) {
-
-				/* if recovering, reset the mix position */
-				if ((dsb->state == STATE_STARTING) || recover) {
-					dsb->primary_mixpos = writepos;
-				}
 
 				/* if the buffer was starting, it must be playing now */
 				if (dsb->state == STATE_STARTING)
@@ -806,8 +776,6 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 
 		/* calc maximum prebuff */
 		prebuff_max = (device->prebuf * device->fraglen);
-		if (playpos + prebuff_max >= device->helfrags * device->fraglen)
-			prebuff_max += device->buflen - device->helfrags * device->fraglen;
 
 		/* check how close we are to an underrun. It occurs when the writepos overtakes the mixpos */
 		prebuff_left = DSOUND_BufPtrDiff(device->buflen, device->mixpos, playpos);
