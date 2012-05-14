@@ -186,8 +186,17 @@ static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device)
     TRACE("buflen: %u, fraglen: %u, helfrags: %u, mix_buffer_len: %u\n",
             device->buflen, device->fraglen, device->helfrags, device->mix_buffer_len);
 
-	device->mixfunction = mixfunctions[device->pwfx->wBitsPerSample/8 - 1];
-	device->normfunction = normfunctions[device->pwfx->wBitsPerSample/8 - 1];
+    if(device->pwfx->wFormatTag == WAVE_FORMAT_IEEE_FLOAT ||
+            (device->pwfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+             IsEqualGUID(&((WAVEFORMATEXTENSIBLE*)device->pwfx)->SubFormat,
+                 &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT))){
+        device->mixfunction = mixfunctions[4];
+        device->normfunction = normfunctions[4];
+    }else{
+        device->mixfunction = mixfunctions[device->pwfx->wBitsPerSample/8 - 1];
+        device->normfunction = normfunctions[device->pwfx->wBitsPerSample/8 - 1];
+    }
+
 	FillMemory(device->buffer, device->buflen, (device->pwfx->wBitsPerSample == 8) ? 128 : 0);
 	FillMemory(device->mix_buffer, device->mix_buffer_len, 0);
 	device->last_pos_bytes = device->playing_offs_bytes = device->in_mmdev_bytes = device->playpos = device->mixpos = 0;
@@ -506,8 +515,17 @@ opened:
 	device->mix_buffer_len = DSOUND_bufpos_to_mixpos(device, device->buflen);
 	device->mix_buffer = HeapReAlloc(GetProcessHeap(), 0, device->mix_buffer, device->mix_buffer_len);
 	FillMemory(device->mix_buffer, device->mix_buffer_len, 0);
-	device->mixfunction = mixfunctions[device->pwfx->wBitsPerSample/8 - 1];
-	device->normfunction = normfunctions[device->pwfx->wBitsPerSample/8 - 1];
+
+	if(device->pwfx->wFormatTag == WAVE_FORMAT_IEEE_FLOAT ||
+			(device->pwfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+			 IsEqualGUID(&((WAVEFORMATEXTENSIBLE*)device->pwfx)->SubFormat,
+				 &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT))){
+		device->mixfunction = mixfunctions[4];
+		device->normfunction = normfunctions[4];
+	}else{
+		device->mixfunction = mixfunctions[device->pwfx->wBitsPerSample/8 - 1];
+		device->normfunction = normfunctions[device->pwfx->wBitsPerSample/8 - 1];
+	}
 
 	if (old_fmt->nSamplesPerSec != device->pwfx->nSamplesPerSec ||
 			old_fmt->wBitsPerSample != device->pwfx->wBitsPerSample ||

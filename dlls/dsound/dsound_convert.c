@@ -116,28 +116,45 @@ float get_mono(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel)
     return val;
 }
 
+static inline unsigned char f_to_8(float value)
+{
+    if(value <= -1.f)
+        return 0;
+    if(value >= 1.f * 0x7f / 0x80)
+        return 0xFF;
+    return lrintf((value + 1.f) * 0x80);
+}
+
 static void put8(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value)
 {
     BYTE* buf = dsb->device->tmp_buffer;
     buf += pos + channel;
+    *buf = f_to_8(value);
+}
+
+static inline SHORT f_to_16(float value)
+{
     if(value <= -1.f)
-        *buf = 0;
-    else if(value >= 1.f * 0x7F / 0x80)
-        *buf = 0xFF;
-    else
-        *buf = lrintf((value + 1.f) * 0x80);
+        return 0x8000;
+    if(value >= 1.f * 0x7FFF / 0x8000)
+        return 0x7FFF;
+    return le16(lrintf(value * 0x8000));
 }
 
 static void put16(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value)
 {
     BYTE* buf = dsb->device->tmp_buffer;
     SHORT *sbuf = (SHORT*)(buf + pos + 2 * channel);
+    *sbuf = f_to_16(value);
+}
+
+static LONG f_to_24(float value)
+{
     if(value <= -1.f)
-        *sbuf = 0x8000;
-    else if(value >= 1.f * 0x7FFF / 0x8000)
-        *sbuf = 0x7FFF;
-    else
-        *sbuf = le16(lrintf(value * 0x8000));
+        return 0x80000000;
+    if(value >= 1.f * 0x7FFFFF / 0x800000)
+        return 0x7FFFFF00;
+    return lrintf(value * 0x80000000U);
 }
 
 static void put24(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value)
@@ -145,27 +162,26 @@ static void put24(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, f
     BYTE* buf = dsb->device->tmp_buffer;
     LONG t;
     buf += pos + 3 * channel;
-    if(value <= -1.f)
-        t = 0x80000000;
-    else if(value >= 1.f * 0x7FFFFF / 0x800000)
-        t = 0x7FFFFF00;
-    else
-        t = lrintf(value * 0x80000000U);
+    t = f_to_24(value);
     buf[0] = (t >> 8) & 0xFF;
     buf[1] = (t >> 16) & 0xFF;
     buf[2] = (t >> 24) & 0xFF;
+}
+
+static inline LONG f_to_32(float value)
+{
+    if(value <= -1.f)
+        return 0x80000000;
+    if(value >= 1.f * 0x7FFFFFFF / 0x80000000U)  /* this rounds to 1.f */
+        return 0x7FFFFFFF;
+    return le32(lrintf(value * 0x80000000U));
 }
 
 static void put32(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value)
 {
     BYTE* buf = dsb->device->tmp_buffer;
     LONG *sbuf = (LONG*)(buf + pos + 4 * channel);
-    if(value <= -1.f)
-        *sbuf = 0x80000000;
-    else if(value >= 1.f * 0x7FFFFFFF / 0x80000000U)  /* this rounds to 1.f */
-        *sbuf = 0x7FFFFFFF;
-    else
-        *sbuf = le32(lrintf(value * 0x80000000U));
+    *sbuf = f_to_32(value);
 }
 
 const bitsputfunc putbpp[4] = {put8, put16, put24, put32};
@@ -176,26 +192,26 @@ void put_mono2stereo(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel
     dsb->put_aux(dsb, pos, 1, value);
 }
 
-static void mix8(signed char *src, INT *dst, unsigned len)
+static void mix8(signed char *src, float *dst, unsigned len)
 {
     TRACE("%p - %p %d\n", src, dst, len);
     while (len--)
         /* 8-bit WAV is unsigned, it's here converted to signed, normalize function will convert it back again */
-        *(dst++) += (signed char)((BYTE)*(src++) - (BYTE)0x80);
+        *(dst++) += ((signed char)((BYTE)*(src++) - (BYTE)0x80)) / (float)0x80;
 }
 
-static void mix16(SHORT *src, INT *dst, unsigned len)
+static void mix16(SHORT *src, float *dst, unsigned len)
 {
     TRACE("%p - %p %d\n", src, dst, len);
     len /= 2;
     while (len--)
     {
-        *dst += le16(*src);
+        *dst += le16(*src) / (float)0x8000U;
         ++dst; ++src;
     }
 }
 
-static void mix24(BYTE *src, INT *dst, unsigned len)
+static void mix24(BYTE *src, float *dst, unsigned len)
 {
     TRACE("%p - %p %d\n", src, dst, len);
     len /= 3;
@@ -205,105 +221,106 @@ static void mix24(BYTE *src, INT *dst, unsigned len)
         field = ((DWORD)src[2] << 16) + ((DWORD)src[1] << 8) + (DWORD)src[0];
         if (src[2] & 0x80)
             field |= 0xFF000000U;
-        *(dst++) += field;
+        *(dst++) += field / (float)0x800000U;
         src += 3;
     }
 }
 
-static void mix32(INT *src, LONGLONG *dst, unsigned len)
+static void mix32(INT *src, float *dst, unsigned len)
 {
     TRACE("%p - %p %d\n", src, dst, len);
     len /= 4;
     while (len--)
-        *(dst++) += le32(*(src++));
+        *(dst++) += le32(*(src++)) / (float)0x80000000U;
 }
 
-const mixfunc mixfunctions[4] = {
+static void mixieee32(float *src, float *dst, unsigned len)
+{
+    TRACE("%p - %p %d\n", src, dst, len);
+    len /= 4;
+    while (len--)
+        *(dst++) += *(src++);
+}
+
+const mixfunc mixfunctions[5] = {
     (mixfunc)mix8,
     (mixfunc)mix16,
     (mixfunc)mix24,
-    (mixfunc)mix32
+    (mixfunc)mix32,
+    (mixfunc)mixieee32
 };
 
-static void norm8(INT *src, signed char *dst, unsigned len)
+static void norm8(float *src, unsigned char *dst, unsigned len)
 {
     TRACE("%p - %p %d\n", src, dst, len);
     while (len--)
     {
-        *dst = (*src) + 0x80;
-        if (*src < -0x80)
-            *dst = 0;
-        else if (*src > 0x7f)
-            *dst = 0xff;
+        *dst = f_to_8(*src);
         ++dst;
         ++src;
     }
 }
 
-static void norm16(INT *src, SHORT *dst, unsigned len)
+static void norm16(float *src, SHORT *dst, unsigned len)
 {
     TRACE("%p - %p %d\n", src, dst, len);
     len /= 2;
     while (len--)
     {
-        *dst = le16(*src);
-        if (*src <= -0x8000)
-            *dst = le16(0x8000);
-        else if (*src > 0x7fff)
-            *dst = le16(0x7fff);
+        *dst = f_to_16(*src);
         ++dst;
         ++src;
     }
 }
 
-static void norm24(INT *src, BYTE *dst, unsigned len)
+static void norm24(float *src, BYTE *dst, unsigned len)
 {
     TRACE("%p - %p %d\n", src, dst, len);
     len /= 3;
     while (len--)
     {
-        if (*src <= -0x800000)
-        {
-            dst[0] = 0;
-            dst[1] = 0;
-            dst[2] = 0x80;
-        }
-        else if (*src > 0x7fffff)
-        {
-            dst[0] = 0xff;
-            dst[1] = 0xff;
-            dst[2] = 0x7f;
-        }
-        else
-        {
-            dst[0] = *src;
-            dst[1] = *src >> 8;
-            dst[2] = *src >> 16;
-        }
+        LONG t = f_to_24(*src);
+        dst[0] = (t >> 8) & 0xFF;
+        dst[1] = (t >> 16) & 0xFF;
+        dst[2] = t >> 24;
         dst += 3;
         ++src;
     }
 }
 
-static void norm32(LONGLONG *src, INT *dst, unsigned len)
+static void norm32(float *src, INT *dst, unsigned len)
 {
     TRACE("%p - %p %d\n", src, dst, len);
     len /= 4;
     while (len--)
     {
-        *dst = le32(*src);
-        if (*src <= -(LONGLONG)0x80000000)
-            *dst = le32(0x80000000);
-        else if (*src > 0x7fffffff)
-            *dst = le32(0x7fffffff);
+        *dst = f_to_32(*src);
         ++dst;
         ++src;
     }
 }
 
-const normfunc normfunctions[4] = {
+static void normieee32(float *src, float *dst, unsigned len)
+{
+    TRACE("%p - %p %d\n", src, dst, len);
+    len /= 4;
+    while (len--)
+    {
+        if(*src > 1)
+            *dst = 1;
+        else if(*src < -1)
+            *dst = -1;
+        else
+            *dst = *src;
+        ++dst;
+        ++src;
+    }
+}
+
+const normfunc normfunctions[5] = {
     (normfunc)norm8,
     (normfunc)norm16,
     (normfunc)norm24,
     (normfunc)norm32,
+    (normfunc)normieee32
 };

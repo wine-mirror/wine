@@ -57,9 +57,9 @@ typedef void (*bitsputfunc)(const IDirectSoundBufferImpl *, DWORD, DWORD, float)
 extern const bitsgetfunc getbpp[5] DECLSPEC_HIDDEN;
 extern const bitsputfunc putbpp[4] DECLSPEC_HIDDEN;
 typedef void (*mixfunc)(const void *, void *, unsigned);
-extern const mixfunc mixfunctions[4] DECLSPEC_HIDDEN;
+extern const mixfunc mixfunctions[5] DECLSPEC_HIDDEN;
 typedef void (*normfunc)(const void *, void *, unsigned);
-extern const normfunc normfunctions[4] DECLSPEC_HIDDEN;
+extern const normfunc normfunctions[5] DECLSPEC_HIDDEN;
 
 typedef struct _DSVOLUMEPAN
 {
