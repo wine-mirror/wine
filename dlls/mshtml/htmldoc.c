@@ -831,7 +831,7 @@ static HRESULT document_write(HTMLDocument *This, SAFEARRAY *psarray, BOOL ln)
         if(V_VT(var+i) == VT_BSTR) {
             nsAString_InitDepend(&nsstr, V_BSTR(var+i));
         }else {
-            hres = VariantChangeType(&tmp, var+i, 0, VT_BSTR);
+            hres = VariantChangeTypeEx(&tmp, var+i, MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT), 0, VT_BSTR);
             if(FAILED(hres)) {
                 WARN("Could not convert %s to string\n", debugstr_variant(var+i));
                 break;
