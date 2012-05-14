@@ -1,6 +1,8 @@
-/* IDirectMusicBuffer Implementation
+/*
+ * IDirectMusicBuffer Implementation
  *
  * Copyright (C) 2003-2004 Rok Mandeljc
+ * Copyright (C) 2012 Christian Costa
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -241,11 +243,16 @@ static HRESULT WINAPI IDirectMusicBufferImpl_SetStartTime(LPDIRECTMUSICBUFFER if
     return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicBufferImpl_SetUsedBytes (LPDIRECTMUSICBUFFER iface, DWORD cb)
+static HRESULT WINAPI IDirectMusicBufferImpl_SetUsedBytes(LPDIRECTMUSICBUFFER iface, DWORD used_bytes)
 {
     IDirectMusicBufferImpl *This = impl_from_IDirectMusicBuffer(iface);
 
-    FIXME("(%p, %d): stub\n", This, cb);
+    TRACE("(%p)->(%u)\n", iface, used_bytes);
+
+    if (used_bytes > This->size)
+        return DMUS_E_BUFFER_FULL;
+
+    This->write_pos = used_bytes;
 
     return S_OK;
 }
