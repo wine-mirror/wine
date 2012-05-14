@@ -40,41 +40,29 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 
-/** Calculate how long a fragment length of about 10 ms should be in frames
- *
- * nSamplesPerSec: Frequency rate in samples per second
- * nBlockAlign: Size of a single blockalign
- *
- * Returns:
- * Size in bytes of a single fragment
- */
-DWORD DSOUND_fraglen(DWORD nSamplesPerSec, DWORD nBlockAlign)
+static DWORD DSOUND_fraglen(DirectSoundDevice *device)
 {
-    /* Given a timer delay of 10ms, the fragment size is approximately:
-     *     fraglen = (nSamplesPerSec * 10 / 1000) * nBlockAlign
-     * ==> fraglen = (nSamplesPerSec / 100) * nBlockSize
-     *
-     * ALSA uses buffers that are powers of 2. Because of this, fraglen
-     * is rounded up to the nearest power of 2:
-     */
+    REFERENCE_TIME period;
+    HRESULT hr;
+    DWORD ret;
 
-    if (nSamplesPerSec <= 12800)
-        return 128 * nBlockAlign;
+    hr = IAudioClient_GetDevicePeriod(device->client, &period, NULL);
+    if(FAILED(hr)){
+        /* just guess at 10ms */
+        WARN("GetDevicePeriod failed: %08x\n", hr);
+        ret = MulDiv(device->pwfx->nBlockAlign, device->pwfx->nSamplesPerSec, 100);
+    }else
+        ret = MulDiv(device->pwfx->nSamplesPerSec * device->pwfx->nBlockAlign, period, 10000000);
 
-    if (nSamplesPerSec <= 25600)
-        return 256 * nBlockAlign;
-
-    if (nSamplesPerSec <= 51200)
-        return 512 * nBlockAlign;
-
-    return 1024 * nBlockAlign;
+    ret -= ret % device->pwfx->nBlockAlign;
+    return ret;
 }
 
 static void DSOUND_RecalcPrimary(DirectSoundDevice *device)
 {
     TRACE("(%p)\n", device);
 
-    device->fraglen = DSOUND_fraglen(device->pwfx->nSamplesPerSec, device->pwfx->nBlockAlign);
+    device->fraglen = DSOUND_fraglen(device);
     device->helfrags = device->buflen / device->fraglen;
     TRACE("fraglen=%d helfrags=%d\n", device->fraglen, device->helfrags);
 
@@ -114,7 +102,7 @@ HRESULT DSOUND_ReopenDevice(DirectSoundDevice *device, BOOL forcewave)
         return hres;
     }
 
-    prebuf_frames = device->prebuf * DSOUND_fraglen(device->pwfx->nSamplesPerSec, device->pwfx->nBlockAlign) / device->pwfx->nBlockAlign;
+    prebuf_frames = device->prebuf * DSOUND_fraglen(device) / device->pwfx->nBlockAlign;
     prebuf_rt = (10000000 * (UINT64)prebuf_frames) / device->pwfx->nSamplesPerSec;
 
     hres = IAudioClient_Initialize(device->client,

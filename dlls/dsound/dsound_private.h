@@ -276,7 +276,6 @@ HRESULT DSOUND_Create8(REFIID riid, LPDIRECTSOUND8 *ppDS) DECLSPEC_HIDDEN;
 
 /* primary.c */
 
-DWORD DSOUND_fraglen(DWORD nSamplesPerSec, DWORD nBlockAlign) DECLSPEC_HIDDEN;
 HRESULT DSOUND_PrimaryCreate(DirectSoundDevice *device) DECLSPEC_HIDDEN;
 HRESULT DSOUND_PrimaryDestroy(DirectSoundDevice *device) DECLSPEC_HIDDEN;
 HRESULT DSOUND_PrimaryPlay(DirectSoundDevice *device) DECLSPEC_HIDDEN;
