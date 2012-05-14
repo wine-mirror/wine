@@ -159,8 +159,8 @@ static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device)
 
 	device->helfrags = device->buflen / device->fraglen;
 
-	device->mix_buffer_len = DSOUND_bufpos_to_mixpos(device, device->buflen);
-	device->mix_buffer = HeapAlloc(GetProcessHeap(), 0, device->mix_buffer_len);
+	device->mix_buffer_len = ((device->prebuf * device->fraglen) / (device->pwfx->wBitsPerSample / 8)) * sizeof(float);
+	device->mix_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, device->mix_buffer_len);
 	if (!device->mix_buffer)
 		return DSERR_OUTOFMEMORY;
 
@@ -511,10 +511,6 @@ opened:
 		else if (FAILED((err = DSOUND_PrimaryOpen(device))))
 			WARN("DSOUND_PrimaryOpen(2) failed: %08x\n", err);
 	}
-
-	device->mix_buffer_len = DSOUND_bufpos_to_mixpos(device, device->buflen);
-	device->mix_buffer = HeapReAlloc(GetProcessHeap(), 0, device->mix_buffer, device->mix_buffer_len);
-	FillMemory(device->mix_buffer, device->mix_buffer_len, 0);
 
 	if(device->pwfx->wFormatTag == WAVE_FORMAT_IEEE_FLOAT ||
 			(device->pwfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&

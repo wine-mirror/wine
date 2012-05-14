@@ -94,7 +94,8 @@ struct DirectSoundDevice
     CRITICAL_SECTION            mixlock;
     IDirectSoundBufferImpl     *primary;
     DWORD                       speaker_config;
-    LPBYTE                      tmp_buffer, mix_buffer;
+    LPBYTE                      tmp_buffer;
+    float *mix_buffer;
     DWORD                       tmp_buffer_len, mix_buffer_len;
 
     DSVOLUMEPAN                 volpan;
@@ -294,7 +295,6 @@ LONG capped_refcount_dec(LONG *ref) DECLSPEC_HIDDEN;
 HRESULT DSOUND_FullDuplexCreate(REFIID riid, LPDIRECTSOUNDFULLDUPLEX* ppDSFD) DECLSPEC_HIDDEN;
 
 /* mixer.c */
-DWORD DSOUND_bufpos_to_mixpos(const DirectSoundDevice* device, DWORD pos) DECLSPEC_HIDDEN;
 void DSOUND_CheckEvent(const IDirectSoundBufferImpl *dsb, DWORD playpos, int len) DECLSPEC_HIDDEN;
 void DSOUND_RecalcVolPan(PDSVOLUMEPAN volpan) DECLSPEC_HIDDEN;
 void DSOUND_AmpFactorToVolPan(PDSVOLUMEPAN volpan) DECLSPEC_HIDDEN;
