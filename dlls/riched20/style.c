@@ -145,7 +145,6 @@ ME_Style *ME_MakeStyle(CHARFORMAT2W *style)
 
   assert(style->cbSize == sizeof(CHARFORMAT2W));
   s->fmt = *style;
-  s->nSequence = -2;
   s->nRefs = 1;
   s->hFont = NULL;
   memset(&s->tm, 0, sizeof(s->tm));
