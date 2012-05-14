@@ -477,13 +477,17 @@ BOOL WINAPI GetUserObjectInformationA( HANDLE handle, INT index, LPVOID info, DW
     if (index == UOI_TYPE || index == UOI_NAME)
     {
         WCHAR buffer[MAX_PATH];
-        DWORD lenA;
+        DWORD lenA, lenW;
 
-        if (!GetUserObjectInformationW( handle, index, buffer, sizeof(buffer), NULL )) return FALSE;
+        if (!GetUserObjectInformationW( handle, index, buffer, sizeof(buffer), &lenW )) return FALSE;
         lenA = WideCharToMultiByte( CP_ACP, 0, buffer, -1, NULL, 0, NULL, NULL );
         if (needed) *needed = lenA;
         if (lenA > len)
         {
+            /* If the buffer length supplied by the caller is insufficient, Windows returns a
+               'needed' length based upon the Unicode byte length, so we should do similarly. */
+            if (needed) *needed = lenW;
+
             SetLastError( ERROR_INSUFFICIENT_BUFFER );
             return FALSE;
         }

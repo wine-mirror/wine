@@ -397,7 +397,7 @@ static void test_getuserobjectinformation(void)
 
     ok(!ret, "GetUserObjectInformationA returned %x", ret);
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "LastError is set to %08x\n", GetLastError());
-    todo_wine ok(size == 22, "size is set to %d\n", size); /* Windows returns Unicode length (11*2) */
+    ok(size == 22, "size is set to %d\n", size); /* Windows returns Unicode length (11*2) */
 
     /* Get string */
     SetLastError(0xdeadbeef);
@@ -439,7 +439,7 @@ static void test_getuserobjectinformation(void)
 
     ok(!ret, "GetUserObjectInformationA returned %x", ret);
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "LastError is set to %08x\n", GetLastError());
-    todo_wine ok(size == 16, "size is set to %d\n", size); /* Windows returns Unicode length (8*2) */
+    ok(size == 16, "size is set to %d\n", size); /* Windows returns Unicode length (8*2) */
 
     /* Get string */
     SetLastError(0xdeadbeef);
