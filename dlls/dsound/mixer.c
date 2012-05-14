@@ -663,53 +663,47 @@ static void DSOUND_MixToPrimary(const DirectSoundDevice *device, DWORD writepos,
 
 static void DSOUND_WaveQueue(DirectSoundDevice *device, BOOL force)
 {
-	DWORD prebuf_frames, buf_offs_bytes, wave_fragpos;
-	int prebuf_frags;
+	DWORD prebuf_frames, prebuf_bytes, read_offs_bytes;
 	BYTE *buffer;
 	HRESULT hr;
 
 	TRACE("(%p)\n", device);
 
-	/* calculate the current wave frag position */
-	wave_fragpos = (device->pwplay + device->pwqueue) % device->helfrags;
+	read_offs_bytes = (device->playing_offs_bytes + device->in_mmdev_bytes) % device->buflen;
 
-	/* calculate the current wave write position */
-	buf_offs_bytes = wave_fragpos * device->fraglen;
-
-	TRACE("wave_fragpos = %i, buf_offs_bytes = %i, pwqueue = %i, prebuf = %i\n",
-		wave_fragpos, buf_offs_bytes, device->pwqueue, device->prebuf);
+	TRACE("read_offs_bytes = %u, playing_offs_bytes = %u, in_mmdev_bytes: %u, prebuf = %u\n",
+		read_offs_bytes, device->playing_offs_bytes, device->in_mmdev_bytes, device->prebuf);
 
 	if (!force)
 	{
-		/* check remaining prebuffered frags */
-		prebuf_frags = device->mixpos / device->fraglen;
-		if (prebuf_frags == device->helfrags)
-			--prebuf_frags;
-		TRACE("wave_fragpos = %d, mixpos_frags = %d\n", wave_fragpos, prebuf_frags);
-		if (prebuf_frags < wave_fragpos)
-			prebuf_frags += device->helfrags;
-		prebuf_frags -= wave_fragpos;
-		TRACE("wanted prebuf_frags = %d\n", prebuf_frags);
+		if(device->mixpos < device->playing_offs_bytes)
+			prebuf_bytes = device->mixpos + device->buflen - device->playing_offs_bytes;
+		else
+			prebuf_bytes = device->mixpos - device->playing_offs_bytes;
 	}
 	else
 		/* buffer the maximum amount of frags */
-		prebuf_frags = device->prebuf;
+		prebuf_bytes = device->prebuf * device->fraglen;
 
 	/* limit to the queue we have left */
-	if ((prebuf_frags + device->pwqueue) > device->prebuf)
-		prebuf_frags = device->prebuf - device->pwqueue;
+	if(device->in_mmdev_bytes + prebuf_bytes > device->prebuf * device->fraglen)
+		prebuf_bytes = device->prebuf * device->fraglen - device->in_mmdev_bytes;
 
-	TRACE("prebuf_frags = %i\n", prebuf_frags);
+	TRACE("prebuf_bytes = %u\n", prebuf_bytes);
 
-	if(!prebuf_frags)
+	if(!prebuf_bytes)
 		return;
 
-	/* adjust queue */
-	device->pwqueue += prebuf_frags;
+	device->in_mmdev_bytes += prebuf_bytes;
 
-	prebuf_frames = ((prebuf_frags + wave_fragpos > device->helfrags) ?
-			(device->helfrags - wave_fragpos) :
-			(prebuf_frags)) * device->fraglen / device->pwfx->nBlockAlign;
+	if(prebuf_bytes + read_offs_bytes > device->buflen){
+		DWORD chunk_bytes = device->buflen - read_offs_bytes;
+		prebuf_frames = chunk_bytes / device->pwfx->nBlockAlign;
+		prebuf_bytes -= chunk_bytes;
+	}else{
+		prebuf_frames = prebuf_bytes / device->pwfx->nBlockAlign;
+		prebuf_bytes = 0;
+	}
 
 	hr = IAudioRenderClient_GetBuffer(device->render, prebuf_frames, &buffer);
 	if(FAILED(hr)){
@@ -717,7 +711,7 @@ static void DSOUND_WaveQueue(DirectSoundDevice *device, BOOL force)
 		return;
 	}
 
-	memcpy(buffer, device->buffer + buf_offs_bytes,
+	memcpy(buffer, device->buffer + read_offs_bytes,
 			prebuf_frames * device->pwfx->nBlockAlign);
 
 	hr = IAudioRenderClient_ReleaseBuffer(device->render, prebuf_frames, 0);
@@ -727,9 +721,8 @@ static void DSOUND_WaveQueue(DirectSoundDevice *device, BOOL force)
 	}
 
 	/* check if anything wrapped */
-	prebuf_frags = prebuf_frags + wave_fragpos - device->helfrags;
-	if(prebuf_frags > 0){
-		prebuf_frames = prebuf_frags * device->fraglen / device->pwfx->nBlockAlign;
+	if(prebuf_bytes > 0){
+		prebuf_frames = prebuf_bytes / device->pwfx->nBlockAlign;
 
 		hr = IAudioRenderClient_GetBuffer(device->render, prebuf_frames, &buffer);
 		if(FAILED(hr)){
@@ -746,7 +739,7 @@ static void DSOUND_WaveQueue(DirectSoundDevice *device, BOOL force)
 		}
 	}
 
-	TRACE("queue now = %i\n", device->pwqueue);
+	TRACE("in_mmdev_bytes now = %i\n", device->in_mmdev_bytes);
 }
 
 /**
@@ -783,9 +776,9 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 
 	delta_frags = (pos_bytes - device->last_pos_bytes) / device->fraglen;
 	if(delta_frags > 0){
-		device->pwplay += delta_frags;
-		device->pwplay %= device->helfrags;
-		device->pwqueue -= delta_frags;
+		device->playing_offs_bytes += delta_frags * device->fraglen;
+		device->playing_offs_bytes %= device->buflen;
+		device->in_mmdev_bytes -= delta_frags * device->fraglen;
 		device->last_pos_bytes = pos_bytes - (pos_bytes % device->fraglen);
 	}
 

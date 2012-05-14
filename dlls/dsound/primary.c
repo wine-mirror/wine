@@ -210,7 +210,7 @@ static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device)
 	device->normfunction = normfunctions[device->pwfx->wBitsPerSample/8 - 1];
 	FillMemory(device->buffer, device->buflen, (device->pwfx->wBitsPerSample == 8) ? 128 : 0);
 	FillMemory(device->mix_buffer, device->mix_buffer_len, 0);
-	device->last_pos_bytes = device->pwplay = device->pwqueue = device->playpos = device->mixpos = 0;
+	device->last_pos_bytes = device->playing_offs_bytes = device->in_mmdev_bytes = device->playpos = device->mixpos = 0;
 	return DS_OK;
 }
 
@@ -221,8 +221,6 @@ static void DSOUND_PrimaryClose(DirectSoundDevice *device)
 
     TRACE("(%p)\n", device);
 
-    device->pwqueue = (DWORD)-1; /* resetting queues */
-
     if(device->client){
         hr = IAudioClient_Stop(device->client);
         if(FAILED(hr))
@@ -230,7 +228,7 @@ static void DSOUND_PrimaryClose(DirectSoundDevice *device)
     }
 
     /* clear the queue */
-    device->pwqueue = 0;
+    device->in_mmdev_bytes = 0;
 }
 
 HRESULT DSOUND_PrimaryCreate(DirectSoundDevice *device)
@@ -308,17 +306,14 @@ HRESULT DSOUND_PrimaryGetPosition(DirectSoundDevice *device, LPDWORD playpos, LP
 {
 	TRACE("(%p,%p,%p)\n", device, playpos, writepos);
 
-	TRACE("pwplay=%i, pwqueue=%i\n", device->pwplay, device->pwqueue);
-
 	/* check if playpos was requested */
 	if (playpos)
-		/* use the cached play position */
-		*playpos = device->pwplay * device->fraglen;
+		*playpos = device->playing_offs_bytes;
 
 	/* check if writepos was requested */
 	if (writepos)
 		/* the writepos is the first non-queued position */
-		*writepos = ((device->pwplay + device->pwqueue) % device->helfrags) * device->fraglen;
+		*writepos = (device->playing_offs_bytes + device->in_mmdev_bytes) % device->buflen;
 
 	TRACE("playpos = %d, writepos = %d (%p, time=%d)\n", playpos?*playpos:-1, writepos?*writepos:-1, device, GetTickCount());
 	return DS_OK;
