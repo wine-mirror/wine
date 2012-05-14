@@ -1,4 +1,5 @@
-/* DirectMusic Private Include
+/*
+ * DirectMusic Private Include
  *
  * Copyright (C) 2003-2004 Rok Mandeljc
  *
@@ -188,25 +189,24 @@ typedef struct _DMUS_PRIVATE_POOLCUE {
  * IDirectMusicCollectionImpl implementation structure
  */
 struct IDirectMusicCollectionImpl {
-  /* IUnknown fields */
-  const IUnknownVtbl *UnknownVtbl;
-  const IDirectMusicCollectionVtbl *CollectionVtbl;
-  const IDirectMusicObjectVtbl *ObjectVtbl;
-  const IPersistStreamVtbl *PersistStreamVtbl;
-  LONG           ref;
+    /* IUnknown fields */
+    IDirectMusicCollection IDirectMusicCollection_iface;
+    IDirectMusicObject IDirectMusicObject_iface;
+    IPersistStream IPersistStream_iface;
+    LONG ref;
 
-  /* IDirectMusicCollectionImpl fields */
-  IStream *pStm; /* stream from which we load collection and later instruments */
-  LARGE_INTEGER liCollectionPosition; /* offset in a stream where collection was loaded from */
-  LARGE_INTEGER liWavePoolTablePosition; /* offset in a stream where wave pool table can be found */
-  LPDMUS_OBJECTDESC pDesc;
-  CHAR* szCopyright; /* FIXME: should probably placed somewhere else */
-  LPDLSHEADER pHeader;
-  /* pool table */
-  LPPOOLTABLE pPoolTable;
-  LPPOOLCUE pPoolCues;
-  /* instruments */
-  struct list Instruments;
+    /* IDirectMusicCollectionImpl fields */
+    IStream *pStm; /* stream from which we load collection and later instruments */
+    LARGE_INTEGER liCollectionPosition; /* offset in a stream where collection was loaded from */
+    LARGE_INTEGER liWavePoolTablePosition; /* offset in a stream where wave pool table can be found */
+    LPDMUS_OBJECTDESC pDesc;
+    CHAR* szCopyright; /* FIXME: should probably placed somewhere else */
+    LPDLSHEADER pHeader;
+    /* pool table */
+    LPPOOLTABLE pPoolTable;
+    LPPOOLCUE pPoolCues;
+    /* instruments */
+    struct list Instruments;
 };
 
 /*****************************************************************************

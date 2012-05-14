@@ -1,4 +1,5 @@
-/* IDirectMusicCollection Implementation
+/*
+ * IDirectMusicCollection Implementation
  *
  * Copyright (C) 2003-2004 Rok Mandeljc
  *
@@ -22,43 +23,61 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 WINE_DECLARE_DEBUG_CHANNEL(dmfile);
 
-static ULONG WINAPI IDirectMusicCollectionImpl_IUnknown_AddRef (LPUNKNOWN iface);
-static ULONG WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_AddRef (LPDIRECTMUSICCOLLECTION iface);
-static ULONG WINAPI IDirectMusicCollectionImpl_IDirectMusicObject_AddRef (LPDIRECTMUSICOBJECT iface);
-static ULONG WINAPI IDirectMusicCollectionImpl_IPersistStream_AddRef (LPPERSISTSTREAM iface);
+static inline IDirectMusicCollectionImpl *impl_from_IDirectMusicCollection(IDirectMusicCollection *iface)
+{
+    return CONTAINING_RECORD(iface, IDirectMusicCollectionImpl, IDirectMusicCollection_iface);
+}
+
+static inline IDirectMusicCollectionImpl *impl_from_IDirectMusicObject(IDirectMusicObject *iface)
+{
+    return CONTAINING_RECORD(iface, IDirectMusicCollectionImpl, IDirectMusicObject_iface);
+}
+
+static inline IDirectMusicCollectionImpl *impl_from_IPersistStream(IPersistStream *iface)
+{
+    return CONTAINING_RECORD(iface, IDirectMusicCollectionImpl, IPersistStream_iface);
+}
 
 /*****************************************************************************
  * IDirectMusicCollectionImpl implementation
  */
 /* IDirectMusicCollectionImpl IUnknown part: */
-static HRESULT WINAPI IDirectMusicCollectionImpl_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj) {
-	ICOM_THIS_MULTI(IDirectMusicCollectionImpl, UnknownVtbl, iface);
-	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
+static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_QueryInterface(LPDIRECTMUSICCOLLECTION iface, REFIID riid, LPVOID *ret_iface)
+{
+    IDirectMusicCollectionImpl *This = impl_from_IDirectMusicCollection(iface);
 
-	if (IsEqualIID (riid, &IID_IUnknown)) {
-		*ppobj = &This->UnknownVtbl;
-		IDirectMusicCollectionImpl_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
-		return S_OK;	
-	} else if (IsEqualIID (riid, &IID_IDirectMusicCollection)) {
-		*ppobj = &This->CollectionVtbl;
-		IDirectMusicCollectionImpl_IDirectMusicCollection_AddRef ((LPDIRECTMUSICCOLLECTION)&This->CollectionVtbl);
-		return S_OK;
-	} else if (IsEqualIID (riid, &IID_IDirectMusicObject)) {
-		*ppobj = &This->ObjectVtbl;
-		IDirectMusicCollectionImpl_IDirectMusicObject_AddRef ((LPDIRECTMUSICOBJECT)&This->ObjectVtbl);		
-		return S_OK;
-	} else if (IsEqualIID (riid, &IID_IPersistStream)) {
-		*ppobj = &This->PersistStreamVtbl;
-		IDirectMusicCollectionImpl_IPersistStream_AddRef ((LPPERSISTSTREAM)&This->PersistStreamVtbl);		
-		return S_OK;
-	}
-	
-	WARN("(%p, %s, %p): not found\n", This, debugstr_dmguid(riid), ppobj);
-	return E_NOINTERFACE;
+    TRACE("(%p/%p)->(%s, %p)\n", iface, This, debugstr_dmguid(riid), ret_iface);
+
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IDirectMusicCollection))
+    {
+        *ret_iface = iface;
+        IDirectMusicCollection_AddRef(iface);
+        return S_OK;
+    }
+    else if (IsEqualIID(riid, &IID_IDirectMusicObject))
+    {
+        *ret_iface = &This->IDirectMusicObject_iface;
+        IDirectMusicCollection_AddRef(iface);
+        return S_OK;
+    }
+    else if (IsEqualIID(riid, &IID_IPersistStream))
+    {
+        *ret_iface = &This->IPersistStream_iface;
+        IDirectMusicCollection_AddRef(iface);
+        return S_OK;
+    }
+
+    *ret_iface = NULL;
+
+    WARN("(%p/%p)->(%s, %p): not found\n", iface, This, debugstr_dmguid(riid), ret_iface);
+
+    return E_NOINTERFACE;
 }
 
-static ULONG WINAPI IDirectMusicCollectionImpl_IUnknown_AddRef (LPUNKNOWN iface) {
-	ICOM_THIS_MULTI(IDirectMusicCollectionImpl, UnknownVtbl, iface);
+static ULONG WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_AddRef(LPDIRECTMUSICCOLLECTION iface)
+{
+	IDirectMusicCollectionImpl *This = impl_from_IDirectMusicCollection(iface);
 	ULONG refCount = InterlockedIncrement(&This->ref);
 
 	TRACE("(%p)->(ref before=%u)\n", This, refCount - 1);
@@ -68,8 +87,9 @@ static ULONG WINAPI IDirectMusicCollectionImpl_IUnknown_AddRef (LPUNKNOWN iface)
 	return refCount;
 }
 
-static ULONG WINAPI IDirectMusicCollectionImpl_IUnknown_Release (LPUNKNOWN iface) {
-	ICOM_THIS_MULTI(IDirectMusicCollectionImpl, UnknownVtbl, iface);
+static ULONG WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_Release(LPDIRECTMUSICCOLLECTION iface)
+{
+	IDirectMusicCollectionImpl *This = impl_from_IDirectMusicCollection(iface);
 	ULONG refCount = InterlockedDecrement(&This->ref);
 
 	TRACE("(%p)->(ref before=%u)\n", This, refCount + 1);
@@ -83,31 +103,10 @@ static ULONG WINAPI IDirectMusicCollectionImpl_IUnknown_Release (LPUNKNOWN iface
 	return refCount;
 }
 
-static const IUnknownVtbl DirectMusicCollection_Unknown_Vtbl = {
-	IDirectMusicCollectionImpl_IUnknown_QueryInterface,
-	IDirectMusicCollectionImpl_IUnknown_AddRef,
-	IDirectMusicCollectionImpl_IUnknown_Release
-};
-
-/* IDirectMusicCollectionImpl IDirectMusicCollection part: */
-static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_QueryInterface (LPDIRECTMUSICCOLLECTION iface, REFIID riid, LPVOID *ppobj) {
-	ICOM_THIS_MULTI(IDirectMusicCollectionImpl, CollectionVtbl, iface);
-	return IDirectMusicCollectionImpl_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
-}
-
-static ULONG WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_AddRef (LPDIRECTMUSICCOLLECTION iface) {
-	ICOM_THIS_MULTI(IDirectMusicCollectionImpl, CollectionVtbl, iface);
-	return IDirectMusicCollectionImpl_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
-}
-
-static ULONG WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_Release (LPDIRECTMUSICCOLLECTION iface) {
-	ICOM_THIS_MULTI(IDirectMusicCollectionImpl, CollectionVtbl, iface);
-	return IDirectMusicCollectionImpl_IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
-}
-
-/* IDirectMusicCollection Interface follow: */
-static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_GetInstrument (LPDIRECTMUSICCOLLECTION iface, DWORD dwPatch, IDirectMusicInstrument** ppInstrument) {
-	ICOM_THIS_MULTI(IDirectMusicCollectionImpl, CollectionVtbl, iface);
+/* IDirectMusicCollection Interface follows: */
+static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_GetInstrument(LPDIRECTMUSICCOLLECTION iface, DWORD dwPatch, IDirectMusicInstrument** ppInstrument)
+{
+	IDirectMusicCollectionImpl *This = impl_from_IDirectMusicCollection(iface);
 	DMUS_PRIVATE_INSTRUMENTENTRY *tmpEntry;
 	struct list *listEntry;
 	DWORD dwInstPatch;
@@ -131,8 +130,9 @@ static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_GetInstr
 	return DMUS_E_INVALIDPATCH;
 }
 
-static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_EnumInstrument (LPDIRECTMUSICCOLLECTION iface, DWORD dwIndex, DWORD* pdwPatch, LPWSTR pwszName, DWORD dwNameLen) {
-	ICOM_THIS_MULTI(IDirectMusicCollectionImpl, CollectionVtbl, iface);
+static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_EnumInstrument(LPDIRECTMUSICCOLLECTION iface, DWORD dwIndex, DWORD* pdwPatch, LPWSTR pwszName, DWORD dwNameLen)
+{
+	IDirectMusicCollectionImpl *This = impl_from_IDirectMusicCollection(iface);
 	unsigned int r = 0;
 	DMUS_PRIVATE_INSTRUMENTENTRY *tmpEntry;
 	struct list *listEntry;
@@ -166,32 +166,39 @@ static const IDirectMusicCollectionVtbl DirectMusicCollection_Collection_Vtbl = 
 };
 
 /* IDirectMusicCollectionImpl IDirectMusicObject part: */
-static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicObject_QueryInterface (LPDIRECTMUSICOBJECT iface, REFIID riid, LPVOID *ppobj) {
-	ICOM_THIS_MULTI(IDirectMusicCollectionImpl, ObjectVtbl, iface);
-	return IDirectMusicCollectionImpl_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
+static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicObject_QueryInterface(LPDIRECTMUSICOBJECT iface, REFIID riid, LPVOID *ret_iface)
+{
+    IDirectMusicCollectionImpl *This = impl_from_IDirectMusicObject(iface);
+    return IDirectMusicCollection_QueryInterface(&This->IDirectMusicCollection_iface, riid, ret_iface);
 }
 
-static ULONG WINAPI IDirectMusicCollectionImpl_IDirectMusicObject_AddRef (LPDIRECTMUSICOBJECT iface) {
-	ICOM_THIS_MULTI(IDirectMusicCollectionImpl, ObjectVtbl, iface);
-	return IDirectMusicCollectionImpl_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
+static ULONG WINAPI IDirectMusicCollectionImpl_IDirectMusicObject_AddRef(LPDIRECTMUSICOBJECT iface)
+{
+    IDirectMusicCollectionImpl *This = impl_from_IDirectMusicObject(iface);
+    return IDirectMusicCollection_AddRef(&This->IDirectMusicCollection_iface);
 }
 
-static ULONG WINAPI IDirectMusicCollectionImpl_IDirectMusicObject_Release (LPDIRECTMUSICOBJECT iface) {
-	ICOM_THIS_MULTI(IDirectMusicCollectionImpl, ObjectVtbl, iface);
-	return IDirectMusicCollectionImpl_IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
+static ULONG WINAPI IDirectMusicCollectionImpl_IDirectMusicObject_Release(LPDIRECTMUSICOBJECT iface)
+{
+    IDirectMusicCollectionImpl *This = impl_from_IDirectMusicObject(iface);
+    return IDirectMusicCollection_Release(&This->IDirectMusicCollection_iface);
 }
 
-static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicObject_GetDescriptor (LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc) {
-	ICOM_THIS_MULTI(IDirectMusicCollectionImpl, ObjectVtbl, iface);
-	TRACE("(%p, %p)\n", This, pDesc);
-	/* I think we shouldn't return pointer here since then values can be changed; it'd be a mess */
-	memcpy (pDesc, This->pDesc, This->pDesc->dwSize);
-	return S_OK;
+static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicObject_GetDescriptor(LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc)
+{
+    IDirectMusicCollectionImpl *This = impl_from_IDirectMusicObject(iface);
+
+    TRACE("(%p/%p)->(%p)\n", iface, This, pDesc);
+
+    /* I think we shouldn't return pointer here since then values can be changed; it'd be a mess */
+    memcpy (pDesc, This->pDesc, This->pDesc->dwSize);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicObject_SetDescriptor(LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc)
 {
-	ICOM_THIS_MULTI(IDirectMusicCollectionImpl, ObjectVtbl, iface);
+    IDirectMusicCollectionImpl *This = impl_from_IDirectMusicObject(iface);
 
 	TRACE("(%p, %p)\n", iface, pDesc);
 
@@ -254,7 +261,7 @@ static HRESULT read_from_stream(IStream *stream, void *data, ULONG size)
 
 static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicObject_ParseDescriptor(LPDIRECTMUSICOBJECT iface, LPSTREAM stream, LPDMUS_OBJECTDESC desc)
 {
-    ICOM_THIS_MULTI(IDirectMusicCollectionImpl, ObjectVtbl, iface);
+    IDirectMusicCollectionImpl *This = impl_from_IDirectMusicObject(iface);
     DMUS_PRIVATE_CHUNK chunk;
     DWORD StreamSize, StreamCount, ListSize[1], ListCount[1];
     LARGE_INTEGER liMove; /* used when skipping chunks */
@@ -450,32 +457,37 @@ static const IDirectMusicObjectVtbl DirectMusicCollection_Object_Vtbl = {
 };
 
 /* IDirectMusicCollectionImpl IPersistStream part: */
-static HRESULT WINAPI IDirectMusicCollectionImpl_IPersistStream_QueryInterface (LPPERSISTSTREAM iface, REFIID riid, LPVOID *ppobj) {
-	ICOM_THIS_MULTI(IDirectMusicCollectionImpl, PersistStreamVtbl, iface);
-	return IDirectMusicCollectionImpl_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
+static HRESULT WINAPI IDirectMusicCollectionImpl_IPersistStream_QueryInterface(LPPERSISTSTREAM iface, REFIID riid, LPVOID *ret_iface)
+{
+    IDirectMusicCollectionImpl *This = impl_from_IPersistStream(iface);
+    return IDirectMusicCollection_QueryInterface(&This->IDirectMusicCollection_iface, riid, ret_iface);
 }
 
-static ULONG WINAPI IDirectMusicCollectionImpl_IPersistStream_AddRef (LPPERSISTSTREAM iface) {
-	ICOM_THIS_MULTI(IDirectMusicCollectionImpl, PersistStreamVtbl, iface);
-	return IDirectMusicCollectionImpl_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
+static ULONG WINAPI IDirectMusicCollectionImpl_IPersistStream_AddRef (LPPERSISTSTREAM iface)
+{
+    IDirectMusicCollectionImpl *This = impl_from_IPersistStream(iface);
+    return IDirectMusicCollection_AddRef(&This->IDirectMusicCollection_iface);
 }
 
-static ULONG WINAPI IDirectMusicCollectionImpl_IPersistStream_Release (LPPERSISTSTREAM iface) {
-	ICOM_THIS_MULTI(IDirectMusicCollectionImpl, PersistStreamVtbl, iface);
-	return IDirectMusicCollectionImpl_IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
+static ULONG WINAPI IDirectMusicCollectionImpl_IPersistStream_Release (LPPERSISTSTREAM iface)
+{
+    IDirectMusicCollectionImpl *This = impl_from_IPersistStream(iface);
+    return IDirectMusicCollection_Release(&This->IDirectMusicCollection_iface);
 }
 
-static HRESULT WINAPI IDirectMusicCollectionImpl_IPersistStream_GetClassID (LPPERSISTSTREAM iface, CLSID* pClassID) {
-	return E_NOTIMPL;
+static HRESULT WINAPI IDirectMusicCollectionImpl_IPersistStream_GetClassID(LPPERSISTSTREAM iface, CLSID* pClassID)
+{
+    return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirectMusicCollectionImpl_IPersistStream_IsDirty (LPPERSISTSTREAM iface) {
-	return E_NOTIMPL;
+static HRESULT WINAPI IDirectMusicCollectionImpl_IPersistStream_IsDirty(LPPERSISTSTREAM iface)
+{
+    return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirectMusicCollectionImpl_IPersistStream_Load (LPPERSISTSTREAM iface, IStream* pStm) {
-	ICOM_THIS_MULTI(IDirectMusicCollectionImpl, PersistStreamVtbl, iface);
-
+static HRESULT WINAPI IDirectMusicCollectionImpl_IPersistStream_Load (LPPERSISTSTREAM iface, IStream* pStm)
+{
+	IDirectMusicCollectionImpl *This = impl_from_IPersistStream(iface);
 	DMUS_PRIVATE_CHUNK Chunk;
 	DWORD StreamSize, StreamCount, ListSize[3], ListCount[3];
 	LARGE_INTEGER liMove; /* used when skipping chunks */
@@ -760,7 +772,7 @@ static HRESULT WINAPI IDirectMusicCollectionImpl_IPersistStream_Load (LPPERSISTS
 		DMUS_PRIVATE_INSTRUMENTENTRY *tmpEntry;
 		struct list *listEntry;
 
-		TRACE("*** IDirectMusicCollection (%p) ***\n", This->CollectionVtbl);
+		TRACE("*** IDirectMusicCollection (%p) ***\n", &This->IDirectMusicCollection_iface);
 		if (This->pDesc->dwValidData & DMUS_OBJ_OBJECT)
 			TRACE(" - GUID = %s\n", debugstr_dmguid(&This->pDesc->guidObject));
 		if (This->pDesc->dwValidData & DMUS_OBJ_VERSION)
@@ -783,12 +795,14 @@ static HRESULT WINAPI IDirectMusicCollectionImpl_IPersistStream_Load (LPPERSISTS
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicCollectionImpl_IPersistStream_Save (LPPERSISTSTREAM iface, IStream* pStm, BOOL fClearDirty) {
-	return E_NOTIMPL;
+static HRESULT WINAPI IDirectMusicCollectionImpl_IPersistStream_Save(LPPERSISTSTREAM iface, IStream* pStm, BOOL fClearDirty)
+{
+    return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirectMusicCollectionImpl_IPersistStream_GetSizeMax (LPPERSISTSTREAM iface, ULARGE_INTEGER* pcbSize) {
-	return E_NOTIMPL;
+static HRESULT WINAPI IDirectMusicCollectionImpl_IPersistStream_GetSizeMax(LPPERSISTSTREAM iface, ULARGE_INTEGER* pcbSize)
+{
+    return E_NOTIMPL;
 }
 
 static const IPersistStreamVtbl DirectMusicCollection_PersistStream_Vtbl = {
@@ -804,7 +818,8 @@ static const IPersistStreamVtbl DirectMusicCollection_PersistStream_Vtbl = {
 
 
 /* for ClassFactory */
-HRESULT WINAPI DMUSIC_CreateDirectMusicCollectionImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) {
+HRESULT WINAPI DMUSIC_CreateDirectMusicCollectionImpl(LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter)
+{
 	IDirectMusicCollectionImpl* obj;
 	
 	obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicCollectionImpl));
@@ -812,10 +827,9 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicCollectionImpl (LPCGUID lpcGUID, LPVOID* 
 		*ppobj = NULL;
 		return E_OUTOFMEMORY;
 	}
-	obj->UnknownVtbl = &DirectMusicCollection_Unknown_Vtbl;
-	obj->CollectionVtbl = &DirectMusicCollection_Collection_Vtbl;
-	obj->ObjectVtbl = &DirectMusicCollection_Object_Vtbl;
-	obj->PersistStreamVtbl = &DirectMusicCollection_PersistStream_Vtbl;
+	obj->IDirectMusicCollection_iface.lpVtbl = &DirectMusicCollection_Collection_Vtbl;
+	obj->IDirectMusicObject_iface.lpVtbl = &DirectMusicCollection_Object_Vtbl;
+	obj->IPersistStream_iface.lpVtbl = &DirectMusicCollection_PersistStream_Vtbl;
 	obj->pDesc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DMUS_OBJECTDESC));
 	DM_STRUCT_INIT(obj->pDesc);
 	obj->pDesc->dwValidData |= DMUS_OBJ_CLASS;
@@ -823,5 +837,5 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicCollectionImpl (LPCGUID lpcGUID, LPVOID* 
 	obj->ref = 0; /* will be inited by QueryInterface */
 	list_init (&obj->Instruments);
 
-	return IDirectMusicCollectionImpl_IUnknown_QueryInterface ((LPUNKNOWN)&obj->UnknownVtbl, lpcGUID, ppobj);
+	return IDirectMusicCollection_QueryInterface(&obj->IDirectMusicCollection_iface, lpcGUID, ppobj);
 }
