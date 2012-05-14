@@ -123,8 +123,51 @@ static HRESULT WINAPI IDirectMusicSynth8Impl_SetNumChannelGroups(LPDIRECTMUSICSY
 static HRESULT WINAPI IDirectMusicSynth8Impl_Download(LPDIRECTMUSICSYNTH8 iface, LPHANDLE hDownload, LPVOID data, LPBOOL free)
 {
     IDirectMusicSynth8Impl *This = impl_from_IDirectMusicSynth8(iface);
+    DMUS_DOWNLOADINFO* info = (DMUS_DOWNLOADINFO*)data;
 
     FIXME("(%p)->(%p, %p, %p): stub\n", This, hDownload, data, free);
+
+    if (!hDownload || !data || !free)
+        return E_POINTER;
+
+    if (TRACE_ON(dmsynth))
+    {
+        TRACE("Dump DMUS_DOWNLOADINFO struct:\n");
+        TRACE(" - dwDLType                = %u\n", info->dwDLType);
+        TRACE(" - dwDLId                  = %u\n", info->dwDLId);
+        TRACE(" - dwNumOffsetTableEntries = %u\n", info->dwNumOffsetTableEntries);
+        TRACE(" - cbSize                  = %u\n", info->cbSize);
+    }
+
+    if (info->dwDLType == DMUS_DOWNLOADINFO_INSTRUMENT)
+    {
+        FIXME("Download type DMUS_DOWNLOADINFO_INSTRUMENT not yet supported\n");
+    }
+    else if (info->dwDLType == DMUS_DOWNLOADINFO_WAVE)
+    {
+        FIXME("Download type DMUS_DOWNLOADINFO_WAVE not yet supported\n");
+    }
+    else if (info->dwDLType == DMUS_DOWNLOADINFO_INSTRUMENT2)
+    {
+        FIXME("Download type DMUS_DOWNLOADINFO_INSTRUMENT2 not yet supported\n");
+    }
+    else if (info->dwDLType == DMUS_DOWNLOADINFO_WAVEARTICULATION)
+    {
+        FIXME("Download type DMUS_DOWNLOADINFO_WAVEARTICULATION not yet supported\n");
+    }
+    else if (info->dwDLType == DMUS_DOWNLOADINFO_STREAMINGWAVE)
+    {
+        FIXME("Download type DMUS_DOWNLOADINFO_STREAMINGWAVE not yet supported\n");
+    }
+    else if (info->dwDLType == DMUS_DOWNLOADINFO_ONESHOTWAVE)
+    {
+        FIXME("Download type DMUS_DOWNLOADINFO_ONESHOTWAVE not yet supported\n");
+    }
+    else
+    {
+        WARN("Unknown download type %u\n", info->dwDLType);
+        return DMUS_E_UNKNOWNDOWNLOAD;
+    }
 
     return S_OK;
 }
