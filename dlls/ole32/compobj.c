@@ -1557,6 +1557,8 @@ HRESULT WINAPI CoDisconnectObject( LPUNKNOWN lpUnk, DWORD reserved )
 
     TRACE("(%p, 0x%08x)\n", lpUnk, reserved);
 
+    if (!lpUnk) return E_INVALIDARG;
+
     hr = IUnknown_QueryInterface(lpUnk, &IID_IMarshal, (void **)&marshal);
     if (hr == S_OK)
     {
