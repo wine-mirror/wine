@@ -2277,8 +2277,7 @@ static HRESULT WINAPI domdoc_loadXML(
 
             /* skip leading spaces if needed */
             if (This->properties->version == MSXML_DEFAULT || This->properties->version == MSXML26)
-                 while (*ptr)
-                    if (isspaceW(*ptr)) ptr++; else break;
+                while (*ptr && isspaceW(*ptr)) ptr++;
 
             xmldoc = doparse(This, (char*)ptr, strlenW(ptr)*sizeof(WCHAR), XML_CHAR_ENCODING_UTF16LE);
             if ( !xmldoc )
