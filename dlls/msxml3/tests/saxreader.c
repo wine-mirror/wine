@@ -3647,16 +3647,31 @@ static void test_mxwriter_stream(void)
     free_bstrs();
 }
 
+static const char *encoding_names[] = {
+    "iso-8859-1",
+    "iso-8859-2",
+    "iso-8859-3",
+    "iso-8859-4",
+    "iso-8859-5",
+    "iso-8859-7",
+    "iso-8859-9",
+    "iso-8859-13",
+    "iso-8859-15",
+    NULL
+};
+
 static void test_mxwriter_encoding(void)
 {
     ISAXContentHandler *content;
     IMXWriter *writer;
     IStream *stream;
+    const char *enc;
     VARIANT dest;
     HRESULT hr;
     HGLOBAL g;
     char *ptr;
     BSTR s;
+    int i;
 
     hr = CoCreateInstance(&CLSID_MXXMLWriter, NULL, CLSCTX_INPROC_SERVER,
             &IID_IMXWriter, (void**)&writer);
@@ -3725,6 +3740,61 @@ static void test_mxwriter_encoding(void)
     SysFreeString(s);
 
     IStream_Release(stream);
+
+    i = 0;
+    enc = encoding_names[i];
+    while (enc)
+    {
+        char expectedA[200];
+
+        hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+        EXPECT_HR(hr, S_OK);
+
+        V_VT(&dest) = VT_UNKNOWN;
+        V_UNKNOWN(&dest) = (IUnknown*)stream;
+        hr = IMXWriter_put_output(writer, dest);
+        EXPECT_HR(hr, S_OK);
+
+        hr = IMXWriter_put_encoding(writer, _bstr_(enc));
+        ok(hr == S_OK || broken(hr != S_OK) /* old win versions do not support certain encodings */,
+            "%s: encoding not accepted\n", enc);
+        if (hr != S_OK)
+        {
+            enc = encoding_names[i++];
+            IStream_Release(stream);
+            continue;
+        }
+
+        hr = ISAXContentHandler_startDocument(content);
+        EXPECT_HR(hr, S_OK);
+
+        hr = ISAXContentHandler_endDocument(content);
+        EXPECT_HR(hr, S_OK);
+
+        hr = IMXWriter_flush(writer);
+        EXPECT_HR(hr, S_OK);
+
+        /* prepare expected string */
+        *expectedA = 0;
+        strcat(expectedA, "<?xml version=\"1.0\" encoding=\"");
+        strcat(expectedA, enc);
+        strcat(expectedA, "\" standalone=\"no\"?>\r\n");
+
+        hr = GetHGlobalFromStream(stream, &g);
+        EXPECT_HR(hr, S_OK);
+
+        ptr = GlobalLock(g);
+        ok(!strncmp(ptr, expectedA, strlen(expectedA)), "%s: got %s, expected %.50s\n", enc, ptr, expectedA);
+        GlobalUnlock(g);
+
+        V_VT(&dest) = VT_EMPTY;
+        hr = IMXWriter_put_output(writer, dest);
+        EXPECT_HR(hr, S_OK);
+
+        IStream_Release(stream);
+
+        enc = encoding_names[++i];
+    }
 
     ISAXContentHandler_Release(content);
     IMXWriter_Release(writer);

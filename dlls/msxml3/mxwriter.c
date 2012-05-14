@@ -46,7 +46,16 @@ static const WCHAR quotW[]  = {'\"'};
 /* should be ordered as encoding names are sorted */
 typedef enum
 {
-    XmlEncoding_UTF16 = 0,
+    XmlEncoding_ISO_8859_1 = 0,
+    XmlEncoding_ISO_8859_13,
+    XmlEncoding_ISO_8859_15,
+    XmlEncoding_ISO_8859_2,
+    XmlEncoding_ISO_8859_3,
+    XmlEncoding_ISO_8859_4,
+    XmlEncoding_ISO_8859_5,
+    XmlEncoding_ISO_8859_7,
+    XmlEncoding_ISO_8859_9,
+    XmlEncoding_UTF16,
     XmlEncoding_UTF8,
     XmlEncoding_Unknown
 } xml_encoding;
@@ -58,12 +67,30 @@ struct xml_encoding_data
     UINT cp;
 };
 
+static const WCHAR iso_8859_1W[] = {'i','s','o','-','8','8','5','9','-','1',0};
+static const WCHAR iso_8859_2W[] = {'i','s','o','-','8','8','5','9','-','2',0};
+static const WCHAR iso_8859_3W[] = {'i','s','o','-','8','8','5','9','-','3',0};
+static const WCHAR iso_8859_4W[] = {'i','s','o','-','8','8','5','9','-','4',0};
+static const WCHAR iso_8859_5W[] = {'i','s','o','-','8','8','5','9','-','5',0};
+static const WCHAR iso_8859_7W[] = {'i','s','o','-','8','8','5','9','-','7',0};
+static const WCHAR iso_8859_9W[] = {'i','s','o','-','8','8','5','9','-','9',0};
+static const WCHAR iso_8859_13W[] = {'i','s','o','-','8','8','5','9','-','1','3',0};
+static const WCHAR iso_8859_15W[] = {'i','s','o','-','8','8','5','9','-','1','5',0};
 static const WCHAR utf16W[] = {'U','T','F','-','1','6',0};
 static const WCHAR utf8W[] = {'U','T','F','-','8',0};
 
 static const struct xml_encoding_data xml_encoding_map[] = {
-    { utf16W, XmlEncoding_UTF16, ~0 }, /* there's no codepage for this case */
-    { utf8W,  XmlEncoding_UTF8,  CP_UTF8 }
+    { iso_8859_1W,  XmlEncoding_ISO_8859_1,  28591 },
+    { iso_8859_13W, XmlEncoding_ISO_8859_13, 28603 },
+    { iso_8859_15W, XmlEncoding_ISO_8859_15, 28605 },
+    { iso_8859_2W,  XmlEncoding_ISO_8859_2,  28592 },
+    { iso_8859_3W,  XmlEncoding_ISO_8859_3,  28593 },
+    { iso_8859_4W,  XmlEncoding_ISO_8859_4,  28594 },
+    { iso_8859_5W,  XmlEncoding_ISO_8859_5,  28595 },
+    { iso_8859_7W,  XmlEncoding_ISO_8859_7,  28597 },
+    { iso_8859_9W,  XmlEncoding_ISO_8859_9,  28599 },
+    { utf16W,       XmlEncoding_UTF16,          ~0 },
+    { utf8W,        XmlEncoding_UTF8,      CP_UTF8 }
 };
 
 typedef enum
@@ -300,7 +327,7 @@ static HRESULT write_output_buffer_mode(output_buffer *buffer, output_mode mode,
     char *ptr;
 
     if (mode & (OutputBuffer_Encoded | OutputBuffer_Both)) {
-        if (buffer->code_page == CP_UTF8)
+        if (buffer->code_page != ~0)
         {
             length = WideCharToMultiByte(buffer->code_page, 0, data, len, NULL, 0, NULL, NULL);
             grow_buffer(&buffer->encoded, length);
