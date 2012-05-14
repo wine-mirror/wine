@@ -253,6 +253,7 @@ typedef struct
     LPWSTR  proxyUsername;
     LPWSTR  proxyPassword;
     DWORD   accessType;
+    DWORD   connect_timeout;
 } appinfo_t;
 
 typedef struct

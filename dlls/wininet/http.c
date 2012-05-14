@@ -5606,7 +5606,7 @@ DWORD HTTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
         session->password = heap_strdupW(lpszPassword);
     session->serverPort = serverPort;
     session->hostPort = serverPort;
-    session->connect_timeout = INFINITE;
+    session->connect_timeout = hIC->connect_timeout;
     session->send_timeout = INFINITE;
     session->receive_timeout = INFINITE;
 

@@ -109,6 +109,7 @@ typedef struct
 } proxyinfo_t;
 
 static ULONG max_conns = 2, max_1_0_conns = 4;
+static ULONG connect_timeout = 60000;
 
 static const WCHAR szInternetSettings[] =
     { 'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
@@ -874,16 +875,47 @@ static DWORD APPINFO_QueryOption(object_header_t *hdr, DWORD option, void *buffe
             *size = sizeof(INTERNET_PROXY_INFOA) + proxyBytesRequired + proxyBypassBytesRequired;
             return ERROR_SUCCESS;
         }
+
+    case INTERNET_OPTION_CONNECT_TIMEOUT:
+        TRACE("INTERNET_OPTION_CONNECT_TIMEOUT\n");
+
+        if (*size < sizeof(ULONG))
+            return ERROR_INSUFFICIENT_BUFFER;
+
+        *(ULONG*)buffer = ai->connect_timeout;
+        *size = sizeof(ULONG);
+
+        return ERROR_SUCCESS;
     }
 
     return INET_QueryOption(hdr, option, buffer, size, unicode);
+}
+
+static DWORD APPINFO_SetOption(object_header_t *hdr, DWORD option, void *buf, DWORD size)
+{
+    appinfo_t *ai = (appinfo_t*)hdr;
+
+    switch(option) {
+    case INTERNET_OPTION_CONNECT_TIMEOUT:
+        TRACE("INTERNET_OPTION_CONNECT_TIMEOUT\n");
+
+        if(size != sizeof(connect_timeout))
+            return ERROR_INTERNET_BAD_OPTION_LENGTH;
+        if(!*(ULONG*)buf)
+            return ERROR_BAD_ARGUMENTS;
+
+        ai->connect_timeout = *(ULONG*)buf;
+        return ERROR_SUCCESS;
+    }
+
+    return INET_SetOption(hdr, option, buf, size);
 }
 
 static const object_vtbl_t APPINFOVtbl = {
     APPINFO_Destroy,
     NULL,
     APPINFO_QueryOption,
-    INET_SetOption,
+    APPINFO_SetOption,
     NULL,
     NULL,
     NULL,
@@ -946,6 +978,7 @@ HINTERNET WINAPI InternetOpenW(LPCWSTR lpszAgent, DWORD dwAccessType,
     lpwai->accessType = dwAccessType;
     lpwai->proxyUsername = NULL;
     lpwai->proxyPassword = NULL;
+    lpwai->connect_timeout = connect_timeout;
 
     lpwai->agent = heap_strdupW(lpszAgent);
     if(dwAccessType == INTERNET_OPEN_TYPE_PRECONFIG)
@@ -2438,6 +2471,16 @@ static DWORD query_global_option(DWORD option, void *buffer, DWORD *size, BOOL u
         return ERROR_INTERNET_INCORRECT_HANDLE_TYPE;
     case INTERNET_OPTION_POLICY:
         return ERROR_INVALID_PARAMETER;
+    case INTERNET_OPTION_CONNECT_TIMEOUT:
+        TRACE("INTERNET_OPTION_CONNECT_TIMEOUT\n");
+
+        if (*size < sizeof(ULONG))
+            return ERROR_INSUFFICIENT_BUFFER;
+
+        *(ULONG*)buffer = connect_timeout;
+        *size = sizeof(ULONG);
+
+        return ERROR_SUCCESS;
     }
 
     FIXME("Stub for %d\n", option);
@@ -2580,6 +2623,17 @@ static DWORD set_global_option(DWORD option, void *buf, DWORD size)
             return ERROR_BAD_ARGUMENTS;
 
         max_1_0_conns = *(ULONG*)buf;
+        return ERROR_SUCCESS;
+
+    case INTERNET_OPTION_CONNECT_TIMEOUT:
+        TRACE("INTERNET_OPTION_CONNECT_TIMEOUT\n");
+
+        if(size != sizeof(connect_timeout))
+            return ERROR_INTERNET_BAD_OPTION_LENGTH;
+        if(!*(ULONG*)buf)
+            return ERROR_BAD_ARGUMENTS;
+
+        connect_timeout = *(ULONG*)buf;
         return ERROR_SUCCESS;
     }
 
