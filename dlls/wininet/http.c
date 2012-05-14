@@ -3424,7 +3424,10 @@ static DWORD HTTP_HttpQueryInfoW(http_request_t *request, DWORD dwInfoLevel,
     case HTTP_QUERY_STATUS_CODE: {
         DWORD res = ERROR_SUCCESS;
 
-        if(request_only || requested_index)
+        if(request_only)
+            return ERROR_HTTP_INVALID_QUERY_REQUEST;
+
+        if(requested_index)
             break;
 
         if(dwInfoLevel & HTTP_QUERY_FLAG_NUMBER) {

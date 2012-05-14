@@ -209,15 +209,15 @@ static void _test_status_code(unsigned line, HINTERNET req, DWORD excode)
     code = 0xdeadbeef;
     index = 1;
     size = sizeof(code);
-    res = HttpQueryInfo(req, HTTP_QUERY_STATUS_CODE||HTTP_QUERY_FLAG_NUMBER, &code, &size, &index);
+    res = HttpQueryInfo(req, HTTP_QUERY_STATUS_CODE|HTTP_QUERY_FLAG_NUMBER, &code, &size, &index);
     ok_(__FILE__,line)(!res && GetLastError() == ERROR_HTTP_HEADER_NOT_FOUND,
-                       "HttpQueryInfo failed: %x(%d)\n", res, GetLastError());
+                       "[invalid 1] HttpQueryInfo failed: %x(%d)\n", res, GetLastError());
 
     code = 0xdeadbeef;
     size = sizeof(code);
-    res = HttpQueryInfo(req, HTTP_QUERY_STATUS_CODE||HTTP_QUERY_FLAG_REQUEST_HEADERS, &code, &size, NULL);
-    ok_(__FILE__,line)(!res && GetLastError() == ERROR_HTTP_HEADER_NOT_FOUND,
-                       "HttpQueryInfo failed: %x(%d)\n", res, GetLastError());
+    res = HttpQueryInfo(req, HTTP_QUERY_STATUS_CODE|HTTP_QUERY_FLAG_REQUEST_HEADERS, &code, &size, NULL);
+    ok_(__FILE__,line)(!res && GetLastError() == ERROR_HTTP_INVALID_QUERY_REQUEST,
+                       "[invalid 2] HttpQueryInfo failed: %x(%d)\n", res, GetLastError());
 }
 
 static int close_handle_cnt;
