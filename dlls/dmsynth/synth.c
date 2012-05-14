@@ -258,9 +258,10 @@ static HRESULT WINAPI IDirectMusicSynth8Impl_GetFormat(LPDIRECTMUSICSYNTH8 iface
 
 static HRESULT WINAPI IDirectMusicSynth8Impl_GetAppend(LPDIRECTMUSICSYNTH8 iface, DWORD* append)
 {
-    IDirectMusicSynth8Impl *This = impl_from_IDirectMusicSynth8(iface);
+    TRACE("(%p)->(%p)\n", iface, append);
 
-    FIXME("(%p)->(%p): stub\n", This, append);
+    /* We don't need extra space at the end of buffers passed to us for now */
+    *append = 0;
 
     return S_OK;
 }
