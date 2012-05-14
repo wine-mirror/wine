@@ -58,18 +58,6 @@ static DWORD DSOUND_fraglen(DirectSoundDevice *device)
     return ret;
 }
 
-static void DSOUND_RecalcPrimary(DirectSoundDevice *device)
-{
-    TRACE("(%p)\n", device);
-
-    device->fraglen = DSOUND_fraglen(device);
-    device->helfrags = device->buflen / device->fraglen;
-    TRACE("fraglen=%d helfrags=%d\n", device->fraglen, device->helfrags);
-
-    /* calculate the 10ms write lead */
-    device->writelead = (device->pwfx->nSamplesPerSec / 100) * device->pwfx->nBlockAlign;
-}
-
 HRESULT DSOUND_ReopenDevice(DirectSoundDevice *device, BOOL forcewave)
 {
     UINT prebuf_frames;
@@ -153,18 +141,23 @@ HRESULT DSOUND_ReopenDevice(DirectSoundDevice *device, BOOL forcewave)
 
 static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device)
 {
-	DWORD buflen;
 	LPBYTE newbuf;
 
 	TRACE("(%p)\n", device);
+
+	device->fraglen = DSOUND_fraglen(device);
 
 	/* on original windows, the buffer it set to a fixed size, no matter what the settings are.
 	   on windows this size is always fixed (tested on win-xp) */
 	if (!device->buflen)
 		device->buflen = ds_hel_buflen;
-	buflen = device->buflen;
-	buflen -= buflen % device->pwfx->nBlockAlign;
-	device->buflen = buflen;
+	device->buflen -= device->buflen % device->pwfx->nBlockAlign;
+	while(device->buflen < device->fraglen * device->prebuf){
+		device->buflen += ds_hel_buflen;
+		device->buflen -= device->buflen % device->pwfx->nBlockAlign;
+	}
+
+	device->helfrags = device->buflen / device->fraglen;
 
 	device->mix_buffer_len = DSOUND_bufpos_to_mixpos(device, device->buflen);
 	device->mix_buffer = HeapAlloc(GetProcessHeap(), 0, device->mix_buffer_len);
@@ -174,13 +167,11 @@ static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device)
 	if (device->state == STATE_PLAYING) device->state = STATE_STARTING;
 	else if (device->state == STATE_STOPPING) device->state = STATE_STOPPED;
 
-    TRACE("desired buflen=%d, old buffer=%p\n", buflen, device->buffer);
-
     /* reallocate emulated primary buffer */
     if (device->buffer)
-        newbuf = HeapReAlloc(GetProcessHeap(),0,device->buffer, buflen);
+        newbuf = HeapReAlloc(GetProcessHeap(),0,device->buffer, device->buflen);
     else
-        newbuf = HeapAlloc(GetProcessHeap(),0, buflen);
+        newbuf = HeapAlloc(GetProcessHeap(),0, device->buflen);
 
     if (!newbuf) {
         ERR("failed to allocate primary buffer\n");
@@ -188,11 +179,12 @@ static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device)
         /* but the old buffer might still exist and must be re-prepared */
     }
 
-    DSOUND_RecalcPrimary(device);
+    device->writelead = (device->pwfx->nSamplesPerSec / 100) * device->pwfx->nBlockAlign;
 
     device->buffer = newbuf;
 
-    TRACE("fraglen=%d\n", device->fraglen);
+    TRACE("buflen: %u, fraglen: %u, helfrags: %u, mix_buffer_len: %u\n",
+            device->buflen, device->fraglen, device->helfrags, device->mix_buffer_len);
 
 	device->mixfunction = mixfunctions[device->pwfx->wBitsPerSample/8 - 1];
 	device->normfunction = normfunctions[device->pwfx->wBitsPerSample/8 - 1];
