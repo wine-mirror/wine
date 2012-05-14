@@ -5190,9 +5190,9 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
                       (pt[2].X-pt[0].X)*(pt[2].X-pt[0].X));
 
     rectcpy[3].X = rectcpy[0].X = rect->X;
-    rectcpy[1].Y = rectcpy[0].Y = rect->Y + offsety;
+    rectcpy[1].Y = rectcpy[0].Y = rect->Y;
     rectcpy[2].X = rectcpy[1].X = rect->X + rect->Width;
-    rectcpy[3].Y = rectcpy[2].Y = rect->Y + offsety + rect->Height;
+    rectcpy[3].Y = rectcpy[2].Y = rect->Y + rect->Height;
     transform_and_round_points(graphics, corners, rectcpy, 4);
 
     scaled_rect.X = 0.0;
