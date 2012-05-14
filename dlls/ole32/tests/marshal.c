@@ -1331,6 +1331,9 @@ static void test_disconnect_stub(void)
     CoDisconnectObject((IUnknown*)&Test_ClassFactory, 0);
 
     ok_no_locks();
+
+    hr = CoDisconnectObject(NULL, 0);
+    ok( hr == E_INVALIDARG, "wrong status %x\n", hr );
 }
 
 /* tests failure case of a same-thread marshal and unmarshal twice */
