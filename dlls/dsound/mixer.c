@@ -609,10 +609,9 @@ static DWORD DSOUND_MixOne(IDirectSoundBufferImpl *dsb, DWORD writepos, DWORD mi
  * Returns:  the length beyond the writepos that was mixed to.
  */
 
-static DWORD DSOUND_MixToPrimary(const DirectSoundDevice *device, DWORD writepos, DWORD mixlen, BOOL recover, BOOL *all_stopped)
+static void DSOUND_MixToPrimary(const DirectSoundDevice *device, DWORD writepos, DWORD mixlen, BOOL recover, BOOL *all_stopped)
 {
-	INT i, len;
-	DWORD minlen = 0;
+	INT i;
 	IDirectSoundBufferImpl	*dsb;
 
 	/* unless we find a running buffer, all have stopped */
@@ -643,22 +642,13 @@ static DWORD DSOUND_MixToPrimary(const DirectSoundDevice *device, DWORD writepos
 					dsb->state = STATE_PLAYING;
 
 				/* mix next buffer into the main buffer */
-				len = DSOUND_MixOne(dsb, writepos, mixlen);
-
-				if (!minlen) minlen = len;
-
-				/* record the minimum length mixed from all buffers */
-				/* we only want to return the length which *all* buffers have mixed */
-				else if (len) minlen = (len < minlen) ? len : minlen;
+				DSOUND_MixOne(dsb, writepos, mixlen);
 
 				*all_stopped = FALSE;
 			}
 			RtlReleaseResource(&dsb->lock);
 		}
 	}
-
-	TRACE("Mixed at least %d from all buffers\n", minlen);
-	return minlen;
 }
 
 /**
@@ -801,7 +791,7 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 
 	if (device->priolevel != DSSCL_WRITEPRIMARY) {
 		BOOL recover = FALSE, all_stopped = FALSE;
-		DWORD playpos, writepos, writelead, maxq, frag, prebuff_max, prebuff_left, size1, size2, mixplaypos, mixplaypos2;
+		DWORD playpos, writepos, writelead, maxq, prebuff_max, prebuff_left, size1, size2, mixplaypos, mixplaypos2;
 		LPVOID buf1, buf2;
 		int nfiller;
 
@@ -873,19 +863,19 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 			prebuff_left, device->prebuf, device->fraglen, prebuff_max, writelead);
 
 		/* do the mixing */
-		frag = DSOUND_MixToPrimary(device, writepos, maxq, recover, &all_stopped);
+		DSOUND_MixToPrimary(device, writepos, maxq, recover, &all_stopped);
 
-		if (frag + writepos > device->buflen)
+		if (maxq + writepos > device->buflen)
 		{
 			DWORD todo = device->buflen - writepos;
 			device->normfunction(device->mix_buffer + DSOUND_bufpos_to_mixpos(device, writepos), device->buffer + writepos, todo);
-			device->normfunction(device->mix_buffer, device->buffer, frag - todo);
+			device->normfunction(device->mix_buffer, device->buffer, maxq - todo);
 		}
 		else
-			device->normfunction(device->mix_buffer + DSOUND_bufpos_to_mixpos(device, writepos), device->buffer + writepos, frag);
+			device->normfunction(device->mix_buffer + DSOUND_bufpos_to_mixpos(device, writepos), device->buffer + writepos, maxq);
 
 		/* update the mix position, taking wrap-around into account */
-		device->mixpos = writepos + frag;
+		device->mixpos = writepos + maxq;
 		device->mixpos %= device->buflen;
 
 		/* update prebuff left */
