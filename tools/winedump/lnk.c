@@ -138,7 +138,7 @@ typedef struct _LOCAL_VOLUME_INFO
 typedef struct _NETWORK_VOLUME_INFO
 {
     DWORD dwSize;
-    DWORD dwUnkown1;
+    DWORD dwUnknown1;
     DWORD dwShareNameOfs;
     DWORD dwReserved;
     DWORD dwUnknown2;
