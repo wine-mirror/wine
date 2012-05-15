@@ -490,21 +490,114 @@ HRESULT WINAPI D3DAssemble(const void *data, SIZE_T datasize, const char *filena
     return hr;
 }
 
+static struct bwriter_shader *parse_hlsl_shader(const char *text, enum shader_type type, DWORD version,
+        const char *entrypoint, char **messages)
+{
+    FIXME("\n");
+    return NULL;
+}
+
+static HRESULT compile_shader(const char *preproc_shader, const char *target, const char *entrypoint,
+        ID3DBlob **shader_blob, ID3DBlob **error_messages)
+{
+    struct bwriter_shader *shader;
+    char *messages = NULL;
+    HRESULT hr;
+    DWORD *res, size;
+    ID3DBlob *buffer;
+    char *pos;
+
+    FIXME("Parse compilation target.\n");
+    shader = parse_hlsl_shader(preproc_shader, ST_VERTEX, 2, entrypoint, &messages);
+
+    if (messages)
+    {
+        TRACE("Compiler messages:\n");
+        TRACE("%s", messages);
+
+        TRACE("Shader source:\n");
+        TRACE("%s\n", debugstr_a(preproc_shader));
+
+        if (error_messages)
+        {
+            const char *preproc_messages = *error_messages ? ID3D10Blob_GetBufferPointer(*error_messages) : NULL;
+
+            size = strlen(messages) + (preproc_messages ? strlen(preproc_messages) : 0) + 1;
+            hr = D3DCreateBlob(size, &buffer);
+            if (FAILED(hr))
+            {
+                HeapFree(GetProcessHeap(), 0, messages);
+                if (shader) SlDeleteShader(shader);
+                return hr;
+            }
+            pos = ID3D10Blob_GetBufferPointer(buffer);
+            if (preproc_messages)
+            {
+                memcpy(pos, preproc_messages, strlen(preproc_messages) + 1);
+                pos += strlen(preproc_messages);
+            }
+            memcpy(pos, messages, strlen(messages) + 1);
+
+            if (*error_messages) ID3D10Blob_Release(*error_messages);
+            *error_messages = buffer;
+        }
+        HeapFree(GetProcessHeap(), 0, messages);
+    }
+
+    if (!shader)
+    {
+        ERR("HLSL shader parsing failed.\n");
+        return D3DXERR_INVALIDDATA;
+    }
+
+    hr = SlWriteBytecode(shader, 9, &res, &size);
+    SlDeleteShader(shader);
+    if (FAILED(hr))
+    {
+        ERR("SlWriteBytecode failed with error 0x%08x.\n", hr);
+        return D3DXERR_INVALIDDATA;
+    }
+
+    if (shader_blob)
+    {
+        hr = D3DCreateBlob(size, &buffer);
+        if (FAILED(hr))
+        {
+            HeapFree(GetProcessHeap(), 0, res);
+            return hr;
+        }
+        memcpy(ID3D10Blob_GetBufferPointer(buffer), res, size);
+        *shader_blob = buffer;
+    }
+
+    HeapFree(GetProcessHeap(), 0, res);
+
+    return S_OK;
+}
+
 HRESULT WINAPI D3DCompile(const void *data, SIZE_T data_size, const char *filename,
         const D3D_SHADER_MACRO *defines, ID3DInclude *include, const char *entrypoint,
         const char *target, UINT sflags, UINT eflags, ID3DBlob **shader, ID3DBlob **error_messages)
 {
+    HRESULT hr;
+
     FIXME("data %p, data_size %lu, filename %s, defines %p, include %p, entrypoint %s,\n"
             "target %s, sflags %#x, eflags %#x, shader %p, error_messages %p stub!\n",
             data, data_size, debugstr_a(filename), defines, include, debugstr_a(entrypoint),
             debugstr_a(target), sflags, eflags, shader, error_messages);
 
-    TRACE("Shader source:\n%s\n", debugstr_an(data, data_size));
+    if (shader) *shader = NULL;
+    if (error_messages) *error_messages = NULL;
 
-    if (error_messages)
-        D3DCreateBlob(1, error_messages); /* zero fill used as string end */
+    EnterCriticalSection(&wpp_mutex);
 
-    return D3DERR_INVALIDCALL;
+    hr = preprocess_shader(data, data_size, defines, include, error_messages);
+    if (SUCCEEDED(hr))
+        hr = compile_shader(wpp_output, target, entrypoint, shader, error_messages);
+
+    HeapFree(GetProcessHeap(), 0, wpp_output);
+    LeaveCriticalSection(&wpp_mutex);
+    return hr;
 }
 
 HRESULT WINAPI D3DPreprocess(const void *data, SIZE_T size, const char *filename,
