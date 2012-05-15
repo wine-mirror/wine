@@ -38,6 +38,7 @@ static BOOL db_display = FALSE;
 
 #define ARM_INSN_SIZE    4
 #define THUMB_INSN_SIZE  2
+#define THUMB2_INSN_SIZE 4
 
 #define ROR32(n, r) (((n) >> (r)) | ((n) << (32 - (r))))
 
@@ -421,21 +422,6 @@ static WORD thumb_disasm_blocktrans(WORD inst, ADDRESS64 *addr)
     return 0;
 }
 
-static WORD thumb_disasm_longbl(WORD inst, ADDRESS64 *addr)
-{
-    WORD inst2;
-    UINT offset = (inst & 0x07ff) << 12;
-
-    addr->Offset += 2;
-    inst2 = db_get_inst( memory_to_linear_addr(addr), 2 );
-    if (!((inst2 & 0xf800) == 0xf800)) return inst;
-
-    offset += (inst2 & 0x07ff) << 1;
-    dbg_printf("\n\tbl\t");
-    db_printsym(addr->Offset + offset);
-    return 0;
-}
-
 static WORD thumb_disasm_condbranch(WORD inst, ADDRESS64 *addr)
 {
     WORD offset = inst & 0x00ff;
@@ -561,6 +547,53 @@ static WORD thumb_disasm_movshift(WORD inst, ADDRESS64 *addr)
     return 0;
 }
 
+static UINT thumb2_disasm_branchlinked(UINT inst, ADDRESS64 *addr)
+{
+    UINT offset = (((inst & 0x07ff0000) >> 4) | ((inst & 0x000007ff) << 1)) + 4;
+
+    dbg_printf("\n\tbl\t");
+    db_printsym(addr->Offset + offset);
+    return 0;
+}
+
+static UINT thumb2_disasm_misc(UINT inst, ADDRESS64 *addr)
+{
+    WORD op1 = (inst >> 20) & 0x03;
+    WORD op2 = (inst >> 4) & 0x03;
+
+    if (get_nibble(inst, 4) != get_nibble(inst, 0))
+        return inst;
+
+    if (op1 == 3 && op2 == 0)
+    {
+        dbg_printf("\n\tclz\t%s, %s\t", tbl_regs[get_nibble(inst, 2)], tbl_regs[get_nibble(inst, 0)]);
+        return 0;
+    }
+
+    if (op1 == 1)
+    {
+        switch (op2)
+        {
+        case 0:
+            dbg_printf("\n\trev\t");
+            break;
+        case 1:
+            dbg_printf("\n\trev16\t");
+            break;
+        case 2:
+            dbg_printf("\n\trbit\t");
+            break;
+        case 3:
+            dbg_printf("\n\trevsh\t");
+            break;
+        }
+        dbg_printf("%s, %s\t", tbl_regs[get_nibble(inst, 2)], tbl_regs[get_nibble(inst, 0)]);
+        return 0;
+    }
+
+    return inst;
+}
+
 struct inst_arm
 {
         UINT mask;
@@ -594,7 +627,6 @@ static const struct inst_thumb16 tbl_thumb16[] = {
     { 0xfc00, 0x4000, thumb_disasm_aluop },
     { 0xf600, 0xb400, thumb_disasm_pushpop },
     { 0xf000, 0xc000, thumb_disasm_blocktrans },
-    { 0xf800, 0xf000, thumb_disasm_longbl },
     { 0xf000, 0xd000, thumb_disasm_condbranch },
     { 0xf800, 0xe000, thumb_disasm_uncondbranch },
     { 0xf000, 0xa000, thumb_disasm_loadadr },
@@ -613,6 +645,12 @@ static const struct inst_thumb16 tbl_thumb16[] = {
     { 0x0000, 0x0000, NULL }
 };
 
+static const struct inst_arm tbl_thumb32[] = {
+    { 0xf800f800, 0xf000f800, thumb2_disasm_branchlinked },
+    { 0xffc0f0c0, 0xfa80f080, thumb2_disasm_misc },
+    { 0x00000000, 0x00000000, NULL }
+};
+
 /***********************************************************************
  *              disasm_one_insn
  *
@@ -623,6 +661,7 @@ void be_arm_disasm_one_insn(ADDRESS64 *addr, int display)
 {
     struct inst_arm *a_ptr = (struct inst_arm *)&tbl_arm;
     struct inst_thumb16 *t_ptr = (struct inst_thumb16 *)&tbl_thumb16;
+    struct inst_arm *t2_ptr = (struct inst_arm *)&tbl_thumb32;
     UINT inst;
     WORD tinst;
     int size;
@@ -636,49 +675,79 @@ void be_arm_disasm_one_insn(ADDRESS64 *addr, int display)
     else
         db_disasm_thumb=(*pval & 0x20)?TRUE:FALSE;
 
-    if (db_disasm_thumb) size = THUMB_INSN_SIZE;
-    else size = ARM_INSN_SIZE;
-
     db_display = display;
-    inst = db_get_inst( memory_to_linear_addr(addr), size );
 
     if (!db_disasm_thumb)
     {
+        size = ARM_INSN_SIZE;
+        inst = db_get_inst( memory_to_linear_addr(addr), size );
         while (a_ptr->func) {
-                if ((inst & a_ptr->mask) ==  a_ptr->pattern) {
-                        matched = 1;
-                        break;
-                }
-                a_ptr++;
+            if ((inst & a_ptr->mask) ==  a_ptr->pattern) {
+                    matched = 1;
+                    break;
+            }
+            a_ptr++;
         }
 
         if (!matched) {
-                dbg_printf("\n\tUnknown Instruction: %08x", inst);
-                addr->Offset += size;
-                return;
+            dbg_printf("\n\tUnknown ARM Instruction: %08x", inst);
+            addr->Offset += size;
         }
         else
         {
             if (!a_ptr->func(inst, addr))
                 addr->Offset += size;
-            return;
         }
+        return;
     }
     else
     {
-        tinst = inst;
-        while (t_ptr->func) {
-                if ((tinst & t_ptr->mask) ==  t_ptr->pattern) {
-                        matched = 1;
-                        break;
+        WORD *taddr = memory_to_linear_addr(addr);
+        tinst = db_get_inst( taddr, THUMB_INSN_SIZE );
+        switch (tinst & 0xf800)
+        {
+            case 0xe800:
+            case 0xf000:
+            case 0xf800:
+                size = THUMB2_INSN_SIZE;
+                taddr++;
+                inst = db_get_inst( taddr, THUMB_INSN_SIZE );
+                inst |= (tinst << 16);
+
+                while (t2_ptr->func) {
+                    if ((inst & t2_ptr->mask) ==  t2_ptr->pattern) {
+                            matched = 1;
+                            break;
+                    }
+                    t2_ptr++;
                 }
-                t_ptr++;
+
+                if (!matched) {
+                    dbg_printf("\n\tUnknown Thumb2 Instruction: %08x", inst);
+                    addr->Offset += size;
+                }
+                else
+                {
+                    if (!t2_ptr->func(inst, addr))
+                        addr->Offset += size;
+                }
+                return;
+            default:
+                break;
+        }
+
+        size = THUMB_INSN_SIZE;
+        while (t_ptr->func) {
+            if ((tinst & t_ptr->mask) ==  t_ptr->pattern) {
+                    matched = 1;
+                    break;
+            }
+            t_ptr++;
         }
 
         if (!matched) {
-                dbg_printf("\n\tUnknown Instruction: %04x", tinst);
-                addr->Offset += size;
-                return;
+            dbg_printf("\n\tUnknown Thumb Instruction: %04x", tinst);
+            addr->Offset += size;
         }
         else
         {
