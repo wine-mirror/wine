@@ -171,7 +171,7 @@ typedef enum _POOL_TYPE {
   NonPagedPool,
   PagedPool,
   NonPagedPoolMustSucceed,
-  UnkownType,
+  DontUseThisType,
   NonPagedPoolCacheAligned,
   PagedPoolCacheAligned,
   NonPagedPoolCacheAlignedMustS,
