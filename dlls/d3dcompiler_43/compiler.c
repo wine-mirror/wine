@@ -396,9 +396,8 @@ static HRESULT assemble_shader(const char *preproc_shader,
     struct bwriter_shader *shader;
     char *messages = NULL;
     HRESULT hr;
-    DWORD *res;
-    LPD3DBLOB buffer;
-    int size;
+    DWORD *res, size;
+    ID3DBlob *buffer;
     char *pos;
 
     shader = SlAssembleShader(preproc_shader, &messages);
@@ -443,7 +442,7 @@ static HRESULT assemble_shader(const char *preproc_shader,
         return D3DXERR_INVALIDDATA;
     }
 
-    hr = SlWriteBytecode(shader, 9, &res);
+    hr = SlWriteBytecode(shader, 9, &res, &size);
     SlDeleteShader(shader);
     if (FAILED(hr))
     {
@@ -453,7 +452,6 @@ static HRESULT assemble_shader(const char *preproc_shader,
 
     if (shader_blob)
     {
-        size = HeapSize(GetProcessHeap(), 0, res);
         hr = D3DCreateBlob(size, &buffer);
         if (FAILED(hr))
         {

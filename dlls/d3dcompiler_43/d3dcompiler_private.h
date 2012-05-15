@@ -570,7 +570,7 @@ typedef enum _BWRITERDECLUSAGE {
 #define T3_REG          5
 
 struct bwriter_shader *SlAssembleShader(const char *text, char **messages) DECLSPEC_HIDDEN;
-DWORD SlWriteBytecode(const struct bwriter_shader *shader, int dxversion, DWORD **result) DECLSPEC_HIDDEN;
+HRESULT SlWriteBytecode(const struct bwriter_shader *shader, int dxversion, DWORD **result, DWORD *size) DECLSPEC_HIDDEN;
 void SlDeleteShader(struct bwriter_shader *shader) DECLSPEC_HIDDEN;
 
 #define MAKE_TAG(ch0, ch1, ch2, ch3) \

@@ -2543,22 +2543,8 @@ static HRESULT call_instr_handler(struct bc_writer *writer,
     return E_INVALIDARG;
 }
 
-/* SlWriteBytecode (wineshader.@)
- *
- * Writes shader version specific bytecode from the shader passed in.
- * The returned bytecode can be passed to the Direct3D runtime like
- * IDirect3DDevice9::Create*Shader.
- *
- * Parameters:
- *  shader: Shader to translate into bytecode
- *  version: Shader version to generate(d3d version token)
- *  dxversion: DirectX version the code targets
- *  result: the resulting shader bytecode
- *
- * Return values:
- *  S_OK on success
- */
-DWORD SlWriteBytecode(const struct bwriter_shader *shader, int dxversion, DWORD **result) {
+HRESULT SlWriteBytecode(const struct bwriter_shader *shader, int dxversion, DWORD **result, DWORD *size)
+{
     struct bc_writer *writer;
     struct bytecode_buffer *buffer = NULL;
     HRESULT hr;
@@ -2610,12 +2596,8 @@ DWORD SlWriteBytecode(const struct bwriter_shader *shader, int dxversion, DWORD 
         goto error;
     }
 
-    /* Cut off unneeded memory from the result buffer */
-    *result = d3dcompiler_realloc(buffer->data,
-                         sizeof(DWORD) * buffer->size);
-    if(!*result) {
-        *result = buffer->data;
-    }
+    *size = buffer->size * sizeof(DWORD);
+    *result = buffer->data;
     buffer->data = NULL;
     hr = S_OK;
 
