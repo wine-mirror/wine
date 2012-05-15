@@ -1013,18 +1013,19 @@ done:
  */
 static Cursor create_xlib_cursor( HDC hdc, const ICONINFOEXW *icon, int width, int height )
 {
+    char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+    BITMAPINFO *info = (BITMAPINFO *)buffer;
     XColor fg, bg;
     Cursor cursor = None;
-    HBITMAP xor_bitmap = 0;
-    BITMAPINFO *info;
+    XVisualInfo vis;
+    Pixmap xor_pixmap, mask_pixmap;
+    struct gdi_image_bits bits;
     unsigned int *color_bits = NULL, *ptr;
     unsigned char *mask_bits = NULL, *xor_bits = NULL;
     int i, x, y, has_alpha = 0;
     int rfg, gfg, bfg, rbg, gbg, bbg, fgBits, bgBits;
     unsigned int width_bytes = (width + 31) / 32 * 4;
 
-    if (!(info = HeapAlloc( GetProcessHeap(), 0, FIELD_OFFSET( BITMAPINFO, bmiColors[256] ))))
-        return FALSE;
     info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     info->bmiHeader.biWidth = width;
     info->bmiHeader.biHeight = -height;
@@ -1048,7 +1049,6 @@ static Cursor create_xlib_cursor( HDC hdc, const ICONINFOEXW *icon, int width, i
 
     /* compute fg/bg color and xor bitmap based on average of the color values */
 
-    if (!(xor_bitmap = CreateBitmap( width, height, 1, 1, NULL ))) goto done;
     rfg = gfg = bfg = rbg = gbg = bbg = fgBits = 0;
     for (y = 0, ptr = color_bits; y < height; y++)
     {
@@ -1090,8 +1090,8 @@ static Cursor create_xlib_cursor( HDC hdc, const ICONINFOEXW *icon, int width, i
     else bg.red = bg.green = bg.blue = 0;
 
     info->bmiHeader.biBitCount = 1;
+    info->bmiHeader.biClrUsed = 0;
     info->bmiHeader.biSizeImage = width_bytes * height;
-    SetDIBits( hdc, xor_bitmap, 0, height, xor_bits, info, DIB_RGB_COLORS );
 
     /* generate mask from the alpha channel if we have one */
 
@@ -1100,37 +1100,38 @@ static Cursor create_xlib_cursor( HDC hdc, const ICONINFOEXW *icon, int width, i
 
     if (has_alpha)
     {
-        /* make sure the bitmaps are owned by x11drv */
-        HBITMAP orig = SelectObject( hdc, icon->hbmMask );
-        SelectObject( hdc, xor_bitmap );
-        SelectObject( hdc, orig );
-
         memset( mask_bits, 0, width_bytes * height );
         for (y = 0, ptr = color_bits; y < height; y++)
             for (x = 0; x < width; x++, ptr++)
                 if ((*ptr >> 24) > 25) /* more than 10% alpha */
                     mask_bits[y * width_bytes + x / 8] |= 0x80 >> (x % 8);
-
-        info->bmiHeader.biBitCount = 1;
-        info->bmiHeader.biSizeImage = width_bytes * height;
-        SetDIBits( hdc, icon->hbmMask, 0, height, mask_bits, info, DIB_RGB_COLORS );
-
-        wine_tsx11_lock();
-        cursor = XCreatePixmapCursor( gdi_display,
-                                      X11DRV_get_pixmap(xor_bitmap),
-                                      X11DRV_get_pixmap(icon->hbmMask),
-                                      &fg, &bg, icon->xHotspot, icon->yHotspot );
-        wine_tsx11_unlock();
     }
-    else
+    else  /* invert the mask */
     {
-        cursor = create_cursor_from_bitmaps( xor_bitmap, icon->hbmMask, width, height, 0, 0,
-                                             &fg, &bg, icon->xHotspot, icon->yHotspot );
+        ptr = (unsigned int *)mask_bits;
+        for (i = 0; i < info->bmiHeader.biSizeImage / sizeof(*ptr); i++, ptr++) *ptr ^= ~0u;
     }
+
+    vis.depth = 1;
+    bits.ptr = xor_bits;
+    bits.free = NULL;
+    bits.is_copy = TRUE;
+    if (!(xor_pixmap = create_pixmap_from_image( hdc, &vis, info, &bits, DIB_RGB_COLORS ))) goto done;
+
+    bits.ptr = mask_bits;
+    mask_pixmap = create_pixmap_from_image( hdc, &vis, info, &bits, DIB_RGB_COLORS );
+
+    wine_tsx11_lock();
+    if (mask_pixmap)
+    {
+        cursor = XCreatePixmapCursor( gdi_display, xor_pixmap, mask_pixmap,
+                                      &fg, &bg, icon->xHotspot, icon->yHotspot );
+        XFreePixmap( gdi_display, mask_pixmap );
+    }
+    XFreePixmap( gdi_display, xor_pixmap );
+    wine_tsx11_unlock();
 
 done:
-    DeleteObject( xor_bitmap );
-    HeapFree( GetProcessHeap(), 0, info );
     HeapFree( GetProcessHeap(), 0, color_bits );
     HeapFree( GetProcessHeap(), 0, xor_bits );
     HeapFree( GetProcessHeap(), 0, mask_bits );
