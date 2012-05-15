@@ -34,3 +34,19 @@ static inline BOOL heap_free(void *mem)
 {
     return HeapFree(GetProcessHeap(), 0, mem);
 }
+
+static inline WCHAR *heap_strdupAtoW(const char *str)
+{
+    WCHAR *ret = NULL;
+
+    if(str) {
+        size_t len;
+
+        len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+        ret = heap_alloc(len*sizeof(WCHAR));
+        if(ret)
+            MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
+    }
+
+    return ret;
+}

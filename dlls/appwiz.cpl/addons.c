@@ -69,6 +69,9 @@ typedef struct {
     const char *file_name;
     const char *subdir_name;
     const char *sha;
+    const char *config_key;
+    const char *url_config_key;
+    const char *dir_config_key;
 } addon_info_t;
 
 static const addon_info_t addons_info[] = {
@@ -76,16 +79,12 @@ static const addon_info_t addons_info[] = {
         GECKO_VERSION,
         "wine_gecko-" GECKO_VERSION "-" ARCH_STRING ".msi",
         "gecko",
-        GECKO_SHA
+        GECKO_SHA,
+        "MSHTML", "GeckoUrl", "GeckoCabDir"
     }
 };
 
 static const addon_info_t *addon = &addons_info[0];
-
-static const WCHAR mshtml_keyW[] =
-    {'S','o','f','t','w','a','r','e',
-     '\\','W','i','n','e',
-     '\\','M','S','H','T','M','L',0};
 
 static HWND install_dialog = NULL;
 static LPWSTR url = NULL;
@@ -233,6 +232,23 @@ static BOOL install_from_unix_file(const char *dir, const char *subdir, const ch
     return ret;
 }
 
+static HKEY open_config_key(void)
+{
+    HKEY hkey, ret;
+    DWORD res;
+
+    static const WCHAR wine_keyW[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e',0};
+
+    /* @@ Wine registry key: HKCU\Software\Wine\$config_key */
+    res = RegOpenKeyW(HKEY_CURRENT_USER, wine_keyW, &hkey);
+    if(res != ERROR_SUCCESS)
+        return NULL;
+
+    res = RegOpenKeyA(hkey, addon->config_key, &ret);
+    RegCloseKey(hkey);
+    return res == ERROR_SUCCESS ? ret : NULL;
+}
+
 static BOOL install_from_registered_dir(void)
 {
     char *package_dir;
@@ -240,16 +256,15 @@ static BOOL install_from_registered_dir(void)
     DWORD res, type, size = MAX_PATH;
     BOOL ret;
 
-    /* @@ Wine registry key: HKCU\Software\Wine\MSHTML */
-    res = RegOpenKeyW(HKEY_CURRENT_USER, mshtml_keyW, &hkey);
-    if(res != ERROR_SUCCESS)
+    hkey = open_config_key();
+    if(!hkey)
         return FALSE;
 
     package_dir = heap_alloc(size);
-    res = RegGetValueA(hkey, NULL, "GeckoCabDir", RRF_RT_ANY, &type, (PBYTE)package_dir, &size);
+    res = RegGetValueA(hkey, NULL, addon->dir_config_key, RRF_RT_ANY, &type, (PBYTE)package_dir, &size);
     if(res == ERROR_MORE_DATA) {
         package_dir = heap_realloc(package_dir, size);
-        res = RegGetValueA(hkey, NULL, "GeckoCabDir", RRF_RT_ANY, &type, (PBYTE)package_dir, &size);
+        res = RegGetValueA(hkey, NULL, addon->dir_config_key, RRF_RT_ANY, &type, (PBYTE)package_dir, &size);
     }
     RegCloseKey(hkey);
     if(res != ERROR_SUCCESS || (type != REG_SZ && type != REG_EXPAND_SZ)) {
@@ -399,26 +414,26 @@ static IBindStatusCallback InstallCallback = { &InstallCallbackVtbl };
 
 static LPWSTR get_url(void)
 {
+    DWORD size = INTERNET_MAX_URL_LENGTH*sizeof(WCHAR);
+    WCHAR *url, *config_key;
     HKEY hkey;
     DWORD res, type;
-    DWORD size = INTERNET_MAX_URL_LENGTH*sizeof(WCHAR);
     DWORD returned_size;
-    LPWSTR url;
 
-    static const WCHAR wszGeckoUrl[] = {'G','e','c','k','o','U','r','l',0};
     static const WCHAR httpW[] = {'h','t','t','p'};
     static const WCHAR arch_formatW[] = {'?','a','r','c','h','='};
     static const WCHAR v_formatW[] = {'&','v','='};
 
-    /* @@ Wine registry key: HKCU\Software\Wine\MSHTML */
-    res = RegOpenKeyW(HKEY_CURRENT_USER, mshtml_keyW, &hkey);
-    if(res != ERROR_SUCCESS)
+    hkey = open_config_key();
+    if(!hkey)
         return NULL;
 
     url = heap_alloc(size);
     returned_size = size;
 
-    res = RegQueryValueExW(hkey, wszGeckoUrl, NULL, &type, (LPBYTE)url, &returned_size);
+    config_key = heap_strdupAtoW(addon->url_config_key);
+    res = RegQueryValueExW(hkey, config_key, NULL, &type, (LPBYTE)url, &returned_size);
+    heap_free(config_key);
     RegCloseKey(hkey);
     if(res != ERROR_SUCCESS || type != REG_SZ) {
         heap_free(url);
