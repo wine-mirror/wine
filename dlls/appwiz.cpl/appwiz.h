@@ -16,7 +16,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-BOOL install_wine_gecko(void) DECLSPEC_HIDDEN;
+typedef enum {
+    ADDON_GECKO
+} addon_t;
+
+BOOL install_addon(addon_t) DECLSPEC_HIDDEN;
 
 extern HINSTANCE hInst DECLSPEC_HIDDEN;
 

@@ -84,7 +84,7 @@ static const addon_info_t addons_info[] = {
     }
 };
 
-static const addon_info_t *addon = &addons_info[0];
+static const addon_info_t *addon;
 
 static HWND install_dialog = NULL;
 static LPWSTR url = NULL;
@@ -553,18 +553,20 @@ static INT_PTR CALLBACK installer_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
     return FALSE;
 }
 
-BOOL install_wine_gecko(void)
+BOOL install_addon(addon_t addon_type)
 {
     if(!*ARCH_STRING)
         return FALSE;
 
+    addon = addons_info+addon_type;
+
     /*
-     * Try to find Gecko .cab file in following order:
-     * - directory stored in GeckoCabDir value of HKCU/Wine/Software/MSHTML key
-     * - $datadir/gecko/
-     * - $INSTALL_DATADIR/wine/gecko/
-     * - /usr/share/wine/gecko/
-     * - download from URL stored in GeckoUrl value of HKCU/Wine/Software/MSHTML key
+     * Try to find addon .msi file in following order:
+     * - directory stored in $dir_config_key value of HKCU/Wine/Software/$config_key key
+     * - $datadir/$addon_subdir/
+     * - $INSTALL_DATADIR/wine/$addon_subdir/
+     * - /usr/share/wine/$addon_subdir/
+     * - download from URL stored in $url_config_key value of HKCU/Wine/Software/$config_key key
      */
     if(!install_from_registered_dir()
        && !install_from_default_dir()

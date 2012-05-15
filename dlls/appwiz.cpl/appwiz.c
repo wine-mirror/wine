@@ -975,7 +975,7 @@ static LONG start_params(const WCHAR *params)
         return FALSE;
 
     if(!strcmpW(params, install_geckoW)) {
-        install_wine_gecko();
+        install_addon(ADDON_GECKO);
         return TRUE;
     }
 
