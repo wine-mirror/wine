@@ -13,7 +13,9 @@ C_SRCS = \
 	utils.c
 
 LEX_SRCS = asmshader.l
-BISON_SRCS = asmshader.y
+BISON_SRCS = \
+	asmshader.y \
+	hlsl.y
 
 RC_SRCS = version.rc
 

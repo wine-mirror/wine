@@ -52,6 +52,8 @@ dlls/advapi32/svcctl_c.c
 dlls/d3dcompiler_43/asmshader.tab.c
 dlls/d3dcompiler_43/asmshader.tab.h
 dlls/d3dcompiler_43/asmshader.yy.c
+dlls/d3dcompiler_43/hlsl.tab.c
+dlls/d3dcompiler_43/hlsl.tab.h
 dlls/dispex/disp_ex.h
 dlls/dispex/disp_ex_p.c
 dlls/dxdiagn/fil_data.h

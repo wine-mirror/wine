@@ -490,13 +490,6 @@ HRESULT WINAPI D3DAssemble(const void *data, SIZE_T datasize, const char *filena
     return hr;
 }
 
-static struct bwriter_shader *parse_hlsl_shader(const char *text, enum shader_type type, DWORD version,
-        const char *entrypoint, char **messages)
-{
-    FIXME("\n");
-    return NULL;
-}
-
 static HRESULT compile_shader(const char *preproc_shader, const char *target, const char *entrypoint,
         ID3DBlob **shader_blob, ID3DBlob **error_messages)
 {
