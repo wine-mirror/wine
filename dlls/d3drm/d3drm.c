@@ -1298,7 +1298,7 @@ HRESULT load_data(IDirect3DRM3* iface, LPDIRECTXFILEDATA data_object, LPIID* GUI
         {
             LPDIRECT3DRMMESHBUILDER3 meshbuilder;
 
-            FIXME("Load mesh data and notify application\n");
+            TRACE("Load mesh data and notify application\n");
 
             hr = IDirect3DRM3_CreateMeshBuilder(iface, &meshbuilder);
             if (SUCCEEDED(hr))
@@ -1312,7 +1312,9 @@ HRESULT load_data(IDirect3DRM3* iface, LPDIRECTXFILEDATA data_object, LPIID* GUI
                     if (SUCCEEDED(hr))
                     {
                         /* Only top level objects are notified */
-                        if (!parent_frame)
+                        if (parent_frame)
+                            IDirect3DRMFrame3_AddVisual(parent_frame, (IUnknown*)meshbuilder);
+                        else
                             LoadProc(object, GUIDs[i], ArgLP);
                     }
                     IDirect3DRMObject_Release(object);
