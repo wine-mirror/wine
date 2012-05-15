@@ -3833,13 +3833,13 @@ lend:
  *   data is available.
  */
 BOOL WINAPI InternetQueryDataAvailable( HINTERNET hFile,
-                                LPDWORD lpdwNumberOfBytesAvailble,
+                                LPDWORD lpdwNumberOfBytesAvailable,
                                 DWORD dwFlags, DWORD_PTR dwContext)
 {
     object_header_t *hdr;
     DWORD res;
 
-    TRACE("(%p %p %x %lx)\n", hFile, lpdwNumberOfBytesAvailble, dwFlags, dwContext);
+    TRACE("(%p %p %x %lx)\n", hFile, lpdwNumberOfBytesAvailable, dwFlags, dwContext);
 
     hdr = get_handle_object( hFile );
     if (!hdr) {
@@ -3848,7 +3848,7 @@ BOOL WINAPI InternetQueryDataAvailable( HINTERNET hFile,
     }
 
     if(hdr->vtbl->QueryDataAvailable) {
-        res = hdr->vtbl->QueryDataAvailable(hdr, lpdwNumberOfBytesAvailble, dwFlags, dwContext);
+        res = hdr->vtbl->QueryDataAvailable(hdr, lpdwNumberOfBytesAvailable, dwFlags, dwContext);
     }else {
         WARN("wrong handle\n");
         res = ERROR_INTERNET_INCORRECT_HANDLE_TYPE;
