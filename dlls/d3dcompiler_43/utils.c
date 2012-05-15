@@ -753,6 +753,7 @@ void compilation_message(struct compilation_messages *msg, const char *fmt, va_l
         }
         else
         {
+            TRACE("%s", msg->string + msg->size);
             msg->size += rc;
             return;
         }
