@@ -67,6 +67,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(appwizcpl);
 typedef struct {
     const char *version;
     const char *file_name;
+    const char *subdir_name;
     const char *sha;
 } addon_info_t;
 
@@ -74,6 +75,7 @@ static const addon_info_t addons_info[] = {
     {
         GECKO_VERSION,
         "wine_gecko-" GECKO_VERSION "-" ARCH_STRING ".msi",
+        "gecko",
         GECKO_SHA
     }
 };
@@ -171,7 +173,7 @@ static BOOL install_file(const WCHAR *file_name)
     return TRUE;
 }
 
-static BOOL install_from_unix_file(const char *dir, const char *file_name)
+static BOOL install_from_unix_file(const char *dir, const char *subdir, const char *file_name)
 {
     LPWSTR dos_file_name;
     char *file_path;
@@ -182,13 +184,18 @@ static BOOL install_from_unix_file(const char *dir, const char *file_name)
     static const WCHAR kernel32W[] = {'k','e','r','n','e','l','3','2','.','d','l','l',0};
 
     len = strlen(dir);
-    file_path = heap_alloc(len+strlen(file_name)+2);
+    file_path = heap_alloc(len+strlen(subdir)+strlen(file_name)+3);
     if(!file_path)
         return FALSE;
 
     memcpy(file_path, dir, len);
     if(len && file_path[len-1] != '/' && file_path[len-1] != '\\')
         file_path[len++] = '/';
+    if(*subdir) {
+        strcpy(file_path+len, subdir);
+        len += strlen(subdir);
+        file_path[len++] = '/';
+    }
     strcpy(file_path+len, file_name);
 
     fd = open(file_path, O_RDONLY);
@@ -252,7 +259,7 @@ static BOOL install_from_registered_dir(void)
 
     TRACE("Trying %s/%s\n", debugstr_a(package_dir), debugstr_a(addon->file_name));
 
-    ret = install_from_unix_file(package_dir, addon->file_name);
+    ret = install_from_unix_file(package_dir, "", addon->file_name);
 
     heap_free(package_dir);
     return ret;
@@ -260,33 +267,30 @@ static BOOL install_from_registered_dir(void)
 
 static BOOL install_from_default_dir(void)
 {
-    const char *data_dir, *subdir;
-    char *package_dir;
-    int len, len2;
+    const char *data_dir, *package_dir;
+    char *dir_buf = NULL;
+    int len;
     BOOL ret;
 
-    if((data_dir = wine_get_data_dir()))
-        subdir = "/gecko/";
-    else if((data_dir = wine_get_build_dir()))
-        subdir = "/../gecko/";
-    else
+    if((data_dir = wine_get_data_dir())) {
+        package_dir = data_dir;
+    }else if((data_dir = wine_get_build_dir())) {
+        len = strlen(data_dir);
+        dir_buf = heap_alloc(len + sizeof("/../"));
+        memcpy(dir_buf, data_dir, len);
+        strcpy(dir_buf+len, "/../");
+        package_dir = dir_buf;
+    }else {
         return FALSE;
+    }
 
-    len = strlen(data_dir);
-    len2 = strlen(subdir);
-
-    package_dir = heap_alloc(len+len2+1);
-    memcpy(package_dir, data_dir, len);
-    memcpy(package_dir+len, subdir, len2+1);
-
-    ret = install_from_unix_file(package_dir, addon->file_name);
-
-    heap_free(package_dir);
+    ret = install_from_unix_file(package_dir, addon->subdir_name, addon->file_name);
+    heap_free(dir_buf);
 
     if (!ret)
-        ret = install_from_unix_file(INSTALL_DATADIR "/wine/gecko/", addon->file_name);
+        ret = install_from_unix_file(INSTALL_DATADIR "/wine/", addon->subdir_name, addon->file_name);
     if (!ret && strcmp(INSTALL_DATADIR, "/usr/share"))
-        ret = install_from_unix_file("/usr/share/wine/gecko/", addon->file_name);
+        ret = install_from_unix_file("/usr/share/wine/", addon->subdir_name, addon->file_name);
     return ret;
 }
 
