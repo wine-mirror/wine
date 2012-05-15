@@ -395,7 +395,7 @@ static void test_getuserobjectinformation(void)
     size = 0xdeadbeef;
     ret = GetUserObjectInformationA(desk, UOI_NAME, NULL, 0, &size);
 
-    ok(!ret, "GetUserObjectInformationA returned %x", ret);
+    ok(!ret, "GetUserObjectInformationA returned %x\n", ret);
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "LastError is set to %08x\n", GetLastError());
     ok(size == 22, "size is set to %d\n", size); /* Windows returns Unicode length (11*2) */
 
@@ -404,7 +404,7 @@ static void test_getuserobjectinformation(void)
     size = 0xdeadbeef;
     ret = GetUserObjectInformationA(desk, UOI_NAME, buffer, sizeof(buffer), &size);
 
-    ok(ret, "GetUserObjectInformationA returned %x", ret);
+    ok(ret, "GetUserObjectInformationA returned %x\n", ret);
     ok(GetLastError() == 0xdeadbeef, "LastError is set to %08x\n", GetLastError());
 
     ok(strcmp(buffer, "foobarTest") == 0, "Buffer is set to '%s'\n", buffer);
@@ -415,7 +415,7 @@ static void test_getuserobjectinformation(void)
     size = 0xdeadbeef;
     ret = GetUserObjectInformationW(desk, UOI_NAME, NULL, 0, &size);
 
-    ok(!ret, "GetUserObjectInformationW returned %x", ret);
+    ok(!ret, "GetUserObjectInformationW returned %x\n", ret);
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "LastError is set to %08x\n", GetLastError());
     ok(size == 22, "size is set to %d\n", size);  /* 22 bytes in 'foobarTest\0' in Unicode */
 
@@ -424,7 +424,7 @@ static void test_getuserobjectinformation(void)
     size = 0xdeadbeef;
     ret = GetUserObjectInformationW(desk, UOI_NAME, bufferW, sizeof(bufferW), &size);
 
-    ok(ret, "GetUserObjectInformationW returned %x", ret);
+    ok(ret, "GetUserObjectInformationW returned %x\n", ret);
     ok(GetLastError() == 0xdeadbeef, "LastError is set to %08x\n", GetLastError());
 
     ok(lstrcmpW(bufferW, foobarTestW) == 0, "Buffer is not set to 'foobarTest'\n");
@@ -437,7 +437,7 @@ static void test_getuserobjectinformation(void)
     size = 0xdeadbeef;
     ret = GetUserObjectInformationA(desk, UOI_TYPE, NULL, 0, &size);
 
-    ok(!ret, "GetUserObjectInformationA returned %x", ret);
+    ok(!ret, "GetUserObjectInformationA returned %x\n", ret);
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "LastError is set to %08x\n", GetLastError());
     ok(size == 16, "size is set to %d\n", size); /* Windows returns Unicode length (8*2) */
 
@@ -446,7 +446,7 @@ static void test_getuserobjectinformation(void)
     size = 0xdeadbeef;
     ret = GetUserObjectInformationA(desk, UOI_TYPE, buffer, sizeof(buffer), &size);
 
-    ok(ret, "GetUserObjectInformationA returned %x", ret);
+    ok(ret, "GetUserObjectInformationA returned %x\n", ret);
     ok(GetLastError() == 0xdeadbeef, "LastError is set to %08x\n", GetLastError());
 
     ok(strcmp(buffer, "Desktop") == 0, "Buffer is set to '%s'\n", buffer);
@@ -457,7 +457,7 @@ static void test_getuserobjectinformation(void)
     SetLastError(0xdeadbeef);
     ret = GetUserObjectInformationW(desk, UOI_TYPE, NULL, 0, &size);
 
-    ok(!ret, "GetUserObjectInformationW returned %x", ret);
+    ok(!ret, "GetUserObjectInformationW returned %x\n", ret);
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "LastError is set to %08x\n", GetLastError());
     ok(size == 16, "size is set to %d\n", size);  /* 16 bytes in 'Desktop\0' in Unicode */
 
@@ -466,7 +466,7 @@ static void test_getuserobjectinformation(void)
     size = 0xdeadbeef;
     ret = GetUserObjectInformationW(desk, UOI_TYPE, bufferW, sizeof(bufferW), &size);
 
-    ok(ret, "GetUserObjectInformationW returned %x", ret);
+    ok(ret, "GetUserObjectInformationW returned %x\n", ret);
     ok(GetLastError() == 0xdeadbeef, "LastError is set to %08x\n", GetLastError());
 
     ok(lstrcmpW(bufferW, DesktopW) == 0, "Buffer is not set to 'Desktop'\n");
