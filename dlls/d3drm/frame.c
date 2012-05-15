@@ -140,6 +140,12 @@ static ULONG WINAPI IDirect3DRMFrame2Impl_Release(IDirect3DRMFrame2* iface)
         for (i = 0; i < This->nb_children; i++)
             IDirect3DRMFrame3_Release(This->children[i]);
         HeapFree(GetProcessHeap(), 0, This->children);
+        for (i = 0; i < This->nb_visuals; i++)
+            IDirect3DRMVisual_Release(This->visuals[i]);
+        HeapFree(GetProcessHeap(), 0, This->visuals);
+        for (i = 0; i < This->nb_lights; i++)
+            IDirect3DRMLight_Release(This->lights[i]);
+        HeapFree(GetProcessHeap(), 0, This->lights);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
