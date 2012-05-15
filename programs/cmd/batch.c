@@ -114,26 +114,23 @@ void WCMD_batch (WCHAR *file, WCHAR *command, BOOL called, WCHAR *startLabel, HA
  *
  * PARAMS
  *  s     [I] input string, non NULL
- *  n     [I] # of the (possibly double quotes-delimited) parameter to return
- *            Starts at 0
- *  start [O] if non NULL, pointer to the start of the nth parameter in s,
- *            potentially a " character
- *  end   [O] if non NULL, pointer to the last char of
- *            the nth parameter in s, potentially a " character
+ *  n     [I] # of the parameter to return, counted from 0
+ *  start [O] Optional. Pointer to the first char of param n in s
+ *  end   [O] Optional. Pointer to the last char of param n in s
  *
  * RETURNS
- *  Success: Returns the nth delimited parameter found in s.
- *           *start points to the start of the param, possibly a starting
- *           double quotes character
- *  Failure: Returns an empty string if the param is not found.
- *           *start is set to NULL
+ *  Success: The nth delimited parameter found in s, with any surrounding quotes removed
+ *           if start != NULL, *start points to the start of the param
+ *           if end != NULL, *end points to the end of the param
+ *  Failure: An empty string if the param is not found.
+ *           *start == *end == NULL
  *
  * NOTES
- *  Return value is stored in static storage, hence is overwritten
- *  after each call.
- *  Doesn't include any potentially delimiting double quotes
+ *  Return value is stored in static storage (i.e. overwritten after each call).
+ *  Specify 'start' and/or 'end' to include delimiting double quotes as well, if any.
  */
-WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **start, WCHAR **end) {
+WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **start, WCHAR **end)
+{
     int curParamNb = 0;
     static WCHAR param[MAX_PATH];
     WCHAR *p = s, *q;
