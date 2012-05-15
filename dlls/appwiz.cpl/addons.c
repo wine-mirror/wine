@@ -64,7 +64,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(appwizcpl);
 #define GECKO_SHA "???"
 #endif
 
-#define GECKO_FILE_NAME "wine_gecko-" GECKO_VERSION "-" ARCH_STRING ".msi"
+typedef struct {
+    const char *file_name;
+} addon_info_t;
+
+static const addon_info_t addons_info[] = {
+    {
+        "wine_gecko-" GECKO_VERSION "-" ARCH_STRING ".msi"
+    }
+};
+
+static const addon_info_t *addon = &addons_info[0];
 
 static const WCHAR mshtml_keyW[] =
     {'S','o','f','t','w','a','r','e',
@@ -157,18 +167,30 @@ static BOOL install_file(const WCHAR *file_name)
     return TRUE;
 }
 
-static BOOL install_from_unix_file(const char *file_name)
+static BOOL install_from_unix_file(const char *dir, const char *file_name)
 {
     LPWSTR dos_file_name;
-    int fd;
+    char *file_path;
+    int fd, len;
     BOOL ret;
 
     static WCHAR * (CDECL *wine_get_dos_file_name)(const char*);
     static const WCHAR kernel32W[] = {'k','e','r','n','e','l','3','2','.','d','l','l',0};
 
-    fd = open(file_name, O_RDONLY);
+    len = strlen(dir);
+    file_path = heap_alloc(len+strlen(file_name)+2);
+    if(!file_path)
+        return FALSE;
+
+    memcpy(file_path, dir, len);
+    if(len && file_path[len-1] != '/' && file_path[len-1] != '\\')
+        file_path[len++] = '/';
+    strcpy(file_path+len, file_name);
+
+    fd = open(file_path, O_RDONLY);
     if(fd == -1) {
-        TRACE("%s not found\n", debugstr_a(file_name));
+        TRACE("%s not found\n", debugstr_a(file_path));
+        heap_free(file_path);
         return FALSE;
     }
 
@@ -178,18 +200,21 @@ static BOOL install_from_unix_file(const char *file_name)
         wine_get_dos_file_name = (void*)GetProcAddress(GetModuleHandleW(kernel32W), "wine_get_dos_file_name");
 
     if(wine_get_dos_file_name) { /* Wine UNIX mode */
-	dos_file_name = wine_get_dos_file_name(file_name);
+	dos_file_name = wine_get_dos_file_name(file_path);
 	if(!dos_file_name) {
-	    ERR("Could not get dos file name of %s\n", debugstr_a(file_name));
+	    ERR("Could not get dos file name of %s\n", debugstr_a(file_path));
+            heap_free(file_path);
 	    return FALSE;
 	}
     } else { /* Windows mode */
 	UINT res;
 	WARN("Could not get wine_get_dos_file_name function, calling install_cab directly.\n");
-	res = MultiByteToWideChar( CP_ACP, 0, file_name, -1, 0, 0);
+	res = MultiByteToWideChar( CP_ACP, 0, file_path, -1, 0, 0);
 	dos_file_name = heap_alloc (res*sizeof(WCHAR));
-	MultiByteToWideChar( CP_ACP, 0, file_name, -1, dos_file_name, res);
+	MultiByteToWideChar( CP_ACP, 0, file_path, -1, dos_file_name, res);
     }
+
+    heap_free(file_path);
 
     ret = install_file(dos_file_name);
 
@@ -199,7 +224,7 @@ static BOOL install_from_unix_file(const char *file_name)
 
 static BOOL install_from_registered_dir(void)
 {
-    char *file_name;
+    char *package_dir;
     HKEY hkey;
     DWORD res, type, size = MAX_PATH;
     BOOL ret;
@@ -209,32 +234,30 @@ static BOOL install_from_registered_dir(void)
     if(res != ERROR_SUCCESS)
         return FALSE;
 
-    file_name = heap_alloc(size+sizeof(GECKO_FILE_NAME));
-    res = RegGetValueA(hkey, NULL, "GeckoCabDir", RRF_RT_ANY, &type, (PBYTE)file_name, &size);
+    package_dir = heap_alloc(size);
+    res = RegGetValueA(hkey, NULL, "GeckoCabDir", RRF_RT_ANY, &type, (PBYTE)package_dir, &size);
     if(res == ERROR_MORE_DATA) {
-        file_name = heap_realloc(file_name, size+sizeof(GECKO_FILE_NAME));
-        res = RegGetValueA(hkey, NULL, "GeckoCabDir", RRF_RT_ANY, &type, (PBYTE)file_name, &size);
+        package_dir = heap_realloc(package_dir, size);
+        res = RegGetValueA(hkey, NULL, "GeckoCabDir", RRF_RT_ANY, &type, (PBYTE)package_dir, &size);
     }
     RegCloseKey(hkey);
     if(res != ERROR_SUCCESS || (type != REG_SZ && type != REG_EXPAND_SZ)) {
-        heap_free(file_name);
+        heap_free(package_dir);
         return FALSE;
     }
 
-    strcat(file_name, GECKO_FILE_NAME);
+    TRACE("Trying %s/%s\n", debugstr_a(package_dir), debugstr_a(addon->file_name));
 
-    TRACE("Trying %s\n", debugstr_a(file_name));
+    ret = install_from_unix_file(package_dir, addon->file_name);
 
-    ret = install_from_unix_file(file_name);
-
-    heap_free(file_name);
+    heap_free(package_dir);
     return ret;
 }
 
 static BOOL install_from_default_dir(void)
 {
     const char *data_dir, *subdir;
-    char *file_name;
+    char *package_dir;
     int len, len2;
     BOOL ret;
 
@@ -248,19 +271,18 @@ static BOOL install_from_default_dir(void)
     len = strlen(data_dir);
     len2 = strlen(subdir);
 
-    file_name = heap_alloc(len+len2+sizeof(GECKO_FILE_NAME));
-    memcpy(file_name, data_dir, len);
-    memcpy(file_name+len, subdir, len2);
-    memcpy(file_name+len+len2, GECKO_FILE_NAME, sizeof(GECKO_FILE_NAME));
+    package_dir = heap_alloc(len+len2+1);
+    memcpy(package_dir, data_dir, len);
+    memcpy(package_dir+len, subdir, len2+1);
 
-    ret = install_from_unix_file(file_name);
+    ret = install_from_unix_file(package_dir, addon->file_name);
 
-    heap_free(file_name);
+    heap_free(package_dir);
 
     if (!ret)
-        ret = install_from_unix_file(INSTALL_DATADIR "/wine/gecko/" GECKO_FILE_NAME);
+        ret = install_from_unix_file(INSTALL_DATADIR "/wine/gecko/", addon->file_name);
     if (!ret && strcmp(INSTALL_DATADIR, "/usr/share"))
-        ret = install_from_unix_file("/usr/share/wine/gecko/" GECKO_FILE_NAME);
+        ret = install_from_unix_file("/usr/share/wine/gecko/", addon->file_name);
     return ret;
 }
 
