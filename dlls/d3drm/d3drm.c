@@ -1266,6 +1266,123 @@ static HRESULT WINAPI IDirect3DRM3Impl_EnumerateObjects(IDirect3DRM3* iface, D3D
     return E_NOTIMPL;
 }
 
+HRESULT load_data(IDirect3DRM3* iface, LPDIRECTXFILEDATA data_object, LPIID* GUIDs, DWORD nb_GUIDs, D3DRMLOADCALLBACK LoadProc,
+                  LPVOID ArgLP, D3DRMLOADTEXTURECALLBACK LoadTextureProc, LPVOID ArgLTP, LPDIRECT3DRMFRAME3 parent_frame)
+{
+    HRESULT ret = D3DRMERR_BADOBJECT;
+    HRESULT hr;
+    const GUID* guid;
+    DWORD i;
+    BOOL requested = FALSE;
+
+    hr = IDirectXFileData_GetType(data_object, &guid);
+    if (hr != DXFILE_OK)
+        goto end;
+
+    TRACE("Found object type whose GUID = %s\n", debugstr_guid(guid));
+
+    if (IsEqualGUID(guid, &TID_D3DRMMesh))
+    {
+        TRACE("Found TID_D3DRMMesh\n");
+
+        for (i = 0; i < nb_GUIDs; i++)
+            if (IsEqualGUID(GUIDs[i], &IID_IDirect3DRMMeshBuilder) ||
+                IsEqualGUID(GUIDs[i], &IID_IDirect3DRMMeshBuilder2) ||
+                IsEqualGUID(GUIDs[i], &IID_IDirect3DRMMeshBuilder3))
+            {
+                requested = TRUE;
+                break;
+            }
+
+        if (requested)
+        {
+            LPDIRECT3DRMMESHBUILDER3 meshbuilder;
+
+            FIXME("Load mesh data and notify application\n");
+
+            hr = IDirect3DRM3_CreateMeshBuilder(iface, &meshbuilder);
+            if (SUCCEEDED(hr))
+            {
+                LPDIRECT3DRMOBJECT object = NULL;
+
+                hr = IDirect3DRMMeshBuilder3_QueryInterface(meshbuilder, GUIDs[i], (void**)&object);
+                if (SUCCEEDED(hr))
+                {
+                    hr = load_mesh_data(meshbuilder, data_object);
+                    if (SUCCEEDED(hr))
+                        LoadProc(object, GUIDs[i], ArgLP);
+                    IDirect3DRMObject_Release(object);
+                }
+                IDirect3DRMMeshBuilder3_Release(meshbuilder);
+            }
+
+            if (FAILED(hr))
+                ERR("Cannot process mesh\n");
+        }
+    }
+    else if (IsEqualGUID(guid, &TID_D3DRMFrame))
+    {
+        TRACE("Found TID_D3DRMFrame\n");
+
+        for (i = 0; i < nb_GUIDs; i++)
+            if (IsEqualGUID(GUIDs[i], &IID_IDirect3DRMFrame) ||
+                IsEqualGUID(GUIDs[i], &IID_IDirect3DRMFrame2) ||
+                IsEqualGUID(GUIDs[i], &IID_IDirect3DRMFrame3))
+            {
+                requested = TRUE;
+                break;
+            }
+
+        if (requested)
+        {
+            LPDIRECT3DRMFRAME3 frame;
+
+            FIXME("Fake frame data and notify application\n");
+
+            hr = IDirect3DRM3_CreateFrame(iface, NULL, &frame);
+            if (SUCCEEDED(hr))
+            {
+                LPDIRECT3DRMOBJECT object;
+
+                hr = IDirect3DRMFrame3_QueryInterface(frame, GUIDs[i], (void**)&object);
+                if (SUCCEEDED(hr))
+                {
+                    LoadProc(object, GUIDs[i], ArgLP);
+                    IDirect3DRMObject_Release(object);
+                }
+                IDirect3DRMFrame3_Release(frame);
+            }
+
+            if (FAILED(hr))
+                ERR("Cannot process frame\n");
+        }
+    }
+    else if (IsEqualGUID(guid, &TID_D3DRMMaterial))
+    {
+        TRACE("Found TID_D3DRMMaterial\n");
+
+        for (i = 0; i < nb_GUIDs; i++)
+            if (IsEqualGUID(GUIDs[i], &IID_IDirect3DRMMaterial) ||
+                IsEqualGUID(GUIDs[i], &IID_IDirect3DRMMaterial2))
+                requested = TRUE;
+
+         if (requested)
+         {
+            FIXME("Processing material not supported yet\n");
+         }
+    }
+    else
+    {
+        FIXME("Found unknown TID %s\n", debugstr_guid(guid));
+    }
+
+    ret = D3DRM_OK;
+
+end:
+
+    return ret;
+}
+
 static HRESULT WINAPI IDirect3DRM3Impl_Load(IDirect3DRM3* iface, LPVOID ObjSource, LPVOID ObjID,
                                             LPIID* GUIDs, DWORD nb_GUIDs, D3DRMLOADOPTIONS LOFlags,
                                             D3DRMLOADCALLBACK LoadProc, LPVOID ArgLP,
@@ -1364,115 +1481,10 @@ static HRESULT WINAPI IDirect3DRM3Impl_Load(IDirect3DRM3* iface, LPVOID ObjSourc
             goto end;
         }
 
-        hr = IDirectXFileData_GetType(pData, &pGuid);
-        if (hr != DXFILE_OK)
+        ret = load_data(iface, pData, GUIDs, nb_GUIDs, LoadProc, ArgLP, LoadTextureProc, ArgLTP, ParentFrame);
+        if (ret != D3DRM_OK)
             goto end;
 
-        TRACE("Found object type whose GUID = %s\n", debugstr_guid(pGuid));
-
-        if (IsEqualGUID(pGuid, &TID_D3DRMMesh))
-        {
-            BOOL requested = FALSE;
-            HRESULT hr;
-
-            TRACE("Found TID_D3DRMMesh\n");
-
-            for (i = 0; i < nb_GUIDs; i++)
-                if (IsEqualGUID(GUIDs[i], &IID_IDirect3DRMMeshBuilder) ||
-                    IsEqualGUID(GUIDs[i], &IID_IDirect3DRMMeshBuilder2) ||
-                    IsEqualGUID(GUIDs[i], &IID_IDirect3DRMMeshBuilder3))
-                {
-                    requested = TRUE;
-                    break;
-                }
-
-            if (requested)
-            {
-                LPDIRECT3DRMMESHBUILDER3 meshbuilder;
-
-                FIXME("Load mesh data and notify application\n");
-
-                hr = IDirect3DRM3_CreateMeshBuilder(iface, &meshbuilder);
-                if (SUCCEEDED(hr))
-                {
-                    LPDIRECT3DRMOBJECT object = NULL;
-
-                    hr = IDirect3DRMMeshBuilder3_QueryInterface(meshbuilder, GUIDs[i], (void**)&object);
-                    if (SUCCEEDED(hr))
-                    {
-                        hr = load_mesh_data(meshbuilder, pData);
-                        if (SUCCEEDED(hr))
-                            LoadProc(object, GUIDs[i], ArgLP);
-                        IDirect3DRMObject_Release(object);
-                    }
-                    IDirect3DRMMeshBuilder3_Release(meshbuilder);
-                }
-
-                if (FAILED(hr))
-                    ERR("Cannot process mesh\n");
-            }
-        }
-        else if (IsEqualGUID(pGuid, &TID_D3DRMFrame))
-        {
-            BOOL requested = FALSE;
-            HRESULT hr;
-
-            TRACE("Found TID_D3DRMFrame\n");
-
-            for (i = 0; i < nb_GUIDs; i++)
-                if (IsEqualGUID(GUIDs[i], &IID_IDirect3DRMFrame) ||
-                    IsEqualGUID(GUIDs[i], &IID_IDirect3DRMFrame2) ||
-                    IsEqualGUID(GUIDs[i], &IID_IDirect3DRMFrame3))
-                {
-                    requested = TRUE;
-                    break;
-                }
-
-            if (requested)
-            {
-                LPDIRECT3DRMFRAME3 frame;
-
-                FIXME("Fake frame data and notify application\n");
-
-                hr = IDirect3DRM3_CreateFrame(iface, NULL, &frame);
-                if (SUCCEEDED(hr))
-                {
-                    LPDIRECT3DRMOBJECT object;
-
-                    hr = IDirect3DRMFrame3_QueryInterface(frame, GUIDs[i], (void**)&object);
-                    if (SUCCEEDED(hr))
-                    {
-                        LoadProc(object, GUIDs[i], ArgLP);
-                        IDirect3DRMObject_Release(object);
-                    }
-                    IDirect3DRMFrame3_Release(frame);
-                }
-
-                if (FAILED(hr))
-                    ERR("Cannot process frame\n");
-
-            }
-        }
-        else if (IsEqualGUID(pGuid, &TID_D3DRMMaterial))
-        {
-            BOOL requested = FALSE;
-
-            TRACE("Found TID_D3DRMMaterial\n");
-
-            for (i = 0; i < nb_GUIDs; i++)
-                if (IsEqualGUID(GUIDs[i], &IID_IDirect3DRMMaterial) ||
-                    IsEqualGUID(GUIDs[i], &IID_IDirect3DRMMaterial2))
-                    requested = TRUE;
-
-            if (requested)
-            {
-                FIXME("Processing material not supported yet\n");
-            }
-        }
-        else
-        {
-            FIXME("Found unknown TID %s\n", debugstr_guid(pGuid));
-        }
         IDirectXFileData_Release(pData);
         pData = NULL;
     }
