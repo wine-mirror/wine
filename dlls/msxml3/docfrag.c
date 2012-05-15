@@ -449,7 +449,7 @@ static HRESULT WINAPI domfrag_get_xml(
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return node_get_xml(&This->node, FALSE, FALSE, p);
+    return node_get_xml(&This->node, FALSE, p);
 }
 
 static HRESULT WINAPI domfrag_transformNode(

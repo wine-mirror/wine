@@ -926,7 +926,7 @@ static HRESULT WINAPI domelem_get_xml(
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return node_get_xml(&This->node, TRUE, FALSE, p);
+    return node_get_xml(&This->node, TRUE, p);
 }
 
 static HRESULT WINAPI domelem_transformNode(

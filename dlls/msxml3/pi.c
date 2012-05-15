@@ -487,7 +487,7 @@ static HRESULT WINAPI dom_pi_get_xml(
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return node_get_xml(&This->node, FALSE, FALSE, p);
+    return node_get_xml(&This->node, FALSE, p);
 }
 
 static HRESULT WINAPI dom_pi_transformNode(

@@ -787,37 +787,6 @@ BSTR EnsureCorrectEOL(BSTR sInput)
     return sNew;
 }
 
-/* Removes encoding information and last character (nullbyte) */
-static BSTR EnsureNoEncoding(BSTR sInput)
-{
-    static const WCHAR wszEncoding[] = {'e','n','c','o','d','i','n','g','='};
-    BSTR sNew;
-    WCHAR *pBeg, *pEnd;
-
-    pBeg = sInput;
-    while(*pBeg != '\n' && memcmp(pBeg, wszEncoding, sizeof(wszEncoding)))
-        pBeg++;
-
-    if(*pBeg == '\n')
-    {
-        SysReAllocStringLen(&sInput, sInput, SysStringLen(sInput)-1);
-        return sInput;
-    }
-    pBeg--;
-
-    pEnd = pBeg + sizeof(wszEncoding)/sizeof(WCHAR) + 2;
-    while(*pEnd != '\"') pEnd++;
-    pEnd++;
-
-    sNew = SysAllocStringLen(NULL,
-            pBeg-sInput + SysStringLen(sInput)-(pEnd-sInput)-1);
-    memcpy(sNew, sInput, (pBeg-sInput)*sizeof(WCHAR));
-    memcpy(&sNew[pBeg-sInput], pEnd, (SysStringLen(sInput)-(pEnd-sInput)-1)*sizeof(WCHAR));
-
-    SysFreeString(sInput);
-    return sNew;
-}
-
 /*
  * We are trying to replicate the same behaviour as msxml by converting
  * line endings to \r\n and using indents as \t. The problem is that msxml
@@ -825,7 +794,7 @@ static BSTR EnsureNoEncoding(BSTR sInput)
  * reproduce behaviour exactly.
  *
  */
-HRESULT node_get_xml(xmlnode *This, BOOL ensure_eol, BOOL ensure_no_encoding, BSTR *ret)
+HRESULT node_get_xml(xmlnode *This, BOOL ensure_eol, BSTR *ret)
 {
     xmlBufferPtr xml_buf;
     xmlNodePtr xmldecl;
@@ -853,8 +822,6 @@ HRESULT node_get_xml(xmlnode *This, BOOL ensure_eol, BOOL ensure_no_encoding, BS
         content = bstr_from_xmlChar(buf_content + (buf_content[0] == ' ' ? 1 : 0));
         if(ensure_eol)
             content = EnsureCorrectEOL(content);
-        if(ensure_no_encoding)
-            content = EnsureNoEncoding(content);
 
         *ret = content;
     }else {
@@ -1453,7 +1420,7 @@ static HRESULT WINAPI unknode_get_xml(
 
     FIXME("(%p)->(%p)\n", This, p);
 
-    return node_get_xml(&This->node, FALSE, FALSE, p);
+    return node_get_xml(&This->node, FALSE, p);
 }
 
 static HRESULT WINAPI unknode_transformNode(
