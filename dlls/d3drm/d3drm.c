@@ -1,7 +1,7 @@
 /*
  * Implementation of IDirect3DRM Interface
  *
- * Copyright 2010 Christian Costa
+ * Copyright 2010, 2012 Christian Costa
  * Copyright 2011 André Hentschel
  *
  * This library is free software; you can redistribute it and/or
@@ -1310,7 +1310,11 @@ HRESULT load_data(IDirect3DRM3* iface, LPDIRECTXFILEDATA data_object, LPIID* GUI
                 {
                     hr = load_mesh_data(meshbuilder, data_object);
                     if (SUCCEEDED(hr))
-                        LoadProc(object, GUIDs[i], ArgLP);
+                    {
+                        /* Only top level objects are notified */
+                        if (!parent_frame)
+                            LoadProc(object, GUIDs[i], ArgLP);
+                    }
                     IDirect3DRMObject_Release(object);
                 }
                 IDirect3DRMMeshBuilder3_Release(meshbuilder);
@@ -1337,9 +1341,9 @@ HRESULT load_data(IDirect3DRM3* iface, LPDIRECTXFILEDATA data_object, LPIID* GUI
         {
             LPDIRECT3DRMFRAME3 frame;
 
-            FIXME("Fake frame data and notify application\n");
+            TRACE("Load frame data and notify application\n");
 
-            hr = IDirect3DRM3_CreateFrame(iface, NULL, &frame);
+            hr = IDirect3DRM3_CreateFrame(iface, parent_frame, &frame);
             if (SUCCEEDED(hr))
             {
                 LPDIRECT3DRMOBJECT object;
@@ -1347,7 +1351,53 @@ HRESULT load_data(IDirect3DRM3* iface, LPDIRECTXFILEDATA data_object, LPIID* GUI
                 hr = IDirect3DRMFrame3_QueryInterface(frame, GUIDs[i], (void**)&object);
                 if (SUCCEEDED(hr))
                 {
-                    LoadProc(object, GUIDs[i], ArgLP);
+                    LPDIRECTXFILEOBJECT child;
+
+                    while (SUCCEEDED(hr = IDirectXFileData_GetNextObject(data_object, &child)))
+                    {
+                        LPDIRECTXFILEDATA data;
+                        LPDIRECTXFILEDATAREFERENCE reference;
+                        LPDIRECTXFILEBINARY binary;
+
+                        hr = IDirectXFileObject_QueryInterface(child, &IID_IDirectXFileBinary, (void **)&binary);
+                        if (SUCCEEDED(hr))
+                        {
+                            FIXME("Binary Object not supported yet\n");
+                            IDirectXFileBinary_Release(binary);
+                            continue;
+                        }
+
+                        hr = IDirectXFileObject_QueryInterface(child, &IID_IDirectXFileData, (void **)&data);
+                        if (SUCCEEDED(hr))
+                        {
+                            TRACE("Found Data Object\n");
+                            hr = load_data(iface, data, GUIDs, nb_GUIDs, LoadProc, ArgLP, LoadTextureProc, ArgLTP, frame);
+                            IDirectXFileData_Release(data);
+                            continue;
+                        }
+                        hr = IDirectXFileObject_QueryInterface(child, &IID_IDirectXFileDataReference, (void **)&reference);
+                        if (SUCCEEDED(hr))
+                        {
+                            TRACE("Found Data Object Reference\n");
+                            IDirectXFileDataReference_Resolve(reference, &data);
+                            hr = load_data(iface, data, GUIDs, nb_GUIDs, LoadProc, ArgLP, LoadTextureProc, ArgLTP, frame);
+                            IDirectXFileData_Release(data);
+                            IDirectXFileDataReference_Release(reference);
+                            continue;
+                        }
+                    }
+
+                    if (hr != DXFILEERR_NOMOREOBJECTS)
+                    {
+                        IDirect3DRMObject_Release(object);
+                        IDirect3DRMFrame3_Release(frame);
+                        goto end;
+                    }
+                    hr = S_OK;
+
+                    /* Only top level objects are notified */
+                    if (!parent_frame)
+                        LoadProc(object, GUIDs[i], ArgLP);
                     IDirect3DRMObject_Release(object);
                 }
                 IDirect3DRMFrame3_Release(frame);
