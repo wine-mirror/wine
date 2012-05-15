@@ -644,11 +644,11 @@ void msi_dialog_handle_event( msi_dialog* dialog, LPCWSTR control,
 
         TRACE("progress: func %u val1 %u val2 %u\n", func, val1, val2);
 
+        units = val1 / 512;
         switch (func)
         {
         case 0: /* init */
             SendMessageW( ctrl->hwnd, PBM_SETRANGE, 0, MAKELPARAM(0,100) );
-            units = val1 / 512;
             if (val2)
             {
                 ctrl->progress_max = units ? units : 100;
@@ -667,7 +667,6 @@ void msi_dialog_handle_event( msi_dialog* dialog, LPCWSTR control,
         case 1: /* FIXME: not sure what this is supposed to do */
             break;
         case 2: /* move */
-            units = val1 / 512;
             if (ctrl->progress_backwards)
             {
                 if (units >= ctrl->progress_current) ctrl->progress_current -= units;
@@ -679,6 +678,9 @@ void msi_dialog_handle_event( msi_dialog* dialog, LPCWSTR control,
                 else ctrl->progress_current = ctrl->progress_max;
             }
             SendMessageW( ctrl->hwnd, PBM_SETPOS, MulDiv(100, ctrl->progress_current, ctrl->progress_max), 0 );
+            break;
+        case 3: /* add */
+            ctrl->progress_max += units;
             break;
         default:
             FIXME("Unknown progress message %u\n", func);
