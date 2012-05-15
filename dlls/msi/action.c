@@ -7340,6 +7340,7 @@ UINT ACTION_PerformUIAction(MSIPACKAGE *package, const WCHAR *action, UINT scrip
 
     TRACE("Performing action (%s)\n", debugstr_w(action));
 
+    package->action_progress_increment = 0;
     handled = ACTION_HandleStandardAction(package, action, &rc);
 
     if (!handled)

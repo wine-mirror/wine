@@ -664,7 +664,9 @@ void msi_dialog_handle_event( msi_dialog* dialog, LPCWSTR control,
                 SendMessageW( ctrl->hwnd, PBM_SETPOS, 0, 0 );
             }
             break;
-        case 1: /* FIXME: not sure what this is supposed to do */
+        case 1: /* action data increment */
+            if (val2) dialog->package->action_progress_increment = val1;
+            else dialog->package->action_progress_increment = 0;
             break;
         case 2: /* move */
             if (ctrl->progress_backwards)

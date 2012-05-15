@@ -1905,8 +1905,16 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType, MSIREC
         msi_free(deformated);
 
         ControlEvent_FireSubscribedEvent(package, szActionData, uirow);
-
         msiobj_release(&uirow->hdr);
+
+        if (package->action_progress_increment)
+        {
+            uirow = MSI_CreateRecord(2);
+            MSI_RecordSetInteger(uirow, 1, 2);
+            MSI_RecordSetInteger(uirow, 2, package->action_progress_increment);
+            ControlEvent_FireSubscribedEvent(package, szSetProgress, uirow);
+            msiobj_release(&uirow->hdr);
+        }
         break;
 
     case INSTALLMESSAGE_ACTIONSTART:
