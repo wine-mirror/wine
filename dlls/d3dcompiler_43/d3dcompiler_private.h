@@ -154,6 +154,21 @@ static inline BOOL d3dcompiler_free(void *ptr)
     return HeapFree(GetProcessHeap(), 0, ptr);
 }
 
+static inline char *d3dcompiler_strdup(const char *string)
+{
+    char *copy;
+    SIZE_T len;
+
+    if (!string)
+        return NULL;
+
+    len = strlen(string);
+    copy = d3dcompiler_alloc(len + 1);
+    if (copy)
+        memcpy(copy, string, len + 1);
+    return copy;
+}
+
 struct asm_parser;
 
 /* This structure is only used in asmshader.y, but since the .l file accesses the semantic types

@@ -12,7 +12,10 @@ C_SRCS = \
 	reflection.c \
 	utils.c
 
-LEX_SRCS = asmshader.l
+LEX_SRCS = \
+	asmshader.l \
+	hlsl.l
+
 BISON_SRCS = \
 	asmshader.y \
 	hlsl.y

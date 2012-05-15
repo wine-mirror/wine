@@ -28,11 +28,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(hlsl_parser);
 
-int hlsl_lex(void)
-{
-    FIXME("Lexer.\n");
-    return 0;
-}
+int hlsl_lex(void);
 
 struct hlsl_parse_ctx hlsl_ctx;
 
@@ -83,12 +79,15 @@ preproc_directive:        PRE_LINE STRING
 
 %%
 
-struct bwriter_shader *parse_hlsl_shader(const char *text, enum shader_type type, DWORD version, const char *entrypoint, char **messages)
+struct bwriter_shader *parse_hlsl(enum shader_type type, DWORD version, const char *entrypoint, char **messages)
 {
     hlsl_ctx.line_no = 1;
+    hlsl_ctx.source_file = d3dcompiler_strdup("");
     hlsl_ctx.matrix_majority = HLSL_COLUMN_MAJOR;
 
     hlsl_parse();
+
+    d3dcompiler_free(hlsl_ctx.source_file);
 
     return NULL;
 }

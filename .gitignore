@@ -54,6 +54,7 @@ dlls/d3dcompiler_43/asmshader.tab.h
 dlls/d3dcompiler_43/asmshader.yy.c
 dlls/d3dcompiler_43/hlsl.tab.c
 dlls/d3dcompiler_43/hlsl.tab.h
+dlls/d3dcompiler_43/hlsl.yy.c
 dlls/dispex/disp_ex.h
 dlls/dispex/disp_ex_p.c
 dlls/dxdiagn/fil_data.h
