@@ -65,12 +65,16 @@ WINE_DEFAULT_DEBUG_CHANNEL(appwizcpl);
 #endif
 
 typedef struct {
+    const char *version;
     const char *file_name;
+    const char *sha;
 } addon_info_t;
 
 static const addon_info_t addons_info[] = {
     {
-        "wine_gecko-" GECKO_VERSION "-" ARCH_STRING ".msi"
+        GECKO_VERSION,
+        "wine_gecko-" GECKO_VERSION "-" ARCH_STRING ".msi",
+        GECKO_SHA
     }
 };
 
@@ -131,10 +135,10 @@ static BOOL sha_check(const WCHAR *file_name)
     for(i=0; i < sizeof(sha); i++)
         sprintf(buf + i*2, "%02x", *((unsigned char*)sha+i));
 
-    if(strcmp(buf, GECKO_SHA)) {
+    if(strcmp(buf, addon->sha)) {
         WCHAR message[256];
 
-        WARN("Got %s, expected %s\n", buf, GECKO_SHA);
+        WARN("Got %s, expected %s\n", buf, addon->sha);
 
         if(LoadStringW(hInst, IDS_INVALID_SHA, message, sizeof(message)/sizeof(WCHAR)))
             MessageBoxW(NULL, message, NULL, MB_ICONERROR);
@@ -426,7 +430,7 @@ static LPWSTR get_url(void)
         len += MultiByteToWideChar(CP_ACP, 0, ARCH_STRING, sizeof(ARCH_STRING), url+len, size/sizeof(WCHAR)-len)-1;
         memcpy(url+len, v_formatW, sizeof(v_formatW));
         len += sizeof(v_formatW)/sizeof(WCHAR);
-        MultiByteToWideChar(CP_ACP, 0, GECKO_VERSION, -1, url+len, size/sizeof(WCHAR)-len);
+        MultiByteToWideChar(CP_ACP, 0, addon->version, -1, url+len, size/sizeof(WCHAR)-len);
     }
 
     TRACE("Got URL %s\n", debugstr_w(url));
