@@ -592,8 +592,8 @@ struct x11drv_win_data
     DWORD       net_wm_state;   /* bit mask of active x11drv_net_wm_state values */
     Window      embedder;       /* window id of embedder */
     unsigned long configure_serial; /* serial number of last configure request */
-    HBITMAP     hWMIconBitmap;
-    HBITMAP     hWMIconMask;
+    Pixmap      icon_pixmap;
+    Pixmap      icon_mask;
 };
 
 extern struct x11drv_win_data *X11DRV_get_win_data( HWND hwnd ) DECLSPEC_HIDDEN;

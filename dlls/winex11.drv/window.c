@@ -804,14 +804,14 @@ static void destroy_icon_window( Display *display, struct x11drv_win_data *data 
  */
 static unsigned long *get_bitmap_argb( HDC hdc, HBITMAP color, HBITMAP mask, unsigned int *size )
 {
+    char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+    BITMAPINFO *info = (BITMAPINFO *)buffer;
     BITMAP bm;
-    BITMAPINFO *info;
     unsigned int *ptr, *bits = NULL;
     unsigned char *mask_bits = NULL;
     int i, j, has_alpha = 0;
 
     if (!GetObjectW( color, sizeof(bm), &bm )) return NULL;
-    if (!(info = HeapAlloc( GetProcessHeap(), 0, FIELD_OFFSET( BITMAPINFO, bmiColors[256] )))) return NULL;
     info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     info->bmiHeader.biWidth = bm.bmWidth;
     info->bmiHeader.biHeight = -bm.bmHeight;
@@ -856,10 +856,72 @@ static unsigned long *get_bitmap_argb( HDC hdc, HBITMAP color, HBITMAP mask, uns
     return (unsigned long *)bits;
 
 failed:
-    HeapFree( GetProcessHeap(), 0, info );
     HeapFree( GetProcessHeap(), 0, bits );
     HeapFree( GetProcessHeap(), 0, mask_bits );
     return NULL;
+}
+
+
+/***********************************************************************
+ *              create_icon_pixmaps
+ */
+static BOOL create_icon_pixmaps( HDC hdc, const ICONINFO *icon, struct x11drv_win_data *data )
+{
+    char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+    BITMAPINFO *info = (BITMAPINFO *)buffer;
+    XVisualInfo vis;
+    struct gdi_image_bits bits;
+    Pixmap color_pixmap = 0, mask_pixmap = 0;
+    int i, lines;
+
+    bits.ptr = NULL;
+    bits.free = NULL;
+    bits.is_copy = TRUE;
+
+    info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    info->bmiHeader.biBitCount = 0;
+    if (!(lines = GetDIBits( hdc, icon->hbmColor, 0, 0, NULL, info, DIB_RGB_COLORS ))) goto failed;
+    if (!(bits.ptr = HeapAlloc( GetProcessHeap(), 0, info->bmiHeader.biSizeImage ))) goto failed;
+    if (!GetDIBits( hdc, icon->hbmColor, 0, lines, bits.ptr, info, DIB_RGB_COLORS )) goto failed;
+
+    vis.visual     = visual;
+    vis.depth      = screen_depth;
+    vis.visualid   = visual->visualid;
+    vis.class      = visual->class;
+    vis.red_mask   = visual->red_mask;
+    vis.green_mask = visual->green_mask;
+    vis.blue_mask  = visual->blue_mask;
+    color_pixmap = create_pixmap_from_image( hdc, &vis, info, &bits, DIB_RGB_COLORS );
+    HeapFree( GetProcessHeap(), 0, bits.ptr );
+    bits.ptr = NULL;
+    if (!color_pixmap) goto failed;
+
+    info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    info->bmiHeader.biBitCount = 0;
+    if (!(lines = GetDIBits( hdc, icon->hbmMask, 0, 0, NULL, info, DIB_RGB_COLORS ))) goto failed;
+    if (!(bits.ptr = HeapAlloc( GetProcessHeap(), 0, info->bmiHeader.biSizeImage ))) goto failed;
+    if (!GetDIBits( hdc, icon->hbmMask, 0, lines, bits.ptr, info, DIB_RGB_COLORS )) goto failed;
+
+    /* invert the mask */
+    for (i = 0; i < info->bmiHeader.biSizeImage / sizeof(DWORD); i++) ((DWORD *)bits.ptr)[i] ^= ~0u;
+
+    vis.depth = 1;
+    mask_pixmap = create_pixmap_from_image( hdc, &vis, info, &bits, DIB_RGB_COLORS );
+    HeapFree( GetProcessHeap(), 0, bits.ptr );
+    bits.ptr = NULL;
+    if (!mask_pixmap) goto failed;
+
+    data->icon_pixmap = color_pixmap;
+    data->icon_mask = mask_pixmap;
+    return TRUE;
+
+failed:
+    wine_tsx11_lock();
+    if (color_pixmap) XFreePixmap( gdi_display, color_pixmap );
+    if (mask_pixmap) XFreePixmap( gdi_display, mask_pixmap );
+    wine_tsx11_unlock();
+    HeapFree( GetProcessHeap(), 0, bits.ptr );
+    return FALSE;
 }
 
 
@@ -884,10 +946,11 @@ static void set_icon_hints( Display *display, struct x11drv_win_data *data,
         if (!icon_small) icon_small = (HICON)GetClassLongPtrW( data->hwnd, GCLP_HICONSM );
     }
 
-    if (data->hWMIconBitmap) DeleteObject( data->hWMIconBitmap );
-    if (data->hWMIconMask) DeleteObject( data->hWMIconMask);
-    data->hWMIconBitmap = 0;
-    data->hWMIconMask = 0;
+    wine_tsx11_lock();
+    if (data->icon_pixmap) XFreePixmap( gdi_display, data->icon_pixmap );
+    if (data->icon_mask) XFreePixmap( gdi_display, data->icon_mask );
+    data->icon_pixmap = data->icon_mask = 0;
+    wine_tsx11_unlock();
 
     if (!icon_big)
     {
@@ -897,21 +960,12 @@ static void set_icon_hints( Display *display, struct x11drv_win_data *data,
     }
     else
     {
-        HBITMAP hbmOrig;
-        RECT rcMask;
-        BITMAP bm;
         ICONINFO ii, ii_small;
         HDC hDC;
         unsigned int size;
         unsigned long *bits;
 
         if (!GetIconInfo(icon_big, &ii)) return;
-
-        GetObjectW(ii.hbmMask, sizeof(bm), &bm);
-        rcMask.top    = 0;
-        rcMask.left   = 0;
-        rcMask.right  = bm.bmWidth;
-        rcMask.bottom = bm.bmHeight;
 
         hDC = CreateCompatibleDC(0);
         bits = get_bitmap_argb( hDC, ii.hbmColor, ii.hbmMask, &size );
@@ -944,19 +998,17 @@ static void set_icon_hints( Display *display, struct x11drv_win_data *data,
         wine_tsx11_unlock();
         HeapFree( GetProcessHeap(), 0, bits );
 
-        hbmOrig = SelectObject(hDC, ii.hbmMask);
-        InvertRect(hDC, &rcMask);
-        SelectObject(hDC, ii.hbmColor);  /* force the color bitmap to x11drv mode too */
-        SelectObject(hDC, hbmOrig);
-
-        data->hWMIconBitmap = ii.hbmColor;
-        data->hWMIconMask = ii.hbmMask;
-
-        hints->icon_pixmap = X11DRV_get_pixmap(data->hWMIconBitmap);
-        hints->icon_mask = X11DRV_get_pixmap(data->hWMIconMask);
+        if (create_icon_pixmaps( hDC, &ii, data ))
+        {
+            hints->icon_pixmap = data->icon_pixmap;
+            hints->icon_mask = data->icon_mask;
+            hints->flags |= IconPixmapHint | IconMaskHint;
+        }
         destroy_icon_window( display, data );
-        hints->flags = (hints->flags & ~IconWindowHint) | IconPixmapHint | IconMaskHint;
+        hints->flags &= ~IconWindowHint;
 
+        DeleteObject( ii.hbmColor );
+        DeleteObject( ii.hbmMask );
         DeleteDC(hDC);
     }
 }
@@ -1894,9 +1946,9 @@ void CDECL X11DRV_DestroyWindow( HWND hwnd )
 
     if (thread_data->last_focus == hwnd) thread_data->last_focus = 0;
     if (thread_data->last_xic_hwnd == hwnd) thread_data->last_xic_hwnd = 0;
-    if (data->hWMIconBitmap) DeleteObject( data->hWMIconBitmap );
-    if (data->hWMIconMask) DeleteObject( data->hWMIconMask);
     wine_tsx11_lock();
+    if (data->icon_pixmap) XFreePixmap( gdi_display, data->icon_pixmap );
+    if (data->icon_mask) XFreePixmap( gdi_display, data->icon_mask );
     XDeleteContext( thread_data->display, (XID)hwnd, win_data_context );
     wine_tsx11_unlock();
     HeapFree( GetProcessHeap(), 0, data );
