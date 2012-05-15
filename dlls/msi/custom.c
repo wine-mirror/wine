@@ -957,7 +957,7 @@ static DWORD ACTION_CallScript( const GUID *guid )
 {
     msi_custom_action_info *info;
     MSIHANDLE hPackage;
-    UINT r;
+    UINT r = ERROR_FUNCTION_FAILED;
 
     info = find_action_by_guid( guid );
     if (!info)
@@ -979,13 +979,13 @@ static DWORD ACTION_CallScript( const GUID *guid )
         ERR("failed to create handle for %p\n", info->package );
 
     release_custom_action_data( info );
-    return S_OK;
+    return r;
 }
 
 static DWORD WINAPI ScriptThread( LPVOID arg )
 {
     LPGUID guid = arg;
-    DWORD rc = 0;
+    DWORD rc;
 
     TRACE("custom action (%x) started\n", GetCurrentThreadId() );
 
