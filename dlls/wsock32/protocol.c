@@ -83,7 +83,7 @@ static DWORD map_service(DWORD wsaflags)
     if (wsaflags & XP1_DISCONNECT_DATA)     flags |= XP_DISCONNECT_DATA;
     if (wsaflags & XP1_SUPPORT_BROADCAST)   flags |= XP_SUPPORTS_BROADCAST;
     if (wsaflags & XP1_SUPPORT_MULTIPOINT)  flags |= XP_SUPPORTS_MULTICAST;
-    if (wsaflags & XP1_QOS_SUPPORTED)       flags |= XP_BANDWITH_ALLOCATION;
+    if (wsaflags & XP1_QOS_SUPPORTED)       flags |= XP_BANDWIDTH_ALLOCATION;
     if (wsaflags & XP1_PARTIAL_MESSAGE)     flags |= XP_FRAGMENTATION;
     return flags;
 }
