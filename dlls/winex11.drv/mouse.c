@@ -936,24 +936,51 @@ done:
 
 
 /***********************************************************************
- *		create_cursor_from_bitmaps
+ *		create_xlib_monochrome_cursor
  *
- * Create an X11 cursor from source bitmaps.
+ * Create a monochrome X cursor from a Windows one.
  */
-static Cursor create_cursor_from_bitmaps( HBITMAP src_xor, HBITMAP src_and, int width, int height,
-                                          int xor_y, int and_y, XColor *fg, XColor *bg,
-                                          int hotspot_x, int hotspot_y )
+static Cursor create_xlib_monochrome_cursor( HDC hdc, const ICONINFOEXW *icon, int width, int height )
 {
-    HDC src = 0, dst = 0;
-    HBITMAP bits = 0, mask = 0, mask_inv = 0;
+    char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+    BITMAPINFO *info = (BITMAPINFO *)buffer;
+    const int and_y = 0;
+    const int xor_y = height;
+    unsigned int width_bytes = (width + 31) / 32 * 4;
+    unsigned char *mask_bits = NULL;
+    GC gc;
+    XColor fg, bg;
+    XVisualInfo vis;
+    Pixmap src_pixmap, bits_pixmap, mask_pixmap;
+    struct gdi_image_bits bits;
     Cursor cursor = 0;
 
-    if (!(src = CreateCompatibleDC( 0 ))) goto done;
-    if (!(dst = CreateCompatibleDC( 0 ))) goto done;
+    info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    info->bmiHeader.biWidth = width;
+    info->bmiHeader.biHeight = -height * 2;
+    info->bmiHeader.biPlanes = 1;
+    info->bmiHeader.biBitCount = 1;
+    info->bmiHeader.biCompression = BI_RGB;
+    info->bmiHeader.biSizeImage = width_bytes * height * 2;
+    info->bmiHeader.biXPelsPerMeter = 0;
+    info->bmiHeader.biYPelsPerMeter = 0;
+    info->bmiHeader.biClrUsed = 0;
+    info->bmiHeader.biClrImportant = 0;
 
-    if (!(bits = CreateBitmap( width, height, 1, 1, NULL ))) goto done;
-    if (!(mask = CreateBitmap( width, height, 1, 1, NULL ))) goto done;
-    if (!(mask_inv = CreateBitmap( width, height, 1, 1, NULL ))) goto done;
+    if (!(mask_bits = HeapAlloc( GetProcessHeap(), 0, info->bmiHeader.biSizeImage ))) goto done;
+    if (!GetDIBits( hdc, icon->hbmMask, 0, height * 2, mask_bits, info, DIB_RGB_COLORS )) goto done;
+
+    vis.depth = 1;
+    bits.ptr = mask_bits;
+    bits.free = NULL;
+    bits.is_copy = TRUE;
+    if (!(src_pixmap = create_pixmap_from_image( hdc, &vis, info, &bits, DIB_RGB_COLORS ))) goto done;
+
+    wine_tsx11_lock();
+    bits_pixmap = XCreatePixmap( gdi_display, root_window, width, height, 1 );
+    mask_pixmap = XCreatePixmap( gdi_display, root_window, width, height, 1 );
+    gc = XCreateGC( gdi_display, src_pixmap, 0, NULL );
+    XSetGraphicsExposures( gdi_display, gc, False );
 
     /* We have to do some magic here, as cursors are not fully
      * compatible between Windows and X11. Under X11, there are
@@ -973,45 +1000,41 @@ static Cursor create_cursor_from_bitmaps( HBITMAP src_xor, HBITMAP src_and, int 
      *  Bits = not 'And' and 'Xor' or 'And2' and 'Xor2'
      *  Mask = not 'And' or 'Xor' or 'And2' and 'Xor2'
      */
-    SelectObject( src, src_and );
-    SelectObject( dst, bits );
-    BitBlt( dst, 0, 0, width, height, src, 0, and_y, SRCCOPY );
-    SelectObject( dst, mask );
-    BitBlt( dst, 0, 0, width, height, src, 0, and_y, SRCCOPY );
-    SelectObject( dst, mask_inv );
-    BitBlt( dst, 0, 0, width, height, src, 0, and_y, SRCCOPY );
-    SelectObject( src, src_xor );
-    BitBlt( dst, 0, 0, width, height, src, 0, xor_y, SRCAND /* src & dst */ );
-    SelectObject( dst, bits );
-    BitBlt( dst, 0, 0, width, height, src, 0, xor_y, SRCERASE /* src & ~dst */ );
-    SelectObject( dst, mask );
-    BitBlt( dst, 0, 0, width, height, src, 0, xor_y, 0xdd0228 /* src | ~dst */ );
+    XSetFunction( gdi_display, gc, GXcopy );
+    XCopyArea( gdi_display, src_pixmap, bits_pixmap, gc, 0, and_y, width, height, 0, 0 );
+    XCopyArea( gdi_display, src_pixmap, mask_pixmap, gc, 0, and_y, width, height, 0, 0 );
+    XSetFunction( gdi_display, gc, GXandReverse );
+    XCopyArea( gdi_display, src_pixmap, bits_pixmap, gc, 0, xor_y, width, height, 0, 0 );
+    XSetFunction( gdi_display, gc, GXorReverse );
+    XCopyArea( gdi_display, src_pixmap, mask_pixmap, gc, 0, xor_y, width, height, 0, 0 );
     /* additional white */
-    SelectObject( src, mask_inv );
-    BitBlt( dst, 1, 1, width, height, src, 0, 0, SRCPAINT /* src | dst */);
-    SelectObject( dst, bits );
-    BitBlt( dst, 1, 1, width, height, src, 0, 0, SRCPAINT /* src | dst */ );
+    XSetFunction( gdi_display, gc, GXand );
+    XCopyArea( gdi_display, src_pixmap, src_pixmap,  gc, 0, xor_y, width, height, 0, and_y );
+    XSetFunction( gdi_display, gc, GXor );
+    XCopyArea( gdi_display, src_pixmap, mask_pixmap, gc, 0, and_y, width, height, 1, 1 );
+    XCopyArea( gdi_display, src_pixmap, bits_pixmap, gc, 0, and_y, width, height, 1, 1 );
+    XFreeGC( gdi_display, gc );
 
-    wine_tsx11_lock();
-    cursor = XCreatePixmapCursor( gdi_display, X11DRV_get_pixmap(bits), X11DRV_get_pixmap(mask),
-                                  fg, bg, hotspot_x, hotspot_y );
+    fg.red = fg.green = fg.blue = 0xffff;
+    bg.red = bg.green = bg.blue = 0;
+    cursor = XCreatePixmapCursor( gdi_display, bits_pixmap, mask_pixmap,
+                                  &fg, &bg, icon->xHotspot, icon->yHotspot );
+    XFreePixmap( gdi_display, src_pixmap );
+    XFreePixmap( gdi_display, bits_pixmap );
+    XFreePixmap( gdi_display, mask_pixmap );
     wine_tsx11_unlock();
 
 done:
-    DeleteDC( src );
-    DeleteDC( dst );
-    DeleteObject( bits );
-    DeleteObject( mask );
-    DeleteObject( mask_inv );
+    HeapFree( GetProcessHeap(), 0, mask_bits );
     return cursor;
 }
 
 /***********************************************************************
- *		create_xlib_cursor
+ *		create_xlib_color_cursor
  *
- * Create an X cursor from a Windows one.
+ * Create a color X cursor from a Windows one.
  */
-static Cursor create_xlib_cursor( HDC hdc, const ICONINFOEXW *icon, int width, int height )
+static Cursor create_xlib_color_cursor( HDC hdc, const ICONINFOEXW *icon, int width, int height )
 {
     char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
     BITMAPINFO *info = (BITMAPINFO *)buffer;
@@ -1148,6 +1171,7 @@ static Cursor create_cursor( HANDLE handle )
     Cursor cursor = 0;
     ICONINFOEXW info;
     BITMAP bm;
+    HDC hdc;
 
     if (!handle) return get_empty_cursor();
 
@@ -1173,30 +1197,24 @@ static Cursor create_cursor( HANDLE handle )
         info.yHotspot = bm.bmHeight / 2;
     }
 
+    hdc = CreateCompatibleDC( 0 );
+
     if (info.hbmColor)
     {
-        HDC hdc = CreateCompatibleDC( 0 );
-        if (hdc)
-        {
 #ifdef SONAME_LIBXCURSOR
-            if (pXcursorImagesLoadCursor)
-                cursor = create_xcursor_cursor( hdc, &info, handle, bm.bmWidth, bm.bmHeight );
+        if (pXcursorImagesLoadCursor)
+            cursor = create_xcursor_cursor( hdc, &info, handle, bm.bmWidth, bm.bmHeight );
 #endif
-            if (!cursor) cursor = create_xlib_cursor( hdc, &info, bm.bmWidth, bm.bmHeight );
-        }
+        if (!cursor) cursor = create_xlib_color_cursor( hdc, &info, bm.bmWidth, bm.bmHeight );
         DeleteObject( info.hbmColor );
-        DeleteDC( hdc );
     }
     else
     {
-        XColor fg, bg;
-        fg.red = fg.green = fg.blue = 0xffff;
-        bg.red = bg.green = bg.blue = 0;
-        cursor = create_cursor_from_bitmaps( info.hbmMask, info.hbmMask, bm.bmWidth, bm.bmHeight,
-                                             bm.bmHeight, 0, &fg, &bg, info.xHotspot, info.yHotspot );
+        cursor = create_xlib_monochrome_cursor( hdc, &info, bm.bmWidth, bm.bmHeight );
     }
 
     DeleteObject( info.hbmMask );
+    DeleteDC( hdc );
     return cursor;
 }
 
