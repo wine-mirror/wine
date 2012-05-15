@@ -55,9 +55,8 @@ typedef struct DirectSoundCaptureDevice      DirectSoundCaptureDevice;
 typedef float (*bitsgetfunc)(const IDirectSoundBufferImpl *, DWORD, DWORD);
 typedef void (*bitsputfunc)(const IDirectSoundBufferImpl *, DWORD, DWORD, float);
 extern const bitsgetfunc getbpp[5] DECLSPEC_HIDDEN;
-extern const bitsputfunc putbpp[4] DECLSPEC_HIDDEN;
-typedef void (*mixfunc)(const void *, void *, unsigned);
-extern const mixfunc mixfunctions[5] DECLSPEC_HIDDEN;
+void putieee32(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value) DECLSPEC_HIDDEN;
+void mixieee32(float *src, float *dst, unsigned samples) DECLSPEC_HIDDEN;
 typedef void (*normfunc)(const void *, void *, unsigned);
 extern const normfunc normfunctions[5] DECLSPEC_HIDDEN;
 
@@ -94,13 +93,11 @@ struct DirectSoundDevice
     CRITICAL_SECTION            mixlock;
     IDirectSoundBufferImpl     *primary;
     DWORD                       speaker_config;
-    LPBYTE                      tmp_buffer;
-    float *mix_buffer;
+    float *mix_buffer, *tmp_buffer;
     DWORD                       tmp_buffer_len, mix_buffer_len;
 
     DSVOLUMEPAN                 volpan;
 
-    mixfunc mixfunction;
     normfunc normfunction;
 
     /* DirectSound3DListener fields */

@@ -141,7 +141,7 @@ void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb)
 	dsb->freqAcc = 0;
 
 	dsb->get_aux = ieee ? getbpp[4] : getbpp[dsb->pwfx->wBitsPerSample/8 - 1];
-	dsb->put_aux = putbpp[dsb->device->pwfx->wBitsPerSample/8 - 1];
+	dsb->put_aux = putieee32;
 
 	dsb->get = dsb->get_aux;
 	dsb->put = dsb->put_aux;
@@ -234,10 +234,10 @@ static inline float get_current_sample(const IDirectSoundBufferImpl *dsb,
     return dsb->get(dsb, mixpos % dsb->buflen, channel);
 }
 
-static UINT cp_fields_noresample(IDirectSoundBufferImpl *dsb,
-        UINT ostride, UINT count)
+static UINT cp_fields_noresample(IDirectSoundBufferImpl *dsb, UINT count)
 {
     UINT istride = dsb->pwfx->nBlockAlign;
+    UINT ostride = dsb->device->pwfx->nChannels * sizeof(float);
     DWORD channel, i;
     for (i = 0; i < count; i++)
         for (channel = 0; channel < dsb->mix_channels; channel++)
@@ -246,11 +246,11 @@ static UINT cp_fields_noresample(IDirectSoundBufferImpl *dsb,
     return count;
 }
 
-static UINT cp_fields_resample(IDirectSoundBufferImpl *dsb,
-        UINT ostride, UINT count, float *freqAcc)
+static UINT cp_fields_resample(IDirectSoundBufferImpl *dsb, UINT count, float *freqAcc)
 {
     UINT i, channel;
     UINT istride = dsb->pwfx->nBlockAlign;
+    UINT ostride = dsb->device->pwfx->nChannels * sizeof(float);
 
     float freqAdjust = dsb->freqAdjust;
     float freqAcc_start = *freqAcc;
@@ -314,15 +314,14 @@ static UINT cp_fields_resample(IDirectSoundBufferImpl *dsb,
     return max_ipos;
 }
 
-static void cp_fields(IDirectSoundBufferImpl *dsb,
-        UINT ostride, UINT count, float *freqAcc)
+static void cp_fields(IDirectSoundBufferImpl *dsb, UINT count, float *freqAcc)
 {
     DWORD ipos, adv;
 
     if (dsb->freqAdjust == 1.0)
-        adv = cp_fields_noresample(dsb, ostride, count); /* *freqAcc is unmodified */
+        adv = cp_fields_noresample(dsb, count); /* *freqAcc is unmodified */
     else
-        adv = cp_fields_resample(dsb, ostride, count, freqAcc);
+        adv = cp_fields_resample(dsb, count, freqAcc);
 
     ipos = dsb->sec_mixpos + adv * dsb->pwfx->nBlockAlign;
     if (ipos >= dsb->buflen) {
@@ -365,89 +364,53 @@ static inline DWORD DSOUND_BufPtrDiff(DWORD buflen, DWORD ptr1, DWORD ptr2)
  *
  * NOTE: writepos + len <= buflen. When called by mixer, MixOne makes sure of this.
  */
-static void DSOUND_MixToTemporary(IDirectSoundBufferImpl *dsb, DWORD tmp_len)
+static void DSOUND_MixToTemporary(IDirectSoundBufferImpl *dsb, DWORD frames)
 {
-	INT	oAdvance = dsb->device->pwfx->nBlockAlign;
-	INT	size = tmp_len / oAdvance;
+	UINT size_bytes = frames * sizeof(float) * dsb->device->pwfx->nChannels;
 
-	if (dsb->device->tmp_buffer_len < tmp_len || !dsb->device->tmp_buffer)
+	if (dsb->device->tmp_buffer_len < size_bytes || !dsb->device->tmp_buffer)
 	{
-		dsb->device->tmp_buffer_len = tmp_len;
+		dsb->device->tmp_buffer_len = size_bytes;
 		if (dsb->device->tmp_buffer)
-			dsb->device->tmp_buffer = HeapReAlloc(GetProcessHeap(), 0, dsb->device->tmp_buffer, tmp_len);
+			dsb->device->tmp_buffer = HeapReAlloc(GetProcessHeap(), 0, dsb->device->tmp_buffer, size_bytes);
 		else
-			dsb->device->tmp_buffer = HeapAlloc(GetProcessHeap(), 0, tmp_len);
+			dsb->device->tmp_buffer = HeapAlloc(GetProcessHeap(), 0, size_bytes);
 	}
 
-	cp_fields(dsb, oAdvance, size, &dsb->freqAcc);
+	cp_fields(dsb, frames, &dsb->freqAcc);
 }
 
-/** Apply volume to the given soundbuffer from (primary) position writepos and length len
- * Returns: NULL if no volume needs to be applied
- * or else a memory handle that holds 'len' volume adjusted buffer */
-static LPBYTE DSOUND_MixerVol(const IDirectSoundBufferImpl *dsb, INT len)
+static void DSOUND_MixerVol(const IDirectSoundBufferImpl *dsb, INT frames)
 {
 	INT	i;
-	BYTE	*bpc;
-	INT16	*bps, *mems;
-	DWORD vLeft, vRight;
-	INT nChannels = dsb->device->pwfx->nChannels;
-	LPBYTE mem = dsb->device->tmp_buffer;
+	float vLeft, vRight;
+	UINT channels = dsb->device->pwfx->nChannels, chan;
 
-	TRACE("(%p,%d)\n",dsb,len);
+	TRACE("(%p,%d)\n",dsb,frames);
 	TRACE("left = %x, right = %x\n", dsb->volpan.dwTotalLeftAmpFactor,
 		dsb->volpan.dwTotalRightAmpFactor);
 
 	if ((!(dsb->dsbd.dwFlags & DSBCAPS_CTRLPAN) || (dsb->volpan.lPan == 0)) &&
 	    (!(dsb->dsbd.dwFlags & DSBCAPS_CTRLVOLUME) || (dsb->volpan.lVolume == 0)) &&
 	     !(dsb->dsbd.dwFlags & DSBCAPS_CTRL3D))
-		return NULL; /* Nothing to do */
+		return; /* Nothing to do */
 
-	if (nChannels != 1 && nChannels != 2)
+	if (channels != 1 && channels != 2)
 	{
-		FIXME("There is no support for %d channels\n", nChannels);
-		return NULL;
+		FIXME("There is no support for %u channels\n", channels);
+		return;
 	}
 
-	if (dsb->device->pwfx->wBitsPerSample != 8 && dsb->device->pwfx->wBitsPerSample != 16)
-	{
-		FIXME("There is no support for %d bpp\n", dsb->device->pwfx->wBitsPerSample);
-		return NULL;
-	}
-
-	assert(dsb->device->tmp_buffer_len >= len && dsb->device->tmp_buffer);
-
-	bpc = dsb->device->tmp_buffer;
-	bps = (INT16 *)bpc;
-	mems = (INT16 *)mem;
-	vLeft = dsb->volpan.dwTotalLeftAmpFactor;
-	if (nChannels > 1)
-		vRight = dsb->volpan.dwTotalRightAmpFactor;
-	else
-		vRight = vLeft;
-
-	switch (dsb->device->pwfx->wBitsPerSample) {
-	case 8:
-		/* 8-bit WAV is unsigned, but we need to operate */
-		/* on signed data for this to work properly */
-		for (i = 0; i < len-1; i+=2) {
-			*(bpc++) = (((*(mem++) - 128) * vLeft) >> 16) + 128;
-			*(bpc++) = (((*(mem++) - 128) * vRight) >> 16) + 128;
+	vLeft = dsb->volpan.dwTotalLeftAmpFactor / ((float)0xFFFF);
+	vRight = dsb->volpan.dwTotalRightAmpFactor / ((float)0xFFFF);
+	for(i = 0; i < frames; ++i){
+		for(chan = 0; chan < channels; ++chan){
+			if(chan == 0)
+				dsb->device->tmp_buffer[i * channels + chan] *= vLeft;
+			else
+				dsb->device->tmp_buffer[i * channels + chan] *= vRight;
 		}
-		if (len % 2 == 1 && nChannels == 1)
-			*(bpc++) = (((*(mem++) - 128) * vLeft) >> 16) + 128;
-		break;
-	case 16:
-		/* 16-bit WAV is signed -- much better */
-		for (i = 0; i < len-3; i += 4) {
-			*(bps++) = (*(mems++) * vLeft) >> 16;
-			*(bps++) = (*(mems++) * vRight) >> 16;
-		}
-		if (len % 4 == 2 && nChannels == 1)
-			*(bps++) = ((INT)*(mems++) * vLeft) >> 16;
-		break;
 	}
-	return dsb->device->tmp_buffer;
 }
 
 /**
@@ -466,8 +429,9 @@ static LPBYTE DSOUND_MixerVol(const IDirectSoundBufferImpl *dsb, INT len)
 static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWORD fraglen)
 {
 	INT len = fraglen;
-	BYTE *ibuf, *volbuf;
+	float *ibuf;
 	DWORD oldpos;
+	UINT frames = fraglen / dsb->device->pwfx->nBlockAlign;
 
 	TRACE("sec_mixpos=%d/%d\n", dsb->sec_mixpos, dsb->buflen);
 	TRACE("(%p,%d,%d)\n",dsb,writepos,fraglen);
@@ -481,15 +445,13 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWO
 	/* Resample buffer to temporary buffer specifically allocated for this purpose, if needed */
 	oldpos = dsb->sec_mixpos;
 
-	DSOUND_MixToTemporary(dsb, len);
+	DSOUND_MixToTemporary(dsb, frames);
 	ibuf = dsb->device->tmp_buffer;
 
 	/* Apply volume if needed */
-	volbuf = DSOUND_MixerVol(dsb, len);
-	if (volbuf)
-		ibuf = volbuf;
+	DSOUND_MixerVol(dsb, frames);
 
-	dsb->device->mixfunction(ibuf, dsb->device->mix_buffer, len);
+	mixieee32(ibuf, dsb->device->mix_buffer, frames * dsb->device->pwfx->nChannels);
 
 	/* check for notification positions */
 	if (dsb->dsbd.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY &&
@@ -694,6 +656,14 @@ static void DSOUND_WaveQueue(DirectSoundDevice *device, BOOL force)
  * Perform mixing for a Direct Sound device. That is, go through all the
  * secondary buffers (the sound bites currently playing) and mix them in
  * to the primary buffer (the device buffer).
+ *
+ * The mixing procedure goes:
+ *
+ * secondary->buffer (secondary format)
+ *   =[Resample]=> device->tmp_buffer (float format)
+ *   =[Volume]=> device->tmp_buffer (float format)
+ *   =[Mix]=> device->mix_buffer (float format)
+ *   =[Reformat]=> device->buffer (device format)
  */
 static void DSOUND_PerformMix(DirectSoundDevice *device)
 {

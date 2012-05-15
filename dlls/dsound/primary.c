@@ -189,13 +189,10 @@ static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device)
     if(device->pwfx->wFormatTag == WAVE_FORMAT_IEEE_FLOAT ||
             (device->pwfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
              IsEqualGUID(&((WAVEFORMATEXTENSIBLE*)device->pwfx)->SubFormat,
-                 &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT))){
-        device->mixfunction = mixfunctions[4];
+                 &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)))
         device->normfunction = normfunctions[4];
-    }else{
-        device->mixfunction = mixfunctions[device->pwfx->wBitsPerSample/8 - 1];
+    else
         device->normfunction = normfunctions[device->pwfx->wBitsPerSample/8 - 1];
-    }
 
 	FillMemory(device->buffer, device->buflen, (device->pwfx->wBitsPerSample == 8) ? 128 : 0);
 	FillMemory(device->mix_buffer, device->mix_buffer_len, 0);
@@ -512,16 +509,14 @@ opened:
 			WARN("DSOUND_PrimaryOpen(2) failed: %08x\n", err);
 	}
 
+
 	if(device->pwfx->wFormatTag == WAVE_FORMAT_IEEE_FLOAT ||
 			(device->pwfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
 			 IsEqualGUID(&((WAVEFORMATEXTENSIBLE*)device->pwfx)->SubFormat,
-				 &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT))){
-		device->mixfunction = mixfunctions[4];
+				 &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)))
 		device->normfunction = normfunctions[4];
-	}else{
-		device->mixfunction = mixfunctions[device->pwfx->wBitsPerSample/8 - 1];
+	else
 		device->normfunction = normfunctions[device->pwfx->wBitsPerSample/8 - 1];
-	}
 
 	if (old_fmt->nSamplesPerSec != device->pwfx->nSamplesPerSec ||
 			old_fmt->wBitsPerSample != device->pwfx->wBitsPerSample ||
