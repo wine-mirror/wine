@@ -83,7 +83,6 @@ struct DirectSoundDevice
     DWORD                       priolevel;
     PWAVEFORMATEX               pwfx;
     UINT                        timerID, playing_offs_bytes, in_mmdev_bytes, prebuf, helfrags;
-    UINT64                      last_pos_bytes;
     DWORD                       fraglen;
     LPBYTE                      buffer;
     DWORD                       writelead, buflen, state, playpos, mixpos;

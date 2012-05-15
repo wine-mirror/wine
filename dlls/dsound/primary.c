@@ -196,7 +196,7 @@ static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device)
 
 	FillMemory(device->buffer, device->buflen, (device->pwfx->wBitsPerSample == 8) ? 128 : 0);
 	FillMemory(device->mix_buffer, device->mix_buffer_len, 0);
-	device->last_pos_bytes = device->playing_offs_bytes = device->in_mmdev_bytes = device->playpos = device->mixpos = 0;
+	device->playing_offs_bytes = device->in_mmdev_bytes = device->playpos = device->mixpos = 0;
 	return DS_OK;
 }
 

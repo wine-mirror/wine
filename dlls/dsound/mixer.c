@@ -667,8 +667,7 @@ static void DSOUND_WaveQueue(DirectSoundDevice *device, BOOL force)
  */
 static void DSOUND_PerformMix(DirectSoundDevice *device)
 {
-	UINT64 clock_pos, clock_freq, pos_bytes;
-	UINT delta_frags;
+	UINT32 pad, to_mix_frags, to_mix_bytes;
 	HRESULT hr;
 
 	TRACE("(%p)\n", device);
@@ -676,28 +675,28 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 	/* **** */
 	EnterCriticalSection(&device->mixlock);
 
-	hr = IAudioClock_GetFrequency(device->clock, &clock_freq);
-	if(FAILED(hr)){
-		WARN("GetFrequency failed: %08x\n", hr);
-        LeaveCriticalSection(&device->mixlock);
-		return;
-	}
-
-	hr = IAudioClock_GetPosition(device->clock, &clock_pos, NULL);
+	hr = IAudioClient_GetCurrentPadding(device->client, &pad);
 	if(FAILED(hr)){
 		WARN("GetCurrentPadding failed: %08x\n", hr);
-        LeaveCriticalSection(&device->mixlock);
+		LeaveCriticalSection(&device->mixlock);
 		return;
 	}
 
-	pos_bytes = (clock_pos * device->pwfx->nSamplesPerSec * device->pwfx->nBlockAlign) / clock_freq;
+	to_mix_frags = device->prebuf - (pad * device->pwfx->nBlockAlign + device->fraglen - 1) / device->fraglen;
 
-	delta_frags = (pos_bytes - device->last_pos_bytes) / device->fraglen;
-	if(delta_frags > 0){
-		device->playing_offs_bytes += delta_frags * device->fraglen;
+	if(to_mix_frags == 0){
+		/* nothing to do! */
+		LeaveCriticalSection(&device->mixlock);
+		return;
+	}
+
+	to_mix_bytes = to_mix_frags * device->fraglen;
+
+	if(device->in_mmdev_bytes > 0){
+		DWORD delta_bytes = min(to_mix_bytes, device->in_mmdev_bytes);
+		device->in_mmdev_bytes -= delta_bytes;
+		device->playing_offs_bytes += delta_bytes;
 		device->playing_offs_bytes %= device->buflen;
-		device->in_mmdev_bytes -= delta_frags * device->fraglen;
-		device->last_pos_bytes = pos_bytes - (pos_bytes % device->fraglen);
 	}
 
 	if (device->priolevel != DSSCL_WRITEPRIMARY) {
