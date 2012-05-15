@@ -505,7 +505,7 @@ HDEVNOTIFY WINAPI RegisterDeviceNotificationA(HANDLE hnd, LPVOID notifyfilter, D
  * notifications about a device.
  *
  * PARAMS
- *     hRecepient           [I] Window or service status handle that
+ *     hRecipient           [I] Window or service status handle that
  *                              will receive notifications.
  *     pNotificationFilter  [I] DEV_BROADCAST_HDR followed by some
  *                              type-specific data.
@@ -518,13 +518,13 @@ HDEVNOTIFY WINAPI RegisterDeviceNotificationA(HANDLE hnd, LPVOID notifyfilter, D
  * NOTES
  *
  * The dwFlags parameter can be one of two values:
- *| DEVICE_NOTIFY_WINDOW_HANDLE  - hRecepient is a window handle
- *| DEVICE_NOTIFY_SERVICE_HANDLE - hRecepient is a service status handle
+ *| DEVICE_NOTIFY_WINDOW_HANDLE  - hRecipient is a window handle
+ *| DEVICE_NOTIFY_SERVICE_HANDLE - hRecipient is a service status handle
  */
-HDEVNOTIFY WINAPI RegisterDeviceNotificationW(HANDLE hRecepient, LPVOID pNotificationFilter, DWORD dwFlags)
+HDEVNOTIFY WINAPI RegisterDeviceNotificationW(HANDLE hRecipient, LPVOID pNotificationFilter, DWORD dwFlags)
 {
     FIXME("(hwnd=%p, filter=%p,flags=0x%08x) returns a fake device notification handle!\n",
-          hRecepient,pNotificationFilter,dwFlags );
+          hRecipient,pNotificationFilter,dwFlags );
     return (HDEVNOTIFY) 0xcafeaffe;
 }
 
