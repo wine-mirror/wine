@@ -125,7 +125,7 @@ static void test_GetDiskFreeSpaceA(void)
                    "GetDiskFreeSpaceA(%s): ret=%d GetLastError=%d\n",
                    drive, ret, GetLastError());
                 if( GetVersion() & 0x80000000)
-                    /* win3.0 thru winME */
+                    /* win3.0 through winME */
                     ok( total_clusters <= 65535,
                             "total clusters is %d > 65535\n", total_clusters);
                 else if (pGetDiskFreeSpaceExA) {

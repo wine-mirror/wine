@@ -125,7 +125,7 @@ static LRESULT CALLBACK mmioDosIOProc(LPMMIOINFO lpmmioinfo, UINT uMessage,
 	/* Parameters:
 	 * lParam1 = new position
 	 * lParam2 = from whence to seek (SEEK_SET, SEEK_CUR, SEEK_END)
-	 * Returns: new file postion, -1 on error
+	 * Returns: new file position, -1 on error
 	 */
 	ret = _llseek((HFILE)lpmmioinfo->adwInfo[0], (LONG)lParam1, (LONG)lParam2);
 	if (ret != -1)
@@ -210,7 +210,7 @@ static LRESULT CALLBACK mmioMemIOProc(LPMMIOINFO lpmmioinfo, UINT uMessage,
 	/* Parameters:
 	 * lParam1 = new position
 	 * lParam2 = from whence to seek (SEEK_SET, SEEK_CUR, SEEK_END)
-	 * Returns: new file postion, -1 on error
+	 * Returns: new file position, -1 on error
 	 * NOTE: lDiskOffset should be updated
 	 */
 	FIXME("MMIOM_SEEK on memory files should not occur, buffer may be lost!\n");

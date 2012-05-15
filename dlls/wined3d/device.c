@@ -1060,7 +1060,7 @@ static void create_dummy_textures(struct wined3d_device *device, struct wined3d_
 
     if (gl_info->supported[APPLE_CLIENT_STORAGE])
     {
-        /* Reenable because if supported it is enabled by default */
+        /* Re-enable because if supported it is enabled by default */
         glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
         checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE)");
     }

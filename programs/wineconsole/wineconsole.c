@@ -377,8 +377,8 @@ void     WINECON_SetConfig(struct inner_data* data, const struct config_data* cf
     {
         CONSOLE_CURSOR_INFO cinfo;
         cinfo.dwSize = cfg->cursor_size;
-        /* <FIXME>: this hack is needed to pass thru the invariant test operation on server side
-         * (no notification is sent when invariant operation is requested
+        /* <FIXME>: this hack is needed to pass through the invariant test operation on the server side
+         * (no notification is sent when invariant operation is requested)
          */
         cinfo.bVisible = !cfg->cursor_visible;
         SetConsoleCursorInfo(data->hConOut, &cinfo);

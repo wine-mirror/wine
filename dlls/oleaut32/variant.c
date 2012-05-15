@@ -2817,7 +2817,7 @@ HRESULT WINAPI VarCmp(LPVARIANT left, LPVARIANT right, LCID lcid, DWORD flags)
     if (xmask == VTBIT_BSTR)
         return VarBstrCmp(V_BSTR(left), V_BSTR(right), lcid, flags);
 
-    /* A BSTR and an other variant; we have to take care of VT_RESERVED */
+    /* A BSTR and another variant; we have to take care of VT_RESERVED */
     if (xmask & VTBIT_BSTR) {
         VARIANT *bstrv, *nonbv;
         VARTYPE nonbvt;

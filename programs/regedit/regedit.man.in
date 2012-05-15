@@ -17,13 +17,13 @@ the whole registry if no key is specified.
 .IP "\-D " regpath
 Deletes the specified registry key.
 .IP \-S
-Run regedit silently (ignored, CLI mode is always silent). This exists for compatability with Windows regedit.
+Run regedit silently (ignored, CLI mode is always silent). This exists for compatibility with Windows regedit.
 .IP \-V
-Run regedit in advanced mode (ignored). This exists for compatability with Windows regedit.
+Run regedit in advanced mode (ignored). This exists for compatibility with Windows regedit.
 .IP  "\-L " location
-Specifies the location of the system.dat registry file (ignored). This exists for compatability with Windows regedit.
+Specifies the location of the system.dat registry file (ignored). This exists for compatibility with Windows regedit.
 .IP "\-R " location
-Specifies the location of the user.dat registry file (ignored). This exists for compatability with Windows regedit.
+Specifies the location of the user.dat registry file (ignored). This exists for compatibility with Windows regedit.
 .IP  \-?
 Prints a help message. Any other options are ignored.
 .IP  \-C \fIfile.reg\fR

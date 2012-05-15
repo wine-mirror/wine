@@ -593,7 +593,7 @@ BOOL PSDRV_WriteSetColor(PHYSDEV dev, PSCOLOR *color)
 	return PSDRV_WriteSpool(dev, buf, strlen(buf));
 
     default:
-        ERR("Unkonwn colour type %d\n", color->type);
+        ERR("Unknown colour type %d\n", color->type);
 	break;
     }
 

@@ -628,7 +628,7 @@ static inline int stabs_pts_read_aggregate(struct ParseTypedefData* ptd,
     PTS_ABORTIF(ptd, stabs_pts_read_number(ptd, &sz) == -1);
 
     doadd = symt_set_udt_size(ptd->module, sdt, sz);
-    if (*ptd->ptr == '!') /* C++ inheritence */
+    if (*ptd->ptr == '!') /* C++ inheritance */
     {
         long     num_classes;
 
@@ -637,7 +637,7 @@ static inline int stabs_pts_read_aggregate(struct ParseTypedefData* ptd,
         PTS_ABORTIF(ptd, *ptd->ptr++ != ',');
         while (--num_classes >= 0)
         {
-            ptd->ptr += 2; /* skip visibility and inheritence */
+            ptd->ptr += 2; /* skip visibility and inheritance */
             PTS_ABORTIF(ptd, stabs_pts_read_number(ptd, &ofs) == -1);
             PTS_ABORTIF(ptd, *ptd->ptr++ != ',');
 

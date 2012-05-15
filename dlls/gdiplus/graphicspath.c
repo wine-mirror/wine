@@ -155,7 +155,7 @@ static BOOL flatten_bezier(path_list_node_t *start, REAL x2, REAL y2, REAL x3, R
         if(!(node = add_path_list_node(start, mp[2].X, mp[2].Y, PathPointTypeLine)))
             return FALSE;
 
-    /* do the same with halfs */
+    /* do the same with halves */
     flatten_bezier(start, mp[0].X, mp[0].Y, mp[1].X, mp[1].Y, node, flatness);
     flatten_bezier(node,  mp[3].X, mp[3].Y, mp[4].X, mp[4].Y, end,  flatness);
 

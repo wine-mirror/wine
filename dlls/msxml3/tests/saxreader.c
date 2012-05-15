@@ -185,7 +185,7 @@ static const char *event_names[EVENT_LAST] = {
     "endElement",
     "characters",
     "ignorableWhitespace",
-    "processingIntruction",
+    "processingInstruction",
     "skippedEntity",
     "error",
     "fatalError",

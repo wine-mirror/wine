@@ -825,7 +825,7 @@ static void quirk_no_np2(struct wined3d_gl_info *gl_info)
      *
      *  Note that wine_normalized_texrect can't be used in this case because internally it uses ARB_tex_npot,
      *  triggering the software fallback. There is not much we can do here apart from disabling the
-     *  software-emulated extension and reenable ARB_tex_rect (which was previously disabled
+     *  software-emulated extension and re-enable ARB_tex_rect (which was previously disabled
      *  in wined3d_adapter_init_gl_caps).
      *  This fixup removes performance problems on both the FX 5900 and FX 5700 (e.g. for framebuffer
      *  post-processing effects in the game "Max Payne 2").
@@ -1294,7 +1294,7 @@ static void init_driver_info(struct wined3d_driver_info *driver_info,
     }
 
     /* When we reach this stage we always have a vendor or device id (it can be a default one).
-     * This means that unless the ids are overriden, we will always find a GPU description. */
+     * This means that unless the ids are overridden, we will always find a GPU description. */
     for (i = 0; i < (sizeof(gpu_description_table) / sizeof(gpu_description_table[0])); i++)
     {
         if (vendor == gpu_description_table[i].vendor && device == gpu_description_table[i].card)
@@ -3048,7 +3048,7 @@ HRESULT CDECL wined3d_get_adapter_identifier(const struct wined3d *wined3d,
     const struct wined3d_adapter *adapter;
     size_t len;
 
-    TRACE_(d3d_caps)("wined3d %p, adapter_idx %u, flags %#x, indentifier %p.\n",
+    TRACE_(d3d_caps)("wined3d %p, adapter_idx %u, flags %#x, identifier %p.\n",
             wined3d, adapter_idx, flags, identifier);
 
     if (adapter_idx >= wined3d->adapter_count)

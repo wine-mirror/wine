@@ -1302,7 +1302,7 @@ static void test_IProp(void)
 
     /* Set access to read and write */
     sc = IPropData_HrSetObjAccess(lpIProp, IPROP_READWRITE);
-    ok(sc == S_OK, "SetObjAcess(WRITE): Expected S_OK got 0x%08X\n", sc);
+    ok(sc == S_OK, "SetObjAccess(WRITE): Expected S_OK got 0x%08X\n", sc);
 
     tags.cValues = 1;
     tags.aulPropTag[0] = PR_IMPORTANCE;
@@ -1311,31 +1311,31 @@ static void test_IProp(void)
     access[0] = 0;
     sc = IPropData_HrSetPropAccess(lpIProp, (LPSPropTagArray)&tags, access);
     ok(sc == MAPI_E_INVALID_PARAMETER,
-       "SetPropAcess(0): Expected INVALID_PARAMETER got 0x%08X\n",sc);
+       "SetPropAccess(0): Expected INVALID_PARAMETER got 0x%08X\n",sc);
     access[0] = IPROP_READWRITE;
     sc = IPropData_HrSetPropAccess(lpIProp, (LPSPropTagArray)&tags, access);
     ok(sc == MAPI_E_INVALID_PARAMETER,
-       "SetPropAcess(RW): Expected INVALID_PARAMETER got 0x%08X\n",sc);
+       "SetPropAccess(RW): Expected INVALID_PARAMETER got 0x%08X\n",sc);
     access[0] = IPROP_CLEAN;
     sc = IPropData_HrSetPropAccess(lpIProp, (LPSPropTagArray)&tags, access);
     ok(sc == MAPI_E_INVALID_PARAMETER,
-       "SetPropAcess(C): Expected INVALID_PARAMETER got 0x%08X\n",sc);
+       "SetPropAccess(C): Expected INVALID_PARAMETER got 0x%08X\n",sc);
 
     /* Set item access to read/write/clean */
     tags.cValues = 1;
     tags.aulPropTag[0] = PR_IMPORTANCE;
     access[0] = IPROP_READWRITE|IPROP_CLEAN;
     sc = IPropData_HrSetPropAccess(lpIProp, (LPSPropTagArray)&tags, access);
-    ok(sc == S_OK, "SetPropAcess(RW/C): Expected S_OK got 0x%08X\n",sc);
+    ok(sc == S_OK, "SetPropAccess(RW/C): Expected S_OK got 0x%08X\n",sc);
 
     /* Set object access to read only */
     sc = IPropData_HrSetObjAccess(lpIProp, IPROP_READONLY);
-    ok(sc == S_OK, "SetObjAcess(READ): Expected S_OK got 0x%08X\n", sc);
+    ok(sc == S_OK, "SetObjAccess(READ): Expected S_OK got 0x%08X\n", sc);
 
     /* Set item access to read/write/dirty - doesn't care about RO object */
     access[0] = IPROP_READONLY|IPROP_DIRTY;
     sc = IPropData_HrSetPropAccess(lpIProp, (LPSPropTagArray)&tags, access);
-    ok(sc == S_OK, "SetPropAcess(WRITE): Expected S_OK got 0x%08X\n", sc);
+    ok(sc == S_OK, "SetPropAccess(WRITE): Expected S_OK got 0x%08X\n", sc);
 
     /* Delete any item when set to read only - Error */
     lpProbs = NULL;
@@ -1347,7 +1347,7 @@ static void test_IProp(void)
 
     /* Set access to read and write */
     sc = IPropData_HrSetObjAccess(lpIProp, IPROP_READWRITE);
-    ok(sc == S_OK, "SetObjAcess(WRITE): Expected S_OK got 0x%08X\n", sc);
+    ok(sc == S_OK, "SetObjAccess(WRITE): Expected S_OK got 0x%08X\n", sc);
 
     /* Delete nonexistent item - No error */
     lpProbs = NULL;
@@ -1401,7 +1401,7 @@ static void test_IProp(void)
     /* Set item to r/w again */
     access[0] = IPROP_READWRITE|IPROP_DIRTY;
     sc = IPropData_HrSetPropAccess(lpIProp, (LPSPropTagArray)&tags, access);
-    ok(sc == S_OK, "SetPropAcess(WRITE): Expected S_OK got 0x%08X\n", sc);
+    ok(sc == S_OK, "SetPropAccess(WRITE): Expected S_OK got 0x%08X\n", sc);
 
     /* Delete existing item (r/w) - No error, no problems */
     lpProbs = NULL;

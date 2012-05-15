@@ -1027,9 +1027,9 @@ static	BOOL	MMSYSTEM_MidiStream_MessageHandler(WINE_MIDIStream* lpMidiStrm, LPWI
             break;
 	/* FIXME(EPP): "I don't understand the content of the first MIDIHDR sent
 	 * by native mcimidi, it doesn't look like a correct one".
-	 * this trick allows to throw it away... but I don't like it.
+	 * this trick allows us to throw it away... but I don't like it.
 	 * It looks like part of the file I'm trying to play and definitively looks
-	 * like raw midi content
+	 * like raw midi content.
 	 * I'd really like to understand why native mcimidi sends it. Perhaps a bad
 	 * synchronization issue where native mcimidi is still processing raw MIDI
 	 * content before generating MIDIEVENTs ?

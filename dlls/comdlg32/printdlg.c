@@ -1521,7 +1521,7 @@ static LRESULT PRINTDLG_WMInitDialog(HWND hDlg,
     }
 
     /* FIXME: I allow more freedom than either Win95 or WinNT,
-     *        which do not agree to what errors should be thrown or not
+     *        which do not agree on what errors should be thrown or not
      *        in case nToPage or nFromPage is out-of-range.
      */
     if (lppd->nMaxPage < lppd->nMinPage)

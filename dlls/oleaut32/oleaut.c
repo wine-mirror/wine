@@ -51,8 +51,8 @@ WINE_DECLARE_DEBUG_CHANNEL(heap);
  *  string type in ole automation. When encapsulated in a Variant type they are
  *  automatically copied and destroyed as the variant is processed.
  *
- *  The low level BSTR Api allows manipulation of these strings and is used by
- *  higher level Api calls to manage the strings transparently to the caller.
+ *  The low level BSTR API allows manipulation of these strings and is used by
+ *  higher level API calls to manage the strings transparently to the caller.
  *
  *  Internally the BSTR type is allocated with space for a DWORD byte count before
  *  the string data begins. This is undocumented and non-system code should not

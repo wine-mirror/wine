@@ -656,7 +656,7 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
                  * (this seems also to be the only spot in RtlGetFullPathName that the 
                  * existence of a part of a path is checked)
                  */
-                /* fall thru */
+                /* fall through */
             case STATUS_BUFFER_TOO_SMALL:
                 reqsize = val.Length + sizeof(WCHAR); /* append trailing '\\' */
                 val.Buffer[val.Length / sizeof(WCHAR)] = '\\';

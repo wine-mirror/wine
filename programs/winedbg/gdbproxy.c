@@ -1,7 +1,7 @@
 /*
- * A Win32 based proxy implementing the GBD remote protocol
- * This allows to debug Wine (and any "emulated" program) under
- * Linux using GDB
+ * A Win32 based proxy implementing the GBD remote protocol.
+ * This makes it possible to debug Wine (and any "emulated"
+ * program) under Linux using GDB.
  *
  * Copyright (c) Eric Pouech 2002-2004
  *
@@ -429,7 +429,7 @@ static BOOL handle_exception(struct gdb_context* gdbctx, EXCEPTION_DEBUG_INFO* e
         ret = TRUE;
         break;
     case EXCEPTION_SINGLE_STEP:
-        /* fall thru */
+        /* fall through */
     case EXCEPTION_BREAKPOINT:
         gdbctx->last_sig = SIGTRAP;
         ret = TRUE;
@@ -1087,7 +1087,7 @@ static enum packet_return packet_verbose_cont(struct gdb_context* gdbctx)
          * (they're running winedbg, so I'm sure they can fix the problem from the error message!) */
         if (threadCount == 100)
         {
-            fprintf(stderr, "Wow, that's a lot of threads, change threadIDs in wine/programms/winedbg/gdbproxy.c to be higher\n");
+            fprintf(stderr, "Wow, that's a lot of threads, change threadIDs in wine/programs/winedbg/gdbproxy.c to be higher\n");
             break;
         }
     }
@@ -2133,16 +2133,16 @@ static BOOL extract_packets(struct gdb_context* gdbctx)
             }
             else 
             {
-                /* FIXME: if we have in our input buffer more than one packet, 
+                /* FIXME: If we have more than one packet in our input buffer,
                  * it's very likely that we took too long to answer to a given packet
-                 * and gdb is sending us again the same packet
-                 * We simply drop the second packet. This will lower the risk of error, 
-                 * but there's still some race conditions here
+                 * and gdb is sending us the same packet again.
+                 * So we simply drop the second packet. This will lower the risk of error,
+                 * but there's still some race conditions here.
                  * A better fix (yet not perfect) would be to have two threads:
                  * - one managing the packets for gdb
                  * - the second one managing the commands...
-                 * This would allow us also the reply with the '+' character (Ack of
-                 * the command) way sooner than what we do now
+                 * This would allow us to send the reply with the '+' character (Ack of
+                 * the command) way sooner than we do now.
                  */
                 if (gdbctx->trace & GDBPXY_TRC_LOWLEVEL)
                     fprintf(stderr, "Dropping packet, I was too slow to respond\n");

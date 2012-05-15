@@ -731,7 +731,7 @@ typedef union
 @END
 
 
-/* Set a process informations */
+/* Set a process information */
 @REQ(set_process_info)
     obj_handle_t handle;       /* process handle */
     int          mask;         /* setting mask (see below) */
@@ -759,7 +759,7 @@ typedef union
 @END
 
 
-/* Set a thread informations */
+/* Set a thread information */
 @REQ(set_thread_info)
     obj_handle_t handle;       /* thread handle */
     int          mask;         /* setting mask (see below) */
@@ -1154,7 +1154,7 @@ enum server_fd_type
 @END
 
 
-/* Reenable pending socket events */
+/* Re-enable pending socket events */
 @REQ(enable_socket_event)
     obj_handle_t handle;        /* handle to the socket */
     unsigned int mask;          /* events to re-enable */
@@ -1348,7 +1348,7 @@ struct console_renderer_event
     short int    height;        /* height of the screen buffer */
     short int    attr;          /* default attribute */
     short int    win_left;      /* window actually displayed by renderer */
-    short int    win_top;       /* the rect area is expressed withing the */
+    short int    win_top;       /* the rect area is expressed within the */
     short int    win_right;     /* boundaries of the screen buffer */
     short int    win_bottom;
     short int    max_width;     /* maximum size (width x height) for the window */
@@ -1374,7 +1374,7 @@ struct console_renderer_event
     short int    height;        /* height of the screen buffer */
     short int    attr;          /* default attribute */
     short int    win_left;      /* window actually displayed by renderer */
-    short int    win_top;       /* the rect area is expressed withing the */
+    short int    win_top;       /* the rect area is expressed within the */
     short int    win_right;     /* boundaries of the screen buffer */
     short int    win_bottom;
     short int    max_width;     /* maximum size (width x height) for the window */

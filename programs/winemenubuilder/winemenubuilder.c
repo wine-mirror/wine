@@ -31,7 +31,7 @@
  * between the user's desktop/start menu and the "All Users" copies.
  *
  *  This program will read a Windows shortcut file using the IShellLink
- * interface, then create a KDE/Gnome menu entry for the shortcut.
+ * interface, then create a KDE/GNOME menu entry for the shortcut.
  *
  *  winemenubuilder [ -w ] <shortcut.lnk>
  *
@@ -1171,8 +1171,8 @@ static void refresh_icon_cache(const char *iconsDir)
 {
     /* The icon theme spec only requires the mtime on the "toplevel"
      * directory (whatever that is) to be changed for a refresh,
-     * but on Gnome you have to create a file in that directory
-     * instead. Creating a file also works on KDE, XFCE and LXDE.
+     * but on GNOME you have to create a file in that directory
+     * instead. Creating a file also works on KDE, Xfce and LXDE.
      */
     char *filename = heap_printf("%s/.wine-refresh-XXXXXX", iconsDir);
     if (filename != NULL)
@@ -2588,7 +2588,7 @@ static BOOL generate_associations(const char *xdg_data_home, const char *package
 
                 if (mimeTypeA != NULL)
                 {
-                    /* Gnome seems to ignore the <icon> tag in MIME packages,
+                    /* GNOME seems to ignore the <icon> tag in MIME packages,
                      * and the default name is more intuitive anyway.
                      */
                     if (iconW)

@@ -45,7 +45,7 @@ static BOOL spurious_message(LPMSG msg)
   return FALSE;
 }
 
-/* A single ok() in each code path allows to prefix this with todo_wine */
+/* A single ok() in each code path allows us to prefix this with todo_wine */
 #define test_notification(hwnd, command, type) test_notification_dbg(hwnd, command, type, __LINE__)
 static void test_notification_dbg(HWND hwnd, const char* command, WPARAM type, int line)
 {   /* Use type 0 as meaning no message */

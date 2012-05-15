@@ -1058,7 +1058,7 @@ DWORD __cdecl svcctl_ControlService(
     case SERVICE_START_PENDING:
         if (dwControl==SERVICE_CONTROL_STOP)
             break;
-        /* fall thru */
+        /* fall through */
     case SERVICE_STOP_PENDING:
         result = ERROR_SERVICE_CANNOT_ACCEPT_CTRL;
         break;

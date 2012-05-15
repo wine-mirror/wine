@@ -503,7 +503,7 @@ static HRESULT WINAPI OleObject_Close(IOleObject *iface, DWORD dwSaveOption)
     TRACE("(%p)->(%d)\n", This, dwSaveOption);
 
     if(dwSaveOption != OLECLOSE_NOSAVE) {
-        FIXME("unimplemnted flag: %x\n", dwSaveOption);
+        FIXME("unimplemented flag: %x\n", dwSaveOption);
         return E_NOTIMPL;
     }
 

@@ -6243,7 +6243,7 @@ INT WINAPI WSAStringToAddressA(LPSTR AddressString,
 /***********************************************************************
  *              WSAStringToAddressW                      (WS2_32.81)
  *
- * Does anybody know if this function allows to use Hebrew/Arabic/Chinese... digits?
+ * FIXME: Does anybody know if this function allows using Hebrew/Arabic/Chinese... digits?
  * If this should be the case, it would be required to map these digits
  * to Unicode digits (0-9) using FoldString first.
  */

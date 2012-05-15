@@ -35,11 +35,11 @@
  *
  * - minidump
  *      + ensure that all commands work as expected in minidump reload function
- *        (and reenable parser usager)
+ *        (and re-enable parser usage)
  * - CPU adherence
- *      + we always assume the stack grows as on i386 (ie downwards)
+ *      + we always assume the stack grows as on i386 (i.e. downwards)
  * - UI
- *      + enable back the limited output (depth of structure printing and number of 
+ *      + re-enable the limited output (depth of structure printing and number of
  *        lines)
  *      + make the output as close as possible to what gdb does
  * - symbol management:

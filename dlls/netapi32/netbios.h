@@ -54,7 +54,7 @@ BOOL NetBIOSRegisterTransport(ULONG id, struct _NetBIOSTransport *transport) DEC
 BOOL NetBIOSRegisterAdapter(ULONG transport, DWORD ifIndex, void *adapter) DECLSPEC_HIDDEN;
 
 /* During enumeration, all adapters from your transport are disabled
- * internally.  If an adapter is still valid, reenable it with this function.
+ * internally.  If an adapter is still valid, re-enable it with this function.
  * Adapters you don't enable will have their transport's NetBIOSCleanupAdapter
  * function (see below) called on them, and will be removed from the table.
  * (This is to deal with lack of plug-and-play--sorry.)

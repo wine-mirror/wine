@@ -2084,7 +2084,7 @@ static HRESULT SS_ItemOut( SCRIPT_STRING_ANALYSIS ssa,
  *  ssa       [I] buffer to hold the analysed string components
  *  iX        [I] X axis displacement for output
  *  iY        [I] Y axis displacement for output
- *  uOptions  [I] flags controling output processing
+ *  uOptions  [I] flags controlling output processing
  *  prc       [I] rectangle coordinates
  *  iMinSel   [I] starting pos for substringing output string
  *  iMaxSel   [I] ending pos for substringing output string

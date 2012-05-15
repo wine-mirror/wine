@@ -180,7 +180,7 @@ static HRESULT WINAPI ACMWrapper_Receive(TransformFilter *tf, IMediaSample *pSam
         hr = IMediaSample_SetActualDataLength(pOutSample, ash.cbDstLengthUsed);
         assert(hr == S_OK);
 
-        /* Bug in acm codecs? It apparantly uses the input, but doesn't necessarily output immediately kl*/
+        /* Bug in acm codecs? It apparently uses the input, but doesn't necessarily output immediately */
         if (!ash.cbSrcLengthUsed)
         {
             WARN("Sample was skipped? Outputted: %u\n", ash.cbDstLengthUsed);

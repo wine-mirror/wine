@@ -178,7 +178,7 @@ static void set_states(ID3DXSpriteImpl *object)
     D3DXMATRIX mat;
     D3DVIEWPORT9 vp;
 
-    /* Miscelaneous stuff */
+    /* Miscellaneous stuff */
     IDirect3DDevice9_SetVertexShader(object->device, NULL);
     IDirect3DDevice9_SetPixelShader(object->device, NULL);
     IDirect3DDevice9_SetNPatchMode(object->device, 0.0f);

@@ -408,10 +408,10 @@ static DWORD MIDIOut_LongData(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
     /* FIXME: MS doc is not 100% clear. Will lpData only contain system exclusive
      * data, or can it also contain raw MIDI data, to be split up and sent to
      * modShortData() ?
-     * If the latest is true, then the following WARNing will fire up
+     * If the latter is true, then the following WARNing will fire up
      */
     if (lpData[0] != 0xF0 || lpData[lpMidiHdr->dwBufferLength - 1] != 0xF7) {
-	WARN("Alledged system exclusive buffer is not correct\n\tPlease report with MIDI file\n");
+	WARN("The allegedly system exclusive buffer is not correct\n\tPlease report with MIDI file\n");
     }
 
     TRACE("dwBufferLength=%u !\n", lpMidiHdr->dwBufferLength);

@@ -268,11 +268,11 @@ static inline UINT get_text_length(EDITSTATE *es)
  *	EDIT_WordBreakProc
  *
  *	Find the beginning of words.
- *	Note:	unlike the specs for a WordBreakProc, this function only
- *		allows to be called without linebreaks between s[0] up to
+ *	Note:	unlike the specs for a WordBreakProc, this function can
+ *		only be called without linebreaks between s[0] up to
  *		s[count - 1].  Remember it is only called
  *		internally, so we can decide this for ourselves.
- *		Additional we will always be breaking the full string.
+ *		Additionally we will always be breaking the full string.
  *
  */
 static INT EDIT_WordBreakProc(EDITSTATE *es, LPWSTR s, INT index, INT count, INT action)

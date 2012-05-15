@@ -1868,7 +1868,7 @@ static HRESULT WINAPI IPropData_fnSetProps(LPPROPDATA iface, ULONG ulValues, LPS
  *           errors that occurred.
  *  Failure: MAPI_E_INVALID_PARAMETER, if any parameter is invalid.
  *           E_ACCESSDENIED, if this object was created using CreateIProp() and
- *           a subsequent call to IPropData_SetObjAcess() was made specifying
+ *           a subsequent call to IPropData_SetObjAccess() was made specifying
  *           IPROP_READONLY as the access type.
  *
  * NOTES

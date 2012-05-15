@@ -399,7 +399,7 @@ static HRESULT AVISplitter_Sample(LPVOID iface, IMediaSample * pSample, DWORD_PT
         return S_OK;
     }
 
-    /* Send the sample to whatever thread is appropiate
+    /* Send the sample to whatever thread is appropriate
      * That thread should also not have a sample queued at the moment
      */
     /* Debugging */

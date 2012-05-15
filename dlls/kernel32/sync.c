@@ -275,8 +275,8 @@ BOOL WINAPI UnregisterWaitEx( HANDLE WaitHandle, HANDLE CompletionEvent )
 /***********************************************************************
  *           SignalObjectAndWait  (KERNEL32.@)
  *
- * Allows to atomically signal any of the synchro objects (semaphore,
- * mutex, event) and wait on another.
+ * Makes it possible to atomically signal any of the synchronization
+ * objects (semaphore, mutex, event) and wait on another.
  */
 DWORD WINAPI SignalObjectAndWait( HANDLE hObjectToSignal, HANDLE hObjectToWaitOn,
                                   DWORD dwMilliseconds, BOOL bAlertable )

@@ -739,7 +739,7 @@ BOOL WINAPI ReportEventW( HANDLE hEventLog, WORD wType, WORD wCategory, DWORD dw
  *  GuidCount          [I]   Number of elements in the TraceGuidReg array
  *  TraceGuidReg       [I/O] Array of TRACE_GUID_REGISTRATION structures
  *  MofImagePath       [I]   not supported, set to NULL
- *  MofResourceNmae    [I]   not supported, set to NULL
+ *  MofResourceName    [I]   not supported, set to NULL
  *  RegistrationHandle [O]   Provider's registration handle
  *
  * RETURNS

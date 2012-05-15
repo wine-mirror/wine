@@ -115,7 +115,7 @@ HRESULT WINAPI AssocCreate(CLSID clsid, REFIID refiid, void **lpInterface)
  *
  * RETURNS
  *  Success: S_OK. lpType and lpFlag contain the perceived type and
- *           its informations. If lppszType is not NULL, it will point
+ *           its information. If lppszType is not NULL, it will point
  *           to a string with perceived type text.
  *  Failure: An HRESULT error code indicating the error.
  *

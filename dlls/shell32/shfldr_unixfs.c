@@ -46,7 +46,7 @@
  *
  * With the introduction of the 'shell' in win32, Microsoft established an 
  * abstraction layer on top of the filesystem, called the shell namespace (I was
- * told that Gnome's virtual filesystem is conceptually similar). In the shell
+ * told that GNOME's virtual filesystem is conceptually similar). In the shell
  * namespace, one doesn't use ascii- or unicode-strings to uniquely identify
  * objects. Instead Microsoft introduced item-identifier-lists (The c type is 
  * called ITEMIDLIST) as an abstraction of path-names. As you probably would

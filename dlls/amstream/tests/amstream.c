@@ -184,7 +184,7 @@ static void test_media_streams(void)
     hr = IAMMultiMediaStream_Initialize(pams, STREAMTYPE_READ, 0, NULL);
     ok(hr == S_OK, "IAMMultiMediaStream_Initialize returned: %x\n", hr);
 
-    /* Retreive media stream filter */
+    /* Retrieve media stream filter */
     hr = IAMMultiMediaStream_GetFilter(pams, NULL);
     ok(hr == E_POINTER, "IAMMultiMediaStream_GetFilter returned: %x\n", hr);
     hr = IAMMultiMediaStream_GetFilter(pams, &media_stream_filter);

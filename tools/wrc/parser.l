@@ -33,7 +33,7 @@
  *			  both single and double slash is recognized as
  *			  MS/Borland does.
  *			- Fixed a bug in 'yywf' case that prevented
- *			  double quoted names to be scanned propperly.
+ *			  double quoted names to be scanned properly.
  *
  * 19-May-1998 BS	- Started to build a preprocessor.
  *			- Changed keyword processing completely to

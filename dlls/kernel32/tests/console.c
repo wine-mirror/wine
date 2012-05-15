@@ -1031,7 +1031,7 @@ static void test_OpenCON(void)
         h = CreateFileW(conW, GENERIC_READ, 0, NULL, accesses[i], 0, NULL);
         /* Windows versions differ here:
          * MSDN states in CreateFile that TRUNCATE_EXISTING requires GENERIC_WRITE
-         * NT, XP, Vista comply, but Win7 doesn't and allows to open CON with TRUNCATE_EXISTING
+         * NT, XP, Vista comply, but Win7 doesn't and allows opening CON with TRUNCATE_EXISTING
          * So don't test when disposition is TRUNCATE_EXISTING
          */
         if (accesses[i] != TRUNCATE_EXISTING)

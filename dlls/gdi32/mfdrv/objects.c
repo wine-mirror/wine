@@ -214,7 +214,7 @@ INT16 MFDRV_CreateBrushIndirect(PHYSDEV dev, HBRUSH hBrush )
 	}
 
 	default:
-	    FIXME("Unkonwn brush style %x\n", logbrush.lbStyle);
+	    FIXME("Unknown brush style %x\n", logbrush.lbStyle);
 	    return 0;
     }
     r = MFDRV_WriteRecord( dev, mr, mr->rdSize * 2);

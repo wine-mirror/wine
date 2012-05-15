@@ -1608,7 +1608,7 @@ static void VGA_Poll_Graphics(void)
     WORD off = 0;
     BYTE bits = 6;
     BYTE value;
-    /* Go thru rows */
+    /* Iterate over the rows */
     for(Y=0; Y<vga_fb_height; Y++, surf+=(Pitch*2)){
       for(X=0; X<vga_fb_width; X++){
         off = Y & 1 ? (8 * 1024) : 0;

@@ -1039,7 +1039,7 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
         mis.itemHeight = ODitemheight;
         mis.itemWidth  = 0;
         SendMessageW( hwndOwner, WM_MEASUREITEM, 0, (LPARAM)&mis );
-        /* Tests reveal that Windows ( Win95 thru WinXP) adds twice the average
+        /* Tests reveal that Windows ( Win95 through WinXP) adds twice the average
          * width of a menufont character to the width of an owner-drawn menu. 
          */
         lpitem->rect.right += mis.itemWidth + 2 * menucharsize.cx;

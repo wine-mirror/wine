@@ -1186,7 +1186,7 @@ ImageList_Draw (HIMAGELIST himl, INT i, HDC hdc, INT x, INT y, UINT fStyle)
 /*************************************************************************
  * ImageList_DrawEx [COMCTL32.@]
  *
- * Draws an image and allows to use extended drawing features.
+ * Draws an image and allows using extended drawing features.
  *
  * PARAMS
  *     himl   [I] handle to image list

@@ -269,7 +269,7 @@ static char* str_printf(struct parsed_symbol* sym, const char* format, ...)
             {
             case 's': t = va_arg(args, char*); if (t) len += strlen(t); break;
             case 'c': (void)va_arg(args, int); len++; break;
-            default: i--; /* fall thru */
+            default: i--; /* fall through */
             case '%': len++; break;
             }
         }
@@ -296,7 +296,7 @@ static char* str_printf(struct parsed_symbol* sym, const char* format, ...)
             case 'c':
                 *p++ = (char)va_arg(args, int);
                 break;
-            default: i--; /* fall thru */
+            default: i--; /* fall through */
             case '%': *p++ = '%'; break;
             }
         }

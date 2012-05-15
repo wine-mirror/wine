@@ -1536,7 +1536,7 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd,
                     {
                     case 0x22:
                         fetch_ushort(&format); /* hot spot */
-                        /* fall thru */
+                        /* fall through */
                     case 0x03:
                         switch (GET_SHORT(format, 0))
                         {

@@ -332,7 +332,7 @@ static void fetch_module_versioninfo(LPCWSTR filename, VS_FIXEDFILEINFO* ffi)
  *
  * Add a memory block to be dumped in a minidump
  * If rva is non 0, it's the rva in the minidump where has to be stored
- * also the rva of the memory block when written (this allows to reference
+ * also the rva of the memory block when written (this allows us to reference
  * a memory block from outside the list of memory blocks).
  */
 void minidump_add_memory_block(struct dump_context* dc, ULONG64 base, ULONG size, ULONG rva)
@@ -513,7 +513,7 @@ static  unsigned        dump_modules(struct dump_context* dc, BOOL dump_elf)
         }
         if (flags_out & ModuleWriteModule)
         {
-            /* fetch CPU dependant module info (like UNWIND_INFO) */
+            /* fetch CPU dependent module info (like UNWIND_INFO) */
             dbghelp_current_cpu->fetch_minidump_module(dc, i, flags_out);
 
             mdModule.BaseOfImage = dc->modules[i].base;

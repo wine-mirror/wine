@@ -181,7 +181,7 @@ static WORD UserBinType = DMBIN_USER;
  *
  *		PSDRV_PPDDecodeHex
  *
- * Copies str into a newly allocated string from the process heap subsituting
+ * Copies str into a newly allocated string from the process heap substituting
  * hex strings enclosed in '<' and '>' for their byte codes.
  *
  */

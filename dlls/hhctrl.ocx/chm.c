@@ -212,7 +212,7 @@ LPWSTR FindContextAlias(CHMInfo *chm, DWORD index)
 }
 
 /*
- * Tests if the file <chmfile>.<ext> exists, used for loading Indicies, Table of Contents, etc.
+ * Tests if the file <chmfile>.<ext> exists, used for loading Indices, Table of Contents, etc.
  * when these files are not available from the HH_WINTYPE structure.
  */
 static WCHAR *FindHTMLHelpSetting(HHInfo *info, const WCHAR *extW)

@@ -473,7 +473,7 @@ static const int padding[4] = {0, 3, 2, 1};
 /***********************************************************************
  *         get_glyph_bitmap
  *
- * Retrieve a 17-level bitmap for the appropiate glyph.
+ * Retrieve a 17-level bitmap for the appropriate glyph.
  *
  * For non-antialiased bitmaps convert them to the 17-level format
  * using only values 0 or 16.

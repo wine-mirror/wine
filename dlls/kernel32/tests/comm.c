@@ -1168,7 +1168,7 @@ static void  test_WaitRx(HANDLE hcom)
 
 }
 
-/* Change the controling line after the given timeout to the given state
+/* Change the controlling line after the given timeout to the given state
    By the loopback, this should trigger the WaitCommEvent
 */
 static DWORD CALLBACK toggle_ctlLine(LPVOID arg)

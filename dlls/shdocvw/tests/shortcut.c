@@ -25,7 +25,7 @@
  * configured. This is documented at http://www.virtualplastic.net/html/ui_shell.html
  * You can also google for a tool called "ShellObjectEditor" by "Tropical 
  * Technologies". This mechanism would be cool for wine, since we could 
- * map Gnome's virtual devices to FolderShortcuts and have them appear in the
+ * map GNOME's virtual devices to FolderShortcuts and have them appear in the
  * file dialogs. These unit tests are meant to document how this mechanism
  * works on windows.
  *

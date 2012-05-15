@@ -529,7 +529,7 @@ static HRESULT WINAPI d3d_viewport_LightElements(IDirect3DViewport3 *iface,
 /*****************************************************************************
  * IDirect3DViewport3::SetBackground
  *
- * Sets tje background material
+ * Sets the background material
  *
  * Params:
  *  hMat: Handle from a IDirect3DMaterial interface

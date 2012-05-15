@@ -1087,7 +1087,7 @@ static BOOL INT21_CreateFile( CONTEXT *context,
     {
         winHandle = CreateFileW( pathW, winAccess, winSharing, NULL,
                                  winMode, winAttributes, 0 );
-        /* DOS allows to open files on a CDROM R/W */
+        /* DOS allows opening files on a CDROM R/W */
         if( winHandle == INVALID_HANDLE_VALUE &&
                 (GetLastError() == ERROR_WRITE_PROTECT ||
                  GetLastError() == ERROR_ACCESS_DENIED)) {

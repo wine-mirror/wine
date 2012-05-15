@@ -171,7 +171,7 @@ typedef struct
 #define ICON_HEIGHT 16
 #define ICON_WIDTH  16
 
-#define MAX_TEXT_SIZE_A 80 /* maximum retriving text size by ANSI message */
+#define MAX_TEXT_SIZE_A 80 /* maximum retrieving text size by ANSI message */
 
 static LRESULT CALLBACK
 TOOLTIPS_SubclassProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uId, DWORD_PTR dwRef);

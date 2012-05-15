@@ -6396,7 +6396,7 @@ static void fragment_prog_arbfp(struct wined3d_context *context, const struct wi
             desc = new_desc;
         }
 
-        /* Now activate the replacement program. GL_FRAGMENT_PROGRAM_ARB is already active(however, note the
+        /* Now activate the replacement program. GL_FRAGMENT_PROGRAM_ARB is already active (however, note the
          * comment above the shader_select call below). If e.g. GLSL is active, the shader_select call will
          * deactivate it.
          */
@@ -6421,13 +6421,13 @@ static void fragment_prog_arbfp(struct wined3d_context *context, const struct wi
     }
 
     /* Finally, select the shader. If a pixel shader is used, it will be set and enabled by the shader backend.
-     * If this shader backend is arbfp(most likely), then it will simply overwrite the last fixed function replace-
-     * ment shader. If the shader backend is not ARB, it currently is important that the opengl implementation
+     * If this shader backend is arbfp(most likely), then it will simply overwrite the last fixed function
+     * replacement shader. If the shader backend is not ARB, it currently is important that the opengl implementation
      * type overwrites GL_ARB_fragment_program. This is currently the case with GLSL. If we really want to use
      * atifs or nvrc pixel shaders with arb fragment programs we'd have to disable GL_FRAGMENT_PROGRAM_ARB here
      *
      * Don't call shader_select if the vertex shader is dirty, because it will be called later on by the vertex
-     * shader handler
+     * shader handler.
      */
     if (!isStateDirty(context, context->state_table[STATE_VSHADER].representative))
     {
@@ -7079,7 +7079,7 @@ static GLuint gen_yuv_shader(struct arbfp_blit_priv *priv, const struct wined3d_
      * regardless of the filtering setting. Vertical filtering works automatically
      * though - the U and V values of two rows are mixed nicely.
      *
-     * Appart of avoiding filtering issues, the code has to know which value it just
+     * Apart of avoiding filtering issues, the code has to know which value it just
      * read, and where it can find the other one. To determine this, it checks if
      * it sampled an even or odd pixel, and shifts the 2nd read accordingly.
      *

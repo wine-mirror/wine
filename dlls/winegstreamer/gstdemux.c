@@ -973,7 +973,7 @@ static HRESULT GST_Connect(GSTInPin *pPin, IPin *pConnectPin, ALLOCATOR_PROPERTI
         WARN("Ret: %i\n", ret);
         hr = E_FAIL;
     } else if (!This->cStreams) {
-        FIXME("Gstreamer could not find any streams\n");
+        FIXME("GStreamer could not find any streams\n");
         hr = E_FAIL;
     } else {
         gst_pad_query_duration(This->ppPins[0]->their_src, &format, &duration);

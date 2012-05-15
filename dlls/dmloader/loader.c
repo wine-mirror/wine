@@ -130,7 +130,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_GetObject (LPDIR
 	  return DMUS_E_LOADER_NOCLASSID;
 	}
 	
-	/* OK, first we iterate thru the list of objects we know about; these are either loaded (GetObject, LoadObjectFromFile)
+	/* OK, first we iterate through the list of objects we know about; these are either loaded (GetObject, LoadObjectFromFile)
 	   or set via SetObject; */
 	TRACE(": looking if we have object in the cache or if it can be found via alias\n");
 	LIST_FOR_EACH(pEntry, This->pObjects) {
@@ -563,8 +563,8 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_CacheObject (LPD
 	DM_STRUCT_INIT(&Desc);
 	IDirectMusicObject_GetDescriptor (pObject, &Desc);
 	
-	/* now iterate thru list and check if we have alias (without object), corresponding
-	   to descriptor of input object */
+	/* now iterate through the list and check if we have an alias (without object), corresponding
+	   to the descriptor of the input object */
 	LIST_FOR_EACH(pEntry, This->pObjects) {
 		pObjectEntry = LIST_ENTRY(pEntry, WINE_LOADER_ENTRY, entry);
 		if ((Desc.dwValidData & DMUS_OBJ_OBJECT) &&
@@ -645,7 +645,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_ReleaseObject (L
 	DM_STRUCT_INIT(&Desc);
 	IDirectMusicObject_GetDescriptor (pObject, &Desc);
 	
-	/* iterate thru the list of objects we know about; check only those with DMUS_OBJ_LOADED */
+	/* iterate through the list of objects we know about; check only those with DMUS_OBJ_LOADED */
 	TRACE(": looking for the object in cache\n");
 	LIST_FOR_EACH(pEntry, This->pObjects) {
 		pObjectEntry = LIST_ENTRY(pEntry, WINE_LOADER_ENTRY, entry);

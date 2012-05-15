@@ -160,7 +160,7 @@ static void update_dialog(ProgressDialog *This, DWORD dwUpdate)
 static void end_dialog(ProgressDialog *This)
 {
     SendMessageW(This->hwnd, WM_DLG_DESTROY, 0, 0);
-    /* native doesn't reenable the window? */
+    /* native doesn't re-enable the window? */
     if (This->hwndDisabledParent)
         EnableWindow(This->hwndDisabledParent, TRUE);
     This->hwnd = NULL;

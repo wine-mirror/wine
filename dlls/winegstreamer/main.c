@@ -1,4 +1,4 @@
-/* Gstreamer Base Functions
+/* GStreamer Base Functions
  *
  * Copyright 2002 Lionel Ulmer
  * Copyright 2010 Aric Stewart, CodeWeavers

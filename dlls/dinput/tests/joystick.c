@@ -444,10 +444,10 @@ static BOOL CALLBACK EnumJoysticks(
              * State: enabled
              *
              * IDirectInputDevice2_SetProperty(DIPROP_AUTOCENTER) can only be
-             * executed when devide is released.
+             * executed when the device is released.
              *
              * If Executed interactively, user can feel that autocenter is
-             * only disabled when joystick is acquired.
+             * only disabled when the joystick is acquired.
              */
             diprop_word.diph.dwSize = sizeof(diprop_word);
             diprop_word.diph.dwHeaderSize = sizeof(diprop_word.diph);

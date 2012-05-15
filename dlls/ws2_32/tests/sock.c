@@ -3023,7 +3023,7 @@ static void test_ioctlsocket(void)
     ok(ret != SOCKET_ERROR, "ioctlsocket failed unexpectedly\n");
     ok(arg, "SIOCATMARK expected a non-zero value\n");
 
-    /* disable SO_OOBINLINE and get the same old bahavior */
+    /* disable SO_OOBINLINE and get the same old behavior */
     optval = 0;
     ret = setsockopt(sock, SOL_SOCKET, SO_OOBINLINE, (void *)&optval, sizeof(optval));
     ok(ret != SOCKET_ERROR, "setsockopt failed unexpectedly\n");
@@ -3749,7 +3749,7 @@ static void test_events(int useMessages)
     ok(ret == 50, "Failed to recv buffer %d err %d\n", ret, GetLastError());
     ok_event_seq(src, hEvent, empty_seq, NULL, 0);
 
-    /* fun fact - events are reenabled even on failure, but only for messages */
+    /* fun fact - events are re-enabled even on failure, but only for messages */
     ret = send(dst, "1", 1, 0);
     ok(ret == 1, "Failed to send buffer %d err %d\n", ret, GetLastError());
     ok_event_seq(src, hEvent, read_seq, NULL, 0);

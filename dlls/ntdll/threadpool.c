@@ -900,7 +900,7 @@ static struct timer_queue *get_timer_queue(HANDLE TimerQueue)
  *                 after the first callback.  If zero, the timer will only
  *                 fire once.  It still needs to be deleted with
  *                 RtlDeleteTimer.
- * Flags       [I] Flags controling the execution of the callback.  In
+ * Flags       [I] Flags controlling the execution of the callback.  In
  *                 addition to the WT_* thread pool flags (see
  *                 RtlQueueWorkItem), WT_EXECUTEINTIMERTHREAD and
  *                 WT_EXECUTEONLYONCE are supported.

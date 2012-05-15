@@ -938,11 +938,11 @@ static void ViewportTest(void)
 
     hr = IDirect3DViewport_QueryInterface(Viewport, &IID_IDirect3DViewport2, (void**) &Viewport2);
     ok(hr==D3D_OK, "QueryInterface returned: %x\n", hr);
-    ok(Viewport2 == (IDirect3DViewport2 *)Viewport, "IDirect3DViewport2 iface diffrent from IDirect3DViewport\n");
+    ok(Viewport2 == (IDirect3DViewport2 *)Viewport, "IDirect3DViewport2 iface different from IDirect3DViewport\n");
 
     hr = IDirect3DViewport_QueryInterface(Viewport, &IID_IDirect3DViewport3, (void**) &Viewport3);
     ok(hr==D3D_OK, "QueryInterface returned: %x\n", hr);
-    ok(Viewport3 == (IDirect3DViewport3 *)Viewport, "IDirect3DViewport3 iface diffrent from IDirect3DViewport\n");
+    ok(Viewport3 == (IDirect3DViewport3 *)Viewport, "IDirect3DViewport3 iface different from IDirect3DViewport\n");
     IDirect3DViewport3_Release(Viewport3);
 
     vp1_data.dwSize = sizeof(vp1_data);

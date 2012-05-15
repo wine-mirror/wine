@@ -1399,7 +1399,7 @@ static BOOL check_filter(const struct wined3d_gl_info *gl_info, GLenum internal)
     if(color_match(readback[6], 0xffffffff, 5) || color_match(readback[6], 0x00000000, 5) ||
        color_match(readback[9], 0xffffffff, 5) || color_match(readback[9], 0x00000000, 5))
     {
-        TRACE("Read back colors 0x%08x and 0x%08x close to unfiltered color, asuming no filtering\n",
+        TRACE("Read back colors 0x%08x and 0x%08x close to unfiltered color, assuming no filtering\n",
               readback[6], readback[9]);
         ret = FALSE;
     }

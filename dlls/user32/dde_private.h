@@ -72,9 +72,9 @@
  * be to provide a new protocol in the case were both partners are handled by DDEML.
  *
  * The StringHandles are in fact stored as local atoms. So an HSZ and a (local) atom
- * can be used interchangably. However, in order to keep track of the allocated HSZ,
+ * can be used interchangeably. However, in order to keep track of the allocated HSZ,
  * and to free them upon instance termination, all HSZ are stored in a link list.
- * When the HSZ need to be passed thru DDE messages, we need to convert them back and
+ * When the HSZ need to be passed through DDE messages, we need to convert them back and
  * forth to global atoms.
  */
 
@@ -145,7 +145,7 @@ typedef struct tagWDML_LINK {
     struct tagWDML_LINK*	next;		/* to link all the active links */
     HCONV			hConv;		/* to get back to the conversation */
     UINT			transactionType;/* 0 for no link */
-    HSZ				hszItem;	/* item targetted for (hot/warm) link */
+    HSZ				hszItem;	/* item targeted for (hot/warm) link */
     UINT			uFmt;		/* format for data */
 } WDML_LINK;
 

@@ -1,5 +1,5 @@
 /*
- * Wininet - Http tests
+ * Wininet - HTTP tests
  *
  * Copyright 2002 Aric Stewart
  * Copyright 2004 Mike McCormack

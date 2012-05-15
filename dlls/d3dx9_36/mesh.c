@@ -1888,7 +1888,7 @@ static const struct ID3DXMeshVtbl D3DXMesh_Vtbl =
  */
 BOOL WINAPI D3DXBoxBoundProbe(CONST D3DXVECTOR3 *pmin, CONST D3DXVECTOR3 *pmax, CONST D3DXVECTOR3 *prayposition, CONST D3DXVECTOR3 *praydirection)
 
-/* Algorithm taken from the article: An Efficient and Robust Ray-Box Intersection Algoritm
+/* Algorithm taken from the article: An Efficient and Robust Ray-Box Intersection Algorithm
 Amy Williams             University of Utah
 Steve Barrus             University of Utah
 R. Keith Morley          University of Utah

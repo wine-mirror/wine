@@ -2433,7 +2433,7 @@ static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
             else
                 ok(lead < trail, "Trailing values should be after leading for ltr characters(%i)\n",Cp);
 
-            /* move by 1 pixel so that we are not inbetween 2 characters.  That could result in being the lead of a rtl and
+            /* move by 1 pixel so that we are not between 2 characters.  That could result in being the lead of a rtl and
                at the same time the trail of an ltr */
 
             /* inside the leading edge */

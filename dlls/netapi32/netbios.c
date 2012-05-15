@@ -49,7 +49,7 @@ typedef struct _NetBIOSSession
  * is not NULL, the adapter is considered valid.  (transport is a pointer to
  * an entry in a NetBIOSTransportTableEntry.)  data has data for the callers of
  * NetBIOSEnumAdapters to be able to see.  The lana is repeated there, even
- * though I don't use it internally--it's for transports to use reenabling
+ * though I don't use it internally--it's for transports to use re-enabling
  * adapters using NetBIOSEnableAdapter.
  */
 typedef struct _NetBIOSAdapter

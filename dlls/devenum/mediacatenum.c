@@ -765,8 +765,8 @@ static HRESULT WINAPI DEVENUM_IEnumMoniker_Skip(IEnumMoniker *iface, ULONG celt)
 
     TRACE("(%p)->(%d)\n", iface, celt);
 
-    /* Before incrementing, check if there are any more values to run thru.
-       Some programs use the Skip() function to get the amount of devices */
+    /* Before incrementing, check if there are any more values to run through.
+       Some programs use the Skip() function to get the number of devices */
     if(RegQueryInfoKeyW(This->hkey, NULL, NULL, NULL, &subKeys, NULL, NULL, NULL, NULL, NULL, NULL, NULL) != ERROR_SUCCESS)
     {
         return S_FALSE;

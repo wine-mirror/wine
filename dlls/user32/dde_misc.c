@@ -1526,7 +1526,7 @@ HDDEDATA        WDML_Global2DataHandle(WDML_CONV* pConv, HGLOBAL hMem, WINE_DDEH
             default:
                 FIXME("Unsupported format (%04x) for data %p, passing raw information\n",
                       pDd->cfFormat, hMem);
-                /* fall thru */
+                /* fall through */
             case 0:
             case CF_TEXT:
                 ret = DdeCreateDataHandle(pConv->instance->instanceID, pDd->Value, size, 0, 0, pDd->cfFormat, 0);
@@ -1585,7 +1585,7 @@ HGLOBAL WDML_DataHandle2Global(HDDEDATA hDdeData, BOOL fResponse, BOOL fRelease,
         default:
             FIXME("Unsupported format (%04x) for data %p, passing raw information\n",
                    pDdh->cfFormat, hDdeData);
-            /* fall thru */
+            /* fall through */
         case 0:
         case CF_TEXT:
             hMem = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, sizeof(WINE_DDEHEAD) + dwSize);

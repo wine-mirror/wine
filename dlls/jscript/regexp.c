@@ -2676,7 +2676,7 @@ ExecuteREBytecode(REGlobalData *gData, REMatchState *x)
                     result = NULL;
                     break;
                 }
-                /* else false thru... */
+                /* else fall through... */
 
               case REOP_ALT:
               doAlt:

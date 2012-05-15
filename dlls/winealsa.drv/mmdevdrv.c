@@ -1385,7 +1385,7 @@ static HRESULT WINAPI AudioClient_GetStreamLatency(IAudioClient *iface,
         return AUDCLNT_E_NOT_INITIALIZED;
     }
 
-    /* Hide some frames in the ALSA buffer.  Allows to return GetCurrentPadding=0
+    /* Hide some frames in the ALSA buffer. Allows us to return GetCurrentPadding=0
      * yet have enough data left to play (as if it were in native's mixer). Add:
      * + mmdevapi_period such that at the end of it, ALSA still has data;
      * + EXTRA_SAFE (~4ms) to allow for late callback invocation / fluctuation;

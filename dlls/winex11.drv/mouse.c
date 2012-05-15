@@ -959,7 +959,7 @@ static Cursor create_cursor_from_bitmaps( HBITMAP src_xor, HBITMAP src_and, int 
      * compatible between Windows and X11. Under X11, there are
      * only 3 possible color cursor: black, white and masked. So
      * we map the 4th Windows color (invert the bits on the screen)
-     * to black and an additional white bit on an other place
+     * to black and an additional white bit on another place
      * (+1,+1). This require some boolean arithmetic:
      *
      *         Windows          |          X11

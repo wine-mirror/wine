@@ -930,7 +930,7 @@ static HRESULT WINAPI GameStatisticsImpl_SetStatistic(
                   value, dwValueLen+1);
     }
     else
-        /* Windows allows to pass NULL as value */
+        /* Windows allows passing NULL as value */
         This->stats.categories[categoryIndex].stats[statIndex].sValue[0] = 0;
 
     return hr;

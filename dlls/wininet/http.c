@@ -1,5 +1,5 @@
 /*
- * Wininet - Http Implementation
+ * Wininet - HTTP Implementation
  *
  * Copyright 1999 Corel Corporation
  * Copyright 2002 CodeWeavers Inc.
@@ -1288,7 +1288,7 @@ static DWORD HTTP_HttpAddRequestHeadersW(http_request_t *request,
  * NOTE
  * On Windows if dwHeaderLength includes the trailing '\0', then
  * HttpAddRequestHeadersW() adds it too. However this results in an
- * invalid Http header which is rejected by some servers so we probably
+ * invalid HTTP header which is rejected by some servers so we probably
  * don't need to match Windows on that point.
  *
  * RETURNS

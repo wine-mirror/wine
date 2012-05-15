@@ -1876,7 +1876,7 @@ static void ContextualShape_Bengali(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *
     input = HeapAlloc(GetProcessHeap(), 0, (cChars * 2) * sizeof(WCHAR));
     memcpy(input, pwcChars, cChars * sizeof(WCHAR));
 
-    /* Step 1: Decompose Vowels and Compose Consonents */
+    /* Step 1: Decompose Vowels and Compose Consonants */
     DecomposeVowels(hdc, input,  &cCount, Bengali_vowels, pwLogClust, cChars);
     ComposeConsonants(hdc, input, &cCount, Bengali_consonants, pwLogClust);
     TRACE("New composed string %s (%i)\n",debugstr_wn(input,cCount),cCount);
@@ -1940,7 +1940,7 @@ static void ContextualShape_Gurmukhi(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS 
     input = HeapAlloc(GetProcessHeap(), 0, cChars * sizeof(WCHAR));
     memcpy(input, pwcChars, cChars * sizeof(WCHAR));
 
-    /* Step 1: Compose Consonents */
+    /* Step 1: Compose Consonants */
     ComposeConsonants(hdc, input, &cCount, Gurmukhi_consonants, pwLogClust);
     TRACE("New composed string %s (%i)\n",debugstr_wn(input,cCount),cCount);
 
@@ -2035,7 +2035,7 @@ static void ContextualShape_Oriya(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *ps
     input = HeapAlloc(GetProcessHeap(), 0, (cChars*2) * sizeof(WCHAR));
     memcpy(input, pwcChars, cChars * sizeof(WCHAR));
 
-    /* Step 1: Decompose Vowels and Compose Consonents */
+    /* Step 1: Decompose Vowels and Compose Consonants */
     DecomposeVowels(hdc, input,  &cCount, Oriya_vowels, pwLogClust, cChars);
     ComposeConsonants(hdc, input, &cCount, Oriya_consonants, pwLogClust);
     TRACE("New composed string %s (%i)\n",debugstr_wn(input,cCount),cCount);
@@ -2085,7 +2085,7 @@ static void ContextualShape_Tamil(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *ps
     input = HeapAlloc(GetProcessHeap(), 0, (cChars*2) * sizeof(WCHAR));
     memcpy(input, pwcChars, cChars * sizeof(WCHAR));
 
-    /* Step 1: Decompose Vowels and Compose Consonents */
+    /* Step 1: Decompose Vowels and Compose Consonants */
     DecomposeVowels(hdc, input,  &cCount, Tamil_vowels, pwLogClust, cChars);
     ComposeConsonants(hdc, input, &cCount, Tamil_consonants, pwLogClust);
     TRACE("New composed string %s (%i)\n",debugstr_wn(input,cCount),cCount);

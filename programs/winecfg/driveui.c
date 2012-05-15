@@ -462,7 +462,7 @@ static void update_controls(HWND dialog)
     EnableWindow( GetDlgItem( dialog, IDC_BUTTON_BROWSE_PATH ), (current_drive->letter != 'C') );
     EnableWindow( GetDlgItem( dialog, IDC_COMBO_TYPE ), (current_drive->letter != 'C') );
 
-    /* removeable media properties */
+    /* removable media properties */
     set_textW(dialog, IDC_EDIT_LABEL, current_drive->label ? current_drive->label : emptyW);
 
     /* set serial edit text */

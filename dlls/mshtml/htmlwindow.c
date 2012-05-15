@@ -2509,7 +2509,7 @@ static HRESULT HTMLWindow_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD 
             return IDispatchEx_InvokeEx(&This->dispex.IDispatchEx_iface, dispex_id, 0, flags, params, res, ei, caller);
         }
         default:
-            FIXME("Not suppoted flags: %x\n", flags);
+            FIXME("Not supported flags: %x\n", flags);
             return E_NOTIMPL;
         }
     case GLOBAL_DISPEXVAR:

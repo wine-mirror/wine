@@ -1334,7 +1334,7 @@ HRESULT WINAPI IUnknown_GetWindow(IUnknown *lpUnknown, HWND *lphWnd)
 
   if (SUCCEEDED(hRet))
   {
-    /* Lazyness here - Since GetWindow() is the first method for the above 3
+    /* Laziness here - Since GetWindow() is the first method for the above 3
      * interfaces, we use the same call for them all.
      */
     hRet = IOleWindow_GetWindow((IOleWindow*)lpOle, lphWnd);

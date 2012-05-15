@@ -1045,7 +1045,7 @@ static void    WCUSER_GenerateKeyInputRecord(struct inner_data* data, BOOL down,
         {
         case 2:
             /* FIXME... should generate two events... */
-            /* fall thru */
+            /* fall through */
         case 1:
             last = buf[0];
             break;
