@@ -662,7 +662,7 @@ static void test_Frame(void)
 
     pVisualArray = NULL;
     hr = IDirect3DRMFrame_GetVisuals(pFrameP1, &pVisualArray);
-    todo_wine ok(hr == D3DRM_OK, "Cannot get visuals (hr = %x)\n", hr);
+    ok(hr == D3DRM_OK, "Cannot get visuals (hr = %x)\n", hr);
     if (pVisualArray)
     {
         count = IDirect3DRMVisualArray_GetSize(pVisualArray);
