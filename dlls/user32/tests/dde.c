@@ -1924,7 +1924,7 @@ static void test_DdeCreateDataHandle(void)
     ok(err == DMLERR_INVALIDPARAMETER, "Expected DMLERR_INVALIDPARAMETER, got %d\n", err);
 
     ret = DdeUninitialize(dde_inst2);
-    ok(res == DMLERR_NO_ERROR, "Expected DMLERR_NO_ERROR, got %d\n", res);
+    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
 
 
     /* NULL pSrc */
@@ -2037,7 +2037,7 @@ static void test_DdeCreateDataHandle(void)
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
 
     ret = DdeUninitialize(dde_inst);
-    ok(res == DMLERR_NO_ERROR, "Expected DMLERR_NO_ERROR, got %d\n", res);
+    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
 }
 
 static void test_DdeCreateStringHandle(void)
