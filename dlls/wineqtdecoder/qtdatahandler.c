@@ -188,12 +188,12 @@ static pascal ComponentResult myDataHGetAvailableFileSize ( DataHandler dh,
     Handle storage = GetComponentInstanceStorage(dh);
     DHData *data = (DHData*)*storage;
     LONGLONG total;
-    LONGLONG avaliable;
+    LONGLONG available;
 
     TRACE("%p\n",dh);
 
-    IAsyncReader_Length(data->dataRef.pReader,&total,&avaliable);
-    *fileSize = avaliable;
+    IAsyncReader_Length(data->dataRef.pReader,&total,&available);
+    *fileSize = available;
     return noErr;
 }
 
@@ -202,11 +202,11 @@ static pascal ComponentResult myDataHGetFileSize ( DataHandler dh, long *fileSiz
     Handle storage = GetComponentInstanceStorage(dh);
     DHData *data = (DHData*)*storage;
     LONGLONG total;
-    LONGLONG avaliable;
+    LONGLONG available;
 
     TRACE("%p\n",dh);
 
-    IAsyncReader_Length(data->dataRef.pReader,&total,&avaliable);
+    IAsyncReader_Length(data->dataRef.pReader,&total,&available);
     *fileSize = total;
     return noErr;
 }
@@ -411,12 +411,12 @@ static pascal ComponentResult myDataHGetFileSize64(DataHandler dh, wide * fileSi
     Handle storage = GetComponentInstanceStorage(dh);
     DHData *data = (DHData*)*storage;
     LONGLONG total;
-    LONGLONG avaliable;
+    LONGLONG available;
     SInt64 total64;
 
     TRACE("%p\n",dh);
 
-    IAsyncReader_Length(data->dataRef.pReader,&total,&avaliable);
+    IAsyncReader_Length(data->dataRef.pReader,&total,&available);
     total64 = total;
     *fileSize = SInt64ToWide(total64);
     return noErr;
@@ -427,13 +427,13 @@ static pascal ComponentResult myDataHGetAvailableFileSize64(DataHandler dh, wide
     Handle storage = GetComponentInstanceStorage(dh);
     DHData *data = (DHData*)*storage;
     LONGLONG total;
-    LONGLONG avaliable;
+    LONGLONG available;
     SInt64 total64;
 
     TRACE("%p\n",dh);
 
-    IAsyncReader_Length(data->dataRef.pReader,&total,&avaliable);
-    total64 = avaliable;
+    IAsyncReader_Length(data->dataRef.pReader,&total,&available);
+    total64 = available;
     *fileSize = SInt64ToWide(total64);
     return noErr;
 }
