@@ -1538,7 +1538,6 @@ static void test_SHPropertyBag_ReadLONG(void)
     ok(out == 0xfeedface, "value should not have changed\n");
     rc = pSHPropertyBag_ReadLONG(&pb->IPropertyBag_iface, szName1, NULL);
     ok(rc == E_INVALIDARG || broken(rc == 0) || broken(rc == 1), "incorrect return %x\n",rc);
-    ok(out == 0xfeedface, "value should not have changed\n");
     rc = pSHPropertyBag_ReadLONG(&pb->IPropertyBag_iface, szName1, &out);
     ok(rc == DISP_E_BADVARTYPE || broken(rc == 0) || broken(rc == 1), "incorrect return %x\n",rc);
     ok(out == 0xfeedface  || broken(out == 0xfeedfa00), "value should not have changed %x\n",out);
