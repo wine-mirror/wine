@@ -2656,7 +2656,7 @@ if (0)
 
         /* baseName */
         str = (BSTR)0xdeadbeef;
-        IXMLDOMComment_get_baseName(node_comment, &str);
+        r = IXMLDOMComment_get_baseName(node_comment, &str);
         ok(r == S_FALSE, "ret %08x\n", r );
         ok(str == NULL, "Expected NULL\n");
 
