@@ -4606,6 +4606,7 @@ static void set_surface_desc_test(void)
             hr, DDERR_INVALIDSURFACETYPE);
 
     ddsd.dwFlags = DDSD_WIDTH;
+    hr = IDirectDrawSurface3_SetSurfaceDesc(surface3, &ddsd, 0);
     ok(hr == DDERR_INVALIDSURFACETYPE, "SetSurfaceDesc returned %#x, expected %#x.\n",
             hr, DDERR_INVALIDSURFACETYPE);
 
