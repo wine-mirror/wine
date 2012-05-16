@@ -140,6 +140,7 @@ DEFINE_EXPECT(OnInPlaceDeactivate);
 DEFINE_EXPECT(RequestUIActivate);
 DEFINE_EXPECT(ControlSite_TranslateAccelerator);
 DEFINE_EXPECT(OnFocus);
+DEFINE_EXPECT(GetExternal);
 
 static const WCHAR wszItem[] = {'i','t','e','m',0};
 static const WCHAR emptyW[] = {0};
@@ -149,7 +150,7 @@ static VARIANT_BOOL exvb;
 static IWebBrowser2 *wb;
 
 static HWND container_hwnd, shell_embedding_hwnd;
-static BOOL is_downloading, is_first_load, use_container_olecmd, test_close, is_http;
+static BOOL is_downloading, is_first_load, use_container_olecmd, test_close, is_http, use_container_dochostui;
 static HRESULT hr_dochost_TranslateAccelerator = E_NOTIMPL;
 static HRESULT hr_site_TranslateAccelerator = E_NOTIMPL;
 static const char *current_url;
@@ -1571,8 +1572,9 @@ static HRESULT WINAPI DocHostUIHandler_GetDropTarget(IDocHostUIHandler2 *iface,
 
 static HRESULT WINAPI DocHostUIHandler_GetExternal(IDocHostUIHandler2 *iface, IDispatch **ppDispatch)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    CHECK_EXPECT(GetExternal);
+    *ppDispatch = NULL;
+    return S_FALSE;
 }
 
 static HRESULT WINAPI DocHostUIHandler_TranslateUrl(IDocHostUIHandler2 *iface, DWORD dwTranslate,
@@ -1708,7 +1710,7 @@ static HRESULT QueryInterface(REFIID riid, void **ppv)
         *ppv = &InPlaceSite;
     else if(IsEqualGUID(&IID_IDocHostUIHandler, riid)
             || IsEqualGUID(&IID_IDocHostUIHandler2, riid))
-        *ppv = &DocHostUIHandler;
+        *ppv = use_container_dochostui ? &DocHostUIHandler : NULL;
     else if(IsEqualGUID(&IID_IDispatch, riid))
         *ppv = &Dispatch;
     else if(IsEqualGUID(&IID_IServiceProvider, riid))
@@ -2550,12 +2552,15 @@ static void test_Navigate2(IUnknown *unk, const char *nav_url)
         SET_EXPECT(EnableModeless_FALSE);
         SET_EXPECT(Invoke_STATUSTEXTCHANGE);
         SET_EXPECT(SetStatusText);
-        SET_EXPECT(GetHostInfo);
+        if(use_container_dochostui)
+            SET_EXPECT(GetHostInfo);
         SET_EXPECT(Invoke_AMBIENT_DLCONTROL);
         SET_EXPECT(Invoke_AMBIENT_USERAGENT);
         SET_EXPECT(Invoke_AMBIENT_PALETTE);
-        SET_EXPECT(GetOptionKeyPath);
-        SET_EXPECT(GetOverridesKeyPath);
+        if(use_container_dochostui) {
+            SET_EXPECT(GetOptionKeyPath);
+            SET_EXPECT(GetOverridesKeyPath);
+        }
         if (use_container_olecmd) SET_EXPECT(QueryStatus_SETPROGRESSTEXT);
         if (use_container_olecmd) SET_EXPECT(Exec_SETPROGRESSMAX);
         if (use_container_olecmd) SET_EXPECT(Exec_SETPROGRESSPOS);
@@ -2579,12 +2584,15 @@ static void test_Navigate2(IUnknown *unk, const char *nav_url)
         CHECK_CALLED(EnableModeless_FALSE);
         CHECK_CALLED(Invoke_STATUSTEXTCHANGE);
         CHECK_CALLED(SetStatusText);
-        CHECK_CALLED(GetHostInfo);
+        if(use_container_dochostui)
+            CHECK_CALLED(GetHostInfo);
         CHECK_CALLED(Invoke_AMBIENT_DLCONTROL);
         CHECK_CALLED(Invoke_AMBIENT_USERAGENT);
         CLEAR_CALLED(Invoke_AMBIENT_PALETTE); /* Not called by IE9 */
-        CLEAR_CALLED(GetOptionKeyPath);
-        CHECK_CALLED(GetOverridesKeyPath);
+        if(use_container_dochostui) {
+            CLEAR_CALLED(GetOptionKeyPath);
+            CHECK_CALLED(GetOverridesKeyPath);
+        }
         if (use_container_olecmd) todo_wine CHECK_CALLED(QueryStatus_SETPROGRESSTEXT);
         if (use_container_olecmd) todo_wine CHECK_CALLED(Exec_SETPROGRESSMAX);
         if (use_container_olecmd) todo_wine CHECK_CALLED(Exec_SETPROGRESSPOS);
@@ -3001,6 +3009,41 @@ static void test_UIActivate(IUnknown *unk, BOOL activate)
     IDispatch_Release(disp);
 }
 
+static void test_external(IUnknown *unk)
+{
+    IDocHostUIHandler2 *dochost;
+    IOleClientSite *client;
+    IDispatch *disp;
+    HRESULT hres;
+
+    client = get_dochost(unk);
+
+    hres = IOleClientSite_QueryInterface(client, &IID_IDocHostUIHandler2, (void**)&dochost);
+    ok(hres == S_OK, "Could not get IDocHostUIHandler2 iface: %08x\n", hres);
+    IOleClientSite_Release(client);
+
+    if(use_container_dochostui)
+        SET_EXPECT(GetExternal);
+    disp = (void*)0xdeadbeef;
+    hres = IDocHostUIHandler2_GetExternal(dochost, &disp);
+    if(use_container_dochostui) {
+        CHECK_CALLED(GetExternal);
+        ok(hres == S_FALSE, "GetExternal failed: %08x\n", hres);
+        ok(!disp, "disp = %p\n", disp);
+    }else {
+        IShellUIHelper *uihelper;
+
+        ok(hres == S_OK, "GetExternal failed: %08x\n", hres);
+        ok(disp != NULL, "disp == NULL\n");
+
+        hres = IDispatch_QueryInterface(disp, &IID_IShellUIHelper, (void**)&uihelper);
+        ok(hres == S_OK, "Could not get IShellUIHelper iface: %08x\n", hres);
+        IShellUIHelper_Release(uihelper);
+    }
+
+    IDocHostUIHandler2_Release(dochost);
+}
+
 static void test_TranslateAccelerator(IUnknown *unk)
 {
     IOleClientSite *doc_clientsite;
@@ -3240,6 +3283,7 @@ static void test_WebBrowser(BOOL do_download, BOOL do_close)
     is_downloading = FALSE;
     is_first_load = TRUE;
     use_container_olecmd = TRUE;
+    use_container_dochostui = TRUE;
 
     hres = IUnknown_QueryInterface(unk, &IID_IWebBrowser2, (void**)&wb);
     ok(hres == S_OK, "Could not get IWebBrowser2 iface: %08x\n", hres);
@@ -3303,6 +3347,8 @@ static void test_WebBrowser(BOOL do_download, BOOL do_close)
         test_dochost_qs(unk);
     }
 
+    test_external(unk);
+
     if(do_close)
         test_Close(wb, do_download);
     else
@@ -3329,7 +3375,6 @@ static void test_WebBrowserV1(void)
     hres = CoCreateInstance(&CLSID_WebBrowser_V1, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IWebBrowser2, (void**)&wb);
     ok(hres == S_OK, "Could not get WebBrowserV1 instance: %08x\n", hres);
-    trace("%08x %p\n", hres, wb);
 
     test_QueryStatusWB(wb, FALSE, FALSE);
     test_ExecWB(wb, FALSE, FALSE);
@@ -3342,7 +3387,7 @@ static void test_WebBrowserV1(void)
     ok(ref == 0, "ref=%d, expected 0\n", ref);
 }
 
-static void test_WebBrowser_NoContainerOlecmd(void)
+static void test_WebBrowser_slim_container(void)
 {
     IUnknown *unk = NULL;
     HRESULT hres;
@@ -3351,6 +3396,7 @@ static void test_WebBrowser_NoContainerOlecmd(void)
     is_downloading = FALSE;
     is_first_load = TRUE;
     use_container_olecmd = FALSE;
+    use_container_dochostui = FALSE;
 
     /* Setup stage */
     if (FAILED(create_WebBrowser(&unk)))
@@ -3367,6 +3413,7 @@ static void test_WebBrowser_NoContainerOlecmd(void)
     /* Tests of interest */
     test_QueryStatusWB(wb, FALSE, TRUE);
     test_ExecWB(wb, FALSE, TRUE);
+    test_external(unk);
 
     /* Cleanup stage */
     IWebBrowser2_Release(wb);
@@ -3391,7 +3438,7 @@ static BOOL is_ie_hardened(void)
             type != REG_DWORD) {
             ie_harden = 0;
         }
-    RegCloseKey(zone_map);
+        RegCloseKey(zone_map);
     }
 
     return ie_harden != 0;
@@ -3417,7 +3464,7 @@ START_TEST(webbrowser)
     trace("Testing WebBrowser (with close)...\n");
     test_WebBrowser(TRUE, TRUE);
     trace("Testing WebBrowser w/o container-based olecmd...\n");
-    test_WebBrowser_NoContainerOlecmd();
+    test_WebBrowser_slim_container();
     trace("Testing WebBrowserV1...\n");
     test_WebBrowserV1();
 
