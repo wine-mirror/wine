@@ -10631,7 +10631,7 @@ msgstr "Catégories de composants &cachés"
 msgid "&Toolbar"
 msgstr "Barre d'&outils"
 
-#: oleview.rc:65 oleview.rc:87 winefile.rc:64
+#: oleview.rc:65 oleview.rc:87 winefile.rc:64 wordpad.rc:71 wordpad.rc:264
 msgid "&Status Bar"
 msgstr "Barre d'&état"
 
@@ -13783,16 +13783,12 @@ msgid "&Get text"
 msgstr "Texte &complet"
 
 #: wordpad.rc:69 wordpad.rc:262
-msgid "&Formatbar"
+msgid "&Format Bar"
 msgstr "&Barre de format"
 
 #: wordpad.rc:70 wordpad.rc:263
 msgid "&Ruler"
 msgstr "&Règle"
-
-#: wordpad.rc:71 wordpad.rc:264
-msgid "&Statusbar"
-msgstr "&Barre d'état"
 
 #: wordpad.rc:75
 msgid "&Insert"

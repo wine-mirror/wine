@@ -9988,7 +9988,7 @@ msgstr "隱藏元件分類(&H)"
 msgid "&Toolbar"
 msgstr "工具列(&T)"
 
-#: oleview.rc:65 oleview.rc:87 winefile.rc:64
+#: oleview.rc:65 oleview.rc:87 winefile.rc:64 wordpad.rc:71 wordpad.rc:264
 msgid "&Status Bar"
 msgstr "狀態列(&S)"
 
@@ -13041,16 +13041,12 @@ msgid "&Get text"
 msgstr "擷取文字(&G)"
 
 #: wordpad.rc:69 wordpad.rc:262
-msgid "&Formatbar"
+msgid "&Format Bar"
 msgstr "格式工具列(&F)"
 
 #: wordpad.rc:70 wordpad.rc:263
 msgid "&Ruler"
 msgstr "尺規(&R)"
-
-#: wordpad.rc:71 wordpad.rc:264
-msgid "&Statusbar"
-msgstr "狀態列(&S)"
 
 #: wordpad.rc:75
 msgid "&Insert"

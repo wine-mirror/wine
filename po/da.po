@@ -10550,7 +10550,7 @@ msgstr "Skjult&e komponent kategorier"
 msgid "&Toolbar"
 msgstr "&Værktøjslinje"
 
-#: oleview.rc:65 oleview.rc:87 winefile.rc:64
+#: oleview.rc:65 oleview.rc:87 winefile.rc:64 wordpad.rc:71 wordpad.rc:264
 msgid "&Status Bar"
 msgstr "&Statuslinje"
 
@@ -13662,16 +13662,12 @@ msgid "&Get text"
 msgstr "&Hent tekst"
 
 #: wordpad.rc:69 wordpad.rc:262
-msgid "&Formatbar"
+msgid "&Format Bar"
 msgstr "&Formateringlinje"
 
 #: wordpad.rc:70 wordpad.rc:263
 msgid "&Ruler"
 msgstr "&Lineal"
-
-#: wordpad.rc:71 wordpad.rc:264
-msgid "&Statusbar"
-msgstr "&Statuslinje"
 
 #: wordpad.rc:75
 msgid "&Insert"

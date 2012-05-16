@@ -10434,7 +10434,7 @@ msgstr "&Dolda komponentkategorier"
 msgid "&Toolbar"
 msgstr "&Verktygsfält"
 
-#: oleview.rc:65 oleview.rc:87 winefile.rc:64
+#: oleview.rc:65 oleview.rc:87 winefile.rc:64 wordpad.rc:71 wordpad.rc:264
 msgid "&Status Bar"
 msgstr "St&atusfält"
 
@@ -13540,16 +13540,12 @@ msgid "&Get text"
 msgstr "&Hämta text"
 
 #: wordpad.rc:69 wordpad.rc:262
-msgid "&Formatbar"
+msgid "&Format Bar"
 msgstr "&Formatfält"
 
 #: wordpad.rc:70 wordpad.rc:263
 msgid "&Ruler"
 msgstr "&Linjal"
-
-#: wordpad.rc:71 wordpad.rc:264
-msgid "&Statusbar"
-msgstr "&Statusfält"
 
 #: wordpad.rc:75
 msgid "&Insert"

@@ -10574,7 +10574,7 @@ msgstr "&Skrite kategorije sestavnih delov"
 msgid "&Toolbar"
 msgstr "Orodna vrs&tica"
 
-#: oleview.rc:65 oleview.rc:87 winefile.rc:64
+#: oleview.rc:65 oleview.rc:87 winefile.rc:64 wordpad.rc:71 wordpad.rc:264
 msgid "&Status Bar"
 msgstr "Vrstica &stanja"
 
@@ -13691,16 +13691,12 @@ msgid "&Get text"
 msgstr "Pridobi &besedilo"
 
 #: wordpad.rc:69 wordpad.rc:262
-msgid "&Formatbar"
+msgid "&Format Bar"
 msgstr "O&blikovna vrstica"
 
 #: wordpad.rc:70 wordpad.rc:263
 msgid "&Ruler"
 msgstr "&Ravnilo"
-
-#: wordpad.rc:71 wordpad.rc:264
-msgid "&Statusbar"
-msgstr "Vrstica &stanja"
 
 #: wordpad.rc:75
 msgid "&Insert"

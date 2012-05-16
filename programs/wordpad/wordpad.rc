@@ -66,9 +66,9 @@ BEGIN
     POPUP "&View"
     BEGIN
         MENUITEM "&Toolbar",        ID_TOGGLE_TOOLBAR
-        MENUITEM "&Formatbar",      ID_TOGGLE_FORMATBAR
+        MENUITEM "&Format Bar",     ID_TOGGLE_FORMATBAR
         MENUITEM "&Ruler",          ID_TOGGLE_RULER
-        MENUITEM "&Statusbar",      ID_TOGGLE_STATUSBAR
+        MENUITEM "&Status Bar",     ID_TOGGLE_STATUSBAR
         MENUITEM SEPARATOR
         MENUITEM "&Options...",     ID_VIEWPROPERTIES
     END
@@ -259,9 +259,9 @@ BEGIN
     RADIOBUTTON "Wrap text by the &margin", IDC_PAGEFMT_WM, 10, 65, 138, 15
     GROUPBOX "Toolbars", -1, 155, 10, 115, 85
     CHECKBOX "&Toolbar", IDC_PAGEFMT_TB, 165, 20, 80, 15
-    CHECKBOX "&Formatbar", IDC_PAGEFMT_FB, 165, 38, 80, 15
+    CHECKBOX "&Format Bar", IDC_PAGEFMT_FB, 165, 38, 80, 15
     CHECKBOX "&Ruler", IDC_PAGEFMT_RU, 165, 56, 80, 15
-    CHECKBOX "&Statusbar", IDC_PAGEFMT_SB, 165, 74, 80, 15
+    CHECKBOX "&Status Bar", IDC_PAGEFMT_SB, 165, 74, 80, 15
     LTEXT "", IDC_PAGEFMT_ID, 0,0,0,0
 END
 
