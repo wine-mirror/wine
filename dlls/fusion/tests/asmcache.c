@@ -1011,6 +1011,11 @@ static void test_QueryAssemblyInfo(void)
         '_','M','S','I','L','\\','w','i','n','e','\\',
         '1','.','0','.','0','.','0','_','_','2','d','0','3','6','1','7','b',
         '1','c','3','1','e','2','f','5','\\',0};
+    static const WCHAR wine2[] = {
+        'w','i','n','e',',','v','e','r','s','i','o','n','=','1','.','0','.','0','.','1',',',
+        'p','u','b','l','i','c','K','e','y','T','o','k','e','n','=',
+        '2','d','0','3','6','1','7','b','1','c','3','1','e','2','f','5',',',
+        'c','u','l','t','u','r','e','=','n','e','u','t','r','a','l',0};
 
     size = MAX_PATH;
     hr = pGetCachePath(ASM_CACHE_GAC, asmpath, &size);
@@ -1363,6 +1368,24 @@ static void test_QueryAssemblyInfo(void)
        "Assembly path was changed\n");
     ok(info.cchBuf == MAX_PATH, "Expected MAX_PATH, got %d\n", info.cchBuf);
 
+    /* display name is "wine,version=1.0.0.1,publicKeyToken=2d03617b1c31e2f5,culture=neutral" */
+    INIT_ASM_INFO();
+    lstrcpyW(name, wine2);
+    hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_GETSIZE,
+                                          name, &info);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
+       "Expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got %08x\n", hr);
+    ok(info.cbAssemblyInfo == sizeof(ASSEMBLY_INFO),
+       "Expected sizeof(ASSEMBLY_INFO), got %d\n", info.cbAssemblyInfo);
+    ok(info.dwAssemblyFlags == 0, "Expected 0, got %08x\n", info.dwAssemblyFlags);
+    ok(info.uliAssemblySizeInKB.u.HighPart == 0,
+       "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.HighPart);
+    ok(info.uliAssemblySizeInKB.u.LowPart == 0,
+       "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.LowPart);
+    ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, empty),
+       "Assembly path was changed\n");
+    ok(info.cchBuf == MAX_PATH, "Expected MAX_PATH, got %d\n", info.cchBuf);
+
     /* display name is "wine, Culture=neutral" */
     INIT_ASM_INFO();
     lstrcpyW(name, wine);
@@ -1394,24 +1417,18 @@ static void test_QueryAssemblyInfo(void)
     lstrcatW(name, badculture);
     hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_GETSIZE,
                                           name, &info);
-    todo_wine
-    {
-        ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
-           "Expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got %08x\n", hr);
-        ok(info.dwAssemblyFlags == 0, "Expected 0, got %08x\n", info.dwAssemblyFlags);
-    }
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
+       "Expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got %08x\n", hr);
+    ok(info.dwAssemblyFlags == 0, "Expected 0, got %08x\n", info.dwAssemblyFlags);
     ok(info.cbAssemblyInfo == sizeof(ASSEMBLY_INFO),
        "Expected sizeof(ASSEMBLY_INFO), got %d\n", info.cbAssemblyInfo);
     ok(info.uliAssemblySizeInKB.u.HighPart == 0,
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.HighPart);
     ok(info.uliAssemblySizeInKB.u.LowPart == 0,
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.LowPart);
-    todo_wine
-    {
-        ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, empty),
-           "Assembly path was changed\n");
-        ok(info.cchBuf == MAX_PATH, "Expected MAX_PATH, got %d\n", info.cchBuf);
-    }
+    ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, empty),
+       "Assembly path was changed\n");
+    ok(info.cchBuf == MAX_PATH, "Expected MAX_PATH, got %d\n", info.cchBuf);
 
     /* display name is "wine, PublicKeyTokens=2d03617b1c31e2f5" */
     INIT_ASM_INFO();

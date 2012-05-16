@@ -308,11 +308,16 @@ static HRESULT WINAPI IAssemblyCacheImpl_QueryAssemblyInfo(IAssemblyCache *iface
     if (FAILED(hr))
         goto done;
 
-    hr = IAssemblyEnum_GetNextAssembly(asmenum, NULL, &next, 0);
-    if (hr == S_FALSE)
+    for (;;)
     {
-        hr = HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
-        goto done;
+        hr = IAssemblyEnum_GetNextAssembly(asmenum, NULL, &next, 0);
+        if (hr != S_OK)
+        {
+            hr = HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
+            goto done;
+        }
+        hr = IAssemblyName_IsEqual(asmname, next, ASM_CMPF_IL_ALL);
+        if (hr == S_OK) break;
     }
 
     if (!pAsmInfo)
