@@ -464,6 +464,7 @@ static void test_CredMarshalCredentialA(void)
     str = (char *)0xdeadbeef;
     SetLastError( 0xdeadbeef );
     ret = pCredMarshalCredentialA( UsernameTargetCredential, &username, &str );
+    error = GetLastError();
     ok( !ret, "unexpected success\n" );
     ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
     ok( str == (char *)0xdeadbeef, "got %p\n", str );
@@ -472,6 +473,7 @@ static void test_CredMarshalCredentialA(void)
     str = (char *)0xdeadbeef;
     SetLastError( 0xdeadbeef );
     ret = pCredMarshalCredentialA( UsernameTargetCredential, &username, &str );
+    error = GetLastError();
     ok( !ret, "unexpected success\n" );
     ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
     ok( str == (char *)0xdeadbeef, "got %p\n", str );
