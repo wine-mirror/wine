@@ -212,41 +212,29 @@ static LPWSTR strdupW(LPCWSTR p)
  *  Failure: FALSE
  *
  */
-static BOOL apd_copyfile(LPWSTR filename, apd_data_t *apd)
+static BOOL apd_copyfile( WCHAR *pathname, WCHAR *file_part, apd_data_t *apd )
 {
-    LPWSTR  ptr;
-    LPWSTR  srcname;
-    DWORD   res;
+    WCHAR *srcname;
+    DWORD res;
 
     apd->src[apd->srclen] = '\0';
     apd->dst[apd->dstlen] = '\0';
 
-    if (!filename || !filename[0]) {
+    if (!pathname || !pathname[0]) {
         /* nothing to copy */
         return TRUE;
     }
 
-    ptr = strrchrW(filename, '\\');
-    if (ptr) {
-        ptr++;
-    }
-    else
-    {
-        ptr = filename;
-    }
-
-    if (apd->copyflags & APD_COPY_FROM_DIRECTORY) {
-        /* we have an absolute Path */
-        srcname = filename;
-    }
+    if (apd->copyflags & APD_COPY_FROM_DIRECTORY)
+        srcname = pathname;
     else
     {
         srcname = apd->src;
-        lstrcatW(srcname, ptr);
+        strcatW( srcname, file_part );
     }
-    lstrcatW(apd->dst, ptr);
+    strcatW( apd->dst, file_part );
 
-    TRACE("%s => %s\n", debugstr_w(filename), debugstr_w(apd->dst));
+    TRACE("%s => %s\n", debugstr_w(srcname), debugstr_w(apd->dst));
 
     /* FIXME: handle APD_COPY_NEW_FILES */
     res = CopyFileW(srcname, apd->dst, FALSE);
@@ -1284,6 +1272,12 @@ end:
     return (HANDLE)printer;
 }
 
+static inline WCHAR *get_file_part( WCHAR *name )
+{
+    WCHAR *ptr = strrchrW( name, '\\' );
+    if (ptr) return ptr + 1;
+    return name;
+}
 
 /******************************************************************************
  *  myAddPrinterDriverEx [internal]
@@ -1299,7 +1293,7 @@ static BOOL myAddPrinterDriverEx(DWORD level, LPBYTE pDriverInfo, DWORD dwFileCo
     DRIVER_INFO_8W di;
     BOOL    (WINAPI *pDrvDriverEvent)(DWORD, DWORD, LPBYTE, LPARAM);
     HMODULE hui;
-    LPWSTR  ptr;
+    WCHAR *file;
     HKEY    hroot;
     HKEY    hdrv;
     DWORD   disposition;
@@ -1378,43 +1372,49 @@ static BOOL myAddPrinterDriverEx(DWORD level, LPBYTE pDriverInfo, DWORD dwFileCo
     RegSetValueExW(hdrv, versionW, 0, REG_DWORD, (const BYTE*) &env->driverversion,
                    sizeof(DWORD));
 
-    RegSetValueExW(hdrv, driverW, 0, REG_SZ, (LPBYTE) di.pDriverPath,
-                   (lstrlenW(di.pDriverPath)+1)* sizeof(WCHAR));
-    apd_copyfile(di.pDriverPath, &apd);
+    file = get_file_part( di.pDriverPath );
+    RegSetValueExW( hdrv, driverW, 0, REG_SZ, (LPBYTE)file, (strlenW( file ) + 1) * sizeof(WCHAR) );
+    apd_copyfile( di.pDriverPath, file, &apd );
 
-    RegSetValueExW(hdrv, data_fileW, 0, REG_SZ, (LPBYTE) di.pDataFile,
-                   (lstrlenW(di.pDataFile)+1)* sizeof(WCHAR));
-    apd_copyfile(di.pDataFile, &apd);
+    file = get_file_part( di.pDataFile );
+    RegSetValueExW( hdrv, data_fileW, 0, REG_SZ, (LPBYTE)file, (strlenW( file ) + 1) * sizeof(WCHAR) );
+    apd_copyfile( di.pDataFile, file, &apd );
 
-    RegSetValueExW(hdrv, configuration_fileW, 0, REG_SZ, (LPBYTE) di.pConfigFile,
-                   (lstrlenW(di.pConfigFile)+1)* sizeof(WCHAR));
-    apd_copyfile(di.pConfigFile, &apd);
+    file = get_file_part( di.pConfigFile );
+    RegSetValueExW( hdrv, configuration_fileW, 0, REG_SZ, (LPBYTE)file, (strlenW( file ) + 1) * sizeof(WCHAR) );
+    apd_copyfile( di.pConfigFile, file, &apd );
 
     /* settings for level 3 */
     if (di.pHelpFile)
-        RegSetValueExW(hdrv, help_fileW, 0, REG_SZ, (LPBYTE) di.pHelpFile,
-                       (lstrlenW(di.pHelpFile)+1)* sizeof(WCHAR));
+    {
+        file = get_file_part( di.pHelpFile );
+        RegSetValueExW( hdrv, help_fileW, 0, REG_SZ, (LPBYTE)file, (strlenW( file ) + 1) * sizeof(WCHAR) );
+        apd_copyfile( di.pHelpFile, file, &apd );
+    }
     else
-        RegSetValueExW(hdrv, help_fileW, 0, REG_SZ, (const BYTE*)emptyW, sizeof(emptyW));
-    apd_copyfile(di.pHelpFile, &apd);
+        RegSetValueExW( hdrv, help_fileW, 0, REG_SZ, (const BYTE*)emptyW, sizeof(emptyW) );
 
+    if (di.pDependentFiles && *di.pDependentFiles)
+    {
+        WCHAR *reg, *reg_ptr, *in_ptr;
+        reg = reg_ptr = HeapAlloc( GetProcessHeap(), 0, multi_sz_lenW( di.pDependentFiles ) );
 
-    ptr = di.pDependentFiles;
-    if (ptr)
-        RegSetValueExW(hdrv, dependent_filesW, 0, REG_MULTI_SZ, (LPBYTE) di.pDependentFiles,
-                       multi_sz_lenW(di.pDependentFiles));
+        for (in_ptr = di.pDependentFiles; *in_ptr; in_ptr += strlenW( in_ptr ) + 1)
+        {
+            file = get_file_part( in_ptr );
+            len = strlenW( file ) + 1;
+            memcpy( reg_ptr, file, len * sizeof(WCHAR) );
+            reg_ptr += len;
+            apd_copyfile( in_ptr, file, &apd );
+        }
+        *reg_ptr = 0;
+
+        RegSetValueExW( hdrv, dependent_filesW, 0, REG_MULTI_SZ, (LPBYTE)reg, (reg_ptr - reg + 1) * sizeof(WCHAR) );
+        HeapFree( GetProcessHeap(), 0, reg );
+    }
     else
         RegSetValueExW(hdrv, dependent_filesW, 0, REG_MULTI_SZ, (const BYTE*)emptyW, sizeof(emptyW));
-    while ((ptr != NULL) && (ptr[0])) {
-        if (apd_copyfile(ptr, &apd)) {
-            ptr += lstrlenW(ptr) + 1;
-        }
-        else
-        {
-            WARN("Failed to copy %s\n", debugstr_w(ptr));
-            ptr = NULL;
-        }
-    }
+
     /* The language-Monitor was already copied by the caller to "%SystemRoot%\system32" */
     if (di.pMonitorName)
         RegSetValueExW(hdrv, monitorW, 0, REG_SZ, (LPBYTE) di.pMonitorName,
