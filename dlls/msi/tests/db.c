@@ -1490,7 +1490,7 @@ static void test_longstrings(void)
 
     HeapFree(GetProcessHeap(), 0, str);
 
-    MsiDatabaseCommit(hdb);
+    r = MsiDatabaseCommit(hdb);
     ok(r == ERROR_SUCCESS, "MsiDatabaseCommit failed\n");
     MsiCloseHandle(hdb);
 
