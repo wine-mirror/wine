@@ -303,7 +303,6 @@ static void test_threads(void)
      */
     while (IEnumPins_Next(enumpins, 1, &avipin, NULL) == S_OK)
     {
-        ok(hr == S_OK, "hr: %08x\n", hr);
         IPin_QueryDirection(avipin, &dir);
         if (dir == PINDIR_OUTPUT)
         {
