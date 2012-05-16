@@ -151,6 +151,7 @@ struct DocHost {
     BOOL is_prop_notif;
 
     ShellBrowser *browser_service;
+    IShellUIHelper2 *shell_ui_helper;
 
     travellog_entry_t *travellog;
     unsigned travellog_size;
@@ -255,6 +256,7 @@ BOOL HlinkFrame_QI(HlinkFrame*,REFIID,void**) DECLSPEC_HIDDEN;
 
 HRESULT create_browser_service(DocHost*,ShellBrowser**) DECLSPEC_HIDDEN;
 void detach_browser_service(ShellBrowser*) DECLSPEC_HIDDEN;
+HRESULT create_shell_ui_helper(IShellUIHelper2**) DECLSPEC_HIDDEN;
 
 void ConnectionPointContainer_Init(ConnectionPointContainer*,IUnknown*) DECLSPEC_HIDDEN;
 void ConnectionPointContainer_Destroy(ConnectionPointContainer*) DECLSPEC_HIDDEN;

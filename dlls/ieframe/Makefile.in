@@ -17,6 +17,7 @@ C_SRCS = \
 	oleobject.c \
 	persist.c \
 	shellbrowser.c \
+	shelluihelper.c \
 	taskbarlist.c \
 	urlhist.c \
 	view.c \

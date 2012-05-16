@@ -777,8 +777,17 @@ static HRESULT WINAPI DocHostUIHandler_GetExternal(IDocHostUIHandler2 *iface,
     if(This->hostui)
         return IDocHostUIHandler_GetExternal(This->hostui, ppDispatch);
 
-    FIXME("default action not implemented\n");
-    return E_NOTIMPL;
+    if(!This->shell_ui_helper) {
+        HRESULT hres;
+
+        hres = create_shell_ui_helper(&This->shell_ui_helper);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    *ppDispatch = (IDispatch*)This->shell_ui_helper;
+    IDispatch_AddRef(*ppDispatch);
+    return S_OK;
 }
 
 static HRESULT WINAPI DocHostUIHandler_TranslateUrl(IDocHostUIHandler2 *iface,
@@ -938,6 +947,9 @@ void DocHost_Init(DocHost *This, IWebBrowser2 *wb, const IDocHostContainerVtbl* 
 
 void DocHost_Release(DocHost *This)
 {
+    if(This->shell_ui_helper)
+        IShellUIHelper2_Release(This->shell_ui_helper);
+
     abort_dochost_tasks(This, NULL);
     release_dochost_client(This);
     DocHost_ClientSite_Release(This);
