@@ -6549,8 +6549,8 @@ msgstr "Användare"
 msgid "Password"
 msgstr "Lösenord"
 
-#: mpr.rc:44
-msgid "&Save this password (Insecure)"
+#: mpr.rc:44 wininet.rc:46 wininet.rc:66
+msgid "&Save this password (insecure)"
 msgstr "&Spara detta lösenord (osäkert)"
 
 #: mpr.rc:27
@@ -8221,10 +8221,6 @@ msgstr "Dubbelsidig:"
 #: wininet.rc:39 wininet.rc:59
 msgid "Realm"
 msgstr "Domän"
-
-#: wininet.rc:46 wininet.rc:66
-msgid "&Save this password (insecure)"
-msgstr "&Spara detta lösenord (osäkert)"
 
 #: wininet.rc:54
 msgid "Authentication Required"

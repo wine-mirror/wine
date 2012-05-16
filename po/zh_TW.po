@@ -6466,9 +6466,9 @@ msgstr "使用者"
 msgid "Password"
 msgstr "密碼"
 
-#: mpr.rc:44
-msgid "&Save this password (Insecure)"
-msgstr "儲存密碼(不安全)(&S)"
+#: mpr.rc:44 wininet.rc:46 wininet.rc:66
+msgid "&Save this password (insecure)"
+msgstr "儲存密碼 (不安全)(&S)"
 
 #: mpr.rc:27
 msgid "Entire Network"
@@ -8080,10 +8080,6 @@ msgstr "雙面："
 #: wininet.rc:39 wininet.rc:59
 msgid "Realm"
 msgstr "Realm"
-
-#: wininet.rc:46 wininet.rc:66
-msgid "&Save this password (insecure)"
-msgstr "儲存密碼 (不安全)(&S)"
 
 #: wininet.rc:54
 msgid "Authentication Required"

@@ -6728,9 +6728,9 @@ msgstr "Uživatel"
 msgid "Password"
 msgstr "Heslo"
 
-#: mpr.rc:44
-msgid "&Save this password (Insecure)"
-msgstr "&Uložit toto heslo (Není bezpečné)"
+#: mpr.rc:44 wininet.rc:46 wininet.rc:66
+msgid "&Save this password (insecure)"
+msgstr "&Uložit toto heslo (nebezpečné)"
 
 #: mpr.rc:27
 msgid "Entire Network"
@@ -8430,10 +8430,6 @@ msgstr "Oboustranně:"
 #: wininet.rc:39 wininet.rc:59
 msgid "Realm"
 msgstr "Plné jméno"
-
-#: wininet.rc:46 wininet.rc:66
-msgid "&Save this password (insecure)"
-msgstr "&Uložit toto heslo (nebezpečné)"
 
 #: wininet.rc:54
 msgid "Authentication Required"

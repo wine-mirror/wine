@@ -6827,8 +6827,8 @@ msgstr "Utilizator"
 msgid "Password"
 msgstr "Parolă"
 
-#: mpr.rc:44
-msgid "&Save this password (Insecure)"
+#: mpr.rc:44 wininet.rc:46 wininet.rc:66
+msgid "&Save this password (insecure)"
 msgstr "&Salvează această parolă (nesigur)"
 
 #: mpr.rc:27
@@ -8503,10 +8503,6 @@ msgstr "Duplex:"
 #: wininet.rc:39 wininet.rc:59
 msgid "Realm"
 msgstr "Domeniu"
-
-#: wininet.rc:46 wininet.rc:66
-msgid "&Save this password (insecure)"
-msgstr "&Salvează această parolă (nesigur)"
 
 #: wininet.rc:54
 msgid "Authentication Required"

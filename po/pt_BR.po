@@ -6573,9 +6573,9 @@ msgstr "Usuário"
 msgid "Password"
 msgstr "Senha"
 
-#: mpr.rc:44
-msgid "&Save this password (Insecure)"
-msgstr "&Salvar esta senha (Inseguro)"
+#: mpr.rc:44 wininet.rc:46 wininet.rc:66
+msgid "&Save this password (insecure)"
+msgstr "&Salvar esta senha (inseguro)"
 
 #: mpr.rc:27
 msgid "Entire Network"
@@ -8263,10 +8263,6 @@ msgstr "Duplex:"
 #: wininet.rc:39 wininet.rc:59
 msgid "Realm"
 msgstr "Domínio"
-
-#: wininet.rc:46 wininet.rc:66
-msgid "&Save this password (insecure)"
-msgstr "&Salvar esta senha (inseguro)"
 
 #: wininet.rc:54
 msgid "Authentication Required"

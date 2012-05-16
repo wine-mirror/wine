@@ -6562,8 +6562,8 @@ msgstr "Uporabniško ime"
 msgid "Password"
 msgstr "Geslo"
 
-#: mpr.rc:44
-msgid "&Save this password (Insecure)"
+#: mpr.rc:44 wininet.rc:46 wininet.rc:66
+msgid "&Save this password (insecure)"
 msgstr "&Shrani geslo (nezaščiteno)"
 
 #: mpr.rc:27
@@ -8246,10 +8246,6 @@ msgstr "Duplex:"
 #: wininet.rc:39 wininet.rc:59
 msgid "Realm"
 msgstr "Področje"
-
-#: wininet.rc:46 wininet.rc:66
-msgid "&Save this password (insecure)"
-msgstr "&Shrani geslo (nezaščiteno)"
 
 #: wininet.rc:54
 msgid "Authentication Required"

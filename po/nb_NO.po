@@ -6798,8 +6798,8 @@ msgstr "Bruker"
 msgid "Password"
 msgstr "Passord"
 
-#: mpr.rc:44
-msgid "&Save this password (Insecure)"
+#: mpr.rc:44 wininet.rc:46 wininet.rc:66
+msgid "&Save this password (insecure)"
 msgstr "Lagre dette pa&ssordet (usikkert)"
 
 #: mpr.rc:27
@@ -8550,10 +8550,6 @@ msgstr "Retning:"
 #: wininet.rc:39 wininet.rc:59
 msgid "Realm"
 msgstr "Område"
-
-#: wininet.rc:46 wininet.rc:66
-msgid "&Save this password (insecure)"
-msgstr "Lagre dette pa&ssordet (usikkert)"
 
 #: wininet.rc:54
 msgid "Authentication Required"

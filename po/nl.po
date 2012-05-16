@@ -6597,9 +6597,9 @@ msgstr "Gebruiker"
 msgid "Password"
 msgstr "Wachtwoord"
 
-#: mpr.rc:44
-msgid "&Save this password (Insecure)"
-msgstr "&Sla dit wachtwoord op (Onveilig)"
+#: mpr.rc:44 wininet.rc:46 wininet.rc:66
+msgid "&Save this password (insecure)"
+msgstr "&Wachtwoord opslaan (onveilig)"
 
 #: mpr.rc:27
 msgid "Entire Network"
@@ -8310,10 +8310,6 @@ msgstr "Dubbelzijdig:"
 #: wininet.rc:39 wininet.rc:59
 msgid "Realm"
 msgstr "Realm"
-
-#: wininet.rc:46 wininet.rc:66
-msgid "&Save this password (insecure)"
-msgstr "&Wachtwoord opslaan (onveilig)"
 
 #: wininet.rc:54
 msgid "Authentication Required"
