@@ -3304,6 +3304,7 @@ static BOOL MENU_InitTracking(HWND hWnd, HMENU hMenu, BOOL bPopup, UINT wFlags)
      * but there are some bugs left that need to be fixed in this case.
      */
     if ((menu = MENU_GetMenu( hMenu ))) menu->hWnd = hWnd;
+    if (!top_popup) top_popup_hmenu = hMenu;
 
     /* Send WM_ENTERMENULOOP and WM_INITMENU message only if TPM_NONOTIFY flag is not specified */
     if (!(wFlags & TPM_NONOTIFY))
@@ -4182,8 +4183,86 @@ HMENU WINAPI GetMenu( HWND hWnd )
  */
 BOOL WINAPI GetMenuBarInfo( HWND hwnd, LONG idObject, LONG idItem, PMENUBARINFO pmbi )
 {
-    FIXME( "(%p,0x%08x,0x%08x,%p)\n", hwnd, idObject, idItem, pmbi );
-    return FALSE;
+    POPUPMENU *menu;
+    HMENU hmenu = NULL;
+    ATOM class_atom;
+
+    TRACE( "(%p,0x%08x,0x%08x,%p)\n", hwnd, idObject, idItem, pmbi );
+
+    switch (idObject)
+    {
+    case OBJID_CLIENT:
+        class_atom = GetClassLongW(hwnd, GCW_ATOM);
+        if (!class_atom)
+            return FALSE;
+        if (class_atom != POPUPMENU_CLASS_ATOM)
+        {
+            WARN("called on invalid window: %d\n", class_atom);
+            SetLastError(ERROR_INVALID_MENU_HANDLE);
+            return FALSE;
+        }
+
+        hmenu = (HMENU)GetWindowLongPtrW(hwnd, 0);
+        break;
+    case OBJID_MENU:
+        hmenu = GetMenu(hwnd);
+        break;
+    case OBJID_SYSMENU:
+        hmenu = GetSystemMenu(hwnd, FALSE);
+        break;
+    default:
+        return FALSE;
+    }
+
+    if (!hmenu)
+        return FALSE;
+
+    if (pmbi->cbSize != sizeof(MENUBARINFO))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    menu = MENU_GetMenu(hmenu);
+    if (!menu)
+        return FALSE;
+    if (idItem < 0 || idItem > menu->nItems)
+        return FALSE;
+
+    if (!menu->Height)
+    {
+        SetRectEmpty(&pmbi->rcBar);
+    }
+    else if (idItem == 0)
+    {
+        GetMenuItemRect(hwnd, hmenu, 0, &pmbi->rcBar);
+        pmbi->rcBar.right = pmbi->rcBar.left + menu->Width;
+        pmbi->rcBar.bottom = pmbi->rcBar.top + menu->Height;
+    }
+    else
+    {
+        GetMenuItemRect(hwnd, hmenu, idItem - 1, &pmbi->rcBar);
+    }
+
+    pmbi->hMenu = hmenu;
+    pmbi->hwndMenu = NULL;
+    pmbi->fBarFocused = top_popup_hmenu == hmenu;
+    if (idItem)
+    {
+        pmbi->fFocused = menu->FocusedItem == idItem - 1;
+        if (pmbi->fFocused && (menu->items[idItem - 1].fType & MF_POPUP))
+        {
+            menu = MENU_GetMenu(menu->items[idItem - 1].hSubMenu);
+            if (menu)
+                pmbi->hwndMenu = menu->hWnd;
+        }
+    }
+    else
+    {
+        pmbi->fFocused = pmbi->fBarFocused;
+    }
+
+    return TRUE;
 }
 
 /**********************************************************************
