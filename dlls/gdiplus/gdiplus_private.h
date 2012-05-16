@@ -266,6 +266,7 @@ struct GpImage{
     ImageType type;
     GUID format;
     UINT flags;
+    UINT frame_count, current_frame;
     UINT palette_flags;
     UINT palette_count;
     UINT palette_size;
