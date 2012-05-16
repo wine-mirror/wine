@@ -5889,7 +5889,6 @@ static void test_undo_coalescing(void)
     ok (result == 0, "expected '%s' but got '%s'\n", "one two three", buffer);
     result = SendMessage(hwnd, EM_UNDO, 0, 0);
     ok (result == TRUE, "Failed to undo typed characters.\n");
-    ok (result == TRUE, "Failed to undo typed characters.\n");
     SendMessageA(hwnd, WM_GETTEXT, sizeof(buffer), (LPARAM)buffer);
     result = strcmp(buffer, "");
     ok (result == 0, "expected '%s' but got '%s'\n", "", buffer);
