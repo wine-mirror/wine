@@ -891,6 +891,32 @@ static void test_CreateAssemblyNameObject(void)
     ok(hr == FUSION_E_INVALID_NAME,
        "Expected FUSION_E_INVALID_NAME, got %08x\n", hr);
     ok(name == (IAssemblyName *)0xdeadbeef, "Expected 0xdeadbeef, got %p\n", name);
+
+    /* no spaces */
+    to_widechar(namestr, "wine,version=1.0.0.0");
+    name = (IAssemblyName *)0xdeadbeef;
+    hr = pCreateAssemblyNameObject(&name, namestr, CANOF_PARSE_DISPLAY_NAME, NULL);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(name != NULL, "Expected non-NULL name\n");
+    hi = lo = 0xdeadbeef;
+    hr = IAssemblyName_GetVersion(name, &hi, &lo);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hi == 65536, "Expected 536, got %u\n", hi);
+    ok(lo == 0, "Expected 0, got %u\n", lo);
+    IAssemblyName_Release(name);
+
+    /* quoted values */
+    to_widechar(namestr, "wine, version=\"1.0.0.0\",culture=\"en\"");
+    name = (IAssemblyName *)0xdeadbeef;
+    hr = pCreateAssemblyNameObject(&name, namestr, CANOF_PARSE_DISPLAY_NAME, NULL);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(name != NULL, "Expected non-NULL name\n");
+    hi = lo = 0xdeadbeef;
+    hr = IAssemblyName_GetVersion(name, &hi, &lo);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hi == 65536, "Expected 65536, got %u\n", hi);
+    ok(lo == 0, "Expected 0, got %u\n", lo);
+    IAssemblyName_Release(name);
 }
 
 static void test_IAssemblyName_IsEqual(void)
@@ -951,7 +977,7 @@ static void test_IAssemblyName_IsEqual(void)
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = IAssemblyName_IsEqual( name1, name2, ASM_CMPF_IL_ALL );
-    todo_wine ok( hr == S_FALSE, "got %08x\n", hr );
+    ok( hr == S_FALSE, "got %08x\n", hr );
 
     IAssemblyName_Release( name1 );
     hr = pCreateAssemblyNameObject( &name1, wine1, CANOF_PARSE_DISPLAY_NAME, NULL );

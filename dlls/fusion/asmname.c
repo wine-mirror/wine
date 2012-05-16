@@ -580,10 +580,32 @@ static HRESULT parse_pubkey(IAssemblyNameImpl *name, LPCWSTR pubkey)
     return S_OK;
 }
 
+static WCHAR *parse_value( const WCHAR *str, unsigned int len )
+{
+    WCHAR *ret;
+    const WCHAR *p = str;
+    BOOL quoted = FALSE;
+    unsigned int i = 0;
+
+    if (!(ret = HeapAlloc( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) ))) return NULL;
+    if (*p == '\"')
+    {
+        quoted = TRUE;
+        p++;
+    }
+    while (*p && *p != '\"') ret[i++] = *p++;
+    if ((quoted && *p != '\"') || (!quoted && *p == '\"'))
+    {
+        HeapFree( GetProcessHeap(), 0, ret );
+        return NULL;
+    }
+    ret[i] = 0;
+    return ret;
+}
+
 static HRESULT parse_display_name(IAssemblyNameImpl *name, LPCWSTR szAssemblyName)
 {
-    LPWSTR str, save;
-    LPWSTR ptr, ptr2;
+    LPWSTR str, save, ptr, ptr2, value;
     HRESULT hr = S_OK;
     BOOL done = FALSE;
 
@@ -651,21 +673,25 @@ static HRESULT parse_display_name(IAssemblyNameImpl *name, LPCWSTR szAssemblyNam
         }
 
         *ptr2 = '\0';
-
+        if (!(value = parse_value( ptr, ptr2 - ptr )))
+        {
+            hr = FUSION_E_INVALID_NAME;
+            goto done;
+        }
         while (*str == ' ') str++;
 
-        if (!lstrcmpW(str, version))
-            hr = parse_version(name, ptr);
-        else if (!lstrcmpW(str, culture))
-            hr = parse_culture(name, ptr);
-        else if (!lstrcmpW(str, pubkey))
-            hr = parse_pubkey(name, ptr);
-        else if (!lstrcmpW(str, procarch))
+        if (!lstrcmpiW(str, version))
+            hr = parse_version( name, value );
+        else if (!lstrcmpiW(str, culture))
+            hr = parse_culture( name, value );
+        else if (!lstrcmpiW(str, pubkey))
+            hr = parse_pubkey( name, value );
+        else if (!lstrcmpiW(str, procarch))
         {
-            name->procarch = strdupW(ptr);
-            if (!name->procarch)
-                hr = E_OUTOFMEMORY;
+            name->procarch = value;
+            value = NULL;
         }
+        HeapFree( GetProcessHeap(), 0, value );
 
         if (FAILED(hr))
             goto done;
