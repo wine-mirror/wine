@@ -622,7 +622,7 @@ static HRESULT parse_display_name(IAssemblyNameImpl *name, LPCWSTR szAssemblyNam
     if (!ptr)
         goto done;
 
-    str = ptr + 2;
+    str = ptr + 1;
     while (!done)
     {
         ptr = strchrW(str, '=');
@@ -639,7 +639,7 @@ static HRESULT parse_display_name(IAssemblyNameImpl *name, LPCWSTR szAssemblyNam
             goto done;
         }
 
-        if (!(ptr2 = strstrW(ptr, separator)))
+        if (!(ptr2 = strchrW(ptr, ',')))
         {
             if (!(ptr2 = strchrW(ptr, '\0')))
             {
