@@ -481,6 +481,19 @@ static PAGESIZE *get_pagesize( PPD *ppd, char *name, BOOL create )
     return page;
 }
 
+static DUPLEX *get_duplex( PPD *ppd, const char *name )
+{
+    DUPLEX *duplex;
+
+    LIST_FOR_EACH_ENTRY( duplex, &ppd->Duplexes, DUPLEX, entry )
+    {
+        if (!strcmp( duplex->Name, name ))
+            return duplex;
+    }
+
+    return NULL;
+}
+
 /**********************************************************************
  *
  *		PSDRV_PPDGetWord
@@ -896,13 +909,13 @@ PPD *PSDRV_ParsePPD(char *fname)
             list_add_tail( &ppd->Duplexes, &duplex->entry );
         }
 
-        else if(!strcmp("*DefaultDuplex", tuple.key)) {
-            if(default_duplex) {
-                WARN("Already set default duplex\n");
-            } else {
+        else if (!strcmp("*DefaultDuplex", tuple.key))
+        {
+            if (!default_duplex)
+            {
                 default_duplex = tuple.value;
                 tuple.value = NULL;
-           }
+            }
         }
 
         HeapFree(PSDRV_Heap, 0, tuple.key);
@@ -946,24 +959,17 @@ PPD *PSDRV_ParsePPD(char *fname)
 
     ppd->DefaultDuplex = NULL;
     if (default_duplex)
-    {
-	DUPLEX *duplex;
-	LIST_FOR_EACH_ENTRY( duplex, &ppd->Duplexes, DUPLEX, entry )
-        {
-            if (!strcmp(duplex->Name, default_duplex))
-            {
-                ppd->DefaultDuplex = duplex;
-                TRACE("DefaultDuplex: %s\n", duplex->Name);
-                break;
-            }
-        }
-        HeapFree(PSDRV_Heap, 0, default_duplex);
-    }
+        ppd->DefaultDuplex = get_duplex( ppd, default_duplex );
+
     if (!ppd->DefaultDuplex)
     {
-        ppd->DefaultDuplex = LIST_ENTRY( list_head( &ppd->Duplexes ), DUPLEX, entry );
+        struct list *head = list_head( &ppd->Duplexes );
+        if (head) ppd->DefaultDuplex = LIST_ENTRY( head, DUPLEX, entry );
         TRACE("Setting DefaultDuplex to first in list\n");
     }
+    TRACE( "DefaultDuplex: %s\n", ppd->DefaultDuplex ? ppd->DefaultDuplex->Name : "<not set>" );
+
+    HeapFree( PSDRV_Heap, 0, default_duplex );
 
 
     {
