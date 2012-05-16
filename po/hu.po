@@ -6592,8 +6592,8 @@ msgstr "Felhasználónév"
 msgid "Password"
 msgstr "Jelszó"
 
-#: mpr.rc:44
-msgid "&Save this password (Insecure)"
+#: mpr.rc:44 wininet.rc:46 wininet.rc:66
+msgid "&Save this password (insecure)"
 msgstr "&Jelszó mentése (nem biztonságos)"
 
 #: mpr.rc:27
@@ -8253,10 +8253,6 @@ msgstr "Duplex:"
 #: wininet.rc:39 wininet.rc:59
 msgid "Realm"
 msgstr "Csoport"
-
-#: wininet.rc:46 wininet.rc:66
-msgid "&Save this password (insecure)"
-msgstr "&Jelszó mentése (nem biztonságos)"
 
 #: wininet.rc:54
 msgid "Authentication Required"

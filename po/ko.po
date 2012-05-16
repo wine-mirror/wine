@@ -6555,9 +6555,9 @@ msgstr "사용자"
 msgid "Password"
 msgstr "암호"
 
-#: mpr.rc:44
-msgid "&Save this password (Insecure)"
-msgstr "암호 저장(&S) (보안에 주의)"
+#: mpr.rc:44 wininet.rc:46 wininet.rc:66
+msgid "&Save this password (insecure)"
+msgstr "암호 저장(&S)(안전하지  못함)"
 
 #: mpr.rc:27
 msgid "Entire Network"
@@ -8235,10 +8235,6 @@ msgstr "양방향 통신:"
 #: wininet.rc:39 wininet.rc:59
 msgid "Realm"
 msgstr "영역"
-
-#: wininet.rc:46 wininet.rc:66
-msgid "&Save this password (insecure)"
-msgstr "암호 저장(&S)(안전하지  못함)"
 
 #: wininet.rc:54
 msgid "Authentication Required"

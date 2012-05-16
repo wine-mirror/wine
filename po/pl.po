@@ -6592,9 +6592,9 @@ msgstr "Użytkownik"
 msgid "Password"
 msgstr "Hasło"
 
-#: mpr.rc:44
-msgid "&Save this password (Insecure)"
-msgstr "&Zapisz to hasło (niebezpieczne)"
+#: mpr.rc:44 wininet.rc:46 wininet.rc:66
+msgid "&Save this password (insecure)"
+msgstr "&Zapamiętaj to hasło (niebezpieczne)"
 
 #: mpr.rc:27
 msgid "Entire Network"
@@ -8316,10 +8316,6 @@ msgstr "Dupleks:"
 #: wininet.rc:39 wininet.rc:59
 msgid "Realm"
 msgstr "Obszar"
-
-#: wininet.rc:46 wininet.rc:66
-msgid "&Save this password (insecure)"
-msgstr "&Zapamiętaj to hasło (niebezpieczne)"
 
 #: wininet.rc:54
 msgid "Authentication Required"

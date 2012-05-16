@@ -6579,8 +6579,8 @@ msgstr "Користувач"
 msgid "Password"
 msgstr "Пароль"
 
-#: mpr.rc:44
-msgid "&Save this password (Insecure)"
+#: mpr.rc:44 wininet.rc:46 wininet.rc:66
+msgid "&Save this password (insecure)"
 msgstr "&Зберегти цей пароль (небезпечно)"
 
 #: mpr.rc:27
@@ -8295,10 +8295,6 @@ msgstr "Дуплекс:"
 #: wininet.rc:39 wininet.rc:59
 msgid "Realm"
 msgstr "Область"
-
-#: wininet.rc:46 wininet.rc:66
-msgid "&Save this password (insecure)"
-msgstr "&Зберегти цей пароль (небезпечно)"
 
 #: wininet.rc:54
 msgid "Authentication Required"

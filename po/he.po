@@ -6817,8 +6817,8 @@ msgstr "משתמש"
 msgid "Password"
 msgstr "ססמה"
 
-#: mpr.rc:44
-msgid "&Save this password (Insecure)"
+#: mpr.rc:44 wininet.rc:46 wininet.rc:66
+msgid "&Save this password (insecure)"
 msgstr "&שמירת ססמה זו (לא מאובטח)"
 
 #: mpr.rc:27
@@ -8489,10 +8489,6 @@ msgstr "דו־צדדי:"
 #: wininet.rc:39 wininet.rc:59
 msgid "Realm"
 msgstr "תחום"
-
-#: wininet.rc:46 wininet.rc:66
-msgid "&Save this password (insecure)"
-msgstr "&שמירת ססמה זו (לא מאובטח)"
 
 #: wininet.rc:54
 msgid "Authentication Required"

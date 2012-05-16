@@ -6584,8 +6584,8 @@ msgstr ""
 msgid "Password"
 msgstr ""
 
-#: mpr.rc:44
-msgid "&Save this password (Insecure)"
+#: mpr.rc:44 wininet.rc:46 wininet.rc:66
+msgid "&Save this password (insecure)"
 msgstr ""
 
 #: mpr.rc:27
@@ -8243,10 +8243,6 @@ msgstr ""
 
 #: wininet.rc:39 wininet.rc:59
 msgid "Realm"
-msgstr ""
-
-#: wininet.rc:46 wininet.rc:66
-msgid "&Save this password (insecure)"
 msgstr ""
 
 #: wininet.rc:54

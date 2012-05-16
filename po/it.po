@@ -6601,8 +6601,8 @@ msgstr "Utente"
 msgid "Password"
 msgstr "Password"
 
-#: mpr.rc:44
-msgid "&Save this password (Insecure)"
+#: mpr.rc:44 wininet.rc:46 wininet.rc:66
+msgid "&Save this password (insecure)"
 msgstr "&Memorizza la password (non sicuro)"
 
 #: mpr.rc:27
@@ -8323,10 +8323,6 @@ msgstr "Fronte retro:"
 #: wininet.rc:39 wininet.rc:59
 msgid "Realm"
 msgstr "Dominio"
-
-#: wininet.rc:46 wininet.rc:66
-msgid "&Save this password (insecure)"
-msgstr "&Memorizza la password (non sicuro)"
 
 #: wininet.rc:54
 msgid "Authentication Required"

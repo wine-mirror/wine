@@ -6560,8 +6560,8 @@ msgstr "ユーザー名"
 msgid "Password"
 msgstr "パスワード"
 
-#: mpr.rc:44
-msgid "&Save this password (Insecure)"
+#: mpr.rc:44 wininet.rc:46 wininet.rc:66
+msgid "&Save this password (insecure)"
 msgstr "パスワードを保存する(&S)(セキュアではありません)"
 
 #: mpr.rc:27
@@ -8242,10 +8242,6 @@ msgstr "両面印刷:"
 #: wininet.rc:39 wininet.rc:59
 msgid "Realm"
 msgstr "領域"
-
-#: wininet.rc:46 wininet.rc:66
-msgid "&Save this password (insecure)"
-msgstr "パスワードを保存する(&S)(セキュアではありません)"
 
 #: wininet.rc:54
 msgid "Authentication Required"

@@ -6480,8 +6480,8 @@ msgstr "Uzanto"
 msgid "Password"
 msgstr "Pasvorto"
 
-#: mpr.rc:44
-msgid "&Save this password (Insecure)"
+#: mpr.rc:44 wininet.rc:46 wininet.rc:66
+msgid "&Save this password (insecure)"
 msgstr "&Konservi pasvorton ( RISKE! )"
 
 #: mpr.rc:27
@@ -8094,10 +8094,6 @@ msgstr "Duobla:"
 #: wininet.rc:39 wininet.rc:59
 msgid "Realm"
 msgstr "Regno"
-
-#: wininet.rc:46 wininet.rc:66
-msgid "&Save this password (insecure)"
-msgstr "&Konservi pasvorton ( RISKE! )"
 
 #: wininet.rc:54
 msgid "Authentication Required"
