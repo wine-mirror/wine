@@ -407,10 +407,37 @@ static HRESULT WINAPI IAssemblyNameImpl_GetVersion(IAssemblyName *iface,
 
 static HRESULT WINAPI IAssemblyNameImpl_IsEqual(IAssemblyName *iface,
                                                 IAssemblyName *pName,
-                                                DWORD dwCmpFlags)
+                                                DWORD flags)
 {
-    FIXME("(%p, %p, %d) stub!\n", iface, pName, dwCmpFlags);
-    return E_NOTIMPL;
+    IAssemblyNameImpl *name1 = impl_from_IAssemblyName(iface);
+    IAssemblyNameImpl *name2 = impl_from_IAssemblyName(pName);
+
+    TRACE("(%p, %p, 0x%08x)\n", iface, pName, flags);
+
+    if (!pName) return S_FALSE;
+    if (flags & ~ASM_CMPF_IL_ALL) FIXME("unsupported flags\n");
+
+    if ((flags & ASM_CMPF_NAME) && strcmpW(name1->name, name2->name)) return S_FALSE;
+    if (name1->versize && name2->versize)
+    {
+        if ((flags & ASM_CMPF_MAJOR_VERSION) &&
+            name1->version[0] != name2->version[0]) return S_FALSE;
+        if ((flags & ASM_CMPF_MINOR_VERSION) &&
+            name1->version[1] != name2->version[1]) return S_FALSE;
+        if ((flags & ASM_CMPF_BUILD_NUMBER) &&
+            name1->version[2] != name2->version[2]) return S_FALSE;
+        if ((flags & ASM_CMPF_REVISION_NUMBER) &&
+            name1->version[3] != name2->version[3]) return S_FALSE;
+    }
+    if ((flags & ASM_CMPF_PUBLIC_KEY_TOKEN) &&
+        name1->haspubkey && name2->haspubkey &&
+        memcmp(name1->pubkey, name2->pubkey, sizeof(name1->pubkey))) return S_FALSE;
+
+    if ((flags & ASM_CMPF_CULTURE) &&
+        name1->culture && name2->culture &&
+        strcmpW(name1->culture, name2->culture)) return S_FALSE;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IAssemblyNameImpl_Clone(IAssemblyName *iface,
