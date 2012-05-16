@@ -2456,23 +2456,24 @@ static struct image_format_dimension image_format_dimensions[] =
     {NULL}
 };
 
-/* FIXME: Need to handle multi-framed images */
 GpStatus WINGDIPAPI GdipImageGetFrameCount(GpImage *image,
     GDIPCONST GUID* dimensionID, UINT* count)
 {
-    static int calls;
-
     TRACE("(%p,%s,%p)\n", image, debugstr_guid(dimensionID), count);
 
     if(!image || !count)
         return InvalidParameter;
 
-    if(!(calls++))
-        FIXME("returning frame count of 1\n");
+    if (!dimensionID ||
+        IsEqualGUID(dimensionID, &image->format) ||
+        IsEqualGUID(dimensionID, &FrameDimensionPage) ||
+        IsEqualGUID(dimensionID, &FrameDimensionTime))
+    {
+        *count = image->frame_count;
+        return Ok;
+    }
 
-    *count = 1;
-
-    return Ok;
+    return InvalidParameter;
 }
 
 GpStatus WINGDIPAPI GdipImageGetFrameDimensionsCount(GpImage *image,

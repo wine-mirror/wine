@@ -2298,7 +2298,7 @@ static void test_multiframegif(void)
     count = 12345;
     stat = GdipImageGetFrameCount((GpImage*)bmp, &dimension, &count);
     expect(Ok, stat);
-    todo_wine expect(2, count);
+    expect(2, count);
 
     /* SelectActiveFrame overwrites our current data */
     stat = GdipImageSelectActiveFrame((GpImage*)bmp, &dimension, 1);
