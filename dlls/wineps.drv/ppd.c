@@ -459,14 +459,12 @@ static BOOL PSDRV_PPDGetNextTuple(FILE *fp, PPDTuple *tuple)
 }
 
 /*********************************************************************
+ *                       get_pagesize
  *
- *		PSDRV_PPDGetPageSizeInfo
- *
- * Searches ppd PageSize list to return entry matching name or creates new
+ * Searches ppd PageSize list to return entry matching name or optionally creates new
  * entry which is appended to the list if name is not found.
- *
  */
-static PAGESIZE *PSDRV_PPDGetPageSizeInfo(PPD *ppd, char *name)
+static PAGESIZE *get_pagesize( PPD *ppd, char *name, BOOL create )
 {
     PAGESIZE *page;
 
@@ -475,6 +473,8 @@ static PAGESIZE *PSDRV_PPDGetPageSizeInfo(PPD *ppd, char *name)
         if(!strcmp(page->Name, name))
             return page;
     }
+
+    if (!create) return NULL;
 
     page = HeapAlloc( PSDRV_Heap,  HEAP_ZERO_MEMORY, sizeof(*page) );
     list_add_tail(&ppd->PageSizes, &page->entry);
@@ -711,7 +711,7 @@ PPD *PSDRV_ParsePPD(char *fname)
 	}
 
 	else if(!strcmp("*PageSize", tuple.key)) {
-	    page = PSDRV_PPDGetPageSizeInfo(ppd, tuple.option);
+            page = get_pagesize( ppd, tuple.option, TRUE );
 
 	    if(!page->Name) {
 	        int i;
@@ -747,17 +747,17 @@ PPD *PSDRV_ParsePPD(char *fname)
 	    }
 	}
 
-        else if(!strcmp("*DefaultPageSize", tuple.key)) {
-            if(default_pagesize) {
-                WARN("Already set default pagesize\n");
-            } else {
+        else if(!strcmp("*DefaultPageSize", tuple.key))
+        {
+            if (!default_pagesize)
+            {
                 default_pagesize = tuple.value;
                 tuple.value = NULL;
-           }
+            }
         }
 
         else if(!strcmp("*ImageableArea", tuple.key)) {
-	    page = PSDRV_PPDGetPageSizeInfo(ppd, tuple.option);
+            page = get_pagesize( ppd, tuple.option, TRUE );
 
 	    if(!page->Name) {
 	        page->Name = tuple.option;
@@ -779,9 +779,8 @@ PPD *PSDRV_ParsePPD(char *fname)
 #undef PIA
 	}
 
-
 	else if(!strcmp("*PaperDimension", tuple.key)) {
-	    page = PSDRV_PPDGetPageSizeInfo(ppd, tuple.option);
+            page = get_pagesize( ppd, tuple.option, TRUE );
 
 	    if(!page->Name) {
 	        page->Name = tuple.option;
@@ -932,20 +931,18 @@ PPD *PSDRV_ParsePPD(char *fname)
     }
 
     ppd->DefaultPageSize = NULL;
-    if(default_pagesize) {
-	LIST_FOR_EACH_ENTRY(page, &ppd->PageSizes, PAGESIZE, entry) {
-            if(!strcmp(page->Name, default_pagesize)) {
-                ppd->DefaultPageSize = page;
-                TRACE("DefaultPageSize: %s\n", page->Name);
-                break;
-            }
-        }
-        HeapFree(PSDRV_Heap, 0, default_pagesize);
-    }
-    if(!ppd->DefaultPageSize) {
-        ppd->DefaultPageSize = LIST_ENTRY(list_head(&ppd->PageSizes), PAGESIZE, entry);
+    if (default_pagesize)
+        ppd->DefaultPageSize = get_pagesize( ppd, default_pagesize, FALSE );
+
+    if (!ppd->DefaultPageSize)
+    {
+        struct list *head = list_head( &ppd->PageSizes );
+        if (head) ppd->DefaultPageSize = LIST_ENTRY( head, PAGESIZE, entry );
         TRACE("Setting DefaultPageSize to first in list\n");
     }
+    TRACE( "DefaultPageSize: %s\n", ppd->DefaultPageSize ? ppd->DefaultPageSize->Name : "<not set>" );
+
+    HeapFree( PSDRV_Heap, 0, default_pagesize );
 
     ppd->DefaultDuplex = NULL;
     if (default_duplex)
