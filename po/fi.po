@@ -10491,7 +10491,7 @@ msgstr "Piilotetut komponenttikategoriat"
 msgid "&Toolbar"
 msgstr "T&yökalupalkki"
 
-#: oleview.rc:65 oleview.rc:87 winefile.rc:64
+#: oleview.rc:65 oleview.rc:87 winefile.rc:64 wordpad.rc:71 wordpad.rc:264
 msgid "&Status Bar"
 msgstr "Ti&lapalkki"
 
@@ -13597,16 +13597,12 @@ msgid "&Get text"
 msgstr "&Poimi teksti"
 
 #: wordpad.rc:69 wordpad.rc:262
-msgid "&Formatbar"
+msgid "&Format Bar"
 msgstr "&Muotoilupalkki"
 
 #: wordpad.rc:70 wordpad.rc:263
 msgid "&Ruler"
 msgstr "&Viivoitin"
-
-#: wordpad.rc:71 wordpad.rc:264
-msgid "&Statusbar"
-msgstr "&Tilapalkki"
 
 #: wordpad.rc:75
 msgid "&Insert"

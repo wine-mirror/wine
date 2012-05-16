@@ -10520,7 +10520,7 @@ msgstr "&Скрытые категории компонентов"
 msgid "&Toolbar"
 msgstr "Панель &инструментов"
 
-#: oleview.rc:65 oleview.rc:87 winefile.rc:64
+#: oleview.rc:65 oleview.rc:87 winefile.rc:64 wordpad.rc:71 wordpad.rc:264
 msgid "&Status Bar"
 msgstr "&Строка состояния"
 
@@ -13632,16 +13632,12 @@ msgid "&Get text"
 msgstr "П&олучить текст"
 
 #: wordpad.rc:69 wordpad.rc:262
-msgid "&Formatbar"
+msgid "&Format Bar"
 msgstr "П&анель форматирования"
 
 #: wordpad.rc:70 wordpad.rc:263
 msgid "&Ruler"
 msgstr "&Линейка"
-
-#: wordpad.rc:71 wordpad.rc:264
-msgid "&Statusbar"
-msgstr "&Строка состояния"
 
 #: wordpad.rc:75
 msgid "&Insert"

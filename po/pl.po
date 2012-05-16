@@ -10563,7 +10563,7 @@ msgstr "&Ukryte kategorie komponentów"
 msgid "&Toolbar"
 msgstr "Pasek &narzędzi"
 
-#: oleview.rc:65 oleview.rc:87 winefile.rc:64
+#: oleview.rc:65 oleview.rc:87 winefile.rc:64 wordpad.rc:71 wordpad.rc:264
 msgid "&Status Bar"
 msgstr "Pasek &stanu"
 
@@ -13679,16 +13679,12 @@ msgid "&Get text"
 msgstr "&Pobierz tekst"
 
 #: wordpad.rc:69 wordpad.rc:262
-msgid "&Formatbar"
+msgid "&Format Bar"
 msgstr "P&asek formatu"
 
 #: wordpad.rc:70 wordpad.rc:263
 msgid "&Ruler"
 msgstr "&Linijka"
-
-#: wordpad.rc:71 wordpad.rc:264
-msgid "&Statusbar"
-msgstr "&Pasek stanu"
 
 #: wordpad.rc:75
 msgid "&Insert"

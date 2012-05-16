@@ -9978,7 +9978,7 @@ msgstr ""
 msgid "&Toolbar"
 msgstr ""
 
-#: oleview.rc:65 oleview.rc:87 winefile.rc:64
+#: oleview.rc:65 oleview.rc:87 winefile.rc:64 wordpad.rc:71 wordpad.rc:264
 msgid "&Status Bar"
 msgstr "&Stata linio"
 
@@ -13009,16 +13009,12 @@ msgid "&Get text"
 msgstr "&Atingi tekston"
 
 #: wordpad.rc:69 wordpad.rc:262
-msgid "&Formatbar"
+msgid "&Format Bar"
 msgstr ""
 
 #: wordpad.rc:70 wordpad.rc:263
 msgid "&Ruler"
 msgstr "&Mezurilo"
-
-#: wordpad.rc:71 wordpad.rc:264
-msgid "&Statusbar"
-msgstr "&Stata linio"
 
 #: wordpad.rc:75
 msgid "&Insert"

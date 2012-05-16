@@ -10502,7 +10502,7 @@ msgstr "隠されたコンポーネントのカテゴリ(&H)"
 msgid "&Toolbar"
 msgstr "ツール バー(&T)"
 
-#: oleview.rc:65 oleview.rc:87 winefile.rc:64
+#: oleview.rc:65 oleview.rc:87 winefile.rc:64 wordpad.rc:71 wordpad.rc:264
 msgid "&Status Bar"
 msgstr "ステータス バー(&S)"
 
@@ -13611,16 +13611,12 @@ msgid "&Get text"
 msgstr "テキストの取得(&G)"
 
 #: wordpad.rc:69 wordpad.rc:262
-msgid "&Formatbar"
+msgid "&Format Bar"
 msgstr "書式バー(&F)"
 
 #: wordpad.rc:70 wordpad.rc:263
 msgid "&Ruler"
 msgstr "ルーラー(&R)"
-
-#: wordpad.rc:71 wordpad.rc:264
-msgid "&Statusbar"
-msgstr "ステータス バー(&S)"
 
 #: wordpad.rc:75
 msgid "&Insert"

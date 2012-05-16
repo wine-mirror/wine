@@ -10469,7 +10469,7 @@ msgstr "컴포넌트 분류 숨기기(&H)"
 msgid "&Toolbar"
 msgstr "도구바(&T)"
 
-#: oleview.rc:65 oleview.rc:87 winefile.rc:64
+#: oleview.rc:65 oleview.rc:87 winefile.rc:64 wordpad.rc:71 wordpad.rc:264
 msgid "&Status Bar"
 msgstr "상태바(&S)"
 
@@ -13570,16 +13570,12 @@ msgid "&Get text"
 msgstr "문자열 얻기(&G)"
 
 #: wordpad.rc:69 wordpad.rc:262
-msgid "&Formatbar"
+msgid "&Format Bar"
 msgstr "형식바(&F)"
 
 #: wordpad.rc:70 wordpad.rc:263
 msgid "&Ruler"
 msgstr "눈금바(&R)"
-
-#: wordpad.rc:71 wordpad.rc:264
-msgid "&Statusbar"
-msgstr "상태바(&S)"
 
 #: wordpad.rc:75
 msgid "&Insert"

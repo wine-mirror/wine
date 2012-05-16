@@ -10273,7 +10273,7 @@ msgstr ""
 msgid "&Toolbar"
 msgstr "&Araç Çubuğu"
 
-#: oleview.rc:65 oleview.rc:87 winefile.rc:64
+#: oleview.rc:65 oleview.rc:87 winefile.rc:64 wordpad.rc:71 wordpad.rc:264
 msgid "&Status Bar"
 msgstr "&Durum Çubuğu"
 
@@ -13331,15 +13331,11 @@ msgid "&Get text"
 msgstr "&Metni al"
 
 #: wordpad.rc:69 wordpad.rc:262
-msgid "&Formatbar"
+msgid "&Format Bar"
 msgstr ""
 
 #: wordpad.rc:70 wordpad.rc:263
 msgid "&Ruler"
-msgstr ""
-
-#: wordpad.rc:71 wordpad.rc:264
-msgid "&Statusbar"
 msgstr ""
 
 #: wordpad.rc:75

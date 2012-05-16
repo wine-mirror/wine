@@ -10527,7 +10527,7 @@ msgstr "&Paslėptų komponentų kategorijos"
 msgid "&Toolbar"
 msgstr "&Įrankių juosta"
 
-#: oleview.rc:65 oleview.rc:87 winefile.rc:64
+#: oleview.rc:65 oleview.rc:87 winefile.rc:64 wordpad.rc:71 wordpad.rc:264
 msgid "&Status Bar"
 msgstr "&Būsenos juosta"
 
@@ -13644,16 +13644,12 @@ msgid "&Get text"
 msgstr "&Gauti tekstą"
 
 #: wordpad.rc:69 wordpad.rc:262
-msgid "&Formatbar"
+msgid "&Format Bar"
 msgstr "&Formatų juosta"
 
 #: wordpad.rc:70 wordpad.rc:263
 msgid "&Ruler"
 msgstr "&Liniuotė"
-
-#: wordpad.rc:71 wordpad.rc:264
-msgid "&Statusbar"
-msgstr "&Būsenos juosta"
 
 #: wordpad.rc:75
 msgid "&Insert"
