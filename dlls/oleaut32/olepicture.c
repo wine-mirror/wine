@@ -1776,7 +1776,7 @@ static HRESULT WINAPI OLEPictureImpl_Save(
         hResult = S_OK;
         break;
     case PICTYPE_BITMAP:
-        if (This->bIsDirty) {
+        if (This->bIsDirty || !This->data) {
             switch (This->keepOrigFormat ? This->loadtime_format : BITMAP_FORMAT_BMP) {
             case BITMAP_FORMAT_BMP:
                 iSerializeResult = serializeBMP(This->desc.u.bmp.hbitmap, &pIconData, &iDataSize);
