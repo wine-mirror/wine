@@ -1423,6 +1423,27 @@ HRESULT load_data(IDirect3DRM3* iface, LPDIRECTXFILEDATA data_object, LPIID* GUI
             FIXME("Processing material not supported yet\n");
          }
     }
+    else if (IsEqualGUID(guid, &TID_D3DRMFrameTransformMatrix))
+    {
+        TRACE("Found TID_D3DRMFrameTransformMatrix\n");
+
+        if (parent_frame)
+        {
+            D3DRMMATRIX4D matrix;
+            DWORD size;
+
+            TRACE("Load Frame Transform Matrix data\n");
+
+            size = sizeof(matrix);
+            hr = IDirectXFileData_GetData(data_object, NULL, &size, (void**)matrix);
+            if ((hr != DXFILE_OK) || (size != sizeof(matrix)))
+                goto end;
+
+            hr = IDirect3DRMFrame3_AddTransform(parent_frame, D3DRMCOMBINE_REPLACE, matrix);
+            if (FAILED(hr))
+                goto end;
+        }
+    }
     else
     {
         FIXME("Found unknown TID %s\n", debugstr_guid(guid));
