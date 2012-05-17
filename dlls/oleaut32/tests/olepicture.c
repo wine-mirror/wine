@@ -953,6 +953,59 @@ static void test_himetric(void)
     DeleteDC(hdc);
 }
 
+static void test_load_save_bmp(void)
+{
+    IPicture *pic;
+    PICTDESC desc;
+    short type;
+    OLE_HANDLE handle;
+    HGLOBAL hmem;
+    DWORD *mem;
+    IPersistStream *src_stream;
+    IStream *dst_stream;
+    HRESULT hr;
+
+    desc.cbSizeofstruct = sizeof(desc);
+    desc.picType = PICTYPE_BITMAP;
+    desc.u.bmp.hpal = 0;
+    desc.u.bmp.hbitmap = CreateBitmap(1, 1, 1, 1, NULL);
+    hr = OleCreatePictureIndirect(&desc, &IID_IPicture, FALSE, (void**)&pic);
+    ok(hr == S_OK, "OleCreatePictureIndirect error %#x\n", hr);
+
+    type = -1;
+    hr = IPicture_get_Type(pic, &type);
+    ok(hr == S_OK,"get_Type error %#8x\n", hr);
+    ok(type == PICTYPE_BITMAP,"expected picture type PICTYPE_BITMAP, got %d\n", type);
+
+    hr = IPicture_get_Handle(pic, &handle);
+    ok(hr == S_OK,"get_Handle error %#8x\n", hr);
+    ok(UIntToPtr(handle) == desc.u.bmp.hbitmap, "get_Handle returned wrong handle %#x\n", handle);
+
+    hmem = GlobalAlloc(GMEM_ZEROINIT, 4096);
+    hr = CreateStreamOnHGlobal(hmem, FALSE, &dst_stream);
+    ok(hr == S_OK, "createstreamonhglobal error %#x\n", hr);
+
+    hr = IPicture_QueryInterface(pic, &IID_IPersistStream, (void **)&src_stream);
+    ok(hr == S_OK, "QueryInterface error %#x\n", hr);
+
+    hr = IPersistStream_Save(src_stream, dst_stream, TRUE);
+    ok(hr == S_OK, "Save error %#x\n", hr);
+
+    IPersistStream_Release(src_stream);
+    IStream_Release(dst_stream);
+
+    mem = GlobalLock(hmem);
+    ok(!memcmp(mem, "lt\0\0", 4), "got wrong stream header %04x\n", mem[0]);
+    ok(mem[1] == 66, "expected stream size 66, got %u\n", mem[1]);
+    ok(!memcmp(&mem[2], "BM", 2), "got wrong bmp header %04x\n", mem[2]);
+
+    GlobalUnlock(hmem);
+    GlobalFree(hmem);
+
+    DeleteObject(desc.u.bmp.hbitmap);
+    IPicture_Release(pic);
+}
+
 START_TEST(olepicture)
 {
     hOleaut32 = GetModuleHandleA("oleaut32.dll");
@@ -989,6 +1042,7 @@ START_TEST(olepicture)
     test_get_Type();
     test_OleLoadPicturePath();
     test_himetric();
+    test_load_save_bmp();
 }
 
 
