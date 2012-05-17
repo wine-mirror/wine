@@ -1173,7 +1173,7 @@ static BOOL PROPSHEET_CreateTabControl(HWND hwndParent,
     SendMessageW(hwndTabCtrl, TCM_SETIMAGELIST, 0, (LPARAM)psInfo->hImageList);
   }
 
-  SendMessageW(GetDlgItem(hwndTabCtrl, IDC_TABCONTROL), WM_SETREDRAW, 0, 0);
+  SendMessageW(hwndTabCtrl, WM_SETREDRAW, 0, 0);
   for (i = 0; i < nTabs; i++)
   {
     if ( psInfo->proppage[i].hasIcon )
@@ -1189,7 +1189,7 @@ static BOOL PROPSHEET_CreateTabControl(HWND hwndParent,
     item.pszText = (LPWSTR) psInfo->proppage[i].pszText;
     SendMessageW(hwndTabCtrl, TCM_INSERTITEMW, i, (LPARAM)&item);
   }
-  SendMessageW(GetDlgItem(hwndTabCtrl, IDC_TABCONTROL), WM_SETREDRAW, 1, 0);
+  SendMessageW(hwndTabCtrl, WM_SETREDRAW, 1, 0);
 
   return TRUE;
 }
