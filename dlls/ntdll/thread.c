@@ -30,6 +30,9 @@
 #ifdef HAVE_SYS_TIMES_H
 #include <sys/times.h>
 #endif
+#ifdef HAVE_SYS_SYSCALL_H
+#include <sys/syscall.h>
+#endif
 
 #define NONAMELESSUNION
 #include "ntstatus.h"
@@ -1183,6 +1186,11 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
 ULONG WINAPI NtGetCurrentProcessorNumber(void)
 {
     ULONG processor;
+
+#if defined(__linux__) && defined(__NR_getcpu)
+    int res = syscall(__NR_getcpu, &processor);
+    if (res != -1) return processor;
+#endif
 
     if (NtCurrentTeb()->Peb->NumberOfProcessors > 1)
     {
