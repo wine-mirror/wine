@@ -339,16 +339,18 @@ static void test_dib_info(HBITMAP hbm, const void *bits, const BITMAPINFOHEADER 
     ok(ret == 0, "%d != 0\n", ret);
 }
 
-#define test_color(hdc, color, exp) \
-{ \
-    COLORREF c; \
-    c = SetPixel(hdc, 0, 0, color); \
-    ok(c == exp, "SetPixel failed: got 0x%06x expected 0x%06x\n", c, (UINT)exp); \
-    c = GetPixel(hdc, 0, 0); \
-    ok(c == exp, "GetPixel failed: got 0x%06x expected 0x%06x\n", c, (UINT)exp); \
-    c = GetNearestColor(hdc, color); \
-    ok(c == exp, "GetNearestColor failed: got 0x%06x expected 0x%06x\n", c, (UINT)exp); \
+static void _test_color( int line, HDC hdc, COLORREF color, COLORREF exp )
+{
+    COLORREF c;
+    c = SetPixel(hdc, 0, 0, color);
+    ok_(__FILE__, line)(c == exp, "SetPixel failed: got 0x%06x expected 0x%06x\n", c, exp);
+    c = GetPixel(hdc, 0, 0);
+    ok_(__FILE__, line)(c == exp, "GetPixel failed: got 0x%06x expected 0x%06x\n", c, exp);
+    c = GetNearestColor(hdc, color);
+    ok_(__FILE__, line)(c == exp, "GetNearestColor failed: got 0x%06x expected 0x%06x\n", c, exp);
 }
+#define test_color(hdc, color, exp) _test_color( __LINE__, hdc, color, exp )
+
 
 static void test_dib_bits_access( HBITMAP hdib, void *bits )
 {
@@ -1512,6 +1514,113 @@ static void test_bitmap(void)
 
     DeleteObject(hbmp);
     DeleteDC(hdc);
+}
+
+static COLORREF get_nearest( int r, int g, int b )
+{
+    return (r*r + g*g + b*b < (255-r)*(255-r) + (255-g)*(255-g) + (255-b)*(255-b)) ? 0x000000 : 0xffffff;
+}
+
+static int is_black_pen( COLORREF fg, COLORREF bg, int r, int g, int b )
+{
+    if (fg == 0 || bg == 0xffffff) return RGB(r,g,b) != 0xffffff && RGB(r,g,b) != bg;
+    return RGB(r,g,b) == 0x000000 || RGB(r,g,b) == bg;
+}
+
+static void test_bitmap_colors( HDC hdc, COLORREF fg, COLORREF bg, int r, int g, int b )
+{
+    static const WORD pattern_bits[] = { 0x5555, 0xaaaa, 0x5555, 0xaaaa, 0x5555, 0xaaaa, 0x5555, 0xaaaa };
+    WORD bits[16];
+    COLORREF res;
+    HBRUSH old_brush;
+    HPEN old_pen;
+    HBITMAP pattern;
+
+    res = SetPixel( hdc, 0, 0, RGB(r,g,b) );
+    ok( res == get_nearest( r, g, b ),
+        "wrong result %06x for %02x,%02x,%02x fg %06x bg %06x\n", res, r, g, b, fg, bg );
+    res = GetPixel( hdc, 0, 0 );
+    ok( res == get_nearest( r, g, b ),
+        "wrong result %06x for %02x,%02x,%02x fg %06x bg %06x\n", res, r, g, b, fg, bg );
+    res = GetNearestColor( hdc, RGB(r,g,b) );
+    ok( res == get_nearest( r, g, b ),
+        "wrong result %06x for %02x,%02x,%02x fg %06x bg %06x\n", res, r, g, b, fg, bg );
+
+    /* solid pen */
+    old_pen = SelectObject( hdc, CreatePen( PS_SOLID, 1, RGB(r,g,b) ));
+    MoveToEx( hdc, 0, 0, NULL );
+    LineTo( hdc, 16, 0 );
+    res = GetPixel( hdc, 0, 0 );
+    ok( res == (is_black_pen( fg, bg, r, g, b ) ? 0 : 0xffffff),
+        "wrong result %06x for %02x,%02x,%02x fg %06x bg %06x\n", res, r, g, b, fg, bg );
+    GetBitmapBits( GetCurrentObject( hdc, OBJ_BITMAP ), sizeof(bits), bits );
+    ok( bits[0] == (is_black_pen( fg, bg, r, g, b ) ? 0x00 : 0xffff),
+        "wrong bits %04x for %02x,%02x,%02x fg %06x bg %06x\n", bits[0], r, g, b, fg, bg );
+    DeleteObject( SelectObject( hdc, old_pen ));
+
+    /* mono DDB pattern brush */
+    pattern = CreateBitmap( 16, 8, 1, 1, pattern_bits );
+    old_brush = SelectObject( hdc, CreatePatternBrush( pattern ));
+    PatBlt( hdc, 0, 0, 16, 16, PATCOPY );
+    GetBitmapBits( GetCurrentObject( hdc, OBJ_BITMAP ), sizeof(bits), bits );
+    ok( bits[0] == 0x5555,
+        "wrong bits %04x for %02x,%02x,%02x fg %06x bg %06x\n", bits[0], r, g, b, fg, bg );
+    DeleteObject( SelectObject( hdc, old_brush ));
+    DeleteObject( pattern );
+}
+
+static void test_mono_bitmap(void)
+{
+    static const COLORREF colors[][2] =
+    {
+        { RGB(0x00,0x00,0x00), RGB(0xff,0xff,0xff) },
+        { RGB(0xff,0xff,0xff), RGB(0x00,0x00,0x00) },
+        { RGB(0x00,0x00,0x00), RGB(0xff,0xff,0xfe) },
+        { RGB(0x00,0x01,0x00), RGB(0xff,0xff,0xff) },
+        { RGB(0x00,0x00,0x00), RGB(0x80,0x80,0x80) },
+        { RGB(0x80,0x80,0x80), RGB(0xff,0xff,0xff) },
+        { RGB(0x30,0x40,0x50), RGB(0x60,0x70,0x80) },
+        { RGB(0xa0,0xa0,0xa0), RGB(0x20,0x30,0x10) },
+        { PALETTEINDEX(0), PALETTEINDEX(255) },
+        { PALETTEINDEX(1), PALETTEINDEX(2) },
+    };
+
+    HBITMAP hbmp;
+    HDC hdc;
+    DWORD col;
+    int i, r, g, b;
+
+    hdc = CreateCompatibleDC(0);
+    assert(hdc != 0);
+
+    hbmp = CreateBitmap(16, 16, 1, 1, NULL);
+    assert(hbmp != NULL);
+
+    SelectObject( hdc, hbmp );
+
+    for (col = 0; col < sizeof(colors) / sizeof(colors[0]); col++)
+    {
+        SetTextColor( hdc, colors[col][0] );
+        SetBkColor( hdc, colors[col][1] );
+
+        for (i = 0; i < 256; i++)
+        {
+            HPALETTE pal = GetCurrentObject( hdc, OBJ_PAL );
+            PALETTEENTRY ent;
+
+            if (!GetPaletteEntries( pal, i, 1, &ent )) GetPaletteEntries( pal, 0, 1, &ent );
+            test_color( hdc, PALETTEINDEX(i), get_nearest( ent.peRed, ent.peGreen, ent.peBlue ));
+            test_color( hdc, DIBINDEX(i), (i == 1) ? 0xffffff : 0x000000 );
+        }
+
+        for (r = 0; r < 256; r += 15)
+            for (g = 0; g < 256; g += 15)
+                for (b = 0; b < 256; b += 15)
+                    test_bitmap_colors( hdc, colors[col][0], colors[col][1], r, g, b );
+    }
+
+    DeleteDC(hdc);
+    DeleteObject(hbmp);
 }
 
 static void test_bmBits(void)
@@ -5386,6 +5495,7 @@ START_TEST(bitmap)
     test_dib_formats();
     test_mono_dibsection();
     test_bitmap();
+    test_mono_bitmap();
     test_bmBits();
     test_GetDIBits_selected_DIB(1);
     test_GetDIBits_selected_DIB(4);
