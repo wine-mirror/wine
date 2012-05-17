@@ -5485,7 +5485,7 @@ TOOLBAR_LButtonDown (TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
                 ScreenToClient(infoPtr->hwndSelf, &pt);
                 nHit = TOOLBAR_InternalHitTest(infoPtr, &pt, &button);
                 if (!infoPtr->bAnchor || button)
-                    TOOLBAR_SetHotItemEx(infoPtr, nHit, HICF_MOUSE | HICF_LMOUSE);
+                    TOOLBAR_SetHotItemEx(infoPtr, button ? nHit : TOOLBAR_NOWHERE, HICF_MOUSE | HICF_LMOUSE);
                 
                 /* remove any left mouse button down or double-click messages
                  * so that we can get a toggle effect on the button */
@@ -5503,7 +5503,7 @@ TOOLBAR_LButtonDown (TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
 	btnPtr->fsState |= TBSTATE_PRESSED;
 
-        TOOLBAR_SetHotItemEx(infoPtr, nHit, HICF_MOUSE | HICF_LMOUSE);
+        TOOLBAR_SetHotItemEx(infoPtr, button ? nHit : TOOLBAR_NOWHERE, HICF_MOUSE | HICF_LMOUSE);
 
         if (btnPtr->fsState & TBSTATE_ENABLED)
 	    InvalidateRect(infoPtr->hwndSelf, &btnPtr->rect, TRUE);
@@ -5559,7 +5559,7 @@ TOOLBAR_LButtonUp (TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     nHit = TOOLBAR_InternalHitTest (infoPtr, &pt, &button);
 
     if (!infoPtr->bAnchor || button)
-        TOOLBAR_SetHotItemEx(infoPtr, nHit, HICF_MOUSE | HICF_LMOUSE);
+        TOOLBAR_SetHotItemEx(infoPtr, button ? nHit : TOOLBAR_NOWHERE, HICF_MOUSE | HICF_LMOUSE);
 
     if (infoPtr->nButtonDrag >= 0) {
         RECT rcClient;
@@ -5619,7 +5619,7 @@ TOOLBAR_LButtonUp (TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
         }
 
         /* button under cursor changed so need to re-set hot item */
-        TOOLBAR_SetHotItemEx(infoPtr, nHit, HICF_MOUSE | HICF_LMOUSE);
+        TOOLBAR_SetHotItemEx(infoPtr, button ? nHit : TOOLBAR_NOWHERE, HICF_MOUSE | HICF_LMOUSE);
         infoPtr->nButtonDrag = -1;
 
         TOOLBAR_SendNotify(&hdr, infoPtr, TBN_TOOLBARCHANGE);
@@ -5849,7 +5849,7 @@ TOOLBAR_MouseMove (TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
     if (((infoPtr->dwStyle & TBSTYLE_FLAT) || GetWindowTheme (infoPtr->hwndSelf)) 
         && (!infoPtr->bAnchor || button))
-        TOOLBAR_SetHotItemEx(infoPtr, nHit, HICF_MOUSE);
+        TOOLBAR_SetHotItemEx(infoPtr, button ? nHit : TOOLBAR_NOWHERE, HICF_MOUSE);
 
     if (infoPtr->nOldHit != nHit)
     {
