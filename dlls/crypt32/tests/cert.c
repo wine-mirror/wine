@@ -2098,7 +2098,6 @@ static void testCreateSelfSignCert(void)
         if (context)
         {
             DWORD size = 0;
-            PCRYPT_KEY_PROV_INFO info;
 
             /* The context must have a key provider info property */
             ret = CertGetCertificateContextProperty(context,
@@ -2106,24 +2105,25 @@ static void testCreateSelfSignCert(void)
             ok(ret && size, "Expected non-zero key provider info\n");
             if (size)
             {
-                info = HeapAlloc(GetProcessHeap(), 0, size);
-                if (info)
+                PCRYPT_KEY_PROV_INFO pInfo = HeapAlloc(GetProcessHeap(), 0, size);
+
+                if (pInfo)
                 {
                     ret = CertGetCertificateContextProperty(context,
-                     CERT_KEY_PROV_INFO_PROP_ID, info, &size);
+                     CERT_KEY_PROV_INFO_PROP_ID, pInfo, &size);
                     ok(ret, "CertGetCertificateContextProperty failed: %08x\n",
                      GetLastError());
                     if (ret)
                     {
                         /* Sanity-check the key provider */
-                        ok(!lstrcmpW(info->pwszContainerName, cspNameW),
+                        ok(!lstrcmpW(pInfo->pwszContainerName, cspNameW),
                          "Unexpected key container\n");
-                        ok(!lstrcmpW(info->pwszProvName, MS_DEF_PROV_W),
+                        ok(!lstrcmpW(pInfo->pwszProvName, MS_DEF_PROV_W),
                          "Unexpected provider\n");
-                        ok(info->dwKeySpec == AT_SIGNATURE,
-                         "Expected AT_SIGNATURE, got %d\n", info->dwKeySpec);
+                        ok(pInfo->dwKeySpec == AT_SIGNATURE,
+                         "Expected AT_SIGNATURE, got %d\n", pInfo->dwKeySpec);
                     }
-                    HeapFree(GetProcessHeap(), 0, info);
+                    HeapFree(GetProcessHeap(), 0, pInfo);
                 }
             }
 
@@ -2152,7 +2152,6 @@ static void testCreateSelfSignCert(void)
     if (context)
     {
         DWORD size = 0;
-        PCRYPT_KEY_PROV_INFO info;
 
         /* The context must have a key provider info property */
         ret = CertGetCertificateContextProperty(context,
@@ -2160,24 +2159,25 @@ static void testCreateSelfSignCert(void)
         ok(ret && size, "Expected non-zero key provider info\n");
         if (size)
         {
-            info = HeapAlloc(GetProcessHeap(), 0, size);
-            if (info)
+            PCRYPT_KEY_PROV_INFO pInfo = HeapAlloc(GetProcessHeap(), 0, size);
+
+            if (pInfo)
             {
                 ret = CertGetCertificateContextProperty(context,
-                    CERT_KEY_PROV_INFO_PROP_ID, info, &size);
+                    CERT_KEY_PROV_INFO_PROP_ID, pInfo, &size);
                 ok(ret, "CertGetCertificateContextProperty failed: %08x\n",
                     GetLastError());
                 if (ret)
                 {
                     /* Sanity-check the key provider */
-                    ok(!lstrcmpW(info->pwszContainerName, cspNameW),
+                    ok(!lstrcmpW(pInfo->pwszContainerName, cspNameW),
                         "Unexpected key container\n");
-                    ok(!lstrcmpW(info->pwszProvName, MS_DEF_PROV_W),
+                    ok(!lstrcmpW(pInfo->pwszProvName, MS_DEF_PROV_W),
                         "Unexpected provider\n");
-                    ok(info->dwKeySpec == AT_KEYEXCHANGE,
-                        "Expected AT_KEYEXCHANGE, got %d\n", info->dwKeySpec);
+                    ok(pInfo->dwKeySpec == AT_KEYEXCHANGE,
+                        "Expected AT_KEYEXCHANGE, got %d\n", pInfo->dwKeySpec);
                 }
-                HeapFree(GetProcessHeap(), 0, info);
+                HeapFree(GetProcessHeap(), 0, pInfo);
             }
         }
 
