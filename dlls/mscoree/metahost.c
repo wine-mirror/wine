@@ -100,6 +100,29 @@ static void CDECL do_nothing(void)
 {
 }
 
+static MonoImage* image_open_module_handle_dummy(HMODULE module_handle,
+    char* fname, UINT has_entry_point, MonoImageOpenStatus* status, int abi_version)
+{
+    return loaded_monos[abi_version-1].mono_image_open(fname, status);
+}
+
+static CDECL MonoImage* image_open_module_handle_dummy_1(HMODULE module_handle,
+    char* fname, UINT has_entry_point, MonoImageOpenStatus* status)
+{
+    return image_open_module_handle_dummy(module_handle, fname, has_entry_point, status, 1);
+}
+
+static CDECL MonoImage* image_open_module_handle_dummy_2(HMODULE module_handle,
+    char* fname, UINT has_entry_point, MonoImageOpenStatus* status)
+{
+    return image_open_module_handle_dummy(module_handle, fname, has_entry_point, status, 2);
+}
+
+MonoImage* (CDECL * const image_from_handle_fn[NUM_ABI_VERSIONS])(HMODULE module_handle, char* fname, UINT has_entry_point, MonoImageOpenStatus* status) = {
+    image_open_module_handle_dummy_1,
+    image_open_module_handle_dummy_2
+};
+
 static void missing_runtime_message(const CLRRuntimeInfo *This)
 {
     if (This->major == 1)
@@ -172,7 +195,7 @@ static HRESULT load_mono(CLRRuntimeInfo *This, loaded_mono **result)
         LOAD_MONO_FUNCTION(mono_class_from_name);
         LOAD_MONO_FUNCTION(mono_class_get_method_from_name);
         LOAD_MONO_FUNCTION(mono_domain_assembly_open);
-        LOAD_MONO_FUNCTION(mono_image_open_from_module_handle);
+        LOAD_MONO_FUNCTION(mono_image_open);
         LOAD_MONO_FUNCTION(mono_install_assembly_preload_hook);
         LOAD_MONO_FUNCTION(mono_jit_exec);
         LOAD_MONO_FUNCTION(mono_jit_init);
@@ -207,19 +230,20 @@ static HRESULT load_mono(CLRRuntimeInfo *This, loaded_mono **result)
 
 #undef LOAD_MONO_FUNCTION
 
-#define LOAD_OPT_VOID_MONO_FUNCTION(x) do { \
+#define LOAD_OPT_MONO_FUNCTION(x, default) do { \
     (*result)->x = (void*)GetProcAddress((*result)->mono_handle, #x); \
     if (!(*result)->x) { \
-        (*result)->x = do_nothing; \
+        (*result)->x = default; \
     } \
 } while (0);
 
-        LOAD_OPT_VOID_MONO_FUNCTION(mono_runtime_set_shutting_down);
-        LOAD_OPT_VOID_MONO_FUNCTION(mono_thread_pool_cleanup);
-        LOAD_OPT_VOID_MONO_FUNCTION(mono_thread_suspend_all_other_threads);
-        LOAD_OPT_VOID_MONO_FUNCTION(mono_threads_set_shutting_down);
+        LOAD_OPT_MONO_FUNCTION(mono_image_open_from_module_handle, image_from_handle_fn[This->mono_abi_version-1]);
+        LOAD_OPT_MONO_FUNCTION(mono_runtime_set_shutting_down, do_nothing);
+        LOAD_OPT_MONO_FUNCTION(mono_thread_pool_cleanup, do_nothing);
+        LOAD_OPT_MONO_FUNCTION(mono_thread_suspend_all_other_threads, do_nothing);
+        LOAD_OPT_MONO_FUNCTION(mono_threads_set_shutting_down, do_nothing);
 
-#undef LOAD_OPT_VOID_MONO_FUNCTION
+#undef LOAD_OPT_MONO_FUNCTION
 
         (*result)->mono_profiler_install((MonoProfiler*)*result, mono_shutdown_callback_fn);
 
