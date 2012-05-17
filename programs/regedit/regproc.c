@@ -998,7 +998,7 @@ static void REGPROC_export_binary(WCHAR **line_buf, DWORD *line_buf_size, DWORD 
     if (type == REG_BINARY) {
         hex_prefix = hex;
     } else {
-        const WCHAR hex_format[] = {'h','e','x','(','%','u',')',':',0};
+        const WCHAR hex_format[] = {'h','e','x','(','%','x',')',':',0};
         hex_prefix = hex_buf;
         sprintfW(hex_buf, hex_format, type);
         if ((type == REG_SZ || type == REG_EXPAND_SZ || type == REG_MULTI_SZ) && !unicode)
