@@ -280,7 +280,6 @@ programs/wscript/ihost.tlb
 rsrc.pot
 server/wineserver
 server/wineserver-installed
-tools/fnt2bdf
 tools/fnt2fon
 tools/make_ctests
 tools/make_xftmpl

@@ -3,7 +3,6 @@ EXTRAINCL = @FREETYPEINCL@
 FREETYPELIBS = @FREETYPELIBS@
 
 PROGRAMS = \
-	fnt2bdf$(EXEEXT) \
 	fnt2fon$(EXEEXT) \
 	make_ctests$(EXEEXT) \
 	make_xftmpl$(EXEEXT) \
@@ -19,7 +18,6 @@ EXTRA_MANPAGES = \
 	winemaker.fr.man
 
 C_SRCS = \
-	fnt2bdf.c \
 	fnt2fon.c \
 	make_ctests.c \
 	make_xftmpl.c \
@@ -51,9 +49,6 @@ make_ctests$(EXEEXT): make_ctests.o
 
 make_xftmpl$(EXEEXT): make_xftmpl.o
 	$(CC) $(CFLAGS) -o $@ make_xftmpl.o $(LIBPORT) $(LDFLAGS)
-
-fnt2bdf$(EXEEXT): fnt2bdf.o
-	$(CC) $(CFLAGS) -o $@ fnt2bdf.o $(LIBPORT) $(LDFLAGS)
 
 fnt2fon$(EXEEXT): fnt2fon.o
 	$(CC) $(CFLAGS) -o $@ fnt2fon.o $(LIBPORT) $(LDFLAGS)
