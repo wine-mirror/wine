@@ -45,7 +45,7 @@
 #define IDC_INFO_COMMENTS   1107
 #define IDC_INFO_LABEL      1108
 
-#define ID_DWL_DIALOG       1200
+#define ID_DWL_GECKO_DIALOG 1200
 #define ID_DWL_PROGRESS     1201
 #define ID_DWL_INSTALL      1202
 #define ID_DWL_STATUS       1203

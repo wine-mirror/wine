@@ -72,6 +72,7 @@ typedef struct {
     const char *config_key;
     const char *url_config_key;
     const char *dir_config_key;
+    LPCWSTR dialog_template;
 } addon_info_t;
 
 static const addon_info_t addons_info[] = {
@@ -80,7 +81,8 @@ static const addon_info_t addons_info[] = {
         "wine_gecko-" GECKO_VERSION "-" ARCH_STRING ".msi",
         "gecko",
         GECKO_SHA,
-        "MSHTML", "GeckoUrl", "GeckoCabDir"
+        "MSHTML", "GeckoUrl", "GeckoCabDir",
+        MAKEINTRESOURCEW(ID_DWL_GECKO_DIALOG)
     }
 };
 
@@ -571,7 +573,7 @@ BOOL install_addon(addon_t addon_type)
     if(!install_from_registered_dir()
        && !install_from_default_dir()
        && (url = get_url()))
-        DialogBoxW(hInst, MAKEINTRESOURCEW(ID_DWL_DIALOG), 0, installer_proc);
+        DialogBoxW(hInst, addon->dialog_template, 0, installer_proc);
 
     heap_free(url);
     url = NULL;
