@@ -473,7 +473,7 @@ static void test_D3DXCreateTexture(IDirect3DDevice9 *device)
 
     IDirect3DDevice9_GetDeviceCaps(device, &caps);
 
-    hr = D3DXCreateTexture(NULL, 0, 0, 0, 0, D3DX_DEFAULT, 0, D3DPOOL_DEFAULT);
+    hr = D3DXCreateTexture(NULL, 0, 0, 0, 0, D3DX_DEFAULT, D3DPOOL_DEFAULT, NULL);
     ok(hr == D3DERR_INVALIDCALL, "D3DXCreateTexture returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
 
     /* width and height tests */
