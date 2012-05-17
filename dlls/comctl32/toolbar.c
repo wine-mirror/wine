@@ -1775,10 +1775,13 @@ TOOLBAR_LayoutToolbar(TOOLBAR_INFO *infoPtr)
 
 
 static INT
-TOOLBAR_InternalHitTest (const TOOLBAR_INFO *infoPtr, const POINT *lpPt)
+TOOLBAR_InternalHitTest (const TOOLBAR_INFO *infoPtr, const POINT *lpPt, BOOL *button)
 {
     TBUTTON_INFO *btnPtr;
     INT i;
+
+    if (button)
+        *button = FALSE;
 
     btnPtr = infoPtr->buttons;
     for (i = 0; i < infoPtr->nNumButtons; i++, btnPtr++) {
@@ -1794,6 +1797,8 @@ TOOLBAR_InternalHitTest (const TOOLBAR_INFO *infoPtr, const POINT *lpPt)
 	else {
 	    if (PtInRect (&btnPtr->rect, *lpPt)) {
 		TRACE(" ON BUTTON %d!\n", i);
+                if (button)
+                    *button = TRUE;
 		return i;
 	    }
 	}
@@ -3664,7 +3669,7 @@ TOOLBAR_HideButton (TOOLBAR_INFO *infoPtr, INT Id, BOOL fHide)
 static inline LRESULT
 TOOLBAR_HitTest (const TOOLBAR_INFO *infoPtr, const POINT* lpPt)
 {
-    return TOOLBAR_InternalHitTest (infoPtr, lpPt);
+    return TOOLBAR_InternalHitTest (infoPtr, lpPt, NULL);
 }
 
 
@@ -5376,13 +5381,13 @@ static LRESULT
 TOOLBAR_LButtonDblClk (TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
     POINT pt;
-    INT   nHit;
+    BOOL button;
 
     pt.x = (short)LOWORD(lParam);
     pt.y = (short)HIWORD(lParam);
-    nHit = TOOLBAR_InternalHitTest (infoPtr, &pt);
+    TOOLBAR_InternalHitTest (infoPtr, &pt, &button);
 
-    if (nHit >= 0)
+    if (button)
         TOOLBAR_LButtonDown (infoPtr, wParam, lParam);
     else if (infoPtr->dwStyle & CCS_ADJUSTABLE)
 	TOOLBAR_Customize (infoPtr);
@@ -5400,6 +5405,7 @@ TOOLBAR_LButtonDown (TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     NMTOOLBARA nmtb;
     NMMOUSE nmmouse;
     BOOL bDragKeyPressed;
+    BOOL button;
 
     TRACE("\n");
 
@@ -5414,11 +5420,12 @@ TOOLBAR_LButtonDown (TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
     pt.x = (short)LOWORD(lParam);
     pt.y = (short)HIWORD(lParam);
-    nHit = TOOLBAR_InternalHitTest (infoPtr, &pt);
+    nHit = TOOLBAR_InternalHitTest (infoPtr, &pt, &button);
 
-    btnPtr = &infoPtr->buttons[nHit];
+    if (button)
+        btnPtr = &infoPtr->buttons[nHit];
 
-    if ((nHit >= 0) && bDragKeyPressed && (infoPtr->dwStyle & CCS_ADJUSTABLE))
+    if (button && bDragKeyPressed && (infoPtr->dwStyle & CCS_ADJUSTABLE))
     {
         infoPtr->nButtonDrag = nHit;
         SetCapture (infoPtr->hwndSelf);
@@ -5429,7 +5436,7 @@ TOOLBAR_LButtonDown (TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
             hCursorDrag = LoadCursorW(COMCTL32_hModule, (LPCWSTR)IDC_MOVEBUTTON);
         SetCursor(hCursorDrag);
     }
-    else if (nHit >= 0)
+    else if (button)
     {
 	RECT arrowRect;
 	infoPtr->nOldHit = nHit;
@@ -5476,8 +5483,8 @@ TOOLBAR_LButtonDown (TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
                  * NOTE: native doesn't do this, but that is a bug */
                 GetCursorPos(&pt);
                 ScreenToClient(infoPtr->hwndSelf, &pt);
-                nHit = TOOLBAR_InternalHitTest(infoPtr, &pt);
-                if (!infoPtr->bAnchor || (nHit >= 0))
+                nHit = TOOLBAR_InternalHitTest(infoPtr, &pt, &button);
+                if (!infoPtr->bAnchor || button)
                     TOOLBAR_SetHotItemEx(infoPtr, nHit, HICF_MOUSE | HICF_LMOUSE);
                 
                 /* remove any left mouse button down or double-click messages
@@ -5504,7 +5511,7 @@ TOOLBAR_LButtonDown (TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 	SetCapture (infoPtr->hwndSelf);
     }
 
-    if (nHit >=0)
+    if (button)
     {
         memset(&nmtb, 0, sizeof(nmtb));
         nmtb.iItem = btnPtr->idCommand;
@@ -5514,7 +5521,7 @@ TOOLBAR_LButtonDown (TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     nmmouse.dwHitInfo = nHit;
 
     /* !!! Undocumented - sends NM_LDOWN with the NMMOUSE structure. */
-    if (nHit < 0)
+    if (!button)
         nmmouse.dwItemSpec = -1;
     else
     {
@@ -5541,6 +5548,7 @@ TOOLBAR_LButtonUp (TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     NMHDR hdr;
     NMMOUSE nmmouse;
     NMTOOLBARA nmtb;
+    BOOL button;
 
     if (infoPtr->hwndToolTip)
 	TOOLBAR_RelayEvent (infoPtr->hwndToolTip, infoPtr->hwndSelf,
@@ -5548,9 +5556,9 @@ TOOLBAR_LButtonUp (TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
     pt.x = (short)LOWORD(lParam);
     pt.y = (short)HIWORD(lParam);
-    nHit = TOOLBAR_InternalHitTest (infoPtr, &pt);
+    nHit = TOOLBAR_InternalHitTest (infoPtr, &pt, &button);
 
-    if (!infoPtr->bAnchor || (nHit >= 0))
+    if (!infoPtr->bAnchor || button)
         TOOLBAR_SetHotItemEx(infoPtr, nHit, HICF_MOUSE | HICF_LMOUSE);
 
     if (infoPtr->nButtonDrag >= 0) {
@@ -5676,7 +5684,7 @@ TOOLBAR_LButtonUp (TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     * NM_CLICK with the NMMOUSE structure. */
     nmmouse.dwHitInfo = nHit;
 
-    if (nHit < 0)
+    if (!button)
         nmmouse.dwItemSpec = -1;
     else
     {
@@ -5699,14 +5707,15 @@ TOOLBAR_RButtonUp(TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     INT nHit;
     NMMOUSE nmmouse;
     POINT pt;
+    BOOL button;
 
     pt.x = (short)LOWORD(lParam);
     pt.y = (short)HIWORD(lParam);
 
-    nHit = TOOLBAR_InternalHitTest(infoPtr, &pt);
+    nHit = TOOLBAR_InternalHitTest(infoPtr, &pt, &button);
     nmmouse.dwHitInfo = nHit;
 
-    if (nHit < 0) {
+    if (!button) {
 	nmmouse.dwItemSpec = -1;
     } else {
 	nmmouse.dwItemSpec = infoPtr->buttons[nmmouse.dwHitInfo].idCommand;
@@ -5805,6 +5814,7 @@ TOOLBAR_MouseMove (TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     TRACKMOUSEEVENT trackinfo;
     INT   nHit;
     TBUTTON_INFO *btnPtr;
+    BOOL button;
     
     if ((infoPtr->dwStyle & TBSTYLE_TOOLTIPS) && (infoPtr->hwndToolTip == NULL))
         TOOLBAR_TooltipCreateControl(infoPtr);
@@ -5835,10 +5845,10 @@ TOOLBAR_MouseMove (TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     pt.x = (short)LOWORD(lParam);
     pt.y = (short)HIWORD(lParam);
 
-    nHit = TOOLBAR_InternalHitTest (infoPtr, &pt);
+    nHit = TOOLBAR_InternalHitTest (infoPtr, &pt, &button);
 
     if (((infoPtr->dwStyle & TBSTYLE_FLAT) || GetWindowTheme (infoPtr->hwndSelf)) 
-        && (!infoPtr->bAnchor || (nHit >= 0)))
+        && (!infoPtr->bAnchor || button))
         TOOLBAR_SetHotItemEx(infoPtr, nHit, HICF_MOUSE);
 
     if (infoPtr->nOldHit != nHit)
