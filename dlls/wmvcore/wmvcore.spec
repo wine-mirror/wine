@@ -9,7 +9,7 @@
 @ stub WMCreateEditor
 @ stub WMCreateIndexer
 @ stub WMCreateProfileManager
-@ stub WMCreateReader
+@ stdcall WMCreateReader(ptr long ptr)
 @ stub WMCreateReaderPriv
 @ stdcall WMCreateSyncReader(ptr long ptr)
 @ stub WMCreateWriter
