@@ -2867,34 +2867,51 @@ INT WINAPI CompareStringA(LCID lcid, DWORD style,
 
     if (!(style & LOCALE_USE_CP_ACP)) locale_cp = get_lcid_codepage( lcid );
 
-    len1W = MultiByteToWideChar(locale_cp, 0, str1, len1, buf1W, 130);
-    if (len1W)
-        str1W = buf1W;
-    else
+    if (len1)
     {
-        len1W = MultiByteToWideChar(locale_cp, 0, str1, len1, NULL, 0);
-        str1W = HeapAlloc(GetProcessHeap(), 0, len1W * sizeof(WCHAR));
-        if (!str1W)
+        len1W = MultiByteToWideChar(locale_cp, 0, str1, len1, buf1W, 130);
+        if (len1W)
+            str1W = buf1W;
+        else
         {
-            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-            return 0;
+            len1W = MultiByteToWideChar(locale_cp, 0, str1, len1, NULL, 0);
+            str1W = HeapAlloc(GetProcessHeap(), 0, len1W * sizeof(WCHAR));
+            if (!str1W)
+            {
+                SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+                return 0;
+            }
+            MultiByteToWideChar(locale_cp, 0, str1, len1, str1W, len1W);
         }
-        MultiByteToWideChar(locale_cp, 0, str1, len1, str1W, len1W);
     }
-    len2W = MultiByteToWideChar(locale_cp, 0, str2, len2, buf2W, 130);
-    if (len2W)
-        str2W = buf2W;
     else
     {
-        len2W = MultiByteToWideChar(locale_cp, 0, str2, len2, NULL, 0);
-        str2W = HeapAlloc(GetProcessHeap(), 0, len2W * sizeof(WCHAR));
-        if (!str2W)
+        len1W = 0;
+        str1W = buf1W;
+    }
+
+    if (len2)
+    {
+        len2W = MultiByteToWideChar(locale_cp, 0, str2, len2, buf2W, 130);
+        if (len2W)
+            str2W = buf2W;
+        else
         {
-            if (str1W != buf1W) HeapFree(GetProcessHeap(), 0, str1W);
-            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-            return 0;
+            len2W = MultiByteToWideChar(locale_cp, 0, str2, len2, NULL, 0);
+            str2W = HeapAlloc(GetProcessHeap(), 0, len2W * sizeof(WCHAR));
+            if (!str2W)
+            {
+                if (str1W != buf1W) HeapFree(GetProcessHeap(), 0, str1W);
+                SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+                return 0;
+            }
+            MultiByteToWideChar(locale_cp, 0, str2, len2, str2W, len2W);
         }
-        MultiByteToWideChar(locale_cp, 0, str2, len2, str2W, len2W);
+    }
+    else
+    {
+        len2W = 0;
+        str2W = buf2W;
     }
 
     ret = CompareStringW(lcid, style, str1W, len1W, str2W, len2W);
