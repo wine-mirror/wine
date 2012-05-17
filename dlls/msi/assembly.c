@@ -87,7 +87,7 @@ BOOL msi_init_assembly_caches( MSIPACKAGE *package )
         package->cache_net[CLR_VERSION_V20]) return TRUE;
     if (pCreateAssemblyCacheSxs( &package->cache_sxs, 0 ) != S_OK) return FALSE;
 
-    if (pCreateAssemblyCacheNet10) pCreateAssemblyCacheNet11( &package->cache_net[CLR_VERSION_V10], 0 );
+    if (pCreateAssemblyCacheNet10) pCreateAssemblyCacheNet10( &package->cache_net[CLR_VERSION_V10], 0 );
     if (pCreateAssemblyCacheNet11) pCreateAssemblyCacheNet11( &package->cache_net[CLR_VERSION_V11], 0 );
     if (pCreateAssemblyCacheNet20) pCreateAssemblyCacheNet20( &package->cache_net[CLR_VERSION_V20], 0 );
 
