@@ -2149,7 +2149,7 @@ static ULONG WINAPI IDirect3DRMMeshImpl_AddRef(IDirect3DRMMesh* iface)
     IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p): AddRef from %d\n", This, ref - 1);
+    TRACE("(%p)->(): new ref = %d\n", This, ref);
 
     return ref;
 }
@@ -2159,7 +2159,7 @@ static ULONG WINAPI IDirect3DRMMeshImpl_Release(IDirect3DRMMesh* iface)
     IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p): ReleaseRef to %d\n", This, ref);
+    TRACE("(%p)->(): new ref = %d\n", This, ref);
 
     if (!ref)
         HeapFree(GetProcessHeap(), 0, This);
