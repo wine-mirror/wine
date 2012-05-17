@@ -347,6 +347,7 @@ MSIASSEMBLY *msi_load_assembly( MSIPACKAGE *package, MSICOMPONENT *comp )
                 {
                     TRACE("runtime version %s\n", debugstr_w(get_clr_version_str( i )));
                     a->installed = TRUE;
+                    break;
                 }
             }
         }
