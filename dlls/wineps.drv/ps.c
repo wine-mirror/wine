@@ -20,6 +20,7 @@
 
 #include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
 #include <locale.h>
@@ -889,7 +890,7 @@ BOOL PSDRV_WriteDIBPatternDict(PHYSDEV dev, const BITMAPINFO *bmi, BYTE *bits, U
       "  %d %d scale\n  mypat image\n  end\n }\n>>\n matrix makepattern setpattern\n";
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     char *buf, *ptr;
-    INT w, h, x, y, w_mult, h_mult;
+    INT w, h, x, y, w_mult, h_mult, abs_height = abs( bmi->bmiHeader.biHeight );
     COLORREF map[2];
 
     TRACE( "size %dx%dx%d\n",
@@ -901,7 +902,7 @@ BOOL PSDRV_WriteDIBPatternDict(PHYSDEV dev, const BITMAPINFO *bmi, BYTE *bits, U
     }
 
     w = bmi->bmiHeader.biWidth & ~0x7;
-    h = bmi->bmiHeader.biHeight & ~0x7;
+    h = abs_height & ~0x7;
 
     buf = HeapAlloc( GetProcessHeap(), 0, sizeof(do_pattern) + 100 );
     ptr = buf;
@@ -913,7 +914,7 @@ BOOL PSDRV_WriteDIBPatternDict(PHYSDEV dev, const BITMAPINFO *bmi, BYTE *bits, U
 	}
     }
     PSDRV_WriteSpool(dev, mypat, sizeof(mypat) - 1);
-    PSDRV_WriteImageDict(dev, 1, 8, 8, buf, FALSE);
+    PSDRV_WriteImageDict(dev, 1, 8, 8, buf, bmi->bmiHeader.biHeight < 0);
     PSDRV_WriteSpool(dev, "def\n", 4);
 
     PSDRV_WriteIndexColorSpaceBegin(dev, 1);
