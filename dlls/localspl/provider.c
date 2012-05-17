@@ -1361,13 +1361,6 @@ static BOOL myAddPrinterDriverEx(DWORD level, LPBYTE pDriverInfo, DWORD dwFileCo
     }
     RegCloseKey(hroot);
 
-    if (disposition == REG_OPENED_EXISTING_KEY) {
-        TRACE("driver %s already installed\n", debugstr_w(di.pName));
-        RegCloseKey(hdrv);
-        SetLastError(ERROR_PRINTER_DRIVER_ALREADY_INSTALLED);
-        return FALSE;
-    }
-
     /* Verified with the Adobe PS Driver, that w2k does not use di.Version */
     RegSetValueExW(hdrv, versionW, 0, REG_DWORD, (const BYTE*) &env->driverversion,
                    sizeof(DWORD));
