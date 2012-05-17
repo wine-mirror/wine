@@ -137,16 +137,13 @@ static HRESULT WINAPI IDirect3DRMImpl_CreateObject(IDirect3DRM* iface, REFCLSID 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMImpl_CreateFrame(IDirect3DRM* iface, LPDIRECT3DRMFRAME pFrameParent, LPDIRECT3DRMFRAME * ppFrame)
+static HRESULT WINAPI IDirect3DRMImpl_CreateFrame(IDirect3DRM* iface, LPDIRECT3DRMFRAME parent_frame, LPDIRECT3DRMFRAME * frame)
 {
     IDirect3DRMImpl *This = impl_from_IDirect3DRM(iface);
 
-    TRACE("(%p/%p)->(%p,%p)\n", iface, This, pFrameParent, ppFrame);
+    TRACE("(%p/%p)->(%p,%p)\n", iface, This, parent_frame, frame);
 
-    if (pFrameParent)
-        FIXME("(%p/%p): Parent frame not yet supported\n", iface, This);
-
-    return Direct3DRMFrame_create(&IID_IDirect3DRMFrame, (IUnknown**)ppFrame);
+    return Direct3DRMFrame_create(&IID_IDirect3DRMFrame, (IUnknown*)parent_frame, (IUnknown**)frame);
 }
 
 static HRESULT WINAPI IDirect3DRMImpl_CreateMesh(IDirect3DRM* iface, LPDIRECT3DRMMESH * ppMesh)
@@ -507,18 +504,14 @@ static HRESULT WINAPI IDirect3DRM2Impl_CreateObject(IDirect3DRM2* iface, REFCLSI
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRM2Impl_CreateFrame(IDirect3DRM2* iface,
-                                                   LPDIRECT3DRMFRAME pFrameParent,
-                                                   LPDIRECT3DRMFRAME2 * ppFrame)
+static HRESULT WINAPI IDirect3DRM2Impl_CreateFrame(IDirect3DRM2* iface, LPDIRECT3DRMFRAME parent_frame,
+                                                   LPDIRECT3DRMFRAME2 * frame)
 {
     IDirect3DRMImpl *This = impl_from_IDirect3DRM2(iface);
 
-    TRACE("(%p/%p)->(%p,%p)\n", iface, This, pFrameParent, ppFrame);
+    TRACE("(%p/%p)->(%p,%p)\n", iface, This, parent_frame, frame);
 
-    if (pFrameParent)
-        FIXME("(%p/%p): Parent frame not yet supported\n", iface, This);
-
-    return Direct3DRMFrame_create(&IID_IDirect3DRMFrame2, (IUnknown**)ppFrame);
+    return Direct3DRMFrame_create(&IID_IDirect3DRMFrame2, (IUnknown*)parent_frame, (IUnknown**)frame);
 }
 
 static HRESULT WINAPI IDirect3DRM2Impl_CreateMesh(IDirect3DRM2* iface, LPDIRECT3DRMMESH * ppMesh)
@@ -936,18 +929,14 @@ static HRESULT WINAPI IDirect3DRM3Impl_CreateObject(IDirect3DRM3* iface, REFCLSI
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRM3Impl_CreateFrame(IDirect3DRM3* iface,
-                                                   LPDIRECT3DRMFRAME3 FrameParent,
-                                                   LPDIRECT3DRMFRAME3* Frame)
+static HRESULT WINAPI IDirect3DRM3Impl_CreateFrame(IDirect3DRM3* iface, LPDIRECT3DRMFRAME3 parent_frame,
+                                                   LPDIRECT3DRMFRAME3* frame)
 {
     IDirect3DRMImpl *This = impl_from_IDirect3DRM3(iface);
 
-    TRACE("(%p/%p)->(%p,%p)\n", iface, This, FrameParent, Frame);
+    TRACE("(%p/%p)->(%p,%p)\n", iface, This, parent_frame, frame);
 
-    if (FrameParent)
-        FIXME("(%p/%p): Parent frame not yet supported\n", iface, This);
-
-    return Direct3DRMFrame_create(&IID_IDirect3DRMFrame3, (IUnknown**)Frame);
+    return Direct3DRMFrame_create(&IID_IDirect3DRMFrame3, (IUnknown*)parent_frame, (IUnknown**)frame);
 }
 
 static HRESULT WINAPI IDirect3DRM3Impl_CreateMesh(IDirect3DRM3* iface, LPDIRECT3DRMMESH* Mesh)

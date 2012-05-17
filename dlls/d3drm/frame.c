@@ -2274,11 +2274,11 @@ static inline IDirect3DRMFrameImpl *unsafe_impl_from_IDirect3DRMFrame3(IDirect3D
     return impl_from_IDirect3DRMFrame3(iface);
 }
 
-HRESULT Direct3DRMFrame_create(REFIID riid, IUnknown** ppObj)
+HRESULT Direct3DRMFrame_create(REFIID riid, IUnknown* parent, IUnknown** ret_iface)
 {
     IDirect3DRMFrameImpl* object;
 
-    TRACE("(%p)\n", ppObj);
+    TRACE("(%s, %p, %p)\n", wine_dbgstr_guid(riid), parent, ret_iface);
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DRMFrameImpl));
     if (!object)
@@ -2294,9 +2294,17 @@ HRESULT Direct3DRMFrame_create(REFIID riid, IUnknown** ppObj)
     memcpy(&object->transform[0][0], &identity[0][0], sizeof(D3DRMMATRIX4D));
 
     if (IsEqualGUID(riid, &IID_IDirect3DRMFrame3))
-        *ppObj = (IUnknown*)&object->IDirect3DRMFrame3_iface;
+    {
+        if (parent)
+            IDirect3DRMFrame3_AddChild((IDirect3DRMFrame3*)parent, &object->IDirect3DRMFrame3_iface);
+        *ret_iface = (IUnknown*)&object->IDirect3DRMFrame3_iface;
+    }
     else
-        *ppObj = (IUnknown*)&object->IDirect3DRMFrame2_iface;
+    {
+        if (parent)
+            IDirect3DRMFrame2_AddChild((IDirect3DRMFrame2*)parent, (IDirect3DRMFrame*)&object->IDirect3DRMFrame2_iface);
+        *ret_iface = (IUnknown*)&object->IDirect3DRMFrame2_iface;
+    }
 
     return S_OK;
 }
