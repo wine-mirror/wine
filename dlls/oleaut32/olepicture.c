@@ -66,7 +66,7 @@
 #include "wine/unicode.h"
 #include "wine/library.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(ole);
+WINE_DEFAULT_DEBUG_CHANNEL(olepicture);
 
 #include "pshpack1.h"
 
