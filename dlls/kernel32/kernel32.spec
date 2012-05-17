@@ -498,6 +498,7 @@
 @ stdcall GetCurrentDirectoryW(long ptr)
 @ stdcall GetCurrentProcess()
 @ stdcall GetCurrentProcessId()
+@ stdcall GetCurrentProcessorNumber() ntdll.NtGetCurrentProcessorNumber
 @ stdcall GetCurrentThread()
 @ stdcall GetCurrentThreadId()
 @ stdcall GetDateFormatA(long long ptr str ptr long)

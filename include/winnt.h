@@ -5286,6 +5286,13 @@ typedef struct _GROUP_AFFINITY
     WORD Reserved[3];
 } GROUP_AFFINITY, *PGROUP_AFFINITY;
 
+typedef struct _PROCESSOR_NUMBER
+{
+    WORD Group;
+    BYTE Number;
+    BYTE Reserved;
+} PROCESSOR_NUMBER, *PPROCESSOR_NUMBER;
+
 typedef struct _PROCESSOR_RELATIONSHIP
 {
     BYTE Flags;

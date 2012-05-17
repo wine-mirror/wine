@@ -1173,3 +1173,20 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
         return STATUS_NOT_IMPLEMENTED;
     }
 }
+
+/******************************************************************************
+ * NtGetCurrentProcessorNumber (NTDLL.@)
+ *
+ * Return the processor, on which the thread is running
+ *
+ */
+ULONG WINAPI NtGetCurrentProcessorNumber(void)
+{
+
+    if (NtCurrentTeb()->Peb->NumberOfProcessors > 1) {
+        FIXME("need multicore support (%d processors)\n", NtCurrentTeb()->Peb->NumberOfProcessors);
+    }
+
+    /* fallback to the first processor */
+    return 0;
+}

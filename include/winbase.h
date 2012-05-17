@@ -1634,6 +1634,8 @@ WINADVAPI  BOOL        WINAPI GetCurrentHwProfileA(LPHW_PROFILE_INFOA);
 WINADVAPI  BOOL        WINAPI GetCurrentHwProfileW(LPHW_PROFILE_INFOW);
 #define                       GetCurrentHwProfile WINELIB_NAME_AW(GetCurrentHwProfile)
 WINBASEAPI HANDLE      WINAPI GetCurrentProcess(void);
+WINBASEAPI DWORD       WINAPI GetCurrentProcessorNumber(void);
+WINBASEAPI VOID        WINAPI GetCurrentProcessorNumberEx(PPROCESSOR_NUMBER);
 WINBASEAPI HANDLE      WINAPI GetCurrentThread(void);
 #define                       GetCurrentTime() GetTickCount()
 WINBASEAPI BOOL        WINAPI GetDefaultCommConfigA(LPCSTR,LPCOMMCONFIG,LPDWORD);

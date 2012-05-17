@@ -176,6 +176,7 @@
 @ stdcall NtFreeVirtualMemory(long ptr ptr long)
 @ stdcall NtFsControlFile(long long long long long long long long long long)
 @ stdcall NtGetContextThread(long ptr)
+@ stdcall NtGetCurrentProcessorNumber()
 # @ stub NtGetDevicePowerState
 @ stub NtGetPlugPlayEvent
 @ stdcall NtGetTickCount()
