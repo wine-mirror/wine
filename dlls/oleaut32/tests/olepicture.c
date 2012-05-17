@@ -55,7 +55,6 @@ static HMODULE hOleaut32;
 
 static HRESULT (WINAPI *pOleLoadPicture)(LPSTREAM,LONG,BOOL,REFIID,LPVOID*);
 static HRESULT (WINAPI *pOleLoadPictureEx)(LPSTREAM,LONG,BOOL,REFIID,DWORD,DWORD,DWORD,LPVOID*);
-static HRESULT (WINAPI *pOleCreatePictureIndirect)(PICTDESC*,REFIID,BOOL,LPVOID*);
 
 #define ok_ole_success(hr, func) ok(hr == S_OK, func " failed with error 0x%08x\n", hr)
 
@@ -488,19 +487,13 @@ static void test_OleCreatePictureIndirect(void)
     HRESULT hr;
     short type;
 
-    if(!pOleCreatePictureIndirect)
-    {
-        win_skip("Skipping OleCreatePictureIndirect tests\n");
-        return;
-    }
-
 if (0)
 {
     /* crashes on native */
-    pOleCreatePictureIndirect(NULL, &IID_IPicture, TRUE, NULL);
+    OleCreatePictureIndirect(NULL, &IID_IPicture, TRUE, NULL);
 }
 
-    hr = pOleCreatePictureIndirect(NULL, &IID_IPicture, TRUE, (void**)&pict);
+    hr = OleCreatePictureIndirect(NULL, &IID_IPicture, TRUE, (void**)&pict);
     ok(hr == S_OK, "hr %08x\n", hr);
 
     type = PICTYPE_NONE;
@@ -901,12 +894,6 @@ static void test_himetric(void)
     HDC hdc;
     INT d;
 
-    if (!pOleCreatePictureIndirect)
-    {
-        win_skip("OleCreatePictureIndirect not available\n");
-        return;
-    }
-
     desc.cbSizeofstruct = sizeof(desc);
     desc.picType = PICTYPE_BITMAP;
     desc.u.bmp.hpal = NULL;
@@ -919,7 +906,7 @@ static void test_himetric(void)
     desc.u.bmp.hbitmap = bmp;
 
     /* size in himetric units reported rounded up to next integer value */
-    hr = pOleCreatePictureIndirect(&desc, &IID_IPicture, FALSE, (void**)&pic);
+    hr = OleCreatePictureIndirect(&desc, &IID_IPicture, FALSE, (void**)&pic);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     cx = 0;
@@ -945,7 +932,7 @@ static void test_himetric(void)
     desc.picType = PICTYPE_ICON;
     desc.u.icon.hicon = icon;
 
-    hr = pOleCreatePictureIndirect(&desc, &IID_IPicture, FALSE, (void**)&pic);
+    hr = OleCreatePictureIndirect(&desc, &IID_IPicture, FALSE, (void**)&pic);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     cx = 0;
@@ -971,7 +958,6 @@ START_TEST(olepicture)
     hOleaut32 = GetModuleHandleA("oleaut32.dll");
     pOleLoadPicture = (void*)GetProcAddress(hOleaut32, "OleLoadPicture");
     pOleLoadPictureEx = (void*)GetProcAddress(hOleaut32, "OleLoadPictureEx");
-    pOleCreatePictureIndirect = (void*)GetProcAddress(hOleaut32, "OleCreatePictureIndirect");
     if (!pOleLoadPicture)
     {
         win_skip("OleLoadPicture is not available\n");
