@@ -734,11 +734,10 @@ static void test_D3DXFilterTexture(IDirect3DDevice9 *device)
 
         hr = D3DXFilterTexture((IDirect3DBaseTexture9*) cubetex, NULL, 5, D3DX_FILTER_NONE); /* Invalid miplevel */
         ok(hr == D3DERR_INVALIDCALL, "D3DXFilterTexture returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+        IDirect3DCubeTexture9_Release(cubetex);
     }
     else
         skip("Failed to create texture\n");
-
-    IDirect3DCubeTexture9_Release(cubetex);
 }
 
 static BOOL color_match(const DWORD *value, const DWORD *expected)
