@@ -248,6 +248,8 @@ include/wine/itss.h
 include/wine/svcctl.h
 include/wine/winedxgi.h
 include/winsxs.h
+include/wmsbuffer.h
+include/wmsdkidl.h
 include/wpcapi.h
 include/wtypes.h
 include/wuapi.h

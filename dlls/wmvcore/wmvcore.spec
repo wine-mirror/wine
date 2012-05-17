@@ -11,7 +11,7 @@
 @ stub WMCreateProfileManager
 @ stub WMCreateReader
 @ stub WMCreateReaderPriv
-@ stub WMCreateSyncReader
+@ stdcall WMCreateSyncReader(ptr long ptr)
 @ stub WMCreateWriter
 @ stub WMCreateWriterFileSink
 @ stub WMCreateWriterNetworkSink

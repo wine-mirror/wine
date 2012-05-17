@@ -1,0 +1,331 @@
+/*
+ * Copyright 2012 André Hentschel
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+import "oaidl.idl";
+import "wmsbuffer.idl";
+/* import "drmexternals.idl"; */
+
+typedef unsigned __int64 QWORD;
+
+typedef struct _WMMediaType
+{
+    GUID majortype;
+    GUID subtype;
+    BOOL bFixedSizeSamples;
+    BOOL bTemporalCompression;
+    ULONG lSampleSize;
+    GUID formattype;
+    IUnknown *pUnk;
+    ULONG cbFormat;
+    [size_is(cbFormat)] BYTE *pbFormat;
+} WM_MEDIA_TYPE;
+
+typedef enum WMT_ATTR_DATATYPE
+{
+    WMT_TYPE_DWORD      = 0,
+    WMT_TYPE_STRING     = 1,
+    WMT_TYPE_BINARY     = 2,
+    WMT_TYPE_BOOL       = 3,
+    WMT_TYPE_QWORD      = 4,
+    WMT_TYPE_WORD       = 5,
+    WMT_TYPE_GUID       = 6,
+} WMT_ATTR_DATATYPE;
+
+typedef enum WMT_STATUS
+{
+    WMT_ERROR                       =  0,
+    WMT_OPENED                      =  1,
+    WMT_BUFFERING_START             =  2,
+    WMT_BUFFERING_STOP              =  3,
+    WMT_EOF                         =  4,
+    WMT_END_OF_FILE                 =  4,
+    WMT_END_OF_SEGMENT              =  5,
+    WMT_END_OF_STREAMING            =  6,
+    WMT_LOCATING                    =  7,
+    WMT_CONNECTING                  =  8,
+    WMT_NO_RIGHTS                   =  9,
+    WMT_MISSING_CODEC               = 10,
+    WMT_STARTED                     = 11,
+    WMT_STOPPED                     = 12,
+    WMT_CLOSED                      = 13,
+    WMT_STRIDING                    = 14,
+    WMT_TIMER                       = 15,
+    WMT_INDEX_PROGRESS              = 16,
+    WMT_SAVEAS_START                = 17,
+    WMT_SAVEAS_STOP                 = 18,
+    WMT_NEW_SOURCEFLAGS             = 19,
+    WMT_NEW_METADATA                = 20,
+    WMT_BACKUPRESTORE_BEGIN         = 21,
+    WMT_SOURCE_SWITCH               = 22,
+    WMT_ACQUIRE_LICENSE             = 23,
+    WMT_INDIVIDUALIZE               = 24,
+    WMT_NEEDS_INDIVIDUALIZATION     = 25,
+    WMT_NO_RIGHTS_EX                = 26,
+    WMT_BACKUPRESTORE_END           = 27,
+    WMT_BACKUPRESTORE_CONNECTING    = 28,
+    WMT_BACKUPRESTORE_DISCONNECTING = 29,
+    WMT_ERROR_WITHURL               = 30,
+    WMT_RESTRICTED_LICENSE          = 31,
+    WMT_CLIENT_CONNECT              = 32,
+    WMT_CLIENT_DISCONNECT           = 33,
+    WMT_NATIVE_OUTPUT_PROPS_CHANGED = 34,
+    WMT_RECONNECT_START             = 35,
+    WMT_RECONNECT_END               = 36,
+    WMT_CLIENT_CONNECT_EX           = 37,
+    WMT_CLIENT_DISCONNECT_EX        = 38,
+    WMT_SET_FEC_SPAN                = 39,
+    WMT_PREROLL_READY               = 40,
+    WMT_PREROLL_COMPLETE            = 41,
+    WMT_CLIENT_PROPERTIES           = 42,
+    WMT_LICENSEURL_SIGNATURE_STATE  = 43,
+    WMT_INIT_PLAYLIST_BURN          = 44,
+    WMT_TRANSCRYPTOR_INIT           = 45,
+    WMT_TRANSCRYPTOR_SEEKED         = 46,
+    WMT_TRANSCRYPTOR_READ           = 47,
+    WMT_TRANSCRYPTOR_CLOSED         = 48,
+    WMT_PROXIMITY_RESULT            = 49,
+    WMT_PROXIMITY_COMPLETED         = 50,
+    WMT_CONTENT_ENABLER             = 51
+} WMT_STATUS;
+
+typedef enum WMT_STREAM_SELECTION
+{
+    WMT_OFF               = 0,
+    WMT_CLEANPOINT_ONLY   = 1,
+    WMT_ON                = 2,
+} WMT_STREAM_SELECTION;
+
+
+[
+    object,
+    uuid(6d7cdc70-9888-11d3-8edc-00c04f6109cf),
+    pointer_default(unique),
+    local
+]
+interface IWMStatusCallback : IUnknown
+{
+    HRESULT OnStatus(
+        [in] WMT_STATUS Status,
+        [in] HRESULT hr,
+        [in] WMT_ATTR_DATATYPE dwType,
+        [in] BYTE *pValue,
+        [in] void *pvContext);
+};
+
+[
+    object,
+    uuid(96406bd8-2b2b-11d3-b36b-00c04f6108ff),
+    pointer_default(unique),
+    local
+]
+interface IWMReaderCallback : IWMStatusCallback
+{
+    HRESULT OnSample(
+        [in] DWORD dwOutputNum,
+        [in] QWORD cnsSampleTime,
+        [in] QWORD cnsSampleDuration,
+        [in] DWORD dwFlags,
+        [in] INSSBuffer *pSample,
+        [in] void *pvContext);
+};
+
+[
+    object,
+    uuid(96406bce-2b2b-11d3-b36b-00c04f6108ff),
+    pointer_default(unique),
+    local
+]
+interface IWMMediaProps : IUnknown
+{
+    HRESULT GetType(
+        [out] GUID *pguidType);
+
+    HRESULT GetMediaType(
+        [out] WM_MEDIA_TYPE *pType,
+        [in, out] DWORD *pcbType);
+
+    HRESULT SetMediaType(
+        [in] WM_MEDIA_TYPE *pType);
+};
+
+[
+    object,
+    uuid(96406bd7-2b2b-11d3-b36b-00c04f6108ff),
+    pointer_default(unique),
+    local
+]
+interface IWMOutputMediaProps : IWMMediaProps
+{
+    HRESULT GetStreamGroupName(
+        [out, size_is(*pcchName)] WCHAR *pwszName,
+        [in, out] WORD *pcchName);
+
+    HRESULT GetConnectionName(
+        [out, size_is(*pcchName)] WCHAR *pwszName,
+        [in, out] WORD *pcchName);
+};
+
+[
+    object,
+    uuid(96406bd6-2b2b-11d3-b36b-00c04f6108ff),
+    pointer_default(unique),
+    local
+]
+interface IWMReader : IUnknown
+{
+    HRESULT Open(
+        [in] const WCHAR *pwszURL,
+        [in] IWMReaderCallback *pCallback,
+        [in] void *pvContext);
+
+    HRESULT Close();
+
+    HRESULT GetOutputCount(
+        [out] DWORD *pcOutputs);
+
+    HRESULT GetOutputProps(
+        [in] DWORD dwOutputNum,
+        [out] IWMOutputMediaProps **ppOutput);
+
+    HRESULT SetOutputProps(
+        [in] DWORD dwOutputNum,
+        [in] IWMOutputMediaProps *pOutput);
+
+    HRESULT GetOutputFormatCount(
+        [in] DWORD dwOutputNumber,
+        [out] DWORD *pcFormats);
+
+    HRESULT GetOutputFormat(
+        [in] DWORD dwOutputNumber,
+        [in] DWORD dwFormatNumber,
+        [out] IWMOutputMediaProps** ppProps);
+
+    HRESULT Start(
+        [in] QWORD cnsStart,
+        [in] QWORD cnsDuration,
+        [in] float fRate,
+        [in] void *pvContext);
+
+    HRESULT Stop();
+
+    HRESULT Pause();
+
+    HRESULT Resume();
+};
+
+[
+    object,
+    uuid(9397f121-7705-4dc9-b049-98b698188414),
+    pointer_default( unique ),
+    local
+]
+interface IWMSyncReader : IUnknown
+{
+    HRESULT Open(
+        [in] const WCHAR *pwszFilename);
+
+    HRESULT Close();
+
+    HRESULT SetRange(
+        [in] QWORD cnsStartTime,
+        [in] LONGLONG cnsDuration);
+
+    HRESULT SetRangeByFrame(
+        [in] WORD wStreamNum,
+        [in] QWORD qwFrameNumber,
+        [in] LONGLONG cFramesToRead);
+
+    HRESULT GetNextSample(
+        [in] WORD wStreamNum,
+        [out] INSSBuffer **ppSample,
+        [out] QWORD *pcnsSampleTime,
+        [out] QWORD *pcnsDuration,
+        [out] DWORD *pdwFlags,
+        [out] DWORD *pdwOutputNum,
+        [out] WORD *pwStreamNum);
+
+    HRESULT SetStreamsSelected(
+        [in] WORD cStreamCount,
+        [in] WORD *pwStreamNumbers,
+        [in] WMT_STREAM_SELECTION *pSelections);
+
+    HRESULT GetStreamSelected(
+        [in] WORD wStreamNum,
+        [out] WMT_STREAM_SELECTION *pSelection);
+
+    HRESULT SetReadStreamSamples(
+        [in] WORD wStreamNum,
+        [in] BOOL fCompressed);
+
+    HRESULT GetReadStreamSamples(
+        [in] WORD wStreamNum,
+        [out] BOOL *pfCompressed);
+
+    HRESULT GetOutputSetting(
+        [in] DWORD dwOutputNum,
+        [in] LPCWSTR pszName,
+        [out] WMT_ATTR_DATATYPE *pType,
+        [out, size_is(*pcbLength)] BYTE *pValue,
+        [in, out] WORD *pcbLength);
+
+    HRESULT SetOutputSetting(
+        [in] DWORD dwOutputNum,
+        [in] LPCWSTR pszName,
+        [in] WMT_ATTR_DATATYPE Type,
+        [in, size_is(cbLength)] const BYTE *pValue,
+        [in] WORD cbLength);
+
+    HRESULT GetOutputCount(
+        [out] DWORD *pcOutputs);
+
+    HRESULT GetOutputProps(
+        [in] DWORD dwOutputNum,
+        [out] IWMOutputMediaProps **ppOutput);
+
+    HRESULT SetOutputProps(
+        [in] DWORD dwOutputNum,
+        [in] IWMOutputMediaProps *pOutput);
+
+    HRESULT GetOutputFormatCount(
+        [in] DWORD dwOutputNum,
+        [out] DWORD *pcFormats);
+
+    HRESULT GetOutputFormat(
+        [in] DWORD dwOutputNum,
+        [in] DWORD dwFormatNum,
+        [out] IWMOutputMediaProps **ppProps);
+
+    HRESULT GetOutputNumberForStream(
+        [in] WORD wStreamNum,
+        [out] DWORD *pdwOutputNum);
+
+    HRESULT GetStreamNumberForOutput(
+        [in] DWORD dwOutputNum,
+        [out] WORD *pwStreamNum);
+
+    HRESULT GetMaxOutputSampleSize(
+        [in] DWORD dwOutput,
+        [out] DWORD *pcbMax);
+
+    HRESULT GetMaxStreamSampleSize(
+        [in] WORD wStream,
+        [out] DWORD *pcbMax);
+
+    HRESULT OpenStream(
+        [in] IStream *pStream);
+};
