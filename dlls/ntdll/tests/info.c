@@ -33,7 +33,8 @@ static NTSTATUS (WINAPI * pNtCreateSection)(HANDLE*,ACCESS_MASK,const OBJECT_ATT
 static NTSTATUS (WINAPI * pNtMapViewOfSection)(HANDLE,HANDLE,PVOID*,ULONG,SIZE_T,const LARGE_INTEGER*,SIZE_T*,SECTION_INHERIT,ULONG,ULONG);
 static NTSTATUS (WINAPI * pNtUnmapViewOfSection)(HANDLE,PVOID);
 static NTSTATUS (WINAPI * pNtClose)(HANDLE);
-static BOOL     (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
+static ULONG    (WINAPI * pNtGetCurrentProcessorNumber)(void);
+static BOOL     (WINAPI * pIsWow64Process)(HANDLE, PBOOL);
 
 static BOOL is_wow64;
 
@@ -71,6 +72,9 @@ static BOOL InitFunctionPtrs(void)
     NTDLL_GET_PROC(NtCreateSection);
     NTDLL_GET_PROC(NtMapViewOfSection);
     NTDLL_GET_PROC(NtUnmapViewOfSection);
+
+    /* not present before XP */
+    pNtGetCurrentProcessorNumber = (void *) GetProcAddress(hntdll, "NtGetCurrentProcessorNumber");
 
     pIsWow64Process = (void *)GetProcAddress(GetModuleHandle("kernel32.dll"), "IsWow64Process");
     if (!pIsWow64Process || !pIsWow64Process( GetCurrentProcess(), &is_wow64 )) is_wow64 = FALSE;
@@ -1391,6 +1395,63 @@ static void test_affinity(void)
         "Unexpected thread affinity\n" );
 }
 
+static void test_NtGetCurrentProcessorNumber(void)
+{
+    NTSTATUS status;
+    SYSTEM_INFO si;
+    PROCESS_BASIC_INFORMATION pbi;
+    THREAD_BASIC_INFORMATION tbi;
+    DWORD_PTR old_process_mask;
+    DWORD_PTR old_thread_mask;
+    DWORD_PTR new_mask;
+    ULONG current_cpu;
+    ULONG i;
+
+    if (!pNtGetCurrentProcessorNumber) {
+        win_skip("NtGetCurrentProcessorNumber not available\n");
+        return;
+    }
+
+    GetSystemInfo(&si);
+    current_cpu = pNtGetCurrentProcessorNumber();
+    trace("dwNumberOfProcessors: %d, current processor: %d\n", si.dwNumberOfProcessors, current_cpu);
+
+    status = pNtQueryInformationProcess(GetCurrentProcess(), ProcessBasicInformation, &pbi, sizeof(pbi), NULL);
+    old_process_mask = (DWORD_PTR)pbi.Reserved2[0];
+    ok(status == STATUS_SUCCESS, "got 0x%x (expected STATUS_SUCCESS)\n", status);
+
+    status = pNtQueryInformationThread(GetCurrentThread(), ThreadBasicInformation, &tbi, sizeof(tbi), NULL);
+    old_thread_mask = tbi.AffinityMask;
+    ok(status == STATUS_SUCCESS, "got 0x%x (expected STATUS_SUCCESS)\n", status);
+
+    /* allow the test to run on all processors */
+    new_mask = (1 << si.dwNumberOfProcessors) - 1;
+    status = pNtSetInformationProcess(GetCurrentProcess(), ProcessAffinityMask, &new_mask, sizeof(new_mask));
+    ok(status == STATUS_SUCCESS, "got 0x%x (expected STATUS_SUCCESS)\n", status);
+
+    for (i = 0; i < si.dwNumberOfProcessors; i++)
+    {
+        new_mask = 1 << i;
+        status = pNtSetInformationThread(GetCurrentThread(), ThreadAffinityMask, &new_mask, sizeof(new_mask));
+        ok(status == STATUS_SUCCESS, "%d: got 0x%x (expected STATUS_SUCCESS)\n", i, status);
+
+        status = pNtQueryInformationThread(GetCurrentThread(), ThreadBasicInformation, &tbi, sizeof(tbi), NULL);
+        ok(status == STATUS_SUCCESS, "%d: got 0x%x (expected STATUS_SUCCESS)\n", i, status);
+
+        current_cpu = pNtGetCurrentProcessorNumber();
+        ok((current_cpu == i), "%d (new_mask 0x%lx): running on processor %d (AffinityMask: 0x%lx)\n",
+                                i, new_mask, current_cpu, tbi.AffinityMask);
+    }
+
+    /* restore old values */
+    status = pNtSetInformationProcess(GetCurrentProcess(), ProcessAffinityMask, &old_process_mask, sizeof(old_process_mask));
+    ok(status == STATUS_SUCCESS, "got 0x%x (expected STATUS_SUCCESS)\n", status);
+
+    status = pNtSetInformationThread(GetCurrentThread(), ThreadAffinityMask, &old_thread_mask, sizeof(old_thread_mask));
+    ok(status == STATUS_SUCCESS, "got 0x%x (expected STATUS_SUCCESS)\n", status);
+}
+
+
 START_TEST(info)
 {
     char **argv;
@@ -1502,4 +1563,5 @@ START_TEST(info)
 
     trace("Starting test_affinity()\n");
     test_affinity();
+    test_NtGetCurrentProcessorNumber();
 }
