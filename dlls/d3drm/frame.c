@@ -275,9 +275,9 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_AddTransform(IDirect3DRMFrame2* ifac
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
 
-    FIXME("(%p/%p)->(%u,%p): stub\n", iface, This, type, matrix);
+    TRACE("(%p/%p)->(%u,%p)\n", iface, This, type, matrix);
 
-    return E_NOTIMPL;
+    return IDirect3DRMFrame3_AddTransform(&This->IDirect3DRMFrame3_iface, type, matrix);
 }
 
 static HRESULT WINAPI IDirect3DRMFrame2Impl_AddTranslation(IDirect3DRMFrame2* iface,
@@ -1253,9 +1253,28 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_AddTransform(IDirect3DRMFrame3* ifac
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
 
-    FIXME("(%p/%p)->(%u,%p): stub\n", iface, This, type, matrix);
+    TRACE("(%p/%p)->(%u,%p)\n", iface, This, type, matrix);
 
-    return E_NOTIMPL;
+    switch (type)
+    {
+        case D3DRMCOMBINE_REPLACE:
+            memcpy(&This->transform[0][0], &matrix[0][0], sizeof(D3DRMMATRIX4D));
+            break;
+
+        case D3DRMCOMBINE_BEFORE:
+            FIXME("D3DRMCOMBINE_BEFORE not supported yed\n");
+            break;
+
+        case D3DRMCOMBINE_AFTER:
+            FIXME("D3DRMCOMBINE_AFTER not supported yed\n");
+            break;
+
+        default:
+            WARN("Unknown Combine Type %u\n", type);
+            return D3DRMERR_BADVALUE;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMFrame3Impl_AddTranslation(IDirect3DRMFrame3* iface,
