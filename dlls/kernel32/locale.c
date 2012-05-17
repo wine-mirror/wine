@@ -1878,7 +1878,7 @@ INT WINAPI MultiByteToWideChar( UINT page, DWORD flags, LPCSTR src, INT srclen,
     const union cptable *table;
     int ret;
 
-    if (!src || (!dst && dstlen))
+    if (!src || !srclen || (!dst && dstlen))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return 0;
@@ -1889,14 +1889,19 @@ INT WINAPI MultiByteToWideChar( UINT page, DWORD flags, LPCSTR src, INT srclen,
     switch(page)
     {
     case CP_SYMBOL:
-        if( flags)
+        if (flags)
         {
-            SetLastError( ERROR_INVALID_PARAMETER );
+            SetLastError( ERROR_INVALID_FLAGS );
             return 0;
         }
         ret = wine_cpsymbol_mbstowcs( src, srclen, dst, dstlen );
         break;
     case CP_UTF7:
+        if (flags)
+        {
+            SetLastError( ERROR_INVALID_FLAGS );
+            return 0;
+        }
         FIXME("UTF-7 not supported\n");
         SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
         return 0;
@@ -1969,7 +1974,7 @@ INT WINAPI WideCharToMultiByte( UINT page, DWORD flags, LPCWSTR src, INT srclen,
     const union cptable *table;
     int ret, used_tmp;
 
-    if (!src || (!dst && dstlen))
+    if (!src || !srclen || (!dst && dstlen))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return 0;
@@ -1980,7 +1985,13 @@ INT WINAPI WideCharToMultiByte( UINT page, DWORD flags, LPCWSTR src, INT srclen,
     switch(page)
     {
     case CP_SYMBOL:
-        if( flags || defchar || used)
+        /* when using CP_SYMBOL, ERROR_INVALID_FLAGS takes precedence */
+        if (flags)
+        {
+            SetLastError( ERROR_INVALID_FLAGS );
+            return 0;
+        }
+        if (defchar || used)
         {
             SetLastError( ERROR_INVALID_PARAMETER );
             return 0;
@@ -1988,6 +1999,17 @@ INT WINAPI WideCharToMultiByte( UINT page, DWORD flags, LPCWSTR src, INT srclen,
         ret = wine_cpsymbol_wcstombs( src, srclen, dst, dstlen );
         break;
     case CP_UTF7:
+        /* when using CP_UTF7, ERROR_INVALID_PARAMETER takes precedence */
+        if (defchar || used)
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return 0;
+        }
+        if (flags)
+        {
+            SetLastError( ERROR_INVALID_FLAGS );
+            return 0;
+        }
         FIXME("UTF-7 not supported\n");
         SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
         return 0;
@@ -2000,7 +2022,11 @@ INT WINAPI WideCharToMultiByte( UINT page, DWORD flags, LPCWSTR src, INT srclen,
         }
         /* fall through */
     case CP_UTF8:
-        if (used) *used = FALSE;  /* all chars are valid for UTF-8 */
+        if (defchar || used)
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return 0;
+        }
         ret = wine_utf8_wcstombs( flags, src, srclen, dst, dstlen );
         break;
     default:
