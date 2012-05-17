@@ -1182,9 +1182,29 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
  */
 ULONG WINAPI NtGetCurrentProcessorNumber(void)
 {
+    ULONG processor;
 
-    if (NtCurrentTeb()->Peb->NumberOfProcessors > 1) {
-        FIXME("need multicore support (%d processors)\n", NtCurrentTeb()->Peb->NumberOfProcessors);
+    if (NtCurrentTeb()->Peb->NumberOfProcessors > 1)
+    {
+        ULONG_PTR thread_mask, processor_mask;
+        NTSTATUS status;
+
+        status = NtQueryInformationThread(GetCurrentThread(), ThreadAffinityMask,
+                                          &thread_mask, sizeof(thread_mask), NULL);
+        if (status == STATUS_SUCCESS)
+        {
+            for (processor = 0; processor < NtCurrentTeb()->Peb->NumberOfProcessors; processor++)
+            {
+                processor_mask = (1 << processor);
+                if (thread_mask & processor_mask)
+                {
+                    if (thread_mask != processor_mask)
+                        FIXME("need multicore support (%d processors)\n",
+                              NtCurrentTeb()->Peb->NumberOfProcessors);
+                    return processor;
+                }
+            }
+        }
     }
 
     /* fallback to the first processor */
