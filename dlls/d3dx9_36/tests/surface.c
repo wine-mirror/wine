@@ -853,7 +853,7 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
     }
 
     /* DXT1, DXT2, DXT3, DXT4, DXT5 */
-    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 2, 2, D3DFMT_R8G8B8, D3DPOOL_SYSTEMMEM, &surf, NULL);
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 4, 4, D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &surf, NULL);
     if (FAILED(hr))
         skip("Failed to create R8G8B8 surface, hr %#x.\n", hr);
     else
@@ -861,7 +861,7 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
         hr = D3DXLoadSurfaceFromFileInMemory(surf, NULL, NULL, dds_24bit, sizeof(dds_24bit), NULL, D3DX_FILTER_NONE, 0, NULL);
         ok(SUCCEEDED(hr), "Failed to load surface, hr %#x.\n", hr);
 
-        hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 2, 2, D3DFMT_DXT2, D3DPOOL_SYSTEMMEM, &newsurf, NULL);
+        hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 4, 4, D3DFMT_DXT2, D3DPOOL_SYSTEMMEM, &newsurf, NULL);
         if (FAILED(hr))
             skip("Failed to create DXT2 surface, hr %#x.\n", hr);
         else
@@ -871,7 +871,7 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
             check_release((IUnknown*)newsurf, 0);
         }
 
-        hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 2, 2, D3DFMT_DXT3, D3DPOOL_SYSTEMMEM, &newsurf, NULL);
+        hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 4, 4, D3DFMT_DXT3, D3DPOOL_SYSTEMMEM, &newsurf, NULL);
         if (FAILED(hr))
             skip("Failed to create DXT3 surface, hr %#x.\n", hr);
         else
@@ -881,7 +881,7 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
             check_release((IUnknown*)newsurf, 0);
         }
 
-        hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 2, 2, D3DFMT_DXT4, D3DPOOL_SYSTEMMEM, &newsurf, NULL);
+        hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 4, 4, D3DFMT_DXT4, D3DPOOL_SYSTEMMEM, &newsurf, NULL);
         if (FAILED(hr))
             skip("Failed to create DXT4 surface, hr %#x.\n", hr);
         else
@@ -891,7 +891,7 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
             check_release((IUnknown*)newsurf, 0);
         }
 
-        hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 2, 2, D3DFMT_DXT5, D3DPOOL_SYSTEMMEM, &newsurf, NULL);
+        hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 4, 4, D3DFMT_DXT5, D3DPOOL_SYSTEMMEM, &newsurf, NULL);
         if (FAILED(hr))
             skip("Failed to create DXT5 surface, hr %#x.\n", hr);
         else
@@ -901,7 +901,7 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
             check_release((IUnknown*)newsurf, 0);
         }
 
-        hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 2, 2, D3DFMT_DXT1, D3DPOOL_SYSTEMMEM, &newsurf, NULL);
+        hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 4, 4, D3DFMT_DXT1, D3DPOOL_SYSTEMMEM, &newsurf, NULL);
         if (FAILED(hr))
             skip("Failed to create DXT1 surface, hr %#x.\n", hr);
         else
