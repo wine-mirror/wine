@@ -3202,8 +3202,10 @@ PCCERT_CONTEXT WINAPI CertCreateSelfSignCertificate(HCRYPTPROV_OR_NCRYPT_KEY_HAN
         }
     }
 
-    CryptExportPublicKeyInfo(hProv, dwKeySpec, X509_ASN_ENCODING, NULL,
+    ret = CryptExportPublicKeyInfo(hProv, dwKeySpec, X509_ASN_ENCODING, NULL,
      &pubKeySize);
+    if (!ret)
+        goto end;
     pubKey = CryptMemAlloc(pubKeySize);
     if (pubKey)
     {
@@ -3237,6 +3239,7 @@ PCCERT_CONTEXT WINAPI CertCreateSelfSignCertificate(HCRYPTPROV_OR_NCRYPT_KEY_HAN
         }
         CryptMemFree(pubKey);
     }
+end:
     if (releaseContext)
         CryptReleaseContext(hProv, 0);
     return context;
