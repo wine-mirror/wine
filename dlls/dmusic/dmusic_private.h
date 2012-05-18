@@ -144,20 +144,20 @@ struct IDirectMusicDownloadImpl {
  * IDirectMusicPortImpl implementation structure
  */
 struct IDirectMusicPortImpl {
-  /* IUnknown fields */
-  const IDirectMusicPortVtbl *lpVtbl;
-  const IDirectMusicPortDownloadVtbl *lpDownloadVtbl;
-  const IDirectMusicThruVtbl *lpThruVtbl;
-  LONG           ref;
+    /* IUnknown fields */
+    IDirectMusicPort IDirectMusicPort_iface;
+    IDirectMusicPortDownload IDirectMusicPortDownload_iface;
+    IDirectMusicThru IDirectMusicThru_iface;
+    LONG ref;
 
-  /* IDirectMusicPortImpl fields */
-  IDirectSound* pDirectSound;
-  IReferenceClock* pLatencyClock;
-  BOOL fActive;
-  DMUS_PORTCAPS caps;
-  DMUS_PORTPARAMS params;
-  int nrofgroups;
-  DMUSIC_PRIVATE_CHANNEL_GROUP group[1];
+    /* IDirectMusicPortImpl fields */
+    IDirectSound* pDirectSound;
+    IReferenceClock* pLatencyClock;
+    BOOL fActive;
+    DMUS_PORTCAPS caps;
+    DMUS_PORTPARAMS params;
+    int nrofgroups;
+    DMUSIC_PRIVATE_CHANNEL_GROUP group[1];
 };
 
 /** Internal factory */
