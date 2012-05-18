@@ -1076,12 +1076,31 @@ static void old_printer_check( BOOL delete_phase )
     HeapFree(GetProcessHeap(), 0, pi);
 }
 
+static const WCHAR winspool_mutex_name[] = {'_','_','W','I','N','E','_','W','I','N','S','P','O','O','L','_',
+                                            'M','U','T','E','X','_','_','\0'};
+
 void WINSPOOL_LoadSystemPrinters(void)
 {
     HKEY                hkey, hkeyPrinters;
     DWORD               needed, num, i;
     WCHAR               PrinterName[256];
     BOOL                done = FALSE;
+    HANDLE              mutex;
+
+    /* FIXME: The init code should be moved to spoolsv.exe */
+    mutex = CreateMutexW( NULL, TRUE, winspool_mutex_name );
+    if (!mutex)
+    {
+        ERR( "Failed to create mutex\n" );
+        return;
+    }
+    if (GetLastError() == ERROR_ALREADY_EXISTS)
+    {
+        WaitForSingleObject( mutex, INFINITE );
+        ReleaseMutex( mutex );
+        TRACE( "Init already done\n" );
+        return;
+    }
 
     /* This ensures that all printer entries have a valid Name value.  If causes
        problems later if they don't.  If one is found to be missed we create one
@@ -1114,6 +1133,7 @@ void WINSPOOL_LoadSystemPrinters(void)
 
     old_printer_check( TRUE );
 
+    ReleaseMutex( mutex );
     return;
 }
 
