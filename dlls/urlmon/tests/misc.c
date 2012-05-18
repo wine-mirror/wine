@@ -1219,8 +1219,10 @@ static void test_ReleaseBindInfo(void)
 static void test_CopyStgMedium(void)
 {
     STGMEDIUM src, dst;
-    HGLOBAL empty;
+    HGLOBAL empty, hg;
+    char *ptr1, *ptr2;
     HRESULT hres;
+    int size;
 
     static WCHAR fileW[] = {'f','i','l','e',0};
 
@@ -1256,6 +1258,35 @@ static void test_CopyStgMedium(void)
     ok(!lstrcmpW(dst.u.lpszFileName, fileW), "wrong file name\n");
     ok(!dst.pUnkForRelease, "pUnkForRelease=%p, expected NULL\n", dst.pUnkForRelease);
     ReleaseStgMedium(&dst);
+
+    /* TYMED_HGLOBAL */
+    hg = GlobalAlloc(GMEM_MOVEABLE, 10);
+    ptr1 = GlobalLock(hg);
+    memset(ptr1, 0xfa, 10);
+    memset(&dst, 0xe0, sizeof(dst));
+    src.tymed = TYMED_HGLOBAL;
+    src.u.hGlobal = hg;
+    hres = pCopyStgMedium(&src, &dst);
+    ok(hres == S_OK, "CopyStgMedium failed: %08x\n", hres);
+    ok(dst.tymed == TYMED_HGLOBAL, "tymed=%d\n", dst.tymed);
+    ok(dst.u.hGlobal != hg, "got %p, %p\n", dst.u.hGlobal, hg);
+    size = GlobalSize(dst.u.hGlobal);
+    ok(size == 10, "got size %d\n", size);
+    /* compare contents */
+    ptr2 = GlobalLock(dst.u.hGlobal);
+    ok(!memcmp(ptr1, ptr2, 10), "got wrong data\n");
+    GlobalUnlock(ptr2);
+    GlobalUnlock(ptr1);
+    ok(GlobalFlags(dst.u.hGlobal) == 0, "got 0x%08x\n", GlobalFlags(dst.u.hGlobal));
+    GlobalFree(hg);
+    ReleaseStgMedium(&dst);
+
+    memset(&dst, 0xe0, sizeof(dst));
+    src.tymed = TYMED_HGLOBAL;
+    src.u.hGlobal = NULL;
+    hres = pCopyStgMedium(&src, &dst);
+    ok(hres == S_OK, "CopyStgMedium failed: %08x\n", hres);
+    ok(dst.u.hGlobal == NULL, "got %p\n", dst.u.hGlobal);
 
     hres = pCopyStgMedium(&src, NULL);
     ok(hres == E_POINTER, "CopyStgMedium failed: %08x, expected E_POINTER\n", hres);
