@@ -636,7 +636,7 @@ HRESULT WINAPI D3DXCreateTextureFromFileInMemoryEx(LPDIRECT3DDEVICE9 device,
         return hr;
     }
 
-    loaded_miplevels = min(miplevels, imginfo.MipLevels);
+    loaded_miplevels = min(IDirect3DTexture9_GetLevelCount(*texptr), imginfo.MipLevels);
     hr = D3DXFilterTexture((IDirect3DBaseTexture9*) *texptr, palette, loaded_miplevels - 1, mipfilter);
 
     if (FAILED(hr))
@@ -1209,7 +1209,7 @@ HRESULT WINAPI D3DXCreateCubeTextureFromFileInMemoryEx(IDirect3DDevice9 *device,
         return hr;
     }
 
-    loaded_miplevels = min(mip_levels, img_info.MipLevels);
+    loaded_miplevels = min(IDirect3DCubeTexture9_GetLevelCount(tex), img_info.MipLevels);
     hr = D3DXFilterTexture((IDirect3DBaseTexture9*) tex, palette, loaded_miplevels - 1, mip_filter);
     if (FAILED(hr))
     {
