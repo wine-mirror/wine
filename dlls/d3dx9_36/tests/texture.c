@@ -765,11 +765,11 @@ static void test_D3DXFilterTexture(IDirect3DDevice9 *device)
 
         hr = D3DXFilterTexture((IDirect3DBaseTexture9*) tex, NULL, 5, D3DX_FILTER_NONE); /* Invalid miplevel */
         ok(hr == D3DERR_INVALIDCALL, "D3DXFilterTexture returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+        IDirect3DTexture9_Release(tex);
     }
     else
         skip("Failed to create texture\n");
-
-    IDirect3DTexture9_Release(tex);
 
     hr = D3DXFilterTexture(NULL, NULL, 0, D3DX_FILTER_NONE);
     ok(hr == D3DERR_INVALIDCALL, "D3DXFilterTexture returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
