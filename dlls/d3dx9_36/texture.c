@@ -436,6 +436,11 @@ HRESULT WINAPI D3DXCheckVolumeTextureRequirements(LPDIRECT3DDEVICE9 device,
     {
         if (!(caps.TextureCaps & D3DPTEXTURECAPS_MIPVOLUMEMAP))
             *miplevels = 1;
+        else if ((usage & D3DUSAGE_AUTOGENMIPMAP))
+        {
+            if (*miplevels > 1)
+                *miplevels = 0;
+        }
         else
         {
             UINT max_mipmaps = 1;

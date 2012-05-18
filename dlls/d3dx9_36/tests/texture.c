@@ -517,6 +517,26 @@ static void test_D3DXCheckVolumeTextureRequirements(IDirect3DDevice9 *device)
     hr = D3DXCheckVolumeTextureRequirements(device, NULL, NULL, NULL, &mipmaps, 0, NULL, D3DPOOL_DEFAULT);
     ok(hr == D3D_OK, "D3DXCheckVolumeTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
     ok(mipmaps == 9, "Returned mipmaps %d, expected %d\n", mipmaps, 9);
+
+    if (!is_autogenmipmap_supported(device, D3DRTYPE_VOLUMETEXTURE))
+    {
+        skip("No D3DUSAGE_AUTOGENMIPMAP support for volume textures\n");
+        return;
+    }
+
+    /* mipmaps when D3DUSAGE_AUTOGENMIPMAP is set */
+    mipmaps = 0;
+    hr = D3DXCheckVolumeTextureRequirements(device, NULL, NULL,NULL, &mipmaps, D3DUSAGE_AUTOGENMIPMAP, NULL, D3DPOOL_DEFAULT);
+    ok(hr == D3D_OK, "D3DXCheckVolumeTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(mipmaps == 0, "Returned mipmaps %d, expected %d\n", mipmaps, 0);
+    mipmaps = 1;
+    hr = D3DXCheckVolumeTextureRequirements(device, NULL, NULL,NULL, &mipmaps, D3DUSAGE_AUTOGENMIPMAP, NULL, D3DPOOL_DEFAULT);
+    ok(hr == D3D_OK, "D3DXCheckVolumeTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(mipmaps == 1, "Returned mipmaps %d, expected %d\n", mipmaps, 1);
+    mipmaps = 3;
+    hr = D3DXCheckVolumeTextureRequirements(device, NULL, NULL,NULL, &mipmaps, D3DUSAGE_AUTOGENMIPMAP, NULL, D3DPOOL_DEFAULT);
+    ok(hr == D3D_OK, "D3DXCheckVolumeTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(mipmaps == 0, "Returned mipmaps %d, expected %d\n", mipmaps, 0);
 }
 
 static void test_D3DXCreateTexture(IDirect3DDevice9 *device)
