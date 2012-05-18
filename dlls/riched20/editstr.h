@@ -138,7 +138,6 @@ typedef enum {
 
 /* this paragraph was already wrapped and hasn't changed, every change resets that flag */
 #define MEPF_REWRAP   0x01
-#define MEPF_REPAINT  0x02
 /* v4.1 */
 #define MEPF_CELL     0x04 /* The paragraph is nested in a cell */
 #define MEPF_ROWSTART 0x08 /* Hidden empty paragraph at the start of the row */
