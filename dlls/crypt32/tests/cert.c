@@ -2156,11 +2156,11 @@ static void testCreateSelfSignCert(void)
     SetLastError(0xdeadbeef);
     context = pCertCreateSelfSignCertificate(csp, &name, 0, &info, NULL, NULL,
         NULL, NULL);
+    todo_wine
     ok(context == NULL, "expected failure\n");
     if (context != NULL)
         CertFreeCertificateContext(context);
     else
-        todo_wine
         ok(GetLastError() == NTE_NO_KEY, "expected NTE_NO_KEY, got %08x\n",
             GetLastError());
     /* Again, with a CSP, AT_SIGNATURE and key info */
@@ -2168,7 +2168,6 @@ static void testCreateSelfSignCert(void)
     SetLastError(0xdeadbeef);
     context = pCertCreateSelfSignCertificate(csp, &name, 0, &info, NULL, NULL,
         NULL, NULL);
-    todo_wine
     ok(context != NULL,
         "CertCreateSelfSignCertificate failed: %08x\n", GetLastError());
     if (context)
