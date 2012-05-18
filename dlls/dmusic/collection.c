@@ -129,31 +129,32 @@ static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_GetInstr
     return DMUS_E_INVALIDPATCH;
 }
 
-static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_EnumInstrument(LPDIRECTMUSICCOLLECTION iface, DWORD dwIndex, DWORD* pdwPatch, LPWSTR pwszName, DWORD dwNameLen)
+static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_EnumInstrument(LPDIRECTMUSICCOLLECTION iface, DWORD index, DWORD* patch, LPWSTR name, DWORD name_length)
 {
-	IDirectMusicCollectionImpl *This = impl_from_IDirectMusicCollection(iface);
-	unsigned int r = 0;
-	DMUS_PRIVATE_INSTRUMENTENTRY *tmpEntry;
-	struct list *listEntry;
-       DWORD dwLen;
-		
-	TRACE("(%p, %d, %p, %p, %d)\n", This, dwIndex, pdwPatch, pwszName, dwNameLen);
-	LIST_FOR_EACH (listEntry, &This->Instruments) {
-		tmpEntry = LIST_ENTRY(listEntry, DMUS_PRIVATE_INSTRUMENTENTRY, entry);
-		if (r == dwIndex) {
-			IDirectMusicInstrumentImpl *pInstrument = impl_from_IDirectMusicInstrument(tmpEntry->pInstrument);
-			IDirectMusicInstrument_GetPatch (tmpEntry->pInstrument, pdwPatch);
-                       if (pwszName) {
-                               dwLen = min(strlenW(pInstrument->wszName),dwNameLen-1);
-                               memcpy (pwszName, pInstrument->wszName, dwLen * sizeof(WCHAR));
-                               pwszName[dwLen] = '\0';
-                       }
-			return S_OK;
-		}
-		r++;		
-	}
-	
-	return S_FALSE;
+    IDirectMusicCollectionImpl *This = impl_from_IDirectMusicCollection(iface);
+    DWORD i = 0;
+    DMUS_PRIVATE_INSTRUMENTENTRY *inst_entry;
+    struct list *list_entry;
+    DWORD length;
+
+    TRACE("(%p/%p)->(%d, %p, %p, %d)\n", iface, This, index, patch, name, name_length);
+
+    LIST_FOR_EACH(list_entry, &This->Instruments) {
+        inst_entry = LIST_ENTRY(list_entry, DMUS_PRIVATE_INSTRUMENTENTRY, entry);
+        if (i == index) {
+            IDirectMusicInstrumentImpl *instrument = impl_from_IDirectMusicInstrument(inst_entry->pInstrument);
+            IDirectMusicInstrument_GetPatch(inst_entry->pInstrument, patch);
+            if (name) {
+                length = min(strlenW(instrument->wszName), name_length - 1);
+                memcpy(name, instrument->wszName, length * sizeof(WCHAR));
+                name[length] = '\0';
+            }
+            return S_OK;
+        }
+        i++;
+    }
+
+    return S_FALSE;
 }
 
 static const IDirectMusicCollectionVtbl DirectMusicCollection_Collection_Vtbl = {
