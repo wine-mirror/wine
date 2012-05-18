@@ -35,7 +35,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 #define NS_PROMPTSERVICE_CONTRACTID "@mozilla.org/embedcomp/prompt-service;1"
-#define NS_WINDOWWATCHER_CONTRACTID "@mozilla.org/embedcomp/window-watcher;1"
 #define NS_TOOLTIPTEXTPROVIDER_CONTRACTID "@mozilla.org/embedcomp/tooltiptextprovider;1"
 
 #define NS_TOOLTIPTEXTPROVIDER_CLASSNAME "nsTooltipTextProvider"
@@ -44,72 +43,6 @@ static const nsIID NS_PROMPTSERVICE_CID =
     {0xa2112d6a,0x0e28,0x421f,{0xb4,0x6a,0x25,0xc0,0xb3,0x8,0xcb,0xd0}};
 static const nsIID NS_TOOLTIPTEXTPROVIDER_CID =
     {0x0b666e3e,0x569a,0x462c,{0xa7,0xf0,0xb1,0x6b,0xb1,0x5d,0x42,0xff}};
-
-static nsresult NSAPI nsWindowCreator_QueryInterface(nsIWindowCreator2 *iface, nsIIDRef riid,
-        void **result)
-{
-    *result = NULL;
-
-    if(IsEqualGUID(&IID_nsISupports, riid)) {
-        TRACE("(IID_nsISupports %p)\n", result);
-        *result = iface;
-    }else if(IsEqualGUID(&IID_nsIWindowCreator, riid)) {
-        TRACE("(IID_nsIWindowCreator %p)\n", result);
-        *result = iface;
-    }else if(IsEqualGUID(&IID_nsIWindowCreator2, riid)) {
-        TRACE("(IID_nsIWindowCreator2 %p)\n", result);
-        *result = iface;
-    }
-
-    if(*result) {
-        nsIWindowCreator_AddRef(iface);
-        return NS_OK;
-    }
-
-    WARN("(%s %p)\n", debugstr_guid(riid), result);
-    return NS_NOINTERFACE;
-}
-
-static nsrefcnt NSAPI nsWindowCreator_AddRef(nsIWindowCreator2 *iface)
-{
-    return 2;
-}
-
-static nsrefcnt NSAPI nsWindowCreator_Release(nsIWindowCreator2 *iface)
-{
-    return 1;
-}
-
-static nsresult NSAPI nsWindowCreator_CreateChromeWindow(nsIWindowCreator2 *iface,
-        nsIWebBrowserChrome *parent, PRUint32 chromeFlags, nsIWebBrowserChrome **_retval)
-{
-    TRACE("(%p %08x %p)\n", parent, chromeFlags, _retval);
-    return nsIWindowCreator2_CreateChromeWindow2(iface, parent, chromeFlags, 0, NULL,
-                                                 NULL, _retval);
-}
-
-static nsresult NSAPI nsWindowCreator_CreateChromeWindow2(nsIWindowCreator2 *iface,
-        nsIWebBrowserChrome *parent, PRUint32 chromeFlags, PRUint32 contextFlags,
-        nsIURI *uri, cpp_bool *cancel, nsIWebBrowserChrome **_retval)
-{
-    TRACE("(%p %08x %08x %p %p %p)\n", parent, chromeFlags, contextFlags, uri,
-          cancel, _retval);
-
-    if(cancel)
-        *cancel = FALSE;
-
-    return create_chrome_window(parent, _retval);
-}
-
-static const nsIWindowCreator2Vtbl nsWindowCreatorVtbl = {
-    nsWindowCreator_QueryInterface,
-    nsWindowCreator_AddRef,
-    nsWindowCreator_Release,
-    nsWindowCreator_CreateChromeWindow,
-    nsWindowCreator_CreateChromeWindow2
-};
-
-static nsIWindowCreator2 nsWindowCreator = { &nsWindowCreatorVtbl };
 
 static nsresult NSAPI nsPromptService_QueryInterface(nsIPromptService *iface,
         nsIIDRef riid, void **result)
@@ -454,25 +387,12 @@ static nsServiceFactory nsTooltipTextFactory = {
 
 void register_nsservice(nsIComponentRegistrar *registrar, nsIServiceManager *service_manager)
 {
-    nsIWindowWatcher *window_watcher;
     nsresult nsres;
 
     nsres = nsIComponentRegistrar_RegisterFactory(registrar, &NS_PROMPTSERVICE_CID,
             "Prompt Service", NS_PROMPTSERVICE_CONTRACTID, &nsPromptServiceFactory.nsIFactory_iface);
     if(NS_FAILED(nsres))
         ERR("RegisterFactory failed: %08x\n", nsres);
-
-    nsres = nsIServiceManager_GetServiceByContractID(service_manager, NS_WINDOWWATCHER_CONTRACTID,
-            &IID_nsIWindowWatcher, (void**)&window_watcher);
-    if(NS_SUCCEEDED(nsres)) {
-        nsres = nsIWindowWatcher_SetWindowCreator(window_watcher,
-                                                  (nsIWindowCreator*)&nsWindowCreator);
-        if(NS_FAILED(nsres))
-            ERR("SetWindowCreator failed: %08x\n", nsres);
-        nsIWindowWatcher_Release(window_watcher);
-    }else {
-        ERR("Could not get WindowWatcher object: %08x\n", nsres);
-    }
 
     nsres = nsIComponentRegistrar_RegisterFactory(registrar, &NS_TOOLTIPTEXTPROVIDER_CID,
             NS_TOOLTIPTEXTPROVIDER_CLASSNAME, NS_TOOLTIPTEXTPROVIDER_CONTRACTID,

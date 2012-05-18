@@ -2824,51 +2824,6 @@ interface nsIProfile : nsISupports
 
 [
     object,
-    uuid(30465632-a777-44cc-90f9-8145475ef999),
-    local
-]
-interface nsIWindowCreator : nsISupports
-{
-    nsresult CreateChromeWindow(nsIWebBrowserChrome *parent, PRUint32 chromeFlags,
-                                   nsIWebBrowserChrome **_retval);
-}
-
-[
-    object,
-    uuid(f673ec81-a4b0-11d6-964b-eb5a2bf216fc),
-    local
-]
-interface nsIWindowCreator2 : nsIWindowCreator
-{
-    nsresult CreateChromeWindow2(nsIWebBrowserChrome *parent, PRUint32 chromeFlags,
-                                 PRUint32 contextFlags, nsIURI *uri, bool *cancel,
-                                 nsIWebBrowserChrome **_retval);
-}
-
-[
-    object,
-    uuid(002286a8-494b-43b3-8ddd-49e3fc50622b),
-    local
-]
-interface nsIWindowWatcher : nsISupports
-{
-    nsresult OpenWindow(nsIDOMWindow *aParent, const char *aUrl, const char *aName,
-                        const char *aFeatures, nsISupports *aArguments, nsIDOMWindow **_retval);
-    nsresult RegisterNotification(nsIObserver *aObserver);
-    nsresult UnregisterNotification(nsIObserver *aObserver);
-    nsresult GetWindowEnumerator(nsISimpleEnumerator **_retval);
-    nsresult GetNewPrompter(nsIDOMWindow *aParent, nsIPrompt **_retval);
-    nsresult GetNewAuthPrompter(nsIDOMWindow *aParent, nsIAuthPrompt **_retval);
-    nsresult SetWindowCreator(nsIWindowCreator *creator);
-    nsresult GetChromeForWindow(nsIDOMWindow *aWindow, nsIWebBrowserChrome **_retval);
-    nsresult GetWindowByName(const PRUnichar *aTargetName, nsIDOMWindow *aCurrentWindow,
-                             nsIDOMWindow **_retval);
-    nsresult GetActiveWindow(nsIDOMWindow **aActiveWindow);
-    nsresult SetActiveWindow(nsIDOMWindow *aActiveWindow);
-}
-
-[
-    object,
     uuid(24f3f4da-18a4-448d-876d-7360fefac029),
     local
 ]

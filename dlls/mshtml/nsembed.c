@@ -1733,22 +1733,6 @@ static const nsISupportsWeakReferenceVtbl nsSupportsWeakReferenceVtbl = {
     nsSupportsWeakReference_GetWeakReference
 };
 
-nsresult create_chrome_window(nsIWebBrowserChrome *parent, nsIWebBrowserChrome **ret)
-{
-    NSContainer *new_container;
-    HRESULT hres;
-
-    if(parent->lpVtbl != &nsWebBrowserChromeVtbl)
-        return NS_ERROR_UNEXPECTED;
-
-    hres = create_nscontainer(NULL, impl_from_nsIWebBrowserChrome(parent), &new_container);
-    if(FAILED(hres))
-        return NS_ERROR_FAILURE;
-
-    *ret = &new_container->nsIWebBrowserChrome_iface;
-    return NS_OK;
-}
-
 static HRESULT init_nscontainer(NSContainer *nscontainer)
 {
     nsIWebBrowserSetup *wbsetup;
@@ -1857,7 +1841,7 @@ static HRESULT init_nscontainer(NSContainer *nscontainer)
     return S_OK;
 }
 
-HRESULT create_nscontainer(HTMLDocumentObj *doc, NSContainer *parent, NSContainer **_ret)
+HRESULT create_nscontainer(HTMLDocumentObj *doc, NSContainer **_ret)
 {
     NSContainer *ret;
     HRESULT hres;
@@ -1879,10 +1863,6 @@ HRESULT create_nscontainer(HTMLDocumentObj *doc, NSContainer *parent, NSContaine
 
     ret->doc = doc;
     ret->ref = 1;
-
-    if(parent)
-        nsIWebBrowserChrome_AddRef(&parent->nsIWebBrowserChrome_iface);
-    ret->parent = parent;
 
     hres = init_nscontainer(ret);
     if(SUCCEEDED(hres))
