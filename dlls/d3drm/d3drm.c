@@ -1463,7 +1463,7 @@ static HRESULT WINAPI IDirect3DRM3Impl_Load(IDirect3DRM3* iface, LPVOID ObjSourc
     HRESULT ret = D3DRMERR_BADOBJECT;
     DWORD i;
 
-    FIXME("(%p/%p)->(%p,%p,%p,%d,%d,%p,%p,%p,%p,%p): partial implementation\n", iface, This, ObjSource, ObjID, GUIDs,
+    TRACE("(%p/%p)->(%p,%p,%p,%d,%d,%p,%p,%p,%p,%p)\n", iface, This, ObjSource, ObjID, GUIDs,
           nb_GUIDs, LOFlags, LoadProc, ArgLP, LoadTextureProc, ArgLTP, ParentFrame);
 
     TRACE("Looking for GUIDs:\n");
