@@ -906,6 +906,10 @@ static DWORD APPINFO_SetOption(object_header_t *hdr, DWORD option, void *buf, DW
 
         ai->connect_timeout = *(ULONG*)buf;
         return ERROR_SUCCESS;
+    case INTERNET_OPTION_USER_AGENT:
+        heap_free(ai->agent);
+        if (!(ai->agent = heap_strdupW(buf))) return ERROR_OUTOFMEMORY;
+        return ERROR_SUCCESS;
     }
 
     return INET_SetOption(hdr, option, buf, size);
