@@ -1238,6 +1238,17 @@ static void test_D3DXCreateTextureFromFileInMemoryEx(IDirect3DDevice9 *device)
         D3DUSAGE_DYNAMIC, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, NULL, &texture);
     ok(hr == D3D_OK, "D3DXCreateTextureFromFileInMemoryEx returned %#x, expected %#x\n", hr, D3D_OK);
     if (SUCCEEDED(hr)) IDirect3DTexture9_Release(texture);
+
+    if (!is_autogenmipmap_supported(device, D3DRTYPE_TEXTURE))
+    {
+        skip("No D3DUSAGE_AUTOGENMIPMAP support for textures\n");
+        return;
+    }
+
+    hr = D3DXCreateTextureFromFileInMemoryEx(device, dds_16bit, sizeof(dds_16bit), D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT,
+        D3DUSAGE_DYNAMIC | D3DUSAGE_AUTOGENMIPMAP, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, NULL, &texture);
+    ok(hr == D3D_OK, "D3DXCreateTextureFromFileInMemoryEx returned %#x, expected %#x\n", hr, D3D_OK);
+    if (SUCCEEDED(hr)) IDirect3DTexture9_Release(texture);
 }
 
 static void test_D3DXCreateCubeTextureFromFileInMemory(IDirect3DDevice9 *device)

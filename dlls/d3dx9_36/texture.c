@@ -513,6 +513,7 @@ HRESULT WINAPI D3DXCreateTextureFromFileInMemoryEx(LPDIRECT3DDEVICE9 device,
     IDirect3DSurface9 *surface;
     BOOL file_width = FALSE, file_height = FALSE;
     BOOL file_format = FALSE, file_miplevels = FALSE;
+    BOOL dynamic_texture;
     D3DXIMAGE_INFO imginfo;
     UINT loaded_miplevels;
     D3DCAPS9 caps;
@@ -600,7 +601,8 @@ HRESULT WINAPI D3DXCreateTextureFromFileInMemoryEx(LPDIRECT3DDEVICE9 device,
         return D3DERR_INVALIDCALL;
 
     /* Create the to-be-filled texture */
-    if (pool == D3DPOOL_DEFAULT && !((caps.Caps2 & D3DCAPS2_DYNAMICTEXTURES) && usage == D3DUSAGE_DYNAMIC))
+    dynamic_texture = (caps.Caps2 & D3DCAPS2_DYNAMICTEXTURES) && (usage & D3DUSAGE_DYNAMIC);
+    if (pool == D3DPOOL_DEFAULT && !dynamic_texture)
     {
         hr = D3DXCreateTexture(device, width, height, miplevels, usage, format, D3DPOOL_SYSTEMMEM, &buftex);
         texptr = &buftex;
