@@ -797,6 +797,26 @@ static void test_D3DXFilterTexture(IDirect3DDevice9 *device)
     else
         skip("Failed to create texture\n");
 
+    hr = IDirect3DDevice9_CreateTexture(device, 256, 256, 0, 0, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &tex, NULL);
+    if (SUCCEEDED(hr))
+    {
+        hr = D3DXFilterTexture((IDirect3DBaseTexture9*) tex, NULL, 0, D3DX_FILTER_POINT);
+        ok(hr == D3D_OK, "D3DXFilterTexture returned %#x, expected %#x\n", hr, D3D_OK);
+        IDirect3DTexture9_Release(tex);
+    }
+    else
+        skip("Failed to create texture\n");
+
+    hr = IDirect3DDevice9_CreateTexture(device, 256, 256, 0, D3DUSAGE_DYNAMIC, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &tex, NULL);
+    if (SUCCEEDED(hr))
+    {
+        hr = D3DXFilterTexture((IDirect3DBaseTexture9*) tex, NULL, 0, D3DX_FILTER_POINT);
+        ok(hr == D3D_OK, "D3DXFilterTexture returned %#x, expected %#x\n", hr, D3D_OK);
+        IDirect3DTexture9_Release(tex);
+    }
+    else
+        skip("Failed to create texture\n");
+
     /* Cube texture test */
     hr = IDirect3DDevice9_CreateCubeTexture(device, 256, 5, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &cubetex, NULL);
 
@@ -811,6 +831,33 @@ static void test_D3DXFilterTexture(IDirect3DDevice9 *device)
         hr = D3DXFilterTexture((IDirect3DBaseTexture9*) cubetex, NULL, 5, D3DX_FILTER_NONE); /* Invalid miplevel */
         ok(hr == D3DERR_INVALIDCALL, "D3DXFilterTexture returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
         IDirect3DCubeTexture9_Release(cubetex);
+    }
+    else
+        skip("Failed to create texture\n");
+
+    /* Test textures with D3DUSAGE_AUTOGENMIPMAP usage */
+    if (!is_autogenmipmap_supported(device, D3DRTYPE_TEXTURE))
+    {
+        skip("No D3DUSAGE_AUTOGENMIPMAP supported for textures\n");
+        return;
+    }
+
+    hr = IDirect3DDevice9_CreateTexture(device, 256, 256, 0, D3DUSAGE_DYNAMIC | D3DUSAGE_AUTOGENMIPMAP, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &tex, NULL);
+    if (SUCCEEDED(hr))
+    {
+        hr = D3DXFilterTexture((IDirect3DBaseTexture9*) tex, NULL, 0, D3DX_FILTER_NONE);
+        ok(hr == D3D_OK, "D3dXFilteTexture returned %#x, expected %#x\n", hr, D3D_OK);
+        IDirect3DTexture9_Release(tex);
+    }
+    else
+        skip("Failed to create texture\n");
+
+    hr = IDirect3DDevice9_CreateTexture(device, 256, 256, 1, D3DUSAGE_DYNAMIC | D3DUSAGE_AUTOGENMIPMAP, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &tex, NULL);
+    if (SUCCEEDED(hr))
+    {
+        hr = D3DXFilterTexture((IDirect3DBaseTexture9*) tex, NULL, 0, D3DX_FILTER_NONE);
+        ok(hr == D3D_OK, "D3dXFilteTexture returned %#x, expected %#x\n", hr, D3D_OK);
+        IDirect3DTexture9_Release(tex);
     }
     else
         skip("Failed to create texture\n");
