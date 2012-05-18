@@ -527,6 +527,7 @@ static ULONG WINAPI VMR9Inner_Release(IUnknown * iface)
     if (!refCount)
     {
         TRACE("Destroying\n");
+        BaseControlWindow_Destroy(&This->baseControlWindow);
 
         if (This->allocator)
             IVMRSurfaceAllocator9_Release(This->allocator);
