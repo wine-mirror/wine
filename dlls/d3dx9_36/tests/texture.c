@@ -85,6 +85,29 @@ static const unsigned char dds_volume_map[] = {
 0x0f,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x10,0x84,0xef,0x7b,0xaa,0xab,0xab,0xab
 };
 
+static BOOL is_autogenmipmap_supported(IDirect3DDevice9 *device, D3DRESOURCETYPE resource_type)
+{
+    HRESULT hr;
+    D3DCAPS9 caps;
+    IDirect3D9 *d3d9;
+    D3DDISPLAYMODE mode;
+    D3DDEVICE_CREATION_PARAMETERS params;
+
+    IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    IDirect3DDevice9_GetDirect3D(device, &d3d9);
+    IDirect3DDevice9_GetCreationParameters(device, &params);
+    IDirect3DDevice9_GetDisplayMode(device, 0, &mode);
+
+    if (!(caps.Caps2 & D3DCAPS2_CANAUTOGENMIPMAP))
+        return FALSE;
+
+    hr = IDirect3D9_CheckDeviceFormat(d3d9, params.AdapterOrdinal, params.DeviceType,
+        mode.Format, D3DUSAGE_AUTOGENMIPMAP, resource_type, D3DFMT_A8R8G8B8);
+
+    IDirect3D9_Release(d3d9);
+    return SUCCEEDED(hr);
+}
+
 static void test_D3DXCheckTextureRequirements(IDirect3DDevice9 *device)
 {
     UINT width, height, mipmaps;
@@ -198,6 +221,29 @@ static void test_D3DXCheckTextureRequirements(IDirect3DDevice9 *device)
     hr = D3DXCheckTextureRequirements(device, NULL, NULL, &mipmaps, 0, NULL, D3DPOOL_DEFAULT);
     ok(hr == D3D_OK, "D3DXCheckTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
     ok(mipmaps == 9, "Returned mipmaps %d, expected %d\n", mipmaps, 9);
+
+    /* mipmaps when D3DUSAGE_AUTOGENMIPMAP is set */
+    if (is_autogenmipmap_supported(device, D3DRTYPE_TEXTURE))
+    {
+        mipmaps = 0;
+        hr = D3DXCheckTextureRequirements(device, NULL, NULL, &mipmaps, D3DUSAGE_AUTOGENMIPMAP, NULL, D3DPOOL_DEFAULT);
+        ok(hr == D3D_OK, "D3DXCheckTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
+        ok(mipmaps == 0, "Returned mipmaps %d, expected %d\n", mipmaps, 0);
+        mipmaps = 1;
+        hr = D3DXCheckTextureRequirements(device, NULL, NULL, &mipmaps, D3DUSAGE_AUTOGENMIPMAP, NULL, D3DPOOL_DEFAULT);
+        ok(hr == D3D_OK, "D3DXCheckTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
+        ok(mipmaps == 1, "Returned mipmaps %d, expected %d\n", mipmaps, 1);
+        mipmaps = 2;
+        hr = D3DXCheckTextureRequirements(device, NULL, NULL, &mipmaps, D3DUSAGE_AUTOGENMIPMAP, NULL, D3DPOOL_DEFAULT);
+        ok(hr == D3D_OK, "D3DXCheckTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
+        ok(mipmaps == 0, "Returned mipmaps %d, expected %d\n", mipmaps, 0);
+        mipmaps = 6;
+        hr = D3DXCheckTextureRequirements(device, NULL, NULL, &mipmaps, D3DUSAGE_AUTOGENMIPMAP, NULL, D3DPOOL_DEFAULT);
+        ok(hr == D3D_OK, "D3DXCheckTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
+        ok(mipmaps == 0, "Returned mipmaps %d, expected %d\n", mipmaps, 0);
+    }
+    else
+        skip("No D3DUSAGE_AUTOGENMIPMAP support for textures\n");
 
     /* usage */
     hr = D3DXCheckTextureRequirements(device, NULL, NULL, NULL, D3DUSAGE_WRITEONLY, NULL, D3DPOOL_DEFAULT);
@@ -321,6 +367,16 @@ static void test_D3DXCheckCubeTextureRequirements(IDirect3DDevice9 *device)
     hr = D3DXCheckCubeTextureRequirements(device, NULL, &mipmaps, 0, NULL, D3DPOOL_DEFAULT);
     ok(hr == D3D_OK, "D3DXCheckCubeTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
     ok(mipmaps == 9, "Returned mipmaps %d, expected %d\n", mipmaps, 9);
+
+    if (is_autogenmipmap_supported(device, D3DRTYPE_CUBETEXTURE))
+    {
+        mipmaps = 3;
+        hr = D3DXCheckCubeTextureRequirements(device, NULL,  &mipmaps, D3DUSAGE_AUTOGENMIPMAP, NULL, D3DPOOL_DEFAULT);
+        ok(hr == D3D_OK, "D3DXCheckCubeTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
+        ok(mipmaps == 0, "Returned mipmaps %d, expected %d\n", mipmaps, 0);
+    }
+    else
+        skip("No D3DUSAGE_AUTOGENMIPMAP support for cube textures\n");
 
     /* usage */
     hr = D3DXCheckCubeTextureRequirements(device, NULL, NULL, D3DUSAGE_WRITEONLY, NULL, D3DPOOL_DEFAULT);

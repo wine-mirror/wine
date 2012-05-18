@@ -216,7 +216,12 @@ HRESULT WINAPI D3DXCheckTextureRequirements(LPDIRECT3DDEVICE9 device,
         *height = h;
 
     /* miplevels */
-    if (miplevels)
+    if (miplevels && (usage & D3DUSAGE_AUTOGENMIPMAP))
+    {
+        if (*miplevels > 1)
+            *miplevels = 0;
+    }
+    else if (miplevels)
     {
         UINT max_mipmaps = 1;
 
