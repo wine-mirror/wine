@@ -565,7 +565,8 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
 
     SetRect(&destrect, 0, 0, 0, 0); /* left = right, top = bottom */
     hr = D3DXLoadSurfaceFromMemory(surf, NULL, &destrect, pixdata, D3DFMT_A8R8G8B8, sizeof(pixdata), NULL, &rect, D3DX_FILTER_NONE, 0);
-    ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3D_OK);
+    /* fails when debug version of d3d9 is used */
+    ok(hr == D3D_OK || broken(hr == D3DERR_INVALIDCALL), "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3D_OK);
 
     SetRect(&destrect, 257, 257, 257, 257); /* left = right, top = bottom, but invalid values */
     hr = D3DXLoadSurfaceFromMemory(surf, NULL, &destrect, pixdata, D3DFMT_A8R8G8B8, sizeof(pixdata), NULL, &rect, D3DX_FILTER_NONE, 0);
@@ -996,7 +997,8 @@ next_tests:
     ok(hr == D3DERR_INVALIDCALL, "D3DXSaveSurfaceToFileA returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
     SetRect(&rect, 0, 0, 0, 0);
     hr = D3DXSaveSurfaceToFileA("saved_surface.bmp", D3DXIFF_BMP, surface, NULL, &rect);
-    ok(hr == D3D_OK, "D3DXSaveSurfaceToFileA returned %#x, expected %#x\n", hr, D3D_OK);
+    /* fails when debug version of d3d9 is used */
+    ok(hr == D3D_OK || broken(hr == D3DERR_INVALIDCALL), "D3DXSaveSurfaceToFileA returned %#x, expected %#x\n", hr, D3D_OK);
 
     DeleteFileA("saved_surface.bmp");
     DeleteFileA("saved_surface.ppm");
