@@ -22,9 +22,12 @@
 #include <stdlib.h>
 #include <windows.h>
 #include <psapi.h>
+#include <wine/debug.h>
 #include <wine/unicode.h>
 
 #include "taskkill.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(taskkill);
 
 static int force_termination;
 
@@ -448,6 +451,7 @@ static BOOL process_arguments(int argc, WCHAR *argv[])
     static const WCHAR slashImage[] = {'/','i','m',0};
     static const WCHAR slashPID[] = {'/','p','i','d',0};
     static const WCHAR slashHelp[] = {'/','?',0};
+    static const WCHAR slashTerminateChildren[] = {'/','t',0};
 
     if (argc > 1)
     {
@@ -465,6 +469,8 @@ static BOOL process_arguments(int argc, WCHAR *argv[])
         {
             int got_im = 0, got_pid = 0;
 
+            if (!strcmpiW(slashTerminateChildren, argv[i]))
+                WINE_FIXME("/T not supported\n");
             if (!strcmpiW(slashForceTerminate, argv[i]))
                 force_termination = 1;
             /* Options /IM and /PID appear to behave identically, except for
