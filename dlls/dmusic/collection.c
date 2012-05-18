@@ -103,30 +103,30 @@ static ULONG WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_Release(LP
 }
 
 /* IDirectMusicCollection Interface follows: */
-static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_GetInstrument(LPDIRECTMUSICCOLLECTION iface, DWORD dwPatch, IDirectMusicInstrument** ppInstrument)
+static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_GetInstrument(LPDIRECTMUSICCOLLECTION iface, DWORD patch, IDirectMusicInstrument** instrument)
 {
-	IDirectMusicCollectionImpl *This = impl_from_IDirectMusicCollection(iface);
-	DMUS_PRIVATE_INSTRUMENTENTRY *tmpEntry;
-	struct list *listEntry;
-	DWORD dwInstPatch;
+    IDirectMusicCollectionImpl *This = impl_from_IDirectMusicCollection(iface);
+    DMUS_PRIVATE_INSTRUMENTENTRY *inst_entry;
+    struct list *list_entry;
+    DWORD inst_patch;
 
-	TRACE("(%p, %d, %p)\n", This, dwPatch, ppInstrument);
-	
-	LIST_FOR_EACH (listEntry, &This->Instruments) {
-		tmpEntry = LIST_ENTRY(listEntry, DMUS_PRIVATE_INSTRUMENTENTRY, entry);
-		IDirectMusicInstrument_GetPatch (tmpEntry->pInstrument, &dwInstPatch);
-		if (dwPatch == dwInstPatch) {
-			*ppInstrument = tmpEntry->pInstrument;
-			IDirectMusicInstrument_AddRef (tmpEntry->pInstrument);
-			IDirectMusicInstrumentImpl_Custom_Load (tmpEntry->pInstrument, This->pStm); /* load instrument before returning it */
-			TRACE(": returning instrument %p\n", *ppInstrument);
-			return S_OK;
-		}
-			
-	}
-	TRACE(": instrument not found\n");
-	
-	return DMUS_E_INVALIDPATCH;
+    TRACE("(%p/%p)->(%u, %p)\n", iface, This, patch, instrument);
+
+    LIST_FOR_EACH(list_entry, &This->Instruments) {
+        inst_entry = LIST_ENTRY(list_entry, DMUS_PRIVATE_INSTRUMENTENTRY, entry);
+        IDirectMusicInstrument_GetPatch(inst_entry->pInstrument, &inst_patch);
+        if (patch == inst_patch) {
+            *instrument = inst_entry->pInstrument;
+            IDirectMusicInstrument_AddRef(inst_entry->pInstrument);
+            IDirectMusicInstrumentImpl_Custom_Load(inst_entry->pInstrument, This->pStm);
+            TRACE(": returning instrument %p\n", *instrument);
+            return S_OK;
+        }
+    }
+
+    TRACE(": instrument not found\n");
+
+    return DMUS_E_INVALIDPATCH;
 }
 
 static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_EnumInstrument(LPDIRECTMUSICCOLLECTION iface, DWORD dwIndex, DWORD* pdwPatch, LPWSTR pwszName, DWORD dwNameLen)
