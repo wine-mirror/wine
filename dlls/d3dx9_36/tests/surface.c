@@ -437,6 +437,7 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
 {
     HRESULT hr;
     BOOL testdummy_ok, testbitmap_ok;
+    IDirect3DTexture9 *tex;
     IDirect3DSurface9 *surf, *newsurf;
     RECT rect, destrect;
     D3DLOCKED_RECT lockrect;
@@ -585,6 +586,18 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
 
         check_release((IUnknown*)newsurf, 0);
     } else skip("Failed to create a second surface\n");
+
+    hr = IDirect3DDevice9_CreateTexture(device, 256, 256, 0, 0, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &tex, NULL);
+    if (SUCCEEDED(hr))
+    {
+        IDirect3DTexture9_GetSurfaceLevel(tex, 0, &newsurf);
+
+        hr = D3DXLoadSurfaceFromSurface(newsurf, NULL, NULL, surf, NULL, NULL, D3DX_DEFAULT, 0);
+        ok(hr == D3D_OK, "D3DXLoadSurfaceFromSurface returned %#x, expected %#x\n", hr, D3D_OK);
+
+        IDirect3DSurface9_Release(newsurf);
+        IDirect3DTexture9_Release(tex);
+    } else skip("Failed to create texture\n");
 
     check_release((IUnknown*)surf, 0);
 
