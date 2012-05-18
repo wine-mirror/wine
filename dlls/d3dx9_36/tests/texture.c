@@ -1290,6 +1290,23 @@ static void test_D3DXCreateCubeTextureFromFileInMemory(IDirect3DDevice9 *device)
     } else skip("Couldn't create cube texture\n");
 }
 
+static void test_D3DXCreateCubeTextureFromFileInMemoryEx(IDirect3DDevice9 *device)
+{
+    HRESULT hr;
+    IDirect3DCubeTexture9 *cube_texture;
+
+    if (!is_autogenmipmap_supported(device, D3DRTYPE_CUBETEXTURE))
+    {
+        skip("No D3DUSAGE_AUTOGENMIPMAP support for cube textures\n");
+        return;
+    }
+
+    hr = D3DXCreateCubeTextureFromFileInMemoryEx(device, dds_cube_map, sizeof(dds_cube_map), D3DX_DEFAULT, D3DX_DEFAULT,
+        D3DUSAGE_DYNAMIC | D3DUSAGE_AUTOGENMIPMAP, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, NULL, &cube_texture);
+    ok(hr == D3D_OK, "D3DXCreateCubeTextureFromFileInMemoryEx returned %#x, expected %#x\n", hr, D3D_OK);
+    if (SUCCEEDED(hr)) IDirect3DCubeTexture9_Release(cube_texture);
+}
+
 static void test_D3DXCreateVolumeTextureFromFileInMemory(IDirect3DDevice9 *device)
 {
     HRESULT hr;
@@ -1377,6 +1394,7 @@ START_TEST(texture)
     test_D3DXCreateTextureFromFileInMemory(device);
     test_D3DXCreateTextureFromFileInMemoryEx(device);
     test_D3DXCreateCubeTextureFromFileInMemory(device);
+    test_D3DXCreateCubeTextureFromFileInMemoryEx(device);
     test_D3DXCreateVolumeTextureFromFileInMemory(device);
 
     IDirect3DDevice9_Release(device);

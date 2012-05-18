@@ -1124,6 +1124,7 @@ HRESULT WINAPI D3DXCreateCubeTextureFromFileInMemoryEx(IDirect3DDevice9 *device,
     D3DCAPS9 caps;
     UINT loaded_miplevels;
     D3DXIMAGE_INFO img_info;
+    BOOL dynamic_texture;
     BOOL file_size = FALSE;
     BOOL file_format = FALSE;
     BOOL file_mip_levels = FALSE;
@@ -1191,7 +1192,8 @@ HRESULT WINAPI D3DXCreateCubeTextureFromFileInMemoryEx(IDirect3DDevice9 *device,
         mip_levels = img_info.MipLevels;
     }
 
-    if (pool == D3DPOOL_DEFAULT && !((caps.Caps2 & D3DCAPS2_DYNAMICTEXTURES) && usage == D3DUSAGE_DYNAMIC))
+    dynamic_texture = (caps.Caps2 & D3DCAPS2_DYNAMICTEXTURES) && (usage & D3DUSAGE_DYNAMIC);
+    if (pool == D3DPOOL_DEFAULT && !dynamic_texture)
     {
         hr = D3DXCreateCubeTexture(device, size, mip_levels, usage, format, D3DPOOL_SYSTEMMEM, &buftex);
         tex = buftex;
