@@ -48,11 +48,17 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 HRESULT WINAPI WMCreateReader(IUnknown *reserved, DWORD rights, IWMSyncReader **reader)
 {
     FIXME("(%p, %x, %p): stub\n", reserved, rights, reader);
+
+    *reader = NULL;
+
     return E_NOTIMPL;
 }
 
 HRESULT WINAPI WMCreateSyncReader(IUnknown *pcert, DWORD rights, IWMSyncReader **syncreader)
 {
     FIXME("(%p, %x, %p): stub\n", pcert, rights, syncreader);
+
+    *syncreader = NULL;
+
     return E_NOTIMPL;
 }
