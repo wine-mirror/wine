@@ -3201,11 +3201,6 @@ PCCERT_CONTEXT WINAPI CertCreateSelfSignCertificate(HCRYPTPROV_OR_NCRYPT_KEY_HAN
             releaseContext = TRUE;
         }
     }
-    else if (pKeyProvInfo)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return NULL;
-    }
 
     CryptExportPublicKeyInfo(hProv, dwKeySpec, X509_ASN_ENCODING, NULL,
      &pubKeySize);
