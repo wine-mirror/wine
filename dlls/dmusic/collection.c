@@ -77,30 +77,29 @@ static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_QueryInt
 
 static ULONG WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_AddRef(LPDIRECTMUSICCOLLECTION iface)
 {
-	IDirectMusicCollectionImpl *This = impl_from_IDirectMusicCollection(iface);
-	ULONG refCount = InterlockedIncrement(&This->ref);
+    IDirectMusicCollectionImpl *This = impl_from_IDirectMusicCollection(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
 
-	TRACE("(%p)->(ref before=%u)\n", This, refCount - 1);
+    TRACE("(%p/%p)->(): new ref = %u)\n", iface, This, ref);
 
-	DMUSIC_LockModule();
+    DMUSIC_LockModule();
 
-	return refCount;
+    return ref;
 }
 
 static ULONG WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_Release(LPDIRECTMUSICCOLLECTION iface)
 {
-	IDirectMusicCollectionImpl *This = impl_from_IDirectMusicCollection(iface);
-	ULONG refCount = InterlockedDecrement(&This->ref);
+    IDirectMusicCollectionImpl *This = impl_from_IDirectMusicCollection(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
 
-	TRACE("(%p)->(ref before=%u)\n", This, refCount + 1);
+    TRACE("(%p/%p)->(): new ref = %u)\n", iface, This, ref);
 
-	if (!refCount) {
-		HeapFree(GetProcessHeap(), 0, This);
-	}
+    if (!ref)
+        HeapFree(GetProcessHeap(), 0, This);
 
-	DMUSIC_UnlockModule();
+    DMUSIC_UnlockModule();
 
-	return refCount;
+    return ref;
 }
 
 /* IDirectMusicCollection Interface follows: */
