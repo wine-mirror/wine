@@ -544,6 +544,21 @@ HRESULT WINAPI CopyStgMedium(const STGMEDIUM *src, STGMEDIUM *dst)
         if(dst->u.pstg)
             IStorage_AddRef(dst->u.pstg);
         break;
+    case TYMED_HGLOBAL:
+        if(dst->u.hGlobal) {
+            SIZE_T size = GlobalSize(src->u.hGlobal);
+            char *src_ptr, *dst_ptr;
+
+            dst->u.hGlobal = GlobalAlloc(GMEM_FIXED, size);
+            if(!dst->u.hGlobal)
+                return E_OUTOFMEMORY;
+            dst_ptr = GlobalLock(dst->u.hGlobal);
+            src_ptr = GlobalLock(src->u.hGlobal);
+            memcpy(dst_ptr, src_ptr, size);
+            GlobalUnlock(src_ptr);
+            GlobalUnlock(dst_ptr);
+        }
+        break;
     default:
         FIXME("Unimplemented tymed %d\n", src->tymed);
     }
