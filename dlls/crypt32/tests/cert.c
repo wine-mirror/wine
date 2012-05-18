@@ -2138,13 +2138,82 @@ static void testCreateSelfSignCert(void)
      CRYPT_DELETEKEYSET);
     ok(ret, "CryptAcquireContext failed: %08x\n", GetLastError());
 
+    /* Do the same test with a CSP, AT_KEYEXCHANGE and key info */
+    pCryptAcquireContextA(&csp, cspNameA, MS_DEF_PROV_A, PROV_RSA_FULL,
+     CRYPT_DELETEKEYSET);
+    ret = pCryptAcquireContextA(&csp, cspNameA, MS_DEF_PROV_A, PROV_RSA_FULL,
+     CRYPT_NEWKEYSET);
+    ok(ret, "CryptAcquireContext failed: %08x\n", GetLastError());
+    ret = CryptGenKey(csp, AT_SIGNATURE, 0, &key);
+    ok(ret, "CryptGenKey failed: %08x\n", GetLastError());
 
-    /* do the same test with AT_KEYEXCHANGE  and key info*/
     memset(&info,0,sizeof(info));
     info.dwProvType = PROV_RSA_FULL;
     info.dwKeySpec = AT_KEYEXCHANGE;
     info.pwszProvName = (LPWSTR) MS_DEF_PROV_W;
     info.pwszContainerName = cspNameW;
+    /* This should fail because the CSP doesn't have the specified key. */
+    SetLastError(0xdeadbeef);
+    context = pCertCreateSelfSignCertificate(csp, &name, 0, &info, NULL, NULL,
+        NULL, NULL);
+    ok(context == NULL, "expected failure\n");
+    if (context != NULL)
+        CertFreeCertificateContext(context);
+    else
+        todo_wine
+        ok(GetLastError() == NTE_NO_KEY, "expected NTE_NO_KEY, got %08x\n",
+            GetLastError());
+    /* Again, with a CSP, AT_SIGNATURE and key info */
+    info.dwKeySpec = AT_SIGNATURE;
+    SetLastError(0xdeadbeef);
+    context = pCertCreateSelfSignCertificate(csp, &name, 0, &info, NULL, NULL,
+        NULL, NULL);
+    todo_wine
+    ok(context != NULL,
+        "CertCreateSelfSignCertificate failed: %08x\n", GetLastError());
+    if (context)
+    {
+        DWORD size = 0;
+
+        /* The context must have a key provider info property */
+        ret = CertGetCertificateContextProperty(context,
+            CERT_KEY_PROV_INFO_PROP_ID, NULL, &size);
+        ok(ret && size, "Expected non-zero key provider info\n");
+        if (size)
+        {
+            PCRYPT_KEY_PROV_INFO pInfo = HeapAlloc(GetProcessHeap(), 0, size);
+
+            if (pInfo)
+            {
+                ret = CertGetCertificateContextProperty(context,
+                    CERT_KEY_PROV_INFO_PROP_ID, pInfo, &size);
+                ok(ret, "CertGetCertificateContextProperty failed: %08x\n",
+                    GetLastError());
+                if (ret)
+                {
+                    /* Sanity-check the key provider */
+                    ok(!lstrcmpW(pInfo->pwszContainerName, cspNameW),
+                        "Unexpected key container\n");
+                    ok(!lstrcmpW(pInfo->pwszProvName, MS_DEF_PROV_W),
+                        "Unexpected provider\n");
+                    ok(pInfo->dwKeySpec == AT_SIGNATURE,
+                        "Expected AT_SIGNATURE, got %d\n", pInfo->dwKeySpec);
+                }
+                HeapFree(GetProcessHeap(), 0, pInfo);
+            }
+        }
+
+        CertFreeCertificateContext(context);
+    }
+    CryptDestroyKey(key);
+
+    CryptReleaseContext(csp, 0);
+    ret = pCryptAcquireContextA(&csp, cspNameA, MS_DEF_PROV_A, PROV_RSA_FULL,
+     CRYPT_DELETEKEYSET);
+    ok(ret, "CryptAcquireContext failed: %08x\n", GetLastError());
+
+    /* Do the same test with no CSP, AT_KEYEXCHANGE and key info */
+    info.dwKeySpec = AT_KEYEXCHANGE;
     context = pCertCreateSelfSignCertificate(0, &name, 0, &info, NULL, NULL,
         NULL, NULL);
     ok(context != NULL, "CertCreateSelfSignCertificate failed: %08x\n",
