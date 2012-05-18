@@ -422,6 +422,33 @@ static pascal ComponentResult myDataHGetFileSize64(DataHandler dh, wide * fileSi
     return noErr;
 }
 
+static pascal ComponentResult myDataHGetFileSizeAsync ( DataHandler dh, wide *fileSize, DataHCompletionUPP CompletionRtn, long RefCon )
+{
+    Handle storage = GetComponentInstanceStorage(dh);
+    DHData *data = (DHData*)*storage;
+    LONGLONG total;
+    LONGLONG avaliable;
+    SInt64 total64;
+
+    TRACE("%p\n",dh);
+
+    IAsyncReader_Length(data->dataRef.pReader,&total,&avaliable);
+    total64 = total;
+    *fileSize = SInt64ToWide(total64);
+
+    if (CompletionRtn)
+    {
+        if (data->AsyncCompletionRtn)
+            InvokeDataHCompletionUPP(data->AsyncPtr, data->AsyncRefCon, noErr, data->AsyncCompletionRtn);
+
+        data->AsyncPtr = (Ptr)fileSize;
+        data->AsyncRefCon = RefCon;
+        data->AsyncCompletionRtn = CompletionRtn;
+    }
+
+    return noErr;
+}
+
 static pascal ComponentResult myDataHGetAvailableFileSize64(DataHandler dh, wide * fileSize)
 {
     Handle storage = GetComponentInstanceStorage(dh);
@@ -610,7 +637,13 @@ static const struct { LPVOID proc; ProcInfoType type;} componentFunctions[] =
     {NULL, 0}, /* kDataHGetDataAvailabilitySelect            */
     {NULL, 0}, /* 0x0038 */
     {NULL, 0}, /* 0x0039 */
-    {NULL, 0}, /* kDataHGetFileSizeAsyncSelect               */
+    {myDataHGetFileSizeAsync, kPascalStackBased
+            | RESULT_SIZE(SIZE_CODE(sizeof(ComponentResult)))
+            | STACK_ROUTINE_PARAMETER(1, SIZE_CODE(sizeof(DataHandler)))
+            | STACK_ROUTINE_PARAMETER(2, SIZE_CODE(sizeof(wide*)))
+            | STACK_ROUTINE_PARAMETER(3, SIZE_CODE(sizeof(DataHCompletionUPP)))
+            | STACK_ROUTINE_PARAMETER(4, SIZE_CODE(sizeof(long)))
+}, /* kDataHGetFileSizeAsyncSelect               */
     {NULL, 0}, /* kDataHGetDataRefAsTypeSelect               */
     {NULL, 0}, /* kDataHSetDataRefExtensionSelect            */
     {NULL, 0}, /* kDataHGetDataRefExtensionSelect            */
