@@ -55,6 +55,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 static const WCHAR colspaceW[] = {':',' ',0};
 static const WCHAR crlfW[] = {'\r','\n',0};
+static const DWORD safety_supported_options =
+    INTERFACESAFE_FOR_UNTRUSTED_CALLER |
+    INTERFACESAFE_FOR_UNTRUSTED_DATA   |
+    INTERFACE_USES_SECURITY_MANAGER;
 
 typedef struct BindStatusCallback BindStatusCallback;
 
@@ -1495,8 +1499,6 @@ static ULONG WINAPI httprequest_Safety_Release(IObjectSafety *iface)
     return IXMLHTTPRequest_Release((IXMLHTTPRequest *)This);
 }
 
-#define SAFETY_SUPPORTED_OPTIONS (INTERFACESAFE_FOR_UNTRUSTED_CALLER|INTERFACESAFE_FOR_UNTRUSTED_DATA|INTERFACE_USES_SECURITY_MANAGER)
-
 static HRESULT WINAPI httprequest_Safety_GetInterfaceSafetyOptions(IObjectSafety *iface, REFIID riid,
         DWORD *supported, DWORD *enabled)
 {
@@ -1506,7 +1508,7 @@ static HRESULT WINAPI httprequest_Safety_GetInterfaceSafetyOptions(IObjectSafety
 
     if(!supported || !enabled) return E_POINTER;
 
-    *supported = SAFETY_SUPPORTED_OPTIONS;
+    *supported = safety_supported_options;
     *enabled = This->safeopt;
 
     return S_OK;
@@ -1518,15 +1520,13 @@ static HRESULT WINAPI httprequest_Safety_SetInterfaceSafetyOptions(IObjectSafety
     httprequest *This = impl_from_IObjectSafety(iface);
     TRACE("(%p)->(%s %x %x)\n", This, debugstr_guid(riid), mask, enabled);
 
-    if ((mask & ~SAFETY_SUPPORTED_OPTIONS) != 0)
+    if ((mask & ~safety_supported_options))
         return E_FAIL;
 
     This->safeopt = (This->safeopt & ~mask) | (mask & enabled);
 
     return S_OK;
 }
-
-#undef SAFETY_SUPPORTED_OPTIONS
 
 static const IObjectSafetyVtbl ObjectSafetyVtbl = {
     httprequest_Safety_QueryInterface,
