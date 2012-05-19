@@ -3760,7 +3760,7 @@ static void test_mxwriter_encoding(void)
             "%s: encoding not accepted\n", enc);
         if (hr != S_OK)
         {
-            enc = encoding_names[i++];
+            enc = encoding_names[++i];
             IStream_Release(stream);
             continue;
         }
