@@ -80,6 +80,7 @@ typedef enum tid_t {
     IMXReaderControl_tid,
     IMXWriter_tid,
     IVBMXNamespaceManager_tid,
+    IServerXMLHTTPRequest_tid,
     LAST_tid
 } tid_t;
 

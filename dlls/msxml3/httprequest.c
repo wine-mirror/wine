@@ -1590,9 +1590,10 @@ static HRESULT WINAPI ServerXMLHTTPRequest_GetTypeInfoCount(IServerXMLHTTPReques
 {
     serverhttp *This = impl_from_IServerXMLHTTPRequest( iface );
 
-    FIXME("(%p)->(%p): stub\n", This, pctinfo);
+    TRACE("(%p)->(%p)\n", This, pctinfo);
+    *pctinfo = 1;
 
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI ServerXMLHTTPRequest_GetTypeInfo(IServerXMLHTTPRequest *iface, UINT iTInfo,
@@ -1600,20 +1601,32 @@ static HRESULT WINAPI ServerXMLHTTPRequest_GetTypeInfo(IServerXMLHTTPRequest *if
 {
     serverhttp *This = impl_from_IServerXMLHTTPRequest( iface );
 
-    FIXME("(%p)->(%u %u %p): stub\n", This, iTInfo, lcid, ppTInfo);
+    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
 
-    return E_NOTIMPL;
+    return get_typeinfo(IServerXMLHTTPRequest_tid, ppTInfo);
 }
 
 static HRESULT WINAPI ServerXMLHTTPRequest_GetIDsOfNames(IServerXMLHTTPRequest *iface, REFIID riid,
         LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
 {
     serverhttp *This = impl_from_IServerXMLHTTPRequest( iface );
+    ITypeInfo *typeinfo;
+    HRESULT hr;
 
-    FIXME("(%p)->(%s %p %u %u %p): stub\n", This, debugstr_guid(riid), rgszNames, cNames,
+    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
           lcid, rgDispId);
 
-    return E_NOTIMPL;
+    if(!rgszNames || cNames == 0 || !rgDispId)
+        return E_INVALIDARG;
+
+    hr = get_typeinfo(IServerXMLHTTPRequest_tid, &typeinfo);
+    if(SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_GetIDsOfNames(typeinfo, rgszNames, cNames, rgDispId);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI ServerXMLHTTPRequest_Invoke(IServerXMLHTTPRequest *iface, DISPID dispIdMember, REFIID riid,
@@ -1621,11 +1634,21 @@ static HRESULT WINAPI ServerXMLHTTPRequest_Invoke(IServerXMLHTTPRequest *iface, 
         EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
     serverhttp *This = impl_from_IServerXMLHTTPRequest( iface );
+    ITypeInfo *typeinfo;
+    HRESULT hr;
 
-    FIXME("(%p)->(%d %s %d %d %p %p %p %p): stub\n", This, dispIdMember, debugstr_guid(riid),
+    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
           lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
-    return E_NOTIMPL;
+    hr = get_typeinfo(IServerXMLHTTPRequest_tid, &typeinfo);
+    if(SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_Invoke(typeinfo, &This->IServerXMLHTTPRequest_iface, dispIdMember, wFlags,
+                pDispParams, pVarResult, pExcepInfo, puArgErr);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI ServerXMLHTTPRequest_open(IServerXMLHTTPRequest *iface, BSTR method, BSTR url,
