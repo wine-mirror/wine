@@ -2813,6 +2813,7 @@ static void test_mxwriter_properties(void)
 
 static void test_mxwriter_flush(void)
 {
+    static const WCHAR emptyW[] = {0};
     ISAXContentHandler *content;
     IMXWriter *writer;
     LARGE_INTEGER pos;
@@ -2820,6 +2821,7 @@ static void test_mxwriter_flush(void)
     IStream *stream;
     VARIANT dest;
     HRESULT hr;
+    char *buff;
 
     hr = CoCreateInstance(&CLSID_MXXMLWriter, NULL, CLSCTX_INPROC_SERVER,
             &IID_IMXWriter, (void**)&writer);
@@ -2886,9 +2888,89 @@ static void test_mxwriter_flush(void)
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(pos2.QuadPart != 0, "expected stream position moved\n");
 
+    IStream_Release(stream);
+
+    /* auto-flush feature */
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    EXPECT_HR(hr, S_OK);
+    EXPECT_REF(stream, 1);
+
+    V_VT(&dest) = VT_UNKNOWN;
+    V_UNKNOWN(&dest) = (IUnknown*)stream;
+    hr = IMXWriter_put_output(writer, dest);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IMXWriter_put_byteOrderMark(writer, VARIANT_FALSE);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IMXWriter_put_omitXMLDeclaration(writer, VARIANT_TRUE);
+    EXPECT_HR(hr, S_OK);
+
+    hr = ISAXContentHandler_startDocument(content);
+    EXPECT_HR(hr, S_OK);
+
+    hr = ISAXContentHandler_startElement(content, emptyW, 0, emptyW, 0, _bstr_("a"), -1, NULL);
+    EXPECT_HR(hr, S_OK);
+
+    /* internal buffer is flushed automatically on certain threshold */
+    pos.QuadPart = 0;
+    pos2.QuadPart = 1;
+    hr = IStream_Seek(stream, pos, STREAM_SEEK_CUR, &pos2);
+    EXPECT_HR(hr, S_OK);
+    ok(pos2.QuadPart == 0, "expected stream beginning\n");
+
+    buff = HeapAlloc(GetProcessHeap(), 0, 2048);
+    memset(buff, 'A', 2048);
+    hr = ISAXContentHandler_characters(content, _bstr_(buff), 2048);
+    EXPECT_HR(hr, S_OK);
+
+    pos.QuadPart = 0;
+    pos2.QuadPart = 0;
+    hr = IStream_Seek(stream, pos, STREAM_SEEK_CUR, &pos2);
+    EXPECT_HR(hr, S_OK);
+todo_wine
+    ok(pos2.QuadPart != 0, "unexpected stream beginning\n");
+
+    hr = ISAXContentHandler_endDocument(content);
+    EXPECT_HR(hr, S_OK);
+
+    IStream_Release(stream);
+
+    /* test char count lower than threshold */
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    EXPECT_HR(hr, S_OK);
+    EXPECT_REF(stream, 1);
+
+    hr = ISAXContentHandler_startDocument(content);
+    EXPECT_HR(hr, S_OK);
+
+    hr = ISAXContentHandler_startElement(content, emptyW, 0, emptyW, 0, _bstr_("a"), -1, NULL);
+    EXPECT_HR(hr, S_OK);
+
+    pos.QuadPart = 0;
+    pos2.QuadPart = 1;
+    hr = IStream_Seek(stream, pos, STREAM_SEEK_CUR, &pos2);
+    EXPECT_HR(hr, S_OK);
+    ok(pos2.QuadPart == 0, "expected stream beginning\n");
+
+    memset(buff, 'A', 2048);
+    hr = ISAXContentHandler_characters(content, _bstr_(buff), 2040);
+    EXPECT_HR(hr, S_OK);
+
+    pos.QuadPart = 0;
+    pos2.QuadPart = 1;
+    hr = IStream_Seek(stream, pos, STREAM_SEEK_CUR, &pos2);
+    EXPECT_HR(hr, S_OK);
+    ok(pos2.QuadPart == 0, "expected stream beginning\n");
+
+    hr = ISAXContentHandler_endDocument(content);
+    EXPECT_HR(hr, S_OK);
+
+    HeapFree(GetProcessHeap(), 0, buff);
     ISAXContentHandler_Release(content);
     IStream_Release(stream);
     IMXWriter_Release(writer);
+    free_bstrs();
 }
 
 static void test_mxwriter_startenddocument(void)
