@@ -455,6 +455,7 @@ extern HRESULT XMLDocument_create(IUnknown*, void**) DECLSPEC_HIDDEN;
 extern HRESULT SAXXMLReader_create(MSXML_VERSION, IUnknown*, void**) DECLSPEC_HIDDEN;
 extern HRESULT SAXAttributes_create(MSXML_VERSION, IUnknown*, void**) DECLSPEC_HIDDEN;
 extern HRESULT XMLHTTPRequest_create(IUnknown*, void **) DECLSPEC_HIDDEN;
+extern HRESULT ServerXMLHTTP_create(IUnknown*, void **) DECLSPEC_HIDDEN;
 extern HRESULT XSLTemplate_create(IUnknown*, void**) DECLSPEC_HIDDEN;
 extern HRESULT MXWriter_create(MSXML_VERSION, IUnknown*, void**) DECLSPEC_HIDDEN;
 extern HRESULT MXNamespaceManager_create(IUnknown*,void**) DECLSPEC_HIDDEN;
