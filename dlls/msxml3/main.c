@@ -287,6 +287,8 @@ const char *debugstr_variant(const VARIANT *v)
             V_BSTRREF(v), debugstr_w(V_BSTRREF(v) ? *V_BSTRREF(v) : NULL));
     case VT_ERROR:
         return wine_dbg_sprintf("{VT_ERROR: 0x%08x}", V_ERROR(v));
+    case VT_VARIANT|VT_BYREF:
+        return wine_dbg_sprintf("{VT_VARIANT|VT_BYREF: %s}", debugstr_variant(V_VARIANTREF(v)));
     default:
         return wine_dbg_sprintf("{vt %d}", V_VT(v));
     }
