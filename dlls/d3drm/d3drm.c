@@ -1255,7 +1255,7 @@ static HRESULT WINAPI IDirect3DRM3Impl_EnumerateObjects(IDirect3DRM3* iface, D3D
     return E_NOTIMPL;
 }
 
-HRESULT load_data(IDirect3DRM3* iface, LPDIRECTXFILEDATA data_object, LPIID* GUIDs, DWORD nb_GUIDs, D3DRMLOADCALLBACK LoadProc,
+static HRESULT load_data(IDirect3DRM3* iface, LPDIRECTXFILEDATA data_object, LPIID* GUIDs, DWORD nb_GUIDs, D3DRMLOADCALLBACK LoadProc,
                   LPVOID ArgLP, D3DRMLOADTEXTURECALLBACK LoadTextureProc, LPVOID ArgLTP, LPDIRECT3DRMFRAME3 parent_frame)
 {
     HRESULT ret = D3DRMERR_BADOBJECT;
