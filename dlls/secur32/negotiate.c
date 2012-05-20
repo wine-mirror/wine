@@ -407,7 +407,7 @@ static SECURITY_STATUS SEC_ENTRY nego_VerifySignature(PCtxtHandle phContext,
 /***********************************************************************
  *             FreeCredentialsHandle
  */
-SECURITY_STATUS SEC_ENTRY nego_FreeCredentialsHandle(PCredHandle phCredential)
+static SECURITY_STATUS SEC_ENTRY nego_FreeCredentialsHandle(PCredHandle phCredential)
 {
     TRACE("%p\n", phCredential);
 
@@ -417,7 +417,7 @@ SECURITY_STATUS SEC_ENTRY nego_FreeCredentialsHandle(PCredHandle phCredential)
 /***********************************************************************
  *             EncryptMessage
  */
-SECURITY_STATUS SEC_ENTRY nego_EncryptMessage(PCtxtHandle phContext,
+static SECURITY_STATUS SEC_ENTRY nego_EncryptMessage(PCtxtHandle phContext,
     ULONG fQOP, PSecBufferDesc pMessage, ULONG MessageSeqNo)
 {
     TRACE("%p, 0x%08x, %p, %u\n", phContext, fQOP, pMessage, MessageSeqNo);
@@ -428,7 +428,7 @@ SECURITY_STATUS SEC_ENTRY nego_EncryptMessage(PCtxtHandle phContext,
 /***********************************************************************
  *             DecryptMessage
  */
-SECURITY_STATUS SEC_ENTRY nego_DecryptMessage(PCtxtHandle phContext,
+static SECURITY_STATUS SEC_ENTRY nego_DecryptMessage(PCtxtHandle phContext,
     PSecBufferDesc pMessage, ULONG MessageSeqNo, PULONG pfQOP)
 {
     TRACE("%p, %p, %u, %p\n", phContext, pMessage, MessageSeqNo, pfQOP);
