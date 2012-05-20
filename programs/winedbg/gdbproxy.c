@@ -197,192 +197,242 @@ static unsigned char checksum(const char* ptr, int len)
  * =============================================== *
  */
 
+/* This struct helps us to manage the different representations of a register:
+ * ctx_offset and ctx_length are the location and size in Win32 CONTEXT
+ * gdb_length is the length gdb expects on the wire
+ * As the two sizes could be different, we have to convert between the two
+ * (for example, on x86_64, Seg?s are 4 bytes on the wire and 2 in CONTEXT)
+ */
+struct cpu_register
+{
+    size_t      ctx_offset;
+    size_t      ctx_length;
+    size_t      gdb_length;
+};
+
+#define REG(r,gs)  {FIELD_OFFSET(CONTEXT, r), sizeof(((CONTEXT*)NULL)->r), gs}
+
 #ifdef __i386__
-static size_t cpu_register_map[] = {
-    FIELD_OFFSET(CONTEXT, Eax),
-    FIELD_OFFSET(CONTEXT, Ecx),
-    FIELD_OFFSET(CONTEXT, Edx),
-    FIELD_OFFSET(CONTEXT, Ebx),
-    FIELD_OFFSET(CONTEXT, Esp),
-    FIELD_OFFSET(CONTEXT, Ebp),
-    FIELD_OFFSET(CONTEXT, Esi),
-    FIELD_OFFSET(CONTEXT, Edi),
-    FIELD_OFFSET(CONTEXT, Eip),
-    FIELD_OFFSET(CONTEXT, EFlags),
-    FIELD_OFFSET(CONTEXT, SegCs),
-    FIELD_OFFSET(CONTEXT, SegSs),
-    FIELD_OFFSET(CONTEXT, SegDs),
-    FIELD_OFFSET(CONTEXT, SegEs),
-    FIELD_OFFSET(CONTEXT, SegFs),
-    FIELD_OFFSET(CONTEXT, SegGs),
+static struct cpu_register cpu_register_map[] = {
+    REG(Eax, 4),
+    REG(Ecx, 4),
+    REG(Edx, 4),
+    REG(Ebx, 4),
+    REG(Esp, 4),
+    REG(Ebp, 4),
+    REG(Esi, 4),
+    REG(Edi, 4),
+    REG(Eip, 4),
+    REG(EFlags, 4),
+    REG(SegCs, 4),
+    REG(SegSs, 4),
+    REG(SegDs, 4),
+    REG(SegEs, 4),
+    REG(SegFs, 4),
+    REG(SegGs, 4),
 };
 #elif defined(__powerpc__)
-static size_t cpu_register_map[] = {
-    FIELD_OFFSET(CONTEXT, Gpr0),
-    FIELD_OFFSET(CONTEXT, Gpr1),
-    FIELD_OFFSET(CONTEXT, Gpr2),
-    FIELD_OFFSET(CONTEXT, Gpr3),
-    FIELD_OFFSET(CONTEXT, Gpr4),
-    FIELD_OFFSET(CONTEXT, Gpr5),
-    FIELD_OFFSET(CONTEXT, Gpr6),
-    FIELD_OFFSET(CONTEXT, Gpr7),
-    FIELD_OFFSET(CONTEXT, Gpr8),
-    FIELD_OFFSET(CONTEXT, Gpr9),
-    FIELD_OFFSET(CONTEXT, Gpr10),
-    FIELD_OFFSET(CONTEXT, Gpr11),
-    FIELD_OFFSET(CONTEXT, Gpr12),
-    FIELD_OFFSET(CONTEXT, Gpr13),
-    FIELD_OFFSET(CONTEXT, Gpr14),
-    FIELD_OFFSET(CONTEXT, Gpr15),
-    FIELD_OFFSET(CONTEXT, Gpr16),
-    FIELD_OFFSET(CONTEXT, Gpr17),
-    FIELD_OFFSET(CONTEXT, Gpr18),
-    FIELD_OFFSET(CONTEXT, Gpr19),
-    FIELD_OFFSET(CONTEXT, Gpr20),
-    FIELD_OFFSET(CONTEXT, Gpr21),
-    FIELD_OFFSET(CONTEXT, Gpr22),
-    FIELD_OFFSET(CONTEXT, Gpr23),
-    FIELD_OFFSET(CONTEXT, Gpr24),
-    FIELD_OFFSET(CONTEXT, Gpr25),
-    FIELD_OFFSET(CONTEXT, Gpr26),
-    FIELD_OFFSET(CONTEXT, Gpr27),
-    FIELD_OFFSET(CONTEXT, Gpr28),
-    FIELD_OFFSET(CONTEXT, Gpr29),
-    FIELD_OFFSET(CONTEXT, Gpr30),
-    FIELD_OFFSET(CONTEXT, Gpr31),
-    FIELD_OFFSET(CONTEXT, Fpr0),
-    FIELD_OFFSET(CONTEXT, Fpr1),
-    FIELD_OFFSET(CONTEXT, Fpr2),
-    FIELD_OFFSET(CONTEXT, Fpr3),
-    FIELD_OFFSET(CONTEXT, Fpr4),
-    FIELD_OFFSET(CONTEXT, Fpr5),
-    FIELD_OFFSET(CONTEXT, Fpr6),
-    FIELD_OFFSET(CONTEXT, Fpr7),
-    FIELD_OFFSET(CONTEXT, Fpr8),
-    FIELD_OFFSET(CONTEXT, Fpr9),
-    FIELD_OFFSET(CONTEXT, Fpr10),
-    FIELD_OFFSET(CONTEXT, Fpr11),
-    FIELD_OFFSET(CONTEXT, Fpr12),
-    FIELD_OFFSET(CONTEXT, Fpr13),
-    FIELD_OFFSET(CONTEXT, Fpr14),
-    FIELD_OFFSET(CONTEXT, Fpr15),
-    FIELD_OFFSET(CONTEXT, Fpr16),
-    FIELD_OFFSET(CONTEXT, Fpr17),
-    FIELD_OFFSET(CONTEXT, Fpr18),
-    FIELD_OFFSET(CONTEXT, Fpr19),
-    FIELD_OFFSET(CONTEXT, Fpr20),
-    FIELD_OFFSET(CONTEXT, Fpr21),
-    FIELD_OFFSET(CONTEXT, Fpr22),
-    FIELD_OFFSET(CONTEXT, Fpr23),
-    FIELD_OFFSET(CONTEXT, Fpr24),
-    FIELD_OFFSET(CONTEXT, Fpr25),
-    FIELD_OFFSET(CONTEXT, Fpr26),
-    FIELD_OFFSET(CONTEXT, Fpr27),
-    FIELD_OFFSET(CONTEXT, Fpr28),
-    FIELD_OFFSET(CONTEXT, Fpr29),
-    FIELD_OFFSET(CONTEXT, Fpr30),
-    FIELD_OFFSET(CONTEXT, Fpr31),
+static struct cpu_register cpu_register_map[] = {
+    REG(Gpr0, 4),
+    REG(Gpr1, 4),
+    REG(Gpr2, 4),
+    REG(Gpr3, 4),
+    REG(Gpr4, 4),
+    REG(Gpr5, 4),
+    REG(Gpr6, 4),
+    REG(Gpr7, 4),
+    REG(Gpr8, 4),
+    REG(Gpr9, 4),
+    REG(Gpr10, 4),
+    REG(Gpr11, 4),
+    REG(Gpr12, 4),
+    REG(Gpr13, 4),
+    REG(Gpr14, 4),
+    REG(Gpr15, 4),
+    REG(Gpr16, 4),
+    REG(Gpr17, 4),
+    REG(Gpr18, 4),
+    REG(Gpr19, 4),
+    REG(Gpr20, 4),
+    REG(Gpr21, 4),
+    REG(Gpr22, 4),
+    REG(Gpr23, 4),
+    REG(Gpr24, 4),
+    REG(Gpr25, 4),
+    REG(Gpr26, 4),
+    REG(Gpr27, 4),
+    REG(Gpr28, 4),
+    REG(Gpr29, 4),
+    REG(Gpr30, 4),
+    REG(Gpr31, 4),
+    REG(Fpr0, 4),
+    REG(Fpr1, 4),
+    REG(Fpr2, 4),
+    REG(Fpr3, 4),
+    REG(Fpr4, 4),
+    REG(Fpr5, 4),
+    REG(Fpr6, 4),
+    REG(Fpr7, 4),
+    REG(Fpr8, 4),
+    REG(Fpr9, 4),
+    REG(Fpr10, 4),
+    REG(Fpr11, 4),
+    REG(Fpr12, 4),
+    REG(Fpr13, 4),
+    REG(Fpr14, 4),
+    REG(Fpr15, 4),
+    REG(Fpr16, 4),
+    REG(Fpr17, 4),
+    REG(Fpr18, 4),
+    REG(Fpr19, 4),
+    REG(Fpr20, 4),
+    REG(Fpr21, 4),
+    REG(Fpr22, 4),
+    REG(Fpr23, 4),
+    REG(Fpr24, 4),
+    REG(Fpr25, 4),
+    REG(Fpr26, 4),
+    REG(Fpr27, 4),
+    REG(Fpr28, 4),
+    REG(Fpr29, 4),
+    REG(Fpr30, 4),
+    REG(Fpr31, 4),
 
-    FIELD_OFFSET(CONTEXT, Iar),
-    FIELD_OFFSET(CONTEXT, Msr),
-    FIELD_OFFSET(CONTEXT, Cr),
-    FIELD_OFFSET(CONTEXT, Lr),
-    FIELD_OFFSET(CONTEXT, Ctr),
-    FIELD_OFFSET(CONTEXT, Xer),
+    REG(Iar, 4),
+    REG(Msr, 4),
+    REG(Cr, 4),
+    REG(Lr, 4),
+    REG(Ctr, 4),
+    REG(Xer, 4),
     /* FIXME: MQ is missing? FIELD_OFFSET(CONTEXT, Mq), */
     /* see gdb/nlm/ppc.c */
 };
 #elif defined(__x86_64__)
-static size_t cpu_register_map[] = {
-    FIELD_OFFSET(CONTEXT, Rax),
-    FIELD_OFFSET(CONTEXT, Rbx),
-    FIELD_OFFSET(CONTEXT, Rcx),
-    FIELD_OFFSET(CONTEXT, Rdx),
-    FIELD_OFFSET(CONTEXT, Rsi),
-    FIELD_OFFSET(CONTEXT, Rdi),
-    FIELD_OFFSET(CONTEXT, Rbp),
-    FIELD_OFFSET(CONTEXT, Rsp),
-    FIELD_OFFSET(CONTEXT, R8),
-    FIELD_OFFSET(CONTEXT, R9),
-    FIELD_OFFSET(CONTEXT, R10),
-    FIELD_OFFSET(CONTEXT, R11),
-    FIELD_OFFSET(CONTEXT, R12),
-    FIELD_OFFSET(CONTEXT, R13),
-    FIELD_OFFSET(CONTEXT, R14),
-    FIELD_OFFSET(CONTEXT, R15),
-    FIELD_OFFSET(CONTEXT, Rip),
-    FIELD_OFFSET(CONTEXT, EFlags),
-    FIELD_OFFSET(CONTEXT, SegCs),
-    FIELD_OFFSET(CONTEXT, SegSs),
-    FIELD_OFFSET(CONTEXT, SegDs),
-    FIELD_OFFSET(CONTEXT, SegEs),
-    FIELD_OFFSET(CONTEXT, SegFs),
-    FIELD_OFFSET(CONTEXT, SegGs),
+static struct cpu_register cpu_register_map[] = {
+    REG(Rax, 8),
+    REG(Rbx, 8),
+    REG(Rcx, 8),
+    REG(Rdx, 8),
+    REG(Rsi, 8),
+    REG(Rdi, 8),
+    REG(Rbp, 8),
+    REG(Rsp, 8),
+    REG(R8, 8),
+    REG(R9, 8),
+    REG(R10, 8),
+    REG(R11, 8),
+    REG(R12, 8),
+    REG(R13, 8),
+    REG(R14, 8),
+    REG(R15, 8),
+    REG(Rip, 8),
+    REG(EFlags, 4),
+    REG(SegCs, 4),
+    REG(SegSs, 4),
+    REG(SegDs, 4),
+    REG(SegEs, 4),
+    REG(SegFs, 4),
+    REG(SegGs, 4),
 };
 #elif defined(__sparc__)
-static size_t cpu_register_map[] = {
-    FIELD_OFFSET(CONTEXT, g0),
-    FIELD_OFFSET(CONTEXT, g1),
-    FIELD_OFFSET(CONTEXT, g2),
-    FIELD_OFFSET(CONTEXT, g3),
-    FIELD_OFFSET(CONTEXT, g4),
-    FIELD_OFFSET(CONTEXT, g5),
-    FIELD_OFFSET(CONTEXT, g6),
-    FIELD_OFFSET(CONTEXT, g7),
-    FIELD_OFFSET(CONTEXT, o0),
-    FIELD_OFFSET(CONTEXT, o1),
-    FIELD_OFFSET(CONTEXT, o2),
-    FIELD_OFFSET(CONTEXT, o3),
-    FIELD_OFFSET(CONTEXT, o4),
-    FIELD_OFFSET(CONTEXT, o5),
-    FIELD_OFFSET(CONTEXT, o6),
-    FIELD_OFFSET(CONTEXT, o7),
-    FIELD_OFFSET(CONTEXT, l0),
-    FIELD_OFFSET(CONTEXT, l1),
-    FIELD_OFFSET(CONTEXT, l2),
-    FIELD_OFFSET(CONTEXT, l3),
-    FIELD_OFFSET(CONTEXT, l4),
-    FIELD_OFFSET(CONTEXT, l5),
-    FIELD_OFFSET(CONTEXT, l6),
-    FIELD_OFFSET(CONTEXT, l7),
-    FIELD_OFFSET(CONTEXT, i0),
-    FIELD_OFFSET(CONTEXT, i1),
-    FIELD_OFFSET(CONTEXT, i2),
-    FIELD_OFFSET(CONTEXT, i3),
-    FIELD_OFFSET(CONTEXT, i4),
-    FIELD_OFFSET(CONTEXT, i5),
-    FIELD_OFFSET(CONTEXT, i6),
-    FIELD_OFFSET(CONTEXT, i7),
+static struct cpu_register cpu_register_map[] = {
+    REG(g0, 4),
+    REG(g1, 4),
+    REG(g2, 4),
+    REG(g3, 4),
+    REG(g4, 4),
+    REG(g5, 4),
+    REG(g6, 4),
+    REG(g7, 4),
+    REG(o0, 4),
+    REG(o1, 4),
+    REG(o2, 4),
+    REG(o3, 4),
+    REG(o4, 4),
+    REG(o5, 4),
+    REG(o6, 4),
+    REG(o7, 4),
+    REG(l0, 4),
+    REG(l1, 4),
+    REG(l2, 4),
+    REG(l3, 4),
+    REG(l4, 4),
+    REG(l5, 4),
+    REG(l6, 4),
+    REG(l7, 4),
+    REG(i0, 4),
+    REG(i1, 4),
+    REG(i2, 4),
+    REG(i3, 4),
+    REG(i4, 4),
+    REG(i5, 4),
+    REG(i6, 4),
+    REG(i7, 4),
 };
 #elif defined(__arm__)
-static size_t cpu_register_map[] = {
-    FIELD_OFFSET(CONTEXT, R0),
-    FIELD_OFFSET(CONTEXT, R1),
-    FIELD_OFFSET(CONTEXT, R2),
-    FIELD_OFFSET(CONTEXT, R3),
-    FIELD_OFFSET(CONTEXT, R4),
-    FIELD_OFFSET(CONTEXT, R5),
-    FIELD_OFFSET(CONTEXT, R6),
-    FIELD_OFFSET(CONTEXT, R7),
-    FIELD_OFFSET(CONTEXT, R8),
-    FIELD_OFFSET(CONTEXT, R9),
-    FIELD_OFFSET(CONTEXT, R10),
-    FIELD_OFFSET(CONTEXT, Fp),
-    FIELD_OFFSET(CONTEXT, Ip),
-    FIELD_OFFSET(CONTEXT, Sp),
-    FIELD_OFFSET(CONTEXT, Lr),
-    FIELD_OFFSET(CONTEXT, Pc),
+static struct cpu_register cpu_register_map[] = {
+    REG(R0, 4),
+    REG(R1, 4),
+    REG(R2, 4),
+    REG(R3, 4),
+    REG(R4, 4),
+    REG(R5, 4),
+    REG(R6, 4),
+    REG(R7, 4),
+    REG(R8, 4),
+    REG(R9, 4),
+    REG(R10, 4),
+    REG(Fp, 4),
+    REG(Ip, 4),
+    REG(Sp, 4),
+    REG(Lr, 4),
+    REG(Pc, 4),
 };
 #else
 # error Define the registers map for your CPU
 #endif
+#undef REG
 
 static const size_t cpu_num_regs = (sizeof(cpu_register_map) / sizeof(cpu_register_map[0]));
 
-static inline unsigned long* cpu_register(CONTEXT* ctx, unsigned idx)
+static inline void* cpu_register_ptr(CONTEXT* ctx, unsigned idx)
 {
     assert(idx < cpu_num_regs);
-    return (unsigned long*)((char*)ctx + cpu_register_map[idx]);
+    return (char*)ctx + cpu_register_map[idx].ctx_offset;
+}
+
+static inline DWORD64   cpu_register(CONTEXT* ctx, unsigned idx)
+{
+    switch (cpu_register_map[idx].ctx_length)
+    {
+    case 2: return *(WORD*)cpu_register_ptr(ctx, idx);
+    case 4: return *(DWORD*)cpu_register_ptr(ctx, idx);
+    case 8: return *(DWORD64*)cpu_register_ptr(ctx, idx);
+    default:
+        fprintf(stderr, "got unexpected size: %u\n", (unsigned)cpu_register_map[idx].ctx_length);
+        assert(0);
+    }
+}
+
+static inline   void    cpu_register_hex_from(CONTEXT* ctx, unsigned idx, const char** phex)
+{
+    DWORD64     val = 0;
+    unsigned    i;
+    BYTE        b;
+
+    for (i = 0; i < cpu_register_map[idx].gdb_length; i++)
+    {
+        hex_from(&b, *phex, 1);
+        *phex += 2;
+        val += (DWORD64)b << (8 * i);
+    }
+    switch (cpu_register_map[idx].ctx_length)
+    {
+    case 2: *(WORD*)cpu_register_ptr(ctx, idx) = (WORD)val; break;
+    case 4: *(DWORD*)cpu_register_ptr(ctx, idx) = (DWORD)val; break;
+    case 8: *(DWORD64*)cpu_register_ptr(ctx, idx) = val; break;
+    default: assert(0);
+    }
 }
 
 /* =============================================== *
@@ -924,6 +974,19 @@ static enum packet_return packet_reply_error(struct gdb_context* gdbctx, int err
     return packet_done;
 }
 
+static inline void packet_reply_register_hex_to(struct gdb_context* gdbctx, unsigned idx)
+{
+    DWORD64     val = cpu_register(&gdbctx->context, idx);
+    unsigned    i;
+
+    for (i = 0; i < cpu_register_map[idx].gdb_length; i++)
+    {
+        BYTE    b = val;
+        packet_reply_hex_to(gdbctx, &b, 1);
+        val >>= 8;
+    }
+}
+
 /* =============================================== *
  *          P A C K E T   H A N D L E R S          *
  * =============================================== *
@@ -954,7 +1017,7 @@ static enum packet_return packet_reply_status(struct gdb_context* gdbctx)
              */
             packet_reply_val(gdbctx, i, 1);
             packet_reply_catc(gdbctx, ':');
-            packet_reply_hex_to(gdbctx, cpu_register(&gdbctx->context, i), 4);
+            packet_reply_register_hex_to(gdbctx, i);
             packet_reply_catc(gdbctx, ';');
         }
     }
@@ -1286,7 +1349,7 @@ static enum packet_return packet_read_registers(struct gdb_context* gdbctx)
     packet_reply_open(gdbctx);
     for (i = 0; i < cpu_num_regs; i++)
     {
-        packet_reply_hex_to(gdbctx, cpu_register(pctx, i), 4);
+        packet_reply_register_hex_to(gdbctx, i);
     }
     packet_reply_close(gdbctx);
     return packet_done;
@@ -1297,6 +1360,7 @@ static enum packet_return packet_write_registers(struct gdb_context* gdbctx)
     unsigned    i;
     CONTEXT     ctx;
     CONTEXT*    pctx = &gdbctx->context;
+    const char* ptr;
 
     assert(gdbctx->in_trap);
     if (dbg_curr_thread != gdbctx->other_thread && gdbctx->other_thread)
@@ -1306,8 +1370,11 @@ static enum packet_return packet_write_registers(struct gdb_context* gdbctx)
     }
     if (gdbctx->in_packet_len < cpu_num_regs * 2) return packet_error;
 
+    ptr = gdbctx->in_packet;
     for (i = 0; i < cpu_num_regs; i++)
-        hex_from(cpu_register(pctx, i), &gdbctx->in_packet[8 * i], 4);
+    {
+        cpu_register_hex_from(pctx, i, &ptr);
+    }
     if (pctx != &gdbctx->context && !SetThreadContext(gdbctx->other_thread->handle, pctx))
     {
         if (gdbctx->trace & GDBPXY_TRC_WIN32_ERROR)
@@ -1462,9 +1529,9 @@ static enum packet_return packet_read_register(struct gdb_context* gdbctx)
             return packet_error;
     }
     if (gdbctx->trace & GDBPXY_TRC_COMMAND)
-        fprintf(stderr, "Read register %x => %lx\n", reg, *cpu_register(pctx, reg));
-    packet_reply_open(gdbctx);
-    packet_reply_hex_to(gdbctx, cpu_register(pctx, reg), 4);
+        fprintf(stderr, "Read register %x => %08x%08x\n", reg,
+                (unsigned)(cpu_register(pctx, reg) >> 32), (unsigned)cpu_register(pctx, reg));
+    packet_reply_register_hex_to(gdbctx, reg);
     packet_reply_close(gdbctx);
     return packet_done;
 }
@@ -1473,35 +1540,25 @@ static enum packet_return packet_write_register(struct gdb_context* gdbctx)
 {
     unsigned            reg;
     char*               ptr;
-    char*               end;
     CONTEXT             ctx;
     CONTEXT*            pctx = &gdbctx->context;
 
     assert(gdbctx->in_trap);
 
-    ptr = memchr(gdbctx->in_packet, '=', gdbctx->in_packet_len);
-    *ptr++ = '\0';
-    reg = strtoul(gdbctx->in_packet, &end, 16);
-    if (end == NULL || reg > cpu_num_regs)
+    reg = strtoul(gdbctx->in_packet, &ptr, 16);
+    if (ptr == NULL || reg > cpu_num_regs || *ptr++ != '=')
     {
         if (gdbctx->trace & GDBPXY_TRC_COMMAND_ERROR)
             fprintf(stderr, "Invalid register index %s\n", gdbctx->in_packet);
         /* FIXME: if just the reg is above cpu_num_regs, don't tell gdb
          *        it wouldn't matter too much, and it fakes our support for all regs
          */
-        return (end == NULL) ? packet_error : packet_ok;
-    }
-    if (ptr + 8 - gdbctx->in_packet != gdbctx->in_packet_len)
-    {
-        if (gdbctx->trace & GDBPXY_TRC_COMMAND_ERROR)
-            fprintf(stderr, "Wrong sizes %u <> %u\n",
-                    (int)(ptr + 8 - gdbctx->in_packet), gdbctx->in_packet_len);
-        return packet_error;
+        return (ptr == NULL) ? packet_error : packet_ok;
     }
     if (gdbctx->trace & GDBPXY_TRC_COMMAND)
     {
         int len = gdbctx->in_packet_len - (ptr - gdbctx->in_packet);
-        fprintf(stderr, "Writing reg %u <= %*.*s\n", reg, len, len, ptr );
+        fprintf(stderr, "Writing reg %u <= %*.*s\n", reg, len, len, ptr);
     }
 
     if (dbg_curr_thread != gdbctx->other_thread && gdbctx->other_thread)
@@ -1510,7 +1567,7 @@ static enum packet_return packet_write_register(struct gdb_context* gdbctx)
             return packet_error;
     }
 
-    hex_from(cpu_register(pctx, reg), ptr, 4);
+    cpu_register_hex_from(pctx, reg, (const char**)&ptr);
     if (pctx != &gdbctx->context && !SetThreadContext(gdbctx->other_thread->handle, pctx))
     {
         if (gdbctx->trace & GDBPXY_TRC_WIN32_ERROR)
@@ -1664,8 +1721,9 @@ static void packet_query_monitor_mem(struct gdb_context* gdbctx, int len, const 
             prot[0] = '\0';
         }
         packet_reply_open(gdbctx);
-        snprintf(buffer, sizeof(buffer), "%08lx %08lx %s %s %s\n",
-                 (DWORD_PTR)addr, mbi.RegionSize, state, type, prot);
+        snprintf(buffer, sizeof(buffer), "%0*lx %0*lx %s %s %s\n",
+                 (unsigned)sizeof(void*), (DWORD_PTR)addr,
+                 (unsigned)sizeof(void*), mbi.RegionSize, state, type, prot);
         packet_reply_catc(gdbctx, 'O');
         packet_reply_hex_to_str(gdbctx, buffer);
         packet_reply_close(gdbctx);
