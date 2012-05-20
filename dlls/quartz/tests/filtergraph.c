@@ -1798,8 +1798,8 @@ static void test_render_filter_priority(void)
 
     rgf2.dwVersion = 2;
     rgf2.dwMerit = MERIT_UNLIKELY;
-    S1(U(rgf2)).cPins2 = 1;
-    S1(U(rgf2)).rgPins2 = rgPins2;
+    S2(U(rgf2)).cPins2 = 1;
+    S2(U(rgf2)).rgPins2 = rgPins2;
     rgPins2[0].dwFlags = REG_PINFLAG_B_RENDERER;
     rgPins2[0].cInstances = 1;
     rgPins2[0].nMediaTypes = 1;
@@ -1825,7 +1825,7 @@ static void test_render_filter_priority(void)
                     &CLSID_LegacyAmFilterCategory, NULL, &rgf2);
         ok(hr == S_OK, "IFilterMapper2_RegisterFilter failed with %x\n", hr);
 
-        S1(U(rgf2)).cPins2 = 2;
+        S2(U(rgf2)).cPins2 = 2;
         rgPins2[0].dwFlags = 0;
         rgPinType[0].clsMinorType = &mediasubtype1;
 
