@@ -255,7 +255,7 @@ static IDispatchEx *get_script_dispatch(IActiveScript *script)
     hres = IActiveScript_GetScriptDispatch(script, NULL, &disp);
     ok(hres == S_OK, "GetScriptDispatch failed: %08x\n", hres);
 
-    IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
+    hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
     IDispatch_Release(disp);
     ok(hres == S_OK, "Could not get IDispatch iface: %08x\n", hres);
     return dispex;
