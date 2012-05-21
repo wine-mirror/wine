@@ -382,32 +382,50 @@ static HRESULT enum_gac_assemblies(struct list *assemblies, IAssemblyName *name,
 
 static HRESULT enumerate_gac(IAssemblyEnumImpl *asmenum, IAssemblyName *pName)
 {
-    WCHAR path[MAX_PATH];
-    WCHAR buf[MAX_PATH];
+    static const WCHAR gac[] = {'\\','G','A','C',0};
+    static const WCHAR gac_32[] = {'\\','G','A','C','_','3','2',0};
+    static const WCHAR gac_msil[] = {'\\','G','A','C','_','M','S','I','L',0};
+    WCHAR path[MAX_PATH], buf[MAX_PATH];
     HRESULT hr;
     DWORD size;
 
-    static WCHAR under32[] = {'_','3','2',0};
-    static WCHAR msil[] = {'_','M','S','I','L',0};
+    size = MAX_PATH;
+    hr = GetCachePath(ASM_CACHE_ROOT_EX, buf, &size);
+    if (FAILED(hr))
+        return hr;
+
+    strcpyW(path, buf);
+    strcpyW(path + size - 1, gac_32);
+    hr = enum_gac_assemblies(&asmenum->assemblies, pName, 0, path);
+    if (FAILED(hr))
+        return hr;
+
+    strcpyW(path, buf);
+    strcpyW(path + size - 1, gac_msil);
+    hr = enum_gac_assemblies(&asmenum->assemblies, pName, 0, path);
+    if (FAILED(hr))
+        return hr;
 
     size = MAX_PATH;
-    hr = GetCachePath(ASM_CACHE_GAC, buf, &size);
+    hr = GetCachePath(ASM_CACHE_ROOT, buf, &size);
     if (FAILED(hr))
         return hr;
 
-    lstrcpyW(path, buf);
-    lstrcatW(path, under32);
+    strcpyW(path, buf);
+    strcpyW(path + size - 1, gac_32);
     hr = enum_gac_assemblies(&asmenum->assemblies, pName, 0, path);
     if (FAILED(hr))
         return hr;
 
-    lstrcpyW(path, buf);
-    lstrcatW(path, msil);
+    strcpyW(path, buf);
+    strcpyW(path + size - 1, gac_msil);
     hr = enum_gac_assemblies(&asmenum->assemblies, pName, 0, path);
     if (FAILED(hr))
         return hr;
 
-    hr = enum_gac_assemblies(&asmenum->assemblies, pName, 0, buf);
+    strcpyW(path, buf);
+    strcpyW(path + size - 1, gac);
+    hr = enum_gac_assemblies(&asmenum->assemblies, pName, 0, path);
     if (FAILED(hr))
         return hr;
 
