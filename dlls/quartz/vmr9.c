@@ -1416,6 +1416,36 @@ static HRESULT VMR9_ImagePresenter_PresentTexture(VMR9DefaultAllocatorPresenterI
     return S_OK;
 }
 
+static HRESULT VMR9_ImagePresenter_PresentOffscreenSurface(VMR9DefaultAllocatorPresenterImpl *This, IDirect3DSurface9 *surface)
+{
+    HRESULT hr;
+    IDirect3DSurface9 *target = NULL;
+    RECT target_rect;
+
+    hr = IDirect3DDevice9_GetBackBuffer(This->d3d9_dev, 0, 0, D3DBACKBUFFER_TYPE_MONO, &target);
+    if (FAILED(hr))
+    {
+        ERR("IDirect3DDevice9_GetBackBuffer -- %08x\n", hr);
+        return hr;
+    }
+
+    target_rect = This->pVMR9->target_rect;
+    target_rect.right -= target_rect.left;
+    target_rect.bottom -= target_rect.top;
+    target_rect.left = target_rect.top = 0;
+
+    /* Flip */
+    target_rect.top = target_rect.bottom;
+    target_rect.bottom = 0;
+
+    hr = IDirect3DDevice9_StretchRect(This->d3d9_dev, surface, &This->pVMR9->source_rect, target, &target_rect, D3DTEXF_LINEAR);
+    if (FAILED(hr))
+        ERR("IDirect3DDevice9_StretchRect -- %08x\n", hr);
+    IDirect3DSurface9_Release(target);
+
+    return hr;
+}
+
 static HRESULT WINAPI VMR9_ImagePresenter_PresentImage(IVMRImagePresenter9 *iface, DWORD_PTR id, VMR9PresentationInfo *info)
 {
     VMR9DefaultAllocatorPresenterImpl *This = impl_from_IVMRImagePresenter9(iface);
@@ -1441,7 +1471,7 @@ static HRESULT WINAPI VMR9_ImagePresenter_PresentImage(IVMRImagePresenter9 *ifac
         if (This->d3d9_vertex)
             hr = VMR9_ImagePresenter_PresentTexture(This, info->lpSurf);
         else
-            hr = E_NOTIMPL;
+            hr = VMR9_ImagePresenter_PresentOffscreenSurface(This, info->lpSurf);
         render = SUCCEEDED(hr);
     }
     else
