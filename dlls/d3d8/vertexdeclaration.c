@@ -331,7 +331,7 @@ static const struct wined3d_parent_ops d3d8_vertexdeclaration_wined3d_parent_ops
 };
 
 HRESULT d3d8_vertex_declaration_init(struct d3d8_vertex_declaration *declaration,
-        IDirect3DDevice8Impl *device, const DWORD *elements, DWORD shader_handle)
+        struct d3d8_device *device, const DWORD *elements, DWORD shader_handle)
 {
     struct wined3d_vertex_element *wined3d_elements;
     UINT wined3d_element_count;
@@ -366,7 +366,7 @@ HRESULT d3d8_vertex_declaration_init(struct d3d8_vertex_declaration *declaration
 }
 
 HRESULT d3d8_vertex_declaration_init_fvf(struct d3d8_vertex_declaration *declaration,
-        IDirect3DDevice8Impl *device, DWORD fvf)
+        struct d3d8_device *device, DWORD fvf)
 {
     HRESULT hr;
 

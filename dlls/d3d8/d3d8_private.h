@@ -100,7 +100,6 @@
 
 void fixup_caps(WINED3DCAPS *pWineCaps) DECLSPEC_HIDDEN;
 
-typedef struct IDirect3DDevice8Impl IDirect3DDevice8Impl;
 typedef struct IDirect3DIndexBuffer8Impl IDirect3DIndexBuffer8Impl;
 typedef struct IDirect3DSurface8Impl IDirect3DSurface8Impl;
 typedef struct IDirect3DSwapChain8Impl IDirect3DSwapChain8Impl;
@@ -151,7 +150,7 @@ struct FvfToDecl
     struct d3d8_vertex_declaration *declaration;
 };
 
-struct IDirect3DDevice8Impl
+struct d3d8_device
 {
     /* IUnknown fields */
     IDirect3DDevice8        IDirect3DDevice8_iface;
@@ -170,7 +169,7 @@ struct IDirect3DDevice8Impl
     BOOL lost;
 };
 
-HRESULT device_init(IDirect3DDevice8Impl *device, struct d3d8 *parent, struct wined3d *wined3d, UINT adapter,
+HRESULT device_init(struct d3d8_device *device, struct d3d8 *parent, struct wined3d *wined3d, UINT adapter,
         D3DDEVTYPE device_type, HWND focus_window, DWORD flags, D3DPRESENT_PARAMETERS *parameters) DECLSPEC_HIDDEN;
 
 /* ---------------- */
@@ -189,7 +188,7 @@ struct IDirect3DVolume8Impl
     IUnknown *forwardReference;
 };
 
-HRESULT volume_init(IDirect3DVolume8Impl *volume, IDirect3DDevice8Impl *device, UINT width, UINT height,
+HRESULT volume_init(IDirect3DVolume8Impl *volume, struct d3d8_device *device, UINT width, UINT height,
         UINT depth, DWORD usage, enum wined3d_format_id format, enum wined3d_pool pool) DECLSPEC_HIDDEN;
 
 /* ------------------- */
@@ -208,7 +207,7 @@ struct IDirect3DSwapChain8Impl
     IDirect3DDevice8 *parentDevice;
 };
 
-HRESULT swapchain_init(IDirect3DSwapChain8Impl *swapchain, IDirect3DDevice8Impl *device,
+HRESULT swapchain_init(IDirect3DSwapChain8Impl *swapchain, struct d3d8_device *device,
         D3DPRESENT_PARAMETERS *present_parameters) DECLSPEC_HIDDEN;
 
 /* ----------------- */
@@ -232,7 +231,7 @@ struct IDirect3DSurface8Impl
     IUnknown                    *forwardReference;
 };
 
-HRESULT surface_init(IDirect3DSurface8Impl *surface, IDirect3DDevice8Impl *device,
+HRESULT surface_init(IDirect3DSurface8Impl *surface, struct d3d8_device *device,
         UINT width, UINT height, D3DFORMAT format, BOOL lockable, BOOL discard, UINT level,
         DWORD usage, D3DPOOL pool, D3DMULTISAMPLE_TYPE multisample_type, DWORD multisample_quality) DECLSPEC_HIDDEN;
 IDirect3DSurface8Impl *unsafe_impl_from_IDirect3DSurface8(IDirect3DSurface8 *iface) DECLSPEC_HIDDEN;
@@ -253,7 +252,7 @@ struct IDirect3DVertexBuffer8Impl
     DWORD fvf;
 };
 
-HRESULT vertexbuffer_init(IDirect3DVertexBuffer8Impl *buffer, IDirect3DDevice8Impl *device,
+HRESULT vertexbuffer_init(IDirect3DVertexBuffer8Impl *buffer, struct d3d8_device *device,
         UINT size, DWORD usage, DWORD fvf, D3DPOOL pool) DECLSPEC_HIDDEN;
 IDirect3DVertexBuffer8Impl *unsafe_impl_from_IDirect3DVertexBuffer8(IDirect3DVertexBuffer8 *iface) DECLSPEC_HIDDEN;
 
@@ -273,7 +272,7 @@ struct IDirect3DIndexBuffer8Impl
     enum wined3d_format_id format;
 };
 
-HRESULT indexbuffer_init(IDirect3DIndexBuffer8Impl *buffer, IDirect3DDevice8Impl *device,
+HRESULT indexbuffer_init(IDirect3DIndexBuffer8Impl *buffer, struct d3d8_device *device,
         UINT size, DWORD usage, D3DFORMAT format, D3DPOOL pool) DECLSPEC_HIDDEN;
 IDirect3DIndexBuffer8Impl *unsafe_impl_from_IDirect3DIndexBuffer8(IDirect3DIndexBuffer8 *iface) DECLSPEC_HIDDEN;
 
@@ -285,11 +284,11 @@ struct d3d8_texture
     IDirect3DDevice8 *parent_device;
 };
 
-HRESULT cubetexture_init(struct d3d8_texture *texture, IDirect3DDevice8Impl *device,
+HRESULT cubetexture_init(struct d3d8_texture *texture, struct d3d8_device *device,
         UINT edge_length, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool) DECLSPEC_HIDDEN;
-HRESULT texture_init(struct d3d8_texture *texture, IDirect3DDevice8Impl *device,
+HRESULT texture_init(struct d3d8_texture *texture, struct d3d8_device *device,
         UINT width, UINT height, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool) DECLSPEC_HIDDEN;
-HRESULT volumetexture_init(struct d3d8_texture *texture, IDirect3DDevice8Impl *device,
+HRESULT volumetexture_init(struct d3d8_texture *texture, struct d3d8_device *device,
         UINT width, UINT height, UINT depth, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool) DECLSPEC_HIDDEN;
 struct d3d8_texture *unsafe_impl_from_IDirect3DBaseTexture8(IDirect3DBaseTexture8 *iface) DECLSPEC_HIDDEN;
 
@@ -303,9 +302,9 @@ struct d3d8_vertex_declaration
 
 void d3d8_vertex_declaration_destroy(struct d3d8_vertex_declaration *declaration) DECLSPEC_HIDDEN;
 HRESULT d3d8_vertex_declaration_init(struct d3d8_vertex_declaration *declaration,
-        IDirect3DDevice8Impl *device, const DWORD *elements, DWORD shader_handle) DECLSPEC_HIDDEN;
+        struct d3d8_device *device, const DWORD *elements, DWORD shader_handle) DECLSPEC_HIDDEN;
 HRESULT d3d8_vertex_declaration_init_fvf(struct d3d8_vertex_declaration *declaration,
-        IDirect3DDevice8Impl *device, DWORD fvf) DECLSPEC_HIDDEN;
+        struct d3d8_device *device, DWORD fvf) DECLSPEC_HIDDEN;
 
 struct d3d8_vertex_shader
 {
@@ -314,7 +313,7 @@ struct d3d8_vertex_shader
 };
 
 void d3d8_vertex_shader_destroy(struct d3d8_vertex_shader *shader) DECLSPEC_HIDDEN;
-HRESULT d3d8_vertex_shader_init(struct d3d8_vertex_shader *shader, IDirect3DDevice8Impl *device,
+HRESULT d3d8_vertex_shader_init(struct d3d8_vertex_shader *shader, struct d3d8_device *device,
         const DWORD *declaration, const DWORD *byte_code, DWORD shader_handle, DWORD usage) DECLSPEC_HIDDEN;
 
 #define D3D8_MAX_VERTEX_SHADER_CONSTANTF 256
@@ -326,7 +325,7 @@ struct d3d8_pixel_shader
 };
 
 void d3d8_pixel_shader_destroy(struct d3d8_pixel_shader *shader) DECLSPEC_HIDDEN;
-HRESULT d3d8_pixel_shader_init(struct d3d8_pixel_shader *shader, IDirect3DDevice8Impl *device,
+HRESULT d3d8_pixel_shader_init(struct d3d8_pixel_shader *shader, struct d3d8_device *device,
         const DWORD *byte_code, DWORD shader_handle) DECLSPEC_HIDDEN;
 
 D3DFORMAT d3dformat_from_wined3dformat(enum wined3d_format_id format) DECLSPEC_HIDDEN;

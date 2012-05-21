@@ -343,7 +343,7 @@ static HRESULT WINAPI d3d8_CreateDevice(IDirect3D8 *iface, UINT adapter,
         IDirect3DDevice8 **device)
 {
     struct d3d8 *d3d8 = impl_from_IDirect3D8(iface);
-    IDirect3DDevice8Impl *object;
+    struct d3d8_device *object;
     HRESULT hr;
 
     TRACE("iface %p, adapter %u, device_type %#x, focus_window %p, flags %#x, parameters %p, device %p.\n",

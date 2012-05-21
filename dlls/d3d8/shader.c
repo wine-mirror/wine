@@ -50,7 +50,7 @@ static const struct wined3d_parent_ops d3d8_vertexshader_wined3d_parent_ops =
     d3d8_vertexshader_wined3d_object_destroyed,
 };
 
-static HRESULT d3d8_vertexshader_create_vertexdeclaration(IDirect3DDevice8Impl *device,
+static HRESULT d3d8_vertexshader_create_vertexdeclaration(struct d3d8_device *device,
         const DWORD *declaration, DWORD shader_handle, struct d3d8_vertex_declaration **decl_ptr)
 {
     struct d3d8_vertex_declaration *object;
@@ -80,7 +80,7 @@ static HRESULT d3d8_vertexshader_create_vertexdeclaration(IDirect3DDevice8Impl *
     return D3D_OK;
 }
 
-HRESULT d3d8_vertex_shader_init(struct d3d8_vertex_shader *shader, IDirect3DDevice8Impl *device,
+HRESULT d3d8_vertex_shader_init(struct d3d8_vertex_shader *shader, struct d3d8_device *device,
         const DWORD *declaration, const DWORD *byte_code, DWORD shader_handle, DWORD usage)
 {
     const DWORD *token = declaration;
@@ -152,7 +152,7 @@ static const struct wined3d_parent_ops d3d8_pixelshader_wined3d_parent_ops =
     d3d8_pixelshader_wined3d_object_destroyed,
 };
 
-HRESULT d3d8_pixel_shader_init(struct d3d8_pixel_shader *shader, IDirect3DDevice8Impl *device,
+HRESULT d3d8_pixel_shader_init(struct d3d8_pixel_shader *shader, struct d3d8_device *device,
         const DWORD *byte_code, DWORD shader_handle)
 {
     HRESULT hr;

@@ -150,7 +150,7 @@ static const struct wined3d_parent_ops d3d8_swapchain_wined3d_parent_ops =
     d3d8_swapchain_wined3d_object_released,
 };
 
-HRESULT swapchain_init(IDirect3DSwapChain8Impl *swapchain, IDirect3DDevice8Impl *device,
+HRESULT swapchain_init(IDirect3DSwapChain8Impl *swapchain, struct d3d8_device *device,
         D3DPRESENT_PARAMETERS *present_parameters)
 {
     struct wined3d_swapchain_desc desc;
