@@ -37,8 +37,20 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3drm);
 static HRESULT Direct3DRMMesh_create(IDirect3DRMMesh** obj);
 
 typedef struct {
+    unsigned nb_vertices;
+    D3DRMVERTEX* vertices;
+    unsigned nb_faces;
+    unsigned vertex_per_face;
+    DWORD face_data_size;
+    unsigned* face_data;
+} mesh_group;
+
+typedef struct {
     IDirect3DRMMesh IDirect3DRMMesh_iface;
     LONG ref;
+    DWORD groups_capacity;
+    DWORD nb_groups;
+    mesh_group* groups;
 } IDirect3DRMMeshImpl;
 
 typedef struct {
@@ -2174,7 +2186,14 @@ static ULONG WINAPI IDirect3DRMMeshImpl_Release(IDirect3DRMMesh* iface)
     TRACE("(%p)->(): new ref = %d\n", This, ref);
 
     if (!ref)
+    {
+        int i;
+
+        for (i = 0; i < This->nb_groups; i++)
+            HeapFree(GetProcessHeap(), 0, This->groups[i].vertices);
+        HeapFree(GetProcessHeap(), 0, This->groups);
         HeapFree(GetProcessHeap(), 0, This);
+    }
 
     return ref;
 }
@@ -2294,14 +2313,80 @@ static HRESULT WINAPI IDirect3DRMMeshImpl_GetBox(IDirect3DRMMesh* iface,
 }
 
 static HRESULT WINAPI IDirect3DRMMeshImpl_AddGroup(IDirect3DRMMesh* iface,
-                                                   unsigned vCount, unsigned fCount, unsigned vPerFace,
-                                                   unsigned *fData, D3DRMGROUPINDEX *returnId)
+                                                   unsigned vertex_count, unsigned face_count, unsigned vertex_per_face,
+                                                   unsigned *face_data, D3DRMGROUPINDEX *return_id)
 {
     IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+    mesh_group* group;
 
-    FIXME("(%p)->(%u,%u,%u,%p,%p): stub\n", This, vCount, fCount, vPerFace, fData, returnId);
+    TRACE("(%p)->(%u,%u,%u,%p,%p)\n", This, vertex_count, face_count, vertex_per_face, face_data, return_id);
 
-    return E_NOTIMPL;
+    if (!face_data || !return_id)
+        return E_POINTER;
+
+    if ((This->nb_groups + 1) > This->groups_capacity)
+    {
+        ULONG new_capacity;
+        mesh_group* groups;
+
+        if (!This->groups_capacity)
+        {
+            new_capacity = 16;
+            groups = HeapAlloc(GetProcessHeap(), 0, new_capacity * sizeof(mesh_group));
+        }
+        else
+        {
+            new_capacity = This->groups_capacity * 2;
+            groups = HeapReAlloc(GetProcessHeap(), 0, This->groups, new_capacity * sizeof(mesh_group));
+        }
+
+        if (!groups)
+            return E_OUTOFMEMORY;
+
+        This->groups_capacity = new_capacity;
+        This->groups = groups;
+    }
+
+    group = This->groups + This->nb_groups;
+
+    group->vertices = HeapAlloc(GetProcessHeap(), 0, vertex_count * sizeof(D3DRMVERTEX));
+    if (!group->vertices)
+        return E_OUTOFMEMORY;
+    group->nb_vertices = vertex_count;
+    group->nb_faces = face_count;
+    group->vertex_per_face = vertex_per_face;
+
+    if (vertex_per_face)
+    {
+        group->face_data_size = face_count * vertex_per_face;
+    }
+    else
+    {
+        int i;
+        unsigned nb_indices;
+        unsigned* face_data_ptr = face_data;
+        group->face_data_size = 0;
+
+        for (i = 0; i < face_count; i++)
+        {
+            nb_indices = *face_data_ptr;
+            group->face_data_size += nb_indices + 1;
+            face_data_ptr += nb_indices;
+        }
+    }
+
+    group->face_data = HeapAlloc(GetProcessHeap(), 0, group->face_data_size * sizeof(unsigned));
+    if (!group->face_data)
+    {
+        HeapFree(GetProcessHeap(), 0 , group->vertices);
+        return E_OUTOFMEMORY;
+    }
+
+    memcpy(group->face_data, face_data, group->face_data_size * sizeof(unsigned));
+
+    *return_id = This->nb_groups++;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMMeshImpl_SetVertices(IDirect3DRMMesh* iface,
