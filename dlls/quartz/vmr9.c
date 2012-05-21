@@ -123,6 +123,28 @@ static inline VMR9Impl *impl_from_IVMRSurfaceAllocatorNotify9( IVMRSurfaceAlloca
     return CONTAINING_RECORD(iface, VMR9Impl, IVMRSurfaceAllocatorNotify9_iface);
 }
 
+typedef struct
+{
+    IVMRImagePresenter9 IVMRImagePresenter9_iface;
+
+    LONG refCount;
+
+    IDirect3DDevice9 *d3d9_dev;
+    IDirect3D9 *d3d9_ptr;
+    IDirect3DVertexBuffer9 *d3d9_vertex;
+
+    VMR9AllocationInfo info;
+
+    VMR9Impl* pVMR9;
+} VMR9DefaultAllocatorPresenterImpl;
+
+static inline VMR9DefaultAllocatorPresenterImpl *impl_from_IVMRImagePresenter9( IVMRImagePresenter9 *iface)
+{
+    return CONTAINING_RECORD(iface, VMR9DefaultAllocatorPresenterImpl, IVMRImagePresenter9_iface);
+}
+
+static HRESULT VMR9DefaultAllocatorPresenterImpl_create(VMR9Impl *parent, LPVOID * ppv);
+
 static HRESULT WINAPI VMR9_DoRenderSample(BaseRenderer *iface, IMediaSample * pSample)
 {
     VMR9Impl *This = (VMR9Impl *)iface;
@@ -886,10 +908,21 @@ static HRESULT WINAPI VMR9FilterConfig_SetRenderingMode(IVMRFilterConfig9 *iface
     {
     case VMR9Mode_Windowed:
     case VMR9Mode_Windowless:
-        This->allocator = NULL;
-        This->presenter = NULL;
         This->allocator_is_ex = 0;
         This->cookie = ~0;
+
+        hr = VMR9DefaultAllocatorPresenterImpl_create(This, (LPVOID*)&This->presenter);
+        if (SUCCEEDED(hr))
+            hr = IVMRImagePresenter9_QueryInterface(This->presenter, &IID_IVMRSurfaceAllocatorEx9, (LPVOID*)&This->allocator);
+        if (FAILED(hr))
+        {
+            ERR("Unable to find Presenter interface\n");
+            IVMRSurfaceAllocatorEx9_Release(This->presenter);
+            This->allocator = NULL;
+            This->presenter = NULL;
+        }
+        else
+            hr = IVMRSurfaceAllocator9_AdviseNotify(This->allocator, &This->IVMRSurfaceAllocatorNotify9_iface);
         break;
     case VMR9Mode_Renderless:
         break;
@@ -1261,4 +1294,221 @@ fail:
     BaseRendererImpl_Release(&pVMR9->renderer.filter.IBaseFilter_iface);
     CoTaskMemFree(pVMR9);
     return hr;
+}
+
+
+
+static HRESULT WINAPI VMR9_ImagePresenter_QueryInterface(IVMRImagePresenter9 *iface, REFIID riid, LPVOID * ppv)
+{
+    VMR9DefaultAllocatorPresenterImpl *This = impl_from_IVMRImagePresenter9(iface);
+    TRACE("(%p/%p)->(%s, %p)\n", This, iface, qzdebugstr_guid(riid), ppv);
+
+    *ppv = NULL;
+
+    if (IsEqualIID(riid, &IID_IUnknown))
+        *ppv = (LPVOID)&(This->IVMRImagePresenter9_iface);
+    else if (IsEqualIID(riid, &IID_IVMRImagePresenter9))
+        *ppv = &This->IVMRImagePresenter9_iface;
+
+    if (*ppv)
+    {
+        IUnknown_AddRef((IUnknown *)(*ppv));
+        return S_OK;
+    }
+
+    FIXME("No interface for %s\n", debugstr_guid(riid));
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI VMR9_ImagePresenter_AddRef(IVMRImagePresenter9 *iface)
+{
+    VMR9DefaultAllocatorPresenterImpl *This = impl_from_IVMRImagePresenter9(iface);
+    ULONG refCount = InterlockedIncrement(&This->refCount);
+
+    TRACE("(%p)->() AddRef from %d\n", iface, refCount - 1);
+
+    return refCount;
+}
+
+static ULONG WINAPI VMR9_ImagePresenter_Release(IVMRImagePresenter9 *iface)
+{
+    VMR9DefaultAllocatorPresenterImpl *This = impl_from_IVMRImagePresenter9(iface);
+    ULONG refCount = InterlockedDecrement(&This->refCount);
+
+    TRACE("(%p)->() Release from %d\n", iface, refCount + 1);
+
+    if (!refCount)
+    {
+        TRACE("Destroying\n");
+        IUnknown_Release(This->d3d9_ptr);
+
+        if (This->d3d9_vertex)
+        {
+            IUnknown_Release(This->d3d9_vertex);
+            This->d3d9_vertex = NULL;
+        }
+        CoTaskMemFree(This);
+        return 0;
+    }
+    return refCount;
+}
+
+static HRESULT WINAPI VMR9_ImagePresenter_StartPresenting(IVMRImagePresenter9 *iface, DWORD_PTR id)
+{
+    VMR9DefaultAllocatorPresenterImpl *This = impl_from_IVMRImagePresenter9(iface);
+
+    TRACE("(%p/%p/%p)->(...) stub\n", iface, This,This->pVMR9);
+    return S_OK;
+}
+
+static HRESULT WINAPI VMR9_ImagePresenter_StopPresenting(IVMRImagePresenter9 *iface, DWORD_PTR id)
+{
+    VMR9DefaultAllocatorPresenterImpl *This = impl_from_IVMRImagePresenter9(iface);
+
+    TRACE("(%p/%p/%p)->(...) stub\n", iface, This,This->pVMR9);
+    return S_OK;
+}
+
+#define USED_FVF (D3DFVF_XYZRHW | D3DFVF_TEX1)
+struct VERTEX { float x, y, z, rhw, u, v; };
+
+static HRESULT VMR9_ImagePresenter_PresentTexture(VMR9DefaultAllocatorPresenterImpl *This, IDirect3DSurface9 *surface)
+{
+    IDirect3DTexture9 *texture = NULL;
+    HRESULT hr;
+
+    hr = IDirect3DDevice9_SetFVF(This->d3d9_dev, USED_FVF);
+    if (FAILED(hr))
+    {
+        FIXME("SetFVF: %08x\n", hr);
+        return hr;
+    }
+
+    hr = IDirect3DDevice9_SetStreamSource(This->d3d9_dev, 0, This->d3d9_vertex, 0, sizeof(struct VERTEX));
+    if (FAILED(hr))
+    {
+        FIXME("SetStreamSource: %08x\n", hr);
+        return hr;
+    }
+
+    hr = IDirect3DSurface9_GetContainer(surface, &IID_IDirect3DTexture9, (void **) &texture);
+    if (FAILED(hr))
+    {
+        FIXME("IDirect3DSurface9_GetContainer failed\n");
+        return hr;
+    }
+    hr = IDirect3DDevice9_SetTexture(This->d3d9_dev, 0, (IDirect3DBaseTexture9 *)texture);
+    IDirect3DTexture9_Release(texture);
+    if (FAILED(hr))
+    {
+        FIXME("SetTexture: %08x\n", hr);
+        return hr;
+    }
+
+    hr = IDirect3DDevice9_DrawPrimitive(This->d3d9_dev, D3DPT_TRIANGLESTRIP, 0, 2);
+    if (FAILED(hr))
+    {
+        FIXME("DrawPrimitive: %08x\n", hr);
+        return hr;
+    }
+
+    return S_OK;
+}
+
+static HRESULT WINAPI VMR9_ImagePresenter_PresentImage(IVMRImagePresenter9 *iface, DWORD_PTR id, VMR9PresentationInfo *info)
+{
+    VMR9DefaultAllocatorPresenterImpl *This = impl_from_IVMRImagePresenter9(iface);
+    HRESULT hr;
+    RECT output;
+    BOOL render = FALSE;
+
+    TRACE("(%p/%p/%p)->(...) stub\n", iface, This, This->pVMR9);
+    GetWindowRect(This->pVMR9->baseControlWindow.baseWindow.hWnd, &output);
+    TRACE("Output rectangle: starting at %dx%d, up to point %dx%d\n", output.left, output.top, output.right, output.bottom);
+
+    /* This might happen if we don't have active focus (eg on a different virtual desktop) */
+    if (!This->d3d9_dev)
+        return S_OK;
+
+    /* Display image here */
+    hr = IDirect3DDevice9_Clear(This->d3d9_dev, 0, NULL, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0, 0, 0), 1.0f, 0);
+    if (FAILED(hr))
+        FIXME("hr: %08x\n", hr);
+    hr = IDirect3DDevice9_BeginScene(This->d3d9_dev);
+    if (SUCCEEDED(hr))
+    {
+        if (This->d3d9_vertex)
+            hr = VMR9_ImagePresenter_PresentTexture(This, info->lpSurf);
+        else
+            hr = E_NOTIMPL;
+        render = SUCCEEDED(hr);
+    }
+    else
+        FIXME("BeginScene: %08x\n", hr);
+    hr = IDirect3DDevice9_EndScene(This->d3d9_dev);
+    if (render && SUCCEEDED(hr))
+    {
+        hr = IDirect3DDevice9_Present(This->d3d9_dev, NULL, NULL, This->pVMR9->baseControlWindow.baseWindow.hWnd, NULL);
+        if (FAILED(hr))
+            FIXME("Presenting image: %08x\n", hr);
+    }
+
+    return S_OK;
+}
+
+static const IVMRImagePresenter9Vtbl VMR9_ImagePresenter =
+{
+    VMR9_ImagePresenter_QueryInterface,
+    VMR9_ImagePresenter_AddRef,
+    VMR9_ImagePresenter_Release,
+    VMR9_ImagePresenter_StartPresenting,
+    VMR9_ImagePresenter_StopPresenting,
+    VMR9_ImagePresenter_PresentImage
+};
+
+static HRESULT VMR9DefaultAllocatorPresenterImpl_create(VMR9Impl *parent, LPVOID * ppv)
+{
+    HRESULT hr = S_OK;
+    int i;
+    VMR9DefaultAllocatorPresenterImpl* This;
+
+    This = CoTaskMemAlloc(sizeof(VMR9DefaultAllocatorPresenterImpl));
+    if (!This)
+        return E_OUTOFMEMORY;
+
+    This->d3d9_ptr = NULL;
+    if (!This->d3d9_ptr)
+    {
+        WARN("Could not initialize d3d9.dll\n");
+        CoTaskMemFree(This);
+        return VFW_E_DDRAW_CAPS_NOT_SUITABLE;
+    }
+
+    i = 0;
+    do
+    {
+        D3DDISPLAYMODE mode;
+
+        hr = IDirect3D9_EnumAdapterModes(This->d3d9_ptr, i++, D3DFMT_X8R8G8B8, 0, &mode);
+    } while (FAILED(hr));
+    if (FAILED(hr))
+        ERR("HR: %08x\n", hr);
+    if (hr == D3DERR_NOTAVAILABLE)
+    {
+        ERR("Format not supported\n");
+        IUnknown_Release(This->d3d9_ptr);
+        CoTaskMemFree(This);
+        return VFW_E_DDRAW_CAPS_NOT_SUITABLE;
+    }
+
+    This->IVMRImagePresenter9_iface.lpVtbl = &VMR9_ImagePresenter;
+
+    This->refCount = 1;
+    This->pVMR9 = parent;
+    This->d3d9_dev = NULL;
+    This->d3d9_vertex = NULL;
+
+    *ppv = This;
+    return S_OK;
 }
