@@ -1329,9 +1329,6 @@ static void test_D3DXCreateCubeTextureFromFileInMemory(IDirect3DDevice9 *device)
         ok(surface_desc.Width == 4, "Got width %u, expected 4\n", surface_desc.Width);
         ok(surface_desc.Height == 4, "Got height %u, expected 4\n", surface_desc.Height);
 
-        hr = IDirect3DCubeTexture9_GetLevelDesc(cube_texture, 3, &surface_desc);
-        todo_wine ok(hr == D3DERR_INVALIDCALL, "GetLevelDesc returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
-
         ref = IDirect3DCubeTexture9_Release(cube_texture);
         ok(ref == 0, "Invalid reference count. Got %u, expected 0\n", ref);
     } else skip("Couldn't create cube texture\n");
