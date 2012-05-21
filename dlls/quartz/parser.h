@@ -74,3 +74,9 @@ extern HRESULT WINAPI Parser_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin **ppP
 extern HRESULT WINAPI Parser_QueryFilterInfo(IBaseFilter * iface, FILTER_INFO *pInfo);
 extern HRESULT WINAPI Parser_JoinFilterGraph(IBaseFilter * iface, IFilterGraph *pGraph, LPCWSTR pName);
 extern HRESULT WINAPI Parser_QueryVendorInfo(IBaseFilter * iface, LPWSTR *pVendorInfo);
+
+/* COM helpers */
+static inline Parser_OutputPin *unsafe_impl_Parser_OutputPin_from_IPin( IPin *iface )
+{
+    return CONTAINING_RECORD(iface, Parser_OutputPin, pin.pin.IPin_iface);
+}

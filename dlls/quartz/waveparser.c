@@ -103,7 +103,7 @@ static HRESULT WAVEParser_Sample(LPVOID iface, IMediaSample * pSample, DWORD_PTR
         return S_OK;
     }
 
-    pOutputPin = (Parser_OutputPin *)This->Parser.ppPins[1];
+    pOutputPin = unsafe_impl_Parser_OutputPin_from_IPin(This->Parser.ppPins[1]);
 
     if (SUCCEEDED(hr))
         hr = IMemAllocator_GetBuffer(pin->pAlloc, &newsample, NULL, NULL, 0);
@@ -232,7 +232,7 @@ static HRESULT WINAPI WAVEParserImpl_seek(IMediaSeeking *iface)
     }
 
     pPin->rtStart = pPin->rtCurrent = bytepos;
-    ((Parser_OutputPin *)This->Parser.ppPins[1])->dwSamplesProcessed = 0;
+    unsafe_impl_Parser_OutputPin_from_IPin(This->Parser.ppPins[1])->dwSamplesProcessed = 0;
     LeaveCriticalSection(&This->Parser.filter.csFilter);
 
     TRACE("Done flushing\n");
@@ -371,7 +371,7 @@ static HRESULT WAVEParser_first_request(LPVOID iface)
         LONGLONG rtSampleStart = pin->rtNext;
         /* Add 4 for the next header, which should hopefully work */
         LONGLONG rtSampleStop = rtSampleStart + MEDIATIME_FROM_BYTES(IMediaSample_GetSize(sample));
-        Parser_OutputPin *outpin = (Parser_OutputPin *)This->Parser.ppPins[1];
+        Parser_OutputPin *outpin = unsafe_impl_Parser_OutputPin_from_IPin(This->Parser.ppPins[1]);
 
         if (rtSampleStop > pin->rtStop)
             rtSampleStop = MEDIATIME_FROM_BYTES(ALIGNUP(BYTES_FROM_MEDIATIME(pin->rtStop), pin->cbAlign));

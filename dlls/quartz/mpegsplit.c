@@ -169,7 +169,7 @@ static HRESULT parse_header(BYTE *header, LONGLONG *plen, LONGLONG *pduration)
 
 static HRESULT FillBuffer(MPEGSplitterImpl *This, IMediaSample *pCurrentSample)
 {
-    Parser_OutputPin * pOutputPin = (Parser_OutputPin*)This->Parser.ppPins[1];
+    Parser_OutputPin * pOutputPin = unsafe_impl_Parser_OutputPin_from_IPin(This->Parser.ppPins[1]);
     LONGLONG length = 0;
     LONGLONG pos = BYTES_FROM_MEDIATIME(This->Parser.pInputPin->rtNext);
     LONGLONG time = This->position, rtstop, rtstart;
@@ -241,7 +241,7 @@ static HRESULT FillBuffer(MPEGSplitterImpl *This, IMediaSample *pCurrentSample)
         EnterCriticalSection(&This->Parser.filter.csFilter);
         pOutputPin->pin.pin.tStart = time;
         pOutputPin->pin.pin.dRate = This->Parser.sourceSeeking.dRate;
-        hr = IPin_ConnectedTo((IPin *)pOutputPin, &victim);
+        hr = IPin_ConnectedTo(&pOutputPin->pin.pin.IPin_iface, &victim);
         if (hr == S_OK)
         {
             hr = IPin_NewSegment(victim, time, This->Parser.sourceSeeking.llStop,
@@ -259,7 +259,7 @@ static HRESULT FillBuffer(MPEGSplitterImpl *This, IMediaSample *pCurrentSample)
     IMediaSample_SetTime(pCurrentSample, &rtstart, &rtstop);
     IMediaSample_SetMediaTime(pCurrentSample, &time, &This->position);
 
-    hr = BaseOutputPinImpl_Deliver((BaseOutputPin*)&pOutputPin->pin, pCurrentSample);
+    hr = BaseOutputPinImpl_Deliver(&pOutputPin->pin, pCurrentSample);
 
     if (hr != S_OK)
     {

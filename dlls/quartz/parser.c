@@ -437,7 +437,7 @@ HRESULT Parser_AddPin(ParserImpl * This, const PIN_INFO * piOutput, ALLOCATOR_PR
     if (SUCCEEDED(hr))
     {
         IPin *pPin = This->ppPins[This->cStreams + 1];
-        Parser_OutputPin *pin = (Parser_OutputPin *)pPin;
+        Parser_OutputPin *pin = unsafe_impl_Parser_OutputPin_from_IPin(pPin);
         pin->pmt = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE));
         CopyMediaType(pin->pmt, amt);
         pin->dwSamplesProcessed = 0;
@@ -614,7 +614,7 @@ static HRESULT WINAPI Parser_OutputPin_BreakConnect(BaseOutputPin *This)
 
 static HRESULT WINAPI Parser_OutputPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
 {
-    Parser_OutputPin *This = (Parser_OutputPin *)iface;
+    Parser_OutputPin *This = unsafe_impl_Parser_OutputPin_from_IPin(iface);
 
     TRACE("(%s, %p)\n", qzdebugstr_guid(riid), ppv);
 
@@ -641,7 +641,7 @@ static HRESULT WINAPI Parser_OutputPin_QueryInterface(IPin * iface, REFIID riid,
 
 static ULONG WINAPI Parser_OutputPin_Release(IPin * iface)
 {
-    Parser_OutputPin *This = (Parser_OutputPin *)iface;
+    Parser_OutputPin *This = unsafe_impl_Parser_OutputPin_from_IPin(iface);
     ULONG refCount = InterlockedDecrement(&This->pin.pin.refCount);
     
     TRACE("(%p)->() Release from %d\n", iface, refCount + 1);
@@ -659,7 +659,7 @@ static ULONG WINAPI Parser_OutputPin_Release(IPin * iface)
 
 static HRESULT WINAPI Parser_OutputPin_Connect(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)
 {
-    Parser_OutputPin *This = (Parser_OutputPin *)iface;
+    Parser_OutputPin *This = unsafe_impl_Parser_OutputPin_from_IPin(iface);
     ParserImpl *parser = (ParserImpl *)This->pin.pin.pinInfo.pFilter;
 
     /* Set the allocator to our input pin's */
@@ -672,7 +672,7 @@ static HRESULT WINAPI Parser_OutputPin_Connect(IPin * iface, IPin * pReceivePin,
 
 static HRESULT WINAPI Parser_OutputPin_QueryAccept(IPin *iface, const AM_MEDIA_TYPE * pmt)
 {
-    Parser_OutputPin *This = (Parser_OutputPin *)iface;
+    Parser_OutputPin *This = unsafe_impl_Parser_OutputPin_from_IPin(iface);
 
     TRACE("()\n");
     dump_AM_MEDIA_TYPE(pmt);

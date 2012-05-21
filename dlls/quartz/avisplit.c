@@ -288,7 +288,7 @@ static HRESULT AVISplitter_next_request(AVISplitterImpl *This, DWORD streamnumbe
 
 static HRESULT AVISplitter_Receive(AVISplitterImpl *This, IMediaSample *sample, DWORD streamnumber)
 {
-    Parser_OutputPin *pin = (Parser_OutputPin *)This->Parser.ppPins[1+streamnumber];
+    Parser_OutputPin *pin = unsafe_impl_Parser_OutputPin_from_IPin(This->Parser.ppPins[1+streamnumber]);
     HRESULT hr;
     LONGLONG start, stop, rtstart, rtstop;
     StreamData *stream = &This->streams[streamnumber];
@@ -318,7 +318,7 @@ static HRESULT AVISplitter_Receive(AVISplitterImpl *This, IMediaSample *sample, 
         EnterCriticalSection(&This->Parser.filter.csFilter);
         pin->pin.pin.tStart = start;
         pin->pin.pin.dRate = This->Parser.sourceSeeking.dRate;
-        hr = IPin_ConnectedTo((IPin *)pin, &victim);
+        hr = IPin_ConnectedTo(&pin->pin.pin.IPin_iface, &victim);
         if (hr == S_OK)
         {
             hr = IPin_NewSegment(victim, start, This->Parser.sourceSeeking.llStop,
@@ -337,7 +337,7 @@ static HRESULT AVISplitter_Receive(AVISplitterImpl *This, IMediaSample *sample, 
     IMediaSample_SetTime(sample, &rtstart, &rtstop);
     IMediaSample_SetMediaTime(sample, &start, &stop);
 
-    hr = BaseOutputPinImpl_Deliver((BaseOutputPin*)&pin->pin, sample);
+    hr = BaseOutputPinImpl_Deliver(&pin->pin, sample);
 
 /* Uncomment this if you want to debug the time differences between the
  * different streams, it is useful for that
@@ -1307,7 +1307,7 @@ static HRESULT WINAPI AVISplitter_seek(IMediaSeeking *iface)
     EnterCriticalSection(&This->Parser.filter.csFilter);
     for (x = 0; x < This->Parser.cStreams; ++x)
     {
-        Parser_OutputPin *pin = (Parser_OutputPin *)This->Parser.ppPins[1+x];
+        Parser_OutputPin *pin = unsafe_impl_Parser_OutputPin_from_IPin(This->Parser.ppPins[1+x]);
         StreamData *stream = This->streams + x;
         LONGLONG wanted_frames;
         DWORD last_keyframe = 0, last_keyframeidx = 0, preroll = 0;
