@@ -152,6 +152,48 @@ static void test_cube_texture_mipmap_gen(IDirect3DDevice9 *device_ptr)
     texture_ptr = NULL;
 }
 
+static void test_cube_texture_levels(IDirect3DDevice9 *device_ptr)
+{
+    IDirect3DCubeTexture9 *texture_ptr;
+    DWORD levels;
+    D3DSURFACE_DESC desc;
+    HRESULT hr;
+    IDirect3DSurface9 *surface;
+
+    hr = IDirect3DDevice9_CreateCubeTexture(device_ptr, 64, 0, 0, D3DFMT_X8R8G8B8,
+                                            D3DPOOL_DEFAULT, &texture_ptr, NULL);
+    if (FAILED(hr))
+    {
+        skip("Couldn't create cube texture\n");
+        return;
+    }
+
+    levels = IDirect3DCubeTexture9_GetLevelCount(texture_ptr);
+    ok(levels == 7, "Got %u levels, expected 7\n", levels);
+
+    hr = IDirect3DCubeTexture9_GetLevelDesc(texture_ptr, levels - 1, &desc);
+    ok(hr == D3D_OK, "IDirect3DCubeTexture9_GetLevelDesc returned %#x\n", hr);
+    hr = IDirect3DCubeTexture9_GetLevelDesc(texture_ptr, levels, &desc);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DCubeTexture9_GetLevelDesc returned %#x\n", hr);
+    hr = IDirect3DCubeTexture9_GetLevelDesc(texture_ptr, levels + 1, &desc);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DCubeTexture9_GetLevelDesc returned %#x\n", hr);
+
+    hr = IDirect3DCubeTexture9_GetCubeMapSurface(texture_ptr, D3DCUBEMAP_FACE_POSITIVE_X,
+                                                 0, &surface);
+    ok(hr == D3D_OK, "IDirect3DCubeTexture9_GetCubeMapSurface returned %#x\n", hr);
+    if (SUCCEEDED(hr)) IDirect3DSurface9_Release(surface);
+    hr = IDirect3DCubeTexture9_GetCubeMapSurface(texture_ptr, D3DCUBEMAP_FACE_NEGATIVE_Z + 1,
+                                                 0, &surface);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DCubeTexture9_GetCubeMapSurface returned %#x\n", hr);
+    if (SUCCEEDED(hr)) IDirect3DSurface9_Release(surface);
+    hr = IDirect3DCubeTexture9_GetCubeMapSurface(texture_ptr, D3DCUBEMAP_FACE_POSITIVE_X - 1,
+                                                 0, &surface);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DCubeTexture9_GetCubeMapSurface returned %#x\n", hr);
+    if (SUCCEEDED(hr)) IDirect3DSurface9_Release(surface);
+
+    IDirect3DCubeTexture9_Release(texture_ptr);
+}
+
 static void test_cube_textures(IDirect3DDevice9 *device_ptr, DWORD caps)
 {
     test_cube_texture_from_pool(device_ptr, caps, D3DPOOL_DEFAULT, TRUE);
@@ -159,6 +201,7 @@ static void test_cube_textures(IDirect3DDevice9 *device_ptr, DWORD caps)
     test_cube_texture_from_pool(device_ptr, caps, D3DPOOL_SYSTEMMEM, TRUE);
     test_cube_texture_from_pool(device_ptr, caps, D3DPOOL_SCRATCH, FALSE);
     test_cube_texture_mipmap_gen(device_ptr);
+    test_cube_texture_levels(device_ptr);
 }
 
 static void test_mipmap_gen(IDirect3DDevice9 *device)
