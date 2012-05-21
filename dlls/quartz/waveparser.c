@@ -53,6 +53,11 @@ static inline WAVEParserImpl *impl_from_IMediaSeeking( IMediaSeeking *iface )
     return CONTAINING_RECORD(iface, WAVEParserImpl, Parser.sourceSeeking.IMediaSeeking_iface);
 }
 
+static inline WAVEParserImpl *impl_from_IBaseFilter( IBaseFilter *iface )
+{
+    return CONTAINING_RECORD(iface, WAVEParserImpl, Parser.filter.IBaseFilter_iface);
+}
+
 static LONGLONG bytepos_to_duration(WAVEParserImpl *This, LONGLONG bytepos)
 {
     LONGLONG duration = BYTES_FROM_MEDIATIME(bytepos - This->StartOfFile);
@@ -246,11 +251,11 @@ static HRESULT WAVEParser_InputPin_PreConnect(IPin * iface, IPin * pConnectPin, 
     LONGLONG pos = 0; /* in bytes */
     PIN_INFO piOutput;
     AM_MEDIA_TYPE amt;
-    WAVEParserImpl * pWAVEParser = (WAVEParserImpl *)This->pin.pinInfo.pFilter;
+    WAVEParserImpl * pWAVEParser = impl_from_IBaseFilter(This->pin.pinInfo.pFilter);
     LONGLONG length, avail;
 
     piOutput.dir = PINDIR_OUTPUT;
-    piOutput.pFilter = (IBaseFilter *)This;
+    piOutput.pFilter = &pWAVEParser->Parser.filter.IBaseFilter_iface;
     lstrcpynW(piOutput.achName, wcsOutputPinName, sizeof(piOutput.achName) / sizeof(piOutput.achName[0]));
     
     hr = IAsyncReader_SyncRead(This->pReader, pos, sizeof(list), (BYTE *)&list);
