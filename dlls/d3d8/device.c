@@ -804,7 +804,7 @@ static HRESULT WINAPI d3d8_device_CreateIndexBuffer(IDirect3DDevice8 *iface, UIN
         DWORD usage, D3DFORMAT format, D3DPOOL pool, IDirect3DIndexBuffer8 **buffer)
 {
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
-    IDirect3DIndexBuffer8Impl *object;
+    struct d3d8_indexbuffer *object;
     HRESULT hr;
 
     TRACE("iface %p, size %u, usage %#x, format %#x, pool %#x, buffer %p.\n",
@@ -2325,7 +2325,7 @@ static HRESULT WINAPI d3d8_device_SetIndices(IDirect3DDevice8 *iface,
         IDirect3DIndexBuffer8 *buffer, UINT base_vertex_idx)
 {
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
-    IDirect3DIndexBuffer8Impl *ib = unsafe_impl_from_IDirect3DIndexBuffer8(buffer);
+    struct d3d8_indexbuffer *ib = unsafe_impl_from_IDirect3DIndexBuffer8(buffer);
     HRESULT hr;
 
     TRACE("iface %p, buffer %p, base_vertex_idx %u.\n", iface, buffer, base_vertex_idx);
@@ -2339,7 +2339,7 @@ static HRESULT WINAPI d3d8_device_SetIndices(IDirect3DDevice8 *iface,
     wined3d_mutex_lock();
     wined3d_device_set_base_vertex_index(device->wined3d_device, base_vertex_idx);
     hr = wined3d_device_set_index_buffer(device->wined3d_device,
-            ib ? ib->wineD3DIndexBuffer : NULL,
+            ib ? ib->wined3d_buffer : NULL,
             ib ? ib->format : WINED3DFMT_UNKNOWN);
     wined3d_mutex_unlock();
 
@@ -2351,7 +2351,7 @@ static HRESULT WINAPI d3d8_device_GetIndices(IDirect3DDevice8 *iface,
 {
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
     struct wined3d_buffer *wined3d_buffer = NULL;
-    IDirect3DIndexBuffer8Impl *buffer_impl;
+    struct d3d8_indexbuffer *buffer_impl;
     HRESULT hr;
 
     TRACE("iface %p, buffer %p, base_vertex_index %p.\n", iface, buffer, base_vertex_index);

@@ -100,7 +100,6 @@
 
 void fixup_caps(WINED3DCAPS *pWineCaps) DECLSPEC_HIDDEN;
 
-typedef struct IDirect3DIndexBuffer8Impl IDirect3DIndexBuffer8Impl;
 typedef struct IDirect3DSurface8Impl IDirect3DSurface8Impl;
 typedef struct IDirect3DSwapChain8Impl IDirect3DSwapChain8Impl;
 typedef struct IDirect3DVolume8Impl IDirect3DVolume8Impl;
@@ -256,25 +255,18 @@ HRESULT vertexbuffer_init(IDirect3DVertexBuffer8Impl *buffer, struct d3d8_device
         UINT size, DWORD usage, DWORD fvf, D3DPOOL pool) DECLSPEC_HIDDEN;
 IDirect3DVertexBuffer8Impl *unsafe_impl_from_IDirect3DVertexBuffer8(IDirect3DVertexBuffer8 *iface) DECLSPEC_HIDDEN;
 
-/* --------------------- */
-/* IDirect3DIndexBuffer8 */
-/* --------------------- */
-
-/*****************************************************************************
- * IDirect3DIndexBuffer8 implementation structure
- */
-struct IDirect3DIndexBuffer8Impl
+struct d3d8_indexbuffer
 {
     IDirect3DIndexBuffer8 IDirect3DIndexBuffer8_iface;
-    LONG ref;
-    struct wined3d_buffer *wineD3DIndexBuffer;
-    IDirect3DDevice8 *parentDevice;
+    LONG refcount;
+    struct wined3d_buffer *wined3d_buffer;
+    IDirect3DDevice8 *parent_device;
     enum wined3d_format_id format;
 };
 
-HRESULT indexbuffer_init(IDirect3DIndexBuffer8Impl *buffer, struct d3d8_device *device,
+HRESULT indexbuffer_init(struct d3d8_indexbuffer *buffer, struct d3d8_device *device,
         UINT size, DWORD usage, D3DFORMAT format, D3DPOOL pool) DECLSPEC_HIDDEN;
-IDirect3DIndexBuffer8Impl *unsafe_impl_from_IDirect3DIndexBuffer8(IDirect3DIndexBuffer8 *iface) DECLSPEC_HIDDEN;
+struct d3d8_indexbuffer *unsafe_impl_from_IDirect3DIndexBuffer8(IDirect3DIndexBuffer8 *iface) DECLSPEC_HIDDEN;
 
 struct d3d8_texture
 {
