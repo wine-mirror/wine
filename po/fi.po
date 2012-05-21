@@ -130,29 +130,60 @@ msgstr ""
 "Lisätietoja: <a href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/"
 "Gecko</a>."
 
-#: appwiz.rc:106
+#: appwiz.rc:106 appwiz.rc:121
 msgid "&Install"
 msgstr "&Asenna"
 
-#: appwiz.rc:107 avifil32.rc:52 browseui.rc:37 comctl32.rc:53 comctl32.rc:68
-#: comdlg32.rc:165 comdlg32.rc:187 comdlg32.rc:205 comdlg32.rc:227
-#: comdlg32.rc:257 comdlg32.rc:300 comdlg32.rc:322 comdlg32.rc:342
-#: comdlg32.rc:354 comdlg32.rc:393 comdlg32.rc:447 comdlg32.rc:471
-#: comdlg32.rc:489 credui.rc:50 cryptui.rc:261 cryptui.rc:273 cryptui.rc:363
-#: dinput.rc:44 ieframe.rc:94 inetcpl.rc:78 localui.rc:42 localui.rc:55
-#: mpr.rc:47 msacm32.rc:51 mshtml.rc:46 mshtml.rc:56 msvfw32.rc:34
-#: oledlg.rc:56 oledlg.rc:88 serialui.rc:39 setupapi.rc:39 setupapi.rc:57
-#: shell32.rc:274 shell32.rc:298 shell32.rc:309 shell32.rc:338 shlwapi.rc:42
-#: user32.rc:78 user32.rc:96 wininet.rc:49 wininet.rc:69 winspool.rc:40
-#: notepad.rc:115 oleview.rc:160 oleview.rc:173 progman.rc:104 progman.rc:122
-#: progman.rc:140 progman.rc:156 progman.rc:178 progman.rc:197 progman.rc:214
-#: regedit.rc:245 regedit.rc:256 regedit.rc:269 regedit.rc:285 regedit.rc:298
-#: regedit.rc:311 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:31 winecfg.rc:206
-#: winecfg.rc:216 wineconsole.rc:132 winefile.rc:129 winefile.rc:152
-#: winefile.rc:182 winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234
-#: wordpad.rc:247
+#: appwiz.rc:107 appwiz.rc:122 avifil32.rc:52 browseui.rc:37 comctl32.rc:53
+#: comctl32.rc:68 comdlg32.rc:165 comdlg32.rc:187 comdlg32.rc:205
+#: comdlg32.rc:227 comdlg32.rc:257 comdlg32.rc:300 comdlg32.rc:322
+#: comdlg32.rc:342 comdlg32.rc:354 comdlg32.rc:393 comdlg32.rc:447
+#: comdlg32.rc:471 comdlg32.rc:489 credui.rc:50 cryptui.rc:261 cryptui.rc:273
+#: cryptui.rc:363 dinput.rc:44 ieframe.rc:94 inetcpl.rc:78 localui.rc:42
+#: localui.rc:55 mpr.rc:47 msacm32.rc:51 mshtml.rc:46 mshtml.rc:56
+#: msvfw32.rc:34 oledlg.rc:56 oledlg.rc:88 serialui.rc:39 setupapi.rc:39
+#: setupapi.rc:57 shell32.rc:274 shell32.rc:298 shell32.rc:309 shell32.rc:338
+#: shlwapi.rc:42 user32.rc:78 user32.rc:96 wininet.rc:49 wininet.rc:69
+#: winspool.rc:40 notepad.rc:115 oleview.rc:160 oleview.rc:173 progman.rc:104
+#: progman.rc:122 progman.rc:140 progman.rc:156 progman.rc:178 progman.rc:197
+#: progman.rc:214 regedit.rc:245 regedit.rc:256 regedit.rc:269 regedit.rc:285
+#: regedit.rc:298 regedit.rc:311 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:31
+#: winecfg.rc:206 winecfg.rc:216 wineconsole.rc:132 winefile.rc:129
+#: winefile.rc:152 winefile.rc:182 winemine.rc:93 wordpad.rc:205
+#: wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "Peruuta"
+
+#: appwiz.rc:112
+#, fuzzy
+#| msgid "Wine Gecko Installer"
+msgid "Wine Mono Installer"
+msgstr "Wine Gecko -asennusohjelma"
+
+#: appwiz.rc:115
+#, fuzzy
+#| msgid ""
+#| "Wine could not find a Gecko package which is needed for applications "
+#| "embedding HTML to work correctly. Wine can automatically download and "
+#| "install it for you.\n"
+#| "\n"
+#| "Note: it is recommended to use your distribution's packages instead. See "
+#| "<a href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> "
+#| "for details."
+msgid ""
+"Wine could not find a Mono package which is needed for .NET applications to "
+"work correctly. Wine can automatically download and install it for you.\n"
+"\n"
+"Note: it is recommended to use your distribution's packages instead. See <a "
+"href=\"http://wiki.winehq.org/Mono\">http://wiki.winehq.org/Mono</a> for "
+"details."
+msgstr ""
+"Wine ei löytänyt Gecko-pakettia, jota tarvitaan HTML:ää sisältävien "
+"ohjelmien toimintaan. Wine voi ladata ja asentaa sen puolestasi.\n"
+"\n"
+"Huomaa, että on suositeltavampaa käyttää oman jakelusi paketteja. "
+"Lisätietoja: <a href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/"
+"Gecko</a>."
 
 #: appwiz.rc:28
 msgid "Add/Remove Programs"

@@ -970,12 +970,18 @@ static void StartApplet(HWND hWnd)
 static LONG start_params(const WCHAR *params)
 {
     static const WCHAR install_geckoW[] = {'i','n','s','t','a','l','l','_','g','e','c','k','o',0};
+    static const WCHAR install_monoW[] = {'i','n','s','t','a','l','l','_','m','o','n','o',0};
 
     if(!params)
         return FALSE;
 
     if(!strcmpW(params, install_geckoW)) {
         install_addon(ADDON_GECKO);
+        return TRUE;
+    }
+
+    if(!strcmpW(params, install_monoW)) {
+        install_addon(ADDON_MONO);
         return TRUE;
     }
 

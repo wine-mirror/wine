@@ -17,7 +17,8 @@
  */
 
 typedef enum {
-    ADDON_GECKO
+    ADDON_GECKO,
+    ADDON_MONO
 } addon_t;
 
 BOOL install_addon(addon_t) DECLSPEC_HIDDEN;

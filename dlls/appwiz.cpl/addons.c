@@ -64,6 +64,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(appwizcpl);
 #define GECKO_SHA "???"
 #endif
 
+#define MONO_VERSION "0.0.4"
+#define MONO_SHA "7d827f7d28a88ae0da95a136573783124ffce4b1"
+
 typedef struct {
     const char *version;
     const char *file_name;
@@ -83,6 +86,14 @@ static const addon_info_t addons_info[] = {
         GECKO_SHA,
         "MSHTML", "GeckoUrl", "GeckoCabDir",
         MAKEINTRESOURCEW(ID_DWL_GECKO_DIALOG)
+    },
+    {
+        MONO_VERSION,
+        "wine-mono-" MONO_VERSION ".msi",
+        "mono",
+        MONO_SHA,
+        "Dotnet", "MonoUrl", "MonoCabDir",
+        MAKEINTRESOURCEW(ID_DWL_MONO_DIALOG)
     }
 };
 
