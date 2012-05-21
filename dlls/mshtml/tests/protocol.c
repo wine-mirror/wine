@@ -478,7 +478,6 @@ static void test_res_protocol(void)
         memset(buf, '?', sizeof(buf));
         hres = IInternetProtocolInfo_QueryInfo(protocol_info, NULL, QUERY_USES_NETWORK, 0,
                                                buf, sizeof(buf), &size, 0);
-        ok(hres == S_OK, "QueryInfo(QUERY_USES_NETWORK) failed: %08x, expected E_FAIL\n", hres);
         ok(hres == S_OK, "QueryInfo(QUERY_USES_NETWORK) failed: %08x\n", hres);
         ok(size == sizeof(DWORD), "size=%d\n", size);
         ok(!*(DWORD*)buf, "buf=%d\n", *(DWORD*)buf);
