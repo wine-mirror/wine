@@ -2849,9 +2849,7 @@ static void ComputeSphereVisibility(void)
 
     ok(rc == D3D_OK, "Expected D3D_OK, received %x\n", rc);
     ok(result[0] == 0x103d, "Expected 0x103d, got %x\n", result[0]);
-    ok(rc == D3D_OK, "Expected D3D_OK, received %x\n", rc);
     ok(result[1] == 0x3f, "Expected 0x3f, got %x\n", result[1]);
-    ok(rc == D3D_OK, "Expected D3D_OK, received %x\n", rc);
     ok(result[2] == 0x3f, "Expected 0x3f, got %x\n", result[2]);
 
     view._11=1.0; view._12=0.0; view._13=0.0; view._14=0.0;

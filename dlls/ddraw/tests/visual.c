@@ -560,8 +560,6 @@ static void fog_test(IDirect3DDevice7 *device)
                                                    untransformed_2, 4, Indices, 6, 0);
         ok(hr == D3D_OK, "DrawIndexedPrimitive returned %08x\n", hr);
 
-        /* transformed verts */
-        ok( hr == D3D_OK, "SetFVF returned %08x\n", hr);
         /* Transformed, vertex fog != NONE, pixel fog == NONE: Use specular color alpha component */
         hr = IDirect3DDevice7_DrawIndexedPrimitive(device, D3DPT_TRIANGLELIST, D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_SPECULAR,
                                                    transformed_1, 4, Indices, 6, 0);
