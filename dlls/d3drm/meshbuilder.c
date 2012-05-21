@@ -855,13 +855,13 @@ static D3DCOLOR WINAPI IDirect3DRMMeshBuilder2Impl_GetVertexColor(IDirect3DRMMes
 }
 
 static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_CreateMesh(IDirect3DRMMeshBuilder2* iface,
-                                                             LPDIRECT3DRMMESH* ppMesh)
+                                                             LPDIRECT3DRMMESH* mesh)
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder2(iface);
 
-    TRACE("(%p)->(%p)\n", This, ppMesh);
+    TRACE("(%p)->(%p)\n", This, mesh);
 
-    return Direct3DRMMesh_create(ppMesh);
+    return IDirect3DRMMeshBuilder3_CreateMesh(&This->IDirect3DRMMeshBuilder3_iface, mesh);
 }
 
 static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_GenerateNormals2(IDirect3DRMMeshBuilder2* iface,
@@ -1812,13 +1812,57 @@ static D3DCOLOR WINAPI IDirect3DRMMeshBuilder3Impl_GetVertexColor(IDirect3DRMMes
 }
 
 static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_CreateMesh(IDirect3DRMMeshBuilder3* iface,
-                                                             LPDIRECT3DRMMESH* Mesh)
+                                                             LPDIRECT3DRMMESH* mesh)
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder3(iface);
+    HRESULT hr;
+    D3DRMGROUPINDEX group;
 
-    TRACE("(%p)->(%p)\n", This, Mesh);
+    TRACE("(%p)->(%p)\n", This, mesh);
 
-    return Direct3DRMMesh_create(Mesh);
+    if (!mesh)
+        return E_POINTER;
+
+    hr = Direct3DRMMesh_create(mesh);
+    if (FAILED(hr))
+        return hr;
+
+    /* If there is mesh data, create a group and put data inside */
+    if (This->nb_vertices)
+    {
+        unsigned* face_data;
+        unsigned* out_ptr;
+        DWORD* in_ptr = This->pFaceData;
+        int i, j;
+
+        face_data = HeapAlloc(GetProcessHeap(), 0, This->face_data_size * sizeof(DWORD));
+        if (!face_data)
+        {
+            IDirect3DRMMesh_Release(*mesh);
+            return E_OUTOFMEMORY;
+        }
+        out_ptr = face_data;
+
+        /* Put only vertex indices */
+        for (i = 0; i < This->nb_faces; i++)
+        {
+            DWORD nb_indices = *out_ptr++ = *in_ptr++;
+            for (j = 0; j < nb_indices; j++)
+            {
+                *out_ptr++ = *in_ptr++;
+                /* Skip normal index */
+                in_ptr++;
+            }
+        }
+
+        hr = IDirect3DRMMesh_AddGroup(*mesh, This->nb_vertices, This->nb_faces, 0, face_data, &group);
+        if (FAILED(hr))
+            IDirect3DRMMesh_Release(*mesh);
+
+        HeapFree(GetProcessHeap(), 0, face_data);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_GetFace(IDirect3DRMMeshBuilder3* iface,
