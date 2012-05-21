@@ -433,7 +433,7 @@ HRESULT assembly_release(ASSEMBLY *assembly) DECLSPEC_HIDDEN;
 HRESULT assembly_get_name(ASSEMBLY *assembly, LPWSTR *name) DECLSPEC_HIDDEN;
 HRESULT assembly_get_path(const ASSEMBLY *assembly, LPWSTR *path) DECLSPEC_HIDDEN;
 HRESULT assembly_get_version(ASSEMBLY *assembly, LPWSTR *version) DECLSPEC_HIDDEN;
-BYTE assembly_get_architecture(ASSEMBLY *assembly) DECLSPEC_HIDDEN;
+PEKIND assembly_get_architecture(ASSEMBLY *assembly) DECLSPEC_HIDDEN;
 HRESULT assembly_get_pubkey_token(ASSEMBLY *assembly, LPWSTR *token) DECLSPEC_HIDDEN;
 HRESULT assembly_get_runtime_version(ASSEMBLY *assembly, LPSTR *version) DECLSPEC_HIDDEN;
 

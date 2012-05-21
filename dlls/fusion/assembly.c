@@ -811,10 +811,10 @@ HRESULT assembly_get_version(ASSEMBLY *assembly, LPWSTR *version)
     return S_OK;
 }
 
-BYTE assembly_get_architecture(ASSEMBLY *assembly)
+PEKIND assembly_get_architecture(ASSEMBLY *assembly)
 {
     if ((assembly->corhdr->MajorRuntimeVersion == 2) && (assembly->corhdr->MinorRuntimeVersion == 0))
-        return 0; /* .NET 1.x assembly */
+        return peNone; /* .NET 1.x assembly */
 
     if (assembly->nthdr->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
         return peAMD64; /* AMD64/IA64 assembly */

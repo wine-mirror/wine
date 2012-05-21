@@ -94,7 +94,7 @@ static BOOL create_full_path(LPCWSTR path)
     return ret;
 }
 
-static BOOL get_assembly_directory(LPWSTR dir, DWORD size, BYTE architecture)
+static BOOL get_assembly_directory(LPWSTR dir, DWORD size, PEKIND architecture)
 {
     static const WCHAR gac[] = {'\\','a','s','s','e','m','b','l','y','\\','G','A','C',0};
 
@@ -107,6 +107,9 @@ static BOOL get_assembly_directory(LPWSTR dir, DWORD size, BYTE architecture)
 
     switch (architecture)
     {
+        case peNone:
+            break;
+
         case peMSIL:
             strcatW(dir, msil);
             break;
@@ -118,6 +121,10 @@ static BOOL get_assembly_directory(LPWSTR dir, DWORD size, BYTE architecture)
         case peAMD64:
             strcatW(dir, amd64);
             break;
+
+        default:
+            WARN("unhandled architecture %u\n", architecture);
+            return FALSE;
     }
 
     return TRUE;
@@ -372,6 +379,7 @@ static HRESULT WINAPI IAssemblyCacheImpl_InstallAssembly(IAssemblyCache *iface,
     WCHAR path[MAX_PATH];
     WCHAR asmdir[MAX_PATH];
     LPWSTR ext;
+    PEKIND architecture;
     HRESULT hr;
 
     TRACE("(%p, %d, %s, %p)\n", iface, dwFlags,
@@ -410,7 +418,8 @@ static HRESULT WINAPI IAssemblyCacheImpl_InstallAssembly(IAssemblyCache *iface,
 
     cache_lock( cache );
 
-    get_assembly_directory(asmdir, MAX_PATH, assembly_get_architecture(assembly));
+    architecture = assembly_get_architecture(assembly);
+    get_assembly_directory(asmdir, MAX_PATH, architecture);
 
     sprintfW(path, format, asmdir, name, version, token);
 
