@@ -2508,9 +2508,9 @@ static DWORD WINAPI IDirect3DRMMeshImpl_GetGroupCount(IDirect3DRMMesh* iface)
 {
     IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
 
-    FIXME("(%p)->(): stub\n", This);
+    TRACE("(%p)->()\n", This);
 
-    return 0;
+    return This->nb_groups;
 }
 
 static HRESULT WINAPI IDirect3DRMMeshImpl_GetGroup(IDirect3DRMMesh* iface,

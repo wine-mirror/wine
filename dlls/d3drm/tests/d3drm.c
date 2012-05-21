@@ -172,6 +172,7 @@ static void test_MeshBuilder(void)
     HRESULT hr;
     LPDIRECT3DRM pD3DRM;
     LPDIRECT3DRMMESHBUILDER pMeshBuilder;
+    LPDIRECT3DRMMESH mesh;
     D3DRMLOADMEMORY info;
     int val;
     DWORD val1, val2, val3;
@@ -282,6 +283,19 @@ static void test_MeshBuilder(void)
     hr = IDirect3DRM_CreateMeshBuilder(pD3DRM, &pMeshBuilder);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMMeshBuilder interface (hr = %x)\n", hr);
 
+    /* No group in mesh when mesh builder is not loaded */
+    hr = IDirect3DRMMeshBuilder_CreateMesh(pMeshBuilder, &mesh);
+    ok(hr == D3DRM_OK, "CreateMesh failed returning hr = %x\n", hr);
+    if (hr == D3DRM_OK)
+    {
+        DWORD nb_groups;
+
+        nb_groups = IDirect3DRMMesh_GetGroupCount(mesh);
+        ok(nb_groups == 0, "GetCroupCount returned %u\n", nb_groups);
+
+        IDirect3DRMMesh_Release(mesh);
+    }
+
     info.lpMemory = data_full;
     info.dSize = strlen(data_full);
     hr = IDirect3DRMMeshBuilder_Load(pMeshBuilder, &info, NULL, D3DRMLOAD_FROMMEMORY, NULL, NULL);
@@ -324,6 +338,18 @@ static void test_MeshBuilder(void)
     ok(f[5] == 2 , "Wrong component f[5] = %d (expected 2)\n", f[5]);
     ok(f[6] == 2 , "Wrong component f[6] = %d (expected 2)\n", f[6]);
     ok(f[7] == 0 , "Wrong component f[7] = %d (expected 0)\n", f[7]);
+
+    hr = IDirect3DRMMeshBuilder_CreateMesh(pMeshBuilder, &mesh);
+    ok(hr == D3DRM_OK, "CreateMesh failed returning hr = %x\n", hr);
+    if (hr == D3DRM_OK)
+    {
+        DWORD nb_groups;
+
+        nb_groups = IDirect3DRMMesh_GetGroupCount(mesh);
+        ok(nb_groups == 1, "GetCroupCount returned %u\n", nb_groups);
+
+        IDirect3DRMMesh_Release(mesh);
+    }
 
     hr = IDirect3DRMMeshBuilder_Scale(pMeshBuilder, 2, 3 ,4);
     ok(hr == D3DRM_OK, "Scale failed returning hr = %x\n", hr);
