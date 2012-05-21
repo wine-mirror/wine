@@ -1838,6 +1838,7 @@ struct wined3d_resource
 {
     LONG ref;
     LONG bind_count;
+    LONG map_count;
     struct wined3d_device *device;
     enum wined3d_resource_type type;
     const struct wined3d_format *format;
@@ -2410,7 +2411,6 @@ struct wined3d_buffer
     UINT buffer_object_size;
     DWORD flags;
 
-    LONG lock_count;
     struct wined3d_map_range *maps;
     ULONG maps_size, modified_areas;
     struct wined3d_event_query *query;
