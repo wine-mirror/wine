@@ -567,7 +567,7 @@ static HRESULT parse_metadata_header(ASSEMBLY *assembly, DWORD *hdrsz)
     size = FIELD_OFFSET(METADATAHDR, Version);
     memcpy(assembly->metadatahdr, metadatahdr, size);
 
-    /* we don't care about the version string */
+    assembly->metadatahdr->Version = (LPSTR)&metadatahdr->Version;
 
     ofs = FIELD_OFFSET(METADATAHDR, Flags);
     ptr += FIELD_OFFSET(METADATAHDR, Version) + metadatahdr->VersionLength + 1;
@@ -900,4 +900,10 @@ done:
     CryptReleaseContext(crypt, 0);
 
     return hr;
+}
+
+HRESULT assembly_get_runtime_version(ASSEMBLY *assembly, LPSTR *version)
+{
+    *version = assembly->metadatahdr->Version;
+    return S_OK;
 }
