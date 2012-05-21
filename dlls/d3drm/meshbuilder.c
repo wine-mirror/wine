@@ -1,5 +1,5 @@
 /*
- * Implementation of IDirect3DRMMeshBuilder2 Interface
+ * Implementation of IDirect3DRMMeshBuilderX and IDirect3DRMMesh interfaces
  *
  * Copyright 2010, 2012 Christian Costa
  * Copyright 2011 André Hentschel
@@ -19,9 +19,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "wine/debug.h"
+#define NONAMELESSUNION
 
 #define COBJMACROS
+
+#include "wine/debug.h"
 
 #include "winbase.h"
 #include "wingdi.h"
@@ -472,9 +474,9 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_Scale(IDirect3DRMMeshBuilder2*
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder2(iface);
 
-    FIXME("(%p)->(%f,%f,%f): stub\n", This, sx, sy, sz);
+    TRACE("(%p)->(%f,%f,%f)\n", This, sx, sy, sz);
 
-    return D3DRM_OK;
+    return IDirect3DRMMeshBuilder3_Scale(&This->IDirect3DRMMeshBuilder3_iface, sx, sy, sz);
 }
 
 static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_Translate(IDirect3DRMMeshBuilder2* iface,
@@ -1415,10 +1417,20 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_Scale(IDirect3DRMMeshBuilder3*
                                                         D3DVALUE sx, D3DVALUE sy, D3DVALUE sz)
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder3(iface);
+    int i;
 
-    FIXME("(%p)->(%f,%f,%f): stub\n", This, sx, sy, sz);
+    TRACE("(%p)->(%f,%f,%f)\n", This, sx, sy, sz);
 
-    return E_NOTIMPL;
+    for (i = 0; i < This->nb_vertices; i++)
+    {
+        This->pVertices[i].u1.x *= sx;
+        This->pVertices[i].u2.y *= sy;
+        This->pVertices[i].u3.z *= sz;
+    }
+
+    /* Normals are not affected by Scale */
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_Translate(IDirect3DRMMeshBuilder3* iface,
