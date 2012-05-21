@@ -399,6 +399,8 @@ GpStatus WINGDIPAPI GdipCreateRegion(GpRegion **region)
     if(!*region)
         return OutOfMemory;
 
+    TRACE("=> %p\n", *region);
+
     return init_region(*region, RegionDataInfiniteRect);
 }
 
@@ -680,6 +682,7 @@ GpStatus WINGDIPAPI GdipGetRegionBounds(GpRegion *region, GpGraphics *graphics, 
     if(!hrgn){
         rect->X = rect->Y = -(REAL)(1 << 22);
         rect->Width = rect->Height = (REAL)(1 << 23);
+        TRACE("%p => infinite\n", region);
         return Ok;
     }
 
@@ -688,6 +691,7 @@ GpStatus WINGDIPAPI GdipGetRegionBounds(GpRegion *region, GpGraphics *graphics, 
         rect->Y = r.top;
         rect->Width  = r.right  - r.left;
         rect->Height = r.bottom - r.top;
+        TRACE("%p => %s\n", region, debugstr_rectf(rect));
     }
     else
         status = GenericError;
@@ -1080,12 +1084,19 @@ GpStatus WINGDIPAPI GdipGetRegionHRgn(GpRegion *region, GpGraphics *graphics, HR
 
 GpStatus WINGDIPAPI GdipIsEmptyRegion(GpRegion *region, GpGraphics *graphics, BOOL *res)
 {
+    GpStatus status;
+    GpRectF rect;
+
     TRACE("(%p, %p, %p)\n", region, graphics, res);
 
     if(!region || !graphics || !res)
         return InvalidParameter;
 
-    *res = (region->node.type == RegionDataEmptyRect);
+    status = GdipGetRegionBounds(region, graphics, &rect);
+    if (status != Ok) return status;
+
+    *res = rect.Width == 0.0 && rect.Height == 0.0;
+    TRACE("=> %d\n", *res);
 
     return Ok;
 }
