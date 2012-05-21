@@ -714,7 +714,7 @@ void x11_copy_to_screen(const struct wined3d_swapchain *swapchain, const RECT *r
     if (!(front->resource.usage & WINED3DUSAGE_RENDERTARGET))
         return;
 
-    if (front->flags & SFLAG_LOCKED)
+    if (front->resource.map_count)
         ERR("Trying to blit a mapped surface.\n");
 
     TRACE("Copying surface %p to screen.\n", front);

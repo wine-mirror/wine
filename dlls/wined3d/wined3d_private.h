@@ -2140,7 +2140,7 @@ void flip_surface(struct wined3d_surface *front, struct wined3d_surface *back) D
 #define SFLAG_NORMCOORD         0x00000008 /* Set if GL texture coordinates are normalized (non-texture rectangle). */
 #define SFLAG_LOCKABLE          0x00000010 /* Surface can be locked. */
 #define SFLAG_DYNLOCK           0x00000020 /* Surface is often locked by the application. */
-#define SFLAG_LOCKED            0x00000040 /* Surface is currently locked. */
+#define SFLAG_PIN_SYSMEM        0x00000040 /* Keep the surface in sysmem, at the same address. */
 #define SFLAG_DCINUSE           0x00000080 /* Set between GetDC and ReleaseDC calls. */
 #define SFLAG_LOST              0x00000100 /* Surface lost flag for ddraw. */
 #define SFLAG_GLCKEY            0x00000200 /* The GL texture was created with a color key. */
@@ -2157,20 +2157,17 @@ void flip_surface(struct wined3d_surface *front, struct wined3d_surface *back) D
 #define SFLAG_INDRAWABLE        0x00100000 /* The GL drawable is current. */
 #define SFLAG_INRB_MULTISAMPLE  0x00200000 /* The multisample renderbuffer is current. */
 #define SFLAG_INRB_RESOLVED     0x00400000 /* The resolved renderbuffer is current. */
-#define SFLAG_PIN_SYSMEM        0x02000000 /* Keep the surface in sysmem, at the same address. */
-#define SFLAG_DISCARDED         0x04000000 /* Surface was discarded, allocating new location is enough. */
+#define SFLAG_DISCARDED         0x00800000 /* Surface was discarded, allocating new location is enough. */
 
 /* In some conditions the surface memory must not be freed:
  * SFLAG_CONVERTED: Converting the data back would take too long
  * SFLAG_DIBSECTION: The dib code manages the memory
- * SFLAG_LOCKED: The app requires access to the surface data
  * SFLAG_DYNLOCK: Avoid freeing the data for performance
  * SFLAG_PBO: PBOs don't use 'normal' memory. It is either allocated by the driver or must be NULL.
  * SFLAG_CLIENT: OpenGL uses our memory as backup
  */
 #define SFLAG_DONOTFREE     (SFLAG_CONVERTED        | \
                              SFLAG_DYNLOCK          | \
-                             SFLAG_LOCKED           | \
                              SFLAG_CLIENT           | \
                              SFLAG_DIBSECTION       | \
                              SFLAG_USERPTR          | \

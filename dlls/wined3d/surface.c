@@ -581,7 +581,7 @@ static void surface_prepare_system_memory(struct wined3d_surface *surface)
 
 static void surface_evict_sysmem(struct wined3d_surface *surface)
 {
-    if (surface->flags & SFLAG_DONOTFREE)
+    if (surface->resource.map_count || (surface->flags & SFLAG_DONOTFREE))
         return;
 
     HeapFree(GetProcessHeap(), 0, surface->resource.heapMemory);
@@ -1441,7 +1441,7 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
                 fx->ddckSrcColorkey.color_space_high_value);
     }
 
-    if ((dst_surface->flags & SFLAG_LOCKED) || (src_surface && (src_surface->flags & SFLAG_LOCKED)))
+    if (dst_surface->resource.map_count || (src_surface && src_surface->resource.map_count))
     {
         WARN("Surface is busy, returning WINEDDERR_SURFACEBUSY.\n");
         return WINEDDERR_SURFACEBUSY;
@@ -2257,7 +2257,7 @@ static void surface_upload_data(struct wined3d_surface *surface, const struct wi
             surface, gl_info, debug_d3dformat(format->id), wine_dbgstr_rect(src_rect), src_pitch,
             wine_dbgstr_point(dst_point), srgb, data->buffer_object, data->addr);
 
-    if (surface->flags & SFLAG_LOCKED)
+    if (surface->resource.map_count)
     {
         WARN("Uploading a surface that is currently mapped, setting SFLAG_PIN_SYSMEM.\n");
         surface->flags |= SFLAG_PIN_SYSMEM;
@@ -3081,9 +3081,9 @@ HRESULT CDECL wined3d_surface_set_mem(struct wined3d_surface *surface, void *mem
 {
     TRACE("surface %p, mem %p.\n", surface, mem);
 
-    if (surface->flags & (SFLAG_LOCKED | SFLAG_DCINUSE))
+    if (surface->resource.map_count || (surface->flags & SFLAG_DCINUSE))
     {
-        WARN("Surface is locked or the DC is in use.\n");
+        WARN("Surface is mapped or the DC is in use.\n");
         return WINED3DERR_INVALIDCALL;
     }
 
@@ -3673,12 +3673,12 @@ HRESULT CDECL wined3d_surface_unmap(struct wined3d_surface *surface)
 {
     TRACE("surface %p.\n", surface);
 
-    if (!(surface->flags & SFLAG_LOCKED))
+    if (!surface->resource.map_count)
     {
         WARN("Trying to unmap unmapped surface.\n");
         return WINEDDERR_NOTLOCKED;
     }
-    surface->flags &= ~SFLAG_LOCKED;
+    --surface->resource.map_count;
 
     surface->surface_ops->surface_unmap(surface);
 
@@ -3693,7 +3693,7 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
     TRACE("surface %p, map_desc %p, rect %s, flags %#x.\n",
             surface, map_desc, wine_dbgstr_rect(rect), flags);
 
-    if (surface->flags & SFLAG_LOCKED)
+    if (surface->resource.map_count)
     {
         WARN("Surface is already mapped.\n");
         return WINED3DERR_INVALIDCALL;
@@ -3717,7 +3717,7 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
         }
     }
 
-    surface->flags |= SFLAG_LOCKED;
+    ++surface->resource.map_count;
 
     if (!(surface->flags & SFLAG_LOCKABLE))
         WARN("Trying to lock unlockable surface.\n");
@@ -3797,7 +3797,7 @@ HRESULT CDECL wined3d_surface_getdc(struct wined3d_surface *surface, HDC *dc)
         return WINEDDERR_DCALREADYCREATED;
 
     /* Can't GetDC if the surface is locked. */
-    if (surface->flags & SFLAG_LOCKED)
+    if (surface->resource.map_count)
         return WINED3DERR_INVALIDCALL;
 
     /* Create a DIB section if there isn't a dc yet. */
@@ -5486,7 +5486,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(struct wined3d_surface *dst_surfa
             fb_copy_to_texture_hwstretch(dst_surface, src_surface, src_rect, dst_rect, filter);
         }
 
-        if (!(dst_surface->flags & SFLAG_DONOTFREE))
+        if (!dst_surface->resource.map_count && !(dst_surface->flags & SFLAG_DONOTFREE))
         {
             HeapFree(GetProcessHeap(), 0, dst_surface->resource.heapMemory);
             dst_surface->resource.allocatedMemory = NULL;
