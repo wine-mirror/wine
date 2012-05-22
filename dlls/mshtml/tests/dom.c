@@ -3541,9 +3541,6 @@ static void test_elem_col_item(IHTMLElementCollection *col, const char *n,
 
     test_elem_collection((IUnknown*)disp, elem_types, len);
     IDispatch_Release(disp);
-    ok(hres == S_OK, "Could not get IHTMLElementCollection interface: %08x\n", hres);
-    if(hres != S_OK)
-        goto cleanup;
 
     V_VT(&index) = VT_I4;
 
@@ -3573,7 +3570,6 @@ static void test_elem_col_item(IHTMLElementCollection *col, const char *n,
     ok(hres == E_INVALIDARG, "item failed: %08x, expected E_INVALIDARG\n", hres);
     ok(disp == NULL, "disp != NULL\n");
 
-cleanup:
     SysFreeString(V_BSTR(&name));
 }
 
