@@ -479,6 +479,35 @@ kQTMovieAudioExtractionAudioPropertyID_AudioStreamBasicDescription,
     return err;
 }
 
+static DWORD WINAPI QTSplitter_loading_thread(LPVOID data)
+{
+    QTSplitter *This = (QTSplitter *)data;
+
+    if (This->pAudio_Pin)
+    {
+        /* according to QA1469 a movie has to be fully loaded before we
+           can reliably start the Extraction session.
+
+           If loaded earlier then we only get an extraction session for
+           the part of the movie that is loaded at that time.
+
+            We are trying to load as much of the movie as we can before we
+            start extracting.  However we can recreate the extraction session
+            again when we run out of loaded extraction frames. But we want
+            to try to minimize that.
+         */
+
+        while(GetMovieLoadState(This->pQTMovie) < kMovieLoadStateComplete)
+        {
+            EnterCriticalSection(&This->csReceive);
+            MoviesTask(This->pQTMovie, 100);
+            LeaveCriticalSection(&This->csReceive);
+            Sleep(0);
+        }
+    }
+    return 0;
+}
+
 static DWORD WINAPI QTSplitter_thread(LPVOID data)
 {
     QTSplitter *This = (QTSplitter *)data;
@@ -488,17 +517,6 @@ static DWORD WINAPI QTSplitter_thread(LPVOID data)
     OSStatus err;
     TimeRecord tr;
 
-    if (This->pAudio_Pin)
-    {
-        /* according to QA1469 a movie has to be fully loaded before we
-           can reliably start the Extraction session */
-
-        while(GetMovieLoadState(This->pQTMovie) < kMovieLoadStateComplete)
-            MoviesTask(This->pQTMovie,1000);
-
-        QT_Create_Extract_Session(This);
-    }
-
     WaitForSingleObject(This->runEvent, -1);
 
     EnterCriticalSection(&This->csReceive);
@@ -507,7 +525,12 @@ static DWORD WINAPI QTSplitter_thread(LPVOID data)
     GetMovieNextInterestingTime(This->pQTMovie, nextTimeEdgeOK | nextTimeStep, 0, NULL, This->movie_time, 1, &next_time, NULL);
 
     GetMovieTime(This->pQTMovie, &tr);
+
+    if (This->pAudio_Pin)
+        QT_Create_Extract_Session(This);
+
     LeaveCriticalSection(&This->csReceive);
+
     do
     {
         LONGLONG tStart=0, tStop=0;
@@ -585,6 +608,32 @@ static DWORD WINAPI QTSplitter_thread(LPVOID data)
             aData.mBuffers[0].mData = ptr;
 
             err = MovieAudioExtractionFillBuffer(This->aSession, &frames, &aData, &flags);
+            if (frames == 0)
+            {
+                TimeRecord etr;
+
+                /* Ran out of frames, Restart the extraction session */
+                TRACE("Restarting extraction session\n");
+                MovieAudioExtractionEnd(This->aSession);
+                This->aSession = NULL;
+                QT_Create_Extract_Session(This);
+
+                etr = tr;
+                etr.value = SInt64ToWide(This->movie_time);
+                MovieAudioExtractionSetProperty(This->aSession,
+                    kQTPropertyClass_MovieAudioExtraction_Movie,
+                    kQTMovieAudioExtractionMoviePropertyID_CurrentTime,
+                    sizeof(TimeRecord), &etr );
+
+                frames = pvi->nSamplesPerSec * duration;
+                aData.mNumberBuffers = 1;
+                aData.mBuffers[0].mNumberChannels = pvi->nChannels;
+                aData.mBuffers[0].mDataByteSize = data_size;
+                aData.mBuffers[0].mData = ptr;
+
+                MovieAudioExtractionFillBuffer(This->aSession, &frames, &aData, &flags);
+            }
+
             TRACE("Got %i frames\n",(int)frames);
 
             IMediaSample_SetActualDataLength(sample, frames * pvi->nBlockAlign);
@@ -992,10 +1041,16 @@ static HRESULT QT_Process_Movie(QTSplitter* filter)
 
     TRACE("Movie duration is %s\n",wine_dbgstr_longlong(filter->sourceSeeking.llDuration));
 
+    thread = CreateThread(NULL, 0, QTSplitter_loading_thread, filter, 0, &tid);
+    if (thread)
+    {
+        TRACE("Created loading thread 0x%08x\n", tid);
+        CloseHandle(thread);
+    }
     thread = CreateThread(NULL, 0, QTSplitter_thread, filter, 0, &tid);
     if (thread)
     {
-        TRACE("Created thread 0x%08x\n", tid);
+        TRACE("Created processing thread 0x%08x\n", tid);
         CloseHandle(thread);
     }
     else
