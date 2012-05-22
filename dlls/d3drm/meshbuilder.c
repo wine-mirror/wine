@@ -1856,10 +1856,28 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_CreateMesh(IDirect3DRMMeshBuil
         }
 
         hr = IDirect3DRMMesh_AddGroup(*mesh, This->nb_vertices, This->nb_faces, 0, face_data, &group);
+        HeapFree(GetProcessHeap(), 0, face_data);
+        if (SUCCEEDED(hr))
+        {
+            D3DRMVERTEX* vertices;
+
+            vertices = HeapAlloc(GetProcessHeap(), 0, This->nb_vertices * sizeof(D3DRMVERTEX));
+            if (vertices)
+            {
+                for (i = 0; i < This->nb_vertices; i++)
+                {
+                    vertices[i].position = This->pVertices[i];
+                }
+                hr = IDirect3DRMMesh_SetVertices(*mesh, 0, 0, This->nb_vertices, vertices);
+                HeapFree(GetProcessHeap(), 0, vertices);
+            }
+            else
+            {
+                hr = E_OUTOFMEMORY;
+            }
+        }
         if (FAILED(hr))
             IDirect3DRMMesh_Release(*mesh);
-
-        HeapFree(GetProcessHeap(), 0, face_data);
     }
 
     return hr;
