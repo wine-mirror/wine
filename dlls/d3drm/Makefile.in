@@ -8,6 +8,7 @@ C_SRCS = \
 	device.c \
 	frame.c \
 	light.c \
+	material.c \
 	math.c \
 	meshbuilder.c \
 	viewport.c
