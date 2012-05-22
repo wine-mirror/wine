@@ -470,7 +470,7 @@ void buffer_get_memory(struct wined3d_buffer *buffer, const struct wined3d_gl_in
     data->buffer_object = buffer->buffer_object;
     if (!buffer->buffer_object)
     {
-        if (buffer->flags & WINED3D_BUFFER_CREATEBO)
+        if ((buffer->flags & WINED3D_BUFFER_CREATEBO) && !buffer->resource.map_count)
         {
             buffer_create_buffer_object(buffer, gl_info);
             buffer->flags &= ~WINED3D_BUFFER_CREATEBO;
@@ -746,6 +746,12 @@ void CDECL wined3d_buffer_preload(struct wined3d_buffer *buffer)
     BYTE *data;
 
     TRACE("buffer %p.\n", buffer);
+
+    if (buffer->resource.map_count)
+    {
+        WARN("Buffer is mapped, skipping preload.\n");
+        return;
+    }
 
     buffer->flags &= ~(WINED3D_BUFFER_NOSYNC | WINED3D_BUFFER_DISCARD);
 
