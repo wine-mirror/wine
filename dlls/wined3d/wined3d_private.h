@@ -840,19 +840,6 @@ do {                                                                \
 #define checkGLcall(A) do {} while(0)
 #endif
 
-/* Trace routines / diagnostics */
-/* ---------------------------- */
-
-/* Dump out a matrix and copy it */
-#define conv_mat(mat,gl_mat)                                                                \
-do {                                                                                        \
-    TRACE("%f %f %f %f\n", (mat)->u.s._11, (mat)->u.s._12, (mat)->u.s._13, (mat)->u.s._14); \
-    TRACE("%f %f %f %f\n", (mat)->u.s._21, (mat)->u.s._22, (mat)->u.s._23, (mat)->u.s._24); \
-    TRACE("%f %f %f %f\n", (mat)->u.s._31, (mat)->u.s._32, (mat)->u.s._33, (mat)->u.s._34); \
-    TRACE("%f %f %f %f\n", (mat)->u.s._41, (mat)->u.s._42, (mat)->u.s._43, (mat)->u.s._44); \
-    memcpy(gl_mat, (mat), 16 * sizeof(float));                                              \
-} while (0)
-
 /* Trace vector and strided data information */
 #define TRACE_STRIDED(si, name) do { if (si->use_map & (1 << name)) \
         TRACE( #name " = (data {%#x:%p}, stride %d, format %s, stream %u)\n", \

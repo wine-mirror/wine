@@ -1801,6 +1801,10 @@ HRESULT CDECL wined3d_device_set_transform(struct wined3d_device *device,
 {
     TRACE("device %p, state %s, matrix %p.\n",
             device, debug_d3dtstype(d3dts), matrix);
+    TRACE("%.8e %.8e %.8e %.8e\n", matrix->u.s._11, matrix->u.s._12, matrix->u.s._13, matrix->u.s._14);
+    TRACE("%.8e %.8e %.8e %.8e\n", matrix->u.s._21, matrix->u.s._22, matrix->u.s._23, matrix->u.s._24);
+    TRACE("%.8e %.8e %.8e %.8e\n", matrix->u.s._31, matrix->u.s._32, matrix->u.s._33, matrix->u.s._34);
+    TRACE("%.8e %.8e %.8e %.8e\n", matrix->u.s._41, matrix->u.s._42, matrix->u.s._43, matrix->u.s._44);
 
     /* Handle recording of state blocks. */
     if (device->isRecordingState)
@@ -1823,14 +1827,7 @@ HRESULT CDECL wined3d_device_set_transform(struct wined3d_device *device,
         return WINED3D_OK;
     }
 
-    conv_mat(matrix, &device->stateBlock->state.transforms[d3dts].u.m[0][0]);
-
-    /* ScreenCoord = ProjectionMat * ViewMat * WorldMat * ObjectCoord
-     * where ViewMat = Camera space, WorldMat = world space.
-     *
-     * In OpenGL, camera and world space is combined into GL_MODELVIEW
-     * matrix.  The Projection matrix stay projection matrix. */
-
+    device->stateBlock->state.transforms[d3dts] = *matrix;
     if (d3dts == WINED3D_TS_VIEW)
         device->view_ident = !memcmp(matrix, &identity, sizeof(identity));
 
