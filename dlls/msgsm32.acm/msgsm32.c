@@ -618,7 +618,7 @@ LRESULT CALLBACK GSM_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
     case ACMDM_STREAM_CONVERT:
 	return GSM_StreamConvert((PACMDRVSTREAMINSTANCE)dwParam1, (PACMDRVSTREAMHEADER)dwParam2);
 #else
-    case ACMDM_STREAM_OPEN: ERR("libgsm support not compiled in!\n");
+    case ACMDM_STREAM_OPEN: WARN("libgsm support not compiled in!\n");
     case ACMDM_STREAM_CLOSE:
     case ACMDM_STREAM_SIZE:
     case ACMDM_STREAM_CONVERT:
