@@ -628,6 +628,12 @@ static HRESULT WINAPI d3d8_texture_cube_GetLevelDesc(IDirect3DCubeTexture8 *ifac
     TRACE("iface %p, level %u, desc %p.\n", iface, level, desc);
 
     wined3d_mutex_lock();
+    if (level >= wined3d_texture_get_level_count(texture->wined3d_texture))
+    {
+        wined3d_mutex_unlock();
+        return D3DERR_INVALIDCALL;
+    }
+
     if (!(sub_resource = wined3d_texture_get_sub_resource(texture->wined3d_texture, level)))
         hr = D3DERR_INVALIDCALL;
     else
