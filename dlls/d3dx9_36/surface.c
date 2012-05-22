@@ -372,7 +372,10 @@ static HRESULT get_image_info_from_dds(const void *buffer, UINT length, D3DXIMAG
    expected_length *= faces;
    expected_length += sizeof(*header);
    if (length < expected_length)
+   {
+       WARN("File is too short %u, expected at least %u bytes\n", length, expected_length);
        return D3DXERR_INVALIDDATA;
+   }
 
    info->ImageFileFormat = D3DXIFF_DDS;
 
