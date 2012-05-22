@@ -2514,14 +2514,28 @@ static DWORD WINAPI IDirect3DRMMeshImpl_GetGroupCount(IDirect3DRMMesh* iface)
 }
 
 static HRESULT WINAPI IDirect3DRMMeshImpl_GetGroup(IDirect3DRMMesh* iface,
-                                                   D3DRMGROUPINDEX id, unsigned *vCount, unsigned *fCount, unsigned *vPerFace,
-                                                   DWORD *fDataSize, unsigned *fData)
+                                                   D3DRMGROUPINDEX id, unsigned *vertex_count, unsigned *face_count, unsigned *vertex_per_face,
+                                                   DWORD *face_data_size, unsigned *face_data)
 {
     IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
 
-    FIXME("(%p)->(%u,%p,%p,%p,%p,%p): stub\n", This, id, vCount, fCount, vPerFace, fDataSize, fData);
+    TRACE("(%p)->(%u,%p,%p,%p,%p,%p)\n", This, id, vertex_count, face_count, vertex_per_face, face_data_size, face_data);
 
-    return E_NOTIMPL;
+    if (id >= This->nb_groups)
+        return D3DRMERR_BADVALUE;
+
+    if (vertex_count)
+        *vertex_count = This->groups[id].nb_vertices;
+    if (face_count)
+        *face_count = This->groups[id].nb_faces;
+    if (vertex_per_face)
+        *vertex_per_face = This->groups[id].vertex_per_face;
+    if (face_data_size)
+        *face_data_size = This->groups[id].face_data_size;
+    if (face_data)
+        memcpy(face_data, This->groups[id].face_data, This->groups[id].face_data_size);
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMMeshImpl_GetVertices(IDirect3DRMMesh* iface,

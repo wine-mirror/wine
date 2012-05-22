@@ -344,9 +344,19 @@ static void test_MeshBuilder(void)
     if (hr == D3DRM_OK)
     {
         DWORD nb_groups;
+        unsigned nb_vertices, nb_faces, nb_face_vertices;
+        DWORD data_size;
 
         nb_groups = IDirect3DRMMesh_GetGroupCount(mesh);
         ok(nb_groups == 1, "GetCroupCount returned %u\n", nb_groups);
+        hr = IDirect3DRMMesh_GetGroup(mesh, 1, &nb_vertices, &nb_faces, &nb_face_vertices, &data_size, NULL);
+        ok(hr == D3DRMERR_BADVALUE, "GetCroup returned hr = %x\n", hr);
+        hr = IDirect3DRMMesh_GetGroup(mesh, 0, &nb_vertices, &nb_faces, &nb_face_vertices, &data_size, NULL);
+        ok(hr == D3DRM_OK, "GetCroup failed returning hr = %x\n", hr);
+        ok(nb_vertices == 3, "Wrong number of vertices %u (must be 3)\n", nb_vertices);
+        ok(nb_faces == 1, "Wrong number of faces %u (must be 1)\n", nb_faces);
+        todo_wine ok(nb_face_vertices == 3, "Wrong number of vertices per face %u (must be 3)\n", nb_face_vertices);
+        todo_wine ok(data_size == 3, "Wrong number of face data bytes %u (must be 3)\n", data_size);
 
         IDirect3DRMMesh_Release(mesh);
     }
