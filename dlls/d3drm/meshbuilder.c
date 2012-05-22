@@ -2439,9 +2439,20 @@ static HRESULT WINAPI IDirect3DRMMeshImpl_SetVertices(IDirect3DRMMesh* iface,
 {
     IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
 
-    FIXME("(%p)->(%u,%u,%u,%p): stub\n", This, id, index, count, values);
+    TRACE("(%p)->(%u,%u,%u,%p)\n", This, id, index, count, values);
 
-    return E_NOTIMPL;
+    if (id >= This->nb_groups)
+        return D3DRMERR_BADVALUE;
+
+    if ((index + count - 1) >= This->groups[id].nb_vertices)
+        return D3DRMERR_BADVALUE;
+
+    if (!values)
+        return E_POINTER;
+
+    memcpy(This->groups[id].vertices + index, values, count * sizeof(D3DRMVERTEX));
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMMeshImpl_SetGroupColor(IDirect3DRMMesh* iface,
