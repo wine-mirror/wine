@@ -792,7 +792,6 @@ static void InternetCreateUrlA_test(void)
 	ok(!ret, "Expected failure\n");
 	ok(GetLastError() == ERROR_INVALID_PARAMETER,
 		"Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
-	ok(len == -1, "Expected len -1, got %d\n", len);
 
 	/* test valid lpUrlComponents, empty szUrl
 	 * lpdwUrlLength is size of buffer required on exit, including
