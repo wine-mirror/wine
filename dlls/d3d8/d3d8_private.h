@@ -103,7 +103,6 @@ void fixup_caps(WINED3DCAPS *pWineCaps) DECLSPEC_HIDDEN;
 typedef struct IDirect3DSurface8Impl IDirect3DSurface8Impl;
 typedef struct IDirect3DSwapChain8Impl IDirect3DSwapChain8Impl;
 typedef struct IDirect3DVolume8Impl IDirect3DVolume8Impl;
-typedef struct IDirect3DVertexBuffer8Impl IDirect3DVertexBuffer8Impl;
 
 struct d3d8
 {
@@ -235,25 +234,18 @@ HRESULT surface_init(IDirect3DSurface8Impl *surface, struct d3d8_device *device,
         DWORD usage, D3DPOOL pool, D3DMULTISAMPLE_TYPE multisample_type, DWORD multisample_quality) DECLSPEC_HIDDEN;
 IDirect3DSurface8Impl *unsafe_impl_from_IDirect3DSurface8(IDirect3DSurface8 *iface) DECLSPEC_HIDDEN;
 
-/* ---------------------- */
-/* IDirect3DVertexBuffer8 */
-/* ---------------------- */
-
-/*****************************************************************************
- * IDirect3DVertexBuffer8 implementation structure
- */
-struct IDirect3DVertexBuffer8Impl
+struct d3d8_vertexbuffer
 {
     IDirect3DVertexBuffer8 IDirect3DVertexBuffer8_iface;
-    LONG ref;
-    struct wined3d_buffer *wineD3DVertexBuffer;
-    IDirect3DDevice8 *parentDevice;
+    LONG refcount;
+    struct wined3d_buffer *wined3d_buffer;
+    IDirect3DDevice8 *parent_device;
     DWORD fvf;
 };
 
-HRESULT vertexbuffer_init(IDirect3DVertexBuffer8Impl *buffer, struct d3d8_device *device,
+HRESULT vertexbuffer_init(struct d3d8_vertexbuffer *buffer, struct d3d8_device *device,
         UINT size, DWORD usage, DWORD fvf, D3DPOOL pool) DECLSPEC_HIDDEN;
-IDirect3DVertexBuffer8Impl *unsafe_impl_from_IDirect3DVertexBuffer8(IDirect3DVertexBuffer8 *iface) DECLSPEC_HIDDEN;
+struct d3d8_vertexbuffer *unsafe_impl_from_IDirect3DVertexBuffer8(IDirect3DVertexBuffer8 *iface) DECLSPEC_HIDDEN;
 
 struct d3d8_indexbuffer
 {
