@@ -1571,12 +1571,12 @@ static HRESULT WINAPI AudioClient_Reset(IAudioClient *iface)
 
     if(This->dataflow == eRender){
         This->written_frames = 0;
+        This->last_pos_frames = 0;
     }else{
         This->written_frames += This->held_frames;
     }
-    This->lcl_offs_frames = 0;
     This->held_frames = 0;
-    This->last_pos_frames = 0;
+    This->lcl_offs_frames = 0;
 
     LeaveCriticalSection(&This->lock);
 
@@ -1752,8 +1752,7 @@ static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
         UINT32 frames, BYTE **data)
 {
     ACImpl *This = impl_from_IAudioRenderClient(iface);
-    UINT32 pad, write_pos;
-    HRESULT hr;
+    UINT32 write_pos;
 
     TRACE("(%p)->(%u, %p)\n", This, frames, data);
 
@@ -1774,13 +1773,7 @@ static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
         return S_OK;
     }
 
-    hr = IAudioClient_GetCurrentPadding(&This->IAudioClient_iface, &pad);
-    if(FAILED(hr)){
-        LeaveCriticalSection(&This->lock);
-        return hr;
-    }
-
-    if(pad + frames > This->bufsize_frames){
+    if(This->held_frames + frames > This->bufsize_frames){
         LeaveCriticalSection(&This->lock);
         return AUDCLNT_E_BUFFER_TOO_LARGE;
     }
@@ -2029,7 +2022,16 @@ static HRESULT WINAPI AudioCaptureClient_GetNextPacketSize(
 
     TRACE("(%p)->(%p)\n", This, frames);
 
-    return AudioClient_GetCurrentPadding(&This->IAudioClient_iface, frames);
+    if(!frames)
+        return E_POINTER;
+
+    EnterCriticalSection(&This->lock);
+
+    *frames = This->held_frames < This->period_frames ? 0 : This->period_frames;
+
+    LeaveCriticalSection(&This->lock);
+
+    return S_OK;
 }
 
 static const IAudioCaptureClientVtbl AudioCaptureClient_Vtbl =
