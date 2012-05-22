@@ -706,7 +706,7 @@ static inline POINT calc_brush_offset(const RECT *rc, const dib_info *brush, con
 }
 
 static void pattern_rects_32(const dib_info *dib, int num, const RECT *rc, const POINT *origin,
-                             const dib_info *brush, void *and_bits, void *xor_bits)
+                             const dib_info *brush, const rop_mask_bits *bits)
 {
     DWORD *ptr, *start, *start_and, *and_ptr, *start_xor, *xor_ptr;
     int x, y, i;
@@ -717,8 +717,8 @@ static void pattern_rects_32(const dib_info *dib, int num, const RECT *rc, const
         offset = calc_brush_offset(rc, brush, origin);
 
         start = get_pixel_ptr_32(dib, rc->left, rc->top);
-        start_and = (DWORD*)and_bits + offset.y * brush->stride / 4;
-        start_xor = (DWORD*)xor_bits + offset.y * brush->stride / 4;
+        start_and = (DWORD*)bits->and + offset.y * brush->stride / 4;
+        start_xor = (DWORD*)bits->xor + offset.y * brush->stride / 4;
 
         for(y = rc->top; y < rc->bottom; y++, start += dib->stride / 4)
         {
@@ -738,8 +738,8 @@ static void pattern_rects_32(const dib_info *dib, int num, const RECT *rc, const
             offset.y++;
             if(offset.y == brush->height)
             {
-                start_and = and_bits;
-                start_xor = xor_bits;
+                start_and = bits->and;
+                start_xor = bits->xor;
                 offset.y = 0;
             }
             else
@@ -752,7 +752,7 @@ static void pattern_rects_32(const dib_info *dib, int num, const RECT *rc, const
 }
 
 static void pattern_rects_24(const dib_info *dib, int num, const RECT *rc, const POINT *origin,
-                             const dib_info *brush, void *and_bits, void *xor_bits)
+                             const dib_info *brush, const rop_mask_bits *bits)
 {
     BYTE *ptr, *start, *start_and, *and_ptr, *start_xor, *xor_ptr;
     int x, y, i;
@@ -763,8 +763,8 @@ static void pattern_rects_24(const dib_info *dib, int num, const RECT *rc, const
         offset = calc_brush_offset(rc, brush, origin);
 
         start = get_pixel_ptr_24(dib, rc->left, rc->top);
-        start_and = (BYTE*)and_bits + offset.y * brush->stride;
-        start_xor = (BYTE*)xor_bits + offset.y * brush->stride;
+        start_and = (BYTE*)bits->and + offset.y * brush->stride;
+        start_xor = (BYTE*)bits->xor + offset.y * brush->stride;
 
         for(y = rc->top; y < rc->bottom; y++, start += dib->stride)
         {
@@ -786,8 +786,8 @@ static void pattern_rects_24(const dib_info *dib, int num, const RECT *rc, const
             offset.y++;
             if(offset.y == brush->height)
             {
-                start_and = and_bits;
-                start_xor = xor_bits;
+                start_and = bits->and;
+                start_xor = bits->xor;
                 offset.y = 0;
             }
             else
@@ -800,7 +800,7 @@ static void pattern_rects_24(const dib_info *dib, int num, const RECT *rc, const
 }
 
 static void pattern_rects_16(const dib_info *dib, int num, const RECT *rc, const POINT *origin,
-                             const dib_info *brush, void *and_bits, void *xor_bits)
+                             const dib_info *brush, const rop_mask_bits *bits)
 {
     WORD *ptr, *start, *start_and, *and_ptr, *start_xor, *xor_ptr;
     int x, y, i;
@@ -811,8 +811,8 @@ static void pattern_rects_16(const dib_info *dib, int num, const RECT *rc, const
         offset = calc_brush_offset(rc, brush, origin);
 
         start = get_pixel_ptr_16(dib, rc->left, rc->top);
-        start_and = (WORD*)and_bits + offset.y * brush->stride / 2;
-        start_xor = (WORD*)xor_bits + offset.y * brush->stride / 2;
+        start_and = (WORD*)bits->and + offset.y * brush->stride / 2;
+        start_xor = (WORD*)bits->xor + offset.y * brush->stride / 2;
 
         for(y = rc->top; y < rc->bottom; y++, start += dib->stride / 2)
         {
@@ -832,8 +832,8 @@ static void pattern_rects_16(const dib_info *dib, int num, const RECT *rc, const
             offset.y++;
             if(offset.y == brush->height)
             {
-                start_and = and_bits;
-                start_xor = xor_bits;
+                start_and = bits->and;
+                start_xor = bits->xor;
                 offset.y = 0;
             }
             else
@@ -846,7 +846,7 @@ static void pattern_rects_16(const dib_info *dib, int num, const RECT *rc, const
 }
 
 static void pattern_rects_8(const dib_info *dib, int num, const RECT *rc, const POINT *origin,
-                            const dib_info *brush, void *and_bits, void *xor_bits)
+                            const dib_info *brush, const rop_mask_bits *bits)
 {
     BYTE *ptr, *start, *start_and, *and_ptr, *start_xor, *xor_ptr;
     int x, y, i;
@@ -857,8 +857,8 @@ static void pattern_rects_8(const dib_info *dib, int num, const RECT *rc, const 
         offset = calc_brush_offset(rc, brush, origin);
 
         start = get_pixel_ptr_8(dib, rc->left, rc->top);
-        start_and = (BYTE*)and_bits + offset.y * brush->stride;
-        start_xor = (BYTE*)xor_bits + offset.y * brush->stride;
+        start_and = (BYTE*)bits->and + offset.y * brush->stride;
+        start_xor = (BYTE*)bits->xor + offset.y * brush->stride;
 
         for(y = rc->top; y < rc->bottom; y++, start += dib->stride)
         {
@@ -878,8 +878,8 @@ static void pattern_rects_8(const dib_info *dib, int num, const RECT *rc, const 
             offset.y++;
             if(offset.y == brush->height)
             {
-                start_and = and_bits;
-                start_xor = xor_bits;
+                start_and = bits->and;
+                start_xor = bits->xor;
                 offset.y = 0;
             }
             else
@@ -892,7 +892,7 @@ static void pattern_rects_8(const dib_info *dib, int num, const RECT *rc, const 
 }
 
 static void pattern_rects_4(const dib_info *dib, int num, const RECT *rc, const POINT *origin,
-                            const dib_info *brush, void *and_bits, void *xor_bits)
+                            const dib_info *brush, const rop_mask_bits *bits)
 {
     BYTE *ptr, *start, *start_and, *and_ptr, *start_xor, *xor_ptr;
     int x, y, i, left, right;
@@ -905,8 +905,8 @@ static void pattern_rects_4(const dib_info *dib, int num, const RECT *rc, const 
         right = dib->rect.left + rc->right;
 
         start = get_pixel_ptr_4(dib, rc->left, rc->top);
-        start_and = (BYTE*)and_bits + offset.y * brush->stride;
-        start_xor = (BYTE*)xor_bits + offset.y * brush->stride;
+        start_and = (BYTE*)bits->and + offset.y * brush->stride;
+        start_xor = (BYTE*)bits->xor + offset.y * brush->stride;
 
         for(y = rc->top; y < rc->bottom; y++, start += dib->stride)
         {
@@ -960,8 +960,8 @@ static void pattern_rects_4(const dib_info *dib, int num, const RECT *rc, const 
             offset.y++;
             if(offset.y == brush->height)
             {
-                start_and = and_bits;
-                start_xor = xor_bits;
+                start_and = bits->and;
+                start_xor = bits->xor;
                 offset.y = 0;
             }
             else
@@ -974,7 +974,7 @@ static void pattern_rects_4(const dib_info *dib, int num, const RECT *rc, const 
 }
 
 static void pattern_rects_1(const dib_info *dib, int num, const RECT *rc, const POINT *origin,
-                            const dib_info *brush, void *and_bits, void *xor_bits)
+                            const dib_info *brush, const rop_mask_bits *bits)
 {
     BYTE *ptr, *start, *start_and, *and_ptr, *start_xor, *xor_ptr;
     int x, y, i, left, right;
@@ -987,8 +987,8 @@ static void pattern_rects_1(const dib_info *dib, int num, const RECT *rc, const 
         right = dib->rect.left + rc->right;
 
         start = get_pixel_ptr_1(dib, rc->left, rc->top);
-        start_and = (BYTE*)and_bits + offset.y * brush->stride;
-        start_xor = (BYTE*)xor_bits + offset.y * brush->stride;
+        start_and = (BYTE*)bits->and + offset.y * brush->stride;
+        start_xor = (BYTE*)bits->xor + offset.y * brush->stride;
 
         for(y = rc->top; y < rc->bottom; y++, start += dib->stride)
         {
@@ -1026,8 +1026,8 @@ static void pattern_rects_1(const dib_info *dib, int num, const RECT *rc, const 
             offset.y++;
             if(offset.y == brush->height)
             {
-                start_and = and_bits;
-                start_xor = xor_bits;
+                start_and = bits->and;
+                start_xor = bits->xor;
                 offset.y = 0;
             }
             else
@@ -1040,7 +1040,7 @@ static void pattern_rects_1(const dib_info *dib, int num, const RECT *rc, const 
 }
 
 static void pattern_rects_null(const dib_info *dib, int num, const RECT *rc, const POINT *origin,
-                               const dib_info *brush, void *and_bits, void *xor_bits)
+                               const dib_info *brush, const rop_mask_bits *bits)
 {
     return;
 }

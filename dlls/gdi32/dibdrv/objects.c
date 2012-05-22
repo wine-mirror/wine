@@ -1989,7 +1989,7 @@ static BOOL pattern_brush(dibdrv_physdev *pdev, dib_brush *brush, dib_info *dib,
 
     GetBrushOrgEx(pdev->dev.hdc, &origin);
 
-    dib->funcs->pattern_rects( dib, num, rects, &origin, &brush->dib, brush->masks.and, brush->masks.xor );
+    dib->funcs->pattern_rects( dib, num, rects, &origin, &brush->dib, &brush->masks );
 
     if (needs_reselect) free_pattern_brush( brush );
     return TRUE;
