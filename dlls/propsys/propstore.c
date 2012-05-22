@@ -133,8 +133,24 @@ static ULONG WINAPI PropertyStore_Release(IPropertyStoreCache *iface)
 static HRESULT WINAPI PropertyStore_GetCount(IPropertyStoreCache *iface,
     DWORD *cProps)
 {
-    FIXME("%p,%p: stub\n", iface, cProps);
-    return E_NOTIMPL;
+    PropertyStore *This = impl_from_IPropertyStoreCache(iface);
+    propstore_format *format;
+
+    TRACE("%p,%p\n", iface, cProps);
+
+    if (!cProps)
+        return E_POINTER;
+
+    *cProps = 0;
+
+    EnterCriticalSection(&This->lock);
+
+    LIST_FOR_EACH_ENTRY(format, &This->formats, propstore_format, entry)
+        *cProps += format->count;
+
+    LeaveCriticalSection(&This->lock);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI PropertyStore_GetAt(IPropertyStoreCache *iface,
@@ -201,6 +217,7 @@ static HRESULT PropertyStore_LookupValue(PropertyStore *This, REFPROPERTYKEY key
 
         value->pid = key->pid;
         list_add_tail(&format->values, &value->entry);
+        format->count++;
     }
 
     *result = value;

@@ -55,11 +55,11 @@ static void test_inmemorystore(void)
     }
 
     hr = IPropertyStoreCache_GetCount(propcache, NULL);
-    todo_wine ok(hr == E_POINTER, "GetCount failed, hr=%x\n", hr);
+    ok(hr == E_POINTER, "GetCount failed, hr=%x\n", hr);
 
     hr = IPropertyStoreCache_GetCount(propcache, &count);
-    todo_wine ok(hr == S_OK, "GetCount failed, hr=%x\n", hr);
-    todo_wine ok(count == 0, "GetCount returned %i, expected 0\n", count);
+    ok(hr == S_OK, "GetCount failed, hr=%x\n", hr);
+    ok(count == 0, "GetCount returned %i, expected 0\n", count);
 
     hr = IPropertyStoreCache_Commit(propcache);
     ok(hr == S_OK, "Commit failed, hr=%x\n", hr);
@@ -91,8 +91,8 @@ static void test_inmemorystore(void)
     ok(hr == S_OK, "SetValue failed, hr=%x\n", hr);
 
     hr = IPropertyStoreCache_GetCount(propcache, &count);
-    todo_wine ok(hr == S_OK, "GetCount failed, hr=%x\n", hr);
-    todo_wine ok(count == 1, "GetCount returned %i, expected 0\n", count);
+    ok(hr == S_OK, "GetCount failed, hr=%x\n", hr);
+    ok(count == 1, "GetCount returned %i, expected 0\n", count);
 
     memset(&pkey, 0, sizeof(pkey));
 
