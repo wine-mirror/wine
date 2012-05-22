@@ -76,8 +76,7 @@ typedef struct dib_brush
     INT      rop;   /* rop2 last used to create the brush bits */
     COLORREF colorref;
     dib_info dib;
-    void    *and_bits;
-    void    *xor_bits;
+    rop_mask_bits masks;
     struct brush_pattern pattern;
     BOOL (*rects)(struct dibdrv_physdev *pdev, struct dib_brush *brush, dib_info *dib,
                   int num, const RECT *rects, INT rop);
