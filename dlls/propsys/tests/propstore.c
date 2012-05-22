@@ -68,7 +68,7 @@ static void test_inmemorystore(void)
     ok(hr == S_OK, "Commit failed, hr=%x\n", hr);
 
     hr = IPropertyStoreCache_GetAt(propcache, 0, &pkey);
-    todo_wine ok(hr == E_INVALIDARG, "GetAt failed, hr=%x\n", hr);
+    ok(hr == E_INVALIDARG, "GetAt failed, hr=%x\n", hr);
 
     pkey.fmtid = PKEY_WineTest;
     pkey.pid = 4;
@@ -97,9 +97,9 @@ static void test_inmemorystore(void)
     memset(&pkey, 0, sizeof(pkey));
 
     hr = IPropertyStoreCache_GetAt(propcache, 0, &pkey);
-    todo_wine ok(hr == S_OK, "GetAt failed, hr=%x\n", hr);
-    todo_wine ok(IsEqualGUID(&pkey.fmtid, &PKEY_WineTest), "got wrong pkey\n");
-    todo_wine ok(pkey.pid == 4, "got pid of %i, expected 4\n", pkey.pid);
+    ok(hr == S_OK, "GetAt failed, hr=%x\n", hr);
+    ok(IsEqualGUID(&pkey.fmtid, &PKEY_WineTest), "got wrong pkey\n");
+    ok(pkey.pid == 4, "got pid of %i, expected 4\n", pkey.pid);
 
     pkey.fmtid = PKEY_WineTest;
     pkey.pid = 4;
