@@ -366,7 +366,7 @@ static HRESULT get_image_info_from_dds(const void *buffer, UINT length, D3DXIMAG
        calculate_dds_surface_size(info, width, height, &pitch, &size);
        expected_length += size;
        width = max(1, width / 2);
-       height = max(1, width / 2);
+       height = max(1, height / 2);
    }
 
    expected_length *= faces;
