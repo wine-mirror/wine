@@ -498,7 +498,7 @@ static HRESULT WINAPI d3d8_device_CreateAdditionalSwapChain(IDirect3DDevice8 *if
         D3DPRESENT_PARAMETERS *present_parameters, IDirect3DSwapChain8 **swapchain)
 {
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
-    IDirect3DSwapChain8Impl *object;
+    struct d3d8_swapchain *object;
     HRESULT hr;
 
     TRACE("iface %p, present_parameters %p, swapchain %p.\n",
@@ -2974,7 +2974,7 @@ static HRESULT CDECL device_parent_create_swapchain(struct wined3d_device_parent
         return hr;
     }
 
-    *swapchain = ((IDirect3DSwapChain8Impl *)d3d_swapchain)->wined3d_swapchain;
+    *swapchain = ((struct d3d8_swapchain *)d3d_swapchain)->wined3d_swapchain;
     wined3d_swapchain_incref(*swapchain);
     IDirect3DSwapChain8_Release(d3d_swapchain);
 
