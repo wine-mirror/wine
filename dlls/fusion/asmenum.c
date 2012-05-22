@@ -398,22 +398,20 @@ static HRESULT enumerate_gac(IAssemblyEnumImpl *asmenum, IAssemblyName *pName)
     if (FAILED(hr))
         return hr;
 
+    strcpyW(path, buf);
     GetNativeSystemInfo(&info);
     if (info.u.s.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
     {
-        strcpyW(path, buf);
         strcpyW(path + size - 1, gac_64);
         hr = enum_gac_assemblies(&asmenum->assemblies, pName, 0, path);
         if (FAILED(hr))
             return hr;
     }
-    strcpyW(path, buf);
     strcpyW(path + size - 1, gac_32);
     hr = enum_gac_assemblies(&asmenum->assemblies, pName, 0, path);
     if (FAILED(hr))
         return hr;
 
-    strcpyW(path, buf);
     strcpyW(path + size - 1, gac_msil);
     hr = enum_gac_assemblies(&asmenum->assemblies, pName, 0, path);
     if (FAILED(hr))
@@ -424,27 +422,24 @@ static HRESULT enumerate_gac(IAssemblyEnumImpl *asmenum, IAssemblyName *pName)
     if (FAILED(hr))
         return hr;
 
+    strcpyW(path, buf);
     if (info.u.s.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
     {
-        strcpyW(path, buf);
         strcpyW(path + size - 1, gac_64);
         hr = enum_gac_assemblies(&asmenum->assemblies, pName, 0, path);
         if (FAILED(hr))
             return hr;
     }
-    strcpyW(path, buf);
     strcpyW(path + size - 1, gac_32);
     hr = enum_gac_assemblies(&asmenum->assemblies, pName, 0, path);
     if (FAILED(hr))
         return hr;
 
-    strcpyW(path, buf);
     strcpyW(path + size - 1, gac_msil);
     hr = enum_gac_assemblies(&asmenum->assemblies, pName, 0, path);
     if (FAILED(hr))
         return hr;
 
-    strcpyW(path, buf);
     strcpyW(path + size - 1, gac);
     hr = enum_gac_assemblies(&asmenum->assemblies, pName, 0, path);
     if (FAILED(hr))
