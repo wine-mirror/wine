@@ -480,7 +480,7 @@ static void test_setting_basic_table(IDirect3DDevice9 *device)
     res = ID3DXConstantTable_SetMatrix(ctable, device, "mvp", &mvp);
     ok(res == D3D_OK, "ID3DXConstantTable_SetMatrix failed on variable mvp: got 0x%08x\n", res);
 
-    ID3DXConstantTable_SetInt(ctable, device, "i", i + 1);
+    res = ID3DXConstantTable_SetInt(ctable, device, "i", i + 1);
     ok(res == D3D_OK, "ID3DXConstantTable_SetInt failed on variable i: got 0x%08x\n", res);
 
     /* Check that setting i again will overwrite the previous value */
