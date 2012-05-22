@@ -21,6 +21,8 @@
 #include <stdarg.h>
 
 #define COBJMACROS
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 
 #include "windef.h"
 #include "winbase.h"
@@ -384,8 +386,10 @@ static HRESULT enumerate_gac(IAssemblyEnumImpl *asmenum, IAssemblyName *pName)
 {
     static const WCHAR gac[] = {'\\','G','A','C',0};
     static const WCHAR gac_32[] = {'\\','G','A','C','_','3','2',0};
+    static const WCHAR gac_64[] = {'\\','G','A','C','_','6','4',0};
     static const WCHAR gac_msil[] = {'\\','G','A','C','_','M','S','I','L',0};
     WCHAR path[MAX_PATH], buf[MAX_PATH];
+    SYSTEM_INFO info;
     HRESULT hr;
     DWORD size;
 
@@ -394,6 +398,15 @@ static HRESULT enumerate_gac(IAssemblyEnumImpl *asmenum, IAssemblyName *pName)
     if (FAILED(hr))
         return hr;
 
+    GetNativeSystemInfo(&info);
+    if (info.u.s.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
+    {
+        strcpyW(path, buf);
+        strcpyW(path + size - 1, gac_64);
+        hr = enum_gac_assemblies(&asmenum->assemblies, pName, 0, path);
+        if (FAILED(hr))
+            return hr;
+    }
     strcpyW(path, buf);
     strcpyW(path + size - 1, gac_32);
     hr = enum_gac_assemblies(&asmenum->assemblies, pName, 0, path);
@@ -411,6 +424,14 @@ static HRESULT enumerate_gac(IAssemblyEnumImpl *asmenum, IAssemblyName *pName)
     if (FAILED(hr))
         return hr;
 
+    if (info.u.s.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
+    {
+        strcpyW(path, buf);
+        strcpyW(path + size - 1, gac_64);
+        hr = enum_gac_assemblies(&asmenum->assemblies, pName, 0, path);
+        if (FAILED(hr))
+            return hr;
+    }
     strcpyW(path, buf);
     strcpyW(path + size - 1, gac_32);
     hr = enum_gac_assemblies(&asmenum->assemblies, pName, 0, path);
