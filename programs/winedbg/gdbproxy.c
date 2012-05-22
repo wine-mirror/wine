@@ -1531,6 +1531,7 @@ static enum packet_return packet_read_register(struct gdb_context* gdbctx)
     if (gdbctx->trace & GDBPXY_TRC_COMMAND)
         fprintf(stderr, "Read register %x => %08x%08x\n", reg,
                 (unsigned)(cpu_register(pctx, reg) >> 32), (unsigned)cpu_register(pctx, reg));
+    packet_reply_open(gdbctx);
     packet_reply_register_hex_to(gdbctx, reg);
     packet_reply_close(gdbctx);
     return packet_done;
