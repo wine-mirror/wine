@@ -25,8 +25,8 @@
 @ stub ClearVariantArray
 @ stub DllCanUnloadNow
 @ stub DllGetClassObject
-@ stub DllRegisterServer
-@ stub DllUnregisterServer
+@ stdcall -private DllRegisterServer()
+@ stdcall -private DllUnregisterServer()
 @ stub InitPropVariantFromBooleanVector
 @ stdcall InitPropVariantFromBuffer(ptr long ptr)
 @ stub InitPropVariantFromCLSID
