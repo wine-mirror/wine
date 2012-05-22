@@ -29,9 +29,9 @@
 #include "windef.h"
 #include "winbase.h"
 #include "objbase.h"
+#include "initguid.h"
 #include "propsys.h"
 #include "propvarutil.h"
-#include "initguid.h"
 #include "wine/test.h"
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
