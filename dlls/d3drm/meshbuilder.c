@@ -2550,13 +2550,24 @@ static HRESULT WINAPI IDirect3DRMMeshImpl_GetGroup(IDirect3DRMMesh* iface,
 }
 
 static HRESULT WINAPI IDirect3DRMMeshImpl_GetVertices(IDirect3DRMMesh* iface,
-                                                      D3DRMGROUPINDEX id, DWORD index, DWORD count, D3DRMVERTEX *returnPtr)
+                                                      D3DRMGROUPINDEX id, DWORD index, DWORD count, D3DRMVERTEX *return_ptr)
 {
     IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
 
-    FIXME("(%p)->(%u,%u,%u,%p): stub\n", This, id, index, count, returnPtr);
+    TRACE("(%p)->(%u,%u,%u,%p)\n", This, id, index, count, return_ptr);
 
-    return E_NOTIMPL;
+    if (id >= This->nb_groups)
+        return D3DRMERR_BADVALUE;
+
+    if ((index + count - 1) >= This->groups[id].nb_vertices)
+        return D3DRMERR_BADVALUE;
+
+    if (!return_ptr)
+        return E_POINTER;
+
+    memcpy(return_ptr, This->groups[id].vertices + index, count * sizeof(D3DRMVERTEX));
+
+    return D3DRM_OK;
 }
 
 static D3DCOLOR WINAPI IDirect3DRMMeshImpl_GetGroupColor(IDirect3DRMMesh* iface, D3DRMGROUPINDEX id)
