@@ -656,11 +656,19 @@ static HRESULT WINAPI d3d8_texture_cube_GetCubeMapSurface(IDirect3DCubeTexture8 
     struct wined3d_resource *sub_resource;
     struct d3d8_surface *surface_impl;
     UINT sub_resource_idx;
+    DWORD level_count;
 
     TRACE("iface %p, face %#x, level %u, surface %p.\n", iface, face, level, surface);
 
     wined3d_mutex_lock();
-    sub_resource_idx = wined3d_texture_get_level_count(texture->wined3d_texture) * face + level;
+    level_count = wined3d_texture_get_level_count(texture->wined3d_texture);
+    if (level >= level_count)
+    {
+        wined3d_mutex_unlock();
+        return D3DERR_INVALIDCALL;
+    }
+
+    sub_resource_idx = level_count * face + level;
     if (!(sub_resource = wined3d_texture_get_sub_resource(texture->wined3d_texture, sub_resource_idx)))
     {
         wined3d_mutex_unlock();
