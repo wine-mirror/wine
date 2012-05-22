@@ -230,7 +230,7 @@ DWORD convert_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struct bit
 
     __TRY
     {
-        dst_dib.funcs->convert_to( &dst_dib, &src_dib, &src->visrect );
+        dst_dib.funcs->convert_to( &dst_dib, &src_dib, &src->visrect, FALSE );
         ret = TRUE;
     }
     __EXCEPT_PAGE_FAULT

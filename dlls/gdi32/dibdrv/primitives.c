@@ -1426,6 +1426,18 @@ static DWORD rgb_to_pixel_colortable(const dib_info *dib, BYTE r, BYTE g, BYTE b
     return best_index;
 }
 
+static DWORD rgb_to_pixel_mono(const dib_info *dib, BOOL dither, int x, int y, BYTE r, BYTE g, BYTE b)
+{
+    DWORD ret;
+
+    if (!dither)
+        ret = rgb_to_pixel_colortable( dib, r, g, b );
+    else
+        ret = ((30 * r + 59 * g + 11 * b) / 100 + bayer_16x16[y % 16][x % 16]) > 255;
+
+    return ret ? 0xff : 0;
+}
+
 static DWORD colorref_to_pixel_colortable(const dib_info *dib, COLORREF color)
 {
     return rgb_to_pixel_colortable( dib, GetRValue(color), GetGValue(color), GetBValue(color) );
@@ -1479,7 +1491,7 @@ static inline BOOL bit_fields_match(const dib_info *d1, const dib_info *d2)
            d1->blue_mask  == d2->blue_mask;
 }
 
-static void convert_to_8888(dib_info *dst, const dib_info *src, const RECT *src_rect)
+static void convert_to_8888(dib_info *dst, const dib_info *src, const RECT *src_rect, BOOL dither)
 {
     DWORD *dst_start = get_pixel_ptr_32(dst, 0, 0), *dst_pixel, src_val;
     int x, y, pad_size = (dst->width - (src_rect->right - src_rect->left)) * 4;
@@ -1715,7 +1727,7 @@ static void convert_to_8888(dib_info *dst, const dib_info *src, const RECT *src_
     }
 }
 
-static void convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_rect)
+static void convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_rect, BOOL dither)
 {
     DWORD *dst_start = get_pixel_ptr_32(dst, 0, 0), *dst_pixel, src_val;
     int x, y, pad_size = (dst->width - (src_rect->right - src_rect->left)) * 4;
@@ -1979,7 +1991,7 @@ static void convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_re
     }
 }
 
-static void convert_to_24(dib_info *dst, const dib_info *src, const RECT *src_rect)
+static void convert_to_24(dib_info *dst, const dib_info *src, const RECT *src_rect, BOOL dither)
 {
     BYTE *dst_start = get_pixel_ptr_24(dst, 0, 0), *dst_pixel;
     DWORD src_val;
@@ -2220,7 +2232,7 @@ static void convert_to_24(dib_info *dst, const dib_info *src, const RECT *src_re
     }
 }
 
-static void convert_to_555(dib_info *dst, const dib_info *src, const RECT *src_rect)
+static void convert_to_555(dib_info *dst, const dib_info *src, const RECT *src_rect, BOOL dither)
 {
     WORD *dst_start = get_pixel_ptr_16(dst, 0, 0), *dst_pixel;
     INT x, y, pad_size = ((dst->width + 1) & ~1) * 2 - (src_rect->right - src_rect->left) * 2;
@@ -2460,7 +2472,7 @@ static void convert_to_555(dib_info *dst, const dib_info *src, const RECT *src_r
     }
 }
 
-static void convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_rect)
+static void convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_rect, BOOL dither)
 {
     WORD *dst_start = get_pixel_ptr_16(dst, 0, 0), *dst_pixel;
     INT x, y, pad_size = ((dst->width + 1) & ~1) * 2 - (src_rect->right - src_rect->left) * 2;
@@ -2735,7 +2747,7 @@ static inline DWORD rgb_lookup_colortable(const dib_info *dst, BYTE r, BYTE g, B
     return rgb_to_pixel_colortable( dst, (r & ~7) + 4, (g & ~7) + 4, (b & ~7) + 4 );
 }
 
-static void convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rect)
+static void convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rect, BOOL dither)
 {
     BYTE *dst_start = get_pixel_ptr_8(dst, 0, 0), *dst_pixel;
     INT x, y, pad_size = ((dst->width + 3) & ~3) - (src_rect->right - src_rect->left);
@@ -2994,7 +3006,7 @@ static void convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
     }
 }
 
-static void convert_to_4(dib_info *dst, const dib_info *src, const RECT *src_rect)
+static void convert_to_4(dib_info *dst, const dib_info *src, const RECT *src_rect, BOOL dither)
 {
     BYTE *dst_start = get_pixel_ptr_4(dst, 0, 0), *dst_pixel, dst_val;
     INT x, y, pad_size = ((dst->width + 7) & ~7) / 2 - (src_rect->right - src_rect->left + 1) / 2;
@@ -3378,14 +3390,12 @@ static void convert_to_4(dib_info *dst, const dib_info *src, const RECT *src_rec
     }
 }
 
-static void convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rect)
+static void convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rect, BOOL dither)
 {
     BYTE *dst_start = get_pixel_ptr_1(dst, 0, 0), *dst_pixel, dst_val;
     INT x, y, pad_size = ((dst->width + 31) & ~31) / 8 - (src_rect->right - src_rect->left + 7) / 8;
     DWORD src_val;
     int bit_pos;
-
-    /* FIXME: Brushes should be dithered. */
 
     switch(src->bit_count)
     {
@@ -3402,7 +3412,7 @@ static void convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rec
                 for(x = src_rect->left, bit_pos = 0; x < src_rect->right; x++)
                 {
                     src_val = *src_pixel++;
-                    dst_val = rgb_to_pixel_colortable(dst, src_val >> 16, src_val >> 8, src_val) ? 0xff : 0;
+                    dst_val = rgb_to_pixel_mono(dst, dither, x, y, src_val >> 16, src_val >> 8, src_val);
 
                     if(bit_pos == 0) *dst_pixel = 0;
                     *dst_pixel = (*dst_pixel & ~pixel_masks_1[bit_pos]) | (dst_val & pixel_masks_1[bit_pos]);
@@ -3431,10 +3441,10 @@ static void convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rec
                 for(x = src_rect->left, bit_pos = 0; x < src_rect->right; x++)
                 {
                     src_val = *src_pixel++;
-                    dst_val = rgb_to_pixel_colortable(dst,
-                                                      src_val >> src->red_shift,
-                                                      src_val >> src->green_shift,
-                                                      src_val >> src->blue_shift) ? 0xff : 0;
+                    dst_val = rgb_to_pixel_mono(dst, dither, x, y,
+                                                src_val >> src->red_shift,
+                                                src_val >> src->green_shift,
+                                                src_val >> src->blue_shift);
 
                    if(bit_pos == 0) *dst_pixel = 0;
                     *dst_pixel = (*dst_pixel & ~pixel_masks_1[bit_pos]) | (dst_val & pixel_masks_1[bit_pos]);
@@ -3463,10 +3473,10 @@ static void convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rec
                 for(x = src_rect->left, bit_pos = 0; x < src_rect->right; x++)
                 {
                     src_val = *src_pixel++;
-                    dst_val = rgb_to_pixel_colortable(dst,
-                                                      get_field(src_val, src->red_shift, src->red_len),
-                                                      get_field(src_val, src->green_shift, src->green_len),
-                                                      get_field(src_val, src->blue_shift, src->blue_len)) ? 0xff : 0;
+                    dst_val = rgb_to_pixel_mono(dst, dither, x, y,
+                                                get_field(src_val, src->red_shift, src->red_len),
+                                                get_field(src_val, src->green_shift, src->green_len),
+                                                get_field(src_val, src->blue_shift, src->blue_len));
 
                    if(bit_pos == 0) *dst_pixel = 0;
                     *dst_pixel = (*dst_pixel & ~pixel_masks_1[bit_pos]) | (dst_val & pixel_masks_1[bit_pos]);
@@ -3499,7 +3509,7 @@ static void convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rec
             src_pixel = src_start;
             for(x = src_rect->left, bit_pos = 0; x < src_rect->right; x++, src_pixel += 3)
             {
-                dst_val = rgb_to_pixel_colortable(dst, src_pixel[2], src_pixel[1], src_pixel[0]) ? 0xff : 0;
+                dst_val = rgb_to_pixel_mono(dst, dither, x, y, src_pixel[2], src_pixel[1], src_pixel[0]);
 
                 if(bit_pos == 0) *dst_pixel = 0;
                 *dst_pixel = (*dst_pixel & ~pixel_masks_1[bit_pos]) | (dst_val & pixel_masks_1[bit_pos]);
@@ -3533,10 +3543,10 @@ static void convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rec
                 for(x = src_rect->left, bit_pos = 0; x < src_rect->right; x++)
                 {
                     src_val = *src_pixel++;
-                    dst_val = rgb_to_pixel_colortable(dst,
-                                                      ((src_val >> 7) & 0xf8) | ((src_val >> 12) & 0x07),
-                                                      ((src_val >> 2) & 0xf8) | ((src_val >>  7) & 0x07),
-                                                      ((src_val << 3) & 0xf8) | ((src_val >>  2) & 0x07) ) ? 0xff : 0;
+                    dst_val = rgb_to_pixel_mono(dst, dither, x, y,
+                                                ((src_val >> 7) & 0xf8) | ((src_val >> 12) & 0x07),
+                                                ((src_val >> 2) & 0xf8) | ((src_val >>  7) & 0x07),
+                                                ((src_val << 3) & 0xf8) | ((src_val >>  2) & 0x07));
 
                     if(bit_pos == 0) *dst_pixel = 0;
                     *dst_pixel = (*dst_pixel & ~pixel_masks_1[bit_pos]) | (dst_val & pixel_masks_1[bit_pos]);
@@ -3565,13 +3575,13 @@ static void convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rec
                 for(x = src_rect->left, bit_pos = 0; x < src_rect->right; x++)
                 {
                     src_val = *src_pixel++;
-                    dst_val = rgb_to_pixel_colortable(dst,
-                                                      (((src_val >> src->red_shift)   << 3) & 0xf8) |
-                                                      (((src_val >> src->red_shift)   >> 2) & 0x07),
-                                                      (((src_val >> src->green_shift) << 3) & 0xf8) |
-                                                      (((src_val >> src->green_shift) >> 2) & 0x07),
-                                                      (((src_val >> src->blue_shift)  << 3) & 0xf8) |
-                                                      (((src_val >> src->blue_shift)  >> 2) & 0x07) ) ? 0xff : 0;
+                    dst_val = rgb_to_pixel_mono(dst, dither, x, y,
+                                                (((src_val >> src->red_shift)   << 3) & 0xf8) |
+                                                (((src_val >> src->red_shift)   >> 2) & 0x07),
+                                                (((src_val >> src->green_shift) << 3) & 0xf8) |
+                                                (((src_val >> src->green_shift) >> 2) & 0x07),
+                                                (((src_val >> src->blue_shift)  << 3) & 0xf8) |
+                                                (((src_val >> src->blue_shift)  >> 2) & 0x07));
                     if(bit_pos == 0) *dst_pixel = 0;
                     *dst_pixel = (*dst_pixel & ~pixel_masks_1[bit_pos]) | (dst_val & pixel_masks_1[bit_pos]);
 
@@ -3599,13 +3609,13 @@ static void convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rec
                 for(x = src_rect->left, bit_pos = 0; x < src_rect->right; x++)
                 {
                     src_val = *src_pixel++;
-                    dst_val = rgb_to_pixel_colortable(dst,
-                                                      (((src_val >> src->red_shift)   << 3) & 0xf8) |
-                                                      (((src_val >> src->red_shift)   >> 2) & 0x07),
-                                                      (((src_val >> src->green_shift) << 2) & 0xfc) |
-                                                      (((src_val >> src->green_shift) >> 4) & 0x03),
-                                                      (((src_val >> src->blue_shift)  << 3) & 0xf8) |
-                                                      (((src_val >> src->blue_shift)  >> 2) & 0x07) ) ? 0xff : 0;
+                    dst_val = rgb_to_pixel_mono(dst, dither, x, y,
+                                                (((src_val >> src->red_shift)   << 3) & 0xf8) |
+                                                (((src_val >> src->red_shift)   >> 2) & 0x07),
+                                                (((src_val >> src->green_shift) << 2) & 0xfc) |
+                                                (((src_val >> src->green_shift) >> 4) & 0x03),
+                                                (((src_val >> src->blue_shift)  << 3) & 0xf8) |
+                                                (((src_val >> src->blue_shift)  >> 2) & 0x07));
                     if(bit_pos == 0) *dst_pixel = 0;
                     *dst_pixel = (*dst_pixel & ~pixel_masks_1[bit_pos]) | (dst_val & pixel_masks_1[bit_pos]);
 
@@ -3633,10 +3643,10 @@ static void convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rec
                 for(x = src_rect->left, bit_pos = 0; x < src_rect->right; x++)
                 {
                     src_val = *src_pixel++;
-                    dst_val = rgb_to_pixel_colortable(dst,
-                                                      get_field(src_val, src->red_shift, src->red_len),
-                                                      get_field(src_val, src->green_shift, src->green_len),
-                                                      get_field(src_val, src->blue_shift, src->blue_len)) ? 0xff : 0;
+                    dst_val = rgb_to_pixel_mono(dst, dither, x, y,
+                                                get_field(src_val, src->red_shift, src->red_len),
+                                                get_field(src_val, src->green_shift, src->green_len),
+                                                get_field(src_val, src->blue_shift, src->blue_len));
                     if(bit_pos == 0) *dst_pixel = 0;
                     *dst_pixel = (*dst_pixel & ~pixel_masks_1[bit_pos]) | (dst_val & pixel_masks_1[bit_pos]);
 
@@ -3669,7 +3679,7 @@ static void convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rec
             for(x = src_rect->left, bit_pos = 0; x < src_rect->right; x++)
             {
                 RGBQUAD rgb = src->color_table[*src_pixel++];
-                dst_val = rgb_to_pixel_colortable(dst, rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue) ? 0xff : 0;
+                dst_val = rgb_to_pixel_mono(dst, dither, x, y, rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue);
 
                 if(bit_pos == 0) *dst_pixel = 0;
                 *dst_pixel = (*dst_pixel & ~pixel_masks_1[bit_pos]) | (dst_val & pixel_masks_1[bit_pos]);
@@ -3707,7 +3717,7 @@ static void convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rec
                     rgb = src->color_table[*src_pixel++ & 0xf];
                 else
                     rgb = src->color_table[*src_pixel >> 4];
-                dst_val = rgb_to_pixel_colortable(dst, rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue) ? 0xff : 0;
+                dst_val = rgb_to_pixel_mono(dst, dither, x, y, rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue);
 
                 if(bit_pos == 0) *dst_pixel = 0;
                 *dst_pixel = (*dst_pixel & ~pixel_masks_1[bit_pos]) | (dst_val & pixel_masks_1[bit_pos]);
@@ -3746,7 +3756,7 @@ static void convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rec
                 RGBQUAD rgb;
                 src_val = (src_start[pos / 8] & pixel_masks_1[pos % 8]) ? 1 : 0;
                 rgb = src->color_table[src_val];
-                dst_val = rgb_to_pixel_colortable(dst, rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue) ? 0xff : 0;
+                dst_val = rgb_to_pixel_mono(dst, dither, x, y, rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue);
 
                 if(bit_pos == 0) *dst_pixel = 0;
                 *dst_pixel = (*dst_pixel & ~pixel_masks_1[bit_pos]) | (dst_val & pixel_masks_1[bit_pos]);
@@ -3770,7 +3780,7 @@ static void convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rec
     }
 }
 
-static void convert_to_null(dib_info *dst, const dib_info *src, const RECT *src_rect)
+static void convert_to_null(dib_info *dst, const dib_info *src, const RECT *src_rect, BOOL dither)
 {
 }
 

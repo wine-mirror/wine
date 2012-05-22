@@ -1874,6 +1874,7 @@ static BOOL select_pattern_brush( dibdrv_physdev *pdev, dib_brush *brush, BOOL *
     BITMAPINFO *info = (BITMAPINFO *)buffer;
     RGBQUAD color_table[2];
     dib_info pattern;
+    BOOL dither = (brush->dib.bit_count == 1);
 
     if (!brush->pattern.info)
     {
@@ -1921,6 +1922,7 @@ static BOOL select_pattern_brush( dibdrv_physdev *pdev, dib_brush *brush, BOOL *
         pattern.color_table = color_table;
         pattern.color_table_size = 2;
         *needs_reselect = TRUE;
+        dither = FALSE;  /* DDB pattern brushes don't get dithered */
     }
 
     copy_dib_color_info(&brush->dib, &pdev->dib);
@@ -1930,7 +1932,7 @@ static BOOL select_pattern_brush( dibdrv_physdev *pdev, dib_brush *brush, BOOL *
     brush->dib.stride = get_dib_stride( brush->dib.width, brush->dib.bit_count );
     brush->dib.rect   = pattern.rect;
 
-    if (matching_pattern_format( &brush->dib, &pattern ))
+    if (!dither && matching_pattern_format( &brush->dib, &pattern ))
     {
         brush->dib.bits.ptr     = pattern.bits.ptr;
         brush->dib.bits.is_copy = FALSE;
@@ -1941,7 +1943,7 @@ static BOOL select_pattern_brush( dibdrv_physdev *pdev, dib_brush *brush, BOOL *
         brush->dib.bits.ptr     = HeapAlloc( GetProcessHeap(), 0, brush->dib.height * brush->dib.stride );
         brush->dib.bits.is_copy = TRUE;
         brush->dib.bits.free    = free_heap_bits;
-        brush->dib.funcs->convert_to(&brush->dib, &pattern, &pattern.rect);
+        brush->dib.funcs->convert_to(&brush->dib, &pattern, &pattern.rect, dither);
     }
     return TRUE;
 }
