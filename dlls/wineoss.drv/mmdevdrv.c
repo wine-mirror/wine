@@ -120,7 +120,6 @@ struct ACImpl {
     UINT32 oss_bufsize_bytes, lcl_offs_frames; /* offs into local_buffer where valid data starts */
 
     BYTE *local_buffer, *tmp_buffer;
-    int buf_state;
     LONG32 getbuf_last; /* <0 when using tmp_buffer */
     HANDLE timer;
 
@@ -130,12 +129,6 @@ struct ACImpl {
     AudioSessionWrapper *session_wrapper;
 
     struct list entry;
-};
-
-enum BufferStates {
-    NOT_LOCKED = 0,
-    LOCKED_NORMAL, /* public buffer piece is from local_buffer */
-    LOCKED_WRAPPED /* public buffer piece is in tmp_buffer */
 };
 
 typedef struct _SessionMgr {
@@ -1571,7 +1564,7 @@ static HRESULT WINAPI AudioClient_Reset(IAudioClient *iface)
         return AUDCLNT_E_NOT_STOPPED;
     }
 
-    if(This->buf_state != NOT_LOCKED || This->getbuf_last){
+    if(This->getbuf_last){
         LeaveCriticalSection(&This->lock);
         return AUDCLNT_E_BUFFER_OPERATION_PENDING;
     }
@@ -1928,7 +1921,6 @@ static HRESULT WINAPI AudioCaptureClient_GetBuffer(IAudioCaptureClient *iface,
         UINT64 *qpcpos)
 {
     ACImpl *This = impl_from_IAudioCaptureClient(iface);
-    HRESULT hr;
 
     TRACE("(%p)->(%p, %p, %p, %p, %p)\n", This, data, frames, flags,
             devpos, qpcpos);
@@ -1938,18 +1930,20 @@ static HRESULT WINAPI AudioCaptureClient_GetBuffer(IAudioCaptureClient *iface,
 
     EnterCriticalSection(&This->lock);
 
-    if(This->buf_state != NOT_LOCKED){
+    if(This->getbuf_last){
         LeaveCriticalSection(&This->lock);
         return AUDCLNT_E_OUT_OF_ORDER;
     }
 
-    hr = IAudioCaptureClient_GetNextPacketSize(iface, frames);
-    if(FAILED(hr)){
+    if(This->held_frames < This->period_frames){
+        *frames = 0;
         LeaveCriticalSection(&This->lock);
-        return hr;
+        return AUDCLNT_S_BUFFER_EMPTY;
     }
 
     *flags = 0;
+
+    *frames = This->period_frames;
 
     if(This->lcl_offs_frames + *frames > This->bufsize_frames){
         UINT32 chunk_bytes, offs_bytes, frames_bytes;
@@ -1976,10 +1970,16 @@ static HRESULT WINAPI AudioCaptureClient_GetBuffer(IAudioCaptureClient *iface,
         *data = This->local_buffer +
             This->lcl_offs_frames * This->fmt->nBlockAlign;
 
-    This->buf_state = LOCKED_NORMAL;
+    This->getbuf_last = *frames;
 
-    if(devpos || qpcpos)
-        IAudioClock_GetPosition(&This->IAudioClock_iface, devpos, qpcpos);
+    if(devpos)
+       *devpos = This->written_frames;
+    if(qpcpos){
+        LARGE_INTEGER stamp, freq;
+        QueryPerformanceCounter(&stamp);
+        QueryPerformanceFrequency(&freq);
+        *qpcpos = (stamp.QuadPart * (INT64)10000000) / freq.QuadPart;
+    }
 
     LeaveCriticalSection(&This->lock);
 
@@ -1995,16 +1995,27 @@ static HRESULT WINAPI AudioCaptureClient_ReleaseBuffer(
 
     EnterCriticalSection(&This->lock);
 
-    if(This->buf_state == NOT_LOCKED){
+    if(!done){
+        This->getbuf_last = 0;
+        LeaveCriticalSection(&This->lock);
+        return S_OK;
+    }
+
+    if(!This->getbuf_last){
         LeaveCriticalSection(&This->lock);
         return AUDCLNT_E_OUT_OF_ORDER;
     }
 
+    if(This->getbuf_last != done){
+        LeaveCriticalSection(&This->lock);
+        return AUDCLNT_E_INVALID_SIZE;
+    }
+
+    This->written_frames += done;
     This->held_frames -= done;
     This->lcl_offs_frames += done;
     This->lcl_offs_frames %= This->bufsize_frames;
-
-    This->buf_state = NOT_LOCKED;
+    This->getbuf_last = 0;
 
     LeaveCriticalSection(&This->lock);
 
