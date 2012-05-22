@@ -1406,17 +1406,7 @@ static HRESULT load_data(IDirect3DRM3* iface, LPDIRECTXFILEDATA data_object, LPI
     }
     else if (IsEqualGUID(guid, &TID_D3DRMMaterial))
     {
-        TRACE("Found TID_D3DRMMaterial\n");
-
-        for (i = 0; i < nb_GUIDs; i++)
-            if (IsEqualGUID(GUIDs[i], &IID_IDirect3DRMMaterial) ||
-                IsEqualGUID(GUIDs[i], &IID_IDirect3DRMMaterial2))
-                requested = TRUE;
-
-         if (requested)
-         {
-            FIXME("Processing material not supported yet\n");
-         }
+        TRACE("Found TID_D3DRMMaterial => Will be taken into account when a mesh will reference it\n");
     }
     else if (IsEqualGUID(guid, &TID_D3DRMFrameTransformMatrix))
     {
