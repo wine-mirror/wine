@@ -4414,7 +4414,7 @@ static void test_default_body(IHTMLBodyElement *body)
     hres = IHTMLBodyElement_get_text(body, &v);
     ok(hres == S_OK, "expect S_OK got 0x%08d\n", hres);
     ok(V_VT(&v) == VT_BSTR, "Expected VT_BSTR got %d\n", V_VT(&v));
-    ok(bstr == NULL, "bstr != NULL\n");
+    ok(V_BSTR(&v) == NULL, "bstr != NULL\n");
 
     /* get_text - Invalid Text */
     V_VT(&v) = VT_BSTR;

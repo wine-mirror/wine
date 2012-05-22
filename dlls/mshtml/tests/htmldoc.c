@@ -2161,8 +2161,8 @@ static HRESULT WINAPI DocumentSite_ActivateMe(IOleDocumentSite *iface, IOleDocum
             ok(hres == S_OK, "Could not get IOleInPlaceActiveObject: %08x\n", hres);
 
             if(activeobj) {
-                IOleInPlaceActiveObject_GetWindow(activeobj, &hwnd);
-                ok(hres == S_OK, "GetWindow failed: %08x\n", hres);
+                hres = IOleInPlaceActiveObject_GetWindow(activeobj, &hwnd);
+                ok(hres == E_FAIL, "GetWindow returned %08x, expected E_FAIL\n", hres);
                 ok(hwnd == NULL, "hwnd=%p, expected NULL\n", hwnd);
             }
 
