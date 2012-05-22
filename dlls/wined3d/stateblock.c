@@ -828,10 +828,10 @@ HRESULT CDECL wined3d_stateblock_capture(struct wined3d_stateblock *stateblock)
     {
         if (!(map & 1)) continue;
 
-        if (memcmp(src_state->clip_planes[i], stateblock->state.clip_planes[i], sizeof(*stateblock->state.clip_planes)))
+        if (memcmp(&stateblock->state.clip_planes[i], &src_state->clip_planes[i], sizeof(src_state->clip_planes[i])))
         {
             TRACE("Updating clipplane %u.\n", i);
-            memcpy(stateblock->state.clip_planes[i], src_state->clip_planes[i], sizeof(*stateblock->state.clip_planes));
+            stateblock->state.clip_planes[i] = src_state->clip_planes[i];
         }
     }
 
@@ -1057,15 +1057,9 @@ HRESULT CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblo
     map = stateblock->changed.clipplane;
     for (i = 0; map; map >>= 1, ++i)
     {
-        float clip[4];
-
         if (!(map & 1)) continue;
 
-        clip[0] = (float) stateblock->state.clip_planes[i][0];
-        clip[1] = (float) stateblock->state.clip_planes[i][1];
-        clip[2] = (float) stateblock->state.clip_planes[i][2];
-        clip[3] = (float) stateblock->state.clip_planes[i][3];
-        wined3d_device_set_clip_plane(device, i, clip);
+        wined3d_device_set_clip_plane(device, i, &stateblock->state.clip_planes[i]);
     }
 
     stateblock->device->stateBlock->state.lowest_disabled_stage = MAX_TEXTURES - 1;

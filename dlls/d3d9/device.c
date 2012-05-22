@@ -1500,31 +1500,29 @@ static HRESULT WINAPI IDirect3DDevice9Impl_GetLightEnable(IDirect3DDevice9Ex *if
     return hr;
 }
 
-static HRESULT WINAPI IDirect3DDevice9Impl_SetClipPlane(IDirect3DDevice9Ex *iface, DWORD Index,
-        const float *pPlane)
+static HRESULT WINAPI IDirect3DDevice9Impl_SetClipPlane(IDirect3DDevice9Ex *iface, DWORD index, const float *plane)
 {
     IDirect3DDevice9Impl *This = impl_from_IDirect3DDevice9Ex(iface);
     HRESULT hr;
 
-    TRACE("iface %p, index %u, plane %p.\n", iface, Index, pPlane);
+    TRACE("iface %p, index %u, plane %p.\n", iface, index, plane);
 
     wined3d_mutex_lock();
-    hr = wined3d_device_set_clip_plane(This->wined3d_device, Index, pPlane);
+    hr = wined3d_device_set_clip_plane(This->wined3d_device, index, (const struct wined3d_vec4 *)plane);
     wined3d_mutex_unlock();
 
     return hr;
 }
 
-static HRESULT WINAPI IDirect3DDevice9Impl_GetClipPlane(IDirect3DDevice9Ex *iface, DWORD Index,
-        float *pPlane)
+static HRESULT WINAPI IDirect3DDevice9Impl_GetClipPlane(IDirect3DDevice9Ex *iface, DWORD index, float *plane)
 {
     IDirect3DDevice9Impl *This = impl_from_IDirect3DDevice9Ex(iface);
     HRESULT hr;
 
-    TRACE("iface %p, index %u, plane %p.\n", iface, Index, pPlane);
+    TRACE("iface %p, index %u, plane %p.\n", iface, index, plane);
 
     wined3d_mutex_lock();
-    hr = wined3d_device_get_clip_plane(This->wined3d_device, Index, pPlane);
+    hr = wined3d_device_get_clip_plane(This->wined3d_device, index, (struct wined3d_vec4 *)plane);
     wined3d_mutex_unlock();
 
     return hr;

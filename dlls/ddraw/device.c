@@ -6162,7 +6162,7 @@ static HRESULT d3d_device7_SetClipPlane(IDirect3DDevice7 *iface, DWORD idx, D3DV
         return DDERR_INVALIDPARAMS;
 
     wined3d_mutex_lock();
-    hr = wined3d_device_set_clip_plane(device->wined3d_device, idx, plane);
+    hr = wined3d_device_set_clip_plane(device->wined3d_device, idx, (struct wined3d_vec4 *)plane);
     wined3d_mutex_unlock();
 
     return hr;
@@ -6211,7 +6211,7 @@ static HRESULT d3d_device7_GetClipPlane(IDirect3DDevice7 *iface, DWORD idx, D3DV
         return DDERR_INVALIDPARAMS;
 
     wined3d_mutex_lock();
-    hr = wined3d_device_get_clip_plane(device->wined3d_device, idx, plane);
+    hr = wined3d_device_get_clip_plane(device->wined3d_device, idx, (struct wined3d_vec4 *)plane);
     wined3d_mutex_unlock();
 
     return hr;

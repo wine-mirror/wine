@@ -3766,6 +3766,7 @@ static void transform_world(struct wined3d_context *context, const struct wined3
 static void clipplane(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     UINT index = state_id - STATE_CLIPPLANE(0);
+    GLdouble plane[4];
 
     if (isStateDirty(context, STATE_TRANSFORM(WINED3D_TS_VIEW)) || index >= context->gl_info->limits.clipplanes)
         return;
@@ -3782,12 +3783,14 @@ static void clipplane(struct wined3d_context *context, const struct wined3d_stat
          */
         glLoadIdentity();
 
+    plane[0] = state->clip_planes[index].x;
+    plane[1] = state->clip_planes[index].y;
+    plane[2] = state->clip_planes[index].z;
+    plane[3] = state->clip_planes[index].w;
+
     TRACE("Clipplane [%.8e, %.8e, %.8e, %.8e]\n",
-            state->clip_planes[index][0],
-            state->clip_planes[index][1],
-            state->clip_planes[index][2],
-            state->clip_planes[index][3]);
-    glClipPlane(GL_CLIP_PLANE0 + index, state->clip_planes[index]);
+            plane[0], plane[1], plane[2], plane[3]);
+    glClipPlane(GL_CLIP_PLANE0 + index, plane);
     checkGLcall("glClipPlane");
 
     glPopMatrix();

@@ -2180,7 +2180,8 @@ HRESULT CDECL wined3d_device_get_light_enable(const struct wined3d_device *devic
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_set_clip_plane(struct wined3d_device *device, UINT plane_idx, const float *plane)
+HRESULT CDECL wined3d_device_set_clip_plane(struct wined3d_device *device,
+        UINT plane_idx, const struct wined3d_vec4 *plane)
 {
     TRACE("device %p, plane_idx %u, plane %p.\n", device, plane_idx, plane);
 
@@ -2193,19 +2194,13 @@ HRESULT CDECL wined3d_device_set_clip_plane(struct wined3d_device *device, UINT 
 
     device->updateStateBlock->changed.clipplane |= 1 << plane_idx;
 
-    if (device->updateStateBlock->state.clip_planes[plane_idx][0] == plane[0]
-            && device->updateStateBlock->state.clip_planes[plane_idx][1] == plane[1]
-            && device->updateStateBlock->state.clip_planes[plane_idx][2] == plane[2]
-            && device->updateStateBlock->state.clip_planes[plane_idx][3] == plane[3])
+    if (!memcmp(&device->updateStateBlock->state.clip_planes[plane_idx], plane, sizeof(*plane)))
     {
         TRACE("Application is setting old values over, nothing to do.\n");
         return WINED3D_OK;
     }
 
-    device->updateStateBlock->state.clip_planes[plane_idx][0] = plane[0];
-    device->updateStateBlock->state.clip_planes[plane_idx][1] = plane[1];
-    device->updateStateBlock->state.clip_planes[plane_idx][2] = plane[2];
-    device->updateStateBlock->state.clip_planes[plane_idx][3] = plane[3];
+    device->updateStateBlock->state.clip_planes[plane_idx] = *plane;
 
     /* Handle recording of state blocks. */
     if (device->isRecordingState)
@@ -2219,7 +2214,8 @@ HRESULT CDECL wined3d_device_set_clip_plane(struct wined3d_device *device, UINT 
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_get_clip_plane(const struct wined3d_device *device, UINT plane_idx, float *plane)
+HRESULT CDECL wined3d_device_get_clip_plane(const struct wined3d_device *device,
+        UINT plane_idx, struct wined3d_vec4 *plane)
 {
     TRACE("device %p, plane_idx %u, plane %p.\n", device, plane_idx, plane);
 
@@ -2230,10 +2226,7 @@ HRESULT CDECL wined3d_device_get_clip_plane(const struct wined3d_device *device,
         return WINED3DERR_INVALIDCALL;
     }
 
-    plane[0] = (float)device->stateBlock->state.clip_planes[plane_idx][0];
-    plane[1] = (float)device->stateBlock->state.clip_planes[plane_idx][1];
-    plane[2] = (float)device->stateBlock->state.clip_planes[plane_idx][2];
-    plane[3] = (float)device->stateBlock->state.clip_planes[plane_idx][3];
+    *plane = device->stateBlock->state.clip_planes[plane_idx];
 
     return WINED3D_OK;
 }

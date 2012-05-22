@@ -2282,7 +2282,7 @@ struct wined3d_state
     DWORD lowest_disabled_stage;
 
     struct wined3d_matrix transforms[HIGHEST_TRANSFORMSTATE + 1];
-    double clip_planes[MAX_CLIPPLANES][4];
+    struct wined3d_vec4 clip_planes[MAX_CLIPPLANES];
     struct wined3d_material material;
     struct wined3d_viewport viewport;
     RECT scissor_rect;

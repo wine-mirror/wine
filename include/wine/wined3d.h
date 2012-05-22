@@ -1505,6 +1505,14 @@ struct wined3d_vec3
     float z;
 };
 
+struct wined3d_vec4
+{
+    float x;
+    float y;
+    float z;
+    float w;
+};
+
 struct wined3d_matrix
 {
     union
@@ -2081,7 +2089,8 @@ UINT __cdecl wined3d_device_get_available_texture_mem(const struct wined3d_devic
 HRESULT __cdecl wined3d_device_get_back_buffer(const struct wined3d_device *device, UINT swapchain_idx,
         UINT backbuffer_idx, enum wined3d_backbuffer_type backbuffer_type, struct wined3d_surface **backbuffer);
 INT __cdecl wined3d_device_get_base_vertex_index(const struct wined3d_device *device);
-HRESULT __cdecl wined3d_device_get_clip_plane(const struct wined3d_device *device, UINT plane_idx, float *plane);
+HRESULT __cdecl wined3d_device_get_clip_plane(const struct wined3d_device *device,
+        UINT plane_idx, struct wined3d_vec4 *plane);
 HRESULT __cdecl wined3d_device_get_clip_status(const struct wined3d_device *device,
         struct wined3d_clip_status *clip_status);
 HRESULT __cdecl wined3d_device_get_creation_parameters(const struct wined3d_device *device,
@@ -2162,7 +2171,8 @@ HRESULT __cdecl wined3d_device_reset(struct wined3d_device *device,
         const struct wined3d_swapchain_desc *swapchain_desc, wined3d_device_reset_cb callback);
 void __cdecl wined3d_device_restore_fullscreen_window(struct wined3d_device *device, HWND window);
 HRESULT __cdecl wined3d_device_set_base_vertex_index(struct wined3d_device *device, INT base_index);
-HRESULT __cdecl wined3d_device_set_clip_plane(struct wined3d_device *device, UINT plane_idx, const float *plane);
+HRESULT __cdecl wined3d_device_set_clip_plane(struct wined3d_device *device,
+        UINT plane_idx, const struct wined3d_vec4 *plane);
 HRESULT __cdecl wined3d_device_set_clip_status(struct wined3d_device *device,
         const struct wined3d_clip_status *clip_status);
 void __cdecl wined3d_device_set_cursor_position(struct wined3d_device *device,
