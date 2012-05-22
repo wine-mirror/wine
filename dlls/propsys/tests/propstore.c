@@ -138,9 +138,9 @@ static void test_inmemorystore(void)
     propvar.vt = VT_I2;
     state = 0xdeadbeef;
     hr = IPropertyStoreCache_GetValueAndState(propcache, &pkey, &propvar, &state);
-    todo_wine ok(hr == TYPE_E_ELEMENTNOTFOUND, "GetValueAndState failed, hr=%x\n", hr);
-    todo_wine ok(propvar.vt == VT_EMPTY, "expected VT_EMPTY, got %d\n", propvar.vt);
-    todo_wine ok(state == PSC_NORMAL, "expected PSC_NORMAL, got %d\n", state);
+    ok(hr == TYPE_E_ELEMENTNOTFOUND, "GetValueAndState failed, hr=%x\n", hr);
+    ok(propvar.vt == VT_EMPTY, "expected VT_EMPTY, got %d\n", propvar.vt);
+    ok(state == PSC_NORMAL, "expected PSC_NORMAL, got %d\n", state);
 
     /* Set state on an unset field */
     hr = IPropertyStoreCache_SetState(propcache, &pkey, PSC_NORMAL);
@@ -171,8 +171,8 @@ static void test_inmemorystore(void)
     memset(&propvar, 0, sizeof(propvar));
     state = 0xdeadbeef;
     hr = IPropertyStoreCache_GetValueAndState(propcache, &pkey, &propvar, &state);
-    todo_wine ok(hr == S_OK, "GetValueAndState failed, hr=%x\n", hr);
-    todo_wine ok(propvar.vt == VT_I4, "expected VT_I4, got %d\n", propvar.vt);
+    ok(hr == S_OK, "GetValueAndState failed, hr=%x\n", hr);
+    ok(propvar.vt == VT_I4, "expected VT_I4, got %d\n", propvar.vt);
     todo_wine ok(propvar.u.lVal == 12346, "expected 12346, got %d\n", propvar.vt);
     todo_wine ok(state == 5, "expected 5, got %d\n", state);
 
