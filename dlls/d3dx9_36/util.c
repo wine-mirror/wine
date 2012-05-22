@@ -63,6 +63,8 @@ static const PixelFormatDesc formats[] =
     {D3DFMT_A8,          {8,  0,  0,  0}, { 0,  0,  0,  0}, 1, 1, 1,  1, FORMAT_ARGB,    NULL,         NULL      },
     {D3DFMT_A8L8,        {8,  8,  0,  0}, { 8,  0,  0,  0}, 2, 1, 1,  2, FORMAT_ARGB,    la_from_rgba, la_to_rgba},
     {D3DFMT_A4L4,        {4,  4,  0,  0}, { 4,  0,  0,  0}, 1, 1, 1,  1, FORMAT_ARGB,    la_from_rgba, la_to_rgba},
+    {D3DFMT_L8,          {0,  8,  0,  0}, { 0,  0,  0,  0}, 1, 1, 1,  1, FORMAT_ARGB,    la_from_rgba, la_to_rgba},
+    {D3DFMT_L16,         {0, 16,  0,  0}, { 0,  0,  0,  0}, 2, 1, 1,  2, FORMAT_ARGB,    la_from_rgba, la_to_rgba},
     {D3DFMT_DXT1,        {0,  0,  0,  0}, { 0,  0,  0,  0}, 1, 4, 4,  8, FORMAT_ARGB,    NULL,         NULL      },
     {D3DFMT_DXT2,        {0,  0,  0,  0}, { 0,  0,  0,  0}, 1, 4, 4, 16, FORMAT_ARGB,    NULL,         NULL      },
     {D3DFMT_DXT3,        {0,  0,  0,  0}, { 0,  0,  0,  0}, 1, 4, 4, 16, FORMAT_ARGB,    NULL,         NULL      },
