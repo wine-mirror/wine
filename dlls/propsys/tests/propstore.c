@@ -144,7 +144,7 @@ static void test_inmemorystore(void)
 
     /* Set state on an unset field */
     hr = IPropertyStoreCache_SetState(propcache, &pkey, PSC_NORMAL);
-    todo_wine ok(hr == TYPE_E_ELEMENTNOTFOUND, "SetState failed, hr=%x\n", hr);
+    ok(hr == TYPE_E_ELEMENTNOTFOUND, "SetState failed, hr=%x\n", hr);
 
     /* Manipulate state on already set field */
     pkey.fmtid = PKEY_WineTest;
@@ -156,12 +156,12 @@ static void test_inmemorystore(void)
     ok(state == PSC_NORMAL, "expected PSC_NORMAL, got %d\n", state);
 
     hr = IPropertyStoreCache_SetState(propcache, &pkey, 10);
-    todo_wine ok(hr == S_OK, "SetState failed, hr=%x\n", hr);
+    ok(hr == S_OK, "SetState failed, hr=%x\n", hr);
 
     state = 0xdeadbeef;
     hr = IPropertyStoreCache_GetState(propcache, &pkey, &state);
     ok(hr == S_OK, "GetState failed, hr=%x\n", hr);
-    todo_wine ok(state == 10, "expected 10, got %d\n", state);
+    ok(state == 10, "expected 10, got %d\n", state);
 
     propvar.vt = VT_I4;
     propvar.u.lVal = 12346;
