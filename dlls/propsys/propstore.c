@@ -30,14 +30,34 @@
 #include "propsys.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
+#include "wine/list.h"
 
+#include "initguid.h"
 #include "propsys_private.h"
+
+DEFINE_GUID(FMTID_NamedProperties, 0xd5cdd505, 0x2e9c, 0x101b, 0x93, 0x97, 0x08, 0x00, 0x2b, 0x2c, 0xf9, 0xae);
 
 WINE_DEFAULT_DEBUG_CHANNEL(propsys);
 
 typedef struct {
+    struct list entry;
+    DWORD pid;
+    PROPVARIANT propvar;
+    PSC_STATE state;
+} propstore_value;
+
+typedef struct {
+    struct list entry;
+    GUID fmtid;
+    struct list values; /* list of struct propstore_value */
+    DWORD count;
+} propstore_format;
+
+typedef struct {
     IPropertyStoreCache IPropertyStoreCache_iface;
     LONG ref;
+    CRITICAL_SECTION lock;
+    struct list formats; /* list of struct propstore_format */
 } PropertyStore;
 
 static inline PropertyStore *impl_from_IPropertyStoreCache(IPropertyStoreCache *iface)
@@ -79,6 +99,17 @@ static ULONG WINAPI PropertyStore_AddRef(IPropertyStoreCache *iface)
     return ref;
 }
 
+static void destroy_format(propstore_format *format)
+{
+    propstore_value *cursor, *cursor2;
+    LIST_FOR_EACH_ENTRY_SAFE(cursor, cursor2, &format->values, propstore_value, entry)
+    {
+        PropVariantClear(&cursor->propvar);
+        HeapFree(GetProcessHeap(), 0, cursor);
+    }
+    HeapFree(GetProcessHeap(), 0, format);
+}
+
 static ULONG WINAPI PropertyStore_Release(IPropertyStoreCache *iface)
 {
     PropertyStore *This = impl_from_IPropertyStoreCache(iface);
@@ -87,7 +118,14 @@ static ULONG WINAPI PropertyStore_Release(IPropertyStoreCache *iface)
     TRACE("(%p) refcount=%u\n", iface, ref);
 
     if (ref == 0)
+    {
+        propstore_format *cursor, *cursor2;
+        This->lock.DebugInfo->Spare[0] = 0;
+        DeleteCriticalSection(&This->lock);
+        LIST_FOR_EACH_ENTRY_SAFE(cursor, cursor2, &This->formats, propstore_format, entry)
+            destroy_format(cursor);
         HeapFree(GetProcessHeap(), 0, This);
+    }
 
     return ref;
 }
@@ -106,18 +144,118 @@ static HRESULT WINAPI PropertyStore_GetAt(IPropertyStoreCache *iface,
     return E_NOTIMPL;
 }
 
+static HRESULT PropertyStore_LookupValue(PropertyStore *This, REFPROPERTYKEY key,
+    int insert, propstore_value **result)
+{
+    propstore_format *format=NULL, *format_candidate;
+    propstore_value *value=NULL, *value_candidate;
+
+    if (IsEqualGUID(&key->fmtid, &FMTID_NamedProperties))
+    {
+        /* This is used in the property store format [MS-PROPSTORE]
+         * for named values and probably gets special treatment. */
+        ERR("don't know how to handle FMTID_NamedProperties\n");
+        return E_FAIL;
+    }
+
+    LIST_FOR_EACH_ENTRY(format_candidate, &This->formats, propstore_format, entry)
+    {
+        if (IsEqualGUID(&format_candidate->fmtid, &key->fmtid))
+        {
+            format = format_candidate;
+            break;
+        }
+    }
+
+    if (!format)
+    {
+        if (!insert)
+            return TYPE_E_ELEMENTNOTFOUND;
+
+        format = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*format));
+        if (!format)
+            return E_OUTOFMEMORY;
+
+        format->fmtid = key->fmtid;
+        list_init(&format->values);
+        list_add_tail(&This->formats, &format->entry);
+    }
+
+    LIST_FOR_EACH_ENTRY(value_candidate, &format->values, propstore_value, entry)
+    {
+        if (value_candidate->pid == key->pid)
+        {
+            value = value_candidate;
+            break;
+        }
+    }
+
+    if (!value)
+    {
+        if (!insert)
+            return TYPE_E_ELEMENTNOTFOUND;
+
+        value = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*value));
+        if (!value)
+            return E_OUTOFMEMORY;
+
+        value->pid = key->pid;
+        list_add_tail(&format->values, &value->entry);
+    }
+
+    *result = value;
+
+    return S_OK;
+}
+
 static HRESULT WINAPI PropertyStore_GetValue(IPropertyStoreCache *iface,
     REFPROPERTYKEY key, PROPVARIANT *pv)
 {
-    FIXME("%p,%p,%p: stub\n", iface, key, pv);
-    return E_NOTIMPL;
+    PropertyStore *This = impl_from_IPropertyStoreCache(iface);
+    propstore_value *value;
+    HRESULT hr;
+
+    TRACE("%p,%p,%p\n", iface, key, pv);
+
+    if (!pv)
+        return E_POINTER;
+
+    EnterCriticalSection(&This->lock);
+
+    hr = PropertyStore_LookupValue(This, key, 0, &value);
+
+    if (SUCCEEDED(hr))
+        hr = PropVariantCopy(pv, &value->propvar);
+    else if (hr == TYPE_E_ELEMENTNOTFOUND)
+    {
+        PropVariantInit(pv);
+        hr = S_OK;
+    }
+
+    LeaveCriticalSection(&This->lock);
+
+    return hr;
 }
 
 static HRESULT WINAPI PropertyStore_SetValue(IPropertyStoreCache *iface,
     REFPROPERTYKEY key, REFPROPVARIANT propvar)
 {
-    FIXME("%p,%p,%p: stub\n", iface, key, propvar);
-    return E_NOTIMPL;
+    PropertyStore *This = impl_from_IPropertyStoreCache(iface);
+    propstore_value *value;
+    HRESULT hr;
+
+    TRACE("%p,%p,%p\n", iface, key, propvar);
+
+    EnterCriticalSection(&This->lock);
+
+    hr = PropertyStore_LookupValue(This, key, 1, &value);
+
+    if (SUCCEEDED(hr))
+        hr = PropVariantCopy(&value->propvar, propvar);
+
+    LeaveCriticalSection(&This->lock);
+
+    return hr;
 }
 
 static HRESULT WINAPI PropertyStore_Commit(IPropertyStoreCache *iface)
@@ -185,6 +323,9 @@ HRESULT PropertyStore_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv
 
     This->IPropertyStoreCache_iface.lpVtbl = &PropertyStore_Vtbl;
     This->ref = 1;
+    InitializeCriticalSection(&This->lock);
+    This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": PropertyStore.lock");
+    list_init(&This->formats);
 
     ret = IPropertyStoreCache_QueryInterface(&This->IPropertyStoreCache_iface, iid, ppv);
     IPropertyStoreCache_Release(&This->IPropertyStoreCache_iface);
