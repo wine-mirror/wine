@@ -327,8 +327,25 @@ static HRESULT WINAPI PropertyStore_Commit(IPropertyStoreCache *iface)
 static HRESULT WINAPI PropertyStore_GetState(IPropertyStoreCache *iface,
     REFPROPERTYKEY key, PSC_STATE *pstate)
 {
-    FIXME("%p,%p,%p: stub\n", iface, key, pstate);
-    return E_NOTIMPL;
+    PropertyStore *This = impl_from_IPropertyStoreCache(iface);
+    propstore_value *value;
+    HRESULT hr;
+
+    TRACE("%p,%p,%p\n", iface, key, pstate);
+
+    EnterCriticalSection(&This->lock);
+
+    hr = PropertyStore_LookupValue(This, key, 0, &value);
+
+    if (SUCCEEDED(hr))
+        *pstate = value->state;
+
+    LeaveCriticalSection(&This->lock);
+
+    if (FAILED(hr))
+        *pstate = PSC_NORMAL;
+
+    return hr;
 }
 
 static HRESULT WINAPI PropertyStore_GetValueAndState(IPropertyStoreCache *iface,

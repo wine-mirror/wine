@@ -132,8 +132,8 @@ static void test_inmemorystore(void)
 
     state = 0xdeadbeef;
     hr = IPropertyStoreCache_GetState(propcache, &pkey, &state);
-    todo_wine ok(hr == TYPE_E_ELEMENTNOTFOUND, "GetState failed, hr=%x\n", hr);
-    todo_wine ok(state == PSC_NORMAL, "expected PSC_NORMAL, got %d\n", state);
+    ok(hr == TYPE_E_ELEMENTNOTFOUND, "GetState failed, hr=%x\n", hr);
+    ok(state == PSC_NORMAL, "expected PSC_NORMAL, got %d\n", state);
 
     propvar.vt = VT_I2;
     state = 0xdeadbeef;
@@ -152,15 +152,15 @@ static void test_inmemorystore(void)
 
     state = 0xdeadbeef;
     hr = IPropertyStoreCache_GetState(propcache, &pkey, &state);
-    todo_wine ok(hr == S_OK, "GetState failed, hr=%x\n", hr);
-    todo_wine ok(state == PSC_NORMAL, "expected PSC_NORMAL, got %d\n", state);
+    ok(hr == S_OK, "GetState failed, hr=%x\n", hr);
+    ok(state == PSC_NORMAL, "expected PSC_NORMAL, got %d\n", state);
 
     hr = IPropertyStoreCache_SetState(propcache, &pkey, 10);
     todo_wine ok(hr == S_OK, "SetState failed, hr=%x\n", hr);
 
     state = 0xdeadbeef;
     hr = IPropertyStoreCache_GetState(propcache, &pkey, &state);
-    todo_wine ok(hr == S_OK, "GetState failed, hr=%x\n", hr);
+    ok(hr == S_OK, "GetState failed, hr=%x\n", hr);
     todo_wine ok(state == 10, "expected 10, got %d\n", state);
 
     propvar.vt = VT_I4;
