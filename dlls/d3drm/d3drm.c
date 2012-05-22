@@ -221,7 +221,7 @@ static HRESULT WINAPI IDirect3DRMImpl_CreateLightRGB(IDirect3DRM* iface, D3DRMLI
     return IDirect3DRM3_CreateLightRGB(&This->IDirect3DRM3_iface, type, red, green, blue, Light);
 }
 
-static HRESULT WINAPI IDirect3DRMImpl_Material(IDirect3DRM* iface, D3DVALUE m, LPDIRECT3DRMMATERIAL * ppMaterial)
+static HRESULT WINAPI IDirect3DRMImpl_CreateMaterial(IDirect3DRM* iface, D3DVALUE m, LPDIRECT3DRMMATERIAL * ppMaterial)
 {
     IDirect3DRMImpl *This = impl_from_IDirect3DRM(iface);
 
@@ -446,7 +446,7 @@ static const struct IDirect3DRMVtbl Direct3DRM_Vtbl =
     IDirect3DRMImpl_CreateTexture,
     IDirect3DRMImpl_CreateLight,
     IDirect3DRMImpl_CreateLightRGB,
-    IDirect3DRMImpl_Material,
+    IDirect3DRMImpl_CreateMaterial,
     IDirect3DRMImpl_CreateDevice,
     IDirect3DRMImpl_CreateDeviceFromSurface,
     IDirect3DRMImpl_CreateDeviceFromD3D,
@@ -593,8 +593,8 @@ static HRESULT WINAPI IDirect3DRM2Impl_CreateLightRGB(IDirect3DRM2* iface, D3DRM
     return IDirect3DRM3_CreateLightRGB(&This->IDirect3DRM3_iface, type, red, green, blue, Light);
 }
 
-static HRESULT WINAPI IDirect3DRM2Impl_Material(IDirect3DRM2* iface, D3DVALUE m,
-                                                LPDIRECT3DRMMATERIAL * ppMaterial)
+static HRESULT WINAPI IDirect3DRM2Impl_CreateMaterial(IDirect3DRM2* iface, D3DVALUE m,
+                                                      LPDIRECT3DRMMATERIAL * ppMaterial)
 {
     IDirect3DRMImpl *This = impl_from_IDirect3DRM2(iface);
 
@@ -871,7 +871,7 @@ static const struct IDirect3DRM2Vtbl Direct3DRM2_Vtbl =
     IDirect3DRM2Impl_CreateTexture,
     IDirect3DRM2Impl_CreateLight,
     IDirect3DRM2Impl_CreateLightRGB,
-    IDirect3DRM2Impl_Material,
+    IDirect3DRM2Impl_CreateMaterial,
     IDirect3DRM2Impl_CreateDevice,
     IDirect3DRM2Impl_CreateDeviceFromSurface,
     IDirect3DRM2Impl_CreateDeviceFromD3D,
@@ -1036,8 +1036,8 @@ static HRESULT WINAPI IDirect3DRM3Impl_CreateLightRGB(IDirect3DRM3* iface, D3DRM
     return ret;
 }
 
-static HRESULT WINAPI IDirect3DRM3Impl_Material(IDirect3DRM3* iface, D3DVALUE m,
-                                                LPDIRECT3DRMMATERIAL2* Material)
+static HRESULT WINAPI IDirect3DRM3Impl_CreateMaterial(IDirect3DRM3* iface, D3DVALUE m,
+                                                      LPDIRECT3DRMMATERIAL2* Material)
 {
     IDirect3DRMImpl *This = impl_from_IDirect3DRM3(iface);
 
@@ -1646,7 +1646,7 @@ static const struct IDirect3DRM3Vtbl Direct3DRM3_Vtbl =
     IDirect3DRM3Impl_CreateTexture,
     IDirect3DRM3Impl_CreateLight,
     IDirect3DRM3Impl_CreateLightRGB,
-    IDirect3DRM3Impl_Material,
+    IDirect3DRM3Impl_CreateMaterial,
     IDirect3DRM3Impl_CreateDevice,
     IDirect3DRM3Impl_CreateDeviceFromSurface,
     IDirect3DRM3Impl_CreateDeviceFromD3D,
