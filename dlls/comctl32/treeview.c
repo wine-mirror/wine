@@ -67,36 +67,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(treeview);
 
 /* internal structures */
-typedef struct _TREEITEM    /* HTREEITEM is a _TREEINFO *. */
-{
-  HTREEITEM parent;         /* handle to parent or 0 if at root */
-  HTREEITEM nextSibling;    /* handle to next item in list, 0 if last */
-  HTREEITEM firstChild;     /* handle to first child or 0 if no child */
-
-  UINT      callbackMask;
-  UINT      state;
-  UINT      stateMask;
-  LPWSTR    pszText;
-  int       cchTextMax;
-  int       iImage;
-  int       iSelectedImage;
-  int       iExpandedImage;
-  int       cChildren;
-  LPARAM    lParam;
-  int       iIntegral;      /* item height multiplier (1 is normal) */
-  int       iLevel;         /* indentation level:0=root level */
-  HTREEITEM lastChild;
-  HTREEITEM prevSibling;    /* handle to prev item in list, 0 if first */
-  RECT      rect;
-  LONG      linesOffset;
-  LONG      stateOffset;
-  LONG      imageOffset;
-  LONG      textOffset;
-  LONG      textWidth;      /* horizontal text extent for pszText */
-  LONG      visibleOrder;   /* visible ordering, 0 is first visible item */
-} TREEVIEW_ITEM;
-
-
 typedef struct tagTREEVIEW_INFO
 {
   HWND          hwnd;
@@ -163,6 +133,35 @@ typedef struct tagTREEVIEW_INFO
   WCHAR szSearchParam[ MAX_PATH ];
 } TREEVIEW_INFO;
 
+typedef struct _TREEITEM    /* HTREEITEM is a _TREEINFO *. */
+{
+  HTREEITEM parent;         /* handle to parent or 0 if at root */
+  HTREEITEM nextSibling;    /* handle to next item in list, 0 if last */
+  HTREEITEM firstChild;     /* handle to first child or 0 if no child */
+
+  UINT      callbackMask;
+  UINT      state;
+  UINT      stateMask;
+  LPWSTR    pszText;
+  int       cchTextMax;
+  int       iImage;
+  int       iSelectedImage;
+  int       iExpandedImage;
+  int       cChildren;
+  LPARAM    lParam;
+  int       iIntegral;      /* item height multiplier (1 is normal) */
+  int       iLevel;         /* indentation level:0=root level */
+  HTREEITEM lastChild;
+  HTREEITEM prevSibling;    /* handle to prev item in list, 0 if first */
+  RECT      rect;
+  LONG      linesOffset;
+  LONG      stateOffset;
+  LONG      imageOffset;
+  LONG      textOffset;
+  LONG      textWidth;      /* horizontal text extent for pszText */
+  LONG      visibleOrder;   /* visible ordering, 0 is first visible item */
+  const TREEVIEW_INFO *infoPtr; /* tree data this item belongs to */
+} TREEVIEW_ITEM;
 
 /******** Defines that TREEVIEW_ProcessLetterKeys uses ****************/
 #define KEY_DELAY       450
@@ -1012,6 +1011,7 @@ TREEVIEW_AllocateItem(const TREEVIEW_INFO *infoPtr)
     newItem->iImage = 0;
     newItem->iSelectedImage = 0;
     newItem->iExpandedImage = (WORD)I_IMAGENONE;
+    newItem->infoPtr = infoPtr;
 
     if (DPA_InsertPtr(infoPtr->items, INT_MAX, newItem) == -1)
     {
@@ -2082,7 +2082,13 @@ TREEVIEW_GetItemT(const TREEVIEW_INFO *infoPtr, LPTVITEMEXW tvItem, BOOL isW)
     TREEVIEW_ITEM *item = tvItem->hItem;
 
     if (!TREEVIEW_ValidItem(infoPtr, item))
-	return FALSE;
+    {
+        if (!item) return FALSE;
+
+        TRACE("got item from different tree %p, called from %p\n", item->infoPtr, infoPtr);
+        infoPtr = item->infoPtr;
+        if (!TREEVIEW_ValidItem(infoPtr, item)) return FALSE;
+    }
 
     TREEVIEW_UpdateDispInfo(infoPtr, item, tvItem->mask);
 

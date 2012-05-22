@@ -746,8 +746,8 @@ static void test_get_set_item(void)
     TVITEMA tviRoot = {0};
     int nBufferSize = 80;
     char szBuffer[80] = {0};
+    HWND hTree, hTree2;
     DWORD ret;
-    HWND hTree;
 
     hTree = create_treeview_control(0);
     fill_tree(hTree);
@@ -791,7 +791,18 @@ static void test_get_set_item(void)
     ok_sequence(sequences, TREEVIEW_SEQ_INDEX, test_get_set_item_seq,
         "test get set item", FALSE);
 
+    /* get item from a different tree */
+    hTree2 = create_treeview_control(0);
+
+    tviRoot.hItem = hRoot;
+    tviRoot.mask = TVIF_STATE;
+    tviRoot.state = 0;
+    ret = SendMessage( hTree2, TVM_GETITEMA, 0, (LPARAM)&tviRoot );
+    expect(TRUE, ret);
+    ok(tviRoot.state == TVIS_FOCUSED, "got state 0x%0x\n", tviRoot.state);
+
     DestroyWindow(hTree);
+    DestroyWindow(hTree2);
 }
 
 static void test_get_set_itemheight(void)
