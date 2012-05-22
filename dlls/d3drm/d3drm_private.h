@@ -30,6 +30,7 @@ HRESULT Direct3DRMFrame_create(REFIID riid, IUnknown* parent_frame, IUnknown** r
 HRESULT Direct3DRMLight_create(IUnknown** ppObj) DECLSPEC_HIDDEN;
 HRESULT Direct3DRMMeshBuilder_create(REFIID riid, IUnknown** ppObj) DECLSPEC_HIDDEN;
 HRESULT Direct3DRMViewport_create(REFIID riid, IUnknown** ppObj) DECLSPEC_HIDDEN;
+HRESULT Direct3DRMMaterial_create(IDirect3DRMMaterial2** ret_iface) DECLSPEC_HIDDEN;
 
 HRESULT load_mesh_data(IDirect3DRMMeshBuilder3* iface, LPDIRECTXFILEDATA pData) DECLSPEC_HIDDEN;
 
