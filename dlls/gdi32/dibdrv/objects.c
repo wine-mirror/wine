@@ -1732,17 +1732,28 @@ static BOOL solid_brush(dibdrv_physdev *pdev, dib_brush *brush, dib_info *dib,
     return TRUE;
 }
 
-static void free_pattern_brush_bits( dib_brush *brush )
+static BOOL alloc_brush_mask_bits( dib_brush *brush )
+{
+    DWORD size = brush->dib.height * abs(brush->dib.stride);
+
+    assert(brush->masks.and == NULL);
+    assert(brush->masks.xor == NULL);
+    assert(brush->dib.stride > 0);
+
+    if (!(brush->masks.and = HeapAlloc(GetProcessHeap(), 0, 2 * size))) return FALSE;
+    brush->masks.xor = (char *)brush->masks.and + size;
+    return TRUE;
+}
+
+static void free_brush_mask_bits( dib_brush *brush )
 {
     HeapFree(GetProcessHeap(), 0, brush->masks.and);
-    HeapFree(GetProcessHeap(), 0, brush->masks.xor);
-    brush->masks.and = NULL;
-    brush->masks.xor = NULL;
+    brush->masks.and = brush->masks.xor = NULL;
 }
 
 void free_pattern_brush( dib_brush *brush )
 {
-    free_pattern_brush_bits( brush );
+    free_brush_mask_bits( brush );
     free_dib_info( &brush->dib );
 }
 
@@ -1752,20 +1763,10 @@ static BOOL create_pattern_brush_bits( dib_brush *brush )
     DWORD *brush_bits = brush->dib.bits.ptr;
     DWORD *and_bits, *xor_bits;
 
-    assert(brush->masks.and == NULL);
-    assert(brush->masks.xor == NULL);
+    if (!alloc_brush_mask_bits( brush )) return FALSE;
 
-    assert(brush->dib.stride > 0);
-
-    and_bits = brush->masks.and = HeapAlloc(GetProcessHeap(), 0, size);
-    xor_bits = brush->masks.xor = HeapAlloc(GetProcessHeap(), 0, size);
-
-    if(!and_bits || !xor_bits)
-    {
-        ERR("Failed to create pattern brush bits\n");
-        free_pattern_brush_bits( brush );
-        return FALSE;
-    }
+    and_bits = brush->masks.and;
+    xor_bits = brush->masks.xor;
 
     while(size)
     {
@@ -1790,11 +1791,7 @@ static BOOL create_hatch_brush_bits(dibdrv_physdev *pdev, dib_brush *brush, BOOL
 {
     dib_info hatch;
     rop_mask fg_mask, bg_mask;
-    DWORD size;
     BOOL ret;
-
-    assert(brush->masks.and == NULL);
-    assert(brush->masks.xor == NULL);
 
     /* Just initialise brush dib with the color / sizing info.  We don't
        need the bits as we'll calculate the rop masks straight from
@@ -1809,17 +1806,7 @@ static BOOL create_hatch_brush_bits(dibdrv_physdev *pdev, dib_brush *brush, BOOL
     brush->dib.rect.right  = 8;
     brush->dib.rect.bottom = 8;
 
-    size = brush->dib.height * brush->dib.stride;
-
-    brush->masks.and = HeapAlloc(GetProcessHeap(), 0, size);
-    brush->masks.xor = HeapAlloc(GetProcessHeap(), 0, size);
-
-    if (!brush->masks.and || !brush->masks.xor)
-    {
-        ERR("Failed to create pattern brush bits\n");
-        free_pattern_brush_bits( brush );
-        return FALSE;
-    }
+    if (!alloc_brush_mask_bits( brush )) return FALSE;
 
     hatch.bit_count = 1;
     hatch.height = hatch.width = 8;
@@ -1841,7 +1828,7 @@ static BOOL create_hatch_brush_bits(dibdrv_physdev *pdev, dib_brush *brush, BOOL
         *needs_reselect = TRUE;
 
     ret = brush->dib.funcs->create_rop_masks( &brush->dib, &hatch, &fg_mask, &bg_mask, &brush->masks );
-    if(!ret) free_pattern_brush_bits( brush );
+    if(!ret) free_brush_mask_bits( brush );
 
     return ret;
 }
@@ -1961,7 +1948,7 @@ static BOOL pattern_brush(dibdrv_physdev *pdev, dib_brush *brush, dib_info *dib,
 
     if (rop != brush->rop)
     {
-        free_pattern_brush_bits( brush );
+        free_brush_mask_bits( brush );
         brush->rop = rop;
     }
 
