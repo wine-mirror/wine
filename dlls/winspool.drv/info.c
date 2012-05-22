@@ -184,12 +184,15 @@ static const WCHAR Version3_RegPathW[] = {'\\','V','e','r','s','i','o','n','-','
 static const WCHAR Version3_SubdirW[] = {'\\','3',0};
 
 static const WCHAR spooldriversW[] = {'\\','s','p','o','o','l','\\','d','r','i','v','e','r','s','\\',0};
+
+static const WCHAR AttributesW[] = {'A','t','t','r','i','b','u','t','e','s',0};
 static const WCHAR backslashW[] = {'\\',0};
 static const WCHAR Configuration_FileW[] = {'C','o','n','f','i','g','u','r','a','t',
 				      'i','o','n',' ','F','i','l','e',0};
 static const WCHAR DatatypeW[] = {'D','a','t','a','t','y','p','e',0};
 static const WCHAR Data_FileW[] = {'D','a','t','a',' ','F','i','l','e',0};
 static const WCHAR Default_DevModeW[] = {'D','e','f','a','u','l','t',' ','D','e','v','M','o','d','e',0};
+static const WCHAR Default_PriorityW[] = {'D','e','f','a','u','l','t',' ','P','r','i','o','r','i','t','y',0};
 static const WCHAR Dependent_FilesW[] = {'D','e','p','e','n','d','e','n','t',' ','F','i','l','e','s',0};
 static const WCHAR DescriptionW[] = {'D','e','s','c','r','i','p','t','i','o','n',0};
 static const WCHAR DriverW[] = {'D','r','i','v','e','r',0};
@@ -209,9 +212,13 @@ static const WCHAR Print_ProcessorW[] = {'P','r','i','n','t',' ','P','r','o','c'
 static const WCHAR Printer_DriverW[] = {'P','r','i','n','t','e','r',' ','D','r','i','v','e','r',0};
 static const WCHAR PrinterDriverDataW[] = {'P','r','i','n','t','e','r','D','r','i','v','e','r','D','a','t','a',0};
 static const WCHAR PrinterPortsW[] = {'P','r','i','n','t','e','r','P','o','r','t','s',0};
+static const WCHAR PriorityW[] = {'P','r','i','o','r','i','t','y',0};
 static const WCHAR ProviderW[] = {'P','r','o','v','i','d','e','r',0};
 static const WCHAR Separator_FileW[] = {'S','e','p','a','r','a','t','o','r',' ','F','i','l','e',0};
 static const WCHAR Share_NameW[] = {'S','h','a','r','e',' ','N','a','m','e',0};
+static const WCHAR StartTimeW[] = {'S','t','a','r','t','T','i','m','e',0};
+static const WCHAR StatusW[] = {'S','t','a','t','u','s',0};
+static const WCHAR UntilTimeW[] = {'U','n','t','i','l','T','i','m','e',0};
 static const WCHAR VersionW[] = {'V','e','r','s','i','o','n',0};
 static       WCHAR WinPrintW[] = {'W','i','n','P','r','i','n','t',0};
 static const WCHAR deviceW[]  = {'d','e','v','i','c','e',0};
@@ -748,9 +755,9 @@ PRINTCAP_LoadPrinters(void) {
     return hadprinter;
 }
 
-static inline DWORD set_reg_DWORD(HKEY hkey, LPCSTR keyname, const DWORD value)
+static inline DWORD set_reg_DWORD(HKEY hkey, const WCHAR *keyname, const DWORD value)
 {
-    return RegSetValueExA(hkey, keyname, 0, REG_DWORD, (const BYTE*)&value, sizeof(value));
+    return RegSetValueExW(hkey, keyname, 0, REG_DWORD, (const BYTE*)&value, sizeof(value));
 }
 
 static inline DWORD set_reg_szW(HKEY hkey, const WCHAR *keyname, const WCHAR *value)
@@ -2602,12 +2609,6 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
     HANDLE retval;
     HKEY hkeyPrinter, hkeyPrinters, hkeyDriver, hkeyDrivers;
     LONG size;
-    static const WCHAR attributesW[]      = {'A','t','t','r','i','b','u','t','e','s',0},
-                       default_devmodeW[] = {'D','e','f','a','u','l','t',' ','D','e','v','M','o','d','e',0},
-                       priorityW[]        = {'P','r','i','o','r','i','t','y',0},
-                       start_timeW[]      = {'S','t','a','r','t','T','i','m','e',0},
-                       statusW[]          = {'S','t','a','t','u','s',0},
-                       until_timeW[]      = {'U','n','t','i','l','T','i','m','e',0};
 
     TRACE("(%s,%d,%p)\n", debugstr_w(pName), Level, pPrinter);
 
@@ -2631,7 +2632,7 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
 	return 0;
     }
     if(!RegOpenKeyW(hkeyPrinters, pi->pPrinterName, &hkeyPrinter)) {
-	if (!RegQueryValueW(hkeyPrinter, attributesW, NULL, NULL)) {
+	if (!RegQueryValueW(hkeyPrinter, AttributesW, NULL, NULL)) {
 	    SetLastError(ERROR_PRINTER_ALREADY_EXISTS);
 	    RegCloseKey(hkeyPrinter);
 	    RegCloseKey(hkeyPrinters);
@@ -2672,7 +2673,7 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
     }
 
     set_devices_and_printerports(pi);
-    RegSetValueExW(hkeyPrinter, attributesW, 0, REG_DWORD,
+    RegSetValueExW(hkeyPrinter, AttributesW, 0, REG_DWORD,
 		   (LPBYTE)&pi->Attributes, sizeof(DWORD));
     set_reg_szW(hkeyPrinter, DatatypeW, pi->pDatatype);
 
@@ -2708,7 +2709,7 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
         }
     }
 
-    set_reg_devmode( hkeyPrinter, default_devmodeW, dm );
+    set_reg_devmode( hkeyPrinter, Default_DevModeW, dm );
     if (!pi->pDevMode) HeapFree( GetProcessHeap(), 0, dm );
 
     set_reg_szW(hkeyPrinter, DescriptionW, pi->pComment);
@@ -2719,15 +2720,15 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
     set_reg_szW(hkeyPrinter, PortW, pi->pPortName);
     set_reg_szW(hkeyPrinter, Print_ProcessorW, pi->pPrintProcessor);
     set_reg_szW(hkeyPrinter, Printer_DriverW, pi->pDriverName);
-    RegSetValueExW(hkeyPrinter, priorityW, 0, REG_DWORD,
+    RegSetValueExW(hkeyPrinter, PriorityW, 0, REG_DWORD,
                    (LPBYTE)&pi->Priority, sizeof(DWORD));
     set_reg_szW(hkeyPrinter, Separator_FileW, pi->pSepFile);
     set_reg_szW(hkeyPrinter, Share_NameW, pi->pShareName);
-    RegSetValueExW(hkeyPrinter, start_timeW, 0, REG_DWORD,
+    RegSetValueExW(hkeyPrinter, StartTimeW, 0, REG_DWORD,
                    (LPBYTE)&pi->StartTime, sizeof(DWORD));
-    RegSetValueExW(hkeyPrinter, statusW, 0, REG_DWORD,
+    RegSetValueExW(hkeyPrinter, StatusW, 0, REG_DWORD,
                    (LPBYTE)&pi->Status, sizeof(DWORD));
-    RegSetValueExW(hkeyPrinter, until_timeW, 0, REG_DWORD,
+    RegSetValueExW(hkeyPrinter, UntilTimeW, 0, REG_DWORD,
                    (LPBYTE)&pi->UntilTime, sizeof(DWORD));
 
     RegCloseKey(hkeyPrinter);
@@ -2916,11 +2917,11 @@ static void set_printer_2( HKEY key, const PRINTER_INFO_2W *pi )
     set_reg_szW( key, DatatypeW, pi->pDatatype );
     set_reg_szW( key, ParametersW, pi->pParameters );
 
-    set_reg_DWORD( key, "Attributes", pi->Attributes );
-    set_reg_DWORD( key, "Priority", pi->Priority );
-    set_reg_DWORD( key, "Default Priority", pi->DefaultPriority );
-    set_reg_DWORD( key, "StartTime", pi->StartTime );
-    set_reg_DWORD( key, "UntilTime", pi->UntilTime );
+    set_reg_DWORD( key, AttributesW, pi->Attributes );
+    set_reg_DWORD( key, PriorityW, pi->Priority );
+    set_reg_DWORD( key, Default_PriorityW, pi->DefaultPriority );
+    set_reg_DWORD( key, StartTimeW, pi->StartTime );
+    set_reg_DWORD( key, UntilTimeW, pi->UntilTime );
 }
 
 static BOOL set_printer_9( HKEY key, const PRINTER_INFO_9W *pi )
