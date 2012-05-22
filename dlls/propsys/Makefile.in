@@ -1,8 +1,9 @@
 MODULE    = propsys.dll
 IMPORTLIB = propsys
-IMPORTS   = ole32 oleaut32
+IMPORTS   = ole32 oleaut32 uuid
 
 C_SRCS = \
+	propstore.c \
 	propsys_main.c \
 	propvar.c
 

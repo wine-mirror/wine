@@ -19,6 +19,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define COBJMACROS
 #include "config.h"
 
 #include <stdarg.h>
@@ -30,6 +31,8 @@
 #include "propsys.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
+
+#include "propsys_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(propsys);
 
@@ -64,6 +67,80 @@ HRESULT WINAPI DllRegisterServer(void)
 HRESULT WINAPI DllUnregisterServer(void)
 {
     return __wine_unregister_resources( propsys_hInstance );
+}
+
+static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)
+{
+    *ppv = NULL;
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", iface, ppv);
+        *ppv = iface;
+    }else if(IsEqualGUID(&IID_IClassFactory, riid)) {
+        TRACE("(%p)->(IID_IClassFactory %p)\n", iface, ppv);
+        *ppv = iface;
+    }
+
+    if(*ppv) {
+        IUnknown_AddRef((IUnknown*)*ppv);
+        return S_OK;
+    }
+
+    FIXME("(%p)->(%s %p)\n", iface, debugstr_guid(riid), ppv);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ClassFactory_AddRef(IClassFactory *iface)
+{
+    TRACE("(%p)\n", iface);
+    return 2;
+}
+
+static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
+{
+    TRACE("(%p)\n", iface);
+    return 1;
+}
+
+static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL fLock)
+{
+    TRACE("(%p)->(%x)\n", iface, fLock);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI InMemoryPropertyStoreFactory_CreateInstance(IClassFactory *iface, IUnknown *outer,
+        REFIID riid, void **ppv)
+{
+    TRACE("(%p %s %p)\n", outer, debugstr_guid(riid), ppv);
+
+    return PropertyStore_CreateInstance(outer, riid, ppv);
+}
+
+static const IClassFactoryVtbl InMemoryPropertyStoreFactoryVtbl = {
+    ClassFactory_QueryInterface,
+    ClassFactory_AddRef,
+    ClassFactory_Release,
+    InMemoryPropertyStoreFactory_CreateInstance,
+    ClassFactory_LockServer
+};
+
+static IClassFactory InMemoryPropertyStoreFactory = { &InMemoryPropertyStoreFactoryVtbl };
+
+HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
+{
+    if(IsEqualGUID(&CLSID_InMemoryPropertyStore, rclsid)) {
+        TRACE("(CLSID_InMemoryPropertyStore %s %p)\n", debugstr_guid(riid), ppv);
+        return IClassFactory_QueryInterface(&InMemoryPropertyStoreFactory, riid, ppv);
+    }
+
+    FIXME("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
+    return CLASS_E_CLASSNOTAVAILABLE;
+}
+
+HRESULT WINAPI DllCanUnloadNow(void)
+{
+    return S_FALSE;
 }
 
 HRESULT WINAPI PSRegisterPropertySchema(PCWSTR path)

@@ -46,7 +46,7 @@ static void test_inmemorystore(void)
 
     hr = CoCreateInstance(&CLSID_InMemoryPropertyStore, NULL, CLSCTX_INPROC_SERVER,
         &IID_IPropertyStoreCache, (void**)&propcache);
-    todo_wine ok(hr == S_OK, "CoCreateInstance failed, hr=%x\n", hr);
+    ok(hr == S_OK, "CoCreateInstance failed, hr=%x\n", hr);
 
     if (FAILED(hr))
     {
@@ -55,11 +55,11 @@ static void test_inmemorystore(void)
     }
 
     hr = IPropertyStoreCache_GetCount(propcache, NULL);
-    ok(hr == E_POINTER, "GetCount failed, hr=%x\n", hr);
+    todo_wine ok(hr == E_POINTER, "GetCount failed, hr=%x\n", hr);
 
     hr = IPropertyStoreCache_GetCount(propcache, &count);
-    ok(hr == S_OK, "GetCount failed, hr=%x\n", hr);
-    ok(count == 0, "GetCount returned %i, expected 0\n", count);
+    todo_wine ok(hr == S_OK, "GetCount failed, hr=%x\n", hr);
+    todo_wine ok(count == 0, "GetCount returned %i, expected 0\n", count);
 
     hr = IPropertyStoreCache_Commit(propcache);
     ok(hr == S_OK, "Commit failed, hr=%x\n", hr);
@@ -68,7 +68,7 @@ static void test_inmemorystore(void)
     ok(hr == S_OK, "Commit failed, hr=%x\n", hr);
 
     hr = IPropertyStoreCache_GetAt(propcache, 0, &pkey);
-    ok(hr == E_INVALIDARG, "GetAt failed, hr=%x\n", hr);
+    todo_wine ok(hr == E_INVALIDARG, "GetAt failed, hr=%x\n", hr);
 
     pkey.fmtid = PKEY_WineTest;
     pkey.pid = 4;
@@ -88,18 +88,18 @@ static void test_inmemorystore(void)
     }
 
     hr = IPropertyStoreCache_SetValue(propcache, &pkey, &propvar);
-    ok(hr == S_OK, "SetValue failed, hr=%x\n", hr);
+    todo_wine ok(hr == S_OK, "SetValue failed, hr=%x\n", hr);
 
     hr = IPropertyStoreCache_GetCount(propcache, &count);
-    ok(hr == S_OK, "GetCount failed, hr=%x\n", hr);
-    ok(count == 1, "GetCount returned %i, expected 0\n", count);
+    todo_wine ok(hr == S_OK, "GetCount failed, hr=%x\n", hr);
+    todo_wine ok(count == 1, "GetCount returned %i, expected 0\n", count);
 
     memset(&pkey, 0, sizeof(pkey));
 
     hr = IPropertyStoreCache_GetAt(propcache, 0, &pkey);
-    ok(hr == S_OK, "GetAt failed, hr=%x\n", hr);
-    ok(IsEqualGUID(&pkey.fmtid, &PKEY_WineTest), "got wrong pkey\n");
-    ok(pkey.pid == 4, "got pid of %i, expected 4\n", pkey.pid);
+    todo_wine ok(hr == S_OK, "GetAt failed, hr=%x\n", hr);
+    todo_wine ok(IsEqualGUID(&pkey.fmtid, &PKEY_WineTest), "got wrong pkey\n");
+    todo_wine ok(pkey.pid == 4, "got pid of %i, expected 4\n", pkey.pid);
 
     pkey.fmtid = PKEY_WineTest;
     pkey.pid = 4;
@@ -114,12 +114,12 @@ static void test_inmemorystore(void)
     }
 
     hr = IPropertyStoreCache_GetValue(propcache, &pkey, NULL);
-    ok(hr == E_POINTER, "GetValue failed, hr=%x\n", hr);
+    todo_wine ok(hr == E_POINTER, "GetValue failed, hr=%x\n", hr);
 
     hr = IPropertyStoreCache_GetValue(propcache, &pkey, &propvar);
-    ok(hr == S_OK, "GetValue failed, hr=%x\n", hr);
-    ok(propvar.vt == VT_I4, "expected VT_I4, got %d\n", propvar.vt);
-    ok(propvar.u.lVal == 12345, "expected 12345, got %d\n", propvar.u.lVal);
+    todo_wine ok(hr == S_OK, "GetValue failed, hr=%x\n", hr);
+    todo_wine ok(propvar.vt == VT_I4, "expected VT_I4, got %d\n", propvar.vt);
+    todo_wine ok(propvar.u.lVal == 12345, "expected 12345, got %d\n", propvar.u.lVal);
 
     pkey.fmtid = PKEY_WineTest;
     pkey.pid = 10;
@@ -127,24 +127,24 @@ static void test_inmemorystore(void)
     /* Get information for field that isn't set yet */
     propvar.vt = VT_I2;
     hr = IPropertyStoreCache_GetValue(propcache, &pkey, &propvar);
-    ok(hr == S_OK, "GetValue failed, hr=%x\n", hr);
-    ok(propvar.vt == VT_EMPTY, "expected VT_EMPTY, got %d\n", propvar.vt);
+    todo_wine ok(hr == S_OK, "GetValue failed, hr=%x\n", hr);
+    todo_wine ok(propvar.vt == VT_EMPTY, "expected VT_EMPTY, got %d\n", propvar.vt);
 
     state = 0xdeadbeef;
     hr = IPropertyStoreCache_GetState(propcache, &pkey, &state);
-    ok(hr == TYPE_E_ELEMENTNOTFOUND, "GetState failed, hr=%x\n", hr);
-    ok(state == PSC_NORMAL, "expected PSC_NORMAL, got %d\n", state);
+    todo_wine ok(hr == TYPE_E_ELEMENTNOTFOUND, "GetState failed, hr=%x\n", hr);
+    todo_wine ok(state == PSC_NORMAL, "expected PSC_NORMAL, got %d\n", state);
 
     propvar.vt = VT_I2;
     state = 0xdeadbeef;
     hr = IPropertyStoreCache_GetValueAndState(propcache, &pkey, &propvar, &state);
-    ok(hr == TYPE_E_ELEMENTNOTFOUND, "GetValueAndState failed, hr=%x\n", hr);
-    ok(propvar.vt == VT_EMPTY, "expected VT_EMPTY, got %d\n", propvar.vt);
-    ok(state == PSC_NORMAL, "expected PSC_NORMAL, got %d\n", state);
+    todo_wine ok(hr == TYPE_E_ELEMENTNOTFOUND, "GetValueAndState failed, hr=%x\n", hr);
+    todo_wine ok(propvar.vt == VT_EMPTY, "expected VT_EMPTY, got %d\n", propvar.vt);
+    todo_wine ok(state == PSC_NORMAL, "expected PSC_NORMAL, got %d\n", state);
 
     /* Set state on an unset field */
     hr = IPropertyStoreCache_SetState(propcache, &pkey, PSC_NORMAL);
-    ok(hr == TYPE_E_ELEMENTNOTFOUND, "SetState failed, hr=%x\n", hr);
+    todo_wine ok(hr == TYPE_E_ELEMENTNOTFOUND, "SetState failed, hr=%x\n", hr);
 
     /* Manipulate state on already set field */
     pkey.fmtid = PKEY_WineTest;
@@ -152,29 +152,29 @@ static void test_inmemorystore(void)
 
     state = 0xdeadbeef;
     hr = IPropertyStoreCache_GetState(propcache, &pkey, &state);
-    ok(hr == S_OK, "GetState failed, hr=%x\n", hr);
-    ok(state == PSC_NORMAL, "expected PSC_NORMAL, got %d\n", state);
+    todo_wine ok(hr == S_OK, "GetState failed, hr=%x\n", hr);
+    todo_wine ok(state == PSC_NORMAL, "expected PSC_NORMAL, got %d\n", state);
 
     hr = IPropertyStoreCache_SetState(propcache, &pkey, 10);
-    ok(hr == S_OK, "SetState failed, hr=%x\n", hr);
+    todo_wine ok(hr == S_OK, "SetState failed, hr=%x\n", hr);
 
     state = 0xdeadbeef;
     hr = IPropertyStoreCache_GetState(propcache, &pkey, &state);
-    ok(hr == S_OK, "GetState failed, hr=%x\n", hr);
-    ok(state == 10, "expected 10, got %d\n", state);
+    todo_wine ok(hr == S_OK, "GetState failed, hr=%x\n", hr);
+    todo_wine ok(state == 10, "expected 10, got %d\n", state);
 
     propvar.vt = VT_I4;
     propvar.u.lVal = 12346;
     hr = IPropertyStoreCache_SetValueAndState(propcache, &pkey, &propvar, 5);
-    ok(hr == S_OK, "SetValueAndState failed, hr=%x\n", hr);
+    todo_wine ok(hr == S_OK, "SetValueAndState failed, hr=%x\n", hr);
 
     memset(&propvar, 0, sizeof(propvar));
     state = 0xdeadbeef;
     hr = IPropertyStoreCache_GetValueAndState(propcache, &pkey, &propvar, &state);
-    ok(hr == S_OK, "GetValueAndState failed, hr=%x\n", hr);
-    ok(propvar.vt == VT_I4, "expected VT_I4, got %d\n", propvar.vt);
-    ok(propvar.u.lVal == 12346, "expected 12346, got %d\n", propvar.vt);
-    ok(state == 5, "expected 5, got %d\n", state);
+    todo_wine ok(hr == S_OK, "GetValueAndState failed, hr=%x\n", hr);
+    todo_wine ok(propvar.vt == VT_I4, "expected VT_I4, got %d\n", propvar.vt);
+    todo_wine ok(propvar.u.lVal == 12346, "expected 12346, got %d\n", propvar.vt);
+    todo_wine ok(state == 5, "expected 5, got %d\n", state);
 
     /* Set new field with state */
     pkey.fmtid = PKEY_WineTest;
@@ -183,15 +183,15 @@ static void test_inmemorystore(void)
     propvar.vt = VT_I4;
     propvar.u.lVal = 12347;
     hr = IPropertyStoreCache_SetValueAndState(propcache, &pkey, &propvar, PSC_DIRTY);
-    ok(hr == S_OK, "SetValueAndState failed, hr=%x\n", hr);
+    todo_wine ok(hr == S_OK, "SetValueAndState failed, hr=%x\n", hr);
 
     memset(&propvar, 0, sizeof(propvar));
     state = 0xdeadbeef;
     hr = IPropertyStoreCache_GetValueAndState(propcache, &pkey, &propvar, &state);
-    ok(hr == S_OK, "GetValueAndState failed, hr=%x\n", hr);
-    ok(propvar.vt == VT_I4, "expected VT_I4, got %d\n", propvar.vt);
-    ok(propvar.u.lVal == 12347, "expected 12347, got %d\n", propvar.vt);
-    ok(state == PSC_DIRTY, "expected PSC_DIRTY, got %d\n", state);
+    todo_wine ok(hr == S_OK, "GetValueAndState failed, hr=%x\n", hr);
+    todo_wine ok(propvar.vt == VT_I4, "expected VT_I4, got %d\n", propvar.vt);
+    todo_wine ok(propvar.u.lVal == 12347, "expected 12347, got %d\n", propvar.vt);
+    todo_wine ok(state == PSC_DIRTY, "expected PSC_DIRTY, got %d\n", state);
 
     IPropertyStoreCache_Release(propcache);
 }
