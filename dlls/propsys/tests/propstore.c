@@ -166,15 +166,15 @@ static void test_inmemorystore(void)
     propvar.vt = VT_I4;
     propvar.u.lVal = 12346;
     hr = IPropertyStoreCache_SetValueAndState(propcache, &pkey, &propvar, 5);
-    todo_wine ok(hr == S_OK, "SetValueAndState failed, hr=%x\n", hr);
+    ok(hr == S_OK, "SetValueAndState failed, hr=%x\n", hr);
 
     memset(&propvar, 0, sizeof(propvar));
     state = 0xdeadbeef;
     hr = IPropertyStoreCache_GetValueAndState(propcache, &pkey, &propvar, &state);
     ok(hr == S_OK, "GetValueAndState failed, hr=%x\n", hr);
     ok(propvar.vt == VT_I4, "expected VT_I4, got %d\n", propvar.vt);
-    todo_wine ok(propvar.u.lVal == 12346, "expected 12346, got %d\n", propvar.vt);
-    todo_wine ok(state == 5, "expected 5, got %d\n", state);
+    ok(propvar.u.lVal == 12346, "expected 12346, got %d\n", propvar.vt);
+    ok(state == 5, "expected 5, got %d\n", state);
 
     /* Set new field with state */
     pkey.fmtid = PKEY_WineTest;
@@ -183,15 +183,15 @@ static void test_inmemorystore(void)
     propvar.vt = VT_I4;
     propvar.u.lVal = 12347;
     hr = IPropertyStoreCache_SetValueAndState(propcache, &pkey, &propvar, PSC_DIRTY);
-    todo_wine ok(hr == S_OK, "SetValueAndState failed, hr=%x\n", hr);
+    ok(hr == S_OK, "SetValueAndState failed, hr=%x\n", hr);
 
     memset(&propvar, 0, sizeof(propvar));
     state = 0xdeadbeef;
     hr = IPropertyStoreCache_GetValueAndState(propcache, &pkey, &propvar, &state);
-    todo_wine ok(hr == S_OK, "GetValueAndState failed, hr=%x\n", hr);
-    todo_wine ok(propvar.vt == VT_I4, "expected VT_I4, got %d\n", propvar.vt);
-    todo_wine ok(propvar.u.lVal == 12347, "expected 12347, got %d\n", propvar.vt);
-    todo_wine ok(state == PSC_DIRTY, "expected PSC_DIRTY, got %d\n", state);
+    ok(hr == S_OK, "GetValueAndState failed, hr=%x\n", hr);
+    ok(propvar.vt == VT_I4, "expected VT_I4, got %d\n", propvar.vt);
+    ok(propvar.u.lVal == 12347, "expected 12347, got %d\n", propvar.vt);
+    ok(state == PSC_DIRTY, "expected PSC_DIRTY, got %d\n", state);
 
     IPropertyStoreCache_Release(propcache);
 }

@@ -402,8 +402,25 @@ static HRESULT WINAPI PropertyStore_SetState(IPropertyStoreCache *iface,
 static HRESULT WINAPI PropertyStore_SetValueAndState(IPropertyStoreCache *iface,
     REFPROPERTYKEY key, const PROPVARIANT *ppropvar, PSC_STATE state)
 {
-    FIXME("%p,%p,%p,%d: stub\n", iface, key, ppropvar, state);
-    return E_NOTIMPL;
+    PropertyStore *This = impl_from_IPropertyStoreCache(iface);
+    propstore_value *value;
+    HRESULT hr;
+
+    TRACE("%p,%p,%p,%d\n", iface, key, ppropvar, state);
+
+    EnterCriticalSection(&This->lock);
+
+    hr = PropertyStore_LookupValue(This, key, 1, &value);
+
+    if (SUCCEEDED(hr))
+        hr = PropVariantCopy(&value->propvar, ppropvar);
+
+    if (SUCCEEDED(hr))
+        value->state = state;
+
+    LeaveCriticalSection(&This->lock);
+
+    return hr;
 }
 
 static const IPropertyStoreCacheVtbl PropertyStore_Vtbl = {
