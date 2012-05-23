@@ -554,7 +554,7 @@ INT nulldrv_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT he
 
     dev = GET_DC_PHYSDEV( dc, pPutImage );
     copy_bitmapinfo( dst_info, src_info );
-    err = dev->funcs->pPutImage( dev, 0, clip, dst_info, &src_bits, &src, &dst, rop );
+    err = dev->funcs->pPutImage( dev, clip, dst_info, &src_bits, &src, &dst, rop );
     if (err == ERROR_BAD_FORMAT)
     {
         /* 1-bpp destination without a color table requires a fake 1-entry table
@@ -573,7 +573,7 @@ INT nulldrv_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT he
         {
             /* get rid of the fake 1-bpp table */
             if (dst_info->bmiHeader.biClrUsed == 1) dst_info->bmiHeader.biClrUsed = 0;
-            err = dev->funcs->pPutImage( dev, 0, clip, dst_info, &src_bits, &src, &dst, rop );
+            err = dev->funcs->pPutImage( dev, clip, dst_info, &src_bits, &src, &dst, rop );
         }
     }
 
@@ -581,7 +581,7 @@ INT nulldrv_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT he
     {
         copy_bitmapinfo( src_info, dst_info );
         err = stretch_bits( src_info, &src, dst_info, &dst, &src_bits, GetStretchBltMode( dev->hdc ) );
-        if (!err) err = dev->funcs->pPutImage( dev, 0, NULL, dst_info, &src_bits, &src, &dst, rop );
+        if (!err) err = dev->funcs->pPutImage( dev, NULL, dst_info, &src_bits, &src, &dst, rop );
     }
     if (err) ret = 0;
     else if (rop == SRCCOPY) ret = height;
@@ -850,11 +850,11 @@ INT nulldrv_SetDIBitsToDevice( PHYSDEV dev, INT x_dst, INT y_dst, DWORD cx, DWOR
 
     dev = GET_DC_PHYSDEV( dc, pPutImage );
     copy_bitmapinfo( dst_info, src_info );
-    err = dev->funcs->pPutImage( dev, 0, clip, dst_info, &src_bits, &src, &dst, SRCCOPY );
+    err = dev->funcs->pPutImage( dev, clip, dst_info, &src_bits, &src, &dst, SRCCOPY );
     if (err == ERROR_BAD_FORMAT)
     {
         err = convert_bits( src_info, &src, dst_info, &src_bits, FALSE );
-        if (!err) err = dev->funcs->pPutImage( dev, 0, clip, dst_info, &src_bits, &src, &dst, SRCCOPY );
+        if (!err) err = dev->funcs->pPutImage( dev, clip, dst_info, &src_bits, &src, &dst, SRCCOPY );
     }
     if (err) lines = 0;
 

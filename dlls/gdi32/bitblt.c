@@ -256,13 +256,13 @@ BOOL nulldrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
 
     if (!(dc_src = get_dc_ptr( src_dev->hdc ))) return FALSE;
     src_dev = GET_DC_PHYSDEV( dc_src, pGetImage );
-    err = src_dev->funcs->pGetImage( src_dev, 0, src_info, &bits, src );
+    err = src_dev->funcs->pGetImage( src_dev, src_info, &bits, src );
     release_dc_ptr( dc_src );
     if (err) return FALSE;
 
     dst_dev = GET_DC_PHYSDEV( dc_dst, pPutImage );
     copy_bitmapinfo( dst_info, src_info );
-    err = dst_dev->funcs->pPutImage( dst_dev, 0, 0, dst_info, &bits, src, dst, rop );
+    err = dst_dev->funcs->pPutImage( dst_dev, 0, dst_info, &bits, src, dst, rop );
     if (err == ERROR_BAD_FORMAT)
     {
         DWORD dst_colors = dst_info->bmiHeader.biClrUsed;
@@ -286,7 +286,7 @@ BOOL nulldrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
         {
             /* get rid of the fake destination table */
             dst_info->bmiHeader.biClrUsed = dst_colors;
-            err = dst_dev->funcs->pPutImage( dst_dev, 0, 0, dst_info, &bits, src, dst, rop );
+            err = dst_dev->funcs->pPutImage( dst_dev, 0, dst_info, &bits, src, dst, rop );
         }
     }
 
@@ -295,7 +295,7 @@ BOOL nulldrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
     {
         copy_bitmapinfo( src_info, dst_info );
         err = stretch_bits( src_info, src, dst_info, dst, &bits, GetStretchBltMode( dst_dev->hdc ));
-        if (!err) err = dst_dev->funcs->pPutImage( dst_dev, 0, 0, dst_info, &bits, src, dst, rop );
+        if (!err) err = dst_dev->funcs->pPutImage( dst_dev, 0, dst_info, &bits, src, dst, rop );
     }
 
     if (bits.free) bits.free( &bits );
@@ -316,7 +316,7 @@ BOOL nulldrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
 
     if (!(dc_src = get_dc_ptr( src_dev->hdc ))) return FALSE;
     src_dev = GET_DC_PHYSDEV( dc_src, pGetImage );
-    err = src_dev->funcs->pGetImage( src_dev, 0, src_info, &bits, src );
+    err = src_dev->funcs->pGetImage( src_dev, src_info, &bits, src );
     release_dc_ptr( dc_src );
     if (err) goto done;
 
@@ -368,12 +368,12 @@ DWORD nulldrv_BlendImage( PHYSDEV dev, BITMAPINFO *info, const struct gdi_image_
 
     dev = GET_DC_PHYSDEV( dc, pGetImage );
     orig_dst = *dst;
-    err = dev->funcs->pGetImage( dev, 0, dst_info, &dst_bits, dst );
+    err = dev->funcs->pGetImage( dev, dst_info, &dst_bits, dst );
     if (err) return err;
 
     dev = GET_DC_PHYSDEV( dc, pPutImage );
     err = blend_bits( info, bits, src, dst_info, &dst_bits, dst, blend );
-    if (!err) err = dev->funcs->pPutImage( dev, 0, 0, dst_info, &dst_bits, dst, &orig_dst, SRCCOPY );
+    if (!err) err = dev->funcs->pPutImage( dev, 0, dst_info, &dst_bits, dst, &orig_dst, SRCCOPY );
 
     if (dst_bits.free) dst_bits.free( &dst_bits );
     return err;
@@ -441,7 +441,7 @@ BOOL nulldrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
     info->bmiHeader.biHeight        = dst.visrect.bottom - dst.visrect.top;
     info->bmiHeader.biSizeImage     = 0;
     dev = GET_DC_PHYSDEV( dc, pPutImage );
-    err = dev->funcs->pPutImage( dev, 0, 0, info, NULL, NULL, NULL, 0 );
+    err = dev->funcs->pPutImage( dev, 0, info, NULL, NULL, NULL, 0 );
     if (err && err != ERROR_BAD_FORMAT) goto done;
 
     info->bmiHeader.biSizeImage = get_dib_image_size( info );
@@ -464,7 +464,7 @@ BOOL nulldrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
     rgn = CreateRectRgn( 0, 0, 0, 0 );
     gradient_bitmapinfo( info, bits.ptr, vert_array, nvert, grad_array, ngrad, mode, pts, rgn );
     OffsetRgn( rgn, dst.visrect.left, dst.visrect.top );
-    ret = !dev->funcs->pPutImage( dev, 0, rgn, info, &bits, &src, &dst, SRCCOPY );
+    ret = !dev->funcs->pPutImage( dev, rgn, info, &bits, &src, &dst, SRCCOPY );
 
     if (bits.free) bits.free( &bits );
     DeleteObject( rgn );
@@ -495,7 +495,7 @@ COLORREF nulldrv_GetPixel( PHYSDEV dev, INT x, INT y )
     if (!clip_visrect( dc, &src.visrect, &src.visrect )) return CLR_INVALID;
 
     dev = GET_DC_PHYSDEV( dc, pGetImage );
-    if (dev->funcs->pGetImage( dev, 0, info, &bits, &src )) return CLR_INVALID;
+    if (dev->funcs->pGetImage( dev, info, &bits, &src )) return CLR_INVALID;
 
     ret = get_pixel_bitmapinfo( info, bits.ptr, &src );
     if (bits.free) bits.free( &bits );

@@ -110,7 +110,7 @@ struct gdi_dc_funcs
     DWORD    (*pGetGlyphIndices)(PHYSDEV,LPCWSTR,INT,LPWORD,DWORD);
     DWORD    (*pGetGlyphOutline)(PHYSDEV,UINT,UINT,LPGLYPHMETRICS,DWORD,LPVOID,const MAT2*);
     BOOL     (*pGetICMProfile)(PHYSDEV,LPDWORD,LPWSTR);
-    DWORD    (*pGetImage)(PHYSDEV,HBITMAP,BITMAPINFO*,struct gdi_image_bits*,struct bitblt_coords*);
+    DWORD    (*pGetImage)(PHYSDEV,BITMAPINFO*,struct gdi_image_bits*,struct bitblt_coords*);
     DWORD    (*pGetKerningPairs)(PHYSDEV,DWORD,LPKERNINGPAIR);
     COLORREF (*pGetNearestColor)(PHYSDEV,COLORREF);
     UINT     (*pGetOutlineTextMetrics)(PHYSDEV,UINT,LPOUTLINETEXTMETRICW);
@@ -142,7 +142,7 @@ struct gdi_dc_funcs
     BOOL     (*pPolygon)(PHYSDEV,const POINT*,INT);
     BOOL     (*pPolyline)(PHYSDEV,const POINT*,INT);
     BOOL     (*pPolylineTo)(PHYSDEV,const POINT*,INT);
-    DWORD    (*pPutImage)(PHYSDEV,HBITMAP,HRGN,BITMAPINFO*,const struct gdi_image_bits*,struct bitblt_coords*,struct bitblt_coords*,DWORD);
+    DWORD    (*pPutImage)(PHYSDEV,HRGN,BITMAPINFO*,const struct gdi_image_bits*,struct bitblt_coords*,struct bitblt_coords*,DWORD);
     UINT     (*pRealizeDefaultPalette)(PHYSDEV);
     UINT     (*pRealizePalette)(PHYSDEV,HPALETTE,BOOL);
     BOOL     (*pRectangle)(PHYSDEV,INT,INT,INT,INT);
@@ -211,7 +211,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 29
+#define WINE_GDI_DRIVER_VERSION 30
 
 #define GDI_PRIORITY_NULL_DRV        0  /* null driver */
 #define GDI_PRIORITY_FONT_DRV      100  /* any font driver */

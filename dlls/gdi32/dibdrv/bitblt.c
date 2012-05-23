@@ -850,22 +850,12 @@ DWORD get_image_from_bitmap( BITMAPOBJ *bmp, BITMAPINFO *info,
 /***********************************************************************
  *           dibdrv_GetImage
  */
-DWORD dibdrv_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
-                       struct gdi_image_bits *bits, struct bitblt_coords *src )
+DWORD dibdrv_GetImage( PHYSDEV dev, BITMAPINFO *info, struct gdi_image_bits *bits,
+                       struct bitblt_coords *src )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
 
-    TRACE( "%p %p %p\n", dev, hbitmap, info );
-
-    if (hbitmap)
-    {
-        DWORD ret;
-        BITMAPOBJ *bmp = GDI_GetObjPtr( hbitmap, OBJ_BITMAP );
-        if (!bmp) return ERROR_INVALID_HANDLE;
-        ret = get_image_from_bitmap( bmp, info, bits, src );
-        GDI_ReleaseObj( hbitmap );
-        return ret;
-    }
+    TRACE( "%p %p\n", dev, info );
 
     return get_image_dib_info( &pdev->dib, info, bits, src );
 }
@@ -956,7 +946,7 @@ static inline BOOL rop_uses_pat(DWORD rop)
 /***********************************************************************
  *           dibdrv_PutImage
  */
-DWORD dibdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *info,
+DWORD dibdrv_PutImage( PHYSDEV dev, HRGN clip, BITMAPINFO *info,
                        const struct gdi_image_bits *bits, struct bitblt_coords *src,
                        struct bitblt_coords *dst, DWORD rop )
 {
@@ -966,17 +956,7 @@ DWORD dibdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *info
     HRGN tmp_rgn = 0;
     dibdrv_physdev *pdev = get_dibdrv_pdev( dev );
 
-    TRACE( "%p %p %p\n", dev, hbitmap, info );
-
-    if (hbitmap)
-    {
-        DWORD ret;
-        BITMAPOBJ *bmp = GDI_GetObjPtr( hbitmap, OBJ_BITMAP );
-        if (!bmp) return ERROR_INVALID_HANDLE;
-        ret = put_image_into_bitmap( bmp, clip, info, bits, src, dst );
-        GDI_ReleaseObj( hbitmap );
-        return ret;
-    }
+    TRACE( "%p %p\n", dev, info );
 
     if (!matching_color_info( &pdev->dib, info )) goto update_format;
     if (!bits) return ERROR_SUCCESS;

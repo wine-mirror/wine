@@ -167,7 +167,7 @@ static void PSDRV_WriteImageBits( PHYSDEV dev, const BITMAPINFO *info, INT xDst,
 /***********************************************************************
  *           PSDRV_PutImage
  */
-DWORD PSDRV_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *info,
+DWORD PSDRV_PutImage( PHYSDEV dev, HRGN clip, BITMAPINFO *info,
                       const struct gdi_image_bits *bits, struct bitblt_coords *src,
                       struct bitblt_coords *dst, DWORD rop )
 {
@@ -175,8 +175,6 @@ DWORD PSDRV_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *info,
     int dst_x, dst_y, dst_width, dst_height;
     unsigned char *src_ptr, *dst_ptr;
     struct gdi_image_bits dst_bits;
-
-    if (hbitmap) return ERROR_NOT_SUPPORTED;
 
     if (info->bmiHeader.biPlanes != 1) goto update_format;
     if (info->bmiHeader.biCompression != BI_RGB) goto update_format;

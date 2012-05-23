@@ -385,8 +385,8 @@ static BOOL nulldrv_GetICMProfile( PHYSDEV dev, LPDWORD size, LPWSTR filename )
     return FALSE;
 }
 
-static DWORD nulldrv_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
-                               struct gdi_image_bits *bits, struct bitblt_coords *src )
+static DWORD nulldrv_GetImage( PHYSDEV dev, BITMAPINFO *info, struct gdi_image_bits *bits,
+                               struct bitblt_coords *src )
 {
     return ERROR_NOT_SUPPORTED;
 }
@@ -502,7 +502,7 @@ static BOOL nulldrv_Polyline( PHYSDEV dev, const POINT *points, INT count )
     return PolyPolyline( dev->hdc, points, counts, 1 );
 }
 
-static DWORD nulldrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *info,
+static DWORD nulldrv_PutImage( PHYSDEV dev, HRGN clip, BITMAPINFO *info,
                                const struct gdi_image_bits *bits, struct bitblt_coords *src,
                                struct bitblt_coords *dst, DWORD rop )
 {

@@ -118,8 +118,8 @@ extern BOOL     dibdrv_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT b
 extern BOOL     dibdrv_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT type ) DECLSPEC_HIDDEN;
 extern BOOL     dibdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
                                    const RECT *rect, LPCWSTR str, UINT count, const INT *dx ) DECLSPEC_HIDDEN;
-extern DWORD    dibdrv_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
-                                 struct gdi_image_bits *bits, struct bitblt_coords *src ) DECLSPEC_HIDDEN;
+extern DWORD    dibdrv_GetImage( PHYSDEV dev, BITMAPINFO *info, struct gdi_image_bits *bits,
+                                 struct bitblt_coords *src ) DECLSPEC_HIDDEN;
 extern COLORREF dibdrv_GetNearestColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
 extern COLORREF dibdrv_GetPixel( PHYSDEV dev, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL     dibdrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
@@ -134,7 +134,7 @@ extern BOOL     dibdrv_PolyPolyline( PHYSDEV dev, const POINT* pt, const DWORD* 
                                      DWORD polylines ) DECLSPEC_HIDDEN;
 extern BOOL     dibdrv_Polygon( PHYSDEV dev, const POINT *pt, INT count ) DECLSPEC_HIDDEN;
 extern BOOL     dibdrv_Polyline( PHYSDEV dev, const POINT* pt, INT count ) DECLSPEC_HIDDEN;
-extern DWORD    dibdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *info,
+extern DWORD    dibdrv_PutImage( PHYSDEV dev, HRGN clip, BITMAPINFO *info,
                                  const struct gdi_image_bits *bits, struct bitblt_coords *src,
                                  struct bitblt_coords *dst, DWORD rop ) DECLSPEC_HIDDEN;
 extern BOOL     dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom ) DECLSPEC_HIDDEN;

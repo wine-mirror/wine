@@ -1896,7 +1896,7 @@ BOOL nulldrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *rect
             info->bmiHeader.biSize   = sizeof(info->bmiHeader);
             info->bmiHeader.biWidth  = src.width;
             info->bmiHeader.biHeight = -src.height;
-            err = dst_dev->funcs->pPutImage( dst_dev, 0, 0, info, NULL, NULL, NULL, 0 );
+            err = dst_dev->funcs->pPutImage( dst_dev, 0, info, NULL, NULL, NULL, 0 );
             if (!err || err == ERROR_BAD_FORMAT)
             {
                 /* make the source rectangle relative to the source bits */
@@ -1915,7 +1915,7 @@ BOOL nulldrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *rect
         else
         {
             PHYSDEV src_dev = GET_DC_PHYSDEV( dc, pGetImage );
-            err = src_dev->funcs->pGetImage( src_dev, 0, info, &bits, &src );
+            err = src_dev->funcs->pGetImage( src_dev, info, &bits, &src );
             if (!err && !bits.is_copy)
             {
                 void *ptr = HeapAlloc( GetProcessHeap(), 0, get_dib_image_size( info ));
@@ -1938,7 +1938,7 @@ BOOL nulldrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *rect
             y += src.visrect.top - dst.visrect.top;
             render_aa_text_bitmapinfo( dev->hdc, info, &bits, &src, x, y, flags,
                                        aa_flags, str, count, dx );
-            err = dst_dev->funcs->pPutImage( dst_dev, 0, 0, info, &bits, &src, &dst, SRCCOPY );
+            err = dst_dev->funcs->pPutImage( dst_dev, 0, info, &bits, &src, &dst, SRCCOPY );
             if (bits.free) bits.free( &bits );
             return !err;
         }
