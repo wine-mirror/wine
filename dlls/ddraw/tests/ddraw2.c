@@ -1373,6 +1373,7 @@ static void test_ck_rgba(void)
     if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
     {
         skip("Failed to create D3D device, skipping test.\n");
+        IDirectDraw2_Release(ddraw);
         DestroyWindow(window);
         return;
     }
@@ -1586,6 +1587,7 @@ static void test_surface_qi(void)
     if (!(ddraw = create_ddraw()))
     {
         skip("Failed to create a ddraw object, skipping test.\n");
+        DestroyWindow(window);
         return;
     }
     /* Try to create a D3D device to see if the ddraw implementation supports
@@ -1594,6 +1596,7 @@ static void test_surface_qi(void)
     if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
     {
         skip("Failed to create D3D device, skipping test.\n");
+        IDirectDraw2_Release(ddraw);
         DestroyWindow(window);
         return;
     }
@@ -1678,6 +1681,7 @@ static void test_device_qi(void)
     if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
     {
         skip("Failed to create D3D device, skipping test.\n");
+        IDirectDraw2_Release(ddraw);
         DestroyWindow(window);
         return;
     }
