@@ -318,6 +318,34 @@ static inline void release_val(variant_val_t *v)
         VariantClear(v->v);
 }
 
+static int stack_pop_bool(exec_ctx_t *ctx, BOOL *b)
+{
+    variant_val_t val;
+    HRESULT hres;
+
+    hres = stack_pop_val(ctx, &val);
+    if(FAILED(hres))
+        return hres;
+
+    switch (V_VT(val.v))
+    {
+    case VT_BOOL:
+        *b = V_BOOL(val.v);
+        break;
+    case VT_I2:
+        *b = V_I2(val.v);
+        break;
+    case VT_I4:
+        *b = V_I4(val.v);
+        break;
+    default:
+        FIXME("unsupported for %s\n", debugstr_variant(val.v));
+        release_val(&val);
+        return E_NOTIMPL;
+    }
+    return S_OK;
+}
+
 static HRESULT stack_pop_disp(exec_ctx_t *ctx, IDispatch **ret)
 {
     VARIANT *v = stack_pop(ctx);
@@ -827,22 +855,16 @@ static HRESULT interp_jmp(exec_ctx_t *ctx)
 static HRESULT interp_jmp_false(exec_ctx_t *ctx)
 {
     const unsigned arg = ctx->instr->arg1.uint;
-    variant_val_t val;
     HRESULT hres;
+    BOOL b;
 
     TRACE("%u\n", arg);
 
-    hres = stack_pop_val(ctx, &val);
+    hres = stack_pop_bool(ctx, &b);
     if(FAILED(hres))
         return hres;
 
-    if(V_VT(val.v) != VT_BOOL) {
-        FIXME("unsupported for %s\n", debugstr_variant(val.v));
-        release_val(&val);
-        return E_NOTIMPL;
-    }
-
-    if(V_BOOL(val.v))
+    if(b)
         ctx->instr++;
     else
         instr_jmp(ctx, ctx->instr->arg1.uint);
@@ -852,22 +874,16 @@ static HRESULT interp_jmp_false(exec_ctx_t *ctx)
 static HRESULT interp_jmp_true(exec_ctx_t *ctx)
 {
     const unsigned arg = ctx->instr->arg1.uint;
-    variant_val_t val;
     HRESULT hres;
+    BOOL b;
 
     TRACE("%u\n", arg);
 
-    hres = stack_pop_val(ctx, &val);
+    hres = stack_pop_bool(ctx, &b);
     if(FAILED(hres))
         return hres;
 
-    if(V_VT(val.v) != VT_BOOL) {
-        FIXME("unsupported for %s\n", debugstr_variant(val.v));
-        release_val(&val);
-        return E_NOTIMPL;
-    }
-
-    if(V_BOOL(val.v))
+    if(b)
         instr_jmp(ctx, ctx->instr->arg1.uint);
     else
         ctx->instr++;
