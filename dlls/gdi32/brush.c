@@ -97,7 +97,6 @@ BOOL store_brush_pattern( LOGBRUSH *brush, struct brush_pattern *pattern )
 {
     HGLOBAL hmem = 0;
 
-    pattern->bitmap = 0;
     pattern->info = NULL;
     pattern->bits.free = NULL;
 

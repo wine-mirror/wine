@@ -2244,7 +2244,6 @@ const struct gdi_dc_funcs path_driver =
     NULL,                               /* pChoosePixelFormat */
     pathdrv_Chord,                      /* pChord */
     pathdrv_CloseFigure,                /* pCloseFigure */
-    NULL,                               /* pCopyBitmap */
     NULL,                               /* pCreateBitmap */
     NULL,                               /* pCreateCompatibleDC */
     pathdrv_CreateDC,                   /* pCreateDC */

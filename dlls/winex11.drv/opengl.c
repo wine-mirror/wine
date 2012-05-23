@@ -3935,7 +3935,6 @@ static const struct gdi_dc_funcs glxdrv_funcs =
     glxdrv_ChoosePixelFormat,           /* pChoosePixelFormat */
     NULL,                               /* pChord */
     NULL,                               /* pCloseFigure */
-    NULL,                               /* pCopyBitmap */
     NULL,                               /* pCreateBitmap */
     glxdrv_CreateCompatibleDC,          /* pCreateCompatibleDC */
     glxdrv_CreateDC,                    /* pCreateDC */
