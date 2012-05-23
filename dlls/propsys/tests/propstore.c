@@ -196,11 +196,64 @@ static void test_inmemorystore(void)
     IPropertyStoreCache_Release(propcache);
 }
 
+static void test_persistserialized(void)
+{
+    IPropertyStore *propstore;
+    IPersistSerializedPropStorage *serialized;
+    HRESULT hr;
+    SERIALIZEDPROPSTORAGE *result;
+    DWORD result_size;
+
+    hr = CoCreateInstance(&CLSID_InMemoryPropertyStore, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IPropertyStore, (void**)&propstore);
+    ok(hr == S_OK, "CoCreateInstance failed, hr=%x\n", hr);
+
+    hr = IPropertyStore_QueryInterface(propstore, &IID_IPersistSerializedPropStorage,
+        (void**)&serialized);
+    todo_wine ok(hr == S_OK, "QueryInterface failed, hr=%x\n", hr);
+
+    if (FAILED(hr))
+    {
+        skip("IPersistSerializedPropStorage not supported\n");
+        return;
+    }
+
+    hr = IPersistSerializedPropStorage_GetPropertyStorage(serialized, NULL, &result_size);
+    ok(hr == E_POINTER, "GetPropertyStorage failed, hr=%x\n", hr);
+
+    hr = IPersistSerializedPropStorage_GetPropertyStorage(serialized, &result, NULL);
+    ok(hr == E_POINTER, "GetPropertyStorage failed, hr=%x\n", hr);
+
+    hr = IPersistSerializedPropStorage_GetPropertyStorage(serialized, &result, &result_size);
+    ok(hr == S_OK, "GetPropertyStorage failed, hr=%x\n", hr);
+
+    if (SUCCEEDED(hr))
+    {
+        ok(result_size == 0, "expected 0 bytes, got %i\n", result_size);
+
+        CoTaskMemFree(result);
+    }
+
+    hr = IPersistSerializedPropStorage_SetPropertyStorage(serialized, NULL, 4);
+    ok(hr == E_POINTER, "SetPropertyStorage failed, hr=%x\n", hr);
+
+    hr = IPersistSerializedPropStorage_SetPropertyStorage(serialized, NULL, 0);
+    ok(hr == S_OK, "SetPropertyStorage failed, hr=%x\n", hr);
+
+    hr = IPropertyStore_GetCount(propstore, &result_size);
+    ok(hr == S_OK, "GetCount failed, hr=%x\n", hr);
+    ok(result_size == 0, "expecting 0, got %d\n", result_size);
+
+    IPropertyStore_Release(propstore);
+    IPersistSerializedPropStorage_Release(serialized);
+}
+
 START_TEST(propstore)
 {
     CoInitialize(NULL);
 
     test_inmemorystore();
+    test_persistserialized();
 
     CoUninitialize();
 }
