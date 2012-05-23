@@ -102,6 +102,8 @@ static inline void init_fmtetc(FORMATETC *fmt, CLIPFORMAT cf, TYMED tymed)
  */
 static HRESULT get_storage(IDataObject *data, IStorage *stg, UINT *src_cf)
 {
+    static const UINT fmt_id[] = { CF_METAFILEPICT, CF_BITMAP, CF_DIB };
+    UINT i;
     HRESULT hr;
     FORMATETC fmt;
     STGMEDIUM med;
@@ -130,6 +132,17 @@ static HRESULT get_storage(IDataObject *data, IStorage *stg, UINT *src_cf)
     {
         *src_cf = embed_source_clipboard_format;
         return hr;
+    }
+
+    for (i = 0; i < sizeof(fmt_id)/sizeof(fmt_id[0]); i++)
+    {
+        init_fmtetc(&fmt, fmt_id[i], TYMED_ISTORAGE);
+        hr = IDataObject_QueryGetData(data, &fmt);
+        if(SUCCEEDED(hr))
+        {
+            *src_cf = fmt_id[i];
+            return hr;
+        }
     }
 
     /* IPersistStorage */
