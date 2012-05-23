@@ -515,22 +515,6 @@ static enum wxr_format get_xrender_format_from_bitmapinfo( const BITMAPINFO *inf
     return WXR_INVALID_FORMAT;
 }
 
-static enum wxr_format get_bitmap_format( int bpp )
-{
-    enum wxr_format format = WXR_INVALID_FORMAT;
-
-    if (bpp == screen_bpp)
-    {
-        switch (bpp)
-        {
-        case 16: format = WXR_FORMAT_R5G6B5; break;
-        case 24: format = WXR_FORMAT_R8G8B8; break;
-        case 32: format = WXR_FORMAT_A8R8G8B8; break;
-        }
-    }
-    return format;
-}
-
 /* Set the x/y scaling and x/y offsets in the transformation matrix of the source picture */
 static void set_xrender_transformation(Picture src_pict, double xscale, double yscale, int xoffset, int yoffset)
 {
@@ -1245,55 +1229,6 @@ static INT xrenderdrv_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID 
         }
     }
     return dev->funcs->pExtEscape( dev, escape, in_count, in_data, out_count, out_data );
-}
-
-/****************************************************************************
- *	  xrenderdrv_CreateBitmap
- */
-static BOOL xrenderdrv_CreateBitmap( PHYSDEV dev, HBITMAP hbitmap )
-{
-    enum wxr_format format = WXR_INVALID_FORMAT;
-    X_PHYSBITMAP *phys_bitmap;
-    BITMAP bitmap;
-
-    if (!GetObjectW( hbitmap, sizeof(bitmap), &bitmap )) return FALSE;
-
-    if (bitmap.bmBitsPixel == 1)
-    {
-        if (!(phys_bitmap = X11DRV_create_phys_bitmap( hbitmap, &bitmap, 1 ))) return FALSE;
-        phys_bitmap->format = WXR_FORMAT_MONO;
-        phys_bitmap->trueColor = FALSE;
-    }
-    else
-    {
-        format = get_bitmap_format( bitmap.bmBitsPixel );
-
-        if (pict_formats[format])
-        {
-            if (!(phys_bitmap = X11DRV_create_phys_bitmap( hbitmap, &bitmap, pict_formats[format]->depth )))
-                return FALSE;
-            phys_bitmap->format = format;
-            phys_bitmap->trueColor = TRUE;
-            phys_bitmap->color_shifts = wxr_color_shifts[format];
-        }
-        else
-        {
-            if (!(phys_bitmap = X11DRV_create_phys_bitmap( hbitmap, &bitmap, screen_depth )))
-                return FALSE;
-            phys_bitmap->format = WXR_INVALID_FORMAT;
-            phys_bitmap->trueColor = (visual->class == TrueColor || visual->class == DirectColor);
-            phys_bitmap->color_shifts = X11DRV_PALETTE_default_shifts;
-        }
-    }
-    return TRUE;
-}
-
-/****************************************************************************
- *	  xrenderdrv_DeleteBitmap
- */
-static BOOL xrenderdrv_DeleteBitmap( HBITMAP hbitmap )
-{
-    return X11DRV_DeleteBitmap( hbitmap );
 }
 
 /***********************************************************************
@@ -2590,10 +2525,8 @@ static const struct gdi_dc_funcs xrender_funcs =
     NULL,                               /* pChoosePixelFormat */
     NULL,                               /* pChord */
     NULL,                               /* pCloseFigure */
-    xrenderdrv_CreateBitmap,            /* pCreateBitmap */
     xrenderdrv_CreateCompatibleDC,      /* pCreateCompatibleDC */
     xrenderdrv_CreateDC,                /* pCreateDC */
-    xrenderdrv_DeleteBitmap,            /* pDeleteBitmap */
     xrenderdrv_DeleteDC,                /* pDeleteDC */
     NULL,                               /* pDeleteObject */
     NULL,                               /* pDescribePixelFormat */

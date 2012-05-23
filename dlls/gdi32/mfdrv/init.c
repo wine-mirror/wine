@@ -110,10 +110,8 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     NULL,                            /* pChoosePixelFormat */
     MFDRV_Chord,                     /* pChord */
     MFDRV_CloseFigure,               /* pCloseFigure */
-    NULL,                            /* pCreateBitmap */
     MFDRV_CreateCompatibleDC,        /* pCreateCompatibleDC */
     NULL,                            /* pCreateDC */
-    NULL,                            /* pDeleteBitmap */
     MFDRV_DeleteDC,                  /* pDeleteDC */
     MFDRV_DeleteObject,              /* pDeleteObject */
     NULL,                            /* pDescribePixelFormat */

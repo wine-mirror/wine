@@ -209,11 +209,6 @@ static BOOL nulldrv_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom
     return TRUE;
 }
 
-static BOOL nulldrv_CreateBitmap( PHYSDEV dev, HBITMAP bitmap )
-{
-    return TRUE;
-}
-
 static BOOL nulldrv_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
 {
     if (!display_driver || !display_driver->funcs->pCreateCompatibleDC) return TRUE;
@@ -225,11 +220,6 @@ static BOOL nulldrv_CreateDC( PHYSDEV *dev, LPCWSTR driver, LPCWSTR device,
 {
     assert(0);  /* should never be called */
     return FALSE;
-}
-
-static BOOL nulldrv_DeleteBitmap( HBITMAP bitmap )
-{
-    return TRUE;
 }
 
 static BOOL nulldrv_DeleteDC( PHYSDEV dev )
@@ -748,10 +738,8 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_ChoosePixelFormat,          /* pChoosePixelFormat */
     nulldrv_Chord,                      /* pChord */
     nulldrv_CloseFigure,                /* pCloseFigure */
-    nulldrv_CreateBitmap,               /* pCreateBitmap */
     nulldrv_CreateCompatibleDC,         /* pCreateCompatibleDC */
     nulldrv_CreateDC,                   /* pCreateDC */
-    nulldrv_DeleteBitmap,               /* pDeleteBitmap */
     nulldrv_DeleteDC,                   /* pDeleteDC */
     nulldrv_DeleteObject,               /* pDeleteObject */
     nulldrv_DescribePixelFormat,        /* pDescribePixelFormat */

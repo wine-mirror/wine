@@ -164,54 +164,6 @@ X_PHYSBITMAP *X11DRV_create_phys_bitmap( HBITMAP hbitmap, const BITMAP *bitmap, 
 }
 
 
-/****************************************************************************
- *	  CreateBitmap   (X11DRV.@)
- *
- * Create a device dependent X11 bitmap
- *
- * Returns TRUE on success else FALSE
- */
-BOOL X11DRV_CreateBitmap( PHYSDEV dev, HBITMAP hbitmap )
-{
-    BITMAP bitmap;
-    X_PHYSBITMAP *phys_bitmap;
-
-    if (!GetObjectW( hbitmap, sizeof(bitmap), &bitmap )) return FALSE;
-
-    if (bitmap.bmBitsPixel == 1)
-    {
-        if (!(phys_bitmap = X11DRV_create_phys_bitmap( hbitmap, &bitmap, 1 ))) return FALSE;
-        phys_bitmap->trueColor = FALSE;
-    }
-    else
-    {
-        if (!(phys_bitmap = X11DRV_create_phys_bitmap( hbitmap, &bitmap, screen_depth ))) return FALSE;
-        phys_bitmap->trueColor = (visual->class == TrueColor || visual->class == DirectColor);
-        phys_bitmap->color_shifts = X11DRV_PALETTE_default_shifts;
-    }
-    return TRUE;
-}
-
-
-/***********************************************************************
- *           DeleteBitmap   (X11DRV.@)
- */
-BOOL X11DRV_DeleteBitmap( HBITMAP hbitmap )
-{
-    X_PHYSBITMAP *physBitmap = X11DRV_get_phys_bitmap( hbitmap );
-
-    if (physBitmap)
-    {
-        wine_tsx11_lock();
-        if (physBitmap->pixmap) XFreePixmap( gdi_display, physBitmap->pixmap );
-        XDeleteContext( gdi_display, (XID)hbitmap, bitmap_context );
-        wine_tsx11_unlock();
-        HeapFree( GetProcessHeap(), 0, physBitmap );
-    }
-    return TRUE;
-}
-
-
 /***********************************************************************
  *           X11DRV_get_phys_bitmap
  *

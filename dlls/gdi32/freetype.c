@@ -7751,10 +7751,8 @@ static const struct gdi_dc_funcs freetype_funcs =
     NULL,                               /* pChoosePixelFormat */
     NULL,                               /* pChord */
     NULL,                               /* pCloseFigure */
-    NULL,                               /* pCreateBitmap */
     NULL,                               /* pCreateCompatibleDC */
     freetype_CreateDC,                  /* pCreateDC */
-    NULL,                               /* pDeleteBitmap */
     freetype_DeleteDC,                  /* pDeleteDC */
     NULL,                               /* pDeleteObject */
     NULL,                               /* pDescribePixelFormat */

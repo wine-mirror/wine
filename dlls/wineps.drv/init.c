@@ -829,10 +829,8 @@ static const struct gdi_dc_funcs psdrv_funcs =
     NULL,                               /* pChoosePixelFormat */
     PSDRV_Chord,                        /* pChord */
     NULL,                               /* pCloseFigure */
-    NULL,                               /* pCreateBitmap */
     PSDRV_CreateCompatibleDC,           /* pCreateCompatibleDC */
     PSDRV_CreateDC,                     /* pCreateDC */
-    NULL,                               /* pDeleteBitmap */
     PSDRV_DeleteDC,                     /* pDeleteDC */
     NULL,                               /* pDeleteObject */
     NULL,                               /* pDescribePixelFormat */

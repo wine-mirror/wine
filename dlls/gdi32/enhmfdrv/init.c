@@ -47,10 +47,8 @@ static const struct gdi_dc_funcs EMFDRV_Funcs =
     NULL,                            /* pChoosePixelFormat */
     EMFDRV_Chord,                    /* pChord */
     EMFDRV_CloseFigure,              /* pCloseFigure */
-    NULL,                            /* pCreateBitmap */
     NULL,                            /* pCreateCompatibleDC */
     NULL,                            /* pCreateDC */
-    NULL,                            /* pDeleteBitmap */
     EMFDRV_DeleteDC,                 /* pDeleteDC */
     EMFDRV_DeleteObject,             /* pDeleteObject */
     NULL,                            /* pDescribePixelFormat */
