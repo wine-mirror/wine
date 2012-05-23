@@ -4803,53 +4803,53 @@ static void draw_glyph_null( const dib_info *dib, const RECT *rect, const dib_in
     return;
 }
 
-static BOOL create_rop_masks_32(const dib_info *dib, const dib_info *hatch, const rop_mask *fg, const rop_mask *bg, rop_mask_bits *bits)
+static void create_rop_masks_32(const dib_info *dib, const BYTE *hatch_ptr,
+                                const rop_mask *fg, const rop_mask *bg, rop_mask_bits *bits)
 {
-    BYTE *hatch_start = get_pixel_ptr_1(hatch, 0, 0), *hatch_ptr;
-    DWORD mask_start = 0, mask_offset;
     DWORD *and_bits = bits->and, *xor_bits = bits->xor;
     int x, y;
 
-    for(y = 0; y < hatch->height; y++)
+    /* masks are always 8x8 */
+    assert( dib->width == 8 );
+    assert( dib->height == 8 );
+
+    for(y = 0; y < 8; y++, hatch_ptr++)
     {
-        hatch_ptr = hatch_start;
-        mask_offset = mask_start;
-        for(x = 0; x < hatch->width; x++)
+        for(x = 0; x < 8; x++)
         {
-            if(*hatch_ptr & pixel_masks_1[x % 8])
+            if(*hatch_ptr & pixel_masks_1[x])
             {
-                and_bits[mask_offset] = fg->and;
-                xor_bits[mask_offset] = fg->xor;
+                and_bits[x] = fg->and;
+                xor_bits[x] = fg->xor;
             }
             else
             {
-                and_bits[mask_offset] = bg->and;
-                xor_bits[mask_offset] = bg->xor;
+                and_bits[x] = bg->and;
+                xor_bits[x] = bg->xor;
             }
-            if(x % 8 == 7) hatch_ptr++;
-            mask_offset++;
         }
-        hatch_start += hatch->stride;
-        mask_start += dib->stride / 4;
+        and_bits += dib->stride / 4;
+        xor_bits += dib->stride / 4;
     }
-
-    return TRUE;
 }
 
-static BOOL create_rop_masks_24(const dib_info *dib, const dib_info *hatch, const rop_mask *fg, const rop_mask *bg, rop_mask_bits *bits)
+static void create_rop_masks_24(const dib_info *dib, const BYTE *hatch_ptr,
+                                const rop_mask *fg, const rop_mask *bg, rop_mask_bits *bits)
 {
-    BYTE *hatch_start = get_pixel_ptr_1(hatch, 0, 0), *hatch_ptr;
     DWORD mask_start = 0, mask_offset;
     BYTE *and_bits = bits->and, *xor_bits = bits->xor;
     int x, y;
 
-    for(y = 0; y < hatch->height; y++)
+    /* masks are always 8x8 */
+    assert( dib->width == 8 );
+    assert( dib->height == 8 );
+
+    for(y = 0; y < 8; y++, hatch_ptr++)
     {
-        hatch_ptr = hatch_start;
         mask_offset = mask_start;
-        for(x = 0; x < hatch->width; x++)
+        for(x = 0; x < 8; x++)
         {
-            if(*hatch_ptr & pixel_masks_1[x % 8])
+            if(*hatch_ptr & pixel_masks_1[x])
             {
                 and_bits[mask_offset]   =  fg->and        & 0xff;
                 xor_bits[mask_offset++] =  fg->xor        & 0xff;
@@ -4867,104 +4867,96 @@ static BOOL create_rop_masks_24(const dib_info *dib, const dib_info *hatch, cons
                 and_bits[mask_offset]   = (bg->and >> 16) & 0xff;
                 xor_bits[mask_offset++] = (bg->xor >> 16) & 0xff;
             }
-            if(x % 8 == 7) hatch_ptr++;
         }
-        hatch_start += hatch->stride;
         mask_start += dib->stride;
     }
-
-    return TRUE;
 }
 
-static BOOL create_rop_masks_16(const dib_info *dib, const dib_info *hatch, const rop_mask *fg, const rop_mask *bg, rop_mask_bits *bits)
+static void create_rop_masks_16(const dib_info *dib, const BYTE *hatch_ptr,
+                                const rop_mask *fg, const rop_mask *bg, rop_mask_bits *bits)
 {
-    BYTE *hatch_start = get_pixel_ptr_1(hatch, 0, 0), *hatch_ptr;
-    DWORD mask_start = 0, mask_offset;
     WORD *and_bits = bits->and, *xor_bits = bits->xor;
     int x, y;
 
-    for(y = 0; y < hatch->height; y++)
+    /* masks are always 8x8 */
+    assert( dib->width == 8 );
+    assert( dib->height == 8 );
+
+    for(y = 0; y < 8; y++, hatch_ptr++)
     {
-        hatch_ptr = hatch_start;
-        mask_offset = mask_start;
-        for(x = 0; x < hatch->width; x++)
+        for(x = 0; x < 8; x++)
         {
-            if(*hatch_ptr & pixel_masks_1[x % 8])
+            if(*hatch_ptr & pixel_masks_1[x])
             {
-                and_bits[mask_offset] = fg->and;
-                xor_bits[mask_offset] = fg->xor;
+                and_bits[x] = fg->and;
+                xor_bits[x] = fg->xor;
             }
             else
             {
-                and_bits[mask_offset] = bg->and;
-                xor_bits[mask_offset] = bg->xor;
+                and_bits[x] = bg->and;
+                xor_bits[x] = bg->xor;
             }
-            if(x % 8 == 7) hatch_ptr++;
-            mask_offset++;
         }
-        hatch_start += hatch->stride;
-        mask_start += dib->stride / 2;
+        and_bits += dib->stride / 2;
+        xor_bits += dib->stride / 2;
     }
-
-    return TRUE;
 }
 
-static BOOL create_rop_masks_8(const dib_info *dib, const dib_info *hatch, const rop_mask *fg, const rop_mask *bg, rop_mask_bits *bits)
+static void create_rop_masks_8(const dib_info *dib, const BYTE *hatch_ptr,
+                               const rop_mask *fg, const rop_mask *bg, rop_mask_bits *bits)
 {
-    BYTE *hatch_start = get_pixel_ptr_1(hatch, 0, 0), *hatch_ptr;
-    DWORD mask_start = 0, mask_offset;
     BYTE *and_bits = bits->and, *xor_bits = bits->xor;
     int x, y;
 
-    for(y = 0; y < hatch->height; y++)
+    /* masks are always 8x8 */
+    assert( dib->width == 8 );
+    assert( dib->height == 8 );
+
+    for(y = 0; y < 8; y++, hatch_ptr++)
     {
-        hatch_ptr = hatch_start;
-        mask_offset = mask_start;
-        for(x = 0; x < hatch->width; x++)
+        for(x = 0; x < 8; x++)
         {
-            if(*hatch_ptr & pixel_masks_1[x % 8])
+            if(*hatch_ptr & pixel_masks_1[x])
             {
-                and_bits[mask_offset] = fg->and;
-                xor_bits[mask_offset] = fg->xor;
+                and_bits[x] = fg->and;
+                xor_bits[x] = fg->xor;
             }
             else
             {
-                and_bits[mask_offset] = bg->and;
-                xor_bits[mask_offset] = bg->xor;
+                and_bits[x] = bg->and;
+                xor_bits[x] = bg->xor;
             }
-            if(x % 8 == 7) hatch_ptr++;
-            mask_offset++;
         }
-        hatch_start += hatch->stride;
-        mask_start += dib->stride;
+        and_bits += dib->stride;
+        xor_bits += dib->stride;
     }
-
-    return TRUE;
 }
 
-static BOOL create_rop_masks_4(const dib_info *dib, const dib_info *hatch, const rop_mask *fg, const rop_mask *bg, rop_mask_bits *bits)
+static void create_rop_masks_4(const dib_info *dib, const BYTE *hatch_ptr,
+                               const rop_mask *fg, const rop_mask *bg, rop_mask_bits *bits)
 {
-    BYTE *hatch_start = get_pixel_ptr_1(hatch, 0, 0), *hatch_ptr;
-    DWORD mask_start = 0, mask_offset;
+    DWORD mask_offset;
     BYTE *and_bits = bits->and, *xor_bits = bits->xor;
     const rop_mask *rop_mask;
     int x, y;
 
-    for(y = 0; y < hatch->height; y++)
+    /* masks are always 8x8 */
+    assert( dib->width == 8 );
+    assert( dib->height == 8 );
+
+    for(y = 0; y < 8; y++, hatch_ptr++)
     {
-        hatch_ptr = hatch_start;
-        mask_offset = mask_start;
-        for(x = 0; x < hatch->width; x++)
+        for(x = mask_offset = 0; x < 8; x++)
         {
-            if(*hatch_ptr & pixel_masks_1[x % 8])
+            if(*hatch_ptr & pixel_masks_1[x])
                 rop_mask = fg;
             else
                 rop_mask = bg;
 
             if(x & 1)
             {
-                and_bits[mask_offset] = (rop_mask->and & 0x0f) | (and_bits[mask_offset] & 0xf0);
-                xor_bits[mask_offset] = (rop_mask->xor & 0x0f) | (xor_bits[mask_offset] & 0xf0);
+                and_bits[mask_offset] |= (rop_mask->and & 0x0f);
+                xor_bits[mask_offset] |= (rop_mask->xor & 0x0f);
                 mask_offset++;
             }
             else
@@ -4972,31 +4964,29 @@ static BOOL create_rop_masks_4(const dib_info *dib, const dib_info *hatch, const
                 and_bits[mask_offset] = (rop_mask->and << 4) & 0xf0;
                 xor_bits[mask_offset] = (rop_mask->xor << 4) & 0xf0;
             }
-
-            if(x % 8 == 7) hatch_ptr++;
         }
-        hatch_start += hatch->stride;
-        mask_start += dib->stride;
+        and_bits += dib->stride;
+        xor_bits += dib->stride;
     }
-
-    return TRUE;
 }
 
-static BOOL create_rop_masks_1(const dib_info *dib, const dib_info *hatch, const rop_mask *fg, const rop_mask *bg, rop_mask_bits *bits)
+static void create_rop_masks_1(const dib_info *dib, const BYTE *hatch_ptr,
+                               const rop_mask *fg, const rop_mask *bg, rop_mask_bits *bits)
 {
-    BYTE *hatch_start = get_pixel_ptr_1(hatch, 0, 0), *hatch_ptr;
-    DWORD mask_start = 0, mask_offset;
     BYTE *and_bits = bits->and, *xor_bits = bits->xor;
     rop_mask rop_mask;
-    int x, y, bit_pos;
+    int x, y;
 
-    for(y = 0; y < hatch->height; y++)
+    /* masks are always 8x8 */
+    assert( dib->width == 8 );
+    assert( dib->height == 8 );
+
+    for(y = 0; y < 8; y++, hatch_ptr++)
     {
-        hatch_ptr = hatch_start;
-        mask_offset = mask_start;
-        for(x = 0, bit_pos = 0; x < hatch->width; x++)
+        *and_bits = *xor_bits = 0;
+        for(x = 0; x < 8; x++)
         {
-            if(*hatch_ptr & pixel_masks_1[x % 8])
+            if(*hatch_ptr & pixel_masks_1[x])
             {
                 rop_mask.and = (fg->and & 1) ? 0xff : 0;
                 rop_mask.xor = (fg->xor & 1) ? 0xff : 0;
@@ -5006,29 +4996,17 @@ static BOOL create_rop_masks_1(const dib_info *dib, const dib_info *hatch, const
                 rop_mask.and = (bg->and & 1) ? 0xff : 0;
                 rop_mask.xor = (bg->xor & 1) ? 0xff : 0;
             }
-
-            if(bit_pos == 0) and_bits[mask_offset] = xor_bits[mask_offset] = 0;
-
-            and_bits[mask_offset] = (rop_mask.and & pixel_masks_1[bit_pos]) | (and_bits[mask_offset] & ~pixel_masks_1[bit_pos]);
-            xor_bits[mask_offset] = (rop_mask.xor & pixel_masks_1[bit_pos]) | (xor_bits[mask_offset] & ~pixel_masks_1[bit_pos]);
-
-            if(++bit_pos == 8)
-            {
-                mask_offset++;
-                hatch_ptr++;
-                bit_pos = 0;
-            }
+            *and_bits |= (rop_mask.and & pixel_masks_1[x]);
+            *xor_bits |= (rop_mask.xor & pixel_masks_1[x]);
         }
-        hatch_start += hatch->stride;
-        mask_start += dib->stride;
+        and_bits += dib->stride;
+        xor_bits += dib->stride;
     }
-
-    return TRUE;
 }
 
-static BOOL create_rop_masks_null(const dib_info *dib, const dib_info *hatch, const rop_mask *fg, const rop_mask *bg, rop_mask_bits *bits)
+static void create_rop_masks_null(const dib_info *dib, const BYTE *hatch_ptr,
+                                  const rop_mask *fg, const rop_mask *bg, rop_mask_bits *bits)
 {
-    return FALSE;
 }
 
 static inline void rop_codes_from_stretch_mode( int mode, struct rop_codes *codes )

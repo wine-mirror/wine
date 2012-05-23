@@ -191,7 +191,7 @@ typedef struct primitive_funcs
     DWORD     (* colorref_to_pixel)(const dib_info *dib, COLORREF color);
     COLORREF  (* pixel_to_colorref)(const dib_info *dib, DWORD pixel);
     void             (* convert_to)(dib_info *dst, const dib_info *src, const RECT *src_rect, BOOL dither);
-    BOOL       (* create_rop_masks)(const dib_info *dib, const dib_info *hatch,
+    void       (* create_rop_masks)(const dib_info *dib, const BYTE *hatch_ptr,
                                     const rop_mask *fg, const rop_mask *bg, rop_mask_bits *bits);
     void            (* stretch_row)(const dib_info *dst_dib, const POINT *dst_start,
                                     const dib_info *src_dib, const POINT *src_start,

@@ -1777,7 +1777,7 @@ static BOOL create_pattern_brush_bits( dib_brush *brush )
     return TRUE;
 }
 
-static const DWORD hatches[6][8] =
+static const BYTE hatches[6][8] =
 {
     { 0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0x00 }, /* HS_HORIZONTAL */
     { 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08 }, /* HS_VERTICAL   */
@@ -1789,9 +1789,7 @@ static const DWORD hatches[6][8] =
 
 static BOOL create_hatch_brush_bits(dibdrv_physdev *pdev, dib_brush *brush, BOOL *needs_reselect)
 {
-    dib_info hatch;
     rop_mask fg_mask, bg_mask;
-    BOOL ret;
 
     /* Just initialise brush dib with the color / sizing info.  We don't
        need the bits as we'll calculate the rop masks straight from
@@ -1808,17 +1806,6 @@ static BOOL create_hatch_brush_bits(dibdrv_physdev *pdev, dib_brush *brush, BOOL
 
     if (!alloc_brush_mask_bits( brush )) return FALSE;
 
-    hatch.bit_count = 1;
-    hatch.height = hatch.width = 8;
-    hatch.stride = 4;
-    hatch.bits.ptr = (void *) hatches[brush->hatch];
-    hatch.bits.free = hatch.bits.param = NULL;
-    hatch.bits.is_copy = FALSE;
-    hatch.rect.left   = 0;
-    hatch.rect.top    = 0;
-    hatch.rect.right  = 8;
-    hatch.rect.bottom = 8;
-
     get_color_masks( pdev, brush->rop, brush->colorref, GetBkMode(pdev->dev.hdc),
                      &fg_mask, &bg_mask );
 
@@ -1827,10 +1814,9 @@ static BOOL create_hatch_brush_bits(dibdrv_physdev *pdev, dib_brush *brush, BOOL
     if (GetBkMode(pdev->dev.hdc) != TRANSPARENT && (GetBkColor(pdev->dev.hdc) & (1 << 24)))
         *needs_reselect = TRUE;
 
-    ret = brush->dib.funcs->create_rop_masks( &brush->dib, &hatch, &fg_mask, &bg_mask, &brush->masks );
-    if(!ret) free_brush_mask_bits( brush );
-
-    return ret;
+    brush->dib.funcs->create_rop_masks( &brush->dib, hatches[brush->hatch],
+                                        &fg_mask, &bg_mask, &brush->masks );
+    return TRUE;
 }
 
 static BOOL matching_pattern_format( dib_info *dib, dib_info *pattern )
