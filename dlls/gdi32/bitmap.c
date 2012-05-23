@@ -46,26 +46,6 @@ static const struct gdi_obj_funcs bitmap_funcs =
 };
 
 
-/***********************************************************************
- *           null driver fallback implementations
- */
-
-DWORD nulldrv_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
-                        struct gdi_image_bits *bits, struct bitblt_coords *src )
-{
-    if (!hbitmap) return ERROR_NOT_SUPPORTED;
-    return dib_driver.pGetImage( 0, hbitmap, info, bits, src );
-}
-
-DWORD nulldrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *info,
-                        const struct gdi_image_bits *bits, struct bitblt_coords *src,
-                        struct bitblt_coords *dst, DWORD rop )
-{
-    if (!hbitmap) return ERROR_SUCCESS;
-    return dib_driver.pPutImage( NULL, hbitmap, clip, info, bits, src, dst, rop );
-}
-
-
 /******************************************************************************
  * CreateBitmap [GDI32.@]
  *

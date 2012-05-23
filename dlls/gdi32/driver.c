@@ -385,6 +385,12 @@ static BOOL nulldrv_GetICMProfile( PHYSDEV dev, LPDWORD size, LPWSTR filename )
     return FALSE;
 }
 
+static DWORD nulldrv_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
+                               struct gdi_image_bits *bits, struct bitblt_coords *src )
+{
+    return ERROR_NOT_SUPPORTED;
+}
+
 static DWORD nulldrv_GetKerningPairs( PHYSDEV dev, DWORD count, LPKERNINGPAIR pairs )
 {
     return 0;
@@ -494,6 +500,13 @@ static BOOL nulldrv_Polyline( PHYSDEV dev, const POINT *points, INT count )
 
     if (count < 0) return FALSE;
     return PolyPolyline( dev->hdc, points, counts, 1 );
+}
+
+static DWORD nulldrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *info,
+                               const struct gdi_image_bits *bits, struct bitblt_coords *src,
+                               struct bitblt_coords *dst, DWORD rop )
+{
+    return ERROR_SUCCESS;
 }
 
 static UINT nulldrv_RealizeDefaultPalette( PHYSDEV dev )
