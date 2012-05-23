@@ -1214,7 +1214,7 @@ HINTERNET WINAPI InternetConnectW(HINTERNET hInternet,
     HINTERNET rc = NULL;
     DWORD res = ERROR_SUCCESS;
 
-    TRACE("(%p, %s, %i, %s, %s, %i, %i, %lx)\n", hInternet, debugstr_w(lpszServerName),
+    TRACE("(%p, %s, %i, %s, %s, %i, %x, %lx)\n", hInternet, debugstr_w(lpszServerName),
 	  nServerPort, debugstr_w(lpszUserName), debugstr_w(lpszPassword),
 	  dwService, dwFlags, dwContext);
 
@@ -2319,17 +2319,6 @@ static DWORD query_global_option(DWORD option, void *buffer, DWORD *size, BOOL u
     /* FIXME: This function currently handles more options than it should. Options requiring
      * proper handles should be moved to proper functions */
     switch(option) {
-    case INTERNET_OPTION_REQUEST_FLAGS:
-        TRACE("INTERNET_OPTION_REQUEST_FLAGS\n");
-
-        if (*size < sizeof(ULONG))
-            return ERROR_INSUFFICIENT_BUFFER;
-
-        *(ULONG*)buffer = 4;
-        *size = sizeof(ULONG);
-
-        return ERROR_SUCCESS;
-
     case INTERNET_OPTION_HTTP_VERSION:
         if (*size < sizeof(HTTP_VERSION_INFO))
             return ERROR_INSUFFICIENT_BUFFER;
@@ -2471,7 +2460,9 @@ static DWORD query_global_option(DWORD option, void *buffer, DWORD *size, BOOL u
 
         return res;
     }
+    case INTERNET_OPTION_REQUEST_FLAGS:
     case INTERNET_OPTION_USER_AGENT:
+        *size = 0;
         return ERROR_INTERNET_INCORRECT_HANDLE_TYPE;
     case INTERNET_OPTION_POLICY:
         return ERROR_INVALID_PARAMETER;
@@ -2508,6 +2499,11 @@ DWORD INET_QueryOption(object_header_t *hdr, DWORD option, void *buffer, DWORD *
         *(DWORD_PTR *)buffer = hdr->dwContext;
         *size = sizeof(DWORD_PTR);
         return ERROR_SUCCESS;
+
+    case INTERNET_OPTION_REQUEST_FLAGS:
+        WARN("INTERNET_OPTION_REQUEST_FLAGS\n");
+        *size = sizeof(DWORD);
+        return ERROR_INTERNET_INCORRECT_HANDLE_TYPE;
 
     case INTERNET_OPTION_MAX_CONNS_PER_SERVER:
     case INTERNET_OPTION_MAX_CONNS_PER_1_0_SERVER:

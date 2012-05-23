@@ -2158,6 +2158,16 @@ static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffe
         *size = sizeof(DWORD);
         *(DWORD *)buffer = req->connect_timeout;
         return ERROR_SUCCESS;
+    case INTERNET_OPTION_REQUEST_FLAGS:
+        TRACE("INTERNET_OPTION_REQUEST_FLAGS\n");
+
+        if (*size < sizeof(DWORD))
+            return ERROR_INSUFFICIENT_BUFFER;
+
+        *(DWORD*)buffer = 4;
+        *size = sizeof(DWORD);
+
+        return ERROR_SUCCESS;
     }
 
     return INET_QueryOption(hdr, option, buffer, size, unicode);

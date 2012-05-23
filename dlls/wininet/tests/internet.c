@@ -212,6 +212,22 @@ static void test_InternetQueryOptionA(void)
   ok(retval == 0,"Got wrong return value %d\n",retval);
   ok(err == ERROR_INTERNET_INCORRECT_HANDLE_TYPE, "Got wrong error code %d\n",err);
 
+  SetLastError(0xdeadbeef);
+  len = sizeof(DWORD);
+  retval = InternetQueryOptionA(hurl,INTERNET_OPTION_REQUEST_FLAGS,NULL,&len);
+  err = GetLastError();
+  ok(retval == 0,"Got wrong return value %d\n",retval);
+  ok(err == ERROR_INTERNET_INCORRECT_HANDLE_TYPE, "Got wrong error code %d\n",err);
+  ok(len == sizeof(DWORD), "len = %d\n", len);
+
+  SetLastError(0xdeadbeef);
+  len = sizeof(DWORD);
+  retval = InternetQueryOptionA(NULL,INTERNET_OPTION_REQUEST_FLAGS,NULL,&len);
+  err = GetLastError();
+  ok(retval == 0,"Got wrong return value %d\n",retval);
+  ok(err == ERROR_INTERNET_INCORRECT_HANDLE_TYPE, "Got wrong error code %d\n",err);
+  ok(!len, "len = %d\n", len);
+
   InternetCloseHandle(hurl);
   InternetCloseHandle(hinet);
 
