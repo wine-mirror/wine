@@ -599,7 +599,6 @@ static int BITBLT_GetDstArea(X11DRV_PDEVICE *physDev, Pixmap pixmap, GC gc, cons
     int exposures = 0;
     INT width  = visRectDst->right - visRectDst->left;
     INT height = visRectDst->bottom - visRectDst->top;
-    BOOL memdc = (GetObjectType( physDev->dev.hdc ) == OBJ_MEMDC);
 
     wine_tsx11_lock();
 
@@ -613,25 +612,17 @@ static int BITBLT_GetDstArea(X11DRV_PDEVICE *physDev, Pixmap pixmap, GC gc, cons
     }
     else
     {
-        register INT x, y;
+        INT x, y;
         XImage *image;
 
-        if (memdc)
-            image = XGetImage( gdi_display, physDev->drawable,
-                               physDev->dc_rect.left + visRectDst->left,
-                               physDev->dc_rect.top + visRectDst->top,
-                               width, height, AllPlanes, ZPixmap );
-        else
-        {
-            /* Make sure we don't get a BadMatch error */
-            XCopyArea( gdi_display, physDev->drawable, pixmap, gc,
-                       physDev->dc_rect.left + visRectDst->left,
-                       physDev->dc_rect.top + visRectDst->top,
-                       width, height, 0, 0);
-            exposures++;
-            image = XGetImage( gdi_display, pixmap, 0, 0, width, height,
-                               AllPlanes, ZPixmap );
-        }
+        /* Make sure we don't get a BadMatch error */
+        XCopyArea( gdi_display, physDev->drawable, pixmap, gc,
+                   physDev->dc_rect.left + visRectDst->left,
+                   physDev->dc_rect.top + visRectDst->top,
+                   width, height, 0, 0);
+        exposures++;
+        image = XGetImage( gdi_display, pixmap, 0, 0, width, height,
+                           AllPlanes, ZPixmap );
         if (image)
         {
             for (y = 0; y < height; y++)

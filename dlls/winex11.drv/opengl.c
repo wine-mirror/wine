@@ -1586,7 +1586,7 @@ static BOOL internal_SetPixelFormat( struct glx_physdev *physdev,
         }
         /* physDev->current_pf will be set by the DCE update */
     }
-    else if(physdev->x11dev->bitmap) {
+    else if (GetObjectType( physdev->dev.hdc ) == OBJ_MEMDC) {
         if(!(value&GLX_PIXMAP_BIT)) {
             WARN("Pixel format %d is not compatible for bitmap rendering\n", iPixelFormat);
             return FALSE;

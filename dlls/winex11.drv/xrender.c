@@ -1224,26 +1224,6 @@ static INT xrenderdrv_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID 
 }
 
 /***********************************************************************
- *           xrenderdrv_SelectBitmap
- */
-static HBITMAP xrenderdrv_SelectBitmap( PHYSDEV dev, HBITMAP hbitmap )
-{
-    HBITMAP ret;
-    struct xrender_physdev *physdev = get_xrender_dev( dev );
-
-    dev = GET_NEXT_PHYSDEV( dev, pSelectBitmap );
-    ret = dev->funcs->pSelectBitmap( dev, hbitmap );
-    if (ret)
-    {
-        free_xrender_picture( physdev );
-        if (hbitmap == BITMAP_stock_phys_bitmap.hbitmap) physdev->format = WXR_FORMAT_MONO;
-        else physdev->format = X11DRV_get_phys_bitmap(hbitmap)->format;
-        physdev->pict_format = pict_formats[physdev->format];
-    }
-    return ret;
-}
-
-/***********************************************************************
  *           xrenderdrv_SetDeviceClipping
  */
 static void xrenderdrv_SetDeviceClipping( PHYSDEV dev, HRGN rgn )
@@ -2575,7 +2555,7 @@ static const struct gdi_dc_funcs xrender_funcs =
     NULL,                               /* pSaveDC */
     NULL,                               /* pScaleViewportExt */
     NULL,                               /* pScaleWindowExt */
-    xrenderdrv_SelectBitmap,            /* pSelectBitmap */
+    NULL,                               /* pSelectBitmap */
     xrenderdrv_SelectBrush,             /* pSelectBrush */
     NULL,                               /* pSelectClipPath */
     xrenderdrv_SelectFont,              /* pSelectFont */

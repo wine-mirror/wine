@@ -42,6 +42,7 @@ static int vert_size;     /* vert. size of screen in millimeters */
 static int palette_size;
 static int device_init_done;
 
+static Pixmap stock_bitmap_pixmap;  /* phys bitmap for the default stock bitmap */
 
 static const WCHAR dpi_key_name[] = {'S','o','f','t','w','a','r','e','\\','F','o','n','t','s','\0'};
 static const WCHAR dpi_value_name[] = {'L','o','g','P','i','x','e','l','s','\0'};
@@ -91,7 +92,9 @@ static void device_init(void)
 
     palette_size = X11DRV_PALETTE_Init();
 
-    X11DRV_BITMAP_Init();
+    wine_tsx11_lock();
+    stock_bitmap_pixmap = XCreatePixmap( gdi_display, root_window, 1, 1, 1 );
+    wine_tsx11_unlock();
 
     /* Initialize device caps */
     log_pixels_x = log_pixels_y = get_dpi();
@@ -157,14 +160,10 @@ static BOOL X11DRV_CreateDC( PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
 static BOOL X11DRV_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
 {
     const struct gdi_dc_funcs *glx_funcs = get_glx_driver();
-    X11DRV_PDEVICE *physDev = create_x11_physdev( BITMAP_stock_phys_bitmap.pixmap );
+    X11DRV_PDEVICE *physDev = create_x11_physdev( stock_bitmap_pixmap );
 
     if (!physDev) return FALSE;
 
-    if (!BITMAP_stock_phys_bitmap.hbitmap)
-        BITMAP_stock_phys_bitmap.hbitmap = GetCurrentObject( (*pdev)->hdc, OBJ_BITMAP );
-
-    physDev->bitmap = &BITMAP_stock_phys_bitmap;
     physDev->depth  = 1;
     SetRect( &physDev->drawable_rect, 0, 0, 1, 1 );
     physDev->dc_rect = physDev->drawable_rect;
@@ -594,7 +593,7 @@ static const struct gdi_dc_funcs x11drv_funcs =
     NULL,                               /* pSaveDC */
     NULL,                               /* pScaleViewportExt */
     NULL,                               /* pScaleWindowExt */
-    X11DRV_SelectBitmap,                /* pSelectBitmap */
+    NULL,                               /* pSelectBitmap */
     X11DRV_SelectBrush,                 /* pSelectBrush */
     NULL,                               /* pSelectClipPath */
     NULL,                               /* pSelectFont */

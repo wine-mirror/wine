@@ -424,11 +424,6 @@ static BOOL X11DRV_XF86VM_SetGammaRamp(LPDDGAMMARAMP ramp)
  */
 BOOL X11DRV_GetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp)
 {
-    if (GetObjectType( dev->hdc ) == OBJ_MEMDC)
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return FALSE;
-    }
 #ifdef SONAME_LIBXXF86VM
   return X11DRV_XF86VM_GetGammaRamp(ramp);
 #else
@@ -445,11 +440,6 @@ BOOL X11DRV_GetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp)
  */
 BOOL X11DRV_SetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp)
 {
-    if (GetObjectType( dev->hdc ) == OBJ_MEMDC)
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return FALSE;
-    }
 #ifdef SONAME_LIBXXF86VM
   return X11DRV_XF86VM_SetGammaRamp(ramp);
 #else
