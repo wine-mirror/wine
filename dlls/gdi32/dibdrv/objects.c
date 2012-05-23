@@ -145,13 +145,12 @@ COLORREF make_rgb_colorref( HDC hdc, dib_info *dib, COLORREF color, BOOL *got_pi
 
     if (color >> 16 == 0x10ff)  /* DIBINDEX */
     {
+        const RGBQUAD *color_table = get_dib_color_table( dib );
         WORD index = LOWORD( color );
         *got_pixel = TRUE;
-        if (!dib->color_table || index >= (1 << dib->bit_count)) return 0;
+        if (!color_table || index >= (1 << dib->bit_count)) return 0;
         *pixel = index;
-        return RGB( dib->color_table[index].rgbRed,
-                    dib->color_table[index].rgbGreen,
-                    dib->color_table[index].rgbBlue );
+        return RGB( color_table[index].rgbRed, color_table[index].rgbGreen, color_table[index].rgbBlue );
     }
 
     return color & 0xffffff;
@@ -172,6 +171,7 @@ DWORD get_pixel_color( dibdrv_physdev *pdev, COLORREF color, BOOL mono_fixup )
     BOOL got_pixel;
     DWORD pixel;
     COLORREF rgb_ref;
+    const RGBQUAD *color_table;
 
     rgb_ref = make_rgb_colorref( pdev->dev.hdc, &pdev->dib, color, &got_pixel, &pixel );
     if (got_pixel) return pixel;
@@ -179,10 +179,11 @@ DWORD get_pixel_color( dibdrv_physdev *pdev, COLORREF color, BOOL mono_fixup )
     if (pdev->dib.bit_count != 1 || !mono_fixup)
         return pdev->dib.funcs->colorref_to_pixel( &pdev->dib, rgb_ref );
 
+    color_table = get_dib_color_table( &pdev->dib );
     fg_quad = rgbquad_from_colorref( rgb_ref );
-    if(rgbquad_equal(&fg_quad, pdev->dib.color_table))
+    if(rgbquad_equal(&fg_quad, color_table))
         return 0;
-    if(rgbquad_equal(&fg_quad, pdev->dib.color_table + 1))
+    if(rgbquad_equal(&fg_quad, color_table + 1))
         return 1;
 
     pixel = get_pixel_color( pdev, GetBkColor(pdev->dev.hdc), FALSE );

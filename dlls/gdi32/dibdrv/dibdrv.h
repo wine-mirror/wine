@@ -270,3 +270,8 @@ static inline int edge_coord( int y, int x1, int y1, int x2, int y2 )
     else
         return x1 + (y - y1) * (x2 - x1) / (y2 - y1);
 }
+
+static inline const RGBQUAD *get_dib_color_table( const dib_info *dib )
+{
+    return dib->color_table ? dib->color_table : get_default_color_table( dib->bit_count );
+}

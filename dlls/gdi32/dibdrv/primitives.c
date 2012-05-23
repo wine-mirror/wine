@@ -1393,20 +1393,22 @@ static DWORD colorref_to_pixel_555(const dib_info *dib, COLORREF color)
 
 static DWORD rgb_to_pixel_colortable(const dib_info *dib, BYTE r, BYTE g, BYTE b)
 {
+    const RGBQUAD *color_table = get_dib_color_table( dib );
+    int size = dib->color_table ? dib->color_table_size : 1 << dib->bit_count;
     int i, best_index = 0;
     DWORD diff, best_diff = 0xffffffff;
 
     /* special case for conversion to 1-bpp without a color table:
      * we get a 1-entry table containing the background color
      */
-    if (dib->bit_count == 1 && dib->color_table_size == 1)
-        return (r == dib->color_table[0].rgbRed &&
-                g == dib->color_table[0].rgbGreen &&
-                b == dib->color_table[0].rgbBlue);
+    if (dib->bit_count == 1 && size == 1)
+        return (r == color_table[0].rgbRed &&
+                g == color_table[0].rgbGreen &&
+                b == color_table[0].rgbBlue);
 
-    for(i = 0; i < dib->color_table_size; i++)
+    for(i = 0; i < size; i++)
     {
-        const RGBQUAD *cur = dib->color_table + i;
+        const RGBQUAD *cur = color_table + i;
         diff = (r - cur->rgbRed)   * (r - cur->rgbRed)
             +  (g - cur->rgbGreen) * (g - cur->rgbGreen)
             +  (b - cur->rgbBlue)  * (b - cur->rgbBlue);
@@ -1469,9 +1471,11 @@ static COLORREF pixel_to_colorref_555(const dib_info *dib, DWORD pixel)
 
 static COLORREF pixel_to_colorref_colortable(const dib_info *dib, DWORD pixel)
 {
-    if (pixel < dib->color_table_size)
+    const RGBQUAD *color_table = get_dib_color_table( dib );
+
+    if (!dib->color_table || pixel < dib->color_table_size)
     {
-        RGBQUAD quad = dib->color_table[pixel];
+        RGBQUAD quad = color_table[pixel];
         return RGB( quad.rgbRed, quad.rgbGreen, quad.rgbBlue );
     }
     return 0;
@@ -1665,6 +1669,7 @@ static void convert_to_8888(dib_info *dst, const dib_info *src, const RECT *src_
 
     case 8:
     {
+        const RGBQUAD *color_table = get_dib_color_table( src );
         BYTE *src_start = get_pixel_ptr_8(src, src_rect->left, src_rect->top), *src_pixel;
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
@@ -1672,7 +1677,7 @@ static void convert_to_8888(dib_info *dst, const dib_info *src, const RECT *src_
             src_pixel = src_start;
             for(x = src_rect->left; x < src_rect->right; x++)
             {
-                RGBQUAD rgb = src->color_table[*src_pixel++];
+                RGBQUAD rgb = color_table[*src_pixel++];
                 *dst_pixel++ = rgb.rgbRed << 16 | rgb.rgbGreen << 8 | rgb.rgbBlue;
             }
             if(pad_size) memset(dst_pixel, 0, pad_size);
@@ -1684,6 +1689,7 @@ static void convert_to_8888(dib_info *dst, const dib_info *src, const RECT *src_
 
     case 4:
     {
+        const RGBQUAD *color_table = get_dib_color_table( src );
         BYTE *src_start = get_pixel_ptr_4(src, src_rect->left, src_rect->top), *src_pixel;
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
@@ -1693,9 +1699,9 @@ static void convert_to_8888(dib_info *dst, const dib_info *src, const RECT *src_
             {
                 RGBQUAD rgb;
                 if (pos & 1)
-                    rgb = src->color_table[*src_pixel++ & 0xf];
+                    rgb = color_table[*src_pixel++ & 0xf];
                 else
-                    rgb = src->color_table[*src_pixel >> 4];
+                    rgb = color_table[*src_pixel >> 4];
                 dst_start[x] = rgb.rgbRed << 16 | rgb.rgbGreen << 8 | rgb.rgbBlue;
             }
             if(pad_size) memset(dst_start + x, 0, pad_size);
@@ -1707,6 +1713,7 @@ static void convert_to_8888(dib_info *dst, const dib_info *src, const RECT *src_
 
     case 1:
     {
+        const RGBQUAD *color_table = get_dib_color_table( src );
         BYTE *src_start = get_pixel_ptr_1(src, src_rect->left, src_rect->top);
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
@@ -1715,7 +1722,7 @@ static void convert_to_8888(dib_info *dst, const dib_info *src, const RECT *src_
             {
                 RGBQUAD rgb;
                 src_val = (src_start[pos / 8] & pixel_masks_1[pos % 8]) ? 1 : 0;
-                rgb = src->color_table[src_val];
+                rgb = color_table[src_val];
                 dst_start[x] = rgb.rgbRed << 16 | rgb.rgbGreen << 8 | rgb.rgbBlue;
             }
             if(pad_size) memset(dst_start + x, 0, pad_size);
@@ -1923,6 +1930,7 @@ static void convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_re
 
     case 8:
     {
+        const RGBQUAD *color_table = get_dib_color_table( src );
         BYTE *src_start = get_pixel_ptr_8(src, src_rect->left, src_rect->top), *src_pixel;
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
@@ -1930,7 +1938,7 @@ static void convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_re
             src_pixel = src_start;
             for(x = src_rect->left; x < src_rect->right; x++)
             {
-                RGBQUAD rgb = src->color_table[*src_pixel++];
+                RGBQUAD rgb = color_table[*src_pixel++];
                 *dst_pixel++ = put_field(rgb.rgbRed,   dst->red_shift,   dst->red_len) |
                                put_field(rgb.rgbGreen, dst->green_shift, dst->green_len) |
                                put_field(rgb.rgbBlue,  dst->blue_shift,  dst->blue_len);
@@ -1944,6 +1952,7 @@ static void convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_re
 
     case 4:
     {
+        const RGBQUAD *color_table = get_dib_color_table( src );
         BYTE *src_start = get_pixel_ptr_4(src, src_rect->left, src_rect->top), *src_pixel;
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
@@ -1953,9 +1962,9 @@ static void convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_re
             {
                 RGBQUAD rgb;
                 if (pos & 1)
-                    rgb = src->color_table[*src_pixel++ & 0xf];
+                    rgb = color_table[*src_pixel++ & 0xf];
                 else
-                    rgb = src->color_table[*src_pixel >> 4];
+                    rgb = color_table[*src_pixel >> 4];
                 dst_start[x] = put_field(rgb.rgbRed,   dst->red_shift,   dst->red_len) |
                                put_field(rgb.rgbGreen, dst->green_shift, dst->green_len) |
                                put_field(rgb.rgbBlue,  dst->blue_shift,  dst->blue_len);
@@ -1969,6 +1978,7 @@ static void convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_re
 
     case 1:
     {
+        const RGBQUAD *color_table = get_dib_color_table( src );
         BYTE *src_start = get_pixel_ptr_1(src, src_rect->left, src_rect->top);
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
@@ -1977,7 +1987,7 @@ static void convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_re
             {
                 RGBQUAD rgb;
                 src_val = (src_start[pos / 8] & pixel_masks_1[pos % 8]) ? 1 : 0;
-                rgb = src->color_table[src_val];
+                rgb = color_table[src_val];
                 dst_start[x] = put_field(rgb.rgbRed,   dst->red_shift,   dst->red_len) |
                                put_field(rgb.rgbGreen, dst->green_shift, dst->green_len) |
                                put_field(rgb.rgbBlue,  dst->blue_shift,  dst->blue_len);
@@ -2164,6 +2174,7 @@ static void convert_to_24(dib_info *dst, const dib_info *src, const RECT *src_re
 
     case 8:
     {
+        const RGBQUAD *color_table = get_dib_color_table( src );
         BYTE *src_start = get_pixel_ptr_8(src, src_rect->left, src_rect->top), *src_pixel;
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
@@ -2171,7 +2182,7 @@ static void convert_to_24(dib_info *dst, const dib_info *src, const RECT *src_re
             src_pixel = src_start;
             for(x = src_rect->left; x < src_rect->right; x++)
             {
-                RGBQUAD rgb = src->color_table[*src_pixel++];
+                RGBQUAD rgb = color_table[*src_pixel++];
                 *dst_pixel++ = rgb.rgbBlue;
                 *dst_pixel++ = rgb.rgbGreen;
                 *dst_pixel++ = rgb.rgbRed;
@@ -2185,6 +2196,7 @@ static void convert_to_24(dib_info *dst, const dib_info *src, const RECT *src_re
 
     case 4:
     {
+        const RGBQUAD *color_table = get_dib_color_table( src );
         BYTE *src_start = get_pixel_ptr_4(src, src_rect->left, src_rect->top), *src_pixel;
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
@@ -2194,9 +2206,9 @@ static void convert_to_24(dib_info *dst, const dib_info *src, const RECT *src_re
             {
                 RGBQUAD rgb;
                 if (pos & 1)
-                    rgb = src->color_table[*src_pixel++ & 0xf];
+                    rgb = color_table[*src_pixel++ & 0xf];
                 else
-                    rgb = src->color_table[*src_pixel >> 4];
+                    rgb = color_table[*src_pixel >> 4];
                 dst_start[x * 3] = rgb.rgbBlue;
                 dst_start[x * 3 + 1] = rgb.rgbGreen;
                 dst_start[x * 3 + 2] = rgb.rgbRed;
@@ -2210,6 +2222,7 @@ static void convert_to_24(dib_info *dst, const dib_info *src, const RECT *src_re
 
     case 1:
     {
+        const RGBQUAD *color_table = get_dib_color_table( src );
         BYTE *src_start = get_pixel_ptr_1(src, src_rect->left, src_rect->top);
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
@@ -2218,7 +2231,7 @@ static void convert_to_24(dib_info *dst, const dib_info *src, const RECT *src_re
             {
                 RGBQUAD rgb;
                 src_val = (src_start[pos / 8] & pixel_masks_1[pos % 8]) ? 1 : 0;
-                rgb = src->color_table[src_val];
+                rgb = color_table[src_val];
                 dst_start[x * 3] = rgb.rgbBlue;
                 dst_start[x * 3 + 1] = rgb.rgbGreen;
                 dst_start[x * 3 + 2] = rgb.rgbRed;
@@ -2404,6 +2417,7 @@ static void convert_to_555(dib_info *dst, const dib_info *src, const RECT *src_r
 
     case 8:
     {
+        const RGBQUAD *color_table = get_dib_color_table( src );
         BYTE *src_start = get_pixel_ptr_8(src, src_rect->left, src_rect->top), *src_pixel;
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
@@ -2411,7 +2425,7 @@ static void convert_to_555(dib_info *dst, const dib_info *src, const RECT *src_r
             src_pixel = src_start;
             for(x = src_rect->left; x < src_rect->right; x++)
             {
-                RGBQUAD rgb = src->color_table[*src_pixel++];
+                RGBQUAD rgb = color_table[*src_pixel++];
                 *dst_pixel++ = ((rgb.rgbRed   << 7) & 0x7c00) |
                                ((rgb.rgbGreen << 2) & 0x03e0) |
                                ((rgb.rgbBlue  >> 3) & 0x001f);
@@ -2425,6 +2439,7 @@ static void convert_to_555(dib_info *dst, const dib_info *src, const RECT *src_r
 
     case 4:
     {
+        const RGBQUAD *color_table = get_dib_color_table( src );
         BYTE *src_start = get_pixel_ptr_4(src, src_rect->left, src_rect->top), *src_pixel;
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
@@ -2434,9 +2449,9 @@ static void convert_to_555(dib_info *dst, const dib_info *src, const RECT *src_r
             {
                 RGBQUAD rgb;
                 if (pos & 1)
-                    rgb = src->color_table[*src_pixel++ & 0xf];
+                    rgb = color_table[*src_pixel++ & 0xf];
                 else
-                    rgb = src->color_table[*src_pixel >> 4];
+                    rgb = color_table[*src_pixel >> 4];
                 dst_start[x] = ((rgb.rgbRed   << 7) & 0x7c00) |
                                ((rgb.rgbGreen << 2) & 0x03e0) |
                                ((rgb.rgbBlue  >> 3) & 0x001f);
@@ -2450,6 +2465,7 @@ static void convert_to_555(dib_info *dst, const dib_info *src, const RECT *src_r
 
     case 1:
     {
+        const RGBQUAD *color_table = get_dib_color_table( src );
         BYTE *src_start = get_pixel_ptr_1(src, src_rect->left, src_rect->top);
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
@@ -2458,7 +2474,7 @@ static void convert_to_555(dib_info *dst, const dib_info *src, const RECT *src_r
             {
                 RGBQUAD rgb;
                 src_val = (src_start[pos / 8] & pixel_masks_1[pos % 8]) ? 1 : 0;
-                rgb = src->color_table[src_val];
+                rgb = color_table[src_val];
                 dst_start[x] = ((rgb.rgbRed   << 7) & 0x7c00) |
                                ((rgb.rgbGreen << 2) & 0x03e0) |
                                ((rgb.rgbBlue  >> 3) & 0x001f);
@@ -2668,6 +2684,7 @@ static void convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_re
 
     case 8:
     {
+        const RGBQUAD *color_table = get_dib_color_table( src );
         BYTE *src_start = get_pixel_ptr_8(src, src_rect->left, src_rect->top), *src_pixel;
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
@@ -2675,7 +2692,7 @@ static void convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_re
             src_pixel = src_start;
             for(x = src_rect->left; x < src_rect->right; x++)
             {
-                RGBQUAD rgb = src->color_table[*src_pixel++];
+                RGBQUAD rgb = color_table[*src_pixel++];
                 *dst_pixel++ = put_field(rgb.rgbRed,   dst->red_shift,   dst->red_len) |
                                put_field(rgb.rgbGreen, dst->green_shift, dst->green_len) |
                                put_field(rgb.rgbBlue,  dst->blue_shift,  dst->blue_len);
@@ -2689,6 +2706,7 @@ static void convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_re
 
     case 4:
     {
+        const RGBQUAD *color_table = get_dib_color_table( src );
         BYTE *src_start = get_pixel_ptr_4(src, src_rect->left, src_rect->top), *src_pixel;
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
@@ -2698,9 +2716,9 @@ static void convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_re
             {
                 RGBQUAD rgb;
                 if (pos & 1)
-                    rgb = src->color_table[*src_pixel++ & 0xf];
+                    rgb = color_table[*src_pixel++ & 0xf];
                 else
-                    rgb = src->color_table[*src_pixel >> 4];
+                    rgb = color_table[*src_pixel >> 4];
                 dst_start[x] = put_field(rgb.rgbRed,   dst->red_shift,   dst->red_len) |
                                put_field(rgb.rgbGreen, dst->green_shift, dst->green_len) |
                                put_field(rgb.rgbBlue,  dst->blue_shift,  dst->blue_len);
@@ -2714,6 +2732,7 @@ static void convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_re
 
     case 1:
     {
+        const RGBQUAD *color_table = get_dib_color_table( src );
         BYTE *src_start = get_pixel_ptr_1(src, src_rect->left, src_rect->top);
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
@@ -2722,7 +2741,7 @@ static void convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_re
             {
                 RGBQUAD rgb;
                 src_val = (src_start[pos / 8] & pixel_masks_1[pos % 8]) ? 1 : 0;
-                rgb = src->color_table[src_val];
+                rgb = color_table[src_val];
                 dst_start[x] = put_field(rgb.rgbRed,   dst->red_shift,   dst->red_len) |
                                put_field(rgb.rgbGreen, dst->green_shift, dst->green_len) |
                                put_field(rgb.rgbBlue,  dst->blue_shift,  dst->blue_len);
@@ -2738,6 +2757,7 @@ static void convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_re
 
 static inline BOOL color_tables_match(const dib_info *d1, const dib_info *d2)
 {
+    if (!d1->color_table || !d2->color_table) return (!d1->color_table && !d2->color_table);
     return !memcmp(d1->color_table, d2->color_table, (1 << d1->bit_count) * sizeof(d1->color_table[0]));
 }
 
@@ -2944,13 +2964,14 @@ static void convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
         }
         else
         {
+            const RGBQUAD *color_table = get_dib_color_table( src );
             for(y = src_rect->top; y < src_rect->bottom; y++)
             {
                 dst_pixel = dst_start;
                 src_pixel = src_start;
                 for(x = src_rect->left; x < src_rect->right; x++)
                 {
-                    RGBQUAD rgb = src->color_table[*src_pixel++];
+                    RGBQUAD rgb = color_table[*src_pixel++];
                     *dst_pixel++ = rgb_to_pixel_colortable(dst, rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue);
                 }
                 if(pad_size) memset(dst_pixel, 0, pad_size);
@@ -2963,6 +2984,7 @@ static void convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
 
     case 4:
     {
+        const RGBQUAD *color_table = get_dib_color_table( src );
         BYTE *src_start = get_pixel_ptr_4(src, src_rect->left, src_rect->top), *src_pixel;
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
@@ -2972,9 +2994,9 @@ static void convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
             {
                 RGBQUAD rgb;
                 if (pos & 1)
-                    rgb = src->color_table[*src_pixel++ & 0xf];
+                    rgb = color_table[*src_pixel++ & 0xf];
                 else
-                    rgb = src->color_table[*src_pixel >> 4];
+                    rgb = color_table[*src_pixel >> 4];
                 dst_start[x] = rgb_to_pixel_colortable(dst, rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue);
             }
             if(pad_size) memset(dst_start + x, 0, pad_size);
@@ -2986,6 +3008,7 @@ static void convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
 
     case 1:
     {
+        const RGBQUAD *color_table = get_dib_color_table( src );
         BYTE *src_start = get_pixel_ptr_1(src, src_rect->left, src_rect->top);
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
@@ -2994,7 +3017,7 @@ static void convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
             {
                 RGBQUAD rgb;
                 src_val = (src_start[pos / 8] & pixel_masks_1[pos % 8]) ? 1 : 0;
-                rgb = src->color_table[src_val];
+                rgb = color_table[src_val];
                 dst_start[x] = rgb_to_pixel_colortable(dst, rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue);
             }
             if(pad_size) memset(dst_start + x, 0, pad_size);
@@ -3273,6 +3296,7 @@ static void convert_to_4(dib_info *dst, const dib_info *src, const RECT *src_rec
 
     case 8:
     {
+        const RGBQUAD *color_table = get_dib_color_table( src );
         BYTE *src_start = get_pixel_ptr_8(src, src_rect->left, src_rect->top), *src_pixel;
 
         for(y = src_rect->top; y < src_rect->bottom; y++)
@@ -3281,7 +3305,7 @@ static void convert_to_4(dib_info *dst, const dib_info *src, const RECT *src_rec
             src_pixel = src_start;
             for(x = src_rect->left; x < src_rect->right; x++)
             {
-                RGBQUAD rgb = src->color_table[*src_pixel++];
+                RGBQUAD rgb = color_table[*src_pixel++];
                 dst_val = rgb_to_pixel_colortable(dst, rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue);
                 if((x - src_rect->left) & 1)
                 {
@@ -3323,6 +3347,7 @@ static void convert_to_4(dib_info *dst, const dib_info *src, const RECT *src_rec
         }
         else
         {
+            const RGBQUAD *color_table = get_dib_color_table( src );
             for(y = src_rect->top; y < src_rect->bottom; y++)
             {
                 int pos = (src->rect.left + src_rect->left) & 1;
@@ -3332,9 +3357,9 @@ static void convert_to_4(dib_info *dst, const dib_info *src, const RECT *src_rec
                 {
                     RGBQUAD rgb;
                     if(pos & 1)
-                        rgb = src->color_table[*src_pixel++ & 0xf];
+                        rgb = color_table[*src_pixel++ & 0xf];
                     else
-                        rgb = src->color_table[*src_pixel >> 4];
+                        rgb = color_table[*src_pixel >> 4];
                     dst_val = rgb_to_pixel_colortable(dst, rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue);
                     if((x - src_rect->left) & 1)
                     {
@@ -3358,6 +3383,7 @@ static void convert_to_4(dib_info *dst, const dib_info *src, const RECT *src_rec
 
     case 1:
     {
+        const RGBQUAD *color_table = get_dib_color_table( src );
         BYTE *src_start = get_pixel_ptr_1(src, src_rect->left, src_rect->top);
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
@@ -3367,7 +3393,7 @@ static void convert_to_4(dib_info *dst, const dib_info *src, const RECT *src_rec
             {
                 RGBQUAD rgb;
                 src_val = (src_start[pos / 8] & pixel_masks_1[pos % 8]) ? 1 : 0;
-                rgb = src->color_table[src_val];
+                rgb = color_table[src_val];
                 dst_val = rgb_to_pixel_colortable(dst, rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue);
                 if((x - src_rect->left) & 1)
                 {
@@ -3670,6 +3696,7 @@ static void convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rec
 
     case 8:
     {
+        const RGBQUAD *color_table = get_dib_color_table( src );
         BYTE *src_start = get_pixel_ptr_8(src, src_rect->left, src_rect->top), *src_pixel;
 
         for(y = src_rect->top; y < src_rect->bottom; y++)
@@ -3678,7 +3705,7 @@ static void convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rec
             src_pixel = src_start;
             for(x = src_rect->left, bit_pos = 0; x < src_rect->right; x++)
             {
-                RGBQUAD rgb = src->color_table[*src_pixel++];
+                RGBQUAD rgb = color_table[*src_pixel++];
                 dst_val = rgb_to_pixel_mono(dst, dither, x, y, rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue);
 
                 if(bit_pos == 0) *dst_pixel = 0;
@@ -3703,6 +3730,7 @@ static void convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rec
 
     case 4:
     {
+        const RGBQUAD *color_table = get_dib_color_table( src );
         BYTE *src_start = get_pixel_ptr_4(src, src_rect->left, src_rect->top), *src_pixel;
 
         for(y = src_rect->top; y < src_rect->bottom; y++)
@@ -3714,9 +3742,9 @@ static void convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rec
             {
                 RGBQUAD rgb;
                 if (pos & 1)
-                    rgb = src->color_table[*src_pixel++ & 0xf];
+                    rgb = color_table[*src_pixel++ & 0xf];
                 else
-                    rgb = src->color_table[*src_pixel >> 4];
+                    rgb = color_table[*src_pixel >> 4];
                 dst_val = rgb_to_pixel_mono(dst, dither, x, y, rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue);
 
                 if(bit_pos == 0) *dst_pixel = 0;
@@ -3746,6 +3774,7 @@ static void convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rec
 
     case 1:
     {
+        const RGBQUAD *color_table = get_dib_color_table( src );
         BYTE *src_start = get_pixel_ptr_1(src, src_rect->left, src_rect->top);
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
@@ -3755,7 +3784,7 @@ static void convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rec
             {
                 RGBQUAD rgb;
                 src_val = (src_start[pos / 8] & pixel_masks_1[pos % 8]) ? 1 : 0;
-                rgb = src->color_table[src_val];
+                rgb = color_table[src_val];
                 dst_val = rgb_to_pixel_mono(dst, dither, x, y, rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue);
 
                 if(bit_pos == 0) *dst_pixel = 0;
@@ -3969,6 +3998,7 @@ static void blend_rect_16(const dib_info *dst, const RECT *rc,
 static void blend_rect_8(const dib_info *dst, const RECT *rc,
                          const dib_info *src, const POINT *origin, BLENDFUNCTION blend)
 {
+    const RGBQUAD *color_table = get_dib_color_table( dst );
     DWORD *src_ptr = get_pixel_ptr_32( src, origin->x, origin->y );
     BYTE *dst_ptr = get_pixel_ptr_8( dst, rc->left, rc->top );
     int x, y;
@@ -3977,7 +4007,7 @@ static void blend_rect_8(const dib_info *dst, const RECT *rc,
     {
         for (x = 0; x < rc->right - rc->left; x++)
         {
-            RGBQUAD rgb = dst->color_table[dst_ptr[x]];
+            RGBQUAD rgb = color_table[dst_ptr[x]];
             DWORD val = blend_rgb( rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue, src_ptr[x], blend );
             dst_ptr[x] = rgb_lookup_colortable( dst, val >> 16, val >> 8, val );
         }
@@ -3987,6 +4017,7 @@ static void blend_rect_8(const dib_info *dst, const RECT *rc,
 static void blend_rect_4(const dib_info *dst, const RECT *rc,
                          const dib_info *src, const POINT *origin, BLENDFUNCTION blend)
 {
+    const RGBQUAD *color_table = get_dib_color_table( dst );
     DWORD *src_ptr = get_pixel_ptr_32( src, origin->x, origin->y );
     BYTE *dst_ptr = get_pixel_ptr_4( dst, rc->left, rc->top );
     int i, x, y;
@@ -3996,7 +4027,7 @@ static void blend_rect_4(const dib_info *dst, const RECT *rc,
         for (i = 0, x = (dst->rect.left + rc->left) & 1; i < rc->right - rc->left; i++, x++)
         {
             DWORD val = ((x & 1) ? dst_ptr[x / 2] : (dst_ptr[x / 2] >> 4)) & 0x0f;
-            RGBQUAD rgb = dst->color_table[val];
+            RGBQUAD rgb = color_table[val];
             val = blend_rgb( rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue, src_ptr[i], blend );
             val = rgb_lookup_colortable( dst, val >> 16, val >> 8, val );
             if (x & 1)
@@ -4010,6 +4041,7 @@ static void blend_rect_4(const dib_info *dst, const RECT *rc,
 static void blend_rect_1(const dib_info *dst, const RECT *rc,
                          const dib_info *src, const POINT *origin, BLENDFUNCTION blend)
 {
+    const RGBQUAD *color_table = get_dib_color_table( dst );
     DWORD *src_ptr = get_pixel_ptr_32( src, origin->x, origin->y );
     BYTE *dst_ptr = get_pixel_ptr_1( dst, rc->left, rc->top );
     int i, x, y;
@@ -4019,7 +4051,7 @@ static void blend_rect_1(const dib_info *dst, const RECT *rc,
         for (i = 0, x = (dst->rect.left + rc->left) & 7; i < rc->right - rc->left; i++, x++)
         {
             DWORD val = (dst_ptr[x / 8] & pixel_masks_1[x % 8]) ? 1 : 0;
-            RGBQUAD rgb = dst->color_table[val];
+            RGBQUAD rgb = color_table[val];
             val = blend_rgb( rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue, src_ptr[i], blend );
             val = rgb_to_pixel_colortable(dst, val >> 16, val >> 8, val) ? 0xff : 0;
             dst_ptr[x / 8] = (dst_ptr[x / 8] & ~pixel_masks_1[x % 8]) | (val & pixel_masks_1[x % 8]);
