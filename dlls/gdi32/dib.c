@@ -1570,7 +1570,7 @@ static HGDIOBJ DIB_SelectObject( HGDIOBJ handle, HDC hdc )
     HGDIOBJ ret;
     BITMAPOBJ *bitmap;
     DC *dc;
-    PHYSDEV physdev = NULL, old_physdev = NULL;
+    PHYSDEV physdev;
 
     if (!(dc = get_dc_ptr( hdc ))) return 0;
 
@@ -1596,18 +1596,7 @@ static HGDIOBJ DIB_SelectObject( HGDIOBJ handle, HDC hdc )
         goto done;
     }
 
-    old_physdev = GET_DC_PHYSDEV( dc, pSelectBitmap );
-    physdev = dc->dibdrv;
-    if (old_physdev != dc->dibdrv)
-    {
-        if (physdev) push_dc_driver( &dc->physDev, physdev, physdev->funcs );
-        else
-        {
-            if (!dib_driver.pCreateDC( &dc->physDev, NULL, NULL, NULL, NULL )) goto done;
-            dc->dibdrv = physdev = dc->physDev;
-        }
-    }
-
+    physdev = GET_DC_PHYSDEV( dc, pSelectBitmap );
     if (!physdev->funcs->pSelectBitmap( physdev, handle ))
     {
         GDI_ReleaseObj( handle );
@@ -1629,10 +1618,6 @@ static HGDIOBJ DIB_SelectObject( HGDIOBJ handle, HDC hdc )
     }
 
  done:
-    if(!ret)
-    {
-        if (old_physdev && old_physdev != dc->dibdrv) pop_dc_driver( dc, dc->dibdrv );
-    }
     release_dc_ptr( dc );
     return ret;
 }

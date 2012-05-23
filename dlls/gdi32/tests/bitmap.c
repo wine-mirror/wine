@@ -3576,6 +3576,7 @@ static void test_GdiAlphaBlend(void)
     SetViewportExtEx(hdcDst, -1, -1, NULL);
     SetLastError(0xdeadbeef);
     ret = pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 0, -1, 50, 50, blend);
+    todo_wine
     ok( ret, "GdiAlphaBlend failed err %u\n", GetLastError() );
     SetLastError(0xdeadbeef);
     ret = pGdiAlphaBlend(hdcDst, -20, -20, 20, 20, hdcSrc, 0, -1, 50, 50, blend);

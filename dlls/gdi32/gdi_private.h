@@ -80,7 +80,6 @@ typedef struct tagDC
     GDIOBJHDR    header;
     HDC          hSelf;            /* Handle to this DC */
     struct gdi_physdev nulldrv;    /* physdev for the null driver */
-    PHYSDEV      dibdrv;           /* physdev for the dib driver */
     PHYSDEV      physDev;          /* current top of the physdev stack */
     DWORD        thread;           /* thread owning the DC */
     LONG         refcount;         /* thread refcount */
