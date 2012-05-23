@@ -100,7 +100,6 @@
 
 void fixup_caps(WINED3DCAPS *pWineCaps) DECLSPEC_HIDDEN;
 
-typedef struct IDirect3DSurface8Impl IDirect3DSurface8Impl;
 typedef struct IDirect3DVolume8Impl IDirect3DVolume8Impl;
 
 struct d3d8
@@ -199,19 +198,12 @@ struct d3d8_swapchain
 HRESULT swapchain_init(struct d3d8_swapchain *swapchain, struct d3d8_device *device,
         D3DPRESENT_PARAMETERS *present_parameters) DECLSPEC_HIDDEN;
 
-/* ----------------- */
-/* IDirect3DSurface8 */
-/* ----------------- */
-
-/*****************************************************************************
- * IDirect3DSurface8 implementation structure
- */
-struct IDirect3DSurface8Impl
+struct d3d8_surface
 {
     IDirect3DSurface8 IDirect3DSurface8_iface;
-    LONG ref;
+    LONG refcount;
     struct wined3d_surface *wined3d_surface;
-    IDirect3DDevice8 *parentDevice;
+    IDirect3DDevice8 *parent_device;
 
     /* The surface container */
     IUnknown                    *container;
@@ -220,10 +212,10 @@ struct IDirect3DSurface8Impl
     IUnknown                    *forwardReference;
 };
 
-HRESULT surface_init(IDirect3DSurface8Impl *surface, struct d3d8_device *device,
+HRESULT surface_init(struct d3d8_surface *surface, struct d3d8_device *device,
         UINT width, UINT height, D3DFORMAT format, BOOL lockable, BOOL discard, UINT level,
         DWORD usage, D3DPOOL pool, D3DMULTISAMPLE_TYPE multisample_type, DWORD multisample_quality) DECLSPEC_HIDDEN;
-IDirect3DSurface8Impl *unsafe_impl_from_IDirect3DSurface8(IDirect3DSurface8 *iface) DECLSPEC_HIDDEN;
+struct d3d8_surface *unsafe_impl_from_IDirect3DSurface8(IDirect3DSurface8 *iface) DECLSPEC_HIDDEN;
 
 struct d3d8_vertexbuffer
 {

@@ -449,7 +449,7 @@ static HRESULT WINAPI d3d8_device_SetCursorProperties(IDirect3DDevice8 *iface,
         UINT hotspot_x, UINT hotspot_y, IDirect3DSurface8 *bitmap)
 {
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
-    IDirect3DSurface8Impl *bitmap_impl = unsafe_impl_from_IDirect3DSurface8(bitmap);
+    struct d3d8_surface *bitmap_impl = unsafe_impl_from_IDirect3DSurface8(bitmap);
     HRESULT hr;
 
     TRACE("iface %p, hotspot_x %u, hotspot_y %u, bitmap %p.\n",
@@ -532,7 +532,7 @@ static HRESULT CDECL reset_enum_callback(struct wined3d_resource *resource)
     wined3d_resource_get_desc(resource, &desc);
     if (desc.pool == WINED3D_POOL_DEFAULT)
     {
-        IDirect3DSurface8Impl *surface;
+        struct d3d8_surface *surface;
 
         if (desc.resource_type != WINED3D_RTYPE_SURFACE)
         {
@@ -541,7 +541,7 @@ static HRESULT CDECL reset_enum_callback(struct wined3d_resource *resource)
         }
 
         surface = wined3d_resource_get_parent(resource);
-        if (surface->ref)
+        if (surface->refcount)
         {
             WARN("Surface %p (resource %p) in pool D3DPOOL_DEFAULT blocks the Reset call.\n", surface, resource);
             return D3DERR_DEVICELOST;
@@ -615,7 +615,7 @@ static HRESULT WINAPI d3d8_device_GetBackBuffer(IDirect3DDevice8 *iface,
 {
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
     struct wined3d_surface *wined3d_surface = NULL;
-    IDirect3DSurface8Impl *surface_impl;
+    struct d3d8_surface *surface_impl;
     HRESULT hr;
 
     TRACE("iface %p, backbuffer_idx %u, backbuffer_type %#x, backbuffer %p.\n",
@@ -836,7 +836,7 @@ static HRESULT d3d8_device_CreateSurface(struct d3d8_device *device, UINT width,
         IDirect3DSurface8 **surface, UINT usage, D3DPOOL pool, D3DMULTISAMPLE_TYPE multisample_type,
         DWORD multisample_quality)
 {
-    IDirect3DSurface8Impl *object;
+    struct d3d8_surface *object;
     HRESULT hr;
 
     TRACE("device %p, width %u, height %u, format %#x, lockable %#x, discard %#x, level %u, surface %p,\n"
@@ -844,8 +844,7 @@ static HRESULT d3d8_device_CreateSurface(struct d3d8_device *device, UINT width,
             device, width, height, format, lockable, discard, level, surface,
             usage, pool, multisample_type, multisample_quality);
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DSurface8Impl));
-    if (!object)
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
     {
         FIXME("Failed to allocate surface memory.\n");
         return D3DERR_OUTOFVIDEOMEMORY;
@@ -920,8 +919,8 @@ static HRESULT WINAPI d3d8_device_CopyRects(IDirect3DDevice8 *iface,
         IDirect3DSurface8 *src_surface, const RECT *src_rects, UINT rect_count,
         IDirect3DSurface8 *dst_surface, const POINT *dst_points)
 {
-    IDirect3DSurface8Impl *src = unsafe_impl_from_IDirect3DSurface8(src_surface);
-    IDirect3DSurface8Impl *dst = unsafe_impl_from_IDirect3DSurface8(dst_surface);
+    struct d3d8_surface *src = unsafe_impl_from_IDirect3DSurface8(src_surface);
+    struct d3d8_surface *dst = unsafe_impl_from_IDirect3DSurface8(dst_surface);
     enum wined3d_format_id src_format, dst_format;
     struct wined3d_resource_desc wined3d_desc;
     struct wined3d_resource *wined3d_resource;
@@ -1042,7 +1041,7 @@ static HRESULT WINAPI d3d8_device_UpdateTexture(IDirect3DDevice8 *iface,
 static HRESULT WINAPI d3d8_device_GetFrontBuffer(IDirect3DDevice8 *iface, IDirect3DSurface8 *dst_surface)
 {
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
-    IDirect3DSurface8Impl *dst_impl = unsafe_impl_from_IDirect3DSurface8(dst_surface);
+    struct d3d8_surface *dst_impl = unsafe_impl_from_IDirect3DSurface8(dst_surface);
     HRESULT hr;
 
     TRACE("iface %p, dst_surface %p.\n", iface, dst_surface);
@@ -1064,8 +1063,8 @@ static HRESULT WINAPI d3d8_device_SetRenderTarget(IDirect3DDevice8 *iface,
         IDirect3DSurface8 *render_target, IDirect3DSurface8 *depth_stencil)
 {
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
-    IDirect3DSurface8Impl *rt_impl = unsafe_impl_from_IDirect3DSurface8(render_target);
-    IDirect3DSurface8Impl *ds_impl = unsafe_impl_from_IDirect3DSurface8(depth_stencil);
+    struct d3d8_surface *rt_impl = unsafe_impl_from_IDirect3DSurface8(render_target);
+    struct d3d8_surface *ds_impl = unsafe_impl_from_IDirect3DSurface8(depth_stencil);
     struct wined3d_surface *original_ds = NULL;
     HRESULT hr;
 
@@ -1129,7 +1128,7 @@ static HRESULT WINAPI d3d8_device_GetRenderTarget(IDirect3DDevice8 *iface, IDire
 {
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
     struct wined3d_surface *wined3d_surface;
-    IDirect3DSurface8Impl *surface_impl;
+    struct d3d8_surface *surface_impl;
     HRESULT hr;
 
     TRACE("iface %p, render_target %p.\n", iface, render_target);
@@ -1160,7 +1159,7 @@ static HRESULT WINAPI d3d8_device_GetDepthStencilSurface(IDirect3DDevice8 *iface
 {
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
     struct wined3d_surface *wined3d_surface;
-    IDirect3DSurface8Impl *surface_impl;
+    struct d3d8_surface *surface_impl;
     HRESULT hr;
 
     TRACE("iface %p, depth_stencil %p.\n", iface, depth_stencil);
@@ -2802,7 +2801,7 @@ static HRESULT CDECL device_parent_create_surface(struct wined3d_device_parent *
         enum wined3d_pool pool, UINT level, enum wined3d_cubemap_face face, struct wined3d_surface **surface)
 {
     struct d3d8_device *device = device_from_device_parent(device_parent);
-    IDirect3DSurface8Impl *d3d_surface;
+    struct d3d8_surface *d3d_surface;
     BOOL lockable = TRUE;
     HRESULT hr;
 
@@ -2827,8 +2826,8 @@ static HRESULT CDECL device_parent_create_surface(struct wined3d_device_parent *
     wined3d_surface_incref(*surface);
 
     d3d_surface->container = container_parent;
-    IUnknown_Release(d3d_surface->parentDevice);
-    d3d_surface->parentDevice = NULL;
+    IUnknown_Release(d3d_surface->parent_device);
+    d3d_surface->parent_device = NULL;
 
     IDirect3DSurface8_Release(&d3d_surface->IDirect3DSurface8_iface);
     d3d_surface->forwardReference = container_parent;
@@ -2842,7 +2841,7 @@ static HRESULT CDECL device_parent_create_rendertarget(struct wined3d_device_par
         struct wined3d_surface **surface)
 {
     struct d3d8_device *device = device_from_device_parent(device_parent);
-    IDirect3DSurface8Impl *d3d_surface;
+    struct d3d8_surface *d3d_surface;
     HRESULT hr;
 
     TRACE("device_parent %p, container_parent %p, width %u, height %u, format %#x, multisample_type %#x,\n"
@@ -2873,7 +2872,7 @@ static HRESULT CDECL device_parent_create_depth_stencil(struct wined3d_device_pa
         DWORD multisample_quality, BOOL discard, struct wined3d_surface **surface)
 {
     struct d3d8_device *device = device_from_device_parent(device_parent);
-    IDirect3DSurface8Impl *d3d_surface;
+    struct d3d8_surface *d3d_surface;
     HRESULT hr;
 
     TRACE("device_parent %p, width %u, height %u, format %#x, multisample_type %#x,\n"

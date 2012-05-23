@@ -109,7 +109,7 @@ static HRESULT WINAPI d3d8_swapchain_GetBackBuffer(IDirect3DSwapChain8 *iface,
 {
     struct d3d8_swapchain *swapchain = impl_from_IDirect3DSwapChain8(iface);
     struct wined3d_surface *wined3d_surface = NULL;
-    IDirect3DSurface8Impl *surface_impl;
+    struct d3d8_surface *surface_impl;
     HRESULT hr;
 
     TRACE("iface %p, backbuffer_idx %u, backbuffer_type %#x, backbuffer %p.\n",
