@@ -68,7 +68,7 @@ static void init_bit_fields(dib_info *dib, const DWORD *bit_fields)
 }
 
 static void init_dib_info(dib_info *dib, const BITMAPINFOHEADER *bi, const DWORD *bit_fields,
-                          const RGBQUAD *color_table, void *bits, enum dib_info_flags flags)
+                          const RGBQUAD *color_table, void *bits)
 {
     dib->bit_count    = bi->biBitCount;
     dib->width        = bi->biWidth;
@@ -145,11 +145,6 @@ static void init_dib_info(dib_info *dib, const BITMAPINFOHEADER *bi, const DWORD
         dib->color_table = color_table;
         dib->color_table_size = bi->biClrUsed;
     }
-    else if (flags & default_color_table)
-    {
-        dib->color_table = get_default_color_table( dib->bit_count );
-        dib->color_table_size = dib->color_table ? (1 << dib->bit_count) : 0;
-    }
     else
     {
         dib->color_table = NULL;
@@ -157,12 +152,12 @@ static void init_dib_info(dib_info *dib, const BITMAPINFOHEADER *bi, const DWORD
     }
 }
 
-void init_dib_info_from_bitmapinfo(dib_info *dib, const BITMAPINFO *info, void *bits, enum dib_info_flags flags)
+void init_dib_info_from_bitmapinfo(dib_info *dib, const BITMAPINFO *info, void *bits)
 {
-    init_dib_info( dib, &info->bmiHeader, (const DWORD *)info->bmiColors, info->bmiColors, bits, flags );
+    init_dib_info( dib, &info->bmiHeader, (const DWORD *)info->bmiColors, info->bmiColors, bits );
 }
 
-BOOL init_dib_info_from_bitmapobj(dib_info *dib, BITMAPOBJ *bmp, enum dib_info_flags flags)
+BOOL init_dib_info_from_bitmapobj(dib_info *dib, BITMAPOBJ *bmp)
 {
     if (!is_bitmapobj_dib( bmp ))
     {
@@ -176,16 +171,15 @@ BOOL init_dib_info_from_bitmapobj(dib_info *dib, BITMAPOBJ *bmp, enum dib_info_f
                                               bmp->dib.dsBm.bmHeight * width_bytes );
             if (!bmp->dib.dsBm.bmBits) return FALSE;
         }
-        init_dib_info_from_bitmapinfo( dib, &info, bmp->dib.dsBm.bmBits, flags );
+        init_dib_info_from_bitmapinfo( dib, &info, bmp->dib.dsBm.bmBits );
     }
     else init_dib_info( dib, &bmp->dib.dsBmih, bmp->dib.dsBitfields,
-                        bmp->color_table, bmp->dib.dsBm.bmBits, flags );
+                        bmp->color_table, bmp->dib.dsBm.bmBits );
     return TRUE;
 }
 
 static void clear_dib_info(dib_info *dib)
 {
-    dib->color_table = NULL;
     dib->bits.ptr    = NULL;
     dib->bits.free   = NULL;
     dib->bits.param  = NULL;
@@ -225,8 +219,8 @@ DWORD convert_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struct bit
     dib_info src_dib, dst_dib;
     DWORD ret;
 
-    init_dib_info_from_bitmapinfo( &src_dib, src_info, src_bits, default_color_table );
-    init_dib_info_from_bitmapinfo( &dst_dib, dst_info, dst_bits, default_color_table );
+    init_dib_info_from_bitmapinfo( &src_dib, src_info, src_bits );
+    init_dib_info_from_bitmapinfo( &dst_dib, dst_info, dst_bits );
 
     __TRY
     {
@@ -380,7 +374,7 @@ static HBITMAP dibdrv_SelectBitmap( PHYSDEV dev, HBITMAP bitmap )
 
     if (!bmp) return 0;
 
-    if(!init_dib_info_from_bitmapobj(&dib, bmp, default_color_table))
+    if (!init_dib_info_from_bitmapobj(&dib, bmp))
     {
         GDI_ReleaseObj( bitmap );
         return 0;

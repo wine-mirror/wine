@@ -1855,7 +1855,7 @@ static BOOL select_pattern_brush( dibdrv_physdev *pdev, dib_brush *brush, BOOL *
         BOOL ret;
 
         if (!bmp) return FALSE;
-        ret = init_dib_info_from_bitmapobj( &pattern, bmp, 0 );
+        ret = init_dib_info_from_bitmapobj( &pattern, bmp );
         GDI_ReleaseObj( brush->pattern.bitmap );
         if (!ret) return FALSE;
     }
@@ -1863,12 +1863,12 @@ static BOOL select_pattern_brush( dibdrv_physdev *pdev, dib_brush *brush, BOOL *
     {
         copy_bitmapinfo( info, brush->pattern.info );
         fill_color_table_from_pal_colors( info, pdev->dev.hdc );
-        init_dib_info_from_bitmapinfo( &pattern, info, brush->pattern.bits.ptr, 0 );
+        init_dib_info_from_bitmapinfo( &pattern, info, brush->pattern.bits.ptr );
         *needs_reselect = TRUE;
     }
     else
     {
-        init_dib_info_from_bitmapinfo( &pattern, brush->pattern.info, brush->pattern.bits.ptr, 0 );
+        init_dib_info_from_bitmapinfo( &pattern, brush->pattern.info, brush->pattern.bits.ptr );
     }
 
     if (pattern.bit_count == 1 && !pattern.color_table)
