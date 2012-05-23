@@ -825,23 +825,22 @@ PEKIND assembly_get_architecture(ASSEMBLY *assembly)
     return peI386; /* x86 assembly */
 }
 
-static BYTE *assembly_get_blob(ASSEMBLY *assembly, WORD index, ULONG *size)
+static BYTE *assembly_get_blob(ASSEMBLY *assembly, DWORD index, ULONG *size)
 {
     return GetData(&assembly->blobs[index], size);
 }
 
 HRESULT assembly_get_pubkey_token(ASSEMBLY *assembly, LPWSTR *token)
 {
-    ASSEMBLYTABLE *asmtbl;
     ULONG i, size;
     LONG offset;
-    BYTE *hashdata;
+    BYTE *hashdata, *pubkey, *ptr;
     HCRYPTPROV crypt;
     HCRYPTHASH hash;
-    BYTE *pubkey;
     BYTE tokbytes[BYTES_PER_TOKEN];
     HRESULT hr = E_FAIL;
     LPWSTR tok;
+    DWORD idx;
 
     *token = NULL;
 
@@ -849,11 +848,17 @@ HRESULT assembly_get_pubkey_token(ASSEMBLY *assembly, LPWSTR *token)
     if (offset == -1)
         return E_FAIL;
 
-    asmtbl = assembly_data_offset(assembly, offset);
-    if (!asmtbl)
+    ptr = assembly_data_offset(assembly, offset);
+    if (!ptr)
         return E_FAIL;
 
-    pubkey = assembly_get_blob(assembly, asmtbl->PublicKey, &size);
+    ptr += FIELD_OFFSET(ASSEMBLYTABLE, PublicKey);
+    if (assembly->blobsz == sizeof(DWORD))
+        idx = *(DWORD *)ptr;
+    else
+        idx = *(WORD *)ptr;
+
+    pubkey = assembly_get_blob(assembly, idx, &size);
 
     if (!CryptAcquireContextA(&crypt, NULL, NULL, PROV_RSA_FULL,
                               CRYPT_VERIFYCONTEXT))
