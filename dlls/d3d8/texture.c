@@ -1031,7 +1031,7 @@ static HRESULT WINAPI d3d8_texture_3d_GetVolumeLevel(IDirect3DVolumeTexture8 *if
 {
     struct d3d8_texture *texture = impl_from_IDirect3DVolumeTexture8(iface);
     struct wined3d_resource *sub_resource;
-    IDirect3DVolume8Impl *volume_impl;
+    struct d3d8_volume *volume_impl;
 
     TRACE("iface %p, level %u, volume %p.\n", iface, level, volume);
 
@@ -1055,7 +1055,7 @@ static HRESULT WINAPI d3d8_texture_3d_LockBox(IDirect3DVolumeTexture8 *iface,
 {
     struct d3d8_texture *texture = impl_from_IDirect3DVolumeTexture8(iface);
     struct wined3d_resource *sub_resource;
-    IDirect3DVolume8Impl *volume_impl;
+    struct d3d8_volume *volume_impl;
     HRESULT hr;
 
     TRACE("iface %p, level %u, locked_box %p, box %p, flags %#x.\n",
@@ -1078,7 +1078,7 @@ static HRESULT WINAPI d3d8_texture_3d_UnlockBox(IDirect3DVolumeTexture8 *iface, 
 {
     struct d3d8_texture *texture = impl_from_IDirect3DVolumeTexture8(iface);
     struct wined3d_resource *sub_resource;
-    IDirect3DVolume8Impl *volume_impl;
+    struct d3d8_volume *volume_impl;
     HRESULT hr;
 
     TRACE("iface %p, level %u.\n", iface, level);

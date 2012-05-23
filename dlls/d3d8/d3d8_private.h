@@ -100,8 +100,6 @@
 
 void fixup_caps(WINED3DCAPS *pWineCaps) DECLSPEC_HIDDEN;
 
-typedef struct IDirect3DVolume8Impl IDirect3DVolume8Impl;
-
 struct d3d8
 {
     IDirect3D8 IDirect3D8_iface;
@@ -168,23 +166,16 @@ struct d3d8_device
 HRESULT device_init(struct d3d8_device *device, struct d3d8 *parent, struct wined3d *wined3d, UINT adapter,
         D3DDEVTYPE device_type, HWND focus_window, DWORD flags, D3DPRESENT_PARAMETERS *parameters) DECLSPEC_HIDDEN;
 
-/* ---------------- */
-/* IDirect3DVolume8 */
-/* ---------------- */
-
-/*****************************************************************************
- * IDirect3DVolume8 implementation structure
- */
-struct IDirect3DVolume8Impl
+struct d3d8_volume
 {
-    IDirect3DVolume8    IDirect3DVolume8_iface;
-    LONG                ref;
+    IDirect3DVolume8 IDirect3DVolume8_iface;
+    LONG refcount;
     struct wined3d_volume *wined3d_volume;
     IUnknown *container;
     IUnknown *forwardReference;
 };
 
-HRESULT volume_init(IDirect3DVolume8Impl *volume, struct d3d8_device *device, UINT width, UINT height,
+HRESULT volume_init(struct d3d8_volume *volume, struct d3d8_device *device, UINT width, UINT height,
         UINT depth, DWORD usage, enum wined3d_format_id format, enum wined3d_pool pool) DECLSPEC_HIDDEN;
 
 struct d3d8_swapchain

@@ -2902,7 +2902,7 @@ static HRESULT CDECL device_parent_create_volume(struct wined3d_device_parent *d
         enum wined3d_pool pool, DWORD usage, struct wined3d_volume **volume)
 {
     struct d3d8_device *device = device_from_device_parent(device_parent);
-    IDirect3DVolume8Impl *object;
+    struct d3d8_volume *object;
     HRESULT hr;
 
     TRACE("device_parent %p, container_parent %p, width %u, height %u, depth %u, "
