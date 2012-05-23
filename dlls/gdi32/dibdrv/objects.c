@@ -1870,6 +1870,9 @@ static BOOL select_pattern_brush( dibdrv_physdev *pdev, dib_brush *brush, BOOL *
     dib_info pattern;
     BOOL dither = (brush->dib.bit_count == 1);
 
+    if (pattern.bit_count == 1 && !pattern.color_table)
+        dither = FALSE;  /* monochrome DDB pattern brushes don't get dithered */
+
     if (!brush->pattern.info)
     {
         BITMAPOBJ *bmp = GDI_GetObjPtr( brush->pattern.bitmap, OBJ_BITMAP );
@@ -1892,7 +1895,8 @@ static BOOL select_pattern_brush( dibdrv_physdev *pdev, dib_brush *brush, BOOL *
         init_dib_info_from_bitmapinfo( &pattern, brush->pattern.info, brush->pattern.bits.ptr );
     }
 
-    if (pattern.bit_count == 1 && !pattern.color_table)
+    if (pattern.bit_count == 1 && !pattern.color_table &&
+        (pdev->dib.bit_count != 1 || pdev->dib.color_table))
     {
         /* monochrome DDB pattern uses DC colors */
         DWORD pixel;
@@ -1916,7 +1920,6 @@ static BOOL select_pattern_brush( dibdrv_physdev *pdev, dib_brush *brush, BOOL *
         pattern.color_table = color_table;
         pattern.color_table_size = 2;
         *needs_reselect = TRUE;
-        dither = FALSE;  /* DDB pattern brushes don't get dithered */
     }
 
     copy_dib_color_info(&brush->dib, &pdev->dib);
