@@ -157,21 +157,10 @@ msgid "Cancel"
 msgstr "Avbryt"
 
 #: appwiz.rc:112
-#, fuzzy
-#| msgid "Wine Gecko Installer"
 msgid "Wine Mono Installer"
-msgstr "Wine Gecko Installationsprogram"
+msgstr "Wine Mono Installationsprogram"
 
 #: appwiz.rc:115
-#, fuzzy
-#| msgid ""
-#| "Wine could not find a Gecko package which is needed for applications "
-#| "embedding HTML to work correctly. Wine can automatically download and "
-#| "install it for you.\n"
-#| "\n"
-#| "Note: it is recommended to use your distribution's packages instead. See "
-#| "<a href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> "
-#| "for details."
 msgid ""
 "Wine could not find a Mono package which is needed for .NET applications to "
 "work correctly. Wine can automatically download and install it for you.\n"
@@ -180,13 +169,12 @@ msgid ""
 "href=\"http://wiki.winehq.org/Mono\">http://wiki.winehq.org/Mono</a> for "
 "details."
 msgstr ""
-"Wine kunde inte hitta paketet Gecko vilket krävs för att program med "
-"inbäddad HTML ska fungera korrekt. Wine kan hämta och installera det "
-"automatiskt åt dig.\n"
+"Wine kunde inte hitta paketet Mono vilket krävs för att .NET-program ska "
+"fungera korrekt. Wine kan hämta och installera det automatiskt åt dig.\n"
 "\n"
 "Obs: Du rekommenderas att använda din distributions paket i stället. Se <a "
-"href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> för "
-"mer information."
+"href=\"http://wiki.winehq.org/Mono\">http://wiki.winehq.org/Mono</a> för mer "
+"information."
 
 #: appwiz.rc:28
 msgid "Add/Remove Programs"
@@ -3058,7 +3046,7 @@ msgstr ""
 
 #: gdi32.rc:41
 msgid "OEM/DOS"
-msgstr ""
+msgstr "OEM/DOS"
 
 #: gphoto2.rc:27
 msgid "Files on Camera"
@@ -9963,7 +9951,7 @@ msgstr "Plats:"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"
-msgstr ""
+msgstr "Användning: hostname\n"
 
 #: hostname.rc:28
 msgid "Error: Invalid option '%c'.\n"
@@ -10062,6 +10050,12 @@ msgid ""
 "Displays the list of running services if 'service' is omitted. Otherwise "
 "'service' is the name of the service to start.\n"
 msgstr ""
+"Syntax för detta kommando är:\n"
+"\n"
+"NET START [tjänst]\n"
+"\n"
+"Visar listan på tjänster som redan körs om 'tjänst' utelämnas. Annars är "
+"'tjänst' namnet på tjänsten att starta.\n"
 
 #: net.rc:29
 msgid ""
@@ -10071,6 +10065,11 @@ msgid ""
 "\n"
 "Where 'service' is the name of the service to stop.\n"
 msgstr ""
+"Syntax för detta kommando är:\n"
+"\n"
+"NET STOP tjänst\n"
+"\n"
+"Där 'tjänst' är namnet på tjänsten att stoppa.\n"
 
 #: net.rc:30
 msgid "Stopping dependent service: %1\n"
