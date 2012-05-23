@@ -37,6 +37,18 @@ static const BYTE bayer_4x4[4][4] =
     { 15,  7, 13,  5 }
 };
 
+static const BYTE bayer_8x8[8][8] =
+{
+    {   0,  32,   8,  40,   2,  34,  10,  42 },
+    {  48,  16,  56,  24,  50,  18,  58,  26 },
+    {  12,  44,   4,  36,  14,  46,   6,  38 },
+    {  60,  28,  52,  20,  62,  30,  54,  22 },
+    {   3,  35,  11,  43,   1,  33,   9,  41 },
+    {  51,  19,  59,  27,  49,  17,  57,  25 },
+    {  15,  47,   7,  39,  13,  45,   5,  37 },
+    {  63,  31,  55,  23,  61,  29,  53,  21 }
+};
+
 static const BYTE bayer_16x16[16][16] =
 {
     {   0, 128,  32, 160,   8, 136,  40, 168,   2, 130,  34, 162,  10, 138,  42, 170 },
@@ -5041,6 +5053,174 @@ static void create_rop_masks_null(const dib_info *dib, const BYTE *hatch_ptr,
 {
 }
 
+static void create_dither_masks_8(const dib_info *dib, int rop2, COLORREF color, rop_mask_bits *bits)
+{
+    /* mapping between RGB triples and the default color table */
+    static const BYTE mapping[27] =
+    {
+        0,   /* 000000 -> 000000 */
+        4,   /* 00007f -> 000080 */
+        252, /* 0000ff -> 0000ff */
+        2,   /* 007f00 -> 008000 */
+        6,   /* 007f7f -> 008080 */
+        224, /* 007fff -> 0080c0 */
+        250, /* 00ff00 -> 00ff00 */
+        184, /* 00ff7f -> 00e080 */
+        254, /* 00ffff -> 00ffff */
+        1,   /* 7f0000 -> 800000 */
+        5,   /* 7f007f -> 800080 */
+        196, /* 7f00ff -> 8000c0 */
+        3,   /* 7f7f00 -> 808000 */
+        248, /* 7f7f7f -> 808080 */
+        228, /* 7f7fff -> 8080c0 */
+        60,  /* 7fff00 -> 80e000 */
+        188, /* 7fff7f -> 80e080 */
+        244, /* 7fffff -> 80c0c0 */
+        249, /* ff0000 -> ff0000 */
+        135, /* ff007f -> e00080 */
+        253, /* ff00ff -> ff00ff */
+        39,  /* ff7f00 -> e08000 */
+        167, /* ff7f7f -> e08080 */
+        231, /* ff7fff -> e080c0 */
+        251, /* ffff00 -> ffff00 */
+        191, /* ffff7f -> e0e080 */
+        255  /* ffffff -> ffffff */
+    };
+
+    BYTE *and_bits = bits->and, *xor_bits = bits->xor;
+    struct rop_codes codes;
+    int x, y;
+
+    /* masks are always 8x8 */
+    assert( dib->width == 8 );
+    assert( dib->height == 8 );
+
+    get_rop_codes( rop2, &codes );
+
+    for (y = 0; y < 8; y++)
+    {
+        for (x = 0; x < 8; x++)
+        {
+            DWORD r = ((GetRValue(color) + 1) / 2 + bayer_8x8[y][x]) / 64;
+            DWORD g = ((GetGValue(color) + 1) / 2 + bayer_8x8[y][x]) / 64;
+            DWORD b = ((GetBValue(color) + 1) / 2 + bayer_8x8[y][x]) / 64;
+            DWORD pixel = mapping[r * 9 + g * 3 + b];
+            and_bits[x] = (pixel & codes.a1) ^ codes.a2;
+            xor_bits[x] = (pixel & codes.x1) ^ codes.x2;
+        }
+        and_bits += dib->stride;
+        xor_bits += dib->stride;
+    }
+}
+
+static void create_dither_masks_4(const dib_info *dib, int rop2, COLORREF color, rop_mask_bits *bits)
+{
+    /* mapping between RGB triples and the default color table */
+    static const BYTE mapping[27] =
+    {
+        0,  /* 000000 -> 000000 */
+        4,  /* 00007f -> 000080 */
+        12, /* 0000ff -> 0000ff */
+        2,  /* 007f00 -> 008000 */
+        6,  /* 007f7f -> 008080 */
+        6,  /* 007fff -> 008080 */
+        10, /* 00ff00 -> 00ff00 */
+        6,  /* 00ff7f -> 008080 */
+        14, /* 00ffff -> 00ffff */
+        1,  /* 7f0000 -> 800000 */
+        5,  /* 7f007f -> 800080 */
+        5,  /* 7f00ff -> 800080 */
+        3,  /* 7f7f00 -> 808000 */
+        7,  /* 7f7f7f -> 808080 */
+        8,  /* 7f7fff -> c0c0c0 */
+        3,  /* 7fff00 -> 808000 */
+        8,  /* 7fff7f -> c0c0c0 */
+        8,  /* 7fffff -> c0c0c0 */
+        9,  /* ff0000 -> ff0000 */
+        5,  /* ff007f -> 800080 */
+        13, /* ff00ff -> ff00ff */
+        3,  /* ff7f00 -> 808000 */
+        8,  /* ff7f7f -> c0c0c0 */
+        8,  /* ff7fff -> c0c0c0 */
+        11, /* ffff00 -> ffff00 */
+        8,  /* ffff7f -> c0c0c0 */
+        15  /* ffffff -> ffffff */
+    };
+
+    BYTE *and_bits = bits->and, *xor_bits = bits->xor;
+    struct rop_codes codes;
+    int x, y;
+
+    /* masks are always 8x8 */
+    assert( dib->width == 8 );
+    assert( dib->height == 8 );
+
+    get_rop_codes( rop2, &codes );
+
+    for (y = 0; y < 8; y++)
+    {
+        for (x = 0; x < 8; x++)
+        {
+            DWORD r = ((GetRValue(color) + 1) / 2 + bayer_8x8[y][x]) / 64;
+            DWORD g = ((GetGValue(color) + 1) / 2 + bayer_8x8[y][x]) / 64;
+            DWORD b = ((GetBValue(color) + 1) / 2 + bayer_8x8[y][x]) / 64;
+            DWORD pixel = mapping[r * 9 + g * 3 + b];
+            if (x & 1)
+            {
+                and_bits[x / 2] |= (pixel & codes.a1) ^ codes.a2;
+                xor_bits[x / 2] |= (pixel & codes.x1) ^ codes.x2;
+            }
+            else
+            {
+                and_bits[x / 2] = ((pixel & codes.a1) ^ codes.a2) << 4;
+                xor_bits[x / 2] = ((pixel & codes.x1) ^ codes.x2) << 4;
+            }
+        }
+        and_bits += dib->stride;
+        xor_bits += dib->stride;
+    }
+}
+
+static void create_dither_masks_1(const dib_info *dib, int rop2, COLORREF color, rop_mask_bits *bits)
+{
+    BYTE *and_bits = bits->and, *xor_bits = bits->xor;
+    struct rop_codes codes;
+    rop_mask rop_mask;
+    int x, y, grey = (30 * GetRValue(color) + 59 * GetGValue(color) + 11 * GetBValue(color) + 200) / 400;
+
+    /* masks are always 8x8 */
+    assert( dib->width == 8 );
+    assert( dib->height == 8 );
+
+    get_rop_codes( rop2, &codes );
+
+    for (y = 0; y < 8; y++)
+    {
+        *and_bits = *xor_bits = 0;
+        for (x = 0; x < 8; x++)
+        {
+            if (grey + bayer_8x8[y][x] > 63)
+            {
+                rop_mask.and = (0xff & codes.a1) ^ codes.a2;
+                rop_mask.xor = (0xff & codes.x1) ^ codes.x2;
+            }
+            else
+            {
+                rop_mask.and = (0x00 & codes.a1) ^ codes.a2;
+                rop_mask.xor = (0x00 & codes.x1) ^ codes.x2;
+            }
+            *and_bits |= (rop_mask.and & pixel_masks_1[x]);
+            *xor_bits |= (rop_mask.xor & pixel_masks_1[x]);
+        }
+        and_bits += dib->stride;
+        xor_bits += dib->stride;
+    }
+}
+
+static void create_dither_masks_null(const dib_info *dib, int rop2, COLORREF color, rop_mask_bits *bits)
+{
+}
+
 static inline void rop_codes_from_stretch_mode( int mode, struct rop_codes *codes )
 {
     switch (mode)
@@ -5460,6 +5640,7 @@ const primitive_funcs funcs_8888 =
     pixel_to_colorref_888,
     convert_to_8888,
     create_rop_masks_32,
+    create_dither_masks_null,
     stretch_row_32,
     shrink_row_32
 };
@@ -5478,6 +5659,7 @@ const primitive_funcs funcs_32 =
     pixel_to_colorref_masks,
     convert_to_32,
     create_rop_masks_32,
+    create_dither_masks_null,
     stretch_row_32,
     shrink_row_32
 };
@@ -5496,6 +5678,7 @@ const primitive_funcs funcs_24 =
     pixel_to_colorref_888,
     convert_to_24,
     create_rop_masks_24,
+    create_dither_masks_null,
     stretch_row_24,
     shrink_row_24
 };
@@ -5514,6 +5697,7 @@ const primitive_funcs funcs_555 =
     pixel_to_colorref_555,
     convert_to_555,
     create_rop_masks_16,
+    create_dither_masks_null,
     stretch_row_16,
     shrink_row_16
 };
@@ -5532,6 +5716,7 @@ const primitive_funcs funcs_16 =
     pixel_to_colorref_masks,
     convert_to_16,
     create_rop_masks_16,
+    create_dither_masks_null,
     stretch_row_16,
     shrink_row_16
 };
@@ -5550,6 +5735,7 @@ const primitive_funcs funcs_8 =
     pixel_to_colorref_colortable,
     convert_to_8,
     create_rop_masks_8,
+    create_dither_masks_8,
     stretch_row_8,
     shrink_row_8
 };
@@ -5568,6 +5754,7 @@ const primitive_funcs funcs_4 =
     pixel_to_colorref_colortable,
     convert_to_4,
     create_rop_masks_4,
+    create_dither_masks_4,
     stretch_row_4,
     shrink_row_4
 };
@@ -5586,6 +5773,7 @@ const primitive_funcs funcs_1 =
     pixel_to_colorref_colortable,
     convert_to_1,
     create_rop_masks_1,
+    create_dither_masks_1,
     stretch_row_1,
     shrink_row_1
 };
@@ -5604,6 +5792,7 @@ const primitive_funcs funcs_null =
     pixel_to_colorref_null,
     convert_to_null,
     create_rop_masks_null,
+    create_dither_masks_null,
     stretch_row_null,
     shrink_row_null
 };

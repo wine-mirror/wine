@@ -188,6 +188,7 @@ typedef struct primitive_funcs
     void             (* convert_to)(dib_info *dst, const dib_info *src, const RECT *src_rect, BOOL dither);
     void       (* create_rop_masks)(const dib_info *dib, const BYTE *hatch_ptr,
                                     const rop_mask *fg, const rop_mask *bg, rop_mask_bits *bits);
+    void    (* create_dither_masks)(const dib_info *dib, int rop2, COLORREF color, rop_mask_bits *bits);
     void            (* stretch_row)(const dib_info *dst_dib, const POINT *dst_start,
                                     const dib_info *src_dib, const POINT *src_start,
                                     const struct stretch_params *params, int mode, BOOL keep_dst);
