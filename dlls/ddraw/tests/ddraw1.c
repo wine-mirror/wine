@@ -186,6 +186,20 @@ static void emit_end(void **ptr)
     *ptr = inst + 1;
 }
 
+static void set_execute_data(IDirect3DExecuteBuffer *execute_buffer, UINT vertex_count, UINT offset, UINT len)
+{
+    D3DEXECUTEDATA exec_data;
+    HRESULT hr;
+
+    memset(&exec_data, 0, sizeof(exec_data));
+    exec_data.dwSize = sizeof(exec_data);
+    exec_data.dwVertexCount = vertex_count;
+    exec_data.dwInstructionOffset = offset;
+    exec_data.dwInstructionLength = len;
+    hr = IDirect3DExecuteBuffer_SetExecuteData(execute_buffer, &exec_data);
+    ok(SUCCEEDED(hr), "Failed to set execute data, hr %#x.\n", hr);
+}
+
 static HRESULT CALLBACK enum_z_fmt(GUID *guid, char *description, char *name,
         D3DDEVICEDESC *hal_desc, D3DDEVICEDESC *hel_desc, void *ctx)
 {
@@ -997,7 +1011,6 @@ static void test_zenable(void)
     D3DEXECUTEBUFFERDESC exec_desc;
     IDirect3DMaterial *background;
     IDirect3DViewport *viewport;
-    D3DEXECUTEDATA exec_data;
     IDirect3DDevice *device;
     IDirectDrawSurface *rt;
     IDirectDraw *ddraw;
@@ -1050,18 +1063,11 @@ static void test_zenable(void)
     hr = IDirect3DExecuteBuffer_Unlock(execute_buffer);
     ok(SUCCEEDED(hr), "Failed to unlock execute buffer, hr %#x.\n", hr);
 
-    memset(&exec_data, 0, sizeof(exec_data));
-    exec_data.dwSize = sizeof(exec_data);
-    exec_data.dwVertexCount = 4;
-    exec_data.dwInstructionOffset = sizeof(tquad);
-    exec_data.dwInstructionLength = inst_length;
-    hr = IDirect3DExecuteBuffer_SetExecuteData(execute_buffer, &exec_data);
-    ok(SUCCEEDED(hr), "Failed to set execute data, hr %#x.\n", hr);
-
     hr = IDirect3DViewport_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
     ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
     hr = IDirect3DDevice_BeginScene(device);
     ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    set_execute_data(execute_buffer, 4, sizeof(tquad), inst_length);
     hr = IDirect3DDevice_Execute(device, execute_buffer, viewport, D3DEXECUTE_CLIPPED);
     ok(SUCCEEDED(hr), "Failed to execute exec buffer, hr %#x.\n", hr);
     hr = IDirect3DDevice_EndScene(device);
@@ -1197,7 +1203,6 @@ static void test_ck_rgba(void)
     for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
     {
         UINT draw1_len, draw2_len;
-        D3DEXECUTEDATA exec_data;
         void *ptr;
 
         hr = IDirect3DExecuteBuffer_Lock(execute_buffer, &exec_desc);
@@ -1227,18 +1232,11 @@ static void test_ck_rgba(void)
         hr = IDirectDrawSurface_Blt(surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
         ok(SUCCEEDED(hr), "Failed to fill texture, hr %#x.\n", hr);
 
-        memset(&exec_data, 0, sizeof(exec_data));
-        exec_data.dwSize = sizeof(exec_data);
-        exec_data.dwVertexCount = 8;
-        exec_data.dwInstructionOffset = sizeof(tquad);
-        exec_data.dwInstructionLength = draw1_len;
-        hr = IDirect3DExecuteBuffer_SetExecuteData(execute_buffer, &exec_data);
-        ok(SUCCEEDED(hr), "Failed to set execute data, hr %#x.\n", hr);
-
         hr = IDirect3DViewport_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER);
         ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
         hr = IDirect3DDevice_BeginScene(device);
         ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+        set_execute_data(execute_buffer, 8, sizeof(tquad), draw1_len);
         hr = IDirect3DDevice_Execute(device, execute_buffer, viewport, D3DEXECUTE_CLIPPED);
         ok(SUCCEEDED(hr), "Failed to execute exec buffer, hr %#x.\n", hr);
         hr = IDirect3DDevice_EndScene(device);
@@ -1256,13 +1254,9 @@ static void test_ck_rgba(void)
         hr = IDirectDrawSurface_Blt(surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
         ok(SUCCEEDED(hr), "Failed to fill texture, hr %#x.\n", hr);
 
-        exec_data.dwInstructionOffset = sizeof(tquad) + draw1_len;
-        exec_data.dwInstructionLength = draw2_len;
-        hr = IDirect3DExecuteBuffer_SetExecuteData(execute_buffer, &exec_data);
-        ok(SUCCEEDED(hr), "Failed to set execute data, hr %#x.\n", hr);
-
         hr = IDirect3DDevice_BeginScene(device);
         ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+        set_execute_data(execute_buffer, 8, sizeof(tquad) + draw1_len, draw2_len);
         hr = IDirect3DDevice_Execute(device, execute_buffer, viewport, D3DEXECUTE_CLIPPED);
         ok(SUCCEEDED(hr), "Failed to execute exec buffer, hr %#x.\n", hr);
         hr = IDirect3DDevice_EndScene(device);
