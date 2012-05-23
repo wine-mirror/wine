@@ -2372,7 +2372,7 @@ static HRESULT WINAPI d3d8_device_GetIndices(IDirect3DDevice8 *iface,
     else
     {
         if (FAILED(hr))
-            ERR("Failed to get wined3d index buffer, hr %#x.", hr);
+            ERR("Failed to get wined3d index buffer, hr %#x.\n", hr);
         *buffer = NULL;
     }
     wined3d_mutex_unlock();
