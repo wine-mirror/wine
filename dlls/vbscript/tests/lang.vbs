@@ -260,6 +260,14 @@ End If
 Call ok(x, "elseif not called?")
 
 x = false
+if 1 then x = true
+Call ok(x, "if 1 not run?")
+
+x = false
+if &h10000& then x = true
+Call ok(x, "if &h10000& not run?")
+
+x = false
 y = false
 while not (x and y)
     if x then
