@@ -375,7 +375,10 @@ static HRESULT WINAPI IAssemblyCacheImpl_InstallAssembly(IAssemblyCache *iface,
                                                          LPCWSTR pszManifestFilePath,
                                                          LPCFUSION_INSTALL_REFERENCE pRefData)
 {
-    static const WCHAR format[] = {'%','s','\\','%','s','\\','%','s','_','_','%','s','\\',0};
+    static const WCHAR format[] =
+        {'%','s','\\','%','s','\\','%','s','_','_','%','s','\\',0};
+    static const WCHAR format_v40[] =
+        {'%','s','\\','%','s','\\','v','4','.','0','_','%','s','_','_','%','s','\\',0};
     static const WCHAR ext_exe[] = {'.','e','x','e',0};
     static const WCHAR ext_dll[] = {'.','d','l','l',0};
     IAssemblyCacheImpl *cache = impl_from_IAssemblyCache(iface);
@@ -430,7 +433,10 @@ static HRESULT WINAPI IAssemblyCacheImpl_InstallAssembly(IAssemblyCache *iface,
     architecture = assembly_get_architecture(assembly);
     get_assembly_directory(asmdir, MAX_PATH, clr_version, architecture);
 
-    sprintfW(path, format, asmdir, name, version, token);
+    if (!strcmp(clr_version, "v4.0.30319"))
+        sprintfW(path, format_v40, asmdir, name, version, token);
+    else
+        sprintfW(path, format, asmdir, name, version, token);
 
     create_full_path(path);
 

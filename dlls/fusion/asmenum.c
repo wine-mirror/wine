@@ -291,17 +291,6 @@ static void insert_assembly(struct list *assemblies, ASMNAME *to_insert)
 static HRESULT enum_gac_assemblies(struct list *assemblies, IAssemblyName *name,
                                    int depth, LPWSTR path)
 {
-    WIN32_FIND_DATAW ffd;
-    WCHAR buf[MAX_PATH];
-    WCHAR disp[MAX_PATH];
-    WCHAR asmpath[MAX_PATH];
-    ASMNAME *asmname;
-    HANDLE hfind;
-    LPWSTR ptr;
-    HRESULT hr = S_OK;
-
-    static WCHAR parent[MAX_PATH];
-
     static const WCHAR dot[] = {'.',0};
     static const WCHAR dotdot[] = {'.','.',0};
     static const WCHAR search_fmt[] = {'%','s','\\','*',0};
@@ -311,6 +300,14 @@ static HRESULT enum_gac_assemblies(struct list *assemblies, IAssemblyName *name,
         'C','u','l','t','u','r','e','=','n','e','u','t','r','a','l',',',' ',
         'P','u','b','l','i','c','K','e','y','T','o','k','e','n','=','%','s',0};
     static const WCHAR ss_fmt[] = {'%','s','\\','%','s',0};
+    static const WCHAR v40[] = {'v','4','.','0','_'};
+    WIN32_FIND_DATAW ffd;
+    WCHAR buf[MAX_PATH], disp[MAX_PATH], asmpath[MAX_PATH];
+    static WCHAR parent[MAX_PATH];
+    ASMNAME *asmname;
+    HANDLE hfind;
+    WCHAR *ptr;
+    HRESULT hr = S_OK;
 
     if (name)
         parse_name(name, depth, path, buf);
@@ -337,13 +334,19 @@ static HRESULT enum_gac_assemblies(struct list *assemblies, IAssemblyName *name,
         }
         else if (depth == 1)
         {
+            unsigned int prefix_len = sizeof(v40)/sizeof(WCHAR);
+            const WCHAR *token, *version = ffd.cFileName;
+
             sprintfW(asmpath, path_fmt, path, ffd.cFileName, parent);
 
             ptr = strstrW(ffd.cFileName, dblunder);
             *ptr = '\0';
-            ptr += 2;
+            token = ptr + 2;
 
-            sprintfW(disp, fmt, parent, ffd.cFileName, ptr);
+            if (strlenW(ffd.cFileName) >= prefix_len &&
+                !memcmp(ffd.cFileName, v40, sizeof(v40))) version += prefix_len;
+
+            sprintfW(disp, fmt, parent, version, token);
 
             asmname = HeapAlloc(GetProcessHeap(), 0, sizeof(ASMNAME));
             if (!asmname)
