@@ -2589,56 +2589,34 @@ fallback:
 static HBRUSH xrenderdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct brush_pattern *pattern )
 {
     struct xrender_physdev *physdev = get_xrender_dev( dev );
-    X_PHYSBITMAP *physbitmap;
-    BOOL delete_bitmap = FALSE;
-    BITMAP bm;
-    HBITMAP bitmap;
     Pixmap pixmap;
-    XRenderPictFormat *pict_format;
-    Picture src_pict, dst_pict;
-    XRenderPictureAttributes pa;
+    XVisualInfo vis;
+    XRenderPictFormat *format = physdev->pict_format;
 
     if (!pattern) goto x11drv_fallback;
+    if (pattern->info->bmiHeader.biBitCount == 1) goto x11drv_fallback;
     if (physdev->format == WXR_FORMAT_MONO) goto x11drv_fallback;
 
-    bitmap = pattern->bitmap;
-    if (!bitmap || !(physbitmap = X11DRV_get_phys_bitmap( bitmap )))
-    {
-        if (!(bitmap = create_brush_bitmap( physdev->x11dev, pattern ))) return 0;
-        physbitmap = X11DRV_get_phys_bitmap( bitmap );
-        delete_bitmap = TRUE;
-    }
+    memset( &vis, 0, sizeof(vis) );
+    vis.depth      = format->depth;
+    vis.red_mask   = format->direct.redMask   << format->direct.red;
+    vis.green_mask = format->direct.greenMask << format->direct.green;
+    vis.blue_mask  = format->direct.blueMask  << format->direct.blue;
 
-    if (physbitmap->format == WXR_FORMAT_MONO) goto x11drv_fallback;
-    if (!(pict_format = pict_formats[physbitmap->format])) goto x11drv_fallback;
-
-    GetObjectW( bitmap, sizeof(bm), &bm );
+    pixmap = create_pixmap_from_image( physdev->dev.hdc, &vis, pattern->info,
+                                       &pattern->bits, pattern->usage );
+    if (!pixmap) return 0;
 
     wine_tsx11_lock();
-    pixmap = XCreatePixmap( gdi_display, root_window, bm.bmWidth, bm.bmHeight,
-                            physdev->pict_format->depth );
-
-    pa.repeat = RepeatNone;
-    src_pict = pXRenderCreatePicture(gdi_display, physbitmap->pixmap, pict_format, CPRepeat, &pa);
-    dst_pict = pXRenderCreatePicture(gdi_display, pixmap, physdev->pict_format, CPRepeat, &pa);
-
-    xrender_blit( PictOpSrc, src_pict, 0, dst_pict, 0, 0, bm.bmWidth, bm.bmHeight,
-                  0, 0, bm.bmWidth, bm.bmHeight, 1.0, 1.0 );
-    pXRenderFreePicture( gdi_display, src_pict );
-    pXRenderFreePicture( gdi_display, dst_pict );
-
     if (physdev->x11dev->brush.pixmap) XFreePixmap( gdi_display, physdev->x11dev->brush.pixmap );
     physdev->x11dev->brush.pixmap = pixmap;
     physdev->x11dev->brush.fillStyle = FillTiled;
     physdev->x11dev->brush.pixel = 0;  /* ignored */
     physdev->x11dev->brush.style = BS_PATTERN;
     wine_tsx11_unlock();
-
-    if (delete_bitmap) DeleteObject( bitmap );
     return hbrush;
 
 x11drv_fallback:
-    if (delete_bitmap) DeleteObject( bitmap );
     dev = GET_NEXT_PHYSDEV( dev, pSelectBrush );
     return dev->funcs->pSelectBrush( dev, hbrush, pattern );
 }
