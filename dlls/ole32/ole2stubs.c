@@ -82,32 +82,6 @@ HGLOBAL WINAPI OleGetIconOfClass(REFCLSID rclsid, LPOLESTR lpszLabel, BOOL fUseT
   return NULL;
 }
 
-
-/******************************************************************************
- *              OleCreateStaticFromData        [OLE32.@]
- */
-HRESULT     WINAPI OleCreateStaticFromData(LPDATAOBJECT pSrcDataObj, REFIID iid,
-                DWORD renderopt, LPFORMATETC pFormatEtc, LPOLECLIENTSITE pClientSite,
-                LPSTORAGE pStg, LPVOID* ppvObj)
-{
-  FIXME("(srcdata=%p, refiid=%s, renderopt=%x, formatetc=%p, client=%p, storage=%p, ppv=%p), stub!\n",
-        pSrcDataObj,debugstr_guid(iid),renderopt,pFormatEtc,pClientSite,pStg,ppvObj );
-  return E_NOTIMPL;
-}
-
-/******************************************************************************
- *              OleCreateLinkFromData        [OLE32.@]
- */
-
-HRESULT WINAPI  OleCreateLinkFromData(LPDATAOBJECT pSrcDataObj, REFIID riid,
-                DWORD renderopt, LPFORMATETC pFormatEtc,
-                LPOLECLIENTSITE pClientSite, LPSTORAGE pStg,
-                LPVOID* ppvObj)
-{
-  FIXME("(not shown), stub!\n");
-  return E_NOTIMPL;
-}
-
 /***********************************************************************
  *           OleRegEnumFormatEtc    [OLE32.@]
  */

@@ -209,6 +209,31 @@ HRESULT WINAPI OleCreateFromData(LPDATAOBJECT data, REFIID iid,
                                fmt, NULL, NULL, client_site, stg, obj);
 }
 
+/******************************************************************************
+ *              OleCreateLinkFromData        [OLE32.@]
+ */
+HRESULT WINAPI OleCreateLinkFromData(IDataObject *data, REFIID iid,
+                                     DWORD renderopt, FORMATETC *fmt,
+                                     IOleClientSite *client_site, IStorage *stg,
+                                     void **obj)
+{
+    FIXME("%p,%s,%08x,%p,%p,%p,%p: semi-stub\n",
+          data, debugstr_guid(iid), renderopt, fmt, client_site, stg, obj);
+    return OleCreateFromData(data, iid, renderopt, fmt, client_site, stg, obj);
+}
+
+/******************************************************************************
+ *              OleCreateStaticFromData        [OLE32.@]
+ */
+HRESULT WINAPI OleCreateStaticFromData(IDataObject *data, REFIID iid,
+                                       DWORD renderopt, FORMATETC *fmt,
+                                       IOleClientSite *client_site, IStorage *stg,
+                                       void **obj)
+{
+    FIXME("%p,%s,%08x,%p,%p,%p,%p: semi-stub\n",
+          data, debugstr_guid(iid), renderopt, fmt, client_site, stg, obj);
+    return OleCreateFromData(data, iid, renderopt, fmt, client_site, stg, obj);
+}
 
 /******************************************************************************
  *              OleDuplicateData        [OLE32.@]
