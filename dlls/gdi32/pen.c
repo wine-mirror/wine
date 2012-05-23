@@ -243,11 +243,7 @@ static HGDIOBJ PEN_SelectObject( HGDIOBJ handle, HDC hdc )
             break;
         case OBJ_EXTPEN:
             pattern = &pen->pattern;
-            if (!pattern->info)
-            {
-                if (pattern->bitmap) cache_pattern_bits( physdev, pattern );
-                else pattern = NULL;
-            }
+            if (!pattern->info) pattern = NULL;
             break;
         default:
             GDI_ReleaseObj( handle );

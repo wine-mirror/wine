@@ -55,88 +55,37 @@ static const struct gdi_obj_funcs brush_funcs =
 };
 
 
-/* fetch the contents of the brush bitmap and cache them in the brush pattern */
-void cache_pattern_bits( PHYSDEV physdev, struct brush_pattern *pattern )
+static BOOL copy_bitmap( struct brush_pattern *brush, HBITMAP bitmap )
 {
+    char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256])];
+    BITMAPINFO *info = (BITMAPINFO *)buffer;
     struct gdi_image_bits bits;
     struct bitblt_coords src;
-    BITMAPINFO *info;
-    BITMAPOBJ *bmp;
+    BITMAPOBJ *bmp = GDI_GetObjPtr( bitmap, OBJ_BITMAP );
 
-    if (pattern->info) return;  /* already cached */
-    if (!(bmp = GDI_GetObjPtr( pattern->bitmap, OBJ_BITMAP ))) return;
-
-    /* we don't need to cache if we are selecting into the same type of DC */
-    if (physdev && bmp->funcs == physdev->funcs) goto done;
-
-    if (!(info = HeapAlloc( GetProcessHeap(), 0, FIELD_OFFSET( BITMAPINFO, bmiColors[256] )))) goto done;
+    if (!bmp) return FALSE;
 
     src.visrect.left   = src.x = 0;
     src.visrect.top    = src.y = 0;
     src.visrect.right  = src.width = bmp->dib.dsBm.bmWidth;
     src.visrect.bottom = src.height = bmp->dib.dsBm.bmHeight;
-    if (bmp->funcs->pGetImage( NULL, pattern->bitmap, info, &bits, &src ))
+    if (bmp->funcs->pGetImage( NULL, bitmap, info, &bits, &src )) goto done;
+
+    brush->bits = bits;
+    if (!bits.free)
     {
-        HeapFree( GetProcessHeap(), 0, info );
+        if (!(brush->bits.ptr = HeapAlloc( GetProcessHeap(), 0, info->bmiHeader.biSizeImage ))) goto done;
+        memcpy( brush->bits.ptr, bits.ptr, info->bmiHeader.biSizeImage );
+        brush->bits.free = free_heap_bits;
+    }
+
+    if (!(brush->info = HeapAlloc( GetProcessHeap(), 0, get_dib_info_size( info, DIB_RGB_COLORS ))))
+    {
+        if (brush->bits.free) brush->bits.free( &brush->bits );
         goto done;
     }
-
-    /* release the unneeded space */
-    HeapReAlloc( GetProcessHeap(), HEAP_REALLOC_IN_PLACE_ONLY, info,
-                 get_dib_info_size( info, DIB_RGB_COLORS ));
-    pattern->info  = info;
-    pattern->bits  = bits;
-    pattern->usage = DIB_RGB_COLORS;
-
-done:
-    GDI_ReleaseObj( pattern->bitmap );
-}
-
-static BOOL copy_bitmap( struct brush_pattern *brush, HBITMAP bitmap )
-{
-    BITMAPINFO *info;
-    BITMAPOBJ *bmp = GDI_GetObjPtr( bitmap, OBJ_BITMAP );
-
-    if (!bmp) return FALSE;
-
-    if (!is_bitmapobj_dib( bmp ))
-    {
-        if ((brush->bitmap = CreateBitmap( bmp->dib.dsBm.bmWidth, bmp->dib.dsBm.bmHeight,
-                                           bmp->dib.dsBm.bmPlanes, bmp->dib.dsBm.bmBitsPixel, NULL )))
-        {
-            if (bmp->funcs->pCopyBitmap( bitmap, brush->bitmap ))
-            {
-                BITMAPOBJ *copy = GDI_GetObjPtr( brush->bitmap, OBJ_BITMAP );
-                copy->funcs = bmp->funcs;
-                GDI_ReleaseObj( copy );
-            }
-            else
-            {
-                DeleteObject( brush->bitmap );
-                brush->bitmap = 0;
-            }
-        }
-        GDI_ReleaseObj( bitmap );
-        return brush->bitmap != 0;
-    }
-
-    info = HeapAlloc( GetProcessHeap(), 0,
-                      get_dib_info_size( (BITMAPINFO *)&bmp->dib.dsBmih, DIB_RGB_COLORS ));
-    if (!info) goto done;
-    info->bmiHeader = bmp->dib.dsBmih;
-    if (info->bmiHeader.biCompression == BI_BITFIELDS)
-        memcpy( &info->bmiHeader + 1, bmp->dib.dsBitfields, sizeof(bmp->dib.dsBitfields) );
-    else if (info->bmiHeader.biClrUsed)
-        memcpy( &info->bmiHeader + 1, bmp->color_table, info->bmiHeader.biClrUsed * sizeof(RGBQUAD) );
-    if (!(brush->bits.ptr = HeapAlloc( GetProcessHeap(), 0, info->bmiHeader.biSizeImage )))
-    {
-        HeapFree( GetProcessHeap(), 0, info );
-        goto done;
-    }
-    memcpy( brush->bits.ptr, bmp->dib.dsBm.bmBits, info->bmiHeader.biSizeImage );
-    brush->bits.is_copy = TRUE;
-    brush->bits.free = free_heap_bits;
-    brush->info = info;
+    memcpy( brush->info, info, get_dib_info_size( info, DIB_RGB_COLORS ));
+    brush->bits.is_copy = FALSE;  /* the bits can't be modified */
     brush->usage = DIB_RGB_COLORS;
 
 done:
@@ -200,7 +149,6 @@ BOOL store_brush_pattern( LOGBRUSH *brush, struct brush_pattern *pattern )
 void free_brush_pattern( struct brush_pattern *pattern )
 {
     if (pattern->bits.free) pattern->bits.free( &pattern->bits );
-    if (pattern->bitmap) DeleteObject( pattern->bitmap );
     HeapFree( GetProcessHeap(), 0, pattern->info );
 }
 
@@ -210,8 +158,6 @@ BOOL get_brush_bitmap_info( HBRUSH handle, BITMAPINFO *info, void **bits, UINT *
     BOOL ret = FALSE;
 
     if (!(brush = GDI_GetObjPtr( handle, OBJ_BRUSH ))) return FALSE;
-
-    if (!brush->pattern.info) cache_pattern_bits( NULL, &brush->pattern );
 
     if (brush->pattern.info)
     {
@@ -495,11 +441,7 @@ static HGDIOBJ BRUSH_SelectObject( HGDIOBJ handle, HDC hdc )
         PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSelectBrush );
         struct brush_pattern *pattern = &brush->pattern;
 
-        if (!pattern->info)
-        {
-            if (pattern->bitmap) cache_pattern_bits( physdev, pattern );
-            else pattern = NULL;
-        }
+        if (!pattern->info) pattern = NULL;
 
         GDI_inc_ref_count( handle );
         GDI_ReleaseObj( handle );

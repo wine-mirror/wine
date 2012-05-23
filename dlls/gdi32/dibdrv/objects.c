@@ -1873,17 +1873,7 @@ static BOOL select_pattern_brush( dibdrv_physdev *pdev, dib_brush *brush, BOOL *
     if (pattern.bit_count == 1 && !pattern.color_table)
         dither = FALSE;  /* monochrome DDB pattern brushes don't get dithered */
 
-    if (!brush->pattern.info)
-    {
-        BITMAPOBJ *bmp = GDI_GetObjPtr( brush->pattern.bitmap, OBJ_BITMAP );
-        BOOL ret;
-
-        if (!bmp) return FALSE;
-        ret = init_dib_info_from_bitmapobj( &pattern, bmp );
-        GDI_ReleaseObj( brush->pattern.bitmap );
-        if (!ret) return FALSE;
-    }
-    else if (brush->pattern.info->bmiHeader.biClrUsed && brush->pattern.usage == DIB_PAL_COLORS)
+    if (brush->pattern.info->bmiHeader.biClrUsed && brush->pattern.usage == DIB_PAL_COLORS)
     {
         copy_bitmapinfo( info, brush->pattern.info );
         fill_color_table_from_pal_colors( info, pdev->dev.hdc );
