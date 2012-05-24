@@ -220,6 +220,26 @@ static void _test_status_code(unsigned line, HINTERNET req, DWORD excode)
                        "[invalid 2] HttpQueryInfo failed: %x(%d)\n", res, GetLastError());
 }
 
+#define test_request_flags(a,b) _test_request_flags(__LINE__,a,b,FALSE)
+#define test_request_flags_todo(a,b) _test_request_flags(__LINE__,a,b,TRUE)
+static void _test_request_flags(unsigned line, HINTERNET req, DWORD exflags, BOOL is_todo)
+{
+    DWORD flags, size;
+    BOOL res;
+
+    flags = 0xdeadbeef;
+    size = sizeof(flags);
+    res = InternetQueryOptionW(req, INTERNET_OPTION_REQUEST_FLAGS, &flags, &size);
+    ok_(__FILE__,line)(res, "InternetQueryOptionW(INTERNET_OPTION_REQUEST_FLAGS) failed: %u\n", GetLastError());
+
+    /* FIXME: Remove once we have INTERNET_REQFLAG_CACHE_WRITE_DISABLED implementation */
+    flags &= ~INTERNET_REQFLAG_CACHE_WRITE_DISABLED;
+    if(!is_todo)
+        ok_(__FILE__,line)(flags == exflags, "flags = %x, expected %x\n", flags, exflags);
+    else
+        todo_wine ok_(__FILE__,line)(flags == exflags, "flags = %x, expected %x\n", flags, exflags);
+}
+
 static int close_handle_cnt;
 
 static VOID WINAPI callback(
@@ -377,7 +397,6 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
     BOOL res, on_async = TRUE;
     CHAR buffer[4000];
     DWORD length, post_len = 0;
-    DWORD out;
     const char *types[2] = { "*", NULL };
     HINTERNET hi, hic = 0, hor = 0;
 
@@ -410,7 +429,7 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
 
     trace("HttpOpenRequestA <--\n");
     hor = HttpOpenRequestA(hic, test->post_data ? "POST" : "GET", test->path, NULL, NULL, types,
-                           INTERNET_FLAG_KEEP_CONNECTION | INTERNET_FLAG_RESYNCHRONIZE,
+                           INTERNET_FLAG_KEEP_CONNECTION | INTERNET_FLAG_RELOAD,
                            0xdeadbead);
     if (hor == 0x0 && GetLastError() == ERROR_INTERNET_NAME_NOT_RESOLVED) {
         /*
@@ -425,6 +444,8 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
     trace("HttpOpenRequestA -->\n");
 
     if (hor == 0x0) goto abort;
+
+    test_request_flags(hor, INTERNET_REQFLAG_NO_HEADERS);
 
     length = sizeof(buffer);
     res = InternetQueryOptionA(hor, INTERNET_OPTION_URL, buffer, &length);
@@ -529,9 +550,7 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
     CLEAR_NOTIFIED(INTERNET_STATUS_CONNECTING_TO_SERVER);
     CLEAR_NOTIFIED(INTERNET_STATUS_CONNECTED_TO_SERVER);
 
-    length = 4;
-    res = InternetQueryOptionA(hor,INTERNET_OPTION_REQUEST_FLAGS,&out,&length);
-    ok(res, "InternetQueryOptionA(INTERNET_OPTION_REQUEST) failed with error %d\n", GetLastError());
+    test_request_flags(hor, 0);
 
     length = 100;
     res = InternetQueryOptionA(hor,INTERNET_OPTION_URL,buffer,&length);
@@ -662,7 +681,7 @@ static void InternetReadFile_chunked_test(void)
 
     trace("HttpOpenRequestA <--\n");
     hor = HttpOpenRequestA(hic, "GET", "/tests/chunked", NULL, NULL, types,
-                           INTERNET_FLAG_KEEP_CONNECTION | INTERNET_FLAG_RESYNCHRONIZE,
+                           INTERNET_FLAG_KEEP_CONNECTION | INTERNET_FLAG_RELOAD,
                            0xdeadbead);
     if (hor == 0x0 && GetLastError() == ERROR_INTERNET_NAME_NOT_RESOLVED) {
         /*
@@ -684,6 +703,8 @@ static void InternetReadFile_chunked_test(void)
     ok(res || (GetLastError() == ERROR_INTERNET_NAME_NOT_RESOLVED),
        "Synchronous HttpSendRequest returning 0, error %u\n", GetLastError());
     trace("HttpSendRequestA <--\n");
+
+    test_request_flags(hor, 0);
 
     length = 100;
     res = HttpQueryInfoA(hor,HTTP_QUERY_CONTENT_TYPE,buffer,&length,0x0);
@@ -781,7 +802,7 @@ static void InternetReadFileExA_test(int flags)
 
     trace("HttpOpenRequestA <--\n");
     hor = HttpOpenRequestA(hic, "GET", "/tests/redirect", NULL, NULL, types,
-                           INTERNET_FLAG_KEEP_CONNECTION | INTERNET_FLAG_RESYNCHRONIZE,
+                           INTERNET_FLAG_KEEP_CONNECTION | INTERNET_FLAG_RELOAD,
                            0xdeadbead);
     if (hor == 0x0 && GetLastError() == ERROR_INTERNET_NAME_NOT_RESOLVED) {
         /*
@@ -877,6 +898,8 @@ static void InternetReadFileExA_test(int flags)
         "InternetReadFileEx should have failed with ERROR_INVALID_PARAMETER instead of %s, %u\n",
         rc ? "TRUE" : "FALSE", GetLastError());
     HeapFree(GetProcessHeap(), 0, inetbuffers.lpvBuffer);
+
+    test_request_flags(hor, 0);
 
     /* tests to see whether lpcszHeader is used - it isn't */
     inetbuffers.dwStructSize = sizeof(INTERNET_BUFFERS);
@@ -1039,6 +1062,7 @@ static void HttpSendRequestEx_test(void)
     }
     ok( hRequest != NULL, "Failed to open request handle err %u\n", GetLastError());
 
+    test_request_flags(hRequest, INTERNET_REQFLAG_NO_HEADERS);
 
     BufferIn.dwStructSize = sizeof( INTERNET_BUFFERS);
     BufferIn.Next = (LPINTERNET_BUFFERS)0xdeadcab;
@@ -1057,11 +1081,17 @@ static void HttpSendRequestEx_test(void)
     ok(ret, "HttpSendRequestEx Failed with error %u\n", error);
     ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", error);
 
+    test_request_flags(hRequest, INTERNET_REQFLAG_NO_HEADERS);
+
     for (i = 3; szPostData[i]; i++)
         ok(InternetWriteFile(hRequest, &szPostData[i], 1, &dwBytesWritten),
                 "InternetWriteFile failed\n");
 
+    test_request_flags(hRequest, INTERNET_REQFLAG_NO_HEADERS);
+
     ok(HttpEndRequest(hRequest, NULL, 0, 0), "HttpEndRequest Failed\n");
+
+    test_request_flags(hRequest, 0);
 
     ok(InternetReadFile(hRequest, szBuffer, 255, &dwBytesRead),
             "Unable to read response\n");
@@ -1918,6 +1948,7 @@ static void test_proxy_indirect(int port)
     ok(!strcmp(buffer, "Basic realm=\"placebo\""), "proxy auth info wrong\n");
 
     test_status_code(hr, 407);
+    test_request_flags(hr, 0);
 
     sz = sizeof buffer;
     r = HttpQueryInfo(hr, HTTP_QUERY_STATUS_TEXT, buffer, &sz, NULL);
@@ -2019,6 +2050,7 @@ static void test_header_handling_order(int port)
     ok(ret, "HttpSendRequest failed\n");
 
     test_status_code(request, 200);
+    test_request_flags(request, 0);
 
     InternetCloseHandle(request);
 
@@ -2378,6 +2410,7 @@ static void test_basic_authentication(int port)
     ok(ret, "HttpSendRequest failed %u\n", GetLastError());
 
     test_status_code(request, 200);
+    test_request_flags(request, 0);
 
     InternetCloseHandle(request);
     InternetCloseHandle(connect);
@@ -2404,6 +2437,7 @@ static void test_invalid_response_headers(int port)
     ok(ret, "HttpSendRequest failed %u\n", GetLastError());
 
     test_status_code(request, 401);
+    test_request_flags(request, 0);
 
     buffer[0] = 0;
     size = sizeof(buffer);
@@ -2441,9 +2475,13 @@ static void test_response_without_headers(int port)
     hr = HttpOpenRequest(hc, NULL, "/testG", NULL, NULL, NULL, 0, 0);
     ok(hr != NULL, "HttpOpenRequest failed %u\n", GetLastError());
 
+    test_request_flags(hr, INTERNET_REQFLAG_NO_HEADERS);
+
     SetLastError(0xdeadbeef);
     r = HttpSendRequest(hr, NULL, 0, NULL, 0);
     ok(r, "HttpSendRequest failed %u\n", GetLastError());
+
+    test_request_flags_todo(hr, INTERNET_REQFLAG_NO_HEADERS);
 
     count = 0;
     memset(buffer, 0, sizeof buffer);
@@ -2454,6 +2492,7 @@ static void test_response_without_headers(int port)
     todo_wine ok(!memcmp(buffer, page1, sizeof page1), "http data wrong\n");
 
     test_status_code(hr, 200);
+    test_request_flags_todo(hr, INTERNET_REQFLAG_NO_HEADERS);
 
     buffer[0] = 0;
     size = sizeof(buffer);
@@ -3535,9 +3574,7 @@ static void test_InternetCloseHandle(void)
     ok(!res && (GetLastError() == ERROR_IO_PENDING),
        "Asynchronous HttpSendRequest NOT returning 0 with error ERROR_IO_PENDING\n");
 
-    len = sizeof(flags);
-    res = InternetQueryOptionA(closetest_req, INTERNET_OPTION_REQUEST_FLAGS, &flags, &len);
-    ok(res, "InternetQueryOptionA(%p INTERNET_OPTION_URL) failed: %u\n", closetest_req, GetLastError());
+    test_request_flags(closetest_req, INTERNET_REQFLAG_NO_HEADERS);
 
     res = InternetCloseHandle(closetest_session);
     ok(res, "InternetCloseHandle failed: %u\n", GetLastError());
