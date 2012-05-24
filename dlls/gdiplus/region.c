@@ -254,20 +254,20 @@ GpStatus WINGDIPAPI GdipCombineRegionPath(GpRegion *region, GpPath *path, Combin
     }
 
     left = GdipAlloc(sizeof(region_element));
-    if (!left)
-        goto out;
-    *left = region->node;
+    if (left)
+    {
+        *left = region->node;
+        stat = clone_element(&path_region->node, &right);
+        if (stat == Ok)
+        {
+            fuse_region(region, left, right, mode);
+            GdipDeleteRegion(path_region);
+            return Ok;
+        }
+    }
+    else
+        stat = OutOfMemory;
 
-    stat = clone_element(&path_region->node, &right);
-    if (stat != Ok)
-        goto out;
-
-    fuse_region(region, left, right, mode);
-
-    GdipDeleteRegion(path_region);
-    return Ok;
-
-out:
     GdipFree(left);
     GdipDeleteRegion(path_region);
     return stat;
@@ -301,20 +301,20 @@ GpStatus WINGDIPAPI GdipCombineRegionRect(GpRegion *region,
     }
 
     left = GdipAlloc(sizeof(region_element));
-    if (!left)
-        goto out;
-    memcpy(left, &region->node, sizeof(region_element));
+    if (left)
+    {
+        memcpy(left, &region->node, sizeof(region_element));
+        stat = clone_element(&rect_region->node, &right);
+        if (stat == Ok)
+        {
+            fuse_region(region, left, right, mode);
+            GdipDeleteRegion(rect_region);
+            return Ok;
+        }
+    }
+    else
+        stat = OutOfMemory;
 
-    stat = clone_element(&rect_region->node, &right);
-    if (stat != Ok)
-        goto out;
-
-    fuse_region(region, left, right, mode);
-
-    GdipDeleteRegion(rect_region);
-    return Ok;
-
-out:
     GdipFree(left);
     GdipDeleteRegion(rect_region);
     return stat;
