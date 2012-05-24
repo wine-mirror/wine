@@ -2159,16 +2159,28 @@ static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffe
         *size = sizeof(DWORD);
         *(DWORD *)buffer = req->connect_timeout;
         return ERROR_SUCCESS;
-    case INTERNET_OPTION_REQUEST_FLAGS:
-        TRACE("INTERNET_OPTION_REQUEST_FLAGS\n");
+    case INTERNET_OPTION_REQUEST_FLAGS: {
+        DWORD flags = 0;
 
         if (*size < sizeof(DWORD))
             return ERROR_INSUFFICIENT_BUFFER;
 
-        *(DWORD*)buffer = 4;
-        *size = sizeof(DWORD);
+        /* FIXME: Add support for:
+         * INTERNET_REQFLAG_FROM_CACHE
+         * INTERNET_REQFLAG_CACHE_WRITE_DISABLED
+         */
 
+        if(req->session->appInfo->proxy)
+            flags |= INTERNET_REQFLAG_VIA_PROXY;
+        if(!req->rawHeaders)
+            flags |= INTERNET_REQFLAG_NO_HEADERS;
+
+        TRACE("INTERNET_OPTION_REQUEST_FLAGS returning %x\n", flags);
+
+        *size = sizeof(DWORD);
+        *(DWORD*)buffer = flags;
         return ERROR_SUCCESS;
+    }
     }
 
     return INET_QueryOption(hdr, option, buffer, size, unicode);
