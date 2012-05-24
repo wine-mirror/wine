@@ -24,14 +24,15 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d9);
 
-typedef struct _D3DDECLTYPE_INFO {
+static const struct
+{
     D3DDECLTYPE d3dType;
     enum wined3d_format_id format;
     int         size;
     int         typesize;
-} D3DDECLTYPE_INFO;
-
-static D3DDECLTYPE_INFO const d3d_dtype_lookup[D3DDECLTYPE_UNUSED] = {
+}
+d3d_dtype_lookup[] =
+{
    {D3DDECLTYPE_FLOAT1,    WINED3DFMT_R32_FLOAT,          1, sizeof(float)},
    {D3DDECLTYPE_FLOAT2,    WINED3DFMT_R32G32_FLOAT,       2, sizeof(float)},
    {D3DDECLTYPE_FLOAT3,    WINED3DFMT_R32G32B32_FLOAT,    3, sizeof(float)},
