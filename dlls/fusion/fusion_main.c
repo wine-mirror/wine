@@ -47,3 +47,9 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
     return TRUE;
 }
+
+HRESULT WINAPI InitializeFusion(void)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
