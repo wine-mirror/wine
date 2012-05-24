@@ -353,6 +353,9 @@ static void test_MeshBuilder(void)
         DWORD nb_groups;
         unsigned nb_vertices, nb_faces, nb_face_vertices;
         DWORD data_size;
+        LPDIRECT3DRMMATERIAL material;
+        LPDIRECT3DRMTEXTURE texture;
+        D3DVALUE values[3];
 
         nb_groups = IDirect3DRMMesh_GetGroupCount(mesh);
         ok(nb_groups == 1, "GetCroupCount returned %u\n", nb_groups);
@@ -364,6 +367,27 @@ static void test_MeshBuilder(void)
         ok(nb_faces == 1, "Wrong number of faces %u (must be 1)\n", nb_faces);
         todo_wine ok(nb_face_vertices == 3, "Wrong number of vertices per face %u (must be 3)\n", nb_face_vertices);
         todo_wine ok(data_size == 3, "Wrong number of face data bytes %u (must be 3)\n", data_size);
+        hr = IDirect3DRMMesh_GetGroupTexture(mesh, 0, &texture);
+        todo_wine ok(hr == D3DRM_OK, "GetCroupTexture failed returning hr = %x\n", hr);
+        todo_wine ok(texture == NULL, "No texture should be present\n");
+        hr = IDirect3DRMMesh_GetGroupMaterial(mesh, 0, &material);
+        todo_wine ok(hr == D3DRM_OK, "GetCroupMaterial failed returning hr = %x\n", hr);
+        todo_wine ok(material != NULL, "No material should be present\n");
+        if ((hr == D3DRM_OK) && material)
+        {
+            hr = IDirect3DRMMaterial_GetEmissive(material, &values[0], &values[1], &values[2]);
+            ok(hr == D3DRM_OK, "GetMaterialEmissive failed returning hr = %x\n", hr);
+            ok(values[0] == 0.5f, "Emissive red component should be %f instead of %f\n", 0.5f, values[0]);
+            ok(values[1] == 0.5f, "Emissive green component should be %f instead of %f\n", 0.5f, values[1]);
+            ok(values[2] == 0.5f, "Emissive blue component should be %f instead of %f\n", 0.5f, values[2]);
+            hr = IDirect3DRMMaterial_GetSpecular(material, &values[0], &values[1], &values[2]);
+            ok(hr == D3DRM_OK, "GetMaterialEmissive failed returning hr = %x\n", hr);
+            ok(values[0] == 1.0f, "Specular red component should be %f instead of %f\n", 1.0f, values[0]);
+            ok(values[1] == 0.0f, "Specular green component should be %f instead of %f\n", 0.0f, values[1]);
+            ok(values[2] == 0.0f, "Specular blue component should be %f instead of %f\n", 0.0f, values[2]);
+            values[0] = IDirect3DRMMaterial_GetPower(material);
+            ok(values[0] == 30.0f, "Power value should be %f instead of %f\n", 30.0f, values[0]);
+        }
 
         IDirect3DRMMesh_Release(mesh);
     }
