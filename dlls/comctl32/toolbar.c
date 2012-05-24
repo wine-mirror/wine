@@ -428,7 +428,7 @@ TOOLBAR_GetImageListForDrawing (const TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPt
 
     if (!TOOLBAR_IsValidBitmapIndex(infoPtr,btnPtr->iBitmap)) {
 	if (btnPtr->iBitmap == I_IMAGENONE) return NULL;
-	ERR("bitmap for ID %d, index %d is not valid, number of bitmaps in imagelist: %d\n",
+	WARN("bitmap for ID %d, index %d is not valid, number of bitmaps in imagelist: %d\n",
 	    HIWORD(btnPtr->iBitmap), LOWORD(btnPtr->iBitmap), infoPtr->nNumBitmaps);
 	return NULL;
     }
