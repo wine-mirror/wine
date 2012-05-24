@@ -941,7 +941,6 @@ static HRESULT WINAPI ProtocolSink_ReportData(IInternetProtocolSink *iface, DWOR
                     if(!emulate_prot)
                         CHECK_CALLED(ReportData2);
                     CHECK_CALLED(ReportResult);
-                    ok(hres == S_OK, "Read failed: %08x\n", hres);
                     reported_all_data = TRUE;
                 }else {
                     if(!emulate_prot)
