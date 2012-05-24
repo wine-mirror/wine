@@ -131,11 +131,7 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
                     buffer->indices[(i * 3) + 1] = ci->u2.v2;
                     buffer->indices[(i * 3) + 2] = ci->u3.v3;
                     instr += size;
-		}
-                /* IDirect3DDevices have color keying always enabled -
-                 * enable it before drawing. This overwrites any ALPHA*
-                 * render state. */
-                wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_COLORKEYENABLE, 1);
+                }
                 IDirect3DDevice7_DrawIndexedPrimitive(&device->IDirect3DDevice7_iface,
                         D3DPT_TRIANGLELIST, D3DFVF_TLVERTEX, tl_vx, 0, buffer->indices, count * 3, 0);
 	    } break;
