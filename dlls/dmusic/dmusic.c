@@ -1,6 +1,8 @@
-/* IDirectMusic8 Implementation
+/*
+ * IDirectMusic8 Implementation
  *
  * Copyright (C) 2003-2004 Rok Mandeljc
+ * Copyright (C) 2012 Christian Costa
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -49,31 +51,31 @@ static HRESULT WINAPI IDirectMusic8Impl_QueryInterface(LPDIRECTMUSIC8 iface, REF
 
 static ULONG WINAPI IDirectMusic8Impl_AddRef(LPDIRECTMUSIC8 iface)
 {
-	IDirectMusic8Impl *This = impl_from_IDirectMusic8(iface);
-	ULONG refCount = InterlockedIncrement(&This->ref);
+    IDirectMusic8Impl *This = impl_from_IDirectMusic8(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
 
-	TRACE("(%p)->(ref before=%u)\n", This, refCount - 1);
+    TRACE("(%p)->(): new ref = %u\n", This, ref);
 
-	DMUSIC_LockModule();
+    DMUSIC_LockModule();
 
-	return refCount;
+    return ref;
 }
 
 static ULONG WINAPI IDirectMusic8Impl_Release(LPDIRECTMUSIC8 iface)
 {
-	IDirectMusic8Impl *This = impl_from_IDirectMusic8(iface);
-	ULONG refCount = InterlockedDecrement(&This->ref);
+    IDirectMusic8Impl *This = impl_from_IDirectMusic8(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
 
-	TRACE("(%p)->(ref before=%u)\n", This, refCount + 1);
+    TRACE("(%p)->(): new ref = %u\n", This, ref);
 
-	if (!refCount) {
-		HeapFree(GetProcessHeap(), 0, This->ppPorts);
-		HeapFree(GetProcessHeap(), 0, This);
-	}
+    if (!ref) {
+        HeapFree(GetProcessHeap(), 0, This->ppPorts);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
 
-	DMUSIC_UnlockModule();
-	
-	return refCount;
+    DMUSIC_UnlockModule();
+
+    return ref;
 }
 
 /* IDirectMusic8Impl IDirectMusic part: */
