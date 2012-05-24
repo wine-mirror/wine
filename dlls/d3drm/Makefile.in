@@ -11,6 +11,7 @@ C_SRCS = \
 	material.c \
 	math.c \
 	meshbuilder.c \
+	texture.c \
 	viewport.c
 
 RC_SRCS = version.rc
