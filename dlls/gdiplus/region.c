@@ -151,15 +151,15 @@ static inline GpStatus clone_element(const region_element* element,
     {
         case RegionDataRect:
             (*element2)->elementdata.rect = element->elementdata.rect;
-            break;
+            return Ok;
         case RegionDataEmptyRect:
         case RegionDataInfiniteRect:
-            break;
+            return Ok;
         case RegionDataPath:
             (*element2)->elementdata.pathdata.pathheader = element->elementdata.pathdata.pathheader;
             stat = GdipClonePath(element->elementdata.pathdata.path,
                     &(*element2)->elementdata.pathdata.path);
-            if (stat != Ok) goto clone_out;
+            if (stat == Ok) return Ok;
             break;
         default:
             (*element2)->elementdata.combine.left  = NULL;
@@ -167,16 +167,15 @@ static inline GpStatus clone_element(const region_element* element,
 
             stat = clone_element(element->elementdata.combine.left,
                     &(*element2)->elementdata.combine.left);
-            if (stat != Ok) goto clone_out;
-            stat = clone_element(element->elementdata.combine.right,
-                    &(*element2)->elementdata.combine.right);
-            if (stat != Ok) goto clone_out;
+            if (stat == Ok)
+            {
+                stat = clone_element(element->elementdata.combine.right,
+                        &(*element2)->elementdata.combine.right);
+                if (stat == Ok) return Ok;
+            }
             break;
     }
 
-    return Ok;
-
-clone_out:
     delete_element(*element2);
     *element2 = NULL;
     return stat;
