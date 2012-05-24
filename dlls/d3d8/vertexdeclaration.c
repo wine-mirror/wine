@@ -226,12 +226,12 @@ static const enum wined3d_format_id wined3d_format_lookup[] =
     /*WINED3DDECLTYPE_FLOAT16_4*/ WINED3DFMT_R16G16B16A16_FLOAT,
 };
 
-typedef struct {
+static const struct
+{
     BYTE usage;
     BYTE usage_idx;
-} wined3d_usage_t;
-
-static const wined3d_usage_t wined3d_usage_lookup[] =
+}
+wined3d_usage_lookup[] =
 {
     /* D3DVSDE_POSITION */      {WINED3D_DECL_USAGE_POSITION,      0},
     /* D3DVSDE_BLENDWEIGHT */   {WINED3D_DECL_USAGE_BLEND_WEIGHT,  0},
