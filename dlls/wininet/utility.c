@@ -286,6 +286,18 @@ static const char *get_callback_name(DWORD dwInternetStatus) {
     return "Unknown";
 }
 
+static const char *debugstr_status_info(DWORD status, void *info)
+{
+    switch(status) {
+    case INTERNET_STATUS_REQUEST_COMPLETE: {
+        INTERNET_ASYNC_RESULT *iar = info;
+        return wine_dbg_sprintf("{%s, %d}", wine_dbgstr_longlong(iar->dwResult), iar->dwError);
+    }
+    default:
+        return wine_dbg_sprintf("%p", info);
+    }
+}
+
 VOID INTERNET_SendCallback(object_header_t *hdr, DWORD_PTR dwContext,
                            DWORD dwInternetStatus, LPVOID lpvStatusInfo,
                            DWORD dwStatusInfoLength)
@@ -331,9 +343,9 @@ VOID INTERNET_SendCallback(object_header_t *hdr, DWORD_PTR dwContext,
         }
     }
     
-    TRACE(" callback(%p) (%p (%p), %08lx, %d (%s), %p, %d)\n",
+    TRACE(" callback(%p) (%p (%p), %08lx, %d (%s), %s, %d)\n",
 	  hdr->lpfnStatusCB, hdr->hInternet, hdr, dwContext, dwInternetStatus, get_callback_name(dwInternetStatus),
-	  lpvNewInfo, dwStatusInfoLength);
+	  debugstr_status_info(dwInternetStatus, lpvNewInfo), dwStatusInfoLength);
     
     hdr->lpfnStatusCB(hdr->hInternet, dwContext, dwInternetStatus,
                       lpvNewInfo, dwStatusInfoLength);
