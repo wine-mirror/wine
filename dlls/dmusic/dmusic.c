@@ -31,22 +31,27 @@ static inline IDirectMusic8Impl *impl_from_IDirectMusic8(IDirectMusic8 *iface)
 }
 
 /* IDirectMusic8Impl IUnknown part: */
-static HRESULT WINAPI IDirectMusic8Impl_QueryInterface(LPDIRECTMUSIC8 iface, REFIID riid, LPVOID *ppobj)
+static HRESULT WINAPI IDirectMusic8Impl_QueryInterface(LPDIRECTMUSIC8 iface, REFIID riid, LPVOID *ret_iface)
 {
-	IDirectMusic8Impl *This = impl_from_IDirectMusic8(iface);
-	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
+    IDirectMusic8Impl *This = impl_from_IDirectMusic8(iface);
 
-	if (IsEqualIID (riid, &IID_IUnknown) || 
-	    IsEqualIID (riid, &IID_IDirectMusic) ||
-	    IsEqualIID (riid, &IID_IDirectMusic2) ||
-	    IsEqualIID (riid, &IID_IDirectMusic8)) {
-		IUnknown_AddRef(iface);
-		*ppobj = This;
-		return S_OK;
-	}
+    TRACE("(%p)->(%s, %p)\n", iface, debugstr_dmguid(riid), ret_iface);
 
-	WARN("(%p, %s, %p): not found\n", This, debugstr_dmguid(riid), ppobj);
-	return E_NOINTERFACE;
+    if (IsEqualIID (riid, &IID_IUnknown) ||
+        IsEqualIID (riid, &IID_IDirectMusic) ||
+        IsEqualIID (riid, &IID_IDirectMusic2) ||
+        IsEqualIID (riid, &IID_IDirectMusic8))
+    {
+        IDirectMusic8_AddRef(iface);
+        *ret_iface = iface;
+        return S_OK;
+    }
+
+    *ret_iface = NULL;
+
+    WARN("(%p, %s, %p): not found\n", This, debugstr_dmguid(riid), ret_iface);
+
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI IDirectMusic8Impl_AddRef(LPDIRECTMUSIC8 iface)
