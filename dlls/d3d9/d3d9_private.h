@@ -127,22 +127,15 @@ enum wined3d_format_id wined3dformat_from_d3dformat(D3DFORMAT format) DECLSPEC_H
     _pD3D9Caps->MaxVertexShader30InstructionSlots = _pWineCaps->MaxVertexShader30InstructionSlots; \
     _pD3D9Caps->MaxPixelShader30InstructionSlots  = _pWineCaps->MaxPixelShader30InstructionSlots;
 
-/*****************************************************************************
- * IDirect3D implementation structure
- */
-typedef struct IDirect3D9Impl
+struct d3d9
 {
-    /* IUnknown fields */
-    IDirect3D9Ex            IDirect3D9Ex_iface;
-    LONG                    ref;
+    IDirect3D9Ex IDirect3D9Ex_iface;
+    LONG refcount;
+    struct wined3d *wined3d;
+    BOOL extended;
+};
 
-    struct wined3d *WineD3D;
-
-    /* Created via Direct3DCreate9Ex? Can QI extended interfaces */
-    BOOL                    extended;
-} IDirect3D9Impl;
-
-BOOL d3d9_init(IDirect3D9Impl *d3d9, BOOL extended) DECLSPEC_HIDDEN;
+BOOL d3d9_init(struct d3d9 *d3d9, BOOL extended) DECLSPEC_HIDDEN;
 void filter_caps(D3DCAPS9* pCaps) DECLSPEC_HIDDEN;
 
 struct fvf_declaration
@@ -160,7 +153,7 @@ typedef struct IDirect3DDevice9Impl
     struct wined3d_device_parent device_parent;
     LONG ref;
     struct wined3d_device *wined3d_device;
-    struct IDirect3D9Impl *d3d_parent;
+    struct d3d9 *d3d_parent;
     /* Avoids recursion with nested ReleaseRef to 0 */
     BOOL                          inDestruction;
 
@@ -171,8 +164,9 @@ typedef struct IDirect3DDevice9Impl
     BOOL                          in_scene;
 } IDirect3DDevice9Impl;
 
-HRESULT device_init(IDirect3DDevice9Impl *device, IDirect3D9Impl *parent, struct wined3d *wined3d, UINT adapter, D3DDEVTYPE device_type,
-        HWND focus_window, DWORD flags, D3DPRESENT_PARAMETERS *parameters, D3DDISPLAYMODEEX *mode) DECLSPEC_HIDDEN;
+HRESULT device_init(IDirect3DDevice9Impl *device, struct d3d9 *parent, struct wined3d *wined3d,
+        UINT adapter, D3DDEVTYPE device_type, HWND focus_window, DWORD flags,
+        D3DPRESENT_PARAMETERS *parameters, D3DDISPLAYMODEEX *mode) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * IDirect3DVolume9 implementation structure
