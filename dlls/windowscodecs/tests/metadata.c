@@ -1,5 +1,6 @@
 /*
  * Copyright 2011 Vincent Povirk for CodeWeavers
+ * Copyright 2012 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -37,6 +38,47 @@
         } \
     } \
 } while (0)
+
+#define IFD_SHORT 3
+#define IFD_LONG 4
+#define IFD_RATIONAL 5
+
+#include "pshpack2.h"
+struct IFD_entry
+{
+    SHORT id;
+    SHORT type;
+    ULONG length;
+    LONG  value;
+};
+
+struct IFD_rational
+{
+    ULONG numerator;
+    ULONG denominator;
+};
+
+static const struct
+{
+    USHORT number_of_entries;
+    struct IFD_entry entry[6];
+    ULONG next_IFD;
+    struct IFD_rational rational;
+} IFD_data =
+{
+    6,
+    {
+        { 0xfe,  IFD_SHORT, 1, 1 },
+        { 0x100, IFD_LONG, 1, 222 },
+        { 0x101, IFD_LONG, 1, 333 },
+        { 0x102, IFD_SHORT, 1, 24 },
+        { 0x103, IFD_LONG, 1, 32773 },
+        { 0x11a, IFD_RATIONAL, 1, sizeof(USHORT) + sizeof(struct IFD_entry) * 6 + sizeof(ULONG) }
+    },
+    0,
+    { 300, 1 }
+};
+#include "poppack.h"
 
 static const char metadata_unknown[] = "lalala";
 
@@ -275,6 +317,117 @@ static void test_metadata_tEXt(void)
     IWICMetadataReader_Release(reader);
 }
 
+static void test_metadata_IFD(void)
+{
+    static const struct test_data
+    {
+        ULONG type, id, value;
+    } td[6] =
+    {
+        { VT_UI2, 0xfe, 1 },
+        { VT_UI4, 0x100, 222 },
+        { VT_UI4, 0x101, 333 },
+        { VT_UI2, 0x102, 24 },
+        { VT_UI4, 0x103, 32773 },
+        { VT_UI8, 0x11a, 300 }
+    };
+    HRESULT hr;
+    IWICMetadataReader *reader;
+    IWICEnumMetadataItem *enumerator;
+    PROPVARIANT schema, id, value;
+    ULONG items_returned, count, i;
+    GUID format;
+
+    PropVariantInit(&schema);
+    PropVariantInit(&id);
+    PropVariantInit(&value);
+
+    hr = CoCreateInstance(&CLSID_WICIfdMetadataReader, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IWICMetadataReader, (void**)&reader);
+    todo_wine ok(hr == S_OK, "CoCreateInstance error %#x\n", hr);
+    if (FAILED(hr)) return;
+
+    hr = IWICMetadataReader_GetCount(reader, NULL);
+    ok(hr == E_INVALIDARG, "GetCount error %#x\n", hr);
+
+    hr = IWICMetadataReader_GetCount(reader, &count);
+    ok(hr == S_OK, "GetCount error %#x\n", hr);
+    ok(count == 0, "unexpected count %u\n", count);
+
+    load_stream((IUnknown*)reader, (const char *)&IFD_data, sizeof(IFD_data));
+
+    hr = IWICMetadataReader_GetCount(reader, &count);
+    ok(hr == S_OK, "GetCount error %#x\n", hr);
+    ok(count == 6, "unexpected count %u\n", count);
+
+    hr = IWICMetadataReader_GetEnumerator(reader, NULL);
+    ok(hr == E_INVALIDARG, "GetEnumerator error %#x\n", hr);
+
+    hr = IWICMetadataReader_GetEnumerator(reader, &enumerator);
+    ok(hr == S_OK, "GetEnumerator error %#x\n", hr);
+
+    for (i = 0; i < count; i++)
+    {
+        hr = IWICEnumMetadataItem_Next(enumerator, 1, &schema, &id, &value, &items_returned);
+        ok(hr == S_OK, "Next error %#x\n", hr);
+        ok(items_returned == 1, "unexpected item count %u\n", items_returned);
+
+        ok(schema.vt == VT_EMPTY, "%u: unexpected vt: %u\n", i, schema.vt);
+        ok(id.vt == VT_UI2, "%u: unexpected vt: %u\n", i, id.vt);
+        ok(U(id).uiVal == td[i].id, "%u: unexpected id: %#x\n", i, U(id).uiVal);
+        ok(value.vt == td[i].type, "%u: unexpected vt: %u\n", i, value.vt);
+        ok(U(value).ulVal == td[i].value, "%u: unexpected id: %u\n", i, U(value).ulVal);
+
+        PropVariantClear(&schema);
+        PropVariantClear(&id);
+        PropVariantClear(&value);
+    }
+
+    hr = IWICEnumMetadataItem_Next(enumerator, 1, &schema, &id, &value, &items_returned);
+    ok(hr == S_FALSE, "Next should fail\n");
+    ok(items_returned == 0, "unexpected item count %u\n", items_returned);
+
+    IWICEnumMetadataItem_Release(enumerator);
+
+    hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
+    ok(hr == S_OK, "GetMetadataFormat error %#x\n", hr);
+    ok(IsEqualGUID(&format, &GUID_MetadataFormatIfd), "unexpected format %s\n", debugstr_guid(&format));
+
+    hr = IWICMetadataReader_GetMetadataFormat(reader, NULL);
+    ok(hr == E_INVALIDARG, "GetMetadataFormat should fail\n");
+
+    hr = IWICMetadataReader_GetValueByIndex(reader, 0, NULL, NULL, NULL);
+    ok(hr == S_OK, "GetValueByIndex error %#x\n", hr);
+
+    hr = IWICMetadataReader_GetValueByIndex(reader, count - 1, NULL, NULL, NULL);
+    ok(hr == S_OK, "GetValueByIndex error %#x\n", hr);
+
+    hr = IWICMetadataReader_GetValueByIndex(reader, 0, &schema, NULL, NULL);
+    ok(hr == S_OK, "GetValueByIndex error %#x\n", hr);
+    ok(schema.vt == VT_EMPTY, "unexpected vt: %u\n", schema.vt);
+
+    hr = IWICMetadataReader_GetValueByIndex(reader, count - 1, &schema, NULL, NULL);
+    ok(hr == S_OK, "GetValueByIndex error %#x\n", hr);
+    ok(schema.vt == VT_EMPTY, "unexpected vt: %u\n", schema.vt);
+
+    hr = IWICMetadataReader_GetValueByIndex(reader, 0, NULL, &id, NULL);
+    ok(hr == S_OK, "GetValueByIndex error %#x\n", hr);
+    ok(id.vt == VT_UI2, "unexpected vt: %u\n", id.vt);
+    ok(U(id).uiVal == 0xfe, "unexpected id: %#x\n", U(id).uiVal);
+    PropVariantClear(&id);
+
+    hr = IWICMetadataReader_GetValueByIndex(reader, 0, NULL, NULL, &value);
+    ok(hr == S_OK, "GetValueByIndex error %#x\n", hr);
+    ok(value.vt == VT_UI2, "unexpected vt: %u\n", value.vt);
+    ok(U(value).ulVal == 1, "unexpected id: %u\n", U(value).ulVal);
+    PropVariantClear(&value);
+
+    hr = IWICMetadataReader_GetValueByIndex(reader, count, &schema, NULL, NULL);
+    ok(hr == E_INVALIDARG, "GetValueByIndex should fail\n");
+
+    IWICMetadataReader_Release(reader);
+}
+
 static void test_create_reader(void)
 {
     HRESULT hr;
@@ -338,6 +491,7 @@ START_TEST(metadata)
 
     test_metadata_unknown();
     test_metadata_tEXt();
+    test_metadata_IFD();
     test_create_reader();
 
     CoUninitialize();
