@@ -511,7 +511,7 @@ DWORD create_netconn(BOOL useSSL, server_t *server, DWORD security_flags, DWORD 
 
     netconn->useSSL = useSSL;
     netconn->socketFD = -1;
-    netconn->security_flags = security_flags;
+    netconn->security_flags = security_flags | server->security_flags;
     list_init(&netconn->pool_entry);
 
     assert(server->addr_len);
@@ -729,6 +729,7 @@ DWORD NETCON_secure_connect(netconn_t *connection)
     }
 
     connection->ssl_s = ssl_s;
+    connection->server->security_flags = connection->security_flags;
     return ERROR_SUCCESS;
 
 fail:

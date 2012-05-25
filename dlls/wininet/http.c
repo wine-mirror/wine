@@ -266,6 +266,7 @@ static server_t *get_server(const WCHAR *name, INTERNET_PORT port)
             server->addr_len = 0;
             server->ref = 1;
             server->port = port;
+            server->security_flags = 0;
             list_init(&server->conn_pool);
             server->name = heap_strdupW(name);
             if(server->name) {
@@ -1997,10 +1998,9 @@ static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffe
             return ERROR_INSUFFICIENT_BUFFER;
 
         *size = sizeof(DWORD);
-        flags = 0;
+        flags = req->netconn ? req->netconn->security_flags : req->security_flags | req->server->security_flags;
         if (req->hdr.dwFlags & INTERNET_FLAG_SECURE)
             flags |= SECURITY_FLAG_SECURE;
-        flags |= req->security_flags;
         if(req->netconn) {
             int bits = NETCON_GetCipherStrength(req->netconn);
             if (bits >= 128)

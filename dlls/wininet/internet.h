@@ -63,6 +63,8 @@ typedef struct {
     LONG ref;
     DWORD64 keep_until;
 
+    DWORD security_flags;
+
     struct list entry;
     struct list conn_pool;
 } server_t;
