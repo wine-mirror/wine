@@ -979,7 +979,7 @@ static void test_load_save_bmp(void)
 
     hr = IPicture_get_Handle(pic, &handle);
     ok(hr == S_OK,"get_Handle error %#8x\n", hr);
-    ok(UIntToPtr(handle) == desc.u.bmp.hbitmap, "get_Handle returned wrong handle %#x\n", handle);
+    ok(IntToPtr(handle) == desc.u.bmp.hbitmap, "get_Handle returned wrong handle %#x\n", handle);
 
     hmem = GlobalAlloc(GMEM_ZEROINIT, 4096);
     hr = CreateStreamOnHGlobal(hmem, FALSE, &dst_stream);
