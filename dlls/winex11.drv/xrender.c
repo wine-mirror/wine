@@ -529,14 +529,6 @@ static void set_xrender_transformation(Picture src_pict, double xscale, double y
 #endif
 }
 
-/* check if we can use repeating instead of scaling for the specified source DC */
-static BOOL use_source_repeat( struct xrender_physdev *dev )
-{
-    return (dev->x11dev->bitmap &&
-            dev->x11dev->drawable_rect.right - dev->x11dev->drawable_rect.left == 1 &&
-            dev->x11dev->drawable_rect.bottom - dev->x11dev->drawable_rect.top == 1);
-}
-
 static void update_xrender_clipping( struct xrender_physdev *dev, HRGN rgn )
 {
     XRenderPictureAttributes pa;
@@ -1926,26 +1918,15 @@ static void xrender_stretch_blit( struct xrender_physdev *physdev_src, struct xr
 {
     int x_dst, y_dst;
     Picture src_pict = 0, dst_pict, mask_pict = 0;
-    BOOL use_repeat;
-    double xscale, yscale;
-
-    use_repeat = use_source_repeat( physdev_src );
-    if (!use_repeat)
-    {
-        xscale = src->width / (double)dst->width;
-        yscale = src->height / (double)dst->height;
-    }
-    else xscale = yscale = 1;  /* no scaling needed with a repeating source */
+    double xscale = src->width / (double)dst->width;
+    double yscale = src->height / (double)dst->height;
 
     if (drawable)  /* using an intermediate pixmap */
     {
-        XRenderPictureAttributes pa;
-
         x_dst = dst->x;
         y_dst = dst->y;
-        pa.repeat = RepeatNone;
         wine_tsx11_lock();
-        dst_pict = pXRenderCreatePicture( gdi_display, drawable, physdev_dst->pict_format, CPRepeat, &pa );
+        dst_pict = pXRenderCreatePicture( gdi_display, drawable, physdev_dst->pict_format, 0, NULL );
         wine_tsx11_unlock();
     }
     else
@@ -1955,7 +1936,7 @@ static void xrender_stretch_blit( struct xrender_physdev *physdev_src, struct xr
         dst_pict = get_xrender_picture( physdev_dst, 0, &dst->visrect );
     }
 
-    src_pict = get_xrender_picture_source( physdev_src, use_repeat );
+    src_pict = get_xrender_picture_source( physdev_src, FALSE );
 
     /* mono -> color */
     if (physdev_src->format == WXR_FORMAT_MONO && physdev_dst->format != WXR_FORMAT_MONO)
@@ -1998,7 +1979,6 @@ static void xrender_put_image( Pixmap src_pixmap, Picture src_pict, Picture mask
 {
     int x_dst, y_dst;
     Picture dst_pict;
-    XRenderPictureAttributes pa;
     double xscale, yscale;
 
     if (drawable)  /* using an intermediate pixmap */
@@ -2008,9 +1988,8 @@ static void xrender_put_image( Pixmap src_pixmap, Picture src_pict, Picture mask
         if (clip) clip_data = X11DRV_GetRegionData( clip, 0 );
         x_dst = dst->x;
         y_dst = dst->y;
-        pa.repeat = RepeatNone;
         wine_tsx11_lock();
-        dst_pict = pXRenderCreatePicture( gdi_display, drawable, dst_format, CPRepeat, &pa );
+        dst_pict = pXRenderCreatePicture( gdi_display, drawable, dst_format, 0, NULL );
         if (clip_data)
             pXRenderSetPictureClipRectangles( gdi_display, dst_pict, 0, 0,
                                               (XRectangle *)clip_data->Buffer, clip_data->rdh.nCount );
@@ -2280,7 +2259,6 @@ static BOOL xrenderdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
     XRenderPictureAttributes pa;
     Pixmap tmp_pixmap = 0;
     double xscale, yscale;
-    BOOL use_repeat;
 
     if (src_dev->funcs != dst_dev->funcs)
     {
@@ -2296,15 +2274,10 @@ static BOOL xrenderdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
 
     dst_pict = get_xrender_picture( physdev_dst, 0, &dst->visrect );
 
-    use_repeat = use_source_repeat( physdev_src );
-    if (!use_repeat)
-    {
-        xscale = src->width / (double)dst->width;
-        yscale = src->height / (double)dst->height;
-    }
-    else xscale = yscale = 1;  /* no scaling needed with a repeating source */
+    xscale = src->width / (double)dst->width;
+    yscale = src->height / (double)dst->height;
 
-    src_pict = get_xrender_picture_source( physdev_src, use_repeat );
+    src_pict = get_xrender_picture_source( physdev_src, FALSE );
 
     if (physdev_src->format == WXR_FORMAT_MONO && physdev_dst->format != WXR_FORMAT_MONO)
     {
@@ -2321,9 +2294,7 @@ static BOOL xrenderdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
         wine_tsx11_lock();
         tmp_pixmap = XCreatePixmap( gdi_display, root_window, width, height,
                                     physdev_dst->pict_format->depth );
-        pa.repeat = use_repeat ? RepeatNormal : RepeatNone;
-        tmp_pict = pXRenderCreatePicture( gdi_display, tmp_pixmap, physdev_dst->pict_format,
-                                          CPRepeat, &pa );
+        tmp_pict = pXRenderCreatePicture( gdi_display, tmp_pixmap, physdev_dst->pict_format, 0, NULL );
         wine_tsx11_unlock();
 
         xrender_mono_blit( src_pict, tmp_pict, physdev_dst->format, &fg, &bg,
@@ -2337,9 +2308,8 @@ static BOOL xrenderdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
         {
             wine_tsx11_lock();
             pa.subwindow_mode = IncludeInferiors;
-            pa.repeat = use_repeat ? RepeatNormal : RepeatNone;
             tmp_pict = pXRenderCreatePicture( gdi_display, physdev_src->x11dev->drawable,
-                                              pict_formats[format], CPSubwindowMode|CPRepeat, &pa );
+                                              pict_formats[format], CPSubwindowMode, &pa );
             wine_tsx11_unlock();
         }
     }
