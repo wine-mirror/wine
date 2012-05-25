@@ -507,6 +507,15 @@ static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, HDC hdc )
         goto done;
     }
 
+    if (bitmap->dib.dsBm.bmBitsPixel != 1 &&
+        bitmap->dib.dsBm.bmBitsPixel != GetDeviceCaps( hdc, BITSPIXEL ))
+    {
+        WARN( "Wrong format bitmap %u bpp\n", bitmap->dib.dsBm.bmBitsPixel );
+        GDI_ReleaseObj( handle );
+        ret = 0;
+        goto done;
+    }
+
     if (dc->dibdrv) old_physdev = pop_dc_driver( dc, dc->dibdrv );
 
     physdev = GET_DC_PHYSDEV( dc, pSelectBitmap );
