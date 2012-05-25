@@ -27,8 +27,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d9);
 static const struct
 {
     enum wined3d_format_id format;
-    int         size;
-    int         typesize;
+    unsigned int component_count;
+    unsigned int component_size;
 }
 d3d_dtype_lookup[] =
 {
@@ -50,9 +50,6 @@ d3d_dtype_lookup[] =
     /* D3DDECLTYPE_FLOAT16_2 */ {WINED3DFMT_R16G16_FLOAT,       2, sizeof(short int)},
     /* D3DDECLTYPE_FLOAT16_4 */ {WINED3DFMT_R16G16B16A16_FLOAT, 4, sizeof(short int)}
 };
-
-#define D3D_DECL_SIZE(type)          d3d_dtype_lookup[type].size
-#define D3D_DECL_TYPESIZE(type)      d3d_dtype_lookup[type].typesize
 
 static inline IDirect3DVertexDeclaration9Impl *impl_from_IDirect3DVertexDeclaration9(IDirect3DVertexDeclaration9 *iface)
 {
@@ -192,7 +189,8 @@ HRESULT vdecl_convert_fvf(
         elements[idx].Stream = 0;
         elements[idx].Method = D3DDECLMETHOD_DEFAULT;
         elements[idx].Offset = offset;
-        offset += D3D_DECL_SIZE(elements[idx].Type) * D3D_DECL_TYPESIZE(elements[idx].Type);
+        offset += d3d_dtype_lookup[elements[idx].Type].component_count
+                * d3d_dtype_lookup[elements[idx].Type].component_size;
     }
 
     *ppVertexElements = elements;
