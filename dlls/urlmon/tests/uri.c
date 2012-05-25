@@ -11105,7 +11105,7 @@ static void test_IPersistStream(void)
                 break;
             }
         }
-        ok(props == 0, "%d) No all properties were processed %d. Next property type: %d\n",
+        ok(props == 0, "%d) Not all properties were processed %d. Next property type: %d\n",
                 i, props, dw_data[0]);
 
         IPersistStream_Release(persist_stream);
