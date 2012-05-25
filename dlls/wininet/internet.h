@@ -86,6 +86,7 @@ typedef struct
     void *ssl_s;
     server_t *server;
     DWORD security_flags;
+    BOOL mask_errors;
 
     BOOL keep_alive;
     DWORD64 keep_until;
@@ -532,7 +533,7 @@ VOID INTERNET_SendCallback(object_header_t *hdr, DWORD_PTR dwContext,
                            DWORD dwStatusInfoLength) DECLSPEC_HIDDEN;
 BOOL INTERNET_FindProxyForProtocol(LPCWSTR szProxy, LPCWSTR proto, WCHAR *foundProxy, DWORD *foundProxyLen) DECLSPEC_HIDDEN;
 
-DWORD create_netconn(BOOL, server_t *, DWORD, DWORD, netconn_t **) DECLSPEC_HIDDEN;
+DWORD create_netconn(BOOL,server_t*,DWORD,BOOL,DWORD,netconn_t**) DECLSPEC_HIDDEN;
 void free_netconn(netconn_t*) DECLSPEC_HIDDEN;
 void NETCON_unload(void) DECLSPEC_HIDDEN;
 DWORD NETCON_secure_connect(netconn_t *connection) DECLSPEC_HIDDEN;
@@ -558,5 +559,13 @@ typedef struct
     DWORD val;
     const char* name;
 } wininet_flag_info;
+
+/* Undocumented security flags */
+#define _SECURITY_FLAG_CERT_INVALID_CA  0x00800000
+#define _SECURITY_FLAG_CERT_INVALID_CN  0x02000000
+
+#define _SECURITY_ERROR_FLAGS_MASK              \
+    (_SECURITY_FLAG_CERT_INVALID_CA             \
+    |_SECURITY_FLAG_CERT_INVALID_CN)
 
 #endif /* _WINE_INTERNET_H_ */

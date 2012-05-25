@@ -4641,7 +4641,9 @@ static DWORD open_http_connection(http_request_t *request, BOOL *reusing)
                           request->server->addr_str,
                           strlen(request->server->addr_str)+1);
 
-    res = create_netconn(is_https, request->server, request->security_flags, request->connect_timeout, &netconn);
+    res = create_netconn(is_https, request->server, request->security_flags,
+                         (request->hdr.ErrorMask & INTERNET_ERROR_MASK_COMBINED_SEC_CERT) != 0,
+                         request->connect_timeout, &netconn);
     if(res != ERROR_SUCCESS) {
         ERR("create_netconn failed: %u\n", res);
         return res;
@@ -4664,20 +4666,6 @@ static DWORD open_http_connection(http_request_t *request, BOOL *reusing)
             res = HTTP_SecureProxyConnect(request);
         if(res == ERROR_SUCCESS)
             res = NETCON_secure_connect(request->netconn);
-        if(res != ERROR_SUCCESS)
-        {
-            WARN("Couldn't connect securely to host\n");
-
-            if((request->hdr.ErrorMask&INTERNET_ERROR_MASK_COMBINED_SEC_CERT) && (
-                    res == ERROR_INTERNET_SEC_CERT_DATE_INVALID
-                    || res == ERROR_INTERNET_INVALID_CA
-                    || res == ERROR_INTERNET_SEC_CERT_NO_REV
-                    || res == ERROR_INTERNET_SEC_CERT_REV_FAILED
-                    || res == ERROR_INTERNET_SEC_CERT_REVOKED
-                    || res == ERROR_INTERNET_SEC_INVALID_CERT
-                    || res == ERROR_INTERNET_SEC_CERT_CN_INVALID))
-                res = ERROR_INTERNET_SEC_CERT_ERRORS;
-        }
     }
 
     if(res != ERROR_SUCCESS) {

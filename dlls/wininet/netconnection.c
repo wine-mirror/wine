@@ -214,95 +214,127 @@ static PCCERT_CONTEXT X509_to_cert_context(X509 *cert)
     return ret;
 }
 
-static DWORD netconn_verify_cert(PCCERT_CONTEXT cert, HCERTSTORE store,
-    WCHAR *server, DWORD security_flags)
+static DWORD netconn_verify_cert(netconn_t *conn, PCCERT_CONTEXT cert, HCERTSTORE store)
 {
     BOOL ret;
     CERT_CHAIN_PARA chainPara = { sizeof(chainPara), { 0 } };
     PCCERT_CHAIN_CONTEXT chain;
     char oid_server_auth[] = szOID_PKIX_KP_SERVER_AUTH;
     char *server_auth[] = { oid_server_auth };
-    DWORD err = ERROR_SUCCESS, chainFlags = 0;
+    DWORD err = ERROR_SUCCESS, chainFlags = 0, errors;
 
-    TRACE("verifying %s\n", debugstr_w(server));
+    static const DWORD supportedErrors =
+        CERT_TRUST_IS_NOT_TIME_VALID |
+        CERT_TRUST_IS_UNTRUSTED_ROOT |
+        CERT_TRUST_IS_PARTIAL_CHAIN |
+        CERT_TRUST_IS_OFFLINE_REVOCATION |
+        CERT_TRUST_REVOCATION_STATUS_UNKNOWN |
+        CERT_TRUST_IS_REVOKED |
+        CERT_TRUST_IS_NOT_VALID_FOR_USAGE;
+
+    TRACE("verifying %s\n", debugstr_w(conn->server->name));
+
     chainPara.RequestedUsage.Usage.cUsageIdentifier = 1;
     chainPara.RequestedUsage.Usage.rgpszUsageIdentifier = server_auth;
-    if (!(security_flags & SECURITY_FLAG_IGNORE_REVOCATION))
+    if (!(conn->security_flags & SECURITY_FLAG_IGNORE_REVOCATION))
         chainFlags |= CERT_CHAIN_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT;
-    if ((ret = CertGetCertificateChain(NULL, cert, NULL, store, &chainPara,
-        chainFlags, NULL, &chain)))
-    {
-        if (chain->TrustStatus.dwErrorStatus)
-        {
-            static const DWORD supportedErrors =
-                CERT_TRUST_IS_NOT_TIME_VALID |
-                CERT_TRUST_IS_UNTRUSTED_ROOT |
-                CERT_TRUST_IS_PARTIAL_CHAIN |
-                CERT_TRUST_IS_OFFLINE_REVOCATION |
-                CERT_TRUST_REVOCATION_STATUS_UNKNOWN |
-                CERT_TRUST_IS_REVOKED |
-                CERT_TRUST_IS_NOT_VALID_FOR_USAGE;
 
-            if (chain->TrustStatus.dwErrorStatus & CERT_TRUST_IS_NOT_TIME_VALID &&
-                !(security_flags & SECURITY_FLAG_IGNORE_CERT_DATE_INVALID))
-                err = ERROR_INTERNET_SEC_CERT_DATE_INVALID;
-            else if (chain->TrustStatus.dwErrorStatus &
-                     (CERT_TRUST_IS_UNTRUSTED_ROOT | CERT_TRUST_IS_PARTIAL_CHAIN) &&
-                     !(security_flags & SECURITY_FLAG_IGNORE_UNKNOWN_CA))
-                err = ERROR_INTERNET_INVALID_CA;
-            else if (!(security_flags & SECURITY_FLAG_IGNORE_REVOCATION) &&
-                     ((chain->TrustStatus.dwErrorStatus &
-                      CERT_TRUST_IS_OFFLINE_REVOCATION) ||
-                      (chain->TrustStatus.dwErrorStatus &
-                       CERT_TRUST_REVOCATION_STATUS_UNKNOWN)))
-                err = ERROR_INTERNET_SEC_CERT_NO_REV;
-            else if (!(security_flags & SECURITY_FLAG_IGNORE_REVOCATION) &&
-                     (chain->TrustStatus.dwErrorStatus & CERT_TRUST_IS_REVOKED))
-                err = ERROR_INTERNET_SEC_CERT_REVOKED;
-            else if (!(security_flags & SECURITY_FLAG_IGNORE_WRONG_USAGE) &&
-                     (chain->TrustStatus.dwErrorStatus &
-                      CERT_TRUST_IS_NOT_VALID_FOR_USAGE))
-                err = ERROR_INTERNET_SEC_INVALID_CERT;
-            else if (chain->TrustStatus.dwErrorStatus & ~supportedErrors)
-                err = ERROR_INTERNET_SEC_INVALID_CERT;
-        }
-        if (!err)
-        {
-            CERT_CHAIN_POLICY_PARA policyPara;
-            SSL_EXTRA_CERT_CHAIN_POLICY_PARA sslExtraPolicyPara;
-            CERT_CHAIN_POLICY_STATUS policyStatus;
-            CERT_CHAIN_CONTEXT chainCopy;
-
-            /* Clear chain->TrustStatus.dwErrorStatus so
-             * CertVerifyCertificateChainPolicy will verify additional checks
-             * rather than stopping with an existing, ignored error.
-             */
-            memcpy(&chainCopy, chain, sizeof(chainCopy));
-            chainCopy.TrustStatus.dwErrorStatus = 0;
-            sslExtraPolicyPara.u.cbSize = sizeof(sslExtraPolicyPara);
-            sslExtraPolicyPara.dwAuthType = AUTHTYPE_SERVER;
-            sslExtraPolicyPara.pwszServerName = server;
-            sslExtraPolicyPara.fdwChecks = security_flags;
-            policyPara.cbSize = sizeof(policyPara);
-            policyPara.dwFlags = 0;
-            policyPara.pvExtraPolicyPara = &sslExtraPolicyPara;
-            ret = CertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_SSL,
-                &chainCopy, &policyPara, &policyStatus);
-            /* Any error in the policy status indicates that the
-             * policy couldn't be verified.
-             */
-            if (ret && policyStatus.dwError)
-            {
-                if (policyStatus.dwError == CERT_E_CN_NO_MATCH)
-                    err = ERROR_INTERNET_SEC_CERT_CN_INVALID;
-                else
-                    err = ERROR_INTERNET_SEC_INVALID_CERT;
-            }
-        }
-        CertFreeCertificateChain(chain);
+    if (!(ret = CertGetCertificateChain(NULL, cert, NULL, store, &chainPara, chainFlags, NULL, &chain))) {
+        TRACE("failed\n");
+        return GetLastError();
     }
-    TRACE("returning %08x\n", err);
-    return err;
+
+    errors = chain->TrustStatus.dwErrorStatus;
+
+    if (chain->TrustStatus.dwErrorStatus & ~supportedErrors) {
+        WARN("CERT_TRUST_IS_NOT_TIME_VALID, unknown error flags\n");
+        err = ERROR_INTERNET_SEC_INVALID_CERT;
+        errors &= supportedErrors;
+    }
+
+    if(errors & CERT_TRUST_IS_NOT_TIME_VALID) {
+        WARN("CERT_TRUST_IS_NOT_TIME_VALID, unknown error flags\n");
+        if(!(conn->security_flags & SECURITY_FLAG_IGNORE_CERT_DATE_INVALID))
+            err = ERROR_INTERNET_SEC_CERT_DATE_INVALID;
+        errors &= ~CERT_TRUST_IS_NOT_TIME_VALID;
+    }
+
+    if(errors & (CERT_TRUST_IS_UNTRUSTED_ROOT | CERT_TRUST_IS_PARTIAL_CHAIN)) {
+        conn->security_flags |= _SECURITY_FLAG_CERT_INVALID_CA;
+        if(!(conn->security_flags & SECURITY_FLAG_IGNORE_UNKNOWN_CA))
+            err = ERROR_INTERNET_INVALID_CA;
+        errors &= ~(CERT_TRUST_IS_UNTRUSTED_ROOT | CERT_TRUST_IS_PARTIAL_CHAIN);
+    }
+
+    if(errors & (CERT_TRUST_IS_OFFLINE_REVOCATION | CERT_TRUST_REVOCATION_STATUS_UNKNOWN)) {
+        WARN("TRUST_IS_OFFLINE_REVOCATION | CERT_TRUST_REVOCATION_STATUS_UNKNOWN, unknown error flags\n");
+        if(!(conn->security_flags & SECURITY_FLAG_IGNORE_REVOCATION))
+            err = ERROR_INTERNET_SEC_CERT_NO_REV;
+        errors &= ~(CERT_TRUST_IS_OFFLINE_REVOCATION | CERT_TRUST_REVOCATION_STATUS_UNKNOWN);
+    }
+
+    if(errors & CERT_TRUST_IS_REVOKED) {
+        WARN("TRUST_IS_OFFLINE_REVOCATION | CERT_TRUST_REVOCATION_STATUS_UNKNOWN, unknown error flags\n");
+        if(!(conn->security_flags & SECURITY_FLAG_IGNORE_REVOCATION))
+            err = ERROR_INTERNET_SEC_CERT_REVOKED;
+        errors &= ~CERT_TRUST_IS_REVOKED;
+    }
+
+    if(errors & CERT_TRUST_IS_NOT_VALID_FOR_USAGE) {
+        WARN("CERT_TRUST_IS_NOT_VALID_FOR_USAGE, unknown error flags\n");
+        if(!(conn->security_flags & SECURITY_FLAG_IGNORE_WRONG_USAGE))
+            err = ERROR_INTERNET_SEC_INVALID_CERT;
+        errors &= ~CERT_TRUST_IS_NOT_VALID_FOR_USAGE;
+    }
+
+    if(!err || conn->mask_errors) {
+        CERT_CHAIN_POLICY_PARA policyPara;
+        SSL_EXTRA_CERT_CHAIN_POLICY_PARA sslExtraPolicyPara;
+        CERT_CHAIN_POLICY_STATUS policyStatus;
+        CERT_CHAIN_CONTEXT chainCopy;
+
+        /* Clear chain->TrustStatus.dwErrorStatus so
+         * CertVerifyCertificateChainPolicy will verify additional checks
+         * rather than stopping with an existing, ignored error.
+         */
+        memcpy(&chainCopy, chain, sizeof(chainCopy));
+        chainCopy.TrustStatus.dwErrorStatus = 0;
+        sslExtraPolicyPara.u.cbSize = sizeof(sslExtraPolicyPara);
+        sslExtraPolicyPara.dwAuthType = AUTHTYPE_SERVER;
+        sslExtraPolicyPara.pwszServerName = conn->server->name;
+        sslExtraPolicyPara.fdwChecks = conn->security_flags;
+        policyPara.cbSize = sizeof(policyPara);
+        policyPara.dwFlags = 0;
+        policyPara.pvExtraPolicyPara = &sslExtraPolicyPara;
+        ret = CertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_SSL,
+                &chainCopy, &policyPara, &policyStatus);
+        /* Any error in the policy status indicates that the
+         * policy couldn't be verified.
+         */
+        if(ret) {
+            if(policyStatus.dwError == CERT_E_CN_NO_MATCH) {
+                conn->security_flags |= _SECURITY_FLAG_CERT_INVALID_CN;
+                err = ERROR_INTERNET_SEC_CERT_CN_INVALID;
+            }else if(policyStatus.dwError) {
+                WARN("unknown error flags for policy status %x\n", policyStatus.dwError);
+                err = ERROR_INTERNET_SEC_INVALID_CERT;
+            }
+        }else {
+            err = GetLastError();
+        }
+    }
+
+    CertFreeCertificateChain(chain);
+
+    if(err) {
+        WARN("failed %u\n", err);
+        conn->server->security_flags |= conn->security_flags & _SECURITY_ERROR_FLAGS_MASK;
+        if(conn->mask_errors)
+            return err == ERROR_INTERNET_INVALID_CA ? ERROR_INTERNET_SEC_CERT_REV_FAILED : ERROR_INTERNET_SEC_CERT_ERRORS;
+        return err;
+    }
+
+    return ERROR_SUCCESS;
 }
 
 static int netconn_secure_verify(int preverify_ok, X509_STORE_CTX *ctx)
@@ -339,8 +371,7 @@ static int netconn_secure_verify(int preverify_ok, X509_STORE_CTX *ctx)
         if (!endCert) ret = FALSE;
         if (ret)
         {
-            DWORD_PTR err = netconn_verify_cert(endCert, store, conn->server->name,
-                                                conn->security_flags);
+            DWORD_PTR err = netconn_verify_cert(conn, endCert, store);
 
             if (err)
             {
@@ -488,7 +519,7 @@ static DWORD init_openssl(void)
 #endif
 }
 
-DWORD create_netconn(BOOL useSSL, server_t *server, DWORD security_flags, DWORD timeout, netconn_t **ret)
+DWORD create_netconn(BOOL useSSL, server_t *server, DWORD security_flags, BOOL mask_errors, DWORD timeout, netconn_t **ret)
 {
     netconn_t *netconn;
     int result, flag;
@@ -512,6 +543,7 @@ DWORD create_netconn(BOOL useSSL, server_t *server, DWORD security_flags, DWORD 
     netconn->useSSL = useSSL;
     netconn->socketFD = -1;
     netconn->security_flags = security_flags | server->security_flags;
+    netconn->mask_errors = mask_errors;
     list_init(&netconn->pool_entry);
 
     assert(server->addr_len);
