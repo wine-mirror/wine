@@ -1182,7 +1182,7 @@ static BOOL HTTP_DoAuthorization( http_request_t *request, LPCWSTR pszAuthValue,
 
         sec_status = InitializeSecurityContextW(first ? &pAuthInfo->cred : NULL,
                                                 first ? NULL : &pAuthInfo->ctx,
-                                                first ? request->session->serverName : NULL,
+                                                first ? request->server->name : NULL,
                                                 context_req, 0, SECURITY_NETWORK_DREP,
                                                 in.pvBuffer ? &in_desc : NULL,
                                                 0, &pAuthInfo->ctx, &out_desc,
@@ -1698,6 +1698,7 @@ static BOOL HTTP_DealWithProxy(appinfo_t *hIC, http_session_t *session, http_req
     WCHAR proxy[INTERNET_MAX_URL_LENGTH];
     static WCHAR szNul[] = { 0 };
     URL_COMPONENTSW UrlComponents;
+    server_t *new_server;
     static const WCHAR protoHttp[] = { 'h','t','t','p',0 };
     static const WCHAR szHttp[] = { 'h','t','t','p',':','/','/',0 };
     static const WCHAR szFormat[] = { 'h','t','t','p',':','/','/','%','s',0 };
@@ -1725,16 +1726,20 @@ static BOOL HTTP_DealWithProxy(appinfo_t *hIC, http_session_t *session, http_req
     if(UrlComponents.nPort == INTERNET_INVALID_PORT_NUMBER)
         UrlComponents.nPort = INTERNET_DEFAULT_HTTP_PORT;
 
-    heap_free(session->serverName);
-    session->serverName = heap_strdupW(UrlComponents.lpszHostName);
-    session->serverPort = UrlComponents.nPort;
+    new_server = get_server(UrlComponents.lpszHostName, UrlComponents.nPort);
+    if(!new_server)
+        return FALSE;
 
-    TRACE("proxy server=%s port=%d\n", debugstr_w(session->serverName), session->serverPort);
+    server_release(request->server);
+    request->server = new_server;
+
+    TRACE("proxy server=%s port=%d\n", debugstr_w(new_server->name), new_server->port);
     return TRUE;
 }
 
-static DWORD HTTP_ResolveName(http_request_t *request, server_t *server)
+static DWORD HTTP_ResolveName(http_request_t *request)
 {
+    server_t *server = request->server;
     socklen_t addr_len;
     const void *addr;
 
@@ -1832,6 +1837,9 @@ static void HTTPREQ_Destroy(object_header_t *hdr)
 
     destroy_authinfo(request->authInfo);
     destroy_authinfo(request->proxyAuthInfo);
+
+    if(request->server)
+        server_release(request->server);
 
     heap_free(request->path);
     heap_free(request->verb);
@@ -3063,6 +3071,7 @@ static DWORD HTTP_HttpOpenRequestW(http_session_t *session,
 {
     appinfo_t *hIC = session->appInfo;
     http_request_t *request;
+    INTERNET_PORT port;
     DWORD len, res = ERROR_SUCCESS;
 
     TRACE("-->\n");
@@ -3088,6 +3097,16 @@ static DWORD HTTP_HttpOpenRequestW(http_session_t *session,
     WININET_AddRef( &session->hdr );
     request->session = session;
     list_add_head( &session->hdr.children, &request->hdr.entry );
+
+    port = session->serverPort;
+    if(port == INTERNET_INVALID_PORT_NUMBER)
+        port = dwFlags & INTERNET_FLAG_SECURE ? INTERNET_DEFAULT_HTTPS_PORT : INTERNET_DEFAULT_HTTP_PORT;
+
+    request->server = get_server(session->serverName, port);
+    if(!request->server) {
+        WININET_Release(&request->hdr);
+        return ERROR_OUTOFMEMORY;
+    }
 
     if (dwFlags & INTERNET_FLAG_IGNORE_CERT_CN_INVALID)
         request->security_flags |= SECURITY_FLAG_IGNORE_CERT_CN_INVALID;
@@ -3155,11 +3174,6 @@ static DWORD HTTP_HttpOpenRequestW(http_session_t *session,
     else
         HTTP_ProcessHeader(request, hostW, session->hostName,
                 HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REQ);
-
-    if (session->serverPort == INTERNET_INVALID_PORT_NUMBER)
-        session->serverPort = (dwFlags & INTERNET_FLAG_SECURE ?
-                        INTERNET_DEFAULT_HTTPS_PORT :
-                        INTERNET_DEFAULT_HTTP_PORT);
 
     if (session->hostPort == INTERNET_INVALID_PORT_NUMBER)
         session->hostPort = (dwFlags & INTERNET_FLAG_SECURE ?
@@ -3913,12 +3927,12 @@ static DWORD HTTP_HandleRedirect(http_request_t *request, LPCWSTR lpszUrl)
 
         reset_data_stream(request);
 
-        if(!using_proxy) {
-            if(strcmpiW(session->serverName, hostName)) {
-                heap_free(session->serverName);
-                session->serverName = heap_strdupW(hostName);
-            }
-            session->serverPort = urlComponents.nPort;
+        if(!using_proxy && (strcmpiW(request->server->name, hostName) || request->server->port != urlComponents.nPort)) {
+            server_t *new_server;
+
+            new_server = get_server(hostName, urlComponents.nPort);
+            server_release(request->server);
+            request->server = new_server;
         }
     }
     heap_free(request->path);
@@ -4601,28 +4615,20 @@ static void HTTP_CacheRequest(http_request_t *request)
 static DWORD open_http_connection(http_request_t *request, BOOL *reusing)
 {
     const BOOL is_https = (request->hdr.dwFlags & INTERNET_FLAG_SECURE) != 0;
-    http_session_t *session = request->session;
     netconn_t *netconn = NULL;
-    server_t *server;
     DWORD res;
 
     assert(!request->netconn);
     reset_data_stream(request);
 
-    server = get_server(session->serverName, session->serverPort);
-    if(!server)
-        return ERROR_OUTOFMEMORY;
-
-    res = HTTP_ResolveName(request, server);
-    if(res != ERROR_SUCCESS) {
-        server_release(server);
+    res = HTTP_ResolveName(request);
+    if(res != ERROR_SUCCESS)
         return res;
-    }
 
     EnterCriticalSection(&connection_pool_cs);
 
-    while(!list_empty(&server->conn_pool)) {
-        netconn = LIST_ENTRY(list_head(&server->conn_pool), netconn_t, pool_entry);
+    while(!list_empty(&request->server->conn_pool)) {
+        netconn = LIST_ENTRY(list_head(&request->server->conn_pool), netconn_t, pool_entry);
         list_remove(&netconn->pool_entry);
 
         if(NETCON_is_alive(netconn))
@@ -4644,11 +4650,10 @@ static DWORD open_http_connection(http_request_t *request, BOOL *reusing)
 
     INTERNET_SendCallback(&request->hdr, request->hdr.dwContext,
                           INTERNET_STATUS_CONNECTING_TO_SERVER,
-                          server->addr_str,
-                          strlen(server->addr_str)+1);
+                          request->server->addr_str,
+                          strlen(request->server->addr_str)+1);
 
-    res = create_netconn(is_https, server, request->security_flags, request->connect_timeout, &netconn);
-    server_release(server);
+    res = create_netconn(is_https, request->server, request->security_flags, request->connect_timeout, &netconn);
     if(res != ERROR_SUCCESS) {
         ERR("create_netconn failed: %u\n", res);
         return res;
@@ -4658,7 +4663,7 @@ static DWORD open_http_connection(http_request_t *request, BOOL *reusing)
 
     INTERNET_SendCallback(&request->hdr, request->hdr.dwContext,
             INTERNET_STATUS_CONNECTED_TO_SERVER,
-            server->addr_str, strlen(server->addr_str)+1);
+            request->server->addr_str, strlen(request->server->addr_str)+1);
 
     if(is_https) {
         /* Note: we differ from Microsoft's WinINet here. they seem to have
@@ -4667,7 +4672,7 @@ static DWORD open_http_connection(http_request_t *request, BOOL *reusing)
          * behaviour to be more correct and to not cause any incompatibilities
          * because using a secure connection through a proxy server is a rare
          * case that would be hard for anyone to depend on */
-        if(session->appInfo->proxy)
+        if(request->session->appInfo->proxy)
             res = HTTP_SecureProxyConnect(request);
         if(res == ERROR_SUCCESS)
             res = NETCON_secure_connect(request->netconn);
@@ -4693,7 +4698,7 @@ static DWORD open_http_connection(http_request_t *request, BOOL *reusing)
     }
 
     *reusing = FALSE;
-    TRACE("Created connection to %s: %p\n", debugstr_w(server->name), netconn);
+    TRACE("Created connection to %s: %p\n", debugstr_w(request->server->name), netconn);
     return ERROR_SUCCESS;
 }
 
