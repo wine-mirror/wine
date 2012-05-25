@@ -205,8 +205,8 @@ static void test_metadata_tEXt(void)
             ok(schema.vt == VT_EMPTY, "unexpected vt: %i\n", schema.vt);
             ok(id.vt == VT_LPSTR, "unexpected vt: %i\n", id.vt);
             ok(!strcmp(U(id).pszVal, "winetest"), "unexpected id: %s\n", U(id).pszVal);
-            ok(value.vt == VT_LPSTR, "unexpected vt: %i\n", id.vt);
-            ok(!strcmp(U(value).pszVal, "value"), "unexpected value: %s\n", U(id).pszVal);
+            ok(value.vt == VT_LPSTR, "unexpected vt: %i\n", value.vt);
+            ok(!strcmp(U(value).pszVal, "value"), "unexpected value: %s\n", U(value).pszVal);
 
             PropVariantClear(&schema);
             PropVariantClear(&id);
@@ -240,7 +240,7 @@ static void test_metadata_tEXt(void)
     hr = IWICMetadataReader_GetValue(reader, &schema, &id, &value);
     ok(hr == S_OK, "GetValue failed, hr=%x\n", hr);
     ok(value.vt == VT_LPSTR, "unexpected vt: %i\n", id.vt);
-    ok(!strcmp(U(value).pszVal, "value"), "unexpected value: %s\n", U(id).pszVal);
+    ok(!strcmp(U(value).pszVal, "value"), "unexpected value: %s\n", U(value).pszVal);
     PropVariantClear(&value);
 
     strcpy(U(id).pszVal, "test");
@@ -265,8 +265,8 @@ static void test_metadata_tEXt(void)
 
     hr = IWICMetadataReader_GetValueByIndex(reader, 0, NULL, NULL, &value);
     ok(hr == S_OK, "GetValueByIndex failed, hr=%x\n", hr);
-    ok(value.vt == VT_LPSTR, "unexpected vt: %i\n", id.vt);
-    ok(!strcmp(U(value).pszVal, "value"), "unexpected value: %s\n", U(id).pszVal);
+    ok(value.vt == VT_LPSTR, "unexpected vt: %i\n", value.vt);
+    ok(!strcmp(U(value).pszVal, "value"), "unexpected value: %s\n", U(value).pszVal);
     PropVariantClear(&value);
 
     hr = IWICMetadataReader_GetValueByIndex(reader, 1, NULL, NULL, NULL);
