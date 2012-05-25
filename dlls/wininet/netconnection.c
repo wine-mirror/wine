@@ -729,6 +729,8 @@ DWORD NETCON_secure_connect(netconn_t *connection)
     }
 
     connection->ssl_s = ssl_s;
+
+    connection->security_flags |= SECURITY_FLAG_SECURE;
     connection->server->security_flags = connection->security_flags;
     return ERROR_SUCCESS;
 

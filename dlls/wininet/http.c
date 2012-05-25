@@ -1999,8 +1999,6 @@ static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffe
 
         *size = sizeof(DWORD);
         flags = req->netconn ? req->netconn->security_flags : req->security_flags | req->server->security_flags;
-        if (req->hdr.dwFlags & INTERNET_FLAG_SECURE)
-            flags |= SECURITY_FLAG_SECURE;
         if(req->netconn) {
             int bits = NETCON_GetCipherStrength(req->netconn);
             if (bits >= 128)
