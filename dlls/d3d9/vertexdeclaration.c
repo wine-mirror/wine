@@ -26,30 +26,30 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d9);
 
 static const struct
 {
-    D3DDECLTYPE d3dType;
     enum wined3d_format_id format;
     int         size;
     int         typesize;
 }
 d3d_dtype_lookup[] =
 {
-   {D3DDECLTYPE_FLOAT1,    WINED3DFMT_R32_FLOAT,          1, sizeof(float)},
-   {D3DDECLTYPE_FLOAT2,    WINED3DFMT_R32G32_FLOAT,       2, sizeof(float)},
-   {D3DDECLTYPE_FLOAT3,    WINED3DFMT_R32G32B32_FLOAT,    3, sizeof(float)},
-   {D3DDECLTYPE_FLOAT4,    WINED3DFMT_R32G32B32A32_FLOAT, 4, sizeof(float)},
-   {D3DDECLTYPE_D3DCOLOR,  WINED3DFMT_B8G8R8A8_UNORM,     4, sizeof(BYTE)},
-   {D3DDECLTYPE_UBYTE4,    WINED3DFMT_R8G8B8A8_UINT,      4, sizeof(BYTE)},
-   {D3DDECLTYPE_SHORT2,    WINED3DFMT_R16G16_SINT,        2, sizeof(short int)},
-   {D3DDECLTYPE_SHORT4,    WINED3DFMT_R16G16B16A16_SINT,  4, sizeof(short int)},
-   {D3DDECLTYPE_UBYTE4N,   WINED3DFMT_R8G8B8A8_UNORM,     4, sizeof(BYTE)},
-   {D3DDECLTYPE_SHORT2N,   WINED3DFMT_R16G16_SNORM,       2, sizeof(short int)},
-   {D3DDECLTYPE_SHORT4N,   WINED3DFMT_R16G16B16A16_SNORM, 4, sizeof(short int)},
-   {D3DDECLTYPE_USHORT2N,  WINED3DFMT_R16G16_UNORM,       2, sizeof(short int)},
-   {D3DDECLTYPE_USHORT4N,  WINED3DFMT_R16G16B16A16_UNORM, 4, sizeof(short int)},
-   {D3DDECLTYPE_UDEC3,     WINED3DFMT_R10G10B10A2_UINT,   3, sizeof(short int)},
-   {D3DDECLTYPE_DEC3N,     WINED3DFMT_R10G10B10A2_SNORM,  3, sizeof(short int)},
-   {D3DDECLTYPE_FLOAT16_2, WINED3DFMT_R16G16_FLOAT,       2, sizeof(short int)},
-   {D3DDECLTYPE_FLOAT16_4, WINED3DFMT_R16G16B16A16_FLOAT, 4, sizeof(short int)}};
+    /* D3DDECLTYPE_FLOAT1    */ {WINED3DFMT_R32_FLOAT,          1, sizeof(float)},
+    /* D3DDECLTYPE_FLOAT2    */ {WINED3DFMT_R32G32_FLOAT,       2, sizeof(float)},
+    /* D3DDECLTYPE_FLOAT3    */ {WINED3DFMT_R32G32B32_FLOAT,    3, sizeof(float)},
+    /* D3DDECLTYPE_FLOAT4    */ {WINED3DFMT_R32G32B32A32_FLOAT, 4, sizeof(float)},
+    /* D3DDECLTYPE_D3DCOLOR  */ {WINED3DFMT_B8G8R8A8_UNORM,     4, sizeof(BYTE)},
+    /* D3DDECLTYPE_UBYTE4    */ {WINED3DFMT_R8G8B8A8_UINT,      4, sizeof(BYTE)},
+    /* D3DDECLTYPE_SHORT2    */ {WINED3DFMT_R16G16_SINT,        2, sizeof(short int)},
+    /* D3DDECLTYPE_SHORT4    */ {WINED3DFMT_R16G16B16A16_SINT,  4, sizeof(short int)},
+    /* D3DDECLTYPE_UBYTE4N   */ {WINED3DFMT_R8G8B8A8_UNORM,     4, sizeof(BYTE)},
+    /* D3DDECLTYPE_SHORT2N   */ {WINED3DFMT_R16G16_SNORM,       2, sizeof(short int)},
+    /* D3DDECLTYPE_SHORT4N   */ {WINED3DFMT_R16G16B16A16_SNORM, 4, sizeof(short int)},
+    /* D3DDECLTYPE_USHORT2N  */ {WINED3DFMT_R16G16_UNORM,       2, sizeof(short int)},
+    /* D3DDECLTYPE_USHORT4N  */ {WINED3DFMT_R16G16B16A16_UNORM, 4, sizeof(short int)},
+    /* D3DDECLTYPE_UDEC3     */ {WINED3DFMT_R10G10B10A2_UINT,   3, sizeof(short int)},
+    /* D3DDECLTYPE_DEC3N     */ {WINED3DFMT_R10G10B10A2_SNORM,  3, sizeof(short int)},
+    /* D3DDECLTYPE_FLOAT16_2 */ {WINED3DFMT_R16G16_FLOAT,       2, sizeof(short int)},
+    /* D3DDECLTYPE_FLOAT16_4 */ {WINED3DFMT_R16G16B16A16_FLOAT, 4, sizeof(short int)}
+};
 
 #define D3D_DECL_SIZE(type)          d3d_dtype_lookup[type].size
 #define D3D_DECL_TYPESIZE(type)      d3d_dtype_lookup[type].typesize
