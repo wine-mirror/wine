@@ -285,7 +285,7 @@ static server_t *get_server(const WCHAR *name, INTERNET_PORT port)
     return server;
 }
 
-BOOL collect_connections(BOOL collect_all)
+BOOL collect_connections(collect_type_t collect_type)
 {
     netconn_t *netconn, *netconn_safe;
     server_t *server, *server_safe;
@@ -296,7 +296,7 @@ BOOL collect_connections(BOOL collect_all)
 
     LIST_FOR_EACH_ENTRY_SAFE(server, server_safe, &connection_pool, server_t, entry) {
         LIST_FOR_EACH_ENTRY_SAFE(netconn, netconn_safe, &server->conn_pool, netconn_t, pool_entry) {
-            if(collect_all || netconn->keep_until < now) {
+            if(collect_type > COLLECT_TIMEOUT || netconn->keep_until < now) {
                 TRACE("freeing %p\n", netconn);
                 list_remove(&netconn->pool_entry);
                 free_netconn(netconn);
@@ -305,7 +305,7 @@ BOOL collect_connections(BOOL collect_all)
             }
         }
 
-        if(collect_all) {
+        if(collect_type == COLLECT_CLEANUP) {
             list_remove(&server->entry);
             list_init(&server->entry);
             server_release(server);
@@ -325,7 +325,7 @@ static DWORD WINAPI collect_connections_proc(void *arg)
 
         EnterCriticalSection(&connection_pool_cs);
 
-        remaining_conns = collect_connections(FALSE);
+        remaining_conns = collect_connections(COLLECT_TIMEOUT);
         if(!remaining_conns)
             collector_running = FALSE;
 

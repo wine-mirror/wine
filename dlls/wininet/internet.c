@@ -309,7 +309,7 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             break;
 
         case DLL_PROCESS_DETACH:
-            collect_connections(TRUE);
+            collect_connections(COLLECT_CLEANUP);
             NETCON_unload();
             URLCacheContainers_DeleteAll();
 
@@ -2634,6 +2634,11 @@ static DWORD set_global_option(DWORD option, void *buf, DWORD size)
             return ERROR_BAD_ARGUMENTS;
 
         connect_timeout = *(ULONG*)buf;
+        return ERROR_SUCCESS;
+
+    case INTERNET_OPTION_SETTINGS_CHANGED:
+        FIXME("INTERNETOPTION_SETTINGS_CHANGED semi-stub\n");
+        collect_connections(COLLECT_CONNECTIONS);
         return ERROR_SUCCESS;
     }
 

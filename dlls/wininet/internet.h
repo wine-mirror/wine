@@ -70,7 +70,13 @@ typedef struct {
 
 void server_addref(server_t*) DECLSPEC_HIDDEN;
 void server_release(server_t*) DECLSPEC_HIDDEN;
-BOOL collect_connections(BOOL) DECLSPEC_HIDDEN;
+
+typedef enum {
+    COLLECT_TIMEOUT,
+    COLLECT_CONNECTIONS,
+    COLLECT_CLEANUP
+} collect_type_t;
+BOOL collect_connections(collect_type_t) DECLSPEC_HIDDEN;
 
 /* used for netconnection.c stuff */
 typedef struct
