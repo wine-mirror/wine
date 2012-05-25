@@ -1309,6 +1309,11 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_Load(IDirect3DRMMeshBuilder3* 
     {
         load_options = DXFILELOAD_FROMMEMORY;
     }
+    else if (loadflags == D3DRMLOAD_FROMFILE)
+    {
+        load_options = DXFILELOAD_FROMFILE;
+        TRACE("Loading from file %s\n", debugstr_a(filename));
+    }
     else
     {
         FIXME("Load options %d not supported yet\n", loadflags);
