@@ -688,6 +688,7 @@ DWORD NETCON_secure_connect(netconn_t *connection)
     DWORD res = ERROR_NOT_SUPPORTED;
 #ifdef SONAME_LIBSSL
     void *ssl_s;
+    int bits;
 
     /* can't connect if we are already connected */
     if (connection->ssl_s)
@@ -730,7 +731,15 @@ DWORD NETCON_secure_connect(netconn_t *connection)
 
     connection->ssl_s = ssl_s;
 
+    bits = NETCON_GetCipherStrength(connection);
+    if (bits >= 128)
+        connection->security_flags |= SECURITY_FLAG_STRENGTH_STRONG;
+    else if (bits >= 56)
+        connection->security_flags |= SECURITY_FLAG_STRENGTH_MEDIUM;
+    else
+        connection->security_flags |= SECURITY_FLAG_STRENGTH_WEAK;
     connection->security_flags |= SECURITY_FLAG_SECURE;
+
     connection->server->security_flags = connection->security_flags;
     return ERROR_SUCCESS;
 
