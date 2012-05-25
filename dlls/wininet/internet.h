@@ -61,7 +61,6 @@ typedef struct {
     char addr_str[INET6_ADDRSTRLEN];
 
     LONG ref;
-    DWORD64 keep_until;
 
     DWORD security_flags;
 

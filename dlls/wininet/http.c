@@ -242,8 +242,10 @@ void server_release(server_t *server)
     if(InterlockedDecrement(&server->ref))
         return;
 
-    if(!server->ref)
-        server->keep_until = GetTickCount64() + COLLECT_TIME;
+    list_remove(&server->entry);
+
+    heap_free(server->name);
+    heap_free(server);
 }
 
 static server_t *get_server(const WCHAR *name, INTERNET_PORT port)
@@ -264,7 +266,7 @@ static server_t *get_server(const WCHAR *name, INTERNET_PORT port)
         server = heap_alloc(sizeof(*server));
         if(server) {
             server->addr_len = 0;
-            server->ref = 1;
+            server->ref = 2; /* list reference and return */
             server->port = port;
             server->security_flags = 0;
             list_init(&server->conn_pool);
@@ -303,15 +305,10 @@ BOOL collect_connections(BOOL collect_all)
             }
         }
 
-        if(!server->ref) {
-            if(collect_all || server->keep_until < now) {
-                list_remove(&server->entry);
-
-                heap_free(server->name);
-                heap_free(server);
-            }else {
-                remaining = TRUE;
-            }
+        if(collect_all) {
+            list_remove(&server->entry);
+            list_init(&server->entry);
+            server_release(server);
         }
     }
 
