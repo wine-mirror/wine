@@ -127,19 +127,6 @@ enum wined3d_format_id wined3dformat_from_d3dformat(D3DFORMAT format) DECLSPEC_H
     _pD3D9Caps->MaxVertexShader30InstructionSlots = _pWineCaps->MaxVertexShader30InstructionSlots; \
     _pD3D9Caps->MaxPixelShader30InstructionSlots  = _pWineCaps->MaxPixelShader30InstructionSlots;
 
-/* ===========================================================================
-    D3D9 interfaces
-   =========================================================================== */
-
-/* ---------- */
-/* IDirect3D9 */
-/* ---------- */
-
-/*****************************************************************************
- * Predeclare the interface implementation structures
- */
-extern const IDirect3D9ExVtbl Direct3D9_Vtbl DECLSPEC_HIDDEN;
-
 /*****************************************************************************
  * IDirect3D implementation structure
  */
@@ -155,6 +142,7 @@ typedef struct IDirect3D9Impl
     BOOL                    extended;
 } IDirect3D9Impl;
 
+BOOL d3d9_init(IDirect3D9Impl *d3d9, BOOL extended) DECLSPEC_HIDDEN;
 void filter_caps(D3DCAPS9* pCaps) DECLSPEC_HIDDEN;
 
 struct fvf_declaration

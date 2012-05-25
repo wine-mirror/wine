@@ -551,8 +551,7 @@ static HRESULT WINAPI IDirect3D9ExImpl_GetAdapterLUID(IDirect3D9Ex *iface, UINT 
     return hr;
 }
 
-
-const IDirect3D9ExVtbl Direct3D9_Vtbl =
+static const struct IDirect3D9ExVtbl Direct3D9_Vtbl =
 {
     /* IUnknown */
     IDirect3D9Impl_QueryInterface,
@@ -581,3 +580,18 @@ const IDirect3D9ExVtbl Direct3D9_Vtbl =
     IDirect3D9ExImpl_GetAdapterLUID
 
 };
+
+BOOL d3d9_init(IDirect3D9Impl *d3d9, BOOL extended)
+{
+    d3d9->IDirect3D9Ex_iface.lpVtbl = &Direct3D9_Vtbl;
+    d3d9->ref = 1;
+
+    wined3d_mutex_lock();
+    d3d9->WineD3D = wined3d_create(9, 0);
+    wined3d_mutex_unlock();
+    if (!d3d9->WineD3D)
+        return FALSE;
+    d3d9->extended = extended;
+
+    return TRUE;
+}
