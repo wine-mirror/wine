@@ -2491,6 +2491,10 @@ static void INT21_Ioctl_Block( CONTEXT *context )
 
         if (drivetype == DRIVE_REMOTE)
             SET_DX( context, (1<<9) | (1<<12) ); /* remote + no direct IO */
+        else if (drivetype == DRIVE_CDROM)
+            /* CDROM should be set to remote. If it set the app will
+             * call int2f to check if it cdrom or remote drive. */
+            SET_DX( context, (1<<12) );
         else
             SET_DX( context, 0 ); /* FIXME: use driver attr here */
         break;
