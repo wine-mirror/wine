@@ -2440,10 +2440,9 @@ static void test_EM_SCROLL(void)
        y_before, y_after);
 
     y_before = SendMessage(hwndRichEdit, EM_GETFIRSTVISIBLELINE, 0, 0);
-    SendMessage(hwndRichEdit, EM_SCROLL,
-                SB_LINEDOWN, 0); /* line down beyond bot */
+    r = SendMessage(hwndRichEdit, EM_SCROLL, SB_LINEDOWN, 0); /* line down beyond bot */
     y_after = SendMessage(hwndRichEdit, EM_GETFIRSTVISIBLELINE, 0, 0);
-    
+
     ok(r == 0x00010000,
        "EM_SCROLL line down returned indicating movement (0x%08x)\n", r);
     ok(y_before == y_after,
