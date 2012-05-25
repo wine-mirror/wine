@@ -240,6 +240,20 @@ static void _test_request_flags(unsigned line, HINTERNET req, DWORD exflags, BOO
         todo_wine ok_(__FILE__,line)(flags == exflags, "flags = %x, expected %x\n", flags, exflags);
 }
 
+#define test_http_version(a) _test_http_version(__LINE__,a)
+static void _test_http_version(unsigned line, HINTERNET req)
+{
+    HTTP_VERSION_INFO v = {0xdeadbeef, 0xdeadbeef};
+    DWORD size;
+    BOOL res;
+
+    size = sizeof(v);
+    res = InternetQueryOptionW(req, INTERNET_OPTION_HTTP_VERSION, &v, &size);
+    ok_(__FILE__,line)(res, "InternetQueryOptionW(INTERNET_OPTION_HTTP_VERSION) failed: %u\n", GetLastError());
+    ok_(__FILE__,line)(v.dwMajorVersion == 1, "dwMajorVersion = %d\n", v.dwMajorVersion);
+    ok_(__FILE__,line)(v.dwMinorVersion == 1, "dwMinorVersion = %d\n", v.dwMinorVersion);
+}
+
 static int close_handle_cnt;
 
 static VOID WINAPI callback(
@@ -2864,6 +2878,206 @@ static void release_cert_info(INTERNET_CERTIFICATE_INFOA *info)
     LocalFree(info->lpszEncryptionAlgName);
 }
 
+#define test_secflags_option(a,b) _test_secflags_option(__LINE__,a,b)
+static void _test_secflags_option(unsigned line, HINTERNET req, DWORD ex_flags)
+{
+    DWORD flags, size;
+    BOOL res;
+
+    flags = 0xdeadbeef;
+    size = sizeof(flags);
+    res = InternetQueryOptionW(req, INTERNET_OPTION_SECURITY_FLAGS, &flags, &size);
+    ok_(__FILE__,line)(res, "InternetQueryOptionW(INTERNET_OPTION_SECURITY_FLAGS) failed: %u\n", GetLastError());
+    ok_(__FILE__,line)(flags == ex_flags, "INTERNET_OPTION_SECURITY_FLAGS flags = %x, expected %x\n", flags, ex_flags);
+}
+
+#define set_secflags(a,b) _set_secflags(__LINE__,a,b)
+static void _set_secflags(unsigned line, HINTERNET req, DWORD flags)
+{
+    BOOL res;
+
+    res = InternetSetOptionW(req, INTERNET_OPTION_SECURITY_FLAGS, &flags, sizeof(flags));
+    ok_(__FILE__,line)(res, "InternetSetOption(INTERNET_OPTION_SECURITY_FLAGS) failed: %u\n", GetLastError());
+}
+
+static void test_security_flags(void)
+{
+    HINTERNET ses, conn, req;
+    DWORD size, flags;
+    char buf[100];
+    BOOL res;
+
+    trace("Testing security flags...\n");
+
+    hCompleteEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+
+    ses = InternetOpen("WineTest", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, INTERNET_FLAG_ASYNC);
+    ok(ses != NULL, "InternetOpen failed\n");
+
+    pInternetSetStatusCallbackA(ses, &callback);
+
+    SET_EXPECT(INTERNET_STATUS_HANDLE_CREATED);
+    conn = InternetConnectA(ses, "test.winehq.org", INTERNET_DEFAULT_HTTPS_PORT,
+                            NULL, NULL, INTERNET_SERVICE_HTTP, INTERNET_FLAG_SECURE, 0xdeadbeef);
+    ok(conn != NULL, "InternetConnect failed with error %u\n", GetLastError());
+    CHECK_NOTIFIED(INTERNET_STATUS_HANDLE_CREATED);
+
+    SET_EXPECT(INTERNET_STATUS_HANDLE_CREATED);
+    req = HttpOpenRequest(conn, "GET", "/tests/hello.html", NULL, NULL, NULL,
+                          INTERNET_FLAG_SECURE|INTERNET_FLAG_KEEP_CONNECTION|INTERNET_FLAG_RELOAD|INTERNET_FLAG_NO_CACHE_WRITE,
+                          0xdeadbeef);
+    ok(req != NULL, "HttpOpenRequest failed\n");
+    CHECK_NOTIFIED(INTERNET_STATUS_HANDLE_CREATED);
+
+    flags = INTERNET_ERROR_MASK_COMBINED_SEC_CERT|INTERNET_ERROR_MASK_LOGIN_FAILURE_DISPLAY_ENTITY_BODY;
+    res = InternetSetOption(req, INTERNET_OPTION_ERROR_MASK, (void*)&flags, sizeof(flags));
+    ok(res, "InternetQueryOption(INTERNET_OPTION_ERROR_MASK failed: %u\n", GetLastError());
+
+    SET_EXPECT(INTERNET_STATUS_RESOLVING_NAME);
+    SET_EXPECT(INTERNET_STATUS_NAME_RESOLVED);
+    SET_EXPECT(INTERNET_STATUS_CONNECTING_TO_SERVER);
+    SET_EXPECT(INTERNET_STATUS_CONNECTED_TO_SERVER);
+    SET_EXPECT(INTERNET_STATUS_CLOSING_CONNECTION);
+    SET_EXPECT(INTERNET_STATUS_CONNECTION_CLOSED);
+    SET_EXPECT(INTERNET_STATUS_REQUEST_COMPLETE);
+    SET_OPTIONAL(INTERNET_STATUS_COOKIE_SENT);
+    SET_OPTIONAL(INTERNET_STATUS_DETECTING_PROXY);
+
+    res = HttpSendRequest(req, NULL, 0, NULL, 0);
+    ok(!res && GetLastError() == ERROR_IO_PENDING, "HttpSendRequest failed: %u\n", GetLastError());
+
+    WaitForSingleObject(hCompleteEvent, INFINITE);
+    ok(req_error == ERROR_INTERNET_SEC_CERT_REV_FAILED || broken(req_error == ERROR_INTERNET_SEC_CERT_ERRORS),
+       "req_error = %d\n", req_error);
+
+    todo_wine CHECK_NOT_NOTIFIED(INTERNET_STATUS_RESOLVING_NAME);
+    todo_wine CHECK_NOT_NOTIFIED(INTERNET_STATUS_NAME_RESOLVED);
+    CHECK_NOTIFIED(INTERNET_STATUS_CONNECTING_TO_SERVER);
+    CHECK_NOTIFIED(INTERNET_STATUS_CONNECTED_TO_SERVER);
+    CHECK_NOTIFIED(INTERNET_STATUS_CLOSING_CONNECTION);
+    CHECK_NOTIFIED(INTERNET_STATUS_CONNECTION_CLOSED);
+    CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
+    CLEAR_NOTIFIED(INTERNET_STATUS_COOKIE_SENT);
+    CLEAR_NOTIFIED(INTERNET_STATUS_DETECTING_PROXY);
+
+    if(req_error != ERROR_INTERNET_SEC_CERT_REV_FAILED) {
+        win_skip("Unexpected cert errors, skipping security flags tests\n");
+
+        close_async_handle(ses, hCompleteEvent, 2);
+        CloseHandle(hCompleteEvent);
+        return;
+    }
+
+    size = sizeof(buf);
+    res = HttpQueryInfoA(req, HTTP_QUERY_CONTENT_ENCODING, buf, &size, 0);
+    ok(!res && GetLastError() == ERROR_HTTP_HEADER_NOT_FOUND, "HttpQueryInfoA(HTTP_QUERY_CONTENT_ENCODING) failed: %u\n", GetLastError());
+
+    test_request_flags(req, 8);
+    test_secflags_option(req, 0x800000);
+
+    set_secflags(req, SECURITY_FLAG_IGNORE_UNKNOWN_CA);
+    test_secflags_option(req, 0x800000|SECURITY_FLAG_IGNORE_UNKNOWN_CA);
+    test_http_version(req);
+
+    SET_EXPECT(INTERNET_STATUS_CONNECTING_TO_SERVER);
+    SET_EXPECT(INTERNET_STATUS_CONNECTED_TO_SERVER);
+    SET_EXPECT(INTERNET_STATUS_SENDING_REQUEST);
+    SET_EXPECT(INTERNET_STATUS_REQUEST_SENT);
+    SET_EXPECT(INTERNET_STATUS_RECEIVING_RESPONSE);
+    SET_EXPECT(INTERNET_STATUS_RESPONSE_RECEIVED);
+    SET_EXPECT(INTERNET_STATUS_REQUEST_COMPLETE);
+    SET_OPTIONAL(INTERNET_STATUS_COOKIE_SENT);
+    SET_OPTIONAL(INTERNET_STATUS_DETECTING_PROXY);
+
+    res = HttpSendRequest(req, NULL, 0, NULL, 0);
+    ok(!res && GetLastError() == ERROR_IO_PENDING, "HttpSendRequest failed: %u\n", GetLastError());
+
+    WaitForSingleObject(hCompleteEvent, INFINITE);
+    ok(req_error == ERROR_SUCCESS, "req_error = %d\n", req_error);
+
+    CHECK_NOTIFIED(INTERNET_STATUS_CONNECTING_TO_SERVER);
+    CHECK_NOTIFIED(INTERNET_STATUS_CONNECTED_TO_SERVER);
+    CHECK_NOTIFIED(INTERNET_STATUS_SENDING_REQUEST);
+    CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_SENT);
+    CHECK_NOTIFIED(INTERNET_STATUS_RECEIVING_RESPONSE);
+    CHECK_NOTIFIED(INTERNET_STATUS_RESPONSE_RECEIVED);
+    CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
+    CLEAR_NOTIFIED(INTERNET_STATUS_COOKIE_SENT);
+    CLEAR_NOTIFIED(INTERNET_STATUS_DETECTING_PROXY);
+
+    test_request_flags(req, 0);
+    test_secflags_option(req, SECURITY_FLAG_SECURE|SECURITY_FLAG_IGNORE_UNKNOWN_CA
+                         |SECURITY_FLAG_STRENGTH_STRONG|0x800000);
+
+    res = InternetReadFile(req, buf, sizeof(buf), &size);
+    ok(res, "InternetReadFile failed: %u\n", GetLastError());
+    ok(size, "size = 0\n");
+
+    close_async_handle(ses, hCompleteEvent, 2);
+
+    /* Collect all existing persistent connections */
+    res = InternetSetOptionA(NULL, INTERNET_OPTION_SETTINGS_CHANGED, NULL, 0);
+    ok(res, "InternetSetOption(INTERNET_OPTION_END_BROWSER_SESSION) failed: %u\n", GetLastError());
+
+    /* Make another request, without setting security flags */
+
+    ses = InternetOpen("WineTest", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, INTERNET_FLAG_ASYNC);
+    ok(ses != NULL, "InternetOpen failed\n");
+
+    pInternetSetStatusCallbackA(ses, &callback);
+
+    SET_EXPECT(INTERNET_STATUS_HANDLE_CREATED);
+    conn = InternetConnectA(ses, "test.winehq.org", INTERNET_DEFAULT_HTTPS_PORT,
+                            NULL, NULL, INTERNET_SERVICE_HTTP, INTERNET_FLAG_SECURE, 0xdeadbeef);
+    ok(conn != NULL, "InternetConnect failed with error %u\n", GetLastError());
+    CHECK_NOTIFIED(INTERNET_STATUS_HANDLE_CREATED);
+
+    SET_EXPECT(INTERNET_STATUS_HANDLE_CREATED);
+    req = HttpOpenRequest(conn, "GET", "/tests/hello.html", NULL, NULL, NULL,
+                          INTERNET_FLAG_SECURE|INTERNET_FLAG_KEEP_CONNECTION|INTERNET_FLAG_RELOAD|INTERNET_FLAG_NO_CACHE_WRITE,
+                          0xdeadbeef);
+    ok(req != NULL, "HttpOpenRequest failed\n");
+    CHECK_NOTIFIED(INTERNET_STATUS_HANDLE_CREATED);
+
+    test_secflags_option(req, SECURITY_FLAG_SECURE|SECURITY_FLAG_IGNORE_UNKNOWN_CA|SECURITY_FLAG_STRENGTH_STRONG|0x800000);
+    test_http_version(req);
+
+    SET_EXPECT(INTERNET_STATUS_CONNECTING_TO_SERVER);
+    SET_EXPECT(INTERNET_STATUS_CONNECTED_TO_SERVER);
+    SET_EXPECT(INTERNET_STATUS_SENDING_REQUEST);
+    SET_EXPECT(INTERNET_STATUS_REQUEST_SENT);
+    SET_EXPECT(INTERNET_STATUS_RECEIVING_RESPONSE);
+    SET_EXPECT(INTERNET_STATUS_RESPONSE_RECEIVED);
+    SET_EXPECT(INTERNET_STATUS_REQUEST_COMPLETE);
+    SET_OPTIONAL(INTERNET_STATUS_COOKIE_SENT);
+
+    res = HttpSendRequest(req, NULL, 0, NULL, 0);
+    ok(!res && GetLastError() == ERROR_IO_PENDING, "HttpSendRequest failed: %u\n", GetLastError());
+
+    WaitForSingleObject(hCompleteEvent, INFINITE);
+    ok(req_error == ERROR_SUCCESS, "req_error = %d\n", req_error);
+
+    CHECK_NOTIFIED(INTERNET_STATUS_CONNECTING_TO_SERVER);
+    CHECK_NOTIFIED(INTERNET_STATUS_CONNECTED_TO_SERVER);
+    CHECK_NOTIFIED(INTERNET_STATUS_SENDING_REQUEST);
+    CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_SENT);
+    CHECK_NOTIFIED(INTERNET_STATUS_RECEIVING_RESPONSE);
+    CHECK_NOTIFIED(INTERNET_STATUS_RESPONSE_RECEIVED);
+    CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
+    CLEAR_NOTIFIED(INTERNET_STATUS_COOKIE_SENT);
+
+    test_request_flags(req, 0);
+    test_secflags_option(req, SECURITY_FLAG_SECURE|SECURITY_FLAG_IGNORE_UNKNOWN_CA|SECURITY_FLAG_STRENGTH_STRONG|0x800000);
+
+    res = InternetReadFile(req, buf, sizeof(buf), &size);
+    ok(res, "InternetReadFile failed: %u\n", GetLastError());
+    ok(size, "size = 0\n");
+
+    close_async_handle(ses, hCompleteEvent, 2);
+
+    CloseHandle(hCompleteEvent);
+}
+
 static void test_secure_connection(void)
 {
     static const WCHAR gizmo5[] = {'G','i','z','m','o','5',0};
@@ -3653,6 +3867,7 @@ START_TEST(http)
     InternetReadFile_test(0, &test_data[1]);
     first_connection_to_test_url = TRUE;
     InternetReadFile_test(INTERNET_FLAG_ASYNC, &test_data[2]);
+    test_security_flags();
     InternetReadFile_test(0, &test_data[2]);
     InternetReadFileExA_test(INTERNET_FLAG_ASYNC);
     test_open_url_async();
