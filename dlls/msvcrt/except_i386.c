@@ -373,13 +373,22 @@ static DWORD catch_function_nested_handler( EXCEPTION_RECORD *rec, EXCEPTION_REG
     if(rec->ExceptionCode == CXX_EXCEPTION)
     {
         PEXCEPTION_RECORD prev_rec = nested_frame->rec;
-        if(rec->ExceptionInformation[1] == 0 && rec->ExceptionInformation[2] == 0)
+        if((rec->ExceptionInformation[1] == 0 && rec->ExceptionInformation[2] == 0) ||
+                (rec->ExceptionInformation[1] == prev_rec->ExceptionInformation[1] &&
+                 rec->ExceptionInformation[2] == prev_rec->ExceptionInformation[2]))
         {
             /* exception was rethrown */
             rec->ExceptionInformation[1] = prev_rec->ExceptionInformation[1];
             rec->ExceptionInformation[2] = prev_rec->ExceptionInformation[2];
             TRACE("detect rethrow: re-propagate: obj: %lx, type: %lx\n",
                     rec->ExceptionInformation[1], rec->ExceptionInformation[2]);
+        }
+        else if (nested_frame->prev_rec &&
+                nested_frame->prev_rec->ExceptionInformation[1] == prev_rec->ExceptionInformation[1] &&
+                nested_frame->prev_rec->ExceptionInformation[2] == prev_rec->ExceptionInformation[2])
+        {
+            TRACE("detect threw new exception in catch block - not owning old(obj: %lx type: %lx)\n",
+                    prev_rec->ExceptionInformation[1], prev_rec->ExceptionInformation[2]);
         }
         else {
             /* new exception in exception handler, destroy old */
@@ -506,6 +515,15 @@ DWORD CDECL cxx_frame_handler( PEXCEPTION_RECORD rec, cxx_exception_frame* frame
 
     if(rec->ExceptionCode == CXX_EXCEPTION)
     {
+        if (rec->ExceptionInformation[1] == 0 && rec->ExceptionInformation[2] == 0)
+        {
+            EXCEPTION_RECORD *exc_record = msvcrt_get_thread_data()->exc_record;
+            rec->ExceptionInformation[1] = exc_record->ExceptionInformation[1];
+            rec->ExceptionInformation[2] = exc_record->ExceptionInformation[2];
+            TRACE("detect rethrow: obj: %lx, type: %lx\n",
+                    rec->ExceptionInformation[1], rec->ExceptionInformation[2]);
+        }
+
         exc_type = (cxx_exception_type *)rec->ExceptionInformation[2];
 
         if (rec->ExceptionInformation[0] > CXX_FRAME_MAGIC_VC8 &&
