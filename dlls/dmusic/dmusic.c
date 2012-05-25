@@ -369,23 +369,37 @@ static const IDirectMusic8Vtbl DirectMusic8_Vtbl = {
 	IDirectMusic8Impl_SetExternalMasterClock
 };
 
-/* for ClassFactory */
-HRESULT WINAPI DMUSIC_CreateDirectMusicImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) {
-	IDirectMusic8Impl *dmusic;
+/* For ClassFactory */
+HRESULT WINAPI DMUSIC_CreateDirectMusicImpl(LPCGUID riid, LPVOID* ret_iface, LPUNKNOWN unkouter)
+{
+    IDirectMusic8Impl *dmusic;
+    HRESULT ret;
 
-	TRACE("(%p,%p,%p)\n",lpcGUID, ppobj, pUnkOuter);
+    TRACE("(%p,%p,%p)\n", riid, ret_iface, unkouter);
 
-	dmusic = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusic8Impl));
-	if (NULL == dmusic) {
-		*ppobj = NULL;
-		return E_OUTOFMEMORY;
-	}
-	dmusic->IDirectMusic8_iface.lpVtbl = &DirectMusic8_Vtbl;
-	dmusic->ref = 0; /* will be inited with QueryInterface */
-	dmusic->pMasterClock = NULL;
-	dmusic->ppPorts = NULL;
-	dmusic->nrofports = 0;
-	DMUSIC_CreateReferenceClockImpl (&IID_IReferenceClock, (LPVOID*)&dmusic->pMasterClock, NULL);
-	
-	return IDirectMusic8Impl_QueryInterface ((LPDIRECTMUSIC8)dmusic, lpcGUID, ppobj);
+    *ret_iface = NULL;
+
+    dmusic = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusic8Impl));
+    if (!dmusic)
+        return E_OUTOFMEMORY;
+
+    dmusic->IDirectMusic8_iface.lpVtbl = &DirectMusic8_Vtbl;
+    dmusic->ref = 0; /* Will be inited by QueryInterface */
+    dmusic->pMasterClock = NULL;
+    dmusic->ppPorts = NULL;
+    dmusic->nrofports = 0;
+    ret = DMUSIC_CreateReferenceClockImpl(&IID_IReferenceClock, (LPVOID*)&dmusic->pMasterClock, NULL);
+    if (FAILED(ret)) {
+        HeapFree(GetProcessHeap(), 0, dmusic);
+        return ret;
+    }
+
+    ret = IDirectMusic8Impl_QueryInterface(&dmusic->IDirectMusic8_iface, riid, ret_iface);
+    if (FAILED(ret)) {
+        IReferenceClock_Release(&dmusic->pMasterClock->IReferenceClock_iface);
+        HeapFree(GetProcessHeap(), 0, dmusic);
+        return ret;
+    }
+
+    return S_OK;
 }
