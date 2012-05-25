@@ -518,8 +518,13 @@ static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, HDC hdc )
 
     if (dc->dibdrv) old_physdev = pop_dc_driver( dc, dc->dibdrv );
 
-    physdev = GET_DC_PHYSDEV( dc, pSelectBitmap );
-    createdev = GET_DC_PHYSDEV( dc, pCreateBitmap );
+    if (bitmap->dib.dsBm.bmBitsPixel > 1)
+    {
+        physdev = GET_DC_PHYSDEV( dc, pSelectBitmap );
+        createdev = GET_DC_PHYSDEV( dc, pCreateBitmap );
+    }
+    else physdev = createdev = &dc->nulldrv;  /* force use of the DIB engine for 1-bpp */
+
     if (physdev->funcs == &null_driver)
     {
         physdev = dc->dibdrv;
