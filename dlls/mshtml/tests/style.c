@@ -662,7 +662,6 @@ static void test_body_style(IHTMLStyle *style)
 
     hres = IHTMLStyle_put_textDecorationUnderline(style, VARIANT_TRUE);
     ok(hres == S_OK, "put_textDecorationUnderline failed: %08x\n", hres);
-    ok(b == VARIANT_FALSE, "textDecorationUnderline = %x\n", b);
 
     hres = IHTMLStyle_get_textDecorationUnderline(style, &b);
     ok(hres == S_OK, "get_textDecorationUnderline failed: %08x\n", hres);
@@ -678,7 +677,6 @@ static void test_body_style(IHTMLStyle *style)
 
     hres = IHTMLStyle_put_textDecorationLineThrough(style, VARIANT_TRUE);
     ok(hres == S_OK, "put_textDecorationLineThrough failed: %08x\n", hres);
-    ok(b == VARIANT_FALSE, "textDecorationLineThrough = %x\n", b);
 
     hres = IHTMLStyle_get_textDecorationLineThrough(style, &b);
     ok(hres == S_OK, "get_textDecorationLineThrough failed: %08x\n", hres);
@@ -694,7 +692,6 @@ static void test_body_style(IHTMLStyle *style)
 
     hres = IHTMLStyle_put_textDecorationNone(style, VARIANT_TRUE);
     ok(hres == S_OK, "put_textDecorationNone failed: %08x\n", hres);
-    ok(b == VARIANT_FALSE, "textDecorationNone = %x\n", b);
 
     hres = IHTMLStyle_get_textDecorationNone(style, &b);
     ok(hres == S_OK, "get_textDecorationNone failed: %08x\n", hres);
@@ -710,7 +707,6 @@ static void test_body_style(IHTMLStyle *style)
 
     hres = IHTMLStyle_put_textDecorationOverline(style, VARIANT_TRUE);
     ok(hres == S_OK, "put_textDecorationOverline failed: %08x\n", hres);
-    ok(b == VARIANT_FALSE, "textDecorationOverline = %x\n", b);
 
     hres = IHTMLStyle_get_textDecorationOverline(style, &b);
     ok(hres == S_OK, "get_textDecorationOverline failed: %08x\n", hres);
@@ -726,7 +722,6 @@ static void test_body_style(IHTMLStyle *style)
 
     hres = IHTMLStyle_put_textDecorationBlink(style, VARIANT_TRUE);
     ok(hres == S_OK, "put_textDecorationBlink failed: %08x\n", hres);
-    ok(b == VARIANT_FALSE, "textDecorationBlink = %x\n", b);
 
     hres = IHTMLStyle_get_textDecorationBlink(style, &b);
     ok(hres == S_OK, "get_textDecorationBlink failed: %08x\n", hres);
