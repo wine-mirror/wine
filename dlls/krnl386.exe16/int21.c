@@ -2495,6 +2495,10 @@ static void INT21_Ioctl_Block( CONTEXT *context )
             /* CDROM should be set to remote. If it set the app will
              * call int2f to check if it cdrom or remote drive. */
             SET_DX( context, (1<<12) );
+        else if (drivetype == DRIVE_FIXED)
+            /* This should define if drive support 0x0d, 0x0f and 0x08
+             * requests. The local fixed drive should do. */
+            SET_DX( context, (1<<11) );
         else
             SET_DX( context, 0 ); /* FIXME: use driver attr here */
         break;
