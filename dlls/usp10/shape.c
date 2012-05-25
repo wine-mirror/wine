@@ -628,9 +628,9 @@ static void UpdateClustersFromGlyphProp(const int cGlyphs, const int cChars, WOR
                 if (pwLogClust[j] == i)
                 {
                     int k = j;
-                    while (!pGlyphProp[pwLogClust[k]].sva.fClusterStart && k >= 0 && k <cChars)
+                    while (k >= 0 && k <cChars && !pGlyphProp[pwLogClust[k]].sva.fClusterStart)
                         k-=1;
-                    if (pGlyphProp[pwLogClust[k]].sva.fClusterStart)
+                    if (k >= 0 && k <cChars && pGlyphProp[pwLogClust[k]].sva.fClusterStart)
                         pwLogClust[j] = pwLogClust[k];
                 }
             }
