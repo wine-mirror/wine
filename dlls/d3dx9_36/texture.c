@@ -746,7 +746,7 @@ HRESULT WINAPI D3DXCreateTextureFromFileExA(LPDIRECT3DDEVICE9 device,
         return D3DERR_INVALIDCALL;
 
     len = MultiByteToWideChar(CP_ACP, 0, srcfile, -1, NULL, 0);
-    widename = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len * sizeof(WCHAR));
+    widename = HeapAlloc(GetProcessHeap(), 0, len * sizeof(*widename));
     MultiByteToWideChar(CP_ACP, 0, srcfile, -1, widename, len);
 
     hr = D3DXCreateTextureFromFileExW(device, widename, width, height, miplevels,

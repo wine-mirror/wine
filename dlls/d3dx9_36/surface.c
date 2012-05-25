@@ -656,7 +656,7 @@ HRESULT WINAPI D3DXGetImageInfoFromFileA(LPCSTR file, D3DXIMAGE_INFO *info)
     if( !file ) return D3DERR_INVALIDCALL;
 
     strlength = MultiByteToWideChar(CP_ACP, 0, file, -1, NULL, 0);
-    widename = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, strlength * sizeof(WCHAR));
+    widename = HeapAlloc(GetProcessHeap(), 0, strlength * sizeof(*widename));
     MultiByteToWideChar(CP_ACP, 0, file, -1, widename, strlength);
 
     hr = D3DXGetImageInfoFromFileW(widename, info);
@@ -918,7 +918,7 @@ HRESULT WINAPI D3DXLoadSurfaceFromFileA(LPDIRECT3DSURFACE9 pDestSurface,
     if( !pSrcFile || !pDestSurface ) return D3DERR_INVALIDCALL;
 
     strlength = MultiByteToWideChar(CP_ACP, 0, pSrcFile, -1, NULL, 0);
-    pWidename = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, strlength * sizeof(WCHAR));
+    pWidename = HeapAlloc(GetProcessHeap(), 0, strlength * sizeof(*pWidename));
     MultiByteToWideChar(CP_ACP, 0, pSrcFile, -1, pWidename, strlength);
 
     hr = D3DXLoadSurfaceFromFileW(pDestSurface, pDestPalette, pDestRect, pWidename, pSrcRect, dwFilter, Colorkey, pSrcInfo);
