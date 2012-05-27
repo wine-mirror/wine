@@ -1134,7 +1134,7 @@ static HRESULT WINAPI IDirect3DRMWinDeviceImpl_HandleActivate(IDirect3DRMWinDevi
 
     FIXME("(%p/%p)->(%u): stub\n", iface, This, wparam);
 
-    return E_NOTIMPL;
+    return D3DRM_OK;
 }
 
 static const struct IDirect3DRMWinDeviceVtbl Direct3DRMWinDevice_Vtbl =
