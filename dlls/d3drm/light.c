@@ -32,6 +32,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3drm);
 typedef struct {
     IDirect3DRMLight IDirect3DRMLight_iface;
     LONG ref;
+    D3DRMLIGHTTYPE type;
 } IDirect3DRMLightImpl;
 
 static inline IDirect3DRMLightImpl *impl_from_IDirect3DRMLight(IDirect3DRMLight *iface)
@@ -174,9 +175,11 @@ static HRESULT WINAPI IDirect3DRMLightImpl_SetType(IDirect3DRMLight* iface, D3DR
 {
     IDirect3DRMLightImpl *This = impl_from_IDirect3DRMLight(iface);
 
-    FIXME("(%p/%p)->(%u): stub\n", iface, This, type);
+    TRACE("(%p/%p)->(%u)\n", iface, This, type);
 
-    return E_NOTIMPL;
+    This->type = type;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMLightImpl_SetColor(IDirect3DRMLight* iface, D3DCOLOR color)
@@ -322,9 +325,9 @@ static D3DRMLIGHTTYPE WINAPI IDirect3DRMLightImpl_GetType(IDirect3DRMLight* ifac
 {
     IDirect3DRMLightImpl *This = impl_from_IDirect3DRMLight(iface);
 
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    TRACE("(%p/%p)->()\n", iface, This);
 
-    return D3DRMLIGHT_AMBIENT;
+    return This->type;
 }
 
 static HRESULT WINAPI IDirect3DRMLightImpl_SetEnableFrame(IDirect3DRMLight* iface,

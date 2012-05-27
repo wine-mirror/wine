@@ -839,15 +839,15 @@ static void test_Light(void)
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMLight interface (hr = %x)\n", hr);
 
     type = IDirect3DRMLight_GetType(pLight);
-    todo_wine ok(type == D3DRMLIGHT_SPOT, "wrong type (%u)\n", type);
+    ok(type == D3DRMLIGHT_SPOT, "wrong type (%u)\n", type);
 
     color = IDirect3DRMLight_GetColor(pLight);
     todo_wine ok(color == 0xff7f7f7f, "wrong color (%x)\n", color);
 
     hr = IDirect3DRMLight_SetType(pLight, D3DRMLIGHT_POINT);
-    todo_wine ok(hr == D3DRM_OK, "Cannot set type (hr = %x)\n", hr);
+    ok(hr == D3DRM_OK, "Cannot set type (hr = %x)\n", hr);
     type = IDirect3DRMLight_GetType(pLight);
-    todo_wine ok(type == D3DRMLIGHT_POINT, "wrong type (%u)\n", type);
+    ok(type == D3DRMLIGHT_POINT, "wrong type (%u)\n", type);
 
     hr = IDirect3DRMLight_SetColor(pLight, 0xff180587);
     todo_wine ok(hr == D3DRM_OK, "Cannot set color (hr = %x)\n", hr);
