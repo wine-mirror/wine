@@ -795,7 +795,7 @@ static void test_Frame(void)
 
     pLightArray = NULL;
     hr = IDirect3DRMFrame_GetLights(pFrameP1, &pLightArray);
-    todo_wine ok(hr == D3DRM_OK, "Cannot get lights (hr = %x)\n", hr);
+    ok(hr == D3DRM_OK, "Cannot get lights (hr = %x)\n", hr);
     if (pLightArray)
     {
         count = IDirect3DRMLightArray_GetSize(pLightArray);
