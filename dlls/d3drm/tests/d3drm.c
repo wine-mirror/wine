@@ -353,7 +353,7 @@ static void test_MeshBuilder(void)
         DWORD nb_groups;
         unsigned nb_vertices, nb_faces, nb_face_vertices;
         DWORD data_size;
-        LPDIRECT3DRMMATERIAL material;
+        LPDIRECT3DRMMATERIAL material = (LPDIRECT3DRMMATERIAL)0xdeadbeef;
         LPDIRECT3DRMTEXTURE texture = (LPDIRECT3DRMTEXTURE)0xdeadbeef;
         D3DVALUE values[3];
 
@@ -371,8 +371,8 @@ static void test_MeshBuilder(void)
         ok(hr == D3DRM_OK, "GetCroupTexture failed returning hr = %x\n", hr);
         ok(texture == NULL, "No texture should be present\n");
         hr = IDirect3DRMMesh_GetGroupMaterial(mesh, 0, &material);
-        todo_wine ok(hr == D3DRM_OK, "GetCroupMaterial failed returning hr = %x\n", hr);
-        todo_wine ok(material != NULL, "No material should be present\n");
+        ok(hr == D3DRM_OK, "GetCroupMaterial failed returning hr = %x\n", hr);
+        todo_wine ok(material != NULL, "No material present\n");
         if ((hr == D3DRM_OK) && material)
         {
             hr = IDirect3DRMMaterial_GetEmissive(material, &values[0], &values[1], &values[2]);

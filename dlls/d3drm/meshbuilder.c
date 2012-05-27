@@ -43,6 +43,7 @@ typedef struct {
     unsigned vertex_per_face;
     DWORD face_data_size;
     unsigned* face_data;
+    IDirect3DRMMaterial2* material;
     IDirect3DRMTexture3* texture;
 } mesh_group;
 
@@ -2452,6 +2453,7 @@ static HRESULT WINAPI IDirect3DRMMeshImpl_AddGroup(IDirect3DRMMesh* iface,
 
     memcpy(group->face_data, face_data, group->face_data_size * sizeof(unsigned));
 
+    group->material = NULL;
     group->texture = NULL;
 
     *return_id = This->nb_groups++;
@@ -2623,13 +2625,24 @@ static D3DRMRENDERQUALITY WINAPI IDirect3DRMMeshImpl_GetGroupQuality(IDirect3DRM
 }
 
 static HRESULT WINAPI IDirect3DRMMeshImpl_GetGroupMaterial(IDirect3DRMMesh* iface,
-                                                           D3DRMGROUPINDEX id, LPDIRECT3DRMMATERIAL *returnPtr)
+                                                           D3DRMGROUPINDEX id, LPDIRECT3DRMMATERIAL *material)
 {
     IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
 
-    FIXME("(%p)->(%u,%p): stub\n", This, id, returnPtr);
+    TRACE("(%p)->(%u,%p)\n", This, id, material);
 
-    return E_NOTIMPL;
+    if (id >= This->nb_groups)
+        return D3DRMERR_BADVALUE;
+
+    if (!material)
+        return E_POINTER;
+
+    if (This->groups[id].material)
+        IDirect3DRMTexture_QueryInterface(This->groups[id].material, &IID_IDirect3DRMMaterial, (void**)material);
+    else
+        *material = NULL;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMMeshImpl_GetGroupTexture(IDirect3DRMMesh* iface,
