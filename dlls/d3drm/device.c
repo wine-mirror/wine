@@ -41,6 +41,7 @@ typedef struct {
     LONG ref;
     BOOL dither;
     D3DRMRENDERQUALITY quality;
+    DWORD rendermode;
 } IDirect3DRMDeviceImpl;
 
 static inline IDirect3DRMDeviceImpl *impl_from_IDirect3DRMDevice2(IDirect3DRMDevice2 *iface)
@@ -444,18 +445,18 @@ static HRESULT WINAPI IDirect3DRMDevice2Impl_SetRenderMode(IDirect3DRMDevice2* i
 {
     IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMDevice2(iface);
 
-    FIXME("(%p/%p)->(%u): stub\n", iface, This, dwFlags);
+    TRACE("(%p/%p)->(%u)\n", iface, This, dwFlags);
 
-    return E_NOTIMPL;
+    return IDirect3DRMDevice3_SetRenderMode(&This->IDirect3DRMDevice3_iface, dwFlags);
 }
 
 static DWORD WINAPI IDirect3DRMDevice2Impl_GetRenderMode(IDirect3DRMDevice2* iface)
 {
     IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMDevice2(iface);
 
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    TRACE("(%p/%p)->()\n", iface, This);
 
-    return E_NOTIMPL;
+    return IDirect3DRMDevice3_GetRenderMode(&This->IDirect3DRMDevice3_iface);
 }
 
 static HRESULT WINAPI IDirect3DRMDevice2Impl_GetDirect3DDevice2(IDirect3DRMDevice2* iface,
@@ -869,18 +870,20 @@ static HRESULT WINAPI IDirect3DRMDevice3Impl_SetRenderMode(IDirect3DRMDevice3* i
 {
     IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMDevice3(iface);
 
-    FIXME("(%p/%p)->(%u): stub\n", iface, This, dwFlags);
+    TRACE("(%p/%p)->(%u)\n", iface, This, dwFlags);
 
-    return E_NOTIMPL;
+    This->rendermode = dwFlags;
+
+    return D3DRM_OK;
 }
 
 static DWORD WINAPI IDirect3DRMDevice3Impl_GetRenderMode(IDirect3DRMDevice3* iface)
 {
     IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMDevice3(iface);
 
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    TRACE("(%p/%p)->()\n", iface, This);
 
-    return E_NOTIMPL;
+    return This->rendermode;
 }
 
 static HRESULT WINAPI IDirect3DRMDevice3Impl_GetDirect3DDevice2(IDirect3DRMDevice3* iface,
