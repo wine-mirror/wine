@@ -42,6 +42,8 @@ typedef struct {
     BOOL dither;
     D3DRMRENDERQUALITY quality;
     DWORD rendermode;
+    DWORD height;
+    DWORD width;
 } IDirect3DRMDeviceImpl;
 
 static inline IDirect3DRMDeviceImpl *impl_from_IDirect3DRMDevice2(IDirect3DRMDevice2 *iface)
@@ -204,9 +206,9 @@ static HRESULT WINAPI IDirect3DRMDevice2Impl_Init(IDirect3DRMDevice2* iface, ULO
 {
     IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMDevice2(iface);
 
-    FIXME("(%p/%p)->(%u, %u): stub\n", iface, This, width, height);
+    TRACE("(%p/%p)->(%u, %u)\n", iface, This, width, height);
 
-    return E_NOTIMPL;
+    return IDirect3DRMDevice3_Init(&This->IDirect3DRMDevice3_iface, width, height);
 }
 
 /*** IDirect3DRMDevice2 methods ***/
@@ -227,9 +229,10 @@ static HRESULT WINAPI IDirect3DRMDevice2Impl_InitFromClipper(IDirect3DRMDevice2*
 {
     IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMDevice2(iface);
 
-    FIXME("(%p/%p)->(%p, %p, %u, %u): stub\n", iface, This, lpDDClipper, lpGUID, width, height);
+    TRACE("(%p/%p)->(%p, %p, %u, %u)\n", iface, This, lpDDClipper, lpGUID, width, height);
 
-    return E_NOTIMPL;
+    return IDirect3DRMDevice3_InitFromClipper(&This->IDirect3DRMDevice3_iface, lpDDClipper, lpGUID,
+                                              width, height);
 }
 
 static HRESULT WINAPI IDirect3DRMDevice2Impl_Update(IDirect3DRMDevice2* iface)
@@ -350,18 +353,18 @@ static DWORD WINAPI IDirect3DRMDevice2Impl_GetHeight(IDirect3DRMDevice2* iface)
 {
     IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMDevice2(iface);
 
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    TRACE("(%p/%p)->()\n", iface, This);
 
-    return E_NOTIMPL;
+    return IDirect3DRMDevice3_GetHeight(&This->IDirect3DRMDevice3_iface);
 }
 
 static DWORD WINAPI IDirect3DRMDevice2Impl_GetWidth(IDirect3DRMDevice2* iface)
 {
     IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMDevice2(iface);
 
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    TRACE("(%p/%p)->()\n", iface, This);
 
-    return E_NOTIMPL;
+    return IDirect3DRMDevice3_GetWidth(&This->IDirect3DRMDevice3_iface);
 }
 
 static DWORD WINAPI IDirect3DRMDevice2Impl_GetTrianglesDrawn(IDirect3DRMDevice2* iface)
@@ -627,7 +630,10 @@ static HRESULT WINAPI IDirect3DRMDevice3Impl_Init(IDirect3DRMDevice3* iface, ULO
 
     FIXME("(%p/%p)->(%u, %u): stub\n", iface, This, width, height);
 
-    return E_NOTIMPL;
+    This->height = height;
+    This->width = width;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMDevice3Impl_InitFromD3D(IDirect3DRMDevice3* iface,
@@ -649,7 +655,10 @@ static HRESULT WINAPI IDirect3DRMDevice3Impl_InitFromClipper(IDirect3DRMDevice3*
 
     FIXME("(%p/%p)->(%p, %p, %u, %u): stub\n", iface, This, lpDDClipper, lpGUID, width, height);
 
-    return E_NOTIMPL;
+    This->height = height;
+    This->width = width;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMDevice3Impl_Update(IDirect3DRMDevice3* iface)
@@ -774,18 +783,18 @@ static DWORD WINAPI IDirect3DRMDevice3Impl_GetHeight(IDirect3DRMDevice3* iface)
 {
     IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMDevice3(iface);
 
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    TRACE("(%p/%p)->()\n", iface, This);
 
-    return E_NOTIMPL;
+    return This->height;
 }
 
 static DWORD WINAPI IDirect3DRMDevice3Impl_GetWidth(IDirect3DRMDevice3* iface)
 {
     IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMDevice3(iface);
 
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    TRACE("(%p/%p)->()\n", iface, This);
 
-    return E_NOTIMPL;
+    return This->width;
 }
 
 static DWORD WINAPI IDirect3DRMDevice3Impl_GetTrianglesDrawn(IDirect3DRMDevice3* iface)
