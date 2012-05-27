@@ -39,6 +39,7 @@ typedef struct {
     IDirect3DRMDevice3 IDirect3DRMDevice3_iface;
     IDirect3DRMWinDevice IDirect3DRMWinDevice_iface;
     LONG ref;
+    BOOL dither;
 } IDirect3DRMDeviceImpl;
 
 static inline IDirect3DRMDeviceImpl *impl_from_IDirect3DRMDevice2(IDirect3DRMDevice2 *iface)
@@ -281,9 +282,9 @@ static HRESULT WINAPI IDirect3DRMDevice2Impl_SetDither(IDirect3DRMDevice2* iface
 {
     IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMDevice2(iface);
 
-    FIXME("(%p/%p)->(%d): stub\n", iface, This, enable);
+    TRACE("(%p/%p)->(%d)\n", iface, This, enable);
 
-    return E_NOTIMPL;
+    return IDirect3DRMDevice3_SetDither(&This->IDirect3DRMDevice3_iface, enable);
 }
 
 static HRESULT WINAPI IDirect3DRMDevice2Impl_SetShades(IDirect3DRMDevice2* iface, DWORD count)
@@ -329,9 +330,9 @@ static BOOL WINAPI IDirect3DRMDevice2Impl_GetDither(IDirect3DRMDevice2* iface)
 {
     IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMDevice2(iface);
 
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    TRACE("(%p/%p)->()\n", iface, This);
 
-    return E_NOTIMPL;
+    return IDirect3DRMDevice3_GetDither(&This->IDirect3DRMDevice3_iface);
 }
 
 static DWORD WINAPI IDirect3DRMDevice2Impl_GetShades(IDirect3DRMDevice2* iface)
@@ -701,9 +702,11 @@ static HRESULT WINAPI IDirect3DRMDevice3Impl_SetDither(IDirect3DRMDevice3* iface
 {
     IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMDevice3(iface);
 
-    FIXME("(%p/%p)->(%d): stub\n", iface, This, enable);
+    TRACE("(%p/%p)->(%d)\n", iface, This, enable);
 
-    return E_NOTIMPL;
+    This->dither = enable;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMDevice3Impl_SetShades(IDirect3DRMDevice3* iface, DWORD count)
@@ -749,9 +752,9 @@ static BOOL WINAPI IDirect3DRMDevice3Impl_GetDither(IDirect3DRMDevice3* iface)
 {
     IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMDevice3(iface);
 
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    TRACE("(%p/%p)->()\n", iface, This);
 
-    return E_NOTIMPL;
+    return This->dither;
 }
 
 static DWORD WINAPI IDirect3DRMDevice3Impl_GetShades(IDirect3DRMDevice3* iface)
