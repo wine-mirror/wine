@@ -40,6 +40,7 @@ typedef struct {
     IDirect3DRMWinDevice IDirect3DRMWinDevice_iface;
     LONG ref;
     BOOL dither;
+    D3DRMRENDERQUALITY quality;
 } IDirect3DRMDeviceImpl;
 
 static inline IDirect3DRMDeviceImpl *impl_from_IDirect3DRMDevice2(IDirect3DRMDevice2 *iface)
@@ -301,9 +302,9 @@ static HRESULT WINAPI IDirect3DRMDevice2Impl_SetQuality(IDirect3DRMDevice2* ifac
 {
     IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMDevice2(iface);
 
-    FIXME("(%p/%p)->(%u): stub\n", iface, This, quality);
+    TRACE("(%p/%p)->(%u)\n", iface, This, quality);
 
-    return E_NOTIMPL;
+    return IDirect3DRMDevice3_SetQuality(&This->IDirect3DRMDevice3_iface, quality);
 }
 
 static HRESULT WINAPI IDirect3DRMDevice2Impl_SetTextureQuality(IDirect3DRMDevice2* iface,
@@ -384,9 +385,9 @@ static D3DRMRENDERQUALITY WINAPI IDirect3DRMDevice2Impl_GetQuality(IDirect3DRMDe
 {
     IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMDevice2(iface);
 
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    TRACE("(%p/%p)->()\n", iface, This);
 
-    return E_NOTIMPL;
+    return IDirect3DRMDevice3_GetQuality(&This->IDirect3DRMDevice3_iface);
 }
 
 static D3DCOLORMODEL WINAPI IDirect3DRMDevice2Impl_GetColorModel(IDirect3DRMDevice2* iface)
@@ -723,9 +724,11 @@ static HRESULT WINAPI IDirect3DRMDevice3Impl_SetQuality(IDirect3DRMDevice3* ifac
 {
     IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMDevice3(iface);
 
-    FIXME("(%p/%p)->(%u): stub\n", iface, This, quality);
+    TRACE("(%p/%p)->(%u)\n", iface, This, quality);
 
-    return E_NOTIMPL;
+    This->quality = quality;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMDevice3Impl_SetTextureQuality(IDirect3DRMDevice3* iface,
@@ -806,9 +809,9 @@ static D3DRMRENDERQUALITY WINAPI IDirect3DRMDevice3Impl_GetQuality(IDirect3DRMDe
 {
     IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMDevice3(iface);
 
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    TRACE("(%p/%p)->()\n", iface, This);
 
-    return E_NOTIMPL;
+    return This->quality;
 }
 
 static D3DCOLORMODEL WINAPI IDirect3DRMDevice3Impl_GetColorModel(IDirect3DRMDevice3* iface)
