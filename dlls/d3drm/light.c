@@ -29,10 +29,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3drm);
 
+#define D3DCOLOR_ARGB(a,r,g,b)        ((D3DCOLOR)((((a)&0xff)<<24)|(((r)&0xff)<<16)|(((g)&0xff)<<8)|((b)&0xff)))
+
 typedef struct {
     IDirect3DRMLight IDirect3DRMLight_iface;
     LONG ref;
     D3DRMLIGHTTYPE type;
+    D3DCOLOR color;
 } IDirect3DRMLightImpl;
 
 static inline IDirect3DRMLightImpl *impl_from_IDirect3DRMLight(IDirect3DRMLight *iface)
@@ -186,9 +189,11 @@ static HRESULT WINAPI IDirect3DRMLightImpl_SetColor(IDirect3DRMLight* iface, D3D
 {
     IDirect3DRMLightImpl *This = impl_from_IDirect3DRMLight(iface);
 
-    FIXME("(%p/%p)->(%u): stub\n", iface, This, color);
+    TRACE("(%p/%p)->(%u)\n", iface, This, color);
 
-    return E_NOTIMPL;
+    This->color = color;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMLightImpl_SetColorRGB(IDirect3DRMLight* iface,
@@ -196,9 +201,13 @@ static HRESULT WINAPI IDirect3DRMLightImpl_SetColorRGB(IDirect3DRMLight* iface,
 {
     IDirect3DRMLightImpl *This = impl_from_IDirect3DRMLight(iface);
 
-    FIXME("(%p/%p)->(%f,%f,%f): stub\n", iface, This, red, green, blue);
+    TRACE("(%p/%p)->(%f,%f,%f)\n", iface, This, red, green, blue);
 
-    return E_NOTIMPL;
+    This->color = D3DCOLOR_ARGB(0xff, (BYTE)(red   * 255.0f),
+                                      (BYTE)(green * 255.0f),
+                                      (BYTE)(blue  * 255.0f));
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMLightImpl_SetRange(IDirect3DRMLight* iface, D3DVALUE range)
@@ -316,9 +325,9 @@ static D3DCOLOR WINAPI IDirect3DRMLightImpl_GetColor(IDirect3DRMLight* iface)
 {
     IDirect3DRMLightImpl *This = impl_from_IDirect3DRMLight(iface);
 
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    TRACE("(%p/%p)->()\n", iface, This);
 
-    return 0;
+    return This->color;
 }
 
 static D3DRMLIGHTTYPE WINAPI IDirect3DRMLightImpl_GetType(IDirect3DRMLight* iface)
