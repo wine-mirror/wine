@@ -240,7 +240,7 @@ static void test_MeshBuilder(void)
     hr = IDirect3DRMMeshBuilder_GetVertices(pMeshBuilder, &val1, NULL, &val2, NULL, &val3, NULL);
     ok(hr == D3DRM_OK, "Cannot get vertices information (hr = %x)\n", hr);
     ok(val1 == 4, "Wrong number of vertices %d (must be 4)\n", val1);
-    todo_wine ok(val2 == 4, "Wrong number of normals %d (must be 4)\n", val2);
+    ok(val2 == 4, "Wrong number of normals %d (must be 4)\n", val2);
     ok(val3 == 22, "Wrong number of face data bytes %d (must be 22)\n", val3);
 
     /* Check that Load method generated default texture coordinates (0.0f, 0.0f) for each vertex */

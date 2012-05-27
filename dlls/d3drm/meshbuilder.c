@@ -1118,6 +1118,8 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3* iface, LPDIRECTXFILEDATA pData)
 
     TRACE("Mesh name is '%s'\n", This->name ? This->name : "");
 
+    This->nb_normals = 0;
+
     hr = IDirectXFileData_GetData(pData, NULL, &size, (void**)&ptr);
     if (hr != DXFILE_OK)
         goto end;
@@ -1211,10 +1213,19 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3* iface, LPDIRECTXFILEDATA pData)
         pData2 = NULL;
     }
 
+    if (!This->nb_normals)
+    {
+        /* Allocate normals, one per vertex */
+        This->pNormals = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->nb_vertices * sizeof(D3DVECTOR));
+        if (!This->pNormals)
+            goto end;
+    }
+
     for (i = 0; i < This->nb_faces; i++)
     {
         DWORD j;
         DWORD nb_face_indexes;
+        D3DVECTOR face_normal;
 
         if (faces_vertex_idx_size < sizeof(DWORD))
             WARN("Not enough data to read number of indices of face %d\n", i);
@@ -1227,22 +1238,46 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3* iface, LPDIRECTXFILEDATA pData)
         if (faces_vertex_idx_size < (nb_face_indexes * sizeof(DWORD)))
             WARN("Not enough data to read all indices of face %d\n", i);
 
+        if (!This->nb_normals)
+        {
+            /* Compute face normal */
+            if (nb_face_indexes > 2)
+            {
+                D3DVECTOR a, b;
+
+                D3DRMVectorSubtract(&a, &This->pVertices[faces_vertex_idx_ptr[2]], &This->pVertices[faces_vertex_idx_ptr[1]]);
+                D3DRMVectorSubtract(&a, &This->pVertices[faces_vertex_idx_ptr[1]], &This->pVertices[faces_vertex_idx_ptr[0]]);
+                D3DRMVectorCrossProduct(&face_normal, &a, &b);
+                D3DRMVectorNormalize(&face_normal);
+            }
+            else
+            {
+                face_normal.u1.x = 0.0f;
+                face_normal.u2.y = 0.0f;
+                face_normal.u3.z = 0.0f;
+            }
+        }
+
         for (j = 0; j < nb_face_indexes; j++)
         {
             /* Copy vertex index */
-            *(faces_data_ptr + faces_data_size++) = *(faces_vertex_idx_ptr++);
+            *(faces_data_ptr + faces_data_size++) = *faces_vertex_idx_ptr;
             /* Copy normal index */
-            if (faces_normal_idx_data)
+            if (This->nb_normals)
             {
                 /* Read from x file */
                 *(faces_data_ptr + faces_data_size++) = *(faces_normal_idx_ptr++);
             }
             else
             {
-                FIXME("No normal available, generate a fake normal index\n");
-                /* Must be generated, put 0 for now */
-                *(faces_data_ptr + faces_data_size++) = 0;
+                DWORD vertex_idx = *faces_vertex_idx_ptr;
+                if (vertex_idx > This->nb_vertices)
+                    vertex_idx = 0;
+                *(faces_data_ptr + faces_data_size++) = vertex_idx;
+                /* Add face normal to vertex normal */
+                D3DRMVectorAdd(&This->pNormals[vertex_idx], &This->pNormals[vertex_idx], &face_normal);
             }
+            faces_vertex_idx_ptr++;
         }
         faces_vertex_idx_size -= nb_face_indexes;
     }
@@ -1252,6 +1287,16 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3* iface, LPDIRECTXFILEDATA pData)
 
     /* Set size (in number of DWORD) of all faces data */
     This->face_data_size = faces_data_size;
+
+    if (!This->nb_normals)
+    {
+        /* Normalize all normals */
+        for (i = 0; i < This->nb_vertices; i++)
+        {
+            D3DRMVectorNormalize(&This->pNormals[i]);
+        }
+        This->nb_normals = This->nb_vertices;
+    }
 
     /* If there is no texture coordinates, generate default texture coordinates (0.0f, 0.0f) for each vertex */
     if (!This->pCoords2d)
