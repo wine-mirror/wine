@@ -36,6 +36,7 @@ typedef struct {
     LONG ref;
     D3DRMLIGHTTYPE type;
     D3DCOLOR color;
+    D3DVALUE range;
 } IDirect3DRMLightImpl;
 
 static inline IDirect3DRMLightImpl *impl_from_IDirect3DRMLight(IDirect3DRMLight *iface)
@@ -214,9 +215,11 @@ static HRESULT WINAPI IDirect3DRMLightImpl_SetRange(IDirect3DRMLight* iface, D3D
 {
     IDirect3DRMLightImpl *This = impl_from_IDirect3DRMLight(iface);
 
-    FIXME("(%p/%p)->(%f): stub\n", iface, This, range);
+    TRACE("(%p/%p)->(%f)\n", iface, This, range);
 
-    return E_NOTIMPL;
+    This->range = range;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMLightImpl_SetUmbra(IDirect3DRMLight* iface, D3DVALUE umbra)
@@ -271,9 +274,9 @@ static D3DVALUE WINAPI IDirect3DRMLightImpl_GetRange(IDirect3DRMLight* iface)
 {
     IDirect3DRMLightImpl *This = impl_from_IDirect3DRMLight(iface);
 
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    TRACE("(%p/%p)->()\n", iface, This);
 
-    return 0;
+    return This->range;
 }
 
 static D3DVALUE WINAPI IDirect3DRMLightImpl_GetUmbra(IDirect3DRMLight* iface)
