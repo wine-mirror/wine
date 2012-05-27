@@ -354,7 +354,7 @@ static void test_MeshBuilder(void)
         unsigned nb_vertices, nb_faces, nb_face_vertices;
         DWORD data_size;
         LPDIRECT3DRMMATERIAL material;
-        LPDIRECT3DRMTEXTURE texture;
+        LPDIRECT3DRMTEXTURE texture = (LPDIRECT3DRMTEXTURE)0xdeadbeef;
         D3DVALUE values[3];
 
         nb_groups = IDirect3DRMMesh_GetGroupCount(mesh);
@@ -368,8 +368,8 @@ static void test_MeshBuilder(void)
         todo_wine ok(nb_face_vertices == 3, "Wrong number of vertices per face %u (must be 3)\n", nb_face_vertices);
         todo_wine ok(data_size == 3, "Wrong number of face data bytes %u (must be 3)\n", data_size);
         hr = IDirect3DRMMesh_GetGroupTexture(mesh, 0, &texture);
-        todo_wine ok(hr == D3DRM_OK, "GetCroupTexture failed returning hr = %x\n", hr);
-        todo_wine ok(texture == NULL, "No texture should be present\n");
+        ok(hr == D3DRM_OK, "GetCroupTexture failed returning hr = %x\n", hr);
+        ok(texture == NULL, "No texture should be present\n");
         hr = IDirect3DRMMesh_GetGroupMaterial(mesh, 0, &material);
         todo_wine ok(hr == D3DRM_OK, "GetCroupMaterial failed returning hr = %x\n", hr);
         todo_wine ok(material != NULL, "No material should be present\n");
