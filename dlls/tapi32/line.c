@@ -544,6 +544,15 @@ DWORD WINAPI lineGetLineDevStatusA(HLINE hLine, LPLINEDEVSTATUS lpLineDevStatus)
 }
 
 /***********************************************************************
+ *              lineGetMessage (TAPI32.@)
+ */
+DWORD WINAPI lineGetMessage(HLINEAPP hLineApp, LPLINEMESSAGE lpMessage, DWORD dwTimeout)
+{
+    FIXME("(%p, %p, %08x): stub.\n", hLineApp, lpMessage, dwTimeout);
+    return 0;
+}
+
+/***********************************************************************
  *		lineGetNewCalls (TAPI32.@)
  */
 DWORD WINAPI lineGetNewCalls(HLINE hLine, DWORD dwAddressID, DWORD dwSelect, LPLINECALLLIST lpCallList)

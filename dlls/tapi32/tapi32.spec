@@ -53,6 +53,7 @@
 @ stdcall lineGetIconA(long str ptr)
 @ stdcall lineGetLineDevStatus(long ptr) lineGetLineDevStatusA
 @ stdcall lineGetLineDevStatusA(long ptr)
+@ stdcall lineGetMessage(long ptr long)
 @ stdcall lineGetNewCalls(long long long ptr)
 @ stdcall lineGetNumRings(long long ptr)
 @ stdcall lineGetProviderList(long ptr) lineGetProviderListA
@@ -138,12 +139,15 @@
 @ stdcall phoneGetIcon(long str ptr) phoneGetIconA
 @ stdcall phoneGetIconA(long str ptr)
 @ stdcall phoneGetLamp(long long ptr)
+@ stdcall phoneGetMessage(long ptr long)
 @ stdcall phoneGetRing(long ptr ptr)
 @ stdcall phoneGetStatus(long ptr) phoneGetStatusA
 @ stdcall phoneGetStatusA(long ptr)
 @ stdcall phoneGetStatusMessages(long ptr ptr ptr)
 @ stdcall phoneGetVolume(long long ptr)
 @ stdcall phoneInitialize(ptr long ptr str ptr)
+@ stdcall phoneInitializeExA(ptr long ptr str ptr ptr ptr)
+@ stdcall phoneInitializeExW(ptr long ptr str ptr ptr ptr)
 @ stdcall phoneNegotiateAPIVersion(long long long long ptr ptr)
 @ stdcall phoneNegotiateExtVersion(long long long long long ptr)
 @ stdcall phoneOpen(long long ptr long long long long)
