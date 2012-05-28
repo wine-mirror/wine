@@ -441,15 +441,16 @@ static void test_create_reader(void)
 
     hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
         &IID_IWICComponentFactory, (void**)&factory);
-    todo_wine ok(hr == S_OK, "CoCreateInstance failed, hr=%x\n", hr);
-    if (FAILED(hr)) return;
+    ok(hr == S_OK, "CoCreateInstance failed, hr=%x\n", hr);
 
     stream = create_stream(metadata_tEXt, sizeof(metadata_tEXt));
 
     hr = IWICComponentFactory_CreateMetadataReaderFromContainer(factory,
         &GUID_ContainerFormatPng, NULL, WICPersistOptionsDefault,
         stream, &reader);
+todo_wine
     ok(hr == S_OK, "CreateMetadataReaderFromContainer failed, hr=%x\n", hr);
+    if (FAILED(hr)) return;
 
     if (SUCCEEDED(hr))
     {

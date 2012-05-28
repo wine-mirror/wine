@@ -624,5 +624,5 @@ HRESULT WINAPI WICCreateImagingFactory_Proxy(UINT SDKVersion, IWICImagingFactory
 {
     TRACE("%x, %p\n", SDKVersion, ppIImagingFactory);
 
-    return ImagingFactory_CreateInstance(NULL, &IID_IWICImagingFactory, (void**)ppIImagingFactory);
+    return ComponentFactory_CreateInstance(NULL, &IID_IWICImagingFactory, (void**)ppIImagingFactory);
 }
