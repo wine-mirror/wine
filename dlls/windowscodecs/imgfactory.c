@@ -122,11 +122,11 @@ static HRESULT WINAPI ImagingFactory_CreateDecoderFromStream(
     IWICImagingFactory *iface, IStream *pIStream, const GUID *pguidVendor,
     WICDecodeOptions metadataOptions, IWICBitmapDecoder **ppIDecoder)
 {
-    static int fixme=0;
     IEnumUnknown *enumdecoders;
     IUnknown *unkdecoderinfo;
     IWICBitmapDecoderInfo *decoderinfo;
-    IWICBitmapDecoder *decoder=NULL;
+    IWICBitmapDecoder *decoder = NULL, *preferred_decoder = NULL;
+    GUID vendor;
     HRESULT res=S_OK;
     ULONG num_fetched;
     BOOL matches;
@@ -134,13 +134,10 @@ static HRESULT WINAPI ImagingFactory_CreateDecoderFromStream(
     TRACE("(%p,%p,%s,%u,%p)\n", iface, pIStream, debugstr_guid(pguidVendor),
         metadataOptions, ppIDecoder);
 
-    if (pguidVendor && !fixme++)
-        FIXME("ignoring vendor GUID\n");
-
     res = CreateComponentEnumerator(WICDecoder, WICComponentEnumerateDefault, &enumdecoders);
     if (FAILED(res)) return res;
 
-    while (!decoder)
+    while (!preferred_decoder)
     {
         res = IEnumUnknown_Next(enumdecoders, 1, &unkdecoderinfo, &num_fetched);
 
@@ -154,19 +151,36 @@ static HRESULT WINAPI ImagingFactory_CreateDecoderFromStream(
 
                 if (SUCCEEDED(res) && matches)
                 {
-                    res = IWICBitmapDecoderInfo_CreateInstance(decoderinfo, &decoder);
+                    IWICBitmapDecoder *new_decoder;
+
+                    res = IWICBitmapDecoderInfo_CreateInstance(decoderinfo, &new_decoder);
 
                     /* FIXME: should use QueryCapability to choose a decoder */
 
                     if (SUCCEEDED(res))
                     {
-                        res = IWICBitmapDecoder_Initialize(decoder, pIStream, metadataOptions);
+                        res = IWICBitmapDecoder_Initialize(new_decoder, pIStream, metadataOptions);
 
-                        if (FAILED(res))
+                        if (SUCCEEDED(res))
                         {
-                            IWICBitmapDecoder_Release(decoder);
-                            decoder = NULL;
+                            if (pguidVendor)
+                            {
+                                res = IWICBitmapDecoderInfo_GetVendorGUID(decoderinfo, &vendor);
+                                if (SUCCEEDED(res) && IsEqualIID(&vendor, pguidVendor))
+                                {
+                                    preferred_decoder = new_decoder;
+                                    new_decoder = NULL;
+                                }
+                            }
+
+                            if (new_decoder && !decoder)
+                            {
+                                decoder = new_decoder;
+                                new_decoder = NULL;
+                            }
                         }
+
+                        if (new_decoder) IWICBitmapDecoder_Release(new_decoder);
                     }
                 }
 
@@ -180,6 +194,13 @@ static HRESULT WINAPI ImagingFactory_CreateDecoderFromStream(
     }
 
     IEnumUnknown_Release(enumdecoders);
+
+    if (preferred_decoder)
+    {
+        *ppIDecoder = preferred_decoder;
+        if (decoder) IWICBitmapDecoder_Release(decoder);
+        return S_OK;
+    }
 
     if (decoder)
     {
