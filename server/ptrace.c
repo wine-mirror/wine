@@ -656,7 +656,7 @@ void set_thread_context( struct thread *thread, const context_t *context, unsign
 }
 
 #elif defined(__i386__) && defined(PTRACE_GETDBREGS) && defined(PTRACE_SETDBREGS) && \
-    (defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__OpenBSD__) || defined(__NetBSD__))
+    (defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__OpenBSD__) || defined(__NetBSD__) || defined(__DragonFly__))
 
 #include <machine/reg.h>
 

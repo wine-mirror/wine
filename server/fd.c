@@ -924,7 +924,7 @@ static int is_device_removable( dev_t dev, int unix_fd )
     return (stfs.f_type == 0x9660 ||    /* iso9660 */
             stfs.f_type == 0x9fa1 ||    /* supermount */
             stfs.f_type == 0x15013346); /* udf */
-#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__APPLE__)
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__) || defined(__APPLE__)
     struct statfs stfs;
 
     if (fstatfs( unix_fd, &stfs ) == -1) return 0;
