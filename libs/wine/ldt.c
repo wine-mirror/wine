@@ -87,7 +87,7 @@ static inline int set_thread_area( struct modify_ldt_s *ptr )
 #endif
 #endif
 
-#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__OpenBSD__)
+#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__OpenBSD__) || defined(__DragonFly__)
 #include <machine/segments.h>
 #include <machine/sysarch.h>
 #endif  /* __NetBSD__ || __FreeBSD__ || __OpenBSD__ */
@@ -175,7 +175,7 @@ static int internal_set_entry( unsigned short sel, const LDT_ENTRY *entry )
         if ((ret = modify_ldt(0x11, &ldt_info, sizeof(ldt_info))) < 0)
             perror( "modify_ldt" );
     }
-#elif defined(__NetBSD__) || defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__OpenBSD__)
+#elif defined(__NetBSD__) || defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__OpenBSD__) || defined(__DragonFly__)
     {
 	LDT_ENTRY entry_copy = *entry;
 	/* The kernel will only let us set LDTs with user priority level */
@@ -412,7 +412,7 @@ void wine_ldt_init_fs( unsigned short sel, const LDT_ENTRY *entry )
         ldt_info.entry_number = sel >> 3;
         fill_modify_ldt_struct( &ldt_info, entry );
         if ((ret = set_thread_area( &ldt_info ) < 0)) perror( "set_thread_area" );
-#elif defined(__FreeBSD__) || defined (__FreeBSD_kernel__)
+#elif defined(__FreeBSD__) || defined (__FreeBSD_kernel__) || defined(__DragonFly__)
         i386_set_fsbase( wine_ldt_get_base( entry ));
 #endif
     }

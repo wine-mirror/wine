@@ -205,7 +205,7 @@ void *wine_anon_mmap( void *start, size_t size, int prot, int flags )
 
     if (!(flags & MAP_FIXED))
     {
-#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__)
         /* Even FreeBSD 5.3 does not properly support NULL here. */
         if( start == NULL ) start = (void *)0x110000;
 #endif
@@ -377,7 +377,7 @@ void mmap_init(void)
         char *base = stack_ptr - ((unsigned int)stack_ptr & granularity_mask) - (granularity_mask + 1);
         if (base > user_space_limit) reserve_area( user_space_limit, base );
         base = stack_ptr - ((unsigned int)stack_ptr & granularity_mask) + (granularity_mask + 1);
-#if defined(linux) || defined(__FreeBSD__) || defined (__FreeBSD_kernel__)
+#if defined(linux) || defined(__FreeBSD__) || defined (__FreeBSD_kernel__) || defined(__DragonFly__)
         /* Heuristic: assume the stack is near the end of the address */
         /* space, this avoids a lot of futile allocation attempts */
         end = (char *)(((unsigned long)base + 0x0fffffff) & 0xf0000000);
