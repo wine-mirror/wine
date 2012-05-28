@@ -54,8 +54,8 @@ struct IFD_entry
 
 struct IFD_rational
 {
-    ULONG numerator;
-    ULONG denominator;
+    LONG numerator;
+    LONG denominator;
 };
 
 static const struct
@@ -63,20 +63,21 @@ static const struct
     USHORT number_of_entries;
     struct IFD_entry entry[6];
     ULONG next_IFD;
-    struct IFD_rational rational;
+    struct IFD_rational xres;
 } IFD_data =
 {
     6,
     {
-        { 0xfe,  IFD_SHORT, 1, 1 },
-        { 0x100, IFD_LONG, 1, 222 },
-        { 0x101, IFD_LONG, 1, 333 },
-        { 0x102, IFD_SHORT, 1, 24 },
-        { 0x103, IFD_LONG, 1, 32773 },
-        { 0x11a, IFD_RATIONAL, 1, sizeof(USHORT) + sizeof(struct IFD_entry) * 6 + sizeof(ULONG) }
+        { 0xfe,  IFD_SHORT, 1, 1 }, /* NEWSUBFILETYPE */
+        { 0x100, IFD_LONG, 1, 222 }, /* IMAGEWIDTH */
+        { 0x101, IFD_LONG, 1, 333 }, /* IMAGELENGTH */
+        { 0x102, IFD_SHORT, 1, 24 }, /* BITSPERSAMPLE */
+        { 0x103, IFD_LONG, 1, 32773 }, /* COMPRESSION: packbits */
+        { 0x11a, IFD_RATIONAL, 1, /* XRESOLUTION */
+          sizeof(USHORT) + sizeof(struct IFD_entry) * 6 + sizeof(ULONG) }
     },
     0,
-    { 300, 1 }
+    { 900, 3 }
 };
 #include "poppack.h"
 
@@ -321,7 +322,8 @@ static void test_metadata_IFD(void)
 {
     static const struct test_data
     {
-        ULONG type, id, value;
+        ULONG type, id;
+        LONGLONG value;
     } td[6] =
     {
         { VT_UI2, 0xfe, 1 },
@@ -329,7 +331,7 @@ static void test_metadata_IFD(void)
         { VT_UI4, 0x101, 333 },
         { VT_UI2, 0x102, 24 },
         { VT_UI4, 0x103, 32773 },
-        { VT_UI8, 0x11a, 300 }
+        { VT_UI8, 0x11a,  ((LONGLONG)3 << 32) | 900 }
     };
     HRESULT hr;
     IWICMetadataReader *reader;
@@ -376,7 +378,7 @@ static void test_metadata_IFD(void)
         ok(id.vt == VT_UI2, "%u: unexpected vt: %u\n", i, id.vt);
         ok(U(id).uiVal == td[i].id, "%u: unexpected id: %#x\n", i, U(id).uiVal);
         ok(value.vt == td[i].type, "%u: unexpected vt: %u\n", i, value.vt);
-        ok(U(value).ulVal == td[i].value, "%u: unexpected id: %u\n", i, U(value).ulVal);
+        ok(U(value).uhVal.QuadPart == td[i].value, "%u: unexpected id: %d/%d\n", i, U(value).uhVal.LowPart, U(value).uhVal.HighPart);
 
         PropVariantClear(&schema);
         PropVariantClear(&id);
