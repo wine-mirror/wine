@@ -1971,6 +1971,49 @@ static void test_wndproc(void)
     UnregisterClassA("ddraw_test_wndproc_wc", GetModuleHandleA(NULL));
 }
 
+static void test_window_style(void)
+{
+    LONG style, exstyle, tmp;
+    RECT fullscreen_rect, r;
+    IDirectDraw2 *ddraw;
+    HWND window;
+    HRESULT hr;
+    ULONG ref;
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 100, 100, 0, 0, 0, 0);
+    if (!(ddraw = create_ddraw()))
+    {
+        skip("Failed to create a ddraw object, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    style = GetWindowLongA(window, GWL_STYLE);
+    exstyle = GetWindowLongA(window, GWL_EXSTYLE);
+    SetRect(&fullscreen_rect, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
+
+    hr = IDirectDraw2_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+    ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
+
+    tmp = GetWindowLongA(window, GWL_STYLE);
+    todo_wine ok(tmp == style, "Expected window style %#x, got %#x.\n", style, tmp);
+    tmp = GetWindowLongA(window, GWL_EXSTYLE);
+    todo_wine ok(tmp == exstyle, "Expected window extended style %#x, got %#x.\n", exstyle, tmp);
+
+    GetWindowRect(window, &r);
+    ok(EqualRect(&r, &fullscreen_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
+            fullscreen_rect.left, fullscreen_rect.top, fullscreen_rect.right, fullscreen_rect.bottom,
+            r.left, r.top, r.right, r.bottom);
+    GetClientRect(window, &r);
+    todo_wine ok(!EqualRect(&r, &fullscreen_rect), "Client rect and window rect are equal.\n");
+
+    ref = IDirectDraw2_Release(ddraw);
+    ok(ref == 0, "The ddraw object was not properly freed: refcount %u.\n", ref);
+
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw2)
 {
     test_coop_level_create_device_window();
@@ -1987,4 +2030,5 @@ START_TEST(ddraw2)
     test_surface_qi();
     test_device_qi();
     test_wndproc();
+    test_window_style();
 }
