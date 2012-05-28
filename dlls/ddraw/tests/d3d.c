@@ -3527,56 +3527,6 @@ static void BackBuffer3DAttachmentTest(void)
     DestroyWindow(window);
 }
 
-static void test_window_style(void)
-{
-    LONG style, exstyle, tmp;
-    RECT fullscreen_rect, r;
-    IDirectDraw7 *ddraw7;
-    HWND window;
-    HRESULT hr;
-    ULONG ref;
-
-    hr = pDirectDrawCreateEx(NULL, (void **)&ddraw7, &IID_IDirectDraw7, NULL);
-    if (FAILED(hr))
-    {
-        skip("Failed to create IDirectDraw7 object (%#x), skipping tests.\n", hr);
-        return;
-    }
-
-    window = CreateWindowA("static", "d3d7_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 100, 100, 0, 0, 0, 0);
-
-    style = GetWindowLongA(window, GWL_STYLE);
-    exstyle = GetWindowLongA(window, GWL_EXSTYLE);
-    SetRect(&fullscreen_rect, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
-
-    hr = IDirectDraw7_SetCooperativeLevel(ddraw7, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
-    ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
-    if (FAILED(hr))
-    {
-        IDirectDraw7_Release(ddraw7);
-        DestroyWindow(window);
-        return;
-    }
-
-    tmp = GetWindowLongA(window, GWL_STYLE);
-    todo_wine ok(tmp == style, "Expected window style %#x, got %#x.\n", style, tmp);
-    tmp = GetWindowLongA(window, GWL_EXSTYLE);
-    todo_wine ok(tmp == exstyle, "Expected window extended style %#x, got %#x.\n", exstyle, tmp);
-
-    GetWindowRect(window, &r);
-    ok(EqualRect(&r, &fullscreen_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
-            fullscreen_rect.left, fullscreen_rect.top, fullscreen_rect.right, fullscreen_rect.bottom,
-            r.left, r.top, r.right, r.bottom);
-    GetClientRect(window, &r);
-    todo_wine ok(!EqualRect(&r, &fullscreen_rect), "Client rect and window rect are equal.\n");
-
-    ref = IDirectDraw7_Release(ddraw7);
-    ok(ref == 0, "The ddraw object was not properly freed: refcount %u.\n", ref);
-
-    DestroyWindow(window);
-}
-
 static void test_redundant_mode_set(void)
 {
     DDSURFACEDESC2 surface_desc = {0};
@@ -4740,7 +4690,6 @@ START_TEST(d3d)
         D3D1_releaseObjects();
     }
 
-    test_window_style();
     test_redundant_mode_set();
     test_coop_level_mode_set();
     test_initialize();
