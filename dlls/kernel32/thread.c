@@ -373,6 +373,16 @@ BOOL WINAPI SetThreadPriorityBoost(
 
 
 /**********************************************************************
+ *           SetThreadStackGuarantee   (KERNEL32.@)
+ */
+BOOL WINAPI SetThreadStackGuarantee(PULONG stacksize)
+{
+    FIXME("(%p): stub\n", stacksize);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/**********************************************************************
  *           SetThreadAffinityMask   (KERNEL32.@)
  */
 DWORD_PTR WINAPI SetThreadAffinityMask( HANDLE hThread, DWORD_PTR dwThreadAffinityMask )

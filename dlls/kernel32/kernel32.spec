@@ -1160,6 +1160,7 @@
 @ stdcall SetThreadPreferredUILanguages(long ptr ptr)
 @ stdcall SetThreadPriority(long long)
 @ stdcall SetThreadPriorityBoost(long long)
+@ stdcall SetThreadStackGuarantee(ptr)
 @ stdcall SetThreadUILanguage(long)
 @ stdcall SetTimeZoneInformation(ptr)
 @ stub SetTimerQueueTimer
