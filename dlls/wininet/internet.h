@@ -269,11 +269,9 @@ typedef struct
     object_header_t hdr;
     appinfo_t *appInfo;
     LPWSTR  hostName; /* the final destination of the request */
-    LPWSTR  serverName; /* the name of the server we directly connect to */
     LPWSTR  userName;
     LPWSTR  password;
     INTERNET_PORT hostPort; /* the final destination port of the request */
-    INTERNET_PORT serverPort; /* the port of the server we directly connect to */
     DWORD connect_timeout;
     DWORD send_timeout;
     DWORD receive_timeout;

@@ -3086,11 +3086,11 @@ static DWORD HTTP_HttpOpenRequestW(http_session_t *session,
     request->session = session;
     list_add_head( &session->hdr.children, &request->hdr.entry );
 
-    port = session->serverPort;
+    port = session->hostPort;
     if(port == INTERNET_INVALID_PORT_NUMBER)
         port = dwFlags & INTERNET_FLAG_SECURE ? INTERNET_DEFAULT_HTTPS_PORT : INTERNET_DEFAULT_HTTP_PORT;
 
-    request->server = get_server(session->serverName, port);
+    request->server = get_server(session->hostName, port);
     if(!request->server) {
         WININET_Release(&request->hdr);
         return ERROR_OUTOFMEMORY;
@@ -5450,7 +5450,6 @@ static void HTTPSESSION_Destroy(object_header_t *hdr)
     WININET_Release(&session->appInfo->hdr);
 
     heap_free(session->hostName);
-    heap_free(session->serverName);
     heap_free(session->password);
     heap_free(session->userName);
 }
@@ -5602,13 +5601,11 @@ DWORD HTTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
         if(hIC->proxyBypass)
             FIXME("Proxy bypass is ignored.\n");
     }
-    session->serverName = heap_strdupW(lpszServerName);
     session->hostName = heap_strdupW(lpszServerName);
     if (lpszUserName && lpszUserName[0])
         session->userName = heap_strdupW(lpszUserName);
     if (lpszPassword && lpszPassword[0])
         session->password = heap_strdupW(lpszPassword);
-    session->serverPort = serverPort;
     session->hostPort = serverPort;
     session->connect_timeout = hIC->connect_timeout;
     session->send_timeout = INFINITE;
