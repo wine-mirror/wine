@@ -21,6 +21,14 @@ import "oleidl.idl";
 import "oaidl.idl";
 import "docobj.idl";
 
+cpp_quote("#define STATURL_QUERYFLAG_ISCACHED  0x010000")
+cpp_quote("#define STATURL_QUERYFLAG_NOURL     0x020000")
+cpp_quote("#define STATURL_QUERYFLAG_NOTITLE   0x040000")
+cpp_quote("#define STATURL_QUERYFLAG_TOPLEVEL  0x080000")
+
+cpp_quote("#define STATURLFLAG_ISCACHED    0x0001")
+cpp_quote("#define STATURLFLAG_ISTOPLEVEL  0x0002")
+
 typedef enum _ADDURL_FLAG
 {
     ADDURL_FIRST                = 0,
@@ -40,7 +48,7 @@ typedef enum _ADDURL_FLAG
 interface IEnumSTATURL : IUnknown
 {
     typedef [unique] IEnumSTATURL *LPENUMSTATURL;
-	
+
     typedef struct _STATURL
     {
         DWORD cbSize;
@@ -77,7 +85,7 @@ interface IEnumSTATURL : IUnknown
 interface IUrlHistoryStg : IUnknown
 {
     typedef [unique] IUrlHistoryStg *LPURLHISTORYSTG;
-	
+
     HRESULT AddUrl(
         [in] LPCOLESTR pocsUrl,
         [in, unique] LPCOLESTR pocsTitle,
@@ -91,14 +99,14 @@ interface IUrlHistoryStg : IUnknown
         [in] LPCOLESTR pocsUrl,
         [in] DWORD dwFlags,
         [in, out, unique] LPSTATURL lpSTATURL);
-	
+
     HRESULT BindToObject(
         [in] LPCOLESTR pocsUrl,
         [in] REFIID riid,
         [out, iid_is(riid)] void **ppvOut);
 
     HRESULT EnumUrls(
-        [out] IEnumSTATURL **ppEnum);	
+        [out] IEnumSTATURL **ppEnum);
 }
 
 /*****************************************************************************
