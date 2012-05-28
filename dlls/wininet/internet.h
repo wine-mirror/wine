@@ -561,11 +561,11 @@ typedef struct
 } wininet_flag_info;
 
 /* Undocumented security flags */
-#define _SECURITY_FLAG_CERT_INVALID_CA  0x00800000
+#define _SECURITY_FLAG_CERT_REV_FAILED  0x00800000
 #define _SECURITY_FLAG_CERT_INVALID_CN  0x02000000
 
 #define _SECURITY_ERROR_FLAGS_MASK              \
-    (_SECURITY_FLAG_CERT_INVALID_CA             \
+    (_SECURITY_FLAG_CERT_REV_FAILED             \
     |_SECURITY_FLAG_CERT_INVALID_CN)
 
 #endif /* _WINE_INTERNET_H_ */
