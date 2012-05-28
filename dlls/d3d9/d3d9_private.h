@@ -164,20 +164,16 @@ HRESULT device_init(struct d3d9_device *device, struct d3d9 *parent, struct wine
         UINT adapter, D3DDEVTYPE device_type, HWND focus_window, DWORD flags,
         D3DPRESENT_PARAMETERS *parameters, D3DDISPLAYMODEEX *mode) DECLSPEC_HIDDEN;
 
-/*****************************************************************************
- * IDirect3DVolume9 implementation structure
- */
-typedef struct IDirect3DVolume9Impl
+struct d3d9_volume
 {
-    /* IUnknown fields */
     IDirect3DVolume9 IDirect3DVolume9_iface;
-    LONG ref;
+    LONG refcount;
     struct wined3d_volume *wined3d_volume;
     IUnknown *container;
     IUnknown *forwardReference;
-} IDirect3DVolume9Impl;
+};
 
-HRESULT volume_init(IDirect3DVolume9Impl *volume, struct d3d9_device *device, UINT width, UINT height,
+HRESULT volume_init(struct d3d9_volume *volume, struct d3d9_device *device, UINT width, UINT height,
         UINT depth, DWORD usage, enum wined3d_format_id format, enum wined3d_pool pool) DECLSPEC_HIDDEN;
 
 /* ------------------- */
