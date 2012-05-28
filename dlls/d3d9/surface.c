@@ -395,7 +395,7 @@ static const struct wined3d_parent_ops d3d9_surface_wined3d_parent_ops =
     surface_wined3d_object_destroyed,
 };
 
-HRESULT surface_init(IDirect3DSurface9Impl *surface, IDirect3DDevice9Impl *device,
+HRESULT surface_init(IDirect3DSurface9Impl *surface, struct d3d9_device *device,
         UINT width, UINT height, D3DFORMAT format, BOOL lockable, BOOL discard, UINT level,
         DWORD usage, D3DPOOL pool, D3DMULTISAMPLE_TYPE multisample_type, DWORD multisample_quality)
 {

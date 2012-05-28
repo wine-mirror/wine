@@ -367,7 +367,7 @@ static HRESULT convert_to_wined3d_declaration(const D3DVERTEXELEMENT9 *d3d9_elem
 }
 
 static HRESULT vertexdeclaration_init(IDirect3DVertexDeclaration9Impl *declaration,
-        IDirect3DDevice9Impl *device, const D3DVERTEXELEMENT9 *elements)
+        struct d3d9_device *device, const D3DVERTEXELEMENT9 *elements)
 {
     struct wined3d_vertex_element *wined3d_elements;
     UINT wined3d_element_count;
@@ -413,7 +413,7 @@ static HRESULT vertexdeclaration_init(IDirect3DVertexDeclaration9Impl *declarati
     return D3D_OK;
 }
 
-HRESULT d3d9_vertex_declaration_create(IDirect3DDevice9Impl *device,
+HRESULT d3d9_vertex_declaration_create(struct d3d9_device *device,
         const D3DVERTEXELEMENT9 *elements, IDirect3DVertexDeclaration9Impl **declaration)
 {
     IDirect3DVertexDeclaration9Impl *object;

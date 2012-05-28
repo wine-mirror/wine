@@ -134,7 +134,7 @@ static const IDirect3DStateBlock9Vtbl Direct3DStateBlock9_Vtbl =
     IDirect3DStateBlock9Impl_Apply
 };
 
-HRESULT stateblock_init(IDirect3DStateBlock9Impl *stateblock, IDirect3DDevice9Impl *device,
+HRESULT stateblock_init(IDirect3DStateBlock9Impl *stateblock, struct d3d9_device *device,
         D3DSTATEBLOCKTYPE type, struct wined3d_stateblock *wined3d_stateblock)
 {
     HRESULT hr;

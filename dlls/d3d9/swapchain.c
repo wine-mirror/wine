@@ -254,7 +254,7 @@ static const struct wined3d_parent_ops d3d9_swapchain_wined3d_parent_ops =
     d3d9_swapchain_wined3d_object_released,
 };
 
-static HRESULT swapchain_init(IDirect3DSwapChain9Impl *swapchain, IDirect3DDevice9Impl *device,
+static HRESULT swapchain_init(IDirect3DSwapChain9Impl *swapchain, struct d3d9_device *device,
         D3DPRESENT_PARAMETERS *present_parameters)
 {
     struct wined3d_swapchain_desc desc;
@@ -312,7 +312,7 @@ static HRESULT swapchain_init(IDirect3DSwapChain9Impl *swapchain, IDirect3DDevic
     return D3D_OK;
 }
 
-HRESULT d3d9_swapchain_create(IDirect3DDevice9Impl *device, D3DPRESENT_PARAMETERS *present_parameters,
+HRESULT d3d9_swapchain_create(struct d3d9_device *device, D3DPRESENT_PARAMETERS *present_parameters,
         IDirect3DSwapChain9Impl **swapchain)
 {
     IDirect3DSwapChain9Impl *object;

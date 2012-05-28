@@ -144,27 +144,23 @@ struct fvf_declaration
     DWORD fvf;
 };
 
-/*****************************************************************************
- * IDirect3DDevice9 implementation structure
- */
-typedef struct IDirect3DDevice9Impl
+struct d3d9_device
 {
     IDirect3DDevice9Ex IDirect3DDevice9Ex_iface;
     struct wined3d_device_parent device_parent;
-    LONG ref;
+    LONG refcount;
     struct wined3d_device *wined3d_device;
     struct d3d9 *d3d_parent;
-    /* Avoids recursion with nested ReleaseRef to 0 */
-    BOOL                          inDestruction;
 
     struct fvf_declaration *fvf_decls;
     UINT fvf_decl_count, fvf_decl_size;
 
-    BOOL                          notreset;
-    BOOL                          in_scene;
-} IDirect3DDevice9Impl;
+    BOOL in_destruction;
+    BOOL not_reset;
+    BOOL in_scene;
+};
 
-HRESULT device_init(IDirect3DDevice9Impl *device, struct d3d9 *parent, struct wined3d *wined3d,
+HRESULT device_init(struct d3d9_device *device, struct d3d9 *parent, struct wined3d *wined3d,
         UINT adapter, D3DDEVTYPE device_type, HWND focus_window, DWORD flags,
         D3DPRESENT_PARAMETERS *parameters, D3DDISPLAYMODEEX *mode) DECLSPEC_HIDDEN;
 
@@ -181,7 +177,7 @@ typedef struct IDirect3DVolume9Impl
     IUnknown *forwardReference;
 } IDirect3DVolume9Impl;
 
-HRESULT volume_init(IDirect3DVolume9Impl *volume, IDirect3DDevice9Impl *device, UINT width, UINT height,
+HRESULT volume_init(IDirect3DVolume9Impl *volume, struct d3d9_device *device, UINT width, UINT height,
         UINT depth, DWORD usage, enum wined3d_format_id format, enum wined3d_pool pool) DECLSPEC_HIDDEN;
 
 /* ------------------- */
@@ -200,7 +196,7 @@ typedef struct IDirect3DSwapChain9Impl
     IDirect3DDevice9Ex *parentDevice;
 } IDirect3DSwapChain9Impl;
 
-HRESULT d3d9_swapchain_create(IDirect3DDevice9Impl *device, D3DPRESENT_PARAMETERS *present_parameters,
+HRESULT d3d9_swapchain_create(struct d3d9_device *device, D3DPRESENT_PARAMETERS *present_parameters,
         IDirect3DSwapChain9Impl **swapchain) DECLSPEC_HIDDEN;
 
 /* ----------------- */
@@ -226,7 +222,7 @@ typedef struct IDirect3DSurface9Impl
     BOOL                        getdc_supported;
 } IDirect3DSurface9Impl;
 
-HRESULT surface_init(IDirect3DSurface9Impl *surface, IDirect3DDevice9Impl *device,
+HRESULT surface_init(IDirect3DSurface9Impl *surface, struct d3d9_device *device,
         UINT width, UINT height, D3DFORMAT format, BOOL lockable, BOOL discard, UINT level,
         DWORD usage, D3DPOOL pool, D3DMULTISAMPLE_TYPE multisample_type, DWORD multisample_quality) DECLSPEC_HIDDEN;
 IDirect3DSurface9Impl *unsafe_impl_from_IDirect3DSurface9(IDirect3DSurface9 *iface) DECLSPEC_HIDDEN;
@@ -247,7 +243,7 @@ typedef struct IDirect3DVertexBuffer9Impl
     DWORD fvf;
 } IDirect3DVertexBuffer9Impl;
 
-HRESULT vertexbuffer_init(IDirect3DVertexBuffer9Impl *buffer, IDirect3DDevice9Impl *device,
+HRESULT vertexbuffer_init(IDirect3DVertexBuffer9Impl *buffer, struct d3d9_device *device,
         UINT size, UINT usage, DWORD fvf, D3DPOOL pool) DECLSPEC_HIDDEN;
 IDirect3DVertexBuffer9Impl *unsafe_impl_from_IDirect3DVertexBuffer9(IDirect3DVertexBuffer9 *iface) DECLSPEC_HIDDEN;
 
@@ -267,7 +263,7 @@ typedef struct IDirect3DIndexBuffer9Impl
     enum wined3d_format_id format;
 } IDirect3DIndexBuffer9Impl;
 
-HRESULT indexbuffer_init(IDirect3DIndexBuffer9Impl *buffer, IDirect3DDevice9Impl *device,
+HRESULT indexbuffer_init(IDirect3DIndexBuffer9Impl *buffer, struct d3d9_device *device,
         UINT size, DWORD usage, D3DFORMAT format, D3DPOOL pool) DECLSPEC_HIDDEN;
 IDirect3DIndexBuffer9Impl *unsafe_impl_from_IDirect3DIndexBuffer9(IDirect3DIndexBuffer9 *iface) DECLSPEC_HIDDEN;
 
@@ -279,11 +275,11 @@ struct d3d9_texture
     IDirect3DDevice9Ex *parent_device;
 };
 
-HRESULT cubetexture_init(struct d3d9_texture *texture, IDirect3DDevice9Impl *device,
+HRESULT cubetexture_init(struct d3d9_texture *texture, struct d3d9_device *device,
         UINT edge_length, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool) DECLSPEC_HIDDEN;
-HRESULT texture_init(struct d3d9_texture *texture, IDirect3DDevice9Impl *device,
+HRESULT texture_init(struct d3d9_texture *texture, struct d3d9_device *device,
         UINT width, UINT height, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool) DECLSPEC_HIDDEN;
-HRESULT volumetexture_init(struct d3d9_texture *texture, IDirect3DDevice9Impl *device,
+HRESULT volumetexture_init(struct d3d9_texture *texture, struct d3d9_device *device,
         UINT width, UINT height, UINT depth, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool) DECLSPEC_HIDDEN;
 struct d3d9_texture *unsafe_impl_from_IDirect3DBaseTexture9(IDirect3DBaseTexture9 *iface) DECLSPEC_HIDDEN;
 
@@ -305,7 +301,7 @@ typedef struct  IDirect3DStateBlock9Impl {
     IDirect3DDevice9Ex      *parentDevice;
 } IDirect3DStateBlock9Impl;
 
-HRESULT stateblock_init(IDirect3DStateBlock9Impl *stateblock, IDirect3DDevice9Impl *device,
+HRESULT stateblock_init(IDirect3DStateBlock9Impl *stateblock, struct d3d9_device *device,
         D3DSTATEBLOCKTYPE type, struct wined3d_stateblock *wined3d_stateblock) DECLSPEC_HIDDEN;
 
 /* --------------------------- */
@@ -331,7 +327,7 @@ typedef struct IDirect3DVertexDeclaration9Impl {
   LPDIRECT3DDEVICE9EX parentDevice;
 } IDirect3DVertexDeclaration9Impl;
 
-HRESULT d3d9_vertex_declaration_create(IDirect3DDevice9Impl *device,
+HRESULT d3d9_vertex_declaration_create(struct d3d9_device *device,
         const D3DVERTEXELEMENT9 *elements, IDirect3DVertexDeclaration9Impl **declaration) DECLSPEC_HIDDEN;
 IDirect3DVertexDeclaration9Impl *unsafe_impl_from_IDirect3DVertexDeclaration9(
         IDirect3DVertexDeclaration9 *iface) DECLSPEC_HIDDEN;
@@ -351,7 +347,7 @@ typedef struct IDirect3DVertexShader9Impl {
 } IDirect3DVertexShader9Impl;
 
 HRESULT vertexshader_init(IDirect3DVertexShader9Impl *shader,
-        IDirect3DDevice9Impl *device, const DWORD *byte_code) DECLSPEC_HIDDEN;
+        struct d3d9_device *device, const DWORD *byte_code) DECLSPEC_HIDDEN;
 IDirect3DVertexShader9Impl *unsafe_impl_from_IDirect3DVertexShader9(IDirect3DVertexShader9 *iface) DECLSPEC_HIDDEN;
 
 #define D3D9_MAX_VERTEX_SHADER_CONSTANTF 256
@@ -372,7 +368,7 @@ typedef struct IDirect3DPixelShader9Impl {
 } IDirect3DPixelShader9Impl;
 
 HRESULT pixelshader_init(IDirect3DPixelShader9Impl *shader,
-        IDirect3DDevice9Impl *device, const DWORD *byte_code) DECLSPEC_HIDDEN;
+        struct d3d9_device *device, const DWORD *byte_code) DECLSPEC_HIDDEN;
 IDirect3DPixelShader9Impl *unsafe_impl_from_IDirect3DPixelShader9(IDirect3DPixelShader9 *iface) DECLSPEC_HIDDEN;
 
 /* --------------- */
@@ -393,7 +389,6 @@ typedef struct IDirect3DQuery9Impl {
     IDirect3DDevice9Ex   *parentDevice;
 } IDirect3DQuery9Impl;
 
-HRESULT query_init(IDirect3DQuery9Impl *query, IDirect3DDevice9Impl *device,
-        D3DQUERYTYPE type) DECLSPEC_HIDDEN;
+HRESULT query_init(IDirect3DQuery9Impl *query, struct d3d9_device *device, D3DQUERYTYPE type) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_D3D9_PRIVATE_H */

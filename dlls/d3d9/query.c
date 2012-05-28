@@ -163,7 +163,7 @@ static const IDirect3DQuery9Vtbl Direct3DQuery9_Vtbl =
     IDirect3DQuery9Impl_GetData
 };
 
-HRESULT query_init(IDirect3DQuery9Impl *query, IDirect3DDevice9Impl *device, D3DQUERYTYPE type)
+HRESULT query_init(IDirect3DQuery9Impl *query, struct d3d9_device *device, D3DQUERYTYPE type)
 {
     HRESULT hr;
 

@@ -284,7 +284,7 @@ static const struct wined3d_parent_ops d3d9_vertexbuffer_wined3d_parent_ops =
     d3d9_vertexbuffer_wined3d_object_destroyed,
 };
 
-HRESULT vertexbuffer_init(IDirect3DVertexBuffer9Impl *buffer, IDirect3DDevice9Impl *device,
+HRESULT vertexbuffer_init(IDirect3DVertexBuffer9Impl *buffer, struct d3d9_device *device,
         UINT size, UINT usage, DWORD fvf, D3DPOOL pool)
 {
     HRESULT hr;
@@ -578,7 +578,7 @@ static const struct wined3d_parent_ops d3d9_indexbuffer_wined3d_parent_ops =
     d3d9_indexbuffer_wined3d_object_destroyed,
 };
 
-HRESULT indexbuffer_init(IDirect3DIndexBuffer9Impl *buffer, IDirect3DDevice9Impl *device,
+HRESULT indexbuffer_init(IDirect3DIndexBuffer9Impl *buffer, struct d3d9_device *device,
         UINT size, DWORD usage, D3DFORMAT format, D3DPOOL pool)
 {
     HRESULT hr;

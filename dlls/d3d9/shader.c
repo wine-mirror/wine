@@ -135,7 +135,7 @@ static const struct wined3d_parent_ops d3d9_vertexshader_wined3d_parent_ops =
     d3d9_vertexshader_wined3d_object_destroyed,
 };
 
-HRESULT vertexshader_init(IDirect3DVertexShader9Impl *shader, IDirect3DDevice9Impl *device, const DWORD *byte_code)
+HRESULT vertexshader_init(IDirect3DVertexShader9Impl *shader, struct d3d9_device *device, const DWORD *byte_code)
 {
     HRESULT hr;
 
@@ -281,7 +281,7 @@ static const struct wined3d_parent_ops d3d9_pixelshader_wined3d_parent_ops =
     d3d9_pixelshader_wined3d_object_destroyed,
 };
 
-HRESULT pixelshader_init(IDirect3DPixelShader9Impl *shader, IDirect3DDevice9Impl *device, const DWORD *byte_code)
+HRESULT pixelshader_init(IDirect3DPixelShader9Impl *shader, struct d3d9_device *device, const DWORD *byte_code)
 {
     HRESULT hr;
 

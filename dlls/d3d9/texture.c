@@ -1306,7 +1306,7 @@ static const struct wined3d_parent_ops d3d9_texture_wined3d_parent_ops =
     d3d9_texture_wined3d_object_destroyed,
 };
 
-HRESULT texture_init(struct d3d9_texture *texture, IDirect3DDevice9Impl *device,
+HRESULT texture_init(struct d3d9_texture *texture, struct d3d9_device *device,
         UINT width, UINT height, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool)
 {
     HRESULT hr;
@@ -1331,7 +1331,7 @@ HRESULT texture_init(struct d3d9_texture *texture, IDirect3DDevice9Impl *device,
     return D3D_OK;
 }
 
-HRESULT cubetexture_init(struct d3d9_texture *texture, IDirect3DDevice9Impl *device,
+HRESULT cubetexture_init(struct d3d9_texture *texture, struct d3d9_device *device,
         UINT edge_length, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool)
 {
     HRESULT hr;
@@ -1356,7 +1356,7 @@ HRESULT cubetexture_init(struct d3d9_texture *texture, IDirect3DDevice9Impl *dev
     return D3D_OK;
 }
 
-HRESULT volumetexture_init(struct d3d9_texture *texture, IDirect3DDevice9Impl *device,
+HRESULT volumetexture_init(struct d3d9_texture *texture, struct d3d9_device *device,
         UINT width, UINT height, UINT depth, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool)
 {
     HRESULT hr;

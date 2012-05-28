@@ -435,7 +435,7 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH d3d9_CreateDevice(IDirect3D9Ex *iface, U
         IDirect3DDevice9 **device)
 {
     struct d3d9 *d3d9 = impl_from_IDirect3D9Ex(iface);
-    IDirect3DDevice9Impl *object;
+    struct d3d9_device *object;
     HRESULT hr;
 
     TRACE("iface %p, adapter %u, device_type %#x, focus_window %p, flags %#x, parameters %p, device %p.\n",
@@ -493,7 +493,7 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH d3d9_CreateDeviceEx(IDirect3D9Ex *iface,
         D3DPRESENT_PARAMETERS *parameters, D3DDISPLAYMODEEX *mode, IDirect3DDevice9Ex **device)
 {
     struct d3d9 *d3d9 = impl_from_IDirect3D9Ex(iface);
-    IDirect3DDevice9Impl *object;
+    struct d3d9_device *object;
     HRESULT hr;
 
     TRACE("iface %p, adapter %u, device_type %#x, focus_window %p, flags %#x, parameters %p, mode %p, device %p.\n",
