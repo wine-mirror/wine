@@ -2929,12 +2929,63 @@ static void test_security_flags(void)
     ok(req != NULL, "HttpOpenRequest failed\n");
     CHECK_NOTIFIED(INTERNET_STATUS_HANDLE_CREATED);
 
+    test_secflags_option(req, 0);
+    set_secflags(req, SECURITY_FLAG_IGNORE_UNKNOWN_CA|SECURITY_FLAG_IGNORE_REVOCATION);
+    test_secflags_option(req, SECURITY_FLAG_IGNORE_UNKNOWN_CA|SECURITY_FLAG_IGNORE_REVOCATION);
+
+    SET_EXPECT(INTERNET_STATUS_RESOLVING_NAME);
+    SET_EXPECT(INTERNET_STATUS_NAME_RESOLVED);
+    SET_EXPECT(INTERNET_STATUS_CONNECTING_TO_SERVER);
+    SET_EXPECT(INTERNET_STATUS_CONNECTED_TO_SERVER);
+    SET_EXPECT(INTERNET_STATUS_SENDING_REQUEST);
+    SET_EXPECT(INTERNET_STATUS_REQUEST_SENT);
+    SET_EXPECT(INTERNET_STATUS_RECEIVING_RESPONSE);
+    SET_EXPECT(INTERNET_STATUS_RESPONSE_RECEIVED);
+    SET_EXPECT(INTERNET_STATUS_REQUEST_COMPLETE);
+    SET_OPTIONAL(INTERNET_STATUS_DETECTING_PROXY);
+    SET_OPTIONAL(INTERNET_STATUS_COOKIE_SENT);
+
+    res = HttpSendRequest(req, NULL, 0, NULL, 0);
+    ok(!res && GetLastError() == ERROR_IO_PENDING, "HttpSendRequest failed: %u\n", GetLastError());
+
+    WaitForSingleObject(hCompleteEvent, INFINITE);
+    ok(req_error == ERROR_SUCCESS, "req_error = %d\n", req_error);
+
+    todo_wine CHECK_NOT_NOTIFIED(INTERNET_STATUS_RESOLVING_NAME);
+    todo_wine CHECK_NOT_NOTIFIED(INTERNET_STATUS_NAME_RESOLVED);
+    CHECK_NOTIFIED(INTERNET_STATUS_CONNECTING_TO_SERVER);
+    CHECK_NOTIFIED(INTERNET_STATUS_CONNECTED_TO_SERVER);
+    CHECK_NOTIFIED(INTERNET_STATUS_SENDING_REQUEST);
+    CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_SENT);
+    CHECK_NOTIFIED(INTERNET_STATUS_RECEIVING_RESPONSE);
+    CHECK_NOTIFIED(INTERNET_STATUS_RESPONSE_RECEIVED);
+    CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
+    CLEAR_NOTIFIED(INTERNET_STATUS_DETECTING_PROXY);
+    CLEAR_NOTIFIED(INTERNET_STATUS_COOKIE_SENT);
+
+    test_request_flags(req, 0);
+    test_secflags_option(req, SECURITY_FLAG_SECURE|SECURITY_FLAG_IGNORE_UNKNOWN_CA|
+            SECURITY_FLAG_IGNORE_REVOCATION|SECURITY_FLAG_STRENGTH_STRONG);
+
+    res = InternetReadFile(req, buf, sizeof(buf), &size);
+    ok(res, "InternetReadFile failed: %u\n", GetLastError());
+    ok(size, "size = 0\n");
+
+    /* Collect all existing persistent connections */
+    res = InternetSetOptionA(NULL, INTERNET_OPTION_SETTINGS_CHANGED, NULL, 0);
+    ok(res, "InternetSetOption(INTERNET_OPTION_END_BROWSER_SESSION) failed: %u\n", GetLastError());
+
+    SET_EXPECT(INTERNET_STATUS_HANDLE_CREATED);
+    req = HttpOpenRequest(conn, "GET", "/tests/hello.html", NULL, NULL, NULL,
+                          INTERNET_FLAG_SECURE|INTERNET_FLAG_KEEP_CONNECTION|INTERNET_FLAG_RELOAD|INTERNET_FLAG_NO_CACHE_WRITE,
+                          0xdeadbeef);
+    ok(req != NULL, "HttpOpenRequest failed\n");
+    CHECK_NOTIFIED(INTERNET_STATUS_HANDLE_CREATED);
+
     flags = INTERNET_ERROR_MASK_COMBINED_SEC_CERT|INTERNET_ERROR_MASK_LOGIN_FAILURE_DISPLAY_ENTITY_BODY;
     res = InternetSetOption(req, INTERNET_OPTION_ERROR_MASK, (void*)&flags, sizeof(flags));
     ok(res, "InternetQueryOption(INTERNET_OPTION_ERROR_MASK failed: %u\n", GetLastError());
 
-    SET_EXPECT(INTERNET_STATUS_RESOLVING_NAME);
-    SET_EXPECT(INTERNET_STATUS_NAME_RESOLVED);
     SET_EXPECT(INTERNET_STATUS_CONNECTING_TO_SERVER);
     SET_EXPECT(INTERNET_STATUS_CONNECTED_TO_SERVER);
     SET_EXPECT(INTERNET_STATUS_CLOSING_CONNECTION);
@@ -2950,8 +3001,6 @@ static void test_security_flags(void)
     ok(req_error == ERROR_INTERNET_SEC_CERT_REV_FAILED || broken(req_error == ERROR_INTERNET_SEC_CERT_ERRORS),
        "req_error = %d\n", req_error);
 
-    todo_wine CHECK_NOT_NOTIFIED(INTERNET_STATUS_RESOLVING_NAME);
-    todo_wine CHECK_NOT_NOTIFIED(INTERNET_STATUS_NAME_RESOLVED);
     CHECK_NOTIFIED(INTERNET_STATUS_CONNECTING_TO_SERVER);
     CHECK_NOTIFIED(INTERNET_STATUS_CONNECTED_TO_SERVER);
     CHECK_NOTIFIED(INTERNET_STATUS_CLOSING_CONNECTION);
@@ -2963,7 +3012,7 @@ static void test_security_flags(void)
     if(req_error != ERROR_INTERNET_SEC_CERT_REV_FAILED) {
         win_skip("Unexpected cert errors, skipping security flags tests\n");
 
-        close_async_handle(ses, hCompleteEvent, 2);
+        close_async_handle(ses, hCompleteEvent, 3);
         CloseHandle(hCompleteEvent);
         return;
     }
@@ -3013,7 +3062,7 @@ static void test_security_flags(void)
     ok(res, "InternetReadFile failed: %u\n", GetLastError());
     ok(size, "size = 0\n");
 
-    close_async_handle(ses, hCompleteEvent, 2);
+    close_async_handle(ses, hCompleteEvent, 3);
 
     /* Collect all existing persistent connections */
     res = InternetSetOptionA(NULL, INTERNET_OPTION_SETTINGS_CHANGED, NULL, 0);
