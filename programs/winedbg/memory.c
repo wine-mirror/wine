@@ -73,7 +73,7 @@ static void	memory_report_invalid_addr(const void* addr)
 
     address.Mode    = AddrModeFlat;
     address.Segment = 0;
-    address.Offset  = (unsigned long)addr;
+    address.Offset  = (ULONG_PTR)addr;
     dbg_printf("*** Invalid address ");
     print_address(&address, FALSE);
     dbg_printf(" ***\n");

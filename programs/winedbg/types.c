@@ -67,7 +67,7 @@ LONGLONG types_extract_as_longlong(const struct dbg_lvalue* lvalue,
 
     if (type.id == dbg_itype_segptr)
     {
-        return (long int)memory_to_linear_addr(&lvalue->addr);
+        return (LONG_PTR)memory_to_linear_addr(&lvalue->addr);
     }
 
     if (psize) *psize = 0;

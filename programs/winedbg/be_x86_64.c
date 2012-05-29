@@ -561,8 +561,7 @@ static unsigned be_x86_64_remove_Xpoint(HANDLE hProcess, const struct be_process
         if (size != 0) return 0;
         if (!pio->read(hProcess, addr, &ch, 1, &sz) || sz != 1) return 0;
         if (ch != (unsigned char)0xCC)
-            WINE_FIXME("Cannot get back %02x instead of 0xCC at %08lx\n",
-                       ch, (unsigned long)addr);
+            WINE_FIXME("Cannot get back %02x instead of 0xCC at %p\n", ch, addr);
         ch = (unsigned char)val;
         if (!pio->write(hProcess, addr, &ch, 1, &sz) || sz != 1) return 0;
         break;
