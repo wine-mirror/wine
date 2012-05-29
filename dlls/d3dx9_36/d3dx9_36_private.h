@@ -59,6 +59,8 @@ typedef struct _PixelFormatDesc {
 HRESULT map_view_of_file(LPCWSTR filename, LPVOID *buffer, DWORD *length) DECLSPEC_HIDDEN;
 HRESULT load_resource_into_memory(HMODULE module, HRSRC resinfo, LPVOID *buffer, DWORD *length) DECLSPEC_HIDDEN;
 
+HRESULT write_buffer_to_file(const WCHAR *filename, ID3DXBuffer *buffer) DECLSPEC_HIDDEN;
+
 const PixelFormatDesc *get_format_info(D3DFORMAT format) DECLSPEC_HIDDEN;
 const PixelFormatDesc *get_format_info_idx(int idx) DECLSPEC_HIDDEN;
 

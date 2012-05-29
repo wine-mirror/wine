@@ -23,6 +23,7 @@
 #include "d3dx9_36_private.h"
 
 #include "initguid.h"
+#include "ole2.h"
 #include "wincodec.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
@@ -1584,6 +1585,7 @@ HRESULT WINAPI D3DXSaveSurfaceToFileA(const char *dst_filename, D3DXIMAGE_FILEFO
     int len;
     WCHAR *filename;
     HRESULT hr;
+    ID3DXBuffer *buffer;
 
     TRACE("(%s, %#x, %p, %p, %s): relay\n",
             wine_dbgstr_a(dst_filename), file_format, src_surface, src_palette, wine_dbgstr_rect(src_rect));
@@ -1595,7 +1597,12 @@ HRESULT WINAPI D3DXSaveSurfaceToFileA(const char *dst_filename, D3DXIMAGE_FILEFO
     if (!filename) return E_OUTOFMEMORY;
     MultiByteToWideChar(CP_ACP, 0, dst_filename, -1, filename, len);
 
-    hr = D3DXSaveSurfaceToFileW(filename, file_format, src_surface, src_palette, src_rect);
+    hr = D3DXSaveSurfaceToFileInMemory(&buffer, file_format, src_surface, src_palette, src_rect);
+    if (SUCCEEDED(hr))
+    {
+        hr = write_buffer_to_file(filename, buffer);
+        ID3DXBuffer_Release(buffer);
+    }
 
     HeapFree(GetProcessHeap(), 0, filename);
     return hr;
@@ -1604,11 +1611,31 @@ HRESULT WINAPI D3DXSaveSurfaceToFileA(const char *dst_filename, D3DXIMAGE_FILEFO
 HRESULT WINAPI D3DXSaveSurfaceToFileW(const WCHAR *dst_filename, D3DXIMAGE_FILEFORMAT file_format,
         IDirect3DSurface9 *src_surface, const PALETTEENTRY *src_palette, const RECT *src_rect)
 {
-    IWICImagingFactory *factory;
+    HRESULT hr;
+    ID3DXBuffer *buffer;
+
+    TRACE("(%s, %#x, %p, %p, %s): relay\n",
+        wine_dbgstr_w(dst_filename), file_format, src_surface, src_palette, wine_dbgstr_rect(src_rect));
+
+    if (!dst_filename) return D3DERR_INVALIDCALL;
+
+    hr = D3DXSaveSurfaceToFileInMemory(&buffer, file_format, src_surface, src_palette, src_rect);
+    if (SUCCEEDED(hr))
+    {
+        hr = write_buffer_to_file(dst_filename, buffer);
+        ID3DXBuffer_Release(buffer);
+    }
+
+    return hr;
+}
+
+HRESULT WINAPI D3DXSaveSurfaceToFileInMemory(ID3DXBuffer **dst_buffer, D3DXIMAGE_FILEFORMAT file_format,
+        IDirect3DSurface9 *src_surface, const PALETTEENTRY *src_palette, const RECT *src_rect)
+{
     IWICBitmapEncoder *encoder = NULL;
     IWICBitmapFrameEncode *frame = NULL;
     IPropertyBag2 *encoder_options = NULL;
-    IWICStream *stream = NULL;
+    IStream *stream = NULL;
     HRESULT hr;
     HRESULT initresult;
     const CLSID *encoder_clsid;
@@ -1618,11 +1645,15 @@ HRESULT WINAPI D3DXSaveSurfaceToFileW(const WCHAR *dst_filename, D3DXIMAGE_FILEF
     D3DSURFACE_DESC src_surface_desc;
     D3DLOCKED_RECT locked_rect;
     int width, height;
+    STATSTG stream_stats;
+    HGLOBAL stream_hglobal;
+    ID3DXBuffer *buffer;
+    DWORD size;
 
-    TRACE("(%s, %#x, %p, %p, %s)\n",
-        wine_dbgstr_w(dst_filename), file_format, src_surface, src_palette, wine_dbgstr_rect(src_rect));
+    TRACE("(%p, %#x, %p, %p, %s)\n",
+        dst_buffer, file_format, src_surface, src_palette, wine_dbgstr_rect(src_rect));
 
-    if (!dst_filename || !src_surface) return D3DERR_INVALIDCALL;
+    if (!dst_buffer || !src_surface) return D3DERR_INVALIDCALL;
 
     if (src_palette)
     {
@@ -1657,7 +1688,10 @@ HRESULT WINAPI D3DXSaveSurfaceToFileW(const WCHAR *dst_filename, D3DXIMAGE_FILEF
     if (src_rect)
     {
         if (src_rect->left == src_rect->right || src_rect->top == src_rect->bottom)
-            return D3D_OK;
+        {
+            WARN("Invalid rectangle with 0 area\n");
+            return D3DXCreateBuffer(64, dst_buffer);
+        }
         if (src_rect->left < 0 || src_rect->top < 0)
             return D3DERR_INVALIDCALL;
         if (src_rect->left > src_rect->right || src_rect->top > src_rect->bottom)
@@ -1676,24 +1710,14 @@ HRESULT WINAPI D3DXSaveSurfaceToFileW(const WCHAR *dst_filename, D3DXIMAGE_FILEF
 
     initresult = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
-    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
-        &IID_IWICImagingFactory, (void **)&factory);
-    if (FAILED(hr)) goto cleanup_err;
-
-    hr = IWICImagingFactory_CreateStream(factory, &stream);
-    IWICImagingFactory_Release(factory);
-    if (FAILED(hr)) goto cleanup_err;
-
-    hr = IWICStream_InitializeFromFilename(stream, dst_filename, GENERIC_WRITE);
-    if (FAILED(hr)) goto cleanup_err;
-
     hr = CoCreateInstance(encoder_clsid, NULL, CLSCTX_INPROC_SERVER,
         &IID_IWICBitmapEncoder, (void **)&encoder);
     if (FAILED(hr)) goto cleanup_err;
 
-    hr = IWICBitmapEncoder_Initialize(encoder, (IStream *)stream, WICBitmapEncoderNoCache);
-    IStream_Release((IStream *)stream);
-    stream = NULL;
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    if (FAILED(hr)) goto cleanup_err;
+
+    hr = IWICBitmapEncoder_Initialize(encoder, stream, WICBitmapEncoderNoCache);
     if (FAILED(hr)) goto cleanup_err;
 
     hr = IWICBitmapEncoder_CreateNewFrame(encoder, &frame, &encoder_options);
@@ -1783,11 +1807,37 @@ HRESULT WINAPI D3DXSaveSurfaceToFileW(const WCHAR *dst_filename, D3DXIMAGE_FILEF
     }
     else WARN("Unsupported pixel format %#x\n", src_surface_desc.Format);
 
+    /* copy data from stream to ID3DXBuffer */
+    hr = IStream_Stat(stream, &stream_stats, STATFLAG_NONAME);
+    if (FAILED(hr)) goto cleanup_err;
+
+    if (stream_stats.cbSize.u.HighPart != 0)
+    {
+        hr = D3DXERR_INVALIDDATA;
+        goto cleanup;
+    }
+    size = stream_stats.cbSize.u.LowPart;
+
+    hr = D3DXCreateBuffer(size, &buffer);
+    if (FAILED(hr)) goto cleanup;
+
+    hr = GetHGlobalFromStream(stream, &stream_hglobal);
+    if (SUCCEEDED(hr))
+    {
+        void *buffer_pointer = ID3DXBuffer_GetBufferPointer(buffer);
+        void *stream_data = GlobalLock(stream_hglobal);
+        memcpy(buffer_pointer, stream_data, size);
+        GlobalUnlock(stream_hglobal);
+        *dst_buffer = buffer;
+    }
+    else ID3DXBuffer_Release(buffer);
+
 cleanup_err:
-    if (FAILED(hr)) hr = D3DERR_INVALIDCALL;
+    if (FAILED(hr) && hr != E_OUTOFMEMORY)
+        hr = D3DERR_INVALIDCALL;
 
 cleanup:
-    if (stream) IStream_Release((IStream *)stream);
+    if (stream) IStream_Release(stream);
 
     if (frame) IWICBitmapFrameEncode_Release(frame);
     if (encoder_options) IPropertyBag2_Release(encoder_options);

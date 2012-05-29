@@ -264,7 +264,7 @@
 @ stub D3DXSavePRTCompBufferToFileA(ptr ptr)
 @ stub D3DXSavePRTCompBufferToFileW(ptr ptr)
 @ stdcall D3DXSaveSurfaceToFileA(ptr long ptr ptr ptr)
-@ stub D3DXSaveSurfaceToFileInMemory(ptr long ptr ptr ptr)
+@ stdcall D3DXSaveSurfaceToFileInMemory(ptr long ptr ptr ptr)
 @ stdcall D3DXSaveSurfaceToFileW(ptr long ptr ptr ptr)
 @ stub D3DXSaveTextureToFileA(ptr long ptr ptr)
 @ stub D3DXSaveTextureToFileInMemory(ptr long ptr ptr)

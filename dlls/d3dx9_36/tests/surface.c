@@ -920,6 +920,32 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
     if(testbitmap_ok) DeleteFileA("testbitmap.bmp");
 }
 
+static void test_D3DXSaveSurfaceToFileInMemory(IDirect3DDevice9 *device)
+{
+    HRESULT hr;
+    RECT rect;
+    ID3DXBuffer *buffer;
+    IDirect3DSurface9 *surface;
+
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 4, 4, D3DFMT_A8R8G8B8, D3DPOOL_SCRATCH, &surface, NULL);
+    if (FAILED(hr)) {
+       skip("Couldn't create surface\n");
+       return;
+    }
+
+    SetRect(&rect, 0, 0, 0, 0);
+    hr = D3DXSaveSurfaceToFileInMemory(&buffer, D3DXIFF_BMP, surface, NULL, &rect);
+    /* fails with the debug version of d3d9 */
+    ok(hr == D3D_OK || broken(hr == D3DERR_INVALIDCALL), "D3DXSaveSurfaceToFileInMemory returned %#x, expected %#x\n", hr, D3D_OK);
+    if (SUCCEEDED(hr)) {
+        DWORD size = ID3DXBuffer_GetBufferSize(buffer);
+        ok(size > 0, "ID3DXBuffer_GetBufferSize returned %u, expected > 0\n", size);
+        ID3DXBuffer_Release(buffer);
+    }
+
+    IDirect3DSurface9_Release(surface);
+}
+
 static void test_D3DXSaveSurfaceToFile(IDirect3DDevice9 *device)
 {
     HRESULT hr;
@@ -1037,6 +1063,7 @@ START_TEST(surface)
 
     test_D3DXGetImageInfo();
     test_D3DXLoadSurface(device);
+    test_D3DXSaveSurfaceToFileInMemory(device);
     test_D3DXSaveSurfaceToFile(device);
 
     check_release((IUnknown*)device, 0);

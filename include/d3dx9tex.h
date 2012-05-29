@@ -168,6 +168,12 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(IDirect3DSurface9 *dst_surface,
         D3DFORMAT src_format, UINT src_pitch, const PALETTEENTRY *src_palette, const RECT *src_rect,
         DWORD filter, D3DCOLOR color_key);
 
+HRESULT WINAPI D3DXSaveSurfaceToFileInMemory(  LPD3DXBUFFER *destbuffer,
+                                               D3DXIMAGE_FILEFORMAT destformat,
+                                               LPDIRECT3DSURFACE9 srcsurface,
+                                               CONST PALETTEENTRY *srcpalette,
+                                               CONST RECT *srcrect);
+
 HRESULT WINAPI D3DXSaveSurfaceToFileA(         LPCSTR destfile,
                                                D3DXIMAGE_FILEFORMAT destformat,
                                                LPDIRECT3DSURFACE9 srcsurface,
