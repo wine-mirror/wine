@@ -2609,8 +2609,9 @@ static void INT21_Ioctl_Block( CONTEXT *context )
             {
                 WCHAR	label[12],fsname[9];
                 DWORD	serial;
+                TRACE( "GENERIC IOCTL - Get media id - %c:\n",
+                       'A' + drive );
 
-                drivespec[0] += drive;
                 GetVolumeInformationW(drivespec, label, 12, &serial, NULL, NULL, fsname, 9);
                 *(WORD*)dataptr	= 0;
                 memcpy(dataptr+2,&serial,4);
