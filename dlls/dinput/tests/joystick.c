@@ -180,6 +180,7 @@ static BOOL CALLBACK EnumJoysticks(
     ULONG ref;
     DIDEVICEINSTANCE inst;
     DIDEVICEINSTANCE_DX3 inst3;
+    DIPROPDWORD dipw;
     HWND hWnd = get_hwnd();
     char oldstate[248], curstate[248];
 
@@ -204,6 +205,16 @@ static BOOL CALLBACK EnumJoysticks(
         goto DONE;
 
     trace("---- %s ----\n", lpddi->tszProductName);
+
+    /* Test for joystick ID property */
+    ZeroMemory(&dipw, sizeof(dipw));
+    dipw.diph.dwSize = sizeof(DIPROPDWORD);
+    dipw.diph.dwHeaderSize = sizeof(DIPROPHEADER);
+    dipw.diph.dwObj = 0;
+    dipw.diph.dwHow = DIPH_DEVICE;
+
+    hr = IDirectInputDevice_GetProperty(pJoystick, DIPROP_JOYSTICKID, &dipw.diph);
+    ok(SUCCEEDED(hr), "IDirectInputDevice_GetProperty() for DIPROP_JOYSTICKID failed\n");
 
     hr = IDirectInputDevice_SetDataFormat(pJoystick, NULL);
     ok(hr==E_POINTER,"IDirectInputDevice_SetDataFormat() should have returned "
