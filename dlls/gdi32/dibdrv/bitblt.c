@@ -871,16 +871,25 @@ done:
 
 static BOOL matching_color_info( const dib_info *dib, const BITMAPINFO *info )
 {
+    const RGBQUAD *color_table = info->bmiColors;
+
     switch (info->bmiHeader.biBitCount)
     {
     case 1:
-    case 4:
-    case 8:
-    {
-        RGBQUAD *color_table = (RGBQUAD *)((char *)info + info->bmiHeader.biSize);
         if (dib->color_table_size != info->bmiHeader.biClrUsed) return FALSE;
         return !memcmp( color_table, dib->color_table, dib->color_table_size * sizeof(RGBQUAD) );
-    }
+
+    case 4:
+    case 8:
+        if (!info->bmiHeader.biClrUsed)
+        {
+            if (!dib->color_table_size) return TRUE;
+            if (dib->color_table_size != 1 << info->bmiHeader.biBitCount) return FALSE;
+            color_table = get_default_color_table( info->bmiHeader.biBitCount );
+        }
+        else if (dib->color_table_size != info->bmiHeader.biClrUsed) return FALSE;
+
+        return !memcmp( color_table, dib->color_table, dib->color_table_size * sizeof(RGBQUAD) );
 
     case 16:
     {
