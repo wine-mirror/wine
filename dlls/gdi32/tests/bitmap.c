@@ -1530,11 +1530,16 @@ static int is_black_pen( COLORREF fg, COLORREF bg, int r, int g, int b )
 static void test_bitmap_colors( HDC hdc, COLORREF fg, COLORREF bg, int r, int g, int b )
 {
     static const WORD pattern_bits[] = { 0x5555, 0xaaaa, 0x5555, 0xaaaa, 0x5555, 0xaaaa, 0x5555, 0xaaaa };
+    char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+    BITMAPINFO *info = (BITMAPINFO *)buffer;
+    RGBQUAD *colors = info->bmiColors;
     WORD bits[16];
+    void *bits_ptr;
     COLORREF res;
     HBRUSH old_brush;
     HPEN old_pen;
-    HBITMAP pattern;
+    HBITMAP bitmap;
+    HDC memdc;
 
     res = SetPixel( hdc, 0, 0, RGB(r,g,b) );
     ok( res == get_nearest( r, g, b ),
@@ -1559,14 +1564,79 @@ static void test_bitmap_colors( HDC hdc, COLORREF fg, COLORREF bg, int r, int g,
     DeleteObject( SelectObject( hdc, old_pen ));
 
     /* mono DDB pattern brush */
-    pattern = CreateBitmap( 16, 8, 1, 1, pattern_bits );
-    old_brush = SelectObject( hdc, CreatePatternBrush( pattern ));
+    bitmap = CreateBitmap( 16, 8, 1, 1, pattern_bits );
+    old_brush = SelectObject( hdc, CreatePatternBrush( bitmap ));
     PatBlt( hdc, 0, 0, 16, 16, PATCOPY );
     GetBitmapBits( GetCurrentObject( hdc, OBJ_BITMAP ), sizeof(bits), bits );
     ok( bits[0] == 0x5555,
         "wrong bits %04x for %02x,%02x,%02x fg %06x bg %06x\n", bits[0], r, g, b, fg, bg );
     DeleteObject( SelectObject( hdc, old_brush ));
-    DeleteObject( pattern );
+
+    /* mono DDB bitmap */
+    memdc = CreateCompatibleDC( hdc );
+    SelectObject( memdc, bitmap );
+    BitBlt( hdc, 0, 0, 16, 8, memdc, 0, 0, SRCCOPY );
+    GetBitmapBits( GetCurrentObject( hdc, OBJ_BITMAP ), sizeof(bits), bits );
+    ok( bits[0] == 0x5555,
+        "wrong bits %04x for %02x,%02x,%02x fg %06x bg %06x\n", bits[0], r, g, b, fg, bg );
+    SetTextColor( memdc, RGB(255,255,255) );
+    SetBkColor( memdc, RGB(0,0,0) );
+    BitBlt( hdc, 0, 0, 16, 8, memdc, 0, 0, SRCCOPY );
+    GetBitmapBits( GetCurrentObject( hdc, OBJ_BITMAP ), sizeof(bits), bits );
+    ok( bits[0] == 0x5555,
+        "wrong bits %04x for %02x,%02x,%02x fg %06x bg %06x\n", bits[0], r, g, b, fg, bg );
+
+    /* mono DIB section */
+    memset( buffer, 0, sizeof(buffer) );
+    info->bmiHeader.biSize = sizeof(info->bmiHeader);
+    info->bmiHeader.biHeight = -16;
+    info->bmiHeader.biWidth = 16;
+    info->bmiHeader.biBitCount = 1;
+    info->bmiHeader.biPlanes = 1;
+    info->bmiHeader.biCompression = BI_RGB;
+    colors[0].rgbRed = 0xff;
+    colors[0].rgbGreen = 0xff;
+    colors[0].rgbBlue = 0xf0;
+    colors[1].rgbRed = 0x20;
+    colors[1].rgbGreen = 0x0;
+    colors[1].rgbBlue = 0x0;
+    bitmap = CreateDIBSection( 0, info, DIB_RGB_COLORS, &bits_ptr, NULL, 0 );
+    memset( bits_ptr, 0x55, 64 );
+    DeleteObject( SelectObject( memdc, bitmap ));
+    BitBlt( hdc, 0, 0, 16, 8, memdc, 0, 0, SRCCOPY );
+    GetBitmapBits( GetCurrentObject( hdc, OBJ_BITMAP ), sizeof(bits), bits );
+    ok( bits[0] == 0x5555,
+        "wrong bits %04x for %02x,%02x,%02x fg %06x bg %06x\n", bits[0], r, g, b, fg, bg );
+
+    colors[0].rgbRed = 0x0;
+    colors[0].rgbGreen = 0x0;
+    colors[0].rgbBlue = 0x10;
+    colors[1].rgbRed = 0xff;
+    colors[1].rgbGreen = 0xf0;
+    colors[1].rgbBlue = 0xff;
+    bitmap = CreateDIBSection( 0, info, DIB_RGB_COLORS, &bits_ptr, NULL, 0 );
+    memset( bits_ptr, 0x55, 64 );
+    DeleteObject( SelectObject( memdc, bitmap ));
+    BitBlt( hdc, 0, 0, 16, 8, memdc, 0, 0, SRCCOPY );
+    GetBitmapBits( GetCurrentObject( hdc, OBJ_BITMAP ), sizeof(bits), bits );
+    ok( bits[0] == 0xaaaa,
+        "wrong bits %04x for %02x,%02x,%02x fg %06x bg %06x\n", bits[0], r, g, b, fg, bg );
+
+    SetTextColor( memdc, RGB(0,20,0) );
+    SetBkColor( memdc, RGB(240,240,240) );
+    BitBlt( hdc, 0, 0, 16, 8, memdc, 0, 0, SRCCOPY );
+    GetBitmapBits( GetCurrentObject( hdc, OBJ_BITMAP ), sizeof(bits), bits );
+    ok( bits[0] == 0x5555,
+        "wrong bits %04x for %02x,%02x,%02x fg %06x bg %06x\n", bits[0], r, g, b, fg, bg );
+
+    SetTextColor( memdc, RGB(250,250,250) );
+    SetBkColor( memdc, RGB(10,10,10) );
+    BitBlt( hdc, 0, 0, 16, 8, memdc, 0, 0, SRCCOPY );
+    GetBitmapBits( GetCurrentObject( hdc, OBJ_BITMAP ), sizeof(bits), bits );
+    ok( bits[0] == 0xaaaa,
+        "wrong bits %04x for %02x,%02x,%02x fg %06x bg %06x\n", bits[0], r, g, b, fg, bg );
+    DeleteDC( memdc );
+    DeleteObject( bitmap );
 }
 
 static void test_mono_bitmap(void)
