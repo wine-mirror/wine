@@ -533,6 +533,7 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
     }
 
     prepare_for_binding(This, pimkName, FALSE);
+    call_docview_84(This->doc_obj);
     hres = set_moniker(This, pimkName, pibc, NULL, TRUE);
     if(FAILED(hres))
         return hres;

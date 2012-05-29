@@ -610,27 +610,6 @@ static void init_bscallback(BSCallback *This, const BSCallbackVtbl *vtbl, IMonik
     This->mon = mon;
 }
 
-/* Calls undocumented 84 cmd of CGID_ShellDocView */
-static void call_docview_84(HTMLDocumentObj *doc)
-{
-    IOleCommandTarget *olecmd;
-    VARIANT var;
-    HRESULT hres;
-
-    if(!doc->client)
-        return;
-
-    hres = IOleClientSite_QueryInterface(doc->client, &IID_IOleCommandTarget, (void**)&olecmd);
-    if(FAILED(hres))
-        return;
-
-    VariantInit(&var);
-    hres = IOleCommandTarget_Exec(olecmd, &CGID_ShellDocView, 84, 0, NULL, &var);
-    IOleCommandTarget_Release(olecmd);
-    if(SUCCEEDED(hres) && V_VT(&var) != VT_NULL)
-        FIXME("handle result\n");
-}
-
 static void parse_content_type(nsChannelBSC *This, const WCHAR *value)
 {
     const WCHAR *ptr;
@@ -745,11 +724,8 @@ HRESULT start_binding(HTMLWindow *window, HTMLDocumentNode *doc, BSCallback *bsc
 
     /* NOTE: IE7 calls IsSystemMoniker here*/
 
-    if(window) {
-        if(bscallback->mon != window->mon)
-            set_current_mon(window, bscallback->mon);
-        call_docview_84(window->doc_obj);
-    }
+    if(window && bscallback->mon != window->mon)
+        set_current_mon(window, bscallback->mon);
 
     if(bctx) {
         RegisterBindStatusCallback(bctx, &bscallback->IBindStatusCallback_iface, NULL, 0);
@@ -1969,13 +1945,15 @@ HRESULT super_navigate(HTMLWindow *window, IUri *uri, const WCHAR *headers, BYTE
             return E_OUTOFMEMORY;
         }
 
+        /* Silently and repeated when real loading starts? */
+        window->readystate = READYSTATE_LOADING;
+        call_docview_84(window->doc_obj);
+
         task->window = window;
         task->bscallback = bsc;
         task->mon = mon;
         push_task(&task->header, navigate_proc, navigate_task_destr, window->task_magic);
 
-        /* Silently and repeated when real loading starts? */
-        window->readystate = READYSTATE_LOADING;
     }else {
         navigate_javascript_task_t *task;
 
@@ -1986,13 +1964,14 @@ HRESULT super_navigate(HTMLWindow *window, IUri *uri, const WCHAR *headers, BYTE
         if(!task)
             return E_OUTOFMEMORY;
 
+        /* Why silently? */
+        window->readystate = READYSTATE_COMPLETE;
+        call_docview_84(window->doc_obj);
+
         IUri_AddRef(uri);
         task->window = window;
         task->uri = uri;
         push_task(&task->header, navigate_javascript_proc, navigate_javascript_task_destr, window->task_magic);
-
-        /* Why silently? */
-        window->readystate = READYSTATE_COMPLETE;
     }
 
     return S_OK;

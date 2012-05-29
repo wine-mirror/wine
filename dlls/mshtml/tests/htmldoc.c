@@ -92,6 +92,7 @@ DEFINE_GUID(SID_SContainerDispatch,0xb722be00,0x4e68,0x101b,0xa2,0xbc,0x00,0xaa,
 #define CLEAR_CALLED(func) \
     expect_ ## func = called_ ## func = FALSE
 
+
 static IOleDocumentView *view = NULL;
 static HWND container_hwnd = NULL, hwnd = NULL, last_hwnd = NULL;
 
@@ -4882,7 +4883,6 @@ static void test_Load(IPersistMoniker *persist, IMoniker *mon)
     }
     SET_EXPECT(OnChanged_READYSTATE);
     SET_EXPECT(Invoke_OnReadyStateChange_Loading);
-    SET_EXPECT(Exec_ShellDocView_84);
     SET_EXPECT(IsSystemMoniker);
     if(mon == &Moniker)
         SET_EXPECT(BindToStorage);
@@ -4892,9 +4892,10 @@ static void test_Load(IPersistMoniker *persist, IMoniker *mon)
         SET_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
         SET_EXPECT(Exec_ShellDocView_37);
         SET_EXPECT(IsErrorUrl);
-    }
-    else
+    }else {
         SET_EXPECT(GetTravelLog);
+    }
+    SET_EXPECT(Exec_ShellDocView_84);
     SET_EXPECT(GetPendingUrl);
     load_state = LD_DOLOAD;
     expect_LockContainer_fLock = TRUE;
@@ -4930,7 +4931,6 @@ static void test_Load(IPersistMoniker *persist, IMoniker *mon)
     CHECK_CALLED(OnChanged_READYSTATE);
     CHECK_CALLED(Invoke_OnReadyStateChange_Loading);
     CLEAR_CALLED(IsSystemMoniker); /* IE7 */
-    SET_CALLED(Exec_ShellDocView_84);
     if(mon == &Moniker)
         CHECK_CALLED(BindToStorage);
     CLEAR_CALLED(SetActiveObject); /* FIXME */
@@ -4939,9 +4939,10 @@ static void test_Load(IPersistMoniker *persist, IMoniker *mon)
         CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
         CHECK_CALLED(Exec_ShellDocView_37);
         todo_wine CHECK_CALLED_BROKEN(IsErrorUrl);
-    }
-    else
+    }else {
         todo_wine CHECK_CALLED(GetTravelLog);
+    }
+    CHECK_CALLED(Exec_ShellDocView_84);
     todo_wine CHECK_CALLED(GetPendingUrl);
 
     set_clientsite = container_locked = TRUE;
@@ -4987,7 +4988,7 @@ static void test_download(DWORD flags)
         SET_EXPECT(GetExternal);
     SET_EXPECT(OnViewChange);
     SET_EXPECT(GetDropTarget);
-    if(flags & DWL_TRYCSS)
+    if((flags & DWL_TRYCSS) && !(flags & DWL_EMPTY))
         SET_EXPECT(Exec_ShellDocView_84);
     if(flags & DWL_CSS) {
         SET_EXPECT(CreateInstance);
@@ -5070,8 +5071,8 @@ static void test_download(DWORD flags)
         CHECK_CALLED(GetExternal);
     CHECK_CALLED(OnViewChange);
     CLEAR_CALLED(GetDropTarget);
-    if(flags & DWL_TRYCSS)
-        SET_CALLED(Exec_ShellDocView_84);
+    if((flags & DWL_TRYCSS) && !(flags & DWL_EMPTY))
+        todo_wine CHECK_CALLED(Exec_ShellDocView_84);
     if(flags & DWL_CSS) {
         CHECK_CALLED(CreateInstance);
         CHECK_CALLED(Start);
@@ -5220,6 +5221,7 @@ static void test_put_href(IHTMLDocument2 *doc, BOOL use_replace, const char *hre
             SET_EXPECT(Invoke_AMBIENT_SILENT);
             SET_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
             SET_EXPECT(Exec_ShellDocView_63);
+            SET_EXPECT(Exec_ShellDocView_84);
         }else {
             SET_EXPECT(FireNavigateComplete2);
             SET_EXPECT(FireDocumentComplete);
@@ -5247,6 +5249,7 @@ static void test_put_href(IHTMLDocument2 *doc, BOOL use_replace, const char *hre
                 CHECK_CALLED(Invoke_AMBIENT_SILENT);
                 CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
                 CHECK_CALLED(Exec_ShellDocView_63);
+                CHECK_CALLED(Exec_ShellDocView_84);
             }else {
                 CHECK_CALLED(FireNavigateComplete2);
                 CHECK_CALLED(FireDocumentComplete);
@@ -5263,6 +5266,7 @@ static void test_put_href(IHTMLDocument2 *doc, BOOL use_replace, const char *hre
                 CLEAR_CALLED(Invoke_AMBIENT_SILENT);
                 CLEAR_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
                 CLEAR_CALLED(Exec_ShellDocView_63);
+                todo_wine CLEAR_CALLED(Exec_ShellDocView_84);
             }else {
                 CLEAR_CALLED(FireNavigateComplete2);
                 CLEAR_CALLED(FireDocumentComplete);
@@ -5295,6 +5299,7 @@ static void test_put_href(IHTMLDocument2 *doc, BOOL use_replace, const char *hre
         SET_EXPECT(Invoke_AMBIENT_SILENT);
         SET_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
         SET_EXPECT(Exec_ShellDocView_63);
+        SET_EXPECT(Exec_ShellDocView_84);
 
         str = a2bstr(nav_url);
         str2 = a2bstr("");
@@ -5309,6 +5314,7 @@ static void test_put_href(IHTMLDocument2 *doc, BOOL use_replace, const char *hre
         CHECK_CALLED(Invoke_AMBIENT_SILENT);
         CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
         CHECK_CALLED(Exec_ShellDocView_63);
+        CHECK_CALLED(Exec_ShellDocView_84);
     }
 
     if(doc_mon) {
@@ -5679,7 +5685,7 @@ static void test_exec_editmode(IUnknown *unk, BOOL loaded)
     CHECK_CALLED(OnChanged_READYSTATE);
     CHECK_CALLED(Invoke_OnReadyStateChange_Loading);
     CLEAR_CALLED(IsSystemMoniker); /* IE7 */
-    SET_CALLED(Exec_ShellDocView_84);
+    CHECK_CALLED(Exec_ShellDocView_84);
     if(loaded)
         CHECK_CALLED(BindToStorage);
     CHECK_CALLED(InPlaceUIWindow_SetActiveObject);
@@ -5888,6 +5894,7 @@ static void test_ClientSite(IOleObject *oleobj, DWORD flags)
         SET_EXPECT(Invoke_AMBIENT_PALETTE);
         SET_EXPECT(GetOverrideKeyPath);
         SET_EXPECT(GetTravelLog);
+        SET_EXPECT(Exec_ShellDocView_84);
 
         hres = IOleObject_SetClientSite(oleobj, &ClientSite);
         ok(hres == S_OK, "SetClientSite failed: %08x\n", hres);
@@ -5912,6 +5919,7 @@ static void test_ClientSite(IOleObject *oleobj, DWORD flags)
         CLEAR_CALLED(Invoke_AMBIENT_PALETTE); /* not called on IE9 */
         CLEAR_CALLED(GetOverrideKeyPath); /* Called by IE9 */
         todo_wine CHECK_CALLED(GetTravelLog);
+        CHECK_CALLED(Exec_ShellDocView_84);
 
         set_clientsite = TRUE;
     }
@@ -7075,7 +7083,6 @@ static void test_editing_mode(BOOL do_load)
     test_MSHTML_QueryStatus(doc, OLECMDF_SUPPORTED|OLECMDF_ENABLED);
 
     if(!do_load) {
-        test_exec_fontname(unk, NULL, wszTimesNewRoman);
         test_exec_fontname(unk, wszArial, wszTimesNewRoman);
         test_timer(EXPECT_UPDATEUI);
         test_exec_fontname(unk, NULL, wszArial);
@@ -7150,6 +7157,7 @@ static void test_UIActivate(BOOL do_load, BOOL use_ipsex, BOOL use_ipsw)
     SET_EXPECT(Exec_SETPROGRESSMAX);
     SET_EXPECT(Exec_SETPROGRESSPOS);
     SET_EXPECT(GetTravelLog);
+    SET_EXPECT(Exec_ShellDocView_84);
 
     hres = IOleObject_SetClientSite(oleobj, &ClientSite);
     ok(hres == S_OK, "SetClientSite failed: %08x\n", hres);
@@ -7170,6 +7178,7 @@ static void test_UIActivate(BOOL do_load, BOOL use_ipsex, BOOL use_ipsw)
     CHECK_CALLED(Exec_SETPROGRESSMAX);
     CHECK_CALLED(Exec_SETPROGRESSPOS);
     todo_wine CHECK_CALLED(GetTravelLog);
+    CHECK_CALLED(Exec_ShellDocView_84);
 
     hres = IOleDocumentView_GetInPlaceSite(view, &inplacesite);
     ok(hres == S_OK, "GetInPlaceSite failed: %08x\n", hres);
