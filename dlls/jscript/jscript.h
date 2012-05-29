@@ -445,13 +445,6 @@ static inline void num_set_nan(VARIANT *v)
 #endif
 }
 
-static inline DOUBLE ret_nan(void)
-{
-    VARIANT v;
-    num_set_nan(&v);
-    return V_R8(&v);
-}
-
 static inline void num_set_inf(VARIANT *v, BOOL positive)
 {
     V_VT(v) = VT_R8;

@@ -15,6 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 #include "config.h"
 #include "wine/port.h"
 
@@ -238,7 +239,7 @@ static HRESULT error_constr(script_ctx_t *ctx, WORD flags, DISPPARAMS *dp,
 
         hres = to_number(ctx, get_arg(dp, 0), ei, &n);
         if(FAILED(hres)) /* FIXME: really? */
-            n = ret_nan();
+            n = NAN;
         if(isnan(n))
             hres = to_string(ctx, get_arg(dp, 0), ei, &msg);
         if(FAILED(hres))

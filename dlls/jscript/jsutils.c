@@ -349,7 +349,7 @@ static HRESULT str_to_number(BSTR str, double *ret)
             ptr++;
 
         if(*ptr)
-            *ret = ret_nan();
+            *ret = NAN;
         else
             *ret = neg ? -ret_inf() : ret_inf();
         return S_OK;
@@ -403,7 +403,7 @@ static HRESULT str_to_number(BSTR str, double *ret)
         ptr++;
 
     if(*ptr) {
-        *ret = ret_nan();
+        *ret = NAN;
         return S_OK;
     }
 
@@ -419,7 +419,7 @@ HRESULT to_number(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, double *ret)
 {
     switch(V_VT(v)) {
     case VT_EMPTY:
-        *ret = ret_nan();
+        *ret = NAN;
         break;
     case VT_NULL:
         *ret = 0;

@@ -933,7 +933,7 @@ static int cc_token(parser_ctx_t *ctx, void *lval)
     var = find_cc_var(ctx->script->cc, ctx->ptr, id_len);
     ctx->ptr += id_len;
     if(!var || var->is_num) {
-        *(literal_t**)lval = new_double_literal(ctx, var ? var->u.n : ret_nan());
+        *(literal_t**)lval = new_double_literal(ctx, var ? var->u.n : NAN);
         return tNumericLiteral;
     }
 

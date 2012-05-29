@@ -511,7 +511,7 @@ static HRESULT JSGlobal_parseInt(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
             i = char_to_int(*ptr++);
         }while(i < radix);
     }else if(empty) {
-        ret = ret_nan();
+        ret = NAN;
     }
 
     SysFreeString(str);

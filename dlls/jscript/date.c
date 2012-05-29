@@ -130,7 +130,7 @@ static inline DOUBLE days_in_year(DOUBLE year)
     int y;
 
     if(year != (int)year)
-        return ret_nan();
+        return NAN;
 
     y = year;
     if(y%4 != 0) return 365;
@@ -143,7 +143,7 @@ static inline DOUBLE days_in_year(DOUBLE year)
 static inline DOUBLE day_from_year(DOUBLE year)
 {
     if(year != (int)year)
-        return ret_nan();
+        return NAN;
 
     return floor(365.0*(year-1970) + floor((year-1969)/4)
         - floor((year-1901)/100) + floor((year-1601)/400));
@@ -192,7 +192,7 @@ static inline DOUBLE year_from_time(DOUBLE time)
     int y;
 
     if(isnan(time))
-        return ret_nan();
+        return NAN;
 
     y = 1970 + time/365.25/MS_PER_DAY;
 
@@ -225,7 +225,7 @@ static inline DOUBLE month_from_time(DOUBLE time)
     int dwy = day_within_year(time);
 
     if(isnan(time))
-        return ret_nan();
+        return NAN;
 
     if(0<=dwy && dwy<31) return 0;
     if(dwy < 59+ily) return 1;
@@ -249,7 +249,7 @@ static inline DOUBLE date_from_time(DOUBLE time)
     int mft = month_from_time(time);
 
     if(isnan(time))
-        return ret_nan();
+        return NAN;
 
     if(mft==0) return dwy+1;
     if(mft==1) return dwy-30;
@@ -271,7 +271,7 @@ static inline DOUBLE week_day(DOUBLE time)
     DOUBLE ret;
 
     if(isnan(time))
-        return ret_nan();
+        return NAN;
 
     ret = fmod(day(time)+4, 7);
     if(ret<0) ret += 7;
@@ -285,7 +285,7 @@ static inline DOUBLE convert_time(int year, SYSTEMTIME st)
     int set_week_day;
 
     if(st.wMonth == 0)
-        return ret_nan();
+        return NAN;
 
     if(st.wYear != 0)
         year = st.wYear;
@@ -359,7 +359,7 @@ static inline DOUBLE hour_from_time(DOUBLE time)
     DOUBLE ret;
 
     if(isnan(time))
-        return ret_nan();
+        return NAN;
 
     ret = fmod(floor(time/MS_PER_HOUR), 24);
     if(ret<0) ret += 24;
@@ -373,7 +373,7 @@ static inline DOUBLE min_from_time(DOUBLE time)
     DOUBLE ret;
 
     if(isnan(time))
-        return ret_nan();
+        return NAN;
 
     ret = fmod(floor(time/MS_PER_MINUTE), 60);
     if(ret<0) ret += 60;
@@ -387,7 +387,7 @@ static inline DOUBLE sec_from_time(DOUBLE time)
     DOUBLE ret;
 
     if(isnan(time))
-        return ret_nan();
+        return NAN;
 
     ret = fmod(floor(time/1000), 60);
     if(ret<0) ret += 60;
@@ -401,7 +401,7 @@ static inline DOUBLE ms_from_time(DOUBLE time)
     DOUBLE ret;
 
     if(isnan(time))
-        return ret_nan();
+        return NAN;
 
     ret = fmod(time, 1000);
     if(ret<0) ret += 1000;
@@ -443,7 +443,7 @@ static inline DOUBLE make_date(DOUBLE day, DOUBLE time)
 static inline DOUBLE time_clip(DOUBLE time)
 {
     if(8.64e15 < time || time < -8.64e15) {
-        return ret_nan();
+        return NAN;
     }
 
     return floor(time);
@@ -2169,7 +2169,7 @@ static inline HRESULT date_parse(BSTR input, double *ret) {
         else if(input[i] == ')') {
             nest_level--;
             if(nest_level<0) {
-                *ret = ret_nan();
+                *ret = NAN;
                 return S_OK;
             }
         }
@@ -2393,7 +2393,7 @@ static inline HRESULT date_parse(BSTR input, double *ret) {
         if(set_hour_adjust)
             *ret = utc(*ret, &di);
     }else {
-        *ret = ret_nan();
+        *ret = NAN;
     }
 
     for(i=0; i<sizeof(string_ids)/sizeof(DWORD); i++)
