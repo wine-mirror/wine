@@ -68,7 +68,7 @@ static HRESULT Math_abs(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARA
 
     if(!arg_cnt(dp)) {
         if(retv)
-            num_set_nan(retv);
+            num_set_val(retv, NAN);
         return S_OK;
     }
 
@@ -90,7 +90,7 @@ static HRESULT Math_acos(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPAR
     TRACE("\n");
 
     if(!arg_cnt(dp)) {
-        if(retv) num_set_nan(retv);
+        if(retv) num_set_val(retv, NAN);
         return S_OK;
     }
 
@@ -98,12 +98,8 @@ static HRESULT Math_acos(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPAR
     if(FAILED(hres))
         return hres;
 
-    if(retv) {
-        if(x < -1.0 || x > 1.0)
-            num_set_nan(retv);
-        else
-            num_set_val(retv, acos(x));
-    }
+    if(retv)
+        num_set_val(retv, x < -1.0 || x > 1.0 ? NAN : acos(x));
     return S_OK;
 }
 
@@ -116,7 +112,7 @@ static HRESULT Math_asin(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPAR
     TRACE("\n");
 
     if(!arg_cnt(dp)) {
-        if(retv) num_set_nan(retv);
+        if(retv) num_set_val(retv, NAN);
         return S_OK;
     }
 
@@ -124,12 +120,8 @@ static HRESULT Math_asin(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPAR
     if(FAILED(hres))
         return hres;
 
-    if(retv) {
-        if(x < -1.0 || x > 1.0)
-            num_set_nan(retv);
-        else
-            num_set_val(retv, asin(x));
-    }
+    if(retv)
+        num_set_val(retv, x < -1.0 || x > 1.0 ? NAN : asin(x));
     return S_OK;
 }
 
@@ -142,7 +134,7 @@ static HRESULT Math_atan(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPAR
     TRACE("\n");
 
     if(!arg_cnt(dp)) {
-        if(retv) num_set_nan(retv);
+        if(retv) num_set_val(retv, NAN);
         return S_OK;
     }
 
@@ -163,7 +155,7 @@ static HRESULT Math_atan2(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPA
     TRACE("\n");
 
     if(arg_cnt(dp)<2) {
-        if(retv) num_set_nan(retv);
+        if(retv) num_set_val(retv, NAN);
         return S_OK;
     }
 
@@ -190,7 +182,7 @@ static HRESULT Math_ceil(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPAR
 
     if(!arg_cnt(dp)) {
         if(retv)
-            num_set_nan(retv);
+            num_set_val(retv, NAN);
         return S_OK;
     }
 
@@ -212,7 +204,7 @@ static HRESULT Math_cos(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARA
     TRACE("\n");
 
     if(!arg_cnt(dp)) {
-        if(retv) num_set_nan(retv);
+        if(retv) num_set_val(retv, NAN);
         return S_OK;
     }
 
@@ -233,7 +225,7 @@ static HRESULT Math_exp(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARA
     TRACE("\n");
 
     if(!arg_cnt(dp)) {
-        if(retv) num_set_nan(retv);
+        if(retv) num_set_val(retv, NAN);
         return S_OK;
     }
 
@@ -255,7 +247,7 @@ static HRESULT Math_floor(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPA
 
     if(!arg_cnt(dp)) {
         if(retv)
-            num_set_nan(retv);
+            num_set_val(retv, NAN);
         return S_OK;
     }
 
@@ -278,7 +270,7 @@ static HRESULT Math_log(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARA
 
     if(!arg_cnt(dp)) {
         if(retv)
-            num_set_nan(retv);
+            num_set_val(retv, NAN);
         return S_OK;
     }
 
@@ -286,12 +278,8 @@ static HRESULT Math_log(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARA
     if(FAILED(hres))
         return hres;
 
-    if(retv) {
-        if(x < -0.0)
-            num_set_nan(retv);
-        else
-            num_set_val(retv, log(x));
-    }
+    if(retv)
+        num_set_val(retv, x < -0.0 ? NAN : log(x));
     return S_OK;
 }
 
@@ -373,7 +361,7 @@ static HRESULT Math_pow(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARA
     TRACE("\n");
 
     if(arg_cnt(dp) < 2) {
-        if(retv) num_set_nan(retv);
+        if(retv) num_set_val(retv, NAN);
         return S_OK;
     }
 
@@ -417,7 +405,8 @@ static HRESULT Math_round(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPA
     TRACE("\n");
 
     if(!arg_cnt(dp)) {
-        num_set_nan(retv);
+        if(retv)
+            num_set_val(retv, NAN);
         return S_OK;
     }
 
@@ -439,7 +428,7 @@ static HRESULT Math_sin(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARA
     TRACE("\n");
 
     if(!arg_cnt(dp)) {
-        if(retv) num_set_nan(retv);
+        if(retv) num_set_val(retv, NAN);
         return S_OK;
     }
 
@@ -460,7 +449,7 @@ static HRESULT Math_sqrt(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPAR
     TRACE("\n");
 
     if(!arg_cnt(dp)) {
-        if(retv) num_set_nan(retv);
+        if(retv) num_set_val(retv, NAN);
         return S_OK;
     }
 
@@ -481,7 +470,7 @@ static HRESULT Math_tan(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARA
     TRACE("\n");
 
     if(!arg_cnt(dp)) {
-        if(retv) num_set_nan(retv);
+        if(retv) num_set_val(retv, NAN);
         return S_OK;
     }
 

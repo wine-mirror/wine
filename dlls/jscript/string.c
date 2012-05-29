@@ -16,6 +16,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "config.h"
+#include "wine/port.h"
+
 #include "jscript.h"
 
 #include "wine/debug.h"
@@ -358,7 +361,7 @@ static HRESULT String_charCodeAt(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
         if(!is_int32(d) || d < 0 || d >= length) {
             SysFreeString(val_str);
             if(retv)
-                num_set_nan(retv);
+                num_set_val(retv, NAN);
             return S_OK;
         }
 

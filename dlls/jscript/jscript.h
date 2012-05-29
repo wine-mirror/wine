@@ -435,16 +435,6 @@ static inline void num_set_val(VARIANT *v, DOUBLE d)
     }
 }
 
-static inline void num_set_nan(VARIANT *v)
-{
-    V_VT(v) = VT_R8;
-#ifdef NAN
-    V_R8(v) = NAN;
-#else
-    V_UI8(v) = (ULONGLONG)0x7ff80000<<32;
-#endif
-}
-
 static inline void num_set_inf(VARIANT *v, BOOL positive)
 {
     V_VT(v) = VT_R8;

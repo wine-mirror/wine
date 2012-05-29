@@ -1987,7 +1987,7 @@ static HRESULT Date_getYear(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
     t = local_time(date->time, date);
     if(isnan(t)) {
         if(retv)
-            num_set_nan(retv);
+            num_set_val(retv, NAN);
         return S_OK;
     }
 
@@ -2023,7 +2023,7 @@ static HRESULT Date_setYear(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
     if(isnan(year)) {
         date->time = year;
         if(retv)
-            num_set_nan(retv);
+            num_set_val(retv, NAN);
         return S_OK;
     }
 
@@ -2414,7 +2414,7 @@ static HRESULT DateConstr_parse(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
 
     if(!arg_cnt(dp)) {
         if(retv)
-            num_set_nan(retv);
+            num_set_val(retv, NAN);
         return S_OK;
     }
 

@@ -456,7 +456,7 @@ static HRESULT JSGlobal_parseInt(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
     HRESULT hres;
 
     if(!arg_cnt(dp)) {
-        if(retv) num_set_nan(retv);
+        if(retv) num_set_val(retv, NAN);
         return S_OK;
     }
 
@@ -468,7 +468,7 @@ static HRESULT JSGlobal_parseInt(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
         if(radix && (radix < 2 || radix > 36)) {
             WARN("radix %d out of range\n", radix);
             if(retv)
-                num_set_nan(retv);
+                num_set_val(retv, NAN);
             return S_OK;
         }
     }
@@ -537,7 +537,7 @@ static HRESULT JSGlobal_parseFloat(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
 
     if(!arg_cnt(dp)) {
         if(retv)
-            num_set_nan(retv);
+            num_set_val(retv, NAN);
         return S_OK;
     }
 
@@ -616,7 +616,7 @@ static HRESULT JSGlobal_parseFloat(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
 
     if(ret_nan) {
         if(retv)
-            num_set_nan(retv);
+            num_set_val(retv, NAN);
         return S_OK;
     }
 
@@ -1284,7 +1284,7 @@ HRESULT init_global(script_ctx_t *ctx)
     if(FAILED(hres))
         return hres;
 
-    num_set_nan(&var);
+    num_set_val(&var, NAN);
     hres = jsdisp_propput_name(ctx->global, NaNW, &var, NULL/*FIXME*/);
     if(FAILED(hres))
         return hres;
