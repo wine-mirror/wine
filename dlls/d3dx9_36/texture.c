@@ -1606,3 +1606,64 @@ HRESULT WINAPI D3DXFillVolumeTexture(LPDIRECT3DVOLUMETEXTURE9 texture,
 
     return D3D_OK;
 }
+
+HRESULT WINAPI D3DXSaveTextureToFileA(const char *dst_filename, D3DXIMAGE_FILEFORMAT file_format,
+        IDirect3DBaseTexture9 *src_texture, const PALETTEENTRY *src_palette)
+{
+    int len;
+    WCHAR *filename;
+    HRESULT hr;
+    ID3DXBuffer *buffer;
+
+    TRACE("(%s, %#x, %p, %p): relay\n",
+            wine_dbgstr_a(dst_filename), file_format, src_texture, src_palette);
+
+    if (!dst_filename) return D3DERR_INVALIDCALL;
+
+    len = MultiByteToWideChar(CP_ACP, 0, dst_filename, -1, NULL, 0);
+    filename = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    if (!filename) return E_OUTOFMEMORY;
+    MultiByteToWideChar(CP_ACP, 0, dst_filename, -1, filename, len);
+
+    hr = D3DXSaveTextureToFileInMemory(&buffer, file_format, src_texture, src_palette);
+    if (SUCCEEDED(hr))
+    {
+        hr = write_buffer_to_file(filename, buffer);
+        ID3DXBuffer_Release(buffer);
+    }
+
+    HeapFree(GetProcessHeap(), 0, filename);
+    return hr;
+}
+
+HRESULT WINAPI D3DXSaveTextureToFileW(const WCHAR *dst_filename, D3DXIMAGE_FILEFORMAT file_format,
+        IDirect3DBaseTexture9 *src_texture, const PALETTEENTRY *src_palette)
+{
+    HRESULT hr;
+    ID3DXBuffer *buffer;
+
+    TRACE("(%s, %#x, %p, %p): relay\n",
+        wine_dbgstr_w(dst_filename), file_format, src_texture, src_palette);
+
+    if (!dst_filename) return D3DERR_INVALIDCALL;
+
+    hr = D3DXSaveTextureToFileInMemory(&buffer, file_format, src_texture, src_palette);
+    if (SUCCEEDED(hr))
+    {
+        hr = write_buffer_to_file(dst_filename, buffer);
+        ID3DXBuffer_Release(buffer);
+    }
+
+    return hr;
+}
+
+HRESULT WINAPI D3DXSaveTextureToFileInMemory(ID3DXBuffer **dst_buffer, D3DXIMAGE_FILEFORMAT file_format,
+        IDirect3DBaseTexture9 *src_texture, const PALETTEENTRY *src_palette)
+{
+    FIXME("(%p, %#x, %p, %p): stub\n",
+        dst_buffer, file_format, src_texture, src_palette);
+
+    if (!dst_buffer || !src_texture) return D3DERR_INVALIDCALL;
+
+    return E_NOTIMPL;
+}

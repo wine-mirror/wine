@@ -638,6 +638,11 @@ HRESULT WINAPI D3DXCreateVolumeTextureFromFileInMemoryEx(LPDIRECT3DDEVICE9 devic
                                                          PALETTEENTRY *palette,
                                                          LPDIRECT3DVOLUMETEXTURE9 *volume);
 
+HRESULT WINAPI D3DXSaveTextureToFileInMemory(LPD3DXBUFFER *destbuffer,
+                                             D3DXIMAGE_FILEFORMAT destformat,
+                                             LPDIRECT3DBASETEXTURE9 srctexture,
+                                             CONST PALETTEENTRY *srcpalette);
+
 HRESULT WINAPI D3DXSaveTextureToFileA(LPCSTR destfile,
                                       D3DXIMAGE_FILEFORMAT destformat,
                                       LPDIRECT3DBASETEXTURE9 srctexture,
