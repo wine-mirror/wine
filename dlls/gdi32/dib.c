@@ -733,11 +733,11 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
 
     copy_bitmapinfo( dst_info, src_info );
 
-    err = bitmap->funcs->pPutImage( NULL, hbitmap, clip, dst_info, &src_bits, &src, &dst, 0 );
+    err = put_image_into_bitmap( bitmap, clip, dst_info, &src_bits, &src, &dst );
     if (err == ERROR_BAD_FORMAT)
     {
         err = convert_bits( src_info, &src, dst_info, &src_bits, FALSE );
-        if (!err) err = bitmap->funcs->pPutImage( NULL, hbitmap, clip, dst_info, &src_bits, &src, &dst, 0 );
+        if (!err) err = put_image_into_bitmap( bitmap, clip, dst_info, &src_bits, &src, &dst );
     }
     if(err) result = 0;
 
@@ -1491,8 +1491,6 @@ HBITMAP WINAPI CreateDIBSection(HDC hdc, CONST BITMAPINFO *bmi, UINT usage,
     bmp->dib.dsBm.bmPlanes     = info->bmiHeader.biPlanes;
     bmp->dib.dsBm.bmBitsPixel  = info->bmiHeader.biBitCount;
     bmp->dib.dsBmih            = info->bmiHeader;
-
-    bmp->funcs = &dib_driver;
 
     if (info->bmiHeader.biBitCount <= 8)  /* build the color table */
     {

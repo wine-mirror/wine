@@ -210,7 +210,6 @@ HBITMAP WINAPI CreateBitmapIndirect( const BITMAP *bmp )
 
     bmpobj->dib.dsBm = bm;
     bmpobj->dib.dsBm.bmBits = NULL;
-    bmpobj->funcs = &dib_driver;
 
     if (!(hbitmap = alloc_gdi_handle( &bmpobj->header, OBJ_BITMAP, &bitmap_funcs )))
     {
@@ -393,14 +392,14 @@ LONG WINAPI SetBitmapBits(
     info->bmiHeader.biWidth         = 0;
     info->bmiHeader.biHeight        = 0;
     info->bmiHeader.biSizeImage     = 0;
-    err = bmp->funcs->pPutImage( NULL, hbitmap, 0, info, NULL, NULL, NULL, SRCCOPY );
+    err = put_image_into_bitmap( bmp, 0, info, NULL, NULL, NULL );
 
     if (!err || err == ERROR_BAD_FORMAT)
     {
         info->bmiHeader.biWidth     = bmp->dib.dsBm.bmWidth;
         info->bmiHeader.biHeight    = -dst.height;
         info->bmiHeader.biSizeImage = dst.height * dst_stride;
-        err = bmp->funcs->pPutImage( NULL, hbitmap, clip, info, &src_bits, &src, &dst, SRCCOPY );
+        err = put_image_into_bitmap( bmp, clip, info, &src_bits, &src, &dst );
     }
     if (err) count = 0;
 
