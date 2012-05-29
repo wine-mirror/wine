@@ -617,8 +617,128 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID* ppv)
     return hr;
 }
 
+static void parse_msi_version_string(const char *version, int *parts)
+{
+    const char *minor_start, *build_start;
+
+    parts[0] = atoi(version);
+
+    parts[1] = parts[2] = 0;
+
+    minor_start = strchr(version, '.');
+    if (minor_start)
+    {
+        minor_start++;
+        parts[1] = atoi(minor_start);
+
+        build_start = strchr(minor_start, '.');
+        if (build_start)
+            parts[2] = atoi(build_start+1);
+    }
+}
+
+static BOOL install_wine_mono(void)
+{
+    BOOL is_wow64=0;
+    HMODULE hmsi;
+    UINT (WINAPI *pMsiGetProductInfoA)(LPCSTR,LPCSTR,LPSTR,DWORD*);
+    char versionstringbuf[15];
+    UINT res;
+    DWORD buffer_size;
+    PROCESS_INFORMATION pi;
+    STARTUPINFOW si;
+    WCHAR app[MAX_PATH];
+    WCHAR *args;
+    LONG len;
+    BOOL ret;
+
+    static const char* mono_version = "0.0.4";
+    static const char* mono_product_code = "{E45D8920-A758-4088-B6C6-31DBB276992E}";
+
+    static const WCHAR controlW[] = {'\\','c','o','n','t','r','o','l','.','e','x','e',0};
+    static const WCHAR argsW[] =
+        {' ','a','p','p','w','i','z','.','c','p','l',' ','i','n','s','t','a','l','l','_','m','o','n','o',0};
+
+    IsWow64Process(GetCurrentProcess(), &is_wow64);
+
+    if (is_wow64)
+    {
+        TRACE("not installing mono in wow64 process\n");
+        return TRUE;
+    }
+
+    hmsi = LoadLibraryA("msi");
+
+    if (!hmsi)
+    {
+        ERR("couldn't load msi.dll\n");
+        return FALSE;
+    }
+
+    pMsiGetProductInfoA = (void*)GetProcAddress(hmsi, "MsiGetProductInfoA");
+
+    buffer_size = sizeof(versionstringbuf);
+
+    res = pMsiGetProductInfoA(mono_product_code, "VersionString", versionstringbuf, &buffer_size);
+
+    FreeLibrary(hmsi);
+
+    if (res == ERROR_SUCCESS)
+    {
+        int current_version[3], wanted_version[3], i;
+
+        TRACE("found installed version %s\n", versionstringbuf);
+
+        parse_msi_version_string(versionstringbuf, current_version);
+        parse_msi_version_string(mono_version, wanted_version);
+
+        for (i=0; i<3; i++)
+        {
+            if (current_version[i] < wanted_version[i])
+                break;
+            else if (current_version[i] > wanted_version[i])
+            {
+                TRACE("installed version is newer than %s, quitting\n", mono_version);
+                return TRUE;
+            }
+        }
+
+        if (i == 3)
+        {
+            TRACE("version %s is already installed, quitting\n", mono_version);
+            return TRUE;
+        }
+    }
+
+    len = GetSystemDirectoryW(app, MAX_PATH-sizeof(controlW)/sizeof(WCHAR));
+    memcpy(app+len, controlW, sizeof(controlW));
+
+    args = HeapAlloc(GetProcessHeap(), 0, (len*sizeof(WCHAR) + sizeof(controlW) + sizeof(argsW)));
+    if(!args)
+        return FALSE;
+
+    memcpy(args, app, len*sizeof(WCHAR) + sizeof(controlW));
+    memcpy(args + len + sizeof(controlW)/sizeof(WCHAR)-1, argsW, sizeof(argsW));
+
+    TRACE("starting %s\n", debugstr_w(args));
+
+    memset(&si, 0, sizeof(si));
+    si.cb = sizeof(si);
+    ret = CreateProcessW(app, args, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    HeapFree(GetProcessHeap(), 0, args);
+    if (ret) {
+        CloseHandle(pi.hThread);
+        WaitForSingleObject(pi.hProcess, INFINITE);
+        CloseHandle(pi.hProcess);
+    }
+
+    return ret;
+}
+
 HRESULT WINAPI DllRegisterServer(void)
 {
+    install_wine_mono();
+
     return __wine_register_resources( MSCOREE_hInstance );
 }
 
