@@ -218,6 +218,27 @@ static DWORD blend_bits( const BITMAPINFO *src_info, const struct gdi_image_bits
     return blend_bitmapinfo( src_info, src_bits->ptr, src, dst_info, dst_bits->ptr, dst, blend );
 }
 
+/* helper to retrieve either both colors or only the background color for monochrome blits */
+static void get_mono_dc_colors( HDC hdc, BITMAPINFO *info, int count )
+{
+    COLORREF color = GetBkColor( hdc );
+
+    info->bmiColors[count - 1].rgbRed      = GetRValue( color );
+    info->bmiColors[count - 1].rgbGreen    = GetGValue( color );
+    info->bmiColors[count - 1].rgbBlue     = GetBValue( color );
+    info->bmiColors[count - 1].rgbReserved = 0;
+
+    if (count > 1)
+    {
+        color = GetTextColor( hdc );
+        info->bmiColors[0].rgbRed      = GetRValue( color );
+        info->bmiColors[0].rgbGreen    = GetGValue( color );
+        info->bmiColors[0].rgbBlue     = GetBValue( color );
+        info->bmiColors[0].rgbReserved = 0;
+    }
+    info->bmiHeader.biClrUsed = count;
+}
+
 /***********************************************************************
  *           null driver fallback implementations
  */
@@ -239,43 +260,32 @@ BOOL nulldrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
     release_dc_ptr( dc_src );
     if (err) return FALSE;
 
-    /* 1-bpp source without a color table uses the destination DC colors */
-    if (src_info->bmiHeader.biBitCount == 1 && !src_info->bmiHeader.biClrUsed)
-    {
-        COLORREF color = GetTextColor( dst_dev->hdc );
-        src_info->bmiColors[0].rgbRed      = GetRValue( color );
-        src_info->bmiColors[0].rgbGreen    = GetGValue( color );
-        src_info->bmiColors[0].rgbBlue     = GetBValue( color );
-        src_info->bmiColors[0].rgbReserved = 0;
-        color = GetBkColor( dst_dev->hdc );
-        src_info->bmiColors[1].rgbRed      = GetRValue( color );
-        src_info->bmiColors[1].rgbGreen    = GetGValue( color );
-        src_info->bmiColors[1].rgbBlue     = GetBValue( color );
-        src_info->bmiColors[1].rgbReserved = 0;
-        src_info->bmiHeader.biClrUsed = 2;
-    }
-
     dst_dev = GET_DC_PHYSDEV( dc_dst, pPutImage );
     copy_bitmapinfo( dst_info, src_info );
     err = dst_dev->funcs->pPutImage( dst_dev, 0, 0, dst_info, &bits, src, dst, rop );
     if (err == ERROR_BAD_FORMAT)
     {
-        /* 1-bpp destination without a color table requires a fake 1-entry table
-         * that contains only the background color */
-        if (dst_info->bmiHeader.biBitCount == 1 && !dst_info->bmiHeader.biClrUsed)
+        DWORD dst_colors = dst_info->bmiHeader.biClrUsed;
+
+        /* 1-bpp source without a color table uses the destination DC colors */
+        if (src_info->bmiHeader.biBitCount == 1 && !src_info->bmiHeader.biClrUsed)
+            get_mono_dc_colors( dst_dev->hdc, src_info, 2 );
+
+        if (dst_info->bmiHeader.biBitCount == 1 && !dst_colors)
         {
-            COLORREF color = GetBkColor( src_dev->hdc );
-            dst_info->bmiColors[0].rgbRed      = GetRValue( color );
-            dst_info->bmiColors[0].rgbGreen    = GetGValue( color );
-            dst_info->bmiColors[0].rgbBlue     = GetBValue( color );
-            dst_info->bmiColors[0].rgbReserved = 0;
-            dst_info->bmiHeader.biClrUsed = 1;
+            /* 1-bpp destination without a color table requires a fake 1-entry table
+             * that contains only the background color; except with a 1-bpp source,
+             * in which case it uses the source colors */
+            if (src_info->bmiHeader.biBitCount > 1)
+                get_mono_dc_colors( src_dev->hdc, dst_info, 1 );
+            else
+                get_mono_dc_colors( src_dev->hdc, dst_info, 2 );
         }
 
         if (!(err = convert_bits( src_info, src, dst_info, &bits, FALSE )))
         {
-            /* get rid of the fake 1-bpp table */
-            if (dst_info->bmiHeader.biClrUsed == 1) dst_info->bmiHeader.biClrUsed = 0;
+            /* get rid of the fake destination table */
+            dst_info->bmiHeader.biClrUsed = dst_colors;
             err = dst_dev->funcs->pPutImage( dst_dev, 0, 0, dst_info, &bits, src, dst, rop );
         }
     }
