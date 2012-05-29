@@ -269,6 +269,8 @@ extern COLORREF get_pixel_bitmapinfo( const BITMAPINFO *info, void *bits, struct
 extern BOOL render_aa_text_bitmapinfo( HDC hdc, BITMAPINFO *info, struct gdi_image_bits *bits,
                                        struct bitblt_coords *src, INT x, INT y, UINT flags,
                                        UINT aa_flags, LPCWSTR str, UINT count, const INT *dx ) DECLSPEC_HIDDEN;
+extern DWORD get_image_from_bitmap( BITMAPOBJ *bmp, BITMAPINFO *info,
+                                    struct gdi_image_bits *bits, struct bitblt_coords *src ) DECLSPEC_HIDDEN;
 
 /* driver.c */
 extern const struct gdi_dc_funcs null_driver DECLSPEC_HIDDEN;

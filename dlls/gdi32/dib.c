@@ -1334,7 +1334,7 @@ INT WINAPI GetDIBits(
         lines = src.height;
     }
 
-    err = bmp->funcs->pGetImage( NULL, hbitmap, src_info, bits ? &src_bits : NULL, bits ? &src : NULL );
+    err = get_image_from_bitmap( bmp, src_info, bits ? &src_bits : NULL, bits ? &src : NULL );
 
     if (err) goto done;
 

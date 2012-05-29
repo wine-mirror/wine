@@ -808,46 +808,19 @@ static void set_color_info( const dib_info *dib, BITMAPINFO *info )
     }
 }
 
-/***********************************************************************
- *           dibdrv_GetImage
- */
-DWORD dibdrv_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
-                       struct gdi_image_bits *bits, struct bitblt_coords *src )
+static DWORD get_image_dib_info( dib_info *dib, BITMAPINFO *info,
+                                 struct gdi_image_bits *bits, struct bitblt_coords *src )
 {
-    DWORD ret = ERROR_SUCCESS;
-    dib_info *dib = NULL, stand_alone;
-
-    TRACE( "%p %p %p\n", dev, hbitmap, info );
-
     info->bmiHeader.biSize          = sizeof(info->bmiHeader);
     info->bmiHeader.biPlanes        = 1;
     info->bmiHeader.biCompression   = BI_RGB;
     info->bmiHeader.biXPelsPerMeter = 0;
     info->bmiHeader.biYPelsPerMeter = 0;
     info->bmiHeader.biClrImportant  = 0;
-
-    if (hbitmap)
-    {
-        BITMAPOBJ *bmp = GDI_GetObjPtr( hbitmap, OBJ_BITMAP );
-
-        if (!bmp) return ERROR_INVALID_HANDLE;
-        if (!init_dib_info_from_bitmapobj( &stand_alone, bmp ))
-        {
-            ret = ERROR_OUTOFMEMORY;
-            goto done;
-        }
-        dib = &stand_alone;
-    }
-    else
-    {
-        dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
-        dib = &pdev->dib;
-    }
-
-    info->bmiHeader.biWidth     = dib->width;
-    info->bmiHeader.biHeight    = dib->rect.bottom - dib->rect.top;
-    info->bmiHeader.biBitCount  = dib->bit_count;
-    info->bmiHeader.biSizeImage = info->bmiHeader.biHeight * abs( dib->stride );
+    info->bmiHeader.biWidth         = dib->width;
+    info->bmiHeader.biHeight        = dib->rect.bottom - dib->rect.top;
+    info->bmiHeader.biBitCount      = dib->bit_count;
+    info->bmiHeader.biSizeImage     = info->bmiHeader.biHeight * abs( dib->stride );
     if (dib->stride > 0) info->bmiHeader.biHeight = -info->bmiHeader.biHeight;
 
     set_color_info( dib, info );
@@ -863,10 +836,39 @@ DWORD dibdrv_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
         src->x += dib->rect.left;
         offset_rect( &src->visrect, dib->rect.left, 0 );
     }
+    return ERROR_SUCCESS;
+}
 
-done:
-   if (hbitmap) GDI_ReleaseObj( hbitmap );
-   return ret;
+DWORD get_image_from_bitmap( BITMAPOBJ *bmp, BITMAPINFO *info,
+                             struct gdi_image_bits *bits, struct bitblt_coords *src )
+{
+    dib_info dib;
+
+    if (!init_dib_info_from_bitmapobj( &dib, bmp )) return ERROR_OUTOFMEMORY;
+    return get_image_dib_info( &dib, info, bits, src );
+}
+
+/***********************************************************************
+ *           dibdrv_GetImage
+ */
+DWORD dibdrv_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
+                       struct gdi_image_bits *bits, struct bitblt_coords *src )
+{
+    dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
+
+    TRACE( "%p %p %p\n", dev, hbitmap, info );
+
+    if (hbitmap)
+    {
+        DWORD ret;
+        BITMAPOBJ *bmp = GDI_GetObjPtr( hbitmap, OBJ_BITMAP );
+        if (!bmp) return ERROR_INVALID_HANDLE;
+        ret = get_image_from_bitmap( bmp, info, bits, src );
+        GDI_ReleaseObj( hbitmap );
+        return ret;
+    }
+
+    return get_image_dib_info( &pdev->dib, info, bits, src );
 }
 
 static BOOL matching_color_info( const dib_info *dib, const BITMAPINFO *info )

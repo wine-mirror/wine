@@ -265,7 +265,7 @@ LONG WINAPI GetBitmapBits(
     src.width = src.visrect.right - src.visrect.left;
     src.height = src.visrect.bottom - src.visrect.top;
 
-    if (!bmp->funcs->pGetImage( NULL, hbitmap, info, &src_bits, &src ))
+    if (!get_image_from_bitmap( bmp, info, &src_bits, &src ))
     {
         const char *src_ptr = src_bits.ptr;
         int src_stride = get_dib_stride( info->bmiHeader.biWidth, info->bmiHeader.biBitCount );

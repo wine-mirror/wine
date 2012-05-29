@@ -69,7 +69,7 @@ static BOOL copy_bitmap( struct brush_pattern *brush, HBITMAP bitmap )
     src.visrect.top    = src.y = 0;
     src.visrect.right  = src.width = bmp->dib.dsBm.bmWidth;
     src.visrect.bottom = src.height = bmp->dib.dsBm.bmHeight;
-    if (bmp->funcs->pGetImage( NULL, bitmap, info, &bits, &src )) goto done;
+    if (get_image_from_bitmap( bmp, info, &bits, &src )) goto done;
 
     brush->bits = bits;
     if (!bits.free)
