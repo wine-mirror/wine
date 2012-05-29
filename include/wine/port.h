@@ -199,6 +199,15 @@ struct statvfs
 #define M_PI_2 1.570796326794896619
 #endif
 
+#ifndef NAN
+static float inline __port_nan(void)
+{
+    static const unsigned __nan_bytes = 0x7fc00000;
+    return *(const float *)&__nan_bytes;
+}
+#define NAN __port_nan()
+#endif
+
 
 /****************************************************************
  * Function definitions (only when using libwine_port)
