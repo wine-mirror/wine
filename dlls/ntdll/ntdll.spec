@@ -1268,6 +1268,7 @@
 @ cdecl -private _itoa(long ptr long)
 @ cdecl -private _itow(long ptr long)
 @ cdecl -private _lfind(ptr ptr ptr long ptr)
+@ stdcall -arch=x86_64 _local_unwind(ptr ptr)
 @ cdecl -private _ltoa(long ptr long)
 @ cdecl -private _ltow(long ptr long)
 @ cdecl -private _memccpy(ptr ptr long long)

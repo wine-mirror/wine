@@ -1282,6 +1282,7 @@
 @ stdcall _lclose(long)
 @ stdcall _lcreat(str long)
 @ stdcall _llseek(long long long)
+@ stdcall -arch=x86_64 -private _local_unwind(ptr ptr) ntdll._local_unwind
 @ stdcall _lopen(str long)
 @ stdcall _lread(long ptr long)
 @ stdcall _lwrite(long ptr long)
