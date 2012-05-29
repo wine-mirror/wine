@@ -965,6 +965,15 @@ static HRESULT WINAPI JoystickWImpl_GetProperty(LPDIRECTINPUTDEVICE8W iface, REF
         break;
     }
 
+    case (DWORD_PTR) DIPROP_JOYSTICKID:
+    {
+        LPDIPROPDWORD pd = (LPDIPROPDWORD)pdiph;
+
+        pd->dwData = get_joystick_index(&This->generic.base.guid);
+        TRACE("DIPROP_JOYSTICKID(%d)\n", pd->dwData);
+        break;
+    }
+
     default:
         return JoystickWGenericImpl_GetProperty(iface, rguid, pdiph);
     }
