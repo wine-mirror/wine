@@ -1876,6 +1876,7 @@ static DWORD create_image_pixmap( BITMAPINFO *info, const struct gdi_image_bits 
     int depth = pict_formats[format]->depth;
     struct gdi_image_bits dst_bits;
     XRenderPictureAttributes pa;
+    GC gc;
     XImage *image;
 
     wine_tsx11_lock();
@@ -1894,9 +1895,10 @@ static DWORD create_image_pixmap( BITMAPINFO *info, const struct gdi_image_bits 
 
     wine_tsx11_lock();
     *pixmap = XCreatePixmap( gdi_display, root_window, width, height, depth );
-    XPutImage( gdi_display, *pixmap, get_bitmap_gc( depth ), image,
-               src->visrect.left, 0, 0, 0, width, height );
+    gc = XCreateGC( gdi_display, *pixmap, 0, NULL );
+    XPutImage( gdi_display, *pixmap, gc, image, src->visrect.left, 0, 0, 0, width, height );
     *pict = pXRenderCreatePicture( gdi_display, *pixmap, pict_formats[format], CPRepeat, &pa );
+    XFreeGC( gdi_display, gc );
     wine_tsx11_unlock();
 
     /* make coordinates relative to the pixmap */

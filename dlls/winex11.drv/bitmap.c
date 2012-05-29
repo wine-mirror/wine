@@ -36,7 +36,7 @@ X_PHYSBITMAP BITMAP_stock_phys_bitmap = { 0 };  /* phys bitmap for the default s
 
 static XContext bitmap_context;  /* X context to associate a phys bitmap to a handle */
 
-GC get_bitmap_gc(int depth)
+static GC get_bitmap_gc(int depth)
 {
     if(depth < 1 || depth > 32)
         return 0;

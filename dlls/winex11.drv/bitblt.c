@@ -1365,16 +1365,21 @@ DWORD X11DRV_GetImage( PHYSDEV dev, BITMAPINFO *info,
     if (X11DRV_check_error())
     {
         /* use a temporary pixmap to avoid the BadMatch error */
+        GC gc;
         Pixmap pixmap;
 
         wine_tsx11_lock();
         pixmap = XCreatePixmap( gdi_display, root_window, width, height, vis.depth );
-        XCopyArea( gdi_display, physdev->drawable, pixmap, get_bitmap_gc(vis.depth),
+        gc = XCreateGC( gdi_display, pixmap, 0, NULL );
+        XSetGraphicsExposures( gdi_display, gc, False );
+        XCopyArea( gdi_display, physdev->drawable, pixmap, gc,
                    physdev->dc_rect.left + x, physdev->dc_rect.top + y, width, height, 0, 0 );
         image = XGetImage( gdi_display, pixmap, 0, 0, width, height, AllPlanes, ZPixmap );
         XFreePixmap( gdi_display, pixmap );
+        XFreeGC( gdi_display, gc );
         wine_tsx11_unlock();
     }
+
     if (!image) return ERROR_OUTOFMEMORY;
 
     info->bmiHeader.biWidth     = width;
@@ -1408,6 +1413,7 @@ static DWORD put_pixmap_image( Pixmap pixmap, const XVisualInfo *vis,
 {
     DWORD ret;
     XImage *image;
+    GC gc;
     struct bitblt_coords coords;
     struct gdi_image_bits dst_bits;
     const XPixmapFormatValues *format = pixmap_formats[vis->depth];
@@ -1439,8 +1445,9 @@ static DWORD put_pixmap_image( Pixmap pixmap, const XVisualInfo *vis,
     {
         image->data = dst_bits.ptr;
         wine_tsx11_lock();
-        XPutImage( gdi_display, pixmap, get_bitmap_gc( vis->depth ),
-                   image, 0, 0, 0, 0, coords.width, coords.height );
+        gc = XCreateGC( gdi_display, pixmap, 0, NULL );
+        XPutImage( gdi_display, pixmap, gc, image, 0, 0, 0, 0, coords.width, coords.height );
+        XFreeGC( gdi_display, gc );
         wine_tsx11_unlock();
         image->data = NULL;
     }

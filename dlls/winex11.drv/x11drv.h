@@ -164,9 +164,6 @@ static inline void add_bounds_rect( RECT *bounds, const RECT *rect )
 
 extern X_PHYSBITMAP BITMAP_stock_phys_bitmap DECLSPEC_HIDDEN;  /* phys bitmap for the default stock bitmap */
 
-/* Retrieve the GC used for bitmap operations */
-extern GC get_bitmap_gc(int depth) DECLSPEC_HIDDEN;
-
 /* Wine driver X11 functions */
 
 extern BOOL X11DRV_Arc( PHYSDEV dev, INT left, INT top, INT right,

@@ -110,7 +110,7 @@ static Pixmap BRUSH_DitherColor( COLORREF color, int depth)
     static COLORREF prevColor = 0xffffffff;
     unsigned int x, y;
     Pixmap pixmap;
-    GC gc = get_bitmap_gc(depth);
+    GC gc;
 
     wine_tsx11_lock();
     if (!ditherImage)
@@ -149,8 +149,9 @@ static Pixmap BRUSH_DitherColor( COLORREF color, int depth)
     }
 
     pixmap = XCreatePixmap( gdi_display, root_window, MATRIX_SIZE, MATRIX_SIZE, depth );
-    XPutImage( gdi_display, pixmap, gc, ditherImage, 0, 0,
-    	       0, 0, MATRIX_SIZE, MATRIX_SIZE );
+    gc = XCreateGC( gdi_display, pixmap, 0, NULL );
+    XPutImage( gdi_display, pixmap, gc, ditherImage, 0, 0, 0, 0, MATRIX_SIZE, MATRIX_SIZE );
+    XFreeGC( gdi_display, gc );
     wine_tsx11_unlock();
 
     return pixmap;
