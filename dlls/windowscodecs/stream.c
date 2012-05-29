@@ -735,8 +735,13 @@ static HRESULT WINAPI IWICStreamImpl_Clone(IWICStream *iface,
 static HRESULT WINAPI IWICStreamImpl_InitializeFromIStream(IWICStream *iface,
     IStream *pIStream)
 {
-    FIXME("(%p): stub\n", iface);
-    return E_NOTIMPL;
+    ULARGE_INTEGER offset, size;
+    TRACE("(%p): relay\n", iface);
+
+    offset.QuadPart = 0;
+    size.u.LowPart = 0xffffffff;
+    size.u.HighPart = 0xffffffff;
+    return IWICStream_InitializeFromIStreamRegion(iface, pIStream, offset, size);
 }
 
 static HRESULT WINAPI IWICStreamImpl_InitializeFromFilename(IWICStream *iface,
