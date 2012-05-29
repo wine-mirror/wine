@@ -1660,10 +1660,40 @@ HRESULT WINAPI D3DXSaveTextureToFileW(const WCHAR *dst_filename, D3DXIMAGE_FILEF
 HRESULT WINAPI D3DXSaveTextureToFileInMemory(ID3DXBuffer **dst_buffer, D3DXIMAGE_FILEFORMAT file_format,
         IDirect3DBaseTexture9 *src_texture, const PALETTEENTRY *src_palette)
 {
-    FIXME("(%p, %#x, %p, %p): stub\n",
+    HRESULT hr;
+    D3DRESOURCETYPE type;
+    IDirect3DSurface9 *surface;
+
+    TRACE("(%p, %#x, %p, %p)\n",
         dst_buffer, file_format, src_texture, src_palette);
 
     if (!dst_buffer || !src_texture) return D3DERR_INVALIDCALL;
 
-    return E_NOTIMPL;
+    if (file_format == D3DXIFF_DDS)
+    {
+        FIXME("DDS file format isn't supported yet\n");
+        return E_NOTIMPL;
+    }
+
+    type = IDirect3DBaseTexture9_GetType(src_texture);
+    switch (type)
+    {
+        case D3DRTYPE_TEXTURE:
+        case D3DRTYPE_CUBETEXTURE:
+            hr = get_surface(type, src_texture, D3DCUBEMAP_FACE_POSITIVE_X, 0, &surface);
+            break;
+        case D3DRTYPE_VOLUMETEXTURE:
+            FIXME("Volume textures aren't supported yet\n");
+            return E_NOTIMPL;
+        default:
+            return D3DERR_INVALIDCALL;
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        hr = D3DXSaveSurfaceToFileInMemory(dst_buffer, file_format, surface, src_palette, NULL);
+        IDirect3DSurface9_Release(surface);
+    }
+
+    return hr;
 }
