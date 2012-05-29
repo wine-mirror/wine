@@ -1188,7 +1188,7 @@ ULONG WINAPI NtGetCurrentProcessorNumber(void)
     ULONG processor;
 
 #if defined(__linux__) && defined(__NR_getcpu)
-    int res = syscall(__NR_getcpu, &processor);
+    int res = syscall(__NR_getcpu, &processor, NULL, NULL);
     if (res != -1) return processor;
 #endif
 
