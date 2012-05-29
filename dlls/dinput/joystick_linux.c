@@ -542,6 +542,42 @@ static HRESULT WINAPI JoystickLinuxAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
 }
 
 /******************************************************************************
+  *     GetProperty : get input device properties
+  */
+static HRESULT WINAPI JoystickLinuxWImpl_GetProperty(LPDIRECTINPUTDEVICE8W iface, REFGUID rguid, LPDIPROPHEADER pdiph)
+{
+    JoystickImpl *This = impl_from_IDirectInputDevice8W(iface);
+
+    TRACE("(this=%p,%s,%p)\n", iface, debugstr_guid(rguid), pdiph);
+    _dump_DIPROPHEADER(pdiph);
+
+    if (!IS_DIPROP(rguid)) return DI_OK;
+
+    switch (LOWORD(rguid)) {
+
+        case (DWORD_PTR) DIPROP_JOYSTICKID:
+        {
+            LPDIPROPDWORD pd = (LPDIPROPDWORD)pdiph;
+
+            pd->dwData = get_joystick_index(&This->generic.base.guid);
+            TRACE("DIPROP_JOYSTICKID(%d)\n", pd->dwData);
+            break;
+        }
+
+    default:
+        return JoystickWGenericImpl_GetProperty(iface, rguid, pdiph);
+    }
+
+    return DI_OK;
+}
+
+static HRESULT WINAPI JoystickLinuxAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface, REFGUID rguid, LPDIPROPHEADER pdiph)
+{
+    JoystickImpl *This = impl_from_IDirectInputDevice8A(iface);
+    return JoystickLinuxWImpl_GetProperty(IDirectInputDevice8W_from_impl(This), rguid, pdiph);
+}
+
+/******************************************************************************
   *     Unacquire : frees the joystick
   */
 static HRESULT WINAPI JoystickLinuxWImpl_Unacquire(LPDIRECTINPUTDEVICE8W iface)
@@ -655,7 +691,7 @@ static const IDirectInputDevice8AVtbl JoystickAvt =
         IDirectInputDevice2AImpl_Release,
 	JoystickAGenericImpl_GetCapabilities,
         IDirectInputDevice2AImpl_EnumObjects,
-	JoystickAGenericImpl_GetProperty,
+	JoystickLinuxAImpl_GetProperty,
 	JoystickAGenericImpl_SetProperty,
 	JoystickLinuxAImpl_Acquire,
 	JoystickLinuxAImpl_Unacquire,
@@ -691,7 +727,7 @@ static const IDirectInputDevice8WVtbl JoystickWvt =
     IDirectInputDevice2WImpl_Release,
     JoystickWGenericImpl_GetCapabilities,
     IDirectInputDevice2WImpl_EnumObjects,
-    JoystickWGenericImpl_GetProperty,
+    JoystickLinuxWImpl_GetProperty,
     JoystickWGenericImpl_SetProperty,
     JoystickLinuxWImpl_Acquire,
     JoystickLinuxWImpl_Unacquire,
