@@ -91,6 +91,16 @@ static const char metadata_tEXt[] = {
     0x3f,0x64,0x19,0xf3 /* chunk CRC */
 };
 
+static const char pngimage[285] = {
+0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a,0x00,0x00,0x00,0x0d,0x49,0x48,0x44,0x52,
+0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,0x08,0x02,0x00,0x00,0x00,0x90,0x77,0x53,
+0xde,0x00,0x00,0x00,0x09,0x70,0x48,0x59,0x73,0x00,0x00,0x0b,0x13,0x00,0x00,0x0b,
+0x13,0x01,0x00,0x9a,0x9c,0x18,0x00,0x00,0x00,0x07,0x74,0x49,0x4d,0x45,0x07,0xd5,
+0x06,0x03,0x0f,0x07,0x2d,0x12,0x10,0xf0,0xfd,0x00,0x00,0x00,0x0c,0x49,0x44,0x41,
+0x54,0x08,0xd7,0x63,0xf8,0xff,0xff,0x3f,0x00,0x05,0xfe,0x02,0xfe,0xdc,0xcc,0x59,
+0xe7,0x00,0x00,0x00,0x00,0x49,0x45,0x4e,0x44,0xae,0x42,0x60,0x82
+};
+
 static const char *debugstr_guid(REFIID riid)
 {
     static char buf[50];
@@ -530,6 +540,86 @@ todo_wine
     IWICComponentFactory_Release(factory);
 }
 
+static void test_metadata_png(void)
+{
+    IStream *stream;
+    IWICBitmapDecoder *decoder;
+    IWICBitmapFrameDecode *frame;
+    IWICMetadataBlockReader *blockreader;
+    IWICMetadataReader *reader;
+    GUID containerformat;
+    HRESULT hr;
+    UINT count;
+
+    hr = CoCreateInstance(&CLSID_WICPngDecoder, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IWICBitmapDecoder, (void**)&decoder);
+    ok(hr == S_OK, "CoCreateInstance failed, hr=%x\n", hr);
+
+    if (FAILED(hr)) return;
+
+    stream = create_stream(pngimage, sizeof(pngimage));
+
+    hr = IWICBitmapDecoder_Initialize(decoder, stream, WICDecodeMetadataCacheOnLoad);
+    ok(hr == S_OK, "Initialize failed, hr=%x\n", hr);
+
+    hr = IWICBitmapDecoder_QueryInterface(decoder, &IID_IWICMetadataBlockReader, (void**)&blockreader);
+    ok(hr == E_NOINTERFACE, "QueryInterface failed, hr=%x\n", hr);
+
+    hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame);
+    ok(hr == S_OK, "GetFrame failed, hr=%x\n", hr);
+
+    hr = IWICBitmapFrameDecode_QueryInterface(frame, &IID_IWICMetadataBlockReader, (void**)&blockreader);
+    todo_wine ok(hr == S_OK, "QueryInterface failed, hr=%x\n", hr);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = IWICMetadataBlockReader_GetContainerFormat(blockreader, NULL);
+        ok(hr == E_INVALIDARG, "GetContainerFormat failed, hr=%x\n", hr);
+
+        hr = IWICMetadataBlockReader_GetContainerFormat(blockreader, &containerformat);
+        ok(hr == S_OK, "GetContainerFormat failed, hr=%x\n", hr);
+        ok(IsEqualGUID(&containerformat, &GUID_ContainerFormatPng), "unexpected container format\n");
+
+        hr = IWICMetadataBlockReader_GetCount(blockreader, NULL);
+        ok(hr == E_INVALIDARG, "GetCount failed, hr=%x\n", hr);
+
+        hr = IWICMetadataBlockReader_GetCount(blockreader, &count);
+        ok(hr == S_OK, "GetCount failed, hr=%x\n", hr);
+        ok(count == 1, "unexpected count %d\n", count);
+
+        if (0)
+        {
+            /* Crashes on Windows XP */
+            hr = IWICMetadataBlockReader_GetReaderByIndex(blockreader, 0, NULL);
+            ok(hr == E_INVALIDARG, "GetReaderByIndex failed, hr=%x\n", hr);
+        }
+
+        hr = IWICMetadataBlockReader_GetReaderByIndex(blockreader, 0, &reader);
+        ok(hr == S_OK, "GetReaderByIndex failed, hr=%x\n", hr);
+
+        if (SUCCEEDED(hr))
+        {
+            hr = IWICMetadataReader_GetMetadataFormat(reader, &containerformat);
+            ok(IsEqualGUID(&containerformat, &GUID_MetadataFormatChunktIME) ||
+               broken(IsEqualGUID(&containerformat, &GUID_MetadataFormatUnknown)) /* Windows XP */,
+               "unexpected container format\n");
+
+            IWICMetadataReader_Release(reader);
+        }
+
+        hr = IWICMetadataBlockReader_GetReaderByIndex(blockreader, 1, &reader);
+        ok(hr == WINCODEC_ERR_VALUEOUTOFRANGE, "GetReaderByIndex failed, hr=%x\n", hr);
+
+        IWICMetadataBlockReader_Release(blockreader);
+    }
+
+    IWICBitmapFrameDecode_Release(frame);
+
+    IWICBitmapDecoder_Release(decoder);
+
+    IWICStream_Release(stream);
+}
+
 START_TEST(metadata)
 {
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
@@ -539,6 +629,7 @@ START_TEST(metadata)
     test_metadata_IFD();
     test_metadata_Exif();
     test_create_reader();
+    test_metadata_png();
 
     CoUninitialize();
 }
