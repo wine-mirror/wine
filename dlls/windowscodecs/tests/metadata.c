@@ -156,6 +156,7 @@ static void test_metadata_unknown(void)
     HRESULT hr;
     IWICMetadataReader *reader;
     IWICEnumMetadataItem *enumerator;
+    IWICMetadataBlockReader *blockreader;
     PROPVARIANT schema, id, value;
     ULONG items_returned;
 
@@ -196,6 +197,12 @@ static void test_metadata_unknown(void)
 
         IWICEnumMetadataItem_Release(enumerator);
     }
+
+    hr = IWICMetadataReader_QueryInterface(reader, &IID_IWICMetadataBlockReader, (void**)&blockreader);
+    todo_wine ok(hr == E_NOINTERFACE, "QueryInterface failed, hr=%x\n", hr);
+
+    if (SUCCEEDED(hr))
+        IWICMetadataBlockReader_Release(blockreader);
 
     IWICMetadataReader_Release(reader);
 }
@@ -335,6 +342,7 @@ static void test_metadata_IFD(void)
     };
     HRESULT hr;
     IWICMetadataReader *reader;
+    IWICMetadataBlockReader *blockreader;
     IWICEnumMetadataItem *enumerator;
     PROPVARIANT schema, id, value;
     ULONG items_returned, count, i;
@@ -427,6 +435,40 @@ static void test_metadata_IFD(void)
     hr = IWICMetadataReader_GetValueByIndex(reader, count, &schema, NULL, NULL);
     ok(hr == E_INVALIDARG, "GetValueByIndex should fail\n");
 
+    hr = IWICMetadataReader_QueryInterface(reader, &IID_IWICMetadataBlockReader, (void**)&blockreader);
+    ok(hr == E_NOINTERFACE, "QueryInterface failed, hr=%x\n", hr);
+
+    if (SUCCEEDED(hr))
+        IWICMetadataBlockReader_Release(blockreader);
+
+    IWICMetadataReader_Release(reader);
+}
+
+static void test_metadata_Exif(void)
+{
+    HRESULT hr;
+    IWICMetadataReader *reader;
+    IWICMetadataBlockReader *blockreader;
+    UINT count=0;
+
+    hr = CoCreateInstance(&CLSID_WICExifMetadataReader, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IWICMetadataReader, (void**)&reader);
+    todo_wine ok(hr == S_OK, "CoCreateInstance error %#x\n", hr);
+    if (FAILED(hr)) return;
+
+    hr = IWICMetadataReader_GetCount(reader, NULL);
+    ok(hr == E_INVALIDARG, "GetCount error %#x\n", hr);
+
+    hr = IWICMetadataReader_GetCount(reader, &count);
+    ok(hr == S_OK, "GetCount error %#x\n", hr);
+    ok(count == 0, "unexpected count %u\n", count);
+
+    hr = IWICMetadataReader_QueryInterface(reader, &IID_IWICMetadataBlockReader, (void**)&blockreader);
+    ok(hr == E_NOINTERFACE, "QueryInterface failed, hr=%x\n", hr);
+
+    if (SUCCEEDED(hr))
+        IWICMetadataBlockReader_Release(blockreader);
+
     IWICMetadataReader_Release(reader);
 }
 
@@ -495,6 +537,7 @@ START_TEST(metadata)
     test_metadata_unknown();
     test_metadata_tEXt();
     test_metadata_IFD();
+    test_metadata_Exif();
     test_create_reader();
 
     CoUninitialize();
