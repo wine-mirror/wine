@@ -199,7 +199,7 @@ static void test_metadata_unknown(void)
     }
 
     hr = IWICMetadataReader_QueryInterface(reader, &IID_IWICMetadataBlockReader, (void**)&blockreader);
-    todo_wine ok(hr == E_NOINTERFACE, "QueryInterface failed, hr=%x\n", hr);
+    ok(hr == E_NOINTERFACE, "QueryInterface failed, hr=%x\n", hr);
 
     if (SUCCEEDED(hr))
         IWICMetadataBlockReader_Release(blockreader);
