@@ -245,6 +245,8 @@ void WINAPI OutputDebugStringA( LPCSTR str )
     static HANDLE DBWinMutex = NULL;
     static BOOL mutex_inited = FALSE;
 
+    if (!str) str = "";
+
     /* send string to attached debugger */
     SERVER_START_REQ( output_debug_string )
     {
