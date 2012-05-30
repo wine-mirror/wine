@@ -276,7 +276,7 @@ static HRESULT HttpProtocol_open_request(Protocol *prot, IUri *uri, DWORD reques
     LPOLESTR accept_mimes[257];
     const WCHAR **accept_types;
     BYTE security_id[512];
-    DWORD len, port;
+    DWORD len, port, flags;
     ULONG num, error;
     BOOL res, b;
     HRESULT hres;
@@ -419,10 +419,15 @@ static HRESULT HttpProtocol_open_request(Protocol *prot, IUri *uri, DWORD reques
         }
     }
 
+    flags = INTERNET_ERROR_MASK_COMBINED_SEC_CERT;
+    res = InternetSetOptionW(This->base.request, INTERNET_OPTION_ERROR_MASK, &flags, sizeof(flags));
+    if(!res)
+        WARN("InternetSetOption(INTERNET_OPTION_ERROR_MASK) failed: %u\n", GetLastError());
+
     b = TRUE;
     res = InternetSetOptionW(This->base.request, INTERNET_OPTION_HTTP_DECODING, &b, sizeof(b));
     if(!res)
-        WARN("InternetSetOption(INTERNET_OPTION_HTTP_DECODING) failed: %08x\n", GetLastError());
+        WARN("InternetSetOption(INTERNET_OPTION_HTTP_DECODING) failed: %u\n", GetLastError());
 
     do {
         error = send_http_request(This);
