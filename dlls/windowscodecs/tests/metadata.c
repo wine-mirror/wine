@@ -569,7 +569,7 @@ static void test_metadata_png(void)
     ok(hr == S_OK, "GetFrame failed, hr=%x\n", hr);
 
     hr = IWICBitmapFrameDecode_QueryInterface(frame, &IID_IWICMetadataBlockReader, (void**)&blockreader);
-    todo_wine ok(hr == S_OK, "QueryInterface failed, hr=%x\n", hr);
+    ok(hr == S_OK, "QueryInterface failed, hr=%x\n", hr);
 
     if (SUCCEEDED(hr))
     {
@@ -581,11 +581,11 @@ static void test_metadata_png(void)
         ok(IsEqualGUID(&containerformat, &GUID_ContainerFormatPng), "unexpected container format\n");
 
         hr = IWICMetadataBlockReader_GetCount(blockreader, NULL);
-        ok(hr == E_INVALIDARG, "GetCount failed, hr=%x\n", hr);
+        todo_wine ok(hr == E_INVALIDARG, "GetCount failed, hr=%x\n", hr);
 
         hr = IWICMetadataBlockReader_GetCount(blockreader, &count);
-        ok(hr == S_OK, "GetCount failed, hr=%x\n", hr);
-        ok(count == 1, "unexpected count %d\n", count);
+        todo_wine ok(hr == S_OK, "GetCount failed, hr=%x\n", hr);
+        todo_wine ok(count == 1, "unexpected count %d\n", count);
 
         if (0)
         {
@@ -595,7 +595,7 @@ static void test_metadata_png(void)
         }
 
         hr = IWICMetadataBlockReader_GetReaderByIndex(blockreader, 0, &reader);
-        ok(hr == S_OK, "GetReaderByIndex failed, hr=%x\n", hr);
+        todo_wine ok(hr == S_OK, "GetReaderByIndex failed, hr=%x\n", hr);
 
         if (SUCCEEDED(hr))
         {
@@ -608,7 +608,7 @@ static void test_metadata_png(void)
         }
 
         hr = IWICMetadataBlockReader_GetReaderByIndex(blockreader, 1, &reader);
-        ok(hr == WINCODEC_ERR_VALUEOUTOFRANGE, "GetReaderByIndex failed, hr=%x\n", hr);
+        todo_wine ok(hr == WINCODEC_ERR_VALUEOUTOFRANGE, "GetReaderByIndex failed, hr=%x\n", hr);
 
         IWICMetadataBlockReader_Release(blockreader);
     }

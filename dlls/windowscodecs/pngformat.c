@@ -31,6 +31,7 @@
 #include "winbase.h"
 #include "objbase.h"
 #include "wincodec.h"
+#include "wincodecsdk.h"
 
 #include "wincodecs_private.h"
 
@@ -152,6 +153,7 @@ static void user_warning_fn(png_structp png_ptr, png_const_charp warning_message
 typedef struct {
     IWICBitmapDecoder IWICBitmapDecoder_iface;
     IWICBitmapFrameDecode IWICBitmapFrameDecode_iface;
+    IWICMetadataBlockReader IWICMetadataBlockReader_iface;
     LONG ref;
     png_structp png_ptr;
     png_infop info_ptr;
@@ -173,6 +175,11 @@ static inline PngDecoder *impl_from_IWICBitmapDecoder(IWICBitmapDecoder *iface)
 static inline PngDecoder *impl_from_IWICBitmapFrameDecode(IWICBitmapFrameDecode *iface)
 {
     return CONTAINING_RECORD(iface, PngDecoder, IWICBitmapFrameDecode_iface);
+}
+
+static inline PngDecoder *impl_from_IWICMetadataBlockReader(IWICMetadataBlockReader *iface)
+{
+    return CONTAINING_RECORD(iface, PngDecoder, IWICMetadataBlockReader_iface);
 }
 
 static const IWICBitmapFrameDecodeVtbl PngDecoder_FrameVtbl;
@@ -559,6 +566,7 @@ static const IWICBitmapDecoderVtbl PngDecoder_Vtbl = {
 static HRESULT WINAPI PngDecoder_Frame_QueryInterface(IWICBitmapFrameDecode *iface, REFIID iid,
     void **ppv)
 {
+    PngDecoder *This = impl_from_IWICBitmapFrameDecode(iface);
     if (!ppv) return E_INVALIDARG;
 
     if (IsEqualIID(&IID_IUnknown, iid) ||
@@ -566,6 +574,10 @@ static HRESULT WINAPI PngDecoder_Frame_QueryInterface(IWICBitmapFrameDecode *ifa
         IsEqualIID(&IID_IWICBitmapFrameDecode, iid))
     {
         *ppv = iface;
+    }
+    else if (IsEqualIID(&IID_IWICMetadataBlockReader, iid))
+    {
+        *ppv = (void**)&This->IWICMetadataBlockReader_iface;
     }
     else
     {
@@ -744,6 +756,64 @@ static const IWICBitmapFrameDecodeVtbl PngDecoder_FrameVtbl = {
     PngDecoder_Frame_GetThumbnail
 };
 
+static HRESULT WINAPI PngDecoder_Block_QueryInterface(IWICMetadataBlockReader *iface, REFIID iid,
+    void **ppv)
+{
+    PngDecoder *This = impl_from_IWICMetadataBlockReader(iface);
+    return IWICBitmapFrameDecode_QueryInterface(&This->IWICBitmapFrameDecode_iface, iid, ppv);
+}
+
+static ULONG WINAPI PngDecoder_Block_AddRef(IWICMetadataBlockReader *iface)
+{
+    PngDecoder *This = impl_from_IWICMetadataBlockReader(iface);
+    return IUnknown_AddRef((IUnknown*)This);
+}
+
+static ULONG WINAPI PngDecoder_Block_Release(IWICMetadataBlockReader *iface)
+{
+    PngDecoder *This = impl_from_IWICMetadataBlockReader(iface);
+    return IUnknown_Release((IUnknown*)This);
+}
+
+static HRESULT WINAPI PngDecoder_Block_GetContainerFormat(IWICMetadataBlockReader *iface,
+    GUID *pguidContainerFormat)
+{
+    if (!pguidContainerFormat) return E_INVALIDARG;
+    memcpy(pguidContainerFormat, &GUID_ContainerFormatPng, sizeof(GUID));
+    return S_OK;
+}
+
+static HRESULT WINAPI PngDecoder_Block_GetCount(IWICMetadataBlockReader *iface,
+    UINT *pcCount)
+{
+    FIXME("%p,%p: stub\n", iface, pcCount);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PngDecoder_Block_GetReaderByIndex(IWICMetadataBlockReader *iface,
+    UINT nIndex, IWICMetadataReader **ppIMetadataReader)
+{
+    FIXME("%p,%d,%p\n", iface, nIndex, ppIMetadataReader);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PngDecoder_Block_GetEnumerator(IWICMetadataBlockReader *iface,
+    IEnumUnknown **ppIEnumMetadata)
+{
+    FIXME("%p,%p\n", iface, ppIEnumMetadata);
+    return E_NOTIMPL;
+}
+
+static const IWICMetadataBlockReaderVtbl PngDecoder_BlockVtbl = {
+    PngDecoder_Block_QueryInterface,
+    PngDecoder_Block_AddRef,
+    PngDecoder_Block_Release,
+    PngDecoder_Block_GetContainerFormat,
+    PngDecoder_Block_GetCount,
+    PngDecoder_Block_GetReaderByIndex,
+    PngDecoder_Block_GetEnumerator,
+};
+
 HRESULT PngDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
 {
     PngDecoder *This;
@@ -766,6 +836,7 @@ HRESULT PngDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
 
     This->IWICBitmapDecoder_iface.lpVtbl = &PngDecoder_Vtbl;
     This->IWICBitmapFrameDecode_iface.lpVtbl = &PngDecoder_FrameVtbl;
+    This->IWICMetadataBlockReader_iface.lpVtbl = &PngDecoder_BlockVtbl;
     This->ref = 1;
     This->png_ptr = NULL;
     This->info_ptr = NULL;
