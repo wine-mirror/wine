@@ -2878,6 +2878,45 @@ static void release_cert_info(INTERNET_CERTIFICATE_INFOA *info)
     LocalFree(info->lpszEncryptionAlgName);
 }
 
+static void test_cert_struct(HINTERNET req)
+{
+    INTERNET_CERTIFICATE_INFOA info;
+    DWORD size;
+    BOOL res;
+
+    static const char ex_subject[] =
+        "US\r\n"
+        "Minnesota\r\n"
+        "Saint Paul\r\n"
+        "WineHQ\r\n"
+        "test.winehq.org\r\n"
+        "webmaster@winehq.org";
+
+    static const char ex_issuer[] =
+        "US\r\n"
+        "Minnesota\r\n"
+        "WineHQ\r\n"
+        "test.winehq.org\r\n"
+        "webmaster@winehq.org";
+
+    memset(&info, 0x5, sizeof(&info));
+
+    size = sizeof(info);
+    res = InternetQueryOption(req, INTERNET_OPTION_SECURITY_CERTIFICATE_STRUCT, &info, &size);
+    ok(res, "InternetQueryOption failed: %u\n", GetLastError());
+    ok(size == sizeof(info), "size = %u\n", size);
+
+    ok(!strcmp(info.lpszSubjectInfo, ex_subject), "lpszSubjectInfo = %s\n", info.lpszSubjectInfo);
+    ok(!strcmp(info.lpszIssuerInfo, ex_issuer), "lpszIssuerInfo = %s\n", info.lpszIssuerInfo);
+    ok(!info.lpszSignatureAlgName, "lpszSignatureAlgName = %s\n", info.lpszSignatureAlgName);
+    ok(!info.lpszEncryptionAlgName, "lpszEncryptionAlgName = %s\n", info.lpszEncryptionAlgName);
+    ok(!info.lpszProtocolName, "lpszProtocolName = %s\n", info.lpszProtocolName);
+    todo_wine
+    ok(info.dwKeySize == 128, "dwKeySize = %u\n", info.dwKeySize);
+
+    release_cert_info(&info);
+}
+
 #define test_secflags_option(a,b) _test_secflags_option(__LINE__,a,b)
 static void _test_secflags_option(unsigned line, HINTERNET req, DWORD ex_flags)
 {
@@ -3057,6 +3096,8 @@ static void test_security_flags(void)
     test_request_flags(req, 0);
     test_secflags_option(req, SECURITY_FLAG_SECURE|SECURITY_FLAG_IGNORE_UNKNOWN_CA
                          |SECURITY_FLAG_STRENGTH_STRONG|0x800000);
+
+    test_cert_struct(req);
 
     res = InternetReadFile(req, buf, sizeof(buf), &size);
     ok(res, "InternetReadFile failed: %u\n", GetLastError());

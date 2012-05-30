@@ -2130,18 +2130,18 @@ static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffe
             info->ftExpiry = context->pCertInfo->NotAfter;
             info->ftStart = context->pCertInfo->NotBefore;
             len = CertNameToStrA(context->dwCertEncodingType,
-                     &context->pCertInfo->Subject, CERT_SIMPLE_NAME_STR, NULL, 0);
+                     &context->pCertInfo->Subject, CERT_SIMPLE_NAME_STR|CERT_NAME_STR_CRLF_FLAG, NULL, 0);
             info->lpszSubjectInfo = LocalAlloc(0, len);
             if(info->lpszSubjectInfo)
                 CertNameToStrA(context->dwCertEncodingType,
-                         &context->pCertInfo->Subject, CERT_SIMPLE_NAME_STR,
+                         &context->pCertInfo->Subject, CERT_SIMPLE_NAME_STR|CERT_NAME_STR_CRLF_FLAG,
                          info->lpszSubjectInfo, len);
             len = CertNameToStrA(context->dwCertEncodingType,
-                     &context->pCertInfo->Issuer, CERT_SIMPLE_NAME_STR, NULL, 0);
+                     &context->pCertInfo->Issuer, CERT_SIMPLE_NAME_STR|CERT_NAME_STR_CRLF_FLAG, NULL, 0);
             info->lpszIssuerInfo = LocalAlloc(0, len);
             if(info->lpszIssuerInfo)
                 CertNameToStrA(context->dwCertEncodingType,
-                         &context->pCertInfo->Issuer, CERT_SIMPLE_NAME_STR,
+                         &context->pCertInfo->Issuer, CERT_SIMPLE_NAME_STR|CERT_NAME_STR_CRLF_FLAG,
                          info->lpszIssuerInfo, len);
             info->dwKeySize = NETCON_GetCipherStrength(req->netconn);
             CertFreeCertificateContext(context);
