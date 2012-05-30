@@ -119,6 +119,9 @@ static HRESULT handle_http_error(HttpProtocol *This, DWORD error)
     IWindowForBindingUI *wfb_ui;
     IHttpSecurity *http_security;
     BOOL security_problem;
+    DWORD dlg_flags;
+    HWND hwnd;
+    DWORD res;
     HRESULT hres;
 
     switch(error) {
@@ -183,7 +186,6 @@ static HRESULT handle_http_error(HttpProtocol *This, DWORD error)
     hres = IServiceProvider_QueryService(serv_prov, &IID_IWindowForBindingUI, &IID_IWindowForBindingUI,
                                          (void**)&wfb_ui);
     if(SUCCEEDED(hres)) {
-        HWND hwnd;
         const IID *iid_reason;
 
         if(security_problem)
@@ -194,26 +196,20 @@ static HRESULT handle_http_error(HttpProtocol *This, DWORD error)
             iid_reason = &IID_IWindowForBindingUI;
 
         hres = IWindowForBindingUI_GetWindow(wfb_ui, iid_reason, &hwnd);
-        if(SUCCEEDED(hres) && hwnd)
-        {
-            DWORD res;
-
-            res = InternetErrorDlg(hwnd, This->base.request, error,
-                                   FLAGS_ERROR_UI_FLAGS_CHANGE_OPTIONS | FLAGS_ERROR_UI_FLAGS_GENERATE_DATA,
-                                   NULL);
-
-            if(res == ERROR_INTERNET_FORCE_RETRY || res == ERROR_SUCCESS)
-                hres = RPC_E_RETRY;
-            else
-                hres = E_FAIL;
-        }
         IWindowForBindingUI_Release(wfb_ui);
+        if(FAILED(hres))
+            hwnd = NULL;
     }
 
     IServiceProvider_Release(serv_prov);
 
-    if(hres == RPC_E_RETRY)
-        return hres;
+    dlg_flags = FLAGS_ERROR_UI_FLAGS_CHANGE_OPTIONS | FLAGS_ERROR_UI_FLAGS_GENERATE_DATA;
+    if(This->base.bindf & BINDF_NO_UI)
+        dlg_flags |= FLAGS_ERROR_UI_FLAGS_NO_UI;
+
+    res = InternetErrorDlg(hwnd, This->base.request, error, dlg_flags, NULL);
+    if(res == ERROR_INTERNET_FORCE_RETRY || res == ERROR_SUCCESS)
+        return RPC_E_RETRY;
 
     return internet_error_to_hres(error);
 }
