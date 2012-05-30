@@ -3139,7 +3139,7 @@ PCCERT_CONTEXT WINAPI CertCreateSelfSignCertificate(HCRYPTPROV_OR_NCRYPT_KEY_HAN
     PCCERT_CONTEXT context = NULL;
     BOOL ret, releaseContext = FALSE;
     PCERT_PUBLIC_KEY_INFO pubKey = NULL;
-    DWORD pubKeySize = 0,dwKeySpec = AT_SIGNATURE;
+    DWORD pubKeySize = 0, dwKeySpec;
 
     TRACE("(%08lx, %p, %08x, %p, %p, %p, %p, %p)\n", hProv,
      pSubjectIssuerBlob, dwFlags, pKeyProvInfo, pSignatureAlgorithm, pStartTime,
@@ -3151,6 +3151,7 @@ PCCERT_CONTEXT WINAPI CertCreateSelfSignCertificate(HCRYPTPROV_OR_NCRYPT_KEY_HAN
         return NULL;
     }
 
+    dwKeySpec = pKeyProvInfo ? pKeyProvInfo->dwKeySpec : AT_SIGNATURE;
     if (!hProv)
     {
         if (!pKeyProvInfo)
@@ -3181,7 +3182,6 @@ PCCERT_CONTEXT WINAPI CertCreateSelfSignCertificate(HCRYPTPROV_OR_NCRYPT_KEY_HAN
                 if (!ret)
                     return NULL;
 	    }
-            dwKeySpec = pKeyProvInfo->dwKeySpec;
             /* check if the key is here */
             ret = CryptGetUserKey(hProv,dwKeySpec,&hKey);
             if(!ret)

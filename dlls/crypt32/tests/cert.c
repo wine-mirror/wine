@@ -2156,7 +2156,6 @@ static void testCreateSelfSignCert(void)
     SetLastError(0xdeadbeef);
     context = pCertCreateSelfSignCertificate(csp, &name, 0, &info, NULL, NULL,
         NULL, NULL);
-    todo_wine
     ok(context == NULL, "expected failure\n");
     if (context != NULL)
         CertFreeCertificateContext(context);
@@ -2278,7 +2277,6 @@ static void testCreateSelfSignCert(void)
     SetLastError(0xdeadbeef);
     context = pCertCreateSelfSignCertificate(csp, &name, 0, &info, NULL, NULL,
         NULL, NULL);
-    todo_wine
     ok(context == NULL, "expected failure\n");
     if (context != NULL)
         CertFreeCertificateContext(context);
