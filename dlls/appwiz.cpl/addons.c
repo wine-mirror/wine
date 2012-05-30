@@ -72,6 +72,7 @@ typedef struct {
     const char *file_name;
     const char *subdir_name;
     const char *sha;
+    const char *url_default;
     const char *config_key;
     const char *url_config_key;
     const char *dir_config_key;
@@ -84,6 +85,7 @@ static const addon_info_t addons_info[] = {
         "wine_gecko-" GECKO_VERSION "-" ARCH_STRING ".msi",
         "gecko",
         GECKO_SHA,
+        "http://source.winehq.org/winegecko.php",
         "MSHTML", "GeckoUrl", "GeckoCabDir",
         MAKEINTRESOURCEW(ID_DWL_GECKO_DIALOG)
     },
@@ -92,6 +94,7 @@ static const addon_info_t addons_info[] = {
         "wine-mono-" MONO_VERSION ".msi",
         "mono",
         MONO_SHA,
+        "http://source.winehq.org/winemono.php",
         "Dotnet", "MonoUrl", "MonoCabDir",
         MAKEINTRESOURCEW(ID_DWL_MONO_DIALOG)
     }
@@ -425,6 +428,22 @@ static const IBindStatusCallbackVtbl InstallCallbackVtbl = {
 
 static IBindStatusCallback InstallCallback = { &InstallCallbackVtbl };
 
+static void append_url_params( WCHAR *url )
+{
+    static const WCHAR arch_formatW[] = {'?','a','r','c','h','='};
+    static const WCHAR v_formatW[] = {'&','v','='};
+    DWORD size = INTERNET_MAX_URL_LENGTH * sizeof(WCHAR);
+    DWORD len = strlenW(url);
+
+    memcpy(url+len, arch_formatW, sizeof(arch_formatW));
+    len += sizeof(arch_formatW)/sizeof(WCHAR);
+    len += MultiByteToWideChar(CP_ACP, 0, ARCH_STRING, sizeof(ARCH_STRING),
+                               url+len, size/sizeof(WCHAR)-len)-1;
+    memcpy(url+len, v_formatW, sizeof(v_formatW));
+    len += sizeof(v_formatW)/sizeof(WCHAR);
+    MultiByteToWideChar(CP_ACP, 0, addon->version, -1, url+len, size/sizeof(WCHAR)-len);
+}
+
 static LPWSTR get_url(void)
 {
     DWORD size = INTERNET_MAX_URL_LENGTH*sizeof(WCHAR);
@@ -434,36 +453,24 @@ static LPWSTR get_url(void)
     DWORD returned_size;
 
     static const WCHAR httpW[] = {'h','t','t','p'};
-    static const WCHAR arch_formatW[] = {'?','a','r','c','h','='};
-    static const WCHAR v_formatW[] = {'&','v','='};
-
-    hkey = open_config_key();
-    if(!hkey)
-        return NULL;
 
     url = heap_alloc(size);
     returned_size = size;
 
-    config_key = heap_strdupAtoW(addon->url_config_key);
-    res = RegQueryValueExW(hkey, config_key, NULL, &type, (LPBYTE)url, &returned_size);
-    heap_free(config_key);
-    RegCloseKey(hkey);
-    if(res != ERROR_SUCCESS || type != REG_SZ) {
-        heap_free(url);
-        return NULL;
+    hkey = open_config_key();
+    if (hkey)
+    {
+        config_key = heap_strdupAtoW(addon->url_config_key);
+        res = RegQueryValueExW(hkey, config_key, NULL, &type, (LPBYTE)url, &returned_size);
+        heap_free(config_key);
+        RegCloseKey(hkey);
+        if(res == ERROR_SUCCESS && type == REG_SZ) goto found;
     }
 
-    if(returned_size > sizeof(httpW) && !memcmp(url, httpW, sizeof(httpW))) {
-        DWORD len;
+    MultiByteToWideChar( CP_ACP, 0, addon->url_default, -1, url, size / sizeof(WCHAR) );
 
-        len = strlenW(url);
-        memcpy(url+len, arch_formatW, sizeof(arch_formatW));
-        len += sizeof(arch_formatW)/sizeof(WCHAR);
-        len += MultiByteToWideChar(CP_ACP, 0, ARCH_STRING, sizeof(ARCH_STRING), url+len, size/sizeof(WCHAR)-len)-1;
-        memcpy(url+len, v_formatW, sizeof(v_formatW));
-        len += sizeof(v_formatW)/sizeof(WCHAR);
-        MultiByteToWideChar(CP_ACP, 0, addon->version, -1, url+len, size/sizeof(WCHAR)-len);
-    }
+found:
+    if (returned_size > sizeof(httpW) && !memcmp(url, httpW, sizeof(httpW))) append_url_params( url );
 
     TRACE("Got URL %s\n", debugstr_w(url));
     return url;
