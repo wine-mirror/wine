@@ -2428,6 +2428,8 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
 
     doc->usermode = UNKNOWN_USERMODE;
 
+    init_binding_ui(doc);
+
     hres = create_nscontainer(doc, &doc->nscontainer);
     if(FAILED(hres)) {
         ERR("Failed to init Gecko, returning CLASS_E_CLASSNOTAVAILABLE\n");

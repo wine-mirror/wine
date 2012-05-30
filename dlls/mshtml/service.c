@@ -254,6 +254,11 @@ static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface, REFG
         return IHTMLDocument2_QueryInterface(&This->IHTMLDocument2_iface, riid, ppv);
     }
 
+    if(IsEqualGUID(&IID_IWindowForBindingUI, guidService)) {
+        TRACE("IID_IWindowForBindingUI\n");
+        return IWindowForBindingUI_QueryInterface(&This->doc_obj->IWindowForBindingUI_iface, riid, ppv);
+    }
+
     TRACE("(%p)->(%s %s %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
 
     if(This->doc_obj->client) {

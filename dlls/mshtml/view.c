@@ -912,3 +912,59 @@ void HTMLDocument_View_Init(HTMLDocument *This)
     This->IOleDocumentView_iface.lpVtbl = &OleDocumentViewVtbl;
     This->IViewObjectEx_iface.lpVtbl = &ViewObjectVtbl;
 }
+
+static inline HTMLDocumentObj *impl_from_IWindowForBindingUI(IWindowForBindingUI *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDocumentObj, IWindowForBindingUI_iface);
+}
+
+static HRESULT WINAPI WindowForBindingUI_QueryInterface(IWindowForBindingUI *iface, REFIID riid, void **ppv)
+{
+    HTMLDocumentObj *This = impl_from_IWindowForBindingUI(iface);
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = &This->IWindowForBindingUI_iface;
+    }else if(IsEqualGUID(&IID_IWindowForBindingUI, riid)) {
+        TRACE("(%p)->(IID_IWindowForBindingUI %p)\n", This, ppv);
+        *ppv = &This->IWindowForBindingUI_iface;
+    }else {
+        WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI WindowForBindingUI_AddRef(IWindowForBindingUI *iface)
+{
+    HTMLDocumentObj *This = impl_from_IWindowForBindingUI(iface);
+    return htmldoc_addref(&This->basedoc);
+}
+
+static ULONG WINAPI WindowForBindingUI_Release(IWindowForBindingUI *iface)
+{
+    HTMLDocumentObj *This = impl_from_IWindowForBindingUI(iface);
+    return htmldoc_release(&This->basedoc);
+}
+
+static HRESULT WINAPI WindowForBindingUI_GetWindow(IWindowForBindingUI *iface, REFGUID rguidReason, HWND *phwnd)
+{
+    HTMLDocumentObj *This = impl_from_IWindowForBindingUI(iface);
+    FIXME("(%p)->(%s %p)\n", This, debugstr_guid(rguidReason), phwnd);
+    return E_NOTIMPL;
+}
+
+static const IWindowForBindingUIVtbl WindowForBindingUIVtbl = {
+    WindowForBindingUI_QueryInterface,
+    WindowForBindingUI_AddRef,
+    WindowForBindingUI_Release,
+    WindowForBindingUI_GetWindow
+};
+
+void init_binding_ui(HTMLDocumentObj *doc)
+{
+    doc->IWindowForBindingUI_iface.lpVtbl = &WindowForBindingUIVtbl;
+}

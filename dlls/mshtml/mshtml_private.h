@@ -453,6 +453,8 @@ struct HTMLDocumentObj {
     ICustomDoc ICustomDoc_iface;
     ITargetContainer ITargetContainer_iface;
 
+    IWindowForBindingUI IWindowForBindingUI_iface;
+
     LONG ref;
 
     NSContainer *nscontainer;
@@ -657,6 +659,7 @@ void HTMLDocument_Service_Init(HTMLDocument*) DECLSPEC_HIDDEN;
 void HTMLDocument_Hlink_Init(HTMLDocument*) DECLSPEC_HIDDEN;
 
 void TargetContainer_Init(HTMLDocumentObj*) DECLSPEC_HIDDEN;
+void init_binding_ui(HTMLDocumentObj*) DECLSPEC_HIDDEN;
 
 void HTMLDocumentNode_SecMgr_Init(HTMLDocumentNode*) DECLSPEC_HIDDEN;
 
