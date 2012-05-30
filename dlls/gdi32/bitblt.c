@@ -256,9 +256,11 @@ BOOL nulldrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
 
     if (!(dc_src = get_dc_ptr( src_dev->hdc ))) return FALSE;
     src_dev = GET_DC_PHYSDEV( dc_src, pGetImage );
-    err = src_dev->funcs->pGetImage( src_dev, src_info, &bits, src );
-    release_dc_ptr( dc_src );
-    if (err) return FALSE;
+    if (src_dev->funcs->pGetImage( src_dev, src_info, &bits, src ))
+    {
+        release_dc_ptr( dc_src );
+        return FALSE;
+    }
 
     dst_dev = GET_DC_PHYSDEV( dc_dst, pPutImage );
     copy_bitmapinfo( dst_info, src_info );
@@ -299,6 +301,7 @@ BOOL nulldrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
     }
 
     if (bits.free) bits.free( &bits );
+    release_dc_ptr( dc_src );
     return !err;
 }
 
@@ -317,7 +320,6 @@ BOOL nulldrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
     if (!(dc_src = get_dc_ptr( src_dev->hdc ))) return FALSE;
     src_dev = GET_DC_PHYSDEV( dc_src, pGetImage );
     err = src_dev->funcs->pGetImage( src_dev, src_info, &bits, src );
-    release_dc_ptr( dc_src );
     if (err) goto done;
 
     dst_dev = GET_DC_PHYSDEV( dc_dst, pBlendImage );
@@ -339,6 +341,7 @@ BOOL nulldrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
 
     if (bits.free) bits.free( &bits );
 done:
+    release_dc_ptr( dc_src );
     if (err) SetLastError( err );
     return !err;
 }
