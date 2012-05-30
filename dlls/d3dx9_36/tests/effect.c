@@ -1857,11 +1857,12 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
             test_effect_parameter_value_GetTestGroup(&res[k], effect, &blob[res_value_offset], parameter, i);
 
             /* SetBool */
-            bvalue = 1;
+            bvalue = 5;
             memcpy(expected_value, &blob[res_value_offset], res_desc->Bytes);
             hr = effect->lpVtbl->SetBool(effect, parameter, bvalue);
             if (!res_desc->Elements && res_desc->Rows == 1 && res_desc->Columns == 1)
             {
+                bvalue = bvalue ? TRUE : FALSE;
                 set_number(expected_value, res_desc->Type, &bvalue, D3DXPT_BOOL);
                 ok(hr == D3D_OK, "%u - %s: SetBool failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
             }
