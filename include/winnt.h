@@ -1976,7 +1976,7 @@ NTSYSAPI void WINAPI RtlCaptureContext(CONTEXT*);
 #define PRODUCT_DATACENTER_SERVER                       0x00000008
 #define PRODUCT_DATACENTER_SERVER_CORE                  0x0000000C
 #define PRODUCT_DATACENTER_SERVER_CORE_V                0x00000027
-#define PRODUCT_SERVER_V                                0x00000025
+#define PRODUCT_EMBEDDED                                0x00000041
 #define PRODUCT_ENTERPRISE                              0x00000004
 #define PRODUCT_ENTERPRISE_N                            0x0000001B
 #define PRODUCT_ENTERPRISE_SERVER                       0x0000000A
@@ -1992,8 +1992,11 @@ NTSYSAPI void WINAPI RtlCaptureContext(CONTEXT*);
 #define PRODUCT_MEDIUMBUSINESS_SERVER_MANAGEMENT        0x0000001E
 #define PRODUCT_MEDIUMBUSINESS_SERVER_MESSAGING         0x00000020
 #define PRODUCT_MEDIUMBUSINESS_SERVER_SECURITY          0x0000001F
+#define PRODUCT_PROFESSIONAL                            0x00000030
+#define PRODUCT_PROFESSIONAL_N                          0x00000031
 #define PRODUCT_SERVER_FOR_SMALLBUSINESS                0x00000018
 #define PRODUCT_SERVER_FOR_SMALLBUSINESS_V              0x00000023
+#define PRODUCT_SERVER_V                                0x00000025
 #define PRODUCT_SMALLBUSINESS_SERVER                    0x00000009
 #define PRODUCT_STANDARD_SERVER                         0x00000007
 #define PRODUCT_STANDARD_SERVER_CORE                    0x0000000D
