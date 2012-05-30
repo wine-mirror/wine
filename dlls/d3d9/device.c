@@ -440,7 +440,7 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH d3d9_device_CreateAdditionalSwapChain(ID
         D3DPRESENT_PARAMETERS *present_parameters, IDirect3DSwapChain9 **swapchain)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
-    IDirect3DSwapChain9Impl *object;
+    struct d3d9_swapchain *object;
     HRESULT hr;
 
     TRACE("iface %p, present_parameters %p, swapchain %p.\n",
@@ -457,7 +457,7 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH d3d9_device_GetSwapChain(IDirect3DDevice
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
     struct wined3d_swapchain *wined3d_swapchain = NULL;
-    IDirect3DSwapChain9Impl *swapchain_impl;
+    struct d3d9_swapchain *swapchain_impl;
     HRESULT hr;
 
     TRACE("iface %p, swapchain_idx %u, swapchain %p.\n", iface, swapchain_idx, swapchain);
@@ -3238,7 +3238,7 @@ static HRESULT CDECL device_parent_create_swapchain(struct wined3d_device_parent
 {
     struct d3d9_device *device = device_from_device_parent(device_parent);
     D3DPRESENT_PARAMETERS local_parameters;
-    IDirect3DSwapChain9Impl *d3d_swapchain;
+    struct d3d9_swapchain *d3d_swapchain;
     HRESULT hr;
 
     TRACE("device_parent %p, desc %p, swapchain %p\n", device_parent, desc, swapchain);

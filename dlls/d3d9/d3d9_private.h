@@ -176,24 +176,16 @@ struct d3d9_volume
 HRESULT volume_init(struct d3d9_volume *volume, struct d3d9_device *device, UINT width, UINT height,
         UINT depth, DWORD usage, enum wined3d_format_id format, enum wined3d_pool pool) DECLSPEC_HIDDEN;
 
-/* ------------------- */
-/* IDirect3DSwapChain9 */
-/* ------------------- */
-
-/*****************************************************************************
- * IDirect3DSwapChain9 implementation structure
- */
-typedef struct IDirect3DSwapChain9Impl
+struct d3d9_swapchain
 {
-    /* IUnknown fields */
     IDirect3DSwapChain9 IDirect3DSwapChain9_iface;
-    LONG                    ref;
+    LONG refcount;
     struct wined3d_swapchain *wined3d_swapchain;
-    IDirect3DDevice9Ex *parentDevice;
-} IDirect3DSwapChain9Impl;
+    IDirect3DDevice9Ex *parent_device;
+};
 
 HRESULT d3d9_swapchain_create(struct d3d9_device *device, D3DPRESENT_PARAMETERS *present_parameters,
-        IDirect3DSwapChain9Impl **swapchain) DECLSPEC_HIDDEN;
+        struct d3d9_swapchain **swapchain) DECLSPEC_HIDDEN;
 
 /* ----------------- */
 /* IDirect3DSurface9 */
