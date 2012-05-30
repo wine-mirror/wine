@@ -2014,6 +2014,59 @@ static void test_window_style(void)
     DestroyWindow(window);
 }
 
+static void test_redundant_mode_set(void)
+{
+    DDSURFACEDESC surface_desc = {0};
+    IDirectDraw2 *ddraw;
+    HWND window;
+    HRESULT hr;
+    RECT r, s;
+    ULONG ref;
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 100, 100, 0, 0, 0, 0);
+    if (!(ddraw = create_ddraw()))
+    {
+        skip("Failed to create a ddraw object, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirectDraw2_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+    ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
+
+    surface_desc.dwSize = sizeof(surface_desc);
+    hr = IDirectDraw2_GetDisplayMode(ddraw, &surface_desc);
+    ok(SUCCEEDED(hr), "GetDipslayMode failed, hr %#x.\n", hr);
+
+    hr = IDirectDraw2_SetDisplayMode(ddraw, surface_desc.dwWidth, surface_desc.dwHeight,
+            U1(surface_desc.ddpfPixelFormat).dwRGBBitCount, 0, 0);
+    ok(SUCCEEDED(hr), "SetDipslayMode failed, hr %#x.\n", hr);
+
+    GetWindowRect(window, &r);
+    r.right /= 2;
+    r.bottom /= 2;
+    SetWindowPos(window, HWND_TOP, r.left, r.top, r.right, r.bottom, 0);
+    GetWindowRect(window, &s);
+    ok(EqualRect(&r, &s), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
+            r.left, r.top, r.right, r.bottom,
+            s.left, s.top, s.right, s.bottom);
+
+    hr = IDirectDraw2_SetDisplayMode(ddraw, surface_desc.dwWidth, surface_desc.dwHeight,
+            U1(surface_desc.ddpfPixelFormat).dwRGBBitCount, 0, 0);
+    ok(SUCCEEDED(hr), "SetDipslayMode failed, hr %#x.\n", hr);
+
+    GetWindowRect(window, &s);
+    ok(EqualRect(&r, &s), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
+            r.left, r.top, r.right, r.bottom,
+            s.left, s.top, s.right, s.bottom);
+
+    ref = IDirectDraw2_Release(ddraw);
+    ok(ref == 0, "The ddraw object was not properly freed: refcount %u.\n", ref);
+
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw2)
 {
     test_coop_level_create_device_window();
@@ -2031,4 +2084,5 @@ START_TEST(ddraw2)
     test_device_qi();
     test_wndproc();
     test_window_style();
+    test_redundant_mode_set();
 }
