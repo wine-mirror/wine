@@ -187,33 +187,21 @@ struct d3d9_swapchain
 HRESULT d3d9_swapchain_create(struct d3d9_device *device, D3DPRESENT_PARAMETERS *present_parameters,
         struct d3d9_swapchain **swapchain) DECLSPEC_HIDDEN;
 
-/* ----------------- */
-/* IDirect3DSurface9 */
-/* ----------------- */
-
-/*****************************************************************************
- * IDirect3DSurface9 implementation structure
- */
-typedef struct IDirect3DSurface9Impl
+struct d3d9_surface
 {
     IDirect3DSurface9 IDirect3DSurface9_iface;
-    LONG ref;
+    LONG refcount;
     struct wined3d_surface *wined3d_surface;
-    IDirect3DDevice9Ex *parentDevice;
+    IDirect3DDevice9Ex *parent_device;
+    IUnknown *container;
+    IUnknown *forwardReference;
+    BOOL getdc_supported;
+};
 
-    /* The surface container */
-    IUnknown                    *container;
-
-    /* If set forward refcounting to this object */
-    IUnknown                    *forwardReference;
-
-    BOOL                        getdc_supported;
-} IDirect3DSurface9Impl;
-
-HRESULT surface_init(IDirect3DSurface9Impl *surface, struct d3d9_device *device,
+HRESULT surface_init(struct d3d9_surface *surface, struct d3d9_device *device,
         UINT width, UINT height, D3DFORMAT format, BOOL lockable, BOOL discard, UINT level,
         DWORD usage, D3DPOOL pool, D3DMULTISAMPLE_TYPE multisample_type, DWORD multisample_quality) DECLSPEC_HIDDEN;
-IDirect3DSurface9Impl *unsafe_impl_from_IDirect3DSurface9(IDirect3DSurface9 *iface) DECLSPEC_HIDDEN;
+struct d3d9_surface *unsafe_impl_from_IDirect3DSurface9(IDirect3DSurface9 *iface) DECLSPEC_HIDDEN;
 
 /* ---------------------- */
 /* IDirect3DVertexBuffer9 */

@@ -113,7 +113,7 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH d3d9_swapchain_Present(IDirect3DSwapChai
 static HRESULT WINAPI d3d9_swapchain_GetFrontBufferData(IDirect3DSwapChain9 *iface, IDirect3DSurface9 *surface)
 {
     struct d3d9_swapchain *swapchain = impl_from_IDirect3DSwapChain9(iface);
-    IDirect3DSurface9Impl *dst = unsafe_impl_from_IDirect3DSurface9(surface);
+    struct d3d9_surface *dst = unsafe_impl_from_IDirect3DSurface9(surface);
     HRESULT hr;
 
     TRACE("iface %p, surface %p.\n", iface, surface);
@@ -130,7 +130,7 @@ static HRESULT WINAPI d3d9_swapchain_GetBackBuffer(IDirect3DSwapChain9 *iface,
 {
     struct d3d9_swapchain *swapchain = impl_from_IDirect3DSwapChain9(iface);
     struct wined3d_surface *wined3d_surface = NULL;
-    IDirect3DSurface9Impl *surface_impl;
+    struct d3d9_surface *surface_impl;
     HRESULT hr;
 
     TRACE("iface %p, backbuffer_idx %u, backbuffer_type %#x, backbuffer %p.\n",

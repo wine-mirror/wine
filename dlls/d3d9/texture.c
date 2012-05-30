@@ -326,7 +326,7 @@ static HRESULT WINAPI d3d9_texture_2d_GetSurfaceLevel(IDirect3DTexture9 *iface,
 {
     struct d3d9_texture *texture = impl_from_IDirect3DTexture9(iface);
     struct wined3d_resource *sub_resource;
-    IDirect3DSurface9Impl *surface_impl;
+    struct d3d9_surface *surface_impl;
 
     TRACE("iface %p, level %u, surface %p.\n", iface, level, surface);
 
@@ -350,7 +350,7 @@ static HRESULT WINAPI d3d9_texture_2d_LockRect(IDirect3DTexture9 *iface,
 {
     struct d3d9_texture *texture = impl_from_IDirect3DTexture9(iface);
     struct wined3d_resource *sub_resource;
-    IDirect3DSurface9Impl *surface_impl;
+    struct d3d9_surface *surface_impl;
     HRESULT hr;
 
     TRACE("iface %p, level %u, locked_rect %p, rect %p, flags %#x.\n",
@@ -373,7 +373,7 @@ static HRESULT WINAPI d3d9_texture_2d_UnlockRect(IDirect3DTexture9 *iface, UINT 
 {
     struct d3d9_texture *texture = impl_from_IDirect3DTexture9(iface);
     struct wined3d_resource *sub_resource;
-    IDirect3DSurface9Impl *surface_impl;
+    struct d3d9_surface *surface_impl;
     HRESULT hr;
 
     TRACE("iface %p, level %u.\n", iface, level);
@@ -748,7 +748,7 @@ static HRESULT WINAPI d3d9_texture_cube_GetCubeMapSurface(IDirect3DCubeTexture9 
 {
     struct d3d9_texture *texture = impl_from_IDirect3DCubeTexture9(iface);
     struct wined3d_resource *sub_resource;
-    IDirect3DSurface9Impl *surface_impl;
+    struct d3d9_surface *surface_impl;
     UINT sub_resource_idx;
     DWORD level_count;
 
@@ -783,7 +783,7 @@ static HRESULT WINAPI d3d9_texture_cube_LockRect(IDirect3DCubeTexture9 *iface,
 {
     struct d3d9_texture *texture = impl_from_IDirect3DCubeTexture9(iface);
     struct wined3d_resource *sub_resource;
-    IDirect3DSurface9Impl *surface_impl;
+    struct d3d9_surface *surface_impl;
     UINT sub_resource_idx;
     HRESULT hr;
 
@@ -809,7 +809,7 @@ static HRESULT WINAPI d3d9_texture_cube_UnlockRect(IDirect3DCubeTexture9 *iface,
 {
     struct d3d9_texture *texture = impl_from_IDirect3DCubeTexture9(iface);
     struct wined3d_resource *sub_resource;
-    IDirect3DSurface9Impl *surface_impl;
+    struct d3d9_surface *surface_impl;
     UINT sub_resource_idx;
     HRESULT hr;
 
