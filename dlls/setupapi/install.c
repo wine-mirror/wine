@@ -91,6 +91,7 @@ static const WCHAR Name[]            = {'N','a','m','e',0};
 static const WCHAR CmdLine[]         = {'C','m','d','L','i','n','e',0};
 static const WCHAR SubDir[]          = {'S','u','b','D','i','r',0};
 static const WCHAR WineFakeDlls[]    = {'W','i','n','e','F','a','k','e','D','l','l','s',0};
+static const WCHAR WinePreInstall[]  = {'W','i','n','e','P','r','e','I','n','s','t','a','l','l',0};
 static const WCHAR DisplayName[]     = {'D','i','s','p','l','a','y','N','a','m','e',0};
 static const WCHAR Description[]     = {'D','e','s','c','r','i','p','t','i','o','n',0};
 static const WCHAR ServiceBinary[]   = {'S','e','r','v','i','c','e','B','i','n','a','r','y',0};
@@ -1067,6 +1068,15 @@ BOOL WINAPI SetupInstallFromInfSectionW( HWND owner, HINF hinf, PCWSTR section, 
     BOOL ret;
     int i;
 
+    if (flags & SPINST_REGISTRY)
+    {
+        struct registry_callback_info info;
+
+        info.default_root = key_root;
+        info.delete = FALSE;
+        if (!iterate_section_fields( hinf, section, WinePreInstall, registry_callback, &info ))
+            return FALSE;
+    }
     if (flags & SPINST_FILES)
     {
         struct files_callback_info info;

@@ -80,6 +80,7 @@ AddReg=\
 [DefaultInstall.ntamd64]
 RegisterDlls=RegisterDllsSection
 WineFakeDlls=FakeDlls
+WinePreInstall=Wow64
 UpdateInis=SystemIni
 CopyFiles=@l_intl.nls
 AddReg=\
@@ -102,8 +103,7 @@ AddReg=\
     SessionMgr,\
     Tapi,\
     Timezones,\
-    VersionInfo,\
-    Wow64
+    VersionInfo
 
 [Wow64Install]
 RegisterDlls=RegisterDllsSection
