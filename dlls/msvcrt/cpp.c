@@ -761,8 +761,8 @@ static const cxx_type_info_table name ## _type_info_table = \
     base_classes+1, \
     { \
         &name ## _cxx_type_info, \
-        cl2, \
-        cl1 \
+        cl1, \
+        cl2 \
     } \
 }; \
 \
