@@ -582,7 +582,11 @@ static HRESULT WINAPI BSCServiceProvider_QueryService(IServiceProvider *iface,
         REFGUID guidService, REFIID riid, void **ppv)
 {
     BSCallback *This = impl_from_IServiceProvider(iface);
+
     TRACE("(%p)->(%s %s %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
+
+    if(This->doc && IsEqualGUID(guidService, &IID_IWindowForBindingUI))
+        return IServiceProvider_QueryService(&This->doc->basedoc.IServiceProvider_iface, guidService, riid, ppv);
     return E_NOINTERFACE;
 }
 
@@ -721,6 +725,8 @@ HRESULT start_binding(HTMLWindow *window, HTMLDocumentNode *doc, BSCallback *bsc
     TRACE("(%p %p %p %p)\n", window, doc, bscallback, bctx);
 
     bscallback->doc = doc;
+    if(!doc && window)
+        bscallback->doc = window->doc;
 
     /* NOTE: IE7 calls IsSystemMoniker here*/
 
@@ -992,8 +998,11 @@ static HRESULT on_start_nsrequest(nsChannelBSC *This)
         list_remove(&This->bsc.entry);
         list_init(&This->bsc.entry);
         update_window_doc(This->window);
-        if(This->window->doc != This->bsc.doc)
+        if(This->window->doc != This->bsc.doc) {
+            if(This->bsc.doc)
+                list_remove(&This->bsc.entry);
             This->bsc.doc = This->window->doc;
+        }
         list_add_head(&This->bsc.doc->bindings, &This->bsc.entry);
         if(This->window->readystate != READYSTATE_LOADING)
             set_ready_state(This->window, READYSTATE_LOADING);
