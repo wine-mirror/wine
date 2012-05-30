@@ -953,8 +953,11 @@ static ULONG WINAPI WindowForBindingUI_Release(IWindowForBindingUI *iface)
 static HRESULT WINAPI WindowForBindingUI_GetWindow(IWindowForBindingUI *iface, REFGUID rguidReason, HWND *phwnd)
 {
     HTMLDocumentObj *This = impl_from_IWindowForBindingUI(iface);
-    FIXME("(%p)->(%s %p)\n", This, debugstr_guid(rguidReason), phwnd);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(rguidReason), phwnd);
+
+    *phwnd = This->hwnd;
+    return S_OK;
 }
 
 static const IWindowForBindingUIVtbl WindowForBindingUIVtbl = {
