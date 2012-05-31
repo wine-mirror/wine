@@ -43,6 +43,21 @@ cpp_quote("DEFINE_GUID(CLSID_WICUnknownMetadataWriter, 0xa09cca86,0x27ba,0x4f39,
 cpp_quote("DEFINE_GUID(CLSID_WICPngTextMetadataReader, 0x4b59afcc,0xb8c3,0x408a,0xb6,0x70,0x89,0xe5,0xfa,0xb6,0xfd,0xa7);")
 cpp_quote("DEFINE_GUID(CLSID_WICPngTextMetadataWriter, 0xb5ebafb9,0x253e,0x4a72,0xa7,0x44,0x07,0x62,0xd2,0x68,0x56,0x83);")
 
+typedef struct WICMetadataPattern {
+    ULARGE_INTEGER Position;
+    ULONG Length;
+    BYTE *Pattern;
+    BYTE *Mask;
+    ULARGE_INTEGER DataOffset;
+} WICMetadataPattern;
+
+typedef struct WICMetadataHeader {
+    ULARGE_INTEGER Position;
+    ULONG Length;
+    BYTE *Header;
+    ULARGE_INTEGER DataOffset;
+} WICMetadataHeader;
+
 [
     object,
     uuid(aba958bf-c672-44d1-8d61-ce6df2e682c2)
@@ -109,6 +124,29 @@ interface IWICMetadataReader : IUnknown
 
 [
     object,
+    uuid(eebf1f5b-07c1-4447-a3ab-22acaf78a804)
+]
+interface IWICMetadataReaderInfo : IWICMetadataHandlerInfo
+{
+    [local]
+    HRESULT GetPatterns(
+        [in] REFGUID guidContainerFormat,
+        [in] UINT cbSize,
+        [out, unique] WICMetadataPattern *pPattern,
+        [out, unique] UINT *pcCount,
+        [out, unique] UINT *pcbActual);
+
+    HRESULT MatchesPattern(
+        [in] REFGUID guidContainerFormat,
+        [in] IStream *pIStream,
+        [out] BOOL *pfMatches);
+
+    HRESULT CreateInstance(
+        [out] IWICMetadataReader **ppIReader);
+}
+
+[
+    object,
     uuid(f7836e16-3be0-470b-86bb-160d0aecd7de)
 ]
 interface IWICMetadataWriter : IWICMetadataReader
@@ -130,6 +168,23 @@ interface IWICMetadataWriter : IWICMetadataReader
 
     HRESULT RemoveValueByIndex(
         [in] UINT nIndex);
+}
+
+[
+    object,
+    uuid(b22e3fba-3925-4323-b5c1-9ebfc430f236)
+]
+interface IWICMetadataWriterInfo : IWICMetadataHandlerInfo
+{
+    [local]
+    HRESULT GetHeader(
+        [in] REFGUID guidContainerFormat,
+        [in] UINT cbSize,
+        [out, unique] WICMetadataHeader *pHeader,
+        [out, unique] UINT *pcbActual);
+
+    HRESULT CreateInstance(
+        [out] IWICMetadataWriter **ppIWriter);
 }
 
 [
