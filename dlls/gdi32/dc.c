@@ -1245,8 +1245,12 @@ BOOL WINAPI GetDeviceGammaRamp(HDC hDC, LPVOID ptr)
     TRACE("%p, %p\n", hDC, ptr);
     if( dc )
     {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pGetDeviceGammaRamp );
-        ret = physdev->funcs->pGetDeviceGammaRamp( physdev, ptr );
+        if (GetObjectType( hDC ) != OBJ_MEMDC)
+        {
+            PHYSDEV physdev = GET_DC_PHYSDEV( dc, pGetDeviceGammaRamp );
+            ret = physdev->funcs->pGetDeviceGammaRamp( physdev, ptr );
+        }
+        else SetLastError( ERROR_INVALID_PARAMETER );
 	release_dc_ptr( dc );
     }
     return ret;
@@ -1263,8 +1267,12 @@ BOOL WINAPI SetDeviceGammaRamp(HDC hDC, LPVOID ptr)
     TRACE("%p, %p\n", hDC, ptr);
     if( dc )
     {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetDeviceGammaRamp );
-        ret = physdev->funcs->pSetDeviceGammaRamp( physdev, ptr );
+        if (GetObjectType( hDC ) != OBJ_MEMDC)
+        {
+            PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetDeviceGammaRamp );
+            ret = physdev->funcs->pSetDeviceGammaRamp( physdev, ptr );
+        }
+        else SetLastError( ERROR_INVALID_PARAMETER );
 	release_dc_ptr( dc );
     }
     return ret;

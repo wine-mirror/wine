@@ -392,24 +392,6 @@ static UINT dibdrv_SetBoundsRect( PHYSDEV dev, RECT *rect, UINT flags )
     return DCB_RESET;  /* we don't have device-specific bounds */
 }
 
-/***********************************************************************
- *           dibdrv_GetDeviceGammaRamp
- */
-static BOOL dibdrv_GetDeviceGammaRamp( PHYSDEV dev, void *ramp )
-{
-    SetLastError( ERROR_INVALID_PARAMETER );
-    return FALSE;
-}
-
-/***********************************************************************
- *           dibdrv_SetDeviceGammaRamp
- */
-static BOOL dibdrv_SetDeviceGammaRamp( PHYSDEV dev, void *ramp )
-{
-    SetLastError( ERROR_INVALID_PARAMETER );
-    return FALSE;
-}
-
 const struct gdi_dc_funcs dib_driver =
 {
     NULL,                               /* pAbortDoc */
@@ -453,7 +435,7 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pGetCharABCWidthsI */
     NULL,                               /* pGetCharWidth */
     NULL,                               /* pGetDeviceCaps */
-    dibdrv_GetDeviceGammaRamp,          /* pGetDeviceGammaRamp */
+    NULL,                               /* pGetDeviceGammaRamp */
     NULL,                               /* pGetFontData */
     NULL,                               /* pGetFontUnicodeRanges */
     NULL,                               /* pGetGlyphIndices */
@@ -515,7 +497,7 @@ const struct gdi_dc_funcs dib_driver =
     dibdrv_SetDCPenColor,               /* pSetDCPenColor */
     NULL,                               /* pSetDIBitsToDevice */
     dibdrv_SetDeviceClipping,           /* pSetDeviceClipping */
-    dibdrv_SetDeviceGammaRamp,          /* pSetDeviceGammaRamp */
+    NULL,                               /* pSetDeviceGammaRamp */
     NULL,                               /* pSetLayout */
     NULL,                               /* pSetMapMode */
     NULL,                               /* pSetMapperFlags */
