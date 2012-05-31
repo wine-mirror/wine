@@ -831,7 +831,7 @@ static HRESULT WINAPI d3d9_device_CreateIndexBuffer(IDirect3DDevice9Ex *iface, U
         HANDLE *shared_handle)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
-    IDirect3DIndexBuffer9Impl *object;
+    struct d3d9_indexbuffer *object;
     HRESULT hr;
 
     TRACE("iface %p, size %u, usage %#x, format %#x, pool %#x, buffer %p, shared_handle %p.\n",
@@ -2497,14 +2497,14 @@ static HRESULT WINAPI d3d9_device_GetStreamSourceFreq(IDirect3DDevice9Ex *iface,
 static HRESULT WINAPI d3d9_device_SetIndices(IDirect3DDevice9Ex *iface, IDirect3DIndexBuffer9 *buffer)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
-    IDirect3DIndexBuffer9Impl *ib = unsafe_impl_from_IDirect3DIndexBuffer9(buffer);
+    struct d3d9_indexbuffer *ib = unsafe_impl_from_IDirect3DIndexBuffer9(buffer);
     HRESULT hr;
 
     TRACE("iface %p, buffer %p.\n", iface, buffer);
 
     wined3d_mutex_lock();
     hr = wined3d_device_set_index_buffer(device->wined3d_device,
-            ib ? ib->wineD3DIndexBuffer : NULL,
+            ib ? ib->wined3d_buffer : NULL,
             ib ? ib->format : WINED3DFMT_UNKNOWN);
     wined3d_mutex_unlock();
 
@@ -2515,7 +2515,7 @@ static HRESULT WINAPI d3d9_device_GetIndices(IDirect3DDevice9Ex *iface, IDirect3
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
     struct wined3d_buffer *retIndexData = NULL;
-    IDirect3DIndexBuffer9Impl *buffer_impl;
+    struct d3d9_indexbuffer *buffer_impl;
     HRESULT hr;
 
     TRACE("iface %p, buffer %p.\n", iface, buffer);

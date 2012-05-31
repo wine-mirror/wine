@@ -216,25 +216,18 @@ HRESULT vertexbuffer_init(struct d3d9_vertexbuffer *buffer, struct d3d9_device *
         UINT size, UINT usage, DWORD fvf, D3DPOOL pool) DECLSPEC_HIDDEN;
 struct d3d9_vertexbuffer *unsafe_impl_from_IDirect3DVertexBuffer9(IDirect3DVertexBuffer9 *iface) DECLSPEC_HIDDEN;
 
-/* --------------------- */
-/* IDirect3DIndexBuffer9 */
-/* --------------------- */
-
-/*****************************************************************************
- * IDirect3DIndexBuffer9 implementation structure
- */
-typedef struct IDirect3DIndexBuffer9Impl
+struct d3d9_indexbuffer
 {
     IDirect3DIndexBuffer9 IDirect3DIndexBuffer9_iface;
-    LONG ref;
-    struct wined3d_buffer *wineD3DIndexBuffer;
-    IDirect3DDevice9Ex *parentDevice;
+    LONG refcount;
+    struct wined3d_buffer *wined3d_buffer;
+    IDirect3DDevice9Ex *parent_device;
     enum wined3d_format_id format;
-} IDirect3DIndexBuffer9Impl;
+};
 
-HRESULT indexbuffer_init(IDirect3DIndexBuffer9Impl *buffer, struct d3d9_device *device,
+HRESULT indexbuffer_init(struct d3d9_indexbuffer *buffer, struct d3d9_device *device,
         UINT size, DWORD usage, D3DFORMAT format, D3DPOOL pool) DECLSPEC_HIDDEN;
-IDirect3DIndexBuffer9Impl *unsafe_impl_from_IDirect3DIndexBuffer9(IDirect3DIndexBuffer9 *iface) DECLSPEC_HIDDEN;
+struct d3d9_indexbuffer *unsafe_impl_from_IDirect3DIndexBuffer9(IDirect3DIndexBuffer9 *iface) DECLSPEC_HIDDEN;
 
 struct d3d9_texture
 {
