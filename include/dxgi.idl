@@ -192,6 +192,18 @@ interface IDXGIResource : IDXGIDeviceSubObject
 
 [
     object,
+    uuid(9d8e1289-d7b3-465f-8126-250e349af85d),
+    local,
+    pointer_default(unique)
+]
+interface IDXGIKeyedMutex : IDXGIDeviceSubObject
+{
+    HRESULT AcquireSync([in] UINT64 Key, [in] DWORD dwMilliseconds);
+    HRESULT ReleaseSync([in] UINT64 Key);
+}
+
+[
+    object,
     local,
     uuid(cafcb56c-6ac3-4889-bf47-9e23bbd260ec)
 ]
