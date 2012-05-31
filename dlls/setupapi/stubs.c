@@ -232,6 +232,15 @@ BOOL WINAPI SetupQueryDrivesInDiskSpaceListW(HDSKSPC disk_space, PWSTR return_bu
 }
 
 /***********************************************************************
+ *      SetupAddToSourceListA (SETUPAPI.@)
+ */
+BOOL WINAPI SetupAddToSourceListA(DWORD flags, PCSTR source)
+{
+    FIXME("0x%08x %s\n", flags, debugstr_a(source));
+    return TRUE;
+}
+
+/***********************************************************************
  *      SetupSetSourceListA (SETUPAPI.@)
  */
 BOOL WINAPI SetupSetSourceListA(DWORD flags, PCSTR *list, UINT count)
