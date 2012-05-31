@@ -1729,7 +1729,7 @@ void X11DRV_InitKeyboard( Display *display )
                          * with appropriate ShiftMask and Mode_switch, use XLookupString
                          * to get character in the local encoding.
                          */
-                        ckey[i] = keysym & 0xFF;
+                        ckey[i] = (keysym <= 0x7F) ? keysym : 0;
                     }
 		} else {
 		  ckey[i] = KEYBOARD_MapDeadKeysym(keysym);
