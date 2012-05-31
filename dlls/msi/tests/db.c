@@ -9345,7 +9345,7 @@ static void test_createtable(void)
         size = sizeof(buffer);
         res = MsiRecordGetString(hrec, 1, buffer, &size );
         ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-        todo_wine ok(!strcmp(buffer,"b"), "b != %s\n", buffer);
+        ok(!strcmp(buffer,"b"), "b != %s\n", buffer);
 
         res = MsiCloseHandle( hrec );
         ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
