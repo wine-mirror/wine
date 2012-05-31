@@ -2054,10 +2054,17 @@ static enum wined3d_pci_device select_card_nvidia_mesa(const struct wined3d_gl_i
     }
     cards[] =
     {
+        /* Kepler */
+        {"NVE4",    CARD_NVIDIA_GEFORCE_GTX680},
+        /* Fermi */
+        {"NVCF",    CARD_NVIDIA_GEFORCE_GTX550},
+        {"NVCE",    CARD_NVIDIA_GEFORCE_GTX560},
         {"NVC8",    CARD_NVIDIA_GEFORCE_GTX570},
         {"NVC4",    CARD_NVIDIA_GEFORCE_GTX460},
         {"NVC3",    CARD_NVIDIA_GEFORCE_GT440},
+        {"NVC1",    CARD_NVIDIA_GEFORCE_GT420},
         {"NVC0",    CARD_NVIDIA_GEFORCE_GTX480},
+        /* Tesla */
         {"NVAF",    CARD_NVIDIA_GEFORCE_GT320M},
         {"NVAC",    CARD_NVIDIA_GEFORCE_8200},
         {"NVAA",    CARD_NVIDIA_GEFORCE_8200},
@@ -2071,10 +2078,11 @@ static enum wined3d_pci_device select_card_nvidia_mesa(const struct wined3d_gl_i
         {"NV92",    CARD_NVIDIA_GEFORCE_9800GT},
         {"NV86",    CARD_NVIDIA_GEFORCE_8500GT},
         {"NV84",    CARD_NVIDIA_GEFORCE_8600GT},
+        {"NV50",    CARD_NVIDIA_GEFORCE_8800GTX},
+        /* Curie */
         {"NV68",    CARD_NVIDIA_GEFORCE_6200},      /* 7050 */
         {"NV67",    CARD_NVIDIA_GEFORCE_6200},      /* 7000M */
         {"NV63",    CARD_NVIDIA_GEFORCE_6200},      /* 7100 */
-        {"NV50",    CARD_NVIDIA_GEFORCE_8800GTX},
         {"NV4E",    CARD_NVIDIA_GEFORCE_6200},      /* 6100 Go / 6150 Go */
         {"NV4C",    CARD_NVIDIA_GEFORCE_6200},      /* 6150SE */
         {"NV4B",    CARD_NVIDIA_GEFORCE_7600},
@@ -2088,15 +2096,18 @@ static enum wined3d_pci_device select_card_nvidia_mesa(const struct wined3d_gl_i
         {"NV42",    CARD_NVIDIA_GEFORCE_6800},
         {"NV41",    CARD_NVIDIA_GEFORCE_6800},
         {"NV40",    CARD_NVIDIA_GEFORCE_6800},
+        /* Rankine */
         {"NV38",    CARD_NVIDIA_GEFORCEFX_5800},    /* FX 5950 Ultra */
         {"NV36",    CARD_NVIDIA_GEFORCEFX_5800},    /* FX 5700/5750 */
         {"NV35",    CARD_NVIDIA_GEFORCEFX_5800},    /* FX 5900 */
         {"NV34",    CARD_NVIDIA_GEFORCEFX_5200},
         {"NV31",    CARD_NVIDIA_GEFORCEFX_5600},
         {"NV30",    CARD_NVIDIA_GEFORCEFX_5800},
+        /* Kelvin */
         {"nv28",    CARD_NVIDIA_GEFORCE4_TI4200},
         {"nv25",    CARD_NVIDIA_GEFORCE4_TI4200},
         {"nv20",    CARD_NVIDIA_GEFORCE3},
+        /* Celsius */
         {"nv1F",    CARD_NVIDIA_GEFORCE4_MX},       /* GF4 MX IGP */
         {"nv1A",    CARD_NVIDIA_GEFORCE2},          /* GF2 IGP */
         {"nv18",    CARD_NVIDIA_GEFORCE4_MX},
@@ -2105,6 +2116,7 @@ static enum wined3d_pci_device select_card_nvidia_mesa(const struct wined3d_gl_i
         {"nv15",    CARD_NVIDIA_GEFORCE2},
         {"nv11",    CARD_NVIDIA_GEFORCE2_MX},
         {"nv10",    CARD_NVIDIA_GEFORCE},
+        /* Fahrenheit */
         {"nv05",    CARD_NVIDIA_RIVA_TNT2},
         {"nv04",    CARD_NVIDIA_RIVA_TNT},
         {"nv03",    CARD_NVIDIA_RIVA_128},
@@ -2119,8 +2131,10 @@ static enum wined3d_pci_device select_card_nvidia_mesa(const struct wined3d_gl_i
     FIXME_(d3d_caps)("Unknown renderer %s.\n", debugstr_a(gl_renderer));
 
     d3d_level = d3d_level_from_gl_info(gl_info);
+    if (d3d_level >= 10)
+        return CARD_NVIDIA_GEFORCE_8800GTX;
     if (d3d_level >= 9)
-        return CARD_NVIDIA_GEFORCEFX_5600;
+        return CARD_NVIDIA_GEFORCEFX_5800;
     if (d3d_level >= 8)
         return CARD_NVIDIA_GEFORCE3;
     if (d3d_level >= 7)
