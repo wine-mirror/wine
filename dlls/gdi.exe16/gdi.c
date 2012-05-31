@@ -2017,7 +2017,8 @@ DWORD WINAPI GetDCHook16( HDC16 hdc16, FARPROC16 *phookProc )
  */
 WORD WINAPI SetHookFlags16( HDC16 hdc, WORD flags )
 {
-    return SetHookFlags( HDC_32(hdc), flags );
+    FIXME( "%04x %x: not supported\n", hdc, flags );
+    return 0;
 }
 
 

@@ -39,6 +39,7 @@
 
 #include "controls.h"
 #include "user_private.h"
+#include "wine/gdi_driver.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 

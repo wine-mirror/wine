@@ -235,4 +235,20 @@ static inline void push_dc_driver( PHYSDEV *dev, PHYSDEV physdev, const struct g
     *dev = physdev;
 }
 
+/* the DC hook support is only exported on Win16, the 32-bit version is a Wine extension */
+
+#define DCHC_INVALIDVISRGN      0x0001
+#define DCHC_DELETEDC           0x0002
+#define DCHF_INVALIDATEVISRGN   0x0001
+#define DCHF_VALIDATEVISRGN     0x0002
+
+typedef BOOL (CALLBACK *DCHOOKPROC)(HDC,WORD,DWORD_PTR,LPARAM);
+
+WINGDIAPI DWORD_PTR WINAPI GetDCHook(HDC,DCHOOKPROC*);
+WINGDIAPI BOOL      WINAPI SetDCHook(HDC,DCHOOKPROC,DWORD_PTR);
+WINGDIAPI WORD      WINAPI SetHookFlags(HDC,WORD);
+
+extern void CDECL __wine_make_gdi_object_system( HGDIOBJ handle, BOOL set );
+extern void CDECL __wine_set_visible_region( HDC hdc, HRGN hrgn, const RECT *vis_rect );
+
 #endif /* __WINE_WINE_GDI_DRIVER_H */
