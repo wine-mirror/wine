@@ -203,25 +203,18 @@ HRESULT surface_init(struct d3d9_surface *surface, struct d3d9_device *device,
         DWORD usage, D3DPOOL pool, D3DMULTISAMPLE_TYPE multisample_type, DWORD multisample_quality) DECLSPEC_HIDDEN;
 struct d3d9_surface *unsafe_impl_from_IDirect3DSurface9(IDirect3DSurface9 *iface) DECLSPEC_HIDDEN;
 
-/* ---------------------- */
-/* IDirect3DVertexBuffer9 */
-/* ---------------------- */
-
-/*****************************************************************************
- * IDirect3DVertexBuffer9 implementation structure
- */
-typedef struct IDirect3DVertexBuffer9Impl
+struct d3d9_vertexbuffer
 {
     IDirect3DVertexBuffer9 IDirect3DVertexBuffer9_iface;
-    LONG ref;
-    struct wined3d_buffer *wineD3DVertexBuffer;
-    IDirect3DDevice9Ex *parentDevice;
+    LONG refcount;
+    struct wined3d_buffer *wined3d_buffer;
+    IDirect3DDevice9Ex *parent_device;
     DWORD fvf;
-} IDirect3DVertexBuffer9Impl;
+};
 
-HRESULT vertexbuffer_init(IDirect3DVertexBuffer9Impl *buffer, struct d3d9_device *device,
+HRESULT vertexbuffer_init(struct d3d9_vertexbuffer *buffer, struct d3d9_device *device,
         UINT size, UINT usage, DWORD fvf, D3DPOOL pool) DECLSPEC_HIDDEN;
-IDirect3DVertexBuffer9Impl *unsafe_impl_from_IDirect3DVertexBuffer9(IDirect3DVertexBuffer9 *iface) DECLSPEC_HIDDEN;
+struct d3d9_vertexbuffer *unsafe_impl_from_IDirect3DVertexBuffer9(IDirect3DVertexBuffer9 *iface) DECLSPEC_HIDDEN;
 
 /* --------------------- */
 /* IDirect3DIndexBuffer9 */

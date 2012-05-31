@@ -796,7 +796,7 @@ static HRESULT WINAPI d3d9_device_CreateVertexBuffer(IDirect3DDevice9Ex *iface, 
         HANDLE *shared_handle)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
-    IDirect3DVertexBuffer9Impl *object;
+    struct d3d9_vertexbuffer *object;
     HRESULT hr;
 
     TRACE("iface %p, size %u, usage %#x, fvf %#x, pool %#x, buffer %p, shared_handle %p.\n",
@@ -2018,7 +2018,7 @@ static HRESULT WINAPI d3d9_device_ProcessVertices(IDirect3DDevice9Ex *iface,
         IDirect3DVertexDeclaration9 *declaration, DWORD flags)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
-    IDirect3DVertexBuffer9Impl *dst_impl = unsafe_impl_from_IDirect3DVertexBuffer9(dst_buffer);
+    struct d3d9_vertexbuffer *dst_impl = unsafe_impl_from_IDirect3DVertexBuffer9(dst_buffer);
     IDirect3DVertexDeclaration9Impl *decl_impl = unsafe_impl_from_IDirect3DVertexDeclaration9(declaration);
     HRESULT hr;
 
@@ -2027,7 +2027,7 @@ static HRESULT WINAPI d3d9_device_ProcessVertices(IDirect3DDevice9Ex *iface,
 
     wined3d_mutex_lock();
     hr = wined3d_device_process_vertices(device->wined3d_device, src_start_idx, dst_idx, vertex_count,
-            dst_impl->wineD3DVertexBuffer, decl_impl ? decl_impl->wineD3DVertexDeclaration : NULL,
+            dst_impl->wined3d_buffer, decl_impl ? decl_impl->wineD3DVertexDeclaration : NULL,
             flags, dst_impl->fvf);
     wined3d_mutex_unlock();
 
@@ -2418,7 +2418,7 @@ static HRESULT WINAPI d3d9_device_SetStreamSource(IDirect3DDevice9Ex *iface,
         UINT stream_idx, IDirect3DVertexBuffer9 *buffer, UINT offset, UINT stride)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
-    IDirect3DVertexBuffer9Impl *buffer_impl = unsafe_impl_from_IDirect3DVertexBuffer9(buffer);
+    struct d3d9_vertexbuffer *buffer_impl = unsafe_impl_from_IDirect3DVertexBuffer9(buffer);
     HRESULT hr;
 
     TRACE("iface %p, stream_idx %u, buffer %p, offset %u, stride %u.\n",
@@ -2426,7 +2426,7 @@ static HRESULT WINAPI d3d9_device_SetStreamSource(IDirect3DDevice9Ex *iface,
 
     wined3d_mutex_lock();
     hr = wined3d_device_set_stream_source(device->wined3d_device, stream_idx,
-            buffer_impl ? buffer_impl->wineD3DVertexBuffer : NULL, offset, stride);
+            buffer_impl ? buffer_impl->wined3d_buffer : NULL, offset, stride);
     wined3d_mutex_unlock();
 
     return hr;
@@ -2436,7 +2436,7 @@ static HRESULT WINAPI d3d9_device_GetStreamSource(IDirect3DDevice9Ex *iface,
         UINT stream_idx, IDirect3DVertexBuffer9 **buffer, UINT *offset, UINT *stride)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
-    IDirect3DVertexBuffer9Impl *buffer_impl;
+    struct d3d9_vertexbuffer *buffer_impl;
     struct wined3d_buffer *wined3d_buffer;
     HRESULT hr;
 
