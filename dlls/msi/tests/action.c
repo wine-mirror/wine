@@ -487,7 +487,10 @@ static const char wrv_registry_dat[] =
     "Registry\tRoot\tKey\tName\tValue\tComponent_\n"
     "s72\ti2\tl255\tL255\tL0\ts72\n"
     "Registry\tRegistry\n"
-    "regdata\t2\tSOFTWARE\\Wine\\msitest\tValue\t[~]one[~]two[~]three\taugustus";
+    "regdata\t2\tSOFTWARE\\Wine\\msitest\tValue\t[~]one[~]two[~]three\taugustus\n"
+    "regdata1\t2\tSOFTWARE\\Wine\\msitest\t*\t\taugustus\n"
+    "regdata2\t2\tSOFTWARE\\Wine\\msitest\t*\t#%\taugustus\n"
+    "regdata3\t2\tSOFTWARE\\Wine\\msitest\t*\t#x\taugustus\n";
 
 static const char cf_directory_dat[] =
     "Directory\tDirectory_Parent\tDefaultDir\n"
@@ -4572,7 +4575,7 @@ static void test_write_registry_values(void)
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     size = MAX_PATH;
-    type = REG_MULTI_SZ;
+    type = 0xdeadbeef;
     memset(path, 'a', MAX_PATH);
     res = RegQueryValueExA(hkey, "Value", NULL, &type, (LPBYTE)path, &size);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -4580,9 +4583,12 @@ static void test_write_registry_values(void)
     ok(size == 15, "Expected 15, got %d\n", size);
     ok(type == REG_MULTI_SZ, "Expected REG_MULTI_SZ, got %d\n", type);
 
+    res = RegQueryValueExA(hkey, "", NULL, NULL, NULL, NULL);
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+
     RegDeleteValueA(hkey, "Value");
     RegCloseKey(hkey);
-    RegDeleteKeyA(HKEY_CURRENT_USER, "SOFTWARE\\Wine\\msitest");
+    RegDeleteKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Wine\\msitest");
 
 error:
     DeleteFile(msifile);

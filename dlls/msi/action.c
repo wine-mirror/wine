@@ -2578,6 +2578,11 @@ static WCHAR *get_keypath( MSIPACKAGE *package, HKEY root, const WCHAR *path )
     return strdupW( path );
 }
 
+static BOOL is_special_entry( const WCHAR *name, const WCHAR *value )
+{
+     return (name && (name[0] == '*' || name[0] == '+') && !name[1] && !value);
+}
+
 static UINT ITERATE_WriteRegistryValues(MSIRECORD *row, LPVOID param)
 {
     MSIPACKAGE *package = param;
@@ -2612,10 +2617,8 @@ static UINT ITERATE_WriteRegistryValues(MSIRECORD *row, LPVOID param)
         /* null values can have special meanings */
         if (name[0]=='-' && name[1] == 0)
                 return ERROR_SUCCESS;
-        else if ((name[0]=='+' && name[1] == 0) || 
-                 (name[0] == '*' && name[1] == 0))
-                name = NULL;
-        check_first = TRUE;
+        if ((name[0] == '+' || name[0] == '*') && !name[1])
+            check_first = TRUE;
     }
 
     root = MSI_RecordGetInteger(row,2);
@@ -2652,28 +2655,30 @@ static UINT ITERATE_WriteRegistryValues(MSIRECORD *row, LPVOID param)
     }
 
     deformat_string(package, name, &deformated);
-
-    if (!check_first)
+    if (!is_special_entry( name , value ))
     {
-        TRACE("Setting value %s of %s\n",debugstr_w(deformated),
-                        debugstr_w(uikey));
-        RegSetValueExW(hkey, deformated, 0, type, (LPBYTE)value_data, size);
-    }
-    else
-    {
-        DWORD sz = 0;
-        rc = RegQueryValueExW(hkey, deformated, NULL, NULL, NULL, &sz);
-        if (rc == ERROR_SUCCESS || rc == ERROR_MORE_DATA)
+        if (!check_first)
         {
-            TRACE("value %s of %s checked already exists\n",
-                            debugstr_w(deformated), debugstr_w(uikey));
+            TRACE("Setting value %s of %s\n", debugstr_w(deformated),
+                  debugstr_w(uikey));
+            RegSetValueExW(hkey, deformated, 0, type, (LPBYTE)value_data, size);
         }
         else
         {
-            TRACE("Checked and setting value %s of %s\n",
-                            debugstr_w(deformated), debugstr_w(uikey));
-            if (deformated || size)
-                RegSetValueExW(hkey, deformated, 0, type, (LPBYTE) value_data, size);
+            DWORD sz = 0;
+            rc = RegQueryValueExW(hkey, deformated, NULL, NULL, NULL, &sz);
+            if (rc == ERROR_SUCCESS || rc == ERROR_MORE_DATA)
+            {
+                TRACE("value %s of %s checked already exists\n", debugstr_w(deformated),
+                      debugstr_w(uikey));
+            }
+            else
+            {
+                TRACE("Checked and setting value %s of %s\n", debugstr_w(deformated),
+                      debugstr_w(uikey));
+                if (deformated || size)
+                    RegSetValueExW(hkey, deformated, 0, type, (LPBYTE)value_data, size);
+            }
         }
     }
     RegCloseKey(hkey);
@@ -2773,7 +2778,7 @@ static UINT ITERATE_RemoveRegistryValuesOnUninstall( MSIRECORD *row, LPVOID para
     {
         if (name[0] == '+' && !name[1])
             return ERROR_SUCCESS;
-        else if ((name[0] == '-' && !name[1]) || (name[0] == '*' && !name[1]))
+        if ((name[0] == '-' || name[0] == '*') && !name[1])
         {
             delete_key = TRUE;
             name = NULL;
