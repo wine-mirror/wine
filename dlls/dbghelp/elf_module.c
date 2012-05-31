@@ -890,25 +890,140 @@ found:
 }
 
 /******************************************************************
- *		elf_debuglink_parse
+ *		elf_locate_build_id_target
  *
- * Parses a .gnu_debuglink section and loads the debug info from
- * the external file specified there.
+ * Try to find the .so file containing the debug info out of the build-id note information
  */
-static BOOL elf_debuglink_parse(struct image_file_map* fmap, const struct module* module,
-                                const BYTE* debuglink)
+static BOOL elf_locate_build_id_target(struct image_file_map* fmap, const BYTE* id, unsigned idlen)
 {
-    /* The content of a debug link section is:
-     * 1/ a NULL terminated string, containing the file name for the
-     *    debug info
-     * 2/ padding on 4 byte boundary
-     * 3/ CRC of the linked ELF file
-     */
-    const char* dbg_link = (const char*)debuglink;
-    DWORD crc;
+    static const WCHAR globalDebugDirW[] = {'/','u','s','r','/','l','i','b','/','d','e','b','u','g','/'};
+    static const WCHAR buildidW[] = {'.','b','u','i','l','d','-','i','d','/'};
+    static const WCHAR dotDebug0W[] = {'.','d','e','b','u','g',0};
+    struct image_file_map* fmap_link = NULL;
+    WCHAR* p;
+    WCHAR* z;
+    const BYTE* idend = id + idlen;
+    struct elf_map_file_data emfd;
 
-    crc = *(const DWORD*)(dbg_link + ((DWORD_PTR)(strlen(dbg_link) + 4) & ~3));
-    return elf_locate_debug_link(fmap, dbg_link, module->module.LoadedImageName, crc);
+    fmap_link = HeapAlloc(GetProcessHeap(), 0, sizeof(*fmap_link));
+    if (!fmap_link) return FALSE;
+
+    p = HeapAlloc(GetProcessHeap(), 0,
+                  sizeof(globalDebugDirW) + sizeof(buildidW) +
+                  (idlen * 2 + 1) * sizeof(WCHAR) + sizeof(dotDebug0W));
+    z = p;
+    memcpy(z, globalDebugDirW, sizeof(globalDebugDirW));
+    z += sizeof(globalDebugDirW) / sizeof(WCHAR);
+    memcpy(z, buildidW, sizeof(buildidW));
+    z += sizeof(buildidW) / sizeof(WCHAR);
+
+    if (id < idend)
+    {
+        *z++ = "0123456789abcdef"[*id >> 4  ];
+        *z++ = "0123456789abcdef"[*id & 0x0F];
+        id++;
+    }
+    if (id < idend)
+        *z++ = '/';
+    while (id < idend)
+    {
+        *z++ = "0123456789abcdef"[*id >> 4  ];
+        *z++ = "0123456789abcdef"[*id & 0x0F];
+        id++;
+    }
+    memcpy(z, dotDebug0W, sizeof(dotDebug0W));
+    TRACE("checking %s\n", wine_dbgstr_w(p));
+
+    emfd.kind = from_file;
+    emfd.u.file.filename = p;
+    if (elf_map_file(&emfd, fmap_link))
+    {
+        struct image_section_map buildid_sect;
+        if (elf_find_section(fmap_link, ".note.gnu.build-id", SHT_NULL, &buildid_sect))
+        {
+            const uint32_t* note;
+
+            note = (const uint32_t*)image_map_section(&buildid_sect);
+            if (note != IMAGE_NO_MAP)
+            {
+                /* the usual ELF note structure: name-size desc-size type <name> <desc> */
+                if (note[2] == NT_GNU_BUILD_ID)
+                {
+                    if (note[1] == idlen &&
+                        !memcmp(note + 3 + ((note[0] + 3) >> 2), idend - idlen, idlen))
+                    {
+                        TRACE("Located debug information file at %s\n", debugstr_w(p));
+                        HeapFree(GetProcessHeap(), 0, p);
+                        fmap->u.elf.alternate = fmap_link;
+                        return TRUE;
+                    }
+                    WARN("mismatch in buildid information for %s\n", wine_dbgstr_w(p));
+                }
+            }
+            image_unmap_section(&buildid_sect);
+        }
+        elf_unmap_file(fmap_link);
+    }
+
+    TRACE("not found\n");
+    HeapFree(GetProcessHeap(), 0, p);
+    HeapFree(GetProcessHeap(), 0, fmap_link);
+    return FALSE;
+}
+
+/******************************************************************
+ *		elf_check_alternate
+ *
+ * Load alternate files for a given ELF file, looking at either .note.gnu_build-id
+ * or .gnu_debuglink sections.
+ */
+static BOOL elf_check_alternate(struct image_file_map* fmap, const struct module* module)
+{
+    BOOL ret = FALSE;
+    BOOL found = FALSE;
+    struct image_section_map buildid_sect, debuglink_sect;
+
+    /* if present, add the .gnu_debuglink file as an alternate to current one */
+    if (elf_find_section(fmap, ".note.gnu.build-id", SHT_NULL, &buildid_sect))
+    {
+        const uint32_t* note;
+
+        found = TRUE;
+        note = (const uint32_t*)image_map_section(&buildid_sect);
+        if (note != IMAGE_NO_MAP)
+        {
+            /* the usual ELF note structure: name-size desc-size type <name> <desc> */
+            if (note[2] == NT_GNU_BUILD_ID)
+            {
+                ret = elf_locate_build_id_target(fmap, (const BYTE*)(note + 3 + ((note[0] + 3) >> 2)), note[1]);
+            }
+        }
+        image_unmap_section(&buildid_sect);
+    }
+    /* if present, add the .gnu_debuglink file as an alternate to current one */
+    if (!ret && elf_find_section(fmap, ".gnu_debuglink", SHT_NULL, &debuglink_sect))
+    {
+        const char* dbg_link;
+
+        found = TRUE;
+        dbg_link = (const char*)image_map_section(&debuglink_sect);
+        if (dbg_link != IMAGE_NO_MAP)
+        {
+            /* The content of a debug link section is:
+             * 1/ a NULL terminated string, containing the file name for the
+             *    debug info
+             * 2/ padding on 4 byte boundary
+             * 3/ CRC of the linked ELF file
+             */
+            DWORD crc = *(const DWORD*)(dbg_link + ((DWORD_PTR)(strlen(dbg_link) + 4) & ~3));
+            ret = elf_locate_debug_link(fmap, dbg_link, module->module.LoadedImageName, crc);
+            if (!ret)
+                WARN("Couldn't load linked debug file for %s\n",
+                     debugstr_w(module->module.ModuleName));
+        }
+        image_unmap_section(&debuglink_sect);
+    }
+    return found ? ret : TRUE;
 }
 
 /******************************************************************
@@ -949,24 +1064,10 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
     if (!(dbghelp_options & SYMOPT_PUBLICS_ONLY))
     {
         struct image_section_map stab_sect, stabstr_sect;
-        struct image_section_map debuglink_sect;
 
-        /* if present, add the .gnu_debuglink file as an alternate to current one */
-	if (elf_find_section(fmap, ".gnu_debuglink", SHT_NULL, &debuglink_sect))
-        {
-            const BYTE* dbg_link;
+        /* check if we need an alternate file (from debuglink or build-id) */
+        ret = elf_check_alternate(fmap, module);
 
-            dbg_link = (const BYTE*)image_map_section(&debuglink_sect);
-            if (dbg_link != IMAGE_NO_MAP)
-            {
-                lret = elf_debuglink_parse(fmap, module, dbg_link);
-                if (!lret)
-		    WARN("Couldn't load linked debug file for %s\n",
-                         debugstr_w(module->module.ModuleName));
-                ret = ret || lret;
-            }
-            image_unmap_section(&debuglink_sect);
-        }
         if (elf_find_section(fmap, ".stab", SHT_NULL, &stab_sect) &&
             elf_find_section(fmap, ".stabstr", SHT_NULL, &stabstr_sect))
         {
