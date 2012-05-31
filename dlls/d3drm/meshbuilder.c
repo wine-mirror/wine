@@ -74,6 +74,7 @@ typedef struct {
     LPVOID pFaceData;
     DWORD nb_coords2d;
     Coords2d* pCoords2d;
+    IDirect3DRMMaterial2* material;
 } IDirect3DRMMeshBuilderImpl;
 
 char templates[] = {
@@ -361,6 +362,8 @@ static ULONG WINAPI IDirect3DRMMeshBuilder2Impl_Release(IDirect3DRMMeshBuilder2*
 
     if (!ref)
     {
+        if (This->material)
+            IDirect3DRMMaterial2_Release(This->material);
         HeapFree(GetProcessHeap(), 0, This->name);
         HeapFree(GetProcessHeap(), 0, This->pVertices);
         HeapFree(GetProcessHeap(), 0, This->pNormals);
@@ -1202,7 +1205,87 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3* iface, LPDIRECTXFILEDATA pData)
         }
         else if (IsEqualGUID(pGuid, &TID_D3DRMMeshMaterialList))
         {
-            FIXME("MeshMaterialList not supported yet, ignoring...\n");
+            DWORD nb_materials;
+            DWORD nb_face_indices;
+            DWORD data_size;
+            LPDIRECTXFILEOBJECT child;
+            DWORD i = 0;
+            float* values;
+
+            TRACE("Process MeshMaterialList\n");
+
+            hr = IDirectXFileData_GetData(pData2, NULL, &size, (void**)&ptr);
+            if (hr != DXFILE_OK)
+                goto end;
+
+            nb_materials = *(DWORD*)ptr;
+            nb_face_indices = *(DWORD*)(ptr + sizeof(DWORD));
+            data_size = 2 * sizeof(DWORD) + nb_face_indices * sizeof(DWORD);
+
+            TRACE("nMaterials = %u, nFaceIndexes = %u\n", nb_materials, nb_face_indices);
+
+            if (size != data_size)
+                WARN("Returned size %u does not match expected one %u\n", size, data_size);
+
+            if (nb_materials > 2)
+            {
+                FIXME("Only one material per mesh supported, first one applies to all faces\n");
+                nb_materials = 1;
+            }
+
+            while (SUCCEEDED(hr = IDirectXFileData_GetNextObject(pData2, &child)) && (i < nb_materials))
+            {
+                LPDIRECTXFILEDATA data;
+                LPDIRECTXFILEDATAREFERENCE reference;
+                LPDIRECT3DRMMATERIAL2 material;
+
+                hr = IDirectXFileObject_QueryInterface(child, &IID_IDirectXFileData, (void **)&data);
+                if (FAILED(hr))
+                {
+                    hr = IDirectXFileObject_QueryInterface(child, &IID_IDirectXFileDataReference, (void **)&reference);
+                    if (FAILED(hr))
+                        goto end;
+
+                    hr = IDirectXFileDataReference_Resolve(reference, &data);
+                    IDirectXFileDataReference_Release(reference);
+                    if (FAILED(hr))
+                        goto end;
+                }
+
+                hr = Direct3DRMMaterial_create(&material);
+                if (FAILED(hr))
+                {
+                    IDirectXFileData_Release(data);
+                    goto end;
+                }
+
+                hr = IDirectXFileData_GetData(data, NULL, &size, (void**)&ptr);
+                if (hr != DXFILE_OK)
+                {
+                    IDirectXFileData_Release(data);
+                    goto end;
+                }
+
+                if (size != 44)
+                    WARN("Material size %u does not match expected one %u\n", size, 44);
+
+                values = (float*)ptr;
+
+                IDirect3DRMMaterial2_SetAmbient(material, values[0], values [1], values[2]); /* Alpha ignored */
+                IDirect3DRMMaterial2_SetPower(material, values[4]);
+                IDirect3DRMMaterial2_SetSpecular(material, values[5], values[6], values[7]);
+                IDirect3DRMMaterial2_SetEmissive(material, values[8], values[9], values[10]);
+
+                This->material = material;
+
+                IDirectXFileData_Release(data);
+                i++;
+            }
+            if (hr == S_OK)
+                WARN("Found more sub-objects than expected\n");
+            else if (hr != DXFILEERR_NOMOREOBJECTS)
+                goto end;
+            hr = S_OK;
         }
         else
         {
