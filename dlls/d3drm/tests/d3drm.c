@@ -372,7 +372,7 @@ static void test_MeshBuilder(void)
         ok(texture == NULL, "No texture should be present\n");
         hr = IDirect3DRMMesh_GetGroupMaterial(mesh, 0, &material);
         ok(hr == D3DRM_OK, "GetCroupMaterial failed returning hr = %x\n", hr);
-        todo_wine ok(material != NULL, "No material present\n");
+        ok(material != NULL, "No material present\n");
         if ((hr == D3DRM_OK) && material)
         {
             hr = IDirect3DRMMaterial_GetEmissive(material, &values[0], &values[1], &values[2]);

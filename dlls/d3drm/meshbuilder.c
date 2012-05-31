@@ -2011,6 +2011,8 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_CreateMesh(IDirect3DRMMeshBuil
                 hr = E_OUTOFMEMORY;
             }
         }
+        if (SUCCEEDED(hr))
+            hr = IDirect3DRMMesh_SetGroupMaterial(*mesh, 0, (LPDIRECT3DRMMATERIAL)This->material);
         if (FAILED(hr))
             IDirect3DRMMesh_Release(*mesh);
     }
@@ -2652,13 +2654,24 @@ static HRESULT WINAPI IDirect3DRMMeshImpl_SetGroupQuality(IDirect3DRMMesh* iface
 }
 
 static HRESULT WINAPI IDirect3DRMMeshImpl_SetGroupMaterial(IDirect3DRMMesh* iface,
-                                                           D3DRMGROUPINDEX id, LPDIRECT3DRMMATERIAL value)
+                                                           D3DRMGROUPINDEX id, LPDIRECT3DRMMATERIAL material)
 {
     IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
 
-    FIXME("(%p)->(%u,%p): stub\n", This, id, value);
+    TRACE("(%p)->(%u,%p)\n", This, id, material);
 
-    return E_NOTIMPL;
+    if (id >= This->nb_groups)
+        return D3DRMERR_BADVALUE;
+
+    if (This->groups[id].material)
+        IDirect3DRMMaterial2_Release(This->groups[id].material);
+
+    This->groups[id].material = (LPDIRECT3DRMMATERIAL2)material;
+
+    if (material)
+        IDirect3DRMMaterial2_AddRef(This->groups[id].material);
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMMeshImpl_SetGroupTexture(IDirect3DRMMesh* iface,
