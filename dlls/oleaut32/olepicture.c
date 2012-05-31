@@ -1402,6 +1402,8 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface, IStream *pStm) 
               !memcmp(&(header[0]), "BM",       2) ||   /* BMP header */
               !memcmp(&(header[0]), "\xff\xd8", 2) ||   /* JPEG header */
               (header[0] == EMR_HEADER)            ||   /* EMF header */
+              (header[0] == 0x10000)               ||   /* icon: idReserved 0, idType 1 */
+              (header[0] == 0x20000)               ||   /* cursor: idReserved 0, idType 2 */
               (header[1] > statstg.cbSize.QuadPart)||   /* invalid size */
               (header[1]==0)
           ) {/* Found start of bitmap data */
