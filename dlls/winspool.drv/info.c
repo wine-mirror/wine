@@ -195,6 +195,7 @@ static const WCHAR Default_DevModeW[] = {'D','e','f','a','u','l','t',' ','D','e'
 static const WCHAR Default_PriorityW[] = {'D','e','f','a','u','l','t',' ','P','r','i','o','r','i','t','y',0};
 static const WCHAR Dependent_FilesW[] = {'D','e','p','e','n','d','e','n','t',' ','F','i','l','e','s',0};
 static const WCHAR DescriptionW[] = {'D','e','s','c','r','i','p','t','i','o','n',0};
+static const WCHAR dnsTimeoutW[] = {'d','n','s','T','i','m','e','o','u','t',0};
 static const WCHAR DriverW[] = {'D','r','i','v','e','r',0};
 static const WCHAR HardwareIDW[] = {'H','a','r','d','w','a','r','e','I','D',0};
 static const WCHAR Help_FileW[] = {'H','e','l','p',' ','F','i','l','e',0};
@@ -218,6 +219,7 @@ static const WCHAR Separator_FileW[] = {'S','e','p','a','r','a','t','o','r',' ',
 static const WCHAR Share_NameW[] = {'S','h','a','r','e',' ','N','a','m','e',0};
 static const WCHAR StartTimeW[] = {'S','t','a','r','t','T','i','m','e',0};
 static const WCHAR StatusW[] = {'S','t','a','t','u','s',0};
+static const WCHAR txTimeoutW[] = {'t','x','T','i','m','e','o','u','t',0};
 static const WCHAR UntilTimeW[] = {'U','n','t','i','l','T','i','m','e',0};
 static const WCHAR VersionW[] = {'V','e','r','s','i','o','n',0};
 static       WCHAR WinPrintW[] = {'W','i','n','P','r','i','n','t',0};
@@ -3358,28 +3360,27 @@ BOOL WINAPI ResetPrinterW(HANDLE hPrinter, LPPRINTER_DEFAULTSW pDefault)
 }
 
 /*****************************************************************************
- *    WINSPOOL_GetDWORDFromReg
+ *    get_dword_from_reg
  *
- * Return DWORD associated with ValueName from hkey.
+ * Return DWORD associated with name from hkey.
  */
-static DWORD WINSPOOL_GetDWORDFromReg(HKEY hkey, LPCSTR ValueName)
+static DWORD get_dword_from_reg( HKEY hkey, const WCHAR *name )
 {
     DWORD sz = sizeof(DWORD), type, value = 0;
     LONG ret;
 
-    ret = RegQueryValueExA(hkey, ValueName, 0, &type, (LPBYTE)&value, &sz);
+    ret = RegQueryValueExW( hkey, name, 0, &type, (LPBYTE)&value, &sz );
 
     if(ret != ERROR_SUCCESS) {
-        WARN("Got ret = %d on name %s\n", ret, ValueName);
-	return 0;
+        WARN("Got ret = %d on name %s\n", ret, debugstr_w(name));
+        return 0;
     }
     if(type != REG_DWORD) {
         ERR("Got type %d\n", type);
-	return 0;
+        return 0;
     }
     return value;
 }
-
 
 /*****************************************************************************
  * get_filename_from_reg [internal]
@@ -3770,12 +3771,11 @@ static BOOL WINSPOOL_GetPrinter_2(HKEY hkeyPrinter, PRINTER_INFO_2W *pi2,
 	*pcbNeeded += size;
     }
     if(pi2) {
-        pi2->Attributes = WINSPOOL_GetDWORDFromReg(hkeyPrinter, "Attributes");
-        pi2->Priority = WINSPOOL_GetDWORDFromReg(hkeyPrinter, "Priority");
-        pi2->DefaultPriority = WINSPOOL_GetDWORDFromReg(hkeyPrinter,
-							"Default Priority");
-        pi2->StartTime = WINSPOOL_GetDWORDFromReg(hkeyPrinter, "StartTime");
-        pi2->UntilTime = WINSPOOL_GetDWORDFromReg(hkeyPrinter, "UntilTime");
+        pi2->Attributes = get_dword_from_reg( hkeyPrinter, AttributesW );
+        pi2->Priority = get_dword_from_reg( hkeyPrinter, PriorityW );
+        pi2->DefaultPriority = get_dword_from_reg( hkeyPrinter, Default_PriorityW );
+        pi2->StartTime = get_dword_from_reg( hkeyPrinter, StartTimeW );
+        pi2->UntilTime = get_dword_from_reg( hkeyPrinter, UntilTimeW );
     }
 
     if(!space && pi2) /* zero out pi2 if we can't completely fill buf */
@@ -3808,7 +3808,7 @@ static BOOL WINSPOOL_GetPrinter_4(HKEY hkeyPrinter, PRINTER_INFO_4W *pi4,
 	*pcbNeeded += size;
     }
     if(pi4) {
-        pi4->Attributes = WINSPOOL_GetDWORDFromReg(hkeyPrinter, "Attributes");
+        pi4->Attributes = get_dword_from_reg( hkeyPrinter, AttributesW );
     }
 
     if(!space && pi4) /* zero out pi4 if we can't completely fill buf */
@@ -3850,11 +3850,9 @@ static BOOL WINSPOOL_GetPrinter_5(HKEY hkeyPrinter, PRINTER_INFO_5W *pi5,
 	*pcbNeeded += size;
     }
     if(pi5) {
-        pi5->Attributes = WINSPOOL_GetDWORDFromReg(hkeyPrinter, "Attributes");
-        pi5->DeviceNotSelectedTimeout = WINSPOOL_GetDWORDFromReg(hkeyPrinter,
-								"dnsTimeout");
-        pi5->TransmissionRetryTimeout = WINSPOOL_GetDWORDFromReg(hkeyPrinter,
-								 "txTimeout");
+        pi5->Attributes = get_dword_from_reg( hkeyPrinter, AttributesW );
+        pi5->DeviceNotSelectedTimeout = get_dword_from_reg( hkeyPrinter, dnsTimeoutW );
+        pi5->TransmissionRetryTimeout = get_dword_from_reg( hkeyPrinter, txTimeoutW );
     }
 
     if(!space && pi5) /* zero out pi5 if we can't completely fill buf */
@@ -4021,7 +4019,7 @@ BOOL WINAPI GetPrinterW(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
         size = sizeof(PRINTER_INFO_6);
         if (size <= cbBuf) {
             /* FIXME: We do not update the status yet */
-            pi6->dwStatus = WINSPOOL_GetDWORDFromReg(hkeyPrinter, "Status");
+            pi6->dwStatus = get_dword_from_reg( hkeyPrinter, StatusW );
             ret = TRUE;
         } else {
             ret = FALSE;
