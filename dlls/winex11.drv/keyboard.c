@@ -61,6 +61,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(keyboard);
 WINE_DECLARE_DEBUG_CHANNEL(key);
 
 static int min_keycode, max_keycode, keysyms_per_keycode;
+static KeySym *key_mapping;
 static WORD keyc2vkey[256], keyc2scan[256];
 
 static int NumLockMask, ScrollLockMask, AltGrMask; /* mask in the XKeyEvent state */
@@ -1102,7 +1103,7 @@ static inline KeySym keycode_to_keysym( Display *display, KeyCode keycode, int i
 #ifdef HAVE_XKB
     if (use_xkb) return XkbKeycodeToKeysym(display, keycode, 0, index);
 #endif
-    return XKeycodeToKeysym(display, keycode, index);
+    return key_mapping[(keycode - min_keycode) * keysyms_per_keycode + index];
 }
 
 /* Returns the Windows virtual key code associated with the X event <e> */
@@ -1608,7 +1609,6 @@ static void set_kbd_layout_preload_key(void)
  */
 void X11DRV_InitKeyboard( Display *display )
 {
-    KeySym *ksp;
     XModifierKeymap *mmp;
     KeySym keysym;
     KeyCode *kcp;
@@ -1641,11 +1641,9 @@ void X11DRV_InitKeyboard( Display *display )
 
     wine_tsx11_lock();
     XDisplayKeycodes(display, &min_keycode, &max_keycode);
-    ksp = XGetKeyboardMapping(display, min_keycode,
-                              max_keycode + 1 - min_keycode, &keysyms_per_keycode);
-    /* We are only interested in keysyms_per_keycode.
-       There is no need to hold a local copy of the keysyms table */
-    XFree(ksp);
+    if (key_mapping) XFree( key_mapping );
+    key_mapping = XGetKeyboardMapping(display, min_keycode,
+                                      max_keycode + 1 - min_keycode, &keysyms_per_keycode);
 
     mmp = XGetModifierMapping(display);
     kcp = mmp->modifiermap;
