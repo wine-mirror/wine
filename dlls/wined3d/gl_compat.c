@@ -19,10 +19,13 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
+
 #include <stdio.h>
 #ifdef HAVE_FLOAT_H
 # include <float.h>
 #endif
+
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(gl_compat);

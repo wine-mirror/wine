@@ -28,6 +28,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <math.h>
 #include <stdio.h>
