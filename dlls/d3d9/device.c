@@ -2019,7 +2019,7 @@ static HRESULT WINAPI d3d9_device_ProcessVertices(IDirect3DDevice9Ex *iface,
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
     struct d3d9_vertexbuffer *dst_impl = unsafe_impl_from_IDirect3DVertexBuffer9(dst_buffer);
-    IDirect3DVertexDeclaration9Impl *decl_impl = unsafe_impl_from_IDirect3DVertexDeclaration9(declaration);
+    struct d3d9_vertex_declaration *decl_impl = unsafe_impl_from_IDirect3DVertexDeclaration9(declaration);
     HRESULT hr;
 
     TRACE("iface %p, src_start_idx %u, dst_idx %u, vertex_count %u, dst_buffer %p, declaration %p, flags %#x.\n",
@@ -2027,7 +2027,7 @@ static HRESULT WINAPI d3d9_device_ProcessVertices(IDirect3DDevice9Ex *iface,
 
     wined3d_mutex_lock();
     hr = wined3d_device_process_vertices(device->wined3d_device, src_start_idx, dst_idx, vertex_count,
-            dst_impl->wined3d_buffer, decl_impl ? decl_impl->wineD3DVertexDeclaration : NULL,
+            dst_impl->wined3d_buffer, decl_impl ? decl_impl->wined3d_declaration : NULL,
             flags, dst_impl->fvf);
     wined3d_mutex_unlock();
 
@@ -2038,7 +2038,7 @@ static HRESULT WINAPI d3d9_device_CreateVertexDeclaration(IDirect3DDevice9Ex *if
         const D3DVERTEXELEMENT9 *elements, IDirect3DVertexDeclaration9 **declaration)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
-    IDirect3DVertexDeclaration9Impl *object;
+    struct d3d9_vertex_declaration *object;
     HRESULT hr;
 
     TRACE("iface %p, elements %p, declaration %p.\n", iface, elements, declaration);
@@ -2059,14 +2059,14 @@ static HRESULT WINAPI d3d9_device_SetVertexDeclaration(IDirect3DDevice9Ex *iface
         IDirect3DVertexDeclaration9 *declaration)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
-    IDirect3DVertexDeclaration9Impl *decl_impl = unsafe_impl_from_IDirect3DVertexDeclaration9(declaration);
+    struct d3d9_vertex_declaration *decl_impl = unsafe_impl_from_IDirect3DVertexDeclaration9(declaration);
     HRESULT hr;
 
     TRACE("iface %p, declaration %p.\n", iface, declaration);
 
     wined3d_mutex_lock();
     hr = wined3d_device_set_vertex_declaration(device->wined3d_device,
-            decl_impl ? decl_impl->wineD3DVertexDeclaration : NULL);
+            decl_impl ? decl_impl->wined3d_declaration : NULL);
     wined3d_mutex_unlock();
 
     return hr;
@@ -2077,7 +2077,7 @@ static HRESULT WINAPI d3d9_device_GetVertexDeclaration(IDirect3DDevice9Ex *iface
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
     struct wined3d_vertex_declaration *wined3d_declaration = NULL;
-    IDirect3DVertexDeclaration9Impl *declaration_impl;
+    struct d3d9_vertex_declaration *declaration_impl;
     HRESULT hr;
 
     TRACE("iface %p, declaration %p.\n", iface, declaration);
@@ -2107,7 +2107,7 @@ static struct wined3d_vertex_declaration *device_get_fvf_declaration(struct d3d9
 {
     struct wined3d_vertex_declaration *wined3d_declaration;
     struct fvf_declaration *fvf_decls = device->fvf_decls;
-    IDirect3DVertexDeclaration9Impl *d3d9_declaration;
+    struct d3d9_vertex_declaration *d3d9_declaration;
     D3DVERTEXELEMENT9 *elements;
     int p, low, high; /* deliberately signed */
     HRESULT hr;
@@ -2156,8 +2156,8 @@ static struct wined3d_vertex_declaration *device_get_fvf_declaration(struct d3d9
         device->fvf_decl_size += grow;
     }
 
-    d3d9_declaration->convFVF = fvf;
-    wined3d_declaration = d3d9_declaration->wineD3DVertexDeclaration;
+    d3d9_declaration->fvf = fvf;
+    wined3d_declaration = d3d9_declaration->wined3d_declaration;
     wined3d_vertex_declaration_incref(wined3d_declaration);
     IDirect3DVertexDeclaration9_Release(&d3d9_declaration->IDirect3DVertexDeclaration9_iface);
 
@@ -2205,7 +2205,7 @@ static HRESULT WINAPI d3d9_device_GetFVF(IDirect3DDevice9Ex *iface, DWORD *fvf)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
     struct wined3d_vertex_declaration *wined3d_declaration;
-    IDirect3DVertexDeclaration9Impl *d3d9_declaration;
+    struct d3d9_vertex_declaration *d3d9_declaration;
     HRESULT hr;
 
     TRACE("iface %p, fvf %p.\n", iface, fvf);
@@ -2222,7 +2222,7 @@ static HRESULT WINAPI d3d9_device_GetFVF(IDirect3DDevice9Ex *iface, DWORD *fvf)
     if (wined3d_declaration)
     {
         d3d9_declaration = wined3d_vertex_declaration_get_parent(wined3d_declaration);
-        *fvf = d3d9_declaration->convFVF;
+        *fvf = d3d9_declaration->fvf;
         wined3d_vertex_declaration_decref(wined3d_declaration);
     }
     else

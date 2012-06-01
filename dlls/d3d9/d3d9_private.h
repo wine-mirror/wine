@@ -256,32 +256,20 @@ struct d3d9_stateblock
 HRESULT stateblock_init(struct d3d9_stateblock *stateblock, struct d3d9_device *device,
         D3DSTATEBLOCKTYPE type, struct wined3d_stateblock *wined3d_stateblock) DECLSPEC_HIDDEN;
 
-/* --------------------------- */
-/* IDirect3DVertexDeclaration9 */
-/* --------------------------- */
-
-/*****************************************************************************
- * IDirect3DVertexDeclaration implementation structure
- */
-typedef struct IDirect3DVertexDeclaration9Impl {
-  /* IUnknown fields */
-  IDirect3DVertexDeclaration9 IDirect3DVertexDeclaration9_iface;
-  LONG    ref;
-
-  D3DVERTEXELEMENT9 *elements;
-  UINT element_count;
-
-  /* IDirect3DVertexDeclaration9 fields */
-  struct wined3d_vertex_declaration *wineD3DVertexDeclaration;
-  DWORD convFVF;
-
-  /* Parent reference */
-  LPDIRECT3DDEVICE9EX parentDevice;
-} IDirect3DVertexDeclaration9Impl;
+struct d3d9_vertex_declaration
+{
+    IDirect3DVertexDeclaration9 IDirect3DVertexDeclaration9_iface;
+    LONG refcount;
+    D3DVERTEXELEMENT9 *elements;
+    UINT element_count;
+    struct wined3d_vertex_declaration *wined3d_declaration;
+    DWORD fvf;
+    IDirect3DDevice9Ex *parent_device;
+};
 
 HRESULT d3d9_vertex_declaration_create(struct d3d9_device *device,
-        const D3DVERTEXELEMENT9 *elements, IDirect3DVertexDeclaration9Impl **declaration) DECLSPEC_HIDDEN;
-IDirect3DVertexDeclaration9Impl *unsafe_impl_from_IDirect3DVertexDeclaration9(
+        const D3DVERTEXELEMENT9 *elements, struct d3d9_vertex_declaration **declaration) DECLSPEC_HIDDEN;
+struct d3d9_vertex_declaration *unsafe_impl_from_IDirect3DVertexDeclaration9(
         IDirect3DVertexDeclaration9 *iface) DECLSPEC_HIDDEN;
 
 /* ---------------------- */
