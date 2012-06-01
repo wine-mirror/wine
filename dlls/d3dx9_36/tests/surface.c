@@ -19,6 +19,7 @@
  */
 
 #define COBJMACROS
+#include <assert.h>
 #include "wine/test.h"
 #include "d3dx9tex.h"
 #include "resources.h"
@@ -138,19 +139,75 @@ static HRESULT create_file(const char *filename, const unsigned char *data, cons
     return D3DERR_INVALIDCALL;
 }
 
+/* dds_header.flags */
 #define DDS_CAPS 0x00000001
 #define DDS_HEIGHT 0x00000002
 #define DDS_WIDTH 0x00000004
+#define DDS_PITCH 0x00000008
 #define DDS_PIXELFORMAT 0x00001000
+#define DDS_LINEARSIZE 0x00080000
 
+/* dds_header.caps */
 #define DDS_CAPS_TEXTURE 0x00001000
 
+/* dds_pixel_format.flags */
 #define DDS_PF_ALPHA 0x00000001
 #define DDS_PF_ALPHA_ONLY 0x00000002
 #define DDS_PF_FOURCC 0x00000004
 #define DDS_PF_RGB 0x00000040
 #define DDS_PF_LUMINANCE 0x00020000
 #define DDS_PF_BUMPDUDV 0x00080000
+
+struct dds_pixel_format
+{
+    DWORD size;
+    DWORD flags;
+    DWORD fourcc;
+    DWORD bpp;
+    DWORD rmask;
+    DWORD gmask;
+    DWORD bmask;
+    DWORD amask;
+};
+
+struct dds_header
+{
+    DWORD magic;
+    DWORD size;
+    DWORD flags;
+    DWORD height;
+    DWORD width;
+    DWORD pitch_or_linear_size;
+    DWORD depth;
+    DWORD miplevels;
+    DWORD reserved[11];
+    struct dds_pixel_format pixel_format;
+    DWORD caps;
+    DWORD caps2;
+    DWORD reserved2[3];
+};
+
+/* fills dds_header with reasonable default values */
+static void fill_dds_header(struct dds_header *header)
+{
+    memset(header, 0, sizeof(*header));
+
+    header->magic = MAKEFOURCC('D','D','S',' ');
+    header->size = sizeof(*header);
+    header->flags = DDS_CAPS | DDS_WIDTH | DDS_HEIGHT | DDS_PIXELFORMAT;
+    header->height = 4;
+    header->width = 4;
+    header->pixel_format.size = sizeof(header->pixel_format);
+    /* X8R8G8B8 */
+    header->pixel_format.flags = DDS_PF_RGB;
+    header->pixel_format.fourcc = 0;
+    header->pixel_format.bpp = 32;
+    header->pixel_format.rmask = 0xff0000;
+    header->pixel_format.gmask = 0x00ff00;
+    header->pixel_format.bmask = 0x0000ff;
+    header->pixel_format.amask = 0;
+    header->caps = DDS_CAPS_TEXTURE;
+}
 
 static void check_dds_pixel_format(DWORD flags, DWORD fourcc, DWORD bpp,
                                    DWORD rmask, DWORD gmask, DWORD bmask, DWORD amask,
@@ -160,49 +217,109 @@ static void check_dds_pixel_format(DWORD flags, DWORD fourcc, DWORD bpp,
     D3DXIMAGE_INFO info;
     struct
     {
-        DWORD magic;
-        DWORD size;
-        DWORD flags;
-        DWORD height;
-        DWORD width;
-        DWORD padding[14];
-        struct
-        {
-            DWORD size;
-            DWORD flags;
-            DWORD fourcc;
-            DWORD bpp;
-            DWORD rmask;
-            DWORD gmask;
-            DWORD bmask;
-            DWORD amask;
-        } pixel_format;
-        DWORD caps;
-        DWORD padding2[4];
+        struct dds_header header;
         BYTE data[256];
     } dds;
 
-    memset(&dds, 0, sizeof(dds));
-
-    dds.magic = MAKEFOURCC('D','D','S',' ');
-    dds.size = 124;
-    dds.flags = DDS_CAPS | DDS_WIDTH | DDS_HEIGHT | DDS_PIXELFORMAT;
-    dds.height = 4;
-    dds.width = 4;
-    dds.pixel_format.size = sizeof(dds.pixel_format);
-    dds.pixel_format.flags = flags;
-    dds.pixel_format.fourcc = fourcc;
-    dds.pixel_format.bpp = bpp;
-    dds.pixel_format.rmask = rmask;
-    dds.pixel_format.gmask = gmask;
-    dds.pixel_format.bmask = bmask;
-    dds.pixel_format.amask = amask;
-    dds.caps = DDS_CAPS_TEXTURE;
+    fill_dds_header(&dds.header);
+    dds.header.pixel_format.flags = flags;
+    dds.header.pixel_format.fourcc = fourcc;
+    dds.header.pixel_format.bpp = bpp;
+    dds.header.pixel_format.rmask = rmask;
+    dds.header.pixel_format.gmask = gmask;
+    dds.header.pixel_format.bmask = bmask;
+    dds.header.pixel_format.amask = amask;
+    memset(dds.data, 0, sizeof(dds.data));
 
     hr = D3DXGetImageInfoFromFileInMemory(&dds, sizeof(dds), &info);
     ok(hr == D3D_OK, "D3DXGetImageInfoFromFileInMemory returned %#x for pixel format %#x, expected %#x\n", hr, expected_format, D3D_OK);
     if (SUCCEEDED(hr))
         ok(info.Format == expected_format, "D3DXGetImageInfoFromFileInMemory returned format %#x, expected %#x\n", info.Format, expected_format);
+}
+
+static void test_dds_header_handling(void)
+{
+    int i;
+    HRESULT hr;
+    D3DXIMAGE_INFO info;
+    struct
+    {
+        struct dds_header header;
+        BYTE data[256];
+    } dds;
+
+    struct
+    {
+        struct dds_pixel_format pixel_format;
+        DWORD flags;
+        DWORD width;
+        DWORD height;
+        DWORD pitch;
+        DWORD pixel_data_size;
+        HRESULT expected_result;
+    } tests[] = {
+        /* pitch is ignored */
+        { { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 }, 0, 4, 4, 0,
+          63 /* pixel data size */, D3DXERR_INVALIDDATA },
+        { { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 }, DDS_PITCH, 4, 4, 0 /* pitch */,
+          64, D3D_OK },
+        { { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 }, DDS_PITCH, 4, 4, 1 /* pitch */,
+          64, D3D_OK },
+        { { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 }, DDS_PITCH, 4, 4, 2 /* pitch */,
+          64, D3D_OK },
+        { { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 }, DDS_PITCH, 4, 4, 3 /* pitch */,
+          64, D3D_OK },
+        { { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 }, DDS_PITCH, 4, 4, 4 /* pitch */,
+          64, D3D_OK },
+        { { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 }, DDS_PITCH, 4, 4, 16 /* pitch */,
+          64, D3D_OK },
+        { { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 }, DDS_PITCH, 4, 4, 1024 /* pitch */,
+          64, D3D_OK },
+        { { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 }, DDS_PITCH, 4, 4, -1 /* pitch */,
+          64, D3D_OK },
+        /* linear size is ignored */
+        { { 32, DDS_PF_FOURCC, MAKEFOURCC('D','X','T','1'), 0, 0, 0, 0, 0 }, 0, 4, 4, 0,
+          7 /* pixel data size */, D3DXERR_INVALIDDATA },
+        { { 32, DDS_PF_FOURCC, MAKEFOURCC('D','X','T','1'), 0, 0, 0, 0, 0 }, DDS_LINEARSIZE, 4, 4, 0 /* linear size */,
+          8, D3D_OK },
+        { { 32, DDS_PF_FOURCC, MAKEFOURCC('D','X','T','1'), 0, 0, 0, 0, 0 }, DDS_LINEARSIZE, 4, 4, 1 /* linear size */,
+          8, D3D_OK },
+        { { 32, DDS_PF_FOURCC, MAKEFOURCC('D','X','T','1'), 0, 0, 0, 0, 0 }, DDS_LINEARSIZE, 4, 4, 2 /* linear size */,
+          8, D3D_OK },
+        { { 32, DDS_PF_FOURCC, MAKEFOURCC('D','X','T','1'), 0, 0, 0, 0, 0 }, DDS_LINEARSIZE, 4, 4, 9 /* linear size */,
+          8, D3D_OK },
+        { { 32, DDS_PF_FOURCC, MAKEFOURCC('D','X','T','1'), 0, 0, 0, 0, 0 }, DDS_LINEARSIZE, 4, 4, 16 /* linear size */,
+          8, D3D_OK },
+        { { 32, DDS_PF_FOURCC, MAKEFOURCC('D','X','T','1'), 0, 0, 0, 0, 0 }, DDS_LINEARSIZE, 4, 4, -1 /* linear size */,
+          8, D3D_OK },
+        /* integer overflows */
+        { { 32, DDS_PF_RGB, 0, 32, 0xff0000, 0x00ff00, 0x0000ff, 0 }, 0, 0x80000000, 0x80000000 /* 0x80000000 * 0x80000000 * 4 = 0 */, 0,
+          64, D3D_OK },
+        { { 32, DDS_PF_RGB, 0, 32, 0xff0000, 0x00ff00, 0x0000ff, 0 }, 0, 0x8000100, 0x800100 /* 0x8000100 * 0x800100 * 4 = 262144 */, 0,
+          64, D3DXERR_INVALIDDATA },
+        { { 32, DDS_PF_RGB, 0, 32, 0xff0000, 0x00ff00, 0x0000ff, 0 }, 0, 0x80000001, 0x80000001 /* 0x80000001 * 0x80000001 * 4 = 4 */, 0,
+          4, D3D_OK },
+        { { 32, DDS_PF_RGB, 0, 32, 0xff0000, 0x00ff00, 0x0000ff, 0 }, 0, 0x80000001, 0x80000001 /* 0x80000001 * 0x80000001 * 4 = 4 */, 0,
+          3 /* pixel data size */, D3DXERR_INVALIDDATA }
+    };
+
+    memset(&dds, 0, sizeof(dds));
+
+    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i++)
+    {
+        DWORD file_size = sizeof(dds.header) + tests[i].pixel_data_size;
+        assert(file_size <= sizeof(dds));
+
+        fill_dds_header(&dds.header);
+        dds.header.flags |= tests[i].flags;
+        dds.header.width = tests[i].width;
+        dds.header.height = tests[i].height;
+        dds.header.pitch_or_linear_size = tests[i].pitch;
+        memcpy(&dds.header.pixel_format, &tests[i].pixel_format, sizeof(struct dds_pixel_format));
+
+        hr = D3DXGetImageInfoFromFileInMemory(&dds, file_size, &info);
+        ok(hr == tests[i].expected_result, "%d: D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", i, hr, tests[i].expected_result);
+    }
 }
 
 static void test_D3DXGetImageInfo(void)
@@ -403,6 +520,8 @@ static void test_D3DXGetImageInfo(void)
     check_dds_pixel_format(DDS_PF_LUMINANCE | DDS_PF_ALPHA, 0, 8, 0x0f, 0, 0, 0xf0, D3DFMT_A4L4);
     check_dds_pixel_format(DDS_PF_BUMPDUDV, 0, 16, 0x00ff, 0xff00, 0, 0, D3DFMT_V8U8);
     check_dds_pixel_format(DDS_PF_BUMPDUDV, 0, 32, 0x0000ffff, 0xffff0000, 0, 0, D3DFMT_V16U16);
+
+    test_dds_header_handling();
 
     hr = D3DXGetImageInfoFromFileInMemory(dds_16bit, sizeof(dds_16bit) - 1, &info);
     ok(hr == D3DXERR_INVALIDDATA, "D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", hr, D3DXERR_INVALIDDATA);
