@@ -2648,6 +2648,29 @@ static void test_initialize(void)
     CoUninitialize();
 }
 
+static void test_coop_level_surf_create(void)
+{
+    IDirectDrawSurface4 *surface;
+    IDirectDraw4 *ddraw;
+    DDSURFACEDESC2 ddsd;
+    HRESULT hr;
+
+    if (!(ddraw = create_ddraw()))
+    {
+        skip("Failed to create a ddraw object, skipping test.\n");
+        return;
+    }
+
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_CAPS;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
+    hr = IDirectDraw4_CreateSurface(ddraw, &ddsd, &surface, NULL);
+    ok(hr == DDERR_NOCOOPERATIVELEVELSET, "Surface creation returned hr %#x.\n", hr);
+
+    IDirectDraw4_Release(ddraw);
+}
+
 START_TEST(ddraw4)
 {
     test_process_vertices();
@@ -2669,4 +2692,5 @@ START_TEST(ddraw4)
     test_redundant_mode_set();
     test_coop_level_mode_set();
     test_initialize();
+    test_coop_level_surf_create();
 }
