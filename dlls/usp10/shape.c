@@ -114,6 +114,8 @@ typedef struct tagConsonantComponents
 
 typedef void (*second_reorder_function)(LPWSTR pwChar, IndicSyllable *syllable,WORD* pwGlyphs, IndicSyllable* glyph_index, lexical_function lex);
 
+typedef int (*combining_lexical_function)(WCHAR c);
+
 /* the orders of joined_forms and contextual_features need to line up */
 static const char* contextual_features[] =
 {
@@ -784,6 +786,45 @@ static inline BOOL get_GSUB_Indic2(SCRIPT_ANALYSIS *psa, ScriptCache *psc)
     return(SUCCEEDED(hr));
 }
 
+static void insert_glyph(WORD *pwGlyphs, INT *pcGlyphs, INT cChars, INT write_dir, WORD glyph, INT index, WORD *pwLogClust)
+{
+    int i;
+    for (i = *pcGlyphs; i>=index; i--)
+        pwGlyphs[i+1] = pwGlyphs[i];
+    pwGlyphs[index] = glyph;
+    *pcGlyphs = *pcGlyphs+1;
+    if (write_dir < 0)
+        UpdateClusters(index-3, 1, write_dir, cChars, pwLogClust);
+    else
+        UpdateClusters(index, 1, write_dir, cChars, pwLogClust);
+}
+
+static void mark_invalid_combinations(HDC hdc, const WCHAR* pwcChars, INT cChars, WORD *pwGlyphs, INT *pcGlyphs, INT write_dir, WORD *pwLogClust, combining_lexical_function lex)
+{
+    CHAR *context_type;
+    int i,g;
+    WCHAR invalid = 0x25cc;
+    WORD invalid_glyph;
+
+    context_type = HeapAlloc(GetProcessHeap(),0,cChars);
+
+    /* Mark invalid combinations */
+    for (i = 0; i < cChars; i++)
+       context_type[i] = lex(pwcChars[i]);
+
+    GetGlyphIndicesW(hdc, &invalid, 1, &invalid_glyph, 0);
+    for (i = 1, g=1; i < cChars; i++, g++)
+    {
+        if (context_type[i] != 0 && context_type[i+write_dir]==context_type[i])
+        {
+            insert_glyph(pwGlyphs, pcGlyphs, cChars, write_dir, invalid_glyph, g, pwLogClust);
+            g++;
+        }
+    }
+
+    HeapFree(GetProcessHeap(),0,context_type);
+}
+
 static WCHAR neighbour_char(int i, int delta, const WCHAR* chars, INT cchLen)
 {
     if (i + delta < 0)
@@ -837,6 +878,51 @@ static inline BOOL word_break_causing(WCHAR chr)
        be within one script, Syriac, so we do not worry about any character
        other than the space character outside of that range */
     return (chr == 0 || chr == 0x20 );
+}
+
+static int combining_lexical_Arabic(WCHAR c)
+{
+    enum {Arab_Norm = 0, Arab_DIAC1, Arab_DIAC2, Arab_DIAC3, Arab_DIAC4, Arab_DIAC5, Arab_DIAC6, Arab_DIAC7, Arab_DIAC8};
+
+   switch(c)
+    {
+        case 0x064B:
+        case 0x064C:
+        case 0x064E:
+        case 0x064F:
+        case 0x0652:
+        case 0x0657:
+        case 0x0658:
+        case 0x06E1: return Arab_DIAC1; break;
+        case 0x064D:
+        case 0x0650:
+        case 0x0656: return Arab_DIAC2; break;
+        case 0x0651: return Arab_DIAC3; break;
+        case 0x0610:
+        case 0x0611:
+        case 0x0612:
+        case 0x0613:
+        case 0x0614:
+        case 0x0659:
+        case 0x06D6:
+        case 0x06DC:
+        case 0x06DF:
+        case 0x06E0:
+        case 0x06E2:
+        case 0x06E4:
+        case 0x06E7:
+        case 0x06E8:
+        case 0x06EB:
+        case 0x06EC: return Arab_DIAC4; break;
+        case 0x06E3:
+        case 0x06EA:
+        case 0x06ED: return Arab_DIAC5; break;
+        case 0x0670: return Arab_DIAC6; break;
+        case 0x0653: return Arab_DIAC7; break;
+        case 0x0655:
+        case 0x0654: return Arab_DIAC8; break;
+        default: return Arab_Norm;
+    }
 }
 
 /*
@@ -929,6 +1015,8 @@ static void ContextualShape_Arabic(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *p
 
     HeapFree(GetProcessHeap(),0,context_shape);
     HeapFree(GetProcessHeap(),0,context_type);
+
+    mark_invalid_combinations(hdc, pwcChars, cChars, pwOutGlyphs, pcGlyphs, dirL, pwLogClust, combining_lexical_Arabic);
 }
 
 /*
