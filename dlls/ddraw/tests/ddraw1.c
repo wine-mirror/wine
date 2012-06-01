@@ -2370,6 +2370,50 @@ done:
     UnregisterClassA("ddraw_test_wndproc_wc", GetModuleHandleA(NULL));
 }
 
+static void test_initialize(void)
+{
+    IDirectDraw *ddraw;
+    IDirect3D *d3d;
+    HRESULT hr;
+
+    if (!(ddraw = create_ddraw()))
+    {
+        skip("Failed to create a ddraw object, skipping test.\n");
+        return;
+    }
+
+    hr = IDirectDraw_Initialize(ddraw, NULL);
+    ok(hr == DDERR_ALREADYINITIALIZED, "Initialize returned hr %#x.\n", hr);
+    IDirectDraw_Release(ddraw);
+
+    CoInitialize(NULL);
+    hr = CoCreateInstance(&CLSID_DirectDraw, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectDraw, (void **)&ddraw);
+    ok(SUCCEEDED(hr), "Failed to create IDirectDraw instance, hr %#x.\n", hr);
+    hr = IDirectDraw_QueryInterface(ddraw, &IID_IDirect3D, (void **)&d3d);
+    if (SUCCEEDED(hr))
+    {
+        /* IDirect3D_Initialize() just returns DDERR_ALREADYINITIALIZED. */
+        hr = IDirect3D_Initialize(d3d, NULL);
+        ok(hr == DDERR_ALREADYINITIALIZED, "Initialize returned hr %#x, expected DDERR_ALREADYINITIALIZED.\n", hr);
+        IDirect3D_Release(d3d);
+    }
+    else skip("Failed to query IDirect3D interface, skipping tests.\n");
+    hr = IDirectDraw_Initialize(ddraw, NULL);
+    ok(hr == DD_OK, "Initialize returned hr %#x, expected DD_OK.\n", hr);
+    hr = IDirectDraw_Initialize(ddraw, NULL);
+    ok(hr == DDERR_ALREADYINITIALIZED, "Initialize returned hr %#x, expected DDERR_ALREADYINITIALIZED.\n", hr);
+    IDirectDraw_Release(ddraw);
+    CoUninitialize();
+
+    if (0) /* This crashes on the W2KPROSP4 testbot. */
+    {
+        CoInitialize(NULL);
+        hr = CoCreateInstance(&CLSID_DirectDraw, NULL, CLSCTX_INPROC_SERVER, &IID_IDirect3D, (void **)&d3d);
+        ok(hr == E_NOINTERFACE, "CoCreateInstance returned hr %#x, expected E_NOINTERFACE.\n", hr);
+        CoUninitialize();
+    }
+}
+
 START_TEST(ddraw1)
 {
     test_coop_level_create_device_window();
@@ -2387,4 +2431,5 @@ START_TEST(ddraw1)
     test_window_style();
     test_redundant_mode_set();
     test_coop_level_mode_set();
+    test_initialize();
 }

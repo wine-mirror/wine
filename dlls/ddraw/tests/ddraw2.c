@@ -2507,6 +2507,32 @@ done:
     UnregisterClassA("ddraw_test_wndproc_wc", GetModuleHandleA(NULL));
 }
 
+static void test_initialize(void)
+{
+    IDirectDraw2 *ddraw;
+    HRESULT hr;
+
+    if (!(ddraw = create_ddraw()))
+    {
+        skip("Failed to create a ddraw object, skipping test.\n");
+        return;
+    }
+
+    hr = IDirectDraw2_Initialize(ddraw, NULL);
+    ok(hr == DDERR_ALREADYINITIALIZED, "Initialize returned hr %#x.\n", hr);
+    IDirectDraw2_Release(ddraw);
+
+    CoInitialize(NULL);
+    hr = CoCreateInstance(&CLSID_DirectDraw, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectDraw2, (void **)&ddraw);
+    ok(SUCCEEDED(hr), "Failed to create IDirectDraw2 instance, hr %#x.\n", hr);
+    hr = IDirectDraw2_Initialize(ddraw, NULL);
+    ok(hr == DD_OK, "Initialize returned hr %#x, expected DD_OK.\n", hr);
+    hr = IDirectDraw2_Initialize(ddraw, NULL);
+    ok(hr == DDERR_ALREADYINITIALIZED, "Initialize returned hr %#x, expected DDERR_ALREADYINITIALIZED.\n", hr);
+    IDirectDraw2_Release(ddraw);
+    CoUninitialize();
+}
+
 START_TEST(ddraw2)
 {
     test_coop_level_create_device_window();
@@ -2526,4 +2552,5 @@ START_TEST(ddraw2)
     test_window_style();
     test_redundant_mode_set();
     test_coop_level_mode_set();
+    test_initialize();
 }
