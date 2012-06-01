@@ -2,7 +2,7 @@
  * OLEPICTURE test program
  *
  * Copyright 2005 Marcus Meissner
- *
+ * Copyright 2012 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1006,6 +1006,59 @@ static void test_load_save_bmp(void)
     IPicture_Release(pic);
 }
 
+static void test_load_save_icon(void)
+{
+    IPicture *pic;
+    PICTDESC desc;
+    short type;
+    OLE_HANDLE handle;
+    HGLOBAL hmem;
+    DWORD *mem;
+    IPersistStream *src_stream;
+    IStream *dst_stream;
+    HRESULT hr;
+
+    desc.cbSizeofstruct = sizeof(desc);
+    desc.picType = PICTYPE_ICON;
+    desc.u.icon.hicon = LoadIcon(0, IDI_APPLICATION);
+    hr = OleCreatePictureIndirect(&desc, &IID_IPicture, FALSE, (void**)&pic);
+    ok(hr == S_OK, "OleCreatePictureIndirect error %#x\n", hr);
+
+    type = -1;
+    hr = IPicture_get_Type(pic, &type);
+    ok(hr == S_OK,"get_Type error %#8x\n", hr);
+    ok(type == PICTYPE_ICON,"expected picture type PICTYPE_ICON, got %d\n", type);
+
+    hr = IPicture_get_Handle(pic, &handle);
+    ok(hr == S_OK,"get_Handle error %#8x\n", hr);
+    ok(IntToPtr(handle) == desc.u.icon.hicon, "get_Handle returned wrong handle %#x\n", handle);
+
+    hmem = GlobalAlloc(GMEM_ZEROINIT, 8192);
+    hr = CreateStreamOnHGlobal(hmem, FALSE, &dst_stream);
+    ok(hr == S_OK, "CreateStreamOnHGlobal error %#x\n", hr);
+
+    hr = IPicture_QueryInterface(pic, &IID_IPersistStream, (void **)&src_stream);
+    ok(hr == S_OK, "QueryInterface error %#x\n", hr);
+
+    hr = IPersistStream_Save(src_stream, dst_stream, TRUE);
+    ok(hr == S_OK, "Saveerror %#x\n", hr);
+
+    IPersistStream_Release(src_stream);
+    IStream_Release(dst_stream);
+
+    mem = GlobalLock(hmem);
+    ok(!memcmp(mem, "lt\0\0", 4), "got wrong stream header %04x\n", mem[0]);
+todo_wine
+    ok(mem[1] == 766, "expected stream size 766, got %u\n", mem[1]);
+    ok(mem[2] == 0x00010000, "got wrong icon header %04x\n", mem[2]);
+
+    GlobalUnlock(hmem);
+    GlobalFree(hmem);
+
+    DeleteObject(desc.u.bmp.hbitmap);
+    IPicture_Release(pic);
+}
+
 START_TEST(olepicture)
 {
     hOleaut32 = GetModuleHandleA("oleaut32.dll");
@@ -1043,6 +1096,7 @@ START_TEST(olepicture)
     test_OleLoadPicturePath();
     test_himetric();
     test_load_save_bmp();
+    test_load_save_icon();
 }
 
 
