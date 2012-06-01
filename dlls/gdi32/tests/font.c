@@ -876,6 +876,7 @@ static void test_bitmap_font_metrics(void)
 
         for(bit = 0; bit < 32; bit++)
         {
+            GLYPHMETRICS gm;
             DWORD fs[2];
             BOOL bRet;
 
@@ -904,15 +905,10 @@ static void test_bitmap_font_metrics(void)
 
             hfont = create_font(lf.lfFaceName, &lf);
             old_hfont = SelectObject(hdc, hfont);
-            bRet = GetTextMetrics(hdc, &tm);
-            ok(bRet, "GetTextMetrics error %d\n", GetLastError());
 
             SetLastError(0xdeadbeef);
             ret = GetTextFace(hdc, sizeof(face_name), face_name);
             ok(ret, "GetTextFace error %u\n", GetLastError());
-
-            SetLastError(0xdeadbeef);
-            ret = GetTextCharset(hdc);
 
             if (lstrcmp(face_name, fd[i].face_name) != 0)
             {
@@ -924,6 +920,19 @@ static void test_bitmap_font_metrics(void)
                 continue;
             }
 
+            memset(&gm, 0, sizeof(gm));
+            SetLastError(0xdeadbeef);
+            ret = GetGlyphOutline(hdc, 'A', GGO_METRICS, &gm, 0, NULL, &mat);
+            todo_wine {
+            ok(ret == GDI_ERROR, "GetGlyphOutline should fail for a bitmap font\n");
+            ok(GetLastError() == ERROR_CAN_NOT_COMPLETE, "expected ERROR_CAN_NOT_COMPLETE, got %u\n", GetLastError());
+            }
+
+            bRet = GetTextMetrics(hdc, &tm);
+            ok(bRet, "GetTextMetrics error %d\n", GetLastError());
+
+            SetLastError(0xdeadbeef);
+            ret = GetTextCharset(hdc);
             ok(ret == expected_cs, "got charset %d, expected %d\n", ret, expected_cs);
 
             trace("created %s, height %d charset %x dpi %d\n", face_name, tm.tmHeight, tm.tmCharSet, tm.tmDigitizedAspectX);
