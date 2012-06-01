@@ -145,10 +145,11 @@ static HDC WINAPI ID3DXFontImpl_GetDC(ID3DXFont *iface)
 }
 
 static HRESULT WINAPI ID3DXFontImpl_GetGlyphData(ID3DXFont *iface, UINT glyph,
-        LPDIRECT3DTEXTURE9 *texture, RECT *blackbox, POINT *cellinc)
+        IDirect3DTexture9 **texture, RECT *blackbox, POINT *cellinc)
 {
-    ID3DXFontImpl *This=impl_from_ID3DXFont(iface);
-    FIXME("(%p)->(%u, %p, %p, %p): stub\n", This, glyph, texture, blackbox, cellinc);
+    FIXME("iface %p, glyph %#x, texture %p, baclbox %s, cellinc %s stub!\n",
+            iface, glyph, texture, wine_dbgstr_rect(blackbox), wine_dbgstr_point(cellinc));
+
     return D3D_OK;
 }
 
@@ -180,19 +181,19 @@ static HRESULT WINAPI ID3DXFontImpl_PreloadTextW(ID3DXFont *iface, LPCWSTR strin
     return D3D_OK;
 }
 
-static INT WINAPI ID3DXFontImpl_DrawTextA(ID3DXFont *iface, LPD3DXSPRITE sprite, LPCSTR string,
-        INT count, LPRECT rect, DWORD format, D3DCOLOR color)
+static INT WINAPI ID3DXFontImpl_DrawTextA(ID3DXFont *iface, ID3DXSprite *sprite,
+        const char *string, INT count, RECT *rect, DWORD format, D3DCOLOR color)
 {
-    ID3DXFontImpl *This=impl_from_ID3DXFont(iface);
-    FIXME("(%p)->(%p, %s, %d, %p, %d, %#x): stub\n", This, sprite, string, count, rect,  format, color);
+    FIXME("iface %p, sprite %p, string %s, count %d, rect %s, format %#x, color 0x%08x stub!\n",
+            iface,  sprite, debugstr_a(string), count, wine_dbgstr_rect(rect), format, color);
     return 1;
 }
 
-static INT WINAPI ID3DXFontImpl_DrawTextW(ID3DXFont *iface, LPD3DXSPRITE sprite, LPCWSTR string,
-        INT count, LPRECT rect, DWORD format, D3DCOLOR color)
+static INT WINAPI ID3DXFontImpl_DrawTextW(ID3DXFont *iface, ID3DXSprite *sprite,
+        const WCHAR *string, INT count, RECT *rect, DWORD format, D3DCOLOR color)
 {
-    ID3DXFontImpl *This=impl_from_ID3DXFont(iface);
-    FIXME("(%p)->(%p, %s, %d, %p, %d, %#x): stub\n", This, sprite, debugstr_w(string), count, rect,  format, color);
+    FIXME("iface %p, sprite %p, string %s, count %d, rect %s, format %#x, color 0x%08x stub!\n",
+            iface,  sprite, debugstr_w(string), count, wine_dbgstr_rect(rect), format, color);
     return 1;
 }
 

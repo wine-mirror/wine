@@ -317,13 +317,14 @@ D3DXSPRITE_SORT_TEXTURE: sort by texture (so that it doesn't change too often)
     return D3D_OK;
 }
 
-static HRESULT WINAPI ID3DXSpriteImpl_Draw(ID3DXSprite *iface, LPDIRECT3DTEXTURE9 texture,
-        CONST RECT *rect, CONST D3DXVECTOR3 *center, CONST D3DXVECTOR3 *position, D3DCOLOR color)
+static HRESULT WINAPI ID3DXSpriteImpl_Draw(ID3DXSprite *iface, IDirect3DTexture9 *texture,
+        const RECT *rect, const D3DXVECTOR3 *center, const D3DXVECTOR3 *position, D3DCOLOR color)
 {
     ID3DXSpriteImpl *This = impl_from_ID3DXSprite(iface);
     D3DSURFACE_DESC texdesc;
 
-    TRACE("(%p)->(%p, %p, %p, %p, %#x): relay\n", This, texture, rect, center, position, color);
+    TRACE("iface %p, texture %p, rect %s, center %p, position %p, color 0x%08x.\n",
+            iface, texture, wine_dbgstr_rect(rect), center, position, color);
 
     if(texture==NULL) return D3DERR_INVALIDCALL;
     if(!This->ready) return D3DERR_INVALIDCALL;
