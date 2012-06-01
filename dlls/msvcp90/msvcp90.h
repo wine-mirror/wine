@@ -26,6 +26,7 @@ typedef SIZE_T streamsize;
 
 void __cdecl _invalid_parameter(const wchar_t*, const wchar_t*,
         const wchar_t*, unsigned int, uintptr_t);
+BOOL __cdecl __uncaught_exception(void);
 
 extern void* (__cdecl *MSVCRT_operator_new)(MSVCP_size_t);
 extern void (__cdecl *MSVCRT_operator_delete)(void*);
