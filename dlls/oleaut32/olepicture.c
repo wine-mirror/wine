@@ -1768,15 +1768,11 @@ static HRESULT WINAPI OLEPictureImpl_Save(
             This->data = pIconData;
             This->datalen = iDataSize;
         }
-        if (This->loadtime_magic != 0xdeadbeef) {
-            DWORD header[2];
 
-            header[0] = This->loadtime_magic;
-            header[1] = This->datalen;
-            IStream_Write(pStm, header, 2 * sizeof(DWORD), &dummy);
-        }
+        header[0] = (This->loadtime_magic != 0xdeadbeef) ? This->loadtime_magic : 0x0000746c;
+        header[1] = This->datalen;
+        IStream_Write(pStm, header, 2 * sizeof(DWORD), &dummy);
         IStream_Write(pStm, This->data, This->datalen, &dummy);
-
         hResult = S_OK;
         break;
     case PICTYPE_BITMAP:
