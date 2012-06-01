@@ -1642,6 +1642,7 @@ static int serializeIcon(HICON hIcon, void ** ppBuffer, unsigned int * pLength)
 			pIconDir = (CURSORICONFILEDIR *)pIconData;
 			pIconDir->idType = 1;
 			pIconDir->idCount = 1;
+			pIconDir->idReserved = 0;
 
 			/* Fill out the CURSORICONFILEDIRENTRY */
 			pIconEntry = (CURSORICONFILEDIRENTRY *)(pIconData + 3 * sizeof(WORD));
