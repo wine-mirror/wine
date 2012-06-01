@@ -539,13 +539,12 @@ static INT_PTR WINAPI WININET_InvalidCertificateDialog(
                     flags |= SECURITY_FLAG_IGNORE_CERT_CN_INVALID;
                     break;
                 case ERROR_INTERNET_SEC_CERT_ERRORS:
-                    FIXME("Should only add ignore flags as needed.\n");
-                    flags |= SECURITY_FLAG_IGNORE_CERT_CN_INVALID |
-                        SECURITY_FLAG_IGNORE_CERT_DATE_INVALID |
-                        SECURITY_FLAG_IGNORE_UNKNOWN_CA;
-                    /* FIXME: ERROR_INTERNET_SEC_CERT_ERRORS also
-                     * seems to set the corresponding DLG_* flags.
-                     */
+                    if(flags & _SECURITY_FLAG_CERT_REV_FAILED)
+                        flags |= SECURITY_FLAG_IGNORE_UNKNOWN_CA;
+                    if(flags & _SECURITY_FLAG_CERT_INVALID_CN)
+                        flags |= SECURITY_FLAG_IGNORE_CERT_CN_INVALID;
+                    if(flags & _SECURITY_FLAG_CERT_INVALID_DATE)
+                        flags |= SECURITY_FLAG_IGNORE_CERT_DATE_INVALID;
                     break;
                 }
                 res = InternetSetOptionW( params->hRequest, INTERNET_OPTION_SECURITY_FLAGS, &flags, size );
