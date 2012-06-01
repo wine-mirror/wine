@@ -1525,7 +1525,7 @@ static HRESULT WINAPI d3d9_device_CreateStateBlock(IDirect3DDevice9Ex *iface,
         D3DSTATEBLOCKTYPE type, IDirect3DStateBlock9 **stateblock)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
-    IDirect3DStateBlock9Impl *object;
+    struct d3d9_stateblock *object;
     HRESULT hr;
 
     TRACE("iface %p, type %#x, stateblock %p.\n", iface, type, stateblock);
@@ -1575,7 +1575,7 @@ static HRESULT WINAPI d3d9_device_EndStateBlock(IDirect3DDevice9Ex *iface, IDire
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
     struct wined3d_stateblock *wined3d_stateblock;
-    IDirect3DStateBlock9Impl *object;
+    struct d3d9_stateblock *object;
     HRESULT hr;
 
     TRACE("iface %p, stateblock %p.\n", iface, stateblock);

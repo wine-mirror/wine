@@ -245,25 +245,15 @@ HRESULT volumetexture_init(struct d3d9_texture *texture, struct d3d9_device *dev
         UINT width, UINT height, UINT depth, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool) DECLSPEC_HIDDEN;
 struct d3d9_texture *unsafe_impl_from_IDirect3DBaseTexture9(IDirect3DBaseTexture9 *iface) DECLSPEC_HIDDEN;
 
-/* ----------------------- */
-/* IDirect3DStateBlock9 */
-/* ----------------------- */
-
-/*****************************************************************************
- * IDirect3DStateBlock9 implementation structure
- */
-typedef struct  IDirect3DStateBlock9Impl {
-    IDirect3DStateBlock9    IDirect3DStateBlock9_iface;
-    LONG                    ref;
-
-    /* IDirect3DStateBlock9 fields */
+struct d3d9_stateblock
+{
+    IDirect3DStateBlock9 IDirect3DStateBlock9_iface;
+    LONG refcount;
     struct wined3d_stateblock *wined3d_stateblock;
+    IDirect3DDevice9Ex *parent_device;
+};
 
-    /* Parent reference */
-    IDirect3DDevice9Ex      *parentDevice;
-} IDirect3DStateBlock9Impl;
-
-HRESULT stateblock_init(IDirect3DStateBlock9Impl *stateblock, struct d3d9_device *device,
+HRESULT stateblock_init(struct d3d9_stateblock *stateblock, struct d3d9_device *device,
         D3DSTATEBLOCKTYPE type, struct wined3d_stateblock *wined3d_stateblock) DECLSPEC_HIDDEN;
 
 /* --------------------------- */
