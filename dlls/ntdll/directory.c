@@ -320,6 +320,13 @@ static char *get_default_com_device( int num )
         strcpy( ret, "/dev/cuad0" );
         ret[strlen(ret) - 1] = '0' + num - 1;
     }
+#elif defined(__DragonFly__)
+    ret = RtlAllocateHeap( GetProcessHeap(), 0, sizeof("/dev/cuaa0") );
+    if (ret)
+    {
+        strcpy( ret, "/dev/cuaa0" );
+        ret[strlen(ret) - 1] = '0' + num - 1;
+    }
 #else
     FIXME( "no known default for device com%d\n", num );
 #endif
