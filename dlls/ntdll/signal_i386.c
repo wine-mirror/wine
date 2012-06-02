@@ -420,7 +420,7 @@ extern void DECLSPEC_NORETURN __wine_restore_regs( const CONTEXT *context );
 enum i386_trap_code
 {
     TRAP_x86_UNKNOWN    = -1,  /* Unknown fault (TRAP_sig not defined) */
-#if defined(__FreeBSD__) || defined (__FreeBSD_kernel__) || defined(__NetBSD__) || defined(__OpenBSD__)
+#if defined(__FreeBSD__) || defined (__FreeBSD_kernel__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__)
     TRAP_x86_DIVIDE     = T_DIVIDE,     /* Division by zero exception */
     TRAP_x86_TRCTRAP    = T_TRCTRAP,    /* Single-step exception */
     TRAP_x86_NMI        = T_NMI,        /* NMI interrupt */
