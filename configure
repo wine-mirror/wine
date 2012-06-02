@@ -13794,6 +13794,20 @@ _ACEOF
 fi
 
 
+ac_fn_c_check_member "$LINENO" "struct dirent" "d_reclen" "ac_cv_member_struct_dirent_d_reclen" "#ifdef HAVE_DIRENT_H
+#include <dirent.h>
+#endif
+"
+if test "x$ac_cv_member_struct_dirent_d_reclen" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_DIRENT_D_RECLEN 1
+_ACEOF
+
+
+fi
+
+
 ac_fn_c_check_member "$LINENO" "struct msghdr" "msg_accrights" "ac_cv_member_struct_msghdr_msg_accrights" "#include <sys/types.h>
 #ifdef HAVE_SYS_SOCKET_H
 # include <sys/socket.h>

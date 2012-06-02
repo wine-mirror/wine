@@ -785,6 +785,9 @@
 /* Define to 1 if you have the `strtoull' function. */
 #undef HAVE_STRTOULL
 
+/* Define to 1 if `d_reclen' is a member of `struct dirent'. */
+#undef HAVE_STRUCT_DIRENT_D_RECLEN
+
 /* Define to 1 if `direction' is a member of `struct ff_effect'. */
 #undef HAVE_STRUCT_FF_EFFECT_DIRECTION
 

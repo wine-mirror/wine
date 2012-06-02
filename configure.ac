@@ -2219,6 +2219,12 @@ AC_CHECK_MEMBERS([struct statvfs.f_blocks],,,
 #include <sys/statvfs.h>
 #endif])
 
+dnl Check for dirent.d_reclen
+AC_CHECK_MEMBERS([struct dirent.d_reclen],,,
+[#ifdef HAVE_DIRENT_H
+#include <dirent.h>
+#endif])
+
 dnl Check for socket structure members
 AC_CHECK_MEMBERS([struct msghdr.msg_accrights, struct sockaddr.sa_len, struct sockaddr_un.sun_len],,,
 [#include <sys/types.h>

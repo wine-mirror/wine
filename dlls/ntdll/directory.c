@@ -1709,6 +1709,15 @@ static inline int wine_getdirentries(int fd, char *buf, int nbytes, long *basep)
     return res;
 }
 
+static inline int dir_reclen(struct dirent *de)
+{
+#ifdef HAVE_STRUCT_DIRENT_D_RECLEN
+    return de->d_reclen;
+#else
+    return _DIRENT_RECLEN(de->d_namlen);
+#endif
+}
+
 /***********************************************************************
  *           read_directory_getdirentries
  *
@@ -1754,9 +1763,9 @@ static int read_directory_getdirentries( int fd, IO_STATUS_BLOCK *io, void *buff
         /* check if we got . and .. from getdirentries */
         if (res > 0)
         {
-            if (!strcmp( de->d_name, "." ) && res > de->d_reclen)
+            if (!strcmp( de->d_name, "." ) && res > dir_reclen(de))
             {
-                struct dirent *next_de = (struct dirent *)(data + de->d_reclen);
+                struct dirent *next_de = (struct dirent *)(data + dir_reclen(de));
                 if (!strcmp( next_de->d_name, ".." )) fake_dot_dot = 0;
             }
         }
@@ -1792,7 +1801,7 @@ static int read_directory_getdirentries( int fd, IO_STATUS_BLOCK *io, void *buff
 
     while (res > 0)
     {
-        res -= de->d_reclen;
+        res -= dir_reclen(de);
         if (de->d_fileno &&
             !(fake_dot_dot && (!strcmp( de->d_name, "." ) || !strcmp( de->d_name, ".." ))) &&
             ((info = append_entry( buffer, io, length, de->d_name, NULL, mask, class ))))
@@ -1819,7 +1828,7 @@ static int read_directory_getdirentries( int fd, IO_STATUS_BLOCK *io, void *buff
             if (res > 0 && (single_entry || io->Information + max_dir_info_size(class) > length))
             {
                 lseek( fd, (unsigned long)restart_pos, SEEK_SET );
-                size = (char *)de + de->d_reclen - data;
+                size = (char *)de + dir_reclen(de) - data;
                 io->Information = restart_info_pos;
                 last_info = restart_last_info;
                 goto restart;
@@ -1828,7 +1837,7 @@ static int read_directory_getdirentries( int fd, IO_STATUS_BLOCK *io, void *buff
         /* move on to the next entry */
         if (res > 0)
         {
-            de = (struct dirent *)((char *)de + de->d_reclen);
+            de = (struct dirent *)((char *)de + dir_reclen(de));
             continue;
         }
         if (size < initial_size) break;  /* already restarted once, give up now */
