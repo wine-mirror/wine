@@ -2418,7 +2418,7 @@ void __thiscall basic_ios_char_dtor(basic_ios_char *this)
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_ios_char_vector_dtor, 8)
 basic_ios_char* __thiscall MSVCP_basic_ios_char_vector_dtor(basic_ios_char *this, unsigned int flags)
 {
-    TRACE("(%p %x)", this, flags);
+    TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
         int i, *ptr = (int *)this-1;
