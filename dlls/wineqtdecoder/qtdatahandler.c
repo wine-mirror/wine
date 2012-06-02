@@ -443,12 +443,12 @@ static pascal ComponentResult myDataHGetFileSizeAsync ( DataHandler dh, wide *fi
     Handle storage = GetComponentInstanceStorage(dh);
     DHData *data = (DHData*)*storage;
     LONGLONG total;
-    LONGLONG avaliable;
+    LONGLONG available;
     SInt64 total64;
 
     TRACE("%p\n",dh);
 
-    IAsyncReader_Length(data->dataRef.pReader,&total,&avaliable);
+    IAsyncReader_Length(data->dataRef.pReader,&total,&available);
     total64 = total;
     *fileSize = SInt64ToWide(total64);
 
