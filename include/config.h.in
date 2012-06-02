@@ -794,6 +794,12 @@
 /* Define to 1 if `ifr_hwaddr' is a member of `struct ifreq'. */
 #undef HAVE_STRUCT_IFREQ_IFR_HWADDR
 
+/* Define to 1 if `ips_total' is a member of `struct ipstat'. */
+#undef HAVE_STRUCT_IPSTAT_IPS_TOTAL
+
+/* Define to 1 if `ips_total' is a member of `struct ip_stats'. */
+#undef HAVE_STRUCT_IP_STATS_IPS_TOTAL
+
 /* Define to 1 if `msg_accrights' is a member of `struct msghdr'. */
 #undef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
 
@@ -1285,6 +1291,11 @@
 
 /* Define to 1 if the X Window System is missing or not being used. */
 #undef X_DISPLAY_MISSING
+
+/* Enable large inode numbers on Mac OS X 10.5.  */
+#ifndef _DARWIN_USE_64_BIT_INODE
+# define _DARWIN_USE_64_BIT_INODE 1
+#endif
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 #undef _FILE_OFFSET_BITS

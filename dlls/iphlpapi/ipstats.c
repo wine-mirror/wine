@@ -659,12 +659,16 @@ DWORD WINAPI GetIpStatistics(PMIB_IPSTATS stats)
         }
         if (kc) kstat_close( kc );
     }
-#elif defined(HAVE_SYS_SYSCTL_H) && defined(IPCTL_STATS)
+#elif defined(HAVE_SYS_SYSCTL_H) && defined(IPCTL_STATS) && (HAVE_STRUCT_IPSTAT_IPS_TOTAL || HAVE_STRUCT_IP_STATS_IPS_TOTAL)
     {
         int mib[] = {CTL_NET, PF_INET, IPPROTO_IP, IPCTL_STATS};
 #define MIB_LEN (sizeof(mib) / sizeof(mib[0]))
         int ip_ttl, ip_forwarding;
+#if HAVE_STRUCT_IPSTAT_IPS_TOTAL
         struct ipstat ip_stat;
+#elif HAVE_STRUCT_IP_STATS_IPS_TOTAL
+        struct ip_stats ip_stat;
+#endif
         size_t needed;
 
         needed = sizeof(ip_stat);

@@ -2312,6 +2312,18 @@ AC_CHECK_MEMBERS([struct icmpstat.icps_outhist],,,
 #include <netinet/icmp_var.h>
 #endif])
 
+dnl Check for struct ipstat
+AC_CHECK_MEMBERS([struct ipstat.ips_total],,,
+[#ifdef HAVE_NETINET_IP_VAR_H
+#include <netinet/ip_var.h>
+#endif])
+
+dnl Check for struct ip_stats
+AC_CHECK_MEMBERS([struct ip_stats.ips_total],,,
+[#ifdef HAVE_NETINET_IP_VAR_H
+#include <netinet/ip_var.h>
+#endif])
+
 dnl Check for struct ifreq.ifr_hwaddr
 AC_CHECK_MEMBERS([struct ifreq.ifr_hwaddr],,,
 [#ifdef HAVE_SYS_TYPES_H
