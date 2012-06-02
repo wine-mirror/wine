@@ -1,0 +1,7 @@
+TESTDLL   = dssenh.dll
+IMPORTS   = advapi32
+
+C_SRCS = \
+	dssenh.c
+
+@MAKE_TEST_RULES@

@@ -15190,6 +15190,7 @@ wine_fn_config_dll drmclien enable_drmclien
 wine_fn_config_dll dsound enable_dsound implib
 wine_fn_config_test dlls/dsound/tests dsound_test
 wine_fn_config_dll dssenh enable_dssenh
+wine_fn_config_test dlls/dssenh/tests dssenh_test
 wine_fn_config_dll dswave enable_dswave
 wine_fn_config_dll dwmapi enable_dwmapi implib
 wine_fn_config_dll dxdiagn enable_dxdiagn po
