@@ -3810,6 +3810,9 @@ TREEVIEW_EditLabel(TREEVIEW_INFO *infoPtr, HTREEITEM hItem)
     TEXTMETRICW textMetric;
 
     TRACE("%p %p\n", hwnd, hItem);
+    if (!(infoPtr->dwStyle & TVS_EDITLABELS))
+        return NULL;
+
     if (!TREEVIEW_ValidItem(infoPtr, hItem))
 	return NULL;
 
