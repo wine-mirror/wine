@@ -519,7 +519,7 @@ static char* UNIXFS_build_shitemid(char *pszUnixPath, BOOL bMustExist, WIN32_FIN
     FileStructW *pFileStructW;
     WORD uOffsetW, *pOffsetW;
 
-    TRACE("(pszUnixPath=%s, bMustExsist=%s, pFindData=%p, pIDL=%p)\n",
+    TRACE("(pszUnixPath=%s, bMustExist=%s, pFindData=%p, pIDL=%p)\n",
             debugstr_a(pszUnixPath), bMustExist ? "T" : "F", pFindData, pIDL);
 
     if (pFindData)

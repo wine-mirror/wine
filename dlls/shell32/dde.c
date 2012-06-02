@@ -86,8 +86,8 @@ static inline HDDEDATA Dde_OnRequest(UINT uFmt, HCONV hconv, HSZ hszTopic,
     {
         static BYTE groups_data[] = "\r\n";
         FIXME( "returning empty groups list\n" );
-	/* this is an workaround for an app wich expect some data
-	 * and cant handle NULL. */
+	/* This is a workaround for an application which expects some data
+	 * and cannot handle NULL. */
         return DdeCreateDataHandle( dwDDEInst, groups_data, sizeof(groups_data), 0, hszProgmanService, uFmt, 0 );
     }
     FIXME( "%u %p %s %s: stub\n", uFmt, hconv, debugstr_hsz(hszTopic), debugstr_hsz(hszItem) );

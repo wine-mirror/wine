@@ -214,7 +214,7 @@ static void test_MeshBuilder(void)
     size = sizeof(name);
     hr = IDirect3DRMMeshBuilder_GetName(pMeshBuilder, &size, name);
     ok(hr == D3DRM_OK, "IDirect3DRMMeshBuilder_GetName returned hr = %x\n", hr);
-    ok(!strcmp(name, "Object"), "Retreived name '%s' instead of 'Object'\n", name);
+    ok(!strcmp(name, "Object"), "Retrieved name '%s' instead of 'Object'\n", name);
     size = strlen("Object"); /* No space for null character */
     hr = IDirect3DRMMeshBuilder_GetName(pMeshBuilder, &size, name);
     ok(hr == E_INVALIDARG, "IDirect3DRMMeshBuilder_GetName returned hr = %x\n", hr);
@@ -229,7 +229,7 @@ static void test_MeshBuilder(void)
     size = sizeof(name);
     hr = IDirect3DRMMeshBuilder_GetName(pMeshBuilder, &size, name);
     ok(hr == D3DRM_OK, "IDirect3DRMMeshBuilder_GetName returned hr = %x\n", hr);
-    ok(!strcmp(name, ""), "Retreived name '%s' instead of ''\n", name);
+    ok(!strcmp(name, ""), "Retrieved name '%s' instead of ''\n", name);
 
     val = IDirect3DRMMeshBuilder_GetVertexCount(pMeshBuilder);
     ok(val == 4, "Wrong number of vertices %d (must be 4)\n", val);

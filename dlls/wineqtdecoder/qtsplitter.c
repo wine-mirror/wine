@@ -488,7 +488,7 @@ static DWORD WINAPI QTSplitter_loading_thread(LPVOID data)
         /* according to QA1469 a movie has to be fully loaded before we
            can reliably start the Extraction session.
 
-           If loaded earlier then we only get an extraction session for
+           If loaded earlier, then we only get an extraction session for
            the part of the movie that is loaded at that time.
 
             We are trying to load as much of the movie as we can before we
