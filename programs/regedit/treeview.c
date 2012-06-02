@@ -483,7 +483,7 @@ HTREEITEM InsertNode(HWND hwndTV, HTREEITEM hItem, LPWSTR name)
 
     if (!hItem) hItem = (HTREEITEM)SendMessageW(hwndTV, TVM_GETNEXTITEM, TVGN_CARET, 0);
     if (!hItem) return FALSE;
-    if (SendMessageW(hwndTV, TVM_GETITEMSTATE, (WPARAM)hItem, TVIS_EXPANDEDONCE)) {
+    if (SendMessageW(hwndTV, TVM_GETITEMSTATE, (WPARAM)hItem, TVIS_EXPANDEDONCE) & TVIS_EXPANDEDONCE) {
         hNewItem = AddEntryToTree(hwndTV, hItem, name, 0, 0);
     } else {
 	item.mask = TVIF_CHILDREN | TVIF_HANDLE;
