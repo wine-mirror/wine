@@ -955,6 +955,8 @@ static int get_unix_tid(void)
     long lwpid;
     thr_self( &lwpid );
     ret = lwpid;
+#elif defined(__DragonFly__)
+    ret = lwp_gettid();
 #endif
     return ret;
 }
