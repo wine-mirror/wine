@@ -314,10 +314,10 @@ static char *get_default_com_device( int num )
         ret[strlen(ret) - 1] = '0' + num - 1;
     }
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
-    ret = RtlAllocateHeap( GetProcessHeap(), 0, sizeof("/dev/cuad0") );
+    ret = RtlAllocateHeap( GetProcessHeap(), 0, sizeof("/dev/cuau0") );
     if (ret)
     {
-        strcpy( ret, "/dev/cuad0" );
+        strcpy( ret, "/dev/cuau0" );
         ret[strlen(ret) - 1] = '0' + num - 1;
     }
 #elif defined(__DragonFly__)
