@@ -56,6 +56,10 @@
 #define ELF_INFO_MODULE         0x0002
 #define ELF_INFO_NAME           0x0004
 
+#ifndef NT_GNU_BUILD_ID
+#define NT_GNU_BUILD_ID 3
+#endif
+
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 
 struct elf_info
