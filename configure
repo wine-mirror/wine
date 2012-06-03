@@ -14086,6 +14086,34 @@ _ACEOF
 fi
 
 
+ac_fn_c_check_member "$LINENO" "struct tcpstat" "tcps_connattempt" "ac_cv_member_struct_tcpstat_tcps_connattempt" "#ifdef HAVE_NETINET_TCP_VAR_H
+#include <netinet/tcp_var.h>
+#endif
+"
+if test "x$ac_cv_member_struct_tcpstat_tcps_connattempt" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_TCPSTAT_TCPS_CONNATTEMPT 1
+_ACEOF
+
+
+fi
+
+
+ac_fn_c_check_member "$LINENO" "struct tcp_stats" "tcps_connattempt" "ac_cv_member_struct_tcp_stats_tcps_connattempt" "#ifdef HAVE_NETINET_TCP_VAR_H
+#include <netinet/tcp_var.h>
+#endif
+"
+if test "x$ac_cv_member_struct_tcp_stats_tcps_connattempt" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_TCP_STATS_TCPS_CONNATTEMPT 1
+_ACEOF
+
+
+fi
+
+
 ac_fn_c_check_member "$LINENO" "struct ifreq" "ifr_hwaddr" "ac_cv_member_struct_ifreq_ifr_hwaddr" "#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif

@@ -2324,6 +2324,18 @@ AC_CHECK_MEMBERS([struct ip_stats.ips_total],,,
 #include <netinet/ip_var.h>
 #endif])
 
+dnl Check for struct tcpstat
+AC_CHECK_MEMBERS([struct tcpstat.tcps_connattempt],,,
+[#ifdef HAVE_NETINET_TCP_VAR_H
+#include <netinet/tcp_var.h>
+#endif])
+
+dnl Check for struct tcp_stats
+AC_CHECK_MEMBERS([struct tcp_stats.tcps_connattempt],,,
+[#ifdef HAVE_NETINET_TCP_VAR_H
+#include <netinet/tcp_var.h>
+#endif])
+
 dnl Check for struct ifreq.ifr_hwaddr
 AC_CHECK_MEMBERS([struct ifreq.ifr_hwaddr],,,
 [#ifdef HAVE_SYS_TYPES_H

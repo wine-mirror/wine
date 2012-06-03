@@ -857,6 +857,12 @@
 /* Define to 1 if `st_mtim' is a member of `struct stat'. */
 #undef HAVE_STRUCT_STAT_ST_MTIM
 
+/* Define to 1 if `tcps_connattempt' is a member of `struct tcpstat'. */
+#undef HAVE_STRUCT_TCPSTAT_TCPS_CONNATTEMPT
+
+/* Define to 1 if `tcps_connattempt' is a member of `struct tcp_stats'. */
+#undef HAVE_STRUCT_TCP_STATS_TCPS_CONNATTEMPT
+
 /* Define to 1 if the system has the type `struct xinpgen'. */
 #undef HAVE_STRUCT_XINPGEN
 
