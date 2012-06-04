@@ -151,10 +151,14 @@ typedef struct {
 } LoadedScript;
 
 typedef struct {
+    WORD *glyphs[GLYPH_MAX / GLYPH_BLOCK_SIZE];
+} CacheGlyphPage;
+
+typedef struct {
     LOGFONTW lf;
     TEXTMETRICW tm;
     BOOL sfnt;
-    WORD *glyphs[GLYPH_MAX / GLYPH_BLOCK_SIZE];
+    CacheGlyphPage *page[0x10];
     ABC *widths[GLYPH_MAX / GLYPH_BLOCK_SIZE];
     LPVOID GSUB_Table;
     LPVOID GDEF_Table;
