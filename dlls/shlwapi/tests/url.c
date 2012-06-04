@@ -901,7 +901,7 @@ static void test_UrlEscape(void)
         wc = 127;
         ret = pUrlEscapeW(overwrite, &wc, &size, URL_ESCAPE_SPACES_ONLY);
         ok(ret == E_POINTER, "got %x, expected %x\n", ret, E_POINTER);
-        ok(size == 10, "got %d, expected 9\n", size);
+        ok(size == 10, "got %d, expected 10\n", size);
         ok(wc == 127, "String has changed, wc = %d\n", wc);
     }
 
