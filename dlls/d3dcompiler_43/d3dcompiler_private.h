@@ -588,10 +588,129 @@ struct bwriter_shader *SlAssembleShader(const char *text, char **messages) DECLS
 HRESULT SlWriteBytecode(const struct bwriter_shader *shader, int dxversion, DWORD **result, DWORD *size) DECLSPEC_HIDDEN;
 void SlDeleteShader(struct bwriter_shader *shader) DECLSPEC_HIDDEN;
 
+/* The general IR structure is inspired by Mesa GLSL hir, even though the code
+ * ends up being quite different in practice. Anyway, here comes the relevant
+ * licensing information.
+ *
+ * Copyright © 2010 Intel Corporation
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the next
+ * paragraph) shall be included in all copies or substantial portions of the
+ * Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ */
+
+enum hlsl_base_type
+{
+    HLSL_TYPE_FLOAT,
+    HLSL_TYPE_HALF,
+    HLSL_TYPE_DOUBLE,
+    HLSL_TYPE_INT,
+    HLSL_TYPE_UINT,
+    HLSL_TYPE_BOOL,
+    HLSL_TYPE_LAST_SCALAR = HLSL_TYPE_BOOL,
+    HLSL_TYPE_SAMPLER,
+    HLSL_TYPE_TEXTURE,
+    HLSL_TYPE_PIXELSHADER,
+    HLSL_TYPE_VERTEXSHADER,
+    HLSL_TYPE_STRING,
+    HLSL_TYPE_STRUCT,
+    HLSL_TYPE_ARRAY,
+    HLSL_TYPE_VOID,
+};
+
 enum hlsl_matrix_majority
 {
     HLSL_COLUMN_MAJOR,
     HLSL_ROW_MAJOR
+};
+
+struct hlsl_type
+{
+    struct list entry;
+    struct list scope_entry;
+    enum hlsl_base_type base_type;
+    const char *name;
+    unsigned int modifiers;
+    unsigned int dimx;
+    unsigned int dimy;
+    union
+    {
+        struct list *elements;
+        struct
+        {
+            struct hlsl_type *type;
+            unsigned int elements_count;
+        } array;
+    } e;
+};
+
+struct hlsl_struct_field
+{
+    struct list entry;
+    struct hlsl_type *type;
+    const char *name;
+    const char *semantic;
+    DWORD modifiers;
+};
+
+enum hlsl_ir_node_type
+{
+    HLSL_IR_VAR = 0,
+};
+
+struct hlsl_ir_node
+{
+    struct list entry;
+    enum hlsl_ir_node_type type;
+    struct hlsl_type *data_type;
+
+    char *source_file;
+    unsigned int line;
+    unsigned int column;
+};
+
+struct hlsl_ir_var
+{
+    struct hlsl_ir_node node;
+    const char *name;
+    const char *semantic;
+    unsigned int modifiers;
+    struct list scope_entry;
+
+    struct hlsl_var_allocation *allocation;
+};
+
+struct hlsl_scope
+{
+    struct list entry;
+    struct list vars;
+    struct list types;
+    struct hlsl_scope *upper;
+};
+
+/* Structures used only during parsing */
+struct parse_variable_def
+{
+    struct list entry;
+    char *name;
+    unsigned int array_size;
+    char *semantic;
+    struct list *initializer;
 };
 
 struct hlsl_parse_ctx
@@ -614,11 +733,26 @@ struct hlsl_parse_ctx
 extern struct hlsl_parse_ctx hlsl_ctx DECLSPEC_HIDDEN;
 
 void hlsl_message(const char *fmt, ...) PRINTF_ATTR(1,2) DECLSPEC_HIDDEN;
+
+BOOL add_declaration(struct hlsl_scope *scope, struct hlsl_ir_var *decl, BOOL local_var) DECLSPEC_HIDDEN;
 struct hlsl_ir_var *get_variable(struct hlsl_scope *scope, const char *name) DECLSPEC_HIDDEN;
+void free_declaration(struct hlsl_ir_var *decl) DECLSPEC_HIDDEN;
+struct hlsl_type *new_hlsl_type(const char *name, enum hlsl_base_type base_type, unsigned dimx, unsigned dimy) DECLSPEC_HIDDEN;
+struct hlsl_type *new_array_type(struct hlsl_type *basic_type, unsigned int array_size) DECLSPEC_HIDDEN;
 struct hlsl_type *get_type(struct hlsl_scope *scope, const char *name, BOOL recursive) DECLSPEC_HIDDEN;
 BOOL find_function(const char *name) DECLSPEC_HIDDEN;
+unsigned int components_count_type(struct hlsl_type *type) DECLSPEC_HIDDEN;
+struct hlsl_ir_deref *new_var_deref(struct hlsl_ir_var *var) DECLSPEC_HIDDEN;
+void push_scope(struct hlsl_parse_ctx *ctx) DECLSPEC_HIDDEN;
+BOOL pop_scope(struct hlsl_parse_ctx *ctx) DECLSPEC_HIDDEN;
 struct bwriter_shader *parse_hlsl_shader(const char *text, enum shader_type type, DWORD version,
         const char *entrypoint, char **messages) DECLSPEC_HIDDEN;
+
+const char *debug_base_type(const struct hlsl_type *type) DECLSPEC_HIDDEN;
+const char *debug_hlsl_type(const struct hlsl_type *type) DECLSPEC_HIDDEN;
+const char *debug_modifiers(DWORD modifiers) DECLSPEC_HIDDEN;
+void free_hlsl_type(struct hlsl_type *type) DECLSPEC_HIDDEN;
+
 
 #define MAKE_TAG(ch0, ch1, ch2, ch3) \
     ((DWORD)(ch0) | ((DWORD)(ch1) << 8) | \

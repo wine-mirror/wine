@@ -761,7 +761,70 @@ void compilation_message(struct compilation_messages *msg, const char *fmt, va_l
     }
 }
 
+BOOL add_declaration(struct hlsl_scope *scope, struct hlsl_ir_var *decl, BOOL local_var)
+{
+    struct hlsl_ir_var *var;
+
+    LIST_FOR_EACH_ENTRY(var, &scope->vars, struct hlsl_ir_var, scope_entry)
+    {
+        if (!strcmp(decl->name, var->name))
+            return FALSE;
+    }
+    if (local_var)
+    {
+        LIST_FOR_EACH_ENTRY(var, &scope->upper->vars, struct hlsl_ir_var, scope_entry)
+        {
+            if (!strcmp(decl->name, var->name))
+                return FALSE;
+        }
+    }
+
+    list_add_tail(&scope->vars, &decl->scope_entry);
+    return TRUE;
+}
+
 struct hlsl_ir_var *get_variable(struct hlsl_scope *scope, const char *name)
+{
+    struct hlsl_ir_var *var;
+
+    LIST_FOR_EACH_ENTRY(var, &scope->vars, struct hlsl_ir_var, scope_entry)
+    {
+        if (!strcmp(name, var->name))
+            return var;
+    }
+    if (!scope->upper)
+        return NULL;
+    return get_variable(scope->upper, name);
+}
+
+void free_declaration(struct hlsl_ir_var *decl)
+{
+    d3dcompiler_free((void *)decl->name);
+    d3dcompiler_free((void *)decl->semantic);
+    d3dcompiler_free(decl);
+}
+
+struct hlsl_type *new_hlsl_type(const char *name, enum hlsl_base_type base_type, unsigned dimx, unsigned dimy)
+{
+    struct hlsl_type *type;
+
+    type = d3dcompiler_alloc(sizeof(*type));
+    if (!type)
+    {
+        ERR("Out of memory\n");
+        return NULL;
+    }
+    type->name = name;
+    type->base_type = base_type;
+    type->dimx = dimx;
+    type->dimy = dimy;
+
+    list_add_tail(&hlsl_ctx.types, &type->entry);
+
+    return type;
+}
+
+struct hlsl_type *new_array_type(struct hlsl_type *basic_type, unsigned int array_size)
 {
     FIXME("stub.\n");
     return NULL;
@@ -777,4 +840,98 @@ BOOL find_function(const char *name)
 {
     FIXME("stub.\n");
     return FALSE;
+}
+
+void push_scope(struct hlsl_parse_ctx *ctx)
+{
+    struct hlsl_scope *new_scope = d3dcompiler_alloc(sizeof(*new_scope));
+
+    if (!new_scope)
+    {
+        ERR("Out of memory!\n");
+        return;
+    }
+    list_init(&new_scope->vars);
+    list_init(&new_scope->types);
+    new_scope->upper = ctx->cur_scope;
+    ctx->cur_scope = new_scope;
+    list_add_tail(&ctx->scopes, &new_scope->entry);
+}
+
+BOOL pop_scope(struct hlsl_parse_ctx *ctx)
+{
+    struct hlsl_scope *prev_scope = ctx->cur_scope->upper;
+    if (!prev_scope)
+        return FALSE;
+
+    ctx->cur_scope = prev_scope;
+    return TRUE;
+}
+
+const char *debug_base_type(const struct hlsl_type *type)
+{
+    const char *name = "(unknown)";
+
+    switch (type->base_type)
+    {
+        case HLSL_TYPE_FLOAT:        name = "float";         break;
+        case HLSL_TYPE_HALF:         name = "half";          break;
+        case HLSL_TYPE_INT:          name = "int";           break;
+        case HLSL_TYPE_UINT:         name = "uint";          break;
+        case HLSL_TYPE_BOOL:         name = "bool";          break;
+        case HLSL_TYPE_STRUCT:       name = "struct";        break;
+        case HLSL_TYPE_ARRAY:        name = "array";         break;
+        default:
+            FIXME("Unhandled case %u\n", type->base_type);
+    }
+    return name;
+}
+
+const char *debug_hlsl_type(const struct hlsl_type *type)
+{
+    const char *name;
+
+    if (type->name)
+        return debugstr_a(type->name);
+
+    if (type->base_type == HLSL_TYPE_STRUCT)
+        name = "<anonymous struct>";
+    else
+        name = debug_base_type(type);
+    if (type->dimx == 1 && type->dimy == 1)
+        return wine_dbg_sprintf("%s", name);
+    if (type->dimy == 1)
+        return wine_dbg_sprintf("vector<%s, %u>", name, type->dimx);
+    return wine_dbg_sprintf("matrix<%s, %u, %u>", name, type->dimx, type->dimy);
+}
+
+const char *debug_node_type(enum hlsl_ir_node_type type)
+{
+    const char *names[] =
+    {
+        "HLSL_IR_VAR",
+    };
+
+    if (type > sizeof(names) / sizeof(names[0]))
+    {
+        return "Unexpected node type";
+    }
+    return names[type];
+}
+
+void free_hlsl_type(struct hlsl_type *type)
+{
+    struct hlsl_struct_field *field, *next_field;
+
+    d3dcompiler_free((void *)type->name);
+    if (type->base_type == HLSL_TYPE_STRUCT)
+    {
+        LIST_FOR_EACH_ENTRY_SAFE(field, next_field, type->e.elements, struct hlsl_struct_field, entry)
+        {
+            d3dcompiler_free((void *)field->name);
+            d3dcompiler_free((void *)field->semantic);
+            d3dcompiler_free(field);
+        }
+    }
+    d3dcompiler_free(type);
 }
