@@ -47,6 +47,7 @@ static void ContextualShape_Syriac(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *p
 static void ContextualShape_Thaana(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
 static void ContextualShape_Phags_pa(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
 static void ContextualShape_Thai(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
+static void ContextualShape_Lao(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
 static void ContextualShape_Sinhala(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
 static void ContextualShape_Devanagari(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
 static void ContextualShape_Bengali(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
@@ -411,8 +412,8 @@ static const ScriptShapeData ShapingData[] =
     {{ phags_features, 3}, NULL, 0, ContextualShape_Phags_pa, ShapeCharGlyphProp_Thai},
     {{ thai_features, 1}, NULL, 0, ContextualShape_Thai, ShapeCharGlyphProp_Thai},
     {{ thai_features, 1}, NULL, 0, ContextualShape_Thai, ShapeCharGlyphProp_Thai},
-    {{ thai_features, 1}, required_lao_features, 0, NULL, ShapeCharGlyphProp_Thai},
-    {{ thai_features, 1}, required_lao_features, 0, NULL, ShapeCharGlyphProp_Thai},
+    {{ thai_features, 1}, required_lao_features, 0, ContextualShape_Lao, ShapeCharGlyphProp_Thai},
+    {{ thai_features, 1}, required_lao_features, 0, ContextualShape_Lao, ShapeCharGlyphProp_Thai},
     {{ devanagari_features, 6}, required_devanagari_features, MS_MAKE_TAG('d','e','v','2'), ContextualShape_Devanagari, ShapeCharGlyphProp_Devanagari},
     {{ devanagari_features, 6}, required_devanagari_features, MS_MAKE_TAG('d','e','v','2'), ContextualShape_Devanagari, ShapeCharGlyphProp_Devanagari},
     {{ devanagari_features, 6}, required_bengali_features, MS_MAKE_TAG('b','n','g','2'), ContextualShape_Bengali, ShapeCharGlyphProp_Bengali},
@@ -1409,6 +1410,50 @@ static void ContextualShape_Thai(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa
         dirL = 1;
 
     mark_invalid_combinations(hdc, pwcChars, cChars, pwOutGlyphs, pcGlyphs, dirL, pwLogClust, combining_lexical_Thai);
+}
+
+static int combining_lexical_Lao(WCHAR c)
+{
+    enum {Lao_Norm=0, Lao_ABOVE1, Lao_ABOVE2, Lao_BELOW1, Lao_BELOW2, Lao_AM};
+
+   switch(c)
+    {
+        case 0xEB1:
+        case 0xEB4:
+        case 0xEB5:
+        case 0xEB6:
+        case 0xEB7:
+        case 0xEBB:
+        case 0xECD: return Lao_ABOVE1; break;
+        case 0xEC8:
+        case 0xEC9:
+        case 0xECA:
+        case 0xECB:
+        case 0xECC: return Lao_ABOVE2; break;
+        case 0xEBC: return Lao_BELOW1; break;
+        case 0xEB8:
+        case 0xEB9: return Lao_BELOW2; break;
+        case 0xEB3: return Lao_AM; break;
+        default: return Lao_Norm;
+    }
+}
+
+static void ContextualShape_Lao(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
+{
+    INT dirL;
+
+    if (*pcGlyphs != cChars)
+    {
+        ERR("Number of Glyphs and Chars need to match at the beginning\n");
+        return;
+    }
+
+    if (!psa->fLogicalOrder && psa->fRTL)
+        dirL = -1;
+    else
+        dirL = 1;
+
+    mark_invalid_combinations(hdc, pwcChars, cChars, pwOutGlyphs, pcGlyphs, dirL, pwLogClust, combining_lexical_Lao);
 }
 
 static void ReplaceInsertChars(HDC hdc, INT cWalk, INT* pcChars, WCHAR *pwOutChars, const WCHAR *replacements)
