@@ -1987,6 +1987,9 @@ static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffe
         return ERROR_SUCCESS;
     }
 
+    case 98:
+        TRACE("Queried undocumented option 98, forwarding to INTERNET_OPTION_SECURITY_FLAGS\n");
+        /* fall through */
     case INTERNET_OPTION_SECURITY_FLAGS:
     {
         DWORD flags;

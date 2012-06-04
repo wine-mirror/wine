@@ -2928,6 +2928,13 @@ static void _test_secflags_option(unsigned line, HINTERNET req, DWORD ex_flags)
     res = InternetQueryOptionW(req, INTERNET_OPTION_SECURITY_FLAGS, &flags, &size);
     ok_(__FILE__,line)(res, "InternetQueryOptionW(INTERNET_OPTION_SECURITY_FLAGS) failed: %u\n", GetLastError());
     ok_(__FILE__,line)(flags == ex_flags, "INTERNET_OPTION_SECURITY_FLAGS flags = %x, expected %x\n", flags, ex_flags);
+
+    /* Option 98 is undocumented and seems to be the same as INTERNET_OPTION_SECURITY_FLAGS */
+    flags = 0xdeadbeef;
+    size = sizeof(flags);
+    res = InternetQueryOptionW(req, 98, &flags, &size);
+    ok_(__FILE__,line)(res, "InternetQueryOptionW(INTERNET_OPTION_SECURITY_FLAGS) failed: %u\n", GetLastError());
+    ok_(__FILE__,line)(flags == ex_flags, "INTERNET_OPTION_SECURITY_FLAGS flags = %x, expected %x\n", flags, ex_flags);
 }
 
 #define set_secflags(a,b) _set_secflags(__LINE__,a,b)
