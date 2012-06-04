@@ -3,6 +3,7 @@
  * Copyright 2009 Matteo Bruni
  * Copyright 2008-2009 Henri Verbeet for CodeWeavers
  * Copyright 2010 Rico Schüller
+ * Copyright 2012 Matteo Bruni for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -758,4 +759,22 @@ void compilation_message(struct compilation_messages *msg, const char *fmt, va_l
             return;
         }
     }
+}
+
+struct hlsl_ir_var *get_variable(struct hlsl_scope *scope, const char *name)
+{
+    FIXME("stub.\n");
+    return NULL;
+}
+
+struct hlsl_type *get_type(struct hlsl_scope *scope, const char *name, BOOL recursive)
+{
+    FIXME("stub.\n");
+    return NULL;
+}
+
+BOOL find_function(const char *name)
+{
+    FIXME("stub.\n");
+    return FALSE;
 }

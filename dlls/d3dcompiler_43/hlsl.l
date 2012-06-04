@@ -45,6 +45,7 @@ WS                      [ \t]
 NEWLINE                 (\n)|(\r\n)
 DOUBLESLASHCOMMENT      "//"[^\n]*
 STRING                  \"[^\"]*\"
+IDENTIFIER              [A-Za-z_][A-Za-z0-9_]*
 
 ANY                     (.)
 
@@ -165,6 +166,17 @@ while                   {return KW_WHILE;               }
 
 column_major            {return KW_COLUMN_MAJOR;        }
 row_major               {return KW_ROW_MAJOR;           }
+
+{IDENTIFIER}            {
+                            hlsl_lval.name = d3dcompiler_strdup(yytext);
+                            if (get_variable(hlsl_ctx.cur_scope, yytext)
+                                    || find_function(yytext))
+                                return VAR_IDENTIFIER;
+                            else if (get_type(hlsl_ctx.cur_scope, yytext, TRUE))
+                                return TYPE_IDENTIFIER;
+                            else
+                                return NEW_IDENTIFIER;
+                        }
 
 [+-]?[0-9]*\.[0-9]+([eE][+-]?[0-9]+)?[h|H|f|F]? {
                             hlsl_lval.floatval = atof(yytext);

@@ -614,6 +614,9 @@ struct hlsl_parse_ctx
 extern struct hlsl_parse_ctx hlsl_ctx DECLSPEC_HIDDEN;
 
 void hlsl_message(const char *fmt, ...) PRINTF_ATTR(1,2) DECLSPEC_HIDDEN;
+struct hlsl_ir_var *get_variable(struct hlsl_scope *scope, const char *name) DECLSPEC_HIDDEN;
+struct hlsl_type *get_type(struct hlsl_scope *scope, const char *name, BOOL recursive) DECLSPEC_HIDDEN;
+BOOL find_function(const char *name) DECLSPEC_HIDDEN;
 struct bwriter_shader *parse_hlsl_shader(const char *text, enum shader_type type, DWORD version,
         const char *entrypoint, char **messages) DECLSPEC_HIDDEN;
 

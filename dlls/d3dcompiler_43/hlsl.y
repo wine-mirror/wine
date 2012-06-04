@@ -159,6 +159,7 @@ static void hlsl_error(const char *s)
 
 %token <intval> PRE_LINE
 
+%token <name> VAR_IDENTIFIER TYPE_IDENTIFIER NEW_IDENTIFIER
 %token <name> STRING
 %token <floatval> C_FLOAT
 %token <intval> C_INTEGER
