@@ -189,6 +189,7 @@ static void test_MeshBuilder(void)
     DWORD f[8];
     char name[10];
     DWORD size;
+    D3DCOLOR color;
 
     hr = pDirect3DRMCreate(&pD3DRM);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRM interface (hr = %x)\n", hr);
@@ -367,6 +368,8 @@ static void test_MeshBuilder(void)
         ok(nb_faces == 1, "Wrong number of faces %u (must be 1)\n", nb_faces);
         todo_wine ok(nb_face_vertices == 3, "Wrong number of vertices per face %u (must be 3)\n", nb_face_vertices);
         todo_wine ok(data_size == 3, "Wrong number of face data bytes %u (must be 3)\n", data_size);
+        color = IDirect3DRMMesh_GetGroupColor(mesh, 0);
+        todo_wine ok(color == 0xff00ff00, "Wrong color returned %#x instead of %#x\n", color, 0xff00ff00);
         hr = IDirect3DRMMesh_GetGroupTexture(mesh, 0, &texture);
         ok(hr == D3DRM_OK, "GetCroupTexture failed returning hr = %x\n", hr);
         ok(texture == NULL, "No texture should be present\n");

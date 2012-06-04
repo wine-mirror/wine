@@ -43,6 +43,7 @@ typedef struct {
     unsigned vertex_per_face;
     DWORD face_data_size;
     unsigned* face_data;
+    D3DCOLOR color;
     IDirect3DRMMaterial2* material;
     IDirect3DRMTexture3* texture;
 } mesh_group;
@@ -2750,9 +2751,9 @@ static D3DCOLOR WINAPI IDirect3DRMMeshImpl_GetGroupColor(IDirect3DRMMesh* iface,
 {
     IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
 
-    FIXME("(%p)->(%u): stub\n", This, id);
+    TRACE("(%p)->(%u)\n", This, id);
 
-    return 0;
+    return This->groups[id].color;
 }
 
 static D3DRMMAPPING WINAPI IDirect3DRMMeshImpl_GetGroupMapping(IDirect3DRMMesh* iface, D3DRMGROUPINDEX id)
