@@ -53,9 +53,9 @@ static void fatal_error( const char *err, ... )  __attribute__((noreturn,format(
 static void fatal_perror( const char *err, ... )  __attribute__((noreturn,format(printf,1,2)));
 #endif
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__FreeBSD_kernel__ )
 #define EXE_LINK "/proc/self/exe"
-#elif defined (__FreeBSD__)
+#elif defined (__FreeBSD__) || defined(__DragonFly__)
 #define EXE_LINK "/proc/curproc/file"
 #endif
 
