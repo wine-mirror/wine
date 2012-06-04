@@ -38,6 +38,7 @@ static const WCHAR emptyW[] = {0};
 typedef struct {
     IBindStatusCallback  IBindStatusCallback_iface;
     IHttpNegotiate       IHttpNegotiate_iface;
+    IHttpSecurity        IHttpSecurity_iface;
 
     LONG ref;
 
@@ -164,6 +165,12 @@ static HRESULT WINAPI BindStatusCallback_QueryInterface(IBindStatusCallback *ifa
     }else if(IsEqualGUID(&IID_IHttpNegotiate, riid)) {
         TRACE("(%p)->(IID_IHttpNegotiate %p)\n", This, ppv);
         *ppv = &This->IHttpNegotiate_iface;
+    }else if(IsEqualGUID(&IID_IWindowForBindingUI, riid)) {
+        TRACE("(%p)->(IID_IWindowForBindingUI %p)\n", This, ppv);
+        *ppv = &This->IHttpSecurity_iface;
+    }else if(IsEqualGUID(&IID_IHttpSecurity, riid)) {
+        TRACE("(%p)->(IID_IHttpSecurity %p)\n", This, ppv);
+        *ppv = &This->IHttpSecurity_iface;
     }else {
         *ppv = NULL;
         WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
@@ -475,6 +482,57 @@ static const IHttpNegotiateVtbl HttpNegotiateVtbl = {
     HttpNegotiate_OnResponse
 };
 
+static inline BindStatusCallback *impl_from_IHttpSecurity(IHttpSecurity *iface)
+{
+    return CONTAINING_RECORD(iface, BindStatusCallback, IHttpSecurity_iface);
+}
+
+static HRESULT WINAPI HttpSecurity_QueryInterface(IHttpSecurity *iface, REFIID riid, void **ppv)
+{
+    BindStatusCallback *This = impl_from_IHttpSecurity(iface);
+    return IBindStatusCallback_QueryInterface(&This->IBindStatusCallback_iface, riid, ppv);
+}
+
+static ULONG WINAPI HttpSecurity_AddRef(IHttpSecurity *iface)
+{
+    BindStatusCallback *This = impl_from_IHttpSecurity(iface);
+    return IBindStatusCallback_AddRef(&This->IBindStatusCallback_iface);
+}
+
+static ULONG WINAPI HttpSecurity_Release(IHttpSecurity *iface)
+{
+    BindStatusCallback *This = impl_from_IHttpSecurity(iface);
+    return IBindStatusCallback_Release(&This->IBindStatusCallback_iface);
+}
+
+static HRESULT WINAPI HttpSecurity_GetWindow(IHttpSecurity *iface, REFGUID rguidReason, HWND *phwnd)
+{
+    BindStatusCallback *This = impl_from_IHttpSecurity(iface);
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(rguidReason), phwnd);
+
+    if(!This->doc_host)
+        return E_FAIL;
+
+    *phwnd = This->doc_host->frame_hwnd;
+    return S_OK;
+}
+
+static HRESULT WINAPI HttpSecurity_OnSecurityProblem(IHttpSecurity *iface, DWORD dwProblem)
+{
+    BindStatusCallback *This = impl_from_IHttpSecurity(iface);
+    FIXME("(%p)->(%u)\n", This, dwProblem);
+    return S_FALSE;
+}
+
+static const IHttpSecurityVtbl HttpSecurityVtbl = {
+    HttpSecurity_QueryInterface,
+    HttpSecurity_AddRef,
+    HttpSecurity_Release,
+    HttpSecurity_GetWindow,
+    HttpSecurity_OnSecurityProblem
+};
+
 static BindStatusCallback *create_callback(DocHost *doc_host, LPCWSTR url, PBYTE post_data,
         ULONG post_data_len, LPCWSTR headers)
 {
@@ -482,6 +540,7 @@ static BindStatusCallback *create_callback(DocHost *doc_host, LPCWSTR url, PBYTE
 
     ret->IBindStatusCallback_iface.lpVtbl = &BindStatusCallbackVtbl;
     ret->IHttpNegotiate_iface.lpVtbl      = &HttpNegotiateVtbl;
+    ret->IHttpSecurity_iface.lpVtbl       = &HttpSecurityVtbl;
 
     ret->ref = 1;
     ret->url = heap_strdupW(url);
