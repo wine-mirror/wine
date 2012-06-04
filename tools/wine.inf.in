@@ -89,6 +89,7 @@ AddReg=\
     CurrentVersion,\
     CurrentVersionWow64,\
     Debugger,\
+    Dotnet,\
     DirectX,\
     Fonts,\
     MCI,\
@@ -509,6 +510,42 @@ HKCU,Control Panel\Desktop\WindowMetrics,Shell Icon Size,2,"32"
 HKCU,Control Panel\Desktop\WindowMetrics,SmCaptionHeight,2,"15"
 HKCU,Control Panel\Desktop\WindowMetrics,SmCaptionWidth,2,"13"
 HKCU,Control Panel\Mouse,Beep,2,"No"
+
+[DotNet]
+HKLM,Software\Microsoft\.NETFramework,"InstallRoot",2,"%10%\Microsoft.NET\Framework\"
+HKLM,Software\Microsoft\.NETFramework\policy\v1.0,,16
+HKLM,Software\Microsoft\.NETFramework\policy\v1.1,,16
+HKLM,Software\Microsoft\.NETFramework\policy\v2.0,"50727",2,"50727-50727"
+HKLM,Software\Microsoft\.NETFramework\policy\v3.0,,16
+HKLM,Software\Microsoft\NET Framework Setup\NDP\v1.1.4322,Install,0x10003,1
+HKLM,Software\Microsoft\NET Framework Setup\NDP\v1.1.4322,SP,0x10003,1
+HKLM,Software\Microsoft\NET Framework Setup\NDP\v2.0.50727,Install,0x10003,1
+HKLM,Software\Microsoft\NET Framework Setup\NDP\v2.0.50727,SP,0x10003,2
+HKLM,Software\Microsoft\NET Framework Setup\NDP\v2.0.50727,Version,2,2.2.30729
+HKLM,Software\Microsoft\NET Framework Setup\NDP\v3.0,Install,0x10003,1
+HKLM,Software\Microsoft\NET Framework Setup\NDP\v3.0,SP,0x10003,2
+HKLM,Software\Microsoft\NET Framework Setup\NDP\v3.0,Version,2,3.2.30729
+HKLM,Software\Microsoft\NET Framework Setup\NDP\v3.0\Setup,InstallSuccess,0x10003,1
+HKLM,Software\Microsoft\NET Framework Setup\NDP\v3.5,Install,0x10003,1
+HKLM,Software\Microsoft\NET Framework Setup\NDP\v3.5,SP,0x10003,1
+HKLM,Software\Microsoft\NET Framework Setup\NDP\v3.5,Version,2,3.5.30729.01
+HKLM,Software\Microsoft\NET Framework Setup\NDP\v3.5\1033,Install,0x10003,1
+HKLM,Software\Microsoft\NET Framework Setup\NDP\v4\Client,Install,0x10003,1
+HKLM,Software\Microsoft\NET Framework Setup\NDP\v4\Client,Version,2,4.0.30319
+HKLM,Software\Microsoft\NET Framework Setup\NDP\v4\Client,TargetVersion,2,4.0.0
+HKLM,Software\Microsoft\NET Framework Setup\NDP\v4\Full,Install,0x10003,1
+HKLM,Software\Microsoft\NET Framework Setup\NDP\v4\Full,Version,2,4.0.30319
+HKLM,Software\Microsoft\NET Framework Setup\NDP\v4\Full,TargetVersion,2,4.0.0
+
+HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{7131646D-CD3C-40F4-97B9-CD9E4E6262EF},,2,".NET Framework"
+HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{7131646D-CD3C-40F4-97B9-CD9E4E6262EF},"ComponentID",2,".NETFramework"
+HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{7131646D-CD3C-40F4-97B9-CD9E4E6262EF},"Locale",2,""
+HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{7131646D-CD3C-40F4-97B9-CD9E4E6262EF},"Version",2,"2,0,50727,0"
+
+HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{CB2F7EDD-9D1F-43C1-90FC-4F52EAE172A1},,2,".NET Framework"
+HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{CB2F7EDD-9D1F-43C1-90FC-4F52EAE172A1},"ComponentID",2,".NETFramework"
+HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{CB2F7EDD-9D1F-43C1-90FC-4F52EAE172A1},"Locale",2,""
+HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{CB2F7EDD-9D1F-43C1-90FC-4F52EAE172A1},"Version",2,"1,0,4322,1"
 
 [DirectX]
 HKLM,Software\Microsoft\DirectX,"Version",,"4.09.00.0904"
