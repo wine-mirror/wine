@@ -263,10 +263,11 @@ int get_clipped_rects( const dib_info *dib, const RECT *rc, HRGN clip, struct cl
 
     init_clipped_rects( clip_rects );
 
-    rect.left   = 0;
-    rect.top    = 0;
-    rect.right  = dib->rect.right - dib->rect.left;
-    rect.bottom = dib->rect.bottom - dib->rect.top;
+    rect.left   = max( 0, -dib->rect.left );
+    rect.top    = max( 0, -dib->rect.top );
+    rect.right  = min( dib->rect.right, dib->width ) - dib->rect.left;
+    rect.bottom = min( dib->rect.bottom, dib->height ) - dib->rect.top;
+    if (is_rect_empty( &rect )) return 0;
     if (rc && !intersect_rect( &rect, &rect, rc )) return 0;
 
     if (!clip)
