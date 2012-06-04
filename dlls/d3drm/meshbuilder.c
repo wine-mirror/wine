@@ -74,6 +74,7 @@ typedef struct {
     LPVOID pFaceData;
     DWORD nb_coords2d;
     Coords2d* pCoords2d;
+    D3DCOLOR color;
     IDirect3DRMMaterial2* material;
 } IDirect3DRMMeshBuilderImpl;
 
@@ -615,9 +616,9 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_SetColorRGB(IDirect3DRMMeshBui
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder2(iface);
 
-    FIXME("(%p)->(%f,%f,%f): stub\n", This, red, green, blue);
+    TRACE("(%p)->(%f,%f,%f)\n", This, red, green, blue);
 
-    return E_NOTIMPL;
+    return IDirect3DRMMeshBuilder3_SetColorRGB(&This->IDirect3DRMMeshBuilder3_iface, red, green, blue);
 }
 
 static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_SetColor(IDirect3DRMMeshBuilder2* iface,
@@ -625,9 +626,9 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_SetColor(IDirect3DRMMeshBuilde
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder2(iface);
 
-    FIXME("(%p)->(%x): stub\n", This, color);
+    TRACE("(%p)->(%x)\n", This, color);
 
-    return E_NOTIMPL;
+    return IDirect3DRMMeshBuilder3_SetColor(&This->IDirect3DRMMeshBuilder3_iface, color);
 }
 
 static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_SetTexture(IDirect3DRMMeshBuilder2* iface,
@@ -1702,9 +1703,13 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_SetColorRGB(IDirect3DRMMeshBui
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder3(iface);
 
-    FIXME("(%p)->(%f,%f,%f): stub\n", This, red, green, blue);
+    TRACE("(%p)->(%f,%f,%f)\n", This, red, green, blue);
 
-    return E_NOTIMPL;
+    This->color = D3DCOLOR_ARGB(0xff, (BYTE)(red   * 255.0f),
+                                      (BYTE)(green * 255.0f),
+                                      (BYTE)(blue  * 255.0f));
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_SetColor(IDirect3DRMMeshBuilder3* iface,
@@ -1712,9 +1717,11 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_SetColor(IDirect3DRMMeshBuilde
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder3(iface);
 
-    FIXME("(%p)->(%x): stub\n", This, color);
+    TRACE("(%p)->(%x)\n", This, color);
 
-    return E_NOTIMPL;
+    This->color = color;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_SetTexture(IDirect3DRMMeshBuilder3* iface,

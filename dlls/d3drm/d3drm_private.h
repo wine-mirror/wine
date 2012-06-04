@@ -24,6 +24,8 @@
 #include "d3drm.h"
 #include "dxfile.h"
 
+#define D3DCOLOR_ARGB(a,r,g,b) ((D3DCOLOR)((((a)&0xff)<<24)|(((r)&0xff)<<16)|(((g)&0xff)<<8)|((b)&0xff)))
+
 HRESULT Direct3DRM_create(IUnknown** ppObj) DECLSPEC_HIDDEN;
 HRESULT Direct3DRMDevice_create(REFIID riid, IUnknown** ppObj) DECLSPEC_HIDDEN;
 HRESULT Direct3DRMFrame_create(REFIID riid, IUnknown* parent_frame, IUnknown** ret_iface) DECLSPEC_HIDDEN;
