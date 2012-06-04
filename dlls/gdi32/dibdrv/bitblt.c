@@ -438,11 +438,11 @@ static int get_overlap( const dib_info *dst, const RECT *dst_rect,
     int height, ret = 0;
 
     if (dst->stride != src->stride) return 0;  /* can't be the same dib */
-    if (dst_rect->right <= src_rect->left) return 0;
-    if (dst_rect->left >= src_rect->right) return 0;
+    if (dst->rect.left + dst_rect->right <= src->rect.left + src_rect->left) return 0;
+    if (dst->rect.left + dst_rect->left >= src->rect.left + src_rect->right) return 0;
 
-    src_top = (const char *)src->bits.ptr + src_rect->top * src->stride;
-    dst_top = (const char *)dst->bits.ptr + dst_rect->top * dst->stride;
+    src_top = (const char *)src->bits.ptr + (src->rect.top + src_rect->top) * src->stride;
+    dst_top = (const char *)dst->bits.ptr + (dst->rect.top + dst_rect->top) * dst->stride;
     height = (dst_rect->bottom - dst_rect->top) * dst->stride;
 
     if (dst->stride > 0)
@@ -460,8 +460,8 @@ static int get_overlap( const dib_info *dst, const RECT *dst_rect,
         else if (dst_top < src_top) ret |= OVERLAP_BELOW;
     }
 
-    if (dst_rect->left < src_rect->left) ret |= OVERLAP_LEFT;
-    else if (dst_rect->left > src_rect->left) ret |= OVERLAP_RIGHT;
+    if (dst->rect.left + dst_rect->left < src->rect.left + src_rect->left) ret |= OVERLAP_LEFT;
+    else if (dst->rect.left + dst_rect->left > src->rect.left + src_rect->left) ret |= OVERLAP_RIGHT;
 
     return ret;
 }
