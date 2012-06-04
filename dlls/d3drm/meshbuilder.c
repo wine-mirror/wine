@@ -2022,6 +2022,8 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_CreateMesh(IDirect3DRMMeshBuil
             }
         }
         if (SUCCEEDED(hr))
+            hr = IDirect3DRMMesh_SetGroupColor(*mesh, 0, This->color);
+        if (SUCCEEDED(hr))
             hr = IDirect3DRMMesh_SetGroupMaterial(*mesh, 0, (LPDIRECT3DRMMATERIAL)This->material);
         if (FAILED(hr))
             IDirect3DRMMesh_Release(*mesh);
