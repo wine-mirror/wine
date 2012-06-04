@@ -46,6 +46,7 @@ static void ContextualShape_Hebrew(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *p
 static void ContextualShape_Syriac(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
 static void ContextualShape_Thaana(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
 static void ContextualShape_Phags_pa(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
+static void ContextualShape_Thai(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
 static void ContextualShape_Sinhala(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
 static void ContextualShape_Devanagari(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
 static void ContextualShape_Bengali(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
@@ -408,8 +409,8 @@ static const ScriptShapeData ShapingData[] =
     {{ tibetan_features, 2}, NULL, 0, NULL, ShapeCharGlyphProp_Tibet},
     {{ tibetan_features, 2}, NULL, 0, NULL, ShapeCharGlyphProp_Tibet},
     {{ phags_features, 3}, NULL, 0, ContextualShape_Phags_pa, ShapeCharGlyphProp_Thai},
-    {{ thai_features, 1}, NULL, 0, NULL, ShapeCharGlyphProp_Thai},
-    {{ thai_features, 1}, NULL, 0, NULL, ShapeCharGlyphProp_Thai},
+    {{ thai_features, 1}, NULL, 0, ContextualShape_Thai, ShapeCharGlyphProp_Thai},
+    {{ thai_features, 1}, NULL, 0, ContextualShape_Thai, ShapeCharGlyphProp_Thai},
     {{ thai_features, 1}, required_lao_features, 0, NULL, ShapeCharGlyphProp_Thai},
     {{ thai_features, 1}, required_lao_features, 0, NULL, ShapeCharGlyphProp_Thai},
     {{ devanagari_features, 6}, required_devanagari_features, MS_MAKE_TAG('d','e','v','2'), ContextualShape_Devanagari, ShapeCharGlyphProp_Devanagari},
@@ -469,7 +470,7 @@ static const ScriptShapeData ShapingData[] =
     {{ NULL, 0}, NULL, 0, NULL, NULL},
     {{ hebrew_features, 1}, NULL, 0, ContextualShape_Hebrew, NULL},
     {{ latin_features, 2}, NULL, 0, NULL, NULL},
-    {{ thai_features, 1}, NULL, 0, NULL, ShapeCharGlyphProp_Thai},
+    {{ thai_features, 1}, NULL, 0, ContextualShape_Thai, ShapeCharGlyphProp_Thai},
 };
 
 extern scriptData scriptInformation[];
@@ -1363,6 +1364,51 @@ static void ContextualShape_Phags_pa(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS 
     }
 
     HeapFree(GetProcessHeap(),0,context_shape);
+}
+
+static int combining_lexical_Thai(WCHAR c)
+{
+    enum {Thai_Norm=0, Thai_ABOVE1, Thai_ABOVE2, Thai_ABOVE3, Thai_ABOVE4, Thai_BELOW1, Thai_BELOW2, Thai_AM};
+
+   switch(c)
+    {
+        case 0xE31:
+        case 0xE34:
+        case 0xE35:
+        case 0xE36:
+        case 0xE37: return Thai_ABOVE1; break;
+        case 0xE47:
+        case 0xE4D: return Thai_ABOVE2; break;
+        case 0xE48:
+        case 0xE49:
+        case 0xE4A:
+        case 0xE4B: return Thai_ABOVE3; break;
+        case 0xE4C:
+        case 0xE4E: return Thai_ABOVE4; break;
+        case 0xE38:
+        case 0xE39: return Thai_BELOW1; break;
+        case 0xE3A: return Thai_BELOW2; break;
+        case 0xE33: return Thai_AM; break;
+        default: return Thai_Norm;
+    }
+}
+
+static void ContextualShape_Thai(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
+{
+    INT dirL;
+
+    if (*pcGlyphs != cChars)
+    {
+        ERR("Number of Glyphs and Chars need to match at the beginning\n");
+        return;
+    }
+
+    if (!psa->fLogicalOrder && psa->fRTL)
+        dirL = -1;
+    else
+        dirL = 1;
+
+    mark_invalid_combinations(hdc, pwcChars, cChars, pwOutGlyphs, pcGlyphs, dirL, pwLogClust, combining_lexical_Thai);
 }
 
 static void ReplaceInsertChars(HDC hdc, INT cWalk, INT* pcChars, WCHAR *pwOutChars, const WCHAR *replacements)
