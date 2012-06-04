@@ -667,6 +667,19 @@ typedef struct _currencyfmtW
 DECL_WINELIB_TYPE_AW(CURRENCYFMT)
 DECL_WINELIB_TYPE_AW(LPCURRENCYFMT)
 
+typedef struct _nlsversioninfo {
+    DWORD dwNLSVersionInfoSize;
+    DWORD dwNLSVersion;
+    DWORD dwDefinedVersion;
+} NLSVERSIONINFO, *LPNLSVERSIONINFO;
+
+typedef struct _nlsversioninfoex {
+    DWORD dwNLSVersionInfoSize;
+    DWORD dwNLSVersion;
+    DWORD dwDefinedVersion;
+    DWORD dwEffectiveId;
+    GUID  guidCustomVersion;
+} NLSVERSIONINFOEX, *LPNLSVERSIONINFOEX;
 
 /* Define a bunch of callback types */
 
@@ -849,6 +862,7 @@ WINBASEAPI INT         WINAPI LCIDToLocaleName(LCID,LPWSTR,INT,DWORD);
 WINBASEAPI INT         WINAPI LCMapStringA(LCID,DWORD,LPCSTR,INT,LPSTR,INT);
 WINBASEAPI INT         WINAPI LCMapStringW(LCID,DWORD,LPCWSTR,INT,LPWSTR,INT);
 #define                       LCMapString WINELIB_NAME_AW(LCMapString)
+WINBASEAPI INT         WINAPI LCMapStringEx(LPCWSTR,DWORD,LPCWSTR,INT,LPWSTR,INT,LPNLSVERSIONINFO,LPVOID,LPARAM);
 WINBASEAPI LCID        WINAPI LocaleNameToLCID(LPCWSTR,DWORD);
 WINBASEAPI INT         WINAPI MultiByteToWideChar(UINT,DWORD,LPCSTR,INT,LPWSTR,INT);
 WINNORMALIZEAPI INT    WINAPI NormalizeString(NORM_FORM,LPCWSTR,INT,LPWSTR,INT);
