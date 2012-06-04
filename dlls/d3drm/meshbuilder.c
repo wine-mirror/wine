@@ -2624,13 +2624,18 @@ static HRESULT WINAPI IDirect3DRMMeshImpl_SetVertices(IDirect3DRMMesh* iface,
 }
 
 static HRESULT WINAPI IDirect3DRMMeshImpl_SetGroupColor(IDirect3DRMMesh* iface,
-                                                        D3DRMGROUPINDEX id, D3DCOLOR value)
+                                                        D3DRMGROUPINDEX id, D3DCOLOR color)
 {
     IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
 
-    FIXME("(%p)->(%u,%x): stub\n", This, id, value);
+    TRACE("(%p)->(%u,%x)\n", This, id, color);
 
-    return E_NOTIMPL;
+    if (id >= This->nb_groups)
+        return D3DRMERR_BADVALUE;
+
+    This->groups[id].color = color;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMMeshImpl_SetGroupColorRGB(IDirect3DRMMesh* iface,
