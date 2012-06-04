@@ -130,308 +130,308 @@ static const struct DefaultFontInfo default_fonts[] =
 {
     {   ANSI_CHARSET,
         { /* System */
-          16, 7, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
+          16, 7, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, ANSI_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'S','y','s','t','e','m','\0'}
         },
         { /* Device Default */
-          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
+          16, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, ANSI_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-           {'\0'}
+           {'S','y','s','t','e','m','\0'}
         },
         { /* System Fixed */
           16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
            0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN,
-           {'\0'}
+           {'C','o','u','r','i','e','r','\0'}
         },
         { /* DefaultGuiFont */
-           8, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
+          -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'M','S',' ','S','h','e','l','l',' ','D','l','g','\0'}
         },
     },
     {   EASTEUROPE_CHARSET,
         { /* System */
-          16, 7, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, EASTEUROPE_CHARSET,
+          16, 7, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, EASTEUROPE_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'S','y','s','t','e','m','\0'}
         },
         { /* Device Default */
-          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, EASTEUROPE_CHARSET,
+          16, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, EASTEUROPE_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-           {'\0'}
+           {'S','y','s','t','e','m','\0'}
         },
         { /* System Fixed */
           16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, EASTEUROPE_CHARSET,
            0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN,
-           {'\0'}
+           {'C','o','u','r','i','e','r','\0'}
         },
         { /* DefaultGuiFont */
-           8, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, EASTEUROPE_CHARSET,
+          -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, EASTEUROPE_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'M','S',' ','S','h','e','l','l',' ','D','l','g','\0'}
         },
     },
     {   RUSSIAN_CHARSET,
         { /* System */
-          16, 7, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, RUSSIAN_CHARSET,
+          16, 7, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, RUSSIAN_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'S','y','s','t','e','m','\0'}
         },
         { /* Device Default */
-          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, RUSSIAN_CHARSET,
+          16, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, RUSSIAN_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-           {'\0'}
+           {'S','y','s','t','e','m','\0'}
         },
         { /* System Fixed */
           16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, RUSSIAN_CHARSET,
            0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN,
-           {'\0'}
+           {'C','o','u','r','i','e','r','\0'}
         },
         { /* DefaultGuiFont */
-           8, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, RUSSIAN_CHARSET,
+          -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, RUSSIAN_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'M','S',' ','S','h','e','l','l',' ','D','l','g','\0'}
         },
     },
     {   GREEK_CHARSET,
         { /* System */
-          16, 7, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, GREEK_CHARSET,
+          16, 7, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, GREEK_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'S','y','s','t','e','m','\0'}
         },
         { /* Device Default */
-          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, GREEK_CHARSET,
+          16, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, GREEK_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-           {'\0'}
+           {'S','y','s','t','e','m','\0'}
         },
         { /* System Fixed */
           16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, GREEK_CHARSET,
            0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN,
-           {'\0'}
+           {'C','o','u','r','i','e','r','\0'}
         },
         { /* DefaultGuiFont */
-           8, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, GREEK_CHARSET,
+          -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, GREEK_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'M','S',' ','S','h','e','l','l',' ','D','l','g','\0'}
         },
     },
     {   TURKISH_CHARSET,
         { /* System */
-          16, 7, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, TURKISH_CHARSET,
+          16, 7, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, TURKISH_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'S','y','s','t','e','m','\0'}
         },
         { /* Device Default */
-          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, TURKISH_CHARSET,
+          16, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, TURKISH_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-           {'\0'}
+           {'S','y','s','t','e','m','\0'}
         },
         { /* System Fixed */
           16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, TURKISH_CHARSET,
            0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN,
-           {'\0'}
+           {'C','o','u','r','i','e','r','\0'}
         },
         { /* DefaultGuiFont */
-           8, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, TURKISH_CHARSET,
+          -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, TURKISH_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'M','S',' ','S','h','e','l','l',' ','D','l','g','\0'}
         },
     },
     {   HEBREW_CHARSET,
         { /* System */
-          16, 7, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, HEBREW_CHARSET,
+          16, 7, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, HEBREW_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'S','y','s','t','e','m','\0'}
         },
         { /* Device Default */
-          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, HEBREW_CHARSET,
+          16, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, HEBREW_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-           {'\0'}
+           {'S','y','s','t','e','m','\0'}
         },
         { /* System Fixed */
           16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, HEBREW_CHARSET,
            0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN,
-           {'\0'}
+           {'C','o','u','r','i','e','r','\0'}
         },
         { /* DefaultGuiFont */
-           8, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, HEBREW_CHARSET,
+          -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, HEBREW_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'M','S',' ','S','h','e','l','l',' ','D','l','g','\0'}
         },
     },
     {   ARABIC_CHARSET,
         { /* System */
-          16, 7, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ARABIC_CHARSET,
+          16, 7, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, ARABIC_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'S','y','s','t','e','m','\0'}
         },
         { /* Device Default */
-          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ARABIC_CHARSET,
+          16, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, ARABIC_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-           {'\0'}
+           {'S','y','s','t','e','m','\0'}
         },
         { /* System Fixed */
           16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ARABIC_CHARSET,
            0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN,
-           {'\0'}
+           {'C','o','u','r','i','e','r','\0'}
         },
         { /* DefaultGuiFont */
-           8, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ARABIC_CHARSET,
+          -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ARABIC_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'M','S',' ','S','h','e','l','l',' ','D','l','g','\0'}
         },
     },
     {   BALTIC_CHARSET,
         { /* System */
-          16, 7, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, BALTIC_CHARSET,
+          16, 7, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, BALTIC_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'S','y','s','t','e','m','\0'}
         },
         { /* Device Default */
-          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, BALTIC_CHARSET,
+          16, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, BALTIC_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-           {'\0'}
+           {'S','y','s','t','e','m','\0'}
         },
         { /* System Fixed */
           16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, BALTIC_CHARSET,
            0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN,
-           {'\0'}
+           {'C','o','u','r','i','e','r','\0'}
         },
         { /* DefaultGuiFont */
-           8, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, BALTIC_CHARSET,
+          -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, BALTIC_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'M','S',' ','S','h','e','l','l',' ','D','l','g','\0'}
         },
     },
     {   THAI_CHARSET,
         { /* System */
-          16, 7, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, THAI_CHARSET,
+          16, 7, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, THAI_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'S','y','s','t','e','m','\0'}
         },
         { /* Device Default */
-          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, THAI_CHARSET,
+          16, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, THAI_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-           {'\0'}
+           {'S','y','s','t','e','m','\0'}
         },
         { /* System Fixed */
           16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, THAI_CHARSET,
            0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN,
-           {'\0'}
+           {'C','o','u','r','i','e','r','\0'}
         },
         { /* DefaultGuiFont */
-           8, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, THAI_CHARSET,
+          -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, THAI_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'M','S',' ','S','h','e','l','l',' ','D','l','g','\0'}
         },
     },
     {   SHIFTJIS_CHARSET,
         { /* System */
-          16, 7, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, SHIFTJIS_CHARSET,
+          16, 7, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, SHIFTJIS_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'S','y','s','t','e','m','\0'}
         },
         { /* Device Default */
-          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, SHIFTJIS_CHARSET,
+          16, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, SHIFTJIS_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-           {'\0'}
+           {'S','y','s','t','e','m','\0'}
         },
         { /* System Fixed */
           16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, SHIFTJIS_CHARSET,
            0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN,
-           {'\0'}
+           {'C','o','u','r','i','e','r','\0'}
         },
         { /* DefaultGuiFont */
-           9, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, SHIFTJIS_CHARSET,
+          -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, SHIFTJIS_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'M','S',' ','S','h','e','l','l',' ','D','l','g','\0'}
         },
     },
     {   GB2312_CHARSET,
         { /* System */
-          16, 7, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, GB2312_CHARSET,
+          16, 7, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, GB2312_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'S','y','s','t','e','m','\0'}
         },
         { /* Device Default */
-          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, GB2312_CHARSET,
+          16, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, GB2312_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-           {'\0'}
+           {'S','y','s','t','e','m','\0'}
         },
         { /* System Fixed */
           16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, GB2312_CHARSET,
            0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN,
-           {'\0'}
+           {'C','o','u','r','i','e','r','\0'}
         },
         { /* DefaultGuiFont */
-           9, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, GB2312_CHARSET,
+          -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, GB2312_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'M','S',' ','S','h','e','l','l',' ','D','l','g','\0'}
         },
     },
     {   HANGEUL_CHARSET,
         { /* System */
-          16, 7, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, HANGEUL_CHARSET,
+          16, 7, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, HANGEUL_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'S','y','s','t','e','m','\0'}
         },
         { /* Device Default */
-          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, HANGEUL_CHARSET,
+          16, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, HANGEUL_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-           {'\0'}
+           {'S','y','s','t','e','m','\0'}
         },
         { /* System Fixed */
           16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, HANGEUL_CHARSET,
            0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN,
-           {'\0'}
+           {'C','o','u','r','i','e','r','\0'}
         },
         { /* DefaultGuiFont */
-           9, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, HANGEUL_CHARSET,
+          -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, HANGEUL_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'M','S',' ','S','h','e','l','l',' ','D','l','g','\0'}
         },
     },
     {   CHINESEBIG5_CHARSET,
         { /* System */
-          16, 7, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, CHINESEBIG5_CHARSET,
+          16, 7, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, CHINESEBIG5_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'S','y','s','t','e','m','\0'}
         },
         { /* Device Default */
-          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, CHINESEBIG5_CHARSET,
+          16, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, CHINESEBIG5_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-           {'\0'}
+           {'S','y','s','t','e','m','\0'}
         },
         { /* System Fixed */
           16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, CHINESEBIG5_CHARSET,
            0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN,
-           {'\0'}
+           {'C','o','u','r','i','e','r','\0'}
         },
         { /* DefaultGuiFont */
-           9, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, CHINESEBIG5_CHARSET,
+          -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, CHINESEBIG5_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'M','S',' ','S','h','e','l','l',' ','D','l','g','\0'}
         },
     },
     {   JOHAB_CHARSET,
         { /* System */
-          16, 7, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, JOHAB_CHARSET,
+          16, 7, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, JOHAB_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'S','y','s','t','e','m','\0'}
         },
         { /* Device Default */
-          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, JOHAB_CHARSET,
+          16, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, JOHAB_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-           {'\0'}
+           {'S','y','s','t','e','m','\0'}
         },
         { /* System Fixed */
           16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, JOHAB_CHARSET,
            0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN,
-           {'\0'}
+           {'C','o','u','r','i','e','r','\0'}
         },
         { /* DefaultGuiFont */
-           8, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, JOHAB_CHARSET,
+          -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, JOHAB_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'M','S',' ','S','h','e','l','l',' ','D','l','g','\0'}
         },
