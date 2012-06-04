@@ -27,7 +27,7 @@
 #include "d3d9types.h"
 #include "d3dcompiler_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(asmshader);
+WINE_DEFAULT_DEBUG_CHANNEL(bytecodewriter);
 
 /****************************************************************
  * General assembler shader construction helper routines follow *
