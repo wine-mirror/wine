@@ -42,6 +42,7 @@ typedef VOID (*ContextualShapingProc)(HDC, ScriptCache*, SCRIPT_ANALYSIS*,
                                       WCHAR*, INT, WORD*, INT*, INT, WORD*);
 
 static void ContextualShape_Arabic(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
+static void ContextualShape_Hebrew(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
 static void ContextualShape_Syriac(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
 static void ContextualShape_Phags_pa(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
 static void ContextualShape_Sinhala(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
@@ -394,7 +395,7 @@ static const ScriptShapeData ShapingData[] =
     {{ latin_features, 2}, NULL, 0, NULL, NULL},
     {{ arabic_features, 6}, required_arabic_features, 0, ContextualShape_Arabic, ShapeCharGlyphProp_Arabic},
     {{ arabic_features, 6}, required_arabic_features, 0, ContextualShape_Arabic, ShapeCharGlyphProp_Arabic},
-    {{ hebrew_features, 1}, NULL, 0, NULL, NULL},
+    {{ hebrew_features, 1}, NULL, 0, ContextualShape_Hebrew, NULL},
     {{ syriac_features, 4}, required_syriac_features, 0, ContextualShape_Syriac, ShapeCharGlyphProp_None},
     {{ arabic_features, 6}, required_arabic_features, 0, ContextualShape_Arabic, ShapeCharGlyphProp_Arabic},
     {{ NULL, 0}, NULL, 0, NULL, ShapeCharGlyphProp_None},
@@ -465,7 +466,7 @@ static const ScriptShapeData ShapingData[] =
     {{ NULL, 0}, NULL, 0, NULL, NULL},
     {{ NULL, 0}, NULL, 0, NULL, NULL},
     {{ NULL, 0}, NULL, 0, NULL, NULL},
-    {{ hebrew_features, 1}, NULL, 0, NULL, NULL},
+    {{ hebrew_features, 1}, NULL, 0, ContextualShape_Hebrew, NULL},
     {{ latin_features, 2}, NULL, 0, NULL, NULL},
     {{ thai_features, 1}, NULL, 0, NULL, ShapeCharGlyphProp_Thai},
 };
@@ -1017,6 +1018,81 @@ static void ContextualShape_Arabic(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *p
     HeapFree(GetProcessHeap(),0,context_type);
 
     mark_invalid_combinations(hdc, pwcChars, cChars, pwOutGlyphs, pcGlyphs, dirL, pwLogClust, combining_lexical_Arabic);
+}
+
+static int combining_lexical_Hebrew(WCHAR c)
+{
+    enum {Hebr_Norm=0, Hebr_DIAC, Hebr_CANT1, Hebr_CANT2, Hebr_CANT3, Hebr_CANT4, Hebr_CANT5, Hebr_CANT6, Hebr_CANT7, Hebr_CANT8, Hebr_CANT9, Hebr_CANT10, Hebr_DAGESH, Hebr_DOTABV, Hebr_HOLAM, Hebr_METEG, Hebr_PATAH, Hebr_QAMATS, Hebr_RAFE, Hebr_SHINSIN};
+
+   switch(c)
+    {
+        case 0x05B0:
+        case 0x05B1:
+        case 0x05B2:
+        case 0x05B3:
+        case 0x05B4:
+        case 0x05B5:
+        case 0x05B6:
+        case 0x05BB: return Hebr_DIAC; break;
+        case 0x0599:
+        case 0x05A1:
+        case 0x05A9:
+        case 0x05AE: return Hebr_CANT1; break;
+        case 0x0597:
+        case 0x05A8:
+        case 0x05AC: return Hebr_CANT2; break;
+        case 0x0592:
+        case 0x0593:
+        case 0x0594:
+        case 0x0595:
+        case 0x05A7:
+        case 0x05AB: return Hebr_CANT3; break;
+        case 0x0598:
+        case 0x059C:
+        case 0x059E:
+        case 0x059F: return Hebr_CANT4; break;
+        case 0x059D:
+        case 0x05A0: return Hebr_CANT5; break;
+        case 0x059B:
+        case 0x05A5: return Hebr_CANT6; break;
+        case 0x0591:
+        case 0x05A3:
+        case 0x05A6: return Hebr_CANT7; break;
+        case 0x0596:
+        case 0x05A4:
+        case 0x05AA: return Hebr_CANT8; break;
+        case 0x059A:
+        case 0x05AD: return Hebr_CANT9; break;
+        case 0x05AF: return Hebr_CANT10; break;
+        case 0x05BC: return Hebr_DAGESH; break;
+        case 0x05C4: return Hebr_DOTABV; break;
+        case 0x05B9: return Hebr_HOLAM; break;
+        case 0x05BD: return Hebr_METEG; break;
+        case 0x05B7: return Hebr_PATAH; break;
+        case 0x05B8: return Hebr_QAMATS; break;
+        case 0x05BF: return Hebr_RAFE; break;
+        case 0x05C1:
+        case 0x05C2: return Hebr_SHINSIN; break;
+        default: return Hebr_Norm;
+    }
+}
+
+static void ContextualShape_Hebrew(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
+{
+    INT dirL;
+
+    if (*pcGlyphs != cChars)
+    {
+        ERR("Number of Glyphs and Chars need to match at the beginning\n");
+        return;
+    }
+
+    if (!psa->fLogicalOrder && psa->fRTL)
+        dirL = -1;
+    else
+        dirL = 1;
+
+    mark_invalid_combinations(hdc, pwcChars, cChars, pwOutGlyphs, pcGlyphs, dirL, pwLogClust, combining_lexical_Hebrew);
 }
 
 /*
