@@ -4580,9 +4580,9 @@ static void test_mxattr_addAttribute(void)
         hr = ISAXAttributes_getLength(saxattr, &len);
         EXPECT_HR(hr, S_OK);
         if (table->hr == S_OK)
-            ok(len == 1, "%d: got %d length, expected 0\n", i, len);
+            ok(len == 1, "%d: got %d length, expected 1\n", i, len);
         else
-            ok(len == 0, "%d: got %d length, expected 1\n", i, len);
+            ok(len == 0, "%d: got %d length, expected 0\n", i, len);
 
         ISAXAttributes_Release(saxattr);
         IMXAttributes_Release(mxattr);
