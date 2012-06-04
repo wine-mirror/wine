@@ -1273,6 +1273,8 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3* iface, LPDIRECTXFILEDATA pData)
 
                 values = (float*)ptr;
 
+                IDirect3DRMMeshBuilder3_SetColorRGB(iface, values[0], values [1], values[2]); /* Alpha ignored */
+
                 IDirect3DRMMaterial2_SetAmbient(material, values[0], values [1], values[2]); /* Alpha ignored */
                 IDirect3DRMMaterial2_SetPower(material, values[4]);
                 IDirect3DRMMaterial2_SetSpecular(material, values[5], values[6], values[7]);
