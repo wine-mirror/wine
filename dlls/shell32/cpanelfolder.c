@@ -302,7 +302,7 @@ static BOOL SHELL_RegisterCPanelApp(IEnumIDListImpl *list, LPCSTR path)
 
     MultiByteToWideChar(CP_ACP, 0, path, -1, wpath, MAX_PATH);
 
-    panel.first = NULL;
+    list_init( &panel.applets );
     applet = Control_LoadApplet(0, wpath, &panel);
 
     if (applet)

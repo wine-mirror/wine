@@ -45,10 +45,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(shlctrl);
 
-CPlApplet*	Control_UnloadApplet(CPlApplet* applet)
+void Control_UnloadApplet(CPlApplet* applet)
 {
     unsigned	i;
-    CPlApplet*	next;
 
     for (i = 0; i < applet->count; i++) {
         if (!applet->info[i].valid) continue;
@@ -56,10 +55,9 @@ CPlApplet*	Control_UnloadApplet(CPlApplet* applet)
     }
     if (applet->proc) applet->proc(applet->hWnd, CPL_EXIT, 0L, 0L);
     FreeLibrary(applet->hModule);
-    next = applet->next;
+    list_remove( &applet->entry );
     HeapFree(GetProcessHeap(), 0, applet->cmd);
     HeapFree(GetProcessHeap(), 0, applet);
-    return next;
 }
 
 CPlApplet*	Control_LoadApplet(HWND hWnd, LPCWSTR cmd, CPanel* panel)
@@ -168,9 +166,7 @@ CPlApplet*	Control_LoadApplet(HWND hWnd, LPCWSTR cmd, CPanel* panel)
        }
     }
 
-    applet->next = panel->first;
-    panel->first = applet;
-
+    list_add_head( &panel->applets, &applet->entry );
     return applet;
 
  theError:
@@ -278,7 +274,8 @@ static void 	 Control_WndProc_Create(HWND hWnd, const CREATESTRUCTW* cs)
    hSubMenu = GetSubMenu(hMenu, 0);
    menucount = 0;
 
-   for (applet = panel->first; applet; applet = applet->next) {
+   LIST_FOR_EACH_ENTRY( applet, &panel->applets, CPlApplet, entry )
+   {
       for (i = 0; i < applet->count; i++) {
          if (!applet->info[i].valid)
             continue;
@@ -450,9 +447,9 @@ static LRESULT WINAPI	Control_WndProc(HWND hWnd, UINT wMsg,
 	 return 0;
       case WM_DESTROY:
          {
-	    CPlApplet*	applet = panel->first;
-	    while (applet)
-	       applet = Control_UnloadApplet(applet);
+             CPlApplet *applet, *next;
+             LIST_FOR_EACH_ENTRY_SAFE( applet, next, &panel->applets, CPlApplet, entry )
+                 Control_UnloadApplet(applet);
          }
          Control_FreeCPlItems(hWnd, panel);
          PostQuitMessage(0);
@@ -717,6 +714,7 @@ static	void	Control_DoLaunch(CPanel* panel, HWND hWnd, LPCWSTR wszCmd)
     LPWSTR	extraPmtsBuf = NULL;
     LPWSTR	extraPmts = NULL;
     int        quoted = 0;
+    CPlApplet *applet;
 
     buffer = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(wszCmd) + 1) * sizeof(*wszCmd));
     if (!buffer) return;
@@ -783,13 +781,9 @@ static	void	Control_DoLaunch(CPanel* panel, HWND hWnd, LPCWSTR wszCmd)
 
     TRACE("cmd %s, extra %s, sp %d\n", debugstr_w(buffer), debugstr_w(extraPmts), sp);
 
-    Control_LoadApplet(hWnd, buffer, panel);
-
-    if (panel->first) {
-        CPlApplet* applet = panel->first;
-
-        assert(applet && applet->next == NULL);
-
+    applet = Control_LoadApplet(hWnd, buffer, panel);
+    if (applet)
+    {
         /* we've been given a textual parameter (or none at all) */
         if (sp == -1) {
             while ((++sp) != applet->count) {
@@ -830,6 +824,7 @@ void WINAPI Control_RunDLLW(HWND hWnd, HINSTANCE hInst, LPCWSTR cmd, DWORD nCmdS
 	  hWnd, hInst, debugstr_w(cmd), nCmdShow);
 
     memset(&panel, 0, sizeof(panel));
+    list_init( &panel.applets );
 
     if (!cmd || !*cmd) {
         Control_DoWindow(&panel, hWnd, hInst);
