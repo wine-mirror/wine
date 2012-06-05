@@ -71,7 +71,11 @@ static PORT_INFO_2W * find_portinfo2(LPWSTR pPort)
 
     if (!pi_buffer) {
         res = EnumPortsW(NULL, 2, NULL, 0, &pi_needed, &pi_numports);
-        ok(!res, "EnumPorts failed: got %d\n", res);
+        if (!res && (GetLastError() == RPC_S_SERVER_UNAVAILABLE)) {
+            win_skip("The Service 'Spooler' is required for many test\n");
+            return NULL;
+        }
+        ok(!res, "EnumPorts succeeded: got %d\n", res);
         pi_buffer = HeapAlloc(GetProcessHeap(), 0, pi_needed);
         res = EnumPortsW(NULL, 2, pi_buffer, pi_needed, &pi_needed, &pi_numports);
         ok(res == 1, "EnumPorts failed: got %d\n", res);
@@ -295,6 +299,12 @@ START_TEST(localui)
 
     /* find installed Ports */
 
+    /* "FILE:" */
+    file_present = find_portinfo2(portname_fileW);
+
+    if (!pi_numports)   /* Nothing to test without a port */
+        return;
+
     id = 0;
     /* "LPT1:" - "LPT9:" */
     while (((lpt_present == NULL) || (lpt_absent == NULL)) && id < 9) {
@@ -316,9 +326,6 @@ START_TEST(localui)
         if (pi2 && (com_present == NULL)) com_present = pi2;
         if (!pi2 && (com_absent == NULL)) com_absent = strdupW(bufferW);
     }
-
-    /* "FILE:" */
-    file_present = find_portinfo2(portname_fileW);
 
     test_AddPortUI();
     test_ConfigurePortUI();
