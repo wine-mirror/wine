@@ -266,7 +266,7 @@
 @ stdcall NtQuerySemaphore (long long ptr long ptr)
 @ stdcall NtQuerySymbolicLinkObject(long ptr ptr)
 @ stdcall NtQuerySystemEnvironmentValue(ptr ptr long ptr)
-# @ stub NtQuerySystemEnvironmentValueEx
+@ stdcall NtQuerySystemEnvironmentValueEx(ptr ptr ptr ptr ptr)
 @ stdcall NtQuerySystemInformation(long long long long)
 @ stdcall NtQuerySystemTime(ptr)
 @ stdcall NtQueryTimer(ptr long ptr long ptr)
