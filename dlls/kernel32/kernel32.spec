@@ -1080,7 +1080,7 @@
 @ stdcall SetConsoleDisplayMode(long long ptr)
 @ stub SetConsoleFont
 @ stub SetConsoleHardwareState
-@ stub SetConsoleIcon
+@ stdcall SetConsoleIcon(ptr)
 @ stdcall SetConsoleInputExeNameA(ptr)
 @ stdcall SetConsoleInputExeNameW(ptr)
 @ stub SetConsoleKeyShortcuts
