@@ -160,7 +160,7 @@ static void test_StreamOnMemory(void)
     hr = IWICStream_Read(pStream, MemBuf, 12, &uBytesRead);
     ok(hr == S_OK, "Read returned with %#x, expected %#x\n", hr, S_OK);
     if(SUCCEEDED(hr)) {
-        ok(uBytesRead == 12, "Read %u bytes, expected %u\n", uBytesRead, 3);
+        ok(uBytesRead == 12, "Read %u bytes, expected %u\n", uBytesRead, 12);
         ok(memcmp(MemBuf, CmpMem, 12) == 0, "Read returned invalid data!\n");
 
         /* check whether the seek pointer has moved correctly */
@@ -506,7 +506,7 @@ static void test_StreamOnStreamRange(void)
     hr = IWICStream_Read(pSubStream, MemBuf, 12, &uBytesRead);
     ok(hr == S_OK, "Read returned with %#x, expected %#x\n", hr, S_OK);
     if(SUCCEEDED(hr)) {
-        ok(uBytesRead == 12, "Read %u bytes, expected %u\n", uBytesRead, 3);
+        ok(uBytesRead == 12, "Read %u bytes, expected %u\n", uBytesRead, 12);
         ok(memcmp(MemBuf, CmpMem+20, 12) == 0, "Read returned invalid data!\n");
 
         /* check whether the seek pointer has moved correctly */
