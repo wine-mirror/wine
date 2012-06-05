@@ -85,8 +85,15 @@ static ULONG WINAPI D3DXRenderToSurface_Release(ID3DXRenderToSurface *iface)
 static HRESULT WINAPI D3DXRenderToSurface_GetDevice(ID3DXRenderToSurface *iface,
                                                     IDirect3DDevice9 **device)
 {
-    FIXME("(%p)->(%p): stub\n", iface, device);
-    return E_NOTIMPL;
+    struct render_to_surface *render = impl_from_ID3DXRenderToSurface(iface);
+
+    TRACE("(%p)->(%p)\n", iface, device);
+
+    if (!device) return D3DERR_INVALIDCALL;
+
+    IDirect3DDevice9_AddRef(render->device);
+    *device = render->device;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI D3DXRenderToSurface_GetDesc(ID3DXRenderToSurface *iface,

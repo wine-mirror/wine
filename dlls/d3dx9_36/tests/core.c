@@ -500,6 +500,32 @@ void test_D3DXCreateRenderToSurface(IDirect3DDevice9 *device)
     if (SUCCEEDED(hr)) ID3DXRenderToSurface_Release(render);
 }
 
+static void test_ID3DXRenderToSurface(IDirect3DDevice9 *device)
+{
+    HRESULT hr;
+    ULONG ref_count;
+    IDirect3DDevice9 *out_device;
+    ID3DXRenderToSurface *render;
+
+    hr = D3DXCreateRenderToSurface(device, 256, 256, D3DFMT_A8R8G8B8, FALSE, D3DFMT_UNKNOWN, &render);
+    if (FAILED(hr))
+    {
+        skip("Failed to create ID3DXRenderToSurface\n");
+        return;
+    }
+
+    /* GetDevice */
+    hr = ID3DXRenderToSurface_GetDevice(render, NULL /* device */);
+    ok(hr == D3DERR_INVALIDCALL, "ID3DXRenderToSurface::GetDevice returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+    ref_count = get_ref((IUnknown *)device);
+    hr = ID3DXRenderToSurface_GetDevice(render, &out_device);
+    ok(hr == D3D_OK, "ID3DXRenderToSurface::GetDevice returned %#x, expected %#x\n", hr, D3D_OK);
+    check_release((IUnknown *)out_device, ref_count);
+
+    check_release((IUnknown *)render, 0);
+}
+
 START_TEST(core)
 {
     HWND wnd;
@@ -535,6 +561,7 @@ START_TEST(core)
     test_ID3DXSprite(device);
     test_ID3DXFont(device);
     test_D3DXCreateRenderToSurface(device);
+    test_ID3DXRenderToSurface(device);
 
     check_release((IUnknown*)device, 0);
     check_release((IUnknown*)d3d, 0);
