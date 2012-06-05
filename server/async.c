@@ -42,8 +42,6 @@ struct async
     struct timeout_user *timeout;
     unsigned int         timeout_status;  /* status to report upon timeout */
     struct event        *event;
-    struct completion   *completion;
-    apc_param_t          comp_key;
     async_data_t         data;            /* data for async I/O call */
 };
 
@@ -75,10 +73,13 @@ struct async_queue
 {
     struct object        obj;             /* object header */
     struct fd           *fd;              /* file descriptor owning this queue */
+    struct completion   *completion;      /* completion associated with a recently closed file descriptor */
+    apc_param_t          comp_key;        /* completion key associated with a recently closed file descriptor */
     struct list          queue;           /* queue of async objects */
 };
 
 static void async_queue_dump( struct object *obj, int verbose );
+static void async_queue_destroy( struct object *obj );
 
 static const struct object_ops async_queue_ops =
 {
@@ -97,7 +98,7 @@ static const struct object_ops async_queue_ops =
     no_lookup_name,                  /* lookup_name */
     no_open_file,                    /* open_file */
     no_close_handle,                 /* close_handle */
-    no_destroy                       /* destroy */
+    async_queue_destroy              /* destroy */
 };
 
 
@@ -123,7 +124,6 @@ static void async_destroy( struct object *obj )
 
     if (async->timeout) remove_timeout_user( async->timeout );
     if (async->event) release_object( async->event );
-    if (async->completion) release_object( async->completion );
     release_object( async->queue );
     release_object( async->thread );
 }
@@ -133,6 +133,13 @@ static void async_queue_dump( struct object *obj, int verbose )
     struct async_queue *async_queue = (struct async_queue *)obj;
     assert( obj->ops == &async_queue_ops );
     fprintf( stderr, "Async queue fd=%p\n", async_queue->fd );
+}
+
+static void async_queue_destroy( struct object *obj )
+{
+    struct async_queue *async_queue = (struct async_queue *)obj;
+    assert( obj->ops == &async_queue_ops );
+    if (async_queue->completion) release_object( async_queue->completion );
 }
 
 /* notifies client thread of new status of its async request */
@@ -178,6 +185,7 @@ struct async_queue *create_async_queue( struct fd *fd )
     if (queue)
     {
         queue->fd = fd;
+        queue->completion = NULL;
         list_init( &queue->queue );
     }
     return queue;
@@ -187,6 +195,7 @@ struct async_queue *create_async_queue( struct fd *fd )
 void free_async_queue( struct async_queue *queue )
 {
     if (!queue) return;
+    if (queue->fd) queue->completion = fd_get_completion( queue->fd, &queue->comp_key );
     queue->fd = NULL;
     async_wake_up( queue, STATUS_HANDLES_CLOSED );
     release_object( queue );
@@ -213,8 +222,6 @@ struct async *create_async( struct thread *thread, struct async_queue *queue, co
     async->data    = *data;
     async->timeout = NULL;
     async->queue   = (struct async_queue *)grab_object( queue );
-    async->completion = NULL;
-    if (queue->fd) async->completion = fd_get_completion( queue->fd, &async->comp_key );
 
     list_add_tail( &queue->queue, &async->queue_entry );
     grab_object( async );
@@ -231,6 +238,24 @@ void async_set_timeout( struct async *async, timeout_t timeout, unsigned int sta
     if (timeout != TIMEOUT_INFINITE) async->timeout = add_timeout_user( timeout, async_timeout, async );
     else async->timeout = NULL;
     async->timeout_status = status;
+}
+
+static void add_async_completion( struct async_queue *queue, apc_param_t cvalue, unsigned int status,
+                                  unsigned int information )
+{
+    if (queue->fd)
+    {
+        apc_param_t ckey;
+        struct completion *completion = fd_get_completion( queue->fd, &ckey );
+
+        if (completion)
+        {
+            add_completion( completion, ckey, cvalue, status, information );
+            release_object( completion );
+        }
+    }
+    else if (queue->completion) add_completion( queue->completion, queue->comp_key,
+                                                cvalue, status, information );
 }
 
 /* store the result of the client-side async callback */
@@ -258,8 +283,7 @@ void async_set_result( struct object *obj, unsigned int status, unsigned int tot
         if (async->timeout) remove_timeout_user( async->timeout );
         async->timeout = NULL;
         async->status = status;
-        if (async->completion && async->data.cvalue)
-            add_completion( async->completion, async->comp_key, async->data.cvalue, status, total );
+        if (async->data.cvalue) add_async_completion( async->queue, async->data.cvalue, status, total );
         if (apc)
         {
             apc_call_t data;
