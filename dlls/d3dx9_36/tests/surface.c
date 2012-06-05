@@ -715,6 +715,24 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
         IDirect3DTexture9_Release(tex);
     } else skip("Failed to create texture\n");
 
+    /* non-lockable render target */
+    hr = IDirect3DDevice9_CreateRenderTarget(device, 256, 256, D3DFMT_A8R8G8B8, D3DMULTISAMPLE_NONE, 0, FALSE, &newsurf, NULL);
+    if (SUCCEEDED(hr)) {
+        hr = D3DXLoadSurfaceFromSurface(surf, NULL, NULL, newsurf, NULL, NULL, D3DX_FILTER_NONE, 0);
+        ok(hr == D3D_OK, "D3DXLoadSurfaceFromSurface returned %#x, expected %#x\n", hr, D3D_OK);
+
+        IDirect3DSurface9_Release(newsurf);
+    } else skip("Failed to create render target surface\n");
+
+    /* non-lockable multisampled render target */
+    hr = IDirect3DDevice9_CreateRenderTarget(device, 256, 256, D3DFMT_A8R8G8B8, D3DMULTISAMPLE_2_SAMPLES, 0, FALSE, &newsurf, NULL);
+    if (SUCCEEDED(hr)) {
+       hr = D3DXLoadSurfaceFromSurface(surf, NULL, NULL, newsurf, NULL, NULL, D3DX_FILTER_NONE, 0);
+       ok(hr == D3D_OK, "D3DXLoadSurfaceFromSurface returned %#x, expected %#x\n", hr, D3D_OK);
+
+       IDirect3DSurface9_Release(newsurf);
+    } else skip("Failed to create multisampled render target\n");
+
     check_release((IUnknown*)surf, 0);
 
 
