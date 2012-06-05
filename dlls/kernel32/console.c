@@ -3216,3 +3216,11 @@ BOOL WINAPI AddConsoleAliasW(LPWSTR source, LPWSTR target, LPWSTR exename)
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
+
+
+BOOL WINAPI SetConsoleIcon(HICON icon)
+{
+    FIXME(": (%p) stub!\n", icon);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
