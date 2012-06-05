@@ -28,6 +28,7 @@ struct render_to_surface
     LONG ref;
 
     IDirect3DDevice9 *device;
+    D3DXRTS_DESC desc;
 };
 
 static inline struct render_to_surface *impl_from_ID3DXRenderToSurface(ID3DXRenderToSurface *iface)
@@ -91,8 +92,14 @@ static HRESULT WINAPI D3DXRenderToSurface_GetDevice(ID3DXRenderToSurface *iface,
 static HRESULT WINAPI D3DXRenderToSurface_GetDesc(ID3DXRenderToSurface *iface,
                                                   D3DXRTS_DESC *desc)
 {
-    FIXME("(%p)->(%p): stub\n", iface, desc);
-    return E_NOTIMPL;
+    struct render_to_surface *render = impl_from_ID3DXRenderToSurface(iface);
+
+    TRACE("(%p)->(%p)\n", iface, desc);
+
+    if (!desc) return D3DERR_INVALIDCALL;
+
+    *desc = render->desc;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI D3DXRenderToSurface_BeginScene(ID3DXRenderToSurface *iface,
@@ -147,7 +154,7 @@ HRESULT WINAPI D3DXCreateRenderToSurface(IDirect3DDevice9 *device,
 {
     struct render_to_surface *render;
 
-    FIXME("(%p, %u, %u, %#x, %d, %#x, %p): semi-stub\n", device, width, height, format,
+    TRACE("(%p, %u, %u, %#x, %d, %#x, %p)\n", device, width, height, format,
             depth_stencil, depth_stencil_format, out);
 
     if (!device || !out) return D3DERR_INVALIDCALL;
@@ -160,6 +167,12 @@ HRESULT WINAPI D3DXCreateRenderToSurface(IDirect3DDevice9 *device,
 
     IDirect3DDevice9_AddRef(device);
     render->device = device;
+
+    render->desc.Width = width;
+    render->desc.Height = height;
+    render->desc.Format = format;
+    render->desc.DepthStencil = depth_stencil;
+    render->desc.DepthStencilFormat = depth_stencil_format;
 
     *out = &render->ID3DXRenderToSurface_iface;
     return D3D_OK;
