@@ -77,6 +77,7 @@ typedef struct {
     Coords2d* pCoords2d;
     D3DCOLOR color;
     IDirect3DRMMaterial2* material;
+    IDirect3DRMTexture3* texture;
 } IDirect3DRMMeshBuilderImpl;
 
 char templates[] = {
@@ -633,13 +634,20 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_SetColor(IDirect3DRMMeshBuilde
 }
 
 static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_SetTexture(IDirect3DRMMeshBuilder2* iface,
-                                                             LPDIRECT3DRMTEXTURE pTexture)
+                                                             LPDIRECT3DRMTEXTURE texture)
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder2(iface);
+    LPDIRECT3DRMTEXTURE3 texture3 = NULL;
+    HRESULT hr = D3DRM_OK;
 
-    FIXME("(%p)->(%p): stub\n", This, pTexture);
+    if (texture)
+        hr = IDirect3DRMTexture_QueryInterface(texture, &IID_IDirect3DRMTexture3, (LPVOID*)&texture3);
+    if (SUCCEEDED(hr))
+        hr = IDirect3DRMMeshBuilder3_SetTexture(&This->IDirect3DRMMeshBuilder3_iface, texture3);
+    if (texture3)
+        IDirect3DRMTexture3_Release(texture3);
 
-    return E_NOTIMPL;
+    return hr;
 }
 
 static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_SetMaterial(IDirect3DRMMeshBuilder2* iface,
@@ -1732,9 +1740,15 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_SetTexture(IDirect3DRMMeshBuil
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder3(iface);
 
-    FIXME("(%p)->(%p): stub\n", This, texture);
+    TRACE("(%p)->(%p)\n", This, texture);
 
-    return E_NOTIMPL;
+    if (texture)
+        IDirect3DRMTexture3_AddRef(texture);
+    if (This->texture)
+        IDirect3DRMTexture3_Release(This->texture);
+    This->texture = texture;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_SetMaterial(IDirect3DRMMeshBuilder3* iface,
@@ -2025,6 +2039,14 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_CreateMesh(IDirect3DRMMeshBuil
             hr = IDirect3DRMMesh_SetGroupColor(*mesh, 0, This->color);
         if (SUCCEEDED(hr))
             hr = IDirect3DRMMesh_SetGroupMaterial(*mesh, 0, (LPDIRECT3DRMMATERIAL)This->material);
+        if (SUCCEEDED(hr) && This->texture)
+        {
+             LPDIRECT3DRMTEXTURE texture;
+
+             IDirect3DRMTexture3_QueryInterface(This->texture, &IID_IDirect3DRMTexture, (LPVOID*)&texture);
+             hr = IDirect3DRMMesh_SetGroupTexture(*mesh, 0, texture);
+             IDirect3DRMTexture_Release(texture);
+        }
         if (FAILED(hr))
             IDirect3DRMMesh_Release(*mesh);
     }
