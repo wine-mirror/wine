@@ -200,7 +200,7 @@ struct statvfs
 #endif
 
 #ifndef NAN
-static float inline __port_nan(void)
+static inline float __port_nan(void)
 {
     static const unsigned __nan_bytes = 0x7fc00000;
     return *(const float *)&__nan_bytes;
