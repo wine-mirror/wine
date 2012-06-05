@@ -32,6 +32,7 @@
 #include "objbase.h"
 #include "ocidl.h"
 #include "wincodec.h"
+#include "wincodecsdk.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -98,6 +99,39 @@ struct regsvr_converter
 static HRESULT register_converters(struct regsvr_converter const *list);
 static HRESULT unregister_converters(struct regsvr_converter const *list);
 
+struct metadata_pattern
+{
+    DWORD position;
+    DWORD length;
+    const BYTE *pattern;
+    const BYTE *mask;
+    DWORD data_offset;
+};
+
+struct reader_containers
+{
+    GUID const *format;
+    const struct metadata_pattern *patterns;
+};
+
+struct regsvr_metadatareader
+{
+    CLSID const *clsid;         /* NULL for end of list */
+    LPCSTR author;
+    LPCSTR friendlyname;
+    LPCSTR version;
+    LPCSTR specversion;
+    GUID const *vendor;
+    GUID const *metadata_format;
+    DWORD requires_fullstream;
+    DWORD supports_padding;
+    DWORD requires_fixedsize;
+    const struct reader_containers *containers;
+};
+
+static HRESULT register_metadatareaders(struct regsvr_metadatareader const *list);
+static HRESULT unregister_metadatareaders(struct regsvr_metadatareader const *list);
+
 /***********************************************************************
  *		static string constants
  */
@@ -135,6 +169,13 @@ static const char pattern_valuename[] = "Pattern";
 static const char mask_valuename[] = "Mask";
 static const char endofstream_valuename[] = "EndOfStream";
 static const WCHAR pixelformats_keyname[] = {'P','i','x','e','l','F','o','r','m','a','t','s',0};
+static const WCHAR metadataformat_valuename[] = {'M','e','t','a','d','a','t','a','F','o','r','m','a','t',0};
+static const char specversion_valuename[] = "SpecVersion";
+static const char requiresfullstream_valuename[] = "RequiresFullStream";
+static const char supportspadding_valuename[] = "SupportsPadding";
+static const char requiresfixedsize_valuename[] = "FixedSize";
+static const WCHAR containers_keyname[] = {'C','o','n','t','a','i','n','e','r','s',0};
+static const char dataoffset_valuename[] = "DataOffset";
 
 /***********************************************************************
  *		register_decoders
@@ -687,6 +728,216 @@ error_return:
 }
 
 /***********************************************************************
+ *		register_metadatareaders
+ */
+static HRESULT register_metadatareaders(struct regsvr_metadatareader const *list)
+{
+    LONG res = ERROR_SUCCESS;
+    HKEY coclass_key;
+    WCHAR buf[39];
+    HKEY readers_key;
+    HKEY instance_key;
+
+    res = RegCreateKeyExW(HKEY_CLASSES_ROOT, clsid_keyname, 0, NULL, 0,
+			  KEY_READ | KEY_WRITE, NULL, &coclass_key, NULL);
+    if (res == ERROR_SUCCESS)  {
+        StringFromGUID2(&CATID_WICMetadataReader, buf, 39);
+        res = RegCreateKeyExW(coclass_key, buf, 0, NULL, 0,
+			      KEY_READ | KEY_WRITE, NULL, &readers_key, NULL);
+        if (res == ERROR_SUCCESS)
+        {
+            res = RegCreateKeyExW(readers_key, instance_keyname, 0, NULL, 0,
+		              KEY_READ | KEY_WRITE, NULL, &instance_key, NULL);
+            if (res != ERROR_SUCCESS) goto error_close_coclass_key;
+        }
+        if (res != ERROR_SUCCESS)
+            RegCloseKey(coclass_key);
+    }
+    if (res != ERROR_SUCCESS) goto error_return;
+
+    for (; res == ERROR_SUCCESS && list->clsid; ++list) {
+	HKEY clsid_key;
+	HKEY instance_clsid_key;
+
+	StringFromGUID2(list->clsid, buf, 39);
+	res = RegCreateKeyExW(coclass_key, buf, 0, NULL, 0,
+			      KEY_READ | KEY_WRITE, NULL, &clsid_key, NULL);
+	if (res != ERROR_SUCCESS) goto error_close_coclass_key;
+
+	StringFromGUID2(list->clsid, buf, 39);
+	res = RegCreateKeyExW(instance_key, buf, 0, NULL, 0,
+			      KEY_READ | KEY_WRITE, NULL, &instance_clsid_key, NULL);
+	if (res == ERROR_SUCCESS) {
+	    res = RegSetValueExW(instance_clsid_key, clsid_valuename, 0, REG_SZ,
+				 (CONST BYTE*)(buf), 78);
+	    RegCloseKey(instance_clsid_key);
+	}
+	if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+
+        if (list->author) {
+	    res = RegSetValueExA(clsid_key, author_valuename, 0, REG_SZ,
+				 (CONST BYTE*)(list->author),
+				 strlen(list->author) + 1);
+	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+        }
+
+        if (list->friendlyname) {
+	    res = RegSetValueExA(clsid_key, friendlyname_valuename, 0, REG_SZ,
+				 (CONST BYTE*)(list->friendlyname),
+				 strlen(list->friendlyname) + 1);
+	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+        }
+
+        if (list->vendor) {
+            StringFromGUID2(list->vendor, buf, 39);
+	    res = RegSetValueExW(clsid_key, vendor_valuename, 0, REG_SZ,
+				 (CONST BYTE*)(buf), 78);
+	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+        }
+
+        if (list->vendor) {
+            StringFromGUID2(list->metadata_format, buf, 39);
+	    res = RegSetValueExW(clsid_key, metadataformat_valuename, 0, REG_SZ,
+				 (CONST BYTE*)(buf), 78);
+	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+        }
+
+        if (list->version) {
+	    res = RegSetValueExA(clsid_key, version_valuename, 0, REG_SZ,
+				 (CONST BYTE*)(list->version),
+				 strlen(list->version) + 1);
+	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+        }
+
+        if (list->specversion) {
+	    res = RegSetValueExA(clsid_key, specversion_valuename, 0, REG_SZ,
+				 (CONST BYTE*)(list->version),
+				 strlen(list->version) + 1);
+	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+        }
+
+        res = RegSetValueExA(clsid_key, requiresfullstream_valuename, 0, REG_DWORD,
+			     (CONST BYTE*)(&list->requires_fullstream), 4);
+        if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+
+        res = RegSetValueExA(clsid_key, supportspadding_valuename, 0, REG_DWORD,
+			     (CONST BYTE*)(&list->supports_padding), 4);
+        if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+
+        if (list->requires_fixedsize) {
+	    res = RegSetValueExA(clsid_key, requiresfixedsize_valuename, 0, REG_DWORD,
+				 (CONST BYTE*)(&list->requires_fixedsize), 4);
+	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+        }
+
+        if (list->containers) {
+            HKEY containers_key;
+            const struct reader_containers *container;
+
+            res = RegCreateKeyExW(clsid_key, containers_keyname, 0, NULL, 0,
+                                  KEY_READ | KEY_WRITE, NULL, &containers_key, NULL);
+            if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+            for (container=list->containers; container->format; ++container)
+            {
+                HKEY format_key;
+                int i;
+                StringFromGUID2(container->format, buf, 39);
+                res = RegCreateKeyExW(containers_key, buf, 0, NULL, 0,
+                                      KEY_READ | KEY_WRITE, NULL, &format_key, NULL);
+                if (res != ERROR_SUCCESS) break;
+
+                for (i=0; container->patterns[i].length; i++)
+                {
+                    HKEY pattern_key;
+                    static const WCHAR int_format[] = {'%','i',0};
+                    snprintfW(buf, 39, int_format, i);
+                    res = RegCreateKeyExW(format_key, buf, 0, NULL, 0,
+                                          KEY_READ | KEY_WRITE, NULL, &pattern_key, NULL);
+                    if (res != ERROR_SUCCESS) break;
+                    res = RegSetValueExA(pattern_key, position_valuename, 0, REG_DWORD,
+                                         (CONST BYTE*)(&container->patterns[i].position), 4);
+                    if (res == ERROR_SUCCESS)
+                        res = RegSetValueExA(pattern_key, pattern_valuename, 0, REG_BINARY,
+                                             container->patterns[i].pattern,
+                                             container->patterns[i].length);
+                    if (res == ERROR_SUCCESS)
+                        res = RegSetValueExA(pattern_key, mask_valuename, 0, REG_BINARY,
+                                             container->patterns[i].mask,
+                                             container->patterns[i].length);
+                    if (res == ERROR_SUCCESS && container->patterns[i].data_offset)
+                        res = RegSetValueExA(pattern_key, dataoffset_valuename, 0, REG_DWORD,
+                                             (CONST BYTE*)&(container->patterns[i].data_offset), 4);
+                    RegCloseKey(pattern_key);
+                }
+
+                RegCloseKey(format_key);
+            }
+            RegCloseKey(containers_key);
+        }
+
+    error_close_clsid_key:
+	RegCloseKey(clsid_key);
+    }
+
+error_close_coclass_key:
+    RegCloseKey(instance_key);
+    RegCloseKey(readers_key);
+    RegCloseKey(coclass_key);
+error_return:
+    return res != ERROR_SUCCESS ? HRESULT_FROM_WIN32(res) : S_OK;
+}
+
+/***********************************************************************
+ *		unregister_metadatareaders
+ */
+static HRESULT unregister_metadatareaders(struct regsvr_metadatareader const *list)
+{
+    LONG res = ERROR_SUCCESS;
+    HKEY coclass_key;
+    WCHAR buf[39];
+    HKEY readers_key;
+    HKEY instance_key;
+
+    res = RegOpenKeyExW(HKEY_CLASSES_ROOT, clsid_keyname, 0,
+			KEY_READ | KEY_WRITE, &coclass_key);
+    if (res == ERROR_FILE_NOT_FOUND) return S_OK;
+
+    if (res == ERROR_SUCCESS)  {
+        StringFromGUID2(&CATID_WICMetadataReader, buf, 39);
+        res = RegCreateKeyExW(coclass_key, buf, 0, NULL, 0,
+			      KEY_READ | KEY_WRITE, NULL, &readers_key, NULL);
+        if (res == ERROR_SUCCESS)
+        {
+            res = RegCreateKeyExW(readers_key, instance_keyname, 0, NULL, 0,
+		              KEY_READ | KEY_WRITE, NULL, &instance_key, NULL);
+            if (res != ERROR_SUCCESS) goto error_close_coclass_key;
+        }
+        if (res != ERROR_SUCCESS)
+            RegCloseKey(coclass_key);
+    }
+    if (res != ERROR_SUCCESS) goto error_return;
+
+    for (; res == ERROR_SUCCESS && list->clsid; ++list) {
+	StringFromGUID2(list->clsid, buf, 39);
+
+	res = RegDeleteTreeW(coclass_key, buf);
+	if (res == ERROR_FILE_NOT_FOUND) res = ERROR_SUCCESS;
+	if (res != ERROR_SUCCESS) goto error_close_coclass_key;
+
+	res = RegDeleteTreeW(instance_key, buf);
+	if (res == ERROR_FILE_NOT_FOUND) res = ERROR_SUCCESS;
+	if (res != ERROR_SUCCESS) goto error_close_coclass_key;
+    }
+
+error_close_coclass_key:
+    RegCloseKey(instance_key);
+    RegCloseKey(readers_key);
+    RegCloseKey(coclass_key);
+error_return:
+    return res != ERROR_SUCCESS ? HRESULT_FROM_WIN32(res) : S_OK;
+}
+
+/***********************************************************************
  *		decoder list
  */
 static const BYTE mask_all[] = {0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff};
@@ -1039,6 +1290,22 @@ static struct regsvr_converter const converter_list[] = {
     { NULL }			/* list terminator */
 };
 
+static struct regsvr_metadatareader const metadatareader_list[] = {
+    {   &CLSID_WICUnknownMetadataReader,
+    "The Wine Project",
+    "Unknown Metadata Reader",
+    "1.0.0.0",
+    "1.0.0.0",
+    &GUID_VendorMicrosoft,
+    &GUID_MetadataFormatUnknown,
+    0,
+    0,
+    0,
+    NULL
+    },
+    { NULL }			/* list terminator */
+};
+
 extern HRESULT WINAPI WIC_DllRegisterServer(void) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI WIC_DllUnregisterServer(void) DECLSPEC_HIDDEN;
 
@@ -1050,11 +1317,13 @@ HRESULT WINAPI DllRegisterServer(void)
 
     hr = WIC_DllRegisterServer();
     if (SUCCEEDED(hr))
-        register_decoders(decoder_list);
+        hr = register_decoders(decoder_list);
     if (SUCCEEDED(hr))
-        register_encoders(encoder_list);
+        hr = register_encoders(encoder_list);
     if (SUCCEEDED(hr))
-        register_converters(converter_list);
+        hr = register_converters(converter_list);
+    if (SUCCEEDED(hr))
+        hr = register_metadatareaders(metadatareader_list);
     return hr;
 }
 
@@ -1066,10 +1335,12 @@ HRESULT WINAPI DllUnregisterServer(void)
 
     hr = WIC_DllUnregisterServer();
     if (SUCCEEDED(hr))
-        unregister_decoders(decoder_list);
+        hr = unregister_decoders(decoder_list);
     if (SUCCEEDED(hr))
-        unregister_encoders(encoder_list);
+        hr = unregister_encoders(encoder_list);
     if (SUCCEEDED(hr))
-        unregister_converters(converter_list);
+        hr = unregister_converters(converter_list);
+    if (SUCCEEDED(hr))
+        hr = unregister_metadatareaders(metadatareader_list);
     return hr;
 }
