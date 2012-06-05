@@ -651,13 +651,13 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_SetTexture(IDirect3DRMMeshBuil
 }
 
 static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_SetMaterial(IDirect3DRMMeshBuilder2* iface,
-                                                              LPDIRECT3DRMMATERIAL pMaterial)
+                                                              LPDIRECT3DRMMATERIAL material)
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder2(iface);
 
-    FIXME("(%p)->(%p): stub\n", This, pMaterial);
+    TRACE("(%p)->(%p)\n", This, material);
 
-    return E_NOTIMPL;
+    return IDirect3DRMMeshBuilder3_SetMaterial(&This->IDirect3DRMMeshBuilder3_iface, (LPDIRECT3DRMMATERIAL2)material);
 }
 
 static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_SetTextureTopology(IDirect3DRMMeshBuilder2* iface,
@@ -1756,9 +1756,15 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_SetMaterial(IDirect3DRMMeshBui
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder3(iface);
 
-    FIXME("(%p)->(%p): stub\n", This, material);
+    TRACE("(%p)->(%p)\n", This, material);
 
-    return E_NOTIMPL;
+    if (material)
+        IDirect3DRMTexture2_AddRef(material);
+    if (This->material)
+        IDirect3DRMTexture2_Release(This->material);
+    This->material = material;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_SetTextureTopology(IDirect3DRMMeshBuilder3* iface,
