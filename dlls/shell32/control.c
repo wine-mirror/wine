@@ -301,8 +301,10 @@ static void 	 Control_WndProc_Create(HWND hWnd, const CREATESTRUCTW* cs)
 
          if (InsertMenuItemW(hSubMenu, menucount, TRUE, &mii)) {
             /* add the list view item */
-            index = ImageList_AddIcon(panel->hImageListLarge, applet->info[i].icon);
-            ImageList_AddIcon(panel->hImageListSmall, applet->info[i].icon);
+            HICON icon = applet->info[i].icon;
+            if (!icon) icon = LoadImageW( 0, (LPCWSTR)IDI_WINLOGO, IMAGE_ICON, 0, 0, LR_SHARED );
+            index = ImageList_AddIcon(panel->hImageListLarge, icon);
+            ImageList_AddIcon(panel->hImageListSmall, icon);
 
             lvItem.mask = LVIF_IMAGE | LVIF_TEXT | LVIF_PARAM;
             lvItem.iItem = menucount;
