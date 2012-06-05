@@ -44,27 +44,8 @@ static void init_function_pointers(void)
     KERNEL32_GET_PROC(VerSetConditionMask);
 }
 
-#define PRODUCT2NAME(x) case x:\
-                        return #x;
-
-static const char * product_to_name(DWORD product)
-{
-    switch (product)
-    {
-        PRODUCT2NAME(PRODUCT_PROFESSIONAL)
-        PRODUCT2NAME(PRODUCT_STANDARD_SERVER)
-        PRODUCT2NAME(PRODUCT_BUSINESS)
-        PRODUCT2NAME(PRODUCT_ULTIMATE)
-        PRODUCT2NAME(PRODUCT_ULTIMATE_N)
-        PRODUCT2NAME(PRODUCT_HOME_PREMIUM)
-    }
-    return "";
-}
-#undef PRODUCT2NAME
-
 static void test_GetProductInfo(void)
 {
-    OSVERSIONINFOEXA os;
     DWORD product;
     DWORD res;
     DWORD table[] = {9,8,7,6,
@@ -94,22 +75,12 @@ static void test_GetProductInfo(void)
         return;
     }
 
-    memset(&os, 0, sizeof(OSVERSIONINFOEXA));
-    os.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEXA);
-    res = GetVersionExA((OSVERSIONINFOA *)&os);
-    ok(res, "got %d (expected TRUE)\n", res);
-
-    trace("%s %u.%u (SP: %u.%u)\n", os.wProductType == VER_NT_WORKSTATION ? "Workstation" : "Server",
-        os.dwMajorVersion, os.dwMinorVersion, os.wServicePackMajor, os.wServicePackMinor);
-
     while (*entry)
     {
         /* SetLastError() / GetLastError(): value is untouched */
         product = 0xdeadbeef;
         SetLastError(0xdeadbeef);
         res = pGetProductInfo(entry[0], entry[1], entry[2], entry[3], &product);
-        trace("%d.%d / %d.%d: got %d and 0x%x %s\n",
-            entry[0], entry[1], entry[2], entry[3], res, product, product_to_name(product));
 
         if (entry[0] >= 6)
             ok(res && (product > PRODUCT_UNDEFINED) && (product <= PRODUCT_EMBEDDED) && (GetLastError() == 0xdeadbeef),
