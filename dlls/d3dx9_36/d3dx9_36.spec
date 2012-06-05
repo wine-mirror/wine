@@ -82,7 +82,7 @@
 @ stub D3DXCreatePRTCompBuffer(long long long ptr ptr ptr ptr)
 @ stub D3DXCreatePRTEngine(ptr ptr long ptr ptr)
 @ stub D3DXCreateRenderToEnvMap(ptr long long long long long ptr)
-@ stub D3DXCreateRenderToSurface(ptr long long long long long ptr)
+@ stdcall D3DXCreateRenderToSurface(ptr long long long long long ptr)
 @ stub D3DXCreateSPMesh(ptr ptr ptr ptr ptr)
 @ stdcall D3DXCreateSkinInfo(long ptr long ptr)
 @ stub D3DXCreateSkinInfoFromBlendedMesh(ptr long ptr ptr)
