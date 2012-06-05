@@ -460,7 +460,7 @@ START_TEST(core)
         skip("Couldn't create application window\n");
         return;
     }
-   if (!d3d) {
+    if (!d3d) {
         skip("Couldn't create IDirect3D9 object\n");
         DestroyWindow(wnd);
         return;
