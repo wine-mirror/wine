@@ -2692,13 +2692,25 @@ static HRESULT WINAPI IDirect3DRMMeshImpl_SetGroupMaterial(IDirect3DRMMesh* ifac
 }
 
 static HRESULT WINAPI IDirect3DRMMeshImpl_SetGroupTexture(IDirect3DRMMesh* iface,
-                                                          D3DRMGROUPINDEX id, LPDIRECT3DRMTEXTURE value)
+                                                          D3DRMGROUPINDEX id, LPDIRECT3DRMTEXTURE texture)
 {
     IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
 
-    FIXME("(%p)->(%u,%p): stub\n", This, id, value);
+    TRACE("(%p)->(%u,%p)\n", This, id, texture);
 
-    return E_NOTIMPL;
+    if (id >= This->nb_groups)
+        return D3DRMERR_BADVALUE;
+
+    if (This->groups[id].texture)
+        IDirect3DRMTexture3_Release(This->groups[id].texture);
+
+    if (!texture)
+    {
+        This->groups[id].texture = NULL;
+        return D3DRM_OK;
+    }
+
+    return IDirect3DRMTexture3_QueryInterface(texture, &IID_IDirect3DRMTexture, (LPVOID*)&This->groups[id].texture);
 }
 
 static DWORD WINAPI IDirect3DRMMeshImpl_GetGroupCount(IDirect3DRMMesh* iface)
