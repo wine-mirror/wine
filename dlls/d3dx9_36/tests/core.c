@@ -459,7 +459,6 @@ void test_D3DXCreateRenderToSurface(IDirect3DDevice9 *device)
     hr = D3DXCreateRenderToSurface(device, 256, 256, D3DFMT_A8R8G8B8, FALSE, D3DFMT_UNKNOWN, NULL /* out */);
     ok(hr == D3DERR_INVALIDCALL, "D3DXCreateRenderToSurface returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
 
-    todo_wine {
     hr = D3DXCreateRenderToSurface(device, 0 /* width */, 256, D3DFMT_A8R8G8B8, FALSE, D3DFMT_UNKNOWN, &render);
     ok(hr == D3D_OK, "D3DXCreateRenderToSurface returned %#x, expected %#x\n", hr, D3D_OK);
     if (SUCCEEDED(hr)) ID3DXRenderToSurface_Release(render);
@@ -481,7 +480,6 @@ void test_D3DXCreateRenderToSurface(IDirect3DDevice9 *device)
     hr = D3DXCreateRenderToSurface(device, 0, 0, D3DFMT_UNKNOWN, FALSE, D3DFMT_UNKNOWN, &render);
     check_ref((IUnknown *)device, ref_count + 1);
     if (SUCCEEDED(hr)) ID3DXRenderToSurface_Release(render);
-    }
 }
 
 START_TEST(core)
