@@ -3412,6 +3412,24 @@ msgstr "증가"
 msgid "High"
 msgstr "높음"
 
+#: joy.rc:33
+msgid "Joysticks"
+msgstr ""
+
+#: joy.rc:40
+msgid "Test Joystick"
+msgstr ""
+
+#: joy.rc:47
+msgid "Test Force Feedback"
+msgstr ""
+
+#: joy.rc:28
+#, fuzzy
+#| msgid "Create Control"
+msgid "Game Controllers"
+msgstr "컨트롤 만들기"
+
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
 msgstr "객페를 기본 형식으로 변환하는 중에 오류 발생"

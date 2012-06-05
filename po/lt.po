@@ -3430,6 +3430,24 @@ msgstr "Padidintos"
 msgid "High"
 msgstr "Aukštos"
 
+#: joy.rc:33
+msgid "Joysticks"
+msgstr ""
+
+#: joy.rc:40
+msgid "Test Joystick"
+msgstr ""
+
+#: joy.rc:47
+msgid "Test Force Feedback"
+msgstr ""
+
+#: joy.rc:28
+#, fuzzy
+#| msgid "Create Control"
+msgid "Game Controllers"
+msgstr "Sukurti valdiklį"
+
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
 msgstr "Klaida keičiant objektą į primityvų tipą"

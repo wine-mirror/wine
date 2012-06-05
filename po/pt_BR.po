@@ -3458,6 +3458,24 @@ msgstr "Elevada"
 msgid "High"
 msgstr "Alta"
 
+#: joy.rc:33
+msgid "Joysticks"
+msgstr ""
+
+#: joy.rc:40
+msgid "Test Joystick"
+msgstr ""
+
+#: joy.rc:47
+msgid "Test Force Feedback"
+msgstr ""
+
+#: joy.rc:28
+#, fuzzy
+#| msgid "Create Control"
+msgid "Game Controllers"
+msgstr "Criar controle"
+
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
 msgstr "Erro ao converter objeto em tipo primitivo"

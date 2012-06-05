@@ -1,0 +1,10 @@
+MODULE    = joy.cpl
+IMPORTS   = dxguid dinput dinput8 ole32 comctl32 user32
+
+C_SRCS = \
+	main.c
+
+RC_SRCS = joy.rc
+PO_SRCS = joy.rc
+
+@MAKE_DLL_RULES@

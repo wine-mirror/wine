@@ -15221,6 +15221,7 @@ wine_fn_config_test dlls/iphlpapi/tests iphlpapi_test
 wine_fn_config_dll itircl enable_itircl
 wine_fn_config_dll itss enable_itss
 wine_fn_config_test dlls/itss/tests itss_test
+wine_fn_config_dll joy.cpl enable_joy_cpl po
 wine_fn_config_dll jscript enable_jscript po
 wine_fn_config_test dlls/jscript/tests jscript_test
 wine_fn_config_dll kernel32 enable_kernel32 implib,mc
