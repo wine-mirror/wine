@@ -184,7 +184,7 @@ static void test_query_timeofday(void)
         LARGE_INTEGER liExpTimeZoneBias;
         ULONG uCurrentTimeZoneId;
         DWORD dwUnknown1[5];
-    } SYSTEM_TIMEOFDAY_INFORMATION_PRIVATE, *PSYSTEM_TIMEOFDAY_INFORMATION_PRIVATE;
+    } SYSTEM_TIMEOFDAY_INFORMATION_PRIVATE;
 
     SYSTEM_TIMEOFDAY_INFORMATION_PRIVATE sti;
   
