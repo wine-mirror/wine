@@ -3468,11 +3468,33 @@ msgstr "Vysoká"
 msgid "Joysticks"
 msgstr ""
 
+#: joy.rc:36 winecfg.rc:204
+msgid "&Disable"
+msgstr "&Zakázat"
+
+#: joy.rc:37
+#, fuzzy
+#| msgid "&enable"
+msgid "&Enable"
+msgstr "P&ovolit"
+
+#: joy.rc:38
+#, fuzzy
+#| msgid "Disconnected"
+msgid "Connected"
+msgstr "Odpojen"
+
 #: joy.rc:40
+#, fuzzy
+#| msgid "&Disable"
+msgid "Disabled"
+msgstr "&Zakázat"
+
+#: joy.rc:46
 msgid "Test Joystick"
 msgstr ""
 
-#: joy.rc:47
+#: joy.rc:53
 msgid "Test Force Feedback"
 msgstr ""
 
@@ -12652,10 +12674,6 @@ msgstr "V&estavěná pak nativní"
 #: winecfg.rc:203
 msgid "Nati&ve then Builtin"
 msgstr "N&ativní a pak vestavěná"
-
-#: winecfg.rc:204
-msgid "&Disable"
-msgstr "&Zakázat"
 
 #: winecfg.rc:211
 msgid "Select Drive Letter"

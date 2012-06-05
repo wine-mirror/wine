@@ -57,9 +57,114 @@ BOOL WINAPI DllMain(HINSTANCE hdll, DWORD reason, LPVOID reserved)
     return TRUE;
 }
 
+/***********************************************************************
+ *  enum_callback [internal]
+ *   Enumerates, creates and sets the common data format for all the joystick devices.
+ *   First time it checks if space for the joysticks was already reserved
+ *   and if not, just counts how many there are.
+ */
+static BOOL CALLBACK enum_callback(const DIDEVICEINSTANCEW *instance, void *context)
+{
+    struct JoystickData *data = context;
+    struct Joystick *joystick;
+
+    if (data->joysticks == NULL)
+    {
+        data->num_joysticks += 1;
+        return DIENUM_CONTINUE;
+    }
+
+    joystick = &data->joysticks[data->cur_joystick];
+    data->cur_joystick += 1;
+
+    IDirectInput8_CreateDevice(data->di, &instance->guidInstance, &joystick->device, NULL);
+    IDirectInputDevice8_SetDataFormat(joystick->device, &c_dfDIJoystick);
+
+    joystick->instance = *instance;
+
+    return DIENUM_CONTINUE;
+}
+
+/***********************************************************************
+ *  initialize_joysticks [internal]
+ */
+static void initialize_joysticks(struct JoystickData *data)
+{
+    data->num_joysticks = 0;
+    data->cur_joystick = 0;
+    IDirectInput8_EnumDevices(data->di, DI8DEVCLASS_GAMECTRL, enum_callback, data, DIEDFL_ATTACHEDONLY);
+    data->joysticks = HeapAlloc(GetProcessHeap(), 0, sizeof(struct Joystick) * data->num_joysticks);
+
+    /* Get all the joysticks */
+    IDirectInput8_EnumDevices(data->di, DI8DEVCLASS_GAMECTRL, enum_callback, data, DIEDFL_ATTACHEDONLY);
+}
+
+/***********************************************************************
+ *  destroy_joysticks [internal]
+ */
+static void destroy_joysticks(struct JoystickData *data)
+{
+    int i;
+
+    for (i = 0; i < data->num_joysticks; i++)
+    {
+        IDirectInputDevice8_Unacquire(data->joysticks[i].device);
+        IDirectInputDevice8_Release(data->joysticks[i].device);
+    }
+
+    HeapFree(GetProcessHeap(), 0, data->joysticks);
+}
+
+/*********************************************************************
+ * list_dlgproc [internal]
+ *
+ */
+INT_PTR CALLBACK list_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    TRACE("(%p, 0x%08x/%d, 0x%lx)\n", hwnd, msg, msg, lparam);
+    switch (msg)
+    {
+        case WM_INITDIALOG:
+        {
+            int i;
+            struct JoystickData *data = (struct JoystickData*) ((PROPSHEETPAGEW*)lparam)->lParam;
+
+            /* Set dialog information */
+            for (i = 0; i < data->num_joysticks; i++)
+            {
+                struct Joystick *joy = &data->joysticks[i];
+                SendDlgItemMessageW(hwnd, IDC_JOYSTICKLIST, LB_ADDSTRING, 0, (LPARAM) joy->instance.tszInstanceName);
+            }
+
+            return TRUE;
+        }
+
+        case WM_COMMAND:
+
+            switch (LOWORD(wparam))
+            {
+                case IDC_BUTTONDISABLE:
+                    FIXME("Disable selected joystick from being enumerated\n");
+                    break;
+
+                case IDC_BUTTONENABLE:
+                    FIXME("Re-Enable selected joystick\n");
+                    break;
+            }
+
+            return TRUE;
+
+        case WM_NOTIFY:
+            return TRUE;
+
+        default:
+            break;
+    }
+    return FALSE;
+}
+
 /******************************************************************************
  * propsheet_callback [internal]
- *
  */
 static int CALLBACK propsheet_callback(HWND hwnd, UINT msg, LPARAM lparam)
 {
@@ -98,7 +203,7 @@ static void display_cpl_sheets(HWND parent, struct JoystickData *data)
     psp[id].dwSize = sizeof (PROPSHEETPAGEW);
     psp[id].hInstance = hcpl;
     psp[id].u.pszTemplate = MAKEINTRESOURCEW(IDD_LIST);
-    psp[id].pfnDlgProc = NULL;
+    psp[id].pfnDlgProc = list_dlgproc;
     psp[id].lParam = (INT_PTR) data;
     id++;
 
@@ -155,8 +260,23 @@ LONG CALLBACK CPlApplet(HWND hwnd, UINT command, LPARAM lParam1, LPARAM lParam2)
     switch (command)
     {
         case CPL_INIT:
-            return TRUE;
+        {
+            HRESULT hr;
 
+            /* Initialize dinput */
+            hr = DirectInput8Create(GetModuleHandleW(NULL), DIRECTINPUT_VERSION, &IID_IDirectInput8W, (void**)&data.di, NULL);
+
+            if (FAILED(hr))
+            {
+                ERR("Failed to initialize DirectInput: 0x%08x\n", hr);
+                return FALSE;
+            }
+
+            /* Then get all the connected joysticks */
+            initialize_joysticks(&data);
+
+            return TRUE;
+        }
         case CPL_GETCOUNT:
             return 1;
 
@@ -175,6 +295,10 @@ LONG CALLBACK CPlApplet(HWND hwnd, UINT command, LPARAM lParam1, LPARAM lParam2)
             break;
 
         case CPL_STOP:
+            destroy_joysticks(&data);
+
+            /* And destroy dinput too */
+            IDirectInput8_Release(data.di);
             break;
     }
 

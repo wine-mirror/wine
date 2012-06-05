@@ -3417,11 +3417,33 @@ msgstr "גבוהה"
 msgid "Joysticks"
 msgstr ""
 
+#: joy.rc:36 winecfg.rc:204
+#, fuzzy
+msgid "&Disable"
+msgstr "Table"
+
+#: joy.rc:37
+#, fuzzy
+#| msgid "&enable"
+msgid "&Enable"
+msgstr "ה&פעלה"
+
+#: joy.rc:38
+#, fuzzy
+#| msgid "Disconnected"
+msgid "Connected"
+msgstr "Disconnected"
+
 #: joy.rc:40
+#, fuzzy
+msgid "Disabled"
+msgstr "Table"
+
+#: joy.rc:46
 msgid "Test Joystick"
 msgstr ""
 
-#: joy.rc:47
+#: joy.rc:53
 msgid "Test Force Feedback"
 msgstr ""
 
@@ -12596,11 +12618,6 @@ msgstr "מובנה, טבעי"
 #, fuzzy
 msgid "Nati&ve then Builtin"
 msgstr "טבעי, מובנה"
-
-#: winecfg.rc:204
-#, fuzzy
-msgid "&Disable"
-msgstr "Table"
 
 #: winecfg.rc:211
 #, fuzzy

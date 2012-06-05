@@ -3416,11 +3416,33 @@ msgstr "Hög"
 msgid "Joysticks"
 msgstr ""
 
+#: joy.rc:36 winecfg.rc:204
+msgid "&Disable"
+msgstr "&Inaktivera"
+
+#: joy.rc:37
+#, fuzzy
+#| msgid "&Table"
+msgid "&Enable"
+msgstr "&Tabell"
+
+#: joy.rc:38
+#, fuzzy
+#| msgid "Disconnected"
+msgid "Connected"
+msgstr "Kopplat ifrån"
+
 #: joy.rc:40
+#, fuzzy
+#| msgid "&Disable"
+msgid "Disabled"
+msgstr "&Inaktivera"
+
+#: joy.rc:46
 msgid "Test Joystick"
 msgstr ""
 
-#: joy.rc:47
+#: joy.rc:53
 msgid "Test Force Feedback"
 msgstr ""
 
@@ -12420,10 +12442,6 @@ msgstr "Inb&yggd sedan Ursprunglig"
 #: winecfg.rc:203
 msgid "Nati&ve then Builtin"
 msgstr "Urs&prunglig sedan Inbyggd"
-
-#: winecfg.rc:204
-msgid "&Disable"
-msgstr "&Inaktivera"
 
 #: winecfg.rc:211
 msgid "Select Drive Letter"

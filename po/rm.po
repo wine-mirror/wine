@@ -3366,11 +3366,27 @@ msgstr ""
 msgid "Joysticks"
 msgstr ""
 
+#: joy.rc:36 winecfg.rc:204
+msgid "&Disable"
+msgstr ""
+
+#: joy.rc:37
+msgid "&Enable"
+msgstr ""
+
+#: joy.rc:38
+msgid "Connected"
+msgstr ""
+
 #: joy.rc:40
+msgid "Disabled"
+msgstr ""
+
+#: joy.rc:46
 msgid "Test Joystick"
 msgstr ""
 
-#: joy.rc:47
+#: joy.rc:53
 msgid "Test Force Feedback"
 msgstr ""
 
@@ -12010,10 +12026,6 @@ msgstr ""
 
 #: winecfg.rc:203
 msgid "Nati&ve then Builtin"
-msgstr ""
-
-#: winecfg.rc:204
-msgid "&Disable"
 msgstr ""
 
 #: winecfg.rc:211

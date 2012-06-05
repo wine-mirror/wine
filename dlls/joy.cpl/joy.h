@@ -57,4 +57,9 @@ struct JoystickData {
 #define IDD_TEST            1001
 #define IDD_FORCEFEEDBACK   1002
 
+#define IDC_JOYSTICKLIST    2000
+#define IDC_BUTTONDISABLE   2001
+#define IDC_BUTTONENABLE    2002
+#define IDC_DISABLEDLIST    2003
+
 #endif

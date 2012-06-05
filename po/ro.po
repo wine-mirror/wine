@@ -3421,11 +3421,33 @@ msgstr "Înal&tă"
 msgid "Joysticks"
 msgstr ""
 
+#: joy.rc:36 winecfg.rc:204
+msgid "&Disable"
+msgstr "&Dezactivează"
+
+#: joy.rc:37
+#, fuzzy
+#| msgid "&enable"
+msgid "&Enable"
+msgstr "activ&ează"
+
+#: joy.rc:38
+#, fuzzy
+#| msgid "Disconnected"
+msgid "Connected"
+msgstr "Deconectat"
+
 #: joy.rc:40
+#, fuzzy
+#| msgid "&Disable"
+msgid "Disabled"
+msgstr "&Dezactivează"
+
+#: joy.rc:46
 msgid "Test Joystick"
 msgstr ""
 
-#: joy.rc:47
+#: joy.rc:53
 msgid "Test Force Feedback"
 msgstr ""
 
@@ -12737,10 +12759,6 @@ msgstr "Bui&ltin apoi Native"
 #: winecfg.rc:203
 msgid "Nati&ve then Builtin"
 msgstr "Nati&ve apoi Builtin"
-
-#: winecfg.rc:204
-msgid "&Disable"
-msgstr "&Dezactivează"
 
 #: winecfg.rc:211
 msgid "Select Drive Letter"

@@ -3458,11 +3458,33 @@ msgstr "Najwyższy"
 msgid "Joysticks"
 msgstr ""
 
+#: joy.rc:36 winecfg.rc:204
+msgid "&Disable"
+msgstr "&Wyłącz bibliotekę"
+
+#: joy.rc:37
+#, fuzzy
+#| msgid "&enable"
+msgid "&Enable"
+msgstr "&Udostępnij"
+
+#: joy.rc:38
+#, fuzzy
+#| msgid "Disconnected"
+msgid "Connected"
+msgstr "Rozłączono"
+
 #: joy.rc:40
+#, fuzzy
+#| msgid "&Disable"
+msgid "Disabled"
+msgstr "&Wyłącz bibliotekę"
+
+#: joy.rc:46
 msgid "Test Joystick"
 msgstr ""
 
-#: joy.rc:47
+#: joy.rc:53
 msgid "Test Force Feedback"
 msgstr ""
 
@@ -12597,10 +12619,6 @@ msgstr "Preferuj w&budowaną"
 #: winecfg.rc:203
 msgid "Nati&ve then Builtin"
 msgstr "Preferuj n&atywną"
-
-#: winecfg.rc:204
-msgid "&Disable"
-msgstr "&Wyłącz bibliotekę"
 
 #: winecfg.rc:211
 msgid "Select Drive Letter"

@@ -3344,11 +3344,33 @@ msgstr "高"
 msgid "Joysticks"
 msgstr ""
 
+#: joy.rc:36 winecfg.rc:204
+msgid "&Disable"
+msgstr "停用(&D)"
+
+#: joy.rc:37
+#, fuzzy
+#| msgid "&enable"
+msgid "&Enable"
+msgstr "啟用(&E)"
+
+#: joy.rc:38
+#, fuzzy
+#| msgid "Disconnected"
+msgid "Connected"
+msgstr "離線"
+
 #: joy.rc:40
+#, fuzzy
+#| msgid "&Disable"
+msgid "Disabled"
+msgstr "停用(&D)"
+
+#: joy.rc:46
 msgid "Test Joystick"
 msgstr ""
 
-#: joy.rc:47
+#: joy.rc:53
 msgid "Test Force Feedback"
 msgstr ""
 
@@ -11941,10 +11963,6 @@ msgstr "內建先於原生(&L)"
 #: winecfg.rc:203
 msgid "Nati&ve then Builtin"
 msgstr "原生先於內建(&V)"
-
-#: winecfg.rc:204
-msgid "&Disable"
-msgstr "停用(&D)"
 
 #: winecfg.rc:211
 msgid "Select Drive Letter"

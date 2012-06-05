@@ -3456,11 +3456,33 @@ msgstr "Magas"
 msgid "Joysticks"
 msgstr ""
 
+#: joy.rc:36 winecfg.rc:204
+msgid "&Disable"
+msgstr "Tiltá&s"
+
+#: joy.rc:37
+#, fuzzy
+#| msgid "&enable"
+msgid "&Enable"
+msgstr "&engedélyez"
+
+#: joy.rc:38
+#, fuzzy
+#| msgid "Disconnected"
+msgid "Connected"
+msgstr "Lecsatlakozott"
+
 #: joy.rc:40
+#, fuzzy
+#| msgid "&Disable"
+msgid "Disabled"
+msgstr "Tiltá&s"
+
+#: joy.rc:46
 msgid "Test Joystick"
 msgstr ""
 
-#: joy.rc:47
+#: joy.rc:53
 msgid "Test Force Feedback"
 msgstr ""
 
@@ -12547,10 +12569,6 @@ msgstr "Beépítet&t, natív"
 #: winecfg.rc:203
 msgid "Nati&ve then Builtin"
 msgstr "Natí&v, beépített"
-
-#: winecfg.rc:204
-msgid "&Disable"
-msgstr "Tiltá&s"
 
 #: winecfg.rc:211
 msgid "Select Drive Letter"

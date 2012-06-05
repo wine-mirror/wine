@@ -3426,11 +3426,27 @@ msgstr "High"
 msgid "Joysticks"
 msgstr "Joysticks"
 
+#: joy.rc:36 winecfg.rc:204
+msgid "&Disable"
+msgstr "&Disable"
+
+#: joy.rc:37
+msgid "&Enable"
+msgstr "&Enable"
+
+#: joy.rc:38
+msgid "Connected"
+msgstr "Connected"
+
 #: joy.rc:40
+msgid "Disabled"
+msgstr "Disabled"
+
+#: joy.rc:46
 msgid "Test Joystick"
 msgstr "Test Joystick"
 
-#: joy.rc:47
+#: joy.rc:53
 msgid "Test Force Feedback"
 msgstr "Test Force Feedback"
 
@@ -12489,10 +12505,6 @@ msgstr "Bui&ltin then Native"
 #: winecfg.rc:203
 msgid "Nati&ve then Builtin"
 msgstr "Nati&ve then Builtin"
-
-#: winecfg.rc:204
-msgid "&Disable"
-msgstr "&Disable"
 
 #: winecfg.rc:211
 msgid "Select Drive Letter"

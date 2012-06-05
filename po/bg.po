@@ -3422,11 +3422,31 @@ msgstr ""
 msgid "Joysticks"
 msgstr ""
 
+#: joy.rc:36 winecfg.rc:204
+msgid "&Disable"
+msgstr "&Забрани"
+
+#: joy.rc:37
+#, fuzzy
+msgid "&Enable"
+msgstr "&Таблица"
+
+#: joy.rc:38
+#, fuzzy
+msgid "Connected"
+msgstr "Файлът не е намерен"
+
 #: joy.rc:40
+#, fuzzy
+#| msgid "&Disable"
+msgid "Disabled"
+msgstr "&Забрани"
+
+#: joy.rc:46
 msgid "Test Joystick"
 msgstr ""
 
-#: joy.rc:47
+#: joy.rc:53
 msgid "Test Force Feedback"
 msgstr ""
 
@@ -12303,10 +12323,6 @@ msgstr "В&градена, после собствена"
 #: winecfg.rc:203
 msgid "Nati&ve then Builtin"
 msgstr "Со&бствена, после вградена"
-
-#: winecfg.rc:204
-msgid "&Disable"
-msgstr "&Забрани"
 
 #: winecfg.rc:211
 #, fuzzy
