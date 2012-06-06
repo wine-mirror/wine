@@ -2197,10 +2197,11 @@ static DWORD HTTPREQ_SetOption(object_header_t *hdr, DWORD option, void *buffer,
         if (!buffer || size != sizeof(DWORD))
             return ERROR_INVALID_PARAMETER;
         flags = *(DWORD *)buffer;
-        TRACE("%08x\n", flags);
-        req->security_flags = flags;
+        TRACE("INTERNET_OPTION_SECURITY_FLAGS %08x\n", flags);
+        flags &= SECURITY_SET_MASK;
+        req->security_flags |= flags;
         if(req->netconn)
-            req->netconn->security_flags = flags;
+            req->netconn->security_flags |= flags;
         return ERROR_SUCCESS;
     }
     case INTERNET_OPTION_CONNECT_TIMEOUT:
