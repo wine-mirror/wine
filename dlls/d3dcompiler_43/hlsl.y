@@ -124,6 +124,7 @@ static DWORD add_modifier(DWORD modifiers, DWORD mod)
     BOOL boolval;
     char *name;
     DWORD modifiers;
+    struct hlsl_ir_var *var;
     struct hlsl_ir_node *instr;
     struct list *list;
     struct parse_variable_def *variable_def;
@@ -243,6 +244,7 @@ static DWORD add_modifier(DWORD modifiers, DWORD mod)
 %type <instr> initializer_expr
 %type <modifiers> var_modifiers
 %type <instr> expr
+%type <var> variable
 %type <intval> array
 %type <name> semantic
 %type <variable_def> variable_def
@@ -544,9 +546,28 @@ primary_expr:             C_FLOAT
                                 c->v.value.b[0] = $1;
                                 $$ = &c->node;
                             }
+                        | variable
+                            {
+                                struct hlsl_ir_deref *deref = new_var_deref($1);
+                                $$ = deref ? &deref->node : NULL;
+                            }
                         | '(' expr ')'
                             {
                                 $$ = $2;
+                            }
+
+variable:                 VAR_IDENTIFIER
+                            {
+                                struct hlsl_ir_var *var;
+                                var = get_variable(hlsl_ctx.cur_scope, $1);
+                                if (!var)
+                                {
+                                    hlsl_message("Line %d: variable '%s' not declared\n",
+                                            hlsl_ctx.line_no, $1);
+                                    set_parse_status(&hlsl_ctx.status, PARSE_ERR);
+                                    return 1;
+                                }
+                                $$ = var;
                             }
 
 postfix_expr:             primary_expr

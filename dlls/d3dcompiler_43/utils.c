@@ -844,6 +844,22 @@ BOOL find_function(const char *name)
     return FALSE;
 }
 
+struct hlsl_ir_deref *new_var_deref(struct hlsl_ir_var *var)
+{
+    struct hlsl_ir_deref *deref = d3dcompiler_alloc(sizeof(*deref));
+
+    if (!deref)
+    {
+        ERR("Out of memory.\n");
+        return NULL;
+    }
+    deref->node.type = HLSL_IR_DEREF;
+    deref->node.data_type = var->node.data_type;
+    deref->type = HLSL_IR_DEREF_VAR;
+    deref->v.var = var;
+    return deref;
+}
+
 void push_scope(struct hlsl_parse_ctx *ctx)
 {
     struct hlsl_scope *new_scope = d3dcompiler_alloc(sizeof(*new_scope));
@@ -951,6 +967,7 @@ const char *debug_node_type(enum hlsl_ir_node_type type)
     {
         "HLSL_IR_VAR",
         "HLSL_IR_CONSTANT",
+        "HLSL_IR_DEREF",
     };
 
     if (type > sizeof(names) / sizeof(names[0]))
@@ -1010,6 +1027,25 @@ static void free_ir_constant(struct hlsl_ir_constant *constant)
     d3dcompiler_free(constant);
 }
 
+static void free_ir_deref(struct hlsl_ir_deref *deref)
+{
+    switch (deref->type)
+    {
+        case HLSL_IR_DEREF_VAR:
+            /* Variables are shared among nodes in the tree. */
+            break;
+        case HLSL_IR_DEREF_ARRAY:
+            free_instr(deref->v.array.array);
+            free_instr(deref->v.array.index);
+            break;
+        case HLSL_IR_DEREF_RECORD:
+            free_instr(deref->v.record.record);
+            d3dcompiler_free((void *)deref->v.record.field);
+            break;
+    }
+    d3dcompiler_free(deref);
+}
+
 void free_instr(struct hlsl_ir_node *node)
 {
     switch (node->type)
@@ -1019,6 +1055,9 @@ void free_instr(struct hlsl_ir_node *node)
             break;
         case HLSL_IR_CONSTANT:
             free_ir_constant(constant_from_node(node));
+            break;
+        case HLSL_IR_DEREF:
+            free_ir_deref(deref_from_node(node));
             break;
         default:
             FIXME("Unsupported node type %s\n", debug_node_type(node->type));

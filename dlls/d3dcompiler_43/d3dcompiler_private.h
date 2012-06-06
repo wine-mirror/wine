@@ -684,6 +684,7 @@ enum hlsl_ir_node_type
 {
     HLSL_IR_VAR = 0,
     HLSL_IR_CONSTANT,
+    HLSL_IR_DEREF,
 };
 
 struct hlsl_ir_node
@@ -720,6 +721,33 @@ struct hlsl_ir_var
     struct list scope_entry;
 
     struct hlsl_var_allocation *allocation;
+};
+
+enum hlsl_ir_deref_type
+{
+    HLSL_IR_DEREF_VAR,
+    HLSL_IR_DEREF_ARRAY,
+    HLSL_IR_DEREF_RECORD,
+};
+
+struct hlsl_ir_deref
+{
+    struct hlsl_ir_node node;
+    enum hlsl_ir_deref_type type;
+    union
+    {
+        struct hlsl_ir_var *var;
+        struct
+        {
+            struct hlsl_ir_node *array;
+            struct hlsl_ir_node *index;
+        } array;
+        struct
+        {
+            struct hlsl_ir_node *record;
+            const char *field;
+        } record;
+    } v;
 };
 
 struct hlsl_ir_constant
@@ -778,6 +806,12 @@ struct hlsl_parse_ctx
 extern struct hlsl_parse_ctx hlsl_ctx DECLSPEC_HIDDEN;
 
 void hlsl_message(const char *fmt, ...) PRINTF_ATTR(1,2) DECLSPEC_HIDDEN;
+
+static inline struct hlsl_ir_deref *deref_from_node(const struct hlsl_ir_node *node)
+{
+    assert(node->type == HLSL_IR_DEREF);
+    return CONTAINING_RECORD(node, struct hlsl_ir_deref, node);
+}
 
 static inline struct hlsl_ir_constant *constant_from_node(const struct hlsl_ir_node *node)
 {
