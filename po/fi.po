@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-03-04 21:45+0200\n"
+"PO-Revision-Date: 2012-06-06 21:18+0300\n"
 "Last-Translator: Lauri Kenttä <lauri.kentta@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Finnish\n"
@@ -3419,43 +3419,35 @@ msgstr "Korkea"
 
 #: joy.rc:33
 msgid "Joysticks"
-msgstr ""
+msgstr "Joystickit"
 
 #: joy.rc:36 winecfg.rc:204
 msgid "&Disable"
 msgstr "&Poista käytöstä"
 
 #: joy.rc:37
-#, fuzzy
-#| msgid "&enable"
 msgid "&Enable"
-msgstr "&käytä"
+msgstr "&Ota käyttöön"
 
 #: joy.rc:38
-#, fuzzy
-#| msgid "Disconnected"
 msgid "Connected"
-msgstr "Yhteys katkaistu"
+msgstr "Yhdistetty"
 
 #: joy.rc:40
-#, fuzzy
-#| msgid "&Disable"
 msgid "Disabled"
-msgstr "&Poista käytöstä"
+msgstr "Ei käytössä"
 
 #: joy.rc:46
 msgid "Test Joystick"
-msgstr ""
+msgstr "Testaa joystickia"
 
 #: joy.rc:53
 msgid "Test Force Feedback"
-msgstr ""
+msgstr "Testaa voimapalautetta"
 
 #: joy.rc:28
-#, fuzzy
-#| msgid "Create Control"
 msgid "Game Controllers"
-msgstr "Luo kontrolli"
+msgstr "Peliohjaimet"
 
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
