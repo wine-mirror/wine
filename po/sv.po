@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-03-06 21:30+0200\n"
+"PO-Revision-Date: 2012-06-06 21:20+0300\n"
 "Last-Translator: Lauri Kenttä <lauri.kentta@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Swedish\n"
@@ -3414,43 +3414,35 @@ msgstr "Hög"
 
 #: joy.rc:33
 msgid "Joysticks"
-msgstr ""
+msgstr "Joysticks"
 
 #: joy.rc:36 winecfg.rc:204
 msgid "&Disable"
 msgstr "&Inaktivera"
 
 #: joy.rc:37
-#, fuzzy
-#| msgid "&Table"
 msgid "&Enable"
-msgstr "&Tabell"
+msgstr "&Aktivera"
 
 #: joy.rc:38
-#, fuzzy
-#| msgid "Disconnected"
 msgid "Connected"
-msgstr "Kopplat ifrån"
+msgstr "Ansluten"
 
 #: joy.rc:40
-#, fuzzy
-#| msgid "&Disable"
 msgid "Disabled"
-msgstr "&Inaktivera"
+msgstr "Inaktiverad"
 
 #: joy.rc:46
 msgid "Test Joystick"
-msgstr ""
+msgstr "Testa joysticken"
 
 #: joy.rc:53
 msgid "Test Force Feedback"
-msgstr ""
+msgstr "Testa kraftåterkoppling"
 
 #: joy.rc:28
-#, fuzzy
-#| msgid "Create Control"
 msgid "Game Controllers"
-msgstr "Create Control"
+msgstr "Spelkontroller"
 
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
@@ -7118,7 +7110,7 @@ msgstr "Skapa ny"
 
 #: oledlg.rc:60
 msgid "Create Control"
-msgstr "Create Control"
+msgstr "Skapa en kontroll"
 
 #: oledlg.rc:62
 msgid "Create From File"
@@ -13125,6 +13117,10 @@ msgid ""
 "button, then <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a> "
 "and attach that file to the report."
 msgstr ""
+"Om denna problem inte presenterar sig i Windows och ännu inte har "
+"rapporterats, kan du spara detaljerna till ett fil med knappen \"Spara som\" "
+"och <a href=\"http://wiki.winehq.org/Bugs\">skicka en bugrapport</a> med "
+"filet som en bilaga."
 
 #: winedbg.rc:35
 msgid "Wine program crash"
