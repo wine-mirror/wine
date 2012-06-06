@@ -804,7 +804,8 @@ void free_declaration(struct hlsl_ir_var *decl)
     d3dcompiler_free(decl);
 }
 
-struct hlsl_type *new_hlsl_type(const char *name, enum hlsl_base_type base_type, unsigned dimx, unsigned dimy)
+struct hlsl_type *new_hlsl_type(const char *name, enum hlsl_type_class type_class,
+        enum hlsl_base_type base_type, unsigned dimx, unsigned dimy)
 {
     struct hlsl_type *type;
 
@@ -815,6 +816,7 @@ struct hlsl_type *new_hlsl_type(const char *name, enum hlsl_base_type base_type,
         return NULL;
     }
     type->name = name;
+    type->type = type_class;
     type->base_type = base_type;
     type->dimx = dimx;
     type->dimy = dimy;
@@ -879,8 +881,6 @@ const char *debug_base_type(const struct hlsl_type *type)
         case HLSL_TYPE_INT:          name = "int";           break;
         case HLSL_TYPE_UINT:         name = "uint";          break;
         case HLSL_TYPE_BOOL:         name = "bool";          break;
-        case HLSL_TYPE_STRUCT:       name = "struct";        break;
-        case HLSL_TYPE_ARRAY:        name = "array";         break;
         default:
             FIXME("Unhandled case %u\n", type->base_type);
     }
@@ -894,15 +894,18 @@ const char *debug_hlsl_type(const struct hlsl_type *type)
     if (type->name)
         return debugstr_a(type->name);
 
-    if (type->base_type == HLSL_TYPE_STRUCT)
+    if (type->type == HLSL_CLASS_STRUCT)
         name = "<anonymous struct>";
     else
         name = debug_base_type(type);
-    if (type->dimx == 1 && type->dimy == 1)
+
+    if (type->type == HLSL_CLASS_SCALAR)
         return wine_dbg_sprintf("%s", name);
-    if (type->dimy == 1)
+    if (type->type == HLSL_CLASS_VECTOR)
         return wine_dbg_sprintf("vector<%s, %u>", name, type->dimx);
-    return wine_dbg_sprintf("matrix<%s, %u, %u>", name, type->dimx, type->dimy);
+    if (type->type == HLSL_CLASS_MATRIX)
+        return wine_dbg_sprintf("matrix<%s, %u, %u>", name, type->dimx, type->dimy);
+    return "unexpected_type";
 }
 
 const char *debug_node_type(enum hlsl_ir_node_type type)
@@ -924,7 +927,7 @@ void free_hlsl_type(struct hlsl_type *type)
     struct hlsl_struct_field *field, *next_field;
 
     d3dcompiler_free((void *)type->name);
-    if (type->base_type == HLSL_TYPE_STRUCT)
+    if (type->type == HLSL_CLASS_STRUCT)
     {
         LIST_FOR_EACH_ENTRY_SAFE(field, next_field, type->e.elements, struct hlsl_struct_field, entry)
         {

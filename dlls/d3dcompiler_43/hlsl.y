@@ -240,7 +240,7 @@ type:                     base_type
 
 base_type:                KW_VOID
                             {
-                                $$ = new_hlsl_type("void", HLSL_TYPE_VOID, 1, 1);
+                                $$ = new_hlsl_type("void", HLSL_CLASS_SCALAR, HLSL_TYPE_VOID, 1, 1);
                             }
                         | TYPE_IDENTIFIER
                             {
@@ -257,9 +257,9 @@ base_type:                KW_VOID
 
                                 TRACE("Struct type %s.\n", $2);
                                 type = get_type(hlsl_ctx.cur_scope, $2, TRUE);
-                                if (type->base_type != HLSL_TYPE_STRUCT)
+                                if (type->type != HLSL_CLASS_STRUCT)
                                 {
-                                    hlsl_message("Line %u: Redefining %s as a structure.\n",
+                                    hlsl_message("Line %u: redefining %s as a structure.\n",
                                             hlsl_ctx.line_no, $2);
                                     set_parse_status(&hlsl_ctx.status, PARSE_ERR);
                                 }

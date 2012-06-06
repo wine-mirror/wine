@@ -614,6 +614,17 @@ void SlDeleteShader(struct bwriter_shader *shader) DECLSPEC_HIDDEN;
  * DEALINGS IN THE SOFTWARE.
  */
 
+enum hlsl_type_class
+{
+    HLSL_CLASS_SCALAR,
+    HLSL_CLASS_VECTOR,
+    HLSL_CLASS_MATRIX,
+    HLSL_CLASS_LAST_NUMERIC = HLSL_CLASS_MATRIX,
+    HLSL_CLASS_STRUCT,
+    HLSL_CLASS_ARRAY,
+    HLSL_CLASS_OBJECT,
+};
+
 enum hlsl_base_type
 {
     HLSL_TYPE_FLOAT,
@@ -628,8 +639,6 @@ enum hlsl_base_type
     HLSL_TYPE_PIXELSHADER,
     HLSL_TYPE_VERTEXSHADER,
     HLSL_TYPE_STRING,
-    HLSL_TYPE_STRUCT,
-    HLSL_TYPE_ARRAY,
     HLSL_TYPE_VOID,
 };
 
@@ -643,6 +652,7 @@ struct hlsl_type
 {
     struct list entry;
     struct list scope_entry;
+    enum hlsl_type_class type;
     enum hlsl_base_type base_type;
     const char *name;
     unsigned int modifiers;
@@ -737,7 +747,8 @@ void hlsl_message(const char *fmt, ...) PRINTF_ATTR(1,2) DECLSPEC_HIDDEN;
 BOOL add_declaration(struct hlsl_scope *scope, struct hlsl_ir_var *decl, BOOL local_var) DECLSPEC_HIDDEN;
 struct hlsl_ir_var *get_variable(struct hlsl_scope *scope, const char *name) DECLSPEC_HIDDEN;
 void free_declaration(struct hlsl_ir_var *decl) DECLSPEC_HIDDEN;
-struct hlsl_type *new_hlsl_type(const char *name, enum hlsl_base_type base_type, unsigned dimx, unsigned dimy) DECLSPEC_HIDDEN;
+struct hlsl_type *new_hlsl_type(const char *name, enum hlsl_type_class type_class,
+        enum hlsl_base_type base_type, unsigned dimx, unsigned dimy) DECLSPEC_HIDDEN;
 struct hlsl_type *new_array_type(struct hlsl_type *basic_type, unsigned int array_size) DECLSPEC_HIDDEN;
 struct hlsl_type *get_type(struct hlsl_scope *scope, const char *name, BOOL recursive) DECLSPEC_HIDDEN;
 BOOL find_function(const char *name) DECLSPEC_HIDDEN;
