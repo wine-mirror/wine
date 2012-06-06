@@ -26,7 +26,6 @@
 
 struct applet_info
 {
-    BOOL     valid;
     LONG_PTR data;
     HICON    icon;
     WCHAR    name[256];

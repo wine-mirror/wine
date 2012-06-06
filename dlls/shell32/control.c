@@ -49,10 +49,9 @@ void Control_UnloadApplet(CPlApplet* applet)
 {
     unsigned	i;
 
-    for (i = 0; i < applet->count; i++) {
-        if (!applet->info[i].valid) continue;
+    for (i = 0; i < applet->count; i++)
         applet->proc(applet->hWnd, CPL_STOP, i, applet->info[i].data);
-    }
+
     if (applet->proc) applet->proc(applet->hWnd, CPL_EXIT, 0L, 0L);
     FreeLibrary(applet->hModule);
     list_remove( &applet->entry );
@@ -70,6 +69,13 @@ CPlApplet*	Control_LoadApplet(HWND hWnd, LPCWSTR cmd, CPanel* panel)
     if (!(applet = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*applet))))
        return applet;
 
+    if (!(applet->cmd = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(cmd)+1) * sizeof(WCHAR)))) {
+        WARN("Cannot allocate memory for applet path\n");
+        goto theError;
+    }
+
+    lstrcpyW(applet->cmd, cmd);
+
     applet->hWnd = hWnd;
 
     if (!(applet->hModule = LoadLibraryW(cmd))) {
@@ -86,23 +92,16 @@ CPlApplet*	Control_LoadApplet(HWND hWnd, LPCWSTR cmd, CPanel* panel)
     }
     if ((applet->count = applet->proc(hWnd, CPL_GETCOUNT, 0L, 0L)) == 0) {
         WARN("No subprogram in applet\n");
+        applet->proc(applet->hWnd, CPL_EXIT, 0, 0);
 	goto theError;
     }
 
     applet = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, applet,
-			 sizeof(*applet) + (applet->count - 1) * sizeof(NEWCPLINFOW));
-
-    if (!(applet->cmd = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(cmd)+1) * sizeof(WCHAR)))) {
-        WARN("Cannot allocate memory for applet path\n");
-        goto theError;
-    }
-
-    lstrcpyW(applet->cmd, cmd);
+                         FIELD_OFFSET( CPlApplet, info[applet->count] ));
 
     for (i = 0; i < applet->count; i++) {
        ZeroMemory(&newinfo, sizeof(newinfo));
        newinfo.dwSize = sizeof(NEWCPLINFOA);
-       applet->info[i].valid = TRUE;
        applet->info[i].helpfile[0] = 0;
        /* proc is supposed to return a null value upon success for
 	* CPL_INQUIRE and CPL_NEWINQUIRE
@@ -170,7 +169,9 @@ CPlApplet*	Control_LoadApplet(HWND hWnd, LPCWSTR cmd, CPanel* panel)
     return applet;
 
  theError:
-    Control_UnloadApplet(applet);
+    FreeLibrary(applet->hModule);
+    HeapFree(GetProcessHeap(), 0, applet->cmd);
+    HeapFree(GetProcessHeap(), 0, applet);
     return NULL;
 }
 
@@ -277,9 +278,6 @@ static void 	 Control_WndProc_Create(HWND hWnd, const CREATESTRUCTW* cs)
    LIST_FOR_EACH_ENTRY( applet, &panel->applets, CPlApplet, entry )
    {
       for (i = 0; i < applet->count; i++) {
-         if (!applet->info[i].valid)
-            continue;
-
          /* set up a CPlItem for this particular subprogram */
          item = HeapAlloc(GetProcessHeap(), 0, sizeof(CPlItem));
 
@@ -787,12 +785,10 @@ static	void	Control_DoLaunch(CPanel* panel, HWND hWnd, LPCWSTR wszCmd)
         /* we've been given a textual parameter (or none at all) */
         if (sp == -1) {
             while ((++sp) != applet->count) {
-                if (applet->info[sp].valid) {
-                    TRACE("sp %d, name %s\n", sp, debugstr_w(applet->info[sp].name));
+                TRACE("sp %d, name %s\n", sp, debugstr_w(applet->info[sp].name));
 
-                    if (StrCmpIW(extraPmts, applet->info[sp].name) == 0)
-                        break;
-                }
+                if (StrCmpIW(extraPmts, applet->info[sp].name) == 0)
+                    break;
             }
         }
 
@@ -801,10 +797,8 @@ static	void	Control_DoLaunch(CPanel* panel, HWND hWnd, LPCWSTR wszCmd)
             sp = 0;
         }
 
-        if (applet->info[sp].valid) {
-            if (!applet->proc(applet->hWnd, CPL_STARTWPARMSW, sp, (LPARAM)extraPmts))
-                applet->proc(applet->hWnd, CPL_DBLCLK, sp, applet->info[sp].data);
-        }
+        if (!applet->proc(applet->hWnd, CPL_STARTWPARMSW, sp, (LPARAM)extraPmts))
+            applet->proc(applet->hWnd, CPL_DBLCLK, sp, applet->info[sp].data);
 
         Control_UnloadApplet(applet);
     }
