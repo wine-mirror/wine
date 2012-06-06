@@ -1,10 +1,10 @@
 1. はじめに
 
-Wineは（DOS、Windows 3.x や Win32 実行可能ファイルを含む）Microsoft
+Wineは（DOS、Windows 3.x、Win32 や Win64 実行可能ファイルを含む）Microsoft
 WindowsプログラムをUnix上で実行できるようにするプログラムです。
 Microsoft Windowsバイナリを読み込んで実行するプログラムローダと、
 UnixやX11同等物を使ってWindows APIの呼び出しを実装する（Winelibと呼ばれる）
-ライブラリから成ります。ライブラリはWin32のコードをネイティブな
+ライブラリから成ります。ライブラリはWindowsのコードをネイティブな
 Unix実行可能ファイルに移植するのにも使えます。
 
 Wineはフリーソフトウェアで、GNU LGPLのもとでリリースされています。
@@ -42,7 +42,7 @@ Wineをコンパイルし実行するには、以下のうち一つを持って�
 
 FreeBSD情報:
   Wineは一般的にFreeBSD 7.0より前のバージョン上で正しく動作しないでしょう。
-  詳細については<http://wiki.freebsd.org/Wine>を参照してください。
+  詳細については http://wiki.freebsd.org/Wine を参照してください。
 
 Solaris情報:
   GNUツールチェーン（gcc、gasなど）でWineをビルドする必要がある可能性が
@@ -72,16 +72,18 @@ Mac OS X情報:
 
   もちろん"make"も必要です（大概はGNU make）。
 
-  flexバージョン2.5以降とbisonも必要です。
+  flexバージョン2.5.33以降とbisonも必要です。
 
 オプションのサポートライブラリ:
-  オプションのライブラリがシステム上に見つからなかったときに情報を表示します。
-  インストールすべきパッケージについてのヒントについては
+  configureはオプションのライブラリがシステム上に見つからなかったときに通知を
+  表示します。インストールすべきパッケージについてのヒントについては
   http://wiki.winehq.org/Recommended_Packagesを参照してください。
 
-  64ビットプラットフォーム上では、これらのライブラリの32ビットバージョンを
-  インストールするようにしなければなりません; 詳細については
-  http://wiki.winehq.org/WineOn64bitを参照してください。
+  64ビットプラットフォームでは、Wineを32ビットでコンパイルした場合（デフォル
+  ト）、これらライブラリの32ビットバージョンをインストールしたことをよく確認
+  してください。詳細はhttp://wiki.winehq.org/WineOn64bitを参照してください。
+  真の64ビットWine（または32ビットと64ビットが混在したWine配置）を必要とする
+  場合は、詳細についてhttp://wiki.winehq.org/Wine64を参照してください。
 
 4. コンパイル
 
@@ -89,7 +91,6 @@ wineinstallを使わないことを選択した場合、Wineをビルドする�
 実行してください:
 
 ./configure
-make depend
 make
 
 これによって"wine"というプログラムと多数のサポートライブラリやバイナリが
@@ -99,22 +100,11 @@ make
 
 コンパイル設定オプションを見るには、./configure --helpを行なってください。
 
-パッチファイルを使うことで新しいリリースにアップグレードするには、
-はじめにリリースのトップレベルディレクトリ（このREADME
-[訳注: README.jaではなくREADME]を含むディレクトリ）にcdしてください。
-そして"make clean"を行ない、以下のようにしてリリースにパッチを当ててください:
-
-    bunzip2 -c patch-file | patch -p1
-
-ここで"patch-file"は（wine-1.0.x.diff.bz2のような）パッチファイルの名前です。
-そうすると"./configure"を再実行でき、"make depend && make"を行なえます。
-
-
 5. 設定
 
 いったんWineが正しくビルドされると、"make install"を行なえます。
-これによりwine実行可能ファイル、Wine manページやいくつかの必要なファイルが
-インストールされます。
+これによりwine実行可能ファイルとライブラリ、Wine manページやいくつかの必要な
+ファイルがインストールされます。
 
 まず、衝突するあらゆる前のWineインストールをアンインストールするのを
 忘れないでください。インストール前に"dpkg -r wine"または"rpm -e wine"
@@ -132,20 +122,18 @@ Wineを起動するとき、実行可能ファイルのパス全体またはフ�
 
 例えば、メモ帳を実行するには:
 
-	wine notepad		   （設定ファイルで指定された、ファイルを検索
-	wine notepad.exe	     するための検索パスを使う）
+    wine notepad            （レジストリで指定された、ファイルを検索
+    wine notepad.exe          するための検索パスを使う）
 
-	wine c:\\windows\\notepad.exe  （DOSファイル名の文法を使う）
+    wine c:\\windows\\notepad.exe  （DOSファイル名の文法を使う）
 
-	wine ~/.wine/drive_c/windows/notepad.exe  （Unixファイル名の文法を使う）
+    wine ~/.wine/drive_c/windows/notepad.exe  （Unixファイル名の文法を使う）
 
-        wine notepad.exe /parameter1 -parameter2 parameter3
-				   （パラメータを付けてプログラムを呼ぶ）
+    wine notepad.exe readme.txt    （パラメータを付けてプログラムを呼ぶ）
 
-Wineはまだ完成していないので、いくつかのプログラムはクラッシュする
-かもしれません。そのようなクラッシュでは、問題を調査して修正できるように
-デバッガに放り込むことになるでしょう。これのやりかたについて詳しくは
-Wine Developer's Guide（Wine開発者のガイド）のデバッグの節を調べてください。
+Wineは完璧ではないので、いくつかのプログラムはクラッシュするかもしれません。
+そのような場合はクラッシュログを得られるでしょう。クラッシュログはバグを報告
+するときにレポートに添付するべきです。
 
 
 7. 更なる情報の取得
@@ -156,27 +144,24 @@ WWW:	Wineについてのたくさんの情報がhttp://www.winehq.org/にある
 
 FAQ:	Wine FAQはhttp://www.winehq.org/FAQにあります
 
-Usenet:	comp.emulators.ms-windows.wine上でWine関連の問題を議論し助けを
-        得られます。
-
-バグ:	http://bugs.winehq.orgにあるWine Bugzillaでバグを報告してください。
-        バグ報告を投稿する前に問題がすでにあるのかどうかを調べるために
-	bugzillaデータベースを検索してください。comp.emulators.ms-windows.wineに
-	バグを投稿することもできます。
-
-IRC:	irc.freenode.net上のチャンネル#WineHQでオンラインヘルプを利用できます。
-
-Git:	現在のWine開発ツリーはGitを通して入手できます。
-	詳細についてはhttp://www.winehq.org/site/gitに行ってください。
+Wiki:	Wine Wikiはhttp://wiki.winehq.orgにあります
 
 メーリングリスト:
 	Wineユーザと開発者のためのいくつかのメーリングリストがあります。
 	詳細についてはhttp://www.winehq.org/forumsを参照してください。
 
-Wiki:	Wine Wikiはhttp://wiki.winehq.orgにあります
+バグ:	http://bugs.winehq.orgにあるWine Bugzillaでバグを報告してください。
+        バグ報告を投稿する前に問題が既知や修正済みかどうかを調べるために
+	bugzillaデータベースを検索してください。
 
-何かを追加するか、バグを修正するならば、次のリリースに含めるために
-（'diff -u'形式で）パッチをwine-patches@winehq.orgのリストに送ってください。
+IRC:	irc.freenode.net上のチャンネル#WineHQでオンラインヘルプを利用できます。
+
+Git:	現在のWine開発ツリーはGitを通して入手できます。
+	詳細についてはhttp://www.winehq.org/gitに行ってください。
+
+何かを追加するか、バグを修正するならば、次のリリースに含めるためにパッチ
+（git-format-patchをなるべく使用）をwine-patches@winehq.orgのリストに送って
+ください。
 
 --
 Alexandre Julliard
