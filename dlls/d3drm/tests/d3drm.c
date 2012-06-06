@@ -603,7 +603,8 @@ static void test_Frame(void)
     hr = IDirect3DRMFrame_GetChildren(pFrameP1, &pArray);
     ok(hr == D3DRM_OK, "Cannot get children (hr = %x)\n", hr);
     /* In some older version of d3drm, creating IDirect3DRMFrameArray object with GetChildren does not increment refcount of children frames */
-    ok((get_refcount((IUnknown*)pFrameC) == 3) || broken(get_refcount((IUnknown*)pFrameC) == 2), "Invalid refcount. Expected 3 (or 2) got %d\n", get_refcount((IUnknown*)pFrameC)); \
+    ok((get_refcount((IUnknown*)pFrameC) == 3) || broken(get_refcount((IUnknown*)pFrameC) == 2),
+            "Invalid refcount. Expected 3 (or 2) got %d\n", get_refcount((IUnknown*)pFrameC));
     if (pArray)
     {
         count = IDirect3DRMFrameArray_GetSize(pArray);
@@ -611,9 +612,11 @@ static void test_Frame(void)
         hr = IDirect3DRMFrameArray_GetElement(pArray, 0, &pFrameTmp);
         ok(hr == D3DRM_OK, "Cannot get element (hr = %x)\n", hr);
         ok(pFrameTmp == pFrameC, "pFrameTmp = %p\n", pFrameTmp);
-        ok((get_refcount((IUnknown*)pFrameC) == 4) || broken(get_refcount((IUnknown*)pFrameC) == 3), "Invalid refcount. Expected 4 (or 3) got %d\n", get_refcount((IUnknown*)pFrameC)); \
+        ok((get_refcount((IUnknown*)pFrameC) == 4) || broken(get_refcount((IUnknown*)pFrameC) == 3),
+                "Invalid refcount. Expected 4 (or 3) got %d\n", get_refcount((IUnknown*)pFrameC));
         IDirect3DRMFrame_Release(pFrameTmp);
-        ok((get_refcount((IUnknown*)pFrameC) == 3) || broken(get_refcount((IUnknown*)pFrameC) == 2), "Invalid refcount. Expected 3 (or 2) got %d\n", get_refcount((IUnknown*)pFrameC)); \
+        ok((get_refcount((IUnknown*)pFrameC) == 3) || broken(get_refcount((IUnknown*)pFrameC) == 2),
+                "Invalid refcount. Expected 3 (or 2) got %d\n", get_refcount((IUnknown*)pFrameC));
         IDirect3DRMFrameArray_Release(pArray);
         CHECK_REFCOUNT(pFrameC, 2);
     }
