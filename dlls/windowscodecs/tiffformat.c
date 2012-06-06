@@ -33,6 +33,7 @@
 #include "winbase.h"
 #include "objbase.h"
 #include "wincodec.h"
+#include "wincodecsdk.h"
 
 #include "wincodecs_private.h"
 
@@ -231,6 +232,7 @@ typedef struct {
 
 typedef struct {
     IWICBitmapFrameDecode IWICBitmapFrameDecode_iface;
+    IWICMetadataBlockReader IWICMetadataBlockReader_iface;
     LONG ref;
     TiffDecoder *parent;
     UINT index;
@@ -240,6 +242,7 @@ typedef struct {
 } TiffFrameDecode;
 
 static const IWICBitmapFrameDecodeVtbl TiffFrameDecode_Vtbl;
+static const IWICMetadataBlockReaderVtbl TiffFrameDecode_BlockVtbl;
 
 static inline TiffDecoder *impl_from_IWICBitmapDecoder(IWICBitmapDecoder *iface)
 {
@@ -249,6 +252,11 @@ static inline TiffDecoder *impl_from_IWICBitmapDecoder(IWICBitmapDecoder *iface)
 static inline TiffFrameDecode *impl_from_IWICBitmapFrameDecode(IWICBitmapFrameDecode *iface)
 {
     return CONTAINING_RECORD(iface, TiffFrameDecode, IWICBitmapFrameDecode_iface);
+}
+
+static inline TiffFrameDecode *impl_from_IWICMetadataBlockReader(IWICMetadataBlockReader *iface)
+{
+    return CONTAINING_RECORD(iface, TiffFrameDecode, IWICMetadataBlockReader_iface);
 }
 
 static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
@@ -690,6 +698,7 @@ static HRESULT WINAPI TiffDecoder_GetFrame(IWICBitmapDecoder *iface,
         if (result)
         {
             result->IWICBitmapFrameDecode_iface.lpVtbl = &TiffFrameDecode_Vtbl;
+            result->IWICMetadataBlockReader_iface.lpVtbl = &TiffFrameDecode_BlockVtbl;
             result->ref = 1;
             result->parent = This;
             result->index = index;
@@ -743,6 +752,10 @@ static HRESULT WINAPI TiffFrameDecode_QueryInterface(IWICBitmapFrameDecode *ifac
         IsEqualIID(&IID_IWICBitmapFrameDecode, iid))
     {
         *ppv = This;
+    }
+    else if (IsEqualIID(&IID_IWICMetadataBlockReader, iid))
+    {
+        *ppv = &This->IWICMetadataBlockReader_iface;
     }
     else
     {
@@ -1096,6 +1109,64 @@ static const IWICBitmapFrameDecodeVtbl TiffFrameDecode_Vtbl = {
     TiffFrameDecode_GetMetadataQueryReader,
     TiffFrameDecode_GetColorContexts,
     TiffFrameDecode_GetThumbnail
+};
+
+static HRESULT WINAPI TiffFrameDecode_Block_QueryInterface(IWICMetadataBlockReader *iface,
+    REFIID iid, void **ppv)
+{
+    TiffFrameDecode *This = impl_from_IWICMetadataBlockReader(iface);
+    return IWICBitmapFrameDecode_QueryInterface(&This->IWICBitmapFrameDecode_iface, iid, ppv);
+}
+
+static ULONG WINAPI TiffFrameDecode_Block_AddRef(IWICMetadataBlockReader *iface)
+{
+    TiffFrameDecode *This = impl_from_IWICMetadataBlockReader(iface);
+    return IWICBitmapFrameDecode_AddRef(&This->IWICBitmapFrameDecode_iface);
+}
+
+static ULONG WINAPI TiffFrameDecode_Block_Release(IWICMetadataBlockReader *iface)
+{
+    TiffFrameDecode *This = impl_from_IWICMetadataBlockReader(iface);
+    return IWICBitmapFrameDecode_Release(&This->IWICBitmapFrameDecode_iface);
+}
+
+static HRESULT WINAPI TiffFrameDecode_Block_GetContainerFormat(IWICMetadataBlockReader *iface,
+    GUID *guid)
+{
+    FIXME("(%p,%p): stub\n", iface, guid);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TiffFrameDecode_Block_GetCount(IWICMetadataBlockReader *iface,
+    UINT *count)
+{
+    FIXME("(%p,%p): stub\n", iface, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TiffFrameDecode_Block_GetReaderByIndex(IWICMetadataBlockReader *iface,
+    UINT index, IWICMetadataReader **reader)
+{
+    FIXME("(%p,%u,%p): stub\n", iface, index, reader);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TiffFrameDecode_Block_GetEnumerator(IWICMetadataBlockReader *iface,
+    IEnumUnknown **enum_metadata)
+{
+    FIXME("(%p,%p): stub\n", iface, enum_metadata);
+    return E_NOTIMPL;
+}
+
+static const IWICMetadataBlockReaderVtbl TiffFrameDecode_BlockVtbl =
+{
+    TiffFrameDecode_Block_QueryInterface,
+    TiffFrameDecode_Block_AddRef,
+    TiffFrameDecode_Block_Release,
+    TiffFrameDecode_Block_GetContainerFormat,
+    TiffFrameDecode_Block_GetCount,
+    TiffFrameDecode_Block_GetReaderByIndex,
+    TiffFrameDecode_Block_GetEnumerator
 };
 
 HRESULT TiffDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
