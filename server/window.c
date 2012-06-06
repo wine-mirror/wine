@@ -2457,7 +2457,12 @@ DECL_HANDLER(update_window_zorder)
         if (!(ptr->style & WS_VISIBLE)) continue;
         if (ptr->ex_style & WS_EX_TRANSPARENT) continue;
         if (!intersect_rect( &tmp, &ptr->visible_rect, &rect )) continue;
-        if (ptr->win_region && !rect_in_region( ptr->win_region, &rect )) continue;
+        if (ptr->win_region)
+        {
+            tmp = rect;
+            offset_rect( &tmp, -ptr->window_rect.left, -ptr->window_rect.top );
+            if (!rect_in_region( ptr->win_region, &tmp )) continue;
+        }
         /* found a window obscuring the rectangle, now move win above this one */
         /* making sure to not violate the topmost rule */
         if (!(ptr->ex_style & WS_EX_TOPMOST) || (win->ex_style & WS_EX_TOPMOST))
