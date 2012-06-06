@@ -47,15 +47,11 @@ static void CheckSize(HWND hwnd, INT width, INT height, const char *msg, int lin
 
     SendMessage(hwnd, TCM_GETITEMRECT, 0, (LPARAM)&r);
     if (width >= 0 && height < 0)
-    {
-        ok_(__FILE__,line) (width == r.right - r.left, "%s: Expected width [%d] got [%d]\n",\
-        msg, width, r.right - r.left);
-    }
+        ok_(__FILE__,line) (width == r.right - r.left, "%s: Expected width [%d] got [%d]\n",
+            msg, width, r.right - r.left);
     else if (height >= 0 && width < 0)
-    {
-        ok_(__FILE__,line) (height == r.bottom - r.top,  "%s: Expected height [%d] got [%d]\n",\
-        msg, height, r.bottom - r.top);
-    }
+        ok_(__FILE__,line) (height == r.bottom - r.top,  "%s: Expected height [%d] got [%d]\n",
+            msg, height, r.bottom - r.top);
     else
         ok_(__FILE__,line) ((width  == r.right  - r.left) && (height == r.bottom - r.top ),
 	    "%s: Expected [%d,%d] got [%d,%d]\n", msg, width, height,
