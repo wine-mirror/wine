@@ -132,8 +132,12 @@ typedef struct
 
     IDirect3DDevice9 *d3d9_dev;
     IDirect3D9 *d3d9_ptr;
+    IDirect3DSurface9 **d3d9_surfaces;
     IDirect3DVertexBuffer9 *d3d9_vertex;
+    HMONITOR hMon;
+    DWORD num_surfaces;
 
+    BOOL reset;
     VMR9AllocationInfo info;
 
     VMR9Impl* pVMR9;
@@ -1349,9 +1353,22 @@ static ULONG WINAPI VMR9_ImagePresenter_Release(IVMRImagePresenter9 *iface)
 
     if (!refCount)
     {
+        int i;
         TRACE("Destroying\n");
         IUnknown_Release(This->d3d9_ptr);
 
+        TRACE("Number of surfaces: %u\n", This->num_surfaces);
+        for (i = 0; i < This->num_surfaces; ++i)
+        {
+            IDirect3DSurface9 *surface = This->d3d9_surfaces[i];
+            TRACE("Releasing surface %p\n", surface);
+            if (surface)
+                IUnknown_Release(surface);
+        }
+
+        CoTaskMemFree(This->d3d9_surfaces);
+        This->d3d9_surfaces = NULL;
+        This->num_surfaces = 0;
         if (This->d3d9_vertex)
         {
             IUnknown_Release(This->d3d9_vertex);
@@ -1527,6 +1544,29 @@ static ULONG WINAPI VMR9_SurfaceAllocator_Release(IVMRSurfaceAllocatorEx9 *iface
     return VMR9_ImagePresenter_Release(&This->IVMRImagePresenter9_iface);
 }
 
+static UINT d3d9_adapter_from_hwnd(IDirect3D9 *d3d9, HWND hwnd, HMONITOR *mon_out)
+{
+    UINT d3d9_adapter;
+    HMONITOR mon;
+
+    mon = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONULL);
+    if (!mon)
+        d3d9_adapter = 0;
+    else
+    {
+        for (d3d9_adapter = 0; d3d9_adapter < IDirect3D9_GetAdapterCount(d3d9); ++d3d9_adapter)
+        {
+            if (mon == IDirect3D9_GetAdapterMonitor(d3d9, d3d9_adapter))
+                break;
+        }
+        if (d3d9_adapter >= IDirect3D9_GetAdapterCount(d3d9))
+            d3d9_adapter = 0;
+    }
+    if (mon_out)
+        *mon_out = mon;
+    return d3d9_adapter;
+}
+
 static HRESULT WINAPI VMR9_SurfaceAllocator_InitializeDevice(IVMRSurfaceAllocatorEx9 *iface, DWORD_PTR id, VMR9AllocationInfo *allocinfo, DWORD *numbuffers)
 {
     VMR9DefaultAllocatorPresenterImpl *This = impl_from_IVMRSurfaceAllocatorEx9(iface);
@@ -1558,6 +1598,116 @@ static HRESULT WINAPI VMR9_SurfaceAllocator_TerminateDevice(IVMRSurfaceAllocator
     return S_OK;
 }
 
+/* Recreate all surfaces (If allocated as D3DPOOL_DEFAULT) and survive! */
+static HRESULT VMR9_SurfaceAllocator_UpdateDeviceReset(VMR9DefaultAllocatorPresenterImpl *This)
+{
+    struct VERTEX t_vert[4];
+    UINT width, height;
+    INT i;
+    void *bits = NULL;
+    D3DPRESENT_PARAMETERS d3dpp;
+    HRESULT hr;
+
+    if (!This->pVMR9->baseControlWindow.baseWindow.hWnd)
+    {
+        ERR("No window\n");
+        return E_FAIL;
+    }
+
+    if (!This->d3d9_surfaces || !This->reset)
+        return S_OK;
+
+    This->reset = FALSE;
+    TRACE("RESETTING\n");
+    if (This->d3d9_vertex)
+    {
+        IDirect3DVertexBuffer9_Release(This->d3d9_vertex);
+        This->d3d9_vertex = NULL;
+    }
+
+    for (i = 0; i < This->num_surfaces; ++i)
+    {
+        IDirect3DSurface9 *surface = This->d3d9_surfaces[i];
+        TRACE("Releasing surface %p\n", surface);
+        if (surface)
+            IUnknown_Release(surface);
+    }
+    ZeroMemory(This->d3d9_surfaces, sizeof(IDirect3DSurface9 *) * This->num_surfaces);
+
+    /* Now try to create the d3d9 device */
+    ZeroMemory(&d3dpp, sizeof(d3dpp));
+    d3dpp.Windowed = TRUE;
+    d3dpp.hDeviceWindow = This->pVMR9->baseControlWindow.baseWindow.hWnd;
+    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+
+    if (This->d3d9_dev)
+        IDirect3DDevice9_Release(This->d3d9_dev);
+    This->d3d9_dev = NULL;
+    hr = IDirect3D9_CreateDevice(This->d3d9_ptr, d3d9_adapter_from_hwnd(This->d3d9_ptr, This->pVMR9->baseControlWindow.baseWindow.hWnd, &This->hMon), D3DDEVTYPE_HAL, NULL, D3DCREATE_HARDWARE_VERTEXPROCESSING, &d3dpp, &This->d3d9_dev);
+    if (FAILED(hr))
+    {
+        hr = IDirect3D9_CreateDevice(This->d3d9_ptr, d3d9_adapter_from_hwnd(This->d3d9_ptr, This->pVMR9->baseControlWindow.baseWindow.hWnd, &This->hMon), D3DDEVTYPE_HAL, NULL, D3DCREATE_MIXED_VERTEXPROCESSING, &d3dpp, &This->d3d9_dev);
+        if (FAILED(hr))
+        {
+            ERR("--> Creating device: %08x\n", hr);
+            return S_OK;
+        }
+    }
+    IVMRSurfaceAllocatorNotify9_ChangeD3DDevice(This->SurfaceAllocatorNotify, This->d3d9_dev, This->hMon);
+
+    IVMRSurfaceAllocatorNotify9_AllocateSurfaceHelper(This->SurfaceAllocatorNotify, &This->info, &This->num_surfaces, This->d3d9_surfaces);
+
+    This->reset = FALSE;
+
+    if (!(This->info.dwFlags & VMR9AllocFlag_TextureSurface))
+        return S_OK;
+
+    hr = IDirect3DDevice9_CreateVertexBuffer(This->d3d9_dev, 4 * sizeof(struct VERTEX), D3DUSAGE_WRITEONLY, USED_FVF,
+                                             This->info.Pool, &This->d3d9_vertex, NULL);
+
+    width = This->info.dwWidth;
+    height = This->info.dwHeight;
+
+    for (i = 0; i < sizeof(t_vert) / sizeof(t_vert[0]); ++i)
+    {
+        if (i % 2)
+        {
+            t_vert[i].x = (float)This->pVMR9->target_rect.right - (float)This->pVMR9->target_rect.left - 0.5f;
+            t_vert[i].u = (float)This->pVMR9->source_rect.right / (float)width;
+        }
+        else
+        {
+            t_vert[i].x = -0.5f;
+            t_vert[i].u = (float)This->pVMR9->source_rect.left / (float)width;
+        }
+
+        if (i % 4 < 2)
+        {
+            t_vert[i].y = -0.5f;
+            t_vert[i].v = (float)This->pVMR9->source_rect.bottom / (float)height;
+        }
+        else
+        {
+            t_vert[i].y = (float)This->pVMR9->target_rect.bottom - (float)This->pVMR9->target_rect.top - 0.5f;
+            t_vert[i].v = (float)This->pVMR9->source_rect.top / (float)height;
+        }
+        t_vert[i].z = 0.0f;
+        t_vert[i].rhw = 1.0f;
+    }
+
+    FIXME("Vertex rectangle:\n");
+    FIXME("X, Y: %f, %f\n", t_vert[0].x, t_vert[0].y);
+    FIXME("X, Y: %f, %f\n", t_vert[3].x, t_vert[3].y);
+    FIXME("TOP, LEFT: %f, %f\n", t_vert[0].u, t_vert[0].v);
+    FIXME("DOWN, BOTTOM: %f, %f\n", t_vert[3].u, t_vert[3].v);
+
+    IDirect3DVertexBuffer9_Lock(This->d3d9_vertex, 0, sizeof(t_vert), &bits, 0);
+    memcpy(bits, t_vert, sizeof(t_vert));
+    IDirect3DVertexBuffer9_Unlock(This->d3d9_vertex);
+
+    return S_OK;
+}
+
 static HRESULT WINAPI VMR9_SurfaceAllocator_GetSurface(IVMRSurfaceAllocatorEx9 *iface, DWORD_PTR id, DWORD surfaceindex, DWORD flags, IDirect3DSurface9 **surface)
 {
     VMR9DefaultAllocatorPresenterImpl *This = impl_from_IVMRSurfaceAllocatorEx9(iface);
@@ -1569,7 +1719,17 @@ static HRESULT WINAPI VMR9_SurfaceAllocator_GetSurface(IVMRSurfaceAllocatorEx9 *
         return E_FAIL;
     }
 
-    return E_NOTIMPL;
+    VMR9_SurfaceAllocator_UpdateDeviceReset(This);
+
+    if (surfaceindex >= This->num_surfaces)
+    {
+        ERR("surfaceindex is greater than num_surfaces\n");
+        return E_FAIL;
+    }
+    *surface = This->d3d9_surfaces[surfaceindex];
+    IUnknown_AddRef(*surface);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI VMR9_SurfaceAllocator_AdviseNotify(IVMRSurfaceAllocatorEx9 *iface, IVMRSurfaceAllocatorNotify9 *allocnotify)
@@ -1635,9 +1795,13 @@ static HRESULT VMR9DefaultAllocatorPresenterImpl_create(VMR9Impl *parent, LPVOID
 
     This->refCount = 1;
     This->pVMR9 = parent;
+    This->d3d9_surfaces = NULL;
     This->d3d9_dev = NULL;
+    This->hMon = 0;
     This->d3d9_vertex = NULL;
+    This->num_surfaces = 0;
     This->SurfaceAllocatorNotify = NULL;
+    This->reset = FALSE;
 
     *ppv = This;
     return S_OK;
