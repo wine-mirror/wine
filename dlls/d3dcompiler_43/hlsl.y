@@ -121,8 +121,10 @@ static DWORD add_modifier(DWORD modifiers, DWORD mod)
     struct hlsl_type *type;
     INT intval;
     FLOAT floatval;
+    BOOL boolval;
     char *name;
     DWORD modifiers;
+    struct hlsl_ir_node *instr;
     struct list *list;
     struct parse_variable_def *variable_def;
 }
@@ -233,13 +235,33 @@ static DWORD add_modifier(DWORD modifiers, DWORD mod)
 %token <name> STRING
 %token <floatval> C_FLOAT
 %token <intval> C_INTEGER
+%type <boolval> boolean
 %type <type> base_type
 %type <type> type
+%type <list> complex_initializer
+%type <list> initializer_expr_list
+%type <instr> initializer_expr
 %type <modifiers> var_modifiers
+%type <instr> expr
 %type <intval> array
 %type <name> semantic
 %type <variable_def> variable_def
 %type <list> variables_def
+%type <instr> primary_expr
+%type <instr> postfix_expr
+%type <instr> unary_expr
+%type <instr> mul_expr
+%type <instr> add_expr
+%type <instr> shift_expr
+%type <instr> relational_expr
+%type <instr> equality_expr
+%type <instr> bitand_expr
+%type <instr> bitxor_expr
+%type <instr> bitor_expr
+%type <instr> logicand_expr
+%type <instr> logicor_expr
+%type <instr> conditional_expr
+%type <instr> assignment_expr
 %%
 
 hlsl_prog:                /* empty */
@@ -337,6 +359,7 @@ declaration:              var_modifiers type variables_def ';'
                                     if (v->initializer)
                                     {
                                         FIXME("Variable with an initializer.\n");
+                                        free_instr_list(v->initializer);
                                     }
 
                                     if (hlsl_ctx.cur_scope == hlsl_ctx.globals)
@@ -375,10 +398,25 @@ variable_def:             any_identifier array semantic
                                 $$->array_size = $2;
                                 $$->semantic = $3;
                             }
+                        | any_identifier array semantic '=' complex_initializer
+                            {
+                                TRACE("Declaration with initializer.\n");
+                                $$ = d3dcompiler_alloc(sizeof(*$$));
+                                $$->name = $1;
+                                $$->array_size = $2;
+                                $$->semantic = $3;
+                                $$->initializer = $5;
+                            }
 
 array:                    /* Empty */
                             {
                                 $$ = 0;
+                            }
+                        | '[' expr ']'
+                            {
+                                FIXME("Array.\n");
+                                $$ = 0;
+                                free_instr($2);
                             }
 
 var_modifiers:            /* Empty */
@@ -428,6 +466,166 @@ var_modifiers:            /* Empty */
                         | KW_COLUMN_MAJOR var_modifiers
                             {
                                 $$ = add_modifier($2, HLSL_MODIFIER_COLUMN_MAJOR);
+                            }
+
+complex_initializer:      initializer_expr
+                            {
+                                $$ = d3dcompiler_alloc(sizeof(*$$));
+                                list_init($$);
+                                list_add_head($$, &$1->entry);
+                            }
+                        | '{' initializer_expr_list '}'
+                            {
+                                $$ = $2;
+                            }
+
+initializer_expr:         assignment_expr
+                            {
+                                $$ = $1;
+                            }
+
+initializer_expr_list:    initializer_expr
+                            {
+                                $$ = d3dcompiler_alloc(sizeof(*$$));
+                                list_init($$);
+                                list_add_head($$, &$1->entry);
+                            }
+                        | initializer_expr_list ',' initializer_expr
+                            {
+                                $$ = $1;
+                                list_add_tail($$, &$3->entry);
+                            }
+
+boolean:                  KW_TRUE
+                            {
+                                $$ = TRUE;
+                            }
+                        | KW_FALSE
+                            {
+                                $$ = FALSE;
+                            }
+
+primary_expr:             C_FLOAT
+                            {
+                                struct hlsl_ir_constant *c = d3dcompiler_alloc(sizeof(*c));
+                                if (!c)
+                                {
+                                    ERR("Out of memory.\n");
+                                    return -1;
+                                }
+                                c->node.type = HLSL_IR_CONSTANT;
+                                c->node.data_type = new_hlsl_type("float", HLSL_CLASS_SCALAR, HLSL_TYPE_FLOAT, 1, 1);
+                                c->v.value.f[0] = $1;
+                                $$ = &c->node;
+                            }
+                        | C_INTEGER
+                            {
+                                struct hlsl_ir_constant *c = d3dcompiler_alloc(sizeof(*c));
+                                if (!c)
+                                {
+                                    ERR("Out of memory.\n");
+                                    return -1;
+                                }
+                                c->node.type = HLSL_IR_CONSTANT;
+                                c->node.data_type = new_hlsl_type("int", HLSL_CLASS_SCALAR, HLSL_TYPE_INT, 1, 1);
+                                c->v.value.i[0] = $1;
+                                $$ = &c->node;
+                            }
+                        | boolean
+                            {
+                                struct hlsl_ir_constant *c = d3dcompiler_alloc(sizeof(*c));
+                                if (!c)
+                                {
+                                    ERR("Out of memory.\n");
+                                    return -1;
+                                }
+                                c->node.type = HLSL_IR_CONSTANT;
+                                c->node.data_type = new_hlsl_type("bool", HLSL_CLASS_SCALAR, HLSL_TYPE_BOOL, 1, 1);
+                                c->v.value.b[0] = $1;
+                                $$ = &c->node;
+                            }
+                        | '(' expr ')'
+                            {
+                                $$ = $2;
+                            }
+
+postfix_expr:             primary_expr
+                            {
+                                $$ = $1;
+                            }
+
+unary_expr:               postfix_expr
+                            {
+                                $$ = $1;
+                            }
+
+mul_expr:                 unary_expr
+                            {
+                                $$ = $1;
+                            }
+
+add_expr:                 mul_expr
+                            {
+                                $$ = $1;
+                            }
+
+shift_expr:               add_expr
+                            {
+                                $$ = $1;
+                            }
+
+relational_expr:          shift_expr
+                            {
+                                $$ = $1;
+                            }
+
+equality_expr:            relational_expr
+                            {
+                                $$ = $1;
+                            }
+
+bitand_expr:              equality_expr
+                            {
+                                $$ = $1;
+                            }
+
+bitxor_expr:              bitand_expr
+                            {
+                                $$ = $1;
+                            }
+
+bitor_expr:               bitxor_expr
+                            {
+                                $$ = $1;
+                            }
+
+logicand_expr:            bitor_expr
+                            {
+                                $$ = $1;
+                            }
+
+logicor_expr:             logicand_expr
+                            {
+                                $$ = $1;
+                            }
+
+conditional_expr:         logicor_expr
+                            {
+                                $$ = $1;
+                            }
+
+assignment_expr:          conditional_expr
+                            {
+                                $$ = $1;
+                            }
+
+expr:                     assignment_expr
+                            {
+                                $$ = $1;
+                            }
+                        | expr ',' assignment_expr
+                            {
+                                FIXME("Comma expression\n");
                             }
 
 %%

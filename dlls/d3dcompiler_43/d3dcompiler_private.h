@@ -33,6 +33,8 @@
 
 #include "d3dcompiler.h"
 
+#include <assert.h>
+
 /*
  * This doesn't belong here, but for some functions it is possible to return that value,
  * see http://msdn.microsoft.com/en-us/library/bb205278%28v=VS.85%29.aspx
@@ -681,6 +683,7 @@ struct hlsl_struct_field
 enum hlsl_ir_node_type
 {
     HLSL_IR_VAR = 0,
+    HLSL_IR_CONSTANT,
 };
 
 struct hlsl_ir_node
@@ -717,6 +720,24 @@ struct hlsl_ir_var
     struct list scope_entry;
 
     struct hlsl_var_allocation *allocation;
+};
+
+struct hlsl_ir_constant
+{
+    struct hlsl_ir_node node;
+    union
+    {
+        union
+        {
+            unsigned u[16];
+            int i[16];
+            float f[16];
+            double d[16];
+            BOOL b[16];
+        } value;
+        struct hlsl_ir_constant *array_elements;
+        struct list *struct_elements;
+    } v;
 };
 
 struct hlsl_scope
@@ -758,6 +779,12 @@ extern struct hlsl_parse_ctx hlsl_ctx DECLSPEC_HIDDEN;
 
 void hlsl_message(const char *fmt, ...) PRINTF_ATTR(1,2) DECLSPEC_HIDDEN;
 
+static inline struct hlsl_ir_constant *constant_from_node(const struct hlsl_ir_node *node)
+{
+    assert(node->type == HLSL_IR_CONSTANT);
+    return CONTAINING_RECORD(node, struct hlsl_ir_constant, node);
+}
+
 BOOL add_declaration(struct hlsl_scope *scope, struct hlsl_ir_var *decl, BOOL local_var) DECLSPEC_HIDDEN;
 struct hlsl_ir_var *get_variable(struct hlsl_scope *scope, const char *name) DECLSPEC_HIDDEN;
 void free_declaration(struct hlsl_ir_var *decl) DECLSPEC_HIDDEN;
@@ -777,6 +804,8 @@ const char *debug_base_type(const struct hlsl_type *type) DECLSPEC_HIDDEN;
 const char *debug_hlsl_type(const struct hlsl_type *type) DECLSPEC_HIDDEN;
 const char *debug_modifiers(DWORD modifiers) DECLSPEC_HIDDEN;
 void free_hlsl_type(struct hlsl_type *type) DECLSPEC_HIDDEN;
+void free_instr(struct hlsl_ir_node *node) DECLSPEC_HIDDEN;
+void free_instr_list(struct list *list) DECLSPEC_HIDDEN;
 
 
 #define MAKE_TAG(ch0, ch1, ch2, ch3) \

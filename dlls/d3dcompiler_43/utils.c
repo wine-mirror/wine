@@ -950,6 +950,7 @@ const char *debug_node_type(enum hlsl_ir_node_type type)
     const char *names[] =
     {
         "HLSL_IR_VAR",
+        "HLSL_IR_CONSTANT",
     };
 
     if (type > sizeof(names) / sizeof(names[0]))
@@ -974,4 +975,52 @@ void free_hlsl_type(struct hlsl_type *type)
         }
     }
     d3dcompiler_free(type);
+}
+
+void free_instr_list(struct list *list)
+{
+    struct hlsl_ir_node *node, *next_node;
+
+    if (!list)
+        return;
+    LIST_FOR_EACH_ENTRY_SAFE(node, next_node, list, struct hlsl_ir_node, entry)
+        free_instr(node);
+}
+
+static void free_ir_constant(struct hlsl_ir_constant *constant)
+{
+    struct hlsl_type *type = constant->node.data_type;
+    unsigned int i;
+    struct hlsl_ir_constant *field, *next_field;
+
+    switch (type->type)
+    {
+        case HLSL_CLASS_ARRAY:
+            for (i = 0; i < type->e.array.elements_count; ++i)
+                free_ir_constant(&constant->v.array_elements[i]);
+            d3dcompiler_free(constant->v.array_elements);
+            break;
+        case HLSL_CLASS_STRUCT:
+            LIST_FOR_EACH_ENTRY_SAFE(field, next_field, constant->v.struct_elements, struct hlsl_ir_constant, node.entry)
+                free_ir_constant(field);
+            break;
+        default:
+            break;
+    }
+    d3dcompiler_free(constant);
+}
+
+void free_instr(struct hlsl_ir_node *node)
+{
+    switch (node->type)
+    {
+        case HLSL_IR_VAR:
+            /* These are freed later on from the scopes. */
+            break;
+        case HLSL_IR_CONSTANT:
+            free_ir_constant(constant_from_node(node));
+            break;
+        default:
+            FIXME("Unsupported node type %s\n", debug_node_type(node->type));
+    }
 }
