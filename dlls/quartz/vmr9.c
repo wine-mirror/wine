@@ -130,6 +130,10 @@ typedef struct
 
     LONG refCount;
 
+    HANDLE ack;
+    DWORD tid;
+    HANDLE hWndThread;
+
     IDirect3DDevice9 *d3d9_dev;
     IDirect3D9 *d3d9_ptr;
     IDirect3DSurface9 **d3d9_surfaces;
@@ -1355,6 +1359,7 @@ static ULONG WINAPI VMR9_ImagePresenter_Release(IVMRImagePresenter9 *iface)
     {
         int i;
         TRACE("Destroying\n");
+        CloseHandle(This->ack);
         IUnknown_Release(This->d3d9_ptr);
 
         TRACE("Number of surfaces: %u\n", This->num_surfaces);
@@ -1544,6 +1549,85 @@ static ULONG WINAPI VMR9_SurfaceAllocator_Release(IVMRSurfaceAllocatorEx9 *iface
     return VMR9_ImagePresenter_Release(&This->IVMRImagePresenter9_iface);
 }
 
+static HRESULT VMR9_SurfaceAllocator_SetAllocationSettings(VMR9DefaultAllocatorPresenterImpl *This, VMR9AllocationInfo *allocinfo)
+{
+    D3DCAPS9 caps;
+    UINT width, height;
+    HRESULT hr;
+
+    if (!(allocinfo->dwFlags & VMR9AllocFlag_TextureSurface))
+        /* Only needed for texture surfaces */
+        return S_OK;
+
+    hr = IDirect3DDevice9_GetDeviceCaps(This->d3d9_dev, &caps);
+    if (FAILED(hr))
+        return hr;
+
+    if (!(caps.TextureCaps & D3DPTEXTURECAPS_POW2) || (caps.TextureCaps & D3DPTEXTURECAPS_SQUAREONLY))
+    {
+        width = allocinfo->dwWidth;
+        height = allocinfo->dwHeight;
+    }
+    else
+    {
+        width = height = 1;
+        while (width < allocinfo->dwWidth)
+            width *= 2;
+
+        while (height < allocinfo->dwHeight)
+            height *= 2;
+        FIXME("NPOW2 support missing, not using proper surfaces!\n");
+    }
+
+    if (caps.TextureCaps & D3DPTEXTURECAPS_SQUAREONLY)
+    {
+        if (height > width)
+            width = height;
+        else
+            height = width;
+        FIXME("Square texture support required..\n");
+    }
+
+    hr = IDirect3DDevice9_CreateVertexBuffer(This->d3d9_dev, 4 * sizeof(struct VERTEX), D3DUSAGE_WRITEONLY, USED_FVF, allocinfo->Pool, &This->d3d9_vertex, NULL);
+    if (FAILED(hr))
+    {
+        ERR("Couldn't create vertex buffer: %08x\n", hr);
+        return hr;
+    }
+
+    This->reset = TRUE;
+    allocinfo->dwHeight = height;
+    allocinfo->dwWidth = width;
+
+    return hr;
+}
+
+static DWORD WINAPI MessageLoop(LPVOID lpParameter)
+{
+    MSG msg;
+    BOOL fGotMessage;
+    VMR9DefaultAllocatorPresenterImpl *This = lpParameter;
+
+    TRACE("Starting message loop\n");
+
+    if (FAILED(BaseWindowImpl_PrepareWindow(&This->pVMR9->baseControlWindow.baseWindow)))
+    {
+        FIXME("Failed to prepare window\n");
+        return FALSE;
+    }
+
+    SetEvent(This->ack);
+    while ((fGotMessage = GetMessageW(&msg, NULL, 0, 0)) != 0 && fGotMessage != -1)
+    {
+        TranslateMessage(&msg);
+        DispatchMessageW(&msg);
+    }
+
+    TRACE("End of message loop\n");
+
+    return 0;
+}
+
 static UINT d3d9_adapter_from_hwnd(IDirect3D9 *d3d9, HWND hwnd, HMONITOR *mon_out)
 {
     UINT d3d9_adapter;
@@ -1567,6 +1651,68 @@ static UINT d3d9_adapter_from_hwnd(IDirect3D9 *d3d9, HWND hwnd, HMONITOR *mon_ou
     return d3d9_adapter;
 }
 
+static BOOL CreateRenderingWindow(VMR9DefaultAllocatorPresenterImpl *This, VMR9AllocationInfo *info, DWORD *numbuffers)
+{
+    D3DPRESENT_PARAMETERS d3dpp;
+    DWORD d3d9_adapter;
+    HRESULT hr;
+
+    TRACE("(%p)->()\n", This);
+
+    This->hWndThread = CreateThread(NULL, 0, MessageLoop, This, 0, &This->tid);
+    if (!This->hWndThread)
+        return FALSE;
+
+    WaitForSingleObject(This->ack, INFINITE);
+
+    if (!This->pVMR9->baseControlWindow.baseWindow.hWnd) return FALSE;
+
+    /* Obtain a monitor and d3d9 device */
+    d3d9_adapter = d3d9_adapter_from_hwnd(This->d3d9_ptr, This->pVMR9->baseControlWindow.baseWindow.hWnd, &This->hMon);
+
+    /* Now try to create the d3d9 device */
+    ZeroMemory(&d3dpp, sizeof(d3dpp));
+    d3dpp.Windowed = TRUE;
+    d3dpp.hDeviceWindow = This->pVMR9->baseControlWindow.baseWindow.hWnd;
+    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    d3dpp.BackBufferHeight = This->pVMR9->target_rect.bottom - This->pVMR9->target_rect.top;
+    d3dpp.BackBufferWidth = This->pVMR9->target_rect.right - This->pVMR9->target_rect.left;
+
+    hr = IDirect3D9_CreateDevice(This->d3d9_ptr, d3d9_adapter, D3DDEVTYPE_HAL, NULL, D3DCREATE_MIXED_VERTEXPROCESSING, &d3dpp, &This->d3d9_dev);
+    if (FAILED(hr))
+    {
+        ERR("Could not create device: %08x\n", hr);
+        BaseWindowImpl_DoneWithWindow(&This->pVMR9->baseControlWindow.baseWindow);
+        return FALSE;
+    }
+    IVMRSurfaceAllocatorNotify9_SetD3DDevice(This->SurfaceAllocatorNotify, This->d3d9_dev, This->hMon);
+
+    This->d3d9_surfaces = CoTaskMemAlloc(*numbuffers * sizeof(IDirect3DSurface9 *));
+    ZeroMemory(This->d3d9_surfaces, *numbuffers * sizeof(IDirect3DSurface9 *));
+
+    hr = VMR9_SurfaceAllocator_SetAllocationSettings(This, info);
+    if (FAILED(hr))
+        ERR("Setting allocation settings failed: %08x\n", hr);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = IVMRSurfaceAllocatorNotify9_AllocateSurfaceHelper(This->SurfaceAllocatorNotify, info, numbuffers, This->d3d9_surfaces);
+        if (FAILED(hr))
+            ERR("Allocating surfaces failed: %08x\n", hr);
+    }
+
+    if (FAILED(hr))
+    {
+        IVMRSurfaceAllocatorEx9_TerminateDevice(This->pVMR9->allocator, This->pVMR9->cookie);
+        BaseWindowImpl_DoneWithWindow(&This->pVMR9->baseControlWindow.baseWindow);
+        return FALSE;
+    }
+
+    This->num_surfaces = *numbuffers;
+
+    return TRUE;
+}
+
 static HRESULT WINAPI VMR9_SurfaceAllocator_InitializeDevice(IVMRSurfaceAllocatorEx9 *iface, DWORD_PTR id, VMR9AllocationInfo *allocinfo, DWORD *numbuffers)
 {
     VMR9DefaultAllocatorPresenterImpl *This = impl_from_IVMRSurfaceAllocatorEx9(iface);
@@ -1578,21 +1724,29 @@ static HRESULT WINAPI VMR9_SurfaceAllocator_InitializeDevice(IVMRSurfaceAllocato
     }
 
     This->info = *allocinfo;
-    return E_NOTIMPL;
+
+    if (!CreateRenderingWindow(This, allocinfo, numbuffers))
+    {
+        ERR("Failed to create rendering window, expect no output!\n");
+        return VFW_E_WRONG_STATE;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI VMR9_SurfaceAllocator_TerminateDevice(IVMRSurfaceAllocatorEx9 *iface, DWORD_PTR id)
 {
     VMR9DefaultAllocatorPresenterImpl *This = impl_from_IVMRSurfaceAllocatorEx9(iface);
-    HRESULT hr;
 
     if (!This->pVMR9->baseControlWindow.baseWindow.hWnd)
     {
         return S_OK;
     }
 
-    hr = SendMessageW(This->pVMR9->baseControlWindow.baseWindow.hWnd, WM_CLOSE, 0, 0);
-    FIXME("SendMessageW: %08x\n", hr);
+    SendMessageW(This->pVMR9->baseControlWindow.baseWindow.hWnd, WM_CLOSE, 0, 0);
+    PostThreadMessageW(This->tid, WM_QUIT, 0, 0);
+    WaitForSingleObject(This->hWndThread, INFINITE);
+    This->hWndThread = NULL;
     BaseWindowImpl_DoneWithWindow(&This->pVMR9->baseControlWindow.baseWindow);
 
     return S_OK;
@@ -1800,6 +1954,8 @@ static HRESULT VMR9DefaultAllocatorPresenterImpl_create(VMR9Impl *parent, LPVOID
     This->hMon = 0;
     This->d3d9_vertex = NULL;
     This->num_surfaces = 0;
+    This->hWndThread = NULL;
+    This->ack = CreateEventW(NULL, 0, 0, NULL);
     This->SurfaceAllocatorNotify = NULL;
     This->reset = FALSE;
 
