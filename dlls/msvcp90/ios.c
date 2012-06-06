@@ -3001,7 +3001,7 @@ void __thiscall basic_ostream_char_osfx(basic_ostream_char *this)
     basic_ostream_char__Osfx(this);
 }
 
-static BOOL sentry_char_create(basic_ostream_char *ostr)
+static BOOL basic_ostream_char_sentry_create(basic_ostream_char *ostr)
 {
     basic_ios_char *base = basic_ostream_char_get_basic_ios(ostr);
 
@@ -3014,7 +3014,7 @@ static BOOL sentry_char_create(basic_ostream_char *ostr)
     return ios_base_good(&base->base);
 }
 
-static void sentry_char_destroy(basic_ostream_char *ostr)
+static void basic_ostream_char_sentry_destroy(basic_ostream_char *ostr)
 {
     basic_ios_char *base = basic_ostream_char_get_basic_ios(ostr);
 
@@ -3048,14 +3048,14 @@ basic_ostream_char* __thiscall basic_ostream_char_put(basic_ostream_char *this, 
 
     TRACE("(%p %c)\n", this, ch);
 
-    if(!sentry_char_create(this)
+    if(!basic_ostream_char_sentry_create(this)
             || basic_streambuf_char_sputc(base->strbuf, ch)==EOF) {
-        sentry_char_destroy(this);
+        basic_ostream_char_sentry_destroy(this);
         ios_base_setstate(&base->base, IOSTATE_badbit);
         return this;
     }
 
-    sentry_char_destroy(this);
+    basic_ostream_char_sentry_destroy(this);
     return this;
 }
 
@@ -3128,14 +3128,14 @@ basic_ostream_char* __thiscall basic_ostream_char_write(basic_ostream_char *this
 
     TRACE("(%p %s %ld)\n", this, debugstr_a(str), count);
 
-    if(!sentry_char_create(this)
+    if(!basic_ostream_char_sentry_create(this)
             || basic_streambuf_char_sputn(base->strbuf, str, count)!=count) {
-        sentry_char_destroy(this);
+        basic_ostream_char_sentry_destroy(this);
         ios_base_setstate(&base->base, IOSTATE_badbit);
         return this;
     }
 
-    sentry_char_destroy(this);
+    basic_ostream_char_sentry_destroy(this);
     return this;
 }
 
