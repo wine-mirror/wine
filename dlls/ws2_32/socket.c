@@ -1706,7 +1706,9 @@ static NTSTATUS WS2_async_accept( void *arg, IO_STATUS_BLOCK *iosb, NTSTATUS sta
     if (status != STATUS_PENDING)
         goto finish;
 
-    return STATUS_SUCCESS;
+    /* The APC has finished but no completion should be sent for the operation yet, additional processing
+     * needs to be performed by WS2_async_accept_recv() first. */
+    return STATUS_MORE_PROCESSING_REQUIRED;
 
 finish:
     iosb->u.Status = status;
@@ -1714,8 +1716,6 @@ finish:
 
     if (wsa->user_overlapped->hEvent)
         SetEvent(wsa->user_overlapped->hEvent);
-    if (wsa->cvalue)
-        WS_AddCompletion( HANDLE2SOCKET(wsa->listen_socket), wsa->cvalue, iosb->u.Status, iosb->Information );
 
     *apc = ws2_async_accept_apc;
     return status;
@@ -2046,7 +2046,8 @@ static BOOL WINAPI WS2_AcceptEx(SOCKET listener, SOCKET acceptor, PVOID dest, DW
         req->async.callback = wine_server_client_ptr( WS2_async_accept );
         req->async.iosb     = wine_server_client_ptr( overlapped );
         req->async.arg      = wine_server_client_ptr( wsa );
-        /* We don't set event or completion since we may also have to read */
+        req->async.cvalue   = cvalue;
+        /* We don't set event since we may also have to read */
         status = wine_server_call( req );
     }
     SERVER_END_REQ;
