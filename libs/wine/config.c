@@ -165,7 +165,8 @@ static char *get_runtime_bindir( const char *argv0 )
         if ((ret = readlink( EXE_LINK, bindir, size )) == -1) break;
         if (ret != size)
         {
-            if (!(p = memrchr( bindir, '/', ret ))) break;
+            bindir[ret] = 0;
+            if (!(p = strrchr( bindir, '/' ))) break;
             if (p == bindir) p++;
             *p = 0;
             return bindir;
