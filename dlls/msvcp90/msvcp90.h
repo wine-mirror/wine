@@ -21,8 +21,8 @@
 
 typedef unsigned char MSVCP_bool;
 typedef SIZE_T MSVCP_size_t;
-typedef SIZE_T streamoff;
-typedef SIZE_T streamsize;
+typedef SSIZE_T streamoff;
+typedef SSIZE_T streamsize;
 
 void __cdecl _invalid_parameter(const wchar_t*, const wchar_t*,
         const wchar_t*, unsigned int, uintptr_t);

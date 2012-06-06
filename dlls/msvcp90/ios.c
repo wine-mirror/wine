@@ -111,8 +111,8 @@ typedef struct _ios_base {
     IOSB_iostate state;
     IOSB_iostate except;
     IOSB_fmtflags fmtfl;
-    MSVCP_size_t prec;
-    MSVCP_size_t wide;
+    streamsize prec;
+    streamsize wide;
     IOS_BASE_iosarray *arr;
     IOS_BASE_fnarray *calls;
     locale *loc;
@@ -126,7 +126,7 @@ typedef struct {
 
 static inline const char* debugstr_fpos_int(fpos_int *fpos)
 {
-    return wine_dbg_sprintf("fpos(%lu %s %d)", fpos->off, wine_dbgstr_longlong(fpos->pos), fpos->state);
+    return wine_dbg_sprintf("fpos(%ld %s %d)", fpos->off, wine_dbgstr_longlong(fpos->pos), fpos->state);
 }
 
 typedef struct {
@@ -526,7 +526,7 @@ streamsize __thiscall basic_streambuf_char__Xsgetn_s(basic_streambuf_char *this,
 {
     streamsize copied, chunk;
 
-    TRACE("(%p %p %lu %lu)\n", this, ptr, size, count);
+    TRACE("(%p %p %lu %ld)\n", this, ptr, size, count);
 
     for(copied=0; copied<count && size;) {
         chunk = basic_streambuf_char__Gnavail(this);
@@ -555,7 +555,7 @@ streamsize __thiscall basic_streambuf_char__Xsgetn_s(basic_streambuf_char *this,
 DEFINE_THISCALL_WRAPPER(basic_streambuf_char__Sgetn_s, 16)
 streamsize __thiscall basic_streambuf_char__Sgetn_s(basic_streambuf_char *this, char *ptr, MSVCP_size_t size, streamsize count)
 {
-    TRACE("(%p %p %lu %lu)\n", this, ptr, size, count);
+    TRACE("(%p %p %lu %ld)\n", this, ptr, size, count);
     return call_basic_streambuf_char__Xsgetn_s(this, ptr, size, count);
 }
 
@@ -703,7 +703,7 @@ DEFINE_THISCALL_WRAPPER(basic_streambuf_char_seekoff, 20)
 fpos_int* __thiscall basic_streambuf_char_seekoff(basic_streambuf_char *this,
         fpos_int *ret, streamoff off, int way, int mode)
 {
-    TRACE("(%p %lu %d %d)\n", this, off, way, mode);
+    TRACE("(%p %ld %d %d)\n", this, off, way, mode);
     ret->off = 0;
     ret->pos = -1;
     ret->state = 0;
@@ -716,7 +716,7 @@ DEFINE_THISCALL_WRAPPER(basic_streambuf_char_pubseekoff, 20)
 fpos_int* __thiscall basic_streambuf_char_pubseekoff(basic_streambuf_char *this,
         fpos_int *ret, streamoff off, int way, int mode)
 {
-    TRACE("(%p %lu %d %d)\n", this, off, way, mode);
+    TRACE("(%p %ld %d %d)\n", this, off, way, mode);
     return call_basic_streambuf_char_seekoff(this, ret, off, way, mode);
 }
 
@@ -726,7 +726,7 @@ DEFINE_THISCALL_WRAPPER(basic_streambuf_char_pubseekoff_old, 20)
 fpos_int* __thiscall basic_streambuf_char_pubseekoff_old(basic_streambuf_char *this,
         fpos_int *ret, streamoff off, unsigned int way, unsigned int mode)
 {
-    TRACE("(%p %lu %d %d)\n", this, off, way, mode);
+    TRACE("(%p %ld %d %d)\n", this, off, way, mode);
     return basic_streambuf_char_pubseekoff(this, ret, off, way, mode);
 }
 
@@ -772,7 +772,7 @@ DEFINE_THISCALL_WRAPPER(basic_streambuf_char_setbuf, 12)
         basic_streambuf_char*, (basic_streambuf_char*, char*, streamsize), (this, buf, count))
 basic_streambuf_char* __thiscall basic_streambuf_char_setbuf(basic_streambuf_char *this, char *buf, streamsize count)
 {
-    TRACE("(%p %p %lu)\n", this, buf, count);
+    TRACE("(%p %p %ld)\n", this, buf, count);
     return this;
 }
 
@@ -781,7 +781,7 @@ basic_streambuf_char* __thiscall basic_streambuf_char_setbuf(basic_streambuf_cha
 DEFINE_THISCALL_WRAPPER(basic_streambuf_char_pubsetbuf, 12)
 basic_streambuf_char* __thiscall basic_streambuf_char_pubsetbuf(basic_streambuf_char *this, char *buf, streamsize count)
 {
-    TRACE("(%p %p %lu)\n", this, buf, count);
+    TRACE("(%p %p %ld)\n", this, buf, count);
     return call_basic_streambuf_char_setbuf(this, buf, count);
 }
 
@@ -810,7 +810,7 @@ int __thiscall basic_streambuf_char_pubsync(basic_streambuf_char *this)
 DEFINE_THISCALL_WRAPPER(basic_streambuf_char_sgetn, 12)
 streamsize __thiscall basic_streambuf_char_sgetn(basic_streambuf_char *this, char *ptr, streamsize count)
 {
-    TRACE("(%p %p %lu)\n", this, ptr, count);
+    TRACE("(%p %p %ld)\n", this, ptr, count);
     return call_basic_streambuf_char__Xsgetn_s(this, ptr, -1, count);
 }
 
@@ -931,7 +931,7 @@ DEFINE_THISCALL_WRAPPER(basic_streambuf_char_xsgetn, 12)
         streamsize, (basic_streambuf_char*, char*, streamsize), (this, ptr, count))
 streamsize __thiscall basic_streambuf_char_xsgetn(basic_streambuf_char *this, char *ptr, streamsize count)
 {
-    TRACE("(%p %p %lu)\n", this, ptr, count);
+    TRACE("(%p %p %ld)\n", this, ptr, count);
     return call_basic_streambuf_char__Xsgetn_s(this, ptr, -1, count);
 }
 
@@ -944,7 +944,7 @@ streamsize __thiscall basic_streambuf_char_xsputn(basic_streambuf_char *this, co
 {
     streamsize copied, chunk;
 
-    TRACE("(%p %p %lu)\n", this, ptr, count);
+    TRACE("(%p %p %ld)\n", this, ptr, count);
 
     for(copied=0; copied<count;) {
         chunk = basic_streambuf_char__Pnavail(this);
@@ -971,7 +971,7 @@ streamsize __thiscall basic_streambuf_char_xsputn(basic_streambuf_char *this, co
 DEFINE_THISCALL_WRAPPER(basic_streambuf_char_sputn, 12)
 streamsize __thiscall basic_streambuf_char_sputn(basic_streambuf_char *this, const char *ptr, streamsize count)
 {
-    TRACE("(%p %p %lu)\n", this, ptr, count);
+    TRACE("(%p %p %ld)\n", this, ptr, count);
     return call_basic_streambuf_char_xsputn(this, ptr, count);
 }
 
@@ -1269,7 +1269,7 @@ streamsize __thiscall basic_streambuf_wchar__Xsgetn_s(basic_streambuf_wchar *thi
 {
     streamsize copied, chunk;
 
-    TRACE("(%p %p %lu %lu)\n", this, ptr, size, count);
+    TRACE("(%p %p %lu %ld)\n", this, ptr, size, count);
 
     for(copied=0; copied<count && size;) {
         chunk = basic_streambuf_wchar__Gnavail(this);
@@ -1300,7 +1300,7 @@ streamsize __thiscall basic_streambuf_wchar__Xsgetn_s(basic_streambuf_wchar *thi
 DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar__Sgetn_s, 16)
 streamsize __thiscall basic_streambuf_wchar__Sgetn_s(basic_streambuf_wchar *this, wchar_t *ptr, MSVCP_size_t size, streamsize count)
 {
-    TRACE("(%p %p %lu %lu)\n", this, ptr, size, count);
+    TRACE("(%p %p %lu %ld)\n", this, ptr, size, count);
     return call_basic_streambuf_wchar__Xsgetn_s(this, ptr, size, count);
 }
 
@@ -1478,7 +1478,7 @@ DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_seekoff, 20)
 fpos_int* __thiscall basic_streambuf_wchar_seekoff(basic_streambuf_wchar *this,
         fpos_int *ret, streamoff off, int way, int mode)
 {
-    TRACE("(%p %lu %d %d)\n", this, off, way, mode);
+    TRACE("(%p %ld %d %d)\n", this, off, way, mode);
     ret->off = 0;
     ret->pos = -1;
     ret->state = 0;
@@ -1493,7 +1493,7 @@ DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_pubseekoff, 20)
 fpos_int* __thiscall basic_streambuf_wchar_pubseekoff(basic_streambuf_wchar *this,
         fpos_int *ret, streamoff off, int way, int mode)
 {
-    TRACE("(%p %lu %d %d)\n", this, off, way, mode);
+    TRACE("(%p %ld %d %d)\n", this, off, way, mode);
     return call_basic_streambuf_wchar_seekoff(this, ret, off, way, mode);
 }
 
@@ -1505,7 +1505,7 @@ DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_pubseekoff_old, 20)
 fpos_int* __thiscall basic_streambuf_wchar_pubseekoff_old(basic_streambuf_wchar *this,
         fpos_int *ret, streamoff off, unsigned int way, unsigned int mode)
 {
-    TRACE("(%p %lu %d %d)\n", this, off, way, mode);
+    TRACE("(%p %ld %d %d)\n", this, off, way, mode);
     return basic_streambuf_wchar_pubseekoff(this, ret, off, way, mode);
 }
 
@@ -1559,7 +1559,7 @@ DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_setbuf, 12)
         basic_streambuf_wchar*, (basic_streambuf_wchar*, wchar_t*, streamsize), (this, buf, count))
 basic_streambuf_wchar* __thiscall basic_streambuf_wchar_setbuf(basic_streambuf_wchar *this, wchar_t *buf, streamsize count)
 {
-    TRACE("(%p %p %lu)\n", this, buf, count);
+    TRACE("(%p %p %ld)\n", this, buf, count);
     return this;
 }
 
@@ -1570,7 +1570,7 @@ basic_streambuf_wchar* __thiscall basic_streambuf_wchar_setbuf(basic_streambuf_w
 DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_pubsetbuf, 12)
 basic_streambuf_wchar* __thiscall basic_streambuf_wchar_pubsetbuf(basic_streambuf_wchar *this, wchar_t *buf, streamsize count)
 {
-    TRACE("(%p %p %lu)\n", this, buf, count);
+    TRACE("(%p %p %ld)\n", this, buf, count);
     return call_basic_streambuf_wchar_setbuf(this, buf, count);
 }
 
@@ -1605,7 +1605,7 @@ int __thiscall basic_streambuf_wchar_pubsync(basic_streambuf_wchar *this)
 DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_sgetn, 12)
 streamsize __thiscall basic_streambuf_wchar_sgetn(basic_streambuf_wchar *this, wchar_t *ptr, streamsize count)
 {
-    TRACE("(%p %p %lu)\n", this, ptr, count);
+    TRACE("(%p %p %ld)\n", this, ptr, count);
     return call_basic_streambuf_wchar__Xsgetn_s(this, ptr, -1, count);
 }
 
@@ -1746,7 +1746,7 @@ DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_xsgetn, 12)
         streamsize, (basic_streambuf_wchar*, wchar_t*, streamsize), (this, ptr, count))
 streamsize __thiscall basic_streambuf_wchar_xsgetn(basic_streambuf_wchar *this, wchar_t *ptr, streamsize count)
 {
-    TRACE("(%p %p %lu)\n", this, ptr, count);
+    TRACE("(%p %p %ld)\n", this, ptr, count);
     return call_basic_streambuf_wchar__Xsgetn_s(this, ptr, -1, count);
 }
 
@@ -1761,7 +1761,7 @@ streamsize __thiscall basic_streambuf_wchar_xsputn(basic_streambuf_wchar *this, 
 {
     streamsize copied, chunk;
 
-    TRACE("(%p %p %lu)\n", this, ptr, count);
+    TRACE("(%p %p %ld)\n", this, ptr, count);
 
     for(copied=0; copied<count;) {
         chunk = basic_streambuf_wchar__Pnavail(this);
@@ -1790,7 +1790,7 @@ streamsize __thiscall basic_streambuf_wchar_xsputn(basic_streambuf_wchar *this, 
 DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_sputn, 12)
 streamsize __thiscall basic_streambuf_wchar_sputn(basic_streambuf_wchar *this, const wchar_t *ptr, streamsize count)
 {
-    TRACE("(%p %p %lu)\n", this, ptr, count);
+    TRACE("(%p %p %ld)\n", this, ptr, count);
     return call_basic_streambuf_wchar_xsputn(this, ptr, count);
 }
 
@@ -2228,11 +2228,11 @@ locale* __thiscall ios_base_imbue(ios_base *this, locale *ret, const locale *loc
 /* ?precision@ios_base@std@@QAEHH@Z */
 /* ?precision@ios_base@std@@QEAA_J_J@Z */
 DEFINE_THISCALL_WRAPPER(ios_base_precision_set, 8)
-MSVCP_size_t __thiscall ios_base_precision_set(ios_base *this, MSVCP_size_t precision)
+streamsize __thiscall ios_base_precision_set(ios_base *this, streamsize precision)
 {
-    MSVCP_size_t ret = this->prec;
+    streamsize ret = this->prec;
 
-    TRACE("(%p %lu)\n", this, precision);
+    TRACE("(%p %ld)\n", this, precision);
 
     this->prec = precision;
     return ret;
@@ -2241,7 +2241,7 @@ MSVCP_size_t __thiscall ios_base_precision_set(ios_base *this, MSVCP_size_t prec
 /* ?precision@ios_base@std@@QBEHXZ */
 /* ?precision@ios_base@std@@QEBA_JXZ */
 DEFINE_THISCALL_WRAPPER(ios_base_precision_get, 4)
-MSVCP_size_t __thiscall ios_base_precision_get(const ios_base *this)
+streamsize __thiscall ios_base_precision_get(const ios_base *this)
 {
     TRACE("(%p)\n", this);
     return this->prec;
@@ -2331,11 +2331,11 @@ void __thiscall ios_base_unsetf(ios_base *this, IOSB_fmtflags flags)
 /* ?width@ios_base@std@@QAEHH@Z */
 /* ?width@ios_base@std@@QEAA_J_J@Z */
 DEFINE_THISCALL_WRAPPER(ios_base_width_set, 8)
-MSVCP_size_t __thiscall ios_base_width_set(ios_base *this, MSVCP_size_t width)
+streamsize __thiscall ios_base_width_set(ios_base *this, streamsize width)
 {
-    MSVCP_size_t ret = this->wide;
+    streamsize ret = this->wide;
 
-    TRACE("(%p %lu)\n", this, width);
+    TRACE("(%p %ld)\n", this, width);
 
     this->wide = width;
     return ret;
@@ -2344,7 +2344,7 @@ MSVCP_size_t __thiscall ios_base_width_set(ios_base *this, MSVCP_size_t width)
 /* ?width@ios_base@std@@QBEHXZ */
 /* ?width@ios_base@std@@QEBA_JXZ */
 DEFINE_THISCALL_WRAPPER(ios_base_width_get, 4)
-MSVCP_size_t __thiscall ios_base_width_get(ios_base *this)
+streamsize __thiscall ios_base_width_get(ios_base *this)
 {
     TRACE("(%p)\n", this);
     return this->wide;
@@ -3066,7 +3066,7 @@ basic_ostream_char* __thiscall basic_ostream_char_seekp(basic_ostream_char *this
 {
     basic_ios_char *base = basic_ostream_char_get_basic_ios(this);
 
-    TRACE("(%p %lu %d)\n", this, off, way);
+    TRACE("(%p %ld %d)\n", this, off, way);
 
     if(!ios_base_fail(&base->base)) {
         fpos_int seek;
@@ -3126,7 +3126,7 @@ basic_ostream_char* __thiscall basic_ostream_char_write(basic_ostream_char *this
 {
     basic_ios_char *base = basic_ostream_char_get_basic_ios(this);
 
-    TRACE("(%p %s %lu)\n", this, debugstr_a(str), count);
+    TRACE("(%p %s %ld)\n", this, debugstr_a(str), count);
 
     if(!sentry_char_create(this)
             || basic_streambuf_char_sputn(base->strbuf, str, count)!=count) {
