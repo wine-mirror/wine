@@ -3380,7 +3380,7 @@ static HRESULT WINAPI IFileDialogCustomize_fnRemoveControlItem(IFileDialogCustom
             return E_FAIL;
 
         for(i = 0; i < count; i++)
-            if(SendMessageW(ctrl->hwnd, CB_GETITEMDATA, 0, 0) == dwIDItem)
+            if(SendMessageW(ctrl->hwnd, CB_GETITEMDATA, i, 0) == dwIDItem)
             {
                 if(SendMessageW(ctrl->hwnd, CB_DELETESTRING, i, 0) == CB_ERR)
                     return E_FAIL;
