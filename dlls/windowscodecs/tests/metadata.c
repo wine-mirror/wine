@@ -386,7 +386,7 @@ static void test_metadata_IFD(void)
         ok(id.vt == VT_UI2, "%u: unexpected vt: %u\n", i, id.vt);
         ok(U(id).uiVal == td[i].id, "%u: unexpected id: %#x\n", i, U(id).uiVal);
         ok(value.vt == td[i].type, "%u: unexpected vt: %u\n", i, value.vt);
-        ok(U(value).uhVal.QuadPart == td[i].value, "%u: unexpected id: %d/%d\n", i, U(value).uhVal.LowPart, U(value).uhVal.HighPart);
+        ok(U(value).uhVal.QuadPart == td[i].value, "%u: unexpected id: %d/%d\n", i, U(value).uhVal.u.LowPart, U(value).uhVal.u.HighPart);
 
         PropVariantClear(&schema);
         PropVariantClear(&id);
