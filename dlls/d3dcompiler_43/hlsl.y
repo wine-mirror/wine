@@ -50,6 +50,8 @@ static void hlsl_error(const char *s)
 static void debug_dump_decl(struct hlsl_type *type, DWORD modifiers, const char *declname, unsigned int line_no)
 {
     TRACE("Line %u: ", line_no);
+    if (modifiers)
+        TRACE("%s ", debug_modifiers(modifiers));
     TRACE("%s %s;\n", debug_hlsl_type(type), declname);
 }
 
@@ -58,6 +60,25 @@ static BOOL declare_variable(struct hlsl_ir_var *decl, BOOL local)
     BOOL ret;
 
     TRACE("Declaring variable %s.\n", decl->name);
+    if (decl->node.data_type->type == HLSL_CLASS_MATRIX)
+    {
+        if (!(decl->modifiers & (HLSL_MODIFIER_ROW_MAJOR | HLSL_MODIFIER_COLUMN_MAJOR)))
+        {
+            decl->modifiers |= hlsl_ctx.matrix_majority == HLSL_ROW_MAJOR
+                    ? HLSL_MODIFIER_ROW_MAJOR : HLSL_MODIFIER_COLUMN_MAJOR;
+        }
+    }
+    if (local)
+    {
+        DWORD invalid = decl->modifiers & (HLSL_STORAGE_EXTERN | HLSL_STORAGE_SHARED
+                | HLSL_STORAGE_GROUPSHARED | HLSL_STORAGE_UNIFORM);
+        if (invalid)
+        {
+            hlsl_message("Line %u: modifier '%s' invalid for local variables.\n",
+                    hlsl_ctx.line_no, debug_modifiers(invalid));
+            set_parse_status(&hlsl_ctx.status, PARSE_ERR);
+        }
+    }
     ret = add_declaration(hlsl_ctx.cur_scope, decl, local);
     if (ret == FALSE)
     {
@@ -69,6 +90,26 @@ static BOOL declare_variable(struct hlsl_ir_var *decl, BOOL local)
         return FALSE;
     }
     return TRUE;
+}
+
+static DWORD add_modifier(DWORD modifiers, DWORD mod)
+{
+    if (modifiers & mod)
+    {
+        hlsl_message("Line %u: modifier '%s' already specified.\n",
+                     hlsl_ctx.line_no, debug_modifiers(mod));
+        set_parse_status(&hlsl_ctx.status, PARSE_ERR);
+        return modifiers;
+    }
+    if (mod & (HLSL_MODIFIER_ROW_MAJOR | HLSL_MODIFIER_COLUMN_MAJOR)
+            && modifiers & (HLSL_MODIFIER_ROW_MAJOR | HLSL_MODIFIER_COLUMN_MAJOR))
+    {
+        hlsl_message("Line %u: more than one matrix majority keyword.\n",
+                hlsl_ctx.line_no);
+        set_parse_status(&hlsl_ctx.status, PARSE_ERR);
+        return modifiers;
+    }
+    return modifiers | mod;
 }
 
 %}
@@ -298,6 +339,12 @@ declaration:              var_modifiers type variables_def ';'
                                         FIXME("Variable with an initializer.\n");
                                     }
 
+                                    if (hlsl_ctx.cur_scope == hlsl_ctx.globals)
+                                    {
+                                        var->modifiers |= HLSL_STORAGE_UNIFORM;
+                                        local = FALSE;
+                                    }
+
                                     ret = declare_variable(var, local);
                                     if (ret == FALSE)
                                         free_declaration(var);
@@ -337,6 +384,50 @@ array:                    /* Empty */
 var_modifiers:            /* Empty */
                             {
                                 $$ = 0;
+                            }
+                        | KW_EXTERN var_modifiers
+                            {
+                                $$ = add_modifier($2, HLSL_STORAGE_EXTERN);
+                            }
+                        | KW_NOINTERPOLATION var_modifiers
+                            {
+                                $$ = add_modifier($2, HLSL_STORAGE_NOINTERPOLATION);
+                            }
+                        | KW_PRECISE var_modifiers
+                            {
+                                $$ = add_modifier($2, HLSL_MODIFIER_PRECISE);
+                            }
+                        | KW_SHARED var_modifiers
+                            {
+                                $$ = add_modifier($2, HLSL_STORAGE_SHARED);
+                            }
+                        | KW_GROUPSHARED var_modifiers
+                            {
+                                $$ = add_modifier($2, HLSL_STORAGE_GROUPSHARED);
+                            }
+                        | KW_STATIC var_modifiers
+                            {
+                                $$ = add_modifier($2, HLSL_STORAGE_STATIC);
+                            }
+                        | KW_UNIFORM var_modifiers
+                            {
+                                $$ = add_modifier($2, HLSL_STORAGE_UNIFORM);
+                            }
+                        | KW_VOLATILE var_modifiers
+                            {
+                                $$ = add_modifier($2, HLSL_STORAGE_VOLATILE);
+                            }
+                        | KW_CONST var_modifiers
+                            {
+                                $$ = add_modifier($2, HLSL_MODIFIER_CONST);
+                            }
+                        | KW_ROW_MAJOR var_modifiers
+                            {
+                                $$ = add_modifier($2, HLSL_MODIFIER_ROW_MAJOR);
+                            }
+                        | KW_COLUMN_MAJOR var_modifiers
+                            {
+                                $$ = add_modifier($2, HLSL_MODIFIER_COLUMN_MAJOR);
                             }
 
 %%

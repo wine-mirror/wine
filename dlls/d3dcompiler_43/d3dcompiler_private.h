@@ -694,6 +694,20 @@ struct hlsl_ir_node
     unsigned int column;
 };
 
+#define HLSL_STORAGE_EXTERN          0x00000001
+#define HLSL_STORAGE_NOINTERPOLATION 0x00000002
+#define HLSL_MODIFIER_PRECISE        0x00000004
+#define HLSL_STORAGE_SHARED          0x00000008
+#define HLSL_STORAGE_GROUPSHARED     0x00000010
+#define HLSL_STORAGE_STATIC          0x00000020
+#define HLSL_STORAGE_UNIFORM         0x00000040
+#define HLSL_STORAGE_VOLATILE        0x00000080
+#define HLSL_MODIFIER_CONST          0x00000100
+#define HLSL_MODIFIER_ROW_MAJOR      0x00000200
+#define HLSL_MODIFIER_COLUMN_MAJOR   0x00000400
+#define HLSL_MODIFIER_IN             0x00000800
+#define HLSL_MODIFIER_OUT            0x00001000
+
 struct hlsl_ir_var
 {
     struct hlsl_ir_node node;
