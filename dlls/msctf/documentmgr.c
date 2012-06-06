@@ -72,7 +72,7 @@ static inline DocumentMgr *impl_from_ITfSource(ITfSource *iface)
     return CONTAINING_RECORD(iface, DocumentMgr, ITfSource_iface);
 }
 
-static inline EnumTfContext *impl_from_IEnumTfContexts(IEnumTfContexts *iface)\
+static inline EnumTfContext *impl_from_IEnumTfContexts(IEnumTfContexts *iface)
 {
     return CONTAINING_RECORD(iface, EnumTfContext, IEnumTfContexts_iface);
 }
