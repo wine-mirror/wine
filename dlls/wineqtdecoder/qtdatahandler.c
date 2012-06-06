@@ -119,8 +119,6 @@
 #include "winuser.h"
 #include "dshow.h"
 
-#include <assert.h>
-
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
