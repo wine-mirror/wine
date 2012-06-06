@@ -2975,7 +2975,7 @@ basic_ostream_char* __thiscall basic_ostream_char_flush(basic_ostream_char *this
 
     if(basic_ios_char_rdbuf_get(base) && ios_base_good(&base->base)
             && basic_streambuf_char_pubsync(basic_ios_char_rdbuf_get(base))==-1)
-        ios_base_setstate(&base->base, IOSTATE_badbit);
+        basic_ios_char_setstate(base, IOSTATE_badbit);
     return this;
 }
 
@@ -3051,7 +3051,7 @@ basic_ostream_char* __thiscall basic_ostream_char_put(basic_ostream_char *this, 
     if(!basic_ostream_char_sentry_create(this)
             || basic_streambuf_char_sputc(base->strbuf, ch)==EOF) {
         basic_ostream_char_sentry_destroy(this);
-        ios_base_setstate(&base->base, IOSTATE_badbit);
+        basic_ios_char_setstate(base, IOSTATE_badbit);
         return this;
     }
 
@@ -3074,7 +3074,7 @@ basic_ostream_char* __thiscall basic_ostream_char_seekp(basic_ostream_char *this
         basic_streambuf_char_pubseekoff(basic_ios_char_rdbuf_get(base),
                 &seek, off, way, OPENMODE_out);
         if(seek.off==0 && seek.pos==-1 && seek.state==0)
-            ios_base_setstate(&base->base, IOSTATE_failbit);
+            basic_ios_char_setstate(base, IOSTATE_failbit);
     }
     return this;
 }
@@ -3094,7 +3094,7 @@ basic_ostream_char* __thiscall basic_ostream_char_seekp_fpos(basic_ostream_char 
         basic_streambuf_char_pubseekpos(basic_ios_char_rdbuf_get(base),
                 &seek, pos, OPENMODE_out);
         if(seek.off==0 && seek.pos==-1 && seek.state==0)
-            ios_base_setstate(&base->base, IOSTATE_failbit);
+            basic_ios_char_setstate(base, IOSTATE_failbit);
     }
     return this;
 }
@@ -3131,7 +3131,7 @@ basic_ostream_char* __thiscall basic_ostream_char_write(basic_ostream_char *this
     if(!basic_ostream_char_sentry_create(this)
             || basic_streambuf_char_sputn(base->strbuf, str, count)!=count) {
         basic_ostream_char_sentry_destroy(this);
-        ios_base_setstate(&base->base, IOSTATE_badbit);
+        basic_ios_char_setstate(base, IOSTATE_badbit);
         return this;
     }
 
