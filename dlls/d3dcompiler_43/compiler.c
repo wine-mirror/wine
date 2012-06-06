@@ -500,6 +500,8 @@ static HRESULT compile_shader(const char *preproc_shader, const char *target, co
     ID3DBlob *buffer;
     char *pos;
 
+    TRACE("Preprocessed shader source: %s\n", debugstr_a(preproc_shader));
+
     FIXME("Parse compilation target.\n");
     shader = parse_hlsl_shader(preproc_shader, ST_VERTEX, 2, entrypoint, &messages);
 
