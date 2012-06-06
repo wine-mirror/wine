@@ -50,7 +50,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(mountmgr);
     DO_FUNC(dbus_bus_get); \
     DO_FUNC(dbus_bus_remove_match); \
     DO_FUNC(dbus_connection_add_filter); \
-    DO_FUNC(dbus_connection_close); \
     DO_FUNC(dbus_connection_read_write_dispatch); \
     DO_FUNC(dbus_connection_remove_filter); \
     DO_FUNC(dbus_connection_send_with_reply_and_block); \
@@ -526,7 +525,6 @@ static DWORD WINAPI dbus_thread( void *arg )
 #ifdef SONAME_LIBHAL
         if (!hal_enumerate_devices())
         {
-            p_dbus_connection_close( connection );
             p_dbus_error_free( &error );
             return 1;
         }
@@ -544,7 +542,6 @@ static DWORD WINAPI dbus_thread( void *arg )
     }
     __ENDTRY;
 
-    p_dbus_connection_close( connection );
     return 0;
 }
 
