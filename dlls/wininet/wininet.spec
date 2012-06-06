@@ -157,6 +157,9 @@
 @ stdcall InternetGetLastResponseInfoW(ptr ptr ptr)
 @ stdcall InternetGetPerSiteCookieDecisionA(str ptr)
 @ stdcall InternetGetPerSiteCookieDecisionW(wstr ptr)
+@ stdcall InternetGetSecurityInfoByURL(str ptr ptr) InternetGetSecurityInfoByURLA
+@ stdcall InternetGetSecurityInfoByURLA(str ptr ptr)
+@ stdcall InternetGetSecurityInfoByURLW(wstr ptr ptr)
 @ stdcall InternetGoOnline(str long long) InternetGoOnlineA
 @ stdcall InternetGoOnlineA(str long long)
 @ stdcall InternetGoOnlineW(wstr long long)

@@ -2702,6 +2702,7 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
             SetLastError(ERROR_INTERNET_BAD_OPTION_LENGTH);
             ret = FALSE;
         } else
+            TRACE("INTERNET_OPTION_ERROR_MASK: %x\n", *(ULONG*)lpBuffer);
             lpwhh->ErrorMask = *(ULONG*)lpBuffer;
       }
       break;
@@ -4411,6 +4412,24 @@ DWORD WINAPI PrivacyGetZonePreferenceW( DWORD zone, DWORD type, LPDWORD template
 
     if (template) *template = zone_preference;
     return 0;
+}
+
+/***********************************************************************
+ *      InternetGetSecurityInfoByURLA (WININET.@)
+ */
+BOOL WINAPI InternetGetSecurityInfoByURLA(LPSTR lpszURL, PCCERT_CHAIN_CONTEXT *ppCertChain, DWORD *pdwSecureFlags)
+{
+    FIXME("(%s %p %p)\n", debugstr_a(lpszURL), ppCertChain, pdwSecureFlags);
+    return FALSE;
+}
+
+/***********************************************************************
+ *      InternetGetSecurityInfoByURLW (WININET.@)
+ */
+BOOL WINAPI InternetGetSecurityInfoByURLW(LPCWSTR lpszURL, PCCERT_CHAIN_CONTEXT *ppCertChain, DWORD *pdwSecureFlags)
+{
+    FIXME("(%s %p %p)\n", debugstr_w(lpszURL), ppCertChain, pdwSecureFlags);
+    return FALSE;
 }
 
 DWORD WINAPI InternetDialA( HWND hwndParent, LPSTR lpszConnectoid, DWORD dwFlags,
