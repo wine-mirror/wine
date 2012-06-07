@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-05-22 16:06+0300\n"
+"PO-Revision-Date: 2012-06-08 21:40+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -3432,59 +3432,51 @@ msgstr "Aukštos"
 
 #: joy.rc:33
 msgid "Joysticks"
-msgstr ""
+msgstr "Vairasvirtės"
 
 #: joy.rc:36 winecfg.rc:204
 msgid "&Disable"
 msgstr "&Išjungti"
 
 #: joy.rc:37
-#, fuzzy
-#| msgid "&enable"
 msgid "&Enable"
-msgstr "įjun&gti"
+msgstr "Įj&ungti"
 
 #: joy.rc:38
-#, fuzzy
-#| msgid "Disconnected"
 msgid "Connected"
-msgstr "Atjungta"
+msgstr "Prijungta"
 
 #: joy.rc:40
-#, fuzzy
-#| msgid "&Disable"
 msgid "Disabled"
-msgstr "&Išjungti"
+msgstr "Išjungta"
 
 #: joy.rc:46
 msgid "Test Joystick"
-msgstr ""
+msgstr "Testuoti vairasvirtę"
 
 #: joy.rc:50
 msgid "Buttons"
-msgstr ""
+msgstr "Mygtukai"
 
 #: joy.rc:51
 msgid "X,Y"
-msgstr ""
+msgstr "X,Y"
 
 #: joy.rc:52
 msgid "Rx,Ry"
-msgstr ""
+msgstr "Rx,Ry"
 
 #: joy.rc:53
 msgid "Z, Rz"
-msgstr ""
+msgstr "Z, Rz"
 
 #: joy.rc:58
 msgid "Test Force Feedback"
-msgstr ""
+msgstr "Testuoti „Force Feedback“"
 
 #: joy.rc:28
-#, fuzzy
-#| msgid "Create Control"
 msgid "Game Controllers"
-msgstr "Sukurti valdiklį"
+msgstr "Žaidimų valdikliai"
 
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
