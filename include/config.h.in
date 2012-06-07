@@ -791,6 +791,9 @@
 /* Define to 1 if `direction' is a member of `struct ff_effect'. */
 #undef HAVE_STRUCT_FF_EFFECT_DIRECTION
 
+/* Define to 1 if `icps_inhist' is a member of `struct icmpstat'. */
+#undef HAVE_STRUCT_ICMPSTAT_ICPS_INHIST
+
 /* Define to 1 if `icps_outhist' is a member of `struct icmpstat'. */
 #undef HAVE_STRUCT_ICMPSTAT_ICPS_OUTHIST
 

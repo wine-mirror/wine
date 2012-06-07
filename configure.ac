@@ -2282,6 +2282,12 @@ AC_CHECK_MEMBERS([ns_msg._msg_ptr],,,
 # include <arpa/nameser.h>
 #endif])
 
+dnl Check for struct icmpstat
+AC_CHECK_MEMBERS([struct icmpstat.icps_inhist],,,
+[#ifdef HAVE_NETINET_ICMP_VAR
+#include <netinet/icmp_var.h>
+#endif])
+
 dnl Check for struct icmpstat.icps_outhist
 AC_CHECK_MEMBERS([struct icmpstat.icps_outhist],,,
 [#ifdef HAVE_SYS_TYPES_H

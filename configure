@@ -14028,6 +14028,20 @@ _ACEOF
 fi
 
 
+ac_fn_c_check_member "$LINENO" "struct icmpstat" "icps_inhist" "ac_cv_member_struct_icmpstat_icps_inhist" "#ifdef HAVE_NETINET_ICMP_VAR
+#include <netinet/icmp_var.h>
+#endif
+"
+if test "x$ac_cv_member_struct_icmpstat_icps_inhist" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_ICMPSTAT_ICPS_INHIST 1
+_ACEOF
+
+
+fi
+
+
 ac_fn_c_check_member "$LINENO" "struct icmpstat" "icps_outhist" "ac_cv_member_struct_icmpstat_icps_outhist" "#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
