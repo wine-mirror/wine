@@ -45,7 +45,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL( mscoree );
 
-static const WCHAR net_11_subdir[] = {'1','.','0',0};
 static const WCHAR net_20_subdir[] = {'2','.','0',0};
 static const WCHAR net_40_subdir[] = {'4','.','0',0};
 
@@ -54,7 +53,7 @@ static const struct ICLRRuntimeInfoVtbl CLRRuntimeInfoVtbl;
 #define NUM_RUNTIMES 3
 
 static struct CLRRuntimeInfo runtimes[NUM_RUNTIMES] = {
-    {{&CLRRuntimeInfoVtbl}, net_11_subdir, 1, 1, 4322, 0},
+    {{&CLRRuntimeInfoVtbl}, net_20_subdir, 1, 1, 4322, 0},
     {{&CLRRuntimeInfoVtbl}, net_20_subdir, 2, 0, 50727, 0},
     {{&CLRRuntimeInfoVtbl}, net_40_subdir, 4, 0, 30319, 0}
 };
@@ -123,14 +122,9 @@ MonoImage* (CDECL * const image_from_handle_fn[NUM_ABI_VERSIONS])(HMODULE module
     image_open_module_handle_dummy_2
 };
 
-static void missing_runtime_message(const CLRRuntimeInfo *This)
+static void missing_runtime_message(void)
 {
-    if (This->major == 1)
-        MESSAGE("wine: Install Mono 2.6 for Windows to run .NET 1.1 applications.\n");
-    else if (This->major == 2)
-        MESSAGE("wine: Install Mono for Windows to run .NET 2.0 applications.\n");
-    else if (This->major == 4)
-        MESSAGE("wine: Install Mono 2.8 or greater for Windows to run .NET 4.0 applications.\n");
+    MESSAGE("wine: Install Mono for Windows to run .NET applications.\n");
 }
 
 static HRESULT load_mono(CLRRuntimeInfo *This, loaded_mono **result)
@@ -147,7 +141,7 @@ static HRESULT load_mono(CLRRuntimeInfo *This, loaded_mono **result)
 
     if (This->mono_abi_version <= 0 || This->mono_abi_version > NUM_ABI_VERSIONS)
     {
-        missing_runtime_message(This);
+        missing_runtime_message();
         return E_FAIL;
     }
 
@@ -1078,7 +1072,7 @@ HRESULT WINAPI CLRMetaHost_GetRuntime(ICLRMetaHost* iface,
                         ppRuntime);
             else
             {
-                missing_runtime_message(&runtimes[i]);
+                missing_runtime_message();
                 return CLR_E_SHIM_RUNTIME;
             }
         }
@@ -1390,10 +1384,7 @@ HRESULT get_runtime_info(LPCWSTR exefile, LPCWSTR version, LPCWSTR config_file,
             }
         }
 
-        if (legacy)
-            missing_runtime_message(&runtimes[1]);
-        else
-            missing_runtime_message(&runtimes[NUM_RUNTIMES-1]);
+        missing_runtime_message();
 
         return CLR_E_SHIM_RUNTIME;
     }
