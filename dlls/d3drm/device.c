@@ -1125,7 +1125,7 @@ static HRESULT WINAPI IDirect3DRMWinDeviceImpl_HandlePaint(IDirect3DRMWinDevice*
 
     FIXME("(%p/%p)->(%p): stub\n", iface, This, hdc);
 
-    return E_NOTIMPL;
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMWinDeviceImpl_HandleActivate(IDirect3DRMWinDevice* iface, WORD wparam)
