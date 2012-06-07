@@ -500,30 +500,200 @@ void test_D3DXCreateRenderToSurface(IDirect3DDevice9 *device)
     if (SUCCEEDED(hr)) ID3DXRenderToSurface_Release(render);
 }
 
-static void test_ID3DXRenderToSurface(IDirect3DDevice9 *device)
+/* runs a set of tests for the ID3DXRenderToSurface interface created with given parameters */
+static void check_ID3DXRenderToSurface(IDirect3DDevice9 *device, UINT width, UINT height, D3DFORMAT format,
+        BOOL depth_stencil, D3DFORMAT depth_stencil_format, BOOL render_target)
 {
     HRESULT hr;
-    ULONG ref_count;
-    IDirect3DDevice9 *out_device;
+    D3DFORMAT fmt;
+    HRESULT expected_value;
+    IDirect3DSurface9 *surface;
     ID3DXRenderToSurface *render;
+    D3DVIEWPORT9 viewport = { 0, 0, width, height, 0.0, 1.0 };
 
-    hr = D3DXCreateRenderToSurface(device, 256, 256, D3DFMT_A8R8G8B8, FALSE, D3DFMT_UNKNOWN, &render);
+    hr = D3DXCreateRenderToSurface(device, width, height, format, depth_stencil, depth_stencil_format, &render);
     if (FAILED(hr))
     {
         skip("Failed to create ID3DXRenderToSurface\n");
         return;
     }
 
-    /* GetDevice */
-    hr = ID3DXRenderToSurface_GetDevice(render, NULL /* device */);
-    ok(hr == D3DERR_INVALIDCALL, "ID3DXRenderToSurface::GetDevice returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+    if (render_target)
+        hr = IDirect3DDevice9_CreateRenderTarget(device, width, height, format, D3DMULTISAMPLE_NONE, 0, FALSE, &surface, NULL);
+    else
+        hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, width, height, format, D3DPOOL_DEFAULT, &surface, NULL);
+    if (FAILED(hr))
+    {
+        skip("Failed to create surface\n");
+        ID3DXRenderToSurface_Release(render);
+        return;
+    }
 
-    ref_count = get_ref((IUnknown *)device);
-    hr = ID3DXRenderToSurface_GetDevice(render, &out_device);
-    ok(hr == D3D_OK, "ID3DXRenderToSurface::GetDevice returned %#x, expected %#x\n", hr, D3D_OK);
-    check_release((IUnknown *)out_device, ref_count);
+    /* viewport */
+    hr = ID3DXRenderToSurface_BeginScene(render, surface, &viewport);
+    ok(hr == D3D_OK, "ID3DXRenderToSurface::BeginScene returned %#x, expected %#x\n", hr, D3D_OK);
+    check_ref((IUnknown *)surface, 2);
+    if (SUCCEEDED(hr)) ID3DXRenderToSurface_EndScene(render, D3DX_FILTER_NONE);
+
+    /* invalid viewport */
+    viewport.Width = 2 * width;
+    hr = ID3DXRenderToSurface_BeginScene(render, surface, &viewport);
+    ok(hr == D3DERR_INVALIDCALL, "ID3DXRenderToSurface::BeginScene returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+    viewport.X = width / 2;
+    viewport.Width = width;
+    hr = ID3DXRenderToSurface_BeginScene(render, surface, &viewport);
+    ok(hr == D3DERR_INVALIDCALL, "ID3DXRenderToSurface::BeginScene returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+    viewport.X = width;
+    viewport.Width = width;
+    hr = ID3DXRenderToSurface_BeginScene(render, surface, &viewport);
+    ok(hr == D3DERR_INVALIDCALL, "ID3DXRenderToSurface::BeginScene returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+    /* rendering to a part of a surface is only allowed for render target surfaces */
+    expected_value = render_target ? D3D_OK : D3DERR_INVALIDCALL;
+
+    viewport.X = 0;
+    viewport.Width = width / 2;
+    hr = ID3DXRenderToSurface_BeginScene(render, surface, &viewport);
+    ok(hr == expected_value, "ID3DXRenderToSurface::BeginScene returned %#x, expected %#x\n", hr, expected_value);
+    if (SUCCEEDED(hr)) ID3DXRenderToSurface_EndScene(render, D3DX_FILTER_NONE);
+
+    viewport.X = width / 2;
+    viewport.Width = width - width / 2;
+    hr = ID3DXRenderToSurface_BeginScene(render, surface, &viewport);
+    ok(hr == expected_value, "ID3DXRenderToSurface::BeginScene returned %#x, expected %#x\n", hr, expected_value);
+    if (SUCCEEDED(hr)) ID3DXRenderToSurface_EndScene(render, D3DX_FILTER_NONE);
+
+    check_release((IUnknown *)surface, 0);
+
+    /* surfaces with different sizes */
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, width / 2, width / 2, format, D3DPOOL_DEFAULT, &surface, NULL);
+    if (FAILED(hr))
+    {
+        skip("Failed to create surface\n");
+        ID3DXRenderToSurface_Release(render);
+        return;
+    }
+    hr = ID3DXRenderToSurface_BeginScene(render, surface, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "ID3DXRenderToSurface::BeginScene returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+    check_release((IUnknown *)surface, 0);
+
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 2 * width, 2 * height, format, D3DPOOL_DEFAULT, &surface, NULL);
+    if (FAILED(hr))
+    {
+        skip("Failed to create surface\n");
+        ID3DXRenderToSurface_Release(render);
+        return;
+    }
+    hr = ID3DXRenderToSurface_BeginScene(render, surface, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "ID3DXRenderToSurface::BeginScene returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+    viewport.X = 0;
+    viewport.Y = 0;
+    viewport.Width = width;
+    viewport.Height = height;
+    hr = ID3DXRenderToSurface_BeginScene(render, surface, &viewport);
+    ok(hr == D3DERR_INVALIDCALL, "ID3DXRenderToSurface::BeginScene returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+    check_release((IUnknown *)surface, 0);
+
+    /* surfaces with different formats */
+    for (fmt = D3DFMT_A8R8G8B8; fmt <= D3DFMT_X8R8G8B8; fmt++)
+    {
+        HRESULT expected_result = (fmt != format) ? D3DERR_INVALIDCALL : D3D_OK;
+
+        hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, width, height, fmt, D3DPOOL_DEFAULT, &surface, NULL);
+        if (FAILED(hr))
+        {
+            skip("Failed to create surface\n");
+            continue;
+        }
+
+        hr = ID3DXRenderToSurface_BeginScene(render, surface, NULL);
+        ok(hr == expected_result, "ID3DXRenderToSurface::BeginScene returned %#x, expected %#x\n", hr, expected_result);
+
+        if (SUCCEEDED(hr)) ID3DXRenderToSurface_EndScene(render, D3DX_FILTER_NONE);
+        check_release((IUnknown *)surface, 0);
+    }
 
     check_release((IUnknown *)render, 0);
+}
+
+static void test_ID3DXRenderToSurface(IDirect3DDevice9 *device)
+{
+    int i;
+    HRESULT hr;
+    ULONG ref_count;
+    IDirect3DDevice9 *out_device;
+    ID3DXRenderToSurface *render;
+    IDirect3DSurface9 *surface;
+    D3DVIEWPORT9 viewport = { 0, 0, 256, 256, 0.0, 1.0 };
+    D3DXRTS_DESC tests[] = {
+        { 256, 256, D3DFMT_A8R8G8B8, FALSE, D3DFMT_UNKNOWN },
+        { 256, 256, D3DFMT_A8R8G8B8, TRUE, D3DFMT_D24S8 },
+        { 256, 256, D3DFMT_A8R8G8B8, TRUE, D3DFMT_D24X8 },
+        { 512, 512, D3DFMT_X8R8G8B8, FALSE, D3DFMT_X8R8G8B8 },
+        { 1024, 1024, D3DFMT_X8R8G8B8, TRUE, D3DFMT_D24S8 }
+    };
+
+    hr = D3DXCreateRenderToSurface(device, 256, 256, D3DFMT_A8R8G8B8, FALSE, D3DFMT_UNKNOWN, &render);
+    ok(hr == D3D_OK, "D3DXCreateRenderToSurface returned %#x, expected %#x\n", hr, D3D_OK);
+    if (FAILED(hr)) return;
+
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 256, 256, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &surface, NULL);
+    if (SUCCEEDED(hr))
+    {
+        ID3DXRenderToSurface *render_surface;
+
+        /* GetDevice */
+        hr = ID3DXRenderToSurface_GetDevice(render, NULL /* device */);
+        ok(hr == D3DERR_INVALIDCALL, "ID3DXRenderToSurface::GetDevice returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+        ref_count = get_ref((IUnknown *)device);
+        hr = ID3DXRenderToSurface_GetDevice(render, &out_device);
+        ok(hr == D3D_OK, "ID3DXRenderToSurface::GetDevice returned %#x, expected %#x\n", hr, D3D_OK);
+        check_release((IUnknown *)out_device, ref_count);
+
+        /* BeginScene and EndScene */
+        hr = ID3DXRenderToSurface_EndScene(render, D3DX_FILTER_NONE);
+        ok(hr == D3DERR_INVALIDCALL, "ID3DXRenderToSurface::EndScene returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+        hr = ID3DXRenderToSurface_BeginScene(render, NULL /* surface */, &viewport);
+        ok(hr == D3DERR_INVALIDCALL, "ID3DXRenderToSurface::BeginScene returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+        ref_count = get_ref((IUnknown *)surface);
+        hr = ID3DXRenderToSurface_BeginScene(render, surface, NULL);
+        ok(hr == D3D_OK, "ID3DXRenderToSurface::BeginScene returned %#x, expected %#x\n", hr, D3D_OK);
+        if (SUCCEEDED(hr))
+        {
+            check_ref((IUnknown *)surface, ref_count + 1);
+
+            hr = ID3DXRenderToSurface_BeginScene(render, surface, NULL);
+            ok(hr == D3DERR_INVALIDCALL, "ID3DXRenderToSurface::BeginScene returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+            hr = ID3DXRenderToSurface_EndScene(render, D3DX_FILTER_NONE);
+            ok(hr == D3D_OK, "ID3DXRenderToSurface::EndScene returned %#x, expected %#x\n", hr, D3D_OK);
+
+            check_ref((IUnknown *)surface, ref_count);
+        }
+
+        /* error handling is deferred to BeginScene */
+        hr = D3DXCreateRenderToSurface(device, 256, 256, D3DFMT_A8R8G8B8, TRUE, D3DFMT_UNKNOWN, &render_surface);
+        ok(hr == D3D_OK, "D3DXCreateRenderToSurface returned %#x, expected %#x\n", hr, D3D_OK);
+        hr = ID3DXRenderToSurface_BeginScene(render_surface, surface, NULL);
+        ok(hr == D3DERR_INVALIDCALL, "ID3DXRenderToSurface::BeginScene returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+        check_release((IUnknown *)render_surface, 0);
+
+        check_release((IUnknown *)surface, 0);
+    }
+    else skip("Failed to create surface\n");
+
+    check_release((IUnknown *)render, 0);
+
+    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i++)
+    {
+        check_ID3DXRenderToSurface(device, tests[i].Width, tests[i].Height, tests[i].Format, tests[i].DepthStencil, tests[i].DepthStencilFormat, TRUE);
+        check_ID3DXRenderToSurface(device, tests[i].Width, tests[i].Height, tests[i].Format, tests[i].DepthStencil, tests[i].DepthStencilFormat, FALSE);
+    }
 }
 
 START_TEST(core)
