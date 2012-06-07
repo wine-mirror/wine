@@ -1303,11 +1303,11 @@ static void test_InternetErrorDlg(void)
         res = InternetErrorDlg(hwnd, (HANDLE)0xdeadbeef, i, flags, NULL);
         if(res == ERROR_CALL_NOT_IMPLEMENTED)
         {
-            todo_wine ok(test_flags & FLAG_UNIMPL, "%i is unexpectedly unimplemented.\n", i);
+            ok(test_flags & FLAG_UNIMPL, "%i is unexpectedly unimplemented.\n", i);
             continue;
         }
         else
-            todo_wine ok(res == ERROR_INVALID_HANDLE, "Got %d (%d)\n", res, i);
+            ok(res == ERROR_INVALID_HANDLE, "Got %d (%d)\n", res, i);
 
         /* With a valid req */
         if(i == ERROR_INTERNET_NEED_UI)
