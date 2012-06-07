@@ -36,12 +36,16 @@ struct Joystick {
     int num_axes;
 };
 
+#define TEST_MAX_BUTTONS    32
+
 struct JoystickData {
     IDirectInput8W *di;
     struct Joystick *joysticks;
     int num_joysticks;
     int cur_joystick;
     int chosen_joystick;
+    HWND buttons[TEST_MAX_BUTTONS];
+    BOOL stop;
 };
 
 #define NUM_PROPERTY_PAGES 3
@@ -61,5 +65,19 @@ struct JoystickData {
 #define IDC_BUTTONDISABLE   2001
 #define IDC_BUTTONENABLE    2002
 #define IDC_DISABLEDLIST    2003
+#define IDC_TESTSELECTCOMBO 2004
+
+#define IDC_JOYSTICKBUTTON  3000
+
+/* constants */
+#define TEST_POLL_TIME      100
+
+#define TEST_BUTTON_COL_MAX 8
+#define TEST_BUTTON_X       15
+#define TEST_BUTTON_Y       200
+#define TEST_NEXT_BUTTON_X  45
+#define TEST_NEXT_BUTTON_Y  30
+#define TEST_BUTTON_SIZE_X  30
+#define TEST_BUTTON_SIZE_Y  25
 
 #endif

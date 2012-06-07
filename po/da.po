@@ -3466,7 +3466,11 @@ msgstr "&Deaktiver"
 msgid "Test Joystick"
 msgstr ""
 
-#: joy.rc:53
+#: joy.rc:50
+msgid "Buttons"
+msgstr ""
+
+#: joy.rc:55
 msgid "Test Force Feedback"
 msgstr ""
 

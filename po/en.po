@@ -3444,7 +3444,11 @@ msgstr "Disabled"
 msgid "Test Joystick"
 msgstr "Test Joystick"
 
-#: joy.rc:53
+#: joy.rc:50
+msgid "Buttons"
+msgstr "Buttons"
+
+#: joy.rc:55
 msgid "Test Force Feedback"
 msgstr "Test Force Feedback"
 

@@ -67,6 +67,7 @@ static BOOL CALLBACK enum_callback(const DIDEVICEINSTANCEW *instance, void *cont
 {
     struct JoystickData *data = context;
     struct Joystick *joystick;
+    DIDEVCAPS caps;
 
     if (data->joysticks == NULL)
     {
@@ -81,6 +82,12 @@ static BOOL CALLBACK enum_callback(const DIDEVICEINSTANCEW *instance, void *cont
     IDirectInputDevice8_SetDataFormat(joystick->device, &c_dfDIJoystick);
 
     joystick->instance = *instance;
+
+    caps.dwSize = sizeof(caps);
+    IDirectInputDevice8_GetCapabilities(joystick->device, &caps);
+
+    joystick->num_buttons = caps.dwButtons;
+    joystick->num_axes = caps.dwAxes;
 
     return DIENUM_CONTINUE;
 }
@@ -163,6 +170,178 @@ INT_PTR CALLBACK list_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     return FALSE;
 }
 
+/*********************************************************************
+ * Joystick testing functions
+ *
+ */
+static void poll_input(const struct Joystick *joy, DIJOYSTATE *state)
+{
+    HRESULT  hr;
+
+    hr = IDirectInputDevice8_Poll(joy->device);
+
+    /* If it failed, try to acquire the joystick */
+    if (FAILED(hr))
+    {
+        hr = IDirectInputDevice8_Acquire(joy->device);
+        while (hr == DIERR_INPUTLOST) hr = IDirectInputDevice8_Acquire(joy->device);
+    }
+
+    if (hr == DIERR_OTHERAPPHASPRIO) return;
+
+    IDirectInputDevice8_GetDeviceState(joy->device, sizeof(DIJOYSTATE), state);
+}
+
+static DWORD WINAPI input_thread(void *param)
+{
+    DIJOYSTATE state;
+    struct JoystickData *data = param;
+
+    ZeroMemory(&state, sizeof(state));
+
+    while (!data->stop)
+    {
+        int i;
+        poll_input(&data->joysticks[data->chosen_joystick], &state);
+
+        /* Indicate pressed buttons */
+        for (i = 0; i < data->joysticks[data->chosen_joystick].num_buttons; i++)
+            if (state.rgbButtons[i])
+                SendMessageW(data->buttons[i], BM_SETSTATE, TRUE, 0);
+
+        Sleep(TEST_POLL_TIME);
+
+        /* Reset button state */
+        for (i = 0; i < data->joysticks[data->chosen_joystick].num_buttons; i++)
+            SendMessageW(data->buttons[i], BM_SETSTATE, FALSE, 0);
+    }
+
+    return 0;
+}
+
+static void test_handle_joychange(HWND hwnd, struct JoystickData *data)
+{
+    int i;
+
+    if (data->num_joysticks == 0) return;
+
+    data->chosen_joystick = SendDlgItemMessageW(hwnd, IDC_TESTSELECTCOMBO, CB_GETCURSEL, 0, 0);
+
+    /* Enable only  buttons present in the device */
+    for (i = 0; i < TEST_MAX_BUTTONS; i++)
+        ShowWindow(data->buttons[i], i <= data->joysticks[data->chosen_joystick].num_buttons);
+}
+
+/*********************************************************************
+ * button_number_to_wchar [internal]
+ *  Transforms an integer in the interval [0,99] into a 2 character WCHAR string
+ */
+static void button_number_to_wchar(int n, WCHAR str[3])
+{
+    str[1] = n % 10 + '0';
+    n /= 10;
+    str[0] = n % 10 + '0';
+    str[2] = '\0';
+}
+
+static void draw_joystick_buttons(HWND hwnd, struct JoystickData* data)
+{
+    int i;
+    int row = 0, col = 0;
+    WCHAR button_label[3];
+    HINSTANCE hinst = (HINSTANCE) GetWindowLongPtrW(hwnd, GWLP_HINSTANCE);
+    static WCHAR button_class[] = {'B','u','t','t','o','n','\0'};
+
+    for (i = 0; i < TEST_MAX_BUTTONS; i++)
+    {
+        if ((i % TEST_BUTTON_COL_MAX) == 0 && i != 0)
+        {
+            row += 1;
+            col = 0;
+        }
+
+        button_number_to_wchar(i + 1, button_label);
+
+        data->buttons[i] = CreateWindowW(button_class, button_label, WS_CHILD,
+            TEST_BUTTON_X + TEST_NEXT_BUTTON_X*col, TEST_BUTTON_Y + TEST_NEXT_BUTTON_Y*row,
+            TEST_BUTTON_SIZE_X, TEST_BUTTON_SIZE_Y,
+            hwnd, NULL, NULL, hinst);
+
+        col += 1;
+    }
+}
+
+/*********************************************************************
+ * test_dlgproc [internal]
+ *
+ */
+static INT_PTR CALLBACK test_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    static HANDLE thread;
+    static struct JoystickData *data;
+    TRACE("(%p, 0x%08x/%d, 0x%lx)\n", hwnd, msg, msg, lparam);
+
+    switch (msg)
+    {
+        case WM_INITDIALOG:
+        {
+            int i;
+
+            data = (struct JoystickData*) ((PROPSHEETPAGEW*)lparam)->lParam;
+
+            /* Add enumerated joysticks to the combobox */
+            for (i = 0; i < data->num_joysticks; i++)
+            {
+                struct Joystick *joy = &data->joysticks[i];
+                SendDlgItemMessageW(hwnd, IDC_TESTSELECTCOMBO, CB_ADDSTRING, 0, (LPARAM) joy->instance.tszInstanceName);
+            }
+
+            draw_joystick_buttons(hwnd, data);
+
+            return TRUE;
+        }
+
+        case WM_COMMAND:
+            switch(wparam)
+            {
+                case MAKEWPARAM(IDC_TESTSELECTCOMBO, CBN_SELCHANGE):
+                    test_handle_joychange(hwnd, data);
+                break;
+            }
+            return TRUE;
+
+        case WM_NOTIFY:
+            switch(((LPNMHDR)lparam)->code)
+            {
+                case PSN_SETACTIVE:
+                {
+                    DWORD tid;
+
+                    /* Initialize input thread */
+                    if (data->num_joysticks > 0)
+                    {
+                        data->stop = FALSE;
+
+                        /* Set the first joystick as default */
+                        SendDlgItemMessageW(hwnd, IDC_TESTSELECTCOMBO, CB_SETCURSEL, 0, 0);
+                        test_handle_joychange(hwnd, data);
+
+                        thread = CreateThread(NULL, 0, input_thread, (void*) data, 0, &tid);
+                    }
+                }
+                break;
+
+                case PSN_RESET:
+                    /* Stop input thread */
+                    data->stop = TRUE;
+                    CloseHandle(thread);
+                break;
+            }
+            return TRUE;
+    }
+    return FALSE;
+}
+
 /******************************************************************************
  * propsheet_callback [internal]
  */
@@ -210,7 +389,7 @@ static void display_cpl_sheets(HWND parent, struct JoystickData *data)
     psp[id].dwSize = sizeof (PROPSHEETPAGEW);
     psp[id].hInstance = hcpl;
     psp[id].u.pszTemplate = MAKEINTRESOURCEW(IDD_TEST);
-    psp[id].pfnDlgProc = NULL;
+    psp[id].pfnDlgProc = test_dlgproc;
     psp[id].lParam = (INT_PTR) data;
     id++;
 
