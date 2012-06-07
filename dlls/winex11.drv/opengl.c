@@ -2903,10 +2903,11 @@ static GLboolean WINAPI X11DRV_wglChoosePixelFormatARB(HDC hdc, const int *piAtt
     }
 
     /* Loop through all matching formats and check if they are suitable.
-    * Note that this function should at max return nMaxFormats different formats */
+     * Note that this function should at max return nMaxFormats different formats */
     for(run=0; run < 2; run++)
     {
-        for (it = 0; it < nCfgs; ++it) {
+        for (it = 0; it < nCfgs && pfmt_it < nMaxFormats; ++it)
+        {
             gl_test = pglXGetFBConfigAttrib(gdi_display, cfgs[it], GLX_FBCONFIG_ID, &fmt_id);
             if (gl_test) {
                 ERR("Failed to retrieve FBCONFIG_ID from GLXFBConfig, expect problems.\n");
@@ -2922,10 +2923,8 @@ static GLboolean WINAPI X11DRV_wglChoosePixelFormatARB(HDC hdc, const int *piAtt
             if( ((run == 0) && fmt->offscreenOnly) || ((run == 1) && !fmt->offscreenOnly) )
                 continue;
 
-            if(pfmt_it < nMaxFormats) {
-                piFormats[pfmt_it] = fmt->iPixelFormat;
-                TRACE("at %d/%d found FBCONFIG_ID 0x%x (%d)\n", it + 1, nCfgs, fmt_id, piFormats[pfmt_it]);
-            }
+            piFormats[pfmt_it] = fmt->iPixelFormat;
+            TRACE("at %d/%d found FBCONFIG_ID 0x%x (%d)\n", it + 1, nCfgs, fmt_id, piFormats[pfmt_it]);
             pfmt_it++;
         }
     }
