@@ -37,6 +37,7 @@ typedef struct {
     IDirect3DRMViewport2 IDirect3DRMViewport2_iface;
     LONG ref;
     D3DVALUE back;
+    D3DVALUE front;
 } IDirect3DRMViewportImpl;
 
 static inline IDirect3DRMViewportImpl *impl_from_IDirect3DRMViewport(IDirect3DRMViewport *iface)
@@ -220,9 +221,9 @@ static HRESULT WINAPI IDirect3DRMViewportImpl_SetFront(IDirect3DRMViewport* ifac
 {
     IDirect3DRMViewportImpl *This = impl_from_IDirect3DRMViewport(iface);
 
-    FIXME("(%p/%p)->(%f): stub\n", iface, This, front);
+    TRACE("(%p/%p)->(%f)\n", iface, This, front);
 
-    return E_NOTIMPL;
+    return IDirect3DRMViewport2_SetFront(&This->IDirect3DRMViewport2_iface, front);
 }
 
 static HRESULT WINAPI IDirect3DRMViewportImpl_SetBack(IDirect3DRMViewport* iface, D3DVALUE back)
@@ -431,9 +432,9 @@ static D3DVALUE WINAPI IDirect3DRMViewportImpl_GetFront(IDirect3DRMViewport* ifa
 {
     IDirect3DRMViewportImpl *This = impl_from_IDirect3DRMViewport(iface);
 
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    TRACE("(%p/%p)->()\n", iface, This);
 
-    return E_NOTIMPL;
+    return IDirect3DRMViewport2_GetFront(&This->IDirect3DRMViewport2_iface);
 }
 
 static D3DRMPROJECTIONTYPE WINAPI IDirect3DRMViewportImpl_GetProjection(IDirect3DRMViewport* iface)
@@ -641,9 +642,11 @@ static HRESULT WINAPI IDirect3DRMViewport2Impl_SetFront(IDirect3DRMViewport2* if
 {
     IDirect3DRMViewportImpl *This = impl_from_IDirect3DRMViewport2(iface);
 
-    FIXME("(%p/%p)->(%f): stub\n", iface, This, front);
+    TRACE("(%p/%p)->(%f):\n", iface, This, front);
 
-    return E_NOTIMPL;
+    This->front = front;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMViewport2Impl_SetBack(IDirect3DRMViewport2* iface, D3DVALUE back)
@@ -854,9 +857,9 @@ static D3DVALUE WINAPI IDirect3DRMViewport2Impl_GetFront(IDirect3DRMViewport2* i
 {
     IDirect3DRMViewportImpl *This = impl_from_IDirect3DRMViewport2(iface);
 
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    TRACE("(%p/%p)->()\n", iface, This);
 
-    return E_NOTIMPL;
+    return This->front;
 }
 
 static D3DRMPROJECTIONTYPE WINAPI IDirect3DRMViewport2Impl_GetProjection(IDirect3DRMViewport2* iface)
