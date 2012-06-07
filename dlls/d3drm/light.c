@@ -35,6 +35,7 @@ typedef struct {
     D3DRMLIGHTTYPE type;
     D3DCOLOR color;
     D3DVALUE range;
+    D3DVALUE cattenuation;
 } IDirect3DRMLightImpl;
 
 static inline IDirect3DRMLightImpl *impl_from_IDirect3DRMLight(IDirect3DRMLight *iface)
@@ -243,9 +244,11 @@ static HRESULT WINAPI IDirect3DRMLightImpl_SetConstantAttenuation(IDirect3DRMLig
 {
     IDirect3DRMLightImpl *This = impl_from_IDirect3DRMLight(iface);
 
-    FIXME("(%p/%p)->(%f): stub\n", iface, This, cattenuation);
+    TRACE("(%p/%p)->(%f)\n", iface, This, cattenuation);
 
-    return E_NOTIMPL;
+    This->cattenuation = cattenuation;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMLightImpl_SetLinearAttenuation(IDirect3DRMLight* iface,
@@ -299,9 +302,9 @@ static D3DVALUE WINAPI IDirect3DRMLightImpl_GetConstantAttenuation(IDirect3DRMLi
 {
     IDirect3DRMLightImpl *This = impl_from_IDirect3DRMLight(iface);
 
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    TRACE("(%p/%p)->()\n", iface, This);
 
-    return 0;
+    return This->cattenuation;
 }
 
 static D3DVALUE WINAPI IDirect3DRMLightImpl_GetLinearAttenuation(IDirect3DRMLight* iface)
