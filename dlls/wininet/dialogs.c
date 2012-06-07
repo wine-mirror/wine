@@ -539,6 +539,9 @@ static INT_PTR WINAPI WININET_InvalidCertificateDialog(
                 case ERROR_INTERNET_SEC_CERT_CN_INVALID:
                     flags |= SECURITY_FLAG_IGNORE_CERT_CN_INVALID;
                     break;
+                case ERROR_INTERNET_SEC_CERT_REV_FAILED:
+                    flags |= SECURITY_FLAG_IGNORE_REVOCATION;
+                    break;
                 case ERROR_INTERNET_SEC_CERT_ERRORS:
                     if(flags & _SECURITY_FLAG_CERT_REV_FAILED)
                         flags |= SECURITY_FLAG_IGNORE_REVOCATION;
@@ -655,6 +658,7 @@ DWORD WINAPI InternetErrorDlg(HWND hWnd, HINTERNET hRequest,
     case ERROR_INTERNET_SEC_CERT_CN_INVALID:
     case ERROR_INTERNET_SEC_CERT_DATE_INVALID:
     case ERROR_INTERNET_INVALID_CA:
+    case ERROR_INTERNET_SEC_CERT_REV_FAILED:
         if( dwFlags & FLAGS_ERROR_UI_FLAGS_NO_UI ) {
             res = ERROR_CANCELLED;
             break;
