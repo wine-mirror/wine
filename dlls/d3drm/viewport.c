@@ -216,7 +216,7 @@ static HRESULT WINAPI IDirect3DRMViewportImpl_Render(IDirect3DRMViewport* iface,
 
     FIXME("(%p/%p)->(%p): stub\n", iface, This, frame);
 
-    return E_NOTIMPL;
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMViewportImpl_SetFront(IDirect3DRMViewport* iface, D3DVALUE front)
@@ -637,7 +637,7 @@ static HRESULT WINAPI IDirect3DRMViewport2Impl_Render(IDirect3DRMViewport2* ifac
 
     FIXME("(%p/%p)->(%p): stub\n", iface, This, frame);
 
-    return E_NOTIMPL;
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMViewport2Impl_SetFront(IDirect3DRMViewport2* iface, D3DVALUE front)
