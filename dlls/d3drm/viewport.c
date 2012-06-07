@@ -36,6 +36,7 @@ typedef struct {
     IDirect3DRMViewport IDirect3DRMViewport_iface;
     IDirect3DRMViewport2 IDirect3DRMViewport2_iface;
     LONG ref;
+    D3DVALUE back;
 } IDirect3DRMViewportImpl;
 
 static inline IDirect3DRMViewportImpl *impl_from_IDirect3DRMViewport(IDirect3DRMViewport *iface)
@@ -228,9 +229,9 @@ static HRESULT WINAPI IDirect3DRMViewportImpl_SetBack(IDirect3DRMViewport* iface
 {
     IDirect3DRMViewportImpl *This = impl_from_IDirect3DRMViewport(iface);
 
-    FIXME("(%p/%p)->(%f): stub\n", iface, This, back);
+    TRACE("(%p/%p)->(%f)\n", iface, This, back);
 
-    return E_NOTIMPL;
+    return IDirect3DRMViewport2_SetBack(&This->IDirect3DRMViewport2_iface, back);
 }
 
 static HRESULT WINAPI IDirect3DRMViewportImpl_SetField(IDirect3DRMViewport* iface, D3DVALUE field)
@@ -421,9 +422,9 @@ static D3DVALUE WINAPI IDirect3DRMViewportImpl_GetBack(IDirect3DRMViewport* ifac
 {
     IDirect3DRMViewportImpl *This = impl_from_IDirect3DRMViewport(iface);
 
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    TRACE("(%p/%p)->()\n", iface, This);
 
-    return E_NOTIMPL;
+    return IDirect3DRMViewport2_GetBack(&This->IDirect3DRMViewport2_iface);
 }
 
 static D3DVALUE WINAPI IDirect3DRMViewportImpl_GetFront(IDirect3DRMViewport* iface)
@@ -649,9 +650,11 @@ static HRESULT WINAPI IDirect3DRMViewport2Impl_SetBack(IDirect3DRMViewport2* ifa
 {
     IDirect3DRMViewportImpl *This = impl_from_IDirect3DRMViewport2(iface);
 
-    FIXME("(%p/%p)->(%f): stub\n", iface, This, back);
+    TRACE("(%p/%p)->(%f)\n", iface, This, back);
 
-    return E_NOTIMPL;
+    This->back = back;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMViewport2Impl_SetField(IDirect3DRMViewport2* iface, D3DVALUE field)
@@ -842,9 +845,9 @@ static D3DVALUE WINAPI IDirect3DRMViewport2Impl_GetBack(IDirect3DRMViewport2* if
 {
     IDirect3DRMViewportImpl *This = impl_from_IDirect3DRMViewport2(iface);
 
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    TRACE("(%p/%p)->()\n", iface, This);
 
-    return E_NOTIMPL;
+    return This->back;
 }
 
 static D3DVALUE WINAPI IDirect3DRMViewport2Impl_GetFront(IDirect3DRMViewport2* iface)
