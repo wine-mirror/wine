@@ -925,7 +925,7 @@ BOOL WINAPI CopyFileW( LPCWSTR source, LPCWSTR dest, BOOL fail_if_exists )
         return FALSE;
     }
 
-    TRACE("%s -> %s\n", debugstr_w(source), debugstr_w(dest));
+    TRACE("%s -> %s, %d\n", debugstr_w(source), debugstr_w(dest), fail_if_exists);
 
     if ((h1 = CreateFileW(source, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
                      NULL, OPEN_EXISTING, 0, 0)) == INVALID_HANDLE_VALUE)
