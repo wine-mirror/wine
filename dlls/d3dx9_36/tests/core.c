@@ -618,6 +618,191 @@ static void check_ID3DXRenderToSurface(IDirect3DDevice9 *device, UINT width, UIN
     check_release((IUnknown *)render, 0);
 }
 
+struct device_state
+{
+    IDirect3DSurface9 *render_target;
+    IDirect3DSurface9 *depth_stencil;
+    D3DVIEWPORT9 viewport;
+};
+
+static void release_device_state(struct device_state *state)
+{
+    if (state->render_target) IDirect3DSurface9_Release(state->render_target);
+    if (state->depth_stencil) IDirect3DSurface9_Release(state->depth_stencil);
+    memset(state, 0, sizeof(*state));
+}
+
+static HRESULT retrieve_device_state(IDirect3DDevice9 *device, struct device_state *state)
+{
+    HRESULT hr;
+
+    memset(state, 0, sizeof(*state));
+
+    hr = IDirect3DDevice9_GetRenderTarget(device, 0, &state->render_target);
+    if (FAILED(hr)) goto cleanup;
+
+    hr = IDirect3DDevice9_GetDepthStencilSurface(device, &state->depth_stencil);
+    if (hr == D3DERR_NOTFOUND)
+        state->depth_stencil = NULL;
+    else if (FAILED(hr))
+        goto cleanup;
+
+    hr = IDirect3DDevice9_GetViewport(device, &state->viewport);
+    if (SUCCEEDED(hr)) return hr;
+
+cleanup:
+    release_device_state(state);
+    return hr;
+}
+
+static HRESULT apply_device_state(IDirect3DDevice9 *device, struct device_state *state)
+{
+    HRESULT hr;
+    HRESULT status = D3D_OK;
+
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, state->render_target);
+    if (FAILED(hr)) status = hr;
+
+    hr = IDirect3DDevice9_SetDepthStencilSurface(device, state->depth_stencil);
+    if (FAILED(hr)) status = hr;
+
+    hr = IDirect3DDevice9_SetViewport(device, &state->viewport);
+    if (FAILED(hr)) status = hr;
+
+    return status;
+}
+
+static void compare_device_state(struct device_state *state1, struct device_state *state2, BOOL equal)
+{
+    BOOL cmp;
+    const char *message = equal ? "differs" : "is the same";
+
+    cmp = state1->render_target == state2->render_target;
+    ok(equal ? cmp : !cmp, "Render target %s %p, %p\n", message, state1->render_target, state2->render_target);
+
+    cmp = state1->depth_stencil == state2->depth_stencil;
+    ok(equal ? cmp : !cmp, "Depth stencil surface %s %p, %p\n", message, state1->depth_stencil, state2->depth_stencil);
+
+    cmp = state1->viewport.X == state2->viewport.X && state1->viewport.Y == state2->viewport.Y
+            && state1->viewport.Width == state2->viewport.Width && state1->viewport.Height == state2->viewport.Height;
+    ok(equal ? cmp : !cmp, "Viewport %s (%u, %u, %u, %u), (%u, %u, %u, %u)\n", message,
+            state1->viewport.X, state1->viewport.Y, state1->viewport.Width, state1->viewport.Height,
+            state2->viewport.X, state2->viewport.Y, state2->viewport.Width, state2->viewport.Height);
+}
+
+static void test_ID3DXRenderToSurface_device_state(IDirect3DDevice9 *device)
+{
+    HRESULT hr;
+    IDirect3DSurface9 *surface = NULL;
+    ID3DXRenderToSurface *render = NULL;
+    struct device_state pre_state;
+    struct device_state current_state;
+    IDirect3DSurface9 *depth_stencil_surface;
+
+    /* make sure there is a depth stencil surface present */
+    hr = IDirect3DDevice9_GetDepthStencilSurface(device, &depth_stencil_surface);
+    if (SUCCEEDED(hr))
+    {
+        IDirect3DSurface9_Release(depth_stencil_surface);
+        depth_stencil_surface = NULL;
+    }
+    else if (hr == D3DERR_NOTFOUND)
+    {
+        hr = IDirect3DDevice9_CreateDepthStencilSurface(device, 256, 256, D3DFMT_D24X8,
+                D3DMULTISAMPLE_NONE, 0, TRUE, &depth_stencil_surface, NULL);
+        if (SUCCEEDED(hr)) IDirect3DDevice9_SetDepthStencilSurface(device, depth_stencil_surface);
+    }
+
+    if (FAILED(hr))
+    {
+        skip("Failed to create depth stencil surface\n");
+        return;
+    }
+
+    hr = IDirect3DDevice9_CreateRenderTarget(device, 256, 256, D3DFMT_A8R8G8B8, D3DMULTISAMPLE_NONE, 0,
+        FALSE, &surface, NULL);
+    if (FAILED(hr))
+    {
+        skip("Failed to create render target\n");
+        goto cleanup;
+    }
+
+    hr = retrieve_device_state(device, &pre_state);
+
+    hr = D3DXCreateRenderToSurface(device, 256, 256, D3DFMT_A8R8G8B8, TRUE, D3DFMT_D24X8, &render);
+    ok(hr == D3D_OK, "D3DXCreateRenderToSurface returned %#x, expected %#x\n", hr, D3D_OK);
+    if (SUCCEEDED(hr))
+    {
+        hr = ID3DXRenderToSurface_BeginScene(render, surface, NULL);
+        ok(hr == D3D_OK, "ID3DXRenderToSurface::BeginScene returned %#x, expected %#x\n", hr, D3D_OK);
+
+        hr = retrieve_device_state(device, &current_state);
+        ok(SUCCEEDED(hr), "Failed to retrieve device state\n");
+        compare_device_state(&current_state, &pre_state, FALSE);
+        release_device_state(&current_state);
+
+        hr = ID3DXRenderToSurface_EndScene(render, D3DX_FILTER_NONE);
+        ok(hr == D3D_OK, "ID3DXRenderToSurface::EndScene returned %#x, expected %#x\n", hr, D3D_OK);
+
+        hr = retrieve_device_state(device, &current_state);
+        ok(SUCCEEDED(hr), "Failed to retrieve device state\n");
+        compare_device_state(&current_state, &pre_state, TRUE);
+        release_device_state(&current_state);
+
+        check_release((IUnknown *)render, 0);
+    }
+
+    hr = D3DXCreateRenderToSurface(device, 256, 256, D3DFMT_A8R8G8B8, FALSE, D3DFMT_UNKNOWN, &render);
+    if (SUCCEEDED(hr))
+    {
+        hr = ID3DXRenderToSurface_BeginScene(render, surface, NULL);
+        ok(hr == D3D_OK, "ID3DXRenderToSurface::BeginScene returned %#x, expected %#x\n", hr, D3D_OK);
+
+        hr = retrieve_device_state(device, &current_state);
+        ok(SUCCEEDED(hr), "Failed to retrieve device state\n");
+        compare_device_state(&current_state, &pre_state, FALSE);
+        release_device_state(&current_state);
+
+        hr = ID3DXRenderToSurface_EndScene(render, D3DX_FILTER_NONE);
+        ok(hr == D3D_OK, "ID3DXRenderToSurface::EndScene returned %#x, expected %#x\n", hr, D3D_OK);
+
+        hr = retrieve_device_state(device, &current_state);
+        ok(SUCCEEDED(hr), "Failed to retrieve device state\n");
+        compare_device_state(&current_state, &pre_state, TRUE);
+        release_device_state(&current_state);
+
+        hr = ID3DXRenderToSurface_BeginScene(render, surface, NULL);
+        ok(hr == D3D_OK, "ID3DXRenderToSurface::BeginScene returned %#x, expected %#x\n", hr, D3D_OK);
+
+        hr = retrieve_device_state(device, &current_state);
+        ok(SUCCEEDED(hr), "Failed to retrieve device state\n");
+        compare_device_state(&current_state, &pre_state, FALSE);
+        release_device_state(&current_state);
+
+        /* if EndScene isn't called, the device state isn't restored */
+        hr = retrieve_device_state(device, &current_state);
+        ok(SUCCEEDED(hr), "Failed to retrieve device state\n");
+        compare_device_state(&current_state, &pre_state, FALSE);
+        release_device_state(&current_state);
+
+        hr = apply_device_state(device, &pre_state);
+        ok(SUCCEEDED(hr), "Failed to restore previous device state\n");
+
+        check_release((IUnknown *)render, 0);
+    }
+
+    release_device_state(&pre_state);
+
+cleanup:
+    if (depth_stencil_surface)
+    {
+        IDirect3DDevice9_SetDepthStencilSurface(device, NULL);
+        IDirect3DSurface9_Release(depth_stencil_surface);
+    }
+
+    if (surface) check_release((IUnknown *)surface, 0);
+}
+
 static void test_ID3DXRenderToSurface(IDirect3DDevice9 *device)
 {
     int i;
@@ -694,6 +879,8 @@ static void test_ID3DXRenderToSurface(IDirect3DDevice9 *device)
         check_ID3DXRenderToSurface(device, tests[i].Width, tests[i].Height, tests[i].Format, tests[i].DepthStencil, tests[i].DepthStencilFormat, TRUE);
         check_ID3DXRenderToSurface(device, tests[i].Width, tests[i].Height, tests[i].Format, tests[i].DepthStencil, tests[i].DepthStencilFormat, FALSE);
     }
+
+    test_ID3DXRenderToSurface_device_state(device);
 }
 
 START_TEST(core)
