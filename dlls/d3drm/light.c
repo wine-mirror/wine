@@ -38,6 +38,7 @@ typedef struct {
     D3DVALUE cattenuation;
     D3DVALUE lattenuation;
     D3DVALUE qattenuation;
+    D3DVALUE umbra;
 } IDirect3DRMLightImpl;
 
 static inline IDirect3DRMLightImpl *impl_from_IDirect3DRMLight(IDirect3DRMLight *iface)
@@ -227,9 +228,11 @@ static HRESULT WINAPI IDirect3DRMLightImpl_SetUmbra(IDirect3DRMLight* iface, D3D
 {
     IDirect3DRMLightImpl *This = impl_from_IDirect3DRMLight(iface);
 
-    FIXME("(%p/%p)->(%f): stub\n", iface, This, umbra);
+    TRACE("(%p/%p)->(%f)\n", iface, This, umbra);
 
-    return E_NOTIMPL;
+    This->umbra = umbra;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMLightImpl_SetPenumbra(IDirect3DRMLight* iface, D3DVALUE penumbra)
@@ -290,9 +293,9 @@ static D3DVALUE WINAPI IDirect3DRMLightImpl_GetUmbra(IDirect3DRMLight* iface)
 {
     IDirect3DRMLightImpl *This = impl_from_IDirect3DRMLight(iface);
 
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    TRACE("(%p/%p)->()\n", iface, This);
 
-    return 0;
+    return This->umbra;
 }
 
 static D3DVALUE WINAPI IDirect3DRMLightImpl_GetPenumbra(IDirect3DRMLight* iface)
