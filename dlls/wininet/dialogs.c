@@ -550,9 +550,11 @@ static INT_PTR WINAPI WININET_InvalidCertificateDialog(
                         flags |= SECURITY_FLAG_IGNORE_CERT_DATE_INVALID;
                     break;
                 }
-                res = InternetSetOptionW( params->req->hdr.hInternet, INTERNET_OPTION_SECURITY_FLAGS, &flags, size );
-                if(!res)
-                    WARN("InternetSetOption(INTERNET_OPTION_SECURITY_FLAGS) failed.\n");
+                /* FIXME: Use helper function */
+                flags |= SECURITY_FLAG_SECURE;
+                req->security_flags |= flags;
+                if(req->netconn)
+                    req->netconn->security_flags |= flags;
             }
 
             EndDialog( hdlg, res ? ERROR_SUCCESS : ERROR_NOT_SUPPORTED );
