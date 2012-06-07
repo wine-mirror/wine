@@ -2190,6 +2190,15 @@ static DWORD HTTPREQ_SetOption(object_header_t *hdr, DWORD option, void *buffer,
     http_request_t *req = (http_request_t*)hdr;
 
     switch(option) {
+    case 99: /* Undocumented, seems to be INTERNET_OPTION_SECURITY_FLAGS with argument validation */
+        TRACE("Undocumented option 99\n");
+
+        if (!buffer || size != sizeof(DWORD))
+            return ERROR_INVALID_PARAMETER;
+        if(*(DWORD*)buffer & ~SECURITY_SET_MASK)
+            return ERROR_INTERNET_OPTION_NOT_SETTABLE;
+
+        /* fall through */
     case INTERNET_OPTION_SECURITY_FLAGS:
     {
         DWORD flags;
