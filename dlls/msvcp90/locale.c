@@ -107,9 +107,20 @@ typedef struct {
     _Cvtvec cvt;
 } ctype_wchar;
 
+typedef enum {
+    CODECVT_ok      = 0,
+    CODECVT_partial = 1,
+    CODECVT_error   = 2,
+    CODECVT_noconv  = 3
+} codecvt_base_result;
+
 typedef struct {
     locale_facet facet;
 } codecvt_base;
+
+typedef struct {
+    codecvt_base base;
+} codecvt_char;
 
 typedef struct {
     locale_facet facet;
@@ -2554,6 +2565,203 @@ int __thiscall codecvt_base_encoding(const codecvt_base *this)
     return call_codecvt_base_do_encoding(this);
 }
 
+/* ?id@?$codecvt@DDH@std@@2V0locale@2@A */
+locale_id codecvt_char_id = {0};
+
+/* ??_7?$codecvt@DDH@std@@6B@ */
+extern const vtable_ptr MSVCP_codecvt_char_vtable;
+
+/* ?_Init@?$codecvt@DDH@std@@IAEXABV_Locinfo@2@@Z */
+/* ?_Init@?$codecvt@DDH@std@@IEAAXAEBV_Locinfo@2@@Z */
+DEFINE_THISCALL_WRAPPER(codecvt_char__Init, 8)
+void __thiscall codecvt_char__Init(codecvt_char *this, const _Locinfo *locinfo)
+{
+    TRACE("(%p %p)\n", this, locinfo);
+}
+
+/* ??0?$codecvt@DDH@std@@QAE@ABV_Locinfo@1@I@Z */
+/* ??0?$codecvt@DDH@std@@QEAA@AEBV_Locinfo@1@_K@Z */
+DEFINE_THISCALL_WRAPPER(codecvt_char_ctor_locinfo, 12)
+codecvt_char* __thiscall codecvt_char_ctor_locinfo(codecvt_char *this, const _Locinfo *locinfo, MSVCP_size_t refs)
+{
+    TRACE("(%p %p %lu)\n", this, locinfo, refs);
+    codecvt_base_ctor_refs(&this->base, refs);
+    this->base.facet.vtable = &MSVCP_codecvt_char_vtable;
+    return this;
+}
+
+/* ??0?$codecvt@DDH@std@@QAE@I@Z */
+/* ??0?$codecvt@DDH@std@@QEAA@_K@Z */
+DEFINE_THISCALL_WRAPPER(codecvt_char_ctor_refs, 8)
+codecvt_char* __thiscall codecvt_char_ctor_refs(codecvt_char *this, MSVCP_size_t refs)
+{
+    return codecvt_char_ctor_locinfo(this, NULL, refs);
+}
+
+/* ??_F?$codecvt@DDH@std@@QAEXXZ */
+/* ??_F?$codecvt@DDH@std@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(codecvt_char_ctor, 4)
+codecvt_char* __thiscall codecvt_char_ctor(codecvt_char *this)
+{
+    return codecvt_char_ctor_locinfo(this, NULL, 0);
+}
+
+/* ?_Getcat@?$codecvt@DDH@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
+/* ??1?$codecvt@DDH@std@@MAE@XZ */
+/* ??1?$codecvt@DDH@std@@MEAA@XZ */
+DEFINE_THISCALL_WRAPPER(codecvt_char_dtor, 4)
+void __thiscall codecvt_char_dtor(codecvt_char *this)
+{
+    TRACE("(%p)\n", this);
+    codecvt_base_dtor(&this->base);
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCP_codecvt_char_vector_dtor, 8)
+codecvt_char* __thiscall MSVCP_codecvt_char_vector_dtor(codecvt_char *this, unsigned int flags)
+{
+    TRACE("(%p %x)\n", this, flags);
+    if(flags & 2) {
+        /* we have an array, with the number of elements stored before the first object */
+        int i, *ptr = (int *)this-1;
+
+        for(i=*ptr-1; i>=0; i--)
+            codecvt_char_dtor(this+i);
+        MSVCRT_operator_delete(ptr);
+    } else {
+        codecvt_char_dtor(this);
+        if(flags & 1)
+            MSVCRT_operator_delete(this);
+    }
+
+    return this;
+}
+
+/* ?_Getcat@?$codecvt@DDH@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
+MSVCP_size_t __cdecl codecvt_char__Getcat(const locale_facet **facet, const locale *loc)
+{
+    TRACE("(%p %p)\n", facet, loc);
+
+    if(facet && !*facet) {
+        *facet = MSVCRT_operator_new(sizeof(codecvt_char));
+        if(!*facet) {
+            ERR("Out of memory\n");
+            throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+            return 0;
+        }
+        codecvt_char_ctor((codecvt_char*)*facet);
+    }
+
+    return LC_CTYPE;
+}
+
+/* ?do_in@?$codecvt@DDH@std@@MBEHAAHPBD1AAPBDPAD3AAPAD@Z */
+/* ?do_in@?$codecvt@DDH@std@@MEBAHAEAHPEBD1AEAPEBDPEAD3AEAPEAD@Z */
+#define call_codecvt_char_do_in(this, state, from, from_end, from_next, to, to_end, to_next) \
+    CALL_VTBL_FUNC(this, 16, int, \
+            (const codecvt_char*, int*, const char*, const char*, const char**, char*, char*, char**), \
+            (this, state, from, from_end, from_next, to, to_end, to_next))
+DEFINE_THISCALL_WRAPPER(codecvt_char_do_in, 32)
+int __thiscall codecvt_char_do_in(const codecvt_char *this, int *state,
+        const char *from, const char *from_end, const char **from_next,
+        char *to, char *to_end, char **to_next)
+{
+    TRACE("(%p %p %p %p %p %p %p %p)\n", this, state, from, from_end,
+            from_next, to, to_end, to_next);
+    *from_next = from;
+    *to_next = to;
+    return CODECVT_noconv;
+}
+
+/* ?in@?$codecvt@DDH@std@@QBEHAAHPBD1AAPBDPAD3AAPAD@Z */
+/* ?in@?$codecvt@DDH@std@@QEBAHAEAHPEBD1AEAPEBDPEAD3AEAPEAD@Z */
+DEFINE_THISCALL_WRAPPER(codecvt_char_in, 32)
+int __thiscall codecvt_char_in(const codecvt_char *this, int *state,
+        const char *from, const char *from_end, const char **from_next,
+        char *to, char *to_end, char **to_next)
+{
+    TRACE("(%p %p %p %p %p %p %p %p)\n", this, state, from, from_end,
+            from_next, to, to_end, to_next);
+    return call_codecvt_char_do_in(this, state, from, from_end, from_next,
+            to, to_end, to_next);
+}
+
+/* ?do_out@?$codecvt@DDH@std@@MBEHAAHPBD1AAPBDPAD3AAPAD@Z */
+/* ?do_out@?$codecvt@DDH@std@@MEBAHAEAHPEBD1AEAPEBDPEAD3AEAPEAD@Z */
+#define call_codecvt_char_do_out(this, state, from, from_end, from_next, to, to_end, to_next) \
+    CALL_VTBL_FUNC(this, 20, int, \
+            (const codecvt_char*, int*, const char*, const char*, const char**, char*, char*, char**), \
+            (this, state, from, from_end, from_next, to, to_end, to_next))
+DEFINE_THISCALL_WRAPPER(codecvt_char_do_out, 32)
+int __thiscall codecvt_char_do_out(const codecvt_char *this, int *state,
+        const char *from, const char *from_end, const char **from_next,
+        char *to, char *to_end, char **to_next)
+{
+    TRACE("(%p %p %p %p %p %p %p %p)\n", this, state, from,
+            from_end, from_next, to, to_end, to_next);
+    *from_next = from;
+    *to_next = to;
+    return CODECVT_noconv;
+}
+
+/* ?out@?$codecvt@DDH@std@@QBEHAAHPBD1AAPBDPAD3AAPAD@Z */
+/* ?out@?$codecvt@DDH@std@@QEBAHAEAHPEBD1AEAPEBDPEAD3AEAPEAD@Z */
+DEFINE_THISCALL_WRAPPER(codecvt_char_out, 32)
+int __thiscall codecvt_char_out(const codecvt_char *this, int *state,
+        const char *from, const char *from_end, const char **from_next,
+        char *to, char *to_end, char **to_next)
+{
+    TRACE("(%p %p %p %p %p %p %p %p)\n", this, state, from, from_end,
+            from_next, to, to_end, to_next);
+    return call_codecvt_char_do_out(this, state, from, from_end, from_next,
+            to, to_end, to_next);
+}
+
+/* ?do_unshift@?$codecvt@DDH@std@@MBEHAAHPAD1AAPAD@Z */
+/* ?do_unshift@?$codecvt@DDH@std@@MEBAHAEAHPEAD1AEAPEAD@Z */
+#define call_codecvt_char_do_unshift(this, state, to, to_end, to_next) CALL_VTBL_FUNC(this, 24, \
+        int, (const codecvt_char*, int*, char*, char*, char**), (this, state, to, to_end, to_next))
+DEFINE_THISCALL_WRAPPER(codecvt_char_do_unshift, 20)
+int __thiscall codecvt_char_do_unshift(const codecvt_char *this,
+        int *state, char *to, char *to_end, char **to_next)
+{
+    TRACE("(%p %p %p %p %p)\n", this, state, to, to_end, to_next);
+    *to_next = to;
+    return CODECVT_noconv;
+}
+
+/* ?unshift@?$codecvt@DDH@std@@QBEHAAHPAD1AAPAD@Z */
+/* ?unshift@?$codecvt@DDH@std@@QEBAHAEAHPEAD1AEAPEAD@Z */
+DEFINE_THISCALL_WRAPPER(codecvt_char_unshift, 20)
+int __thiscall codecvt_char_unshift(const codecvt_char *this,
+        int *state, char *to, char *to_end, char **to_next)
+{
+    TRACE("(%p %p %p %p %p)\n", this, state, to, to_end, to_next);
+    return call_codecvt_char_do_unshift(this, state, to, to_end, to_next);
+}
+
+/* ?do_length@?$codecvt@DDH@std@@MBEHABHPBD1I@Z */
+/* ?do_length@?$codecvt@DDH@std@@MEBAHAEBHPEBD1_K@Z */
+#define call_codecvt_char_do_length(this, state, from, from_end, max) CALL_VTBL_FUNC(this, 28, \
+        int, (const codecvt_char*, const int*, const char*, const char*, MSVCP_size_t), \
+        (this, state, from, from_end, max))
+DEFINE_THISCALL_WRAPPER(codecvt_char_do_length, 20)
+int __thiscall codecvt_char_do_length(const codecvt_char *this, const int *state,
+        const char *from, const char *from_end, MSVCP_size_t max)
+{
+    TRACE("(%p %p %p %p %lu)\n", this, state, from, from_end, max);
+    return (from_end-from > max ? max : from_end-from);
+}
+
+/* ?length@?$codecvt@DDH@std@@QBEHABHPBD1I@Z */
+/* ?length@?$codecvt@DDH@std@@QEBAHAEBHPEBD1_K@Z */
+DEFINE_THISCALL_WRAPPER(codecvt_char_length, 20)
+int __thiscall codecvt_char_length(const codecvt_char *this, const int *state,
+        const char *from, const char *from_end, MSVCP_size_t max)
+{
+    TRACE("(%p %p %p %p %lu)\n", this, state, from, from_end, max);
+    return call_codecvt_char_do_length(this, state, from, from_end, max);
+}
+
 /* ?id@?$numpunct@D@std@@2V0locale@2@A */
 locale_id numpunct_char_id = {0};
 
@@ -4339,6 +4547,7 @@ DEFINE_RTTI_DATA(ctype_char, 0, 2, &ctype_base_rtti_base_descriptor, &locale_fac
 DEFINE_RTTI_DATA(ctype_wchar, 0, 2, &ctype_base_rtti_base_descriptor, &locale_facet_rtti_base_descriptor, NULL, ".?AV?$ctype@_W@std@@");
 DEFINE_RTTI_DATA(ctype_short, 0, 2, &ctype_base_rtti_base_descriptor, &locale_facet_rtti_base_descriptor, NULL, ".?AV?$ctype@G@std@@");
 DEFINE_RTTI_DATA(codecvt_base, 0, 1, &locale_facet_rtti_base_descriptor, NULL, NULL, ".?AVcodecvt_base@std@@");
+DEFINE_RTTI_DATA(codecvt_char, 0, 2, &codecvt_base_rtti_base_descriptor, &locale_facet_rtti_base_descriptor, NULL, ".?AV?$codecvt@DDH@std@@");
 DEFINE_RTTI_DATA(numpunct_char, 0, 1, &locale_facet_rtti_base_descriptor, NULL, NULL, ".?AV?$numpunct@D@std@@");
 DEFINE_RTTI_DATA(numpunct_wchar, 0, 1, &locale_facet_rtti_base_descriptor, NULL, NULL, ".?AV?$numpunct@_W@std@@");
 DEFINE_RTTI_DATA(numpunct_short, 0, 1, &locale_facet_rtti_base_descriptor, NULL, NULL, ".?AV?$numpunct@G@std@@");
@@ -4408,6 +4617,14 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(codecvt_base_do_always_noconv)
             VTABLE_ADD_FUNC(codecvt_base_do_max_length)
             VTABLE_ADD_FUNC(codecvt_base_do_encoding));
+    __ASM_VTABLE(codecvt_char,
+            VTABLE_ADD_FUNC(codecvt_base_do_always_noconv)
+            VTABLE_ADD_FUNC(codecvt_base_do_max_length)
+            VTABLE_ADD_FUNC(codecvt_base_do_encoding)
+            VTABLE_ADD_FUNC(codecvt_char_do_in)
+            VTABLE_ADD_FUNC(codecvt_char_do_out)
+            VTABLE_ADD_FUNC(codecvt_char_do_unshift)
+            VTABLE_ADD_FUNC(codecvt_char_do_length));
     __ASM_VTABLE(numpunct_char,
             VTABLE_ADD_FUNC(numpunct_char_do_decimal_point)
             VTABLE_ADD_FUNC(numpunct_char_do_thousands_sep)
