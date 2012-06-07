@@ -174,6 +174,20 @@ INT_PTR CALLBACK list_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
  * Joystick testing functions
  *
  */
+static void dump_joy_state(DIJOYSTATE* st, int num_buttons)
+{
+    int i;
+    TRACE("Ax (% 5d,% 5d,% 5d)\n", st->lX,st->lY, st->lZ);
+    TRACE("RAx (% 5d,% 5d,% 5d)\n", st->lRx, st->lRy, st->lRz);
+    TRACE("Slider (% 5d,% 5d)\n", st->rglSlider[0], st->rglSlider[1]);
+    TRACE("Pov (% 5d,% 5d,% 5d,% 5d)\n", st->rgdwPOV[0], st->rgdwPOV[1], st->rgdwPOV[2], st->rgdwPOV[3]);
+
+    TRACE("Buttons ");
+    for(i=0; i < num_buttons; i++)
+        TRACE("  %c",st->rgbButtons[i] ? 'x' : 'o');
+    TRACE("\n");
+}
+
 static void poll_input(const struct Joystick *joy, DIJOYSTATE *state)
 {
     HRESULT  hr;
@@ -204,6 +218,8 @@ static DWORD WINAPI input_thread(void *param)
     {
         int i;
         poll_input(&data->joysticks[data->chosen_joystick], &state);
+
+        dump_joy_state(&state, data->joysticks[data->chosen_joystick].num_buttons);
 
         /* Indicate pressed buttons */
         for (i = 0; i < data->joysticks[data->chosen_joystick].num_buttons; i++)
