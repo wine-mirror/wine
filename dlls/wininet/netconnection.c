@@ -272,12 +272,21 @@ static DWORD netconn_verify_cert(netconn_t *conn, PCCERT_CONTEXT cert, HCERTSTOR
         errors &= ~CERT_TRUST_IS_UNTRUSTED_ROOT;
     }
 
+    /* This seems strange, but that's what tests show */
     if(errors & CERT_TRUST_IS_PARTIAL_CHAIN) {
         WARN("CERT_TRUST_IS_PARTIAL_CHAIN\n");
-        if(conn->mask_errors)
-            conn->security_flags |= _SECURITY_FLAG_CERT_REV_FAILED;
-        if(!(conn->security_flags & SECURITY_FLAG_IGNORE_UNKNOWN_CA))
-            err = conn->mask_errors && err ? ERROR_INTERNET_SEC_CERT_ERRORS : ERROR_INTERNET_SEC_CERT_REV_FAILED;
+        if(!(conn->security_flags & SECURITY_FLAG_IGNORE_UNKNOWN_CA)) {
+            if(!(conn->security_flags & _SECURITY_FLAG_CERT_REV_FAILED))
+                err = conn->mask_errors && err ? ERROR_INTERNET_SEC_CERT_ERRORS : ERROR_INTERNET_SEC_CERT_REV_FAILED;
+            else
+                err = conn->mask_errors ? ERROR_INTERNET_SEC_CERT_ERRORS : ERROR_INTERNET_INVALID_CA;
+        }
+        if(conn->mask_errors) {
+            if(!(conn->security_flags & _SECURITY_FLAG_CERT_REV_FAILED))
+                conn->security_flags |= _SECURITY_FLAG_CERT_REV_FAILED;
+            else
+                conn->security_flags |= _SECURITY_FLAG_CERT_INVALID_CA;
+        }
         errors &= ~CERT_TRUST_IS_PARTIAL_CHAIN;
     }
 

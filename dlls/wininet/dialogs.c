@@ -540,6 +540,8 @@ static INT_PTR WINAPI WININET_InvalidCertificateDialog(
                     break;
                 case ERROR_INTERNET_SEC_CERT_ERRORS:
                     if(flags & _SECURITY_FLAG_CERT_REV_FAILED)
+                        flags |= SECURITY_FLAG_IGNORE_REVOCATION;
+                    if(flags & _SECURITY_FLAG_CERT_INVALID_CA)
                         flags |= SECURITY_FLAG_IGNORE_UNKNOWN_CA;
                     if(flags & _SECURITY_FLAG_CERT_INVALID_CN)
                         flags |= SECURITY_FLAG_IGNORE_CERT_CN_INVALID;
