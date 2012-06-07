@@ -1092,8 +1092,8 @@
 @ stub -arch=win64 ??0_UShinit@std@@QEAA@XZ
 @ stub -arch=win32 ??0_Winit@std@@QAE@XZ
 @ stub -arch=win64 ??0_Winit@std@@QEAA@XZ
-@ stub -arch=win32 ??0codecvt_base@std@@QAE@I@Z
-@ stub -arch=win64 ??0codecvt_base@std@@QEAA@_K@Z
+@ thiscall -arch=win32 ??0codecvt_base@std@@QAE@I@Z(ptr long) codecvt_base_ctor_refs
+@ cdecl -arch=win64 ??0codecvt_base@std@@QEAA@_K@Z(ptr long) codecvt_base_ctor_refs
 @ thiscall -arch=win32 ??0ctype_base@std@@QAE@I@Z(ptr long) ctype_base_ctor_refs
 @ cdecl -arch=win64 ??0ctype_base@std@@QEAA@_K@Z(ptr long) ctype_base_ctor_refs
 @ thiscall -arch=win32 ??0facet@locale@std@@IAE@I@Z(ptr long) locale_facet_ctor_refs
@@ -1326,8 +1326,8 @@
 @ stub -arch=win64 ??1_UShinit@std@@QEAA@XZ
 @ stub -arch=win32 ??1_Winit@std@@QAE@XZ
 @ stub -arch=win64 ??1_Winit@std@@QEAA@XZ
-@ stub -arch=win32 ??1codecvt_base@std@@UAE@XZ
-@ stub -arch=win64 ??1codecvt_base@std@@UEAA@XZ
+@ thiscall -arch=win32 ??1codecvt_base@std@@UAE@XZ(ptr) codecvt_base_dtor
+@ cdecl -arch=win64 ??1codecvt_base@std@@UEAA@XZ(ptr) codecvt_base_dtor
 @ thiscall -arch=win32 ??1ctype_base@std@@UAE@XZ(ptr) ctype_base_dtor
 @ cdecl -arch=win64 ??1ctype_base@std@@UEAA@XZ(ptr) ctype_base_dtor
 @ thiscall -arch=win32 ??1facet@locale@std@@UAE@XZ(ptr) locale_facet_dtor
@@ -1858,7 +1858,7 @@
 # extern ??_7?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@6B@
 # extern ??_7?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@6B@
 @ extern ??_7_Locimp@locale@std@@6B@ MSVCP_locale__Locimp_vtable
-# extern ??_7codecvt_base@std@@6B@
+@ extern ??_7codecvt_base@std@@6B@ MSVCP_codecvt_base_vtable
 @ extern ??_7ctype_base@std@@6B@ MSVCP_ctype_base_vtable
 @ extern ??_7ios_base@std@@6B@ MSVCP_ios_base_vtable
 # extern ??_7messages_base@std@@6B@
@@ -2081,8 +2081,8 @@
 @ cdecl -arch=win64 ??_F_Locinfo@std@@QEAAXXZ(ptr) _Locinfo_ctor
 @ thiscall -arch=win32 ??_F_Timevec@std@@QAEXXZ(ptr) _Timevec_ctor
 @ cdecl -arch=win64 ??_F_Timevec@std@@QEAAXXZ(ptr) _Timevec_ctor
-@ stub -arch=win32 ??_Fcodecvt_base@std@@QAEXXZ
-@ stub -arch=win64 ??_Fcodecvt_base@std@@QEAAXXZ
+@ thiscall -arch=win32 ??_Fcodecvt_base@std@@QAEXXZ(ptr) codecvt_base_ctor
+@ cdecl -arch=win64 ??_Fcodecvt_base@std@@QEAAXXZ(ptr) codecvt_base_ctor
 @ thiscall -arch=win32 ??_Fctype_base@std@@QAEXXZ(ptr) ctype_base_ctor
 @ cdecl -arch=win64 ??_Fctype_base@std@@QEAAXXZ(ptr) ctype_base_ctor
 @ thiscall -arch=win32 ??_Ffacet@locale@std@@QAEXXZ(ptr) locale_facet_ctor
@@ -2914,8 +2914,8 @@
 @ cdecl -arch=win64 ?allocate@?$allocator@_W@std@@QEAAPEA_W_K@Z(ptr long) MSVCP_allocator_wchar_allocate
 @ thiscall -arch=win32 ?allocate@?$allocator@_W@std@@QAEPA_WIPBX@Z(ptr long ptr) MSVCP_allocator_wchar_allocate_hint
 @ cdecl -arch=win64 ?allocate@?$allocator@_W@std@@QEAAPEA_W_KPEBX@Z(ptr long ptr) MSVCP_allocator_wchar_allocate_hint
-@ stub -arch=win32 ?always_noconv@codecvt_base@std@@QBE_NXZ
-@ stub -arch=win64 ?always_noconv@codecvt_base@std@@QEBA_NXZ
+@ thiscall -arch=win32 ?always_noconv@codecvt_base@std@@QBE_NXZ(ptr) codecvt_base_always_noconv
+@ cdecl -arch=win64 ?always_noconv@codecvt_base@std@@QEBA_NXZ(ptr) codecvt_base_always_noconv
 @ thiscall -arch=win32 ?append@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@ABV12@@Z(ptr ptr) MSVCP_basic_string_char_append
 @ cdecl -arch=win64 ?append@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@AEBV12@@Z(ptr ptr) MSVCP_basic_string_char_append
 @ thiscall -arch=win32 ?append@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@ABV12@II@Z(ptr ptr long long) MSVCP_basic_string_char_append_substr
@@ -3288,8 +3288,8 @@
 @ stub -arch=win64 ?do_always_noconv@?$codecvt@GDH@std@@MEBA_NXZ
 @ stub -arch=win32 ?do_always_noconv@?$codecvt@_WDH@std@@MBE_NXZ
 @ stub -arch=win64 ?do_always_noconv@?$codecvt@_WDH@std@@MEBA_NXZ
-@ stub -arch=win32 ?do_always_noconv@codecvt_base@std@@MBE_NXZ
-@ stub -arch=win64 ?do_always_noconv@codecvt_base@std@@MEBA_NXZ
+@ thiscall -arch=win32 ?do_always_noconv@codecvt_base@std@@MBE_NXZ(ptr) codecvt_base_do_always_noconv
+@ cdecl -arch=win64 ?do_always_noconv@codecvt_base@std@@MEBA_NXZ(ptr) codecvt_base_do_always_noconv
 @ stub -arch=win32 ?do_close@?$messages@D@std@@MBEXH@Z
 @ stub -arch=win64 ?do_close@?$messages@D@std@@MEBAXH@Z
 @ stub -arch=win32 ?do_close@?$messages@G@std@@MBEXH@Z
@@ -3326,8 +3326,8 @@
 @ cdecl -arch=win64 ?do_decimal_point@?$numpunct@G@std@@MEBAGXZ(ptr) numpunct_wchar_do_decimal_point
 @ thiscall -arch=win32 ?do_decimal_point@?$numpunct@_W@std@@MBE_WXZ(ptr) numpunct_wchar_do_decimal_point
 @ cdecl -arch=win64 ?do_decimal_point@?$numpunct@_W@std@@MEBA_WXZ(ptr) numpunct_wchar_do_decimal_point
-@ stub -arch=win32 ?do_encoding@codecvt_base@std@@MBEHXZ
-@ stub -arch=win64 ?do_encoding@codecvt_base@std@@MEBAHXZ
+@ thiscall -arch=win32 ?do_encoding@codecvt_base@std@@MBEHXZ(ptr) codecvt_base_do_encoding
+@ cdecl -arch=win64 ?do_encoding@codecvt_base@std@@MEBAHXZ(ptr) codecvt_base_do_encoding
 @ thiscall -arch=win32 ?do_falsename@?$numpunct@D@std@@MBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ(ptr ptr) numpunct_char_do_falsename
 @ cdecl -arch=win64 ?do_falsename@?$numpunct@D@std@@MEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ(ptr ptr) numpunct_char_do_falsename
 @ thiscall -arch=win32 ?do_falsename@?$numpunct@G@std@@MBE?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@XZ(ptr ptr) numpunct_wchar_do_falsename
@@ -3496,8 +3496,8 @@
 @ stub -arch=win64 ?do_max_length@?$codecvt@GDH@std@@MEBAHXZ
 @ stub -arch=win32 ?do_max_length@?$codecvt@_WDH@std@@MBEHXZ
 @ stub -arch=win64 ?do_max_length@?$codecvt@_WDH@std@@MEBAHXZ
-@ stub -arch=win32 ?do_max_length@codecvt_base@std@@MBEHXZ
-@ stub -arch=win64 ?do_max_length@codecvt_base@std@@MEBAHXZ
+@ thiscall -arch=win32 ?do_max_length@codecvt_base@std@@MBEHXZ(ptr) codecvt_base_do_max_length
+@ cdecl -arch=win64 ?do_max_length@codecvt_base@std@@MEBAHXZ(ptr) codecvt_base_do_max_length
 @ thiscall -arch=win32 ?do_narrow@?$ctype@D@std@@MBEDDD@Z(ptr long long) ctype_char_do_narrow_ch
 @ cdecl -arch=win64 ?do_narrow@?$ctype@D@std@@MEBADDD@Z(ptr long long) ctype_char_do_narrow_ch
 @ thiscall -arch=win32 ?do_narrow@?$ctype@D@std@@MBEPBDPBD0DPAD@Z(ptr ptr ptr long ptr) ctype_char_do_narrow
@@ -3705,8 +3705,8 @@
 @ thiscall -arch=win32 ?empty@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBE_NXZ(ptr) MSVCP_basic_string_wchar_empty
 @ cdecl -arch=win64 ?empty@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_NXZ(ptr) MSVCP_basic_string_wchar_empty
 @ stub ?empty@locale@std@@SA?AV12@XZ
-@ stub -arch=win32 ?encoding@codecvt_base@std@@QBEHXZ
-@ stub -arch=win64 ?encoding@codecvt_base@std@@QEBAHXZ
+@ thiscall -arch=win32 ?encoding@codecvt_base@std@@QBEHXZ(ptr) codecvt_base_encoding
+@ cdecl -arch=win64 ?encoding@codecvt_base@std@@QEBAHXZ(ptr) codecvt_base_encoding
 @ thiscall -arch=win32 ?end@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE?AV?$_String_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ(ptr ptr) MSVCP_basic_string_char_end
 @ cdecl -arch=win64 ?end@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA?AV?$_String_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ(ptr ptr) MSVCP_basic_string_char_end
 @ thiscall -arch=win32 ?end@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBE?AV?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ(ptr ptr) MSVCP_basic_string_char_end
@@ -4507,8 +4507,8 @@
 @ extern ?max_exponent@?$numeric_limits@N@std@@2HB std_numeric_limits_double_max_exponent
 @ extern ?max_exponent@?$numeric_limits@O@std@@2HB std_numeric_limits_long_double_max_exponent
 @ extern ?max_exponent@_Num_base@std@@2HB std_Num_base_max_exponent
-@ stub -arch=win32 ?max_length@codecvt_base@std@@QBEHXZ
-@ stub -arch=win64 ?max_length@codecvt_base@std@@QEBAHXZ
+@ thiscall -arch=win32 ?max_length@codecvt_base@std@@QBEHXZ(ptr) codecvt_base_max_length
+@ cdecl -arch=win64 ?max_length@codecvt_base@std@@QEBAHXZ(ptr) codecvt_base_max_length
 @ thiscall -arch=win32 ?max_size@?$allocator@D@std@@QBEIXZ(ptr) MSVCP_allocator_char_max_size
 @ cdecl -arch=win64 ?max_size@?$allocator@D@std@@QEBA_KXZ(ptr) MSVCP_allocator_char_max_size
 @ thiscall -arch=win32 ?max_size@?$allocator@G@std@@QBEIXZ(ptr) MSVCP_allocator_short_max_size
