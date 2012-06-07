@@ -37,6 +37,7 @@ struct Joystick {
 };
 
 #define TEST_MAX_BUTTONS    32
+#define TEST_MAX_AXES       3
 
 struct JoystickData {
     IDirectInput8W *di;
@@ -45,6 +46,7 @@ struct JoystickData {
     int cur_joystick;
     int chosen_joystick;
     HWND buttons[TEST_MAX_BUTTONS];
+    HWND axes[TEST_MAX_AXES];
     BOOL stop;
 };
 
@@ -68,6 +70,7 @@ struct JoystickData {
 #define IDC_TESTSELECTCOMBO 2004
 
 #define IDC_JOYSTICKBUTTON  3000
+#define IDC_JOYSTICKAXES    4000
 
 /* constants */
 #define TEST_POLL_TIME      100
@@ -79,5 +82,13 @@ struct JoystickData {
 #define TEST_NEXT_BUTTON_Y  30
 #define TEST_BUTTON_SIZE_X  30
 #define TEST_BUTTON_SIZE_Y  25
+
+#define TEST_AXIS_X         65
+#define TEST_AXIS_Y         98
+#define TEST_NEXT_AXIS_X    115
+#define TEST_AXIS_SIZE_X    5
+#define TEST_AXIS_SIZE_Y    5
+#define TEST_AXIS_MIN       -40
+#define TEST_AXIS_MAX       40
 
 #endif

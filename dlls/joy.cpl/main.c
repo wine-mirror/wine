@@ -194,6 +194,7 @@ static void poll_input(const struct Joystick *joy, DIJOYSTATE *state)
 
 static DWORD WINAPI input_thread(void *param)
 {
+    int axes_pos[TEST_MAX_AXES][2];
     DIJOYSTATE state;
     struct JoystickData *data = param;
 
@@ -208,6 +209,20 @@ static DWORD WINAPI input_thread(void *param)
         for (i = 0; i < data->joysticks[data->chosen_joystick].num_buttons; i++)
             if (state.rgbButtons[i])
                 SendMessageW(data->buttons[i], BM_SETSTATE, TRUE, 0);
+
+        /* Indicate axis positions, axes showing are hardcoded for now */
+        axes_pos[0][0] = state.lX;
+        axes_pos[0][1] = state.lY;
+        axes_pos[1][0] = state.lRx;
+        axes_pos[1][1] = state.lRy;
+        axes_pos[2][0] = state.lZ;
+        axes_pos[2][1] = state.lRz;
+
+        for (i = 0; i < TEST_MAX_AXES; i++)
+            SetWindowPos(data->axes[i], 0,
+                        TEST_AXIS_X + TEST_NEXT_AXIS_X*i + axes_pos[i][0],
+                        TEST_AXIS_Y + axes_pos[i][1],
+                        0, 0, SWP_NOZORDER | SWP_NOSIZE);
 
         Sleep(TEST_POLL_TIME);
 
@@ -271,6 +286,37 @@ static void draw_joystick_buttons(HWND hwnd, struct JoystickData* data)
     }
 }
 
+static void draw_joystick_axes(HWND hwnd, struct JoystickData* data)
+{
+    int i;
+    struct Joystick *joy;
+    DIPROPRANGE propRange;
+    HINSTANCE hinst = (HINSTANCE) GetWindowLongPtrW(hwnd, GWLP_HINSTANCE);
+    static WCHAR button_class[] = {'B','u','t','t','o','n','\0'};
+
+    /* Set axis range to ease the GUI visualization */
+    for (i = 0; i < data->num_joysticks; i++)
+    {
+        joy = &data->joysticks[i];
+        propRange.diph.dwSize = sizeof(DIPROPRANGE);
+        propRange.diph.dwHeaderSize = sizeof(DIPROPHEADER);
+        propRange.diph.dwHow = DIPH_DEVICE;
+        propRange.diph.dwObj = 0;
+        propRange.lMin = TEST_AXIS_MIN;
+        propRange.lMax = TEST_AXIS_MAX;
+
+        IDirectInputDevice_SetProperty(joy->device, DIPROP_RANGE, &propRange.diph);
+    }
+
+    for (i = 0; i < TEST_MAX_AXES; i++)
+    {
+        data->axes[i] = CreateWindowW( button_class, NULL, WS_CHILD | WS_VISIBLE,
+            TEST_AXIS_X + TEST_NEXT_AXIS_X*i, TEST_AXIS_Y,
+            TEST_AXIS_SIZE_X, TEST_AXIS_SIZE_Y,
+            hwnd, (HMENU) IDC_JOYSTICKAXES + i, NULL, hinst);
+    }
+}
+
 /*********************************************************************
  * test_dlgproc [internal]
  *
@@ -297,6 +343,7 @@ static INT_PTR CALLBACK test_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
             }
 
             draw_joystick_buttons(hwnd, data);
+            draw_joystick_axes(hwnd, data);
 
             return TRUE;
         }
