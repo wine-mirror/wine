@@ -39,6 +39,7 @@ typedef struct {
     D3DVALUE back;
     D3DVALUE front;
     D3DVALUE field;
+    D3DRMPROJECTIONTYPE projection;
 } IDirect3DRMViewportImpl;
 
 static inline IDirect3DRMViewportImpl *impl_from_IDirect3DRMViewport(IDirect3DRMViewport *iface)
@@ -269,9 +270,9 @@ static HRESULT WINAPI IDirect3DRMViewportImpl_SetProjection(IDirect3DRMViewport*
 {
     IDirect3DRMViewportImpl *This = impl_from_IDirect3DRMViewport(iface);
 
-    FIXME("(%p/%p)->(%u): stub\n", iface, This, type);
+    TRACE("(%p/%p)->(%u)\n", iface, This, type);
 
-    return S_OK;
+    return IDirect3DRMViewport2_SetProjection(&This->IDirect3DRMViewport2_iface, type);
 }
 
 static HRESULT WINAPI IDirect3DRMViewportImpl_Transform(IDirect3DRMViewport* iface,
@@ -442,9 +443,9 @@ static D3DRMPROJECTIONTYPE WINAPI IDirect3DRMViewportImpl_GetProjection(IDirect3
 {
     IDirect3DRMViewportImpl *This = impl_from_IDirect3DRMViewport(iface);
 
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    TRACE("(%p/%p)->()\n", iface, This);
 
-    return E_NOTIMPL;
+    return IDirect3DRMViewport2_GetProjection(&This->IDirect3DRMViewport2_iface);
 }
 
 static HRESULT WINAPI IDirect3DRMViewportImpl_GetDirect3DViewport(IDirect3DRMViewport* iface,
@@ -696,9 +697,11 @@ static HRESULT WINAPI IDirect3DRMViewport2Impl_SetProjection(IDirect3DRMViewport
 {
     IDirect3DRMViewportImpl *This = impl_from_IDirect3DRMViewport2(iface);
 
-    FIXME("(%p/%p)->(%u): stub\n", iface, This, type);
+    TRACE("(%p/%p)->(%u)\n", iface, This, type);
 
-    return S_OK;
+    This->projection = type;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMViewport2Impl_Transform(IDirect3DRMViewport2* iface,
@@ -869,9 +872,9 @@ static D3DRMPROJECTIONTYPE WINAPI IDirect3DRMViewport2Impl_GetProjection(IDirect
 {
     IDirect3DRMViewportImpl *This = impl_from_IDirect3DRMViewport2(iface);
 
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    TRACE("(%p/%p)->()\n", iface, This);
 
-    return E_NOTIMPL;
+    return This->projection;
 }
 
 static HRESULT WINAPI IDirect3DRMViewport2Impl_GetDirect3DViewport(IDirect3DRMViewport2* iface,
