@@ -2937,12 +2937,12 @@ static void _test_secflags_option(unsigned line, HINTERNET req, DWORD ex_flags)
     ok_(__FILE__,line)(flags == ex_flags, "INTERNET_OPTION_SECURITY_FLAGS flags = %x, expected %x\n", flags, ex_flags);
 }
 
-#define set_secflags(a,b) _set_secflags(__LINE__,a,b)
-static void _set_secflags(unsigned line, HINTERNET req, DWORD flags)
+#define set_secflags(a,b,c) _set_secflags(__LINE__,a,b,c)
+static void _set_secflags(unsigned line, HINTERNET req, BOOL use_undoc, DWORD flags)
 {
     BOOL res;
 
-    res = InternetSetOptionW(req, INTERNET_OPTION_SECURITY_FLAGS, &flags, sizeof(flags));
+    res = InternetSetOptionW(req, use_undoc ? 99 : INTERNET_OPTION_SECURITY_FLAGS, &flags, sizeof(flags));
     ok_(__FILE__,line)(res, "InternetSetOption(INTERNET_OPTION_SECURITY_FLAGS) failed: %u\n", GetLastError());
 }
 
@@ -2976,8 +2976,19 @@ static void test_security_flags(void)
     CHECK_NOTIFIED(INTERNET_STATUS_HANDLE_CREATED);
 
     test_secflags_option(req, 0);
-    set_secflags(req, SECURITY_FLAG_IGNORE_UNKNOWN_CA|SECURITY_FLAG_IGNORE_REVOCATION);
-    test_secflags_option(req, SECURITY_FLAG_IGNORE_UNKNOWN_CA|SECURITY_FLAG_IGNORE_REVOCATION);
+
+    set_secflags(req, TRUE, SECURITY_FLAG_IGNORE_REVOCATION);
+    test_secflags_option(req, SECURITY_FLAG_IGNORE_REVOCATION);
+
+    set_secflags(req, TRUE, SECURITY_FLAG_IGNORE_CERT_CN_INVALID);
+    test_secflags_option(req, SECURITY_FLAG_IGNORE_REVOCATION|SECURITY_FLAG_IGNORE_CERT_CN_INVALID);
+
+    set_secflags(req, FALSE, SECURITY_FLAG_IGNORE_UNKNOWN_CA);
+    test_secflags_option(req, SECURITY_FLAG_IGNORE_UNKNOWN_CA|SECURITY_FLAG_IGNORE_REVOCATION|SECURITY_FLAG_IGNORE_CERT_CN_INVALID);
+
+    flags = SECURITY_FLAG_IGNORE_CERT_CN_INVALID|SECURITY_FLAG_SECURE;
+    res = InternetSetOptionW(req, 99, &flags, sizeof(flags));
+    ok(!res && GetLastError() == ERROR_INTERNET_OPTION_NOT_SETTABLE, "InternetSetOption(99) failed: %u\n", GetLastError());
 
     SET_EXPECT(INTERNET_STATUS_RESOLVING_NAME);
     SET_EXPECT(INTERNET_STATUS_NAME_RESOLVED);
@@ -3010,8 +3021,8 @@ static void test_security_flags(void)
     CLEAR_NOTIFIED(INTERNET_STATUS_COOKIE_SENT);
 
     test_request_flags(req, 0);
-    test_secflags_option(req, SECURITY_FLAG_SECURE|SECURITY_FLAG_IGNORE_UNKNOWN_CA|
-            SECURITY_FLAG_IGNORE_REVOCATION|SECURITY_FLAG_STRENGTH_STRONG);
+    test_secflags_option(req, SECURITY_FLAG_SECURE|SECURITY_FLAG_IGNORE_UNKNOWN_CA
+            |SECURITY_FLAG_IGNORE_REVOCATION|SECURITY_FLAG_IGNORE_CERT_CN_INVALID|SECURITY_FLAG_STRENGTH_STRONG);
 
     res = InternetReadFile(req, buf, sizeof(buf), &size);
     ok(res, "InternetReadFile failed: %u\n", GetLastError());
@@ -3070,8 +3081,37 @@ static void test_security_flags(void)
     test_request_flags(req, 8);
     test_secflags_option(req, 0x800000);
 
-    set_secflags(req, SECURITY_FLAG_IGNORE_UNKNOWN_CA);
-    test_secflags_option(req, 0x800000|SECURITY_FLAG_IGNORE_UNKNOWN_CA);
+    set_secflags(req, FALSE, SECURITY_FLAG_IGNORE_REVOCATION);
+    test_secflags_option(req, 0x800000|SECURITY_FLAG_IGNORE_REVOCATION);
+
+    SET_EXPECT(INTERNET_STATUS_CONNECTING_TO_SERVER);
+    SET_EXPECT(INTERNET_STATUS_CONNECTED_TO_SERVER);
+    SET_EXPECT(INTERNET_STATUS_CLOSING_CONNECTION);
+    SET_EXPECT(INTERNET_STATUS_CONNECTION_CLOSED);
+    SET_EXPECT(INTERNET_STATUS_REQUEST_COMPLETE);
+    SET_OPTIONAL(INTERNET_STATUS_COOKIE_SENT);
+    SET_OPTIONAL(INTERNET_STATUS_DETECTING_PROXY);
+
+    res = HttpSendRequest(req, NULL, 0, NULL, 0);
+    ok(!res && GetLastError() == ERROR_IO_PENDING, "HttpSendRequest failed: %u\n", GetLastError());
+
+    WaitForSingleObject(hCompleteEvent, INFINITE);
+    ok(req_error == ERROR_INTERNET_SEC_CERT_ERRORS, "req_error = %d\n", req_error);
+
+    CHECK_NOTIFIED(INTERNET_STATUS_CONNECTING_TO_SERVER);
+    CHECK_NOTIFIED(INTERNET_STATUS_CONNECTED_TO_SERVER);
+    CHECK_NOTIFIED(INTERNET_STATUS_CLOSING_CONNECTION);
+    CHECK_NOTIFIED(INTERNET_STATUS_CONNECTION_CLOSED);
+    CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
+    CLEAR_NOTIFIED(INTERNET_STATUS_COOKIE_SENT);
+    CLEAR_NOTIFIED(INTERNET_STATUS_DETECTING_PROXY);
+
+    test_request_flags(req, INTERNET_REQFLAG_NO_HEADERS);
+    test_secflags_option(req, SECURITY_FLAG_IGNORE_REVOCATION|0x1800000);
+
+    set_secflags(req, FALSE, SECURITY_FLAG_IGNORE_UNKNOWN_CA);
+    test_secflags_option(req, 0x1800000|SECURITY_FLAG_IGNORE_REVOCATION|SECURITY_FLAG_IGNORE_UNKNOWN_CA
+            |SECURITY_FLAG_IGNORE_REVOCATION);
     test_http_version(req);
 
     SET_EXPECT(INTERNET_STATUS_CONNECTING_TO_SERVER);
@@ -3101,8 +3141,8 @@ static void test_security_flags(void)
     CLEAR_NOTIFIED(INTERNET_STATUS_DETECTING_PROXY);
 
     test_request_flags(req, 0);
-    test_secflags_option(req, SECURITY_FLAG_SECURE|SECURITY_FLAG_IGNORE_UNKNOWN_CA
-                         |SECURITY_FLAG_STRENGTH_STRONG|0x800000);
+    test_secflags_option(req, SECURITY_FLAG_SECURE|SECURITY_FLAG_IGNORE_UNKNOWN_CA|SECURITY_FLAG_IGNORE_REVOCATION
+            |SECURITY_FLAG_STRENGTH_STRONG|0x1800000);
 
     test_cert_struct(req);
 
@@ -3136,7 +3176,8 @@ static void test_security_flags(void)
     ok(req != NULL, "HttpOpenRequest failed\n");
     CHECK_NOTIFIED(INTERNET_STATUS_HANDLE_CREATED);
 
-    test_secflags_option(req, SECURITY_FLAG_SECURE|SECURITY_FLAG_IGNORE_UNKNOWN_CA|SECURITY_FLAG_STRENGTH_STRONG|0x800000);
+    test_secflags_option(req, SECURITY_FLAG_SECURE|SECURITY_FLAG_IGNORE_UNKNOWN_CA|SECURITY_FLAG_STRENGTH_STRONG
+           |SECURITY_FLAG_IGNORE_REVOCATION|0x1800000);
     test_http_version(req);
 
     SET_EXPECT(INTERNET_STATUS_CONNECTING_TO_SERVER);
@@ -3164,7 +3205,8 @@ static void test_security_flags(void)
     CLEAR_NOTIFIED(INTERNET_STATUS_COOKIE_SENT);
 
     test_request_flags(req, 0);
-    test_secflags_option(req, SECURITY_FLAG_SECURE|SECURITY_FLAG_IGNORE_UNKNOWN_CA|SECURITY_FLAG_STRENGTH_STRONG|0x800000);
+    test_secflags_option(req, SECURITY_FLAG_SECURE|SECURITY_FLAG_IGNORE_UNKNOWN_CA|SECURITY_FLAG_STRENGTH_STRONG
+            |SECURITY_FLAG_IGNORE_REVOCATION|0x1800000);
 
     res = InternetReadFile(req, buf, sizeof(buf), &size);
     ok(res, "InternetReadFile failed: %u\n", GetLastError());
