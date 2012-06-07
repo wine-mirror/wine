@@ -193,35 +193,46 @@ static HRESULT handle_http_error(HttpProtocol *This, DWORD error)
         }
     }
 
-    hres = IServiceProvider_QueryService(serv_prov, &IID_IWindowForBindingUI, &IID_IWindowForBindingUI,
-                                         (void**)&wfb_ui);
-    if(SUCCEEDED(hres)) {
-        const IID *iid_reason;
+    switch(error) {
+    case ERROR_INTERNET_SEC_CERT_REV_FAILED:
+        if(hres == S_FALSE) {
+            hres = internet_error_to_hres(error);
+        }else {
+            /* Silently ignore the error. We will get more detailed error from wininet anyway. */
+            set_security_flag(This, SECURITY_FLAG_IGNORE_REVOCATION);
+            hres = RPC_E_RETRY;
+        }
+        break;
 
-        if(security_problem)
-            iid_reason = &IID_IHttpSecurity;
-        else if(error == ERROR_INTERNET_INCORRECT_PASSWORD)
-            iid_reason = &IID_IAuthenticate;
-        else
-            iid_reason = &IID_IWindowForBindingUI;
+    default:
+        hres = IServiceProvider_QueryService(serv_prov, &IID_IWindowForBindingUI, &IID_IWindowForBindingUI, (void**)&wfb_ui);
+        if(SUCCEEDED(hres)) {
+            const IID *iid_reason;
 
-        hres = IWindowForBindingUI_GetWindow(wfb_ui, iid_reason, &hwnd);
-        IWindowForBindingUI_Release(wfb_ui);
-        if(FAILED(hres))
-            hwnd = NULL;
+            if(security_problem)
+                iid_reason = &IID_IHttpSecurity;
+            else if(error == ERROR_INTERNET_INCORRECT_PASSWORD)
+                iid_reason = &IID_IAuthenticate;
+            else
+                iid_reason = &IID_IWindowForBindingUI;
+
+            hres = IWindowForBindingUI_GetWindow(wfb_ui, iid_reason, &hwnd);
+            IWindowForBindingUI_Release(wfb_ui);
+            if(FAILED(hres))
+                hwnd = NULL;
+        }
+
+
+        dlg_flags = FLAGS_ERROR_UI_FLAGS_CHANGE_OPTIONS | FLAGS_ERROR_UI_FLAGS_GENERATE_DATA;
+        if(This->base.bindf & BINDF_NO_UI)
+            dlg_flags |= FLAGS_ERROR_UI_FLAGS_NO_UI;
+
+        res = InternetErrorDlg(hwnd, This->base.request, error, dlg_flags, NULL);
+        hres = res == ERROR_INTERNET_FORCE_RETRY || res == ERROR_SUCCESS ? RPC_E_RETRY : internet_error_to_hres(error);
     }
 
     IServiceProvider_Release(serv_prov);
-
-    dlg_flags = FLAGS_ERROR_UI_FLAGS_CHANGE_OPTIONS | FLAGS_ERROR_UI_FLAGS_GENERATE_DATA;
-    if(This->base.bindf & BINDF_NO_UI)
-        dlg_flags |= FLAGS_ERROR_UI_FLAGS_NO_UI;
-
-    res = InternetErrorDlg(hwnd, This->base.request, error, dlg_flags, NULL);
-    if(res == ERROR_INTERNET_FORCE_RETRY || res == ERROR_SUCCESS)
-        return RPC_E_RETRY;
-
-    return internet_error_to_hres(error);
+    return hres;
 }
 
 static ULONG send_http_request(HttpProtocol *This)
