@@ -2342,6 +2342,12 @@ AC_CHECK_MEMBERS([struct tcp_stats.tcps_connattempt],,,
 #include <netinet/tcp_var.h>
 #endif])
 
+dnl Check for struct udpstat
+AC_CHECK_MEMBERS([struct udpstat.udps_ipackets],,,
+[#ifdef HAVE_NETINET_UDP_VAR_H
+#include <netinet/udp_var.h>
+#endif])
+
 dnl Check for struct ifreq.ifr_hwaddr
 AC_CHECK_MEMBERS([struct ifreq.ifr_hwaddr],,,
 [#ifdef HAVE_SYS_TYPES_H

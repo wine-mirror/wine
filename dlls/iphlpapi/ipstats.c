@@ -927,7 +927,7 @@ DWORD WINAPI GetUdpStatistics(PMIB_UDPSTATS stats)
         }
         if (kc) kstat_close( kc );
     }
-#elif defined(HAVE_SYS_SYSCTL_H) && defined(UDPCTL_STATS)
+#elif defined(HAVE_SYS_SYSCTL_H) && defined(UDPCTL_STATS) && defined(HAVE_STRUCT_UDPSTAT_UDPS_IPACKETS)
     {
         int mib[] = {CTL_NET, PF_INET, IPPROTO_UDP, UDPCTL_STATS};
 #define MIB_LEN (sizeof(mib) / sizeof(mib[0]))

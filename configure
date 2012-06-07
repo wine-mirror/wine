@@ -14128,6 +14128,20 @@ _ACEOF
 fi
 
 
+ac_fn_c_check_member "$LINENO" "struct udpstat" "udps_ipackets" "ac_cv_member_struct_udpstat_udps_ipackets" "#ifdef HAVE_NETINET_UDP_VAR_H
+#include <netinet/udp_var.h>
+#endif
+"
+if test "x$ac_cv_member_struct_udpstat_udps_ipackets" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_UDPSTAT_UDPS_IPACKETS 1
+_ACEOF
+
+
+fi
+
+
 ac_fn_c_check_member "$LINENO" "struct ifreq" "ifr_hwaddr" "ac_cv_member_struct_ifreq_ifr_hwaddr" "#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
