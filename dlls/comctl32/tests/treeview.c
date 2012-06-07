@@ -1602,6 +1602,55 @@ static void test_delete_items(void)
     DestroyWindow(hTree);
 }
 
+static void test_cchildren(void)
+{
+    HWND hTree;
+    INT ret;
+    TVITEMA item;
+
+    hTree = create_treeview_control(0);
+    fill_tree(hTree);
+
+    ret = SendMessage(hTree, TVM_DELETEITEM, 0, (LPARAM)hChild);
+    expect(TRUE, ret);
+
+    /* check cChildren - automatic mode */
+    item.hItem = hRoot;
+    item.mask = TVIF_CHILDREN;
+
+    ret = SendMessageA(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
+    expect(TRUE, ret);
+    expect(0, item.cChildren);
+
+    DestroyWindow(hTree);
+
+    /* start over */
+    hTree = create_treeview_control(0);
+    fill_tree(hTree);
+
+    /* turn off automatic mode by setting cChildren explicitly */
+    item.hItem = hRoot;
+    item.mask = TVIF_CHILDREN;
+
+    ret = SendMessageA(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
+    expect(TRUE, ret);
+    expect(1, item.cChildren);
+
+    ret = SendMessageA(hTree, TVM_SETITEMA, 0, (LPARAM)&item);
+    expect(TRUE, ret);
+
+    ret = SendMessage(hTree, TVM_DELETEITEM, 0, (LPARAM)hChild);
+    expect(TRUE, ret);
+
+    /* check cChildren */
+    ret = SendMessageA(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
+    expect(TRUE, ret);
+todo_wine
+    expect(1, item.cChildren);
+
+    DestroyWindow(hTree);
+}
+
 struct _ITEM_DATA
 {
     HTREEITEM  parent; /* for root value of parent field is unidetified */
@@ -1908,6 +1957,7 @@ START_TEST(treeview)
     test_TVS_SINGLEEXPAND();
     test_WM_PAINT();
     test_delete_items();
+    test_cchildren();
     test_htreeitem_layout();
     test_TVS_CHECKBOXES();
     test_TVM_GETNEXTITEM();
