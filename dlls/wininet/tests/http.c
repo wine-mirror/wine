@@ -2933,8 +2933,8 @@ static void _test_secflags_option(unsigned line, HINTERNET req, DWORD ex_flags)
     flags = 0xdeadbeef;
     size = sizeof(flags);
     res = InternetQueryOptionW(req, 98, &flags, &size);
-    ok_(__FILE__,line)(res, "InternetQueryOptionW(INTERNET_OPTION_SECURITY_FLAGS) failed: %u\n", GetLastError());
-    ok_(__FILE__,line)(flags == ex_flags, "INTERNET_OPTION_SECURITY_FLAGS flags = %x, expected %x\n", flags, ex_flags);
+    ok_(__FILE__,line)(res, "InternetQueryOptionW(98) failed: %u\n", GetLastError());
+    ok_(__FILE__,line)(flags == ex_flags, "INTERNET_OPTION_SECURITY_FLAGS(98) flags = %x, expected %x\n", flags, ex_flags);
 }
 
 #define set_secflags(a,b,c) _set_secflags(__LINE__,a,b,c)
@@ -2974,6 +2974,17 @@ static void test_security_flags(void)
                           0xdeadbeef);
     ok(req != NULL, "HttpOpenRequest failed\n");
     CHECK_NOTIFIED(INTERNET_STATUS_HANDLE_CREATED);
+
+    flags = 0xdeadbeef;
+    size = sizeof(flags);
+    res = InternetQueryOptionW(req, 98, &flags, &size);
+    if(!res && GetLastError() == ERROR_INVALID_PARAMETER) {
+        win_skip("Incomplete security flags support, skipping\n");
+
+        close_async_handle(ses, hCompleteEvent, 2);
+        CloseHandle(hCompleteEvent);
+        return;
+    }
 
     test_secflags_option(req, 0);
 
