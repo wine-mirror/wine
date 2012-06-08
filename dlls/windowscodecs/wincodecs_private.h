@@ -84,8 +84,7 @@ typedef struct _MetadataHandlerVtbl
         ULARGE_INTEGER *size);
 } MetadataHandlerVtbl;
 
-extern HRESULT MetadataReader_Create(const MetadataHandlerVtbl *vtable, IUnknown *pUnkOuter, REFIID iid, void** ppv) DECLSPEC_HIDDEN;
-
 extern HRESULT UnknownMetadataReader_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv) DECLSPEC_HIDDEN;
+extern HRESULT IfdMetadataReader_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void **ppv) DECLSPEC_HIDDEN;
 
 #endif /* WINCODECS_PRIVATE_H */

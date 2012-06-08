@@ -60,6 +60,7 @@ static classinfo wic_classes[] = {
     {&CLSID_WICDefaultFormatConverter, FormatConverter_CreateInstance},
     {&CLSID_WineTgaDecoder, TgaDecoder_CreateInstance},
     {&CLSID_WICUnknownMetadataReader, UnknownMetadataReader_CreateInstance},
+    {&CLSID_WICIfdMetadataReader, IfdMetadataReader_CreateInstance},
     {0}};
 
 typedef struct {

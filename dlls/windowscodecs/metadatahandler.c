@@ -325,7 +325,7 @@ static const IWICPersistStreamVtbl MetadataHandler_PersistStream_Vtbl = {
     MetadataHandler_SaveEx
 };
 
-HRESULT MetadataReader_Create(const MetadataHandlerVtbl *vtable, IUnknown *pUnkOuter, REFIID iid, void** ppv)
+static HRESULT MetadataReader_Create(const MetadataHandlerVtbl *vtable, IUnknown *pUnkOuter, REFIID iid, void** ppv)
 {
     MetadataHandler *This;
     HRESULT hr;
@@ -596,4 +596,26 @@ static const MetadataHandlerVtbl UnknownMetadataReader_Vtbl = {
 HRESULT UnknownMetadataReader_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
 {
     return MetadataReader_Create(&UnknownMetadataReader_Vtbl, pUnkOuter, iid, ppv);
+}
+
+static HRESULT LoadIfdMetadata(IStream *input, const GUID *preferred_vendor,
+    DWORD persist_options, MetadataItem **items, DWORD *item_count)
+{
+    FIXME("stub\n");
+
+    *items = NULL;
+    *item_count = 0;
+
+    return S_OK;
+}
+
+static const MetadataHandlerVtbl IfdMetadataReader_Vtbl = {
+    0,
+    &CLSID_WICIfdMetadataReader,
+    LoadIfdMetadata
+};
+
+HRESULT IfdMetadataReader_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void **ppv)
+{
+    return MetadataReader_Create(&IfdMetadataReader_Vtbl, pUnkOuter, iid, ppv);
 }
