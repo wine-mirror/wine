@@ -436,7 +436,7 @@ static HRESULT WINAPI VMR9_ShouldDrawSampleNow(BaseRenderer *This, IMediaSample 
     return S_FALSE;
 }
 
-HRESULT WINAPI VMR9_CompleteConnect(BaseRenderer *This, IPin *pReceivePin)
+static HRESULT WINAPI VMR9_CompleteConnect(BaseRenderer *This, IPin *pReceivePin)
 {
     VMR9Impl *pVMR9 = (VMR9Impl*)This;
     HRESULT hr = S_OK;
@@ -452,7 +452,7 @@ HRESULT WINAPI VMR9_CompleteConnect(BaseRenderer *This, IPin *pReceivePin)
     return hr;
 }
 
-HRESULT WINAPI VMR9_BreakConnect(BaseRenderer *This)
+static HRESULT WINAPI VMR9_BreakConnect(BaseRenderer *This)
 {
     VMR9Impl *pVMR9 = (VMR9Impl*)This;
     HRESULT hr = S_OK;
