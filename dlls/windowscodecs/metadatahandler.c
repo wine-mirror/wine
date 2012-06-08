@@ -133,6 +133,8 @@ static ULONG WINAPI MetadataHandler_Release(IWICMetadataWriter *iface)
 static HRESULT WINAPI MetadataHandler_GetMetadataFormat(IWICMetadataWriter *iface,
     GUID *pguidMetadataFormat)
 {
+    if (!pguidMetadataFormat) return E_INVALIDARG;
+
     FIXME("(%p,%s): stub\n", iface, debugstr_guid(pguidMetadataFormat));
     return E_NOTIMPL;
 }
@@ -147,6 +149,8 @@ static HRESULT WINAPI MetadataHandler_GetMetadataHandlerInfo(IWICMetadataWriter 
 static HRESULT WINAPI MetadataHandler_GetCount(IWICMetadataWriter *iface,
     UINT *pcCount)
 {
+    if (!pcCount) return E_INVALIDARG;
+
     FIXME("(%p,%p): stub\n", iface, pcCount);
     return E_NOTIMPL;
 }
@@ -513,6 +517,8 @@ static HRESULT MetadataHandlerEnum_Create(MetadataHandler *parent, DWORD index,
     IWICEnumMetadataItem **ppIEnumMetadataItem)
 {
     MetadataHandlerEnum *This;
+
+    if (!ppIEnumMetadataItem) return E_INVALIDARG;
 
     *ppIEnumMetadataItem = NULL;
 
