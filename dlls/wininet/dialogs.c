@@ -477,28 +477,6 @@ static INT_PTR WINAPI WININET_InvalidCertificateDialog(
 }
 
 /***********************************************************************
- *         WININET_GetConnectionStatus
- */
-static INT WININET_GetConnectionStatus( HINTERNET hRequest )
-{
-    WCHAR szStatus[0x20];
-    DWORD sz, index, dwStatus;
-
-    TRACE("%p\n", hRequest );
-
-    sz = sizeof szStatus;
-    index = 0;
-    if( !HttpQueryInfoW( hRequest, HTTP_QUERY_STATUS_CODE,
-                    szStatus, &sz, &index))
-        return -1;
-    dwStatus = atoiW( szStatus );
-
-    TRACE("request %p status = %d\n", hRequest, dwStatus );
-
-    return dwStatus;
-}
-
-/***********************************************************************
  *         InternetErrorDlg
  */
 DWORD WINAPI InternetErrorDlg(HWND hWnd, HINTERNET hRequest,
@@ -531,16 +509,12 @@ DWORD WINAPI InternetErrorDlg(HWND hWnd, HINTERNET hRequest,
     {
     case ERROR_SUCCESS:
     case ERROR_INTERNET_INCORRECT_PASSWORD: {
-        DWORD dwStatus;
-
         if( !dwError && !(dwFlags & FLAGS_ERROR_UI_FILTER_FOR_ERRORS ) )
             break;
         if(!req)
             return ERROR_INVALID_HANDLE;
 
-        dwStatus = WININET_GetConnectionStatus( hRequest );
-        switch (dwStatus)
-        {
+        switch(req->status_code) {
         case HTTP_STATUS_PROXY_AUTH_REQ:
             res = DialogBoxParamW( WININET_hModule, MAKEINTRESOURCEW( IDD_PROXYDLG ),
                                    hWnd, WININET_ProxyPasswordDialog, (LPARAM) &params );
@@ -550,7 +524,7 @@ DWORD WINAPI InternetErrorDlg(HWND hWnd, HINTERNET hRequest,
                                     hWnd, WININET_PasswordDialog, (LPARAM) &params );
             break;
         default:
-            WARN("unhandled status %u\n", dwStatus);
+            WARN("unhandled status %u\n", req->status_code);
         }
         break;
     }
