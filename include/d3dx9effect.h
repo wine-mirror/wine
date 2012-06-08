@@ -84,12 +84,12 @@ DECLARE_INTERFACE_(ID3DXEffectPool, IUnknown)
     STDMETHOD_(ULONG, AddRef)(THIS) PURE;
     STDMETHOD_(ULONG, Release)(THIS) PURE;
 };
+#undef INTERFACE
 
 typedef struct ID3DXBaseEffect *LPD3DXBASEEFFECT;
 
 DEFINE_GUID(IID_ID3DXBaseEffect, 0x17c18ac, 0x103f, 0x4417, 0x8c, 0x51, 0x6b, 0xf6, 0xef, 0x1e, 0x56, 0xbe);
 
-#undef INTERFACE
 #define INTERFACE ID3DXBaseEffect
 
 DECLARE_INTERFACE_(ID3DXBaseEffect, IUnknown)
@@ -154,12 +154,12 @@ DECLARE_INTERFACE_(ID3DXBaseEffect, IUnknown)
     STDMETHOD(GetVertexShader)(THIS_ D3DXHANDLE parameter, LPDIRECT3DVERTEXSHADER9* vshader) PURE;
     STDMETHOD(SetArrayRange)(THIS_ D3DXHANDLE parameter, UINT start, UINT end) PURE;
 };
+#undef INTERFACE
 
 typedef struct ID3DXEffectStateManager *LPD3DXEFFECTSTATEMANAGER;
 
 DEFINE_GUID(IID_ID3DXEffectStateManager, 0x79aab587, 0x6dbc, 0x4fa7, 0x82, 0xde, 0x37, 0xfa, 0x17, 0x81, 0xc5, 0xce);
 
-#undef INTERFACE
 #define INTERFACE ID3DXEffectStateManager
 
 DECLARE_INTERFACE_(ID3DXEffectStateManager, IUnknown)
@@ -188,12 +188,12 @@ DECLARE_INTERFACE_(ID3DXEffectStateManager, IUnknown)
     STDMETHOD(SetPixelShaderConstantI)(THIS_ UINT register_index, CONST INT * constant_data, UINT register_count) PURE;
     STDMETHOD(SetPixelShaderConstantB)(THIS_ UINT register_index, CONST BOOL* constant_data, UINT register_count) PURE;
 };
+#undef INTERFACE
 
 typedef struct ID3DXEffect *LPD3DXEFFECT;
 
 DEFINE_GUID(IID_ID3DXEffect, 0xf6ceb4b3, 0x4e4c, 0x40dd, 0xb8, 0x83, 0x8d, 0x8d, 0xe5, 0xea, 0xc, 0xd5);
 
-#undef INTERFACE
 #define INTERFACE ID3DXEffect
 
 DECLARE_INTERFACE_(ID3DXEffect, ID3DXBaseEffect)
@@ -281,12 +281,12 @@ DECLARE_INTERFACE_(ID3DXEffect, ID3DXBaseEffect)
     STDMETHOD(CloneEffect)(THIS_ LPDIRECT3DDEVICE9 device, LPD3DXEFFECT* effect) PURE;
     STDMETHOD(SetRawValue)(THIS_ D3DXHANDLE parameter, LPCVOID data, UINT byte_offset, UINT bytes) PURE;
 };
+#undef INTERFACE
 
 typedef struct ID3DXEffectCompiler *LPD3DXEFFECTCOMPILER;
 
 DEFINE_GUID(IID_ID3DXEffectCompiler, 0x51b8a949, 0x1a31, 0x47e6, 0xbe, 0xa0, 0x4b, 0x30, 0xdb, 0x53, 0xf1, 0xe0);
 
-#undef INTERFACE
 #define INTERFACE ID3DXEffectCompiler
 
 DECLARE_INTERFACE_(ID3DXEffectCompiler, ID3DXBaseEffect)

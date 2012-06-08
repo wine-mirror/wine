@@ -334,11 +334,9 @@ DECLARE_INTERFACE_(ID3DXBaseMesh, IUnknown)
     STDMETHOD(GenerateAdjacency)(THIS_ FLOAT epsilon, DWORD* adjacency) PURE;
     STDMETHOD(UpdateSemantics)(THIS_ D3DVERTEXELEMENT9 declaration[MAX_FVF_DECL_SIZE]) PURE;
 };
-
-
 #undef INTERFACE
-#define INTERFACE ID3DXMesh
 
+#define INTERFACE ID3DXMesh
 DECLARE_INTERFACE_(ID3DXMesh, ID3DXBaseMesh)
 {
     /*** IUnknown methods ***/
@@ -676,6 +674,7 @@ DECLARE_INTERFACE_(ID3DXPRTEngine, IUnknown)
     STDMETHOD_(BOOL, ClosestRayIntersects)(THIS_ CONST D3DXVECTOR3 *ray_pos, CONST D3DXVECTOR3 *ray_dir,
         DWORD *face_index, FLOAT *u, FLOAT *v, FLOAT *dist) PURE;
 };
+#undef INTERFACE
 
 #ifdef __cplusplus
 extern "C" {

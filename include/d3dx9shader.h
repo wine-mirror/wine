@@ -150,6 +150,7 @@ DECLARE_INTERFACE_(ID3DXConstantTable, ID3DXBuffer)
     STDMETHOD(SetMatrixTransposeArray)(THIS_ LPDIRECT3DDEVICE9 pDevice, D3DXHANDLE hConstant, CONST D3DXMATRIX* pMatrix, UINT Count) PURE;
     STDMETHOD(SetMatrixTransposePointerArray)(THIS_ LPDIRECT3DDEVICE9 pDevice, D3DXHANDLE hConstant, CONST D3DXMATRIX** ppMatrix, UINT Count) PURE;
 };
+#undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
@@ -234,7 +235,6 @@ typedef enum _D3DXINCLUDE_TYPE
     D3DXINC_FORCE_DWORD = 0x7fffffff,
 } D3DXINCLUDE_TYPE, *LPD3DXINCLUDE_TYPE;
 
-#undef INTERFACE
 #define INTERFACE ID3DXInclude
 
 DECLARE_INTERFACE(ID3DXInclude)
@@ -242,6 +242,7 @@ DECLARE_INTERFACE(ID3DXInclude)
     STDMETHOD(Open)(THIS_ D3DXINCLUDE_TYPE include_type, LPCSTR filename, LPCVOID parent_data, LPCVOID *data, UINT *bytes) PURE;
     STDMETHOD(Close)(THIS_ LPCVOID data) PURE;
 };
+#undef INTERFACE
 
 #define ID3DXInclude_Open(p,a,b,c,d,e)  (p)->lpVtbl->Open(p,a,b,c,d,e)
 #define ID3DXInclude_Close(p,a)         (p)->lpVtbl->Close(p,a)

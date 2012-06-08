@@ -127,9 +127,9 @@ DECLARE_INTERFACE_IID_(ISecurityInformation, IUnknown, "965fc360-16ff-11d0-91cb-
                                 ULONG *pcInheritTypes ) PURE;
     STDMETHOD(PropertySheetPageCallback)(THIS_ HWND hwnd, UINT uMsg, SI_PAGE_TYPE uPage ) PURE;
 };
+#undef INTERFACE
 typedef ISecurityInformation *LPSECURITYINFO;
 
-#undef INTERFACE
 #define INTERFACE ISecurityInformation2
 DECLARE_INTERFACE_IID_(ISecurityInformation2, IUnknown, "c3ccfdb4-6f88-11d2-a3ce-00c04fb1782a")
 {
@@ -142,6 +142,7 @@ DECLARE_INTERFACE_IID_(ISecurityInformation2, IUnknown, "c3ccfdb4-6f88-11d2-a3ce
     STDMETHOD_(BOOL,IsDaclCanonical) (THIS_ PACL pDacl) PURE;
     STDMETHOD(LookupSids) (THIS_ ULONG cSids, PSID *rgpSids, LPDATAOBJECT *ppdo) PURE;
 };
+#undef INTERFACE
 typedef ISecurityInformation2 *LPSECURITYINFO2;
 
 #define CFSTR_ACLUI_SID_INFO_LIST   TEXT("CFSTR_ACLUI_SID_INFO_LIST")
@@ -161,7 +162,6 @@ typedef struct _SID_INFO_LIST
 } SID_INFO_LIST, *PSID_INFO_LIST;
 
 
-#undef INTERFACE
 #define INTERFACE IEffectivePermission
 DECLARE_INTERFACE_IID_(IEffectivePermission, IUnknown, "3853dc76-9f35-407c-88a1-d19344365fbc")
 {
@@ -181,9 +181,9 @@ DECLARE_INTERFACE_IID_(IEffectivePermission, IUnknown, "3853dc76-9f35-407c-88a1-
                                        PACCESS_MASK *ppGrantedAccessList,
                                        ULONG *pcGrantedAccessListLength) PURE;
 };
+#undef INTERFACE
 typedef IEffectivePermission *LPEFFECTIVEPERMISSION;
 
-#undef INTERFACE
 #define INTERFACE ISecurityObjectTypeInfo
 DECLARE_INTERFACE_IID_(ISecurityObjectTypeInfo, IUnknown, "fc3066eb-79ef-444b-9111-d18a75ebf2fa")
 {
@@ -202,10 +202,10 @@ DECLARE_INTERFACE_IID_(ISecurityObjectTypeInfo, IUnknown, "fc3066eb-79ef-444b-91
 #endif
                                 ) PURE;
 };
+#undef INTERFACE
 typedef ISecurityObjectTypeInfo *LPSecurityObjectTypeInfo;
 
 
-#undef INTERFACE
 #define INTERFACE ISecurityInformation3
 DECLARE_INTERFACE_IID_(ISecurityInformation3, IUnknown, "e2cdc9cc-31bd-4f8f-8c8b-b641af516a1a")
 {
@@ -218,6 +218,7 @@ DECLARE_INTERFACE_IID_(ISecurityInformation3, IUnknown, "e2cdc9cc-31bd-4f8f-8c8b
     STDMETHOD(GetFullResourceName) (THIS_ LPWSTR *ppszResourceName) PURE;
     STDMETHOD(OpenElevatedEditor) (THIS_ HWND hWnd, SI_PAGE_TYPE uPage) PURE;
 };
+#undef INTERFACE
 typedef ISecurityInformation3 *LPSECURITYINFO3;
 
 DEFINE_GUID(IID_ISecurityInformation, 0x965fc360, 0x16ff, 0x11d0, 0x91, 0xcb, 0x0, 0xaa, 0x0, 0xbb, 0xb7, 0x23);

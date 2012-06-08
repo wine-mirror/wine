@@ -140,6 +140,7 @@ DECLARE_INTERFACE_(ITextServices,IUnknown)
         DWORD* pdwHeight) PURE;
 
 };
+#undef INTERFACE
 
 #ifdef COBJMACROS
 /*** IUnknown methods ***/
@@ -147,8 +148,6 @@ DECLARE_INTERFACE_(ITextServices,IUnknown)
 #define ITextServices_AddRef(p) (p)->lpVtbl->AddRef(p)
 #define ITextServices_Release(p) (p)->lpVtbl->Release(p)
 #endif
-
-#undef INTERFACE
 
 typedef enum _TXTBACKSTYLE {
     TXTBACK_TRANSPARENT = 0,
@@ -350,6 +349,7 @@ DECLARE_INTERFACE_(ITextHost,IUnknown)
         LONG* lSelBarWidth) PURE;
 
 };
+#undef INTERFACE
 
 #ifdef COBJMACROS
 /*** IUnknown methods ***/
@@ -357,8 +357,6 @@ DECLARE_INTERFACE_(ITextHost,IUnknown)
 #define ITextHost_AddRef(p) (p)->lpVtbl->AddRef(p)
 #define ITextHost_Release(p) (p)->lpVtbl->Release(p)
 #endif
-
-#undef INTERFACE
 
 HRESULT WINAPI CreateTextServices(IUnknown*,ITextHost*,IUnknown**);
 

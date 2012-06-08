@@ -42,5 +42,6 @@ DECLARE_INTERFACE_(IAMDirectSound,IUnknown)
     STDMETHOD(SetFocusWindow)(THIS_ HWND hwnd, BOOL bgsilent) PURE;
     STDMETHOD(GetFocusWindow)(THIS_ HWND hwnd) PURE;
 };
+#undef INTERFACE
 
 #endif
