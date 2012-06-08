@@ -56,6 +56,7 @@ static const char usage[] =
 "   -d n               Set debug level to 'n'\n"
 "   -D id[=val]        Define preprocessor identifier id=val\n"
 "   -E                 Preprocess only\n"
+"   --help             Display this help and exit\n"
 "   -h                 Generate headers\n"
 "   -H file            Name of header file (default is infile.h)\n"
 "   -I path            Set include search dir to path (multiple -I allowed)\n"
@@ -149,6 +150,7 @@ enum {
     PREFIX_ALL_OPTION,
     PREFIX_CLIENT_OPTION,
     PREFIX_SERVER_OPTION,
+    PRINT_HELP,
     WIN32_OPTION,
     WIN64_OPTION,
     WIN32_ALIGN_OPTION,
@@ -160,6 +162,7 @@ static const char short_options[] =
 static const struct option long_options[] = {
     { "dlldata", 1, NULL, DLLDATA_OPTION },
     { "dlldata-only", 0, NULL, DLLDATA_ONLY_OPTION },
+    { "help", 0, NULL, PRINT_HELP },
     { "local-stubs", 1, NULL, LOCAL_STUBS_OPTION },
     { "oldnames", 0, NULL, OLDNAMES_OPTION },
     { "output", 0, NULL, 'o' },
@@ -526,6 +529,9 @@ int main(int argc,char *argv[])
     case PREFIX_SERVER_OPTION:
       prefix_server = xstrdup(optarg);
       break;
+    case PRINT_HELP:
+      fprintf(stderr, "%s", usage);
+      return 0;
     case WIN32_OPTION:
       do_win32 = 1;
       do_win64 = 0;
