@@ -149,10 +149,14 @@ static HRESULT WINAPI MetadataHandler_GetMetadataHandlerInfo(IWICMetadataWriter 
 static HRESULT WINAPI MetadataHandler_GetCount(IWICMetadataWriter *iface,
     UINT *pcCount)
 {
+    MetadataHandler *This = impl_from_IWICMetadataWriter(iface);
+
+    TRACE("%p,%p\n", iface, pcCount);
+
     if (!pcCount) return E_INVALIDARG;
 
-    FIXME("(%p,%p): stub\n", iface, pcCount);
-    return E_NOTIMPL;
+    *pcCount = This->item_count;
+    return S_OK;
 }
 
 static HRESULT WINAPI MetadataHandler_GetValueByIndex(IWICMetadataWriter *iface,
