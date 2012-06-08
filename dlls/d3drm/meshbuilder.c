@@ -1366,8 +1366,11 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3* iface, LPDIRECTXFILEDATA pData)
             else
             {
                 DWORD vertex_idx = *faces_vertex_idx_ptr;
-                if (vertex_idx > This->nb_vertices)
+                if (vertex_idx >= This->nb_vertices)
+                {
+                    WARN("Found vertex index %u but only %u vertices available => use index 0\n", vertex_idx, This->nb_vertices);
                     vertex_idx = 0;
+                }
                 *(faces_data_ptr + faces_data_size++) = vertex_idx;
                 /* Add face normal to vertex normal */
                 D3DRMVectorAdd(&This->pNormals[vertex_idx], &This->pNormals[vertex_idx], &face_normal);
