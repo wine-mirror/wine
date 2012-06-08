@@ -1248,6 +1248,7 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3* iface, LPDIRECTXFILEDATA pData)
                 LPDIRECTXFILEDATA data;
                 LPDIRECTXFILEDATAREFERENCE reference;
                 LPDIRECT3DRMMATERIAL2 material;
+                LPDIRECTXFILEOBJECT material_child;
 
                 hr = IDirectXFileObject_QueryInterface(child, &IID_IDirectXFileData, (void **)&data);
                 if (FAILED(hr))
@@ -1289,6 +1290,62 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3* iface, LPDIRECTXFILEDATA pData)
                 IDirect3DRMMaterial2_SetEmissive(material, values[8], values[9], values[10]);
 
                 This->material = material;
+
+                hr = IDirectXFileData_GetNextObject(data, &material_child);
+                if (hr == S_OK)
+                {
+                    LPDIRECTXFILEDATA data;
+                    LPDIRECT3DRMTEXTURE3 texture;
+                    char** filename;
+
+                    hr = IDirectXFileObject_QueryInterface(material_child, &IID_IDirectXFileData, (void **)&data);
+                    if (FAILED(hr))
+                    {
+                        LPDIRECTXFILEDATAREFERENCE reference;
+
+                        hr = IDirectXFileObject_QueryInterface(material_child, &IID_IDirectXFileDataReference, (void **)&reference);
+                        if (FAILED(hr))
+                            goto end;
+
+                        hr = IDirectXFileDataReference_Resolve(reference, &data);
+                        IDirectXFileDataReference_Release(reference);
+                        if (FAILED(hr))
+                            goto end;
+                    }
+
+                    hr = IDirectXFileData_GetType(data, &pGuid);
+                    if (hr != DXFILE_OK)
+                        goto end;
+                    if (!IsEqualGUID(pGuid, &TID_D3DRMTextureFilename))
+                    {
+                         WARN("Not a texture filename\n");
+                         goto end;
+                    }
+
+                    size = 4;
+                    hr = IDirectXFileData_GetData(data, NULL, &size, (void**)&filename);
+                    if (SUCCEEDED(hr))
+                    {
+                        HANDLE file;
+
+                        file = CreateFileA(*filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+                        if (file != INVALID_HANDLE_VALUE)
+                        {
+                            hr = Direct3DRMTexture_create(&IID_IDirect3DRMTexture3, (LPUNKNOWN*)&texture);
+                            if (FAILED(hr))
+                            {
+                                IDirectXFileData_Release(data);
+                                goto end;
+                            }
+                            This->texture = texture;
+                        }
+                    }
+                }
+                else if (hr != DXFILEERR_NOMOREOBJECTS)
+                {
+                    goto end;
+                }
+                hr = S_OK;
 
                 IDirectXFileData_Release(data);
                 i++;
