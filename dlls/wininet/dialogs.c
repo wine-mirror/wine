@@ -175,34 +175,21 @@ static BOOL WININET_GetSetPassword( HWND hdlg, LPCWSTR szServer,
 /***********************************************************************
  *         WININET_SetAuthorization
  */
-static BOOL WININET_SetAuthorization( HINTERNET hRequest, LPWSTR username,
+static BOOL WININET_SetAuthorization( http_request_t *request, LPWSTR username,
                                       LPWSTR password, BOOL proxy )
 {
-    http_request_t *request;
-    http_session_t *session;
-    BOOL ret = FALSE;
+    http_session_t *session = request->session;
     LPWSTR p, q;
-
-    request = (http_request_t*) get_handle_object( hRequest );
-    if( !request )
-        return FALSE;
-
-    session = request->session;
-    if (NULL == session ||  session->hdr.htype != WH_HHTTPSESSION)
-    {
-        INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
-        goto done;
-    }
 
     p = heap_strdupW(username);
     if( !p )
-        goto done;
+        return FALSE;
 
     q = heap_strdupW(password);
     if( !q )
     {
         heap_free(username);
-        goto done;
+        return FALSE;
     }
 
     if (proxy)
@@ -224,11 +211,7 @@ static BOOL WININET_SetAuthorization( HINTERNET hRequest, LPWSTR username,
         session->password = q;
     }
 
-    ret = TRUE;
-
-done:
-    WININET_Release( &request->hdr );
-    return ret;
+    return TRUE;
 }
 
 /***********************************************************************
@@ -291,7 +274,7 @@ static INT_PTR WINAPI WININET_ProxyPasswordDialog(
                 WININET_GetAuthRealm( params->req->hdr.hInternet,
                                       szRealm, sizeof szRealm/sizeof(WCHAR), TRUE) )
                 WININET_GetSetPassword( hdlg, params->req->session->appInfo->proxy, szRealm, TRUE );
-            WININET_SetAuthorization( params->req->hdr.hInternet, username, password, TRUE );
+            WININET_SetAuthorization( params->req, username, password, TRUE );
 
             EndDialog( hdlg, ERROR_INTERNET_FORCE_RETRY );
             return TRUE;
@@ -368,7 +351,7 @@ static INT_PTR WINAPI WININET_PasswordDialog(
             {
                 WININET_GetSetPassword( hdlg, params->req->session->hostName, szRealm, TRUE );
             }
-            WININET_SetAuthorization( params->req->hdr.hInternet, username, password, FALSE );
+            WININET_SetAuthorization( params->req, username, password, FALSE );
 
             EndDialog( hdlg, ERROR_INTERNET_FORCE_RETRY );
             return TRUE;
