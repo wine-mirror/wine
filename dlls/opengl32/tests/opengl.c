@@ -37,6 +37,7 @@ const unsigned char * WINAPI glGetString(unsigned int);
 #define GL_VENDOR 0x1F00
 #define GL_RENDERER 0x1F01
 #define GL_VERSION 0x1F02
+#define GL_EXTENSIONS 0x1F03
 
 #define GL_VIEWPORT 0x0ba2
 void WINAPI glGetIntegerv(GLenum pname, GLint *params);
@@ -114,6 +115,33 @@ static void init_functions(void)
     GET_PROC(wglReleasePbufferDCARB)
 
 #undef GET_PROC
+}
+
+static BOOL gl_extension_supported(const char *extensions, const char *extension_string)
+{
+    size_t ext_str_len = strlen(extension_string);
+
+    while (*extensions)
+    {
+        const char *start;
+        size_t len;
+
+        while (isspace(*extensions))
+            ++extensions;
+        start = extensions;
+        while (!isspace(*extensions) && *extensions)
+            ++extensions;
+
+        len = extensions - start;
+        if (!len)
+            continue;
+
+        if (len == ext_str_len && !memcmp(start, extension_string, ext_str_len))
+        {
+            return TRUE;
+        }
+    }
+    return FALSE;
 }
 
 static void test_pbuffers(HDC hdc)
@@ -736,6 +764,41 @@ static void test_deletecontext(HDC hdc)
      * deletion takes place when the thread becomes not current. */
     hglrc = wglGetCurrentContext();
     ok(hglrc == NULL, "A WGL context is active while none was expected\n");
+}
+
+
+static void test_getprocaddress(HDC hdc)
+{
+    const char *extensions = (const char*)glGetString(GL_EXTENSIONS);
+    PROC func = NULL;
+    HGLRC ctx = wglGetCurrentContext();
+
+    if (!extensions)
+    {
+        skip("skipping wglGetProcAddress tests because no GL extensions supported\n");
+        return;
+    }
+
+    /* The goal of the test will be to test behavior of wglGetProcAddress when
+     * no WGL context is active. Before the test we pick an extension (GL_ARB_multitexture)
+     * which any GL >=1.2.1 implementation supports. Unfortunately the GDI renderer doesn't
+     * support it. There aren't any extensions we can use for this test which are supported by
+     * both GDI and real drivers.
+     * Note GDI only has GL_EXT_bgra, GL_EXT_paletted_texture and GL_WIN_swap_hint.
+     */
+    if (!gl_extension_supported(extensions, "GL_ARB_multitexture"))
+    {
+        skip("skipping test because lack of GL_ARB_multitexture support\n");
+    }
+
+    func = wglGetProcAddress("glActiveTextureARB");
+    ok(func != NULL, "Unable to lookup glActiveTextureARB, last error %#x\n", GetLastError());
+
+    /* Temporarily disable the context, so we can see that we can't retrieve functions now. */
+    wglMakeCurrent(hdc, NULL);
+    func = wglGetProcAddress("glActiveTextureARB");
+    todo_wine ok(func == NULL, "Function lookup without a context passed, expected a failure; last error %#x\n", GetLastError());
+    wglMakeCurrent(hdc, ctx);
 }
 
 static void test_make_current_read(HDC hdc)
@@ -1403,6 +1466,7 @@ START_TEST(opengl)
             return;
         }
 
+        test_getprocaddress(hdc);
         test_deletecontext(hdc);
         test_makecurrent(hdc);
         test_setpixelformat(hdc);
