@@ -659,7 +659,7 @@ DWORD WINAPI GetIpStatistics(PMIB_IPSTATS stats)
         }
         if (kc) kstat_close( kc );
     }
-#elif defined(HAVE_SYS_SYSCTL_H) && defined(IPCTL_STATS) && (HAVE_STRUCT_IPSTAT_IPS_TOTAL || HAVE_STRUCT_IP_STATS_IPS_TOTAL)
+#elif defined(HAVE_SYS_SYSCTL_H) && defined(IPCTL_STATS) && (defined(HAVE_STRUCT_IPSTAT_IPS_TOTAL) || defined(HAVE_STRUCT_IP_STATS_IPS_TOTAL))
     {
         int mib[] = {CTL_NET, PF_INET, IPPROTO_IP, IPCTL_STATS};
 #define MIB_LEN (sizeof(mib) / sizeof(mib[0]))
