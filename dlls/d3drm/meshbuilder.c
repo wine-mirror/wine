@@ -367,6 +367,8 @@ static ULONG WINAPI IDirect3DRMMeshBuilder2Impl_Release(IDirect3DRMMeshBuilder2*
     {
         if (This->material)
             IDirect3DRMMaterial2_Release(This->material);
+        if (This->texture)
+            IDirect3DRMTexture3_Release(This->texture);
         HeapFree(GetProcessHeap(), 0, This->name);
         HeapFree(GetProcessHeap(), 0, This->pVertices);
         HeapFree(GetProcessHeap(), 0, This->pNormals);
