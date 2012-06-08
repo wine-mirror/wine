@@ -20,7 +20,7 @@ void WINAPI wine_glAccum( GLenum op, GLfloat value ) {
 /***********************************************************************
  *              glAlphaFunc (OPENGL32.@)
  */
-void WINAPI wine_glAlphaFunc( GLenum func, GLclampf ref ) {
+void WINAPI wine_glAlphaFunc( GLenum func, GLfloat ref ) {
   TRACE("(%d, %f)\n", func, ref );
   ENTER_GL();
   glAlphaFunc( func, ref );
@@ -132,7 +132,7 @@ void WINAPI wine_glClearAccum( GLfloat red, GLfloat green, GLfloat blue, GLfloat
 /***********************************************************************
  *              glClearColor (OPENGL32.@)
  */
-void WINAPI wine_glClearColor( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha ) {
+void WINAPI wine_glClearColor( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha ) {
   TRACE("(%f, %f, %f, %f)\n", red, green, blue, alpha );
   ENTER_GL();
   glClearColor( red, green, blue, alpha );
@@ -142,7 +142,7 @@ void WINAPI wine_glClearColor( GLclampf red, GLclampf green, GLclampf blue, GLcl
 /***********************************************************************
  *              glClearDepth (OPENGL32.@)
  */
-void WINAPI wine_glClearDepth( GLclampd depth ) {
+void WINAPI wine_glClearDepth( GLdouble depth ) {
   TRACE("(%f)\n", depth );
   ENTER_GL();
   glClearDepth( depth );
@@ -632,7 +632,7 @@ void WINAPI wine_glDepthMask( GLboolean flag ) {
 /***********************************************************************
  *              glDepthRange (OPENGL32.@)
  */
-void WINAPI wine_glDepthRange( GLclampd nearParam, GLclampd farParam ) {
+void WINAPI wine_glDepthRange( GLdouble nearParam, GLdouble farParam ) {
   TRACE("(%f, %f)\n", nearParam, farParam );
   ENTER_GL();
   glDepthRange( nearParam, farParam );
@@ -2052,7 +2052,7 @@ void WINAPI wine_glPopName( void ) {
 /***********************************************************************
  *              glPrioritizeTextures (OPENGL32.@)
  */
-void WINAPI wine_glPrioritizeTextures( GLsizei n, GLuint* textures, GLclampf* priorities ) {
+void WINAPI wine_glPrioritizeTextures( GLsizei n, GLuint* textures, GLfloat* priorities ) {
   TRACE("(%d, %p, %p)\n", n, textures, priorities );
   ENTER_GL();
   glPrioritizeTextures( n, textures, priorities );
