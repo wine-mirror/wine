@@ -364,8 +364,7 @@ static void test_metadata_IFD(void)
 
     hr = CoCreateInstance(&CLSID_WICIfdMetadataReader, NULL, CLSCTX_INPROC_SERVER,
         &IID_IWICMetadataReader, (void**)&reader);
-    todo_wine ok(hr == S_OK, "CoCreateInstance error %#x\n", hr);
-    if (FAILED(hr)) return;
+    ok(hr == S_OK, "CoCreateInstance error %#x\n", hr);
 
     hr = IWICMetadataReader_GetCount(reader, NULL);
     ok(hr == E_INVALIDARG, "GetCount error %#x\n", hr);
@@ -378,6 +377,7 @@ static void test_metadata_IFD(void)
 
     hr = IWICMetadataReader_GetCount(reader, &count);
     ok(hr == S_OK, "GetCount error %#x\n", hr);
+todo_wine
     ok(count == 6, "unexpected count %u\n", count);
 
     hr = IWICMetadataReader_GetEnumerator(reader, NULL);
@@ -410,14 +410,22 @@ static void test_metadata_IFD(void)
     IWICEnumMetadataItem_Release(enumerator);
 
     hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
+todo_wine
     ok(hr == S_OK, "GetMetadataFormat error %#x\n", hr);
+todo_wine
     ok(IsEqualGUID(&format, &GUID_MetadataFormatIfd), "unexpected format %s\n", debugstr_guid(&format));
 
     hr = IWICMetadataReader_GetMetadataFormat(reader, NULL);
     ok(hr == E_INVALIDARG, "GetMetadataFormat should fail\n");
 
     hr = IWICMetadataReader_GetValueByIndex(reader, 0, NULL, NULL, NULL);
+todo_wine
     ok(hr == S_OK, "GetValueByIndex error %#x\n", hr);
+    if (FAILED(hr))
+    {
+        IWICMetadataReader_Release(reader);
+        return;
+    }
 
     hr = IWICMetadataReader_GetValueByIndex(reader, count - 1, NULL, NULL, NULL);
     ok(hr == S_OK, "GetValueByIndex error %#x\n", hr);

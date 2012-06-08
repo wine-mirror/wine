@@ -128,3 +128,10 @@ coclass WineTgaDecoder { interface IWICBitmapDecoder; }
     uuid(699745c2-5066-4b82-a8e3-d40478dbec8c)
 ]
 coclass WICUnknownMetadataReader { interface IWICMetadataReader; }
+
+[
+    helpstring("WIC Ifd Metadata Reader"),
+    threading(both),
+    uuid(8f914656-9d0a-4eb2-9019-0bf96d8a9ee6)
+]
+coclass WICIfdMetadataReader { interface IWICIfdMetadataReader; }

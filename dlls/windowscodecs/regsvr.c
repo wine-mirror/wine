@@ -1290,18 +1290,43 @@ static struct regsvr_converter const converter_list[] = {
     { NULL }			/* list terminator */
 };
 
+static const BYTE no_magic[1] = { 0 };
+static const BYTE no_mask[1] = { 0 };
+
+static const struct metadata_pattern ifd_metadata_pattern[] = {
+    { 0, 1, no_magic, no_mask, 0 },
+    { 0 }
+};
+
+static const struct reader_containers ifd_containers[] = {
+    {
+        &GUID_ContainerFormatTiff,
+        ifd_metadata_pattern
+    },
+    { NULL } /* list terminator */
+};
+
 static struct regsvr_metadatareader const metadatareader_list[] = {
     {   &CLSID_WICUnknownMetadataReader,
-    "The Wine Project",
-    "Unknown Metadata Reader",
-    "1.0.0.0",
-    "1.0.0.0",
-    &GUID_VendorMicrosoft,
-    &GUID_MetadataFormatUnknown,
-    0,
-    0,
-    0,
-    NULL
+        "The Wine Project",
+        "Unknown Metadata Reader",
+        "1.0.0.0",
+        "1.0.0.0",
+        &GUID_VendorMicrosoft,
+        &GUID_MetadataFormatUnknown,
+        0, 0, 0,
+        NULL
+    },
+    {
+        &CLSID_WICIfdMetadataReader,
+        "The Wine Project",
+        "Ifd Reader",
+        "1.0.0.0",
+        "1.0.0.0",
+        &GUID_VendorMicrosoft,
+        &GUID_MetadataFormatIfd,
+        1, 1, 0,
+        ifd_containers
     },
     { NULL }			/* list terminator */
 };
