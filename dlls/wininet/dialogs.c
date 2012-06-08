@@ -58,45 +58,6 @@ struct WININET_ErrorDlgParams
 };
 
 /***********************************************************************
- *         WININET_GetProxyServer
- *
- *  Determine the name of the proxy server the request is using
- */
-static BOOL WININET_GetProxyServer( HINTERNET hRequest, LPWSTR szBuf, DWORD sz )
-{
-    http_request_t *request;
-    http_session_t *session = NULL;
-    appinfo_t *hIC = NULL;
-    BOOL ret = FALSE;
-    LPWSTR p;
-
-    request = (http_request_t*) get_handle_object( hRequest );
-    if (NULL == request)
-        return FALSE;
-
-    session = request->session;
-    if (NULL == session)
-        goto done;
-
-    hIC = session->appInfo;
-    if (NULL == hIC)
-        goto done;
-
-    lstrcpynW(szBuf, hIC->proxy, sz);
-
-    /* FIXME: perhaps it would be better to use InternetCrackUrl here */
-    p = strchrW(szBuf, ':');
-    if (p)
-        *p = 0;
-
-    ret = TRUE;
-
-done:
-    WININET_Release( &request->hdr );
-    return ret;
-}
-
-/***********************************************************************
  *         WININET_GetServer
  *
  *  Determine the name of the web server
@@ -324,13 +285,8 @@ static INT_PTR WINAPI WININET_ProxyPasswordDialog(
             SetWindowTextW( hitem, szRealm );
         }
 
-        /* extract the name of the proxy server */
-        if( WININET_GetProxyServer( params->req->hdr.hInternet,
-                                    szServer, sizeof szServer/sizeof(WCHAR)) )
-        {
-            hitem = GetDlgItem( hdlg, IDC_PROXY );
-            SetWindowTextW( hitem, szServer );
-        }
+        hitem = GetDlgItem( hdlg, IDC_PROXY );
+        SetWindowTextW( hitem, params->req->session->appInfo->proxy );
 
         WININET_GetSetPassword( hdlg, szServer, szRealm, FALSE );
 
@@ -361,12 +317,8 @@ static INT_PTR WINAPI WININET_ProxyPasswordDialog(
             if( hitem &&
                 SendMessageW( hitem, BM_GETSTATE, 0, 0 ) &&
                 WININET_GetAuthRealm( params->req->hdr.hInternet,
-                                  szRealm, sizeof szRealm/sizeof(WCHAR), TRUE ) &&
-                WININET_GetProxyServer( params->req->hdr.hInternet,
-                                    szServer, sizeof szServer/sizeof(WCHAR)) )
-            {
-                WININET_GetSetPassword( hdlg, szServer, szRealm, TRUE );
-            }
+                                      szRealm, sizeof szRealm/sizeof(WCHAR), TRUE) )
+                WININET_GetSetPassword( hdlg, params->req->session->appInfo->proxy, szRealm, TRUE );
             WININET_SetAuthorization( params->req->hdr.hInternet, username, password, TRUE );
 
             EndDialog( hdlg, ERROR_INTERNET_FORCE_RETRY );
