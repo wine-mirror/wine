@@ -834,7 +834,6 @@ BOOL pop_scope(struct hlsl_parse_ctx *ctx) DECLSPEC_HIDDEN;
 struct bwriter_shader *parse_hlsl_shader(const char *text, enum shader_type type, DWORD version,
         const char *entrypoint, char **messages) DECLSPEC_HIDDEN;
 
-const char *debug_base_type(const struct hlsl_type *type) DECLSPEC_HIDDEN;
 const char *debug_hlsl_type(const struct hlsl_type *type) DECLSPEC_HIDDEN;
 const char *debug_modifiers(DWORD modifiers) DECLSPEC_HIDDEN;
 void free_hlsl_type(struct hlsl_type *type) DECLSPEC_HIDDEN;

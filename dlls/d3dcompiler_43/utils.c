@@ -886,7 +886,7 @@ BOOL pop_scope(struct hlsl_parse_ctx *ctx)
     return TRUE;
 }
 
-const char *debug_base_type(const struct hlsl_type *type)
+static const char *debug_base_type(const struct hlsl_type *type)
 {
     const char *name = "(unknown)";
 
@@ -961,7 +961,7 @@ const char *debug_modifiers(DWORD modifiers)
     return wine_dbg_sprintf("%s", string[0] ? string + 1 : "");
 }
 
-const char *debug_node_type(enum hlsl_ir_node_type type)
+static const char *debug_node_type(enum hlsl_ir_node_type type)
 {
     const char *names[] =
     {
