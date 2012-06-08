@@ -2491,7 +2491,14 @@ static ULONG WINAPI IDirect3DRMMeshImpl_Release(IDirect3DRMMesh* iface)
         int i;
 
         for (i = 0; i < This->nb_groups; i++)
+        {
             HeapFree(GetProcessHeap(), 0, This->groups[i].vertices);
+            HeapFree(GetProcessHeap(), 0, This->groups[i].face_data);
+            if (This->groups[i].material)
+                IDirect3DRMMaterial2_Release(This->groups[i].material);
+            if (This->groups[i].texture)
+                IDirect3DRMTexture3_Release(This->groups[i].texture);
+        }
         HeapFree(GetProcessHeap(), 0, This->groups);
         HeapFree(GetProcessHeap(), 0, This);
     }
