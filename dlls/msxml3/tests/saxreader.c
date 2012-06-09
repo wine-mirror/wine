@@ -956,7 +956,6 @@ static HRESULT WINAPI contentHandler_putDocumentLocator(
 
     locator = pLocator;
 
-    memset(&call, 0, sizeof(call));
     init_call_entry(locator, &call);
     call.id = CH_PUTDOCUMENTLOCATOR;
     add_call(sequences, CONTENT_HANDLER_INDEX, &call);
