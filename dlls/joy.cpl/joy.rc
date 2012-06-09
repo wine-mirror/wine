@@ -68,6 +68,9 @@ FONT 8, "Ms Shell Dlg"
     GROUPBOX        "Direction", IDC_STATIC, 220, 30, 60, 60
 }
 
+/* @makedep: joy.ico */
+ICO_MAIN ICON "joy.ico"
+
 #define WINE_FILENAME_STR "joy.cpl"
 #define WINE_FILEDESCRIPTION_STR "Game Controllers Configuration Panel"
 
