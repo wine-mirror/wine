@@ -190,12 +190,21 @@ static void test_MeshBuilder(void)
     char name[10];
     DWORD size;
     D3DCOLOR color;
+    CHAR cname[64] = {0};
 
     hr = pDirect3DRMCreate(&pD3DRM);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRM interface (hr = %x)\n", hr);
 
     hr = IDirect3DRM_CreateMeshBuilder(pD3DRM, &pMeshBuilder);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMMeshBuilder interface (hr = %x)\n", hr);
+
+    size = sizeof(cname);
+    hr = IDirect3DRMMeshBuilder_GetClassName(pMeshBuilder, &size, cname);
+    todo_wine {
+    ok(hr == D3DRM_OK, "Cannot get classname (hr = %x)\n", hr);
+    ok(size != sizeof(cname), "size didn't change: %u\n", size);
+    ok(!strcmp(cname, "Builder"), "Expected cname to be \"Builder\", but got \"%s\"\n", cname);
+    }
 
     info.lpMemory = data_bad_version;
     info.dSize = strlen(data_bad_version);
@@ -437,6 +446,8 @@ static void test_MeshBuilder3(void)
     int val;
     DWORD val1;
     D3DVALUE valu, valv;
+    DWORD size;
+    CHAR cname[64] = {0};
 
     hr = pDirect3DRMCreate(&pD3DRM);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRM interface (hr = %x)\n", hr);
@@ -451,6 +462,14 @@ static void test_MeshBuilder3(void)
 
     hr = IDirect3DRM3_CreateMeshBuilder(pD3DRM3, &pMeshBuilder3);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMMeshBuilder3 interface (hr = %x)\n", hr);
+
+    size = sizeof(cname);
+    hr = IDirect3DRMMeshBuilder3_GetClassName(pMeshBuilder3, &size, cname);
+    todo_wine {
+    ok(hr == D3DRM_OK, "Cannot get classname (hr = %x)\n", hr);
+    ok(size != sizeof(cname), "size didn't change: %u\n", size);
+    ok(!strcmp(cname, "Builder"), "Expected cname to be \"Builder\", but got \"%s\"\n", cname);
+    }
 
     info.lpMemory = data_bad_version;
     info.dSize = strlen(data_bad_version);
@@ -541,6 +560,7 @@ static void test_Frame(void)
     LPDIRECT3DRMLIGHT pLightTmp;
     LPDIRECT3DRMLIGHTARRAY pLightArray;
     DWORD count;
+    CHAR cname[64] = {0};
 
     hr = pDirect3DRMCreate(&pD3DRM);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRM interface (hr = %x)\n", hr);
@@ -548,6 +568,14 @@ static void test_Frame(void)
     hr = IDirect3DRM_CreateFrame(pD3DRM, NULL, &pFrameC);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMFrame interface (hr = %x)\n", hr);
     CHECK_REFCOUNT(pFrameC, 1);
+
+    count = sizeof(cname);
+    hr = IDirect3DRMFrame_GetClassName(pFrameC, &count, cname);
+    todo_wine {
+    ok(hr == D3DRM_OK, "Cannot get classname (hr = %x)\n", hr);
+    ok(count != sizeof(cname), "size didn't change: %u\n", count);
+    ok(!strcmp(cname, "Frame"), "Expected cname to be \"Frame\", but got \"%s\"\n", cname);
+    }
 
     hr = IDirect3DRMFrame_GetParent(pFrameC, NULL);
     ok(hr == D3DRMERR_BADVALUE, "Should fail and return D3DRM_BADVALUE (hr = %x)\n", hr);
@@ -837,12 +865,22 @@ static void test_Light(void)
     LPDIRECT3DRMLIGHT pLight;
     D3DRMLIGHTTYPE type;
     D3DCOLOR color;
+    DWORD size;
+    CHAR cname[64] = {0};
 
     hr = pDirect3DRMCreate(&pD3DRM);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRM interface (hr = %x)\n", hr);
 
     hr = IDirect3DRM_CreateLightRGB(pD3DRM, D3DRMLIGHT_SPOT, 0.5, 0.5, 0.5, &pLight);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMLight interface (hr = %x)\n", hr);
+
+    size = sizeof(cname);
+    hr = IDirect3DRMLight_GetClassName(pLight, &size, cname);
+    todo_wine {
+    ok(hr == D3DRM_OK, "Cannot get classname (hr = %x)\n", hr);
+    ok(size != sizeof(cname), "size didn't change: %u\n", size);
+    ok(!strcmp(cname, "Light"), "Expected cname to be \"Light\", but got \"%s\"\n", cname);
+    }
 
     type = IDirect3DRMLight_GetType(pLight);
     ok(type == D3DRMLIGHT_SPOT, "wrong type (%u)\n", type);
