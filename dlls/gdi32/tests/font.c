@@ -4422,9 +4422,6 @@ static void test_stock_fonts(void)
         }
 
         ok(td[i].weight == lf.lfWeight, "%d: expected lfWeight %d, got %d\n", i, td[i].weight, lf.lfWeight);
-        if (td[i].height < 0) /* FIXME: remove once Wine is fixed */
-        todo_wine ok(td[i].height == lf.lfHeight, "%d: expected lfHeight %d, got %d\n", i, td[i].height, lf.lfHeight);
-        else
         ok(td[i].height == lf.lfHeight, "%d: expected lfHeight %d, got %d\n", i, td[i].height, lf.lfHeight);
         ok(!lstrcmp(td[i].face_name, lf.lfFaceName), "%d: expected lfFaceName %s, got %s\n", i, td[i].face_name, lf.lfFaceName);
     }
