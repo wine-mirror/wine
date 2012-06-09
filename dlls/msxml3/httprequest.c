@@ -540,31 +540,32 @@ static HRESULT WINAPI BSCHttpNegotiate_OnResponse(IHttpNegotiate *iface, DWORD c
     This->request->status_text = NULL;
     if (resp_headers)
     {
-        const WCHAR *ptr, *line;
+        const WCHAR *ptr, *line, *status_text;
 
         ptr = line = resp_headers;
 
-        /* skip status line */
-        while (*ptr)
+        /* skip HTTP-Version */
+        ptr = strchrW(ptr, ' ');
+        if (ptr)
         {
-            if (*ptr == '\r' && *(ptr+1) == '\n')
+            /* skip Status-Code */
+            ptr = strchrW(++ptr, ' ');
+            if (ptr)
             {
-                const WCHAR *end = ptr-1;
-                line = ptr + 2;
-                /* scan back to get status phrase */
-                while (ptr > resp_headers)
+                status_text = ++ptr;
+                /* now it supposed to end with CRLF */
+                while (*ptr)
                 {
-                     if (*ptr == ' ')
-                     {
-                         This->request->status_text = SysAllocStringLen(ptr+1, end-ptr);
-                         TRACE("status text %s\n", debugstr_w(This->request->status_text));
-                         break;
-                     }
-                     ptr--;
+                    if (*ptr == '\r' && *(ptr+1) == '\n')
+                    {
+                        line = ptr + 2;
+                        This->request->status_text = SysAllocStringLen(status_text, ptr-status_text);
+                        TRACE("status text %s\n", debugstr_w(This->request->status_text));
+                        break;
+                    }
+                    ptr++;
                 }
-                break;
             }
-            ptr++;
         }
 
         /* store as unparsed string for now */
