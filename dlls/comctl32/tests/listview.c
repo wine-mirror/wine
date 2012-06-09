@@ -2090,7 +2090,6 @@ static void test_multiselect(void)
         { "using VK_HOME", -1, VK_HOME, 1, -1 }
     };
 
-
     hwnd = create_listview_control(LVS_REPORT);
 
     for (i=0;i<items;i++) {
@@ -2236,6 +2235,131 @@ static void test_multiselect(void)
     expect(TRUE, r);
     r = ListView_GetSelectedCount(hwnd);
     expect(0, r);
+
+    /* 1. selection mark is update when new focused item is set */
+    style = GetWindowLongPtrA(hwnd, GWL_STYLE);
+    SetWindowLongPtrA(hwnd, GWL_STYLE, style & ~LVS_SINGLESEL);
+
+    r = SendMessage(hwnd, LVM_SETSELECTIONMARK, 0, -1);
+    expect(-1, r);
+
+    item.stateMask = LVIS_FOCUSED;
+    item.state     = LVIS_FOCUSED;
+    r = SendMessage(hwnd, LVM_SETITEMSTATE, 0, (LPARAM)&item);
+    expect(TRUE, r);
+
+    r = SendMessage(hwnd, LVM_GETSELECTIONMARK, 0, 0);
+    expect(0, r);
+
+    /* it's not updated if already set */
+    item.stateMask = LVIS_FOCUSED;
+    item.state     = LVIS_FOCUSED;
+    r = SendMessage(hwnd, LVM_SETITEMSTATE, 1, (LPARAM)&item);
+    expect(TRUE, r);
+
+    r = SendMessage(hwnd, LVM_GETSELECTIONMARK, 0, 0);
+    expect(0, r);
+
+    r = SendMessage(hwnd, LVM_SETSELECTIONMARK, 0, -1);
+    expect(0, r);
+
+    item.stateMask = LVIS_FOCUSED;
+    item.state     = LVIS_FOCUSED;
+    r = SendMessage(hwnd, LVM_SETITEMSTATE, 1, (LPARAM)&item);
+    expect(TRUE, r);
+
+    r = SendMessage(hwnd, LVM_GETSELECTIONMARK, 0, 0);
+    expect(-1, r);
+
+    /* need to reset focused item first */
+    item.stateMask = LVIS_FOCUSED;
+    item.state     = 0;
+    r = SendMessage(hwnd, LVM_SETITEMSTATE, -1, (LPARAM)&item);
+    expect(TRUE, r);
+
+    item.stateMask = LVIS_FOCUSED;
+    item.state     = LVIS_FOCUSED;
+    r = SendMessage(hwnd, LVM_SETITEMSTATE, 2, (LPARAM)&item);
+    expect(TRUE, r);
+
+    r = SendMessage(hwnd, LVM_GETSELECTIONMARK, 0, 0);
+    expect(2, r);
+
+    item.stateMask = LVIS_FOCUSED;
+    item.state     = 0;
+    r = SendMessage(hwnd, LVM_SETITEMSTATE, -1, (LPARAM)&item);
+    expect(TRUE, r);
+
+    r = SendMessage(hwnd, LVM_GETSELECTIONMARK, 0, 0);
+    expect(2, r);
+
+    /* 2. same tests, with LVM_SETITEM */
+    style = GetWindowLongPtrA(hwnd, GWL_STYLE);
+    SetWindowLongPtrA(hwnd, GWL_STYLE, style & ~LVS_SINGLESEL);
+
+    r = SendMessage(hwnd, LVM_SETSELECTIONMARK, 0, -1);
+    expect(2, r);
+
+    item.stateMask = LVIS_FOCUSED;
+    item.state     = LVIS_FOCUSED;
+    item.mask      = LVIF_STATE;
+    item.iItem = item.iSubItem = 0;
+    r = SendMessage(hwnd, LVM_SETITEMA, 0, (LPARAM)&item);
+    expect(TRUE, r);
+
+    r = SendMessage(hwnd, LVM_GETSELECTIONMARK, 0, 0);
+    expect(0, r);
+
+    /* it's not updated if already set */
+    item.stateMask = LVIS_FOCUSED;
+    item.state     = LVIS_FOCUSED;
+    item.mask      = LVIF_STATE;
+    item.iItem     = 1;
+    item.iSubItem  = 0;
+    r = SendMessage(hwnd, LVM_SETITEMA, 0, (LPARAM)&item);
+    expect(TRUE, r);
+
+    r = SendMessage(hwnd, LVM_GETSELECTIONMARK, 0, 0);
+    expect(0, r);
+
+    r = SendMessage(hwnd, LVM_SETSELECTIONMARK, 0, -1);
+    expect(0, r);
+
+    item.stateMask = LVIS_FOCUSED;
+    item.state     = LVIS_FOCUSED;
+    item.mask      = LVIF_STATE;
+    item.iItem     = 1;
+    item.iSubItem  = 0;
+    r = SendMessage(hwnd, LVM_SETITEMA, 0, (LPARAM)&item);
+    expect(TRUE, r);
+
+    r = SendMessage(hwnd, LVM_GETSELECTIONMARK, 0, 0);
+    expect(-1, r);
+
+    /* need to reset focused item first */
+    item.stateMask = LVIS_FOCUSED;
+    item.state     = 0;
+    r = SendMessage(hwnd, LVM_SETITEMSTATE, -1, (LPARAM)&item);
+    expect(TRUE, r);
+
+    item.stateMask = LVIS_FOCUSED;
+    item.state     = LVIS_FOCUSED;
+    item.mask      = LVIF_STATE;
+    item.iItem     = 2;
+    item.iSubItem  = 0;
+    r = SendMessage(hwnd, LVM_SETITEMA, 0, (LPARAM)&item);
+    expect(TRUE, r);
+
+    r = SendMessage(hwnd, LVM_GETSELECTIONMARK, 0, 0);
+    expect(2, r);
+
+    item.stateMask = LVIS_FOCUSED;
+    item.state     = 0;
+    r = SendMessage(hwnd, LVM_SETITEMSTATE, -1, (LPARAM)&item);
+    expect(TRUE, r);
+
+    r = SendMessage(hwnd, LVM_GETSELECTIONMARK, 0, 0);
+    expect(2, r);
 
     DestroyWindow(hwnd);
 }
