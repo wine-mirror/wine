@@ -326,7 +326,7 @@ static INT num_startup;          /* reference counter */
 static FARPROC blocking_hook = (FARPROC)WSA_DefaultBlockingHook;
 
 /* function prototypes */
-static struct WS_hostent *WS_create_he(char *name, int aliases, int addresses, int fill_addresses);
+static struct WS_hostent *WS_create_he(char *name, int aliases, int aliases_size, int addresses, int address_length);
 static struct WS_hostent *WS_dup_he(const struct hostent* p_he);
 static struct WS_protoent *WS_dup_pe(const struct protoent* p_pe);
 static struct WS_servent *WS_dup_se(const struct servent* p_se);
@@ -4557,7 +4557,7 @@ static struct WS_hostent* WS_get_local_ips( char *hostname )
     /* Allocate a hostent and enough memory for all the IPs,
      * including the NULL at the end of the list.
      */
-    hostlist = WS_create_he(hostname, 1, numroutes+1, TRUE);
+    hostlist = WS_create_he(hostname, 1, 0, numroutes+1, sizeof(struct in_addr));
     if (hostlist == NULL)
         goto cleanup; /* Failed to allocate a hostent for the list of IPs */
     hostlist->h_addr_list[numroutes] = NULL; /* NULL-terminate the address list */
@@ -5581,54 +5581,51 @@ static int list_dup(char** l_src, char** l_to, int item_size)
  *
  * Creates the entry with enough memory for the name, aliases
  * addresses, and the address pointers.  Also copies the name
- * and sets up all the pointers.  If "fill_addresses" is set then
- * sufficient memory for the addresses is also allocated and the
- * address pointers are set to this memory.
+ * and sets up all the pointers.
  *
  * NOTE: The alias and address lists must be allocated with room
  * for the NULL item terminating the list.  This is true even if
  * the list has no items ("aliases" and "addresses" must be
  * at least "1", a truly empty list is invalid).
  */
-static struct WS_hostent *WS_create_he(char *name, int aliases, int addresses, int fill_addresses)
+static struct WS_hostent *WS_create_he(char *name, int aliases, int aliases_size, int addresses, int address_length)
 {
     struct WS_hostent *p_to;
     char *p;
-
     int size = (sizeof(struct WS_hostent) +
                 strlen(name) + 1 +
-                sizeof(char *)*aliases +
-                sizeof(char *)*addresses);
-
-    /* Allocate enough memory for the addresses */
-    if (fill_addresses)
-        size += sizeof(struct in_addr)*addresses;
+                sizeof(char *) * aliases +
+                aliases_size +
+                sizeof(char *) * addresses +
+                address_length * (addresses - 1)), i;
 
     if (!(p_to = check_buffer_he(size))) return NULL;
     memset(p_to, 0, size);
 
+    /* Use the memory in the same way winsock does.
+     * First set the pointer for aliases, second set the pointers for addressess.
+     * Third fill the addresses indexes, fourth jump aliases names size.
+     * Fifth fill the hostname.
+     * NOTE: This method is valid for OS version's >= XP.
+     */
     p = (char *)(p_to + 1);
-    p_to->h_name = p;
-    strcpy(p, name);
-    p += strlen(p) + 1;
-
     p_to->h_aliases = (char **)p;
     p += sizeof(char *)*aliases;
+
     p_to->h_addr_list = (char **)p;
     p += sizeof(char *)*addresses;
-    if (fill_addresses)
-    {
-        int i;
 
-        /* NOTE: h_aliases must be filled in manually, leave these
-         * pointers NULL (already set to NULL by memset earlier).
-         */
+    for (i = 0, addresses--; i < addresses; i++, p += address_length)
+        p_to->h_addr_list[i] = p;
 
-        /* Fill in the list of address pointers */
-        for (i = 0; i < addresses; i++)
-            p_to->h_addr_list[i] = (p += sizeof(struct in_addr));
-        p += sizeof(struct in_addr);
-    }
+    /* NOTE: h_aliases must be filled in manually because we don't know each string
+     * size, leave these pointers NULL (already set to NULL by memset earlier).
+     */
+    p += aliases_size;
+
+    p_to->h_name = p;
+    strcpy(p, name);
+
     return p_to;
 }
 
@@ -5638,18 +5635,30 @@ static struct WS_hostent *WS_create_he(char *name, int aliases, int addresses, i
  */
 static struct WS_hostent *WS_dup_he(const struct hostent* p_he)
 {
-    int addresses = list_size(p_he->h_addr_list, p_he->h_length);
-    int aliases = list_size(p_he->h_aliases, 0);
+    int i, addresses = 0, alias_size = 0;
     struct WS_hostent *p_to;
+    char *p;
 
-    p_to = WS_create_he(p_he->h_name, aliases, addresses, FALSE);
+    for( i = 0; p_he->h_aliases[i]; i++) alias_size += strlen(p_he->h_aliases[i]) + 1;
+    while (p_he->h_addr_list[addresses]) addresses++;
+
+    p_to = WS_create_he(p_he->h_name, i + 1, alias_size, addresses + 1, p_he->h_length);
 
     if (!p_to) return NULL;
     p_to->h_addrtype = p_he->h_addrtype;
     p_to->h_length = p_he->h_length;
 
-    list_dup(p_he->h_aliases, p_to->h_aliases, 0);
-    list_dup(p_he->h_addr_list, p_to->h_addr_list, p_he->h_length);
+    for(i = 0, p = p_to->h_addr_list[0]; p_he->h_addr_list[i]; i++, p += p_to->h_length)
+        memcpy(p, p_he->h_addr_list[i], p_to->h_length);
+
+    /* Fill the aliases after the IP data */
+    for(i = 0; p_he->h_aliases[i]; i++)
+    {
+        p_to->h_aliases[i] = p;
+        strcpy(p, p_he->h_aliases[i]);
+        p += strlen(p) + 1;
+    }
+
     return p_to;
 }
 

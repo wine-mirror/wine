@@ -2759,22 +2759,22 @@ static void test_dns(void)
     addr.mem = h + 1;
     if(h->h_addr_list == addr.mem) /* <= W2K */
     {
-        skip("Skipping hostent tests since this OS is unsupported\n");
+        win_skip("Skipping hostent tests since this OS is unsupported\n");
         return;
     }
 
-    todo_wine ok(h->h_aliases == addr.mem,
+    ok(h->h_aliases == addr.mem,
        "hostent->h_aliases should be in %p, it is in %p\n", addr.mem, h->h_aliases);
 
     for(ptr = h->h_aliases, acount = 1; *ptr; ptr++) acount++;
     addr.chr += sizeof(*ptr) * acount;
-    todo_wine ok(h->h_addr_list == addr.mem,
+    ok(h->h_addr_list == addr.mem,
        "hostent->h_addr_list should be in %p, it is in %p\n", addr.mem, h->h_addr_list);
 
     for(ptr = h->h_addr_list, acount = 1; *ptr; ptr++) acount++;
 
     addr.chr += sizeof(*ptr) * acount;
-    todo_wine ok(h->h_addr_list[0] == addr.mem,
+    ok(h->h_addr_list[0] == addr.mem,
        "hostent->h_addr_list[0] should be in %p, it is in %p\n", addr.mem, h->h_addr_list[0]);
 }
 
