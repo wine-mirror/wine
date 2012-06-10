@@ -557,13 +557,11 @@ inline D3DXQUATERNION& D3DXQUATERNION::operator -= (CONST D3DXQUATERNION& quat)
     return *this;
 }
 
-/* TODO: uncomment this when D3DXQuaternionMultiply has been implemented
 inline D3DXQUATERNION& D3DXQUATERNION::operator *= (CONST D3DXQUATERNION& quat)
 {
     D3DXQuaternionMultiply(this, this, &quat);
     return *this;
 }
-*/
 
 inline D3DXQUATERNION& D3DXQUATERNION::operator *= (FLOAT f)
 {
@@ -604,14 +602,12 @@ inline D3DXQUATERNION D3DXQUATERNION::operator - (CONST D3DXQUATERNION& quat) co
     return D3DXQUATERNION(x - quat.x, y - quat.y, z - quat.z, w - quat.w);
 }
 
-/* TODO: uncomment this when D3DXQuaternionMultiply has been implemented
 inline D3DXQUATERNION D3DXQUATERNION::operator * (CONST D3DXQUATERNION& quat) const
 {
     D3DXQUATERNION buf;
     D3DXQuaternionMultiply(&buf, this, &quat);
     return buf;
 }
-*/
 
 inline D3DXQUATERNION D3DXQUATERNION::operator * (FLOAT f) const
 {
