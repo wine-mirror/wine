@@ -1892,8 +1892,8 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, SIZE_T size
     }
     else
     {
-        HEAP_ShrinkBlock( subheap, pArena, rounded_size );
         notify_realloc( pArena + 1, oldActualSize, size );
+        HEAP_ShrinkBlock( subheap, pArena, rounded_size );
     }
 
     pArena->unused_bytes = (pArena->size & ARENA_SIZE_MASK) - size;
