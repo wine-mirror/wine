@@ -29,16 +29,18 @@ static inline int get_ref(IUnknown *obj)
     return IUnknown_Release(obj);
 }
 
-static inline void check_ref(IUnknown *obj, int exp)
+#define check_ref(obj, exp) _check_ref(__LINE__, obj, exp)
+static inline void _check_ref(unsigned int line, IUnknown *obj, int exp)
 {
     int ref = get_ref(obj);
-    ok (exp == ref, "Invalid refcount. Expected %d, got %d\n", exp, ref);
+    ok_(__FILE__, line)(exp == ref, "Invalid refcount. Expected %d, got %d\n", exp, ref);
 }
 
-static inline void check_release(IUnknown *obj, int exp)
+#define check_release(obj, exp) _check_release(__LINE__, obj, exp)
+static inline void _check_release(unsigned int line, IUnknown *obj, int exp)
 {
     int ref = IUnknown_Release(obj);
-    ok (ref == exp, "Invalid refcount. Expected %d, got %d\n", exp, ref);
+    ok_(__FILE__, line)(ref == exp, "Invalid refcount. Expected %d, got %d\n", exp, ref);
 }
 
 #define admitted_error 0.0001f
