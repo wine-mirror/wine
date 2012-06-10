@@ -883,6 +883,57 @@ static void test_ID3DXRenderToSurface(IDirect3DDevice9 *device)
     test_ID3DXRenderToSurface_device_state(device);
 }
 
+void test_D3DXCreateRenderToEnvMap(IDirect3DDevice9 *device)
+{
+    int i;
+    HRESULT hr;
+    ULONG ref_count;
+    D3DXRTE_DESC desc;
+    ID3DXRenderToEnvMap *render;
+    static const struct {
+        D3DXRTE_DESC parameters;
+        D3DXRTE_DESC expected_values;
+    } tests[] = {
+        { {   0,   0, D3DFMT_A8R8G8B8, FALSE, D3DFMT_UNKNOWN }, {   1, 1, D3DFMT_A8R8G8B8, FALSE, D3DFMT_UNKNOWN } },
+        { { 256,   0, D3DFMT_A8R8G8B8, FALSE, D3DFMT_UNKNOWN }, { 256, 9, D3DFMT_A8R8G8B8, FALSE, D3DFMT_UNKNOWN } },
+        { { 256,   4, D3DFMT_A8R8G8B8, FALSE, D3DFMT_D24S8   }, { 256, 4, D3DFMT_A8R8G8B8, FALSE, D3DFMT_D24S8   } },
+        { { 256, 256, D3DFMT_UNKNOWN,  FALSE, D3DFMT_R8G8B8  }, { 256, 9, D3DFMT_A8R8G8B8, FALSE, D3DFMT_R8G8B8  } },
+        { {  -1,  -1, D3DFMT_A8R8G8B8, TRUE,  D3DFMT_DXT1    }, { 256, 9, D3DFMT_A8R8G8B8, TRUE,  D3DFMT_DXT1    } },
+        { { 256,   1, D3DFMT_X8R8G8B8, TRUE,  D3DFMT_UNKNOWN }, { 256, 1, D3DFMT_X8R8G8B8, TRUE,  D3DFMT_UNKNOWN } }
+    };
+
+    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i++)
+    {
+        const D3DXRTE_DESC *parameters = &tests[i].parameters;
+        const D3DXRTE_DESC *expected  = &tests[i].expected_values;
+        hr = D3DXCreateRenderToEnvMap(device, parameters->Size, parameters->MipLevels, parameters->Format,
+                parameters->DepthStencil, parameters->DepthStencilFormat, &render);
+        todo_wine ok(hr == D3D_OK, "%d: D3DXCreateRenderToEnvMap returned %#x, expected %#x\n", i, hr, D3D_OK);
+        if (SUCCEEDED(hr))
+        {
+            hr = ID3DXRenderToEnvMap_GetDesc(render, &desc);
+            ok(hr == D3D_OK, "%d: GetDesc failed %#x\n", i, hr);
+            if (SUCCEEDED(hr))
+            {
+                ok(desc.Size == expected->Size, "%d: Got size %u, expected %u\n", i, desc.Size, expected->Size);
+                ok(desc.MipLevels == expected->MipLevels, "%d: Got miplevels %u, expected %u\n", i, desc.MipLevels, expected->MipLevels);
+                ok(desc.Format == expected->Format, "%d: Got format %#x, expected %#x\n", i, desc.Format, expected->Format);
+                ok(desc.DepthStencil == expected->DepthStencil, "%d: Got depth stencil %d, expected %d\n",
+                        i, expected->DepthStencil, expected->DepthStencil);
+                ok(desc.DepthStencilFormat == expected->DepthStencilFormat, "%d: Got depth stencil format %#x, expected %#x\n",
+                        i, expected->DepthStencilFormat, expected->DepthStencilFormat);
+            }
+            check_release((IUnknown *)render, 0);
+        }
+    }
+
+    /* check device ref count */
+    ref_count = get_ref((IUnknown *)device);
+    hr = D3DXCreateRenderToEnvMap(device, 0, 0, D3DFMT_UNKNOWN, FALSE, D3DFMT_UNKNOWN, &render);
+    todo_wine check_ref((IUnknown *)device, ref_count + 1);
+    if (SUCCEEDED(hr)) ID3DXRenderToEnvMap_Release(render);
+}
+
 START_TEST(core)
 {
     HWND wnd;
@@ -919,6 +970,7 @@ START_TEST(core)
     test_ID3DXFont(device);
     test_D3DXCreateRenderToSurface(device);
     test_ID3DXRenderToSurface(device);
+    test_D3DXCreateRenderToEnvMap(device);
 
     check_release((IUnknown*)device, 0);
     check_release((IUnknown*)d3d, 0);

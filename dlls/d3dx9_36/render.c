@@ -386,3 +386,19 @@ HRESULT WINAPI D3DXCreateRenderToSurface(IDirect3DDevice9 *device,
     *out = &render->ID3DXRenderToSurface_iface;
     return D3D_OK;
 }
+
+HRESULT WINAPI D3DXCreateRenderToEnvMap(IDirect3DDevice9 *device,
+                                        UINT size,
+                                        UINT mip_levels,
+                                        D3DFORMAT format,
+                                        BOOL depth_stencil,
+                                        D3DFORMAT depth_stencil_format,
+                                        ID3DXRenderToEnvMap **out)
+{
+    FIXME("(%p, %u, %u, %#x, %d, %#x, %p): stub\n", device, size, mip_levels,
+            format, depth_stencil, depth_stencil_format, out);
+
+    if (!device || !out) return D3DERR_INVALIDCALL;
+
+    return E_NOTIMPL;
+}
