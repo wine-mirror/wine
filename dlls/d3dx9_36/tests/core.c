@@ -908,7 +908,7 @@ void test_D3DXCreateRenderToEnvMap(IDirect3DDevice9 *device)
         const D3DXRTE_DESC *expected  = &tests[i].expected_values;
         hr = D3DXCreateRenderToEnvMap(device, parameters->Size, parameters->MipLevels, parameters->Format,
                 parameters->DepthStencil, parameters->DepthStencilFormat, &render);
-        todo_wine ok(hr == D3D_OK, "%d: D3DXCreateRenderToEnvMap returned %#x, expected %#x\n", i, hr, D3D_OK);
+        ok(hr == D3D_OK, "%d: D3DXCreateRenderToEnvMap returned %#x, expected %#x\n", i, hr, D3D_OK);
         if (SUCCEEDED(hr))
         {
             hr = ID3DXRenderToEnvMap_GetDesc(render, &desc);
@@ -930,7 +930,7 @@ void test_D3DXCreateRenderToEnvMap(IDirect3DDevice9 *device)
     /* check device ref count */
     ref_count = get_ref((IUnknown *)device);
     hr = D3DXCreateRenderToEnvMap(device, 0, 0, D3DFMT_UNKNOWN, FALSE, D3DFMT_UNKNOWN, &render);
-    todo_wine check_ref((IUnknown *)device, ref_count + 1);
+    check_ref((IUnknown *)device, ref_count + 1);
     if (SUCCEEDED(hr)) ID3DXRenderToEnvMap_Release(render);
 }
 
