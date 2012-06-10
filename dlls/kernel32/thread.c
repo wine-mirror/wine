@@ -377,7 +377,9 @@ BOOL WINAPI SetThreadPriorityBoost(
  */
 BOOL WINAPI SetThreadStackGuarantee(PULONG stacksize)
 {
-    FIXME("(%p): stub\n", stacksize);
+    static int once;
+    if (once++ == 0)
+        FIXME("(%p): stub\n", stacksize);
     return TRUE;
 }
 
