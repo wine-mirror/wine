@@ -631,6 +631,56 @@ static UINT thumb2_disasm_mul(UINT inst, ADDRESS64 *addr)
     return inst;
 }
 
+static UINT thumb2_disasm_longmuldiv(UINT inst, ADDRESS64 *addr)
+{
+    WORD op1 = (inst >> 20) & 0x07;
+    WORD op2 = (inst >> 4) & 0x0f;
+
+    if (op2 == 0)
+    {
+        switch (op1)
+        {
+        case 0:
+            dbg_printf("\n\tsmull\t");
+            break;
+        case 2:
+            dbg_printf("\n\tumull\t");
+            break;
+        case 4:
+            dbg_printf("\n\tsmlal\t");
+            break;
+        case 6:
+            dbg_printf("\n\tumlal\t");
+            break;
+        default:
+            return inst;
+        }
+        dbg_printf("%s, %s, %s, %s\t", tbl_regs[get_nibble(inst, 3)], tbl_regs[get_nibble(inst, 2)],
+                                       tbl_regs[get_nibble(inst, 4)], tbl_regs[get_nibble(inst, 0)]);
+        return 0;
+    }
+
+    if (op2 == 0xffff)
+    {
+        switch (op1)
+        {
+        case 1:
+            dbg_printf("\n\tsdiv\t");
+            break;
+        case 3:
+            dbg_printf("\n\tudiv\t");
+            break;
+        default:
+            return inst;
+        }
+        dbg_printf("%s, %s, %s\t", tbl_regs[get_nibble(inst, 2)], tbl_regs[get_nibble(inst, 4)],
+                                   tbl_regs[get_nibble(inst, 0)]);
+        return 0;
+    }
+
+    return inst;
+}
+
 struct inst_arm
 {
         UINT mask;
@@ -686,6 +736,8 @@ static const struct inst_arm tbl_thumb32[] = {
     { 0xf800f800, 0xf000f800, thumb2_disasm_branchlinked },
     { 0xffc0f0c0, 0xfa80f080, thumb2_disasm_misc },
     { 0xff8000c0, 0xfb000000, thumb2_disasm_mul },
+    { 0xff8000f0, 0xfb800000, thumb2_disasm_longmuldiv },
+    { 0xff8000f0, 0xfb8000f0, thumb2_disasm_longmuldiv },
     { 0x00000000, 0x00000000, NULL }
 };
 
