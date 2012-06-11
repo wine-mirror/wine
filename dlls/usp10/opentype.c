@@ -924,10 +924,15 @@ static void GSUB_initialize_language_cache(LoadedScript *script)
 
     if (!script->language_count)
     {
+        DWORD offset;
         const GSUB_Script* table = script->table;
         script->language_count = GET_BE_WORD(table->LangSysCount);
-        script->default_language.tag = MS_MAKE_TAG('d','f','l','t');
-        script->default_language.table = (const BYTE*)table + GET_BE_WORD(table->DefaultLangSys);
+        offset = GET_BE_WORD(table->DefaultLangSys);
+        if (offset)
+        {
+            script->default_language.tag = MS_MAKE_TAG('d','f','l','t');
+            script->default_language.table = (const BYTE*)table + offset;
+        }
 
         if (script->language_count)
         {
