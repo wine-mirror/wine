@@ -897,6 +897,16 @@ static const char *debug_base_type(const struct hlsl_type *type)
         case HLSL_TYPE_INT:          name = "int";           break;
         case HLSL_TYPE_UINT:         name = "uint";          break;
         case HLSL_TYPE_BOOL:         name = "bool";          break;
+        case HLSL_TYPE_SAMPLER:
+            switch (type->sampler_dim)
+            {
+                case HLSL_SAMPLER_DIM_GENERIC: name = "sampler";       break;
+                case HLSL_SAMPLER_DIM_1D:      name = "sampler1D";     break;
+                case HLSL_SAMPLER_DIM_2D:      name = "sampler2D";     break;
+                case HLSL_SAMPLER_DIM_3D:      name = "sampler3D";     break;
+                case HLSL_SAMPLER_DIM_CUBE:    name = "samplerCUBE";   break;
+            }
+            break;
         default:
             FIXME("Unhandled case %u\n", type->base_type);
     }

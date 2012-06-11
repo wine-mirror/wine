@@ -644,6 +644,15 @@ enum hlsl_base_type
     HLSL_TYPE_VOID,
 };
 
+enum hlsl_sampler_dim
+{
+   HLSL_SAMPLER_DIM_GENERIC,
+   HLSL_SAMPLER_DIM_1D,
+   HLSL_SAMPLER_DIM_2D,
+   HLSL_SAMPLER_DIM_3D,
+   HLSL_SAMPLER_DIM_CUBE,
+};
+
 enum hlsl_matrix_majority
 {
     HLSL_COLUMN_MAJOR,
@@ -656,6 +665,7 @@ struct hlsl_type
     struct list scope_entry;
     enum hlsl_type_class type;
     enum hlsl_base_type base_type;
+    enum hlsl_sampler_dim sampler_dim;
     const char *name;
     unsigned int modifiers;
     unsigned int dimx;
