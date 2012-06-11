@@ -1339,7 +1339,6 @@ static UINT msi_parse_summary( MSISUMMARYINFO *si, MSIPACKAGE *package )
 
 static UINT validate_package( MSIPACKAGE *package )
 {
-    BOOL is_wow64;
     UINT i;
 
     if (package->platform == PLATFORM_INTEL64)
@@ -1348,7 +1347,6 @@ static UINT validate_package( MSIPACKAGE *package )
     if (package->platform == PLATFORM_ARM)
         return ERROR_INSTALL_PLATFORM_UNSUPPORTED;
 #endif
-    IsWow64Process( GetCurrentProcess(), &is_wow64 );
     if (package->platform == PLATFORM_X64)
     {
         if (!is_64bit && !is_wow64)

@@ -2554,12 +2554,13 @@ static const WCHAR *get_root_key( MSIPACKAGE *package, INT root, HKEY *root_key 
     return ret;
 }
 
-static WCHAR *get_keypath( MSIPACKAGE *package, HKEY root, const WCHAR *path )
+static WCHAR *get_keypath( MSICOMPONENT *comp, HKEY root, const WCHAR *path )
 {
     static const WCHAR prefixW[] = {'S','O','F','T','W','A','R','E','\\'};
     static const UINT len = sizeof(prefixW) / sizeof(prefixW[0]);
 
-    if (is_64bit && package->platform == PLATFORM_INTEL &&
+    if ((is_64bit || is_wow64) &&
+        !(comp->Attributes & msidbComponentAttributes64bit) &&
         root == HKEY_LOCAL_MACHINE && !strncmpiW( path, prefixW, len ))
     {
         UINT size;
@@ -2574,7 +2575,6 @@ static WCHAR *get_keypath( MSIPACKAGE *package, HKEY root, const WCHAR *path )
         strcatW( path_32node, path + len );
         return path_32node;
     }
-
     return strdupW( path );
 }
 
@@ -2634,9 +2634,9 @@ static UINT ITERATE_WriteRegistryValues(MSIRECORD *row, LPVOID param)
     strcpyW(uikey,szRoot);
     strcatW(uikey,deformated);
 
-    keypath = get_keypath( package, root_key, deformated );
+    keypath = get_keypath( comp, root_key, deformated );
     msi_free( deformated );
-    if (RegCreateKeyW( root_key, keypath, &hkey ))
+    if (RegCreateKeyExW( root_key, keypath, 0, NULL, 0, KEY_ALL_ACCESS|KEY_WOW64_64KEY, NULL, &hkey, NULL ))
     {
         ERR("Could not create key %s\n", debugstr_w(keypath));
         msi_free(uikey);
@@ -2722,7 +2722,7 @@ static void delete_reg_value( HKEY root, const WCHAR *keypath, const WCHAR *valu
     HKEY hkey;
     DWORD num_subkeys, num_values;
 
-    if (!(res = RegOpenKeyW( root, keypath, &hkey )))
+    if (!(res = RegOpenKeyExW( root, keypath, 0, KEY_ALL_ACCESS|KEY_WOW64_64KEY, &hkey )))
     {
         if ((res = RegDeleteValueW( hkey, value )))
         {
@@ -2734,7 +2734,7 @@ static void delete_reg_value( HKEY root, const WCHAR *keypath, const WCHAR *valu
         if (!res && !num_subkeys && !num_values)
         {
             TRACE("removing empty key %s\n", debugstr_w(keypath));
-            RegDeleteKeyW( root, keypath );
+            RegDeleteKeyExW( root, keypath, KEY_WOW64_64KEY, 0 );
         }
         return;
     }
@@ -2743,8 +2743,18 @@ static void delete_reg_value( HKEY root, const WCHAR *keypath, const WCHAR *valu
 
 static void delete_reg_key( HKEY root, const WCHAR *keypath )
 {
-    LONG res = RegDeleteTreeW( root, keypath );
+    HKEY hkey;
+    LONG res = RegOpenKeyExW( root, keypath, 0, KEY_ALL_ACCESS|KEY_WOW64_64KEY, &hkey );
+    if (res)
+    {
+        TRACE("failed to open key %s (%d)\n", debugstr_w(keypath), res);
+        return;
+    }
+    res = RegDeleteTreeW( hkey, NULL );
+    if (res) TRACE("failed to delete subtree of %s (%d)\n", debugstr_w(keypath), res);
+    res = RegDeleteKeyExW( root, keypath, KEY_WOW64_64KEY, 0 );
     if (res) TRACE("failed to delete key %s (%d)\n", debugstr_w(keypath), res);
+    RegCloseKey( hkey );
 }
 
 static UINT ITERATE_RemoveRegistryValuesOnUninstall( MSIRECORD *row, LPVOID param )
@@ -2800,7 +2810,7 @@ static UINT ITERATE_RemoveRegistryValuesOnUninstall( MSIRECORD *row, LPVOID para
 
     deformat_string( package, name, &deformated_name );
 
-    keypath = get_keypath( package, hkey_root, deformated_key );
+    keypath = get_keypath( comp, hkey_root, deformated_key );
     msi_free( deformated_key );
     if (delete_key) delete_reg_key( hkey_root, keypath );
     else delete_reg_value( hkey_root, keypath, deformated_name );
@@ -2865,7 +2875,7 @@ static UINT ITERATE_RemoveRegistryValuesOnInstall( MSIRECORD *row, LPVOID param 
 
     deformat_string( package, name, &deformated_name );
 
-    keypath = get_keypath( package, hkey_root, deformated_key );
+    keypath = get_keypath( comp, hkey_root, deformated_key );
     msi_free( deformated_key );
     if (delete_key) delete_reg_key( hkey_root, keypath );
     else delete_reg_value( hkey_root, keypath, deformated_name );

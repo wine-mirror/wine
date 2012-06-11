@@ -39,6 +39,7 @@
 #include "wine/debug.h"
 
 static const BOOL is_64bit = sizeof(void *) > sizeof(int);
+BOOL is_wow64;
 
 #define MSI_DATASIZEMASK 0x00ff
 #define MSITYPE_VALID    0x0100

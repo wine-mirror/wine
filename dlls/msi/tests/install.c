@@ -1237,6 +1237,53 @@ static const CHAR uc_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
                                               "PublishProduct\t\t1200\n"
                                               "InstallFinalize\t\t1300\n";
 
+static const char mixed_feature_dat[] =
+    "Feature\tFeature_Parent\tTitle\tDescription\tDisplay\tLevel\tDirectory_\tAttributes\n"
+    "s38\tS38\tL64\tL255\tI2\ti2\tS72\ti2\n"
+    "Feature\tFeature\n"
+    "feature1\t\t\t\t1\t2\tMSITESTDIR\t0\n"
+    "feature2\t\t\t\t1\t2\tMSITESTDIR\t0\n";
+
+static const char mixed_feature_comp_dat[] =
+    "Feature_\tComponent_\n"
+    "s38\ts72\n"
+    "FeatureComponents\tFeature_\tComponent_\n"
+    "feature1\tcomp1\n"
+    "feature2\tcomp2\n";
+
+static const char mixed_component_dat[] =
+    "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
+    "s72\tS38\ts72\ti2\tS255\tS72\n"
+    "Component\tComponent\n"
+    "comp1\t{DE9F0EF4-0ED3-495A-8105-060C0EA457B8}\tTARGETDIR\t4\t\tregdata1\n"
+    "comp2\t{4912DBE7-FC3A-4F91-BB5C-88F5C15C19A5}\tTARGETDIR\t260\t\tregdata2\n";
+
+static const char mixed_registry_dat[] =
+    "Registry\tRoot\tKey\tName\tValue\tComponent_\n"
+    "s72\ti2\tl255\tL255\tL0\ts72\n"
+    "Registry\tRegistry\n"
+    "regdata1\t2\tSOFTWARE\\Wine\\msitest\ttest1\t\tcomp1\n"
+    "regdata2\t2\tSOFTWARE\\Wine\\msitest\ttest2\t\tcomp2\n";
+
+static const char mixed_install_exec_seq_dat[] =
+    "Action\tCondition\tSequence\n"
+    "s72\tS255\tI2\n"
+    "InstallExecuteSequence\tAction\n"
+    "LaunchConditions\t\t100\n"
+    "CostInitialize\t\t200\n"
+    "FileCost\t\t300\n"
+    "CostFinalize\t\t400\n"
+    "InstallValidate\t\t500\n"
+    "InstallInitialize\t\t600\n"
+    "ProcessComponents\t\t700\n"
+    "UnpublishFeatures\t\t800\n"
+    "RemoveRegistryValues\t\t900\n"
+    "WriteRegistryValues\t\t1000\n"
+    "RegisterProduct\t\t1100\n"
+    "PublishFeatures\t\t1200\n"
+    "PublishProduct\t\t1300\n"
+    "InstallFinalize\t\t1400\n";
+
 typedef struct _msi_table
 {
     const CHAR *filename;
@@ -1926,6 +1973,18 @@ static const msi_table uc_tables[] =
     ADD_TABLE(uc_install_exec_seq),
     ADD_TABLE(media),
     ADD_TABLE(uc_property)
+};
+
+static const msi_table mixed_tables[] =
+{
+    ADD_TABLE(directory),
+    ADD_TABLE(mixed_component),
+    ADD_TABLE(mixed_feature),
+    ADD_TABLE(mixed_feature_comp),
+    ADD_TABLE(mixed_install_exec_seq),
+    ADD_TABLE(mixed_registry),
+    ADD_TABLE(media),
+    ADD_TABLE(property)
 };
 
 /* cabinet definitions */
@@ -6618,6 +6677,86 @@ static void test_MsiSetFeatureAttributes(void)
     DeleteFileA( msifile );
 }
 
+static void test_mixed_package(void)
+{
+    UINT r;
+    LONG res;
+    HKEY hkey;
+
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
+    if (!is_wow64 && !is_64bit)
+    {
+        skip("this test must be run on 64-bit\n");
+        return;
+    }
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+    create_database_template(msifile, mixed_tables, sizeof(mixed_tables)/sizeof(msi_table), 200, "x64;1033");
+
+    r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine\\msitest", 0, KEY_ALL_ACCESS|KEY_WOW64_32KEY, &hkey);
+    ok(!res, "can't open 32-bit component key\n");
+    res = RegQueryValueExA(hkey, "test1", NULL, NULL, NULL, NULL);
+    ok(!res, "value test1 not found\n");
+    RegCloseKey(hkey);
+
+    res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine\\msitest", 0, KEY_ALL_ACCESS|KEY_WOW64_64KEY, &hkey);
+    ok(!res, "can't open 64-bit component key\n");
+    res = RegQueryValueExA(hkey, "test2", NULL, NULL, NULL, NULL);
+    ok(!res, "value test2 not found\n");
+    RegCloseKey(hkey);
+
+    r = MsiInstallProductA(msifile, "REMOVE=ALL");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine\\msitest", 0, KEY_ALL_ACCESS|KEY_WOW64_32KEY, &hkey);
+    ok(res == ERROR_FILE_NOT_FOUND, "32-bit component key not removed\n");
+
+    res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine\\msitest", 0, KEY_ALL_ACCESS|KEY_WOW64_64KEY, &hkey);
+    ok(res == ERROR_FILE_NOT_FOUND, "64-bit component key not removed\n");
+
+    DeleteFileA( msifile );
+    create_database_template(msifile, mixed_tables, sizeof(mixed_tables)/sizeof(msi_table), 200, "Intel;1033");
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine\\msitest", 0, KEY_ALL_ACCESS|KEY_WOW64_32KEY, &hkey);
+    ok(!res, "can't open 32-bit component key\n");
+    res = RegQueryValueExA(hkey, "test1", NULL, NULL, NULL, NULL);
+    ok(!res, "value test1 not found\n");
+    RegCloseKey(hkey);
+
+    res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine\\msitest", 0, KEY_ALL_ACCESS|KEY_WOW64_64KEY, &hkey);
+    ok(!res, "can't open 64-bit component key\n");
+    res = RegQueryValueExA(hkey, "test2", NULL, NULL, NULL, NULL);
+    ok(!res, "value test2 not found\n");
+    RegCloseKey(hkey);
+
+    r = MsiInstallProductA(msifile, "REMOVE=ALL");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine\\msitest", 0, KEY_ALL_ACCESS|KEY_WOW64_32KEY, &hkey);
+    ok(res == ERROR_FILE_NOT_FOUND, "32-bit component key not removed\n");
+
+    res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine\\msitest", 0, KEY_ALL_ACCESS|KEY_WOW64_64KEY, &hkey);
+    ok(res == ERROR_FILE_NOT_FOUND, "64-bit component key not removed\n");
+
+error:
+    DeleteFileA( msifile );
+    return;
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -6709,6 +6848,7 @@ START_TEST(install)
     test_upgrade_code();
     test_MsiGetFeatureInfo();
     test_MsiSetFeatureAttributes();
+    test_mixed_package();
 
     DeleteFileA(log_file);
 
