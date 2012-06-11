@@ -490,7 +490,8 @@ static const char wrv_registry_dat[] =
     "regdata\t2\tSOFTWARE\\Wine\\msitest\tValue\t[~]one[~]two[~]three\taugustus\n"
     "regdata1\t2\tSOFTWARE\\Wine\\msitest\t*\t\taugustus\n"
     "regdata2\t2\tSOFTWARE\\Wine\\msitest\t*\t#%\taugustus\n"
-    "regdata3\t2\tSOFTWARE\\Wine\\msitest\t*\t#x\taugustus\n";
+    "regdata3\t2\tSOFTWARE\\Wine\\msitest\t*\t#x\taugustus\n"
+    "regdata4\t2\tSOFTWARE\\Wine\\msitest\\VisualStudio\\10.0\\AD7Metrics\\Exception\\{049EC4CC-30D2-4032-9256-EE18EB41B62B}\\Common Language Runtime Exceptions\\System.Workflow.ComponentModel.Serialization\\System.Workflow.ComponentModel.Serialization.WorkflowMarkupSerializationException\tlong\tkey\taugustus\n";
 
 static const char cf_directory_dat[] =
     "Directory\tDirectory_Parent\tDefaultDir\n"
@@ -1817,6 +1818,75 @@ static const msi_table pa_tables[] =
     ADD_TABLE(media),
     ADD_TABLE(property)
 };
+
+/* based on RegDeleteTreeW from dlls/advapi32/registry.c */
+static LSTATUS action_RegDeleteTreeA(HKEY hKey, LPCSTR lpszSubKey, REGSAM access)
+{
+    LONG ret;
+    DWORD dwMaxSubkeyLen, dwMaxValueLen;
+    DWORD dwMaxLen, dwSize;
+    char szNameBuf[MAX_PATH], *lpszName = szNameBuf;
+    HKEY hSubKey = hKey;
+
+    if(lpszSubKey)
+    {
+        ret = RegOpenKeyExA(hKey, lpszSubKey, 0, access, &hSubKey);
+        if (ret) return ret;
+    }
+
+    ret = RegQueryInfoKeyA(hSubKey, NULL, NULL, NULL, NULL,
+            &dwMaxSubkeyLen, NULL, NULL, &dwMaxValueLen, NULL, NULL, NULL);
+    if (ret) goto cleanup;
+
+    dwMaxSubkeyLen++;
+    dwMaxValueLen++;
+    dwMaxLen = max(dwMaxSubkeyLen, dwMaxValueLen);
+    if (dwMaxLen > sizeof(szNameBuf))
+    {
+        /* Name too big: alloc a buffer for it */
+        if (!(lpszName = HeapAlloc( GetProcessHeap(), 0, dwMaxLen)))
+        {
+            ret = ERROR_NOT_ENOUGH_MEMORY;
+            goto cleanup;
+        }
+    }
+
+    /* Recursively delete all the subkeys */
+    while (TRUE)
+    {
+        dwSize = dwMaxLen;
+        if (RegEnumKeyExA(hSubKey, 0, lpszName, &dwSize, NULL,
+                          NULL, NULL, NULL)) break;
+
+        ret = action_RegDeleteTreeA(hSubKey, lpszName, access);
+        if (ret) goto cleanup;
+    }
+
+    if (lpszSubKey)
+    {
+        if (pRegDeleteKeyExA)
+            ret = pRegDeleteKeyExA(hKey, lpszSubKey, access, 0);
+        else
+            ret = RegDeleteKeyA(hKey, lpszSubKey);
+    }
+    else
+        while (TRUE)
+        {
+            dwSize = dwMaxLen;
+            if (RegEnumValueA(hKey, 0, lpszName, &dwSize,
+                  NULL, NULL, NULL, NULL)) break;
+
+            ret = RegDeleteValueA(hKey, lpszName);
+            if (ret) goto cleanup;
+        }
+
+cleanup:
+    if (lpszName != szNameBuf)
+        HeapFree(GetProcessHeap(), 0, lpszName);
+    if(lpszSubKey)
+        RegCloseKey(hSubKey);
+    return ret;
+}
 
 /* cabinet definitions */
 
@@ -4585,6 +4655,9 @@ static void test_write_registry_values(void)
 
     res = RegQueryValueExA(hkey, "", NULL, NULL, NULL, NULL);
     ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+
+    res = action_RegDeleteTreeA(hkey, "VisualStudio", KEY_ALL_ACCESS);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     RegDeleteValueA(hkey, "Value");
     RegCloseKey(hkey);
