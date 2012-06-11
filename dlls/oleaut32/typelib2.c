@@ -1987,7 +1987,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(
     if(!insert)
         return E_OUTOFMEMORY;
     insert->u.data = heap_alloc(FIELD_OFFSET(MSFT_FuncRecord, HelpContext) +
-                            sizeof(int[(num_defaults?4:3)])*pFuncDesc->cParams);
+                            sizeof(int)*(num_defaults?4:3)*pFuncDesc->cParams);
     if(!insert->u.data) {
         heap_free(insert);
         return E_OUTOFMEMORY;
