@@ -213,8 +213,6 @@ static DWORD add_modifier(DWORD modifiers, DWORD mod)
 %token OP_ELLIPSIS
 %token OP_LE
 %token OP_GE
-%token OP_LT
-%token OP_GT
 %token OP_NE
 %token OP_ADDASSIGN
 %token OP_SUBASSIGN
@@ -301,6 +299,44 @@ semantic:                 /* Empty */
 type:                     base_type
                             {
                                 $$ = $1;
+                            }
+                        | KW_VECTOR '<' base_type ',' C_INTEGER '>'
+                            {
+                                if ($3->type != HLSL_CLASS_SCALAR)
+                                {
+                                    hlsl_message("Line %u: vectors of non-scalar types are not allowed.\n",
+                                            hlsl_ctx.line_no);
+                                    set_parse_status(&hlsl_ctx.status, PARSE_ERR);
+                                    return 1;
+                                }
+                                if ($5 < 1 || $5 > 4)
+                                {
+                                    hlsl_message("Line %u: vector size must be between 1 and 4.\n",
+                                            hlsl_ctx.line_no);
+                                    set_parse_status(&hlsl_ctx.status, PARSE_ERR);
+                                    return 1;
+                                }
+
+                                $$ = new_hlsl_type(NULL, HLSL_CLASS_VECTOR, $3->base_type, $5, 1);
+                            }
+                        | KW_MATRIX '<' base_type ',' C_INTEGER ',' C_INTEGER '>'
+                            {
+                                if ($3->type != HLSL_CLASS_SCALAR)
+                                {
+                                    hlsl_message("Line %u: matrices of non-scalar types are not allowed.\n",
+                                            hlsl_ctx.line_no);
+                                    set_parse_status(&hlsl_ctx.status, PARSE_ERR);
+                                    return 1;
+                                }
+                                if ($5 < 1 || $5 > 4 || $7 < 1 || $7 > 4)
+                                {
+                                    hlsl_message("Line %u: matrix dimensions must be between 1 and 4.\n",
+                                            hlsl_ctx.line_no);
+                                    set_parse_status(&hlsl_ctx.status, PARSE_ERR);
+                                    return 1;
+                                }
+
+                                $$ = new_hlsl_type(NULL, HLSL_CLASS_MATRIX, $3->base_type, $5, $7);
                             }
 
 base_type:                KW_VOID

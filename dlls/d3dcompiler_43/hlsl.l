@@ -148,8 +148,6 @@ while                   {return KW_WHILE;               }
 \.\.\.                  {return OP_ELLIPSIS;            }
 \<=                     {return OP_LE;                  }
 \>=                     {return OP_GE;                  }
-\<                      {return OP_LT;                  }
-\>                      {return OP_GT;                  }
 !=                      {return OP_NE;                  }
 \+=                     {return OP_ADDASSIGN;           }
 \-=                     {return OP_SUBASSIGN;           }
