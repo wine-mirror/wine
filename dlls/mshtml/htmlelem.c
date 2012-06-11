@@ -108,7 +108,6 @@ static const tag_desc_t *get_tag_desc(const WCHAR *tag_name)
 HRESULT replace_node_by_html(nsIDOMHTMLDocument *nsdoc, nsIDOMNode *nsnode, const WCHAR *html)
 {
     nsIDOMDocumentFragment *nsfragment;
-    nsIDOMNSRange *nsrange;
     nsIDOMNode *nsparent;
     nsIDOMRange *range;
     nsAString html_str;
@@ -121,16 +120,9 @@ HRESULT replace_node_by_html(nsIDOMHTMLDocument *nsdoc, nsIDOMNode *nsnode, cons
         return E_FAIL;
     }
 
-    nsres = nsIDOMRange_QueryInterface(range, &IID_nsIDOMNSRange, (void**)&nsrange);
-    nsIDOMRange_Release(range);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIDOMNSRange: %08x\n", nsres);
-        return E_FAIL;
-    }
-
     nsAString_InitDepend(&html_str, html);
-    nsIDOMNSRange_CreateContextualFragment(nsrange, &html_str, &nsfragment);
-    nsIDOMNSRange_Release(nsrange);
+    nsIDOMRange_CreateContextualFragment(range, &html_str, &nsfragment);
+    nsIDOMRange_Release(range);
     nsAString_Finish(&html_str);
     if(NS_FAILED(nsres)) {
         ERR("CreateContextualFragment failed: %08x\n", nsres);
@@ -1150,7 +1142,6 @@ static HRESULT WINAPI HTMLElement_insertAdjacentHTML(IHTMLElement *iface, BSTR w
 {
     HTMLElement *This = impl_from_IHTMLElement(iface);
     nsIDOMRange *range;
-    nsIDOMNSRange *nsrange;
     nsIDOMNode *nsnode;
     nsAString ns_html;
     nsresult nsres;
@@ -1172,19 +1163,10 @@ static HRESULT WINAPI HTMLElement_insertAdjacentHTML(IHTMLElement *iface, BSTR w
 
     nsIDOMRange_SetStartBefore(range, This->node.nsnode);
 
-    nsIDOMRange_QueryInterface(range, &IID_nsIDOMNSRange, (void **)&nsrange);
-    nsIDOMRange_Release(range);
-    if(NS_FAILED(nsres))
-    {
-        ERR("getting nsIDOMNSRange failed: %08x\n", nsres);
-        return E_FAIL;
-    }
-
     nsAString_InitDepend(&ns_html, html);
-
-    nsres = nsIDOMNSRange_CreateContextualFragment(nsrange, &ns_html, (nsIDOMDocumentFragment **)&nsnode);
-    nsIDOMNSRange_Release(nsrange);
+    nsres = nsIDOMRange_CreateContextualFragment(range, &ns_html, (nsIDOMDocumentFragment **)&nsnode);
     nsAString_Finish(&ns_html);
+    nsIDOMRange_Release(range);
 
     if(NS_FAILED(nsres) || !nsnode)
     {

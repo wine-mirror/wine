@@ -624,7 +624,7 @@ static HRESULT WINAPI HTMLDOMNode_cloneNode(IHTMLDOMNode *iface, VARIANT_BOOL fD
 
     TRACE("(%p)->(%x %p)\n", This, fDeep, clonedNode);
 
-    nsres = nsIDOMNode_CloneNode(This->nsnode, fDeep != VARIANT_FALSE, &nsnode);
+    nsres = nsIDOMNode_CloneNode(This->nsnode, fDeep != VARIANT_FALSE, 1, &nsnode);
     if(NS_FAILED(nsres) || !nsnode) {
         ERR("CloneNode failed: %08x\n", nsres);
         return E_FAIL;
