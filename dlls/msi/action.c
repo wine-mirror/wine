@@ -2645,7 +2645,7 @@ static UINT ITERATE_WriteRegistryValues(MSIRECORD *row, LPVOID param)
         ERR("Could not create key %s\n", debugstr_w(keypath));
         msi_free(uikey);
         msi_free(keypath);
-        return ERROR_SUCCESS;
+        return ERROR_FUNCTION_FAILED;
     }
     value = parse_value(package, MSI_RecordGetString(row, 5), &type, &size);
     deformat_string(package, name, &deformated);
