@@ -27,6 +27,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wininet.h"
+#include "winineti.h"
 #include "winsock.h"
 
 #include "wine/test.h"
@@ -158,6 +159,7 @@ static const test_data_t test_data[] = {
 };
 
 static INTERNET_STATUS_CALLBACK (WINAPI *pInternetSetStatusCallbackA)(HINTERNET ,INTERNET_STATUS_CALLBACK);
+static BOOL (WINAPI *pInternetGetSecurityInfoByURLA)(LPSTR,PCCERT_CHAIN_CONTEXT*,DWORD*);
 
 static BOOL proxy_active(void)
 {
@@ -2917,6 +2919,34 @@ static void test_cert_struct(HINTERNET req)
     release_cert_info(&info);
 }
 
+#define test_security_info(a,b,c) _test_security_info(__LINE__,a,b,c)
+static void _test_security_info(unsigned line, const char *urlc, DWORD error, DWORD ex_flags)
+{
+    char url[INTERNET_MAX_URL_LENGTH];
+    const CERT_CHAIN_CONTEXT *chain;
+    DWORD flags;
+    BOOL res;
+
+    if(!pInternetGetSecurityInfoByURLA) {
+        win_skip("pInternetGetSecurityInfoByURLA not available\n");
+        return;
+    }
+
+    strcpy(url, urlc);
+    chain = (void*)0xdeadbeef;
+    flags = 0xdeadbeef;
+    res = pInternetGetSecurityInfoByURLA(url, &chain, &flags);
+    if(error == ERROR_SUCCESS) {
+        ok_(__FILE__,line)(res, "InternetGetSecurityInfoByURLA failed: %u\n", GetLastError());
+        ok_(__FILE__,line)(chain != NULL, "chain = NULL\n");
+        ok_(__FILE__,line)(flags == ex_flags, "flags = %x\n", flags);
+        CertFreeCertificateChain(chain);
+    }else {
+        ok_(__FILE__,line)(!res && GetLastError() == error,
+                           "InternetGetSecurityInfoByURLA returned: %x(%u), exected %u\n", res, GetLastError(), error);
+    }
+}
+
 #define test_secflags_option(a,b) _test_secflags_option(__LINE__,a,b)
 static void _test_secflags_option(unsigned line, HINTERNET req, DWORD ex_flags)
 {
@@ -2987,6 +3017,7 @@ static void test_security_flags(void)
     }
 
     test_secflags_option(req, 0);
+    test_security_info("https://test.winehq.org/data/some_file.html?q", ERROR_INTERNET_ITEM_NOT_FOUND, 0);
 
     set_secflags(req, TRUE, SECURITY_FLAG_IGNORE_REVOCATION);
     test_secflags_option(req, SECURITY_FLAG_IGNORE_REVOCATION);
@@ -3119,6 +3150,7 @@ static void test_security_flags(void)
 
     test_request_flags(req, INTERNET_REQFLAG_NO_HEADERS);
     test_secflags_option(req, SECURITY_FLAG_IGNORE_REVOCATION|0x1800000);
+    test_security_info("https://test.winehq.org/data/some_file.html?q", ERROR_INTERNET_ITEM_NOT_FOUND, 0);
 
     set_secflags(req, FALSE, SECURITY_FLAG_IGNORE_UNKNOWN_CA);
     test_secflags_option(req, 0x1800000|SECURITY_FLAG_IGNORE_REVOCATION|SECURITY_FLAG_IGNORE_UNKNOWN_CA
@@ -3156,6 +3188,7 @@ static void test_security_flags(void)
             |SECURITY_FLAG_STRENGTH_STRONG|0x1800000);
 
     test_cert_struct(req);
+    test_security_info("https://test.winehq.org/data/some_file.html?q", 0, 0x1800000);
 
     res = InternetReadFile(req, buf, sizeof(buf), &size);
     ok(res, "InternetReadFile failed: %u\n", GetLastError());
@@ -3226,6 +3259,10 @@ static void test_security_flags(void)
     close_async_handle(ses, hCompleteEvent, 2);
 
     CloseHandle(hCompleteEvent);
+
+    test_security_info("http://test.winehq.org/data/some_file.html?q", ERROR_INTERNET_ITEM_NOT_FOUND, 0);
+    test_security_info("file:///c:/dir/file.txt", ERROR_INTERNET_ITEM_NOT_FOUND, 0);
+    test_security_info("xxx:///c:/dir/file.txt", ERROR_INTERNET_ITEM_NOT_FOUND, 0);
 }
 
 static void test_secure_connection(void)
@@ -4009,6 +4046,7 @@ START_TEST(http)
     }
 
     pInternetSetStatusCallbackA = (void*)GetProcAddress(hdll, "InternetSetStatusCallbackA");
+    pInternetGetSecurityInfoByURLA = (void*)GetProcAddress(hdll, "InternetGetSecurityInfoByURLA");
 
     init_status_tests();
     test_InternetCloseHandle();

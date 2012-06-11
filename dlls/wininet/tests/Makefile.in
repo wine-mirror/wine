@@ -1,5 +1,5 @@
 TESTDLL   = wininet.dll
-IMPORTS   = wininet ws2_32 user32 advapi32
+IMPORTS   = wininet crypt32 ws2_32 user32 advapi32
 
 C_SRCS = \
 	ftp.c \
