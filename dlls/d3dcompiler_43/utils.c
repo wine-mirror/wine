@@ -804,6 +804,31 @@ void free_declaration(struct hlsl_ir_var *decl)
     d3dcompiler_free(decl);
 }
 
+BOOL add_func_parameter(struct list *list, struct parse_parameter *param, unsigned int line)
+{
+    struct hlsl_ir_var *decl = d3dcompiler_alloc(sizeof(*decl));
+
+    if (!decl)
+    {
+        ERR("Out of memory.\n");
+        return FALSE;
+    }
+    decl->node.type = HLSL_IR_VAR;
+    decl->node.data_type = param->type;
+    decl->node.line = line;
+    decl->name = param->name;
+    decl->semantic = param->semantic;
+    decl->modifiers = param->modifiers;
+
+    if (!add_declaration(hlsl_ctx.cur_scope, decl, FALSE))
+    {
+        free_declaration(decl);
+        return FALSE;
+    }
+    list_add_tail(list, &decl->node.entry);
+    return TRUE;
+}
+
 struct hlsl_type *new_hlsl_type(const char *name, enum hlsl_type_class type_class,
         enum hlsl_base_type base_type, unsigned dimx, unsigned dimy)
 {
@@ -840,7 +865,13 @@ struct hlsl_type *get_type(struct hlsl_scope *scope, const char *name, BOOL recu
 
 BOOL find_function(const char *name)
 {
-    FIXME("stub.\n");
+    struct hlsl_ir_function_decl *func;
+
+    LIST_FOR_EACH_ENTRY(func, &hlsl_ctx.functions, struct hlsl_ir_function_decl, node.entry)
+    {
+        if (!strcmp(func->name, name))
+            return TRUE;
+    }
     return FALSE;
 }
 
@@ -884,6 +915,24 @@ BOOL pop_scope(struct hlsl_parse_ctx *ctx)
 
     ctx->cur_scope = prev_scope;
     return TRUE;
+}
+
+struct hlsl_ir_function_decl *new_func_decl(const char *name, struct hlsl_type *return_type, struct list *parameters)
+{
+    struct hlsl_ir_function_decl *decl;
+
+    decl = d3dcompiler_alloc(sizeof(*decl));
+    if (!decl)
+    {
+        ERR("Out of memory.\n");
+        return NULL;
+    }
+    decl->node.type = HLSL_IR_FUNCTION_DECL;
+    decl->node.data_type = return_type;
+    decl->name = name;
+    decl->parameters = parameters;
+
+    return decl;
 }
 
 static const char *debug_base_type(const struct hlsl_type *type)
@@ -978,6 +1027,7 @@ static const char *debug_node_type(enum hlsl_ir_node_type type)
         "HLSL_IR_VAR",
         "HLSL_IR_CONSTANT",
         "HLSL_IR_DEREF",
+        "HLSL_IR_FUNCTION_DECL",
     };
 
     if (type > sizeof(names) / sizeof(names[0]))
@@ -1072,4 +1122,15 @@ void free_instr(struct hlsl_ir_node *node)
         default:
             FIXME("Unsupported node type %s\n", debug_node_type(node->type));
     }
+}
+
+void free_function(struct hlsl_ir_function_decl *func)
+{
+    struct hlsl_ir_var *param, *next_param;
+
+    d3dcompiler_free((void *)func->name);
+    d3dcompiler_free((void *)func->semantic);
+    LIST_FOR_EACH_ENTRY_SAFE(param, next_param, func->parameters, struct hlsl_ir_var, node.entry)
+        d3dcompiler_free(param);
+    d3dcompiler_free(func->parameters);
 }

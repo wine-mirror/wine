@@ -127,6 +127,8 @@ static DWORD add_modifier(DWORD modifiers, DWORD mod)
     struct hlsl_ir_var *var;
     struct hlsl_ir_node *instr;
     struct list *list;
+    struct hlsl_ir_function_decl *function;
+    struct parse_parameter parameter;
     struct parse_variable_def *variable_def;
 }
 
@@ -230,7 +232,7 @@ static DWORD add_modifier(DWORD modifiers, DWORD mod)
 %token <intval> PRE_LINE
 
 %token <name> VAR_IDENTIFIER TYPE_IDENTIFIER NEW_IDENTIFIER
-%type <name> any_identifier
+%type <name> any_identifier var_identifier
 %token <name> STRING
 %token <floatval> C_FLOAT
 %token <intval> C_INTEGER
@@ -241,9 +243,14 @@ static DWORD add_modifier(DWORD modifiers, DWORD mod)
 %type <list> initializer_expr_list
 %type <instr> initializer_expr
 %type <modifiers> var_modifiers
+%type <list> parameters
+%type <list> param_list
 %type <instr> expr
 %type <var> variable
 %type <intval> array
+%type <function> func_declaration
+%type <function> func_prototype
+%type <parameter> parameter
 %type <name> semantic
 %type <variable_def> variable_def
 %type <list> variables_def
@@ -262,10 +269,16 @@ static DWORD add_modifier(DWORD modifiers, DWORD mod)
 %type <instr> logicor_expr
 %type <instr> conditional_expr
 %type <instr> assignment_expr
+%type <modifiers> input_mod
 %%
 
 hlsl_prog:                /* empty */
                             {
+                            }
+                        | hlsl_prog func_declaration
+                            {
+                                FIXME("Check that the function doesn't conflict with an already declared one.\n");
+                                list_add_tail(&hlsl_ctx.functions, &$2->node.entry);
                             }
                         | hlsl_prog declaration_statement
                             {
@@ -287,6 +300,32 @@ any_identifier:           VAR_IDENTIFIER
                         | TYPE_IDENTIFIER
                         | NEW_IDENTIFIER
 
+func_declaration:         func_prototype ';'
+                            {
+                                TRACE("Function prototype for %s.\n", $1->name);
+                                $$ = $1;
+                                pop_scope(&hlsl_ctx);
+                            }
+
+func_prototype:           var_modifiers type var_identifier '(' parameters ')' semantic
+                            {
+                                $$ = new_func_decl($3, $2, $5);
+                                if (!$$)
+                                {
+                                    ERR("Out of memory.\n");
+                                    return -1;
+                                }
+                                $$->semantic = $7;
+                            }
+
+scope_start:              /* Empty */
+                            {
+                                push_scope(&hlsl_ctx);
+                            }
+
+var_identifier:           VAR_IDENTIFIER
+                        | NEW_IDENTIFIER
+
 semantic:                 /* Empty */
                             {
                                 $$ = NULL;
@@ -294,6 +333,65 @@ semantic:                 /* Empty */
                         | ':' any_identifier
                             {
                                 $$ = $2;
+                            }
+
+parameters:               scope_start
+                            {
+                                $$ = d3dcompiler_alloc(sizeof(*$$));
+                                list_init($$);
+                            }
+                        | scope_start param_list
+                            {
+                                $$ = $2;
+                            }
+
+param_list:               parameter
+                            {
+                                $$ = d3dcompiler_alloc(sizeof(*$$));
+                                list_init($$);
+                                if (!add_func_parameter($$, &$1, hlsl_ctx.line_no))
+                                {
+                                    ERR("Error adding function parameter %s.\n", $1.name);
+                                    set_parse_status(&hlsl_ctx.status, PARSE_ERR);
+                                    return -1;
+                                }
+                            }
+                        | param_list ',' parameter
+                            {
+                                $$ = $1;
+                                if (!add_func_parameter($$, &$3, hlsl_ctx.line_no))
+                                {
+                                    hlsl_message("Line %u: duplicate parameter %s.\n",
+                                            hlsl_ctx.line_no, $3.name);
+                                    set_parse_status(&hlsl_ctx.status, PARSE_ERR);
+                                    return 1;
+                                }
+                            }
+
+parameter:                input_mod var_modifiers type any_identifier semantic
+                            {
+                                $$.modifiers = $1;
+                                $$.modifiers |= $2;
+                                $$.type = $3;
+                                $$.name = $4;
+                                $$.semantic = $5;
+                            }
+
+input_mod:                /* Empty */
+                            {
+                                $$ = HLSL_MODIFIER_IN;
+                            }
+                        | KW_IN
+                            {
+                                $$ = HLSL_MODIFIER_IN;
+                            }
+                        | KW_OUT
+                            {
+                                $$ = HLSL_MODIFIER_OUT;
+                            }
+                        | KW_INOUT
+                            {
+                                $$ = HLSL_MODIFIER_IN | HLSL_MODIFIER_OUT;
                             }
 
 type:                     base_type
@@ -714,6 +812,7 @@ expr:                     assignment_expr
 
 struct bwriter_shader *parse_hlsl(enum shader_type type, DWORD version, const char *entrypoint, char **messages)
 {
+    struct hlsl_ir_function_decl *function;
     struct hlsl_scope *scope, *next_scope;
     struct hlsl_type *hlsl_type, *next_type;
     struct hlsl_ir_var *var, *next_var;
@@ -732,6 +831,9 @@ struct bwriter_shader *parse_hlsl(enum shader_type type, DWORD version, const ch
     hlsl_parse();
 
     d3dcompiler_free(hlsl_ctx.source_file);
+    TRACE("Freeing functions IR.\n");
+    LIST_FOR_EACH_ENTRY(function, &hlsl_ctx.functions, struct hlsl_ir_function_decl, node.entry)
+        free_function(function);
 
     TRACE("Freeing variables.\n");
     LIST_FOR_EACH_ENTRY_SAFE(scope, next_scope, &hlsl_ctx.scopes, struct hlsl_scope, entry)
