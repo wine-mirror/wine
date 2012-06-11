@@ -694,6 +694,7 @@ enum hlsl_ir_node_type
 {
     HLSL_IR_VAR = 0,
     HLSL_IR_CONSTANT,
+    HLSL_IR_CONSTRUCTOR,
     HLSL_IR_DEREF,
     HLSL_IR_FUNCTION_DECL,
 };
@@ -788,6 +789,12 @@ struct hlsl_ir_constant
     } v;
 };
 
+struct hlsl_ir_constructor
+{
+    struct hlsl_ir_node node;
+    struct list *arguments;
+};
+
 struct hlsl_scope
 {
     struct list entry;
@@ -845,6 +852,12 @@ static inline struct hlsl_ir_constant *constant_from_node(const struct hlsl_ir_n
 {
     assert(node->type == HLSL_IR_CONSTANT);
     return CONTAINING_RECORD(node, struct hlsl_ir_constant, node);
+}
+
+static inline struct hlsl_ir_constructor *constructor_from_node(const struct hlsl_ir_node *node)
+{
+    assert(node->type == HLSL_IR_CONSTRUCTOR);
+    return CONTAINING_RECORD(node, struct hlsl_ir_constructor, node);
 }
 
 BOOL add_declaration(struct hlsl_scope *scope, struct hlsl_ir_var *decl, BOOL local_var) DECLSPEC_HIDDEN;

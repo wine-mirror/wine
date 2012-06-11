@@ -876,6 +876,32 @@ BOOL find_function(const char *name)
     return FALSE;
 }
 
+unsigned int components_count_type(struct hlsl_type *type)
+{
+    unsigned int count = 0;
+    struct hlsl_struct_field *field;
+
+    if (type->type <= HLSL_CLASS_LAST_NUMERIC)
+    {
+        return type->dimx * type->dimy;
+    }
+    if (type->type == HLSL_CLASS_ARRAY)
+    {
+        return components_count_type(type->e.array.type) * type->e.array.elements_count;
+    }
+    if (type->type != HLSL_CLASS_STRUCT)
+    {
+        ERR("Unexpected data type %s.\n", debug_hlsl_type(type));
+        return 0;
+    }
+
+    LIST_FOR_EACH_ENTRY(field, type->e.elements, struct hlsl_struct_field, entry)
+    {
+        count += components_count_type(field->type);
+    }
+    return count;
+}
+
 struct hlsl_ir_deref *new_var_deref(struct hlsl_ir_var *var)
 {
     struct hlsl_ir_deref *deref = d3dcompiler_alloc(sizeof(*deref));
@@ -1027,6 +1053,7 @@ static const char *debug_node_type(enum hlsl_ir_node_type type)
     {
         "HLSL_IR_VAR",
         "HLSL_IR_CONSTANT",
+        "HLSL_IR_CONSTRUCTOR",
         "HLSL_IR_DEREF",
         "HLSL_IR_FUNCTION_DECL",
     };
@@ -1112,7 +1139,20 @@ static void debug_dump_ir_constant(const struct hlsl_ir_constant *constant)
         TRACE("}");
 }
 
-static void debug_dump_instr(const struct hlsl_ir_node *instr)
+void debug_dump_ir_constructor(const struct hlsl_ir_constructor *constructor)
+{
+    struct hlsl_ir_node *arg;
+
+    TRACE("%s (", debug_hlsl_type(constructor->node.data_type));
+    LIST_FOR_EACH_ENTRY(arg, constructor->arguments, struct hlsl_ir_node, entry)
+    {
+        debug_dump_instr(arg);
+        TRACE(" ");
+    }
+    TRACE(")");
+}
+
+void debug_dump_instr(const struct hlsl_ir_node *instr)
 {
     switch (instr->type)
     {
@@ -1121,6 +1161,9 @@ static void debug_dump_instr(const struct hlsl_ir_node *instr)
             break;
         case HLSL_IR_CONSTANT:
             debug_dump_ir_constant(constant_from_node(instr));
+            break;
+        case HLSL_IR_CONSTRUCTOR:
+            debug_dump_ir_constructor(constructor_from_node(instr));
             break;
         default:
             TRACE("No dump function for %s\n", debug_node_type(instr->type));
@@ -1226,6 +1269,12 @@ static void free_ir_deref(struct hlsl_ir_deref *deref)
     d3dcompiler_free(deref);
 }
 
+static void free_ir_constructor(struct hlsl_ir_constructor *constructor)
+{
+    free_instr_list(constructor->arguments);
+    d3dcompiler_free(constructor);
+}
+
 void free_instr(struct hlsl_ir_node *node)
 {
     switch (node->type)
@@ -1238,6 +1287,9 @@ void free_instr(struct hlsl_ir_node *node)
             break;
         case HLSL_IR_DEREF:
             free_ir_deref(deref_from_node(node));
+            break;
+        case HLSL_IR_CONSTRUCTOR:
+            free_ir_constructor(constructor_from_node(node));
             break;
         default:
             FIXME("Unsupported node type %s\n", debug_node_type(node->type));

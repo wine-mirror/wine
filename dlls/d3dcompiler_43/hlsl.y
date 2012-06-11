@@ -112,6 +112,18 @@ static DWORD add_modifier(DWORD modifiers, DWORD mod)
     return modifiers | mod;
 }
 
+static unsigned int components_count_expr_list(struct list *list)
+{
+    struct hlsl_ir_node *node;
+    unsigned int count = 0;
+
+    LIST_FOR_EACH_ENTRY(node, list, struct hlsl_ir_node, entry)
+    {
+        count += components_count_type(node->data_type);
+    }
+    return count;
+}
+
 %}
 
 %error-verbose
@@ -792,6 +804,42 @@ variable:                 VAR_IDENTIFIER
 postfix_expr:             primary_expr
                             {
                                 $$ = $1;
+                            }
+                          /* "var_modifiers" doesn't make sense in this case, but it's needed
+                             in the grammar to avoid shift/reduce conflicts. */
+                        | var_modifiers type '(' initializer_expr_list ')'
+                            {
+                                struct hlsl_ir_constructor *constructor;
+
+                                TRACE("%s constructor.\n", debug_hlsl_type($2));
+                                if ($1)
+                                {
+                                    hlsl_message("Line %u: unexpected modifier in a constructor.\n",
+                                            hlsl_ctx.line_no);
+                                    set_parse_status(&hlsl_ctx.status, PARSE_ERR);
+                                    return -1;
+                                }
+                                if ($2->type > HLSL_CLASS_LAST_NUMERIC)
+                                {
+                                    hlsl_message("Line %u: constructors are allowed only for numeric data types.\n",
+                                            hlsl_ctx.line_no);
+                                    set_parse_status(&hlsl_ctx.status, PARSE_ERR);
+                                    return -1;
+                                }
+                                if ($2->dimx * $2->dimy != components_count_expr_list($4))
+                                {
+                                    hlsl_message("Line %u: wrong number of components in constructor.\n",
+                                            hlsl_ctx.line_no);
+                                    set_parse_status(&hlsl_ctx.status, PARSE_ERR);
+                                    return -1;
+                                }
+
+                                constructor = d3dcompiler_alloc(sizeof(*constructor));
+                                constructor->node.type = HLSL_IR_CONSTRUCTOR;
+                                constructor->node.data_type = $2;
+                                constructor->arguments = $4;
+
+                                $$ = &constructor->node;
                             }
 
 unary_expr:               postfix_expr
