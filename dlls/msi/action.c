@@ -2390,13 +2390,17 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
     return MSI_SetFeatureStates(package);
 }
 
-/* OK this value is "interpreted" and then formatted based on the 
-   first few characters */
-static LPSTR parse_value(MSIPACKAGE *package, LPCWSTR value, DWORD *type, 
-                         DWORD *size)
+static LPSTR parse_value(MSIPACKAGE *package, LPCWSTR value, DWORD *type, DWORD *size)
 {
     LPSTR data = NULL;
 
+    if (!value)
+    {
+        data = (LPSTR)strdupW(szEmpty);
+        *size = sizeof(szEmpty);
+        *type = REG_SZ;
+        return data;
+    }
     if (value[0]=='#' && value[1]!='#' && value[1]!='%')
     {
         if (value[1]=='x')
@@ -2578,19 +2582,19 @@ static WCHAR *get_keypath( MSICOMPONENT *comp, HKEY root, const WCHAR *path )
     return strdupW( path );
 }
 
-static BOOL is_special_entry( const WCHAR *name, const WCHAR *value )
+static BOOL is_special_entry( const WCHAR *name )
 {
-     return (name && (name[0] == '*' || name[0] == '+') && !name[1] && !value);
+     return (name && (name[0] == '*' || name[0] == '+') && !name[1]);
 }
 
 static UINT ITERATE_WriteRegistryValues(MSIRECORD *row, LPVOID param)
 {
     MSIPACKAGE *package = param;
-    LPSTR value_data = NULL;
+    LPSTR value;
     HKEY  root_key, hkey;
     DWORD type,size;
     LPWSTR deformated, uikey, keypath;
-    LPCWSTR szRoot, component, name, key, value;
+    LPCWSTR szRoot, component, name, key;
     MSICOMPONENT *comp;
     MSIRECORD * uirow;
     INT   root;
@@ -2643,25 +2647,16 @@ static UINT ITERATE_WriteRegistryValues(MSIRECORD *row, LPVOID param)
         msi_free(keypath);
         return ERROR_SUCCESS;
     }
-
-    value = MSI_RecordGetString(row,5);
-    if (value)
-        value_data = parse_value(package, value, &type, &size); 
-    else
-    {
-        value_data = (LPSTR)strdupW(szEmpty);
-        size = sizeof(szEmpty);
-        type = REG_SZ;
-    }
-
+    value = parse_value(package, MSI_RecordGetString(row, 5), &type, &size);
     deformat_string(package, name, &deformated);
-    if (!is_special_entry( name , value ))
+
+    if (!is_special_entry( name ))
     {
         if (!check_first)
         {
             TRACE("Setting value %s of %s\n", debugstr_w(deformated),
                   debugstr_w(uikey));
-            RegSetValueExW(hkey, deformated, 0, type, (LPBYTE)value_data, size);
+            RegSetValueExW(hkey, deformated, 0, type, (LPBYTE)value, size);
         }
         else
         {
@@ -2677,7 +2672,7 @@ static UINT ITERATE_WriteRegistryValues(MSIRECORD *row, LPVOID param)
                 TRACE("Checked and setting value %s of %s\n", debugstr_w(deformated),
                       debugstr_w(uikey));
                 if (deformated || size)
-                    RegSetValueExW(hkey, deformated, 0, type, (LPBYTE)value_data, size);
+                    RegSetValueExW(hkey, deformated, 0, type, (LPBYTE)value, size);
             }
         }
     }
@@ -2687,11 +2682,11 @@ static UINT ITERATE_WriteRegistryValues(MSIRECORD *row, LPVOID param)
     MSI_RecordSetStringW(uirow,2,deformated);
     MSI_RecordSetStringW(uirow,1,uikey);
     if (type == REG_SZ || type == REG_EXPAND_SZ)
-        MSI_RecordSetStringW(uirow,3,(LPWSTR)value_data);
+        MSI_RecordSetStringW(uirow, 3, (LPWSTR)value);
     msi_ui_actiondata( package, szWriteRegistryValues, uirow );
     msiobj_release( &uirow->hdr );
 
-    msi_free(value_data);
+    msi_free(value);
     msi_free(deformated);
     msi_free(uikey);
     msi_free(keypath);
