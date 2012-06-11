@@ -866,6 +866,7 @@ struct bwriter_shader *parse_hlsl_shader(const char *text, enum shader_type type
 
 const char *debug_hlsl_type(const struct hlsl_type *type) DECLSPEC_HIDDEN;
 const char *debug_modifiers(DWORD modifiers) DECLSPEC_HIDDEN;
+void debug_dump_ir_function(const struct hlsl_ir_function_decl *func) DECLSPEC_HIDDEN;
 
 void free_hlsl_type(struct hlsl_type *type) DECLSPEC_HIDDEN;
 void free_instr(struct hlsl_ir_node *node) DECLSPEC_HIDDEN;

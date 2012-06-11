@@ -770,8 +770,9 @@ BOOL add_declaration(struct hlsl_scope *scope, struct hlsl_ir_var *decl, BOOL lo
         if (!strcmp(decl->name, var->name))
             return FALSE;
     }
-    if (local_var)
+    if (local_var && scope->upper->upper == hlsl_ctx.globals)
     {
+        /* Check whether the variable redefines a function parameter. */
         LIST_FOR_EACH_ENTRY(var, &scope->upper->vars, struct hlsl_ir_var, scope_entry)
         {
             if (!strcmp(decl->name, var->name))
@@ -1037,6 +1038,125 @@ static const char *debug_node_type(enum hlsl_ir_node_type type)
     return names[type];
 }
 
+static void debug_dump_instr(const struct hlsl_ir_node *instr);
+
+static void debug_dump_ir_var(const struct hlsl_ir_var *var)
+{
+    if (var->modifiers)
+        TRACE("%s ", debug_modifiers(var->modifiers));
+    TRACE("%s %s", debug_hlsl_type(var->node.data_type), var->name);
+    if (var->semantic)
+        TRACE(" : %s", debugstr_a(var->semantic));
+}
+
+static void debug_dump_ir_deref(const struct hlsl_ir_deref *deref)
+{
+    switch (deref->type)
+    {
+        case HLSL_IR_DEREF_VAR:
+            TRACE("deref(");
+            debug_dump_ir_var(deref->v.var);
+            TRACE(")");
+            break;
+        case HLSL_IR_DEREF_ARRAY:
+            debug_dump_instr(deref->v.array.array);
+            TRACE("[");
+            debug_dump_instr(deref->v.array.index);
+            TRACE("]");
+            break;
+        case HLSL_IR_DEREF_RECORD:
+            debug_dump_instr(deref->v.record.record);
+            TRACE(".%s", debugstr_a(deref->v.record.field));
+            break;
+    }
+}
+
+static void debug_dump_ir_constant(const struct hlsl_ir_constant *constant)
+{
+    struct hlsl_type *type = constant->node.data_type;
+    unsigned int x, y;
+
+    if (type->dimy != 1)
+        TRACE("{");
+    for (y = 0; y < type->dimy; ++y)
+    {
+        if (type->dimx != 1)
+            TRACE("{");
+        for (x = 0; x < type->dimx; ++x)
+        {
+            switch (type->base_type)
+            {
+                case HLSL_TYPE_FLOAT:
+                    TRACE("%g ", (double)constant->v.value.f[y * type->dimx + x]);
+                    break;
+                case HLSL_TYPE_DOUBLE:
+                    TRACE("%g ", constant->v.value.d[y * type->dimx + x]);
+                    break;
+                case HLSL_TYPE_INT:
+                    TRACE("%d ", constant->v.value.i[y * type->dimx + x]);
+                    break;
+                case HLSL_TYPE_UINT:
+                    TRACE("%u ", constant->v.value.u[y * type->dimx + x]);
+                    break;
+                case HLSL_TYPE_BOOL:
+                    TRACE("%s ", constant->v.value.b[y * type->dimx + x] == FALSE ? "false" : "true");
+                    break;
+                default:
+                    TRACE("Constants of type %s not supported\n", debug_base_type(type));
+            }
+        }
+        if (type->dimx != 1)
+            TRACE("}");
+    }
+    if (type->dimy != 1)
+        TRACE("}");
+}
+
+static void debug_dump_instr(const struct hlsl_ir_node *instr)
+{
+    switch (instr->type)
+    {
+        case HLSL_IR_DEREF:
+            debug_dump_ir_deref(deref_from_node(instr));
+            break;
+        case HLSL_IR_CONSTANT:
+            debug_dump_ir_constant(constant_from_node(instr));
+            break;
+        default:
+            TRACE("No dump function for %s\n", debug_node_type(instr->type));
+    }
+}
+
+static void debug_dump_instr_list(const struct list *list)
+{
+    struct hlsl_ir_node *instr;
+
+    LIST_FOR_EACH_ENTRY(instr, list, struct hlsl_ir_node, entry)
+    {
+        debug_dump_instr(instr);
+        TRACE("\n");
+    }
+}
+
+void debug_dump_ir_function(const struct hlsl_ir_function_decl *func)
+{
+    struct hlsl_ir_var *param;
+
+    TRACE("Dumping function %s.\n", debugstr_a(func->name));
+    TRACE("Function parameters:\n");
+    LIST_FOR_EACH_ENTRY(param, func->parameters, struct hlsl_ir_var, node.entry)
+    {
+        debug_dump_ir_var(param);
+        TRACE("\n");
+    }
+    if (func->semantic)
+        TRACE("Function semantic: %s\n", debugstr_a(func->semantic));
+    if (func->body)
+    {
+        debug_dump_instr_list(func->body);
+    }
+}
+
 void free_hlsl_type(struct hlsl_type *type)
 {
     struct hlsl_struct_field *field, *next_field;
@@ -1133,4 +1253,6 @@ void free_function(struct hlsl_ir_function_decl *func)
     LIST_FOR_EACH_ENTRY_SAFE(param, next_param, func->parameters, struct hlsl_ir_var, node.entry)
         d3dcompiler_free(param);
     d3dcompiler_free(func->parameters);
+    free_instr_list(func->body);
+    d3dcompiler_free(func->body);
 }

@@ -248,6 +248,9 @@ static DWORD add_modifier(DWORD modifiers, DWORD mod)
 %type <instr> expr
 %type <var> variable
 %type <intval> array
+%type <list> statement
+%type <list> statement_list
+%type <list> compound_statement
 %type <function> func_declaration
 %type <function> func_prototype
 %type <parameter> parameter
@@ -269,6 +272,7 @@ static DWORD add_modifier(DWORD modifiers, DWORD mod)
 %type <instr> logicor_expr
 %type <instr> conditional_expr
 %type <instr> assignment_expr
+%type <list> expr_statement
 %type <modifiers> input_mod
 %%
 
@@ -300,7 +304,14 @@ any_identifier:           VAR_IDENTIFIER
                         | TYPE_IDENTIFIER
                         | NEW_IDENTIFIER
 
-func_declaration:         func_prototype ';'
+func_declaration:         func_prototype compound_statement
+                            {
+                                TRACE("Function %s parsed.\n", $1->name);
+                                $$ = $1;
+                                $$->body = $2;
+                                pop_scope(&hlsl_ctx);
+                            }
+                        | func_prototype ';'
                             {
                                 TRACE("Function prototype for %s.\n", $1->name);
                                 $$ = $1;
@@ -316,6 +327,17 @@ func_prototype:           var_modifiers type var_identifier '(' parameters ')' s
                                     return -1;
                                 }
                                 $$->semantic = $7;
+                            }
+
+compound_statement:       '{' '}'
+                            {
+                                $$ = d3dcompiler_alloc(sizeof(*$$));
+                                list_init($$);
+                            }
+                        | '{' scope_start statement_list '}'
+                            {
+                                pop_scope(&hlsl_ctx);
+                                $$ = $3;
                             }
 
 scope_start:              /* Empty */
@@ -666,6 +688,44 @@ boolean:                  KW_TRUE
                                 $$ = FALSE;
                             }
 
+statement_list:           statement
+                            {
+                                $$ = $1;
+                            }
+                        | statement_list statement
+                            {
+                                $$ = $1;
+                                list_move_tail($$, $2);
+                                d3dcompiler_free($2);
+                            }
+
+statement:                declaration_statement
+                            {
+                                $$ = d3dcompiler_alloc(sizeof(*$$));
+                                list_init($$);
+                            }
+                        | expr_statement
+                            {
+                                $$ = $1;
+                            }
+                        | compound_statement
+                            {
+                                $$ = $1;
+                            }
+
+expr_statement:           ';'
+                            {
+                                $$ = d3dcompiler_alloc(sizeof(*$$));
+                                list_init($$);
+                            }
+                        | expr ';'
+                            {
+                                $$ = d3dcompiler_alloc(sizeof(*$$));
+                                list_init($$);
+                                if ($1)
+                                    list_add_head($$, &$1->entry);
+                            }
+
 primary_expr:             C_FLOAT
                             {
                                 struct hlsl_ir_constant *c = d3dcompiler_alloc(sizeof(*c));
@@ -829,6 +889,18 @@ struct bwriter_shader *parse_hlsl(enum shader_type type, DWORD version, const ch
     hlsl_ctx.globals = hlsl_ctx.cur_scope;
 
     hlsl_parse();
+
+    if (TRACE_ON(hlsl_parser))
+    {
+        struct hlsl_ir_function_decl *func;
+
+        TRACE("IR dump.\n");
+        LIST_FOR_EACH_ENTRY(func, &hlsl_ctx.functions, struct hlsl_ir_function_decl, node.entry)
+        {
+            if (func->body)
+                debug_dump_ir_function(func);
+        }
+    }
 
     d3dcompiler_free(hlsl_ctx.source_file);
     TRACE("Freeing functions IR.\n");
