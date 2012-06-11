@@ -80,7 +80,6 @@
 #include "winbase.h"
 #include "wininet.h"
 #include "winerror.h"
-#include "wincrypt.h"
 
 #include "wine/debug.h"
 #include "internet.h"
@@ -358,15 +357,23 @@ static DWORD netconn_verify_cert(netconn_t *conn, PCCERT_CONTEXT cert, HCERTSTOR
         }
     }
 
-    CertFreeCertificateChain(chain);
-
     if(err) {
         WARN("failed %u\n", err);
+        CertFreeCertificateChain(chain);
+        if(conn->server->cert_chain) {
+            CertFreeCertificateChain(conn->server->cert_chain);
+            conn->server->cert_chain = NULL;
+        }
         if(conn->mask_errors)
             conn->server->security_flags |= conn->security_flags & _SECURITY_ERROR_FLAGS_MASK;
         return err;
     }
 
+    /* FIXME: Reuse cached chain */
+    if(conn->server->cert_chain)
+        CertFreeCertificateChain(chain);
+    else
+        conn->server->cert_chain = chain;
     return ERROR_SUCCESS;
 }
 

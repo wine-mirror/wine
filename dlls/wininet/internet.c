@@ -61,7 +61,6 @@
 #include "winreg.h"
 #include "winuser.h"
 #include "wininet.h"
-#include "winineti.h"
 #include "winnls.h"
 #include "wine/debug.h"
 #include "winerror.h"
@@ -4419,8 +4418,18 @@ DWORD WINAPI PrivacyGetZonePreferenceW( DWORD zone, DWORD type, LPDWORD template
  */
 BOOL WINAPI InternetGetSecurityInfoByURLA(LPSTR lpszURL, PCCERT_CHAIN_CONTEXT *ppCertChain, DWORD *pdwSecureFlags)
 {
-    FIXME("(%s %p %p)\n", debugstr_a(lpszURL), ppCertChain, pdwSecureFlags);
-    return FALSE;
+    WCHAR *url;
+    BOOL res;
+
+    TRACE("(%s %p %p)\n", debugstr_a(lpszURL), ppCertChain, pdwSecureFlags);
+
+    url = heap_strdupAtoW(lpszURL);
+    if(!url)
+        return FALSE;
+
+    res = InternetGetSecurityInfoByURLW(url, ppCertChain, pdwSecureFlags);
+    heap_free(url);
+    return res;
 }
 
 /***********************************************************************
@@ -4428,8 +4437,48 @@ BOOL WINAPI InternetGetSecurityInfoByURLA(LPSTR lpszURL, PCCERT_CHAIN_CONTEXT *p
  */
 BOOL WINAPI InternetGetSecurityInfoByURLW(LPCWSTR lpszURL, PCCERT_CHAIN_CONTEXT *ppCertChain, DWORD *pdwSecureFlags)
 {
-    FIXME("(%s %p %p)\n", debugstr_w(lpszURL), ppCertChain, pdwSecureFlags);
-    return FALSE;
+    WCHAR hostname[INTERNET_MAX_HOST_NAME_LENGTH];
+    URL_COMPONENTSW url = {sizeof(url)};
+    server_t *server;
+    BOOL res = FALSE;
+
+    TRACE("(%s %p %p)\n", debugstr_w(lpszURL), ppCertChain, pdwSecureFlags);
+
+    url.lpszHostName = hostname;
+    url.dwHostNameLength = sizeof(hostname)/sizeof(WCHAR);
+
+    res = InternetCrackUrlW(lpszURL, 0, 0, &url);
+    if(!res || url.nScheme != INTERNET_SCHEME_HTTPS) {
+        SetLastError(ERROR_INTERNET_ITEM_NOT_FOUND);
+        return FALSE;
+    }
+
+    if(url.nPort == INTERNET_INVALID_PORT_NUMBER)
+        url.nPort = INTERNET_DEFAULT_HTTPS_PORT;
+
+    server = get_server(hostname, url.nPort, FALSE);
+    if(!server) {
+        SetLastError(ERROR_INTERNET_ITEM_NOT_FOUND);
+        return FALSE;
+    }
+
+    if(server->cert_chain) {
+        const CERT_CHAIN_CONTEXT *chain_dup;
+
+        chain_dup = CertDuplicateCertificateChain(server->cert_chain);
+        if(chain_dup) {
+            *ppCertChain = chain_dup;
+            *pdwSecureFlags = server->security_flags & _SECURITY_ERROR_FLAGS_MASK;
+        }else {
+            res = FALSE;
+        }
+    }else {
+        SetLastError(ERROR_INTERNET_ITEM_NOT_FOUND);
+        res = FALSE;
+    }
+
+    server_release(server);
+    return res;
 }
 
 DWORD WINAPI InternetDialA( HWND hwndParent, LPSTR lpszConnectoid, DWORD dwFlags,
