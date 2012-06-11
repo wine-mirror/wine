@@ -411,7 +411,7 @@ static const ScriptShapeData ShapingData[] =
     {{ tibetan_features, 2}, NULL, 0, NULL, ShapeCharGlyphProp_Tibet},
     {{ phags_features, 3}, NULL, 0, ContextualShape_Phags_pa, ShapeCharGlyphProp_Thai},
     {{ thai_features, 1}, NULL, 0, ContextualShape_Thai, ShapeCharGlyphProp_Thai},
-    {{ thai_features, 1}, NULL, 0, ContextualShape_Thai, ShapeCharGlyphProp_Thai},
+    {{ thai_features, 1}, NULL, 0, ContextualShape_Thai, NULL},
     {{ thai_features, 1}, required_lao_features, 0, ContextualShape_Lao, ShapeCharGlyphProp_Thai},
     {{ thai_features, 1}, required_lao_features, 0, ContextualShape_Lao, ShapeCharGlyphProp_Thai},
     {{ devanagari_features, 6}, required_devanagari_features, MS_MAKE_TAG('d','e','v','2'), ContextualShape_Devanagari, ShapeCharGlyphProp_Devanagari},
@@ -2838,13 +2838,9 @@ static void ShapeCharGlyphProp_Arabic( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSI
 
 static void ShapeCharGlyphProp_Thai( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp )
 {
-    int i,k;
+    int i;
     int finaGlyph;
     INT dirL;
-    BYTE *spaces;
-
-    spaces = HeapAlloc(GetProcessHeap(),0,cGlyphs);
-    memset(spaces,0,cGlyphs);
 
     if (!psa->fLogicalOrder && psa->fRTL)
     {
@@ -2857,20 +2853,11 @@ static void ShapeCharGlyphProp_Thai( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS 
         dirL = 1;
     }
 
-    for (i = 0; i < cGlyphs; i++)
-    {
-        for (k = 0; k < cChars; k++)
-            if (pwLogClust[k] == i)
-            {
-                if (pwcChars[k] == 0x0020)
-                    spaces[i] = 1;
-            }
-    }
-
     OpenType_GDEF_UpdateGlyphProps(hdc, psc, pwGlyphs, cGlyphs, pwLogClust, cChars, pGlyphProp);
 
     for (i = 0; i < cGlyphs; i++)
     {
+        int k;
         int char_index[20];
         int char_count = 0;
 
@@ -2881,25 +2868,22 @@ static void ShapeCharGlyphProp_Thai( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS 
                 char_index[char_count++] = k;
         }
 
+        if (i == finaGlyph)
+            pGlyphProp[i].sva.uJustification = SCRIPT_JUSTIFY_NONE;
+        else
+            pGlyphProp[i].sva.uJustification = SCRIPT_JUSTIFY_CHARACTER;
+
         if (char_count == 0)
             continue;
 
         if (char_count ==1 && pwcChars[char_index[0]] == 0x0020)  /* space */
-        {
-            pGlyphProp[i].sva.uJustification = SCRIPT_JUSTIFY_CHARACTER;
             pCharProp[char_index[0]].fCanGlyphAlone = 1;
-        }
-        else if (i == finaGlyph)
-            pGlyphProp[i].sva.uJustification = SCRIPT_JUSTIFY_NONE;
-        else
-            pGlyphProp[i].sva.uJustification = SCRIPT_JUSTIFY_CHARACTER;
 
         /* handle Thai SARA AM (U+0E33) differently than GDEF */
         if (char_count == 1 && pwcChars[char_index[0]] == 0x0e33)
             pGlyphProp[i].sva.fClusterStart = 0;
     }
 
-    HeapFree(GetProcessHeap(),0,spaces);
     UpdateClustersFromGlyphProp(cGlyphs, cChars, pwLogClust, pGlyphProp);
 
     /* Do not allow justification between marks and their base */
