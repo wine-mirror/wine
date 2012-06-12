@@ -25,6 +25,8 @@
 #include "errno.h"
 #include "limits.h"
 
+#include "wine/list.h"
+
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
@@ -37,17 +39,13 @@ char* __cdecl _Getmonths(void);
 void* __cdecl _Gettnames(void);
 unsigned int __cdecl ___lc_codepage_func(void);
 LCID* __cdecl ___lc_handle_func(void);
+const locale_facet* __thiscall locale__Getfacet(const locale*, MSVCP_size_t);
 
 typedef int category;
 
 typedef struct {
     MSVCP_size_t id;
 } locale_id;
-
-typedef struct {
-    const vtable_ptr *vtable;
-    MSVCP_size_t refs;
-} locale_facet;
 
 typedef struct _locale__Locimp {
     locale_facet facet;
@@ -198,6 +196,25 @@ locale_facet* __thiscall MSVCP_locale_facet_vector_dtor(locale_facet *this, unsi
     }
 
     return this;
+}
+
+typedef struct
+{
+    locale_facet *fac;
+    struct list entry;
+} facets_elem;
+static struct list lazy_facets = LIST_INIT(lazy_facets);
+
+static void locale_facet_register(locale_facet *add)
+{
+    facets_elem *head = MSVCRT_operator_new(sizeof(*head));
+    if(!head) {
+        ERR("Out of memory\n");
+        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+    }
+
+    head->fac = add;
+    list_add_head(&lazy_facets, &head->entry);
 }
 
 extern const vtable_ptr MSVCP_locale_facet_vtable;
@@ -2657,6 +2674,32 @@ MSVCP_size_t __cdecl codecvt_char__Getcat(const locale_facet **facet, const loca
     return LC_CTYPE;
 }
 
+codecvt_char* codecvt_char_use_facet(locale *loc)
+{
+    static codecvt_char *obj = NULL;
+
+    _Lockit lock;
+    const locale_facet *fac;
+
+    _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
+    fac = locale__Getfacet(loc, codecvt_char_id.id);
+    if(fac) {
+        _Lockit_dtor(&lock);
+        return (codecvt_char*)fac;
+    }
+
+    if(obj)
+        return obj;
+
+    codecvt_char__Getcat(&fac, loc);
+    obj = (codecvt_char*)fac;
+    locale_facet__Incref(&obj->base.facet);
+    locale_facet_register(&obj->base.facet);
+    _Lockit_dtor(&lock);
+
+    return obj;
+}
+
 /* ?do_in@?$codecvt@DDH@std@@MBEHAAHPBD1AAPBDPAD3AAPAD@Z */
 /* ?do_in@?$codecvt@DDH@std@@MEBAHAEAHPEBD1AEAPEBDPEAD3AEAPEAD@Z */
 #define call_codecvt_char_do_in(this, state, from, from_end, from_next, to, to_end, to_next) \
@@ -4525,8 +4568,15 @@ locale* __thiscall locale__Addfac(locale *this, locale_facet *facet, MSVCP_size_
 DEFINE_THISCALL_WRAPPER(locale__Getfacet, 8)
 const locale_facet* __thiscall locale__Getfacet(const locale *this, MSVCP_size_t id)
 {
-    FIXME("(%p %lu) stub\n", this, id);
-    return NULL;
+    locale_facet *fac;
+
+    TRACE("(%p %lu)\n", this, id);
+
+    fac = id < this->ptr->facet_cnt ? this->ptr->facetvec[id] : NULL;
+    if(fac || !this->ptr->transparent)
+        return fac;
+
+    return id < global_locale->facet_cnt ? global_locale->facetvec[id] : NULL;
 }
 
 /* ?_Getgloballocale@locale@std@@CAPAV_Locimp@12@XZ */
@@ -4711,8 +4761,17 @@ void __asm_dummy_vtables(void) {
 
 void free_locale(void)
 {
+    facets_elem *iter, *safe;
+
     if(global_locale) {
         locale__Locimp_dtor(global_locale);
         locale_dtor(&classic_locale);
+    }
+
+    LIST_FOR_EACH_ENTRY_SAFE(iter, safe, &lazy_facets, facets_elem, entry) {
+        list_remove(&iter->entry);
+        if(locale_facet__Decref(iter->fac))
+            call_locale_facet_vector_dtor(iter->fac, 1);
+        MSVCRT_operator_delete(iter);
     }
 }

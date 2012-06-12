@@ -257,6 +257,12 @@ wchar_t* __stdcall MSVCP_allocator_wchar_allocate(void*, MSVCP_size_t);
 void __stdcall MSVCP_allocator_wchar_deallocate(void*, wchar_t*, MSVCP_size_t);
 MSVCP_size_t __stdcall MSVCP_allocator_wchar_max_size(void*);
 
+/* class locale::facet */
+typedef struct {
+    const vtable_ptr *vtable;
+    MSVCP_size_t refs;
+} locale_facet;
+
 /* class locale */
 typedef struct
 {
