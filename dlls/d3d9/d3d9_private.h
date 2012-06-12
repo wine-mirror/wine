@@ -272,23 +272,17 @@ HRESULT d3d9_vertex_declaration_create(struct d3d9_device *device,
 struct d3d9_vertex_declaration *unsafe_impl_from_IDirect3DVertexDeclaration9(
         IDirect3DVertexDeclaration9 *iface) DECLSPEC_HIDDEN;
 
-/* ---------------------- */
-/* IDirect3DVertexShader9 */
-/* ---------------------- */
+struct d3d9_vertexshader
+{
+    IDirect3DVertexShader9 IDirect3DVertexShader9_iface;
+    LONG refcount;
+    struct wined3d_shader *wined3d_shader;
+    IDirect3DDevice9Ex *parent_device;
+};
 
-/*****************************************************************************
- * IDirect3DVertexShader implementation structure
- */
-typedef struct IDirect3DVertexShader9Impl {
-  IDirect3DVertexShader9 IDirect3DVertexShader9_iface;
-  LONG ref;
-  struct wined3d_shader *wined3d_shader;
-  IDirect3DDevice9Ex *parentDevice;
-} IDirect3DVertexShader9Impl;
-
-HRESULT vertexshader_init(IDirect3DVertexShader9Impl *shader,
+HRESULT vertexshader_init(struct d3d9_vertexshader *shader,
         struct d3d9_device *device, const DWORD *byte_code) DECLSPEC_HIDDEN;
-IDirect3DVertexShader9Impl *unsafe_impl_from_IDirect3DVertexShader9(IDirect3DVertexShader9 *iface) DECLSPEC_HIDDEN;
+struct d3d9_vertexshader *unsafe_impl_from_IDirect3DVertexShader9(IDirect3DVertexShader9 *iface) DECLSPEC_HIDDEN;
 
 #define D3D9_MAX_VERTEX_SHADER_CONSTANTF 256
 #define D3D9_MAX_SIMULTANEOUS_RENDERTARGETS 4

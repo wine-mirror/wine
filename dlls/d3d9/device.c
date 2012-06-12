@@ -2240,7 +2240,7 @@ static HRESULT WINAPI d3d9_device_CreateVertexShader(IDirect3DDevice9Ex *iface,
         const DWORD *byte_code, IDirect3DVertexShader9 **shader)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
-    IDirect3DVertexShader9Impl *object;
+    struct d3d9_vertexshader *object;
     HRESULT hr;
 
     TRACE("iface %p, byte_code %p, shader %p.\n", iface, byte_code, shader);
@@ -2269,7 +2269,7 @@ static HRESULT WINAPI d3d9_device_CreateVertexShader(IDirect3DDevice9Ex *iface,
 static HRESULT WINAPI d3d9_device_SetVertexShader(IDirect3DDevice9Ex *iface, IDirect3DVertexShader9 *shader)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
-    IDirect3DVertexShader9Impl *shader_obj = unsafe_impl_from_IDirect3DVertexShader9(shader);
+    struct d3d9_vertexshader *shader_obj = unsafe_impl_from_IDirect3DVertexShader9(shader);
     HRESULT hr;
 
     TRACE("iface %p, shader %p.\n", iface, shader);
@@ -2285,7 +2285,7 @@ static HRESULT WINAPI d3d9_device_SetVertexShader(IDirect3DDevice9Ex *iface, IDi
 static HRESULT WINAPI d3d9_device_GetVertexShader(IDirect3DDevice9Ex *iface, IDirect3DVertexShader9 **shader)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
-    IDirect3DVertexShader9Impl *shader_impl;
+    struct d3d9_vertexshader *shader_impl;
     struct wined3d_shader *wined3d_shader;
 
     TRACE("iface %p, shader %p.\n", iface, shader);
