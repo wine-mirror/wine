@@ -4082,7 +4082,10 @@ static void load_numbered_arrays(struct wined3d_context *context,
 
         if (!(stream_info->use_map & (1 << i)))
         {
-            if (context->numbered_array_mask & (1 << i)) unload_numbered_array(context, i);
+            if (context->numbered_array_mask & (1 << i))
+                unload_numbered_array(context, i);
+            if (state->vertex_shader->reg_maps.input_registers & (1 << i))
+                GL_EXTCALL(glVertexAttrib4fARB(i, 0.0f, 0.0f, 0.0f, 0.0f));
             continue;
         }
 
