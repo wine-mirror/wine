@@ -70,6 +70,10 @@ static void test_PSetupCreateMonitorInfo(VOID)
 
     SetLastError(0xdeadbeef);
     mi = pPSetupCreateMonitorInfo(NULL, NULL, NULL);
+    if (!mi && (GetLastError() == RPC_S_SERVER_UNAVAILABLE)) {
+        win_skip("The Service 'Spooler' is required for many test\n");
+        return;
+    }
     ok( mi != NULL, "got %p with %u (expected '!= NULL')\n", mi, GetLastError());
     if (mi) pPSetupDestroyMonitorInfo(mi);
 
@@ -96,6 +100,10 @@ static void test_PSetupDestroyMonitorInfo(VOID)
 
     SetLastError(0xdeadbeef);
     mi = pPSetupCreateMonitorInfo(NULL, NULL, NULL);
+    if (!mi && (GetLastError() == RPC_S_SERVER_UNAVAILABLE)) {
+        win_skip("The Service 'Spooler' is required for many test\n");
+        return;
+    }
     ok( mi != NULL, "got %p with %u (expected '!= NULL')\n", mi, GetLastError());
 
     if (!mi) return;
