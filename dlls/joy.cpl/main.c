@@ -126,7 +126,7 @@ static void destroy_joysticks(struct JoystickData *data)
  * list_dlgproc [internal]
  *
  */
-INT_PTR CALLBACK list_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+static INT_PTR CALLBACK list_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     TRACE("(%p, 0x%08x/%d, 0x%lx)\n", hwnd, msg, msg, lparam);
     switch (msg)
