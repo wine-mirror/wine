@@ -250,6 +250,503 @@ BOOL WINAPI DdeSetQualityOfService(HWND hwndClient, CONST SECURITY_QUALITY_OF_SE
 
 /* ================================================================
  *
+ * 			WDML Error management
+ *
+ * ================================================================ */
+
+/******************************************************************************
+ * DdeGetLastError [USER32.@]  Gets most recent error code
+ *
+ * PARAMS
+ *    idInst [I] Instance identifier
+ *
+ * RETURNS
+ *    Last error code
+ */
+UINT WINAPI DdeGetLastError(DWORD idInst)
+{
+    DWORD		error_code;
+    WDML_INSTANCE*	pInstance;
+
+    /*  First check instance
+     */
+    pInstance = WDML_GetInstance(idInst);
+    if  (pInstance == NULL)
+    {
+	error_code = DMLERR_INVALIDPARAMETER;
+    }
+    else
+    {
+	error_code = pInstance->lastError;
+	pInstance->lastError = 0;
+    }
+
+    return error_code;
+}
+
+/******************************************************************
+ *		WDML_SetAllLastError
+ *
+ *
+ */
+static void	WDML_SetAllLastError(DWORD lastError)
+{
+    DWORD		threadID;
+    WDML_INSTANCE*	pInstance;
+    threadID = GetCurrentThreadId();
+    pInstance = WDML_InstanceList;
+    while (pInstance)
+    {
+	if (pInstance->threadID == threadID)
+	    pInstance->lastError = lastError;
+	pInstance = pInstance->next;
+    }
+}
+
+/* ================================================================
+ *
+ * 			String management
+ *
+ * ================================================================ */
+
+
+/******************************************************************
+ *		WDML_FindNode
+ *
+ *
+ */
+static HSZNode*	WDML_FindNode(WDML_INSTANCE* pInstance, HSZ hsz)
+{
+    HSZNode*	pNode;
+
+    if (pInstance == NULL) return NULL;
+
+    for (pNode = pInstance->nodeList; pNode != NULL; pNode = pNode->next)
+    {
+	if (pNode->hsz == hsz) break;
+    }
+    if (!pNode) WARN("HSZ %p not found\n", hsz);
+    return pNode;
+}
+
+/******************************************************************
+ *		WDML_MakeAtomFromHsz
+ *
+ * Creates a global atom from an existing HSZ
+ * Generally used before sending an HSZ as an atom to a remote app
+ */
+ATOM	WDML_MakeAtomFromHsz(HSZ hsz)
+{
+    WCHAR nameBuffer[MAX_BUFFER_LEN];
+
+    if (GetAtomNameW(HSZ2ATOM(hsz), nameBuffer, MAX_BUFFER_LEN))
+	return GlobalAddAtomW(nameBuffer);
+    WARN("HSZ %p not found\n", hsz);
+    return 0;
+}
+
+/******************************************************************
+ *		WDML_MakeHszFromAtom
+ *
+ * Creates a HSZ from an existing global atom
+ * Generally used while receiving a global atom and transforming it
+ * into an HSZ
+ */
+HSZ	WDML_MakeHszFromAtom(const WDML_INSTANCE* pInstance, ATOM atom)
+{
+    WCHAR nameBuffer[MAX_BUFFER_LEN];
+
+    if (!atom) return NULL;
+
+    if (GlobalGetAtomNameW(atom, nameBuffer, MAX_BUFFER_LEN))
+    {
+	TRACE("%x => %s\n", atom, debugstr_w(nameBuffer));
+	return DdeCreateStringHandleW(pInstance->instanceID, nameBuffer, CP_WINUNICODE);
+    }
+    WARN("ATOM 0x%x not found\n", atom);
+    return 0;
+}
+
+/******************************************************************
+ *		WDML_IncHSZ
+ *
+ *
+ */
+BOOL WDML_IncHSZ(WDML_INSTANCE* pInstance, HSZ hsz)
+{
+    HSZNode*	pNode;
+
+    pNode = WDML_FindNode(pInstance, hsz);
+    if (!pNode) return FALSE;
+
+    pNode->refCount++;
+    return TRUE;
+}
+
+/******************************************************************************
+ *           WDML_DecHSZ    (INTERNAL)
+ *
+ * Decrease the ref count of an HSZ. If it reaches 0, the node is removed from the list
+ * of HSZ nodes
+ * Returns -1 is the HSZ isn't found, otherwise it's the current (after --) of the ref count
+ */
+BOOL WDML_DecHSZ(WDML_INSTANCE* pInstance, HSZ hsz)
+{
+    HSZNode* 	pPrev = NULL;
+    HSZNode* 	pCurrent;
+
+    for (pCurrent = pInstance->nodeList; pCurrent != NULL; pCurrent = (pPrev = pCurrent)->next)
+    {
+	/* If we found the node we were looking for and its ref count is one,
+	 * we can remove it
+	 */
+	if (pCurrent->hsz == hsz)
+	{
+	    if (--pCurrent->refCount == 0)
+	    {
+		if (pCurrent == pInstance->nodeList)
+		{
+		    pInstance->nodeList = pCurrent->next;
+		}
+		else
+		{
+		    pPrev->next = pCurrent->next;
+		}
+		HeapFree(GetProcessHeap(), 0, pCurrent);
+		DeleteAtom(HSZ2ATOM(hsz));
+	    }
+	    return TRUE;
+	}
+    }
+    WARN("HSZ %p not found\n", hsz);
+
+    return FALSE;
+}
+
+/******************************************************************************
+ *            WDML_FreeAllHSZ    (INTERNAL)
+ *
+ * Frees up all the strings still allocated in the list and
+ * remove all the nodes from the list of HSZ nodes.
+ */
+void WDML_FreeAllHSZ(WDML_INSTANCE* pInstance)
+{
+    /* Free any strings created in this instance.
+     */
+    while (pInstance->nodeList != NULL)
+    {
+	DdeFreeStringHandle(pInstance->instanceID, pInstance->nodeList->hsz);
+    }
+}
+
+/******************************************************************************
+ *            InsertHSZNode    (INTERNAL)
+ *
+ * Insert a node to the head of the list.
+ */
+static void WDML_InsertHSZNode(WDML_INSTANCE* pInstance, HSZ hsz)
+{
+    if (hsz != 0)
+    {
+	HSZNode* pNew = NULL;
+	/* Create a new node for this HSZ.
+	 */
+	pNew = HeapAlloc(GetProcessHeap(), 0, sizeof(HSZNode));
+	if (pNew != NULL)
+	{
+	    pNew->hsz      = hsz;
+	    pNew->next     = pInstance->nodeList;
+	    pNew->refCount = 1;
+	    pInstance->nodeList = pNew;
+	}
+	else
+	{
+	    ERR("Primary HSZ Node allocation failed - out of memory\n");
+	}
+    }
+}
+
+/******************************************************************
+ *		WDML_QueryString
+ *
+ *
+ */
+static int	WDML_QueryString(WDML_INSTANCE* pInstance, HSZ hsz, LPVOID ptr, DWORD cchMax,
+				 int codepage)
+{
+    WCHAR	pString[MAX_BUFFER_LEN];
+    int		ret;
+    /* If psz is null, we have to return only the length
+     * of the string.
+     */
+    if (ptr == NULL)
+    {
+	ptr = pString;
+	cchMax = MAX_BUFFER_LEN;
+    }
+
+    /* if there is no input windows returns a NULL string */
+    if (hsz == NULL)
+    {
+	CHAR *t_ptr = ptr;
+	*t_ptr = '\0';
+	return 1;
+    }
+
+    switch (codepage)
+    {
+    case CP_WINANSI:
+	ret = GetAtomNameA(HSZ2ATOM(hsz), ptr, cchMax);
+	break;
+    case CP_WINUNICODE:
+	ret = GetAtomNameW(HSZ2ATOM(hsz), ptr, cchMax);
+        break;
+    default:
+	ERR("Unknown code page %d\n", codepage);
+	ret = 0;
+    }
+    return ret;
+}
+
+/*****************************************************************
+ * DdeQueryStringA [USER32.@]
+ */
+DWORD WINAPI DdeQueryStringA(DWORD idInst, HSZ hsz, LPSTR psz, DWORD cchMax, INT iCodePage)
+{
+    DWORD		ret = 0;
+    WDML_INSTANCE*	pInstance;
+
+    TRACE("(%d, %p, %p, %d, %d)\n", idInst, hsz, psz, cchMax, iCodePage);
+
+    /*  First check instance
+     */
+    pInstance = WDML_GetInstance(idInst);
+    if (pInstance != NULL)
+    {
+	if (iCodePage == 0) iCodePage = CP_WINANSI;
+	ret = WDML_QueryString(pInstance, hsz, psz, cchMax, iCodePage);
+    }
+
+    TRACE("returning %d (%s)\n", ret, debugstr_a(psz));
+    return ret;
+}
+
+/*****************************************************************
+ * DdeQueryStringW [USER32.@]
+ */
+
+DWORD WINAPI DdeQueryStringW(DWORD idInst, HSZ hsz, LPWSTR psz, DWORD cchMax, INT iCodePage)
+{
+    DWORD		ret = 0;
+    WDML_INSTANCE*	pInstance;
+
+    TRACE("(%d, %p, %p, %d, %d)\n", idInst, hsz, psz, cchMax, iCodePage);
+
+    /*  First check instance
+     */
+    pInstance = WDML_GetInstance(idInst);
+    if (pInstance != NULL)
+    {
+	if (iCodePage == 0) iCodePage = CP_WINUNICODE;
+	ret = WDML_QueryString(pInstance, hsz, psz, cchMax, iCodePage);
+    }
+
+    TRACE("returning %d (%s)\n", ret, debugstr_w(psz));
+    return ret;
+}
+
+/******************************************************************
+ *		DML_CreateString
+ *
+ *
+ */
+static	HSZ	WDML_CreateString(WDML_INSTANCE* pInstance, LPCVOID ptr, int codepage)
+{
+    HSZ		hsz;
+
+    switch (codepage)
+    {
+    case CP_WINANSI:
+	hsz = ATOM2HSZ(AddAtomA(ptr));
+	TRACE("added atom %s with HSZ %p,\n", debugstr_a(ptr), hsz);
+	break;
+    case CP_WINUNICODE:
+	hsz = ATOM2HSZ(AddAtomW(ptr));
+	TRACE("added atom %s with HSZ %p,\n", debugstr_w(ptr), hsz);
+	break;
+    default:
+	ERR("Unknown code page %d\n", codepage);
+	return 0;
+    }
+    WDML_InsertHSZNode(pInstance, hsz);
+    return hsz;
+}
+
+/*****************************************************************
+ * DdeCreateStringHandleA [USER32.@]
+ *
+ * See DdeCreateStringHandleW.
+ */
+HSZ WINAPI DdeCreateStringHandleA(DWORD idInst, LPCSTR psz, INT codepage)
+{
+    HSZ			hsz = 0;
+    WDML_INSTANCE*	pInstance;
+
+    TRACE("(%d,%s,%d)\n", idInst, debugstr_a(psz), codepage);
+
+    pInstance = WDML_GetInstance(idInst);
+    if (pInstance == NULL)
+	WDML_SetAllLastError(DMLERR_INVALIDPARAMETER);
+    else
+    {
+	if (codepage == 0) codepage = CP_WINANSI;
+	hsz = WDML_CreateString(pInstance, psz, codepage);
+    }
+
+    return hsz;
+}
+
+
+/******************************************************************************
+ * DdeCreateStringHandleW [USER32.@]  Creates handle to identify string
+ *
+ * PARAMS
+ * 	idInst   [I] Instance identifier
+ * 	psz      [I] Pointer to string
+ *	codepage [I] Code page identifier
+ * RETURNS
+ *    Success: String handle
+ *    Failure: 0
+ */
+HSZ WINAPI DdeCreateStringHandleW(DWORD idInst, LPCWSTR psz, INT codepage)
+{
+    WDML_INSTANCE*	pInstance;
+    HSZ			hsz = 0;
+
+    pInstance = WDML_GetInstance(idInst);
+    if (pInstance == NULL)
+	WDML_SetAllLastError(DMLERR_INVALIDPARAMETER);
+    else
+    {
+	if (codepage == 0) codepage = CP_WINUNICODE;
+	hsz = WDML_CreateString(pInstance, psz, codepage);
+    }
+
+    return hsz;
+}
+
+/*****************************************************************
+ *            DdeFreeStringHandle   (USER32.@)
+ * RETURNS
+ *  success: nonzero
+ *  fail:    zero
+ */
+BOOL WINAPI DdeFreeStringHandle(DWORD idInst, HSZ hsz)
+{
+    WDML_INSTANCE*	pInstance;
+    BOOL		ret = FALSE;
+
+    TRACE("(%d,%p):\n", idInst, hsz);
+
+    /*  First check instance
+     */
+    pInstance = WDML_GetInstance(idInst);
+    if (pInstance)
+	ret = WDML_DecHSZ(pInstance, hsz);
+
+    return ret;
+}
+
+/*****************************************************************
+ *            DdeKeepStringHandle  (USER32.@)
+ *
+ * RETURNS
+ *  success: nonzero
+ *  fail:    zero
+ */
+BOOL WINAPI DdeKeepStringHandle(DWORD idInst, HSZ hsz)
+{
+    WDML_INSTANCE*	pInstance;
+    BOOL		ret = FALSE;
+
+    TRACE("(%d,%p):\n", idInst, hsz);
+
+    /*  First check instance
+     */
+    pInstance = WDML_GetInstance(idInst);
+    if (pInstance)
+	ret = WDML_IncHSZ(pInstance, hsz);
+
+    return ret;
+}
+
+/*****************************************************************
+ *            DdeCmpStringHandles (USER32.@)
+ *
+ * Compares the value of two string handles.  This comparison is
+ * not case sensitive.
+ *
+ * PARAMS
+ *  hsz1    [I] Handle to the first string
+ *  hsz2    [I] Handle to the second string
+ *
+ * RETURNS
+ *  -1 The value of hsz1 is zero or less than hsz2
+ *  0  The values of hsz 1 and 2 are the same or both zero.
+ *  1  The value of hsz2 is zero of less than hsz1
+ */
+INT WINAPI DdeCmpStringHandles(HSZ hsz1, HSZ hsz2)
+{
+    WCHAR	psz1[MAX_BUFFER_LEN];
+    WCHAR	psz2[MAX_BUFFER_LEN];
+    int		ret = 0;
+    int		ret1, ret2;
+
+    ret1 = GetAtomNameW(HSZ2ATOM(hsz1), psz1, MAX_BUFFER_LEN);
+    ret2 = GetAtomNameW(HSZ2ATOM(hsz2), psz2, MAX_BUFFER_LEN);
+
+    TRACE("(%p<%s> %p<%s>);\n", hsz1, debugstr_w(psz1), hsz2, debugstr_w(psz2));
+
+    /* Make sure we found both strings. */
+    if (ret1 == 0 && ret2 == 0)
+    {
+	/* If both are not found, return both  "zero strings". */
+	ret = 0;
+    }
+    else if (ret1 == 0)
+    {
+	/* If hsz1 is a not found, return hsz1 is "zero string". */
+	ret = -1;
+    }
+    else if (ret2 == 0)
+    {
+	/* If hsz2 is a not found, return hsz2 is "zero string". */
+	ret = 1;
+    }
+    else
+    {
+	/* Compare the two strings we got (case insensitive). */
+	ret = lstrcmpiW(psz1, psz2);
+	/* Since strcmp returns any number smaller than
+	 * 0 when the first string is found to be less than
+	 * the second one we must make sure we are returning
+	 * the proper values.
+	 */
+	if (ret < 0)
+	{
+	    ret = -1;
+	}
+	else if (ret > 0)
+	{
+	    ret = 1;
+	}
+    }
+
+    return ret;
+}
+
+/* ================================================================
+ *
  * 			Instance management
  *
  * ================================================================ */
@@ -779,497 +1276,6 @@ WDML_INSTANCE*	WDML_GetInstanceFromWnd(HWND hWnd)
     return (WDML_INSTANCE*)GetWindowLongPtrW(hWnd, GWL_WDML_INSTANCE);
 }
 
-/******************************************************************************
- * DdeGetLastError [USER32.@]  Gets most recent error code
- *
- * PARAMS
- *    idInst [I] Instance identifier
- *
- * RETURNS
- *    Last error code
- */
-UINT WINAPI DdeGetLastError(DWORD idInst)
-{
-    DWORD		error_code;
-    WDML_INSTANCE*	pInstance;
-
-    /*  First check instance
-     */
-    pInstance = WDML_GetInstance(idInst);
-    if  (pInstance == NULL)
-    {
-	error_code = DMLERR_INVALIDPARAMETER;
-    }
-    else
-    {
-	error_code = pInstance->lastError;
-	pInstance->lastError = 0;
-    }
-
-    return error_code;
-}
-
-/******************************************************************
- *		WDML_SetAllLastError
- *
- *
- */
-static void	WDML_SetAllLastError(DWORD lastError)
-{
-    DWORD		threadID;
-    WDML_INSTANCE*	pInstance;
-    threadID = GetCurrentThreadId();
-    pInstance = WDML_InstanceList;
-    while (pInstance)
-    {
-	if (pInstance->threadID == threadID)
-	    pInstance->lastError = lastError;
-	pInstance = pInstance->next;
-    }
-}
-
-/* ================================================================
- *
- * 			String management
- *
- * ================================================================ */
-
-
-/******************************************************************
- *		WDML_FindNode
- *
- *
- */
-static HSZNode*	WDML_FindNode(WDML_INSTANCE* pInstance, HSZ hsz)
-{
-    HSZNode*	pNode;
-
-    if (pInstance == NULL) return NULL;
-
-    for (pNode = pInstance->nodeList; pNode != NULL; pNode = pNode->next)
-    {
-	if (pNode->hsz == hsz) break;
-    }
-    if (!pNode) WARN("HSZ %p not found\n", hsz);
-    return pNode;
-}
-
-/******************************************************************
- *		WDML_MakeAtomFromHsz
- *
- * Creates a global atom from an existing HSZ
- * Generally used before sending an HSZ as an atom to a remote app
- */
-ATOM	WDML_MakeAtomFromHsz(HSZ hsz)
-{
-    WCHAR nameBuffer[MAX_BUFFER_LEN];
-
-    if (GetAtomNameW(HSZ2ATOM(hsz), nameBuffer, MAX_BUFFER_LEN))
-	return GlobalAddAtomW(nameBuffer);
-    WARN("HSZ %p not found\n", hsz);
-    return 0;
-}
-
-/******************************************************************
- *		WDML_MakeHszFromAtom
- *
- * Creates a HSZ from an existing global atom
- * Generally used while receiving a global atom and transforming it
- * into an HSZ
- */
-HSZ	WDML_MakeHszFromAtom(const WDML_INSTANCE* pInstance, ATOM atom)
-{
-    WCHAR nameBuffer[MAX_BUFFER_LEN];
-
-    if (!atom) return NULL;
-
-    if (GlobalGetAtomNameW(atom, nameBuffer, MAX_BUFFER_LEN))
-    {
-	TRACE("%x => %s\n", atom, debugstr_w(nameBuffer));
-	return DdeCreateStringHandleW(pInstance->instanceID, nameBuffer, CP_WINUNICODE);
-    }
-    WARN("ATOM 0x%x not found\n", atom);
-    return 0;
-}
-
-/******************************************************************
- *		WDML_IncHSZ
- *
- *
- */
-BOOL WDML_IncHSZ(WDML_INSTANCE* pInstance, HSZ hsz)
-{
-    HSZNode*	pNode;
-
-    pNode = WDML_FindNode(pInstance, hsz);
-    if (!pNode) return FALSE;
-
-    pNode->refCount++;
-    return TRUE;
-}
-
-/******************************************************************************
- *           WDML_DecHSZ    (INTERNAL)
- *
- * Decrease the ref count of an HSZ. If it reaches 0, the node is removed from the list
- * of HSZ nodes
- * Returns -1 is the HSZ isn't found, otherwise it's the current (after --) of the ref count
- */
-BOOL WDML_DecHSZ(WDML_INSTANCE* pInstance, HSZ hsz)
-{
-    HSZNode* 	pPrev = NULL;
-    HSZNode* 	pCurrent;
-
-    for (pCurrent = pInstance->nodeList; pCurrent != NULL; pCurrent = (pPrev = pCurrent)->next)
-    {
-	/* If we found the node we were looking for and its ref count is one,
-	 * we can remove it
-	 */
-	if (pCurrent->hsz == hsz)
-	{
-	    if (--pCurrent->refCount == 0)
-	    {
-		if (pCurrent == pInstance->nodeList)
-		{
-		    pInstance->nodeList = pCurrent->next;
-		}
-		else
-		{
-		    pPrev->next = pCurrent->next;
-		}
-		HeapFree(GetProcessHeap(), 0, pCurrent);
-		DeleteAtom(HSZ2ATOM(hsz));
-	    }
-	    return TRUE;
-	}
-    }
-    WARN("HSZ %p not found\n", hsz);
-
-    return FALSE;
-}
-
-/******************************************************************************
- *            WDML_FreeAllHSZ    (INTERNAL)
- *
- * Frees up all the strings still allocated in the list and
- * remove all the nodes from the list of HSZ nodes.
- */
-void WDML_FreeAllHSZ(WDML_INSTANCE* pInstance)
-{
-    /* Free any strings created in this instance.
-     */
-    while (pInstance->nodeList != NULL)
-    {
-	DdeFreeStringHandle(pInstance->instanceID, pInstance->nodeList->hsz);
-    }
-}
-
-/******************************************************************************
- *            InsertHSZNode    (INTERNAL)
- *
- * Insert a node to the head of the list.
- */
-static void WDML_InsertHSZNode(WDML_INSTANCE* pInstance, HSZ hsz)
-{
-    if (hsz != 0)
-    {
-	HSZNode* pNew = NULL;
-	/* Create a new node for this HSZ.
-	 */
-	pNew = HeapAlloc(GetProcessHeap(), 0, sizeof(HSZNode));
-	if (pNew != NULL)
-	{
-	    pNew->hsz      = hsz;
-	    pNew->next     = pInstance->nodeList;
-	    pNew->refCount = 1;
-	    pInstance->nodeList = pNew;
-	}
-	else
-	{
-	    ERR("Primary HSZ Node allocation failed - out of memory\n");
-	}
-    }
-}
-
-/******************************************************************
- *		WDML_QueryString
- *
- *
- */
-static int	WDML_QueryString(WDML_INSTANCE* pInstance, HSZ hsz, LPVOID ptr, DWORD cchMax,
-				 int codepage)
-{
-    WCHAR	pString[MAX_BUFFER_LEN];
-    int		ret;
-    /* If psz is null, we have to return only the length
-     * of the string.
-     */
-    if (ptr == NULL)
-    {
-	ptr = pString;
-	cchMax = MAX_BUFFER_LEN;
-    }
-
-    /* if there is no input windows returns a NULL string */
-    if (hsz == NULL)
-    {
-	CHAR *t_ptr = ptr;
-	*t_ptr = '\0';
-	return 1;
-    }
-
-    switch (codepage)
-    {
-    case CP_WINANSI:
-	ret = GetAtomNameA(HSZ2ATOM(hsz), ptr, cchMax);
-	break;
-    case CP_WINUNICODE:
-	ret = GetAtomNameW(HSZ2ATOM(hsz), ptr, cchMax);
-        break;
-    default:
-	ERR("Unknown code page %d\n", codepage);
-	ret = 0;
-    }
-    return ret;
-}
-
-/*****************************************************************
- * DdeQueryStringA [USER32.@]
- */
-DWORD WINAPI DdeQueryStringA(DWORD idInst, HSZ hsz, LPSTR psz, DWORD cchMax, INT iCodePage)
-{
-    DWORD		ret = 0;
-    WDML_INSTANCE*	pInstance;
-
-    TRACE("(%d, %p, %p, %d, %d)\n", idInst, hsz, psz, cchMax, iCodePage);
-
-    /*  First check instance
-     */
-    pInstance = WDML_GetInstance(idInst);
-    if (pInstance != NULL)
-    {
-	if (iCodePage == 0) iCodePage = CP_WINANSI;
-	ret = WDML_QueryString(pInstance, hsz, psz, cchMax, iCodePage);
-    }
-
-    TRACE("returning %d (%s)\n", ret, debugstr_a(psz));
-    return ret;
-}
-
-/*****************************************************************
- * DdeQueryStringW [USER32.@]
- */
-
-DWORD WINAPI DdeQueryStringW(DWORD idInst, HSZ hsz, LPWSTR psz, DWORD cchMax, INT iCodePage)
-{
-    DWORD		ret = 0;
-    WDML_INSTANCE*	pInstance;
-
-    TRACE("(%d, %p, %p, %d, %d)\n", idInst, hsz, psz, cchMax, iCodePage);
-
-    /*  First check instance
-     */
-    pInstance = WDML_GetInstance(idInst);
-    if (pInstance != NULL)
-    {
-	if (iCodePage == 0) iCodePage = CP_WINUNICODE;
-	ret = WDML_QueryString(pInstance, hsz, psz, cchMax, iCodePage);
-    }
-
-    TRACE("returning %d (%s)\n", ret, debugstr_w(psz));
-    return ret;
-}
-
-/******************************************************************
- *		DML_CreateString
- *
- *
- */
-static	HSZ	WDML_CreateString(WDML_INSTANCE* pInstance, LPCVOID ptr, int codepage)
-{
-    HSZ		hsz;
-
-    switch (codepage)
-    {
-    case CP_WINANSI:
-	hsz = ATOM2HSZ(AddAtomA(ptr));
-	TRACE("added atom %s with HSZ %p,\n", debugstr_a(ptr), hsz);
-	break;
-    case CP_WINUNICODE:
-	hsz = ATOM2HSZ(AddAtomW(ptr));
-	TRACE("added atom %s with HSZ %p,\n", debugstr_w(ptr), hsz);
-	break;
-    default:
-	ERR("Unknown code page %d\n", codepage);
-	return 0;
-    }
-    WDML_InsertHSZNode(pInstance, hsz);
-    return hsz;
-}
-
-/*****************************************************************
- * DdeCreateStringHandleA [USER32.@]
- *
- * See DdeCreateStringHandleW.
- */
-HSZ WINAPI DdeCreateStringHandleA(DWORD idInst, LPCSTR psz, INT codepage)
-{
-    HSZ			hsz = 0;
-    WDML_INSTANCE*	pInstance;
-
-    TRACE("(%d,%s,%d)\n", idInst, debugstr_a(psz), codepage);
-
-    pInstance = WDML_GetInstance(idInst);
-    if (pInstance == NULL)
-	WDML_SetAllLastError(DMLERR_INVALIDPARAMETER);
-    else
-    {
-	if (codepage == 0) codepage = CP_WINANSI;
-	hsz = WDML_CreateString(pInstance, psz, codepage);
-    }
-
-    return hsz;
-}
-
-
-/******************************************************************************
- * DdeCreateStringHandleW [USER32.@]  Creates handle to identify string
- *
- * PARAMS
- * 	idInst   [I] Instance identifier
- * 	psz      [I] Pointer to string
- *	codepage [I] Code page identifier
- * RETURNS
- *    Success: String handle
- *    Failure: 0
- */
-HSZ WINAPI DdeCreateStringHandleW(DWORD idInst, LPCWSTR psz, INT codepage)
-{
-    WDML_INSTANCE*	pInstance;
-    HSZ			hsz = 0;
-
-    pInstance = WDML_GetInstance(idInst);
-    if (pInstance == NULL)
-	WDML_SetAllLastError(DMLERR_INVALIDPARAMETER);
-    else
-    {
-	if (codepage == 0) codepage = CP_WINUNICODE;
-	hsz = WDML_CreateString(pInstance, psz, codepage);
-    }
-
-    return hsz;
-}
-
-/*****************************************************************
- *            DdeFreeStringHandle   (USER32.@)
- * RETURNS
- *  success: nonzero
- *  fail:    zero
- */
-BOOL WINAPI DdeFreeStringHandle(DWORD idInst, HSZ hsz)
-{
-    WDML_INSTANCE*	pInstance;
-    BOOL		ret = FALSE;
-
-    TRACE("(%d,%p):\n", idInst, hsz);
-
-    /*  First check instance
-     */
-    pInstance = WDML_GetInstance(idInst);
-    if (pInstance)
-	ret = WDML_DecHSZ(pInstance, hsz);
-
-    return ret;
-}
-
-/*****************************************************************
- *            DdeKeepStringHandle  (USER32.@)
- *
- * RETURNS
- *  success: nonzero
- *  fail:    zero
- */
-BOOL WINAPI DdeKeepStringHandle(DWORD idInst, HSZ hsz)
-{
-    WDML_INSTANCE*	pInstance;
-    BOOL		ret = FALSE;
-
-    TRACE("(%d,%p):\n", idInst, hsz);
-
-    /*  First check instance
-     */
-    pInstance = WDML_GetInstance(idInst);
-    if (pInstance)
-	ret = WDML_IncHSZ(pInstance, hsz);
-
-    return ret;
-}
-
-/*****************************************************************
- *            DdeCmpStringHandles (USER32.@)
- *
- * Compares the value of two string handles.  This comparison is
- * not case sensitive.
- *
- * PARAMS
- *  hsz1    [I] Handle to the first string
- *  hsz2    [I] Handle to the second string
- *
- * RETURNS
- *  -1 The value of hsz1 is zero or less than hsz2
- *  0  The values of hsz 1 and 2 are the same or both zero.
- *  1  The value of hsz2 is zero of less than hsz1
- */
-INT WINAPI DdeCmpStringHandles(HSZ hsz1, HSZ hsz2)
-{
-    WCHAR	psz1[MAX_BUFFER_LEN];
-    WCHAR	psz2[MAX_BUFFER_LEN];
-    int		ret = 0;
-    int		ret1, ret2;
-
-    ret1 = GetAtomNameW(HSZ2ATOM(hsz1), psz1, MAX_BUFFER_LEN);
-    ret2 = GetAtomNameW(HSZ2ATOM(hsz2), psz2, MAX_BUFFER_LEN);
-
-    TRACE("(%p<%s> %p<%s>);\n", hsz1, debugstr_w(psz1), hsz2, debugstr_w(psz2));
-
-    /* Make sure we found both strings. */
-    if (ret1 == 0 && ret2 == 0)
-    {
-	/* If both are not found, return both  "zero strings". */
-	ret = 0;
-    }
-    else if (ret1 == 0)
-    {
-	/* If hsz1 is a not found, return hsz1 is "zero string". */
-	ret = -1;
-    }
-    else if (ret2 == 0)
-    {
-	/* If hsz2 is a not found, return hsz2 is "zero string". */
-	ret = 1;
-    }
-    else
-    {
-	/* Compare the two strings we got (case insensitive). */
-	ret = lstrcmpiW(psz1, psz2);
-	/* Since strcmp returns any number smaller than
-	 * 0 when the first string is found to be less than
-	 * the second one we must make sure we are returning
-	 * the proper values.
-	 */
-	if (ret < 0)
-	{
-	    ret = -1;
-	}
-	else if (ret > 0)
-	{
-	    ret = 1;
-	}
-    }
-
-    return ret;
-}
-
 /* ================================================================
  *
  * 			Data handle management
@@ -1750,6 +1756,259 @@ WDML_SERVER*	WDML_FindServer(WDML_INSTANCE* pInstance, HSZ hszService, HSZ hszTo
 
 /* ================================================================
  *
+ * 			Link (hot & warm) management
+ *
+ * ================================================================ */
+
+/******************************************************************
+ *		WDML_AddLink
+ *
+ *
+ */
+void WDML_AddLink(WDML_INSTANCE* pInstance, HCONV hConv, WDML_SIDE side,
+		  UINT wType, HSZ hszItem, UINT wFmt)
+{
+    WDML_LINK*	pLink;
+
+    pLink = HeapAlloc(GetProcessHeap(), 0, sizeof(WDML_LINK));
+    if (pLink == NULL)
+    {
+	ERR("OOM\n");
+	return;
+    }
+
+    pLink->hConv = hConv;
+    pLink->transactionType = wType;
+    WDML_IncHSZ(pInstance, pLink->hszItem = hszItem);
+    pLink->uFmt = wFmt;
+    pLink->next = pInstance->links[side];
+    pInstance->links[side] = pLink;
+}
+
+/******************************************************************
+ *		WDML_RemoveLink
+ *
+ *
+ */
+void WDML_RemoveLink(WDML_INSTANCE* pInstance, HCONV hConv, WDML_SIDE side,
+		     HSZ hszItem, UINT uFmt)
+{
+    WDML_LINK* pPrev = NULL;
+    WDML_LINK* pCurrent = NULL;
+
+    pCurrent = pInstance->links[side];
+
+    while (pCurrent != NULL)
+    {
+	if (pCurrent->hConv == hConv &&
+	    DdeCmpStringHandles(pCurrent->hszItem, hszItem) == 0 &&
+	    pCurrent->uFmt == uFmt)
+	{
+	    if (pCurrent == pInstance->links[side])
+	    {
+		pInstance->links[side] = pCurrent->next;
+	    }
+	    else
+	    {
+		pPrev->next = pCurrent->next;
+	    }
+
+	    WDML_DecHSZ(pInstance, pCurrent->hszItem);
+	    HeapFree(GetProcessHeap(), 0, pCurrent);
+	    break;
+	}
+
+	pPrev = pCurrent;
+	pCurrent = pCurrent->next;
+    }
+}
+
+/* this function is called to remove all links related to the conv.
+   It should be called from both client and server when terminating
+   the conversation.
+*/
+/******************************************************************
+ *		WDML_RemoveAllLinks
+ *
+ *
+ */
+void WDML_RemoveAllLinks(WDML_INSTANCE* pInstance, WDML_CONV* pConv, WDML_SIDE side)
+{
+    WDML_LINK* pPrev = NULL;
+    WDML_LINK* pCurrent = NULL;
+    WDML_LINK* pNext = NULL;
+
+    pCurrent = pInstance->links[side];
+
+    while (pCurrent != NULL)
+    {
+	if (pCurrent->hConv == (HCONV)pConv)
+	{
+	    if (pCurrent == pInstance->links[side])
+	    {
+		pInstance->links[side] = pCurrent->next;
+		pNext = pCurrent->next;
+	    }
+	    else
+	    {
+		pPrev->next = pCurrent->next;
+		pNext = pCurrent->next;
+	    }
+
+	    WDML_DecHSZ(pInstance, pCurrent->hszItem);
+
+	    HeapFree(GetProcessHeap(), 0, pCurrent);
+	    pCurrent = NULL;
+	}
+
+	if (pCurrent)
+	{
+	    pPrev = pCurrent;
+	    pCurrent = pCurrent->next;
+	}
+	else
+	{
+	    pCurrent = pNext;
+	}
+    }
+}
+
+/******************************************************************
+ *		WDML_FindLink
+ *
+ *
+ */
+WDML_LINK* 	WDML_FindLink(WDML_INSTANCE* pInstance, HCONV hConv, WDML_SIDE side,
+			      HSZ hszItem, BOOL use_fmt, UINT uFmt)
+{
+    WDML_LINK*	pCurrent = NULL;
+
+    for (pCurrent = pInstance->links[side]; pCurrent != NULL; pCurrent = pCurrent->next)
+    {
+	/* we don't need to check for transaction type as it can be altered */
+
+	if (pCurrent->hConv == hConv &&
+	    DdeCmpStringHandles(pCurrent->hszItem, hszItem) == 0 &&
+	    (!use_fmt || pCurrent->uFmt == uFmt))
+	{
+	    break;
+	}
+
+    }
+
+    return pCurrent;
+}
+
+/* ================================================================
+ *
+ * 			Transaction management
+ *
+ * ================================================================ */
+
+/******************************************************************
+ *		WDML_AllocTransaction
+ *
+ * Alloc a transaction structure for handling the message ddeMsg
+ */
+WDML_XACT*	WDML_AllocTransaction(WDML_INSTANCE* pInstance, UINT ddeMsg,
+				      UINT wFmt, HSZ hszItem)
+{
+    WDML_XACT*		pXAct;
+    static WORD		tid = 1;	/* FIXME: wrap around */
+
+    pXAct = HeapAlloc(GetProcessHeap(), 0, sizeof(WDML_XACT));
+    if (!pXAct)
+    {
+	pInstance->lastError = DMLERR_MEMORY_ERROR;
+	return NULL;
+    }
+
+    pXAct->xActID = tid++;
+    pXAct->ddeMsg = ddeMsg;
+    pXAct->hDdeData = 0;
+    pXAct->hUser = 0;
+    pXAct->next = NULL;
+    pXAct->wType = 0;
+    pXAct->wFmt = wFmt;
+    if ((pXAct->hszItem = hszItem)) WDML_IncHSZ(pInstance, pXAct->hszItem);
+    pXAct->atom = 0;
+    pXAct->hMem = 0;
+    pXAct->lParam = 0;
+
+    return pXAct;
+}
+
+/******************************************************************
+ *		WDML_QueueTransaction
+ *
+ * Adds a transaction to the list of transaction
+ */
+void	WDML_QueueTransaction(WDML_CONV* pConv, WDML_XACT* pXAct)
+{
+    WDML_XACT**	pt;
+
+    /* advance to last in queue */
+    for (pt = &pConv->transactions; *pt != NULL; pt = &(*pt)->next);
+    *pt = pXAct;
+}
+
+/******************************************************************
+ *		WDML_UnQueueTransaction
+ *
+ *
+ */
+BOOL	WDML_UnQueueTransaction(WDML_CONV* pConv, WDML_XACT*  pXAct)
+{
+    WDML_XACT**	pt;
+
+    for (pt = &pConv->transactions; *pt; pt = &(*pt)->next)
+    {
+	if (*pt == pXAct)
+	{
+	    *pt = pXAct->next;
+	    return TRUE;
+	}
+    }
+    return FALSE;
+}
+
+/******************************************************************
+ *		WDML_FreeTransaction
+ *
+ *
+ */
+void	WDML_FreeTransaction(WDML_INSTANCE* pInstance, WDML_XACT* pXAct, BOOL doFreePmt)
+{
+    /* free pmt(s) in pXAct too. check against one for not deleting TRUE return values */
+    if (doFreePmt && (ULONG_PTR)pXAct->hMem > 1)
+    {
+	GlobalFree(pXAct->hMem);
+    }
+    if (pXAct->hszItem) WDML_DecHSZ(pInstance, pXAct->hszItem);
+
+    HeapFree(GetProcessHeap(), 0, pXAct);
+}
+
+/******************************************************************
+ *		WDML_FindTransaction
+ *
+ *
+ */
+WDML_XACT*	WDML_FindTransaction(WDML_CONV* pConv, DWORD tid)
+{
+    WDML_XACT* pXAct;
+
+    tid = HIWORD(tid);
+    for (pXAct = pConv->transactions; pXAct; pXAct = pXAct->next)
+    {
+	if (pXAct->xActID == tid)
+	    break;
+    }
+    return pXAct;
+}
+
+/* ================================================================
+ *
  * 		Conversation management
  *
  * ================================================================ */
@@ -2211,259 +2470,6 @@ UINT WINAPI DdeQueryConvInfo(HCONV hConv, DWORD id, PCONVINFO lpConvInfo)
     if (ret != 0)
 	memcpy(lpConvInfo, &ci, min((size_t)lpConvInfo->cb, sizeof(ci)));
     return ret;
-}
-
-/* ================================================================
- *
- * 			Link (hot & warm) management
- *
- * ================================================================ */
-
-/******************************************************************
- *		WDML_AddLink
- *
- *
- */
-void WDML_AddLink(WDML_INSTANCE* pInstance, HCONV hConv, WDML_SIDE side,
-		  UINT wType, HSZ hszItem, UINT wFmt)
-{
-    WDML_LINK*	pLink;
-
-    pLink = HeapAlloc(GetProcessHeap(), 0, sizeof(WDML_LINK));
-    if (pLink == NULL)
-    {
-	ERR("OOM\n");
-	return;
-    }
-
-    pLink->hConv = hConv;
-    pLink->transactionType = wType;
-    WDML_IncHSZ(pInstance, pLink->hszItem = hszItem);
-    pLink->uFmt = wFmt;
-    pLink->next = pInstance->links[side];
-    pInstance->links[side] = pLink;
-}
-
-/******************************************************************
- *		WDML_RemoveLink
- *
- *
- */
-void WDML_RemoveLink(WDML_INSTANCE* pInstance, HCONV hConv, WDML_SIDE side,
-		     HSZ hszItem, UINT uFmt)
-{
-    WDML_LINK* pPrev = NULL;
-    WDML_LINK* pCurrent = NULL;
-
-    pCurrent = pInstance->links[side];
-
-    while (pCurrent != NULL)
-    {
-	if (pCurrent->hConv == hConv &&
-	    DdeCmpStringHandles(pCurrent->hszItem, hszItem) == 0 &&
-	    pCurrent->uFmt == uFmt)
-	{
-	    if (pCurrent == pInstance->links[side])
-	    {
-		pInstance->links[side] = pCurrent->next;
-	    }
-	    else
-	    {
-		pPrev->next = pCurrent->next;
-	    }
-
-	    WDML_DecHSZ(pInstance, pCurrent->hszItem);
-	    HeapFree(GetProcessHeap(), 0, pCurrent);
-	    break;
-	}
-
-	pPrev = pCurrent;
-	pCurrent = pCurrent->next;
-    }
-}
-
-/* this function is called to remove all links related to the conv.
-   It should be called from both client and server when terminating
-   the conversation.
-*/
-/******************************************************************
- *		WDML_RemoveAllLinks
- *
- *
- */
-void WDML_RemoveAllLinks(WDML_INSTANCE* pInstance, WDML_CONV* pConv, WDML_SIDE side)
-{
-    WDML_LINK* pPrev = NULL;
-    WDML_LINK* pCurrent = NULL;
-    WDML_LINK* pNext = NULL;
-
-    pCurrent = pInstance->links[side];
-
-    while (pCurrent != NULL)
-    {
-	if (pCurrent->hConv == (HCONV)pConv)
-	{
-	    if (pCurrent == pInstance->links[side])
-	    {
-		pInstance->links[side] = pCurrent->next;
-		pNext = pCurrent->next;
-	    }
-	    else
-	    {
-		pPrev->next = pCurrent->next;
-		pNext = pCurrent->next;
-	    }
-
-	    WDML_DecHSZ(pInstance, pCurrent->hszItem);
-
-	    HeapFree(GetProcessHeap(), 0, pCurrent);
-	    pCurrent = NULL;
-	}
-
-	if (pCurrent)
-	{
-	    pPrev = pCurrent;
-	    pCurrent = pCurrent->next;
-	}
-	else
-	{
-	    pCurrent = pNext;
-	}
-    }
-}
-
-/******************************************************************
- *		WDML_FindLink
- *
- *
- */
-WDML_LINK* 	WDML_FindLink(WDML_INSTANCE* pInstance, HCONV hConv, WDML_SIDE side,
-			      HSZ hszItem, BOOL use_fmt, UINT uFmt)
-{
-    WDML_LINK*	pCurrent = NULL;
-
-    for (pCurrent = pInstance->links[side]; pCurrent != NULL; pCurrent = pCurrent->next)
-    {
-	/* we don't need to check for transaction type as it can be altered */
-
-	if (pCurrent->hConv == hConv &&
-	    DdeCmpStringHandles(pCurrent->hszItem, hszItem) == 0 &&
-	    (!use_fmt || pCurrent->uFmt == uFmt))
-	{
-	    break;
-	}
-
-    }
-
-    return pCurrent;
-}
-
-/* ================================================================
- *
- * 			Transaction management
- *
- * ================================================================ */
-
-/******************************************************************
- *		WDML_AllocTransaction
- *
- * Alloc a transaction structure for handling the message ddeMsg
- */
-WDML_XACT*	WDML_AllocTransaction(WDML_INSTANCE* pInstance, UINT ddeMsg,
-				      UINT wFmt, HSZ hszItem)
-{
-    WDML_XACT*		pXAct;
-    static WORD		tid = 1;	/* FIXME: wrap around */
-
-    pXAct = HeapAlloc(GetProcessHeap(), 0, sizeof(WDML_XACT));
-    if (!pXAct)
-    {
-	pInstance->lastError = DMLERR_MEMORY_ERROR;
-	return NULL;
-    }
-
-    pXAct->xActID = tid++;
-    pXAct->ddeMsg = ddeMsg;
-    pXAct->hDdeData = 0;
-    pXAct->hUser = 0;
-    pXAct->next = NULL;
-    pXAct->wType = 0;
-    pXAct->wFmt = wFmt;
-    if ((pXAct->hszItem = hszItem)) WDML_IncHSZ(pInstance, pXAct->hszItem);
-    pXAct->atom = 0;
-    pXAct->hMem = 0;
-    pXAct->lParam = 0;
-
-    return pXAct;
-}
-
-/******************************************************************
- *		WDML_QueueTransaction
- *
- * Adds a transaction to the list of transaction
- */
-void	WDML_QueueTransaction(WDML_CONV* pConv, WDML_XACT* pXAct)
-{
-    WDML_XACT**	pt;
-
-    /* advance to last in queue */
-    for (pt = &pConv->transactions; *pt != NULL; pt = &(*pt)->next);
-    *pt = pXAct;
-}
-
-/******************************************************************
- *		WDML_UnQueueTransaction
- *
- *
- */
-BOOL	WDML_UnQueueTransaction(WDML_CONV* pConv, WDML_XACT*  pXAct)
-{
-    WDML_XACT**	pt;
-
-    for (pt = &pConv->transactions; *pt; pt = &(*pt)->next)
-    {
-	if (*pt == pXAct)
-	{
-	    *pt = pXAct->next;
-	    return TRUE;
-	}
-    }
-    return FALSE;
-}
-
-/******************************************************************
- *		WDML_FreeTransaction
- *
- *
- */
-void	WDML_FreeTransaction(WDML_INSTANCE* pInstance, WDML_XACT* pXAct, BOOL doFreePmt)
-{
-    /* free pmt(s) in pXAct too. check against one for not deleting TRUE return values */
-    if (doFreePmt && (ULONG_PTR)pXAct->hMem > 1)
-    {
-	GlobalFree(pXAct->hMem);
-    }
-    if (pXAct->hszItem) WDML_DecHSZ(pInstance, pXAct->hszItem);
-
-    HeapFree(GetProcessHeap(), 0, pXAct);
-}
-
-/******************************************************************
- *		WDML_FindTransaction
- *
- *
- */
-WDML_XACT*	WDML_FindTransaction(WDML_CONV* pConv, DWORD tid)
-{
-    WDML_XACT* pXAct;
-
-    tid = HIWORD(tid);
-    for (pXAct = pConv->transactions; pXAct; pXAct = pXAct->next)
-    {
-	if (pXAct->xActID == tid)
-	    break;
-    }
-    return pXAct;
 }
 
 /* ================================================================
