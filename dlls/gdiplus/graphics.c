@@ -2113,7 +2113,7 @@ end:
     return stat;
 }
 
-void get_font_hfont(GpGraphics *graphics, GDIPCONST GpFont *font, HFONT *hfont)
+static void get_font_hfont(GpGraphics *graphics, GDIPCONST GpFont *font, HFONT *hfont)
 {
     HDC hdc = CreateCompatibleDC(0);
     GpPointF pt[3];
