@@ -4614,6 +4614,33 @@ basic_string_char* __thiscall locale_name(const locale *this, basic_string_char 
     return ret;
 }
 
+/* ?global@locale@std@@SA?AV12@ABV12@@Z */
+/* ?global@locale@std@@SA?AV12@AEBV12@@Z */
+locale* __cdecl locale_global(locale *ret, const locale *loc)
+{
+    _Lockit lock;
+    int i;
+
+    TRACE("(%p %p)\n", loc, ret);
+
+    _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
+    locale_ctor(ret);
+
+    if(loc->ptr != global_locale) {
+        locale_facet__Decref(&global_locale->facet);
+        global_locale = loc->ptr;
+        locale_facet__Incref(&global_locale->facet);
+
+        for(i=LC_ALL+1; i<=LC_MAX; i++) {
+            if((global_locale->catmask & (1<<(i-1))) == 0)
+                continue;
+            setlocale(i, MSVCP_basic_string_char_c_str(&global_locale->name));
+        }
+    }
+    _Lockit_dtor(&lock);
+    return ret;
+}
+
 DEFINE_RTTI_DATA(locale_facet, 0, 0, NULL, NULL, NULL, ".?AVfacet@locale@std@@");
 DEFINE_RTTI_DATA(collate_char, 0, 1, &locale_facet_rtti_base_descriptor, NULL, NULL, ".?AV?$collate@D@std@@");
 DEFINE_RTTI_DATA(collate_wchar, 0, 1, &locale_facet_rtti_base_descriptor, NULL, NULL, ".?AV?$collate@_W@std@@");

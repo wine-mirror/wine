@@ -4155,8 +4155,8 @@
 @ cdecl -arch=win64 ?getloc@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QEBA?AVlocale@2@XZ(ptr ptr) basic_streambuf_wchar_getloc
 @ thiscall -arch=win32 ?getloc@ios_base@std@@QBE?AVlocale@2@XZ(ptr ptr) ios_base_getloc
 @ cdecl -arch=win64 ?getloc@ios_base@std@@QEBA?AVlocale@2@XZ(ptr ptr) ios_base_getloc
-@ stub -arch=win32 ?global@locale@std@@SA?AV12@ABV12@@Z
-@ stub -arch=win64 ?global@locale@std@@SA?AV12@AEBV12@@Z
+@ cdecl -arch=win32 ?global@locale@std@@SA?AV12@ABV12@@Z(ptr ptr) locale_global
+@ cdecl -arch=win64 ?global@locale@std@@SA?AV12@AEBV12@@Z(ptr ptr) locale_global
 @ thiscall -arch=win32 ?good@ios_base@std@@QBE_NXZ(ptr) ios_base_good
 @ cdecl -arch=win64 ?good@ios_base@std@@QEBA_NXZ(ptr) ios_base_good
 @ thiscall -arch=win32 ?gptr@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IBEPADXZ(ptr) basic_streambuf_char_gptr
