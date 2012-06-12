@@ -226,7 +226,6 @@ static       WCHAR WinPrintW[] = {'W','i','n','P','r','i','n','t',0};
 static const WCHAR deviceW[]  = {'d','e','v','i','c','e',0};
 static const WCHAR devicesW[] = {'d','e','v','i','c','e','s',0};
 static const WCHAR windowsW[] = {'w','i','n','d','o','w','s',0};
-static       WCHAR generic_ppdW[] = {'g','e','n','e','r','i','c','.','p','p','d',0};
 static       WCHAR rawW[] = {'R','A','W',0};
 static       WCHAR driver_9x[] = {'w','i','n','e','p','s','1','6','.','d','r','v',0};
 static       WCHAR driver_nt[] = {'w','i','n','e','p','s','.','d','r','v',0};
@@ -447,7 +446,7 @@ WINSPOOL_SetDefaultPrinter(const char *devname, const char *name, BOOL force) {
     }
 }
 
-static BOOL add_printer_driver(WCHAR *name)
+static BOOL add_printer_driver(WCHAR *name, WCHAR *ppd)
 {
     DRIVER_INFO_3W di3;
 
@@ -456,18 +455,18 @@ static BOOL add_printer_driver(WCHAR *name)
     di3.pName            = name;
     di3.pEnvironment     = envname_x86W;
     di3.pDriverPath      = driver_nt;
-    di3.pDataFile        = generic_ppdW;
+    di3.pDataFile        = ppd;
     di3.pConfigFile      = driver_nt;
     di3.pDefaultDataType = rawW;
 
-    if (AddPrinterDriverW(NULL, 3, (LPBYTE)&di3) ||
+    if (AddPrinterDriverExW( NULL, 3, (LPBYTE)&di3, APD_COPY_NEW_FILES | APD_COPY_FROM_DIRECTORY ) ||
         (GetLastError() ==  ERROR_PRINTER_DRIVER_ALREADY_INSTALLED ))
     {
         di3.cVersion     = 0;
         di3.pEnvironment = envname_win40W;
         di3.pDriverPath  = driver_9x;
         di3.pConfigFile  = driver_9x;
-        if (AddPrinterDriverW(NULL, 3, (LPBYTE)&di3) ||
+        if (AddPrinterDriverExW( NULL, 3, (LPBYTE)&di3, APD_COPY_NEW_FILES | APD_COPY_FROM_DIRECTORY ) ||
             (GetLastError() ==  ERROR_PRINTER_DRIVER_ALREADY_INSTALLED ))
         {
             return TRUE;
@@ -475,6 +474,157 @@ static BOOL add_printer_driver(WCHAR *name)
     }
     ERR("failed with %u for %s (%s)\n", GetLastError(), debugstr_w(di3.pDriverPath), debugstr_w(di3.pEnvironment));
     return FALSE;
+}
+
+static inline char *expand_env_string( char *str, DWORD type )
+{
+    if (type == REG_EXPAND_SZ)
+    {
+        char *tmp;
+        DWORD needed = ExpandEnvironmentStringsA( str, NULL, 0 );
+        tmp = HeapAlloc( GetProcessHeap(), 0, needed );
+        if (tmp)
+        {
+            ExpandEnvironmentStringsA( str, tmp, needed );
+            HeapFree( GetProcessHeap(), 0, str );
+            return tmp;
+        }
+    }
+    return str;
+}
+
+static char *get_fallback_ppd_name( const char *printer_name )
+{
+    static const WCHAR ppds_key[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
+                                     'P','r','i','n','t','i','n','g','\\','P','P','D',' ','F','i','l','e','s',0};
+    HKEY hkey;
+    DWORD needed, type;
+    char *ret = NULL;
+    const char *data_dir, *filename;
+
+    if (RegOpenKeyW( HKEY_CURRENT_USER, ppds_key, &hkey ) == ERROR_SUCCESS )
+    {
+        const char *value_name = NULL;
+
+        if (RegQueryValueExA( hkey, printer_name, 0, NULL, NULL, &needed ) == ERROR_SUCCESS)
+            value_name = printer_name;
+        else if (RegQueryValueExA( hkey, "generic", 0, NULL, NULL, &needed ) == ERROR_SUCCESS)
+            value_name = "generic";
+
+        if (value_name)
+        {
+            ret = HeapAlloc( GetProcessHeap(), 0, needed );
+            if (!ret) return NULL;
+            RegQueryValueExA( hkey, value_name, 0, &type, (BYTE *)ret, &needed );
+        }
+        RegCloseKey( hkey );
+        if (ret) return expand_env_string( ret, type );
+    }
+
+    if ((data_dir = wine_get_data_dir())) filename = "/generic.ppd";
+    else if ((data_dir = wine_get_build_dir())) filename = "/dlls/wineps.drv/generic.ppd";
+    else
+    {
+        ERR( "Error getting PPD file name for printer '%s'\n", debugstr_a(printer_name) );
+        return NULL;
+    }
+    ret = HeapAlloc( GetProcessHeap(), 0, strlen(data_dir) + strlen(filename) + 1 );
+    if (ret)
+    {
+        strcpy( ret, data_dir );
+        strcat( ret, filename );
+    }
+
+    return ret;
+}
+
+static BOOL copy_file( const char *src, const char *dst )
+{
+    int fds[2] = {-1, -1}, num;
+    char buf[1024];
+    BOOL ret = FALSE;
+
+    fds[0] = open( src, O_RDONLY );
+    fds[1] = open( dst, O_CREAT | O_TRUNC | O_WRONLY, 0666 );
+    if (fds[0] == -1 || fds[1] == -1) goto fail;
+
+    while ((num = read( fds[0], buf, sizeof(buf) )) != 0)
+    {
+        if (num == -1) goto fail;
+        if (write( fds[1], buf, num ) != num) goto fail;
+    }
+    ret = TRUE;
+
+fail:
+    if (fds[1] != -1) close( fds[1] );
+    if (fds[0] != -1) close( fds[0] );
+    return ret;
+}
+
+static BOOL get_fallback_ppd( const char *printer_name, const WCHAR *ppd )
+{
+    char *src = get_fallback_ppd_name( printer_name );
+    char *dst = wine_get_unix_file_name( ppd );
+    BOOL ret = FALSE;
+
+    TRACE( "(%s %s) found %s\n", debugstr_a(printer_name), debugstr_w(ppd), debugstr_a(src) );
+
+    if (!src || !dst) goto fail;
+
+    if (symlink( src, dst ) == -1)
+        if (errno != ENOSYS || !copy_file( src, dst ))
+            goto fail;
+
+    ret = TRUE;
+fail:
+    HeapFree( GetProcessHeap(), 0, dst );
+    HeapFree( GetProcessHeap(), 0, src );
+    return ret;
+}
+
+static WCHAR *get_ppd_filename( const WCHAR *dir, const WCHAR *file_name )
+{
+    static const WCHAR dot_ppd[] = {'.','p','p','d',0};
+    int len = (strlenW( dir ) + strlenW( file_name )) * sizeof(WCHAR) + sizeof(dot_ppd);
+    WCHAR *ppd = HeapAlloc( GetProcessHeap(), 0, len );
+
+    if (!ppd) return NULL;
+    strcpyW( ppd, dir );
+    strcatW( ppd, file_name );
+    strcatW( ppd, dot_ppd );
+
+    return ppd;
+}
+
+static WCHAR *get_ppd_dir( void )
+{
+    static const WCHAR wine_ppds[] = {'w','i','n','e','_','p','p','d','s','\\',0};
+    DWORD len;
+    WCHAR *dir, tmp_path[MAX_PATH];
+    BOOL res;
+
+    len = GetTempPathW( sizeof(tmp_path) / sizeof(tmp_path[0]), tmp_path );
+    if (!len) return NULL;
+    dir = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) + sizeof(wine_ppds) ) ;
+    if (!dir) return NULL;
+
+    memcpy( dir, tmp_path, len * sizeof(WCHAR) );
+    memcpy( dir + len, wine_ppds, sizeof(wine_ppds) );
+    res = CreateDirectoryW( dir, NULL );
+    if (!res && GetLastError() != ERROR_ALREADY_EXISTS)
+    {
+        HeapFree( GetProcessHeap(), 0, dir );
+        dir = NULL;
+    }
+    TRACE( "ppd temporary dir: %s\n", debugstr_w(dir) );
+    return dir;
+}
+
+static void unlink_ppd( const WCHAR *ppd )
+{
+    char *unix_name = wine_get_unix_file_name( ppd );
+    unlink( unix_name );
+    HeapFree( GetProcessHeap(), 0, unix_name );
 }
 
 #ifdef SONAME_LIBCUPS
@@ -488,10 +638,62 @@ static void *cupshandle;
     DO_FUNC(cupsGetPPD); \
     DO_FUNC(cupsParseOptions); \
     DO_FUNC(cupsPrintFile);
+#define CUPS_OPT_FUNCS \
+    DO_FUNC(cupsGetPPD3);
 
 #define DO_FUNC(f) static typeof(f) *p##f
 CUPS_FUNCS;
 #undef DO_FUNC
+static http_status_t (*pcupsGetPPD3)(http_t *,const char *, time_t *, char *, size_t);
+
+static http_status_t cupsGetPPD3_wrapper( http_t *http, const char *name,
+                                          time_t *modtime, char *buffer,
+                                          size_t bufsize )
+{
+    const char *ppd;
+
+    if (pcupsGetPPD3) return pcupsGetPPD3( http, name, modtime, buffer, bufsize );
+
+    TRACE( "No cupsGetPPD3 implementation, so calling cupsGetPPD\n" );
+
+    *modtime = 0;
+    ppd = pcupsGetPPD( name );
+
+    TRACE( "cupsGetPPD returns %s\n", debugstr_a(ppd) );
+
+    if (!ppd) return HTTP_NOT_FOUND;
+
+    if (rename( ppd, buffer ) == -1)
+    {
+        BOOL res = copy_file( ppd, buffer );
+        unlink( ppd );
+        if (!res) return HTTP_NOT_FOUND;
+    }
+    return HTTP_OK;
+}
+
+static BOOL get_cups_ppd( const char *printer_name, const WCHAR *ppd )
+{
+    time_t modtime = 0;
+    http_status_t http_status;
+    char *unix_name = wine_get_unix_file_name( ppd );
+
+    TRACE( "(%s, %s)\n", debugstr_a(printer_name), debugstr_w(ppd) );
+
+    if (!unix_name) return FALSE;
+
+    http_status = cupsGetPPD3_wrapper( 0, printer_name, &modtime,
+                                       unix_name, strlen( unix_name ) + 1 );
+    HeapFree( GetProcessHeap(), 0, unix_name );
+
+    if (http_status == HTTP_OK) return TRUE;
+
+    TRACE( "failed to get ppd for printer %s from cups, calling fallback\n", debugstr_a(printer_name) );
+    return get_fallback_ppd( printer_name, ppd );
+}
+
+static WCHAR comment_cups[]  = {'W','I','N','E','P','S',' ','P','r','i','n','t','e','r',
+                                ' ','u','s','i','n','g',' ','C','U','P','S',0};
 
 static BOOL CUPS_LoadPrinters(void)
 {
@@ -499,7 +701,7 @@ static BOOL CUPS_LoadPrinters(void)
     BOOL                  hadprinter = FALSE, haddefault = FALSE;
     cups_dest_t          *dests;
     PRINTER_INFO_2W       pi2;
-    WCHAR   *port;
+    WCHAR *port, *ppd_dir = NULL, *ppd;
     HKEY hkeyPrinter, hkeyPrinters;
     char    loaderror[256];
     WCHAR   nameW[MAX_PATH];
@@ -514,6 +716,9 @@ static BOOL CUPS_LoadPrinters(void)
 
 #define DO_FUNC(x) p##x = wine_dlsym( cupshandle, #x, NULL, 0 ); if (!p##x) return FALSE;
     CUPS_FUNCS;
+#undef DO_FUNC
+#define DO_FUNC(x) p##x = wine_dlsym( cupshandle, #x, NULL, 0 );
+    CUPS_OPT_FUNCS;
 #undef DO_FUNC
 
     if(RegCreateKeyW(HKEY_LOCAL_MACHINE, PrintersW, &hkeyPrinters) !=
@@ -541,10 +746,17 @@ static BOOL CUPS_LoadPrinters(void)
             RegDeleteValueW(hkeyPrinter, May_Delete_Value);
             RegCloseKey(hkeyPrinter);
         } else {
-            static WCHAR comment_cups[]  = {'W','I','N','E','P','S',' ','P','r','i','n','t','e','r',
-                                            ' ','u','s','i','n','g',' ','C','U','P','S',0};
+            BOOL added_driver = FALSE;
 
-            add_printer_driver(nameW);
+            if (!ppd_dir) ppd_dir = get_ppd_dir();
+            ppd = get_ppd_filename( ppd_dir, nameW );
+            if (get_cups_ppd( dests[i].name, ppd ))
+            {
+                added_driver = add_printer_driver( nameW, ppd );
+                unlink_ppd( ppd );
+            }
+            HeapFree( GetProcessHeap(), 0, ppd );
+            if (!added_driver) continue;
 
             memset(&pi2, 0, sizeof(PRINTER_INFO_2W));
             pi2.pPrinterName    = nameW;
@@ -571,6 +783,13 @@ static BOOL CUPS_LoadPrinters(void)
             haddefault = TRUE;
         }
     }
+
+    if (ppd_dir)
+    {
+        RemoveDirectoryW( ppd_dir );
+        HeapFree( GetProcessHeap(), 0, ppd_dir );
+    }
+
     if (hadprinter && !haddefault) {
         MultiByteToWideChar(CP_UNIXCP, 0, dests[0].name, -1, nameW, sizeof(nameW) / sizeof(WCHAR));
         SetDefaultPrinterW(nameW);
@@ -589,8 +808,8 @@ static BOOL PRINTCAP_ParseEntry( const char *pent, BOOL isfirst )
     char		*e,*s,*name,*prettyname,*devname;
     BOOL		ret = FALSE, set_default = FALSE;
     char *port = NULL, *env_default;
-    HKEY hkeyPrinter, hkeyPrinters;
-    WCHAR devnameW[MAX_PATH];
+    HKEY hkeyPrinter, hkeyPrinters = NULL;
+    WCHAR devnameW[MAX_PATH], *ppd_dir = NULL, *ppd;
     HANDLE added_printer;
 
     while (isspace(*pent)) pent++;
@@ -674,8 +893,17 @@ static BOOL PRINTCAP_ParseEntry( const char *pent, BOOL isfirst )
                     params[]      = "<parameters?>",
                     share_name[]  = "<share name?>",
                     sep_file[]    = "<sep file?>";
+        BOOL added_driver = FALSE;
 
-        add_printer_driver(devnameW);
+        if (!ppd_dir) ppd_dir = get_ppd_dir();
+        ppd = get_ppd_filename( ppd_dir, devnameW );
+        if (get_fallback_ppd( devname, ppd ))
+        {
+            added_driver = add_printer_driver( devnameW, ppd );
+            unlink_ppd( ppd );
+        }
+        HeapFree( GetProcessHeap(), 0, ppd );
+        if (!added_driver) goto end;
 
         memset(&pinfo2a,0,sizeof(pinfo2a));
         pinfo2a.pPrinterName    = devname;
@@ -694,12 +922,17 @@ static BOOL PRINTCAP_ParseEntry( const char *pent, BOOL isfirst )
         else if (GetLastError() != ERROR_PRINTER_ALREADY_EXISTS)
             ERR( "printer '%s' not added by AddPrinter (error %d)\n", debugstr_a(name), GetLastError() );
     }
-    RegCloseKey(hkeyPrinters);
 
     if (isfirst || set_default)
         WINSPOOL_SetDefaultPrinter(devname,name,TRUE);
 
  end:
+    if (hkeyPrinters) RegCloseKey( hkeyPrinters );
+    if (ppd_dir)
+    {
+        RemoveDirectoryW( ppd_dir );
+        HeapFree( GetProcessHeap(), 0, ppd_dir );
+    }
     HeapFree(GetProcessHeap(), 0, port);
     HeapFree(GetProcessHeap(), 0, name);
     return ret;
