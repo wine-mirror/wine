@@ -255,26 +255,26 @@ const int basic_istream_char_vbtable[] = {0, sizeof(basic_istream_char)};
 /* ??_7?$basic_istream@DU?$char_traits@D@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_istream_char_vtable;
 
-DEFINE_RTTI_DATA(iosb, 0, 0, NULL, NULL, NULL, ".?AV?$_Iosb@H@std@@");
-DEFINE_RTTI_DATA(ios_base, 0, 1, &iosb_rtti_base_descriptor, NULL, NULL, ".?AV?$_Iosb@H@std@@");
-DEFINE_RTTI_DATA(basic_ios_char, 0, 2, &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
-        NULL, ".?AV?$basic_ios@DU?$char_traits@D@std@@@std@@");
-DEFINE_RTTI_DATA(basic_ios_wchar, 0, 2, &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
-        NULL, ".?AV?$basic_ios@_WU?$char_traits@_W@std@@@std@@");
-DEFINE_RTTI_DATA(basic_ios_short, 0, 2, &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
-        NULL, ".?AV?$basic_ios@GU?$char_traits@G@std@@@std@@");
-DEFINE_RTTI_DATA(basic_streambuf_char, 0, 0, NULL, NULL, NULL,
+DEFINE_RTTI_DATA0(iosb, 0, ".?AV?$_Iosb@H@std@@");
+DEFINE_RTTI_DATA1(ios_base, 0, &iosb_rtti_base_descriptor, ".?AV?$_Iosb@H@std@@");
+DEFINE_RTTI_DATA2(basic_ios_char, 0, &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
+        ".?AV?$basic_ios@DU?$char_traits@D@std@@@std@@");
+DEFINE_RTTI_DATA2(basic_ios_wchar, 0, &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
+        ".?AV?$basic_ios@_WU?$char_traits@_W@std@@@std@@");
+DEFINE_RTTI_DATA2(basic_ios_short, 0, &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
+        ".?AV?$basic_ios@GU?$char_traits@G@std@@@std@@");
+DEFINE_RTTI_DATA0(basic_streambuf_char, 0,
         ".?AV?$basic_streambuf@DU?$char_traits@D@std@@@std@@");
-DEFINE_RTTI_DATA(basic_streambuf_wchar, 0, 0, NULL, NULL, NULL,
+DEFINE_RTTI_DATA0(basic_streambuf_wchar, 0,
         ".?AV?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@");
-DEFINE_RTTI_DATA(basic_streambuf_short, 0, 0, NULL, NULL, NULL,
+DEFINE_RTTI_DATA0(basic_streambuf_short, 0,
         ".?AV?$basic_streambuf@GU?$char_traits@G@std@@@std@@");
-DEFINE_RTTI_DATA(basic_filebuf_char, 0, 1, &basic_streambuf_char_rtti_base_descriptor,
-        NULL, NULL, ".?AV?$basic_filebuf@DU?$char_traits@D@std@@@std@@");
-DEFINE_RTTI_DATA(basic_ostream_char, sizeof(basic_ostream_char), 3, &basic_ios_char_rtti_base_descriptor,
+DEFINE_RTTI_DATA1(basic_filebuf_char, 0, &basic_streambuf_char_rtti_base_descriptor,
+        ".?AV?$basic_filebuf@DU?$char_traits@D@std@@@std@@");
+DEFINE_RTTI_DATA3(basic_ostream_char, sizeof(basic_ostream_char), &basic_ios_char_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
         ".?AV?$basic_ostream@DU?$char_traits@D@std@@@std@@");
-DEFINE_RTTI_DATA(basic_istream_char, sizeof(basic_istream_char), 3, &basic_ios_char_rtti_base_descriptor,
+DEFINE_RTTI_DATA3(basic_istream_char, sizeof(basic_istream_char), &basic_ios_char_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
         ".?AV?$basic_istream@DU?$char_traits@D@std@@@std@@");
 
