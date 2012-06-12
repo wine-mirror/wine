@@ -23,7 +23,6 @@
 extern HRESULT MMDevEnum_Create(REFIID riid, void **ppv) DECLSPEC_HIDDEN;
 extern void MMDevEnum_Free(void) DECLSPEC_HIDDEN;
 
-extern HRESULT MMDevice_GetPropValue(const GUID *devguid, DWORD flow, REFPROPERTYKEY key, PROPVARIANT *pv) DECLSPEC_HIDDEN;
 
 /* Changes to this enum must be synced in drivers. */
 enum _DriverPriority {
