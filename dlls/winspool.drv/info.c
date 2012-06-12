@@ -420,6 +420,36 @@ static int multi_sz_lenA(const char *str)
     return ptr - str + 1;
 }
 
+/*****************************************************************************
+ *    get_dword_from_reg
+ *
+ * Return DWORD associated with name from hkey.
+ */
+static DWORD get_dword_from_reg( HKEY hkey, const WCHAR *name )
+{
+    DWORD sz = sizeof(DWORD), type, value = 0;
+    LONG ret;
+
+    ret = RegQueryValueExW( hkey, name, 0, &type, (LPBYTE)&value, &sz );
+
+    if (ret != ERROR_SUCCESS)
+    {
+        WARN( "Got ret = %d on name %s\n", ret, debugstr_w(name) );
+        return 0;
+    }
+    if (type != REG_DWORD)
+    {
+        ERR( "Got type %d\n", type );
+        return 0;
+    }
+    return value;
+}
+
+static inline DWORD set_reg_DWORD( HKEY hkey, const WCHAR *keyname, const DWORD value )
+{
+    return RegSetValueExW( hkey, keyname, 0, REG_DWORD, (const BYTE*)&value, sizeof(value) );
+}
+
 static void
 WINSPOOL_SetDefaultPrinter(const char *devname, const char *name, BOOL force) {
     char qbuf[200];
@@ -738,12 +768,15 @@ static BOOL CUPS_LoadPrinters(void)
 
         TRACE("Printer %d: %s\n", i, debugstr_w(nameW));
         if(RegOpenKeyW(hkeyPrinters, nameW, &hkeyPrinter) == ERROR_SUCCESS) {
+            DWORD status = get_dword_from_reg( hkeyPrinter, StatusW );
             /* Printer already in registry, delete the tag added in WINSPOOL_LoadSystemPrinters
                and continue */
             TRACE("Printer already exists\n");
             /* overwrite old LPR:* port */
             RegSetValueExW(hkeyPrinter, PortW, 0, REG_SZ, (LPBYTE)port, (lstrlenW(port) + 1) * sizeof(WCHAR));
             RegDeleteValueW(hkeyPrinter, May_Delete_Value);
+            /* flag that the PPD file should be checked for an update */
+            set_reg_DWORD( hkeyPrinter, StatusW, status | PRINTER_STATUS_DRIVER_UPDATE_NEEDED );
             RegCloseKey(hkeyPrinter);
         } else {
             BOOL added_driver = FALSE;
@@ -988,11 +1021,6 @@ PRINTCAP_LoadPrinters(void) {
     }
     fclose(f);
     return hadprinter;
-}
-
-static inline DWORD set_reg_DWORD(HKEY hkey, const WCHAR *keyname, const DWORD value)
-{
-    return RegSetValueExW(hkey, keyname, 0, REG_DWORD, (const BYTE*)&value, sizeof(value));
 }
 
 static inline DWORD set_reg_szW(HKEY hkey, const WCHAR *keyname, const WCHAR *value)
@@ -3590,29 +3618,6 @@ BOOL WINAPI ResetPrinterW(HANDLE hPrinter, LPPRINTER_DEFAULTSW pDefault)
 {
     FIXME("(%p, %p): stub\n", hPrinter, pDefault);
     return FALSE;
-}
-
-/*****************************************************************************
- *    get_dword_from_reg
- *
- * Return DWORD associated with name from hkey.
- */
-static DWORD get_dword_from_reg( HKEY hkey, const WCHAR *name )
-{
-    DWORD sz = sizeof(DWORD), type, value = 0;
-    LONG ret;
-
-    ret = RegQueryValueExW( hkey, name, 0, &type, (LPBYTE)&value, &sz );
-
-    if(ret != ERROR_SUCCESS) {
-        WARN("Got ret = %d on name %s\n", ret, debugstr_w(name));
-        return 0;
-    }
-    if(type != REG_DWORD) {
-        ERR("Got type %d\n", type);
-        return 0;
-    }
-    return value;
 }
 
 /*****************************************************************************
