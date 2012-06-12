@@ -546,10 +546,10 @@
 @ cdecl -arch=win64 ??0?$allocator@_W@std@@QEAA@AEBV01@@Z(ptr ptr) MSVCP_allocator_wchar_copy_ctor
 @ thiscall -arch=win32 ??0?$allocator@_W@std@@QAE@XZ(ptr) MSVCP_allocator_wchar_ctor
 @ cdecl -arch=win64 ??0?$allocator@_W@std@@QEAA@XZ(ptr) MSVCP_allocator_wchar_ctor
-@ stub -arch=win32 ??0?$basic_filebuf@DU?$char_traits@D@std@@@std@@QAE@PAU_iobuf@@@Z
-@ stub -arch=win64 ??0?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEAA@PEAU_iobuf@@@Z
-@ stub -arch=win32 ??0?$basic_filebuf@DU?$char_traits@D@std@@@std@@QAE@W4_Uninitialized@1@@Z
-@ stub -arch=win64 ??0?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEAA@W4_Uninitialized@1@@Z
+@ thiscall -arch=win32 ??0?$basic_filebuf@DU?$char_traits@D@std@@@std@@QAE@PAU_iobuf@@@Z(ptr ptr) basic_filebuf_char_ctor_file
+@ cdecl -arch=win64 ??0?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEAA@PEAU_iobuf@@@Z(ptr ptr) basic_filebuf_char_ctor_file
+@ thiscall -arch=win32 ??0?$basic_filebuf@DU?$char_traits@D@std@@@std@@QAE@W4_Uninitialized@1@@Z(ptr long) basic_filebuf_char_ctor_uninitialized
+@ cdecl -arch=win64 ??0?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEAA@W4_Uninitialized@1@@Z(ptr long) basic_filebuf_char_ctor_uninitialized
 @ stub -arch=win32 ??0?$basic_filebuf@GU?$char_traits@G@std@@@std@@QAE@PAU_iobuf@@@Z
 @ stub -arch=win64 ??0?$basic_filebuf@GU?$char_traits@G@std@@@std@@QEAA@PEAU_iobuf@@@Z
 @ stub -arch=win32 ??0?$basic_filebuf@GU?$char_traits@G@std@@@std@@QAE@W4_Uninitialized@1@@Z
@@ -1146,8 +1146,8 @@
 @ stub -arch=win64 ??1?$_Mpunct@G@std@@MEAA@XZ
 @ stub -arch=win32 ??1?$_Mpunct@_W@std@@MAE@XZ
 @ stub -arch=win64 ??1?$_Mpunct@_W@std@@MEAA@XZ
-@ stub -arch=win32 ??1?$basic_filebuf@DU?$char_traits@D@std@@@std@@UAE@XZ
-@ stub -arch=win64 ??1?$basic_filebuf@DU?$char_traits@D@std@@@std@@UEAA@XZ
+@ thiscall -arch=win32 ??1?$basic_filebuf@DU?$char_traits@D@std@@@std@@UAE@XZ(ptr) basic_filebuf_char_dtor
+@ cdecl -arch=win64 ??1?$basic_filebuf@DU?$char_traits@D@std@@@std@@UEAA@XZ(ptr) basic_filebuf_char_dtor
 @ stub -arch=win32 ??1?$basic_filebuf@GU?$char_traits@G@std@@@std@@UAE@XZ
 @ stub -arch=win64 ??1?$basic_filebuf@GU?$char_traits@G@std@@@std@@UEAA@XZ
 @ stub -arch=win32 ??1?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@UAE@XZ
@@ -1779,7 +1779,7 @@
 # extern ??_7?$_Mpunct@D@std@@6B@
 # extern ??_7?$_Mpunct@G@std@@6B@
 # extern ??_7?$_Mpunct@_W@std@@6B@
-# extern ??_7?$basic_filebuf@DU?$char_traits@D@std@@@std@@6B@
+@ extern ??_7?$basic_filebuf@DU?$char_traits@D@std@@@std@@6B@ MSVCP_basic_filebuf_char_vtable
 # extern ??_7?$basic_filebuf@GU?$char_traits@G@std@@@std@@6B@
 # extern ??_7?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@6B@
 # extern ??_7?$basic_fstream@DU?$char_traits@D@std@@@std@@6B@
@@ -1961,8 +1961,8 @@
 @ cdecl -arch=win64 ??_F?$_String_val@GV?$allocator@G@std@@@std@@QEAAXXZ(ptr) _String_val_ctor
 @ thiscall -arch=win32 ??_F?$_String_val@_WV?$allocator@_W@std@@@std@@QAEXXZ(ptr) _String_val_ctor
 @ cdecl -arch=win64 ??_F?$_String_val@_WV?$allocator@_W@std@@@std@@QEAAXXZ(ptr) _String_val_ctor
-@ stub -arch=win32 ??_F?$basic_filebuf@DU?$char_traits@D@std@@@std@@QAEXXZ
-@ stub -arch=win64 ??_F?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEAAXXZ
+@ thiscall -arch=win32 ??_F?$basic_filebuf@DU?$char_traits@D@std@@@std@@QAEXXZ(ptr) basic_filebuf_char_ctor
+@ cdecl -arch=win64 ??_F?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEAAXXZ(ptr) basic_filebuf_char_ctor
 @ stub -arch=win32 ??_F?$basic_filebuf@GU?$char_traits@G@std@@@std@@QAEXXZ
 @ stub -arch=win64 ??_F?$basic_filebuf@GU?$char_traits@G@std@@@std@@QEAAXXZ
 @ stub -arch=win32 ??_F?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@QAEXXZ
@@ -2180,8 +2180,8 @@
 @ cdecl -arch=win64 ?_Dowiden@?$ctype@G@std@@IEBAGD@Z(ptr long) ctype_wchar__Dowiden
 @ thiscall -arch=win32 ?_Dowiden@?$ctype@_W@std@@IBE_WD@Z(ptr long) ctype_wchar__Dowiden
 @ cdecl -arch=win64 ?_Dowiden@?$ctype@_W@std@@IEBA_WD@Z(ptr long) ctype_wchar__Dowiden
-@ stub -arch=win32 ?_Endwrite@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IAE_NXZ
-@ stub -arch=win64 ?_Endwrite@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IEAA_NXZ
+@ thiscall -arch=win32 ?_Endwrite@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IAE_NXZ(ptr) basic_filebuf_char__Endwrite
+@ cdecl -arch=win64 ?_Endwrite@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IEAA_NXZ(ptr) basic_filebuf_char__Endwrite
 @ stub -arch=win32 ?_Endwrite@?$basic_filebuf@GU?$char_traits@G@std@@@std@@IAE_NXZ
 @ stub -arch=win64 ?_Endwrite@?$basic_filebuf@GU?$char_traits@G@std@@@std@@IEAA_NXZ
 @ stub -arch=win32 ?_Endwrite@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@IAE_NXZ
@@ -2434,8 +2434,8 @@
 @ stub -arch=win64 ?_Init@?$_Mpunct@G@std@@IEAAXAEBV_Locinfo@2@_N@Z
 @ stub -arch=win32 ?_Init@?$_Mpunct@_W@std@@IAEXABV_Locinfo@2@_N@Z
 @ stub -arch=win64 ?_Init@?$_Mpunct@_W@std@@IEAAXAEBV_Locinfo@2@_N@Z
-@ stub -arch=win32 ?_Init@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IAEXPAU_iobuf@@W4_Initfl@12@@Z
-@ stub -arch=win64 ?_Init@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IEAAXPEAU_iobuf@@W4_Initfl@12@@Z
+@ thiscall -arch=win32 ?_Init@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IAEXPAU_iobuf@@W4_Initfl@12@@Z(ptr ptr long) basic_filebuf_char__Init
+@ cdecl -arch=win64 ?_Init@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IEAAXPEAU_iobuf@@W4_Initfl@12@@Z(ptr ptr long) basic_filebuf_char__Init
 @ stub -arch=win32 ?_Init@?$basic_filebuf@GU?$char_traits@G@std@@@std@@IAEXPAU_iobuf@@W4_Initfl@12@@Z
 @ stub -arch=win64 ?_Init@?$basic_filebuf@GU?$char_traits@G@std@@@std@@IEAAXPEAU_iobuf@@W4_Initfl@12@@Z
 @ stub -arch=win32 ?_Init@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@IAEXPAU_iobuf@@W4_Initfl@12@@Z
@@ -2543,8 +2543,8 @@
 @ stub -arch=win64 ?_Init_locks_ctor@_Init_locks@std@@CAXPEAV12@@Z
 @ stub -arch=win32 ?_Init_locks_dtor@_Init_locks@std@@CAXPAV12@@Z
 @ stub -arch=win64 ?_Init_locks_dtor@_Init_locks@std@@CAXPEAV12@@Z
-@ stub -arch=win32 ?_Initcvt@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IAEXPAV?$codecvt@DDH@2@@Z
-@ stub -arch=win64 ?_Initcvt@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IEAAXPEAV?$codecvt@DDH@2@@Z
+@ thiscall -arch=win32 ?_Initcvt@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IAEXPAV?$codecvt@DDH@2@@Z(ptr ptr) basic_filebuf_char__Initcvt
+@ cdecl -arch=win64 ?_Initcvt@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IEAAXPEAV?$codecvt@DDH@2@@Z(ptr ptr) basic_filebuf_char__Initcvt
 @ stub -arch=win32 ?_Initcvt@?$basic_filebuf@GU?$char_traits@G@std@@@std@@IAEXPAV?$codecvt@GDH@2@@Z
 @ stub -arch=win64 ?_Initcvt@?$basic_filebuf@GU?$char_traits@G@std@@@std@@IEAAXPEAV?$codecvt@GDH@2@@Z
 @ stub -arch=win32 ?_Initcvt@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@IAEXPAV?$codecvt@_WDH@2@@Z
@@ -2791,8 +2791,8 @@
 @ stub ?_Sinh@?$_Ctraits@M@std@@SAMMM@Z
 @ stub ?_Sinh@?$_Ctraits@N@std@@SANNN@Z
 @ stub ?_Sinh@?$_Ctraits@O@std@@SAOOO@Z
-# extern -arch=win32 ?_Stinit@?1??_Init@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IAEXPAU_iobuf@@W4_Initfl@23@@Z@4HA
-# extern -arch=win64 ?_Stinit@?1??_Init@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IEAAXPEAU_iobuf@@W4_Initfl@23@@Z@4HA
+@ extern -arch=win32 ?_Stinit@?1??_Init@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IAEXPAU_iobuf@@W4_Initfl@23@@Z@4HA basic_filebuf_char__Init__Stinit
+@ extern -arch=win64 ?_Stinit@?1??_Init@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IEAAXPEAU_iobuf@@W4_Initfl@23@@Z@4HA basic_filebuf_char__Init__Stinit
 # extern -arch=win32 ?_Stinit@?1??_Init@?$basic_filebuf@GU?$char_traits@G@std@@@std@@IAEXPAU_iobuf@@W4_Initfl@23@@Z@4HA
 # extern -arch=win64 ?_Stinit@?1??_Init@?$basic_filebuf@GU?$char_traits@G@std@@@std@@IEAAXPEAU_iobuf@@W4_Initfl@23@@Z@4HA
 # extern -arch=win32 ?_Stinit@?1??_Init@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@IAEXPAU_iobuf@@W4_Initfl@23@@Z@4HA
@@ -3084,8 +3084,8 @@
 @ thiscall -arch=win32 ?clear@ios_base@std@@QAEXI@Z(ptr long) ios_base_clear_unsigned
 @ cdecl -arch=win64 ?clear@ios_base@std@@QEAAXI@Z(ptr long) ios_base_clear_unsigned
 # extern ?clog@std@@3V?$basic_ostream@DU?$char_traits@D@std@@@1@A
-@ stub -arch=win32 ?close@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QAEPAV12@XZ
-@ stub -arch=win64 ?close@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEAAPEAV12@XZ
+@ thiscall -arch=win32 ?close@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QAEPAV12@XZ(ptr) basic_filebuf_char_close
+@ cdecl -arch=win64 ?close@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEAAPEAV12@XZ(ptr) basic_filebuf_char_close
 @ stub -arch=win32 ?close@?$basic_filebuf@GU?$char_traits@G@std@@@std@@QAEPAV12@XZ
 @ stub -arch=win64 ?close@?$basic_filebuf@GU?$char_traits@G@std@@@std@@QEAAPEAV12@XZ
 @ stub -arch=win32 ?close@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@QAEPAV12@XZ
@@ -4250,8 +4250,8 @@
 @ stub -arch=win64 ?imag@?$_Complex_base@OU_C_ldouble_complex@@@std@@QEAAOAEBO@Z
 @ stub -arch=win32 ?imag@?$_Complex_base@OU_C_ldouble_complex@@@std@@QBEOXZ
 @ stub -arch=win64 ?imag@?$_Complex_base@OU_C_ldouble_complex@@@std@@QEBAOXZ
-@ stub -arch=win32 ?imbue@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAEXABVlocale@2@@Z
-@ stub -arch=win64 ?imbue@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAAXAEBVlocale@2@@Z
+@ thiscall -arch=win32 ?imbue@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAEXABVlocale@2@@Z(ptr ptr) basic_filebuf_char_imbue
+@ cdecl -arch=win64 ?imbue@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAAXAEBVlocale@2@@Z(ptr ptr) basic_filebuf_char_imbue
 @ stub -arch=win32 ?imbue@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MAEXABVlocale@2@@Z
 @ stub -arch=win64 ?imbue@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MEAAXAEBVlocale@2@@Z
 @ stub -arch=win32 ?imbue@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@MAEXABVlocale@2@@Z
@@ -4403,8 +4403,8 @@
 @ extern ?is_modulo@_Num_base@std@@2_NB std_Num_base_is_modulo
 @ extern ?is_modulo@_Num_float_base@std@@2_NB std_Num_float_base_is_modulo
 @ extern ?is_modulo@_Num_int_base@std@@2_NB std_Num_int_base_is_modulo
-@ stub -arch=win32 ?is_open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QBE_NXZ
-@ stub -arch=win64 ?is_open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEBA_NXZ
+@ thiscall -arch=win32 ?is_open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QBE_NXZ(ptr) basic_filebuf_char_is_open
+@ cdecl -arch=win64 ?is_open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEBA_NXZ(ptr) basic_filebuf_char_is_open
 @ stub -arch=win32 ?is_open@?$basic_filebuf@GU?$char_traits@G@std@@@std@@QBE_NXZ
 @ stub -arch=win64 ?is_open@?$basic_filebuf@GU?$char_traits@G@std@@@std@@QEBA_NXZ
 @ stub -arch=win32 ?is_open@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@QBE_NXZ
@@ -4595,18 +4595,18 @@
 @ extern -arch=win64 ?npos@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@2_KB MSVCP_basic_string_wchar_npos
 @ extern -arch=win32 ?npos@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@2IB MSVCP_basic_string_wchar_npos
 @ extern -arch=win64 ?npos@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@2_KB MSVCP_basic_string_wchar_npos
-@ stub -arch=win32 ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QAEPAV12@PBDHH@Z
-@ stub -arch=win64 ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEAAPEAV12@PEBDHH@Z
-@ stub -arch=win32 ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QAEPAV12@PBDI@Z
-@ stub -arch=win64 ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEAAPEAV12@PEBDI@Z
-@ stub -arch=win32 ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QAEPAV12@PBGHH@Z
-@ stub -arch=win64 ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEAAPEAV12@PEBGHH@Z
-@ stub -arch=win32 ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QAEPAV12@PBGI@Z
-@ stub -arch=win64 ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEAAPEAV12@PEBGI@Z
-@ stub -arch=win32 ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QAEPAV12@PB_WHH@Z
-@ stub -arch=win64 ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEAAPEAV12@PEB_WHH@Z
-@ stub -arch=win32 ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QAEPAV12@PB_WI@Z
-@ stub -arch=win64 ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEAAPEAV12@PEB_WI@Z
+@ thiscall -arch=win32 ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QAEPAV12@PBDHH@Z(ptr str long long) basic_filebuf_char_open
+@ cdecl -arch=win64 ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEAAPEAV12@PEBDHH@Z(ptr str long long) basic_filebuf_char_open
+@ thiscall -arch=win32 ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QAEPAV12@PBDI@Z(ptr str long) basic_filebuf_char_open_mode
+@ cdecl -arch=win64 ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEAAPEAV12@PEBDI@Z(ptr str long) basic_filebuf_char_open_mode
+@ thiscall -arch=win32 ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QAEPAV12@PBGHH@Z(ptr wstr long long) basic_filebuf_char_open_wchar
+@ cdecl -arch=win64 ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEAAPEAV12@PEBGHH@Z(ptr wstr long long) basic_filebuf_char_open_wchar
+@ thiscall -arch=win32 ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QAEPAV12@PBGI@Z(ptr wstr long) basic_filebuf_char_open_wchar_mode
+@ cdecl -arch=win64 ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEAAPEAV12@PEBGI@Z(ptr wstr long) basic_filebuf_char_open_wchar_mode
+@ thiscall -arch=win32 ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QAEPAV12@PB_WHH@Z(ptr wstr long long) basic_filebuf_char_open_wchar
+@ cdecl -arch=win64 ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEAAPEAV12@PEB_WHH@Z(ptr wstr long long) basic_filebuf_char_open_wchar
+@ thiscall -arch=win32 ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QAEPAV12@PB_WI@Z(ptr wstr long) basic_filebuf_char_open_wchar_mode
+@ cdecl -arch=win64 ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEAAPEAV12@PEB_WI@Z(ptr wstr long) basic_filebuf_char_open_wchar_mode
 @ stub -arch=win32 ?open@?$basic_filebuf@GU?$char_traits@G@std@@@std@@QAEPAV12@PBDHH@Z
 @ stub -arch=win64 ?open@?$basic_filebuf@GU?$char_traits@G@std@@@std@@QEAAPEAV12@PEBDHH@Z
 @ stub -arch=win32 ?open@?$basic_filebuf@GU?$char_traits@G@std@@@std@@QAEPAV12@PBDI@Z
@@ -4763,8 +4763,8 @@
 @ stub -arch=win64 ?out@?$codecvt@GDH@std@@QEBAHAEAHPEBG1AEAPEBGPEAD3AEAPEAD@Z
 @ stub -arch=win32 ?out@?$codecvt@_WDH@std@@QBEHAAHPB_W1AAPB_WPAD3AAPAD@Z
 @ stub -arch=win64 ?out@?$codecvt@_WDH@std@@QEBAHAEAHPEB_W1AEAPEB_WPEAD3AEAPEAD@Z
-@ stub -arch=win32 ?overflow@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAEHH@Z
-@ stub -arch=win64 ?overflow@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAAHH@Z
+@ thiscall -arch=win32 ?overflow@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAEHH@Z(ptr long) basic_filebuf_char_overflow
+@ cdecl -arch=win64 ?overflow@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAAHH@Z(ptr long) basic_filebuf_char_overflow
 @ stub -arch=win32 ?overflow@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MAEGG@Z
 @ stub -arch=win64 ?overflow@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MEAAGG@Z
 @ stub -arch=win32 ?overflow@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@MAEGG@Z
@@ -4783,8 +4783,8 @@
 @ stub -arch=win64 ?overflow@?$basic_stringbuf@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@MEAAGG@Z
 @ stub -arch=win32 ?overflow@strstreambuf@std@@MAEHH@Z
 @ stub -arch=win64 ?overflow@strstreambuf@std@@MEAAHH@Z
-@ stub -arch=win32 ?pbackfail@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAEHH@Z
-@ stub -arch=win64 ?pbackfail@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAAHH@Z
+@ thiscall -arch=win32 ?pbackfail@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAEHH@Z(ptr long) basic_filebuf_char_pbackfail
+@ cdecl -arch=win64 ?pbackfail@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAAHH@Z(ptr long) basic_filebuf_char_pbackfail
 @ stub -arch=win32 ?pbackfail@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MAEGG@Z
 @ stub -arch=win64 ?pbackfail@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MEAAGG@Z
 @ stub -arch=win32 ?pbackfail@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@MAEGG@Z
@@ -5258,8 +5258,8 @@
 @ stub -arch=win64 ?seekg@?$basic_istream@_WU?$char_traits@_W@std@@@std@@QEAAAEAV12@V?$fpos@H@2@@Z
 @ stub -arch=win32 ?seekg@?$basic_istream@_WU?$char_traits@_W@std@@@std@@QAEAAV12@V?$fpos@H@2@@Z
 @ stub -arch=win64 ?seekg@?$basic_istream@_WU?$char_traits@_W@std@@@std@@QEAAAEAV12@_JH@Z
-@ stub -arch=win32 ?seekoff@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAE?AV?$fpos@H@2@JHH@Z
-@ stub -arch=win64 ?seekoff@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAA?AV?$fpos@H@2@_JHH@Z
+@ thiscall -arch=win32 ?seekoff@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAE?AV?$fpos@H@2@JHH@Z(ptr ptr long long long) basic_filebuf_char_seekoff
+@ cdecl -arch=win64 ?seekoff@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAA?AV?$fpos@H@2@_JHH@Z(ptr ptr long long long) basic_filebuf_char_seekoff
 @ stub -arch=win32 ?seekoff@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MAE?AV?$fpos@H@2@JHH@Z
 @ stub -arch=win64 ?seekoff@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MEAA?AV?$fpos@H@2@_JHH@Z
 @ stub -arch=win32 ?seekoff@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@MAE?AV?$fpos@H@2@JHH@Z
@@ -5290,8 +5290,8 @@
 @ stub -arch=win64 ?seekp@?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QEAAAEAV12@V?$fpos@H@2@@Z
 @ stub -arch=win32 ?seekp@?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QAEAAV12@V?$fpos@H@2@@Z
 @ stub -arch=win64 ?seekp@?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QEAAAEAV12@_JH@Z
-@ stub -arch=win32 ?seekpos@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAE?AV?$fpos@H@2@V32@H@Z
-@ stub -arch=win64 ?seekpos@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAA?AV?$fpos@H@2@V32@H@Z
+@ thiscall -arch=win32 ?seekpos@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAE?AV?$fpos@H@2@V32@H@Z(ptr ptr long long int64 long long long) basic_filebuf_char_seekpos
+@ cdecl -arch=win64 ?seekpos@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAA?AV?$fpos@H@2@V32@H@Z(ptr ptr ptr long) basic_filebuf_char_seekpos
 @ stub -arch=win32 ?seekpos@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MAE?AV?$fpos@H@2@V32@H@Z
 @ stub -arch=win64 ?seekpos@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MEAA?AV?$fpos@H@2@V32@H@Z
 @ stub -arch=win32 ?seekpos@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@MAE?AV?$fpos@H@2@V32@H@Z
@@ -5313,8 +5313,8 @@
 @ cdecl ?set_new_handler@std@@YAP6AXXZH@Z(long) set_new_handler_reset
 @ cdecl ?set_new_handler@std@@YAP6AXXZP6AXXZ@Z(ptr) set_new_handler
 @ stub ?setbase@std@@YA?AU?$_Smanip@H@1@H@Z
-@ stub -arch=win32 ?setbuf@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAEPAV?$basic_streambuf@DU?$char_traits@D@std@@@2@PADH@Z
-@ stub -arch=win64 ?setbuf@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAAPEAV?$basic_streambuf@DU?$char_traits@D@std@@@2@PEAD_J@Z
+@ thiscall -arch=win32 ?setbuf@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAEPAV?$basic_streambuf@DU?$char_traits@D@std@@@2@PADH@Z(ptr ptr long) basic_filebuf_char_setbuf
+@ cdecl -arch=win64 ?setbuf@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAAPEAV?$basic_streambuf@DU?$char_traits@D@std@@@2@PEAD_J@Z(ptr ptr long) basic_filebuf_char_setbuf
 @ stub -arch=win32 ?setbuf@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MAEPAV?$basic_streambuf@GU?$char_traits@G@std@@@2@PAGH@Z
 @ stub -arch=win64 ?setbuf@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MEAAPEAV?$basic_streambuf@GU?$char_traits@G@std@@@2@PEAG_J@Z
 @ stub -arch=win32 ?setbuf@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@MAEPAV?$basic_streambuf@_WU?$char_traits@_W@std@@@2@PA_WH@Z
@@ -5514,8 +5514,8 @@
 @ cdecl -arch=win64 ?swap@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEAAXAEAV12@@Z(ptr ptr) MSVCP_basic_string_wchar_swap
 @ thiscall -arch=win32 ?swap@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEXAAV12@@Z(ptr ptr) MSVCP_basic_string_wchar_swap
 @ cdecl -arch=win64 ?swap@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAXAEAV12@@Z(ptr ptr) MSVCP_basic_string_wchar_swap
-@ stub -arch=win32 ?sync@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAEHXZ
-@ stub -arch=win64 ?sync@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAAHXZ
+@ thiscall -arch=win32 ?sync@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAEHXZ(ptr) basic_filebuf_char_sync
+@ cdecl -arch=win64 ?sync@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAAHXZ(ptr) basic_filebuf_char_sync
 @ stub -arch=win32 ?sync@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MAEHXZ
 @ stub -arch=win64 ?sync@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MEAAHXZ
 @ stub -arch=win32 ?sync@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@MAEHXZ
@@ -5628,8 +5628,8 @@
 @ cdecl -arch=win64 ?truename@?$numpunct@G@std@@QEBA?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@XZ(ptr ptr) numpunct_wchar_truename
 @ thiscall -arch=win32 ?truename@?$numpunct@_W@std@@QBE?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@XZ(ptr ptr) numpunct_wchar_truename
 @ cdecl -arch=win64 ?truename@?$numpunct@_W@std@@QEBA?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@XZ(ptr ptr) numpunct_wchar_truename
-@ stub -arch=win32 ?uflow@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAEHXZ
-@ stub -arch=win64 ?uflow@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAAHXZ
+@ thiscall -arch=win32 ?uflow@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAEHXZ(ptr) basic_filebuf_char_uflow
+@ cdecl -arch=win64 ?uflow@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAAHXZ(ptr) basic_filebuf_char_uflow
 @ stub -arch=win32 ?uflow@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MAEGXZ
 @ stub -arch=win64 ?uflow@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MEAAGXZ
 @ stub -arch=win32 ?uflow@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@MAEGXZ
@@ -5641,8 +5641,8 @@
 @ thiscall -arch=win32 ?uflow@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MAEGXZ(ptr) basic_streambuf_wchar_uflow
 @ cdecl -arch=win64 ?uflow@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MEAAGXZ(ptr) basic_streambuf_wchar_uflow
 @ cdecl ?uncaught_exception@std@@YA_NXZ() msvcrt.__uncaught_exception
-@ stub -arch=win32 ?underflow@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAEHXZ
-@ stub -arch=win64 ?underflow@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAAHXZ
+@ thiscall -arch=win32 ?underflow@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAEHXZ(ptr) basic_filebuf_char_underflow
+@ cdecl -arch=win64 ?underflow@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAAHXZ(ptr) basic_filebuf_char_underflow
 @ stub -arch=win32 ?underflow@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MAEGXZ
 @ stub -arch=win64 ?underflow@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MEAAGXZ
 @ stub -arch=win32 ?underflow@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@MAEGXZ

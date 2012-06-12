@@ -105,21 +105,6 @@ typedef struct {
     _Cvtvec cvt;
 } ctype_wchar;
 
-typedef enum {
-    CODECVT_ok      = 0,
-    CODECVT_partial = 1,
-    CODECVT_error   = 2,
-    CODECVT_noconv  = 3
-} codecvt_base_result;
-
-typedef struct {
-    locale_facet facet;
-} codecvt_base;
-
-typedef struct {
-    codecvt_base base;
-} codecvt_char;
-
 typedef struct {
     locale_facet facet;
     const char *grouping;
@@ -2674,7 +2659,7 @@ MSVCP_size_t __cdecl codecvt_char__Getcat(const locale_facet **facet, const loca
     return LC_CTYPE;
 }
 
-codecvt_char* codecvt_char_use_facet(locale *loc)
+codecvt_char* codecvt_char_use_facet(const locale *loc)
 {
     static codecvt_char *obj = NULL;
 

@@ -263,6 +263,31 @@ typedef struct {
     MSVCP_size_t refs;
 } locale_facet;
 
+typedef enum {
+    CODECVT_ok      = 0,
+    CODECVT_partial = 1,
+    CODECVT_error   = 2,
+    CODECVT_noconv  = 3
+} codecvt_base_result;
+
+/* class codecvt_base */
+typedef struct {
+    locale_facet facet;
+} codecvt_base;
+
+/* class codecvt<char> */
+typedef struct {
+    codecvt_base base;
+} codecvt_char;
+
+MSVCP_bool __thiscall codecvt_base_always_noconv(const codecvt_base*);
+int __thiscall codecvt_char_unshift(const codecvt_char*, int*, char*, char*, char**);
+int __thiscall codecvt_char_out(const codecvt_char*, int*, const char*,
+        const char*, const char**, char*, char*, char**);
+int __thiscall codecvt_char_in(const codecvt_char*, int*, const char*,
+        const char*, const char**, char*, char*, char**);
+int __thiscall codecvt_base_max_length(const codecvt_base*);
+
 /* class locale */
 typedef struct
 {
@@ -274,6 +299,7 @@ locale* __thiscall locale_copy_ctor(locale*, const locale*);
 locale* __thiscall locale_operator_assign(locale*, const locale*);
 void __thiscall locale_dtor(locale*);
 void free_locale(void);
+codecvt_char* codecvt_char_use_facet(const locale*);
 
 /* class _Lockit */
 typedef struct {

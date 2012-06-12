@@ -21,6 +21,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <limits.h>
+#include <share.h>
 
 #include "msvcp90.h"
 #include "windef.h"
@@ -69,7 +70,7 @@ typedef enum {
     OPENMODE_trunc      = 0x10,
     OPENMODE__Nocreate  = 0x40,
     OPENMODE__Noreplace = 0x80,
-    OPENMODE_binray     = 0x20,
+    OPENMODE_binary     = 0x20,
     OPENMODE_mask       = 0xff
 } IOSB_openmode;
 
@@ -166,6 +167,22 @@ typedef struct {
     locale *loc;
 } basic_streambuf_wchar;
 
+typedef enum {
+    INITFL_new   = 0,
+    INITFL_open  = 1,
+    INITFL_close = 2
+} basic_filebuf__Initfl;
+
+typedef struct {
+    basic_streambuf_char base;
+    codecvt_char *cvt;
+    char putback;
+    MSVCP_bool wrotesome;
+    int state;
+    MSVCP_bool close;
+    FILE *file;
+} basic_filebuf_char;
+
 typedef struct {
     ios_base base;
     basic_streambuf_char *strbuf;
@@ -225,6 +242,9 @@ extern const vtable_ptr MSVCP_basic_streambuf_wchar_vtable;
 /* ??_7?$basic_streambuf@GU?$char_traits@G@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_streambuf_short_vtable;
 
+/* ??_7?$basic_filebuf@DU?$char_traits@D@std@@@std@@6B@ */
+extern const vtable_ptr MSVCP_basic_filebuf_char_vtable;
+
 /* ??_8?$basic_ostream@DU?$char_traits@D@std@@@std@@7B@ */
 const int basic_ostream_char_vbtable[] = {0, sizeof(basic_ostream_char)};
 /* ??_7?$basic_ostream@DU?$char_traits@D@std@@@std@@6B@ */
@@ -249,6 +269,8 @@ DEFINE_RTTI_DATA(basic_streambuf_wchar, 0, 0, NULL, NULL, NULL,
         ".?AV?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@");
 DEFINE_RTTI_DATA(basic_streambuf_short, 0, 0, NULL, NULL, NULL,
         ".?AV?$basic_streambuf@GU?$char_traits@G@std@@@std@@");
+DEFINE_RTTI_DATA(basic_filebuf_char, 0, 1, &basic_streambuf_char_rtti_base_descriptor,
+        NULL, NULL, ".?AV?$basic_filebuf@DU?$char_traits@D@std@@@std@@");
 DEFINE_RTTI_DATA(basic_ostream_char, sizeof(basic_ostream_char), 3, &basic_ios_char_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
         ".?AV?$basic_ostream@DU?$char_traits@D@std@@@std@@");
@@ -306,6 +328,20 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(basic_streambuf_wchar_setbuf)
             VTABLE_ADD_FUNC(basic_streambuf_wchar_sync)
             VTABLE_ADD_FUNC(basic_streambuf_wchar_imbue));
+    __ASM_VTABLE(basic_filebuf_char,
+            VTABLE_ADD_FUNC(basic_filebuf_char_overflow)
+            VTABLE_ADD_FUNC(basic_filebuf_char_pbackfail)
+            VTABLE_ADD_FUNC(basic_streambuf_char_showmanyc)
+            VTABLE_ADD_FUNC(basic_filebuf_char_underflow)
+            VTABLE_ADD_FUNC(basic_filebuf_char_uflow)
+            VTABLE_ADD_FUNC(basic_streambuf_char_xsgetn)
+            VTABLE_ADD_FUNC(basic_streambuf_char__Xsgetn_s)
+            VTABLE_ADD_FUNC(basic_streambuf_char_xsputn)
+            VTABLE_ADD_FUNC(basic_filebuf_char_seekoff)
+            VTABLE_ADD_FUNC(basic_filebuf_char_seekpos)
+            VTABLE_ADD_FUNC(basic_filebuf_char_setbuf)
+            VTABLE_ADD_FUNC(basic_filebuf_char_sync)
+            VTABLE_ADD_FUNC(basic_filebuf_char_imbue));
     __ASM_VTABLE(basic_ostream_char, "");
     __ASM_VTABLE(basic_istream_char, "");
 #ifndef __GNUC__
@@ -1811,6 +1847,544 @@ streamsize __thiscall basic_streambuf_wchar_sputn(basic_streambuf_wchar *this, c
 {
     TRACE("(%p %p %ld)\n", this, ptr, count);
     return call_basic_streambuf_wchar_xsputn(this, ptr, count);
+}
+
+/* ?_Stinit@?1??_Init@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IAEXPAU_iobuf@@W4_Initfl@23@@Z@4HA */
+/* ?_Stinit@?1??_Init@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IEAAXPEAU_iobuf@@W4_Initfl@23@@Z@4HA */
+int basic_filebuf_char__Init__Stinit = 0;
+
+/* ?_Init@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IAEXPAU_iobuf@@W4_Initfl@12@@Z */
+/* ?_Init@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IEAAXPEAU_iobuf@@W4_Initfl@12@@Z */
+DEFINE_THISCALL_WRAPPER(basic_filebuf_char__Init, 12)
+void __thiscall basic_filebuf_char__Init(basic_filebuf_char *this, FILE *file, basic_filebuf__Initfl which)
+{
+    TRACE("(%p %p %d)\n", this, file, which);
+
+    this->cvt = NULL;
+    this->wrotesome = FALSE;
+    this->state = basic_filebuf_char__Init__Stinit;
+    this->close = (which == INITFL_open);
+    this->file = file;
+
+    basic_streambuf_char__Init_empty(&this->base);
+    if(file)
+        basic_streambuf_char__Init(&this->base, &file->_base, &file->_ptr,
+                &file->_cnt, &file->_base, &file->_ptr, &file->_cnt);
+}
+
+/* ?_Initcvt@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IAEXPAV?$codecvt@DDH@2@@Z */
+/* ?_Initcvt@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IEAAXPEAV?$codecvt@DDH@2@@Z */
+DEFINE_THISCALL_WRAPPER(basic_filebuf_char__Initcvt, 8)
+void __thiscall basic_filebuf_char__Initcvt(basic_filebuf_char *this, codecvt_char *cvt)
+{
+    TRACE("(%p %p)\n", this, cvt);
+
+    if(codecvt_base_always_noconv(&cvt->base)) {
+        this->cvt = NULL;
+    }else {
+        basic_streambuf_char__Init_empty(&this->base);
+        this->cvt = cvt;
+    }
+}
+
+/* ?_Endwrite@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IAE_NXZ */
+/* ?_Endwrite@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IEAA_NXZ */
+DEFINE_THISCALL_WRAPPER(basic_filebuf_char__Endwrite, 4)
+MSVCP_bool __thiscall basic_filebuf_char__Endwrite(basic_filebuf_char *this)
+{
+    TRACE("(%p)\n", this);
+
+    if(!this->wrotesome || !this->cvt)
+        return TRUE;
+
+
+    if(call_basic_streambuf_char_overflow(&this->base, EOF) == EOF)
+        return FALSE;
+
+    while(1) {
+        /* TODO: check if we need a dynamic buffer here */
+        char buf[128];
+        char *next;
+        int ret;
+
+        ret = codecvt_char_unshift(this->cvt, &this->state, buf, buf+sizeof(buf), &next);
+        switch(ret) {
+        case CODECVT_ok:
+            this->wrotesome = FALSE;
+            /* fall through */
+        case CODECVT_partial:
+            if(!fwrite(buf, next-buf, 1, this->file))
+                return FALSE;
+            if(this->wrotesome)
+                break;
+            /* fall through */
+        case CODECVT_noconv:
+            if(call_basic_streambuf_char_overflow(&this->base, EOF) == EOF)
+                return FALSE;
+            return TRUE;
+        default:
+            return FALSE;
+        }
+    }
+}
+
+/* ?close@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QAEPAV12@XZ */
+/* ?close@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEAAPEAV12@XZ */
+DEFINE_THISCALL_WRAPPER(basic_filebuf_char_close, 4)
+basic_filebuf_char* __thiscall basic_filebuf_char_close(basic_filebuf_char *this)
+{
+    basic_filebuf_char *ret = this;
+
+    TRACE("(%p)\n", this);
+
+    if(!this->file)
+        return NULL;
+
+    /* TODO: handle exceptions */
+    if(!basic_filebuf_char__Endwrite(this))
+        ret = NULL;
+    if(!fclose(this->file))
+        ret  = NULL;
+
+    basic_filebuf_char__Init(this, NULL, INITFL_close);
+    return ret;
+}
+
+/* ??0?$basic_filebuf@DU?$char_traits@D@std@@@std@@QAE@PAU_iobuf@@@Z */
+/* ??0?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEAA@PEAU_iobuf@@@Z */
+DEFINE_THISCALL_WRAPPER(basic_filebuf_char_ctor_file, 8)
+basic_filebuf_char* __thiscall basic_filebuf_char_ctor_file(basic_filebuf_char *this, FILE *file)
+{
+    TRACE("(%p %p)\n", this, file);
+
+    basic_streambuf_char_ctor(&this->base);
+    this->base.vtable = &MSVCP_basic_filebuf_char_vtable;
+
+    basic_filebuf_char__Init(this, file, INITFL_new);
+    return this;
+}
+
+/* ??_F?$basic_filebuf@DU?$char_traits@D@std@@@std@@QAEXXZ */
+/* ??_F?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(basic_filebuf_char_ctor, 4)
+basic_filebuf_char* __thiscall basic_filebuf_char_ctor(basic_filebuf_char *this)
+{
+    return basic_filebuf_char_ctor_file(this, NULL);
+}
+
+/* ??0?$basic_filebuf@DU?$char_traits@D@std@@@std@@QAE@W4_Uninitialized@1@@Z */
+/* ??0?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEAA@W4_Uninitialized@1@@Z */
+DEFINE_THISCALL_WRAPPER(basic_filebuf_char_ctor_uninitialized, 8)
+basic_filebuf_char* __thiscall basic_filebuf_char_ctor_uninitialized(basic_filebuf_char *this, int uninitialized)
+{
+    TRACE("(%p %d)\n", this, uninitialized);
+
+    basic_streambuf_char_ctor(&this->base);
+    this->base.vtable = &MSVCP_basic_filebuf_char_vtable;
+    return this;
+}
+
+/* ??1?$basic_filebuf@DU?$char_traits@D@std@@@std@@UAE@XZ */
+/* ??1?$basic_filebuf@DU?$char_traits@D@std@@@std@@UEAA@XZ */
+DEFINE_THISCALL_WRAPPER(basic_filebuf_char_dtor, 4)
+void __thiscall basic_filebuf_char_dtor(basic_filebuf_char *this)
+{
+    TRACE("(%p)\n", this);
+
+    if(this->close)
+        basic_filebuf_char_close(this);
+    basic_streambuf_char_dtor(&this->base);
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_filebuf_char_vector_dtor, 8)
+basic_filebuf_char* __thiscall MSVCP_basic_filebuf_char_vector_dtor(basic_filebuf_char *this, unsigned int flags)
+{
+    TRACE("(%p %x)\n", this, flags);
+    if(flags & 2) {
+        /* we have an array, with the number of elements stored before the first object */
+        int i, *ptr = (int *)this-1;
+
+        for(i=*ptr-1; i>=0; i--)
+            basic_filebuf_char_dtor(this+i);
+        MSVCRT_operator_delete(ptr);
+    } else {
+        basic_filebuf_char_dtor(this);
+        if(flags & 1)
+            MSVCRT_operator_delete(this);
+    }
+
+    return this;
+}
+
+/* ?is_open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QBE_NXZ */
+/* ?is_open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEBA_NXZ */
+DEFINE_THISCALL_WRAPPER(basic_filebuf_char_is_open, 4)
+MSVCP_bool __thiscall basic_filebuf_char_is_open(const basic_filebuf_char *this)
+{
+    TRACE("(%p)\n", this);
+    return this->file != NULL;
+}
+
+/* ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QAEPAV12@PB_WHH@Z */
+/* ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEAAPEAV12@PEB_WHH@Z */
+/* ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QAEPAV12@PBGHH@Z */
+/* ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEAAPEAV12@PEBGHH@Z */
+DEFINE_THISCALL_WRAPPER(basic_filebuf_char_open_wchar, 16)
+basic_filebuf_char* __thiscall basic_filebuf_char_open_wchar(basic_filebuf_char *this, const wchar_t *name, int mode, int prot)
+{
+    static const wchar_t rW[] = {'r',0};
+    static const struct {
+        int mode;
+        const wchar_t str[4];
+        const wchar_t str_bin[4];
+    } str_mode[] = {
+        {OPENMODE_out,                            {'w',0},     {'w','b',0}},
+        {OPENMODE_out|OPENMODE_app,               {'a',0},     {'a','b',0}},
+        {OPENMODE_app,                            {'a',0},     {'a','b',0}},
+        {OPENMODE_out|OPENMODE_trunc,             {'w',0},     {'w','b',0}},
+        {OPENMODE_in,                             {'r',0},     {'r','b',0}},
+        {OPENMODE_in|OPENMODE_out,                {'r','+',0}, {'r','+','b',0}},
+        {OPENMODE_in|OPENMODE_out|OPENMODE_trunc, {'w','+',0}, {'w','+','b',0}},
+        {OPENMODE_in|OPENMODE_out|OPENMODE_app,   {'a','+',0}, {'a','+','b',0}},
+        {OPENMODE_in|OPENMODE_app,                {'a','+',0}, {'a','+','b',0}}
+    };
+
+    int real_mode = mode & ~(OPENMODE_ate|OPENMODE__Nocreate|OPENMODE__Noreplace|OPENMODE_binary);
+    int mode_idx;
+    FILE *f = NULL;
+
+    TRACE("(%p %s %d %d)\n", this, debugstr_w(name), mode, prot);
+
+    if(basic_filebuf_char_is_open(this))
+        return NULL;
+
+    for(mode_idx=0; mode_idx<sizeof(str_mode)/sizeof(str_mode[0]); mode_idx++)
+        if(str_mode[mode_idx].mode == real_mode)
+            break;
+    if(mode_idx == sizeof(str_mode)/sizeof(str_mode[0]))
+        return NULL;
+
+    if((mode & OPENMODE__Nocreate) && !(f = _wfopen(name, rW)))
+        return NULL;
+    else if(f)
+        fclose(f);
+
+    if((mode & OPENMODE__Noreplace) && (mode & (OPENMODE_out|OPENMODE_app))
+            && (f = _wfopen(name, rW))) {
+        fclose(f);
+        return NULL;
+    }
+
+    f = _wfsopen(name, (mode & OPENMODE_binary) ? str_mode[mode_idx].str_bin
+            : str_mode[mode_idx].str, prot);
+    if(!f)
+        return NULL;
+
+    if((mode & OPENMODE_ate) && fseek(f, 0, SEEK_END)) {
+        fclose(f);
+        return NULL;
+    }
+
+    basic_filebuf_char__Init(this, f, INITFL_open);
+    basic_filebuf_char__Initcvt(this, codecvt_char_use_facet(this->base.loc));
+    return this;
+}
+
+/* ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QAEPAV12@PB_WI@Z */
+/* ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEAAPEAV12@PEB_WI@Z */
+/* ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QAEPAV12@PBGI@Z */
+/* ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEAAPEAV12@PEBGI@Z */
+DEFINE_THISCALL_WRAPPER(basic_filebuf_char_open_wchar_mode, 12)
+basic_filebuf_char* __thiscall basic_filebuf_char_open_wchar_mode(basic_filebuf_char *this, const wchar_t *name, unsigned int mode)
+{
+    return basic_filebuf_char_open_wchar(this, name, mode, SH_DENYNO);
+}
+
+/* ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QAEPAV12@PBDHH@Z */
+/* ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEAAPEAV12@PEBDHH@Z */
+DEFINE_THISCALL_WRAPPER(basic_filebuf_char_open, 16)
+basic_filebuf_char* __thiscall basic_filebuf_char_open(basic_filebuf_char *this, const char *name, int mode, int prot)
+{
+    wchar_t nameW[FILENAME_MAX];
+
+    TRACE("(%p %s %d %d)\n", this, name, mode, prot);
+
+    if(mbstowcs_s(NULL, nameW, FILENAME_MAX, name, FILENAME_MAX-1) != 0)
+        return NULL;
+    return basic_filebuf_char_open_wchar(this, nameW, mode, prot);
+}
+
+/* ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QAEPAV12@PBDI@Z */
+/* ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEAAPEAV12@PEBDI@Z */
+DEFINE_THISCALL_WRAPPER(basic_filebuf_char_open_mode, 12)
+basic_filebuf_char* __thiscall basic_filebuf_char_open_mode(basic_filebuf_char *this, const char *name, unsigned int mode)
+{
+    return basic_filebuf_char_open(this, name, mode, SH_DENYNO);
+}
+
+/* ?overflow@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAEHH@Z */
+/* ?overflow@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAAHH@Z */
+#define call_basic_filebuf_char_overflow(this, c) CALL_VTBL_FUNC(this, 4, \
+        int, (basic_filebuf_char*, int), (this, c))
+DEFINE_THISCALL_WRAPPER(basic_filebuf_char_overflow, 8)
+int __thiscall basic_filebuf_char_overflow(basic_filebuf_char *this, int c)
+{
+    char buf[8], *dyn_buf;
+    char ch = c, *to_next;
+    const char *from_next;
+    int ret, max_size;
+
+
+    TRACE("(%p %d)\n", this, c);
+
+    if(!basic_filebuf_char_is_open(this))
+        return EOF;
+    if(c == EOF)
+        return !c;
+
+    if(!this->cvt)
+        return fwrite(&ch, sizeof(char), 1, this->file) ? c : EOF;
+
+    from_next = &ch;
+    do {
+        ret = codecvt_char_out(this->cvt, &this->state, from_next, &ch+1,
+                &from_next, buf, buf+sizeof(buf), &to_next);
+
+        switch(ret) {
+        case CODECVT_partial:
+            if(to_next == buf)
+                break;
+            /* fall through */
+        case CODECVT_ok:
+            if(!fwrite(buf, to_next-buf, 1, this->file))
+                return EOF;
+            if(ret == CODECVT_partial)
+                continue;
+            return c;
+        case CODECVT_noconv:
+            return fwrite(&ch, sizeof(char), 1, this->file) ? c : EOF;
+        default:
+            return EOF;
+        }
+    } while(0);
+
+    max_size = codecvt_base_max_length(&this->cvt->base);
+    dyn_buf = malloc(max_size);
+    if(!dyn_buf)
+        return EOF;
+
+    ret = codecvt_char_out(this->cvt, &this->state, from_next, &ch+1,
+            &from_next, dyn_buf, dyn_buf+max_size, &to_next);
+
+    switch(ret) {
+    case CODECVT_ok:
+        ret = fwrite(dyn_buf, to_next-dyn_buf, 1, this->file);
+        free(dyn_buf);
+        return ret ? c : EOF;
+    case CODECVT_partial:
+        ERR("buffer should be big enough to store all output\n");
+        /* fall through */
+    default:
+        free(dyn_buf);
+        return EOF;
+    }
+}
+
+/* ?pbackfail@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAEHH@Z */
+/* ?pbackfail@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAAHH@Z */
+#define call_basic_filebuf_char_pbackfail(this, c) CALL_VTBL_FUNC(this, 8, \
+        int, (basic_filebuf_char*, int), (this, c))
+DEFINE_THISCALL_WRAPPER(basic_filebuf_char_pbackfail, 8)
+int __thiscall basic_filebuf_char_pbackfail(basic_filebuf_char *this, int c)
+{
+    TRACE("(%p %d)\n", this, c);
+
+    if(!basic_filebuf_char_is_open(this))
+        return EOF;
+
+    if(basic_streambuf_char_gptr(&this->base)>basic_streambuf_char_eback(&this->base)
+            && (c==EOF || basic_streambuf_char_gptr(&this->base)[-1]==(char)c)) {
+        basic_streambuf_char__Gndec(&this->base);
+        return c==EOF ? !c : c;
+    }else if(c!=EOF && !this->cvt) {
+        return ungetc(c, this->file);
+    }
+
+    return EOF;
+}
+
+/* ?uflow@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAEHXZ */
+/* ?uflow@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAAHXZ */
+#define call_basic_filebuf_char_uflow(this) CALL_VTBL_FUNC(this, 20, \
+        int, (basic_filebuf_char*), (this))
+DEFINE_THISCALL_WRAPPER(basic_filebuf_char_uflow, 4)
+int __thiscall basic_filebuf_char_uflow(basic_filebuf_char *this)
+{
+    char ch, buf[128], *to_next;
+    const char *buf_next;
+    int c, i;
+
+    TRACE("(%p)\n", this);
+
+    if(!basic_filebuf_char_is_open(this))
+        return EOF;
+
+    if(basic_streambuf_char_gptr(&this->base) < basic_streambuf_char_egptr(&this->base))
+        return *basic_streambuf_char__Gninc(&this->base);
+
+    c = fgetc(this->file);
+    if(!this->cvt || !c)
+        return c;
+
+    buf_next = buf;
+    for(i=0; i < sizeof(buf)/sizeof(char); i++) {
+        buf[i] = c;
+
+        switch(codecvt_char_in(this->cvt, &this->state, buf_next,
+                    buf+i+1, &buf_next, &ch, &ch+1, &to_next)) {
+        case CODECVT_partial:
+        case CODECVT_ok:
+            if(to_next == &ch) {
+                c = fgetc(this->file);
+                if(!c)
+                    return EOF;
+                continue;
+            }
+
+            for(i--; i>=buf_next-buf; i--)
+                ungetc(buf[i], this->file);
+            return ch;
+        case CODECVT_noconv:
+            return buf[0];
+        default:
+            return EOF;
+        }
+    }
+
+    FIXME("buffer is to small\n");
+    return EOF;
+}
+
+/* ?underflow@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAEHXZ */
+/* ?underflow@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAAHXZ */
+#define call_basic_filebuf_char_underflow(this) CALL_VTBL_FUNC(this, 16, \
+        int, (basic_filebuf_char*), (this))
+DEFINE_THISCALL_WRAPPER(basic_filebuf_char_underflow, 4)
+int __thiscall basic_filebuf_char_underflow(basic_filebuf_char *this)
+{
+    int ret;
+
+    TRACE("(%p)\n", this);
+
+    if(basic_streambuf_char_gptr(&this->base) < basic_streambuf_char_egptr(&this->base))
+        return *basic_streambuf_char_gptr(&this->base);
+
+    ret = call_basic_filebuf_char_uflow(this);
+    if(ret)
+        ret = call_basic_filebuf_char_pbackfail(this, ret);
+    return ret;
+}
+
+/* ?seekoff@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAE?AV?$fpos@H@2@JHH@Z */
+/* ?seekoff@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAA?AV?$fpos@H@2@_JHH@Z */
+#define call_basic_filebuf_char_seekoff(this, ret, off, way, mode) CALL_VTBL_FUNC(this, 36, \
+        fpos_int*, (basic_filebuf_char*, fpos_int*, streamoff, int, int), (this, ret, off, way, mode))
+DEFINE_THISCALL_WRAPPER(basic_filebuf_char_seekoff, 20)
+fpos_int* __thiscall basic_filebuf_char_seekoff(basic_filebuf_char *this,
+        fpos_int *ret, streamoff off, int way, int mode)
+{
+    fpos_t pos;
+
+    TRACE("(%p %p %ld %d %d)\n", this, ret, off, way, mode);
+
+    if(!basic_filebuf_char_is_open(this) || !basic_filebuf_char__Endwrite(this)
+            || fseek(this->file, off, way)) {
+        ret->off = 0;
+        ret->pos = -1;
+        ret->state = 0;
+        return ret;
+    }
+
+    fgetpos(this->file, &pos);
+    ret->off = 0;
+    ret->pos = pos;
+    ret->state = this->state;
+    return ret;
+}
+
+/* ?seekpos@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAE?AV?$fpos@H@2@V32@H@Z */
+/* ?seekpos@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAA?AV?$fpos@H@2@V32@H@Z */
+#define call_basic_filebuf_char_seekpos(this, ret, pos, mode) CALL_VTBL_FUNC(this, 40, \
+        fpos_int*, (basic_filebuf_char*, fpos_int*, fpos_int, mode), (this, ret, pos, mode))
+DEFINE_THISCALL_WRAPPER(basic_filebuf_char_seekpos, 36)
+fpos_int* __thiscall basic_filebuf_char_seekpos(basic_filebuf_char *this,
+        fpos_int *ret, fpos_int pos, int mode)
+{
+    fpos_t fpos;
+
+    TRACE("(%p %p %s %d)\n", this, ret, debugstr_fpos_int(&pos), mode);
+
+    if(!basic_filebuf_char_is_open(this) || !basic_filebuf_char__Endwrite(this)
+            || fseek(this->file, (LONG)pos.pos, SEEK_SET)
+            || (pos.off && fseek(this->file, pos.off, SEEK_CUR))) {
+        ret->off = 0;
+        ret->pos = -1;
+        ret->state = 0;
+        return ret;
+    }
+
+    fgetpos(this->file, &fpos);
+    ret->off = 0;
+    ret->pos = fpos;
+    ret->state = this->state;
+    return ret;
+}
+
+/* ?setbuf@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAEPAV?$basic_streambuf@DU?$char_traits@D@std@@@2@PADH@Z */
+/* ?setbuf@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAAPEAV?$basic_streambuf@DU?$char_traits@D@std@@@2@PEAD_J@Z */
+#define call_basic_filebuf_char_setbuf(this, buf, count) CALL_VTBL_FUNC(this, 44, \
+        basic_streambuf_char*, (basic_filebuf_char*, char*, streamsize), (this, buf, count))
+DEFINE_THISCALL_WRAPPER(basic_filebuf_char_setbuf, 12)
+basic_streambuf_char* __thiscall basic_filebuf_char_setbuf(basic_filebuf_char *this, char *buf, streamsize count)
+{
+    TRACE("(%p %p %ld)\n", this, buf, count);
+
+    if(!basic_filebuf_char_is_open(this))
+        return NULL;
+
+    if(setvbuf(this->file, buf, (buf==NULL && count==0) ? _IONBF : _IOFBF, count))
+        return NULL;
+
+    basic_filebuf_char__Init(this, this->file, INITFL_open);
+    return &this->base;
+}
+
+/* ?sync@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAEHXZ */
+/* ?sync@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAAHXZ */
+#define call_basic_filebuf_char_sync(this) CALL_VTBL_FUNC(this, 48, \
+        int, (basic_filebuf_char*), (this))
+DEFINE_THISCALL_WRAPPER(basic_filebuf_char_sync, 4)
+int __thiscall basic_filebuf_char_sync(basic_filebuf_char *this)
+{
+    TRACE("(%p)\n", this);
+
+    if(!basic_filebuf_char_is_open(this))
+        return 0;
+
+    if(call_basic_filebuf_char_overflow(this, EOF) == EOF)
+        return 0;
+    return fflush(this->file);
+}
+
+/* ?imbue@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAEXABVlocale@2@@Z */
+/* ?imbue@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAAXAEBVlocale@2@@Z */
+#define call_basic_filebuf_char_imbue(this, loc) CALL_VTBL_FUNC(this, 52, \
+        void, (basic_filebuf_char*, const locale*), (this, loc))
+DEFINE_THISCALL_WRAPPER(basic_filebuf_char_imbue, 8)
+void __thiscall basic_filebuf_char_imbue(basic_filebuf_char *this, const locale *loc)
+{
+    TRACE("(%p %p)\n", this, loc);
+    basic_filebuf_char__Initcvt(this, codecvt_char_use_facet(loc));
 }
 
 /* ??0ios_base@std@@IAE@XZ */
