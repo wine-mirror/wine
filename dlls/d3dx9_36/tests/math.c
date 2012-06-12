@@ -746,11 +746,24 @@ static void D3DXQuaternionTest(void)
     expectedquat.x = 0.093768f; expectedquat.y = 0.187536f; expectedquat.z = 0.375073f; expectedquat.w = 0.0f;
     D3DXQuaternionLn(&gotquat,&Nq);
     expect_vec4(expectedquat,gotquat);
-    /* Test the cas where the norm of the quaternion is <1 */
-    Nq1.x = 0.2f; Nq1.y = 0.1f; Nq1.z = 0.3; Nq1.w= 0.9f;
+    Nq.x = 0.0f; Nq.y = 0.0f; Nq.z = 0.0f; Nq.w = 1.0f;
+    expectedquat.x = 0.0f; expectedquat.y = 0.0f; expectedquat.z = 0.0f; expectedquat.w = 0.0f;
+    D3DXQuaternionLn(&gotquat,&Nq);
+    expect_vec4(expectedquat,gotquat);
+    Nq.x = 5.4f; Nq.y = 1.2f; Nq.z = -0.3f; Nq.w = -0.3f;
+    expectedquat.x = 10.616652f; expectedquat.y = 2.359256f; expectedquat.z = -0.589814f; expectedquat.w = 0.0f;
+    D3DXQuaternionLn(&gotquat,&Nq);
+    expect_vec4(expectedquat,gotquat);
+    /* Test the case where the norm of the quaternion is <1 */
+    Nq1.x = 0.2f; Nq1.y = 0.1f; Nq1.z = 0.3; Nq1.w = 0.9f;
     expectedquat.x = 0.206945f; expectedquat.y = 0.103473f; expectedquat.z = 0.310418f; expectedquat.w = 0.0f;
     D3DXQuaternionLn(&gotquat,&Nq1);
-    todo_wine{ expect_vec4(expectedquat,gotquat) };
+    expect_vec4(expectedquat,gotquat);
+    /* Test the case where the real part of the quaternion is -1.0f */
+    Nq1.x = 0.2f; Nq1.y = 0.1f; Nq1.z = 0.3; Nq1.w = -1.0f;
+    expectedquat.x = 0.2f; expectedquat.y = 0.1f; expectedquat.z = 0.3f; expectedquat.w = 0.0f;
+    D3DXQuaternionLn(&gotquat,&Nq1);
+    expect_vec4(expectedquat,gotquat);
 
 /*_______________D3DXQuaternionMultiply________________________*/
     expectedquat.x = 3.0f; expectedquat.y = 61.0f; expectedquat.z = -32.0f; expectedquat.w = 85.0f;

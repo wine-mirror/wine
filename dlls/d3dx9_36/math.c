@@ -1215,29 +1215,20 @@ D3DXQUATERNION* WINAPI D3DXQuaternionInverse(D3DXQUATERNION *pout, CONST D3DXQUA
 
 D3DXQUATERNION* WINAPI D3DXQuaternionLn(D3DXQUATERNION *pout, CONST D3DXQUATERNION *pq)
 {
-    FLOAT norm, normvec, theta;
+    FLOAT t;
 
-    norm = D3DXQuaternionLengthSq(pq);
-    if ( norm > 1.0001f )
-    {
-     pout->x = pq->x;
-     pout->y = pq->y;
-     pout->z = pq->z;
-     pout->w = 0.0f;
-    }
-    else if( norm > 0.99999f)
-    {
-     normvec = sqrt( pq->x * pq->x + pq->y * pq->y + pq->z * pq->z );
-     theta = atan2(normvec, pq->w) / normvec;
-     pout->x = theta * pq->x;
-     pout->y = theta * pq->y;
-     pout->z = theta * pq->z;
-     pout->w = 0.0f;
-    }
+    TRACE("(%p, %p)\n", pout, pq);
+
+    if ( (pq->w >= 1.0f) || (pq->w == -1.0f) )
+        t = 1.0f;
     else
-    {
-     FIXME("The quaternion (%f, %f, %f, %f) has a norm <1. This should not happen. Windows returns a result anyway. This case is not implemented yet.\n", pq->x, pq->y, pq->z, pq->w);
-    }
+        t = acos( pq->w ) / sqrt( 1.0f - pq->w * pq->w );
+
+    pout->x = t * pq->x;
+    pout->y = t * pq->y;
+    pout->z = t * pq->z;
+    pout->w = 0.0f;
+
     return pout;
 }
 
