@@ -591,6 +591,55 @@ static void surface_evict_sysmem(struct wined3d_surface *surface)
 }
 
 /* Context activation is done by the caller. */
+void surface_bind(struct wined3d_surface *surface, struct wined3d_context *context, BOOL srgb)
+{
+    TRACE("surface %p, context %p, srgb %#x.\n", surface, context, srgb);
+
+    if (surface->container.type == WINED3D_CONTAINER_TEXTURE)
+    {
+        struct wined3d_texture *texture = surface->container.u.texture;
+
+        TRACE("Passing to container (%p).\n", texture);
+        texture->texture_ops->texture_bind(texture, context, srgb);
+    }
+    else
+    {
+        if (surface->texture_level)
+        {
+            ERR("Standalone surface %p is non-zero texture level %u.\n",
+                    surface, surface->texture_level);
+        }
+
+        if (srgb)
+            ERR("Trying to bind standalone surface %p as sRGB.\n", surface);
+
+        ENTER_GL();
+
+        if (!surface->texture_name)
+        {
+            glGenTextures(1, &surface->texture_name);
+            checkGLcall("glGenTextures");
+
+            TRACE("Surface %p given name %u.\n", surface, surface->texture_name);
+
+            context_bind_texture(context, surface->texture_target, surface->texture_name);
+            glTexParameteri(surface->texture_target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(surface->texture_target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexParameteri(surface->texture_target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+            glTexParameteri(surface->texture_target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(surface->texture_target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            checkGLcall("glTexParameteri");
+        }
+        else
+        {
+            context_bind_texture(context, surface->texture_target, surface->texture_name);
+        }
+
+        LEAVE_GL();
+    }
+}
+
+/* Context activation is done by the caller. */
 static void surface_bind_and_dirtify(struct wined3d_surface *surface,
         struct wined3d_context *context, BOOL srgb)
 {
@@ -1746,6 +1795,38 @@ static void surface_remove_pbo(struct wined3d_surface *surface, const struct win
     surface->flags &= ~SFLAG_PBO;
 }
 
+BOOL surface_init_sysmem(struct wined3d_surface *surface)
+{
+    if (!surface->resource.allocatedMemory)
+    {
+        if (!surface->resource.heapMemory)
+        {
+            if (!(surface->resource.heapMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                    surface->resource.size + RESOURCE_ALIGNMENT)))
+            {
+                ERR("Failed to allocate memory.\n");
+                return FALSE;
+            }
+        }
+        else if (!(surface->flags & SFLAG_CLIENT))
+        {
+            ERR("Surface %p has heapMemory %p and flags %#x.\n",
+                    surface, surface->resource.heapMemory, surface->flags);
+        }
+
+        surface->resource.allocatedMemory =
+            (BYTE *)(((ULONG_PTR)surface->resource.heapMemory + (RESOURCE_ALIGNMENT - 1)) & ~(RESOURCE_ALIGNMENT - 1));
+    }
+    else
+    {
+        memset(surface->resource.allocatedMemory, 0, surface->resource.size);
+    }
+
+    surface_modify_location(surface, SFLAG_INSYSMEM, TRUE);
+
+    return TRUE;
+}
+
 /* Do not call while under the GL lock. */
 static void surface_unload(struct wined3d_resource *resource)
 {
@@ -2032,55 +2113,6 @@ void surface_set_texture_target(struct wined3d_surface *surface, GLenum target)
     surface_force_reload(surface);
 }
 
-/* Context activation is done by the caller. */
-void surface_bind(struct wined3d_surface *surface, struct wined3d_context *context, BOOL srgb)
-{
-    TRACE("surface %p, context %p, srgb %#x.\n", surface, context, srgb);
-
-    if (surface->container.type == WINED3D_CONTAINER_TEXTURE)
-    {
-        struct wined3d_texture *texture = surface->container.u.texture;
-
-        TRACE("Passing to container (%p).\n", texture);
-        texture->texture_ops->texture_bind(texture, context, srgb);
-    }
-    else
-    {
-        if (surface->texture_level)
-        {
-            ERR("Standalone surface %p is non-zero texture level %u.\n",
-                    surface, surface->texture_level);
-        }
-
-        if (srgb)
-            ERR("Trying to bind standalone surface %p as sRGB.\n", surface);
-
-        ENTER_GL();
-
-        if (!surface->texture_name)
-        {
-            glGenTextures(1, &surface->texture_name);
-            checkGLcall("glGenTextures");
-
-            TRACE("Surface %p given name %u.\n", surface, surface->texture_name);
-
-            context_bind_texture(context, surface->texture_target, surface->texture_name);
-            glTexParameteri(surface->texture_target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(surface->texture_target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            glTexParameteri(surface->texture_target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-            glTexParameteri(surface->texture_target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glTexParameteri(surface->texture_target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            checkGLcall("glTexParameteri");
-        }
-        else
-        {
-            context_bind_texture(context, surface->texture_target, surface->texture_name);
-        }
-
-        LEAVE_GL();
-    }
-}
-
 /* This call just downloads data, the caller is responsible for binding the
  * correct texture. */
 /* Context activation is done by the caller. */
@@ -2358,6 +2390,134 @@ static void surface_upload_data(struct wined3d_surface *surface, const struct wi
             context_surface_update(device->contexts[i], surface);
         }
     }
+}
+
+HRESULT d3dfmt_get_conv(const struct wined3d_surface *surface, BOOL need_alpha_ck, BOOL use_texturing,
+        struct wined3d_format *format, enum wined3d_conversion_type *conversion_type)
+{
+    BOOL colorkey_active = need_alpha_ck && (surface->CKeyFlags & WINEDDSD_CKSRCBLT);
+    const struct wined3d_device *device = surface->resource.device;
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+    BOOL blit_supported = FALSE;
+
+    /* Copy the default values from the surface. Below we might perform fixups */
+    /* TODO: get rid of color keying desc fixups by using e.g. a table. */
+    *format = *surface->resource.format;
+    *conversion_type = WINED3D_CT_NONE;
+
+    /* Ok, now look if we have to do any conversion */
+    switch (surface->resource.format->id)
+    {
+        case WINED3DFMT_P8_UINT:
+            /* Below the call to blit_supported is disabled for Wine 1.2
+             * because the function isn't operating correctly yet. At the
+             * moment 8-bit blits are handled in software and if certain GL
+             * extensions are around, surface conversion is performed at
+             * upload time. The blit_supported call recognizes it as a
+             * destination fixup. This type of upload 'fixup' and 8-bit to
+             * 8-bit blits need to be handled by the blit_shader.
+             * TODO: get rid of this #if 0. */
+#if 0
+            blit_supported = device->blitter->blit_supported(&device->adapter->gl_info, WINED3D_BLIT_OP_COLOR_BLIT,
+                    &rect, surface->resource.usage, surface->resource.pool, surface->resource.format,
+                    &rect, surface->resource.usage, surface->resource.pool, surface->resource.format);
+#endif
+            blit_supported = gl_info->supported[EXT_PALETTED_TEXTURE] || gl_info->supported[ARB_FRAGMENT_PROGRAM];
+
+            /* Use conversion when the blit_shader backend supports it. It only supports this in case of
+             * texturing. Further also use conversion in case of color keying.
+             * Paletted textures can be emulated using shaders but only do that for 2D purposes e.g. situations
+             * in which the main render target uses p8. Some games like GTA Vice City use P8 for texturing which
+             * conflicts with this.
+             */
+            if (!((blit_supported && device->fb.render_targets && surface == device->fb.render_targets[0]))
+                    || colorkey_active || !use_texturing)
+            {
+                format->glFormat = GL_RGBA;
+                format->glInternal = GL_RGBA;
+                format->glType = GL_UNSIGNED_BYTE;
+                format->conv_byte_count = 4;
+                if (colorkey_active)
+                    *conversion_type = WINED3D_CT_PALETTED_CK;
+                else
+                    *conversion_type = WINED3D_CT_PALETTED;
+            }
+            break;
+
+        case WINED3DFMT_B2G3R3_UNORM:
+            /* **********************
+                GL_UNSIGNED_BYTE_3_3_2
+                ********************** */
+            if (colorkey_active) {
+                /* This texture format will never be used.. So do not care about color keying
+                    up until the point in time it will be needed :-) */
+                FIXME(" ColorKeying not supported in the RGB 332 format !\n");
+            }
+            break;
+
+        case WINED3DFMT_B5G6R5_UNORM:
+            if (colorkey_active)
+            {
+                *conversion_type = WINED3D_CT_CK_565;
+                format->glFormat = GL_RGBA;
+                format->glInternal = GL_RGB5_A1;
+                format->glType = GL_UNSIGNED_SHORT_5_5_5_1;
+                format->conv_byte_count = 2;
+            }
+            break;
+
+        case WINED3DFMT_B5G5R5X1_UNORM:
+            if (colorkey_active)
+            {
+                *conversion_type = WINED3D_CT_CK_5551;
+                format->glFormat = GL_BGRA;
+                format->glInternal = GL_RGB5_A1;
+                format->glType = GL_UNSIGNED_SHORT_1_5_5_5_REV;
+                format->conv_byte_count = 2;
+            }
+            break;
+
+        case WINED3DFMT_B8G8R8_UNORM:
+            if (colorkey_active)
+            {
+                *conversion_type = WINED3D_CT_CK_RGB24;
+                format->glFormat = GL_RGBA;
+                format->glInternal = GL_RGBA8;
+                format->glType = GL_UNSIGNED_INT_8_8_8_8;
+                format->conv_byte_count = 4;
+            }
+            break;
+
+        case WINED3DFMT_B8G8R8X8_UNORM:
+            if (colorkey_active)
+            {
+                *conversion_type = WINED3D_CT_RGB32_888;
+                format->glFormat = GL_RGBA;
+                format->glInternal = GL_RGBA8;
+                format->glType = GL_UNSIGNED_INT_8_8_8_8;
+                format->conv_byte_count = 4;
+            }
+            break;
+
+        case WINED3DFMT_B8G8R8A8_UNORM:
+            if (colorkey_active)
+            {
+                *conversion_type = WINED3D_CT_CK_ARGB32;
+                format->conv_byte_count = 4;
+            }
+            break;
+
+        default:
+            break;
+    }
+
+    if (*conversion_type != WINED3D_CT_NONE)
+    {
+        format->rtInternal = format->glInternal;
+        format->glGammaInternal = format->glInternal;
+    }
+
+    return WINED3D_OK;
 }
 
 HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const POINT *dst_point,
@@ -3979,38 +4139,6 @@ void surface_internal_preload(struct wined3d_surface *surface, enum WINED3DSRGB 
     }
 }
 
-BOOL surface_init_sysmem(struct wined3d_surface *surface)
-{
-    if (!surface->resource.allocatedMemory)
-    {
-        if (!surface->resource.heapMemory)
-        {
-            if (!(surface->resource.heapMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                    surface->resource.size + RESOURCE_ALIGNMENT)))
-            {
-                ERR("Failed to allocate memory.\n");
-                return FALSE;
-            }
-        }
-        else if (!(surface->flags & SFLAG_CLIENT))
-        {
-            ERR("Surface %p has heapMemory %p and flags %#x.\n",
-                    surface, surface->resource.heapMemory, surface->flags);
-        }
-
-        surface->resource.allocatedMemory =
-            (BYTE *)(((ULONG_PTR)surface->resource.heapMemory + (RESOURCE_ALIGNMENT - 1)) & ~(RESOURCE_ALIGNMENT - 1));
-    }
-    else
-    {
-        memset(surface->resource.allocatedMemory, 0, surface->resource.size);
-    }
-
-    surface_modify_location(surface, SFLAG_INSYSMEM, TRUE);
-
-    return TRUE;
-}
-
 /* Read the framebuffer back into the surface */
 static void read_from_framebuffer(struct wined3d_surface *surface, const RECT *rect, void *dest, UINT pitch)
 {
@@ -4434,134 +4562,6 @@ static void flush_to_framebuffer_drawpixels(struct wined3d_surface *surface,
         wglFlush();
 
     context_release(context);
-}
-
-HRESULT d3dfmt_get_conv(const struct wined3d_surface *surface, BOOL need_alpha_ck, BOOL use_texturing,
-        struct wined3d_format *format, enum wined3d_conversion_type *conversion_type)
-{
-    BOOL colorkey_active = need_alpha_ck && (surface->CKeyFlags & WINEDDSD_CKSRCBLT);
-    const struct wined3d_device *device = surface->resource.device;
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    BOOL blit_supported = FALSE;
-
-    /* Copy the default values from the surface. Below we might perform fixups */
-    /* TODO: get rid of color keying desc fixups by using e.g. a table. */
-    *format = *surface->resource.format;
-    *conversion_type = WINED3D_CT_NONE;
-
-    /* Ok, now look if we have to do any conversion */
-    switch (surface->resource.format->id)
-    {
-        case WINED3DFMT_P8_UINT:
-            /* Below the call to blit_supported is disabled for Wine 1.2
-             * because the function isn't operating correctly yet. At the
-             * moment 8-bit blits are handled in software and if certain GL
-             * extensions are around, surface conversion is performed at
-             * upload time. The blit_supported call recognizes it as a
-             * destination fixup. This type of upload 'fixup' and 8-bit to
-             * 8-bit blits need to be handled by the blit_shader.
-             * TODO: get rid of this #if 0. */
-#if 0
-            blit_supported = device->blitter->blit_supported(&device->adapter->gl_info, WINED3D_BLIT_OP_COLOR_BLIT,
-                    &rect, surface->resource.usage, surface->resource.pool, surface->resource.format,
-                    &rect, surface->resource.usage, surface->resource.pool, surface->resource.format);
-#endif
-            blit_supported = gl_info->supported[EXT_PALETTED_TEXTURE] || gl_info->supported[ARB_FRAGMENT_PROGRAM];
-
-            /* Use conversion when the blit_shader backend supports it. It only supports this in case of
-             * texturing. Further also use conversion in case of color keying.
-             * Paletted textures can be emulated using shaders but only do that for 2D purposes e.g. situations
-             * in which the main render target uses p8. Some games like GTA Vice City use P8 for texturing which
-             * conflicts with this.
-             */
-            if (!((blit_supported && device->fb.render_targets && surface == device->fb.render_targets[0]))
-                    || colorkey_active || !use_texturing)
-            {
-                format->glFormat = GL_RGBA;
-                format->glInternal = GL_RGBA;
-                format->glType = GL_UNSIGNED_BYTE;
-                format->conv_byte_count = 4;
-                if (colorkey_active)
-                    *conversion_type = WINED3D_CT_PALETTED_CK;
-                else
-                    *conversion_type = WINED3D_CT_PALETTED;
-            }
-            break;
-
-        case WINED3DFMT_B2G3R3_UNORM:
-            /* **********************
-                GL_UNSIGNED_BYTE_3_3_2
-                ********************** */
-            if (colorkey_active) {
-                /* This texture format will never be used.. So do not care about color keying
-                    up until the point in time it will be needed :-) */
-                FIXME(" ColorKeying not supported in the RGB 332 format !\n");
-            }
-            break;
-
-        case WINED3DFMT_B5G6R5_UNORM:
-            if (colorkey_active)
-            {
-                *conversion_type = WINED3D_CT_CK_565;
-                format->glFormat = GL_RGBA;
-                format->glInternal = GL_RGB5_A1;
-                format->glType = GL_UNSIGNED_SHORT_5_5_5_1;
-                format->conv_byte_count = 2;
-            }
-            break;
-
-        case WINED3DFMT_B5G5R5X1_UNORM:
-            if (colorkey_active)
-            {
-                *conversion_type = WINED3D_CT_CK_5551;
-                format->glFormat = GL_BGRA;
-                format->glInternal = GL_RGB5_A1;
-                format->glType = GL_UNSIGNED_SHORT_1_5_5_5_REV;
-                format->conv_byte_count = 2;
-            }
-            break;
-
-        case WINED3DFMT_B8G8R8_UNORM:
-            if (colorkey_active)
-            {
-                *conversion_type = WINED3D_CT_CK_RGB24;
-                format->glFormat = GL_RGBA;
-                format->glInternal = GL_RGBA8;
-                format->glType = GL_UNSIGNED_INT_8_8_8_8;
-                format->conv_byte_count = 4;
-            }
-            break;
-
-        case WINED3DFMT_B8G8R8X8_UNORM:
-            if (colorkey_active)
-            {
-                *conversion_type = WINED3D_CT_RGB32_888;
-                format->glFormat = GL_RGBA;
-                format->glInternal = GL_RGBA8;
-                format->glType = GL_UNSIGNED_INT_8_8_8_8;
-                format->conv_byte_count = 4;
-            }
-            break;
-
-        case WINED3DFMT_B8G8R8A8_UNORM:
-            if (colorkey_active)
-            {
-                *conversion_type = WINED3D_CT_CK_ARGB32;
-                format->conv_byte_count = 4;
-            }
-            break;
-
-        default:
-            break;
-    }
-
-    if (*conversion_type != WINED3D_CT_NONE)
-    {
-        format->rtInternal = format->glInternal;
-        format->glGammaInternal = format->glInternal;
-    }
-
-    return WINED3D_OK;
 }
 
 static BOOL color_in_range(const struct wined3d_color_key *color_key, DWORD color)
