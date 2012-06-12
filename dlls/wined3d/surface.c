@@ -591,7 +591,7 @@ static void surface_evict_sysmem(struct wined3d_surface *surface)
 }
 
 /* Context activation is done by the caller. */
-void surface_bind(struct wined3d_surface *surface, struct wined3d_context *context, BOOL srgb)
+static void surface_bind(struct wined3d_surface *surface, struct wined3d_context *context, BOOL srgb)
 {
     TRACE("surface %p, context %p, srgb %#x.\n", surface, context, srgb);
 
@@ -1795,7 +1795,7 @@ static void surface_remove_pbo(struct wined3d_surface *surface, const struct win
     surface->flags &= ~SFLAG_PBO;
 }
 
-BOOL surface_init_sysmem(struct wined3d_surface *surface)
+static BOOL surface_init_sysmem(struct wined3d_surface *surface)
 {
     if (!surface->resource.allocatedMemory)
     {
@@ -2392,7 +2392,7 @@ static void surface_upload_data(struct wined3d_surface *surface, const struct wi
     }
 }
 
-HRESULT d3dfmt_get_conv(const struct wined3d_surface *surface, BOOL need_alpha_ck, BOOL use_texturing,
+static HRESULT d3dfmt_get_conv(const struct wined3d_surface *surface, BOOL need_alpha_ck, BOOL use_texturing,
         struct wined3d_format *format, enum wined3d_conversion_type *conversion_type)
 {
     BOOL colorkey_active = need_alpha_ck && (surface->CKeyFlags & WINEDDSD_CKSRCBLT);
