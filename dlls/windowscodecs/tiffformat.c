@@ -58,7 +58,7 @@ static void *libtiff_handle;
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
 MAKE_FUNCPTR(TIFFClientOpen);
 MAKE_FUNCPTR(TIFFClose);
-MAKE_FUNCPTR(TIFFCurrentDirectory);
+MAKE_FUNCPTR(TIFFNumberOfDirectories);
 MAKE_FUNCPTR(TIFFGetField);
 MAKE_FUNCPTR(TIFFIsByteSwapped);
 MAKE_FUNCPTR(TIFFReadDirectory);
@@ -89,7 +89,7 @@ static void *load_libtiff(void)
     }
         LOAD_FUNCPTR(TIFFClientOpen);
         LOAD_FUNCPTR(TIFFClose);
-        LOAD_FUNCPTR(TIFFCurrentDirectory);
+        LOAD_FUNCPTR(TIFFNumberOfDirectories);
         LOAD_FUNCPTR(TIFFGetField);
         LOAD_FUNCPTR(TIFFIsByteSwapped);
         LOAD_FUNCPTR(TIFFReadDirectory);
@@ -662,8 +662,7 @@ static HRESULT WINAPI TiffDecoder_GetFrameCount(IWICBitmapDecoder *iface,
     }
 
     EnterCriticalSection(&This->lock);
-    while (pTIFFReadDirectory(This->tiff)) { }
-    *pCount = pTIFFCurrentDirectory(This->tiff)+1;
+    *pCount = pTIFFNumberOfDirectories(This->tiff);
     LeaveCriticalSection(&This->lock);
 
     TRACE("(%p) <-- %i\n", iface, *pCount);
