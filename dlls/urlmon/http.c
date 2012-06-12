@@ -79,18 +79,13 @@ static LPWSTR query_http_info(HttpProtocol *This, DWORD option)
     return ret;
 }
 
-static inline BOOL set_security_flag(HttpProtocol *This, DWORD new_flag)
+static inline BOOL set_security_flag(HttpProtocol *This, DWORD flags)
 {
-    DWORD flags, size = sizeof(flags);
     BOOL res;
 
-    res = InternetQueryOptionW(This->base.request, INTERNET_OPTION_SECURITY_FLAGS, &flags, &size);
-    if(res) {
-        flags |= new_flag;
-        res = InternetSetOptionW(This->base.request, INTERNET_OPTION_SECURITY_FLAGS, &flags, size);
-    }
+    res = InternetSetOptionW(This->base.request, INTERNET_OPTION_SECURITY_FLAGS, &flags, sizeof(flags));
     if(!res)
-        ERR("Failed to set security flag(s): %x\n", new_flag);
+        ERR("Failed to set security flags: %x\n", flags);
 
     return res;
 }
