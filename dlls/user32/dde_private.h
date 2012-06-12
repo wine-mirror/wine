@@ -196,8 +196,6 @@ extern WDML_QUEUE_STATE WDML_ServerHandle(WDML_CONV* pConv, WDML_XACT* pXAct) DE
 /* transaction handler on the client side */
 HDDEDATA WDML_ClientHandle(WDML_CONV *pConv, WDML_XACT *pXAct, DWORD dwTimeout, LPDWORD pdwResult) DECLSPEC_HIDDEN;
 /* called both in DdeClientTransaction and server side. */
-extern	UINT		WDML_Initialize(LPDWORD pidInst, PFNCALLBACK pfnCallback,
-					DWORD afCmd, DWORD ulRes, BOOL bUnicode) DECLSPEC_HIDDEN;
 extern	WDML_CONV* 	WDML_AddConv(WDML_INSTANCE* pInstance, WDML_SIDE side,
 				     HSZ hszService, HSZ hszTopic, HWND hwndClient, HWND hwndServer) DECLSPEC_HIDDEN;
 extern	void		WDML_RemoveConv(WDML_CONV* pConv, WDML_SIDE side) DECLSPEC_HIDDEN;
@@ -213,9 +211,7 @@ extern	WDML_LINK*	WDML_FindLink(WDML_INSTANCE* pInstance, HCONV hConv, WDML_SIDE
 				      HSZ hszItem, BOOL use_fmt, UINT uFmt) DECLSPEC_HIDDEN;
 extern	void 		WDML_RemoveLink(WDML_INSTANCE* pInstance, HCONV hConv, WDML_SIDE side,
 					HSZ hszItem, UINT wFmt) DECLSPEC_HIDDEN;
-extern	void		WDML_RemoveAllLinks(WDML_INSTANCE* pInstance, WDML_CONV* pConv, WDML_SIDE side) DECLSPEC_HIDDEN;
 /* string internals */
-extern	void 		WDML_FreeAllHSZ(WDML_INSTANCE* pInstance) DECLSPEC_HIDDEN;
 extern	BOOL		WDML_DecHSZ(WDML_INSTANCE* pInstance, HSZ hsz) DECLSPEC_HIDDEN;
 extern	BOOL		WDML_IncHSZ(WDML_INSTANCE* pInstance, HSZ hsz) DECLSPEC_HIDDEN;
 extern	ATOM		WDML_MakeAtomFromHsz(HSZ hsz) DECLSPEC_HIDDEN;
@@ -225,7 +221,6 @@ extern	WDML_XACT*	WDML_AllocTransaction(WDML_INSTANCE* pInstance, UINT ddeMsg, U
 extern	void		WDML_QueueTransaction(WDML_CONV* pConv, WDML_XACT* pXAct) DECLSPEC_HIDDEN;
 extern	BOOL		WDML_UnQueueTransaction(WDML_CONV* pConv, WDML_XACT*  pXAct) DECLSPEC_HIDDEN;
 extern	void		WDML_FreeTransaction(WDML_INSTANCE* pInstance, WDML_XACT* pXAct, BOOL doFreePmt) DECLSPEC_HIDDEN;
-extern	WDML_XACT*	WDML_FindTransaction(WDML_CONV* pConv, DWORD tid) DECLSPEC_HIDDEN;
 extern	HGLOBAL		WDML_DataHandle2Global(HDDEDATA hDdeData, BOOL fResponse, BOOL fRelease,
 					       BOOL fDeferUpd, BOOL dAckReq) DECLSPEC_HIDDEN;
 extern	HDDEDATA	WDML_Global2DataHandle(WDML_CONV* pConv, HGLOBAL hMem, WINE_DDEHEAD* da) DECLSPEC_HIDDEN;

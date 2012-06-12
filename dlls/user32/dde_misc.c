@@ -429,7 +429,7 @@ BOOL WDML_DecHSZ(WDML_INSTANCE* pInstance, HSZ hsz)
  * Frees up all the strings still allocated in the list and
  * remove all the nodes from the list of HSZ nodes.
  */
-void WDML_FreeAllHSZ(WDML_INSTANCE* pInstance)
+static void WDML_FreeAllHSZ(WDML_INSTANCE* pInstance)
 {
     /* Free any strings created in this instance.
      */
@@ -837,8 +837,8 @@ static LRESULT CALLBACK WDML_EventProc(HWND hwndEvent, UINT uMsg, WPARAM wParam,
  *
  *
  */
-UINT WDML_Initialize(LPDWORD pidInst, PFNCALLBACK pfnCallback,
-		     DWORD afCmd, DWORD ulRes, BOOL bUnicode)
+static UINT WDML_Initialize(LPDWORD pidInst, PFNCALLBACK pfnCallback,
+                            DWORD afCmd, DWORD ulRes, BOOL bUnicode)
 {
     WDML_INSTANCE*		pInstance;
     WDML_INSTANCE*		reference_inst;
@@ -1832,7 +1832,7 @@ void WDML_RemoveLink(WDML_INSTANCE* pInstance, HCONV hConv, WDML_SIDE side,
  *
  *
  */
-void WDML_RemoveAllLinks(WDML_INSTANCE* pInstance, WDML_CONV* pConv, WDML_SIDE side)
+static void WDML_RemoveAllLinks(WDML_INSTANCE* pInstance, WDML_CONV* pConv, WDML_SIDE side)
 {
     WDML_LINK* pPrev = NULL;
     WDML_LINK* pCurrent = NULL;
@@ -1994,7 +1994,7 @@ void	WDML_FreeTransaction(WDML_INSTANCE* pInstance, WDML_XACT* pXAct, BOOL doFre
  *
  *
  */
-WDML_XACT*	WDML_FindTransaction(WDML_CONV* pConv, DWORD tid)
+static WDML_XACT* WDML_FindTransaction(WDML_CONV* pConv, DWORD tid)
 {
     WDML_XACT* pXAct;
 
