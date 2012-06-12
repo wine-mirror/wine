@@ -2760,7 +2760,7 @@ static HRESULT WINAPI d3d9_device_DeletePatch(IDirect3DDevice9Ex *iface, UINT ha
 static HRESULT WINAPI d3d9_device_CreateQuery(IDirect3DDevice9Ex *iface, D3DQUERYTYPE type, IDirect3DQuery9 **query)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
-    IDirect3DQuery9Impl *object;
+    struct d3d9_query *object;
     HRESULT hr;
 
     TRACE("iface %p, type %#x, query %p.\n", iface, type, query);

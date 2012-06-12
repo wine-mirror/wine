@@ -299,24 +299,14 @@ HRESULT pixelshader_init(struct d3d9_pixelshader *shader,
         struct d3d9_device *device, const DWORD *byte_code) DECLSPEC_HIDDEN;
 struct d3d9_pixelshader *unsafe_impl_from_IDirect3DPixelShader9(IDirect3DPixelShader9 *iface) DECLSPEC_HIDDEN;
 
-/* --------------- */
-/* IDirect3DQuery9 */
-/* --------------- */
+struct d3d9_query
+{
+    IDirect3DQuery9 IDirect3DQuery9_iface;
+    LONG refcount;
+    struct wined3d_query *wined3d_query;
+    IDirect3DDevice9Ex *parent_device;
+};
 
-/*****************************************************************************
- * IDirect3DPixelShader implementation structure
- */
-typedef struct IDirect3DQuery9Impl {
-    IDirect3DQuery9      IDirect3DQuery9_iface;
-    LONG                 ref;
-
-    /* IDirect3DQuery9 fields */
-    struct wined3d_query *wineD3DQuery;
-
-    /* Parent reference */
-    IDirect3DDevice9Ex   *parentDevice;
-} IDirect3DQuery9Impl;
-
-HRESULT query_init(IDirect3DQuery9Impl *query, struct d3d9_device *device, D3DQUERYTYPE type) DECLSPEC_HIDDEN;
+HRESULT query_init(struct d3d9_query *query, struct d3d9_device *device, D3DQUERYTYPE type) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_D3D9_PRIVATE_H */
