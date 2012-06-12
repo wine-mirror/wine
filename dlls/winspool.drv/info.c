@@ -450,6 +450,62 @@ static inline DWORD set_reg_DWORD( HKEY hkey, const WCHAR *keyname, const DWORD 
     return RegSetValueExW( hkey, keyname, 0, REG_DWORD, (const BYTE*)&value, sizeof(value) );
 }
 
+/******************************************************************
+ *  get_opened_printer
+ *  Get the pointer to the opened printer referred by the handle
+ */
+static opened_printer_t *get_opened_printer(HANDLE hprn)
+{
+    UINT_PTR idx = (UINT_PTR)hprn;
+    opened_printer_t *ret = NULL;
+
+    EnterCriticalSection(&printer_handles_cs);
+
+    if ((idx > 0) && (idx <= nb_printer_handles)) {
+        ret = printer_handles[idx - 1];
+    }
+    LeaveCriticalSection(&printer_handles_cs);
+    return ret;
+}
+
+/******************************************************************
+ *  get_opened_printer_name
+ *  Get the pointer to the opened printer name referred by the handle
+ */
+static LPCWSTR get_opened_printer_name(HANDLE hprn)
+{
+    opened_printer_t *printer = get_opened_printer(hprn);
+    if(!printer) return NULL;
+    return printer->name;
+}
+
+static DWORD open_printer_reg_key( const WCHAR *name, HKEY *key )
+{
+    HKEY printers;
+    DWORD err;
+
+    *key = NULL;
+    err = RegCreateKeyW( HKEY_LOCAL_MACHINE, PrintersW, &printers );
+    if (err) return err;
+
+    err = RegOpenKeyW( printers, name, key );
+    if (err) err = ERROR_INVALID_PRINTER_NAME;
+    RegCloseKey( printers );
+    return err;
+}
+
+/******************************************************************
+ *  WINSPOOL_GetOpenedPrinterRegKey
+ *
+ */
+static DWORD WINSPOOL_GetOpenedPrinterRegKey(HANDLE hPrinter, HKEY *phkey)
+{
+    LPCWSTR name = get_opened_printer_name(hPrinter);
+
+    if(!name) return ERROR_INVALID_HANDLE;
+    return open_printer_reg_key( name, phkey );
+}
+
 static void
 WINSPOOL_SetDefaultPrinter(const char *devname, const char *name, BOOL force) {
     char qbuf[200];
@@ -476,13 +532,13 @@ WINSPOOL_SetDefaultPrinter(const char *devname, const char *name, BOOL force) {
     }
 }
 
-static BOOL add_printer_driver(WCHAR *name, WCHAR *ppd)
+static BOOL add_printer_driver(const WCHAR *name, WCHAR *ppd)
 {
     DRIVER_INFO_3W di3;
 
     ZeroMemory(&di3, sizeof(DRIVER_INFO_3W));
     di3.cVersion         = 3;
-    di3.pName            = name;
+    di3.pName            = (WCHAR*)name;
     di3.pEnvironment     = envname_x86W;
     di3.pDriverPath      = driver_nt;
     di3.pDataFile        = ppd;
@@ -831,7 +887,61 @@ static BOOL CUPS_LoadPrinters(void)
     RegCloseKey(hkeyPrinters);
     return TRUE;
 }
+
+static char *get_cups_name( HANDLE printer )
+{
+    WCHAR *port;
+    DWORD err, needed, type;
+    char *ret = NULL;
+    HKEY key;
+
+    err = WINSPOOL_GetOpenedPrinterRegKey( printer, &key );
+    if (err) return NULL;
+    err = RegQueryValueExW( key, PortW, 0, &type, NULL, &needed );
+    if (err || needed <= sizeof( CUPS_Port )) goto end;
+    port = HeapAlloc( GetProcessHeap(), 0, needed );
+    if (!port) goto end;
+    RegQueryValueExW( key, PortW, 0, &type, (BYTE*)port, &needed );
+    if (!memcmp( port, CUPS_Port, sizeof(CUPS_Port) - sizeof(WCHAR) ))
+    {
+        WCHAR *name = port + sizeof(CUPS_Port) / sizeof(WCHAR) - 1;
+        needed = WideCharToMultiByte( CP_UNIXCP, 0, name, -1, NULL, 0, NULL, NULL );
+        ret = HeapAlloc( GetProcessHeap(), 0, needed );
+        if(ret) WideCharToMultiByte( CP_UNIXCP, 0, name, -1, ret, needed, NULL, NULL );
+    }
+    HeapFree( GetProcessHeap(), 0, port );
+end:
+    RegCloseKey( key );
+    return ret;
+}
 #endif
+
+static BOOL update_driver( HANDLE printer )
+{
+    BOOL ret = FALSE;
+#ifdef SONAME_LIBCUPS
+    const WCHAR *name = get_opened_printer_name( printer );
+    WCHAR *ppd_dir, *ppd;
+    char *cups_name;
+
+    if (!name) return FALSE;
+    cups_name = get_cups_name( printer );
+    if (!cups_name) return FALSE;
+
+    ppd_dir = get_ppd_dir();
+    ppd = get_ppd_filename( ppd_dir, name );
+    if (get_cups_ppd( cups_name, ppd ))
+    {
+        TRACE( "updating driver %s\n", debugstr_w( name ) );
+        ret = add_printer_driver( name, ppd );
+        unlink_ppd( ppd );
+    }
+    HeapFree( GetProcessHeap(), 0, ppd_dir );
+    HeapFree( GetProcessHeap(), 0, ppd );
+    HeapFree( GetProcessHeap(), 0, cups_name );
+#endif
+    return ret;
+}
 
 static BOOL PRINTCAP_ParseEntry( const char *pent, BOOL isfirst )
 {
@@ -1243,62 +1353,6 @@ end:
     return (HANDLE)handle;
 }
 
-/******************************************************************
- *  get_opened_printer
- *  Get the pointer to the opened printer referred by the handle
- */
-static opened_printer_t *get_opened_printer(HANDLE hprn)
-{
-    UINT_PTR idx = (UINT_PTR)hprn;
-    opened_printer_t *ret = NULL;
-
-    EnterCriticalSection(&printer_handles_cs);
-
-    if ((idx > 0) && (idx <= nb_printer_handles)) {
-        ret = printer_handles[idx - 1];
-    }
-    LeaveCriticalSection(&printer_handles_cs);
-    return ret;
-}
-
-/******************************************************************
- *  get_opened_printer_name
- *  Get the pointer to the opened printer name referred by the handle
- */
-static LPCWSTR get_opened_printer_name(HANDLE hprn)
-{
-    opened_printer_t *printer = get_opened_printer(hprn);
-    if(!printer) return NULL;
-    return printer->name;
-}
-
-static DWORD open_printer_reg_key( const WCHAR *name, HKEY *key )
-{
-    HKEY printers;
-    DWORD err;
-
-    *key = NULL;
-    err = RegCreateKeyW( HKEY_LOCAL_MACHINE, PrintersW, &printers );
-    if (err) return err;
-
-    err = RegOpenKeyW( printers, name, key );
-    if (err) err = ERROR_INVALID_PRINTER_NAME;
-    RegCloseKey( printers );
-    return err;
-}
-
-/******************************************************************
- *  WINSPOOL_GetOpenedPrinterRegKey
- *
- */
-static DWORD WINSPOOL_GetOpenedPrinterRegKey(HANDLE hPrinter, HKEY *phkey)
-{
-    LPCWSTR name = get_opened_printer_name(hPrinter);
-
-    if(!name) return ERROR_INVALID_HANDLE;
-    return open_printer_reg_key( name, phkey );
-}
-
 static void old_printer_check( BOOL delete_phase )
 {
     PRINTER_INFO_5W* pi;
@@ -1348,6 +1402,7 @@ static void old_printer_check( BOOL delete_phase )
 
 static const WCHAR winspool_mutex_name[] = {'_','_','W','I','N','E','_','W','I','N','S','P','O','O','L','_',
                                             'M','U','T','E','X','_','_','\0'};
+static HANDLE init_mutex;
 
 void WINSPOOL_LoadSystemPrinters(void)
 {
@@ -1355,19 +1410,18 @@ void WINSPOOL_LoadSystemPrinters(void)
     DWORD               needed, num, i;
     WCHAR               PrinterName[256];
     BOOL                done = FALSE;
-    HANDLE              mutex;
 
     /* FIXME: The init code should be moved to spoolsv.exe */
-    mutex = CreateMutexW( NULL, TRUE, winspool_mutex_name );
-    if (!mutex)
+    init_mutex = CreateMutexW( NULL, TRUE, winspool_mutex_name );
+    if (!init_mutex)
     {
         ERR( "Failed to create mutex\n" );
         return;
     }
     if (GetLastError() == ERROR_ALREADY_EXISTS)
     {
-        WaitForSingleObject( mutex, INFINITE );
-        ReleaseMutex( mutex );
+        WaitForSingleObject( init_mutex, INFINITE );
+        ReleaseMutex( init_mutex );
         TRACE( "Init already done\n" );
         return;
     }
@@ -1403,7 +1457,7 @@ void WINSPOOL_LoadSystemPrinters(void)
 
     old_printer_check( TRUE );
 
-    ReleaseMutex( mutex );
+    ReleaseMutex( init_mutex );
     return;
 }
 
@@ -2277,6 +2331,25 @@ BOOL WINAPI OpenPrinterW(LPWSTR lpPrinterName,HANDLE *phPrinter, LPPRINTER_DEFAU
 
     /* Get the unique handle of the printer or Printserver */
     *phPrinter = get_opened_printer_entry(lpPrinterName, pDefault);
+
+    WaitForSingleObject( init_mutex, INFINITE );
+    if (*phPrinter)
+    {
+        HKEY key;
+        DWORD deleting = 0, size = sizeof( deleting ), type;
+        DWORD status;
+        WINSPOOL_GetOpenedPrinterRegKey( *phPrinter, &key );
+        RegQueryValueExW( key, May_Delete_Value, NULL, &type, (LPBYTE)&deleting, &size );
+        status = get_dword_from_reg( key, StatusW );
+        if (!deleting && (status & PRINTER_STATUS_DRIVER_UPDATE_NEEDED))
+        {
+            update_driver( *phPrinter );
+            set_reg_DWORD( key, StatusW, status & ~PRINTER_STATUS_DRIVER_UPDATE_NEEDED );
+        }
+        RegCloseKey( key );
+    }
+    ReleaseMutex( init_mutex );
+
     TRACE("returning %d with %u and %p\n", *phPrinter != NULL, GetLastError(), *phPrinter);
     return (*phPrinter != 0);
 }
