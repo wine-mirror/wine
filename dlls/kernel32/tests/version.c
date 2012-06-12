@@ -153,8 +153,6 @@ static void test_GetVersionEx(void)
     ok(ret ||
        broken(ret == 0), /* win95 */
        "Expected GetVersionExA to succeed\n");
-    ok(GetLastError() == 0xdeadbeef,
-        "Expected 0xdeadbeef, got %d\n", GetLastError());
 }
 
 static void test_VerifyVersionInfo(void)
