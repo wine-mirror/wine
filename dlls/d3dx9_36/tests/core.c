@@ -448,7 +448,7 @@ static void test_ID3DXFont(IDirect3DDevice9 *device)
     } else skip("Failed to create a ID3DXFont object\n");
 }
 
-void test_D3DXCreateRenderToSurface(IDirect3DDevice9 *device)
+static void test_D3DXCreateRenderToSurface(IDirect3DDevice9 *device)
 {
     int i;
     HRESULT hr;
@@ -885,7 +885,7 @@ static void test_ID3DXRenderToSurface(IDirect3DDevice9 *device)
     test_ID3DXRenderToSurface_device_state(device);
 }
 
-void test_D3DXCreateRenderToEnvMap(IDirect3DDevice9 *device)
+static void test_D3DXCreateRenderToEnvMap(IDirect3DDevice9 *device)
 {
     int i;
     HRESULT hr;
