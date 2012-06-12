@@ -163,6 +163,9 @@ typedef struct _istreambuf_iterator_wchar
 /* ?_Id_cnt@id@locale@std@@0HA */
 int locale_id__Id_cnt = 0;
 
+static locale__Locimp *global_locale;
+static locale classic_locale;
+
 /* ?_Clocptr@_Locimp@locale@std@@0PAV123@A */
 /* ?_Clocptr@_Locimp@locale@std@@0PEAV123@EA */
 locale__Locimp *locale__Locimp__Clocptr = NULL;
@@ -2606,7 +2609,6 @@ codecvt_char* __thiscall codecvt_char_ctor(codecvt_char *this)
     return codecvt_char_ctor_locinfo(this, NULL, 0);
 }
 
-/* ?_Getcat@?$codecvt@DDH@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
 /* ??1?$codecvt@DDH@std@@MAE@XZ */
 /* ??1?$codecvt@DDH@std@@MEAA@XZ */
 DEFINE_THISCALL_WRAPPER(codecvt_char_dtor, 4)
@@ -2636,6 +2638,7 @@ codecvt_char* __thiscall MSVCP_codecvt_char_vector_dtor(codecvt_char *this, unsi
     return this;
 }
 
+/* ?_Getcat@?$codecvt@DDH@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
 /* ?_Getcat@?$codecvt@DDH@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
 MSVCP_size_t __cdecl codecvt_char__Getcat(const locale_facet **facet, const locale *loc)
 {
@@ -4338,6 +4341,41 @@ locale* __thiscall locale_ctor_locimp(locale *this, locale__Locimp *locimp)
     return this;
 }
 
+/* ?_Init@locale@std@@CAPAV_Locimp@12@XZ */
+/* ?_Init@locale@std@@CAPEAV_Locimp@12@XZ */
+locale__Locimp* __cdecl locale__Init(void)
+{
+    _Lockit lock;
+
+    TRACE("\n");
+
+    _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
+    if(global_locale) {
+        _Lockit_dtor(&lock);
+        return global_locale;
+    }
+
+    global_locale = MSVCRT_operator_new(sizeof(locale__Locimp));
+    if(!global_locale) {
+        _Lockit_dtor(&lock);
+        ERR("Out of memory\n");
+        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+        return NULL;
+    }
+
+    locale__Locimp_ctor(global_locale);
+    global_locale->catmask = (1<<(LC_MAX+1))-1;
+    MSVCP_basic_string_char_dtor(&global_locale->name);
+    MSVCP_basic_string_char_ctor_cstr(&global_locale->name, "C");
+
+    locale__Locimp__Clocptr = global_locale;
+    global_locale->facet.refs++;
+    locale_ctor_locimp(&classic_locale, locale__Locimp__Clocptr);
+    _Lockit_dtor(&lock);
+
+    return global_locale;
+}
+
 /* ??0locale@std@@QAE@ABV01@0H@Z */
 /* ??0locale@std@@QEAA@AEBV01@0H@Z */
 DEFINE_THISCALL_WRAPPER(locale_ctor_locale_locale, 16)
@@ -4392,14 +4430,8 @@ DEFINE_THISCALL_WRAPPER(locale_ctor, 4)
 locale* __thiscall locale_ctor(locale *this)
 {
     TRACE("(%p)\n", this);
-    this->ptr = MSVCRT_operator_new(sizeof(locale__Locimp));
-    if(!this->ptr) {
-        ERR("Out of memory\n");
-        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-        return NULL;
-    }
-
-    locale__Locimp_ctor(this->ptr);
+    this->ptr = locale__Init();
+    locale_facet__Incref(&this->ptr->facet);
     return this;
 }
 
@@ -4497,35 +4529,29 @@ const locale_facet* __thiscall locale__Getfacet(const locale *this, MSVCP_size_t
     return NULL;
 }
 
-/* ?_Init@locale@std@@CAPAV_Locimp@12@XZ */
-/* ?_Init@locale@std@@CAPEAV_Locimp@12@XZ */
-locale__Locimp* __cdecl locale__Init(void)
-{
-    FIXME("stub\n");
-    return NULL;
-}
-
 /* ?_Getgloballocale@locale@std@@CAPAV_Locimp@12@XZ */
 /* ?_Getgloballocale@locale@std@@CAPEAV_Locimp@12@XZ */
 locale__Locimp* __cdecl locale__Getgloballocale(void)
 {
-    FIXME("stub\n");
-    return NULL;
+    TRACE("\n");
+    return global_locale;
 }
 
 /* ?_Setgloballocale@locale@std@@CAXPAX@Z */
 /* ?_Setgloballocale@locale@std@@CAXPEAX@Z */
 void __cdecl locale__Setgloballocale(void *locimp)
 {
-    FIXME("(%p) stub\n", locimp);
+    TRACE("(%p)\n", locimp);
+    global_locale = locimp;
 }
 
 /* ?classic@locale@std@@SAABV12@XZ */
 /* ?classic@locale@std@@SAAEBV12@XZ */
 const locale* __cdecl locale_classic(void)
 {
-    FIXME("stub\n");
-    return NULL;
+    TRACE("\n");
+    locale__Init();
+    return &classic_locale;
 }
 
 /* ?name@locale@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
@@ -4682,3 +4708,11 @@ void __asm_dummy_vtables(void) {
 #ifndef __GNUC__
 }
 #endif
+
+void free_locale(void)
+{
+    if(global_locale) {
+        locale__Locimp_dtor(global_locale);
+        locale_dtor(&classic_locale);
+    }
+}

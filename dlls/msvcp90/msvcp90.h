@@ -267,6 +267,7 @@ locale* __thiscall locale_ctor(locale*);
 locale* __thiscall locale_copy_ctor(locale*, const locale*);
 locale* __thiscall locale_operator_assign(locale*, const locale*);
 void __thiscall locale_dtor(locale*);
+void free_locale(void);
 
 /* class _Lockit */
 typedef struct {
