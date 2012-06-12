@@ -2318,7 +2318,7 @@ static void write_msi_summary_info(MSIHANDLE db, INT version, INT wordcount, con
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     r = MsiSummaryInfoSetPropertyA(summary, PID_REVNUMBER, VT_LPSTR, 0, NULL,
-                                   "{004757CA-5092-49c2-AD20-28E1CE0DF5F2}");
+                                   "{004757CA-5092-49C2-AD20-28E1CE0DF5F2}");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     r = MsiSummaryInfoSetPropertyA(summary, PID_PAGECOUNT, VT_I4, version, NULL, NULL);
@@ -2947,7 +2947,7 @@ currentuser:
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     CHECK_DEL_REG_STR(hkey, "ProductName", "MSITEST");
-    CHECK_DEL_REG_STR(hkey, "PackageCode", "AC75740029052c94DA02821EECD05F2F");
+    CHECK_DEL_REG_STR(hkey, "PackageCode", "AC75740029052C94DA02821EECD05F2F");
     CHECK_DEL_REG_DWORD(hkey, "Language", 1033);
     CHECK_DEL_REG_DWORD(hkey, "Version", 0x1010001);
     if (!old_installer)
@@ -3028,7 +3028,7 @@ machprod:
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     CHECK_DEL_REG_STR(hkey, "ProductName", "MSITEST");
-    CHECK_DEL_REG_STR(hkey, "PackageCode", "AC75740029052c94DA02821EECD05F2F");
+    CHECK_DEL_REG_STR(hkey, "PackageCode", "AC75740029052C94DA02821EECD05F2F");
     CHECK_DEL_REG_DWORD(hkey, "Language", 1033);
     CHECK_DEL_REG_DWORD(hkey, "Version", 0x1010001);
     if (!old_installer)

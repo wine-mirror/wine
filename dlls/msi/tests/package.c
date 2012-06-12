@@ -2445,7 +2445,7 @@ static void test_msipackage(void)
     ok(r == ERROR_INSTALL_PACKAGE_INVALID,
        "Expected ERROR_INSTALL_PACKAGE_INVALID, got %d\n", r);
 
-    set_summary_str(hdb, PID_REVNUMBER, "{004757CD-5092-49c2-AD20-28E1CE0DF5F2}");
+    set_summary_str(hdb, PID_REVNUMBER, "{004757CD-5092-49C2-AD20-28E1CE0DF5F2}");
     r = MsiOpenPackage(name, &hpack);
     ok(r == ERROR_SUCCESS,
        "Expected ERROR_SUCCESS, got %d\n", r);
