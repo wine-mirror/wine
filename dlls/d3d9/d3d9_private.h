@@ -287,23 +287,17 @@ struct d3d9_vertexshader *unsafe_impl_from_IDirect3DVertexShader9(IDirect3DVerte
 #define D3D9_MAX_VERTEX_SHADER_CONSTANTF 256
 #define D3D9_MAX_SIMULTANEOUS_RENDERTARGETS 4
 
-/* --------------------- */
-/* IDirect3DPixelShader9 */
-/* --------------------- */
-
-/*****************************************************************************
- * IDirect3DPixelShader implementation structure
- */
-typedef struct IDirect3DPixelShader9Impl {
+struct d3d9_pixelshader
+{
     IDirect3DPixelShader9 IDirect3DPixelShader9_iface;
-    LONG ref;
+    LONG refcount;
     struct wined3d_shader *wined3d_shader;
-    IDirect3DDevice9Ex *parentDevice;
-} IDirect3DPixelShader9Impl;
+    IDirect3DDevice9Ex *parent_device;
+};
 
-HRESULT pixelshader_init(IDirect3DPixelShader9Impl *shader,
+HRESULT pixelshader_init(struct d3d9_pixelshader *shader,
         struct d3d9_device *device, const DWORD *byte_code) DECLSPEC_HIDDEN;
-IDirect3DPixelShader9Impl *unsafe_impl_from_IDirect3DPixelShader9(IDirect3DPixelShader9 *iface) DECLSPEC_HIDDEN;
+struct d3d9_pixelshader *unsafe_impl_from_IDirect3DPixelShader9(IDirect3DPixelShader9 *iface) DECLSPEC_HIDDEN;
 
 /* --------------- */
 /* IDirect3DQuery9 */
