@@ -43,20 +43,25 @@ static HMODULE hfusion10, hfusion11, hfusion20, hfusion40, hmscoree, hsxs;
 
 static BOOL init_function_pointers( void )
 {
-    static const WCHAR szFusion[] = {'f','u','s','i','o','n','.','d','l','l',0};
+    static const WCHAR szFusion[]    = {'f','u','s','i','o','n','.','d','l','l',0};
+    static const WCHAR szMscoree[]   = {'\\','m','s','c','o','r','e','e','.','d','l','l',0};
+    static const WCHAR szSxs[]       = {'s','x','s','.','d','l','l',0};
     static const WCHAR szVersion10[] = {'v','1','.','0','.','3','7','0','5',0};
     static const WCHAR szVersion11[] = {'v','1','.','1','.','4','3','2','2',0};
     static const WCHAR szVersion20[] = {'v','2','.','0','.','5','0','7','2','7',0};
     static const WCHAR szVersion40[] = {'v','4','.','0','.','3','0','3','1','9',0};
+    WCHAR path[MAX_PATH];
+    DWORD len = GetSystemDirectoryW( path, MAX_PATH );
 
-    if (!hsxs && !(hsxs = LoadLibraryA( "sxs.dll" ))) return FALSE;
+    if (!hsxs && !(hsxs = LoadLibraryW( szSxs ))) return FALSE;
     if (!(pCreateAssemblyCacheSxs = (void *)GetProcAddress( hsxs, "CreateAssemblyCache" )))
     {
         FreeLibrary( hsxs );
         hsxs = NULL;
         return FALSE;
     }
-    if (hmscoree || !(hmscoree = LoadLibraryA( "mscoree.dll" ))) return TRUE;
+    strcpyW( path + len, szMscoree );
+    if (hmscoree || !(hmscoree = LoadLibraryW( path ))) return TRUE;
     pGetFileVersion = (void *)GetProcAddress( hmscoree, "GetFileVersion" ); /* missing from v1.0.3705 */
     if (!(pLoadLibraryShim = (void *)GetProcAddress( hmscoree, "LoadLibraryShim" )))
     {
