@@ -2991,7 +2991,10 @@ static void ShapeCharGlyphProp_BaseIndic( HDC hdc, ScriptCache *psc, SCRIPT_ANAL
         }
 
         if (char_count == 0)
+        {
+            pGlyphProp[i].sva.uJustification = SCRIPT_JUSTIFY_NONE;
             continue;
+        }
 
         if (char_count ==1 && pwcChars[char_index[0]] == 0x0020)  /* space */
         {
