@@ -4630,6 +4630,39 @@ basic_istream_char* __thiscall basic_istream_char_read_bool(basic_istream_char *
     return NULL;
 }
 
+/* ??$getline@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@YAAAV?$basic_istream@DU?$char_traits@D@std@@@0@AAV10@AAV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@D@Z */
+/* ??$getline@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@0@AEAV10@AEAV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@D@Z */
+basic_istream_char* __cdecl basic_istream_char_getline_str_delim(
+        basic_istream_char *istream, basic_string_char *str, char delim)
+{
+    IOSB_iostate state = IOSTATE_failbit;
+    int c;
+
+    TRACE("(%p %p %c)\n", istream, str, delim);
+
+    if(basic_istream_char_sentry_create(istream, TRUE)) {
+        MSVCP_basic_string_char_clear(str);
+
+        for(c = basic_istream_char_get(istream); c!=delim && c!=EOF;
+                c = basic_istream_char_get(istream)) {
+            state = IOSTATE_goodbit;
+            MSVCP_basic_string_char_append_ch(str, c);
+        }
+    }
+    basic_istream_char_sentry_destroy(istream);
+
+    basic_ios_char_setstate(basic_istream_char_get_basic_ios(istream), state);
+    return istream;
+}
+
+/* ??$getline@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@YAAAV?$basic_istream@DU?$char_traits@D@std@@@0@AAV10@AAV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z */
+/* ??$getline@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@0@AEAV10@AEAV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z */
+basic_istream_char* __cdecl basic_istream_char_getline_str(
+        basic_istream_char *istream, basic_string_char *str)
+{
+    return basic_istream_char_getline_str_delim(istream, str, '\n');
+}
+
 /* ??0?$basic_ifstream@DU?$char_traits@D@std@@@std@@QAE@XZ */
 /* ??0?$basic_ifstream@DU?$char_traits@D@std@@@std@@QEAA@XZ */
 DEFINE_THISCALL_WRAPPER(basic_ifstream_char_ctor, 8)

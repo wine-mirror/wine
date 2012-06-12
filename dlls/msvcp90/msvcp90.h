@@ -247,6 +247,8 @@ basic_string_char* __stdcall MSVCP_basic_string_char_ctor_cstr(basic_string_char
 basic_string_char* __stdcall MSVCP_basic_string_char_copy_ctor(basic_string_char*, const basic_string_char*);
 void __stdcall MSVCP_basic_string_char_dtor(basic_string_char*);
 const char* __stdcall MSVCP_basic_string_char_c_str(const basic_string_char*);
+void __thiscall MSVCP_basic_string_char_clear(basic_string_char*);
+basic_string_char* __thiscall MSVCP_basic_string_char_append_ch(basic_string_char*, char);
 
 #define BUF_SIZE_WCHAR 8
 typedef struct _basic_string_wchar
