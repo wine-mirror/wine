@@ -193,7 +193,7 @@ static const struct IDirect3DRMFrameArrayVtbl Direct3DRMFrameArray_Vtbl =
     IDirect3DRMFrameArrayImpl_GetElement
 };
 
-HRESULT Direct3DRMFrameArray_create(IDirect3DRMFrameArray** obj)
+static HRESULT Direct3DRMFrameArray_create(IDirect3DRMFrameArray** obj)
 {
     IDirect3DRMFrameArrayImpl* object;
 
@@ -309,7 +309,7 @@ static const struct IDirect3DRMVisualArrayVtbl Direct3DRMVisualArray_Vtbl =
     IDirect3DRMVisualArrayImpl_GetElement
 };
 
-HRESULT Direct3DRMVisualArray_create(IDirect3DRMVisualArray** ret_iface)
+static HRESULT Direct3DRMVisualArray_create(IDirect3DRMVisualArray** ret_iface)
 {
     IDirect3DRMVisualArrayImpl* object;
 
@@ -429,7 +429,7 @@ static const struct IDirect3DRMLightArrayVtbl Direct3DRMLightArray_Vtbl =
     IDirect3DRMLightArrayImpl_GetElement
 };
 
-HRESULT Direct3DRMLightArray_create(IDirect3DRMLightArray** obj)
+static HRESULT Direct3DRMLightArray_create(IDirect3DRMLightArray** obj)
 {
     IDirect3DRMLightArrayImpl* object;
 
