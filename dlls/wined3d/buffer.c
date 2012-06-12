@@ -1011,7 +1011,20 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
     flags = buffer_sanitize_flags(buffer, flags);
     if (!(flags & WINED3DLOCK_READONLY))
     {
-        if (!buffer_add_dirty_area(buffer, offset, size)) return E_OUTOFMEMORY;
+        if (flags & WINED3DLOCK_DISCARD)
+        {
+            /* DISCARD invalidates the entire buffer, regardless of the
+             * specified offset and size. Some applications also depend on the
+             * entire buffer being uploaded in that case. Two such
+             * applications are Port Royale and Darkstar One. */
+            if (!buffer_add_dirty_area(buffer, 0, 0))
+                return E_OUTOFMEMORY;
+        }
+        else
+        {
+            if (!buffer_add_dirty_area(buffer, offset, size))
+                return E_OUTOFMEMORY;
+        }
     }
 
     count = ++buffer->resource.map_count;
