@@ -2907,8 +2907,10 @@ static inline HRESULT PROPVARIANT_ValidateType(VARTYPE vt)
     {
     case VT_EMPTY:
     case VT_NULL:
+    case VT_I1:
     case VT_I2:
     case VT_I4:
+    case VT_I8:
     case VT_R4:
     case VT_R8:
     case VT_CY:
@@ -2920,7 +2922,6 @@ static inline HRESULT PROPVARIANT_ValidateType(VARTYPE vt)
     case VT_UI1:
     case VT_UI2:
     case VT_UI4:
-    case VT_I8:
     case VT_UI8:
     case VT_LPSTR:
     case VT_LPWSTR:
@@ -2933,8 +2934,10 @@ static inline HRESULT PROPVARIANT_ValidateType(VARTYPE vt)
     case VT_BLOB_OBJECT:
     case VT_CF:
     case VT_CLSID:
+    case VT_I1|VT_VECTOR:
     case VT_I2|VT_VECTOR:
     case VT_I4|VT_VECTOR:
+    case VT_I8|VT_VECTOR:
     case VT_R4|VT_VECTOR:
     case VT_R8|VT_VECTOR:
     case VT_CY|VT_VECTOR:
@@ -2946,7 +2949,6 @@ static inline HRESULT PROPVARIANT_ValidateType(VARTYPE vt)
     case VT_UI1|VT_VECTOR:
     case VT_UI2|VT_VECTOR:
     case VT_UI4|VT_VECTOR:
-    case VT_I8|VT_VECTOR:
     case VT_UI8|VT_VECTOR:
     case VT_LPSTR|VT_VECTOR:
     case VT_LPWSTR|VT_VECTOR:
@@ -2979,8 +2981,10 @@ HRESULT WINAPI PropVariantClear(PROPVARIANT * pvar) /* [in/out] */
     {
     case VT_EMPTY:
     case VT_NULL:
+    case VT_I1:
     case VT_I2:
     case VT_I4:
+    case VT_I8:
     case VT_R4:
     case VT_R8:
     case VT_CY:
@@ -2991,7 +2995,6 @@ HRESULT WINAPI PropVariantClear(PROPVARIANT * pvar) /* [in/out] */
     case VT_UI1:
     case VT_UI2:
     case VT_UI4:
-    case VT_I8:
     case VT_UI8:
     case VT_FILETIME:
         break;
