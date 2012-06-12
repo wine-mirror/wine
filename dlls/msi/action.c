@@ -1017,7 +1017,6 @@ UINT msi_load_all_components( MSIPACKAGE *package )
 
     r = MSI_IterateRecords(view, NULL, load_component, package);
     msiobj_release(&view->hdr);
-    msi_destroy_assembly_caches( package );
     return r;
 }
 

@@ -99,9 +99,11 @@ void msi_destroy_assembly_caches( MSIPACKAGE *package )
 {
     UINT i;
 
-    IAssemblyCache_Release( package->cache_sxs );
-    package->cache_sxs = NULL;
-
+    if (package->cache_sxs)
+    {
+        IAssemblyCache_Release( package->cache_sxs );
+        package->cache_sxs = NULL;
+    }
     for (i = 0; i < CLR_VERSION_MAX; i++)
     {
         if (package->cache_net[i])
