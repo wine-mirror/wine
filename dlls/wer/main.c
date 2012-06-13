@@ -261,7 +261,6 @@ HRESULT WINAPI WerReportCloseHandle(HREPORT hreport)
 HRESULT WINAPI WerReportCreate(PCWSTR eventtype, WER_REPORT_TYPE reporttype, PWER_REPORT_INFORMATION reportinfo, HREPORT *phandle)
 {
     report_t *report;
-    DWORD len;
 
     TRACE("(%s, %d, %p, %p)\n", debugstr_w(eventtype), reporttype, reportinfo, phandle);
     if (reportinfo) {
@@ -274,9 +273,7 @@ HRESULT WINAPI WerReportCreate(PCWSTR eventtype, WER_REPORT_TYPE reporttype, PWE
         return E_INVALIDARG;
     }
 
-    len = lstrlenW(eventtype) + 1;
-
-    report = heap_alloc_zero(len * sizeof(WCHAR) + sizeof(report_t));
+    report = heap_alloc_zero(FIELD_OFFSET(report_t, eventtype[lstrlenW(eventtype) + 1]));
     if (!report)
         return __HRESULT_FROM_WIN32(ERROR_OUTOFMEMORY);
 
