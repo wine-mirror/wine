@@ -733,6 +733,39 @@ static HRESULT LoadIfdMetadata(IStream *input, const GUID *preferred_vendor,
         return hr;
     }
 
+    /* limit number of IFDs to 4096 to avoid infinite loop */
+    for (i = 0; i < 4096; i++)
+    {
+        ULONG next_ifd_offset;
+        LARGE_INTEGER pos;
+        USHORT next_ifd_count;
+
+        hr = IStream_Read(input, &next_ifd_offset, sizeof(next_ifd_offset), NULL);
+        if (FAILED(hr)) break;
+
+        SWAP_ULONG(next_ifd_offset);
+        if (!next_ifd_offset) break;
+
+        pos.QuadPart = next_ifd_offset;
+        hr = IStream_Seek(input, pos, SEEK_SET, NULL);
+        if (FAILED(hr)) break;
+
+        hr = IStream_Read(input, &next_ifd_count, sizeof(next_ifd_count), NULL);
+        if (FAILED(hr)) break;
+
+        SWAP_USHORT(next_ifd_count);
+
+        pos.QuadPart = next_ifd_count * sizeof(*entry);
+        hr = IStream_Seek(input, pos, SEEK_CUR, NULL);
+        if (FAILED(hr)) break;
+    }
+
+    if (FAILED(hr) || i == 4096)
+    {
+        HeapFree(GetProcessHeap(), 0, entry);
+        return WINCODEC_ERR_BADMETADATAHEADER;
+    }
+
     result = HeapAlloc(GetProcessHeap(), 0, count * sizeof(*result));
     if (!result)
     {
