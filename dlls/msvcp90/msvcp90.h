@@ -82,7 +82,7 @@ extern void* (__cdecl *MSVCRT_set_new_handler)(void*);
 
 #endif /* _WIN64 */
 
-#define DEFINE_RTTI_DATA(name, off, base_classes, cl1, cl2, cl3, cl4, mangled_name) \
+#define DEFINE_RTTI_DATA(name, off, base_classes, cl1, cl2, cl3, cl4, cl5, cl6, cl7, cl8, mangled_name) \
 static const type_info name ## _type_info = { \
     &MSVCP_type_info_vtable, \
     NULL, \
@@ -102,7 +102,11 @@ static const rtti_base_array name ## _rtti_base_array = { \
         cl1, \
         cl2, \
         cl3, \
-        cl4 \
+        cl4, \
+        cl5, \
+        cl6, \
+        cl7, \
+        cl8, \
     } \
 }; \
 \
@@ -122,15 +126,17 @@ const rtti_object_locator name ## _rtti = { \
 }
 
 #define DEFINE_RTTI_DATA0(name, off, mangled_name) \
-    DEFINE_RTTI_DATA(name, off, 0, NULL, NULL, NULL, NULL, mangled_name)
+    DEFINE_RTTI_DATA(name, off, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, mangled_name)
 #define DEFINE_RTTI_DATA1(name, off, cl1, mangled_name) \
-    DEFINE_RTTI_DATA(name, off, 0, cl1, NULL, NULL, NULL, mangled_name)
+    DEFINE_RTTI_DATA(name, off, 1, cl1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, mangled_name)
 #define DEFINE_RTTI_DATA2(name, off, cl1, cl2, mangled_name) \
-    DEFINE_RTTI_DATA(name, off, 0, cl1, cl2, NULL, NULL, mangled_name)
+    DEFINE_RTTI_DATA(name, off, 2, cl1, cl2, NULL, NULL, NULL, NULL, NULL, NULL, mangled_name)
 #define DEFINE_RTTI_DATA3(name, off, cl1, cl2, cl3, mangled_name) \
-    DEFINE_RTTI_DATA(name, off, 0, cl1, cl2, cl3, NULL, mangled_name)
+    DEFINE_RTTI_DATA(name, off, 3, cl1, cl2, cl3, NULL, NULL, NULL, NULL, NULL, mangled_name)
 #define DEFINE_RTTI_DATA4(name, off, cl1, cl2, cl3, cl4, mangled_name) \
-    DEFINE_RTTI_DATA(name, off, 0, cl1, cl2, cl3, cl4, mangled_name)
+    DEFINE_RTTI_DATA(name, off, 4, cl1, cl2, cl3, cl4, NULL, NULL, NULL, NULL, mangled_name)
+#define DEFINE_RTTI_DATA8(name, off, cl1, cl2, cl3, cl4, cl5, cl6, cl7, cl8, mangled_name) \
+    DEFINE_RTTI_DATA(name, off, 8, cl1, cl2, cl3, cl4, cl5, cl6, cl7, cl8, mangled_name)
 
 #ifdef __i386__
 
@@ -210,7 +216,7 @@ typedef struct _rtti_base_descriptor
 
 typedef struct _rtti_base_array
 {
-    const rtti_base_descriptor *bases[5]; /* First element is the class itself */
+    const rtti_base_descriptor *bases[9]; /* First element is the class itself */
 } rtti_base_array;
 
 typedef struct _rtti_object_hierarchy

@@ -630,8 +630,8 @@
 @ cdecl -arch=win64 ??0?$basic_ios@_WU?$char_traits@_W@std@@@std@@IEAA@XZ(ptr) basic_ios_wchar_ctor
 @ thiscall -arch=win32 ??0?$basic_ios@_WU?$char_traits@_W@std@@@std@@QAE@PAV?$basic_streambuf@_WU?$char_traits@_W@std@@@1@@Z(ptr ptr) basic_ios_wchar_ctor_streambuf
 @ cdecl -arch=win64 ??0?$basic_ios@_WU?$char_traits@_W@std@@@std@@QEAA@PEAV?$basic_streambuf@_WU?$char_traits@_W@std@@@1@@Z(ptr ptr) basic_ios_wchar_ctor_streambuf
-@ stub -arch=win32 ??0?$basic_iostream@DU?$char_traits@D@std@@@std@@QAE@PAV?$basic_streambuf@DU?$char_traits@D@std@@@1@@Z
-@ stub -arch=win64 ??0?$basic_iostream@DU?$char_traits@D@std@@@std@@QEAA@PEAV?$basic_streambuf@DU?$char_traits@D@std@@@1@@Z
+@ thiscall -arch=win32 ??0?$basic_iostream@DU?$char_traits@D@std@@@std@@QAE@PAV?$basic_streambuf@DU?$char_traits@D@std@@@1@@Z(ptr ptr long) basic_iostream_char_ctor
+@ cdecl -arch=win64 ??0?$basic_iostream@DU?$char_traits@D@std@@@std@@QEAA@PEAV?$basic_streambuf@DU?$char_traits@D@std@@@1@@Z(ptr ptr long) basic_iostream_char_ctor
 @ stub -arch=win32 ??0?$basic_iostream@GU?$char_traits@G@std@@@std@@QAE@PAV?$basic_streambuf@GU?$char_traits@G@std@@@1@@Z
 @ stub -arch=win64 ??0?$basic_iostream@GU?$char_traits@G@std@@@std@@QEAA@PEAV?$basic_streambuf@GU?$char_traits@G@std@@@1@@Z
 @ stub -arch=win32 ??0?$basic_iostream@_WU?$char_traits@_W@std@@@std@@QAE@PAV?$basic_streambuf@_WU?$char_traits@_W@std@@@1@@Z
@@ -698,8 +698,8 @@
 @ stub -arch=win64 ??0?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QEAA@XZ
 @ thiscall -arch=win32 ??0?$basic_ostream@DU?$char_traits@D@std@@@std@@QAE@PAV?$basic_streambuf@DU?$char_traits@D@std@@@1@_N@Z(ptr ptr long long) basic_ostream_char_ctor
 @ cdecl -arch=win64 ??0?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAA@PEAV?$basic_streambuf@DU?$char_traits@D@std@@@1@_N@Z(ptr ptr long long) basic_ostream_char_ctor
-@ thiscall -arch=win32 ??0?$basic_ostream@DU?$char_traits@D@std@@@std@@QAE@W4_Uninitialized@1@_N@Z(ptr long long long) basic_ostream_char_uninitialized
-@ cdecl -arch=win64 ??0?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAA@W4_Uninitialized@1@_N@Z(ptr long long long) basic_ostream_char_uninitialized
+@ thiscall -arch=win32 ??0?$basic_ostream@DU?$char_traits@D@std@@@std@@QAE@W4_Uninitialized@1@_N@Z(ptr long long long) basic_ostream_char_ctor_uninitialized
+@ cdecl -arch=win64 ??0?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAA@W4_Uninitialized@1@_N@Z(ptr long long long) basic_ostream_char_ctor_uninitialized
 @ stub -arch=win32 ??0?$basic_ostream@GU?$char_traits@G@std@@@std@@QAE@PAV?$basic_streambuf@GU?$char_traits@G@std@@@1@_N@Z
 @ stub -arch=win64 ??0?$basic_ostream@GU?$char_traits@G@std@@@std@@QEAA@PEAV?$basic_streambuf@GU?$char_traits@G@std@@@1@_N@Z
 @ stub -arch=win32 ??0?$basic_ostream@GU?$char_traits@G@std@@@std@@QAE@W4_Uninitialized@1@_N@Z
@@ -1170,8 +1170,8 @@
 @ cdecl -arch=win64 ??1?$basic_ios@GU?$char_traits@G@std@@@std@@UEAA@XZ(ptr) basic_ios_wchar_dtor
 @ thiscall -arch=win32 ??1?$basic_ios@_WU?$char_traits@_W@std@@@std@@UAE@XZ(ptr) basic_ios_wchar_dtor
 @ cdecl -arch=win64 ??1?$basic_ios@_WU?$char_traits@_W@std@@@std@@UEAA@XZ(ptr) basic_ios_wchar_dtor
-@ stub -arch=win32 ??1?$basic_iostream@DU?$char_traits@D@std@@@std@@UAE@XZ
-@ stub -arch=win64 ??1?$basic_iostream@DU?$char_traits@D@std@@@std@@UEAA@XZ
+@ thiscall -arch=win32 ??1?$basic_iostream@DU?$char_traits@D@std@@@std@@UAE@XZ(ptr) basic_iostream_char_dtor
+@ cdecl -arch=win64 ??1?$basic_iostream@DU?$char_traits@D@std@@@std@@UEAA@XZ(ptr) basic_iostream_char_dtor
 @ stub -arch=win32 ??1?$basic_iostream@GU?$char_traits@G@std@@@std@@UAE@XZ
 @ stub -arch=win64 ??1?$basic_iostream@GU?$char_traits@G@std@@@std@@UEAA@XZ
 @ stub -arch=win32 ??1?$basic_iostream@_WU?$char_traits@_W@std@@@std@@UAE@XZ
@@ -1791,7 +1791,7 @@
 @ extern ??_7?$basic_ios@DU?$char_traits@D@std@@@std@@6B@ MSVCP_basic_ios_char_vtable
 @ extern ??_7?$basic_ios@GU?$char_traits@G@std@@@std@@6B@ MSVCP_basic_ios_short_vtable
 @ extern ??_7?$basic_ios@_WU?$char_traits@_W@std@@@std@@6B@ MSVCP_basic_ios_wchar_vtable
-# extern ??_7?$basic_iostream@DU?$char_traits@D@std@@@std@@6B@
+@ extern ??_7?$basic_iostream@DU?$char_traits@D@std@@@std@@6B@ MSVCP_basic_iostream_char_vtable
 # extern ??_7?$basic_iostream@GU?$char_traits@G@std@@@std@@6B@
 # extern ??_7?$basic_iostream@_WU?$char_traits@_W@std@@@std@@6B@
 @ extern ??_7?$basic_istream@DU?$char_traits@D@std@@@std@@6B@ MSVCP_basic_istream_char_vtable
@@ -1874,8 +1874,8 @@
 @ extern ??_8?$basic_ifstream@DU?$char_traits@D@std@@@std@@7B@ basic_ifstream_char_vbtable
 # extern ??_8?$basic_ifstream@GU?$char_traits@G@std@@@std@@7B@
 # extern ??_8?$basic_ifstream@_WU?$char_traits@_W@std@@@std@@7B@
-# extern ??_8?$basic_iostream@DU?$char_traits@D@std@@@std@@7B?$basic_istream@DU?$char_traits@D@std@@@1@@
-# extern ??_8?$basic_iostream@DU?$char_traits@D@std@@@std@@7B?$basic_ostream@DU?$char_traits@D@std@@@1@@
+@ extern ??_8?$basic_iostream@DU?$char_traits@D@std@@@std@@7B?$basic_istream@DU?$char_traits@D@std@@@1@@ basic_iostream_char_vbtable1
+@ extern ??_8?$basic_iostream@DU?$char_traits@D@std@@@std@@7B?$basic_ostream@DU?$char_traits@D@std@@@1@@ basic_iostream_char_vbtable2
 # extern ??_8?$basic_iostream@GU?$char_traits@G@std@@@std@@7B?$basic_istream@GU?$char_traits@G@std@@@1@@
 # extern ??_8?$basic_iostream@GU?$char_traits@G@std@@@std@@7B?$basic_ostream@GU?$char_traits@G@std@@@1@@
 # extern ??_8?$basic_iostream@_WU?$char_traits@_W@std@@@std@@7B?$basic_istream@_WU?$char_traits@_W@std@@@1@@
@@ -1913,8 +1913,8 @@
 @ stub -arch=win64 ??_D?$basic_ifstream@GU?$char_traits@G@std@@@std@@QEAAXXZ
 @ stub -arch=win32 ??_D?$basic_ifstream@_WU?$char_traits@_W@std@@@std@@QAEXXZ
 @ stub -arch=win64 ??_D?$basic_ifstream@_WU?$char_traits@_W@std@@@std@@QEAAXXZ
-@ stub -arch=win32 ??_D?$basic_iostream@DU?$char_traits@D@std@@@std@@QAEXXZ
-@ stub -arch=win64 ??_D?$basic_iostream@DU?$char_traits@D@std@@@std@@QEAAXXZ
+@ thiscall -arch=win32 ??_D?$basic_iostream@DU?$char_traits@D@std@@@std@@QAEXXZ(ptr) basic_iostream_char_vbase_dtor
+@ cdecl -arch=win64 ??_D?$basic_iostream@DU?$char_traits@D@std@@@std@@QEAAXXZ(ptr) basic_iostream_char_vbase_dtor
 @ stub -arch=win32 ??_D?$basic_iostream@GU?$char_traits@G@std@@@std@@QAEXXZ
 @ stub -arch=win64 ??_D?$basic_iostream@GU?$char_traits@G@std@@@std@@QEAAXXZ
 @ stub -arch=win32 ??_D?$basic_iostream@_WU?$char_traits@_W@std@@@std@@QAEXXZ

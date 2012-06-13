@@ -220,6 +220,14 @@ typedef struct {
 } basic_istream_char;
 
 typedef struct {
+    basic_istream_char base1;
+    basic_ostream_char base2;
+    /* virtual inheritance
+     * basic_ios_char basic_ios;
+     */
+} basic_iostream_char;
+
+typedef struct {
     basic_istream_char base;
     basic_filebuf_char filebuf;
     /* virtual inheritance
@@ -263,6 +271,13 @@ const int basic_istream_char_vbtable[] = {0, sizeof(basic_istream_char)};
 /* ??_7?$basic_istream@DU?$char_traits@D@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_istream_char_vtable;
 
+/* ??_8?$basic_iostream@DU?$char_traits@D@std@@@std@@7B?$basic_istream@DU?$char_traits@D@std@@@1@@ */
+const int basic_iostream_char_vbtable1[] = {0, sizeof(basic_iostream_char)};
+/* ??_8?$basic_iostream@DU?$char_traits@D@std@@@std@@7B?$basic_ostream@DU?$char_traits@D@std@@@1@@ */
+const int basic_iostream_char_vbtable2[] = {0, sizeof(basic_iostream_char)-FIELD_OFFSET(basic_iostream_char, base2)};
+/* ??_7?$basic_iostream@DU?$char_traits@D@std@@@std@@6B@ */
+extern const vtable_ptr MSVCP_basic_iostream_char_vtable;
+
 /*??_8?$basic_ifstream@DU?$char_traits@D@std@@@std@@7B@ */
 const int basic_ifstream_char_vbtable[] = {0, sizeof(basic_ifstream_char)};
 /* ??_7?$basic_ifstream@DU?$char_traits@D@std@@@std@@6B@ */
@@ -290,6 +305,12 @@ DEFINE_RTTI_DATA3(basic_ostream_char, sizeof(basic_ostream_char), &basic_ios_cha
 DEFINE_RTTI_DATA3(basic_istream_char, sizeof(basic_istream_char), &basic_ios_char_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
         ".?AV?$basic_istream@DU?$char_traits@D@std@@@std@@");
+DEFINE_RTTI_DATA8(basic_iostream_char, sizeof(basic_iostream_char),
+        &basic_istream_char_rtti_base_descriptor, &basic_ios_char_rtti_base_descriptor,
+        &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
+        &basic_ostream_char_rtti_base_descriptor, &basic_ios_char_rtti_base_descriptor,
+        &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
+        ".?AV?$basic_iostream@DU?$char_traits@D@std@@@std@@");
 DEFINE_RTTI_DATA4(basic_ifstream_char, sizeof(basic_ifstream_char),
         &basic_istream_char_rtti_base_descriptor, &basic_ios_char_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
@@ -361,6 +382,7 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(basic_filebuf_char_imbue));
     __ASM_VTABLE(basic_ostream_char, "");
     __ASM_VTABLE(basic_istream_char, "");
+    __ASM_VTABLE(basic_iostream_char, "");
     __ASM_VTABLE(basic_ifstream_char, "");
 #ifndef __GNUC__
 }
@@ -3510,8 +3532,8 @@ basic_ostream_char* __thiscall basic_ostream_char_ctor(basic_ostream_char *this,
 
 /* ??0?$basic_ostream@DU?$char_traits@D@std@@@std@@QAE@W4_Uninitialized@1@_N@Z */
 /* ??0?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAA@W4_Uninitialized@1@_N@Z */
-DEFINE_THISCALL_WRAPPER(basic_ostream_char_uninitialized, 16)
-basic_ostream_char* __thiscall basic_ostream_char_uninitialized(basic_ostream_char *this,
+DEFINE_THISCALL_WRAPPER(basic_ostream_char_ctor_uninitialized, 16)
+basic_ostream_char* __thiscall basic_ostream_char_ctor_uninitialized(basic_ostream_char *this,
         int uninitialized, MSVCP_bool addstd, MSVCP_bool virt_init)
 {
     basic_ios_char *base;
@@ -4661,6 +4683,74 @@ basic_istream_char* __cdecl basic_istream_char_getline_str(
         basic_istream_char *istream, basic_string_char *str)
 {
     return basic_istream_char_getline_str_delim(istream, str, '\n');
+}
+
+/* ??0?$basic_iostream@DU?$char_traits@D@std@@@std@@QAE@PAV?$basic_streambuf@DU?$char_traits@D@std@@@1@@Z */
+/* ??0?$basic_iostream@DU?$char_traits@D@std@@@std@@QEAA@PEAV?$basic_streambuf@DU?$char_traits@D@std@@@1@@Z */
+DEFINE_THISCALL_WRAPPER(basic_iostream_char_ctor, 12)
+basic_iostream_char* __thiscall basic_iostream_char_ctor(basic_iostream_char *this, basic_streambuf_char *strbuf, MSVCP_bool virt_init)
+{
+    basic_ios_char *basic_ios;
+
+    TRACE("(%p %p %d)\n", this, strbuf, virt_init);
+
+    if(virt_init) {
+        this->base1.vbtable = basic_iostream_char_vbtable1;
+        this->base2.vbtable = basic_iostream_char_vbtable2;
+        basic_ios = basic_istream_char_get_basic_ios(&this->base1);
+        basic_ios_char_ctor(basic_ios);
+    }else {
+        basic_ios = basic_istream_char_get_basic_ios(&this->base1);
+    }
+
+    basic_ios->base.vtable = &MSVCP_basic_iostream_char_vtable;
+
+    basic_istream_char_ctor(&this->base1, strbuf, FALSE, FALSE);
+    basic_ostream_char_ctor_uninitialized(&this->base2, 0, FALSE, FALSE);
+    return this;
+}
+
+/* ??1?$basic_iostream@DU?$char_traits@D@std@@@std@@UAE@XZ */
+/* ??1?$basic_iostream@DU?$char_traits@D@std@@@std@@UEAA@XZ */
+DEFINE_THISCALL_WRAPPER(basic_iostream_char_dtor, 4)
+void __thiscall basic_iostream_char_dtor(basic_iostream_char *this)
+{
+    TRACE("(%p)\n", this);
+    basic_ostream_char_dtor(&this->base2);
+    basic_istream_char_dtor(&this->base1);
+}
+
+/* ??_D?$basic_iostream@DU?$char_traits@D@std@@@std@@QAEXXZ */
+/* ??_D?$basic_iostream@DU?$char_traits@D@std@@@std@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(basic_iostream_char_vbase_dtor, 4)
+void __thiscall basic_iostream_char_vbase_dtor(basic_iostream_char *this)
+{
+    TRACE("(%p)\n", this);
+    basic_iostream_char_dtor(this);
+    basic_ios_char_dtor(basic_istream_char_get_basic_ios(&this->base1));
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_iostream_char_vector_dtor, 8)
+basic_iostream_char* __thiscall MSVCP_basic_iostream_char_vector_dtor(basic_ios_char *base, unsigned int flags)
+{
+    basic_iostream_char *this = (basic_iostream_char *)((char*)base - basic_iostream_char_vbtable1[1] + basic_iostream_char_vbtable1[0]);
+
+    TRACE("(%p %x)\n", this, flags);
+
+    if(flags & 2) {
+        /* we have an array, with the number of elements stored before the first object */
+        int i, *ptr = (int *)this-1;
+
+        for(i=*ptr-1; i>=0; i--)
+            basic_iostream_char_vbase_dtor(this+i);
+        MSVCRT_operator_delete(ptr);
+    } else {
+        basic_iostream_char_vbase_dtor(this);
+        if(flags & 1)
+            MSVCRT_operator_delete(this);
+    }
+
+    return this;
 }
 
 /* ??0?$basic_ifstream@DU?$char_traits@D@std@@@std@@QAE@XZ */
