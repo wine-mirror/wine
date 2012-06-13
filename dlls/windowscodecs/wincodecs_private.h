@@ -55,6 +55,8 @@ extern HRESULT copy_pixels(UINT bpp, const BYTE *srcbuffer,
 
 extern void reverse_bgr8(UINT bytesperpixel, LPBYTE bits, UINT width, UINT height, INT stride) DECLSPEC_HIDDEN;
 
+extern HRESULT get_pixelformat_bpp(const GUID *pixelformat, UINT *bpp) DECLSPEC_HIDDEN;
+
 extern HRESULT CreatePropertyBag2(IPropertyBag2 **ppPropertyBag2) DECLSPEC_HIDDEN;
 
 extern HRESULT CreateComponentInfo(REFCLSID clsid, IWICComponentInfo **ppIInfo) DECLSPEC_HIDDEN;

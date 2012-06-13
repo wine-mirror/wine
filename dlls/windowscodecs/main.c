@@ -17,6 +17,7 @@
  */
 
 
+#define COBJMACROS
 #include "config.h"
 
 #include <stdarg.h>
@@ -135,4 +136,28 @@ void reverse_bgr8(UINT bytesperpixel, LPBYTE bits, UINT width, UINT height, INT 
             pixel += bytesperpixel;
         }
     }
+}
+
+HRESULT get_pixelformat_bpp(const GUID *pixelformat, UINT *bpp)
+{
+    HRESULT hr;
+    IWICComponentInfo *info;
+    IWICPixelFormatInfo *formatinfo;
+
+    hr = CreateComponentInfo(pixelformat, &info);
+    if (SUCCEEDED(hr))
+    {
+        hr = IWICComponentInfo_QueryInterface(info, &IID_IWICPixelFormatInfo, (void**)&formatinfo);
+
+        if (SUCCEEDED(hr))
+        {
+            hr = IWICPixelFormatInfo_GetBitsPerPixel(formatinfo, bpp);
+
+            IWICPixelFormatInfo_Release(formatinfo);
+        }
+
+        IWICComponentInfo_Release(info);
+    }
+
+    return hr;
 }
