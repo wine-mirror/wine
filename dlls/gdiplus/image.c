@@ -3889,6 +3889,9 @@ GpStatus WINGDIPAPI GdipImageRotateFlip(GpImage *image, RotateFlipType type)
 
     TRACE("(%p, %u)\n", image, type);
 
+    if (!image)
+        return InvalidParameter;
+
     rotate_90 = type&1;
     flip_x = (type&6) == 2 || (type&6) == 4;
     flip_y = (type&3) == 1 || (type&3) == 2;
