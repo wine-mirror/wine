@@ -1601,7 +1601,7 @@ void pp_do_include(char *fname, int type)
 	/* Undo the effect of the quotation */
 	fname[n-1] = '\0';
 
-	if((fp = pp_open_include(fname+1, type ? pp_status.input : NULL, &newpath)) == NULL)
+	if((fp = pp_open_include(fname+1, type, pp_status.input, &newpath)) == NULL)
 	{
 		ppy_error("Unable to open include file %s", fname+1);
 		return;

@@ -143,7 +143,7 @@ static void wpp_warning(const char *file, int line, int col, const char *near,
     wpp_write_message_var("\n");
 }
 
-static char *wpp_lookup_mem(const char *filename, const char *parent_name,
+static char *wpp_lookup_mem(const char *filename, int type, const char *parent_name,
                             char **include_path, int include_path_count)
 {
     /* Here we return always ok. We will maybe fail on the next wpp_open_mem */
