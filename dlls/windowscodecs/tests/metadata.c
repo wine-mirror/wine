@@ -142,6 +142,8 @@ static void load_stream(IUnknown *reader, const char *data, int data_size)
     HRESULT hr;
     IWICPersistStream *persist;
     IStream *stream;
+    LARGE_INTEGER pos;
+    ULARGE_INTEGER cur_pos;
 
     stream = create_stream(data, data_size);
     if (!stream)
@@ -157,6 +159,13 @@ static void load_stream(IUnknown *reader, const char *data, int data_size)
 
         IWICPersistStream_Release(persist);
     }
+
+    pos.QuadPart = 0;
+    hr = IStream_Seek(stream, pos, SEEK_CUR, &cur_pos);
+    ok(hr == S_OK, "IStream_Seek error %#x\n", hr);
+    /* IFD metadata reader doesn't rewind the stream to the start */
+    ok(cur_pos.QuadPart == 0 || cur_pos.QuadPart <= data_size,
+       "current stream pos is at %x/%x, data size %x\n", cur_pos.u.LowPart, cur_pos.u.HighPart, data_size);
 
     IStream_Release(stream);
 }
