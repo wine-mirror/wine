@@ -444,37 +444,6 @@ static ULONG WINAPI d3d_texture1_AddRef(IDirect3DTexture *iface)
     return IUnknown_AddRef(surface->texture_outer);
 }
 
-/*****************************************************************************
- * ddraw_surface_destroy
- *
- * A helper function for IDirectDrawSurface7::Release
- *
- * Frees the surface, regardless of its refcount.
- *  See IDirectDrawSurface7::Release for more information
- *
- * Params:
- *  This: Surface to free
- *
- *****************************************************************************/
-static void ddraw_surface_destroy(struct ddraw_surface *This)
-{
-    TRACE("surface %p.\n", This);
-
-    /* Check the iface count and give a warning */
-    if(This->iface_count > 1)
-    {
-        /* This can happen when a complex surface is destroyed,
-         * because the 2nd surface was addref()ed when the app
-         * called GetAttachedSurface
-         */
-        WARN("(%p): Destroying surface with refcounts 7: %d 4: %d 3: %d 2: %d 1: %d\n",
-                This, This->ref7, This->ref4, This->ref3, This->ref2, This->ref1);
-    }
-
-    if (This->wined3d_surface)
-        wined3d_surface_decref(This->wined3d_surface);
-}
-
 static void ddraw_surface_cleanup(struct ddraw_surface *surface)
 {
     struct ddraw_surface *surf;
@@ -498,20 +467,24 @@ static void ddraw_surface_cleanup(struct ddraw_surface *surface)
 
         surf = surface->complex_array[i];
         surface->complex_array[i] = NULL;
-        while (surf)
-        {
-            struct ddraw_surface *destroy = surf;
-            surf = surf->complex_array[0];              /* Iterate through the "tree" */
-            ddraw_surface_destroy(destroy);             /* Destroy it */
-        }
+        ddraw_surface_cleanup(surf);
     }
 
     if (surface->device1)
         IUnknown_Release(&surface->device1->IUnknown_inner);
     ifaceToRelease = surface->ifaceToRelease;
 
-    /* Destroy the root surface. */
-    ddraw_surface_destroy(surface);
+    if (surface->iface_count > 1)
+    {
+        /* This can happen when a complex surface is destroyed, because the
+         * 2nd surface was addref()ed when the app called
+         * GetAttachedSurface(). */
+        WARN("Destroying surface %p with refcounts 7: %u 4: %u 3: %u 2: %u 1: %u.\n",
+                surface, surface->ref7, surface->ref4, surface->ref3, surface->ref2, surface->ref1);
+    }
+
+    if (surface->wined3d_surface)
+        wined3d_surface_decref(surface->wined3d_surface);
 
     /* Reduce the ddraw refcount */
     if (ifaceToRelease)

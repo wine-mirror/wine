@@ -1958,7 +1958,7 @@ static void CubeMapTest(void)
     IDirectDrawSurface7_Release(cubemap);
 
     ref = getRefcount((IUnknown *) palette);
-    todo_wine ok(ref == 1, "Refcount is %u, expected 1\n", ref);
+    ok(ref == 1, "Refcount is %u, expected 1\n", ref);
 
     IDirectDrawPalette_Release(palette);
 
