@@ -19,6 +19,7 @@
 #include "config.h"
 
 #include <stdarg.h>
+#include <stdio.h>
 
 #define COBJMACROS
 #define NONAMELESSUNION
@@ -598,13 +599,133 @@ HRESULT UnknownMetadataReader_CreateInstance(IUnknown *pUnkOuter, REFIID iid, vo
     return MetadataReader_Create(&UnknownMetadataReader_Vtbl, pUnkOuter, iid, ppv);
 }
 
+#include "pshpack2.h"
+struct IFD_entry
+{
+    SHORT id;
+    SHORT type;
+    ULONG length;
+    LONG  value;
+};
+
+struct IFD_rational
+{
+    LONG numerator;
+    LONG denominator;
+};
+#include "poppack.h"
+
+#define IFD_BYTE 1
+#define IFD_ASCII 2
+#define IFD_SHORT 3
+#define IFD_LONG 4
+#define IFD_RATIONAL 5
+#define IFD_SBYTE 6
+#define IFD_UNDEFINED 7
+#define IFD_SSHORT 8
+#define IFD_SLONG 9
+#define IFD_SRATIONAL 10
+#define IFD_FLOAT 11
+#define IFD_DOUBLE 12
+#define IFD_IFD 13
+
+static HRESULT load_IFD_entry(IStream *input, struct IFD_entry *entry, MetadataItem *item)
+{
+    item->schema.vt = VT_EMPTY;
+    item->id.vt = VT_UI2;
+    item->id.u.uiVal = entry->id;
+
+    switch (entry->type)
+    {
+    case IFD_SHORT:
+        if (entry->length == 1)
+        {
+            item->value.vt = VT_UI2;
+            item->value.u.uiVal = entry->value;
+            break;
+        }
+        FIXME("loading multiple short fields is not implemented\n");
+        break;
+    case IFD_LONG:
+        if (entry->length == 1)
+        {
+            item->value.vt = VT_UI4;
+            item->value.u.ulVal = entry->value;
+            break;
+        }
+        FIXME("loading multiple long fields is not implemented\n");
+        break;
+    case IFD_RATIONAL:
+        if (entry->length == 1)
+        {
+            HRESULT hr;
+            LARGE_INTEGER pos;
+            struct IFD_rational rational;
+
+            pos.QuadPart = entry->value;
+            hr = IStream_Seek(input, pos, SEEK_SET, NULL);
+            if (FAILED(hr)) return hr;
+
+            item->value.vt = VT_UI8;
+            hr = IStream_Read(input, &rational , sizeof(rational), NULL);
+            if (FAILED(hr)) return hr;
+            item->value.u.uhVal.QuadPart = ((LONGLONG)rational.denominator << 32) | rational.numerator;
+            break;
+        }
+        FIXME("loading multiple rational fields is not implemented\n");
+        break;
+    default:
+        FIXME("loading field of type %d is not implemented\n", entry->type);
+        break;
+    }
+    return S_OK;
+}
+
 static HRESULT LoadIfdMetadata(IStream *input, const GUID *preferred_vendor,
     DWORD persist_options, MetadataItem **items, DWORD *item_count)
 {
-    FIXME("stub\n");
+    HRESULT hr;
+    MetadataItem *result;
+    USHORT count, i;
+    struct IFD_entry *entry;
 
-    *items = NULL;
-    *item_count = 0;
+    TRACE("\n");
+
+    hr = IStream_Read(input, &count, sizeof(count), NULL);
+    if (FAILED(hr)) return hr;
+
+    entry = HeapAlloc(GetProcessHeap(), 0, count * sizeof(*entry));
+    if (!entry) return E_OUTOFMEMORY;
+
+    hr = IStream_Read(input, entry, count * sizeof(*entry), NULL);
+    if (FAILED(hr))
+    {
+        HeapFree(GetProcessHeap(), 0, entry);
+        return hr;
+    }
+
+    result = HeapAlloc(GetProcessHeap(), 0, count * sizeof(*result));
+    if (!result)
+    {
+        HeapFree(GetProcessHeap(), 0, entry);
+        return E_OUTOFMEMORY;
+    }
+
+    for (i = 0; i < count; i++)
+    {
+        hr = load_IFD_entry(input, &entry[i], &result[i]);
+        if (FAILED(hr))
+        {
+            HeapFree(GetProcessHeap(), 0, entry);
+            HeapFree(GetProcessHeap(), 0, result);
+            return hr;
+        }
+    }
+
+    HeapFree(GetProcessHeap(), 0, entry);
+
+    *items = result;
+    *item_count = count;
 
     return S_OK;
 }

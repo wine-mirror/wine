@@ -386,7 +386,6 @@ static void test_metadata_IFD(void)
 
     hr = IWICMetadataReader_GetCount(reader, &count);
     ok(hr == S_OK, "GetCount error %#x\n", hr);
-todo_wine
     ok(count == 6, "unexpected count %u\n", count);
 
     hr = IWICMetadataReader_GetEnumerator(reader, NULL);
