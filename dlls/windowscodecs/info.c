@@ -50,6 +50,7 @@ static const WCHAR bitsperpixel_valuename[] = {'B','i','t','L','e','n','g','t','
 static const WCHAR channelcount_valuename[] = {'C','h','a','n','n','e','l','C','o','u','n','t',0};
 static const WCHAR channelmasks_keyname[] = {'C','h','a','n','n','e','l','M','a','s','k','s',0};
 static const WCHAR numericrepresentation_valuename[] = {'N','u','m','e','r','i','c','R','e','p','r','e','s','e','n','t','a','t','i','o','n',0};
+static const WCHAR supportstransparency_valuename[] = {'S','u','p','p','o','r','t','s','T','r','a','n','s','p','a','r','e','n','c','y',0};
 
 static HRESULT ComponentInfo_GetStringValue(HKEY classkey, LPCWSTR value,
     UINT buffer_size, WCHAR *buffer, UINT *actual_size)
@@ -1324,8 +1325,11 @@ static HRESULT WINAPI PixelFormatInfo_GetChannelMask(IWICPixelFormatInfo2 *iface
 static HRESULT WINAPI PixelFormatInfo_SupportsTransparency(IWICPixelFormatInfo2 *iface,
     BOOL *pfSupportsTransparency)
 {
-    FIXME("(%p,%p): stub\n", iface, pfSupportsTransparency);
-    return E_NOTIMPL;
+    PixelFormatInfo *This = impl_from_IWICPixelFormatInfo2(iface);
+
+    TRACE("(%p,%p)\n", iface, pfSupportsTransparency);
+
+    return ComponentInfo_GetDWORDValue(This->classkey, supportstransparency_valuename, (DWORD*)pfSupportsTransparency);
 }
 
 static HRESULT WINAPI PixelFormatInfo_GetNumericRepresentation(IWICPixelFormatInfo2 *iface,
