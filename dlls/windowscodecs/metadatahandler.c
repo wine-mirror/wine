@@ -1,5 +1,6 @@
 /*
  * Copyright 2012 Vincent Povirk for CodeWeavers
+ * Copyright 2012 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -26,6 +27,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winternl.h"
 #include "objbase.h"
 #include "wincodec.h"
 #include "wincodecsdk.h"
@@ -599,12 +601,16 @@ HRESULT UnknownMetadataReader_CreateInstance(IUnknown *pUnkOuter, REFIID iid, vo
     return MetadataReader_Create(&UnknownMetadataReader_Vtbl, pUnkOuter, iid, ppv);
 }
 
+#define SWAP_USHORT(x) do { if (!native_byte_order) (x) = RtlUshortByteSwap(x); } while(0)
+#define SWAP_ULONG(x) do { if (!native_byte_order) (x) = RtlUlongByteSwap(x); } while(0)
+#define SWAP_ULONGLONG(x) do { if (!native_byte_order) (x) = RtlUlonglongByteSwap(x); } while(0)
+
 #include "pshpack2.h"
 struct IFD_entry
 {
     SHORT id;
     SHORT type;
-    ULONG length;
+    ULONG count;
     LONG  value;
 };
 
@@ -629,47 +635,60 @@ struct IFD_rational
 #define IFD_DOUBLE 12
 #define IFD_IFD 13
 
-static HRESULT load_IFD_entry(IStream *input, struct IFD_entry *entry, MetadataItem *item)
+static HRESULT load_IFD_entry(IStream *input, const struct IFD_entry *entry,
+                              MetadataItem *item, BOOL native_byte_order)
 {
+    ULONG count, value;
+    SHORT type;
+
     item->schema.vt = VT_EMPTY;
     item->id.vt = VT_UI2;
     item->id.u.uiVal = entry->id;
+    SWAP_USHORT(item->id.u.uiVal);
 
-    switch (entry->type)
+    count = entry->count;
+    SWAP_ULONG(count);
+    type = entry->type;
+    SWAP_USHORT(type);
+    value = entry->value;
+    SWAP_ULONG(value);
+
+    switch (type)
     {
     case IFD_SHORT:
-        if (entry->length == 1)
+        if (count == 1)
         {
             item->value.vt = VT_UI2;
-            item->value.u.uiVal = entry->value;
+            item->value.u.uiVal = value;
             break;
         }
         FIXME("loading multiple short fields is not implemented\n");
         break;
     case IFD_LONG:
-        if (entry->length == 1)
+        if (count == 1)
         {
             item->value.vt = VT_UI4;
-            item->value.u.ulVal = entry->value;
+            item->value.u.ulVal = value;
             break;
         }
         FIXME("loading multiple long fields is not implemented\n");
         break;
     case IFD_RATIONAL:
-        if (entry->length == 1)
+        if (count == 1)
         {
             HRESULT hr;
             LARGE_INTEGER pos;
             struct IFD_rational rational;
 
-            pos.QuadPart = entry->value;
+            pos.QuadPart = value;
             hr = IStream_Seek(input, pos, SEEK_SET, NULL);
             if (FAILED(hr)) return hr;
 
             item->value.vt = VT_UI8;
-            hr = IStream_Read(input, &rational , sizeof(rational), NULL);
+            hr = IStream_Read(input, &rational, sizeof(rational), NULL);
             if (FAILED(hr)) return hr;
             item->value.u.uhVal.QuadPart = ((LONGLONG)rational.denominator << 32) | rational.numerator;
+            SWAP_ULONGLONG(item->value.u.uhVal.QuadPart);
             break;
         }
         FIXME("loading multiple rational fields is not implemented\n");
@@ -688,11 +707,21 @@ static HRESULT LoadIfdMetadata(IStream *input, const GUID *preferred_vendor,
     MetadataItem *result;
     USHORT count, i;
     struct IFD_entry *entry;
+    BOOL native_byte_order = TRUE;
 
     TRACE("\n");
 
+#ifdef WORDS_BIGENDIAN
+    if (persist_options & WICPersistOptionsLittleEndian)
+#else
+    if (persist_options & WICPersistOptionsBigEndian)
+#endif
+        native_byte_order = FALSE;
+
     hr = IStream_Read(input, &count, sizeof(count), NULL);
     if (FAILED(hr)) return hr;
+
+    SWAP_USHORT(count);
 
     entry = HeapAlloc(GetProcessHeap(), 0, count * sizeof(*entry));
     if (!entry) return E_OUTOFMEMORY;
@@ -713,7 +742,7 @@ static HRESULT LoadIfdMetadata(IStream *input, const GUID *preferred_vendor,
 
     for (i = 0; i < count; i++)
     {
-        hr = load_IFD_entry(input, &entry[i], &result[i]);
+        hr = load_IFD_entry(input, &entry[i], &result[i], native_byte_order);
         if (FAILED(hr))
         {
             HeapFree(GetProcessHeap(), 0, entry);
