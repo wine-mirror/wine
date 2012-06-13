@@ -85,7 +85,7 @@ static const char * const _country_synonyms[] =
     "german-swiss", "des",
     "italian-swiss", "its",
     "german-austrian", "dea",
-    "portugese", "ptb",
+    "portuguese", "ptb",
     "portuguese-brazil", "ptb",
     "spanish-mexican", "esm",
     "norwegian-bokmal", "nor",
