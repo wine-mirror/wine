@@ -3029,8 +3029,7 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
     }
 
     set_devices_and_printerports(pi);
-    RegSetValueExW(hkeyPrinter, AttributesW, 0, REG_DWORD,
-		   (LPBYTE)&pi->Attributes, sizeof(DWORD));
+    set_reg_DWORD(hkeyPrinter, AttributesW, pi->Attributes);
     set_reg_szW(hkeyPrinter, DatatypeW, pi->pDatatype);
 
     /* See if we can load the driver.  We may need the devmode structure anyway
@@ -3076,16 +3075,12 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
     set_reg_szW(hkeyPrinter, PortW, pi->pPortName);
     set_reg_szW(hkeyPrinter, Print_ProcessorW, pi->pPrintProcessor);
     set_reg_szW(hkeyPrinter, Printer_DriverW, pi->pDriverName);
-    RegSetValueExW(hkeyPrinter, PriorityW, 0, REG_DWORD,
-                   (LPBYTE)&pi->Priority, sizeof(DWORD));
+    set_reg_DWORD(hkeyPrinter, PriorityW, pi->Priority);
     set_reg_szW(hkeyPrinter, Separator_FileW, pi->pSepFile);
     set_reg_szW(hkeyPrinter, Share_NameW, pi->pShareName);
-    RegSetValueExW(hkeyPrinter, StartTimeW, 0, REG_DWORD,
-                   (LPBYTE)&pi->StartTime, sizeof(DWORD));
-    RegSetValueExW(hkeyPrinter, StatusW, 0, REG_DWORD,
-                   (LPBYTE)&pi->Status, sizeof(DWORD));
-    RegSetValueExW(hkeyPrinter, UntilTimeW, 0, REG_DWORD,
-                   (LPBYTE)&pi->UntilTime, sizeof(DWORD));
+    set_reg_DWORD(hkeyPrinter, StartTimeW, pi->StartTime);
+    set_reg_DWORD(hkeyPrinter, StatusW, pi->Status);
+    set_reg_DWORD(hkeyPrinter, UntilTimeW, pi->UntilTime);
 
     RegCloseKey(hkeyPrinter);
     RegCloseKey(hkeyPrinters);
