@@ -21,6 +21,10 @@
 
 #include "d3d11shader.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define D3DCOMPILE_DEBUG                          0x0001
 #define D3DCOMPILE_SKIP_VALIDATION                0x0002
 #define D3DCOMPILE_SKIP_OPTIMIZATION              0x0004
@@ -84,5 +88,9 @@ HRESULT WINAPI D3DCreateBlob(SIZE_T data_size, ID3DBlob **blob);
 HRESULT WINAPI D3DPreprocess(const void *data, SIZE_T size, const char *filename,
         const D3D_SHADER_MACRO *defines, ID3DInclude *include,
         ID3DBlob **shader, ID3DBlob **error_messages);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
