@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-06-06 01:03+0200\n"
+"PO-Revision-Date: 2012-06-13 22:52+0200\n"
 "Last-Translator: Julian Rüger\n"
 "Language-Team: none\n"
 "Language: German\n"
@@ -3435,11 +3435,11 @@ msgstr "Joysticks"
 
 #: joy.rc:36 winecfg.rc:204
 msgid "&Disable"
-msgstr "&Ausschalten"
+msgstr "&Deaktivieren"
 
 #: joy.rc:37
 msgid "&Enable"
-msgstr "&Einschalten"
+msgstr "&Aktivieren"
 
 #: joy.rc:38
 msgid "Connected"
@@ -3447,7 +3447,7 @@ msgstr "Verbunden"
 
 #: joy.rc:40
 msgid "Disabled"
-msgstr "Ausgeschaltet"
+msgstr "Deaktiviert"
 
 #: joy.rc:46
 msgid "Test Joystick"
@@ -3455,19 +3455,19 @@ msgstr "Joystick testen"
 
 #: joy.rc:50
 msgid "Buttons"
-msgstr ""
+msgstr "Tasten"
 
 #: joy.rc:51
 msgid "X,Y"
-msgstr ""
+msgstr "X,Y"
 
 #: joy.rc:52
 msgid "Rx,Ry"
-msgstr ""
+msgstr "Rx,Ry"
 
 #: joy.rc:53
 msgid "Z, Rz"
-msgstr ""
+msgstr "Z, Rz"
 
 #: joy.rc:58
 msgid "Test Force Feedback"
@@ -3475,7 +3475,7 @@ msgstr "Force Feedback testen"
 
 #: joy.rc:28
 msgid "Game Controllers"
-msgstr "Spielsteuerungsgeräte"
+msgstr "Gamecontroller"
 
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
