@@ -1059,6 +1059,7 @@ static BOOL WINAPI fpGetPrinterDriverDirectory(LPWSTR pName, LPWSTR pEnvironment
 {
     DWORD needed;
     const printenv_t * env;
+    WCHAR * const dir = (WCHAR *)pDriverDirectory;
 
     TRACE("(%s, %s, %d, %p, %d, %p)\n", debugstr_w(pName),
           debugstr_w(pEnvironment), Level, pDriverDirectory, cbBuf, pcbNeeded);
@@ -1087,18 +1088,18 @@ static BOOL WINAPI fpGetPrinterDriverDirectory(LPWSTR pName, LPWSTR pEnvironment
         return FALSE;
     }
 
-    if (pDriverDirectory == NULL) {
+    if (dir == NULL) {
         /* ERROR_INVALID_USER_BUFFER is NT, ERROR_INVALID_PARAMETER is win9x */
         SetLastError(ERROR_INVALID_USER_BUFFER);
         return FALSE;
     }
 
-    GetSystemDirectoryW((LPWSTR) pDriverDirectory, cbBuf/sizeof(WCHAR));
+    GetSystemDirectoryW( dir, cbBuf / sizeof(WCHAR) );
     /* add the Subdirectories */
-    lstrcatW((LPWSTR) pDriverDirectory, spooldriversW);
-    lstrcatW((LPWSTR) pDriverDirectory, env->subdir);
+    lstrcatW( dir, spooldriversW );
+    lstrcatW( dir, env->subdir );
 
-    TRACE("=> %s\n", debugstr_w((LPWSTR) pDriverDirectory));
+    TRACE( "=> %s\n", debugstr_w( dir ) );
     return TRUE;
 }
 
