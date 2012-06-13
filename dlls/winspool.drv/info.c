@@ -888,23 +888,34 @@ static BOOL CUPS_LoadPrinters(void)
     return TRUE;
 }
 
-static char *get_cups_name( HANDLE printer )
+#endif
+
+static char *get_queue_name( HANDLE printer, BOOL *cups )
 {
-    WCHAR *port;
+    WCHAR *port, *name = NULL;
     DWORD err, needed, type;
     char *ret = NULL;
     HKEY key;
 
+    *cups = FALSE;
+
     err = WINSPOOL_GetOpenedPrinterRegKey( printer, &key );
     if (err) return NULL;
     err = RegQueryValueExW( key, PortW, 0, &type, NULL, &needed );
-    if (err || needed <= sizeof( CUPS_Port )) goto end;
+    if (err) goto end;
     port = HeapAlloc( GetProcessHeap(), 0, needed );
     if (!port) goto end;
     RegQueryValueExW( key, PortW, 0, &type, (BYTE*)port, &needed );
-    if (!memcmp( port, CUPS_Port, sizeof(CUPS_Port) - sizeof(WCHAR) ))
+
+    if (!strncmpW( port, CUPS_Port, sizeof(CUPS_Port) / sizeof(WCHAR) -1 ))
     {
-        WCHAR *name = port + sizeof(CUPS_Port) / sizeof(WCHAR) - 1;
+        name = port + sizeof(CUPS_Port) / sizeof(WCHAR) - 1;
+        *cups = TRUE;
+    }
+    else if (!strncmpW( port, LPR_Port, sizeof(LPR_Port) / sizeof(WCHAR) -1 ))
+        name = port + sizeof(LPR_Port) / sizeof(WCHAR) - 1;
+    if (name)
+    {
         needed = WideCharToMultiByte( CP_UNIXCP, 0, name, -1, NULL, 0, NULL, NULL );
         ret = HeapAlloc( GetProcessHeap(), 0, needed );
         if(ret) WideCharToMultiByte( CP_UNIXCP, 0, name, -1, ret, needed, NULL, NULL );
@@ -914,23 +925,30 @@ end:
     RegCloseKey( key );
     return ret;
 }
-#endif
+
 
 static BOOL update_driver( HANDLE printer )
 {
-    BOOL ret = FALSE;
-#ifdef SONAME_LIBCUPS
+    BOOL ret, is_cups;
     const WCHAR *name = get_opened_printer_name( printer );
     WCHAR *ppd_dir, *ppd;
-    char *cups_name;
+    char *queue_name;
 
     if (!name) return FALSE;
-    cups_name = get_cups_name( printer );
-    if (!cups_name) return FALSE;
+    queue_name = get_queue_name( printer, &is_cups );
+    if (!queue_name) return FALSE;
 
     ppd_dir = get_ppd_dir();
     ppd = get_ppd_filename( ppd_dir, name );
-    if (get_cups_ppd( cups_name, ppd ))
+
+#ifdef SONAME_LIBCUPS
+    if (is_cups)
+        ret = get_cups_ppd( queue_name, ppd );
+    else
+#endif
+        ret = get_fallback_ppd( queue_name, ppd );
+
+    if (ret)
     {
         TRACE( "updating driver %s\n", debugstr_w( name ) );
         ret = add_printer_driver( name, ppd );
@@ -938,8 +956,7 @@ static BOOL update_driver( HANDLE printer )
     }
     HeapFree( GetProcessHeap(), 0, ppd_dir );
     HeapFree( GetProcessHeap(), 0, ppd );
-    HeapFree( GetProcessHeap(), 0, cups_name );
-#endif
+    HeapFree( GetProcessHeap(), 0, queue_name );
     return ret;
 }
 
@@ -1024,10 +1041,13 @@ static BOOL PRINTCAP_ParseEntry( const char *pent, BOOL isfirst )
     MultiByteToWideChar(CP_ACP, 0, devname, -1, devnameW, sizeof(devnameW) / sizeof(WCHAR));
 
     if(RegOpenKeyA(hkeyPrinters, devname, &hkeyPrinter) == ERROR_SUCCESS) {
+        DWORD status = get_dword_from_reg( hkeyPrinter, StatusW );
         /* Printer already in registry, delete the tag added in WINSPOOL_LoadSystemPrinters
            and continue */
         TRACE("Printer already exists\n");
         RegDeleteValueW(hkeyPrinter, May_Delete_Value);
+        /* flag that the PPD file should be checked for an update */
+        set_reg_DWORD( hkeyPrinter, StatusW, status | PRINTER_STATUS_DRIVER_UPDATE_NEEDED );
         RegCloseKey(hkeyPrinter);
     } else {
         static CHAR data_type[]   = "RAW",
