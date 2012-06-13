@@ -3068,6 +3068,7 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
     if (!pi->pDevMode) HeapFree( GetProcessHeap(), 0, dm );
 
     set_reg_szW(hkeyPrinter, DescriptionW, pi->pComment);
+    set_reg_DWORD(hkeyPrinter, dnsTimeoutW, 0);
     set_reg_szW(hkeyPrinter, LocationW, pi->pLocation);
     set_reg_szW(hkeyPrinter, NameW, pi->pPrinterName);
     set_reg_szW(hkeyPrinter, ParametersW, pi->pParameters);
@@ -3080,6 +3081,7 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
     set_reg_szW(hkeyPrinter, Share_NameW, pi->pShareName);
     set_reg_DWORD(hkeyPrinter, StartTimeW, pi->StartTime);
     set_reg_DWORD(hkeyPrinter, StatusW, pi->Status);
+    set_reg_DWORD(hkeyPrinter, txTimeoutW, 0);
     set_reg_DWORD(hkeyPrinter, UntilTimeW, pi->UntilTime);
 
     RegCloseKey(hkeyPrinter);
