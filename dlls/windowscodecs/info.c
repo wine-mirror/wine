@@ -1241,8 +1241,15 @@ static HRESULT WINAPI PixelFormatInfo_GetFriendlyName(IWICPixelFormatInfo2 *ifac
 static HRESULT WINAPI PixelFormatInfo_GetFormatGUID(IWICPixelFormatInfo2 *iface,
     GUID *pFormat)
 {
-    FIXME("(%p,%p): stub\n", iface, pFormat);
-    return E_NOTIMPL;
+    PixelFormatInfo *This = impl_from_IWICPixelFormatInfo2(iface);
+    TRACE("(%p,%p)\n", iface, pFormat);
+
+    if (!pFormat)
+        return E_INVALIDARG;
+
+    *pFormat = This->clsid;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI PixelFormatInfo_GetColorContext(IWICPixelFormatInfo2 *iface,
