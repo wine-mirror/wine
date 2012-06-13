@@ -1139,7 +1139,7 @@ static void debug_dump_ir_constant(const struct hlsl_ir_constant *constant)
         TRACE("}");
 }
 
-void debug_dump_ir_constructor(const struct hlsl_ir_constructor *constructor)
+static void debug_dump_ir_constructor(const struct hlsl_ir_constructor *constructor)
 {
     struct hlsl_ir_node *arg;
 
