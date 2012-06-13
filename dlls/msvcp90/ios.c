@@ -5037,7 +5037,7 @@ basic_ifstream_char* __thiscall basic_ifstream_char_ctor_name(basic_ifstream_cha
 
     basic_ifstream_char_ctor(this, virt_init);
 
-    if(!basic_filebuf_char_open(&this->filebuf, name, mode, prot)) {
+    if(!basic_filebuf_char_open(&this->filebuf, name, mode|OPENMODE_in, prot)) {
         basic_ios_char *basic_ios = basic_istream_char_get_basic_ios(&this->base);
         basic_ios_char_setstate(basic_ios, IOSTATE_failbit);
     }
@@ -5046,6 +5046,8 @@ basic_ifstream_char* __thiscall basic_ifstream_char_ctor_name(basic_ifstream_cha
 
 /* ??0?$basic_ifstream@DU?$char_traits@D@std@@@std@@QAE@PBGHH@Z */
 /* ??0?$basic_ifstream@DU?$char_traits@D@std@@@std@@QEAA@PEBGHH@Z */
+/* ??0?$basic_ifstream@DU?$char_traits@D@std@@@std@@QAE@PB_WHH@Z */
+/* ??0?$basic_ifstream@DU?$char_traits@D@std@@@std@@QEAA@PEB_WHH@Z */
 DEFINE_THISCALL_WRAPPER(basic_ifstream_char_ctor_name_wchar, 20)
 basic_ifstream_char* __thiscall basic_ifstream_char_ctor_name_wchar(basic_ifstream_char *this,
         const wchar_t *name, int mode, int prot, MSVCP_bool virt_init)
@@ -5054,7 +5056,7 @@ basic_ifstream_char* __thiscall basic_ifstream_char_ctor_name_wchar(basic_ifstre
 
     basic_ifstream_char_ctor(this, virt_init);
 
-    if(!basic_filebuf_char_open_wchar(&this->filebuf, name, mode, prot)) {
+    if(!basic_filebuf_char_open_wchar(&this->filebuf, name, mode|OPENMODE_in, prot)) {
         basic_ios_char *basic_ios = basic_istream_char_get_basic_ios(&this->base);
         basic_ios_char_setstate(basic_ios, IOSTATE_failbit);
     }
@@ -5136,7 +5138,7 @@ void __thiscall basic_ifstream_char_open(basic_ifstream_char *this,
 {
     TRACE("(%p %s %d %d)\n", this, name, mode, prot);
 
-    if(!basic_filebuf_char_open(&this->filebuf, name, mode, prot)) {
+    if(!basic_filebuf_char_open(&this->filebuf, name, mode|OPENMODE_in, prot)) {
         basic_ios_char *basic_ios = basic_istream_char_get_basic_ios(&this->base);
         basic_ios_char_setstate(basic_ios, IOSTATE_failbit);
     }
@@ -5146,20 +5148,22 @@ void __thiscall basic_ifstream_char_open(basic_ifstream_char *this,
 /* ?open@?$basic_ifstream@DU?$char_traits@D@std@@@std@@QEAAXPEBDI@Z */
 DEFINE_THISCALL_WRAPPER(basic_ifstream_char_open_old, 12)
 void __thiscall basic_ifstream_char_open_old(basic_ifstream_char *this,
-        const char *name, unsigned int mod)
+        const char *name, unsigned int mode)
 {
-    basic_ifstream_char_open(this, name, mod, _SH_DENYNO);
+    basic_ifstream_char_open(this, name, mode, _SH_DENYNO);
 }
 
 /* ?open@?$basic_ifstream@DU?$char_traits@D@std@@@std@@QAEXPBGHH@Z */
 /* ?open@?$basic_ifstream@DU?$char_traits@D@std@@@std@@QEAAXPEBGHH@Z */
+/* ?open@?$basic_ifstream@DU?$char_traits@D@std@@@std@@QAEXPB_WHH@Z */
+/* ?open@?$basic_ifstream@DU?$char_traits@D@std@@@std@@QEAAXPEB_WHH@Z */
 DEFINE_THISCALL_WRAPPER(basic_ifstream_char_open_wchar, 16)
 void __thiscall basic_ifstream_char_open_wchar(basic_ifstream_char *this,
         const wchar_t *name, int mode, int prot)
 {
     TRACE("(%p %s %d %d)\n", this, debugstr_w(name), mode, prot);
 
-    if(!basic_filebuf_char_open_wchar(&this->filebuf, name, mode, prot)) {
+    if(!basic_filebuf_char_open_wchar(&this->filebuf, name, mode|OPENMODE_in, prot)) {
         basic_ios_char *basic_ios = basic_istream_char_get_basic_ios(&this->base);
         basic_ios_char_setstate(basic_ios, IOSTATE_failbit);
     }
@@ -5167,6 +5171,8 @@ void __thiscall basic_ifstream_char_open_wchar(basic_ifstream_char *this,
 
 /* ?open@?$basic_ifstream@DU?$char_traits@D@std@@@std@@QAEXPBGI@Z */
 /* ?open@?$basic_ifstream@DU?$char_traits@D@std@@@std@@QEAAXPEBGI@Z */
+/* ?open@?$basic_ifstream@DU?$char_traits@D@std@@@std@@QAEXPB_WI@Z */
+/* ?open@?$basic_ifstream@DU?$char_traits@D@std@@@std@@QEAAXPEB_WI@Z */
 DEFINE_THISCALL_WRAPPER(basic_ifstream_char_open_wchar_old, 12)
 void __thiscall basic_ifstream_char_open_wchar_old(basic_ifstream_char *this,
         const wchar_t *name, unsigned int mode)
