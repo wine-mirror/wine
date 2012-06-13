@@ -48,6 +48,7 @@ static const WCHAR vendor_valuename[] = {'V','e','n','d','o','r',0};
 static const WCHAR version_valuename[] = {'V','e','r','s','i','o','n',0};
 static const WCHAR bitsperpixel_valuename[] = {'B','i','t','L','e','n','g','t','h',0};
 static const WCHAR channelcount_valuename[] = {'C','h','a','n','n','e','l','C','o','u','n','t',0};
+static const WCHAR channelmasks_keyname[] = {'C','h','a','n','n','e','l','M','a','s','k','s',0};
 
 static HRESULT ComponentInfo_GetStringValue(HKEY classkey, LPCWSTR value,
     UINT buffer_size, WCHAR *buffer, UINT *actual_size)
@@ -1274,8 +1275,42 @@ static HRESULT WINAPI PixelFormatInfo_GetChannelCount(IWICPixelFormatInfo2 *ifac
 static HRESULT WINAPI PixelFormatInfo_GetChannelMask(IWICPixelFormatInfo2 *iface,
     UINT uiChannelIndex, UINT cbMaskBuffer, BYTE *pbMaskBuffer, UINT *pcbActual)
 {
-    FIXME("(%p,%u,%u,%p,%p): stub\n", iface, uiChannelIndex, cbMaskBuffer, pbMaskBuffer, pcbActual);
-    return E_NOTIMPL;
+    static const WCHAR uintformatW[] = {'%','u',0};
+    PixelFormatInfo *This = impl_from_IWICPixelFormatInfo2(iface);
+    UINT channel_count;
+    HRESULT hr;
+    LONG ret;
+    WCHAR valuename[11];
+    DWORD cbData;
+
+    TRACE("(%p,%u,%u,%p,%p)\n", iface, uiChannelIndex, cbMaskBuffer, pbMaskBuffer, pcbActual);
+
+    if (!pcbActual)
+        return E_INVALIDARG;
+
+    hr = PixelFormatInfo_GetChannelCount(iface, &channel_count);
+
+    if (SUCCEEDED(hr) && uiChannelIndex >= channel_count)
+        hr = E_INVALIDARG;
+
+    if (SUCCEEDED(hr))
+    {
+        snprintfW(valuename, 11, uintformatW, uiChannelIndex);
+
+        cbData = cbMaskBuffer;
+
+        ret = RegGetValueW(This->classkey, channelmasks_keyname, valuename, RRF_RT_REG_BINARY, NULL, pbMaskBuffer, &cbData);
+
+        if (ret == ERROR_SUCCESS || ret == ERROR_MORE_DATA)
+            *pcbActual = cbData;
+
+        if (ret == ERROR_MORE_DATA)
+            hr = E_INVALIDARG;
+        else
+            hr = HRESULT_FROM_WIN32(ret);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI PixelFormatInfo_SupportsTransparency(IWICPixelFormatInfo2 *iface,
