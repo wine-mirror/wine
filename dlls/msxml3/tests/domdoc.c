@@ -7160,7 +7160,86 @@ static void test_testTransforms(void)
     free_bstrs();
 }
 
-static void test_namespaces(void)
+struct namespaces_change_t {
+    const CLSID *clsid;
+    const char *name;
+};
+
+static const struct namespaces_change_t namespaces_change_test_data[] = {
+    { &CLSID_DOMDocument,   "CLSID_DOMDocument"   },
+    { &CLSID_DOMDocument2,  "CLSID_DOMDocument2"  },
+    { &CLSID_DOMDocument26, "CLSID_DOMDocument26" },
+    { &CLSID_DOMDocument30, "CLSID_DOMDocument30" },
+    { &CLSID_DOMDocument40, "CLSID_DOMDocument40" },
+    { &CLSID_DOMDocument60, "CLSID_DOMDocument60" },
+    { 0 }
+};
+
+static void test_namespaces_change(void)
+{
+    const struct namespaces_change_t *class_ptr = namespaces_change_test_data;
+
+    while (class_ptr->clsid)
+    {
+        IXMLDOMDocument *doc = NULL;
+        IXMLDOMElement *elem = NULL;
+        IXMLDOMNode *node = NULL;
+
+        VARIANT var;
+        HRESULT hr;
+        BSTR str;
+
+        hr = CoCreateInstance(class_ptr->clsid, NULL, CLSCTX_INPROC_SERVER,
+                              &IID_IXMLDOMDocument, (void**)&doc);
+        if (hr != S_OK)
+        {
+            win_skip("failed to create class instance for %s\n", class_ptr->name);
+            class_ptr++;
+            continue;
+        }
+
+        V_VT(&var) = VT_I2;
+        V_I2(&var) = NODE_ELEMENT;
+
+        hr = IXMLDOMDocument_createNode(doc, var, _bstr_("ns:elem"), _bstr_("ns/uri"), &node);
+        EXPECT_HR(hr, S_OK);
+
+        hr = IXMLDOMDocument_appendChild(doc, node, NULL);
+        EXPECT_HR(hr, S_OK);
+
+        hr = IXMLDOMDocument_get_documentElement(doc, &elem);
+        EXPECT_HR(hr, S_OK);
+
+        /* try same prefix, different uri */
+        V_VT(&var) = VT_BSTR;
+        V_BSTR(&var) = _bstr_("ns/uri2");
+
+        hr = IXMLDOMElement_setAttribute(elem, _bstr_("xmlns:ns"), var);
+        EXPECT_HR(hr, E_INVALIDARG);
+
+        /* try same prefix and uri */
+        V_VT(&var) = VT_BSTR;
+        V_BSTR(&var) = _bstr_("ns/uri");
+
+        hr = IXMLDOMElement_setAttribute(elem, _bstr_("xmlns:ns"), var);
+        EXPECT_HR(hr, S_OK);
+
+        hr = IXMLDOMElement_get_xml(elem, &str);
+        EXPECT_HR(hr, S_OK);
+        ok(!lstrcmpW(str, _bstr_("<ns:elem xmlns:ns=\"ns/uri\"/>")), "got element %s for %s\n",
+           wine_dbgstr_w(str), class_ptr->name);
+        SysFreeString(str);
+
+        IXMLDOMElement_Release(elem);
+        IXMLDOMDocument_Release(doc);
+
+        free_bstrs();
+
+        class_ptr++;
+    }
+}
+
+static void test_namespaces_basic(void)
 {
     static const CHAR namespaces_xmlA[] =
         "<?xml version=\"1.0\"?>\n"
@@ -7175,7 +7254,6 @@ static void test_namespaces(void)
     IXMLDOMNode *node;
 
     VARIANT_BOOL b;
-    VARIANT var;
     HRESULT hr;
     BSTR str;
 
@@ -7250,80 +7328,6 @@ static void test_namespaces(void)
         IXMLDOMNode_Release(node);
     }
 
-    IXMLDOMDocument_Release(doc);
-
-    /* create on element and try to alter namespace after that */
-    doc = create_document(&IID_IXMLDOMDocument);
-    if (!doc) return;
-
-    V_VT(&var) = VT_I2;
-    V_I2(&var) = NODE_ELEMENT;
-
-    hr = IXMLDOMDocument_createNode(doc, var, _bstr_("ns:elem"), _bstr_("ns/uri"), &node);
-    EXPECT_HR(hr, S_OK);
-
-    hr = IXMLDOMDocument_appendChild(doc, node, NULL);
-    EXPECT_HR(hr, S_OK);
-
-    hr = IXMLDOMDocument_get_documentElement(doc, &elem);
-    EXPECT_HR(hr, S_OK);
-
-    V_VT(&var) = VT_BSTR;
-    V_BSTR(&var) = _bstr_("ns/uri2");
-
-    hr = IXMLDOMElement_setAttribute(elem, _bstr_("xmlns:ns"), var);
-    EXPECT_HR(hr, E_INVALIDARG);
-
-    V_VT(&var) = VT_BSTR;
-    V_BSTR(&var) = _bstr_("ns/uri");
-
-    hr = IXMLDOMElement_setAttribute(elem, _bstr_("xmlns:ns"), var);
-    EXPECT_HR(hr, S_OK);
-
-    hr = IXMLDOMElement_get_xml(elem, &str);
-    EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(str, _bstr_("<ns:elem xmlns:ns=\"ns/uri\"/>")), "got element %s\n", wine_dbgstr_w(str));
-    SysFreeString(str);
-
-    IXMLDOMElement_Release(elem);
-    IXMLDOMDocument_Release(doc);
-
-    /* create on element and try to alter namespace after that */
-    doc = create_document_version(60, &IID_IXMLDOMDocument);
-    if (!doc) return;
-
-    V_VT(&var) = VT_I2;
-    V_I2(&var) = NODE_ELEMENT;
-
-    hr = IXMLDOMDocument_createNode(doc, var, _bstr_("ns:elem"), _bstr_("ns/uri"), &node);
-    EXPECT_HR(hr, S_OK);
-
-    hr = IXMLDOMDocument_appendChild(doc, node, NULL);
-    EXPECT_HR(hr, S_OK);
-
-    hr = IXMLDOMDocument_get_documentElement(doc, &elem);
-    EXPECT_HR(hr, S_OK);
-
-    /* try same prefix, different uri */
-    V_VT(&var) = VT_BSTR;
-    V_BSTR(&var) = _bstr_("ns/uri2");
-
-    hr = IXMLDOMElement_setAttribute(elem, _bstr_("xmlns:ns"), var);
-    EXPECT_HR(hr, E_INVALIDARG);
-
-    /* try same prefix and uri */
-    V_VT(&var) = VT_BSTR;
-    V_BSTR(&var) = _bstr_("ns/uri");
-
-    hr = IXMLDOMElement_setAttribute(elem, _bstr_("xmlns:ns"), var);
-    EXPECT_HR(hr, S_OK);
-
-    hr = IXMLDOMElement_get_xml(elem, &str);
-    EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(str, _bstr_("<ns:elem xmlns:ns=\"ns/uri\"/>")), "got element %s\n", wine_dbgstr_w(str));
-    SysFreeString(str);
-
-    IXMLDOMElement_Release(elem);
     IXMLDOMDocument_Release(doc);
 
     free_bstrs();
@@ -11851,7 +11855,8 @@ START_TEST(domdoc)
     test_xmlTypes();
     test_save();
     test_testTransforms();
-    test_namespaces();
+    test_namespaces_basic();
+    test_namespaces_change();
     test_FormattingXML();
     test_nodeTypedValue();
     test_TransformWithLoadingLocalFile();
