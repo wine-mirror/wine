@@ -193,7 +193,7 @@ static void *wpp_open_mem(const char *filename, int type)
         return NULL;
     }
     hr = ID3DInclude_Open(current_include,
-                          type ? D3D_INCLUDE_SYSTEM : D3D_INCLUDE_LOCAL,
+                          type ? D3D_INCLUDE_LOCAL : D3D_INCLUDE_SYSTEM,
                           filename, parent_include, (LPCVOID *)&desc->buffer,
                           &desc->size);
     if(FAILED(hr))

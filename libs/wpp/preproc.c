@@ -517,7 +517,7 @@ void *pp_open_include(const char *name, const char *parent_name, char **newpath)
 
     if (!(path = wpp_callbacks->lookup(name, parent_name, includepath,
                                        nincludepath))) return NULL;
-    fp = wpp_callbacks->open(path, parent_name == NULL ? 1 : 0);
+    fp = wpp_callbacks->open(path, !!parent_name);
 
     if (fp)
     {
