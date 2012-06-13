@@ -140,6 +140,11 @@ static LONG WINAPI assert_fault(EXCEPTION_POINTERS *eptr)
     return EXCEPTION_CONTINUE_SEARCH;
 }
 
+static inline int starts_with( const char *str, const char *prefix )
+{
+    return !strncmp( str, prefix, strlen(prefix) );
+}
+
 static GUID *parse_uuid( GUID *guid, const char *str )
 {
     /* standard uuid format */
@@ -199,6 +204,27 @@ static const char *udisks_next_dict_entry( DBusMessageIter *iter, DBusMessageIte
     return name;
 }
 
+static enum device_type udisks_parse_media_compatibility( DBusMessageIter *iter )
+{
+    DBusMessageIter media;
+    enum device_type drive_type = DEVICE_UNKNOWN;
+
+    p_dbus_message_iter_recurse( iter, &media );
+    while (p_dbus_message_iter_get_arg_type( &media ) == DBUS_TYPE_STRING)
+    {
+        const char *media_type;
+        p_dbus_message_iter_get_basic( &media, &media_type );
+        if (starts_with( media_type, "optical_dvd" ))
+            drive_type = DEVICE_DVD;
+        if (starts_with( media_type, "floppy" ))
+            drive_type = DEVICE_FLOPPY;
+        else if (starts_with( media_type, "optical_" ) && drive_type == DEVICE_UNKNOWN)
+            drive_type = DEVICE_CDROM;
+        p_dbus_message_iter_next( &media );
+    }
+    return drive_type;
+}
+
 /* UDisks callback for new device */
 static void udisks_new_device( const char *udi )
 {
@@ -246,22 +272,7 @@ static void udisks_new_device( const char *udi )
             else if (!strcmp( name, "IdType" ))
                 p_dbus_message_iter_get_basic( &variant, &type );
             else if (!strcmp( name, "DriveMediaCompatibility" ))
-            {
-                DBusMessageIter media;
-                p_dbus_message_iter_recurse( &variant, &media );
-                while (p_dbus_message_iter_get_arg_type( &media ) == DBUS_TYPE_STRING)
-                {
-                    const char *media_type;
-                    p_dbus_message_iter_get_basic( &media, &media_type );
-                    if (!strncmp( media_type, "optical_dvd", 11 ))
-                        drive_type = DEVICE_DVD;
-                    if (!strncmp( media_type, "floppy", 6 ))
-                        drive_type = DEVICE_FLOPPY;
-                    else if (!strncmp( media_type, "optical_", 8 ) && drive_type == DEVICE_UNKNOWN)
-                        drive_type = DEVICE_CDROM;
-                    p_dbus_message_iter_next( &media );
-                }
-            }
+                drive_type = udisks_parse_media_compatibility( &variant );
             else if (!strcmp( name, "DeviceMountPaths" ))
             {
                 DBusMessageIter paths;
