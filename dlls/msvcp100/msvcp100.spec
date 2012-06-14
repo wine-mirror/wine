@@ -18,8 +18,8 @@
 @ cdecl -arch=win64 ??0?$basic_ios@_WU?$char_traits@_W@std@@@std@@QEAA@PEAV?$basic_streambuf@_WU?$char_traits@_W@std@@@1@@Z(ptr ptr) msvcp90.??0?$basic_ios@_WU?$char_traits@_W@std@@@std@@QEAA@PEAV?$basic_streambuf@_WU?$char_traits@_W@std@@@1@@Z
 @ stub -arch=win32 ??0?$basic_iostream@DU?$char_traits@D@std@@@std@@QAE@$$QAV01@@Z
 @ stub -arch=win64 ??0?$basic_iostream@DU?$char_traits@D@std@@@std@@QEAA@$$QEAV01@@Z
-@ stub -arch=win32 ??0?$basic_iostream@DU?$char_traits@D@std@@@std@@QAE@PAV?$basic_streambuf@DU?$char_traits@D@std@@@1@@Z
-@ stub -arch=win64 ??0?$basic_iostream@DU?$char_traits@D@std@@@std@@QEAA@PEAV?$basic_streambuf@DU?$char_traits@D@std@@@1@@Z
+@ thiscall -arch=win32 ??0?$basic_iostream@DU?$char_traits@D@std@@@std@@QAE@PAV?$basic_streambuf@DU?$char_traits@D@std@@@1@@Z(ptr ptr long) msvcp90.??0?$basic_iostream@DU?$char_traits@D@std@@@std@@QAE@PAV?$basic_streambuf@DU?$char_traits@D@std@@@1@@Z
+@ cdecl -arch=win64 ??0?$basic_iostream@DU?$char_traits@D@std@@@std@@QEAA@PEAV?$basic_streambuf@DU?$char_traits@D@std@@@1@@Z(ptr ptr long) msvcp90.??0?$basic_iostream@DU?$char_traits@D@std@@@std@@QEAA@PEAV?$basic_streambuf@DU?$char_traits@D@std@@@1@@Z
 @ stub -arch=win32 ??0?$basic_iostream@GU?$char_traits@G@std@@@std@@QAE@$$QAV01@@Z
 @ stub -arch=win64 ??0?$basic_iostream@GU?$char_traits@G@std@@@std@@QEAA@$$QEAV01@@Z
 @ stub -arch=win32 ??0?$basic_iostream@GU?$char_traits@G@std@@@std@@QAE@PAV?$basic_streambuf@GU?$char_traits@G@std@@@1@@Z
@@ -238,8 +238,8 @@
 @ cdecl -arch=win64 ??1?$basic_ios@GU?$char_traits@G@std@@@std@@UEAA@XZ(ptr) msvcp90.??1?$basic_ios@GU?$char_traits@G@std@@@std@@UEAA@XZ
 @ thiscall -arch=win32 ??1?$basic_ios@_WU?$char_traits@_W@std@@@std@@UAE@XZ(ptr) msvcp90.??1?$basic_ios@_WU?$char_traits@_W@std@@@std@@UAE@XZ
 @ cdecl -arch=win64 ??1?$basic_ios@_WU?$char_traits@_W@std@@@std@@UEAA@XZ(ptr) msvcp90.??1?$basic_ios@_WU?$char_traits@_W@std@@@std@@UEAA@XZ
-@ stub -arch=win32 ??1?$basic_iostream@DU?$char_traits@D@std@@@std@@UAE@XZ
-@ stub -arch=win64 ??1?$basic_iostream@DU?$char_traits@D@std@@@std@@UEAA@XZ
+@ thiscall -arch=win32 ??1?$basic_iostream@DU?$char_traits@D@std@@@std@@UAE@XZ(ptr) msvcp90.??1?$basic_iostream@DU?$char_traits@D@std@@@std@@UAE@XZ
+@ cdecl -arch=win64 ??1?$basic_iostream@DU?$char_traits@D@std@@@std@@UEAA@XZ(ptr) msvcp90.??1?$basic_iostream@DU?$char_traits@D@std@@@std@@UEAA@XZ
 @ stub -arch=win32 ??1?$basic_iostream@GU?$char_traits@G@std@@@std@@UAE@XZ
 @ stub -arch=win64 ??1?$basic_iostream@GU?$char_traits@G@std@@@std@@UEAA@XZ
 @ stub -arch=win32 ??1?$basic_iostream@_WU?$char_traits@_W@std@@@std@@UAE@XZ
@@ -633,7 +633,7 @@
 @ extern ??_7?$basic_ios@DU?$char_traits@D@std@@@std@@6B@ msvcp90.??_7?$basic_ios@DU?$char_traits@D@std@@@std@@6B@
 @ extern ??_7?$basic_ios@GU?$char_traits@G@std@@@std@@6B@ msvcp90.??_7?$basic_ios@GU?$char_traits@G@std@@@std@@6B@
 @ extern ??_7?$basic_ios@_WU?$char_traits@_W@std@@@std@@6B@ msvcp90.??_7?$basic_ios@_WU?$char_traits@_W@std@@@std@@6B@
-# extern ??_7?$basic_iostream@DU?$char_traits@D@std@@@std@@6B@
+@ extern ??_7?$basic_iostream@DU?$char_traits@D@std@@@std@@6B@ msvcp90.??_7?$basic_iostream@DU?$char_traits@D@std@@@std@@6B@
 # extern ??_7?$basic_iostream@GU?$char_traits@G@std@@@std@@6B@
 # extern ??_7?$basic_iostream@_WU?$char_traits@_W@std@@@std@@6B@
 @ extern ??_7?$basic_istream@DU?$char_traits@D@std@@@std@@6B@ msvcp90.??_7?$basic_istream@DU?$char_traits@D@std@@@std@@6B@
@@ -668,8 +668,8 @@
 @ extern ??_7ctype_base@std@@6B@ msvcp90.??_7ctype_base@std@@6B@
 @ extern ??_7ios_base@std@@6B@ msvcp90.??_7ios_base@std@@6B@
 # extern ??_7time_base@std@@6B@
-# extern ??_8?$basic_iostream@DU?$char_traits@D@std@@@std@@7B?$basic_istream@DU?$char_traits@D@std@@@1@@
-# extern ??_8?$basic_iostream@DU?$char_traits@D@std@@@std@@7B?$basic_ostream@DU?$char_traits@D@std@@@1@@
+@ extern ??_8?$basic_iostream@DU?$char_traits@D@std@@@std@@7B?$basic_istream@DU?$char_traits@D@std@@@1@@ msvcp90.??_8?$basic_iostream@DU?$char_traits@D@std@@@std@@7B?$basic_istream@DU?$char_traits@D@std@@@1@@
+@ extern ??_8?$basic_iostream@DU?$char_traits@D@std@@@std@@7B?$basic_ostream@DU?$char_traits@D@std@@@1@@ msvcp90.??_8?$basic_iostream@DU?$char_traits@D@std@@@std@@7B?$basic_ostream@DU?$char_traits@D@std@@@1@@
 # extern ??_8?$basic_iostream@GU?$char_traits@G@std@@@std@@7B?$basic_istream@GU?$char_traits@G@std@@@1@@
 # extern ??_8?$basic_iostream@GU?$char_traits@G@std@@@std@@7B?$basic_ostream@GU?$char_traits@G@std@@@1@@
 # extern ??_8?$basic_iostream@_WU?$char_traits@_W@std@@@std@@7B?$basic_istream@_WU?$char_traits@_W@std@@@1@@
@@ -680,8 +680,8 @@
 @ extern ??_8?$basic_ostream@DU?$char_traits@D@std@@@std@@7B@ msvcp90.??_8?$basic_ostream@DU?$char_traits@D@std@@@std@@7B@
 # extern ??_8?$basic_ostream@GU?$char_traits@G@std@@@std@@7B@
 # extern ??_8?$basic_ostream@_WU?$char_traits@_W@std@@@std@@7B@
-@ stub -arch=win32 ??_D?$basic_iostream@DU?$char_traits@D@std@@@std@@QAEXXZ
-@ stub -arch=win64 ??_D?$basic_iostream@DU?$char_traits@D@std@@@std@@QEAAXXZ
+@ thiscall -arch=win32 ??_D?$basic_iostream@DU?$char_traits@D@std@@@std@@QAEXXZ(ptr) msvcp90.??_D?$basic_iostream@DU?$char_traits@D@std@@@std@@QAEXXZ
+@ cdecl -arch=win64 ??_D?$basic_iostream@DU?$char_traits@D@std@@@std@@QEAAXXZ(ptr) msvcp90.??_D?$basic_iostream@DU?$char_traits@D@std@@@std@@QEAAXXZ
 @ stub -arch=win32 ??_D?$basic_iostream@GU?$char_traits@G@std@@@std@@QAEXXZ
 @ stub -arch=win64 ??_D?$basic_iostream@GU?$char_traits@G@std@@@std@@QEAAXXZ
 @ stub -arch=win32 ??_D?$basic_iostream@_WU?$char_traits@_W@std@@@std@@QAEXXZ
@@ -1624,8 +1624,8 @@
 @ stub ?empty@locale@std@@SA?AV12@XZ
 @ thiscall -arch=win32 ?encoding@codecvt_base@std@@QBEHXZ(ptr) msvcp90.?encoding@codecvt_base@std@@QBEHXZ
 @ cdecl -arch=win64 ?encoding@codecvt_base@std@@QEBAHXZ(ptr) msvcp90.?encoding@codecvt_base@std@@QEBAHXZ
-@ stub -arch=win32 ?endl@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@1@AAV21@@Z
-@ stub -arch=win64 ?endl@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@1@AEAV21@@Z
+@ cdecl -arch=win32 ?endl@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@1@AAV21@@Z(ptr) msvcp90.?endl@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@1@AAV21@@Z
+@ cdecl -arch=win64 ?endl@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@1@AEAV21@@Z(ptr) msvcp90.?endl@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@1@AEAV21@@Z
 @ stub -arch=win32 ?endl@std@@YAAAV?$basic_ostream@GU?$char_traits@G@std@@@1@AAV21@@Z
 @ stub -arch=win64 ?endl@std@@YAAEAV?$basic_ostream@GU?$char_traits@G@std@@@1@AEAV21@@Z
 @ stub -arch=win32 ?endl@std@@YAAAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@AAV21@@Z
