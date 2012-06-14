@@ -214,6 +214,24 @@ interface IWbemStatusCodeText : IUnknown
         [out] BSTR *MessageText);
 };
 
+typedef [v1_enum] enum tag_WBEM_GENERIC_FLAG_TYPE
+{
+    WBEM_FLAG_RETURN_WBEM_COMPLETE      = 0,
+    WBEM_FLAG_BIDIRECTIONAL             = 0,
+    WBEM_FLAG_RETURN_ERROR_OBJECT       = 0,
+    WBEM_FLAG_DONT_SEND_STATUS          = 0,
+    WBEM_FLAG_SEND_ONLY_SELECTED        = 0,
+    WBEM_FLAG_RETURN_IMMEDIATELY        = 0x10,
+    WBEM_FLAG_FORWARD_ONLY              = 0x20,
+    WBEM_FLAG_NO_ERROR_OBJECT           = 0x40,
+    WBEM_FLAG_SEND_STATUS               = 0x80,
+    WBEM_FLAG_ENSURE_LOCATABLE          = 0x100,
+    WBEM_FLAG_DIRECT_READ               = 0x200,
+    WBEM_MASK_RESERVED_FLAGS            = 0x1f000,
+    WBEM_FLAG_USE_AMENDED_QUALIFIERS    = 0x20000,
+    WBEM_FLAG_STRONG_VALIDATION         = 0x100000
+} WBEM_GENERIC_FLAG_TYPE;
+
 [
     object,
     restricted,
