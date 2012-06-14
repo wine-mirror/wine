@@ -1184,20 +1184,29 @@ static void parse_target_option( struct options *opts, const char *target )
 
     /* get the CPU part */
 
-    if (!(p = strchr( spec, '-' ))) error( "Invalid target specification '%s'\n", target );
-    *p++ = 0;
-    for (i = 0; i < sizeof(cpu_names)/sizeof(cpu_names[0]); i++)
+    if ((p = strchr( spec, '-' )))
     {
-        if (!strcmp( cpu_names[i].name, spec ))
+        *p++ = 0;
+        for (i = 0; i < sizeof(cpu_names)/sizeof(cpu_names[0]); i++)
         {
-            opts->target_cpu = cpu_names[i].cpu;
-            break;
+            if (!strcmp( cpu_names[i].name, spec ))
+            {
+                opts->target_cpu = cpu_names[i].cpu;
+                break;
+            }
         }
+        if (i == sizeof(cpu_names)/sizeof(cpu_names[0]))
+            error( "Unrecognized CPU '%s'\n", spec );
+        platform = p;
+        if ((p = strrchr( p, '-' ))) platform = p + 1;
     }
-    if (i == sizeof(cpu_names)/sizeof(cpu_names[0]))
-        error( "Unrecognized CPU '%s'\n", spec );
-    platform = p;
-    if ((p = strrchr( p, '-' ))) platform = p + 1;
+    else if (!strcmp( spec, "mingw32" ))
+    {
+        opts->target_cpu = CPU_x86;
+        platform = spec;
+    }
+    else
+        error( "Invalid target specification '%s'\n", target );
 
     /* get the OS part */
 
