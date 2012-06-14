@@ -2,6 +2,7 @@ MODULE    = wbemprox.dll
 IMPORTS   = ole32 advapi32
 
 C_SRCS = \
+	class.c \
 	main.c \
 	services.c \
 	wbemlocator.c

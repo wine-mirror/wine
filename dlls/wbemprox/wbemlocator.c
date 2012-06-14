@@ -58,7 +58,7 @@ static ULONG WINAPI wbem_locator_Release(
     if (!refs)
     {
         TRACE("destroying %p\n", wl);
-        HeapFree( GetProcessHeap(), 0, wl );
+        heap_free( wl );
     }
     return refs;
 }
@@ -129,7 +129,7 @@ HRESULT WbemLocator_create( IUnknown *pUnkOuter, LPVOID *ppObj )
 
     TRACE("(%p,%p)\n", pUnkOuter, ppObj);
 
-    wl = HeapAlloc( GetProcessHeap(), 0, sizeof(*wl) );
+    wl = heap_alloc( sizeof(*wl) );
     if (!wl) return E_OUTOFMEMORY;
 
     wl->IWbemLocator_iface.lpVtbl = &wbem_locator_vtbl;
