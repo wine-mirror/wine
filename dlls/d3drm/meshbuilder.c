@@ -454,13 +454,13 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_GetName(IDirect3DRMMeshBuilder
 }
 
 static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_GetClassName(IDirect3DRMMeshBuilder2* iface,
-                                                               LPDWORD lpdwSize, LPSTR lpName)
+                                                               LPDWORD size, LPSTR name)
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder2(iface);
 
-    FIXME("(%p)->(%p,%p): stub\n", This, lpdwSize, lpName);
+    TRACE("(%p)->(%p, %p)\n", This, size, name);
 
-    return E_NOTIMPL;
+    return IDirect3DRMMeshBuilder3_GetClassName(&This->IDirect3DRMMeshBuilder3_iface, size, name);
 }
 
 /*** IDirect3DRMMeshBuilder2 methods ***/
@@ -1080,13 +1080,19 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_GetName(IDirect3DRMMeshBuilder
 }
 
 static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_GetClassName(IDirect3DRMMeshBuilder3* iface,
-                                                               LPDWORD lpdwSize, LPSTR lpName)
+                                                               LPDWORD size, LPSTR name)
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder3(iface);
 
-    FIXME("(%p)->(%p,%p): stub\n", This, lpdwSize, lpName);
+    TRACE("(%p)->(%p, %p)\n", This, size, name);
 
-    return E_NOTIMPL;
+    if (!size || *size < strlen("Builder") || !name)
+        return E_INVALIDARG;
+
+    strcpy(name, "Builder");
+    *size = sizeof("Builder");
+
+    return D3DRM_OK;
 }
 
 HRESULT load_mesh_data(IDirect3DRMMeshBuilder3* iface, LPDIRECTXFILEDATA pData)

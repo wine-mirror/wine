@@ -198,13 +198,18 @@ static void test_MeshBuilder(void)
     hr = IDirect3DRM_CreateMeshBuilder(pD3DRM, &pMeshBuilder);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMMeshBuilder interface (hr = %x)\n", hr);
 
+    hr = IDirect3DRMMeshBuilder_GetClassName(pMeshBuilder, NULL, cname);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
+    hr = IDirect3DRMMeshBuilder_GetClassName(pMeshBuilder, NULL, NULL);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
+    size = 1;
+    hr = IDirect3DRMMeshBuilder_GetClassName(pMeshBuilder, &size, cname);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
     size = sizeof(cname);
     hr = IDirect3DRMMeshBuilder_GetClassName(pMeshBuilder, &size, cname);
-    todo_wine {
     ok(hr == D3DRM_OK, "Cannot get classname (hr = %x)\n", hr);
-    ok(size != sizeof(cname), "size didn't change: %u\n", size);
+    ok(size == sizeof("Builder"), "wrong strlen: %u\n", size);
     ok(!strcmp(cname, "Builder"), "Expected cname to be \"Builder\", but got \"%s\"\n", cname);
-    }
 
     info.lpMemory = data_bad_version;
     info.dSize = strlen(data_bad_version);
@@ -463,13 +468,18 @@ static void test_MeshBuilder3(void)
     hr = IDirect3DRM3_CreateMeshBuilder(pD3DRM3, &pMeshBuilder3);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMMeshBuilder3 interface (hr = %x)\n", hr);
 
+    hr = IDirect3DRMMeshBuilder3_GetClassName(pMeshBuilder3, NULL, cname);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
+    hr = IDirect3DRMMeshBuilder3_GetClassName(pMeshBuilder3, NULL, NULL);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
+    size = 1;
+    hr = IDirect3DRMMeshBuilder3_GetClassName(pMeshBuilder3, &size, cname);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
     size = sizeof(cname);
     hr = IDirect3DRMMeshBuilder3_GetClassName(pMeshBuilder3, &size, cname);
-    todo_wine {
     ok(hr == D3DRM_OK, "Cannot get classname (hr = %x)\n", hr);
-    ok(size != sizeof(cname), "size didn't change: %u\n", size);
+    ok(size == sizeof("Builder"), "wrong strlen: %u\n", size);
     ok(!strcmp(cname, "Builder"), "Expected cname to be \"Builder\", but got \"%s\"\n", cname);
-    }
 
     info.lpMemory = data_bad_version;
     info.dSize = strlen(data_bad_version);
