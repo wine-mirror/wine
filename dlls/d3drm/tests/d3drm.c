@@ -879,13 +879,18 @@ static void test_Light(void)
     hr = IDirect3DRM_CreateLightRGB(pD3DRM, D3DRMLIGHT_SPOT, 0.5, 0.5, 0.5, &pLight);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMLight interface (hr = %x)\n", hr);
 
+    hr = IDirect3DRMLight_GetClassName(pLight, NULL, cname);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
+    hr = IDirect3DRMLight_GetClassName(pLight, NULL, NULL);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
+    size = 1;
+    hr = IDirect3DRMLight_GetClassName(pLight, &size, cname);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
     size = sizeof(cname);
     hr = IDirect3DRMLight_GetClassName(pLight, &size, cname);
-    todo_wine {
     ok(hr == D3DRM_OK, "Cannot get classname (hr = %x)\n", hr);
-    ok(size != sizeof(cname), "size didn't change: %u\n", size);
+    ok(size == sizeof("Light"), "wrong strlen: %u\n", size);
     ok(!strcmp(cname, "Light"), "Expected cname to be \"Light\", but got \"%s\"\n", cname);
-    }
 
     type = IDirect3DRMLight_GetType(pLight);
     ok(type == D3DRMLIGHT_SPOT, "wrong type (%u)\n", type);

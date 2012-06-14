@@ -172,9 +172,15 @@ static HRESULT WINAPI IDirect3DRMLightImpl_GetClassName(IDirect3DRMLight* iface,
 {
     IDirect3DRMLightImpl *This = impl_from_IDirect3DRMLight(iface);
 
-    FIXME("(%p/%p)->(%p, %p): stub\n", iface, This, size, name);
+    TRACE("(%p/%p)->(%p, %p)\n", iface, This, size, name);
 
-    return E_NOTIMPL;
+    if (!size || *size < strlen("Light") || !name)
+        return E_INVALIDARG;
+
+    strcpy(name, "Light");
+    *size = sizeof("Light");
+
+    return D3DRM_OK;
 }
 
 /*** IDirect3DRMLight methods ***/
