@@ -202,6 +202,8 @@ static void locale_facet_register(locale_facet *add)
     list_add_head(&lazy_facets, &head->entry);
 }
 
+/* Not exported from msvcp90 */
+/* ??_7facet@locale@std@@6B@ */
 extern const vtable_ptr MSVCP_locale_facet_vtable;
 
 /* ??0id@locale@std@@QAE@I@Z */
