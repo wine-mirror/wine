@@ -569,13 +569,18 @@ static void test_Frame(void)
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMFrame interface (hr = %x)\n", hr);
     CHECK_REFCOUNT(pFrameC, 1);
 
+    hr = IDirect3DRMFrame_GetClassName(pFrameC, NULL, cname);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
+    hr = IDirect3DRMFrame_GetClassName(pFrameC, NULL, NULL);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
+    count = 1;
+    hr = IDirect3DRMFrame_GetClassName(pFrameC, &count, cname);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
     count = sizeof(cname);
     hr = IDirect3DRMFrame_GetClassName(pFrameC, &count, cname);
-    todo_wine {
     ok(hr == D3DRM_OK, "Cannot get classname (hr = %x)\n", hr);
-    ok(count != sizeof(cname), "size didn't change: %u\n", count);
+    ok(count == sizeof("Frame"), "wrong strlen: %u\n", count);
     ok(!strcmp(cname, "Frame"), "Expected cname to be \"Frame\", but got \"%s\"\n", cname);
-    }
 
     hr = IDirect3DRMFrame_GetParent(pFrameC, NULL);
     ok(hr == D3DRMERR_BADVALUE, "Should fail and return D3DRM_BADVALUE (hr = %x)\n", hr);

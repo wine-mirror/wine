@@ -594,9 +594,9 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_GetClassName(IDirect3DRMFrame2* ifac
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
 
-    FIXME("(%p/%p)->(%p, %p): stub\n", iface, This, size, name);
+    TRACE("(%p/%p)->(%p, %p)\n", iface, This, size, name);
 
-    return E_NOTIMPL;
+    return IDirect3DRMFrame3_GetClassName(&This->IDirect3DRMFrame3_iface, size, name);
 }
 
 /*** IDirect3DRMFrame methods ***/
@@ -1493,9 +1493,15 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_GetClassName(IDirect3DRMFrame3* ifac
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
 
-    FIXME("(%p/%p)->(%p, %p): stub\n", iface, This, size, name);
+    TRACE("(%p/%p)->(%p, %p)\n", iface, This, size, name);
 
-    return E_NOTIMPL;
+    if (!size || *size < strlen("Frame") || !name)
+        return E_INVALIDARG;
+
+    strcpy(name, "Frame");
+    *size = sizeof("Frame");
+
+    return D3DRM_OK;
 }
 
 /*** IDirect3DRMFrame methods ***/
