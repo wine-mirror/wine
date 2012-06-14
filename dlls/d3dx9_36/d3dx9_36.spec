@@ -252,7 +252,7 @@
 @ stdcall D3DXQuaternionRotationYawPitchRoll(ptr float float float)
 @ stdcall D3DXQuaternionSlerp(ptr ptr ptr float)
 @ stdcall D3DXQuaternionSquad(ptr ptr ptr ptr ptr float)
-@ stub D3DXQuaternionSquadSetup(ptr ptr ptr ptr ptr ptr ptr)
+@ stdcall D3DXQuaternionSquadSetup(ptr ptr ptr ptr ptr ptr ptr)
 @ stdcall D3DXQuaternionToAxisAngle(ptr ptr ptr)
 @ stub D3DXRectPatchSize(ptr ptr ptr)
 @ stub D3DXSaveMeshHierarchyToFileA(ptr long ptr ptr ptr)

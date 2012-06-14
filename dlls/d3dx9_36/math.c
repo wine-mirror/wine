@@ -1366,6 +1366,73 @@ D3DXQUATERNION* WINAPI D3DXQuaternionSquad(D3DXQUATERNION *pout, CONST D3DXQUATE
     return pout;
 }
 
+static D3DXQUATERNION add_diff(CONST D3DXQUATERNION *q1, CONST D3DXQUATERNION *q2, CONST FLOAT add)
+{
+    D3DXQUATERNION temp;
+
+    temp.x = q1->x + add * q2->x;
+    temp.y = q1->y + add * q2->y;
+    temp.z = q1->z + add * q2->z;
+    temp.w = q1->w + add * q2->w;
+
+    return temp;
+}
+
+void WINAPI D3DXQuaternionSquadSetup(D3DXQUATERNION *paout, D3DXQUATERNION *pbout, D3DXQUATERNION *pcout, CONST D3DXQUATERNION *pq0, CONST D3DXQUATERNION *pq1, CONST D3DXQUATERNION *pq2, CONST D3DXQUATERNION *pq3)
+{
+    D3DXQUATERNION q, temp1, temp2, temp3, zero;
+
+    TRACE("(%p, %p, %p, %p, %p, %p, %p)\n", paout, pbout, pcout, pq0, pq1, pq2, pq3);
+
+    zero.x = 0.0f;
+    zero.y = 0.0f;
+    zero.z = 0.0f;
+    zero.w = 0.0f;
+
+    if ( D3DXQuaternionDot(pq0, pq1) <  0.0f )
+        temp2 = add_diff(&zero, pq0, -1.0f);
+    else
+        temp2 = *pq0;
+
+    if ( D3DXQuaternionDot(pq1, pq2) < 0.0f )
+        *pcout = add_diff(&zero, pq2, -1.0f);
+    else
+        *pcout = *pq2;
+
+    if ( D3DXQuaternionDot(pcout, pq3) < 0.0f )
+        temp3 = add_diff(&zero, pq3, -1.0f);
+    else
+        temp3 = *pq3;
+
+    D3DXQuaternionInverse(&temp1, pq1);
+    D3DXQuaternionMultiply(&temp2, &temp1, &temp2);
+    D3DXQuaternionLn(&temp2, &temp2);
+    D3DXQuaternionMultiply(&q, &temp1, pcout);
+    D3DXQuaternionLn(&q, &q);
+    temp1 = add_diff(&temp2, &q, 1.0f);
+    temp1.x *= -0.25f;
+    temp1.y *= -0.25f;
+    temp1.z *= -0.25f;
+    temp1.w *= -0.25f;
+    D3DXQuaternionExp(&temp1, &temp1);
+    D3DXQuaternionMultiply(paout, pq1, &temp1);
+
+    D3DXQuaternionInverse(&temp1, pcout);
+    D3DXQuaternionMultiply(&temp2, &temp1, pq1);
+    D3DXQuaternionLn(&temp2, &temp2);
+    D3DXQuaternionMultiply(&q, &temp1, &temp3);
+    D3DXQuaternionLn(&q, &q);
+    temp1 = add_diff(&temp2, &q, 1.0f);
+    temp1.x *= -0.25f;
+    temp1.y *= -0.25f;
+    temp1.z *= -0.25f;
+    temp1.w *= -0.25f;
+    D3DXQuaternionExp(&temp1, &temp1);
+    D3DXQuaternionMultiply(pbout, pcout, &temp1);
+
+    return;
+}
+
 void WINAPI D3DXQuaternionToAxisAngle(CONST D3DXQUATERNION *pq, D3DXVECTOR3 *paxis, FLOAT *pangle)
 {
     paxis->x = pq->x;
