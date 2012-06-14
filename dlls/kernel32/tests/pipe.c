@@ -798,6 +798,113 @@ static DWORD CALLBACK serverThreadMain4(LPVOID arg)
     return 0;
 }
 
+static int completion_called;
+static DWORD completion_errorcode;
+static DWORD completion_num_bytes;
+static LPOVERLAPPED completion_lpoverlapped;
+
+static VOID WINAPI completion_routine(DWORD errorcode, DWORD num_bytes, LPOVERLAPPED lpoverlapped)
+{
+    completion_called++;
+    completion_errorcode = errorcode;
+    completion_num_bytes = num_bytes;
+    completion_lpoverlapped = lpoverlapped;
+    SetEvent(lpoverlapped->hEvent);
+}
+
+/** Trivial byte echo server - uses ReadFileEx/WriteFileEx */
+static DWORD CALLBACK serverThreadMain5(LPVOID arg)
+{
+    int i;
+    HANDLE hEvent;
+
+    trace("serverThreadMain5\n");
+    /* Set up a simple echo server */
+    hnp = CreateNamedPipe(PIPENAME "serverThreadMain5", PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
+        PIPE_TYPE_BYTE | PIPE_WAIT,
+        /* nMaxInstances */ 1,
+        /* nOutBufSize */ 1024,
+        /* nInBufSize */ 1024,
+        /* nDefaultWait */ NMPWAIT_USE_DEFAULT_WAIT,
+        /* lpSecurityAttrib */ NULL);
+    ok(hnp != INVALID_HANDLE_VALUE, "CreateNamedPipe failed\n");
+
+    hEvent = CreateEvent(NULL,  /* security attribute */
+        TRUE,                   /* manual reset event */
+        FALSE,                  /* initial state */
+        NULL);                  /* name */
+    ok(hEvent != NULL, "CreateEvent\n");
+
+    for (i = 0; i < NB_SERVER_LOOPS; i++) {
+        char buf[512];
+        DWORD readden;
+        DWORD success;
+        OVERLAPPED oOverlap;
+        DWORD err;
+
+        memset(&oOverlap, 0, sizeof(oOverlap));
+        oOverlap.hEvent = hEvent;
+
+        /* Wait for client to connect */
+        trace("Server calling ConnectNamedPipe...\n");
+        success = ConnectNamedPipe(hnp, NULL);
+        err = GetLastError();
+        ok(success || (err == ERROR_PIPE_CONNECTED), "ConnectNamedPipe failed: %d\n", err);
+        trace("ConnectNamedPipe operation complete.\n");
+
+        /* Echo bytes once */
+        memset(buf, 0, sizeof(buf));
+
+        trace("Server reading...\n");
+        completion_called = 0;
+        ResetEvent(hEvent);
+        success = ReadFileEx(hnp, buf, sizeof(buf), &oOverlap, completion_routine);
+        trace("Server ReadFileEx returned...\n");
+        ok(success, "ReadFileEx failed, err=%i\n", GetLastError());
+        ok(completion_called == 0, "completion routine called before ReadFileEx return\n");
+        trace("ReadFileEx returned.\n");
+        if (success) {
+            DWORD ret;
+            do {
+                ret = WaitForSingleObjectEx(hEvent, INFINITE, TRUE);
+            } while (ret == WAIT_IO_COMPLETION);
+            ok(ret == 0, "wait ReadFileEx returned %x\n", ret);
+        }
+        ok(completion_called == 1, "completion routine called %i times\n", completion_called);
+        ok(completion_errorcode == ERROR_SUCCESS, "completion routine got error %d\n", completion_errorcode);
+        ok(completion_num_bytes != 0, "read 0 bytes");
+        ok(completion_lpoverlapped == &oOverlap, "got wrong overlapped pointer %p\n", completion_lpoverlapped);
+        readden = completion_num_bytes;
+        trace("Server done reading.\n");
+
+        trace("Server writing...\n");
+        completion_called = 0;
+        ResetEvent(hEvent);
+        success = WriteFileEx(hnp, buf, readden, &oOverlap, completion_routine);
+        trace("Server WriteFileEx returned...\n");
+        ok(success, "WriteFileEx failed, err=%i\n", GetLastError());
+        ok(completion_called == 0, "completion routine called before ReadFileEx return\n");
+        trace("overlapped WriteFile returned.\n");
+        if (success) {
+            DWORD ret;
+            do {
+                ret = WaitForSingleObjectEx(hEvent, INFINITE, TRUE);
+            } while (ret == WAIT_IO_COMPLETION);
+            ok(ret == 0, "wait WriteFileEx returned %x\n", ret);
+        }
+        trace("Server done writing.\n");
+        ok(completion_called == 1, "completion routine called %i times\n", completion_called);
+        ok(completion_errorcode == ERROR_SUCCESS, "completion routine got error %d\n", completion_errorcode);
+        ok(completion_num_bytes == readden, "read %i bytes wrote %i\n", readden, completion_num_bytes);
+        ok(completion_lpoverlapped == &oOverlap, "got wrong overlapped pointer %p\n", completion_lpoverlapped);
+
+        /* finish this connection, wait for next one */
+        ok(FlushFileBuffers(hnp), "FlushFileBuffers\n");
+        ok(DisconnectNamedPipe(hnp), "DisconnectNamedPipe\n");
+    }
+    return 0;
+}
+
 static void exercizeServer(const char *pipename, HANDLE serverThread)
 {
     int i;
@@ -890,6 +997,12 @@ static void test_NamedPipe_2(void)
     serverThread = CreateThread(NULL, 0, serverThreadMain4, 0, 0, &serverThreadId);
     ok(serverThread != NULL, "CreateThread failed: %d\n", GetLastError());
     exercizeServer(PIPENAME "serverThreadMain4", serverThread);
+
+    /* Try server #5 */
+    SetLastError(0xdeadbeef);
+    serverThread = CreateThread(NULL, 0, serverThreadMain5, 0, 0, &serverThreadId);
+    ok(serverThread != NULL, "CreateThread failed: %d\n", GetLastError());
+    exercizeServer(PIPENAME "serverThreadMain5", serverThread);
 
     ok(SetEvent( alarm_event ), "SetEvent\n");
     CloseHandle( alarm_event );
