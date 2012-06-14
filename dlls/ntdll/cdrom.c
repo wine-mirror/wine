@@ -1141,7 +1141,7 @@ static NTSTATUS CDROM_Verify(int dev, int fd)
         return STATUS_SUCCESS;
     else
         return STATUS_NO_MEDIA_IN_DEVICE;
-#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__)
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__) || defined(__DragonFly__)
     int ret;
     ret = ioctl(fd, CDIOCSTART, NULL);
     if(ret == 0)
