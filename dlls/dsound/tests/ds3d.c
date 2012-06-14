@@ -801,7 +801,7 @@ static HRESULT test_secondary(LPGUID lpGuid, int play,
         ZeroMemory(&bufdesc, sizeof(bufdesc));
         bufdesc.dwSize=sizeof(bufdesc);
         bufdesc.dwFlags=DSBCAPS_GETCURRENTPOSITION2;
-        if (has_3d)
+        if (has_3dbuffer)
             bufdesc.dwFlags|=DSBCAPS_CTRL3D;
         else
             bufdesc.dwFlags|=
@@ -833,6 +833,14 @@ static HRESULT test_secondary(LPGUID lpGuid, int play,
            wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels,
            getDSBCAPS(bufdesc.dwFlags),rc);
         if (rc==DS_OK && secondary!=NULL) {
+            IDirectSound3DBuffer *ds3d;
+
+            rc=IDirectSoundBuffer_QueryInterface(secondary, &IID_IDirectSound3DBuffer, (void**)&ds3d);
+            ok((has_3dbuffer && rc==DS_OK) || (!has_3dbuffer && rc==E_NOINTERFACE),
+                    "Wrong return trying to get 3D buffer on %s3D secondary interface: %08x\n", has_3dbuffer ? "" : "non-", rc);
+            if(rc==DS_OK)
+                IDirectSound3DBuffer_Release(ds3d);
+
             if (!has_3d) {
                 LONG refvol,vol,refpan,pan;
 

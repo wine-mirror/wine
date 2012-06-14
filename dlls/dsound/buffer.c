@@ -764,9 +764,13 @@ static HRESULT WINAPI IDirectSoundBufferImpl_QueryInterface(IDirectSoundBuffer8 
 	}
 
 	if ( IsEqualGUID( &IID_IDirectSound3DBuffer, riid ) ) {
+            if(This->dsbd.dwFlags & DSBCAPS_CTRL3D){
                 IDirectSound3DBuffer_AddRef(&This->IDirectSound3DBuffer_iface);
                 *ppobj = &This->IDirectSound3DBuffer_iface;
                 return S_OK;
+            }
+            TRACE("app requested IDirectSound3DBuffer on non-3D secondary buffer\n");
+            return E_NOINTERFACE;
 	}
 
 	if ( IsEqualGUID( &IID_IDirectSound3DListener, riid ) ) {
