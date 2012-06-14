@@ -3929,6 +3929,17 @@ basic_ostream_char* __thiscall basic_ostream_char_print_bool(basic_ostream_char 
     return NULL;
 }
 
+/* ?endl@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@1@AAV21@@Z */
+/* ?endl@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@1@AEAV21@@Z */
+basic_ostream_char* __cdecl basic_ostream_char_endl(basic_ostream_char *ostr)
+{
+    TRACE("(%p)\n", ostr);
+
+    basic_ostream_char_put(ostr, '\n');
+    basic_ostream_char_flush(ostr);
+    return ostr;
+}
+
 /* Caution: basic_istream uses virtual inheritance. */
 static inline basic_ios_char* basic_istream_char_get_basic_ios(basic_istream_char *this)
 {
