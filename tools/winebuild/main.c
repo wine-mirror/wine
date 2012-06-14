@@ -191,12 +191,21 @@ static void set_target( const char *target )
 
     /* get the CPU part */
 
-    if (!(p = strchr( spec, '-' ))) fatal_error( "Invalid target specification '%s'\n", target );
-    *p++ = 0;
-    if ((target_cpu = get_cpu_from_name( spec )) == -1)
-        fatal_error( "Unrecognized CPU '%s'\n", spec );
-    platform = p;
-    if ((p = strrchr( p, '-' ))) platform = p + 1;
+    if ((p = strchr( spec, '-' )))
+    {
+        *p++ = 0;
+        if ((target_cpu = get_cpu_from_name( spec )) == -1)
+            fatal_error( "Unrecognized CPU '%s'\n", spec );
+        platform = p;
+        if ((p = strrchr( p, '-' ))) platform = p + 1;
+    }
+    else if (!strcmp( spec, "mingw32" ))
+    {
+        target_cpu = CPU_x86;
+        platform = spec;
+    }
+    else
+        fatal_error( "Invalid target specification '%s'\n", target );
 
     /* get the OS part */
 
