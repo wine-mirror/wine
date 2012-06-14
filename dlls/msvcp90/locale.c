@@ -190,7 +190,10 @@ typedef struct
 } facets_elem;
 static struct list lazy_facets = LIST_INIT(lazy_facets);
 
-static void locale_facet_register(locale_facet *add)
+/* Not exported from msvcp90 */
+/* ?facet_Register@facet@locale@std@@CAXPAV123@@Z */
+/* ?facet_Register@facet@locale@std@@CAXPEAV123@@Z */
+void __cdecl locale_facet_register(locale_facet *add)
 {
     facets_elem *head = MSVCRT_operator_new(sizeof(*head));
     if(!head) {
