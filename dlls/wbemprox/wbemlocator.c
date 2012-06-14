@@ -23,7 +23,6 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "initguid.h"
 #include "objbase.h"
 #include "wbemcli.h"
 
@@ -98,8 +97,21 @@ static HRESULT WINAPI wbem_locator_ConnectServer(
     IWbemContext *pCtx,
     IWbemServices **ppNamespace)
 {
+    HRESULT hr;
+
     FIXME("%p, %s, %s, %s, %s, 0x%08x, %s, %p, %p)\n", iface, debugstr_w(NetworkResource), debugstr_w(User),
           debugstr_w(Password), debugstr_w(Locale), SecurityFlags, debugstr_w(Authority), pCtx, ppNamespace);
+
+    if (((NetworkResource[0] == '\\' && NetworkResource[1] == '\\') ||
+         (NetworkResource[0] == '/' && NetworkResource[1] == '/')) && NetworkResource[2] != '.')
+    {
+        FIXME("remote computer not supported\n");
+        return WBEM_E_TRANSPORT_FAILURE;
+    }
+    hr = WbemServices_create( NULL, (void **)ppNamespace );
+    if (SUCCEEDED( hr ))
+        return WBEM_NO_ERROR;
+
     return WBEM_E_FAILED;
 }
 

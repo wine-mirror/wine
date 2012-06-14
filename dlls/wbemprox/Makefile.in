@@ -3,6 +3,7 @@ IMPORTS   = ole32 advapi32
 
 C_SRCS = \
 	main.c \
+	services.c \
 	wbemlocator.c
 
 IDL_R_SRCS = wbemprox.idl

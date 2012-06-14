@@ -17,3 +17,4 @@
  */
 
 HRESULT WbemLocator_create(IUnknown *, LPVOID *) DECLSPEC_HIDDEN;
+HRESULT WbemServices_create(IUnknown *, LPVOID *) DECLSPEC_HIDDEN;
