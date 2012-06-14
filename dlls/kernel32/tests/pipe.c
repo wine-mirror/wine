@@ -1795,7 +1795,7 @@ static void test_readfileex_pending(void)
     completion_called = 0;
     ResetEvent(event);
     ret = ReadFileEx(server, read_buf, sizeof(read_buf), &overlapped, completion_routine);
-    todo_wine ok(ret == TRUE, "ReadFileEx failed, err=%i\n", GetLastError());
+    ok(ret == TRUE, "ReadFileEx failed, err=%i\n", GetLastError());
     ok(completion_called == 0, "completion routine called before ReadFileEx returned\n");
 
     ret = WriteFile(client, test_string, sizeof(test_string), &num_bytes, NULL);
@@ -1837,7 +1837,7 @@ static void test_readfileex_pending(void)
         ok(completion_lpoverlapped == &overlapped, "completion called with wrong overlapped pointer\n");
     }
 
-    todo_wine ok(ret == TRUE, "WriteFileEx failed, err=%i\n", err);
+    ok(ret == TRUE, "WriteFileEx failed, err=%i\n", err);
     ok(completion_called == 0, "completion routine called but wait timed out\n");
     ok(completion_errorcode == 0, "completion called with error %x\n", completion_errorcode);
     ok(completion_lpoverlapped == &overlapped, "completion called with wrong overlapped pointer\n");

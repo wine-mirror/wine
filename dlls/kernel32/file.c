@@ -352,7 +352,7 @@ BOOL WINAPI ReadFileEx(HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
     status = NtReadFile(hFile, NULL, FILE_ReadWriteApc, lpCompletionRoutine,
                         io_status, buffer, bytesToRead, &offset, NULL);
 
-    if (status)
+    if (status && status != STATUS_PENDING)
     {
         SetLastError( RtlNtStatusToDosError(status) );
         return FALSE;
@@ -484,8 +484,12 @@ BOOL WINAPI WriteFileEx(HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
     status = NtWriteFile(hFile, NULL, FILE_ReadWriteApc, lpCompletionRoutine,
                          io_status, buffer, bytesToWrite, &offset, NULL);
 
-    if (status) SetLastError( RtlNtStatusToDosError(status) );
-    return !status;
+    if (status && status != STATUS_PENDING)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
+    }
+    return TRUE;
 }
 
 
