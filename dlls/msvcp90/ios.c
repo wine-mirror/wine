@@ -4061,6 +4061,7 @@ MSVCP_bool __thiscall basic_istream_char__Ipfx(basic_istream_char *this, MSVCP_b
 
     if(!noskip && (ios_base_flags_get(&base->base) & FMTFLAG_skipws)) {
         basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
+        const ctype_char *ctype = ctype_char_use_facet(base->strbuf->loc);
         int ch;
 
         for(ch = basic_streambuf_char_sgetc(strbuf); ;
@@ -4070,8 +4071,7 @@ MSVCP_bool __thiscall basic_istream_char__Ipfx(basic_istream_char *this, MSVCP_b
                 return FALSE;
             }
 
-            /* TODO: use locale class instead of isspace */
-            if(!isspace(ch))
+            if(!ctype_char_is_ch(ctype, _SPACE|_BLANK, ch))
                 break;
         }
     }

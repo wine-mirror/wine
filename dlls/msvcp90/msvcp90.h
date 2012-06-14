@@ -311,6 +311,26 @@ int __thiscall codecvt_char_in(const codecvt_char*, int*, const char*,
         const char*, const char**, char*, char*, char**);
 int __thiscall codecvt_base_max_length(const codecvt_base*);
 
+typedef struct {
+    LCID handle;
+    unsigned page;
+    const short *table;
+    int delfl;
+} _Ctypevec;
+
+/* class ctype_base */
+typedef struct {
+    locale_facet facet;
+} ctype_base;
+
+/* class ctype<char> */
+typedef struct {
+    ctype_base base;
+    _Ctypevec ctype;
+} ctype_char;
+
+MSVCP_bool __thiscall ctype_char_is_ch(const ctype_char*, short, char);
+
 /* class locale */
 typedef struct
 {
@@ -323,6 +343,7 @@ locale* __thiscall locale_operator_assign(locale*, const locale*);
 void __thiscall locale_dtor(locale*);
 void free_locale(void);
 codecvt_char* codecvt_char_use_facet(const locale*);
+ctype_char* ctype_char_use_facet(const locale*);
 
 /* class _Lockit */
 typedef struct {

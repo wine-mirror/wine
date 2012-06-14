@@ -76,28 +76,12 @@ typedef struct {
 typedef struct {
     LCID handle;
     unsigned page;
-    const short *table;
-    int delfl;
-} _Ctypevec;
-
-typedef struct {
-    LCID handle;
-    unsigned page;
 } _Cvtvec;
 
 typedef struct {
     locale_facet facet;
     _Collvec coll;
 } collate;
-
-typedef struct {
-    locale_facet facet;
-} ctype_base;
-
-typedef struct {
-    ctype_base base;
-    _Ctypevec ctype;
-} ctype_char;
 
 typedef struct {
     ctype_base base;
@@ -1494,6 +1478,32 @@ MSVCP_size_t __cdecl ctype_char__Getcat(const locale_facet **facet, const locale
     }
 
     return LC_CTYPE;
+}
+
+ctype_char* ctype_char_use_facet(const locale *loc)
+{
+    static ctype_char *obj = NULL;
+
+    _Lockit lock;
+    const locale_facet *fac;
+
+    _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
+    fac = locale__Getfacet(loc, ctype_char_id.id);
+    if(fac) {
+        _Lockit_dtor(&lock);
+        return (ctype_char*)fac;
+    }
+
+    if(obj)
+        return obj;
+
+    ctype_char__Getcat(&fac, loc);
+    obj = (ctype_char*)fac;
+    locale_facet__Incref(&obj->base.facet);
+    locale_facet_register(&obj->base.facet);
+    _Lockit_dtor(&lock);
+
+    return obj;
 }
 
 /* _Tolower */
