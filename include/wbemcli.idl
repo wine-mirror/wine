@@ -19,6 +19,7 @@
 cpp_quote("DEFINE_GUID(CLSID_WbemLocator, 0x4590f811,0x1d3A,0x11d0,0x89,0x1f,0x00,0xaa,0x00,0x4b,0x2e,0x24);")
 cpp_quote("DEFINE_GUID(CLSID_WbemStatusCode, 0xeb87e1bd,0x3233,0x11d2,0xae,0xc9,0x00,0xc0,0x4f,0xb6,0x88,0x20);")
 
+import "oaidl.idl";
 import "objidl.idl";
 
 interface IWbemContext;
@@ -28,6 +29,7 @@ interface IWbemCallResult;
 interface IWbemObjectSink;
 interface IWbemClassObject;
 interface IEnumWbemClassObject;
+interface IWbemQualifierSet;
 
 typedef [v1_enum] enum tag_WBEMSTATUS
 {
@@ -173,6 +175,37 @@ typedef [v1_enum] enum tag_WBEMSTATUS
     WBEM_E_NO_KEY                           = 0x80041089,
     WBEM_E_PROVIDER_DISABLED                = 0x8004108a
 } WBEMSTATUS;
+
+typedef [v1_enum] enum tag_WBEM_TIMEOUT_TYPE
+{
+    WBEM_NO_WAIT  = 0,
+    WBEM_INFINITE = 0xffffffff
+} WBEM_TIMEOUT_TYPE;
+
+typedef [v1_enum] enum tag_CIMTYPE_ENUMERATION
+{
+    CIM_ILLEGAL = 0xfff,
+    CIM_EMPTY   = 0,
+    CIM_SINT16  = 2,
+    CIM_SINT32  = 3,
+    CIM_REAL32  = 4,
+    CIM_REAL64  = 5,
+    CIM_STRING  = 8,
+    CIM_BOOLEAN = 11,
+    CIM_OBJECT  = 13,
+    CIM_SINT8   = 16,
+    CIM_UINT8   = 17,
+    CIM_UINT16  = 18,
+    CIM_UINT32  = 19,
+    CIM_SINT64  = 20,
+    CIM_UINT64  = 21,
+    CIM_DATETIME   = 101,
+    CIM_REFERENCE  = 102,
+    CIM_CHAR16     = 103,
+    CIM_FLAG_ARRAY = 0x2000
+} CIMTYPE_ENUMERATION;
+
+typedef long CIMTYPE;
 
 [
     object,
@@ -411,3 +444,113 @@ interface IEnumWbemClassObject : IUnknown
         [in] long lTimeout,
         [in] ULONG nCount);
 };
+
+[
+    object,
+    restricted,
+    local,
+    uuid(dc12a681-737f-11cf-884d-00aa004b2e24)
+]
+interface IWbemClassObject : IUnknown
+{
+    HRESULT GetQualifierSet(
+        [out] IWbemQualifierSet **ppQualSet);
+
+    HRESULT Get(
+        [in,string] LPCWSTR wszName,
+        [in] long lFlags,
+        [out] VARIANT *pVal,
+        [out] CIMTYPE *pType,
+        [out] long *plFlavor);
+
+    HRESULT Put(
+        [in,string] LPCWSTR wszName,
+        [in] long lFlags,
+        [in] VARIANT *pVal,
+        [in] CIMTYPE Type);
+
+    HRESULT Delete(
+        [in,string] LPCWSTR wszName);
+
+    HRESULT GetNames(
+        [in,string] LPCWSTR wszQualifierName,
+        [in] long lFlags,
+        [in] VARIANT *pQualifierVal,
+        [out] SAFEARRAY *pNames);
+
+    HRESULT BeginEnumeration(
+        [in] long lEnumFlags);
+
+    HRESULT Next(
+        [in] long lFlags,
+        [out] BSTR *strName,
+        [out] VARIANT *pVal,
+        [out] CIMTYPE *pType,
+        [out] long *plFlavor);
+
+    HRESULT EndEnumeration();
+
+    HRESULT GetPropertyQualifierSet(
+        [in,string] LPCWSTR wszProperty,
+        [out] IWbemQualifierSet **ppQualSet);
+
+    HRESULT Clone(
+        [out] IWbemClassObject **ppCopy);
+
+    HRESULT GetObjectText(
+        [in] long lFlags,
+        [out] BSTR *pstrObjectText);
+
+    HRESULT SpawnDerivedClass(
+        [in] long lFlags,
+        [out] IWbemClassObject **ppNewClass);
+
+    HRESULT SpawnInstance(
+        [in] long lFlags,
+        [out] IWbemClassObject **ppNewInstance);
+
+    HRESULT CompareTo(
+        [in] long lFlags,
+        [in] IWbemClassObject *pCompareTo);
+
+    HRESULT GetPropertyOrigin(
+        [in,string] LPCWSTR wszName,
+        [out] BSTR *pstrClassName);
+
+    HRESULT InheritsFrom(
+        [in] LPCWSTR strAncestor);
+
+    HRESULT GetMethod(
+        [in,string] LPCWSTR wszName,
+        [in] long lFlags,
+        [out] IWbemClassObject **ppInSignature,
+        [out] IWbemClassObject **ppOutSignature);
+
+    HRESULT PutMethod(
+        [in,string] LPCWSTR wszName,
+        [in] long lFlags,
+        [in] IWbemClassObject *pInSignature,
+        [in] IWbemClassObject *pOutSignature);
+
+    HRESULT DeleteMethod(
+        [in,string] LPCWSTR wszName);
+
+    HRESULT BeginMethodEnumeration(
+        [in] long lEnumFlags);
+
+    HRESULT NextMethod(
+        [in] long lFlags,
+        [out] BSTR *pstrName,
+        [out] IWbemClassObject **ppInSignature,
+        [out] IWbemClassObject **ppOutSignature);
+
+    HRESULT EndMethodEnumeration();
+
+    HRESULT GetMethodQualifierSet(
+        [in,string] LPCWSTR wszMethod,
+        [out] IWbemQualifierSet **ppQualSet);
+
+    HRESULT GetMethodOrigin(
+        [in,string] LPCWSTR wszMethodName,
+        [out] BSTR *pstrClassName);
+}
