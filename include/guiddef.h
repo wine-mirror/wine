@@ -113,7 +113,7 @@ typedef GUID FMTID,*LPFMTID;
 
 #endif /* ndef __IID_DEFINED__ */
 
-#if defined(__cplusplus) && !defined(CINTERFACE)
+#ifdef __cplusplus
 #define REFGUID             const GUID &
 #define REFCLSID            const CLSID &
 #define REFIID              const IID &
