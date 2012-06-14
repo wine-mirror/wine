@@ -251,6 +251,7 @@ BOOL LoadWinTypeFromCHM(HHInfo *info)
     HRESULT hr;
     DWORD cbRead;
 
+    static const WCHAR null[] = {0};
     static const WCHAR toc_extW[] = {'h','h','c',0};
     static const WCHAR index_extW[] = {'h','h','k',0};
     static const WCHAR windowsW[] = {'#','W','I','N','D','O','W','S',0};
@@ -260,7 +261,6 @@ BOOL LoadWinTypeFromCHM(HHInfo *info)
     {
         /* no defined window types so use (hopefully) sane defaults */
         static const WCHAR defaultwinW[] = {'d','e','f','a','u','l','t','w','i','n','\0'};
-        static const WCHAR null[] = {0};
         memset((void*)&(info->WinType), 0, sizeof(info->WinType));
         info->WinType.cbStruct=sizeof(info->WinType);
         info->WinType.fUniCodeStrings=TRUE;
@@ -292,13 +292,16 @@ BOOL LoadWinTypeFromCHM(HHInfo *info)
 
     info->WinType.pszType      = info->pszType     = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszType));
     info->WinType.pszCaption   = info->pszCaption  = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszCaption));
-    info->WinType.pszFile      = info->pszFile     = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszFile));
     info->WinType.pszHome      = info->pszHome     = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszHome));
     info->WinType.pszJump1     = info->pszJump1    = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszJump1));
     info->WinType.pszJump2     = info->pszJump2    = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszJump2));
     info->WinType.pszUrlJump1  = info->pszUrlJump1 = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszUrlJump1));
     info->WinType.pszUrlJump2  = info->pszUrlJump2 = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszUrlJump2));
 
+    if (info->WinType.pszFile)
+        info->WinType.pszFile  = info->pszFile     = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszFile));
+    else
+        info->WinType.pszFile  = strdupW(info->pCHMInfo->defTopic ? info->pCHMInfo->defTopic : null);
     if (info->WinType.pszToc)
         info->WinType.pszToc   = info->pszToc      = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszToc));
     else
