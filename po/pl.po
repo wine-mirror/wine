@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-03-31 07:45+0200\n"
+"PO-Revision-Date: 2012-06-14 15:46+0200\n"
 "Last-Translator: Łukasz Wojniłowicz <lukasz.wojnilowicz@gmail.com>\n"
 "Language-Team: Polish <kde-i18n-doc@kde.org>\n"
 "Language: Polish\n"
@@ -163,21 +163,10 @@ msgid "Cancel"
 msgstr "Anuluj"
 
 #: appwiz.rc:112
-#, fuzzy
-#| msgid "Wine Gecko Installer"
 msgid "Wine Mono Installer"
-msgstr "Instalator Wine Gecko"
+msgstr "Instalator Wine Mono"
 
 #: appwiz.rc:115
-#, fuzzy
-#| msgid ""
-#| "Wine could not find a Gecko package which is needed for applications "
-#| "embedding HTML to work correctly. Wine can automatically download and "
-#| "install it for you.\n"
-#| "\n"
-#| "Note: it is recommended to use your distribution's packages instead. See "
-#| "<a href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> "
-#| "for details."
 msgid ""
 "Wine could not find a Mono package which is needed for .NET applications to "
 "work correctly. Wine can automatically download and install it for you.\n"
@@ -186,12 +175,11 @@ msgid ""
 "href=\"http://wiki.winehq.org/Mono\">http://wiki.winehq.org/Mono</a> for "
 "details."
 msgstr ""
-"Nie znaleziono paczki Gecko potrzebnej do prawidłowego działania aplikacji "
-"zawierających kod HTML. Wine może automatycznie pobrać i zainstalować tą "
-"paczkę dla ciebie.\n"
+"Nie znaleziono paczki Mono potrzebnej do prawidłowego działania aplikacji ."
+"NET. Wine może automatycznie pobrać i zainstalować tą paczkę dla ciebie.\n"
 "\n"
 "Uwaga: Lepiej jednak użyć paczki z twojej dystrybucji. Po szczegóły zajrzyj "
-"na <a href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> "
+"na <a href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Mono</a> "
 "po szczegóły."
 
 #: appwiz.rc:28
@@ -3456,59 +3444,51 @@ msgstr "Najwyższy"
 
 #: joy.rc:33
 msgid "Joysticks"
-msgstr ""
+msgstr "Joysticki"
 
 #: joy.rc:36 winecfg.rc:204
 msgid "&Disable"
-msgstr "&Wyłącz bibliotekę"
+msgstr "Wyłą&cz "
 
 #: joy.rc:37
-#, fuzzy
-#| msgid "&enable"
 msgid "&Enable"
-msgstr "&Udostępnij"
+msgstr "&Włącz"
 
 #: joy.rc:38
-#, fuzzy
-#| msgid "Disconnected"
 msgid "Connected"
-msgstr "Rozłączono"
+msgstr "Podłączony"
 
 #: joy.rc:40
-#, fuzzy
-#| msgid "&Disable"
 msgid "Disabled"
-msgstr "&Wyłącz bibliotekę"
+msgstr "Wyłączony"
 
 #: joy.rc:46
 msgid "Test Joystick"
-msgstr ""
+msgstr "Testuj Joystick"
 
 #: joy.rc:50
 msgid "Buttons"
-msgstr ""
+msgstr "Przyciski"
 
 #: joy.rc:51
 msgid "X,Y"
-msgstr ""
+msgstr "X,Y"
 
 #: joy.rc:52
 msgid "Rx,Ry"
-msgstr ""
+msgstr "Rx,Ry"
 
 #: joy.rc:53
 msgid "Z, Rz"
-msgstr ""
+msgstr "Z, Rz"
 
 #: joy.rc:58
 msgid "Test Force Feedback"
-msgstr ""
+msgstr "Testuj odczucie siły zwrotnej"
 
 #: joy.rc:28
-#, fuzzy
-#| msgid "Create Control"
 msgid "Game Controllers"
-msgstr "Utwórz kontrolkę"
+msgstr "Kontrolery gier"
 
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
@@ -3639,16 +3619,12 @@ msgid "URI to be decoded is incorrect"
 msgstr "URI do dekodowania jest niepoprawny"
 
 #: jscript.rc:57
-#, fuzzy
-#| msgid "Enumeration value out of range.\n"
 msgid "Number of fraction digits is out of range"
-msgstr "Wartość typu wyliczeniowego poza zakresem.\n"
+msgstr "Ilość cyfr znaczących jest poza zakresem"
 
 #: jscript.rc:58
-#, fuzzy
-#| msgid "Subscript out of range"
 msgid "Precision is out of range"
-msgstr "Indeks dolny poza zakresem"
+msgstr "Precyzja jest poza poza zakresem"
 
 #: jscript.rc:59
 msgid "Array length must be a finite positive integer"
@@ -6753,37 +6729,6 @@ msgid "insert disk %s"
 msgstr "włóż dysk '%s'"
 
 #: msi.rc:30
-#, fuzzy
-#| msgid ""
-#| "Windows Installer %s\n"
-#| "\n"
-#| "Usage:\n"
-#| "msiexec command {required parameter} [optional parameter]\n"
-#| "\n"
-#| "Install a product:\n"
-#| "\t/i {package|product_code} [property]\n"
-#| "\t/package {package|product_code} [property]\n"
-#| "\t/a package [property]\n"
-#| "Repair an installation:\n"
-#| "\t/f[p|o|e|d|c|a|u|m|s|v] {package|product_code}\n"
-#| "Uninstall a product:\n"
-#| "\t/uninstall {package|product_code} [property]\n"
-#| "\t/x {package|product_code} [property]\n"
-#| "Advertise a product:\n"
-#| "\t/j[u|m] package [/t transform] [/g languageid]\n"
-#| "Apply a patch:\n"
-#| "\t/p patch_package [property]\n"
-#| "\t/p patch_package /a package [property]\n"
-#| "Log and UI Modifiers for above commands:\n"
-#| "\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] logfile\n"
-#| "\t/q{|n|b|r|f|n+|b+|b-}\n"
-#| "Register MSI Service:\n"
-#| "\t/y\n"
-#| "Unregister MSI Service:\n"
-#| "\t/z\n"
-#| "Display this help:\n"
-#| "\t/help\n"
-#| "\t/?\n"
 msgid ""
 "Windows Installer %s\n"
 "\n"
@@ -6815,7 +6760,7 @@ msgid ""
 "\t/help\n"
 "\t/?\n"
 msgstr ""
-"Windows Installer %s\n"
+"Instalator Windows %s\n"
 "\n"
 "Użycie:\n"
 "polecenie msiexec {wymagany parametr} [opcjonalny parametr]\n"
