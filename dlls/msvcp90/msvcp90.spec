@@ -5348,8 +5348,8 @@
 @ cdecl -arch=win64 ?setp@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IEAAXPEA_W00@Z(ptr ptr ptr ptr) basic_streambuf_wchar_setp_next
 @ thiscall -arch=win32 ?setp@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IAEXPA_W0@Z(ptr ptr ptr) basic_streambuf_wchar_setp
 @ cdecl -arch=win64 ?setp@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IEAAXPEA_W0@Z(ptr ptr ptr) basic_streambuf_wchar_setp
-@ stub -arch=win32 ?setprecision@std@@YA?AU?$_Smanip@H@1@H@Z
-@ stub -arch=win64 ?setprecision@std@@YA?AU?$_Smanip@_J@1@_J@Z
+@ cdecl -arch=win32 ?setprecision@std@@YA?AU?$_Smanip@H@1@H@Z(ptr long) setprecision
+@ cdecl -arch=win64 ?setprecision@std@@YA?AU?$_Smanip@_J@1@_J@Z(ptr long) setprecision
 @ thiscall -arch=win32 ?setstate@?$basic_ios@DU?$char_traits@D@std@@@std@@QAEXH_N@Z(ptr long long) basic_ios_char_setstate_reraise
 @ cdecl -arch=win64 ?setstate@?$basic_ios@DU?$char_traits@D@std@@@std@@QEAAXH_N@Z(ptr long long) basic_ios_char_setstate_reraise
 @ thiscall -arch=win32 ?setstate@?$basic_ios@DU?$char_traits@D@std@@@std@@QAEXI@Z(ptr long) basic_ios_char_setstate

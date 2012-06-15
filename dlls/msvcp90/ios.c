@@ -132,6 +132,11 @@ static inline const char* debugstr_fpos_int(fpos_int *fpos)
 }
 
 typedef struct {
+    void (__cdecl *pfunc)(ios_base*, streamsize);
+    streamsize arg;
+} manip_streamsize;
+
+typedef struct {
     const vtable_ptr *vtable;
     mutex lock;
     char *rbuf;
@@ -5539,6 +5544,22 @@ basic_filebuf_char* __thiscall basic_fstream_char_rdbuf(const basic_fstream_char
 {
     TRACE("(%p)\n", this);
     return (basic_filebuf_char*)&this->filebuf;
+}
+
+static void __cdecl setprecision_func(ios_base *base, streamsize prec)
+{
+    ios_base_precision_set(base, prec);
+}
+
+/* ?setprecision@std@@YA?AU?$_Smanip@H@1@H@Z */
+/* ?setprecision@std@@YA?AU?$_Smanip@_J@1@_J@Z */
+manip_streamsize* __cdecl setprecision(manip_streamsize *ret, streamsize prec)
+{
+    TRACE("(%p %ld)\n", ret, prec);
+
+    ret->pfunc = setprecision_func;
+    ret->arg = prec;
+    return ret;
 }
 
 static basic_filebuf_char filebuf_stdin;
