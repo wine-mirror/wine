@@ -3186,8 +3186,8 @@ locale *__thiscall basic_ios_char_imbue(basic_ios_char *this, locale *ret, const
 DEFINE_THISCALL_WRAPPER(basic_ios_char_narrow, 12)
 char __thiscall basic_ios_char_narrow(basic_ios_char *this, char ch, char def)
 {
-    FIXME("(%p %c %c) stub\n", this, ch, def);
-    return def;
+    TRACE("(%p %c %c)\n", this, ch, def);
+    return ctype_char_narrow_ch(ctype_char_use_facet(this->strbuf->loc), ch, def);
 }
 
 /* ?rdbuf@?$basic_ios@DU?$char_traits@D@std@@@std@@QAEPAV?$basic_streambuf@DU?$char_traits@D@std@@@2@PAV32@@Z */
@@ -3452,8 +3452,8 @@ locale *__thiscall basic_ios_wchar_imbue(basic_ios_wchar *this, locale *ret, con
 DEFINE_THISCALL_WRAPPER(basic_ios_wchar_narrow, 12)
 char __thiscall basic_ios_wchar_narrow(basic_ios_wchar *this, wchar_t ch, char def)
 {
-    FIXME("(%p %c %c) stub\n", this, ch, def);
-    return def;
+    TRACE("(%p %c %c)\n", this, ch, def);
+    return ctype_wchar_narrow_ch(ctype_wchar_use_facet(this->strbuf->loc), ch, def);
 }
 
 /* ?rdbuf@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QAEPAV?$basic_streambuf@_WU?$char_traits@_W@std@@@2@PAV32@@Z */

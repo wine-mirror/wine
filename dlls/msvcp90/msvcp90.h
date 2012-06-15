@@ -331,6 +331,21 @@ typedef struct {
 } ctype_char;
 
 MSVCP_bool __thiscall ctype_char_is_ch(const ctype_char*, short, char);
+char __thiscall ctype_char_narrow_ch(const ctype_char*, char, char);
+
+typedef struct {
+    LCID handle;
+    unsigned page;
+} _Cvtvec;
+
+/* class ctype<wchar> */
+typedef struct {
+    ctype_base base;
+    _Ctypevec ctype;
+    _Cvtvec cvt;
+} ctype_wchar;
+
+char __thiscall ctype_wchar_narrow_ch(const ctype_wchar*, wchar_t, char);
 
 /* class locale */
 typedef struct
@@ -345,6 +360,7 @@ void __thiscall locale_dtor(locale*);
 void free_locale(void);
 codecvt_char* codecvt_char_use_facet(const locale*);
 ctype_char* ctype_char_use_facet(const locale*);
+ctype_wchar* ctype_wchar_use_facet(const locale*);
 
 /* class _Lockit */
 typedef struct {

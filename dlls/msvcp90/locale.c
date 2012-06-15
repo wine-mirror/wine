@@ -74,20 +74,9 @@ typedef struct {
 } _Collvec;
 
 typedef struct {
-    LCID handle;
-    unsigned page;
-} _Cvtvec;
-
-typedef struct {
     locale_facet facet;
     _Collvec coll;
 } collate;
-
-typedef struct {
-    ctype_base base;
-    _Ctypevec ctype;
-    _Cvtvec cvt;
-} ctype_wchar;
 
 typedef struct {
     locale_facet facet;
@@ -2233,6 +2222,32 @@ wchar_t __cdecl _Towlower(wchar_t ch, const _Ctypevec *ctype)
 {
     TRACE("(%d %p)\n", ch, ctype);
     return tolowerW(ch);
+}
+
+ctype_wchar* ctype_wchar_use_facet(const locale *loc)
+{
+    static ctype_wchar *obj = NULL;
+
+    _Lockit lock;
+    const locale_facet *fac;
+
+    _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
+    fac = locale__Getfacet(loc, ctype_wchar_id.id);
+    if(fac) {
+        _Lockit_dtor(&lock);
+        return (ctype_wchar*)fac;
+    }
+
+    if(obj)
+        return obj;
+
+    ctype_wchar__Getcat(&fac, loc);
+    obj = (ctype_wchar*)fac;
+    locale_facet__Incref(&obj->base.facet);
+    locale_facet_register(&obj->base.facet);
+    _Lockit_dtor(&lock);
+
+    return obj;
 }
 
 /* ?do_tolower@?$ctype@_W@std@@MBE_W_W@Z */
