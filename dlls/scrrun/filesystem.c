@@ -26,6 +26,7 @@
 #include "ole2.h"
 #include "dispex.h"
 #include "scrrun.h"
+#include "scrrun_private.h"
 
 #include "wine/debug.h"
 
@@ -90,19 +91,26 @@ static HRESULT WINAPI filesys_GetTypeInfoCount(IFileSystem3 *iface, UINT *pctinf
 static HRESULT WINAPI filesys_GetTypeInfo(IFileSystem3 *iface, UINT iTInfo,
                                         LCID lcid, ITypeInfo **ppTInfo)
 {
-    FIXME("(%p)->(%u %u %p)\n", iface, iTInfo, lcid, ppTInfo);
-
-    return E_NOTIMPL;
-}
+    TRACE("(%p)->(%u %u %p)\n", iface, iTInfo, lcid, ppTInfo);
+    return get_typeinfo(IFileSystem3_tid, ppTInfo);}
 
 static HRESULT WINAPI filesys_GetIDsOfNames(IFileSystem3 *iface, REFIID riid,
                                         LPOLESTR *rgszNames, UINT cNames,
                                         LCID lcid, DISPID *rgDispId)
 {
-    FIXME("(%p)->(%s %p %u %u %p)\n", iface, debugstr_guid(riid), rgszNames, cNames,
-          lcid, rgDispId);
+    ITypeInfo *typeinfo;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s %p %u %u %p)\n", iface, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+
+    hr = get_typeinfo(IFileSystem3_tid, &typeinfo);
+    if(SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_GetIDsOfNames(typeinfo, rgszNames, cNames, rgDispId);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI filesys_Invoke(IFileSystem3 *iface, DISPID dispIdMember,
@@ -110,10 +118,21 @@ static HRESULT WINAPI filesys_Invoke(IFileSystem3 *iface, DISPID dispIdMember,
                                       DISPPARAMS *pDispParams, VARIANT *pVarResult,
                                       EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
-    FIXME("(%p)->(%d %s %d %d %p %p %p %p)\n", iface, dispIdMember, debugstr_guid(riid),
-          lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+    ITypeInfo *typeinfo;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", iface, dispIdMember, debugstr_guid(riid),
+           lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+
+    hr = get_typeinfo(IFileSystem3_tid, &typeinfo);
+    if(SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_Invoke(typeinfo, &iface, dispIdMember, wFlags,
+                pDispParams, pVarResult, pExcepInfo, puArgErr);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI filesys_get_Drives(IFileSystem3 *iface, IDriveCollection **ppdrives)

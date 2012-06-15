@@ -27,6 +27,7 @@
 
 #include <initguid.h>
 #include "scrrun.h"
+#include "scrrun_private.h"
 
 #include "wine/debug.h"
 
@@ -35,8 +36,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(scrrun);
 static HINSTANCE scrrun_instance;
 
 typedef HRESULT (*fnCreateInstance)(LPVOID *ppObj);
-
-extern HRESULT WINAPI FileSystem_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
 
 static HRESULT WINAPI scrruncf_QueryInterface(IClassFactory *iface, REFIID riid, LPVOID *ppv )
 {
@@ -88,6 +87,70 @@ static const struct IClassFactoryVtbl scrruncf_vtbl =
 
 static IClassFactory FileSystemFactory = { &scrruncf_vtbl };
 
+static ITypeLib *typelib;
+static ITypeInfo *typeinfos[LAST_tid];
+
+static REFIID tid_ids[] = {
+    &IID_NULL,
+    &IID_IFileSystem3,
+};
+
+static HRESULT load_typelib(void)
+{
+    HRESULT hres;
+    ITypeLib *tl;
+
+    hres = LoadRegTypeLib(&LIBID_Scripting, 1, 0, LOCALE_SYSTEM_DEFAULT, &tl);
+    if(FAILED(hres)) {
+        ERR("LoadRegTypeLib failed: %08x\n", hres);
+        return hres;
+    }
+
+    if(InterlockedCompareExchangePointer((void**)&typelib, tl, NULL))
+        ITypeLib_Release(tl);
+    return hres;
+}
+
+HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo)
+{
+    HRESULT hres;
+
+    if (!typelib)
+        hres = load_typelib();
+    if (!typelib)
+        return hres;
+
+    if(!typeinfos[tid]) {
+        ITypeInfo *ti;
+
+        hres = ITypeLib_GetTypeInfoOfGuid(typelib, tid_ids[tid], &ti);
+        if(FAILED(hres)) {
+            ERR("GetTypeInfoOfGuid(%s) failed: %08x\n", debugstr_guid(tid_ids[tid]), hres);
+            return hres;
+        }
+
+        if(InterlockedCompareExchangePointer((void**)(typeinfos+tid), ti, NULL))
+            ITypeInfo_Release(ti);
+    }
+
+    *typeinfo = typeinfos[tid];
+    return S_OK;
+}
+
+static void release_typelib(void)
+{
+    unsigned i;
+
+    if(!typelib)
+        return;
+
+    for(i=0; i < sizeof(typeinfos)/sizeof(*typeinfos); i++)
+        if(typeinfos[i])
+            ITypeInfo_Release(typeinfos[i]);
+
+    ITypeLib_Release(typelib);
+}
+
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
     TRACE("%p, %u, %p\n", hinst, reason, reserved);
@@ -101,6 +164,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
             scrrun_instance = hinst;
             break;
         case DLL_PROCESS_DETACH:
+            release_typelib();
             break;
     }
     return TRUE;

@@ -1,5 +1,5 @@
 MODULE    = scrrun.dll
-IMPORTS   = uuid
+IMPORTS   = uuid oleaut32
 
 C_SRCS = \
 	filesystem.c \
