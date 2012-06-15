@@ -37,15 +37,10 @@
 #  define SLDF_HAS_LOGO3ID 0x00000800 /* not available in the Vista SDK */
 #endif
 
-typedef void (WINAPI *fnILFree)(LPITEMIDLIST);
-typedef BOOL (WINAPI *fnILIsEqual)(LPCITEMIDLIST, LPCITEMIDLIST);
-typedef HRESULT (WINAPI *fnSHILCreateFromPath)(LPCWSTR, LPITEMIDLIST *,DWORD*);
-typedef HRESULT (WINAPI *fnSHDefExtractIconA)(LPCSTR, int, UINT, HICON*, HICON*, UINT);
-
-static fnILFree pILFree;
-static fnILIsEqual pILIsEqual;
-static fnSHILCreateFromPath pSHILCreateFromPath;
-static fnSHDefExtractIconA pSHDefExtractIconA;
+static void (WINAPI *pILFree)(LPITEMIDLIST);
+static BOOL (WINAPI *pILIsEqual)(LPCITEMIDLIST, LPCITEMIDLIST);
+static HRESULT (WINAPI *pSHILCreateFromPath)(LPCWSTR, LPITEMIDLIST *,DWORD*);
+static HRESULT (WINAPI *pSHDefExtractIconA)(LPCSTR, int, UINT, HICON*, HICON*, UINT);
 
 static DWORD (WINAPI *pGetLongPathNameA)(LPCSTR, LPSTR, DWORD);
 static DWORD (WINAPI *pGetShortPathNameA)(LPCSTR, LPSTR, DWORD);
@@ -1005,10 +1000,10 @@ START_TEST(shelllink)
     HMODULE hmod = GetModuleHandleA("shell32.dll");
     HMODULE hkernel32 = GetModuleHandleA("kernel32.dll");
 
-    pILFree = (fnILFree) GetProcAddress(hmod, (LPSTR)155);
-    pILIsEqual = (fnILIsEqual) GetProcAddress(hmod, (LPSTR)21);
-    pSHILCreateFromPath = (fnSHILCreateFromPath) GetProcAddress(hmod, (LPSTR)28);
-    pSHDefExtractIconA = (fnSHDefExtractIconA) GetProcAddress(hmod, "SHDefExtractIconA");
+    pILFree = (void *)GetProcAddress(hmod, (LPSTR)155);
+    pILIsEqual = (void *)GetProcAddress(hmod, (LPSTR)21);
+    pSHILCreateFromPath = (void *)GetProcAddress(hmod, (LPSTR)28);
+    pSHDefExtractIconA = (void *)GetProcAddress(hmod, "SHDefExtractIconA");
 
     pGetLongPathNameA = (void *)GetProcAddress(hkernel32, "GetLongPathNameA");
     pGetShortPathNameA = (void *)GetProcAddress(hkernel32, "GetShortPathNameA");
