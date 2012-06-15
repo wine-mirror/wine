@@ -5562,6 +5562,22 @@ manip_streamsize* __cdecl setprecision(manip_streamsize *ret, streamsize prec)
     return ret;
 }
 
+static void __cdecl setw_func(ios_base *base, streamsize width)
+{
+    ios_base_width_set(base, width);
+}
+
+/* ?setw@std@@YA?AU?$_Smanip@H@1@H@Z */
+/* ?setw@std@@YA?AU?$_Smanip@_J@1@_J@Z */
+manip_streamsize* __cdecl setw(manip_streamsize *ret, streamsize width)
+{
+    TRACE("(%p %ld)\n", ret, width);
+
+    ret->pfunc = setw_func;
+    ret->arg = width;
+    return ret;
+}
+
 static basic_filebuf_char filebuf_stdin;
 /* ?cin@std@@3V?$basic_istream@DU?$char_traits@D@std@@@1@A */
 struct {

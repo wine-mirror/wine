@@ -5368,8 +5368,8 @@
 @ cdecl -arch=win64 ?setstate@ios_base@std@@QEAAXH_N@Z(ptr long long) ios_base_setstate_reraise
 @ thiscall -arch=win32 ?setstate@ios_base@std@@QAEXI@Z(ptr long) ios_base_setstate_unsigned
 @ cdecl -arch=win64 ?setstate@ios_base@std@@QEAAXI@Z(ptr long) ios_base_setstate_unsigned
-@ stub -arch=win32 ?setw@std@@YA?AU?$_Smanip@H@1@H@Z
-@ stub -arch=win64 ?setw@std@@YA?AU?$_Smanip@_J@1@_J@Z
+@ cdecl -arch=win32 ?setw@std@@YA?AU?$_Smanip@H@1@H@Z(ptr long) setw
+@ cdecl -arch=win64 ?setw@std@@YA?AU?$_Smanip@_J@1@_J@Z(ptr long) setw
 @ thiscall -arch=win32 ?sgetc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAEHXZ(ptr) basic_streambuf_char_sgetc
 @ cdecl -arch=win64 ?sgetc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEAAHXZ(ptr) basic_streambuf_char_sgetc
 @ thiscall -arch=win32 ?sgetc@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QAEGXZ(ptr) basic_streambuf_wchar_sgetc
