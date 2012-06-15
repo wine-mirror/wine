@@ -430,8 +430,7 @@ static DWORD WINAPI service_control_dispatcher(LPVOID arg)
                     !(service->full_access_handle = OpenServiceW( manager, data, GENERIC_READ|GENERIC_WRITE )))
                     FIXME( "failed to open service %s\n", debugstr_w(data) );
             }
-            result = service_handle_start(service, data + info.name_size,
-                                          data_size / sizeof(WCHAR) - info.name_size );
+            result = service_handle_start(service, data, data_size / sizeof(WCHAR));
             break;
         case WINESERV_SENDCONTROL:
             result = service_handle_control(service, info.control);

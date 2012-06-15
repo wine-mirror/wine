@@ -94,6 +94,10 @@ static void WINAPI service_main(DWORD argc, char **argv)
     SERVICE_STATUS status;
     BOOL res;
 
+    service_ok(argc == 1, "argc = %d", argc);
+    if(argc)
+        service_ok(!strcmp(argv[0], service_name), "argv[0] = %s, expected %s", argv[0], service_name);
+
     service_handle = pRegisterServiceCtrlHandlerExA(service_name, service_handler, NULL);
     service_ok(service_handle != NULL, "RegisterServiceCtrlHandlerEx failed: %u\n", GetLastError());
     if(!service_handle)
