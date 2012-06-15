@@ -1,26 +1,13 @@
-The Wine team is proud to announce that the stable release Wine 1.4
-is now available.
+The Wine maintenance release 1.4.1 is now available.
 
-This release represents 20 months of development effort and over
-16,000 individual changes. The main highlights are the new DIB
-graphics engine, a redesigned audio stack, and full support for
-bidirectional text and character shaping.
-
-It also contains a lot of improvements across the board, as well as
-support for many new applications, notably Microsoft Office 2010. See
-the release notes below for a summary of the major changes.
-
-This release is dedicated to the memory of Gé (Greg) van Geldorp, who
-passed away in May 2011. Greg single-handedly designed, built, and
-maintained the Wine Testbot, which has become a cornerstone of our
-development process. The high quality of this release owes a lot to
-his work. He is greatly missed by us all.
-
+What's new in this release (see below for details):
+  - Translation updates.
+  - Various bug fixes.
 
 The source is available from the following locations:
 
-  http://ibiblio.org/pub/linux/system/emulators/wine/wine-1.4.tar.bz2
-  http://prdownloads.sourceforge.net/wine/wine-1.4.tar.bz2
+  http://prdownloads.sourceforge.net/wine/wine-1.4.1.tar.bz2
+  http://mirrors.ibiblio.org/wine/source/1.4/wine-1.4.1.tar.bz2
 
 Binary packages for various distributions will be available from:
 
@@ -36,457 +23,490 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-What's new in Wine 1.4
-======================
-
-*** Graphics
-
-- There is a new graphics engine for rendering into Device Independent
-  Bitmaps (DIB). DIB rendering no longer requires access faults or
-  round-trips to the X server, which yields large performance gains in
-  DIB-intensive applications.
-
-- The DIB engine can also be used for fall-back implementations of
-  some graphics primitives, like alpha blending, when the display
-  driver doesn't support them directly.
-
-- All possible color formats are supported by the DIB engine, so DIB
-  operations are no longer limited by the color resolution of the
-  display. Rendering of the various palette formats is also improved.
-
-- Custom styles of dashed lines are supported.
-
-- Cosmetic pens using hashes or patterns are supported.
-
-- Gradients use dithering on low color resolution devices for a nicer
-  appearance.
-
-- The XRender extension is used for gradients when supported.
-
-- PostScript output quality is improved, particularly for bitmaps and
-  paths.
-
-- Rotated text works better for all output device types.
-
-- GdiPlus supports more image formats, including formats that are not
-  supported through GDI.
-
-- More image codecs are implemented, including support for TGA and CMYK
-  JPEG decoding, as well as BMP, TIFF, PNG, and ICNS encoding.
-
-
-*** Audio
-
-- The audio stack is completely redesigned, based on the Vista
-  model. WinMM and DirectSound are implemented on top of the new
-  MMDevAPI library.
-
-- The Alsa, OSS, and CoreAudio drivers have been rewritten to use the
-  new model. They now serve as back-ends to the MMDevAPI dll, which no
-  longer needs to rely on the OpenAL library.
-
-- The Jack, NAS, AudioIO, and ESD audio subsystems are no longer
-  supported. Version 3 of the OSS subsystem is no longer supported
-  either, version 4 is required.
-
-- The Audio tab in the Wine Configuration tool has been redesigned for
-  the new audio subsystem. The appropriate driver is automatically
-  selected and no longer needs to be configured manually.
-
-
-*** Input devices
-
-- The XInput 2 extension is used to provide better mouse control in
-  games and other full-screen applications.
-
-- The mouse is automatically clipped to prevent it from leaving a
-  full-screen window when running in desktop mode. Switching to a
-  different application with Alt-Tab releases the mouse. Clipping can
-  be disabled through the Wine Configuration tool.
-
-- Animated mouse cursors are fully supported.
-
-- Joystick action mapping is supported, including a configuration dialog.
-
-
-*** Internationalization
-
-- Bidirectional text rendering is fully supported.
-
-- Font shaping and reordering is supported for all the scripts
-  specified in the Unicode standard.
-
-- Bidirectional text editing is supported in the standard edit
-  control.
-
-- Vertical fonts (e.g. for Japanese) are supported.
-
-- Mirroring of windows, menus, and window controls for right-to-left
-  languages is fully supported.
-
-- All resources (strings, menus, dialogs, accelerators) contained in
-  Wine can be translated through standard gettext-style po files.
-
-- The Unicode character data tables have been updated to version 6.0
-  of the Unicode standard.
-
-- Wine is translated to French, German, Spanish, Italian, Dutch,
-  Swedish, Finnish, Portuguese, Catalan, Hungarian, Polish, Russian,
-  Slovenian, Lithuanian, Japanese, and Korean. It has partial
-  translations for another fifteen languages.
-
-
-*** User interface
-
-- The new Vista style of file dialogs is supported.
-
-- Common controls are improved, particularly the calendar, tree view,
-  system link, and image list controls.
-
-- Parts of the Game Explorer API are implemented.
-
-- Wine can take advantage of the GStreamer framework for audio and
-  video playback. This makes it possible to support all formats that
-  have a GStreamer codec. On Mac OS X, the QuickTime framework is used
-  for the same purpose.
-
-
-*** Desktop integration
-
-- System tray notification balloons are implemented.
-
-- The system tray is displayed as a task bar at the bottom of the
-  screen in desktop mode.
-
-- The system tray is automatically registered again when the Unix tray
-  manager is restarted.
-
-- The standard mouse cursors are remapped to the cursor theme of the
-  Unix desktop.
-
-- Drag & drop of OLE objects across applications is supported.
-
-- Icons for menu entries are exported in multiple sizes and in PNG
-  format.
-
-- Icons are displayed for the Unix desktop "Open with..." menu
-  entries.
-
-
-*** Internet and networking
-
-- The built-in Internet Explorer has a user interface, including a
-  menu, an address bar, a tool bar, and configuration dialogs.
-
-- There is an "Internet Settings" control panel that allows
-  configuring various aspects of web browsing, as well as managing
-  security certificates.
-
-- The VBScript language is fully supported.
-
-- The built-in (Gecko-based) web browser engine supports ActiveX.
-
-- The Gecko engine has been updated to the version from Firefox 8.
-
-- The Gecko engine is packaged as an MSI file, and its installation
-  can be managed from the "Add/Remove Programs" control panel.
-
-- The Gecko engine is available on 64-bit.
-
-- Persistent HTTP connections are supported.
-
-- HTTP proxies are better supported, including PAC scripts.
-
-- Changing network passwords is supported.
-
-- The HTML Help support is improved, including a nicer user interface
-  and better navigation support.
-
-- Asynchronous I/O on network socket is improved, particularly
-  asynchronous accepts. This helps with various networked games.
-
-
-*** Direct3D
-
-- Reloading sRGB textures uses either EXT_texture_sRGB_decode or FBO
-  blits when available. This is much faster. This affects Source
-  Engine games and Unreal Engine 3 games in particular.
-
-- WineD3D supports multisample anti-aliasing.
-
-- D3D8 and D3D9 properly support v-sync / swap intervals.
-
-- The WineD3D blitter code is improved both for correctness and
-  performance.
-
-- The WineD3D graphics card database has been updated to recognize new
-  graphics cards and Mesa drivers.
-
-- WineD3D no longer uses COM for its implementation. This makes it
-  much nicer to work with.
-
-- The context management code is improved. The window being destroyed
-  while the WineD3D device is still active in particular is handled
-  much better.
-
-- There have been some performance improvements related to WineD3D
-  state management and resource updates.
-
-- Focus and device window handling work better for D3D8 and D3D9. This
-  mostly affects things like changing graphics settings, switching
-  from full-screen to windowed and back, etc.
-
-- NVDB is supported on cards that support GL_EXT_depth_bounds_test.
-
-- The INTZ and NULL formats are supported.
-
-- Depth surface blits are implemented in WineD3D.
-
-- Depth bias handling is improved. This fixes flickering shadows and
-  decals in a couple of games, like Mass Effect 2 and Unreal
-  Tournament 2004.
-
-- GL_ARB_draw_elements_base_vertex is supported. This allows draws to
-  be more efficient in some cases.
-
-- GL_ARB_map_buffer_alignment is supported. This allows for more
-  efficient mapping of textures and buffers in some cases.
-
-- Handling projected textures works better in early shader model
-  versions.
-
-- Shaders are strictly checked against the hardware capabilities. This
-  means we won't try to create e.g. a shader model 3 shader on shader
-  model 2 hardware.
-
-- D3D9EX texture creation from system memory is supported. This
-  affects some Source Engine games like Team Fortress 2.
-
-- The D3DX9 shader assembler is mostly finished. It is now part of the
-  new d3dcompiler dll.
-
-- Various parts of D3DX9 are more complete, including:
-  - The surface / texture loading functions.
-  - The mesh creation and manipulation functions.
-  - The vertex declaration handling functions.
-  - The effects framework, binary effect parsing in particular.
-
-
-*** DirectDraw
-
-- OpenGL is used by default for DirectDraw as well, just like D3D8 and
-  D3D9. For most applications this is an improvement, but nevertheless
-  the old GDI renderer may still work better for specific applications
-  or if the graphics driver's OpenGL implementation is inadequate.
-
-- Flips are properly supported. The back buffer now contains the front
-  buffer contents after a flip instead of being undefined.
-
-- Improved support for viewports in early versions of DirectDraw that
-  include an extra clipspace transformation. This affects the original
-  Half-Life.
-
-- Fixes for cooperative levels and associated window handling and mode
-  changes.
-
-- DirectDraw clippers are supported.
-
-
-*** Kernel
-
-- DOSBox is used to run DOS applications on platforms that don't
-  support vm86 mode.
-
-- The Windows console is emulated as best as possible on Unix
-  terminals without requiring switching into curses mode.
-
-- Volume label and serial number can be retrieved from UDF filesystems
-  (used on DVDs).
-
-- Side-by-side manifests are installed for a number of built-in
-  libraries to make them more compatible with applications using
-  manifest resources.
-
-- The Wine preloader is also used on 64-bit for a more compatible
-  address space layout.
-
-
-*** Installer support
-
-- Applying installer patches is supported. This is needed for various
-  Service Pack installers, particularly for the .NET ones.
-
-- Installing side-by-side assemblies is supported.
-
-- Rollbacks of failed installs is supported.
-
-- Installing services is better supported.
-
-- MSI installers can be created entirely under Wine, using the
-  'cabarc' and 'winemsibuilder' tools.
-
-
-*** Build environment
-
-- The IDL compiler (widl) can generate format strings for both
-  old-style and new-style COM interpreted stubs.
-
-- Registrations for dlls and typelibs are based on scripts generated
-  at compile time, for faster Wine prefix creation and updates.
-
-- The Resource Compiler (wrc) and Message Compiler (wmc) can generate
-  translated resources from po files, as well as create po files from
-  existing translated resources.
-
-- Fake PE dlls are generated and installed for all built-in dlls,
-  since many applications expect to find the PE dlls on disk.
-
-- The ARM platform is supported by the Wine tool chain.
-
-- The windows.h header can now be used in Wine code, the compile time
-  gains are no longer worth the header incompatibilities.
-
-- Some headers have been modified to make them easier to share with
-  the Mingw-w64 project.
-
-
-*** Platform-specific changes
-
-- Wine compiles on ARM platforms.
-
-- On Mac OS X, the secure channel implementation uses the Security
-  framework instead of the GnuTLS library.
-
-- On Linux, dynamic device management can use the new UDisks service
-  in addition to HAL.
-
-- Stubless OLE proxies are supported also on 64-bit platforms.
-
-
-*** Built-in applications
-
-- The new 'cabarc' program allows manipulation of cabinet files,
-  including creation of new cabinets.
-
-- The new 'wscript' program implements the Windows Script Host, to run
-  VBScript and JavaScript scripts.
-
-- The new 'taskkill' program allows killing Windows processes by name
-  or process id.
-
-- The new 'ipconfig' program displays the IP configuration seen by
-  Windows programs.
-
-- The new 'hostname' program displays the hostname seen by Windows
-  programs.
-
-- The 'explorer' program implements a shell namespace explorer instead
-  of launching the file manager.
-
-- The 'view' program can display enhanced metafiles.
-
-- The 'dxdiag' tool outputs real information about the system.
-
-- The new 'winemsibuilder' tool allows creating MSI installers; it is
-  used to build the Gecko add-on package.
-
-- Almost all built-in applications are fully Unicode.
-
-- All applications installed to /usr/bin have a manual page.
-
-
-*** Quality assurance & debugging
-
-- The test suite no longer attempts to support Win9x platforms, this
-  was too much effort for little benefit.
-
-- The Wine debugger offers to save crash information to a file, to
-  make it easier to provide good information in bug reports.
-
-- Parsing of debugging information from various object file formats is
-  improved, which should yield better quality crash information,
-  particularly for 64-bit.
-
-
-*** Miscellaneous
-
-- XML support is improved, including support for schemas, namespaces,
-  MSXML version 6, and an XML file writer. This is particularly useful
-  for the new Microsoft Office XML-based document formats.
-
-- The new "secure" versions of the C runtime functions are almost all
-  implemented.
-
-- There is an initial implementation of the Microsoft C++ standard
-  class libraries, including string, locale, and stream classes.
-
-- Creation of compressed cabinet files is supported.
-
-- There is an implementation of the OpenCL library, as a wrapper
-  around the equivalent Unix library.
-
-- Print jobs are submitted to CUPS directly instead of requiring the
-  'lpr' command-line tool.
-
-- There is support for managing multiple .NET runtime versions and
-  their corresponding Mono versions.
-
-
-*** New external dependencies
-
-- The XInput 2 library is used for mouse control in games.
-
-- The libopencl library is used by the OpenCL wrapper dll.
-
-- The libgettextpo library is optionally used at build time to update
-  po files from the rc sources.
-
-- The msgfmt tool (from the gettext library) is used at build time to
-  compile po files.
-
-- The zlib library is used to implement cabinet file compression.
-
-- The libfreetype library needs to be at least version 2.2, older
-  versions are no longer supported.
-
-- The libdbus library is used for the UDisks device support on Linux.
-
-- The smbpasswd tool (part of Samba) is used for changing network
-  passwords.
-
-- DOSBox is used to run DOS applications. It is recommended to use the
-  latest SVN version of DOSBox since it contains some Wine-specific
-  improvements.
-
-
-*** Useful configuration options
-
-Note: More details abouts these and other configuration options can be
-      found at http://wiki.winehq.org/UsefulRegistryKeys
-
-- The correct audio driver is detected automatically, but can still be
-  overridden through the HKCU\Software\Wine\Drivers\Audio key like in
-  previous versions. It is recommended to delete this key entirely to
-  enable the auto-detection.
-
-- Multisample anti-aliasing can be disabled by setting "Multisampling"
-  to "disabled" under HKCU\Software\Wine\Direct3D.
-
-- Setting "AlwaysOffscreen" to "enabled" under
-  HKCU\Software\Wine\Direct3D simplifies sharing depth / stencil
-  surfaces between on-screen and off-screen render targets in
-  WineD3D. This will likely become the default for the next release.
-
-- The DirectDraw renderer can be switched back to the old GDI mode by
-  setting "DirectDrawRenderer" to "gdi" under HKCU\Software\Wine\Direct3D.
-
-
-*** Known issues
-
-- Support for PulseAudio is improved, but very recent versions of
-  PulseAudio (>= 1.0) and alsa-plugins (>= 1.0.25) are required for
-  good results, since older versions contain various bugs.
-  See http://wiki.winehq.org/Sound for details.
+Bugs fixed in 1.4.1 (total 69):
+
+  12694  Air Rival Crashes after login
+  13082  Adobe Premiere Pro 1.5 fails to start
+  15582  Adobe Dreamweaver CS3 Installer crash if you reject the license
+  18231  Adobe Acrobat 7, 8 installers fail due to spooler service being disabled by default
+  18776  VBALink: GBC roms open at an incorrect resolution
+  22060  regedit crashes when a long length key is renamed or deleted
+  22456  Wrong caching with INI functions
+  24108  error in Visual Basic Editor
+  24551  Cannot install Windows Server 2003 Administration Tools Pack
+  25261  AutoCAD 2009 LT: Running AcDelTree.exe crashes
+  25777  TurningPointAnyWhere24.exe fails to run (needs "HKCU\\Control Panel\\Mouse" registry key present)
+  25861  POPO 2011 exits silently
+  26989  Playchess, games tab is not drawn
+  26990  Playchess, pieces are not shown correctly
+  27192  Regedit - import failure if reg-file contains ';'
+  27560  Runaway 3 "A Twist of Fate" fails to recognize media on Wine 64Bits (WoW64-aware SecuROM 7.x tries to disable registry redirection/missing advapi32.dll RegDisableReflectionKey)
+  27633  Missing StrToInt64Ex in SHLWAPI.DLL
+  27690  Just Cause crashes on first level load (texture resolution 'high')
+  27808  Celtic Kings crashes on launch (audio related)
+  27970  cmd's attrib command doesn't accept multiple attributes
+  28274  Multiple 64-bit applications crash due to unimplemented function kernel32.dll.__chkstk (IE8, Debugging Tools for Windows)
+  28401  .NET Framework 3.0 installation interrupted prematurely
+  28799  d3dx9_36/tests/mesh.ok: memcpy source and destination overlap in weld_float16_2() triggered by test_weld_vertices()
+  28898  Blizzard Launcher/Installer needs AcceptEx improvements (Affects WoW, D3...)
+  28962  Mount & Blade: WFAS texture quality slider isn't moving
+  28999  Weatherbug fails to detect vbscript
+  29031  Game borderlands does not start
+  29099  LabView 2011 demo crashes on start (PathRemoveExtensionA/W unconditionally tries to null terminate string)
+  29717  IE4 setup wants inetcpl.cpl.DllInstall
+  29721  makecert from Windows Platform SDK 7.1 crashes due to unimplemented function mssign32.dll.PvkGetCryptProv
+  29793  POPO 2011 display in wrong color with builtin msvcr71
+  29859  Renegade X fails to install with Mono 2.10 (works with .NET Framework 4.0 prerequisite)
+  29891  Symantec VIP Access can not be activated
+  29894  LibreOffice: sdraw.exe runs out of GDI object handles and crashes on a particular VSD file
+  29956  Unable to create an empty Jet database file.
+  29984  Legend of Grimrock (test) crashes with "Device can't render to D3DFMT_G16R16"
+  30000  iw4mp (Call of Duty MW2 mod) loader crashes because some kernel32.dll API entries are not hotpatchable (DECLSPEC_HOTPATCH missing)
+  30001  iw4mp (Call of Duty MW2 mod) loader crashes due to iphlpapi.dll GetAdaptersAddresses not hotpatchable (DECLSPEC_HOTPATCH missing)
+  30005  Acrobat 8: installer action text for INSTALLMESSAGE_ACTIONDATA is not deformated
+  30012  MS Project 2010 crashes at shutdown
+  30112  Ice Age 2 demo crashes
+  30115  Perfect World: Skills and items icons messed up
+  30213  Screen obscured by black box when game changes resolution, using xfwm/icewm
+  30243  RaiderZ needs msvcr90.dll._byteswap_ulong
+  30284  Mathematica 6.0 installer fails, reports error 0x80020006 (missing support for IShellDispatch2::IsServiceRunning)
+  30303  iexplore http://ckeditor.com crashes
+  30326  Strong Bad's Cool Game launcher crashes on the first keypress
+  30327  builtin iexplore crash on http://fastpc.pl/thread-3329.html
+  30332  winedbg reports "Size mismatch in memory_write_value, got 8 from type while expecting 4" when trying to modify 64 bit register values
+  30337  You can't try www.w3schools.com examples in iexplore anymore
+  30418  regedit crash on export some binary values
+  30424  Regression: Framemaker 6.0 only prints blank pages
+  30430  Iexplore crashes http://europe.cnn.com/CNNI/
+  30531  Microsoft SQL Server Management Studio Express 2005: OLEPicture fails to set hotspot coordinates for hand cursor
+  30536  Avanquest PDF Experte Ultimate 7.0.x installer crashes with stack overflow (hot patching issue)
+  30543  Multiple apps crash/terminate because K32GetModuleFileNameExW overflows supplied buffer
+  30574  Installation of MS Office 2010, some service doesn't start
+  30604  Ultra Fractal 5 hangs when selecting an item in the file browser
+  30607  The Stalin Subway 2 (Red Veil) crashes on game start
+  30614  Builtin richedit extremely slow at appending text when window is hidden
+  30626  Abbyy fine reader 11 needs rpcrt4.dll.RpcServerInqDefaultPrincNameW
+  30653  Deleting text from richedit controls extremely slow
+  30691  excessive operator '&' in GetThemeSysFont(); can probably lead to segfault
+  30705  usb joystick not working with virtuanes
+  30719  SmartFTP 4.0 crashes on startup (crypt32 CertCreateSelfSignCertificate failure)
+  30750  [patch] krnl386.exe16/int21.c: set (1<<12) for cdrom
+  30777  Dr.com v3.71 infinitely asks for reboot due to missing registry entry
+  30818  BMFont crashes on startup with Unhandled page fault
+  30842  Take Command 14 from JPSoftware wants KERNEL32.dll.SetConsoleIcon
+
+----------------------------------------------------------------
+
+Changes since 1.4:
+
+Akihiro Sagawa (13):
+      msvcrt: Add support for fflush to clear an input buffer.
+      msvcrt: Add a helper function to flush all buffers.
+      msvcrt: Add support for _flushall to clear all input buffer.
+      msvcrt: Add semi stub _mbcjmstojis implementation.
+      msvcrt: Implement _mbcjmstojis.
+      msvcrt: Improve _mbbtombc to handle Japanese characters.
+      msvcrt: Fix _mbcjistojms off by one error.
+      msvcrt: Fix _mbsnbcmp and _mbsnbicmp implementation.
+      comctl32: Add support for retrieving lpszText in TOOLINFO structure.
+      comctl32: Truncate the info tip text when using ANSI version messages.
+      readme: Update Japanese translation.
+      po: Update Japanese translation.
+      po: Refine Japanese translation to aid understanding.
+
+Alessandro Pignotti (1):
+      oleaut32: Avoid converting variants if it is not needed.
+
+Alexander Morozov (1):
+      ntoskrnl.exe: Fix a typo.
+
+Alexandre Julliard (34):
+      wine.inf: Avoid creating empty registry values.
+      winex11: Ignore FocusOut event on destroyed windows.
+      gdi32: Fix rounding error for odd ellipse sizes in CreateRoundRectRgn.
+      msvcrt: Export __C_specific handler in other msvcrt versions too.
+      server: Create some kernel notification events.
+      kernel32: Implement the memory resource notification functions.
+      winex11: Never try to clip the cursor if we don't have XInput2.
+      ntdll: Use the context argument as working variable instead of making a copy in RtlUnwindEx.
+      ntdll: Restore the original context for the last frame instead of the result of the unwind handler.
+      ntdll: Set the TARGET_UNWIND flag when calling the unwind handler for the target frame.
+      ntdll: Trace the exception extra information also in RtlUnwindEx.
+      ntdll: Add support for the special STATUS_UNWIND_CONSOLIDATE exception code.
+      ntdll: Add support for rep;ret instruction in function epilogs.
+      ntdll: Add support for jump instructions in function epilogs.
+      ntdll: Properly follow jumps when checking a function epilog.
+      ntdll: Also call the unwind handler for the target frame.
+      comdlg32: Implement WM_CHOOSEFONT_GETLOGFONT in the font dialog.
+      dbghelp: Add support for jump instructions in function epilogs on x86_64.
+      winex11: Fix a potential deadlock in the GradientFill non-XRender fallback.
+      gdi32: Fix GetClipBox return value for non-memory DCs.
+      winex11: ExtFloodFill does take the current ROP into account.
+      gdi32: Fix some typos in the 4-bpp shrink_row function.
+      gdi32: Fix coordinates for row copies in mirrored vertical stretching.
+      kernel32: Fix buffer overflows in K32GetModuleFileNameExA/W.
+      kernel32: Fix another overflow in GetModuleFileNameExW.
+      wine.inf: Unify all the control panel settings.
+      ole32: Add a NULL pointer check in CoDisconnectObject.
+      ntdll: Export _local_unwind.
+      mountmgr.sys: Don't try to close the dbus connection.
+      ntdll: Move the _chkstk implementation to signal_i386.c.
+      ntdll: Add a __chkstk entry point for x86_64.
+      winex11: Use XGetKeyboardMapping instead of XKeycodeToKeysym.
+      configure: Update with autoconf 2.69.
+      gdi32: Fix a build failure on Mac OS X.
+
+Alistair Leslie-Hughes (4):
+      mscoree: Better support RUNTIME_INFO_UPGRADE_VERSION in GetRequestedRuntimeInfo.
+      mscoree: Allow capital for version number.
+      mssign32: Add stubs PvkFreeCryptProv, PvkGetCryptProv, PvkPrivateKeyAcquireContextFromMemory.
+      mscoree: Add CoEEShutDownCOM stub.
+
+Andrew Eikum (4):
+      mciqtz: Actually assign result to the output structure.
+      mciqtz32: Stop the graph when the file is no longer playing.
+      dsound: Validate and correct wValidBitsPerSample in primary buffer SetFormat.
+      dmime: Don't try to create a standard audio path if the client didn't ask for one.
+
+André Hentschel (12):
+      kernel32: Make GetModuleHandleA hotpatchable.
+      kernel32: Make Sleep hotpatchable.
+      iphlpapi: Make GetAdaptersAddresses hotpatchable.
+      include: Add more error codes.
+      winemaker: Abort on unhandled file formats.
+      winemaker: Fix conversion of C++ filenames into object names.
+      view: Show the filename in the window title.
+      view: Also show the filename in the window title when loading it from command line.
+      winemaker: Handle library search pragmas.
+      kernel32: Handle LOCALE_NAME_USER_DEFAULT with tests.
+      wine.inf: Start the spool service when needed.
+      inetcpl: Add stub for DllInstall.
+
+Aric Stewart (4):
+      usp10: Properly handle invalid arguments to ScriptBreak.
+      usp10: Add fallback font for Myanmar.
+      usp10: Check bounds before checking value in array.
+      usp10: Correct glyph caching beyond the BMP.
+
+Austin English (6):
+      user32: Make a few more functions hotpatchable.
+      wine.inf: Add HKCU\Control Panel\Mouse\Beep key.
+      uxtheme: plf is already a pointer.
+      wine.inf: Add HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WinSock2\Parameters\Protocol_Catalog9\Catalog_Entries registry entry.
+      advapi32: Add a stub for RegDisableReflectionKey.
+      kernel32: Add a stub for SetConsoleIcon.
+
+Bruno Jesus (5):
+      ws2_32: Handle NULL proto in WSAAsyncGetServByName.
+      kernel32: Avoid ini cache if file does not exist anymore.
+      regedit: Fix item text reading in regedit.
+      regedit: Allows semicolon comments.
+      regedit: Fix qword entries export.
+
+Carlo Bramini (5):
+      shlwapi: Implemented StrToInt64ExA/W.
+      include: Add PERCEIVED types and flags.
+      include: mimeole.idl: Fix typo in ADDRESSPROPS structure.
+      shlwapi: Don't remove nonexistent extension in PathRemoveExtension.
+      shlwapi: Add NULL checks to StrCpyW and StrCatW.
+
+Cheer Xiao (2):
+      po: Update simplified Chinese translation.
+      po: Update simplified Chinese translation.
+
+Christian Costa (11):
+      configure: Check if version of msgfmt (from gettext) is recent enough.
+      attrib: Make command accept several arguments.
+      attrib: Display unknown options.
+      attrib: Skip processing of . and .. entries.
+      attrib: Display filenames with absolute path as in native.
+      attrib: Add 2 missing spaces between attribute flags and filename.
+      attrib: Do not hardcode number of characters in flags array.
+      attrib: Display attribute flags in the right order. (cherry picked from commit 6520f19181fc6853a9b2a6ec35acb759cc87e7fc)
+      include: Add missing error codes.
+      d3dxof: Check the right offset before dereferencing next byte.
+      d3dxof: Do not allow separator to terminate the string. Only the double quote can do that.
+
+Dan Kegel (1):
+      riched20: Don't need to redraw when changing selection from none to none.
+
+Daniel Jelinski (4):
+      comdlg32: Fixed support for deleting items other than the first.
+      regedit: Make key names editable also with native comctl32.
+      regedit: Adding new subkey to a key with no subkeys now works with native comctl32.
+      oleaut32: Added support for loading cursors in OLEPicture.
+
+Daniel Lehman (3):
+      gdi32: Don't add_join if points are coincident in wide_line_segments.
+      msvcrt: Add declarations to stdlib.h for _strtoui64 and _strtoi64.
+      oleaut32: Treat years 0 to 29 as 2000 to 2029 in VARIANT_RollUdate.
+
+Detlef Riekenberg (1):
+      ntdll: Implement RtlGetProductInfo.
+
+Dmitry Timoshkov (10):
+      gdiplus: Create GDI brush only when needed.
+      gdiplus: Create GDI bitmap only when needed.
+      user32: IsDialogMessage should allow control ids other than IDOK when processing WM_KEYDOWN.
+      fonts: Update cyrillic bitmap glyphs in Tahoma Bold.
+      include: Define MUTEX_ALL_ACCESS in a PSDK compatible way.
+      include: Add some missing FILE_FLAG_xxx definitions.
+      gdiplus: Use StretchBlt instead of GdiAlphaBlend if device doesn't support alpha blending.
+      server: Make sure that region and rectangle have the same origin before calling rect_in_region().
+      user32: SetParent() should use ShowWindow() to make a reparented window visible and move a window to new position.
+      user32: SetWindowPos() should check the final window position in screen coords before adding SWP_NOMOVE.
+
+Dylan Smith (4):
+      richedit: Remove always FALSE parameter from ME_PaintContent.
+      richedit: Avoid scanning all text for paragraphs to invalidate.
+      richedit: Remove some unused structure fields.
+      richedit: Invalidate a range of paragraphs without marking them.
+
+Eduardo García (1):
+      po: Update Spanish translation.
+
+Eric Pouech (7):
+      winedbg: Fix set instruction when sizeof(int) <> sizeof register.
+      winedbg: Fix printing of fp registers for x86_64 CPU.
+      winedbg: Also recognize 'rep ret' as a valid return insn for i386 as we did for x86_64.
+      winedbg: In the gdb remote protocol implementation, correctly manage the size of registers on the wire (esp. for 64bit ones).
+      winedbg: In the gdb remote protocol implementation, correctly manage the size of registers on the wire (esp. for 64bit ones).
+      dbghelp: Protect COFF line number parsing against out of bounds access.
+      winegcc: Try harder to find out whether the compiler is from gcc family.
+
+Erich Hoover (7):
+      ntdll: Fix mapping sections for applications that map over the section headers.
+      ntdll: Fix section header heap deadlock.
+      ws2_32: Implement IP_UNICAST_IF socket option.
+      ws2_32: Implement IPV6_UNICAST_IF socket option.
+      server: Access the completion from the file descriptor instead of the async object.
+      server: STATUS_MORE_PROCESSING_REQUIRED indicates that an async operation should not send a completion.
+      ws2_32: Use STATUS_MORE_PROCESSING_REQUIRED to indicate that the AcceptEx async should not send a completion.
+
+Francois Gouget (28):
+      vbscript: Add support for integer values in conditional jumps.
+      cryptui: Use a single space after a full stop to follow the Windows GUI guidelines.
+      po: Remove duplicate spaces between sentences.
+      po: Fix some typography issues in the Czech translation.
+      po: A couple of line wrapping tweaks in the Czech translation.
+      po: Fix a couple of typography issues in the Portuguese (Portugal) translation.
+      po: Assorted French translation spelling fixes and tweaks.
+      po: Mark an Esperanto translation with an invalid formatting directive as fuzzy.
+      po: Fix a few line feed / line wrapping issues in the Esperanto translation.
+      po: Fix some typography issues in the Esperanto translation.
+      po: Fix a couple of trailing space issues in the Korean translation.
+      po: Fix some typography issues in the Danish translation.
+      po: Fix a couple of line feed / line wrapping issues in the Ukrainian translation.
+      po: Fix some typography issues in the Ukrainian translation.
+      po: Fix some typography issues in the Turkish translation.
+      po: Mark an incomplete Ukrainian translation as fuzzy.
+      po: Mark an incorrect Spanish translation as fuzzy.
+      po: Fix some typography issues in the Chinese (PRC) translation.
+      po: Fix a Portuguese (Portugal) translation.
+      po: Update a few Yes/No/All Slovak translations.
+      kernel32: Some English (United States) spelling fixes.
+      wldap32: An English (United States) spelling fix.
+      comdlg32: An English (United States) spelling fix.
+      regedit: An English (United States) spelling fix.
+      po: Update the English (neutral / Great Britain) translation.
+      po: English (neutral / Great Britain) spelling fixes.
+      mpr: Tweak a label so it matches the one in wininet.
+      wordpad: Tweak the spelling of a couple of menus.
+
+Frédéric Delanoy (1):
+      attrib: Fix typo.
+
+Hans Leidekker (10):
+      advapi32: Implement CredMarshalCredential and CredUnmarshalCredential.
+      winhttp: Fix up headers with wrong termination.
+      msiexec: Support the "b!" UI option.
+      advapi32: Return a fake security descriptor from CreatePrivateObjectSecurity.
+      advapi32: Return a fake handle from EventRegister.
+      advapi32: Add stub implementations of EventUnregister and EventWrite.
+      rpcrt4: Add a stub implementation of RpcServerInqDefaultPrincNameA/W.
+      msi: Perform a case insensitive match on filenames from cabinets.
+      msi: Fix deleting services on installation.
+      msi: Deformat the description field of INSTALLMESSAGE_ACTIONDATA messages.
+
+Hasan Kiran (1):
+      po: Update Turkish translation.
+
+Henri Verbeet (9):
+      ntdll: Free the correct section headers copy in map_image().
+      ntdll: Use the copy of the section headers for applying memory protections as well in map_image().
+      wined3d: Pass correctly offset pointers to surface_cpu_blt_compressed().
+      wined3d: Use ARB_texture_rg for WINED3DFMT_R16G16_UNORM textures when available.
+      include: Fix a couple of ID3DXSaveUserData prototypes.
+      wined3d: Properly determine the viewport size for front buffer blits in SetupForBlit().
+      wined3d: Move the resource bind_count field up to wined3d_resource.
+      wined3d: Move the resource map count field up to wined3d_resource.
+      wined3d: Avoid moving buffers while they're mapped.
+
+Huw Davies (4):
+      gdi32: Correctly propagate the enumproc's return value.
+      wordpad: Don't quit if the user cancels the save-as dialog when being prompted to save changes.
+      wineps: Fix top-down dib pattern brushes.
+      include: Add a couple of missing printer status values.
+
+Igor Paliychuk (2):
+      po: Update Ukrainian translation.
+      po: Update Ukrainian translation.
+
+Ilya Basin (1):
+      regedit: Fix buffer size when exporting binary values.
+
+Jacek Caban (21):
+      widl: Removed unused idfile_token.
+      widl: Make headers guards compatible with midl.
+      mshtml: Recognize UTF-8 BOM.
+      jscript: Fixed jsheap_grow implementation.
+      jscript: Emit undefined statement return for switch without default clausule.
+      jscript: Fixed parsing /=/ regexp.
+      jscript: Replace only the first match for non-regexp pattern in String.replace.
+      vbscript: Short if statement may have optional 'end if'.
+      urlmon: Build more appropriate user agent string.
+      jscript: Make sure to jump out of switch before entering implicit default clausule.
+      jscript: Pass correct cpbegin to InitMatch.
+      jscript: Correctly handle empty matches in String.replace.
+      jscript: Added regexp 'pre-parser' to support non-backslash-sequenced non-terminating '/' in characted classes.
+      vbscript: 'property' may be both keyword and identifier.
+      axcore.idl: Guard GetTimeFormat by WINE_NO_UNICODE_MACROS ifdef and added missing AM_GBF_NODDSURFACELOCK define.
+      winhttp: Fixed netconn_recv when read uses both SSL_recv and buffered data.
+      winhttp: Use SSL_pending in netconn_query_data_available.
+      widl: Added support for nameless structs and unions.
+      widl: Added --help command line option.
+      urlhist.idl: Added missing flags.
+      dxgi.idl: Added IDXGIKeyedMutex declaration.
+
+Jeff Muizelaar (1):
+      gdi32: Improve performance of common case of AlphaBlend.
+
+Juan Lang (3):
+      crypt32: Don't fail if HCRYPTPROV and PCRYPT_KEY_PROV_INFO parameters are both non-NULL.
+      crypt32: Fail earlier if CryptExportPublicKeyInfo fails.
+      crypt32: Initialize key spec correctly.
+
+Julian Rüger (1):
+      po: Update German translation.
+
+Józef Kucia (3):
+      wpp: Reset lexer state after unexpected end of file.
+      wpp: Fix a few memory leaks in the wpp_parse() function.
+      include/d3dx9: Fix spelling errors.
+
+Keith Bowes (1):
+      po: Update Esperanto Translation.
+
+Ken Thomases (4):
+      ntdll: Fix status returned for too-long registry value names.
+      shell32: Partially implement Mac Trash backing for the Recycle Bin.
+      Revert "gdi32: Load fonts from default Mac external font paths.".
+      gdi32: On Mac OS X, find fonts using Core Text rather than FontConfig, by default.
+
+Lauri Kenttä (2):
+      cryptui: Use the same string in import and export wizards.
+      po: Update Swedish translation.
+
+Lucas Zawacki (3):
+      dinput: Correct wrong loop delimiter in diactionformat_priority.
+      dinput: Implement GetProperty for JOYSTICKID (Linux driver).
+      dinput: Implement GetProperty for JOYSTICKID (LinuxInput driver).
+
+Matteo Bruni (3):
+      include: Fix some winsock definitions.
+      wined3d: Update the correct draw buffers mask.
+      wined3d: Support WINED3D_TTFF_COUNT3 texture projection in the ARB backend.
+
+Michael Geddes (1):
+      kernel32: Add timed wait capability flag to COMM Port properties.
+
+Michael Mc Donnell (1):
+      d3dx9: Do not weld self.
+
+Michael Stefaniuc (2):
+      riched20: Avoid a forward declaration of a vtbl.
+      riched20: Support COM aggregation in CreateTextServices().
+
+Morten Rønne (3):
+      wineconsole: Fixed a wrong word in message.
+      po: Updated Danish translation.
+      po: Updated Danish translation.
+
+Nicolas Le Cam (1):
+      configure.ac: Prefer pkg-config over freetype-config.
+
+Nikolay Sivov (8):
+      comctl32: Update thumb position on WM_MOUSEMOVE instead of deferring it.
+      comctl32: Update thumb position on autopage instead of deferring it.
+      shell32: Added a stub for IShellDispatch2.
+      shell32: Implement IShellDispatch2::IsServiceRunning().
+      comctl32: Properly disable redraw on tab control.
+      comctl32: When created with TCS_VERTICAL, TCS_MULTILINE is set automatically.
+      urlmon: Implement TYMED_HGLOBAL case for CopyStgMedium.
+      comctl32: Make it possible to use TVM_GETITEM with item from another tree.
+
+Oleksij Rempel (3):
+      krnl386: Set remote bit for cdrom.
+      krnl386: Set 11-bit for fixed drive.
+      krnl386.exe: Fix drive spec in get_media_id call.
+
+Owen Rudge (9):
+      comctl32/monthcal: Check both min and max ranges in IsDateInValidRange.
+      comctl32/datetime: Check dates are within range in SetSystemTime.
+      comctl32/datetime: Ensure up/down/home/end increments remain within bounds.
+      comctl32/datetime: Don't allow an invalid year to be typed in.
+      comctl32/datetime: Don't check box if no valid date set.
+      comctl32/datetime: Allow entering 'AM' or 'PM' via keyboard.
+      comctl32/datetime: Fix AM/PM handling with 12-hour fields.
+      user32: Correct return value when buffer too short in GetUserObjectInformation.
+      user32: Return Unicode length instead of ANSI in GetUserObjectInformationA.
+
+Petr Kočandrle (1):
+      po: Update Czech translation.
+
+Piotr Caban (13):
+      msvcrt: Fixed printf behaviour on hexadecimal, zero-padded numbers.
+      shlwapi: Lowercase schemes in UrlCombine function.
+      shell32: Prepare QueryAssociations helper functions to work on non LPWSTR data.
+      shell32: Handle ASSOCDATA_EDITFLAGS in IQueryAssociations:GetData function.
+      ddraw: Improve GetScanLine stub so it's usable for timing related tasks.
+      msvcrt: Fixed 'h' modifier handling when printing integers.
+      msvcrt: Added more length modifiers in scanf function.
+      user32: Added GetMenuBarInfo implementation.
+      comctl32: Return if point is over a button in TOOLBAR_InternalHitTest.
+      comctl32: Don't make separator on first position hot.
+      comctl32: LVM_SETITEMTEXT is not supported on LVS_OWNERDATA.
+      msvcr90: Added _byteswap_{ushort,ulong,uint64} implementation.
+      msvcr90: Fix byteswap_ulong implementation.
+
+Rico Schüller (1):
+      d3dx9: Use param->bytes for copying the data in ID3DXBaseEffect::SetValue().
+
+Robert van Herk (2):
+      msvcrt: Fix file mode T (temporary file).
+      msi: Fixed MsiGetFileHashW for empty files.
+
+Stefan Leichter (1):
+      kernel32: Fix OutputDebugStringA called with NULL pointer.
+
+Thomas Faber (5):
+      msvcp60: Fix build with MSVC.
+      msvcp90: Fix build with MSVC.
+      dbghelp: Fix uninitialized variable usage.
+      jscript: Add missing port.h include for isnan.
+      msvcrt: Fix malloc_func_t/free_func_t calling convention.
+
+Vincent Povirk (7):
+      rpcrt4: Do nothing when DllMain is called because the process is exiting.
+      gdiplus: Support bitmap creation from 16-bit ddb's.
+      mscoree: Search for an arch-specific mono dll first.
+      winedump: Add basic support for dumping the property store in lnk files.
+      mscoree: Always call mono_thread_attach before invoking managed code.
+      winebuild: Allow angle brackets in export names.
+      include: Add declarations for metadata handler info interfaces.
+
+Łukasz Wojniłowicz (1):
+      po: Updated Polish translation.
 
 --
 Alexandre Julliard
