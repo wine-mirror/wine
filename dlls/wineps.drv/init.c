@@ -24,12 +24,6 @@
 
 #include <stdarg.h>
 #include <string.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-#ifdef HAVE_CUPS_CUPS_H
-# include <cups/cups.h>
-#endif
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
@@ -45,10 +39,6 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
-
-#ifdef SONAME_LIBCUPS
-static void *cupshandle = NULL;
-#endif
 
 static const PSDRV_DEVMODE DefaultDevmode =
 {
@@ -145,25 +135,12 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 		HeapDestroy(PSDRV_Heap);
 		return FALSE;
 	    }
-#ifdef SONAME_LIBCUPS
-	    /* dynamically load CUPS if not yet loaded */
-	    if (!cupshandle) {
-		cupshandle = wine_dlopen(SONAME_LIBCUPS, RTLD_NOW, NULL, 0);
-		if (!cupshandle) cupshandle = (void*)-1;
-	    }
-#endif
             break;
 
 	case DLL_PROCESS_DETACH:
 
 	    DeleteObject( PSDRV_DefaultFont );
 	    HeapDestroy( PSDRV_Heap );
-#ifdef SONAME_LIBCUPS
-	    if (cupshandle && (cupshandle != (void*)-1)) {
-		wine_dlclose(cupshandle, NULL, 0);
-		cupshandle = NULL;
-	    }
-#endif
             break;
     }
 
@@ -573,104 +550,21 @@ static BOOL set_devmode( HANDLE printer, PSDRV_DEVMODE *dm )
     return SetPrinterW( printer, 9, (BYTE *)&info, 0 );
 }
 
-static inline char *expand_env_string( char *str, DWORD type )
+static char *get_ppd_filename( HANDLE printer )
 {
-    if (type == REG_EXPAND_SZ)
-    {
-        char *tmp;
-        DWORD needed = ExpandEnvironmentStringsA( str, NULL, 0 );
-        tmp = HeapAlloc( GetProcessHeap(), 0, needed );
-        if (tmp)
-        {
-            ExpandEnvironmentStringsA( str, tmp, needed );
-            HeapFree( GetProcessHeap(), 0, str );
-            return tmp;
-        }
-    }
-    return str;
-}
+    DWORD needed;
+    DRIVER_INFO_2W *info;
+    char *unixname;
 
-static char *get_ppd_filename( HANDLE printer, const char *nameA, BOOL *needs_unlink )
-{
-    char *ret = NULL;
-    DWORD needed, err, type;
-    HKEY hkey;
-    const char *data_dir, *filename;
+    GetPrinterDriverW( printer, NULL, 2, NULL, 0, &needed );
+    if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) return NULL;
+    info = HeapAlloc( GetProcessHeap(), 0, needed );
+    if (!info) return NULL;
+    GetPrinterDriverW( printer, NULL, 2, (BYTE*)info, needed, &needed );
+    unixname = wine_get_unix_file_name( info->pDataFile );
+    HeapFree( GetProcessHeap(), 0, info );
 
-    *needs_unlink = FALSE;
-
-#ifdef SONAME_LIBCUPS
-    if (cupshandle != (void*)-1)
-    {
-        typeof(cupsGetPPD) *pcupsGetPPD;
-
-        pcupsGetPPD = wine_dlsym( cupshandle, "cupsGetPPD", NULL, 0 );
-        if (pcupsGetPPD)
-        {
-            filename = pcupsGetPPD( nameA );
-
-            if (filename)
-            {
-                needed = strlen( filename ) + 1;
-                ret = HeapAlloc( GetProcessHeap(), 0, needed );
-                memcpy( ret, filename, needed );
-                *needs_unlink = TRUE;
-                return ret;
-            }
-            else
-                WARN( "CUPS did not find ppd for %s\n", debugstr_a(nameA) );
-        }
-    }
-#endif
-
-    err = GetPrinterDataExA( printer, "PrinterDriverData", "PPD File", NULL, NULL, 0, &needed );
-    if (err == ERROR_MORE_DATA)
-    {
-        ret = HeapAlloc( GetProcessHeap(), 0, needed );
-        if (!ret) return NULL;
-        GetPrinterDataExA( printer, "PrinterDriverData", "PPD File", &type,
-                           (BYTE *)ret, needed, &needed );
-        return expand_env_string( ret, type );
-    }
-
-    /* Look for a ppd file for this printer in the config file.
-     * First look under that printer's name, and then under 'generic'
-     */
-    /* @@ Wine registry key: HKCU\Software\Wine\Printing\PPD Files */
-    if (RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\Printing\\PPD Files", &hkey ) == ERROR_SUCCESS )
-    {
-        const char *value_name = NULL;
-
-        if (RegQueryValueExA( hkey, nameA, 0, NULL, NULL, &needed ) == ERROR_SUCCESS)
-            value_name = nameA;
-        else if (RegQueryValueExA( hkey, "generic", 0, NULL, NULL, &needed ) == ERROR_SUCCESS)
-            value_name = "generic";
-
-        if (value_name)
-        {
-            ret = HeapAlloc( GetProcessHeap(), 0, needed );
-            if (!ret) return NULL;
-            RegQueryValueExA( hkey, value_name, 0, &type, (BYTE *)ret, &needed );
-        }
-        RegCloseKey( hkey );
-        if (ret) return expand_env_string( ret, type );
-    }
-
-    if ((data_dir = wine_get_data_dir())) filename = "/generic.ppd";
-    else if ((data_dir = wine_get_build_dir())) filename = "/dlls/wineps.drv/generic.ppd";
-    else
-    {
-        ERR( "Error getting PPD file name for printer '%s'\n", debugstr_a(nameA) );
-        return NULL;
-    }
-    ret = HeapAlloc( GetProcessHeap(), 0, strlen(data_dir) + strlen(filename) + 1 );
-    if (ret)
-    {
-        strcpy( ret, data_dir );
-        strcat( ret, filename );
-    }
-
-    return ret;
+    return unixname;
 }
 
 static struct list printer_list = LIST_INIT( printer_list );
@@ -686,7 +580,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
     const AFM *afm;
     HANDLE hPrinter = 0;
     char *ppd_filename = NULL, *nameA = NULL;
-    BOOL using_default_devmode = FALSE, needs_unlink = FALSE;
+    BOOL using_default_devmode = FALSE;
     int len;
 
     TRACE("'%s'\n", debugstr_w(name));
@@ -715,7 +609,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
     pi->Devmode = get_devmode( hPrinter, name, &using_default_devmode );
     if (!pi->Devmode) goto fail;
 
-    ppd_filename = get_ppd_filename( hPrinter, nameA, &needs_unlink );
+    ppd_filename = get_ppd_filename( hPrinter );
     if (!ppd_filename) goto fail;
 
     pi->ppd = PSDRV_ParsePPD( ppd_filename );
@@ -798,7 +692,6 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
     }
     ClosePrinter( hPrinter );
     HeapFree( GetProcessHeap(), 0, nameA );
-    if (needs_unlink) unlink( ppd_filename );
     HeapFree( GetProcessHeap(), 0, ppd_filename );
     list_add_head( &printer_list, &pi->entry );
     return pi;
@@ -810,7 +703,6 @@ fail:
     HeapFree(PSDRV_Heap, 0, pi->Devmode);
     HeapFree(PSDRV_Heap, 0, pi);
     HeapFree( GetProcessHeap(), 0, nameA );
-    if (needs_unlink) unlink( ppd_filename );
     HeapFree( GetProcessHeap(), 0, ppd_filename );
     return NULL;
 }
