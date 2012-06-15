@@ -37,6 +37,7 @@ HRESULT create_view( const struct property *proplist, const WCHAR *class,
 
     if (!view) return E_OUTOFMEMORY;
     view->proplist = proplist;
+    view->table    = get_table( class );
     view->cond     = cond;
     *ret = view;
     return S_OK;

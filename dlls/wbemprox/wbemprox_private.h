@@ -17,8 +17,24 @@
  */
 
 #include "wine/list.h"
+#include "wine/unicode.h"
 
 #define SIZEOF(array) (sizeof(array)/sizeof((array)[0]))
+
+struct column
+{
+    const WCHAR *name;
+    CIMTYPE_ENUMERATION type;
+};
+
+struct table
+{
+    const WCHAR *name;
+    UINT num_cols;
+    const struct column *columns;
+    UINT num_rows;
+    BYTE *data;
+};
 
 struct property
 {
@@ -75,6 +91,7 @@ struct expr
 struct view
 {
     const struct property *proplist;
+    struct table *table;
     const struct expr *cond;
 };
 
@@ -90,6 +107,7 @@ HRESULT parse_query( const WCHAR *, struct view **, struct list * ) DECLSPEC_HID
 HRESULT create_view( const struct property *, const WCHAR *, const struct expr *,
                      struct view ** ) DECLSPEC_HIDDEN;
 void destroy_view( struct view * ) DECLSPEC_HIDDEN;
+struct table *get_table( const WCHAR * ) DECLSPEC_HIDDEN;
 
 HRESULT WbemLocator_create(IUnknown *, LPVOID *) DECLSPEC_HIDDEN;
 HRESULT WbemServices_create(IUnknown *, LPVOID *) DECLSPEC_HIDDEN;
