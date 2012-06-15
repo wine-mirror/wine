@@ -867,7 +867,7 @@ static BOOL CUPS_LoadPrinters(void)
             pi2.pPrintProcessor = WinPrintW;
             pi2.pDriverName     = nameW;
             pi2.pComment        = get_cups_option( "printer-info", dests[i].num_options, dests[i].options );
-            pi2.pLocation       = emptyStringW;
+            pi2.pLocation       = get_cups_option( "printer-location", dests[i].num_options, dests[i].options );
             pi2.pPortName       = port;
             pi2.pParameters     = emptyStringW;
             pi2.pShareName      = emptyStringW;
@@ -879,6 +879,7 @@ static BOOL CUPS_LoadPrinters(void)
                 ERR( "printer '%s' not added by AddPrinter (error %d)\n", debugstr_w(nameW), GetLastError() );
 
             HeapFree( GetProcessHeap(), 0, pi2.pComment );
+            HeapFree( GetProcessHeap(), 0, pi2.pLocation );
         }
         HeapFree( GetProcessHeap(), 0, port );
 
