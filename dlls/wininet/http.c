@@ -3480,12 +3480,14 @@ static DWORD HTTP_HttpQueryInfoW(http_request_t *request, DWORD dwInfoLevel,
             DWORD size;
             static const WCHAR formatW[] = {'%','u',0};
 
-            size = (sprintfW(buf, formatW, request->status_code)+1) * sizeof(WCHAR);
+            size = sprintfW(buf, formatW, request->status_code) * sizeof(WCHAR);
 
-            if(size <= *lpdwBufferLength)
-                memcpy(lpBuffer, buf, size);
-            else
+            if(size <= *lpdwBufferLength) {
+                memcpy(lpBuffer, buf, size+sizeof(WCHAR));
+            }else {
+                size += sizeof(WCHAR);
                 res = ERROR_INSUFFICIENT_BUFFER;
+            }
 
             *lpdwBufferLength = size;
         }

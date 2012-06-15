@@ -161,6 +161,13 @@ static const test_data_t test_data[] = {
 static INTERNET_STATUS_CALLBACK (WINAPI *pInternetSetStatusCallbackA)(HINTERNET ,INTERNET_STATUS_CALLBACK);
 static BOOL (WINAPI *pInternetGetSecurityInfoByURLA)(LPSTR,PCCERT_CHAIN_CONTEXT*,DWORD*);
 
+static int strcmp_wa(LPCWSTR strw, const char *stra)
+{
+    WCHAR buf[512];
+    MultiByteToWideChar(CP_ACP, 0, stra, -1, buf, sizeof(buf)/sizeof(WCHAR));
+    return lstrcmpW(strw, buf);
+}
+
 static BOOL proxy_active(void)
 {
     HKEY internet_settings;
@@ -185,41 +192,70 @@ static void _test_status_code(unsigned line, HINTERNET req, DWORD excode)
 {
     DWORD code, size, index;
     char exbuf[10], bufa[10];
+    WCHAR bufw[10];
     BOOL res;
 
     code = 0xdeadbeef;
     size = sizeof(code);
-    res = HttpQueryInfo(req, HTTP_QUERY_STATUS_CODE|HTTP_QUERY_FLAG_NUMBER, &code, &size, NULL);
-    ok_(__FILE__,line)(res, "HttpQueryInfo(HTTP_QUERY_STATUS_CODE|number) failed: %u\n", GetLastError());
+    res = HttpQueryInfoA(req, HTTP_QUERY_STATUS_CODE|HTTP_QUERY_FLAG_NUMBER, &code, &size, NULL);
+    ok_(__FILE__,line)(res, "[1] HttpQueryInfoA(HTTP_QUERY_STATUS_CODE|number) failed: %u\n", GetLastError());
     ok_(__FILE__,line)(code == excode, "code = %d, expected %d\n", code, excode);
+    ok_(__FILE__,line)(size == sizeof(code), "size = %u\n", size);
 
     code = 0xdeadbeef;
     index = 0;
     size = sizeof(code);
-    res = HttpQueryInfo(req, HTTP_QUERY_STATUS_CODE|HTTP_QUERY_FLAG_NUMBER, &code, &size, &index);
-    ok_(__FILE__,line)(res, "HttpQueryInfo(HTTP_QUERY_STATUS_CODE|number index) failed: %u\n", GetLastError());
+    res = HttpQueryInfoA(req, HTTP_QUERY_STATUS_CODE|HTTP_QUERY_FLAG_NUMBER, &code, &size, &index);
+    ok_(__FILE__,line)(res, "[2] HttpQueryInfoA(HTTP_QUERY_STATUS_CODE|number index) failed: %u\n", GetLastError());
     ok_(__FILE__,line)(code == excode, "code = %d, expected %d\n", code, excode);
     ok_(__FILE__,line)(!index, "index = %d, expected 0\n", code);
+    ok_(__FILE__,line)(size == sizeof(code), "size = %u\n", size);
 
     sprintf(exbuf, "%u", excode);
 
     size = sizeof(bufa);
-    res = HttpQueryInfo(req, HTTP_QUERY_STATUS_CODE, bufa, &size, NULL);
-    ok_(__FILE__,line)(res, "HttpQueryInfo(HTTP_QUERY_STATUS_CODE) failed: %u\n", GetLastError());
-    ok_(__FILE__,line)(!strcmp(bufa, exbuf), "unexpected status code %s, expected %s", bufa, exbuf);
+    res = HttpQueryInfoA(req, HTTP_QUERY_STATUS_CODE, bufa, &size, NULL);
+    ok_(__FILE__,line)(res, "[3] HttpQueryInfoA(HTTP_QUERY_STATUS_CODE) failed: %u\n", GetLastError());
+    ok_(__FILE__,line)(!strcmp(bufa, exbuf), "unexpected status code %s, expected %s\n", bufa, exbuf);
+    ok_(__FILE__,line)(size == strlen(exbuf), "unexpected size %d for \"%s\"\n", size, exbuf);
+
+    size = 0;
+    res = HttpQueryInfoA(req, HTTP_QUERY_STATUS_CODE, NULL, &size, NULL);
+    ok_(__FILE__,line)(!res && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+                       "[4] HttpQueryInfoA(HTTP_QUERY_STATUS_CODE) failed: %u\n", GetLastError());
+    ok_(__FILE__,line)(size == strlen(exbuf)+1, "unexpected size %d for \"%s\"\n", size, exbuf);
+
+    size = sizeof(bufw);
+    res = HttpQueryInfoW(req, HTTP_QUERY_STATUS_CODE, bufw, &size, NULL);
+    ok_(__FILE__,line)(res, "[5] HttpQueryInfoW(HTTP_QUERY_STATUS_CODE) failed: %u\n", GetLastError());
+    ok_(__FILE__,line)(!strcmp_wa(bufw, exbuf), "unexpected status code %s, expected %s\n", bufa, exbuf);
+    ok_(__FILE__,line)(size == strlen(exbuf)*sizeof(WCHAR), "unexpected size %d for \"%s\"\n", size, exbuf);
+
+    size = 0;
+    res = HttpQueryInfoW(req, HTTP_QUERY_STATUS_CODE, bufw, &size, NULL);
+    ok_(__FILE__,line)(!res && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+                       "[6] HttpQueryInfoW(HTTP_QUERY_STATUS_CODE) failed: %u\n", GetLastError());
+    ok_(__FILE__,line)(size == (strlen(exbuf)+1)*sizeof(WCHAR), "unexpected size %d for \"%s\"\n", size, exbuf);
+
+    if(0) {
+    size = sizeof(bufw);
+    res = HttpQueryInfoW(req, HTTP_QUERY_STATUS_CODE, NULL, &size, NULL);
+    ok(!res && GetLastError() == ERROR_INVALID_PARAMETER, "HttpQueryInfo(HTTP_QUERY_STATUS_CODE) failed: %u\n", GetLastError());
+    ok(size == sizeof(bufw), "unexpected size %d\n", size);
+    }
 
     code = 0xdeadbeef;
     index = 1;
     size = sizeof(code);
-    res = HttpQueryInfo(req, HTTP_QUERY_STATUS_CODE|HTTP_QUERY_FLAG_NUMBER, &code, &size, &index);
+    res = HttpQueryInfoA(req, HTTP_QUERY_STATUS_CODE|HTTP_QUERY_FLAG_NUMBER, &code, &size, &index);
     ok_(__FILE__,line)(!res && GetLastError() == ERROR_HTTP_HEADER_NOT_FOUND,
-                       "[invalid 1] HttpQueryInfo failed: %x(%d)\n", res, GetLastError());
+                       "[7] HttpQueryInfoA failed: %x(%d)\n", res, GetLastError());
 
     code = 0xdeadbeef;
     size = sizeof(code);
-    res = HttpQueryInfo(req, HTTP_QUERY_STATUS_CODE|HTTP_QUERY_FLAG_REQUEST_HEADERS, &code, &size, NULL);
+    res = HttpQueryInfoA(req, HTTP_QUERY_STATUS_CODE|HTTP_QUERY_FLAG_REQUEST_HEADERS, &code, &size, NULL);
     ok_(__FILE__,line)(!res && GetLastError() == ERROR_HTTP_INVALID_QUERY_REQUEST,
-                       "[invalid 2] HttpQueryInfo failed: %x(%d)\n", res, GetLastError());
+                       "[8] HttpQueryInfoA failed: %x(%d)\n", res, GetLastError());
 }
 
 #define test_request_flags(a,b) _test_request_flags(__LINE__,a,b,FALSE)
