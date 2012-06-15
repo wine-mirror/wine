@@ -1739,7 +1739,7 @@ static DWORD HTTP_ResolveName(http_request_t *request)
 {
     server_t *server = request->server;
     socklen_t addr_len;
-    const void *addr;
+    void *addr;
 
     if(server->addr_len)
         return ERROR_SUCCESS;
