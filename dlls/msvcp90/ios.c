@@ -3984,6 +3984,39 @@ basic_ostream_char* __cdecl basic_ostream_char_print_bstr(basic_ostream_char *os
     return ostr;
 }
 
+/* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@P6AAAV01@AAV01@@Z@Z */
+/* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@P6AAEAV01@AEAV01@@Z@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostream_char_print_func, 8)
+basic_ostream_char* __thiscall basic_ostream_char_print_func(basic_ostream_char *this,
+        basic_ostream_char* (__cdecl *pfunc)(basic_ostream_char*))
+{
+    TRACE("(%p %p)\n", this, pfunc);
+    pfunc(this);
+    return this;
+}
+
+/* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@P6AAAV?$basic_ios@DU?$char_traits@D@std@@@1@AAV21@@Z@Z */
+/* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@P6AAEAV?$basic_ios@DU?$char_traits@D@std@@@1@AEAV21@@Z@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostream_char_print_func_basic_ios, 8)
+basic_ostream_char* __thiscall basic_ostream_char_print_func_basic_ios(basic_ostream_char *this,
+        basic_ios_char* (__cdecl *pfunc)(basic_ios_char*))
+{
+    TRACE("(%p %p)\n", this, pfunc);
+    pfunc(basic_ostream_char_get_basic_ios(this));
+    return this;
+}
+
+/* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@P6AAAVios_base@1@AAV21@@Z@Z */
+/* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@P6AAEAVios_base@1@AEAV21@@Z@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostream_char_print_func_ios_base, 8)
+basic_ostream_char* __thiscall basic_ostream_char_print_func_ios_base(
+        basic_ostream_char *this, ios_base* (__cdecl *pfunc)(ios_base*))
+{
+    TRACE("(%p %p)\n", this, pfunc);
+    pfunc(&basic_ostream_char_get_basic_ios(this)->base);
+    return this;
+}
+
 /* Caution: basic_istream uses virtual inheritance. */
 static inline basic_ios_char* basic_istream_char_get_basic_ios(basic_istream_char *this)
 {
