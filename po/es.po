@@ -5521,7 +5521,7 @@ msgid "No user session key.\n"
 msgstr "No hay clave de sesión del usuario.\n"
 
 #: winerror.mc:2376
-msgid "Licence quota exceeded.\n"
+msgid "License quota exceeded.\n"
 msgstr "La cuota de la licencia ha sido superada.\n"
 
 #: winerror.mc:2381

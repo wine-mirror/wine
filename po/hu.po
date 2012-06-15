@@ -5523,7 +5523,7 @@ msgid "No user session key.\n"
 msgstr "Nincs felhasználói session kulcs.\n"
 
 #: winerror.mc:2376
-msgid "Licence quota exceeded.\n"
+msgid "License quota exceeded.\n"
 msgstr "Licensz kvóta túllépés.\n"
 
 #: winerror.mc:2381

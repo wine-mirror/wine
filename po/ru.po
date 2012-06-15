@@ -5494,7 +5494,7 @@ msgid "No user session key.\n"
 msgstr "Нет сеансового ключа пользователя.\n"
 
 #: winerror.mc:2376
-msgid "Licence quota exceeded.\n"
+msgid "License quota exceeded.\n"
 msgstr "Превышена квота лицензий.\n"
 
 #: winerror.mc:2381

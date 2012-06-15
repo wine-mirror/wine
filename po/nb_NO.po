@@ -5685,7 +5685,7 @@ msgid "No user session key.\n"
 msgstr "Ingen øktnøkkel for brukeren.\n"
 
 #: winerror.mc:2376
-msgid "Licence quota exceeded.\n"
+msgid "License quota exceeded.\n"
 msgstr "Lisenskvoten er oversteget.\n"
 
 #: winerror.mc:2381

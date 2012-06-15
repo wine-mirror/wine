@@ -5479,8 +5479,8 @@ msgid "No user session key.\n"
 msgstr "No user session key.\n"
 
 #: winerror.mc:2376
-msgid "Licence quota exceeded.\n"
-msgstr "Licence quota exceeded.\n"
+msgid "License quota exceeded.\n"
+msgstr "License quota exceeded.\n"
 
 #: winerror.mc:2381
 msgid "Wrong target name.\n"

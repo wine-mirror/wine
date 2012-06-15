@@ -2371,7 +2371,7 @@ No user session key.
 MessageId=1395
 SymbolicName=ERROR_LICENSE_QUOTA_EXCEEDED
 Language=ENU
-Licence quota exceeded.
+License quota exceeded.
 .
 MessageId=1396
 SymbolicName=ERROR_WRONG_TARGET_NAME

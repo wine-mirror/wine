@@ -5499,7 +5499,7 @@ msgid "No user session key.\n"
 msgstr "Brak klucza sesji użytkownika.\n"
 
 #: winerror.mc:2376
-msgid "Licence quota exceeded.\n"
+msgid "License quota exceeded.\n"
 msgstr "Przydział licencji przekroczony.\n"
 
 #: winerror.mc:2381

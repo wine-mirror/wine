@@ -5477,7 +5477,7 @@ msgid "No user session key.\n"
 msgstr "사용자 세션 키가 없음.\n"
 
 #: winerror.mc:2376
-msgid "Licence quota exceeded.\n"
+msgid "License quota exceeded.\n"
 msgstr "라이센스의 할당량을 초과했습니다.\n"
 
 #: winerror.mc:2381
