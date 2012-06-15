@@ -395,7 +395,7 @@ ok(tmp === "2,ad", "arr.concat = " + tmp);
 m = "a+bcabc".match("a+");
 ok(typeof(m) === "object", "typeof m is not object");
 ok(m.length === 1, "m.length is not 1");
-ok(m["0"] === "a", "m[0] is not \"ab\"");
+ok(m["0"] === "a", "m[0] is not \"a\"");
 
 r = "- [test] -".replace("[test]", "success");
 ok(r === "- success -", "r = " + r + " expected '- success -'");
@@ -408,7 +408,7 @@ ok(r === "test", "r = " + r + " expected 'test'");
 
 function replaceFunc3(m, off, str) {
     ok(arguments.length === 3, "arguments.length = " + arguments.length);
-    ok(m === "[test]", "m = " + m + " expected [test1]");
+    ok(m === "[test]", "m = " + m + " expected [test]");
     ok(off === 1, "off = " + off + " expected 0");
     ok(str === "-[test]-", "str = " + arguments[3]);
     return "ret";

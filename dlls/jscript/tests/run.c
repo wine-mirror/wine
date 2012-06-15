@@ -569,8 +569,8 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
             ok(!pvarRes, "pvarRes != NULL\n");
         ok(pei != NULL, "pei == NULL\n");
 
-        ok(V_VT(pdp->rgvarg) == VT_BSTR, "V_VT(psp->rgvargs) = %d\n", V_VT(pdp->rgvarg));
-        ok(V_VT(pdp->rgvarg+1) == VT_BOOL, "V_VT(psp->rgvargs+1) = %d\n", V_VT(pdp->rgvarg));
+        ok(V_VT(pdp->rgvarg) == VT_BSTR, "V_VT(pdp->rgvarg) = %d\n", V_VT(pdp->rgvarg));
+        ok(V_VT(pdp->rgvarg+1) == VT_BOOL, "V_VT(pdp->rgvarg+1) = %d\n", V_VT(pdp->rgvarg+1));
         ok(V_BOOL(pdp->rgvarg+1), "%s: %s\n", test_name, wine_dbgstr_w(V_BSTR(pdp->rgvarg)));
 
         return S_OK;
@@ -585,7 +585,7 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
         ok(!pvarRes, "pvarRes != NULL\n");
         ok(pei != NULL, "pei == NULL\n");
 
-        ok(V_VT(pdp->rgvarg) == VT_BSTR, "V_VT(psp->rgvargs) = %d\n", V_VT(pdp->rgvarg));
+        ok(V_VT(pdp->rgvarg) == VT_BSTR, "V_VT(pdp->rgvarg) = %d\n", V_VT(pdp->rgvarg));
         if(V_VT(pdp->rgvarg) == VT_BSTR)
             trace("%s: %s\n", test_name, wine_dbgstr_w(V_BSTR(pdp->rgvarg)));
 
@@ -764,7 +764,7 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
         ok(pvarRes == NULL, "pvarRes != NULL\n");
         ok(pei != NULL, "pei == NULL\n");
 
-        ok(V_VT(pdp->rgvarg) == VT_DISPATCH, "V_VT(arg) = %d\n", V_VT(pdp->rgvarg));
+        ok(V_VT(pdp->rgvarg) == VT_DISPATCH, "V_VT(pdp->rgvarg) = %d\n", V_VT(pdp->rgvarg));
         ok(V_DISPATCH(pdp->rgvarg) == (IDispatch*)iface, "disp != iface\n");
 
         return S_OK;
@@ -874,14 +874,14 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
         ok(!pvarRes, "pvarRes != NULL\n");
         ok(pei != NULL, "pei == NULL\n");
 
-        ok(V_VT(pdp->rgvarg) == VT_I4, "V_VT(psp->rgvargs) = %d\n", V_VT(pdp->rgvarg));
-        ok(V_I4(pdp->rgvarg) == 2, "V_I4(psp->rgvargs) = %d\n", V_I4(pdp->rgvarg));
+        ok(V_VT(pdp->rgvarg) == VT_I4, "V_VT(pdp->rgvarg) = %d\n", V_VT(pdp->rgvarg));
+        ok(V_I4(pdp->rgvarg) == 2, "V_I4(pdp->rgvarg) = %d\n", V_I4(pdp->rgvarg));
 
-        ok(V_VT(pdp->rgvarg+1) == VT_I4, "V_VT(psp->rgvargs+1) = %d\n", V_VT(pdp->rgvarg+1));
-        ok(V_I4(pdp->rgvarg+1) == 1, "V_I4(psp->rgvargs+1) = %d\n", V_I4(pdp->rgvarg+1));
+        ok(V_VT(pdp->rgvarg+1) == VT_I4, "V_VT(pdp->rgvarg+1) = %d\n", V_VT(pdp->rgvarg+1));
+        ok(V_I4(pdp->rgvarg+1) == 1, "V_I4(pdp->rgvarg+1) = %d\n", V_I4(pdp->rgvarg+1));
 
-        ok(V_VT(pdp->rgvarg+2) == VT_I4, "V_VT(psp->rgvargs+2) = %d\n", V_VT(pdp->rgvarg+2));
-        ok(V_I4(pdp->rgvarg+2) == 0, "V_I4(psp->rgvargs+2) = %d\n", V_I4(pdp->rgvarg+2));
+        ok(V_VT(pdp->rgvarg+2) == VT_I4, "V_VT(pdp->rgvarg+2) = %d\n", V_VT(pdp->rgvarg+2));
+        ok(V_I4(pdp->rgvarg+2) == 0, "V_I4(pdp->rgvarg+2) = %d\n", V_I4(pdp->rgvarg+2));
         return S_OK;
 
     case DISPID_GLOBAL_OBJECT_FLAG: {
@@ -952,19 +952,19 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
         ok(pdp->cArgs == 5, "cArgs = %d\n", pdp->cArgs);
         ok(!pvarRes, "pvarRes != NULL\n");
 
-        ok(V_VT(pdp->rgvarg+1) == VT_I4, "V_VT(psp->rgvargs+1) = %d\n", V_VT(pdp->rgvarg));
-        ok(V_I4(pdp->rgvarg+1) == 10, "V_I4(psp->rgvargs+1) = %d\n", V_I4(pdp->rgvarg));
+        ok(V_VT(pdp->rgvarg+1) == VT_I4, "V_VT(pdp->rgvarg+1) = %d\n", V_VT(pdp->rgvarg+1));
+        ok(V_I4(pdp->rgvarg+1) == 10, "V_I4(pdp->rgvarg+1) = %d\n", V_I4(pdp->rgvarg+1));
 
-        ok(V_VT(pdp->rgvarg+2) == VT_I4, "V_VT(psp->rgvargs+2) = %d\n", V_VT(pdp->rgvarg+1));
-        ok(V_I4(pdp->rgvarg+2) == 10, "V_I4(psp->rgvargs+2) = %d\n", V_I4(pdp->rgvarg+1));
+        ok(V_VT(pdp->rgvarg+2) == VT_I4, "V_VT(pdp->rgvarg+2) = %d\n", V_VT(pdp->rgvarg+2));
+        ok(V_I4(pdp->rgvarg+2) == 10, "V_I4(pdp->rgvarg+2) = %d\n", V_I4(pdp->rgvarg+2));
 
-        ok(V_VT(pdp->rgvarg+3) == VT_I4, "V_VT(psp->rgvargs+3) = %d\n", V_VT(pdp->rgvarg+3));
-        ok(V_I4(pdp->rgvarg+3) == 22, "V_I4(psp->rgvargs+3) = %d\n", V_I4(pdp->rgvarg+3));
+        ok(V_VT(pdp->rgvarg+3) == VT_I4, "V_VT(pdp->rgvarg+3) = %d\n", V_VT(pdp->rgvarg+3));
+        ok(V_I4(pdp->rgvarg+3) == 22, "V_I4(pdp->rgvarg+3) = %d\n", V_I4(pdp->rgvarg+3));
 
-        ok(V_VT(pdp->rgvarg+4) == VT_I4, "V_VT(psp->rgvargs+4) = %d\n", V_VT(pdp->rgvarg+4));
-        ok(V_I4(pdp->rgvarg+4) == 22, "V_I4(psp->rgvargs+4) = %d\n", V_I4(pdp->rgvarg+4));
+        ok(V_VT(pdp->rgvarg+4) == VT_I4, "V_VT(pdp->rgvarg+4) = %d\n", V_VT(pdp->rgvarg+4));
+        ok(V_I4(pdp->rgvarg+4) == 22, "V_I4(pdp->rgvarg+4) = %d\n", V_I4(pdp->rgvarg+4));
 
-        ok(V_VT(pdp->rgvarg) == VT_DISPATCH, "V_VT(psp->rgvargs) = %d\n", V_VT(pdp->rgvarg));
+        ok(V_VT(pdp->rgvarg) == VT_DISPATCH, "V_VT(pdp->rgvarg) = %d\n", V_VT(pdp->rgvarg));
 
         V_VT(args) = VT_I2;
         V_I2(args) = 2;
