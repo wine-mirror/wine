@@ -453,11 +453,9 @@ static void test_msiinsert(void)
     ok(r == TRUE, "file didn't exist after commit\n");
 }
 
-typedef UINT (WINAPI *fnMsiDecomposeDescriptorA)(LPCSTR, LPCSTR, LPSTR, LPSTR, DWORD *);
-static fnMsiDecomposeDescriptorA pMsiDecomposeDescriptorA;
-
 static void test_msidecomposedesc(void)
 {
+    UINT (WINAPI *pMsiDecomposeDescriptorA)(LPCSTR, LPCSTR, LPSTR, LPSTR, DWORD *);
     char prod[MAX_FEATURE_CHARS+1], comp[MAX_FEATURE_CHARS+1], feature[MAX_FEATURE_CHARS+1];
     const char *desc;
     UINT r;
@@ -465,8 +463,7 @@ static void test_msidecomposedesc(void)
     HMODULE hmod;
 
     hmod = GetModuleHandle("msi.dll");
-    pMsiDecomposeDescriptorA = (fnMsiDecomposeDescriptorA)
-        GetProcAddress(hmod, "MsiDecomposeDescriptorA");
+    pMsiDecomposeDescriptorA = (void*)GetProcAddress(hmod, "MsiDecomposeDescriptorA");
     if (!pMsiDecomposeDescriptorA)
         return;
 
