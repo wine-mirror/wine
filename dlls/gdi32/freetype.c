@@ -2380,7 +2380,7 @@ static void load_mac_font_callback(const void *value, void *context)
     if (path && CFStringGetFileSystemRepresentation(pathStr, path, len))
     {
         TRACE("font file %s\n", path);
-        AddFontToList(path, NULL, 0, ADDFONT_EXTERNAL_FONT | ADDFONT_ADD_TO_CACHE);
+        AddFontFileToList(path, NULL, NULL, ADDFONT_EXTERNAL_FONT | ADDFONT_ADD_TO_CACHE);
     }
     HeapFree(GetProcessHeap(), 0, path);
 }
