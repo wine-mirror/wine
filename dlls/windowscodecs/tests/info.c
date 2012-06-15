@@ -130,7 +130,7 @@ static void test_pixelformat_info(void)
     DWORD signing;
 
     hr = get_component_info(&GUID_WICPixelFormat32bppBGRA, &info);
-    todo_wine ok(hr == S_OK, "CreateComponentInfo failed, hr=%x\n", hr);
+    ok(hr == S_OK, "CreateComponentInfo failed, hr=%x\n", hr);
 
     if (FAILED(hr))
         return;
@@ -189,6 +189,8 @@ static void test_pixelformat_info(void)
     ok(hr == S_OK, "GetComponentType failed, hr=%x\n", hr);
     ok(componenttype == WICPixelFormat, "unexpected component type 0x%x\n", componenttype);
 
+    todo_wine
+    {
     len = 0xdeadbeef;
     hr = IWICComponentInfo_GetFriendlyName(info, 0, NULL, &len);
     ok(hr == S_OK, "GetFriendlyName failed, hr=%x\n", hr);
@@ -216,6 +218,7 @@ static void test_pixelformat_info(void)
     hr = IWICComponentInfo_GetVersion(info, 0, NULL, &len);
     ok(hr == S_OK, "GetVersion failed, hr=%x\n", hr);
     ok(len == 0, "invalid length 0x%x\n", len); /* version does not apply to pixel formats */
+    }
 
     IWICComponentInfo_Release(info);
 }

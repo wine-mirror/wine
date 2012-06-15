@@ -1086,6 +1086,7 @@ static HRESULT WINAPI PixelFormatInfo_GetComponentType(IWICPixelFormatInfo2 *ifa
     WICComponentType *pType)
 {
     TRACE("(%p,%p)\n", iface, pType);
+    if (!pType) return E_INVALIDARG;
     *pType = WICPixelFormat;
     return S_OK;
 }
