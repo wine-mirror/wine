@@ -3029,21 +3029,31 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
     }
 
     set_devices_and_printerports(pi);
+
     set_reg_DWORD(hkeyPrinter, AttributesW, pi->Attributes);
     set_reg_szW(hkeyPrinter, DatatypeW, pi->pDatatype);
+    set_reg_szW(hkeyPrinter, DescriptionW, pi->pComment);
+    set_reg_DWORD(hkeyPrinter, dnsTimeoutW, 0);
+    set_reg_szW(hkeyPrinter, LocationW, pi->pLocation);
+    set_reg_szW(hkeyPrinter, NameW, pi->pPrinterName);
+    set_reg_szW(hkeyPrinter, ParametersW, pi->pParameters);
+    set_reg_szW(hkeyPrinter, PortW, pi->pPortName);
+    set_reg_szW(hkeyPrinter, Print_ProcessorW, pi->pPrintProcessor);
+    set_reg_szW(hkeyPrinter, Printer_DriverW, pi->pDriverName);
+    set_reg_DWORD(hkeyPrinter, PriorityW, pi->Priority);
+    set_reg_szW(hkeyPrinter, Separator_FileW, pi->pSepFile);
+    set_reg_szW(hkeyPrinter, Share_NameW, pi->pShareName);
+    set_reg_DWORD(hkeyPrinter, StartTimeW, pi->StartTime);
+    set_reg_DWORD(hkeyPrinter, StatusW, pi->Status);
+    set_reg_DWORD(hkeyPrinter, txTimeoutW, 0);
+    set_reg_DWORD(hkeyPrinter, UntilTimeW, pi->UntilTime);
 
-    /* See if we can load the driver.  We may need the devmode structure anyway
-     *
-     * FIXME:
-     * Note that DocumentPropertiesW will briefly try to open the printer we
-     * just create to find a DEVMODE struct (it will use the WINEPS default
-     * one in case it is not there, so we are ok).
-     */
     size = DocumentPropertiesW(0, 0, pi->pPrinterName, NULL, NULL, 0);
 
-    if(size < 0) {
+    if (size < 0)
+    {
         FIXME("DocumentPropertiesW on printer %s fails\n", debugstr_w(pi->pPrinterName));
-	size = sizeof(DEVMODEW);
+        size = sizeof(DEVMODEW);
     }
     if(pi->pDevMode)
         dm = pi->pDevMode;
@@ -3066,23 +3076,6 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
 
     set_reg_devmode( hkeyPrinter, Default_DevModeW, dm );
     if (!pi->pDevMode) HeapFree( GetProcessHeap(), 0, dm );
-
-    set_reg_szW(hkeyPrinter, DescriptionW, pi->pComment);
-    set_reg_DWORD(hkeyPrinter, dnsTimeoutW, 0);
-    set_reg_szW(hkeyPrinter, LocationW, pi->pLocation);
-    set_reg_szW(hkeyPrinter, NameW, pi->pPrinterName);
-    set_reg_szW(hkeyPrinter, ParametersW, pi->pParameters);
-
-    set_reg_szW(hkeyPrinter, PortW, pi->pPortName);
-    set_reg_szW(hkeyPrinter, Print_ProcessorW, pi->pPrintProcessor);
-    set_reg_szW(hkeyPrinter, Printer_DriverW, pi->pDriverName);
-    set_reg_DWORD(hkeyPrinter, PriorityW, pi->Priority);
-    set_reg_szW(hkeyPrinter, Separator_FileW, pi->pSepFile);
-    set_reg_szW(hkeyPrinter, Share_NameW, pi->pShareName);
-    set_reg_DWORD(hkeyPrinter, StartTimeW, pi->StartTime);
-    set_reg_DWORD(hkeyPrinter, StatusW, pi->Status);
-    set_reg_DWORD(hkeyPrinter, txTimeoutW, 0);
-    set_reg_DWORD(hkeyPrinter, UntilTimeW, pi->UntilTime);
 
     RegCloseKey(hkeyPrinter);
     RegCloseKey(hkeyPrinters);
