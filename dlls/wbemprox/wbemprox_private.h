@@ -16,8 +16,84 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "wine/list.h"
+
+#define SIZEOF(array) (sizeof(array)/sizeof((array)[0]))
+
+struct property
+{
+    const WCHAR *name;
+    const WCHAR *class;
+    const struct property *next;
+};
+
+enum operator
+{
+    OP_EQ      = 1,
+    OP_AND     = 2,
+    OP_OR      = 3,
+    OP_GT      = 4,
+    OP_LT      = 5,
+    OP_LE      = 6,
+    OP_GE      = 7,
+    OP_NE      = 8,
+    OP_ISNULL  = 9,
+    OP_NOTNULL = 10,
+    OP_LIKE    = 11
+};
+
+struct expr;
+struct complex_expr
+{
+    enum operator op;
+    struct expr *left;
+    struct expr *right;
+};
+
+enum expr_type
+{
+    EXPR_COMPLEX = 1,
+    EXPR_UNARY   = 2,
+    EXPR_PROPVAL = 3,
+    EXPR_SVAL    = 4,
+    EXPR_IVAL    = 5,
+    EXPR_BVAL    = 6
+};
+
+struct expr
+{
+    enum expr_type type;
+    union
+    {
+        struct complex_expr expr;
+        const struct property *propval;
+        const WCHAR *sval;
+        int ival;
+    } u;
+};
+
+struct view
+{
+    const struct property *proplist;
+    const struct expr *cond;
+};
+
+struct query
+{
+    struct view *view;
+    struct list mem;
+};
+
+void free_query( struct query * ) DECLSPEC_HIDDEN;
+HRESULT exec_query( const WCHAR *, IEnumWbemClassObject ** ) DECLSPEC_HIDDEN;
+HRESULT parse_query( const WCHAR *, struct view **, struct list * ) DECLSPEC_HIDDEN;
+HRESULT create_view( const struct property *, const WCHAR *, const struct expr *,
+                     struct view ** ) DECLSPEC_HIDDEN;
+void destroy_view( struct view * ) DECLSPEC_HIDDEN;
+
 HRESULT WbemLocator_create(IUnknown *, LPVOID *) DECLSPEC_HIDDEN;
 HRESULT WbemServices_create(IUnknown *, LPVOID *) DECLSPEC_HIDDEN;
+HRESULT EnumWbemClassObject_create(IUnknown *, struct query *, LPVOID *) DECLSPEC_HIDDEN;
 
 static void *heap_alloc( size_t len ) __WINE_ALLOC_SIZE(1);
 static inline void *heap_alloc( size_t len )

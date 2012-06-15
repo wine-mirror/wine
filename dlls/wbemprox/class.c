@@ -35,6 +35,7 @@ struct enum_class_object
 {
     IEnumWbemClassObject IEnumWbemClassObject_iface;
     LONG refs;
+    struct query *query;
 };
 
 static inline struct enum_class_object *impl_from_IEnumWbemClassObject(
@@ -58,6 +59,7 @@ static ULONG WINAPI enum_class_object_Release(
     if (!refs)
     {
         TRACE("destroying %p\n", ec);
+        free_query( ec->query );
         heap_free( ec );
     }
     return refs;
@@ -143,7 +145,7 @@ static const IEnumWbemClassObjectVtbl enum_class_object_vtbl =
 };
 
 HRESULT EnumWbemClassObject_create(
-    IUnknown *pUnkOuter, LPVOID *ppObj )
+    IUnknown *pUnkOuter, struct query *query, LPVOID *ppObj )
 {
     struct enum_class_object *ec;
 
@@ -154,6 +156,7 @@ HRESULT EnumWbemClassObject_create(
 
     ec->IEnumWbemClassObject_iface.lpVtbl = &enum_class_object_vtbl;
     ec->refs  = 1;
+    ec->query = query;
 
     *ppObj = &ec->IEnumWbemClassObject_iface;
 

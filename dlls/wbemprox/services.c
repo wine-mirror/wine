@@ -158,7 +158,7 @@ static ULONG WINAPI wbem_services_Release(
     if (!refs)
     {
         TRACE("destroying %p\n", ws);
-        HeapFree( GetProcessHeap(), 0, ws );
+        heap_free( ws );
     }
     return refs;
 }
@@ -383,9 +383,14 @@ static HRESULT WINAPI wbem_services_ExecQuery(
     IWbemContext *pCtx,
     IEnumWbemClassObject **ppEnum )
 {
-    FIXME("%p, %s, %s, 0x%08x, %p, %p\n", iface, debugstr_w(strQueryLanguage),
+    static const WCHAR wqlW[] = {'W','Q','L',0};
+
+    TRACE("%p, %s, %s, 0x%08x, %p, %p\n", iface, debugstr_w(strQueryLanguage),
           debugstr_w(strQuery), lFlags, pCtx, ppEnum);
-    return WBEM_E_FAILED;
+
+    if (!strQueryLanguage || !strQuery) return WBEM_E_INVALID_PARAMETER;
+    if (strcmpiW( strQueryLanguage, wqlW )) return WBEM_E_INVALID_QUERY_TYPE;
+    return exec_query( strQuery, ppEnum );
 }
 
 static HRESULT WINAPI wbem_services_ExecQueryAsync(
@@ -487,7 +492,7 @@ HRESULT WbemServices_create( IUnknown *pUnkOuter, LPVOID *ppObj )
 
     TRACE("(%p,%p)\n", pUnkOuter, ppObj);
 
-    ws = HeapAlloc( GetProcessHeap(), 0, sizeof(*ws) );
+    ws = heap_alloc( sizeof(*ws) );
     if (!ws) return E_OUTOFMEMORY;
 
     ws->IWbemServices_iface.lpVtbl = &wbem_services_vtbl;
