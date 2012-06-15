@@ -93,6 +93,8 @@ struct view
     const struct property *proplist;
     struct table *table;
     const struct expr *cond;
+    UINT *result;
+    UINT  count;
 };
 
 struct query
@@ -117,6 +119,12 @@ static void *heap_alloc( size_t len ) __WINE_ALLOC_SIZE(1);
 static inline void *heap_alloc( size_t len )
 {
     return HeapAlloc( GetProcessHeap(), 0, len );
+}
+
+static void *heap_realloc( void *mem, size_t len ) __WINE_ALLOC_SIZE(2);
+static inline void *heap_realloc( void *mem, size_t len )
+{
+    return HeapReAlloc( GetProcessHeap(), 0, mem, len );
 }
 
 static inline BOOL heap_free( void *mem )
