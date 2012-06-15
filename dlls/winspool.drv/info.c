@@ -3032,6 +3032,7 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
 
     set_reg_DWORD(hkeyPrinter, AttributesW, pi->Attributes);
     set_reg_szW(hkeyPrinter, DatatypeW, pi->pDatatype);
+    set_reg_DWORD(hkeyPrinter, Default_PriorityW, pi->DefaultPriority);
     set_reg_szW(hkeyPrinter, DescriptionW, pi->pComment);
     set_reg_DWORD(hkeyPrinter, dnsTimeoutW, 0);
     set_reg_szW(hkeyPrinter, LocationW, pi->pLocation);
