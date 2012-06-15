@@ -2694,14 +2694,14 @@
 @ cdecl -arch=win64 ?_Pninc@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IEAAPEAGXZ(ptr) basic_streambuf_wchar__Pninc
 @ thiscall -arch=win32 ?_Pninc@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IAEPA_WXZ(ptr) basic_streambuf_wchar__Pninc
 @ cdecl -arch=win64 ?_Pninc@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IEAAPEA_WXZ(ptr) basic_streambuf_wchar__Pninc
-# extern -arch=win32 ?_Ptr_cerr@std@@3PAV?$basic_ostream@DU?$char_traits@D@std@@@1@A
-# extern -arch=win64 ?_Ptr_cerr@std@@3PEAV?$basic_ostream@DU?$char_traits@D@std@@@1@EA
-# extern -arch=win32 ?_Ptr_cin@std@@3PAV?$basic_istream@DU?$char_traits@D@std@@@1@A
-# extern -arch=win64 ?_Ptr_cin@std@@3PEAV?$basic_istream@DU?$char_traits@D@std@@@1@EA
+@ extern -arch=win32 ?_Ptr_cerr@std@@3PAV?$basic_ostream@DU?$char_traits@D@std@@@1@A _Ptr_cerr
+@ extern -arch=win64 ?_Ptr_cerr@std@@3PEAV?$basic_ostream@DU?$char_traits@D@std@@@1@EA _Ptr_cerr
+@ extern -arch=win32 ?_Ptr_cin@std@@3PAV?$basic_istream@DU?$char_traits@D@std@@@1@A _Ptr_cin
+@ extern -arch=win64 ?_Ptr_cin@std@@3PEAV?$basic_istream@DU?$char_traits@D@std@@@1@EA _Ptr_cin
 # extern -arch=win32 ?_Ptr_clog@std@@3PAV?$basic_ostream@DU?$char_traits@D@std@@@1@A
 # extern -arch=win64 ?_Ptr_clog@std@@3PEAV?$basic_ostream@DU?$char_traits@D@std@@@1@EA
-# extern -arch=win32 ?_Ptr_cout@std@@3PAV?$basic_ostream@DU?$char_traits@D@std@@@1@A
-# extern -arch=win64 ?_Ptr_cout@std@@3PEAV?$basic_ostream@DU?$char_traits@D@std@@@1@EA
+@ extern -arch=win32 ?_Ptr_cout@std@@3PAV?$basic_ostream@DU?$char_traits@D@std@@@1@A _Ptr_cout
+@ extern -arch=win64 ?_Ptr_cout@std@@3PEAV?$basic_ostream@DU?$char_traits@D@std@@@1@EA _Ptr_cout
 # extern -arch=win32 ?_Ptr_wcerr@std@@3PAV?$basic_ostream@GU?$char_traits@G@std@@@1@A
 # extern -arch=win64 ?_Ptr_wcerr@std@@3PEAV?$basic_ostream@GU?$char_traits@G@std@@@1@EA
 # extern -arch=win32 ?_Ptr_wcerr@std@@3PAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@A
@@ -3053,8 +3053,8 @@
 @ cdecl -arch=win64 ?capacity@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEBA_KXZ(ptr) MSVCP_basic_string_wchar_capacity
 @ thiscall -arch=win32 ?capacity@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIXZ(ptr) MSVCP_basic_string_wchar_capacity
 @ cdecl -arch=win64 ?capacity@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KXZ(ptr) MSVCP_basic_string_wchar_capacity
-# extern ?cerr@std@@3V?$basic_ostream@DU?$char_traits@D@std@@@1@A
-# extern ?cin@std@@3V?$basic_istream@DU?$char_traits@D@std@@@1@A
+@ extern ?cerr@std@@3V?$basic_ostream@DU?$char_traits@D@std@@@1@A cerr
+@ extern ?cin@std@@3V?$basic_istream@DU?$char_traits@D@std@@@1@A cin
 @ cdecl -arch=win32 ?classic@locale@std@@SAABV12@XZ() locale_classic
 @ cdecl -arch=win64 ?classic@locale@std@@SAAEBV12@XZ() locale_classic
 @ cdecl -arch=win32 ?classic_table@?$ctype@D@std@@KAPBFXZ() ctype_char_classic_table
@@ -3191,7 +3191,7 @@
 @ cdecl ?cos@?$_Ctraits@M@std@@SAMM@Z(float) std_Ctraits_float_cos
 @ cdecl ?cos@?$_Ctraits@N@std@@SANN@Z(double) std_Ctraits_double_cos
 @ cdecl ?cos@?$_Ctraits@O@std@@SAOO@Z(double) std_Ctraits_long_double_cos
-# extern ?cout@std@@3V?$basic_ostream@DU?$char_traits@D@std@@@1@A
+@ extern ?cout@std@@3V?$basic_ostream@DU?$char_traits@D@std@@@1@A cout
 @ stub -arch=win32 ?curr_symbol@?$_Mpunct@D@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
 @ stub -arch=win64 ?curr_symbol@?$_Mpunct@D@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
 @ stub -arch=win32 ?curr_symbol@?$_Mpunct@G@std@@QBE?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@XZ

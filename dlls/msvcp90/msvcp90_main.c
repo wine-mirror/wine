@@ -90,8 +90,10 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         case DLL_PROCESS_ATTACH:
             init_cxx_funcs();
             init_lockit();
+            init_io();
             break;
         case DLL_PROCESS_DETACH:
+            free_io();
             free_locale();
             free_lockit();
             break;

@@ -5507,3 +5507,57 @@ basic_filebuf_char* __thiscall basic_fstream_char_rdbuf(const basic_fstream_char
     TRACE("(%p)\n", this);
     return (basic_filebuf_char*)&this->filebuf;
 }
+
+static basic_filebuf_char filebuf_stdin;
+/* ?cin@std@@3V?$basic_istream@DU?$char_traits@D@std@@@1@A */
+struct {
+    basic_istream_char obj;
+    basic_ios_char vbase;
+} cin = { { 0 } };
+/* ?_Ptr_cin@std@@3PAV?$basic_istream@DU?$char_traits@D@std@@@1@A */
+/* ?_Ptr_cin@std@@3PEAV?$basic_istream@DU?$char_traits@D@std@@@1@EA */
+basic_istream_char *_Ptr_cin = &cin.obj;
+
+static basic_filebuf_char filebuf_stdout;
+/* ?cout@std@@3V?$basic_ostream@DU?$char_traits@D@std@@@1@A */
+struct {
+    basic_ostream_char obj;
+    basic_ios_char vbase;
+} cout = { { 0 } };
+/* ?_Ptr_cout@std@@3PAV?$basic_ostream@DU?$char_traits@D@std@@@1@A */
+/* ?_Ptr_cout@std@@3PEAV?$basic_ostream@DU?$char_traits@D@std@@@1@EA */
+basic_ostream_char *_Ptr_cout = &cout.obj;
+
+static basic_filebuf_char filebuf_stderr;
+/* ?cerr@std@@3V?$basic_ostream@DU?$char_traits@D@std@@@1@A */
+struct {
+    basic_ostream_char obj;
+    basic_ios_char vbase;
+} cerr = { { 0 } };
+/* ?_Ptr_cerr@std@@3PAV?$basic_ostream@DU?$char_traits@D@std@@@1@A */
+/* ?_Ptr_cerr@std@@3PEAV?$basic_ostream@DU?$char_traits@D@std@@@1@EA */
+basic_ostream_char *_Ptr_cerr = &cerr.obj;
+
+void init_io(void)
+{
+    basic_filebuf_char_ctor_file(&filebuf_stdin, stdin);
+    basic_istream_char_ctor(&cin.obj, &filebuf_stdin.base, FALSE/*FIXME*/, TRUE);
+
+    basic_filebuf_char_ctor_file(&filebuf_stdout, stdout);
+    basic_ostream_char_ctor(&cout.obj, &filebuf_stdout.base, FALSE/*FIXME*/, TRUE);
+
+    basic_filebuf_char_ctor_file(&filebuf_stderr, stderr);
+    basic_ostream_char_ctor(&cerr.obj, &filebuf_stderr.base, FALSE/*FIXME*/, TRUE);
+}
+
+void free_io(void)
+{
+    basic_istream_char_dtor(&cin.obj);
+    basic_filebuf_char_dtor(&filebuf_stdin);
+
+    basic_ostream_char_dtor(&cout.obj);
+    basic_filebuf_char_dtor(&filebuf_stdout);
+
+    basic_ostream_char_dtor(&cerr.obj);
+    basic_filebuf_char_dtor(&filebuf_stderr);
+}
