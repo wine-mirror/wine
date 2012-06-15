@@ -738,8 +738,6 @@ static const struct CertPropIDHeader *findPropID(const BYTE *buf, DWORD size,
     return ret;
 }
 
-typedef DWORD (WINAPI *SHDeleteKeyAFunc)(HKEY, LPCSTR);
-
 static void testRegStore(void)
 {
     static const char tempKey[] = "Software\\Wine\\CryptTemp";
@@ -1017,9 +1015,9 @@ static void testRegStore(void)
              */
             if (shlwapi)
             {
-                SHDeleteKeyAFunc pSHDeleteKeyA =
-                 (SHDeleteKeyAFunc)GetProcAddress(shlwapi, "SHDeleteKeyA");
+                DWORD (WINAPI *pSHDeleteKeyA)(HKEY, LPCSTR);
 
+                pSHDeleteKeyA = (void*)GetProcAddress(shlwapi, "SHDeleteKeyA");
                 if (pSHDeleteKeyA)
                     pSHDeleteKeyA(HKEY_CURRENT_USER, tempKey);
                 FreeLibrary(shlwapi);
