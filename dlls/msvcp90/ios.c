@@ -3940,6 +3940,50 @@ basic_ostream_char* __cdecl basic_ostream_char_endl(basic_ostream_char *ostr)
     return ostr;
 }
 
+/* $?6DU?$char_traits@D@std@@V?$allocator@D@1@@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@0@AAV10@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z */
+/* ??$?6DU?$char_traits@D@std@@V?$allocator@D@1@@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@0@AEAV10@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z */
+basic_ostream_char* __cdecl basic_ostream_char_print_bstr(basic_ostream_char *ostr, const basic_string_char *str)
+{
+    basic_ios_char *base = basic_ostream_char_get_basic_ios(ostr);
+    IOSB_iostate state = IOSTATE_goodbit;
+
+    TRACE("(%p %p)\n", ostr, str);
+
+    if(basic_ostream_char_sentry_create(ostr)) {
+        MSVCP_size_t len = MSVCP_basic_string_char_length(str);
+        streamsize pad = (base->base.wide>len ? base->base.wide-len : 0);
+
+        if((base->base.fmtfl & FMTFLAG_adjustfield) != FMTFLAG_left) {
+            for(; pad!=0; pad--) {
+                if(basic_streambuf_char_sputc(base->strbuf, base->fillch) == EOF) {
+                    state = IOSTATE_badbit;
+                    break;
+                }
+            }
+        }
+
+        if(state == IOSTATE_goodbit) {
+            if(basic_streambuf_char_sputn(base->strbuf, MSVCP_basic_string_char_c_str(str), len) != len)
+                    state = IOSTATE_badbit;
+        }
+
+        for(; pad!=0; pad--) {
+            if(basic_streambuf_char_sputc(base->strbuf, base->fillch) == EOF) {
+                state = IOSTATE_badbit;
+                break;
+            }
+        }
+
+        base->base.wide = 0;
+    }else {
+        state = IOSTATE_badbit;
+    }
+    basic_ostream_char_sentry_destroy(ostr);
+
+    basic_ios_char_setstate(base, state);
+    return ostr;
+}
+
 /* Caution: basic_istream uses virtual inheritance. */
 static inline basic_ios_char* basic_istream_char_get_basic_ios(basic_istream_char *this)
 {
