@@ -1134,6 +1134,110 @@ static void test_extension(void)
 
 #undef ARRAY_SIZE
 
+
+static BOOL WINAPI test_null_enum(HWND hwnd, LPARAM lParam)
+{
+    /* Find the textbox and send a filename so IDOK will work.
+       If the file textbox is empty IDOK will be ignored */
+    CHAR className[20];
+    if(GetClassNameA(hwnd, className, sizeof(className)) > 0 && !strcmp("Edit",className))
+    {
+        SetWindowText(hwnd, "testfile");
+        return FALSE; /* break window enumeration */
+    }
+    return TRUE;
+}
+
+static UINT_PTR WINAPI test_null_wndproc(HWND dlg, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    HWND parent = GetParent( dlg);
+    if( msg == WM_NOTIFY) {
+        SetTimer( dlg, 0, 100, 0);
+        SetTimer( dlg, 1, 1000, 0);
+        EnumChildWindows( parent, test_null_enum, 0);
+    }
+    if( msg == WM_TIMER) {
+        if(!wParam)
+            PostMessage( parent, WM_COMMAND, IDOK, 0);
+        else {
+            /* the dialog did not close automatically */
+            KillTimer( dlg, 0);
+            PostMessage( parent, WM_COMMAND, IDCANCEL, 0);
+        }
+    }
+    return FALSE;
+}
+
+static void test_null_filename(void)
+{
+    OPENFILENAMEA ofnA = {0};
+    OPENFILENAMEW ofnW = {0};
+    WCHAR filterW[] = {'t','e','x','t','\0','*','.','t','x','t','\0',
+                       'A','l','l','\0','*','\0','\0'};
+    DWORD ret;
+
+    ofnA.lStructSize = sizeof(ofnA);
+    ofnA.lpstrFile = NULL;
+    ofnA.nMaxFile = 0;
+    ofnA.nFileOffset = 0xdead;
+    ofnA.nFileExtension = 0xbeef;
+    ofnA.lpfnHook = test_null_wndproc;
+    ofnA.Flags = OFN_ENABLEHOOK | OFN_EXPLORER;
+    ofnA.hInstance = GetModuleHandleA(NULL);
+    ofnA.lpstrFilter = "text\0*.txt\0All\0*\0\0";
+    ofnA.lpstrDefExt = NULL;
+    ret = GetOpenFileNameA(&ofnA);
+    todo_wine ok(ret, "GetOpenFileNameA returned %#x\n", ret);
+    ret = CommDlgExtendedError();
+    todo_wine ok(!ret, "CommDlgExtendedError returned %#x, should be 0\n", ret);
+
+    todo_wine ok(ofnA.nFileOffset != 0xdead, "ofnA.nFileOffset is 0xdead\n");
+    todo_wine ok(ofnA.nFileExtension != 0xbeef, "ofnA.nFileExtension is 0xbeef\n");
+
+    ofnA.lpstrFile = NULL;
+    ofnA.nMaxFile = 1024; /* bogus input - lpstrFile = NULL but fake 1024 bytes available */
+    ofnA.nFileOffset = 0xdead;
+    ofnA.nFileExtension = 0xbeef;
+    ret = GetOpenFileNameA(&ofnA);
+    ok(ret, "GetOpenFileNameA returned %#x\n", ret);
+    ret = CommDlgExtendedError();
+    ok(!ret, "CommDlgExtendedError returned %#x\n", ret);
+
+    ok(ofnA.nFileOffset != 0xdead, "ofnA.nFileOffset is 0xdead\n");
+    ok(ofnA.nFileExtension == 0, "ofnA.nFileExtension is 0x%x, should be 0\n", ofnA.nFileExtension);
+
+    /* unicode tests */
+    ofnW.lStructSize = sizeof(ofnW);
+    ofnW.lpstrFile = NULL;
+    ofnW.nMaxFile = 0;
+    ofnW.nFileOffset = 0xdead;
+    ofnW.nFileExtension = 0xbeef;
+    ofnW.lpfnHook = test_null_wndproc;
+    ofnW.Flags = OFN_ENABLEHOOK | OFN_EXPLORER;
+    ofnW.hInstance = GetModuleHandleW(NULL);
+    ofnW.lpstrFilter = filterW;
+    ofnW.lpstrDefExt = NULL;
+    ret = GetOpenFileNameW(&ofnW);
+    todo_wine ok(ret, "GetOpenFileNameW returned %#x\n", ret);
+    ret = CommDlgExtendedError();
+    todo_wine ok(!ret, "CommDlgExtendedError returned %#x\n", ret);
+
+    todo_wine ok(ofnW.nFileOffset != 0xdead, "ofnW.nFileOffset is 0xdead\n");
+    todo_wine ok(ofnW.nFileExtension != 0xbeef, "ofnW.nFileExtension is 0xbeef\n");
+
+    ofnW.lpstrFile = NULL;
+    ofnW.nMaxFile = 1024; /* bogus input - lpstrFile = NULL but fake 1024 bytes available */
+    ofnW.nFileOffset = 0xdead;
+    ofnW.nFileExtension = 0xbeef;
+    ret = GetOpenFileNameW(&ofnW);
+    ok(ret, "GetOpenFileNameA returned %#x\n", ret);
+    ret = CommDlgExtendedError();
+    ok(!ret, "CommDlgExtendedError returned %#x\n", ret);
+
+    ok(ofnW.nFileOffset != 0xdead, "ofnW.nFileOffset is 0xdead\n");
+    ok(ofnW.nFileExtension == 0, "ofnW.nFileExtension is 0x%x, should be 0\n", ofnW.nFileExtension);
+}
+
 START_TEST(filedlg)
 {
     test_DialogCancel();
@@ -1146,4 +1250,5 @@ START_TEST(filedlg)
     test_mru();
     if( resizesupported) test_resizable2();
     test_extension();
+    test_null_filename();
 }

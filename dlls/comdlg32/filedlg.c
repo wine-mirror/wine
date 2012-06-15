@@ -2684,16 +2684,20 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
           }
           else
           {
-               LPSTR lpszTemp;
-               LPOPENFILENAMEA ofn = (LPOPENFILENAMEA)fodInfos->ofnInfos;
+              LPSTR lpszTemp;
+              CHAR tempFileA[MAX_PATH];
+
+              /* avoid using fodInfos->ofnInfos->lpstrFile since it can be NULL */
+              WideCharToMultiByte(CP_ACP, 0, lpstrPathAndFile, -1,
+                                  tempFileA, sizeof(tempFileA), NULL, NULL);
 
               /* set filename offset */
-              lpszTemp = PathFindFileNameA(ofn->lpstrFile);
-              fodInfos->ofnInfos->nFileOffset = (lpszTemp - ofn->lpstrFile);
+              lpszTemp = PathFindFileNameA(tempFileA);
+              fodInfos->ofnInfos->nFileOffset = (lpszTemp - tempFileA);
 
               /* set extension offset */
-              lpszTemp = PathFindExtensionA(ofn->lpstrFile);
-              fodInfos->ofnInfos->nFileExtension = (*lpszTemp) ? (lpszTemp - ofn->lpstrFile) + 1 : 0;
+              lpszTemp = PathFindExtensionA(tempFileA);
+              fodInfos->ofnInfos->nFileExtension = (*lpszTemp) ? (lpszTemp - tempFileA) + 1 : 0;
           }
 
           /* set the lpstrFileTitle */
@@ -2746,7 +2750,8 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
           if (fodInfos->ofnInfos->Flags & OFN_ALLOWMULTISELECT)
              size += 1;
           /* return needed size in first two bytes of lpstrFile */
-          *(WORD *)fodInfos->ofnInfos->lpstrFile = size;
+          if(fodInfos->ofnInfos->lpstrFile)
+              *(WORD *)fodInfos->ofnInfos->lpstrFile = size;
           FILEDLG95_Clean(hwnd);
           ret = EndDialog(hwnd, FALSE);
           COMDLG32_SetCommDlgExtendedError(FNERR_BUFFERTOOSMALL);
