@@ -41,6 +41,7 @@ HRESULT create_view( const struct property *proplist, const WCHAR *class,
     view->cond     = cond;
     view->result   = NULL;
     view->count    = 0;
+    view->index    = 0;
     *ret = view;
     return S_OK;
 }

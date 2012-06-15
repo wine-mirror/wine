@@ -102,8 +102,27 @@ static HRESULT WINAPI enum_class_object_Next(
     IWbemClassObject **apObjects,
     ULONG *puReturned )
 {
-    FIXME("%p, %d, %u, %p, %p\n", iface, lTimeout, uCount, apObjects, puReturned);
-    return E_NOTIMPL;
+    struct enum_class_object *ec = impl_from_IEnumWbemClassObject( iface );
+    struct view *view = ec->query->view;
+    HRESULT hr;
+
+    TRACE("%p, %d, %u, %p, %p\n", iface, lTimeout, uCount, apObjects, puReturned);
+
+    if (!uCount) return WBEM_S_FALSE;
+    if (!apObjects || !puReturned) return WBEM_E_INVALID_PARAMETER;
+    if (lTimeout != WBEM_INFINITE) FIXME("timeout not supported\n");
+
+    *puReturned = 0;
+    if (view->index + uCount > view->count) return WBEM_S_FALSE;
+
+    hr = WbemClassObject_create( NULL, iface, view->index, (void **)apObjects );
+    if (hr != S_OK) return hr;
+
+    view->index++;
+    *puReturned = 1;
+    if (view->index == view->count) return WBEM_S_FALSE;
+    if (uCount > 1) return WBEM_S_TIMEDOUT;
+    return WBEM_S_NO_ERROR;
 }
 
 static HRESULT WINAPI enum_class_object_NextAsync(
@@ -168,6 +187,8 @@ struct class_object
 {
     IWbemClassObject IWbemClassObject_iface;
     LONG refs;
+    IEnumWbemClassObject *iter;
+    UINT index;
 };
 
 static inline struct class_object *impl_from_IWbemClassObject(
@@ -191,6 +212,7 @@ static ULONG WINAPI class_object_Release(
     if (!refs)
     {
         TRACE("destroying %p\n", co);
+        if (co->iter) IEnumWbemClassObject_Release( co->iter );
         heap_free( co );
     }
     return refs;
@@ -472,7 +494,7 @@ static const IWbemClassObjectVtbl class_object_vtbl =
 };
 
 HRESULT WbemClassObject_create(
-    IUnknown *pUnkOuter, LPVOID *ppObj )
+    IUnknown *pUnkOuter, IEnumWbemClassObject *iter, UINT index, LPVOID *ppObj )
 {
     struct class_object *co;
 
@@ -482,7 +504,10 @@ HRESULT WbemClassObject_create(
     if (!co) return E_OUTOFMEMORY;
 
     co->IWbemClassObject_iface.lpVtbl = &class_object_vtbl;
-    co->refs = 1;
+    co->refs  = 1;
+    co->iter  = iter;
+    co->index = index;
+    if (iter) IEnumWbemClassObject_AddRef( iter );
 
     *ppObj = &co->IWbemClassObject_iface;
 
