@@ -332,6 +332,7 @@ typedef struct {
 
 MSVCP_bool __thiscall ctype_char_is_ch(const ctype_char*, short, char);
 char __thiscall ctype_char_narrow_ch(const ctype_char*, char, char);
+char __thiscall ctype_char_widen_ch(const ctype_char*, char);
 
 typedef struct {
     LCID handle;
@@ -346,6 +347,7 @@ typedef struct {
 } ctype_wchar;
 
 char __thiscall ctype_wchar_narrow_ch(const ctype_wchar*, wchar_t, char);
+wchar_t __thiscall ctype_wchar_widen_ch(const ctype_wchar*, char);
 
 /* class locale */
 typedef struct

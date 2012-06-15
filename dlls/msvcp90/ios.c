@@ -3259,8 +3259,8 @@ basic_ostream_char* __thiscall basic_ios_char_tie_get(const basic_ios_char *this
 DEFINE_THISCALL_WRAPPER(basic_ios_char_widen, 8)
 char __thiscall basic_ios_char_widen(basic_ios_char *this, char ch)
 {
-    FIXME("(%p %c) stub\n", this, ch);
-    return 0;
+    TRACE("(%p %c)\n", this, ch);
+    return ctype_char_widen_ch(ctype_char_use_facet(this->strbuf->loc), ch);
 }
 
 
@@ -3539,8 +3539,8 @@ basic_ostream_wchar* __thiscall basic_ios_wchar_tie_get(const basic_ios_wchar *t
 DEFINE_THISCALL_WRAPPER(basic_ios_wchar_widen, 8)
 wchar_t __thiscall basic_ios_wchar_widen(basic_ios_wchar *this, char ch)
 {
-    FIXME("(%p %c)\n", this, ch);
-    return 0;
+    TRACE("(%p %c)\n", this, ch);
+    return ctype_wchar_widen_ch(ctype_wchar_use_facet(this->strbuf->loc), ch);
 }
 
 /* Caution: basic_ostream uses virtual inheritance.
