@@ -721,6 +721,7 @@ static void *cupshandle;
     DO_FUNC(cupsFreeDests); \
     DO_FUNC(cupsFreeOptions); \
     DO_FUNC(cupsGetDests); \
+    DO_FUNC(cupsGetOption); \
     DO_FUNC(cupsGetPPD); \
     DO_FUNC(cupsParseOptions); \
     DO_FUNC(cupsPrintFile);
@@ -778,8 +779,21 @@ static BOOL get_cups_ppd( const char *printer_name, const WCHAR *ppd )
     return get_fallback_ppd( printer_name, ppd );
 }
 
-static WCHAR comment_cups[]  = {'W','I','N','E','P','S',' ','P','r','i','n','t','e','r',
-                                ' ','u','s','i','n','g',' ','C','U','P','S',0};
+static WCHAR *get_cups_option( const char *name, int num_options, cups_option_t *options )
+{
+    const char *value;
+    WCHAR *ret;
+    int len;
+
+    value = pcupsGetOption( name, num_options, options );
+    if (!value) return NULL;
+
+    len = MultiByteToWideChar( CP_UNIXCP, 0, value, -1, NULL, 0 );
+    ret = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+    if (ret) MultiByteToWideChar( CP_UNIXCP, 0, value, -1, ret, len );
+
+    return ret;
+}
 
 static BOOL CUPS_LoadPrinters(void)
 {
@@ -852,7 +866,7 @@ static BOOL CUPS_LoadPrinters(void)
             pi2.pDatatype       = rawW;
             pi2.pPrintProcessor = WinPrintW;
             pi2.pDriverName     = nameW;
-            pi2.pComment        = comment_cups;
+            pi2.pComment        = get_cups_option( "printer-info", dests[i].num_options, dests[i].options );
             pi2.pLocation       = emptyStringW;
             pi2.pPortName       = port;
             pi2.pParameters     = emptyStringW;
@@ -863,8 +877,10 @@ static BOOL CUPS_LoadPrinters(void)
             if (added_printer) ClosePrinter( added_printer );
             else if (GetLastError() != ERROR_PRINTER_ALREADY_EXISTS)
                 ERR( "printer '%s' not added by AddPrinter (error %d)\n", debugstr_w(nameW), GetLastError() );
+
+            HeapFree( GetProcessHeap(), 0, pi2.pComment );
         }
-	HeapFree(GetProcessHeap(),0,port);
+        HeapFree( GetProcessHeap(), 0, port );
 
         hadprinter = TRUE;
         if (dests[i].is_default) {
