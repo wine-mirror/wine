@@ -2150,6 +2150,7 @@ static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffe
             CertFreeCertificateContext(context);
             return ERROR_SUCCESS;
         }
+        return ERROR_NOT_SUPPORTED;
     }
     case INTERNET_OPTION_CONNECT_TIMEOUT:
         if (*size < sizeof(DWORD))
