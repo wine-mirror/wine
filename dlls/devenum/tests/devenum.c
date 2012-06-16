@@ -47,28 +47,24 @@ static struct category am_categories[] =
     { "Video compressor category", &CLSID_VideoCompressorCategory }
 };
 
-static void test_devenum(void)
+static void test_devenum(IBindCtx *bind_ctx)
 {
     HRESULT res;
     ICreateDevEnum* create_devenum;
     IEnumMoniker* enum_moniker = NULL;
     int i;
 
-    CoInitialize(NULL);
-
     res = CoCreateInstance(&CLSID_SystemDeviceEnum, NULL, CLSCTX_INPROC,
                            &IID_ICreateDevEnum, (LPVOID*)&create_devenum);
     if (res != S_OK) {
         skip("Cannot create SystemDeviceEnum object (%x)\n", res);
-        CoUninitialize();
         return;
     }
 
-    trace("\n");
-
     for (i = 0; i < (sizeof(am_categories) / sizeof(struct category)); i++)
     {
-        trace("%s:\n", am_categories[i].name);
+        if (winetest_debug > 1)
+            trace("%s:\n", am_categories[i].name);
 
         res = ICreateDevEnum_CreateClassEnumerator(create_devenum, am_categories[i].clsid, &enum_moniker, 0);
         ok(SUCCEEDED(res), "Cannot create enum moniker (res = %x)\n", res);
@@ -82,7 +78,7 @@ static void test_devenum(void)
                 HRESULT hr;
 
                 VariantInit(&var);
-                hr = IMoniker_BindToStorage(moniker, NULL, NULL, &IID_IPropertyBag, (LPVOID*)&prop_bag);
+                hr = IMoniker_BindToStorage(moniker, bind_ctx, NULL, &IID_IPropertyBag, (LPVOID*)&prop_bag);
                 ok(hr == S_OK, "IMoniker_BindToStorage failed with error %x\n", hr);
 
                 if (SUCCEEDED(hr))
@@ -92,7 +88,8 @@ static void test_devenum(void)
 
                     if (SUCCEEDED(hr))
                     {
-                        trace("  %s\n", wine_dbgstr_w(V_UNION(&var, bstrVal)));
+                        if (winetest_debug > 1)
+                            trace("  %s\n", wine_dbgstr_w(V_UNION(&var, bstrVal)));
                         VariantClear(&var);
                     }
                     else
@@ -107,18 +104,29 @@ static void test_devenum(void)
             }
             IEnumMoniker_Release(enum_moniker);
         }
-
-        trace("\n");
     }
 
     ICreateDevEnum_Release(create_devenum);
-
-    CoUninitialize();
 }
 
 /* CLSID_CDeviceMoniker */
 
 START_TEST(devenum)
 {
-    test_devenum();
+    IBindCtx *bind_ctx = NULL;
+    HRESULT hr;
+
+    CoInitialize(NULL);
+
+    test_devenum(NULL);
+
+    /* IBindCtx is allowed in IMoniker_BindToStorage (IMediaCatMoniker_BindToStorage) */
+    hr = CreateBindCtx(0, &bind_ctx);
+    ok(hr == S_OK, "Cannot create BindCtx: (res = 0x%x)\n", hr);
+    if (bind_ctx) {
+        test_devenum(bind_ctx);
+        IBindCtx_Release(bind_ctx);
+    }
+
+    CoUninitialize();
 }

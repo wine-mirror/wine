@@ -465,8 +465,18 @@ static HRESULT WINAPI DEVENUM_IMediaCatMoniker_BindToStorage(IMoniker *iface, IB
 
     *ppvObj = NULL;
 
-    if (pbc || pmkToLeft)
+    if (pmkToLeft)
         return MK_E_NOSTORAGE;
+
+    if (pbc != NULL)
+    {
+        static DWORD reported;
+        if (!reported)
+        {
+            FIXME("ignoring IBindCtx %p\n", pbc);
+            reported++;
+        }
+    }
 
     if (IsEqualGUID(riid, &IID_IPropertyBag))
     {
