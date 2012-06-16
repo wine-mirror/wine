@@ -4460,14 +4460,7 @@ static void test_stock_fonts(void)
                 continue;
             }
 
-            if ((font[i] == DEVICE_DEFAULT_FONT || font[i] == SYSTEM_FONT) && td[i][j].charset != DEFAULT_CHARSET)
-            todo_wine ok(td[i][j].weight == lf.lfWeight, "%d(%d): expected lfWeight %d, got %d\n", i, j, td[i][j].weight, lf.lfWeight);
-            else
             ok(td[i][j].weight == lf.lfWeight, "%d(%d): expected lfWeight %d, got %d\n", i, j, td[i][j].weight, lf.lfWeight);
-            if ((font[i] == DEFAULT_GUI_FONT && td[i][j].charset != DEFAULT_CHARSET) ||
-                ((font[i] == DEVICE_DEFAULT_FONT || font[i] == SYSTEM_FONT) && td[i][j].charset == SHIFTJIS_CHARSET))
-            todo_wine ok(td[i][j].height == lf.lfHeight, "%d(%d): expected lfHeight %d, got %d\n", i, j, td[i][j].height, lf.lfHeight);
-            else
             ok(td[i][j].height == lf.lfHeight, "%d(%d): expected lfHeight %d, got %d\n", i, j, td[i][j].height, lf.lfHeight);
             if (td[i][j].face_name[0] == '?')
             {

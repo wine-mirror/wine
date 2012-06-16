@@ -328,12 +328,12 @@ static const struct DefaultFontInfo default_fonts[] =
     },
     {   SHIFTJIS_CHARSET,
         { /* System */
-          16, 7, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, SHIFTJIS_CHARSET,
+          18, 8, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, SHIFTJIS_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'S','y','s','t','e','m','\0'}
         },
         { /* Device Default */
-          16, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, SHIFTJIS_CHARSET,
+          18, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, SHIFTJIS_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'S','y','s','t','e','m','\0'}
         },
@@ -343,7 +343,7 @@ static const struct DefaultFontInfo default_fonts[] =
            {'C','o','u','r','i','e','r','\0'}
         },
         { /* DefaultGuiFont */
-          -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, SHIFTJIS_CHARSET,
+          -12, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, SHIFTJIS_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'M','S',' ','S','h','e','l','l',' ','D','l','g','\0'}
         },
@@ -365,19 +365,19 @@ static const struct DefaultFontInfo default_fonts[] =
            {'C','o','u','r','i','e','r','\0'}
         },
         { /* DefaultGuiFont */
-          -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, GB2312_CHARSET,
+          -12, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, GB2312_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'M','S',' ','S','h','e','l','l',' ','D','l','g','\0'}
         },
     },
     {   HANGEUL_CHARSET,
         { /* System */
-          16, 7, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, HANGEUL_CHARSET,
+          16, 8, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, HANGEUL_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'S','y','s','t','e','m','\0'}
         },
         { /* Device Default */
-          16, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, HANGEUL_CHARSET,
+          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, HANGEUL_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'S','y','s','t','e','m','\0'}
         },
@@ -387,7 +387,7 @@ static const struct DefaultFontInfo default_fonts[] =
            {'C','o','u','r','i','e','r','\0'}
         },
         { /* DefaultGuiFont */
-          -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, HANGEUL_CHARSET,
+          -12, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, HANGEUL_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'M','S',' ','S','h','e','l','l',' ','D','l','g','\0'}
         },
@@ -409,7 +409,7 @@ static const struct DefaultFontInfo default_fonts[] =
            {'C','o','u','r','i','e','r','\0'}
         },
         { /* DefaultGuiFont */
-          -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, CHINESEBIG5_CHARSET,
+          -12, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, CHINESEBIG5_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'M','S',' ','S','h','e','l','l',' ','D','l','g','\0'}
         },
@@ -431,7 +431,7 @@ static const struct DefaultFontInfo default_fonts[] =
            {'C','o','u','r','i','e','r','\0'}
         },
         { /* DefaultGuiFont */
-          -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, JOHAB_CHARSET,
+          -12, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, JOHAB_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'M','S',' ','S','h','e','l','l',' ','D','l','g','\0'}
         },
