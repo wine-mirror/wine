@@ -123,7 +123,7 @@ struct DefaultFontInfo
         LOGFONTW        SystemFont;
         LOGFONTW        DeviceDefaultFont;
         LOGFONTW        SystemFixedFont;
-        LOGFONTW        DefaultGuiFont; /* Note for this font the lfHeight member should be the point size */
+        LOGFONTW        DefaultGuiFont;
 };
 
 static const struct DefaultFontInfo default_fonts[] =
