@@ -1041,6 +1041,45 @@ static void test_Material2(void)
     IDirect3DRM_Release(pD3DRM);
 }
 
+static void test_Texture(void)
+{
+    HRESULT hr;
+    LPDIRECT3DRM pD3DRM;
+    LPDIRECT3DRMTEXTURE pTexture;
+    D3DRMIMAGE initimg = {
+        2, 2, 1, 1, 32,
+        TRUE, 2 * sizeof(DWORD), NULL, NULL,
+        0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000, 0, NULL
+    };
+    DWORD pixel[4] = { 20000, 30000, 10000, 0 };
+    DWORD size;
+    CHAR cname[64] = {0};
+
+    hr = pDirect3DRMCreate(&pD3DRM);
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DRM interface (hr = %x)\n", hr);
+
+    initimg.buffer1 = &pixel;
+    hr = IDirect3DRM_CreateTexture(pD3DRM, &initimg, &pTexture);
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DRMTexture interface (hr = %x)\n", hr);
+
+    hr = IDirect3DRMTexture_GetClassName(pTexture, NULL, cname);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
+    hr = IDirect3DRMTexture_GetClassName(pTexture, NULL, NULL);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
+    size = 1;
+    hr = IDirect3DRMTexture_GetClassName(pTexture, &size, cname);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
+    size = sizeof(cname);
+    hr = IDirect3DRMTexture_GetClassName(pTexture, &size, cname);
+    ok(hr == D3DRM_OK, "Cannot get classname (hr = %x)\n", hr);
+    ok(size == sizeof("Texture"), "wrong size: %u\n", size);
+    ok(!strcmp(cname, "Texture"), "Expected cname to be \"Texture\", but got \"%s\"\n", cname);
+
+    IDirect3DRMTexture_Release(pTexture);
+
+    IDirect3DRM_Release(pD3DRM);
+}
+
 static void test_frame_transform(void)
 {
     HRESULT hr;
@@ -1108,6 +1147,7 @@ START_TEST(d3drm)
     test_Frame();
     test_Light();
     test_Material2();
+    test_Texture();
     test_frame_transform();
     test_d3drm_load();
 

@@ -160,9 +160,11 @@ static HRESULT WINAPI IDirect3DRMTexture2Impl_GetName(IDirect3DRMTexture2* iface
 static HRESULT WINAPI IDirect3DRMTexture2Impl_GetClassName(IDirect3DRMTexture2* iface,
                                                            LPDWORD size, LPSTR name)
 {
-    FIXME("(%p)->(%p, %p): stub\n", iface, size, name);
+    IDirect3DRMTextureImpl *This = impl_from_IDirect3DRMTexture2(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p/%p)->(%p, %p)\n", iface, This, size, name);
+
+    return IDirect3DRMTexture3_GetClassName(&This->IDirect3DRMTexture3_iface, size, name);
 }
 
 /*** IDirect3DRMTexture3 methods ***/
@@ -522,9 +524,17 @@ static HRESULT WINAPI IDirect3DRMTexture3Impl_GetName(IDirect3DRMTexture3* iface
 static HRESULT WINAPI IDirect3DRMTexture3Impl_GetClassName(IDirect3DRMTexture3* iface,
                                                            LPDWORD size, LPSTR name)
 {
-    FIXME("(%p)->(%p, %p): stub\n", iface, size, name);
+    IDirect3DRMTextureImpl *This = impl_from_IDirect3DRMTexture3(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p/%p)->(%p, %p)\n", iface, This, size, name);
+
+    if (!size || *size < strlen("Texture") || !name)
+        return E_INVALIDARG;
+
+    strcpy(name, "Texture");
+    *size = sizeof("Texture");
+
+    return D3DRM_OK;
 }
 
 /*** IDirect3DRMTexture3 methods ***/
