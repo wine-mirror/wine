@@ -2584,13 +2584,19 @@ static HRESULT WINAPI IDirect3DRMMeshImpl_GetName(IDirect3DRMMesh* iface,
 }
 
 static HRESULT WINAPI IDirect3DRMMeshImpl_GetClassName(IDirect3DRMMesh* iface,
-                                                       LPDWORD lpdwSize, LPSTR lpName)
+                                                       LPDWORD size, LPSTR name)
 {
     IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
 
-    FIXME("(%p)->(%p,%p): stub\n", This, lpdwSize, lpName);
+    TRACE("(%p)->(%p, %p)\n", This, size, name);
 
-    return E_NOTIMPL;
+    if (!size || *size < strlen("Mesh") || !name)
+        return E_INVALIDARG;
+
+    strcpy(name, "Mesh");
+    *size = sizeof("Mesh");
+
+    return D3DRM_OK;
 }
 
 /*** IDirect3DRMMesh methods ***/

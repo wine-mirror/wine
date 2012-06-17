@@ -553,6 +553,38 @@ static void test_MeshBuilder3(void)
     IDirect3DRM_Release(pD3DRM);
 }
 
+static void test_Mesh(void)
+{
+    HRESULT hr;
+    LPDIRECT3DRM pD3DRM;
+    LPDIRECT3DRMMESH pMesh;
+    DWORD size;
+    CHAR cname[64] = {0};
+
+    hr = pDirect3DRMCreate(&pD3DRM);
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DRM interface (hr = %x)\n", hr);
+
+    hr = IDirect3DRM_CreateMesh(pD3DRM, &pMesh);
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DRMMesh interface (hr = %x)\n", hr);
+
+    hr = IDirect3DRMMesh_GetClassName(pMesh, NULL, cname);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
+    hr = IDirect3DRMMesh_GetClassName(pMesh, NULL, NULL);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
+    size = 1;
+    hr = IDirect3DRMMesh_GetClassName(pMesh, &size, cname);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
+    size = sizeof(cname);
+    hr = IDirect3DRMMesh_GetClassName(pMesh, &size, cname);
+    ok(hr == D3DRM_OK, "Cannot get classname (hr = %x)\n", hr);
+    ok(size == sizeof("Mesh"), "wrong size: %u\n", size);
+    ok(!strcmp(cname, "Mesh"), "Expected cname to be \"Mesh\", but got \"%s\"\n", cname);
+
+    IDirect3DRMMesh_Release(pMesh);
+
+    IDirect3DRM_Release(pD3DRM);
+}
+
 static void test_Frame(void)
 {
     HRESULT hr;
@@ -991,6 +1023,7 @@ START_TEST(d3drm)
 
     test_MeshBuilder();
     test_MeshBuilder3();
+    test_Mesh();
     test_Frame();
     test_Light();
     test_frame_transform();
