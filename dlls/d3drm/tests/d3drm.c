@@ -1080,6 +1080,54 @@ static void test_Texture(void)
     IDirect3DRM_Release(pD3DRM);
 }
 
+static void test_Device(void)
+{
+    HRESULT hr;
+    LPDIRECT3DRM pD3DRM;
+    LPDIRECTDRAWCLIPPER pClipper;
+    LPDIRECT3DRMDEVICE pDevice;
+    GUID driver;
+    HWND window;
+    RECT rc;
+    DWORD size;
+    CHAR cname[64] = {0};
+
+    window = CreateWindowA("static", "d3drm_test", WS_OVERLAPPEDWINDOW, 0, 0, 300, 200, 0, 0, 0, 0);
+    GetClientRect(window, &rc);
+
+    hr = pDirect3DRMCreate(&pD3DRM);
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DRM interface (hr = %x)\n", hr);
+
+    hr = DirectDrawCreateClipper(0, &pClipper, NULL);
+    ok(hr == DD_OK, "Cannot get IDirectDrawClipper interface (hr = %x)\n", hr);
+
+    hr = IDirectDrawClipper_SetHWnd(pClipper, 0, window);
+    ok(hr == DD_OK, "Cannot set HWnd to Clipper (hr = %x)\n", hr);
+
+    memcpy(&driver, &IID_IDirect3DRGBDevice, sizeof(GUID));
+    hr = IDirect3DRM3_CreateDeviceFromClipper(pD3DRM, pClipper, &driver, rc.right, rc.bottom, &pDevice);
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DRMDevice interface (hr = %x)\n", hr);
+
+    hr = IDirect3DRMDevice_GetClassName(pDevice, NULL, cname);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
+    hr = IDirect3DRMDevice_GetClassName(pDevice, NULL, NULL);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
+    size = 1;
+    hr = IDirect3DRMDevice_GetClassName(pDevice, &size, cname);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
+    size = sizeof(cname);
+    hr = IDirect3DRMDevice_GetClassName(pDevice, &size, cname);
+    ok(hr == D3DRM_OK, "Cannot get classname (hr = %x)\n", hr);
+    ok(size == sizeof("Device"), "wrong size: %u\n", size);
+    ok(!strcmp(cname, "Device"), "Expected cname to be \"Device\", but got \"%s\"\n", cname);
+
+    IDirect3DRMDevice_Release(pDevice);
+    IDirectDrawClipper_Release(pClipper);
+
+    IDirect3DRM_Release(pD3DRM);
+    DestroyWindow(window);
+}
+
 static void test_frame_transform(void)
 {
     HRESULT hr;
@@ -1145,6 +1193,7 @@ START_TEST(d3drm)
     test_MeshBuilder3();
     test_Mesh();
     test_Frame();
+    test_Device();
     test_Light();
     test_Material2();
     test_Texture();
