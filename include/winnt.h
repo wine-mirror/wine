@@ -3429,7 +3429,10 @@ typedef struct IMAGE_COR20_HEADER
 
     IMAGE_DATA_DIRECTORY MetaData;
     DWORD Flags;
-    DWORD EntryPointToken;
+    union {
+        DWORD EntryPointToken;
+        DWORD EntryPointRVA;
+    } DUMMYUNIONNAME;
 
     IMAGE_DATA_DIRECTORY Resources;
     IMAGE_DATA_DIRECTORY StrongNameSignature;

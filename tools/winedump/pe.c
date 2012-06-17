@@ -966,7 +966,7 @@ static void dump_dir_clr_header(void)
     print_dword( "Header Size", dir->cb );
     print_ver( "Required runtime version", dir->MajorRuntimeVersion, dir->MinorRuntimeVersion );
     print_clrflags( "Flags", dir->Flags );
-    print_dword( "EntryPointToken", dir->EntryPointToken );
+    print_dword( "EntryPointToken", dir->u.EntryPointToken );
     printf("\n");
     printf( "CLR Data Directory\n" );
     print_clrdirectory( "MetaData", &dir->MetaData );
