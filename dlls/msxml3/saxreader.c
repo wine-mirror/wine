@@ -2151,6 +2151,8 @@ static HRESULT internal_parseBuffer(saxreader *This, const char *buffer, int siz
     saxlocator *locator;
     HRESULT hr;
 
+    TRACE("(%p)->(%p %d)\n", This, buffer, size);
+
     hr = SAXLocator_create(This, &locator, vbInterface);
     if (FAILED(hr))
         return hr;
@@ -2441,7 +2443,7 @@ static HRESULT internal_parse(
     {
         case VT_BSTR:
             hr = internal_parseBuffer(This, (const char*)V_BSTR(&varInput),
-                    SysStringByteLen(V_BSTR(&varInput)), vbInterface);
+                    strlenW(V_BSTR(&varInput))*sizeof(WCHAR), vbInterface);
             break;
         case VT_ARRAY|VT_UI1: {
             void *pSAData;
