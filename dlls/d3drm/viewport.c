@@ -177,13 +177,13 @@ static HRESULT WINAPI IDirect3DRMViewportImpl_GetName(IDirect3DRMViewport* iface
 }
 
 static HRESULT WINAPI IDirect3DRMViewportImpl_GetClassName(IDirect3DRMViewport* iface,
-                                                               LPDWORD size, LPSTR name)
+                                                           LPDWORD size, LPSTR name)
 {
     IDirect3DRMViewportImpl *This = impl_from_IDirect3DRMViewport(iface);
 
-    FIXME("(%p/%p)->(%p, %p): stub\n", iface, This, size, name);
+    TRACE("(%p/%p)->(%p, %p)\n", iface, This, size, name);
 
-    return E_NOTIMPL;
+    return IDirect3DRMViewport2_GetClassName(&This->IDirect3DRMViewport2_iface, size, name);
 }
 
 /*** IDirect3DRMViewport methods ***/
@@ -598,13 +598,19 @@ static HRESULT WINAPI IDirect3DRMViewport2Impl_GetName(IDirect3DRMViewport2* ifa
 }
 
 static HRESULT WINAPI IDirect3DRMViewport2Impl_GetClassName(IDirect3DRMViewport2* iface,
-                                                               LPDWORD size, LPSTR name)
+                                                            LPDWORD size, LPSTR name)
 {
     IDirect3DRMViewportImpl *This = impl_from_IDirect3DRMViewport2(iface);
 
-    FIXME("(%p/%p)->(%p, %p): stub\n", iface, This, size, name);
+    TRACE("(%p/%p)->(%p, %p)\n", iface, This, size, name);
 
-    return E_NOTIMPL;
+    if (!size || *size < strlen("Viewport") || !name)
+        return E_INVALIDARG;
+
+    strcpy(name, "Viewport");
+    *size = sizeof("Viewport");
+
+    return D3DRM_OK;
 }
 
 /*** IDirect3DRMViewport methods ***/

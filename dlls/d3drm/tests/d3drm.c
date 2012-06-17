@@ -906,6 +906,63 @@ static void test_Frame(void)
     IDirect3DRM_Release(pD3DRM);
 }
 
+static void test_Viewport(void)
+{
+    HRESULT hr;
+    LPDIRECT3DRM pD3DRM;
+    LPDIRECTDRAWCLIPPER pClipper;
+    LPDIRECT3DRMDEVICE pDevice;
+    LPDIRECT3DRMFRAME pFrame;
+    LPDIRECT3DRMVIEWPORT pViewport;
+    GUID driver;
+    HWND window;
+    RECT rc;
+    DWORD size;
+    CHAR cname[64] = {0};
+
+    window = CreateWindowA("static", "d3drm_test", WS_OVERLAPPEDWINDOW, 0, 0, 300, 200, 0, 0, 0, 0);
+    GetClientRect(window, &rc);
+
+    hr = pDirect3DRMCreate(&pD3DRM);
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DRM interface (hr = %x)\n", hr);
+
+    hr = DirectDrawCreateClipper(0, &pClipper, NULL);
+    ok(hr == DD_OK, "Cannot get IDirectDrawClipper interface (hr = %x)\n", hr);
+
+    hr = IDirectDrawClipper_SetHWnd(pClipper, 0, window);
+    ok(hr == DD_OK, "Cannot set HWnd to Clipper (hr = %x)\n", hr);
+
+    memcpy(&driver, &IID_IDirect3DRGBDevice, sizeof(GUID));
+    hr = IDirect3DRM3_CreateDeviceFromClipper(pD3DRM, pClipper, &driver, rc.right, rc.bottom, &pDevice);
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DRMDevice interface (hr = %x)\n", hr);
+
+    hr = IDirect3DRM_CreateFrame(pD3DRM, NULL, &pFrame);
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DRMFrame interface (hr = %x)\n", hr);
+
+    hr = IDirect3DRM_CreateViewport(pD3DRM, pDevice, pFrame, rc.left, rc.top, rc.right, rc.bottom, &pViewport);
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DRMViewport interface (hr = %x)\n", hr);
+
+    hr = IDirect3DRMViewport_GetClassName(pViewport, NULL, cname);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
+    hr = IDirect3DRMViewport_GetClassName(pViewport, NULL, NULL);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
+    size = 1;
+    hr = IDirect3DRMViewport_GetClassName(pViewport, &size, cname);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
+    size = sizeof(cname);
+    hr = IDirect3DRMViewport_GetClassName(pViewport, &size, cname);
+    ok(hr == D3DRM_OK, "Cannot get classname (hr = %x)\n", hr);
+    ok(size == sizeof("Viewport"), "wrong size: %u\n", size);
+    ok(!strcmp(cname, "Viewport"), "Expected cname to be \"Viewport\", but got \"%s\"\n", cname);
+
+    IDirect3DRMViewport_Release(pViewport);
+    IDirect3DRMFrame_Release(pFrame);
+    IDirect3DRMDevice_Release(pDevice);
+    IDirectDrawClipper_Release(pClipper);
+
+    IDirect3DRM_Release(pD3DRM);
+}
+
 static void test_Light(void)
 {
     HRESULT hr;
@@ -1220,6 +1277,7 @@ START_TEST(d3drm)
     test_Mesh();
     test_Frame();
     test_Device();
+    test_Viewport();
     test_Light();
     test_Material2();
     test_Texture();
