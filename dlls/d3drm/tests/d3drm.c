@@ -208,7 +208,7 @@ static void test_MeshBuilder(void)
     size = sizeof(cname);
     hr = IDirect3DRMMeshBuilder_GetClassName(pMeshBuilder, &size, cname);
     ok(hr == D3DRM_OK, "Cannot get classname (hr = %x)\n", hr);
-    ok(size == sizeof("Builder"), "wrong strlen: %u\n", size);
+    ok(size == sizeof("Builder"), "wrong size: %u\n", size);
     ok(!strcmp(cname, "Builder"), "Expected cname to be \"Builder\", but got \"%s\"\n", cname);
 
     info.lpMemory = data_bad_version;
@@ -478,7 +478,7 @@ static void test_MeshBuilder3(void)
     size = sizeof(cname);
     hr = IDirect3DRMMeshBuilder3_GetClassName(pMeshBuilder3, &size, cname);
     ok(hr == D3DRM_OK, "Cannot get classname (hr = %x)\n", hr);
-    ok(size == sizeof("Builder"), "wrong strlen: %u\n", size);
+    ok(size == sizeof("Builder"), "wrong size: %u\n", size);
     ok(!strcmp(cname, "Builder"), "Expected cname to be \"Builder\", but got \"%s\"\n", cname);
 
     info.lpMemory = data_bad_version;
@@ -621,7 +621,7 @@ static void test_Frame(void)
     count = sizeof(cname);
     hr = IDirect3DRMFrame_GetClassName(pFrameC, &count, cname);
     ok(hr == D3DRM_OK, "Cannot get classname (hr = %x)\n", hr);
-    ok(count == sizeof("Frame"), "wrong strlen: %u\n", count);
+    ok(count == sizeof("Frame"), "wrong size: %u\n", count);
     ok(!strcmp(cname, "Frame"), "Expected cname to be \"Frame\", but got \"%s\"\n", cname);
 
     hr = IDirect3DRMFrame_GetParent(pFrameC, NULL);
@@ -931,7 +931,7 @@ static void test_Light(void)
     size = sizeof(cname);
     hr = IDirect3DRMLight_GetClassName(pLight, &size, cname);
     ok(hr == D3DRM_OK, "Cannot get classname (hr = %x)\n", hr);
-    ok(size == sizeof("Light"), "wrong strlen: %u\n", size);
+    ok(size == sizeof("Light"), "wrong size: %u\n", size);
     ok(!strcmp(cname, "Light"), "Expected cname to be \"Light\", but got \"%s\"\n", cname);
 
     type = IDirect3DRMLight_GetType(pLight);
@@ -957,6 +957,87 @@ static void test_Light(void)
 
     IDirect3DRMLight_Release(pLight);
 
+    IDirect3DRM_Release(pD3DRM);
+}
+
+static void test_Material2(void)
+{
+    HRESULT hr;
+    LPDIRECT3DRM pD3DRM;
+    LPDIRECT3DRM3 pD3DRM3;
+    LPDIRECT3DRMMATERIAL2 pMaterial2;
+    D3DVALUE r, g, b;
+    DWORD size;
+    CHAR cname[64] = {0};
+
+    hr = pDirect3DRMCreate(&pD3DRM);
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DRM interface (hr = %x)\n", hr);
+
+    hr = IDirect3DRM_QueryInterface(pD3DRM, &IID_IDirect3DRM3, (LPVOID*)&pD3DRM3);
+    if (FAILED(hr))
+    {
+        win_skip("Cannot get IDirect3DRM3 interface (hr = %x), skipping tests\n", hr);
+        IDirect3DRM_Release(pD3DRM);
+        return;
+    }
+
+    hr = IDirect3DRM3_CreateMaterial(pD3DRM3, 18.5f, &pMaterial2);
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DRMMaterial2 interface (hr = %x)\n", hr);
+
+    hr = IDirect3DRMMaterial2_GetClassName(pMaterial2, NULL, cname);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
+    hr = IDirect3DRMMaterial2_GetClassName(pMaterial2, NULL, NULL);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
+    size = 1;
+    hr = IDirect3DRMMaterial2_GetClassName(pMaterial2, &size, cname);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
+    size = sizeof(cname);
+    hr = IDirect3DRMMaterial2_GetClassName(pMaterial2, &size, cname);
+    ok(hr == D3DRM_OK, "Cannot get classname (hr = %x)\n", hr);
+    ok(size == sizeof("Material"), "wrong size: %u\n", size);
+    ok(!strcmp(cname, "Material"), "Expected cname to be \"Material\", but got \"%s\"\n", cname);
+
+    r = IDirect3DRMMaterial2_GetPower(pMaterial2);
+    ok(r == 18.5f, "wrong power (%f)\n", r);
+
+    hr = IDirect3DRMMaterial2_GetEmissive(pMaterial2, &r, &g, &b);
+    ok(hr == D3DRM_OK, "Cannot get emissive (hr = %x)\n", hr);
+    ok(r == 0.0f && g == 0.0f && b == 0.0f, "wrong emissive r=%f g=%f b=%f, expected r=0.0 g=0.0 b=0.0\n", r, g, b);
+
+    hr = IDirect3DRMMaterial2_GetSpecular(pMaterial2, &r, &g, &b);
+    ok(hr == D3DRM_OK, "Cannot get emissive (hr = %x)\n", hr);
+    todo_wine ok(r == 1.0f && g == 1.0f && b == 1.0f, "wrong specular r=%f g=%f b=%f, expected r=1.0 g=1.0 b=1.0\n", r, g, b);
+
+    hr = IDirect3DRMMaterial2_GetAmbient(pMaterial2, &r, &g, &b);
+    ok(hr == D3DRM_OK, "Cannot get emissive (hr = %x)\n", hr);
+    ok(r == 0.0f && g == 0.0f && b == 0.0f, "wrong ambient r=%f g=%f b=%f, expected r=0.0 g=0.0 b=0.0\n", r, g, b);
+
+    hr = IDirect3DRMMaterial2_SetPower(pMaterial2, 5.87f);
+    ok(hr == D3DRM_OK, "Cannot set power (hr = %x)\n", hr);
+    r = IDirect3DRMMaterial2_GetPower(pMaterial2);
+    ok(r == 5.87f, "wrong power (%f)\n", r);
+
+    hr = IDirect3DRMMaterial2_SetEmissive(pMaterial2, 0.5f, 0.5f, 0.5f);
+    ok(hr == D3DRM_OK, "Cannot set emissive (hr = %x)\n", hr);
+    hr = IDirect3DRMMaterial2_GetEmissive(pMaterial2, &r, &g, &b);
+    ok(hr == D3DRM_OK, "Cannot get emissive (hr = %x)\n", hr);
+    ok(r == 0.5f && g == 0.5f && b == 0.5f, "wrong emissive r=%f g=%f b=%f, expected r=0.5 g=0.5 b=0.5\n", r, g, b);
+
+    hr = IDirect3DRMMaterial2_SetSpecular(pMaterial2, 0.6f, 0.6f, 0.6f);
+    ok(hr == D3DRM_OK, "Cannot set specular (hr = %x)\n", hr);
+    hr = IDirect3DRMMaterial2_GetSpecular(pMaterial2, &r, &g, &b);
+    ok(hr == D3DRM_OK, "Cannot get specular (hr = %x)\n", hr);
+    ok(r == 0.6f && g == 0.6f && b == 0.6f, "wrong specular r=%f g=%f b=%f, expected r=0.6 g=0.6 b=0.6\n", r, g, b);
+
+    hr = IDirect3DRMMaterial2_SetAmbient(pMaterial2, 0.7f, 0.7f, 0.7f);
+    ok(hr == D3DRM_OK, "Cannot set ambient (hr = %x)\n", hr);
+    hr = IDirect3DRMMaterial2_GetAmbient(pMaterial2, &r, &g, &b);
+    ok(hr == D3DRM_OK, "Cannot get ambient (hr = %x)\n", hr);
+    ok(r == 0.7f && g == 0.7f && b == 0.7f, "wrong ambient r=%f g=%f b=%f, expected r=0.7 g=0.7 b=0.7\n", r, g, b);
+
+    IDirect3DRMMaterial2_Release(pMaterial2);
+
+    IDirect3DRM3_Release(pD3DRM3);
     IDirect3DRM_Release(pD3DRM);
 }
 
@@ -1026,6 +1107,7 @@ START_TEST(d3drm)
     test_Mesh();
     test_Frame();
     test_Light();
+    test_Material2();
     test_frame_transform();
     test_d3drm_load();
 
