@@ -199,7 +199,7 @@ static inline float float_16_to_32(const unsigned short *in) {
     } else if(e < 31) {
         return sgn * powf(2, (float)e - 15.0f) * (1.0f + ((float)m / 1024.0f));
     } else {
-        if(m == 0) return sgn / 0.0f; /* +INF / -INF */
+        if(m == 0) return sgn * INFINITY;
         else return NAN;
     }
 }
@@ -221,7 +221,7 @@ static inline float float_24_to_32(DWORD in)
     }
     else
     {
-        if (m == 0) return sgn / 0.0f; /* +INF / -INF */
+        if (m == 0) return sgn * INFINITY;
         else return NAN;
     }
 }
