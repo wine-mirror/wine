@@ -20,6 +20,7 @@
 #define COBJMACROS
 #include <d3drm.h>
 #include <initguid.h>
+#include <d3drmwin.h>
 
 #include "wine/test.h"
 
@@ -1086,6 +1087,7 @@ static void test_Device(void)
     LPDIRECT3DRM pD3DRM;
     LPDIRECTDRAWCLIPPER pClipper;
     LPDIRECT3DRMDEVICE pDevice;
+    LPDIRECT3DRMWINDEVICE pWinDevice;
     GUID driver;
     HWND window;
     RECT rc;
@@ -1121,6 +1123,30 @@ static void test_Device(void)
     ok(size == sizeof("Device"), "wrong size: %u\n", size);
     ok(!strcmp(cname, "Device"), "Expected cname to be \"Device\", but got \"%s\"\n", cname);
 
+    /* WinDevice */
+    hr = IDirect3DRMDevice_QueryInterface(pDevice, &IID_IDirect3DRMWinDevice, (LPVOID*)&pWinDevice);
+    if (FAILED(hr))
+    {
+        win_skip("Cannot get IDirect3DRMWinDevice interface (hr = %x), skipping tests\n", hr);
+        goto cleanup;
+    }
+
+    hr = IDirect3DRMWinDevice_GetClassName(pWinDevice, NULL, cname);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
+    hr = IDirect3DRMWinDevice_GetClassName(pWinDevice, NULL, NULL);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
+    size = 1;
+    hr = IDirect3DRMWinDevice_GetClassName(pWinDevice, &size, cname);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
+    size = sizeof(cname);
+    hr = IDirect3DRMWinDevice_GetClassName(pWinDevice, &size, cname);
+    ok(hr == D3DRM_OK, "Cannot get classname (hr = %x)\n", hr);
+    ok(size == sizeof("Device"), "wrong size: %u\n", size);
+    ok(!strcmp(cname, "Device"), "Expected cname to be \"Device\", but got \"%s\"\n", cname);
+
+    IDirect3DRMWinDevice_Release(pWinDevice);
+
+cleanup:
     IDirect3DRMDevice_Release(pDevice);
     IDirectDrawClipper_Release(pClipper);
 

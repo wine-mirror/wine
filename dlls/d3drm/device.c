@@ -1115,13 +1115,13 @@ static HRESULT WINAPI IDirect3DRMWinDeviceImpl_GetName(IDirect3DRMWinDevice* ifa
 }
 
 static HRESULT WINAPI IDirect3DRMWinDeviceImpl_GetClassName(IDirect3DRMWinDevice* iface,
-                                                               LPDWORD size, LPSTR name)
+                                                            LPDWORD size, LPSTR name)
 {
     IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMWinDevice(iface);
 
-    FIXME("(%p/%p)->(%p, %p): stub\n", iface, This, size, name);
+    TRACE("(%p/%p)->(%p, %p)\n", iface, This, size, name);
 
-    return E_NOTIMPL;
+    return IDirect3DRMDevice3_GetClassName(&This->IDirect3DRMDevice3_iface, size, name);
 }
 
 /*** IDirect3DRMWinDevice methods ***/
