@@ -34,8 +34,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3drm);
 
-static HRESULT Direct3DRMMesh_create(IDirect3DRMMesh** obj);
-
 typedef struct {
     unsigned nb_vertices;
     D3DRMVERTEX* vertices;
@@ -2983,7 +2981,7 @@ static const struct IDirect3DRMMeshVtbl Direct3DRMMesh_Vtbl =
     IDirect3DRMMeshImpl_GetGroupTexture
 };
 
-static HRESULT Direct3DRMMesh_create(IDirect3DRMMesh** obj)
+HRESULT Direct3DRMMesh_create(IDirect3DRMMesh** obj)
 {
     IDirect3DRMMeshImpl* object;
 

@@ -150,9 +150,9 @@ static HRESULT WINAPI IDirect3DRMImpl_CreateMesh(IDirect3DRM* iface, LPDIRECT3DR
 {
     IDirect3DRMImpl *This = impl_from_IDirect3DRM(iface);
 
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, ppMesh);
+    TRACE("(%p/%p)->(%p)\n", iface, This, ppMesh);
 
-    return E_NOTIMPL;
+    return IDirect3DRM3_CreateMesh(&This->IDirect3DRM3_iface, ppMesh);
 }
 
 static HRESULT WINAPI IDirect3DRMImpl_CreateMeshBuilder(IDirect3DRM* iface, LPDIRECT3DRMMESHBUILDER * ppMeshBuilder)
@@ -518,9 +518,9 @@ static HRESULT WINAPI IDirect3DRM2Impl_CreateMesh(IDirect3DRM2* iface, LPDIRECT3
 {
     IDirect3DRMImpl *This = impl_from_IDirect3DRM2(iface);
 
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, ppMesh);
+    TRACE("(%p/%p)->(%p)\n", iface, This, ppMesh);
 
-    return E_NOTIMPL;
+    return IDirect3DRM3_CreateMesh(&This->IDirect3DRM3_iface, ppMesh);
 }
 
 static HRESULT WINAPI IDirect3DRM2Impl_CreateMeshBuilder(IDirect3DRM2* iface,
@@ -943,9 +943,9 @@ static HRESULT WINAPI IDirect3DRM3Impl_CreateMesh(IDirect3DRM3* iface, LPDIRECT3
 {
     IDirect3DRMImpl *This = impl_from_IDirect3DRM3(iface);
 
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, Mesh);
+    TRACE("(%p/%p)->(%p)\n", iface, This, Mesh);
 
-    return E_NOTIMPL;
+    return Direct3DRMMesh_create(Mesh);
 }
 
 static HRESULT WINAPI IDirect3DRM3Impl_CreateMeshBuilder(IDirect3DRM3* iface,
