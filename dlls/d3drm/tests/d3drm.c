@@ -1006,7 +1006,7 @@ static void test_Material2(void)
 
     hr = IDirect3DRMMaterial2_GetSpecular(pMaterial2, &r, &g, &b);
     ok(hr == D3DRM_OK, "Cannot get emissive (hr = %x)\n", hr);
-    todo_wine ok(r == 1.0f && g == 1.0f && b == 1.0f, "wrong specular r=%f g=%f b=%f, expected r=1.0 g=1.0 b=1.0\n", r, g, b);
+    ok(r == 1.0f && g == 1.0f && b == 1.0f, "wrong specular r=%f g=%f b=%f, expected r=1.0 g=1.0 b=1.0\n", r, g, b);
 
     hr = IDirect3DRMMaterial2_GetAmbient(pMaterial2, &r, &g, &b);
     ok(hr == D3DRM_OK, "Cannot get emissive (hr = %x)\n", hr);

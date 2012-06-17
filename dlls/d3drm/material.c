@@ -320,6 +320,10 @@ HRESULT Direct3DRMMaterial_create(IDirect3DRMMaterial2** ret_iface)
     object->IDirect3DRMMaterial2_iface.lpVtbl = &Direct3DRMMaterial2_Vtbl;
     object->ref = 1;
 
+    object->specular.r = 1.0f;
+    object->specular.g = 1.0f;
+    object->specular.b = 1.0f;
+
     *ret_iface = &object->IDirect3DRMMaterial2_iface;
 
     return S_OK;
