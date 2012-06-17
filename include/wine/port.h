@@ -199,6 +199,15 @@ struct statvfs
 #define M_PI_2 1.570796326794896619
 #endif
 
+#ifndef INFINITY
+static inline float __port_infinity(void)
+{
+    static const unsigned __inf_bytes = 0x7f800000;
+    return *(const float *)&__inf_bytes;
+}
+#define INFINITY __port_infinity()
+#endif
+
 #ifndef NAN
 static inline float __port_nan(void)
 {
