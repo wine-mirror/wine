@@ -1645,6 +1645,13 @@ static void set_window_pos( struct window *win, struct window *previous,
             if (tmp)
             {
                 set_region_rect( tmp, &valid_rects[0] );
+                /* subtract update region since invalid parts of the valid rect won't be copied */
+                if (win->update_region)
+                {
+                    offset_region( tmp, -window_rect->left, -window_rect->top );
+                    subtract_region( tmp, tmp, win->update_region );
+                    offset_region( tmp, window_rect->left, window_rect->top );
+                }
                 if (subtract_region( tmp, win_rgn, tmp )) win_rgn = tmp;
                 else free_region( tmp );
             }
