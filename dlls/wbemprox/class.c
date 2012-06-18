@@ -274,8 +274,18 @@ static HRESULT WINAPI class_object_Get(
     CIMTYPE *pType,
     LONG *plFlavor )
 {
-    FIXME("%p, %s, %08x, %p, %p, %p\n", iface, debugstr_w(wszName), lFlags, pVal, pType, plFlavor);
-    return E_NOTIMPL;
+    struct class_object *co = impl_from_IWbemClassObject( iface );
+    struct enum_class_object *ec = impl_from_IEnumWbemClassObject( co->iter );
+    struct view *view = ec->query->view;
+
+    TRACE("%p, %s, %08x, %p, %p, %p\n", iface, debugstr_w(wszName), lFlags, pVal, pType, plFlavor);
+
+    if (plFlavor)
+    {
+        FIXME("flavor parameter not supported\n");
+        *plFlavor = 0;
+    }
+    return get_propval( view, co->index, wszName, pVal, pType );
 }
 
 static HRESULT WINAPI class_object_Put(

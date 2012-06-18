@@ -111,6 +111,8 @@ HRESULT create_view( const struct property *, const WCHAR *, const struct expr *
                      struct view ** ) DECLSPEC_HIDDEN;
 void destroy_view( struct view * ) DECLSPEC_HIDDEN;
 struct table *get_table( const WCHAR * ) DECLSPEC_HIDDEN;
+HRESULT get_propval( const struct view *, UINT, const WCHAR *, VARIANT *,
+                     CIMTYPE * ) DECLSPEC_HIDDEN;
 
 HRESULT WbemLocator_create(IUnknown *, LPVOID *) DECLSPEC_HIDDEN;
 HRESULT WbemServices_create(IUnknown *, LPVOID *) DECLSPEC_HIDDEN;

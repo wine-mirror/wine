@@ -347,3 +347,45 @@ done:
     if (hr != S_OK) free_query( query );
     return hr;
 }
+
+static BOOL is_selected_prop( const struct view *view, const WCHAR *name )
+{
+    const struct property *prop = view->proplist;
+
+    if (!prop) return TRUE;
+    while (prop)
+    {
+        if (!strcmpiW( prop->name, name )) return TRUE;
+        prop = prop->next;
+    }
+    return FALSE;
+}
+
+HRESULT get_propval( const struct view *view, UINT index, const WCHAR *name, VARIANT *ret, CIMTYPE *type )
+{
+    HRESULT hr;
+    UINT column, row = view->result[index];
+    INT_PTR val;
+
+    if (!is_selected_prop( view, name )) return WBEM_E_NOT_FOUND;
+
+    hr = get_column_index( view->table, name, &column );
+    if (hr != S_OK) return WBEM_E_NOT_FOUND;
+
+    hr = get_value( view->table, row, column, &val );
+    if (hr != S_OK) return hr;
+
+    switch (view->table->columns[column].type)
+    {
+    case CIM_STRING:
+    case CIM_DATETIME:
+        V_VT( ret ) = VT_BSTR;
+        V_BSTR( ret ) = SysAllocString( (const WCHAR *)val );
+        break;
+    default:
+        ERR("unhandled column type %u\n", view->table->columns[column].type);
+        return WBEM_E_FAILED;
+    }
+    if (type) *type = view->table->columns[column].type;
+    return S_OK;
+}
