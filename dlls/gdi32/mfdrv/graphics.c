@@ -309,13 +309,21 @@ static INT16 MFDRV_CreateRegion(PHYSDEV dev, HRGN hrgn)
 	    *Param++ = pCurRect->right;
 	}
     }
-    len = Param - (WORD *)mr;
+
+    if (StartBand)
+    {
+        *StartBand = Param - StartBand - 3;
+        *Param++ = *StartBand;
+        if(*StartBand > MaxBands)
+            MaxBands = *StartBand;
+        Bands++;
+    }
 
     mr->rdParm[0] = 0;
     mr->rdParm[1] = 6;
     mr->rdParm[2] = 0x1234;
     mr->rdParm[3] = 0;
-    mr->rdParm[4] = len * 2;
+    mr->rdParm[4] = (Param - mr->rdParm) * sizeof(WORD);
     mr->rdParm[5] = Bands;
     mr->rdParm[6] = MaxBands;
     mr->rdParm[7] = rgndata->rdh.rcBound.left;
@@ -323,7 +331,7 @@ static INT16 MFDRV_CreateRegion(PHYSDEV dev, HRGN hrgn)
     mr->rdParm[9] = rgndata->rdh.rcBound.right;
     mr->rdParm[10] = rgndata->rdh.rcBound.bottom;
     mr->rdFunction = META_CREATEREGION;
-    mr->rdSize = len / 2;
+    mr->rdSize = Param - (WORD *)mr;
     ret = MFDRV_WriteRecord( dev, mr, mr->rdSize * 2 );
     HeapFree( GetProcessHeap(), 0, mr );
     HeapFree( GetProcessHeap(), 0, rgndata );
