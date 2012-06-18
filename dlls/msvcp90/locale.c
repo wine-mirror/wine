@@ -2831,7 +2831,7 @@ locale_id codecvt_short_id = {0};
 /* ??_7?$codecvt@_WDH@std@@6B@ */
 extern const vtable_ptr MSVCP_codecvt_wchar_vtable;
 /* ??_7?$codecvt@GDH@std@@6B@ */
-extern const vtable_ptr MSVCP_codecvt_wchar_vtable;
+extern const vtable_ptr MSVCP_codecvt_short_vtable;
 
 /* ?_Init@?$codecvt@GDH@std@@IAEXABV_Locinfo@2@@Z */
 /* ?_Init@?$codecvt@GDH@std@@IEAAXAEBV_Locinfo@2@@Z */
@@ -2840,7 +2840,8 @@ extern const vtable_ptr MSVCP_codecvt_wchar_vtable;
 DEFINE_THISCALL_WRAPPER(codecvt_wchar__Init, 8)
 void __thiscall codecvt_wchar__Init(codecvt_wchar *this, const _Locinfo *locinfo)
 {
-    FIXME("(%p %p) stub\n", this, locinfo);
+    TRACE("(%p %p)\n", this, locinfo);
+    _Locinfo__Getcvt(locinfo, &this->cvt);
 }
 
 /* ??0?$codecvt@_WDH@std@@QAE@ABV_Locinfo@1@I@Z */
@@ -2848,8 +2849,13 @@ void __thiscall codecvt_wchar__Init(codecvt_wchar *this, const _Locinfo *locinfo
 DEFINE_THISCALL_WRAPPER(codecvt_wchar_ctor_locinfo, 12)
 codecvt_wchar* __thiscall codecvt_wchar_ctor_locinfo(codecvt_wchar *this, const _Locinfo *locinfo, MSVCP_size_t refs)
 {
-    FIXME("(%p %p %ld) stub\n", this, locinfo, refs);
-    return NULL;
+    TRACE("(%p %p %ld)\n", this, locinfo, refs);
+
+    codecvt_base_ctor_refs(&this->base, refs);
+    this->base.facet.vtable = &MSVCP_codecvt_wchar_vtable;
+
+    codecvt_wchar__Init(this, locinfo);
+    return this;
 }
 
 /* ??0?$codecvt@GDH@std@@QAE@ABV_Locinfo@1@I@Z */
@@ -2857,8 +2863,11 @@ codecvt_wchar* __thiscall codecvt_wchar_ctor_locinfo(codecvt_wchar *this, const 
 DEFINE_THISCALL_WRAPPER(codecvt_short_ctor_locinfo, 12)
 codecvt_wchar* __thiscall codecvt_short_ctor_locinfo(codecvt_wchar *this, const _Locinfo *locinfo, MSVCP_size_t refs)
 {
-    FIXME("(%p %p %ld) stub\n", this, locinfo, refs);
-    return NULL;
+    TRACE("(%p %p %ld)\n", this, locinfo, refs);
+
+    codecvt_wchar_ctor_locinfo(this, locinfo, refs);
+    this->base.facet.vtable = &MSVCP_codecvt_short_vtable;
+    return this;
 }
 
 /* ??0?$codecvt@_WDH@std@@QAE@I@Z */
@@ -2866,8 +2875,14 @@ codecvt_wchar* __thiscall codecvt_short_ctor_locinfo(codecvt_wchar *this, const 
 DEFINE_THISCALL_WRAPPER(codecvt_wchar_ctor_refs, 8)
 codecvt_wchar* __thiscall codecvt_wchar_ctor_refs(codecvt_wchar *this, MSVCP_size_t refs)
 {
-    FIXME("(%p %ld) stub\n", this, refs);
-    return NULL;
+    _Locinfo locinfo;
+
+    TRACE("(%p %ld)\n", this, refs);
+
+    _Locinfo_ctor(&locinfo);
+    codecvt_wchar_ctor_locinfo(this, &locinfo, refs);
+    _Locinfo_dtor(&locinfo);
+    return this;
 }
 
 /* ??0?$codecvt@GDH@std@@QAE@I@Z */
@@ -2875,8 +2890,14 @@ codecvt_wchar* __thiscall codecvt_wchar_ctor_refs(codecvt_wchar *this, MSVCP_siz
 DEFINE_THISCALL_WRAPPER(codecvt_short_ctor_refs, 8)
 codecvt_wchar* __thiscall codecvt_short_ctor_refs(codecvt_wchar *this, MSVCP_size_t refs)
 {
-    FIXME("(%p %ld) stub\n", this, refs);
-    return NULL;
+    _Locinfo locinfo;
+
+    TRACE("(%p %ld)\n", this, refs);
+
+    _Locinfo_ctor(&locinfo);
+    codecvt_short_ctor_locinfo(this, &locinfo, refs);
+    _Locinfo_dtor(&locinfo);
+    return this;
 }
 
 /* ??0?$codecvt@GDH@std@@IAE@PBDI@Z */
@@ -2884,8 +2905,14 @@ codecvt_wchar* __thiscall codecvt_short_ctor_refs(codecvt_wchar *this, MSVCP_siz
 DEFINE_THISCALL_WRAPPER(codecvt_short_ctor_name, 12)
 codecvt_wchar* __thiscall codecvt_short_ctor_name(codecvt_wchar *this, const char *name, MSVCP_size_t refs)
 {
-    FIXME("(%p %s %ld) stub\n", this, name, refs);
-    return NULL;
+    _Locinfo locinfo;
+
+    TRACE("(%p %s %ld)\n", this, name, refs);
+
+    _Locinfo_ctor_cstr(&locinfo, name);
+    codecvt_short_ctor_locinfo(this, &locinfo, refs);
+    _Locinfo_dtor(&locinfo);
+    return this;
 }
 
 /* ??_F?$codecvt@_WDH@std@@QAEXXZ */
@@ -2893,8 +2920,7 @@ codecvt_wchar* __thiscall codecvt_short_ctor_name(codecvt_wchar *this, const cha
 DEFINE_THISCALL_WRAPPER(codecvt_wchar_ctor, 4)
 codecvt_wchar* __thiscall codecvt_wchar_ctor(codecvt_wchar *this)
 {
-    FIXME("(%p) stub\n", this);
-    return NULL;
+    return codecvt_wchar_ctor_refs(this, 0);
 }
 
 /* ??_F?$codecvt@GDH@std@@QAEXXZ */
@@ -2902,8 +2928,7 @@ codecvt_wchar* __thiscall codecvt_wchar_ctor(codecvt_wchar *this)
 DEFINE_THISCALL_WRAPPER(codecvt_short_ctor, 4)
 codecvt_wchar* __thiscall codecvt_short_ctor(codecvt_wchar *this)
 {
-    FIXME("(%p) stub\n", this);
-    return NULL;
+    return codecvt_short_ctor_refs(this, 0);
 }
 
 /* ??1?$codecvt@GDH@std@@MAE@XZ */
@@ -2913,7 +2938,8 @@ codecvt_wchar* __thiscall codecvt_short_ctor(codecvt_wchar *this)
 DEFINE_THISCALL_WRAPPER(codecvt_wchar_dtor, 4)
 void __thiscall codecvt_wchar_dtor(codecvt_wchar *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
+    codecvt_base_dtor(&this->base);
 }
 
 DEFINE_THISCALL_WRAPPER(MSVCP_codecvt_wchar_vector_dtor, 8)
@@ -2946,32 +2972,64 @@ codecvt_wchar* __thiscall MSVCP_codecvt_short_vector_dtor(codecvt_wchar *this, u
 /* ?_Getcat@?$codecvt@_WDH@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
 unsigned int __cdecl codecvt_wchar__Getcat(const locale_facet **facet, const locale *loc)
 {
-    FIXME("(%p %p) stub\n", facet, loc);
-    return 0;
+    TRACE("(%p %p)\n", facet, loc);
+
+    if(facet && !*facet) {
+        _Locinfo locinfo;
+
+        *facet = MSVCRT_operator_new(sizeof(codecvt_wchar));
+        if(!*facet) {
+            ERR("Out of memory\n");
+            throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+            return 0;
+        }
+
+        _Locinfo_ctor_cstr(&locinfo, MSVCP_basic_string_char_c_str(&loc->ptr->name));
+        codecvt_wchar_ctor_locinfo((codecvt_wchar*)*facet, &locinfo, 0);
+        _Locinfo_dtor(&locinfo);
+    }
+
+    return LC_CTYPE;
 }
 
 /* ?_Getcat@?$codecvt@GDH@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
 /* ?_Getcat@?$codecvt@GDH@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
 unsigned int __cdecl codecvt_short__Getcat(const locale_facet **facet, const locale *loc)
 {
-    FIXME("(%p %p) stub\n", facet, loc);
-    return 0;
+    TRACE("(%p %p)\n", facet, loc);
+
+    if(facet && !*facet) {
+        _Locinfo locinfo;
+
+        *facet = MSVCRT_operator_new(sizeof(codecvt_wchar));
+        if(!*facet) {
+            ERR("Out of memory\n");
+            throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+            return 0;
+        }
+
+        _Locinfo_ctor_cstr(&locinfo, MSVCP_basic_string_char_c_str(&loc->ptr->name));
+        codecvt_short_ctor((codecvt_wchar*)*facet);
+        _Locinfo_dtor(&locinfo);
+    }
+
+    return LC_CTYPE;
 }
 
 /* ?_Id_func@?$codecvt@_WDH@std@@SAAAVid@locale@2@XZ */
 /* ?_Id_func@?$codecvt@_WDH@std@@SAAEAVid@locale@2@XZ */
 locale_id* __cdecl codecvt_wchar__Id_func(void)
 {
-    FIXME("() stub\n");
-    return NULL;
+    TRACE("()\n");
+    return &codecvt_wchar_id;
 }
 
 /* ?_Id_func@?$codecvt@GDH@std@@SAAAVid@locale@2@XZ */
 /* ?_Id_func@?$codecvt@GDH@std@@SAAEAVid@locale@2@XZ */
 locale_id* __cdecl codecvt_short__Id_func(void)
 {
-    FIXME("() stub\n");
-    return NULL;
+    TRACE("()\n");
+    return &codecvt_short_id;
 }
 
 /* ?do_always_noconv@?$codecvt@GDH@std@@MBE_NXZ */
@@ -2981,8 +3039,8 @@ locale_id* __cdecl codecvt_short__Id_func(void)
 DEFINE_THISCALL_WRAPPER(codecvt_wchar_do_always_noconv, 4)
 MSVCP_bool __thiscall codecvt_wchar_do_always_noconv(const codecvt_wchar *this)
 {
-    FIXME("(%p) stub\n", this);
-    return 0;
+    TRACE("(%p)\n", this);
+    return FALSE;
 }
 
 /* ?do_max_length@?$codecvt@GDH@std@@MBEHXZ */
@@ -2992,8 +3050,8 @@ MSVCP_bool __thiscall codecvt_wchar_do_always_noconv(const codecvt_wchar *this)
 DEFINE_THISCALL_WRAPPER(codecvt_wchar_do_max_length, 4)
 int __thiscall codecvt_wchar_do_max_length(const codecvt_wchar *this)
 {
-    FIXME("(%p) stub\n", this);
-    return 0;
+    TRACE("(%p)\n", this);
+    return MB_LEN_MAX;
 }
 
 /* ?do_in@?$codecvt@GDH@std@@MBEHAAHPBD1AAPBDPAG3AAPAG@Z */
@@ -3009,9 +3067,30 @@ int __thiscall codecvt_wchar_do_in(const codecvt_wchar *this, int *state,
         const char *from, const char *from_end, const char **from_next,
         wchar_t *to, wchar_t *to_end, wchar_t **to_next)
 {
-    FIXME("(%p %p %p %p %p %p %p %p) stub\n", this, state, from,
+    TRACE("(%p %p %p %p %p %p %p %p)\n", this, state, from,
             from_end, from_next, to, to_end, to_next);
-    return 0;
+
+    *from_next = from;
+    *to_next = to;
+
+    while(*from_next!=from_end && *to_next!=to_end) {
+        switch(_Mbrtowc(*to_next, *from_next, from_end-*from_next, state, &this->cvt)) {
+        case -2:
+            *from_next = from_end;
+            return CODECVT_partial;
+        case -1:
+            return CODECVT_error;
+        case 2:
+            (*from_next)++;
+            /* fall through */
+        case 0:
+        case 1:
+            (*from_next)++;
+            (*to_next)++;
+        }
+    }
+
+    return CODECVT_ok;
 }
 
 /* ?in@?$codecvt@GDH@std@@QBEHAAHPBD1AAPBDPAG3AAPAG@Z */
@@ -3042,9 +3121,31 @@ int __thiscall codecvt_wchar_do_out(const codecvt_wchar *this, int *state,
         const wchar_t *from, const wchar_t *from_end, const wchar_t **from_next,
         char *to, char *to_end, char **to_next)
 {
-    FIXME("(%p %p %p %p %p %p %p %p) stub\n", this, state, from,
+    TRACE("(%p %p %p %p %p %p %p %p)\n", this, state, from,
             from_end, from_next, to, to_end, to_next);
-    return 0;
+
+    *from_next = from;
+    *to_next = to;
+
+    while(*from_next!=from_end && *to_next!=to_end) {
+        int old_state = *state, size;
+        char buf[MB_LEN_MAX];
+
+        switch((size = _Wcrtomb(buf, **from_next, state, &this->cvt))) {
+        case -1:
+            return CODECVT_error;
+        default:
+            if(size > from_end-*from_next) {
+                *state = old_state;
+                return CODECVT_partial;
+            }
+
+            (*from_next)++;
+            (*to_next) += size;
+        }
+    }
+
+    return CODECVT_ok;
 }
 
 /* ?out@?$codecvt@GDH@std@@QBEHAAHPBG1AAPBGPAD3AAPAD@Z */
@@ -3072,8 +3173,12 @@ DEFINE_THISCALL_WRAPPER(codecvt_wchar_do_unshift, 20)
 int __thiscall codecvt_wchar_do_unshift(const codecvt_wchar *this,
         int *state, char *to, char *to_end, char **to_next)
 {
-    FIXME("(%p %p %p %p %p) stub\n", this, state, to, to_end, to_next);
-    return 0;
+    TRACE("(%p %p %p %p %p)\n", this, state, to, to_end, to_next);
+    if(*state)
+        WARN("unexpected state: %x\n", *state);
+
+    *to_next = to;
+    return CODECVT_ok;
 }
 
 /* ?unshift@?$codecvt@GDH@std@@QBEHAAHPAD1AAPAD@Z */
@@ -3099,8 +3204,26 @@ DEFINE_THISCALL_WRAPPER(codecvt_wchar_do_length, 20)
 int __thiscall codecvt_wchar_do_length(const codecvt_wchar *this, const int *state,
         const char *from, const char *from_end, MSVCP_size_t max)
 {
-    FIXME("(%p %p %p %p %ld) stub\n", this, state, from, from_end, max);
-    return 0;
+    int tmp_state = *state, ret=0;
+
+    TRACE("(%p %p %p %p %ld)\n", this, state, from, from_end, max);
+
+    while(ret<max && from!=from_end) {
+        switch(_Mbrtowc(NULL, from, from_end-from, &tmp_state, &this->cvt)) {
+        case -2:
+        case -1:
+            return ret;
+        case 2:
+            from++;
+            /* fall through */
+        case 0:
+        case 1:
+            from++;
+            ret++;
+        }
+    }
+
+    return ret;
 }
 
 /* ?length@?$codecvt@GDH@std@@QBEHABHPBD1I@Z */
