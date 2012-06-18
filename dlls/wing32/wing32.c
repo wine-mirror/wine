@@ -42,7 +42,7 @@ BOOL WINAPI WinGRecommendDIBFormat( BITMAPINFO *bmi )
 
     bmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     bmi->bmiHeader.biWidth = 320;
-    bmi->bmiHeader.biHeight = -1;
+    bmi->bmiHeader.biHeight = 1;
     bmi->bmiHeader.biPlanes = 1;
     bmi->bmiHeader.biBitCount = 8;
     bmi->bmiHeader.biCompression = BI_RGB;
