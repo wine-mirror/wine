@@ -446,6 +446,35 @@ static void test_ID3DXFont(IDirect3DDevice9 *device)
         }
         ID3DXFont_Release(font);
     } else skip("Failed to create a ID3DXFont object\n");
+
+
+    /* ID3DXFont_PreloadText */
+    hr = D3DXCreateFontA(device, 12, 0, FW_DONTCARE, 0, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "Arial", &font);
+    if(SUCCEEDED(hr)) {
+        const WCHAR testW[] = {'t','e','s','t',0};
+
+        todo_wine {
+        hr = ID3DXFont_PreloadTextA(font, NULL, -1);
+        ok(hr == D3DERR_INVALIDCALL, "ID3DXFont_PreloadTextA returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+        hr = ID3DXFont_PreloadTextA(font, NULL, 0);
+        ok(hr == D3D_OK, "ID3DXFont_PreloadTextA returned %#x, expected %#x\n", hr, D3D_OK);
+        hr = ID3DXFont_PreloadTextA(font, NULL, 1);
+        ok(hr == D3DERR_INVALIDCALL, "ID3DXFont_PreloadTextA returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+        hr = ID3DXFont_PreloadTextA(font, "test", -1);
+        ok(hr == D3D_OK, "ID3DXFont_PreloadTextA returned %#x, expected %#x\n", hr, D3D_OK);
+
+        hr = ID3DXFont_PreloadTextW(font, NULL, -1);
+        ok(hr == D3DERR_INVALIDCALL, "ID3DXFont_PreloadTextW returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+        hr = ID3DXFont_PreloadTextW(font, NULL, 0);
+        ok(hr == D3D_OK, "ID3DXFont_PreloadTextW returned %#x, expected %#x\n", hr, D3D_OK);
+        hr = ID3DXFont_PreloadTextW(font, NULL, 1);
+        ok(hr == D3DERR_INVALIDCALL, "ID3DXFont_PreloadTextW returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+        hr = ID3DXFont_PreloadTextW(font, testW, -1);
+        ok(hr == D3D_OK, "ID3DXFont_PreloadTextW returned %#x, expected %#x\n", hr, D3D_OK);
+        }
+
+        check_release((IUnknown*)font, 0);
+    } else skip("Failed to create a ID3DXFont object\n");
 }
 
 static void test_D3DXCreateRenderToSurface(IDirect3DDevice9 *device)
