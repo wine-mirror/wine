@@ -887,9 +887,9 @@ static void surface_map(struct wined3d_surface *surface, const RECT *rect, DWORD
     TRACE("surface %p, rect %s, flags %#x.\n",
             surface, wine_dbgstr_rect(rect), flags);
 
-    if (flags & WINED3DLOCK_DISCARD)
+    if (flags & WINED3D_MAP_DISCARD)
     {
-        TRACE("WINED3DLOCK_DISCARD flag passed, marking SYSMEM as up to date.\n");
+        TRACE("WINED3D_MAP_DISCARD flag passed, marking SYSMEM as up to date.\n");
         surface_prepare_system_memory(surface);
         surface_modify_location(surface, SFLAG_INSYSMEM, TRUE);
     }
@@ -933,7 +933,7 @@ static void surface_map(struct wined3d_surface *surface, const RECT *rect, DWORD
         context_release(context);
     }
 
-    if (!(flags & (WINED3DLOCK_NO_DIRTY_UPDATE | WINED3DLOCK_READONLY)))
+    if (!(flags & (WINED3D_MAP_NO_DIRTY_UPDATE | WINED3D_MAP_READONLY)))
     {
         if (!rect)
             surface_add_dirty_rect(surface, NULL);
@@ -3746,15 +3746,13 @@ static struct wined3d_surface *surface_convert_format(struct wined3d_surface *so
     memset(&src_map, 0, sizeof(src_map));
     memset(&dst_map, 0, sizeof(dst_map));
 
-    hr = wined3d_surface_map(source, &src_map, NULL, WINED3DLOCK_READONLY);
-    if (FAILED(hr))
+    if (FAILED(hr = wined3d_surface_map(source, &src_map, NULL, WINED3D_MAP_READONLY)))
     {
         ERR("Failed to lock the source surface.\n");
         wined3d_surface_decref(ret);
         return NULL;
     }
-    hr = wined3d_surface_map(ret, &dst_map, NULL, WINED3DLOCK_READONLY);
-    if (FAILED(hr))
+    if (FAILED(hr = wined3d_surface_map(ret, &dst_map, NULL, WINED3D_MAP_READONLY)))
     {
         ERR("Failed to lock the destination surface.\n");
         wined3d_surface_unmap(source);
@@ -6637,7 +6635,7 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
                     goto release;
                 }
             }
-            wined3d_surface_map(src_surface, &src_map, NULL, WINED3DLOCK_READONLY);
+            wined3d_surface_map(src_surface, &src_map, NULL, WINED3D_MAP_READONLY);
             src_format = src_surface->resource.format;
         }
         else

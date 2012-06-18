@@ -4210,10 +4210,9 @@ static HRESULT device_update_volume(struct wined3d_device *device,
 
     /* TODO: Implement direct loading into the gl volume instead of using
      * memcpy and dirtification to improve loading performance. */
-    hr = wined3d_volume_map(src_volume, &src, NULL, WINED3DLOCK_READONLY);
-    if (FAILED(hr)) return hr;
-    hr = wined3d_volume_map(dst_volume, &dst, NULL, WINED3DLOCK_DISCARD);
-    if (FAILED(hr))
+    if (FAILED(hr = wined3d_volume_map(src_volume, &src, NULL, WINED3D_MAP_READONLY)))
+        return hr;
+    if (FAILED(hr = wined3d_volume_map(dst_volume, &dst, NULL, WINED3D_MAP_DISCARD)))
     {
         wined3d_volume_unmap(src_volume);
         return hr;
@@ -4911,7 +4910,7 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
          * instead. */
         device->cursorWidth = cursor_image->resource.width;
         device->cursorHeight = cursor_image->resource.height;
-        if (SUCCEEDED(wined3d_surface_map(cursor_image, &map_desc, NULL, WINED3DLOCK_READONLY)))
+        if (SUCCEEDED(wined3d_surface_map(cursor_image, &map_desc, NULL, WINED3D_MAP_READONLY)))
         {
             const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
             const struct wined3d_format *format = wined3d_get_format(gl_info, WINED3DFMT_B8G8R8A8_UNORM);
@@ -4981,7 +4980,7 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
             maskBits = HeapAlloc(GetProcessHeap(), 0, mask_size);
             memset(maskBits, 0xff, mask_size);
             wined3d_surface_map(cursor_image, &map_desc, NULL,
-                    WINED3DLOCK_NO_DIRTY_UPDATE | WINED3DLOCK_READONLY);
+                    WINED3D_MAP_NO_DIRTY_UPDATE | WINED3D_MAP_READONLY);
             TRACE("width: %u height: %u.\n", cursor_image->resource.width, cursor_image->resource.height);
 
             cursorInfo.fIcon = FALSE;

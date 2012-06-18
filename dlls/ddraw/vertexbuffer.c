@@ -219,13 +219,13 @@ static HRESULT WINAPI d3d_vertex_buffer7_Lock(IDirect3DVertexBuffer7 *iface,
      * nosyslock: Not applicable
      */
     if (!(flags & DDLOCK_WAIT))
-        wined3d_flags |= WINED3DLOCK_DONOTWAIT;
+        wined3d_flags |= WINED3D_MAP_DONOTWAIT;
     if (flags & DDLOCK_READONLY)
-        wined3d_flags |= WINED3DLOCK_READONLY;
+        wined3d_flags |= WINED3D_MAP_READONLY;
     if (flags & DDLOCK_NOOVERWRITE)
-        wined3d_flags |= WINED3DLOCK_NOOVERWRITE;
+        wined3d_flags |= WINED3D_MAP_NOOVERWRITE;
     if (flags & DDLOCK_DISCARDCONTENTS)
-        wined3d_flags |= WINED3DLOCK_DISCARD;
+        wined3d_flags |= WINED3D_MAP_DISCARD;
 
     wined3d_mutex_lock();
     if (data_size)

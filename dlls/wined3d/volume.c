@@ -226,7 +226,7 @@ HRESULT CDECL wined3d_volume_map(struct wined3d_volume *volume,
         volume->lockedBox.back   = box->back;
     }
 
-    if (!(flags & (WINED3DLOCK_NO_DIRTY_UPDATE | WINED3DLOCK_READONLY)))
+    if (!(flags & (WINED3D_MAP_NO_DIRTY_UPDATE | WINED3D_MAP_READONLY)))
     {
         volume_add_dirty_box(volume, &volume->lockedBox);
         wined3d_texture_set_dirty(volume->container, TRUE);

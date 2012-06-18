@@ -604,9 +604,11 @@ static void buffer_sync_apple(struct wined3d_buffer *This, DWORD flags, const st
     enum wined3d_event_query_result ret;
 
     /* No fencing needs to be done if the app promises not to overwrite
-     * existing data */
-    if(flags & WINED3DLOCK_NOOVERWRITE) return;
-    if(flags & WINED3DLOCK_DISCARD)
+     * existing data. */
+    if (flags & WINED3D_MAP_NOOVERWRITE)
+        return;
+
+    if (flags & WINED3D_MAP_DISCARD)
     {
         ENTER_GL();
         GL_EXTCALL(glBufferDataARB(This->buffer_type_hint, This->resource.size, NULL, This->buffer_object_usage));
@@ -698,8 +700,10 @@ static void buffer_direct_upload(struct wined3d_buffer *This, const struct wined
         if (This->flags & WINED3D_BUFFER_APPLESYNC)
         {
             DWORD syncflags = 0;
-            if (flags & WINED3D_BUFFER_DISCARD) syncflags |= WINED3DLOCK_DISCARD;
-            if (flags & WINED3D_BUFFER_NOSYNC) syncflags |= WINED3DLOCK_NOOVERWRITE;
+            if (flags & WINED3D_BUFFER_DISCARD)
+                syncflags |= WINED3D_MAP_DISCARD;
+            if (flags & WINED3D_BUFFER_NOSYNC)
+                syncflags |= WINED3D_MAP_NOOVERWRITE;
             LEAVE_GL();
             buffer_sync_apple(This, syncflags, gl_info);
             ENTER_GL();
@@ -948,29 +952,31 @@ void CDECL wined3d_buffer_preload(struct wined3d_buffer *buffer)
 
 static DWORD buffer_sanitize_flags(const struct wined3d_buffer *buffer, DWORD flags)
 {
-    /* Not all flags make sense together, but Windows never returns an error. Catch the
-     * cases that could cause issues */
-    if(flags & WINED3DLOCK_READONLY)
+    /* Not all flags make sense together, but Windows never returns an error.
+     * Catch the cases that could cause issues. */
+    if (flags & WINED3D_MAP_READONLY)
     {
-        if(flags & WINED3DLOCK_DISCARD)
+        if (flags & WINED3D_MAP_DISCARD)
         {
-            WARN("WINED3DLOCK_READONLY combined with WINED3DLOCK_DISCARD, ignoring flags\n");
+            WARN("WINED3D_MAP_READONLY combined with WINED3D_MAP_DISCARD, ignoring flags.\n");
             return 0;
         }
-        if(flags & WINED3DLOCK_NOOVERWRITE)
+        if (flags & WINED3D_MAP_NOOVERWRITE)
         {
-            WARN("WINED3DLOCK_READONLY combined with WINED3DLOCK_NOOVERWRITE, ignoring flags\n");
+            WARN("WINED3D_MAP_READONLY combined with WINED3D_MAP_NOOVERWRITE, ignoring flags.\n");
             return 0;
         }
     }
-    else if((flags & (WINED3DLOCK_DISCARD | WINED3DLOCK_NOOVERWRITE)) == (WINED3DLOCK_DISCARD | WINED3DLOCK_NOOVERWRITE))
+    else if ((flags & (WINED3D_MAP_DISCARD | WINED3D_MAP_NOOVERWRITE))
+            == (WINED3D_MAP_DISCARD | WINED3D_MAP_NOOVERWRITE))
     {
-        WARN("WINED3DLOCK_DISCARD and WINED3DLOCK_NOOVERWRITE used together, ignoring\n");
+        WARN("WINED3D_MAP_DISCARD and WINED3D_MAP_NOOVERWRITE used together, ignoring.\n");
         return 0;
     }
-    else if (flags & (WINED3DLOCK_DISCARD | WINED3DLOCK_NOOVERWRITE) && !(buffer->resource.usage & WINED3DUSAGE_DYNAMIC))
+    else if (flags & (WINED3D_MAP_DISCARD | WINED3D_MAP_NOOVERWRITE)
+            && !(buffer->resource.usage & WINED3DUSAGE_DYNAMIC))
     {
-        WARN("DISCARD or NOOVERWRITE lock on non-dynamic buffer, ignoring\n");
+        WARN("DISCARD or NOOVERWRITE map on non-dynamic buffer, ignoring.\n");
         return 0;
     }
 
@@ -981,14 +987,14 @@ static GLbitfield buffer_gl_map_flags(DWORD d3d_flags)
 {
     GLbitfield ret = 0;
 
-    if (!(d3d_flags & WINED3DLOCK_READONLY))
+    if (!(d3d_flags & WINED3D_MAP_READONLY))
         ret |= GL_MAP_WRITE_BIT | GL_MAP_FLUSH_EXPLICIT_BIT;
-    if (!(d3d_flags & (WINED3DLOCK_DISCARD | WINED3DLOCK_NOOVERWRITE)))
+    if (!(d3d_flags & (WINED3D_MAP_DISCARD | WINED3D_MAP_NOOVERWRITE)))
         ret |= GL_MAP_READ_BIT;
 
-    if (d3d_flags & WINED3DLOCK_DISCARD)
+    if (d3d_flags & WINED3D_MAP_DISCARD)
         ret |= GL_MAP_INVALIDATE_BUFFER_BIT;
-    if (d3d_flags & WINED3DLOCK_NOOVERWRITE)
+    if (d3d_flags & WINED3D_MAP_NOOVERWRITE)
         ret |= GL_MAP_UNSYNCHRONIZED_BIT;
 
     return ret;
@@ -1009,9 +1015,9 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
     TRACE("buffer %p, offset %u, size %u, data %p, flags %#x\n", buffer, offset, size, data, flags);
 
     flags = buffer_sanitize_flags(buffer, flags);
-    if (!(flags & WINED3DLOCK_READONLY))
+    if (!(flags & WINED3D_MAP_READONLY))
     {
-        if (flags & WINED3DLOCK_DISCARD)
+        if (flags & WINED3D_MAP_DISCARD)
         {
             /* DISCARD invalidates the entire buffer, regardless of the
              * specified offset and size. Some applications also depend on the
@@ -1105,17 +1111,17 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
         {
             if (dirty)
             {
-                if (buffer->flags & WINED3D_BUFFER_NOSYNC && !(flags & WINED3DLOCK_NOOVERWRITE))
+                if (buffer->flags & WINED3D_BUFFER_NOSYNC && !(flags & WINED3D_MAP_NOOVERWRITE))
                 {
                     buffer->flags &= ~WINED3D_BUFFER_NOSYNC;
                 }
             }
-            else if(flags & WINED3DLOCK_NOOVERWRITE)
+            else if(flags & WINED3D_MAP_NOOVERWRITE)
             {
                 buffer->flags |= WINED3D_BUFFER_NOSYNC;
             }
 
-            if (flags & WINED3DLOCK_DISCARD)
+            if (flags & WINED3D_MAP_DISCARD)
             {
                 buffer->flags |= WINED3D_BUFFER_DISCARD;
             }
