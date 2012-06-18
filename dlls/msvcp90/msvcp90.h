@@ -294,6 +294,13 @@ typedef enum {
     CODECVT_noconv  = 3
 } codecvt_base_result;
 
+typedef struct {
+    LCID handle;
+    unsigned page;
+    const short *table;
+    int delfl;
+} _Ctypevec;
+
 /* class codecvt_base */
 typedef struct {
     locale_facet facet;
@@ -315,9 +322,13 @@ int __thiscall codecvt_base_max_length(const codecvt_base*);
 typedef struct {
     LCID handle;
     unsigned page;
-    const short *table;
-    int delfl;
-} _Ctypevec;
+} _Cvtvec;
+
+/* class codecvt<wchar> */
+typedef struct {
+    codecvt_base base;
+    _Cvtvec cvt;
+} codecvt_wchar;
 
 /* class ctype_base */
 typedef struct {
@@ -333,11 +344,6 @@ typedef struct {
 MSVCP_bool __thiscall ctype_char_is_ch(const ctype_char*, short, char);
 char __thiscall ctype_char_narrow_ch(const ctype_char*, char, char);
 char __thiscall ctype_char_widen_ch(const ctype_char*, char);
-
-typedef struct {
-    LCID handle;
-    unsigned page;
-} _Cvtvec;
 
 /* class ctype<wchar> */
 typedef struct {
@@ -360,6 +366,7 @@ locale* __thiscall locale_copy_ctor(locale*, const locale*);
 locale* __thiscall locale_operator_assign(locale*, const locale*);
 void __thiscall locale_dtor(locale*);
 void free_locale(void);
+codecvt_char* codecvt_char_use_facet(const locale*);
 codecvt_char* codecvt_char_use_facet(const locale*);
 ctype_char* ctype_char_use_facet(const locale*);
 ctype_wchar* ctype_wchar_use_facet(const locale*);
