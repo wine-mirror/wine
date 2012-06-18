@@ -3591,6 +3591,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     return FALSE;
   }
   case WM_PASTE:
+  case WM_MBUTTONDOWN:
     ME_Paste(editor);
     return 0;
   case WM_CUT:
