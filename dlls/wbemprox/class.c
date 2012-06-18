@@ -152,8 +152,20 @@ static HRESULT WINAPI enum_class_object_Skip(
     LONG lTimeout,
     ULONG nCount )
 {
-    FIXME("%p, %d, %u\n", iface, lTimeout, nCount);
-    return E_NOTIMPL;
+    struct enum_class_object *ec = impl_from_IEnumWbemClassObject( iface );
+    struct view *view = ec->query->view;
+
+    TRACE("%p, %d, %u\n", iface, lTimeout, nCount);
+
+    if (lTimeout != WBEM_INFINITE) FIXME("timeout not supported\n");
+
+    if (view->index + nCount >= view->count)
+    {
+        view->index = view->count - 1;
+        return WBEM_S_FALSE;
+    }
+    view->index += nCount;
+    return WBEM_S_NO_ERROR;
 }
 
 static const IEnumWbemClassObjectVtbl enum_class_object_vtbl =
