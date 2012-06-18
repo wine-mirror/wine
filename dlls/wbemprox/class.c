@@ -91,8 +91,13 @@ static HRESULT WINAPI enum_class_object_QueryInterface(
 static HRESULT WINAPI enum_class_object_Reset(
     IEnumWbemClassObject *iface )
 {
-    FIXME("%p\n", iface);
-    return E_NOTIMPL;
+    struct enum_class_object *ec = impl_from_IEnumWbemClassObject( iface );
+    struct view *view = ec->query->view;
+
+    TRACE("%p\n", iface);
+
+    view->index = 0;
+    return WBEM_S_NO_ERROR;
 }
 
 static HRESULT WINAPI enum_class_object_Next(
