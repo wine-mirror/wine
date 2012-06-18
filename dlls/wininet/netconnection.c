@@ -245,76 +245,97 @@ static DWORD netconn_verify_cert(netconn_t *conn, PCCERT_CONTEXT cert, HCERTSTOR
 
     errors = chain->TrustStatus.dwErrorStatus;
 
-    if (chain->TrustStatus.dwErrorStatus & ~supportedErrors) {
-        WARN("error status %x\n", chain->TrustStatus.dwErrorStatus & ~supportedErrors);
-        if(conn->mask_errors)
-            WARN("CERT_TRUST_IS_NOT_TIME_VALID, unknown error flags\n");
-        err = conn->mask_errors && err ? ERROR_INTERNET_SEC_CERT_ERRORS : ERROR_INTERNET_SEC_INVALID_CERT;
-        errors &= supportedErrors;
-    }
-
-    if(errors & CERT_TRUST_IS_NOT_TIME_VALID) {
-        WARN("CERT_TRUST_IS_NOT_TIME_VALID\n");
-        if(conn->mask_errors)
-            conn->security_flags |= _SECURITY_FLAG_CERT_INVALID_DATE;
-        if(!(conn->security_flags & SECURITY_FLAG_IGNORE_CERT_DATE_INVALID))
-            err = conn->mask_errors && err ? ERROR_INTERNET_SEC_CERT_ERRORS : ERROR_INTERNET_SEC_CERT_DATE_INVALID;
-        errors &= ~CERT_TRUST_IS_NOT_TIME_VALID;
-    }
-
-    if(errors & CERT_TRUST_IS_UNTRUSTED_ROOT) {
-        WARN("CERT_TRUST_IS_UNTRUSTED_ROOT\n");
-        if(conn->mask_errors)
-            WARN("CERT_TRUST_IS_UNTRUSTED_ROOT, unknown flags\n");
-        if(!(conn->security_flags & SECURITY_FLAG_IGNORE_UNKNOWN_CA))
-            err = conn->mask_errors && err ? ERROR_INTERNET_SEC_CERT_ERRORS : ERROR_INTERNET_INVALID_CA;
-        errors &= ~CERT_TRUST_IS_UNTRUSTED_ROOT;
-    }
-
-    /* This seems strange, but that's what tests show */
-    if(errors & CERT_TRUST_IS_PARTIAL_CHAIN) {
-        WARN("CERT_TRUST_IS_PARTIAL_CHAIN\n");
-        if(!(conn->security_flags & SECURITY_FLAG_IGNORE_UNKNOWN_CA)) {
-            if(!(conn->security_flags & _SECURITY_FLAG_CERT_REV_FAILED))
-                err = conn->mask_errors && err ? ERROR_INTERNET_SEC_CERT_ERRORS : ERROR_INTERNET_SEC_CERT_REV_FAILED;
-            else
-                err = conn->mask_errors ? ERROR_INTERNET_SEC_CERT_ERRORS : ERROR_INTERNET_INVALID_CA;
-        }
-        if(conn->mask_errors) {
-            if(!(conn->security_flags & _SECURITY_FLAG_CERT_REV_FAILED))
+    do {
+        /* This seems strange, but that's what tests show */
+        if(errors & (CERT_TRUST_IS_PARTIAL_CHAIN|CERT_TRUST_IS_OFFLINE_REVOCATION)) {
+            WARN("ERROR_INTERNET_SEC_CERT_REV_FAILED\n");
+            err = ERROR_INTERNET_SEC_CERT_REV_FAILED;
+            if(conn->mask_errors)
                 conn->security_flags |= _SECURITY_FLAG_CERT_REV_FAILED;
-            else
-                conn->security_flags |= _SECURITY_FLAG_CERT_INVALID_CA;
+            if(!(conn->security_flags & SECURITY_FLAG_IGNORE_REVOCATION))
+                break;
         }
-        errors &= ~CERT_TRUST_IS_PARTIAL_CHAIN;
-    }
 
-    if(errors & (CERT_TRUST_IS_OFFLINE_REVOCATION | CERT_TRUST_REVOCATION_STATUS_UNKNOWN)) {
-        WARN("CERT_TRUST_IS_OFFLINE_REVOCATION | CERT_TRUST_REVOCATION_STATUS_UNKNOWN\n");
-        if(conn->mask_errors)
-            WARN("TRUST_IS_OFFLINE_REVOCATION | CERT_TRUST_REVOCATION_STATUS_UNKNOWN, unknown error flags\n");
-        if(!(conn->security_flags & SECURITY_FLAG_IGNORE_REVOCATION))
-            err = conn->mask_errors && err ? ERROR_INTERNET_SEC_CERT_ERRORS : ERROR_INTERNET_SEC_CERT_NO_REV;
-        errors &= ~(CERT_TRUST_IS_OFFLINE_REVOCATION | CERT_TRUST_REVOCATION_STATUS_UNKNOWN);
-    }
-
-    if(errors & CERT_TRUST_IS_REVOKED) {
-        WARN("CERT_TRUST_IS_REVOKED\n");
-        if(conn->mask_errors)
-            WARN("TRUST_IS_OFFLINE_REVOCATION | CERT_TRUST_REVOCATION_STATUS_UNKNOWN, unknown error flags\n");
-        if(!(conn->security_flags & SECURITY_FLAG_IGNORE_REVOCATION))
-            err = conn->mask_errors && err ? ERROR_INTERNET_SEC_CERT_ERRORS : ERROR_INTERNET_SEC_CERT_REVOKED;
-        errors &= ~CERT_TRUST_IS_REVOKED;
-    }
-
-    if(errors & CERT_TRUST_IS_NOT_VALID_FOR_USAGE) {
-        WARN("CERT_TRUST_IS_NOT_VALID_FOR_USAGE\n");
-        if(conn->mask_errors)
-            WARN("CERT_TRUST_IS_NOT_VALID_FOR_USAGE, unknown error flags\n");
-        if(!(conn->security_flags & SECURITY_FLAG_IGNORE_WRONG_USAGE))
+        if (chain->TrustStatus.dwErrorStatus & ~supportedErrors) {
+            WARN("error status %x\n", chain->TrustStatus.dwErrorStatus & ~supportedErrors);
             err = conn->mask_errors && err ? ERROR_INTERNET_SEC_CERT_ERRORS : ERROR_INTERNET_SEC_INVALID_CERT;
-        errors &= ~CERT_TRUST_IS_NOT_VALID_FOR_USAGE;
-    }
+            errors &= supportedErrors;
+            if(!conn->mask_errors)
+                break;
+            WARN("unknown error flags\n");
+        }
+
+        if(errors & CERT_TRUST_IS_NOT_TIME_VALID) {
+            WARN("CERT_TRUST_IS_NOT_TIME_VALID\n");
+            if(!(conn->security_flags & SECURITY_FLAG_IGNORE_CERT_DATE_INVALID)) {
+                err = conn->mask_errors && err ? ERROR_INTERNET_SEC_CERT_ERRORS : ERROR_INTERNET_SEC_CERT_DATE_INVALID;
+                if(!conn->mask_errors)
+                    break;
+                conn->security_flags |= _SECURITY_FLAG_CERT_INVALID_DATE;
+            }
+            errors &= ~CERT_TRUST_IS_NOT_TIME_VALID;
+        }
+
+        if(errors & CERT_TRUST_IS_UNTRUSTED_ROOT) {
+            WARN("CERT_TRUST_IS_UNTRUSTED_ROOT\n");
+            if(!(conn->security_flags & SECURITY_FLAG_IGNORE_UNKNOWN_CA)) {
+                err = conn->mask_errors && err ? ERROR_INTERNET_SEC_CERT_ERRORS : ERROR_INTERNET_INVALID_CA;
+                if(!conn->mask_errors)
+                    break;
+                conn->security_flags |= _SECURITY_FLAG_CERT_INVALID_CA;
+            }
+            errors &= ~CERT_TRUST_IS_UNTRUSTED_ROOT;
+        }
+
+        if(errors & CERT_TRUST_IS_PARTIAL_CHAIN) {
+            WARN("CERT_TRUST_IS_PARTIAL_CHAIN\n");
+            if(!(conn->security_flags & SECURITY_FLAG_IGNORE_UNKNOWN_CA)) {
+                err = conn->mask_errors && err ? ERROR_INTERNET_SEC_CERT_ERRORS : ERROR_INTERNET_INVALID_CA;
+                if(!conn->mask_errors)
+                    break;
+                conn->security_flags |= _SECURITY_FLAG_CERT_INVALID_CA;
+            }
+            errors &= ~CERT_TRUST_IS_PARTIAL_CHAIN;
+        }
+
+        if(errors & (CERT_TRUST_IS_OFFLINE_REVOCATION | CERT_TRUST_REVOCATION_STATUS_UNKNOWN)) {
+            WARN("CERT_TRUST_IS_OFFLINE_REVOCATION | CERT_TRUST_REVOCATION_STATUS_UNKNOWN\n");
+            if(!(conn->security_flags & SECURITY_FLAG_IGNORE_REVOCATION)) {
+                err = conn->mask_errors && err ? ERROR_INTERNET_SEC_CERT_ERRORS : ERROR_INTERNET_SEC_CERT_NO_REV;
+                if(!conn->mask_errors)
+                    break;
+                conn->security_flags |= _SECURITY_FLAG_CERT_REV_FAILED;
+            }
+            errors &= ~(CERT_TRUST_IS_OFFLINE_REVOCATION | CERT_TRUST_REVOCATION_STATUS_UNKNOWN);
+        }
+
+        if(errors & CERT_TRUST_IS_REVOKED) {
+            WARN("CERT_TRUST_IS_REVOKED\n");
+            if(!(conn->security_flags & SECURITY_FLAG_IGNORE_REVOCATION)) {
+                err = conn->mask_errors && err ? ERROR_INTERNET_SEC_CERT_ERRORS : ERROR_INTERNET_SEC_CERT_REVOKED;
+                if(!conn->mask_errors)
+                    break;
+                WARN("TRUST_IS_OFFLINE_REVOCATION | CERT_TRUST_REVOCATION_STATUS_UNKNOWN, unknown error flags\n");
+            }
+            errors &= ~CERT_TRUST_IS_REVOKED;
+        }
+
+        if(errors & CERT_TRUST_IS_NOT_VALID_FOR_USAGE) {
+            WARN("CERT_TRUST_IS_NOT_VALID_FOR_USAGE\n");
+            if(!(conn->security_flags & SECURITY_FLAG_IGNORE_WRONG_USAGE)) {
+                err = conn->mask_errors && err ? ERROR_INTERNET_SEC_CERT_ERRORS : ERROR_INTERNET_SEC_INVALID_CERT;
+                if(!conn->mask_errors)
+                    break;
+                WARN("CERT_TRUST_IS_NOT_VALID_FOR_USAGE, unknown error flags\n");
+            }
+            errors &= ~CERT_TRUST_IS_NOT_VALID_FOR_USAGE;
+        }
+
+        if(err == ERROR_INTERNET_SEC_CERT_REV_FAILED) {
+            assert(conn->security_flags & SECURITY_FLAG_IGNORE_REVOCATION);
+            err = ERROR_SUCCESS;
+        }
+    }while(0);
 
     if(!err || conn->mask_errors) {
         CERT_CHAIN_POLICY_PARA policyPara;
