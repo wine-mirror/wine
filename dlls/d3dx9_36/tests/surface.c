@@ -211,9 +211,12 @@ static void fill_dds_header(struct dds_header *header)
     header->caps = DDS_CAPS_TEXTURE;
 }
 
-static void check_dds_pixel_format(DWORD flags, DWORD fourcc, DWORD bpp,
-                                   DWORD rmask, DWORD gmask, DWORD bmask, DWORD amask,
-                                   D3DFORMAT expected_format)
+#define check_dds_pixel_format(flags, fourcc, bpp, rmask, gmask, bmask, amask, format) \
+        check_dds_pixel_format_(__LINE__, flags, fourcc, bpp, rmask, gmask, bmask, amask, format)
+static void check_dds_pixel_format_(unsigned int line,
+                                    DWORD flags, DWORD fourcc, DWORD bpp,
+                                    DWORD rmask, DWORD gmask, DWORD bmask, DWORD amask,
+                                    D3DFORMAT expected_format)
 {
     HRESULT hr;
     D3DXIMAGE_INFO info;
@@ -234,9 +237,13 @@ static void check_dds_pixel_format(DWORD flags, DWORD fourcc, DWORD bpp,
     memset(dds.data, 0, sizeof(dds.data));
 
     hr = D3DXGetImageInfoFromFileInMemory(&dds, sizeof(dds), &info);
-    ok(hr == D3D_OK, "D3DXGetImageInfoFromFileInMemory returned %#x for pixel format %#x, expected %#x\n", hr, expected_format, D3D_OK);
+    ok_(__FILE__, line)(hr == D3D_OK, "D3DXGetImageInfoFromFileInMemory returned %#x for pixel format %#x, expected %#x\n",
+            hr, expected_format, D3D_OK);
     if (SUCCEEDED(hr))
-        ok(info.Format == expected_format, "D3DXGetImageInfoFromFileInMemory returned format %#x, expected %#x\n", info.Format, expected_format);
+    {
+        ok_(__FILE__, line)(info.Format == expected_format, "D3DXGetImageInfoFromFileInMemory returned format %#x, expected %#x\n",
+                info.Format, expected_format);
+    }
 }
 
 static void test_dds_header_handling(void)
