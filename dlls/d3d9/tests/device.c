@@ -3425,6 +3425,85 @@ done:
     UnregisterClassA("d3d9_test_wndproc_wc", GetModuleHandleA(NULL));
 }
 
+static void test_reset_resources(void)
+{
+    IDirect3DSurface9 *surface, *rt;
+    IDirect3DTexture9 *texture;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d9;
+    unsigned int i;
+    D3DCAPS9 caps;
+    HWND window;
+    HRESULT hr;
+    ULONG ref;
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+
+    if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create IDirect3D9 object, skipping tests.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    if (!(device = create_device(d3d9, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_CreateTexture(device, 128, 128, 1, D3DUSAGE_DEPTHSTENCIL,
+            D3DFMT_D24S8, D3DPOOL_DEFAULT, &texture, NULL);
+    ok(SUCCEEDED(hr), "Failed to create depth/stencil texture, hr %#x.\n", hr);
+    hr = IDirect3DTexture9_GetSurfaceLevel(texture, 0, &surface);
+    ok(SUCCEEDED(hr), "Failed to get surface, hr %#x.\n", hr);
+    IDirect3DTexture9_Release(texture);
+    hr = IDirect3DDevice9_SetDepthStencilSurface(device, surface);
+    ok(SUCCEEDED(hr), "Failed to set depth/stencil surface, hr %#x.\n", hr);
+    IDirect3DSurface9_Release(surface);
+
+    for (i = 0; i < caps.NumSimultaneousRTs; ++i)
+    {
+        hr = IDirect3DDevice9_CreateTexture(device, 128, 128, 1, D3DUSAGE_RENDERTARGET,
+                D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &texture, NULL);
+        ok(SUCCEEDED(hr), "Failed to create render target texture %u, hr %#x.\n", i, hr);
+        hr = IDirect3DTexture9_GetSurfaceLevel(texture, 0, &surface);
+        ok(SUCCEEDED(hr), "Failed to get surface %u, hr %#x.\n", i, hr);
+        IDirect3DTexture9_Release(texture);
+        hr = IDirect3DDevice9_SetRenderTarget(device, i, surface);
+        ok(SUCCEEDED(hr), "Failed to set render target surface %u, hr %#x.\n", i, hr);
+        IDirect3DSurface9_Release(surface);
+    }
+
+    hr = reset_device(device, device_window, TRUE);
+    ok(SUCCEEDED(hr), "Failed to reset device.\n");
+
+    hr = IDirect3DDevice9_GetBackBuffer(device, 0, 0, D3DBACKBUFFER_TYPE_MONO, &rt);
+    ok(SUCCEEDED(hr), "Failed to get back buffer, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetRenderTarget(device, 0, &surface);
+    ok(SUCCEEDED(hr), "Failed to get render target surface, hr %#x.\n", hr);
+    ok(surface == rt, "Got unexpected surface %p for render target.\n", surface);
+    IDirect3DSurface9_Release(surface);
+    IDirect3DSurface9_Release(rt);
+
+    for (i = 1; i < caps.NumSimultaneousRTs; ++i)
+    {
+        hr = IDirect3DDevice9_GetRenderTarget(device, i, &surface);
+        ok(hr == D3DERR_NOTFOUND, "Got unexpected hr %#x.\n", hr);
+    }
+
+    ref = IDirect3DDevice9_Release(device);
+    ok(ref == 0, "The device was not properly freed: refcount %u.\n", ref);
+
+done:
+    IDirect3D9_Release(d3d9);
+    DestroyWindow(window);
+}
+
 START_TEST(device)
 {
     HMODULE d3d9_handle = LoadLibraryA( "d3d9.dll" );
@@ -3481,6 +3560,7 @@ START_TEST(device)
         test_window_style();
         test_mode_change();
         test_device_window_reset();
+        test_reset_resources();
     }
 
 out:
