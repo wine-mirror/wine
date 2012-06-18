@@ -30,28 +30,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wbemprox);
 
-HRESULT create_view( const struct property *proplist, const WCHAR *class,
-                     const struct expr *cond, struct view **ret )
-{
-    struct view *view = heap_alloc( sizeof(struct view) );
-
-    if (!view) return E_OUTOFMEMORY;
-    view->proplist = proplist;
-    view->table    = get_table( class );
-    view->cond     = cond;
-    view->result   = NULL;
-    view->count    = 0;
-    view->index    = 0;
-    *ret = view;
-    return S_OK;
-}
-
-void destroy_view( struct view *view )
-{
-    heap_free( view->result );
-    heap_free( view );
-}
-
 static HRESULT get_column_index( const struct table *table, const WCHAR *name, UINT *column )
 {
     UINT i;
@@ -138,6 +116,52 @@ static HRESULT get_value( const struct table *table, UINT row, UINT column, INT_
         break;
     }
     return S_OK;
+}
+
+HRESULT create_view( const struct property *proplist, const WCHAR *class,
+                     const struct expr *cond, struct view **ret )
+{
+    struct view *view = heap_alloc( sizeof(struct view) );
+
+    if (!view) return E_OUTOFMEMORY;
+    view->proplist = proplist;
+    view->table    = get_table( class );
+    view->cond     = cond;
+    view->result   = NULL;
+    view->count    = 0;
+    view->index    = 0;
+    *ret = view;
+    return S_OK;
+}
+
+static void clear_table( struct table *table )
+{
+    UINT i, j;
+
+    if (!table->fill || !table->data) return;
+
+    for (i = 0; i < table->num_rows; i++)
+    {
+        for (j = 0; j < table->num_cols; j++)
+        {
+            if (table->columns[j].type == CIM_STRING   ||
+                table->columns[j].type == CIM_DATETIME ||
+                (table->columns[j].type & CIM_FLAG_ARRAY))
+            {
+                void *ptr;
+                if (get_value( table, i, j, (INT_PTR *)&ptr ) == S_OK) heap_free( ptr );
+            }
+        }
+    }
+    heap_free( table->data );
+    table->data = NULL;
+}
+
+void destroy_view( struct view *view )
+{
+    if (view->table) clear_table( view->table );
+    heap_free( view->result );
+    heap_free( view );
 }
 
 static BOOL eval_like( INT_PTR lval, INT_PTR rval )
