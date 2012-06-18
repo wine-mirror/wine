@@ -3163,6 +3163,70 @@ done:
     if (hwnd) DestroyWindow(hwnd);
 }
 
+static void test_reset_resources(void)
+{
+    IDirect3DSurface8 *surface, *rt;
+    IDirect3DTexture8 *texture;
+    IDirect3DDevice8 *device;
+    IDirect3D8 *d3d8;
+    HWND window;
+    HRESULT hr;
+    ULONG ref;
+
+    window = CreateWindowA("static", "d3d8_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+
+    if (!(d3d8 = pDirect3DCreate8(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create IDirect3D8 object, skipping tests.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    if (!(device = create_device(d3d8, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice8_CreateTexture(device, 128, 128, 1, D3DUSAGE_DEPTHSTENCIL,
+            D3DFMT_D24S8, D3DPOOL_DEFAULT, &texture);
+    ok(SUCCEEDED(hr), "Failed to create depth/stencil texture, hr %#x.\n", hr);
+    hr = IDirect3DTexture8_GetSurfaceLevel(texture, 0, &surface);
+    ok(SUCCEEDED(hr), "Failed to get surface, hr %#x.\n", hr);
+    IDirect3DTexture8_Release(texture);
+
+    hr = IDirect3DDevice8_CreateTexture(device, 128, 128, 1, D3DUSAGE_RENDERTARGET,
+            D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &texture);
+    ok(SUCCEEDED(hr), "Failed to create render target texture, hr %#x.\n", hr);
+    hr = IDirect3DTexture8_GetSurfaceLevel(texture, 0, &rt);
+    ok(SUCCEEDED(hr), "Failed to get surface, hr %#x.\n", hr);
+    IDirect3DTexture8_Release(texture);
+
+    hr = IDirect3DDevice8_SetRenderTarget(device, rt, surface);
+    ok(SUCCEEDED(hr), "Failed to set render target surface, hr %#x.\n", hr);
+    IDirect3DSurface8_Release(rt);
+    IDirect3DSurface8_Release(surface);
+
+    hr = reset_device(device, device_window, TRUE);
+    ok(SUCCEEDED(hr), "Failed to reset device.\n");
+
+    hr = IDirect3DDevice8_GetBackBuffer(device, 0, D3DBACKBUFFER_TYPE_MONO, &rt);
+    ok(SUCCEEDED(hr), "Failed to get back buffer, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_GetRenderTarget(device, &surface);
+    ok(SUCCEEDED(hr), "Failed to get render target surface, hr %#x.\n", hr);
+    ok(surface == rt, "Got unexpected surface %p for render target.\n", surface);
+    IDirect3DSurface8_Release(surface);
+    IDirect3DSurface8_Release(rt);
+
+    ref = IDirect3DDevice8_Release(device);
+    ok(ref == 0, "The device was not properly freed: refcount %u.\n", ref);
+
+done:
+    IDirect3D8_Release(d3d8);
+    DestroyWindow(window);
+}
+
 START_TEST(device)
 {
     HMODULE d3d8_handle = LoadLibraryA( "d3d8.dll" );
@@ -3217,6 +3281,7 @@ START_TEST(device)
         test_wrong_shader();
         test_mode_change();
         test_device_window_reset();
+        test_reset_resources();
         depth_blit_test();
     }
     UnregisterClassA("d3d8_test_wc", GetModuleHandleA(NULL));
