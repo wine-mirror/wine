@@ -5254,6 +5254,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     TRACE("device %p, swapchain_desc %p.\n", device, swapchain_desc);
 
     stateblock_unbind_resources(device->stateBlock);
+    wined3d_device_set_depth_stencil(device, NULL);
 
     if (device->onscreen_depth_stencil)
     {
@@ -5362,8 +5363,6 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     /* Reset the depth stencil */
     if (swapchain_desc->enable_auto_depth_stencil)
         wined3d_device_set_depth_stencil(device, device->auto_depth_stencil);
-    else
-        wined3d_device_set_depth_stencil(device, NULL);
 
     TRACE("Resetting stateblock\n");
     wined3d_stateblock_decref(device->updateStateBlock);
