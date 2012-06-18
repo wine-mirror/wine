@@ -872,7 +872,7 @@ static DWORD CALLBACK serverThreadMain5(LPVOID arg)
         }
         ok(completion_called == 1, "completion routine called %i times\n", completion_called);
         ok(completion_errorcode == ERROR_SUCCESS, "completion routine got error %d\n", completion_errorcode);
-        ok(completion_num_bytes != 0, "read 0 bytes");
+        ok(completion_num_bytes != 0, "read 0 bytes\n");
         ok(completion_lpoverlapped == &oOverlap, "got wrong overlapped pointer %p\n", completion_lpoverlapped);
         readden = completion_num_bytes;
         trace("Server done reading.\n");
