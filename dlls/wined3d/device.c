@@ -5249,11 +5249,26 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     struct wined3d_display_mode mode;
     BOOL DisplayModeChanged = FALSE;
     BOOL update_desc = FALSE;
+    unsigned int i;
     HRESULT hr;
 
     TRACE("device %p, swapchain_desc %p.\n", device, swapchain_desc);
 
+    if (FAILED(hr = wined3d_device_get_swapchain(device, 0, &swapchain)))
+    {
+        ERR("Failed to get the first implicit swapchain.\n");
+        return hr;
+    }
+
     stateblock_unbind_resources(device->stateBlock);
+    if (swapchain->back_buffers && swapchain->back_buffers[0])
+        wined3d_device_set_render_target(device, 0, swapchain->back_buffers[0], FALSE);
+    else
+        wined3d_device_set_render_target(device, 0, swapchain->front_buffer, FALSE);
+    for (i = 1; i < device->adapter->gl_info.limits.buffers; ++i)
+    {
+        wined3d_device_set_render_target(device, i, NULL, FALSE);
+    }
     wined3d_device_set_depth_stencil(device, NULL);
 
     if (device->onscreen_depth_stencil)
@@ -5266,14 +5281,10 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     {
         TRACE("Enumerating resource %p.\n", resource);
         if (FAILED(hr = callback(resource)))
+        {
+            wined3d_swapchain_decref(swapchain);
             return hr;
-    }
-
-    hr = wined3d_device_get_swapchain(device, 0, &swapchain);
-    if (FAILED(hr))
-    {
-        ERR("Failed to get the first implicit swapchain\n");
-        return hr;
+        }
     }
 
     if (!is_display_mode_supported(device, swapchain_desc))
