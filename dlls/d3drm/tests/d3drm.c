@@ -961,6 +961,7 @@ static void test_Viewport(void)
     IDirectDrawClipper_Release(pClipper);
 
     IDirect3DRM_Release(pD3DRM);
+    DestroyWindow(window);
 }
 
 static void test_Light(void)
