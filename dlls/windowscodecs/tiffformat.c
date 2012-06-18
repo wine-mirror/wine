@@ -440,12 +440,6 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
     {
         decode_info->tiled = 1;
 
-        if (!ret)
-        {
-            WARN("missing tile width\n");
-            return E_FAIL;
-        }
-
         ret = pTIFFGetField(tiff, TIFFTAG_TILELENGTH, &decode_info->tile_height);
         if (!ret)
         {
