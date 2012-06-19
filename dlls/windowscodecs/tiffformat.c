@@ -58,9 +58,10 @@ static void *libtiff_handle;
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
 MAKE_FUNCPTR(TIFFClientOpen);
 MAKE_FUNCPTR(TIFFClose);
-MAKE_FUNCPTR(TIFFNumberOfDirectories);
+MAKE_FUNCPTR(TIFFCurrentDirOffset);
 MAKE_FUNCPTR(TIFFGetField);
 MAKE_FUNCPTR(TIFFIsByteSwapped);
+MAKE_FUNCPTR(TIFFNumberOfDirectories);
 MAKE_FUNCPTR(TIFFReadDirectory);
 MAKE_FUNCPTR(TIFFReadEncodedStrip);
 MAKE_FUNCPTR(TIFFReadEncodedTile);
@@ -89,9 +90,10 @@ static void *load_libtiff(void)
     }
         LOAD_FUNCPTR(TIFFClientOpen);
         LOAD_FUNCPTR(TIFFClose);
-        LOAD_FUNCPTR(TIFFNumberOfDirectories);
+        LOAD_FUNCPTR(TIFFCurrentDirOffset);
         LOAD_FUNCPTR(TIFFGetField);
         LOAD_FUNCPTR(TIFFIsByteSwapped);
+        LOAD_FUNCPTR(TIFFNumberOfDirectories);
         LOAD_FUNCPTR(TIFFReadDirectory);
         LOAD_FUNCPTR(TIFFReadEncodedStrip);
         LOAD_FUNCPTR(TIFFReadEncodedTile);
@@ -1133,15 +1135,76 @@ static HRESULT WINAPI TiffFrameDecode_Block_GetContainerFormat(IWICMetadataBlock
 static HRESULT WINAPI TiffFrameDecode_Block_GetCount(IWICMetadataBlockReader *iface,
     UINT *count)
 {
-    FIXME("(%p,%p): stub\n", iface, count);
-    return E_NOTIMPL;
+    TRACE("%p,%p\n", iface, count);
+
+    if (!count) return E_INVALIDARG;
+
+    *count = 1;
+    return S_OK;
+}
+
+static HRESULT create_metadata_reader(TiffFrameDecode *This, IWICMetadataReader **reader)
+{
+    HRESULT hr;
+    LARGE_INTEGER dir_offset;
+    IWICMetadataReader *metadata_reader;
+    IWICPersistStream *persist;
+
+    /* FIXME: Use IWICComponentFactory_CreateMetadataReader once it's implemented */
+
+    hr = CoCreateInstance(&CLSID_WICIfdMetadataReader, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IWICMetadataReader, (void **)&metadata_reader);
+    if (FAILED(hr)) return hr;
+
+    hr = IWICMetadataReader_QueryInterface(metadata_reader, &IID_IWICPersistStream, (void **)&persist);
+    if (FAILED(hr))
+    {
+        IWICMetadataReader_Release(metadata_reader);
+        return hr;
+    }
+
+    EnterCriticalSection(&This->parent->lock);
+
+    dir_offset.QuadPart = pTIFFCurrentDirOffset(This->parent->tiff);
+    hr = IStream_Seek(This->parent->stream, dir_offset, STREAM_SEEK_SET, NULL);
+    if (SUCCEEDED(hr))
+    {
+        BOOL byte_swapped = pTIFFIsByteSwapped(This->parent->tiff);
+#ifdef WORDS_BIGENDIAN
+        DWORD persist_options = byte_swapped ? WICPersistOptionsLittleEndian : WICPersistOptionsBigEndian;
+#else
+        DWORD persist_options = byte_swapped ? WICPersistOptionsBigEndian : WICPersistOptionsLittleEndian;
+#endif
+        persist_options |= WICPersistOptionsNoCacheStream;
+        hr = IWICPersistStream_LoadEx(persist, This->parent->stream, NULL, persist_options);
+        if (FAILED(hr))
+            ERR("IWICPersistStream_LoadEx error %#x\n", hr);
+    }
+
+    LeaveCriticalSection(&This->parent->lock);
+
+    IWICPersistStream_Release(persist);
+
+    if (FAILED(hr))
+    {
+        IWICMetadataReader_Release(metadata_reader);
+        return hr;
+    }
+
+    *reader = metadata_reader;
+    return S_OK;
 }
 
 static HRESULT WINAPI TiffFrameDecode_Block_GetReaderByIndex(IWICMetadataBlockReader *iface,
     UINT index, IWICMetadataReader **reader)
 {
-    FIXME("(%p,%u,%p): stub\n", iface, index, reader);
-    return E_NOTIMPL;
+    TiffFrameDecode *This = impl_from_IWICMetadataBlockReader(iface);
+
+    TRACE("(%p,%u,%p)\n", iface, index, reader);
+
+    if (!reader || index != 0) return E_INVALIDARG;
+
+    return create_metadata_reader(This, reader);
 }
 
 static HRESULT WINAPI TiffFrameDecode_Block_GetEnumerator(IWICMetadataBlockReader *iface,
