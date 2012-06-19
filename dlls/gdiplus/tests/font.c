@@ -105,6 +105,11 @@ static void test_logfont(void)
     memset(&lfa, 0, sizeof(LOGFONTA));
     memset(&lfa2, 0xff, sizeof(LOGFONTA));
 
+    lstrcpyA(lfa.lfFaceName, "Nonexistent font");
+    stat = GdipCreateFontFromLogfontA(hdc, &lfa, &font);
+    ok(stat == NotTrueTypeFont || broken(stat == FileNotFound), /* before XP */
+       "expected NotTrueTypeFont, got %d\n", stat);
+
     /* empty FaceName */
     lfa.lfFaceName[0] = 0;
     stat = GdipCreateFontFromLogfontA(hdc, &lfa, &font);
