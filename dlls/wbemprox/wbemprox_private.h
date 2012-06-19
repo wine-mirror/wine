@@ -21,10 +21,13 @@
 
 #define SIZEOF(array) (sizeof(array)/sizeof((array)[0]))
 
+#define COL_TYPE_MASK    0x0000ffff
+#define COL_FLAG_DYNAMIC 0x00010000
+
 struct column
 {
     const WCHAR *name;
-    CIMTYPE_ENUMERATION type;
+    UINT type;
 };
 
 struct table

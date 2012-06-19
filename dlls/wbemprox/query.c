@@ -48,7 +48,7 @@ static UINT get_column_size( const struct table *table, UINT column )
 {
     if (table->columns[column].type & CIM_FLAG_ARRAY) return sizeof(void *);
 
-    switch (table->columns[column].type)
+    switch (table->columns[column].type & COL_TYPE_MASK)
     {
     case CIM_SINT16:
     case CIM_UINT16:
@@ -60,7 +60,7 @@ static UINT get_column_size( const struct table *table, UINT column )
     case CIM_STRING:
         return sizeof(WCHAR *);
     default:
-        ERR("unkown column type %u\n", table->columns[column].type);
+        ERR("unkown column type %u\n", table->columns[column].type & COL_TYPE_MASK);
         break;
     }
     return sizeof(INT32);
@@ -92,7 +92,7 @@ static HRESULT get_value( const struct table *table, UINT row, UINT column, INT_
         *val = (INT_PTR)*(const void **)ptr;
         return S_OK;
     }
-    switch (table->columns[column].type)
+    switch (table->columns[column].type & COL_TYPE_MASK)
     {
     case CIM_DATETIME:
     case CIM_STRING:
@@ -111,7 +111,7 @@ static HRESULT get_value( const struct table *table, UINT row, UINT column, INT_
         *val = *(const UINT32 *)ptr;
         break;
     default:
-        ERR("invalid column type %u\n", table->columns[column].type);
+        ERR("invalid column type %u\n", table->columns[column].type & COL_TYPE_MASK);
         *val = 0;
         break;
     }
@@ -136,7 +136,7 @@ HRESULT create_view( const struct property *proplist, const WCHAR *class,
 
 static void clear_table( struct table *table )
 {
-    UINT i, j;
+    UINT i, j, type;
 
     if (!table->fill || !table->data) return;
 
@@ -144,9 +144,10 @@ static void clear_table( struct table *table )
     {
         for (j = 0; j < table->num_cols; j++)
         {
-            if (table->columns[j].type == CIM_STRING   ||
-                table->columns[j].type == CIM_DATETIME ||
-                (table->columns[j].type & CIM_FLAG_ARRAY))
+            if (!(table->columns[j].type & COL_FLAG_DYNAMIC)) continue;
+
+            type = table->columns[j].type & COL_TYPE_MASK;
+            if (type == CIM_STRING || type == CIM_DATETIME || (type & CIM_FLAG_ARRAY))
             {
                 void *ptr;
                 if (get_value( table, i, j, (INT_PTR *)&ptr ) == S_OK) heap_free( ptr );
@@ -399,7 +400,7 @@ HRESULT get_propval( const struct view *view, UINT index, const WCHAR *name, VAR
     hr = get_value( view->table, row, column, &val );
     if (hr != S_OK) return hr;
 
-    switch (view->table->columns[column].type)
+    switch (view->table->columns[column].type & COL_TYPE_MASK)
     {
     case CIM_STRING:
     case CIM_DATETIME:
@@ -410,7 +411,7 @@ HRESULT get_propval( const struct view *view, UINT index, const WCHAR *name, VAR
         ERR("unhandled column type %u\n", view->table->columns[column].type);
         return WBEM_E_FAILED;
     }
-    if (type) *type = view->table->columns[column].type;
+    if (type) *type = view->table->columns[column].type & COL_TYPE_MASK;
     return S_OK;
 }
 

@@ -74,8 +74,8 @@ static const struct column col_compsys[] =
 };
 static const struct column col_process[] =
 {
-    { prop_captionW,     CIM_STRING },
-    { prop_descriptionW, CIM_STRING },
+    { prop_captionW,     CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_descriptionW, CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_pprocessidW,  CIM_UINT32 },
     { prop_processidW,   CIM_UINT32 },
     { prop_threadcountW, CIM_UINT32 }
