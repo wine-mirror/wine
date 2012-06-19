@@ -312,7 +312,7 @@ static HRESULT WINAPI class_object_GetNames(
     LPCWSTR wszQualifierName,
     LONG lFlags,
     VARIANT *pQualifierVal,
-    SAFEARRAY *pNames )
+    SAFEARRAY **pNames )
 {
     FIXME("%p, %s, %08x, %p, %p\n", iface, debugstr_w(wszQualifierName), lFlags, pQualifierVal, pNames);
     return E_NOTIMPL;

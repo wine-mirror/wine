@@ -476,7 +476,7 @@ interface IWbemClassObject : IUnknown
         [in,string] LPCWSTR wszQualifierName,
         [in] long lFlags,
         [in] VARIANT *pQualifierVal,
-        [out] SAFEARRAY *pNames);
+        [out] SAFEARRAY **pNames);
 
     HRESULT BeginEnumeration(
         [in] long lEnumFlags);
