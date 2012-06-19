@@ -17,6 +17,8 @@
  */
 
 #define COBJMACROS
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 
 #include "config.h"
 #include <stdarg.h>
@@ -35,6 +37,8 @@ static const WCHAR class_biosW[] =
     {'W','i','n','3','2','_','B','I','O','S',0};
 static const WCHAR class_compsysW[] =
     {'W','i','n','3','2','_','C','o','m','p','u','t','e','r','S','y','s','t','e','m',0};
+static const WCHAR class_osW[] =
+    {'W','i','n','3','2','_','O','p','e','r','a','t','i','n','g','S','y','s','t','e','m',0};
 static const WCHAR class_processW[] =
     {'W','i','n','3','2','_','P','r','o','c','e','s','s',0};
 static const WCHAR class_processorW[] =
@@ -48,6 +52,8 @@ static const WCHAR prop_manufacturerW[] =
     {'M','a','n','u','f','a','c','t','u','r','e','r',0};
 static const WCHAR prop_modelW[] =
     {'M','o','d','e','l',0};
+static const WCHAR prop_osarchitectureW[] =
+    {'O','S','A','r','c','h','i','t','e','c','t','u','r','e',0};
 static const WCHAR prop_pprocessidW[] =
     {'P','a','r','e','n','t','P','r','o','c','e','s','s','I','D',0};
 static const WCHAR prop_processidW[] =
@@ -71,6 +77,11 @@ static const struct column col_compsys[] =
     { prop_descriptionW,  CIM_STRING },
     { prop_manufacturerW, CIM_STRING },
     { prop_modelW,        CIM_STRING }
+};
+static const struct column col_os[] =
+{
+    { prop_captionW,        CIM_STRING },
+    { prop_osarchitectureW, CIM_STRING }
 };
 static const struct column col_process[] =
 {
@@ -99,6 +110,12 @@ static const WCHAR compsys_manufacturerW[] =
     {'T','h','e',' ','W','i','n','e',' ','P','r','o','j','e','c','t',0};
 static const WCHAR compsys_modelW[] =
     {'W','i','n','e',0};
+static const WCHAR os_captionW[] =
+    {'W','i','n','e',0};
+static const WCHAR os_32bitW[] =
+    {'3','2','-','b','i','t',0};
+static const WCHAR os_64bitW[] =
+    {'6','4','-','b','i','t',0};
 static const WCHAR processor_manufacturerW[] =
     {'G','e','n','u','i','n','e','I','n','t','e','l',0};
 
@@ -115,6 +132,11 @@ struct record_computersystem
     const WCHAR *description;
     const WCHAR *manufacturer;
     const WCHAR *model;
+};
+struct record_operatingsystem
+{
+    const WCHAR *caption;
+    const WCHAR *osarchitecture;
 };
 struct record_process
 {
@@ -183,10 +205,31 @@ done:
     CloseHandle( snap );
 }
 
+static void fill_os( struct table *table )
+{
+    struct record_operatingsystem *rec;
+    SYSTEM_INFO info;
+
+    if (!(table->data = heap_alloc( sizeof(*rec) ))) return;
+
+    rec = (struct record_operatingsystem *)table->data;
+    rec->caption = os_captionW;
+
+    GetNativeSystemInfo( &info );
+    if (info.u.s.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
+        rec->osarchitecture = os_64bitW;
+    else
+        rec->osarchitecture = os_32bitW;
+
+    TRACE("created 1 row\n");
+    table->num_rows = 1;
+}
+
 static struct table classtable[] =
 {
     { class_biosW, SIZEOF(col_bios), col_bios, SIZEOF(data_bios), (BYTE *)data_bios, NULL },
     { class_compsysW, SIZEOF(col_compsys), col_compsys, SIZEOF(data_compsys), (BYTE *)data_compsys, NULL },
+    { class_osW, SIZEOF(col_os), col_os, 0, NULL, fill_os },
     { class_processW, SIZEOF(col_process), col_process, 0, NULL, fill_process },
     { class_processorW, SIZEOF(col_processor), col_processor, SIZEOF(data_processor), (BYTE *)data_processor, NULL }
 };
