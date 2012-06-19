@@ -33,6 +33,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(wbemprox);
 
 static const WCHAR class_biosW[] =
     {'W','i','n','3','2','_','B','I','O','S',0};
+static const WCHAR class_compsysW[] =
+    {'W','i','n','3','2','_','C','o','m','p','u','t','e','r','S','y','s','t','e','m',0};
 static const WCHAR class_processW[] =
     {'W','i','n','3','2','_','P','r','o','c','e','s','s',0};
 
@@ -42,6 +44,8 @@ static const WCHAR prop_descriptionW[] =
     {'D','e','s','c','r','i','p','t','i','o','n',0};
 static const WCHAR prop_manufacturerW[] =
     {'M','a','n','u','f','a','c','t','u','r','e','r',0};
+static const WCHAR prop_modelW[] =
+    {'M','o','d','e','l',0};
 static const WCHAR prop_pprocessidW[] =
     {'P','a','r','e','n','t','P','r','o','c','e','s','s','I','D',0};
 static const WCHAR prop_processidW[] =
@@ -60,6 +64,12 @@ static const struct column col_bios[] =
     { prop_releasedateW,  CIM_DATETIME },
     { prop_serialnumberW, CIM_STRING }
 };
+static const struct column col_compsys[] =
+{
+    { prop_descriptionW,  CIM_STRING },
+    { prop_manufacturerW, CIM_STRING },
+    { prop_modelW,        CIM_STRING }
+};
 static const struct column col_process[] =
 {
     { prop_captionW,     CIM_STRING },
@@ -77,6 +87,12 @@ static const WCHAR bios_releasedateW[] =
     {'2','0','1','2','0','6','0','8','0','0','0','0','0','0','.','0','0','0','0','0','0','+','0','0','0',0};
 static const WCHAR bios_serialnumberW[] =
     {'0',0};
+static const WCHAR compsys_descriptionW[] =
+    {'A','T','/','A','T',' ','C','O','M','P','A','T','I','B','L','E',0};
+static const WCHAR compsys_manufacturerW[] =
+    {'T','h','e',' ','W','i','n','e',' ','P','r','o','j','e','c','t',0};
+static const WCHAR compsys_modelW[] =
+    {'W','i','n','e',0};
 
 #include "pshpack1.h"
 struct record_bios
@@ -85,6 +101,12 @@ struct record_bios
     const WCHAR *manufacturer;
     const WCHAR *releasedate;
     const WCHAR *serialnumber;
+};
+struct record_computersystem
+{
+    const WCHAR *description;
+    const WCHAR *manufacturer;
+    const WCHAR *model;
 };
 struct record_process
 {
@@ -99,6 +121,10 @@ struct record_process
 static const struct record_bios data_bios[] =
 {
     { bios_descriptionW, bios_manufacturerW, bios_releasedateW, bios_serialnumberW }
+};
+static const struct record_computersystem data_compsys[] =
+{
+    { compsys_descriptionW, compsys_manufacturerW, compsys_modelW }
 };
 
 static void fill_process( struct table *table )
@@ -144,6 +170,7 @@ done:
 static struct table classtable[] =
 {
     { class_biosW, SIZEOF(col_bios), col_bios, SIZEOF(data_bios), (BYTE *)data_bios, NULL },
+    { class_compsysW, SIZEOF(col_compsys), col_compsys, SIZEOF(data_compsys), (BYTE *)data_compsys, NULL },
     { class_processW, SIZEOF(col_process), col_process, 0, NULL, fill_process }
 };
 
