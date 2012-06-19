@@ -3450,18 +3450,6 @@ msgstr "Test Joystick"
 msgid "Buttons"
 msgstr "Buttons"
 
-#: joy.rc:51
-msgid "X,Y"
-msgstr "X,Y"
-
-#: joy.rc:52
-msgid "Rx,Ry"
-msgstr "Rx,Ry"
-
-#: joy.rc:53
-msgid "Z, Rz"
-msgstr "Z, Rz"
-
 #: joy.rc:58
 msgid "Test Force Feedback"
 msgstr "Test Force Feedback"
