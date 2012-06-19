@@ -1970,7 +1970,7 @@ static void test_GdipDrawString(void)
     expect(Ok, status);
 
     status = GdipCreateFontFromLogfontA(hdc, &logfont, &fnt);
-    if (status == FileNotFound)
+    if (status == NotTrueTypeFont || status == FileNotFound)
     {
         skip("Arial not installed.\n");
         return;
