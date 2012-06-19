@@ -65,6 +65,7 @@ typedef VOID (*ShapeCharGlyphPropProc)( HDC , ScriptCache*, SCRIPT_ANALYSIS*, co
 
 static void ShapeCharGlyphProp_Default( HDC hdc, ScriptCache* psc, SCRIPT_ANALYSIS* psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD* pwLogClust, SCRIPT_CHARPROP* pCharProp, SCRIPT_GLYPHPROP* pGlyphProp);
 static void ShapeCharGlyphProp_Arabic( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP* pCharProp, SCRIPT_GLYPHPROP *pGlyphProp );
+static void ShapeCharGlyphProp_Hebrew( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP* pCharProp, SCRIPT_GLYPHPROP *pGlyphProp );
 static void ShapeCharGlyphProp_Thai( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp );
 static void ShapeCharGlyphProp_None( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp );
 static void ShapeCharGlyphProp_Tibet( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp );
@@ -398,7 +399,7 @@ static const ScriptShapeData ShapingData[] =
     {{ latin_features, 2}, NULL, 0, NULL, NULL},
     {{ arabic_features, 6}, required_arabic_features, 0, ContextualShape_Arabic, ShapeCharGlyphProp_Arabic},
     {{ arabic_features, 6}, required_arabic_features, 0, ContextualShape_Arabic, ShapeCharGlyphProp_Arabic},
-    {{ hebrew_features, 1}, NULL, 0, ContextualShape_Hebrew, NULL},
+    {{ hebrew_features, 1}, NULL, 0, ContextualShape_Hebrew, ShapeCharGlyphProp_Hebrew},
     {{ syriac_features, 4}, required_syriac_features, 0, ContextualShape_Syriac, ShapeCharGlyphProp_None},
     {{ arabic_features, 6}, required_arabic_features, 0, ContextualShape_Arabic, ShapeCharGlyphProp_Arabic},
     {{ NULL, 0}, NULL, 0, ContextualShape_Thaana, ShapeCharGlyphProp_None},
@@ -2834,6 +2835,36 @@ static void ShapeCharGlyphProp_Arabic( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSI
     OpenType_GDEF_UpdateGlyphProps(hdc, psc, pwGlyphs, cGlyphs, pwLogClust, cChars, pGlyphProp);
     UpdateClustersFromGlyphProp(cGlyphs, cChars, pwLogClust, pGlyphProp);
     HeapFree(GetProcessHeap(),0,spaces);
+}
+
+static void ShapeCharGlyphProp_Hebrew( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp )
+{
+    int i,k;
+
+    for (i = 0; i < cGlyphs; i++)
+    {
+        int char_index[20];
+        int char_count = 0;
+
+        k = USP10_FindGlyphInLogClust(pwLogClust, cChars, i);
+        if (k>=0)
+        {
+            for (; k < cChars && pwLogClust[k] == i; k++)
+                char_index[char_count++] = k;
+        }
+
+        if (char_count == 0)
+            pGlyphProp[i].sva.uJustification = SCRIPT_JUSTIFY_NONE;
+        else
+        {
+            pGlyphProp[i].sva.uJustification = SCRIPT_JUSTIFY_CHARACTER;
+            if (char_count ==1 && pwcChars[char_index[0]] == 0x0020)  /* space */
+                pCharProp[char_index[0]].fCanGlyphAlone = 1;
+        }
+    }
+
+    OpenType_GDEF_UpdateGlyphProps(hdc, psc, pwGlyphs, cGlyphs, pwLogClust, cChars, pGlyphProp);
+    UpdateClustersFromGlyphProp(cGlyphs, cChars, pwLogClust, pGlyphProp);
 }
 
 static void ShapeCharGlyphProp_Thai( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp )
