@@ -99,7 +99,7 @@ static HRESULT WINAPI wbem_locator_ConnectServer(
 {
     HRESULT hr;
 
-    FIXME("%p, %s, %s, %s, %s, 0x%08x, %s, %p, %p)\n", iface, debugstr_w(NetworkResource), debugstr_w(User),
+    TRACE("%p, %s, %s, %s, %s, 0x%08x, %s, %p, %p)\n", iface, debugstr_w(NetworkResource), debugstr_w(User),
           debugstr_w(Password), debugstr_w(Locale), SecurityFlags, debugstr_w(Authority), pCtx, ppNamespace);
 
     if (((NetworkResource[0] == '\\' && NetworkResource[1] == '\\') ||
@@ -108,6 +108,13 @@ static HRESULT WINAPI wbem_locator_ConnectServer(
         FIXME("remote computer not supported\n");
         return WBEM_E_TRANSPORT_FAILURE;
     }
+    if (User || Password || Authority)
+        FIXME("authentication not supported\n");
+    if (Locale)
+        FIXME("specific locale not supported\n");
+    if (SecurityFlags)
+        FIXME("unsupported flags\n");
+
     hr = WbemServices_create( NULL, (void **)ppNamespace );
     if (SUCCEEDED( hr ))
         return WBEM_NO_ERROR;
