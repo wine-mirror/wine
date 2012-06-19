@@ -784,7 +784,7 @@ int __cdecl _Strcoll(const char *first1, const char *last1, const char *first2,
         lcid = coll->handle;
     else
         lcid = ___lc_handle_func()[LC_COLLATE];
-    return CompareStringA(lcid, 0, first1, last1-first1, first2, last2-first2)-2;
+    return CompareStringA(lcid, 0, first1, last1-first1, first2, last2-first2)-CSTR_EQUAL;
 }
 
 /* ?do_compare@?$collate@D@std@@MBEHPBD000@Z */
@@ -1045,7 +1045,7 @@ int __cdecl _Wcscoll(const wchar_t *first1, const wchar_t *last1, const wchar_t 
         lcid = coll->handle;
     else
         lcid = ___lc_handle_func()[LC_COLLATE];
-    return CompareStringW(lcid, 0, first1, last1-first1, first2, last2-first2)-2;
+    return CompareStringW(lcid, 0, first1, last1-first1, first2, last2-first2)-CSTR_EQUAL;
 }
 
 /* ?do_compare@?$collate@_W@std@@MBEHPB_W000@Z */
