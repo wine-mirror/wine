@@ -413,3 +413,25 @@ HRESULT get_propval( const struct view *view, UINT index, const WCHAR *name, VAR
     if (type) *type = view->table->columns[column].type;
     return S_OK;
 }
+
+HRESULT get_properties( const struct view *view, SAFEARRAY **props )
+{
+    SAFEARRAY *sa;
+    BSTR str;
+    LONG i;
+
+    if (!(sa = SafeArrayCreateVector( VT_BSTR, 0, view->table->num_cols ))) return E_OUTOFMEMORY;
+
+    for (i = 0; i < view->table->num_cols; i++)
+    {
+        str = SysAllocString( view->table->columns[i].name );
+        if (!str || SafeArrayPutElement( sa, &i, str ) != S_OK)
+        {
+            SysFreeString( str );
+            SafeArrayDestroy( sa );
+            return E_OUTOFMEMORY;
+        }
+    }
+    *props = sa;
+    return S_OK;
+}

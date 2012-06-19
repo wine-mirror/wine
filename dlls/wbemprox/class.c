@@ -314,8 +314,22 @@ static HRESULT WINAPI class_object_GetNames(
     VARIANT *pQualifierVal,
     SAFEARRAY **pNames )
 {
-    FIXME("%p, %s, %08x, %p, %p\n", iface, debugstr_w(wszQualifierName), lFlags, pQualifierVal, pNames);
-    return E_NOTIMPL;
+    struct class_object *co = impl_from_IWbemClassObject( iface );
+    struct enum_class_object *ec = impl_from_IEnumWbemClassObject( co->iter );
+
+    TRACE("%p, %s, %08x, %p, %p\n", iface, debugstr_w(wszQualifierName), lFlags, pQualifierVal, pNames);
+
+    if (wszQualifierName || pQualifierVal)
+    {
+        FIXME("qualifier not supported\n");
+        return E_NOTIMPL;
+    }
+    if (lFlags != WBEM_FLAG_ALWAYS)
+    {
+        FIXME("flags %08x not supported\n", lFlags);
+        return E_NOTIMPL;
+    }
+    return get_properties( ec->query->view, pNames );
 }
 
 static HRESULT WINAPI class_object_BeginEnumeration(
