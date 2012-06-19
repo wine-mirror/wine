@@ -2583,7 +2583,7 @@ static const PixelFormat wic_gdip_formats[] = {
     PixelFormat32bppPARGB,
 };
 
-static GpStatus decode_image_wic(IStream* stream, REFCLSID clsid, GpImage **image)
+static GpStatus decode_image_wic(IStream* stream, REFCLSID clsid, UINT active_frame, GpImage **image)
 {
     GpStatus status=Ok;
     GpBitmap *bitmap;
@@ -2609,8 +2609,7 @@ static GpStatus decode_image_wic(IStream* stream, REFCLSID clsid, GpImage **imag
     if (SUCCEEDED(hr))
     {
         IWICBitmapDecoder_GetFrameCount(decoder, &frame_count);
-        /* FIXME: set current frame */
-        hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame);
+        hr = IWICBitmapDecoder_GetFrame(decoder, active_frame, &frame);
     }
 
     if (SUCCEEDED(hr)) /* got frame */
@@ -2704,23 +2703,23 @@ end:
         /* Native GDI+ used to be smarter, but since Win7 it just sets these flags. */
         bitmap->image.flags |= ImageFlagsReadOnly|ImageFlagsHasRealPixelSize|ImageFlagsHasRealDPI|ImageFlagsColorSpaceRGB;
         bitmap->image.frame_count = frame_count;
-        bitmap->image.current_frame = 0;
+        bitmap->image.current_frame = active_frame;
     }
 
     return status;
 }
 
-static GpStatus decode_image_icon(IStream* stream, REFCLSID clsid, GpImage **image)
+static GpStatus decode_image_icon(IStream* stream, REFCLSID clsid, UINT active_frame, GpImage **image)
 {
-    return decode_image_wic(stream, &CLSID_WICIcoDecoder, image);
+    return decode_image_wic(stream, &CLSID_WICIcoDecoder, active_frame, image);
 }
 
-static GpStatus decode_image_bmp(IStream* stream, REFCLSID clsid, GpImage **image)
+static GpStatus decode_image_bmp(IStream* stream, REFCLSID clsid, UINT active_frame, GpImage **image)
 {
     GpStatus status;
     GpBitmap* bitmap;
 
-    status = decode_image_wic(stream, &CLSID_WICBmpDecoder, image);
+    status = decode_image_wic(stream, &CLSID_WICBmpDecoder, active_frame, image);
 
     bitmap = (GpBitmap*)*image;
 
@@ -2733,27 +2732,27 @@ static GpStatus decode_image_bmp(IStream* stream, REFCLSID clsid, GpImage **imag
     return status;
 }
 
-static GpStatus decode_image_jpeg(IStream* stream, REFCLSID clsid, GpImage **image)
+static GpStatus decode_image_jpeg(IStream* stream, REFCLSID clsid, UINT active_frame, GpImage **image)
 {
-    return decode_image_wic(stream, &CLSID_WICJpegDecoder, image);
+    return decode_image_wic(stream, &CLSID_WICJpegDecoder, active_frame, image);
 }
 
-static GpStatus decode_image_png(IStream* stream, REFCLSID clsid, GpImage **image)
+static GpStatus decode_image_png(IStream* stream, REFCLSID clsid, UINT active_frame, GpImage **image)
 {
-    return decode_image_wic(stream, &CLSID_WICPngDecoder, image);
+    return decode_image_wic(stream, &CLSID_WICPngDecoder, active_frame, image);
 }
 
-static GpStatus decode_image_gif(IStream* stream, REFCLSID clsid, GpImage **image)
+static GpStatus decode_image_gif(IStream* stream, REFCLSID clsid, UINT active_frame, GpImage **image)
 {
-    return decode_image_wic(stream, &CLSID_WICGifDecoder, image);
+    return decode_image_wic(stream, &CLSID_WICGifDecoder, active_frame, image);
 }
 
-static GpStatus decode_image_tiff(IStream* stream, REFCLSID clsid, GpImage **image)
+static GpStatus decode_image_tiff(IStream* stream, REFCLSID clsid, UINT active_frame, GpImage **image)
 {
-    return decode_image_wic(stream, &CLSID_WICTiffDecoder, image);
+    return decode_image_wic(stream, &CLSID_WICTiffDecoder, active_frame, image);
 }
 
-static GpStatus decode_image_olepicture_metafile(IStream* stream, REFCLSID clsid, GpImage **image)
+static GpStatus decode_image_olepicture_metafile(IStream* stream, REFCLSID clsid, UINT active_frame, GpImage **image)
 {
     IPicture *pic;
 
@@ -2789,7 +2788,7 @@ static GpStatus decode_image_olepicture_metafile(IStream* stream, REFCLSID clsid
 typedef GpStatus (*encode_image_func)(GpImage *image, IStream* stream,
     GDIPCONST CLSID* clsid, GDIPCONST EncoderParameters* params);
 
-typedef GpStatus (*decode_image_func)(IStream *stream, REFCLSID clsid, GpImage** image);
+typedef GpStatus (*decode_image_func)(IStream *stream, REFCLSID clsid, UINT active_frame, GpImage **image);
 
 typedef struct image_codec {
     ImageCodecInfo info;
@@ -2875,7 +2874,7 @@ GpStatus WINGDIPAPI GdipLoadImageFromStream(IStream* stream, GpImage **image)
     if (FAILED(hr)) return hresult_to_status(hr);
 
     /* call on the image decoder to do the real work */
-    stat = codec->decode_func(stream, &codec->info.Clsid, image);
+    stat = codec->decode_func(stream, &codec->info.Clsid, 0, image);
 
     /* take note of the original data format */
     if (stat == Ok)
