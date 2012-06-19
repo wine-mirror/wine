@@ -260,7 +260,8 @@ struct GpAdustableArrowCap{
 };
 
 struct GpImage{
-    IPicture* picture;
+    IPicture *picture;
+    IStream *stream; /* a copy of the source stream */
     ImageType type;
     GUID format;
     UINT flags;

@@ -1779,6 +1779,7 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
     (*bitmap)->height = height;
     (*bitmap)->format = format;
     (*bitmap)->image.picture = NULL;
+    (*bitmap)->image.stream = NULL;
     (*bitmap)->hbitmap = hbitmap;
     (*bitmap)->hdc = NULL;
     (*bitmap)->bits = bits;
@@ -2029,6 +2030,8 @@ GpStatus WINGDIPAPI GdipDisposeImage(GpImage *image)
     }
     if (image->picture)
         IPicture_Release(image->picture);
+    if (image->stream)
+        IStream_Release(image->stream);
     GdipFree(image->palette_entries);
     image->type = ~0;
     GdipFree(image);
@@ -2704,6 +2707,7 @@ end:
         bitmap->image.flags |= ImageFlagsReadOnly|ImageFlagsHasRealPixelSize|ImageFlagsHasRealDPI|ImageFlagsColorSpaceRGB;
         bitmap->image.frame_count = frame_count;
         bitmap->image.current_frame = active_frame;
+        bitmap->image.stream = stream;
     }
 
     return status;
@@ -2771,6 +2775,7 @@ static GpStatus decode_image_olepicture_metafile(IStream* stream, REFCLSID clsid
     *image = GdipAlloc(sizeof(GpMetafile));
     if(!*image) return OutOfMemory;
     (*image)->type = ImageTypeMetafile;
+    (*image)->stream = stream;
     (*image)->picture = pic;
     (*image)->flags   = ImageFlagsNone;
     (*image)->frame_count = 1;
@@ -2857,21 +2862,42 @@ static GpStatus get_decoder_info(IStream* stream, const struct image_codec **res
     return GenericError;
 }
 
-GpStatus WINGDIPAPI GdipLoadImageFromStream(IStream* stream, GpImage **image)
+GpStatus WINGDIPAPI GdipLoadImageFromStream(IStream *source, GpImage **image)
 {
     GpStatus stat;
     LARGE_INTEGER seek;
     HRESULT hr;
     const struct image_codec *codec=NULL;
+    IStream *stream;
+
+    hr = IStream_Clone(source, &stream);
+    if (FAILED(hr))
+    {
+        STATSTG statstg;
+
+        hr = IStream_Stat(source, &statstg, STATFLAG_NOOPEN);
+        if (FAILED(hr)) return hresult_to_status(hr);
+
+        stat = GdipCreateStreamOnFile(statstg.pwcsName, GENERIC_READ, &stream);
+        if(stat != Ok) return stat;
+    }
 
     /* choose an appropriate image decoder */
     stat = get_decoder_info(stream, &codec);
-    if (stat != Ok) return stat;
+    if (stat != Ok)
+    {
+        IStream_Release(stream);
+        return stat;
+    }
 
     /* seek to the start of the stream */
     seek.QuadPart = 0;
     hr = IStream_Seek(stream, seek, STREAM_SEEK_SET, NULL);
-    if (FAILED(hr)) return hresult_to_status(hr);
+    if (FAILED(hr))
+    {
+        IStream_Release(stream);
+        return hresult_to_status(hr);
+    }
 
     /* call on the image decoder to do the real work */
     stat = codec->decode_func(stream, &codec->info.Clsid, 0, image);
@@ -2880,8 +2906,10 @@ GpStatus WINGDIPAPI GdipLoadImageFromStream(IStream* stream, GpImage **image)
     if (stat == Ok)
     {
         memcpy(&(*image)->format, &codec->info.FormatID, sizeof(GUID));
+        return Ok;
     }
 
+    IStream_Release(stream);
     return stat;
 }
 
