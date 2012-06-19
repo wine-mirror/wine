@@ -2605,7 +2605,7 @@ static GpStatus decode_image_wic(IStream* stream, REFCLSID clsid, GpImage **imag
         &IID_IWICBitmapDecoder, (void**)&decoder);
     if (FAILED(hr)) goto end;
 
-    hr = IWICBitmapDecoder_Initialize(decoder, (IStream*)stream, WICDecodeMetadataCacheOnLoad);
+    hr = IWICBitmapDecoder_Initialize(decoder, stream, WICDecodeMetadataCacheOnLoad);
     if (SUCCEEDED(hr))
     {
         IWICBitmapDecoder_GetFrameCount(decoder, &frame_count);
