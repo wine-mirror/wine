@@ -432,14 +432,14 @@ static void test_SavingImages(void)
     if (stat != Ok) goto cleanup;
 
     stat = GdipSaveImageToFile((GpImage*)bm, filename, &codecs[0].Clsid, 0);
-    expect(stat, Ok);
+    expect(Ok, stat);
 
     GdipDisposeImage((GpImage*)bm);
     bm = 0;
 
     /* re-load and check image stats */
     stat = GdipLoadImageFromFile(filename, (GpImage**)&bm);
-    expect(stat, Ok);
+    expect(Ok, stat);
     if (stat != Ok) goto cleanup;
 
     stat = GdipGetImageDimension((GpImage*)bm, &w, &h);
