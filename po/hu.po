@@ -13703,6 +13703,24 @@ msgstr "Nem található richedit megvalósítás... Megszakítás"
 msgid "Help topics: "
 msgstr "Súgó témák: "
 
+#: wmic.rc:25
+#, fuzzy
+#| msgid "Error: Invalid command line parameters\n"
+msgid "Error: Command line not supported\n"
+msgstr "Hiba: Érvénytelen parancssor paraméterek\n"
+
+#: wmic.rc:26
+#, fuzzy
+#| msgid "Property set not found.\n"
+msgid "Error: Alias not found\n"
+msgstr "Beállítás nem található.\n"
+
+#: wmic.rc:27
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "Error: Invalid query\n"
+msgstr "Hiba: Érvénytelen kulcsnév\n"
+
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&Új...\tCtrl+N"

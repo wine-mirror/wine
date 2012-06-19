@@ -13698,6 +13698,24 @@ msgstr ""
 msgid "Help topics: "
 msgstr "Tematy pomocy: "
 
+#: wmic.rc:25
+#, fuzzy
+#| msgid "Error: Invalid command line parameters\n"
+msgid "Error: Command line not supported\n"
+msgstr "Błąd: Niewłaściwe parametry wiersza poleceń\n"
+
+#: wmic.rc:26
+#, fuzzy
+#| msgid "Property set not found.\n"
+msgid "Error: Alias not found\n"
+msgstr "Nie znaleziono zestawu właściwości.\n"
+
+#: wmic.rc:27
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "Error: Invalid query\n"
+msgstr "Błąd: Niewłaściwa nazwa klucza\n"
+
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&Nowy...\tCtrl+N"

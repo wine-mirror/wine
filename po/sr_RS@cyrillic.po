@@ -13770,6 +13770,23 @@ msgstr ""
 msgid "Help topics: "
 msgstr ""
 
+#: wmic.rc:25
+#, fuzzy
+#| msgid "Error: Invalid command line parameters\n"
+msgid "Error: Command line not supported\n"
+msgstr ""
+"Грешка: унесени су непознати или неисправни параметри наредбене линије\n"
+
+#: wmic.rc:26
+#, fuzzy
+msgid "Error: Alias not found\n"
+msgstr "Датотека није пронађена.\n"
+
+#: wmic.rc:27
+#, fuzzy
+msgid "Error: Invalid query\n"
+msgstr "Неисправна синтакса.\n"
+
 #: wordpad.rc:28
 #, fuzzy
 msgid "&New...\tCtrl+N"

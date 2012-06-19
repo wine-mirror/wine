@@ -13131,6 +13131,24 @@ msgstr "找不到 richedit 的实现……终止"
 msgid "Help topics: "
 msgstr "帮助主题： "
 
+#: wmic.rc:25
+#, fuzzy
+#| msgid "Operation not supported.\n"
+msgid "Error: Command line not supported\n"
+msgstr "不支持此操作。\n"
+
+#: wmic.rc:26
+#, fuzzy
+#| msgid "Property set not found.\n"
+msgid "Error: Alias not found\n"
+msgstr "找不到属性集。\n"
+
+#: wmic.rc:27
+#, fuzzy
+#| msgid "Invalid query syntax.\n"
+msgid "Error: Invalid query\n"
+msgstr "请求语法无效。\n"
+
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "新建(&N)...\tCtrl+N"

@@ -13730,6 +13730,24 @@ msgstr "Die Richedit Implementation konnte nicht gefunden werden... Breche ab"
 msgid "Help topics: "
 msgstr "Hilfethemen: "
 
+#: wmic.rc:25
+#, fuzzy
+#| msgid "Error: Invalid command line parameters\n"
+msgid "Error: Command line not supported\n"
+msgstr "Fehler: Ungültige Befehlszeilenargumente\n"
+
+#: wmic.rc:26
+#, fuzzy
+#| msgid "Property set not found.\n"
+msgid "Error: Alias not found\n"
+msgstr "Eigenschaften nicht gefunden.\n"
+
+#: wmic.rc:27
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "Error: Invalid query\n"
+msgstr "Fehler: Ungültiger Schlüssel\n"
+
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&Neu...\tStrg+N"

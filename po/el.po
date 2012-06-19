@@ -13227,6 +13227,21 @@ msgstr ""
 msgid "Help topics: "
 msgstr ""
 
+#: wmic.rc:25
+#, fuzzy
+msgid "Error: Command line not supported\n"
+msgstr "Επιλογές.\n"
+
+#: wmic.rc:26
+#, fuzzy
+msgid "Error: Alias not found\n"
+msgstr "Το αρχείο δε βρέθηκε.\n"
+
+#: wmic.rc:27
+#, fuzzy
+msgid "Error: Invalid query\n"
+msgstr "Μη έγγυρος(οι) χαρακτήρας(ες) στο μονοπάτι.\n"
+
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr ""

@@ -13722,6 +13722,24 @@ msgstr "Ni mogoče najti knjižnice richedit ... Prekinjanje"
 msgid "Help topics: "
 msgstr "Teme pomoči: "
 
+#: wmic.rc:25
+#, fuzzy
+#| msgid "Error: Invalid command line parameters\n"
+msgid "Error: Command line not supported\n"
+msgstr "Napaka: neveljaven parameter v ukazni vrstici\n"
+
+#: wmic.rc:26
+#, fuzzy
+#| msgid "Property set not found.\n"
+msgid "Error: Alias not found\n"
+msgstr "Nastavljene lastnosti ni mogoče najti.\n"
+
+#: wmic.rc:27
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "Error: Invalid query\n"
+msgstr "Napaka: neveljavno ime ključa\n"
+
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&Nova ...\tCtrl+N"

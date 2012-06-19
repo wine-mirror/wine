@@ -13070,6 +13070,24 @@ msgstr "找不到 richedit... 終止"
 msgid "Help topics: "
 msgstr "說明主題："
 
+#: wmic.rc:25
+#, fuzzy
+#| msgid "Extended attributes not supported.\n"
+msgid "Error: Command line not supported\n"
+msgstr "不支援延伸屬性。\n"
+
+#: wmic.rc:26
+#, fuzzy
+#| msgid "Sector not found.\n"
+msgid "Error: Alias not found\n"
+msgstr "找不到磁區。\n"
+
+#: wmic.rc:27
+#, fuzzy
+#| msgid "Invalid key.\n"
+msgid "Error: Invalid query\n"
+msgstr "無效的機碼。\n"
+
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "新增(&N)...\tCtrl+N"

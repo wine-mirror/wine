@@ -13664,6 +13664,24 @@ msgstr "Nepavyko rasti RichEdit realizacijos... Nutraukiama"
 msgid "Help topics: "
 msgstr "Žinyno temos: "
 
+#: wmic.rc:25
+#, fuzzy
+#| msgid "Error: Invalid command line parameters\n"
+msgid "Error: Command line not supported\n"
+msgstr "Klaida: Netinkami komandos eilutės parametrai\n"
+
+#: wmic.rc:26
+#, fuzzy
+#| msgid "Property set not found.\n"
+msgid "Error: Alias not found\n"
+msgstr "Savybių aibė nerasta.\n"
+
+#: wmic.rc:27
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "Error: Invalid query\n"
+msgstr "Klaida: Netinkamas rakto vardas\n"
+
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&Naujas...\tVald+N"

@@ -13566,6 +13566,24 @@ msgstr "Kan inte hitta en implementation av richedit... Avslutar"
 msgid "Help topics: "
 msgstr "Hjälprubriker: "
 
+#: wmic.rc:25
+#, fuzzy
+#| msgid "Error: Invalid command line parameters\n"
+msgid "Error: Command line not supported\n"
+msgstr "Fel: ogiltiga kommandoradsparametrar\n"
+
+#: wmic.rc:26
+#, fuzzy
+#| msgid "Property set not found.\n"
+msgid "Error: Alias not found\n"
+msgstr "Egenskapsmängden hittades inte.\n"
+
+#: wmic.rc:27
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "Error: Invalid query\n"
+msgstr "Fel: ogiltigt nyckelnamn\n"
+
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&Nytt...\tCtrl+N"

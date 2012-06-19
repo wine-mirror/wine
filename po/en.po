@@ -13633,6 +13633,18 @@ msgstr "Cannot find a richedit implementation... Aborting"
 msgid "Help topics: "
 msgstr "Help topics: "
 
+#: wmic.rc:25
+msgid "Error: Command line not supported\n"
+msgstr "Error: Command line not supported\n"
+
+#: wmic.rc:26
+msgid "Error: Alias not found\n"
+msgstr "Error: Alias not found\n"
+
+#: wmic.rc:27
+msgid "Error: Invalid query\n"
+msgstr "Error: Invalid query\n"
+
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&New...\tCtrl+N"

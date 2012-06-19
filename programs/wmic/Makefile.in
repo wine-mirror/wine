@@ -1,7 +1,11 @@
 MODULE    = wmic.exe
 APPMODE   = -mconsole -municode
+IMPORTS   = oleaut32 ole32 user32
 
 C_SRCS = \
 	main.c
+
+RC_SRCS = wmic.rc
+PO_SRCS = wmic.rc
 
 @MAKE_PROG_RULES@

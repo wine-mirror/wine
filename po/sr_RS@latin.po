@@ -13911,6 +13911,23 @@ msgstr "Ne mogu naći richedit ubacen... Prekidam"
 msgid "Help topics: "
 msgstr "Teme pomoći: "
 
+#: wmic.rc:25
+#, fuzzy
+#| msgid "Error: Invalid command line parameters\n"
+msgid "Error: Command line not supported\n"
+msgstr ""
+"Greška: uneseni su nepoznati ili neispravni parametri naredbene linije\n"
+
+#: wmic.rc:26
+#, fuzzy
+msgid "Error: Alias not found\n"
+msgstr "Datoteka nije pronađena.\n"
+
+#: wmic.rc:27
+#, fuzzy
+msgid "Error: Invalid query\n"
+msgstr "Neispravna sintaksa.\n"
+
 #: wordpad.rc:28
 #, fuzzy
 msgid "&New...\tCtrl+N"

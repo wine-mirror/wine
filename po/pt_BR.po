@@ -13777,6 +13777,24 @@ msgstr "Não foi possível encontrar uma implementação do richedit... Abortand
 msgid "Help topics: "
 msgstr "Tópicos de ajuda: "
 
+#: wmic.rc:25
+#, fuzzy
+#| msgid "Error: Invalid command line parameters\n"
+msgid "Error: Command line not supported\n"
+msgstr "Erro: Parâmetros da linha de comandos inválidos\n"
+
+#: wmic.rc:26
+#, fuzzy
+#| msgid "Property set not found.\n"
+msgid "Error: Alias not found\n"
+msgstr "Propriedade não encontrada.\n"
+
+#: wmic.rc:27
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "Error: Invalid query\n"
+msgstr "Erro: Nome de chave inválido\n"
+
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&Novo...\tCtrl+N"

@@ -13803,6 +13803,24 @@ msgstr "Aucune implémentation richedit détectée... Abandon"
 msgid "Help topics: "
 msgstr "Rubriques d'aide : "
 
+#: wmic.rc:25
+#, fuzzy
+#| msgid "Error: Invalid command line parameters\n"
+msgid "Error: Command line not supported\n"
+msgstr "Erreur : paramètre de ligne de commande invalide\n"
+
+#: wmic.rc:26
+#, fuzzy
+#| msgid "Property set not found.\n"
+msgid "Error: Alias not found\n"
+msgstr "Jeu de propriétés introuvable.\n"
+
+#: wmic.rc:27
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "Error: Invalid query\n"
+msgstr "Erreur : nom de clé invalide\n"
+
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&Nouveau...\tCtrl+N"

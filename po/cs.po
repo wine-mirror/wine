@@ -13831,6 +13831,23 @@ msgstr "Nemohu najít implementaci richedit... Přerušuji"
 msgid "Help topics: "
 msgstr "Témata nápovědy: "
 
+#: wmic.rc:25
+#, fuzzy
+#| msgid "Error: Invalid command line parameters\n"
+msgid "Error: Command line not supported\n"
+msgstr "Chyba: Neplatné parametry příkazové řádky\n"
+
+#: wmic.rc:26
+#, fuzzy
+msgid "Error: Alias not found\n"
+msgstr "Soubor nebyl nalezen.\n"
+
+#: wmic.rc:27
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "Error: Invalid query\n"
+msgstr "Chyba: Neplatný název klíče\n"
+
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&Nový...\tCtrl+N"

@@ -13230,6 +13230,19 @@ msgstr ""
 msgid "Help topics: "
 msgstr ""
 
+#: wmic.rc:25
+msgid "Error: Command line not supported\n"
+msgstr ""
+
+#: wmic.rc:26
+#, fuzzy
+msgid "Error: Alias not found\n"
+msgstr "Súbor nenájdený.\n"
+
+#: wmic.rc:27
+msgid "Error: Invalid query\n"
+msgstr ""
+
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&Nový...\tCtrl+N"

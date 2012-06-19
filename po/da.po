@@ -13692,6 +13692,24 @@ msgstr "Kan ikke finde en 'richedit' implementering... Afbryder"
 msgid "Help topics: "
 msgstr "Hjælp emner: "
 
+#: wmic.rc:25
+#, fuzzy
+#| msgid "Error: Invalid command line parameters\n"
+msgid "Error: Command line not supported\n"
+msgstr "Fejl: Ugyldige kommando linje parametre\n"
+
+#: wmic.rc:26
+#, fuzzy
+#| msgid "Property set not found.\n"
+msgid "Error: Alias not found\n"
+msgstr "Egenskabs sæt ikke fundet.\n"
+
+#: wmic.rc:27
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "Error: Invalid query\n"
+msgstr "Fejl: Ugyldigt nøgle navn\n"
+
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&Ny...\tCtrl+N"

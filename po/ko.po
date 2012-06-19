@@ -13598,6 +13598,24 @@ msgstr "richedit 구현을 찾을수 없습니다... 취소중"
 msgid "Help topics: "
 msgstr "도움말 목차: "
 
+#: wmic.rc:25
+#, fuzzy
+#| msgid "Error: Invalid command line parameters\n"
+msgid "Error: Command line not supported\n"
+msgstr "오류:올바르지 않은 명령라인 매개변수\n"
+
+#: wmic.rc:26
+#, fuzzy
+#| msgid "Property set not found.\n"
+msgid "Error: Alias not found\n"
+msgstr "속성 세트를 찾을 수 없습니다.\n"
+
+#: wmic.rc:27
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "Error: Invalid query\n"
+msgstr "오류: 올바르지 않은 키 이름\n"
+
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "새 파일(&N)...\tCtrl+N"

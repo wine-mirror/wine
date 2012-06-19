@@ -13359,6 +13359,22 @@ msgstr ""
 msgid "Help topics: "
 msgstr "Yardım konuları: "
 
+#: wmic.rc:25
+msgid "Error: Command line not supported\n"
+msgstr ""
+
+#: wmic.rc:26
+#, fuzzy
+#| msgid "Entry not found.\n"
+msgid "Error: Alias not found\n"
+msgstr "Girdi bulunamadı.\n"
+
+#: wmic.rc:27
+#, fuzzy
+#| msgid "Invalid entry.\n"
+msgid "Error: Invalid query\n"
+msgstr "Geçersiz giriş.\n"
+
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&Yeni...\tCtrl+N"
