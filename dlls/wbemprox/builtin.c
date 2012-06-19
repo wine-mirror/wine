@@ -37,6 +37,8 @@ static const WCHAR class_compsysW[] =
     {'W','i','n','3','2','_','C','o','m','p','u','t','e','r','S','y','s','t','e','m',0};
 static const WCHAR class_processW[] =
     {'W','i','n','3','2','_','P','r','o','c','e','s','s',0};
+static const WCHAR class_processorW[] =
+    {'W','i','n','3','2','_','P','r','o','c','e','s','s','o','r',0};
 
 static const WCHAR prop_captionW[] =
     {'C','a','p','t','i','o','n',0};
@@ -78,6 +80,10 @@ static const struct column col_process[] =
     { prop_processidW,   CIM_UINT32 },
     { prop_threadcountW, CIM_UINT32 }
 };
+static const struct column col_processor[] =
+{
+    { prop_manufacturerW, CIM_STRING }
+};
 
 static const WCHAR bios_descriptionW[] =
     {'D','e','f','a','u','l','t',' ','S','y','s','t','e','m',' ','B','I','O','S',0};
@@ -93,6 +99,8 @@ static const WCHAR compsys_manufacturerW[] =
     {'T','h','e',' ','W','i','n','e',' ','P','r','o','j','e','c','t',0};
 static const WCHAR compsys_modelW[] =
     {'W','i','n','e',0};
+static const WCHAR processor_manufacturerW[] =
+    {'G','e','n','u','i','n','e','I','n','t','e','l',0};
 
 #include "pshpack1.h"
 struct record_bios
@@ -116,6 +124,10 @@ struct record_process
     UINT32       process_id;
     UINT32       thread_count;
 };
+struct record_processor
+{
+    const WCHAR *manufacturer;
+};
 #include "poppack.h"
 
 static const struct record_bios data_bios[] =
@@ -125,6 +137,10 @@ static const struct record_bios data_bios[] =
 static const struct record_computersystem data_compsys[] =
 {
     { compsys_descriptionW, compsys_manufacturerW, compsys_modelW }
+};
+static const struct record_processor data_processor[] =
+{
+    { processor_manufacturerW }
 };
 
 static void fill_process( struct table *table )
@@ -171,7 +187,8 @@ static struct table classtable[] =
 {
     { class_biosW, SIZEOF(col_bios), col_bios, SIZEOF(data_bios), (BYTE *)data_bios, NULL },
     { class_compsysW, SIZEOF(col_compsys), col_compsys, SIZEOF(data_compsys), (BYTE *)data_compsys, NULL },
-    { class_processW, SIZEOF(col_process), col_process, 0, NULL, fill_process }
+    { class_processW, SIZEOF(col_process), col_process, 0, NULL, fill_process },
+    { class_processorW, SIZEOF(col_processor), col_processor, SIZEOF(data_processor), (BYTE *)data_processor, NULL }
 };
 
 struct table *get_table( const WCHAR *name )
