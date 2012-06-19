@@ -559,11 +559,8 @@ static inline int textcmpWT(LPCWSTR aw, LPCWSTR bt, BOOL isW)
     
 static inline int lstrncmpiW(LPCWSTR s1, LPCWSTR s2, int n)
 {
-    int res;
-
     n = min(min(n, lstrlenW(s1)), lstrlenW(s2));
-    res = CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE, s1, n, s2, n);
-    return res ? res - sizeof(WCHAR) : res;
+    return CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE, s1, n, s2, n) - CSTR_EQUAL;
 }
 
 /******** Debugging functions *****************************************/
