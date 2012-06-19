@@ -1210,27 +1210,27 @@ static void test_CompareStringA(void)
   }
 
   ret = CompareStringA(lcid, NORM_IGNORECASE, "Salut", -1, "Salute", -1);
-  ok (ret== 1, "(Salut/Salute) Expected 1, got %d\n", ret);
+  ok (ret == CSTR_LESS_THAN, "(Salut/Salute) Expected CSTR_LESS_THAN, got %d\n", ret);
 
   ret = CompareStringA(lcid, NORM_IGNORECASE, "Salut", -1, "SaLuT", -1);
-  ok (ret== 2, "(Salut/SaLuT) Expected 2, got %d\n", ret);
+  ok (ret == CSTR_EQUAL, "(Salut/SaLuT) Expected CSTR_EQUAL, got %d\n", ret);
 
   ret = CompareStringA(lcid, NORM_IGNORECASE, "Salut", -1, "hola", -1);
-  ok (ret== 3, "(Salut/hola) Expected 3, got %d\n", ret);
+  ok (ret == CSTR_GREATER_THAN, "(Salut/hola) Expected CSTR_GREATER_THAN, got %d\n", ret);
 
   ret = CompareStringA(lcid, NORM_IGNORECASE, "haha", -1, "hoho", -1);
-  ok (ret== 1, "(haha/hoho) Expected 1, got %d\n", ret);
+  ok (ret == CSTR_LESS_THAN, "(haha/hoho) Expected CSTR_LESS_THAN, got %d\n", ret);
 
   lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
 
   ret = CompareStringA(lcid, NORM_IGNORECASE, "haha", -1, "hoho", -1);
-  ok (ret== 1, "(haha/hoho) Expected 1, got %d\n", ret);
+  ok (ret == CSTR_LESS_THAN, "(haha/hoho) Expected CSTR_LESS_THAN, got %d\n", ret);
 
   ret = CompareStringA(lcid, NORM_IGNORECASE, "haha", -1, "hoho", 0);
-  ok (ret== 3, "(haha/hoho) Expected 3, got %d\n", ret);
+  ok (ret == CSTR_GREATER_THAN, "(haha/hoho) Expected CSTR_GREATER_THAN, got %d\n", ret);
 
     ret = CompareStringA(lcid, NORM_IGNORECASE, "Salut", 5, "saLuT", -1);
-    ok (ret == 2, "(Salut/saLuT) Expected 2, got %d\n", ret);
+    ok (ret == CSTR_EQUAL, "(Salut/saLuT) Expected CSTR_EQUAL, got %d\n", ret);
 
     /* test for CompareStringA flags */
     SetLastError(0xdeadbeef);
@@ -1260,52 +1260,52 @@ static void test_CompareStringA(void)
 
     if (0) { /* this requires collation table patch to make it MS compatible */
     ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "'o", -1, "-o", -1 );
-    ok(ret == 1, "'o vs -o expected 1, got %d\n", ret);
+    ok(ret == CSTR_LESS_THAN, "'o vs -o expected CSTR_LESS_THAN, got %d\n", ret);
 
     ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, SORT_STRINGSORT, "'o", -1, "-o", -1 );
-    ok(ret == 1, "'o vs -o expected 1, got %d\n", ret);
+    ok(ret == CSTR_LESS_THAN, "'o vs -o expected CSTR_LESS_THAN, got %d\n", ret);
 
     ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "'", -1, "-", -1 );
-    ok(ret == 1, "' vs - expected 1, got %d\n", ret);
+    ok(ret == CSTR_LESS_THAN, "' vs - expected CSTR_LESS_THAN, got %d\n", ret);
 
     ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, SORT_STRINGSORT, "'", -1, "-", -1 );
-    ok(ret == 1, "' vs - expected 1, got %d\n", ret);
+    ok(ret == CSTR_LESS_THAN, "' vs - expected CSTR_LESS_THAN, got %d\n", ret);
 
     ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "`o", -1, "/m", -1 );
-    ok(ret == 3, "`o vs /m expected 3, got %d\n", ret);
+    ok(ret == CSTR_GREATER_THAN, "`o vs /m CSTR_GREATER_THAN got %d\n", ret);
 
     ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "/m", -1, "`o", -1 );
-    ok(ret == 1, "/m vs `o expected 1, got %d\n", ret);
+    ok(ret == CSTR_LESS_THAN, "/m vs `o expected CSTR_LESS_THAN, got %d\n", ret);
 
     ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, SORT_STRINGSORT, "`o", -1, "/m", -1 );
-    ok(ret == 3, "`o vs /m expected 3, got %d\n", ret);
+    ok(ret == CSTR_GREATER_THAN, "`o vs /m CSTR_GREATER_THAN got %d\n", ret);
 
     ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, SORT_STRINGSORT, "/m", -1, "`o", -1 );
-    ok(ret == 1, "/m vs `o expected 1, got %d\n", ret);
+    ok(ret == CSTR_LESS_THAN, "/m vs `o expected CSTR_LESS_THAN, got %d\n", ret);
 
     ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "`o", -1, "-m", -1 );
-    ok(ret == 1, "`o vs -m expected 1, got %d\n", ret);
+    ok(ret == CSTR_LESS_THAN, "`o vs -m expected CSTR_LESS_THAN, got %d\n", ret);
 
     ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "-m", -1, "`o", -1 );
-    ok(ret == 3, "-m vs `o expected 3, got %d\n", ret);
+    ok(ret == CSTR_GREATER_THAN, "-m vs `o CSTR_GREATER_THAN got %d\n", ret);
 
     ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, SORT_STRINGSORT, "`o", -1, "-m", -1 );
-    ok(ret == 3, "`o vs -m expected 3, got %d\n", ret);
+    ok(ret == CSTR_GREATER_THAN, "`o vs -m CSTR_GREATER_THAN got %d\n", ret);
 
     ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, SORT_STRINGSORT, "-m", -1, "`o", -1 );
-    ok(ret == 1, "-m vs `o expected 1, got %d\n", ret);
+    ok(ret == CSTR_LESS_THAN, "-m vs `o expected CSTR_LESS_THAN, got %d\n", ret);
     }
 
 
     /* WinXP handles embedded NULLs differently than earlier versions */
     ret = CompareStringA(LOCALE_USER_DEFAULT, 0, "aLuZkUtZ", 8, "aLuZkUtZ\0A", 10);
-    ok(ret == 1 || ret == 2, "aLuZkUtZ vs aLuZkUtZ\\0A expected 1 or 2, got %d\n", ret);
+    ok(ret == CSTR_LESS_THAN || ret == CSTR_EQUAL, "aLuZkUtZ vs aLuZkUtZ\\0A expected CSTR_LESS_THAN or CSTR_EQUAL, got %d\n", ret);
 
     ret = CompareStringA(LOCALE_USER_DEFAULT, 0, "aLu\0ZkUtZ", 8, "aLu\0ZkUtZ\0A", 10);
-    ok(ret == 1 || ret == 2, "aLu\\0ZkUtZ vs aLu\\0ZkUtZ\\0A expected 1 or 2, got %d\n", ret);
+    ok(ret == CSTR_LESS_THAN || ret == CSTR_EQUAL, "aLu\\0ZkUtZ vs aLu\\0ZkUtZ\\0A expected CSTR_LESS_THAN or CSTR_EQUAL, got %d\n", ret);
 
     ret = CompareStringA(lcid, 0, "a\0b", -1, "a", -1);
-    ok(ret == 2, "a vs a expected 2, got %d\n", ret);
+    ok(ret == CSTR_EQUAL, "a vs a expected CSTR_EQUAL, got %d\n", ret);
 
     ret = CompareStringA(lcid, 0, "a\0b", 4, "a", 2);
     ok(ret == CSTR_EQUAL || /* win2k */
@@ -1313,7 +1313,7 @@ static void test_CompareStringA(void)
        "a\\0b vs a expected CSTR_EQUAL or CSTR_GREATER_THAN, got %d\n", ret);
 
     ret = CompareStringA(lcid, 0, "\2", 2, "\1", 2);
-    todo_wine ok(ret != 2, "\\2 vs \\1 expected unequal\n");
+    todo_wine ok(ret != CSTR_EQUAL, "\\2 vs \\1 expected unequal\n");
 
     ret = CompareStringA(lcid, NORM_IGNORECASE | LOCALE_USE_CP_ACP, "#", -1, ".", -1);
     todo_wine ok(ret == CSTR_LESS_THAN, "\"#\" vs \".\" expected CSTR_LESS_THAN, got %d\n", ret);
