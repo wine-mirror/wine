@@ -227,7 +227,7 @@ static void SB_OnLButtonDown(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
 static void SB_OnLButtonUp(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
-    HHInfo *pHHInfo = (HHInfo *)GetWindowLongPtrW(hWnd, GWLP_USERDATA);
+    HHInfo *pHHInfo = (HHInfo *)GetWindowLongPtrW(hWnd, 0);
     POINT pt;
 
     pt.x = (short)LOWORD(lParam);
@@ -278,7 +278,7 @@ static void HH_RegisterSizeBarClass(HHInfo *pHHInfo)
     wcex.style          = 0;
     wcex.lpfnWndProc    = SizeBar_WndProc;
     wcex.cbClsExtra     = 0;
-    wcex.cbWndExtra     = 0;
+    wcex.cbWndExtra     = sizeof(LONG_PTR);
     wcex.hInstance      = hhctrl_hinstance;
     wcex.hIcon          = LoadIconW(NULL, (LPCWSTR)IDI_APPLICATION);
     wcex.hCursor        = LoadCursorW(NULL, (LPCWSTR)IDC_SIZEWE);
@@ -324,7 +324,7 @@ static BOOL HH_AddSizeBar(HHInfo *pHHInfo)
         return FALSE;
 
     /* store the pointer to the HH info struct */
-    SetWindowLongPtrW(hWnd, GWLP_USERDATA, (LONG_PTR)pHHInfo);
+    SetWindowLongPtrW(hWnd, 0, (LONG_PTR)pHHInfo);
 
     pHHInfo->hwndSizeBar = hWnd;
     return TRUE;
@@ -428,7 +428,7 @@ static void ResizeTabChild(HHInfo *info, int tab)
 
 static LRESULT Child_OnSize(HWND hwnd)
 {
-    HHInfo *info = (HHInfo*)GetWindowLongPtrW(hwnd, GWLP_USERDATA);
+    HHInfo *info = (HHInfo*)GetWindowLongPtrW(hwnd, 0);
     RECT rect;
 
     if(!info || hwnd != info->WinType.hwndNavigation)
@@ -447,7 +447,7 @@ static LRESULT Child_OnSize(HWND hwnd)
 
 static LRESULT OnTabChange(HWND hwnd)
 {
-    HHInfo *info = (HHInfo*)GetWindowLongPtrW(hwnd, GWLP_USERDATA);
+    HHInfo *info = (HHInfo*)GetWindowLongPtrW(hwnd, 0);
     int tab_id, tab_index, i;
 
     TRACE("%p\n", hwnd);
@@ -586,7 +586,7 @@ static LRESULT CALLBACK Child_WndProc(HWND hWnd, UINT message, WPARAM wParam, LP
     case WM_SIZE:
         return Child_OnSize(hWnd);
     case WM_NOTIFY: {
-        HHInfo *info = (HHInfo*)GetWindowLongPtrW(hWnd, GWLP_USERDATA);
+        HHInfo *info = (HHInfo*)GetWindowLongPtrW(hWnd, 0);
         NMHDR *nmhdr = (NMHDR*)lParam;
 
         switch(nmhdr->code) {
@@ -669,7 +669,7 @@ static void HH_RegisterChildWndClass(HHInfo *pHHInfo)
     wcex.style          = 0;
     wcex.lpfnWndProc    = Child_WndProc;
     wcex.cbClsExtra     = 0;
-    wcex.cbWndExtra     = 0;
+    wcex.cbWndExtra     = sizeof(LONG_PTR);
     wcex.hInstance      = hhctrl_hinstance;
     wcex.hIcon          = LoadIconW(NULL, (LPCWSTR)IDI_APPLICATION);
     wcex.hCursor        = LoadCursorW(NULL, (LPCWSTR)IDC_ARROW);
@@ -735,7 +735,7 @@ static void DisplayPopupMenu(HHInfo *info)
 
 static void TB_OnClick(HWND hWnd, DWORD dwID)
 {
-    HHInfo *info = (HHInfo *)GetWindowLongPtrW(hWnd, GWLP_USERDATA);
+    HHInfo *info = (HHInfo *)GetWindowLongPtrW(hWnd, 0);
 
     switch (dwID)
     {
@@ -967,7 +967,7 @@ static BOOL HH_AddNavigationPane(HHInfo *info)
     if (!hWnd)
         return FALSE;
 
-    SetWindowLongPtrW(hWnd, GWLP_USERDATA, (LONG_PTR)info);
+    SetWindowLongPtrW(hWnd, 0, (LONG_PTR)info);
 
     hwndTabCtrl = CreateWindowExW(dwExStyles, WC_TABCONTROLW, szEmpty, dwStyles | WS_VISIBLE,
                                   0, TAB_TOP_PADDING,
@@ -1039,7 +1039,7 @@ static BOOL HH_AddHTMLPane(HHInfo *pHHInfo)
         return FALSE;
 
     /* store the pointer to the HH info struct */
-    SetWindowLongPtrW(hWnd, GWLP_USERDATA, (LONG_PTR)pHHInfo);
+    SetWindowLongPtrW(hWnd, 0, (LONG_PTR)pHHInfo);
 
     ShowWindow(hWnd, SW_SHOW);
     UpdateWindow(hWnd);
@@ -1151,7 +1151,7 @@ static BOOL AddSearchTab(HHInfo *info)
     info->search.hwndContainer = hwndContainer;
     info->tabs[TAB_SEARCH].hwnd = hwndContainer;
 
-    SetWindowLongPtrW(hwndContainer, GWLP_USERDATA, (LONG_PTR)info);
+    SetWindowLongPtrW(hwndContainer, 0, (LONG_PTR)info);
 
     ResizeTabChild(info, TAB_SEARCH);
 
@@ -1191,7 +1191,7 @@ static void ResizePopupChild(HHInfo *info)
 
 static LRESULT CALLBACK HelpPopup_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    HHInfo *info = (HHInfo *)GetWindowLongPtrW(hWnd, GWLP_USERDATA);
+    HHInfo *info = (HHInfo *)GetWindowLongPtrW(hWnd, 0);
 
     switch (message)
     {
@@ -1221,7 +1221,7 @@ static LRESULT CALLBACK PopupChild_WndProc(HWND hWnd, UINT message, WPARAM wPara
         switch(nmhdr->code)
         {
         case NM_DBLCLK: {
-            HHInfo *info = (HHInfo*)GetWindowLongPtrW(hWnd, GWLP_USERDATA);
+            HHInfo *info = (HHInfo*)GetWindowLongPtrW(hWnd, 0);
             IndexSubItem *iter;
 
             if(info == 0 || lParam == 0)
@@ -1234,7 +1234,7 @@ static LRESULT CALLBACK PopupChild_WndProc(HWND hWnd, UINT message, WPARAM wPara
             return 0;
         }
         case NM_RETURN: {
-            HHInfo *info = (HHInfo*)GetWindowLongPtrW(hWnd, GWLP_USERDATA);
+            HHInfo *info = (HHInfo*)GetWindowLongPtrW(hWnd, 0);
             IndexSubItem *iter;
             LVITEMW lvItem;
 
@@ -1276,7 +1276,7 @@ static BOOL AddIndexPopup(HHInfo *info)
     wcex.style          = CS_HREDRAW | CS_VREDRAW;
     wcex.lpfnWndProc    = HelpPopup_WndProc;
     wcex.cbClsExtra     = 0;
-    wcex.cbWndExtra     = 0;
+    wcex.cbWndExtra     = sizeof(LONG_PTR);
     wcex.hInstance      = hhctrl_hinstance;
     wcex.hIcon          = LoadIconW(NULL, (LPCWSTR)IDI_APPLICATION);
     wcex.hCursor        = LoadCursorW(NULL, (LPCWSTR)IDC_ARROW);
@@ -1290,7 +1290,7 @@ static BOOL AddIndexPopup(HHInfo *info)
     wcex.style          = 0;
     wcex.lpfnWndProc    = PopupChild_WndProc;
     wcex.cbClsExtra     = 0;
-    wcex.cbWndExtra     = 0;
+    wcex.cbWndExtra     = sizeof(LONG_PTR);
     wcex.hInstance      = hhctrl_hinstance;
     wcex.hIcon          = LoadIconW(NULL, (LPCWSTR)IDI_APPLICATION);
     wcex.hCursor        = LoadCursorW(NULL, (LPCWSTR)IDC_ARROW);
@@ -1338,8 +1338,8 @@ static BOOL AddIndexPopup(HHInfo *info)
     info->popup.hwndCallback = hwndCallback;
     info->popup.hwndPopup = hwndPopup;
     info->popup.hwndList = hwndList;
-    SetWindowLongPtrW(hwndPopup, GWLP_USERDATA, (LONG_PTR)info);
-    SetWindowLongPtrW(hwndCallback, GWLP_USERDATA, (LONG_PTR)info);
+    SetWindowLongPtrW(hwndPopup, 0, (LONG_PTR)info);
+    SetWindowLongPtrW(hwndCallback, 0, (LONG_PTR)info);
 
     ResizePopupChild(info);
     ShowWindow(hwndList, SW_SHOW);
@@ -1382,7 +1382,7 @@ static void ExpandContract(HHInfo *pHHInfo)
 
 static LRESULT Help_OnSize(HWND hWnd)
 {
-    HHInfo *pHHInfo = (HHInfo *)GetWindowLongPtrW(hWnd, GWLP_USERDATA);
+    HHInfo *pHHInfo = (HHInfo *)GetWindowLongPtrW(hWnd, 0);
     DWORD dwSize;
     RECT rc;
 
@@ -1423,7 +1423,7 @@ static LRESULT CALLBACK Help_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPA
     case WM_SIZE:
         return Help_OnSize(hWnd);
     case WM_CLOSE:
-        ReleaseHelpViewer((HHInfo *)GetWindowLongPtrW(hWnd, GWLP_USERDATA));
+        ReleaseHelpViewer((HHInfo *)GetWindowLongPtrW(hWnd, 0));
         return 0;
     case WM_DESTROY:
         if(hh_process)
@@ -1454,7 +1454,7 @@ static BOOL HH_CreateHelpWindow(HHInfo *info)
     wcex.style          = CS_HREDRAW | CS_VREDRAW;
     wcex.lpfnWndProc    = Help_WndProc;
     wcex.cbClsExtra     = 0;
-    wcex.cbWndExtra     = 0;
+    wcex.cbWndExtra     = sizeof(LONG_PTR);
     wcex.hInstance      = hhctrl_hinstance;
     wcex.hIcon          = LoadIconW(NULL, (LPCWSTR)IDI_APPLICATION);
     wcex.hCursor        = LoadCursorW(NULL, (LPCWSTR)IDC_ARROW);
@@ -1518,7 +1518,7 @@ static BOOL HH_CreateHelpWindow(HHInfo *info)
     UpdateWindow(hWnd);
 
     /* store the pointer to the HH info struct */
-    SetWindowLongPtrW(hWnd, GWLP_USERDATA, (LONG_PTR)info);
+    SetWindowLongPtrW(hWnd, 0, (LONG_PTR)info);
 
     info->WinType.hwndHelp = hWnd;
     return TRUE;
