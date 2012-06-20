@@ -2057,7 +2057,7 @@ msgstr "Meddelandenummer="
 
 #: cryptdlg.rc:37
 msgid "Notice Text="
-msgstr "Meddelandetext"
+msgstr "Meddelandetext="
 
 #: cryptui.rc:177 cryptui.rc:232 inetcpl.rc:43
 msgid "General"
@@ -3438,7 +3438,7 @@ msgstr "Testa joysticken"
 
 #: joy.rc:50
 msgid "Buttons"
-msgstr ""
+msgstr "Knappar"
 
 #: joy.rc:58
 msgid "Test Force Feedback"
@@ -3506,15 +3506,15 @@ msgstr "Oterminerad strängkonstant"
 
 #: jscript.rc:39
 msgid "Can't have 'break' outside of loop"
-msgstr ""
+msgstr "Går ej att ha 'break' utanför loop"
 
 #: jscript.rc:40
 msgid "Can't have 'continue' outside of loop"
-msgstr ""
+msgstr "Går ej att ha 'continue' utanför loop"
 
 #: jscript.rc:41
 msgid "Label redefined"
-msgstr ""
+msgstr "Etiketten är redan definierat"
 
 #: jscript.rc:42
 msgid "Label not found"
@@ -11013,11 +11013,11 @@ msgstr "Operation slutfördes utan problem\n"
 
 #: reg.rc:32
 msgid "Error: Invalid key name\n"
-msgstr "Fel: ogiltigt nyckelnamn\n"
+msgstr "Fel: Ogiltigt nyckelnamn\n"
 
 #: reg.rc:33
 msgid "Error: Invalid command line parameters\n"
-msgstr "Fel: ogiltiga kommandoradsparametrar\n"
+msgstr "Fel: Ogiltiga kommandoradsparametrar\n"
 
 #: reg.rc:34
 msgid "Error: Unable to add keys to remote machine\n"
@@ -13555,22 +13555,16 @@ msgid "Help topics: "
 msgstr "Hjälprubriker: "
 
 #: wmic.rc:25
-#, fuzzy
-#| msgid "Error: Invalid command line parameters\n"
 msgid "Error: Command line not supported\n"
-msgstr "Fel: ogiltiga kommandoradsparametrar\n"
+msgstr "Fel: Kommandoraden stöds inte\n"
 
 #: wmic.rc:26
-#, fuzzy
-#| msgid "Property set not found.\n"
 msgid "Error: Alias not found\n"
-msgstr "Egenskapsmängden hittades inte.\n"
+msgstr "Fel: Aliaset hittades inte\n"
 
 #: wmic.rc:27
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "Error: Invalid query\n"
-msgstr "Fel: ogiltigt nyckelnamn\n"
+msgstr "Fel: Ogiltig fråga\n"
 
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
