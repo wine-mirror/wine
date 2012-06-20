@@ -461,7 +461,7 @@ BOOL WINAPI ImageAddCertificate(
         char null[8];
 
         ZeroMemory(null, 8);
-        WriteFile(FileHandle, null, 8 - (Certificate->dwLength % 8), NULL, NULL);
+        WriteFile(FileHandle, null, 8 - (Certificate->dwLength % 8), &count, NULL);
 
         size += 8 - (Certificate->dwLength % 8);
     }
