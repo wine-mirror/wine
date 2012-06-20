@@ -376,16 +376,6 @@ static int parse_string_literal(parser_ctx_t *ctx, const WCHAR **ret, WCHAR endc
     return tStringLiteral;
 }
 
-static literal_t *new_int_literal(parser_ctx_t *ctx, LONG l)
-{
-    literal_t *ret = parser_alloc(ctx, sizeof(literal_t));
-
-    ret->type = LT_INT;
-    ret->u.lval = l;
-
-    return ret;
-}
-
 static literal_t *new_double_literal(parser_ctx_t *ctx, DOUBLE d)
 {
     literal_t *ret = parser_alloc(ctx, sizeof(literal_t));
@@ -410,12 +400,6 @@ static int parse_double_literal(parser_ctx_t *ctx, LONG int_part, literal_t **li
     LONGLONG d, hlp;
     int exp = 0;
 
-    if(ctx->ptr == ctx->end || (!isdigitW(*ctx->ptr) &&
-        *ctx->ptr!='.' && *ctx->ptr!='e' && *ctx->ptr!='E')) {
-        ERR("Illegal character\n");
-        return 0;
-    }
-
     d = int_part;
     while(ctx->ptr < ctx->end && isdigitW(*ctx->ptr)) {
         hlp = d*10 + *(ctx->ptr++) - '0';
@@ -431,18 +415,20 @@ static int parse_double_literal(parser_ctx_t *ctx, LONG int_part, literal_t **li
         ctx->ptr++;
     }
 
-    if(*ctx->ptr == '.') ctx->ptr++;
-
-    while(ctx->ptr < ctx->end && isdigitW(*ctx->ptr)) {
-        hlp = d*10 + *(ctx->ptr++) - '0';
-        if(d>LONGLONG_MAX/10 || hlp<0)
-            break;
-
-        d = hlp;
-        exp--;
-    }
-    while(ctx->ptr < ctx->end && isdigitW(*ctx->ptr))
+    if(*ctx->ptr == '.') {
         ctx->ptr++;
+
+        while(ctx->ptr < ctx->end && isdigitW(*ctx->ptr)) {
+            hlp = d*10 + *(ctx->ptr++) - '0';
+            if(d>LONGLONG_MAX/10 || hlp<0)
+                break;
+
+            d = hlp;
+            exp--;
+        }
+        while(ctx->ptr < ctx->end && isdigitW(*ctx->ptr))
+            ctx->ptr++;
+    }
 
     if(ctx->ptr < ctx->end && (*ctx->ptr == 'e' || *ctx->ptr == 'E')) {
         int sign = 1, e = 0;
@@ -485,11 +471,6 @@ static int parse_numeric_literal(parser_ctx_t *ctx, literal_t **literal)
     LONG l, d;
 
     l = *ctx->ptr++ - '0';
-    if(ctx->ptr == ctx->end) {
-        *literal = new_int_literal(ctx, l);
-        return tNumericLiteral;
-    }
-
     if(!l) {
         if(*ctx->ptr == 'x' || *ctx->ptr == 'X') {
             if(++ctx->ptr == ctx->end) {
@@ -507,42 +488,22 @@ static int parse_numeric_literal(parser_ctx_t *ctx, literal_t **literal)
                 return lex_error(ctx, E_FAIL);
             }
 
-            *literal = new_int_literal(ctx, l);
+            *literal = new_double_literal(ctx, l);
             return tNumericLiteral;
         }
 
-        if(isdigitW(*ctx->ptr) || is_identifier_char(*ctx->ptr)) {
+        if(is_identifier_char(*ctx->ptr)) {
             WARN("wrong char after zero\n");
             return lex_error(ctx, E_FAIL);
         }
 
-        *literal = new_int_literal(ctx, 0);
-    }
-
-    while(ctx->ptr < ctx->end && isdigitW(*ctx->ptr))
-    {
-        d = l*10 + *(ctx->ptr)-'0';
-
-        /* Check for integer overflow */
-        if (l > INT_MAX/10 || d < 0)
-            return parse_double_literal(ctx, l, literal);
-
-        l = d;
-        ctx->ptr++;
-    }
-
-    if(ctx->ptr < ctx->end) {
-        if(*ctx->ptr == '.' || *ctx->ptr == 'e' || *ctx->ptr == 'E')
-            return parse_double_literal(ctx, l, literal);
-
-        if(is_identifier_char(*ctx->ptr)) {
-            WARN("unexpected identifier char\n");
-            return lex_error(ctx, E_FAIL);
+        if(isdigitW(*ctx->ptr)) {
+            FIXME("octal literals not implemented\n");
+            return lex_error(ctx, E_NOTIMPL);
         }
     }
 
-    *literal = new_int_literal(ctx, l);
-    return tNumericLiteral;
+    return parse_double_literal(ctx, l, literal);
 }
 
 static int next_token(parser_ctx_t *ctx, void *lval)

@@ -712,8 +712,6 @@ static HRESULT compile_literal(compiler_ctx_t *ctx, literal_t *literal)
         return push_instr_int(ctx, OP_bool, literal->u.bval);
     case LT_DOUBLE:
         return push_instr_double(ctx, OP_double, literal->u.dval);
-    case LT_INT:
-        return push_instr_int(ctx, OP_int, literal->u.lval);
     case LT_NULL:
         return push_instr(ctx, OP_null) ? S_OK : E_OUTOFMEMORY;
     case LT_STRING:
@@ -747,9 +745,6 @@ static HRESULT literal_as_bstr(compiler_ctx_t *ctx, literal_t *literal, BSTR *st
     switch(literal->type) {
     case LT_STRING:
         *str = compiler_alloc_bstr(ctx, literal->u.wstr);
-        break;
-    case LT_INT:
-        *str = int_to_bstr(literal->u.lval);
         break;
     case LT_DOUBLE:
         return double_to_bstr(literal->u.dval, str);

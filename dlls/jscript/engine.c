@@ -1185,13 +1185,10 @@ static HRESULT interp_int(exec_ctx_t *ctx)
 static HRESULT interp_double(exec_ctx_t *ctx)
 {
     const double arg = get_op_double(ctx);
-    VARIANT v;
 
     TRACE("%lf\n", arg);
 
-    V_VT(&v) = VT_R8;
-    V_R8(&v) = arg;
-    return stack_push(ctx, &v);
+    return stack_push_number(ctx, arg);
 }
 
 /* ECMA-262 3rd Edition    7.8.4 */

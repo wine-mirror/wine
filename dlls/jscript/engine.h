@@ -248,7 +248,6 @@ HRESULT exec_source(exec_ctx_t*,bytecode_t*,function_code_t*,BOOL,jsexcept_t*,VA
 HRESULT create_source_function(script_ctx_t*,bytecode_t*,function_code_t*,scope_chain_t*,jsdisp_t**) DECLSPEC_HIDDEN;
 
 typedef enum {
-    LT_INT,
     LT_DOUBLE,
     LT_STRING,
     LT_BOOL,
@@ -259,7 +258,6 @@ typedef enum {
 typedef struct {
     literal_type_t type;
     union {
-        LONG lval;
         double dval;
         const WCHAR *wstr;
         VARIANT_BOOL bval;
