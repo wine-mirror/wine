@@ -193,6 +193,8 @@ void ReleaseSearch(HHInfo *info) DECLSPEC_HIDDEN;
 
 LPCWSTR skip_schema(LPCWSTR url) DECLSPEC_HIDDEN;
 
+WCHAR *decode_html(const char *html_fragment, int html_fragment_len);
+
 /* memory allocation functions */
 
 static inline void * __WINE_ALLOC_SIZE(1) heap_alloc(size_t len)

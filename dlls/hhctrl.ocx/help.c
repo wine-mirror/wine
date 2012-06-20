@@ -50,6 +50,119 @@ static void ExpandContract(HHInfo *pHHInfo);
 
 static const WCHAR szEmpty[] = {0};
 
+struct html_encoded_symbol {
+    const char *html_code;
+    char        ansi_symbol;
+};
+
+/*
+ * Table mapping the conversion between HTML encoded symbols and their ANSI code page equivalent.
+ * Note: Add additional entries in proper alphabetical order (a binary search is used on this table).
+ */
+struct html_encoded_symbol html_encoded_symbols[] =
+{
+    {"AElig",  0xC6},
+    {"Aacute", 0xC1},
+    {"Acirc",  0xC2},
+    {"Agrave", 0xC0},
+    {"Aring",  0xC5},
+    {"Atilde", 0xC3},
+    {"Auml",   0xC4},
+    {"Ccedil", 0xC7},
+    {"ETH",    0xD0},
+    {"Eacute", 0xC9},
+    {"Ecirc",  0xCA},
+    {"Egrave", 0xC8},
+    {"Euml",   0xCB},
+    {"Iacute", 0xCD},
+    {"Icirc",  0xCE},
+    {"Igrave", 0xCC},
+    {"Iuml",   0xCF},
+    {"Ntilde", 0xD1},
+    {"Oacute", 0xD3},
+    {"Ocirc",  0xD4},
+    {"Ograve", 0xD2},
+    {"Oslash", 0xD8},
+    {"Otilde", 0xD5},
+    {"Ouml",   0xD6},
+    {"THORN",  0xDE},
+    {"Uacute", 0xDA},
+    {"Ucirc",  0xDB},
+    {"Ugrave", 0xD9},
+    {"Uuml",   0xDC},
+    {"Yacute", 0xDD},
+    {"aacute", 0xE1},
+    {"acirc",  0xE2},
+    {"acute",  0xB4},
+    {"aelig",  0xE6},
+    {"agrave", 0xE0},
+    {"amp",    '&'},
+    {"aring",  0xE5},
+    {"atilde", 0xE3},
+    {"auml",   0xE4},
+    {"brvbar", 0xA6},
+    {"ccedil", 0xE7},
+    {"cedil",  0xB8},
+    {"cent",   0xA2},
+    {"copy",   0xA9},
+    {"curren", 0xA4},
+    {"deg",    0xB0},
+    {"divide", 0xF7},
+    {"eacute", 0xE9},
+    {"ecirc",  0xEA},
+    {"egrave", 0xE8},
+    {"eth",    0xF0},
+    {"euml",   0xEB},
+    {"frac12", 0xBD},
+    {"frac14", 0xBC},
+    {"frac34", 0xBE},
+    {"gt",     '>'},
+    {"iacute", 0xED},
+    {"icirc",  0xEE},
+    {"iexcl",  0xA1},
+    {"igrave", 0xEC},
+    {"iquest", 0xBF},
+    {"iuml",   0xEF},
+    {"laquo",  0xAB},
+    {"lt",     '<'},
+    {"macr",   0xAF},
+    {"micro",  0xB5},
+    {"middot", 0xB7},
+    {"nbsp",   ' '},
+    {"not",    0xAC},
+    {"ntilde", 0xF1},
+    {"oacute", 0xF3},
+    {"ocirc",  0xF4},
+    {"ograve", 0xF2},
+    {"ordf",   0xAA},
+    {"ordm",   0xBA},
+    {"oslash", 0xF8},
+    {"otilde", 0xF5},
+    {"ouml",   0xF6},
+    {"para",   0xB6},
+    {"plusmn", 0xB1},
+    {"pound",  0xA3},
+    {"quot",   '"'},
+    {"raquo",  0xBB},
+    {"reg",    0xAE},
+    {"sect",   0xA7},
+    {"shy",    0xAD},
+    {"sup1",   0xB9},
+    {"sup2",   0xB2},
+    {"sup3",   0xB3},
+    {"szlig",  0xDF},
+    {"thorn",  0xFE},
+    {"times",  0xD7},
+    {"uacute", 0xFA},
+    {"ucirc",  0xFB},
+    {"ugrave", 0xF9},
+    {"uml",    0xA8},
+    {"uuml",   0xFC},
+    {"yacute", 0xFD},
+    {"yen",    0xA5},
+    {"yuml",   0xFF}
+};
+
 /* Loads a string from the resource file */
 static LPWSTR HH_LoadString(DWORD dwID)
 {
@@ -1653,4 +1766,93 @@ HHInfo *CreateHelpViewer(LPCWSTR filename)
     }
 
     return info;
+}
+
+/*
+ * Search the table of HTML entities and return the corresponding ANSI symbol.
+ */
+static char find_html_symbol(const char *entity, int entity_len)
+{
+    int max = sizeof(html_encoded_symbols)/sizeof(html_encoded_symbols[0])-1;
+    int min = 0, dir;
+
+    while(min <= max)
+    {
+        int pos = (min+max)/2;
+        const char *encoded_symbol = html_encoded_symbols[pos].html_code;
+        dir = strncmp(encoded_symbol, entity, entity_len);
+        if(dir == 0 && !encoded_symbol[entity_len]) return html_encoded_symbols[pos].ansi_symbol;
+        if(dir < 0)
+            min = pos+1;
+        else
+            max = pos-1;
+    }
+    return 0;
+}
+
+/*
+ * Decode a string containing HTML encoded characters into a unicode string.
+ */
+WCHAR *decode_html(const char *html_fragment, int html_fragment_len)
+{
+    const char *h = html_fragment;
+    char *amp, *sem, symbol, *tmp;
+    int len, tmp_len = 0;
+    WCHAR *unicode_text;
+
+    tmp = heap_alloc(html_fragment_len+1);
+    while(1)
+    {
+        symbol = 0;
+        amp = strchr(h, '&');
+        if(!amp) break;
+        len = amp-h;
+        /* Copy the characters prior to the HTML encoded character */
+        memcpy(&tmp[tmp_len], h, len);
+        tmp_len += len;
+        amp++; /* skip ampersand */
+        sem = strchr(amp, ';');
+        /* Require a semicolon after the ampersand */
+        if(!sem)
+        {
+            h = amp;
+            tmp[tmp_len++] = '&';
+            continue;
+        }
+        /* Find the symbol either by using the ANSI character number (prefixed by the pound symbol)
+         * or by searching the HTML entity table */
+        len = sem-amp;
+        if(amp[0] == '#')
+        {
+            char *endnum = NULL;
+            int tmp;
+
+            tmp = (char) strtol(amp, &endnum, 10);
+            if(endnum == sem)
+                symbol = tmp;
+        }
+        else
+            symbol = find_html_symbol(amp, len);
+        if(!symbol)
+        {
+            FIXME("Failed to translate HTML encoded character '&%.*s;'.\n", len, amp);
+            h = amp;
+            tmp[tmp_len++] = '&';
+            continue;
+        }
+        /* Insert the new symbol */
+        h = sem+1;
+        tmp[tmp_len++] = symbol;
+    }
+    /* Convert any remaining characters */
+    len = html_fragment_len-(h-html_fragment);
+    memcpy(&tmp[tmp_len], h, len);
+    tmp_len += len;
+    tmp[tmp_len++] = 0; /* NULL-terminate the string */
+
+    len = MultiByteToWideChar(CP_ACP, 0, tmp, tmp_len, NULL, 0);
+    unicode_text = heap_alloc(len*sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, tmp, tmp_len, unicode_text, len);
+    heap_free(tmp);
+    return unicode_text;
 }
