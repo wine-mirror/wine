@@ -3907,6 +3907,35 @@ float __cdecl _Stofx(const char *buf, char **buf_end, LONG exp, int *err)
     return _Stodx(buf, buf_end, exp, err);
 }
 
+__int64 __cdecl _Stoll(const char *buf, char **buf_end, int base)
+{
+    return _strtoi64(buf, buf_end, base);
+}
+
+__int64 __cdecl _Stollx(const char *buf, char **buf_end, int base, int *err)
+{
+    __int64 ret;
+
+    *err = *_errno();
+    *_errno() = 0;
+    ret = _strtoi64(buf, buf_end, base);
+    if(*_errno()) {
+        *err = *_errno();
+    }else {
+        *_errno() = *err;
+        *err = 0;
+    }
+    return ret;
+}
+
+LONG __cdecl _Stolx(const char *buf, char **buf_end, int base, int *err)
+{
+    __int64 i = _Stollx(buf, buf_end, base, err);
+    if(!*err && i!=(__int64)((LONG)i))
+        *err = ERANGE;
+    return i;
+}
+
 /* ?id@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@2V0locale@2@A */
 locale_id num_get_wchar_id = {0};
 /* ?id@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@2V0locale@2@A */

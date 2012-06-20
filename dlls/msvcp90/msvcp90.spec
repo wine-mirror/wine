@@ -5789,9 +5789,9 @@
 @ cdecl _Stofx(ptr ptr long ptr)
 @ cdecl _Stold(ptr ptr long) _Stod
 @ cdecl _Stoldx(ptr ptr long ptr) _Stodx
-@ stub _Stoll
-@ stub _Stollx
-@ stub _Stolx
+@ cdecl -ret64 _Stoll(ptr ptr long)
+@ cdecl -ret64 _Stollx(ptr ptr long ptr)
+@ cdecl _Stolx(ptr ptr long ptr)
 @ stub _Stoul
 @ stub _Stoull
 @ stub _Stoullx
