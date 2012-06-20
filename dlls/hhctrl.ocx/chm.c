@@ -133,6 +133,13 @@ static BOOL ReadChmSystem(CHMInfo *chm)
             heap_free(chm->defTitle);
             chm->defTitle = strdupnAtoW(buf, entry.len);
             break;
+        case 0x4:
+            /* TODO: Currently only the Locale ID is loaded from this field */
+            TRACE("Locale is: %d\n", *(LCID*)&buf[0]);
+            if(!GetLocaleInfoW(*(LCID*)&buf[0], LOCALE_IDEFAULTANSICODEPAGE|LOCALE_RETURN_NUMBER,
+                               (WCHAR *)&chm->codePage, sizeof(chm->codePage)/sizeof(WCHAR)))
+                chm->codePage = CP_ACP;
+            break;
         case 0x5:
             TRACE("Default window is %s\n", debugstr_an(buf, entry.len));
             break;
@@ -416,6 +423,7 @@ CHMInfo *OpenCHM(LPCWSTR szFile)
 
     if (!(ret = heap_alloc_zero(sizeof(CHMInfo))))
         return NULL;
+    ret->codePage = CP_ACP;
 
     if (!(ret->szFile = strdupW(szFile))) {
         heap_free(ret);

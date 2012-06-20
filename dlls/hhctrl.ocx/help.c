@@ -1793,7 +1793,7 @@ static char find_html_symbol(const char *entity, int entity_len)
 /*
  * Decode a string containing HTML encoded characters into a unicode string.
  */
-WCHAR *decode_html(const char *html_fragment, int html_fragment_len)
+WCHAR *decode_html(const char *html_fragment, int html_fragment_len, UINT code_page)
 {
     const char *h = html_fragment;
     char *amp, *sem, symbol, *tmp;
@@ -1850,9 +1850,9 @@ WCHAR *decode_html(const char *html_fragment, int html_fragment_len)
     tmp_len += len;
     tmp[tmp_len++] = 0; /* NULL-terminate the string */
 
-    len = MultiByteToWideChar(CP_ACP, 0, tmp, tmp_len, NULL, 0);
+    len = MultiByteToWideChar(code_page, 0, tmp, tmp_len, NULL, 0);
     unicode_text = heap_alloc(len*sizeof(WCHAR));
-    MultiByteToWideChar(CP_ACP, 0, tmp, tmp_len, unicode_text, len);
+    MultiByteToWideChar(code_page, 0, tmp, tmp_len, unicode_text, len);
     heap_free(tmp);
     return unicode_text;
 }

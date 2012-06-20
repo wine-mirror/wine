@@ -50,7 +50,7 @@ static void free_content_item(ContentItem *item)
     }
 }
 
-static void parse_obj_node_param(ContentItem *item, ContentItem *hhc_root, const char *text)
+static void parse_obj_node_param(ContentItem *item, ContentItem *hhc_root, const char *text, UINT code_page)
 {
     const char *ptr;
     LPWSTR *param, merge;
@@ -89,11 +89,11 @@ static void parse_obj_node_param(ContentItem *item, ContentItem *hhc_root, const
         const char *local = strstr(ptr, "::")+2;
         int local_len = len-(local-ptr);
 
-        item->local = decode_html(local, local_len);
+        item->local = decode_html(local, local_len, code_page);
         param = &merge;
     }
 
-    *param = decode_html(ptr, len);
+    *param = decode_html(ptr, len, code_page);
 
     if(param == &merge) {
         SetChmPath(&item->merge, hhc_root->merge.chm_file, merge);
@@ -151,7 +151,7 @@ static ContentItem *parse_sitemap_object(HHInfo *info, stream_t *stream, Content
         if(!strcasecmp(node_name.buf, "/object"))
             break;
         if(!strcasecmp(node_name.buf, "param"))
-            parse_obj_node_param(item, hhc_root, node.buf);
+            parse_obj_node_param(item, hhc_root, node.buf, info->pCHMInfo->codePage);
 
         strbuf_zero(&node);
     }

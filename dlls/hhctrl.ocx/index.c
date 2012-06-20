@@ -62,7 +62,7 @@ static void fill_index_tree(HWND hwnd, IndexItem *item)
  * sub-topic then there isn't really a sub-topic, the index will jump
  * directly to the requested item.
  */
-static void parse_index_obj_node_param(IndexItem *item, const char *text)
+static void parse_index_obj_node_param(IndexItem *item, const char *text, UINT code_page)
 {
     const char *ptr;
     LPWSTR *param;
@@ -109,7 +109,7 @@ static void parse_index_obj_node_param(IndexItem *item, const char *text)
         return;
     }
 
-    *param = decode_html(ptr, len);
+    *param = decode_html(ptr, len, code_page);
 }
 
 /* Parse the object tag corresponding to a list item.
@@ -137,7 +137,7 @@ static IndexItem *parse_index_sitemap_object(HHInfo *info, stream_t *stream)
         TRACE("%s\n", node.buf);
 
         if(!strcasecmp(node_name.buf, "param")) {
-            parse_index_obj_node_param(item, node.buf);
+            parse_index_obj_node_param(item, node.buf, info->pCHMInfo->codePage);
         }else if(!strcasecmp(node_name.buf, "/object")) {
             break;
         }else {
