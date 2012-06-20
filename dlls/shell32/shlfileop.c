@@ -1177,7 +1177,7 @@ static void create_dest_dirs(LPCWSTR szDestDir)
 }
 
 /* the FO_COPY operation */
-static HRESULT copy_files(FILE_OPERATION *op, const FILE_LIST *flFrom, FILE_LIST *flTo)
+static DWORD copy_files(FILE_OPERATION *op, const FILE_LIST *flFrom, FILE_LIST *flTo)
 {
     DWORD i;
     const FILE_ENTRY *entryToCopy;
@@ -1325,7 +1325,7 @@ static BOOL confirm_delete_list(HWND hWnd, DWORD fFlags, BOOL fTrash, const FILE
 }
 
 /* the FO_DELETE operation */
-static HRESULT delete_files(LPSHFILEOPSTRUCTW lpFileOp, const FILE_LIST *flFrom)
+static DWORD delete_files(LPSHFILEOPSTRUCTW lpFileOp, const FILE_LIST *flFrom)
 {
     const FILE_ENTRY *fileEntry;
     DWORD i;
@@ -1425,7 +1425,7 @@ static void move_to_dir(LPSHFILEOPSTRUCTW lpFileOp, const FILE_ENTRY *feFrom, co
 }
 
 /* the FO_MOVE operation */
-static HRESULT move_files(LPSHFILEOPSTRUCTW lpFileOp, const FILE_LIST *flFrom, const FILE_LIST *flTo)
+static DWORD move_files(LPSHFILEOPSTRUCTW lpFileOp, const FILE_LIST *flFrom, const FILE_LIST *flTo)
 {
     DWORD i;
     const FILE_ENTRY *entryToMove;
@@ -1477,7 +1477,7 @@ static HRESULT move_files(LPSHFILEOPSTRUCTW lpFileOp, const FILE_LIST *flFrom, c
 }
 
 /* the FO_RENAME files */
-static HRESULT rename_files(LPSHFILEOPSTRUCTW lpFileOp, const FILE_LIST *flFrom, const FILE_LIST *flTo)
+static DWORD rename_files(LPSHFILEOPSTRUCTW lpFileOp, const FILE_LIST *flFrom, const FILE_LIST *flTo)
 {
     const FILE_ENTRY *feFrom;
     const FILE_ENTRY *feTo;

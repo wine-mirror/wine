@@ -570,7 +570,7 @@ static HRESULT BrsFolder_Treeview_Changed( browse_info *info, NMTREEVIEWW *pnmtv
     browsefolder_callback( info->lpBrowseInfo, info->hWnd, BFFM_SELCHANGED,
                            (LPARAM)info->pidlRet );
     BrsFolder_CheckValidSelection( info, lptvid );
-    return 0;
+    return S_OK;
 }
 
 static LRESULT BrsFolder_Treeview_Rename(browse_info *info, NMTVDISPINFOW *pnmtv)

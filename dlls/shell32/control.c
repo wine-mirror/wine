@@ -849,7 +849,7 @@ void WINAPI Control_RunDLLA(HWND hWnd, HINSTANCE hInst, LPCSTR cmd, DWORD nCmdSh
 HRESULT WINAPI Control_FillCache_RunDLLW(HWND hWnd, HANDLE hModule, DWORD w, DWORD x)
 {
     FIXME("%p %p 0x%08x 0x%08x stub\n", hWnd, hModule, w, x);
-    return 0;
+    return S_OK;
 }
 
 /*************************************************************************
