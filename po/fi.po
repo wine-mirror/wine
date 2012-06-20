@@ -3443,7 +3443,7 @@ msgstr "Testaa joystickia"
 
 #: joy.rc:50
 msgid "Buttons"
-msgstr ""
+msgstr "Painikkeet"
 
 #: joy.rc:58
 msgid "Test Force Feedback"
@@ -13605,22 +13605,16 @@ msgid "Help topics: "
 msgstr "Ohjeen otsikot: "
 
 #: wmic.rc:25
-#, fuzzy
-#| msgid "Error: Invalid command line parameters\n"
 msgid "Error: Command line not supported\n"
-msgstr "Virhe: Viallisia komentoriviparametreja\n"
+msgstr "Virhe: Komentoriviä ei tueta\n"
 
 #: wmic.rc:26
-#, fuzzy
-#| msgid "Property set not found.\n"
 msgid "Error: Alias not found\n"
-msgstr "Ominaisuusjoukkoa ei löytynyt.\n"
+msgstr "Virhe: Aliasta ei löydy\n"
 
 #: wmic.rc:27
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "Error: Invalid query\n"
-msgstr "Virhe: Viallinen avaimen nimi\n"
+msgstr "Virhe: Viallinen kysely\n"
 
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
