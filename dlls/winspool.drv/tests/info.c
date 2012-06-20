@@ -1534,18 +1534,22 @@ static void test_GetPrinterDriverDirectory(void)
 
     SetLastError(MAGIC_DEAD);
     res = GetPrinterDriverDirectoryA( NULL, NULL, 1, buffer, cbBuf, NULL);
-    ok( (!res && RPC_X_NULL_REF_POINTER == GetLastError()) || res,
-         "expected either result == 0 and "
-         "last error == RPC_X_NULL_REF_POINTER or result != 0 "
-         "got result %d and last error == %d\n", res, GetLastError());
+    /* w7 with deactivated spooler: ERROR_INVALID_PARAMETER,
+       NT: RPC_X_NULL_REF_POINTER  */
+    ok( res || (GetLastError() == RPC_X_NULL_REF_POINTER) ||
+               (GetLastError() == ERROR_INVALID_PARAMETER),
+        "returned %d with %d (expected '!=0' or '0' with RPC_X_NULL_REF_POINTER "
+        "or '0' with ERROR_INVALID_PARAMETER)\n", res, GetLastError());
 
     SetLastError(MAGIC_DEAD);
     res = GetPrinterDriverDirectoryA( NULL, NULL, 1, NULL, cbBuf, NULL);
-    ok(res || (GetLastError() == RPC_X_NULL_REF_POINTER),
-        "returned %d with %d (expected '!=0' or '0' with "
-        "RPC_X_NULL_REF_POINTER)\n", res, GetLastError());
- 
- 
+    /* w7 with deactivated spooler: ERROR_INVALID_PARAMETER,
+       NT: RPC_X_NULL_REF_POINTER  */
+    ok( res || (GetLastError() == RPC_X_NULL_REF_POINTER) ||
+               (GetLastError() == ERROR_INVALID_PARAMETER),
+        "returned %d with %d (expected '!=0' or '0' with RPC_X_NULL_REF_POINTER "
+        "or '0' with ERROR_INVALID_PARAMETER)\n", res, GetLastError());
+
     /* with a valid buffer, but level is too large */
     buffer[0] = '\0';
     SetLastError(MAGIC_DEAD);
@@ -1679,20 +1683,22 @@ static void test_GetPrintProcessorDirectory(void)
     buffer[0] = '\0';
     SetLastError(0xdeadbeef);
     res = GetPrintProcessorDirectoryA( NULL, NULL, 1, buffer, cbBuf, NULL);
-    /* NT: RPC_X_NULL_REF_POINTER, 9x: res != 0  */
-    ok( (!res && (GetLastError() == RPC_X_NULL_REF_POINTER)) ||
-        broken(res),
-        "returned %d with %d (expected '0' with RPC_X_NULL_REF_POINTER)\n",
-        res, GetLastError());
+    /* w7 with deactivated spooler: ERROR_INVALID_PARAMETER,
+       NT: RPC_X_NULL_REF_POINTER, 9x: res != 0  */
+    ok( !res && ((GetLastError() == RPC_X_NULL_REF_POINTER) ||
+                 (GetLastError() == ERROR_INVALID_PARAMETER)),
+        "returned %d with %d (expected '0' with RPC_X_NULL_REF_POINTER "
+        "or with ERROR_INVALID_PARAMETER)\n", res, GetLastError());
 
     buffer[0] = '\0';
     SetLastError(0xdeadbeef);
     res = GetPrintProcessorDirectoryA( NULL, NULL, 1, NULL, cbBuf, NULL);
-    /* NT: RPC_X_NULL_REF_POINTER, 9x: res != 0  */
-    ok( (!res && (GetLastError() == RPC_X_NULL_REF_POINTER)) ||
-        broken(res),
-        "returned %d with %d (expected '0' with RPC_X_NULL_REF_POINTER)\n",
-        res, GetLastError());
+    /* w7 with deactivated spooler: ERROR_INVALID_PARAMETER,
+       NT: RPC_X_NULL_REF_POINTER, 9x: res != 0  */
+    ok( !res && ((GetLastError() == RPC_X_NULL_REF_POINTER) ||
+                 (GetLastError() == ERROR_INVALID_PARAMETER)),
+        "returned %d with %d (expected '0' with RPC_X_NULL_REF_POINTER "
+        "or with ERROR_INVALID_PARAMETER)\n", res, GetLastError());
 
     /* with a valid buffer, but level is invalid */
     buffer[0] = '\0';
@@ -1992,6 +1998,14 @@ static void test_SetDefaultPrinter(void)
     WriteProfileStringA("windows", "device", NULL);    
     SetLastError(MAGIC_DEAD);
     res = pSetDefaultPrinterA("");
+    if ((res == 0) && (GetLastError() == RPC_S_SERVER_UNAVAILABLE))     {
+        if (!deactivated_spooler_reported) {
+            deactivated_spooler_reported++;
+            skip("The Service 'Spooler' is required for many test\n");
+        }
+        goto restore_old_printer;
+    }
+
     /* we get ERROR_INVALID_PRINTER_NAME when no printer is installed */
     ok(res || (!res && (GetLastError() == ERROR_INVALID_PRINTER_NAME)),
          "returned %d with %d (expected '!=0' or '0' with "
@@ -2013,6 +2027,7 @@ static void test_SetDefaultPrinter(void)
         "ERROR_INVALID_PRINTER_NAME)\n", res, GetLastError());
 
     /* restore the original value */
+restore_old_printer:
     res = pSetDefaultPrinterA(default_printer);          /* the nice way */
     ok(res, "SetDefaultPrinter error %d\n", GetLastError());
     WriteProfileStringA("windows", "device", org_value); /* the old way */
