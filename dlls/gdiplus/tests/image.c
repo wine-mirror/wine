@@ -2307,7 +2307,7 @@ static void test_multiframegif(void)
     color = 0xdeadbeef;
     GdipBitmapGetPixel(bmp, 0, 0, &color);
     expect(Ok, stat);
-    todo_wine expect(0xff000000, color);
+    expect(0xff000000, color);
 
     stat = GdipImageSelectActiveFrame((GpImage*)bmp, &dimension, 0);
     expect(Ok, stat);
@@ -2338,7 +2338,7 @@ static void test_multiframegif(void)
 
     stat = GdipBitmapGetPixel(bmp, 0, 0, &color);
     expect(Ok, stat);
-    todo_wine expect(0xffffffff, color);
+    expect(0xffffffff, color);
 
     GdipDisposeImage((GpImage*)bmp);
     IStream_Release(stream);
