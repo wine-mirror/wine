@@ -46,6 +46,8 @@ static const WCHAR class_processorW[] =
 
 static const WCHAR prop_captionW[] =
     {'C','a','p','t','i','o','n',0};
+static const WCHAR prop_commandlineW[] =
+    {'C','o','m','m','a','n','d','L','i','n','e',0};
 static const WCHAR prop_descriptionW[] =
     {'D','e','s','c','r','i','p','t','i','o','n',0};
 static const WCHAR prop_handleW[] =
@@ -88,6 +90,7 @@ static const struct column col_os[] =
 static const struct column col_process[] =
 {
     { prop_captionW,     CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_commandlineW, CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_descriptionW, CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_handleW,      CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
     { prop_pprocessidW,  CIM_UINT32 },
@@ -144,6 +147,7 @@ struct record_operatingsystem
 struct record_process
 {
     const WCHAR *caption;
+    const WCHAR *commandline;
     const WCHAR *description;
     const WCHAR *handle;
     UINT32       pprocess_id;
@@ -168,6 +172,12 @@ static const struct record_processor data_processor[] =
 {
     { processor_manufacturerW }
 };
+
+static WCHAR *get_cmdline( DWORD process_id )
+{
+    if (process_id == GetCurrentProcessId()) return heap_strdupW( GetCommandLineW() );
+    return NULL; /* FIXME handle different process case */
+}
 
 static void fill_process( struct table *table )
 {
@@ -196,6 +206,7 @@ static void fill_process( struct table *table )
         }
         rec = (struct record_process *)(table->data + offset);
         rec->caption      = heap_strdupW( entry.szExeFile );
+        rec->commandline  = get_cmdline( entry.th32ProcessID );
         rec->description  = heap_strdupW( entry.szExeFile );
         sprintfW( handle, fmtW, entry.th32ProcessID );
         rec->handle       = heap_strdupW( handle );
