@@ -1758,7 +1758,7 @@ static void test_readfileex_pending(void)
     OVERLAPPED overlapped;
     char read_buf[1024];
     char write_buf[1024];
-    const char *test_string = "test";
+    const char test_string[] = "test";
     int i;
 
     server = CreateNamedPipe(PIPENAME, FILE_FLAG_OVERLAPPED | PIPE_ACCESS_DUPLEX,
@@ -1798,9 +1798,9 @@ static void test_readfileex_pending(void)
     ok(ret == TRUE, "ReadFileEx failed, err=%i\n", GetLastError());
     ok(completion_called == 0, "completion routine called before ReadFileEx returned\n");
 
-    ret = WriteFile(client, test_string, sizeof(test_string), &num_bytes, NULL);
+    ret = WriteFile(client, test_string, strlen(test_string), &num_bytes, NULL);
     ok(ret == TRUE, "WriteFile failed\n");
-    ok(num_bytes == sizeof(test_string), "only %i bytes written\n", num_bytes);
+    ok(num_bytes == strlen(test_string), "only %i bytes written\n", num_bytes);
 
     ok(completion_called == 0, "completion routine called during WriteFile\n");
 
@@ -1809,9 +1809,9 @@ static void test_readfileex_pending(void)
 
     ok(completion_called == 1, "completion not called after writing pipe\n");
     ok(completion_errorcode == 0, "completion called with error %x\n", completion_errorcode);
-    ok(completion_num_bytes == sizeof(test_string), "ReadFileEx returned only %d bytes\n", completion_num_bytes);
+    ok(completion_num_bytes == strlen(test_string), "ReadFileEx returned only %d bytes\n", completion_num_bytes);
     ok(completion_lpoverlapped == &overlapped, "completion called with wrong overlapped pointer\n");
-    ok(!memcmp(test_string, read_buf, sizeof(test_string)), "ReadFileEx read wrong bytes\n");
+    ok(!memcmp(test_string, read_buf, strlen(test_string)), "ReadFileEx read wrong bytes\n");
 
     /* Make writes until the pipe is full and the write fails */
     memset(write_buf, 0xaa, sizeof(write_buf));
