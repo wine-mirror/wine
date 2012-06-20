@@ -97,8 +97,7 @@ static HRESULT set_length(jsdisp_t *obj, jsexcept_t *ei, DWORD length)
         return S_OK;
     }
 
-    V_VT(&var) = VT_I4;
-    V_I4(&var) = length;
+    num_set_int(&var, length);
     return jsdisp_propput_name(obj, lengthW, &var, ei);
 }
 
@@ -126,8 +125,7 @@ static HRESULT Array_length(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
 
     switch(flags) {
     case DISPATCH_PROPERTYGET:
-        V_VT(retv) = VT_I4;
-        V_I4(retv) = This->length;
+        num_set_int(retv, This->length);
         break;
     case DISPATCH_PROPERTYPUT: {
         DOUBLE len = -1;
@@ -448,10 +446,8 @@ static HRESULT Array_push(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPAR
     if(FAILED(hres))
         return hres;
 
-    if(retv) {
-        V_VT(retv) = VT_I4;
-        V_I4(retv) = length+n;
-    }
+    if(retv)
+        num_set_int(retv, length+n);
     return S_OK;
 }
 
@@ -909,9 +905,7 @@ static HRESULT Array_splice(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPP
         }
 
         if(SUCCEEDED(hres)) {
-            V_VT(&v) = VT_I4;
-            V_I4(&v) = delete_cnt;
-
+            num_set_int(&v, delete_cnt);
             hres = jsdisp_propput_name(ret_array, lengthW, &v, ei);
         }
     }
@@ -941,8 +935,7 @@ static HRESULT Array_splice(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPP
         hres = jsdisp_propput_idx(jsthis, start+i, get_arg(dp,i+2), ei);
 
     if(SUCCEEDED(hres)) {
-        V_VT(&v) = VT_I4;
-        V_I4(&v) = length-delete_cnt+add_args;
+        num_set_int(&v, length-delete_cnt+add_args);
         hres = jsdisp_propput_name(jsthis, lengthW, &v, ei);
     }
 
@@ -1036,12 +1029,10 @@ static HRESULT Array_unshift(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISP
     }
 
     if(retv) {
-        if(ctx->version < 2) {
+        if(ctx->version < 2)
             V_VT(retv) = VT_EMPTY;
-        }else {
-            V_VT(retv) = VT_I4;
-            V_I4(retv) = length;
-        }
+        else
+            num_set_int(retv, length);
     }
     return S_OK;
 }
