@@ -5785,8 +5785,8 @@
 @ extern _Snan
 @ cdecl _Stod(ptr ptr long)
 @ cdecl _Stodx(ptr ptr long ptr)
-@ stub _Stof
-@ stub _Stofx
+@ cdecl _Stof(ptr ptr long)
+@ cdecl _Stofx(ptr ptr long ptr)
 @ cdecl _Stold(ptr ptr long) _Stod
 @ cdecl _Stoldx(ptr ptr long ptr) _Stodx
 @ stub _Stoll

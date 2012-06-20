@@ -3897,6 +3897,16 @@ double __cdecl _Stodx(const char *buf, char **buf_end, LONG exp, int *err)
     return ret;
 }
 
+float __cdecl _Stof(const char *buf, char **buf_end, LONG exp)
+{
+    return _Stod(buf, buf_end, exp);
+}
+
+float __cdecl _Stofx(const char *buf, char **buf_end, LONG exp, int *err)
+{
+    return _Stodx(buf, buf_end, exp, err);
+}
+
 /* ?id@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@2V0locale@2@A */
 locale_id num_get_wchar_id = {0};
 /* ?id@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@2V0locale@2@A */
