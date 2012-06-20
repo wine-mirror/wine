@@ -761,7 +761,7 @@ static int XCOPY_ParseCommandLine(WCHAR *suppliedsource,
             case 'E': if (CompareStringW(LOCALE_USER_DEFAULT,
                                          NORM_IGNORECASE | SORT_STRINGSORT,
                                          &word[1], 8,
-                                         EXCLUDE, -1) == 2) {
+                                         EXCLUDE, -1) == CSTR_EQUAL) {
                         if (XCOPY_ProcessExcludeList(&word[9])) {
                           XCOPY_FailMessage(ERROR_INVALID_PARAMETER);
                           goto out;
