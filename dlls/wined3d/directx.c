@@ -3029,15 +3029,18 @@ HRESULT CDECL wined3d_enum_adapter_modes(const struct wined3d *wined3d, UINT ada
 HRESULT CDECL wined3d_get_adapter_display_mode(const struct wined3d *wined3d, UINT adapter_idx,
         struct wined3d_display_mode *mode)
 {
+    const struct wined3d_adapter *adapter;
+
     TRACE("wined3d %p, adapter_idx %u, display_mode %p.\n", wined3d, adapter_idx, mode);
 
     if (!mode || adapter_idx >= wined3d->adapter_count)
         return WINED3DERR_INVALIDCALL;
 
+    adapter = &wined3d->adapters[adapter_idx];
+
     if (!adapter_idx)
     {
         DEVMODEW DevModeW;
-        unsigned int bpp;
 
         ZeroMemory(&DevModeW, sizeof(DevModeW));
         DevModeW.dmSize = sizeof(DevModeW);
@@ -3045,11 +3048,22 @@ HRESULT CDECL wined3d_get_adapter_display_mode(const struct wined3d *wined3d, UI
         EnumDisplaySettingsExW(NULL, ENUM_CURRENT_SETTINGS, &DevModeW, 0);
         mode->width = DevModeW.dmPelsWidth;
         mode->height = DevModeW.dmPelsHeight;
-        bpp = DevModeW.dmBitsPerPel;
         mode->refresh_rate = DEFAULT_REFRESH_RATE;
         if (DevModeW.dmFields & DM_DISPLAYFREQUENCY)
             mode->refresh_rate = DevModeW.dmDisplayFrequency;
-        mode->format_id = pixelformat_for_depth(bpp);
+        mode->format_id = pixelformat_for_depth(DevModeW.dmBitsPerPel);
+
+        /* Lie about the format. X11 can't change the color depth, and some
+         * apps are pretty angry if they SetDisplayMode from 24 to 16 bpp and
+         * find out that GetDisplayMode still returns 24 bpp. This should
+         * probably be handled in winex11 instead. */
+        if (adapter->screen_format && adapter->screen_format != mode->format_id)
+        {
+            WARN("Overriding format %s with stored format %s.\n",
+                    debug_d3dformat(mode->format_id),
+                    debug_d3dformat(adapter->screen_format));
+            mode->format_id = adapter->screen_format;
+        }
     }
     else
     {
