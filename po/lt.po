@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-06-08 21:40+0300\n"
+"PO-Revision-Date: 2012-06-20 09:00+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -13653,22 +13653,16 @@ msgid "Help topics: "
 msgstr "Žinyno temos: "
 
 #: wmic.rc:25
-#, fuzzy
-#| msgid "Error: Invalid command line parameters\n"
 msgid "Error: Command line not supported\n"
-msgstr "Klaida: Netinkami komandos eilutės parametrai\n"
+msgstr "Klaida: Komandos eilutė nepalaikoma\n"
 
 #: wmic.rc:26
-#, fuzzy
-#| msgid "Property set not found.\n"
 msgid "Error: Alias not found\n"
-msgstr "Savybių aibė nerasta.\n"
+msgstr "Klaida: Alternatyvusis vardas nerastas.\n"
 
 #: wmic.rc:27
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "Error: Invalid query\n"
-msgstr "Klaida: Netinkamas rakto vardas\n"
+msgstr "Klaida: Netinkama užklausa\n"
 
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
