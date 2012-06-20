@@ -118,6 +118,49 @@ static HRESULT get_value( const struct table *table, UINT row, UINT column, INT_
     return S_OK;
 }
 
+static BSTR get_value_bstr( const struct table *table, UINT row, UINT column )
+{
+    static const WCHAR fmt_signedW[] = {'%','d',0};
+    static const WCHAR fmt_unsignedW[] = {'%','u',0};
+    static const WCHAR fmt_strW[] = {'\"','%','s','\"',0};
+    INT_PTR val;
+    BSTR ret;
+    WCHAR number[12];
+    UINT len;
+
+    if (table->columns[column].type & CIM_FLAG_ARRAY)
+    {
+        FIXME("array to string conversion not handled\n");
+        return NULL;
+    }
+    if (get_value( table, row, column, &val ) != S_OK) return NULL;
+
+    switch (table->columns[column].type & COL_TYPE_MASK)
+    {
+    case CIM_DATETIME:
+    case CIM_STRING:
+        len = strlenW( (const WCHAR *)val ) + 2;
+        if (!(ret = SysAllocStringLen( NULL, len ))) return NULL;
+        sprintfW( ret, fmt_strW, (const WCHAR *)val );
+        return ret;
+
+    case CIM_SINT16:
+    case CIM_SINT32:
+        sprintfW( number, fmt_signedW, val );
+        return SysAllocString( number );
+
+    case CIM_UINT16:
+    case CIM_UINT32:
+        sprintfW( number, fmt_unsignedW, val );
+        return SysAllocString( number );
+
+    default:
+        FIXME("unhandled column type %u\n", table->columns[column].type & COL_TYPE_MASK);
+        break;
+    }
+    return NULL;
+}
+
 HRESULT create_view( const struct property *proplist, const WCHAR *class,
                      const struct expr *cond, struct view **ret )
 {
@@ -416,10 +459,77 @@ static BSTR build_namespace( const struct view *view )
     return SysAllocString( cimv2W );
 }
 
+static BSTR build_proplist( const struct view *view, UINT index, UINT count, UINT *len )
+{
+    static const WCHAR fmtW[] = {'%','s','=','%','s',0};
+    UINT i, j, offset, row = view->result[index];
+    BSTR *values, ret = NULL;
+
+    if (!(values = heap_alloc( count * sizeof(BSTR) ))) return NULL;
+
+    *len = j = 0;
+    for (i = 0; i < view->table->num_cols; i++)
+    {
+        if (view->table->columns[i].type & COL_FLAG_KEY)
+        {
+            const WCHAR *name = view->table->columns[i].name;
+
+            values[j] = get_value_bstr( view->table, row, i );
+            *len += strlenW( fmtW ) + strlenW( name ) + strlenW( values[j] );
+            j++;
+        }
+    }
+    if ((ret = SysAllocStringLen( NULL, *len )))
+    {
+        offset = j = 0;
+        for (i = 0; i < view->table->num_cols; i++)
+        {
+            if (view->table->columns[i].type & COL_FLAG_KEY)
+            {
+                const WCHAR *name = view->table->columns[i].name;
+
+                offset += sprintfW( ret + offset, fmtW, name, values[j] );
+                if (j < count - 1) ret[offset++] = ',';
+                j++;
+            }
+        }
+    }
+    for (i = 0; i < count; i++) SysFreeString( values[i] );
+    heap_free( values );
+    return ret;
+}
+
+static UINT count_key_columns( const struct view *view )
+{
+    UINT i, num_keys = 0;
+
+    for (i = 0; i < view->table->num_cols; i++)
+    {
+        if (view->table->columns[i].type & COL_FLAG_KEY) num_keys++;
+    }
+    return num_keys;
+}
+
 static BSTR build_relpath( const struct view *view, UINT index, const WCHAR *name )
 {
+    static const WCHAR fmtW[] = {'%','s','.','%','s',0};
+    BSTR class, proplist, ret = NULL;
+    UINT num_keys, len;
+
     if (view->proplist) return NULL;
-    return build_classname( view ); /* FIXME: append list of key properties */
+
+    if (!(class = build_classname( view ))) return NULL;
+    if (!(num_keys = count_key_columns( view ))) return class;
+    if (!(proplist = build_proplist( view, index, num_keys, &len ))) goto done;
+
+    len += strlenW( fmtW ) + SysStringLen( class );
+    if (!(ret = SysAllocStringLen( NULL, len ))) goto done;
+    sprintfW( ret, fmtW, class, proplist );
+
+done:
+    SysFreeString( class );
+    SysFreeString( proplist );
+    return ret;
 }
 
 static BSTR build_path( const struct view *view, UINT index, const WCHAR *name )
