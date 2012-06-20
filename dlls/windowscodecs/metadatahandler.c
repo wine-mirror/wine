@@ -133,15 +133,6 @@ static ULONG WINAPI MetadataHandler_Release(IWICMetadataWriter *iface)
     return ref;
 }
 
-static HRESULT WINAPI MetadataHandler_GetMetadataFormat(IWICMetadataWriter *iface,
-    GUID *pguidMetadataFormat)
-{
-    if (!pguidMetadataFormat) return E_INVALIDARG;
-
-    FIXME("(%p,%s): stub\n", iface, debugstr_guid(pguidMetadataFormat));
-    return E_NOTIMPL;
-}
-
 static HRESULT WINAPI MetadataHandler_GetMetadataHandlerInfo(IWICMetadataWriter *iface,
     IWICMetadataHandlerInfo **ppIHandler)
 {
@@ -158,6 +149,25 @@ static HRESULT WINAPI MetadataHandler_GetMetadataHandlerInfo(IWICMetadataWriter 
         (void **)ppIHandler);
 
     IWICComponentInfo_Release(component_info);
+    return hr;
+}
+
+static HRESULT WINAPI MetadataHandler_GetMetadataFormat(IWICMetadataWriter *iface,
+    GUID *pguidMetadataFormat)
+{
+    HRESULT hr;
+    IWICMetadataHandlerInfo *metadata_info;
+
+    TRACE("%p,%p\n", iface, pguidMetadataFormat);
+
+    if (!pguidMetadataFormat) return E_INVALIDARG;
+
+    hr = MetadataHandler_GetMetadataHandlerInfo(iface, &metadata_info);
+    if (FAILED(hr)) return hr;
+
+    hr = IWICMetadataHandlerInfo_GetMetadataFormat(metadata_info, pguidMetadataFormat);
+    IWICMetadataHandlerInfo_Release(metadata_info);
+
     return hr;
 }
 

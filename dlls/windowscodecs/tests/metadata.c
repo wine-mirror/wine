@@ -418,9 +418,7 @@ static void test_metadata_IFD(void)
     IWICEnumMetadataItem_Release(enumerator);
 
     hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
-todo_wine
     ok(hr == S_OK, "GetMetadataFormat error %#x\n", hr);
-todo_wine
     ok(IsEqualGUID(&format, &GUID_MetadataFormatIfd), "unexpected format %s\n", debugstr_guid(&format));
 
     hr = IWICMetadataReader_GetMetadataFormat(reader, NULL);
