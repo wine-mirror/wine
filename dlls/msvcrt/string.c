@@ -543,7 +543,7 @@ int CDECL MSVCRT_strcoll_l( const char* str1, const char* str2, MSVCRT__locale_t
     else
         locinfo = locale->locinfo;
 
-    return CompareStringA(locinfo->lc_handle[MSVCRT_LC_CTYPE], 0, str1, -1, str2, -1)-2;
+    return CompareStringA(locinfo->lc_handle[MSVCRT_LC_CTYPE], 0, str1, -1, str2, -1)-CSTR_EQUAL;
 }
 
 /*********************************************************************
@@ -567,7 +567,7 @@ int CDECL MSVCRT__stricoll_l( const char* str1, const char* str2, MSVCRT__locale
         locinfo = locale->locinfo;
 
     return CompareStringA(locinfo->lc_handle[MSVCRT_LC_CTYPE], NORM_IGNORECASE,
-            str1, -1, str2, -1)-2;
+            str1, -1, str2, -1)-CSTR_EQUAL;
 }
 
 /*********************************************************************
@@ -590,7 +590,7 @@ int CDECL MSVCRT_strncoll_l( const char* str1, const char* str2, MSVCRT_size_t c
     else
         locinfo = locale->locinfo;
 
-    return CompareStringA(locinfo->lc_handle[MSVCRT_LC_CTYPE], 0, str1, count, str2, count)-2;
+    return CompareStringA(locinfo->lc_handle[MSVCRT_LC_CTYPE], 0, str1, count, str2, count)-CSTR_EQUAL;
 }
 
 /*********************************************************************
@@ -614,7 +614,7 @@ int CDECL MSVCRT__strnicoll_l( const char* str1, const char* str2, MSVCRT_size_t
         locinfo = locale->locinfo;
 
     return CompareStringA(locinfo->lc_handle[MSVCRT_LC_CTYPE], NORM_IGNORECASE,
-            str1, count, str2, count)-2;
+            str1, count, str2, count)-CSTR_EQUAL;
 }
 
 /*********************************************************************
