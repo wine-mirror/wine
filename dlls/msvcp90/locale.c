@@ -3936,6 +3936,44 @@ LONG __cdecl _Stolx(const char *buf, char **buf_end, int base, int *err)
     return i;
 }
 
+unsigned __int64 __cdecl _Stoull(const char *buf, char **buf_end, int base)
+{
+    return _strtoui64(buf, buf_end, base);
+}
+
+unsigned __int64 __cdecl _Stoullx(const char *buf, char **buf_end, int base, int *err)
+{
+    unsigned __int64 ret;
+
+    *err = *_errno();
+    *_errno() = 0;
+    ret = _strtoui64(buf, buf_end, base);
+    if(*_errno()) {
+        *err = *_errno();
+    }else {
+        *_errno() = *err;
+        *err = 0;
+    }
+    return ret;
+}
+
+ULONG __cdecl _Stoul(const char *buf, char **buf_end, int base)
+{
+    int err;
+    unsigned __int64 i = _Stoullx(buf[0]=='-' ? buf+1 : buf, buf_end, base, &err);
+    if(!err && i!=(unsigned __int64)((ULONG)i))
+        *_errno() = ERANGE;
+    return buf[0]=='-' ? -i : i;
+}
+
+ULONG __cdecl _Stoulx(const char *buf, char **buf_end, int base, int *err)
+{
+    unsigned __int64 i = _Stoullx(buf[0]=='-' ? buf+1 : buf, buf_end, base, err);
+    if(!*err && i!=(unsigned __int64)((ULONG)i))
+        *err = ERANGE;
+    return buf[0]=='-' ? -i : i;
+}
+
 /* ?id@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@2V0locale@2@A */
 locale_id num_get_wchar_id = {0};
 /* ?id@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@2V0locale@2@A */

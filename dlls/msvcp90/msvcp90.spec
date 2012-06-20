@@ -5792,10 +5792,10 @@
 @ cdecl -ret64 _Stoll(ptr ptr long)
 @ cdecl -ret64 _Stollx(ptr ptr long ptr)
 @ cdecl _Stolx(ptr ptr long ptr)
-@ stub _Stoul
-@ stub _Stoull
-@ stub _Stoullx
-@ stub _Stoulx
+@ cdecl _Stoul(ptr ptr long)
+@ cdecl -ret64 _Stoull(ptr ptr long)
+@ cdecl -ret64 _Stoullx(ptr ptr long ptr)
+@ cdecl _Stoulx(ptr ptr long ptr)
 @ cdecl _Strcoll(ptr ptr ptr ptr ptr)
 @ stub _Strxfrm
 @ cdecl _Tolower(long ptr)
