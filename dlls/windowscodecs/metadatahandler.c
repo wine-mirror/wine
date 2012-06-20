@@ -185,10 +185,32 @@ static HRESULT WINAPI MetadataHandler_GetCount(IWICMetadataWriter *iface,
 }
 
 static HRESULT WINAPI MetadataHandler_GetValueByIndex(IWICMetadataWriter *iface,
-    UINT nIndex, PROPVARIANT *pvarSchema, PROPVARIANT *pvarId, PROPVARIANT *pvarValue)
+    UINT index, PROPVARIANT *schema, PROPVARIANT *id, PROPVARIANT *value)
 {
-    FIXME("(%p,%u,%p,%p,%p): stub\n", iface, nIndex, pvarSchema, pvarId, pvarValue);
-    return E_NOTIMPL;
+    HRESULT hr = S_OK;
+    MetadataHandler *This = impl_from_IWICMetadataWriter(iface);
+
+    TRACE("%p,%u,%p,%p,%p\n", iface, index, schema, id, value);
+
+    EnterCriticalSection(&This->lock);
+
+    if (index >= This->item_count)
+    {
+        LeaveCriticalSection(&This->lock);
+        return E_INVALIDARG;
+    }
+
+    if (schema)
+        hr = PropVariantCopy(schema, &This->items[index].schema);
+
+    if (SUCCEEDED(hr) && id)
+        hr = PropVariantCopy(id, &This->items[index].id);
+
+    if (SUCCEEDED(hr) && value)
+        hr = PropVariantCopy(value, &This->items[index].value);
+
+    LeaveCriticalSection(&This->lock);
+    return hr;
 }
 
 static HRESULT WINAPI MetadataHandler_GetValue(IWICMetadataWriter *iface,

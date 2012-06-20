@@ -425,13 +425,7 @@ static void test_metadata_IFD(void)
     ok(hr == E_INVALIDARG, "GetMetadataFormat should fail\n");
 
     hr = IWICMetadataReader_GetValueByIndex(reader, 0, NULL, NULL, NULL);
-todo_wine
     ok(hr == S_OK, "GetValueByIndex error %#x\n", hr);
-    if (FAILED(hr))
-    {
-        IWICMetadataReader_Release(reader);
-        return;
-    }
 
     hr = IWICMetadataReader_GetValueByIndex(reader, count - 1, NULL, NULL, NULL);
     ok(hr == S_OK, "GetValueByIndex error %#x\n", hr);
