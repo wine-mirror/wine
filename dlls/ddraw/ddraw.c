@@ -1061,20 +1061,6 @@ static HRESULT ddraw_set_display_mode(struct ddraw *ddraw, DWORD Width, DWORD He
         default: format = WINED3DFMT_UNKNOWN;          break;
     }
 
-    if (FAILED(hr = wined3d_device_get_display_mode(ddraw->wined3d_device, 0, &mode)))
-    {
-        ERR("Failed to get current display mode, hr %#x.\n", hr);
-    }
-    else if (mode.width == Width
-            && mode.height == Height
-            && mode.format_id == format
-            && mode.refresh_rate == RefreshRate)
-    {
-        TRACE("Skipping redundant mode setting call.\n");
-        wined3d_mutex_unlock();
-        return DD_OK;
-    }
-
     /* Check the exclusive mode
     if(!(ddraw->cooperative_level & DDSCL_EXCLUSIVE))
         return DDERR_NOEXCLUSIVEMODE;

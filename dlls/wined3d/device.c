@@ -1567,9 +1567,11 @@ HRESULT CDECL wined3d_device_set_display_mode(struct wined3d_device *device,
 {
     struct wined3d_adapter *adapter = device->adapter;
     const struct wined3d_format *format = wined3d_get_format(&adapter->gl_info, mode->format_id);
+    struct wined3d_display_mode current_mode;
     DEVMODEW devmode;
     LONG ret;
     RECT clip_rc;
+    HRESULT hr;
 
     TRACE("device %p, swapchain_idx %u, mode %p (%ux%u@%u %s).\n", device, swapchain_idx, mode,
             mode->width, mode->height, mode->refresh_rate, debug_d3dformat(mode->format_id));
@@ -1592,9 +1594,19 @@ HRESULT CDECL wined3d_device_set_display_mode(struct wined3d_device *device,
         devmode.dmFields |= DM_DISPLAYFREQUENCY;
 
     /* Only change the mode if necessary */
-    if (adapter->screen_size.cx == mode->width && adapter->screen_size.cy == mode->height
-            && adapter->screen_format == mode->format_id && !mode->refresh_rate)
+    if (FAILED(hr = wined3d_device_get_display_mode(device, swapchain_idx, &current_mode)))
+    {
+        ERR("Failed to get current display mode, hr %#x.\n", hr);
+    }
+    else if (current_mode.width == mode->width
+            && current_mode.height == mode->height
+            && current_mode.format_id == mode->format_id
+            && (current_mode.refresh_rate == mode->refresh_rate
+            || !mode->refresh_rate))
+    {
+        TRACE("Skipping redundant mode setting call.\n");
         return WINED3D_OK;
+    }
 
     ret = ChangeDisplaySettingsExW(NULL, &devmode, NULL, CDS_FULLSCREEN, NULL);
     if (ret != DISP_CHANGE_SUCCESSFUL)
