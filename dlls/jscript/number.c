@@ -554,10 +554,8 @@ static HRESULT NumberConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
     switch(flags) {
     case INVOKE_FUNC:
         if(!arg_cnt(dp)) {
-            if(retv) {
-                V_VT(retv) = VT_I4;
-                V_I4(retv) = 0;
-            }
+            if(retv)
+                num_set_int(retv, 0);
             return S_OK;
         }
 

@@ -111,8 +111,7 @@ static HRESULT String_length(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DIS
     case DISPATCH_PROPERTYGET: {
         StringInstance *string = string_from_vdisp(jsthis);
 
-        V_VT(retv) = VT_I4;
-        V_I4(retv) = string->length;
+        num_set_int(retv, string->length);
         break;
     }
     default:
@@ -368,10 +367,8 @@ static HRESULT String_charCodeAt(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
         idx = d;
     }
 
-    if(retv) {
-        V_VT(retv) = VT_I4;
-        V_I4(retv) = str[idx];
-    }
+    if(retv)
+        num_set_int(retv, str[idx]);
 
     SysFreeString(val_str);
     return S_OK;
@@ -476,10 +473,8 @@ static HRESULT String_indexOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DI
         return hres;
 
     if(!arg_cnt(dp)) {
-        if(retv) {
-            V_VT(retv) = VT_I4;
-            V_I4(retv) = -1;
-        }
+        if(retv)
+            num_set_int(retv, -1);
         SysFreeString(val_str);
         return S_OK;
     }
@@ -513,10 +508,8 @@ static HRESULT String_indexOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DI
     if(FAILED(hres))
         return hres;
 
-    if(retv) {
-        V_VT(retv) = VT_I4;
-        V_I4(retv) = ret;
-    }
+    if(retv)
+        num_set_int(retv, ret);
     return S_OK;
 }
 
@@ -544,10 +537,8 @@ static HRESULT String_lastIndexOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
         return hres;
 
     if(!arg_cnt(dp)) {
-        if(retv) {
-            V_VT(retv) = VT_I4;
-            V_I4(retv) = -1;
-        }
+        if(retv)
+            num_set_int(retv, -1);
         SysFreeString(val_str);
         return S_OK;
     }
@@ -586,10 +577,8 @@ static HRESULT String_lastIndexOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
     if(FAILED(hres))
         return hres;
 
-    if(retv) {
-        V_VT(retv) = VT_I4;
-        V_I4(retv) = ret;
-    }
+    if(retv)
+        num_set_int(retv, ret);
     return S_OK;
 }
 
@@ -729,8 +718,7 @@ static HRESULT rep_call(script_ctx_t *ctx, jsdisp_t *func, const WCHAR *str, mat
 
     if(SUCCEEDED(hres)) {
         arg = get_arg(&dp,parens_cnt+1);
-        V_VT(arg) = VT_I4;
-        V_I4(arg) = match->str - str;
+        num_set_int(arg, match->str - str);
 
         arg = get_arg(&dp,parens_cnt+2);
         V_VT(arg) = VT_BSTR;
@@ -1046,10 +1034,8 @@ static HRESULT String_search(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DIS
     if(FAILED(hres))
         return hres;
 
-    if(retv) {
-        V_VT(retv) = VT_I4;
-        V_I4(retv) = hres == S_OK ? match.str-str : -1;
-    }
+    if(retv)
+        num_set_int(retv, hres == S_OK ? match.str-str : -1);
     return S_OK;
 }
 

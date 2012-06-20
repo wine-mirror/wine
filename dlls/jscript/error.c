@@ -199,8 +199,7 @@ static HRESULT create_error(script_ctx_t *ctx, jsdisp_t *constr,
     if(FAILED(hres))
         return hres;
 
-    V_VT(&v) = VT_I4;
-    V_I4(&v) = number;
+    num_set_int(&v, number);
     hres = jsdisp_propput_name(err, numberW, &v, NULL/*FIXME*/);
     if(FAILED(hres)) {
         jsdisp_release(err);

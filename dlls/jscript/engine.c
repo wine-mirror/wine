@@ -2030,16 +2030,14 @@ static HRESULT equal_values(script_ctx_t *ctx, VARIANT *lval, VARIANT *rval, jse
     if(V_VT(rval) == VT_BOOL) {
         VARIANT v;
 
-        V_VT(&v) = VT_I4;
-        V_I4(&v) = V_BOOL(rval) ? 1 : 0;
+        num_set_int(&v, V_BOOL(rval) ? 1 : 0);
         return equal_values(ctx, lval, &v, ei, ret);
     }
 
     if(V_VT(lval) == VT_BOOL) {
         VARIANT v;
 
-        V_VT(&v) = VT_I4;
-        V_I4(&v) = V_BOOL(lval) ? 1 : 0;
+        num_set_int(&v, V_BOOL(lval) ? 1 : 0);
         return equal_values(ctx, &v, rval, ei, ret);
     }
 

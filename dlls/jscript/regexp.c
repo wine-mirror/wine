@@ -3606,13 +3606,12 @@ static HRESULT create_match_array(script_ctx_t *ctx, BSTR input, const match_res
     }
 
     while(SUCCEEDED(hres)) {
-        V_VT(&var) = VT_I4;
-        V_I4(&var) = result->str-input;
+        num_set_int(&var, result->str-input);
         hres = jsdisp_propput_name(array, indexW, &var, ei);
         if(FAILED(hres))
             break;
 
-        V_I4(&var) = result->str-input+result->len;
+        num_set_int(&var, result->str-input+result->len);
         hres = jsdisp_propput_name(array, lastIndexW, &var, ei);
         if(FAILED(hres))
             break;
@@ -3862,8 +3861,7 @@ HRESULT create_regexp(script_ctx_t *ctx, const WCHAR *exp, int len, DWORD flags,
         return E_FAIL;
     }
 
-    V_VT(&regexp->last_index_var) = VT_I4;
-    V_I4(&regexp->last_index_var) = 0;
+    num_set_int(&regexp->last_index_var, 0);
 
     *ret = &regexp->dispex;
     return S_OK;
@@ -3990,13 +3988,12 @@ HRESULT regexp_string_match(script_ctx_t *ctx, jsdisp_t *re, BSTR str,
     }
 
     while(SUCCEEDED(hres)) {
-        V_VT(&var) = VT_I4;
-        V_I4(&var) = match_result[match_cnt-1].str-str;
+        num_set_int(&var, match_result[match_cnt-1].str-str);
         hres = jsdisp_propput_name(array, indexW, &var, ei);
         if(FAILED(hres))
             break;
 
-        V_I4(&var) = match_result[match_cnt-1].str-str+match_result[match_cnt-1].len;
+        num_set_int(&var, match_result[match_cnt-1].str-str+match_result[match_cnt-1].len);
         hres = jsdisp_propput_name(array, lastIndexW, &var, ei);
         if(FAILED(hres))
             break;

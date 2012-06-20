@@ -745,10 +745,8 @@ static HRESULT JSGlobal_ScriptEngineMajorVersion(script_ctx_t *ctx, vdisp_t *jst
 {
     TRACE("\n");
 
-    if(retv) {
-        V_VT(retv) = VT_I4;
-        V_I4(retv) = JSCRIPT_MAJOR_VERSION;
-    }
+    if(retv)
+        num_set_int(retv, JSCRIPT_MAJOR_VERSION);
     return S_OK;
 }
 
@@ -757,10 +755,8 @@ static HRESULT JSGlobal_ScriptEngineMinorVersion(script_ctx_t *ctx, vdisp_t *jst
 {
     TRACE("\n");
 
-    if(retv) {
-        V_VT(retv) = VT_I4;
-        V_I4(retv) = JSCRIPT_MINOR_VERSION;
-    }
+    if(retv)
+        num_set_int(retv, JSCRIPT_MINOR_VERSION);
     return S_OK;
 }
 
@@ -769,10 +765,8 @@ static HRESULT JSGlobal_ScriptEngineBuildVersion(script_ctx_t *ctx, vdisp_t *jst
 {
     TRACE("\n");
 
-    if(retv) {
-        V_VT(retv) = VT_I4;
-        V_I4(retv) = JSCRIPT_BUILD_VERSION;
-    }
+    if(retv)
+        num_set_int(retv, JSCRIPT_BUILD_VERSION);
     return S_OK;
 }
 
