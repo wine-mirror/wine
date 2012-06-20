@@ -447,13 +447,6 @@ static inline void num_set_inf(VARIANT *v, BOOL positive)
 #endif
 }
 
-static inline DOUBLE ret_inf(void)
-{
-    VARIANT v;
-    num_set_inf(&v, TRUE);
-    return V_R8(&v);
-}
-
 static inline void var_set_jsdisp(VARIANT *v, jsdisp_t *jsdisp)
 {
     V_VT(v) = VT_DISPATCH;

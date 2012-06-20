@@ -351,7 +351,7 @@ static HRESULT str_to_number(BSTR str, double *ret)
         if(*ptr)
             *ret = NAN;
         else
-            *ret = neg ? -ret_inf() : ret_inf();
+            *ret = neg ? -INFINITY : INFINITY;
         return S_OK;
     }
 
