@@ -386,12 +386,148 @@ static BOOL is_selected_prop( const struct view *view, const WCHAR *name )
     return FALSE;
 }
 
+static BOOL is_system_prop( const WCHAR *name )
+{
+    return (name[0] == '_' && name[1] == '_');
+}
+
+static BSTR build_servername( const struct view *view )
+{
+    WCHAR server[MAX_COMPUTERNAME_LENGTH + 1], *p;
+    DWORD len = sizeof(server)/sizeof(server[0]);
+
+    if (view->proplist) return NULL;
+
+    if (!(GetComputerNameW( server, &len ))) return NULL;
+    for (p = server; *p; p++) *p = toupperW( *p );
+    return SysAllocString( server );
+}
+
+static BSTR build_classname( const struct view *view )
+{
+    return SysAllocString( view->table->name );
+}
+
+static BSTR build_namespace( const struct view *view )
+{
+    static const WCHAR cimv2W[] = {'R','O','O','T','\\','C','I','M','V','2',0};
+
+    if (view->proplist) return NULL;
+    return SysAllocString( cimv2W );
+}
+
+static BSTR build_relpath( const struct view *view, UINT index, const WCHAR *name )
+{
+    if (view->proplist) return NULL;
+    return build_classname( view ); /* FIXME: append list of key properties */
+}
+
+static BSTR build_path( const struct view *view, UINT index, const WCHAR *name )
+{
+    static const WCHAR fmtW[] = {'\\','\\','%','s','\\','%','s',':','%','s',0};
+    BSTR server, namespace = NULL, relpath = NULL, ret = NULL;
+    UINT len;
+
+    if (view->proplist) return NULL;
+
+    if (!(server = build_servername( view ))) return NULL;
+    if (!(namespace = build_namespace( view ))) goto done;
+    if (!(relpath = build_relpath( view, index, name ))) goto done;
+
+    len = strlenW( fmtW ) + SysStringLen( server ) + SysStringLen( namespace ) + SysStringLen( relpath );
+    if (!(ret = SysAllocStringLen( NULL, len ))) goto done;
+    sprintfW( ret, fmtW, server, namespace, relpath );
+
+done:
+    SysFreeString( server );
+    SysFreeString( namespace );
+    SysFreeString( relpath );
+    return ret;
+}
+
+static UINT count_selected_props( const struct view *view )
+{
+    const struct property *prop = view->proplist;
+    UINT count;
+
+    if (!prop) return view->table->num_cols;
+
+    count = 1;
+    while ((prop = prop->next)) count++;
+    return count;
+}
+
+static HRESULT get_system_propval( const struct view *view, UINT index, const WCHAR *name,
+                                   VARIANT *ret, CIMTYPE *type )
+{
+    static const WCHAR classW[] = {'_','_','C','L','A','S','S',0};
+    static const WCHAR genusW[] = {'_','_','G','E','N','U','S',0};
+    static const WCHAR pathW[] = {'_','_','P','A','T','H',0};
+    static const WCHAR namespaceW[] = {'_','_','N','A','M','E','S','P','A','C','E',0};
+    static const WCHAR propcountW[] = {'_','_','P','R','O','P','E','R','T','Y','_','C','O','U','N','T',0};
+    static const WCHAR relpathW[] = {'_','_','R','E','L','P','A','T','H',0};
+    static const WCHAR serverW[] = {'_','_','S','E','R','V','E','R',0};
+
+    if (!strcmpiW( name, classW ))
+    {
+        V_VT( ret ) = VT_BSTR;
+        V_BSTR( ret ) = build_classname( view );
+        if (type) *type = CIM_STRING;
+        return S_OK;
+    }
+    if (!strcmpiW( name, genusW ))
+    {
+        V_VT( ret ) = VT_INT;
+        V_INT( ret ) = WBEM_GENUS_INSTANCE; /* FIXME */
+        if (type) *type = CIM_SINT32;
+        return S_OK;
+    }
+    else if (!strcmpiW( name, namespaceW ))
+    {
+        V_VT( ret ) = VT_BSTR;
+        V_BSTR( ret ) = build_namespace( view );
+        if (type) *type = CIM_STRING;
+        return S_OK;
+    }
+    else if (!strcmpiW( name, pathW ))
+    {
+        V_VT( ret ) = VT_BSTR;
+        V_BSTR( ret ) = build_path( view, index, name );
+        if (type) *type = CIM_STRING;
+        return S_OK;
+    }
+    if (!strcmpiW( name, propcountW ))
+    {
+        V_VT( ret ) = VT_INT;
+        V_INT( ret ) = count_selected_props( view );
+        if (type) *type = CIM_SINT32;
+        return S_OK;
+    }
+    else if (!strcmpiW( name, relpathW ))
+    {
+        V_VT( ret ) = VT_BSTR;
+        V_BSTR( ret ) = build_relpath( view, index, name );
+        if (type) *type = CIM_STRING;
+        return S_OK;
+    }
+    else if (!strcmpiW( name, serverW ))
+    {
+        V_VT( ret ) = VT_BSTR;
+        V_BSTR( ret ) = build_servername( view );
+        if (type) *type = CIM_STRING;
+        return S_OK;
+    }
+    FIXME("system property %s not implemented\n", debugstr_w(name));
+    return WBEM_E_NOT_FOUND;
+}
+
 HRESULT get_propval( const struct view *view, UINT index, const WCHAR *name, VARIANT *ret, CIMTYPE *type )
 {
     HRESULT hr;
     UINT column, row = view->result[index];
     INT_PTR val;
 
+    if (is_system_prop( name )) return get_system_propval( view, index, name, ret, type );
     if (!is_selected_prop( view, name )) return WBEM_E_NOT_FOUND;
 
     hr = get_column_index( view->table, name, &column );

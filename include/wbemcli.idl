@@ -201,6 +201,12 @@ typedef [v1_enum] enum tag_WBEM_CONDITION_FLAG_TYPE
     WBEM_MASK_CLASS_CONDITION           = 0x300
 } WBEM_CONDITION_FLAG_TYPE;
 
+typedef [v1_enum] enum tag_WBEM_GENUS_TYPE
+{
+    WBEM_GENUS_CLASS = 1,
+    WBEM_GENUS_INSTANCE = 2
+} WBEM_GENUS_TYPE;
+
 typedef [v1_enum] enum tag_CIMTYPE_ENUMERATION
 {
     CIM_ILLEGAL = 0xfff,
