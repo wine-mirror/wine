@@ -176,7 +176,7 @@ static BOOL SHLWAPI_ChrCmpHelperA(WORD ch1, WORD ch2, DWORD dwFlags)
   else
     str2[1] = '\0';
 
-  return CompareStringA(GetThreadLocale(), dwFlags, str1, -1, str2, -1) - 2;
+  return CompareStringA(GetThreadLocale(), dwFlags, str1, -1, str2, -1) - CSTR_EQUAL;
 }
 
 /*************************************************************************
@@ -216,7 +216,7 @@ BOOL WINAPI ChrCmpIA(WORD ch1, WORD ch2)
  */
 BOOL WINAPI ChrCmpIW(WCHAR ch1, WCHAR ch2)
 {
-  return CompareStringW(GetThreadLocale(), NORM_IGNORECASE, &ch1, 1, &ch2, 1) - 2;
+  return CompareStringW(GetThreadLocale(), NORM_IGNORECASE, &ch1, 1, &ch2, 1) - CSTR_EQUAL;
 }
 
 /*************************************************************************
@@ -352,12 +352,8 @@ LPWSTR WINAPI StrChrNW(LPCWSTR lpszStr, WCHAR ch, UINT cchMax)
  */
 int WINAPI StrCmpIW(LPCWSTR lpszStr, LPCWSTR lpszComp)
 {
-  int iRet;
-
   TRACE("(%s,%s)\n", debugstr_w(lpszStr),debugstr_w(lpszComp));
-
-  iRet = CompareStringW(GetThreadLocale(), NORM_IGNORECASE, lpszStr, -1, lpszComp, -1);
-  return iRet == CSTR_LESS_THAN ? -1 : iRet == CSTR_GREATER_THAN ? 1 : 0;
+  return CompareStringW(GetThreadLocale(), NORM_IGNORECASE, lpszStr, -1, lpszComp, -1) - CSTR_EQUAL;
 }
 
 /*************************************************************************
@@ -376,12 +372,8 @@ int WINAPI StrCmpIW(LPCWSTR lpszStr, LPCWSTR lpszComp)
  */
 INT WINAPI StrCmpNA(LPCSTR lpszStr, LPCSTR lpszComp, INT iLen)
 {
-  INT iRet;
-
   TRACE("(%s,%s,%i)\n", debugstr_a(lpszStr), debugstr_a(lpszComp), iLen);
-
-  iRet = CompareStringA(GetThreadLocale(), 0, lpszStr, iLen, lpszComp, iLen);
-  return iRet == CSTR_LESS_THAN ? -1 : iRet == CSTR_GREATER_THAN ? 1 : 0;
+  return CompareStringA(GetThreadLocale(), 0, lpszStr, iLen, lpszComp, iLen) - CSTR_EQUAL;
 }
 
 /*************************************************************************
@@ -391,12 +383,8 @@ INT WINAPI StrCmpNA(LPCSTR lpszStr, LPCSTR lpszComp, INT iLen)
  */
 INT WINAPI StrCmpNW(LPCWSTR lpszStr, LPCWSTR lpszComp, INT iLen)
 {
-  INT iRet;
-
   TRACE("(%s,%s,%i)\n", debugstr_w(lpszStr), debugstr_w(lpszComp), iLen);
-
-  iRet = CompareStringW(GetThreadLocale(), 0, lpszStr, iLen, lpszComp, iLen);
-  return iRet == CSTR_LESS_THAN ? -1 : iRet == CSTR_GREATER_THAN ? 1 : 0;
+  return CompareStringW(GetThreadLocale(), 0, lpszStr, iLen, lpszComp, iLen) - CSTR_EQUAL;
 }
 
 /*************************************************************************
@@ -415,12 +403,8 @@ INT WINAPI StrCmpNW(LPCWSTR lpszStr, LPCWSTR lpszComp, INT iLen)
  */
 int WINAPI StrCmpNIA(LPCSTR lpszStr, LPCSTR lpszComp, int iLen)
 {
-  INT iRet;
-
   TRACE("(%s,%s,%i)\n", debugstr_a(lpszStr), debugstr_a(lpszComp), iLen);
-
-  iRet = CompareStringA(GetThreadLocale(), NORM_IGNORECASE, lpszStr, iLen, lpszComp, iLen);
-  return iRet == CSTR_LESS_THAN ? -1 : iRet == CSTR_GREATER_THAN ? 1 : 0;
+  return CompareStringA(GetThreadLocale(), NORM_IGNORECASE, lpszStr, iLen, lpszComp, iLen) - CSTR_EQUAL;
 }
 
 /*************************************************************************
@@ -430,12 +414,8 @@ int WINAPI StrCmpNIA(LPCSTR lpszStr, LPCSTR lpszComp, int iLen)
  */
 INT WINAPI StrCmpNIW(LPCWSTR lpszStr, LPCWSTR lpszComp, int iLen)
 {
-  INT iRet;
-
   TRACE("(%s,%s,%i)\n", debugstr_w(lpszStr), debugstr_w(lpszComp), iLen);
-
-  iRet = CompareStringW(GetThreadLocale(), NORM_IGNORECASE, lpszStr, iLen, lpszComp, iLen);
-  return iRet == CSTR_LESS_THAN ? -1 : iRet == CSTR_GREATER_THAN ? 1 : 0;
+  return CompareStringW(GetThreadLocale(), NORM_IGNORECASE, lpszStr, iLen, lpszComp, iLen) - CSTR_EQUAL;
 }
 
 /*************************************************************************
@@ -453,12 +433,8 @@ INT WINAPI StrCmpNIW(LPCWSTR lpszStr, LPCWSTR lpszComp, int iLen)
  */
 int WINAPI StrCmpW(LPCWSTR lpszStr, LPCWSTR lpszComp)
 {
-  INT iRet;
-
   TRACE("(%s,%s)\n", debugstr_w(lpszStr), debugstr_w(lpszComp));
-
-  iRet = CompareStringW(GetThreadLocale(), 0, lpszStr, -1, lpszComp, -1);
-  return iRet == CSTR_LESS_THAN ? -1 : iRet == CSTR_GREATER_THAN ? 1 : 0;
+  return CompareStringW(GetThreadLocale(), 0, lpszStr, -1, lpszComp, -1) - CSTR_EQUAL;
 }
 
 /*************************************************************************
