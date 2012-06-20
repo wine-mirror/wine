@@ -3174,11 +3174,12 @@ locale *__thiscall basic_ios_char_imbue(basic_ios_char *this, locale *ret, const
 {
     TRACE("(%p %p %p)\n", this, ret, loc);
 
-    if(this->strbuf)
-        return basic_streambuf_char_pubimbue(this->strbuf, ret, loc);
+    if(this->strbuf) {
+        basic_streambuf_char_pubimbue(this->strbuf, ret, loc);
+        locale_dtor(ret);
+    }
 
-    locale_copy_ctor(ret, loc);
-    return ret;
+    return ios_base_imbue(&this->base, ret, loc);
 }
 
 /* ?narrow@?$basic_ios@DU?$char_traits@D@std@@@std@@QBEDDD@Z */
