@@ -74,6 +74,7 @@ HRESULT      WINAPI SHPathPrepareForWriteW(HWND,IUnknown*,LPCWSTR,DWORD);
 #define             SHPathPrepareForWrite WINELIB_NAME_AW(SHPathPrepareForWrite);
 UINT         WINAPI SHReplaceFromPropSheetExtArray(HPSXA,UINT,LPFNADDPROPSHEETPAGE,LPARAM);
 LPITEMIDLIST WINAPI SHSimpleIDListFromPath(LPCWSTR);
+BOOL         WINAPI SHRunControlPanel(LPCWSTR, HWND);
 int          WINAPI SHMapPIDLToSystemImageListIndex(IShellFolder*,LPCITEMIDLIST,int*);
 HRESULT      WINAPI SHStartNetConnectionDialog(HWND,LPCSTR,DWORD);
 VOID         WINAPI SHUpdateImageA(LPCSTR,INT,UINT,INT);
@@ -81,9 +82,11 @@ VOID         WINAPI SHUpdateImageW(LPCWSTR,INT,UINT,INT);
 #define             SHUpdateImage WINELIB_NAME_AW(SHUpdateImage)
 int          WINAPI RestartDialog(HWND,LPCWSTR,DWORD);
 int          WINAPI RestartDialogEx(HWND,LPCWSTR,DWORD,DWORD);
+int          WINAPI DriveType(int);
 BOOL         WINAPI IsUserAnAdmin(void);
 UINT         WINAPI Shell_MergeMenus(HMENU,HMENU,UINT,UINT,UINT,ULONG);
 BOOL         WINAPI Shell_GetImageLists(HIMAGELIST*,HIMAGELIST*);
+BOOL         WINAPI SignalFileOpen(PCIDLIST_ABSOLUTE);
 BOOL         WINAPI ImportPrivacySettings(LPCWSTR, BOOL*, BOOL*);
 
 #define KF_FLAG_SIMPLE_IDLIST       0x00000100
