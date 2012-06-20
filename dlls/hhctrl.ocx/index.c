@@ -66,7 +66,7 @@ static void parse_index_obj_node_param(IndexItem *item, const char *text)
 {
     const char *ptr;
     LPWSTR *param;
-    int len, wlen;
+    int len;
 
     ptr = get_attr(text, "name", &len);
     if(!ptr) {
@@ -109,10 +109,7 @@ static void parse_index_obj_node_param(IndexItem *item, const char *text)
         return;
     }
 
-    wlen = MultiByteToWideChar(CP_ACP, 0, ptr, len, NULL, 0);
-    *param = heap_alloc((wlen+1)*sizeof(WCHAR));
-    MultiByteToWideChar(CP_ACP, 0, ptr, len, *param, wlen);
-    (*param)[wlen] = 0;
+    *param = decode_html(ptr, len);
 }
 
 /* Parse the object tag corresponding to a list item.
