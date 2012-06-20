@@ -7017,7 +7017,7 @@ HRESULT WINAPI VarBstrCmp(BSTR pbstrLeft, BSTR pbstrRight, LCID lcid, DWORD dwFl
       }
 
       hres = CompareStringW(lcid, dwFlags, pbstrLeft, lenLeft,
-              pbstrRight, lenRight) - 1;
+              pbstrRight, lenRight) - CSTR_LESS_THAN;
       TRACE("%d\n", hres);
       return hres;
     }
