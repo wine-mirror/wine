@@ -321,9 +321,9 @@ static INT16 MFDRV_CreateRegion(PHYSDEV dev, HRGN hrgn)
 
     mr->rdParm[0] = 0;
     mr->rdParm[1] = 6;
-    mr->rdParm[2] = 0x1234;
+    mr->rdParm[2] = 0x2f6;
     mr->rdParm[3] = 0;
-    mr->rdParm[4] = (Param - mr->rdParm) * sizeof(WORD);
+    mr->rdParm[4] = (Param - &mr->rdFunction) * sizeof(WORD);
     mr->rdParm[5] = Bands;
     mr->rdParm[6] = MaxBands;
     mr->rdParm[7] = rgndata->rdh.rcBound.left;
@@ -413,7 +413,7 @@ INT MFDRV_ExtSelectClipRgn( PHYSDEV dev, HRGN hrgn, INT mode )
     if (!hrgn) return NULLREGION;
     iRgn = MFDRV_CreateRegion( dev, hrgn );
     if(iRgn == -1) return ERROR;
-    ret = MFDRV_MetaParam1( dev, META_SELECTCLIPREGION, iRgn ) ? NULLREGION : ERROR;
+    ret = MFDRV_MetaParam1( dev, META_SELECTOBJECT, iRgn ) ? NULLREGION : ERROR;
     MFDRV_MetaParam1( dev, META_DELETEOBJECT, iRgn );
     MFDRV_RemoveHandle( dev, iRgn );
     return ret;
