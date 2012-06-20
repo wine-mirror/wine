@@ -145,8 +145,20 @@ static HRESULT WINAPI MetadataHandler_GetMetadataFormat(IWICMetadataWriter *ifac
 static HRESULT WINAPI MetadataHandler_GetMetadataHandlerInfo(IWICMetadataWriter *iface,
     IWICMetadataHandlerInfo **ppIHandler)
 {
-    FIXME("(%p,%p): stub\n", iface, ppIHandler);
-    return E_NOTIMPL;
+    HRESULT hr;
+    IWICComponentInfo *component_info;
+    MetadataHandler *This = impl_from_IWICMetadataWriter(iface);
+
+    TRACE("%p,%p\n", iface, ppIHandler);
+
+    hr = CreateComponentInfo(This->vtable->clsid, &component_info);
+    if (FAILED(hr)) return hr;
+
+    hr = IWICComponentInfo_QueryInterface(component_info, &IID_IWICMetadataHandlerInfo,
+        (void **)ppIHandler);
+
+    IWICComponentInfo_Release(component_info);
+    return hr;
 }
 
 static HRESULT WINAPI MetadataHandler_GetCount(IWICMetadataWriter *iface,

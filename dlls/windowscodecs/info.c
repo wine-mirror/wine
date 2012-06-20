@@ -1618,7 +1618,10 @@ HRESULT CreateComponentInfo(REFCLSID clsid, IWICComponentInfo **ppIInfo)
             hr = HRESULT_FROM_WIN32(res);
     }
     else
+    {
+        FIXME("%s is not supported\n", wine_dbgstr_guid(clsid));
         hr = E_FAIL;
+    }
 
     RegCloseKey(clsidkey);
 
