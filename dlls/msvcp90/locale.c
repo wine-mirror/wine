@@ -24,6 +24,7 @@
 #include "locale.h"
 #include "errno.h"
 #include "limits.h"
+#include "math.h"
 
 #include "wine/list.h"
 
@@ -3869,6 +3870,31 @@ basic_string_wchar* __thiscall numpunct_wchar_truename(const numpunct_wchar *thi
 {
     TRACE("(%p)\n", this);
     return call_numpunct_wchar_do_truename(this, ret);
+}
+
+double __cdecl _Stod(const char *buf, char **buf_end, LONG exp)
+{
+    double ret = strtod(buf, buf_end);
+
+    if(exp)
+        ret *= pow(10, exp);
+    return ret;
+}
+
+double __cdecl _Stodx(const char *buf, char **buf_end, LONG exp, int *err)
+{
+    double ret;
+
+    *err = *_errno();
+    *_errno() = 0;
+    ret = _Stod(buf, buf_end, exp);
+    if(*_errno()) {
+        *err = *_errno();
+    }else {
+        *_errno() = *err;
+        *err = 0;
+    }
+    return ret;
 }
 
 /* ?id@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@2V0locale@2@A */

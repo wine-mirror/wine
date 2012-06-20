@@ -5783,12 +5783,12 @@
 # extern _Rteps
 @ stub _Sinh
 @ extern _Snan
-@ stub _Stod
-@ stub _Stodx
+@ cdecl _Stod(ptr ptr long)
+@ cdecl _Stodx(ptr ptr long ptr)
 @ stub _Stof
 @ stub _Stofx
-@ stub _Stold
-@ stub _Stoldx
+@ cdecl _Stold(ptr ptr long) _Stod
+@ cdecl _Stoldx(ptr ptr long ptr) _Stodx
 @ stub _Stoll
 @ stub _Stollx
 @ stub _Stolx
