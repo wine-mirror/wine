@@ -1421,10 +1421,7 @@ static HRESULT WINAPI ddraw7_GetDisplayMode(IDirectDraw7 *iface, DDSURFACEDESC2 
         return DDERR_INVALIDPARAMS;
     }
 
-    /* The necessary members of LPDDSURFACEDESC and LPDDSURFACEDESC2 are equal,
-     * so one method can be used for all versions (Hopefully) */
-    hr = wined3d_device_get_display_mode(ddraw->wined3d_device, 0, &mode);
-    if (FAILED(hr))
+    if (FAILED(hr = wined3d_get_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &mode)))
     {
         ERR("Failed to get display mode, hr %#x.\n", hr);
         wined3d_mutex_unlock();
