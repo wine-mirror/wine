@@ -237,13 +237,7 @@ static void test_reader_info(void)
     if (FAILED(hr)) return;
 
     hr = IWICImagingFactory_CreateComponentInfo(factory, &CLSID_WICUnknownMetadataReader, &info);
-    todo_wine ok(hr == S_OK, "CreateComponentInfo failed, hr=%x\n", hr);
-
-    if (FAILED(hr))
-    {
-        IWICImagingFactory_Release(factory);
-        return;
-    }
+    ok(hr == S_OK, "CreateComponentInfo failed, hr=%x\n", hr);
 
     hr = IWICComponentInfo_QueryInterface(info, &IID_IWICMetadataReaderInfo, (void**)&reader_info);
     ok(hr == S_OK, "QueryInterface failed, hr=%x\n", hr);
@@ -264,7 +258,9 @@ static void test_reader_info(void)
 
     count = 0xdeadbeef;
     hr = IWICMetadataReaderInfo_GetContainerFormats(reader_info, 0, NULL, &count);
+todo_wine
     ok(hr == S_OK, "GetContainerFormats failed, hr=%x\n", hr);
+todo_wine
     ok(count == 0, "unexpected count %d\n", count);
 
     hr = IWICMetadataReaderInfo_GetPatterns(reader_info, &GUID_ContainerFormatPng,
@@ -274,6 +270,7 @@ static void test_reader_info(void)
     count = size = 0xdeadbeef;
     hr = IWICMetadataReaderInfo_GetPatterns(reader_info, &GUID_ContainerFormatPng,
         0, NULL, &count, &size);
+todo_wine
     ok(hr == WINCODEC_ERR_COMPONENTNOTFOUND || broken(hr == S_OK) /* Windows XP */,
         "GetPatterns failed, hr=%x\n", hr);
     ok(count == 0xdeadbeef, "unexpected count %d\n", count);
@@ -284,7 +281,14 @@ static void test_reader_info(void)
     IWICComponentInfo_Release(info);
 
     hr = IWICImagingFactory_CreateComponentInfo(factory, &CLSID_WICXMBStructMetadataReader, &info);
+todo_wine
     ok(hr == S_OK, "CreateComponentInfo failed, hr=%x\n", hr);
+
+    if (FAILED(hr))
+    {
+        IWICImagingFactory_Release(factory);
+        return;
+    }
 
     hr = IWICComponentInfo_QueryInterface(info, &IID_IWICMetadataReaderInfo, (void**)&reader_info);
     ok(hr == S_OK, "QueryInterface failed, hr=%x\n", hr);

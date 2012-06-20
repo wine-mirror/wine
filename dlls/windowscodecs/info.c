@@ -1,5 +1,6 @@
 /*
  * Copyright 2009 Vincent Povirk for CodeWeavers
+ * Copyright 2012 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -27,6 +28,7 @@
 #include "winreg.h"
 #include "objbase.h"
 #include "wincodec.h"
+#include "wincodecsdk.h"
 
 #include "wincodecs_private.h"
 
@@ -41,6 +43,7 @@ static const WCHAR author_valuename[] = {'A','u','t','h','o','r',0};
 static const WCHAR friendlyname_valuename[] = {'F','r','i','e','n','d','l','y','N','a','m','e',0};
 static const WCHAR pixelformats_keyname[] = {'P','i','x','e','l','F','o','r','m','a','t','s',0};
 static const WCHAR containerformat_valuename[] = {'C','o','n','t','a','i','n','e','r','F','o','r','m','a','t',0};
+static const WCHAR metadataformat_valuename[] = {'M','e','t','a','d','a','t','a','F','o','r','m','a','t',0};
 static const WCHAR vendor_valuename[] = {'V','e','n','d','o','r',0};
 static const WCHAR version_valuename[] = {'V','e','r','s','i','o','n',0};
 
@@ -1295,6 +1298,260 @@ static HRESULT PixelFormatInfo_Constructor(HKEY classkey, REFCLSID clsid, IWICCo
     return S_OK;
 }
 
+typedef struct
+{
+    IWICMetadataReaderInfo IWICMetadataReaderInfo_iface;
+    LONG ref;
+    HKEY classkey;
+    CLSID clsid;
+} MetadataReaderInfo;
+
+static inline MetadataReaderInfo *impl_from_IWICMetadataReaderInfo(IWICMetadataReaderInfo *iface)
+{
+    return CONTAINING_RECORD(iface, MetadataReaderInfo, IWICMetadataReaderInfo_iface);
+}
+
+static HRESULT WINAPI MetadataReaderInfo_QueryInterface(IWICMetadataReaderInfo *iface,
+    REFIID riid, void **ppv)
+{
+    MetadataReaderInfo *This = impl_from_IWICMetadataReaderInfo(iface);
+
+    TRACE("(%p,%s,%p)\n", iface, debugstr_guid(riid), ppv);
+
+    if (!ppv) return E_INVALIDARG;
+
+    if (IsEqualIID(&IID_IUnknown, riid) ||
+        IsEqualIID(&IID_IWICComponentInfo, riid) ||
+        IsEqualIID(&IID_IWICMetadataHandlerInfo, riid) ||
+        IsEqualIID(&IID_IWICMetadataReaderInfo, riid))
+    {
+        *ppv = This;
+    }
+    else
+    {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown *)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI MetadataReaderInfo_AddRef(IWICMetadataReaderInfo *iface)
+{
+    MetadataReaderInfo *This = impl_from_IWICMetadataReaderInfo(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) refcount=%u\n", iface, ref);
+    return ref;
+}
+
+static ULONG WINAPI MetadataReaderInfo_Release(IWICMetadataReaderInfo *iface)
+{
+    MetadataReaderInfo *This = impl_from_IWICMetadataReaderInfo(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) refcount=%u\n", iface, ref);
+
+    if (!ref)
+    {
+        RegCloseKey(This->classkey);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+    return ref;
+}
+
+static HRESULT WINAPI MetadataReaderInfo_GetComponentType(IWICMetadataReaderInfo *iface,
+    WICComponentType *type)
+{
+    TRACE("(%p,%p)\n", iface, type);
+
+    if (!type) return E_INVALIDARG;
+    *type = WICMetadataReader;
+    return S_OK;
+}
+
+static HRESULT WINAPI MetadataReaderInfo_GetCLSID(IWICMetadataReaderInfo *iface,
+    CLSID *clsid)
+{
+    MetadataReaderInfo *This = impl_from_IWICMetadataReaderInfo(iface);
+
+    TRACE("(%p,%p)\n", iface, clsid);
+
+    if (!clsid) return E_INVALIDARG;
+    *clsid = This->clsid;
+    return S_OK;
+}
+
+static HRESULT WINAPI MetadataReaderInfo_GetSigningStatus(IWICMetadataReaderInfo *iface,
+    DWORD *status)
+{
+    FIXME("(%p,%p): stub\n", iface, status);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MetadataReaderInfo_GetAuthor(IWICMetadataReaderInfo *iface,
+    UINT length, WCHAR *author, UINT *actual_length)
+{
+    MetadataReaderInfo *This = impl_from_IWICMetadataReaderInfo(iface);
+
+    TRACE("(%p,%u,%p,%p)\n", iface, length, author, actual_length);
+
+    return ComponentInfo_GetStringValue(This->classkey, author_valuename,
+                                        length, author, actual_length);
+}
+
+static HRESULT WINAPI MetadataReaderInfo_GetVendorGUID(IWICMetadataReaderInfo *iface,
+    GUID *vendor)
+{
+    FIXME("(%p,%p): stub\n", iface, vendor);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MetadataReaderInfo_GetVersion(IWICMetadataReaderInfo *iface,
+    UINT length, WCHAR *version, UINT *actual_length)
+{
+    FIXME("(%p,%u,%p,%p): stub\n", iface, length, version, actual_length);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MetadataReaderInfo_GetSpecVersion(IWICMetadataReaderInfo *iface,
+    UINT length, WCHAR *version, UINT *actual_length)
+{
+    FIXME("(%p,%u,%p,%p): stub\n", iface, length, version, actual_length);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MetadataReaderInfo_GetFriendlyName(IWICMetadataReaderInfo *iface,
+    UINT length, WCHAR *name, UINT *actual_length)
+{
+    FIXME("(%p,%u,%p,%p): stub\n", iface, length, name, actual_length);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MetadataReaderInfo_GetMetadataFormat(IWICMetadataReaderInfo *iface,
+    GUID *format)
+{
+    MetadataReaderInfo *This = impl_from_IWICMetadataReaderInfo(iface);
+    TRACE("(%p,%p)\n", iface, format);
+    return ComponentInfo_GetGUIDValue(This->classkey, metadataformat_valuename, format);
+}
+
+static HRESULT WINAPI MetadataReaderInfo_GetContainerFormats(IWICMetadataReaderInfo *iface,
+    UINT length, GUID *formats, UINT *actual_length)
+{
+    if (!actual_length) return E_INVALIDARG;
+
+    FIXME("(%p,%u,%p,%p): stub\n", iface, length, formats, actual_length);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MetadataReaderInfo_GetDeviceManufacturer(IWICMetadataReaderInfo *iface,
+    UINT length, WCHAR *manufacturer, UINT *actual_length)
+{
+    FIXME("(%p,%u,%p,%p): stub\n", iface, length, manufacturer, actual_length);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MetadataReaderInfo_GetDeviceModels(IWICMetadataReaderInfo *iface,
+    UINT length, WCHAR *models, UINT *actual_length)
+{
+    FIXME("(%p,%u,%p,%p): stub\n", iface, length, models, actual_length);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MetadataReaderInfo_DoesRequireFullStream(IWICMetadataReaderInfo *iface,
+    BOOL *param)
+{
+    FIXME("(%p,%p): stub\n", iface, param);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MetadataReaderInfo_DoesSupportPadding(IWICMetadataReaderInfo *iface,
+    BOOL *param)
+{
+    FIXME("(%p,%p): stub\n", iface, param);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MetadataReaderInfo_DoesRequireFixedSize(IWICMetadataReaderInfo *iface,
+    BOOL *param)
+{
+    FIXME("(%p,%p): stub\n", iface, param);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MetadataReaderInfo_GetPatterns(IWICMetadataReaderInfo *iface,
+    REFGUID container, UINT length, WICMetadataPattern *pattern, UINT *count, UINT *actual_length)
+{
+    if (!actual_length) return E_INVALIDARG;
+
+    FIXME("(%p,%s,%u,%p,%p,%p): stub\n", iface, debugstr_guid(container), length, pattern, count, actual_length);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MetadataReaderInfo_MatchesPattern(IWICMetadataReaderInfo *iface,
+    REFGUID container, IStream *stream, BOOL *matches)
+{
+    FIXME("(%p,%s,%p,%p): stub\n", iface, debugstr_guid(container), stream, matches);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MetadataReaderInfo_CreateInstance(IWICMetadataReaderInfo *iface,
+    IWICMetadataReader **reader)
+{
+    MetadataReaderInfo *This = impl_from_IWICMetadataReaderInfo(iface);
+
+    TRACE("(%p,%p)\n", iface, reader);
+
+    return CoCreateInstance(&This->clsid, NULL, CLSCTX_INPROC_SERVER,
+                            &IID_IWICMetadataReader, (void **)reader);
+}
+
+static const IWICMetadataReaderInfoVtbl MetadataReaderInfo_Vtbl = {
+    MetadataReaderInfo_QueryInterface,
+    MetadataReaderInfo_AddRef,
+    MetadataReaderInfo_Release,
+    MetadataReaderInfo_GetComponentType,
+    MetadataReaderInfo_GetCLSID,
+    MetadataReaderInfo_GetSigningStatus,
+    MetadataReaderInfo_GetAuthor,
+    MetadataReaderInfo_GetVendorGUID,
+    MetadataReaderInfo_GetVersion,
+    MetadataReaderInfo_GetSpecVersion,
+    MetadataReaderInfo_GetFriendlyName,
+    MetadataReaderInfo_GetMetadataFormat,
+    MetadataReaderInfo_GetContainerFormats,
+    MetadataReaderInfo_GetDeviceManufacturer,
+    MetadataReaderInfo_GetDeviceModels,
+    MetadataReaderInfo_DoesRequireFullStream,
+    MetadataReaderInfo_DoesSupportPadding,
+    MetadataReaderInfo_DoesRequireFixedSize,
+    MetadataReaderInfo_GetPatterns,
+    MetadataReaderInfo_MatchesPattern,
+    MetadataReaderInfo_CreateInstance
+};
+
+static HRESULT MetadataReaderInfo_Constructor(HKEY classkey, REFCLSID clsid, IWICComponentInfo **info)
+{
+    MetadataReaderInfo *This;
+
+    This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
+    if (!This)
+    {
+        RegCloseKey(classkey);
+        return E_OUTOFMEMORY;
+    }
+
+    This->IWICMetadataReaderInfo_iface.lpVtbl = &MetadataReaderInfo_Vtbl;
+    This->ref = 1;
+    This->classkey = classkey;
+    This->clsid = *clsid;
+
+    *info = (IWICComponentInfo *)This;
+    return S_OK;
+}
+
 static const WCHAR clsid_keyname[] = {'C','L','S','I','D',0};
 static const WCHAR instance_keyname[] = {'I','n','s','t','a','n','c','e',0};
 
@@ -1309,6 +1566,7 @@ static const struct category categories[] = {
     {WICEncoder, &CATID_WICBitmapEncoders, BitmapEncoderInfo_Constructor},
     {WICPixelFormatConverter, &CATID_WICFormatConverters, FormatConverterInfo_Constructor},
     {WICPixelFormat, &CATID_WICPixelFormats, PixelFormatInfo_Constructor},
+    {WICMetadataReader, &CATID_WICMetadataReader, MetadataReaderInfo_Constructor},
     {0}
 };
 
