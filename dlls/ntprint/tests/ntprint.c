@@ -71,7 +71,7 @@ static void test_PSetupCreateMonitorInfo(VOID)
     SetLastError(0xdeadbeef);
     mi = pPSetupCreateMonitorInfo(NULL, NULL, NULL);
     if (!mi && (GetLastError() == RPC_S_SERVER_UNAVAILABLE)) {
-        win_skip("The Service 'Spooler' is required for many test\n");
+        win_skip("The service 'Spooler' is required for many tests\n");
         return;
     }
     ok( mi != NULL, "got %p with %u (expected '!= NULL')\n", mi, GetLastError());
@@ -101,7 +101,7 @@ static void test_PSetupDestroyMonitorInfo(VOID)
     SetLastError(0xdeadbeef);
     mi = pPSetupCreateMonitorInfo(NULL, NULL, NULL);
     if (!mi && (GetLastError() == RPC_S_SERVER_UNAVAILABLE)) {
-        win_skip("The Service 'Spooler' is required for many test\n");
+        win_skip("The service 'Spooler' is required for many tests\n");
         return;
     }
     ok( mi != NULL, "got %p with %u (expected '!= NULL')\n", mi, GetLastError());
@@ -113,7 +113,7 @@ static void test_PSetupDestroyMonitorInfo(VOID)
     /* lasterror is returned */
     trace("returned with %u\n", GetLastError());
 
-    /* Try to destroy the handle twice crash with native ntprint.dll */
+    /* Trying to destroy the handle twice crashes with native ntprint.dll */
     if (0) {
         SetLastError(0xdeadbeef);
         pPSetupDestroyMonitorInfo(mi);
