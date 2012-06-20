@@ -670,12 +670,7 @@ static HRESULT ddraw_create_swapchain(struct ddraw *ddraw, HWND window, BOOL win
     struct wined3d_display_mode mode;
     HRESULT hr = WINED3D_OK;
 
-    /* FIXME: wined3d_get_adapter_display_mode() would be more appropriate
-     * here, since we don't actually have a swapchain yet, but
-     * wined3d_device_get_display_mode() has some special handling for color
-     * depth changes. */
-    hr = wined3d_device_get_display_mode(ddraw->wined3d_device, 0, &mode);
-    if (FAILED(hr))
+    if (FAILED(hr = wined3d_get_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &mode)))
     {
         ERR("Failed to get display mode.\n");
         return hr;
