@@ -48,6 +48,8 @@ static const WCHAR prop_captionW[] =
     {'C','a','p','t','i','o','n',0};
 static const WCHAR prop_descriptionW[] =
     {'D','e','s','c','r','i','p','t','i','o','n',0};
+static const WCHAR prop_handleW[] =
+    {'H','a','n','d','l','e',0};
 static const WCHAR prop_manufacturerW[] =
     {'M','a','n','u','f','a','c','t','u','r','e','r',0};
 static const WCHAR prop_modelW[] =
@@ -87,6 +89,7 @@ static const struct column col_process[] =
 {
     { prop_captionW,     CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_descriptionW, CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_handleW,      CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
     { prop_pprocessidW,  CIM_UINT32 },
     { prop_processidW,   CIM_UINT32 },
     { prop_threadcountW, CIM_UINT32 }
@@ -142,6 +145,7 @@ struct record_process
 {
     const WCHAR *caption;
     const WCHAR *description;
+    const WCHAR *handle;
     UINT32       pprocess_id;
     UINT32       process_id;
     UINT32       thread_count;
@@ -167,6 +171,8 @@ static const struct record_processor data_processor[] =
 
 static void fill_process( struct table *table )
 {
+    static const WCHAR fmtW[] = {'%','u',0};
+    WCHAR handle[11];
     struct record_process *rec;
     PROCESSENTRY32W entry;
     HANDLE snap;
@@ -191,6 +197,8 @@ static void fill_process( struct table *table )
         rec = (struct record_process *)(table->data + offset);
         rec->caption      = heap_strdupW( entry.szExeFile );
         rec->description  = heap_strdupW( entry.szExeFile );
+        sprintfW( handle, fmtW, entry.th32ProcessID );
+        rec->handle       = heap_strdupW( handle );
         rec->process_id   = entry.th32ProcessID;
         rec->pprocess_id  = entry.th32ParentProcessID;
         rec->thread_count = entry.cntThreads;
