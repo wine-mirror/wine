@@ -614,12 +614,12 @@ WORD WINAPI ArrangeWindows(
  * NOTES
  *     exported by ordinal
  */
-DWORD WINAPI
-SignalFileOpen (DWORD dwParam1)
+BOOL WINAPI
+SignalFileOpen (PCIDLIST_ABSOLUTE pidl)
 {
-    FIXME("(0x%08x):stub.\n", dwParam1);
+    FIXME("(%p):stub.\n", pidl);
 
-    return 0;
+    return FALSE;
 }
 
 /*************************************************************************
@@ -1131,9 +1131,10 @@ HRESULT WINAPI SHWinHelp (DWORD v, DWORD w, DWORD x, DWORD z)
  *  SHRunControlPanel [SHELL32.161]
  *
  */
-HRESULT WINAPI SHRunControlPanel (DWORD x, DWORD z)
-{	FIXME("0x%08x 0x%08x stub\n",x,z);
-	return 0;
+BOOL WINAPI SHRunControlPanel (LPCWSTR commandLine, HWND parent)
+{
+	FIXME("(%s, %p): stub\n", debugstr_w(commandLine), parent);
+	return FALSE;
 }
 
 static LPUNKNOWN SHELL32_IExplorerInterface=0;
@@ -1499,7 +1500,7 @@ HRESULT WINAPI SHLoadOLE(LPARAM lParam)
  * DriveType					[SHELL32.64]
  *
  */
-HRESULT WINAPI DriveType(DWORD u)
+int WINAPI DriveType(int u)
 {	FIXME("0x%04x stub\n",u);
 	return 0;
 }
@@ -1582,10 +1583,10 @@ DWORD WINAPI RLBuildListOfPaths (void)
  *	SHValidateUNC				[SHELL32.173]
  *
  */
-HRESULT WINAPI SHValidateUNC (DWORD x, DWORD y, DWORD z)
+BOOL WINAPI SHValidateUNC (HWND hwndOwner, PWSTR pszFile, UINT fConnect)
 {
-	FIXME("0x%08x 0x%08x 0x%08x stub\n",x,y,z);
-	return 0;
+	FIXME("(%p, %s, 0x%08x): stub\n", hwndOwner, debugstr_w(pszFile), fConnect);
+	return FALSE;
 }
 
 /************************************************************************

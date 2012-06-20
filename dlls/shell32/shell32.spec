@@ -95,7 +95,7 @@
  100 stdcall -ordinal SHRestricted(long)
 
  102 stdcall -ordinal SHCoCreateInstance(wstr ptr long ptr ptr)
- 103 stdcall -ordinal SignalFileOpen(long)
+ 103 stdcall -ordinal SignalFileOpen(ptr)
  104 stdcall -noname FileMenu_DeleteAllItems(long)
  105 stdcall -noname FileMenu_DrawItem(long ptr)
  106 stdcall -noname FileMenu_FindSubMenuByPidl(long ptr)
@@ -150,7 +150,7 @@
  158 stdcall -noname PathGetExtension(str long long) PathGetExtensionAW
  159 stdcall -noname PathIsDirectory(ptr) PathIsDirectoryAW
  160 stub SHNetConnectionDialog
- 161 stdcall -noname SHRunControlPanel(long long)
+ 161 stdcall -noname SHRunControlPanel(wstr long)
  162 stdcall -ordinal SHSimpleIDListFromPath(ptr) SHSimpleIDListFromPathAW
  163 stdcall -noname StrToOleStr(wstr str) StrToOleStrAW
  164 stdcall -ordinal Win32DeleteFile(str) Win32DeleteFileAW
@@ -162,7 +162,7 @@
  170 stdcall -ordinal SHReplaceFromPropSheetExtArray(long long long long)
  171 stdcall -ordinal PathCleanupSpec(ptr ptr)
  172 stdcall -noname SHCreateLinks(long str ptr long ptr)
- 173 stdcall -ordinal SHValidateUNC(long long long)
+ 173 stdcall -ordinal SHValidateUNC(long wstr long)
  174 stdcall -ordinal SHCreateShellFolderViewEx(ptr ptr)
  175 stdcall -noname SHGetSpecialFolderPath(long long long long) SHGetSpecialFolderPathAW
  176 stdcall -ordinal SHSetInstanceExplorer(long)
