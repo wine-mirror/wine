@@ -80,20 +80,20 @@ static HKEY get_rootkey(LPWSTR key)
     static const WCHAR szHKCC[] = {'H','K','C','C',0};
     static const WCHAR szHKEY_CURRENT_CONFIG[] = {'H','K','E','Y','_','C','U','R','R','E','N','T','_','C','O','N','F','I','G',0};
 
-    if (CompareStringW(CP_ACP,NORM_IGNORECASE,key,4,szHKLM,4)==2 ||
-        CompareStringW(CP_ACP,NORM_IGNORECASE,key,18,szHKEY_LOCAL_MACHINE,18)==2)
+    if (CompareStringW(CP_ACP,NORM_IGNORECASE,key,4,szHKLM,4)==CSTR_EQUAL ||
+        CompareStringW(CP_ACP,NORM_IGNORECASE,key,18,szHKEY_LOCAL_MACHINE,18)==CSTR_EQUAL)
         return HKEY_LOCAL_MACHINE;
-    else if (CompareStringW(CP_ACP,NORM_IGNORECASE,key,4,szHKCU,4)==2 ||
-             CompareStringW(CP_ACP,NORM_IGNORECASE,key,17,szHKEY_CURRENT_USER,17)==2)
+    else if (CompareStringW(CP_ACP,NORM_IGNORECASE,key,4,szHKCU,4)==CSTR_EQUAL ||
+             CompareStringW(CP_ACP,NORM_IGNORECASE,key,17,szHKEY_CURRENT_USER,17)==CSTR_EQUAL)
         return HKEY_CURRENT_USER;
-    else if (CompareStringW(CP_ACP,NORM_IGNORECASE,key,4,szHKCR,4)==2 ||
-             CompareStringW(CP_ACP,NORM_IGNORECASE,key,17,szHKEY_CLASSES_ROOT,17)==2)
+    else if (CompareStringW(CP_ACP,NORM_IGNORECASE,key,4,szHKCR,4)==CSTR_EQUAL ||
+             CompareStringW(CP_ACP,NORM_IGNORECASE,key,17,szHKEY_CLASSES_ROOT,17)==CSTR_EQUAL)
         return HKEY_CLASSES_ROOT;
-    else if (CompareStringW(CP_ACP,NORM_IGNORECASE,key,3,szHKU,3)==2 ||
-             CompareStringW(CP_ACP,NORM_IGNORECASE,key,10,szHKEY_USERS,10)==2)
+    else if (CompareStringW(CP_ACP,NORM_IGNORECASE,key,3,szHKU,3)==CSTR_EQUAL ||
+             CompareStringW(CP_ACP,NORM_IGNORECASE,key,10,szHKEY_USERS,10)==CSTR_EQUAL)
         return HKEY_USERS;
-    else if (CompareStringW(CP_ACP,NORM_IGNORECASE,key,4,szHKCC,4)==2 ||
-             CompareStringW(CP_ACP,NORM_IGNORECASE,key,19,szHKEY_CURRENT_CONFIG,19)==2)
+    else if (CompareStringW(CP_ACP,NORM_IGNORECASE,key,4,szHKCC,4)==CSTR_EQUAL ||
+             CompareStringW(CP_ACP,NORM_IGNORECASE,key,19,szHKEY_CURRENT_CONFIG,19)==CSTR_EQUAL)
         return HKEY_CURRENT_CONFIG;
     else return NULL;
 }
