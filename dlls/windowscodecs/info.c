@@ -1417,8 +1417,12 @@ static HRESULT WINAPI MetadataReaderInfo_GetVendorGUID(IWICMetadataReaderInfo *i
 static HRESULT WINAPI MetadataReaderInfo_GetVersion(IWICMetadataReaderInfo *iface,
     UINT length, WCHAR *version, UINT *actual_length)
 {
-    FIXME("(%p,%u,%p,%p): stub\n", iface, length, version, actual_length);
-    return E_NOTIMPL;
+    MetadataReaderInfo *This = impl_from_IWICMetadataReaderInfo(iface);
+
+    TRACE("(%p,%u,%p,%p)\n", iface, length, version, actual_length);
+
+    return ComponentInfo_GetStringValue(This->classkey, version_valuename,
+                                        length, version, actual_length);
 }
 
 static HRESULT WINAPI MetadataReaderInfo_GetSpecVersion(IWICMetadataReaderInfo *iface,
