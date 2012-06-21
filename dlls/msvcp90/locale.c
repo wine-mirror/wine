@@ -4709,7 +4709,7 @@ int __cdecl num_get_char__Getffld(const num_get *this, char *dest, istreambuf_it
 
 /* ?_Getffldx@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABAHPADAAV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@1AAVios_base@2@PAH@Z */
 /* ?_Getffldx@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@AEBAHPEADAEAV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@1AEAVios_base@2@PEAH@Z */
-int __cdecl num_get_char__Getffldx(num_get *this, char *dest, istreambuf_iterator_char *first,
+int __cdecl num_get_char__Getffldx(const num_get *this, char *dest, istreambuf_iterator_char *first,
     istreambuf_iterator_char *last, ios_base *ios, int *phexexp)
 {
     FIXME("(%p %p %p %p %p) stub\n", dest, first, last, ios, phexexp);
@@ -4848,11 +4848,32 @@ int __thiscall MSVCP_num_get_char__Hexdig(num_get *this, char dig, char e0, char
 
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHAAPAX@Z */
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHAEAPEAX@Z */
+#define call_num_get_char_do_get_void(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 4, istreambuf_iterator_char*, \
+        (const num_get*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, void**), \
+        (this, ret, first, last, base, state, pval))
 DEFINE_THISCALL_WRAPPER(num_get_char_do_get_void,36)
 istreambuf_iterator_char *__thiscall num_get_char_do_get_void(const num_get *this, istreambuf_iterator_char *ret,
     istreambuf_iterator_char first, istreambuf_iterator_char last, ios_base *base, int *state, void **pval)
 {
-    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, state, pval);
+    unsigned __int64 v;
+    char tmp[25], *end;
+    int err;
+
+    TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
+
+    v = _Stoullx(tmp, &end, num_get_char__Getifld(this, tmp,
+                &first, &last, FMTFLAG_hex, base->loc), &err);
+    if(v!=(unsigned __int64)((INT_PTR)v))
+        *state |= IOSTATE_failbit;
+    else if(end!=tmp && !err)
+        *pval = (void*)((INT_PTR)v);
+    else
+        *state |= IOSTATE_failbit;
+
+    if(!first.strbuf)
+        *state |= IOSTATE_eofbit;
+
+    *ret = first;
     return ret;
 }
 
@@ -4862,19 +4883,40 @@ DEFINE_THISCALL_WRAPPER(num_get_char_get_void,36)
 istreambuf_iterator_char *__thiscall num_get_char_get_void(const num_get *this, istreambuf_iterator_char *ret,
     istreambuf_iterator_char first, istreambuf_iterator_char last, ios_base *base, int *state, void **pval)
 {
-    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, state, pval);
-    return ret;
+    TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
+    return call_num_get_char_do_get_void(this, ret, first, last, base, state, pval);
 }
 
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHAAO@Z */
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHAEAO@Z */
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHAAN@Z */
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHAEAN@Z */
+#define call_num_get_char_do_get_ldouble(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 8, istreambuf_iterator_char*, \
+        (const num_get*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, double*), \
+        (this, ret, first, last, base, state, pval))
+#define call_num_get_char_do_get_double(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 12, istreambuf_iterator_char*, \
+        (const num_get*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, double*), \
+        (this, ret, first, last, base, state, pval))
 DEFINE_THISCALL_WRAPPER(num_get_char_do_get_double,36)
 istreambuf_iterator_char *__thiscall num_get_char_do_get_double(const num_get *this, istreambuf_iterator_char *ret,
     istreambuf_iterator_char first, istreambuf_iterator_char last, ios_base *base, int *state, double *pval)
 {
-    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, state, pval);
+    double v;
+    char tmp[32], *end;
+    int err;
+
+    TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
+
+    v = _Stodx(tmp, &end, num_get_char__Getffld(this, tmp, &first, &last, base->loc), &err);
+    if(end!=tmp && !err)
+        *pval = v;
+    else
+        *state |= IOSTATE_failbit;
+
+    if(!first.strbuf)
+        *state |= IOSTATE_eofbit;
+
+    *ret = first;
     return ret;
 }
 
@@ -4894,17 +4936,35 @@ DEFINE_THISCALL_WRAPPER(num_get_char_get_double,36)
 istreambuf_iterator_char *__thiscall num_get_char_get_double(const num_get *this, istreambuf_iterator_char *ret,
     istreambuf_iterator_char first, istreambuf_iterator_char last, ios_base *base, int *state, double *pval)
 {
-    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, state, pval);
-    return ret;
+    TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
+    return call_num_get_char_do_get_double(this, ret, first, last, base, state, pval);
 }
 
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHAAM@Z */
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHAEAM@Z */
+#define call_num_get_char_do_get_float(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 16, istreambuf_iterator_char*, \
+        (const num_get*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, float*), \
+        (this, ret, first, last, base, state, pval))
 DEFINE_THISCALL_WRAPPER(num_get_char_do_get_float,36)
 istreambuf_iterator_char *__thiscall num_get_char_do_get_float(const num_get *this, istreambuf_iterator_char *ret,
     istreambuf_iterator_char first, istreambuf_iterator_char last, ios_base *base, int *state, float *pval)
 {
-    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, state, pval);
+    float v;
+    char tmp[32], *end;
+    int err;
+
+    TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
+
+    v = _Stofx(tmp, &end, num_get_char__Getffld(this, tmp, &first, &last, base->loc), &err);
+    if(end!=tmp && !err)
+        *pval = v;
+    else
+        *state |= IOSTATE_failbit;
+
+    if(!first.strbuf)
+        *state |= IOSTATE_eofbit;
+
+    *ret = first;
     return ret;
 }
 
@@ -4914,17 +4974,36 @@ DEFINE_THISCALL_WRAPPER(num_get_char_get_float,36)
 istreambuf_iterator_char *__thiscall num_get_char_get_float(const num_get *this, istreambuf_iterator_char *ret,
     istreambuf_iterator_char first, istreambuf_iterator_char last, ios_base *base, int *state, float *pval)
 {
-    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, state, pval);
-    return ret;
+    TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
+    return call_num_get_char_do_get_float(this, ret, first, last, base, state, pval);
 }
 
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHAA_K@Z */
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHAEA_K@Z */
+#define call_num_get_char_do_get_uint64(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 20, istreambuf_iterator_char*, \
+        (const num_get*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, ULONGLONG*), \
+        (this, ret, first, last, base, state, pval))
 DEFINE_THISCALL_WRAPPER(num_get_char_do_get_uint64,36)
 istreambuf_iterator_char *__thiscall num_get_char_do_get_uint64(const num_get *this, istreambuf_iterator_char *ret,
     istreambuf_iterator_char first, istreambuf_iterator_char last, ios_base *base, int *state, ULONGLONG *pval)
 {
-    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, state, pval);
+    unsigned __int64 v;
+    char tmp[25], *end;
+    int err;
+
+    TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
+
+    v = _Stoullx(tmp, &end, num_get_char__Getifld(this, tmp,
+                &first, &last, base->fmtfl, base->loc), &err);
+    if(end!=tmp && !err)
+        *pval = v;
+    else
+        *state |= IOSTATE_failbit;
+
+    if(!first.strbuf)
+        *state |= IOSTATE_eofbit;
+
+    *ret = first;
     return ret;
 }
 
@@ -4934,17 +5013,36 @@ DEFINE_THISCALL_WRAPPER(num_get_char_get_uint64,36)
 istreambuf_iterator_char *__thiscall num_get_char_get_uint64(const num_get *this, istreambuf_iterator_char *ret,
     istreambuf_iterator_char first, istreambuf_iterator_char last, ios_base *base, int *state, ULONGLONG *pval)
 {
-    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, state, pval);
-    return ret;
+    TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
+    return call_num_get_char_do_get_uint64(this, ret, first, last, base, state, pval);
 }
 
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHAA_J@Z */
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHAEA_J@Z */
+#define call_num_get_char_do_get_int64(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 24, istreambuf_iterator_char*, \
+        (const num_get*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, LONGLONG*), \
+        (this, ret, first, last, base, state, pval))
 DEFINE_THISCALL_WRAPPER(num_get_char_do_get_int64,36)
 istreambuf_iterator_char *__thiscall num_get_char_do_get_int64(const num_get *this, istreambuf_iterator_char *ret,
     istreambuf_iterator_char first, istreambuf_iterator_char last, ios_base *base, int *state, LONGLONG *pval)
 {
-    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, state, pval);
+    __int64 v;
+    char tmp[25], *end;
+    int err;
+
+    TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
+
+    v = _Stollx(tmp, &end, num_get_char__Getifld(this, tmp,
+                &first, &last, base->fmtfl, base->loc), &err);
+    if(end!=tmp && !err)
+        *pval = v;
+    else
+        *state |= IOSTATE_failbit;
+
+    if(!first.strbuf)
+        *state |= IOSTATE_eofbit;
+
+    *ret = first;
     return ret;
 }
 
@@ -4954,17 +5052,36 @@ DEFINE_THISCALL_WRAPPER(num_get_char_get_int64,36)
 istreambuf_iterator_char *__thiscall num_get_char_get_int64(const num_get *this, istreambuf_iterator_char *ret,
     istreambuf_iterator_char first, istreambuf_iterator_char last, ios_base *base, int *state, LONGLONG *pval)
 {
-    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, state, pval);
-    return ret;
+    TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
+    return call_num_get_char_do_get_int64(this, ret, first, last, base, state, pval);
 }
 
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHAAK@Z */
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHAEAK@Z */
+#define call_num_get_char_do_get_ulong(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 28, istreambuf_iterator_char*, \
+        (const num_get*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, ULONG*), \
+        (this, ret, first, last, base, state, pval))
 DEFINE_THISCALL_WRAPPER(num_get_char_do_get_ulong,36)
 istreambuf_iterator_char *__thiscall num_get_char_do_get_ulong(const num_get *this, istreambuf_iterator_char *ret,
     istreambuf_iterator_char first, istreambuf_iterator_char last, ios_base *base, int *state, ULONG *pval)
 {
-    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, state, pval);
+    ULONG v;
+    char tmp[25], *end;
+    int err;
+
+    TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
+
+    v = _Stoulx(tmp, &end, num_get_char__Getifld(this, tmp,
+                &first, &last, base->fmtfl, base->loc), &err);
+    if(end!=tmp && !err)
+        *pval = v;
+    else
+        *state |= IOSTATE_failbit;
+
+    if(!first.strbuf)
+        *state |= IOSTATE_eofbit;
+
+    *ret = first;
     return ret;
 }
 
@@ -4974,17 +5091,36 @@ DEFINE_THISCALL_WRAPPER(num_get_char_get_ulong,36)
 istreambuf_iterator_char *__thiscall num_get_char_get_ulong(const num_get *this, istreambuf_iterator_char *ret,
     istreambuf_iterator_char first, istreambuf_iterator_char last, ios_base *base, int *state, ULONG *pval)
 {
-    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, state, pval);
-    return ret;
+    TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
+    return call_num_get_char_do_get_ulong(this, ret, first, last, base, state, pval);
 }
 
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHAAJ@Z */
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHAEAJ@Z */
+#define call_num_get_char_do_get_long(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 32, istreambuf_iterator_char*, \
+        (const num_get*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, LONG*), \
+        (this, ret, first, last, base, state, pval))
 DEFINE_THISCALL_WRAPPER(num_get_char_do_get_long,36)
 istreambuf_iterator_char *__thiscall num_get_char_do_get_long(const num_get *this, istreambuf_iterator_char *ret,
     istreambuf_iterator_char first, istreambuf_iterator_char last, ios_base *base, int *state, LONG *pval)
 {
-    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, state, pval);
+    LONG v;
+    char tmp[25], *end;
+    int err;
+
+    TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
+
+    v = _Stolx(tmp, &end, num_get_char__Getifld(this, tmp,
+                &first, &last, base->fmtfl, base->loc), &err);
+    if(end!=tmp && !err)
+        *pval = v;
+    else
+        *state |= IOSTATE_failbit;
+
+    if(!first.strbuf)
+        *state |= IOSTATE_eofbit;
+
+    *ret = first;
     return ret;
 }
 
@@ -4994,18 +5130,21 @@ DEFINE_THISCALL_WRAPPER(num_get_char_get_long,36)
 istreambuf_iterator_char *__thiscall num_get_char_get_long(const num_get *this, istreambuf_iterator_char *ret,
     istreambuf_iterator_char first, istreambuf_iterator_char last, ios_base *base, int *state, LONG *pval)
 {
-    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, state, pval);
-    return ret;
+    TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
+    return call_num_get_char_do_get_long(this, ret, first, last, base, state, pval);
 }
 
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHAAI@Z */
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHAEAI@Z */
+#define call_num_get_char_do_get_uint(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 36, istreambuf_iterator_char*, \
+        (const num_get*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, unsigned int*), \
+        (this, ret, first, last, base, state, pval))
 DEFINE_THISCALL_WRAPPER(num_get_char_do_get_uint,36)
 istreambuf_iterator_char *__thiscall num_get_char_do_get_uint(const num_get *this, istreambuf_iterator_char *ret,
     istreambuf_iterator_char first, istreambuf_iterator_char last, ios_base *base, int *state, unsigned int *pval)
 {
-    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, state, pval);
-    return ret;
+    TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
+    return num_get_char_do_get_ulong(this, ret, first, last, base, state, pval);
 }
 
 /* ?get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHAAI@Z */
@@ -5014,17 +5153,41 @@ DEFINE_THISCALL_WRAPPER(num_get_char_get_uint,36)
 istreambuf_iterator_char *__thiscall num_get_char_get_uint(const num_get *this, istreambuf_iterator_char *ret,
     istreambuf_iterator_char first, istreambuf_iterator_char last, ios_base *base, int *state, unsigned int *pval)
 {
-    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, state, pval);
-    return ret;
+    TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
+    return call_num_get_char_do_get_uint(this, ret, first, last, base, state, pval);
 }
 
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHAAG@Z */
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHAEAG@Z */
+#define call_num_get_char_do_get_ushort(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 40, istreambuf_iterator_char*, \
+        (const num_get*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, unsigned short*), \
+        (this, ret, first, last, base, state, pval))
 DEFINE_THISCALL_WRAPPER(num_get_char_do_get_ushort,36)
 istreambuf_iterator_char *__thiscall num_get_char_do_get_ushort(const num_get *this, istreambuf_iterator_char *ret,
     istreambuf_iterator_char first, istreambuf_iterator_char last, ios_base *base, int *state, unsigned short *pval)
 {
-    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, state, pval);
+    ULONG v;
+    char tmp[25], *beg, *end;
+    int err, b;
+
+    TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
+
+    b = num_get_char__Getifld(this, tmp,
+            &first, &last, base->fmtfl, base->loc);
+    beg = tmp + (tmp[0]=='-' ? 1 : 0);
+    v = _Stoulx(beg, &end, b, &err);
+
+    if(v != (ULONG)((unsigned short)v))
+        *state |= IOSTATE_failbit;
+    else if(end!=beg && !err)
+        *pval = (tmp[0]=='-' ? -((unsigned short)v) : v);
+    else
+        *state |= IOSTATE_failbit;
+
+    if(!first.strbuf)
+        *state |= IOSTATE_eofbit;
+
+    *ret = first;
     return ret;
 }
 
@@ -5034,17 +5197,76 @@ DEFINE_THISCALL_WRAPPER(num_get_char_get_ushort,36)
 istreambuf_iterator_char *__thiscall num_get_char_get_ushort(const num_get *this, istreambuf_iterator_char *ret,
     istreambuf_iterator_char first, istreambuf_iterator_char last, ios_base *base, int *state, unsigned short *pval)
 {
-    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, state, pval);
-    return ret;
+    TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
+    return call_num_get_char_do_get_ushort(this, ret, first, last, base, state, pval);
 }
 
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHAA_N@Z */
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHAEA_N@Z */
+#define call_num_get_char_do_get_bool(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 44, istreambuf_iterator_char*, \
+        (const num_get*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, MSVCP_bool*), \
+        (this, ret, first, last, base, state, pval))
 DEFINE_THISCALL_WRAPPER(num_get_char_do_get_bool,36)
 istreambuf_iterator_char *__thiscall num_get_char_do_get_bool(const num_get *this, istreambuf_iterator_char *ret,
     istreambuf_iterator_char first, istreambuf_iterator_char last, ios_base *base, int *state, MSVCP_bool *pval)
 {
-    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, state, pval);
+    TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
+
+    if(base->fmtfl & FMTFLAG_boolalpha) {
+        numpunct_char *numpunct = numpunct_char_use_facet(base->loc);
+        basic_string_char false_bstr, true_bstr;
+        const char *pfalse, *ptrue;
+
+        numpunct_char_falsename(numpunct, &false_bstr);
+        numpunct_char_truename(numpunct, &true_bstr);
+        pfalse = MSVCP_basic_string_char_c_str(&false_bstr);
+        ptrue = MSVCP_basic_string_char_c_str(&true_bstr);
+
+        for(istreambuf_iterator_char_val(&first); first.strbuf;
+                istreambuf_iterator_char_inc(&first)) {
+            if(pfalse && *pfalse && first.val!=*pfalse)
+                pfalse = NULL;
+            if(ptrue && *ptrue && first.val!=*ptrue)
+                ptrue = NULL;
+
+            if(pfalse && *pfalse && ptrue && !*ptrue)
+                ptrue = NULL;
+            if(ptrue && *ptrue && pfalse && !*pfalse)
+                pfalse = NULL;
+
+            if(pfalse)
+                pfalse++;
+            if(ptrue)
+                ptrue++;
+
+            if((!pfalse || !*pfalse) && (!ptrue || !*ptrue))
+                break;
+        }
+
+        if(ptrue)
+            *pval = TRUE;
+        else if(pfalse)
+            *pval = FALSE;
+        else
+            *state |= IOSTATE_failbit;
+
+        MSVCP_basic_string_char_dtor(&false_bstr);
+        MSVCP_basic_string_char_dtor(&true_bstr);
+    }else {
+        char tmp[25], *end;
+        int err;
+        LONG v = _Stolx(tmp, &end, num_get_char__Getifld(this, tmp,
+                    &first, &last, base->fmtfl, base->loc), &err);
+
+        if(end!=tmp && err==0 && (v==0 || v==1))
+            *pval = v;
+        else
+            *state |= IOSTATE_failbit;
+    }
+
+    if(!first.strbuf)
+        *state |= IOSTATE_eofbit;
+    memcpy(ret, &first, sizeof(first));
     return ret;
 }
 
@@ -5054,8 +5276,8 @@ DEFINE_THISCALL_WRAPPER(num_get_char_get_bool,36)
 istreambuf_iterator_char *__thiscall num_get_char_get_bool(const num_get *this, istreambuf_iterator_char *ret,
     istreambuf_iterator_char first, istreambuf_iterator_char last, ios_base *base, int *state, MSVCP_bool *pval)
 {
-    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, state, pval);
-    return ret;
+    TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
+    return call_num_get_char_do_get_bool(this, ret, first, last, base, state, pval);
 }
 
 /* ??0_Locimp@locale@std@@AAE@_N@Z */
