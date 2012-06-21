@@ -1291,6 +1291,8 @@ static void test_GetTempFileNameA(void)
 static void test_DeleteFileA( void )
 {
     BOOL ret;
+    char temp_path[MAX_PATH], temp_file[MAX_PATH];
+    HANDLE hfile;
 
     ret = DeleteFileA(NULL);
     ok(!ret && (GetLastError() == ERROR_INVALID_PARAMETER ||
@@ -1308,6 +1310,25 @@ static void test_DeleteFileA( void )
                 GetLastError() == ERROR_ACCESS_DENIED ||
                 GetLastError() == ERROR_INVALID_FUNCTION),
        "DeleteFileA(\"nul\") returned ret=%d error=%d\n",ret,GetLastError());
+
+    GetTempPathA(MAX_PATH, temp_path);
+    GetTempFileName(temp_path, "tst", 0, temp_file);
+
+    SetLastError(0xdeadbeef);
+    hfile = CreateFile(temp_file, GENERIC_READ, FILE_SHARE_DELETE | FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
+    ok(hfile != INVALID_HANDLE_VALUE, "CreateFile error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = DeleteFile(temp_file);
+todo_wine
+    ok(ret, "DeleteFile error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = CloseHandle(hfile);
+    ok(ret, "CloseHandle error %d\n", GetLastError());
+    ret = DeleteFile(temp_file);
+todo_wine
+    ok(!ret, "DeleteFile should fail\n");
 }
 
 static void test_DeleteFileW( void )
