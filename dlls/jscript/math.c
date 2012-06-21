@@ -295,7 +295,7 @@ static HRESULT Math_max(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARA
 
     if(!arg_cnt(dp)) {
         if(retv)
-            num_set_inf(retv, FALSE);
+            num_set_val(retv, -INFINITY);
         return S_OK;
     }
 
@@ -329,7 +329,7 @@ static HRESULT Math_min(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARA
 
     if(!arg_cnt(dp)) {
         if(retv)
-            num_set_inf(retv, TRUE);
+            num_set_val(retv, INFINITY);
         return S_OK;
     }
 

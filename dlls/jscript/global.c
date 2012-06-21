@@ -1283,7 +1283,7 @@ HRESULT init_global(script_ctx_t *ctx)
     if(FAILED(hres))
         return hres;
 
-    num_set_inf(&var, TRUE);
+    num_set_val(&var, INFINITY);
     hres = jsdisp_propput_name(ctx->global, InfinityW, &var, NULL/*FIXME*/);
     return hres;
 }
