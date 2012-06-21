@@ -854,6 +854,33 @@ static HRESULT load_IFD_entry(IStream *input, const struct IFD_entry *entry,
         }
         FIXME("loading multiple rational fields is not implemented\n");
         break;
+    case IFD_ASCII:
+        item->value.u.pszVal = HeapAlloc(GetProcessHeap(), 0, count + 1);
+        if (!item->value.u.pszVal) return E_OUTOFMEMORY;
+
+        if (count <= 4)
+        {
+            const char *data = (const char *)&entry->value;
+            memcpy(item->value.u.pszVal, data, count);
+            item->value.u.pszVal[count] = 0;
+            break;
+        }
+
+        pos.QuadPart = value;
+        hr = IStream_Seek(input, pos, SEEK_SET, NULL);
+        if (FAILED(hr))
+        {
+            HeapFree(GetProcessHeap(), 0, item->value.u.pszVal);
+            return hr;
+        }
+        hr = IStream_Read(input, item->value.u.pszVal, count, NULL);
+        if (FAILED(hr))
+        {
+            HeapFree(GetProcessHeap(), 0, item->value.u.pszVal);
+            return hr;
+        }
+        item->value.u.pszVal[count] = 0;
+        break;
     default:
         FIXME("loading field of type %d, count %u is not implemented\n", type, count);
         break;

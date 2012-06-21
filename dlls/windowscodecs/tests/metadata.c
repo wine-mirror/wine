@@ -82,7 +82,7 @@ static const struct ifd_data
     FLOAT float_val[2];
 } IFD_data =
 {
-    19,
+    21,
     {
         { 0xfe,  IFD_SHORT, 1, 1 }, /* NEWSUBFILETYPE */
         { 0x100, IFD_LONG, 1, 222 }, /* IMAGEWIDTH */
@@ -103,6 +103,8 @@ static const struct ifd_data
         { 0xf00b, IFD_SSHORT, 4, FIELD_OFFSET(struct ifd_data, short_val) },
         { 0xf00c, IFD_SLONG, 2, FIELD_OFFSET(struct ifd_data, long_val) },
         { 0xf00d, IFD_FLOAT, 2, FIELD_OFFSET(struct ifd_data, float_val) },
+        { 0xf00e, IFD_ASCII, 13, FIELD_OFFSET(struct ifd_data, string) },
+        { 0xf00f, IFD_ASCII, 4, 'a' | 'b' << 8 | 'c' << 16 | 'd' << 24 },
     },
     0,
     { 900, 3 },
@@ -385,7 +387,8 @@ static void test_metadata_IFD(void)
         ULONG type, id;
         int count; /* if VT_VECTOR */
         LONGLONG value[13];
-    } td[19] =
+        const char *string;
+    } td[21] =
     {
         { VT_UI2, 0xfe, 0, { 1 } },
         { VT_UI4, 0x100, 0, { 222 } },
@@ -406,6 +409,8 @@ static void test_metadata_IFD(void)
         { VT_I2|VT_VECTOR, 0xf00b, 4, { 0x0101, 0x0202, 0x0303, 0x0404 } },
         { VT_I4|VT_VECTOR, 0xf00c, 2, { 0x11223344, 0x55667788 } },
         { VT_R4|VT_VECTOR, 0xf00d, 2, { 0x449a522b, 0x4608f5ba } },
+        { VT_LPSTR, 0xf00e, 12, { 0 }, "Hello World!" },
+        { VT_LPSTR, 0xf00f, 4, { 0 }, "abcd" },
     };
     HRESULT hr;
     IWICMetadataReader *reader;
@@ -476,10 +481,24 @@ static void test_metadata_IFD(void)
                 for (j = 0; j < U(value).caul.cElems; j++)
                     ok(td[i].value[j] == U(value).caul.pElems[j], "%u: expected value[%d] %#x/%#x, got %#x\n", i, j, (ULONG)td[i].value[j], (ULONG)(td[i].value[j] >> 32), U(value).caul.pElems[j]);
                 break;
+            case VT_LPSTR:
+                ok(td[i].count == U(value).calpstr.cElems, "%u: expected cElems %d, got %d\n", i, td[i].count, U(value).caub.cElems);
+                for (j = 0; j < U(value).calpstr.cElems; j++)
+                    trace("%u: %s\n", j, U(value).calpstr.pElems[j]);
+                /* fall through to not handled message */
             default:
                 ok(0, "%u: array of type %d is not handled\n", i, value.vt & ~VT_VECTOR);
                 break;
             }
+        }
+        else if (value.vt == VT_LPSTR)
+        {
+            ok(td[i].count == strlen(U(value).pszVal) ||
+               broken(td[i].count == strlen(U(value).pszVal) + 1), /* before Win7 */
+               "%u: expected count %d, got %d\n", i, td[i].count, lstrlenA(U(value).pszVal));
+            if (td[i].count == strlen(U(value).pszVal))
+                ok(!strcmp(td[i].string, U(value).pszVal),
+                   "%u: expected %s, got %s\n", i, td[i].string, U(value).pszVal);
         }
         else
             ok(U(value).uhVal.QuadPart == td[i].value[0], "%u: unexpected value: %d/%d\n", i, U(value).uhVal.u.LowPart, U(value).uhVal.u.HighPart);
