@@ -3988,8 +3988,8 @@ extern const vtable_ptr MSVCP_num_get_short_vtable;
 /* ?_Init@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@IEAAXAEBV_Locinfo@2@@Z */
 /* ?_Init@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@IAEXABV_Locinfo@2@@Z */
 /* ?_Init@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@IEAAXAEBV_Locinfo@2@@Z */
-DEFINE_THISCALL_WRAPPER(num_get_wchar_ctor__Init, 8)
-void __thiscall num_get_wchar_ctor__Init(num_get *this, const _Locinfo *locinfo)
+DEFINE_THISCALL_WRAPPER(num_get_wchar__Init, 8)
+void __thiscall num_get_wchar__Init(num_get *this, const _Locinfo *locinfo)
 {
     FIXME("(%p %p) stub\n", this, locinfo);
 }
@@ -4402,8 +4402,8 @@ extern const vtable_ptr MSVCP_num_get_char_vtable;
 
 /* ?_Init@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@IAEXABV_Locinfo@2@@Z */
 /* ?_Init@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@IEAAXAEBV_Locinfo@2@@Z */
-DEFINE_THISCALL_WRAPPER(num_get_char_ctor__Init, 8)
-void __thiscall num_get_char_ctor__Init(num_get *this, const _Locinfo *locinfo)
+DEFINE_THISCALL_WRAPPER(num_get_char__Init, 8)
+void __thiscall num_get_char__Init(num_get *this, const _Locinfo *locinfo)
 {
     FIXME("(%p %p) stub\n", this, locinfo);
 }
