@@ -117,6 +117,16 @@ static void test_EnumProcessModules(void)
     ok(GetLastError() == ERROR_ACCESS_DENIED, "expected error=ERROR_ACCESS_DENIED but got %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
+    ret = pEnumProcessModules(hpQI, &hMod, sizeof(HMODULE), NULL);
+    ok(!ret, "succeeded\n");
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "expected error=ERROR_ACCESS_DENIED but got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pEnumProcessModules(hpQV, &hMod, sizeof(HMODULE), NULL);
+    ok(!ret, "succeeded\n");
+    ok(GetLastError() == ERROR_NOACCESS, "expected error=ERROR_NOACCESS but got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
     ret = pEnumProcessModules(hpQV, NULL, 0, &cbNeeded);
     ok(ret == 1, "failed with %d\n", GetLastError());
 
