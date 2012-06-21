@@ -25,6 +25,7 @@
 #include "errno.h"
 #include "limits.h"
 #include "math.h"
+#include "stdio.h"
 
 #include "wine/list.h"
 
@@ -125,6 +126,31 @@ static locale classic_locale;
 /* ?_Clocptr@_Locimp@locale@std@@0PAV123@A */
 /* ?_Clocptr@_Locimp@locale@std@@0PEAV123@EA */
 locale__Locimp *locale__Locimp__Clocptr = NULL;
+
+static char istreambuf_iterator_char_val(istreambuf_iterator_char *this)
+{
+    if(this->strbuf && !this->got) {
+        int c = basic_streambuf_char_sgetc(this->strbuf);
+        if(c == EOF)
+            this->strbuf = NULL;
+        else
+            this->val = c;
+    }
+
+    this->got = TRUE;
+    return this->val;
+}
+
+static void istreambuf_iterator_char_inc(istreambuf_iterator_char *this)
+{
+    if(!this->strbuf || basic_streambuf_char_sbumpc(this->strbuf)==EOF) {
+        this->strbuf = NULL;
+        this->got = TRUE;
+    }else {
+        this->got = FALSE;
+        istreambuf_iterator_char_val(this);
+    }
+}
 
 /* ??1facet@locale@std@@UAE@XZ */
 /* ??1facet@locale@std@@UEAA@XZ */
@@ -3401,6 +3427,32 @@ MSVCP_size_t __cdecl numpunct_char__Getcat(const locale_facet **facet, const loc
     return LC_NUMERIC;
 }
 
+numpunct_char* numpunct_char_use_facet(const locale *loc)
+{
+    static numpunct_char *obj = NULL;
+
+    _Lockit lock;
+    const locale_facet *fac;
+
+    _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
+    fac = locale__Getfacet(loc, numpunct_char_id.id);
+    if(fac) {
+        _Lockit_dtor(&lock);
+        return (numpunct_char*)fac;
+    }
+
+    if(obj)
+        return obj;
+
+    numpunct_char__Getcat(&fac, loc);
+    obj = (numpunct_char*)fac;
+    locale_facet__Incref(&obj->facet);
+    locale_facet_register(&obj->facet);
+    _Lockit_dtor(&lock);
+
+    return obj;
+}
+
 /* ?do_decimal_point@?$numpunct@D@std@@MBEDXZ */
 /* ?do_decimal_point@?$numpunct@D@std@@MEBADXZ */
 DEFINE_THISCALL_WRAPPER(numpunct_char_do_decimal_point, 4)
@@ -4509,11 +4561,150 @@ MSVCP_size_t __cdecl num_get_char__Getcat(const locale_facet **facet, const loca
 
 /* ?_Getffld@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABAHPADAAV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@1ABVlocale@2@@Z */
 /* ?_Getffld@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@AEBAHPEADAEAV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@1AEBVlocale@2@@Z */
-int __cdecl num_get_char__Getffld(num_get *this, char *dest, istreambuf_iterator_char *first,
-    istreambuf_iterator_char *last, const locale *loc)
+/* Copies number to dest buffer, validates grouping and skips separators.
+ * Updates first so it points past the number, all digits are skipped.
+ * Returns how exponent needs to changed.
+ * Size of dest buffer is not specified, assuming it's not smaller then 32:
+ * strlen(+0.e+) + 22(digits) + 4(expontent) + 1(nullbyte)
+ */
+int __cdecl num_get_char__Getffld(const num_get *this, char *dest, istreambuf_iterator_char *first,
+        istreambuf_iterator_char *last, const locale *loc)
 {
-    FIXME("(%p %p %p %p) stub\n", dest, first, last, loc);
-    return -1;
+    numpunct_char *numpunct = numpunct_char_use_facet(loc);
+    basic_string_char grouping_bstr;
+    int groups_no = 0, cur_group = 0, exp = 0;
+    char *dest_beg = dest, *num_end = dest+25, *exp_end = dest+31, *groups = NULL, sep;
+    const char *grouping;
+    BOOL error = TRUE, dest_empty = TRUE;
+
+    TRACE("(%p %p %p %p)\n", dest, first, last, loc);
+
+    numpunct_char_grouping(numpunct, &grouping_bstr);
+    grouping = MSVCP_basic_string_char_c_str(&grouping_bstr);
+    sep = grouping[0] ? numpunct_char_thousands_sep(numpunct) : '\0';
+
+    istreambuf_iterator_char_val(first);
+    if(first->strbuf && (first->val=='-' || first->val=='+')) {
+        *dest++ = first->val;
+        istreambuf_iterator_char_inc(first);
+    }
+
+    if(sep) {
+        groups_no = strlen(grouping)+2;
+        groups = calloc(groups_no, sizeof(char));
+    }
+
+    for(; first->strbuf; istreambuf_iterator_char_inc(first)) {
+        if(first->val<'0' || first->val>'9') {
+            if(sep && first->val==sep) {
+                if(cur_group == groups_no+1) {
+                    if(groups[1] != groups[2]) {
+                        error = TRUE;
+                        break;
+                    }else {
+                        memmove(groups+1, groups+2, groups_no);
+                        groups[cur_group] = 0;
+                    }
+                }else {
+                    cur_group++;
+                }
+            }else {
+                break;
+            }
+        }else {
+            error = FALSE;
+            if(dest_empty && first->val == '0')
+                continue;
+            dest_empty = FALSE;
+            if(dest < num_end)
+                *dest++ = first->val;
+            else
+                exp++;
+            if(sep && groups[cur_group]<CHAR_MAX)
+                groups[cur_group]++;
+        }
+    }
+
+    if(cur_group && !groups[cur_group])
+        error = TRUE;
+    else if(!cur_group)
+        cur_group--;
+
+    for(; cur_group>=0 && !error; cur_group--) {
+        if(*grouping == CHAR_MAX) {
+            if(cur_group)
+                error = TRUE;
+            break;
+        }else if((cur_group && *grouping!=groups[cur_group])
+                || (!cur_group && *grouping<groups[cur_group])) {
+            error = TRUE;
+            break;
+        }else if(grouping[1]) {
+            grouping++;
+        }
+    }
+    MSVCP_basic_string_char_dtor(&grouping_bstr);
+    free(groups);
+
+    if(error) {
+        *dest_beg = '\0';
+        return 0;
+    }else if(dest_empty) {
+        *dest++ = '0';
+    }
+
+    if(first->strbuf && first->val==numpunct_char_decimal_point(numpunct)) {
+        if(dest < num_end)
+            *dest++ = *localeconv()->decimal_point;
+        istreambuf_iterator_char_inc(first);
+
+        if(dest_empty) {
+            for(; first->strbuf && first->val=='0'; istreambuf_iterator_char_inc(first))
+                exp--;
+
+            if(!first->strbuf || first->val<'1' || first->val>'9')
+                dest--;
+        }
+    }
+
+    for(; first->strbuf; istreambuf_iterator_char_inc(first)) {
+        if(first->val<'0' || first->val>'9')
+            break;
+        else if(dest<num_end)
+            *dest++ = first->val;
+        else
+            exp--;
+    }
+
+    if(first->strbuf && (first->val=='e' || first->val=='E')) {
+        *dest++ = first->val;
+        istreambuf_iterator_char_inc(first);
+
+        if(first->strbuf && (first->val=='-' || first->val=='+')) {
+            *dest++ = first->val;
+            istreambuf_iterator_char_inc(first);
+        }
+
+        error = dest_empty = TRUE;
+        for(; first->strbuf && first->val=='0'; istreambuf_iterator_char_inc(first))
+            error = FALSE;
+
+        for(; first->strbuf && first->val>='0' && first->val<='9'; istreambuf_iterator_char_inc(first)) {
+            error = dest_empty = FALSE;
+            if(dest<exp_end)
+                *dest++ = first->val;
+        }
+
+        if(error) {
+            *dest_beg = '\0';
+            return 0;
+        }else if(dest_empty) {
+            *dest++ = '0';
+        }
+    }
+
+    *dest++ = '\0';
+    return exp;
 }
 
 /* ?_Getffldx@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABAHPADAAV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@1AAVios_base@2@PAH@Z */
