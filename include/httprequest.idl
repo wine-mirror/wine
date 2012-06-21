@@ -20,6 +20,12 @@
 
 import "oaidl.idl";
 
+#ifndef __WIDL__
+#define threading(model)
+#define progid(str)
+#define vi_progid(str)
+#endif
+
 [
     uuid(662901fc-6951-4854-9eb2-d9a2570f2b2e),
     helpstring("Microsoft WinHTTP Services, version 5.1"),
