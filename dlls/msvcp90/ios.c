@@ -50,42 +50,6 @@ typedef struct {
     streamsize arg;
 } manip_streamsize;
 
-typedef struct {
-    const vtable_ptr *vtable;
-    mutex lock;
-    char *rbuf;
-    char *wbuf;
-    char **prbuf;
-    char **pwbuf;
-    char *rpos;
-    char *wpos;
-    char **prpos;
-    char **pwpos;
-    int rsize;
-    int wsize;
-    int *prsize;
-    int *pwsize;
-    locale *loc;
-} basic_streambuf_char;
-
-typedef struct {
-    const vtable_ptr *vtable;
-    mutex lock;
-    wchar_t *rbuf;
-    wchar_t *wbuf;
-    wchar_t **prbuf;
-    wchar_t **pwbuf;
-    wchar_t *rpos;
-    wchar_t *wpos;
-    wchar_t **prpos;
-    wchar_t **pwpos;
-    int rsize;
-    int wsize;
-    int *prsize;
-    int *pwsize;
-    locale *loc;
-} basic_streambuf_wchar;
-
 typedef enum {
     INITFL_new   = 0,
     INITFL_open  = 1,

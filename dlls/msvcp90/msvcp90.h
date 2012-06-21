@@ -484,5 +484,43 @@ typedef struct _ios_base {
     locale *loc;
 } ios_base;
 
+/* class basic_streambuf<char> */
+typedef struct {
+    const vtable_ptr *vtable;
+    mutex lock;
+    char *rbuf;
+    char *wbuf;
+    char **prbuf;
+    char **pwbuf;
+    char *rpos;
+    char *wpos;
+    char **prpos;
+    char **pwpos;
+    int rsize;
+    int wsize;
+    int *prsize;
+    int *pwsize;
+    locale *loc;
+} basic_streambuf_char;
+
+/* class basic_streambuf<wchar> */
+typedef struct {
+    const vtable_ptr *vtable;
+    mutex lock;
+    wchar_t *rbuf;
+    wchar_t *wbuf;
+    wchar_t **prbuf;
+    wchar_t **pwbuf;
+    wchar_t *rpos;
+    wchar_t *wpos;
+    wchar_t **prpos;
+    wchar_t **pwpos;
+    int rsize;
+    int wsize;
+    int *prsize;
+    int *pwsize;
+    locale *loc;
+} basic_streambuf_wchar;
+
 void init_io(void);
 void free_io(void);

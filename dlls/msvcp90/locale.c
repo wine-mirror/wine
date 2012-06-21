@@ -104,14 +104,14 @@ typedef struct {
 
 typedef struct _istreambuf_iterator_char
 {
-    struct _basic_streambuf_char *strbuf;
+    basic_streambuf_char *strbuf;
     MSVCP_bool      got;
     char            val;
 } istreambuf_iterator_char;
 
 typedef struct _istreambuf_iterator_wchar
 {
-    struct _basic_streambuf_wchar *strbuf;
+    basic_streambuf_wchar *strbuf;
     MSVCP_bool      got;
     wchar_t         val;
 } istreambuf_iterator_wchar;
