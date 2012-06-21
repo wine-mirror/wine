@@ -81,9 +81,10 @@ static const struct ifd_data
     SHORT short_val[4];
     LONG long_val[2];
     FLOAT float_val[2];
+    struct IFD_rational rational[3];
 } IFD_data =
 {
-    27,
+    28,
     {
         { 0xfe,  IFD_SHORT, 1, 1 }, /* NEWSUBFILETYPE */
         { 0x100, IFD_LONG, 1, 222 }, /* IMAGEWIDTH */
@@ -112,6 +113,7 @@ static const struct ifd_data
         { 0xf013, IFD_SHORT, 0, 0x11223344 },
         { 0xf014, IFD_LONG, 0, 0x11223344 },
         { 0xf015, IFD_FLOAT, 0, 0x11223344 },
+        { 0xf016, IFD_SRATIONAL, 3, FIELD_OFFSET(struct ifd_data, rational) },
     },
     0,
     { 900, 3 },
@@ -121,6 +123,7 @@ static const struct ifd_data
     { 0x0101, 0x0202, 0x0303, 0x0404 },
     { 0x11223344, 0x55667788 },
     { (FLOAT)1234.5678, (FLOAT)8765.4321 },
+    { { 0x01020304, 0x05060708 }, { 0x10203040, 0x50607080 }, { 0x11223344, 0x55667788 } },
 };
 #include "poppack.h"
 
@@ -603,7 +606,7 @@ static void compare_ifd_metadata(IWICMetadataReader *reader, const struct test_d
 
 static void test_metadata_IFD(void)
 {
-    static const struct test_data td[27] =
+    static const struct test_data td[28] =
     {
         { VT_UI2, 0xfe, 0, { 1 } },
         { VT_UI4, 0x100, 0, { 222 } },
@@ -632,6 +635,10 @@ static void test_metadata_IFD(void)
         { VT_UI2, 0xf013, 0, { 0x3344 } },
         { VT_UI4, 0xf014, 0, { 0x11223344 } },
         { VT_R4, 0xf015, 0, { 0x11223344 } },
+        { VT_I8|VT_VECTOR, 0xf016, 3,
+          { ((LONGLONG)0x05060708 << 32) | 0x01020304,
+            ((LONGLONG)0x50607080 << 32) | 0x10203040,
+            ((LONGLONG)0x55667788 << 32) | 0x11223344 } },
     };
     HRESULT hr;
     IWICMetadataReader *reader;

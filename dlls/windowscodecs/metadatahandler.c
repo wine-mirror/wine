@@ -865,7 +865,37 @@ static HRESULT load_IFD_entry(IStream *input, const struct IFD_entry *entry,
             }
             break;
         }
-        FIXME("loading multiple rational fields is not implemented\n");
+        else
+        {
+            item->value.vt |= VT_VECTOR;
+            item->value.u.cauh.cElems = count;
+            item->value.u.cauh.pElems = HeapAlloc(GetProcessHeap(), 0, count * 8);
+            if (!item->value.u.cauh.pElems) return E_OUTOFMEMORY;
+
+            pos.QuadPart = value;
+            hr = IStream_Seek(input, pos, SEEK_SET, NULL);
+            if (FAILED(hr))
+            {
+                HeapFree(GetProcessHeap(), 0, item->value.u.cauh.pElems);
+                return hr;
+            }
+            hr = IStream_Read(input, item->value.u.cauh.pElems, count * 8, NULL);
+            if (FAILED(hr))
+            {
+                HeapFree(GetProcessHeap(), 0, item->value.u.cauh.pElems);
+                return hr;
+            }
+            for (i = 0; i < count; i++)
+            {
+                if (type == IFD_DOUBLE)
+                    SWAP_ULONGLONG(item->value.u.cauh.pElems[i].QuadPart);
+                else
+                {
+                    SWAP_ULONG(item->value.u.cauh.pElems[i].u.LowPart);
+                    SWAP_ULONG(item->value.u.cauh.pElems[i].u.HighPart);
+                }
+            }
+        }
         break;
     case IFD_ASCII:
         item->value.u.pszVal = HeapAlloc(GetProcessHeap(), 0, count + 1);
