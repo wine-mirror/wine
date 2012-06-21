@@ -679,6 +679,28 @@ struct IFD_rational
 #define IFD_DOUBLE 12
 #define IFD_IFD 13
 
+static int tag_to_vt(SHORT tag)
+{
+    static const int tag2vt[] =
+    {
+        VT_EMPTY, /* 0 */
+        VT_UI1,   /* IFD_BYTE 1 */
+        VT_LPSTR, /* IFD_ASCII 2 */
+        VT_UI2,   /* IFD_SHORT 3 */
+        VT_UI4,   /* IFD_LONG 4 */
+        VT_UI8,   /* IFD_RATIONAL 5 */
+        VT_I1,    /* IFD_SBYTE 6 */
+        VT_BLOB,  /* IFD_UNDEFINED 7 */
+        VT_I2,    /* IFD_SSHORT 8 */
+        VT_I4,    /* IFD_SLONG 9 */
+        VT_I8,    /* IFD_SRATIONAL 10 */
+        VT_R4,    /* IFD_FLOAT 11 */
+        VT_R8,    /* IFD_DOUBLE 12 */
+        VT_BLOB,  /* IFD_IFD 13 */
+    };
+    return (tag > 0 && tag <= 13) ? tag2vt[tag] : VT_BLOB;
+}
+
 static HRESULT load_IFD_entry(IStream *input, const struct IFD_entry *entry,
                               MetadataItem *item, BOOL native_byte_order)
 {
@@ -694,30 +716,44 @@ static HRESULT load_IFD_entry(IStream *input, const struct IFD_entry *entry,
     SWAP_ULONG(count);
     type = entry->type;
     SWAP_USHORT(type);
+    item->value.vt = tag_to_vt(type);
     value = entry->value;
     SWAP_ULONG(value);
 
     switch (type)
     {
-    case IFD_SHORT:
+     case IFD_BYTE:
+     case IFD_SBYTE:
         if (count == 1)
         {
-            item->value.vt = VT_UI2;
-            item->value.u.uiVal = value;
+            item->value.u.bVal = *(const BYTE *)&entry->value;
+            break;
+        }
+        FIXME("loading multiple byte fields is not implemented\n");
+        break;
+    case IFD_SHORT:
+    case IFD_SSHORT:
+        if (count == 1)
+        {
+            item->value.u.uiVal = *(const SHORT *)&entry->value;
+            SWAP_USHORT(item->value.u.uiVal);
             break;
         }
         FIXME("loading multiple short fields is not implemented\n");
         break;
     case IFD_LONG:
+    case IFD_SLONG:
+    case IFD_FLOAT:
         if (count == 1)
         {
-            item->value.vt = VT_UI4;
             item->value.u.ulVal = value;
             break;
         }
         FIXME("loading multiple long fields is not implemented\n");
         break;
     case IFD_RATIONAL:
+    case IFD_SRATIONAL:
+    case IFD_DOUBLE:
         if (count == 1)
         {
             HRESULT hr;
@@ -728,7 +764,6 @@ static HRESULT load_IFD_entry(IStream *input, const struct IFD_entry *entry,
             hr = IStream_Seek(input, pos, SEEK_SET, NULL);
             if (FAILED(hr)) return hr;
 
-            item->value.vt = VT_UI8;
             hr = IStream_Read(input, &rational, sizeof(rational), NULL);
             if (FAILED(hr)) return hr;
             item->value.u.uhVal.QuadPart = ((LONGLONG)rational.denominator << 32) | rational.numerator;
