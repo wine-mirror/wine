@@ -4188,10 +4188,18 @@ istreambuf_iterator_wchar *__thiscall num_get_wchar_do_get_double(const num_get 
 
 /* ?get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHAAO@Z */
 /* ?get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHAEAO@Z */
-/* ?get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHAAN@Z */
-/* ?get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHAEAN@Z */
 /* ?get@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@GU?$char_traits@G@std@@@2@V32@0AAVios_base@2@AAHAAO@Z */
 /* ?get@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@GU?$char_traits@G@std@@@2@V32@0AEAVios_base@2@AEAHAEAO@Z */
+DEFINE_THISCALL_WRAPPER(num_get_wchar_get_ldouble,36)
+istreambuf_iterator_wchar *__thiscall num_get_wchar_get_ldouble(const num_get *this, istreambuf_iterator_wchar *ret,
+        istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, struct _ios_base *base, int *state, double *pval)
+{
+    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, state, pval);
+    return ret;
+}
+
+/* ?get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHAAN@Z */
+/* ?get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHAEAN@Z */
 /* ?get@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@GU?$char_traits@G@std@@@2@V32@0AAVios_base@2@AAHAAN@Z */
 /* ?get@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@GU?$char_traits@G@std@@@2@V32@0AEAVios_base@2@AEAHAEAN@Z */
 DEFINE_THISCALL_WRAPPER(num_get_wchar_get_double,36)
@@ -4542,6 +4550,14 @@ istreambuf_iterator_char *__thiscall num_get_char_do_get_double(const num_get *t
 
 /* ?get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHAAO@Z */
 /* ?get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHAEAO@Z */
+DEFINE_THISCALL_WRAPPER(num_get_char_get_ldouble,36)
+istreambuf_iterator_char *__thiscall num_get_char_get_ldouble(const num_get *this, istreambuf_iterator_char *ret,
+        istreambuf_iterator_char first, istreambuf_iterator_char last, struct _ios_base *base, int *state, double *pval)
+{
+    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, state, pval);
+    return ret;
+}
+
 /* ?get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHAAN@Z */
 /* ?get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHAEAN@Z */
 DEFINE_THISCALL_WRAPPER(num_get_char_get_double,36)
