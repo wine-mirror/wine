@@ -39,16 +39,26 @@
     } \
 } while (0)
 
+#define IFD_BYTE 1
+#define IFD_ASCII 2
 #define IFD_SHORT 3
 #define IFD_LONG 4
 #define IFD_RATIONAL 5
+#define IFD_SBYTE 6
+#define IFD_UNDEFINED 7
+#define IFD_SSHORT 8
+#define IFD_SLONG 9
+#define IFD_SRATIONAL 10
+#define IFD_FLOAT 11
+#define IFD_DOUBLE 12
+#define IFD_IFD 13
 
 #include "pshpack2.h"
 struct IFD_entry
 {
     SHORT id;
     SHORT type;
-    ULONG length;
+    ULONG count;
     LONG  value;
 };
 
@@ -58,26 +68,50 @@ struct IFD_rational
     LONG denominator;
 };
 
-static const struct
+static const struct ifd_data
 {
     USHORT number_of_entries;
-    struct IFD_entry entry[6];
+    struct IFD_entry entry[40];
     ULONG next_IFD;
     struct IFD_rational xres;
+    DOUBLE double_val;
+    struct IFD_rational srational_val;
+    char string[14];
+    SHORT short_val[4];
+    LONG long_val[2];
+    FLOAT float_val[2];
 } IFD_data =
 {
-    6,
+    19,
     {
         { 0xfe,  IFD_SHORT, 1, 1 }, /* NEWSUBFILETYPE */
         { 0x100, IFD_LONG, 1, 222 }, /* IMAGEWIDTH */
         { 0x101, IFD_LONG, 1, 333 }, /* IMAGELENGTH */
         { 0x102, IFD_SHORT, 1, 24 }, /* BITSPERSAMPLE */
         { 0x103, IFD_LONG, 1, 32773 }, /* COMPRESSION: packbits */
-        { 0x11a, IFD_RATIONAL, 1, /* XRESOLUTION */
-          sizeof(USHORT) + sizeof(struct IFD_entry) * 6 + sizeof(ULONG) }
+        { 0x11a, IFD_RATIONAL, 1, FIELD_OFFSET(struct ifd_data, xres) },
+        { 0xf001, IFD_BYTE, 1, 0x11223344 },
+        { 0xf002, IFD_BYTE, 4, 0x11223344 },
+        { 0xf003, IFD_SBYTE, 1, 0x11223344 },
+        { 0xf004, IFD_SSHORT, 1, 0x11223344 },
+        { 0xf005, IFD_SSHORT, 2, 0x11223344 },
+        { 0xf006, IFD_SLONG, 1, 0x11223344 },
+        { 0xf007, IFD_FLOAT, 1, 0x11223344 },
+        { 0xf008, IFD_DOUBLE, 1, FIELD_OFFSET(struct ifd_data, double_val) },
+        { 0xf009, IFD_SRATIONAL, 1, FIELD_OFFSET(struct ifd_data, srational_val) },
+        { 0xf00a, IFD_BYTE, 13, FIELD_OFFSET(struct ifd_data, string) },
+        { 0xf00b, IFD_SSHORT, 4, FIELD_OFFSET(struct ifd_data, short_val) },
+        { 0xf00c, IFD_SLONG, 2, FIELD_OFFSET(struct ifd_data, long_val) },
+        { 0xf00d, IFD_FLOAT, 2, FIELD_OFFSET(struct ifd_data, float_val) },
     },
     0,
-    { 900, 3 }
+    { 900, 3 },
+    1234567890.0987654321,
+    { 0x1a2b3c4d, 0x5a6b7c8d },
+    "Hello World!",
+    { 0x0101, 0x0202, 0x0303, 0x0404 },
+    { 0x11223344, 0x55667788 },
+    { (FLOAT)1234.5678, (FLOAT)8765.4321 },
 };
 #include "poppack.h"
 
@@ -349,15 +383,29 @@ static void test_metadata_IFD(void)
     static const struct test_data
     {
         ULONG type, id;
-        LONGLONG value;
-    } td[6] =
+        int count; /* if VT_VECTOR */
+        LONGLONG value[13];
+    } td[19] =
     {
-        { VT_UI2, 0xfe, 1 },
-        { VT_UI4, 0x100, 222 },
-        { VT_UI4, 0x101, 333 },
-        { VT_UI2, 0x102, 24 },
-        { VT_UI4, 0x103, 32773 },
-        { VT_UI8, 0x11a,  ((LONGLONG)3 << 32) | 900 }
+        { VT_UI2, 0xfe, 0, { 1 } },
+        { VT_UI4, 0x100, 0, { 222 } },
+        { VT_UI4, 0x101, 0, { 333 } },
+        { VT_UI2, 0x102, 0, { 24 } },
+        { VT_UI4, 0x103, 0, { 32773 } },
+        { VT_UI8, 0x11a, 0, { ((LONGLONG)3 << 32) | 900 } },
+        { VT_UI1, 0xf001, 0, { 0x44 } },
+        { VT_UI1|VT_VECTOR, 0xf002, 4, { 0x44, 0x33, 0x22, 0x11 } },
+        { VT_I1, 0xf003, 0, { 0x44 } },
+        { VT_I2, 0xf004, 0, { 0x3344 } },
+        { VT_I2|VT_VECTOR, 0xf005, 2, { 0x3344, 0x1122 } },
+        { VT_I4, 0xf006, 0, { 0x11223344 } },
+        { VT_R4, 0xf007, 0, { 0x11223344 } },
+        { VT_R8, 0xf008, 0, { ((LONGLONG)0x41d26580 << 32) | 0xb486522c } },
+        { VT_I8, 0xf009, 0, { ((LONGLONG)0x5a6b7c8d << 32) | 0x1a2b3c4d } },
+        { VT_UI1|VT_VECTOR, 0xf00a, 13, { 'H','e','l','l','o',' ','W','o','r','l','d','!',0 } },
+        { VT_I2|VT_VECTOR, 0xf00b, 4, { 0x0101, 0x0202, 0x0303, 0x0404 } },
+        { VT_I4|VT_VECTOR, 0xf00c, 2, { 0x11223344, 0x55667788 } },
+        { VT_R4|VT_VECTOR, 0xf00d, 2, { 0x449a522b, 0x4608f5ba } },
     };
     HRESULT hr;
     IWICMetadataReader *reader;
@@ -386,7 +434,7 @@ static void test_metadata_IFD(void)
 
     hr = IWICMetadataReader_GetCount(reader, &count);
     ok(hr == S_OK, "GetCount error %#x\n", hr);
-    ok(count == 6, "unexpected count %u\n", count);
+    ok(count == sizeof(td)/sizeof(td[0]), "unexpected count %u\n", count);
 
     hr = IWICMetadataReader_GetEnumerator(reader, NULL);
     ok(hr == E_INVALIDARG, "GetEnumerator error %#x\n", hr);
@@ -402,9 +450,39 @@ static void test_metadata_IFD(void)
 
         ok(schema.vt == VT_EMPTY, "%u: unexpected vt: %u\n", i, schema.vt);
         ok(id.vt == VT_UI2, "%u: unexpected vt: %u\n", i, id.vt);
-        ok(U(id).uiVal == td[i].id, "%u: unexpected id: %#x\n", i, U(id).uiVal);
-        ok(value.vt == td[i].type, "%u: unexpected vt: %u\n", i, value.vt);
-        ok(U(value).uhVal.QuadPart == td[i].value, "%u: unexpected id: %d/%d\n", i, U(value).uhVal.u.LowPart, U(value).uhVal.u.HighPart);
+        ok(U(id).uiVal == td[i].id, "%u: expected id %#x, got %#x\n", i, td[i].id, U(id).uiVal);
+        ok(value.vt == td[i].type, "%u: expected vt %#x, got %#x\n", i, td[i].type, value.vt);
+        if (value.vt & VT_VECTOR)
+        {
+            ULONG j;
+            switch (value.vt & ~VT_VECTOR)
+            {
+            case VT_I1:
+            case VT_UI1:
+                ok(td[i].count == U(value).caub.cElems, "%u: expected cElems %d, got %d\n", i, td[i].count, U(value).caub.cElems);
+                for (j = 0; j < U(value).caub.cElems; j++)
+                    ok(td[i].value[j] == U(value).caub.pElems[j], "%u: expected value[%d] %#x/%#x, got %#x\n", i, j, (ULONG)td[i].value[j], (ULONG)(td[i].value[j] >> 32), U(value).caub.pElems[j]);
+                break;
+            case VT_I2:
+            case VT_UI2:
+                ok(td[i].count == U(value).caui.cElems, "%u: expected cElems %d, got %d\n", i, td[i].count, U(value).caui.cElems);
+                for (j = 0; j < U(value).caui.cElems; j++)
+                    ok(td[i].value[j] == U(value).caui.pElems[j], "%u: expected value[%d] %#x/%#x, got %#x\n", i, j, (ULONG)td[i].value[j], (ULONG)(td[i].value[j] >> 32), U(value).caui.pElems[j]);
+                break;
+            case VT_I4:
+            case VT_UI4:
+            case VT_R4:
+                ok(td[i].count == U(value).caul.cElems, "%u: expected cElems %d, got %d\n", i, td[i].count, U(value).caui.cElems);
+                for (j = 0; j < U(value).caul.cElems; j++)
+                    ok(td[i].value[j] == U(value).caul.pElems[j], "%u: expected value[%d] %#x/%#x, got %#x\n", i, j, (ULONG)td[i].value[j], (ULONG)(td[i].value[j] >> 32), U(value).caul.pElems[j]);
+                break;
+            default:
+                ok(0, "%u: array of type %d is not handled\n", i, value.vt & ~VT_VECTOR);
+                break;
+            }
+        }
+        else
+            ok(U(value).uhVal.QuadPart == td[i].value[0], "%u: unexpected value: %d/%d\n", i, U(value).uhVal.u.LowPart, U(value).uhVal.u.HighPart);
 
         PropVariantClear(&schema);
         PropVariantClear(&id);
