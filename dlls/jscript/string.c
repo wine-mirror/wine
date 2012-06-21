@@ -728,7 +728,7 @@ static HRESULT rep_call(script_ctx_t *ctx, jsdisp_t *func, const WCHAR *str, mat
     }
 
     if(SUCCEEDED(hres))
-        hres = jsdisp_call_value(func, DISPATCH_METHOD, &dp, &var, ei);
+        hres = jsdisp_call_value(func, NULL, DISPATCH_METHOD, &dp, &var, ei);
 
     for(i=0; i < parens_cnt+3; i++) {
         if(i != parens_cnt+1)

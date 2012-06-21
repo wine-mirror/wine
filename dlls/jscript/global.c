@@ -117,7 +117,7 @@ static HRESULT constructor_call(jsdisp_t *constr, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei)
 {
     if(flags != DISPATCH_PROPERTYGET)
-        return jsdisp_call_value(constr, flags, dp, retv, ei);
+        return jsdisp_call_value(constr, NULL, flags, dp, retv, ei);
 
     jsdisp_addref(constr);
     var_set_jsdisp(retv, constr);

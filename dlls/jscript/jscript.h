@@ -207,7 +207,8 @@ HRESULT init_dispex(jsdisp_t*,script_ctx_t*,const builtin_info_t*,jsdisp_t*) DEC
 HRESULT init_dispex_from_constr(jsdisp_t*,script_ctx_t*,const builtin_info_t*,jsdisp_t*) DECLSPEC_HIDDEN;
 
 HRESULT disp_call(script_ctx_t*,IDispatch*,DISPID,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*) DECLSPEC_HIDDEN;
-HRESULT jsdisp_call_value(jsdisp_t*,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*) DECLSPEC_HIDDEN;
+HRESULT disp_call_value(script_ctx_t*,IDispatch*,IDispatch*,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*) DECLSPEC_HIDDEN;
+HRESULT jsdisp_call_value(jsdisp_t*,IDispatch*,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*) DECLSPEC_HIDDEN;
 HRESULT jsdisp_call(jsdisp_t*,DISPID,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*) DECLSPEC_HIDDEN;
 HRESULT jsdisp_call_name(jsdisp_t*,const WCHAR*,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*) DECLSPEC_HIDDEN;
 HRESULT disp_propget(script_ctx_t*,IDispatch*,DISPID,VARIANT*,jsexcept_t*) DECLSPEC_HIDDEN;
@@ -225,7 +226,7 @@ VARIANT_BOOL jsdisp_is_own_prop(jsdisp_t *obj, BSTR name) DECLSPEC_HIDDEN;
 HRESULT create_builtin_function(script_ctx_t*,builtin_invoke_t,const WCHAR*,const builtin_info_t*,DWORD,
         jsdisp_t*,jsdisp_t**) DECLSPEC_HIDDEN;
 HRESULT Function_value(script_ctx_t*,vdisp_t*,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*) DECLSPEC_HIDDEN;
-HRESULT Function_invoke(jsdisp_t*,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*);
+HRESULT Function_invoke(jsdisp_t*,IDispatch*,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*);
 
 HRESULT throw_eval_error(script_ctx_t*,jsexcept_t*,HRESULT,const WCHAR*) DECLSPEC_HIDDEN;
 HRESULT throw_generic_error(script_ctx_t*,jsexcept_t*,HRESULT,const WCHAR*) DECLSPEC_HIDDEN;

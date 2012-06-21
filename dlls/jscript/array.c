@@ -646,7 +646,7 @@ static HRESULT sort_cmp(script_ctx_t *ctx, jsdisp_t *cmp_func, VARIANT *v1, VARI
         args[0] = *v2;
         args[1] = *v1;
 
-        hres = jsdisp_call_value(cmp_func, DISPATCH_METHOD, &dp, &res, ei);
+        hres = jsdisp_call_value(cmp_func, NULL, DISPATCH_METHOD, &dp, &res, ei);
         if(FAILED(hres))
             return hres;
 

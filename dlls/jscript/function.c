@@ -307,23 +307,23 @@ static HRESULT function_to_string(FunctionInstance *function, BSTR *ret)
     return S_OK;
 }
 
-HRESULT Function_invoke(jsdisp_t *func_this, WORD flags, DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei)
+HRESULT Function_invoke(jsdisp_t *func_this, IDispatch *jsthis, WORD flags, DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei)
 {
     FunctionInstance *function;
 
-    TRACE("\n");
+    TRACE("func %p this %p\n", func_this, jsthis);
 
     assert(is_class(func_this, JSCLASS_FUNCTION));
     function = (FunctionInstance*)func_this;
 
     if(function->value_proc)
-        return invoke_value_proc(function->dispex.ctx, function, get_this(dp), flags, dp, retv, ei);
+        return invoke_value_proc(function->dispex.ctx, function, jsthis, flags, dp, retv, ei);
 
     if(flags == DISPATCH_CONSTRUCT)
         return invoke_constructor(function->dispex.ctx, function, dp, retv, ei);
 
     assert(flags == DISPATCH_METHOD);
-    return invoke_source(function->dispex.ctx, function, get_this(dp), dp, retv, ei);
+    return invoke_source(function->dispex.ctx, function, jsthis, dp, retv, ei);
 }
 
 static HRESULT Function_length(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
