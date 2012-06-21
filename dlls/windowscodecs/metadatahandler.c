@@ -881,6 +881,33 @@ static HRESULT load_IFD_entry(IStream *input, const struct IFD_entry *entry,
         }
         item->value.u.pszVal[count] = 0;
         break;
+    case IFD_UNDEFINED:
+        item->value.u.blob.pBlobData = HeapAlloc(GetProcessHeap(), 0, count);
+        if (!item->value.u.blob.pBlobData) return E_OUTOFMEMORY;
+
+        item->value.u.blob.cbSize = count;
+
+        if (count <= 4)
+        {
+            const char *data = (const char *)&entry->value;
+            memcpy(item->value.u.blob.pBlobData, data, count);
+            break;
+        }
+
+        pos.QuadPart = value;
+        hr = IStream_Seek(input, pos, SEEK_SET, NULL);
+        if (FAILED(hr))
+        {
+            HeapFree(GetProcessHeap(), 0, item->value.u.blob.pBlobData);
+            return hr;
+        }
+        hr = IStream_Read(input, item->value.u.blob.pBlobData, count, NULL);
+        if (FAILED(hr))
+        {
+            HeapFree(GetProcessHeap(), 0, item->value.u.blob.pBlobData);
+            return hr;
+        }
+        break;
     default:
         FIXME("loading field of type %d, count %u is not implemented\n", type, count);
         break;

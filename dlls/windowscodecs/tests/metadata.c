@@ -82,7 +82,7 @@ static const struct ifd_data
     FLOAT float_val[2];
 } IFD_data =
 {
-    21,
+    23,
     {
         { 0xfe,  IFD_SHORT, 1, 1 }, /* NEWSUBFILETYPE */
         { 0x100, IFD_LONG, 1, 222 }, /* IMAGEWIDTH */
@@ -105,6 +105,8 @@ static const struct ifd_data
         { 0xf00d, IFD_FLOAT, 2, FIELD_OFFSET(struct ifd_data, float_val) },
         { 0xf00e, IFD_ASCII, 13, FIELD_OFFSET(struct ifd_data, string) },
         { 0xf00f, IFD_ASCII, 4, 'a' | 'b' << 8 | 'c' << 16 | 'd' << 24 },
+        { 0xf010, IFD_UNDEFINED, 13, FIELD_OFFSET(struct ifd_data, string) },
+        { 0xf011, IFD_UNDEFINED, 4, 'a' | 'b' << 8 | 'c' << 16 | 'd' << 24 },
     },
     0,
     { 900, 3 },
@@ -388,7 +390,7 @@ static void test_metadata_IFD(void)
         int count; /* if VT_VECTOR */
         LONGLONG value[13];
         const char *string;
-    } td[21] =
+    } td[23] =
     {
         { VT_UI2, 0xfe, 0, { 1 } },
         { VT_UI4, 0x100, 0, { 222 } },
@@ -411,6 +413,8 @@ static void test_metadata_IFD(void)
         { VT_R4|VT_VECTOR, 0xf00d, 2, { 0x449a522b, 0x4608f5ba } },
         { VT_LPSTR, 0xf00e, 12, { 0 }, "Hello World!" },
         { VT_LPSTR, 0xf00f, 4, { 0 }, "abcd" },
+        { VT_BLOB, 0xf010, 13, { 0 }, "Hello World!" },
+        { VT_BLOB, 0xf011, 4, { 0 }, "abcd" },
     };
     HRESULT hr;
     IWICMetadataReader *reader;
@@ -499,6 +503,11 @@ static void test_metadata_IFD(void)
             if (td[i].count == strlen(U(value).pszVal))
                 ok(!strcmp(td[i].string, U(value).pszVal),
                    "%u: expected %s, got %s\n", i, td[i].string, U(value).pszVal);
+        }
+        else if (value.vt == VT_BLOB)
+        {
+            ok(td[i].count == U(value).blob.cbSize, "%u: expected count %d, got %d\n", i, td[i].count, U(value).blob.cbSize);
+            ok(!memcmp(td[i].string, U(value).blob.pBlobData, td[i].count), "%u: expected %s, got %s\n", i, td[i].string, U(value).blob.pBlobData);
         }
         else
             ok(U(value).uhVal.QuadPart == td[i].value[0], "%u: unexpected value: %d/%d\n", i, U(value).uhVal.u.LowPart, U(value).uhVal.u.HighPart);
