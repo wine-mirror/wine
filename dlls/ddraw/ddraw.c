@@ -1948,6 +1948,7 @@ static HRESULT WINAPI ddraw7_GetScanLine(IDirectDraw7 *iface, DWORD *Scanline)
     struct wined3d_display_mode mode;
     static BOOL hide = FALSE;
     DWORD time, frame_progress, lines;
+    HRESULT hr;
 
     TRACE("iface %p, line %p.\n", iface, Scanline);
 
@@ -1959,8 +1960,13 @@ static HRESULT WINAPI ddraw7_GetScanLine(IDirectDraw7 *iface, DWORD *Scanline)
     }
 
     wined3d_mutex_lock();
-    wined3d_device_get_display_mode(ddraw->wined3d_device, 0, &mode);
+    hr = wined3d_get_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &mode);
     wined3d_mutex_unlock();
+    if (FAILED(hr))
+    {
+        ERR("Failed to get display mode, hr %#x.\n", hr);
+        return hr;
+    }
 
     /* Fake the line sweeping of the monitor */
     /* FIXME: We should synchronize with a source to keep the refresh rate */
