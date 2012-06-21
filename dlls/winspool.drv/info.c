@@ -974,6 +974,10 @@ static BOOL update_driver( HANDLE printer )
     HeapFree( GetProcessHeap(), 0, ppd_dir );
     HeapFree( GetProcessHeap(), 0, ppd );
     HeapFree( GetProcessHeap(), 0, queue_name );
+
+    /* call into the driver to update the devmode */
+    DocumentPropertiesW( 0, printer, NULL, NULL, NULL, 0 );
+
     return ret;
 }
 
@@ -2369,7 +2373,6 @@ BOOL WINAPI OpenPrinterW(LPWSTR lpPrinterName,HANDLE *phPrinter, LPPRINTER_DEFAU
     /* Get the unique handle of the printer or Printserver */
     *phPrinter = get_opened_printer_entry(lpPrinterName, pDefault);
 
-    WaitForSingleObject( init_mutex, INFINITE );
     if (*phPrinter)
     {
         HKEY key;
@@ -2377,15 +2380,14 @@ BOOL WINAPI OpenPrinterW(LPWSTR lpPrinterName,HANDLE *phPrinter, LPPRINTER_DEFAU
         DWORD status;
         WINSPOOL_GetOpenedPrinterRegKey( *phPrinter, &key );
         RegQueryValueExW( key, May_Delete_Value, NULL, &type, (LPBYTE)&deleting, &size );
+        WaitForSingleObject( init_mutex, INFINITE );
         status = get_dword_from_reg( key, StatusW );
+        set_reg_DWORD( key, StatusW, status & ~PRINTER_STATUS_DRIVER_UPDATE_NEEDED );
+        ReleaseMutex( init_mutex );
         if (!deleting && (status & PRINTER_STATUS_DRIVER_UPDATE_NEEDED))
-        {
             update_driver( *phPrinter );
-            set_reg_DWORD( key, StatusW, status & ~PRINTER_STATUS_DRIVER_UPDATE_NEEDED );
-        }
         RegCloseKey( key );
     }
-    ReleaseMutex( init_mutex );
 
     TRACE("returning %d with %u and %p\n", *phPrinter != NULL, GetLastError(), *phPrinter);
     return (*phPrinter != 0);
