@@ -391,7 +391,6 @@ static HRESULT invoke_prop_func(jsdisp_t *This, jsdisp_t *jsthis, dispex_prop_t 
     case PROP_BUILTIN: {
         DISPPARAMS params;
         VARIANT buf[6];
-        vdisp_t vthis;
 
         if(flags == DISPATCH_CONSTRUCT && (prop->flags & PROPF_METHOD)) {
             WARN("%s is not a constructor\n", debugstr_w(prop->name));
@@ -402,9 +401,16 @@ static HRESULT invoke_prop_func(jsdisp_t *This, jsdisp_t *jsthis, dispex_prop_t 
         if(FAILED(hres))
             return hres;
 
-        set_jsdisp(&vthis, jsthis);
-        hres = prop->u.p->invoke(This->ctx, &vthis, flags, &params, retv, ei);
-        vdisp_release(&vthis);
+        if(prop->name || jsthis->builtin_info->class != JSCLASS_FUNCTION) {
+            vdisp_t vthis;
+
+            set_jsdisp(&vthis, jsthis);
+            hres = prop->u.p->invoke(This->ctx, &vthis, flags, &params, retv, ei);
+            vdisp_release(&vthis);
+        }else {
+            /* Function object calls are special case */
+            hres = Function_invoke(This, flags, &params, retv, ei);
+        }
         if(params.rgvarg != buf && params.rgvarg != dp->rgvarg)
             heap_free(params.rgvarg);
         return hres;
