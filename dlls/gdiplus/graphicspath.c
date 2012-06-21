@@ -1008,12 +1008,12 @@ GpStatus WINGDIPAPI GdipAddPathString(GpPath* path, GDIPCONST WCHAR* string, INT
     }
     if (format && format->vertalign == StringAlignmentCenter && layoutRect->Y + args.maxY < layoutRect->Height)
     {
-        float inc = layoutRect->Height - args.maxY - layoutRect->Y;
+        float inc = layoutRect->Height + layoutRect->Y - args.maxY;
         inc /= 2;
         for (i = backup->pathdata.Count; i < path->pathdata.Count; ++i)
             path->pathdata.Points[i].Y += inc;
     } else if (format && format->vertalign == StringAlignmentFar) {
-        float inc = layoutRect->Height - args.maxY - layoutRect->Y;
+        float inc = layoutRect->Height + layoutRect->Y - args.maxY;
         for (i = backup->pathdata.Count; i < path->pathdata.Count; ++i)
             path->pathdata.Points[i].Y += inc;
     }
