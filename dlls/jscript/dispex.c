@@ -407,17 +407,10 @@ static HRESULT invoke_prop_func(jsdisp_t *This, IDispatch *jsthis, dispex_prop_t
 
     switch(prop->type) {
     case PROP_BUILTIN: {
-        DISPPARAMS params;
-        VARIANT buf[6];
-
         if(flags == DISPATCH_CONSTRUCT && (prop->flags & PROPF_METHOD)) {
             WARN("%s is not a constructor\n", debugstr_w(prop->name));
             return E_INVALIDARG;
         }
-
-        hres = convert_params(dp, buf, &params);
-        if(FAILED(hres))
-            return hres;
 
         if(prop->name || This->builtin_info->class != JSCLASS_FUNCTION) {
             vdisp_t vthis;
@@ -426,14 +419,12 @@ static HRESULT invoke_prop_func(jsdisp_t *This, IDispatch *jsthis, dispex_prop_t
                 set_disp(&vthis, jsthis);
             else
                 set_jsdisp(&vthis, This);
-            hres = prop->u.p->invoke(This->ctx, &vthis, flags, &params, retv, ei);
+            hres = prop->u.p->invoke(This->ctx, &vthis, flags, dp, retv, ei);
             vdisp_release(&vthis);
         }else {
             /* Function object calls are special case */
-            hres = Function_invoke(This, jsthis, flags, &params, retv, ei);
+            hres = Function_invoke(This, jsthis, flags, dp, retv, ei);
         }
-        if(params.rgvarg != buf && params.rgvarg != dp->rgvarg)
-            heap_free(params.rgvarg);
         return hres;
     }
     case PROP_PROTREF:
@@ -738,9 +729,19 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
         wFlags = DISPATCH_METHOD;
         /* fall through */
     case DISPATCH_METHOD:
-    case DISPATCH_CONSTRUCT:
-        hres = invoke_prop_func(This, get_this(pdp), prop, wFlags, pdp, pvarRes, &jsexcept, pspCaller);
+    case DISPATCH_CONSTRUCT: {
+        DISPPARAMS params;
+        VARIANT buf[6];
+
+        hres = convert_params(pdp, buf, &params);
+        if(FAILED(hres))
+            return hres;
+
+        hres = invoke_prop_func(This, get_this(pdp), prop, wFlags, &params, pvarRes, &jsexcept, pspCaller);
+        if(params.rgvarg != buf && params.rgvarg != pdp->rgvarg)
+            heap_free(params.rgvarg);
         break;
+    }
     case DISPATCH_PROPERTYGET:
         hres = prop_get(This, prop, pdp, pvarRes, &jsexcept, pspCaller);
         break;
