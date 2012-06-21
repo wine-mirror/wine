@@ -175,6 +175,7 @@ extern void __winetest_cdecl winetest_trace( const char *msg, ... );
 #ifdef STANDALONE
 
 #include <stdio.h>
+#include <excpt.h>
 
 #if defined(__x86_64__) && defined(__GNUC__) && defined(__WINE_USE_MSVCRT)
 # define __winetest_va_start(list,arg) __builtin_ms_va_start(list,arg)
