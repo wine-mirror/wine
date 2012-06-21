@@ -3195,27 +3195,27 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
                   {
                      PIP_ADAPTER_INFO ptr;
 
-                     if (size*sizeof(INTERFACE_INFO)/sizeof(IP_ADAPTER_INFO) > out_size)
-                     {
-                        WARN("Buffer too small = %u, out_size = %u\n", size, out_size);
-                        HeapFree(GetProcessHeap(),0,table);
-                        release_sock_fd( s, fd );
-                        status = WSAEFAULT;
-                        break;
-                     }
-                     for (ptr = table, numInt = 0; ptr;
-                      ptr = ptr->Next, intArray++, numInt++)
+                     for (ptr = table, numInt = 0; ptr; ptr = ptr->Next)
                      {
                         unsigned int addr, mask, bcast;
                         struct ifreq ifInfo;
+
+                        /* Skip interfaces without an IPv4 address. */
+                        if (ptr->IpAddressList.IpAddress.String[0] == '\0')
+                            continue;
+
+                        if ((numInt + 1)*sizeof(INTERFACE_INFO)/sizeof(IP_ADAPTER_INFO) > out_size)
+                        {
+                            WARN("Buffer too small = %u, out_size = %u\n", numInt + 1, out_size);
+                            status = WSAEFAULT;
+                            break;
+                        }
 
                         /* Socket Status Flags */
                         lstrcpynA(ifInfo.ifr_name, ptr->AdapterName, IFNAMSIZ);
                         if (ioctl(fd, SIOCGIFFLAGS, &ifInfo) < 0)
                         {
                            ERR("Error obtaining status flags for socket!\n");
-                           HeapFree(GetProcessHeap(),0,table);
-                           release_sock_fd( s, fd );
                            status = WSAEINVAL;
                            break;
                         }
@@ -3255,6 +3255,8 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
                         intArray->iiBroadcastAddress.AddressIn.sin_port = 0;
                         intArray->iiBroadcastAddress.AddressIn.sin_addr.
                          WS_s_addr = bcast;
+                        intArray++;
+                        numInt++;
                      }
                   }
                   else
