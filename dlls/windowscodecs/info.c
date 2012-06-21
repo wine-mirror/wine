@@ -1431,8 +1431,12 @@ static HRESULT WINAPI MetadataReaderInfo_GetSpecVersion(IWICMetadataReaderInfo *
 static HRESULT WINAPI MetadataReaderInfo_GetFriendlyName(IWICMetadataReaderInfo *iface,
     UINT length, WCHAR *name, UINT *actual_length)
 {
-    FIXME("(%p,%u,%p,%p): stub\n", iface, length, name, actual_length);
-    return E_NOTIMPL;
+    MetadataReaderInfo *This = impl_from_IWICMetadataReaderInfo(iface);
+
+    TRACE("(%p,%u,%p,%p)\n", iface, length, name, actual_length);
+
+    return ComponentInfo_GetStringValue(This->classkey, friendlyname_valuename,
+                                        length, name, actual_length);
 }
 
 static HRESULT WINAPI MetadataReaderInfo_GetMetadataFormat(IWICMetadataReaderInfo *iface,
