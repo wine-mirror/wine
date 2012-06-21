@@ -842,6 +842,7 @@ struct format_string_args
     GpPath *path;
     float maxY;
     float scale;
+    float ascent;
 };
 
 static GpStatus format_string_callback(HDC dc,
@@ -861,13 +862,15 @@ static GpStatus format_string_callback(HDC dc,
     if (underlined_index_count)
         FIXME("hotkey underlines not drawn yet\n");
 
+    if (y + bounds->Height * args->scale > args->maxY)
+        args->maxY = y + bounds->Height * args->scale;
+
     for (i = index; i < length; ++i)
     {
         GLYPHMETRICS gm;
         TTPOLYGONHEADER *ph = NULL;
         char *start;
         DWORD len, ofs = 0;
-        float bb_end;
         len = GetGlyphOutlineW(dc, string[i], GGO_BEZIER, &gm, 0, NULL, &identity);
         if (len == GDI_ERROR)
         {
@@ -882,9 +885,6 @@ static GpStatus format_string_callback(HDC dc,
             break;
         }
         GetGlyphOutlineW(dc, string[i], GGO_BEZIER, &gm, len, start, &identity);
-        bb_end = (gm.gmBlackBoxY + gm.gmptGlyphOrigin.y) * args->scale;
-        if (bb_end + y > args->maxY)
-            args->maxY = bb_end + y;
 
         ofs = 0;
         while (ofs < len)
@@ -893,7 +893,7 @@ static GpStatus format_string_callback(HDC dc,
             ph = (TTPOLYGONHEADER*)&start[ofs];
             path->pathdata.Types[path->pathdata.Count] = PathPointTypeStart;
             path->pathdata.Points[path->pathdata.Count].X = x + fromfixedpoint(ph->pfxStart.x) * args->scale;
-            path->pathdata.Points[path->pathdata.Count++].Y = y + bb_end - fromfixedpoint(ph->pfxStart.y) * args->scale;
+            path->pathdata.Points[path->pathdata.Count++].Y = y + args->ascent - fromfixedpoint(ph->pfxStart.y) * args->scale;
             TRACE("Starting at count %i with pos %f, %f)\n", path->pathdata.Count, x, y);
             ofs += sizeof(*ph);
             while (ofs - ofs_start < ph->cb)
@@ -909,7 +909,7 @@ static GpStatus format_string_callback(HDC dc,
                     {
                         path->pathdata.Types[path->pathdata.Count] = PathPointTypeLine;
                         path->pathdata.Points[path->pathdata.Count].X = x + fromfixedpoint(curve->apfx[j].x) * args->scale;
-                        path->pathdata.Points[path->pathdata.Count++].Y = y + bb_end - fromfixedpoint(curve->apfx[j].y) * args->scale;
+                        path->pathdata.Points[path->pathdata.Count++].Y = y + args->ascent - fromfixedpoint(curve->apfx[j].y) * args->scale;
                     }
                     break;
                 case TT_PRIM_CSPLINE:
@@ -917,7 +917,7 @@ static GpStatus format_string_callback(HDC dc,
                     {
                         path->pathdata.Types[path->pathdata.Count] = PathPointTypeBezier;
                         path->pathdata.Points[path->pathdata.Count].X = x + fromfixedpoint(curve->apfx[j].x) * args->scale;
-                        path->pathdata.Points[path->pathdata.Count++].Y = y + bb_end - fromfixedpoint(curve->apfx[j].y) * args->scale;
+                        path->pathdata.Points[path->pathdata.Count++].Y = y + args->ascent - fromfixedpoint(curve->apfx[j].y) * args->scale;
                     }
                     break;
                 default:
@@ -992,6 +992,7 @@ GpStatus WINGDIPAPI GdipAddPathString(GpPath* path, GDIPCONST WCHAR* string, INT
     args.path = path;
     args.maxY = 0;
     args.scale = emSize / native_height;
+    args.ascent = textmetric.tmAscent * args.scale;
     status = gdip_format_string(dc, string, length, NULL, &scaled_layout_rect, format, format_string_callback, &args);
 
     DeleteDC(dc);
