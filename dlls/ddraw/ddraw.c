@@ -4642,7 +4642,12 @@ static HRESULT WINAPI d3d7_EnumZBufferFormats(IDirect3D7 *iface, REFCLSID device
      * not like that we'll have to find some workaround, like iterating over
      * all imaginable formats and collecting all the depth stencil formats we
      * can get. */
-    hr = wined3d_device_get_display_mode(ddraw->wined3d_device, 0, &mode);
+    if (FAILED(hr = wined3d_get_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &mode)))
+    {
+        ERR("Failed to get display mode, hr %#x.\n", hr);
+        wined3d_mutex_unlock();
+        return hr;
+    }
 
     for (i = 0; i < (sizeof(formats) / sizeof(*formats)); ++i)
     {
