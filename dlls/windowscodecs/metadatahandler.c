@@ -704,8 +704,10 @@ static int tag_to_vt(SHORT tag)
 static HRESULT load_IFD_entry(IStream *input, const struct IFD_entry *entry,
                               MetadataItem *item, BOOL native_byte_order)
 {
-    ULONG count, value;
+    ULONG count, value, i;
     SHORT type;
+    LARGE_INTEGER pos;
+    HRESULT hr;
 
     item->schema.vt = VT_EMPTY;
     item->id.vt = VT_UI2;
@@ -724,22 +726,84 @@ static HRESULT load_IFD_entry(IStream *input, const struct IFD_entry *entry,
     {
      case IFD_BYTE:
      case IFD_SBYTE:
-        if (count == 1)
+        if (count <= 4)
         {
-            item->value.u.bVal = *(const BYTE *)&entry->value;
+            const BYTE *data = (const BYTE *)&entry->value;
+
+            if (count == 1)
+                item->value.u.bVal = data[0];
+            else
+            {
+                item->value.vt |= VT_VECTOR;
+                item->value.u.caub.cElems = count;
+                item->value.u.caub.pElems = HeapAlloc(GetProcessHeap(), 0, count);
+                memcpy(item->value.u.caub.pElems, data, count);
+            }
             break;
         }
-        FIXME("loading multiple byte fields is not implemented\n");
+
+        item->value.vt |= VT_VECTOR;
+        item->value.u.caub.cElems = count;
+        item->value.u.caub.pElems = HeapAlloc(GetProcessHeap(), 0, count);
+        if (!item->value.u.caub.pElems) return E_OUTOFMEMORY;
+
+        pos.QuadPart = value;
+        hr = IStream_Seek(input, pos, SEEK_SET, NULL);
+        if (FAILED(hr))
+        {
+            HeapFree(GetProcessHeap(), 0, item->value.u.caub.pElems);
+            return hr;
+        }
+        hr = IStream_Read(input, item->value.u.caub.pElems, count, NULL);
+        if (FAILED(hr))
+        {
+            HeapFree(GetProcessHeap(), 0, item->value.u.caub.pElems);
+            return hr;
+        }
         break;
     case IFD_SHORT:
     case IFD_SSHORT:
-        if (count == 1)
+        if (count <= 2)
         {
-            item->value.u.uiVal = *(const SHORT *)&entry->value;
-            SWAP_USHORT(item->value.u.uiVal);
+            const SHORT *data = (const SHORT *)&entry->value;
+
+            if (count == 1)
+            {
+                item->value.u.uiVal = data[0];
+                SWAP_USHORT(item->value.u.uiVal);
+            }
+            else
+            {
+                item->value.vt |= VT_VECTOR;
+                item->value.u.caui.cElems = count;
+                item->value.u.caui.pElems = HeapAlloc(GetProcessHeap(), 0, count * 2);
+                memcpy(item->value.u.caui.pElems, data, count * 2);
+                for (i = 0; i < count; i++)
+                    SWAP_USHORT(item->value.u.caui.pElems[i]);
+            }
             break;
         }
-        FIXME("loading multiple short fields is not implemented\n");
+
+        item->value.vt |= VT_VECTOR;
+        item->value.u.caui.cElems = count;
+        item->value.u.caui.pElems = HeapAlloc(GetProcessHeap(), 0, count * 2);
+        if (!item->value.u.caui.pElems) return E_OUTOFMEMORY;
+
+        pos.QuadPart = value;
+        hr = IStream_Seek(input, pos, SEEK_SET, NULL);
+        if (FAILED(hr))
+        {
+            HeapFree(GetProcessHeap(), 0, item->value.u.caui.pElems);
+            return hr;
+        }
+        hr = IStream_Read(input, item->value.u.caui.pElems, count * 2, NULL);
+        if (FAILED(hr))
+        {
+            HeapFree(GetProcessHeap(), 0, item->value.u.caui.pElems);
+            return hr;
+        }
+        for (i = 0; i < count; i++)
+            SWAP_USHORT(item->value.u.caui.pElems[i]);
         break;
     case IFD_LONG:
     case IFD_SLONG:
@@ -749,15 +813,33 @@ static HRESULT load_IFD_entry(IStream *input, const struct IFD_entry *entry,
             item->value.u.ulVal = value;
             break;
         }
-        FIXME("loading multiple long fields is not implemented\n");
+
+        item->value.vt |= VT_VECTOR;
+        item->value.u.caul.cElems = count;
+        item->value.u.caul.pElems = HeapAlloc(GetProcessHeap(), 0, count * 4);
+        if (!item->value.u.caul.pElems) return E_OUTOFMEMORY;
+
+        pos.QuadPart = value;
+        hr = IStream_Seek(input, pos, SEEK_SET, NULL);
+        if (FAILED(hr))
+        {
+            HeapFree(GetProcessHeap(), 0, item->value.u.caul.pElems);
+            return hr;
+        }
+        hr = IStream_Read(input, item->value.u.caul.pElems, count * 4, NULL);
+        if (FAILED(hr))
+        {
+            HeapFree(GetProcessHeap(), 0, item->value.u.caul.pElems);
+            return hr;
+        }
+        for (i = 0; i < count; i++)
+            SWAP_ULONG(item->value.u.caul.pElems[i]);
         break;
     case IFD_RATIONAL:
     case IFD_SRATIONAL:
     case IFD_DOUBLE:
         if (count == 1)
         {
-            HRESULT hr;
-            LARGE_INTEGER pos;
             struct IFD_rational rational;
 
             pos.QuadPart = value;
@@ -773,7 +855,7 @@ static HRESULT load_IFD_entry(IStream *input, const struct IFD_entry *entry,
         FIXME("loading multiple rational fields is not implemented\n");
         break;
     default:
-        FIXME("loading field of type %d is not implemented\n", entry->type);
+        FIXME("loading field of type %d, count %u is not implemented\n", type, count);
         break;
     }
     return S_OK;
