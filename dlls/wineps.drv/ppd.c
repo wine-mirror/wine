@@ -611,18 +611,36 @@ static BOOL PSDRV_AddSlot(PPD *ppd, LPCSTR szName, LPCSTR szFullName,
     return TRUE;
 }
 
+static char *get_ppd_override( HANDLE printer, const char *value )
+{
+    DWORD err, type, needed;
+    char *data;
+
+    err = GetPrinterDataExA( printer, "PPD Overrides", value, &type, NULL, 0, &needed );
+    if (err != ERROR_MORE_DATA || type != REG_SZ || needed == 0) return NULL;
+
+    data = HeapAlloc( PSDRV_Heap, 0, needed );
+    if (data)
+    {
+        GetPrinterDataExA( printer, "PPD Overrides", value, &type, (BYTE*)data, needed, &needed );
+        TRACE( "got override %s: %s\n", value, data );
+    }
+    return data;
+}
+
 /***********************************************************************
  *
  *		PSDRV_ParsePPD
  *
  *
  */
-PPD *PSDRV_ParsePPD(char *fname)
+PPD *PSDRV_ParsePPD( char *fname, HANDLE printer )
 {
     FILE *fp;
     PPD *ppd;
     PPDTuple tuple;
     char *default_pagesize = NULL, *default_duplex = NULL;
+    char *def_pagesize_override = NULL, *def_duplex_override = NULL;
     PAGESIZE *page, *page_cursor2;
 
     TRACE("file '%s'\n", fname);
@@ -944,7 +962,10 @@ PPD *PSDRV_ParsePPD(char *fname)
     }
 
     ppd->DefaultPageSize = NULL;
-    if (default_pagesize)
+    def_pagesize_override = get_ppd_override( printer, "DefaultPageSize" );
+    if (def_pagesize_override)
+        ppd->DefaultPageSize = get_pagesize( ppd, def_pagesize_override, FALSE );
+    if (!ppd->DefaultPageSize && default_pagesize)
         ppd->DefaultPageSize = get_pagesize( ppd, default_pagesize, FALSE );
 
     if (!ppd->DefaultPageSize)
@@ -955,10 +976,14 @@ PPD *PSDRV_ParsePPD(char *fname)
     }
     TRACE( "DefaultPageSize: %s\n", ppd->DefaultPageSize ? ppd->DefaultPageSize->Name : "<not set>" );
 
+    HeapFree( PSDRV_Heap, 0, def_pagesize_override );
     HeapFree( PSDRV_Heap, 0, default_pagesize );
 
     ppd->DefaultDuplex = NULL;
-    if (default_duplex)
+    def_duplex_override = get_ppd_override( printer, "DefaultDuplex" );
+    if (def_duplex_override)
+        ppd->DefaultDuplex = get_duplex( ppd, def_duplex_override );
+    if (!ppd->DefaultDuplex && default_duplex)
         ppd->DefaultDuplex = get_duplex( ppd, default_duplex );
 
     if (!ppd->DefaultDuplex)
@@ -969,6 +994,7 @@ PPD *PSDRV_ParsePPD(char *fname)
     }
     TRACE( "DefaultDuplex: %s\n", ppd->DefaultDuplex ? ppd->DefaultDuplex->Name : "<not set>" );
 
+    HeapFree( PSDRV_Heap, 0, def_duplex_override );
     HeapFree( PSDRV_Heap, 0, default_duplex );
 
 

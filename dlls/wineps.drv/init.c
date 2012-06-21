@@ -612,7 +612,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
     ppd_filename = get_ppd_filename( hPrinter );
     if (!ppd_filename) goto fail;
 
-    pi->ppd = PSDRV_ParsePPD( ppd_filename );
+    pi->ppd = PSDRV_ParsePPD( ppd_filename, hPrinter );
     if (!pi->ppd)
     {
         WARN( "Couldn't parse PPD file '%s'\n", ppd_filename );
