@@ -98,18 +98,6 @@ typedef struct {
     const wchar_t *true_name;
 } numpunct_wchar;
 
-typedef struct {
-    locale_facet facet;
-    _Cvtvec cvt;
-} num_get;
-
-typedef struct _istreambuf_iterator_char
-{
-    basic_streambuf_char *strbuf;
-    MSVCP_bool      got;
-    char            val;
-} istreambuf_iterator_char;
-
 typedef struct _istreambuf_iterator_wchar
 {
     basic_streambuf_wchar *strbuf;
@@ -4557,6 +4545,32 @@ MSVCP_size_t __cdecl num_get_char__Getcat(const locale_facet **facet, const loca
     }
 
     return LC_NUMERIC;
+}
+
+num_get* num_get_char_use_facet(const locale *loc)
+{
+    static num_get *obj = NULL;
+
+    _Lockit lock;
+    const locale_facet *fac;
+
+    _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
+    fac = locale__Getfacet(loc, num_get_char_id.id);
+    if(fac) {
+        _Lockit_dtor(&lock);
+        return (num_get*)fac;
+    }
+
+    if(obj)
+        return obj;
+
+    num_get_char__Getcat(&fac, loc);
+    obj = (num_get*)fac;
+    locale_facet__Incref(&obj->facet);
+    locale_facet_register(&obj->facet);
+    _Lockit_dtor(&lock);
+
+    return obj;
 }
 
 /* ?_Getffld@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABAHPADAAV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@1ABVlocale@2@@Z */

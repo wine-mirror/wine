@@ -4550,118 +4550,319 @@ basic_istream_char* __thiscall basic_istream_char_seekg_fpos(basic_istream_char 
 /* ??5?$basic_istream@DU?$char_traits@D@std@@@std@@QAEAAV01@AAF@Z */
 /* ??5?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@AEAF@Z */
 DEFINE_THISCALL_WRAPPER(basic_istream_char_read_short, 8)
-basic_istream_char* __thiscall basic_istream_char_read_short(basic_istream_char *this, short *arg1)
+basic_istream_char* __thiscall basic_istream_char_read_short(basic_istream_char *this, short *v)
 {
-    FIXME("(%p %p) stub\n", this, arg1);
-    return NULL;
+    basic_ios_char *base = basic_istream_char_get_basic_ios(this);
+    int state = IOSTATE_goodbit;
+
+    TRACE("(%p %p)\n", this, v);
+
+    if(basic_istream_char_sentry_create(this, FALSE)) {
+        basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
+        const num_get *numget = num_get_char_use_facet(strbuf->loc);
+        istreambuf_iterator_char first={0}, last={0};
+        LONG tmp;
+
+        first.strbuf = strbuf;
+        num_get_char_get_long(numget, &last, first, last, &base->base, &state, &tmp);
+
+        if(!(state&IOSTATE_failbit) && tmp==(LONG)((short)tmp))
+            *v = tmp;
+        else
+            state |= IOSTATE_failbit;
+    }
+    basic_istream_char_sentry_destroy(this);
+
+    basic_ios_char_setstate(base, state);
+    return this;
 }
 
 /* ??5?$basic_istream@DU?$char_traits@D@std@@@std@@QAEAAV01@AAG@Z */
 /* ??5?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@AEAG@Z */
 DEFINE_THISCALL_WRAPPER(basic_istream_char_read_ushort, 8)
-basic_istream_char* __thiscall basic_istream_char_read_ushort(basic_istream_char *this, unsigned short *arg1)
+basic_istream_char* __thiscall basic_istream_char_read_ushort(basic_istream_char *this, unsigned short *v)
 {
-    FIXME("(%p %p) stub\n", this, arg1);
-    return NULL;
+    basic_ios_char *base = basic_istream_char_get_basic_ios(this);
+    int state = IOSTATE_goodbit;
+
+    TRACE("(%p %p)\n", this, v);
+
+    if(basic_istream_char_sentry_create(this, FALSE)) {
+        basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
+        const num_get *numget = num_get_char_use_facet(strbuf->loc);
+        istreambuf_iterator_char first={0}, last={0};
+
+        first.strbuf = strbuf;
+        num_get_char_get_ushort(numget, &last, first, last, &base->base, &state, v);
+    }
+    basic_istream_char_sentry_destroy(this);
+
+    basic_ios_char_setstate(base, state);
+    return this;
 }
 
 /* ??5?$basic_istream@DU?$char_traits@D@std@@@std@@QAEAAV01@AAH@Z */
 /* ??5?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@AEAH@Z */
 DEFINE_THISCALL_WRAPPER(basic_istream_char_read_int, 8)
-basic_istream_char* __thiscall basic_istream_char_read_int(basic_istream_char *this, int *arg1)
+basic_istream_char* __thiscall basic_istream_char_read_int(basic_istream_char *this, int *v)
 {
-    FIXME("(%p %p) stub\n", this, arg1);
-    return NULL;
+    basic_ios_char *base = basic_istream_char_get_basic_ios(this);
+    int state = IOSTATE_goodbit;
+
+    TRACE("(%p %p)\n", this, v);
+
+    if(basic_istream_char_sentry_create(this, FALSE)) {
+        basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
+        const num_get *numget = num_get_char_use_facet(strbuf->loc);
+        istreambuf_iterator_char first={0}, last={0};
+
+        first.strbuf = strbuf;
+        num_get_char_get_long(numget, &last, first, last, &base->base, &state, v);
+    }
+    basic_istream_char_sentry_destroy(this);
+
+    basic_ios_char_setstate(base, state);
+    return this;
 }
 
 /* ??5?$basic_istream@DU?$char_traits@D@std@@@std@@QAEAAV01@AAI@Z */
 /* ??5?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@AEAI@Z */
 DEFINE_THISCALL_WRAPPER(basic_istream_char_read_uint, 8)
-basic_istream_char* __thiscall basic_istream_char_read_uint(basic_istream_char *this, unsigned int *arg1)
+basic_istream_char* __thiscall basic_istream_char_read_uint(basic_istream_char *this, unsigned int *v)
 {
-    FIXME("(%p %p) stub\n", this, arg1);
-    return NULL;
+    basic_ios_char *base = basic_istream_char_get_basic_ios(this);
+    int state = IOSTATE_goodbit;
+
+    TRACE("(%p %p)\n", this, v);
+
+    if(basic_istream_char_sentry_create(this, FALSE)) {
+        basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
+        const num_get *numget = num_get_char_use_facet(strbuf->loc);
+        istreambuf_iterator_char first={0}, last={0};
+
+        first.strbuf = strbuf;
+        num_get_char_get_uint(numget, &last, first, last, &base->base, &state, v);
+    }
+    basic_istream_char_sentry_destroy(this);
+
+    basic_ios_char_setstate(base, state);
+    return this;
 }
 
 /* ??5?$basic_istream@DU?$char_traits@D@std@@@std@@QAEAAV01@AAJ@Z */
 /* ??5?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@AEAJ@Z */
 DEFINE_THISCALL_WRAPPER(basic_istream_char_read_long, 8)
-basic_istream_char* __thiscall basic_istream_char_read_long(basic_istream_char *this, LONG *arg1)
+basic_istream_char* __thiscall basic_istream_char_read_long(basic_istream_char *this, LONG *v)
 {
-    FIXME("(%p %p) stub\n", this, arg1);
-    return NULL;
+    basic_ios_char *base = basic_istream_char_get_basic_ios(this);
+    int state = IOSTATE_goodbit;
+
+    TRACE("(%p %p)\n", this, v);
+
+    if(basic_istream_char_sentry_create(this, FALSE)) {
+        basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
+        const num_get *numget = num_get_char_use_facet(strbuf->loc);
+        istreambuf_iterator_char first={0}, last={0};
+
+        first.strbuf = strbuf;
+        num_get_char_get_long(numget, &last, first, last, &base->base, &state, v);
+    }
+    basic_istream_char_sentry_destroy(this);
+
+    basic_ios_char_setstate(base, state);
+    return this;
 }
 
 /* ??5?$basic_istream@DU?$char_traits@D@std@@@std@@QAEAAV01@AAK@Z */
 /* ??5?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@AEAK@Z */
 DEFINE_THISCALL_WRAPPER(basic_istream_char_read_ulong, 8)
-basic_istream_char* __thiscall basic_istream_char_read_ulong(basic_istream_char *this, ULONG *arg1)
+basic_istream_char* __thiscall basic_istream_char_read_ulong(basic_istream_char *this, ULONG *v)
 {
-    FIXME("(%p %p) stub\n", this, arg1);
-    return NULL;
+    basic_ios_char *base = basic_istream_char_get_basic_ios(this);
+    int state = IOSTATE_goodbit;
+
+    TRACE("(%p %p)\n", this, v);
+
+    if(basic_istream_char_sentry_create(this, FALSE)) {
+        basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
+        const num_get *numget = num_get_char_use_facet(strbuf->loc);
+        istreambuf_iterator_char first={0}, last={0};
+
+        first.strbuf = strbuf;
+        num_get_char_get_ulong(numget, &last, first, last, &base->base, &state, v);
+    }
+    basic_istream_char_sentry_destroy(this);
+
+    basic_ios_char_setstate(base, state);
+    return this;
 }
 
 /* ??5?$basic_istream@DU?$char_traits@D@std@@@std@@QAEAAV01@AAM@Z */
 /* ??5?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@AEAM@Z */
 DEFINE_THISCALL_WRAPPER(basic_istream_char_read_float, 8)
-basic_istream_char* __thiscall basic_istream_char_read_float(basic_istream_char *this, float *arg1)
+basic_istream_char* __thiscall basic_istream_char_read_float(basic_istream_char *this, float *v)
 {
-    FIXME("(%p %p) stub\n", this, arg1);
-    return NULL;
+    basic_ios_char *base = basic_istream_char_get_basic_ios(this);
+    int state = IOSTATE_goodbit;
+
+    TRACE("(%p %p)\n", this, v);
+
+    if(basic_istream_char_sentry_create(this, FALSE)) {
+        basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
+        const num_get *numget = num_get_char_use_facet(strbuf->loc);
+        istreambuf_iterator_char first={0}, last={0};
+
+        first.strbuf = strbuf;
+        num_get_char_get_float(numget, &last, first, last, &base->base, &state, v);
+    }
+    basic_istream_char_sentry_destroy(this);
+
+    basic_ios_char_setstate(base, state);
+    return this;
 }
 
 /* ??5?$basic_istream@DU?$char_traits@D@std@@@std@@QAEAAV01@AAN@Z */
 /* ??5?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@AEAN@Z */
 DEFINE_THISCALL_WRAPPER(basic_istream_char_read_double, 8)
-basic_istream_char* __thiscall basic_istream_char_read_double(basic_istream_char *this, double *arg1)
+basic_istream_char* __thiscall basic_istream_char_read_double(basic_istream_char *this, double *v)
 {
-    FIXME("(%p %p) stub\n", this, arg1);
-    return NULL;
+    basic_ios_char *base = basic_istream_char_get_basic_ios(this);
+    int state = IOSTATE_goodbit;
+
+    TRACE("(%p %p)\n", this, v);
+
+    if(basic_istream_char_sentry_create(this, FALSE)) {
+        basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
+        const num_get *numget = num_get_char_use_facet(strbuf->loc);
+        istreambuf_iterator_char first={0}, last={0};
+
+        first.strbuf = strbuf;
+        num_get_char_get_double(numget, &last, first, last, &base->base, &state, v);
+    }
+    basic_istream_char_sentry_destroy(this);
+
+    basic_ios_char_setstate(base, state);
+    return this;
 }
 
 /* ??5?$basic_istream@DU?$char_traits@D@std@@@std@@QAEAAV01@AAO@Z */
 /* ??5?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@AEAO@Z */
 DEFINE_THISCALL_WRAPPER(basic_istream_char_read_ldouble, 8)
-basic_istream_char* __thiscall basic_istream_char_read_ldouble(basic_istream_char *this, long double *arg1)
+basic_istream_char* __thiscall basic_istream_char_read_ldouble(basic_istream_char *this, double *v)
 {
-    FIXME("(%p %p) stub\n", this, arg1);
-    return NULL;
+    basic_ios_char *base = basic_istream_char_get_basic_ios(this);
+    int state = IOSTATE_goodbit;
+
+    TRACE("(%p %p)\n", this, v);
+
+    if(basic_istream_char_sentry_create(this, FALSE)) {
+        basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
+        const num_get *numget = num_get_char_use_facet(strbuf->loc);
+        istreambuf_iterator_char first={0}, last={0};
+
+        first.strbuf = strbuf;
+        num_get_char_get_ldouble(numget, &last, first, last, &base->base, &state, v);
+    }
+    basic_istream_char_sentry_destroy(this);
+
+    basic_ios_char_setstate(base, state);
+    return this;
 }
 
 /* ??5?$basic_istream@DU?$char_traits@D@std@@@std@@QAEAAV01@AAPAX@Z */
 /* ??5?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@AEAPEAX@Z */
 DEFINE_THISCALL_WRAPPER(basic_istream_char_read_ptr, 8)
-basic_istream_char* __thiscall basic_istream_char_read_ptr(basic_istream_char *this, void **arg1)
+basic_istream_char* __thiscall basic_istream_char_read_ptr(basic_istream_char *this, void **v)
 {
-    FIXME("(%p %p) stub\n", this, arg1);
-    return NULL;
+    basic_ios_char *base = basic_istream_char_get_basic_ios(this);
+    int state = IOSTATE_goodbit;
+
+    TRACE("(%p %p)\n", this, v);
+
+    if(basic_istream_char_sentry_create(this, FALSE)) {
+        basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
+        const num_get *numget = num_get_char_use_facet(strbuf->loc);
+        istreambuf_iterator_char first={0}, last={0};
+
+        first.strbuf = strbuf;
+        num_get_char_get_void(numget, &last, first, last, &base->base, &state, v);
+    }
+    basic_istream_char_sentry_destroy(this);
+
+    basic_ios_char_setstate(base, state);
+    return this;
 }
 
 /* ??5?$basic_istream@DU?$char_traits@D@std@@@std@@QAEAAV01@AA_J@Z */
 /* ??5?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@AEA_J@Z */
 DEFINE_THISCALL_WRAPPER(basic_istream_char_read_int64, 8)
-basic_istream_char* __thiscall basic_istream_char_read_int64(basic_istream_char *this, __int64 *arg1)
+basic_istream_char* __thiscall basic_istream_char_read_int64(basic_istream_char *this, __int64 *v)
 {
-    FIXME("(%p %p) stub\n", this, arg1);
-    return NULL;
+    basic_ios_char *base = basic_istream_char_get_basic_ios(this);
+    int state = IOSTATE_goodbit;
+
+    TRACE("(%p %p)\n", this, v);
+
+    if(basic_istream_char_sentry_create(this, FALSE)) {
+        basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
+        const num_get *numget = num_get_char_use_facet(strbuf->loc);
+        istreambuf_iterator_char first={0}, last={0};
+
+        first.strbuf = strbuf;
+        num_get_char_get_int64(numget, &last, first, last, &base->base, &state, v);
+    }
+    basic_istream_char_sentry_destroy(this);
+
+    basic_ios_char_setstate(base, state);
+    return this;
 }
 
 /* ??5?$basic_istream@DU?$char_traits@D@std@@@std@@QAEAAV01@AA_K@Z */
 /* ??5?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@AEA_K@Z */
 DEFINE_THISCALL_WRAPPER(basic_istream_char_read_uint64, 8)
-basic_istream_char* __thiscall basic_istream_char_read_uint64(basic_istream_char *this, unsigned __int64 *arg1)
+basic_istream_char* __thiscall basic_istream_char_read_uint64(basic_istream_char *this, unsigned __int64 *v)
 {
-    FIXME("(%p %p) stub\n", this, arg1);
-    return NULL;
+    basic_ios_char *base = basic_istream_char_get_basic_ios(this);
+    int state = IOSTATE_goodbit;
+
+    TRACE("(%p %p)\n", this, v);
+
+    if(basic_istream_char_sentry_create(this, FALSE)) {
+        basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
+        const num_get *numget = num_get_char_use_facet(strbuf->loc);
+        istreambuf_iterator_char first={0}, last={0};
+
+        first.strbuf = strbuf;
+        num_get_char_get_uint64(numget, &last, first, last, &base->base, &state, v);
+    }
+    basic_istream_char_sentry_destroy(this);
+
+    basic_ios_char_setstate(base, state);
+    return this;
 }
 
 /* ??5?$basic_istream@DU?$char_traits@D@std@@@std@@QAEAAV01@AA_N@Z */
 /* ??5?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@AEA_N@Z */
 DEFINE_THISCALL_WRAPPER(basic_istream_char_read_bool, 8)
-basic_istream_char* __thiscall basic_istream_char_read_bool(basic_istream_char *this, MSVCP_bool *arg1)
+basic_istream_char* __thiscall basic_istream_char_read_bool(basic_istream_char *this, MSVCP_bool *v)
 {
-    FIXME("(%p %p) stub\n", this, arg1);
-    return NULL;
+    basic_ios_char *base = basic_istream_char_get_basic_ios(this);
+    int state = IOSTATE_goodbit;
+
+    TRACE("(%p %p)\n", this, v);
+
+    if(basic_istream_char_sentry_create(this, FALSE)) {
+        basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
+        const num_get *numget = num_get_char_use_facet(strbuf->loc);
+        istreambuf_iterator_char first={0}, last={0};
+
+        first.strbuf = strbuf;
+        num_get_char_get_bool(numget, &last, first, last, &base->base, &state, v);
+    }
+    basic_istream_char_sentry_destroy(this);
+
+    basic_ios_char_setstate(base, state);
+    return this;
 }
 
 /* ??$getline@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@YAAAV?$basic_istream@DU?$char_traits@D@std@@@0@AAV10@AAV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@D@Z */

@@ -503,6 +503,12 @@ typedef struct {
     locale *loc;
 } basic_streambuf_char;
 
+typedef struct {
+    basic_streambuf_char *strbuf;
+    MSVCP_bool      got;
+    char            val;
+} istreambuf_iterator_char;
+
 int __thiscall basic_streambuf_char_sgetc(basic_streambuf_char*);
 int __thiscall basic_streambuf_char_sbumpc(basic_streambuf_char*);
 
@@ -524,6 +530,36 @@ typedef struct {
     int *pwsize;
     locale *loc;
 } basic_streambuf_wchar;
+
+/* class num_get<char> */
+typedef struct {
+    locale_facet facet;
+    _Cvtvec cvt;
+} num_get;
+
+num_get* num_get_char_use_facet(const locale*);
+istreambuf_iterator_char* __thiscall num_get_char_get_long(const num_get*, istreambuf_iterator_char*,
+        istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, LONG*);
+istreambuf_iterator_char* __thiscall num_get_char_get_ushort(const num_get*, istreambuf_iterator_char*,
+        istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, unsigned short*);
+istreambuf_iterator_char* __thiscall num_get_char_get_uint(const num_get*, istreambuf_iterator_char*,
+        istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, unsigned int*);
+istreambuf_iterator_char* __thiscall num_get_char_get_ulong(const num_get*, istreambuf_iterator_char*,
+        istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, ULONG*);
+istreambuf_iterator_char* __thiscall num_get_char_get_float(const num_get*, istreambuf_iterator_char*,
+        istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, float*);
+istreambuf_iterator_char *__thiscall num_get_char_get_double(const num_get*, istreambuf_iterator_char*,
+        istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, double*);
+istreambuf_iterator_char *__thiscall num_get_char_get_ldouble(const num_get*, istreambuf_iterator_char*,
+        istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, double*);
+istreambuf_iterator_char *__thiscall num_get_char_get_void(const num_get*, istreambuf_iterator_char*,
+        istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, void**);
+istreambuf_iterator_char *__thiscall num_get_char_get_int64(const num_get*, istreambuf_iterator_char*,
+        istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, LONGLONG*);
+istreambuf_iterator_char *__thiscall num_get_char_get_uint64(const num_get*, istreambuf_iterator_char*,
+        istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, ULONGLONG*);
+istreambuf_iterator_char *__thiscall num_get_char_get_bool(const num_get*, istreambuf_iterator_char*,
+        istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, MSVCP_bool*);
 
 void init_io(void);
 void free_io(void);
