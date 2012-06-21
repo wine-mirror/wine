@@ -430,7 +430,7 @@ static HRESULT WINAPI IGetFrame_fnSetFormat(IGetFrame *iface,
     }
 
     if (lpBits == NULL) {
-      register DWORD size = This->lpOutFormat->biClrUsed * sizeof(RGBQUAD);
+      DWORD size = This->lpOutFormat->biClrUsed * sizeof(RGBQUAD);
 
       size += This->lpOutFormat->biSize + This->lpOutFormat->biSizeImage;
       This->lpOutFormat = HeapReAlloc(GetProcessHeap(), 0, This->lpOutFormat, size);
