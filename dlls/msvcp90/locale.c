@@ -4718,11 +4718,123 @@ int __cdecl num_get_char__Getffldx(num_get *this, char *dest, istreambuf_iterato
 
 /* ?_Getifld@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABAHPADAAV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@1HABVlocale@2@@Z */
 /* ?_Getifld@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@AEBAHPEADAEAV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@1HAEBVlocale@2@@Z */
-int __cdecl num_get_char__Getifld(num_get *this, char *dest, istreambuf_iterator_char *first,
-    istreambuf_iterator_char *last, int fmtflags, const locale *loc)
+/* Copies number to dest buffer, validates grouping and skips separators.
+ * Updates first so it points past the number, all digits are skipped.
+ * Returns number base (8, 10 or 16).
+ * Size of dest buffer is not specified, assuming it's not smaller then 25:
+ * 22(8^22>2^64)+1(detect overflows)+1(sign)+1(nullbyte) = 25
+ */
+int __cdecl num_get_char__Getifld(const num_get *this, char *dest, istreambuf_iterator_char *first,
+        istreambuf_iterator_char *last, int fmtflags, const locale *loc)
 {
-    FIXME("(%p %p %p %04x %p) stub\n", dest, first, last, fmtflags, loc);
-    return -1;
+    static const char digits[] = "0123456789abcdefABCDEF";
+
+    numpunct_char *numpunct = numpunct_char_use_facet(loc);
+    basic_string_char grouping_bstr;
+    int basefield, base, groups_no = 0, cur_group = 0;
+    char *dest_beg = dest, *dest_end = dest+24, *groups = NULL, sep;
+    const char *grouping;
+    BOOL error = TRUE, dest_empty = TRUE;
+
+    TRACE("(%p %p %p %04x %p)\n", dest, first, last, fmtflags, loc);
+
+    numpunct_char_grouping(numpunct, &grouping_bstr);
+    grouping = MSVCP_basic_string_char_c_str(&grouping_bstr);
+    sep = grouping[0] ? numpunct_char_thousands_sep(numpunct) : '\0';
+
+    basefield = fmtflags & FMTFLAG_basefield;
+    if(basefield == FMTFLAG_oct)
+        base = 8;
+    else if(basefield == FMTFLAG_hex)
+        base = 22; /* equal to the size of digits buffer */
+    else if(!basefield)
+        base = 0;
+    else
+        base = 10;
+
+    istreambuf_iterator_char_val(first);
+    if(first->strbuf && (first->val=='-' || first->val=='+')) {
+        *dest++ = first->val;
+        istreambuf_iterator_char_inc(first);
+    }
+
+    if(!base && first->strbuf && first->val=='0') {
+        istreambuf_iterator_char_inc(first);
+        if(first->strbuf && (first->val=='x' || first->val=='X')) {
+            istreambuf_iterator_char_inc(first);
+            base = 22;
+        }else {
+            error = FALSE;
+            base = 8;
+        }
+    }else {
+        base = 10;
+    }
+
+    if(sep) {
+        groups_no = strlen(grouping)+2;
+        groups = calloc(groups_no, sizeof(char));
+    }
+
+    for(; first->strbuf; istreambuf_iterator_char_inc(first)) {
+        if(!memchr(digits, first->val, base)) {
+            if(sep && first->val==sep) {
+                if(cur_group == groups_no+1) {
+                    if(groups[1] != groups[2]) {
+                        error = TRUE;
+                        break;
+                    }else {
+                        memmove(groups+1, groups+2, groups_no);
+                        groups[cur_group] = 0;
+                    }
+                }else {
+                    cur_group++;
+                }
+            }else {
+                break;
+            }
+        }else {
+            error = FALSE;
+            if(dest_empty && first->val == '0')
+                continue;
+            dest_empty = FALSE;
+            /* skip digits that can't be copied to dest buffer, other
+             * functions are responsible for detecting overflows */
+            if(dest < dest_end)
+                *dest++ = first->val;
+            if(sep && groups[cur_group]<CHAR_MAX)
+                groups[cur_group]++;
+        }
+    }
+
+    if(cur_group && !groups[cur_group])
+        error = TRUE;
+    else if(!cur_group)
+        cur_group--;
+
+    for(; cur_group>=0 && !error; cur_group--) {
+        if(*grouping == CHAR_MAX) {
+            if(cur_group)
+                error = TRUE;
+            break;
+        }else if((cur_group && *grouping!=groups[cur_group])
+                || (!cur_group && *grouping<groups[cur_group])) {
+            error = TRUE;
+            break;
+        }else if(grouping[1]) {
+            grouping++;
+        }
+    }
+    MSVCP_basic_string_char_dtor(&grouping_bstr);
+    free(groups);
+
+    if(error)
+        dest = dest_beg;
+    else if(dest_empty)
+        *dest++ = '0';
+    *dest = '\0';
+
+    return (base==22 ? 16 : base);
 }
 
 /* ?_Hexdig@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABEHD000@Z */
