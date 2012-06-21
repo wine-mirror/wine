@@ -45,6 +45,63 @@
 # include <cups/cups.h>
 #endif
 
+#ifdef HAVE_APPLICATIONSERVICES_APPLICATIONSERVICES_H
+#define GetCurrentProcess GetCurrentProcess_Mac
+#define GetCurrentThread GetCurrentThread_Mac
+#define LoadResource LoadResource_Mac
+#define AnimatePalette AnimatePalette_Mac
+#define EqualRgn EqualRgn_Mac
+#define FillRgn FillRgn_Mac
+#define FrameRgn FrameRgn_Mac
+#define GetPixel GetPixel_Mac
+#define InvertRgn InvertRgn_Mac
+#define LineTo LineTo_Mac
+#define OffsetRgn OffsetRgn_Mac
+#define PaintRgn PaintRgn_Mac
+#define Polygon Polygon_Mac
+#define ResizePalette ResizePalette_Mac
+#define SetRectRgn SetRectRgn_Mac
+#define EqualRect EqualRect_Mac
+#define FillRect FillRect_Mac
+#define FrameRect FrameRect_Mac
+#define GetCursor GetCursor_Mac
+#define InvertRect InvertRect_Mac
+#define OffsetRect OffsetRect_Mac
+#define PtInRect PtInRect_Mac
+#define SetCursor SetCursor_Mac
+#define SetRect SetRect_Mac
+#define ShowCursor ShowCursor_Mac
+#define UnionRect UnionRect_Mac
+#include <ApplicationServices/ApplicationServices.h>
+#undef GetCurrentProcess
+#undef GetCurrentThread
+#undef LoadResource
+#undef AnimatePalette
+#undef EqualRgn
+#undef FillRgn
+#undef FrameRgn
+#undef GetPixel
+#undef InvertRgn
+#undef LineTo
+#undef OffsetRgn
+#undef PaintRgn
+#undef Polygon
+#undef ResizePalette
+#undef SetRectRgn
+#undef EqualRect
+#undef FillRect
+#undef FrameRect
+#undef GetCursor
+#undef InvertRect
+#undef OffsetRect
+#undef PtInRect
+#undef SetCursor
+#undef SetRect
+#undef ShowCursor
+#undef UnionRect
+#undef DPRINTF
+#endif
+
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "wine/library.h"
@@ -241,6 +298,9 @@ static const WCHAR LPR_Port[] = {'L','P','R',':',0};
 
 static const WCHAR default_doc_title[] = {'L','o','c','a','l',' ','D','o','w','n','l','e','v','e','l',' ',
                                           'D','o','c','u','m','e','n','t',0};
+
+static const WCHAR PPD_Overrides[] = {'P','P','D',' ','O','v','e','r','r','i','d','e','s',0};
+static const WCHAR DefaultPageSize[] = {'D','e','f','a','u','l','t','P','a','g','e','S','i','z','e',0};
 
 static const DWORD di_sizeof[] = {0, sizeof(DRIVER_INFO_1W), sizeof(DRIVER_INFO_2W),
                                      sizeof(DRIVER_INFO_3W), sizeof(DRIVER_INFO_4W),
@@ -944,6 +1004,50 @@ end:
 }
 
 
+static void set_ppd_overrides( HANDLE printer )
+{
+    WCHAR *wstr = NULL;
+    int size = 0;
+#ifdef HAVE_APPLICATIONSERVICES_APPLICATIONSERVICES_H
+    OSStatus status;
+    PMPrintSession session = NULL;
+    PMPageFormat format = NULL;
+    PMPaper paper;
+    CFStringRef paper_name;
+    CFRange range;
+
+    status = PMCreateSession( &session );
+    if (status) goto end;
+
+    status = PMCreatePageFormat( &format );
+    if (status) goto end;
+
+    status = PMSessionDefaultPageFormat( session, format );
+    if (status) goto end;
+
+    status = PMGetPageFormatPaper( format, &paper );
+    if (status) goto end;
+
+    status = PMPaperGetPPDPaperName( paper, &paper_name );
+    if (status) goto end;
+
+    range.location = 0;
+    range.length = CFStringGetLength( paper_name );
+    size = (range.length + 1) * sizeof(WCHAR);
+
+    wstr = HeapAlloc( GetProcessHeap(), 0, size );
+    CFStringGetCharacters( paper_name, range, (UniChar*)wstr );
+    wstr[range.length] = 0;
+
+end:
+    if (format) PMRelease( format );
+    if (session) PMRelease( session );
+#endif
+
+    SetPrinterDataExW( printer, PPD_Overrides, DefaultPageSize, REG_SZ, (BYTE*)wstr, size );
+    HeapFree( GetProcessHeap(), 0, wstr );
+}
+
 static BOOL update_driver( HANDLE printer )
 {
     BOOL ret, is_cups;
@@ -974,6 +1078,8 @@ static BOOL update_driver( HANDLE printer )
     HeapFree( GetProcessHeap(), 0, ppd_dir );
     HeapFree( GetProcessHeap(), 0, ppd );
     HeapFree( GetProcessHeap(), 0, queue_name );
+
+    set_ppd_overrides( printer );
 
     /* call into the driver to update the devmode */
     DocumentPropertiesW( 0, printer, NULL, NULL, NULL, 0 );

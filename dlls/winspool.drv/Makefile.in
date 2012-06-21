@@ -3,6 +3,7 @@ MODULE    = winspool.drv
 IMPORTLIB = winspool
 IMPORTS   = user32 gdi32 advapi32
 EXTRAINCL = @CUPSINCL@
+EXTRALIBS = @APPLICATIONSERVICESLIB@
 
 C_SRCS = \
 	info.c \
