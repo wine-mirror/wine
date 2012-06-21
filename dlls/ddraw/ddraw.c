@@ -2892,11 +2892,11 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
     desc2.u4.ddpfPixelFormat.dwSize=sizeof(DDPIXELFORMAT); /* Just to be sure */
 
     /* Get the video mode from WineD3D - we will need it */
-    hr = wined3d_device_get_display_mode(ddraw->wined3d_device, 0, &mode);
-    if (FAILED(hr))
+    if (FAILED(hr = wined3d_get_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &mode)))
     {
-        ERR("Failed to read display mode from wined3d\n");
-        switch(ddraw->orig_bpp)
+        ERR("Failed to get display mode, hr %#x.\n", hr);
+
+        switch (ddraw->orig_bpp)
         {
             case 8:
                 mode.format_id = WINED3DFMT_P8_UINT;
