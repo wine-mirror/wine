@@ -649,7 +649,6 @@ HRESULT UnknownMetadataReader_CreateInstance(IUnknown *pUnkOuter, REFIID iid, vo
 #define SWAP_ULONG(x) do { if (!native_byte_order) (x) = RtlUlongByteSwap(x); } while(0)
 #define SWAP_ULONGLONG(x) do { if (!native_byte_order) (x) = RtlUlonglongByteSwap(x); } while(0)
 
-#include "pshpack2.h"
 struct IFD_entry
 {
     SHORT id;
@@ -657,13 +656,6 @@ struct IFD_entry
     ULONG count;
     LONG  value;
 };
-
-struct IFD_rational
-{
-    LONG numerator;
-    LONG denominator;
-};
-#include "poppack.h"
 
 #define IFD_BYTE 1
 #define IFD_ASCII 2
@@ -840,16 +832,24 @@ static HRESULT load_IFD_entry(IStream *input, const struct IFD_entry *entry,
     case IFD_DOUBLE:
         if (count == 1)
         {
-            struct IFD_rational rational;
+            ULONGLONG ull;
 
             pos.QuadPart = value;
             hr = IStream_Seek(input, pos, SEEK_SET, NULL);
             if (FAILED(hr)) return hr;
 
-            hr = IStream_Read(input, &rational, sizeof(rational), NULL);
+            hr = IStream_Read(input, &ull, sizeof(ull), NULL);
             if (FAILED(hr)) return hr;
-            item->value.u.uhVal.QuadPart = ((LONGLONG)rational.denominator << 32) | rational.numerator;
-            SWAP_ULONGLONG(item->value.u.uhVal.QuadPart);
+
+            item->value.u.uhVal.QuadPart = ull;
+
+            if (type == IFD_DOUBLE)
+                SWAP_ULONGLONG(item->value.u.uhVal.QuadPart);
+            else
+            {
+                SWAP_ULONG(item->value.u.uhVal.u.LowPart);
+                SWAP_ULONG(item->value.u.uhVal.u.HighPart);
+            }
             break;
         }
         FIXME("loading multiple rational fields is not implemented\n");
