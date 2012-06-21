@@ -630,8 +630,6 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
 	    dm.dmPublic.u1.s1.dmPaperSize = papersize;
 	    PSDRV_MergeDevmodes(pi->Devmode, &dm, pi);
 	}
-
-        set_devmode( hPrinter, pi->Devmode );
     }
 
     if(pi->ppd->DefaultPageSize) { /* We'll let the ppd override the devmode */
@@ -671,6 +669,8 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
         else
             pi->Devmode->dmPublic.dmDuplex = DMDUP_SIMPLEX;
     }
+
+    set_devmode( hPrinter, pi->Devmode );
 
     pi->FontSubTable = load_font_sub_table( hPrinter, &pi->FontSubTableSize );
 
