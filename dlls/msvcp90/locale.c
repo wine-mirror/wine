@@ -4412,7 +4412,8 @@ extern const vtable_ptr MSVCP_num_get_char_vtable;
 DEFINE_THISCALL_WRAPPER(num_get_char__Init, 8)
 void __thiscall num_get_char__Init(num_get *this, const _Locinfo *locinfo)
 {
-    FIXME("(%p %p) stub\n", this, locinfo);
+    TRACE("(%p %p)\n", this, locinfo);
+    _Locinfo__Getcvt(locinfo, &this->cvt);
 }
 
 /* ??0?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QAE@ABV_Locinfo@1@I@Z */
@@ -4421,8 +4422,13 @@ DEFINE_THISCALL_WRAPPER(num_get_char_ctor_locinfo, 12)
 num_get* __thiscall num_get_char_ctor_locinfo(num_get *this,
         _Locinfo *locinfo, MSVCP_size_t refs)
 {
-    FIXME("(%p %p %lu) stub\n", this, locinfo, refs);
-    return NULL;
+    TRACE("(%p %p %lu)\n", this, locinfo, refs);
+
+    locale_facet_ctor_refs(&this->facet, refs);
+    this->facet.vtable = &MSVCP_num_get_char_vtable;
+
+    num_get_char__Init(this, locinfo);
+    return this;
 }
 
 /* ??0?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QAE@I@Z */
@@ -4430,8 +4436,14 @@ num_get* __thiscall num_get_char_ctor_locinfo(num_get *this,
 DEFINE_THISCALL_WRAPPER(num_get_char_ctor_refs, 8)
 num_get* __thiscall num_get_char_ctor_refs(num_get *this, MSVCP_size_t refs)
 {
-    FIXME("(%p %lu) stub\n", this, refs);
-    return NULL;
+    _Locinfo locinfo;
+
+    TRACE("(%p %lu)\n", this, refs);
+
+    _Locinfo_ctor(&locinfo);
+    num_get_char_ctor_locinfo(this, &locinfo, refs);
+    _Locinfo_dtor(&locinfo);
+    return this;
 }
 
 /* ??_F?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QAEXXZ */
@@ -4439,8 +4451,7 @@ num_get* __thiscall num_get_char_ctor_refs(num_get *this, MSVCP_size_t refs)
 DEFINE_THISCALL_WRAPPER(num_get_char_ctor, 4)
 num_get* __thiscall num_get_char_ctor(num_get *this)
 {
-    FIXME("(%p) stub\n", this);
-    return NULL;
+    return num_get_char_ctor_refs(this, 0);
 }
 
 /* ??1?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MAE@XZ */
@@ -4448,7 +4459,8 @@ num_get* __thiscall num_get_char_ctor(num_get *this)
 DEFINE_THISCALL_WRAPPER(num_get_char_dtor, 4)
 void __thiscall num_get_char_dtor(num_get *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
+    locale_facet_dtor(&this->facet);
 }
 
 DEFINE_THISCALL_WRAPPER(MSVCP_num_get_char_vector_dtor, 8)
@@ -4475,8 +4487,24 @@ num_get* __thiscall MSVCP_num_get_char_vector_dtor(num_get *this, unsigned int f
 /* ?_Getcat@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
 MSVCP_size_t __cdecl num_get_char__Getcat(const locale_facet **facet, const locale *loc)
 {
-    FIXME("(%p %p) stub\n", facet, loc);
-    return -1;
+    TRACE("(%p %p)\n", facet, loc);
+
+    if(facet && !*facet) {
+        _Locinfo locinfo;
+
+        *facet = MSVCRT_operator_new(sizeof(num_get));
+        if(!*facet) {
+            ERR("Out of memory\n");
+            throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+            return 0;
+        }
+
+        _Locinfo_ctor_cstr(&locinfo, MSVCP_basic_string_char_c_str(&loc->ptr->name));
+        num_get_char_ctor_locinfo((num_get*)*facet, &locinfo, 0);
+        _Locinfo_dtor(&locinfo);
+    }
+
+    return LC_NUMERIC;
 }
 
 /* ?_Getffld@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABAHPADAAV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@1ABVlocale@2@@Z */
