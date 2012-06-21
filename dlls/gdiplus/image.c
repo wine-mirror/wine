@@ -2462,7 +2462,7 @@ struct image_format_dimension
     const GUID *dimension;
 };
 
-static struct image_format_dimension image_format_dimensions[] =
+static const struct image_format_dimension image_format_dimensions[] =
 {
     {&ImageFormatGIF, &FrameDimensionTime},
     {&ImageFormatIcon, &FrameDimensionResolution},
@@ -2563,7 +2563,7 @@ GpStatus WINGDIPAPI GdipLoadImageFromFileICM(GDIPCONST WCHAR* filename,GpImage *
     return GdipLoadImageFromFile(filename, image);
 }
 
-static const WICPixelFormatGUID *wic_pixel_formats[] = {
+static const WICPixelFormatGUID * const wic_pixel_formats[] = {
     &GUID_WICPixelFormat16bppBGR555,
     &GUID_WICPixelFormat24bppBGR,
     &GUID_WICPixelFormat32bppBGR,
