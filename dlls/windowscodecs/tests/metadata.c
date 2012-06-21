@@ -82,7 +82,7 @@ static const struct ifd_data
     FLOAT float_val[2];
 } IFD_data =
 {
-    23,
+    27,
     {
         { 0xfe,  IFD_SHORT, 1, 1 }, /* NEWSUBFILETYPE */
         { 0x100, IFD_LONG, 1, 222 }, /* IMAGEWIDTH */
@@ -107,6 +107,10 @@ static const struct ifd_data
         { 0xf00f, IFD_ASCII, 4, 'a' | 'b' << 8 | 'c' << 16 | 'd' << 24 },
         { 0xf010, IFD_UNDEFINED, 13, FIELD_OFFSET(struct ifd_data, string) },
         { 0xf011, IFD_UNDEFINED, 4, 'a' | 'b' << 8 | 'c' << 16 | 'd' << 24 },
+        { 0xf012, IFD_BYTE, 0, 0x11223344 },
+        { 0xf013, IFD_SHORT, 0, 0x11223344 },
+        { 0xf014, IFD_LONG, 0, 0x11223344 },
+        { 0xf015, IFD_FLOAT, 0, 0x11223344 },
     },
     0,
     { 900, 3 },
@@ -390,7 +394,7 @@ static void test_metadata_IFD(void)
         int count; /* if VT_VECTOR */
         LONGLONG value[13];
         const char *string;
-    } td[23] =
+    } td[27] =
     {
         { VT_UI2, 0xfe, 0, { 1 } },
         { VT_UI4, 0x100, 0, { 222 } },
@@ -415,6 +419,10 @@ static void test_metadata_IFD(void)
         { VT_LPSTR, 0xf00f, 4, { 0 }, "abcd" },
         { VT_BLOB, 0xf010, 13, { 0 }, "Hello World!" },
         { VT_BLOB, 0xf011, 4, { 0 }, "abcd" },
+        { VT_UI1, 0xf012, 0, { 0x44 } },
+        { VT_UI2, 0xf013, 0, { 0x3344 } },
+        { VT_UI4, 0xf014, 0, { 0x11223344 } },
+        { VT_R4, 0xf015, 0, { 0x11223344 } },
     };
     HRESULT hr;
     IWICMetadataReader *reader;

@@ -718,6 +718,8 @@ static HRESULT load_IFD_entry(IStream *input, const struct IFD_entry *entry,
     {
      case IFD_BYTE:
      case IFD_SBYTE:
+        if (!count) count = 1;
+
         if (count <= 4)
         {
             const BYTE *data = (const BYTE *)&entry->value;
@@ -755,6 +757,8 @@ static HRESULT load_IFD_entry(IStream *input, const struct IFD_entry *entry,
         break;
     case IFD_SHORT:
     case IFD_SSHORT:
+        if (!count) count = 1;
+
         if (count <= 2)
         {
             const SHORT *data = (const SHORT *)&entry->value;
@@ -800,6 +804,8 @@ static HRESULT load_IFD_entry(IStream *input, const struct IFD_entry *entry,
     case IFD_LONG:
     case IFD_SLONG:
     case IFD_FLOAT:
+        if (!count) count = 1;
+
         if (count == 1)
         {
             item->value.u.ulVal = value;
@@ -830,6 +836,13 @@ static HRESULT load_IFD_entry(IStream *input, const struct IFD_entry *entry,
     case IFD_RATIONAL:
     case IFD_SRATIONAL:
     case IFD_DOUBLE:
+        if (!count)
+        {
+            FIXME("IFD field type %d, count 0\n", type);
+            item->value.vt = VT_EMPTY;
+            break;
+        }
+
         if (count == 1)
         {
             ULONGLONG ull;
@@ -882,6 +895,13 @@ static HRESULT load_IFD_entry(IStream *input, const struct IFD_entry *entry,
         item->value.u.pszVal[count] = 0;
         break;
     case IFD_UNDEFINED:
+        if (!count)
+        {
+            FIXME("IFD field type %d, count 0\n", type);
+            item->value.vt = VT_EMPTY;
+            break;
+        }
+
         item->value.u.blob.pBlobData = HeapAlloc(GetProcessHeap(), 0, count);
         if (!item->value.u.blob.pBlobData) return E_OUTOFMEMORY;
 
