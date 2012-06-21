@@ -397,5 +397,92 @@ void __thiscall mutex_dtor(mutex*);
 void __thiscall mutex_lock(mutex*);
 void __thiscall mutex_unlock(mutex*);
 
+typedef enum {
+    FMTFLAG_skipws      = 0x0001,
+    FMTFLAG_unitbuf     = 0x0002,
+    FMTFLAG_uppercase   = 0x0004,
+    FMTFLAG_showbase    = 0x0008,
+    FMTFLAG_showpoint   = 0x0010,
+    FMTFLAG_showpos     = 0x0020,
+    FMTFLAG_left        = 0x0040,
+    FMTFLAG_right       = 0x0080,
+    FMTFLAG_internal    = 0x0100,
+    FMTFLAG_dec         = 0x0200,
+    FMTFLAG_oct         = 0x0400,
+    FMTFLAG_hex         = 0x0800,
+    FMTFLAG_scientific  = 0x1000,
+    FMTFLAG_fixed       = 0x2000,
+    FMTFLAG_hexfloat    = 0x3000,
+    FMTFLAG_boolalpha   = 0x4000,
+    FMTFLAG_stdio       = 0x8000,
+    FMTFLAG_adjustfield = FMTFLAG_left|FMTFLAG_right|FMTFLAG_internal,
+    FMTFLAG_basefield   = FMTFLAG_dec|FMTFLAG_oct|FMTFLAG_hex,
+    FMTFLAG_floadfield  = FMTFLAG_scientific|FMTFLAG_fixed,
+    FMTFLAG_mask        = 0xffff
+} IOSB_fmtflags;
+
+typedef enum {
+    OPENMODE_in         = 0x01,
+    OPENMODE_out        = 0x02,
+    OPENMODE_ate        = 0x04,
+    OPENMODE_app        = 0x08,
+    OPENMODE_trunc      = 0x10,
+    OPENMODE__Nocreate  = 0x40,
+    OPENMODE__Noreplace = 0x80,
+    OPENMODE_binary     = 0x20,
+    OPENMODE_mask       = 0xff
+} IOSB_openmode;
+
+typedef enum {
+    SEEKDIR_beg  = 0x1,
+    SEEKDIR_cur  = 0x2,
+    SEEKDIR_end  = 0x3,
+    SEEKDIR_mask = 0x3
+} IOSB_seekdir;
+
+typedef enum {
+    IOSTATE_goodbit   = 0x00,
+    IOSTATE_eofbit    = 0x01,
+    IOSTATE_failbit   = 0x02,
+    IOSTATE_badbit    = 0x04,
+    IOSTATE__Hardfail = 0x10,
+    IOSTATE_mask      = 0x17
+} IOSB_iostate;
+
+typedef struct _iosarray {
+    struct _iosarray *next;
+    int index;
+    int long_val;
+    void *ptr_val;
+} IOS_BASE_iosarray;
+
+typedef enum {
+    EVENT_erase_event,
+    EVENT_imbue_event,
+    EVENT_copyfmt_event
+} IOS_BASE_event;
+
+struct _ios_base;
+typedef void (CDECL *IOS_BASE_event_callback)(IOS_BASE_event, struct _ios_base*, int);
+typedef struct _fnarray {
+    struct _fnarray *next;
+    int index;
+    IOS_BASE_event_callback event_handler;
+} IOS_BASE_fnarray;
+
+/* class ios_base */
+typedef struct _ios_base {
+    const vtable_ptr *vtable;
+    MSVCP_size_t stdstr;
+    IOSB_iostate state;
+    IOSB_iostate except;
+    IOSB_fmtflags fmtfl;
+    streamsize prec;
+    streamsize wide;
+    IOS_BASE_iosarray *arr;
+    IOS_BASE_fnarray *calls;
+    locale *loc;
+} ios_base;
+
 void init_io(void);
 void free_io(void);
