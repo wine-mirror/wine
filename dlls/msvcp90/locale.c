@@ -5477,8 +5477,30 @@ ostreambuf_iterator_char* __cdecl num_put_char__Fput(const num_put *this, ostrea
 /* ?_Ifmt@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@AEBAPEADPEADPEBDH@Z */
 char* __cdecl num_put_char__Ifmt(const num_put *this, char *fmt, const char *spec, int fmtfl)
 {
-    FIXME("(%p %p %p %d) stub\n", this, fmt, spec, fmtfl);
-    return NULL;
+    int base = fmtfl & FMTFLAG_basefield;
+    char *p = fmt;
+
+    TRACE("(%p %p %p %d)\n", this, fmt, spec, fmtfl);
+
+    *p++ = '%';
+    if(fmtfl & FMTFLAG_showpos)
+        *p++ = '+';
+    if(fmtfl & FMTFLAG_showbase)
+        *p++ = '#';
+
+    *p++ = *spec++;
+    if(*spec == 'l')
+        *p++ = *spec++;
+
+    if(base == FMTFLAG_oct)
+        *p++ = 'o';
+    else if(base == FMTFLAG_hex)
+        *p++ = (fmtfl & FMTFLAG_uppercase) ? 'X' : 'x';
+    else
+        *p++ = *spec;
+
+    *p++ = '\0';
+    return fmt;
 }
 
 /* ?_Iput@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@DPADI@Z */
@@ -5486,8 +5508,55 @@ char* __cdecl num_put_char__Ifmt(const num_put *this, char *fmt, const char *spe
 ostreambuf_iterator_char* __cdecl num_put_char__Iput(const num_put *this, ostreambuf_iterator_char *ret,
         ostreambuf_iterator_char dest, ios_base *base, char fill, char *buf, MSVCP_size_t count)
 {
-    FIXME("(%p %p %p %d %p %ld) stub\n", this, ret, base, fill, buf, count);
-    return NULL;
+    numpunct_char *numpunct = numpunct_char_use_facet(base->loc);
+    basic_string_char grouping_bstr;
+    const char *grouping;
+    char *p, sep;
+    int cur_group = 0, group_size = 0;
+    int adjustfield = base->fmtfl & FMTFLAG_adjustfield;
+    MSVCP_size_t pad;
+
+    TRACE("(%p %p %p %d %s %ld)\n", this, ret, base, fill, buf, count);
+
+    /* Add separators to number */
+    numpunct_char_grouping(numpunct, &grouping_bstr);
+    grouping = MSVCP_basic_string_char_c_str(&grouping_bstr);
+    sep = grouping[0] ? numpunct_char_thousands_sep(numpunct) : '\0';
+
+    for(p=buf+count-1; p>buf && sep && grouping[cur_group]!=CHAR_MAX; p--) {
+        group_size++;
+        if(group_size == grouping[cur_group]) {
+            group_size = 0;
+            if(grouping[cur_group+1])
+                cur_group++;
+
+            memmove(p+1, p, buf+count-p);
+            *p = sep;
+            count++;
+        }
+    }
+    MSVCP_basic_string_char_dtor(&grouping_bstr);
+
+    /* Display number with padding */
+    if(count >= base->wide)
+        pad = 0;
+    else
+        pad = base->wide-count;
+    base->wide = 0;
+
+    if((adjustfield & FMTFLAG_internal) && (buf[0]=='-' || buf[0]=='+')) {
+        num_put_char__Putc(this, &dest, dest, buf, 1);
+        buf++;
+    }else if((adjustfield & FMTFLAG_internal) && (buf[1]=='x' || buf[1]=='X')) {
+        num_put_char__Putc(this, &dest, dest, buf, 2);
+        buf += 2;
+    }
+    if(adjustfield != FMTFLAG_left) {
+        num_put_char__Rep(this, ret, dest, fill, pad);
+        pad = 0;
+    }
+    num_put_char__Putc(this, &dest, dest, buf, count);
+    return num_put_char__Rep(this, ret, dest, fill, pad);
 }
 
 /* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@DJ@Z */
@@ -5499,8 +5568,13 @@ DEFINE_THISCALL_WRAPPER(num_put_char_do_put_long, 28)
 ostreambuf_iterator_char* __thiscall num_put_char_do_put_long(const num_put *this, ostreambuf_iterator_char *ret,
         ostreambuf_iterator_char dest, ios_base *base, char fill, LONG v)
 {
-    FIXME("(%p %p %p %d %d) stub\n", this, ret, base, fill, v);
-    return NULL;
+    char tmp[48]; /* 22(8^22>2^64)*2(separators beetwen every digit) + 3(strlen("+0x"))+1 */
+    char fmt[7]; /* strlen("%+#lld")+1 */
+
+    TRACE("(%p %p %p %d %d)\n", this, ret, base, fill, v);
+
+    return num_put_char__Iput(this, ret, dest, base, fill, tmp,
+            sprintf(tmp, num_put_char__Ifmt(this, fmt, "ld", base->fmtfl), v));
 }
 
 /* ?put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@DJ@Z */
@@ -5522,8 +5596,13 @@ DEFINE_THISCALL_WRAPPER(num_put_char_do_put_ulong, 28)
 ostreambuf_iterator_char* __thiscall num_put_char_do_put_ulong(const num_put *this, ostreambuf_iterator_char *ret,
         ostreambuf_iterator_char dest, ios_base *base, char fill, ULONG v)
 {
-    FIXME("(%p %p %p %d %d) stub\n", this, ret, base, fill, v);
-    return NULL;
+    char tmp[48]; /* 22(8^22>2^64)*2(separators beetwen every digit) + 3(strlen("+0x"))+1 */
+    char fmt[7]; /* strlen("%+#lld")+1 */
+
+    TRACE("(%p %p %p %d %d)\n", this, ret, base, fill, v);
+
+    return num_put_char__Iput(this, ret, dest, base, fill, tmp,
+            sprintf(tmp, num_put_char__Ifmt(this, fmt, "lu", base->fmtfl), v));
 }
 
 /* ?put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@DK@Z */
@@ -5583,8 +5662,11 @@ DEFINE_THISCALL_WRAPPER(num_put_char_do_put_ptr, 28)
 ostreambuf_iterator_char* __thiscall num_put_char_do_put_ptr(const num_put *this, ostreambuf_iterator_char *ret,
         ostreambuf_iterator_char dest, ios_base *base, char fill, const void *v)
 {
-    FIXME("(%p %p %p %d %p) stub\n", this, ret, base, fill, v);
-    return NULL;
+    char tmp[17]; /* 8(16^8==2^64)*2(separators beetwen every digit) + 1 */
+
+    TRACE("(%p %p %p %d %p)\n", this, ret, base, fill, v);
+
+    return num_put_char__Iput(this, ret, dest, base, fill, tmp, sprintf(tmp, "%p", v));
 }
 
 /* ?put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@DPBX@Z */
@@ -5606,8 +5688,13 @@ DEFINE_THISCALL_WRAPPER(num_put_char_do_put_int64, 32)
 ostreambuf_iterator_char* __thiscall num_put_char_do_put_int64(const num_put *this, ostreambuf_iterator_char *ret,
         ostreambuf_iterator_char dest, ios_base *base, char fill, __int64 v)
 {
-    FIXME("(%p %p %p %d) stub\n", this, ret, base, fill);
-    return NULL;
+    char tmp[48]; /* 22(8^22>2^64)*2(separators beetwen every digit) + 3(strlen("+0x"))+1 */
+    char fmt[7]; /* strlen("%+#lld")+1 */
+
+    TRACE("(%p %p %p %d)\n", this, ret, base, fill);
+
+    return num_put_char__Iput(this, ret, dest, base, fill, tmp,
+            sprintf(tmp, num_put_char__Ifmt(this, fmt, "lld", base->fmtfl), v));
 }
 
 /* ?put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@D_J@Z */
@@ -5629,8 +5716,13 @@ DEFINE_THISCALL_WRAPPER(num_put_char_do_put_uint64, 32)
 ostreambuf_iterator_char* __thiscall num_put_char_do_put_uint64(const num_put *this, ostreambuf_iterator_char *ret,
         ostreambuf_iterator_char dest, ios_base *base, char fill, unsigned __int64 v)
 {
-    FIXME("(%p %p %p %d) stub\n", this, ret, base, fill);
-    return NULL;
+    char tmp[48]; /* 22(8^22>2^64)*2(separators beetwen every digit) + 3(strlen("+0x"))+1 */
+    char fmt[7]; /* strlen("%+#lld")+1 */
+
+    TRACE("(%p %p %p %d)\n", this, ret, base, fill);
+
+    return num_put_char__Iput(this, ret, dest, base, fill, tmp,
+            sprintf(tmp, num_put_char__Ifmt(this, fmt, "llu", base->fmtfl), v));
 }
 
 /* ?put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@D_K@Z */
