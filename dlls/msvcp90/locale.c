@@ -5458,8 +5458,32 @@ ostreambuf_iterator_char* __cdecl num_put_char__Rep(const num_put *this, ostream
 /* ?_Ffmt@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@AEBAPEADPEADDH@Z */
 char* __cdecl num_put_char__Ffmt(const num_put *this, char *fmt, char spec, int fmtfl)
 {
-    FIXME("(%p %p %d %d) stub\n", this, fmt, spec, fmtfl);
-    return NULL;
+    int type = fmtfl & FMTFLAG_floatfield;
+    char *p = fmt;
+
+    TRACE("(%p %p %d %d)\n", this, fmt, spec, fmtfl);
+
+    *p++ = '%';
+    if(fmtfl & FMTFLAG_showpos)
+        *p++ = '+';
+    if(fmtfl & FMTFLAG_showbase)
+        *p++ = '#';
+    *p++ = '.';
+    *p++ = '*';
+    if(spec)
+        *p++ = spec;
+
+    if(type == FMTFLAG_fixed)
+        *p++ = 'f';
+    else if(type == FMTFLAG_scientific)
+        *p++ = (fmtfl & FMTFLAG_uppercase) ? 'E' : 'e';
+    else if(type == (FMTFLAG_fixed|FMTFLAG_scientific))
+        *p++ = (fmtfl & FMTFLAG_uppercase) ? 'A' : 'a';
+    else
+        *p++ = (fmtfl & FMTFLAG_uppercase) ? 'G' : 'g';
+
+    *p++ = '\0';
+    return fmt;
 }
 
 /* ?_Fput@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@DPBDIIII@Z */
@@ -5471,6 +5495,67 @@ ostreambuf_iterator_char* __cdecl num_put_char__Fput(const num_put *this, ostrea
     FIXME("(%p %p %p %d %p %ld %ld %ld %ld) stub\n", this, ret, base,
             fill, buf, bef_point, aft_point, trailing, count);
     return NULL;
+}
+
+/* TODO: This function should be removed when num_put_char__Fput is implemented */
+static ostreambuf_iterator_char* num_put_char_fput(const num_put *this, ostreambuf_iterator_char *ret,
+        ostreambuf_iterator_char dest, ios_base *base, char fill, char *buf, MSVCP_size_t count)
+{
+    numpunct_char *numpunct = numpunct_char_use_facet(base->loc);
+    basic_string_char grouping_bstr;
+    const char *grouping;
+    char *p, sep = *localeconv()->decimal_point;
+    int cur_group = 0, group_size = 0;
+    int adjustfield = base->fmtfl & FMTFLAG_adjustfield;
+    MSVCP_size_t pad;
+
+    TRACE("(%p %p %p %d %s %ld)\n", this, ret, base, fill, buf, count);
+
+    /* Change decimal point */
+    for(p=buf; p<buf+count; p++) {
+        if(*p == sep) {
+            *p = numpunct_char_decimal_point(numpunct);
+            break;
+        }
+    }
+    p--;
+
+    /* Add separators to number */
+    numpunct_char_grouping(numpunct, &grouping_bstr);
+    grouping = MSVCP_basic_string_char_c_str(&grouping_bstr);
+    sep = grouping[0] ? numpunct_char_thousands_sep(numpunct) : '\0';
+
+    for(; p>buf && sep && grouping[cur_group]!=CHAR_MAX; p--) {
+        group_size++;
+        if(group_size == grouping[cur_group]) {
+            group_size = 0;
+            if(grouping[cur_group+1])
+                cur_group++;
+
+            memmove(p+1, p, buf+count-p);
+            *p = sep;
+            count++;
+        }
+    }
+    MSVCP_basic_string_char_dtor(&grouping_bstr);
+
+    /* Display number with padding */
+    if(count >= base->wide)
+        pad = 0;
+    else
+        pad = base->wide-count;
+    base->wide = 0;
+
+    if((adjustfield & FMTFLAG_internal) && (buf[0]=='-' || buf[0]=='+')) {
+        num_put_char__Putc(this, &dest, dest, buf, 1);
+        buf++;
+    }
+    if(adjustfield != FMTFLAG_left) {
+        num_put_char__Rep(this, ret, dest, fill, pad);
+        pad = 0;
+    }
+    num_put_char__Putc(this, &dest, dest, buf, count);
+    return num_put_char__Rep(this, ret, dest, fill, pad);
 }
 
 /* ?_Ifmt@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABAPADPADPBDH@Z */
@@ -5629,8 +5714,24 @@ DEFINE_THISCALL_WRAPPER(num_put_char_do_put_double, 32)
 ostreambuf_iterator_char* __thiscall num_put_char_do_put_double(const num_put *this, ostreambuf_iterator_char *ret,
         ostreambuf_iterator_char dest, ios_base *base, char fill, double v)
 {
-    FIXME("(%p %p %p %d %lf) stub\n", this, ret, base, fill, v);
-    return NULL;
+    char *tmp;
+    char fmt[8]; /* strlen("%+#.*lg")+1 */
+    int size;
+
+    TRACE("(%p %p %p %d %lf)\n", this, ret, base, fill, v);
+
+    num_put_char__Ffmt(this, fmt, '\0', base->fmtfl);
+    size = _scprintf(fmt, base->prec, v);
+
+    /* TODO: don't use dynamic allocation */
+    tmp = MSVCRT_operator_new(size*2);
+    if(!tmp) {
+        ERR("Out of memory\n");
+        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+    }
+    num_put_char_fput(this, ret, dest, base, fill, tmp, sprintf(tmp, fmt, base->prec, v));
+    MSVCRT_operator_delete(tmp);
+    return ret;
 }
 
 /* ?put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@DN@Z */

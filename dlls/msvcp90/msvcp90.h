@@ -417,7 +417,7 @@ typedef enum {
     FMTFLAG_stdio       = 0x8000,
     FMTFLAG_adjustfield = FMTFLAG_left|FMTFLAG_right|FMTFLAG_internal,
     FMTFLAG_basefield   = FMTFLAG_dec|FMTFLAG_oct|FMTFLAG_hex,
-    FMTFLAG_floadfield  = FMTFLAG_scientific|FMTFLAG_fixed,
+    FMTFLAG_floatfield  = FMTFLAG_scientific|FMTFLAG_fixed,
     FMTFLAG_mask        = 0xffff
 } IOSB_fmtflags;
 

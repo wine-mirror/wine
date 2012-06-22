@@ -167,6 +167,7 @@ void   __cdecl setbuf(FILE*,char*);
 int    __cdecl setvbuf(FILE*,char*,int,size_t);
 int    __cdecl sprintf(char*,const char*,...);
 int    __cdecl sprintf_s(char*,size_t,const char*,...);
+int    __cdecl _scprintf(const char *, ...);
 int    __cdecl sscanf(const char*,const char*,...);
 int    __cdecl sscanf_s(const char*,const char*,...);
 FILE*  __cdecl tmpfile(void);
