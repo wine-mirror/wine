@@ -1119,6 +1119,33 @@ static void test_gif_notrailer(void)
     IWICImagingFactory_Release(factory);
 }
 
+static void test_create_decoder(void)
+{
+    IWICBitmapDecoder *decoder;
+    IWICImagingFactory *factory;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IWICImagingFactory, (void **)&factory);
+    ok(hr == S_OK, "CoCreateInstance error %#x\n", hr);
+
+    hr = IWICImagingFactory_CreateDecoder(factory, NULL, NULL, NULL);
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
+
+    hr = IWICImagingFactory_CreateDecoder(factory, NULL, NULL, &decoder);
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
+
+    hr = IWICImagingFactory_CreateDecoder(factory, &GUID_ContainerFormatBmp, NULL, &decoder);
+    ok(hr == S_OK, "CreateDecoder error %#x\n", hr);
+    IWICBitmapDecoder_Release(decoder);
+
+    hr = IWICImagingFactory_CreateDecoder(factory, &GUID_ContainerFormatBmp, &GUID_VendorMicrosoft, &decoder);
+    ok(hr == S_OK, "CreateDecoder error %#x\n", hr);
+    IWICBitmapDecoder_Release(decoder);
+
+    IWICImagingFactory_Release(factory);
+}
+
 START_TEST(bmpformat)
 {
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
@@ -1131,6 +1158,7 @@ START_TEST(bmpformat)
     test_componentinfo();
     test_createfromstream();
     test_gif_notrailer();
+    test_create_decoder();
 
     CoUninitialize();
 }
