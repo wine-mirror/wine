@@ -39,7 +39,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_constants);
-WINE_DECLARE_DEBUG_CHANNEL(d3d_caps);
 WINE_DECLARE_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
@@ -4991,10 +4990,8 @@ static void shader_glsl_get_caps(const struct wined3d_gl_info *gl_info, struct s
 
     caps->VSClipping = TRUE;
 
-    TRACE_(d3d_caps)("Hardware vertex shader version %u enabled (GLSL).\n",
-            caps->VertexShaderVersion);
-    TRACE_(d3d_caps)("Hardware pixel shader version %u enabled (GLSL).\n",
-            caps->PixelShaderVersion);
+    TRACE("Hardware vertex shader version %u enabled (GLSL).\n", caps->VertexShaderVersion);
+    TRACE("Hardware pixel shader version %u enabled (GLSL).\n", caps->PixelShaderVersion);
 }
 
 static BOOL shader_glsl_color_fixup_supported(struct color_fixup_desc fixup)

@@ -37,7 +37,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_constants);
-WINE_DECLARE_DEBUG_CHANNEL(d3d_caps);
 WINE_DECLARE_DEBUG_CHANNEL(d3d);
 
 /* Extract a line. Note that this modifies the source string. */
@@ -4951,18 +4950,18 @@ static void shader_arb_get_caps(const struct wined3d_gl_info *gl_info, struct sh
         if (gl_info->supported[NV_VERTEX_PROGRAM3])
         {
             caps->VertexShaderVersion = 3;
-            TRACE_(d3d_caps)("Hardware vertex shader version 3.0 enabled (NV_VERTEX_PROGRAM3)\n");
+            TRACE("Hardware vertex shader version 3.0 enabled (NV_VERTEX_PROGRAM3)\n");
         }
         else if (vs_consts >= 256)
         {
             /* Shader Model 2.0 requires at least 256 vertex shader constants */
             caps->VertexShaderVersion = 2;
-            TRACE_(d3d_caps)("Hardware vertex shader version 2.0 enabled (ARB_PROGRAM)\n");
+            TRACE("Hardware vertex shader version 2.0 enabled (ARB_PROGRAM)\n");
         }
         else
         {
             caps->VertexShaderVersion = 1;
-            TRACE_(d3d_caps)("Hardware vertex shader version 1.1 enabled (ARB_PROGRAM)\n");
+            TRACE("Hardware vertex shader version 1.1 enabled (ARB_PROGRAM)\n");
         }
         caps->MaxVertexShaderConst = vs_consts;
     }
@@ -4986,18 +4985,18 @@ static void shader_arb_get_caps(const struct wined3d_gl_info *gl_info, struct sh
         if (gl_info->supported[NV_FRAGMENT_PROGRAM2])
         {
             caps->PixelShaderVersion = 3;
-            TRACE_(d3d_caps)("Hardware pixel shader version 3.0 enabled (NV_FRAGMENT_PROGRAM2)\n");
+            TRACE("Hardware pixel shader version 3.0 enabled (NV_FRAGMENT_PROGRAM2)\n");
         }
         else if (ps_consts >= 32)
         {
             /* Shader Model 2.0 requires at least 32 pixel shader constants */
             caps->PixelShaderVersion = 2;
-            TRACE_(d3d_caps)("Hardware pixel shader version 2.0 enabled (ARB_PROGRAM)\n");
+            TRACE("Hardware pixel shader version 2.0 enabled (ARB_PROGRAM)\n");
         }
         else
         {
             caps->PixelShaderVersion = 1;
-            TRACE_(d3d_caps)("Hardware pixel shader version 1.4 enabled (ARB_PROGRAM)\n");
+            TRACE("Hardware pixel shader version 1.4 enabled (ARB_PROGRAM)\n");
         }
         caps->PixelShader1xMaxValue = 8.0f;
         caps->MaxPixelShaderConst = ps_consts;
