@@ -509,6 +509,11 @@ typedef struct {
     char            val;
 } istreambuf_iterator_char;
 
+typedef struct {
+    MSVCP_bool failed;
+    basic_streambuf_char *strbuf;
+} ostreambuf_iterator_char;
+
 int __thiscall basic_streambuf_char_sgetc(basic_streambuf_char*);
 int __thiscall basic_streambuf_char_sbumpc(basic_streambuf_char*);
 
@@ -560,6 +565,12 @@ istreambuf_iterator_char *__thiscall num_get_char_get_uint64(const num_get*, ist
         istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, ULONGLONG*);
 istreambuf_iterator_char *__thiscall num_get_char_get_bool(const num_get*, istreambuf_iterator_char*,
         istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, MSVCP_bool*);
+
+/* class num_put<char> */
+typedef struct {
+    locale_facet facet;
+    _Cvtvec cvt;
+} num_put;
 
 void init_io(void);
 void free_io(void);

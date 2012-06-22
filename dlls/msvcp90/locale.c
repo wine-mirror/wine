@@ -5292,6 +5292,307 @@ istreambuf_iterator_char *__thiscall num_get_char_get_bool(const num_get *this, 
     return call_num_get_char_do_get_bool(this, ret, first, last, base, state, pval);
 }
 
+/* ?id@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@2V0locale@2@A */
+locale_id num_put_char_id = {0};
+
+/* num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@6B@ */
+extern const vtable_ptr MSVCP_num_put_char_vtable;
+
+/* ?_Init@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@IAEXABV_Locinfo@2@@Z */
+/* ?_Init@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@IEAAXAEBV_Locinfo@2@@Z */
+DEFINE_THISCALL_WRAPPER(num_put_char__Init, 8)
+void __thiscall num_put_char__Init(num_put *this, const _Locinfo *locinfo)
+{
+    FIXME("(%p %p) stub\n", this, locinfo);
+}
+
+/* ??0?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QAE@ABV_Locinfo@1@I@Z */
+/* ??0?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEAA@AEBV_Locinfo@1@_K@Z */
+DEFINE_THISCALL_WRAPPER(num_put_char_ctor_locinfo, 12)
+num_put* __thiscall num_put_char_ctor_locinfo(num_put *this, const _Locinfo *locinfo, MSVCP_size_t refs)
+{
+    FIXME("(%p %p %ld) stub\n", this, locinfo, refs);
+    return NULL;
+}
+
+/* ??0?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QAE@I@Z */
+/* ??0?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEAA@_K@Z */
+DEFINE_THISCALL_WRAPPER(num_put_char_ctor_refs, 8)
+num_put* __thiscall num_put_char_ctor_refs(num_put *this, MSVCP_size_t refs)
+{
+    FIXME("(%p %ld) stub\n", this, refs);
+    return NULL;
+}
+
+/* ??_F?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QAEXXZ */
+/* ??_F?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(num_put_char_ctor, 4)
+num_put* __thiscall num_put_char_ctor(num_put *this)
+{
+    FIXME("(%p) stub\n", this);
+    return NULL;
+}
+
+/* ??1?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MAE@XZ */
+/* ??1?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEAA@XZ */
+DEFINE_THISCALL_WRAPPER(num_put_char_dtor, 4)
+void __thiscall num_put_char_dtor(num_put *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCP_num_put_char_vector_dtor, 8)
+num_put* __thiscall MSVCP_num_put_char_vector_dtor(num_put *this, unsigned int flags)
+{
+    TRACE("(%p %x)\n", this, flags);
+    if(flags & 2) {
+        /* we have an array, with the number of elements stored before the first object */
+        int i, *ptr = (int *)this-1;
+
+        for(i=*ptr-1; i>=0; i--)
+            num_put_char_dtor(this+i);
+        MSVCRT_operator_delete(ptr);
+    } else {
+        num_put_char_dtor(this);
+        if(flags & 1)
+            MSVCRT_operator_delete(this);
+    }
+
+    return this;
+}
+
+/* ?_Getcat@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
+/* ?_Getcat@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
+unsigned int __cdecl num_put_char__Getcat(const locale_facet **facet, const locale *loc)
+{
+    FIXME("(%p %p) stub\n", facet, loc);
+    return 0;
+}
+
+/* ?_Put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@PBDI@Z */
+/* ?_Put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@AEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@PEBD_K@Z */
+ostreambuf_iterator_char* __cdecl num_put_char__Put(const num_put *this, ostreambuf_iterator_char *ret,
+        ostreambuf_iterator_char dest, const char *ptr, MSVCP_size_t count)
+{
+    FIXME("(%p %p %p %ld) stub\n", this, ret, ptr, count);
+    return NULL;
+}
+
+/* ?_Putc@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@PBDI@Z */
+/* ?_Putc@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@AEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@PEBD_K@Z */
+ostreambuf_iterator_char* __cdecl num_put_char__Putc(const num_put *this, ostreambuf_iterator_char *ret,
+        ostreambuf_iterator_char dest, const char *ptr, MSVCP_size_t count)
+{
+    FIXME("(%p %p %p %ld) stub\n", this, ret, ptr, count);
+    return NULL;
+}
+
+/* ?_Putgrouped@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@PBDID@Z */
+/* ?_Putgrouped@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@AEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@PEBD_KD@Z */
+ostreambuf_iterator_char* __cdecl num_put_char__Putgrouped(const num_put *this, ostreambuf_iterator_char *ret,
+        ostreambuf_iterator_char dest, const char *ptr, MSVCP_size_t count, char delim)
+{
+    FIXME("(%p %p %p %ld %d) stub\n", this, ret, ptr, count, delim);
+    return NULL;
+}
+
+/* ?_Rep@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@DI@Z */
+/* ?_Rep@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@AEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@D_K@Z */
+ostreambuf_iterator_char* __cdecl num_put_char__Rep(const num_put *this, ostreambuf_iterator_char *ret,
+        ostreambuf_iterator_char dest, char c, MSVCP_size_t count)
+{
+    FIXME("(%p %p %d %ld) stub\n", this, ret, c, count);
+    return NULL;
+}
+
+/* ?_Ffmt@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABAPADPADDH@Z */
+/* ?_Ffmt@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@AEBAPEADPEADDH@Z */
+char* __cdecl num_put_char__Ffmt(const num_put *this, char *fmt, char spec, int fmtfl)
+{
+    FIXME("(%p %p %d %d) stub\n", this, fmt, spec, fmtfl);
+    return NULL;
+}
+
+/* ?_Fput@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@DPBDIIII@Z */
+/* ?_Fput@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@AEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@DPEBD_K333@Z */
+ostreambuf_iterator_char* __cdecl num_put_char__Fput(const num_put *this, ostreambuf_iterator_char *ret,
+        ostreambuf_iterator_char dest, ios_base *base, char fill, const char *buf, MSVCP_size_t bef_point,
+        MSVCP_size_t aft_point, MSVCP_size_t trailing, MSVCP_size_t count)
+{
+    FIXME("(%p %p %p %d %p %ld %ld %ld %ld) stub\n", this, ret, base,
+            fill, buf, bef_point, aft_point, trailing, count);
+    return NULL;
+}
+
+/* ?_Ifmt@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABAPADPADPBDH@Z */
+/* ?_Ifmt@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@AEBAPEADPEADPEBDH@Z */
+char* __cdecl num_put_char__Ifmt(const num_put *this, char *fmt, const char *spec, int fmtfl)
+{
+    FIXME("(%p %p %p %d) stub\n", this, fmt, spec, fmtfl);
+    return NULL;
+}
+
+/* ?_Iput@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@DPADI@Z */
+/* ?_Iput@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@AEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@DPEAD_K@Z */
+ostreambuf_iterator_char* __cdecl num_put_char__Iput(const num_put *this, ostreambuf_iterator_char *ret,
+        ostreambuf_iterator_char dest, ios_base *base, char fill, char *buf, MSVCP_size_t count)
+{
+    FIXME("(%p %p %p %d %p %ld) stub\n", this, ret, base, fill, buf, count);
+    return NULL;
+}
+
+/* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@DJ@Z */
+/* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@DJ@Z */
+DEFINE_THISCALL_WRAPPER(num_put_char_do_put_long, 28)
+ostreambuf_iterator_char* __thiscall num_put_char_do_put_long(const num_put *this, ostreambuf_iterator_char *ret,
+        ostreambuf_iterator_char dest, ios_base *base, char fill, LONG v)
+{
+    FIXME("(%p %p %p %d %d) stub\n", this, ret, base, fill, v);
+    return NULL;
+}
+
+/* ?put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@DJ@Z */
+/* ?put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@DJ@Z */
+DEFINE_THISCALL_WRAPPER(num_put_char_put_long, 28)
+ostreambuf_iterator_char* __thiscall num_put_char_put_long(const num_put *this, ostreambuf_iterator_char *ret,
+        ostreambuf_iterator_char dest, ios_base *base, char fill, LONG v)
+{
+    FIXME("(%p %p %p %d %d) stub\n", this, ret, base, fill, v);
+    return NULL;
+}
+
+/* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@DK@Z */
+/* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@DK@Z */
+DEFINE_THISCALL_WRAPPER(num_put_char_do_put_ulong, 28)
+ostreambuf_iterator_char* __thiscall num_put_char_do_put_ulong(const num_put *this, ostreambuf_iterator_char *ret,
+        ostreambuf_iterator_char dest, ios_base *base, char fill, ULONG v)
+{
+    FIXME("(%p %p %p %d %d) stub\n", this, ret, base, fill, v);
+    return NULL;
+}
+
+/* ?put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@DK@Z */
+/* ?put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@DK@Z */
+DEFINE_THISCALL_WRAPPER(num_put_char_put_ulong, 28)
+ostreambuf_iterator_char* __thiscall num_put_char_put_ulong(const num_put *this, ostreambuf_iterator_char *ret,
+        ostreambuf_iterator_char dest, ios_base *base, char fill, ULONG v)
+{
+    FIXME("(%p %p %p %d %d) stub\n", this, ret, base, fill, v);
+    return NULL;
+}
+
+/* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@DN@Z */
+/* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@DN@Z */
+/* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@DO@Z */
+/* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@DO@Z */
+DEFINE_THISCALL_WRAPPER(num_put_char_do_put_double, 32)
+ostreambuf_iterator_char* __thiscall num_put_char_do_put_double(const num_put *this, ostreambuf_iterator_char *ret,
+        ostreambuf_iterator_char dest, ios_base *base, char fill, double v)
+{
+    FIXME("(%p %p %p %d %lf) stub\n", this, ret, base, fill, v);
+    return NULL;
+}
+
+/* ?put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@DN@Z */
+/* ?put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@DN@Z */
+DEFINE_THISCALL_WRAPPER(num_put_char_put_double, 32)
+ostreambuf_iterator_char* __thiscall num_put_char_put_double(const num_put *this, ostreambuf_iterator_char *ret,
+        ostreambuf_iterator_char dest, ios_base *base, char fill, double v)
+{
+    FIXME("(%p %p %p %d %lf) stub\n", this, ret, base, fill, v);
+    return NULL;
+}
+
+/* ?put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@DO@Z */
+/* ?put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@DO@Z */
+DEFINE_THISCALL_WRAPPER(num_put_char_put_ldouble, 32)
+ostreambuf_iterator_char* __thiscall num_put_char_put_ldouble(const num_put *this, ostreambuf_iterator_char *ret,
+        ostreambuf_iterator_char dest, ios_base *base, char fill, double v)
+{
+    FIXME("(%p %p %p %d %lf) stub\n", this, ret, base, fill, v);
+    return NULL;
+}
+
+/* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@DPBX@Z */
+/* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@DPEBX@Z */
+DEFINE_THISCALL_WRAPPER(num_put_char_do_put_ptr, 28)
+ostreambuf_iterator_char* __thiscall num_put_char_do_put_ptr(const num_put *this, ostreambuf_iterator_char *ret,
+        ostreambuf_iterator_char dest, ios_base *base, char fill, const void *v)
+{
+    FIXME("(%p %p %p %d %p) stub\n", this, ret, base, fill, v);
+    return NULL;
+}
+
+/* ?put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@DPBX@Z */
+/* ?put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@DPEBX@Z */
+DEFINE_THISCALL_WRAPPER(num_put_char_put_ptr, 28)
+ostreambuf_iterator_char* __thiscall num_put_char_put_ptr(const num_put *this, ostreambuf_iterator_char *ret,
+        ostreambuf_iterator_char dest, ios_base *base, char fill, const void *v)
+{
+    FIXME("(%p %p %p %d %p) stub\n", this, ret, base, fill, v);
+    return NULL;
+}
+
+/* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@D_J@Z */
+/* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@D_J@Z */
+DEFINE_THISCALL_WRAPPER(num_put_char_do_put_int64, 32)
+ostreambuf_iterator_char* __thiscall num_put_char_do_put_int64(const num_put *this, ostreambuf_iterator_char *ret,
+        ostreambuf_iterator_char dest, ios_base *base, char fill, __int64 v)
+{
+    FIXME("(%p %p %p %d) stub\n", this, ret, base, fill);
+    return NULL;
+}
+
+/* ?put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@D_J@Z */
+/* ?put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@D_J@Z */
+DEFINE_THISCALL_WRAPPER(num_put_char_put_int64, 32)
+ostreambuf_iterator_char* __thiscall num_put_char_put_int64(const num_put *this, ostreambuf_iterator_char *ret,
+        ostreambuf_iterator_char dest, ios_base *base, char fill, __int64 v)
+{
+    FIXME("(%p %p %p %d) stub\n", this, ret, base, fill);
+    return NULL;
+}
+
+/* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@D_K@Z */
+/* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@D_K@Z */
+DEFINE_THISCALL_WRAPPER(num_put_char_do_put_uint64, 32)
+ostreambuf_iterator_char* __thiscall num_put_char_do_put_uint64(const num_put *this, ostreambuf_iterator_char *ret,
+        ostreambuf_iterator_char dest, ios_base *base, char fill, unsigned __int64 v)
+{
+    FIXME("(%p %p %p %d) stub\n", this, ret, base, fill);
+    return NULL;
+}
+
+/* ?put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@D_K@Z */
+/* ?put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@D_K@Z */
+DEFINE_THISCALL_WRAPPER(num_put_char_put_uint64, 32)
+ostreambuf_iterator_char* __thiscall num_put_char_put_uint64(const num_put *this, ostreambuf_iterator_char *ret,
+        ostreambuf_iterator_char dest, ios_base *base, char fill, unsigned __int64 v)
+{
+    FIXME("(%p %p %p %d) stub\n", this, ret, base, fill);
+    return NULL;
+}
+
+/* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@D_N@Z */
+/* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@D_N@Z */
+DEFINE_THISCALL_WRAPPER(num_put_char_do_put_bool, 28)
+ostreambuf_iterator_char* __thiscall num_put_char_do_put_bool(const num_put *this, ostreambuf_iterator_char *ret,
+        ostreambuf_iterator_char dest, ios_base *base, char fill, MSVCP_bool v)
+{
+    FIXME("(%p %p %p %d %d) stub\n", this, ret, base, fill, v);
+    return NULL;
+}
+
+/* ?put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@D_N@Z */
+/* ?put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@D_N@Z */
+DEFINE_THISCALL_WRAPPER(num_put_char_put_bool, 28)
+ostreambuf_iterator_char* __thiscall num_put_char_put_bool(const num_put *this, ostreambuf_iterator_char *ret,
+        ostreambuf_iterator_char dest, ios_base *base, char fill, MSVCP_bool v)
+{
+    FIXME("(%p %p %p %d %d) stub\n", this, ret, base, fill, v);
+    return NULL;
+}
+
 /* ??0_Locimp@locale@std@@AAE@_N@Z */
 /* ??0_Locimp@locale@std@@AEAA@_N@Z */
 DEFINE_THISCALL_WRAPPER(locale__Locimp_ctor_transparent, 8)
@@ -5772,6 +6073,7 @@ DEFINE_RTTI_DATA1(numpunct_short, 0, &locale_facet_rtti_base_descriptor, ".?AV?$
 DEFINE_RTTI_DATA1(num_get_char, 0, &locale_facet_rtti_base_descriptor, ".?AV?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@");
 DEFINE_RTTI_DATA1(num_get_wchar, 0, &locale_facet_rtti_base_descriptor, ".?AV?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@");
 DEFINE_RTTI_DATA1(num_get_short, 0, &locale_facet_rtti_base_descriptor, ".?AV?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@");
+DEFINE_RTTI_DATA1(num_put_char, 0, &locale_facet_rtti_base_descriptor, ".?AV?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@");
 
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
@@ -5913,6 +6215,15 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(num_get_wchar_do_get_uint)
             VTABLE_ADD_FUNC(num_get_wchar_do_get_ushort)
             VTABLE_ADD_FUNC(num_get_wchar_do_get_bool));
+    __ASM_VTABLE(num_put_char,
+            VTABLE_ADD_FUNC(num_put_char_do_put_ptr)
+            VTABLE_ADD_FUNC(num_put_char_do_put_double)
+            VTABLE_ADD_FUNC(num_put_char_do_put_double)
+            VTABLE_ADD_FUNC(num_put_char_do_put_uint64)
+            VTABLE_ADD_FUNC(num_put_char_do_put_int64)
+            VTABLE_ADD_FUNC(num_put_char_do_put_ulong)
+            VTABLE_ADD_FUNC(num_put_char_do_put_long)
+            VTABLE_ADD_FUNC(num_put_char_do_put_bool));
 #ifndef __GNUC__
 }
 #endif
