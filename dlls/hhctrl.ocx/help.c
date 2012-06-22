@@ -707,6 +707,24 @@ static LRESULT CALLBACK Child_WndProc(HWND hWnd, UINT message, WPARAM wParam, LP
             return OnTabChange(hWnd);
         case TVN_SELCHANGEDW:
             return OnTopicChange(info, (void*)((NMTREEVIEWW *)lParam)->itemNew.lParam);
+        case TVN_ITEMEXPANDINGW: {
+            TVITEMW *item = &((NMTREEVIEWW *)lParam)->itemNew;
+            HWND hwndTreeView = info->tabs[TAB_CONTENTS].hwnd;
+
+            item->mask = TVIF_IMAGE|TVIF_SELECTEDIMAGE;
+            if (item->state & TVIS_EXPANDED)
+            {
+                item->iImage = HHTV_FOLDER;
+                item->iSelectedImage = HHTV_FOLDER;
+            }
+            else
+            {
+                item->iImage = HHTV_OPENFOLDER;
+                item->iSelectedImage = HHTV_OPENFOLDER;
+            }
+            SendMessageW(hwndTreeView, TVM_SETITEMW, 0, (LPARAM)item);
+            return 0;
+        }
         case NM_DBLCLK:
             if(!info)
                 return 0;
@@ -1163,18 +1181,29 @@ static BOOL HH_AddHTMLPane(HHInfo *pHHInfo)
 
 static BOOL AddContentTab(HHInfo *info)
 {
+    HIMAGELIST hImageList;
+    HBITMAP hBitmap;
+    HWND hWnd;
+
     if(info->tabs[TAB_CONTENTS].id == -1)
         return TRUE; /* No "Contents" tab */
-    info->tabs[TAB_CONTENTS].hwnd = CreateWindowExW(WS_EX_CLIENTEDGE, WC_TREEVIEWW,
-           szEmpty, WS_CHILD | WS_BORDER | 0x25, 50, 50, 100, 100,
-           info->WinType.hwndNavigation, NULL, hhctrl_hinstance, NULL);
-    if(!info->tabs[TAB_CONTENTS].hwnd) {
+    hWnd = CreateWindowExW(WS_EX_CLIENTEDGE, WC_TREEVIEWW, szEmpty, WS_CHILD | WS_BORDER | TVS_LINESATROOT
+                           | TVS_SHOWSELALWAYS | TVS_HASBUTTONS, 50, 50, 100, 100,
+                           info->WinType.hwndNavigation, NULL, hhctrl_hinstance, NULL);
+    if(!hWnd) {
         ERR("Could not create treeview control\n");
         return FALSE;
     }
 
+    hImageList = ImageList_Create(16, 16, ILC_COLOR32, 0, HHTV_NUMBITMAPS);
+    hBitmap = LoadBitmapW(hhctrl_hinstance, MAKEINTRESOURCEW(IDB_HHTREEVIEW));
+    ImageList_Add(hImageList, hBitmap, NULL);
+    SendMessageW(hWnd, TVM_SETIMAGELIST, TVSIL_NORMAL, (LPARAM)hImageList);
+
+    info->contents.hImageList = hImageList;
+    info->tabs[TAB_CONTENTS].hwnd = hWnd;
     ResizeTabChild(info, TAB_CONTENTS);
-    ShowWindow(info->tabs[TAB_CONTENTS].hwnd, SW_SHOW);
+    ShowWindow(hWnd, SW_SHOW);
 
     return TRUE;
 }
@@ -1729,6 +1758,8 @@ void ReleaseHelpViewer(HHInfo *info)
     ReleaseIndex(info);
     ReleaseSearch(info);
 
+    if(info->contents.hImageList)
+        ImageList_Destroy(info->contents.hImageList);
     if(info->WinType.hwndHelp)
         DestroyWindow(info->WinType.hwndHelp);
 

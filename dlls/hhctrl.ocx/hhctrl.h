@@ -135,6 +135,10 @@ typedef struct {
 } SearchTab;
 
 typedef struct {
+    HIMAGELIST hImageList;
+} ContentsTab;
+
+typedef struct {
     IOleClientSite *client_site;
     IWebBrowser2 *web_browser;
     IOleObject *wb_object;
@@ -158,6 +162,7 @@ typedef struct {
     IndexItem *index;
     IndexPopup popup;
     SearchTab search;
+    ContentsTab contents;
     HWND hwndTabCtrl;
     HWND hwndSizeBar;
     HFONT hFont;

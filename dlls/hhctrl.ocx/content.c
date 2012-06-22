@@ -22,6 +22,7 @@
 
 #include "hhctrl.h"
 #include "stream.h"
+#include "resource.h"
 
 #include "wine/debug.h"
 
@@ -267,10 +268,12 @@ static void insert_content_item(HWND hwnd, ContentItem *parent, ContentItem *ite
     TVINSERTSTRUCTW tvis;
 
     memset(&tvis, 0, sizeof(tvis));
-    tvis.u.item.mask = TVIF_TEXT|TVIF_PARAM;
+    tvis.u.item.mask = TVIF_TEXT|TVIF_PARAM|TVIF_IMAGE|TVIF_SELECTEDIMAGE;
     tvis.u.item.cchTextMax = strlenW(item->name)+1;
     tvis.u.item.pszText = item->name;
     tvis.u.item.lParam = (LPARAM)item;
+    tvis.u.item.iImage = item->child ? HHTV_FOLDER : HHTV_DOCUMENT;
+    tvis.u.item.iSelectedImage = item->child ? HHTV_FOLDER : HHTV_DOCUMENT;
     tvis.hParent = parent ? parent->id : 0;
     tvis.hInsertAfter = TVI_LAST;
 
