@@ -568,7 +568,7 @@ struct Imports {
     } ibn;
     char dllname[0x10];
 };
-#define EXIT_PROCESS (VA_START+RVA_IDATA+FIELD_OFFSET(struct Imports, thunks[0]))
+#define EXIT_PROCESS (VA_START+RVA_IDATA+FIELD_OFFSET(struct Imports, thunks))
 
 static struct _PeImage {
     IMAGE_DOS_HEADER dos_header;
@@ -582,9 +582,9 @@ static struct _PeImage {
     char __alignment3[FILE_TOTAL-FILE_IDATA-sizeof(struct Imports)];
 } bin = {
     /* dos header */
-    {IMAGE_DOS_SIGNATURE, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {}, 0, 0, {}, FILE_PE_START},
+    {IMAGE_DOS_SIGNATURE, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, 0, 0, {0}, FILE_PE_START},
     /* alignment before PE header */
-    {},
+    {0},
     /* nt headers */
     {IMAGE_NT_SIGNATURE,
         /* basic headers - 3 sections, no symbols, EXE file */
@@ -611,7 +611,7 @@ static struct _PeImage {
             0, 0, 0, IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ | IMAGE_SCN_MEM_WRITE}
     },
     /* alignment before first section */
-    {},
+    {0},
     /* .text section */
     {
         0x31, 0xC0, /* xor eax, eax */
@@ -634,7 +634,7 @@ static struct _PeImage {
         "KERNEL32.DLL"
     },
     /* final alignment */
-    {}
+    {0}
 };
 #include <poppack.h>
 
