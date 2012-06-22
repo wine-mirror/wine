@@ -1788,6 +1788,104 @@ static struct regsvr_pixelformat const pixelformat_list[] = {
     { NULL }			/* list terminator */
 };
 
+struct regsvr_category
+{
+    const CLSID *clsid; /* NULL for end of list */
+};
+
+static const struct regsvr_category category_list[] = {
+    { &CATID_WICBitmapDecoders },
+    { &CATID_WICBitmapEncoders },
+    { &CATID_WICFormatConverters },
+    { &CATID_WICMetadataReader },
+    { &CATID_WICPixelFormats },
+    { NULL }
+};
+
+static HRESULT register_categories(const struct regsvr_category *list)
+{
+    LONG res;
+    WCHAR buf[39];
+    HKEY coclass_key, categories_key, instance_key;
+
+    res = RegCreateKeyExW(HKEY_CLASSES_ROOT, clsid_keyname, 0, NULL, 0,
+                          KEY_READ | KEY_WRITE, NULL, &coclass_key, NULL);
+    if (res != ERROR_SUCCESS) return HRESULT_FROM_WIN32(res);
+
+    StringFromGUID2(&CLSID_WICImagingCategories, buf, 39);
+    res = RegCreateKeyExW(coclass_key, buf, 0, NULL, 0,
+                          KEY_READ | KEY_WRITE, NULL, &categories_key, NULL);
+    if (res != ERROR_SUCCESS)
+    {
+        RegCloseKey(coclass_key);
+        return HRESULT_FROM_WIN32(res);
+    }
+
+    res = RegCreateKeyExW(categories_key, instance_keyname, 0, NULL, 0,
+                          KEY_READ | KEY_WRITE, NULL, &instance_key, NULL);
+
+    for (; res == ERROR_SUCCESS && list->clsid; list++)
+    {
+        HKEY instance_clsid_key;
+
+        StringFromGUID2(list->clsid, buf, 39);
+        res = RegCreateKeyExW(instance_key, buf, 0, NULL, 0,
+                              KEY_READ | KEY_WRITE, NULL, &instance_clsid_key, NULL);
+        if (res == ERROR_SUCCESS)
+        {
+            res = RegSetValueExW(instance_clsid_key, clsid_valuename, 0, REG_SZ,
+                                 (const BYTE *)buf, 78);
+            RegCloseKey(instance_clsid_key);
+        }
+    }
+
+    RegCloseKey(instance_key);
+    RegCloseKey(categories_key);
+    RegCloseKey(coclass_key);
+
+    return res != ERROR_SUCCESS ? HRESULT_FROM_WIN32(res) : S_OK;
+}
+
+static HRESULT unregister_categories(const struct regsvr_category *list)
+{
+    LONG res;
+    WCHAR buf[39];
+    HKEY coclass_key, categories_key, instance_key;
+
+    res = RegOpenKeyExW(HKEY_CLASSES_ROOT, clsid_keyname, 0,
+                        KEY_READ | KEY_WRITE, &coclass_key);
+    if (res != ERROR_SUCCESS) return HRESULT_FROM_WIN32(res);
+
+    StringFromGUID2(&CLSID_WICImagingCategories, buf, 39);
+    res = RegOpenKeyExW(coclass_key, buf, 0,
+                        KEY_READ | KEY_WRITE, &categories_key);
+    if (res != ERROR_SUCCESS)
+    {
+        if (res == ERROR_FILE_NOT_FOUND) res = ERROR_SUCCESS;
+        RegCloseKey(coclass_key);
+        return HRESULT_FROM_WIN32(res);
+    }
+
+    res = RegOpenKeyExW(categories_key, instance_keyname, 0,
+                          KEY_READ | KEY_WRITE, &instance_key);
+
+    for (; res == ERROR_SUCCESS && list->clsid; list++)
+    {
+        StringFromGUID2(list->clsid, buf, 39);
+        res = RegDeleteTreeW(instance_key, buf);
+    }
+
+    RegCloseKey(instance_key);
+    RegCloseKey(categories_key);
+
+    StringFromGUID2(&CLSID_WICImagingCategories, buf, 39);
+    res = RegDeleteTreeW(coclass_key, buf);
+
+    RegCloseKey(coclass_key);
+
+    return res != ERROR_SUCCESS ? HRESULT_FROM_WIN32(res) : S_OK;
+}
+
 extern HRESULT WINAPI WIC_DllRegisterServer(void) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI WIC_DllUnregisterServer(void) DECLSPEC_HIDDEN;
 
@@ -1798,6 +1896,8 @@ HRESULT WINAPI DllRegisterServer(void)
     TRACE("\n");
 
     hr = WIC_DllRegisterServer();
+    if (SUCCEEDED(hr))
+        hr = register_categories(category_list);
     if (SUCCEEDED(hr))
         hr = register_decoders(decoder_list);
     if (SUCCEEDED(hr))
@@ -1818,6 +1918,8 @@ HRESULT WINAPI DllUnregisterServer(void)
     TRACE("\n");
 
     hr = WIC_DllUnregisterServer();
+    if (SUCCEEDED(hr))
+        hr = unregister_categories(category_list);
     if (SUCCEEDED(hr))
         hr = unregister_decoders(decoder_list);
     if (SUCCEEDED(hr))
