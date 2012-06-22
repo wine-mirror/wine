@@ -3723,31 +3723,10 @@ HRESULT CDECL wined3d_device_get_display_mode(const struct wined3d_device *devic
 
     TRACE("device %p, swapchain_idx %u, mode %p.\n", device, swapchain_idx, mode);
 
-    if (swapchain_idx)
+    if (SUCCEEDED(hr = wined3d_device_get_swapchain(device, swapchain_idx, &swapchain)))
     {
-        hr = wined3d_device_get_swapchain(device, swapchain_idx, &swapchain);
-        if (SUCCEEDED(hr))
-        {
-            hr = wined3d_swapchain_get_display_mode(swapchain, mode);
-            wined3d_swapchain_decref(swapchain);
-        }
-    }
-    else
-    {
-        const struct wined3d_adapter *adapter = device->adapter;
-
-        /* Don't read the real display mode, but return the stored mode
-         * instead. X11 can't change the color depth, and some apps are
-         * pretty angry if they SetDisplayMode from 24 to 16 bpp and find out
-         * that GetDisplayMode still returns 24 bpp.
-         *
-         * Also don't relay to the swapchain because with ddraw it's possible
-         * that there isn't a swapchain at all. */
-        mode->width = adapter->screen_size.cx;
-        mode->height = adapter->screen_size.cy;
-        mode->format_id = adapter->screen_format;
-        mode->refresh_rate = 0;
-        hr = WINED3D_OK;
+        hr = wined3d_swapchain_get_display_mode(swapchain, mode);
+        wined3d_swapchain_decref(swapchain);
     }
 
     return hr;
