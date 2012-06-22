@@ -4800,7 +4800,9 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
 
     if (cursor_image)
     {
+        struct wined3d_display_mode mode;
         struct wined3d_map_desc map_desc;
+        HRESULT hr;
 
         /* MSDN: Cursor must be A8R8G8B8 */
         if (cursor_image->resource.format->id != WINED3DFMT_B8G8R8A8_UNORM)
@@ -4809,13 +4811,18 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
             return WINED3DERR_INVALIDCALL;
         }
 
+        if (FAILED(hr = wined3d_get_adapter_display_mode(device->wined3d, device->adapter->ordinal, &mode)))
+        {
+            ERR("Failed to get display mode, hr %#x.\n", hr);
+            return WINED3DERR_INVALIDCALL;
+        }
+
         /* MSDN: Cursor must be smaller than the display mode */
-        if (cursor_image->resource.width > device->adapter->screen_size.cx
-                || cursor_image->resource.height > device->adapter->screen_size.cy)
+        if (cursor_image->resource.width > mode.width || cursor_image->resource.height > mode.height)
         {
             WARN("Surface %p dimensions are %ux%u, but screen dimensions are %ux%u.\n",
                     cursor_image, cursor_image->resource.width, cursor_image->resource.height,
-                    device->adapter->screen_size.cx, device->adapter->screen_size.cy);
+                    mode.width, mode.height);
             return WINED3DERR_INVALIDCALL;
         }
 
@@ -5694,8 +5701,6 @@ HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
         wined3d_decref(device->wined3d);
         return hr;
     }
-    adapter->screen_size.cx = mode.width;
-    adapter->screen_size.cy = mode.height;
     adapter->screen_format = mode.format_id;
 
     /* Save the creation parameters. */

@@ -3136,8 +3136,6 @@ HRESULT CDECL wined3d_set_adapter_display_mode(struct wined3d *wined3d,
     }
 
     /* Store the new values. */
-    adapter->screen_size.cx = mode->width;
-    adapter->screen_size.cy = mode->height;
     adapter->screen_format = mode->format_id;
 
     /* And finally clip mouse to our screen. */

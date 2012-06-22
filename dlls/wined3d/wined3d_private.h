@@ -1543,7 +1543,6 @@ struct wined3d_adapter
     BOOL                    opengl;
 
     POINT monitorPoint;
-    SIZE screen_size;
     enum wined3d_format_id screen_format;
 
     struct wined3d_gl_info  gl_info;
