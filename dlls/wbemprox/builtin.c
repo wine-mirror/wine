@@ -27,6 +27,8 @@
 #include "winbase.h"
 #include "wbemcli.h"
 #include "tlhelp32.h"
+#include "initguid.h"
+#include "d3d10.h"
 
 #include "wine/debug.h"
 #include "wbemprox_private.h"
@@ -43,13 +45,19 @@ static const WCHAR class_processW[] =
     {'W','i','n','3','2','_','P','r','o','c','e','s','s',0};
 static const WCHAR class_processorW[] =
     {'W','i','n','3','2','_','P','r','o','c','e','s','s','o','r',0};
+static const WCHAR class_videocontrollerW[] =
+    {'W','i','n','3','2','_','V','i','d','e','o','C','o','n','t','r','o','l','l','e','r',0};
 
+static const WCHAR prop_adapterramW[] =
+    {'A','d','a','p','t','e','r','R','A','M',0};
 static const WCHAR prop_captionW[] =
     {'C','a','p','t','i','o','n',0};
 static const WCHAR prop_commandlineW[] =
     {'C','o','m','m','a','n','d','L','i','n','e',0};
 static const WCHAR prop_descriptionW[] =
     {'D','e','s','c','r','i','p','t','i','o','n',0};
+static const WCHAR prop_deviceidW[] =
+    {'D','e','v','i','c','e','I','d',0};
 static const WCHAR prop_handleW[] =
     {'H','a','n','d','l','e',0};
 static const WCHAR prop_manufacturerW[] =
@@ -101,6 +109,11 @@ static const struct column col_processor[] =
 {
     { prop_manufacturerW, CIM_STRING }
 };
+static const struct column col_videocontroller[] =
+{
+    { prop_adapterramW,  CIM_UINT32 },
+    { prop_deviceidW,    CIM_STRING|COL_FLAG_KEY }
+};
 
 static const WCHAR bios_descriptionW[] =
     {'D','e','f','a','u','l','t',' ','S','y','s','t','e','m',' ','B','I','O','S',0};
@@ -124,6 +137,8 @@ static const WCHAR os_64bitW[] =
     {'6','4','-','b','i','t',0};
 static const WCHAR processor_manufacturerW[] =
     {'G','e','n','u','i','n','e','I','n','t','e','l',0};
+static const WCHAR videocontroller_deviceidW[] =
+    {'V','i','d','e','o','C','o','n','t','r','o','l','l','e','r','1',0};
 
 #include "pshpack1.h"
 struct record_bios
@@ -157,6 +172,11 @@ struct record_process
 struct record_processor
 {
     const WCHAR *manufacturer;
+};
+struct record_videocontroller
+{
+    UINT32       adapter_ram;
+    const WCHAR *device_id;
 };
 #include "poppack.h"
 
@@ -244,13 +264,47 @@ static void fill_os( struct table *table )
     table->num_rows = 1;
 }
 
+static void fill_videocontroller( struct table *table )
+{
+
+    struct record_videocontroller *rec;
+    HRESULT hr;
+    IDXGIFactory *factory = NULL;
+    IDXGIAdapter *adapter = NULL;
+    DXGI_ADAPTER_DESC desc;
+    UINT vidmem = 512 * 1024 * 1024;
+
+    if (!(table->data = heap_alloc( sizeof(*rec) ))) return;
+
+    hr = CreateDXGIFactory( &IID_IDXGIFactory, (void **)&factory );
+    if (FAILED(hr)) goto done;
+
+    hr = IDXGIFactory_EnumAdapters( factory, 0, &adapter );
+    if (FAILED(hr)) goto done;
+
+    hr = IDXGIAdapter_GetDesc( adapter, &desc );
+    if (SUCCEEDED(hr)) vidmem = desc.DedicatedVideoMemory;
+
+done:
+    rec = (struct record_videocontroller *)table->data;
+    rec->device_id   = videocontroller_deviceidW;
+    rec->adapter_ram = vidmem;
+
+    TRACE("created 1 row\n");
+    table->num_rows = 1;
+
+    if (adapter) IDXGIAdapter_Release( adapter );
+    if (factory) IDXGIFactory_Release( factory );
+}
+
 static struct table classtable[] =
 {
     { class_biosW, SIZEOF(col_bios), col_bios, SIZEOF(data_bios), (BYTE *)data_bios, NULL },
     { class_compsysW, SIZEOF(col_compsys), col_compsys, SIZEOF(data_compsys), (BYTE *)data_compsys, NULL },
     { class_osW, SIZEOF(col_os), col_os, 0, NULL, fill_os },
     { class_processW, SIZEOF(col_process), col_process, 0, NULL, fill_process },
-    { class_processorW, SIZEOF(col_processor), col_processor, SIZEOF(data_processor), (BYTE *)data_processor, NULL }
+    { class_processorW, SIZEOF(col_processor), col_processor, SIZEOF(data_processor), (BYTE *)data_processor, NULL },
+    { class_videocontrollerW, SIZEOF(col_videocontroller), col_videocontroller, 0, NULL, fill_videocontroller }
 };
 
 struct table *get_table( const WCHAR *name )
