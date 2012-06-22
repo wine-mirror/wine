@@ -5678,7 +5678,6 @@ HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
 {
     struct wined3d_adapter *adapter = &wined3d->adapters[adapter_idx];
     const struct fragment_pipeline *fragment_pipeline;
-    struct wined3d_display_mode mode;
     struct shader_caps shader_caps;
     struct fragment_caps ffp_caps;
     unsigned int i;
@@ -5692,16 +5691,6 @@ HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
     list_init(&device->resources);
     list_init(&device->shaders);
     device->surface_alignment = surface_alignment;
-
-    /* Get the initial screen setup for ddraw. */
-    hr = wined3d_get_adapter_display_mode(wined3d, adapter_idx, &mode);
-    if (FAILED(hr))
-    {
-        ERR("Failed to get the adapter's display mode, hr %#x.\n", hr);
-        wined3d_decref(device->wined3d);
-        return hr;
-    }
-    adapter->screen_format = mode.format_id;
 
     /* Save the creation parameters. */
     device->create_parms.adapter_idx = adapter_idx;
