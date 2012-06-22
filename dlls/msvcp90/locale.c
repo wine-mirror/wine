@@ -5744,8 +5744,32 @@ DEFINE_THISCALL_WRAPPER(num_put_char_do_put_bool, 28)
 ostreambuf_iterator_char* __thiscall num_put_char_do_put_bool(const num_put *this, ostreambuf_iterator_char *ret,
         ostreambuf_iterator_char dest, ios_base *base, char fill, MSVCP_bool v)
 {
-    FIXME("(%p %p %p %d %d) stub\n", this, ret, base, fill, v);
-    return NULL;
+    TRACE("(%p %p %p %d %d)\n", this, ret, base, fill, v);
+
+    if(base->fmtfl & FMTFLAG_boolalpha) {
+        numpunct_char *numpunct = numpunct_char_use_facet(base->loc);
+        basic_string_char str;
+        MSVCP_size_t pad, len;
+
+        if(v)
+            numpunct_char_truename(numpunct, &str);
+        else
+            numpunct_char_falsename(numpunct, &str);
+
+        len = MSVCP_basic_string_char_length(&str);
+        pad = (len>base->wide ? 0 : base->wide-len);
+        base->wide = 0;
+
+        if((base->fmtfl & FMTFLAG_adjustfield) != FMTFLAG_left) {
+            num_put_char__Rep(this, &dest, dest, fill, pad);
+            pad = 0;
+        }
+        num_put_char__Putc(this, &dest, dest, MSVCP_basic_string_char_c_str(&str), len);
+        MSVCP_basic_string_char_dtor(&str);
+        return num_put_char__Rep(this, ret, dest, fill, pad);
+    }
+
+    return num_put_char_put_long(this, ret, dest, base, fill, v);
 }
 
 /* ?put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@D_N@Z */
