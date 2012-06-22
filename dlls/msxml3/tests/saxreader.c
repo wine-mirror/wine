@@ -2822,6 +2822,7 @@ static void test_mxwriter_flush(void)
     HRESULT hr;
     char *buff;
     LONG ref;
+    int len;
 
     hr = CoCreateInstance(&CLSID_MXXMLWriter, NULL, CLSCTX_INPROC_SERVER,
             &IID_IMXWriter, (void**)&writer);
@@ -2919,9 +2920,10 @@ static void test_mxwriter_flush(void)
     EXPECT_HR(hr, S_OK);
     ok(pos2.QuadPart == 0, "expected stream beginning\n");
 
-    buff = HeapAlloc(GetProcessHeap(), 0, 2048);
-    memset(buff, 'A', 2048);
-    hr = ISAXContentHandler_characters(content, _bstr_(buff), 2048);
+    len = 2048;
+    buff = HeapAlloc(GetProcessHeap(), 0, len);
+    memset(buff, 'A', len);
+    hr = ISAXContentHandler_characters(content, _bstr_(buff), len);
     EXPECT_HR(hr, S_OK);
 
     pos.QuadPart = 0;
@@ -2965,8 +2967,8 @@ todo_wine
     EXPECT_HR(hr, S_OK);
     ok(pos2.QuadPart == 0, "expected stream beginning\n");
 
-    memset(buff, 'A', 2048);
-    hr = ISAXContentHandler_characters(content, _bstr_(buff), 2040);
+    memset(buff, 'A', len);
+    hr = ISAXContentHandler_characters(content, _bstr_(buff), len - 8);
     EXPECT_HR(hr, S_OK);
 
     pos.QuadPart = 0;
@@ -2977,6 +2979,28 @@ todo_wine
 
     hr = ISAXContentHandler_endDocument(content);
     EXPECT_HR(hr, S_OK);
+
+    /* test auto-flush function when stream is not set */
+    V_VT(&dest) = VT_EMPTY;
+    hr = IMXWriter_put_output(writer, dest);
+    EXPECT_HR(hr, S_OK);
+
+    hr = ISAXContentHandler_startDocument(content);
+    EXPECT_HR(hr, S_OK);
+
+    hr = ISAXContentHandler_startElement(content, emptyW, 0, emptyW, 0, _bstr_("a"), -1, NULL);
+    EXPECT_HR(hr, S_OK);
+
+    memset(buff, 'A', len);
+    hr = ISAXContentHandler_characters(content, _bstr_(buff), len);
+    EXPECT_HR(hr, S_OK);
+
+    V_VT(&dest) = VT_EMPTY;
+    hr = IMXWriter_get_output(writer, &dest);
+    EXPECT_HR(hr, S_OK);
+    len += strlen("<a>");
+    ok(SysStringLen(V_BSTR(&dest)) == len, "got len=%d, expected %d\n", SysStringLen(V_BSTR(&dest)), len);
+    VariantClear(&dest);
 
     HeapFree(GetProcessHeap(), 0, buff);
     ISAXContentHandler_Release(content);
@@ -3381,6 +3405,18 @@ static void test_mxwriter_startendelement(void)
     ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
     ok(!lstrcmpW(_bstr_("<abc></abd>"), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
+
+    V_VT(&dest) = VT_EMPTY;
+    hr = IMXWriter_put_output(writer, dest);
+    EXPECT_HR(hr, S_OK);
+
+    hr = ISAXContentHandler_startElement(content, _bstr_(""), 0, _bstr_(""), 0, _bstr_("a"), -1, NULL);
+    EXPECT_HR(hr, S_OK);
+    V_VT(&dest) = VT_EMPTY;
+    hr = IMXWriter_get_output(writer, &dest);
+    EXPECT_HR(hr, S_OK);
+    ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
+    ok(!lstrcmpW(_bstr_("<a>"), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
 
     ISAXContentHandler_Release(content);
     IMXWriter_Release(writer);

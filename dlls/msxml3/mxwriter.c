@@ -536,7 +536,10 @@ static void close_element_starttag(const mxwriter *This)
 static void set_element_name(mxwriter *This, const WCHAR *name, int len)
 {
     SysFreeString(This->element);
-    This->element = name ? SysAllocStringLen(name, len) : NULL;
+    if (name)
+        This->element = len != -1 ? SysAllocStringLen(name, len) : SysAllocString(name);
+    else
+        This->element = NULL;
 }
 
 static inline HRESULT flush_output_buffer(mxwriter *This)
