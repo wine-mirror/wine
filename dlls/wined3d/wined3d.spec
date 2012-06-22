@@ -17,6 +17,7 @@
 @ cdecl wined3d_get_device_caps(ptr long long ptr)
 @ cdecl wined3d_incref(ptr)
 @ cdecl wined3d_register_software_device(ptr ptr)
+@ cdecl wined3d_set_adapter_display_mode(ptr long ptr)
 
 @ cdecl wined3d_buffer_create(ptr ptr ptr ptr ptr ptr)
 @ cdecl wined3d_buffer_create_ib(ptr long long long ptr ptr ptr)
@@ -109,7 +110,6 @@
 @ cdecl wined3d_device_set_cursor_properties(ptr long long ptr)
 @ cdecl wined3d_device_set_depth_stencil(ptr ptr)
 @ cdecl wined3d_device_set_dialog_box_mode(ptr long)
-@ cdecl wined3d_device_set_display_mode(ptr long ptr)
 @ cdecl wined3d_device_set_gamma_ramp(ptr long long ptr)
 @ cdecl wined3d_device_set_index_buffer(ptr ptr long)
 @ cdecl wined3d_device_set_light(ptr long ptr)

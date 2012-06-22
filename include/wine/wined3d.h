@@ -2033,6 +2033,8 @@ HRESULT __cdecl wined3d_get_device_caps(const struct wined3d *wined3d, UINT adap
         enum wined3d_device_type device_type, WINED3DCAPS *caps);
 ULONG __cdecl wined3d_incref(struct wined3d *wined3d);
 HRESULT __cdecl wined3d_register_software_device(struct wined3d *wined3d, void *init_function);
+HRESULT __cdecl wined3d_set_adapter_display_mode(struct wined3d *wined3d,
+        UINT adapter_idx, const struct wined3d_display_mode *mode);
 
 HRESULT __cdecl wined3d_buffer_create(struct wined3d_device *device, struct wined3d_buffer_desc *desc,
         const void *data, void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_buffer **buffer);
@@ -2181,8 +2183,6 @@ HRESULT __cdecl wined3d_device_set_cursor_properties(struct wined3d_device *devi
         UINT x_hotspot, UINT y_hotspot, struct wined3d_surface *cursor_surface);
 HRESULT __cdecl wined3d_device_set_depth_stencil(struct wined3d_device *device, struct wined3d_surface *depth_stencil);
 HRESULT __cdecl wined3d_device_set_dialog_box_mode(struct wined3d_device *device, BOOL enable_dialogs);
-HRESULT __cdecl wined3d_device_set_display_mode(struct wined3d_device *device,
-        UINT swapchain_idx, const struct wined3d_display_mode *mode);
 void __cdecl wined3d_device_set_gamma_ramp(const struct wined3d_device *device,
         UINT swapchain_idx, DWORD flags, const struct wined3d_gamma_ramp *ramp);
 HRESULT __cdecl wined3d_device_set_index_buffer(struct wined3d_device *device,

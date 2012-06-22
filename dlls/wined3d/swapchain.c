@@ -31,6 +31,7 @@ WINE_DECLARE_DEBUG_CHANNEL(fps);
 static void swapchain_cleanup(struct wined3d_swapchain *swapchain)
 {
     struct wined3d_display_mode mode;
+    HRESULT hr;
     UINT i;
 
     TRACE("Destroying swapchain %p.\n", swapchain);
@@ -79,7 +80,9 @@ static void swapchain_cleanup(struct wined3d_swapchain *swapchain)
         mode.height = swapchain->orig_height;
         mode.refresh_rate = 0;
         mode.format_id = swapchain->orig_fmt;
-        wined3d_device_set_display_mode(swapchain->device, 0, &mode);
+        if (FAILED(hr = wined3d_set_adapter_display_mode(swapchain->device->wined3d,
+                swapchain->device->adapter->ordinal, &mode)))
+            ERR("Failed to restore display mode, hr %#x.\n", hr);
     }
 
     if (swapchain->backup_dc)
@@ -964,8 +967,7 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, enum wined3d_
         mode.format_id = desc->backbuffer_format;
         mode.refresh_rate = desc->refresh_rate;
 
-        hr = wined3d_device_set_display_mode(device, 0, &mode);
-        if (FAILED(hr))
+        if (FAILED(hr = wined3d_set_adapter_display_mode(device->wined3d, device->adapter->ordinal, &mode)))
         {
             WARN("Failed to set display mode, hr %#x.\n", hr);
             goto err;

@@ -1562,79 +1562,6 @@ void CDECL wined3d_device_set_multithreaded(struct wined3d_device *device)
     device->create_parms.flags |= WINED3DCREATE_MULTITHREADED;
 }
 
-HRESULT CDECL wined3d_device_set_display_mode(struct wined3d_device *device,
-        UINT swapchain_idx, const struct wined3d_display_mode *mode)
-{
-    struct wined3d_adapter *adapter = device->adapter;
-    const struct wined3d_format *format = wined3d_get_format(&adapter->gl_info, mode->format_id);
-    struct wined3d_display_mode current_mode;
-    DEVMODEW devmode;
-    LONG ret;
-    RECT clip_rc;
-    HRESULT hr;
-
-    TRACE("device %p, swapchain_idx %u, mode %p (%ux%u@%u %s).\n", device, swapchain_idx, mode,
-            mode->width, mode->height, mode->refresh_rate, debug_d3dformat(mode->format_id));
-
-    /* Resize the screen even without a window:
-     * The app could have unset it with SetCooperativeLevel, but not called
-     * RestoreDisplayMode first. Then the release will call RestoreDisplayMode,
-     * but we don't have any hwnd
-     */
-
-    memset(&devmode, 0, sizeof(devmode));
-    devmode.dmSize = sizeof(devmode);
-    devmode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
-    devmode.dmBitsPerPel = format->byte_count * CHAR_BIT;
-    devmode.dmPelsWidth = mode->width;
-    devmode.dmPelsHeight = mode->height;
-
-    devmode.dmDisplayFrequency = mode->refresh_rate;
-    if (mode->refresh_rate)
-        devmode.dmFields |= DM_DISPLAYFREQUENCY;
-
-    /* Only change the mode if necessary */
-    if (FAILED(hr = wined3d_device_get_display_mode(device, swapchain_idx, &current_mode)))
-    {
-        ERR("Failed to get current display mode, hr %#x.\n", hr);
-    }
-    else if (current_mode.width == mode->width
-            && current_mode.height == mode->height
-            && current_mode.format_id == mode->format_id
-            && (current_mode.refresh_rate == mode->refresh_rate
-            || !mode->refresh_rate))
-    {
-        TRACE("Skipping redundant mode setting call.\n");
-        return WINED3D_OK;
-    }
-
-    ret = ChangeDisplaySettingsExW(NULL, &devmode, NULL, CDS_FULLSCREEN, NULL);
-    if (ret != DISP_CHANGE_SUCCESSFUL)
-    {
-        if (devmode.dmDisplayFrequency)
-        {
-            WARN("ChangeDisplaySettingsExW failed, trying without the refresh rate\n");
-            devmode.dmFields &= ~DM_DISPLAYFREQUENCY;
-            devmode.dmDisplayFrequency = 0;
-            ret = ChangeDisplaySettingsExW(NULL, &devmode, NULL, CDS_FULLSCREEN, NULL) != DISP_CHANGE_SUCCESSFUL;
-        }
-        if(ret != DISP_CHANGE_SUCCESSFUL) {
-            return WINED3DERR_NOTAVAILABLE;
-        }
-    }
-
-    /* Store the new values */
-    adapter->screen_size.cx = mode->width;
-    adapter->screen_size.cy = mode->height;
-    adapter->screen_format = mode->format_id;
-
-    /* And finally clip mouse to our screen */
-    SetRect(&clip_rc, 0, 0, mode->width, mode->height);
-    ClipCursor(&clip_rc);
-
-    return WINED3D_OK;
-}
-
 HRESULT CDECL wined3d_device_get_wined3d(const struct wined3d_device *device, struct wined3d **wined3d)
 {
     TRACE("device %p, wined3d %p.\n", device, wined3d);
@@ -5476,7 +5403,12 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     if (!swapchain_desc->windowed != !swapchain->desc.windowed
             || DisplayModeChanged)
     {
-        wined3d_device_set_display_mode(device, 0, &mode);
+        if (FAILED(hr = wined3d_set_adapter_display_mode(device->wined3d, device->adapter->ordinal, &mode)))
+        {
+            WARN("Failed to set display mode, hr %#x.\n", hr);
+            wined3d_swapchain_decref(swapchain);
+            return hr;
+        }
 
         if (!swapchain_desc->windowed)
         {
