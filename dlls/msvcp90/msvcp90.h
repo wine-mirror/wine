@@ -516,6 +516,7 @@ typedef struct {
 
 int __thiscall basic_streambuf_char_sgetc(basic_streambuf_char*);
 int __thiscall basic_streambuf_char_sbumpc(basic_streambuf_char*);
+int __thiscall basic_streambuf_char_sputc(basic_streambuf_char*, char);
 
 /* class basic_streambuf<wchar> */
 typedef struct {

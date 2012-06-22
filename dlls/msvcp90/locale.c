@@ -140,6 +140,12 @@ static void istreambuf_iterator_char_inc(istreambuf_iterator_char *this)
     }
 }
 
+static void ostreambuf_iterator_char_put(ostreambuf_iterator_char *this, char ch)
+{
+    if(this->failed || basic_streambuf_char_sputc(this->strbuf, ch)==EOF)
+        this->failed = TRUE;
+}
+
 /* ??1facet@locale@std@@UAE@XZ */
 /* ??1facet@locale@std@@UEAA@XZ */
 DEFINE_THISCALL_WRAPPER(locale_facet_dtor, 4)
@@ -5303,7 +5309,8 @@ extern const vtable_ptr MSVCP_num_put_char_vtable;
 DEFINE_THISCALL_WRAPPER(num_put_char__Init, 8)
 void __thiscall num_put_char__Init(num_put *this, const _Locinfo *locinfo)
 {
-    FIXME("(%p %p) stub\n", this, locinfo);
+    TRACE("(%p %p)\n", this, locinfo);
+    _Locinfo__Getcvt(locinfo, &this->cvt);
 }
 
 /* ??0?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QAE@ABV_Locinfo@1@I@Z */
@@ -5311,8 +5318,13 @@ void __thiscall num_put_char__Init(num_put *this, const _Locinfo *locinfo)
 DEFINE_THISCALL_WRAPPER(num_put_char_ctor_locinfo, 12)
 num_put* __thiscall num_put_char_ctor_locinfo(num_put *this, const _Locinfo *locinfo, MSVCP_size_t refs)
 {
-    FIXME("(%p %p %ld) stub\n", this, locinfo, refs);
-    return NULL;
+    TRACE("(%p %p %ld)\n", this, locinfo, refs);
+
+    locale_facet_ctor_refs(&this->facet, refs);
+    this->facet.vtable = &MSVCP_num_put_char_vtable;
+
+    num_put_char__Init(this, locinfo);
+    return this;
 }
 
 /* ??0?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QAE@I@Z */
@@ -5320,8 +5332,14 @@ num_put* __thiscall num_put_char_ctor_locinfo(num_put *this, const _Locinfo *loc
 DEFINE_THISCALL_WRAPPER(num_put_char_ctor_refs, 8)
 num_put* __thiscall num_put_char_ctor_refs(num_put *this, MSVCP_size_t refs)
 {
-    FIXME("(%p %ld) stub\n", this, refs);
-    return NULL;
+     _Locinfo locinfo;
+
+     TRACE("(%p %lu)\n", this, refs);
+
+     _Locinfo_ctor(&locinfo);
+     num_put_char_ctor_locinfo(this, &locinfo, refs);
+     _Locinfo_dtor(&locinfo);
+     return this;
 }
 
 /* ??_F?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QAEXXZ */
@@ -5329,8 +5347,7 @@ num_put* __thiscall num_put_char_ctor_refs(num_put *this, MSVCP_size_t refs)
 DEFINE_THISCALL_WRAPPER(num_put_char_ctor, 4)
 num_put* __thiscall num_put_char_ctor(num_put *this)
 {
-    FIXME("(%p) stub\n", this);
-    return NULL;
+    return num_put_char_ctor_refs(this, 0);
 }
 
 /* ??1?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MAE@XZ */
@@ -5338,7 +5355,8 @@ num_put* __thiscall num_put_char_ctor(num_put *this)
 DEFINE_THISCALL_WRAPPER(num_put_char_dtor, 4)
 void __thiscall num_put_char_dtor(num_put *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
+    locale_facet_dtor(&this->facet);
 }
 
 DEFINE_THISCALL_WRAPPER(MSVCP_num_put_char_vector_dtor, 8)
@@ -5365,8 +5383,24 @@ num_put* __thiscall MSVCP_num_put_char_vector_dtor(num_put *this, unsigned int f
 /* ?_Getcat@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
 unsigned int __cdecl num_put_char__Getcat(const locale_facet **facet, const locale *loc)
 {
-    FIXME("(%p %p) stub\n", facet, loc);
-    return 0;
+    TRACE("(%p %p)\n", facet, loc);
+
+    if(facet && !*facet) {
+        _Locinfo locinfo;
+
+        *facet = MSVCRT_operator_new(sizeof(num_put));
+        if(!*facet) {
+            ERR("Out of memory\n");
+            throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+            return 0;
+        }
+
+        _Locinfo_ctor_cstr(&locinfo, MSVCP_basic_string_char_c_str(&loc->ptr->name));
+        num_put_char_ctor_locinfo((num_put*)*facet, &locinfo, 0);
+        _Locinfo_dtor(&locinfo);
+    }
+
+    return LC_NUMERIC;
 }
 
 /* ?_Put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@PBDI@Z */
@@ -5374,8 +5408,13 @@ unsigned int __cdecl num_put_char__Getcat(const locale_facet **facet, const loca
 ostreambuf_iterator_char* __cdecl num_put_char__Put(const num_put *this, ostreambuf_iterator_char *ret,
         ostreambuf_iterator_char dest, const char *ptr, MSVCP_size_t count)
 {
-    FIXME("(%p %p %p %ld) stub\n", this, ret, ptr, count);
-    return NULL;
+    TRACE("(%p %p %p %ld)\n", this, ret, ptr, count);
+
+    for(; count>0; count--)
+        ostreambuf_iterator_char_put(&dest, *ptr++);
+
+    *ret = dest;
+    return ret;
 }
 
 /* ?_Putc@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@PBDI@Z */
@@ -5383,8 +5422,13 @@ ostreambuf_iterator_char* __cdecl num_put_char__Put(const num_put *this, ostream
 ostreambuf_iterator_char* __cdecl num_put_char__Putc(const num_put *this, ostreambuf_iterator_char *ret,
         ostreambuf_iterator_char dest, const char *ptr, MSVCP_size_t count)
 {
-    FIXME("(%p %p %p %ld) stub\n", this, ret, ptr, count);
-    return NULL;
+    TRACE("(%p %p %p %ld)\n", this, ret, ptr, count);
+
+    for(; count>0; count--)
+        ostreambuf_iterator_char_put(&dest, *ptr++);
+
+    *ret = dest;
+    return ret;
 }
 
 /* ?_Putgrouped@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@PBDID@Z */
@@ -5401,8 +5445,13 @@ ostreambuf_iterator_char* __cdecl num_put_char__Putgrouped(const num_put *this, 
 ostreambuf_iterator_char* __cdecl num_put_char__Rep(const num_put *this, ostreambuf_iterator_char *ret,
         ostreambuf_iterator_char dest, char c, MSVCP_size_t count)
 {
-    FIXME("(%p %p %d %ld) stub\n", this, ret, c, count);
-    return NULL;
+    TRACE("(%p %p %d %ld)\n", this, ret, c, count);
+
+    for(; count>0; count--)
+        ostreambuf_iterator_char_put(&dest, c);
+
+    *ret = dest;
+    return ret;
 }
 
 /* ?_Ffmt@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABAPADPADDH@Z */
@@ -5443,6 +5492,9 @@ ostreambuf_iterator_char* __cdecl num_put_char__Iput(const num_put *this, ostrea
 
 /* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@DJ@Z */
 /* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@DJ@Z */
+#define call_num_put_char_do_put_long(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 28, ostreambuf_iterator_char*, \
+        (const num_put*, ostreambuf_iterator_char*, ostreambuf_iterator_char, ios_base*, char, LONG), \
+        (this, ret, dest, base, fill, v))
 DEFINE_THISCALL_WRAPPER(num_put_char_do_put_long, 28)
 ostreambuf_iterator_char* __thiscall num_put_char_do_put_long(const num_put *this, ostreambuf_iterator_char *ret,
         ostreambuf_iterator_char dest, ios_base *base, char fill, LONG v)
@@ -5457,12 +5509,15 @@ DEFINE_THISCALL_WRAPPER(num_put_char_put_long, 28)
 ostreambuf_iterator_char* __thiscall num_put_char_put_long(const num_put *this, ostreambuf_iterator_char *ret,
         ostreambuf_iterator_char dest, ios_base *base, char fill, LONG v)
 {
-    FIXME("(%p %p %p %d %d) stub\n", this, ret, base, fill, v);
-    return NULL;
+    TRACE("(%p %p %p %d %d)\n", this, ret, base, fill, v);
+    return call_num_put_char_do_put_long(this, ret, dest, base, fill, v);
 }
 
 /* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@DK@Z */
 /* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@DK@Z */
+#define call_num_put_char_do_put_ulong(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 24, ostreambuf_iterator_char*, \
+        (const num_put*, ostreambuf_iterator_char*, ostreambuf_iterator_char, ios_base*, char, ULONG), \
+        (this, ret, dest, base, fill, v))
 DEFINE_THISCALL_WRAPPER(num_put_char_do_put_ulong, 28)
 ostreambuf_iterator_char* __thiscall num_put_char_do_put_ulong(const num_put *this, ostreambuf_iterator_char *ret,
         ostreambuf_iterator_char dest, ios_base *base, char fill, ULONG v)
@@ -5477,14 +5532,20 @@ DEFINE_THISCALL_WRAPPER(num_put_char_put_ulong, 28)
 ostreambuf_iterator_char* __thiscall num_put_char_put_ulong(const num_put *this, ostreambuf_iterator_char *ret,
         ostreambuf_iterator_char dest, ios_base *base, char fill, ULONG v)
 {
-    FIXME("(%p %p %p %d %d) stub\n", this, ret, base, fill, v);
-    return NULL;
+    TRACE("(%p %p %p %d %d)\n", this, ret, base, fill, v);
+    return call_num_put_char_do_put_ulong(this, ret, dest, base, fill, v);
 }
 
 /* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@DN@Z */
 /* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@DN@Z */
 /* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@DO@Z */
 /* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@DO@Z */
+#define call_num_put_char_do_put_double(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 12, ostreambuf_iterator_char*, \
+        (const num_put*, ostreambuf_iterator_char*, ostreambuf_iterator_char, ios_base*, char, double), \
+        (this, ret, dest, base, fill, v))
+#define call_num_put_char_do_put_ldouble(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 8, ostreambuf_iterator_char*, \
+        (const num_put*, ostreambuf_iterator_char*, ostreambuf_iterator_char, ios_base*, char, double), \
+        (this, ret, dest, base, fill, v))
 DEFINE_THISCALL_WRAPPER(num_put_char_do_put_double, 32)
 ostreambuf_iterator_char* __thiscall num_put_char_do_put_double(const num_put *this, ostreambuf_iterator_char *ret,
         ostreambuf_iterator_char dest, ios_base *base, char fill, double v)
@@ -5499,8 +5560,8 @@ DEFINE_THISCALL_WRAPPER(num_put_char_put_double, 32)
 ostreambuf_iterator_char* __thiscall num_put_char_put_double(const num_put *this, ostreambuf_iterator_char *ret,
         ostreambuf_iterator_char dest, ios_base *base, char fill, double v)
 {
-    FIXME("(%p %p %p %d %lf) stub\n", this, ret, base, fill, v);
-    return NULL;
+    TRACE("(%p %p %p %d %lf)\n", this, ret, base, fill, v);
+    return call_num_put_char_do_put_double(this, ret, dest, base, fill, v);
 }
 
 /* ?put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@DO@Z */
@@ -5509,12 +5570,15 @@ DEFINE_THISCALL_WRAPPER(num_put_char_put_ldouble, 32)
 ostreambuf_iterator_char* __thiscall num_put_char_put_ldouble(const num_put *this, ostreambuf_iterator_char *ret,
         ostreambuf_iterator_char dest, ios_base *base, char fill, double v)
 {
-    FIXME("(%p %p %p %d %lf) stub\n", this, ret, base, fill, v);
-    return NULL;
+    TRACE("(%p %p %p %d %lf)\n", this, ret, base, fill, v);
+    return call_num_put_char_do_put_ldouble(this, ret, dest, base, fill, v);
 }
 
 /* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@DPBX@Z */
 /* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@DPEBX@Z */
+#define call_num_put_char_do_put_ptr(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 4, ostreambuf_iterator_char*, \
+        (const num_put*, ostreambuf_iterator_char*, ostreambuf_iterator_char, ios_base*, char, const void*), \
+        (this, ret, dest, base, fill, v))
 DEFINE_THISCALL_WRAPPER(num_put_char_do_put_ptr, 28)
 ostreambuf_iterator_char* __thiscall num_put_char_do_put_ptr(const num_put *this, ostreambuf_iterator_char *ret,
         ostreambuf_iterator_char dest, ios_base *base, char fill, const void *v)
@@ -5529,12 +5593,15 @@ DEFINE_THISCALL_WRAPPER(num_put_char_put_ptr, 28)
 ostreambuf_iterator_char* __thiscall num_put_char_put_ptr(const num_put *this, ostreambuf_iterator_char *ret,
         ostreambuf_iterator_char dest, ios_base *base, char fill, const void *v)
 {
-    FIXME("(%p %p %p %d %p) stub\n", this, ret, base, fill, v);
-    return NULL;
+    TRACE("(%p %p %p %d %p)\n", this, ret, base, fill, v);
+    return call_num_put_char_do_put_ptr(this, ret, dest, base, fill, v);
 }
 
 /* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@D_J@Z */
 /* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@D_J@Z */
+#define call_num_put_char_do_put_int64(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 20, ostreambuf_iterator_char*, \
+        (const num_put*, ostreambuf_iterator_char*, ostreambuf_iterator_char, ios_base*, char, __int64), \
+        (this, ret, dest, base, fill, v))
 DEFINE_THISCALL_WRAPPER(num_put_char_do_put_int64, 32)
 ostreambuf_iterator_char* __thiscall num_put_char_do_put_int64(const num_put *this, ostreambuf_iterator_char *ret,
         ostreambuf_iterator_char dest, ios_base *base, char fill, __int64 v)
@@ -5549,12 +5616,15 @@ DEFINE_THISCALL_WRAPPER(num_put_char_put_int64, 32)
 ostreambuf_iterator_char* __thiscall num_put_char_put_int64(const num_put *this, ostreambuf_iterator_char *ret,
         ostreambuf_iterator_char dest, ios_base *base, char fill, __int64 v)
 {
-    FIXME("(%p %p %p %d) stub\n", this, ret, base, fill);
-    return NULL;
+    TRACE("(%p %p %p %d)\n", this, ret, base, fill);
+    return call_num_put_char_do_put_int64(this, ret, dest, base, fill, v);
 }
 
 /* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@D_K@Z */
 /* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@D_K@Z */
+#define call_num_put_char_do_put_uint64(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 16, ostreambuf_iterator_char*, \
+        (const num_put*, ostreambuf_iterator_char*, ostreambuf_iterator_char, ios_base*, char, unsigned __int64), \
+        (this, ret, dest, base, fill, v))
 DEFINE_THISCALL_WRAPPER(num_put_char_do_put_uint64, 32)
 ostreambuf_iterator_char* __thiscall num_put_char_do_put_uint64(const num_put *this, ostreambuf_iterator_char *ret,
         ostreambuf_iterator_char dest, ios_base *base, char fill, unsigned __int64 v)
@@ -5569,12 +5639,15 @@ DEFINE_THISCALL_WRAPPER(num_put_char_put_uint64, 32)
 ostreambuf_iterator_char* __thiscall num_put_char_put_uint64(const num_put *this, ostreambuf_iterator_char *ret,
         ostreambuf_iterator_char dest, ios_base *base, char fill, unsigned __int64 v)
 {
-    FIXME("(%p %p %p %d) stub\n", this, ret, base, fill);
-    return NULL;
+    TRACE("(%p %p %p %d)\n", this, ret, base, fill);
+    return call_num_put_char_do_put_uint64(this, ret, dest, base, fill, v);
 }
 
 /* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@D_N@Z */
 /* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@D_N@Z */
+#define call_num_put_char_do_put_bool(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 32, ostreambuf_iterator_char*, \
+        (const num_put*, ostreambuf_iterator_char*, ostreambuf_iterator_char, ios_base*, char, MSVCP_bool), \
+        (this, ret, dest, base, fill, v))
 DEFINE_THISCALL_WRAPPER(num_put_char_do_put_bool, 28)
 ostreambuf_iterator_char* __thiscall num_put_char_do_put_bool(const num_put *this, ostreambuf_iterator_char *ret,
         ostreambuf_iterator_char dest, ios_base *base, char fill, MSVCP_bool v)
@@ -5589,8 +5662,8 @@ DEFINE_THISCALL_WRAPPER(num_put_char_put_bool, 28)
 ostreambuf_iterator_char* __thiscall num_put_char_put_bool(const num_put *this, ostreambuf_iterator_char *ret,
         ostreambuf_iterator_char dest, ios_base *base, char fill, MSVCP_bool v)
 {
-    FIXME("(%p %p %p %d %d) stub\n", this, ret, base, fill, v);
-    return NULL;
+    TRACE("(%p %p %p %d %d)\n", this, ret, base, fill, v);
+    return call_num_put_char_do_put_bool(this, ret, dest, base, fill, v);
 }
 
 /* ??0_Locimp@locale@std@@AAE@_N@Z */
