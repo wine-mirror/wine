@@ -4686,8 +4686,6 @@ int __cdecl num_get_char__Getffld(const num_get *this, char *dest, istreambuf_it
             break;
         else if(dest<num_end)
             *dest++ = first->val;
-        else
-            exp--;
     }
 
     if(first->strbuf && (first->val=='e' || first->val=='E')) {
