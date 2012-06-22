@@ -653,6 +653,22 @@ HRESULT get_propval( const struct view *view, UINT index, const WCHAR *name, VAR
         V_VT( ret ) = VT_BSTR;
         V_BSTR( ret ) = SysAllocString( (const WCHAR *)val );
         break;
+    case CIM_SINT16:
+        V_VT( ret ) = VT_I2;
+        V_I2( ret ) = val;
+        break;
+    case CIM_UINT16:
+        V_VT( ret ) = VT_UI2;
+        V_UI2( ret ) = val;
+        break;
+    case CIM_SINT32:
+        V_VT( ret ) = VT_I4;
+        V_I4( ret ) = val;
+        break;
+    case CIM_UINT32:
+        V_VT( ret ) = VT_UI4;
+        V_UI4( ret ) = val;
+        break;
     default:
         ERR("unhandled column type %u\n", view->table->columns[column].type);
         return WBEM_E_FAILED;
