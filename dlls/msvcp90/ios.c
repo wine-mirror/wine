@@ -3701,8 +3701,24 @@ basic_ostream_char* __thiscall basic_ostream_char_write(basic_ostream_char *this
 DEFINE_THISCALL_WRAPPER(basic_ostream_char_print_short, 8)
 basic_ostream_char* __thiscall basic_ostream_char_print_short(basic_ostream_char *this, short val)
 {
-    FIXME("(%p %d) stub\n", this, val);
-    return NULL;
+    basic_ios_char *base = basic_ostream_char_get_basic_ios(this);
+    int state = IOSTATE_goodbit;
+
+    TRACE("(%p %d)\n", this, val);
+
+    if(basic_ostream_char_sentry_create(this)) {
+        basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
+        const num_put *numput = num_put_char_use_facet(strbuf->loc);
+        ostreambuf_iterator_char dest = {0, strbuf};
+
+        num_put_char_put_long(numput, &dest, dest, &base->base, basic_ios_char_fill_get(base),
+                (ios_base_flags_get(&base->base) & FMTFLAG_basefield & (FMTFLAG_oct | FMTFLAG_hex))
+                ? (LONG)((unsigned short)val) : (LONG)val);
+    }
+    basic_ostream_char_sentry_destroy(this);
+
+    basic_ios_char_setstate(base, state);
+    return this;
 }
 
 /* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@G@Z */
@@ -3710,44 +3726,72 @@ basic_ostream_char* __thiscall basic_ostream_char_print_short(basic_ostream_char
 DEFINE_THISCALL_WRAPPER(basic_ostream_char_print_ushort, 8)
 basic_ostream_char* __thiscall basic_ostream_char_print_ushort(basic_ostream_char *this, unsigned short val)
 {
-    FIXME("(%p %d) stub\n", this, val);
-    return NULL;
+    basic_ios_char *base = basic_ostream_char_get_basic_ios(this);
+    int state = IOSTATE_goodbit;
+
+    TRACE("(%p %u)\n", this, val);
+
+    if(basic_ostream_char_sentry_create(this)) {
+        basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
+        const num_put *numput = num_put_char_use_facet(strbuf->loc);
+        ostreambuf_iterator_char dest = {0, strbuf};
+
+        num_put_char_put_ulong(numput, &dest, dest, &base->base, basic_ios_char_fill_get(base), val);
+    }
+    basic_ostream_char_sentry_destroy(this);
+
+    basic_ios_char_setstate(base, state);
+    return this;
 }
 
 /* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@H@Z */
 /* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@H@Z */
+/* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@J@Z */
+/* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@J@Z */
 DEFINE_THISCALL_WRAPPER(basic_ostream_char_print_int, 8)
 basic_ostream_char* __thiscall basic_ostream_char_print_int(basic_ostream_char *this, int val)
 {
-    FIXME("(%p %d) stub\n", this, val);
-    return NULL;
+    basic_ios_char *base = basic_ostream_char_get_basic_ios(this);
+    int state = IOSTATE_goodbit;
+
+    TRACE("(%p %d)\n", this, val);
+
+    if(basic_ostream_char_sentry_create(this)) {
+        basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
+        const num_put *numput = num_put_char_use_facet(strbuf->loc);
+        ostreambuf_iterator_char dest = {0, strbuf};
+
+        num_put_char_put_long(numput, &dest, dest, &base->base, basic_ios_char_fill_get(base), val);
+    }
+    basic_ostream_char_sentry_destroy(this);
+
+    basic_ios_char_setstate(base, state);
+    return this;
 }
 
 /* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@I@Z */
 /* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@I@Z */
+/* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@K@Z */
+/* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@K@Z */
 DEFINE_THISCALL_WRAPPER(basic_ostream_char_print_uint, 8)
 basic_ostream_char* __thiscall basic_ostream_char_print_uint(basic_ostream_char *this, unsigned int val)
 {
-    FIXME("(%p %d) stub\n", this, val);
-    return NULL;
-}
+    basic_ios_char *base = basic_ostream_char_get_basic_ios(this);
+    int state = IOSTATE_goodbit;
 
-/* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@J@Z */
-/* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@J@Z */
-DEFINE_THISCALL_WRAPPER(basic_ostream_char_print_long, 8)
-basic_ostream_char* __thiscall basic_ostream_char_print_long(basic_ostream_char *this, LONG val)
-{
-    FIXME("(%p %d) stub\n", this, val);
-    return NULL;
-}
+    TRACE("(%p %u)\n", this, val);
 
-/* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@K@Z */
-/* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@K@Z */
-DEFINE_THISCALL_WRAPPER(basic_ostream_char_print_ulong, 8)
-basic_ostream_char* __thiscall basic_ostream_char_print_ulong(basic_ostream_char *this, ULONG val)
-{
-    FIXME("(%p %d) stub\n", this, val);
-    return NULL;
+    if(basic_ostream_char_sentry_create(this)) {
+        basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
+        const num_put *numput = num_put_char_use_facet(strbuf->loc);
+        ostreambuf_iterator_char dest = {0, strbuf};
+
+        num_put_char_put_ulong(numput, &dest, dest, &base->base, basic_ios_char_fill_get(base), val);
+    }
+    basic_ostream_char_sentry_destroy(this);
+
+    basic_ios_char_setstate(base, state);
+    return this;
 }
 
 /* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@M@Z */
@@ -3755,8 +3799,22 @@ basic_ostream_char* __thiscall basic_ostream_char_print_ulong(basic_ostream_char
 DEFINE_THISCALL_WRAPPER(basic_ostream_char_print_float, 8)
 basic_ostream_char* __thiscall basic_ostream_char_print_float(basic_ostream_char *this, float val)
 {
-    FIXME("(%p %f) stub\n", this, val);
-    return NULL;
+    basic_ios_char *base = basic_ostream_char_get_basic_ios(this);
+    int state = IOSTATE_goodbit;
+
+    TRACE("(%p %f)\n", this, val);
+
+    if(basic_ostream_char_sentry_create(this)) {
+        basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
+        const num_put *numput = num_put_char_use_facet(strbuf->loc);
+        ostreambuf_iterator_char dest = {0, strbuf};
+
+        num_put_char_put_double(numput, &dest, dest, &base->base, basic_ios_char_fill_get(base), val);
+    }
+    basic_ostream_char_sentry_destroy(this);
+
+    basic_ios_char_setstate(base, state);
+    return this;
 }
 
 /* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@N@Z */
@@ -3764,8 +3822,45 @@ basic_ostream_char* __thiscall basic_ostream_char_print_float(basic_ostream_char
 DEFINE_THISCALL_WRAPPER(basic_ostream_char_print_double, 12)
 basic_ostream_char* __thiscall basic_ostream_char_print_double(basic_ostream_char *this, double val)
 {
-    FIXME("(%p %lf) stub\n", this, val);
-    return NULL;
+    basic_ios_char *base = basic_ostream_char_get_basic_ios(this);
+    int state = IOSTATE_goodbit;
+
+    TRACE("(%p %lf)\n", this, val);
+
+    if(basic_ostream_char_sentry_create(this)) {
+        basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
+        const num_put *numput = num_put_char_use_facet(strbuf->loc);
+        ostreambuf_iterator_char dest = {0, strbuf};
+
+        num_put_char_put_double(numput, &dest, dest, &base->base, basic_ios_char_fill_get(base), val);
+    }
+    basic_ostream_char_sentry_destroy(this);
+
+    basic_ios_char_setstate(base, state);
+    return this;
+}
+
+/* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@O@Z */
+/* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@O@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostream_char_print_ldouble, 12)
+basic_ostream_char* __thiscall basic_ostream_char_print_ldouble(basic_ostream_char *this, double val)
+{
+    basic_ios_char *base = basic_ostream_char_get_basic_ios(this);
+    int state = IOSTATE_goodbit;
+
+    TRACE("(%p %lf)\n", this, val);
+
+    if(basic_ostream_char_sentry_create(this)) {
+        basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
+        const num_put *numput = num_put_char_use_facet(strbuf->loc);
+        ostreambuf_iterator_char dest = {0, strbuf};
+
+        num_put_char_put_ldouble(numput, &dest, dest, &base->base, basic_ios_char_fill_get(base), val);
+    }
+    basic_ostream_char_sentry_destroy(this);
+
+    basic_ios_char_setstate(base, state);
+    return this;
 }
 
 /* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@PAV?$basic_streambuf@DU?$char_traits@D@std@@@1@@Z */
@@ -3782,8 +3877,22 @@ basic_ostream_char* __thiscall basic_ostream_char_print_streambuf(basic_ostream_
 DEFINE_THISCALL_WRAPPER(basic_ostream_char_print_ptr, 8)
 basic_ostream_char* __thiscall basic_ostream_char_print_ptr(basic_ostream_char *this, const void *val)
 {
-    FIXME("(%p %p) stub\n", this, val);
-    return NULL;
+    basic_ios_char *base = basic_ostream_char_get_basic_ios(this);
+    int state = IOSTATE_goodbit;
+
+    TRACE("(%p %p)\n", this, val);
+
+    if(basic_ostream_char_sentry_create(this)) {
+        basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
+        const num_put *numput = num_put_char_use_facet(strbuf->loc);
+        ostreambuf_iterator_char dest = {0, strbuf};
+
+        num_put_char_put_ptr(numput, &dest, dest, &base->base, basic_ios_char_fill_get(base), val);
+    }
+    basic_ostream_char_sentry_destroy(this);
+
+    basic_ios_char_setstate(base, state);
+    return this;
 }
 
 /* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@_J@Z */
@@ -3791,8 +3900,22 @@ basic_ostream_char* __thiscall basic_ostream_char_print_ptr(basic_ostream_char *
 DEFINE_THISCALL_WRAPPER(basic_ostream_char_print_int64, 12)
 basic_ostream_char* __thiscall basic_ostream_char_print_int64(basic_ostream_char *this, __int64 val)
 {
-    FIXME("(%p) stub\n", this);
-    return NULL;
+    basic_ios_char *base = basic_ostream_char_get_basic_ios(this);
+    int state = IOSTATE_goodbit;
+
+    TRACE("(%p)\n", this);
+
+    if(basic_ostream_char_sentry_create(this)) {
+        basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
+        const num_put *numput = num_put_char_use_facet(strbuf->loc);
+        ostreambuf_iterator_char dest = {0, strbuf};
+
+        num_put_char_put_int64(numput, &dest, dest, &base->base, basic_ios_char_fill_get(base), val);
+    }
+    basic_ostream_char_sentry_destroy(this);
+
+    basic_ios_char_setstate(base, state);
+    return this;
 }
 
 /* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@_K@Z */
@@ -3800,8 +3923,22 @@ basic_ostream_char* __thiscall basic_ostream_char_print_int64(basic_ostream_char
 DEFINE_THISCALL_WRAPPER(basic_ostream_char_print_uint64, 12)
 basic_ostream_char* __thiscall basic_ostream_char_print_uint64(basic_ostream_char *this, unsigned __int64 val)
 {
-    FIXME("(%p) stub\n", this);
-    return NULL;
+    basic_ios_char *base = basic_ostream_char_get_basic_ios(this);
+    int state = IOSTATE_goodbit;
+
+    TRACE("(%p)\n", this);
+
+    if(basic_ostream_char_sentry_create(this)) {
+        basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
+        const num_put *numput = num_put_char_use_facet(strbuf->loc);
+        ostreambuf_iterator_char dest = {0, strbuf};
+
+        num_put_char_put_uint64(numput, &dest, dest, &base->base, basic_ios_char_fill_get(base), val);
+    }
+    basic_ostream_char_sentry_destroy(this);
+
+    basic_ios_char_setstate(base, state);
+    return this;
 }
 
 /* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@_N@Z */
@@ -3809,8 +3946,22 @@ basic_ostream_char* __thiscall basic_ostream_char_print_uint64(basic_ostream_cha
 DEFINE_THISCALL_WRAPPER(basic_ostream_char_print_bool, 8)
 basic_ostream_char* __thiscall basic_ostream_char_print_bool(basic_ostream_char *this, MSVCP_bool val)
 {
-    FIXME("(%p %x) stub\n", this, val);
-    return NULL;
+    basic_ios_char *base = basic_ostream_char_get_basic_ios(this);
+    int state = IOSTATE_goodbit;
+
+    TRACE("(%p %x)\n", this, val);
+
+    if(basic_ostream_char_sentry_create(this)) {
+        basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
+        const num_put *numput = num_put_char_use_facet(strbuf->loc);
+        ostreambuf_iterator_char dest = {0, strbuf};
+
+        num_put_char_put_bool(numput, &dest, dest, &base->base, basic_ios_char_fill_get(base), val);
+    }
+    basic_ostream_char_sentry_destroy(this);
+
+    basic_ios_char_setstate(base, state);
+    return this;
 }
 
 /* ?endl@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@1@AAV21@@Z */

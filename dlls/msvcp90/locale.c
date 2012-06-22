@@ -5403,6 +5403,32 @@ unsigned int __cdecl num_put_char__Getcat(const locale_facet **facet, const loca
     return LC_NUMERIC;
 }
 
+num_put* num_put_char_use_facet(const locale *loc)
+{
+    static num_put *obj = NULL;
+
+    _Lockit lock;
+    const locale_facet *fac;
+
+    _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
+    fac = locale__Getfacet(loc, num_put_char_id.id);
+    if(fac) {
+        _Lockit_dtor(&lock);
+        return (num_put*)fac;
+    }
+
+    if(obj)
+        return obj;
+
+    num_put_char__Getcat(&fac, loc);
+    obj = (num_put*)fac;
+    locale_facet__Incref(&obj->facet);
+    locale_facet_register(&obj->facet);
+    _Lockit_dtor(&lock);
+
+    return obj;
+}
+
 /* ?_Put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@PBDI@Z */
 /* ?_Put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@AEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@PEBD_K@Z */
 ostreambuf_iterator_char* __cdecl num_put_char__Put(const num_put *this, ostreambuf_iterator_char *ret,

@@ -573,5 +573,23 @@ typedef struct {
     _Cvtvec cvt;
 } num_put;
 
+num_put* num_put_char_use_facet(const locale*);
+ostreambuf_iterator_char* __thiscall num_put_char_put_long(const num_put*, ostreambuf_iterator_char*,
+        ostreambuf_iterator_char, ios_base*, char, LONG);
+ostreambuf_iterator_char* __thiscall num_put_char_put_ulong(const num_put*, ostreambuf_iterator_char*,
+        ostreambuf_iterator_char, ios_base*, char, ULONG);
+ostreambuf_iterator_char* __thiscall num_put_char_put_double(const num_put*, ostreambuf_iterator_char*,
+        ostreambuf_iterator_char, ios_base*, char, double);
+ostreambuf_iterator_char* __thiscall num_put_char_put_ldouble(const num_put*, ostreambuf_iterator_char*,
+        ostreambuf_iterator_char, ios_base*, char, double);
+ostreambuf_iterator_char* __thiscall num_put_char_put_ptr(const num_put*, ostreambuf_iterator_char*,
+        ostreambuf_iterator_char, ios_base*, char, const void*);
+ostreambuf_iterator_char* __thiscall num_put_char_put_int64(const num_put*, ostreambuf_iterator_char*,
+        ostreambuf_iterator_char, ios_base*, char, __int64);
+ostreambuf_iterator_char* __thiscall num_put_char_put_uint64(const num_put*, ostreambuf_iterator_char*,
+        ostreambuf_iterator_char, ios_base*, char, unsigned __int64);
+ostreambuf_iterator_char* __thiscall num_put_char_put_bool(const num_put*, ostreambuf_iterator_char*,
+        ostreambuf_iterator_char, ios_base*, char, MSVCP_bool);
+
 void init_io(void);
 void free_io(void);
