@@ -544,6 +544,9 @@ INT nulldrv_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT he
     src.visrect.bottom = height;
     if (!intersect_rect( &src.visrect, &src.visrect, &rect )) goto done;
 
+    if (rop == SRCCOPY) ret = height;
+    else ret = src_info->bmiHeader.biHeight;
+
     get_bounding_rect( &rect, dst.x, dst.y, dst.width, dst.height );
 
     if (!clip_visrect( dc, &dst.visrect, &rect )) goto done;
@@ -584,8 +587,6 @@ INT nulldrv_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT he
         if (!err) err = dev->funcs->pPutImage( dev, NULL, dst_info, &src_bits, &src, &dst, rop );
     }
     if (err) ret = 0;
-    else if (rop == SRCCOPY) ret = height;
-    else ret = src_info->bmiHeader.biHeight;
 
 done:
     if (src_bits.free) src_bits.free( &src_bits );

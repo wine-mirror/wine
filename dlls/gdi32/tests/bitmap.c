@@ -3353,12 +3353,13 @@ static void check_StretchDIBits_pixel(HDC hdcDst, UINT32 *dstBuffer, UINT32 *src
         dwRop, expected, *dstBuffer, line);
 }
 
-static void check_StretchDIBits_stretch(HDC hdcDst, UINT32 *dstBuffer, UINT32 *srcBuffer,
+static INT check_StretchDIBits_stretch( HDC hdcDst, UINT32 *dstBuffer, UINT32 *srcBuffer,
                                         int nXOriginDest, int nYOriginDest, int nWidthDest, int nHeightDest,
                                         int nXOriginSrc, int nYOriginSrc, int nWidthSrc, int nHeightSrc,
                                         UINT32 expected[4], int line)
 {
     BITMAPINFO bitmapInfo;
+    INT ret;
 
     memset(&bitmapInfo, 0, sizeof(BITMAPINFO));
     bitmapInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
@@ -3369,9 +3370,9 @@ static void check_StretchDIBits_stretch(HDC hdcDst, UINT32 *dstBuffer, UINT32 *s
     bitmapInfo.bmiHeader.biCompression = BI_RGB;
 
     memset(dstBuffer, 0, 16);
-    StretchDIBits(hdcDst, nXOriginDest, nYOriginDest, nWidthDest, nHeightDest,
-                  nXOriginSrc, nYOriginSrc, nWidthSrc, nHeightSrc,
-                  srcBuffer, &bitmapInfo, DIB_RGB_COLORS, SRCCOPY);
+    ret = StretchDIBits(hdcDst, nXOriginDest, nYOriginDest, nWidthDest, nHeightDest,
+                        nXOriginSrc, nYOriginSrc, nWidthSrc, nHeightSrc,
+                        srcBuffer, &bitmapInfo, DIB_RGB_COLORS, SRCCOPY);
     ok(memcmp(dstBuffer, expected, 16) == 0,
         "StretchDIBits expected { %08X, %08X, %08X, %08X } got { %08X, %08X, %08X, %08X } "
         "stretching { %d, %d, %d, %d } to { %d, %d, %d, %d } from line %d\n",
@@ -3379,6 +3380,7 @@ static void check_StretchDIBits_stretch(HDC hdcDst, UINT32 *dstBuffer, UINT32 *s
         dstBuffer[0], dstBuffer[1], dstBuffer[2], dstBuffer[3],
         nXOriginSrc, nYOriginSrc, nWidthSrc, nHeightSrc,
         nXOriginDest, nYOriginDest, nWidthDest, nHeightDest, line);
+    return ret;
 }
 
 static void test_StretchDIBits(void)
@@ -3390,6 +3392,7 @@ static void test_StretchDIBits(void)
     HBRUSH hBrush, hOldBrush;
     BITMAPINFO biDst;
     UINT32 expected[4];
+    INT ret;
 
     memset(&biDst, 0, sizeof(BITMAPINFO));
     biDst.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
@@ -3435,43 +3438,63 @@ static void test_StretchDIBits(void)
 
     expected[0] = 0xCAFED00D, expected[1] = 0xFEEDFACE;
     expected[2] = 0xFEDCBA98, expected[3] = 0x76543210;
-    check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
-                                0, 0, 2, 2, 0, 0, 2, 2, expected, __LINE__);
+    ret = check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
+                                      0, 0, 2, 2, 0, 0, 2, 2, expected, __LINE__);
+    ok( ret == 2, "got ret %d\n", ret );
 
     expected[0] = 0xCAFED00D, expected[1] = 0x00000000;
     expected[2] = 0x00000000, expected[3] = 0x00000000;
-    check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
-                                0, 0, 1, 1, 0, 0, 1, 1, expected, __LINE__);
+    ret = check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
+                                      0, 0, 1, 1, 0, 0, 1, 1, expected, __LINE__);
+    todo_wine ok( ret == 1, "got ret %d\n", ret );
 
     expected[0] = 0xFEDCBA98, expected[1] = 0xFEDCBA98;
     expected[2] = 0xFEDCBA98, expected[3] = 0xFEDCBA98;
-    check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
-                                0, 0, 2, 2, 0, 0, 1, 1, expected, __LINE__);
+    ret = check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
+                                      0, 0, 2, 2, 0, 0, 1, 1, expected, __LINE__);
+    ok( ret == 2, "got ret %d\n", ret );
 
     expected[0] = 0x42441000, expected[1] = 0x00000000;
     expected[2] = 0x00000000, expected[3] = 0x00000000;
-    check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
-                                0, 0, 1, 1, 0, 0, 2, 2, expected, __LINE__);
+    ret = check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
+                                      0, 0, 1, 1, 0, 0, 2, 2, expected, __LINE__);
+    ok( ret == 2, "got ret %d\n", ret );
 
     expected[0] = 0x00000000, expected[1] = 0x00000000;
     expected[2] = 0x00000000, expected[3] = 0x00000000;
-    check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
-                                0, 0, 2, 2, 1, 1, -2, -2, expected, __LINE__);
+    ret = check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
+                                      0, 0, 2, 2, 1, 1, -2, -2, expected, __LINE__);
+    ok( ret == 0, "got ret %d\n", ret );
 
     expected[0] = 0x00000000, expected[1] = 0x00000000;
     expected[2] = 0x00000000, expected[3] = 0x00000000;
-    check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
-                                0, 0, 2, 2, 1, 1, -2, -2, expected, __LINE__);
+    ret = check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
+                                      0, 0, 2, 2, 1, 1, -2, -2, expected, __LINE__);
+    ok( ret == 0, "got ret %d\n", ret );
 
     expected[0] = 0x00000000, expected[1] = 0x00000000;
     expected[2] = 0x00000000, expected[3] = 0x00000000;
-    check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
-                                1, 1, -2, -2, 1, 1, -2, -2, expected, __LINE__);
+    ret = check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
+                                      1, 1, -2, -2, 1, 1, -2, -2, expected, __LINE__);
+    ok( ret == 0, "got ret %d\n", ret );
 
     expected[0] = 0x00000000, expected[1] = 0x00000000;
     expected[2] = 0x00000000, expected[3] = 0xCAFED00D;
-    check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
-                                1, 1, 2, 2, 0, 0, 2, 2, expected, __LINE__);
+    ret = check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
+                                      1, 1, 2, 2, 0, 0, 2, 2, expected, __LINE__);
+    ok( ret == 2, "got ret %d\n", ret );
+
+    expected[0] = 0x00000000, expected[1] = 0x00000000;
+    expected[2] = 0x00000000, expected[3] = 0x00000000;
+    ret = check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
+                                      2, 2, 4, 4, 0, 0, 2, 2, expected, __LINE__);
+    ok( ret == 2, "got ret %d\n", ret );
+
+    expected[0] = 0x00000000, expected[1] = 0x00000000;
+    expected[2] = 0x00000000, expected[3] = 0x00000000;
+    ret = check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
+                                      -4, -4, 4, 4, 0, 0, 4, 4, expected, __LINE__);
+    ok( ret == 2, "got ret %d\n", ret );
 
     SelectObject(hdcDst, oldDst);
     DeleteObject(bmpDst);
