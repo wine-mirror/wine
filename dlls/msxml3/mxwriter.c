@@ -755,6 +755,8 @@ static HRESULT WINAPI mxwriter_get_output(IMXWriter *iface, VARIANT *dest)
 
     TRACE("(%p)->(%p)\n", This, dest);
 
+    if (!dest) return E_POINTER;
+
     if (!This->dest)
     {
         HRESULT hr = flush_output_buffer(This);
@@ -766,10 +768,13 @@ static HRESULT WINAPI mxwriter_get_output(IMXWriter *iface, VARIANT *dest)
 
         return S_OK;
     }
-    else
-        FIXME("not implemented when stream is set up\n");
 
-    return E_NOTIMPL;
+    /* we only support IStream output so far */
+    V_VT(dest) = VT_UNKNOWN;
+    V_UNKNOWN(dest) = (IUnknown*)This->dest;
+    IStream_AddRef(This->dest);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI mxwriter_put_encoding(IMXWriter *iface, BSTR encoding)

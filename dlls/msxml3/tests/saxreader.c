@@ -2821,6 +2821,7 @@ static void test_mxwriter_flush(void)
     VARIANT dest;
     HRESULT hr;
     char *buff;
+    LONG ref;
 
     hr = CoCreateInstance(&CLSID_MXXMLWriter, NULL, CLSCTX_INPROC_SERVER,
             &IID_IMXWriter, (void**)&writer);
@@ -2929,6 +2930,18 @@ static void test_mxwriter_flush(void)
     EXPECT_HR(hr, S_OK);
 todo_wine
     ok(pos2.QuadPart != 0, "unexpected stream beginning\n");
+
+    hr = IMXWriter_get_output(writer, NULL);
+    EXPECT_HR(hr, E_POINTER);
+
+    ref = get_refcount(stream);
+    V_VT(&dest) = VT_EMPTY;
+    hr = IMXWriter_get_output(writer, &dest);
+    EXPECT_HR(hr, S_OK);
+    ok(V_VT(&dest) == VT_UNKNOWN, "got vt type %d\n", V_VT(&dest));
+    ok(V_UNKNOWN(&dest) == (IUnknown*)stream, "got pointer %p\n", V_UNKNOWN(&dest));
+    ok(ref+1 == get_refcount(stream), "expected increased refcount\n");
+    VariantClear(&dest);
 
     hr = ISAXContentHandler_endDocument(content);
     EXPECT_HR(hr, S_OK);
