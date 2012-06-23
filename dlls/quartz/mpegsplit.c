@@ -154,11 +154,17 @@ static HRESULT parse_header(BYTE *header, LONGLONG *plen, LONGLONG *pduration)
         return E_INVALIDARG;
     }
 
-
-    if (layer == 3 || layer == 2)
-        length = 144 * bitrate / freqs[freq_index] + padding;
-    else
+    if (layer == 1)
         length = 4 * (12 * bitrate / freqs[freq_index] + padding);
+    else if (layer == 2)
+        length = 144 * bitrate / freqs[freq_index] + padding;
+    else if (layer == 3)
+        length = 144 * bitrate / (freqs[freq_index]<<lsf) + padding;
+    else
+    {
+        ERR("Impossible layer %d\n", layer);
+        return E_INVALIDARG;
+    }
 
     duration = (ULONGLONG)10000000 * (ULONGLONG)(length) / (ULONGLONG)(bitrate/8);
     *plen = length;
