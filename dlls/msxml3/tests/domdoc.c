@@ -10484,8 +10484,10 @@ static void test_domobj_dispex(IUnknown *obj)
 static void test_mxnamespacemanager(void)
 {
     static const char xmluriA[] = "http://www.w3.org/XML/1998/namespace";
+    IMXNamespacePrefixes *prefixes;
     IVBMXNamespaceManager *mgr2;
     IMXNamespaceManager *nsmgr;
+    IUnknown *unk1, *unk2;
     WCHAR buffW[250];
     IDispatch *disp;
     IUnknown *unk;
@@ -10503,6 +10505,28 @@ static void test_mxnamespacemanager(void)
 
     hr = IMXNamespaceManager_QueryInterface(nsmgr, &IID_IVBMXNamespaceManager, (void**)&mgr2);
     EXPECT_HR(hr, S_OK);
+
+    EXPECT_REF(nsmgr, 2);
+    EXPECT_REF(mgr2, 2);
+    prefixes = NULL;
+    hr = IVBMXNamespaceManager_getDeclaredPrefixes(mgr2, &prefixes);
+    if (hr == S_OK)
+    {
+        ok(prefixes != NULL, "got %p\n", prefixes);
+        EXPECT_REF(nsmgr, 2);
+        EXPECT_REF(mgr2, 2);
+        EXPECT_REF(prefixes, 1);
+
+        IVBMXNamespaceManager_QueryInterface(mgr2, &IID_IUnknown, (void**)&unk1);
+        IMXNamespacePrefixes_QueryInterface(prefixes, &IID_IUnknown, (void**)&unk2);
+
+        EXPECT_REF(mgr2, 3);
+        EXPECT_REF(prefixes, 2);
+
+        IUnknown_Release(unk1);
+        IUnknown_Release(unk2);
+        IMXNamespacePrefixes_Release(prefixes);
+    }
     IVBMXNamespaceManager_Release(mgr2);
 
     hr = IMXNamespaceManager_declarePrefix(nsmgr, NULL, NULL);
