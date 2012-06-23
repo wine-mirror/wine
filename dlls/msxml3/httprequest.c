@@ -759,6 +759,7 @@ static HRESULT httprequest_open(httprequest *This, BSTR method, BSTR url,
     static const WCHAR MethodPutW[] = {'P','U','T',0};
     static const WCHAR MethodPostW[] = {'P','O','S','T',0};
     static const WCHAR MethodDeleteW[] = {'D','E','L','E','T','E',0};
+    static const WCHAR MethodPropFindW[] = {'P','R','O','P','F','I','N','D',0};
     VARIANT str, is_async;
     HRESULT hr;
 
@@ -782,7 +783,8 @@ static HRESULT httprequest_open(httprequest *This, BSTR method, BSTR url,
     {
         This->verb = BINDVERB_POST;
     }
-    else if (!strcmpiW(method, MethodDeleteW))
+    else if (!strcmpiW(method, MethodDeleteW) ||
+             !strcmpiW(method, MethodPropFindW))
     {
         This->verb = BINDVERB_CUSTOM;
         SysReAllocString(&This->custom, method);
