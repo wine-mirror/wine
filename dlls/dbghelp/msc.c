@@ -935,6 +935,18 @@ static int codeview_add_type_struct_field_list(struct codeview_type_parse* ctp,
             }
             break;
 
+        case LF_INDEX_V1:
+            if (!codeview_add_type_struct_field_list(ctp, symt, type->index_v1.ref))
+                return FALSE;
+            ptr += 2 + 2;
+            break;
+
+        case LF_INDEX_V2:
+            if (!codeview_add_type_struct_field_list(ctp, symt, type->index_v2.ref))
+                return FALSE;
+            ptr += 2 + 2 + 4;
+            break;
+
         default:
             FIXME("Unsupported type %04x in STRUCT field list\n", type->generic.id);
             return FALSE;
