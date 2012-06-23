@@ -124,17 +124,14 @@ static const DWORD tabsel_123[2][3][16] = {
 
 static HRESULT parse_header(BYTE *header, LONGLONG *plen, LONGLONG *pduration)
 {
+    int bitrate_index, freq_index, lsf = 1, mpeg1, layer, padding, bitrate, length;
     LONGLONG duration;
 
-    int bitrate_index, freq_index, lsf = 1, mpeg1, layer, padding, bitrate, length;
-    if (header[0] != 0xff)
-        return E_INVALIDARG;
-
-    if (!(((header[1]>>5)&0x7) == 0x7 &&
-       ((header[1]>>1)&0x3) != 0 && ((header[2]>>4)&0xf) != 0xf &&
-       ((header[2]>>2)&0x3) != 0x3))
+    if (!(header[0] == 0xff && ((header[1]>>5)&0x7) == 0x7 &&
+          ((header[1]>>1)&0x3) != 0 && ((header[2]>>4)&0xf) != 0xf &&
+          ((header[2]>>2)&0x3) != 0x3))
     {
-        FIXME("Not a valid header: %02x:%02x\n", header[1], header[2]);
+        FIXME("Not a valid header: %02x:%02x:%02x:%02x\n", header[0], header[1], header[2], header[3]);
         return E_INVALIDARG;
     }
 
@@ -509,17 +506,23 @@ static HRESULT MPEGSplitter_pre_connect(IPin *iface, IPin *pConnectPin, ALLOCATO
     /* Skip ID3 v2 tag, if any */
     if (SUCCEEDED(hr) && !memcmp("ID3", header, 3))
     do {
-        UINT length;
+        UINT length = 0;
         hr = IAsyncReader_SyncRead(pPin->pReader, pos, 6, header + 4);
         if (FAILED(hr))
             break;
         pos += 6;
         TRACE("Found ID3 v2.%d.%d\n", header[3], header[4]);
-        length  = (header[6] & 0x7F) << 21;
-        length += (header[7] & 0x7F) << 14;
-        length += (header[8] & 0x7F) << 7;
-        length += (header[9] & 0x7F);
-        TRACE("Length: %u\n", length);
+        if(header[3] <= 4 && header[4] != 0xff &&
+           (header[5]&0x0f) == 0 && (header[6]&0x80) == 0 &&
+           (header[7]&0x80) == 0 && (header[8]&0x80) == 0 &&
+           (header[9]&0x80) == 0)
+        {
+            length = (header[6]<<21) | (header[7]<<14) |
+                     (header[8]<< 7) | (header[9]    );
+            if((header[5]&0x10))
+                length += 10;
+            TRACE("Length: %u\n", length);
+        }
         pos += length;
 
         /* Read the real header for the mpeg splitter */
@@ -592,14 +595,17 @@ static HRESULT MPEGSplitter_pre_connect(IPin *iface, IPin *pConnectPin, ALLOCATO
                 hr = IAsyncReader_SyncRead(pPin->pReader, pos, 4, header);
                 if (hr != S_OK)
                     break;
-                while (parse_header(header, &length, &duration))
+                while ((hr=parse_header(header, &length, &duration)) != S_OK &&
+                       pos + 4 < This->EndOfFile)
                 {
                     /* No valid header yet; shift by a byte and check again */
                     memmove(header, header+1, 3);
-                    hr = IAsyncReader_SyncRead(pPin->pReader, pos++, 1, header + 3);
-                    if (hr != S_OK || This->EndOfFile - pos < 4)
+                    hr = IAsyncReader_SyncRead(pPin->pReader, ++pos + 3, 1, header + 3);
+                    if (hr != S_OK)
                        break;
                 }
+                if (hr != S_OK)
+                    break;
                 pos += length;
 
                 if (This->seektable && (duration / SEEK_INTERVAL) > last_entry)
@@ -692,11 +698,11 @@ static HRESULT WINAPI MPEGSplitter_seek(IMediaSeeking *iface)
         if (hr != S_OK || timepos >= newpos)
             break;
 
-        while (parse_header(header, &length, &timepos) && bytepos + 3 < This->EndOfFile)
+        while (parse_header(header, &length, &timepos) && bytepos + 4 < This->EndOfFile)
         {
             /* No valid header yet; shift by a byte and check again */
             memmove(header, header+1, 3);
-            hr = IAsyncReader_SyncRead(pPin->pReader, ++bytepos, 1, header + 3);
+            hr = IAsyncReader_SyncRead(pPin->pReader, ++bytepos + 3, 1, header + 3);
             if (hr != S_OK)
                 break;
          }
