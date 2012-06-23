@@ -39,9 +39,8 @@ msgstr ""
 "Fjern for å fjerne det eller endre installerte komponenter."
 
 #: appwiz.rc:64
-#, fuzzy
 msgid "&Support Information"
-msgstr "Støtteinformasjon"
+msgstr "&Støtteinformasjon"
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87
 msgid "&Modify..."
@@ -385,7 +384,6 @@ msgid "Separator"
 msgstr "Adskiller"
 
 #: comctl32.rc:44 progman.rc:78
-#, fuzzy
 msgctxt "hotkey"
 msgid "None"
 msgstr "Ingen"
@@ -2150,9 +2148,8 @@ msgid "Notice Reference"
 msgstr ""
 
 #: cryptdlg.rc:35
-#, fuzzy
 msgid "Organization="
-msgstr "Organisasjon"
+msgstr "Organisasjon="
 
 #: cryptdlg.rc:36
 #, fuzzy
@@ -2192,9 +2189,8 @@ msgid "Certification Path"
 msgstr "Sertifiseringssti"
 
 #: cryptui.rc:211
-#, fuzzy
 msgid "Certification path"
-msgstr "Sertifiseringsst&i"
+msgstr "Sertifiseringssti"
 
 #: cryptui.rc:214
 msgid "&View Certificate"
@@ -2306,16 +2302,12 @@ msgstr ""
 "over tiltrodde eller tilbakekalte sertifikater:"
 
 #: cryptui.rc:296
-#, fuzzy
-#| msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (.p7b)"
 msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (*.p7b)"
-msgstr "Standardformat for kryptografiske meldinger/PKCS #7 Messages (.p7b)"
+msgstr "Standardformat for kryptografiske meldinger/PKCS #7 Messages (*.p7b)"
 
 #: cryptui.rc:298
-#, fuzzy
-#| msgid "Personal Information Exchange/PKCS #12 (.pfx, .p12)"
 msgid "Personal Information Exchange/PKCS #12 (*.pfx; *.p12)"
-msgstr "Personlig informasjonsutveksling/PKCS #12 (.pfx, .p12)"
+msgstr "Personlig informasjonsutveksling/PKCS #12 (*.pfx; *.p12)"
 
 #: cryptui.rc:300 cryptui.rc:78 cryptui.rc:159
 msgid "Microsoft Serialized Certificate Store (*.sst)"
@@ -2455,32 +2447,24 @@ msgid "Select the format you want to use:"
 msgstr "Velg formatet du ønsker å bruke:"
 
 #: cryptui.rc:405
-#, fuzzy
-#| msgid "&DER-encoded X.509 (.cer)"
 msgid "&DER-encoded X.509 (*.cer)"
-msgstr "&DER-kodet X.509 (.cer)"
+msgstr "&DER-kodet X.509 (*.cer)"
 
 #: cryptui.rc:407
-#, fuzzy
-#| msgid "Ba&se64-encoded X.509 (.cer):"
 msgid "Ba&se64-encoded X.509 (*.cer):"
-msgstr "Ba&se64-kodet X.509 (.cer):"
+msgstr "Ba&se64-kodet X.509 (*.cer):"
 
 #: cryptui.rc:409
-#, fuzzy
-#| msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (.p7b)"
 msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (*.p7b)"
-msgstr "Standardformat for &kryptografiske meldinger/PKCS #7 Message (.p7b)"
+msgstr "Standardformat for &kryptografiske meldinger/PKCS #7 Message (*.p7b)"
 
 #: cryptui.rc:411
 msgid "&Include all certificates in the certification path if possible"
 msgstr "Ta med alle sertifikater &i sertifikatstien, hvis mulig"
 
 #: cryptui.rc:413
-#, fuzzy
-#| msgid "&Personal Information Exchange/PKCS #12 (.pfx)"
 msgid "&Personal Information Exchange/PKCS #12 (*.pfx)"
-msgstr "&Personlig informasjonsutveksling/PKCS #12 (.pfx)"
+msgstr "&Personlig informasjonsutveksling/PKCS #12 (*.pfx)"
 
 #: cryptui.rc:415
 msgid "Incl&ude all certificates in the certification path if possible"
@@ -2513,7 +2497,6 @@ msgid "Certificate Information"
 msgstr "Sertifikatinformasjon"
 
 #: cryptui.rc:29
-#, fuzzy
 msgid ""
 "This certificate has an invalid signature. The certificate may have been "
 "altered or corrupted."
@@ -2522,7 +2505,6 @@ msgstr ""
 "eller skadet."
 
 #: cryptui.rc:30
-#, fuzzy
 msgid ""
 "This root certificate is not trusted. To trust it, add it to your system's "
 "trusted root certificate store."
@@ -2672,7 +2654,6 @@ msgid "Please select a certificate store."
 msgstr "Velg et lagringssted for sertifikater."
 
 #: cryptui.rc:69
-#, fuzzy
 msgid ""
 "The file contains objects that do not match the given criteria. Please "
 "select another file."
@@ -2725,7 +2706,6 @@ msgid "Please select a file."
 msgstr "Velg en fil."
 
 #: cryptui.rc:82
-#, fuzzy
 msgid "The file format is not recognized. Please select another file."
 msgstr "Filformatet ble ikke gjenkjent. Velg en annen fil."
 
@@ -2966,7 +2946,6 @@ msgid "Specify the name of the file in which the content will be saved."
 msgstr "Angi navnet på filen som innholdet skal lagres i."
 
 #: cryptui.rc:152
-#, fuzzy
 msgid "The specified file already exists. Do you want to replace it?"
 msgstr "Filen finnes fra før. Vil du erstatte den?"
 
@@ -3035,7 +3014,6 @@ msgid "Note: The private key for this certificate could not be opened."
 msgstr "Merk: Klarte ikke åpne den private nøkkelen for dette sertifikatet."
 
 #: cryptui.rc:173
-#, fuzzy
 msgid "Note: The private key for this certificate is not exportable."
 msgstr ""
 "Merk: Den private nøkkelen for dette sertifikatet kan ikke eksporteres."
@@ -3071,9 +3049,8 @@ msgid "Player"
 msgstr "Spill av"
 
 #: dinput.rc:49
-#, fuzzy
 msgid "Device"
-msgstr "En&het:"
+msgstr "Enhet"
 
 #: dinput.rc:50
 #, fuzzy
@@ -6947,12 +6924,11 @@ msgid "Done"
 msgstr ""
 
 #: msi.rc:27
-#, fuzzy
 msgid ""
 "The specified installation package could not be opened. Please check the "
 "file path and try again."
 msgstr ""
-"Klarte ikke å åpne den oppgitte installasjonspakken.  Kontroller filbanen og "
+"Klarte ikke å åpne den oppgitte installasjonspakken. Kontroller filbanen og "
 "prøv igjen."
 
 #: msi.rc:28
@@ -7485,43 +7461,39 @@ msgstr ""
 "med %s."
 
 #: oledlg.rc:36
-#, fuzzy
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s. It will be displayed as an icon."
 msgstr ""
 "Setter innholdet fra utklippstavlen inn i dokumentet så du kan aktivere det "
-"med %s.  Det vises som et ikon."
+"med %s. Det vises som et ikon."
 
 #: oledlg.rc:37
-#, fuzzy
 msgid ""
 "Inserts the contents of the clipboard into your document as %s. The data is "
 "linked to the source file so that changes to the file will be reflected in "
 "your document."
 msgstr ""
-"Setter innholdet fra utklippstavlen inn i dokumentet som %s.  Det kobles til "
+"Setter innholdet fra utklippstavlen inn i dokumentet som %s. Det kobles til "
 "kildefilen så endringer i denne også skjer i dokumentet."
 
 #: oledlg.rc:38
-#, fuzzy
 msgid ""
 "Inserts a picture of the clipboard contents into your document. The picture "
 "is linked to the source file so that changes to the file will be reflected "
 "in your document."
 msgstr ""
-"Setter inn et bilde av utklippstavleinnholdet i dokumentet.  Bildet kobles "
+"Setter inn et bilde av utklippstavleinnholdet i dokumentet. Bildet kobles "
 "til kildefilen så endringer i denne også skjer i dokumentet."
 
 #: oledlg.rc:39
-#, fuzzy
 msgid ""
 "Inserts a shortcut which points to the location of the clipboard contents. "
 "The shortcut is linked to the source file so that changes to the file will "
 "be reflected in your document."
 msgstr ""
 "Setter inn en snarvei som peker til plasseringen av innholdet på "
-"utklippstavlen.  Snarveien kobles til kildefilen så endringer i denne også "
+"utklippstavlen. Snarveien kobles til kildefilen så endringer i denne også "
 "skjer i dokumentet."
 
 #: oledlg.rc:40
@@ -8497,7 +8469,6 @@ msgid "Confirm overwrite"
 msgstr "Bekreft overskriving av fil"
 
 #: shell32.rc:265
-#, fuzzy
 msgid ""
 "Wine is free software; you can redistribute it and/or modify it under the "
 "terms of the GNU Lesser General Public License as published by the Free "
@@ -8520,7 +8491,7 @@ msgstr ""
 "\n"
 "Wine utgis i håp om at det er nyttig, men UTEN ENHVER GARANTI; uten engang "
 "den antydede garantien om HANDELSEGNETHET eller EGNETHET FOR ET SPESIELT "
-"FORMÅL.  Se «GNU Lesser General Public License» for flere detaljer.\n"
+"FORMÅL. Se «GNU Lesser General Public License» for flere detaljer.\n"
 "\n"
 "Du skal ha mottatt et eksemplar av «GNU Lesser General Public License» "
 "sammen med dette programmet; hvis ikke, skriv til: the Free Software "
@@ -8543,24 +8514,20 @@ msgid "Don't show me th&is message again"
 msgstr "&Ikke vis denne meldingen igjen"
 
 #: shlwapi.rc:27
-#, fuzzy
 msgid "%d bytes"
-msgstr "%ld byte"
+msgstr "%d byte"
 
 #: shlwapi.rc:28
-#, fuzzy
 msgctxt "time unit: hours"
 msgid " hr"
 msgstr " hr"
 
 #: shlwapi.rc:29
-#, fuzzy
 msgctxt "time unit: minutes"
 msgid " min"
 msgstr " min"
 
 #: shlwapi.rc:30
-#, fuzzy
 msgctxt "time unit: seconds"
 msgid " sec"
 msgstr " sec"
@@ -8719,7 +8686,6 @@ msgid "The specified device handle is invalid."
 msgstr "Det oppgitte enhetshåndtaket er ugyldig."
 
 #: winmm.rc:34
-#, fuzzy
 msgid "There is no driver installed on your system!"
 msgstr "Det er ingen driver installert på systemet!"
 
@@ -8752,7 +8718,6 @@ msgid "An invalid parameter was passed to a system function."
 msgstr "En ugyldig parameter ble gitt til en systemfunksjon."
 
 #: winmm.rc:42
-#, fuzzy
 msgid ""
 "The specified format is not supported or cannot be translated. Use the "
 "Capabilities function to determine the supported formats."
@@ -8938,7 +8903,6 @@ msgid "Cannot use 'all' as the device name with the specified command."
 msgstr "Kan ikke bruke 'all' som enhetsnavn med den oppgitte kommandoen."
 
 #: winmm.rc:77
-#, fuzzy
 msgid ""
 "Errors occurred in more than one device. Specify each command and device "
 "separately to determine which devices caused the error."
@@ -9290,9 +9254,8 @@ msgid "&Output File Name:"
 msgstr "&Ut-fil:"
 
 #: winspool.rc:28
-#, fuzzy
 msgid "The output file already exists. Click OK to overwrite."
-msgstr "Ut-filen finnes allerede.  Velg «OK» for å overskrive den."
+msgstr "Ut-filen finnes allerede. Velg «OK» for å overskrive den."
 
 #: winspool.rc:29
 msgid "Unable to create the output file."
@@ -12773,12 +12736,10 @@ msgid "Organi&zation:"
 msgstr "Organisasjon:"
 
 #: winecfg.rc:145
-#, fuzzy
 msgid "Application settings"
-msgstr " Programminnstillinger "
+msgstr "Programminnstillinger"
 
 #: winecfg.rc:146
-#, fuzzy
 msgid ""
 "Wine can mimic different Windows versions for each application. This tab is "
 "linked to the Libraries and Graphics tabs to allow you to change systemwide "
@@ -12801,9 +12762,8 @@ msgid "&Windows Version:"
 msgstr "&Windows-versjon:"
 
 #: winecfg.rc:160
-#, fuzzy
 msgid "Window settings"
-msgstr " Vinduinnstillinger "
+msgstr "Vinduinnstillinger"
 
 #: winecfg.rc:161
 msgid "Automatically capture the &mouse in full-screen windows"
@@ -12826,18 +12786,16 @@ msgid "Desktop &size:"
 msgstr "Størrelse:"
 
 #: winecfg.rc:171
-#, fuzzy
 msgid "Screen resolution"
-msgstr " Skjermoppløsning (styrer skriftstørrelse) "
+msgstr "Skjermoppløsning"
 
 #: winecfg.rc:175
 msgid "This is a sample text using 10 point Tahoma"
 msgstr "Forhåndsvisning av tekst med 10 punkters Tahoma"
 
 #: winecfg.rc:182
-#, fuzzy
 msgid "DLL overrides"
-msgstr " DLL-overstyring "
+msgstr "DLL-overstyring"
 
 #: winecfg.rc:183
 msgid ""
@@ -12870,9 +12828,8 @@ msgid "Edit Override"
 msgstr "Rediger overstyring"
 
 #: winecfg.rc:199
-#, fuzzy
 msgid "Load order"
-msgstr " Lastingsrekkefølge "
+msgstr "Lastingsrekkefølge"
 
 #: winecfg.rc:200
 msgid "&Builtin (Wine)"
@@ -12895,9 +12852,8 @@ msgid "Select Drive Letter"
 msgstr "Velg stasjonsbokstav"
 
 #: winecfg.rc:223
-#, fuzzy
 msgid "Drive mappings"
-msgstr " Stasjonkartlegging "
+msgstr "Stasjonkartlegging"
 
 #: winecfg.rc:224
 msgid ""
@@ -12972,9 +12928,8 @@ msgid "&Test Sound"
 msgstr "&Test"
 
 #: winecfg.rc:274
-#, fuzzy
 msgid "Appearance"
-msgstr " Utseende "
+msgstr "Utseende"
 
 #: winecfg.rc:275
 msgid "&Theme:"
@@ -12993,7 +12948,6 @@ msgid "C&olor:"
 msgstr "Farge:"
 
 #: winecfg.rc:290
-#, fuzzy
 msgid "Folders"
 msgstr "Mappe"
 
@@ -13010,7 +12964,6 @@ msgid "Drives"
 msgstr "Stasjoner"
 
 #: winecfg.rc:33
-#, fuzzy
 msgid "Select the Unix target directory, please."
 msgstr "Velg Unix-målkatalogen."
 
@@ -13067,9 +13020,8 @@ msgid "Selected driver: %s"
 msgstr ""
 
 #: winecfg.rc:82
-#, fuzzy
 msgid "(None)"
-msgstr "Ingen"
+msgstr "(Ingen)"
 
 #: winecfg.rc:83
 #, fuzzy
@@ -13118,9 +13070,8 @@ msgid "Default Settings"
 msgstr "Globale innstillinger"
 
 #: winecfg.rc:59
-#, fuzzy
 msgid "Wine Programs (*.exe; *.exe.so)"
-msgstr "Wine-programmer (*.exe,*.exe.so)"
+msgstr "Wine-programmer (*.exe; *.exe.so)"
 
 #: winecfg.rc:60
 msgid "Use global settings"
@@ -13152,7 +13103,6 @@ msgid "CD-ROM"
 msgstr "CD-ROM"
 
 #: winecfg.rc:71
-#, fuzzy
 msgid ""
 "You cannot add any more drives.\n"
 "\n"
@@ -13160,7 +13110,7 @@ msgid ""
 msgstr ""
 "Du kan ikke legge til flere stasjoner.\n"
 "\n"
-"Hver stasjon må ha en bokstav fra A til Z, så 26 stasjoner er det meste"
+"Hver stasjon må ha en bokstav fra A til Z, så 26 stasjoner er det meste."
 
 #: winecfg.rc:72
 msgid "System drive"
@@ -13179,7 +13129,6 @@ msgstr ""
 "ikke er der. Husk å lage den på nytt hvis du fortsetter!"
 
 #: winecfg.rc:74
-#, fuzzy
 msgctxt "Drive letter"
 msgid "Letter"
 msgstr "Bokstav"
@@ -13367,7 +13316,6 @@ msgid "Command history"
 msgstr "Kommandohistorikk"
 
 #: wineconsole.rc:73
-#, fuzzy
 msgid "&Number of recalled commands:"
 msgstr "A&ntall huskede kommandoer:"
 
@@ -13393,12 +13341,10 @@ msgid "Buffer zone"
 msgstr "Hurtigminnesone"
 
 #: wineconsole.rc:101
-#, fuzzy
 msgid "&Width:"
 msgstr "&Bredde:"
 
 #: wineconsole.rc:104
-#, fuzzy
 msgid "&Height:"
 msgstr "&Høyde:"
 
@@ -13407,12 +13353,10 @@ msgid "Window size"
 msgstr "Vindustørrelse"
 
 #: wineconsole.rc:109
-#, fuzzy
 msgid "W&idth:"
 msgstr "&Bredde:"
 
 #: wineconsole.rc:112
-#, fuzzy
 msgid "H&eight:"
 msgstr "Høyd&e:"
 
@@ -13477,9 +13421,8 @@ msgid "Screen buffer size must be greater or equal to the window's one"
 msgstr "Skjermens hurtigminnestørrelse må være større eller lik vinduets"
 
 #: wineconsole.rc:34
-#, fuzzy
 msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
-msgstr "Hvert tegn er %ld piksler bredt og %ld piksler høyt"
+msgstr "Hvert tegn er %1!u! piksler bredt og %2!u! piksler høyt"
 
 #: wineconsole.rc:35
 msgid "This is a test"
@@ -13536,13 +13479,11 @@ msgstr ""
 "konsoll\n"
 
 #: wineconsole.rc:50
-#, fuzzy
 msgid "  <command>                The Wine program to launch in the console.\n"
 msgstr ""
-"  <kommando>                Wine-programmet som skal kjøres i konsollet\n"
+"  <kommando>               Wine-programmet som skal kjøres i konsollet.\n"
 
 #: wineconsole.rc:51
-#, fuzzy
 msgid ""
 "\n"
 "Example:\n"
@@ -13553,7 +13494,7 @@ msgstr ""
 "\n"
 "Eksempel:\n"
 "  wineconsole cmd\n"
-"Starter Wine-ledeteksten i et Wine-konsoll\n"
+"Starter Wine-ledeteksten i et Wine-konsoll.\n"
 "\n"
 
 #: winedbg.rc:46
@@ -14302,9 +14243,8 @@ msgid "Unicode text document"
 msgstr "Tekstdokument (Unicode)"
 
 #: wordpad.rc:143
-#, fuzzy
 msgid "Printer files (*.prn)"
-msgstr "Skriverfiler (*.PRN)"
+msgstr "Skriverfiler (*.prn)"
 
 #: wordpad.rc:150
 msgid "Center"
@@ -14351,13 +14291,11 @@ msgid "Pages"
 msgstr "Sider"
 
 #: wordpad.rc:172
-#, fuzzy
 msgctxt "unit: centimeter"
 msgid "cm"
 msgstr "cm"
 
 #: wordpad.rc:173
-#, fuzzy
 msgctxt "unit: inch"
 msgid "in"
 msgstr "in"
@@ -14367,7 +14305,6 @@ msgid "inch"
 msgstr "tommer"
 
 #: wordpad.rc:175
-#, fuzzy
 msgctxt "unit: point"
 msgid "pt"
 msgstr "pt"
@@ -14397,12 +14334,10 @@ msgstr ""
 "formatering går tapt. Er du sikker på at du vil fortsette?"
 
 #: wordpad.rc:187
-#, fuzzy
 msgid "Invalid number format."
 msgstr "Ugyldig tallformat."
 
 #: wordpad.rc:188
-#, fuzzy
 msgid "OLE storage documents are not supported."
 msgstr "OLE storage-dokumenter støttes ikke."
 
