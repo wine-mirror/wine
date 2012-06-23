@@ -4450,6 +4450,44 @@ static void test_mxwriter_dtd(void)
         V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
+    /* attribute declaration */
+    V_VT(&dest) = VT_EMPTY;
+    hr = IMXWriter_put_output(writer, dest);
+    EXPECT_HR(hr, S_OK);
+
+    hr = ISAXDeclHandler_attributeDecl(decl, _bstr_("element"), strlen("element"),
+        _bstr_("attribute"), strlen("attribute"), _bstr_("CDATA"), strlen("CDATA"),
+        _bstr_("#REQUIRED"), strlen("#REQUIRED"), _bstr_("value"), strlen("value"));
+    EXPECT_HR(hr, S_OK);
+
+    V_VT(&dest) = VT_EMPTY;
+    hr = IMXWriter_get_output(writer, &dest);
+    EXPECT_HR(hr, S_OK);
+    ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
+    ok(!lstrcmpW(_bstr_("<!ATTLIST element attribute CDATA #REQUIRED \"value\">\r\n"),
+        V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    VariantClear(&dest);
+
+    hr = ISAXDeclHandler_attributeDecl(decl, _bstr_("element"), strlen("element"),
+        _bstr_("attribute2"), strlen("attribute2"), _bstr_("CDATA"), strlen("CDATA"),
+        _bstr_("#REQUIRED"), strlen("#REQUIRED"), _bstr_("value2"), strlen("value2"));
+    EXPECT_HR(hr, S_OK);
+
+    hr = ISAXDeclHandler_attributeDecl(decl, _bstr_("element2"), strlen("element2"),
+        _bstr_("attribute3"), strlen("attribute3"), _bstr_("CDATA"), strlen("CDATA"),
+        _bstr_("#REQUIRED"), strlen("#REQUIRED"), _bstr_("value3"), strlen("value3"));
+    EXPECT_HR(hr, S_OK);
+
+    V_VT(&dest) = VT_EMPTY;
+    hr = IMXWriter_get_output(writer, &dest);
+    EXPECT_HR(hr, S_OK);
+    ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
+    ok(!lstrcmpW(_bstr_("<!ATTLIST element attribute CDATA #REQUIRED \"value\">\r\n"
+                        "<!ATTLIST element attribute2 CDATA #REQUIRED \"value2\">\r\n"
+                        "<!ATTLIST element2 attribute3 CDATA #REQUIRED \"value3\">\r\n"),
+        V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    VariantClear(&dest);
+
     ISAXContentHandler_Release(content);
     ISAXLexicalHandler_Release(lexical);
     ISAXDeclHandler_Release(decl);
