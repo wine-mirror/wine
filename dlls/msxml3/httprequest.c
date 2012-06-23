@@ -695,6 +695,7 @@ static HRESULT BindStatusCallback_create(httprequest* This, BindStatusCallback *
             break;
         }
         case VT_EMPTY:
+        case VT_ERROR:
             ptr = NULL;
             size = 0;
             break;
