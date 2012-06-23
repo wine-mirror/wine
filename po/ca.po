@@ -1850,7 +1850,7 @@ msgstr "Ús de Clau Desconegut"
 
 #: crypt32.rc:191
 msgid "Subject Type="
-msgstr "Tipus d'Entitat"
+msgstr "Tipus d'Entitat="
 
 #: crypt32.rc:192
 msgctxt "Certificate Authority"
@@ -1863,7 +1863,7 @@ msgstr "Entitat Final"
 
 #: crypt32.rc:194
 msgid "Path Length Constraint="
-msgstr "Restricció de Longitud de Ruta"
+msgstr "Restricció de Longitud de Ruta="
 
 #: crypt32.rc:195
 msgctxt "path length"
