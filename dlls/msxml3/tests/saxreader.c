@@ -4488,6 +4488,27 @@ static void test_mxwriter_dtd(void)
         V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
+    /* internal entities */
+    V_VT(&dest) = VT_EMPTY;
+    hr = IMXWriter_put_output(writer, dest);
+    EXPECT_HR(hr, S_OK);
+
+    hr = ISAXDeclHandler_internalEntityDecl(decl, NULL, 0, NULL, 0);
+    EXPECT_HR(hr, E_INVALIDARG);
+
+    hr = ISAXDeclHandler_internalEntityDecl(decl, _bstr_("name"), -1, NULL, 0);
+    EXPECT_HR(hr, E_INVALIDARG);
+
+    hr = ISAXDeclHandler_internalEntityDecl(decl, _bstr_("name"), strlen("name"), _bstr_("value"), strlen("value"));
+    EXPECT_HR(hr, S_OK);
+
+    V_VT(&dest) = VT_EMPTY;
+    hr = IMXWriter_get_output(writer, &dest);
+    EXPECT_HR(hr, S_OK);
+    ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
+    ok(!lstrcmpW(_bstr_("<!ENTITY name \"value\">\r\n"), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    VariantClear(&dest);
+
     ISAXContentHandler_Release(content);
     ISAXLexicalHandler_Release(lexical);
     ISAXDeclHandler_Release(decl);
