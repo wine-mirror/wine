@@ -1071,7 +1071,8 @@ static HRESULT WINAPI SAXContentHandler_startElement(
     TRACE("(%p)->(%s %s %s %p)\n", This, debugstr_wn(namespaceUri, nnamespaceUri),
         debugstr_wn(local_name, nlocal_name), debugstr_wn(QName, nQName), attr);
 
-    if ((!namespaceUri || !local_name || !QName) && This->class_version != MSXML6)
+    if (((!namespaceUri || !local_name || !QName) && This->class_version != MSXML6) ||
+        (nQName == -1 && This->class_version == MSXML6))
         return E_INVALIDARG;
 
     close_element_starttag(This);
@@ -1139,13 +1140,13 @@ static HRESULT WINAPI SAXContentHandler_endElement(
     TRACE("(%p)->(%s:%d %s:%d %s:%d)\n", This, debugstr_wn(namespaceUri, nnamespaceUri), nnamespaceUri,
         debugstr_wn(local_name, nlocal_name), nlocal_name, debugstr_wn(QName, nQName), nQName);
 
-    if ((!namespaceUri || !local_name || !QName) && This->class_version != MSXML6)
+    if (((!namespaceUri || !local_name || !QName) && This->class_version != MSXML6) ||
+         (nQName == -1 && This->class_version == MSXML6))
         return E_INVALIDARG;
 
-    if (This->element && QName && !strncmpW(This->element, QName, nQName))
+    if (This->element)
     {
         static const WCHAR closeW[] = {'/','>'};
-
         write_output_buffer(This->buffer, closeW, 2);
     }
     else
