@@ -815,7 +815,7 @@ static HRESULT httprequest_open(httprequest *This, BSTR method, BSTR url,
 
     VariantInit(&is_async);
     hr = VariantChangeType(&is_async, &async, 0, VT_BOOL);
-    This->async = hr == S_OK && V_BOOL(&is_async) == VARIANT_TRUE;
+    This->async = hr == S_OK && V_BOOL(&is_async);
 
     VariantInit(&str);
     hr = VariantChangeType(&str, &user, 0, VT_BSTR);
