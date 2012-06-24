@@ -1061,11 +1061,15 @@ static NTSTATUS check_architecture( const IMAGE_NT_HEADERS *nt )
     }
 #elif defined(__arm__) && !defined(__ARMEB__)
     if (nt->FileHeader.Machine == IMAGE_FILE_MACHINE_ARM ||
-#if defined(__ARM_ARCH_7__) || defined(__ARM_ARCH_7A__) || defined(__ARM_ARCH_7R__)
-        nt->FileHeader.Machine == IMAGE_FILE_MACHINE_ARMV7 ||
-#endif
         nt->FileHeader.Machine == IMAGE_FILE_MACHINE_THUMB)
         return STATUS_SUCCESS;
+    if (nt->FileHeader.Machine == IMAGE_FILE_MACHINE_ARMV7)
+    {
+        SYSTEM_CPU_INFORMATION sci;
+        if (SUCCEEDED(NtQuerySystemInformation( SystemCpuInformation, &sci, sizeof(sci), NULL )) &&
+            sci.Architecture == PROCESSOR_ARCHITECTURE_ARM && sci.Level >= 7)
+            return STATUS_SUCCESS;
+    }
 #endif
 
     switch (nt->FileHeader.Machine)
