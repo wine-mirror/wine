@@ -403,22 +403,24 @@ static void output_asm_constructor( const char *constructor )
     }
     else
     {
-        output( "\n\t.section \".init\",\"ax\"\n" );
         switch(target_cpu)
         {
         case CPU_x86:
         case CPU_x86_64:
+            output( "\n\t.section \".init\",\"ax\"\n" );
             output( "\tcall %s\n", asm_name(constructor) );
             break;
         case CPU_SPARC:
+            output( "\n\t.section \".init\",\"ax\"\n" );
             output( "\tcall %s\n", asm_name(constructor) );
             output( "\tnop\n" );
             break;
         case CPU_ARM:
+            output( "\n\t.section \".text\",\"ax\"\n" );
             output( "\tblx %s\n", asm_name(constructor) );
-            output( "\t.arm\n" );
             break;
         case CPU_POWERPC:
+            output( "\n\t.section \".init\",\"ax\"\n" );
             output( "\tbl %s\n", asm_name(constructor) );
             break;
         }
@@ -452,20 +454,20 @@ void output_module( DLLSPEC *spec )
         output( "\t.skip %u\n", 65536 + page_size );
         break;
     default:
-        output( "\n\t.section \".init\",\"ax\"\n" );
         switch(target_cpu)
         {
         case CPU_x86:
         case CPU_x86_64:
         case CPU_SPARC:
+            output( "\n\t.section \".init\",\"ax\"\n" );
             output( "\tjmp 1f\n" );
             break;
         case CPU_ARM:
-            output( "\n\t.syntax unified\n" );
-            output( "\n\t.thumb\n" );
-            output( "\tb.w 1f\n" );
+            output( "\n\t.section \".text\",\"ax\"\n" );
+            output( "\tb 1f\n" );
             break;
         case CPU_POWERPC:
+            output( "\n\t.section \".init\",\"ax\"\n" );
             output( "\tb 1f\n" );
             break;
         }
