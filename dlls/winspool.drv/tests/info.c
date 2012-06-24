@@ -100,7 +100,7 @@ static DWORD deactivated_spooler_reported = 0;
     { \
         if (!deactivated_spooler_reported) { \
             deactivated_spooler_reported++; \
-            skip("The Service 'Spooler' is required for many test\n"); \
+            skip("The service 'Spooler' is required for many tests\n"); \
         } \
         return; \
     }
@@ -111,7 +111,7 @@ static DWORD access_denied_reported = 0;
     { \
         if (!access_denied_reported) { \
             access_denied_reported++; \
-            skip("More Access-Rights are required for many test\n"); \
+            skip("More access rights are required for many tests\n"); \
         } \
         return; \
     }
@@ -335,7 +335,7 @@ static void test_AddMonitor(void)
 
     if (0)
     {
-    /* This test crash with win9x on vmware (works with win9x on qemu 0.8.1) */
+    /* This test crashes win9x on vmware (works with win9x on qemu 0.8.1) */
     SetLastError(MAGIC_DEAD);
     res = AddMonitorA(NULL, 2, NULL);
     /* NT: unchanged,  9x: ERROR_PRIVILEGE_NOT_HELD */
@@ -365,7 +365,7 @@ static void test_AddMonitor(void)
 
     if (0)
     {
-    /* The Test is deactivated, because when mi2a.pName is NULL, the subkey
+    /* The test is deactivated, because when mi2a.pName is NULL, the subkey
        HKLM\System\CurrentControlSet\Control\Print\Monitors\C:\WINDOWS\SYSTEM
        or HKLM\System\CurrentControlSet\Control\Print\Monitors\ì
        is created on win9x and we do not want to hit this bug here. */
@@ -522,7 +522,7 @@ static void test_AddPortEx(void)
     }
     ok( res, "got %u with %u (expected '!= 0')\n", res, GetLastError());
 
-    /* Add a port, that already exist */
+    /* add a port that already exists */
     SetLastError(0xdeadbeef);
     res = pAddPortExA(NULL, 1, (LPBYTE) &pi, LocalPortA);
     ok( !res && (GetLastError() == ERROR_INVALID_PARAMETER),
@@ -807,7 +807,7 @@ static void test_EnumForms(LPSTR pName)
     RETURN_ON_DEACTIVATED_SPOOLER(res)
     if (!res || !hprinter)
     {
-        /* Open the local Printserver is not supported on win9x */
+        /* opening the local Printserver is not supported on win9x */
         if (pName) skip("Failed to open '%s' (not supported on win9x)\n", pName);
         return;
     }
@@ -819,16 +819,16 @@ static void test_EnumForms(LPSTR pName)
         SetLastError(0xdeadbeef);
         res = EnumFormsA(hprinter, level, NULL, 0, &cbBuf, &pcReturned);
 
-        /* EnumForms is not implemented in win9x */
+        /* EnumForms is not implemented on win9x */
         if (!res && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)) continue;
 
-        /* EnumForms for the Server not implemented on all NT-Versions */
+        /* EnumForms for the server is not implemented on all NT-versions */
         if (!res && (GetLastError() == ERROR_INVALID_HANDLE) && !pName) continue;
 
         /* Level 2 for EnumForms is not supported on all systems */
         if (!res && (GetLastError() == ERROR_INVALID_LEVEL) && (level == 2)) continue;
 
-        /* use only a short test, when we test with an invalid level */
+        /* use only a short test when testing an invalid level */
         if(!level || (level > 2)) {
             ok( (!res && (GetLastError() == ERROR_INVALID_LEVEL)) ||
                 (res && (pcReturned == 0)),
@@ -942,7 +942,7 @@ static void test_EnumMonitors(void)
         if (!res && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)) continue;
 
 
-        /* use only a short test, when we test with an invalid level */
+        /* use only a short test when testing an invalid level */
         if(!level || (level > 2)) {
             ok( (!res && (GetLastError() == ERROR_INVALID_LEVEL)) ||
                 (res && (pcReturned == 0)),
@@ -1048,7 +1048,7 @@ static void test_EnumPorts(void)
         res = EnumPortsA(NULL, level, NULL, 0, &cbBuf, &pcReturned);
         RETURN_ON_DEACTIVATED_SPOOLER(res)
 
-        /* use only a short test, when we test with an invalid level */
+        /* use only a short test when testing an invalid level */
         if(!level || (level > 2)) {
             /* NT: ERROR_INVALID_LEVEL, 9x: success */
             ok( (!res && (GetLastError() == ERROR_INVALID_LEVEL)) ||
@@ -1147,7 +1147,7 @@ static void test_EnumPrinterDrivers(void)
         res = EnumPrinterDriversA(NULL, NULL, level, NULL, 0, &cbBuf, &pcReturned);
         RETURN_ON_DEACTIVATED_SPOOLER(res)
 
-        /* use only a short test, when we test with an invalid level */
+        /* use only a short test when testing an invalid level */
         if(!level || (level == 7) || (level > 8)) {
 
             ok( (!res && (GetLastError() == ERROR_INVALID_LEVEL)) ||
@@ -1158,7 +1158,7 @@ static void test_EnumPrinterDrivers(void)
             continue;
         }
 
-        /* some level are not supported in all windows versions */
+        /* some levels are not supported on all windows versions */
         if (!res && (GetLastError() == ERROR_INVALID_LEVEL)) {
             skip("Level %d not supported\n", level);
             continue;
@@ -1193,7 +1193,7 @@ static void test_EnumPrinterDrivers(void)
         ok(res, "(%u) got %u with %u (expected '!=0')\n", level, res, GetLastError());
         ok(pcbNeeded == cbBuf, "(%d) returned %d (expected %d)\n", level, pcbNeeded, cbBuf);
 
-        /* validate the returned Data here */
+        /* validate the returned data here */
         if (level > 1) {
             LPDRIVER_INFO_2A di = (LPDRIVER_INFO_2A) buffer;
 
@@ -1310,7 +1310,7 @@ static void test_EnumPrintProcessors(void)
     pcbNeeded = 0xdeadbeef;
     res = EnumPrintProcessorsA(NULL, NULL, 1, buffer, cbBuf, &pcbNeeded, &pcReturned);
     ok(res, "got %u with %u (expected '!=0')\n", res, GetLastError());
-    /* validate the returned Data here. */
+    /* validate the returned data here. */
 
 
     SetLastError(0xdeadbeef);
@@ -1365,7 +1365,7 @@ static void test_EnumPrintProcessors(void)
 
     /* failure-Codes for NULL */
     if (0) {
-        /* this test crash on win98se */
+        /* this test crashes on win98se */
         SetLastError(0xdeadbeef);
         pcbNeeded = 0xdeadbeef;
         pcReturned = 0xdeadbeef;
@@ -1639,7 +1639,7 @@ static void test_GetPrintProcessorDirectory(void)
 
     SetLastError(0xdeadbeef);
     res = GetPrintProcessorDirectoryA(NULL, NULL, 1, NULL, 0, &cbBuf);
-    /* The deactivated Spooler is caught here on NT3.51 */
+    /* The deactivated spooler is caught here on NT3.51 */
     RETURN_ON_DEACTIVATED_SPOOLER(res)
     ok( !res && (GetLastError() == ERROR_INSUFFICIENT_BUFFER),
         "returned %d with %d (expected '0' with ERROR_INSUFFICIENT_BUFFER)\n",
@@ -1713,7 +1713,7 @@ static void test_GetPrintProcessorDirectory(void)
     buffer[0] = '\0';
     SetLastError(0xdeadbeef);
     res = GetPrintProcessorDirectoryA(NULL, NULL, 2, buffer, cbBuf, &pcbNeeded);
-    /* Level is ignored in win9x*/
+    /* Level is ignored on win9x*/
     ok( (!res && (GetLastError() == ERROR_INVALID_LEVEL)) ||
         broken(res && buffer[0]),
         "returned %d with %d (expected '0' with ERROR_INVALID_LEVEL)\n",
@@ -1740,7 +1740,7 @@ static void test_GetPrintProcessorDirectory(void)
         "returned %d with %d (expected '!= 0' or '0' with "
         "ERROR_INVALID_ENVIRONMENT)\n", res, GetLastError());
 
-    /* invalid on all Systems */
+    /* invalid on all systems */
     buffer[0] = '\0';
     SetLastError(0xdeadbeef);
     res = GetPrintProcessorDirectoryA(NULL, invalid_env, 1, buffer, cbBuf*2, &pcbNeeded);
@@ -1754,7 +1754,7 @@ static void test_GetPrintProcessorDirectory(void)
     res = GetPrintProcessorDirectoryA(empty, NULL, 1, buffer, cbBuf*2, &pcbNeeded);
     ok(res, "returned %d with %d (expected '!= 0')\n", res, GetLastError());
 
-    /* invalid on all Systems */
+    /* invalid on all systems */
     buffer[0] = '\0';
     SetLastError(0xdeadbeef);
     res = GetPrintProcessorDirectoryA(server_does_not_exist, NULL, 1, buffer, cbBuf*2, &pcbNeeded);
@@ -1777,7 +1777,7 @@ static void test_OpenPrinter(void)
 
     SetLastError(MAGIC_DEAD);
     res = OpenPrinter(NULL, NULL, NULL);    
-    /* The deactivated Spooler is caught here on NT3.51 */
+    /* The deactivated spooler is caught here on NT3.51 */
     RETURN_ON_DEACTIVATED_SPOOLER(res)
     ok(!res && (GetLastError() == ERROR_INVALID_PARAMETER),
         "returned %d with %d (expected '0' with ERROR_INVALID_PARAMETER)\n",
@@ -1788,7 +1788,7 @@ static void test_OpenPrinter(void)
     hprinter = (HANDLE) MAGIC_DEAD;
     SetLastError(MAGIC_DEAD);
     res = OpenPrinter(NULL, &hprinter, NULL);
-    /* The deactivated Spooler is caught here on XPsp2 */
+    /* The deactivated spooler is caught here on XPsp2 */
     RETURN_ON_DEACTIVATED_SPOOLER(res)
     ok(res || (!res && GetLastError() == ERROR_INVALID_PARAMETER),
         "returned %d with %d (expected '!=0' or '0' with ERROR_INVALID_PARAMETER)\n",
@@ -1852,7 +1852,7 @@ static void test_OpenPrinter(void)
     if(res) ClosePrinter(hprinter);
 
 
-    /* Get Handle for the default Printer */
+    /* get handle for the default printer */
     if (default_printer)
     {
         hprinter = (HANDLE) MAGIC_DEAD;
@@ -1860,7 +1860,7 @@ static void test_OpenPrinter(void)
         res = OpenPrinter(default_printer, &hprinter, NULL);
         if((!res) && (GetLastError() == RPC_S_SERVER_UNAVAILABLE))
         {
-            trace("The Service 'Spooler' is required for '%s'\n", default_printer);
+            trace("The service 'Spooler' is required for '%s'\n", default_printer);
             return;
         }
         ok(res, "returned %d with %d (expected '!=0')\n", res, GetLastError());
@@ -2001,7 +2001,7 @@ static void test_SetDefaultPrinter(void)
     if ((res == 0) && (GetLastError() == RPC_S_SERVER_UNAVAILABLE))     {
         if (!deactivated_spooler_reported) {
             deactivated_spooler_reported++;
-            skip("The Service 'Spooler' is required for many test\n");
+            skip("The service 'Spooler' is required for many tests\n");
         }
         goto restore_old_printer;
     }
@@ -2218,7 +2218,7 @@ static void test_XcvDataW_PortIsValid(void)
         "ERROR_PATH_NOT_FOUND or ERROR_ACCESS_DENIED)\n",
         res, GetLastError(), needed, status);
 
-    /* more valid well known Ports */
+    /* more valid well known ports */
     needed = (DWORD) 0xdeadbeef;
     status = (DWORD) 0xdeadbeef;
     SetLastError(0xdeadbeef);
@@ -2837,7 +2837,7 @@ static void test_DeviceCapabilities(void)
     ok(n_copies > 0, "DeviceCapabilities DC_COPIES failed\n");
     trace("n_copies = %d\n", n_copies);
 
-    /* these capabilities not available on all printer drivers */
+    /* these capabilities are not available on all printer drivers */
     if (0)
     {
         ret = DeviceCapabilities(device, port, DC_MAXEXTENT, NULL, NULL);
