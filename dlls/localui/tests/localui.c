@@ -72,7 +72,7 @@ static PORT_INFO_2W * find_portinfo2(LPWSTR pPort)
     if (!pi_buffer) {
         res = EnumPortsW(NULL, 2, NULL, 0, &pi_needed, &pi_numports);
         if (!res && (GetLastError() == RPC_S_SERVER_UNAVAILABLE)) {
-            win_skip("The Service 'Spooler' is required for many test\n");
+            win_skip("The service 'Spooler' is required for many tests\n");
             return NULL;
         }
         ok(!res, "EnumPorts succeeded: got %d\n", res);
@@ -165,12 +165,12 @@ static void test_AddPortUI(void)
         SetLastError(0xdeadbeef);
         new_portname = NULL;
         /*
-         * - On MSDN, you can read, that no dialogs should be displayed, when hWnd
+         * - On MSDN, you can read that no dialog should be displayed when hWnd
          *   is NULL, but native localui does not care
-         * - when the new port already exist,
+         * - When the new port already exists,
          *   TRUE is returned, but new_portname is NULL
-         * - when the new port starts with "COM" or "LPT",
-         *   FALSE is returned with ERROR_NOT_SUPPORTED in windows
+         * - When the new port starts with "COM" or "LPT",
+         *   FALSE is returned with ERROR_NOT_SUPPORTED on windows
          */
         res = pAddPortUI(NULL, NULL, localportW, &new_portname);
         ok( res ||
@@ -297,7 +297,7 @@ START_TEST(localui)
         }
     }
 
-    /* find installed Ports */
+    /* find installed ports */
 
     /* "FILE:" */
     file_present = find_portinfo2(portname_fileW);
