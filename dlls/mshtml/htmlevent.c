@@ -1386,7 +1386,7 @@ void check_event_attr(HTMLDocumentNode *doc, nsIDOMElement *nselem)
 
             TRACE("%p.%s = %s\n", nselem, debugstr_w(event_info[i].attr_name), debugstr_w(attr_value));
 
-            disp = script_parse_event(doc->basedoc.window, attr_value);
+            disp = script_parse_event(doc->basedoc.window->base.inner_window, attr_value);
             if(disp) {
                 hres = get_node(doc, (nsIDOMNode*)nselem, TRUE, &node);
                 if(SUCCEEDED(hres)) {

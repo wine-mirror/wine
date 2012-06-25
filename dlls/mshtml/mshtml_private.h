@@ -334,7 +334,6 @@ struct HTMLOuterWindow {
     IHTMLEventObj *event;
 
     SCRIPTMODE scriptmode;
-    struct list script_hosts;
 
     IInternetSecurityManager *secmgr;
 
@@ -353,6 +352,8 @@ struct HTMLInnerWindow {
     DispatchEx dispex;
 
     HTMLDocumentNode *doc;
+
+    struct list script_hosts;
 
     HTMLOptionElementFactory *option_factory;
 
@@ -843,13 +844,13 @@ void release_nodes(HTMLDocumentNode*) DECLSPEC_HIDDEN;
 
 HTMLElement *unsafe_impl_from_IHTMLElement(IHTMLElement*) DECLSPEC_HIDDEN;
 
-void release_script_hosts(HTMLOuterWindow*) DECLSPEC_HIDDEN;
-void connect_scripts(HTMLOuterWindow*) DECLSPEC_HIDDEN;
-void doc_insert_script(HTMLOuterWindow*,nsIDOMHTMLScriptElement*) DECLSPEC_HIDDEN;
-IDispatch *script_parse_event(HTMLOuterWindow*,LPCWSTR) DECLSPEC_HIDDEN;
-HRESULT exec_script(HTMLOuterWindow*,const WCHAR*,const WCHAR*,VARIANT*) DECLSPEC_HIDDEN;
+void release_script_hosts(HTMLInnerWindow*) DECLSPEC_HIDDEN;
+void connect_scripts(HTMLInnerWindow*) DECLSPEC_HIDDEN;
+void doc_insert_script(HTMLInnerWindow*,nsIDOMHTMLScriptElement*) DECLSPEC_HIDDEN;
+IDispatch *script_parse_event(HTMLInnerWindow*,LPCWSTR) DECLSPEC_HIDDEN;
+HRESULT exec_script(HTMLInnerWindow*,const WCHAR*,const WCHAR*,VARIANT*) DECLSPEC_HIDDEN;
 void set_script_mode(HTMLOuterWindow*,SCRIPTMODE) DECLSPEC_HIDDEN;
-BOOL find_global_prop(HTMLOuterWindow*,BSTR,DWORD,ScriptHost**,DISPID*) DECLSPEC_HIDDEN;
+BOOL find_global_prop(HTMLInnerWindow*,BSTR,DWORD,ScriptHost**,DISPID*) DECLSPEC_HIDDEN;
 IDispatch *get_script_disp(ScriptHost*) DECLSPEC_HIDDEN;
 HRESULT search_window_props(HTMLInnerWindow*,BSTR,DWORD,DISPID*) DECLSPEC_HIDDEN;
 

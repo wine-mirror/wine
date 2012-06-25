@@ -66,7 +66,7 @@ struct ScriptHost {
 
     SCRIPTSTATE script_state;
 
-    HTMLOuterWindow *window;
+    HTMLInnerWindow *window;
 
     GUID guid;
     struct list entry;
@@ -211,7 +211,7 @@ static void release_script_engine(ScriptHost *This)
     This->script_state = SCRIPTSTATE_UNINITIALIZED;
 }
 
-void connect_scripts(HTMLOuterWindow *window)
+void connect_scripts(HTMLInnerWindow *window)
 {
     ScriptHost *iter;
 
@@ -316,11 +316,11 @@ static HRESULT WINAPI ActiveScriptSite_GetItemInfo(IActiveScriptSite *iface, LPC
     if(strcmpW(pstrName, windowW))
         return DISP_E_MEMBERNOTFOUND;
 
-    if(!This->window)
+    if(!This->window || !This->window->base.outer_window)
         return E_FAIL;
 
     /* FIXME: Return proxy object */
-    *ppiunkItem = (IUnknown*)&This->window->base.IHTMLWindow2_iface;
+    *ppiunkItem = (IUnknown*)&This->window->base.outer_window->base.IHTMLWindow2_iface;
     IUnknown_AddRef(*ppiunkItem);
 
     return S_OK;
@@ -591,7 +591,7 @@ static const IServiceProviderVtbl ASServiceProviderVtbl = {
     ASServiceProvider_QueryService
 };
 
-static ScriptHost *create_script_host(HTMLOuterWindow *window, const GUID *guid)
+static ScriptHost *create_script_host(HTMLInnerWindow *window, const GUID *guid)
 {
     ScriptHost *ret;
     HRESULT hres;
@@ -796,7 +796,7 @@ static BOOL get_script_guid(nsIDOMHTMLScriptElement *nsscript, GUID *guid)
     return ret;
 }
 
-static ScriptHost *get_script_host(HTMLOuterWindow *window, const GUID *guid)
+static ScriptHost *get_script_host(HTMLInnerWindow *window, const GUID *guid)
 {
     ScriptHost *iter;
 
@@ -808,7 +808,7 @@ static ScriptHost *get_script_host(HTMLOuterWindow *window, const GUID *guid)
     return create_script_host(window, guid);
 }
 
-void doc_insert_script(HTMLOuterWindow *window, nsIDOMHTMLScriptElement *nsscript)
+void doc_insert_script(HTMLInnerWindow *window, nsIDOMHTMLScriptElement *nsscript)
 {
     ScriptHost *script_host;
     GUID guid;
@@ -818,7 +818,8 @@ void doc_insert_script(HTMLOuterWindow *window, nsIDOMHTMLScriptElement *nsscrip
         return;
     }
 
-    if(IsEqualGUID(&CLSID_JScript, &guid) && window->scriptmode != SCRIPTMODE_ACTIVESCRIPT) {
+    if(IsEqualGUID(&CLSID_JScript, &guid)
+       && (!window->base.outer_window || window->base.outer_window->scriptmode != SCRIPTMODE_ACTIVESCRIPT)) {
         TRACE("Ignoring JScript\n");
         return;
     }
@@ -831,7 +832,7 @@ void doc_insert_script(HTMLOuterWindow *window, nsIDOMHTMLScriptElement *nsscrip
         parse_script_elem(script_host, nsscript);
 }
 
-IDispatch *script_parse_event(HTMLOuterWindow *window, LPCWSTR text)
+IDispatch *script_parse_event(HTMLInnerWindow *window, LPCWSTR text)
 {
     ScriptHost *script_host;
     GUID guid = CLSID_JScript;
@@ -864,7 +865,8 @@ IDispatch *script_parse_event(HTMLOuterWindow *window, LPCWSTR text)
         ptr = text;
     }
 
-    if(IsEqualGUID(&CLSID_JScript, &guid) && window->scriptmode != SCRIPTMODE_ACTIVESCRIPT) {
+    if(IsEqualGUID(&CLSID_JScript, &guid)
+       && (!window->base.outer_window || window->base.outer_window->scriptmode != SCRIPTMODE_ACTIVESCRIPT)) {
         TRACE("Ignoring JScript\n");
         return NULL;
     }
@@ -885,7 +887,7 @@ IDispatch *script_parse_event(HTMLOuterWindow *window, LPCWSTR text)
     return disp;
 }
 
-HRESULT exec_script(HTMLOuterWindow *window, const WCHAR *code, const WCHAR *lang, VARIANT *ret)
+HRESULT exec_script(HTMLInnerWindow *window, const WCHAR *code, const WCHAR *lang, VARIANT *ret)
 {
     ScriptHost *script_host;
     EXCEPINFO ei;
@@ -936,7 +938,7 @@ IDispatch *get_script_disp(ScriptHost *script_host)
     return disp;
 }
 
-BOOL find_global_prop(HTMLOuterWindow *window, BSTR name, DWORD flags, ScriptHost **ret_host, DISPID *ret_id)
+BOOL find_global_prop(HTMLInnerWindow *window, BSTR name, DWORD flags, ScriptHost **ret_host, DISPID *ret_id)
 {
     IDispatchEx *dispex;
     IDispatch *disp;
@@ -1015,7 +1017,7 @@ void set_script_mode(HTMLOuterWindow *window, SCRIPTMODE mode)
         ERR("JavaScript setup failed: %08x\n", nsres);
 }
 
-void release_script_hosts(HTMLOuterWindow *window)
+void release_script_hosts(HTMLInnerWindow *window)
 {
     ScriptHost *iter;
 

@@ -208,8 +208,6 @@ static void release_outer_window(HTMLOuterWindow *This)
     This->window_ref->window = NULL;
     windowref_release(This->window_ref);
 
-    release_script_hosts(This);
-
     if(This->nswindow)
         nsIDOMWindow_Release(This->nswindow);
 
@@ -220,6 +218,8 @@ static void release_outer_window(HTMLOuterWindow *This)
 static void release_inner_window(HTMLInnerWindow *This)
 {
     unsigned i;
+
+    release_script_hosts(This);
 
     htmldoc_release(&This->doc->basedoc);
     release_dispex(&This->dispex);
@@ -1183,7 +1183,7 @@ static HRESULT WINAPI HTMLWindow2_execScript(IHTMLWindow2 *iface, BSTR scode, BS
 
     TRACE("(%p)->(%s %s %p)\n", This, debugstr_w(scode), debugstr_w(language), pvarRet);
 
-    return exec_script(This->outer_window, scode, language, pvarRet);
+    return exec_script(This->inner_window, scode, language, pvarRet);
 }
 
 static HRESULT WINAPI HTMLWindow2_toString(IHTMLWindow2 *iface, BSTR *String)
@@ -1468,7 +1468,7 @@ static HRESULT window_set_timer(HTMLInnerWindow *This, VARIANT *expr, LONG msec,
         break;
 
     case VT_BSTR:
-        disp = script_parse_event(This->base.outer_window, V_BSTR(expr));
+        disp = script_parse_event(This->base.inner_window, V_BSTR(expr));
         break;
 
     default:
@@ -2238,7 +2238,7 @@ HRESULT search_window_props(HTMLInnerWindow *This, BSTR bstrName, DWORD grfdex, 
         }
     }
 
-    if(find_global_prop(This->base.outer_window, bstrName, grfdex, &script_host, &id)) {
+    if(find_global_prop(This->base.inner_window, bstrName, grfdex, &script_host, &id)) {
         global_prop_t *prop;
 
         prop = alloc_global_prop(This, GLOBAL_SCRIPTVAR, bstrName);
@@ -2580,6 +2580,8 @@ static HRESULT create_inner_window(HTMLOuterWindow *outer_window, HTMLDocumentNo
     if(!window)
         return E_OUTOFMEMORY;
 
+    list_init(&window->script_hosts);
+
     window->base.outer_window = outer_window;
     window->base.inner_window = window;
 
@@ -2623,7 +2625,6 @@ HRESULT HTMLOuterWindow_Create(HTMLDocumentObj *doc_obj, nsIDOMWindow *nswindow,
 
     window->scriptmode = parent ? parent->scriptmode : SCRIPTMODE_GECKO;
     window->readystate = READYSTATE_UNINITIALIZED;
-    list_init(&window->script_hosts);
 
     hres = update_window_doc(window);
     if(FAILED(hres)) {
@@ -2663,7 +2664,7 @@ static HRESULT window_set_docnode(HTMLOuterWindow *window, HTMLDocumentNode *doc
             window->base.inner_window->doc->basedoc.cp_container.forward_container = NULL;
         detach_events(window->base.inner_window->doc);
         abort_document_bindings(window->base.inner_window->doc);
-        release_script_hosts(window);
+        release_script_hosts(window->base.inner_window);
     }
 
     if(doc_node) {

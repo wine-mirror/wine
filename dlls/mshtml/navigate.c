@@ -1807,7 +1807,7 @@ static void navigate_javascript_proc(task_t *_task)
     set_download_state(window->doc_obj, 1);
 
     V_VT(&v) = VT_EMPTY;
-    hres = exec_script(window, code, jscriptW, &v);
+    hres = exec_script(window->base.inner_window, code, jscriptW, &v);
     SysFreeString(code);
     if(SUCCEEDED(hres) && V_VT(&v) != VT_EMPTY) {
         FIXME("javascirpt URL returned %s\n", debugstr_variant(&v));
