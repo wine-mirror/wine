@@ -344,10 +344,6 @@ struct HTMLOuterWindow {
     IHTMLScreen *screen;
     IOmHistory *history;
 
-    global_prop_t *global_props;
-    DWORD global_prop_cnt;
-    DWORD global_prop_size;
-
     struct list children;
     struct list sibling_entry;
     struct list entry;
@@ -358,6 +354,10 @@ struct HTMLInnerWindow {
     DispatchEx dispex;
 
     HTMLDocumentNode *doc;
+
+    global_prop_t *global_props;
+    DWORD global_prop_cnt;
+    DWORD global_prop_size;
 };
 
 typedef enum {
@@ -850,7 +850,7 @@ HRESULT exec_script(HTMLOuterWindow*,const WCHAR*,const WCHAR*,VARIANT*) DECLSPE
 void set_script_mode(HTMLOuterWindow*,SCRIPTMODE) DECLSPEC_HIDDEN;
 BOOL find_global_prop(HTMLOuterWindow*,BSTR,DWORD,ScriptHost**,DISPID*) DECLSPEC_HIDDEN;
 IDispatch *get_script_disp(ScriptHost*) DECLSPEC_HIDDEN;
-HRESULT search_window_props(HTMLOuterWindow*,BSTR,DWORD,DISPID*) DECLSPEC_HIDDEN;
+HRESULT search_window_props(HTMLInnerWindow*,BSTR,DWORD,DISPID*) DECLSPEC_HIDDEN;
 
 HRESULT wrap_iface(IUnknown*,IUnknown*,IUnknown**) DECLSPEC_HIDDEN;
 

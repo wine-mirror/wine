@@ -180,8 +180,6 @@ static ULONG WINAPI HTMLWindow2_AddRef(IHTMLWindow2 *iface)
 
 static void release_outer_window(HTMLOuterWindow *This)
 {
-    unsigned i;
-
     remove_target_tasks(This->task_magic);
     set_window_bscallback(This, NULL);
     set_current_mon(This, NULL);
@@ -212,13 +210,9 @@ static void release_outer_window(HTMLOuterWindow *This)
     if(This->screen)
         IHTMLScreen_Release(This->screen);
 
-    for(i=0; i < This->global_prop_cnt; i++)
-        heap_free(This->global_props[i].name);
-
     This->window_ref->window = NULL;
     windowref_release(This->window_ref);
 
-    heap_free(This->global_props);
     release_script_hosts(This);
 
     if(This->nswindow)
@@ -230,8 +224,15 @@ static void release_outer_window(HTMLOuterWindow *This)
 
 static void release_inner_window(HTMLInnerWindow *This)
 {
+    unsigned i;
+
     htmldoc_release(&This->doc->basedoc);
     release_dispex(&This->dispex);
+
+    for(i=0; i < This->global_prop_cnt; i++)
+        heap_free(This->global_props[i].name);
+    heap_free(This->global_props);
+
     heap_free(This);
 }
 
@@ -2186,7 +2187,7 @@ static HRESULT WINAPI WindowDispEx_Invoke(IDispatchEx *iface, DISPID dispIdMembe
             pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
-static global_prop_t *alloc_global_prop(HTMLOuterWindow *This, global_prop_type_t type, BSTR name)
+static global_prop_t *alloc_global_prop(HTMLInnerWindow *This, global_prop_type_t type, BSTR name)
 {
     if(This->global_prop_cnt == This->global_prop_size) {
         global_prop_t *new_props;
@@ -2213,12 +2214,12 @@ static global_prop_t *alloc_global_prop(HTMLOuterWindow *This, global_prop_type_
     return This->global_props + This->global_prop_cnt++;
 }
 
-static inline DWORD prop_to_dispid(HTMLOuterWindow *This, global_prop_t *prop)
+static inline DWORD prop_to_dispid(HTMLInnerWindow *This, global_prop_t *prop)
 {
     return MSHTML_DISPID_CUSTOM_MIN + (prop-This->global_props);
 }
 
-HRESULT search_window_props(HTMLOuterWindow *This, BSTR bstrName, DWORD grfdex, DISPID *pid)
+HRESULT search_window_props(HTMLInnerWindow *This, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
     DWORD i;
     ScriptHost *script_host;
@@ -2232,7 +2233,7 @@ HRESULT search_window_props(HTMLOuterWindow *This, BSTR bstrName, DWORD grfdex, 
         }
     }
 
-    if(find_global_prop(This, bstrName, grfdex, &script_host, &id)) {
+    if(find_global_prop(This->base.outer_window, bstrName, grfdex, &script_host, &id)) {
         global_prop_t *prop;
 
         prop = alloc_global_prop(This, GLOBAL_SCRIPTVAR, bstrName);
@@ -2252,7 +2253,7 @@ HRESULT search_window_props(HTMLOuterWindow *This, BSTR bstrName, DWORD grfdex, 
 static HRESULT WINAPI WindowDispEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
     HTMLWindow *This = impl_from_IDispatchEx(iface);
-    HTMLOuterWindow *window = This->outer_window;
+    HTMLInnerWindow *window = This->inner_window;
     HRESULT hres;
 
     TRACE("(%p)->(%s %x %p)\n", This, debugstr_w(bstrName), grfdex, pid);
@@ -2450,10 +2451,10 @@ static HRESULT HTMLWindow_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD 
     HRESULT hres;
 
     idx = id - MSHTML_DISPID_CUSTOM_MIN;
-    if(idx >= This->base.outer_window->global_prop_cnt)
+    if(idx >= This->global_prop_cnt)
         return DISP_E_MEMBERNOTFOUND;
 
-    prop = This->base.outer_window->global_props+idx;
+    prop = This->global_props+idx;
 
     switch(prop->type) {
     case GLOBAL_SCRIPTVAR: {

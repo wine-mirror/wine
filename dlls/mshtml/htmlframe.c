@@ -231,7 +231,7 @@ static HRESULT HTMLFrameElement_get_dispid(HTMLDOMNode *iface, BSTR name,
     if(!This->framebase.content_window)
         return DISP_E_UNKNOWNNAME;
 
-    return search_window_props(This->framebase.content_window, name, grfdex, pid);
+    return search_window_props(This->framebase.content_window->base.inner_window, name, grfdex, pid);
 }
 
 static HRESULT HTMLFrameElement_invoke(HTMLDOMNode *iface, DISPID id, LCID lcid,
