@@ -486,35 +486,6 @@ COLORREF WINAPI GetPixel( HDC hdc, INT x, INT y )
 
 
 /******************************************************************************
- * ChoosePixelFormat [GDI32.@]
- * Matches a pixel format to given format
- *
- * PARAMS
- *    hdc  [I] Device context to search for best pixel match
- *    ppfd [I] Pixel format for which a match is sought
- *
- * RETURNS
- *    Success: Pixel format index closest to given format
- *    Failure: 0
- */
-INT WINAPI ChoosePixelFormat( HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd )
-{
-    INT ret = 0;
-    DC * dc = get_dc_ptr( hdc );
-
-    TRACE("(%p,%p)\n",hdc,ppfd);
-
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pChoosePixelFormat );
-        ret = physdev->funcs->pChoosePixelFormat( physdev, ppfd );
-        release_dc_ptr( dc );
-    }
-    return ret;
-}
-
-
-/******************************************************************************
  * SetPixelFormat [GDI32.@]
  * Sets pixel format of device context
  *

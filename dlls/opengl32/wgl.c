@@ -51,7 +51,6 @@ static struct
     BOOL  (WINAPI *p_SetPixelFormat)(HDC hdc, INT iPixelFormat, const PIXELFORMATDESCRIPTOR *ppfd);
     BOOL  (WINAPI *p_wglMakeCurrent)(HDC hdc, HGLRC hglrc);
     HGLRC (WINAPI *p_wglCreateContext)(HDC hdc);
-    INT   (WINAPI *p_ChoosePixelFormat)(HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd);
     INT   (WINAPI *p_DescribePixelFormat)(HDC hdc, INT iPixelFormat, UINT nBytes, LPPIXELFORMATDESCRIPTOR ppfd);
     INT   (WINAPI *p_GetPixelFormat)(HDC hdc);
 
@@ -175,7 +174,162 @@ HGLRC WINAPI wglGetCurrentContext(void)
  */
 INT WINAPI wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd)
 {
-  return wine_wgl.p_ChoosePixelFormat(hdc, ppfd);
+    PIXELFORMATDESCRIPTOR format, best;
+    int i, count, best_format;
+    int bestDBuffer = -1, bestStereo = -1;
+
+    TRACE_(wgl)( "%p %p: size %u version %u flags %u type %u color %u %u,%u,%u,%u "
+                 "accum %u depth %u stencil %u aux %u\n",
+                 hdc, ppfd, ppfd->nSize, ppfd->nVersion, ppfd->dwFlags, ppfd->iPixelType,
+                 ppfd->cColorBits, ppfd->cRedBits, ppfd->cGreenBits, ppfd->cBlueBits, ppfd->cAlphaBits,
+                 ppfd->cAccumBits, ppfd->cDepthBits, ppfd->cStencilBits, ppfd->cAuxBuffers );
+
+    count = wine_wgl.p_DescribePixelFormat( hdc, 0, 0, NULL );
+    if (!count) return 0;
+
+    best_format = 0;
+    best.dwFlags = 0;
+    best.cAlphaBits = -1;
+    best.cColorBits = -1;
+    best.cDepthBits = -1;
+    best.cStencilBits = -1;
+    best.cAuxBuffers = -1;
+
+    for (i = 1; i <= count; i++)
+    {
+        if (!wine_wgl.p_DescribePixelFormat( hdc, i, sizeof(format), &format )) continue;
+
+        if (ppfd->iPixelType != format.iPixelType)
+        {
+            TRACE( "pixel type mismatch for iPixelFormat=%d\n", i );
+            continue;
+        }
+
+        /* only use bitmap capable for formats for bitmap rendering */
+        if( (ppfd->dwFlags & PFD_DRAW_TO_BITMAP) != (format.dwFlags & PFD_DRAW_TO_BITMAP))
+        {
+            TRACE( "PFD_DRAW_TO_BITMAP mismatch for iPixelFormat=%d\n", i );
+            continue;
+        }
+
+        /* The behavior of PDF_STEREO/PFD_STEREO_DONTCARE and PFD_DOUBLEBUFFER / PFD_DOUBLEBUFFER_DONTCARE
+         * is not very clear on MSDN. They specify that ChoosePixelFormat tries to match pixel formats
+         * with the flag (PFD_STEREO / PFD_DOUBLEBUFFERING) set. Otherwise it says that it tries to match
+         * formats without the given flag set.
+         * A test on Windows using a Radeon 9500pro on WinXP (the driver doesn't support Stereo)
+         * has indicated that a format without stereo is returned when stereo is unavailable.
+         * So in case PFD_STEREO is set, formats that support it should have priority above formats
+         * without. In case PFD_STEREO_DONTCARE is set, stereo is ignored.
+         *
+         * To summarize the following is most likely the correct behavior:
+         * stereo not set -> prefer no-stereo formats, else also accept stereo formats
+         * stereo set -> prefer stereo formats, else also accept no-stereo formats
+         * stereo don't care -> it doesn't matter whether we get stereo or not
+         *
+         * In Wine we will treat no-stereo the same way as don't care because it makes
+         * format selection even more complicated and second drivers with Stereo advertise
+         * each format twice anyway.
+         */
+
+        /* Doublebuffer, see the comments above */
+        if (!(ppfd->dwFlags & PFD_DOUBLEBUFFER_DONTCARE))
+        {
+            if (((ppfd->dwFlags & PFD_DOUBLEBUFFER) != bestDBuffer) &&
+                ((format.dwFlags & PFD_DOUBLEBUFFER) == (ppfd->dwFlags & PFD_DOUBLEBUFFER)))
+                goto found;
+
+            if (bestDBuffer != -1 && (format.dwFlags & PFD_DOUBLEBUFFER) != bestDBuffer) continue;
+        }
+
+        /* Stereo, see the comments above. */
+        if (!(ppfd->dwFlags & PFD_STEREO_DONTCARE))
+        {
+            if (((ppfd->dwFlags & PFD_STEREO) != bestStereo) &&
+                ((format.dwFlags & PFD_STEREO) == (ppfd->dwFlags & PFD_STEREO)))
+                goto found;
+
+            if (bestStereo != -1 && (format.dwFlags & PFD_STEREO) != bestStereo) continue;
+        }
+
+        /* Below we will do a number of checks to select the 'best' pixelformat.
+         * We assume the precedence cColorBits > cAlphaBits > cDepthBits > cStencilBits -> cAuxBuffers.
+         * The code works by trying to match the most important options as close as possible.
+         * When a reasonable format is found, we will try to match more options.
+         * It appears (see the opengl32 test) that Windows opengl drivers ignore options
+         * like cColorBits, cAlphaBits and friends if they are set to 0, so they are considered
+         * as DONTCARE. At least Serious Sam TSE relies on this behavior. */
+
+        if (ppfd->cColorBits)
+        {
+            if (((ppfd->cColorBits > best.cColorBits) && (format.cColorBits > best.cColorBits)) ||
+                ((format.cColorBits >= ppfd->cColorBits) && (format.cColorBits < best.cColorBits)))
+                goto found;
+
+            if (best.cColorBits != format.cColorBits)  /* Do further checks if the format is compatible */
+            {
+                TRACE( "color mismatch for iPixelFormat=%d\n", i );
+                continue;
+            }
+        }
+        if (ppfd->cAlphaBits)
+        {
+            if (((ppfd->cAlphaBits > best.cAlphaBits) && (format.cAlphaBits > best.cAlphaBits)) ||
+                ((format.cAlphaBits >= ppfd->cAlphaBits) && (format.cAlphaBits < best.cAlphaBits)))
+                goto found;
+
+            if (best.cAlphaBits != format.cAlphaBits)
+            {
+                TRACE( "alpha mismatch for iPixelFormat=%d\n", i );
+                continue;
+            }
+        }
+        if (ppfd->cDepthBits)
+        {
+            if (((ppfd->cDepthBits > best.cDepthBits) && (format.cDepthBits > best.cDepthBits)) ||
+                ((format.cDepthBits >= ppfd->cDepthBits) && (format.cDepthBits < best.cDepthBits)))
+                goto found;
+
+            if (best.cDepthBits != format.cDepthBits)
+            {
+                TRACE( "depth mismatch for iPixelFormat=%d\n", i );
+                continue;
+            }
+        }
+        if (ppfd->cStencilBits)
+        {
+            if (((ppfd->cStencilBits > best.cStencilBits) && (format.cStencilBits > best.cStencilBits)) ||
+                ((format.cStencilBits >= ppfd->cStencilBits) && (format.cStencilBits < best.cStencilBits)))
+                goto found;
+
+            if (best.cStencilBits != format.cStencilBits)
+            {
+                TRACE( "stencil mismatch for iPixelFormat=%d\n", i );
+                continue;
+            }
+        }
+        if (ppfd->cAuxBuffers)
+        {
+            if (((ppfd->cAuxBuffers > best.cAuxBuffers) && (format.cAuxBuffers > best.cAuxBuffers)) ||
+                ((format.cAuxBuffers >= ppfd->cAuxBuffers) && (format.cAuxBuffers < best.cAuxBuffers)))
+                goto found;
+
+            if (best.cAuxBuffers != format.cAuxBuffers)
+            {
+                TRACE( "aux mismatch for iPixelFormat=%d\n", i );
+                continue;
+            }
+        }
+        continue;
+
+    found:
+        best_format = i;
+        best = format;
+        bestDBuffer = format.dwFlags & PFD_DOUBLEBUFFER;
+        bestStereo = format.dwFlags & PFD_STEREO;
+    }
+
+    TRACE( "returning %u\n", best_format );
+    return best_format;
 }
 
 /***********************************************************************
@@ -933,7 +1087,6 @@ static BOOL process_attach(void)
   wine_wgl.p_SetPixelFormat = (void *)GetProcAddress(mod_gdi32, "SetPixelFormat");
   wine_wgl.p_wglMakeCurrent = (void *)GetProcAddress(mod_gdi32, "wglMakeCurrent");
   wine_wgl.p_wglCreateContext = (void *)GetProcAddress(mod_gdi32, "wglCreateContext");
-  wine_wgl.p_ChoosePixelFormat = (void *)GetProcAddress(mod_gdi32, "ChoosePixelFormat");
   wine_wgl.p_DescribePixelFormat = (void *)GetProcAddress(mod_gdi32, "DescribePixelFormat");
   wine_wgl.p_GetPixelFormat = (void *)GetProcAddress(mod_gdi32, "GetPixelFormat");
 
