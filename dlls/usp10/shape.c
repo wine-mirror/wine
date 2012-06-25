@@ -898,11 +898,11 @@ static int combining_lexical_Arabic(WCHAR c)
         case 0x0652:
         case 0x0657:
         case 0x0658:
-        case 0x06E1: return Arab_DIAC1; break;
+        case 0x06E1: return Arab_DIAC1;
         case 0x064D:
         case 0x0650:
-        case 0x0656: return Arab_DIAC2; break;
-        case 0x0651: return Arab_DIAC3; break;
+        case 0x0656: return Arab_DIAC2;
+        case 0x0651: return Arab_DIAC3;
         case 0x0610:
         case 0x0611:
         case 0x0612:
@@ -918,14 +918,14 @@ static int combining_lexical_Arabic(WCHAR c)
         case 0x06E7:
         case 0x06E8:
         case 0x06EB:
-        case 0x06EC: return Arab_DIAC4; break;
+        case 0x06EC: return Arab_DIAC4;
         case 0x06E3:
         case 0x06EA:
-        case 0x06ED: return Arab_DIAC5; break;
-        case 0x0670: return Arab_DIAC6; break;
-        case 0x0653: return Arab_DIAC7; break;
+        case 0x06ED: return Arab_DIAC5;
+        case 0x0670: return Arab_DIAC6;
+        case 0x0653: return Arab_DIAC7;
         case 0x0655:
-        case 0x0654: return Arab_DIAC8; break;
+        case 0x0654: return Arab_DIAC8;
         default: return Arab_Norm;
     }
 }
@@ -1037,46 +1037,46 @@ static int combining_lexical_Hebrew(WCHAR c)
         case 0x05B4:
         case 0x05B5:
         case 0x05B6:
-        case 0x05BB: return Hebr_DIAC; break;
+        case 0x05BB: return Hebr_DIAC;
         case 0x0599:
         case 0x05A1:
         case 0x05A9:
-        case 0x05AE: return Hebr_CANT1; break;
+        case 0x05AE: return Hebr_CANT1;
         case 0x0597:
         case 0x05A8:
-        case 0x05AC: return Hebr_CANT2; break;
+        case 0x05AC: return Hebr_CANT2;
         case 0x0592:
         case 0x0593:
         case 0x0594:
         case 0x0595:
         case 0x05A7:
-        case 0x05AB: return Hebr_CANT3; break;
+        case 0x05AB: return Hebr_CANT3;
         case 0x0598:
         case 0x059C:
         case 0x059E:
-        case 0x059F: return Hebr_CANT4; break;
+        case 0x059F: return Hebr_CANT4;
         case 0x059D:
-        case 0x05A0: return Hebr_CANT5; break;
+        case 0x05A0: return Hebr_CANT5;
         case 0x059B:
-        case 0x05A5: return Hebr_CANT6; break;
+        case 0x05A5: return Hebr_CANT6;
         case 0x0591:
         case 0x05A3:
-        case 0x05A6: return Hebr_CANT7; break;
+        case 0x05A6: return Hebr_CANT7;
         case 0x0596:
         case 0x05A4:
-        case 0x05AA: return Hebr_CANT8; break;
+        case 0x05AA: return Hebr_CANT8;
         case 0x059A:
-        case 0x05AD: return Hebr_CANT9; break;
-        case 0x05AF: return Hebr_CANT10; break;
-        case 0x05BC: return Hebr_DAGESH; break;
-        case 0x05C4: return Hebr_DOTABV; break;
-        case 0x05B9: return Hebr_HOLAM; break;
-        case 0x05BD: return Hebr_METEG; break;
-        case 0x05B7: return Hebr_PATAH; break;
-        case 0x05B8: return Hebr_QAMATS; break;
-        case 0x05BF: return Hebr_RAFE; break;
+        case 0x05AD: return Hebr_CANT9;
+        case 0x05AF: return Hebr_CANT10;
+        case 0x05BC: return Hebr_DAGESH;
+        case 0x05C4: return Hebr_DOTABV;
+        case 0x05B9: return Hebr_HOLAM;
+        case 0x05BD: return Hebr_METEG;
+        case 0x05B7: return Hebr_PATAH;
+        case 0x05B8: return Hebr_QAMATS;
+        case 0x05BF: return Hebr_RAFE;
         case 0x05C1:
-        case 0x05C2: return Hebr_SHINSIN; break;
+        case 0x05C2: return Hebr_SHINSIN;
         default: return Hebr_Norm;
     }
 }
@@ -1113,40 +1113,40 @@ static int combining_lexical_Syriac(WCHAR c)
         case 0x733:
         case 0x736:
         case 0x73A:
-        case 0x73D: return Syriac_DIAC1; break;
+        case 0x73D: return Syriac_DIAC1;
         case 0x731:
         case 0x734:
         case 0x737:
         case 0x73B:
-        case 0x73E: return Syriac_DIAC2; break;
+        case 0x73E: return Syriac_DIAC2;
         case 0x740:
         case 0x749:
-        case 0x74A: return Syriac_DIAC3; break;
+        case 0x74A: return Syriac_DIAC3;
         case 0x732:
         case 0x735:
-        case 0x73F: return Syriac_DIAC4; break;
+        case 0x73F: return Syriac_DIAC4;
         case 0x738:
         case 0x739:
-        case 0x73C: return Syriac_DIAC5; break;
+        case 0x73C: return Syriac_DIAC5;
         case 0x741:
-        case 0x30A: return Syriac_DIAC6; break;
+        case 0x30A: return Syriac_DIAC6;
         case 0x742:
-        case 0x325: return Syriac_DIAC7; break;
+        case 0x325: return Syriac_DIAC7;
         case 0x747:
-        case 0x303: return Syriac_DIAC8; break;
+        case 0x303: return Syriac_DIAC8;
         case 0x748:
         case 0x32D:
         case 0x32E:
         case 0x330:
-        case 0x331: return Syriac_DIAC9; break;
-        case 0x308: return Syriac_DIAC10; break;
-        case 0x304: return Syriac_DIAC11; break;
-        case 0x307: return Syriac_DIAC12; break;
-        case 0x323: return Syriac_DIAC13; break;
-        case 0x743: return Syriac_DIAC14; break;
-        case 0x744: return Syriac_DIAC15; break;
-        case 0x745: return Syriac_DIAC16; break;
-        case 0x746: return Syriac_DIAC17; break;
+        case 0x331: return Syriac_DIAC9;
+        case 0x308: return Syriac_DIAC10;
+        case 0x304: return Syriac_DIAC11;
+        case 0x307: return Syriac_DIAC12;
+        case 0x323: return Syriac_DIAC13;
+        case 0x743: return Syriac_DIAC14;
+        case 0x744: return Syriac_DIAC15;
+        case 0x745: return Syriac_DIAC16;
+        case 0x746: return Syriac_DIAC17;
         default: return Syriac_Norm;
     }
 }
@@ -1260,7 +1260,7 @@ static int combining_lexical_Thaana(WCHAR c)
         case 0x7AC:
         case 0x7AD:
         case 0x7AE:
-        case 0x7AF: return Thaana_FILI; break;
+        case 0x7AF: return Thaana_FILI;
         default: return Thaana_Norm;
     }
 }
@@ -1378,19 +1378,19 @@ static int combining_lexical_Thai(WCHAR c)
         case 0xE34:
         case 0xE35:
         case 0xE36:
-        case 0xE37: return Thai_ABOVE1; break;
+        case 0xE37: return Thai_ABOVE1;
         case 0xE47:
-        case 0xE4D: return Thai_ABOVE2; break;
+        case 0xE4D: return Thai_ABOVE2;
         case 0xE48:
         case 0xE49:
         case 0xE4A:
-        case 0xE4B: return Thai_ABOVE3; break;
+        case 0xE4B: return Thai_ABOVE3;
         case 0xE4C:
-        case 0xE4E: return Thai_ABOVE4; break;
+        case 0xE4E: return Thai_ABOVE4;
         case 0xE38:
-        case 0xE39: return Thai_BELOW1; break;
-        case 0xE3A: return Thai_BELOW2; break;
-        case 0xE33: return Thai_AM; break;
+        case 0xE39: return Thai_BELOW1;
+        case 0xE3A: return Thai_BELOW2;
+        case 0xE33: return Thai_AM;
         default: return Thai_Norm;
     }
 }
@@ -1425,16 +1425,16 @@ static int combining_lexical_Lao(WCHAR c)
         case 0xEB6:
         case 0xEB7:
         case 0xEBB:
-        case 0xECD: return Lao_ABOVE1; break;
+        case 0xECD: return Lao_ABOVE1;
         case 0xEC8:
         case 0xEC9:
         case 0xECA:
         case 0xECB:
-        case 0xECC: return Lao_ABOVE2; break;
-        case 0xEBC: return Lao_BELOW1; break;
+        case 0xECC: return Lao_ABOVE2;
+        case 0xEBC: return Lao_BELOW1;
         case 0xEB8:
-        case 0xEB9: return Lao_BELOW2; break;
-        case 0xEB3: return Lao_AM; break;
+        case 0xEB9: return Lao_BELOW2;
+        case 0xEB3: return Lao_AM;
         default: return Lao_Norm;
     }
 }
