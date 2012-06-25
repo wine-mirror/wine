@@ -90,6 +90,7 @@ const GLubyte * WINAPI wine_glGetString( GLenum name );
 /* internal GDI functions */
 extern INT WINAPI GdiDescribePixelFormat( HDC hdc, INT fmt, UINT size, PIXELFORMATDESCRIPTOR *pfd );
 extern BOOL WINAPI GdiSetPixelFormat( HDC hdc, INT fmt, const PIXELFORMATDESCRIPTOR *pfd );
+extern BOOL WINAPI GdiSwapBuffers( HDC hdc );
 
 /***********************************************************************
  *		 wglSetPixelFormat(OPENGL32.@)
@@ -560,7 +561,7 @@ BOOL WINAPI wglSwapLayerBuffers(HDC hdc,
   TRACE_(opengl)("(%p, %08x)\n", hdc, fuPlanes);
 
   if (fuPlanes & WGL_SWAP_MAIN_PLANE) {
-    if (!SwapBuffers(hdc)) return FALSE;
+    if (!GdiSwapBuffers(hdc)) return FALSE;
     fuPlanes &= ~WGL_SWAP_MAIN_PLANE;
   }
 
@@ -1062,7 +1063,7 @@ void WINAPI wine_glGetIntegerv( GLenum pname, GLint* params )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH wglSwapBuffers( HDC hdc )
 {
-    return SwapBuffers(hdc);
+    return GdiSwapBuffers(hdc);
 }
 
 /* This is for brain-dead applications that use OpenGL functions before even

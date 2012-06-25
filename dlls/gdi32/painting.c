@@ -562,17 +562,11 @@ INT WINAPI GdiDescribePixelFormat( HDC hdc, INT iPixelFormat, UINT nBytes,
 
 
 /******************************************************************************
- * SwapBuffers [GDI32.@]
- * Exchanges front and back buffers of window
+ * GdiSwapBuffers [GDI32.@]
  *
- * PARAMS
- *    hdc [I] Device context whose buffers get swapped
- *
- * RETURNS
- *    Success: TRUE
- *    Failure: FALSE
+ * Probably not the correct semantics, it's supposed to be an internal backend for SwapBuffers.
  */
-BOOL WINAPI SwapBuffers( HDC hdc )
+BOOL WINAPI GdiSwapBuffers( HDC hdc )
 {
     INT bRet = FALSE;
     DC * dc = get_dc_ptr( hdc );

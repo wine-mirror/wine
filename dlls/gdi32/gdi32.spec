@@ -218,7 +218,7 @@
 @ stub GdiSetServerAttr
 # @ stub GdiStartDocEMF
 # @ stub GdiStartPageEMF
-# @ stub GdiSwapBuffers
+@ stdcall GdiSwapBuffers(long)
 @ stdcall GdiTransparentBlt(long long long long long long long long long long long)
 # @ stub GdiValidateHandle
 @ stub GdiWinWatchClose

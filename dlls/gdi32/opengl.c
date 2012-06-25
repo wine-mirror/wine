@@ -43,6 +43,7 @@ static HMODULE opengl32;
 static INT (WINAPI *wglChoosePixelFormat)(HDC,const PIXELFORMATDESCRIPTOR *);
 static INT (WINAPI *wglDescribePixelFormat)(HDC,INT,UINT,PIXELFORMATDESCRIPTOR*);
 static BOOL (WINAPI *wglSetPixelFormat)(HDC,INT,const PIXELFORMATDESCRIPTOR*);
+static BOOL (WINAPI *wglSwapBuffers)(HDC);
 
 static HDC default_hdc = 0;
 
@@ -266,4 +267,18 @@ BOOL WINAPI SetPixelFormat( HDC hdc, INT fmt, const PIXELFORMATDESCRIPTOR *pfd )
             return 0;
     }
     return wglSetPixelFormat( hdc, fmt, pfd );
+}
+
+/******************************************************************************
+ *		SwapBuffers (GDI32.@)
+ */
+BOOL WINAPI SwapBuffers( HDC hdc )
+{
+    if (!wglSwapBuffers)
+    {
+        if (!opengl32) opengl32 = LoadLibraryW( opengl32W );
+        if (!(wglSwapBuffers = (void *)GetProcAddress( opengl32, "wglSwapBuffers" )))
+            return 0;
+    }
+    return wglSwapBuffers( hdc );
 }
