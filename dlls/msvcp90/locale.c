@@ -146,6 +146,12 @@ static void ostreambuf_iterator_char_put(ostreambuf_iterator_char *this, char ch
         this->failed = TRUE;
 }
 
+static void ostreambuf_iterator_wchar_put(ostreambuf_iterator_wchar *this, wchar_t ch)
+{
+    if(this->failed || basic_streambuf_wchar_sputc(this->strbuf, ch)==WEOF)
+        this->failed = TRUE;
+}
+
 /* ??1facet@locale@std@@UAE@XZ */
 /* ??1facet@locale@std@@UEAA@XZ */
 DEFINE_THISCALL_WRAPPER(locale_facet_dtor, 4)
@@ -3777,6 +3783,32 @@ MSVCP_size_t __cdecl numpunct_wchar__Getcat(const locale_facet **facet, const lo
     return LC_NUMERIC;
 }
 
+numpunct_wchar* numpunct_wchar_use_facet(const locale *loc)
+{
+    static numpunct_wchar *obj = NULL;
+
+    _Lockit lock;
+    const locale_facet *fac;
+
+    _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
+    fac = locale__Getfacet(loc, numpunct_wchar_id.id);
+    if(fac) {
+        _Lockit_dtor(&lock);
+        return (numpunct_wchar*)fac;
+    }
+
+    if(obj)
+        return obj;
+
+    numpunct_wchar__Getcat(&fac, loc);
+    obj = (numpunct_wchar*)fac;
+    locale_facet__Incref(&obj->facet);
+    locale_facet_register(&obj->facet);
+    _Lockit_dtor(&lock);
+
+    return obj;
+}
+
 /* ?_Getcat@?$numpunct@G@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
 /* ?_Getcat@?$numpunct@G@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
 MSVCP_size_t __cdecl numpunct_short__Getcat(const locale_facet **facet, const locale *loc)
@@ -5909,6 +5941,637 @@ ostreambuf_iterator_char* __thiscall num_put_char_put_bool(const num_put *this, 
     return call_num_put_char_do_put_bool(this, ret, dest, base, fill, v);
 }
 
+/* ?id@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@2V0locale@2@A */
+locale_id num_put_wchar_id = {0};
+
+/* num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@6B@ */
+extern const vtable_ptr MSVCP_num_put_wchar_vtable;
+
+/* ?_Init@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@IAEXABV_Locinfo@2@@Z */
+/* ?_Init@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@IEAAXAEBV_Locinfo@2@@Z */
+DEFINE_THISCALL_WRAPPER(num_put_wchar__Init, 8)
+void __thiscall num_put_wchar__Init(num_put *this, const _Locinfo *locinfo)
+{
+    TRACE("(%p %p)\n", this, locinfo);
+    _Locinfo__Getcvt(locinfo, &this->cvt);
+}
+
+/* ??0?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QAE@ABV_Locinfo@1@I@Z */
+/* ??0?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEAA@AEBV_Locinfo@1@_K@Z */
+DEFINE_THISCALL_WRAPPER(num_put_wchar_ctor_locinfo, 12)
+num_put* __thiscall num_put_wchar_ctor_locinfo(num_put *this, const _Locinfo *locinfo, MSVCP_size_t refs)
+{
+    TRACE("(%p %p %ld)\n", this, locinfo, refs);
+
+    locale_facet_ctor_refs(&this->facet, refs);
+    this->facet.vtable = &MSVCP_num_put_wchar_vtable;
+
+    num_put_wchar__Init(this, locinfo);
+    return this;
+}
+
+/* ??0?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QAE@I@Z */
+/* ??0?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEAA@_K@Z */
+DEFINE_THISCALL_WRAPPER(num_put_wchar_ctor_refs, 8)
+num_put* __thiscall num_put_wchar_ctor_refs(num_put *this, MSVCP_size_t refs)
+{
+    _Locinfo locinfo;
+
+    TRACE("(%p %lu)\n", this, refs);
+
+    _Locinfo_ctor(&locinfo);
+    num_put_wchar_ctor_locinfo(this, &locinfo, refs);
+    _Locinfo_dtor(&locinfo);
+    return this;
+}
+
+/* ??_F?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QAEXXZ */
+/* ??_F?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(num_put_wchar_ctor, 4)
+num_put* __thiscall num_put_wchar_ctor(num_put *this)
+{
+    return num_put_wchar_ctor_refs(this, 0);
+}
+
+/* ??1?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MAE@XZ */
+/* ??1?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEAA@XZ */
+DEFINE_THISCALL_WRAPPER(num_put_wchar_dtor, 4)
+void __thiscall num_put_wchar_dtor(num_put *this)
+{
+    TRACE("(%p)\n", this);
+    locale_facet_dtor(&this->facet);
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCP_num_put_wchar_vector_dtor, 8)
+num_put* __thiscall MSVCP_num_put_wchar_vector_dtor(num_put *this, unsigned int flags)
+{
+    TRACE("(%p %x)\n", this, flags);
+    if(flags & 2) {
+        /* we have an array, with the number of elements stored before the first object */
+        int i, *ptr = (int *)this-1;
+
+        for(i=*ptr-1; i>=0; i--)
+            num_put_wchar_dtor(this+i);
+        MSVCRT_operator_delete(ptr);
+    } else {
+        num_put_wchar_dtor(this);
+        if(flags & 1)
+            MSVCRT_operator_delete(this);
+    }
+
+    return this;
+}
+
+/* ?_Getcat@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
+/* ?_Getcat@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
+unsigned int __cdecl num_put_wchar__Getcat(const locale_facet **facet, const locale *loc)
+{
+    TRACE("(%p %p)\n", facet, loc);
+
+    if(facet && !*facet) {
+        _Locinfo locinfo;
+
+        *facet = MSVCRT_operator_new(sizeof(num_put));
+        if(!*facet) {
+            ERR("Out of memory\n");
+            throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+            return 0;
+        }
+
+        _Locinfo_ctor_cstr(&locinfo, MSVCP_basic_string_char_c_str(&loc->ptr->name));
+        num_put_wchar_ctor_locinfo((num_put*)*facet, &locinfo, 0);
+        _Locinfo_dtor(&locinfo);
+    }
+
+    return LC_NUMERIC;
+}
+
+num_put* num_put_wchar_use_facet(const locale *loc)
+{
+    static num_put *obj = NULL;
+
+    _Lockit lock;
+    const locale_facet *fac;
+
+    _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
+    fac = locale__Getfacet(loc, num_put_wchar_id.id);
+    if(fac) {
+        _Lockit_dtor(&lock);
+        return (num_put*)fac;
+    }
+
+    if(obj)
+        return obj;
+
+    num_put_wchar__Getcat(&fac, loc);
+    obj = (num_put*)fac;
+    locale_facet__Incref(&obj->facet);
+    locale_facet_register(&obj->facet);
+    _Lockit_dtor(&lock);
+
+    return obj;
+}
+
+/* ?_Put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@ABA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@PB_WI@Z */
+/* ?_Put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@PEB_W_K@Z */
+ostreambuf_iterator_wchar* __cdecl num_put_wchar__Put(const num_put *this, ostreambuf_iterator_wchar *ret,
+        ostreambuf_iterator_wchar dest, const wchar_t *ptr, MSVCP_size_t count)
+{
+    TRACE("(%p %p %s %ld)\n", this, ret, debugstr_wn(ptr, count), count);
+
+    for(; count>0; count--)
+        ostreambuf_iterator_wchar_put(&dest, *ptr++);
+
+    *ret = dest;
+    return ret;
+}
+
+/* ?_Putc@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@ABA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@PBDI@Z */
+/* ?_Putc@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@PEBD_K@Z */
+ostreambuf_iterator_wchar* __cdecl num_put_wchar__Putc(const num_put *this, ostreambuf_iterator_wchar *ret,
+        ostreambuf_iterator_wchar dest, const char *ptr, MSVCP_size_t count)
+{
+    int state = 0;
+    wchar_t ch;
+
+    TRACE("(%p %p %s %ld)\n", this, ret, debugstr_an(ptr, count), count);
+
+    for(; count>0; count--) {
+        if(_Mbrtowc(&ch, ptr++, 1, &state, &this->cvt) == 1)
+            ostreambuf_iterator_wchar_put(&dest, ch);
+    }
+
+    *ret = dest;
+    return ret;
+}
+
+/* ?_Putgrouped@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@ABA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@PBDI_W@Z */
+/* ?_Putgrouped@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@PEBD_K_W@Z */
+ostreambuf_iterator_wchar* __cdecl num_put_wchar__Putgrouped(const num_put *this, ostreambuf_iterator_wchar *ret,
+        ostreambuf_iterator_wchar dest, const char *ptr, MSVCP_size_t count, wchar_t delim)
+{
+    FIXME("(%p %p %p %ld %d) stub\n", this, ret, ptr, count, delim);
+    return NULL;
+}
+
+/* ?_Rep@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@ABA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@_WI@Z */
+/* ?_Rep@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@_W_K@Z */
+ostreambuf_iterator_wchar* __cdecl num_put_wchar__Rep(const num_put *this, ostreambuf_iterator_wchar *ret,
+        ostreambuf_iterator_wchar dest, wchar_t c, MSVCP_size_t count)
+{
+    TRACE("(%p %p %d %ld)\n", this, ret, c, count);
+
+    for(; count>0; count--)
+        ostreambuf_iterator_wchar_put(&dest, c);
+
+    *ret = dest;
+    return ret;
+}
+
+/* ?_Ffmt@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@ABAPADPADDH@Z */
+/* ?_Ffmt@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEBAPEADPEADDH@Z */
+char* __cdecl num_put_wchar__Ffmt(const num_put *this, char *fmt, char spec, int fmtfl)
+{
+    int type = fmtfl & FMTFLAG_floatfield;
+    char *p = fmt;
+
+    TRACE("(%p %p %d %d)\n", this, fmt, spec, fmtfl);
+
+    *p++ = '%';
+    if(fmtfl & FMTFLAG_showpos)
+        *p++ = '+';
+    if(fmtfl & FMTFLAG_showbase)
+        *p++ = '#';
+    *p++ = '.';
+    *p++ = '*';
+    if(spec)
+        *p++ = spec;
+
+    if(type == FMTFLAG_fixed)
+        *p++ = 'f';
+    else if(type == FMTFLAG_scientific)
+        *p++ = (fmtfl & FMTFLAG_uppercase) ? 'E' : 'e';
+    else if(type == (FMTFLAG_fixed|FMTFLAG_scientific))
+        *p++ = (fmtfl & FMTFLAG_uppercase) ? 'A' : 'a';
+    else
+        *p++ = (fmtfl & FMTFLAG_uppercase) ? 'G' : 'g';
+
+    *p++ = '\0';
+    return fmt;
+}
+
+/* ?_Fput@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@ABA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AAVios_base@2@_WPBDIIII@Z */
+/* ?_Fput@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AEAVios_base@2@_WPEBD_K444@Z */
+ostreambuf_iterator_wchar* __cdecl num_put_wchar__Fput(const num_put *this, ostreambuf_iterator_wchar *ret,
+        ostreambuf_iterator_wchar dest, ios_base *base, wchar_t fill, const char *buf, MSVCP_size_t bef_point,
+        MSVCP_size_t aft_point, MSVCP_size_t trailing, MSVCP_size_t count)
+{
+    FIXME("(%p %p %p %d %p %ld %ld %ld %ld) stub\n", this, ret, base,
+            fill, buf, bef_point, aft_point, trailing, count);
+    return NULL;
+}
+
+/* TODO: This function should be removed when num_put_wchar__Fput is implemented */
+static ostreambuf_iterator_wchar* num_put_wchar_fput(const num_put *this, ostreambuf_iterator_wchar *ret,
+        ostreambuf_iterator_wchar dest, ios_base *base, wchar_t fill, char *buf, MSVCP_size_t count)
+{
+    numpunct_wchar *numpunct = numpunct_wchar_use_facet(base->loc);
+    basic_string_char grouping_bstr;
+    const char *grouping;
+    char *p, dec_point = *localeconv()->decimal_point;
+    wchar_t sep;
+    int cur_group = 0, group_size = 0;
+    int adjustfield = base->fmtfl & FMTFLAG_adjustfield;
+    MSVCP_size_t i, pad;
+
+    TRACE("(%p %p %p %d %s %ld)\n", this, ret, base, fill, buf, count);
+
+    for(p=buf; p<buf+count; p++) {
+        if(*p == dec_point)
+            break;
+    }
+    p--;
+
+    /* Add separators to number */
+    numpunct_wchar_grouping(numpunct, &grouping_bstr);
+    grouping = MSVCP_basic_string_char_c_str(&grouping_bstr);
+    sep = grouping[0] ? numpunct_wchar_thousands_sep(numpunct) : '\0';
+
+    for(; p>buf && sep && grouping[cur_group]!=CHAR_MAX; p--) {
+        group_size++;
+        if(group_size == grouping[cur_group]) {
+            group_size = 0;
+            if(grouping[cur_group+1])
+                cur_group++;
+
+            memmove(p+1, p, buf+count-p);
+            *p = '\0'; /* mark thousands separator positions */
+            count++;
+        }
+    }
+    MSVCP_basic_string_char_dtor(&grouping_bstr);
+
+    /* Display number with padding */
+    if(count >= base->wide)
+        pad = 0;
+    else
+        pad = base->wide-count;
+    base->wide = 0;
+
+    if((adjustfield & FMTFLAG_internal) && (buf[0]=='-' || buf[0]=='+')) {
+        num_put_wchar__Putc(this, &dest, dest, buf, 1);
+        buf++;
+    }
+    if(adjustfield != FMTFLAG_left) {
+        num_put_wchar__Rep(this, ret, dest, fill, pad);
+        pad = 0;
+    }
+
+    for(i=0; i<count; i++) {
+        if(buf[i] == dec_point)
+            num_put_wchar__Rep(this, &dest, dest, numpunct_wchar_decimal_point(numpunct), 1);
+        else if(!buf[i])
+            num_put_wchar__Rep(this, &dest, dest, sep, 1);
+        else
+            num_put_wchar__Putc(this, &dest, dest, buf+i, 1);
+    }
+
+    return num_put_wchar__Rep(this, ret, dest, fill, pad);
+}
+
+/* ?_Ifmt@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@ABAPADPADPBDH@Z */
+/* ?_Ifmt@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEBAPEADPEADPEBDH@Z */
+char* __cdecl num_put_wchar__Ifmt(const num_put *this, char *fmt, const char *spec, int fmtfl)
+{
+    int base = fmtfl & FMTFLAG_basefield;
+    char *p = fmt;
+
+    TRACE("(%p %p %p %d)\n", this, fmt, spec, fmtfl);
+
+    *p++ = '%';
+    if(fmtfl & FMTFLAG_showpos)
+        *p++ = '+';
+    if(fmtfl & FMTFLAG_showbase)
+        *p++ = '#';
+
+    *p++ = *spec++;
+    if(*spec == 'l')
+        *p++ = *spec++;
+
+    if(base == FMTFLAG_oct)
+        *p++ = 'o';
+    else if(base == FMTFLAG_hex)
+        *p++ = (fmtfl & FMTFLAG_uppercase) ? 'X' : 'x';
+    else
+        *p++ = *spec;
+
+    *p++ = '\0';
+    return fmt;
+}
+
+/* ?_Iput@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@ABA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AAVios_base@2@_WPADI@Z */
+/* ?_Iput@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AEAVios_base@2@_WPEAD_K@Z */
+ostreambuf_iterator_wchar* __cdecl num_put_wchar__Iput(const num_put *this, ostreambuf_iterator_wchar *ret,
+        ostreambuf_iterator_wchar dest, ios_base *base, wchar_t fill, char *buf, MSVCP_size_t count)
+{
+    numpunct_wchar *numpunct = numpunct_wchar_use_facet(base->loc);
+    basic_string_char grouping_bstr;
+    const char *grouping;
+    char *p;
+    wchar_t sep;
+    int cur_group = 0, group_size = 0;
+    int adjustfield = base->fmtfl & FMTFLAG_adjustfield;
+    MSVCP_size_t i, pad;
+
+    TRACE("(%p %p %p %d %s %ld)\n", this, ret, base, fill, buf, count);
+
+    /* Add separators to number */
+    numpunct_wchar_grouping(numpunct, &grouping_bstr);
+    grouping = MSVCP_basic_string_char_c_str(&grouping_bstr);
+    sep = grouping[0] ? numpunct_wchar_thousands_sep(numpunct) : '\0';
+
+    for(p=buf+count-1; p>buf && sep && grouping[cur_group]!=CHAR_MAX; p--) {
+        group_size++;
+        if(group_size == grouping[cur_group]) {
+            group_size = 0;
+            if(grouping[cur_group+1])
+                cur_group++;
+
+            memmove(p+1, p, buf+count-p);
+            *p = '\0'; /* mark thousands separator positions */
+            count++;
+        }
+    }
+    MSVCP_basic_string_char_dtor(&grouping_bstr);
+
+    /* Display number with padding */
+    if(count >= base->wide)
+        pad = 0;
+    else
+        pad = base->wide-count;
+    base->wide = 0;
+
+    if((adjustfield & FMTFLAG_internal) && (buf[0]=='-' || buf[0]=='+')) {
+        num_put_wchar__Putc(this, &dest, dest, buf, 1);
+        buf++;
+    }else if((adjustfield & FMTFLAG_internal) && (buf[1]=='x' || buf[1]=='X')) {
+        num_put_wchar__Putc(this, &dest, dest, buf, 2);
+        buf += 2;
+    }
+    if(adjustfield != FMTFLAG_left) {
+        num_put_wchar__Rep(this, ret, dest, fill, pad);
+        pad = 0;
+    }
+
+    for(i=0; i<count; i++) {
+        if(!buf[i])
+            num_put_wchar__Rep(this, &dest, dest, sep, 1);
+        else
+            num_put_wchar__Putc(this, &dest, dest, buf+i, 1);
+    }
+
+    return num_put_wchar__Rep(this, ret, dest, fill, pad);
+}
+
+/* ?do_put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AAVios_base@2@_WJ@Z */
+/* ?do_put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AEAVios_base@2@_WJ@Z */
+#define call_num_put_wchar_do_put_long(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 28, ostreambuf_iterator_wchar*, \
+        (const num_put*, ostreambuf_iterator_wchar*, ostreambuf_iterator_wchar, ios_base*, wchar_t, LONG), \
+        (this, ret, dest, base, fill, v))
+DEFINE_THISCALL_WRAPPER(num_put_wchar_do_put_long, 28)
+ostreambuf_iterator_wchar* __thiscall num_put_wchar_do_put_long(const num_put *this, ostreambuf_iterator_wchar *ret,
+        ostreambuf_iterator_wchar dest, ios_base *base, wchar_t fill, LONG v)
+{
+    char tmp[48]; /* 22(8^22>2^64)*2(separators beetwen every digit) + 3(strlen("+0x"))+1 */
+    char fmt[7]; /* strlen("%+#lld")+1 */
+
+    TRACE("(%p %p %p %d %d)\n", this, ret, base, fill, v);
+
+    return num_put_wchar__Iput(this, ret, dest, base, fill, tmp,
+            sprintf(tmp, num_put_wchar__Ifmt(this, fmt, "ld", base->fmtfl), v));
+}
+
+/* ?put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBE?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AAVios_base@2@_WJ@Z */
+/* ?put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AEAVios_base@2@_WJ@Z */
+DEFINE_THISCALL_WRAPPER(num_put_wchar_put_long, 28)
+ostreambuf_iterator_wchar* __thiscall num_put_wchar_put_long(const num_put *this, ostreambuf_iterator_wchar *ret,
+        ostreambuf_iterator_wchar dest, ios_base *base, wchar_t fill, LONG v)
+{
+    TRACE("(%p %p %p %d %d)\n", this, ret, base, fill, v);
+    return call_num_put_wchar_do_put_long(this, ret, dest, base, fill, v);
+}
+
+/* ?do_put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AAVios_base@2@_WK@Z */
+/* ?do_put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AEAVios_base@2@_WK@Z */
+#define call_num_put_wchar_do_put_ulong(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 24, ostreambuf_iterator_wchar*, \
+        (const num_put*, ostreambuf_iterator_wchar*, ostreambuf_iterator_wchar, ios_base*, wchar_t, ULONG), \
+        (this, ret, dest, base, fill, v))
+DEFINE_THISCALL_WRAPPER(num_put_wchar_do_put_ulong, 28)
+ostreambuf_iterator_wchar* __thiscall num_put_wchar_do_put_ulong(const num_put *this, ostreambuf_iterator_wchar *ret,
+        ostreambuf_iterator_wchar dest, ios_base *base, wchar_t fill, ULONG v)
+{
+    char tmp[48]; /* 22(8^22>2^64)*2(separators beetwen every digit) + 3(strlen("+0x"))+1 */
+    char fmt[7]; /* strlen("%+#lld")+1 */
+
+    TRACE("(%p %p %p %d %d)\n", this, ret, base, fill, v);
+
+    return num_put_wchar__Iput(this, ret, dest, base, fill, tmp,
+            sprintf(tmp, num_put_wchar__Ifmt(this, fmt, "lu", base->fmtfl), v));
+}
+
+/* ?put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBE?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AAVios_base@2@_WK@Z */
+/* ?put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AEAVios_base@2@_WK@Z */
+DEFINE_THISCALL_WRAPPER(num_put_wchar_put_ulong, 28)
+ostreambuf_iterator_wchar* __thiscall num_put_wchar_put_ulong(const num_put *this, ostreambuf_iterator_wchar *ret,
+        ostreambuf_iterator_wchar dest, ios_base *base, wchar_t fill, ULONG v)
+{
+    TRACE("(%p %p %p %d %d)\n", this, ret, base, fill, v);
+    return call_num_put_wchar_do_put_ulong(this, ret, dest, base, fill, v);
+}
+
+/* ?do_put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AAVios_base@2@_WN@Z */
+/* ?do_put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AEAVios_base@2@_WN@Z */
+/* ?do_put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AAVios_base@2@_WO@Z */
+/* ?do_put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AEAVios_base@2@_WO@Z */
+#define call_num_put_wchar_do_put_double(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 12, ostreambuf_iterator_wchar*, \
+        (const num_put*, ostreambuf_iterator_wchar*, ostreambuf_iterator_wchar, ios_base*, wchar_t, double), \
+        (this, ret, dest, base, fill, v))
+#define call_num_put_wchar_do_put_ldouble(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 8, ostreambuf_iterator_wchar*, \
+        (const num_put*, ostreambuf_iterator_wchar*, ostreambuf_iterator_wchar, ios_base*, wchar_t, double), \
+        (this, ret, dest, base, fill, v))
+DEFINE_THISCALL_WRAPPER(num_put_wchar_do_put_double, 32)
+ostreambuf_iterator_wchar* __thiscall num_put_wchar_do_put_double(const num_put *this, ostreambuf_iterator_wchar *ret,
+        ostreambuf_iterator_wchar dest, ios_base *base, wchar_t fill, double v)
+{
+    char *tmp;
+    char fmt[8]; /* strlen("%+#.*lg")+1 */
+    int size;
+
+    TRACE("(%p %p %p %d %lf)\n", this, ret, base, fill, v);
+
+    num_put_wchar__Ffmt(this, fmt, '\0', base->fmtfl);
+    size = _scprintf(fmt, base->prec, v);
+
+    /* TODO: don't use dynamic allocation */
+    tmp = MSVCRT_operator_new(size*2);
+    if(!tmp) {
+        ERR("Out of memory\n");
+        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+    }
+    num_put_wchar_fput(this, ret, dest, base, fill, tmp, sprintf(tmp, fmt, base->prec, v));
+    MSVCRT_operator_delete(tmp);
+    return ret;
+}
+
+/* ?put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBE?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AAVios_base@2@_WN@Z */
+/* ?put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AEAVios_base@2@_WN@Z */
+DEFINE_THISCALL_WRAPPER(num_put_wchar_put_double, 32)
+ostreambuf_iterator_wchar* __thiscall num_put_wchar_put_double(const num_put *this, ostreambuf_iterator_wchar *ret,
+        ostreambuf_iterator_wchar dest, ios_base *base, wchar_t fill, double v)
+{
+    TRACE("(%p %p %p %d %lf)\n", this, ret, base, fill, v);
+    return call_num_put_wchar_do_put_double(this, ret, dest, base, fill, v);
+}
+
+/* ?put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBE?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AAVios_base@2@_WO@Z */
+/* ?put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AEAVios_base@2@_WO@Z */
+DEFINE_THISCALL_WRAPPER(num_put_wchar_put_ldouble, 32)
+ostreambuf_iterator_wchar* __thiscall num_put_wchar_put_ldouble(const num_put *this, ostreambuf_iterator_wchar *ret,
+        ostreambuf_iterator_wchar dest, ios_base *base, wchar_t fill, double v)
+{
+    TRACE("(%p %p %p %d %lf)\n", this, ret, base, fill, v);
+    return call_num_put_wchar_do_put_ldouble(this, ret, dest, base, fill, v);
+}
+
+/* ?do_put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AAVios_base@2@_WPBX@Z */
+/* ?do_put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AEAVios_base@2@_WPEBX@Z */
+#define call_num_put_wchar_do_put_ptr(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 4, ostreambuf_iterator_wchar*, \
+        (const num_put*, ostreambuf_iterator_wchar*, ostreambuf_iterator_wchar, ios_base*, wchar_t, const void*), \
+        (this, ret, dest, base, fill, v))
+DEFINE_THISCALL_WRAPPER(num_put_wchar_do_put_ptr, 28)
+ostreambuf_iterator_wchar* __thiscall num_put_wchar_do_put_ptr(const num_put *this, ostreambuf_iterator_wchar *ret,
+        ostreambuf_iterator_wchar dest, ios_base *base, wchar_t fill, const void *v)
+{
+    char tmp[17]; /* 8(16^8==2^64)*2(separators beetwen every digit) + 1 */
+
+    TRACE("(%p %p %p %d %p)\n", this, ret, base, fill, v);
+
+    return num_put_wchar__Iput(this, ret, dest, base, fill, tmp, sprintf(tmp, "%p", v));
+}
+
+/* ?put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBE?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AAVios_base@2@_WPBX@Z */
+/* ?put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AEAVios_base@2@_WPEBX@Z */
+DEFINE_THISCALL_WRAPPER(num_put_wchar_put_ptr, 28)
+ostreambuf_iterator_wchar* __thiscall num_put_wchar_put_ptr(const num_put *this, ostreambuf_iterator_wchar *ret,
+        ostreambuf_iterator_wchar dest, ios_base *base, wchar_t fill, const void *v)
+{
+    TRACE("(%p %p %p %d %p)\n", this, ret, base, fill, v);
+    return call_num_put_wchar_do_put_ptr(this, ret, dest, base, fill, v);
+}
+
+/* ?do_put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AAVios_base@2@_W_J@Z */
+/* ?do_put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AEAVios_base@2@_W_J@Z */
+#define call_num_put_wchar_do_put_int64(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 20, ostreambuf_iterator_wchar*, \
+        (const num_put*, ostreambuf_iterator_wchar*, ostreambuf_iterator_wchar, ios_base*, wchar_t, __int64), \
+        (this, ret, dest, base, fill, v))
+DEFINE_THISCALL_WRAPPER(num_put_wchar_do_put_int64, 32)
+ostreambuf_iterator_wchar* __thiscall num_put_wchar_do_put_int64(const num_put *this, ostreambuf_iterator_wchar *ret,
+        ostreambuf_iterator_wchar dest, ios_base *base, wchar_t fill, __int64 v)
+{
+    char tmp[48]; /* 22(8^22>2^64)*2(separators beetwen every digit) + 3(strlen("+0x"))+1 */
+    char fmt[7]; /* strlen("%+#lld")+1 */
+
+    TRACE("(%p %p %p %d)\n", this, ret, base, fill);
+
+    return num_put_wchar__Iput(this, ret, dest, base, fill, tmp,
+            sprintf(tmp, num_put_wchar__Ifmt(this, fmt, "lld", base->fmtfl), v));
+}
+
+/* ?put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBE?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AAVios_base@2@_W_J@Z */
+/* ?put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AEAVios_base@2@_W_J@Z */
+DEFINE_THISCALL_WRAPPER(num_put_wchar_put_int64, 32)
+ostreambuf_iterator_wchar* __thiscall num_put_wchar_put_int64(const num_put *this, ostreambuf_iterator_wchar *ret,
+        ostreambuf_iterator_wchar dest, ios_base *base, wchar_t fill, __int64 v)
+{
+    TRACE("(%p %p %p %d)\n", this, ret, base, fill);
+    return call_num_put_wchar_do_put_int64(this, ret, dest, base, fill, v);
+}
+
+/* ?do_put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AAVios_base@2@_W_K@Z */
+/* ?do_put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AEAVios_base@2@_W_K@Z */
+#define call_num_put_wchar_do_put_uint64(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 16, ostreambuf_iterator_wchar*, \
+        (const num_put*, ostreambuf_iterator_wchar*, ostreambuf_iterator_wchar, ios_base*, wchar_t, unsigned __int64), \
+        (this, ret, dest, base, fill, v))
+DEFINE_THISCALL_WRAPPER(num_put_wchar_do_put_uint64, 32)
+ostreambuf_iterator_wchar* __thiscall num_put_wchar_do_put_uint64(const num_put *this, ostreambuf_iterator_wchar *ret,
+        ostreambuf_iterator_wchar dest, ios_base *base, wchar_t fill, unsigned __int64 v)
+{
+    char tmp[48]; /* 22(8^22>2^64)*2(separators beetwen every digit) + 3(strlen("+0x"))+1 */
+    char fmt[7]; /* strlen("%+#lld")+1 */
+
+    TRACE("(%p %p %p %d)\n", this, ret, base, fill);
+
+    return num_put_wchar__Iput(this, ret, dest, base, fill, tmp,
+            sprintf(tmp, num_put_wchar__Ifmt(this, fmt, "llu", base->fmtfl), v));
+}
+
+/* ?put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBE?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AAVios_base@2@_W_K@Z */
+/* ?put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AEAVios_base@2@_W_K@Z */
+DEFINE_THISCALL_WRAPPER(num_put_wchar_put_uint64, 32)
+ostreambuf_iterator_wchar* __thiscall num_put_wchar_put_uint64(const num_put *this, ostreambuf_iterator_wchar *ret,
+        ostreambuf_iterator_wchar dest, ios_base *base, wchar_t fill, unsigned __int64 v)
+{
+    TRACE("(%p %p %p %d)\n", this, ret, base, fill);
+    return call_num_put_wchar_do_put_uint64(this, ret, dest, base, fill, v);
+}
+
+/* ?do_put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AAVios_base@2@_W_N@Z */
+/* ?do_put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AEAVios_base@2@_W_N@Z */
+#define call_num_put_wchar_do_put_bool(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 32, ostreambuf_iterator_wchar*, \
+        (const num_put*, ostreambuf_iterator_wchar*, ostreambuf_iterator_wchar, ios_base*, wchar_t, MSVCP_bool), \
+        (this, ret, dest, base, fill, v))
+DEFINE_THISCALL_WRAPPER(num_put_wchar_do_put_bool, 28)
+ostreambuf_iterator_wchar* __thiscall num_put_wchar_do_put_bool(const num_put *this, ostreambuf_iterator_wchar *ret,
+        ostreambuf_iterator_wchar dest, ios_base *base, wchar_t fill, MSVCP_bool v)
+{
+    TRACE("(%p %p %p %d %d)\n", this, ret, base, fill, v);
+
+    if(base->fmtfl & FMTFLAG_boolalpha) {
+        numpunct_wchar *numpunct = numpunct_wchar_use_facet(base->loc);
+        basic_string_wchar str;
+        MSVCP_size_t pad, len;
+
+        if(v)
+            numpunct_wchar_truename(numpunct, &str);
+        else
+            numpunct_wchar_falsename(numpunct, &str);
+
+        len = MSVCP_basic_string_wchar_length(&str);
+        pad = (len>base->wide ? 0 : base->wide-len);
+        base->wide = 0;
+
+        if((base->fmtfl & FMTFLAG_adjustfield) != FMTFLAG_left) {
+            num_put_wchar__Rep(this, &dest, dest, fill, pad);
+            pad = 0;
+        }
+        num_put_wchar__Put(this, &dest, dest, MSVCP_basic_string_wchar_c_str(&str), len);
+        MSVCP_basic_string_wchar_dtor(&str);
+        return num_put_wchar__Rep(this, ret, dest, fill, pad);
+    }
+
+    return num_put_wchar_put_long(this, ret, dest, base, fill, v);
+}
+
+/* ?put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBE?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AAVios_base@2@_W_N@Z */
+/* ?put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AEAVios_base@2@_W_N@Z */
+DEFINE_THISCALL_WRAPPER(num_put_wchar_put_bool, 28)
+ostreambuf_iterator_wchar* __thiscall num_put_wchar_put_bool(const num_put *this, ostreambuf_iterator_wchar *ret,
+        ostreambuf_iterator_wchar dest, ios_base *base, wchar_t fill, MSVCP_bool v)
+{
+    TRACE("(%p %p %p %d %d)\n", this, ret, base, fill, v);
+    return call_num_put_wchar_do_put_bool(this, ret, dest, base, fill, v);
+}
+
 /* ??0_Locimp@locale@std@@AAE@_N@Z */
 /* ??0_Locimp@locale@std@@AEAA@_N@Z */
 DEFINE_THISCALL_WRAPPER(locale__Locimp_ctor_transparent, 8)
@@ -6390,6 +7053,7 @@ DEFINE_RTTI_DATA1(num_get_char, 0, &locale_facet_rtti_base_descriptor, ".?AV?$nu
 DEFINE_RTTI_DATA1(num_get_wchar, 0, &locale_facet_rtti_base_descriptor, ".?AV?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@");
 DEFINE_RTTI_DATA1(num_get_short, 0, &locale_facet_rtti_base_descriptor, ".?AV?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@");
 DEFINE_RTTI_DATA1(num_put_char, 0, &locale_facet_rtti_base_descriptor, ".?AV?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@");
+DEFINE_RTTI_DATA1(num_put_wchar, 0, &locale_facet_rtti_base_descriptor, ".?AV?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@");
 
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
@@ -6540,6 +7204,15 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(num_put_char_do_put_ulong)
             VTABLE_ADD_FUNC(num_put_char_do_put_long)
             VTABLE_ADD_FUNC(num_put_char_do_put_bool));
+    __ASM_VTABLE(num_put_wchar,
+            VTABLE_ADD_FUNC(num_put_wchar_do_put_ptr)
+            VTABLE_ADD_FUNC(num_put_wchar_do_put_double)
+            VTABLE_ADD_FUNC(num_put_wchar_do_put_double)
+            VTABLE_ADD_FUNC(num_put_wchar_do_put_uint64)
+            VTABLE_ADD_FUNC(num_put_wchar_do_put_int64)
+            VTABLE_ADD_FUNC(num_put_wchar_do_put_ulong)
+            VTABLE_ADD_FUNC(num_put_wchar_do_put_long)
+            VTABLE_ADD_FUNC(num_put_wchar_do_put_bool));
 #ifndef __GNUC__
 }
 #endif

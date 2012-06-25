@@ -272,7 +272,10 @@ typedef struct _basic_string_wchar
     MSVCP_size_t res;
 } basic_string_wchar;
 
-basic_string_wchar* __stdcall MSVCP_basic_string_wchar_ctor_cstr(basic_string_wchar*, const wchar_t*);
+basic_string_wchar* __thiscall MSVCP_basic_string_wchar_ctor_cstr(basic_string_wchar*, const wchar_t*);
+void __thiscall MSVCP_basic_string_wchar_dtor(basic_string_wchar*);
+const wchar_t* __thiscall MSVCP_basic_string_wchar_c_str(const basic_string_wchar*);
+MSVCP_size_t __thiscall MSVCP_basic_string_wchar_length(const basic_string_wchar*);
 
 char* __stdcall MSVCP_allocator_char_allocate(void*, MSVCP_size_t);
 void __stdcall MSVCP_allocator_char_deallocate(void*, char*, MSVCP_size_t);
@@ -537,6 +540,13 @@ typedef struct {
     locale *loc;
 } basic_streambuf_wchar;
 
+typedef struct {
+    MSVCP_bool failed;
+    basic_streambuf_wchar *strbuf;
+} ostreambuf_iterator_wchar;
+
+unsigned short __thiscall basic_streambuf_wchar_sputc(basic_streambuf_wchar*, wchar_t);
+
 /* class num_get<char> */
 typedef struct {
     locale_facet facet;
@@ -568,6 +578,7 @@ istreambuf_iterator_char *__thiscall num_get_char_get_bool(const num_get*, istre
         istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, MSVCP_bool*);
 
 /* class num_put<char> */
+/* class num_put<wchar> */
 typedef struct {
     locale_facet facet;
     _Cvtvec cvt;

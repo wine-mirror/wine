@@ -2962,7 +2962,7 @@ void __thiscall MSVCP_basic_string_wchar_dtor(basic_string_wchar *this)
 /* ?length@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBEIXZ */
 /* ?length@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEBA_KXZ */
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_wchar_length, 4)
-MSVCP_size_t __thiscall MSVCP_basic_string_wchar_length(basic_string_wchar *this)
+MSVCP_size_t __thiscall MSVCP_basic_string_wchar_length(const basic_string_wchar *this)
 {
     TRACE("%p\n", this);
     return this->size;
