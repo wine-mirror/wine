@@ -1948,11 +1948,11 @@ static BOOL glxdrv_wglMakeContextCurrentARB( PHYSDEV draw_dev, PHYSDEV read_dev,
 }
 
 /**
- * glxdrv_wglShareLists
+ * X11DRV_wglShareLists
  *
  * For OpenGL32 wglShareLists.
  */
-static BOOL glxdrv_wglShareLists(HGLRC hglrc1, HGLRC hglrc2)
+static BOOL WINAPI X11DRV_wglShareLists(HGLRC hglrc1, HGLRC hglrc2)
 {
     Wine_GLContext *org  = (Wine_GLContext *) hglrc1;
     Wine_GLContext *dest = (Wine_GLContext *) hglrc2;
@@ -3254,6 +3254,7 @@ static const WineGLExtension WGL_internal_functions =
     { "wglGetIntegerv", X11DRV_wglGetIntegerv },
     { "wglFinish", X11DRV_wglFinish },
     { "wglFlush", X11DRV_wglFlush },
+    { "wglShareLists", X11DRV_wglShareLists },
   }
 };
 
@@ -3762,7 +3763,7 @@ static const struct gdi_dc_funcs glxdrv_funcs =
     glxdrv_wglMakeContextCurrentARB,    /* pwglMakeContextCurrentARB */
     glxdrv_wglMakeCurrent,              /* pwglMakeCurrent */
     glxdrv_wglSetPixelFormatWINE,       /* pwglSetPixelFormatWINE */
-    glxdrv_wglShareLists,               /* pwglShareLists */
+    NULL,                               /* pwglShareLists */
     NULL,                               /* pwglUseFontBitmapsA */
     NULL,                               /* pwglUseFontBitmapsW */
     GDI_PRIORITY_GRAPHICS_DRV + 20      /* priority */

@@ -1717,8 +1717,7 @@ BOOL (WINAPI *pwglShareLists)(HGLRC, HGLRC) DECLSPEC_HIDDEN;
     USE_WGL_FUNC(wglGetCurrentContext) \
     USE_WGL_FUNC(wglGetCurrentDC) \
     USE_WGL_FUNC(wglGetProcAddress) \
-    USE_WGL_FUNC(wglMakeCurrent) \
-    USE_WGL_FUNC(wglShareLists)
+    USE_WGL_FUNC(wglMakeCurrent)
 
 /* OpenGL extensions. */
 enum wined3d_gl_extension

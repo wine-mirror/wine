@@ -52,7 +52,6 @@ static struct
     BOOL  (WINAPI *p_wglCopyContext)(HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask);
     BOOL  (WINAPI *p_wglDeleteContext)(HGLRC hglrc);
     BOOL  (WINAPI *p_wglMakeCurrent)(HDC hdc, HGLRC hglrc);
-    BOOL  (WINAPI *p_wglShareLists)(HGLRC hglrc1, HGLRC hglrc2);
     HDC   (WINAPI *p_wglGetCurrentDC)(void);
     HGLRC (WINAPI *p_wglCreateContext)(HDC hdc);
     HGLRC (WINAPI *p_wglGetCurrentContext)(void);
@@ -60,10 +59,11 @@ static struct
     INT   (WINAPI *p_DescribePixelFormat)(HDC hdc, INT iPixelFormat, UINT nBytes, LPPIXELFORMATDESCRIPTOR ppfd);
     INT   (WINAPI *p_GetPixelFormat)(HDC hdc);
 
-    /* Interal WGL function */
+    /* internal WGL functions */
     void  (WINAPI *p_wglGetIntegerv)(GLenum pname, GLint* params);
     void  (WINAPI *p_wglFinish)(void);
     void  (WINAPI *p_wglFlush)(void);
+    BOOL  (WINAPI *p_wglShareLists)(HGLRC hglrc1, HGLRC hglrc2);
 } wine_wgl;
 
 #ifdef SONAME_LIBGLU
@@ -128,7 +128,12 @@ BOOL WINAPI wglMakeCurrent(HDC hdc, HGLRC hglrc)
  */
 BOOL WINAPI wglShareLists(HGLRC hglrc1, HGLRC hglrc2)
 {
-  return wine_wgl.p_wglShareLists(hglrc1, hglrc2);
+    if (!hglrc1 || !hglrc2)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+    return wine_wgl.p_wglShareLists(hglrc1, hglrc2);
 }
 
 /***********************************************************************
@@ -919,7 +924,6 @@ static BOOL process_attach(void)
   wine_wgl.p_wglCopyContext = (void *)GetProcAddress(mod_gdi32, "wglCopyContext");
   wine_wgl.p_wglDeleteContext = (void *)GetProcAddress(mod_gdi32, "wglDeleteContext");
   wine_wgl.p_wglMakeCurrent = (void *)GetProcAddress(mod_gdi32, "wglMakeCurrent");
-  wine_wgl.p_wglShareLists = (void *)GetProcAddress(mod_gdi32, "wglShareLists");
   wine_wgl.p_wglGetCurrentDC = (void *)GetProcAddress(mod_gdi32, "wglGetCurrentDC");
   wine_wgl.p_wglCreateContext = (void *)GetProcAddress(mod_gdi32, "wglCreateContext");
   wine_wgl.p_wglGetCurrentContext = (void *)GetProcAddress(mod_gdi32, "wglGetCurrentContext");
@@ -927,10 +931,11 @@ static BOOL process_attach(void)
   wine_wgl.p_DescribePixelFormat = (void *)GetProcAddress(mod_gdi32, "DescribePixelFormat");
   wine_wgl.p_GetPixelFormat = (void *)GetProcAddress(mod_gdi32, "GetPixelFormat");
 
-  /* Interal WGL function */
+  /* internal WGL functions */
   wine_wgl.p_wglGetIntegerv = (void *)wine_wgl.p_wglGetProcAddress("wglGetIntegerv");
   wine_wgl.p_wglFinish = (void *)wine_wgl.p_wglGetProcAddress("wglFinish");
   wine_wgl.p_wglFlush = (void *)wine_wgl.p_wglGetProcAddress("wglFlush");
+  wine_wgl.p_wglShareLists = (void *)wine_wgl.p_wglGetProcAddress("wglShareLists");
 
   if (!RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\OpenGL", &hkey)) {
     if (!RegQueryValueExA( hkey, "DisabledExtensions", 0, NULL, NULL, &size)) {

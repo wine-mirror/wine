@@ -5359,9 +5359,11 @@ static BOOL InitAdapters(struct wined3d *wined3d)
 #ifdef USE_WIN32_OPENGL
     wglFinish = (void*)GetProcAddress(mod_gl, "glFinish");
     wglFlush = (void*)GetProcAddress(mod_gl, "glFlush");
+    pwglShareLists = (void*)GetProcAddress(mod_gl, "wglShareLists");
 #else
     wglFinish = (void*)pwglGetProcAddress("wglFinish");
     wglFlush = (void*)pwglGetProcAddress("wglFlush");
+    pwglShareLists = (void*)pwglGetProcAddress("wglShareLists");
 #endif
 
     glEnableWINE = glEnable;
