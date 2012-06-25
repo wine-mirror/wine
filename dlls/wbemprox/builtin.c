@@ -26,6 +26,8 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wbemcli.h"
+#include "winsock2.h"
+#include "iphlpapi.h"
 #include "tlhelp32.h"
 #include "initguid.h"
 #include "d3d10.h"
@@ -47,6 +49,8 @@ static const WCHAR class_processorW[] =
     {'W','i','n','3','2','_','P','r','o','c','e','s','s','o','r',0};
 static const WCHAR class_videocontrollerW[] =
     {'W','i','n','3','2','_','V','i','d','e','o','C','o','n','t','r','o','l','l','e','r',0};
+static const WCHAR class_networkadapterW[] =
+    {'W','i','n','3','2','_','N','e','t','w','o','r','k','A','d','a','p','t','e','r',0};
 
 static const WCHAR prop_adapterramW[] =
     {'A','d','a','p','t','e','r','R','A','M',0};
@@ -60,10 +64,14 @@ static const WCHAR prop_deviceidW[] =
     {'D','e','v','i','c','e','I','d',0};
 static const WCHAR prop_handleW[] =
     {'H','a','n','d','l','e',0};
+static const WCHAR prop_interfaceindexW[] =
+    {'I','n','t','e','r','f','a','c','e','I','n','d','e','x',0};
 static const WCHAR prop_manufacturerW[] =
     {'M','a','n','u','f','a','c','t','u','r','e','r',0};
 static const WCHAR prop_modelW[] =
     {'M','o','d','e','l',0};
+static const WCHAR prop_netconnectionstatusW[] =
+    {'N','e','t','C','o','n','n','e','c','t','i','o','n','S','t','a','t','u','s',0};
 static const WCHAR prop_osarchitectureW[] =
     {'O','S','A','r','c','h','i','t','e','c','t','u','r','e',0};
 static const WCHAR prop_pprocessidW[] =
@@ -89,6 +97,12 @@ static const struct column col_compsys[] =
     { prop_descriptionW,  CIM_STRING },
     { prop_manufacturerW, CIM_STRING },
     { prop_modelW,        CIM_STRING }
+};
+static const struct column col_networkadapter[] =
+{
+    { prop_deviceidW,            CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
+    { prop_interfaceindexW,      CIM_SINT32 },
+    { prop_netconnectionstatusW, CIM_UINT16 }
 };
 static const struct column col_os[] =
 {
@@ -154,6 +168,12 @@ struct record_computersystem
     const WCHAR *manufacturer;
     const WCHAR *model;
 };
+struct record_networkadapter
+{
+    const WCHAR *device_id;
+    INT32        interface_index;
+    UINT16       netconnection_status;
+};
 struct record_operatingsystem
 {
     const WCHAR *caption;
@@ -192,6 +212,60 @@ static const struct record_processor data_processor[] =
 {
     { processor_manufacturerW }
 };
+
+static UINT16 get_connection_status( IF_OPER_STATUS status )
+{
+    switch (status)
+    {
+    case IfOperStatusDown:
+        return 0; /* Disconnected */
+    case IfOperStatusUp:
+        return 2; /* Connected */
+    default:
+        ERR("unhandled status %u\n", status);
+        break;
+    }
+    return 0;
+}
+
+static void fill_networkadapter( struct table *table )
+{
+    static const WCHAR fmtW[] = {'%','u',0};
+    WCHAR device_id[11];
+    struct record_networkadapter *rec;
+    IP_ADAPTER_ADDRESSES *aa, *buffer;
+    UINT num_rows = 0, offset = 0;
+    DWORD size = 0, ret;
+
+    ret = GetAdaptersAddresses( AF_UNSPEC, 0, NULL, NULL, &size );
+    if (ret != ERROR_BUFFER_OVERFLOW) return;
+
+    if (!(buffer = heap_alloc( size ))) return;
+    if (GetAdaptersAddresses( AF_UNSPEC, 0, NULL, buffer, &size ))
+    {
+        heap_free( buffer );
+        return;
+    }
+    for (aa = buffer; aa; aa = aa->Next) num_rows++;
+    if (!(table->data = heap_alloc( sizeof(*rec) * num_rows )))
+    {
+        heap_free( buffer );
+        return;
+    }
+    for (aa = buffer; aa; aa = aa->Next)
+    {
+        rec = (struct record_networkadapter *)(table->data + offset);
+        sprintfW( device_id, fmtW, aa->u.s.IfIndex );
+        rec->device_id            = heap_strdupW( device_id );
+        rec->interface_index      = aa->u.s.IfIndex;
+        rec->netconnection_status = get_connection_status( aa->OperStatus );
+        offset += sizeof(*rec);
+    }
+    TRACE("created %u rows\n", num_rows);
+    table->num_rows = num_rows;
+
+    heap_free( buffer );
+}
 
 static WCHAR *get_cmdline( DWORD process_id )
 {
@@ -301,6 +375,7 @@ static struct table classtable[] =
 {
     { class_biosW, SIZEOF(col_bios), col_bios, SIZEOF(data_bios), (BYTE *)data_bios, NULL },
     { class_compsysW, SIZEOF(col_compsys), col_compsys, SIZEOF(data_compsys), (BYTE *)data_compsys, NULL },
+    { class_networkadapterW, SIZEOF(col_networkadapter), col_networkadapter, 0, NULL, fill_networkadapter },
     { class_osW, SIZEOF(col_os), col_os, 0, NULL, fill_os },
     { class_processW, SIZEOF(col_process), col_process, 0, NULL, fill_process },
     { class_processorW, SIZEOF(col_processor), col_processor, SIZEOF(data_processor), (BYTE *)data_processor, NULL },

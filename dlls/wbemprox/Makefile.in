@@ -1,5 +1,5 @@
 MODULE    = wbemprox.dll
-IMPORTS   = dxgi oleaut32 ole32 advapi32
+IMPORTS   = iphlpapi dxgi oleaut32 ole32 advapi32
 
 C_SRCS = \
 	builtin.c \
