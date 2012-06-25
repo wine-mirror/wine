@@ -2420,16 +2420,59 @@ GpStatus WINGDIPAPI GdipGetPropertyCount(GpImage *image, UINT *num)
     return Ok;
 }
 
-GpStatus WINGDIPAPI GdipGetPropertyIdList(GpImage *image, UINT num, PROPID* list)
+GpStatus WINGDIPAPI GdipGetPropertyIdList(GpImage *image, UINT num, PROPID *list)
 {
-    static int calls;
+    HRESULT hr;
+    IWICMetadataReader *reader;
+    IWICEnumMetadataItem *enumerator;
+    UINT prop_count, i, items_returned;
 
     TRACE("(%p, %u, %p)\n", image, num, list);
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    if (!image || !list) return InvalidParameter;
 
-    return InvalidParameter;
+    if (image->type != ImageTypeBitmap)
+    {
+        FIXME("Not implemented for type %d\n", image->type);
+        return NotImplemented;
+    }
+
+    reader = ((GpBitmap *)image)->metadata_reader;
+    if (!reader)
+    {
+        if (num != 0) return InvalidParameter;
+        return Ok;
+    }
+
+    hr = IWICMetadataReader_GetCount(reader, &prop_count);
+    if (FAILED(hr)) return hresult_to_status(hr);
+
+    if (num != prop_count) return InvalidParameter;
+
+    hr = IWICMetadataReader_GetEnumerator(reader, &enumerator);
+    if (FAILED(hr)) return hresult_to_status(hr);
+
+    IWICEnumMetadataItem_Reset(enumerator);
+
+    for (i = 0; i < num; i++)
+    {
+        PROPVARIANT id;
+
+        hr = IWICEnumMetadataItem_Next(enumerator, 1, NULL, &id, NULL, &items_returned);
+        if (hr != S_OK) break;
+
+        if (id.vt != VT_UI2)
+        {
+            FIXME("not supported propvariant type for id: %u\n", id.vt);
+            list[i] = 0;
+            continue;
+        }
+        list[i] = id.u.uiVal;
+    }
+
+    IWICEnumMetadataItem_Release(enumerator);
+
+    return hr == S_OK ? Ok : hresult_to_status(hr);
 }
 
 GpStatus WINGDIPAPI GdipGetPropertyItem(GpImage *image, PROPID id, UINT size,
