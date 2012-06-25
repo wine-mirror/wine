@@ -34,7 +34,7 @@ msgstr "Į&diegti..."
 #: appwiz.rc:62
 msgid ""
 "The following software can be automatically removed. To remove a program or "
-"to modify its installed components, select it from the list and click Change/"
+"to modify its installed components, select it from the list and click Modify/"
 "Remove."
 msgstr ""
 "Ši programinė įranga gali būti automatiškai pašalinta. Norėdami pašalinti "

@@ -32,9 +32,14 @@ msgid "&Install..."
 msgstr "ה&תקנה..."
 
 #: appwiz.rc:62
+#, fuzzy
+#| msgid ""
+#| "The following software can be automatically removed. To remove a program "
+#| "or to modify its installed components, select it from the list and click "
+#| "Change/Remove."
 msgid ""
 "The following software can be automatically removed. To remove a program or "
-"to modify its installed components, select it from the list and click Change/"
+"to modify its installed components, select it from the list and click Modify/"
 "Remove."
 msgstr ""
 "ניתן להסיר אוטומטית את התכניות הבאות. כדי להסיר תכנית או כדי לשנות את רכיביה "

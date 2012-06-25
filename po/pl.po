@@ -36,7 +36,7 @@ msgstr "&Zainstaluj..."
 #: appwiz.rc:62
 msgid ""
 "The following software can be automatically removed. To remove a program or "
-"to modify its installed components, select it from the list and click Change/"
+"to modify its installed components, select it from the list and click Modify/"
 "Remove."
 msgstr ""
 "To oprogramowanie może być usunięte automatycznie. Aby usunąć program lub "

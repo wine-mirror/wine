@@ -32,7 +32,7 @@ msgstr "&Installeren..."
 #: appwiz.rc:62
 msgid ""
 "The following software can be automatically removed. To remove a program or "
-"to modify its installed components, select it from the list and click Change/"
+"to modify its installed components, select it from the list and click Modify/"
 "Remove."
 msgstr ""
 "De volgende software kan automatisch verwijderd worden. Om een programma te "

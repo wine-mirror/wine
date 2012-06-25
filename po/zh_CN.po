@@ -28,9 +28,14 @@ msgid "&Install..."
 msgstr "安装(&I)..."
 
 #: appwiz.rc:62
+#, fuzzy
+#| msgid ""
+#| "The following software can be automatically removed. To remove a program "
+#| "or to modify its installed components, select it from the list and click "
+#| "Change/Remove."
 msgid ""
 "The following software can be automatically removed. To remove a program or "
-"to modify its installed components, select it from the list and click Change/"
+"to modify its installed components, select it from the list and click Modify/"
 "Remove."
 msgstr "下列软件可以自动卸载。 按'添加/删除'可卸载选定程序或者调整已安装部件。"
 
