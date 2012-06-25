@@ -1687,6 +1687,8 @@ BOOL WINAPI GetDiskFreeSpaceW( LPCWSTR root, LPDWORD cluster_sectors,
     if (sector_bytes) *sector_bytes = info.BytesPerSector;
     if (free_clusters) *free_clusters = info.AvailableAllocationUnits.u.LowPart;
     if (total_clusters) *total_clusters = info.TotalAllocationUnits.u.LowPart;
+    TRACE("%#08x, %#08x, %#08x, %#08x\n", info.SectorsPerAllocationUnit, info.BytesPerSector,
+          info.AvailableAllocationUnits.u.LowPart, info.TotalAllocationUnits.u.LowPart);
     return TRUE;
 }
 
