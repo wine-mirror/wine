@@ -54,6 +54,15 @@ static void fill_index_tree(HWND hwnd, IndexItem *item)
     }
 }
 
+static void item_realloc(IndexItem *item, int num_items)
+{
+    item->nItems = num_items;
+    item->items = heap_realloc(item->items, sizeof(IndexSubItem)*item->nItems);
+    item->items[item->nItems-1].name = NULL;
+    item->items[item->nItems-1].local = NULL;
+    item->itemFlags = 0x00;
+}
+
 /* Parse the attributes correspond to a list item, including sub-topics.
  *
  * Each list item has, at minimum, a param of type "keyword" and two
@@ -77,13 +86,8 @@ static void parse_index_obj_node_param(IndexItem *item, const char *text, UINT c
     /* Allocate a new sub-item, either on the first run or whenever a
      * sub-topic has filled out both the "name" and "local" params.
      */
-    if(item->itemFlags == 0x11 && (!strncasecmp("name", ptr, len) || !strncasecmp("local", ptr, len))) {
-        item->nItems++;
-        item->items = heap_realloc(item->items, sizeof(IndexSubItem)*item->nItems);
-        item->items[item->nItems-1].name = NULL;
-        item->items[item->nItems-1].local = NULL;
-        item->itemFlags = 0x00;
-    }
+    if(item->itemFlags == 0x11 && (!strncasecmp("name", ptr, len) || !strncasecmp("local", ptr, len)))
+        item_realloc(item, item->nItems+1);
     if(!strncasecmp("keyword", ptr, len)) {
         param = &item->keyword;
     }else if(!item->keyword && !strncasecmp("name", ptr, len)) {
@@ -228,8 +232,19 @@ static void parse_hhindex(HHInfo *info, IStream *str, IndexItem *item)
         TRACE("%s\n", node.buf);
 
         if(!strcasecmp(node_name.buf, "li")) {
-            item->next = parse_li(info, &stream);
-            if(item->next) {
+            IndexItem *new_item;
+
+            new_item = parse_li(info, &stream);
+            if(new_item && item->keyword && strcmpW(new_item->keyword, item->keyword) == 0) {
+                int num_items = item->nItems;
+
+                item_realloc(item, num_items+1);
+                memcpy(&item->items[num_items], &new_item->items[0], sizeof(IndexSubItem));
+                heap_free(new_item->keyword);
+                heap_free(new_item->items);
+                heap_free(new_item);
+            } else if(new_item) {
+                item->next = new_item;
                 item->next->merge = item->merge;
                 item = item->next;
                 item->indentLevel = indent_level;
