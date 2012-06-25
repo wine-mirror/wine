@@ -41,6 +41,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wgl);
 static const WCHAR opengl32W[] = {'o','p','e','n','g','l','3','2','.','d','l','l',0};
 static HMODULE opengl32;
 static INT (WINAPI *wglChoosePixelFormat)(HDC,const PIXELFORMATDESCRIPTOR *);
+static INT (WINAPI *wglDescribePixelFormat)(HDC,INT,UINT,PIXELFORMATDESCRIPTOR*);
 
 static HDC default_hdc = 0;
 
@@ -236,4 +237,18 @@ INT WINAPI ChoosePixelFormat( HDC hdc, const PIXELFORMATDESCRIPTOR *pfd )
             return 0;
     }
     return wglChoosePixelFormat( hdc, pfd );
+}
+
+/******************************************************************************
+ *		DescribePixelFormat (GDI32.@)
+ */
+INT WINAPI DescribePixelFormat( HDC hdc, INT fmt, UINT size, PIXELFORMATDESCRIPTOR *pfd )
+{
+    if (!wglDescribePixelFormat)
+    {
+        if (!opengl32) opengl32 = LoadLibraryW( opengl32W );
+        if (!(wglDescribePixelFormat = (void *)GetProcAddress( opengl32, "wglDescribePixelFormat" )))
+            return 0;
+    }
+    return wglDescribePixelFormat( hdc, fmt, size, pfd );
 }

@@ -547,21 +547,12 @@ INT WINAPI GetPixelFormat( HDC hdc )
 
 
 /******************************************************************************
- * DescribePixelFormat [GDI32.@]
- * Gets info about pixel format from DC
+ * GdiDescribePixelFormat [GDI32.@]
  *
- * PARAMS
- *    hdc          [I] Device context
- *    iPixelFormat [I] Pixel format selector
- *    nBytes       [I] Size of buffer
- *    ppfd         [O] Pointer to structure to receive pixel format data
- *
- * RETURNS
- *    Success: Maximum pixel format index of the device context
- *    Failure: 0
+ * Probably not the correct semantics, it's supposed to be an internal backend for DescribePixelFormat.
  */
-INT WINAPI DescribePixelFormat( HDC hdc, INT iPixelFormat, UINT nBytes,
-                                LPPIXELFORMATDESCRIPTOR ppfd )
+INT WINAPI GdiDescribePixelFormat( HDC hdc, INT iPixelFormat, UINT nBytes,
+                                   LPPIXELFORMATDESCRIPTOR ppfd )
 {
     INT ret = 0;
     DC * dc = get_dc_ptr( hdc );

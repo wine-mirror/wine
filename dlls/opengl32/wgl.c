@@ -51,7 +51,6 @@ static struct
     BOOL  (WINAPI *p_SetPixelFormat)(HDC hdc, INT iPixelFormat, const PIXELFORMATDESCRIPTOR *ppfd);
     BOOL  (WINAPI *p_wglMakeCurrent)(HDC hdc, HGLRC hglrc);
     HGLRC (WINAPI *p_wglCreateContext)(HDC hdc);
-    INT   (WINAPI *p_DescribePixelFormat)(HDC hdc, INT iPixelFormat, UINT nBytes, LPPIXELFORMATDESCRIPTOR ppfd);
     INT   (WINAPI *p_GetPixelFormat)(HDC hdc);
 
     /* internal WGL functions */
@@ -88,6 +87,8 @@ static char* internal_gl_disabled_extensions = NULL;
 static char* internal_gl_extensions = NULL;
 
 const GLubyte * WINAPI wine_glGetString( GLenum name );
+
+extern INT WINAPI GdiDescribePixelFormat( HDC hdc, INT fmt, UINT size, PIXELFORMATDESCRIPTOR *pfd );
 
 /***********************************************************************
  *		 wglSetPixelFormat(OPENGL32.@)
@@ -184,7 +185,7 @@ INT WINAPI wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd)
                  ppfd->cColorBits, ppfd->cRedBits, ppfd->cGreenBits, ppfd->cBlueBits, ppfd->cAlphaBits,
                  ppfd->cAccumBits, ppfd->cDepthBits, ppfd->cStencilBits, ppfd->cAuxBuffers );
 
-    count = wine_wgl.p_DescribePixelFormat( hdc, 0, 0, NULL );
+    count = GdiDescribePixelFormat( hdc, 0, 0, NULL );
     if (!count) return 0;
 
     best_format = 0;
@@ -197,7 +198,7 @@ INT WINAPI wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd)
 
     for (i = 1; i <= count; i++)
     {
-        if (!wine_wgl.p_DescribePixelFormat( hdc, i, sizeof(format), &format )) continue;
+        if (!GdiDescribePixelFormat( hdc, i, sizeof(format), &format )) continue;
 
         if (ppfd->iPixelType != format.iPixelType)
         {
@@ -338,8 +339,9 @@ INT WINAPI wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd)
 INT WINAPI wglDescribePixelFormat(HDC hdc, INT iPixelFormat, UINT nBytes,
                                 LPPIXELFORMATDESCRIPTOR ppfd)
 {
-  return wine_wgl.p_DescribePixelFormat(hdc, iPixelFormat, nBytes, ppfd);
+  return GdiDescribePixelFormat(hdc, iPixelFormat, nBytes, ppfd);
 }
+
 /***********************************************************************
  *		wglGetPixelFormat (OPENGL32.@)
  */
@@ -1087,7 +1089,6 @@ static BOOL process_attach(void)
   wine_wgl.p_SetPixelFormat = (void *)GetProcAddress(mod_gdi32, "SetPixelFormat");
   wine_wgl.p_wglMakeCurrent = (void *)GetProcAddress(mod_gdi32, "wglMakeCurrent");
   wine_wgl.p_wglCreateContext = (void *)GetProcAddress(mod_gdi32, "wglCreateContext");
-  wine_wgl.p_DescribePixelFormat = (void *)GetProcAddress(mod_gdi32, "DescribePixelFormat");
   wine_wgl.p_GetPixelFormat = (void *)GetProcAddress(mod_gdi32, "GetPixelFormat");
 
   /* internal WGL functions */
