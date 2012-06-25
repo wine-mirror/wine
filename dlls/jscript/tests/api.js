@@ -1644,9 +1644,11 @@ function callTest(argc) {
 
 callTest.call(tmp, 1, 1);
 callTest.call(tmp, 2, 1, 2);
+callTest.call(tmp, 3, 1, 2, 3);
 
 callTest.apply(tmp, [1, 1]);
 callTest.apply(tmp, [2, 1, 2]);
+callTest.apply(tmp, [3, 1, 2, 3]);
 (function () { callTest.apply(tmp, arguments); })(2,1,2);
 
 function callTest2() {
