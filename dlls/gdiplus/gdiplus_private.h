@@ -29,6 +29,7 @@
 
 #include "objbase.h"
 #include "ocidl.h"
+#include "wincodecsdk.h"
 #include "wine/list.h"
 
 #include "gdiplus.h"
@@ -309,6 +310,7 @@ struct GpBitmap{
     INT stride; /* stride of bits if this is a DIB */
     BYTE *own_bits; /* image bits that need to be freed with this object */
     INT lockx, locky; /* X and Y coordinates of the rect when a bitmap is locked for writing. */
+    IWICMetadataReader *metadata_reader; /* NULL if there is no metadata */
 };
 
 struct GpCachedBitmap{

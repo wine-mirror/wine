@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <assert.h>
 
 #define NONAMELESSUNION
 
@@ -1785,6 +1786,7 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
     (*bitmap)->bits = bits;
     (*bitmap)->stride = stride;
     (*bitmap)->own_bits = own_bits;
+    (*bitmap)->metadata_reader = NULL;
 
     /* set format-related flags */
     if (format & (PixelFormatAlpha|PixelFormatPAlpha|PixelFormatIndexed))
@@ -1967,6 +1969,11 @@ GpStatus WINGDIPAPI GdipEmfToWmfBits(HENHMETAFILE hemf, UINT cbData16,
  * and free src. */
 static void move_bitmap(GpBitmap *dst, GpBitmap *src, BOOL clobber_palette)
 {
+    assert(src->image.type == ImageTypeBitmap);
+    assert(dst->image.type == ImageTypeBitmap);
+    assert(src->image.stream == NULL);
+    assert(dst->image.stream == NULL);
+
     GdipFree(dst->bitmapbits);
     DeleteDC(dst->hdc);
     DeleteObject(dst->hbitmap);
@@ -1991,7 +1998,11 @@ static void move_bitmap(GpBitmap *dst, GpBitmap *src, BOOL clobber_palette)
     dst->bits = src->bits;
     dst->stride = src->stride;
     dst->own_bits = src->own_bits;
+    if (dst->metadata_reader)
+        IWICMetadataReader_Release(dst->metadata_reader);
+    dst->metadata_reader = src->metadata_reader;
 
+    src->image.type = ~0;
     GdipFree(src);
 }
 
@@ -2006,6 +2017,8 @@ static GpStatus free_image_data(GpImage *image)
         GdipFree(((GpBitmap*)image)->own_bits);
         DeleteDC(((GpBitmap*)image)->hdc);
         DeleteObject(((GpBitmap*)image)->hbitmap);
+        if (((GpBitmap*)image)->metadata_reader)
+            IWICMetadataReader_Release(((GpBitmap*)image)->metadata_reader);
     }
     else if (image->type == ImageTypeMetafile)
     {
@@ -2588,6 +2601,7 @@ static GpStatus decode_image_wic(IStream* stream, REFCLSID clsid, UINT active_fr
     IWICBitmapDecoder *decoder;
     IWICBitmapFrameDecode *frame;
     IWICBitmapSource *source=NULL;
+    IWICMetadataBlockReader *block_reader;
     WICPixelFormatGUID wic_format;
     PixelFormat gdip_format=0;
     int i;
@@ -2683,6 +2697,15 @@ static GpStatus decode_image_wic(IStream* stream, REFCLSID clsid, UINT active_fr
             }
 
             IWICBitmapSource_Release(source);
+        }
+
+        bitmap->metadata_reader = NULL;
+        if (IWICBitmapFrameDecode_QueryInterface(frame, &IID_IWICMetadataBlockReader, (void **)&block_reader) == S_OK)
+        {
+            UINT block_count = 0;
+            if (IWICMetadataBlockReader_GetCount(block_reader, &block_count) == S_OK && block_count)
+                IWICMetadataBlockReader_GetReaderByIndex(block_reader, 0, &bitmap->metadata_reader);
+            IWICMetadataBlockReader_Release(block_reader);
         }
 
         IWICBitmapFrameDecode_Release(frame);
