@@ -1239,6 +1239,7 @@ static HRESULT assoc_element(PluginHost *host, HTMLDocumentNode *doc, nsIDOMElem
 
     hres = IHTMLDOMNode_QueryInterface(&node->IHTMLDOMNode_iface, &IID_HTMLPluginContainer,
             (void**)&container_elem);
+    node_release(node);
     if(FAILED(hres)) {
         ERR("Not an object element\n");
         return hres;

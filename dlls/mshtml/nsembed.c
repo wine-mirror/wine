@@ -1287,6 +1287,7 @@ static nsresult NSAPI nsContextMenuListener_OnShowContextMenu(nsIContextMenuList
         return NS_ERROR_FAILURE;
 
     show_context_menu(This->doc, dwID, &pt, (IDispatch*)&node->IHTMLDOMNode_iface);
+    node_release(node);
     return NS_OK;
 }
 

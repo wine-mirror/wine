@@ -175,7 +175,9 @@ static HRESULT WINAPI HTMLDocument3_get_documentElement(IHTMLDocument3 *iface, I
     if(FAILED(hres))
         return hres;
 
-    return IHTMLDOMNode_QueryInterface(&node->IHTMLDOMNode_iface, &IID_IHTMLElement, (void**)p);
+    hres = IHTMLDOMNode_QueryInterface(&node->IHTMLDOMNode_iface, &IID_IHTMLElement, (void**)p);
+    node_release(node);
+    return hres;
 }
 
 static HRESULT WINAPI HTMLDocument3_uniqueID(IHTMLDocument3 *iface, BSTR *p)
@@ -532,9 +534,10 @@ static HRESULT WINAPI HTMLDocument3_getElementById(IHTMLDocument3 *iface, BSTR v
         hres = get_node(This->doc_node, nsnode, TRUE, &node);
         nsIDOMNode_Release(nsnode);
 
-        if(SUCCEEDED(hres))
-            hres = IHTMLDOMNode_QueryInterface(&node->IHTMLDOMNode_iface, &IID_IHTMLElement,
-                    (void**)pel);
+        if(SUCCEEDED(hres)) {
+            hres = IHTMLDOMNode_QueryInterface(&node->IHTMLDOMNode_iface, &IID_IHTMLElement, (void**)pel);
+            node_release(node);
+        }
     }else {
         *pel = NULL;
         hres = S_OK;

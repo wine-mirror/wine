@@ -486,6 +486,7 @@ static HRESULT WINAPI HTMLOptionElementFactory_create(IHTMLOptionElementFactory 
 
     hres = IHTMLDOMNode_QueryInterface(&node->IHTMLDOMNode_iface,
             &IID_IHTMLOptionElement, (void**)optelem);
+    node_release(node);
 
     if(V_VT(&text) == VT_BSTR)
         IHTMLOptionElement_put_text(*optelem, V_BSTR(&text));

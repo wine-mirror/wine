@@ -73,7 +73,6 @@ static HRESULT htmlselect_item(HTMLSelectElement *This, int i, IDispatch **ret)
         if(FAILED(hres))
             return hres;
 
-        IHTMLDOMNode_AddRef(&node->IHTMLDOMNode_iface);
         *ret = (IDispatch*)&node->IHTMLDOMNode_iface;
     }else {
         *ret = NULL;

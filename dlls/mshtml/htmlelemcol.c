@@ -522,6 +522,7 @@ static void create_all_list(HTMLDocumentNode *doc, HTMLDOMNode *elem, elem_vecto
 
             elem_vector_add(buf, elem_from_HTMLDOMNode(node));
             create_all_list(doc, node, buf);
+            node_release(node);
         }
     }
 }
@@ -563,6 +564,7 @@ IHTMLElementCollection *create_collection_from_nodelist(HTMLDocumentNode *doc, I
                 if(FAILED(hres))
                     continue;
                 buf.buf[buf.len++] = elem_from_HTMLDOMNode(node);
+                node_release(node);
             }
             nsIDOMNode_Release(nsnode);
         }
@@ -597,6 +599,7 @@ IHTMLElementCollection *create_collection_from_htmlcol(HTMLDocumentNode *doc, IU
             if(FAILED(hres))
                 break;
             buf.buf[i] = elem_from_HTMLDOMNode(node);
+            node_release(node);
         }
     }else {
         buf.buf = NULL;

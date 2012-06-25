@@ -556,6 +556,11 @@ struct HTMLDOMNode {
     HTMLDOMNode *next;
 };
 
+static inline void node_release(HTMLDOMNode *node)
+{
+    IHTMLDOMNode_Release(&node->IHTMLDOMNode_iface);
+}
+
 typedef struct {
     HTMLDOMNode node;
     ConnectionPointContainer cp_container;

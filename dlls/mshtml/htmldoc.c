@@ -138,9 +138,12 @@ static HRESULT WINAPI HTMLDocument_get_all(IHTMLDocument2 *iface, IHTMLElementCo
     }
 
     hres = get_node(This->doc_node, (nsIDOMNode*)nselem, TRUE, &node);
-    if(SUCCEEDED(hres))
-        *p = create_all_collection(node, TRUE);
     nsIDOMElement_Release(nselem);
+    if(FAILED(hres))
+        return hres;
+
+    *p = create_all_collection(node, TRUE);
+    node_release(node);
     return hres;
 }
 
@@ -173,7 +176,9 @@ static HRESULT WINAPI HTMLDocument_get_body(IHTMLDocument2 *iface, IHTMLElement 
     if(FAILED(hres))
         return hres;
 
-    return IHTMLDOMNode_QueryInterface(&node->IHTMLDOMNode_iface, &IID_IHTMLElement, (void**)p);
+    hres = IHTMLDOMNode_QueryInterface(&node->IHTMLDOMNode_iface, &IID_IHTMLElement, (void**)p);
+    node_release(node);
+    return hres;
 }
 
 static HRESULT WINAPI HTMLDocument_get_activeElement(IHTMLDocument2 *iface, IHTMLElement **p)
@@ -1349,7 +1354,9 @@ static HRESULT WINAPI HTMLDocument_elementFromPoint(IHTMLDocument2 *iface, LONG 
     if(FAILED(hres))
         return hres;
 
-    return IHTMLDOMNode_QueryInterface(&node->IHTMLDOMNode_iface, &IID_IHTMLElement, (void**)elementHit);
+    hres = IHTMLDOMNode_QueryInterface(&node->IHTMLDOMNode_iface, &IID_IHTMLElement, (void**)elementHit);
+    node_release(node);
+    return hres;
 }
 
 static HRESULT WINAPI HTMLDocument_get_parentWindow(IHTMLDocument2 *iface, IHTMLWindow2 **p)
@@ -2156,7 +2163,6 @@ static HRESULT HTMLDocumentNode_invoke(DispatchEx *dispex, DISPID id, LCID lcid,
     if(FAILED(hres))
         return hres;
 
-    IHTMLDOMNode_AddRef(&node->IHTMLDOMNode_iface);
     V_VT(res) = VT_DISPATCH;
     V_DISPATCH(res) = (IDispatch*)&node->IHTMLDOMNode_iface;
     return S_OK;

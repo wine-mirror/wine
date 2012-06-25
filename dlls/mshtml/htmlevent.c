@@ -1003,6 +1003,7 @@ void fire_event(HTMLDocumentNode *doc, eventid_t eid, BOOL set_event, nsIDOMNode
             return;
 
         event_obj = create_event(node, eid, nsevent);
+        node_release(node);
         doc->basedoc.window->event = &event_obj->IHTMLEventObj_iface;
     }else {
         doc->basedoc.window->event = NULL;
@@ -1016,9 +1017,11 @@ void fire_event(HTMLDocumentNode *doc, eventid_t eid, BOOL set_event, nsIDOMNode
     case ELEMENT_NODE:
         do {
             hres = get_node(doc, nsnode, FALSE, &node);
-            if(SUCCEEDED(hres) && node)
+            if(SUCCEEDED(hres) && node) {
                 call_event_handlers(doc, event_obj, *get_node_event_target(node),
                         node->cp_container, eid, (IDispatch*)&node->IHTMLDOMNode_iface);
+                node_release(node);
+            }
 
             if(!(event_info[eid].flags & EVENT_BUBBLE) || (event_obj && event_obj->cancel_bubble))
                 break;
@@ -1043,9 +1046,11 @@ void fire_event(HTMLDocumentNode *doc, eventid_t eid, BOOL set_event, nsIDOMNode
             nsres = nsIDOMHTMLDocument_GetBody(doc->nsdoc, &nsbody);
             if(NS_SUCCEEDED(nsres) && nsbody) {
                 hres = get_node(doc, (nsIDOMNode*)nsbody, FALSE, &node);
-                if(SUCCEEDED(hres) && node)
+                if(SUCCEEDED(hres) && node) {
                     call_event_handlers(doc, event_obj, *get_node_event_target(node),
                             node->cp_container, eid, (IDispatch*)&node->IHTMLDOMNode_iface);
+                    node_release(node);
+                }
                 nsIDOMHTMLElement_Release(nsbody);
             }else {
                 ERR("Could not get body: %08x\n", nsres);
@@ -1078,8 +1083,10 @@ void fire_event(HTMLDocumentNode *doc, eventid_t eid, BOOL set_event, nsIDOMNode
             if(FAILED(hres))
                 break;
 
-            if(node && node->vtbl->handle_event) {
-                hres = node->vtbl->handle_event(node, eid, nsevent, &prevent_default);
+            if(node) {
+                if(node->vtbl->handle_event)
+                    hres = node->vtbl->handle_event(node, eid, nsevent, &prevent_default);
+                node_release(node);
                 if(FAILED(hres) || prevent_default || (event_obj && event_obj->cancel_bubble))
                     break;
             }
@@ -1382,8 +1389,10 @@ void check_event_attr(HTMLDocumentNode *doc, nsIDOMElement *nselem)
             disp = script_parse_event(doc->basedoc.window, attr_value);
             if(disp) {
                 hres = get_node(doc, (nsIDOMNode*)nselem, TRUE, &node);
-                if(SUCCEEDED(hres))
+                if(SUCCEEDED(hres)) {
                     set_event_handler_disp(get_node_event_target(node), node->nsnode, node->doc, i, disp);
+                    node_release(node);
+                }
                 IDispatch_Release(disp);
             }
         }

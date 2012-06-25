@@ -182,7 +182,6 @@ static HRESULT WINAPI HTMLDOMChildrenCollection_item(IHTMLDOMChildrenCollection 
         return hres;
 
     *ppItem = (IDispatch*)&node->IHTMLDOMNode_iface;
-    IDispatch_AddRef(*ppItem);
     return S_OK;
 }
 
@@ -429,7 +428,6 @@ static HRESULT WINAPI HTMLDOMNode_get_parentNode(IHTMLDOMNode *iface, IHTMLDOMNo
         return hres;
 
     *p = &node->IHTMLDOMNode_iface;
-    IHTMLDOMNode_AddRef(*p);
     return S_OK;
 }
 
@@ -540,7 +538,6 @@ static HRESULT WINAPI HTMLDOMNode_insertBefore(IHTMLDOMNode *iface, IHTMLDOMNode
         return hres;
 
     *node = &node_obj->IHTMLDOMNode_iface;
-    IHTMLDOMNode_AddRef(*node);
     return S_OK;
 }
 
@@ -572,7 +569,6 @@ static HRESULT WINAPI HTMLDOMNode_removeChild(IHTMLDOMNode *iface, IHTMLDOMNode 
 
     /* FIXME: Make sure that node != newChild */
     *node = &node_obj->IHTMLDOMNode_iface;
-    IHTMLDOMNode_AddRef(*node);
     return S_OK;
 }
 
@@ -609,7 +605,6 @@ static HRESULT WINAPI HTMLDOMNode_replaceChild(IHTMLDOMNode *iface, IHTMLDOMNode
         return hres;
 
     *node = &node_new->IHTMLDOMNode_iface;
-    IHTMLDOMNode_AddRef(*node);
     return S_OK;
 }
 
@@ -690,7 +685,6 @@ static HRESULT WINAPI HTMLDOMNode_appendChild(IHTMLDOMNode *iface, IHTMLDOMNode 
 
     /* FIXME: Make sure that node != newChild */
     *node = &node_obj->IHTMLDOMNode_iface;
-    IHTMLDOMNode_AddRef(*node);
     return S_OK;
 }
 
@@ -776,7 +770,6 @@ static HRESULT WINAPI HTMLDOMNode_get_firstChild(IHTMLDOMNode *iface, IHTMLDOMNo
         return hres;
 
     *p = &node->IHTMLDOMNode_iface;
-    IHTMLDOMNode_AddRef(*p);
     return S_OK;
 }
 
@@ -801,7 +794,6 @@ static HRESULT WINAPI HTMLDOMNode_get_lastChild(IHTMLDOMNode *iface, IHTMLDOMNod
         return hres;
 
     *p = &node->IHTMLDOMNode_iface;
-    IHTMLDOMNode_AddRef(*p);
     return S_OK;
 }
 
@@ -826,7 +818,6 @@ static HRESULT WINAPI HTMLDOMNode_get_previousSibling(IHTMLDOMNode *iface, IHTML
         return hres;
 
     *p = &node->IHTMLDOMNode_iface;
-    IHTMLDOMNode_AddRef(*p);
     return S_OK;
 }
 
@@ -851,7 +842,6 @@ static HRESULT WINAPI HTMLDOMNode_get_nextSibling(IHTMLDOMNode *iface, IHTMLDOMN
         return hres;
 
     *p = &node->IHTMLDOMNode_iface;
-    IHTMLDOMNode_AddRef(*p);
     return S_OK;
 }
 
@@ -1106,6 +1096,7 @@ static HRESULT create_node(HTMLDocumentNode *doc, nsIDOMNode *nsnode, HTMLDOMNod
 HRESULT get_node(HTMLDocumentNode *This, nsIDOMNode *nsnode, BOOL create, HTMLDOMNode **ret)
 {
     HTMLDOMNode *iter = This->nodes;
+    HRESULT hres;
 
     while(iter) {
         if(iter->nsnode == nsnode)
@@ -1114,11 +1105,16 @@ HRESULT get_node(HTMLDocumentNode *This, nsIDOMNode *nsnode, BOOL create, HTMLDO
     }
 
     if(iter || !create) {
+        if(iter)
+            IHTMLDOMNode_AddRef(&iter->IHTMLDOMNode_iface);
         *ret = iter;
         return S_OK;
     }
 
-    return create_node(This, nsnode, ret);
+    hres = create_node(This, nsnode, ret);
+    if(SUCCEEDED(hres))
+        IHTMLDOMNode_AddRef(&(*ret)->IHTMLDOMNode_iface);
+    return hres;
 }
 
 /*

@@ -228,6 +228,7 @@ static nsresult run_bind_to_tree(HTMLDocumentNode *doc, nsISupports *nsiface, ns
     if(node->vtbl->bind_to_tree)
         node->vtbl->bind_to_tree(node);
 
+    node_release(node);
     return nsres;
 }
 

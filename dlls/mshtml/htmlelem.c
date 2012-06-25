@@ -920,6 +920,7 @@ static HRESULT WINAPI HTMLElement_get_offsetParent(IHTMLElement *iface, IHTMLEle
             return hres;
 
         hres = IHTMLDOMNode_QueryInterface(&node->IHTMLDOMNode_iface, &IID_IHTMLElement, (void**)p);
+        node_release(node);
     }else {
         *p = NULL;
         hres = S_OK;

@@ -66,7 +66,6 @@ static HRESULT htmlform_item(HTMLFormElement *This, int i, IDispatch **ret)
         if(FAILED(hres))
             return hres;
 
-        IHTMLDOMNode_AddRef(&node->IHTMLDOMNode_iface);
         nsIDOMNode_Release(item);
         *ret = (IDispatch*)&node->IHTMLDOMNode_iface;
     }else {
