@@ -98,13 +98,6 @@ typedef struct {
     const wchar_t *true_name;
 } numpunct_wchar;
 
-typedef struct _istreambuf_iterator_wchar
-{
-    basic_streambuf_wchar *strbuf;
-    MSVCP_bool      got;
-    wchar_t         val;
-} istreambuf_iterator_wchar;
-
 /* ?_Id_cnt@id@locale@std@@0HA */
 int locale_id__Id_cnt = 0;
 
@@ -129,6 +122,20 @@ static char istreambuf_iterator_char_val(istreambuf_iterator_char *this)
     return this->val;
 }
 
+static wchar_t istreambuf_iterator_wchar_val(istreambuf_iterator_wchar *this)
+{
+    if(this->strbuf && !this->got) {
+        unsigned short c = basic_streambuf_wchar_sgetc(this->strbuf);
+        if(c == WEOF)
+            this->strbuf = NULL;
+        else
+            this->val = c;
+    }
+
+    this->got = TRUE;
+    return this->val;
+}
+
 static void istreambuf_iterator_char_inc(istreambuf_iterator_char *this)
 {
     if(!this->strbuf || basic_streambuf_char_sbumpc(this->strbuf)==EOF) {
@@ -137,6 +144,17 @@ static void istreambuf_iterator_char_inc(istreambuf_iterator_char *this)
     }else {
         this->got = FALSE;
         istreambuf_iterator_char_val(this);
+    }
+}
+
+static void istreambuf_iterator_wchar_inc(istreambuf_iterator_wchar *this)
+{
+    if(!this->strbuf || basic_streambuf_wchar_sbumpc(this->strbuf)==WEOF) {
+        this->strbuf = NULL;
+        this->got = TRUE;
+    }else {
+        this->got = FALSE;
+        istreambuf_iterator_wchar_val(this);
     }
 }
 
@@ -3829,6 +3847,32 @@ MSVCP_size_t __cdecl numpunct_short__Getcat(const locale_facet **facet, const lo
     return LC_NUMERIC;
 }
 
+numpunct_wchar* numpunct_short_use_facet(const locale *loc)
+{
+    static numpunct_wchar *obj = NULL;
+
+    _Lockit lock;
+    const locale_facet *fac;
+
+    _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
+    fac = locale__Getfacet(loc, numpunct_short_id.id);
+    if(fac) {
+        _Lockit_dtor(&lock);
+        return (numpunct_wchar*)fac;
+    }
+
+    if(obj)
+        return obj;
+
+    numpunct_short__Getcat(&fac, loc);
+    obj = (numpunct_wchar*)fac;
+    locale_facet__Incref(&obj->facet);
+    locale_facet_register(&obj->facet);
+    _Lockit_dtor(&lock);
+
+    return obj;
+}
+
 /* ?do_decimal_point@?$numpunct@_W@std@@MBE_WXZ */
 /* ?do_decimal_point@?$numpunct@_W@std@@MEBA_WXZ */
 /* ?do_decimal_point@?$numpunct@G@std@@MBEGXZ */
@@ -4212,22 +4256,176 @@ MSVCP_size_t __cdecl num_get_short__Getcat(const locale_facet **facet, const loc
     return LC_NUMERIC;
 }
 
+static inline wchar_t mb_to_wc(char ch, const _Cvtvec *cvt)
+{
+    int state;
+    wchar_t ret;
+
+    return _Mbrtowc(&ret, &ch, 1, &state, cvt) == 1 ? ret : 0;
+}
+
+static int num_get__Getffld(const num_get *this, char *dest, istreambuf_iterator_wchar *first,
+        istreambuf_iterator_wchar *last, const locale *loc, numpunct_wchar *numpunct)
+{
+    basic_string_char grouping_bstr;
+    int i, groups_no = 0, cur_group = 0, exp = 0;
+    char *dest_beg = dest, *num_end = dest+25, *exp_end = dest+31, *groups = NULL;
+    wchar_t sep, digits[11], *digits_pos;
+    const char *grouping;
+    BOOL error = TRUE, dest_empty = TRUE;
+
+    TRACE("(%p %p %p %p)\n", dest, first, last, loc);
+
+    for(i=0; i<10; i++)
+        digits[i] = mb_to_wc('0'+i, &this->cvt);
+    digits[10] = 0;
+
+    numpunct_wchar_grouping(numpunct, &grouping_bstr);
+    grouping = MSVCP_basic_string_char_c_str(&grouping_bstr);
+    sep = grouping[0] ? numpunct_wchar_thousands_sep(numpunct) : (wchar_t)0;
+
+    istreambuf_iterator_wchar_val(first);
+    if(first->strbuf && first->val==mb_to_wc('-', &this->cvt)) {
+        *dest++ = '-';
+        istreambuf_iterator_wchar_inc(first);
+    }else if(first->strbuf && first->val==mb_to_wc('+', &this->cvt)) {
+        *dest++ = '+';
+        istreambuf_iterator_wchar_inc(first);
+    }
+
+    if(sep) {
+        groups_no = strlen(grouping)+2;
+        groups = calloc(groups_no, sizeof(char));
+    }
+
+    for(; first->strbuf; istreambuf_iterator_wchar_inc(first)) {
+        if(!(digits_pos = wcschr(digits, first->val))) {
+            if(sep && first->val==sep) {
+                if(cur_group == groups_no+1) {
+                    if(groups[1] != groups[2]) {
+                        error = TRUE;
+                        break;
+                    }else {
+                        memmove(groups+1, groups+2, groups_no);
+                        groups[cur_group] = 0;
+                    }
+                }else {
+                    cur_group++;
+                }
+            }else {
+                break;
+            }
+        }else {
+            error = FALSE;
+            if(dest_empty && first->val == digits[0])
+                continue;
+            dest_empty = FALSE;
+            if(dest < num_end)
+                *dest++ = '0'+digits_pos-digits;
+            else
+                exp++;
+            if(sep && groups[cur_group]<CHAR_MAX)
+                groups[cur_group]++;
+        }
+    }
+
+    if(cur_group && !groups[cur_group])
+        error = TRUE;
+    else if(!cur_group)
+        cur_group--;
+
+    for(; cur_group>=0 && !error; cur_group--) {
+        if(*grouping == CHAR_MAX) {
+            if(cur_group)
+                error = TRUE;
+            break;
+        }else if((cur_group && *grouping!=groups[cur_group])
+                || (!cur_group && *grouping<groups[cur_group])) {
+            error = TRUE;
+            break;
+        }else if(grouping[1]) {
+            grouping++;
+        }
+    }
+    MSVCP_basic_string_char_dtor(&grouping_bstr);
+    free(groups);
+
+    if(error) {
+        *dest_beg = '\0';
+        return 0;
+    }else if(dest_empty) {
+        *dest++ = '0';
+    }
+
+    if(first->strbuf && first->val==numpunct_wchar_decimal_point(numpunct)) {
+        if(dest < num_end)
+            *dest++ = *localeconv()->decimal_point;
+        istreambuf_iterator_wchar_inc(first);
+
+        if(dest_empty) {
+            for(; first->strbuf && first->val==digits[0]; istreambuf_iterator_wchar_inc(first))
+                exp--;
+
+            if(!first->strbuf || !wcschr(digits, first->val))
+                dest--;
+        }
+    }
+
+    for(; first->strbuf; istreambuf_iterator_wchar_inc(first)) {
+        if(!(digits_pos = wcschr(digits, first->val)))
+            break;
+        else if(dest<num_end)
+            *dest++ = '0'+digits_pos-digits;
+    }
+
+    if(first->strbuf && (first->val==mb_to_wc('e', &this->cvt) || first->val==mb_to_wc('E', &this->cvt))) {
+        *dest++ = 'e';
+        istreambuf_iterator_wchar_inc(first);
+
+        if(first->strbuf && first->val==mb_to_wc('-', &this->cvt)) {
+            *dest++ = '-';
+            istreambuf_iterator_wchar_inc(first);
+        }else if(first->strbuf && first->val==mb_to_wc('+', &this->cvt)) {
+            *dest++ = '+';
+            istreambuf_iterator_wchar_inc(first);
+        }
+
+        error = dest_empty = TRUE;
+        for(; first->strbuf && first->val==digits[0]; istreambuf_iterator_wchar_inc(first))
+            error = FALSE;
+
+        for(; first->strbuf && (digits_pos = wcschr(digits, first->val)); istreambuf_iterator_wchar_inc(first)) {
+            error = dest_empty = FALSE;
+            if(dest<exp_end)
+                *dest++ = '0'+digits_pos-digits;
+        }
+
+        if(error) {
+            *dest_beg = '\0';
+            return 0;
+        }else if(dest_empty) {
+            *dest++ = '0';
+        }
+    }
+
+    *dest++ = '\0';
+    return exp;
+}
+
 /* ?_Getffld@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@ABAHPADAAV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@1ABVlocale@2@@Z */
 /* ?_Getffld@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEBAHPEADAEAV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@1AEBVlocale@2@@Z */
-int __cdecl num_get_wchar__Getffld(num_get *this, char *dest, istreambuf_iterator_wchar *first,
+int __cdecl num_get_wchar__Getffld(const num_get *this, char *dest, istreambuf_iterator_wchar *first,
     istreambuf_iterator_wchar *last, const locale *loc)
 {
-    FIXME("(%p %p %p %p) stub\n", dest, first, last, loc);
-    return -1;
+    return num_get__Getffld(this, dest, first, last, loc, numpunct_wchar_use_facet(loc));
 }
 
 /* ?_Getffld@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@ABAHPADAAV?$istreambuf_iterator@GU?$char_traits@G@std@@@2@1ABVlocale@2@@Z */
 /* ?_Getffld@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@AEBAHPEADAEAV?$istreambuf_iterator@GU?$char_traits@G@std@@@2@1AEBVlocale@2@@Z */
-int __cdecl num_get_short__Getffld(num_get *this, char *dest, istreambuf_iterator_wchar *first,
+int __cdecl num_get_short__Getffld(const num_get *this, char *dest, istreambuf_iterator_wchar *first,
     istreambuf_iterator_wchar *last, const locale *loc)
 {
-    FIXME("(%p %p %p %p) stub\n", dest, first, last, loc);
-    return -1;
+    return num_get__Getffld(this, dest, first, last, loc, numpunct_short_use_facet(loc));
 }
 
 /* ?_Getffldx@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@ABAHPADAAV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@1AAVios_base@2@PAH@Z */

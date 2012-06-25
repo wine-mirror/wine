@@ -541,10 +541,18 @@ typedef struct {
 } basic_streambuf_wchar;
 
 typedef struct {
+    basic_streambuf_wchar *strbuf;
+    MSVCP_bool got;
+    wchar_t val;
+} istreambuf_iterator_wchar;
+
+typedef struct {
     MSVCP_bool failed;
     basic_streambuf_wchar *strbuf;
 } ostreambuf_iterator_wchar;
 
+unsigned short __thiscall basic_streambuf_wchar_sgetc(basic_streambuf_wchar*);
+unsigned short __thiscall basic_streambuf_wchar_sbumpc(basic_streambuf_wchar*);
 unsigned short __thiscall basic_streambuf_wchar_sputc(basic_streambuf_wchar*, wchar_t);
 
 /* class num_get<char> */
