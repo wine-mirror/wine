@@ -726,7 +726,7 @@ HRESULT start_binding(HTMLOuterWindow *window, HTMLDocumentNode *doc, BSCallback
 
     bscallback->doc = doc;
     if(!doc && window)
-        bscallback->doc = window->doc;
+        bscallback->doc = window->base.inner_window->doc;
 
     /* NOTE: IE7 calls IsSystemMoniker here*/
 
@@ -998,10 +998,10 @@ static HRESULT on_start_nsrequest(nsChannelBSC *This)
         list_remove(&This->bsc.entry);
         list_init(&This->bsc.entry);
         update_window_doc(This->window);
-        if(This->window->doc != This->bsc.doc) {
+        if(This->window->base.inner_window->doc != This->bsc.doc) {
             if(This->bsc.doc)
                 list_remove(&This->bsc.entry);
-            This->bsc.doc = This->window->doc;
+            This->bsc.doc = This->window->base.inner_window->doc;
         }
         list_add_head(&This->bsc.doc->bindings, &This->bsc.entry);
         if(This->window->readystate != READYSTATE_LOADING)
@@ -1276,7 +1276,7 @@ static HRESULT nsChannelBSC_start_binding(BSCallback *bsc)
     nsChannelBSC *This = nsChannelBSC_from_BSCallback(bsc);
 
     if(This->window)
-        This->window->doc->skip_mutation_notif = FALSE;
+        This->window->base.inner_window->doc->skip_mutation_notif = FALSE;
 
     return S_OK;
 }
@@ -1668,7 +1668,7 @@ void set_window_bscallback(HTMLOuterWindow *window, nsChannelBSC *callback)
     if(callback) {
         callback->window = window;
         IBindStatusCallback_AddRef(&callback->bsc.IBindStatusCallback_iface);
-        callback->bsc.doc = window->doc;
+        callback->bsc.doc = window->base.inner_window->doc;
     }
 }
 
@@ -2150,7 +2150,7 @@ HRESULT navigate_url(HTMLOuterWindow *window, const WCHAR *new_url, const WCHAR 
     if(window->doc_obj && window == window->doc_obj->basedoc.window) {
         BOOL cancel;
 
-        hres = hlink_frame_navigate(&window->doc->basedoc, url, NULL, 0, &cancel);
+        hres = hlink_frame_navigate(&window->base.inner_window->doc->basedoc, url, NULL, 0, &cancel);
         if(FAILED(hres))
             return hres;
 

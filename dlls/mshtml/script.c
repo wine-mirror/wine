@@ -573,10 +573,10 @@ static HRESULT WINAPI ASServiceProvider_QueryService(IServiceProvider *iface, RE
     if(IsEqualGUID(&SID_SInternetHostSecurityManager, guidService)) {
         TRACE("(%p)->(SID_SInternetHostSecurityManager)\n", This);
 
-        if(!This->window || !This->window->doc)
+        if(!This->window || !This->window->base.inner_window->doc)
             return E_NOINTERFACE;
 
-        return IInternetHostSecurityManager_QueryInterface(&This->window->doc->IInternetHostSecurityManager_iface,
+        return IInternetHostSecurityManager_QueryInterface(&This->window->base.inner_window->doc->IInternetHostSecurityManager_iface,
                 riid, ppv);
     }
 
@@ -659,7 +659,7 @@ static void parse_extern_script(ScriptHost *script_host, LPCWSTR src)
     if(FAILED(hres))
         return;
 
-    hres = bind_mon_to_buffer(script_host->window->doc, mon, (void**)&buf, &size);
+    hres = bind_mon_to_buffer(script_host->window->base.inner_window->doc, mon, (void**)&buf, &size);
     IMoniker_Release(mon);
     if(FAILED(hres))
         return;

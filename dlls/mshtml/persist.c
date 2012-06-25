@@ -406,7 +406,7 @@ void set_ready_state(HTMLOuterWindow *window, READYSTATE readystate)
     if(window->doc_obj && window->doc_obj->basedoc.window == window)
         call_property_onchanged(&window->doc_obj->basedoc.cp_propnotif, DISPID_READYSTATE);
 
-    fire_event(window->doc, EVENTID_READYSTATECHANGE, FALSE, window->doc->node.nsnode, NULL);
+    fire_event(window->base.inner_window->doc, EVENTID_READYSTATECHANGE, FALSE, window->base.inner_window->doc->node.nsnode, NULL);
 
     if(window->frame_element)
         fire_event(window->frame_element->element.node.doc, EVENTID_READYSTATECHANGE,

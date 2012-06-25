@@ -285,10 +285,10 @@ HRESULT load_nsuri(HTMLOuterWindow *window, nsWineURI *uri, nsChannelBSC *channe
     }
 
     uri->channel_bsc = channelbsc;
-    doc = window->doc;
+    doc = window->base.inner_window->doc;
     doc->skip_mutation_notif = TRUE;
     nsres = nsIDocShell_LoadURI(doc_shell, (nsIURI*)&uri->nsIURL_iface, NULL, flags, FALSE);
-    if(doc == window->doc)
+    if(doc == window->base.inner_window->doc)
         doc->skip_mutation_notif = FALSE;
     uri->channel_bsc = NULL;
     nsIDocShell_Release(doc_shell);
@@ -1022,9 +1022,9 @@ static nsresult async_open(nsChannel *This, HTMLOuterWindow *window, BOOL is_doc
     }else {
         start_binding_task_t *task = heap_alloc(sizeof(start_binding_task_t));
 
-        task->doc = window->doc;
+        task->doc = window->base.inner_window->doc;
         task->bscallback = bscallback;
-        push_task(&task->header, start_binding_proc, start_binding_task_destr, window->doc->basedoc.task_magic);
+        push_task(&task->header, start_binding_proc, start_binding_task_destr, window->base.inner_window->doc->basedoc.task_magic);
     }
 
     return NS_OK;

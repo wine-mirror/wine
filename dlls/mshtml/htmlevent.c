@@ -1348,7 +1348,7 @@ HRESULT detach_event(event_target_t *event_target, HTMLDocument *doc, BSTR name,
     return S_OK;
 }
 
-void update_cp_events(HTMLOuterWindow *window, event_target_t **event_target_ptr, cp_static_data_t *cp, nsIDOMNode *nsnode)
+void update_cp_events(HTMLInnerWindow *window, event_target_t **event_target_ptr, cp_static_data_t *cp, nsIDOMNode *nsnode)
 {
     event_target_t *event_target;
     int i;

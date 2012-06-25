@@ -461,12 +461,12 @@ static HRESULT WINAPI HTMLFrameBase2_get_readyState(IHTMLFrameBase2 *iface, BSTR
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(!This->content_window || !This->content_window->doc) {
+    if(!This->content_window || !This->content_window->base.inner_window->doc) {
         FIXME("no document associated\n");
         return E_FAIL;
     }
 
-    return IHTMLDocument2_get_readyState(&This->content_window->doc->basedoc.IHTMLDocument2_iface, p);
+    return IHTMLDocument2_get_readyState(&This->content_window->base.inner_window->doc->basedoc.IHTMLDocument2_iface, p);
 }
 
 static HRESULT WINAPI HTMLFrameBase2_put_allowTransparency(IHTMLFrameBase2 *iface, VARIANT_BOOL v)

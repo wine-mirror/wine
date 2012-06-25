@@ -184,12 +184,12 @@ static HRESULT HTMLIFrame_get_document(HTMLDOMNode *iface, IDispatch **p)
 {
     HTMLIFrame *This = impl_from_HTMLDOMNode(iface);
 
-    if(!This->framebase.content_window || !This->framebase.content_window->doc) {
+    if(!This->framebase.content_window || !This->framebase.content_window->base.inner_window->doc) {
         *p = NULL;
         return S_OK;
     }
 
-    *p = (IDispatch*)&This->framebase.content_window->doc->basedoc.IHTMLDocument2_iface;
+    *p = (IDispatch*)&This->framebase.content_window->base.inner_window->doc->basedoc.IHTMLDocument2_iface;
     IDispatch_AddRef(*p);
     return S_OK;
 }

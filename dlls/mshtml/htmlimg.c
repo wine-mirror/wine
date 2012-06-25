@@ -807,6 +807,7 @@ static HRESULT WINAPI HTMLImageElementFactory_create(IHTMLImageElementFactory *i
         VARIANT width, VARIANT height, IHTMLImgElement **img_elem)
 {
     HTMLImageElementFactory *This = impl_from_IHTMLImageElementFactory(iface);
+    HTMLDocumentNode *doc;
     IHTMLImgElement *img;
     HTMLElement *elem;
     nsIDOMHTMLElement *nselem;
@@ -818,18 +819,20 @@ static HRESULT WINAPI HTMLImageElementFactory_create(IHTMLImageElementFactory *i
     TRACE("(%p)->(%s %s %p)\n", This, debugstr_variant(&width),
             debugstr_variant(&height), img_elem);
 
-    if(!This->window || !This->window->doc) {
+    if(!This->window || !This->window->base.inner_window->doc) {
         WARN("NULL doc\n");
         return E_UNEXPECTED;
     }
 
+    doc = This->window->base.inner_window->doc;
+
     *img_elem = NULL;
 
-    hres = create_nselem(This->window->doc, imgW, &nselem);
+    hres = create_nselem(doc, imgW, &nselem);
     if(FAILED(hres))
         return hres;
 
-    hres = HTMLElement_Create(This->window->doc, (nsIDOMNode*)nselem, FALSE, &elem);
+    hres = HTMLElement_Create(doc, (nsIDOMNode*)nselem, FALSE, &elem);
     nsIDOMHTMLElement_Release(nselem);
     if(FAILED(hres)) {
         ERR("HTMLElement_Create failed\n");

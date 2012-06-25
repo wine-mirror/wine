@@ -1568,7 +1568,7 @@ static void HTMLDocument_on_advise(IUnknown *iface, cp_static_data_t *cp)
     HTMLDocument *This = impl_from_IHTMLDocument2((IHTMLDocument2*)iface);
 
     if(This->window)
-        update_cp_events(This->window, &This->doc_node->node.event_target, cp, This->doc_node->node.nsnode);
+        update_cp_events(This->window->base.inner_window, &This->doc_node->node.event_target, cp, This->doc_node->node.nsnode);
 }
 
 static inline HTMLDocument *impl_from_ISupportErrorInfo(ISupportErrorInfo *iface)
@@ -2448,7 +2448,6 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
     if(FAILED(hres))
         return hres;
 
-
     nsres = nsIWebBrowser_GetContentDOMWindow(doc->nscontainer->webbrowser, &nswindow);
     if(NS_FAILED(nsres))
         ERR("GetContentDOMWindow failed: %08x\n", nsres);
@@ -2461,8 +2460,8 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
         return hres;
     }
 
-    if(!doc->basedoc.doc_node && doc->basedoc.window->doc) {
-        doc->basedoc.doc_node = doc->basedoc.window->doc;
+    if(!doc->basedoc.doc_node && doc->basedoc.window->base.inner_window->doc) {
+        doc->basedoc.doc_node = doc->basedoc.window->base.inner_window->doc;
         htmldoc_addref(&doc->basedoc.doc_node->basedoc);
     }
 

@@ -321,7 +321,6 @@ struct HTMLOuterWindow {
     windowref_t *window_ref;
     LONG task_magic;
 
-    HTMLDocumentNode *doc;
     HTMLDocumentObj *doc_obj;
     nsIDOMWindow *nswindow;
     HTMLOuterWindow *parent;
@@ -357,6 +356,8 @@ struct HTMLOuterWindow {
 
 struct HTMLInnerWindow {
     HTMLWindow base;
+
+    HTMLDocumentNode *doc;
 };
 
 typedef enum {
@@ -656,7 +657,7 @@ HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument*,HTMLDocumentObj*,HTMLOuterWind
 HRESULT create_document_fragment(nsIDOMNode*,HTMLDocumentNode*,HTMLDocumentNode**) DECLSPEC_HIDDEN;
 
 HRESULT HTMLOuterWindow_Create(HTMLDocumentObj*,nsIDOMWindow*,HTMLOuterWindow*,HTMLOuterWindow**) DECLSPEC_HIDDEN;
-void update_window_doc(HTMLOuterWindow*) DECLSPEC_HIDDEN;
+HRESULT update_window_doc(HTMLOuterWindow*) DECLSPEC_HIDDEN;
 HTMLOuterWindow *nswindow_to_window(const nsIDOMWindow*) DECLSPEC_HIDDEN;
 void get_top_window(HTMLOuterWindow*,HTMLOuterWindow**) DECLSPEC_HIDDEN;
 HTMLOptionElementFactory *HTMLOptionElementFactory_Create(HTMLOuterWindow*) DECLSPEC_HIDDEN;
