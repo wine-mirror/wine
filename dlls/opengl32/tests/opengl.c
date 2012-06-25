@@ -797,7 +797,7 @@ static void test_getprocaddress(HDC hdc)
     /* Temporarily disable the context, so we can see that we can't retrieve functions now. */
     wglMakeCurrent(hdc, NULL);
     func = wglGetProcAddress("glActiveTextureARB");
-    todo_wine ok(func == NULL, "Function lookup without a context passed, expected a failure; last error %#x\n", GetLastError());
+    ok(func == NULL, "Function lookup without a context passed, expected a failure; last error %#x\n", GetLastError());
     wglMakeCurrent(hdc, ctx);
 }
 

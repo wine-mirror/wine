@@ -300,8 +300,17 @@ PROC WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
 
   TRACE("(%s)\n", lpszProc);
 
-  if(lpszProc == NULL)
+  if (lpszProc == NULL)
     return NULL;
+
+  /* Without an active context opengl32 doesn't know to what
+   * driver it has to dispatch wglGetProcAddress.
+   */
+  if (wglGetCurrentContext() == NULL)
+  {
+    WARN("No active WGL context found\n");
+    return NULL;
+  }
 
   /* First, look if it's not already defined in the 'standard' OpenGL functions */
   if ((local_func = GetProcAddress(opengl32_handle, lpszProc)) != NULL) {
