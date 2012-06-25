@@ -5360,11 +5360,15 @@ static BOOL InitAdapters(struct wined3d *wined3d)
     wglFinish = (void*)GetProcAddress(mod_gl, "glFinish");
     wglFlush = (void*)GetProcAddress(mod_gl, "glFlush");
     pwglDeleteContext = (void*)GetProcAddress(mod_gl, "wglDeleteContext");
+    pwglGetCurrentContext = (void*)GetProcAddress(mod_gl, "wglGetCurrentContext");
+    pwglGetCurrentDC = (void*)GetProcAddress(mod_gl, "wglGetCurrentDC");
     pwglShareLists = (void*)GetProcAddress(mod_gl, "wglShareLists");
 #else
     wglFinish = (void*)pwglGetProcAddress("wglFinish");
     wglFlush = (void*)pwglGetProcAddress("wglFlush");
     pwglDeleteContext = (void*)pwglGetProcAddress("wglDeleteContext");
+    pwglGetCurrentContext = (void*)pwglGetProcAddress("wglGetCurrentContext");
+    pwglGetCurrentDC = (void*)pwglGetProcAddress("wglGetCurrentDC");
     pwglShareLists = (void*)pwglGetProcAddress("wglShareLists");
 #endif
 

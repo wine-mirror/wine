@@ -50,9 +50,7 @@ static struct
     PROC  (WINAPI *p_wglGetProcAddress)(LPCSTR  lpszProc);
     BOOL  (WINAPI *p_SetPixelFormat)(HDC hdc, INT iPixelFormat, const PIXELFORMATDESCRIPTOR *ppfd);
     BOOL  (WINAPI *p_wglMakeCurrent)(HDC hdc, HGLRC hglrc);
-    HDC   (WINAPI *p_wglGetCurrentDC)(void);
     HGLRC (WINAPI *p_wglCreateContext)(HDC hdc);
-    HGLRC (WINAPI *p_wglGetCurrentContext)(void);
     INT   (WINAPI *p_ChoosePixelFormat)(HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd);
     INT   (WINAPI *p_DescribePixelFormat)(HDC hdc, INT iPixelFormat, UINT nBytes, LPPIXELFORMATDESCRIPTOR ppfd);
     INT   (WINAPI *p_GetPixelFormat)(HDC hdc);
@@ -60,9 +58,11 @@ static struct
     /* internal WGL functions */
     BOOL  (WINAPI *p_wglCopyContext)(HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask);
     BOOL  (WINAPI *p_wglDeleteContext)(HGLRC hglrc);
-    void  (WINAPI *p_wglGetIntegerv)(GLenum pname, GLint* params);
     void  (WINAPI *p_wglFinish)(void);
     void  (WINAPI *p_wglFlush)(void);
+    HGLRC (WINAPI *p_wglGetCurrentContext)(void);
+    HDC   (WINAPI *p_wglGetCurrentDC)(void);
+    void  (WINAPI *p_wglGetIntegerv)(GLenum pname, GLint* params);
     BOOL  (WINAPI *p_wglShareLists)(HGLRC hglrc1, HGLRC hglrc2);
 } wine_wgl;
 
@@ -932,9 +932,7 @@ static BOOL process_attach(void)
   wine_wgl.p_wglGetProcAddress = (void *)GetProcAddress(mod_gdi32, "wglGetProcAddress");
   wine_wgl.p_SetPixelFormat = (void *)GetProcAddress(mod_gdi32, "SetPixelFormat");
   wine_wgl.p_wglMakeCurrent = (void *)GetProcAddress(mod_gdi32, "wglMakeCurrent");
-  wine_wgl.p_wglGetCurrentDC = (void *)GetProcAddress(mod_gdi32, "wglGetCurrentDC");
   wine_wgl.p_wglCreateContext = (void *)GetProcAddress(mod_gdi32, "wglCreateContext");
-  wine_wgl.p_wglGetCurrentContext = (void *)GetProcAddress(mod_gdi32, "wglGetCurrentContext");
   wine_wgl.p_ChoosePixelFormat = (void *)GetProcAddress(mod_gdi32, "ChoosePixelFormat");
   wine_wgl.p_DescribePixelFormat = (void *)GetProcAddress(mod_gdi32, "DescribePixelFormat");
   wine_wgl.p_GetPixelFormat = (void *)GetProcAddress(mod_gdi32, "GetPixelFormat");
@@ -942,9 +940,11 @@ static BOOL process_attach(void)
   /* internal WGL functions */
   wine_wgl.p_wglCopyContext = (void *)wine_wgl.p_wglGetProcAddress("wglCopyContext");
   wine_wgl.p_wglDeleteContext = (void *)wine_wgl.p_wglGetProcAddress("wglDeleteContext");
-  wine_wgl.p_wglGetIntegerv = (void *)wine_wgl.p_wglGetProcAddress("wglGetIntegerv");
   wine_wgl.p_wglFinish = (void *)wine_wgl.p_wglGetProcAddress("wglFinish");
   wine_wgl.p_wglFlush = (void *)wine_wgl.p_wglGetProcAddress("wglFlush");
+  wine_wgl.p_wglGetCurrentContext = (void *)wine_wgl.p_wglGetProcAddress("wglGetCurrentContext");
+  wine_wgl.p_wglGetCurrentDC = (void *)wine_wgl.p_wglGetProcAddress("wglGetCurrentDC");
+  wine_wgl.p_wglGetIntegerv = (void *)wine_wgl.p_wglGetProcAddress("wglGetIntegerv");
   wine_wgl.p_wglShareLists = (void *)wine_wgl.p_wglGetProcAddress("wglShareLists");
 
   if (!RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\OpenGL", &hkey)) {

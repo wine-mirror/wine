@@ -2005,6 +2005,26 @@ static BOOL WINAPI X11DRV_wglShareLists(HGLRC hglrc1, HGLRC hglrc2)
     return FALSE;
 }
 
+/***********************************************************************
+ *		X11DRV_wglGetCurrentContext
+ */
+static HGLRC WINAPI X11DRV_wglGetCurrentContext(void)
+{
+    return NtCurrentTeb()->glContext;
+}
+
+/***********************************************************************
+ *		X11DRV_wglGetCurrentDC
+ */
+static HDC WINAPI X11DRV_wglGetCurrentDC(void)
+{
+    Wine_GLContext *ctx = NtCurrentTeb()->glContext;
+
+    if (!ctx) return NULL;
+    TRACE("hdc %p\n", ctx->hdc);
+    return ctx->hdc;
+}
+
 /* WGL helper function which handles differences in glGetIntegerv from WGL and GLX */
 static void WINAPI X11DRV_wglGetIntegerv(GLenum pname, GLint* params)
 {
@@ -3251,9 +3271,11 @@ static const WineGLExtension WGL_internal_functions =
   {
     { "wglCopyContext", X11DRV_wglCopyContext },
     { "wglDeleteContext", X11DRV_wglDeleteContext },
-    { "wglGetIntegerv", X11DRV_wglGetIntegerv },
     { "wglFinish", X11DRV_wglFinish },
     { "wglFlush", X11DRV_wglFlush },
+    { "wglGetCurrentContext", X11DRV_wglGetCurrentContext },
+    { "wglGetCurrentDC", X11DRV_wglGetCurrentDC },
+    { "wglGetIntegerv", X11DRV_wglGetIntegerv },
     { "wglShareLists", X11DRV_wglShareLists },
   }
 };
