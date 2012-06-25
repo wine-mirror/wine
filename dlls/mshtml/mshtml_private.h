@@ -316,7 +316,6 @@ struct HTMLWindow {
 
 struct HTMLOuterWindow {
     HTMLWindow base;
-    DispatchEx dispex;
 
     windowref_t *window_ref;
     LONG task_magic;
@@ -356,6 +355,7 @@ struct HTMLOuterWindow {
 
 struct HTMLInnerWindow {
     HTMLWindow base;
+    DispatchEx dispex;
 
     HTMLDocumentNode *doc;
 };

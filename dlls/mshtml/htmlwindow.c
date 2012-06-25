@@ -154,7 +154,7 @@ static HRESULT WINAPI HTMLWindow2_QueryInterface(IHTMLWindow2 *iface, REFIID rii
     }else if(IsEqualGUID(&IID_ITravelLogClient, riid)) {
         TRACE("(%p)->(IID_ITravelLogClient %p)\n", This, ppv);
         *ppv = &This->ITravelLogClient_iface;
-    }else if(dispex_query_interface(&This->outer_window->dispex, riid, ppv)) {
+    }else if(dispex_query_interface(&This->inner_window->dispex, riid, ppv)) {
         assert(!*ppv);
         return E_NOINTERFACE;
     }
@@ -225,13 +225,13 @@ static void release_outer_window(HTMLOuterWindow *This)
         nsIDOMWindow_Release(This->nswindow);
 
     list_remove(&This->entry);
-    release_dispex(&This->dispex);
     heap_free(This);
 }
 
 static void release_inner_window(HTMLInnerWindow *This)
 {
     htmldoc_release(&This->doc->basedoc);
+    release_dispex(&This->dispex);
     heap_free(This);
 }
 
@@ -2137,7 +2137,7 @@ static HRESULT WINAPI WindowDispEx_GetTypeInfoCount(IDispatchEx *iface, UINT *pc
 
     TRACE("(%p)->(%p)\n", This, pctinfo);
 
-    return IDispatchEx_GetTypeInfoCount(&This->outer_window->dispex.IDispatchEx_iface, pctinfo);
+    return IDispatchEx_GetTypeInfoCount(&This->inner_window->dispex.IDispatchEx_iface, pctinfo);
 }
 
 static HRESULT WINAPI WindowDispEx_GetTypeInfo(IDispatchEx *iface, UINT iTInfo,
@@ -2147,7 +2147,7 @@ static HRESULT WINAPI WindowDispEx_GetTypeInfo(IDispatchEx *iface, UINT iTInfo,
 
     TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
 
-    return IDispatchEx_GetTypeInfo(&This->outer_window->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+    return IDispatchEx_GetTypeInfo(&This->inner_window->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
 }
 
 static HRESULT WINAPI WindowDispEx_GetIDsOfNames(IDispatchEx *iface, REFIID riid,
@@ -2182,7 +2182,7 @@ static HRESULT WINAPI WindowDispEx_Invoke(IDispatchEx *iface, DISPID dispIdMembe
 
     /* FIXME: Use script dispatch */
 
-    return IDispatchEx_Invoke(&This->outer_window->dispex.IDispatchEx_iface, dispIdMember, riid, lcid, wFlags,
+    return IDispatchEx_Invoke(&This->inner_window->dispex.IDispatchEx_iface, dispIdMember, riid, lcid, wFlags,
             pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
@@ -2261,7 +2261,7 @@ static HRESULT WINAPI WindowDispEx_GetDispID(IDispatchEx *iface, BSTR bstrName, 
     if(hres != DISP_E_UNKNOWNNAME)
         return hres;
 
-    hres = IDispatchEx_GetDispID(&window->dispex.IDispatchEx_iface, bstrName, grfdex, pid);
+    hres = IDispatchEx_GetDispID(&window->base.inner_window->dispex.IDispatchEx_iface, bstrName, grfdex, pid);
     if(hres != DISP_E_UNKNOWNNAME)
         return hres;
 
@@ -2310,7 +2310,7 @@ static HRESULT WINAPI WindowDispEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID 
         return hres;
     }
 
-    return IDispatchEx_InvokeEx(&window->dispex.IDispatchEx_iface, id, lcid, wFlags, pdp, pvarRes,
+    return IDispatchEx_InvokeEx(&window->base.inner_window->dispex.IDispatchEx_iface, id, lcid, wFlags, pdp, pvarRes,
             pei, pspCaller);
 }
 
@@ -2320,7 +2320,7 @@ static HRESULT WINAPI WindowDispEx_DeleteMemberByName(IDispatchEx *iface, BSTR b
 
     TRACE("(%p)->(%s %x)\n", This, debugstr_w(bstrName), grfdex);
 
-    return IDispatchEx_DeleteMemberByName(&This->outer_window->dispex.IDispatchEx_iface, bstrName, grfdex);
+    return IDispatchEx_DeleteMemberByName(&This->inner_window->dispex.IDispatchEx_iface, bstrName, grfdex);
 }
 
 static HRESULT WINAPI WindowDispEx_DeleteMemberByDispID(IDispatchEx *iface, DISPID id)
@@ -2329,7 +2329,7 @@ static HRESULT WINAPI WindowDispEx_DeleteMemberByDispID(IDispatchEx *iface, DISP
 
     TRACE("(%p)->(%x)\n", This, id);
 
-    return IDispatchEx_DeleteMemberByDispID(&This->outer_window->dispex.IDispatchEx_iface, id);
+    return IDispatchEx_DeleteMemberByDispID(&This->inner_window->dispex.IDispatchEx_iface, id);
 }
 
 static HRESULT WINAPI WindowDispEx_GetMemberProperties(IDispatchEx *iface, DISPID id, DWORD grfdexFetch, DWORD *pgrfdex)
@@ -2338,7 +2338,7 @@ static HRESULT WINAPI WindowDispEx_GetMemberProperties(IDispatchEx *iface, DISPI
 
     TRACE("(%p)->(%x %x %p)\n", This, id, grfdexFetch, pgrfdex);
 
-    return IDispatchEx_GetMemberProperties(&This->outer_window->dispex.IDispatchEx_iface, id, grfdexFetch,
+    return IDispatchEx_GetMemberProperties(&This->inner_window->dispex.IDispatchEx_iface, id, grfdexFetch,
             pgrfdex);
 }
 
@@ -2348,7 +2348,7 @@ static HRESULT WINAPI WindowDispEx_GetMemberName(IDispatchEx *iface, DISPID id, 
 
     TRACE("(%p)->(%x %p)\n", This, id, pbstrName);
 
-    return IDispatchEx_GetMemberName(&This->outer_window->dispex.IDispatchEx_iface, id, pbstrName);
+    return IDispatchEx_GetMemberName(&This->inner_window->dispex.IDispatchEx_iface, id, pbstrName);
 }
 
 static HRESULT WINAPI WindowDispEx_GetNextDispID(IDispatchEx *iface, DWORD grfdex, DISPID id, DISPID *pid)
@@ -2357,7 +2357,7 @@ static HRESULT WINAPI WindowDispEx_GetNextDispID(IDispatchEx *iface, DWORD grfde
 
     TRACE("(%p)->(%x %x %p)\n", This, grfdex, id, pid);
 
-    return IDispatchEx_GetNextDispID(&This->outer_window->dispex.IDispatchEx_iface, grfdex, id, pid);
+    return IDispatchEx_GetNextDispID(&This->inner_window->dispex.IDispatchEx_iface, grfdex, id, pid);
 }
 
 static HRESULT WINAPI WindowDispEx_GetNameSpaceParent(IDispatchEx *iface, IUnknown **ppunk)
@@ -2436,24 +2436,24 @@ static const IServiceProviderVtbl ServiceProviderVtbl = {
     HTMLWindowSP_QueryService
 };
 
-static inline HTMLOuterWindow *impl_from_DispatchEx(DispatchEx *iface)
+static inline HTMLInnerWindow *impl_from_DispatchEx(DispatchEx *iface)
 {
-    return CONTAINING_RECORD(iface, HTMLOuterWindow, dispex);
+    return CONTAINING_RECORD(iface, HTMLInnerWindow, dispex);
 }
 
 static HRESULT HTMLWindow_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
         VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
-    HTMLOuterWindow *This = impl_from_DispatchEx(dispex);
+    HTMLInnerWindow *This = impl_from_DispatchEx(dispex);
     global_prop_t *prop;
     DWORD idx;
     HRESULT hres;
 
     idx = id - MSHTML_DISPID_CUSTOM_MIN;
-    if(idx >= This->global_prop_cnt)
+    if(idx >= This->base.outer_window->global_prop_cnt)
         return DISP_E_MEMBERNOTFOUND;
 
-    prop = This->global_props+idx;
+    prop = This->base.outer_window->global_props+idx;
 
     switch(prop->type) {
     case GLOBAL_SCRIPTVAR: {
@@ -2580,6 +2580,8 @@ static HRESULT create_inner_window(HTMLOuterWindow *outer_window, HTMLDocumentNo
     htmldoc_addref(&doc_node->basedoc);
     window->doc = doc_node;
 
+    init_dispex(&window->dispex, (IUnknown*)&window->base.IHTMLWindow2_iface, &HTMLWindow_dispex);
+
     *ret = window;
     return S_OK;
 }
@@ -2607,8 +2609,6 @@ HRESULT HTMLOuterWindow_Create(HTMLDocumentObj *doc_obj, nsIDOMWindow *nswindow,
 
     window->window_ref->window = window;
     window->window_ref->ref = 1;
-
-    init_dispex(&window->dispex, (IUnknown*)&window->base.IHTMLWindow2_iface, &HTMLWindow_dispex);
 
     if(nswindow) {
         nsIDOMWindow_AddRef(nswindow);
