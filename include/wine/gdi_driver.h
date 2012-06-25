@@ -192,24 +192,19 @@ struct gdi_dc_funcs
     BOOL     (*pSwapBuffers)(PHYSDEV);
     BOOL     (*pUnrealizePalette)(HPALETTE);
     BOOL     (*pWidenPath)(PHYSDEV);
-    BOOL     (*pwglCopyContext)(HGLRC,HGLRC,UINT);
     HGLRC    (*pwglCreateContext)(PHYSDEV);
     HGLRC    (*pwglCreateContextAttribsARB)(PHYSDEV,HGLRC,const int*);
-    BOOL     (*pwglDeleteContext)(HGLRC);
     PROC     (*pwglGetProcAddress)(LPCSTR);
     BOOL     (*pwglMakeContextCurrentARB)(PHYSDEV,PHYSDEV,HGLRC);
     BOOL     (*pwglMakeCurrent)(PHYSDEV,HGLRC);
     BOOL     (*pwglSetPixelFormatWINE)(PHYSDEV,INT,const PIXELFORMATDESCRIPTOR*);
-    BOOL     (*pwglShareLists)(HGLRC,HGLRC);
-    BOOL     (*pwglUseFontBitmapsA)(PHYSDEV,DWORD,DWORD,DWORD);
-    BOOL     (*pwglUseFontBitmapsW)(PHYSDEV,DWORD,DWORD,DWORD);
 
     /* priority order for the driver on the stack */
     UINT       priority;
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 31
+#define WINE_GDI_DRIVER_VERSION 32
 
 #define GDI_PRIORITY_NULL_DRV        0  /* null driver */
 #define GDI_PRIORITY_FONT_DRV      100  /* any font driver */

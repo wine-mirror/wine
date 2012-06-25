@@ -635,17 +635,12 @@ static const struct gdi_dc_funcs x11drv_funcs =
     NULL,                               /* pSwapBuffers */
     X11DRV_UnrealizePalette,            /* pUnrealizePalette */
     NULL,                               /* pWidenPath */
-    NULL,                               /* pwglCopyContext */
     X11DRV_wglCreateContext,            /* pwglCreateContext */
     X11DRV_wglCreateContextAttribsARB,  /* pwglCreateContextAttribsARB */
-    NULL,                               /* pwglDeleteContext */
     X11DRV_wglGetProcAddress,           /* pwglGetProcAddress */
     NULL,                               /* pwglMakeContextCurrentARB */
     NULL,                               /* pwglMakeCurrent */
     X11DRV_wglSetPixelFormatWINE,       /* pwglSetPixelFormatWINE */
-    NULL,                               /* pwglShareLists */
-    NULL,                               /* pwglUseFontBitmapsA */
-    NULL,                               /* pwglUseFontBitmapsW */
     GDI_PRIORITY_GRAPHICS_DRV           /* priority */
 };
 

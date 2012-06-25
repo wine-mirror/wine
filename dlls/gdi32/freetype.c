@@ -7871,17 +7871,12 @@ static const struct gdi_dc_funcs freetype_funcs =
     NULL,                               /* pSwapBuffers */
     NULL,                               /* pUnrealizePalette */
     NULL,                               /* pWidenPath */
-    NULL,                               /* pwglCopyContext */
     NULL,                               /* pwglCreateContext */
     NULL,                               /* pwglCreateContextAttribsARB */
-    NULL,                               /* pwglDeleteContext */
     NULL,                               /* pwglGetProcAddress */
     NULL,                               /* pwglMakeContextCurrentARB */
     NULL,                               /* pwglMakeCurrent */
     NULL,                               /* pwglSetPixelFormatWINE */
-    NULL,                               /* pwglShareLists */
-    NULL,                               /* pwglUseFontBitmapsA */
-    NULL,                               /* pwglUseFontBitmapsW */
     GDI_PRIORITY_FONT_DRV               /* priority */
 };
 

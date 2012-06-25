@@ -670,11 +670,6 @@ static BOOL nulldrv_UnrealizePalette( HPALETTE palette )
     return FALSE;
 }
 
-static BOOL nulldrv_wglCopyContext( HGLRC ctx_src, HGLRC ctx_dst, UINT mask )
-{
-    return FALSE;
-}
-
 static HGLRC nulldrv_wglCreateContext( PHYSDEV dev )
 {
     return 0;
@@ -683,11 +678,6 @@ static HGLRC nulldrv_wglCreateContext( PHYSDEV dev )
 static HGLRC nulldrv_wglCreateContextAttribsARB( PHYSDEV dev, HGLRC share_ctx, const int *attribs )
 {
     return 0;
-}
-
-static BOOL nulldrv_wglDeleteContext( HGLRC ctx )
-{
-    return FALSE;
 }
 
 static PROC nulldrv_wglGetProcAddress( LPCSTR name )
@@ -706,21 +696,6 @@ static BOOL nulldrv_wglMakeContextCurrentARB( PHYSDEV dev_draw, PHYSDEV dev_read
 }
 
 static BOOL nulldrv_wglSetPixelFormatWINE( PHYSDEV dev, INT format, const PIXELFORMATDESCRIPTOR *descr )
-{
-    return FALSE;
-}
-
-static BOOL nulldrv_wglShareLists( HGLRC ctx1, HGLRC ctx2 )
-{
-    return FALSE;
-}
-
-static BOOL nulldrv_wglUseFontBitmapsA( PHYSDEV dev, DWORD start, DWORD count, DWORD base )
-{
-    return FALSE;
-}
-
-static BOOL nulldrv_wglUseFontBitmapsW( PHYSDEV dev, DWORD start, DWORD count, DWORD base )
 {
     return FALSE;
 }
@@ -858,17 +833,12 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_SwapBuffers,                /* pSwapBuffers */
     nulldrv_UnrealizePalette,           /* pUnrealizePalette */
     nulldrv_WidenPath,                  /* pWidenPath */
-    nulldrv_wglCopyContext,             /* pwglCopyContext */
     nulldrv_wglCreateContext,           /* pwglCreateContext */
     nulldrv_wglCreateContextAttribsARB, /* pwglCreateContextAttribsARB */
-    nulldrv_wglDeleteContext,           /* pwglDeleteContext */
     nulldrv_wglGetProcAddress,          /* pwglGetProcAddress */
     nulldrv_wglMakeContextCurrentARB,   /* pwglMakeContextCurrentARB */
     nulldrv_wglMakeCurrent,             /* pwglMakeCurrent */
     nulldrv_wglSetPixelFormatWINE,      /* pwglSetPixelFormatWINE */
-    nulldrv_wglShareLists,              /* pwglShareLists */
-    nulldrv_wglUseFontBitmapsA,         /* pwglUseFontBitmapsA */
-    nulldrv_wglUseFontBitmapsW,         /* pwglUseFontBitmapsW */
 
     GDI_PRIORITY_NULL_DRV               /* priority */
 };

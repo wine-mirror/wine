@@ -40,11 +40,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(wgl);
 
 static HDC default_hdc = 0;
 
-typedef struct opengl_context
-{
-    HDC hdc;
-} *OPENGL_Context;
-
 /* We route all wgl functions from opengl32.dll through gdi32.dll to
  * the display driver. Various wgl calls have a hDC as one of their parameters.
  * Using get_dc_ptr we get access to the functions exported by the driver.
@@ -57,31 +52,6 @@ static DC* OPENGL_GetDefaultDC(void)
         default_hdc = CreateDCA("DISPLAY", NULL, NULL, NULL);
 
     return get_dc_ptr(default_hdc);
-}
-
-/***********************************************************************
- *		wglCopyContext (OPENGL32.@)
- */
-BOOL WINAPI wglCopyContext(HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask)
-{
-    DC *dc;
-    BOOL ret = FALSE;
-    OPENGL_Context ctx = (OPENGL_Context)hglrcSrc;
-
-    TRACE("hglrcSrc: (%p), hglrcDst: (%p), mask: %#x\n", hglrcSrc, hglrcDst, mask);
-    /* If no context is set, this call doesn't have a purpose */
-    if(!hglrcSrc || !hglrcDst)
-        return FALSE;
-
-    /* Retrieve the HDC associated with the context to access the display driver */
-    dc = get_dc_ptr(ctx->hdc);
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pwglCopyContext );
-        ret = physdev->funcs->pwglCopyContext(hglrcSrc, hglrcDst, mask);
-        release_dc_ptr( dc );
-    }
-    return ret;
 }
 
 /***********************************************************************
@@ -125,60 +95,6 @@ static HGLRC WINAPI wglCreateContextAttribsARB(HDC hdc, HGLRC hShareContext, con
 }
 
 /***********************************************************************
- *		wglDeleteContext (OPENGL32.@)
- */
-BOOL WINAPI wglDeleteContext(HGLRC hglrc)
-{
-    DC *dc;
-    BOOL ret = FALSE;
-    OPENGL_Context ctx = (OPENGL_Context)hglrc;
-
-    TRACE("hglrc: (%p)\n", hglrc);
-    if(ctx == NULL)
-    {
-        SetLastError(ERROR_INVALID_HANDLE);
-        return FALSE;
-    }
-
-    /* Retrieve the HDC associated with the context to access the display driver */
-    dc = get_dc_ptr(ctx->hdc);
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pwglDeleteContext );
-        ret = physdev->funcs->pwglDeleteContext( hglrc );
-        release_dc_ptr( dc );
-    }
-    else SetLastError(ERROR_INVALID_HANDLE);
-    return ret;
-}
-
-/***********************************************************************
- *		wglGetCurrentContext (OPENGL32.@)
- */
-HGLRC WINAPI wglGetCurrentContext(void)
-{
-    HGLRC ret = NtCurrentTeb()->glContext;
-    TRACE(" returning %p\n", ret);
-    return ret;
-}
-
-/***********************************************************************
- *		wglGetCurrentDC (OPENGL32.@)
- */
-HDC WINAPI wglGetCurrentDC(void)
-{
-    OPENGL_Context ctx = (OPENGL_Context)wglGetCurrentContext();
-
-    TRACE(" found context: %p\n", ctx);
-    if(ctx == NULL)
-        return NULL;
-
-    /* Retrieve the current DC from the active context */
-    TRACE(" returning hdc: %p\n", ctx->hdc);
-    return ctx->hdc;
-}
-
-/***********************************************************************
  *		wglMakeCurrent (OPENGL32.@)
  */
 BOOL WINAPI wglMakeCurrent(HDC hdc, HGLRC hglrc)
@@ -190,7 +106,7 @@ BOOL WINAPI wglMakeCurrent(HDC hdc, HGLRC hglrc)
      * In that case use the global hDC to get access to the driver.  */
     if(hglrc == NULL)
     {
-        if( hdc == NULL && !wglGetCurrentContext() )
+        if (hdc == NULL && !NtCurrentTeb()->glContext)
         {
             WARN( "Current context is NULL\n");
             SetLastError( ERROR_INVALID_HANDLE );
@@ -265,68 +181,6 @@ static BOOL WINAPI wglSetPixelFormatWINE(HDC hdc, int iPixelFormat, const PIXELF
         release_dc_ptr( dc );
     }
     return bRet;
-}
-
-/***********************************************************************
- *		wglShareLists (OPENGL32.@)
- */
-BOOL WINAPI wglShareLists(HGLRC hglrc1, HGLRC hglrc2)
-{
-    DC *dc;
-    BOOL ret = FALSE;
-    OPENGL_Context ctx = (OPENGL_Context)hglrc1;
-
-    TRACE("hglrc1: (%p); hglrc: (%p)\n", hglrc1, hglrc2);
-    if(ctx == NULL || hglrc2 == NULL)
-        return FALSE;
-
-    /* Retrieve the HDC associated with the context to access the display driver */
-    dc = get_dc_ptr(ctx->hdc);
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pwglShareLists );
-        ret = physdev->funcs->pwglShareLists( hglrc1, hglrc2 );
-        release_dc_ptr( dc );
-    }
-    return ret;
-}
-
-/***********************************************************************
- *		wglUseFontBitmapsA (OPENGL32.@)
- */
-BOOL WINAPI wglUseFontBitmapsA(HDC hdc, DWORD first, DWORD count, DWORD listBase)
-{
-    BOOL ret = FALSE;
-    DC * dc = get_dc_ptr( hdc );
-
-    TRACE("(%p, %d, %d, %d)\n", hdc, first, count, listBase);
-
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pwglUseFontBitmapsA );
-        ret = physdev->funcs->pwglUseFontBitmapsA( physdev, first, count, listBase );
-        release_dc_ptr( dc );
-    }
-    return ret;
-}
-
-/***********************************************************************
- *		wglUseFontBitmapsW (OPENGL32.@)
- */
-BOOL WINAPI wglUseFontBitmapsW(HDC hdc, DWORD first, DWORD count, DWORD listBase)
-{
-    BOOL ret = FALSE;
-    DC * dc = get_dc_ptr( hdc );
-
-    TRACE("(%p, %d, %d, %d)\n", hdc, first, count, listBase);
-
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pwglUseFontBitmapsW );
-        ret = physdev->funcs->pwglUseFontBitmapsW( physdev, first, count, listBase );
-        release_dc_ptr( dc );
-    }
-    return ret;
 }
 
 /***********************************************************************

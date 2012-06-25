@@ -3777,17 +3777,12 @@ static const struct gdi_dc_funcs glxdrv_funcs =
     glxdrv_SwapBuffers,                 /* pSwapBuffers */
     NULL,                               /* pUnrealizePalette */
     NULL,                               /* pWidenPath */
-    NULL,                               /* pwglCopyContext */
     glxdrv_wglCreateContext,            /* pwglCreateContext */
     glxdrv_wglCreateContextAttribsARB,  /* pwglCreateContextAttribsARB */
-    NULL,                               /* pwglDeleteContext */
     glxdrv_wglGetProcAddress,           /* pwglGetProcAddress */
     glxdrv_wglMakeContextCurrentARB,    /* pwglMakeContextCurrentARB */
     glxdrv_wglMakeCurrent,              /* pwglMakeCurrent */
     glxdrv_wglSetPixelFormatWINE,       /* pwglSetPixelFormatWINE */
-    NULL,                               /* pwglShareLists */
-    NULL,                               /* pwglUseFontBitmapsA */
-    NULL,                               /* pwglUseFontBitmapsW */
     GDI_PRIORITY_GRAPHICS_DRV + 20      /* priority */
 };
 
