@@ -2403,16 +2403,20 @@ GpStatus WINGDIPAPI GdipGetAllPropertyItems(GpImage *image, UINT size,
     return InvalidParameter;
 }
 
-GpStatus WINGDIPAPI GdipGetPropertyCount(GpImage *image, UINT* num)
+GpStatus WINGDIPAPI GdipGetPropertyCount(GpImage *image, UINT *num)
 {
-    static int calls;
-
     TRACE("(%p, %p)\n", image, num);
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    if (!image || !num) return InvalidParameter;
 
     *num = 0;
+
+    if (image->type == ImageTypeBitmap)
+    {
+        if (((GpBitmap *)image)->metadata_reader)
+            IWICMetadataReader_GetCount(((GpBitmap *)image)->metadata_reader, num);
+    }
+
     return Ok;
 }
 
