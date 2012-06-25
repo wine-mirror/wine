@@ -44,7 +44,7 @@ static inline VBArrayInstance *vbarray_this(vdisp_t *jsthis)
     return is_vclass(jsthis, JSCLASS_VBARRAY) ? vbarray_from_vdisp(jsthis) : NULL;
 }
 
-static HRESULT VBArray_dimensions(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPARAMS *dp,
+static HRESULT VBArray_dimensions(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned argc, VARIANT *argv,
         VARIANT *retv, jsexcept_t *ei)
 {
     VBArrayInstance *vbarray;
@@ -60,11 +60,11 @@ static HRESULT VBArray_dimensions(script_ctx_t *ctx, vdisp_t *vthis, WORD flags,
     return S_OK;
 }
 
-static HRESULT VBArray_getItem(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPARAMS *dp,
+static HRESULT VBArray_getItem(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned argc, VARIANT *argv,
         VARIANT *retv, jsexcept_t *ei)
 {
     VBArrayInstance *vbarray;
-    int i, *indexes, size;
+    int i, *indexes;
     VARIANT out;
     HRESULT hres;
 
@@ -74,16 +74,15 @@ static HRESULT VBArray_getItem(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DI
     if(!vbarray)
         return throw_type_error(ctx, ei, JS_E_VBARRAY_EXPECTED, NULL);
 
-    size = arg_cnt(dp);
-    if(size < SafeArrayGetDim(vbarray->safearray))
+    if(argc < SafeArrayGetDim(vbarray->safearray))
         return throw_range_error(ctx, ei, JS_E_SUBSCRIPT_OUT_OF_RANGE, NULL);
 
-    indexes = heap_alloc(sizeof(int)*size);
+    indexes = heap_alloc(sizeof(int)*argc);
     if(!indexes)
         return E_OUTOFMEMORY;
 
-    for(i=0; i<size; i++) {
-        hres = to_int32(ctx, get_arg(dp, i), ei, indexes+i);
+    for(i=0; i<argc; i++) {
+        hres = to_int32(ctx, argv+i, ei, indexes+i);
         if(FAILED(hres)) {
             heap_free(indexes);
             return hres;
@@ -103,7 +102,7 @@ static HRESULT VBArray_getItem(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DI
     return hres;
 }
 
-static HRESULT VBArray_lbound(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPARAMS *dp,
+static HRESULT VBArray_lbound(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned argc, VARIANT *argv,
         VARIANT *retv, jsexcept_t *ei)
 {
     VBArrayInstance *vbarray;
@@ -116,8 +115,8 @@ static HRESULT VBArray_lbound(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DIS
     if(!vbarray)
         return throw_type_error(ctx, ei, JS_E_VBARRAY_EXPECTED, NULL);
 
-    if(arg_cnt(dp)) {
-        hres = to_int32(ctx, get_arg(dp, 0), ei, &dim);
+    if(argc) {
+        hres = to_int32(ctx, argv, ei, &dim);
         if(FAILED(hres))
             return hres;
     } else
@@ -134,7 +133,7 @@ static HRESULT VBArray_lbound(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DIS
     return S_OK;
 }
 
-static HRESULT VBArray_toArray(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPARAMS *dp,
+static HRESULT VBArray_toArray(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned argc, VARIANT *argv,
         VARIANT *retv, jsexcept_t *ei)
 {
     VBArrayInstance *vbarray;
@@ -182,7 +181,7 @@ static HRESULT VBArray_toArray(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DI
     return S_OK;
 }
 
-static HRESULT VBArray_ubound(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPARAMS *dp,
+static HRESULT VBArray_ubound(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned argc, VARIANT *argv,
         VARIANT *retv, jsexcept_t *ei)
 {
     VBArrayInstance *vbarray;
@@ -195,8 +194,8 @@ static HRESULT VBArray_ubound(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DIS
     if(!vbarray)
         return throw_type_error(ctx, ei, JS_E_VBARRAY_EXPECTED, NULL);
 
-    if(arg_cnt(dp)) {
-        hres = to_int32(ctx, get_arg(dp, 0), ei, &dim);
+    if(argc) {
+        hres = to_int32(ctx, argv, ei, &dim);
         if(FAILED(hres))
             return hres;
     } else
@@ -213,7 +212,7 @@ static HRESULT VBArray_ubound(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DIS
     return S_OK;
 }
 
-static HRESULT VBArray_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
+static HRESULT VBArray_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
         VARIANT *retv, jsexcept_t *ei)
 {
     FIXME("\n");
@@ -275,10 +274,9 @@ static HRESULT alloc_vbarray(script_ctx_t *ctx, jsdisp_t *object_prototype, VBAr
     return S_OK;
 }
 
-static HRESULT VBArrayConstr_value(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPARAMS *dp,
+static HRESULT VBArrayConstr_value(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned argc, VARIANT *argv,
         VARIANT *retv, jsexcept_t *ei)
 {
-    VARIANT *arg;
     VBArrayInstance *vbarray;
     HRESULT hres;
 
@@ -286,21 +284,21 @@ static HRESULT VBArrayConstr_value(script_ctx_t *ctx, vdisp_t *vthis, WORD flags
 
     switch(flags) {
     case DISPATCH_METHOD:
-        if(arg_cnt(dp)<1 || V_VT((arg = get_arg(dp, 0)))!=(VT_ARRAY|VT_VARIANT))
+        if(argc<1 || V_VT(argv) != (VT_ARRAY|VT_VARIANT))
             return throw_type_error(ctx, ei, JS_E_VBARRAY_EXPECTED, NULL);
 
-        hres = VariantCopy(retv, arg);
+        hres = VariantCopy(retv, argv);
         return hres;
 
     case DISPATCH_CONSTRUCT:
-        if(arg_cnt(dp)<1 || V_VT((arg = get_arg(dp, 0)))!=(VT_ARRAY|VT_VARIANT))
+        if(argc<1 || V_VT(argv) != (VT_ARRAY|VT_VARIANT))
             return throw_type_error(ctx, ei, JS_E_VBARRAY_EXPECTED, NULL);
 
         hres = alloc_vbarray(ctx, NULL, &vbarray);
         if(FAILED(hres))
             return hres;
 
-        hres = SafeArrayCopy(V_ARRAY(arg), &vbarray->safearray);
+        hres = SafeArrayCopy(V_ARRAY(argv), &vbarray->safearray);
         if(FAILED(hres)) {
             jsdisp_release(&vbarray->dispex);
             return hres;

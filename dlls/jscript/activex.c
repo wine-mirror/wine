@@ -138,7 +138,7 @@ static IUnknown *create_activex_object(script_ctx_t *ctx, const WCHAR *progid)
     return obj;
 }
 
-static HRESULT ActiveXObject_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
+static HRESULT ActiveXObject_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
         VARIANT *retv, jsexcept_t *ei)
 {
     IDispatch *disp;
@@ -159,12 +159,12 @@ static HRESULT ActiveXObject_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
         return E_NOTIMPL;
     }
 
-    if(arg_cnt(dp) != 1) {
-        FIXME("unsupported arg_cnt %d\n", arg_cnt(dp));
+    if(argc != 1) {
+        FIXME("unsupported argc %d\n", argc);
         return E_NOTIMPL;
     }
 
-    hres = to_string(ctx, get_arg(dp,0), ei, &progid);
+    hres = to_string(ctx, argv, ei, &progid);
     if(FAILED(hres))
         return hres;
 
