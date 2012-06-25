@@ -136,6 +136,7 @@ struct wbem_services
 {
     IWbemServices IWbemServices_iface;
     LONG refs;
+    WCHAR *namespace;
 };
 
 static inline struct wbem_services *impl_from_IWbemServices( IWbemServices *iface )
@@ -158,6 +159,7 @@ static ULONG WINAPI wbem_services_Release(
     if (!refs)
     {
         TRACE("destroying %p\n", ws);
+        heap_free( ws->namespace );
         heap_free( ws );
     }
     return refs;
@@ -486,7 +488,7 @@ static const IWbemServicesVtbl wbem_services_vtbl =
     wbem_services_ExecMethodAsync
 };
 
-HRESULT WbemServices_create( IUnknown *pUnkOuter, LPVOID *ppObj )
+HRESULT WbemServices_create( IUnknown *pUnkOuter, WCHAR *namespace, LPVOID *ppObj )
 {
     struct wbem_services *ws;
 
@@ -497,6 +499,7 @@ HRESULT WbemServices_create( IUnknown *pUnkOuter, LPVOID *ppObj )
 
     ws->IWbemServices_iface.lpVtbl = &wbem_services_vtbl;
     ws->refs = 1;
+    ws->namespace = namespace;
 
     *ppObj = &ws->IWbemServices_iface;
 

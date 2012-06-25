@@ -121,7 +121,7 @@ HRESULT get_propval( const struct view *, UINT, const WCHAR *, VARIANT *,
 HRESULT get_properties( const struct view *, SAFEARRAY ** ) DECLSPEC_HIDDEN;
 
 HRESULT WbemLocator_create(IUnknown *, LPVOID *) DECLSPEC_HIDDEN;
-HRESULT WbemServices_create(IUnknown *, LPVOID *) DECLSPEC_HIDDEN;
+HRESULT WbemServices_create(IUnknown *, WCHAR *, LPVOID *) DECLSPEC_HIDDEN;
 HRESULT WbemClassObject_create(IUnknown *, IEnumWbemClassObject *, UINT, LPVOID *) DECLSPEC_HIDDEN;
 HRESULT EnumWbemClassObject_create(IUnknown *, struct query *, LPVOID *) DECLSPEC_HIDDEN;
 

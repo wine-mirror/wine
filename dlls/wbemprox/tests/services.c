@@ -84,9 +84,96 @@ static void test_IClientSecurity(void)
     SysFreeString( path );
 }
 
+static void test_IWbemLocator(void)
+{
+    static const WCHAR path0W[] = {0};
+    static const WCHAR path1W[] = {'\\',0};
+    static const WCHAR path2W[] = {'\\','\\',0};
+    static const WCHAR path3W[] = {'\\','\\','.',0};
+    static const WCHAR path4W[] = {'\\','\\','.','\\',0};
+    static const WCHAR path5W[] = {'\\','R','O','O','T',0};
+    static const WCHAR path6W[] = {'\\','\\','R','O','O','T',0};
+    static const WCHAR path7W[] = {'\\','\\','.','R','O','O','T',0};
+    static const WCHAR path8W[] = {'\\','\\','.','\\','N','O','N','E',0};
+    static const WCHAR path9W[] = {'\\','\\','.','\\','R','O','O','T',0};
+    static const WCHAR path10W[] = {'\\','\\','\\','.','\\','R','O','O','T',0};
+    static const WCHAR path11W[] = {'\\','/','.','\\','R','O','O','T',0};
+    static const WCHAR path12W[] = {'/','/','.','\\','R','O','O','T',0};
+    static const WCHAR path13W[] = {'\\','\\','.','/','R','O','O','T',0};
+    static const WCHAR path14W[] = {'/','/','.','/','R','O','O','T',0};
+    static const WCHAR path15W[] = {'N','O','N','E',0};
+    static const WCHAR path16W[] = {'R','O','O','T',0};
+    static const WCHAR path17W[] = {'R','O','O','T','\\','N','O','N','E',0};
+    static const WCHAR path18W[] = {'R','O','O','T','\\','C','I','M','V','2',0};
+    static const WCHAR path19W[] = {'R','O','O','T','\\','\\','C','I','M','V','2',0};
+    static const WCHAR path20W[] = {'R','O','O','T','\\','C','I','M','V','2','\\',0};
+    static const WCHAR path21W[] = {'R','O','O','T','/','C','I','M','V','2',0};
+    static const struct
+    {
+        const WCHAR *path;
+        HRESULT      result;
+        int          todo;
+        HRESULT      result_broken;
+    }
+    test[] =
+    {
+        { path0W, WBEM_E_INVALID_NAMESPACE },
+        { path1W, WBEM_E_INVALID_NAMESPACE },
+        { path2W, WBEM_E_INVALID_NAMESPACE },
+        { path3W, WBEM_E_INVALID_NAMESPACE },
+        { path4W, WBEM_E_INVALID_NAMESPACE, 0, WBEM_E_INVALID_PARAMETER },
+        { path5W, WBEM_E_INVALID_NAMESPACE },
+        { path6W, 0x800706ba, 1 },
+        { path7W, 0x800706ba, 1 },
+        { path8W, WBEM_E_INVALID_NAMESPACE },
+        { path9W, S_OK },
+        { path10W, WBEM_E_INVALID_PARAMETER },
+        { path11W, S_OK },
+        { path12W, S_OK },
+        { path13W, S_OK },
+        { path14W, S_OK },
+        { path15W, WBEM_E_INVALID_NAMESPACE },
+        { path16W, S_OK },
+        { path17W, WBEM_E_INVALID_NAMESPACE },
+        { path18W, S_OK },
+        { path19W, WBEM_E_INVALID_NAMESPACE },
+        { path20W, WBEM_E_INVALID_NAMESPACE },
+        { path21W, S_OK }
+    };
+    IWbemLocator *locator;
+    IWbemServices *services;
+    unsigned int i;
+    HRESULT hr;
+    BSTR resource;
+
+    hr = CoCreateInstance( &CLSID_WbemLocator, NULL, CLSCTX_INPROC_SERVER, &IID_IWbemLocator, (void **)&locator );
+    if (hr != S_OK)
+    {
+        win_skip("can't create instance of WbemLocator\n");
+        return;
+    }
+    ok( hr == S_OK, "failed to create IWbemLocator interface %08x\n", hr );
+
+    for (i = 0; i < sizeof(test) / sizeof(test[0]); i++)
+    {
+        resource = SysAllocString( test[i].path );
+        hr = IWbemLocator_ConnectServer( locator, resource, NULL, NULL, NULL, 0, NULL, NULL, &services );
+        if (test[i].todo) todo_wine
+            ok( hr == test[i].result || broken(hr == test[i].result_broken),
+                "%u: expected %08x got %08x\n", i, test[i].result, hr );
+        else
+            ok( hr == test[i].result || broken(hr == test[i].result_broken),
+                "%u: expected %08x got %08x\n", i, test[i].result, hr );
+        SysFreeString( resource );
+        if (hr == S_OK) IWbemServices_Release( services );
+    }
+    IWbemLocator_Release( locator );
+}
+
 START_TEST(services)
 {
     CoInitialize( NULL );
     test_IClientSecurity();
+    test_IWbemLocator();
     CoUninitialize();
 }
