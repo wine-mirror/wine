@@ -6475,6 +6475,16 @@ struct {
 /* ?_Ptr_cerr@std@@3PEAV?$basic_ostream@DU?$char_traits@D@std@@@1@EA */
 basic_ostream_char *_Ptr_cerr = &cerr.obj;
 
+static basic_filebuf_char filebuf_log;
+/* ?clog@std@@3V?$basic_ostream@DU?$char_traits@D@std@@@1@A */
+struct {
+    basic_ostream_char obj;
+    basic_ios_char vbase;
+} clog = { { 0 } };
+/* ?_Ptr_clog@std@@3PAV?$basic_ostream@DU?$char_traits@D@std@@@1@A */
+/* ?_Ptr_clog@std@@3PEAV?$basic_ostream@DU?$char_traits@D@std@@@1@EA */
+basic_ostream_char *_Ptr_clog = &clog.obj;
+
 void init_io(void)
 {
     basic_filebuf_char_ctor_file(&filebuf_stdin, stdin);
@@ -6485,6 +6495,9 @@ void init_io(void)
 
     basic_filebuf_char_ctor_file(&filebuf_stderr, stderr);
     basic_ostream_char_ctor(&cerr.obj, &filebuf_stderr.base, FALSE/*FIXME*/, TRUE);
+
+    basic_filebuf_char_ctor_file(&filebuf_log, stderr);
+    basic_ostream_char_ctor(&clog.obj, &filebuf_log.base, FALSE/*FIXME*/, TRUE);
 }
 
 void free_io(void)
@@ -6497,4 +6510,7 @@ void free_io(void)
 
     basic_ostream_char_dtor(&cerr.obj);
     basic_filebuf_char_dtor(&filebuf_stderr);
+
+    basic_ostream_char_dtor(&clog.obj);
+    basic_filebuf_char_dtor(&filebuf_log);
 }

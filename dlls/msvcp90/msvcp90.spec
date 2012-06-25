@@ -2698,8 +2698,8 @@
 @ extern -arch=win64 ?_Ptr_cerr@std@@3PEAV?$basic_ostream@DU?$char_traits@D@std@@@1@EA _Ptr_cerr
 @ extern -arch=win32 ?_Ptr_cin@std@@3PAV?$basic_istream@DU?$char_traits@D@std@@@1@A _Ptr_cin
 @ extern -arch=win64 ?_Ptr_cin@std@@3PEAV?$basic_istream@DU?$char_traits@D@std@@@1@EA _Ptr_cin
-# extern -arch=win32 ?_Ptr_clog@std@@3PAV?$basic_ostream@DU?$char_traits@D@std@@@1@A
-# extern -arch=win64 ?_Ptr_clog@std@@3PEAV?$basic_ostream@DU?$char_traits@D@std@@@1@EA
+@ extern -arch=win32 ?_Ptr_clog@std@@3PAV?$basic_ostream@DU?$char_traits@D@std@@@1@A _Ptr_clog
+@ extern -arch=win64 ?_Ptr_clog@std@@3PEAV?$basic_ostream@DU?$char_traits@D@std@@@1@EA _Ptr_clog
 @ extern -arch=win32 ?_Ptr_cout@std@@3PAV?$basic_ostream@DU?$char_traits@D@std@@@1@A _Ptr_cout
 @ extern -arch=win64 ?_Ptr_cout@std@@3PEAV?$basic_ostream@DU?$char_traits@D@std@@@1@EA _Ptr_cout
 # extern -arch=win32 ?_Ptr_wcerr@std@@3PAV?$basic_ostream@GU?$char_traits@G@std@@@1@A
@@ -3083,7 +3083,7 @@
 @ cdecl -arch=win64 ?clear@ios_base@std@@QEAAXH_N@Z(ptr long long) ios_base_clear_reraise
 @ thiscall -arch=win32 ?clear@ios_base@std@@QAEXI@Z(ptr long) ios_base_clear_unsigned
 @ cdecl -arch=win64 ?clear@ios_base@std@@QEAAXI@Z(ptr long) ios_base_clear_unsigned
-# extern ?clog@std@@3V?$basic_ostream@DU?$char_traits@D@std@@@1@A
+@ extern ?clog@std@@3V?$basic_ostream@DU?$char_traits@D@std@@@1@A clog
 @ thiscall -arch=win32 ?close@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QAEPAV12@XZ(ptr) basic_filebuf_char_close
 @ cdecl -arch=win64 ?close@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEAAPEAV12@XZ(ptr) basic_filebuf_char_close
 @ stub -arch=win32 ?close@?$basic_filebuf@GU?$char_traits@G@std@@@std@@QAEPAV12@XZ
