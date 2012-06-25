@@ -27,8 +27,8 @@
 #include "gdiplus.h"
 #include "wine/test.h"
 
-#define expect(expected, got) ok((UINT)(got) == (UINT)(expected), "Expected %.8x, got %.8x\n", (UINT)(expected), (UINT)(got))
-#define expectf(expected, got) ok(fabs(expected - got) < 0.0001, "Expected %.2f, got %.2f\n", expected, got)
+#define expect(expected, got) ok((got) == (expected), "Expected %d, got %d\n", (expected), (got))
+#define expectf(expected, got) ok(fabs((expected) - (got)) < 0.0001, "Expected %f, got %f\n", (expected), (got))
 
 static BOOL color_match(ARGB c1, ARGB c2, BYTE max_diff)
 {
@@ -2656,6 +2656,116 @@ static void test_dispose(void)
     expect(ObjectBusy, stat);
 }
 
+static GpImage *load_image(const BYTE *image_data, UINT image_size)
+{
+    IStream *stream;
+    HGLOBAL hmem;
+    BYTE *data;
+    HRESULT hr;
+    GpStatus status;
+    GpImage *image = NULL;
+
+    hmem = GlobalAlloc(0, image_size);
+    data = GlobalLock(hmem);
+    memcpy(data, image_data, image_size);
+    GlobalUnlock(hmem);
+
+    hr = CreateStreamOnHGlobal(hmem, TRUE, &stream);
+    ok(hr == S_OK, "CreateStreamOnHGlobal error %#x\n", hr);
+    if (hr != S_OK) return NULL;
+
+    status = GdipLoadImageFromStream(stream, &image);
+    ok(status == Ok, "GdipLoadImageFromStream error %d\n", status);
+
+    IStream_Release(stream);
+
+    return image;
+}
+
+static void test_image_properties(void)
+{
+    static const struct test_data
+    {
+        const BYTE *image_data;
+        UINT image_size;
+        ImageType image_type;
+        UINT prop_count;
+    }
+    td[] =
+    {
+        { pngimage, sizeof(pngimage), ImageTypeBitmap, 4 },
+        /* Win7 reports 4 properties, while everybody else just 1
+        { gifimage, sizeof(gifimage), ImageTypeBitmap, 1 }, */
+        { jpgimage, sizeof(jpgimage), ImageTypeBitmap, 2 },
+        { tiffimage, sizeof(tiffimage), ImageTypeBitmap, 16 },
+        { bmpimage, sizeof(bmpimage), ImageTypeBitmap, 0 },
+        { wmfimage, sizeof(wmfimage), ImageTypeMetafile, 0 }
+    };
+    GpStatus status;
+    GpImage *image;
+    UINT prop_count, i;
+    PROPID prop_id[16];
+    ImageType image_type;
+
+    for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
+    {
+        image = load_image(td[i].image_data, td[i].image_size);
+        ok(image != 0, "%u: failed to load image data\n", i);
+        if (!image) continue;
+
+        status = GdipGetImageType(image, &image_type);
+        ok(status == Ok, "%u: GdipGetImageType error %d\n", i, status);
+        ok(td[i].image_type == image_type, "%u: expected image_type %d, got %d\n",
+           i, td[i].image_type, image_type);
+
+        status = GdipGetPropertyCount(image, &prop_count);
+        ok(status == Ok, "%u: GdipGetPropertyCount error %d\n", i, status);
+        if (td[i].image_data == pngimage || td[i].image_data == gifimage ||
+            td[i].image_data == jpgimage)
+        todo_wine
+        ok(td[i].prop_count == prop_count, " %u: expected property count %u, got %u\n",
+           i, td[i].prop_count, prop_count);
+        else
+        ok(td[i].prop_count == prop_count, " %u: expected property count %u, got %u\n",
+           i, td[i].prop_count, prop_count);
+
+        if (td[i].prop_count != prop_count)
+        {
+            GdipDisposeImage(image);
+            continue;
+        }
+
+        status = GdipGetPropertyIdList(NULL, prop_count, prop_id);
+        expect(InvalidParameter, status);
+        status = GdipGetPropertyIdList(image, prop_count, NULL);
+        expect(InvalidParameter, status);
+        status = GdipGetPropertyIdList(image, 0, prop_id);
+        if (image_type == ImageTypeMetafile)
+            expect(NotImplemented, status);
+        else if (prop_count == 0)
+            expect(Ok, status);
+        else
+            expect(InvalidParameter, status);
+        status = GdipGetPropertyIdList(image, prop_count - 1, prop_id);
+        if (image_type == ImageTypeMetafile)
+            expect(NotImplemented, status);
+        else
+            expect(InvalidParameter, status);
+        status = GdipGetPropertyIdList(image, prop_count + 1, prop_id);
+        if (image_type == ImageTypeMetafile)
+            expect(NotImplemented, status);
+        else
+            expect(InvalidParameter, status);
+        status = GdipGetPropertyIdList(image, prop_count, prop_id);
+        if (image_type == ImageTypeMetafile)
+            expect(NotImplemented, status);
+        else
+            expect(Ok, status);
+
+        GdipDisposeImage(image);
+    }
+}
+
 START_TEST(image)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -2668,6 +2778,7 @@ START_TEST(image)
 
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
+    test_image_properties();
     test_Scan0();
     test_FromGdiDib();
     test_GetImageDimension();
