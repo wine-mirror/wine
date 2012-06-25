@@ -1624,11 +1624,11 @@ static BOOL glxdrv_SetPixelFormat(PHYSDEV dev, int iPixelFormat, const PIXELFORM
 }
 
 /**
- * glxdrv_wglCopyContext
+ * X11DRV_wglCopyContext
  *
  * For OpenGL32 wglCopyContext.
  */
-static BOOL glxdrv_wglCopyContext(HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask)
+static BOOL WINAPI X11DRV_wglCopyContext(HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask)
 {
     Wine_GLContext *src = (Wine_GLContext*)hglrcSrc;
     Wine_GLContext *dst = (Wine_GLContext*)hglrcDst;
@@ -1688,17 +1688,15 @@ static HGLRC glxdrv_wglCreateContext(PHYSDEV dev)
 }
 
 /**
- * glxdrv_wglDeleteContext
+ * X11DRV_wglDeleteContext
  *
  * For OpenGL32 wglDeleteContext.
  */
-static BOOL glxdrv_wglDeleteContext(HGLRC hglrc)
+static BOOL WINAPI X11DRV_wglDeleteContext(HGLRC hglrc)
 {
     Wine_GLContext *ctx = (Wine_GLContext *) hglrc;
 
     TRACE("(%p)\n", hglrc);
-
-    if (!has_opengl()) return 0;
 
     if (!is_valid_context(ctx))
     {
@@ -3251,6 +3249,8 @@ static const WineGLExtension WGL_internal_functions =
 {
   "",
   {
+    { "wglCopyContext", X11DRV_wglCopyContext },
+    { "wglDeleteContext", X11DRV_wglDeleteContext },
     { "wglGetIntegerv", X11DRV_wglGetIntegerv },
     { "wglFinish", X11DRV_wglFinish },
     { "wglFlush", X11DRV_wglFlush },
@@ -3755,10 +3755,10 @@ static const struct gdi_dc_funcs glxdrv_funcs =
     glxdrv_SwapBuffers,                 /* pSwapBuffers */
     NULL,                               /* pUnrealizePalette */
     NULL,                               /* pWidenPath */
-    glxdrv_wglCopyContext,              /* pwglCopyContext */
+    NULL,                               /* pwglCopyContext */
     glxdrv_wglCreateContext,            /* pwglCreateContext */
     glxdrv_wglCreateContextAttribsARB,  /* pwglCreateContextAttribsARB */
-    glxdrv_wglDeleteContext,            /* pwglDeleteContext */
+    NULL,                               /* pwglDeleteContext */
     glxdrv_wglGetProcAddress,           /* pwglGetProcAddress */
     glxdrv_wglMakeContextCurrentARB,    /* pwglMakeContextCurrentARB */
     glxdrv_wglMakeCurrent,              /* pwglMakeCurrent */

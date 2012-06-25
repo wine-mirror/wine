@@ -1713,7 +1713,6 @@ BOOL (WINAPI *pwglShareLists)(HGLRC, HGLRC) DECLSPEC_HIDDEN;
 
 #define WGL_FUNCS_GEN \
     USE_WGL_FUNC(wglCreateContext) \
-    USE_WGL_FUNC(wglDeleteContext) \
     USE_WGL_FUNC(wglGetCurrentContext) \
     USE_WGL_FUNC(wglGetCurrentDC) \
     USE_WGL_FUNC(wglGetProcAddress) \
