@@ -191,6 +191,8 @@ static IndexItem *parse_li(HHInfo *info, stream_t *stream)
 
         strbuf_zero(&node);
     }
+    if(!ret)
+        FIXME("Failed to parse <li> tag!\n");
 
     strbuf_free(&node);
     strbuf_free(&node_name);
@@ -227,9 +229,11 @@ static void parse_hhindex(HHInfo *info, IStream *str, IndexItem *item)
 
         if(!strcasecmp(node_name.buf, "li")) {
             item->next = parse_li(info, &stream);
-            item->next->merge = item->merge;
-            item = item->next;
-            item->indentLevel = indent_level;
+            if(item->next) {
+                item->next->merge = item->merge;
+                item = item->next;
+                item->indentLevel = indent_level;
+            }
         }else if(!strcasecmp(node_name.buf, "ul")) {
             indent_level++;
         }else if(!strcasecmp(node_name.buf, "/ul")) {
