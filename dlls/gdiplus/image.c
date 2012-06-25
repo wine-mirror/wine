@@ -2676,12 +2676,14 @@ static GpStatus decode_image_wic(IStream* stream, REFCLSID clsid, UINT active_fr
 
         if (SUCCEEDED(hr))
         {
+            IWICBitmapSource *bmp_source;
+            IWICBitmapFrameDecode_QueryInterface(frame, &IID_IWICBitmapSource, (void **)&bmp_source);
+
             for (i=0; wic_pixel_formats[i]; i++)
             {
                 if (IsEqualGUID(&wic_format, wic_pixel_formats[i]))
                 {
-                    source = (IWICBitmapSource*)frame;
-                    IWICBitmapSource_AddRef(source);
+                    source = bmp_source;
                     gdip_format = wic_gdip_formats[i];
                     break;
                 }
@@ -2689,8 +2691,9 @@ static GpStatus decode_image_wic(IStream* stream, REFCLSID clsid, UINT active_fr
             if (!source)
             {
                 /* unknown format; fall back on 32bppARGB */
-                hr = WICConvertBitmapSource(&GUID_WICPixelFormat32bppBGRA, (IWICBitmapSource*)frame, &source);
+                hr = WICConvertBitmapSource(&GUID_WICPixelFormat32bppBGRA, bmp_source, &source);
                 gdip_format = PixelFormat32bppARGB;
+                IWICBitmapSource_Release(bmp_source);
             }
         }
 
