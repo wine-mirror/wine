@@ -2007,141 +2007,6 @@ static BOOL glxdrv_wglShareLists(HGLRC hglrc1, HGLRC hglrc2)
     return FALSE;
 }
 
-static BOOL internal_wglUseFontBitmaps(HDC hdc, DWORD first, DWORD count, DWORD listBase, DWORD (WINAPI *GetGlyphOutline_ptr)(HDC,UINT,UINT,LPGLYPHMETRICS,DWORD,LPVOID,const MAT2*))
-{
-     /* We are running using client-side rendering fonts... */
-     GLYPHMETRICS gm;
-     unsigned int glyph, size = 0;
-     void *bitmap = NULL, *gl_bitmap = NULL;
-     int org_alignment;
-
-     wine_tsx11_lock();
-     pglGetIntegerv(GL_UNPACK_ALIGNMENT, &org_alignment);
-     pglPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-     wine_tsx11_unlock();
-
-     for (glyph = first; glyph < first + count; glyph++) {
-         static const MAT2 identity = { {0,1},{0,0},{0,0},{0,1} };
-         unsigned int needed_size = GetGlyphOutline_ptr(hdc, glyph, GGO_BITMAP, &gm, 0, NULL, &identity);
-         unsigned int height, width_int;
-
-         TRACE("Glyph : %3d / List : %d\n", glyph, listBase);
-         if (needed_size == GDI_ERROR) {
-             TRACE("  - needed size : %d (GDI_ERROR)\n", needed_size);
-             goto error;
-         } else {
-             TRACE("  - needed size : %d\n", needed_size);
-         }
-
-         if (needed_size > size) {
-             size = needed_size;
-             HeapFree(GetProcessHeap(), 0, bitmap);
-             HeapFree(GetProcessHeap(), 0, gl_bitmap);
-             bitmap = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
-             gl_bitmap = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
-         }
-         if (GetGlyphOutline_ptr(hdc, glyph, GGO_BITMAP, &gm, size, bitmap, &identity) == GDI_ERROR)
-             goto error;
-         if (TRACE_ON(wgl)) {
-             unsigned int height, width, bitmask;
-             unsigned char *bitmap_ = bitmap;
-
-             TRACE("  - bbox : %d x %d\n", gm.gmBlackBoxX, gm.gmBlackBoxY);
-             TRACE("  - origin : (%d , %d)\n", gm.gmptGlyphOrigin.x, gm.gmptGlyphOrigin.y);
-             TRACE("  - increment : %d - %d\n", gm.gmCellIncX, gm.gmCellIncY);
-             if (needed_size != 0) {
-                 TRACE("  - bitmap :\n");
-                 for (height = 0; height < gm.gmBlackBoxY; height++) {
-                     TRACE("      ");
-                     for (width = 0, bitmask = 0x80; width < gm.gmBlackBoxX; width++, bitmask >>= 1) {
-                         if (bitmask == 0) {
-                             bitmap_ += 1;
-                             bitmask = 0x80;
-                         }
-                         if (*bitmap_ & bitmask)
-                             TRACE("*");
-                         else
-                             TRACE(" ");
-                     }
-                     bitmap_ += (4 - ((UINT_PTR)bitmap_ & 0x03));
-                     TRACE("\n");
-                 }
-             }
-         }
-
-         /* In OpenGL, the bitmap is drawn from the bottom to the top... So we need to invert the
-         * glyph for it to be drawn properly.
-         */
-         if (needed_size != 0) {
-             width_int = (gm.gmBlackBoxX + 31) / 32;
-             for (height = 0; height < gm.gmBlackBoxY; height++) {
-                 unsigned int width;
-                 for (width = 0; width < width_int; width++) {
-                     ((int *) gl_bitmap)[(gm.gmBlackBoxY - height - 1) * width_int + width] =
-                     ((int *) bitmap)[height * width_int + width];
-                 }
-             }
-         }
-
-         wine_tsx11_lock();
-         pglNewList(listBase++, GL_COMPILE);
-         if (needed_size != 0) {
-             pglBitmap(gm.gmBlackBoxX, gm.gmBlackBoxY,
-                     0 - gm.gmptGlyphOrigin.x, (int) gm.gmBlackBoxY - gm.gmptGlyphOrigin.y,
-                     gm.gmCellIncX, gm.gmCellIncY,
-                     gl_bitmap);
-         } else {
-             /* This is the case of 'empty' glyphs like the space character */
-             pglBitmap(0, 0, 0, 0, gm.gmCellIncX, gm.gmCellIncY, NULL);
-         }
-         pglEndList();
-         wine_tsx11_unlock();
-     }
-
-     wine_tsx11_lock();
-     pglPixelStorei(GL_UNPACK_ALIGNMENT, org_alignment);
-     wine_tsx11_unlock();
-
-     HeapFree(GetProcessHeap(), 0, bitmap);
-     HeapFree(GetProcessHeap(), 0, gl_bitmap);
-     return TRUE;
-
-  error:
-     wine_tsx11_lock();
-     pglPixelStorei(GL_UNPACK_ALIGNMENT, org_alignment);
-     wine_tsx11_unlock();
-
-     HeapFree(GetProcessHeap(), 0, bitmap);
-     HeapFree(GetProcessHeap(), 0, gl_bitmap);
-     return FALSE;
-}
-
-/**
- * glxdrv_wglUseFontBitmapsA
- *
- * For OpenGL32 wglUseFontBitmapsA.
- */
-static BOOL glxdrv_wglUseFontBitmapsA(PHYSDEV dev, DWORD first, DWORD count, DWORD listBase)
-{
-     TRACE("(%p, %d, %d, %d)\n", dev->hdc, first, count, listBase);
-
-     if (!has_opengl()) return FALSE;
-     return internal_wglUseFontBitmaps(dev->hdc, first, count, listBase, GetGlyphOutlineA);
-}
-
-/**
- * glxdrv_wglUseFontBitmapsW
- *
- * For OpenGL32 wglUseFontBitmapsW.
- */
-static BOOL glxdrv_wglUseFontBitmapsW(PHYSDEV dev, DWORD first, DWORD count, DWORD listBase)
-{
-     TRACE("(%p, %d, %d, %d)\n", dev->hdc, first, count, listBase);
-
-     if (!has_opengl()) return FALSE;
-     return internal_wglUseFontBitmaps(dev->hdc, first, count, listBase, GetGlyphOutlineW);
-}
-
 /* WGL helper function which handles differences in glGetIntegerv from WGL and GLX */
 static void WINAPI X11DRV_wglGetIntegerv(GLenum pname, GLint* params)
 {
@@ -3898,8 +3763,8 @@ static const struct gdi_dc_funcs glxdrv_funcs =
     glxdrv_wglMakeCurrent,              /* pwglMakeCurrent */
     glxdrv_wglSetPixelFormatWINE,       /* pwglSetPixelFormatWINE */
     glxdrv_wglShareLists,               /* pwglShareLists */
-    glxdrv_wglUseFontBitmapsA,          /* pwglUseFontBitmapsA */
-    glxdrv_wglUseFontBitmapsW,          /* pwglUseFontBitmapsW */
+    NULL,                               /* pwglUseFontBitmapsA */
+    NULL,                               /* pwglUseFontBitmapsW */
     GDI_PRIORITY_GRAPHICS_DRV + 20      /* priority */
 };
 

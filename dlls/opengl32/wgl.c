@@ -53,8 +53,6 @@ static struct
     BOOL  (WINAPI *p_wglDeleteContext)(HGLRC hglrc);
     BOOL  (WINAPI *p_wglMakeCurrent)(HDC hdc, HGLRC hglrc);
     BOOL  (WINAPI *p_wglShareLists)(HGLRC hglrc1, HGLRC hglrc2);
-    BOOL  (WINAPI *p_wglUseFontBitmapsA)(HDC hdc, DWORD first, DWORD count, DWORD listBase);
-    BOOL  (WINAPI *p_wglUseFontBitmapsW)(HDC hdc, DWORD first, DWORD count, DWORD listBase);
     HDC   (WINAPI *p_wglGetCurrentDC)(void);
     HGLRC (WINAPI *p_wglCreateContext)(HDC hdc);
     HGLRC (WINAPI *p_wglGetCurrentContext)(void);
@@ -131,22 +129,6 @@ BOOL WINAPI wglMakeCurrent(HDC hdc, HGLRC hglrc)
 BOOL WINAPI wglShareLists(HGLRC hglrc1, HGLRC hglrc2)
 {
   return wine_wgl.p_wglShareLists(hglrc1, hglrc2);
-}
-
-/***********************************************************************
- *		wglUseFontBitmapsA (OPENGL32.@)
- */
-BOOL WINAPI wglUseFontBitmapsA(HDC hdc, DWORD first, DWORD count, DWORD listBase)
-{
-  return wine_wgl.p_wglUseFontBitmapsA(hdc, first, count, listBase);
-}
-
-/***********************************************************************
- *		wglUseFontBitmapsW (OPENGL32.@)
- */
-BOOL WINAPI wglUseFontBitmapsW(HDC hdc, DWORD first, DWORD count, DWORD listBase)
-{
-  return wine_wgl.p_wglUseFontBitmapsW(hdc, first, count, listBase);
 }
 
 /***********************************************************************
@@ -415,6 +397,129 @@ BOOL WINAPI wglSwapLayerBuffers(HDC hdc,
   }
 
   return TRUE;
+}
+
+/***********************************************************************
+ *		wglUseFontBitmaps_common
+ */
+static BOOL wglUseFontBitmaps_common( HDC hdc, DWORD first, DWORD count, DWORD listBase, BOOL unicode )
+{
+     GLYPHMETRICS gm;
+     unsigned int glyph, size = 0;
+     void *bitmap = NULL, *gl_bitmap = NULL;
+     int org_alignment;
+     BOOL ret = TRUE;
+
+     ENTER_GL();
+     glGetIntegerv(GL_UNPACK_ALIGNMENT, &org_alignment);
+     glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+     LEAVE_GL();
+
+     for (glyph = first; glyph < first + count; glyph++) {
+         static const MAT2 identity = { {0,1},{0,0},{0,0},{0,1} };
+         unsigned int needed_size, height, width, width_int;
+
+         if (unicode)
+             needed_size = GetGlyphOutlineW(hdc, glyph, GGO_BITMAP, &gm, 0, NULL, &identity);
+         else
+             needed_size = GetGlyphOutlineA(hdc, glyph, GGO_BITMAP, &gm, 0, NULL, &identity);
+
+         TRACE("Glyph : %3d / List : %d size %d\n", glyph, listBase, needed_size);
+         if (needed_size == GDI_ERROR) {
+             ret = FALSE;
+             break;
+         }
+
+         if (needed_size > size) {
+             size = needed_size;
+             HeapFree(GetProcessHeap(), 0, bitmap);
+             HeapFree(GetProcessHeap(), 0, gl_bitmap);
+             bitmap = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
+             gl_bitmap = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
+         }
+         if (unicode)
+             ret = (GetGlyphOutlineW(hdc, glyph, GGO_BITMAP, &gm, size, bitmap, &identity) != GDI_ERROR);
+         else
+             ret = (GetGlyphOutlineA(hdc, glyph, GGO_BITMAP, &gm, size, bitmap, &identity) != GDI_ERROR);
+         if (!ret) break;
+
+         if (TRACE_ON(wgl)) {
+             unsigned int bitmask;
+             unsigned char *bitmap_ = bitmap;
+
+             TRACE("  - bbox : %d x %d\n", gm.gmBlackBoxX, gm.gmBlackBoxY);
+             TRACE("  - origin : (%d , %d)\n", gm.gmptGlyphOrigin.x, gm.gmptGlyphOrigin.y);
+             TRACE("  - increment : %d - %d\n", gm.gmCellIncX, gm.gmCellIncY);
+             if (needed_size != 0) {
+                 TRACE("  - bitmap :\n");
+                 for (height = 0; height < gm.gmBlackBoxY; height++) {
+                     TRACE("      ");
+                     for (width = 0, bitmask = 0x80; width < gm.gmBlackBoxX; width++, bitmask >>= 1) {
+                         if (bitmask == 0) {
+                             bitmap_ += 1;
+                             bitmask = 0x80;
+                         }
+                         if (*bitmap_ & bitmask)
+                             TRACE("*");
+                         else
+                             TRACE(" ");
+                     }
+                     bitmap_ += (4 - ((UINT_PTR)bitmap_ & 0x03));
+                     TRACE("\n");
+                 }
+             }
+         }
+
+         /* In OpenGL, the bitmap is drawn from the bottom to the top... So we need to invert the
+         * glyph for it to be drawn properly.
+         */
+         if (needed_size != 0) {
+             width_int = (gm.gmBlackBoxX + 31) / 32;
+             for (height = 0; height < gm.gmBlackBoxY; height++) {
+                 for (width = 0; width < width_int; width++) {
+                     ((int *) gl_bitmap)[(gm.gmBlackBoxY - height - 1) * width_int + width] =
+                     ((int *) bitmap)[height * width_int + width];
+                 }
+             }
+         }
+
+         ENTER_GL();
+         glNewList(listBase++, GL_COMPILE);
+         if (needed_size != 0) {
+             glBitmap(gm.gmBlackBoxX, gm.gmBlackBoxY,
+                     0 - gm.gmptGlyphOrigin.x, (int) gm.gmBlackBoxY - gm.gmptGlyphOrigin.y,
+                     gm.gmCellIncX, gm.gmCellIncY,
+                     gl_bitmap);
+         } else {
+             /* This is the case of 'empty' glyphs like the space character */
+             glBitmap(0, 0, 0, 0, gm.gmCellIncX, gm.gmCellIncY, NULL);
+         }
+         glEndList();
+         LEAVE_GL();
+     }
+
+     ENTER_GL();
+     glPixelStorei(GL_UNPACK_ALIGNMENT, org_alignment);
+     LEAVE_GL();
+     HeapFree(GetProcessHeap(), 0, bitmap);
+     HeapFree(GetProcessHeap(), 0, gl_bitmap);
+     return ret;
+}
+
+/***********************************************************************
+ *		wglUseFontBitmapsA (OPENGL32.@)
+ */
+BOOL WINAPI wglUseFontBitmapsA(HDC hdc, DWORD first, DWORD count, DWORD listBase)
+{
+    return wglUseFontBitmaps_common( hdc, first, count, listBase, FALSE );
+}
+
+/***********************************************************************
+ *		wglUseFontBitmapsW (OPENGL32.@)
+ */
+BOOL WINAPI wglUseFontBitmapsW(HDC hdc, DWORD first, DWORD count, DWORD listBase)
+{
+    return wglUseFontBitmaps_common( hdc, first, count, listBase, TRUE );
 }
 
 #ifdef SONAME_LIBGLU
@@ -815,8 +920,6 @@ static BOOL process_attach(void)
   wine_wgl.p_wglDeleteContext = (void *)GetProcAddress(mod_gdi32, "wglDeleteContext");
   wine_wgl.p_wglMakeCurrent = (void *)GetProcAddress(mod_gdi32, "wglMakeCurrent");
   wine_wgl.p_wglShareLists = (void *)GetProcAddress(mod_gdi32, "wglShareLists");
-  wine_wgl.p_wglUseFontBitmapsA = (void *)GetProcAddress(mod_gdi32, "wglUseFontBitmapsA");
-  wine_wgl.p_wglUseFontBitmapsW = (void *)GetProcAddress(mod_gdi32, "wglUseFontBitmapsW");
   wine_wgl.p_wglGetCurrentDC = (void *)GetProcAddress(mod_gdi32, "wglGetCurrentDC");
   wine_wgl.p_wglCreateContext = (void *)GetProcAddress(mod_gdi32, "wglCreateContext");
   wine_wgl.p_wglGetCurrentContext = (void *)GetProcAddress(mod_gdi32, "wglGetCurrentContext");
