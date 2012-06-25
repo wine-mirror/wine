@@ -1096,8 +1096,12 @@ static HRESULT WINAPI TiffFrameDecode_GetColorContexts(IWICBitmapFrameDecode *if
 static HRESULT WINAPI TiffFrameDecode_GetThumbnail(IWICBitmapFrameDecode *iface,
     IWICBitmapSource **ppIThumbnail)
 {
-    FIXME("(%p,%p): stub\n", iface, ppIThumbnail);
-    return E_NOTIMPL;
+    TRACE("(%p,%p)\n", iface, ppIThumbnail);
+
+    if (!ppIThumbnail) return E_INVALIDARG;
+
+    *ppIThumbnail = NULL;
+    return WINCODEC_ERR_CODECNOTHUMBNAIL;
 }
 
 static const IWICBitmapFrameDecodeVtbl TiffFrameDecode_Vtbl = {
