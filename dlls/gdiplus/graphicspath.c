@@ -953,7 +953,7 @@ GpStatus WINGDIPAPI GdipAddPathString(GpPath* path, GDIPCONST WCHAR* string, INT
     RectF scaled_layout_rect;
     TEXTMETRICW textmetric;
 
-    FIXME("(%p, %s, %d, %p, %d, %f, %p, %p): stub\n", path, debugstr_w(string), length, family, style, emSize, layoutRect, format);
+    TRACE("(%p, %s, %d, %p, %d, %f, %p, %p)\n", path, debugstr_w(string), length, family, style, emSize, layoutRect, format);
     if (!path || !string || !family || !emSize || !layoutRect || !format)
         return InvalidParameter;
 
