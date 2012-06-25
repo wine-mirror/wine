@@ -1027,7 +1027,7 @@ static HRESULT WINAPI HTMLWindow2_get_document(IHTMLWindow2 *iface, IHTMLDocumen
 static HRESULT WINAPI HTMLWindow2_get_event(IHTMLWindow2 *iface, IHTMLEventObj **p)
 {
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
-    HTMLOuterWindow *window = This->outer_window;
+    HTMLInnerWindow *window = This->inner_window;
 
     TRACE("(%p)->(%p)\n", This, p);
 

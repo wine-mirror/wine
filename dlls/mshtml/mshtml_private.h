@@ -331,8 +331,6 @@ struct HTMLOuterWindow {
     IUri *uri;
     BSTR url;
 
-    IHTMLEventObj *event;
-
     SCRIPTMODE scriptmode;
 
     IInternetSecurityManager *secmgr;
@@ -354,6 +352,8 @@ struct HTMLInnerWindow {
     HTMLDocumentNode *doc;
 
     struct list script_hosts;
+
+    IHTMLEventObj *event;
 
     HTMLOptionElementFactory *option_factory;
 

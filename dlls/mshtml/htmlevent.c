@@ -989,6 +989,7 @@ void fire_event(HTMLDocumentNode *doc, eventid_t eid, BOOL set_event, nsIDOMNode
     IHTMLEventObj *prev_event;
     nsIDOMNode *parent, *nsnode;
     BOOL prevent_default = FALSE;
+    HTMLInnerWindow *window;
     HTMLDOMNode *node;
     PRUint16 node_type;
     nsresult nsres;
@@ -996,7 +997,8 @@ void fire_event(HTMLDocumentNode *doc, eventid_t eid, BOOL set_event, nsIDOMNode
 
     TRACE("(%p) %s\n", doc, debugstr_w(event_info[eid].name));
 
-    prev_event = doc->basedoc.window->event;
+    window = doc->basedoc.window->base.inner_window;
+    prev_event = window->event;
     if(set_event) {
         hres = get_node(doc, target, TRUE, &node);
         if(FAILED(hres))
@@ -1004,9 +1006,9 @@ void fire_event(HTMLDocumentNode *doc, eventid_t eid, BOOL set_event, nsIDOMNode
 
         event_obj = create_event(node, eid, nsevent);
         node_release(node);
-        doc->basedoc.window->event = &event_obj->IHTMLEventObj_iface;
+        window->event = &event_obj->IHTMLEventObj_iface;
     }else {
-        doc->basedoc.window->event = NULL;
+        window->event = NULL;
     }
 
     nsIDOMNode_GetNodeType(target, &node_type);
@@ -1070,7 +1072,7 @@ void fire_event(HTMLDocumentNode *doc, eventid_t eid, BOOL set_event, nsIDOMNode
 
     if(event_obj && event_obj->prevent_default)
         prevent_default = TRUE;
-    doc->basedoc.window->event = prev_event;
+    window->event = prev_event;
     if(event_obj)
         IHTMLEventObj_Release(&event_obj->IHTMLEventObj_iface);
 
