@@ -327,7 +327,7 @@ static HRESULT convert_params(const DISPPARAMS *dp, VARIANT *buf, unsigned *argc
     }
 
     for(i = 0; i < cnt; i++) {
-        s = get_arg(dp, i);
+        s = dp->rgvarg+dp->cArgs-i-1;
         switch(V_VT(s)) {
         case VT_I2:
             V_VT(argv+i) = VT_I4;

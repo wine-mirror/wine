@@ -377,16 +377,6 @@ HRESULT regexp_match(script_ctx_t*,jsdisp_t*,const WCHAR*,DWORD,BOOL,match_resul
 HRESULT parse_regexp_flags(const WCHAR*,DWORD,DWORD*) DECLSPEC_HIDDEN;
 HRESULT regexp_string_match(script_ctx_t*,jsdisp_t*,BSTR,VARIANT*,jsexcept_t*) DECLSPEC_HIDDEN;
 
-static inline VARIANT *get_arg(const DISPPARAMS *dp, DWORD i)
-{
-    return dp->rgvarg + dp->cArgs-i-1;
-}
-
-static inline DWORD arg_cnt(const DISPPARAMS *dp)
-{
-    return dp->cArgs - dp->cNamedArgs;
-}
-
 static inline BOOL is_class(jsdisp_t *jsdisp, jsclass_t class)
 {
     return jsdisp->builtin_info->class == class;
