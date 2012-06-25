@@ -1216,7 +1216,7 @@ static HRESULT WINAPI PHServiceProvider_QueryService(IServiceProvider *iface, RE
         return E_NOINTERFACE;
     }
 
-    return IServiceProvider_QueryService(&This->doc->basedoc.window->IServiceProvider_iface,
+    return IServiceProvider_QueryService(&This->doc->basedoc.window->base.IServiceProvider_iface,
             guidService, riid, ppv);
 }
 

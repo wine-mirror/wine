@@ -108,7 +108,7 @@ static HRESULT WINAPI HTMLFrameElement3_get_contentDocument(IHTMLFrameElement3 *
         return E_FAIL;
     }
 
-    hres = IHTMLWindow2_get_document(&This->framebase.content_window->IHTMLWindow2_iface, &doc);
+    hres = IHTMLWindow2_get_document(&This->framebase.content_window->base.IHTMLWindow2_iface, &doc);
     if(FAILED(hres))
         return hres;
 
@@ -244,7 +244,7 @@ static HRESULT HTMLFrameElement_invoke(HTMLDOMNode *iface, DISPID id, LCID lcid,
         return E_FAIL;
     }
 
-    return IDispatchEx_InvokeEx(&This->framebase.content_window->IDispatchEx_iface, id, lcid,
+    return IDispatchEx_InvokeEx(&This->framebase.content_window->base.IDispatchEx_iface, id, lcid,
             flags, params, res, ei, caller);
 }
 

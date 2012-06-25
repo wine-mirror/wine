@@ -106,7 +106,7 @@ static HRESULT WINAPI HTMLDocument_get_Script(IHTMLDocument2 *iface, IDispatch *
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = (IDispatch*)&This->window->IHTMLWindow2_iface;
+    *p = (IDispatch*)&This->window->base.IHTMLWindow2_iface;
     IDispatch_AddRef(*p);
     return S_OK;
 }
@@ -479,7 +479,7 @@ static HRESULT WINAPI HTMLDocument_get_frames(IHTMLDocument2 *iface, IHTMLFrames
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return IHTMLWindow2_get_frames(&This->window->IHTMLWindow2_iface, p);
+    return IHTMLWindow2_get_frames(&This->window->base.IHTMLWindow2_iface, p);
 }
 
 static HRESULT WINAPI HTMLDocument_get_embeds(IHTMLDocument2 *iface, IHTMLElementCollection **p)
@@ -587,7 +587,7 @@ static HRESULT WINAPI HTMLDocument_get_location(IHTMLDocument2 *iface, IHTMLLoca
         return E_UNEXPECTED;
     }
 
-    return IHTMLWindow2_get_location(&This->window->IHTMLWindow2_iface, p);
+    return IHTMLWindow2_get_location(&This->window->base.IHTMLWindow2_iface, p);
 }
 
 static HRESULT WINAPI HTMLDocument_get_lastModified(IHTMLDocument2 *iface, BSTR *p)
@@ -911,8 +911,8 @@ static HRESULT WINAPI HTMLDocument_open(IHTMLDocument2 *iface, BSTR url, VARIANT
     if(tmp)
         nsISupports_Release(tmp);
 
-    *pomWindowResult = (IDispatch*)&This->window->IHTMLWindow2_iface;
-    IHTMLWindow2_AddRef(&This->window->IHTMLWindow2_iface);
+    *pomWindowResult = (IDispatch*)&This->window->base.IHTMLWindow2_iface;
+    IHTMLWindow2_AddRef(&This->window->base.IHTMLWindow2_iface);
     return S_OK;
 }
 
@@ -1365,7 +1365,7 @@ static HRESULT WINAPI HTMLDocument_get_parentWindow(IHTMLDocument2 *iface, IHTML
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = &This->window->IHTMLWindow2_iface;
+    *p = &This->window->base.IHTMLWindow2_iface;
     IHTMLWindow2_AddRef(*p);
     return S_OK;
 }
@@ -1758,7 +1758,7 @@ static HRESULT WINAPI DocDispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID
     HTMLDocument *This = impl_from_IDispatchEx(iface);
 
     if(This->window && id == DISPID_IHTMLDOCUMENT2_LOCATION && (wFlags & DISPATCH_PROPERTYPUT))
-        return IDispatchEx_InvokeEx(&This->window->IDispatchEx_iface, DISPID_IHTMLWINDOW2_LOCATION,
+        return IDispatchEx_InvokeEx(&This->window->base.IDispatchEx_iface, DISPID_IHTMLWINDOW2_LOCATION,
                 lcid, wFlags, pdp, pvarRes, pei, pspCaller);
 
 
@@ -2199,7 +2199,7 @@ static dispex_static_data_t HTMLDocumentNode_dispex = {
     HTMLDocumentNode_iface_tids
 };
 
-static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLWindow *window)
+static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLOuterWindow *window)
 {
     HTMLDocumentNode *doc;
 
@@ -2226,7 +2226,7 @@ static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLWindow *wi
     return doc;
 }
 
-HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocumentObj *doc_obj, HTMLWindow *window, HTMLDocumentNode **ret)
+HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocumentObj *doc_obj, HTMLOuterWindow *window, HTMLDocumentNode **ret)
 {
     HTMLDocumentNode *doc;
 
@@ -2325,7 +2325,7 @@ static ULONG WINAPI CustomDoc_Release(ICustomDoc *iface)
         }
         if(This->basedoc.window) {
             This->basedoc.window->doc_obj = NULL;
-            IHTMLWindow2_Release(&This->basedoc.window->IHTMLWindow2_iface);
+            IHTMLWindow2_Release(&This->basedoc.window->base.IHTMLWindow2_iface);
         }
         if(This->basedoc.advise_holder)
             IOleAdviseHolder_Release(This->basedoc.advise_holder);
@@ -2453,7 +2453,7 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
     if(NS_FAILED(nsres))
         ERR("GetContentDOMWindow failed: %08x\n", nsres);
 
-    hres = HTMLWindow_Create(doc, nswindow, NULL /* FIXME */, &doc->basedoc.window);
+    hres = HTMLOuterWindow_Create(doc, nswindow, NULL /* FIXME */, &doc->basedoc.window);
     if(nswindow)
         nsIDOMWindow_Release(nswindow);
     if(FAILED(hres)) {

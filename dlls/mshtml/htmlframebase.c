@@ -38,7 +38,7 @@ static const WCHAR noW[] = {'n','o',0};
 HRESULT set_frame_doc(HTMLFrameBase *frame, nsIDOMDocument *nsdoc)
 {
     nsIDOMWindow *nswindow;
-    HTMLWindow *window;
+    HTMLOuterWindow *window;
     nsresult nsres;
     HRESULT hres = S_OK;
 
@@ -51,7 +51,7 @@ HRESULT set_frame_doc(HTMLFrameBase *frame, nsIDOMDocument *nsdoc)
 
     window = nswindow_to_window(nswindow);
     if(!window)
-        hres = HTMLWindow_Create(frame->element.node.doc->basedoc.doc_obj, nswindow,
+        hres = HTMLOuterWindow_Create(frame->element.node.doc->basedoc.doc_obj, nswindow,
                 frame->element.node.doc->basedoc.window, &window);
     nsIDOMWindow_Release(nswindow);
     if(FAILED(hres))
@@ -418,8 +418,8 @@ static HRESULT WINAPI HTMLFrameBase2_get_contentWindow(IHTMLFrameBase2 *iface, I
     TRACE("(%p)->(%p)\n", This, p);
 
     if(This->content_window) {
-        IHTMLWindow2_AddRef(&This->content_window->IHTMLWindow2_iface);
-        *p = &This->content_window->IHTMLWindow2_iface;
+        IHTMLWindow2_AddRef(&This->content_window->base.IHTMLWindow2_iface);
+        *p = &This->content_window->base.IHTMLWindow2_iface;
     }else {
         WARN("NULL content window\n");
         *p = NULL;

@@ -82,7 +82,7 @@ typedef struct nsProtocolStream nsProtocolStream;
 struct nsChannelBSC {
     BSCallback bsc;
 
-    HTMLWindow *window;
+    HTMLOuterWindow *window;
 
     nsChannel *nschannel;
     nsIStreamListener *nslistener;
@@ -103,15 +103,15 @@ HRESULT create_redirect_nschannel(const WCHAR*,nsChannel*,nsChannel**) DECLSPEC_
 
 nsresult on_start_uri_open(NSContainer*,nsIURI*,cpp_bool*) DECLSPEC_HIDDEN;
 HRESULT hlink_frame_navigate(HTMLDocument*,LPCWSTR,nsChannel*,DWORD,BOOL*) DECLSPEC_HIDDEN;
-HRESULT create_doc_uri(HTMLWindow*,WCHAR*,nsWineURI**) DECLSPEC_HIDDEN;
-HRESULT load_nsuri(HTMLWindow*,nsWineURI*,nsChannelBSC*,DWORD) DECLSPEC_HIDDEN;
+HRESULT create_doc_uri(HTMLOuterWindow*,WCHAR*,nsWineURI**) DECLSPEC_HIDDEN;
+HRESULT load_nsuri(HTMLOuterWindow*,nsWineURI*,nsChannelBSC*,DWORD) DECLSPEC_HIDDEN;
 HRESULT set_moniker(HTMLDocument*,IMoniker*,IBindCtx*,nsChannelBSC*,BOOL) DECLSPEC_HIDDEN;
 void prepare_for_binding(HTMLDocument*,IMoniker*,BOOL) DECLSPEC_HIDDEN;
-HRESULT super_navigate(HTMLWindow*,IUri*,const WCHAR*,BYTE*,DWORD) DECLSPEC_HIDDEN;
-HRESULT navigate_new_window(HTMLWindow*,IUri*,const WCHAR*,IHTMLWindow2**) DECLSPEC_HIDDEN;
+HRESULT super_navigate(HTMLOuterWindow*,IUri*,const WCHAR*,BYTE*,DWORD) DECLSPEC_HIDDEN;
+HRESULT navigate_new_window(HTMLOuterWindow*,IUri*,const WCHAR*,IHTMLWindow2**) DECLSPEC_HIDDEN;
 
 HRESULT create_channelbsc(IMoniker*,const WCHAR*,BYTE*,DWORD,nsChannelBSC**) DECLSPEC_HIDDEN;
 HRESULT channelbsc_load_stream(nsChannelBSC*,IStream*) DECLSPEC_HIDDEN;
 void channelbsc_set_channel(nsChannelBSC*,nsChannel*,nsIStreamListener*,nsISupports*) DECLSPEC_HIDDEN;
 IUri *nsuri_get_uri(nsWineURI*) DECLSPEC_HIDDEN;
-HRESULT create_relative_uri(HTMLWindow*,const WCHAR*,IUri**) DECLSPEC_HIDDEN;
+HRESULT create_relative_uri(HTMLOuterWindow*,const WCHAR*,IUri**) DECLSPEC_HIDDEN;

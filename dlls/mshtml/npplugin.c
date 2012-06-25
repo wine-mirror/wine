@@ -234,11 +234,11 @@ static nsIDOMElement *get_dom_element(NPP instance)
     return elem;
 }
 
-static HTMLWindow *get_elem_window(nsIDOMElement *elem)
+static HTMLOuterWindow *get_elem_window(nsIDOMElement *elem)
 {
     nsIDOMWindow *nswindow;
     nsIDOMDocument *nsdoc;
-    HTMLWindow *window;
+    HTMLOuterWindow *window;
     nsresult nsres;
 
     nsres = nsIDOMElement_GetOwnerDocument(elem, &nsdoc);
@@ -313,7 +313,7 @@ static BOOL get_elem_clsid(nsIDOMElement *elem, CLSID *clsid)
     return ret;
 }
 
-static IUnknown *create_activex_object(HTMLWindow *window, nsIDOMElement *nselem, CLSID *clsid)
+static IUnknown *create_activex_object(HTMLOuterWindow *window, nsIDOMElement *nselem, CLSID *clsid)
 {
     IClassFactoryEx *cfex;
     IClassFactory *cf;
@@ -357,7 +357,7 @@ static NPError CDECL NPP_New(NPMIMEType pluginType, NPP instance, UINT16 mode, I
         char **argv, NPSavedData *saved)
 {
     nsIDOMElement *nselem;
-    HTMLWindow *window;
+    HTMLOuterWindow *window;
     IUnknown *obj;
     CLSID clsid;
     NPError err = NPERR_NO_ERROR;

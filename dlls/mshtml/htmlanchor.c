@@ -73,7 +73,7 @@ static HRESULT navigate_anchor_window(HTMLAnchorElement *This, const WCHAR *targ
 static HRESULT navigate_anchor(HTMLAnchorElement *This)
 {
     nsAString href_str, target_str;
-    HTMLWindow *window = NULL;
+    HTMLOuterWindow *window = NULL;
     nsresult nsres;
     HRESULT hres = E_FAIL;
 

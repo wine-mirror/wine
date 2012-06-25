@@ -325,7 +325,7 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
             IWebBrowser2 *wb;
 
             V_VT(&var) = VT_UNKNOWN;
-            V_UNKNOWN(&var) = (IUnknown*)&This->window->IHTMLWindow2_iface;
+            V_UNKNOWN(&var) = (IUnknown*)&This->window->base.IHTMLWindow2_iface;
             IOleCommandTarget_Exec(cmdtrg, &CGID_DocHostCmdPriv, DOCHOST_DOCCANNAVIGATE, 0, &var, NULL);
 
             hres = do_query_service((IUnknown*)pClientSite, &IID_IShellBrowser,

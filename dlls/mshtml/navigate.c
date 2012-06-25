@@ -717,7 +717,7 @@ static HRESULT process_response_headers(nsChannelBSC *This, const WCHAR *headers
     return S_OK;
 }
 
-HRESULT start_binding(HTMLWindow *window, HTMLDocumentNode *doc, BSCallback *bscallback, IBindCtx *bctx)
+HRESULT start_binding(HTMLOuterWindow *window, HTMLDocumentNode *doc, BSCallback *bscallback, IBindCtx *bctx)
 {
     IStream *str = NULL;
     HRESULT hres;
@@ -1387,7 +1387,7 @@ static void handle_navigation_error(nsChannelBSC *This, DWORD result)
 
     ind = 3;
     V_VT(&var) = VT_UNKNOWN;
-    V_UNKNOWN(&var) = (IUnknown*)&This->window->IHTMLWindow2_iface;
+    V_UNKNOWN(&var) = (IUnknown*)&This->window->base.IHTMLWindow2_iface;
     SafeArrayPutElement(sa, &ind, &var);
 
     /* FIXME: what are the following fields for? */
@@ -1653,7 +1653,7 @@ HRESULT create_channelbsc(IMoniker *mon, const WCHAR *headers, BYTE *post_data, 
     return S_OK;
 }
 
-void set_window_bscallback(HTMLWindow *window, nsChannelBSC *callback)
+void set_window_bscallback(HTMLOuterWindow *window, nsChannelBSC *callback)
 {
     if(window->bscallback) {
         if(window->bscallback->bsc.binding)
@@ -1674,7 +1674,7 @@ void set_window_bscallback(HTMLWindow *window, nsChannelBSC *callback)
 
 typedef struct {
     task_t header;
-    HTMLWindow *window;
+    HTMLOuterWindow *window;
     nsChannelBSC *bscallback;
 } start_doc_binding_task_t;
 
@@ -1693,7 +1693,7 @@ static void start_doc_binding_task_destr(task_t *_task)
     heap_free(task);
 }
 
-HRESULT async_start_doc_binding(HTMLWindow *window, nsChannelBSC *bscallback)
+HRESULT async_start_doc_binding(HTMLOuterWindow *window, nsChannelBSC *bscallback)
 {
     start_doc_binding_task_t *task;
 
@@ -1784,14 +1784,14 @@ void channelbsc_set_channel(nsChannelBSC *This, nsChannel *channel, nsIStreamLis
 
 typedef struct {
     task_t header;
-    HTMLWindow *window;
+    HTMLOuterWindow *window;
     IUri *uri;
 } navigate_javascript_task_t;
 
 static void navigate_javascript_proc(task_t *_task)
 {
     navigate_javascript_task_t *task = (navigate_javascript_task_t*)_task;
-    HTMLWindow *window = task->window;
+    HTMLOuterWindow *window = task->window;
     VARIANT v;
     BSTR code;
     HRESULT hres;
@@ -1830,7 +1830,7 @@ static void navigate_javascript_task_destr(task_t *_task)
 
 typedef struct {
     task_t header;
-    HTMLWindow *window;
+    HTMLOuterWindow *window;
     nsChannelBSC *bscallback;
     IMoniker *mon;
 } navigate_task_t;
@@ -1854,7 +1854,7 @@ static void navigate_task_destr(task_t *_task)
     heap_free(task);
 }
 
-static HRESULT navigate_fragment(HTMLWindow *window, IUri *uri)
+static HRESULT navigate_fragment(HTMLOuterWindow *window, IUri *uri)
 {
     nsIDOMLocation *nslocation;
     nsAString nsfrag_str;
@@ -1885,15 +1885,15 @@ static HRESULT navigate_fragment(HTMLWindow *window, IUri *uri)
     }
 
     if(window->doc_obj->doc_object_service) {
-        IDocObjectService_FireNavigateComplete2(window->doc_obj->doc_object_service, &window->IHTMLWindow2_iface, 0x10);
-        IDocObjectService_FireDocumentComplete(window->doc_obj->doc_object_service, &window->IHTMLWindow2_iface, 0);
+        IDocObjectService_FireNavigateComplete2(window->doc_obj->doc_object_service, &window->base.IHTMLWindow2_iface, 0x10);
+        IDocObjectService_FireDocumentComplete(window->doc_obj->doc_object_service, &window->base.IHTMLWindow2_iface, 0);
 
     }
 
     return S_OK;
 }
 
-HRESULT super_navigate(HTMLWindow *window, IUri *uri, const WCHAR *headers, BYTE *post_data, DWORD post_data_size)
+HRESULT super_navigate(HTMLOuterWindow *window, IUri *uri, const WCHAR *headers, BYTE *post_data, DWORD post_data_size)
 {
     nsChannelBSC *bsc;
     IMoniker *mon;
@@ -1986,7 +1986,7 @@ HRESULT super_navigate(HTMLWindow *window, IUri *uri, const WCHAR *headers, BYTE
     return S_OK;
 }
 
-HRESULT navigate_new_window(HTMLWindow *window, IUri *uri, const WCHAR *name, IHTMLWindow2 **ret)
+HRESULT navigate_new_window(HTMLOuterWindow *window, IUri *uri, const WCHAR *name, IHTMLWindow2 **ret)
 {
     IWebBrowser2 *web_browser;
     IHTMLWindow2 *new_window;
@@ -2096,7 +2096,7 @@ HRESULT hlink_frame_navigate(HTMLDocument *doc, LPCWSTR url, nsChannel *nschanne
     return hres;
 }
 
-HRESULT navigate_url(HTMLWindow *window, const WCHAR *new_url, const WCHAR *base_url)
+HRESULT navigate_url(HTMLOuterWindow *window, const WCHAR *new_url, const WCHAR *base_url)
 {
     WCHAR url[INTERNET_MAX_URL_LENGTH];
     nsWineURI *uri;

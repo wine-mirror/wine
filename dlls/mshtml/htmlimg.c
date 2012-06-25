@@ -917,7 +917,7 @@ static dispex_static_data_t HTMLImageElementFactory_dispex = {
     HTMLImageElementFactory_iface_tids
 };
 
-HTMLImageElementFactory *HTMLImageElementFactory_Create(HTMLWindow *window)
+HTMLImageElementFactory *HTMLImageElementFactory_Create(HTMLOuterWindow *window)
 {
     HTMLImageElementFactory *ret;
 

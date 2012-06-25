@@ -54,7 +54,7 @@ typedef struct {
     LPOLESTR url;
 } download_proc_task_t;
 
-static BOOL use_gecko_script(HTMLWindow *window)
+static BOOL use_gecko_script(HTMLOuterWindow *window)
 {
     DWORD zone;
     HRESULT hres;
@@ -98,7 +98,7 @@ static void notify_travellog_update(HTMLDocumentObj *doc)
     }
 }
 
-void set_current_uri(HTMLWindow *window, IUri *uri)
+void set_current_uri(HTMLOuterWindow *window, IUri *uri)
 {
     if(window->uri) {
         IUri_Release(window->uri);
@@ -117,7 +117,7 @@ void set_current_uri(HTMLWindow *window, IUri *uri)
     IUri_GetDisplayUri(uri, &window->url);
 }
 
-void set_current_mon(HTMLWindow *This, IMoniker *mon)
+void set_current_mon(HTMLOuterWindow *This, IMoniker *mon)
 {
     IUriContainer *uri_container;
     IUri *uri = NULL;
@@ -171,7 +171,7 @@ void set_current_mon(HTMLWindow *This, IMoniker *mon)
     set_script_mode(This, use_gecko_script(This) ? SCRIPTMODE_GECKO : SCRIPTMODE_ACTIVESCRIPT);
 }
 
-HRESULT create_relative_uri(HTMLWindow *window, const WCHAR *rel_uri, IUri **uri)
+HRESULT create_relative_uri(HTMLOuterWindow *window, const WCHAR *rel_uri, IUri **uri)
 {
     return window->uri
         ? CoInternetCombineUrlEx(window->uri, rel_uri, URL_ESCAPE_SPACES_ONLY|URL_DONT_ESCAPE_EXTRA_INFO, uri, 0)
@@ -325,7 +325,7 @@ void prepare_for_binding(HTMLDocument *This, IMoniker *mon, BOOL navigated_bindi
                 IOleCommandTarget_Exec(cmdtrg, &CGID_ShellDocView, 37, 0, &var, NULL);
             }else {
                 V_VT(&var) = VT_UNKNOWN;
-                V_UNKNOWN(&var) = (IUnknown*)&This->window->IHTMLWindow2_iface;
+                V_UNKNOWN(&var) = (IUnknown*)&This->window->base.IHTMLWindow2_iface;
                 V_VT(&out) = VT_EMPTY;
                 hres = IOleCommandTarget_Exec(cmdtrg, &CGID_ShellDocView, 63, 0, &var, &out);
                 if(SUCCEEDED(hres))
@@ -399,7 +399,7 @@ HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, nsChannel
     return S_OK;
 }
 
-void set_ready_state(HTMLWindow *window, READYSTATE readystate)
+void set_ready_state(HTMLOuterWindow *window, READYSTATE readystate)
 {
     window->readystate = readystate;
 

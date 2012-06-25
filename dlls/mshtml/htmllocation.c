@@ -617,7 +617,7 @@ static dispex_static_data_t HTMLLocation_dispex = {
 };
 
 
-HRESULT HTMLLocation_Create(HTMLWindow *window, HTMLLocation **ret)
+HRESULT HTMLLocation_Create(HTMLOuterWindow *window, HTMLLocation **ret)
 {
     HTMLLocation *location;
 

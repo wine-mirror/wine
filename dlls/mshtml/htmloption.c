@@ -517,7 +517,7 @@ static const IHTMLOptionElementFactoryVtbl HTMLOptionElementFactoryVtbl = {
     HTMLOptionElementFactory_create
 };
 
-HTMLOptionElementFactory *HTMLOptionElementFactory_Create(HTMLWindow *window)
+HTMLOptionElementFactory *HTMLOptionElementFactory_Create(HTMLOuterWindow *window)
 {
     HTMLOptionElementFactory *ret;
 

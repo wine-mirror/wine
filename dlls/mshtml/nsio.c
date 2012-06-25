@@ -139,7 +139,7 @@ BOOL compare_ignoring_frag(IUri *uri1, IUri *uri2)
     return ret;
 }
 
-static nsresult create_nsuri(IUri*,HTMLWindow*,NSContainer*,nsWineURI**);
+static nsresult create_nsuri(IUri*,HTMLOuterWindow*,NSContainer*,nsWineURI**);
 
 static const char *debugstr_nsacstr(const nsACString *nsstr)
 {
@@ -264,7 +264,7 @@ static nsresult before_async_open(nsChannel *channel, NSContainer *container, BO
     return NS_OK;
 }
 
-HRESULT load_nsuri(HTMLWindow *window, nsWineURI *uri, nsChannelBSC *channelbsc, DWORD flags)
+HRESULT load_nsuri(HTMLOuterWindow *window, nsWineURI *uri, nsChannelBSC *channelbsc, DWORD flags)
 {
     nsIWebNavigation *web_navigation;
     nsIDocShell *doc_shell;
@@ -314,7 +314,7 @@ static void set_uri_nscontainer(nsWineURI *This, NSContainer *nscontainer)
     This->container = nscontainer;
 }
 
-static void set_uri_window(nsWineURI *This, HTMLWindow *window)
+static void set_uri_window(nsWineURI *This, HTMLOuterWindow *window)
 {
     if(This->window_ref) {
         if(This->window_ref->window == window)
@@ -874,9 +874,9 @@ static nsresult NSAPI nsChannel_Open(nsIHttpChannel *iface, nsIInputStream **_re
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
-static HTMLWindow *get_window_from_load_group(nsChannel *This)
+static HTMLOuterWindow *get_window_from_load_group(nsChannel *This)
 {
-    HTMLWindow *window;
+    HTMLOuterWindow *window;
     nsIChannel *channel;
     nsIRequest *req;
     nsWineURI *wine_uri;
@@ -915,17 +915,17 @@ static HTMLWindow *get_window_from_load_group(nsChannel *This)
 
     window = wine_uri->window_ref ? wine_uri->window_ref->window : NULL;
     if(window)
-        IHTMLWindow2_AddRef(&window->IHTMLWindow2_iface);
+        IHTMLWindow2_AddRef(&window->base.IHTMLWindow2_iface);
     nsIURI_Release(&wine_uri->nsIURL_iface);
 
     return window;
 }
 
-static HTMLWindow *get_channel_window(nsChannel *This)
+static HTMLOuterWindow *get_channel_window(nsChannel *This)
 {
     nsIWebProgress *web_progress;
     nsIDOMWindow *nswindow;
-    HTMLWindow *window;
+    HTMLOuterWindow *window;
     nsresult nsres;
 
     if(This->load_group) {
@@ -965,7 +965,7 @@ static HTMLWindow *get_channel_window(nsChannel *This)
     nsIDOMWindow_Release(nswindow);
 
     if(window)
-        IHTMLWindow2_AddRef(&window->IHTMLWindow2_iface);
+        IHTMLWindow2_AddRef(&window->base.IHTMLWindow2_iface);
     else
         FIXME("NULL window for %p\n", nswindow);
     return window;
@@ -992,7 +992,7 @@ static void start_binding_task_destr(task_t *_task)
     heap_free(task);
 }
 
-static nsresult async_open(nsChannel *This, HTMLWindow *window, BOOL is_doc_channel, nsIStreamListener *listener,
+static nsresult async_open(nsChannel *This, HTMLOuterWindow *window, BOOL is_doc_channel, nsIStreamListener *listener,
         nsISupports *context)
 {
     nsChannelBSC *bscallback;
@@ -1034,7 +1034,7 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
                                           nsISupports *aContext)
 {
     nsChannel *This = impl_from_nsIHttpChannel(iface);
-    HTMLWindow *window = NULL;
+    HTMLOuterWindow *window = NULL;
     BOOL cancel = FALSE;
     nsresult nsres = NS_OK;
 
@@ -1073,7 +1073,7 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
     if(!window) {
         if(This->uri->window_ref && This->uri->window_ref->window) {
             window = This->uri->window_ref->window;
-            IHTMLWindow2_AddRef(&window->IHTMLWindow2_iface);
+            IHTMLWindow2_AddRef(&window->base.IHTMLWindow2_iface);
         }else {
             /* FIXME: Analyze removing get_window_from_load_group call */
             if(This->load_group)
@@ -1119,7 +1119,7 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
             ERR("AddRequest failed: %08x\n", nsres);
     }
 
-    IHTMLWindow2_Release(&window->IHTMLWindow2_iface);
+    IHTMLWindow2_Release(&window->base.IHTMLWindow2_iface);
     return nsres;
 }
 
@@ -2823,7 +2823,7 @@ static const nsIStandardURLVtbl nsStandardURLVtbl = {
     nsStandardURL_Init
 };
 
-static nsresult create_nsuri(IUri *iuri, HTMLWindow *window, NSContainer *container, nsWineURI **_retval)
+static nsresult create_nsuri(IUri *iuri, HTMLOuterWindow *window, NSContainer *container, nsWineURI **_retval)
 {
     nsWineURI *ret = heap_alloc_zero(sizeof(nsWineURI));
 
@@ -2843,7 +2843,7 @@ static nsresult create_nsuri(IUri *iuri, HTMLWindow *window, NSContainer *contai
     return NS_OK;
 }
 
-HRESULT create_doc_uri(HTMLWindow *window, WCHAR *url, nsWineURI **ret)
+HRESULT create_doc_uri(HTMLOuterWindow *window, WCHAR *url, nsWineURI **ret)
 {
     nsWineURI *uri;
     IUri *iuri;
@@ -2898,7 +2898,7 @@ static nsresult create_nschannel(nsWineURI *uri, nsChannel **ret)
 
 HRESULT create_redirect_nschannel(const WCHAR *url, nsChannel *orig_channel, nsChannel **ret)
 {
-    HTMLWindow *window = NULL;
+    HTMLOuterWindow *window = NULL;
     nsChannel *channel;
     nsWineURI *uri;
     IUri *iuri;
@@ -3183,7 +3183,7 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
 {
     nsWineURI *wine_uri, *base_wine_uri = NULL;
     WCHAR new_spec[INTERNET_MAX_URL_LENGTH];
-    HTMLWindow *window = NULL;
+    HTMLOuterWindow *window = NULL;
     const char *spec = NULL;
     IUri *urlmon_uri;
     nsresult nsres;

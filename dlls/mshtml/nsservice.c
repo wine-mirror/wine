@@ -77,7 +77,7 @@ static nsrefcnt NSAPI nsPromptService_Release(nsIPromptService *iface)
 static nsresult NSAPI nsPromptService_Alert(nsIPromptService *iface, nsIDOMWindow *aParent,
         const PRUnichar *aDialogTitle, const PRUnichar *aText)
 {
-    HTMLWindow *window;
+    HTMLOuterWindow *window;
     BSTR text;
 
     TRACE("(%p %s %s)\n", aParent, debugstr_w(aDialogTitle), debugstr_w(aText));
@@ -89,7 +89,7 @@ static nsresult NSAPI nsPromptService_Alert(nsIPromptService *iface, nsIDOMWindo
     }
 
     text = SysAllocString(aText);
-    IHTMLWindow2_alert(&window->IHTMLWindow2_iface, text);
+    IHTMLWindow2_alert(&window->base.IHTMLWindow2_iface, text);
     SysFreeString(text);
 
     return NS_OK;
