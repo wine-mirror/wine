@@ -168,7 +168,6 @@ static inline struct glx_physdev *get_glxdrv_dev( PHYSDEV dev )
 static struct list context_list = LIST_INIT( context_list );
 static struct WineGLInfo WineGLInfo = { 0 };
 static int use_render_texture_emulation = 1;
-static int use_render_texture_ati = 0;
 static BOOL has_swap_control;
 static int swap_interval = 1;
 
@@ -274,11 +273,6 @@ MAKE_FUNCPTR(glXGetCurrentReadDrawable)
 static GLXContext (*pglXCreateContextAttribsARB)(Display *dpy, GLXFBConfig config, GLXContext share_context, Bool direct, const int *attrib_list);
 static void* (*pglXGetProcAddressARB)(const GLubyte *);
 static int   (*pglXSwapIntervalSGI)(int);
-
-/* ATI GLX Extensions */
-static BOOL  (*pglXBindTexImageATI)(Display *dpy, GLXPbuffer pbuffer, int buffer);
-static BOOL  (*pglXReleaseTexImageATI)(Display *dpy, GLXPbuffer pbuffer, int buffer);
-static BOOL  (*pglXDrawableAttribATI)(Display *dpy, GLXDrawable draw, const int *attribList);
 
 /* NV GLX Extension */
 static void* (*pglXAllocateMemoryNV)(GLsizei size, GLfloat readfreq, GLfloat writefreq, GLfloat priority);
@@ -602,13 +596,6 @@ static BOOL has_opengl(void)
          ERR(" glx_version is %s and GLX_SGIX_fbconfig extension is unsupported. Expect problems.\n", WineGLInfo.glxServerVersion);
     }
 
-    if(glxRequireExtension("GLX_ATI_render_texture")) {
-        use_render_texture_ati = 1;
-        pglXBindTexImageATI = pglXGetProcAddressARB((const GLubyte *) "glXBindTexImageATI");
-        pglXReleaseTexImageATI = pglXGetProcAddressARB((const GLubyte *) "glXReleaseTexImageATI");
-        pglXDrawableAttribATI = pglXGetProcAddressARB((const GLubyte *) "glXDrawableAttribATI");
-    }
-
     if(glxRequireExtension("GLX_MESA_copy_sub_buffer")) {
         pglXCopySubBufferMESA = pglXGetProcAddressARB((const GLubyte *) "glXCopySubBufferMESA");
     }
@@ -818,10 +805,7 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_GLPBuf
       if (NULL == pbuf) {
         ERR("trying to use GLX_Pbuffer Attributes without Pbuffer (was %x)\n", iWGLAttr[cur]);
       }
-      if (use_render_texture_ati) {
-        /** nothing to do here */
-      }
-      else if (!use_render_texture_emulation) {
+      if (!use_render_texture_emulation) {
         if (WGL_NO_TEXTURE_ARB != pop) {
           ERR("trying to use WGL_render_texture Attributes without support (was %x)\n", iWGLAttr[cur]);
           return -1; /** error: don't support it */
@@ -2431,70 +2415,56 @@ static HPBUFFERARB WINAPI X11DRV_wglCreatePbufferARB(HDC hdc, int iPixelFormat, 
                 ++piAttribList;
                 attr_v = *piAttribList;
                 TRACE("WGL_render_texture Attribute: WGL_TEXTURE_FORMAT_ARB as %x\n", attr_v);
-                if (use_render_texture_ati) {
-                    int type = 0;
-                    switch (attr_v) {
-                        case WGL_NO_TEXTURE_ARB: type = GLX_NO_TEXTURE_ATI; break ;
-                        case WGL_TEXTURE_RGB_ARB: type = GLX_TEXTURE_RGB_ATI; break ;
-                        case WGL_TEXTURE_RGBA_ARB: type = GLX_TEXTURE_RGBA_ATI; break ;
-                        default:
-                            SetLastError(ERROR_INVALID_DATA);
-                            goto create_failed;
-                    }
-                    object->use_render_texture = 1;
-                    PUSH2(attribs, GLX_TEXTURE_FORMAT_ATI, type);
+                if (WGL_NO_TEXTURE_ARB == attr_v) {
+                    object->use_render_texture = 0;
                 } else {
-                    if (WGL_NO_TEXTURE_ARB == attr_v) {
-                        object->use_render_texture = 0;
-                    } else {
-                        if (!use_render_texture_emulation) {
+                    if (!use_render_texture_emulation) {
+                        SetLastError(ERROR_INVALID_DATA);
+                        goto create_failed;
+                    }
+                    switch (attr_v) {
+                        case WGL_TEXTURE_RGB_ARB:
+                            object->use_render_texture = GL_RGB;
+                            object->texture_bpp = 3;
+                            object->texture_format = GL_RGB;
+                            object->texture_type = GL_UNSIGNED_BYTE;
+                            break;
+                        case WGL_TEXTURE_RGBA_ARB:
+                            object->use_render_texture = GL_RGBA;
+                            object->texture_bpp = 4;
+                            object->texture_format = GL_RGBA;
+                            object->texture_type = GL_UNSIGNED_BYTE;
+                            break;
+
+                        /* WGL_FLOAT_COMPONENTS_NV */
+                        case WGL_TEXTURE_FLOAT_R_NV:
+                            object->use_render_texture = GL_FLOAT_R_NV;
+                            object->texture_bpp = 4;
+                            object->texture_format = GL_RED;
+                            object->texture_type = GL_FLOAT;
+                            break;
+                        case WGL_TEXTURE_FLOAT_RG_NV:
+                            object->use_render_texture = GL_FLOAT_RG_NV;
+                            object->texture_bpp = 8;
+                            object->texture_format = GL_LUMINANCE_ALPHA;
+                            object->texture_type = GL_FLOAT;
+                            break;
+                        case WGL_TEXTURE_FLOAT_RGB_NV:
+                            object->use_render_texture = GL_FLOAT_RGB_NV;
+                            object->texture_bpp = 12;
+                            object->texture_format = GL_RGB;
+                            object->texture_type = GL_FLOAT;
+                            break;
+                        case WGL_TEXTURE_FLOAT_RGBA_NV:
+                            object->use_render_texture = GL_FLOAT_RGBA_NV;
+                            object->texture_bpp = 16;
+                            object->texture_format = GL_RGBA;
+                            object->texture_type = GL_FLOAT;
+                            break;
+                        default:
+                            ERR("Unknown texture format: %x\n", attr_v);
                             SetLastError(ERROR_INVALID_DATA);
                             goto create_failed;
-                        }
-                        switch (attr_v) {
-                            case WGL_TEXTURE_RGB_ARB:
-                                object->use_render_texture = GL_RGB;
-                                object->texture_bpp = 3;
-                                object->texture_format = GL_RGB;
-                                object->texture_type = GL_UNSIGNED_BYTE;
-                                break;
-                            case WGL_TEXTURE_RGBA_ARB:
-                                object->use_render_texture = GL_RGBA;
-                                object->texture_bpp = 4;
-                                object->texture_format = GL_RGBA;
-                                object->texture_type = GL_UNSIGNED_BYTE;
-                                break;
-
-                            /* WGL_FLOAT_COMPONENTS_NV */
-                            case WGL_TEXTURE_FLOAT_R_NV:
-                                object->use_render_texture = GL_FLOAT_R_NV;
-                                object->texture_bpp = 4;
-                                object->texture_format = GL_RED;
-                                object->texture_type = GL_FLOAT;
-                                break;
-                            case WGL_TEXTURE_FLOAT_RG_NV:
-                                object->use_render_texture = GL_FLOAT_RG_NV;
-                                object->texture_bpp = 8;
-                                object->texture_format = GL_LUMINANCE_ALPHA;
-                                object->texture_type = GL_FLOAT;
-                                break;
-                            case WGL_TEXTURE_FLOAT_RGB_NV:
-                                object->use_render_texture = GL_FLOAT_RGB_NV;
-                                object->texture_bpp = 12;
-                                object->texture_format = GL_RGB;
-                                object->texture_type = GL_FLOAT;
-                                break;
-                            case WGL_TEXTURE_FLOAT_RGBA_NV:
-                                object->use_render_texture = GL_FLOAT_RGBA_NV;
-                                object->texture_bpp = 16;
-                                object->texture_format = GL_RGBA;
-                                object->texture_type = GL_FLOAT;
-                                break;
-                            default:
-                                ERR("Unknown texture format: %x\n", attr_v);
-                                SetLastError(ERROR_INVALID_DATA);
-                                goto create_failed;
-                        }
                     }
                 }
                 break;
@@ -2504,60 +2474,46 @@ static HPBUFFERARB WINAPI X11DRV_wglCreatePbufferARB(HDC hdc, int iPixelFormat, 
                 ++piAttribList;
                 attr_v = *piAttribList;
                 TRACE("WGL_render_texture Attribute: WGL_TEXTURE_TARGET_ARB as %x\n", attr_v);
-                if (use_render_texture_ati) {
-                    int type = 0;
-                    switch (attr_v) {
-                        case WGL_NO_TEXTURE_ARB: type = GLX_NO_TEXTURE_ATI; break ;
-                        case WGL_TEXTURE_CUBE_MAP_ARB: type = GLX_TEXTURE_CUBE_MAP_ATI; break ;
-                        case WGL_TEXTURE_1D_ARB: type = GLX_TEXTURE_1D_ATI; break ;
-                        case WGL_TEXTURE_2D_ARB: type = GLX_TEXTURE_2D_ATI; break ;
-                        default:
-                            SetLastError(ERROR_INVALID_DATA);
-                            goto create_failed;
-                    }
-                    PUSH2(attribs, GLX_TEXTURE_TARGET_ATI, type);
+                if (WGL_NO_TEXTURE_ARB == attr_v) {
+                    object->texture_target = 0;
                 } else {
-                    if (WGL_NO_TEXTURE_ARB == attr_v) {
-                        object->texture_target = 0;
-                    } else {
-                        if (!use_render_texture_emulation) {
-                            SetLastError(ERROR_INVALID_DATA);
-                            goto create_failed;
-                        }
-                        switch (attr_v) {
-                            case WGL_TEXTURE_CUBE_MAP_ARB: {
-                                if (iWidth != iHeight) {
-                                    SetLastError(ERROR_INVALID_DATA);
-                                    goto create_failed;
-                                }
-                                object->texture_target = GL_TEXTURE_CUBE_MAP;
-                                object->texture_bind_target = GL_TEXTURE_BINDING_CUBE_MAP;
-                               break;
-                            }
-                            case WGL_TEXTURE_1D_ARB: {
-                                if (1 != iHeight) {
-                                    SetLastError(ERROR_INVALID_DATA);
-                                    goto create_failed;
-                                }
-                                object->texture_target = GL_TEXTURE_1D;
-                                object->texture_bind_target = GL_TEXTURE_BINDING_1D;
-                                break;
-                            }
-                            case WGL_TEXTURE_2D_ARB: {
-                                object->texture_target = GL_TEXTURE_2D;
-                                object->texture_bind_target = GL_TEXTURE_BINDING_2D;
-                                break;
-                            }
-                            case WGL_TEXTURE_RECTANGLE_NV: {
-                                object->texture_target = GL_TEXTURE_RECTANGLE_NV;
-                                object->texture_bind_target = GL_TEXTURE_BINDING_RECTANGLE_NV;
-                                break;
-                            }
-                            default:
-                                ERR("Unknown texture target: %x\n", attr_v);
+                    if (!use_render_texture_emulation) {
+                        SetLastError(ERROR_INVALID_DATA);
+                        goto create_failed;
+                    }
+                    switch (attr_v) {
+                        case WGL_TEXTURE_CUBE_MAP_ARB: {
+                            if (iWidth != iHeight) {
                                 SetLastError(ERROR_INVALID_DATA);
                                 goto create_failed;
+                            }
+                            object->texture_target = GL_TEXTURE_CUBE_MAP;
+                            object->texture_bind_target = GL_TEXTURE_BINDING_CUBE_MAP;
+                           break;
                         }
+                        case WGL_TEXTURE_1D_ARB: {
+                            if (1 != iHeight) {
+                                SetLastError(ERROR_INVALID_DATA);
+                                goto create_failed;
+                            }
+                            object->texture_target = GL_TEXTURE_1D;
+                            object->texture_bind_target = GL_TEXTURE_BINDING_1D;
+                            break;
+                        }
+                        case WGL_TEXTURE_2D_ARB: {
+                            object->texture_target = GL_TEXTURE_2D;
+                            object->texture_bind_target = GL_TEXTURE_BINDING_2D;
+                            break;
+                        }
+                        case WGL_TEXTURE_RECTANGLE_NV: {
+                            object->texture_target = GL_TEXTURE_RECTANGLE_NV;
+                            object->texture_bind_target = GL_TEXTURE_BINDING_RECTANGLE_NV;
+                            break;
+                        }
+                        default:
+                            ERR("Unknown texture target: %x\n", attr_v);
+                            SetLastError(ERROR_INVALID_DATA);
+                            goto create_failed;
                     }
                 }
                 break;
@@ -2567,13 +2523,9 @@ static HPBUFFERARB WINAPI X11DRV_wglCreatePbufferARB(HDC hdc, int iPixelFormat, 
                 ++piAttribList;
                 attr_v = *piAttribList;
                 TRACE("WGL_render_texture Attribute: WGL_MIPMAP_TEXTURE_ARB as %x\n", attr_v);
-                if (use_render_texture_ati) {
-                    PUSH2(attribs, GLX_MIPMAP_TEXTURE_ATI, attr_v);
-                } else {
-                    if (!use_render_texture_emulation) {
-                        SetLastError(ERROR_INVALID_DATA);
-                        goto create_failed;
-                    }
+                if (!use_render_texture_emulation) {
+                    SetLastError(ERROR_INVALID_DATA);
+                    goto create_failed;
                 }
                 break;
             }
@@ -2687,73 +2639,45 @@ static GLboolean WINAPI X11DRV_wglQueryPbufferARB(HPBUFFERARB hPbuffer, int iAtt
             break;
 
         case WGL_TEXTURE_FORMAT_ARB:
-            if (use_render_texture_ati) {
-                unsigned int tmp;
-                int type = WGL_NO_TEXTURE_ARB;
-                wine_tsx11_lock();
-                pglXQueryDrawable(object->display, object->drawable, GLX_TEXTURE_FORMAT_ATI, &tmp);
-                wine_tsx11_unlock();
-                switch (tmp) {
-                    case GLX_NO_TEXTURE_ATI: type = WGL_NO_TEXTURE_ARB; break ;
-                    case GLX_TEXTURE_RGB_ATI: type = WGL_TEXTURE_RGB_ARB; break ;
-                    case GLX_TEXTURE_RGBA_ATI: type = WGL_TEXTURE_RGBA_ARB; break ;
-                }
-                *piValue = type;
+            if (!object->use_render_texture) {
+                *piValue = WGL_NO_TEXTURE_ARB;
             } else {
-                if (!object->use_render_texture) {
-                    *piValue = WGL_NO_TEXTURE_ARB;
-                } else {
-                    if (!use_render_texture_emulation) {
-                        SetLastError(ERROR_INVALID_HANDLE);
-                        return GL_FALSE;
-                    }
-                    switch(object->use_render_texture) {
-                        case GL_RGB:
-                            *piValue = WGL_TEXTURE_RGB_ARB;
-                            break;
-                        case GL_RGBA:
-                            *piValue = WGL_TEXTURE_RGBA_ARB;
-                            break;
-                        /* WGL_FLOAT_COMPONENTS_NV */
-                        case GL_FLOAT_R_NV:
-                            *piValue = WGL_TEXTURE_FLOAT_R_NV;
-                            break;
-                        case GL_FLOAT_RG_NV:
-                            *piValue = WGL_TEXTURE_FLOAT_RG_NV;
-                            break;
-                        case GL_FLOAT_RGB_NV:
-                            *piValue = WGL_TEXTURE_FLOAT_RGB_NV;
-                            break;
-                        case GL_FLOAT_RGBA_NV:
-                            *piValue = WGL_TEXTURE_FLOAT_RGBA_NV;
-                            break;
-                        default:
-                            ERR("Unknown texture format: %x\n", object->use_render_texture);
-                    }
+                if (!use_render_texture_emulation) {
+                    SetLastError(ERROR_INVALID_HANDLE);
+                    return GL_FALSE;
+                }
+                switch(object->use_render_texture) {
+                    case GL_RGB:
+                        *piValue = WGL_TEXTURE_RGB_ARB;
+                        break;
+                    case GL_RGBA:
+                        *piValue = WGL_TEXTURE_RGBA_ARB;
+                        break;
+                    /* WGL_FLOAT_COMPONENTS_NV */
+                    case GL_FLOAT_R_NV:
+                        *piValue = WGL_TEXTURE_FLOAT_R_NV;
+                        break;
+                    case GL_FLOAT_RG_NV:
+                        *piValue = WGL_TEXTURE_FLOAT_RG_NV;
+                        break;
+                    case GL_FLOAT_RGB_NV:
+                        *piValue = WGL_TEXTURE_FLOAT_RGB_NV;
+                        break;
+                    case GL_FLOAT_RGBA_NV:
+                        *piValue = WGL_TEXTURE_FLOAT_RGBA_NV;
+                        break;
+                    default:
+                        ERR("Unknown texture format: %x\n", object->use_render_texture);
                 }
             }
             break;
 
         case WGL_TEXTURE_TARGET_ARB:
-            if (use_render_texture_ati) {
-                unsigned int tmp;
-                int type = WGL_NO_TEXTURE_ARB;
-                wine_tsx11_lock();
-                pglXQueryDrawable(object->display, object->drawable, GLX_TEXTURE_TARGET_ATI, &tmp);
-                wine_tsx11_unlock();
-                switch (tmp) {
-                    case GLX_NO_TEXTURE_ATI: type = WGL_NO_TEXTURE_ARB; break ;
-                    case GLX_TEXTURE_CUBE_MAP_ATI: type = WGL_TEXTURE_CUBE_MAP_ARB; break ;
-                    case GLX_TEXTURE_1D_ATI: type = WGL_TEXTURE_1D_ARB; break ;
-                    case GLX_TEXTURE_2D_ATI: type = WGL_TEXTURE_2D_ARB; break ;
-                }
-                *piValue = type;
-            } else {
-            if (!object->texture_target) {
+            if (!object->texture_target){
                 *piValue = WGL_NO_TEXTURE_ARB;
             } else {
                 if (!use_render_texture_emulation) {
-                    SetLastError(ERROR_INVALID_DATA);      
+                    SetLastError(ERROR_INVALID_DATA);
                     return GL_FALSE;
                 }
                 switch (object->texture_target) {
@@ -2763,23 +2687,16 @@ static GLboolean WINAPI X11DRV_wglQueryPbufferARB(HPBUFFERARB hPbuffer, int iAtt
                     case GL_TEXTURE_RECTANGLE_NV: *piValue = WGL_TEXTURE_RECTANGLE_NV; break;
                 }
             }
-        }
-        break;
+            break;
 
-    case WGL_MIPMAP_TEXTURE_ARB:
-        if (use_render_texture_ati) {
-            wine_tsx11_lock();
-            pglXQueryDrawable(object->display, object->drawable, GLX_MIPMAP_TEXTURE_ATI, (unsigned int*) piValue);
-            wine_tsx11_unlock();
-        } else {
+        case WGL_MIPMAP_TEXTURE_ARB:
             *piValue = GL_FALSE; /** don't support that */
             FIXME("unsupported WGL_ARB_render_texture attribute query for 0x%x\n", iAttribute);
-        }
-        break;
+            break;
 
-    default:
-        FIXME("unexpected attribute %x\n", iAttribute);
-        break;
+        default:
+            FIXME("unexpected attribute %x\n", iAttribute);
+            break;
     }
 
     return GL_TRUE;
@@ -2815,16 +2732,8 @@ static GLboolean WINAPI X11DRV_wglSetPbufferAttribARB(HPBUFFERARB hPbuffer, cons
         SetLastError(ERROR_INVALID_HANDLE);
         return GL_FALSE;
     }
-    if (!use_render_texture_ati && 1 == use_render_texture_emulation) {
+    if (1 == use_render_texture_emulation) {
         return GL_TRUE;
-    }
-    if (NULL != pglXDrawableAttribATI) {
-        if (use_render_texture_ati) {
-            FIXME("Need conversion for GLX_ATI_render_texture\n");
-        }
-        wine_tsx11_lock();
-        ret = pglXDrawableAttribATI(object->display, object->drawable, piAttribList);
-        wine_tsx11_unlock();
     }
     return ret;
 }
@@ -3021,15 +2930,7 @@ static GLboolean WINAPI X11DRV_wglGetPixelFormatAttribivARB(HDC hdc, int iPixelF
                 break;
 
             case WGL_BIND_TO_TEXTURE_RGB_ARB:
-                if (use_render_texture_ati) {
-                    curGLXAttr = GLX_BIND_TO_TEXTURE_RGB_ATI;
-                    break;
-                }
             case WGL_BIND_TO_TEXTURE_RGBA_ARB:
-                if (use_render_texture_ati) {
-                    curGLXAttr = GLX_BIND_TO_TEXTURE_RGBA_ATI;
-                    break;
-                }
                 if (!use_render_texture_emulation) {
                     piValues[i] = GL_FALSE;
                     continue;	
@@ -3247,7 +3148,7 @@ static GLboolean WINAPI X11DRV_wglBindTexImageARB(HPBUFFERARB hPbuffer, int iBuf
         return GL_FALSE;
     }
 
-    if (!use_render_texture_ati && 1 == use_render_texture_emulation) {
+    if (1 == use_render_texture_emulation) {
         static int init = 0;
         int prev_binded_texture = 0;
         GLXContext prev_context;
@@ -3287,38 +3188,6 @@ static GLboolean WINAPI X11DRV_wglBindTexImageARB(HPBUFFERARB hPbuffer, int iBuf
         return GL_TRUE;
     }
 
-    if (NULL != pglXBindTexImageATI) {
-        int buffer;
-
-        switch(iBuffer)
-        {
-            case WGL_FRONT_LEFT_ARB:
-                buffer = GLX_FRONT_LEFT_ATI;
-                break;
-            case WGL_FRONT_RIGHT_ARB:
-                buffer = GLX_FRONT_RIGHT_ATI;
-                break;
-            case WGL_BACK_LEFT_ARB:
-                buffer = GLX_BACK_LEFT_ATI;
-                break;
-            case WGL_BACK_RIGHT_ARB:
-                buffer = GLX_BACK_RIGHT_ATI;
-                break;
-            default:
-                ERR("Unknown iBuffer=%#x\n", iBuffer);
-                return FALSE;
-        }
-
-        /* In the sample 'ogl_offscreen_rendering_3' from codesampler.net I get garbage on the screen.
-         * I'm not sure if that's a bug in the ATI extension or in the program. I think that the program
-         * expected a single buffering format since it didn't ask for double buffering. A buffer swap
-         * fixed the program. I don't know what the correct behavior is. On the other hand that demo
-         * works fine using our pbuffer emulation path.
-         */
-        wine_tsx11_lock();
-        ret = pglXBindTexImageATI(object->display, object->drawable, buffer);
-        wine_tsx11_unlock();
-    }
     return ret;
 }
 
@@ -3341,33 +3210,8 @@ static GLboolean WINAPI X11DRV_wglReleaseTexImageARB(HPBUFFERARB hPbuffer, int i
         SetLastError(ERROR_INVALID_HANDLE);
         return GL_FALSE;
     }
-    if (!use_render_texture_ati && 1 == use_render_texture_emulation) {
+    if (1 == use_render_texture_emulation) {
         return GL_TRUE;
-    }
-    if (NULL != pglXReleaseTexImageATI) {
-        int buffer;
-
-        switch(iBuffer)
-        {
-            case WGL_FRONT_LEFT_ARB:
-                buffer = GLX_FRONT_LEFT_ATI;
-                break;
-            case WGL_FRONT_RIGHT_ARB:
-                buffer = GLX_FRONT_RIGHT_ATI;
-                break;
-            case WGL_BACK_LEFT_ARB:
-                buffer = GLX_BACK_LEFT_ATI;
-                break;
-            case WGL_BACK_RIGHT_ARB:
-                buffer = GLX_BACK_RIGHT_ATI;
-                break;
-            default:
-                ERR("Unknown iBuffer=%#x\n", iBuffer);
-                return FALSE;
-        }
-        wine_tsx11_lock();
-        ret = pglXReleaseTexImageATI(object->display, object->drawable, buffer);
-        wine_tsx11_unlock();
     }
     return ret;
 }
@@ -3681,23 +3525,14 @@ static void X11DRV_WineGL_LoadExtensions(void)
 
     /* In general pbuffer functionality requires support in the X-server. The functionality is
      * available either when the GLX_SGIX_pbuffer is present or when the GLX server version is 1.3.
-     * All display drivers except for Nvidia's use the GLX module from Xfree86/Xorg which only
-     * supports GLX 1.2. The endresult is that only Nvidia's drivers support pbuffers.
-     *
-     * The only other drive which has pbuffer support is Ati's FGLRX driver. They provide clientside GLX 1.3 support
-     * without support in the X-server (which other Mesa based drivers require).
-     *
-     * Support pbuffers when the GLX version is 1.3 and GLX_SGIX_pbuffer is available. Further pbuffers can
-     * also be supported when GLX_ATI_render_texture is available. This extension depends on pbuffers, so when it
-     * is available pbuffers must be available too. */
-    if ( (glxRequireVersion(3) && glxRequireExtension("GLX_SGIX_pbuffer")) || glxRequireExtension("GLX_ATI_render_texture"))
+     */
+    if ( glxRequireVersion(3) && glxRequireExtension("GLX_SGIX_pbuffer") )
         register_extension(&WGL_ARB_pbuffer);
 
     register_extension(&WGL_ARB_pixel_format);
 
     /* Support WGL_ARB_render_texture when there's support or pbuffer based emulation */
-    if (glxRequireExtension("GLX_ATI_render_texture") ||
-        glxRequireExtension("GLX_ARB_render_texture") ||
+    if (glxRequireExtension("GLX_ARB_render_texture") ||
         (glxRequireVersion(3) && glxRequireExtension("GLX_SGIX_pbuffer") && use_render_texture_emulation))
     {
         register_extension(&WGL_ARB_render_texture);
