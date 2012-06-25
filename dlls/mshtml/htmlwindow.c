@@ -192,11 +192,6 @@ static void release_outer_window(HTMLOuterWindow *This)
     if(This->frame_element)
         This->frame_element->content_window = NULL;
 
-    if(This->option_factory) {
-        This->option_factory->window = NULL;
-        IHTMLOptionElementFactory_Release(&This->option_factory->IHTMLOptionElementFactory_iface);
-    }
-
     if(This->image_factory) {
         This->image_factory->window = NULL;
         IHTMLImageElementFactory_Release(&This->image_factory->IHTMLImageElementFactory_iface);
@@ -232,6 +227,11 @@ static void release_inner_window(HTMLInnerWindow *This)
     for(i=0; i < This->global_prop_cnt; i++)
         heap_free(This->global_props[i].name);
     heap_free(This->global_props);
+
+    if(This->option_factory) {
+        This->option_factory->window = NULL;
+        IHTMLOptionElementFactory_Release(&This->option_factory->IHTMLOptionElementFactory_iface);
+    }
 
     heap_free(This);
 }
@@ -1083,12 +1083,17 @@ static HRESULT WINAPI HTMLWindow2_get_screen(IHTMLWindow2 *iface, IHTMLScreen **
 static HRESULT WINAPI HTMLWindow2_get_Option(IHTMLWindow2 *iface, IHTMLOptionElementFactory **p)
 {
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
-    HTMLOuterWindow *window = This->outer_window;
+    HTMLInnerWindow *window = This->inner_window;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(!window->option_factory)
-        window->option_factory = HTMLOptionElementFactory_Create(window);
+    if(!window->option_factory) {
+        HRESULT hres;
+
+        hres = HTMLOptionElementFactory_Create(window, &window->option_factory);
+        if(FAILED(hres))
+            return hres;
+    }
 
     *p = &window->option_factory->IHTMLOptionElementFactory_iface;
     IHTMLOptionElementFactory_AddRef(*p);

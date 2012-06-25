@@ -517,15 +517,18 @@ static const IHTMLOptionElementFactoryVtbl HTMLOptionElementFactoryVtbl = {
     HTMLOptionElementFactory_create
 };
 
-HTMLOptionElementFactory *HTMLOptionElementFactory_Create(HTMLOuterWindow *window)
+HRESULT HTMLOptionElementFactory_Create(HTMLInnerWindow *window, HTMLOptionElementFactory **ret_ptr)
 {
     HTMLOptionElementFactory *ret;
 
-    ret = heap_alloc(sizeof(HTMLOptionElementFactory));
+    ret = heap_alloc(sizeof(*ret));
+    if(!ret)
+        return E_OUTOFMEMORY;
 
     ret->IHTMLOptionElementFactory_iface.lpVtbl = &HTMLOptionElementFactoryVtbl;
     ret->ref = 1;
     ret->window = window;
 
-    return ret;
+    *ret_ptr = ret;
+    return S_OK;
 }
