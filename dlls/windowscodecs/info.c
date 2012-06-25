@@ -1485,8 +1485,11 @@ static HRESULT WINAPI MetadataReaderInfo_GetAuthor(IWICMetadataReaderInfo *iface
 static HRESULT WINAPI MetadataReaderInfo_GetVendorGUID(IWICMetadataReaderInfo *iface,
     GUID *vendor)
 {
-    FIXME("(%p,%p): stub\n", iface, vendor);
-    return E_NOTIMPL;
+    MetadataReaderInfo *This = impl_from_IWICMetadataReaderInfo(iface);
+
+    TRACE("(%p,%p)\n", iface, vendor);
+
+    return ComponentInfo_GetGUIDValue(This->classkey, vendor_valuename, vendor);
 }
 
 static HRESULT WINAPI MetadataReaderInfo_GetVersion(IWICMetadataReaderInfo *iface,
