@@ -358,7 +358,8 @@ static HRESULT convert_params(const DISPPARAMS *dp, VARIANT *buf, DISPPARAMS *re
     VARIANT *d;
     unsigned i;
 
-    *ret = *dp;
+    ret->cArgs = dp->cArgs - dp->cNamedArgs;
+    ret->cNamedArgs = 0;
 
     for(i = 0; i < ret->cArgs && !need_conversion; i++) {
         switch(V_VT(get_arg(dp, i))) {
@@ -369,8 +370,10 @@ static HRESULT convert_params(const DISPPARAMS *dp, VARIANT *buf, DISPPARAMS *re
         }
     }
 
-    if(!need_conversion)
+    if(!need_conversion) {
+        ret->rgvarg = dp->rgvarg + dp->cNamedArgs;
         return S_OK;
+    }
 
     if(ret->cArgs > 6) {
         ret->rgvarg = heap_alloc(ret->cArgs * sizeof(VARIANT));
