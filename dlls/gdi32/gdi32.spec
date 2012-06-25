@@ -214,7 +214,7 @@
 @ stub GdiSetAttrs
 @ stdcall GdiSetBatchLimit(long)
 # @ stub GdiSetLastError
-# @ stub GdiSetPixelFormat
+@ stdcall GdiSetPixelFormat(long long ptr)
 @ stub GdiSetServerAttr
 # @ stub GdiStartDocEMF
 # @ stub GdiStartPageEMF

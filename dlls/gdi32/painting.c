@@ -486,20 +486,11 @@ COLORREF WINAPI GetPixel( HDC hdc, INT x, INT y )
 
 
 /******************************************************************************
- * SetPixelFormat [GDI32.@]
- * Sets pixel format of device context
+ * GdiSetPixelFormat [GDI32.@]
  *
- * PARAMS
- *    hdc          [I] Device context to search for best pixel match
- *    iPixelFormat [I] Pixel format index
- *    ppfd         [I] Pixel format for which a match is sought
- *
- * RETURNS
- *    Success: TRUE
- *    Failure: FALSE
+ * Probably not the correct semantics, it's supposed to be an internal backend for SetPixelFormat.
  */
-BOOL WINAPI SetPixelFormat( HDC hdc, INT iPixelFormat,
-                            const PIXELFORMATDESCRIPTOR *ppfd)
+BOOL WINAPI GdiSetPixelFormat( HDC hdc, INT iPixelFormat, const PIXELFORMATDESCRIPTOR *ppfd)
 {
     INT bRet = FALSE;
     DC * dc = get_dc_ptr( hdc );

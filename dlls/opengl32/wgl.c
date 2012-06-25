@@ -48,7 +48,6 @@ WINE_DECLARE_DEBUG_CHANNEL(opengl);
 static struct
 {
     PROC  (WINAPI *p_wglGetProcAddress)(LPCSTR  lpszProc);
-    BOOL  (WINAPI *p_SetPixelFormat)(HDC hdc, INT iPixelFormat, const PIXELFORMATDESCRIPTOR *ppfd);
     BOOL  (WINAPI *p_wglMakeCurrent)(HDC hdc, HGLRC hglrc);
     HGLRC (WINAPI *p_wglCreateContext)(HDC hdc);
     INT   (WINAPI *p_GetPixelFormat)(HDC hdc);
@@ -88,7 +87,9 @@ static char* internal_gl_extensions = NULL;
 
 const GLubyte * WINAPI wine_glGetString( GLenum name );
 
+/* internal GDI functions */
 extern INT WINAPI GdiDescribePixelFormat( HDC hdc, INT fmt, UINT size, PIXELFORMATDESCRIPTOR *pfd );
+extern BOOL WINAPI GdiSetPixelFormat( HDC hdc, INT fmt, const PIXELFORMATDESCRIPTOR *pfd );
 
 /***********************************************************************
  *		 wglSetPixelFormat(OPENGL32.@)
@@ -96,7 +97,7 @@ extern INT WINAPI GdiDescribePixelFormat( HDC hdc, INT fmt, UINT size, PIXELFORM
 BOOL WINAPI wglSetPixelFormat( HDC hdc, INT iPixelFormat,
                                const PIXELFORMATDESCRIPTOR *ppfd)
 {
-  return wine_wgl.p_SetPixelFormat(hdc, iPixelFormat, ppfd);
+    return GdiSetPixelFormat(hdc, iPixelFormat, ppfd);
 }
 
 /***********************************************************************
@@ -1086,7 +1087,6 @@ static BOOL process_attach(void)
   wine_tsx11_unlock_ptr = (void *)GetProcAddress( mod_x11, "wine_tsx11_unlock" );
 
   wine_wgl.p_wglGetProcAddress = (void *)GetProcAddress(mod_gdi32, "wglGetProcAddress");
-  wine_wgl.p_SetPixelFormat = (void *)GetProcAddress(mod_gdi32, "SetPixelFormat");
   wine_wgl.p_wglMakeCurrent = (void *)GetProcAddress(mod_gdi32, "wglMakeCurrent");
   wine_wgl.p_wglCreateContext = (void *)GetProcAddress(mod_gdi32, "wglCreateContext");
   wine_wgl.p_GetPixelFormat = (void *)GetProcAddress(mod_gdi32, "GetPixelFormat");

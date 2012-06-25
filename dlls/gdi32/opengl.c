@@ -42,6 +42,7 @@ static const WCHAR opengl32W[] = {'o','p','e','n','g','l','3','2','.','d','l','l
 static HMODULE opengl32;
 static INT (WINAPI *wglChoosePixelFormat)(HDC,const PIXELFORMATDESCRIPTOR *);
 static INT (WINAPI *wglDescribePixelFormat)(HDC,INT,UINT,PIXELFORMATDESCRIPTOR*);
+static BOOL (WINAPI *wglSetPixelFormat)(HDC,INT,const PIXELFORMATDESCRIPTOR*);
 
 static HDC default_hdc = 0;
 
@@ -251,4 +252,18 @@ INT WINAPI DescribePixelFormat( HDC hdc, INT fmt, UINT size, PIXELFORMATDESCRIPT
             return 0;
     }
     return wglDescribePixelFormat( hdc, fmt, size, pfd );
+}
+
+/******************************************************************************
+ *		SetPixelFormat (GDI32.@)
+ */
+BOOL WINAPI SetPixelFormat( HDC hdc, INT fmt, const PIXELFORMATDESCRIPTOR *pfd )
+{
+    if (!wglSetPixelFormat)
+    {
+        if (!opengl32) opengl32 = LoadLibraryW( opengl32W );
+        if (!(wglSetPixelFormat = (void *)GetProcAddress( opengl32, "wglSetPixelFormat" )))
+            return 0;
+    }
+    return wglSetPixelFormat( hdc, fmt, pfd );
 }
