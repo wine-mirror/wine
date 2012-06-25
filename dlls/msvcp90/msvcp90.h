@@ -610,5 +610,23 @@ ostreambuf_iterator_char* __thiscall num_put_char_put_uint64(const num_put*, ost
 ostreambuf_iterator_char* __thiscall num_put_char_put_bool(const num_put*, ostreambuf_iterator_char*,
         ostreambuf_iterator_char, ios_base*, char, MSVCP_bool);
 
+num_put* num_put_wchar_use_facet(const locale*);
+ostreambuf_iterator_wchar* __thiscall num_put_wchar_put_long(const num_put*, ostreambuf_iterator_wchar*,
+        ostreambuf_iterator_wchar, ios_base*, wchar_t, LONG);
+ostreambuf_iterator_wchar* __thiscall num_put_wchar_put_ulong(const num_put*, ostreambuf_iterator_wchar*,
+        ostreambuf_iterator_wchar, ios_base*, wchar_t, ULONG);
+ostreambuf_iterator_wchar* __thiscall num_put_wchar_put_double(const num_put*, ostreambuf_iterator_wchar*,
+        ostreambuf_iterator_wchar, ios_base*, wchar_t, double);
+ostreambuf_iterator_wchar* __thiscall num_put_wchar_put_ldouble(const num_put*, ostreambuf_iterator_wchar*,
+        ostreambuf_iterator_wchar, ios_base*, wchar_t, double);
+ostreambuf_iterator_wchar* __thiscall num_put_wchar_put_ptr(const num_put*, ostreambuf_iterator_wchar*,
+        ostreambuf_iterator_wchar, ios_base*, wchar_t, const void*);
+ostreambuf_iterator_wchar* __thiscall num_put_wchar_put_int64(const num_put*, ostreambuf_iterator_wchar*,
+        ostreambuf_iterator_wchar, ios_base*, wchar_t, __int64);
+ostreambuf_iterator_wchar* __thiscall num_put_wchar_put_uint64(const num_put*, ostreambuf_iterator_wchar*,
+        ostreambuf_iterator_wchar, ios_base*, wchar_t, unsigned __int64);
+ostreambuf_iterator_wchar* __thiscall num_put_wchar_put_bool(const num_put*, ostreambuf_iterator_wchar*,
+        ostreambuf_iterator_wchar, ios_base*, wchar_t, MSVCP_bool);
+
 void init_io(void);
 void free_io(void);
