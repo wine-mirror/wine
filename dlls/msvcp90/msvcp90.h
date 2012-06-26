@@ -275,6 +275,8 @@ typedef struct _basic_string_wchar
 basic_string_wchar* __thiscall MSVCP_basic_string_wchar_ctor_cstr(basic_string_wchar*, const wchar_t*);
 void __thiscall MSVCP_basic_string_wchar_dtor(basic_string_wchar*);
 const wchar_t* __thiscall MSVCP_basic_string_wchar_c_str(const basic_string_wchar*);
+void __thiscall MSVCP_basic_string_wchar_clear(basic_string_wchar*);
+basic_string_wchar* __thiscall MSVCP_basic_string_wchar_append_ch(basic_string_wchar*, wchar_t);
 MSVCP_size_t __thiscall MSVCP_basic_string_wchar_length(const basic_string_wchar*);
 
 char* __stdcall MSVCP_allocator_char_allocate(void*, MSVCP_size_t);
@@ -355,6 +357,7 @@ typedef struct {
     _Cvtvec cvt;
 } ctype_wchar;
 
+MSVCP_bool __thiscall ctype_wchar_is_ch(const ctype_wchar*, short, wchar_t);
 char __thiscall ctype_wchar_narrow_ch(const ctype_wchar*, wchar_t, char);
 wchar_t __thiscall ctype_wchar_widen_ch(const ctype_wchar*, char);
 
@@ -584,6 +587,30 @@ istreambuf_iterator_char *__thiscall num_get_char_get_uint64(const num_get*, ist
         istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, ULONGLONG*);
 istreambuf_iterator_char *__thiscall num_get_char_get_bool(const num_get*, istreambuf_iterator_char*,
         istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, MSVCP_bool*);
+
+num_get* num_get_wchar_use_facet(const locale*);
+istreambuf_iterator_wchar* __thiscall num_get_wchar_get_long(const num_get*, istreambuf_iterator_wchar*,
+        istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, LONG*);
+istreambuf_iterator_wchar* __thiscall num_get_wchar_get_ushort(const num_get*, istreambuf_iterator_wchar*,
+        istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, unsigned short*);
+istreambuf_iterator_wchar* __thiscall num_get_wchar_get_uint(const num_get*, istreambuf_iterator_wchar*,
+        istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, unsigned int*);
+istreambuf_iterator_wchar* __thiscall num_get_wchar_get_ulong(const num_get*, istreambuf_iterator_wchar*,
+        istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, ULONG*);
+istreambuf_iterator_wchar* __thiscall num_get_wchar_get_float(const num_get*, istreambuf_iterator_wchar*,
+        istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, float*);
+istreambuf_iterator_wchar *__thiscall num_get_wchar_get_double(const num_get*, istreambuf_iterator_wchar*,
+        istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, double*);
+istreambuf_iterator_wchar *__thiscall num_get_wchar_get_ldouble(const num_get*, istreambuf_iterator_wchar*,
+        istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, double*);
+istreambuf_iterator_wchar *__thiscall num_get_wchar_get_void(const num_get*, istreambuf_iterator_wchar*,
+        istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, void**);
+istreambuf_iterator_wchar *__thiscall num_get_wchar_get_int64(const num_get*, istreambuf_iterator_wchar*,
+        istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, LONGLONG*);
+istreambuf_iterator_wchar *__thiscall num_get_wchar_get_uint64(const num_get*, istreambuf_iterator_wchar*,
+        istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, ULONGLONG*);
+istreambuf_iterator_wchar *__thiscall num_get_wchar_get_bool(const num_get*, istreambuf_iterator_wchar*,
+        istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, MSVCP_bool*);
 
 /* class num_put<char> */
 /* class num_put<wchar> */

@@ -4244,6 +4244,32 @@ MSVCP_size_t __cdecl num_get_wchar__Getcat(const locale_facet **facet, const loc
     return LC_NUMERIC;
 }
 
+num_get* num_get_wchar_use_facet(const locale *loc)
+{
+        static num_get *obj = NULL;
+
+        _Lockit lock;
+        const locale_facet *fac;
+
+        _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
+        fac = locale__Getfacet(loc, num_get_wchar_id.id);
+        if(fac) {
+            _Lockit_dtor(&lock);
+            return (num_get*)fac;
+        }
+
+        if(obj)
+            return obj;
+
+        num_get_wchar__Getcat(&fac, loc);
+        obj = (num_get*)fac;
+        locale_facet__Incref(&obj->facet);
+        locale_facet_register(&obj->facet);
+        _Lockit_dtor(&lock);
+
+        return obj;
+}
+
 /* ?_Getcat@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
 /* ?_Getcat@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
 MSVCP_size_t __cdecl num_get_short__Getcat(const locale_facet **facet, const locale *loc)
