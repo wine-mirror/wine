@@ -192,10 +192,10 @@ static HRESULT WINAPI wbem_locator_ConnectServer(
         FIXME("unsupported flags\n");
 
     hr = WbemServices_create( NULL, namespace, (void **)ppNamespace );
+    heap_free( namespace );
     if (SUCCEEDED( hr ))
         return WBEM_NO_ERROR;
 
-    heap_free( namespace );
     return WBEM_E_FAILED;
 }
 

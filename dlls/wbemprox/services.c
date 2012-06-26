@@ -201,8 +201,17 @@ static HRESULT WINAPI wbem_services_OpenNamespace(
     IWbemServices **ppWorkingNamespace,
     IWbemCallResult **ppResult )
 {
-    FIXME("\n");
-    return WBEM_E_FAILED;
+    static const WCHAR cimv2W[] = {'c','i','m','v','2',0};
+    static const WCHAR defaultW[] = {'d','e','f','a','u','l','t',0};
+    struct wbem_services *ws = impl_from_IWbemServices( iface );
+
+    TRACE("%p, %s, 0x%08x, %p, %p, %p\n", iface, debugstr_w(strNamespace), lFlags,
+          pCtx, ppWorkingNamespace, ppResult);
+
+    if ((strcmpiW( strNamespace, cimv2W ) && strcmpiW( strNamespace, defaultW )) || ws->namespace)
+        return WBEM_E_INVALID_NAMESPACE;
+
+    return WbemServices_create( NULL, cimv2W, (void **)ppWorkingNamespace );
 }
 
 static HRESULT WINAPI wbem_services_CancelAsyncCall(
@@ -488,7 +497,7 @@ static const IWbemServicesVtbl wbem_services_vtbl =
     wbem_services_ExecMethodAsync
 };
 
-HRESULT WbemServices_create( IUnknown *pUnkOuter, WCHAR *namespace, LPVOID *ppObj )
+HRESULT WbemServices_create( IUnknown *pUnkOuter, const WCHAR *namespace, LPVOID *ppObj )
 {
     struct wbem_services *ws;
 
@@ -499,7 +508,7 @@ HRESULT WbemServices_create( IUnknown *pUnkOuter, WCHAR *namespace, LPVOID *ppOb
 
     ws->IWbemServices_iface.lpVtbl = &wbem_services_vtbl;
     ws->refs = 1;
-    ws->namespace = namespace;
+    ws->namespace = heap_strdupW( namespace );
 
     *ppObj = &ws->IWbemServices_iface;
 
