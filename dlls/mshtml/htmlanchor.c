@@ -615,16 +615,6 @@ static HRESULT HTMLAnchorElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
     return HTMLElement_QI(&This->element.node, riid, ppv);
 }
 
-static void HTMLAnchorElement_destructor(HTMLDOMNode *iface)
-{
-    HTMLAnchorElement *This = impl_from_HTMLDOMNode(iface);
-
-    if(This->nsanchor)
-        nsIDOMHTMLAnchorElement_Release(This->nsanchor);
-
-    HTMLElement_destructor(&This->element.node);
-}
-
 static HRESULT HTMLAnchorElement_handle_event(HTMLDOMNode *iface, eventid_t eid, nsIDOMEvent *event, BOOL *prevent_default)
 {
     HTMLAnchorElement *This = impl_from_HTMLDOMNode(iface);
@@ -662,7 +652,7 @@ static HRESULT HTMLAnchorElement_handle_event(HTMLDOMNode *iface, eventid_t eid,
 
 static const NodeImplVtbl HTMLAnchorElementImplVtbl = {
     HTMLAnchorElement_QI,
-    HTMLAnchorElement_destructor,
+    HTMLElement_destructor,
     HTMLElement_clone,
     HTMLElement_get_attr_col,
     NULL,
@@ -697,14 +687,13 @@ HRESULT HTMLAnchorElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nsele
     ret->IHTMLAnchorElement_iface.lpVtbl = &HTMLAnchorElementVtbl;
     ret->element.node.vtbl = &HTMLAnchorElementImplVtbl;
 
-    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLAnchorElement, (void**)&ret->nsanchor);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIDOMHTMLAnchorElement iface: %08x\n", nsres);
-        heap_free(ret);
-        return E_FAIL;
-    }
-
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLAnchorElement_dispex);
+
+    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLAnchorElement, (void**)&ret->nsanchor);
+
+    /* Shere the reference with nsnode */
+    assert(nsres == NS_OK && (nsIDOMNode*)ret->nsanchor == ret->element.node.nsnode);
+    nsIDOMNode_Release(ret->element.node.nsnode);
 
     *elem = &ret->element;
     return S_OK;
