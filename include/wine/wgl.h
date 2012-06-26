@@ -20,18 +20,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-/* For compatibility with old Mesa headers */
-#ifndef GLX_SAMPLE_BUFFERS_ARB
-# define GLX_SAMPLE_BUFFERS_ARB             100000
-#endif
-#ifndef GLX_SAMPLES_ARB
-# define GLX_SAMPLES_ARB                    100001
-#endif
-#ifndef GL_TEXTURE_CUBE_MAP
-# define GL_TEXTURE_CUBE_MAP 0x8513
-#endif
-
-#define HPBUFFERARB void *
+DECLARE_HANDLE(HPBUFFERARB);
+DECLARE_HANDLE(HPBUFFEREXT);
 
 #define WGL_NUMBER_PIXEL_FORMATS_ARB		0x2000
 #define WGL_DRAW_TO_WINDOW_ARB			0x2001
@@ -163,35 +153,11 @@
 #define WGL_TEXTURE_FLOAT_RG_NV        0x20B6
 #define WGL_TEXTURE_FLOAT_RGB_NV       0x20B7
 #define WGL_TEXTURE_FLOAT_RGBA_NV      0x20B8
-/** GL_NV_float_buffer */
-#define GL_FLOAT_R_NV                     0x8880
-#define GL_FLOAT_RG_NV                    0x8881
-#define GL_FLOAT_RGB_NV                   0x8882
-#define GL_FLOAT_RGBA_NV                  0x8883
-#define GL_FLOAT_R16_NV                   0x8884
-#define GL_FLOAT_R32_NV                   0x8885
-#define GL_FLOAT_RG16_NV                  0x8886
-#define GL_FLOAT_RG32_NV                  0x8887
-#define GL_FLOAT_RGB16_NV                 0x8888
-#define GL_FLOAT_RGB32_NV                 0x8889
-#define GL_FLOAT_RGBA16_NV                0x888A
-#define GL_FLOAT_RGBA32_NV                0x888B
-#define GL_TEXTURE_FLOAT_COMPONENTS_NV    0x888C
-#define GL_FLOAT_CLEAR_COLOR_VALUE_NV     0x888D
-#define GL_FLOAT_RGBA_MODE_NV             0x888E
-
 /** WGL_EXT_framebuffer_sRGB */
 #define WGL_FRAMEBUFFER_SRGB_CAPABLE_EXT  0x20A9
-#ifndef GLX_FRAMEBUFFER_SRGB_CAPABLE_EXT
-# define GLX_FRAMEBUFFER_SRGB_CAPABLE_EXT 0x20B2
-#endif
 
 /* WGL_EXT_pixel_format_packed_float */
 #define WGL_TYPE_RGBA_UNSIGNED_FLOAT_EXT 0x20A8
-#ifndef GLX_EXT_fbconfig_packed_float
-#define GLX_RGBA_UNSIGNED_FLOAT_TYPE_EXT 0x20B1
-#define GLX_RGBA_UNSIGNED_FLOAT_BIT_EXT  0x00000008
-#endif
 
 /** WGL_ARB_create_context */
 #define WGL_CONTEXT_DEBUG_BIT_ARB      0x0001
@@ -205,32 +171,8 @@
 #define WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB 0x00000002
 #define ERROR_INVALID_VERSION_ARB      0x2095
 #define ERROR_INVALID_PROFILE_ARB      0x2096
-#ifndef GLX_ARB_create_context
-#define GLX_CONTEXT_DEBUG_BIT_ARB          0x00000001
-#define GLX_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB 0x00000002
-#define GLX_CONTEXT_MAJOR_VERSION_ARB      0x2091
-#define GLX_CONTEXT_MINOR_VERSION_ARB      0x2092
-#define GLX_CONTEXT_FLAGS_ARB              0x2094
-#endif
-#ifndef GLX_ARB_create_context_profile
-#define GLX_CONTEXT_PROFILE_MASK_ARB       0x9126
-#define GLX_CONTEXT_CORE_PROFILE_BIT_ARB   0x00000001
-#define GLX_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB 0x00000002
-#endif
 
 /** 
  * WGL_ATI_pixel_format_float / WGL_ARB_color_buffer_float
  */
 #define WGL_TYPE_RGBA_FLOAT_ATI             0x21A0
-#define GL_RGBA_FLOAT_MODE_ATI              0x8820
-#define GL_COLOR_CLEAR_UNCLAMPED_VALUE_ATI  0x8835
-#define GL_CLAMP_VERTEX_COLOR_ARB           0x891A
-#define GL_CLAMP_FRAGMENT_COLOR_ARB         0x891B
-#define GL_CLAMP_READ_COLOR_ARB             0x891C
-/** GLX_ATI_pixel_format_float */
-#define GLX_RGBA_FLOAT_ATI_BIT              0x00000100
-/** GLX_ARB_pixel_format_float */
-#define GLX_RGBA_FLOAT_BIT                  0x00000004
-#define GLX_RGBA_FLOAT_TYPE                 0x20B9 
-/** GLX_NV_float_buffer */
-#define GLX_FLOAT_COMPONENTS_NV            0x20B0

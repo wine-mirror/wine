@@ -47,6 +47,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wgl);
 #ifdef SONAME_LIBGL
 
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
+WINE_DECLARE_DEBUG_CHANNEL(fps);
 
 #undef APIENTRY
 #undef CALLBACK
@@ -59,8 +60,6 @@ WINE_DECLARE_DEBUG_CHANNEL(winediag);
 # include <GL/glx.h>
 #endif
 
-#include "wine/wgl.h"
-
 #undef APIENTRY
 #undef CALLBACK
 #undef WINAPI
@@ -70,8 +69,57 @@ WINE_DECLARE_DEBUG_CHANNEL(winediag);
 #define WINAPI      __stdcall
 #define APIENTRY    WINAPI
 
+#include "wine/wgl.h"
 
-WINE_DECLARE_DEBUG_CHANNEL(fps);
+/* For compatibility with old Mesa headers */
+#ifndef GLX_SAMPLE_BUFFERS_ARB
+# define GLX_SAMPLE_BUFFERS_ARB           100000
+#endif
+#ifndef GLX_SAMPLES_ARB
+# define GLX_SAMPLES_ARB                  100001
+#endif
+#ifndef GL_TEXTURE_CUBE_MAP
+# define GL_TEXTURE_CUBE_MAP              0x8513
+#endif
+#ifndef GLX_FRAMEBUFFER_SRGB_CAPABLE_EXT
+# define GLX_FRAMEBUFFER_SRGB_CAPABLE_EXT 0x20B2
+#endif
+#ifndef GLX_EXT_fbconfig_packed_float
+# define GLX_RGBA_UNSIGNED_FLOAT_TYPE_EXT 0x20B1
+# define GLX_RGBA_UNSIGNED_FLOAT_BIT_EXT  0x00000008
+#endif
+#ifndef GLX_ARB_create_context
+# define GLX_CONTEXT_MAJOR_VERSION_ARB    0x2091
+# define GLX_CONTEXT_MINOR_VERSION_ARB    0x2092
+# define GLX_CONTEXT_FLAGS_ARB            0x2094
+#endif
+#ifndef GLX_ARB_create_context_profile
+# define GLX_CONTEXT_PROFILE_MASK_ARB     0x9126
+#endif
+/** GLX_ATI_pixel_format_float */
+#define GLX_RGBA_FLOAT_ATI_BIT            0x00000100
+/** GLX_ARB_pixel_format_float */
+#define GLX_RGBA_FLOAT_BIT                0x00000004
+#define GLX_RGBA_FLOAT_TYPE               0x20B9
+/** GL_NV_float_buffer */
+#define GL_FLOAT_R_NV                     0x8880
+#define GL_FLOAT_RG_NV                    0x8881
+#define GL_FLOAT_RGB_NV                   0x8882
+#define GL_FLOAT_RGBA_NV                  0x8883
+#define GL_FLOAT_R16_NV                   0x8884
+#define GL_FLOAT_R32_NV                   0x8885
+#define GL_FLOAT_RG16_NV                  0x8886
+#define GL_FLOAT_RG32_NV                  0x8887
+#define GL_FLOAT_RGB16_NV                 0x8888
+#define GL_FLOAT_RGB32_NV                 0x8889
+#define GL_FLOAT_RGBA16_NV                0x888A
+#define GL_FLOAT_RGBA32_NV                0x888B
+#define GL_TEXTURE_FLOAT_COMPONENTS_NV    0x888C
+#define GL_FLOAT_CLEAR_COLOR_VALUE_NV     0x888D
+#define GL_FLOAT_RGBA_MODE_NV             0x888E
+/** GLX_NV_float_buffer */
+#define GLX_FLOAT_COMPONENTS_NV           0x20B0
+
 
 typedef struct wine_glextension {
     const char *extName;
@@ -2137,7 +2185,7 @@ static HPBUFFERARB WINAPI X11DRV_wglCreatePbufferARB(HDC hdc, int iPixelFormat, 
         goto create_failed; /* unexpected error */
     }
     TRACE("->(%p)\n", object);
-    return object;
+    return (HPBUFFERARB)object;
 
 create_failed:
     HeapFree(GetProcessHeap(), 0, object);
@@ -2152,7 +2200,7 @@ create_failed:
  */
 static GLboolean WINAPI X11DRV_wglDestroyPbufferARB(HPBUFFERARB hPbuffer)
 {
-    Wine_GLPBuffer* object = hPbuffer;
+    Wine_GLPBuffer* object = (Wine_GLPBuffer *)hPbuffer;
     TRACE("(%p)\n", hPbuffer);
     if (NULL == object) {
         SetLastError(ERROR_INVALID_HANDLE);
@@ -2173,7 +2221,7 @@ static GLboolean WINAPI X11DRV_wglDestroyPbufferARB(HPBUFFERARB hPbuffer)
 static HDC WINAPI X11DRV_wglGetPbufferDCARB(HPBUFFERARB hPbuffer)
 {
     struct x11drv_escape_set_drawable escape;
-    Wine_GLPBuffer* object = hPbuffer;
+    Wine_GLPBuffer* object = (Wine_GLPBuffer *)hPbuffer;
     HDC hdc;
 
     if (NULL == object) {
@@ -2206,7 +2254,7 @@ static HDC WINAPI X11DRV_wglGetPbufferDCARB(HPBUFFERARB hPbuffer)
  */
 static GLboolean WINAPI X11DRV_wglQueryPbufferARB(HPBUFFERARB hPbuffer, int iAttribute, int *piValue)
 {
-    Wine_GLPBuffer* object = hPbuffer;
+    Wine_GLPBuffer* object = (Wine_GLPBuffer *)hPbuffer;
     TRACE("(%p, 0x%x, %p)\n", hPbuffer, iAttribute, piValue);
     if (NULL == object) {
         SetLastError(ERROR_INVALID_HANDLE);
@@ -2314,7 +2362,7 @@ static int WINAPI X11DRV_wglReleasePbufferDCARB(HPBUFFERARB hPbuffer, HDC hdc)
  */
 static GLboolean WINAPI X11DRV_wglSetPbufferAttribARB(HPBUFFERARB hPbuffer, const int *piAttribList)
 {
-    Wine_GLPBuffer* object = hPbuffer;
+    Wine_GLPBuffer* object = (Wine_GLPBuffer *)hPbuffer;
     GLboolean ret = GL_FALSE;
 
     WARN("(%p, %p): alpha-testing, report any problem\n", hPbuffer, piAttribList);
@@ -2729,7 +2777,7 @@ static GLboolean WINAPI X11DRV_wglGetPixelFormatAttribfvARB(HDC hdc, int iPixelF
  */
 static GLboolean WINAPI X11DRV_wglBindTexImageARB(HPBUFFERARB hPbuffer, int iBuffer)
 {
-    Wine_GLPBuffer* object = hPbuffer;
+    Wine_GLPBuffer* object = (Wine_GLPBuffer *)hPbuffer;
     GLboolean ret = GL_FALSE;
 
     TRACE("(%p, %d)\n", hPbuffer, iBuffer);
@@ -2792,7 +2840,7 @@ static GLboolean WINAPI X11DRV_wglBindTexImageARB(HPBUFFERARB hPbuffer, int iBuf
  */
 static GLboolean WINAPI X11DRV_wglReleaseTexImageARB(HPBUFFERARB hPbuffer, int iBuffer)
 {
-    Wine_GLPBuffer* object = hPbuffer;
+    Wine_GLPBuffer* object = (Wine_GLPBuffer *)hPbuffer;
     GLboolean ret = GL_FALSE;
 
     TRACE("(%p, %d)\n", hPbuffer, iBuffer);
