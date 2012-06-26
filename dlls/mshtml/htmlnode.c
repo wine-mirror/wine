@@ -1007,14 +1007,7 @@ void HTMLDOMNode_destructor(HTMLDOMNode *This)
 
 static HRESULT HTMLDOMNode_clone(HTMLDOMNode *This, nsIDOMNode *nsnode, HTMLDOMNode **ret)
 {
-    HRESULT hres;
-
-    hres = create_node(This->doc, nsnode, ret);
-    if(FAILED(hres))
-        return hres;
-
-    IHTMLDOMNode_AddRef(&(*ret)->IHTMLDOMNode_iface);
-    return S_OK;
+    return create_node(This->doc, nsnode, ret);
 }
 
 static const NodeImplVtbl HTMLDOMNodeImplVtbl = {
@@ -1027,8 +1020,11 @@ void HTMLDOMNode_Init(HTMLDocumentNode *doc, HTMLDOMNode *node, nsIDOMNode *nsno
 {
     node->IHTMLDOMNode_iface.lpVtbl = &HTMLDOMNodeVtbl;
     node->IHTMLDOMNode2_iface.lpVtbl = &HTMLDOMNode2Vtbl;
-    node->ref = 1;
+    node->ref = 2;
     node->doc = doc;
+
+    if(&doc->node != node)
+        node->ref++; /* one extra for list entry reference */
 
     if(nsnode)
         nsIDOMNode_AddRef(nsnode);
@@ -1096,7 +1092,6 @@ static HRESULT create_node(HTMLDocumentNode *doc, nsIDOMNode *nsnode, HTMLDOMNod
 HRESULT get_node(HTMLDocumentNode *This, nsIDOMNode *nsnode, BOOL create, HTMLDOMNode **ret)
 {
     HTMLDOMNode *iter = This->nodes;
-    HRESULT hres;
 
     while(iter) {
         if(iter->nsnode == nsnode)
@@ -1111,10 +1106,7 @@ HRESULT get_node(HTMLDocumentNode *This, nsIDOMNode *nsnode, BOOL create, HTMLDO
         return S_OK;
     }
 
-    hres = create_node(This, nsnode, ret);
-    if(SUCCEEDED(hres))
-        IHTMLDOMNode_AddRef(&(*ret)->IHTMLDOMNode_iface);
-    return hres;
+    return create_node(This, nsnode, ret);
 }
 
 /*

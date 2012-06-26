@@ -1037,7 +1037,6 @@ static HRESULT WINAPI HTMLDocument_createElement(IHTMLDocument2 *iface, BSTR eTa
         return hres;
 
     *newElem = &elem->IHTMLElement_iface;
-    IHTMLElement_AddRef(&elem->IHTMLElement_iface);
     return S_OK;
 }
 
@@ -2262,7 +2261,6 @@ HRESULT create_document_fragment(nsIDOMNode *nsnode, HTMLDocumentNode *doc_node,
     doc_frag->node.vtbl = &HTMLDocumentFragmentImplVtbl;
     doc_frag->node.cp_container = &doc_frag->basedoc.cp_container;
 
-    htmldoc_addref(&doc_frag->basedoc);
     *ret = doc_frag;
     return S_OK;
 }

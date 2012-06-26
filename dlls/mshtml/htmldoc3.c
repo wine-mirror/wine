@@ -135,7 +135,6 @@ static HRESULT WINAPI HTMLDocument3_createTextNode(IHTMLDocument3 *iface, BSTR t
         return hres;
 
     *newTextNode = &node->IHTMLDOMNode_iface;
-    IHTMLDOMNode_AddRef(&node->IHTMLDOMNode_iface);
     return S_OK;
 }
 

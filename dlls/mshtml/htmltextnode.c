@@ -191,14 +191,8 @@ static void HTMLDOMTextNode_destructor(HTMLDOMNode *iface)
 static HRESULT HTMLDOMTextNode_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, HTMLDOMNode **ret)
 {
     HTMLDOMTextNode *This = impl_from_HTMLDOMNode(iface);
-    HRESULT hres;
 
-    hres = HTMLDOMTextNode_Create(This->node.doc, nsnode, ret);
-    if(FAILED(hres))
-        return hres;
-
-    IHTMLDOMNode_AddRef(&(*ret)->IHTMLDOMNode_iface);
-    return S_OK;
+    return HTMLDOMTextNode_Create(This->node.doc, nsnode, ret);
 }
 
 static const NodeImplVtbl HTMLDOMTextNodeImplVtbl = {

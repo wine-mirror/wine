@@ -841,6 +841,7 @@ static HRESULT WINAPI HTMLImageElementFactory_create(IHTMLImageElementFactory *i
 
     hres = IHTMLElement_QueryInterface(&elem->IHTMLElement_iface, &IID_IHTMLImgElement,
             (void**)&img);
+    IHTMLElement_Release(&elem->IHTMLElement_iface);
     if(FAILED(hres)) {
         ERR("IHTMLElement_QueryInterface failed: 0x%08x\n", hres);
         return hres;

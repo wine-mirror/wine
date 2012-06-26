@@ -155,7 +155,6 @@ static HRESULT WINAPI HTMLDocument5_createComment(IHTMLDocument5 *iface, BSTR bs
         return hres;
 
     *ppRetNode = &elem->node.IHTMLDOMNode_iface;
-    IHTMLDOMNode_AddRef(&elem->node.IHTMLDOMNode_iface);
     return S_OK;
 }
 

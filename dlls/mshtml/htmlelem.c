@@ -1618,7 +1618,6 @@ HRESULT HTMLElement_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, HTMLDOMNode **
         }
     }
 
-    IHTMLElement_AddRef(&new_elem->IHTMLElement_iface);
     *ret = &new_elem->node;
     return S_OK;
 }
