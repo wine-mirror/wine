@@ -1776,7 +1776,8 @@ void HTMLElement_Init(HTMLElement *This, HTMLDocumentNode *doc, nsIDOMHTMLElemen
         nsIDOMHTMLElement_AddRef(nselem);
     This->nselem = nselem;
 
-    HTMLDOMNode_Init(doc, &This->node, (nsIDOMNode*)nselem);
+    if(nselem)
+        HTMLDOMNode_Init(doc, &This->node, (nsIDOMNode*)nselem);
 
     ConnectionPointContainer_Init(&This->cp_container, (IUnknown*)&This->IHTMLElement_iface);
 }
