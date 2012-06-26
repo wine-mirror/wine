@@ -980,6 +980,14 @@ BOOL WINAPI wglUseFontOutlinesW(HDC hdc,
 }
 
 /***********************************************************************
+ *              glDebugEntry (OPENGL32.@)
+ */
+GLint WINAPI wine_glDebugEntry( GLint unknown1, GLint unknown2 )
+{
+    return 0;
+}
+
+/***********************************************************************
  *              glFinish (OPENGL32.@)
  */
 void WINAPI wine_glFinish( void )

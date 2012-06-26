@@ -56,7 +56,7 @@
 @  stdcall glCopyTexSubImage1D( long long long long long long ) wine_glCopyTexSubImage1D
 @  stdcall glCopyTexSubImage2D( long long long long long long long long ) wine_glCopyTexSubImage2D
 @  stdcall glCullFace( long ) wine_glCullFace
-@  stub glDebugEntry
+@  stdcall glDebugEntry( long long ) wine_glDebugEntry
 @  stdcall glDeleteLists( long long ) wine_glDeleteLists
 @  stdcall glDeleteTextures( long ptr ) wine_glDeleteTextures
 @  stdcall glDepthFunc( long ) wine_glDepthFunc

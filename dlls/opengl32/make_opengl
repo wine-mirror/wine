@@ -235,6 +235,7 @@ sub GenerateThunk($$$$$)
     my $trace_call_arg = "";
     my $trace_arg = "";
 
+    return "" if $func_ref->[0] eq "glDebugEntry";
     return "" if $func_ref->[0] eq "glGetString";
     return "" if $func_ref->[0] eq "glGetIntegerv";
     return "" if $func_ref->[0] eq "glFinish";
@@ -409,7 +410,8 @@ $pseudo_to_opengl{"UInt64EXT"} = "UINT64";
 #     [ "GLfloat", "ymove" ],
 #     [ "GLubyte *", "bitmap"] ] ];
 #
-my %norm_functions = ();
+my %norm_functions = ( "glDebugEntry" => [ "glDebugEntry", "GLint", [[ "GLint", "unknown1" ],
+                                                                     [ "GLint", "unknown2" ]] ] );
 
 #
 # This stores various extensions NOT part of the GL extension registry but still
