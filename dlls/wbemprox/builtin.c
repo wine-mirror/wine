@@ -74,6 +74,8 @@ static const WCHAR prop_netconnectionstatusW[] =
     {'N','e','t','C','o','n','n','e','c','t','i','o','n','S','t','a','t','u','s',0};
 static const WCHAR prop_osarchitectureW[] =
     {'O','S','A','r','c','h','i','t','e','c','t','u','r','e',0};
+static const WCHAR prop_oslanguageW[] =
+    {'O','S','L','a','n','g','u','a','g','e',0};
 static const WCHAR prop_pprocessidW[] =
     {'P','a','r','e','n','t','P','r','o','c','e','s','s','I','D',0};
 static const WCHAR prop_processidW[] =
@@ -82,6 +84,8 @@ static const WCHAR prop_releasedateW[] =
     {'R','e','l','e','a','s','e','D','a','t','e',0};
 static const WCHAR prop_serialnumberW[] =
     {'S','e','r','i','a','l','N','u','m','b','e','r',0};
+static const WCHAR prop_systemdirectoryW[] =
+    {'S','y','s','t','e','m','D','i','r','e','c','t','o','r','y',0};
 static const WCHAR prop_threadcountW[] =
     {'T','h','r','e','a','d','C','o','u','n','t',0};
 
@@ -106,8 +110,10 @@ static const struct column col_networkadapter[] =
 };
 static const struct column col_os[] =
 {
-    { prop_captionW,        CIM_STRING },
-    { prop_osarchitectureW, CIM_STRING }
+    { prop_captionW,         CIM_STRING },
+    { prop_osarchitectureW,  CIM_STRING },
+    { prop_oslanguageW,      CIM_UINT32 },
+    { prop_systemdirectoryW, CIM_STRING }
 };
 static const struct column col_process[] =
 {
@@ -178,6 +184,8 @@ struct record_operatingsystem
 {
     const WCHAR *caption;
     const WCHAR *osarchitecture;
+    UINT32       oslanguage;
+    const WCHAR *systemdirectory;
 };
 struct record_process
 {
@@ -321,7 +329,9 @@ done:
 static void fill_os( struct table *table )
 {
     struct record_operatingsystem *rec;
+    WCHAR path[MAX_PATH];
     SYSTEM_INFO info;
+    void *redir;
 
     if (!(table->data = heap_alloc( sizeof(*rec) ))) return;
 
@@ -333,6 +343,13 @@ static void fill_os( struct table *table )
         rec->osarchitecture = os_64bitW;
     else
         rec->osarchitecture = os_32bitW;
+
+    rec->oslanguage = MAKELANGID( LANG_ENGLISH, SUBLANG_ENGLISH_US );
+
+    Wow64DisableWow64FsRedirection( &redir );
+    GetSystemDirectoryW( path, MAX_PATH );
+    Wow64RevertWow64FsRedirection( redir );
+    rec->systemdirectory = heap_strdupW( path );
 
     TRACE("created 1 row\n");
     table->num_rows = 1;
