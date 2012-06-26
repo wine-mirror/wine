@@ -192,11 +192,6 @@ static void release_outer_window(HTMLOuterWindow *This)
     if(This->frame_element)
         This->frame_element->content_window = NULL;
 
-    if(This->image_factory) {
-        This->image_factory->window = NULL;
-        IHTMLImageElementFactory_Release(&This->image_factory->IHTMLImageElementFactory_iface);
-    }
-
     if(This->location) {
         This->location->window = NULL;
         IHTMLLocation_Release(&This->location->IHTMLLocation_iface);
@@ -227,6 +222,11 @@ static void release_inner_window(HTMLInnerWindow *This)
     for(i=0; i < This->global_prop_cnt; i++)
         heap_free(This->global_props[i].name);
     heap_free(This->global_props);
+
+    if(This->image_factory) {
+        This->image_factory->window = NULL;
+        IHTMLImageElementFactory_Release(&This->image_factory->IHTMLImageElementFactory_iface);
+    }
 
     if(This->option_factory) {
         This->option_factory->window = NULL;
@@ -647,12 +647,17 @@ static HRESULT WINAPI HTMLWindow2_prompt(IHTMLWindow2 *iface, BSTR message,
 static HRESULT WINAPI HTMLWindow2_get_Image(IHTMLWindow2 *iface, IHTMLImageElementFactory **p)
 {
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
-    HTMLOuterWindow *window = This->outer_window;
+    HTMLInnerWindow *window = This->inner_window;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(!window->image_factory)
-        window->image_factory = HTMLImageElementFactory_Create(window);
+    if(!window->image_factory) {
+        HRESULT hres;
+
+        hres = HTMLImageElementFactory_Create(window, &window->image_factory);
+        if(FAILED(hres))
+            return hres;
+    }
 
     *p = &window->image_factory->IHTMLImageElementFactory_iface;
     IHTMLImageElementFactory_AddRef(*p);

@@ -920,11 +920,13 @@ static dispex_static_data_t HTMLImageElementFactory_dispex = {
     HTMLImageElementFactory_iface_tids
 };
 
-HTMLImageElementFactory *HTMLImageElementFactory_Create(HTMLOuterWindow *window)
+HRESULT HTMLImageElementFactory_Create(HTMLInnerWindow *window, HTMLImageElementFactory **ret_val)
 {
     HTMLImageElementFactory *ret;
 
     ret = heap_alloc(sizeof(HTMLImageElementFactory));
+    if(!ret)
+        return E_OUTOFMEMORY;
 
     ret->IHTMLImageElementFactory_iface.lpVtbl = &HTMLImageElementFactoryVtbl;
     ret->ref = 1;
@@ -933,5 +935,6 @@ HTMLImageElementFactory *HTMLImageElementFactory_Create(HTMLOuterWindow *window)
     init_dispex(&ret->dispex, (IUnknown*)&ret->IHTMLImageElementFactory_iface,
             &HTMLImageElementFactory_dispex);
 
-    return ret;
+    *ret_val = ret;
+    return S_OK;
 }

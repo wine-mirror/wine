@@ -278,7 +278,7 @@ typedef struct {
 
     LONG ref;
 
-    HTMLOuterWindow *window;
+    HTMLInnerWindow *window;
 } HTMLImageElementFactory;
 
 struct HTMLLocation {
@@ -335,7 +335,6 @@ struct HTMLOuterWindow {
 
     IInternetSecurityManager *secmgr;
 
-    HTMLImageElementFactory *image_factory;
     HTMLLocation *location;
     IHTMLScreen *screen;
     IOmHistory *history;
@@ -355,6 +354,7 @@ struct HTMLInnerWindow {
 
     IHTMLEventObj *event;
 
+    HTMLImageElementFactory *image_factory;
     HTMLOptionElementFactory *option_factory;
 
     global_prop_t *global_props;
@@ -663,7 +663,7 @@ HRESULT update_window_doc(HTMLOuterWindow*) DECLSPEC_HIDDEN;
 HTMLOuterWindow *nswindow_to_window(const nsIDOMWindow*) DECLSPEC_HIDDEN;
 void get_top_window(HTMLOuterWindow*,HTMLOuterWindow**) DECLSPEC_HIDDEN;
 HRESULT HTMLOptionElementFactory_Create(HTMLInnerWindow*,HTMLOptionElementFactory**) DECLSPEC_HIDDEN;
-HTMLImageElementFactory *HTMLImageElementFactory_Create(HTMLOuterWindow*) DECLSPEC_HIDDEN;
+HRESULT HTMLImageElementFactory_Create(HTMLInnerWindow*,HTMLImageElementFactory**) DECLSPEC_HIDDEN;
 HRESULT HTMLLocation_Create(HTMLOuterWindow*,HTMLLocation**) DECLSPEC_HIDDEN;
 IOmNavigator *OmNavigator_Create(void) DECLSPEC_HIDDEN;
 HRESULT HTMLScreen_Create(IHTMLScreen**) DECLSPEC_HIDDEN;
