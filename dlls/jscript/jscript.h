@@ -266,7 +266,6 @@ HRESULT variant_change_type(script_ctx_t*,VARIANT*,VARIANT*,VARTYPE) DECLSPEC_HI
 
 HRESULT decode_source(WCHAR*) DECLSPEC_HIDDEN;
 
-BSTR int_to_bstr(int) DECLSPEC_HIDDEN;
 HRESULT double_to_bstr(double,BSTR*) DECLSPEC_HIDDEN;
 
 typedef struct named_item_t {

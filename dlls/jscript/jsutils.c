@@ -517,7 +517,7 @@ HRESULT to_uint32(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, DWORD *ret)
     return S_OK;
 }
 
-BSTR int_to_bstr(int i)
+static BSTR int_to_bstr(int i)
 {
     WCHAR buf[12], *p;
     BOOL neg = FALSE;
