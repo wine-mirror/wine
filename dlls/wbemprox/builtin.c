@@ -59,6 +59,8 @@ static const WCHAR prop_captionW[] =
     {'C','a','p','t','i','o','n',0};
 static const WCHAR prop_commandlineW[] =
     {'C','o','m','m','a','n','d','L','i','n','e',0};
+static const WCHAR prop_cpustatusW[] =
+    {'C','p','u','S','t','a','t','u','s',0};
 static const WCHAR prop_descriptionW[] =
     {'D','e','s','c','r','i','p','t','i','o','n',0};
 static const WCHAR prop_deviceidW[] =
@@ -134,6 +136,8 @@ static const struct column col_process[] =
 };
 static const struct column col_processor[] =
 {
+    { prop_cpustatusW,    CIM_UINT16 },
+    { prop_deviceidW,     CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
     { prop_manufacturerW, CIM_STRING }
 };
 static const struct column col_videocontroller[] =
@@ -208,6 +212,8 @@ struct record_process
 };
 struct record_processor
 {
+    UINT16       cpu_status;
+    const WCHAR *device_id;
     const WCHAR *manufacturer;
 };
 struct record_videocontroller
@@ -220,10 +226,6 @@ struct record_videocontroller
 static const struct record_bios data_bios[] =
 {
     { bios_descriptionW, bios_manufacturerW, bios_releasedateW, bios_serialnumberW }
-};
-static const struct record_processor data_processor[] =
-{
-    { processor_manufacturerW }
 };
 
 static UINT get_processor_count(void)
@@ -356,6 +358,26 @@ done:
     CloseHandle( snap );
 }
 
+static void fill_processor( struct table *table )
+{
+    static const WCHAR fmtW[] = {'C','P','U','%','u',0};
+    WCHAR device_id[14];
+    struct record_processor *rec;
+    UINT i, offset = 0, count = get_processor_count();
+
+    if (!(table->data = heap_alloc( sizeof(*rec) * count ))) return;
+
+    for (i = 0; i < count; i++)
+    {
+        rec = (struct record_processor *)(table->data + offset);
+        rec->cpu_status   = 1; /* CPU Enabled */
+        rec->manufacturer = processor_manufacturerW;
+        sprintfW( device_id, fmtW, i );
+        rec->device_id    = heap_strdupW( device_id );
+        offset += sizeof(*rec);
+    }
+}
+
 static void fill_os( struct table *table )
 {
     struct record_operatingsystem *rec;
@@ -425,7 +447,7 @@ static struct table classtable[] =
     { class_networkadapterW, SIZEOF(col_networkadapter), col_networkadapter, 0, NULL, fill_networkadapter },
     { class_osW, SIZEOF(col_os), col_os, 0, NULL, fill_os },
     { class_processW, SIZEOF(col_process), col_process, 0, NULL, fill_process },
-    { class_processorW, SIZEOF(col_processor), col_processor, SIZEOF(data_processor), (BYTE *)data_processor, NULL },
+    { class_processorW, SIZEOF(col_processor), col_processor, 0, NULL, fill_processor },
     { class_videocontrollerW, SIZEOF(col_videocontroller), col_videocontroller, 0, NULL, fill_videocontroller }
 };
 
