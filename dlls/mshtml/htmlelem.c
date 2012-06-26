@@ -16,8 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-
 #include <stdarg.h>
+#include <assert.h>
 
 #define COBJMACROS
 
@@ -1772,12 +1772,13 @@ void HTMLElement_Init(HTMLElement *This, HTMLDocumentNode *doc, nsIDOMHTMLElemen
     init_dispex(&This->node.dispex, (IUnknown*)&This->IHTMLElement_iface,
             dispex_data ? dispex_data : &HTMLElement_dispex);
 
-    if(nselem)
-        nsIDOMHTMLElement_AddRef(nselem);
-    This->nselem = nselem;
-
-    if(nselem)
+    if(nselem) {
         HTMLDOMNode_Init(doc, &This->node, (nsIDOMNode*)nselem);
+
+        /* No AddRef, share reference with HTMLDOMNode */
+        assert((nsIDOMNode*)nselem == This->node.nsnode);
+        This->nselem = nselem;
+    }
 
     ConnectionPointContainer_Init(&This->cp_container, (IUnknown*)&This->IHTMLElement_iface);
 }
