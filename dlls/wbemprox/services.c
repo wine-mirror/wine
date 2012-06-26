@@ -366,13 +366,27 @@ static HRESULT WINAPI wbem_services_DeleteInstanceAsync(
 
 static HRESULT WINAPI wbem_services_CreateInstanceEnum(
     IWbemServices *iface,
-    const BSTR strFilter,
+    const BSTR strClass,
     LONG lFlags,
     IWbemContext *pCtx,
     IEnumWbemClassObject **ppEnum )
 {
-    FIXME("\n");
-    return WBEM_E_FAILED;
+    static const WCHAR selectW[] = {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',0};
+    WCHAR *query;
+    HRESULT hr;
+
+    TRACE("%p, %s, 0%08x, %p, %p\n", iface, debugstr_w(strClass), lFlags, pCtx, ppEnum);
+
+    if (lFlags) FIXME("unsupported flags 0x%08x\n", lFlags);
+
+    if (!(query = heap_alloc( strlenW( strClass ) * sizeof(WCHAR) + sizeof(selectW) )))
+        return E_OUTOFMEMORY;
+    strcpyW( query, selectW );
+    strcatW( query, strClass );
+
+    hr = exec_query( query, ppEnum );
+    heap_free( query );
+    return hr;
 }
 
 static HRESULT WINAPI wbem_services_CreateInstanceEnumAsync(
