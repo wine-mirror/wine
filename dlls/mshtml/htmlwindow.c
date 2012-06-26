@@ -232,6 +232,8 @@ static void release_inner_window(HTMLInnerWindow *This)
 
     if(This->screen)
         IHTMLScreen_Release(This->screen);
+    if(This->history)
+        IOmHistory_Release(This->history);
 
     heap_free(This);
 }
@@ -684,7 +686,7 @@ static HRESULT WINAPI HTMLWindow2_get_location(IHTMLWindow2 *iface, IHTMLLocatio
 static HRESULT WINAPI HTMLWindow2_get_history(IHTMLWindow2 *iface, IOmHistory **p)
 {
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
-    HTMLOuterWindow *window = This->outer_window;
+    HTMLInnerWindow *window = This->inner_window;
 
     TRACE("(%p)->(%p)\n", This, p);
 

@@ -336,7 +336,6 @@ struct HTMLOuterWindow {
     IInternetSecurityManager *secmgr;
 
     HTMLLocation *location;
-    IOmHistory *history;
 
     struct list children;
     struct list sibling_entry;
@@ -356,6 +355,7 @@ struct HTMLInnerWindow {
     HTMLImageElementFactory *image_factory;
     HTMLOptionElementFactory *option_factory;
     IHTMLScreen *screen;
+    IOmHistory *history;
 
     global_prop_t *global_props;
     DWORD global_prop_cnt;
