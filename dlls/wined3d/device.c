@@ -5293,10 +5293,6 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     if (swapchain_desc->enable_auto_depth_stencil)
         wined3d_device_set_depth_stencil(device, device->auto_depth_stencil);
 
-    TRACE("Resetting stateblock\n");
-    wined3d_stateblock_decref(device->updateStateBlock);
-    wined3d_stateblock_decref(device->stateBlock);
-
     if (swapchain_desc->windowed)
     {
         mode.width = swapchain->orig_width;
@@ -5377,9 +5373,6 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         }
     }
 
-    if (device->d3d_initialized)
-        delete_opengl_contexts(device, swapchain);
-
     if (!swapchain_desc->windowed != !swapchain->desc.windowed
             || DisplayModeChanged)
     {
@@ -5442,6 +5435,13 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         device->style = style;
         device->exStyle = exStyle;
     }
+
+    TRACE("Resetting stateblock.\n");
+    wined3d_stateblock_decref(device->updateStateBlock);
+    wined3d_stateblock_decref(device->stateBlock);
+
+    if (device->d3d_initialized)
+        delete_opengl_contexts(device, swapchain);
 
     /* Note: No parent needed for initial internal stateblock */
     hr = wined3d_stateblock_create(device, WINED3D_SBT_INIT, &device->stateBlock);
