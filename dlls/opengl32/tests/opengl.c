@@ -779,6 +779,16 @@ static void test_getprocaddress(HDC hdc)
         return;
     }
 
+    /* Core GL 1.0/1.1 functions should not be loadable through wglGetProcAddress.
+     * Try to load the function with and without a context.
+     */
+    func = wglGetProcAddress("glEnable");
+    ok(func == NULL, "Lookup of function glEnable with a context passed, expected a failure\n");
+    wglMakeCurrent(hdc, NULL);
+    func = wglGetProcAddress("glEnable");
+    ok(func == NULL, "Lookup of function glEnable without a context passed, expected a failure\n");
+    wglMakeCurrent(hdc, ctx);
+
     /* The goal of the test will be to test behavior of wglGetProcAddress when
      * no WGL context is active. Before the test we pick an extension (GL_ARB_multitexture)
      * which any GL >=1.2.1 implementation supports. Unfortunately the GDI renderer doesn't

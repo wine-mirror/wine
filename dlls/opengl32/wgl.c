@@ -467,13 +467,7 @@ PROC WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
     return NULL;
   }
 
-  /* First, look if it's not already defined in the 'standard' OpenGL functions */
-  if ((local_func = GetProcAddress(opengl32_handle, lpszProc)) != NULL) {
-    TRACE(" found function in 'standard' OpenGL functions (%p)\n", local_func);
-    return local_func;
-  }
-
-  /* After that, search in the thunks to find the real name of the extension */
+  /* Search in the thunks to find the real name of the extension */
   ext.name = lpszProc;
   ext_ret = bsearch(&ext, extension_registry, extension_registry_size,
                     sizeof(OpenGL_extension), compar);
