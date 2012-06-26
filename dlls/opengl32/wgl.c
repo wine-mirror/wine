@@ -393,6 +393,20 @@ int WINAPI wglGetLayerPaletteEntries(HDC hdc,
   return 0;
 }
 
+/* check if the extension is present in the list */
+static BOOL has_extension( const char *list, const char *ext )
+{
+    size_t len = strlen( ext );
+
+    while (list)
+    {
+        while (*list == ' ') list++;
+        if (!strncmp( list, ext, len ) && (!list[len] || list[len] == ' ')) return TRUE;
+        list = strchr( list, ' ' );
+    }
+    return FALSE;
+}
+
 static int compar(const void *elt_a, const void *elt_b) {
   return strcmp(((const OpenGL_extension *) elt_a)->name,
 		((const OpenGL_extension *) elt_b)->name);
@@ -417,7 +431,7 @@ static BOOL is_extension_supported(const char* extension)
      * if the OpenGL extension required for the function we are looking up is supported. */
 
     /* Check if the extension is part of the GL extension string to see if it is supported. */
-    if(strstr(gl_ext_string, extension) != NULL)
+    if (has_extension(gl_ext_string, extension))
         return TRUE;
 
     /* In general an OpenGL function starts as an ARB/EXT extension and at some stage
@@ -1028,7 +1042,7 @@ const GLubyte * WINAPI wine_glGetString( GLenum name )
 	TRACE("- %s:", ThisExtn);
 	
 	/* test if supported API is disabled by config */
-	if (!internal_gl_disabled_extensions || !strstr(internal_gl_disabled_extensions, ThisExtn)) {
+	if (!has_extension(internal_gl_disabled_extensions, ThisExtn)) {
 	  strcat(internal_gl_extensions, " ");
 	  strcat(internal_gl_extensions, ThisExtn);
 	  TRACE(" active\n");
