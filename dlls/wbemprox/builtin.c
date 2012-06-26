@@ -31,6 +31,7 @@
 #include "tlhelp32.h"
 #include "initguid.h"
 #include "d3d10.h"
+#include "winternl.h"
 
 #include "wine/debug.h"
 #include "wbemprox_private.h"
@@ -41,6 +42,8 @@ static const WCHAR class_biosW[] =
     {'W','i','n','3','2','_','B','I','O','S',0};
 static const WCHAR class_compsysW[] =
     {'W','i','n','3','2','_','C','o','m','p','u','t','e','r','S','y','s','t','e','m',0};
+static const WCHAR class_networkadapterW[] =
+    {'W','i','n','3','2','_','N','e','t','w','o','r','k','A','d','a','p','t','e','r',0};
 static const WCHAR class_osW[] =
     {'W','i','n','3','2','_','O','p','e','r','a','t','i','n','g','S','y','s','t','e','m',0};
 static const WCHAR class_processW[] =
@@ -49,8 +52,6 @@ static const WCHAR class_processorW[] =
     {'W','i','n','3','2','_','P','r','o','c','e','s','s','o','r',0};
 static const WCHAR class_videocontrollerW[] =
     {'W','i','n','3','2','_','V','i','d','e','o','C','o','n','t','r','o','l','l','e','r',0};
-static const WCHAR class_networkadapterW[] =
-    {'W','i','n','3','2','_','N','e','t','w','o','r','k','A','d','a','p','t','e','r',0};
 
 static const WCHAR prop_adapterramW[] =
     {'A','d','a','p','t','e','r','R','A','M',0};
@@ -72,6 +73,10 @@ static const WCHAR prop_modelW[] =
     {'M','o','d','e','l',0};
 static const WCHAR prop_netconnectionstatusW[] =
     {'N','e','t','C','o','n','n','e','c','t','i','o','n','S','t','a','t','u','s',0};
+static const WCHAR prop_numlogicalprocessorsW[] =
+    {'N','u','m','b','e','r','O','f','L','o','g','i','c','a','l','P','r','o','c','e','s','s','o','r','s',0};
+static const WCHAR prop_numprocessorsW[] =
+    {'N','u','m','b','e','r','O','f','P','r','o','c','e','s','s','o','r','s',0};
 static const WCHAR prop_osarchitectureW[] =
     {'O','S','A','r','c','h','i','t','e','c','t','u','r','e',0};
 static const WCHAR prop_oslanguageW[] =
@@ -98,9 +103,11 @@ static const struct column col_bios[] =
 };
 static const struct column col_compsys[] =
 {
-    { prop_descriptionW,  CIM_STRING },
-    { prop_manufacturerW, CIM_STRING },
-    { prop_modelW,        CIM_STRING }
+    { prop_descriptionW,          CIM_STRING },
+    { prop_manufacturerW,         CIM_STRING },
+    { prop_modelW,                CIM_STRING },
+    { prop_numlogicalprocessorsW, CIM_UINT32 },
+    { prop_numprocessorsW,        CIM_UINT32 }
 };
 static const struct column col_networkadapter[] =
 {
@@ -173,6 +180,8 @@ struct record_computersystem
     const WCHAR *description;
     const WCHAR *manufacturer;
     const WCHAR *model;
+    UINT32       num_logical_processors;
+    UINT32       num_processors;
 };
 struct record_networkadapter
 {
@@ -212,14 +221,35 @@ static const struct record_bios data_bios[] =
 {
     { bios_descriptionW, bios_manufacturerW, bios_releasedateW, bios_serialnumberW }
 };
-static const struct record_computersystem data_compsys[] =
-{
-    { compsys_descriptionW, compsys_manufacturerW, compsys_modelW }
-};
 static const struct record_processor data_processor[] =
 {
     { processor_manufacturerW }
 };
+
+static UINT get_processor_count(void)
+{
+    SYSTEM_BASIC_INFORMATION info;
+
+    if (NtQuerySystemInformation( SystemBasicInformation, &info, sizeof(info), NULL )) return 1;
+    return info.NumberOfProcessors;
+}
+
+static void fill_compsys( struct table *table )
+{
+    struct record_computersystem *rec;
+
+    if (!(table->data = heap_alloc( sizeof(*rec) ))) return;
+
+    rec = (struct record_computersystem *)table->data;
+    rec->description            = compsys_descriptionW;
+    rec->manufacturer           = compsys_manufacturerW;
+    rec->model                  = compsys_modelW;
+    rec->num_logical_processors = get_processor_count();
+    rec->num_processors         = rec->num_logical_processors;
+
+    TRACE("created 1 row\n");
+    table->num_rows = 1;
+}
 
 static UINT16 get_connection_status( IF_OPER_STATUS status )
 {
@@ -391,7 +421,7 @@ done:
 static struct table classtable[] =
 {
     { class_biosW, SIZEOF(col_bios), col_bios, SIZEOF(data_bios), (BYTE *)data_bios, NULL },
-    { class_compsysW, SIZEOF(col_compsys), col_compsys, SIZEOF(data_compsys), (BYTE *)data_compsys, NULL },
+    { class_compsysW, SIZEOF(col_compsys), col_compsys, 0, NULL, fill_compsys },
     { class_networkadapterW, SIZEOF(col_networkadapter), col_networkadapter, 0, NULL, fill_networkadapter },
     { class_osW, SIZEOF(col_os), col_os, 0, NULL, fill_os },
     { class_processW, SIZEOF(col_process), col_process, 0, NULL, fill_process },
