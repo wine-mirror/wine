@@ -2486,7 +2486,7 @@ LSTATUS WINAPI RegConnectRegistryW( LPCWSTR lpMachineName, HKEY hKey,
 {
     LONG ret;
 
-    TRACE("(%s,%p,%p): stub\n",debugstr_w(lpMachineName),hKey,phkResult);
+    TRACE("(%s,%p,%p)\n",debugstr_w(lpMachineName), hKey, phkResult);
 
     if (!lpMachineName || !*lpMachineName) {
         /* Use the local machine name */
@@ -2679,7 +2679,7 @@ LSTATUS WINAPI RegLoadMUIStringW(HKEY hKey, LPCWSTR pwszValue, LPWSTR pwszBuffer
     LONG result;
         
     TRACE("(hKey = %p, pwszValue = %s, pwszBuffer = %p, cbBuffer = %d, pcbData = %p, "
-          "dwFlags = %d, pwszBaseDir = %s) stub\n", hKey, debugstr_w(pwszValue), pwszBuffer, 
+          "dwFlags = %d, pwszBaseDir = %s)\n", hKey, debugstr_w(pwszValue), pwszBuffer,
           cbBuffer, pcbData, dwFlags, debugstr_w(pwszBaseDir));
 
     /* Parameter sanity checks. */
