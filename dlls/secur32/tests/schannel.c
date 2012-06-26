@@ -640,21 +640,66 @@ static void test_communication(void)
 
     buffers[1].cBuffers = 1;
     buffers[1].pBuffers[0].BufferType = SECBUFFER_TOKEN;
-    data_size = buffers[0].pBuffers[0].cbBuffer;
     status = pInitializeSecurityContextA(&cred_handle, &context, (SEC_CHAR *)"localhost",
             ISC_REQ_CONFIDENTIALITY|ISC_REQ_STREAM,
             0, 0, &buffers[1], 0, NULL, &buffers[0], &attrs, NULL);
     ok(status == SEC_E_INVALID_TOKEN, "Expected SEC_E_INVALID_TOKEN, got %08x\n", status);
 
     buffers[0].pBuffers[0].cbBuffer = buf_size;
-    buffers[1].cBuffers = 4;
-    buffers[1].pBuffers[0].cbBuffer = buf_size;
 
     status = pInitializeSecurityContextA(&cred_handle, NULL, (SEC_CHAR *)"localhost",
             ISC_REQ_CONFIDENTIALITY|ISC_REQ_STREAM,
             0, 0, NULL, 0, &context, &buffers[0], &attrs, NULL);
     ok(status == SEC_I_CONTINUE_NEEDED, "Expected SEC_I_CONTINUE_NEEDED, got %08x\n", status);
 
+    buf = &buffers[0].pBuffers[0];
+    send(sock, buf->pvBuffer, buf->cbBuffer, 0);
+    buf->cbBuffer = buf_size;
+
+    status = pInitializeSecurityContextA(&cred_handle, &context, (SEC_CHAR *)"localhost",
+            ISC_REQ_CONFIDENTIALITY|ISC_REQ_STREAM,
+            0, 0, NULL, 0, NULL, &buffers[0], &attrs, NULL);
+    ok(status == SEC_E_INCOMPLETE_MESSAGE, "Got unexpected status %#x.\n", status);
+    ok(buffers[0].pBuffers[0].cbBuffer == buf_size, "Output buffer size changed.\n");
+    ok(buffers[0].pBuffers[0].BufferType == SECBUFFER_TOKEN, "Output buffer type changed.\n");
+
+    buffers[1].cBuffers = 4;
+    buffers[1].pBuffers[0].cbBuffer = 0;
+
+    status = pInitializeSecurityContextA(&cred_handle, &context, (SEC_CHAR *)"localhost",
+            ISC_REQ_CONFIDENTIALITY|ISC_REQ_STREAM,
+            0, 0, &buffers[1], 0, NULL, &buffers[0], &attrs, NULL);
+    ok(status == SEC_E_INCOMPLETE_MESSAGE, "Got unexpected status %#x.\n", status);
+    ok(buffers[0].pBuffers[0].cbBuffer == buf_size, "Output buffer size changed.\n");
+    ok(buffers[0].pBuffers[0].BufferType == SECBUFFER_TOKEN, "Output buffer type changed.\n");
+
+    buf = &buffers[1].pBuffers[0];
+    buf->cbBuffer = buf_size;
+    ret = receive_data(sock, buf);
+    if (ret == -1)
+        return;
+
+    buffers[1].pBuffers[0].cbBuffer = 4;
+    status = pInitializeSecurityContextA(&cred_handle, &context, (SEC_CHAR *)"localhost",
+            ISC_REQ_CONFIDENTIALITY|ISC_REQ_STREAM,
+            0, 0, &buffers[1], 0, NULL, &buffers[0], &attrs, NULL);
+    ok(status == SEC_E_INCOMPLETE_MESSAGE, "Got unexpected status %#x.\n", status);
+    ok(buffers[0].pBuffers[0].cbBuffer == buf_size, "Output buffer size changed.\n");
+    ok(buffers[0].pBuffers[0].BufferType == SECBUFFER_TOKEN, "Output buffer type changed.\n");
+
+    buffers[1].pBuffers[0].cbBuffer = 5;
+    status = pInitializeSecurityContextA(&cred_handle, &context, (SEC_CHAR *)"localhost",
+            ISC_REQ_CONFIDENTIALITY|ISC_REQ_STREAM,
+            0, 0, &buffers[1], 0, NULL, &buffers[0], &attrs, NULL);
+    ok(status == SEC_E_INCOMPLETE_MESSAGE, "Got unexpected status %#x.\n", status);
+    ok(buffers[0].pBuffers[0].cbBuffer == buf_size, "Output buffer size changed.\n");
+    ok(buffers[0].pBuffers[0].BufferType == SECBUFFER_TOKEN, "Output buffer type changed.\n");
+
+    buffers[1].pBuffers[0].cbBuffer = ret;
+    status = pInitializeSecurityContextA(&cred_handle, &context, (SEC_CHAR *)"localhost",
+            ISC_REQ_CONFIDENTIALITY|ISC_REQ_STREAM,
+            0, 0, &buffers[1], 0, NULL, &buffers[0], &attrs, NULL);
+    buffers[1].pBuffers[0].cbBuffer = buf_size;
     while (status == SEC_I_CONTINUE_NEEDED)
     {
         buf = &buffers[0].pBuffers[0];

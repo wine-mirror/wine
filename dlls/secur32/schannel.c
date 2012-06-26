@@ -714,6 +714,30 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
     }
     else
     {
+        unsigned int expected_size;
+        unsigned char *ptr;
+        SecBuffer *buffer;
+        int idx;
+
+        if (!pInput)
+            return SEC_E_INCOMPLETE_MESSAGE;
+
+        idx = schan_find_sec_buffer_idx(pInput, 0, SECBUFFER_TOKEN);
+        if (idx == -1)
+            return SEC_E_INCOMPLETE_MESSAGE;
+
+        buffer = &pInput->pBuffers[idx];
+        if (buffer->cbBuffer < 5)
+            return SEC_E_INCOMPLETE_MESSAGE;
+
+        ptr = buffer->pvBuffer;
+        expected_size = 5 + ((ptr[3] << 8) | ptr[4]);
+        if (buffer->cbBuffer < expected_size)
+        {
+            TRACE("Expected %u bytes, but buffer only contains %u bytes.\n", expected_size, buffer->cbBuffer);
+            return SEC_E_INCOMPLETE_MESSAGE;
+        }
+
         ctx = schan_get_object(phContext->dwLower, SCHAN_HANDLE_CTX);
     }
 
