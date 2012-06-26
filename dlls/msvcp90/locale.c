@@ -3445,7 +3445,7 @@ MSVCP_size_t __cdecl numpunct_char__Getcat(const locale_facet **facet, const loc
     return LC_NUMERIC;
 }
 
-numpunct_char* numpunct_char_use_facet(const locale *loc)
+static numpunct_char* numpunct_char_use_facet(const locale *loc)
 {
     static numpunct_char *obj = NULL;
 
