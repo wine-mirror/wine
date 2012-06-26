@@ -346,8 +346,7 @@ static void test_samplegrabber(void)
     /* COM aggregation */
     hr = CoCreateInstance(&CLSID_SampleGrabber, &unk_obj.IUnknown_iface, CLSCTX_INPROC_SERVER,
             &IID_IUnknown, (void**)&unk_obj.inner_unk);
-    todo_wine ok(hr == S_OK, "CoCreateInstance failed: %08x\n", hr);
-    if (hr != S_OK) return;
+    ok(hr == S_OK, "CoCreateInstance failed: %08x\n", hr);
 
     hr = IUnknown_QueryInterface(unk_obj.inner_unk, &IID_ISampleGrabber, (void**)&sg);
     ok(hr == S_OK, "QueryInterface for IID_ISampleGrabber failed: %08x\n", hr);
