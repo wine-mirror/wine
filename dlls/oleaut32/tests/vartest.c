@@ -2007,6 +2007,8 @@ static void test_VarNot(void)
 {
     static const WCHAR szNum0[] = {'0','\0' };
     static const WCHAR szNum1[] = {'1','\0' };
+    static const WCHAR szFalse[] = { '#','F','A','L','S','E','#','\0' };
+    static const WCHAR szTrue[] = { '#','T','R','U','E','#','\0' };
     HRESULT hres;
     VARIANT v, exp, vDst;
     DECIMAL *pdec = &V_DECIMAL(&v);
@@ -2102,6 +2104,8 @@ static void test_VarNot(void)
     ok(V_VT(&v) == VT_BSTR && V_BSTR(&v) == szNum0, "VarNot(0): changed input\n");
     VARNOT(BSTR,(BSTR)szNum1,I4,-2);
     ok(V_VT(&v) == VT_BSTR && V_BSTR(&v) == szNum1, "VarNot(1): changed input\n");
+    VARNOT(BSTR, (BSTR)szTrue, BOOL, VARIANT_FALSE);
+    VARNOT(BSTR, (BSTR)szFalse, BOOL, VARIANT_TRUE);
 
     V_VT(&v) = VT_DECIMAL;
     S(U(*pdec)).sign = DECIMAL_NEG;

@@ -5026,6 +5026,19 @@ HRESULT WINAPI VarNot(LPVARIANT pVarIn, LPVARIANT pVarOut)
         pVarIn = &temp;
     }
 
+    if (V_VT(pVarIn) == VT_BSTR)
+    {
+        V_VT(&varIn) = VT_R8;
+        hRet = VarR8FromStr( V_BSTR(pVarIn), LOCALE_USER_DEFAULT, 0, &V_R8(&varIn) );
+        if (FAILED(hRet))
+        {
+            V_VT(&varIn) = VT_BOOL;
+            hRet = VarBoolFromStr( V_BSTR(pVarIn), LOCALE_USER_DEFAULT, VAR_LOCALBOOL, &V_BOOL(&varIn) );
+        }
+        if (FAILED(hRet)) goto VarNot_Exit;
+        pVarIn = &varIn;
+    }
+
     V_VT(pVarOut) = V_VT(pVarIn);
 
     switch (V_VT(pVarIn))
@@ -5066,12 +5079,6 @@ HRESULT WINAPI VarNot(LPVARIANT pVarIn, LPVARIANT pVarOut)
         V_I4(pVarOut) = ~V_I4(pVarOut);
         V_VT(pVarOut) = VT_I4;
         break;
-    case VT_BSTR:
-        hRet = VarR8FromStr(V_BSTR(pVarIn), LOCALE_USER_DEFAULT, 0, &V_R8(&varIn));
-        if (FAILED(hRet))
-            break;
-        pVarIn = &varIn;
-        /* Fall through ... */
     case VT_DATE:
     case VT_R8:
         hRet = VarI4FromR8(V_R8(pVarIn), &V_I4(pVarOut));
