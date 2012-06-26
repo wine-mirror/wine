@@ -5289,12 +5289,6 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         }
     }
 
-    if (device->onscreen_depth_stencil)
-    {
-        wined3d_surface_decref(device->onscreen_depth_stencil);
-        device->onscreen_depth_stencil = NULL;
-    }
-
     /* Reset the depth stencil */
     if (swapchain_desc->enable_auto_depth_stencil)
         wined3d_device_set_depth_stencil(device, device->auto_depth_stencil);
