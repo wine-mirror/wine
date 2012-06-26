@@ -69,7 +69,7 @@ my $norm_file = "opengl_norm.c";
 my $ext_file  = "opengl_ext.c";
 
 # Set to 0 for removing the ENTER / LEAVE GL calls
-my $gen_thread_safe = 1;
+my $gen_thread_safe = 0;
 # Prefix used for the local variables
 my $ext_prefix = "func_";
 # If set to 1, generate TRACEs for each OpenGL function
@@ -285,7 +285,7 @@ sub GenerateThunk($$$$$)
     }
     $ret .= 'void ' if (!@{$func_ref->[2]});
     $ret = "$ret) {\n";
-    if ($func_ref->[1] ne "void") {
+    if ($func_ref->[1] ne "void" && $thread_safe) {
 	$ret = "$ret  " . ConvertType($func_ref->[1]) . " ret_value;\n";
     }
     $ret .= $local_var;
@@ -297,18 +297,23 @@ sub GenerateThunk($$$$$)
 	$ret = "$ret);\n";
     }
     if ($thread_safe) {
-	$ret = "$ret  ENTER_GL();\n";
+	$ret .= "  ENTER_GL();\n";
+        $ret .= "  ";
+        if ($func_ref->[1] ne "void") {
+            $ret .= "ret_value = ";
+        }
+        $ret .= "$prefix$func_ref->[0]( $call_arg);\n";
+	$ret .= "  LEAVE_GL();\n";
+        if ($func_ref->[1] ne "void") {
+            $ret .= "  return ret_value;\n"
+        }
     }
-    $ret = "$ret  ";
-    if ($func_ref->[1] ne "void") {
-	$ret = $ret . "ret_value = ";
-    }
-    $ret = "$ret$prefix$func_ref->[0]( $call_arg);\n";
-    if ($thread_safe) {
-	$ret = "$ret  LEAVE_GL();\n";
-    }
-    if ($func_ref->[1] ne "void") {
-	$ret = "$ret  return ret_value;\n"
+    else {
+        $ret .= "  ";
+        if ($func_ref->[1] ne "void") {
+            $ret .= "return ";
+        }
+        $ret .= "$prefix$func_ref->[0]( $call_arg);\n";
     }
     $ret = "$ret}\n";
 

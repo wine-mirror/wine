@@ -36,15 +36,6 @@
 #define WINAPI      __stdcall
 #define APIENTRY    WINAPI
 
-/* X11 locking */
-
-extern void (*wine_tsx11_lock_ptr)(void);
-extern void (*wine_tsx11_unlock_ptr)(void);
-
-/* As GLX relies on X, this is needed */
-#define ENTER_GL() wine_tsx11_lock_ptr()
-#define LEAVE_GL() wine_tsx11_unlock_ptr()
-
 
 typedef struct {
   const char  *name;     /* name of the extension */

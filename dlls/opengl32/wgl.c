@@ -76,9 +76,6 @@ MAKE_FUNCPTR(gluTessVertex)
 #undef MAKE_FUNCPTR
 #endif /* SONAME_LIBGLU */
 
-void (*wine_tsx11_lock_ptr)(void) = NULL;
-void (*wine_tsx11_unlock_ptr)(void) = NULL;
-
 static HMODULE opengl32_handle;
 static void* libglu_handle = NULL;
 
@@ -588,10 +585,8 @@ static BOOL wglUseFontBitmaps_common( HDC hdc, DWORD first, DWORD count, DWORD l
      int org_alignment;
      BOOL ret = TRUE;
 
-     ENTER_GL();
      glGetIntegerv(GL_UNPACK_ALIGNMENT, &org_alignment);
      glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-     LEAVE_GL();
 
      for (glyph = first; glyph < first + count; glyph++) {
          static const MAT2 identity = { {0,1},{0,0},{0,0},{0,1} };
@@ -661,7 +656,6 @@ static BOOL wglUseFontBitmaps_common( HDC hdc, DWORD first, DWORD count, DWORD l
              }
          }
 
-         ENTER_GL();
          glNewList(listBase++, GL_COMPILE);
          if (needed_size != 0) {
              glBitmap(gm.gmBlackBoxX, gm.gmBlackBoxY,
@@ -673,12 +667,9 @@ static BOOL wglUseFontBitmaps_common( HDC hdc, DWORD first, DWORD count, DWORD l
              glBitmap(0, 0, 0, 0, gm.gmCellIncX, gm.gmCellIncY, NULL);
          }
          glEndList();
-         LEAVE_GL();
      }
 
-     ENTER_GL();
      glPixelStorei(GL_UNPACK_ALIGNMENT, org_alignment);
-     LEAVE_GL();
      HeapFree(GetProcessHeap(), 0, bitmap);
      HeapFree(GetProcessHeap(), 0, gl_bitmap);
      return ret;
@@ -794,17 +785,11 @@ static BOOL wglUseFontOutlines_common(HDC hdc,
         return FALSE;
     }
 
-    ENTER_GL();
     tess = pgluNewTess();
-    if(tess)
-    {
-        pgluTessCallback(tess, GLU_TESS_VERTEX, (_GLUfuncptr)tess_callback_vertex);
-        pgluTessCallback(tess, GLU_TESS_BEGIN, (_GLUfuncptr)tess_callback_begin);
-        pgluTessCallback(tess, GLU_TESS_END, tess_callback_end);
-    }
-    LEAVE_GL();
-
     if(!tess) return FALSE;
+    pgluTessCallback(tess, GLU_TESS_VERTEX, (_GLUfuncptr)tess_callback_vertex);
+    pgluTessCallback(tess, GLU_TESS_BEGIN, (_GLUfuncptr)tess_callback_begin);
+    pgluTessCallback(tess, GLU_TESS_END, tess_callback_end);
 
     GetObjectW(GetCurrentObject(hdc, OBJ_FONT), sizeof(lf), &lf);
     rc.left = rc.right = rc.bottom = 0;
@@ -856,7 +841,6 @@ static BOOL wglUseFontOutlines_common(HDC hdc,
             lpgmf++;
         }
 
-	ENTER_GL();
 	glNewList(listBase++, GL_COMPILE);
         pgluTessBeginPolygon(tess, NULL);
 
@@ -919,7 +903,6 @@ error_in_list:
         pgluTessEndPolygon(tess);
         glTranslated((GLdouble)gm.gmCellIncX / em_size, (GLdouble)gm.gmCellIncY / em_size, 0.0);
         glEndList();
-        LEAVE_GL();
         HeapFree(GetProcessHeap(), 0, buf);
         HeapFree(GetProcessHeap(), 0, vertices);
     }
@@ -1056,29 +1039,23 @@ static char *build_gl_extensions( const char *extensions )
  */
 const GLubyte * WINAPI wine_glGetString( GLenum name )
 {
-  static const char *gl_extensions;
-  const GLubyte *ret;
-  const char* GL_Extensions = NULL;
+  static const GLubyte *gl_extensions;
 
   /* this is for buggy nvidia driver, crashing if called from a different
      thread with no context */
   if(wglGetCurrentContext() == NULL)
     return NULL;
 
-  if (GL_EXTENSIONS != name) {
-    ENTER_GL();
-    ret = glGetString(name);
-    LEAVE_GL();
-    return ret;
-  }
+  if (name != GL_EXTENSIONS) return glGetString(name);
 
-  if (!gl_extensions) {
-    ENTER_GL();
-    GL_Extensions = (const char *) glGetString(GL_EXTENSIONS);
-    gl_extensions = build_gl_extensions( GL_Extensions );
-    LEAVE_GL();
+  if (!gl_extensions)
+  {
+      const char *orig_ext = (const char *)glGetString(GL_EXTENSIONS);
+      char *new_ext = build_gl_extensions( orig_ext );
+      if (InterlockedCompareExchangePointer( (void **)&gl_extensions, new_ext, NULL ))
+          HeapFree( GetProcessHeap(), 0, new_ext );
   }
-  return (const GLubyte *)gl_extensions;
+  return gl_extensions;
 }
 
 /***********************************************************************
@@ -1101,20 +1078,16 @@ BOOL WINAPI DECLSPEC_HOTPATCH wglSwapBuffers( HDC hdc )
    creating a rendering context.... */
 static BOOL process_attach(void)
 {
-  HMODULE mod_x11, mod_gdi32;
+  HMODULE mod_gdi32;
 
   GetDesktopWindow();  /* make sure winex11 is loaded (FIXME) */
-  mod_x11 = GetModuleHandleA( "winex11.drv" );
   mod_gdi32 = GetModuleHandleA( "gdi32.dll" );
 
-  if (!mod_x11 || !mod_gdi32)
+  if (!mod_gdi32)
   {
-      ERR("X11DRV or GDI32 not loaded. Cannot create default context.\n");
+      ERR("GDI32 not loaded. Cannot create default context.\n");
       return FALSE;
   }
-
-  wine_tsx11_lock_ptr   = (void *)GetProcAddress( mod_x11, "wine_tsx11_lock" );
-  wine_tsx11_unlock_ptr = (void *)GetProcAddress( mod_x11, "wine_tsx11_unlock" );
 
   wine_wgl.p_wglGetProcAddress = (void *)GetProcAddress(mod_gdi32, "wglGetProcAddress");
   wine_wgl.p_wglMakeCurrent = (void *)GetProcAddress(mod_gdi32, "wglMakeCurrent");
