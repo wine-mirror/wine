@@ -197,9 +197,6 @@ static void release_outer_window(HTMLOuterWindow *This)
         IHTMLLocation_Release(&This->location->IHTMLLocation_iface);
     }
 
-    if(This->screen)
-        IHTMLScreen_Release(This->screen);
-
     This->window_ref->window = NULL;
     windowref_release(This->window_ref);
 
@@ -232,6 +229,9 @@ static void release_inner_window(HTMLInnerWindow *This)
         This->option_factory->window = NULL;
         IHTMLOptionElementFactory_Release(&This->option_factory->IHTMLOptionElementFactory_iface);
     }
+
+    if(This->screen)
+        IHTMLScreen_Release(This->screen);
 
     heap_free(This);
 }
@@ -1068,7 +1068,7 @@ static HRESULT WINAPI HTMLWindow2_showHelp(IHTMLWindow2 *iface, BSTR helpURL, VA
 static HRESULT WINAPI HTMLWindow2_get_screen(IHTMLWindow2 *iface, IHTMLScreen **p)
 {
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
-    HTMLOuterWindow *window = This->outer_window;
+    HTMLInnerWindow *window = This->inner_window;
 
     TRACE("(%p)->(%p)\n", This, p);
 
