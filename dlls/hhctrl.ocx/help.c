@@ -634,6 +634,8 @@ static LRESULT OnTopicChange(HHInfo *info, void *user_data)
                 IndexSubItem *item = &iiter->items[i];
                 WCHAR *name = iiter->keyword;
 
+                if(!item->name)
+                    item->name = GetDocumentTitle(info->pCHMInfo, item->local);
                 if(item->name)
                     name = item->name;
                 memset(&lvi, 0, sizeof(lvi));

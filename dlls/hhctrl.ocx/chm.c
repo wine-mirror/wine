@@ -20,16 +20,13 @@
  */
 
 #include "hhctrl.h"
+#include "stream.h"
 
 #include "winreg.h"
 #include "shlwapi.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(htmlhelp);
-
-#define BLOCK_BITS 12
-#define BLOCK_SIZE (1 << BLOCK_BITS)
-#define BLOCK_MASK (BLOCK_SIZE-1)
 
 /* Reads a string from the #STRINGS section in the CHM file */
 static LPCSTR GetChmString(CHMInfo *chm, DWORD offset)
@@ -411,6 +408,62 @@ IStream *GetChmStream(CHMInfo *info, LPCWSTR parent_chm, ChmPath *chm_file)
         WARN("Could not open stream: %08x\n", hres);
 
     return stream;
+}
+
+/*
+ * Retrieve a CHM document and parse the data from the <title> element to get the document's title.
+ */
+WCHAR *GetDocumentTitle(CHMInfo *info, LPCWSTR document)
+{
+    strbuf_t node, node_name, content;
+    WCHAR *document_title = NULL;
+    IStream *str = NULL;
+    IStorage *storage;
+    stream_t stream;
+    HRESULT hres;
+
+    TRACE("%s\n", debugstr_w(document));
+
+    storage = info->pStorage;
+    if(!storage) {
+        WARN("Could not open storage to obtain the title for a document.\n");
+        return NULL;
+    }
+    IStorage_AddRef(storage);
+
+    hres = IStorage_OpenStream(storage, document, NULL, STGM_READ, 0, &str);
+    IStorage_Release(storage);
+    if(FAILED(hres))
+        WARN("Could not open stream: %08x\n", hres);
+
+    stream_init(&stream, str);
+    strbuf_init(&node);
+    strbuf_init(&content);
+    strbuf_init(&node_name);
+
+    while(next_node(&stream, &node)) {
+        get_node_name(&node, &node_name);
+
+        TRACE("%s\n", node.buf);
+
+        if(!strcasecmp(node_name.buf, "title")) {
+            if(next_content(&stream, &content) && content.len > 1)
+            {
+                document_title = strdupnAtoW(&content.buf[1], content.len-1);
+                FIXME("magic: %s\n", debugstr_w(document_title));
+                break;
+            }
+        }
+
+        strbuf_zero(&node);
+    }
+
+    strbuf_free(&node);
+    strbuf_free(&content);
+    strbuf_free(&node_name);
+    IStream_Release(str);
+
+    return document_title;
 }
 
 /* Opens the CHM file for reading */

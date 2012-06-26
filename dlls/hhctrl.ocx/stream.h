@@ -19,7 +19,9 @@
 #ifndef HHCTRL_STREAM_H
 #define HHCTRL_STREAM_H
 
-#define BLOCK_SIZE 0x1000
+#define BLOCK_BITS 12
+#define BLOCK_SIZE (1 << BLOCK_BITS)
+#define BLOCK_MASK (BLOCK_SIZE-1)
 
 typedef struct {
     char *buf;
