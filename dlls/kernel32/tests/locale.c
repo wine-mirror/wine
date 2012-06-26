@@ -1652,7 +1652,17 @@ static INT LCMapStringW_wrapper(DWORD flags, LPCWSTR src, INT srclen, LPWSTR dst
 
 static void test_LCMapStringW(void)
 {
+    int ret;
+    WCHAR buf[256];
+
     trace("testing LCMapStringW\n");
+
+    SetLastError(0xdeadbeef);
+    ret = LCMapStringW((LCID)-1, LCMAP_LOWERCASE, upper_case, -1, buf, sizeof(buf)/sizeof(WCHAR));
+    todo_wine {
+    ok(!ret, "LCMapStringW should fail with bad lcid\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "unexpected error code %d\n", GetLastError());
+    }
 
     test_lcmapstring_unicode(LCMapStringW_wrapper, "LCMapStringW:");
 }
@@ -1665,15 +1675,23 @@ static INT LCMapStringEx_wrapper(DWORD flags, LPCWSTR src, INT srclen, LPWSTR ds
 static void test_LCMapStringEx(void)
 {
     int ret;
-    WCHAR buf[256];
+    WCHAR buf[256], badname[] = {'w', 'i', 'n', 'e', 't', 'e', 's', 't', 0};
 
     if (!pLCMapStringEx)
     {
-        skip( "LCMapStringEx not available\n" );
+        win_skip( "LCMapStringEx not available\n" );
         return;
     }
 
     trace("testing LCMapStringEx\n");
+
+    SetLastError(0xdeadbeef);
+    ret = pLCMapStringEx(badname, LCMAP_LOWERCASE,
+                         upper_case, -1, buf, sizeof(buf)/sizeof(WCHAR), NULL, NULL, 0);
+    todo_wine {
+    ok(!ret, "LCMapStringEx should fail with bad locale name\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "unexpected error code %d\n", GetLastError());
+    }
 
     /* test reserved parameters */
     ret = pLCMapStringEx(LOCALE_NAME_USER_DEFAULT, LCMAP_LOWERCASE,
