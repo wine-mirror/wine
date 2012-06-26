@@ -1080,23 +1080,18 @@ static SECURITY_STATUS SEC_ENTRY schan_DecryptMessage(PCtxtHandle context_handle
     {
         SIZE_T length = data_size - received;
         SECURITY_STATUS status = schan_imp_recv(ctx->session, data + received, &length);
+
         if (status == SEC_I_CONTINUE_NEEDED)
-        {
-            if (!received)
-            {
-                HeapFree(GetProcessHeap(), 0, data);
-                TRACE("Returning SEC_E_INCOMPLETE_MESSAGE\n");
-                return SEC_E_INCOMPLETE_MESSAGE;
-            }
             break;
-        }
-        else if (status != SEC_E_OK)
+
+        if (status != SEC_E_OK)
         {
             HeapFree(GetProcessHeap(), 0, data);
             ERR("Returning %d\n", status);
             return status;
         }
-        else if (!length)
+
+        if (!length)
             break;
 
         received += length;
