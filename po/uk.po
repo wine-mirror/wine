@@ -9264,7 +9264,7 @@ msgstr "Зациклювання при обробці посилань"
 msgid "Referral hop limit exceeded"
 msgstr "Перевищено граничну кількість пересилання посилань"
 
-#: attrib.rc:27 cmd.rc:314
+#: attrib.rc:27 cmd.rc:325
 msgid ""
 "Not Yet Implemented\n"
 "\n"
@@ -9272,7 +9272,7 @@ msgstr ""
 "Ще не реалізовано\n"
 "\n"
 
-#: attrib.rc:28 cmd.rc:317
+#: attrib.rc:28 cmd.rc:328
 msgid "%1: File Not Found\n"
 msgstr "%1: Файл не знайдено\n"
 
@@ -9637,7 +9637,7 @@ msgstr "RD <тека> це коротка версія RMDIR. Вона вида�
 msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgstr "RMDIR <тека> видаляє підтеку.\n"
 
-#: cmd.rc:193
+#: cmd.rc:204
 msgid ""
 "SET displays or changes the cmd environment variables.\n"
 "\n"
@@ -9673,7 +9673,7 @@ msgstr ""
 "в звичайній реалізації Win32. Зверніть увагу на те, що неможливо\n"
 "змінити оточення операційної системи з cmd.\n"
 
-#: cmd.rc:198
+#: cmd.rc:209
 msgid ""
 "SHIFT is used in a batch file to remove one parameter from the head of\n"
 "the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n"
@@ -9684,7 +9684,7 @@ msgstr ""
 "при\n"
 "її виклику з командного рядка.\n"
 
-#: cmd.rc:175 start.rc:39
+#: cmd.rc:186 start.rc:50
 msgid ""
 "Start a program, or open a document in the program normally used for files "
 "with that suffix.\n"
@@ -9693,41 +9693,36 @@ msgid ""
 "start [options] document_filename\n"
 "\n"
 "Options:\n"
-"/M[inimized] Start the program minimized.\n"
-"/MAX[imized] Start the program maximized.\n"
-"/R[estored]  Start the program normally (neither minimized nor maximized).\n"
-"/W[ait]      Wait for started program to finish, then exit with its exit "
+"\"title\"      Specifies the title of the child windows.\n"
+"/d directory Start the program in the specified directory.\n"
+"/b           Don't create a new console for the program.\n"
+"/i           Start the program with fresh environment variables.\n"
+"/min         Start the program minimized.\n"
+"/max         Start the program maximized.\n"
+"/low         Start the program in the idle priority class.\n"
+"/normal      Start the program in the normal priority class.\n"
+"/high        Start the program in the high priority class.\n"
+"/realtime    Start the program in the realtime priority class.\n"
+"/abovenormal Start the program in the abovenormal priority class.\n"
+"/belownormal Start the program in the belownormal priority class.\n"
+"/node n      Start the program on the specified NUMA node.\n"
+"/affinity mask Start the program with the specified affinity mask.\n"
+"/wait        Wait for the started program to finish, then exit with its exit "
 "code.\n"
-"/Unix        Use a Unix filename and start the file like windows explorer.\n"
-"/ProgIDOpen  Open a document using the following progID.\n"
+"/unix        Use a Unix filename and start the file like windows explorer.\n"
+"/ProgIDOpen  Open a document using the specified progID.\n"
 "/?           Display this help and exit.\n"
 msgstr ""
-"Запустити програму чи відкрити документ в програмі, яка\n"
-"зазвичай використовується для файлів з цим розширенням.\n"
-"Використання:\n"
-"start [опції] ім'я_файлу_програми [...]\n"
-"start [опції] ім'я_файлу_документу\n"
-"\n"
-"Опції:\n"
-"/M[inimized] Запустити програму згорнутою.\n"
-"/MAX[imized] Запустити програму на весь екран.\n"
-"/R[estored]  Запустити програму зі звичайним розміром вікна.\n"
-"/W[ait]      Очікувати завершення запущеної програми і вийти з кодом її "
-"виходу.\n"
-"/Unix        Сприймати шлях до документу записаним в Unix-форматі і "
-"запускати як windows explorer.\n"
-"/ProgIDOpen  Відкрити документ, використовуючи зазначений progID.\n"
-"/?           Показати довідку та вийти.\n"
 
-#: cmd.rc:200
+#: cmd.rc:211
 msgid "TIME sets or shows the current system time.\n"
 msgstr "TIME задає чи показує поточний системний час.\n"
 
-#: cmd.rc:202
+#: cmd.rc:213
 msgid "TITLE <string> sets the window title for the cmd window.\n"
 msgstr "TITLE <рядок> задає заголовок вікна для вікна cmd.\n"
 
-#: cmd.rc:206
+#: cmd.rc:217
 msgid ""
 "TYPE <filename> copies <filename> to the console device (or elsewhere\n"
 "if redirected). No check is made that the file is readable text.\n"
@@ -9737,7 +9732,7 @@ msgstr ""
 "якщо він перенаправлений). Не перевіряється, чи файл це текст, призначений\n"
 "для читання.\n"
 
-#: cmd.rc:215
+#: cmd.rc:226
 msgid ""
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
 "\n"
@@ -9756,15 +9751,15 @@ msgstr ""
 "\n"
 "Прапор перевірки не має функцій в Wine.\n"
 
-#: cmd.rc:218
+#: cmd.rc:229
 msgid "VER displays the version of cmd you are running.\n"
 msgstr "VER відображає версію запущеного cmd.\n"
 
-#: cmd.rc:220
+#: cmd.rc:231
 msgid "VOL shows the volume label of a disk device.\n"
 msgstr "VOL відображає мітку тому дискового пристрою.\n"
 
-#: cmd.rc:224
+#: cmd.rc:235
 msgid ""
 "ENDLOCAL ends localization of environment changes in a batch file\n"
 "which were introduced by a preceding SETLOCAL.\n"
@@ -9772,7 +9767,7 @@ msgstr ""
 "ENDLOCAL завершує локазізацію змін оточення в пакетному файлі\n"
 "що були впроваджені командою SETLOCAL.\n"
 
-#: cmd.rc:232
+#: cmd.rc:243
 msgid ""
 "SETLOCAL starts localization of environment changes in a batch file.\n"
 "\n"
@@ -9788,7 +9783,7 @@ msgstr ""
 "трапиться раніше), після чого відновлюються попередні налаштування\n"
 "оточення.\n"
 
-#: cmd.rc:235
+#: cmd.rc:246
 msgid ""
 "PUSHD <directoryname> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
@@ -9796,11 +9791,11 @@ msgstr ""
 "PUSHD <ім'я_теки> зберігає поточну теку в стек,\n"
 "а потім змінює поточну теку на вказану.\n"
 
-#: cmd.rc:237
+#: cmd.rc:248
 msgid "POPD changes current directory to the last one saved with PUSHD.\n"
 msgstr "POPD змінює поточну теку на останню збережену командою PUSHD.\n"
 
-#: cmd.rc:245
+#: cmd.rc:256
 msgid ""
 "ASSOC shows or modifies file extension associations.\n"
 "\n"
@@ -9820,7 +9815,7 @@ msgstr ""
 "Якщо не вказати тип файлу після знаку рівності то існуюча асоціація буде "
 "видалена.\n"
 
-#: cmd.rc:256
+#: cmd.rc:267
 msgid ""
 "FTYPE shows or modifies open commands associated with file types.\n"
 "\n"
@@ -9844,11 +9839,11 @@ msgstr ""
 "Якщо не вказана команда відкриття після знаку рівності то це видалить\n"
 "команду для вказаного типу файлів.\n"
 
-#: cmd.rc:258
+#: cmd.rc:269
 msgid "MORE displays output of files or piped input in pages.\n"
 msgstr "MORE відображає вміст файлів чи каналів сторінками.\n"
 
-#: cmd.rc:262
+#: cmd.rc:273
 msgid ""
 "CHOICE displays a text and waits, until the User\n"
 "presses an allowed Key from a selectable list.\n"
@@ -9859,7 +9854,7 @@ msgstr ""
 "CHOICE переважно використовується для побудови меню вибору в пакетному "
 "файлі.\n"
 
-#: cmd.rc:266
+#: cmd.rc:277
 msgid ""
 "EXIT terminates the current command session and returns\n"
 "to the operating system or shell from which you invoked cmd.\n"
@@ -9868,7 +9863,7 @@ msgstr ""
 "до операційної системи чи оболонки, з якої ви запустили cmd.\n"
 
 # FIXME: Missing CHOICE
-#: cmd.rc:304
+#: cmd.rc:315
 #, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
@@ -9948,110 +9943,110 @@ msgstr ""
 "\n"
 "Введіть HELP <команда> для детальнішої інформації про вищенаведені команди.\n"
 
-#: cmd.rc:306
+#: cmd.rc:317
 msgid "Are you sure?"
 msgstr "Ви впевнені?"
 
-#: cmd.rc:307 xcopy.rc:40
+#: cmd.rc:318 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr "Т"
 
-#: cmd.rc:308 xcopy.rc:41
+#: cmd.rc:319 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr "Н"
 
-#: cmd.rc:309
+#: cmd.rc:320
 msgid "File association missing for extension %1\n"
 msgstr "Файлова асоціація для розширення %1 відсутня\n"
 
-#: cmd.rc:310
+#: cmd.rc:321
 msgid "No open command associated with file type '%1'\n"
 msgstr "Немає команди відкриття, асоційованої з файловим типом '%1'\n"
 
-#: cmd.rc:311
+#: cmd.rc:322
 msgid "Overwrite %1?"
 msgstr "Перезаписати %1?"
 
-#: cmd.rc:312
+#: cmd.rc:323
 msgid "More..."
 msgstr "Більше..."
 
-#: cmd.rc:313
+#: cmd.rc:324
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr "Рядок в обробці Пакету мабуть урізаний. Використовую:\n"
 
-#: cmd.rc:315
+#: cmd.rc:326
 msgid "Argument missing\n"
 msgstr "Відсутній аргумент\n"
 
-#: cmd.rc:316
+#: cmd.rc:327
 msgid "Syntax error\n"
 msgstr "Синтаксична помилка\n"
 
-#: cmd.rc:318
+#: cmd.rc:329
 msgid "No help available for %1\n"
 msgstr "Немає довідки для %1\n"
 
-#: cmd.rc:319
+#: cmd.rc:330
 msgid "Target to GOTO not found\n"
 msgstr "Не знайдена ціль для GOTO\n"
 
-#: cmd.rc:320
+#: cmd.rc:331
 msgid "Current Date is %1\n"
 msgstr "Поточна дата: %1\n"
 
-#: cmd.rc:321
+#: cmd.rc:332
 msgid "Current Time is %1\n"
 msgstr "Поточний час: %1\n"
 
-#: cmd.rc:322
+#: cmd.rc:333
 msgid "Enter new date: "
 msgstr "Введіть нову дату: "
 
-#: cmd.rc:323
+#: cmd.rc:334
 msgid "Enter new time: "
 msgstr "Введіть новий час: "
 
-#: cmd.rc:324
+#: cmd.rc:335
 msgid "Environment variable %1 not defined\n"
 msgstr "Змінна оточення %1 не визначена\n"
 
-#: cmd.rc:325 xcopy.rc:38
+#: cmd.rc:336 xcopy.rc:38
 msgid "Failed to open '%1'\n"
 msgstr "Не вдалось відкрити '%1'\n"
 
-#: cmd.rc:326
+#: cmd.rc:337
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "Не можу викликати мітку пакету за межами пакетного скрипта\n"
 
-#: cmd.rc:327 xcopy.rc:42
+#: cmd.rc:338 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr "В"
 
-#: cmd.rc:328
+#: cmd.rc:339
 msgid "Delete %1?"
 msgstr "Видалити %1?"
 
-#: cmd.rc:329
+#: cmd.rc:340
 msgid "Echo is %1\n"
 msgstr "Echo зараз %1\n"
 
-#: cmd.rc:330
+#: cmd.rc:341
 msgid "Verify is %1\n"
 msgstr "Verify зараз %1\n"
 
-#: cmd.rc:331
+#: cmd.rc:342
 msgid "Verify must be ON or OFF\n"
 msgstr "Verify повинен бути ON чи OFF\n"
 
-#: cmd.rc:332
+#: cmd.rc:343
 msgid "Parameter error\n"
 msgstr "Помилка параметру\n"
 
-#: cmd.rc:333
+#: cmd.rc:344
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
@@ -10059,47 +10054,47 @@ msgstr ""
 "Серійний номер диску: %1!04x!-%2!04x!\n"
 "\n"
 
-#: cmd.rc:334
+#: cmd.rc:345
 msgid "Volume label (11 characters, <Enter> for none)?"
 msgstr "Мітка диску (11 символів, <Enter> - без мітки)?"
 
-#: cmd.rc:335
+#: cmd.rc:346
 msgid "PATH not found\n"
 msgstr "PATH не знайдено\n"
 
-#: cmd.rc:336
+#: cmd.rc:347
 msgid "Press any key to continue... "
 msgstr "Натисніть будь-яку клавішу, щоб продовжити... "
 
-#: cmd.rc:337
+#: cmd.rc:348
 msgid "Wine Command Prompt"
 msgstr "Командний рядок Wine"
 
-#: cmd.rc:338
+#: cmd.rc:349
 msgid "CMD Version %1!S!\n"
 msgstr "Версія CMD %1!S!\n"
 
-#: cmd.rc:339
+#: cmd.rc:350
 msgid "More? "
 msgstr "Більше? "
 
-#: cmd.rc:340
+#: cmd.rc:351
 msgid "The input line is too long.\n"
 msgstr "Введений рядок задовгий.\n"
 
-#: cmd.rc:341
+#: cmd.rc:352
 msgid "Volume in drive %1!c! is %2\n"
 msgstr "Том в приводі %1!c! : %2\n"
 
-#: cmd.rc:342
+#: cmd.rc:353
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr "Том в приводі %1!c! не має мітки.\n"
 
-#: cmd.rc:343
+#: cmd.rc:354
 msgid " (Yes|No)"
 msgstr " (Так|Ні)"
 
-#: cmd.rc:344
+#: cmd.rc:355
 msgid " (Yes|No|All)"
 msgstr " (Так|Ні|Всі)"
 
@@ -11511,7 +11506,7 @@ msgstr "Додає нове багаторядкове значення"
 msgid "Exports selected branch of the registry to a text file"
 msgstr "Експортує вибрану гілку реєстру до текстового файлу"
 
-#: start.rc:41
+#: start.rc:52
 msgid ""
 "Application could not be started, or no application associated with the "
 "specified file.\n"
@@ -11521,7 +11516,7 @@ msgstr ""
 "документа додатків.\n"
 "Виклик ShellExecuteEx провалився"
 
-#: start.rc:43
+#: start.rc:54
 msgid "Could not translate the specified Unix filename to a DOS filename."
 msgstr "Неможливо перетворити ім'я файлу UNIX в ім'я файлу DOS."
 

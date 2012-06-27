@@ -166,12 +166,23 @@ start [options] program_filename [...]\n\
 start [options] document_filename\n\
 \n\
 Options:\n\
-/M[inimized] Start the program minimized.\n\
-/MAX[imized] Start the program maximized.\n\
-/R[estored]  Start the program normally (neither minimized nor maximized).\n\
-/W[ait]      Wait for started program to finish, then exit with its exit code.\n\
-/Unix        Use a Unix filename and start the file like windows explorer.\n\
-/ProgIDOpen  Open a document using the following progID.\n\
+\"title\"      Specifies the title of the child windows.\n\
+/d directory Start the program in the specified directory.\n\
+/b           Don't create a new console for the program.\n\
+/i           Start the program with fresh environment variables.\n\
+/min         Start the program minimized.\n\
+/max         Start the program maximized.\n\
+/low         Start the program in the idle priority class.\n\
+/normal      Start the program in the normal priority class.\n\
+/high        Start the program in the high priority class.\n\
+/realtime    Start the program in the realtime priority class.\n\
+/abovenormal Start the program in the abovenormal priority class.\n\
+/belownormal Start the program in the belownormal priority class.\n\
+/node n      Start the program on the specified NUMA node.\n\
+/affinity mask Start the program with the specified affinity mask.\n\
+/wait        Wait for the started program to finish, then exit with its exit code.\n\
+/unix        Use a Unix filename and start the file like windows explorer.\n\
+/ProgIDOpen  Open a document using the specified progID.\n\
 /?           Display this help and exit.\n"
 
   WCMD_SET,

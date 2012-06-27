@@ -169,21 +169,46 @@ static WCHAR *get_parent_dir(WCHAR* path)
 	return result;
 }
 
+static BOOL is_option(const WCHAR* arg, const WCHAR* opt)
+{
+    return CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE,
+                          arg, -1, opt, -1) == CSTR_EQUAL;
+}
+
 int wmain (int argc, WCHAR *argv[])
 {
 	SHELLEXECUTEINFOW sei;
+	DWORD creation_flags;
 	WCHAR *args = NULL;
 	int i;
 	int unix_mode = 0;
 	int progid_open = 0;
+	WCHAR *title = NULL;
 	WCHAR *dos_filename = NULL;
 	WCHAR *parent_directory = NULL;
 	DWORD binary_type;
 
-	static const WCHAR openW[] = { 'o', 'p', 'e', 'n', 0 };
-	static const WCHAR unixW[] = { 'u', 'n', 'i', 'x', 0 };
+	static const WCHAR bW[] = { '/', 'b', 0 };
+	static const WCHAR minW[] = { '/', 'm', 'i', 'n', 0 };
+	static const WCHAR maxW[] = { '/', 'm', 'a', 'x', 0 };
+	static const WCHAR lowW[] = { '/', 'l', 'o', 'w', 0 };
+	static const WCHAR normalW[] = { '/', 'n', 'o', 'r', 'm', 'a', 'l', 0 };
+	static const WCHAR highW[] = { '/', 'h', 'i', 'g', 'h', 0 };
+	static const WCHAR realtimeW[] = { '/', 'r', 'e', 'a', 'l', 't', 'i', 'm', 'e', 0 };
+	static const WCHAR abovenormalW[] = { '/', 'a', 'b', 'o', 'v', 'e', 'n', 'o', 'r', 'm', 'a', 'l', 0 };
+	static const WCHAR belownormalW[] = { '/', 'b', 'e', 'l', 'o', 'w', 'n', 'o', 'r', 'm', 'a', 'l', 0 };
+	static const WCHAR separateW[] = { '/', 's', 'e', 'p', 'a', 'r', 'a', 't', 'e', 0 };
+	static const WCHAR sharedW[] = { '/', 's', 'h', 'a', 'r', 'e', 'd', 0 };
+	static const WCHAR nodeW[] = { '/', 'n', 'o', 'd', 'e', 0 };
+	static const WCHAR affinityW[] = { '/', 'a', 'f', 'f', 'i', 'n', 'i', 't', 'y', 0 };
+	static const WCHAR wW[] = { '/', 'w', 0 };
+	static const WCHAR waitW[] = { '/', 'w', 'a', 'i', 't', 0 };
+	static const WCHAR helpW[] = { '/', '?', 0 };
+	static const WCHAR unixW[] = { '/', 'u', 'n', 'i', 'x', 0 };
 	static const WCHAR progIDOpenW[] =
-		{ 'p', 'r', 'o', 'g', 'I', 'D', 'O', 'p', 'e', 'n', 0};
+		{ '/', 'p', 'r', 'o', 'g', 'I', 'D', 'O', 'p', 'e', 'n', 0};
+	static const WCHAR openW[] = { '/', 'o', 'p', 'e', 'n', 0 };
+	static const WCHAR cmdW[] = { 'c', 'm', 'd', '.', 'e', 'x', 'e', 0 };
 
 	memset(&sei, 0, sizeof(sei));
 	sei.cbSize = sizeof(sei);
@@ -193,87 +218,127 @@ int wmain (int argc, WCHAR *argv[])
 	sei.fMask = SEE_MASK_FLAG_DDEWAIT|
 	            SEE_MASK_FLAG_NO_UI|
 	            SEE_MASK_NO_CONSOLE;
+        sei.lpDirectory = NULL;
+        creation_flags = CREATE_NEW_CONSOLE;
 
 	/* Canonical Microsoft commandline flag processing:
-	 * flags start with /, are case insensitive,
-	 * and may be run together in same word.
+	 * flags start with / and are case insensitive.
 	 */
 	for (i=1; i<argc; i++) {
-		int ci;
-
+		if (argv[i][0] == '"') {
+			title = argv[i];
+			continue;
+		}
 		if (argv[i][0] != '/')
 			break;
 
-		/* Unix paths can start with / so we have to assume anything following /U is not a flag */
+		/* Unix paths can start with / so we have to assume anything following /unix is not a flag */
 		if (unix_mode || progid_open)
 			break;
 
-		/* Handle all options in this word */
-		for (ci=0; argv[i][ci]; ) {
-			/* Skip slash */
-			ci++;
-			switch(argv[i][ci]) {
-			case 'b':
-			case 'B':
-				break; /* FIXME: should stop new window from being created */
-			case 'i':
-			case 'I':
-				break; /* FIXME: should ignore any changes to current environment */
-			case 'm':
-			case 'M':
-				if (argv[i][ci+1] == 'a' || argv[i][ci+1] == 'A')
-					sei.nShow = SW_SHOWMAXIMIZED;
-				else
-					sei.nShow = SW_SHOWMINIMIZED;
-				break;
-			case 'r':
-			case 'R':
-				/* sei.nShow = SW_SHOWNORMAL; */
-				break;
-			case 'u':
-			case 'U':
-				if (strncmpiW(&argv[i][ci], unixW, 4) == 0)
-					unix_mode = 1;
-				else {
-					WINE_ERR("Option '%s' not recognized\n", wine_dbgstr_w( argv[i]+ci-1));
-					usage();
-				}
-				break;
-			case 'p':
-			case 'P':
-				if (strncmpiW(&argv[i][ci], progIDOpenW, 17) == 0)
-					progid_open = 1;
-				else {
-					WINE_ERR("Option '%s' not recognized\n", wine_dbgstr_w( argv[i]+ci-1));
-					usage();
-				}
-				break;
-			case 'w':
-			case 'W':
-				sei.fMask |= SEE_MASK_NOCLOSEPROCESS;
-				break;
-			case '?':
+		if (argv[i][0] == '/' && (argv[i][1] == 'd' || argv[i][1] == 'D')) {
+			if (argv[i][2])
+				/* The start directory was concatenated to the option */
+				sei.lpDirectory = argv[i]+2;
+			else if (i+1 == argc) {
+				WINE_ERR("you must specify a directory path for the /d option\n");
 				usage();
-				break;
-			default:
-				WINE_ERR("Option '%s' not recognized\n", wine_dbgstr_w( argv[i]+ci-1));
+			} else
+				sei.lpDirectory = argv[++i];
+		}
+		else if (is_option(argv[i], bW)) {
+			creation_flags &= !CREATE_NEW_CONSOLE;
+		}
+		else if (argv[i][0] == '/' && (argv[i][1] == 'i' || argv[i][1] == 'I')) {
+                    TRACE("/i is ignored\n"); /* FIXME */
+		}
+		else if (is_option(argv[i], minW)) {
+			sei.nShow = SW_SHOWMINIMIZED;
+		}
+		else if (is_option(argv[i], maxW)) {
+			sei.nShow = SW_SHOWMAXIMIZED;
+		}
+		else if (is_option(argv[i], lowW)) {
+			creation_flags |= IDLE_PRIORITY_CLASS;
+		}
+		else if (is_option(argv[i], normalW)) {
+			creation_flags |= NORMAL_PRIORITY_CLASS;
+		}
+		else if (is_option(argv[i], highW)) {
+			creation_flags |= HIGH_PRIORITY_CLASS;
+		}
+		else if (is_option(argv[i], realtimeW)) {
+			creation_flags |= REALTIME_PRIORITY_CLASS;
+		}
+		else if (is_option(argv[i], abovenormalW)) {
+			creation_flags |= ABOVE_NORMAL_PRIORITY_CLASS;
+		}
+		else if (is_option(argv[i], belownormalW)) {
+			creation_flags |= BELOW_NORMAL_PRIORITY_CLASS;
+		}
+		else if (is_option(argv[i], separateW)) {
+			TRACE("/separate is ignored\n"); /* FIXME */
+		}
+		else if (is_option(argv[i], sharedW)) {
+			TRACE("/shared is ignored\n"); /* FIXME */
+		}
+		else if (is_option(argv[i], nodeW)) {
+			if (i+1 == argc) {
+				WINE_ERR("you must specify a numa node for the /node option\n");
 				usage();
+			} else
+			{
+				TRACE("/node is ignored\n"); /* FIXME */
+				i++;
 			}
-			/* Skip to next slash */
-			while (argv[i][ci] && (argv[i][ci] != '/'))
-				ci++;
+		}
+		else if (is_option(argv[i], affinityW))
+		{
+			if (i+1 == argc) {
+				WINE_ERR("you must specify a numa node for the /node option\n");
+				usage();
+			} else
+			{
+				TRACE("/affinity is ignored\n"); /* FIXME */
+				i++;
+			}
+		}
+		else if (is_option(argv[i], wW) || is_option(argv[i], waitW)) {
+			sei.fMask |= SEE_MASK_NOCLOSEPROCESS;
+		}
+		else if (is_option(argv[i], helpW)) {
+			usage();
+		}
+
+		/* Wine extensions */
+
+		else if (is_option(argv[i], unixW)) {
+			unix_mode = 1;
+		}
+		else if (is_option(argv[i], progIDOpenW)) {
+			progid_open = 1;
+		} else
+
+		{
+			WINE_ERR("Unknown option '%s'\n", wine_dbgstr_w(argv[i]));
+			usage();
 		}
 	}
 
-	if (i == argc)
-		usage();
-
 	if (progid_open) {
+		if (i == argc)
+			usage();
 		sei.lpClass = argv[i++];
 		sei.fMask |= SEE_MASK_CLASSNAME;
 	}
 
-	sei.lpFile = argv[i++];
+	if (i == argc) {
+		if (progid_open || unix_mode)
+			usage();
+		sei.lpFile = cmdW;
+	}
+	else
+		sei.lpFile = argv[i++];
 
 	args = build_args( argc - i, &argv[i] );
 	sei.lpParameters = args;
@@ -301,7 +366,8 @@ int wmain (int argc, WCHAR *argv[])
 			fatal_string(STRING_UNIXFAIL);
 
 		sei.lpFile = dos_filename;
-		sei.lpDirectory = parent_directory = get_parent_dir(dos_filename);
+		if (!sei.lpDirectory)
+			sei.lpDirectory = parent_directory = get_parent_dir(dos_filename);
 		sei.fMask &= ~SEE_MASK_FLAG_NO_UI;
 
                 if (GetBinaryTypeW(sei.lpFile, &binary_type)) {
@@ -317,6 +383,7 @@ int wmain (int argc, WCHAR *argv[])
 
                     ZeroMemory(&startup_info, sizeof(startup_info));
                     startup_info.cb = sizeof(startup_info);
+                    startup_info.lpTitle = title;
 
                     if (!CreateProcessW(
                             NULL, /* lpApplicationName */
@@ -324,7 +391,7 @@ int wmain (int argc, WCHAR *argv[])
                             NULL, /* lpProcessAttributes */
                             NULL, /* lpThreadAttributes */
                             FALSE, /* bInheritHandles */
-                            CREATE_NEW_CONSOLE, /* dwCreationFlags */
+                            creation_flags, /* dwCreationFlags */
                             NULL, /* lpEnvironment */
                             sei.lpDirectory, /* lpCurrentDirectory */
                             &startup_info, /* lpStartupInfo */

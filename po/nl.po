@@ -9352,7 +9352,7 @@ msgstr "Lus gevonden bij het verwerken van verwijzingen"
 msgid "Referral hop limit exceeded"
 msgstr "Overschrijding van limiet op verwijzingen"
 
-#: attrib.rc:27 cmd.rc:314
+#: attrib.rc:27 cmd.rc:325
 msgid ""
 "Not Yet Implemented\n"
 "\n"
@@ -9360,7 +9360,7 @@ msgstr ""
 "Nog niet geïmplementeerd\n"
 "\n"
 
-#: attrib.rc:28 cmd.rc:317
+#: attrib.rc:28 cmd.rc:328
 msgid "%1: File Not Found\n"
 msgstr "%1: Bestand niet gevonden\n"
 
@@ -9745,7 +9745,7 @@ msgstr "RD <mapnaam> is de korte versie van RMDIR. Het verwijdert een map.\n"
 msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgstr "RMDIR <mapnaam> verwijdert een map.\n"
 
-#: cmd.rc:193
+#: cmd.rc:204
 #, fuzzy
 msgid ""
 "SET displays or changes the cmd environment variables.\n"
@@ -9783,7 +9783,7 @@ msgstr ""
 "Win32 implementatie. Merk op dat het niet mogelijk is om de omgevings-\n"
 "variabelen van het onderliggende besturingssysteem te wijzigen vanuit cmd.\n"
 
-#: cmd.rc:198
+#: cmd.rc:209
 msgid ""
 "SHIFT is used in a batch file to remove one parameter from the head of\n"
 "the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n"
@@ -9794,8 +9794,7 @@ msgstr ""
 "enzovoort. Deze opdracht heeft geen effect als hij wordt aangeroepen vanaf\n"
 "de opdrachtregel.\n"
 
-#: cmd.rc:175 start.rc:39
-#, fuzzy
+#: cmd.rc:186 start.rc:50
 msgid ""
 "Start a program, or open a document in the program normally used for files "
 "with that suffix.\n"
@@ -9804,49 +9803,37 @@ msgid ""
 "start [options] document_filename\n"
 "\n"
 "Options:\n"
-"/M[inimized] Start the program minimized.\n"
-"/MAX[imized] Start the program maximized.\n"
-"/R[estored]  Start the program normally (neither minimized nor maximized).\n"
-"/W[ait]      Wait for started program to finish, then exit with its exit "
+"\"title\"      Specifies the title of the child windows.\n"
+"/d directory Start the program in the specified directory.\n"
+"/b           Don't create a new console for the program.\n"
+"/i           Start the program with fresh environment variables.\n"
+"/min         Start the program minimized.\n"
+"/max         Start the program maximized.\n"
+"/low         Start the program in the idle priority class.\n"
+"/normal      Start the program in the normal priority class.\n"
+"/high        Start the program in the high priority class.\n"
+"/realtime    Start the program in the realtime priority class.\n"
+"/abovenormal Start the program in the abovenormal priority class.\n"
+"/belownormal Start the program in the belownormal priority class.\n"
+"/node n      Start the program on the specified NUMA node.\n"
+"/affinity mask Start the program with the specified affinity mask.\n"
+"/wait        Wait for the started program to finish, then exit with its exit "
 "code.\n"
-"/Unix        Use a Unix filename and start the file like windows explorer.\n"
-"/ProgIDOpen  Open a document using the following progID.\n"
+"/unix        Use a Unix filename and start the file like windows explorer.\n"
+"/ProgIDOpen  Open a document using the specified progID.\n"
 "/?           Display this help and exit.\n"
 msgstr ""
-"Start een programma, of open een document met het programma dat normaal voor "
-"bestanden met die extensie gebruikt wordt.\n"
-"Gebruik:\n"
-"start [opties] programma_naam [...]\n"
-"start [opties] document_naam\n"
-"\n"
-"Opties:\n"
-"/M[inimized] Start het programma geminimaliseerd.\n"
-"/MAX[imized] Start het programma gemaximaliseerd.\n"
-"/R[estored]  Start het programma normaal (noch geminimaliseerd noch "
-"gemaximaliseerd).\n"
-"/W[ait]      Wacht totdat het gestarte programma is beëindigd, eindig dan "
-"met de exit code van dat programma.\n"
-"/Unix        Gebruik een Unix bestandsnaam en start het bestand als de "
-"Windows verkenner.\n"
-"/ProgIDOpen  Open een document met behulp van het volgende progID.\n"
-"/?           Toon deze tekst en eindig dit programma.\n"
-"\n"
-"start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
-"Start wordt u ABSOLUUT ZONDER GARANTIE aangeboden; draai dit programma met "
-"de /L optie voor details.\n"
-"Dit is vrije software, en u wordt uitgenodigd om het verder te verspreiden\n"
-"onder bepaalde voorwaarden; draai 'start /L' voor details.\n"
 
-#: cmd.rc:200
+#: cmd.rc:211
 msgid "TIME sets or shows the current system time.\n"
 msgstr "TIME wijzigt of toont de systeemtijd.\n"
 
-#: cmd.rc:202
+#: cmd.rc:213
 #, fuzzy
 msgid "TITLE <string> sets the window title for the cmd window.\n"
 msgstr "Wijzigt de naam van het cmd-venster, syntax: TITLE [tekenreeks]\n"
 
-#: cmd.rc:206
+#: cmd.rc:217
 msgid ""
 "TYPE <filename> copies <filename> to the console device (or elsewhere\n"
 "if redirected). No check is made that the file is readable text.\n"
@@ -9854,7 +9841,7 @@ msgstr ""
 "TYPE <bestandsnaam> kopieert <bestandsnaam> naar het uitvoerapparaat.\n"
 "Er wordt niet gecontroleerd of het bestand leesbare tekst bevat.\n"
 
-#: cmd.rc:215
+#: cmd.rc:226
 #, fuzzy
 msgid ""
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
@@ -9874,15 +9861,15 @@ msgstr ""
 "\n"
 "De verify-schakelaar heeft geen functie binnen Wine.\n"
 
-#: cmd.rc:218
+#: cmd.rc:229
 msgid "VER displays the version of cmd you are running.\n"
 msgstr "VER toont de versie van cmd die u draait.\n"
 
-#: cmd.rc:220
+#: cmd.rc:231
 msgid "VOL shows the volume label of a disk device.\n"
 msgstr "VOL toont het label van een schijf.\n"
 
-#: cmd.rc:224
+#: cmd.rc:235
 msgid ""
 "ENDLOCAL ends localization of environment changes in a batch file\n"
 "which were introduced by a preceding SETLOCAL.\n"
@@ -9890,7 +9877,7 @@ msgstr ""
 "ENDLOCAL beëindigt de localisatie van omgevingswijzigingen in een\n"
 "batchbestand die werd begonnen door een voorafgaande SETLOCAL opdracht.\n"
 
-#: cmd.rc:232
+#: cmd.rc:243
 msgid ""
 "SETLOCAL starts localization of environment changes in a batch file.\n"
 "\n"
@@ -9906,7 +9893,7 @@ msgstr ""
 "opdracht (of tot het eind van het bestand, welke eerst komst),\n"
 "waar de vorige omgevingsvariabelen worden teruggezet.\n"
 
-#: cmd.rc:235
+#: cmd.rc:246
 msgid ""
 "PUSHD <directoryname> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
@@ -9914,14 +9901,14 @@ msgstr ""
 "PUSHD <mapnaam> bewaart de huidige map op een\n"
 "stapel, en verandert dan de huidige map naar de opgegeven naam.\n"
 
-#: cmd.rc:237
+#: cmd.rc:248
 #, fuzzy
 msgid "POPD changes current directory to the last one saved with PUSHD.\n"
 msgstr ""
 "POPD verandert de huidige map naar de meest recente die\n"
 "op de stapel werd gezet met PUSHD.\n"
 
-#: cmd.rc:245
+#: cmd.rc:256
 #, fuzzy
 msgid ""
 "ASSOC shows or modifies file extension associations.\n"
@@ -9942,7 +9929,7 @@ msgstr ""
 "Zonder bestandstype achter het '=' teken wordt de huidige associatie "
 "verwijderd, als deze bestaat.\n"
 
-#: cmd.rc:256
+#: cmd.rc:267
 #, fuzzy
 msgid ""
 "FTYPE shows or modifies open commands associated with file types.\n"
@@ -9968,12 +9955,12 @@ msgstr ""
 "Zonder 'open' opdracht achter het '=' teken wordt de opdracht die "
 "geassocieerd is met het gespecificeerde bestandstype verwijderd.\n"
 
-#: cmd.rc:258
+#: cmd.rc:269
 msgid "MORE displays output of files or piped input in pages.\n"
 msgstr ""
 "MORE toont de uitvoer van programma's of herleidde invoer per bladzijde.\n"
 
-#: cmd.rc:262
+#: cmd.rc:273
 msgid ""
 "CHOICE displays a text and waits, until the User\n"
 "presses an allowed Key from a selectable list.\n"
@@ -9984,7 +9971,7 @@ msgstr ""
 "CHOICE wordt hoofdzakelijk gebruikt om een selectie uit een menu te maken\n"
 "in een batch bestand.\n"
 
-#: cmd.rc:266
+#: cmd.rc:277
 msgid ""
 "EXIT terminates the current command session and returns\n"
 "to the operating system or shell from which you invoked cmd.\n"
@@ -9992,7 +9979,7 @@ msgstr ""
 "EXIT beëindigt de lopende sessie en keert terug\n"
 "naar het besturingssysteem of de schil van waaruit cmd werd gestart.\n"
 
-#: cmd.rc:304
+#: cmd.rc:315
 #, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
@@ -10073,114 +10060,114 @@ msgstr ""
 "\n"
 "type HELP <opdracht> voor meer informatie over bovengenoemde opdrachten.\n"
 
-#: cmd.rc:306
+#: cmd.rc:317
 #, fuzzy
 msgid "Are you sure?"
 msgstr "Bent u zeker"
 
-#: cmd.rc:307 xcopy.rc:40
+#: cmd.rc:318 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr "J"
 
-#: cmd.rc:308 xcopy.rc:41
+#: cmd.rc:319 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr "N"
 
-#: cmd.rc:309
+#: cmd.rc:320
 msgid "File association missing for extension %1\n"
 msgstr "Bestandsassociatie ontbreekt voor extensie %1\n"
 
-#: cmd.rc:310
+#: cmd.rc:321
 msgid "No open command associated with file type '%1'\n"
 msgstr "Geen open commando verbonden met bestandstype '%1'\n"
 
-#: cmd.rc:311
+#: cmd.rc:322
 #, fuzzy
 msgid "Overwrite %1?"
 msgstr "Overschrijf %1"
 
-#: cmd.rc:312
+#: cmd.rc:323
 msgid "More..."
 msgstr "Meer..."
 
-#: cmd.rc:313
+#: cmd.rc:324
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr "Regel in Batch proces mogelijk afgebroken. We gebruiken:\n"
 
-#: cmd.rc:315
+#: cmd.rc:326
 msgid "Argument missing\n"
 msgstr "Argument ontbreekt\n"
 
-#: cmd.rc:316
+#: cmd.rc:327
 msgid "Syntax error\n"
 msgstr "Fout in de syntax\n"
 
-#: cmd.rc:318
+#: cmd.rc:329
 msgid "No help available for %1\n"
 msgstr "Geen help beschikbaar voor %1\n"
 
-#: cmd.rc:319
+#: cmd.rc:330
 msgid "Target to GOTO not found\n"
 msgstr "Doel opgegeven bij GOTO niet gevonden\n"
 
-#: cmd.rc:320
+#: cmd.rc:331
 msgid "Current Date is %1\n"
 msgstr "Huidige datum is %1\n"
 
-#: cmd.rc:321
+#: cmd.rc:332
 msgid "Current Time is %1\n"
 msgstr "Huidige tijd is %1\n"
 
-#: cmd.rc:322
+#: cmd.rc:333
 msgid "Enter new date: "
 msgstr "Voer de nieuwe datum in: "
 
-#: cmd.rc:323
+#: cmd.rc:334
 msgid "Enter new time: "
 msgstr "voer de nieuwe tijd in: "
 
-#: cmd.rc:324
+#: cmd.rc:335
 msgid "Environment variable %1 not defined\n"
 msgstr "Omgevingsvariable %1 niet gedefinieerd\n"
 
-#: cmd.rc:325 xcopy.rc:38
+#: cmd.rc:336 xcopy.rc:38
 msgid "Failed to open '%1'\n"
 msgstr "Openen van '%1' is mislukt\n"
 
-#: cmd.rc:326
+#: cmd.rc:337
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr ""
 "Onmogelijk om een batch label aan te roepen van buiten een batch script\n"
 
-#: cmd.rc:327 xcopy.rc:42
+#: cmd.rc:338 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr "A"
 
-#: cmd.rc:328
+#: cmd.rc:339
 #, fuzzy
 msgid "Delete %1?"
 msgstr "Verwijderen"
 
-#: cmd.rc:329
+#: cmd.rc:340
 msgid "Echo is %1\n"
 msgstr "Echo staat %1\n"
 
-#: cmd.rc:330
+#: cmd.rc:341
 msgid "Verify is %1\n"
 msgstr "Verify staat %1\n"
 
-#: cmd.rc:331
+#: cmd.rc:342
 msgid "Verify must be ON or OFF\n"
 msgstr "Verify moet ON of OFF zijn\n"
 
-#: cmd.rc:332
+#: cmd.rc:343
 msgid "Parameter error\n"
 msgstr "Parameter onjuist\n"
 
-#: cmd.rc:333
+#: cmd.rc:344
 #, fuzzy
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
@@ -10190,49 +10177,49 @@ msgstr ""
 "Het serienummer van de schijf is %3!04x!-%4!04x!\n"
 "\n"
 
-#: cmd.rc:334
+#: cmd.rc:345
 #, fuzzy
 msgid "Volume label (11 characters, <Enter> for none)?"
 msgstr "Schijf naam (11 karakters, ENTER voor geen)?"
 
-#: cmd.rc:335
+#: cmd.rc:346
 msgid "PATH not found\n"
 msgstr "PATH niet gevonden\n"
 
-#: cmd.rc:336
+#: cmd.rc:347
 msgid "Press any key to continue... "
 msgstr "Druk op een willekeurige toets om verder te gaan... "
 
-#: cmd.rc:337
+#: cmd.rc:348
 msgid "Wine Command Prompt"
 msgstr "Wine Command Prompt"
 
-#: cmd.rc:338
+#: cmd.rc:349
 msgid "CMD Version %1!S!\n"
 msgstr "CMD versie %1!S!\n"
 
-#: cmd.rc:339
+#: cmd.rc:350
 msgid "More? "
 msgstr "Meer? "
 
-#: cmd.rc:340
+#: cmd.rc:351
 msgid "The input line is too long.\n"
 msgstr "De invoerregel is te lang.\n"
 
-#: cmd.rc:341
+#: cmd.rc:352
 msgid "Volume in drive %1!c! is %2\n"
 msgstr ""
 
-#: cmd.rc:342
+#: cmd.rc:353
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr ""
 
-#: cmd.rc:343
+#: cmd.rc:354
 #, fuzzy
 msgid " (Yes|No)"
 msgstr "%1? (Ja|Nee)\n"
 
-#: cmd.rc:344
+#: cmd.rc:355
 #, fuzzy
 msgid " (Yes|No|All)"
 msgstr "%1? (Ja|Nee)\n"
@@ -11658,7 +11645,7 @@ msgstr ""
 "Exporteert de geselecteerde subsleutel van het register naar een tekst "
 "bestand"
 
-#: start.rc:41
+#: start.rc:52
 msgid ""
 "Application could not be started, or no application associated with the "
 "specified file.\n"
@@ -11668,7 +11655,7 @@ msgstr ""
 "opgegeven bestand.\n"
 "ShellExecuteEx is mislukt"
 
-#: start.rc:43
+#: start.rc:54
 msgid "Could not translate the specified Unix filename to a DOS filename."
 msgstr ""
 "Kon de opgegeven Unix bestandsnaam niet omzetten naar een DOS bestandsnaam."

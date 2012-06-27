@@ -9509,7 +9509,7 @@ msgstr "Buclă la gestionarea referenților"
 msgid "Referral hop limit exceeded"
 msgstr "Limită număr referenți depășită"
 
-#: attrib.rc:27 cmd.rc:314
+#: attrib.rc:27 cmd.rc:325
 msgid ""
 "Not Yet Implemented\n"
 "\n"
@@ -9517,7 +9517,7 @@ msgstr ""
 "Încă neimplementat\n"
 "\n"
 
-#: attrib.rc:28 cmd.rc:317
+#: attrib.rc:28 cmd.rc:328
 msgid "%1: File Not Found\n"
 msgstr "%1: fișier negăsit\n"
 
@@ -9870,7 +9870,7 @@ msgstr "RD <dir> este versiunea scurtă pentru RMDIR. RD șterge subdosarul.\n"
 msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgstr "RMDIR <dir> șterge subdosarul.\n"
 
-#: cmd.rc:193
+#: cmd.rc:204
 msgid ""
 "SET displays or changes the cmd environment variables.\n"
 "\n"
@@ -9905,7 +9905,7 @@ msgstr ""
 "implementare Win32 nativă. Rețineți că nu poate fi modificat mediul\n"
 "sistemului de operare din cmd.\n"
 
-#: cmd.rc:198
+#: cmd.rc:209
 msgid ""
 "SHIFT is used in a batch file to remove one parameter from the head of\n"
 "the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n"
@@ -9915,8 +9915,7 @@ msgstr ""
 "din listă; astfel, parametrul 2 devine parametrul 1 și așa mai departe.\n"
 "Nu are efect dacă este apelat din linia de comandă.\n"
 
-#: cmd.rc:175 start.rc:39
-#, fuzzy
+#: cmd.rc:186 start.rc:50
 msgid ""
 "Start a program, or open a document in the program normally used for files "
 "with that suffix.\n"
@@ -9925,40 +9924,36 @@ msgid ""
 "start [options] document_filename\n"
 "\n"
 "Options:\n"
-"/M[inimized] Start the program minimized.\n"
-"/MAX[imized] Start the program maximized.\n"
-"/R[estored]  Start the program normally (neither minimized nor maximized).\n"
-"/W[ait]      Wait for started program to finish, then exit with its exit "
+"\"title\"      Specifies the title of the child windows.\n"
+"/d directory Start the program in the specified directory.\n"
+"/b           Don't create a new console for the program.\n"
+"/i           Start the program with fresh environment variables.\n"
+"/min         Start the program minimized.\n"
+"/max         Start the program maximized.\n"
+"/low         Start the program in the idle priority class.\n"
+"/normal      Start the program in the normal priority class.\n"
+"/high        Start the program in the high priority class.\n"
+"/realtime    Start the program in the realtime priority class.\n"
+"/abovenormal Start the program in the abovenormal priority class.\n"
+"/belownormal Start the program in the belownormal priority class.\n"
+"/node n      Start the program on the specified NUMA node.\n"
+"/affinity mask Start the program with the specified affinity mask.\n"
+"/wait        Wait for the started program to finish, then exit with its exit "
 "code.\n"
-"/Unix        Use a Unix filename and start the file like windows explorer.\n"
-"/ProgIDOpen  Open a document using the following progID.\n"
+"/unix        Use a Unix filename and start the file like windows explorer.\n"
+"/ProgIDOpen  Open a document using the specified progID.\n"
 "/?           Display this help and exit.\n"
 msgstr ""
-"Lansați un program sau deschideți un document în programul utilizat\n"
-"de obicei pentru fișierele cu acel sufix.\n"
-"Utilizare:\n"
-"start [opțiuni] cale_program [...]\n"
-"start [opțiuni] cale_document\n"
-"\n"
-"Opțiuni:\n"
-"/M[inimizat] Pornește programul minimizat.\n"
-"/MAX[imized] Pornește programul maximizat.\n"
-"/R[estored]  Pornește programul normal (nici minimizat, nici maximizat).\n"
-"/W[ait]      Așteaptă ca programul pornit să termine, apoi ieși din el\n"
-"             cu codul său de ieșire.\n"
-"/Unix        Utilizează un nume de fișier Unix și pornește fișierul ca\n"
-"             windows explorer.\n"
-"/ProgIDOpen  Deschide un document utilizând următorul progID.\n"
 
-#: cmd.rc:200
+#: cmd.rc:211
 msgid "TIME sets or shows the current system time.\n"
 msgstr "TIME afișează sau schimbă ora sistemului.\n"
 
-#: cmd.rc:202
+#: cmd.rc:213
 msgid "TITLE <string> sets the window title for the cmd window.\n"
 msgstr "TITLE [șir] definește titlul pentru fereastra cmd.\n"
 
-#: cmd.rc:206
+#: cmd.rc:217
 msgid ""
 "TYPE <filename> copies <filename> to the console device (or elsewhere\n"
 "if redirected). No check is made that the file is readable text.\n"
@@ -9966,7 +9961,7 @@ msgstr ""
 "TYPE <numefișier> copiază <numefișier> în consolă (sau unde este\n"
 "redirecționat). Nu se verifică dacă fișierul conține text lizibil.\n"
 
-#: cmd.rc:215
+#: cmd.rc:226
 msgid ""
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
 "\n"
@@ -9985,21 +9980,21 @@ msgstr ""
 "\n"
 "Indicatorul de verificare nu are nici o funcție în Wine.\n"
 
-#: cmd.rc:218
+#: cmd.rc:229
 msgid "VER displays the version of cmd you are running.\n"
 msgstr "VER afișează versiunea de cmd utilizată.\n"
 
-#: cmd.rc:220
+#: cmd.rc:231
 msgid "VOL shows the volume label of a disk device.\n"
 msgstr "VOL Afișează eticheta de volum a unui disc.\n"
 
-#: cmd.rc:224
+#: cmd.rc:235
 msgid ""
 "ENDLOCAL ends localization of environment changes in a batch file\n"
 "which were introduced by a preceding SETLOCAL.\n"
 msgstr ""
 
-#: cmd.rc:232
+#: cmd.rc:243
 msgid ""
 "SETLOCAL starts localization of environment changes in a batch file.\n"
 "\n"
@@ -10009,7 +10004,7 @@ msgid ""
 "settings are restored.\n"
 msgstr ""
 
-#: cmd.rc:235
+#: cmd.rc:246
 msgid ""
 "PUSHD <directoryname> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
@@ -10017,11 +10012,11 @@ msgstr ""
 "PUSHD <numedirector> salvează directorul curent într-o stivă și apoi\n"
 "înlocuiește directorul curent cu cel specificat.\n"
 
-#: cmd.rc:237
+#: cmd.rc:248
 msgid "POPD changes current directory to the last one saved with PUSHD.\n"
 msgstr "POPD schimbă directorul curent cu ultimul salvat cu PUSHD.\n"
 
-#: cmd.rc:245
+#: cmd.rc:256
 msgid ""
 "ASSOC shows or modifies file extension associations.\n"
 "\n"
@@ -10033,7 +10028,7 @@ msgid ""
 "association, if any.\n"
 msgstr ""
 
-#: cmd.rc:256
+#: cmd.rc:267
 msgid ""
 "FTYPE shows or modifies open commands associated with file types.\n"
 "\n"
@@ -10047,18 +10042,18 @@ msgid ""
 "associated to the specified file type.\n"
 msgstr ""
 
-#: cmd.rc:258
+#: cmd.rc:269
 msgid "MORE displays output of files or piped input in pages.\n"
 msgstr "MORE afișează în pagini conținutul fișierelor sau datele introduse.\n"
 
-#: cmd.rc:262
+#: cmd.rc:273
 msgid ""
 "CHOICE displays a text and waits, until the User\n"
 "presses an allowed Key from a selectable list.\n"
 "CHOICE is mainly used to build a menu selection in a batch file.\n"
 msgstr ""
 
-#: cmd.rc:266
+#: cmd.rc:277
 msgid ""
 "EXIT terminates the current command session and returns\n"
 "to the operating system or shell from which you invoked cmd.\n"
@@ -10066,7 +10061,7 @@ msgstr ""
 "EXIT termină sesiunea curentă a liniei de comandă și revine la sistemul\n"
 "de operare sau shell-ul din care ați invocat cmd.\n"
 
-#: cmd.rc:304
+#: cmd.rc:315
 #, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
@@ -10140,112 +10135,112 @@ msgstr ""
 "Introduceți HELP <comandă> pentru informații suplimentare despre\n"
 "comenzile de mai sus\n"
 
-#: cmd.rc:306
+#: cmd.rc:317
 msgid "Are you sure?"
 msgstr "Sunteți sigur?"
 
-#: cmd.rc:307 xcopy.rc:40
+#: cmd.rc:318 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr "D"
 
-#: cmd.rc:308 xcopy.rc:41
+#: cmd.rc:319 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr "N"
 
-#: cmd.rc:309
+#: cmd.rc:320
 msgid "File association missing for extension %1\n"
 msgstr "Lipsește asocierea cu fișiere pentru extensia %1\n"
 
-#: cmd.rc:310
+#: cmd.rc:321
 msgid "No open command associated with file type '%1'\n"
 msgstr ""
 "Nici o comandă de deschidere nu este asociată cu tipul de fișier „%1”\n"
 
-#: cmd.rc:311
+#: cmd.rc:322
 msgid "Overwrite %1?"
 msgstr "Suprascrie %1?"
 
-#: cmd.rc:312
+#: cmd.rc:323
 msgid "More..."
 msgstr "Mai mult..."
 
-#: cmd.rc:313
+#: cmd.rc:324
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr ""
 "Linie posibil trunchiată în procesarea fișierului batch. Se utilizează:\n"
 
-#: cmd.rc:315
+#: cmd.rc:326
 msgid "Argument missing\n"
 msgstr "Argument lipsă\n"
 
-#: cmd.rc:316
+#: cmd.rc:327
 msgid "Syntax error\n"
 msgstr "Eroare de sintaxă\n"
 
-#: cmd.rc:318
+#: cmd.rc:329
 msgid "No help available for %1\n"
 msgstr "Nu există ajutor pentru %1\n"
 
-#: cmd.rc:319
+#: cmd.rc:330
 msgid "Target to GOTO not found\n"
 msgstr "Destinația pentru GOTO nu a fost găsită\n"
 
-#: cmd.rc:320
+#: cmd.rc:331
 msgid "Current Date is %1\n"
 msgstr "Data actuală este %1\n"
 
-#: cmd.rc:321
+#: cmd.rc:332
 msgid "Current Time is %1\n"
 msgstr "Ora actuală este %1\n"
 
-#: cmd.rc:322
+#: cmd.rc:333
 msgid "Enter new date: "
 msgstr "Introduceți noua dată: "
 
-#: cmd.rc:323
+#: cmd.rc:334
 msgid "Enter new time: "
 msgstr "Introduceți noua oră: "
 
-#: cmd.rc:324
+#: cmd.rc:335
 msgid "Environment variable %1 not defined\n"
 msgstr "Variabila de mediu %1 nu este definită\n"
 
-#: cmd.rc:325 xcopy.rc:38
+#: cmd.rc:336 xcopy.rc:38
 msgid "Failed to open '%1'\n"
 msgstr "Deschiderea „%1” a eșuat\n"
 
-#: cmd.rc:326
+#: cmd.rc:337
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "Nu se poate apela eticheta pentru batch în afara unui script batch\n"
 
-#: cmd.rc:327 xcopy.rc:42
+#: cmd.rc:338 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr "T"
 
-#: cmd.rc:328
+#: cmd.rc:339
 msgid "Delete %1?"
 msgstr "Șterge %1?"
 
-#: cmd.rc:329
+#: cmd.rc:340
 msgid "Echo is %1\n"
 msgstr "Echo este %1\n"
 
-#: cmd.rc:330
+#: cmd.rc:341
 msgid "Verify is %1\n"
 msgstr "Verify este %1\n"
 
-#: cmd.rc:331
+#: cmd.rc:342
 msgid "Verify must be ON or OFF\n"
 msgstr "Verify trebuie să fie ON sau OFF\n"
 
-#: cmd.rc:332
+#: cmd.rc:343
 msgid "Parameter error\n"
 msgstr "Eroare de parametri\n"
 
-#: cmd.rc:333
+#: cmd.rc:344
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
@@ -10253,47 +10248,47 @@ msgstr ""
 "Numărul de serie al volumului este %1!04x!-%2!04x!\n"
 "\n"
 
-#: cmd.rc:334
+#: cmd.rc:345
 msgid "Volume label (11 characters, <Enter> for none)?"
 msgstr "Etichetă pentru volum (11 caractere, <Enter> pentru nici una)?"
 
-#: cmd.rc:335
+#: cmd.rc:346
 msgid "PATH not found\n"
 msgstr "PATH negăsită\n"
 
-#: cmd.rc:336
+#: cmd.rc:347
 msgid "Press any key to continue... "
 msgstr "Apăsați orice tastă pentru a continua... "
 
-#: cmd.rc:337
+#: cmd.rc:348
 msgid "Wine Command Prompt"
 msgstr "Linia de comandă Wine"
 
-#: cmd.rc:338
+#: cmd.rc:349
 msgid "CMD Version %1!S!\n"
 msgstr "CMD versiunea %1!S!\n"
 
-#: cmd.rc:339
+#: cmd.rc:350
 msgid "More? "
 msgstr "Mai mult? "
 
-#: cmd.rc:340
+#: cmd.rc:351
 msgid "The input line is too long.\n"
 msgstr "Șirul introdus este prea lung.\n"
 
-#: cmd.rc:341
+#: cmd.rc:352
 msgid "Volume in drive %1!c! is %2\n"
 msgstr ""
 
-#: cmd.rc:342
+#: cmd.rc:353
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr ""
 
-#: cmd.rc:343
+#: cmd.rc:354
 msgid " (Yes|No)"
 msgstr " (Da|Nu)"
 
-#: cmd.rc:344
+#: cmd.rc:355
 msgid " (Yes|No|All)"
 msgstr " (Da|Nu|Toate)"
 
@@ -11698,7 +11693,7 @@ msgstr "Adaugă o nouă valoare de șir multiplu"
 msgid "Exports selected branch of the registry to a text file"
 msgstr "Exportă ramura de registru selectată ca fișier text"
 
-#: start.rc:41
+#: start.rc:52
 msgid ""
 "Application could not be started, or no application associated with the "
 "specified file.\n"
@@ -11707,7 +11702,7 @@ msgstr ""
 "Aplicația nu a putut fi pornită sau nu există nici o aplicație asociată\n"
 "cu fișierul specificat. ShellExecuteEx a eșuat"
 
-#: start.rc:43
+#: start.rc:54
 msgid "Could not translate the specified Unix filename to a DOS filename."
 msgstr ""
 "Nu a putut fi tradus numele de fișier Unix specificat într-un nume de fișier "
