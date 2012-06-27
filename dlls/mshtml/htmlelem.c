@@ -1578,8 +1578,6 @@ void HTMLElement_destructor(HTMLDOMNode *iface)
 
     ConnectionPointContainer_Destroy(&This->cp_container);
 
-    if(This->nselem)
-        nsIDOMHTMLElement_Release(This->nselem);
     if(This->style) {
         This->style->elem = NULL;
         IHTMLStyle_Release(&This->style->IHTMLStyle_iface);
