@@ -376,6 +376,9 @@ static void fill_processor( struct table *table )
         rec->device_id    = heap_strdupW( device_id );
         offset += sizeof(*rec);
     }
+
+    TRACE("created %u rows\n", count);
+    table->num_rows = count;
 }
 
 static void fill_os( struct table *table )
