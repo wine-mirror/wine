@@ -82,7 +82,7 @@ struct JoystickData {
 #define TEST_BUTTON_X       15
 #define TEST_BUTTON_Y       200
 #define TEST_NEXT_BUTTON_X  45
-#define TEST_NEXT_BUTTON_Y  30
+#define TEST_NEXT_BUTTON_Y  40
 #define TEST_BUTTON_SIZE_X  30
 #define TEST_BUTTON_SIZE_Y  25
 
