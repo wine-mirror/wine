@@ -27,7 +27,7 @@
 #include "gdiplus.h"
 #include "wine/test.h"
 
-#define expect(expected, got) ok((got) == (expected), "Expected %d, got %d\n", (expected), (got))
+#define expect(expected, got) ok((got) == (expected), "Expected %d, got %d\n", (UINT)(expected), (UINT)(got))
 #define expectf(expected, got) ok(fabs((expected) - (got)) < 0.0001, "Expected %f, got %f\n", (expected), (got))
 
 static BOOL color_match(ARGB c1, ARGB c2, BYTE max_diff)
