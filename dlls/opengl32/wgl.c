@@ -224,11 +224,11 @@ INT WINAPI wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd)
          * without. In case PFD_STEREO_DONTCARE is set, stereo is ignored.
          *
          * To summarize the following is most likely the correct behavior:
-         * stereo not set -> prefer no-stereo formats, else also accept stereo formats
-         * stereo set -> prefer stereo formats, else also accept no-stereo formats
+         * stereo not set -> prefer non-stereo formats, but also accept stereo formats
+         * stereo set -> prefer stereo formats, but also accept non-stereo formats
          * stereo don't care -> it doesn't matter whether we get stereo or not
          *
-         * In Wine we will treat no-stereo the same way as don't care because it makes
+         * In Wine we will treat non-stereo the same way as don't care because it makes
          * format selection even more complicated and second drivers with Stereo advertise
          * each format twice anyway.
          */
@@ -426,7 +426,7 @@ static BOOL is_extension_supported(const char* extension)
     /* We use the GetProcAddress function from the display driver to retrieve function pointers
      * for OpenGL and WGL extensions. In case of winex11.drv the OpenGL extension lookup is done
      * using glXGetProcAddress. This function is quite unreliable in the sense that its specs don't
-     * require the function to return NULL when a extension isn't found. For this reason we check
+     * require the function to return NULL when an extension isn't found. For this reason we check
      * if the OpenGL extension required for the function we are looking up is supported. */
 
     /* Check if the extension is part of the GL extension string to see if it is supported. */
@@ -487,11 +487,11 @@ PROC WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
 
   /* If nothing was found, we are looking for a WGL extension or an unknown GL extension. */
   if (ext_ret == NULL) {
-    /* If the function name starts with a w it is a WGL extension */
+    /* If the function name starts with a 'w', it is a WGL extension */
     if(lpszProc[0] == 'w')
       return wine_wgl.p_wglGetProcAddress(lpszProc);
 
-    /* We are dealing with an unknown GL extension. */
+    /* We are dealing with an unknown GL extension */
     WARN("Extension '%s' not defined in opengl32.dll's function table!\n", lpszProc);
     return NULL;
   } else { /* We are looking for an OpenGL extension */
@@ -508,7 +508,7 @@ PROC WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
       char buf[256];
       void *ret = NULL;
 
-      /* Remove the 3 last letters (EXT, ARB, ...).
+      /* Remove the last 3 letters (EXT, ARB, ...).
 
 	 I know that some extensions have more than 3 letters (MESA, NV,
 	 INTEL, ...), but this is only a stop-gap measure to fix buggy
@@ -879,7 +879,7 @@ static BOOL wglUseFontOutlines_common(HDC hdc,
                 case TT_PRIM_QSPLINE:
                     for(i = 0; i < ppc->cpfx/2; i++)
                     {
-                        /* FIXME just connecting the control points for now */
+                        /* FIXME: just connecting the control points for now */
                         TRACE("\t\tcurve  %d,%d %d,%d\n",
                               ppc->apfx[i * 2].x.value,     ppc->apfx[i * 3].y.value,
                               ppc->apfx[i * 2 + 1].x.value, ppc->apfx[i * 3 + 1].y.value);
