@@ -20,6 +20,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <assert.h>
 
 #define COBJMACROS
 
@@ -2084,10 +2085,8 @@ static void HTMLDocumentNode_destructor(HTMLDOMNode *iface)
     while(!list_empty(&This->plugin_hosts))
         detach_plugin_host(LIST_ENTRY(list_head(&This->plugin_hosts), PluginHost, entry));
 
-    if(This->nsdoc) {
+    if(This->nsdoc)
         release_document_mutation(This);
-        nsIDOMHTMLDocument_Release(This->nsdoc);
-    }
 
     heap_free(This->event_vector);
     destroy_htmldoc(&This->basedoc);
@@ -2236,12 +2235,15 @@ HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocumentObj *doc_ob
     if(!doc_obj->basedoc.window || window == doc_obj->basedoc.window)
         doc->basedoc.cp_container.forward_container = &doc_obj->basedoc.cp_container;
 
-    nsIDOMHTMLDocument_AddRef(nsdoc);
+    HTMLDOMNode_Init(doc, &doc->node, (nsIDOMNode*)nsdoc);
+
+    /* No AddRef, share the reference with nsnode */
+    assert((nsIDOMNode*)nsdoc == doc->node.nsnode);
     doc->nsdoc = nsdoc;
+
     init_document_mutation(doc);
     doc_init_events(doc);
 
-    HTMLDOMNode_Init(doc, &doc->node, (nsIDOMNode*)nsdoc);
     doc->node.vtbl = &HTMLDocumentNodeImplVtbl;
     doc->node.cp_container = &doc->basedoc.cp_container;
 
