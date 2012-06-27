@@ -3470,7 +3470,7 @@ msgstr "Testuj Joystick"
 msgid "Buttons"
 msgstr "Przyciski"
 
-#: joy.rc:58
+#: joy.rc:59
 msgid "Test Force Feedback"
 msgstr "Testuj odczucie siły zwrotnej"
 

@@ -3463,7 +3463,7 @@ msgstr ""
 msgid "Buttons"
 msgstr ""
 
-#: joy.rc:58
+#: joy.rc:59
 msgid "Test Force Feedback"
 msgstr ""
 

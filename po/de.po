@@ -3457,7 +3457,7 @@ msgstr "Joystick testen"
 msgid "Buttons"
 msgstr "Tasten"
 
-#: joy.rc:58
+#: joy.rc:59
 msgid "Test Force Feedback"
 msgstr "Force Feedback testen"
 

@@ -3474,7 +3474,7 @@ msgstr "Tester le joystick"
 msgid "Buttons"
 msgstr "Boutons"
 
-#: joy.rc:58
+#: joy.rc:59
 msgid "Test Force Feedback"
 msgstr "Tester le retour de force"
 

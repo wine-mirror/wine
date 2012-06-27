@@ -3445,7 +3445,7 @@ msgstr "Testaa joystickia"
 msgid "Buttons"
 msgstr "Painikkeet"
 
-#: joy.rc:58
+#: joy.rc:59
 msgid "Test Force Feedback"
 msgstr "Testaa voimapalautetta"
 

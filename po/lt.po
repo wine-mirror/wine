@@ -3458,7 +3458,7 @@ msgstr "Testuoti vairasvirtę"
 msgid "Buttons"
 msgstr "Mygtukai"
 
-#: joy.rc:58
+#: joy.rc:59
 msgid "Test Force Feedback"
 msgstr "Testuoti „Force Feedback“"
 

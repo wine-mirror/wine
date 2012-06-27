@@ -37,7 +37,7 @@ struct Joystick {
 };
 
 #define TEST_MAX_BUTTONS    32
-#define TEST_MAX_AXES       3
+#define TEST_MAX_AXES       4
 
 struct JoystickData {
     IDirectInput8W *di;
@@ -71,6 +71,7 @@ struct JoystickData {
 #define IDC_TESTGROUPXY     2005
 #define IDC_TESTGROUPRXRY   2006
 #define IDC_TESTGROUPZRZ    2007
+#define IDC_TESTGROUPPOV    2008
 
 #define IDC_JOYSTICKBUTTON  3000
 #define IDC_JOYSTICKAXES    4000

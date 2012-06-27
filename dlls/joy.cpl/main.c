@@ -212,6 +212,19 @@ static DWORD WINAPI input_thread(void *param)
     DIJOYSTATE state;
     struct JoystickData *data = param;
 
+    /* Setup POV as clock positions
+     *         0
+     *   31500    4500
+     * 27000  -1    9000
+     *   22500   13500
+     *       18000
+     */
+    int ma = TEST_AXIS_MAX;
+    int pov_val[9] = {0, 4500, 9000, 13500,
+                      18000, 22500, 27000, 31500, -1};
+    int pov_pos[9][2] = { {0, -ma}, {ma/2, -ma/2}, {ma, 0}, {ma/2, ma/2},
+                          {0, ma}, {-ma/2, ma/2}, {-ma, 0}, {-ma/2, -ma/2}, {0, 0} };
+
     ZeroMemory(&state, sizeof(state));
 
     while (!data->stop)
@@ -233,6 +246,16 @@ static DWORD WINAPI input_thread(void *param)
         axes_pos[1][1] = state.lRy;
         axes_pos[2][0] = state.lZ;
         axes_pos[2][1] = state.lRz;
+
+        /* Set pov values */
+        for (i = 0; i < sizeof(pov_val)/sizeof(pov_val[0]); i++)
+        {
+            if (state.rgdwPOV[0] == pov_val[i])
+            {
+                axes_pos[3][0] = pov_pos[i][0];
+                axes_pos[3][1] = pov_pos[i][1];
+            }
+        }
 
         for (i = 0; i < TEST_MAX_AXES; i++)
             SetWindowPos(data->axes[i], 0,
@@ -309,8 +332,10 @@ static void draw_joystick_axes(HWND hwnd, struct JoystickData* data)
     DIPROPRANGE propRange;
     HINSTANCE hinst = (HINSTANCE) GetWindowLongPtrW(hwnd, GWLP_HINSTANCE);
     static const WCHAR button_class[] = {'B','u','t','t','o','n','\0'};
-    static const WCHAR axes_names[TEST_MAX_AXES][7] = { {'X',',','Y','\0'}, {'R','x',',','R','y','\0'}, {'Z',',','R','z','\0'} };
-    static const DWORD axes_idc[TEST_MAX_AXES] = { IDC_TESTGROUPXY, IDC_TESTGROUPRXRY, IDC_TESTGROUPZRZ };
+    static const WCHAR axes_names[TEST_MAX_AXES][7] = { {'X',',','Y','\0'}, {'R','x',',','R','y','\0'},
+                                                        {'Z',',','R','z','\0'}, {'P','O','V','\0'} };
+    static const DWORD axes_idc[TEST_MAX_AXES] = { IDC_TESTGROUPXY, IDC_TESTGROUPRXRY,
+                                                   IDC_TESTGROUPZRZ, IDC_TESTGROUPPOV };
 
     /* Set axis range to ease the GUI visualization */
     for (i = 0; i < data->num_joysticks; i++)
