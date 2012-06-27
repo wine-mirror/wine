@@ -361,7 +361,7 @@ HGLRC WINAPI wglCreateLayerContext(HDC hdc,
   if (iLayerPlane == 0) {
       return wglCreateContext(hdc);
   }
-  FIXME(" no handler for layer %d\n", iLayerPlane);
+  FIXME("no handler for layer %d\n", iLayerPlane);
 
   return NULL;
 }
@@ -387,7 +387,7 @@ int WINAPI wglGetLayerPaletteEntries(HDC hdc,
 				     int iStart,
 				     int cEntries,
 				     const COLORREF *pcr) {
-  FIXME("(): stub !\n");
+  FIXME("(): stub!\n");
 
   return 0;
 }
@@ -443,7 +443,7 @@ static BOOL is_extension_supported(const char* extension)
         const char *version = extension + 11; /* Move past 'GL_VERSION_' */
 
         if(!gl_version) {
-            ERR("Error no OpenGL version found,\n");
+            ERR("No OpenGL version found!\n");
             return FALSE;
         }
 
@@ -517,18 +517,18 @@ PROC WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
       */
       memcpy(buf, ext_ret->name, strlen(ext_ret->name) - 3);
       buf[strlen(ext_ret->name) - 3] = '\0';
-      TRACE(" extension not found in the Linux OpenGL library, checking against libGL bug with %s..\n", buf);
+      TRACE("Extension not found in the Linux OpenGL library, checking against libGL bug with %s..\n", buf);
 
       ret = GetProcAddress(opengl32_handle, buf);
       if (ret != NULL) {
-        TRACE(" found function in main OpenGL library (%p) !\n", ret);
+        TRACE("Found function in main OpenGL library (%p)!\n", ret);
       } else {
-        WARN("Did not find function %s (%s) in your OpenGL library !\n", lpszProc, ext_ret->name);
+        WARN("Did not find function %s (%s) in your OpenGL library!\n", lpszProc, ext_ret->name);
       }
 
       return ret;
     } else {
-      TRACE(" returning function  (%p)\n", ext_ret->func);
+      TRACE("returning function (%p)\n", ext_ret->func);
       extension_funcs[ext_ret - extension_registry] = local_func;
 
       return ext_ret->func;
@@ -555,7 +555,7 @@ int WINAPI wglSetLayerPaletteEntries(HDC hdc,
 				     int iStart,
 				     int cEntries,
 				     const COLORREF *pcr) {
-  FIXME("(): stub !\n");
+  FIXME("(): stub!\n");
 
   return 0;
 }
@@ -573,7 +573,7 @@ BOOL WINAPI wglSwapLayerBuffers(HDC hdc,
   }
 
   if (fuPlanes) {
-    WARN("Following layers unhandled : %08x\n", fuPlanes);
+    WARN("Following layers unhandled: %08x\n", fuPlanes);
   }
 
   return TRUE;
@@ -602,7 +602,7 @@ static BOOL wglUseFontBitmaps_common( HDC hdc, DWORD first, DWORD count, DWORD l
          else
              needed_size = GetGlyphOutlineA(hdc, glyph, GGO_BITMAP, &gm, 0, NULL, &identity);
 
-         TRACE("Glyph : %3d / List : %d size %d\n", glyph, listBase, needed_size);
+         TRACE("Glyph: %3d / List: %d size %d\n", glyph, listBase, needed_size);
          if (needed_size == GDI_ERROR) {
              ret = FALSE;
              break;
@@ -625,11 +625,11 @@ static BOOL wglUseFontBitmaps_common( HDC hdc, DWORD first, DWORD count, DWORD l
              unsigned int bitmask;
              unsigned char *bitmap_ = bitmap;
 
-             TRACE("  - bbox : %d x %d\n", gm.gmBlackBoxX, gm.gmBlackBoxY);
-             TRACE("  - origin : (%d , %d)\n", gm.gmptGlyphOrigin.x, gm.gmptGlyphOrigin.y);
-             TRACE("  - increment : %d - %d\n", gm.gmCellIncX, gm.gmCellIncY);
+             TRACE("  - bbox: %d x %d\n", gm.gmBlackBoxX, gm.gmBlackBoxY);
+             TRACE("  - origin: (%d, %d)\n", gm.gmptGlyphOrigin.x, gm.gmptGlyphOrigin.y);
+             TRACE("  - increment: %d - %d\n", gm.gmCellIncX, gm.gmCellIncY);
              if (needed_size != 0) {
-                 TRACE("  - bitmap :\n");
+                 TRACE("  - bitmap:\n");
                  for (height = 0; height < gm.gmBlackBoxY; height++) {
                      TRACE("      ");
                      for (width = 0, bitmask = 0x80; width < gm.gmBlackBoxX; width++, bitmask >>= 1) {
