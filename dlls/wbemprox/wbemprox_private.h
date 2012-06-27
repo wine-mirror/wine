@@ -100,7 +100,6 @@ struct view
     const struct expr *cond;
     UINT *result;
     UINT  count;
-    UINT  index;
 };
 
 struct query

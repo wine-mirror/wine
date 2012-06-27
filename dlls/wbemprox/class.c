@@ -36,6 +36,7 @@ struct enum_class_object
     IEnumWbemClassObject IEnumWbemClassObject_iface;
     LONG refs;
     struct query *query;
+    UINT index;
 };
 
 static inline struct enum_class_object *impl_from_IEnumWbemClassObject(
@@ -92,11 +93,10 @@ static HRESULT WINAPI enum_class_object_Reset(
     IEnumWbemClassObject *iface )
 {
     struct enum_class_object *ec = impl_from_IEnumWbemClassObject( iface );
-    struct view *view = ec->query->view;
 
     TRACE("%p\n", iface);
 
-    view->index = 0;
+    ec->index = 0;
     return WBEM_S_NO_ERROR;
 }
 
@@ -118,14 +118,14 @@ static HRESULT WINAPI enum_class_object_Next(
     if (lTimeout != WBEM_INFINITE) FIXME("timeout not supported\n");
 
     *puReturned = 0;
-    if (view->index + uCount > view->count) return WBEM_S_FALSE;
+    if (ec->index + uCount > view->count) return WBEM_S_FALSE;
 
-    hr = WbemClassObject_create( NULL, iface, view->index, (void **)apObjects );
+    hr = WbemClassObject_create( NULL, iface, ec->index, (void **)apObjects );
     if (hr != S_OK) return hr;
 
-    view->index++;
+    ec->index++;
     *puReturned = 1;
-    if (view->index == view->count) return WBEM_S_FALSE;
+    if (ec->index == view->count) return WBEM_S_FALSE;
     if (uCount > 1) return WBEM_S_TIMEDOUT;
     return WBEM_S_NO_ERROR;
 }
@@ -159,12 +159,12 @@ static HRESULT WINAPI enum_class_object_Skip(
 
     if (lTimeout != WBEM_INFINITE) FIXME("timeout not supported\n");
 
-    if (view->index + nCount >= view->count)
+    if (ec->index + nCount >= view->count)
     {
-        view->index = view->count - 1;
+        ec->index = view->count - 1;
         return WBEM_S_FALSE;
     }
-    view->index += nCount;
+    ec->index += nCount;
     return WBEM_S_NO_ERROR;
 }
 
@@ -193,6 +193,7 @@ HRESULT EnumWbemClassObject_create(
     ec->IEnumWbemClassObject_iface.lpVtbl = &enum_class_object_vtbl;
     ec->refs  = 1;
     ec->query = query;
+    ec->index = 0;
 
     *ppObj = &ec->IEnumWbemClassObject_iface;
 
