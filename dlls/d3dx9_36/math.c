@@ -1981,6 +1981,20 @@ FLOAT* WINAPI D3DXSHAdd(FLOAT *out, UINT order, const FLOAT *a, const FLOAT *b)
     return out;
 }
 
+FLOAT WINAPI D3DXSHDot(UINT order, CONST FLOAT *a, CONST FLOAT *b)
+{
+    FLOAT s;
+    UINT i;
+
+    TRACE("order %u, a %p, b %p\n", order, a, b);
+
+    s = a[0] * b[0];
+    for (i = 1; i < order * order; i++)
+        s += a[i] * b[i];
+
+    return s;
+}
+
 FLOAT* WINAPI D3DXSHMultiply3(FLOAT *out, CONST FLOAT *a, CONST FLOAT *b)
 {
     FLOAT t, ta, tb;

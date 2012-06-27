@@ -2399,6 +2399,29 @@ static void test_D3DXSHAdd(void)
     }
 }
 
+static void test_D3DXSHDot(void)
+{
+    unsigned int i;
+    FLOAT a[64], b[64], got;
+    CONST FLOAT expected[] =
+    { 0.5f, 0.5f, 25.0f, 262.5f, 1428.0f, 5362.0f, 15873.0f, 39812.0f, 88400.0f, };
+
+    for (i = 0; i < 64; i++)
+    {
+        a[i] = (FLOAT)i + 1.0f;
+        b[i] = (FLOAT)i + 0.5f;
+    }
+
+    /* D3DXSHDot computes by using order * order elements */
+    for (i = 0; i < 9; i++)
+    {
+        got = D3DXSHDot(i, a, b);
+        ok(relative_error(got, expected[i]) < admitted_error, "order %d: expected %f, received %f\n", i, expected[i], got);
+    }
+
+    return;
+}
+
 static void test_D3DXSHMultiply3(void)
 {
     unsigned int i;
@@ -2438,5 +2461,6 @@ START_TEST(math)
     test_D3DXVec_Array();
     test_D3DXFloat_Array();
     test_D3DXSHAdd();
+    test_D3DXSHDot();
     test_D3DXSHMultiply3();
 }
