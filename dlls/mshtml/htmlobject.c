@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <assert.h>
 
 #define COBJMACROS
 
@@ -571,8 +572,6 @@ static void HTMLObjectElement_destructor(HTMLDOMNode *iface)
 
     if(This->plugin_container.plugin_host)
         detach_plugin_host(This->plugin_container.plugin_host);
-    if(This->nsobject)
-        nsIDOMHTMLObjectElement_Release(This->nsobject);
 
     HTMLElement_destructor(&This->plugin_container.element.node);
 }
@@ -646,14 +645,13 @@ HRESULT HTMLObjectElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nsele
     ret->IHTMLObjectElement2_iface.lpVtbl = &HTMLObjectElement2Vtbl;
     ret->plugin_container.element.node.vtbl = &HTMLObjectElementImplVtbl;
 
-    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLObjectElement, (void**)&ret->nsobject);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIDOMHTMLObjectElement iface: %08x\n", nsres);
-        heap_free(ret);
-        return E_FAIL;
-    }
-
     HTMLElement_Init(&ret->plugin_container.element, doc, nselem, &HTMLObjectElement_dispex);
+
+    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLObjectElement, (void**)&ret->nsobject);
+
+    /* Share nsobject reference with nsnode */
+    assert(nsres == NS_OK && (nsIDOMNode*)ret->nsobject == ret->plugin_container.element.node.nsnode);
+    nsIDOMNode_Release(ret->plugin_container.element.node.nsnode);
 
     *elem = &ret->plugin_container.element;
     return S_OK;
