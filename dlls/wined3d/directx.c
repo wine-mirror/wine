@@ -3024,11 +3024,12 @@ HRESULT CDECL wined3d_enum_adapter_modes(const struct wined3d *wined3d, UINT ada
 }
 
 HRESULT CDECL wined3d_get_adapter_display_mode(const struct wined3d *wined3d, UINT adapter_idx,
-        struct wined3d_display_mode *mode)
+        struct wined3d_display_mode *mode, enum wined3d_display_rotation *rotation)
 {
     const struct wined3d_adapter *adapter;
 
-    TRACE("wined3d %p, adapter_idx %u, display_mode %p.\n", wined3d, adapter_idx, mode);
+    TRACE("wined3d %p, adapter_idx %u, display_mode %p, rotation %p.\n",
+            wined3d, adapter_idx, mode, rotation);
 
     if (!mode || adapter_idx >= wined3d->adapter_count)
         return WINED3DERR_INVALIDCALL;
@@ -3068,6 +3069,29 @@ HRESULT CDECL wined3d_get_adapter_display_mode(const struct wined3d *wined3d, UI
             mode->scanline_ordering = WINED3D_SCANLINE_ORDERING_INTERLACED;
         else
             mode->scanline_ordering = WINED3D_SCANLINE_ORDERING_PROGRESSIVE;
+
+        if (rotation)
+        {
+            switch (DevModeW.u1.s2.dmDisplayOrientation)
+            {
+                case DMDO_DEFAULT:
+                    *rotation = WINED3D_DISPLAY_ROTATION_0;
+                    break;
+                case DMDO_90:
+                    *rotation = WINED3D_DISPLAY_ROTATION_90;
+                    break;
+                case DMDO_180:
+                    *rotation = WINED3D_DISPLAY_ROTATION_180;
+                    break;
+                case DMDO_270:
+                    *rotation = WINED3D_DISPLAY_ROTATION_270;
+                    break;
+                default:
+                    FIXME("Unhandled display rotation %#x.\n", DevModeW.u1.s2.dmDisplayOrientation);
+                    *rotation = WINED3D_DISPLAY_ROTATION_UNSPECIFIED;
+                    break;
+            }
+        }
     }
     else
     {
@@ -3120,7 +3144,7 @@ HRESULT CDECL wined3d_set_adapter_display_mode(struct wined3d *wined3d,
     }
 
     /* Only change the mode if necessary. */
-    if (FAILED(hr = wined3d_get_adapter_display_mode(wined3d, adapter_idx, &current_mode)))
+    if (FAILED(hr = wined3d_get_adapter_display_mode(wined3d, adapter_idx, &current_mode, NULL)))
     {
         ERR("Failed to get current display mode, hr %#x.\n", hr);
     }

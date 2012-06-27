@@ -774,6 +774,15 @@ enum wined3d_scanline_ordering
     WINED3D_SCANLINE_ORDERING_INTERLACED    = 2,
 };
 
+enum wined3d_display_rotation
+{
+    WINED3D_DISPLAY_ROTATION_UNSPECIFIED    = 0,
+    WINED3D_DISPLAY_ROTATION_0              = 1,
+    WINED3D_DISPLAY_ROTATION_90             = 2,
+    WINED3D_DISPLAY_ROTATION_180            = 3,
+    WINED3D_DISPLAY_ROTATION_270            = 4,
+};
+
 #define WINED3DCOLORWRITEENABLE_RED                             (1 << 0)
 #define WINED3DCOLORWRITEENABLE_GREEN                           (1 << 1)
 #define WINED3DCOLORWRITEENABLE_BLUE                            (1 << 2)
@@ -2031,7 +2040,7 @@ HRESULT __cdecl wined3d_enum_adapter_modes(const struct wined3d *wined3d, UINT a
         enum wined3d_format_id format_id, UINT mode_idx, struct wined3d_display_mode *mode);
 UINT __cdecl wined3d_get_adapter_count(const struct wined3d *wined3d);
 HRESULT __cdecl wined3d_get_adapter_display_mode(const struct wined3d *wined3d, UINT adapter_idx,
-        struct wined3d_display_mode *mode);
+        struct wined3d_display_mode *mode, enum wined3d_display_rotation *rotation);
 HRESULT __cdecl wined3d_get_adapter_identifier(const struct wined3d *wined3d, UINT adapter_idx,
         DWORD flags, struct wined3d_adapter_identifier *identifier);
 UINT __cdecl wined3d_get_adapter_mode_count(const struct wined3d *wined3d,

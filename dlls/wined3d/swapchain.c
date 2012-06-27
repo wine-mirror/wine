@@ -267,7 +267,8 @@ HRESULT CDECL wined3d_swapchain_get_display_mode(const struct wined3d_swapchain 
 
     TRACE("swapchain %p, mode %p.\n", swapchain, mode);
 
-    hr = wined3d_get_adapter_display_mode(swapchain->device->wined3d, swapchain->device->adapter->ordinal, mode);
+    hr = wined3d_get_adapter_display_mode(swapchain->device->wined3d,
+            swapchain->device->adapter->ordinal, mode, NULL);
 
     TRACE("Returning w %u, h %u, refresh rate %u, format %s.\n",
             mode->width, mode->height, mode->refresh_rate, debug_d3dformat(mode->format_id));
@@ -905,7 +906,7 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, enum wined3d_
     swapchain->win_handle = window;
     swapchain->device_window = window;
 
-    wined3d_get_adapter_display_mode(device->wined3d, adapter->ordinal, &mode);
+    wined3d_get_adapter_display_mode(device->wined3d, adapter->ordinal, &mode, NULL);
     swapchain->orig_width = mode.width;
     swapchain->orig_height = mode.height;
     swapchain->orig_fmt = mode.format_id;

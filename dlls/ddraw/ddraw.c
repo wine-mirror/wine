@@ -670,7 +670,7 @@ static HRESULT ddraw_create_swapchain(struct ddraw *ddraw, HWND window, BOOL win
     struct wined3d_display_mode mode;
     HRESULT hr = WINED3D_OK;
 
-    if (FAILED(hr = wined3d_get_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &mode)))
+    if (FAILED(hr = wined3d_get_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &mode, NULL)))
     {
         ERR("Failed to get display mode.\n");
         return hr;
@@ -886,7 +886,7 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND hwnd,
         {
             struct wined3d_display_mode display_mode;
 
-            wined3d_get_adapter_display_mode(This->wined3d, WINED3DADAPTER_DEFAULT, &display_mode);
+            wined3d_get_adapter_display_mode(This->wined3d, WINED3DADAPTER_DEFAULT, &display_mode, NULL);
             wined3d_device_setup_fullscreen_window(This->wined3d_device, hwnd,
                     display_mode.width, display_mode.height);
         }
@@ -1422,7 +1422,7 @@ static HRESULT WINAPI ddraw7_GetDisplayMode(IDirectDraw7 *iface, DDSURFACEDESC2 
         return DDERR_INVALIDPARAMS;
     }
 
-    if (FAILED(hr = wined3d_get_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &mode)))
+    if (FAILED(hr = wined3d_get_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &mode, NULL)))
     {
         ERR("Failed to get display mode, hr %#x.\n", hr);
         wined3d_mutex_unlock();
@@ -1514,7 +1514,7 @@ static HRESULT WINAPI ddraw7_GetFourCCCodes(IDirectDraw7 *iface, DWORD *NumCodes
 
     TRACE("iface %p, codes_count %p, codes %p.\n", iface, NumCodes, Codes);
 
-    if (FAILED(hr = wined3d_get_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &mode)))
+    if (FAILED(hr = wined3d_get_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &mode, NULL)))
     {
         ERR("Failed to get display mode, hr %#x.\n", hr);
         return hr;
@@ -1961,7 +1961,7 @@ static HRESULT WINAPI ddraw7_GetScanLine(IDirectDraw7 *iface, DWORD *Scanline)
     }
 
     wined3d_mutex_lock();
-    hr = wined3d_get_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &mode);
+    hr = wined3d_get_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &mode, NULL);
     wined3d_mutex_unlock();
     if (FAILED(hr))
     {
@@ -2893,7 +2893,7 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
     desc2.u4.ddpfPixelFormat.dwSize=sizeof(DDPIXELFORMAT); /* Just to be sure */
 
     /* Get the video mode from WineD3D - we will need it */
-    if (FAILED(hr = wined3d_get_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &mode)))
+    if (FAILED(hr = wined3d_get_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &mode, NULL)))
     {
         ERR("Failed to get display mode, hr %#x.\n", hr);
 
@@ -4643,7 +4643,7 @@ static HRESULT WINAPI d3d7_EnumZBufferFormats(IDirect3D7 *iface, REFCLSID device
      * not like that we'll have to find some workaround, like iterating over
      * all imaginable formats and collecting all the depth stencil formats we
      * can get. */
-    if (FAILED(hr = wined3d_get_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &mode)))
+    if (FAILED(hr = wined3d_get_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &mode, NULL)))
     {
         ERR("Failed to get display mode, hr %#x.\n", hr);
         wined3d_mutex_unlock();
