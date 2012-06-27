@@ -2656,6 +2656,12 @@ static void test_dispose(void)
     expect(ObjectBusy, stat);
 }
 
+static LONG obj_refcount(void *obj)
+{
+    IUnknown_AddRef((IUnknown *)obj);
+    return IUnknown_Release((IUnknown *)obj);
+}
+
 static GpImage *load_image(const BYTE *image_data, UINT image_size)
 {
     IStream *stream;
@@ -2664,6 +2670,8 @@ static GpImage *load_image(const BYTE *image_data, UINT image_size)
     HRESULT hr;
     GpStatus status;
     GpImage *image = NULL;
+    ImageType image_type;
+    LONG refcount;
 
     hmem = GlobalAlloc(0, image_size);
     data = GlobalLock(hmem);
@@ -2674,10 +2682,20 @@ static GpImage *load_image(const BYTE *image_data, UINT image_size)
     ok(hr == S_OK, "CreateStreamOnHGlobal error %#x\n", hr);
     if (hr != S_OK) return NULL;
 
+    refcount = obj_refcount(stream);
+    ok(refcount == 1, "expected stream refcount 1, got %d\n", refcount);
+
     status = GdipLoadImageFromStream(stream, &image);
     ok(status == Ok, "GdipLoadImageFromStream error %d\n", status);
 
-    IStream_Release(stream);
+    status = GdipGetImageType(image, &image_type);
+    ok(status == Ok, "GdipGetImageType error %d\n", status);
+
+    refcount = IStream_Release(stream);
+    if (image_type == ImageTypeBitmap)
+        todo_wine ok(refcount >= 1, "expected stream refcount != 0\n");
+    else
+        ok(refcount == 0, "expected stream refcount 0, got %d\n", refcount);
 
     return image;
 }
