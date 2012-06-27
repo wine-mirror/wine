@@ -57,6 +57,8 @@ static const WCHAR prop_adapterramW[] =
     {'A','d','a','p','t','e','r','R','A','M',0};
 static const WCHAR prop_captionW[] =
     {'C','a','p','t','i','o','n',0};
+static const WCHAR prop_csdversionW[] =
+    {'C','S','D','V','e','r','s','i','o','n',0};
 static const WCHAR prop_commandlineW[] =
     {'C','o','m','m','a','n','d','L','i','n','e',0};
 static const WCHAR prop_cpustatusW[] =
@@ -123,6 +125,7 @@ static const struct column col_networkadapter[] =
 static const struct column col_os[] =
 {
     { prop_captionW,         CIM_STRING },
+    { prop_csdversionW,      CIM_STRING },
     { prop_osarchitectureW,  CIM_STRING },
     { prop_oslanguageW,      CIM_UINT32 },
     { prop_systemdirectoryW, CIM_STRING }
@@ -164,7 +167,10 @@ static const WCHAR compsys_manufacturerW[] =
 static const WCHAR compsys_modelW[] =
     {'W','i','n','e',0};
 static const WCHAR os_captionW[] =
-    {'W','i','n','e',0};
+    {'M','i','c','r','o','s','o','f','t',' ','W','i','n','d','o','w','s',' ','X','P',' ',
+     'V','e','r','s','i','o','n',' ','=',' ','5','.','1','.','2','6','0','0',0};
+static const WCHAR os_csdversionW[] =
+    {'S','e','r','v','i','c','e',' ','P','a','c','k',' ','3',0};
 static const WCHAR os_32bitW[] =
     {'3','2','-','b','i','t',0};
 static const WCHAR os_64bitW[] =
@@ -200,6 +206,7 @@ struct record_networkadapter
 struct record_operatingsystem
 {
     const WCHAR *caption;
+    const WCHAR *csdversion;
     const WCHAR *osarchitecture;
     UINT32       oslanguage;
     const WCHAR *systemdirectory;
@@ -396,7 +403,8 @@ static void fill_os( struct table *table )
     if (!(table->data = heap_alloc( sizeof(*rec) ))) return;
 
     rec = (struct record_operatingsystem *)table->data;
-    rec->caption = os_captionW;
+    rec->caption    = os_captionW;
+    rec->csdversion = os_csdversionW;
 
     GetNativeSystemInfo( &info );
     if (info.u.s.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
