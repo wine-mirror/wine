@@ -3538,7 +3538,7 @@ INT WINAPI AddFontResourceExW( LPCWSTR str, DWORD fl, PVOID pdv )
             int num_resources = 0;
             LPWSTR rt_font = (LPWSTR)((ULONG_PTR)8);  /* we don't want to include winuser.h */
 
-            TRACE("WineEndAddFontResourceEx failed on PE file %s - trying to load resources manually\n",
+            TRACE("WineEngAddFontResourceEx failed on PE file %s - trying to load resources manually\n",
                 wine_dbgstr_w(str));
             if (EnumResourceNamesW(hModule, rt_font, load_enumed_resource, (LONG_PTR)&num_resources))
                 ret = num_resources;
