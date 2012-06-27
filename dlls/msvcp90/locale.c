@@ -223,6 +223,16 @@ void __cdecl locale_facet_register(locale_facet *add)
 }
 
 /* Not exported from msvcp90 */
+/* ?_Register@facet@locale@std@@QAEXXZ */
+/* ?_Register@facet@locale@std@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(locale_facet__Register, 4)
+void __thiscall locale_facet__Register(locale_facet *this)
+{
+    TRACE("(%p)\n", this);
+    locale_facet_register(this);
+}
+
+/* Not exported from msvcp90 */
 /* ??_7facet@locale@std@@6B@ */
 extern const vtable_ptr MSVCP_locale_facet_vtable;
 

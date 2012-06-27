@@ -5817,3 +5817,5 @@
 @ extern ??_7facet@locale@std@@6B@ MSVCP_locale_facet_vtable
 @ cdecl -arch=win32 ?facet_Register@facet@locale@std@@CAXPAV123@@Z(ptr) locale_facet_register
 @ cdecl -arch=win64 ?facet_Register@facet@locale@std@@CAXPEAV123@@Z(ptr) locale_facet_register
+@ thiscall -arch=win32 ?_Register@facet@locale@std@@QAEXXZ(ptr) locale_facet__Register
+@ cdecl -arch=win64 ?_Register@facet@locale@std@@QEAAXXZ(ptr) locale_facet__Register
