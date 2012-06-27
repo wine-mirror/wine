@@ -1252,8 +1252,7 @@ static HRESULT WINAPI HTMLElement2_getElementsByTagName(IHTMLElement2 *iface, BS
         return E_FAIL;
     }
 
-    *pelColl = create_collection_from_nodelist(This->node.doc,
-            (IUnknown*)&This->IHTMLElement_iface, nslist);
+    *pelColl = create_collection_from_nodelist(This->node.doc, nslist);
     nsIDOMNodeList_Release(nslist);
     return S_OK;
 }

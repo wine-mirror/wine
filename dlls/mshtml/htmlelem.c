@@ -1412,8 +1412,7 @@ static HRESULT WINAPI HTMLElement_get_children(IHTMLElement *iface, IDispatch **
         return E_FAIL;
     }
 
-    *p = (IDispatch*)create_collection_from_nodelist(This->node.doc,
-            (IUnknown*)&This->IHTMLElement_iface, nsnode_list);
+    *p = (IDispatch*)create_collection_from_nodelist(This->node.doc, nsnode_list);
 
     nsIDOMNodeList_Release(nsnode_list);
     return S_OK;

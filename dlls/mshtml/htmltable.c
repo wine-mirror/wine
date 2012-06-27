@@ -300,8 +300,7 @@ static HRESULT WINAPI HTMLTable_get_rows(IHTMLTable *iface, IHTMLElementCollecti
         return E_FAIL;
     }
 
-    *p = create_collection_from_htmlcol(This->element.node.doc, (IUnknown*)&This->IHTMLTable_iface,
-            nscol);
+    *p = create_collection_from_htmlcol(This->element.node.doc, nscol);
 
     nsIDOMHTMLCollection_Release(nscol);
     return S_OK;

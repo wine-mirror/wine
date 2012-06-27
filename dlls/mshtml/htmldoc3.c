@@ -572,8 +572,7 @@ static HRESULT WINAPI HTMLDocument3_getElementsByTagName(IHTMLDocument3 *iface, 
         return E_FAIL;
     }
 
-    *pelColl = create_collection_from_nodelist(This->doc_node,
-                                               (IUnknown*)&This->IHTMLDocument3_iface, nslist);
+    *pelColl = create_collection_from_nodelist(This->doc_node, nslist);
     nsIDOMNodeList_Release(nslist);
 
     return S_OK;
