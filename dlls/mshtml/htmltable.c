@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <assert.h>
 
 #define COBJMACROS
 
@@ -741,19 +742,9 @@ static HRESULT HTMLTable_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
     return HTMLElement_QI(&This->element.node, riid, ppv);
 }
 
-static void HTMLTable_destructor(HTMLDOMNode *iface)
-{
-    HTMLTable *This = impl_from_HTMLDOMNode(iface);
-
-    if(This->nstable)
-        nsIDOMHTMLTableElement_Release(This->nstable);
-
-    HTMLElement_destructor(&This->element.node);
-}
-
 static const NodeImplVtbl HTMLTableImplVtbl = {
     HTMLTable_QI,
-    HTMLTable_destructor,
+    HTMLElement_destructor,
     HTMLElement_clone,
     HTMLElement_get_attr_col
 };
@@ -783,14 +774,14 @@ HRESULT HTMLTable_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLE
     ret->element.node.vtbl = &HTMLTableImplVtbl;
     ret->IHTMLTable_iface.lpVtbl = &HTMLTableVtbl;
 
-    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLTableElement, (void**)&ret->nstable);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIDOMHTMLTableElement iface: %08x\n", nsres);
-        heap_free(ret);
-        return E_FAIL;
-    }
-
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLTable_dispex);
+
+    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLTableElement, (void**)&ret->nstable);
+
+    /* Share the reference with nsnode */
+    assert(nsres == NS_OK && (nsIDOMNode*)ret->nstable == ret->element.node.nsnode);
+    nsIDOMNode_Release(ret->element.node.nsnode);
+
     ConnectionPoint_Init(&ret->cp, &ret->element.cp_container, &DIID_HTMLTableEvents, NULL);
 
     *elem = &ret->element;
