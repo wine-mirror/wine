@@ -2036,12 +2036,9 @@ MSVCP_bool __thiscall basic_filebuf_char_is_open(const basic_filebuf_char *this)
     return this->file != NULL;
 }
 
-/* ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QAEPAV12@PB_WHH@Z */
-/* ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEAAPEAV12@PEB_WHH@Z */
-/* ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QAEPAV12@PBGHH@Z */
-/* ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEAAPEAV12@PEBGHH@Z */
-DEFINE_THISCALL_WRAPPER(basic_filebuf_char_open_wchar, 16)
-basic_filebuf_char* __thiscall basic_filebuf_char_open_wchar(basic_filebuf_char *this, const wchar_t *name, int mode, int prot)
+/* ?_Fiopen@std@@YAPAU_iobuf@@PB_WHH@Z */
+/* ?_Fiopen@std@@YAPEAU_iobuf@@PEB_WHH@Z */
+FILE* __cdecl _Fiopen_wchar(const wchar_t *name, int mode, int prot)
 {
     static const wchar_t rW[] = {'r',0};
     static const struct {
@@ -2064,10 +2061,7 @@ basic_filebuf_char* __thiscall basic_filebuf_char_open_wchar(basic_filebuf_char 
     int mode_idx;
     FILE *f = NULL;
 
-    TRACE("(%p %s %d %d)\n", this, debugstr_w(name), mode, prot);
-
-    if(basic_filebuf_char_is_open(this))
-        return NULL;
+    TRACE("(%s %d %d)\n", debugstr_w(name), mode, prot);
 
     for(mode_idx=0; mode_idx<sizeof(str_mode)/sizeof(str_mode[0]); mode_idx++)
         if(str_mode[mode_idx].mode == real_mode)
@@ -2095,6 +2089,39 @@ basic_filebuf_char* __thiscall basic_filebuf_char_open_wchar(basic_filebuf_char 
         fclose(f);
         return NULL;
     }
+
+    return f;
+}
+
+/* ?_Fiopen@std@@YAPAU_iobuf@@PBDHH@Z */
+/* ?_Fiopen@std@@YAPEAU_iobuf@@PEBDHH@Z */
+FILE* __cdecl _Fiopen(const char *name, int mode, int prot)
+{
+    wchar_t nameW[FILENAME_MAX];
+
+    TRACE("(%s %d %d)\n", name, mode, prot);
+
+    if(mbstowcs_s(NULL, nameW, FILENAME_MAX, name, FILENAME_MAX-1) != 0)
+        return NULL;
+    return _Fiopen_wchar(nameW, mode, prot);
+}
+
+/* ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QAEPAV12@PB_WHH@Z */
+/* ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEAAPEAV12@PEB_WHH@Z */
+/* ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QAEPAV12@PBGHH@Z */
+/* ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEAAPEAV12@PEBGHH@Z */
+DEFINE_THISCALL_WRAPPER(basic_filebuf_char_open_wchar, 16)
+basic_filebuf_char* __thiscall basic_filebuf_char_open_wchar(basic_filebuf_char *this, const wchar_t *name, int mode, int prot)
+{
+    FILE *f = NULL;
+
+    TRACE("(%p %s %d %d)\n", this, debugstr_w(name), mode, prot);
+
+    if(basic_filebuf_char_is_open(this))
+        return NULL;
+
+    if(!(f = _Fiopen_wchar(name, mode, prot)))
+        return NULL;
 
     basic_filebuf_char__Init(this, f, INITFL_open);
     basic_filebuf_char__Initcvt(this, codecvt_char_use_facet(this->base.loc));
