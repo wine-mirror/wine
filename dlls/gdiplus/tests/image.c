@@ -2693,7 +2693,7 @@ static GpImage *load_image(const BYTE *image_data, UINT image_size)
 
     refcount = IStream_Release(stream);
     if (image_type == ImageTypeBitmap)
-        todo_wine ok(refcount >= 1, "expected stream refcount != 0\n");
+        ok(refcount >= 1, "expected stream refcount != 0\n");
     else
         ok(refcount == 0, "expected stream refcount 0, got %d\n", refcount);
 
