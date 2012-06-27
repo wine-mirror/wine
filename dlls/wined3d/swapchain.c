@@ -239,7 +239,7 @@ HRESULT CDECL wined3d_swapchain_get_raster_status(const struct wined3d_swapchain
     if (!QueryPerformanceCounter(&counter) || !QueryPerformanceFrequency(&freq_per_sec))
         return WINED3DERR_INVALIDCALL;
 
-    if (FAILED(wined3d_swapchain_get_display_mode(swapchain, &mode)))
+    if (FAILED(wined3d_swapchain_get_display_mode(swapchain, &mode, NULL)))
         return WINED3DERR_INVALIDCALL;
     if (mode.refresh_rate == DEFAULT_REFRESH_RATE)
         mode.refresh_rate = 60;
@@ -261,14 +261,14 @@ HRESULT CDECL wined3d_swapchain_get_raster_status(const struct wined3d_swapchain
 }
 
 HRESULT CDECL wined3d_swapchain_get_display_mode(const struct wined3d_swapchain *swapchain,
-        struct wined3d_display_mode *mode)
+        struct wined3d_display_mode *mode, enum wined3d_display_rotation *rotation)
 {
     HRESULT hr;
 
-    TRACE("swapchain %p, mode %p.\n", swapchain, mode);
+    TRACE("swapchain %p, mode %p, rotation %p.\n", swapchain, mode, rotation);
 
     hr = wined3d_get_adapter_display_mode(swapchain->device->wined3d,
-            swapchain->device->adapter->ordinal, mode, NULL);
+            swapchain->device->adapter->ordinal, mode, rotation);
 
     TRACE("Returning w %u, h %u, refresh rate %u, format %s.\n",
             mode->width, mode->height, mode->refresh_rate, debug_d3dformat(mode->format_id));

@@ -421,7 +421,7 @@ static HRESULT WINAPI d3d8_device_GetDisplayMode(IDirect3DDevice8 *iface, D3DDIS
     TRACE("iface %p, mode %p.\n", iface, mode);
 
     wined3d_mutex_lock();
-    hr = wined3d_device_get_display_mode(device->wined3d_device, 0, &wined3d_mode);
+    hr = wined3d_device_get_display_mode(device->wined3d_device, 0, &wined3d_mode, NULL);
     wined3d_mutex_unlock();
 
     if (SUCCEEDED(hr))

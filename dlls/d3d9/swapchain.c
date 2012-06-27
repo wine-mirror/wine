@@ -175,7 +175,7 @@ static HRESULT WINAPI d3d9_swapchain_GetDisplayMode(IDirect3DSwapChain9 *iface, 
     TRACE("iface %p, mode %p.\n", iface, mode);
 
     wined3d_mutex_lock();
-    hr = wined3d_swapchain_get_display_mode(swapchain->wined3d_swapchain, &wined3d_mode);
+    hr = wined3d_swapchain_get_display_mode(swapchain->wined3d_swapchain, &wined3d_mode, NULL);
     wined3d_mutex_unlock();
 
     if (SUCCEEDED(hr))

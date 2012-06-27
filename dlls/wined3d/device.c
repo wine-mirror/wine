@@ -3715,17 +3715,18 @@ HRESULT CDECL wined3d_device_get_device_caps(const struct wined3d_device *device
             device->create_parms.device_type, caps);
 }
 
-HRESULT CDECL wined3d_device_get_display_mode(const struct wined3d_device *device,
-        UINT swapchain_idx, struct wined3d_display_mode *mode)
+HRESULT CDECL wined3d_device_get_display_mode(const struct wined3d_device *device, UINT swapchain_idx,
+        struct wined3d_display_mode *mode, enum wined3d_display_rotation *rotation)
 {
     struct wined3d_swapchain *swapchain;
     HRESULT hr;
 
-    TRACE("device %p, swapchain_idx %u, mode %p.\n", device, swapchain_idx, mode);
+    TRACE("device %p, swapchain_idx %u, mode %p, rotation %p.\n",
+            device, swapchain_idx, mode, rotation);
 
     if (SUCCEEDED(hr = wined3d_device_get_swapchain(device, swapchain_idx, &swapchain)))
     {
-        hr = wined3d_swapchain_get_display_mode(swapchain, mode);
+        hr = wined3d_swapchain_get_display_mode(swapchain, mode, rotation);
         wined3d_swapchain_decref(swapchain);
     }
 
