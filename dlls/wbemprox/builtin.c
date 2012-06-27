@@ -91,6 +91,8 @@ static const WCHAR prop_releasedateW[] =
     {'R','e','l','e','a','s','e','D','a','t','e',0};
 static const WCHAR prop_serialnumberW[] =
     {'S','e','r','i','a','l','N','u','m','b','e','r',0};
+static const WCHAR prop_speedW[] =
+    {'S','p','e','e','d',0};
 static const WCHAR prop_systemdirectoryW[] =
     {'S','y','s','t','e','m','D','i','r','e','c','t','o','r','y',0};
 static const WCHAR prop_threadcountW[] =
@@ -115,7 +117,8 @@ static const struct column col_networkadapter[] =
 {
     { prop_deviceidW,            CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
     { prop_interfaceindexW,      CIM_SINT32 },
-    { prop_netconnectionstatusW, CIM_UINT16 }
+    { prop_netconnectionstatusW, CIM_UINT16 },
+    { prop_speedW,               CIM_UINT64 }
 };
 static const struct column col_os[] =
 {
@@ -192,6 +195,7 @@ struct record_networkadapter
     const WCHAR *device_id;
     INT32        interface_index;
     UINT16       netconnection_status;
+    UINT64       speed;
 };
 struct record_operatingsystem
 {
@@ -299,6 +303,7 @@ static void fill_networkadapter( struct table *table )
         rec->device_id            = heap_strdupW( device_id );
         rec->interface_index      = aa->u.s.IfIndex;
         rec->netconnection_status = get_connection_status( aa->OperStatus );
+        rec->speed                = 1000000;
         offset += sizeof(*rec);
     }
     TRACE("created %u rows\n", num_rows);
