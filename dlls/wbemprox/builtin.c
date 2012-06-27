@@ -99,7 +99,10 @@ static const WCHAR prop_systemdirectoryW[] =
     {'S','y','s','t','e','m','D','i','r','e','c','t','o','r','y',0};
 static const WCHAR prop_threadcountW[] =
     {'T','h','r','e','a','d','C','o','u','n','t',0};
+static const WCHAR prop_totalphysicalmemoryW[] =
+    {'T','o','t','a','l','P','h','y','s','i','c','a','l','M','e','m','o','r','y',0};
 
+/* column definitions must be kept in sync with record structures below */
 static const struct column col_bios[] =
 {
     { prop_descriptionW,  CIM_STRING },
@@ -113,7 +116,8 @@ static const struct column col_compsys[] =
     { prop_manufacturerW,         CIM_STRING },
     { prop_modelW,                CIM_STRING },
     { prop_numlogicalprocessorsW, CIM_UINT32 },
-    { prop_numprocessorsW,        CIM_UINT32 }
+    { prop_numprocessorsW,        CIM_UINT32 },
+    { prop_totalphysicalmemoryW,  CIM_UINT64 }
 };
 static const struct column col_networkadapter[] =
 {
@@ -195,6 +199,7 @@ struct record_computersystem
     const WCHAR *model;
     UINT32       num_logical_processors;
     UINT32       num_processors;
+    UINT64       total_physical_memory;
 };
 struct record_networkadapter
 {
@@ -247,6 +252,15 @@ static UINT get_processor_count(void)
     return info.NumberOfProcessors;
 }
 
+static UINT64 get_total_physical_memory(void)
+{
+    MEMORYSTATUSEX status;
+
+    status.dwLength = sizeof(status);
+    if (!GlobalMemoryStatusEx( &status )) return 1024 * 1024 * 1024;
+    return status.ullTotalPhys;
+}
+
 static void fill_compsys( struct table *table )
 {
     struct record_computersystem *rec;
@@ -259,6 +273,7 @@ static void fill_compsys( struct table *table )
     rec->model                  = compsys_modelW;
     rec->num_logical_processors = get_processor_count();
     rec->num_processors         = rec->num_logical_processors;
+    rec->total_physical_memory  = get_total_physical_memory();
 
     TRACE("created 1 row\n");
     table->num_rows = 1;
