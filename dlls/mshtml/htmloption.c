@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <assert.h>
 
 #define COBJMACROS
 
@@ -310,19 +311,9 @@ static HRESULT HTMLOptionElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
     return HTMLElement_QI(&This->element.node, riid, ppv);
 }
 
-static void HTMLOptionElement_destructor(HTMLDOMNode *iface)
-{
-    HTMLOptionElement *This = impl_from_HTMLDOMNode(iface);
-
-    if(This->nsoption)
-        nsIDOMHTMLOptionElement_Release(This->nsoption);
-
-    HTMLElement_destructor(&This->element.node);
-}
-
 static const NodeImplVtbl HTMLOptionElementImplVtbl = {
     HTMLOptionElement_QI,
-    HTMLOptionElement_destructor,
+    HTMLElement_destructor,
     HTMLElement_clone,
     HTMLElement_get_attr_col
 };
@@ -351,14 +342,13 @@ HRESULT HTMLOptionElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nsele
     ret->IHTMLOptionElement_iface.lpVtbl = &HTMLOptionElementVtbl;
     ret->element.node.vtbl = &HTMLOptionElementImplVtbl;
 
-    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLOptionElement, (void**)&ret->nsoption);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIDOMHTMLOptionElement interface: %08x\n", nsres);
-        heap_free(ret);
-        return E_FAIL;
-    }
-
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLOptionElement_dispex);
+
+    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLOptionElement, (void**)&ret->nsoption);
+
+    /* Share nsoption reference with nsnode */
+    assert(nsres == NS_OK && (nsIDOMNode*)ret->nsoption == ret->element.node.nsnode);
+    nsIDOMNode_Release(ret->element.node.nsnode);
 
     *elem = &ret->element;
     return S_OK;
