@@ -1673,14 +1673,14 @@ static BOOL glxdrv_wglMakeCurrent(PHYSDEV dev, HGLRC hglrc)
  */
 static BOOL glxdrv_wglMakeContextCurrentARB( PHYSDEV draw_dev, PHYSDEV read_dev, HGLRC hglrc )
 {
+    HDC draw_hdc = draw_dev->hdc;
+    HDC read_hdc = read_dev->hdc;
+    Wine_GLContext *ctx = (Wine_GLContext *)hglrc;
     Wine_GLContext *prev_ctx = NtCurrentTeb()->glContext;
-    struct glx_physdev *draw_physdev = get_glxdrv_dev( draw_dev );
-    struct glx_physdev *read_physdev = get_glxdrv_dev( read_dev );
+    struct x11drv_escape_get_drawable escape_draw, escape_read;
     BOOL ret;
 
-    TRACE("(%p,%p,%p)\n", draw_dev->hdc, read_dev->hdc, hglrc);
-
-    if (!has_opengl()) return 0;
+    TRACE("(%p,%p,%p)\n", draw_hdc, read_hdc, hglrc);
 
     if (hglrc == NULL)
     {
@@ -1691,7 +1691,18 @@ static BOOL glxdrv_wglMakeContextCurrentARB( PHYSDEV draw_dev, PHYSDEV read_dev,
         wine_tsx11_unlock();
         NtCurrentTeb()->glContext = NULL;
     }
-    else if (!draw_physdev->pixel_format)
+
+    escape_draw.code = X11DRV_GET_DRAWABLE;
+    if (!ExtEscape( draw_hdc, X11DRV_ESCAPE, sizeof(escape_draw.code), (LPCSTR)&escape_draw.code,
+                    sizeof(escape_draw), (LPSTR)&escape_draw ))
+        return FALSE;
+
+    escape_read.code = X11DRV_GET_DRAWABLE;
+    if (!ExtEscape( read_hdc, X11DRV_ESCAPE, sizeof(escape_read.code), (LPCSTR)&escape_read.code,
+                    sizeof(escape_read), (LPSTR)&escape_read ))
+        return FALSE;
+
+    if (!escape_draw.pixel_format)
     {
         WARN("Trying to use an invalid drawable\n");
         SetLastError(ERROR_INVALID_HANDLE);
@@ -1699,27 +1710,23 @@ static BOOL glxdrv_wglMakeContextCurrentARB( PHYSDEV draw_dev, PHYSDEV read_dev,
     }
     else
     {
-        Wine_GLContext *ctx = (Wine_GLContext *) hglrc;
-        Drawable draw_drawable = draw_physdev->drawable;
-        Drawable read_drawable = read_physdev->drawable;
-
         if (!pglXMakeContextCurrent) return FALSE;
 
-        if (draw_physdev->type == DC_GL_BITMAP) draw_drawable = get_context_pixmap( draw_physdev->dev.hdc, ctx );
-        if (read_physdev->type == DC_GL_BITMAP) read_drawable = get_context_pixmap( read_physdev->dev.hdc, ctx );
+        if (escape_draw.gl_type == DC_GL_BITMAP) escape_draw.drawable = get_context_pixmap( draw_hdc, ctx );
+        if (escape_read.gl_type == DC_GL_BITMAP) escape_read.drawable = get_context_pixmap( read_hdc, ctx );
 
         wine_tsx11_lock();
-        ret = pglXMakeContextCurrent(gdi_display, draw_drawable, read_drawable, ctx->ctx);
+        ret = pglXMakeContextCurrent(gdi_display, escape_draw.drawable, escape_read.drawable, ctx->ctx);
         if (ret)
         {
             if (prev_ctx) prev_ctx->tid = 0;
 
             ctx->has_been_current = TRUE;
             ctx->tid = GetCurrentThreadId();
-            ctx->hdc = draw_dev->hdc;
-            ctx->read_hdc = read_dev->hdc;
-            ctx->drawables[0] = draw_drawable;
-            ctx->drawables[1] = read_drawable;
+            ctx->hdc = draw_hdc;
+            ctx->read_hdc = read_hdc;
+            ctx->drawables[0] = escape_draw.drawable;
+            ctx->drawables[1] = escape_read.drawable;
             ctx->refresh_drawables = FALSE;
             NtCurrentTeb()->glContext = ctx;
         }
