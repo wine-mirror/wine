@@ -5755,6 +5755,30 @@ basic_istream_char* __cdecl basic_istream_char_get_bstr(
     return istream;
 }
 
+/* ??$?5DU?$char_traits@D@std@@@std@@YAAAV?$basic_istream@DU?$char_traits@D@std@@@0@AAV10@AAD@Z */
+/* ??$?5DU?$char_traits@D@std@@@std@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@0@AEAV10@AEAD@Z */
+basic_istream_char* __cdecl basic_istream_char_read_ch(basic_istream_char *istream, char *ch)
+{
+    IOSB_iostate state = IOSTATE_failbit;
+    int c = 0;
+
+    TRACE("(%p %p)\n", istream, ch);
+
+    if(basic_istream_char_sentry_create(istream, FALSE)) {
+        c = basic_streambuf_char_sbumpc(basic_ios_char_rdbuf_get(
+                    basic_istream_char_get_basic_ios(istream)));
+        if(c != EOF) {
+            state = IOSTATE_goodbit;
+            *ch = c;
+        }
+    }
+    basic_istream_char_sentry_destroy(istream);
+
+    basic_ios_char_setstate(basic_istream_char_get_basic_ios(istream),
+            state | (c==EOF ? IOSTATE_eofbit : IOSTATE_goodbit));
+    return istream;
+}
+
 /* Caution: basic_istream uses virtual inheritance. */
 static inline basic_ios_wchar* basic_istream_wchar_get_basic_ios(basic_istream_wchar *this)
 {
@@ -6774,6 +6798,30 @@ basic_istream_wchar* __cdecl basic_istream_wchar_get_bstr(
                 c = basic_streambuf_wchar_snextc(basic_ios_wchar_rdbuf_get(base))) {
             state = IOSTATE_goodbit;
             MSVCP_basic_string_wchar_append_ch(str, c);
+        }
+    }
+    basic_istream_wchar_sentry_destroy(istream);
+
+    basic_ios_wchar_setstate(basic_istream_wchar_get_basic_ios(istream),
+            state | (c==WEOF ? IOSTATE_eofbit : IOSTATE_goodbit));
+    return istream;
+}
+
+/* ??$?5_WU?$char_traits@_W@std@@@std@@YAAAV?$basic_istream@_WU?$char_traits@_W@std@@@0@AAV10@AA_W@Z */
+/* ??$?5_WU?$char_traits@_W@std@@@std@@YAAEAV?$basic_istream@_WU?$char_traits@_W@std@@@0@AEAV10@AEA_W@Z */
+basic_istream_wchar* __cdecl basic_istream_wchar_read_ch(basic_istream_wchar *istream, wchar_t *ch)
+{
+    IOSB_iostate state = IOSTATE_failbit;
+    unsigned short c = 0;
+
+    TRACE("(%p %p)\n", istream, ch);
+
+    if(basic_istream_wchar_sentry_create(istream, FALSE)) {
+        c = basic_streambuf_wchar_sbumpc(basic_ios_wchar_rdbuf_get(
+                    basic_istream_wchar_get_basic_ios(istream)));
+        if(c != WEOF) {
+            state = IOSTATE_goodbit;
+            *ch = c;
         }
     }
     basic_istream_wchar_sentry_destroy(istream);

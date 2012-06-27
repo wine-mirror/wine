@@ -1,5 +1,5 @@
-@ stub -arch=win32 ??$?5DU?$char_traits@D@std@@@std@@YAAAV?$basic_istream@DU?$char_traits@D@std@@@0@AAV10@AAD@Z
-@ stub -arch=win64 ??$?5DU?$char_traits@D@std@@@std@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@0@AEAV10@AEAD@Z
+@ cdecl -arch=win32 ??$?5DU?$char_traits@D@std@@@std@@YAAAV?$basic_istream@DU?$char_traits@D@std@@@0@AAV10@AAD@Z(ptr ptr) basic_istream_char_read_ch
+@ cdecl -arch=win64 ??$?5DU?$char_traits@D@std@@@std@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@0@AEAV10@AEAD@Z(ptr ptr) basic_istream_char_read_ch
 @ stub -arch=win32 ??$?5DU?$char_traits@D@std@@@std@@YAAAV?$basic_istream@DU?$char_traits@D@std@@@0@AAV10@PAD@Z
 @ stub -arch=win64 ??$?5DU?$char_traits@D@std@@@std@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@0@AEAV10@PEAD@Z
 @ cdecl -arch=win32 ??$?5DU?$char_traits@D@std@@V?$allocator@D@1@@std@@YAAAV?$basic_istream@DU?$char_traits@D@std@@@0@AAV10@AAV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z(ptr ptr) basic_istream_char_get_bstr
@@ -36,8 +36,8 @@
 @ stub -arch=win64 ??$?5U?$char_traits@D@std@@@std@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@0@AEAV10@PEAC@Z
 @ stub -arch=win32 ??$?5U?$char_traits@D@std@@@std@@YAAAV?$basic_istream@DU?$char_traits@D@std@@@0@AAV10@PAE@Z
 @ stub -arch=win64 ??$?5U?$char_traits@D@std@@@std@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@0@AEAV10@PEAE@Z
-@ stub -arch=win32 ??$?5_WU?$char_traits@_W@std@@@std@@YAAAV?$basic_istream@_WU?$char_traits@_W@std@@@0@AAV10@AA_W@Z
-@ stub -arch=win64 ??$?5_WU?$char_traits@_W@std@@@std@@YAAEAV?$basic_istream@_WU?$char_traits@_W@std@@@0@AEAV10@AEA_W@Z
+@ cdecl -arch=win32 ??$?5_WU?$char_traits@_W@std@@@std@@YAAAV?$basic_istream@_WU?$char_traits@_W@std@@@0@AAV10@AA_W@Z(ptr ptr) basic_istream_wchar_read_ch
+@ cdecl -arch=win64 ??$?5_WU?$char_traits@_W@std@@@std@@YAAEAV?$basic_istream@_WU?$char_traits@_W@std@@@0@AEAV10@AEA_W@Z(ptr ptr) basic_istream_wchar_read_ch
 @ stub -arch=win32 ??$?5_WU?$char_traits@_W@std@@@std@@YAAAV?$basic_istream@_WU?$char_traits@_W@std@@@0@AAV10@PA_W@Z
 @ stub -arch=win64 ??$?5_WU?$char_traits@_W@std@@@std@@YAAEAV?$basic_istream@_WU?$char_traits@_W@std@@@0@AEAV10@PEA_W@Z
 @ cdecl -arch=win32 ??$?5_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YAAAV?$basic_istream@_WU?$char_traits@_W@std@@@0@AAV10@AAV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@@Z(ptr ptr) basic_istream_wchar_get_bstr
