@@ -572,6 +572,11 @@ struct HTMLDOMNode {
     HTMLDOMNode *next;
 };
 
+static inline void node_addref(HTMLDOMNode *node)
+{
+    IHTMLDOMNode_AddRef(&node->IHTMLDOMNode_iface);
+}
+
 static inline void node_release(HTMLDOMNode *node)
 {
     IHTMLDOMNode_Release(&node->IHTMLDOMNode_iface);

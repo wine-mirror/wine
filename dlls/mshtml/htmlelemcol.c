@@ -137,6 +137,10 @@ static ULONG WINAPI HTMLElementCollection_Release(IHTMLElementCollection *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
+        unsigned i;
+
+        for(i=0; i < This->len; i++)
+            node_release(&This->elems[i]->node);
         IUnknown_Release(This->ref_unk);
         release_dispex(&This->dispex);
         heap_free(This->elems);
@@ -319,8 +323,10 @@ static HRESULT WINAPI HTMLElementCollection_item(IHTMLElementCollection *iface,
             buf.buf = heap_alloc(buf.size*sizeof(HTMLElement*));
 
             for(i=0; i<This->len; i++) {
-                if(is_elem_name(This->elems[i], V_BSTR(&name)))
+                if(is_elem_name(This->elems[i], V_BSTR(&name))) {
+                    node_addref(&This->elems[i]->node);
                     elem_vector_add(&buf, This->elems[i]);
+                }
             }
 
             if(buf.len > 1) {
@@ -328,8 +334,8 @@ static HRESULT WINAPI HTMLElementCollection_item(IHTMLElementCollection *iface,
                 *pdisp = (IDispatch*)HTMLElementCollection_Create(This->ref_unk, buf.buf, buf.len);
             }else {
                 if(buf.len == 1) {
+                    /* Already AddRef-ed */
                     *pdisp = (IDispatch*)&buf.buf[0]->IHTMLElement_iface;
-                    IDispatch_AddRef(*pdisp);
                 }
 
                 heap_free(buf.buf);
@@ -376,8 +382,10 @@ static HRESULT WINAPI HTMLElementCollection_tags(IHTMLElementCollection *iface,
         nsAString_GetData(&tag_str, &tag);
 
         if(CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE, tag, -1,
-                          V_BSTR(&tagName), -1) == CSTR_EQUAL)
+                          V_BSTR(&tagName), -1) == CSTR_EQUAL) {
+            node_addref(&This->elems[i]->node);
             elem_vector_add(&buf, This->elems[i]);
+        }
     }
 
     nsAString_Finish(&tag_str);
@@ -522,7 +530,6 @@ static void create_all_list(HTMLDocumentNode *doc, HTMLDOMNode *elem, elem_vecto
 
             elem_vector_add(buf, elem_from_HTMLDOMNode(node));
             create_all_list(doc, node, buf);
-            node_release(node);
         }
     }
 }
@@ -533,8 +540,10 @@ IHTMLElementCollection *create_all_collection(HTMLDOMNode *node, BOOL include_ro
 
     buf.buf = heap_alloc(buf.size*sizeof(HTMLElement*));
 
-    if(include_root)
+    if(include_root) {
+        node_addref(node);
         elem_vector_add(&buf, elem_from_HTMLDOMNode(node));
+    }
     create_all_list(node->doc, node, &buf);
     elem_vector_normalize(&buf);
 
@@ -564,7 +573,6 @@ IHTMLElementCollection *create_collection_from_nodelist(HTMLDocumentNode *doc, I
                 if(FAILED(hres))
                     continue;
                 buf.buf[buf.len++] = elem_from_HTMLDOMNode(node);
-                node_release(node);
             }
             nsIDOMNode_Release(nsnode);
         }
@@ -599,7 +607,6 @@ IHTMLElementCollection *create_collection_from_htmlcol(HTMLDocumentNode *doc, IU
             if(FAILED(hres))
                 break;
             buf.buf[i] = elem_from_HTMLDOMNode(node);
-            node_release(node);
         }
     }else {
         buf.buf = NULL;
