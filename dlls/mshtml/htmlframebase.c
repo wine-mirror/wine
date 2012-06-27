@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <assert.h>
 
 #define COBJMACROS
 
@@ -522,11 +523,6 @@ void HTMLFrameBase_destructor(HTMLFrameBase *This)
     if(This->content_window)
         This->content_window->frame_element = NULL;
 
-    if(This->nsframe)
-        nsIDOMHTMLFrameElement_Release(This->nsframe);
-    if(This->nsiframe)
-        nsIDOMHTMLIFrameElement_Release(This->nsiframe);
-
     HTMLElement_destructor(&This->element.node);
 }
 
@@ -542,9 +538,14 @@ void HTMLFrameBase_Init(HTMLFrameBase *This, HTMLDocumentNode *doc, nsIDOMHTMLEl
 
     nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLFrameElement, (void**)&This->nsframe);
     if(NS_FAILED(nsres)) {
+        This->nsframe = NULL;
         nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLIFrameElement, (void**)&This->nsiframe);
-        if(NS_FAILED(nsres))
-            ERR("Could not get nsIDOMHTML[I]Frame interface\n");
-    }else
+        assert(nsres == NS_OK && (nsIDOMNode*)This->nsiframe == This->element.node.nsnode);
+    }else {
+        assert((nsIDOMNode*)This->nsframe == This->element.node.nsnode);
         This->nsiframe = NULL;
+    }
+
+    /* Share the reference with nsnode */
+    nsIDOMNode_Release(This->element.node.nsnode);
 }
