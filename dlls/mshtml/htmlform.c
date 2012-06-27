@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <assert.h>
 
 #define COBJMACROS
 
@@ -505,16 +506,6 @@ static HRESULT HTMLFormElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
     return HTMLElement_QI(&This->element.node, riid, ppv);
 }
 
-static void HTMLFormElement_destructor(HTMLDOMNode *iface)
-{
-    HTMLFormElement *This = impl_from_HTMLDOMNode(iface);
-
-    if(This->nsform)
-        nsIDOMHTMLFormElement_Release(This->nsform);
-
-    HTMLElement_destructor(&This->element.node);
-}
-
 static HRESULT HTMLFormElement_get_dispid(HTMLDOMNode *iface,
         BSTR name, DWORD grfdex, DISPID *pid)
 {
@@ -639,7 +630,7 @@ static HRESULT HTMLFormElement_invoke(HTMLDOMNode *iface,
 
 static const NodeImplVtbl HTMLFormElementImplVtbl = {
     HTMLFormElement_QI,
-    HTMLFormElement_destructor,
+    HTMLElement_destructor,
     HTMLElement_clone,
     HTMLElement_get_attr_col,
     NULL,
@@ -678,14 +669,13 @@ HRESULT HTMLFormElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem,
     ret->IHTMLFormElement_iface.lpVtbl = &HTMLFormElementVtbl;
     ret->element.node.vtbl = &HTMLFormElementImplVtbl;
 
-    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLFormElement, (void**)&ret->nsform);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIDOMHTMLFormElement interface: %08x\n", nsres);
-        heap_free(ret);
-        return E_FAIL;
-    }
-
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLFormElement_dispex);
+
+    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLFormElement, (void**)&ret->nsform);
+
+    /* Share the reference with nsnode */
+    assert(nsres == NS_OK && (nsIDOMNode*)ret->nsform == ret->element.node.nsnode);
+    nsIDOMNode_Release(ret->element.node.nsnode);
 
     *elem = &ret->element;
     return S_OK;
