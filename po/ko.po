@@ -30,18 +30,13 @@ msgid "&Install..."
 msgstr "설치(&I)..."
 
 #: appwiz.rc:62
-#, fuzzy
-#| msgid ""
-#| "The following software can be automatically removed. To remove a program "
-#| "or to modify its installed components, select it from the list and click "
-#| "Change/Remove."
 msgid ""
 "The following software can be automatically removed. To remove a program or "
 "to modify its installed components, select it from the list and click Modify/"
 "Remove."
 msgstr ""
-"이 소프트웨어는 자동으로 삭제되었을 수도 있습니다.설치된 구성요소를 고치거나 "
-"프로그램을 지우려면 , 추가/삭제 목록에서 선택하십시오."
+"다음 소프트웨어는 자동으로 제거될 것입니다.프로그램을 제거하거나 설치된 구성"
+"요소를 변경하려면,목록에서 선택하고 고치기/제거를 클릭하십시오."
 
 #: appwiz.rc:64
 msgid "&Support Information"
@@ -3419,51 +3414,43 @@ msgstr "높음"
 
 #: joy.rc:33
 msgid "Joysticks"
-msgstr ""
+msgstr "조이스틱"
 
 #: joy.rc:36 winecfg.rc:204
 msgid "&Disable"
 msgstr "사용하지 않음(&D)"
 
 #: joy.rc:37
-#, fuzzy
-#| msgid "&enable"
 msgid "&Enable"
 msgstr "가능(&E)"
 
 #: joy.rc:38
-#, fuzzy
-#| msgid "Disconnected"
 msgid "Connected"
-msgstr "연결이 끊어짐"
+msgstr "연결됨"
 
 #: joy.rc:40
-#, fuzzy
-#| msgid "&Disable"
 msgid "Disabled"
-msgstr "사용하지 않음(&D)"
+msgstr "불가능"
 
 #: joy.rc:46
 msgid "Test Joystick"
-msgstr ""
+msgstr "조이스틱 시험"
 
 #: joy.rc:50
 msgid "Buttons"
-msgstr ""
+msgstr "버튼"
 
 #: joy.rc:59
 msgid "Test Force Feedback"
-msgstr ""
+msgstr "강제 피드백 시험"
 
 #: joy.rc:28
-#, fuzzy
-#| msgid "Create Control"
 msgid "Game Controllers"
-msgstr "컨트롤 만들기"
+msgstr "게임 컨트롤러"
 
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
-msgstr "객페를 기본 형식으로 변환하는 중에 오류 발생"
+msgstr "객체를 기본 형식으로 변환하는 중에 오류 발생"
 
 #: jscript.rc:26
 msgid "Invalid procedure call or argument"
@@ -13588,22 +13575,16 @@ msgid "Help topics: "
 msgstr "도움말 목차: "
 
 #: wmic.rc:25
-#, fuzzy
-#| msgid "Error: Invalid command line parameters\n"
 msgid "Error: Command line not supported\n"
-msgstr "오류:올바르지 않은 명령라인 매개변수\n"
+msgstr "오류: 명령 라인은 지원하지 않음\n"
 
 #: wmic.rc:26
-#, fuzzy
-#| msgid "Property set not found.\n"
 msgid "Error: Alias not found\n"
-msgstr "속성 세트를 찾을 수 없습니다.\n"
+msgstr "오류: Alias를 찾을 수 없음\n"
 
 #: wmic.rc:27
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "Error: Invalid query\n"
-msgstr "오류: 올바르지 않은 키 이름\n"
+msgstr "오류: 올바르지 않은 질의\n"
 
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
