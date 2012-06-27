@@ -5374,29 +5374,31 @@ static BOOL InitAdapters(struct wined3d *wined3d)
     TRACE("Initializing adapters\n");
 
     if(!mod_gl) {
-#ifdef USE_WIN32_OPENGL
-#define USE_GL_FUNC(pfn) pfn = (void*)GetProcAddress(mod_gl, #pfn);
         mod_gl = LoadLibraryA("opengl32.dll");
         if(!mod_gl) {
             ERR("Can't load opengl32.dll!\n");
             goto nogl_adapter;
         }
+    }
+
+#ifdef USE_WIN32_OPENGL
+    pwglGetProcAddress = (void*)GetProcAddress(mod_gl, "wglGetProcAddress");
+#define USE_GL_FUNC(pfn) pfn = (void*)GetProcAddress(mod_gl, #pfn);
 #else
+    /* To bypass the opengl32 thunks load wglGetProcAddress from gdi32 instead of opengl32 */
+    pwglGetProcAddress = (void*)GetProcAddress(GetModuleHandleA("gdi32.dll"), "wglGetProcAddress");
 #define USE_GL_FUNC(pfn) pfn = (void*)pwglGetProcAddress(#pfn);
-        /* To bypass the opengl32 thunks load wglGetProcAddress from gdi32 (glXGetProcAddress wrapper) instead of opengl32's */
-        mod_gl = GetModuleHandleA("gdi32.dll");
 #endif
+
+    if(!pwglGetProcAddress) {
+        ERR("Unable to load wglGetProcAddress!\n");
+        goto nogl_adapter;
     }
 
 /* Load WGL core functions from opengl32.dll */
 #define USE_WGL_FUNC(pfn) p##pfn = (void*)GetProcAddress(mod_gl, #pfn);
     WGL_FUNCS_GEN;
 #undef USE_WGL_FUNC
-
-    if(!pwglGetProcAddress) {
-        ERR("Unable to load wglGetProcAddress!\n");
-        goto nogl_adapter;
-    }
 
 /* Dynamically load all GL core functions */
     GL_FUNCS_GEN;
@@ -5408,17 +5410,9 @@ static BOOL InitAdapters(struct wined3d *wined3d)
 #ifdef USE_WIN32_OPENGL
     wglFinish = (void*)GetProcAddress(mod_gl, "glFinish");
     wglFlush = (void*)GetProcAddress(mod_gl, "glFlush");
-    pwglDeleteContext = (void*)GetProcAddress(mod_gl, "wglDeleteContext");
-    pwglGetCurrentContext = (void*)GetProcAddress(mod_gl, "wglGetCurrentContext");
-    pwglGetCurrentDC = (void*)GetProcAddress(mod_gl, "wglGetCurrentDC");
-    pwglShareLists = (void*)GetProcAddress(mod_gl, "wglShareLists");
 #else
     wglFinish = (void*)pwglGetProcAddress("wglFinish");
     wglFlush = (void*)pwglGetProcAddress("wglFlush");
-    pwglDeleteContext = (void*)pwglGetProcAddress("wglDeleteContext");
-    pwglGetCurrentContext = (void*)pwglGetProcAddress("wglGetCurrentContext");
-    pwglGetCurrentDC = (void*)pwglGetProcAddress("wglGetCurrentDC");
-    pwglShareLists = (void*)pwglGetProcAddress("wglShareLists");
 #endif
 
     glEnableWINE = glEnable;
