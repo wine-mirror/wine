@@ -166,18 +166,23 @@ static UINT WINAPI d3d8_GetAdapterModeCount(IDirect3D8 *iface, UINT adapter)
 static HRESULT WINAPI d3d8_EnumAdapterModes(IDirect3D8 *iface, UINT adapter, UINT mode_idx, D3DDISPLAYMODE *mode)
 {
     struct d3d8 *d3d8 = impl_from_IDirect3D8(iface);
+    struct wined3d_display_mode wined3d_mode;
     HRESULT hr;
 
     TRACE("iface %p, adapter %u, mode_idx %u, mode %p.\n",
             iface, adapter, mode_idx, mode);
 
     wined3d_mutex_lock();
-    hr = wined3d_enum_adapter_modes(d3d8->wined3d, adapter, WINED3DFMT_UNKNOWN,
-            mode_idx, (struct wined3d_display_mode *)mode);
+    hr = wined3d_enum_adapter_modes(d3d8->wined3d, adapter, WINED3DFMT_UNKNOWN, mode_idx, &wined3d_mode);
     wined3d_mutex_unlock();
 
     if (SUCCEEDED(hr))
-        mode->Format = d3dformat_from_wined3dformat(mode->Format);
+    {
+        mode->Width = wined3d_mode.width;
+        mode->Height = wined3d_mode.height;
+        mode->RefreshRate = wined3d_mode.refresh_rate;
+        mode->Format = d3dformat_from_wined3dformat(wined3d_mode.format_id);
+    }
 
     return hr;
 }
@@ -185,17 +190,23 @@ static HRESULT WINAPI d3d8_EnumAdapterModes(IDirect3D8 *iface, UINT adapter, UIN
 static HRESULT WINAPI d3d8_GetAdapterDisplayMode(IDirect3D8 *iface, UINT adapter, D3DDISPLAYMODE *mode)
 {
     struct d3d8 *d3d8 = impl_from_IDirect3D8(iface);
+    struct wined3d_display_mode wined3d_mode;
     HRESULT hr;
 
     TRACE("iface %p, adapter %u, mode %p.\n",
             iface, adapter, mode);
 
     wined3d_mutex_lock();
-    hr = wined3d_get_adapter_display_mode(d3d8->wined3d, adapter, (struct wined3d_display_mode *)mode);
+    hr = wined3d_get_adapter_display_mode(d3d8->wined3d, adapter, &wined3d_mode);
     wined3d_mutex_unlock();
 
     if (SUCCEEDED(hr))
-        mode->Format = d3dformat_from_wined3dformat(mode->Format);
+    {
+        mode->Width = wined3d_mode.width;
+        mode->Height = wined3d_mode.height;
+        mode->RefreshRate = wined3d_mode.refresh_rate;
+        mode->Format = d3dformat_from_wined3dformat(wined3d_mode.format_id);
+    }
 
     return hr;
 }

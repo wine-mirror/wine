@@ -169,16 +169,22 @@ static HRESULT WINAPI d3d9_swapchain_GetRasterStatus(IDirect3DSwapChain9 *iface,
 static HRESULT WINAPI d3d9_swapchain_GetDisplayMode(IDirect3DSwapChain9 *iface, D3DDISPLAYMODE *mode)
 {
     struct d3d9_swapchain *swapchain = impl_from_IDirect3DSwapChain9(iface);
+    struct wined3d_display_mode wined3d_mode;
     HRESULT hr;
 
     TRACE("iface %p, mode %p.\n", iface, mode);
 
     wined3d_mutex_lock();
-    hr = wined3d_swapchain_get_display_mode(swapchain->wined3d_swapchain, (struct wined3d_display_mode *)mode);
+    hr = wined3d_swapchain_get_display_mode(swapchain->wined3d_swapchain, &wined3d_mode);
     wined3d_mutex_unlock();
 
     if (SUCCEEDED(hr))
-        mode->Format = d3dformat_from_wined3dformat(mode->Format);
+    {
+        mode->Width = wined3d_mode.width;
+        mode->Height = wined3d_mode.height;
+        mode->RefreshRate = wined3d_mode.refresh_rate;
+        mode->Format = d3dformat_from_wined3dformat(wined3d_mode.format_id);
+    }
 
     return hr;
 }

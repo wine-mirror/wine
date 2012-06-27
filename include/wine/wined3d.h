@@ -767,6 +767,13 @@ enum wined3d_sysval_semantic
     WINED3D_SV_TARGET7 = 7,
 };
 
+enum wined3d_scanline_ordering
+{
+    WINED3D_SCANLINE_ORDERING_UNKNOWN       = 0,
+    WINED3D_SCANLINE_ORDERING_PROGRESSIVE   = 1,
+    WINED3D_SCANLINE_ORDERING_INTERLACED    = 2,
+};
+
 #define WINED3DCOLORWRITEENABLE_RED                             (1 << 0)
 #define WINED3DCOLORWRITEENABLE_GREEN                           (1 << 1)
 #define WINED3DCOLORWRITEENABLE_BLUE                            (1 << 2)
@@ -1488,6 +1495,7 @@ struct wined3d_display_mode
     UINT height;
     UINT refresh_rate;
     enum wined3d_format_id format_id;
+    enum wined3d_scanline_ordering scanline_ordering;
 };
 
 struct wined3d_color

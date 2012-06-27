@@ -2998,6 +2998,13 @@ HRESULT CDECL wined3d_enum_adapter_modes(const struct wined3d *wined3d, UINT ada
                 mode->format_id = pixelformat_for_depth(DevModeW.dmBitsPerPel);
             else
                 mode->format_id = format_id;
+
+            if (!(DevModeW.dmFields & DM_DISPLAYFLAGS))
+                mode->scanline_ordering = WINED3D_SCANLINE_ORDERING_UNKNOWN;
+            else if (DevModeW.u2.dmDisplayFlags & DM_INTERLACED)
+                mode->scanline_ordering = WINED3D_SCANLINE_ORDERING_INTERLACED;
+            else
+                mode->scanline_ordering = WINED3D_SCANLINE_ORDERING_PROGRESSIVE;
         }
         else
         {
@@ -3005,8 +3012,8 @@ HRESULT CDECL wined3d_enum_adapter_modes(const struct wined3d *wined3d, UINT ada
             return WINED3DERR_INVALIDCALL;
         }
 
-        TRACE("%ux%u@%u %u bpp, %s.\n", mode->width, mode->height, mode->refresh_rate,
-                DevModeW.dmBitsPerPel, debug_d3dformat(mode->format_id));
+        TRACE("%ux%u@%u %u bpp, %s %#x.\n", mode->width, mode->height, mode->refresh_rate,
+                DevModeW.dmBitsPerPel, debug_d3dformat(mode->format_id), mode->scanline_ordering);
     }
     else
     {
@@ -3054,14 +3061,22 @@ HRESULT CDECL wined3d_get_adapter_display_mode(const struct wined3d *wined3d, UI
                     debug_d3dformat(adapter->screen_format));
             mode->format_id = adapter->screen_format;
         }
+
+        if (!(DevModeW.dmFields & DM_DISPLAYFLAGS))
+            mode->scanline_ordering = WINED3D_SCANLINE_ORDERING_UNKNOWN;
+        else if (DevModeW.u2.dmDisplayFlags & DM_INTERLACED)
+            mode->scanline_ordering = WINED3D_SCANLINE_ORDERING_INTERLACED;
+        else
+            mode->scanline_ordering = WINED3D_SCANLINE_ORDERING_PROGRESSIVE;
     }
     else
     {
         FIXME("Adapter not primary display.\n");
     }
 
-    TRACE("Returning %ux%u@%u %s.\n", mode->width, mode->height,
-            mode->refresh_rate, debug_d3dformat(mode->format_id));
+    TRACE("Returning %ux%u@%u %s %#x.\n", mode->width, mode->height,
+            mode->refresh_rate, debug_d3dformat(mode->format_id),
+            mode->scanline_ordering);
     return WINED3D_OK;
 }
 
@@ -3076,8 +3091,9 @@ HRESULT CDECL wined3d_set_adapter_display_mode(struct wined3d *wined3d,
     HRESULT hr;
     LONG ret;
 
-    TRACE("wined3d %p, adapter_idx %u, mode %p (%ux%u@%u %s).\n", wined3d, adapter_idx, mode,
-            mode->width, mode->height, mode->refresh_rate, debug_d3dformat(mode->format_id));
+    TRACE("wined3d %p, adapter_idx %u, mode %p (%ux%u@%u %s %#x).\n", wined3d, adapter_idx, mode,
+            mode->width, mode->height, mode->refresh_rate, debug_d3dformat(mode->format_id),
+            mode->scanline_ordering);
 
     if (adapter_idx >= wined3d->adapter_count)
         return WINED3DERR_INVALIDCALL;
@@ -3096,6 +3112,13 @@ HRESULT CDECL wined3d_set_adapter_display_mode(struct wined3d *wined3d,
     if (mode->refresh_rate)
         devmode.dmFields |= DM_DISPLAYFREQUENCY;
 
+    if (mode->scanline_ordering != WINED3D_SCANLINE_ORDERING_UNKNOWN)
+    {
+        devmode.dmFields |= DM_DISPLAYFLAGS;
+        if (mode->scanline_ordering == WINED3D_SCANLINE_ORDERING_INTERLACED)
+            devmode.u2.dmDisplayFlags |= DM_INTERLACED;
+    }
+
     /* Only change the mode if necessary. */
     if (FAILED(hr = wined3d_get_adapter_display_mode(wined3d, adapter_idx, &current_mode)))
     {
@@ -3105,7 +3128,9 @@ HRESULT CDECL wined3d_set_adapter_display_mode(struct wined3d *wined3d,
             && current_mode.height == mode->height
             && current_mode.format_id == mode->format_id
             && (current_mode.refresh_rate == mode->refresh_rate
-            || !mode->refresh_rate))
+            || !mode->refresh_rate)
+            && (current_mode.scanline_ordering == mode->scanline_ordering
+            || mode->scanline_ordering == WINED3D_SCANLINE_ORDERING_UNKNOWN))
     {
         TRACE("Skipping redundant mode setting call.\n");
         return WINED3D_OK;

@@ -177,7 +177,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetDisplayModeList(IDXGIOutput *ifa
         desc[i].RefreshRate.Numerator = mode.refresh_rate;
         desc[i].RefreshRate.Denominator = 1;
         desc[i].Format = format;
-        desc[i].ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED; /* FIXME */
+        desc[i].ScanlineOrdering = mode.scanline_ordering;
         desc[i].Scaling = DXGI_MODE_SCALING_UNSPECIFIED; /* FIXME */
     }
     wined3d_decref(wined3d);

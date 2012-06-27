@@ -5259,6 +5259,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         mode.height = swapchain->orig_height;
         mode.refresh_rate = 0;
         mode.format_id = swapchain->desc.backbuffer_format;
+        mode.scanline_ordering = WINED3D_SCANLINE_ORDERING_UNKNOWN;
     }
     else
     {
@@ -5266,6 +5267,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         mode.height = swapchain_desc->backbuffer_height;
         mode.refresh_rate = swapchain_desc->refresh_rate;
         mode.format_id = swapchain_desc->backbuffer_format;
+        mode.scanline_ordering = WINED3D_SCANLINE_ORDERING_UNKNOWN;
     }
 
     /* Should Width == 800 && Height == 0 set 800x600? */

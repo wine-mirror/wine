@@ -174,6 +174,7 @@ static HRESULT WINAPI d3d9_EnumAdapterModes(IDirect3D9Ex *iface, UINT adapter,
         D3DFORMAT format, UINT mode_idx, D3DDISPLAYMODE *mode)
 {
     struct d3d9 *d3d9 = impl_from_IDirect3D9Ex(iface);
+    struct wined3d_display_mode wined3d_mode;
     HRESULT hr;
 
     TRACE("iface %p, adapter %u, format %#x, mode_idx %u, mode %p.\n",
@@ -184,11 +185,16 @@ static HRESULT WINAPI d3d9_EnumAdapterModes(IDirect3D9Ex *iface, UINT adapter,
 
     wined3d_mutex_lock();
     hr = wined3d_enum_adapter_modes(d3d9->wined3d, adapter, wined3dformat_from_d3dformat(format),
-            mode_idx, (struct wined3d_display_mode *)mode);
+            mode_idx, &wined3d_mode);
     wined3d_mutex_unlock();
 
     if (SUCCEEDED(hr))
-        mode->Format = d3dformat_from_wined3dformat(mode->Format);
+    {
+        mode->Width = wined3d_mode.width;
+        mode->Height = wined3d_mode.height;
+        mode->RefreshRate = wined3d_mode.refresh_rate;
+        mode->Format = d3dformat_from_wined3dformat(wined3d_mode.format_id);
+    }
 
     return hr;
 }
@@ -196,16 +202,22 @@ static HRESULT WINAPI d3d9_EnumAdapterModes(IDirect3D9Ex *iface, UINT adapter,
 static HRESULT WINAPI d3d9_GetAdapterDisplayMode(IDirect3D9Ex *iface, UINT adapter, D3DDISPLAYMODE *mode)
 {
     struct d3d9 *d3d9 = impl_from_IDirect3D9Ex(iface);
+    struct wined3d_display_mode wined3d_mode;
     HRESULT hr;
 
     TRACE("iface %p, adapter %u, mode %p.\n", iface, adapter, mode);
 
     wined3d_mutex_lock();
-    hr = wined3d_get_adapter_display_mode(d3d9->wined3d, adapter, (struct wined3d_display_mode *)mode);
+    hr = wined3d_get_adapter_display_mode(d3d9->wined3d, adapter, &wined3d_mode);
     wined3d_mutex_unlock();
 
     if (SUCCEEDED(hr))
-        mode->Format = d3dformat_from_wined3dformat(mode->Format);
+    {
+        mode->Width = wined3d_mode.width;
+        mode->Height = wined3d_mode.height;
+        mode->RefreshRate = wined3d_mode.refresh_rate;
+        mode->Format = d3dformat_from_wined3dformat(wined3d_mode.format_id);
+    }
 
     return hr;
 }

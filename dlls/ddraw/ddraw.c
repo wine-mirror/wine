@@ -1069,6 +1069,7 @@ static HRESULT ddraw_set_display_mode(struct ddraw *ddraw, DWORD Width, DWORD He
     mode.height = Height;
     mode.refresh_rate = RefreshRate;
     mode.format_id = format;
+    mode.scanline_ordering = WINED3D_SCANLINE_ORDERING_UNKNOWN;
 
     /* TODO: The possible return values from msdn suggest that
      * the screen mode can't be changed if a surface is locked

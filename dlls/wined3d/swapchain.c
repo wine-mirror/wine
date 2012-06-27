@@ -80,6 +80,7 @@ static void swapchain_cleanup(struct wined3d_swapchain *swapchain)
         mode.height = swapchain->orig_height;
         mode.refresh_rate = 0;
         mode.format_id = swapchain->orig_fmt;
+        mode.scanline_ordering = WINED3D_SCANLINE_ORDERING_UNKNOWN;
         if (FAILED(hr = wined3d_set_adapter_display_mode(swapchain->device->wined3d,
                 swapchain->device->adapter->ordinal, &mode)))
             ERR("Failed to restore display mode, hr %#x.\n", hr);
@@ -966,6 +967,7 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, enum wined3d_
         mode.height = desc->backbuffer_height;
         mode.format_id = desc->backbuffer_format;
         mode.refresh_rate = desc->refresh_rate;
+        mode.scanline_ordering = WINED3D_SCANLINE_ORDERING_UNKNOWN;
 
         if (FAILED(hr = wined3d_set_adapter_display_mode(device->wined3d, device->adapter->ordinal, &mode)))
         {

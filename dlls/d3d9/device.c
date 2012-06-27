@@ -357,16 +357,22 @@ static HRESULT WINAPI d3d9_device_GetDeviceCaps(IDirect3DDevice9Ex *iface, D3DCA
 static HRESULT WINAPI d3d9_device_GetDisplayMode(IDirect3DDevice9Ex *iface, UINT swapchain, D3DDISPLAYMODE *mode)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
+    struct wined3d_display_mode wined3d_mode;
     HRESULT hr;
 
     TRACE("iface %p, swapchain %u, mode %p.\n", iface, swapchain, mode);
 
     wined3d_mutex_lock();
-    hr = wined3d_device_get_display_mode(device->wined3d_device, swapchain, (struct wined3d_display_mode *)mode);
+    hr = wined3d_device_get_display_mode(device->wined3d_device, swapchain, &wined3d_mode);
     wined3d_mutex_unlock();
 
     if (SUCCEEDED(hr))
-        mode->Format = d3dformat_from_wined3dformat(mode->Format);
+    {
+        mode->Width = wined3d_mode.width;
+        mode->Height = wined3d_mode.height;
+        mode->RefreshRate = wined3d_mode.refresh_rate;
+        mode->Format = d3dformat_from_wined3dformat(wined3d_mode.format_id);
+    }
 
     return hr;
 }
