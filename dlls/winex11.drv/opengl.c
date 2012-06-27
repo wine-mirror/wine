@@ -1469,6 +1469,8 @@ static HGLRC glxdrv_wglCreateContext(PHYSDEV dev)
     return (HGLRC) ret;
 }
 
+static BOOL WINAPI X11DRV_wglMakeCurrent(HDC hdc, HGLRC hglrc);
+
 /**
  * X11DRV_wglDeleteContext
  *
@@ -1497,7 +1499,7 @@ static BOOL WINAPI X11DRV_wglDeleteContext(HGLRC hglrc)
 
     /* WGL makes a context not current if it is active before deletion. GLX waits until the context is not current. */
     if (ctx == NtCurrentTeb()->glContext)
-        wglMakeCurrent(ctx->hdc, NULL);
+        X11DRV_wglMakeCurrent(ctx->hdc, NULL);
 
     wine_tsx11_lock();
     list_remove( &ctx->entry );
@@ -1584,13 +1586,12 @@ static GLXPixmap get_context_pixmap( HDC hdc, struct wine_glcontext *ctx )
 }
 
 /**
- * glxdrv_wglMakeCurrent
+ * X11DRV_wglMakeCurrent
  *
  * For OpenGL32 wglMakeCurrent.
  */
-static BOOL glxdrv_wglMakeCurrent(PHYSDEV dev, HGLRC hglrc)
+static BOOL WINAPI X11DRV_wglMakeCurrent(HDC hdc, HGLRC hglrc)
 {
-    HDC hdc = dev->hdc;
     BOOL ret;
     Wine_GLContext *prev_ctx = NtCurrentTeb()->glContext;
     Wine_GLContext *ctx = (Wine_GLContext *) hglrc;
@@ -1667,14 +1668,12 @@ static BOOL glxdrv_wglMakeCurrent(PHYSDEV dev, HGLRC hglrc)
 }
 
 /**
- * glxdrv_wglMakeContextCurrentARB
+ * X11DRV_wglMakeContextCurrentARB
  *
  * For OpenGL32 wglMakeContextCurrentARB
  */
-static BOOL glxdrv_wglMakeContextCurrentARB( PHYSDEV draw_dev, PHYSDEV read_dev, HGLRC hglrc )
+static BOOL WINAPI X11DRV_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, HGLRC hglrc )
 {
-    HDC draw_hdc = draw_dev->hdc;
-    HDC read_hdc = read_dev->hdc;
     Wine_GLContext *ctx = (Wine_GLContext *)hglrc;
     Wine_GLContext *prev_ctx = NtCurrentTeb()->glContext;
     struct x11drv_escape_get_drawable escape_draw, escape_read;
@@ -3070,6 +3069,7 @@ static const WineGLExtension WGL_internal_functions =
     { "wglGetCurrentContext", X11DRV_wglGetCurrentContext },
     { "wglGetCurrentDC", X11DRV_wglGetCurrentDC },
     { "wglGetIntegerv", X11DRV_wglGetIntegerv },
+    { "wglMakeCurrent", X11DRV_wglMakeCurrent },
     { "wglShareLists", X11DRV_wglShareLists },
   }
 };
@@ -3096,7 +3096,7 @@ static const WineGLExtension WGL_ARB_make_current_read =
   "WGL_ARB_make_current_read",
   {
     { "wglGetCurrentReadDCARB", X11DRV_wglGetCurrentReadDCARB },
-    { "wglMakeContextCurrentARB", (void *)1 /* not called directly */ },
+    { "wglMakeContextCurrentARB", X11DRV_wglMakeContextCurrentARB },
   }
 };
 
@@ -3584,8 +3584,8 @@ static const struct gdi_dc_funcs glxdrv_funcs =
     glxdrv_wglCreateContext,            /* pwglCreateContext */
     glxdrv_wglCreateContextAttribsARB,  /* pwglCreateContextAttribsARB */
     glxdrv_wglGetProcAddress,           /* pwglGetProcAddress */
-    glxdrv_wglMakeContextCurrentARB,    /* pwglMakeContextCurrentARB */
-    glxdrv_wglMakeCurrent,              /* pwglMakeCurrent */
+    NULL,                               /* pwglMakeContextCurrentARB */
+    NULL,                               /* pwglMakeCurrent */
     glxdrv_wglSetPixelFormatWINE,       /* pwglSetPixelFormatWINE */
     GDI_PRIORITY_GRAPHICS_DRV + 20      /* priority */
 };

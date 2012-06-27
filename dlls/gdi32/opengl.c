@@ -101,74 +101,6 @@ static HGLRC WINAPI wglCreateContextAttribsARB(HDC hdc, HGLRC hShareContext, con
     return ret;
 }
 
-/***********************************************************************
- *		wglMakeCurrent (OPENGL32.@)
- */
-BOOL WINAPI wglMakeCurrent(HDC hdc, HGLRC hglrc)
-{
-    BOOL ret = FALSE;
-    DC * dc = NULL;
-
-    /* When the context hglrc is NULL, the HDC is ignored and can be NULL.
-     * In that case use the global hDC to get access to the driver.  */
-    if(hglrc == NULL)
-    {
-        if (hdc == NULL && !NtCurrentTeb()->glContext)
-        {
-            WARN( "Current context is NULL\n");
-            SetLastError( ERROR_INVALID_HANDLE );
-            return FALSE;
-        }
-        dc = OPENGL_GetDefaultDC();
-    }
-    else
-        dc = get_dc_ptr( hdc );
-
-    TRACE("hdc: (%p), hglrc: (%p)\n", hdc, hglrc);
-
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pwglMakeCurrent );
-        update_dc( dc );
-        ret = physdev->funcs->pwglMakeCurrent( physdev, hglrc );
-        release_dc_ptr( dc );
-    }
-    return ret;
-}
-
-/***********************************************************************
- *		wglMakeContextCurrentARB
- */
-static BOOL WINAPI wglMakeContextCurrentARB(HDC hDrawDC, HDC hReadDC, HGLRC hglrc)
-{
-    BOOL ret = FALSE;
-    PHYSDEV draw_physdev, read_physdev;
-    DC *DrawDC;
-    DC *ReadDC;
-
-    TRACE("hDrawDC: (%p), hReadDC: (%p) hglrc: (%p)\n", hDrawDC, hReadDC, hglrc);
-
-    /* Both hDrawDC and hReadDC need to be valid */
-    DrawDC = get_dc_ptr( hDrawDC );
-    if (!DrawDC) return FALSE;
-
-    ReadDC = get_dc_ptr( hReadDC );
-    if (!ReadDC) {
-        release_dc_ptr( DrawDC );
-        return FALSE;
-    }
-
-    update_dc( DrawDC );
-    update_dc( ReadDC );
-    draw_physdev = GET_DC_PHYSDEV( DrawDC, pwglMakeContextCurrentARB );
-    read_physdev = GET_DC_PHYSDEV( ReadDC, pwglMakeContextCurrentARB );
-    if (draw_physdev->funcs == read_physdev->funcs)
-        ret = draw_physdev->funcs->pwglMakeContextCurrentARB(draw_physdev, read_physdev, hglrc);
-    release_dc_ptr( DrawDC );
-    release_dc_ptr( ReadDC );
-    return ret;
-}
-
 /**************************************************************************************
  *      WINE-specific wglSetPixelFormat which can set the iPixelFormat multiple times
  *
@@ -219,8 +151,6 @@ PROC WINAPI wglGetProcAddress(LPCSTR func)
      */
     if(ret && strcmp(func, "wglCreateContextAttribsARB") == 0)
         return (PROC)wglCreateContextAttribsARB;
-    else if(ret && strcmp(func, "wglMakeContextCurrentARB") == 0)
-        return (PROC)wglMakeContextCurrentARB;
     else if(ret && strcmp(func, "wglSetPixelFormatWINE") == 0)
         return (PROC)wglSetPixelFormatWINE;
 

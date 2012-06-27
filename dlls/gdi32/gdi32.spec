@@ -499,9 +499,8 @@
 ################################################################
 # Wine extensions: OpenGL support
 #
-@ stdcall wglCreateContext(long)
+@ stdcall -private wglCreateContext(long)
 @ stdcall -private wglGetProcAddress(str)
-@ stdcall wglMakeCurrent(long long)
 
 ################################################################
 # Wine extensions: Win16 functions that are needed by other dlls

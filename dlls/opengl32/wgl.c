@@ -48,7 +48,6 @@ WINE_DECLARE_DEBUG_CHANNEL(opengl);
 static struct
 {
     PROC  (WINAPI *p_wglGetProcAddress)(LPCSTR  lpszProc);
-    BOOL  (WINAPI *p_wglMakeCurrent)(HDC hdc, HGLRC hglrc);
     HGLRC (WINAPI *p_wglCreateContext)(HDC hdc);
     INT   (WINAPI *p_GetPixelFormat)(HDC hdc);
 
@@ -60,6 +59,7 @@ static struct
     HGLRC (WINAPI *p_wglGetCurrentContext)(void);
     HDC   (WINAPI *p_wglGetCurrentDC)(void);
     void  (WINAPI *p_wglGetIntegerv)(GLenum pname, GLint* params);
+    BOOL  (WINAPI *p_wglMakeCurrent)(HDC hdc, HGLRC hglrc);
     BOOL  (WINAPI *p_wglShareLists)(HGLRC hglrc1, HGLRC hglrc2);
 } wine_wgl;
 
@@ -126,7 +126,12 @@ BOOL WINAPI wglDeleteContext(HGLRC hglrc)
  */
 BOOL WINAPI wglMakeCurrent(HDC hdc, HGLRC hglrc)
 {
-  return wine_wgl.p_wglMakeCurrent(hdc, hglrc);
+    if (!hglrc && !hdc && !NtCurrentTeb()->glContext)
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+    return wine_wgl.p_wglMakeCurrent(hdc, hglrc);
 }
 
 /***********************************************************************
@@ -1090,7 +1095,6 @@ static BOOL process_attach(void)
   }
 
   wine_wgl.p_wglGetProcAddress = (void *)GetProcAddress(mod_gdi32, "wglGetProcAddress");
-  wine_wgl.p_wglMakeCurrent = (void *)GetProcAddress(mod_gdi32, "wglMakeCurrent");
   wine_wgl.p_wglCreateContext = (void *)GetProcAddress(mod_gdi32, "wglCreateContext");
   wine_wgl.p_GetPixelFormat = (void *)GetProcAddress(mod_gdi32, "GetPixelFormat");
 
@@ -1102,6 +1106,7 @@ static BOOL process_attach(void)
   wine_wgl.p_wglGetCurrentContext = (void *)wine_wgl.p_wglGetProcAddress("wglGetCurrentContext");
   wine_wgl.p_wglGetCurrentDC = (void *)wine_wgl.p_wglGetProcAddress("wglGetCurrentDC");
   wine_wgl.p_wglGetIntegerv = (void *)wine_wgl.p_wglGetProcAddress("wglGetIntegerv");
+  wine_wgl.p_wglMakeCurrent = (void *)wine_wgl.p_wglGetProcAddress("wglMakeCurrent");
   wine_wgl.p_wglShareLists = (void *)wine_wgl.p_wglGetProcAddress("wglShareLists");
   return TRUE;
 }
