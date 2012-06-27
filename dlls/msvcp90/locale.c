@@ -3801,7 +3801,7 @@ MSVCP_size_t __cdecl numpunct_wchar__Getcat(const locale_facet **facet, const lo
     return LC_NUMERIC;
 }
 
-numpunct_wchar* numpunct_wchar_use_facet(const locale *loc)
+static numpunct_wchar* numpunct_wchar_use_facet(const locale *loc)
 {
     static numpunct_wchar *obj = NULL;
 
@@ -3847,7 +3847,7 @@ MSVCP_size_t __cdecl numpunct_short__Getcat(const locale_facet **facet, const lo
     return LC_NUMERIC;
 }
 
-numpunct_wchar* numpunct_short_use_facet(const locale *loc)
+static numpunct_wchar* numpunct_short_use_facet(const locale *loc)
 {
     static numpunct_wchar *obj = NULL;
 
