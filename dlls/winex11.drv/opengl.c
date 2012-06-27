@@ -3436,6 +3436,16 @@ static INT glxdrv_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_d
                        dev->hdc, physdev->drawable, physdev->pixel_format, physdev->type );
             }
             break;
+        case X11DRV_GET_DRAWABLE:
+            if (out_count >= sizeof(struct x11drv_escape_get_drawable))
+            {
+                struct x11drv_escape_get_drawable *data = out_data;
+                data->pixel_format = physdev->pixel_format;
+                data->gl_type      = physdev->type;
+                data->gl_drawable  = physdev->drawable;
+                data->pixmap       = physdev->pixmap;
+            }
+            break;
         case X11DRV_FLUSH_GL_DRAWABLE:
             flush_gl_drawable( physdev );
             return TRUE;

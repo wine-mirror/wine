@@ -289,6 +289,7 @@ extern void X11DRV_PALETTE_ComputeColorShifts(ColorShifts *shifts, unsigned long
 enum x11drv_escape_codes
 {
     X11DRV_SET_DRAWABLE,     /* set current drawable for a DC */
+    X11DRV_GET_DRAWABLE,     /* get current drawable for a DC */
     X11DRV_START_EXPOSURES,  /* start graphics exposures */
     X11DRV_END_EXPOSURES,    /* end graphics exposures */
     X11DRV_FLUSH_GL_DRAWABLE /* flush changes made to the gl drawable */
@@ -304,6 +305,16 @@ struct x11drv_escape_set_drawable
     XID                      fbconfig_id;  /* fbconfig id used by the GL drawable */
     Drawable                 gl_drawable;  /* GL drawable */
     Pixmap                   pixmap;       /* Pixmap for a GLXPixmap gl_drawable */
+    enum dc_gl_type          gl_type;      /* type of GL device context */
+};
+
+struct x11drv_escape_get_drawable
+{
+    enum x11drv_escape_codes code;         /* escape code (X11DRV_GET_DRAWABLE) */
+    Drawable                 drawable;     /* X drawable */
+    Drawable                 gl_drawable;  /* GL drawable */
+    Pixmap                   pixmap;       /* Pixmap for a GLXPixmap gl_drawable */
+    int                      pixel_format; /* internal GL pixel format */
     enum dc_gl_type          gl_type;      /* type of GL device context */
 };
 

@@ -362,6 +362,14 @@ static INT X11DRV_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_d
                     return TRUE;
                 }
                 break;
+            case X11DRV_GET_DRAWABLE:
+                if (out_count >= sizeof(struct x11drv_escape_get_drawable))
+                {
+                    struct x11drv_escape_get_drawable *data = out_data;
+                    data->drawable = physDev->drawable;
+                    return TRUE;
+                }
+                break;
             case X11DRV_START_EXPOSURES:
                 wine_tsx11_lock();
                 XSetGraphicsExposures( gdi_display, physDev->gc, True );
