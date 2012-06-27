@@ -1263,7 +1263,7 @@ locale_id* __cdecl ctype_char__Id_func(void)
 /* ?_Init@?$ctype@D@std@@IAEXABV_Locinfo@2@@Z */
 /* ?_Init@?$ctype@D@std@@IEAAXAEBV_Locinfo@2@@Z */
 DEFINE_THISCALL_WRAPPER(ctype_char__Init, 8)
-void __thiscall ctype_char__Init(ctype_char *this, _Locinfo *locinfo)
+void __thiscall ctype_char__Init(ctype_char *this, const _Locinfo *locinfo)
 {
     TRACE("(%p %p)\n", this, locinfo);
     _Locinfo__Getctype(locinfo, &this->ctype);
@@ -1292,7 +1292,7 @@ const short* __cdecl ctype_char_classic_table(void)
 /* ??0?$ctype@D@std@@QEAA@AEBV_Locinfo@1@_K@Z */
 DEFINE_THISCALL_WRAPPER(ctype_char_ctor_locinfo, 12)
 ctype_char* __thiscall ctype_char_ctor_locinfo(ctype_char *this,
-        _Locinfo *locinfo, MSVCP_size_t refs)
+        const _Locinfo *locinfo, MSVCP_size_t refs)
 {
     TRACE("(%p %p %lu)\n", this, locinfo, refs);
     ctype_base_ctor_refs(&this->base, refs);
@@ -1806,7 +1806,7 @@ locale_id* __cdecl ctype_short__Id_func(void)
 /* ?_Init@?$ctype@G@std@@IAEXABV_Locinfo@2@@Z */
 /* ?_Init@?$ctype@G@std@@IEAAXAEBV_Locinfo@2@@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar__Init, 8)
-void __thiscall ctype_wchar__Init(ctype_wchar *this, _Locinfo *locinfo)
+void __thiscall ctype_wchar__Init(ctype_wchar *this, const _Locinfo *locinfo)
 {
     TRACE("(%p %p)\n", this, locinfo);
     _Locinfo__Getctype(locinfo, &this->ctype);
@@ -1817,7 +1817,7 @@ void __thiscall ctype_wchar__Init(ctype_wchar *this, _Locinfo *locinfo)
 /* ??0?$ctype@_W@std@@QEAA@AEBV_Locinfo@1@_K@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_ctor_locinfo, 12)
 ctype_wchar* __thiscall ctype_wchar_ctor_locinfo(ctype_wchar *this,
-        _Locinfo *locinfo, MSVCP_size_t refs)
+        const _Locinfo *locinfo, MSVCP_size_t refs)
 {
     TRACE("(%p %p %lu)\n", this, locinfo, refs);
     ctype_base_ctor_refs(&this->base, refs);
@@ -1830,7 +1830,7 @@ ctype_wchar* __thiscall ctype_wchar_ctor_locinfo(ctype_wchar *this,
 /* ??0?$ctype@G@std@@QEAA@AEBV_Locinfo@1@_K@Z */
 DEFINE_THISCALL_WRAPPER(ctype_short_ctor_locinfo, 12)
 ctype_wchar* __thiscall ctype_short_ctor_locinfo(ctype_wchar *this,
-        _Locinfo *locinfo, MSVCP_size_t refs)
+        const _Locinfo *locinfo, MSVCP_size_t refs)
 {
     ctype_wchar *ret = ctype_wchar_ctor_locinfo(this, locinfo, refs);
     this->base.facet.vtable = &MSVCP_ctype_short_vtable;
@@ -2296,6 +2296,32 @@ ctype_wchar* ctype_wchar_use_facet(const locale *loc)
         return obj;
 
     ctype_wchar__Getcat(&fac, loc);
+    obj = (ctype_wchar*)fac;
+    locale_facet__Incref(&obj->base.facet);
+    locale_facet_register(&obj->base.facet);
+    _Lockit_dtor(&lock);
+
+    return obj;
+}
+
+static ctype_wchar* ctype_short_use_facet(const locale *loc)
+{
+    static ctype_wchar *obj = NULL;
+
+    _Lockit lock;
+    const locale_facet *fac;
+
+    _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
+    fac = locale__Getfacet(loc, locale_id_operator_size_t(&ctype_short_id));
+    if(fac) {
+        _Lockit_dtor(&lock);
+        return (ctype_wchar*)fac;
+    }
+
+    if(obj)
+        return obj;
+
+    ctype_short__Getcat(&fac, loc);
     obj = (ctype_wchar*)fac;
     locale_facet__Incref(&obj->base.facet);
     locale_facet_register(&obj->base.facet);
@@ -3046,6 +3072,32 @@ unsigned int __cdecl codecvt_wchar__Getcat(const locale_facet **facet, const loc
     return LC_CTYPE;
 }
 
+static codecvt_wchar* codecvt_wchar_use_facet(const locale *loc)
+{
+    static codecvt_wchar *obj = NULL;
+
+    _Lockit lock;
+    const locale_facet *fac;
+
+    _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
+    fac = locale__Getfacet(loc, locale_id_operator_size_t(&codecvt_wchar_id));
+    if(fac) {
+        _Lockit_dtor(&lock);
+        return (codecvt_wchar*)fac;
+    }
+
+    if(obj)
+        return obj;
+
+    codecvt_wchar__Getcat(&fac, loc);
+    obj = (codecvt_wchar*)fac;
+    locale_facet__Incref(&obj->base.facet);
+    locale_facet_register(&obj->base.facet);
+    _Lockit_dtor(&lock);
+
+    return obj;
+}
+
 /* ?_Getcat@?$codecvt@GDH@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
 /* ?_Getcat@?$codecvt@GDH@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
 unsigned int __cdecl codecvt_short__Getcat(const locale_facet **facet, const locale *loc)
@@ -3068,6 +3120,32 @@ unsigned int __cdecl codecvt_short__Getcat(const locale_facet **facet, const loc
     }
 
     return LC_CTYPE;
+}
+
+static codecvt_wchar* codecvt_short_use_facet(const locale *loc)
+{
+    static codecvt_wchar *obj = NULL;
+
+    _Lockit lock;
+    const locale_facet *fac;
+
+    _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
+    fac = locale__Getfacet(loc, locale_id_operator_size_t(&codecvt_short_id));
+    if(fac) {
+        _Lockit_dtor(&lock);
+        return (codecvt_wchar*)fac;
+    }
+
+    if(obj)
+        return obj;
+
+    codecvt_short__Getcat(&fac, loc);
+    obj = (codecvt_wchar*)fac;
+    locale_facet__Incref(&obj->base.facet);
+    locale_facet_register(&obj->base.facet);
+    _Lockit_dtor(&lock);
+
+    return obj;
 }
 
 /* ?_Id_func@?$codecvt@_WDH@std@@SAAAVid@locale@2@XZ */
@@ -3301,7 +3379,7 @@ extern const vtable_ptr MSVCP_numpunct_char_vtable;
 /* ?_Init@?$numpunct@D@std@@IAEXABV_Locinfo@2@_N@Z */
 /* ?_Init@?$numpunct@D@std@@IEAAXAEBV_Locinfo@2@_N@Z */
 DEFINE_THISCALL_WRAPPER(numpunct_char__Init, 12)
-void __thiscall numpunct_char__Init(numpunct_char *this, _Locinfo *locinfo, MSVCP_bool isdef)
+void __thiscall numpunct_char__Init(numpunct_char *this, const _Locinfo *locinfo, MSVCP_bool isdef)
 {
     int len;
 
@@ -3362,7 +3440,7 @@ void __thiscall numpunct_char__Tidy(numpunct_char *this)
 /* ??0?$numpunct@D@std@@QEAA@AEBV_Locinfo@1@_K_N@Z */
 DEFINE_THISCALL_WRAPPER(numpunct_char_ctor_locinfo, 16)
 numpunct_char* __thiscall numpunct_char_ctor_locinfo(numpunct_char *this,
-        _Locinfo *locinfo, MSVCP_size_t refs, MSVCP_bool usedef)
+        const _Locinfo *locinfo, MSVCP_size_t refs, MSVCP_bool usedef)
 {
     TRACE("(%p %p %lu %d)\n", this, locinfo, refs, usedef);
     locale_facet_ctor_refs(&this->facet, refs);
@@ -3599,7 +3677,8 @@ extern const vtable_ptr MSVCP_numpunct_short_vtable;
 /* ?_Init@?$numpunct@G@std@@IAEXABV_Locinfo@2@_N@Z */
 /* ?_Init@?$numpunct@G@std@@IEAAXAEBV_Locinfo@2@_N@Z */
 DEFINE_THISCALL_WRAPPER(numpunct_wchar__Init, 12)
-void __thiscall numpunct_wchar__Init(numpunct_wchar *this, _Locinfo *locinfo, MSVCP_bool isdef)
+void __thiscall numpunct_wchar__Init(numpunct_wchar *this,
+        const _Locinfo *locinfo, MSVCP_bool isdef)
 {
     const char *to_convert;
     _Cvtvec cvt;
@@ -3670,7 +3749,7 @@ void __thiscall numpunct_wchar__Tidy(numpunct_wchar *this)
 /* ??0?$numpunct@_W@std@@QEAA@AEBV_Locinfo@1@_K_N@Z */
 DEFINE_THISCALL_WRAPPER(numpunct_wchar_ctor_locinfo, 16)
 numpunct_wchar* __thiscall numpunct_wchar_ctor_locinfo(numpunct_wchar *this,
-        _Locinfo *locinfo, MSVCP_size_t refs, MSVCP_bool usedef)
+        const _Locinfo *locinfo, MSVCP_size_t refs, MSVCP_bool usedef)
 {
     TRACE("(%p %p %lu %d)\n", this, locinfo, refs, usedef);
     locale_facet_ctor_refs(&this->facet, refs);
@@ -3683,7 +3762,7 @@ numpunct_wchar* __thiscall numpunct_wchar_ctor_locinfo(numpunct_wchar *this,
 /* ??0?$numpunct@G@std@@QEAA@AEBV_Locinfo@1@_K_N@Z */
 DEFINE_THISCALL_WRAPPER(numpunct_short_ctor_locinfo, 16)
 numpunct_wchar* __thiscall numpunct_short_ctor_locinfo(numpunct_wchar *this,
-        _Locinfo *locinfo, MSVCP_size_t refs, MSVCP_bool usedef)
+        const _Locinfo *locinfo, MSVCP_size_t refs, MSVCP_bool usedef)
 {
     numpunct_wchar_ctor_locinfo(this, locinfo, refs, usedef);
     this->facet.vtable = &MSVCP_numpunct_short_vtable;
@@ -4130,7 +4209,7 @@ void __thiscall num_get_wchar__Init(num_get *this, const _Locinfo *locinfo)
 /* ??0?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEAA@AEBV_Locinfo@1@_K@Z */
 DEFINE_THISCALL_WRAPPER(num_get_wchar_ctor_locinfo, 12)
 num_get* __thiscall num_get_wchar_ctor_locinfo(num_get *this,
-        _Locinfo *locinfo, MSVCP_size_t refs)
+        const _Locinfo *locinfo, MSVCP_size_t refs)
 {
     TRACE("(%p %p %lu)\n", this, locinfo, refs);
 
@@ -4145,7 +4224,7 @@ num_get* __thiscall num_get_wchar_ctor_locinfo(num_get *this,
 /* ??0?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@QEAA@AEBV_Locinfo@1@_K@Z */
 DEFINE_THISCALL_WRAPPER(num_get_short_ctor_locinfo, 12)
 num_get* __thiscall num_get_short_ctor_locinfo(num_get *this,
-        _Locinfo *locinfo, MSVCP_size_t refs)
+        const _Locinfo *locinfo, MSVCP_size_t refs)
 {
     num_get_wchar_ctor_locinfo(this, locinfo, refs);
     this->facet.vtable = &MSVCP_num_get_short_vtable;
@@ -4290,6 +4369,32 @@ MSVCP_size_t __cdecl num_get_short__Getcat(const locale_facet **facet, const loc
     }
 
     return LC_NUMERIC;
+}
+
+static num_get* num_get_short_use_facet(const locale *loc)
+{
+    static num_get *obj = NULL;
+
+    _Lockit lock;
+    const locale_facet *fac;
+
+    _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
+    fac = locale__Getfacet(loc, locale_id_operator_size_t(&num_get_short_id));
+    if(fac) {
+        _Lockit_dtor(&lock);
+        return (num_get*)fac;
+    }
+
+    if(obj)
+        return obj;
+
+    num_get_short__Getcat(&fac, loc);
+    obj = (num_get*)fac;
+    locale_facet__Incref(&obj->facet);
+    locale_facet_register(&obj->facet);
+    _Lockit_dtor(&lock);
+
+    return obj;
 }
 
 static inline wchar_t mb_to_wc(char ch, const _Cvtvec *cvt)
@@ -5277,7 +5382,7 @@ void __thiscall num_get_char__Init(num_get *this, const _Locinfo *locinfo)
 /* ??0?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEAA@AEBV_Locinfo@1@_K@Z */
 DEFINE_THISCALL_WRAPPER(num_get_char_ctor_locinfo, 12)
 num_get* __thiscall num_get_char_ctor_locinfo(num_get *this,
-        _Locinfo *locinfo, MSVCP_size_t refs)
+        const _Locinfo *locinfo, MSVCP_size_t refs)
 {
     TRACE("(%p %p %lu)\n", this, locinfo, refs);
 
@@ -7511,33 +7616,273 @@ locale__Locimp** __cdecl locale__Locimp__Clocptr_func(void)
     return NULL;
 }
 
-/* ?_Makeloc@_Locimp@locale@std@@CAPAV123@ABV_Locinfo@3@HPAV123@PBV23@@Z */
-/* ?_Makeloc@_Locimp@locale@std@@CAPEAV123@AEBV_Locinfo@3@HPEAV123@PEBV23@@Z */
-locale__Locimp* __cdecl locale__Locimp__Makeloc(const _Locinfo *locinfo, category cat, locale__Locimp *locimp, const locale *loc)
-{
-    FIXME("(%p %d %p %p) stub\n", locinfo, cat, locimp, loc);
-    return NULL;
-}
-
 /* ?_Makeushloc@_Locimp@locale@std@@CAXABV_Locinfo@3@HPAV123@PBV23@@Z */
 /* ?_Makeushloc@_Locimp@locale@std@@CAXAEBV_Locinfo@3@HPEAV123@PEBV23@@Z */
+/* List of missing facets:
+ * num_put, collate, messages, money_get, money_put, moneypunct, moneypunct, time_get, time_put
+ */
 void __cdecl locale__Locimp__Makeushloc(const _Locinfo *locinfo, category cat, locale__Locimp *locimp, const locale *loc)
 {
-    FIXME("(%p %d %p %p) stub\n", locinfo, cat, locimp, loc);
+    FIXME("(%p %d %p %p) semi-stub\n", locinfo, cat, locimp, loc);
+
+    if(cat & (1<<(ctype_short__Getcat(NULL, NULL)-1))) {
+        ctype_wchar *ctype;
+
+        if(loc) {
+            ctype = ctype_short_use_facet(loc);
+        }else {
+            ctype = MSVCRT_operator_new(sizeof(ctype_wchar));
+            if(!ctype) {
+                ERR("Out of memory\n");
+                throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+            }
+            ctype_short_ctor_locinfo(ctype, locinfo, 0);
+        }
+        locale__Locimp__Addfac(locimp, &ctype->base.facet, locale_id_operator_size_t(&ctype_short_id));
+    }
+
+    if(cat & (1<<(num_get_short__Getcat(NULL, NULL)-1))) {
+        num_get *numget;
+
+        if(loc) {
+            numget = num_get_short_use_facet(loc);
+        }else {
+            numget = MSVCRT_operator_new(sizeof(num_get));
+            if(!numget) {
+                ERR("Out of memory\n");
+                throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+            }
+            num_get_short_ctor_locinfo(numget, locinfo, 0);
+        }
+        locale__Locimp__Addfac(locimp, &numget->facet, locale_id_operator_size_t(&num_get_short_id));
+    }
+
+    if(cat & (1<<(numpunct_short__Getcat(NULL, NULL)-1))) {
+        numpunct_wchar *numpunct;
+
+        if(loc) {
+            numpunct = numpunct_short_use_facet(loc);
+        }else {
+            numpunct = MSVCRT_operator_new(sizeof(numpunct_wchar));
+            if(!numpunct) {
+                ERR("Out of memory\n");
+                throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+            }
+            numpunct_short_ctor_locinfo(numpunct, locinfo, 0, FALSE);
+        }
+        locale__Locimp__Addfac(locimp, &numpunct->facet, locale_id_operator_size_t(&numpunct_short_id));
+    }
+
+    if(cat & (1<<(codecvt_short__Getcat(NULL, NULL)-1))) {
+        codecvt_wchar *codecvt;
+
+        if(loc) {
+            codecvt = codecvt_short_use_facet(loc);
+        }else {
+            codecvt = MSVCRT_operator_new(sizeof(codecvt_wchar));
+            if(!codecvt) {
+                ERR("Out of memory\n");
+                throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+            }
+            codecvt_short_ctor_locinfo(codecvt, locinfo, 0);
+        }
+        locale__Locimp__Addfac(locimp, &codecvt->base.facet, locale_id_operator_size_t(&codecvt_short_id));
+    }
 }
 
 /* ?_Makewloc@_Locimp@locale@std@@CAXABV_Locinfo@3@HPAV123@PBV23@@Z */
 /* ?_Makewloc@_Locimp@locale@std@@CAXAEBV_Locinfo@3@HPEAV123@PEBV23@@Z */
+/* List of missing facets:
+ * collate, messages, money_get, money_put, moneypunct, moneypunct, time_get, time_put
+ */
 void __cdecl locale__Locimp__Makewloc(const _Locinfo *locinfo, category cat, locale__Locimp *locimp, const locale *loc)
 {
-    FIXME("(%p %d %p %p) stub\n", locinfo, cat, locimp, loc);
+    FIXME("(%p %d %p %p) semi-stub\n", locinfo, cat, locimp, loc);
+
+    if(cat & (1<<(ctype_wchar__Getcat(NULL, NULL)-1))) {
+        ctype_wchar *ctype;
+
+        if(loc) {
+            ctype = ctype_wchar_use_facet(loc);
+        }else {
+            ctype = MSVCRT_operator_new(sizeof(ctype_wchar));
+            if(!ctype) {
+                ERR("Out of memory\n");
+                throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+            }
+            ctype_wchar_ctor_locinfo(ctype, locinfo, 0);
+        }
+        locale__Locimp__Addfac(locimp, &ctype->base.facet, locale_id_operator_size_t(&ctype_wchar_id));
+    }
+
+    if(cat & (1<<(num_get_wchar__Getcat(NULL, NULL)-1))) {
+        num_get *numget;
+
+        if(loc) {
+            numget = num_get_wchar_use_facet(loc);
+        }else {
+            numget = MSVCRT_operator_new(sizeof(num_get));
+            if(!numget) {
+                ERR("Out of memory\n");
+                throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+            }
+            num_get_wchar_ctor_locinfo(numget, locinfo, 0);
+        }
+        locale__Locimp__Addfac(locimp, &numget->facet, locale_id_operator_size_t(&num_get_wchar_id));
+    }
+
+    if(cat & (1<<(num_put_wchar__Getcat(NULL, NULL)-1))) {
+        num_put *numput;
+
+        if(loc) {
+            numput = num_put_wchar_use_facet(loc);
+        }else {
+            numput = MSVCRT_operator_new(sizeof(num_put));
+            if(!numput) {
+                ERR("Out of memory\n");
+                throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+            }
+            num_put_wchar_ctor_locinfo(numput, locinfo, 0);
+        }
+        locale__Locimp__Addfac(locimp, &numput->facet, locale_id_operator_size_t(&num_put_wchar_id));
+    }
+
+    if(cat & (1<<(numpunct_wchar__Getcat(NULL, NULL)-1))) {
+        numpunct_wchar *numpunct;
+
+        if(loc) {
+            numpunct = numpunct_wchar_use_facet(loc);
+        }else {
+            numpunct = MSVCRT_operator_new(sizeof(numpunct_wchar));
+            if(!numpunct) {
+                ERR("Out of memory\n");
+                throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+            }
+            numpunct_wchar_ctor_locinfo(numpunct, locinfo, 0, FALSE);
+        }
+        locale__Locimp__Addfac(locimp, &numpunct->facet, locale_id_operator_size_t(&numpunct_wchar_id));
+    }
+
+    if(cat & (1<<(codecvt_wchar__Getcat(NULL, NULL)-1))) {
+        codecvt_wchar *codecvt;
+
+        if(loc) {
+            codecvt = codecvt_wchar_use_facet(loc);
+        }else {
+            codecvt = MSVCRT_operator_new(sizeof(codecvt_wchar));
+            if(!codecvt) {
+                ERR("Out of memory\n");
+                throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+            }
+            codecvt_wchar_ctor_locinfo(codecvt, locinfo, 0);
+        }
+        locale__Locimp__Addfac(locimp, &codecvt->base.facet, locale_id_operator_size_t(&codecvt_wchar_id));
+    }
 }
 
 /* ?_Makexloc@_Locimp@locale@std@@CAXABV_Locinfo@3@HPAV123@PBV23@@Z */
 /* ?_Makexloc@_Locimp@locale@std@@CAXAEBV_Locinfo@3@HPEAV123@PEBV23@@Z */
+/* List of missing facets:
+ * collate, messages, money_get, money_put, moneypunct, moneypunct, time_get, time_put
+ */
 void __cdecl locale__Locimp__Makexloc(const _Locinfo *locinfo, category cat, locale__Locimp *locimp, const locale *loc)
 {
-    FIXME("(%p %d %p %p) stub\n", locinfo, cat, locimp, loc);
+    FIXME("(%p %d %p %p) semi-stub\n", locinfo, cat, locimp, loc);
+
+    if(cat & (1<<(ctype_char__Getcat(NULL, NULL)-1))) {
+        ctype_char *ctype;
+
+        if(loc) {
+            ctype = ctype_char_use_facet(loc);
+        }else {
+            ctype = MSVCRT_operator_new(sizeof(ctype_char));
+            if(!ctype) {
+                ERR("Out of memory\n");
+                throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+            }
+            ctype_char_ctor_locinfo(ctype, locinfo, 0);
+        }
+        locale__Locimp__Addfac(locimp, &ctype->base.facet, locale_id_operator_size_t(&ctype_char_id));
+    }
+
+    if(cat & (1<<(num_get_char__Getcat(NULL, NULL)-1))) {
+        num_get *numget;
+
+        if(loc) {
+            numget = num_get_char_use_facet(loc);
+        }else {
+            numget = MSVCRT_operator_new(sizeof(num_get));
+            if(!numget) {
+                ERR("Out of memory\n");
+                throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+            }
+            num_get_char_ctor_locinfo(numget, locinfo, 0);
+        }
+        locale__Locimp__Addfac(locimp, &numget->facet, locale_id_operator_size_t(&num_get_char_id));
+    }
+
+    if(cat & (1<<(num_put_char__Getcat(NULL, NULL)-1))) {
+        num_put *numput;
+
+        if(loc) {
+            numput = num_put_char_use_facet(loc);
+        }else {
+            numput = MSVCRT_operator_new(sizeof(num_put));
+            if(!numput) {
+                ERR("Out of memory\n");
+                throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+            }
+            num_put_char_ctor_locinfo(numput, locinfo, 0);
+        }
+        locale__Locimp__Addfac(locimp, &numput->facet, locale_id_operator_size_t(&num_put_char_id));
+    }
+
+    if(cat & (1<<(numpunct_char__Getcat(NULL, NULL)-1))) {
+        numpunct_char *numpunct;
+
+        if(loc) {
+            numpunct = numpunct_char_use_facet(loc);
+        }else {
+            numpunct = MSVCRT_operator_new(sizeof(numpunct_char));
+            if(!numpunct) {
+                ERR("Out of memory\n");
+                throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+            }
+            numpunct_char_ctor_locinfo(numpunct, locinfo, 0, FALSE);
+        }
+        locale__Locimp__Addfac(locimp, &numpunct->facet, locale_id_operator_size_t(&numpunct_char_id));
+    }
+
+    if(cat & (1<<(codecvt_char__Getcat(NULL, NULL)-1))) {
+        codecvt_char *codecvt;
+
+        if(loc) {
+            codecvt = codecvt_char_use_facet(loc);
+        }else {
+            codecvt = MSVCRT_operator_new(sizeof(codecvt_char));
+            if(!codecvt) {
+                ERR("Out of memory\n");
+                throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+            }
+            codecvt_char_ctor_locinfo(codecvt, locinfo, 0);
+        }
+        locale__Locimp__Addfac(locimp, &codecvt->base.facet, locale_id_operator_size_t(&codecvt_char_id));
+    }
+}
+
+/* ?_Makeloc@_Locimp@locale@std@@CAPAV123@ABV_Locinfo@3@HPAV123@PBV23@@Z */
+/* ?_Makeloc@_Locimp@locale@std@@CAPEAV123@AEBV_Locinfo@3@HPEAV123@PEBV23@@Z */
+locale__Locimp* __cdecl locale__Locimp__Makeloc(const _Locinfo *locinfo, category cat, locale__Locimp *locimp, const locale *loc)
+{
+    TRACE("(%p %d %p %p)\n", locinfo, cat, locimp, loc);
+
+    locale__Locimp__Makexloc(locinfo, cat, locimp, loc);
+    locale__Locimp__Makewloc(locinfo, cat, locimp, loc);
+    locale__Locimp__Makeushloc(locinfo, cat, locimp, loc);
+
+    locimp->catmask |= cat;
+    MSVCP_basic_string_char_copy_ctor(&locimp->name, &locinfo->newlocname);
+    return locimp;
 }
 
 /* ??_7_Locimp@locale@std@@6B@ */
@@ -7625,8 +7970,28 @@ locale* __thiscall locale_ctor_locale_cstr(locale *this, const locale *loc, cons
 DEFINE_THISCALL_WRAPPER(locale_ctor_cstr, 12)
 locale* __thiscall locale_ctor_cstr(locale *this, const char *locname, category cat)
 {
-    FIXME("(%p %s %d) stub\n", this, locname, cat);
-    return NULL;
+    _Locinfo locinfo;
+
+    TRACE("(%p %s %d)\n", this, locname, cat);
+
+    this->ptr = MSVCRT_operator_new(sizeof(locale__Locimp));
+    if(!this->ptr) {
+        ERR("Out of memory\n");
+        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+    }
+    this->ptr = locale__Init();
+
+    _Locinfo_ctor_cat_cstr(&locinfo, cat, locname);
+    if(!memcmp(MSVCP_basic_string_char_c_str(&locinfo.newlocname), "*", 2)) {
+        _Locinfo_dtor(&locinfo);
+        MSVCRT_operator_delete(this->ptr);
+        throw_exception(EXCEPTION_RUNTIME_ERROR, "bad locale name");
+    }
+
+    locale__Locimp__Makeloc(&locinfo, cat, this->ptr, NULL);
+    _Locinfo_dtor(&locinfo);
+
+    return this;
 }
 
 /* ??0locale@std@@QAE@W4_Uninitialized@1@@Z */
