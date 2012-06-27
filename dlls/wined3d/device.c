@@ -5017,36 +5017,6 @@ void CDECL wined3d_device_evict_managed_resources(struct wined3d_device *device)
     device_invalidate_state(device, STATE_STREAMSRC);
 }
 
-static BOOL is_display_mode_supported(const struct wined3d_device *device,
-        const struct wined3d_swapchain_desc *swapchain_desc)
-{
-    struct wined3d_display_mode m;
-    UINT i, count;
-    HRESULT hr;
-
-    /* All Windowed modes are supported, as is leaving the current mode */
-    if (swapchain_desc->windowed)
-        return TRUE;
-    if (!swapchain_desc->backbuffer_width)
-        return TRUE;
-    if (!swapchain_desc->backbuffer_height)
-        return TRUE;
-
-    count = wined3d_get_adapter_mode_count(device->wined3d, device->adapter->ordinal, WINED3DFMT_UNKNOWN);
-    for (i = 0; i < count; ++i)
-    {
-        memset(&m, 0, sizeof(m));
-        hr = wined3d_enum_adapter_modes(device->wined3d, device->adapter->ordinal, WINED3DFMT_UNKNOWN, i, &m);
-        if (FAILED(hr))
-            ERR("Failed to enumerate adapter mode.\n");
-        if (m.width == swapchain_desc->backbuffer_width && m.height == swapchain_desc->backbuffer_height)
-            /* Mode found, it is supported. */
-            return TRUE;
-    }
-    /* Mode not found -> not supported */
-    return FALSE;
-}
-
 /* Do not call while under the GL lock. */
 static void delete_opengl_contexts(struct wined3d_device *device, struct wined3d_swapchain *swapchain)
 {
@@ -5211,16 +5181,6 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         }
     }
 
-    if (!is_display_mode_supported(device, swapchain_desc))
-    {
-        WARN("Rejecting reset() call because the requested display mode is not supported.\n");
-        WARN("Requested mode: %ux%u.\n",
-                swapchain_desc->backbuffer_width,
-                swapchain_desc->backbuffer_height);
-        wined3d_swapchain_decref(swapchain);
-        return WINED3DERR_INVALIDCALL;
-    }
-
     /* Is it necessary to recreate the gl context? Actually every setting can be changed
      * on an existing gl context, so there's no real need for recreation.
      *
@@ -5380,7 +5340,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         {
             WARN("Failed to set display mode, hr %#x.\n", hr);
             wined3d_swapchain_decref(swapchain);
-            return hr;
+            return WINED3DERR_INVALIDCALL;
         }
 
         if (!swapchain_desc->windowed)
