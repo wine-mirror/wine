@@ -252,7 +252,9 @@ typedef struct _basic_string_char
     MSVCP_size_t res;
 } basic_string_char;
 
+basic_string_char* __thiscall MSVCP_basic_string_char_ctor(basic_string_char*);
 basic_string_char* __stdcall MSVCP_basic_string_char_ctor_cstr(basic_string_char*, const char*);
+basic_string_char* __thiscall MSVCP_basic_string_char_ctor_cstr_len(basic_string_char*, const char*, MSVCP_size_t);
 basic_string_char* __stdcall MSVCP_basic_string_char_copy_ctor(basic_string_char*, const basic_string_char*);
 void __stdcall MSVCP_basic_string_char_dtor(basic_string_char*);
 const char* __stdcall MSVCP_basic_string_char_c_str(const basic_string_char*);
