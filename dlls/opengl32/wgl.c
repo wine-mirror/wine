@@ -133,6 +133,14 @@ BOOL WINAPI wglMakeCurrent(HDC hdc, HGLRC hglrc)
 }
 
 /***********************************************************************
+ *		wglMakeContextCurrentARB  (wrapper for the extension function returned by the driver)
+ */
+static BOOL WINAPI wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, HGLRC hglrc )
+{
+    return wgl_driver->p_wglMakeContextCurrentARB( draw_hdc, read_hdc, hglrc );
+}
+
+/***********************************************************************
  *		wglShareLists (OPENGL32.@)
  */
 BOOL WINAPI wglShareLists(HGLRC hglrc1, HGLRC hglrc2)
@@ -487,7 +495,20 @@ PROC WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
   if (ext_ret == NULL) {
     /* If the function name starts with a 'w', it is a WGL extension */
     if(lpszProc[0] == 'w')
-      return wine_wgl.p_wglGetProcAddress(lpszProc);
+    {
+        local_func = wine_wgl.p_wglGetProcAddress( lpszProc );
+        if (local_func == (void *)1)  /* special function that needs a wrapper */
+        {
+            if (!strcmp( lpszProc, "wglMakeContextCurrentARB" ))
+                local_func = wglMakeContextCurrentARB;
+            else
+            {
+                FIXME( "wrapper missing for %s\n", lpszProc );
+                local_func = NULL;
+            }
+        }
+        return local_func;
+    }
 
     /* We are dealing with an unknown GL extension */
     WARN("Extension '%s' not defined in opengl32.dll's function table!\n", lpszProc);

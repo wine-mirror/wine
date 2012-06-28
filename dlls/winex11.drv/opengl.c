@@ -1654,12 +1654,10 @@ static BOOL glxdrv_wglMakeCurrent(HDC hdc, HGLRC hglrc)
     return ret;
 }
 
-/**
- * X11DRV_wglMakeContextCurrentARB
- *
- * For OpenGL32 wglMakeContextCurrentARB
+/***********************************************************************
+ *		glxdrv_wglMakeContextCurrentARB
  */
-static BOOL WINAPI X11DRV_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, HGLRC hglrc )
+static BOOL glxdrv_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, HGLRC hglrc )
 {
     Wine_GLContext *ctx = (Wine_GLContext *)hglrc;
     Wine_GLContext *prev_ctx = NtCurrentTeb()->glContext;
@@ -3095,7 +3093,7 @@ static const WineGLExtension WGL_ARB_make_current_read =
   "WGL_ARB_make_current_read",
   {
     { "wglGetCurrentReadDCARB", X11DRV_wglGetCurrentReadDCARB },
-    { "wglMakeContextCurrentARB", X11DRV_wglMakeContextCurrentARB },
+    { "wglMakeContextCurrentARB", (void *)1 /* called through the glxdrv_wgl_funcs driver */ },
   }
 };
 
@@ -3604,6 +3602,7 @@ static const struct wgl_funcs glxdrv_wgl_funcs =
     glxdrv_wglCopyContext,              /* p_wglCopyContext */
     glxdrv_wglDeleteContext,            /* p_wglDeleteContext */
     glxdrv_wglGetCurrentDC,             /* p_wglGetCurrentDC */
+    glxdrv_wglMakeContextCurrentARB,    /* p_wglMakeContextCurrentARB */
     glxdrv_wglMakeCurrent,              /* p_wglMakeCurrent */
     glxdrv_wglShareLists,               /* p_wglShareLists */
 };
