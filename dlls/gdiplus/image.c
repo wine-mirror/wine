@@ -2475,19 +2475,6 @@ GpStatus WINGDIPAPI GdipGetPropertyIdList(GpImage *image, UINT num, PROPID *list
     return hr == S_OK ? Ok : hresult_to_status(hr);
 }
 
-GpStatus WINGDIPAPI GdipGetPropertyItem(GpImage *image, PROPID id, UINT size,
-    PropertyItem* buffer)
-{
-    static int calls;
-
-    TRACE("(%p, %u, %u, %p)\n", image, id, size, buffer);
-
-    if(!(calls++))
-        FIXME("not implemented\n");
-
-    return InvalidParameter;
-}
-
 static UINT propvariant_size(PROPVARIANT *value)
 {
     switch (value->vt & ~VT_VECTOR)
@@ -2551,6 +2538,137 @@ GpStatus WINGDIPAPI GdipGetPropertyItemSize(GpImage *image, PROPID propid, UINT 
     PropVariantClear(&value);
 
     return Ok;
+}
+
+#ifndef PropertyTagTypeSByte
+#define PropertyTagTypeSByte  6
+#define PropertyTagTypeSShort 8
+#define PropertyTagTypeFloat  11
+#define PropertyTagTypeDouble 12
+#endif
+
+static UINT vt_to_itemtype(UINT vt)
+{
+    static const struct
+    {
+        UINT vt, type;
+    } vt2type[] =
+    {
+        { VT_I1, PropertyTagTypeSByte },
+        { VT_UI1, PropertyTagTypeByte },
+        { VT_I2, PropertyTagTypeSShort },
+        { VT_UI2, PropertyTagTypeShort },
+        { VT_I4, PropertyTagTypeSLONG },
+        { VT_UI4, PropertyTagTypeLong },
+        { VT_I8, PropertyTagTypeSRational },
+        { VT_UI8, PropertyTagTypeRational },
+        { VT_R4, PropertyTagTypeFloat },
+        { VT_R8, PropertyTagTypeDouble },
+        { VT_LPSTR, PropertyTagTypeASCII },
+        { VT_BLOB, PropertyTagTypeUndefined }
+    };
+    UINT i;
+    for (i = 0; i < sizeof(vt2type)/sizeof(vt2type[0]); i++)
+    {
+        if (vt2type[i].vt == vt) return vt2type[i].type;
+    }
+    FIXME("not supported variant type %u\n", vt);
+    return 0;
+}
+
+static GpStatus propvariant_to_item(PROPVARIANT *value, PropertyItem *item,
+                                    UINT size, PROPID id)
+{
+    UINT item_size, item_type;
+
+    item_size = propvariant_size(value);
+    if (size != item_size + sizeof(PropertyItem)) return InvalidParameter;
+
+    item_type = vt_to_itemtype(value->vt & ~VT_VECTOR);
+    if (!item_type) return InvalidParameter;
+
+    item->value = item + 1;
+
+    switch (value->vt & ~VT_VECTOR)
+    {
+    case VT_I1:
+    case VT_UI1:
+        if (!(value->vt & VT_VECTOR))
+            *(BYTE *)item->value = value->u.bVal;
+        else
+            memcpy(item->value, value->u.caub.pElems, item_size);
+        break;
+    case VT_I2:
+    case VT_UI2:
+        if (!(value->vt & VT_VECTOR))
+            *(USHORT *)item->value = value->u.uiVal;
+        else
+            memcpy(item->value, value->u.caui.pElems, item_size);
+        break;
+    case VT_I4:
+    case VT_UI4:
+    case VT_R4:
+        if (!(value->vt & VT_VECTOR))
+            *(ULONG *)item->value = value->u.ulVal;
+        else
+            memcpy(item->value, value->u.caul.pElems, item_size);
+        break;
+    case VT_I8:
+    case VT_UI8:
+    case VT_R8:
+        if (!(value->vt & VT_VECTOR))
+            *(ULONGLONG *)item->value = value->u.uhVal.QuadPart;
+        else
+            memcpy(item->value, value->u.cauh.pElems, item_size);
+        break;
+    case VT_LPSTR:
+        memcpy(item->value, value->u.pszVal, item_size);
+        break;
+    case VT_BLOB:
+        memcpy(item->value, value->u.blob.pBlobData, item_size);
+        break;
+    default:
+        FIXME("not supported variant type %d\n", value->vt);
+        return InvalidParameter;
+    }
+
+    item->length = item_size;
+    item->type = item_type;
+    item->id = id;
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipGetPropertyItem(GpImage *image, PROPID propid, UINT size,
+                                        PropertyItem *buffer)
+{
+    GpStatus stat;
+    HRESULT hr;
+    IWICMetadataReader *reader;
+    PROPVARIANT id, value;
+
+    TRACE("(%p,%#x,%u,%p)\n", image, propid, size, buffer);
+
+    if (!image || !buffer) return InvalidParameter;
+
+    if (image->type != ImageTypeBitmap)
+    {
+        FIXME("Not implemented for type %d\n", image->type);
+        return NotImplemented;
+    }
+
+    reader = ((GpBitmap *)image)->metadata_reader;
+    if (!reader) return PropertyNotFound;
+
+    id.vt = VT_UI2;
+    id.u.uiVal = propid;
+    hr = IWICMetadataReader_GetValue(reader, NULL, &id, &value);
+    if (FAILED(hr)) return PropertyNotFound;
+
+    stat = propvariant_to_item(&value, buffer, size, propid);
+    PropVariantClear(&value);
+
+    return stat;
 }
 
 GpStatus WINGDIPAPI GdipGetPropertySize(GpImage *image, UINT* size, UINT* num)
