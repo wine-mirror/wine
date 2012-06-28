@@ -121,26 +121,22 @@ static HRESULT WINAPI ComponentFactory_CreateDecoderFromFilename(
     return hr;
 }
 
-static HRESULT WINAPI ComponentFactory_CreateDecoderFromStream(
-    IWICComponentFactory *iface, IStream *pIStream, const GUID *pguidVendor,
-    WICDecodeOptions metadataOptions, IWICBitmapDecoder **ppIDecoder)
+static IWICBitmapDecoder *find_decoder(IStream *pIStream, const GUID *pguidVendor,
+                                       WICDecodeOptions metadataOptions)
 {
     IEnumUnknown *enumdecoders;
     IUnknown *unkdecoderinfo;
     IWICBitmapDecoderInfo *decoderinfo;
-    IWICBitmapDecoder *decoder = NULL, *preferred_decoder = NULL;
+    IWICBitmapDecoder *decoder = NULL;
     GUID vendor;
-    HRESULT res=S_OK;
+    HRESULT res;
     ULONG num_fetched;
     BOOL matches;
 
-    TRACE("(%p,%p,%s,%u,%p)\n", iface, pIStream, debugstr_guid(pguidVendor),
-        metadataOptions, ppIDecoder);
-
     res = CreateComponentEnumerator(WICDecoder, WICComponentEnumerateDefault, &enumdecoders);
-    if (FAILED(res)) return res;
+    if (FAILED(res)) return NULL;
 
-    while (!preferred_decoder)
+    while (!decoder)
     {
         res = IEnumUnknown_Next(enumdecoders, 1, &unkdecoderinfo, &num_fetched);
 
@@ -150,40 +146,34 @@ static HRESULT WINAPI ComponentFactory_CreateDecoderFromStream(
 
             if (SUCCEEDED(res))
             {
+                if (pguidVendor)
+                {
+                    res = IWICBitmapDecoderInfo_GetVendorGUID(decoderinfo, &vendor);
+                    if (FAILED(res) || !IsEqualIID(&vendor, pguidVendor))
+                    {
+                        IWICBitmapDecoderInfo_Release(decoderinfo);
+                        IUnknown_Release(unkdecoderinfo);
+                        continue;
+                    }
+                }
+
                 res = IWICBitmapDecoderInfo_MatchesPattern(decoderinfo, pIStream, &matches);
 
                 if (SUCCEEDED(res) && matches)
                 {
-                    IWICBitmapDecoder *new_decoder;
-
-                    res = IWICBitmapDecoderInfo_CreateInstance(decoderinfo, &new_decoder);
+                    res = IWICBitmapDecoderInfo_CreateInstance(decoderinfo, &decoder);
 
                     /* FIXME: should use QueryCapability to choose a decoder */
 
                     if (SUCCEEDED(res))
                     {
-                        res = IWICBitmapDecoder_Initialize(new_decoder, pIStream, metadataOptions);
+                        res = IWICBitmapDecoder_Initialize(decoder, pIStream, metadataOptions);
 
-                        if (SUCCEEDED(res))
+                        if (FAILED(res))
                         {
-                            if (pguidVendor)
-                            {
-                                res = IWICBitmapDecoderInfo_GetVendorGUID(decoderinfo, &vendor);
-                                if (SUCCEEDED(res) && IsEqualIID(&vendor, pguidVendor))
-                                {
-                                    preferred_decoder = new_decoder;
-                                    new_decoder = NULL;
-                                }
-                            }
-
-                            if (new_decoder && !decoder)
-                            {
-                                decoder = new_decoder;
-                                new_decoder = NULL;
-                            }
+                            IWICBitmapDecoder_Release(decoder);
+                            decoder = NULL;
                         }
-
-                        if (new_decoder) IWICBitmapDecoder_Release(new_decoder);
                     }
                 }
 
@@ -198,12 +188,23 @@ static HRESULT WINAPI ComponentFactory_CreateDecoderFromStream(
 
     IEnumUnknown_Release(enumdecoders);
 
-    if (preferred_decoder)
-    {
-        *ppIDecoder = preferred_decoder;
-        if (decoder) IWICBitmapDecoder_Release(decoder);
-        return S_OK;
-    }
+    return decoder;
+}
+
+static HRESULT WINAPI ComponentFactory_CreateDecoderFromStream(
+    IWICComponentFactory *iface, IStream *pIStream, const GUID *pguidVendor,
+    WICDecodeOptions metadataOptions, IWICBitmapDecoder **ppIDecoder)
+{
+    HRESULT res;
+    IWICBitmapDecoder *decoder = NULL;
+
+    TRACE("(%p,%p,%s,%u,%p)\n", iface, pIStream, debugstr_guid(pguidVendor),
+        metadataOptions, ppIDecoder);
+
+    if (pguidVendor)
+        decoder = find_decoder(pIStream, pguidVendor, metadataOptions);
+    if (!decoder)
+        decoder = find_decoder(pIStream, NULL, metadataOptions);
 
     if (decoder)
     {
