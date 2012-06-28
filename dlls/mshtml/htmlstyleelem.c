@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <assert.h>
 
 #define COBJMACROS
 
@@ -282,19 +283,9 @@ static HRESULT HTMLStyleElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
     return S_OK;
 }
 
-static void HTMLStyleElement_destructor(HTMLDOMNode *iface)
-{
-    HTMLStyleElement *This = impl_from_HTMLDOMNode(iface);
-
-    if(This->nsstyle)
-        nsIDOMHTMLStyleElement_Release(This->nsstyle);
-
-    HTMLElement_destructor(&This->element.node);
-}
-
 static const NodeImplVtbl HTMLStyleElementImplVtbl = {
     HTMLStyleElement_QI,
-    HTMLStyleElement_destructor,
+    HTMLElement_destructor,
     HTMLElement_clone,
     HTMLElement_get_attr_col
 };
@@ -323,14 +314,14 @@ HRESULT HTMLStyleElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem
     ret->IHTMLStyleElement_iface.lpVtbl = &HTMLStyleElementVtbl;
     ret->element.node.vtbl = &HTMLStyleElementImplVtbl;
 
-    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLStyleElement, (void**)&ret->nsstyle);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIDOMHTMLStyleElement iface: %08x\n", nsres);
-        heap_free(ret);
-        return E_FAIL;
-    }
-
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLStyleElement_dispex);
+
+    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLStyleElement, (void**)&ret->nsstyle);
+
+    /* Share nsstyle reference with nsnode */
+    assert(nsres == NS_OK && (nsIDOMNode*)ret->nsstyle == ret->element.node.nsnode);
+    nsIDOMNode_Release(ret->element.node.nsnode);
+
     *elem = &ret->element;
     return S_OK;
 }
