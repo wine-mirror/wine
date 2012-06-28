@@ -3444,8 +3444,11 @@ static const struct wgl_funcs * glxdrv_wine_get_wgl_driver( PHYSDEV dev, UINT ve
         ERR( "version mismatch, opengl32 wants %u but driver has %u\n", version, WINE_GDI_DRIVER_VERSION );
         return NULL;
     }
-    if (!has_opengl()) return NULL;
-    return &glxdrv_wgl_funcs;
+
+    if (has_opengl()) return &glxdrv_wgl_funcs;
+
+    dev = GET_NEXT_PHYSDEV( dev, wine_get_wgl_driver );
+    return dev->funcs->wine_get_wgl_driver( dev, version );
 }
 
 static const struct gdi_dc_funcs glxdrv_funcs =
