@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <assert.h>
 
 #define COBJMACROS
 
@@ -398,15 +399,6 @@ static HRESULT HTMLTextAreaElement_QI(HTMLDOMNode *iface, REFIID riid, void **pp
     return HTMLElement_QI(&This->element.node, riid, ppv);
 }
 
-static void HTMLTextAreaElement_destructor(HTMLDOMNode *iface)
-{
-    HTMLTextAreaElement *This = impl_from_HTMLDOMNode(iface);
-
-    nsIDOMHTMLTextAreaElement_Release(This->nstextarea);
-
-    HTMLElement_destructor(&This->element.node);
-}
-
 static HRESULT HTMLTextAreaElementImpl_put_disabled(HTMLDOMNode *iface, VARIANT_BOOL v)
 {
     HTMLTextAreaElement *This = impl_from_HTMLDOMNode(iface);
@@ -421,7 +413,7 @@ static HRESULT HTMLTextAreaElementImpl_get_disabled(HTMLDOMNode *iface, VARIANT_
 
 static const NodeImplVtbl HTMLTextAreaElementImplVtbl = {
     HTMLTextAreaElement_QI,
-    HTMLTextAreaElement_destructor,
+    HTMLElement_destructor,
     HTMLElement_clone,
     HTMLElement_get_attr_col,
     NULL,
@@ -456,15 +448,14 @@ HRESULT HTMLTextAreaElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nse
     ret->IHTMLTextAreaElement_iface.lpVtbl = &HTMLTextAreaElementVtbl;
     ret->element.node.vtbl = &HTMLTextAreaElementImplVtbl;
 
+    HTMLElement_Init(&ret->element, doc, nselem, &HTMLTextAreaElement_dispex);
+
     nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLTextAreaElement,
                                              (void**)&ret->nstextarea);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsDOMHTMLInputElement: %08x\n", nsres);
-        heap_free(ret);
-        return E_FAIL;
-    }
 
-    HTMLElement_Init(&ret->element, doc, nselem, &HTMLTextAreaElement_dispex);
+    /* Share nstextarea reference with nsnode */
+    assert(nsres == NS_OK && (nsIDOMNode*)ret->nstextarea == ret->element.node.nsnode);
+    nsIDOMNode_Release(ret->element.node.nsnode);
 
     *elem = &ret->element;
     return S_OK;
