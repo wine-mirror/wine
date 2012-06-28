@@ -153,12 +153,12 @@ typedef unsigned int UHALF_PTR, *PUHALF_PTR;
 
 static inline ULONG32 HandleToULong(const void *h)
 {
-    return (ULONG_PTR)h;
+    return (ULONG32)(ULONG_PTR)h;
 }
 
 static inline LONG32 HandleToLong(const void *h)
 {
-    return (LONG_PTR)h;
+    return (LONG32)(LONG_PTR)h;
 }
 
 static inline void *ULongToHandle(ULONG32 ul)
@@ -173,32 +173,32 @@ static inline void *LongToHandle(LONG32 l)
 
 static inline ULONG32 PtrToUlong(const void *p)
 {
-    return (ULONG_PTR)p;
+    return (ULONG32)(ULONG_PTR)p;
 }
 
 static inline LONG32 PtrToLong(const void *p)
 {
-    return (LONG_PTR)p;
+    return (LONG32)(LONG_PTR)p;
 }
 
 static inline UINT32 PtrToUint(const void *p)
 {
-    return (UINT_PTR)p;
+    return (UINT32)(UINT_PTR)p;
 }
 
 static inline INT32 PtrToInt(const void *p)
 {
-    return (INT_PTR)p;
+    return (INT32)(INT_PTR)p;
 }
 
 static inline UINT16 PtrToUshort(const void *p)
 {
-    return (ULONG_PTR)p;
+    return (UINT16)(ULONG_PTR)p;
 }
 
 static inline INT16 PtrToShort(const void *p)
 {
-    return (LONG_PTR)p;
+    return (INT16)(LONG_PTR)p;
 }
 
 static inline void *IntToPtr(INT32 i)
