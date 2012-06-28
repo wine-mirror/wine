@@ -2945,12 +2945,8 @@ HRESULT CDECL wined3d_enum_adapter_modes(const struct wined3d *wined3d, UINT ada
     TRACE("wined3d %p, adapter_idx %u, format %s, mode_idx %u, mode %p.\n",
             wined3d, adapter_idx, debug_d3dformat(format_id), mode_idx, mode);
 
-    /* Validate the parameters as much as possible */
-    if (!mode || adapter_idx >= wined3d->adapter_count
-            || mode_idx >= wined3d_get_adapter_mode_count(wined3d, adapter_idx, format_id))
-    {
+    if (!mode || adapter_idx >= wined3d->adapter_count)
         return WINED3DERR_INVALIDCALL;
-    }
 
     /* TODO: Store modes per adapter and read it from the adapter structure */
     if (!adapter_idx)
@@ -2968,8 +2964,14 @@ HRESULT CDECL wined3d_enum_adapter_modes(const struct wined3d *wined3d, UINT ada
         /* If we are filtering to a specific format (D3D9), then need to skip
            all unrelated modes, but if mode is irrelevant (D3D8), then we can
            just count through the ones with valid bit depths */
-        while (i <= mode_idx && EnumDisplaySettingsExW(NULL, j++, &DevModeW, 0))
+        while (i <= mode_idx)
         {
+            if (!EnumDisplaySettingsExW(NULL, j++, &DevModeW, 0))
+            {
+                WARN("Invalid mode_idx %u.\n", mode_idx);
+                return WINED3DERR_INVALIDCALL;
+            }
+
             if (format_id == WINED3DFMT_UNKNOWN)
             {
                 /* This is for D3D8, do not enumerate P8 here */
@@ -2981,11 +2983,6 @@ HRESULT CDECL wined3d_enum_adapter_modes(const struct wined3d *wined3d, UINT ada
             }
         }
 
-        if (!i)
-        {
-            TRACE("No modes found for format %s (%#x).\n", debug_d3dformat(format_id), format_id);
-            return WINED3DERR_INVALIDCALL;
-        }
         ModeIdx = j - 1;
 
         /* Now get the display mode via the calculated index */
