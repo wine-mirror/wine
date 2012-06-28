@@ -21,6 +21,7 @@
 #define COBJMACROS
 
 #include <math.h>
+#include <assert.h>
 
 #include "initguid.h"
 #include "windows.h"
@@ -2711,22 +2712,32 @@ static void test_image_properties(void)
         UINT image_size;
         ImageType image_type;
         UINT prop_count;
+        UINT prop_count2; /* if win7 behaves differently */
+        /* 1st property attributes */
+        UINT prop_size;
+        UINT prop_size2; /* if win7 behaves differently */
+        UINT prop_id;
+        UINT prop_id2; /* if win7 behaves differently */
     }
     td[] =
     {
-        { pngimage, sizeof(pngimage), ImageTypeBitmap, 4 },
-        /* Win7 reports 4 properties, while everybody else just 1
-        { gifimage, sizeof(gifimage), ImageTypeBitmap, 1 }, */
-        { jpgimage, sizeof(jpgimage), ImageTypeBitmap, 2 },
-        { tiffimage, sizeof(tiffimage), ImageTypeBitmap, 16 },
-        { bmpimage, sizeof(bmpimage), ImageTypeBitmap, 0 },
-        { wmfimage, sizeof(wmfimage), ImageTypeMetafile, 0 }
+        { pngimage, sizeof(pngimage), ImageTypeBitmap, 4, ~0, 1, 20, 0x5110, 0x132 },
+        { gifimage, sizeof(gifimage), ImageTypeBitmap, 1, 4, 4, 0, 0x5100, 0 },
+        { jpgimage, sizeof(jpgimage), ImageTypeBitmap, 2, ~0, 128, 0, 0x5090, 0x5091 },
+        { tiffimage, sizeof(tiffimage), ImageTypeBitmap, 16, 0, 4, 0, 0xfe, 0 },
+        { bmpimage, sizeof(bmpimage), ImageTypeBitmap, 0, 0, 0, 0, 0, 0 },
+        { wmfimage, sizeof(wmfimage), ImageTypeMetafile, 0, 0, 0, 0, 0, 0 }
     };
     GpStatus status;
     GpImage *image;
-    UINT prop_count, i;
-    PROPID prop_id[16];
+    UINT prop_count, prop_size, i;
+    PROPID prop_id[16] = { 0 };
     ImageType image_type;
+    union
+    {
+        PropertyItem data;
+        char buf[256];
+    } item;
 
     for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
     {
@@ -2744,12 +2755,35 @@ static void test_image_properties(void)
         if (td[i].image_data == pngimage || td[i].image_data == gifimage ||
             td[i].image_data == jpgimage)
         todo_wine
-        ok(td[i].prop_count == prop_count, " %u: expected property count %u, got %u\n",
-           i, td[i].prop_count, prop_count);
+        ok(td[i].prop_count == prop_count || td[i].prop_count2 == prop_count,
+           " %u: expected property count %u or %u, got %u\n",
+           i, td[i].prop_count, td[i].prop_count2, prop_count);
         else
-        ok(td[i].prop_count == prop_count, " %u: expected property count %u, got %u\n",
-           i, td[i].prop_count, prop_count);
+        ok(td[i].prop_count == prop_count || td[i].prop_count2 == prop_count,
+           " %u: expected property count %u or %u, got %u\n",
+           i, td[i].prop_count, td[i].prop_count2, prop_count);
 
+        status = GdipGetPropertyItemSize(NULL, 0, &prop_size);
+        expect(InvalidParameter, status);
+        status = GdipGetPropertyItemSize(image, 0, NULL);
+        expect(InvalidParameter, status);
+        status = GdipGetPropertyItemSize(image, 0, &prop_size);
+        if (image_type == ImageTypeMetafile)
+            expect(NotImplemented, status);
+        else
+            expect(PropertyNotFound, status);
+
+        status = GdipGetPropertyItem(NULL, 0, 0, &item.data);
+        expect(InvalidParameter, status);
+        status = GdipGetPropertyItem(image, 0, 0, NULL);
+        expect(InvalidParameter, status);
+        status = GdipGetPropertyItem(image, 0, 0, &item.data);
+        if (image_type == ImageTypeMetafile)
+            expect(NotImplemented, status);
+        else
+            expect(PropertyNotFound, status);
+
+        /* FIXME: remove once Wine is fixed */
         if (td[i].prop_count != prop_count)
         {
             GdipDisposeImage(image);
@@ -2781,7 +2815,46 @@ static void test_image_properties(void)
         if (image_type == ImageTypeMetafile)
             expect(NotImplemented, status);
         else
+        {
             expect(Ok, status);
+            if (prop_count != 0)
+                ok(td[i].prop_id == prop_id[0] || td[i].prop_id2 == prop_id[0],
+                   " %u: expected property id %#x or %#x, got %#x\n",
+                   i, td[i].prop_id, td[i].prop_id2, prop_id[0]);
+        }
+
+        if (status == Ok)
+        {
+            status = GdipGetPropertyItemSize(image, prop_id[0], &prop_size);
+            if (prop_count == 0)
+                expect(PropertyNotFound, status);
+            else
+            {
+                expect(Ok, status);
+
+                assert(sizeof(item) >= prop_size);
+                ok(prop_size > sizeof(PropertyItem), "%u: got too small prop_size %u\n",
+                   i, prop_size);
+                ok(td[i].prop_size + sizeof(PropertyItem) == prop_size ||
+                   td[i].prop_size2 + sizeof(PropertyItem) == prop_size,
+                   " %u: expected property size %u or %u, got %u\n",
+                   i, td[i].prop_size, td[i].prop_size2, prop_size);
+
+                status = GdipGetPropertyItem(image, prop_id[0], 0, &item.data);
+                ok(status == InvalidParameter || status == GenericError /* Win7 */,
+                   "%u: expected InvalidParameter, got %d\n", i, status);
+                status = GdipGetPropertyItem(image, prop_id[0], prop_size - 1, &item.data);
+                ok(status == InvalidParameter || status == GenericError /* Win7 */,
+                   "%u: expected InvalidParameter, got %d\n", i, status);
+                status = GdipGetPropertyItem(image, prop_id[0], prop_size + 1, &item.data);
+                ok(status == InvalidParameter || status == GenericError /* Win7 */,
+                   "%u: expected InvalidParameter, got %d\n", i, status);
+                status = GdipGetPropertyItem(image, prop_id[0], prop_size, &item.data);
+                expect(Ok, status);
+                ok(prop_id[0] == item.data.id,
+                   "%u: expected property id %#x, got %#x\n", i, prop_id[0], item.data.id);
+            }
+        }
 
         GdipDisposeImage(image);
     }
