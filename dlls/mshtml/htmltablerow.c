@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <assert.h>
 
 #define COBJMACROS
 
@@ -287,19 +288,9 @@ static HRESULT HTMLTableRow_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
     return HTMLElement_QI(&This->element.node, riid, ppv);
 }
 
-static void HTMLTableRow_destructor(HTMLDOMNode *iface)
-{
-    HTMLTableRow *This = impl_from_HTMLDOMNode(iface);
-
-    if(This->nsrow)
-        nsIDOMHTMLTableRowElement_Release(This->nsrow);
-
-    HTMLElement_destructor(&This->element.node);
-}
-
 static const NodeImplVtbl HTMLTableRowImplVtbl = {
     HTMLTableRow_QI,
-    HTMLTableRow_destructor,
+    HTMLElement_destructor,
     HTMLElement_clone,
     HTMLElement_get_attr_col
 };
@@ -329,14 +320,13 @@ HRESULT HTMLTableRow_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HT
     ret->IHTMLTableRow_iface.lpVtbl = &HTMLTableRowVtbl;
     ret->element.node.vtbl = &HTMLTableRowImplVtbl;
 
-    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLTableRowElement, (void**)&ret->nsrow);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIDOMHTMLTableRowElement iface: %08x\n", nsres);
-        heap_free(ret);
-        return E_OUTOFMEMORY;
-    }
-
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLTableRow_dispex);
+
+    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLTableRowElement, (void**)&ret->nsrow);
+
+    /* Share nsrow reference with nsnode */
+    assert(nsres == NS_OK && (nsIDOMNode*)ret->nsrow == ret->element.node.nsnode);
+    nsIDOMNode_Release(ret->element.node.nsnode);
 
     *elem = &ret->element;
     return S_OK;
