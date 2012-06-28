@@ -1704,6 +1704,37 @@ static void widen_joint(const GpPointF *p1, const GpPointF *p2, const GpPointF *
 {
     switch (pen->join)
     {
+    case LineJoinMiter:
+    case LineJoinMiterClipped:
+    {
+        if ((p2->X - p1->X) * (p3->Y - p1->Y) > (p2->Y - p1->Y) * (p3->X - p1->X))
+        {
+            float distance = pen->width/2.0;
+            float length_0 = sqrtf((p2->X-p1->X)*(p2->X-p1->X)+(p2->Y-p1->Y)*(p2->Y-p1->Y));
+            float length_1 = sqrtf((p3->X-p2->X)*(p3->X-p2->X)+(p3->Y-p2->Y)*(p3->Y-p2->Y));
+            float dx0 = distance * (p2->X - p1->X) / length_0;
+            float dy0 = distance * (p2->Y - p1->Y) / length_0;
+            float dx1 = distance * (p3->X - p2->X) / length_1;
+            float dy1 = distance * (p3->Y - p2->Y) / length_1;
+            float det = (dy0*dx1 - dx0*dy1);
+            float dx = (dx0*dx1*(dx0-dx1) + dy0*dy0*dx1 - dy1*dy1*dx0)/det;
+            float dy = (dy0*dy1*(dy0-dy1) + dx0*dx0*dy1 - dx1*dx1*dy0)/det;
+            if (dx*dx + dy*dy < pen->miterlimit*pen->miterlimit * distance*distance)
+            {
+                *last_point = add_path_list_node(*last_point, p2->X + dx,
+                    p2->Y + dy, PathPointTypeLine);
+                break;
+            }
+            else if (pen->join == LineJoinMiter)
+            {
+                static int once;
+                if (!once++)
+                    FIXME("should add a clipped corner\n");
+            }
+            /* else fall-through */
+        }
+        /* else fall-through */
+    }
     default:
     case LineJoinBevel:
         add_bevel_point(p2, p1, pen, 1, last_point);
@@ -1838,7 +1869,7 @@ GpStatus WINGDIPAPI GdipWidenPath(GpPath *path, GpPen *pen, GpMatrix *matrix,
         if (pen->dashcap != DashCapFlat)
             FIXME("unimplemented dash cap %d\n", pen->dashcap);
 
-        if (pen->join != LineJoinBevel)
+        if (pen->join == LineJoinRound)
             FIXME("unimplemented line join %d\n", pen->join);
 
         if (pen->dash != DashStyleSolid)
