@@ -1786,10 +1786,13 @@ static void test_getsetpixel(void)
        broken(stat == Ok), /* Older gdiplus */
        "Expected InvalidParameter, got %.8x\n", stat);
 
+if (0) /* crashes some gdiplus implementations */
+{
     stat = GdipBitmapSetPixel(bitmap, 1, -1, 0);
     ok(stat == InvalidParameter ||
        broken(stat == Ok), /* Older gdiplus */
        "Expected InvalidParameter, got %.8x\n", stat);
+}
 
     stat = GdipBitmapGetPixel(bitmap, 2, 1, &color);
     expect(InvalidParameter, stat);
