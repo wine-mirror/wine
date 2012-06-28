@@ -9632,6 +9632,32 @@ msgid ""
 "/ProgIDOpen  Open a document using the specified progID.\n"
 "/?           Display this help and exit.\n"
 msgstr ""
+"Käynnistä ohjelma tai avaa dokumentti ohjelmalla, jota yleensä käytetään "
+"kyseiseen tiedostopäätteeseen.\n"
+"Käyttö:\n"
+"start [valitsimet] ohjelman_tiedostonimi [...]\n"
+"start [valitsimet] dokumentin_tiedostonimi\n"
+"\n"
+"Valitsimet:\n"
+"\"otsikko\"    Asettaa lapsi-ikkunoiden otsikon.\n"
+"/d hakemisto Käynnistä ohjelma määrätyssä hakemistossa.\n"
+"/b           Älä luo uutta konsolia ohjelmalle.\n"
+"/i           Käynnistä ohjelma tuoreilla ympäristömuuttujilla.\n"
+"/min         Käynnistä ohjelma pienennettynä.\n"
+"/max         Käynnistä ohjelma suurennettuna.\n"
+"/low         Käynnistä ohjelma matalassa prioriteettiluokassa.\n"
+"/normal      Käynnistä ohjelma normaalissa prioriteetiluokassa.\n"
+"/high        Käynnistä ohjelma korkeassa prioriteetiluokassa.\n"
+"/realtime    Käynnistä ohjelma reaaliaikaisessa prioriteetiluokassa.\n"
+"/abovenormal Käynnistä ohjelma normaalia korkeammassa prioriteetiluokassa.\n"
+"/belownormal Käynnistä ohjelma normaalia matalammassa prioriteetiluokassa.\n"
+"/node n      Käynnistä ohjelma määrätyllä NUMA-solmulla.\n"
+"/affinity peite Käynnistä ohjelma määrätyllä affiniteettipeitteellä.\n"
+"/wait        Odota, että ohjelma sulkeutuu, ja palauta sen paluuarvo.\n"
+"/unix        Käytä Unix-tiedostonimeä ja avaa tiedosto siten, kuin Windows "
+"Explorer avaisi sen.\n"
+"/ProgIDOpen  Avaa dokumentti määrätyllä progID:llä.\n"
+"/?           Näytä tämä ohje ja lopeta.\n"
 
 #: cmd.rc:211
 msgid "TIME sets or shows the current system time.\n"
@@ -11457,11 +11483,11 @@ msgstr "Virhe: Joko /im tai /pid on annettava.\n"
 
 #: taskkill.rc:31
 msgid "Error: Option %1 expects a command line parameter.\n"
-msgstr "Virhe: Valinta %1 vaatii komentoriviparametrin.\n"
+msgstr "Virhe: Valitsin %1 vaatii komentoriviparametrin.\n"
 
 #: taskkill.rc:32
 msgid "Error: Options /im and /pid are mutually exclusive.\n"
-msgstr "Virhe: Valinnat /im ja /pid ovat keskenään vaihtoehtoiset.\n"
+msgstr "Virhe: Valitsimet /im ja /pid ovat keskenään vaihtoehtoiset.\n"
 
 #: taskkill.rc:33
 msgid "Close message sent to top-level windows of process with PID %1!u!.\n"
@@ -11615,15 +11641,15 @@ msgstr "Aseta &prioriteetti"
 
 #: taskmgr.rc:156
 msgid "&Realtime"
-msgstr "&Reaaliaika"
+msgstr "&Reaaliaikainen"
 
 #: taskmgr.rc:160
 msgid "&Above Normal"
-msgstr "Normaalin &yläpuolella"
+msgstr "Normaalia k&orkeampi"
 
 #: taskmgr.rc:164
 msgid "&Below Normal"
-msgstr "Normaalin &alapuolella"
+msgstr "Normaalia m&atalampi"
 
 #: taskmgr.rc:169
 msgid "Set &Affinity..."
@@ -12111,7 +12137,7 @@ msgstr "Kontrolloi, millä suorittimilla prosessia voidaan ajaa"
 
 #: taskmgr.rc:237
 msgid "Sets process to the REALTIME priority class"
-msgstr "Asettaa prosessin REALTIME-prioriteettiluokkaan"
+msgstr "Asettaa prosessin prioriteettiluokkaan REAALIAIKAINEN"
 
 #: taskmgr.rc:238
 msgid "Sets process to the HIGH priority class"
@@ -12119,15 +12145,15 @@ msgstr "Asettaa prosessin prioriteettiluokkaan KORKEA"
 
 #: taskmgr.rc:240
 msgid "Sets process to the ABOVE NORMAL priority class"
-msgstr "Asettaa prosessin prioriteettiluokkaan YLI KESKITASON"
+msgstr "Asettaa prosessin prioriteettiluokkaan NORMAALIA KORKEAMPI"
 
 #: taskmgr.rc:242
 msgid "Sets process to the NORMAL priority class"
-msgstr "Asettaa prosessin prioriteettiluokkaan KESKITASO"
+msgstr "Asettaa prosessin prioriteettiluokkaan NORMAALI"
 
 #: taskmgr.rc:244
 msgid "Sets process to the BELOW NORMAL priority class"
-msgstr "Asettaa prosessin prioriteettiluokkaan ALLE KESKITASON"
+msgstr "Asettaa prosessin prioriteettiluokkaan NORMAALIA MATALAMPI"
 
 #: taskmgr.rc:245
 msgid "Sets process to the LOW priority class"
@@ -13096,9 +13122,9 @@ msgid ""
 msgstr ""
 "\n"
 "Käyttö:\n"
-"  wineconsole [vaihtoehdot] <komento>\n"
+"  wineconsole [valitsimet] <komento>\n"
 "\n"
-"Vaihtoehdot:\n"
+"Valitsimet:\n"
 
 #: wineconsole.rc:49
 msgid ""
