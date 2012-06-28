@@ -39,6 +39,7 @@
 #undef near
 #include <GL/glu.h>
 #endif
+#include "wine/gdi_driver.h"
 #include "wine/library.h"
 #include "wine/debug.h"
 
@@ -52,16 +53,13 @@ static struct
     INT   (WINAPI *p_GetPixelFormat)(HDC hdc);
 
     /* internal WGL functions */
-    BOOL  (WINAPI *p_wglCopyContext)(HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask);
-    BOOL  (WINAPI *p_wglDeleteContext)(HGLRC hglrc);
     void  (WINAPI *p_wglFinish)(void);
     void  (WINAPI *p_wglFlush)(void);
     HGLRC (WINAPI *p_wglGetCurrentContext)(void);
-    HDC   (WINAPI *p_wglGetCurrentDC)(void);
     void  (WINAPI *p_wglGetIntegerv)(GLenum pname, GLint* params);
-    BOOL  (WINAPI *p_wglMakeCurrent)(HDC hdc, HGLRC hglrc);
-    BOOL  (WINAPI *p_wglShareLists)(HGLRC hglrc1, HGLRC hglrc2);
 } wine_wgl;
+
+static const struct wgl_funcs *wgl_driver;
 
 #ifdef SONAME_LIBGLU
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f;
@@ -105,7 +103,7 @@ BOOL WINAPI wglCopyContext(HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask)
         SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
     }
-    return wine_wgl.p_wglCopyContext(hglrcSrc, hglrcDst, mask);
+    return wgl_driver->p_wglCopyContext(hglrcSrc, hglrcDst, mask);
 }
 
 /***********************************************************************
@@ -118,7 +116,7 @@ BOOL WINAPI wglDeleteContext(HGLRC hglrc)
         SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
     }
-    return wine_wgl.p_wglDeleteContext(hglrc);
+    return wgl_driver->p_wglDeleteContext(hglrc);
 }
 
 /***********************************************************************
@@ -131,7 +129,7 @@ BOOL WINAPI wglMakeCurrent(HDC hdc, HGLRC hglrc)
         SetLastError( ERROR_INVALID_HANDLE );
         return FALSE;
     }
-    return wine_wgl.p_wglMakeCurrent(hdc, hglrc);
+    return wgl_driver->p_wglMakeCurrent(hdc, hglrc);
 }
 
 /***********************************************************************
@@ -144,7 +142,7 @@ BOOL WINAPI wglShareLists(HGLRC hglrc1, HGLRC hglrc2)
         SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
     }
-    return wine_wgl.p_wglShareLists(hglrc1, hglrc2);
+    return wgl_driver->p_wglShareLists(hglrc1, hglrc2);
 }
 
 /***********************************************************************
@@ -152,7 +150,7 @@ BOOL WINAPI wglShareLists(HGLRC hglrc1, HGLRC hglrc2)
  */
 HDC WINAPI wglGetCurrentDC(void)
 {
-  return wine_wgl.p_wglGetCurrentDC();
+  return wgl_driver->p_wglGetCurrentDC();
 }
 
 /***********************************************************************
@@ -1084,8 +1082,11 @@ BOOL WINAPI DECLSPEC_HOTPATCH wglSwapBuffers( HDC hdc )
 static BOOL process_attach(void)
 {
   HMODULE mod_gdi32;
+  HDC hdc = GetDC( 0 );
 
-  GetDesktopWindow();  /* make sure winex11 is loaded (FIXME) */
+  wgl_driver = __wine_get_wgl_driver( hdc, WINE_GDI_DRIVER_VERSION );
+  ReleaseDC( 0, hdc );
+
   mod_gdi32 = GetModuleHandleA( "gdi32.dll" );
 
   if (!mod_gdi32)
@@ -1099,15 +1100,10 @@ static BOOL process_attach(void)
   wine_wgl.p_GetPixelFormat = (void *)GetProcAddress(mod_gdi32, "GetPixelFormat");
 
   /* internal WGL functions */
-  wine_wgl.p_wglCopyContext = (void *)wine_wgl.p_wglGetProcAddress("wglCopyContext");
-  wine_wgl.p_wglDeleteContext = (void *)wine_wgl.p_wglGetProcAddress("wglDeleteContext");
   wine_wgl.p_wglFinish = (void *)wine_wgl.p_wglGetProcAddress("wglFinish");
   wine_wgl.p_wglFlush = (void *)wine_wgl.p_wglGetProcAddress("wglFlush");
   wine_wgl.p_wglGetCurrentContext = (void *)wine_wgl.p_wglGetProcAddress("wglGetCurrentContext");
-  wine_wgl.p_wglGetCurrentDC = (void *)wine_wgl.p_wglGetProcAddress("wglGetCurrentDC");
   wine_wgl.p_wglGetIntegerv = (void *)wine_wgl.p_wglGetProcAddress("wglGetIntegerv");
-  wine_wgl.p_wglMakeCurrent = (void *)wine_wgl.p_wglGetProcAddress("wglMakeCurrent");
-  wine_wgl.p_wglShareLists = (void *)wine_wgl.p_wglGetProcAddress("wglShareLists");
   return TRUE;
 }
 

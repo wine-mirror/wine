@@ -500,15 +500,6 @@ static PROC X11DRV_wglGetProcAddress( LPCSTR proc )
     return NULL;
 }
 
-/***********************************************************************
- *		X11DRV_wglSetPixelFormatWINE
- */
-static BOOL X11DRV_wglSetPixelFormatWINE( PHYSDEV dev, int fmt, const PIXELFORMATDESCRIPTOR *ppfd )
-{
-    opengl_error();
-    return FALSE;
-}
-
 
 static const struct gdi_dc_funcs x11drv_funcs =
 {
@@ -646,9 +637,7 @@ static const struct gdi_dc_funcs x11drv_funcs =
     X11DRV_wglCreateContext,            /* pwglCreateContext */
     X11DRV_wglCreateContextAttribsARB,  /* pwglCreateContextAttribsARB */
     X11DRV_wglGetProcAddress,           /* pwglGetProcAddress */
-    NULL,                               /* pwglMakeContextCurrentARB */
-    NULL,                               /* pwglMakeCurrent */
-    X11DRV_wglSetPixelFormatWINE,       /* pwglSetPixelFormatWINE */
+    NULL,                               /* wine_get_wgl_driver */
     GDI_PRIORITY_GRAPHICS_DRV           /* priority */
 };
 

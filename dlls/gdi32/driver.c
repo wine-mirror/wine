@@ -685,19 +685,9 @@ static PROC nulldrv_wglGetProcAddress( LPCSTR name )
     return NULL;
 }
 
-static BOOL nulldrv_wglMakeCurrent( PHYSDEV dev, HGLRC ctx )
+static const struct wgl_funcs *nulldrv_wine_get_wgl_driver( PHYSDEV dev, UINT version )
 {
-    return FALSE;
-}
-
-static BOOL nulldrv_wglMakeContextCurrentARB( PHYSDEV dev_draw, PHYSDEV dev_read, HGLRC ctx )
-{
-    return FALSE;
-}
-
-static BOOL nulldrv_wglSetPixelFormatWINE( PHYSDEV dev, INT format, const PIXELFORMATDESCRIPTOR *descr )
-{
-    return FALSE;
+    return NULL;
 }
 
 const struct gdi_dc_funcs null_driver =
@@ -836,9 +826,7 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_wglCreateContext,           /* pwglCreateContext */
     nulldrv_wglCreateContextAttribsARB, /* pwglCreateContextAttribsARB */
     nulldrv_wglGetProcAddress,          /* pwglGetProcAddress */
-    nulldrv_wglMakeContextCurrentARB,   /* pwglMakeContextCurrentARB */
-    nulldrv_wglMakeCurrent,             /* pwglMakeCurrent */
-    nulldrv_wglSetPixelFormatWINE,      /* pwglSetPixelFormatWINE */
+    nulldrv_wine_get_wgl_driver,        /* wine_get_wgl_driver */
 
     GDI_PRIORITY_NULL_DRV               /* priority */
 };

@@ -6,6 +6,7 @@
  * Copyright 2005 Raphael Junqueira
  * Copyright 2006-2009 Roderick Colenbrander
  * Copyright 2006 Tomas Carnecky
+ * Copyright 2012 Alexandre Julliard
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -158,6 +159,7 @@ struct glx_physdev
     Pixmap             pixmap;        /* pixmap for a DL_GL_PIXMAP_WIN drawable */
 };
 
+static const struct wgl_funcs glxdrv_wgl_funcs;
 static const struct gdi_dc_funcs glxdrv_funcs;
 
 static inline struct glx_physdev *get_glxdrv_dev( PHYSDEV dev )
@@ -1393,12 +1395,10 @@ static BOOL glxdrv_SetPixelFormat(PHYSDEV dev, int iPixelFormat, const PIXELFORM
     return TRUE;
 }
 
-/**
- * X11DRV_wglCopyContext
- *
- * For OpenGL32 wglCopyContext.
+/***********************************************************************
+ *		glxdrv_wglCopyContext
  */
-static BOOL WINAPI X11DRV_wglCopyContext(HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask)
+static BOOL glxdrv_wglCopyContext(HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask)
 {
     Wine_GLContext *src = (Wine_GLContext*)hglrcSrc;
     Wine_GLContext *dst = (Wine_GLContext*)hglrcDst;
@@ -1457,14 +1457,10 @@ static HGLRC glxdrv_wglCreateContext(PHYSDEV dev)
     return (HGLRC) ret;
 }
 
-static BOOL WINAPI X11DRV_wglMakeCurrent(HDC hdc, HGLRC hglrc);
-
-/**
- * X11DRV_wglDeleteContext
- *
- * For OpenGL32 wglDeleteContext.
+/***********************************************************************
+ *		glxdrv_wglDeleteContext
  */
-static BOOL WINAPI X11DRV_wglDeleteContext(HGLRC hglrc)
+static BOOL glxdrv_wglDeleteContext(HGLRC hglrc)
 {
     Wine_GLContext *ctx = (Wine_GLContext *) hglrc;
 
@@ -1487,7 +1483,12 @@ static BOOL WINAPI X11DRV_wglDeleteContext(HGLRC hglrc)
 
     /* WGL makes a context not current if it is active before deletion. GLX waits until the context is not current. */
     if (ctx == NtCurrentTeb()->glContext)
-        X11DRV_wglMakeCurrent(ctx->hdc, NULL);
+    {
+        wine_tsx11_lock();
+        pglXMakeCurrent(gdi_display, None, NULL);
+        wine_tsx11_unlock();
+        NtCurrentTeb()->glContext = NULL;
+    }
 
     wine_tsx11_lock();
     list_remove( &ctx->entry );
@@ -1573,12 +1574,10 @@ static GLXPixmap get_context_pixmap( HDC hdc, struct wine_glcontext *ctx )
     return ctx->glxpixmap;
 }
 
-/**
- * X11DRV_wglMakeCurrent
- *
- * For OpenGL32 wglMakeCurrent.
+/***********************************************************************
+ *		glxdrv_wglMakeCurrent
  */
-static BOOL WINAPI X11DRV_wglMakeCurrent(HDC hdc, HGLRC hglrc)
+static BOOL glxdrv_wglMakeCurrent(HDC hdc, HGLRC hglrc)
 {
     BOOL ret;
     Wine_GLContext *prev_ctx = NtCurrentTeb()->glContext;
@@ -1726,19 +1725,15 @@ static BOOL WINAPI X11DRV_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, 
     return ret;
 }
 
-/**
- * X11DRV_wglShareLists
- *
- * For OpenGL32 wglShareLists.
+/***********************************************************************
+ *		glxdrv_wglShareLists
  */
-static BOOL WINAPI X11DRV_wglShareLists(HGLRC hglrc1, HGLRC hglrc2)
+static BOOL glxdrv_wglShareLists(HGLRC hglrc1, HGLRC hglrc2)
 {
     Wine_GLContext *org  = (Wine_GLContext *) hglrc1;
     Wine_GLContext *dest = (Wine_GLContext *) hglrc2;
 
     TRACE("(%p, %p)\n", org, dest);
-
-    if (!has_opengl()) return FALSE;
 
     /* Sharing of display lists works differently in GLX and WGL. In case of GLX it is done
      * at context creation time but in case of WGL it is done using wglShareLists.
@@ -1795,9 +1790,9 @@ static HGLRC WINAPI X11DRV_wglGetCurrentContext(void)
 }
 
 /***********************************************************************
- *		X11DRV_wglGetCurrentDC
+ *		glxdrv_wglGetCurrentDC
  */
-static HDC WINAPI X11DRV_wglGetCurrentDC(void)
+static HDC glxdrv_wglGetCurrentDC(void)
 {
     Wine_GLContext *ctx = NtCurrentTeb()->glContext;
 
@@ -3071,15 +3066,10 @@ static const WineGLExtension WGL_internal_functions =
 {
   "",
   {
-    { "wglCopyContext", X11DRV_wglCopyContext },
-    { "wglDeleteContext", X11DRV_wglDeleteContext },
     { "wglFinish", X11DRV_wglFinish },
     { "wglFlush", X11DRV_wglFlush },
     { "wglGetCurrentContext", X11DRV_wglGetCurrentContext },
-    { "wglGetCurrentDC", X11DRV_wglGetCurrentDC },
     { "wglGetIntegerv", X11DRV_wglGetIntegerv },
-    { "wglMakeCurrent", X11DRV_wglMakeCurrent },
-    { "wglShareLists", X11DRV_wglShareLists },
   }
 };
 
@@ -3285,8 +3275,6 @@ static BOOL glxdrv_SwapBuffers(PHYSDEV dev)
   struct glx_physdev *physdev = get_glxdrv_dev( dev );
   Wine_GLContext *ctx = NtCurrentTeb()->glContext;
 
-  if (!has_opengl()) return FALSE;
-
   TRACE("(%p)\n", dev->hdc);
 
   if (!ctx)
@@ -3457,6 +3445,20 @@ static INT glxdrv_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_d
     return dev->funcs->pExtEscape( dev, escape, in_count, in_data, out_count, out_data );
 }
 
+/**********************************************************************
+ *           glxdrv_wine_get_wgl_driver
+ */
+static const struct wgl_funcs * glxdrv_wine_get_wgl_driver( PHYSDEV dev, UINT version )
+{
+    if (version != WINE_GDI_DRIVER_VERSION)
+    {
+        ERR( "version mismatch, opengl32 wants %u but driver has %u\n", version, WINE_GDI_DRIVER_VERSION );
+        return NULL;
+    }
+    if (!has_opengl()) return NULL;
+    return &glxdrv_wgl_funcs;
+}
+
 static const struct gdi_dc_funcs glxdrv_funcs =
 {
     NULL,                               /* pAbortDoc */
@@ -3593,10 +3595,17 @@ static const struct gdi_dc_funcs glxdrv_funcs =
     glxdrv_wglCreateContext,            /* pwglCreateContext */
     glxdrv_wglCreateContextAttribsARB,  /* pwglCreateContextAttribsARB */
     glxdrv_wglGetProcAddress,           /* pwglGetProcAddress */
-    NULL,                               /* pwglMakeContextCurrentARB */
-    NULL,                               /* pwglMakeCurrent */
-    NULL,                               /* pwglSetPixelFormatWINE */
+    glxdrv_wine_get_wgl_driver,         /* wine_get_wgl_driver */
     GDI_PRIORITY_GRAPHICS_DRV + 20      /* priority */
+};
+
+static const struct wgl_funcs glxdrv_wgl_funcs =
+{
+    glxdrv_wglCopyContext,              /* p_wglCopyContext */
+    glxdrv_wglDeleteContext,            /* p_wglDeleteContext */
+    glxdrv_wglGetCurrentDC,             /* p_wglGetCurrentDC */
+    glxdrv_wglMakeCurrent,              /* p_wglMakeCurrent */
+    glxdrv_wglShareLists,               /* p_wglShareLists */
 };
 
 const struct gdi_dc_funcs *get_glx_driver(void)

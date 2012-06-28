@@ -134,6 +134,23 @@ PROC WINAPI wglGetProcAddress(LPCSTR func)
     return ret;
 }
 
+/***********************************************************************
+ *      __wine_get_wgl_driver  (GDI32.@)
+ */
+const struct wgl_funcs * CDECL __wine_get_wgl_driver( HDC hdc, UINT version )
+{
+    const struct wgl_funcs *ret = NULL;
+    DC * dc = get_dc_ptr( hdc );
+
+    if (dc)
+    {
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, wine_get_wgl_driver );
+        ret = physdev->funcs->wine_get_wgl_driver( physdev, version );
+        release_dc_ptr( dc );
+    }
+    return ret;
+}
+
 /******************************************************************************
  *		ChoosePixelFormat (GDI32.@)
  */

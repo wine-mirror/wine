@@ -233,9 +233,7 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     NULL,                            /* pwglCreateContext */
     NULL,                            /* pwglCreateContextAttribsARB */
     NULL,                            /* pwglGetProcAddress */
-    NULL,                            /* pwglMakeContextCurrentARB */
-    NULL,                            /* pwglMakeCurrent */
-    NULL,                            /* pwglSetPixelFormatWINE */
+    NULL,                            /* wine_get_wgl_driver */
     GDI_PRIORITY_GRAPHICS_DRV        /* priority */
 };
 
