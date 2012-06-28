@@ -239,8 +239,30 @@ static HRESULT WINAPI wbem_services_GetObject(
     IWbemClassObject **ppObject,
     IWbemCallResult **ppCallResult )
 {
-    FIXME("\n");
-    return WBEM_E_FAILED;
+    static const WCHAR selectW[] = {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',0};
+    IEnumWbemClassObject *iter;
+    WCHAR *query;
+    HRESULT hr;
+
+    TRACE("%p, %s, 0x%08x, %p, %p, %p\n", iface, debugstr_w(strObjectPath), lFlags,
+          pCtx, ppObject, ppCallResult);
+
+    if (lFlags) FIXME("unsupported flags 0x%08x\n", lFlags);
+
+    /* FIXME: parse path */
+
+    if (!(query = heap_alloc( strlenW( strObjectPath ) * sizeof(WCHAR) + sizeof(selectW) )))
+        return E_OUTOFMEMORY;
+    strcpyW( query, selectW );
+    strcatW( query, strObjectPath );
+
+    hr = exec_query( query, &iter );
+    heap_free( query );
+    if (hr != S_OK) return hr;
+
+    hr = WbemClassObject_create( NULL, iter, 0, (void **)ppObject );
+    IEnumWbemClassObject_Release( iter );
+    return hr;
 }
 
 static HRESULT WINAPI wbem_services_GetObjectAsync(
