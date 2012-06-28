@@ -1537,8 +1537,10 @@ ctype_char* ctype_char_use_facet(const locale *loc)
         return (ctype_char*)fac;
     }
 
-    if(obj)
+    if(obj) {
+        _Lockit_dtor(&lock);
         return obj;
+    }
 
     ctype_char__Getcat(&fac, loc);
     obj = (ctype_char*)fac;
@@ -2292,8 +2294,10 @@ ctype_wchar* ctype_wchar_use_facet(const locale *loc)
         return (ctype_wchar*)fac;
     }
 
-    if(obj)
+    if(obj) {
+        _Lockit_dtor(&lock);
         return obj;
+    }
 
     ctype_wchar__Getcat(&fac, loc);
     obj = (ctype_wchar*)fac;
@@ -2318,8 +2322,10 @@ static ctype_wchar* ctype_short_use_facet(const locale *loc)
         return (ctype_wchar*)fac;
     }
 
-    if(obj)
+    if(obj) {
+        _Lockit_dtor(&lock);
         return obj;
+    }
 
     ctype_short__Getcat(&fac, loc);
     obj = (ctype_wchar*)fac;
@@ -2783,8 +2789,10 @@ codecvt_char* codecvt_char_use_facet(const locale *loc)
         return (codecvt_char*)fac;
     }
 
-    if(obj)
+    if(obj) {
+        _Lockit_dtor(&lock);
         return obj;
+    }
 
     codecvt_char__Getcat(&fac, loc);
     obj = (codecvt_char*)fac;
@@ -3086,8 +3094,10 @@ static codecvt_wchar* codecvt_wchar_use_facet(const locale *loc)
         return (codecvt_wchar*)fac;
     }
 
-    if(obj)
+    if(obj) {
+        _Lockit_dtor(&lock);
         return obj;
+    }
 
     codecvt_wchar__Getcat(&fac, loc);
     obj = (codecvt_wchar*)fac;
@@ -3136,8 +3146,10 @@ static codecvt_wchar* codecvt_short_use_facet(const locale *loc)
         return (codecvt_wchar*)fac;
     }
 
-    if(obj)
+    if(obj) {
+        _Lockit_dtor(&lock);
         return obj;
+    }
 
     codecvt_short__Getcat(&fac, loc);
     obj = (codecvt_wchar*)fac;
@@ -3547,8 +3559,10 @@ static numpunct_char* numpunct_char_use_facet(const locale *loc)
         return (numpunct_char*)fac;
     }
 
-    if(obj)
+    if(obj) {
+        _Lockit_dtor(&lock);
         return obj;
+    }
 
     numpunct_char__Getcat(&fac, loc);
     obj = (numpunct_char*)fac;
@@ -3904,8 +3918,10 @@ static numpunct_wchar* numpunct_wchar_use_facet(const locale *loc)
         return (numpunct_wchar*)fac;
     }
 
-    if(obj)
+    if(obj) {
+        _Lockit_dtor(&lock);
         return obj;
+    }
 
     numpunct_wchar__Getcat(&fac, loc);
     obj = (numpunct_wchar*)fac;
@@ -3950,8 +3966,10 @@ static numpunct_wchar* numpunct_short_use_facet(const locale *loc)
         return (numpunct_wchar*)fac;
     }
 
-    if(obj)
+    if(obj) {
+        _Lockit_dtor(&lock);
         return obj;
+    }
 
     numpunct_short__Getcat(&fac, loc);
     obj = (numpunct_wchar*)fac;
@@ -4347,8 +4365,10 @@ num_get* num_get_wchar_use_facet(const locale *loc)
             return (num_get*)fac;
         }
 
-        if(obj)
+        if(obj) {
+            _Lockit_dtor(&lock);
             return obj;
+        }
 
         num_get_wchar__Getcat(&fac, loc);
         obj = (num_get*)fac;
@@ -4385,8 +4405,10 @@ static num_get* num_get_short_use_facet(const locale *loc)
         return (num_get*)fac;
     }
 
-    if(obj)
+    if(obj) {
+        _Lockit_dtor(&lock);
         return obj;
+    }
 
     num_get_short__Getcat(&fac, loc);
     obj = (num_get*)fac;
@@ -5483,8 +5505,10 @@ num_get* num_get_char_use_facet(const locale *loc)
         return (num_get*)fac;
     }
 
-    if(obj)
+    if(obj) {
+        _Lockit_dtor(&lock);
         return obj;
+    }
 
     num_get_char__Getcat(&fac, loc);
     obj = (num_get*)fac;
@@ -6333,8 +6357,10 @@ num_put* num_put_char_use_facet(const locale *loc)
         return (num_put*)fac;
     }
 
-    if(obj)
+    if(obj) {
+        _Lockit_dtor(&lock);
         return obj;
+    }
 
     num_put_char__Getcat(&fac, loc);
     obj = (num_put*)fac;
@@ -6944,8 +6970,10 @@ num_put* num_put_wchar_use_facet(const locale *loc)
         return (num_put*)fac;
     }
 
-    if(obj)
+    if(obj) {
+        _Lockit_dtor(&lock);
         return obj;
+    }
 
     num_put_wchar__Getcat(&fac, loc);
     obj = (num_put*)fac;
