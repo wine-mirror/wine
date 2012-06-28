@@ -1779,14 +1779,6 @@ static BOOL glxdrv_wglShareLists(HGLRC hglrc1, HGLRC hglrc2)
 }
 
 /***********************************************************************
- *		X11DRV_wglGetCurrentContext
- */
-static HGLRC WINAPI X11DRV_wglGetCurrentContext(void)
-{
-    return NtCurrentTeb()->glContext;
-}
-
-/***********************************************************************
  *		glxdrv_wglGetCurrentDC
  */
 static HDC glxdrv_wglGetCurrentDC(void)
@@ -3066,7 +3058,6 @@ static const WineGLExtension WGL_internal_functions =
   {
     { "wglFinish", X11DRV_wglFinish },
     { "wglFlush", X11DRV_wglFlush },
-    { "wglGetCurrentContext", X11DRV_wglGetCurrentContext },
     { "wglGetIntegerv", X11DRV_wglGetIntegerv },
   }
 };

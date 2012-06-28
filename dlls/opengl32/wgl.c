@@ -51,7 +51,6 @@ static struct
     /* internal WGL functions */
     void  (WINAPI *p_wglFinish)(void);
     void  (WINAPI *p_wglFlush)(void);
-    HGLRC (WINAPI *p_wglGetCurrentContext)(void);
     void  (WINAPI *p_wglGetIntegerv)(GLenum pname, GLint* params);
 } wine_wgl;
 
@@ -178,7 +177,7 @@ HGLRC WINAPI wglCreateContext(HDC hdc)
  */
 HGLRC WINAPI wglGetCurrentContext(void)
 {
-  return wine_wgl.p_wglGetCurrentContext();
+    return NtCurrentTeb()->glContext;
 }
 
 /***********************************************************************
@@ -1119,7 +1118,6 @@ static BOOL process_attach(void)
   /* internal WGL functions */
   wine_wgl.p_wglFinish = (void *)wgl_driver->p_wglGetProcAddress("wglFinish");
   wine_wgl.p_wglFlush = (void *)wgl_driver->p_wglGetProcAddress("wglFlush");
-  wine_wgl.p_wglGetCurrentContext = (void *)wgl_driver->p_wglGetProcAddress("wglGetCurrentContext");
   wine_wgl.p_wglGetIntegerv = (void *)wgl_driver->p_wglGetProcAddress("wglGetIntegerv");
   return TRUE;
 }
