@@ -130,7 +130,7 @@ static const IClientSecurityVtbl client_security_vtbl =
     client_security_CopyProxy
 };
 
-static IClientSecurity client_security = { &client_security_vtbl };
+IClientSecurity client_security = { &client_security_vtbl };
 
 struct wbem_services
 {

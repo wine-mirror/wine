@@ -19,6 +19,8 @@
 #include "wine/list.h"
 #include "wine/unicode.h"
 
+IClientSecurity client_security;
+
 #define SIZEOF(array) (sizeof(array)/sizeof((array)[0]))
 
 #define COL_TYPE_MASK    0x0000ffff
