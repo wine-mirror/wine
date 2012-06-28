@@ -95,6 +95,7 @@ static ULONG WINAPI HTMLDOMChildrenCollection_Release(IHTMLDOMChildrenCollection
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
+        htmldoc_release(&This->doc->basedoc);
         nsIDOMNodeList_Release(This->nslist);
         heap_free(This);
     }
@@ -285,6 +286,8 @@ static IHTMLDOMChildrenCollection *create_child_collection(HTMLDocumentNode *doc
 
     nsIDOMNodeList_AddRef(nslist);
     ret->nslist = nslist;
+
+    htmldoc_addref(&doc->basedoc);
     ret->doc = doc;
 
     init_dispex(&ret->dispex, (IUnknown*)&ret->IHTMLDOMChildrenCollection_iface,
