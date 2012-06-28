@@ -1913,35 +1913,36 @@ static void WINAPI X11DRV_wglFlush(void)
     }
 }
 
-/**
- * glxdrv_wglCreateContextAttribsARB
- *
- * WGL_ARB_create_context: wglCreateContextAttribsARB
+/***********************************************************************
+ *		glxdrv_wglCreateContextAttribsARB
  */
-static HGLRC glxdrv_wglCreateContextAttribsARB(PHYSDEV dev, HGLRC hShareContext, const int* attribList)
+static HGLRC glxdrv_wglCreateContextAttribsARB( HDC hdc, HGLRC hShareContext, const int* attribList )
 {
-    struct glx_physdev *physdev = get_glxdrv_dev( dev );
+    struct x11drv_escape_get_drawable escape;
     Wine_GLContext *ret;
     WineGLPixelFormat *fmt;
     int fmt_count = 0;
 
-    TRACE("(%p %p %p)\n", dev->hdc, hShareContext, attribList);
+    TRACE("(%p %p %p)\n", hdc, hShareContext, attribList);
 
-    if (!has_opengl()) return 0;
+    escape.code = X11DRV_GET_DRAWABLE;
+    if (!ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape.code), (LPCSTR)&escape.code,
+                    sizeof(escape), (LPSTR)&escape ))
+        return 0;
 
-    fmt = ConvertPixelFormatWGLtoGLX(gdi_display, physdev->pixel_format, TRUE /* Offscreen */, &fmt_count);
+    fmt = ConvertPixelFormatWGLtoGLX(gdi_display, escape.pixel_format, TRUE /* Offscreen */, &fmt_count);
     /* wglCreateContextAttribsARB supports ALL pixel formats, so also offscreen ones.
      * If this fails something is very wrong on the system. */
     if(!fmt)
     {
-        ERR("Cannot get FB Config for iPixelFormat %d, expect problems!\n", physdev->pixel_format);
+        ERR("Cannot get FB Config for iPixelFormat %d, expect problems!\n", escape.pixel_format);
         SetLastError(ERROR_INVALID_PIXEL_FORMAT);
         return NULL;
     }
 
     if (!(ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ret)))) return 0;
 
-    ret->hdc = dev->hdc;
+    ret->hdc = hdc;
     ret->fmt = fmt;
     ret->vis = NULL; /* glXCreateContextAttribsARB requires a fbconfig instead of a visual */
     ret->gl3_context = TRUE;
@@ -3076,7 +3077,7 @@ static const WineGLExtension WGL_ARB_create_context =
 {
   "WGL_ARB_create_context",
   {
-    { "wglCreateContextAttribsARB", (void *)1 /* not called directly */ },
+    { "wglCreateContextAttribsARB", (void *)1 /* called through the glxdrv_wgl_funcs driver */ },
   }
 };
 
@@ -3591,7 +3592,7 @@ static const struct gdi_dc_funcs glxdrv_funcs =
     NULL,                               /* pUnrealizePalette */
     NULL,                               /* pWidenPath */
     glxdrv_wglCreateContext,            /* pwglCreateContext */
-    glxdrv_wglCreateContextAttribsARB,  /* pwglCreateContextAttribsARB */
+    NULL,                               /* pwglCreateContextAttribsARB */
     glxdrv_wglGetProcAddress,           /* pwglGetProcAddress */
     glxdrv_wine_get_wgl_driver,         /* wine_get_wgl_driver */
     GDI_PRIORITY_GRAPHICS_DRV + 20      /* priority */
@@ -3600,6 +3601,7 @@ static const struct gdi_dc_funcs glxdrv_funcs =
 static const struct wgl_funcs glxdrv_wgl_funcs =
 {
     glxdrv_wglCopyContext,              /* p_wglCopyContext */
+    glxdrv_wglCreateContextAttribsARB,  /* p_wglCreateContextAttribsARB */
     glxdrv_wglDeleteContext,            /* p_wglDeleteContext */
     glxdrv_wglGetCurrentDC,             /* p_wglGetCurrentDC */
     glxdrv_wglMakeContextCurrentARB,    /* p_wglMakeContextCurrentARB */

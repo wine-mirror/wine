@@ -82,26 +82,6 @@ HGLRC WINAPI wglCreateContext(HDC hdc)
 }
 
 /***********************************************************************
- *      wglCreateContextAttribsARB
- */
-static HGLRC WINAPI wglCreateContextAttribsARB(HDC hdc, HGLRC hShareContext, const int *attributeList)
-{
-    HGLRC ret = 0;
-    DC * dc = get_dc_ptr( hdc );
-
-    TRACE("(%p)\n",hdc);
-
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pwglCreateContextAttribsARB );
-        update_dc( dc );
-        ret = physdev->funcs->pwglCreateContextAttribsARB( physdev, hShareContext, attributeList );
-        release_dc_ptr( dc );
-    }
-    return ret;
-}
-
-/***********************************************************************
  *		Internal wglGetProcAddress for retrieving WGL extensions
  */
 PROC WINAPI wglGetProcAddress(LPCSTR func)
@@ -122,15 +102,6 @@ PROC WINAPI wglGetProcAddress(LPCSTR func)
         ret = physdev->funcs->pwglGetProcAddress(func);
         release_dc_ptr( dc );
     }
-
-    /* At the moment we implement one WGL extension which requires a HDC. When we
-     * are looking up this call and when the Extension is available (that is the case
-     * when a non-NULL value is returned by wglGetProcAddress), we return the address
-     * of a wrapper function which will handle the HDC->PhysDev conversion.
-     */
-    if(ret && strcmp(func, "wglCreateContextAttribsARB") == 0)
-        return (PROC)wglCreateContextAttribsARB;
-
     return ret;
 }
 

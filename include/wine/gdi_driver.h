@@ -203,7 +203,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 34
+#define WINE_GDI_DRIVER_VERSION 35
 
 #define GDI_PRIORITY_NULL_DRV        0  /* null driver */
 #define GDI_PRIORITY_FONT_DRV      100  /* any font driver */
@@ -234,6 +234,7 @@ static inline void push_dc_driver( PHYSDEV *dev, PHYSDEV physdev, const struct g
 struct wgl_funcs
 {
     BOOL  (*p_wglCopyContext)(HGLRC,HGLRC,UINT);
+    HGLRC (*p_wglCreateContextAttribsARB)(HDC,HGLRC,const int*);
     BOOL  (*p_wglDeleteContext)(HGLRC);
     HDC   (*p_wglGetCurrentDC)(void);
     BOOL  (*p_wglMakeContextCurrentARB)(HDC,HDC,HGLRC);

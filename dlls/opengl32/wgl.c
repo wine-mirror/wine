@@ -133,6 +133,14 @@ BOOL WINAPI wglMakeCurrent(HDC hdc, HGLRC hglrc)
 }
 
 /***********************************************************************
+ *		wglCreateContextAttribsARB  (wrapper for the extension function returned by the driver)
+ */
+static HGLRC WINAPI wglCreateContextAttribsARB( HDC hdc, HGLRC share, const int *attribs )
+{
+    return wgl_driver->p_wglCreateContextAttribsARB( hdc, share, attribs );
+}
+
+/***********************************************************************
  *		wglMakeContextCurrentARB  (wrapper for the extension function returned by the driver)
  */
 static BOOL WINAPI wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, HGLRC hglrc )
@@ -464,6 +472,12 @@ static BOOL is_extension_supported(const char* extension)
     return FALSE;
 }
 
+static const OpenGL_extension wgl_extensions[] =
+{
+    { "wglCreateContextAttribsARB", "WGL_ARB_create_context", wglCreateContextAttribsARB },
+    { "wglMakeContextCurrentARB", "WGL_ARB_make_current_read", wglMakeContextCurrentARB },
+};
+
 /***********************************************************************
  *		wglGetProcAddress (OPENGL32.@)
  */
@@ -499,13 +513,12 @@ PROC WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
         local_func = wine_wgl.p_wglGetProcAddress( lpszProc );
         if (local_func == (void *)1)  /* special function that needs a wrapper */
         {
-            if (!strcmp( lpszProc, "wglMakeContextCurrentARB" ))
-                local_func = wglMakeContextCurrentARB;
-            else
-            {
-                FIXME( "wrapper missing for %s\n", lpszProc );
-                local_func = NULL;
-            }
+            ext_ret = bsearch( &ext, wgl_extensions, sizeof(wgl_extensions)/sizeof(wgl_extensions[0]),
+                               sizeof(OpenGL_extension), compar );
+            if (ext_ret) return ext_ret->func;
+
+            FIXME( "wrapper missing for %s\n", lpszProc );
+            return NULL;
         }
         return local_func;
     }
