@@ -741,7 +741,7 @@ static BOOL context_set_pixel_format(const struct wined3d_gl_info *gl_info, HDC 
      * when really needed. */
     if (gl_info->supported[WGL_WINE_PIXEL_FORMAT_PASSTHROUGH])
     {
-        if (!GL_EXTCALL(wglSetPixelFormatWINE(dc, format, NULL)))
+        if (!GL_EXTCALL(wglSetPixelFormatWINE(dc, format)))
         {
             ERR("wglSetPixelFormatWINE failed to set pixel format %d on device context %p.\n",
                     format, dc);

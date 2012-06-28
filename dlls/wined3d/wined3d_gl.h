@@ -3770,8 +3770,7 @@ typedef BOOL (WINAPI *WINED3D_PFNWGLCHOOSEPIXELFORMATARBPROC)(HDC hdc, const int
 #endif
 
 /* WGL_WINE_pixel_format_passthrough */
-typedef BOOL (WINAPI *WINED3D_PFNWGLSETPIXELFORMATWINE)(HDC hdc, int iPixelFormat,
-        const PIXELFORMATDESCRIPTOR *ppfd);
+typedef BOOL (WINAPI *WINED3D_PFNWGLSETPIXELFORMATWINE)(HDC hdc, int iPixelFormat);
 
 typedef BOOL (WINAPI *WINED3D_PFNWGLSWAPINTERVALEXTPROC)(int interval);
 

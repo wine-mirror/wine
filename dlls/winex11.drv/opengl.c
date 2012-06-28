@@ -1310,16 +1310,24 @@ static int glxdrv_GetPixelFormat(PHYSDEV dev)
   return physdev->pixel_format;
 }
 
-/* This function is the core of X11DRV_SetPixelFormat and X11DRV_SetPixelFormatWINE.
- * Both functions are the same except that X11DRV_SetPixelFormatWINE allows you to
- * set the pixel format multiple times. */
-static BOOL internal_SetPixelFormat( struct glx_physdev *physdev,
-                                     int iPixelFormat,
-                                     const PIXELFORMATDESCRIPTOR *ppfd)
+/**
+ * glxdrv_SetPixelFormat
+ *
+ * Set the pixel-format id used by this DC
+ */
+static BOOL glxdrv_SetPixelFormat(PHYSDEV dev, int iPixelFormat, const PIXELFORMATDESCRIPTOR *ppfd)
 {
+    struct glx_physdev *physdev = get_glxdrv_dev( dev );
     WineGLPixelFormat *fmt;
     int value;
     HWND hwnd;
+
+    TRACE("(%p,%d,%p)\n", dev->hdc, iPixelFormat, ppfd);
+
+    if (!has_opengl()) return FALSE;
+
+    if(physdev->pixel_format)  /* cannot change it if already set */
+        return (physdev->pixel_format == iPixelFormat);
 
     /* SetPixelFormat is not allowed on the X root_window e.g. GetDC(0) */
     if(physdev->x11dev->drawable == root_window)
@@ -1383,26 +1391,6 @@ static BOOL internal_SetPixelFormat( struct glx_physdev *physdev,
         wine_tsx11_unlock();
     }
     return TRUE;
-}
-
-
-/**
- * glxdrv_SetPixelFormat
- *
- * Set the pixel-format id used by this DC
- */
-static BOOL glxdrv_SetPixelFormat(PHYSDEV dev, int iPixelFormat, const PIXELFORMATDESCRIPTOR *ppfd)
-{
-    struct glx_physdev *physdev = get_glxdrv_dev( dev );
-
-    TRACE("(%p,%d,%p)\n", dev->hdc, iPixelFormat, ppfd);
-
-    if (!has_opengl()) return FALSE;
-
-    if(physdev->pixel_format)  /* cannot change it if already set */
-        return (physdev->pixel_format == iPixelFormat);
-
-    return internal_SetPixelFormat(physdev, iPixelFormat, ppfd);
 }
 
 /**
@@ -2991,24 +2979,45 @@ static void WINAPI X11DRV_wglFreeMemoryNV(GLvoid* pointer) {
 }
 
 /**
- * glxdrv_wglSetPixelFormatWINE
+ * X11DRV_wglSetPixelFormatWINE
  *
  * WGL_WINE_pixel_format_passthrough: wglSetPixelFormatWINE
  * This is a WINE-specific wglSetPixelFormat which can set the pixel format multiple times.
  */
-static BOOL glxdrv_wglSetPixelFormatWINE(PHYSDEV dev, int iPixelFormat, const PIXELFORMATDESCRIPTOR *ppfd)
+static BOOL WINAPI X11DRV_wglSetPixelFormatWINE(HDC hdc, int format)
 {
-    struct glx_physdev *physdev = get_glxdrv_dev( dev );
+    WineGLPixelFormat *fmt;
+    int value;
+    HWND hwnd;
 
-    TRACE("(%p,%d,%p)\n", dev->hdc, iPixelFormat, ppfd);
+    TRACE("(%p,%d)\n", hdc, format);
 
-    if (!has_opengl()) return FALSE;
+    fmt = ConvertPixelFormatWGLtoGLX(gdi_display, format, FALSE /* Offscreen */, &value);
+    if (!fmt)
+    {
+        ERR( "Invalid format %d\n", format );
+        return FALSE;
+    }
 
-    if (physdev->pixel_format == iPixelFormat) return TRUE;
+    hwnd = WindowFromDC( hdc );
+    if (!hwnd || hwnd == GetDesktopWindow())
+    {
+        ERR( "not a valid window DC %p\n", hdc );
+        return FALSE;
+    }
 
-    /* Relay to the core SetPixelFormat */
-    TRACE("Changing iPixelFormat from %d to %d\n", physdev->pixel_format, iPixelFormat);
-    return internal_SetPixelFormat(physdev, iPixelFormat, ppfd);
+    wine_tsx11_lock();
+    pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_DRAWABLE_TYPE, &value);
+    wine_tsx11_unlock();
+
+    if (!(value & GLX_WINDOW_BIT))
+    {
+        WARN( "Pixel format %d is not compatible for window rendering\n", format );
+        return FALSE;
+    }
+
+    return SendMessageW(hwnd, WM_X11DRV_SET_WIN_FORMAT, fmt->fmt_id, 0);
+    /* DC pixel format will be set by the DCE update */
 }
 
 /**
@@ -3167,7 +3176,7 @@ static const WineGLExtension WGL_WINE_pixel_format_passthrough =
 {
   "WGL_WINE_pixel_format_passthrough",
   {
-    { "wglSetPixelFormatWINE", (void *)1 /* not called directly */ },
+    { "wglSetPixelFormatWINE", X11DRV_wglSetPixelFormatWINE },
   }
 };
 
@@ -3586,7 +3595,7 @@ static const struct gdi_dc_funcs glxdrv_funcs =
     glxdrv_wglGetProcAddress,           /* pwglGetProcAddress */
     NULL,                               /* pwglMakeContextCurrentARB */
     NULL,                               /* pwglMakeCurrent */
-    glxdrv_wglSetPixelFormatWINE,       /* pwglSetPixelFormatWINE */
+    NULL,                               /* pwglSetPixelFormatWINE */
     GDI_PRIORITY_GRAPHICS_DRV + 20      /* priority */
 };
 
