@@ -130,7 +130,7 @@ static HRESULT WINAPI HTMLDocument3_createTextNode(IHTMLDocument3 *iface, BSTR t
     }
 
     hres = HTMLDOMTextNode_Create(This->doc_node, (nsIDOMNode*)nstext, &node);
-    nsIDOMElement_Release(nstext);
+    nsIDOMText_Release(nstext);
     if(FAILED(hres))
         return hres;
 
