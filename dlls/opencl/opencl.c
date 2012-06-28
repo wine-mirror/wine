@@ -31,6 +31,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(opencl);
 
 #if defined(HAVE_CL_CL_H)
+#define CL_USE_DEPRECATED_OPENCL_1_1_APIS
 #include <CL/cl.h>
 #elif defined(HAVE_OPENCL_OPENCL_H)
 #include <OpenCL/opencl.h>
