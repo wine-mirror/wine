@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <assert.h>
 
 #define COBJMACROS
 
@@ -529,15 +530,6 @@ static HRESULT HTMLSelectElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
     return HTMLElement_QI(&This->element.node, riid, ppv);
 }
 
-static void HTMLSelectElement_destructor(HTMLDOMNode *iface)
-{
-    HTMLSelectElement *This = impl_from_HTMLDOMNode(iface);
-
-    nsIDOMHTMLSelectElement_Release(This->nsselect);
-
-    HTMLElement_destructor(&This->element.node);
-}
-
 static HRESULT HTMLSelectElementImpl_put_disabled(HTMLDOMNode *iface, VARIANT_BOOL v)
 {
     HTMLSelectElement *This = impl_from_HTMLDOMNode(iface);
@@ -606,7 +598,7 @@ static HRESULT HTMLSelectElement_invoke(HTMLDOMNode *iface, DISPID id, LCID lcid
 
 static const NodeImplVtbl HTMLSelectElementImplVtbl = {
     HTMLSelectElement_QI,
-    HTMLSelectElement_destructor,
+    HTMLElement_destructor,
     HTMLElement_clone,
     HTMLElement_get_attr_col,
     NULL,
@@ -645,15 +637,14 @@ HRESULT HTMLSelectElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nsele
     ret->IHTMLSelectElement_iface.lpVtbl = &HTMLSelectElementVtbl;
     ret->element.node.vtbl = &HTMLSelectElementImplVtbl;
 
+    HTMLElement_Init(&ret->element, doc, nselem, &HTMLSelectElement_dispex);
+
     nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLSelectElement,
                                              (void**)&ret->nsselect);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIDOMHTMLSelectElement interfce: %08x\n", nsres);
-        heap_free(ret);
-        return E_FAIL;
-    }
 
-    HTMLElement_Init(&ret->element, doc, nselem, &HTMLSelectElement_dispex);
+    /* Share nsselect reference with nsnode */
+    assert(nsres == NS_OK && (nsIDOMNode*)ret->nsselect == ret->element.node.nsnode);
+    nsIDOMNode_Release(ret->element.node.nsnode);
 
     *elem = &ret->element;
     return S_OK;
