@@ -2241,7 +2241,6 @@ const struct gdi_dc_funcs path_driver =
     pathdrv_ArcTo,                      /* pArcTo */
     pathdrv_BeginPath,                  /* pBeginPath */
     NULL,                               /* pBlendImage */
-    NULL,                               /* pChoosePixelFormat */
     pathdrv_Chord,                      /* pChord */
     pathdrv_CloseFigure,                /* pCloseFigure */
     NULL,                               /* pCreateCompatibleDC */
@@ -2285,7 +2284,6 @@ const struct gdi_dc_funcs path_driver =
     NULL,                               /* pGetNearestColor */
     NULL,                               /* pGetOutlineTextMetrics */
     NULL,                               /* pGetPixel */
-    NULL,                               /* pGetPixelFormat */
     NULL,                               /* pGetSystemPaletteEntries */
     NULL,                               /* pGetTextCharsetInfo */
     NULL,                               /* pGetTextExtentExPoint */
@@ -2364,9 +2362,6 @@ const struct gdi_dc_funcs path_driver =
     NULL,                               /* pSwapBuffers */
     NULL,                               /* pUnrealizePalette */
     NULL,                               /* pWidenPath */
-    NULL,                               /* pwglCreateContext */
-    NULL,                               /* pwglCreateContextAttribsARB */
-    NULL,                               /* pwglGetProcAddress */
     NULL,                               /* wine_get_wgl_driver */
     GDI_PRIORITY_PATH_DRV               /* priority */
 };

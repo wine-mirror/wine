@@ -70,7 +70,6 @@ struct gdi_dc_funcs
     BOOL     (*pArcTo)(PHYSDEV,INT,INT,INT,INT,INT,INT,INT,INT);
     BOOL     (*pBeginPath)(PHYSDEV);
     DWORD    (*pBlendImage)(PHYSDEV,BITMAPINFO*,const struct gdi_image_bits*,struct bitblt_coords*,struct bitblt_coords*,BLENDFUNCTION);
-    INT      (*pChoosePixelFormat)(PHYSDEV,const PIXELFORMATDESCRIPTOR *);
     BOOL     (*pChord)(PHYSDEV,INT,INT,INT,INT,INT,INT,INT,INT);
     BOOL     (*pCloseFigure)(PHYSDEV);
     BOOL     (*pCreateCompatibleDC)(PHYSDEV,PHYSDEV*);
@@ -114,7 +113,6 @@ struct gdi_dc_funcs
     COLORREF (*pGetNearestColor)(PHYSDEV,COLORREF);
     UINT     (*pGetOutlineTextMetrics)(PHYSDEV,UINT,LPOUTLINETEXTMETRICW);
     COLORREF (*pGetPixel)(PHYSDEV,INT,INT);
-    INT      (*pGetPixelFormat)(PHYSDEV);
     UINT     (*pGetSystemPaletteEntries)(PHYSDEV,UINT,UINT,LPPALETTEENTRY);
     UINT     (*pGetTextCharsetInfo)(PHYSDEV,LPFONTSIGNATURE,DWORD);
     BOOL     (*pGetTextExtentExPoint)(PHYSDEV,LPCWSTR,INT,INT,LPINT,LPINT,LPSIZE);
@@ -193,9 +191,6 @@ struct gdi_dc_funcs
     BOOL     (*pSwapBuffers)(PHYSDEV);
     BOOL     (*pUnrealizePalette)(HPALETTE);
     BOOL     (*pWidenPath)(PHYSDEV);
-    HGLRC    (*pwglCreateContext)(PHYSDEV);
-    HGLRC    (*pwglCreateContextAttribsARB)(PHYSDEV,HGLRC,const int*);
-    PROC     (*pwglGetProcAddress)(LPCSTR);
     const struct wgl_funcs * (*wine_get_wgl_driver)(PHYSDEV,UINT);
 
     /* priority order for the driver on the stack */
@@ -203,7 +198,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 38
+#define WINE_GDI_DRIVER_VERSION 39
 
 #define GDI_PRIORITY_NULL_DRV        0  /* null driver */
 #define GDI_PRIORITY_FONT_DRV      100  /* any font driver */

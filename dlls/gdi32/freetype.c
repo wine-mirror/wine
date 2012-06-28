@@ -7748,7 +7748,6 @@ static const struct gdi_dc_funcs freetype_funcs =
     NULL,                               /* pArcTo */
     NULL,                               /* pBeginPath */
     NULL,                               /* pBlendImage */
-    NULL,                               /* pChoosePixelFormat */
     NULL,                               /* pChord */
     NULL,                               /* pCloseFigure */
     NULL,                               /* pCreateCompatibleDC */
@@ -7792,7 +7791,6 @@ static const struct gdi_dc_funcs freetype_funcs =
     NULL,                               /* pGetNearestColor */
     freetype_GetOutlineTextMetrics,     /* pGetOutlineTextMetrics */
     NULL,                               /* pGetPixel */
-    NULL,                               /* pGetPixelFormat */
     NULL,                               /* pGetSystemPaletteEntries */
     freetype_GetTextCharsetInfo,        /* pGetTextCharsetInfo */
     freetype_GetTextExtentExPoint,      /* pGetTextExtentExPoint */
@@ -7871,9 +7869,6 @@ static const struct gdi_dc_funcs freetype_funcs =
     NULL,                               /* pSwapBuffers */
     NULL,                               /* pUnrealizePalette */
     NULL,                               /* pWidenPath */
-    NULL,                               /* pwglCreateContext */
-    NULL,                               /* pwglCreateContextAttribsARB */
-    NULL,                               /* pwglGetProcAddress */
     NULL,                               /* wine_get_wgl_driver */
     GDI_PRIORITY_FONT_DRV               /* priority */
 };

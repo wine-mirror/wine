@@ -718,7 +718,6 @@ static const struct gdi_dc_funcs psdrv_funcs =
     NULL,                               /* pArcTo */
     NULL,                               /* pBeginPath */
     NULL,                               /* pBlendImage */
-    NULL,                               /* pChoosePixelFormat */
     PSDRV_Chord,                        /* pChord */
     NULL,                               /* pCloseFigure */
     PSDRV_CreateCompatibleDC,           /* pCreateCompatibleDC */
@@ -762,7 +761,6 @@ static const struct gdi_dc_funcs psdrv_funcs =
     NULL,                               /* pGetNearestColor */
     NULL,                               /* pGetOutlineTextMetrics */
     NULL,                               /* pGetPixel */
-    NULL,                               /* pGetPixelFormat */
     NULL,                               /* pGetSystemPaletteEntries */
     NULL,                               /* pGetTextCharsetInfo */
     PSDRV_GetTextExtentExPoint,         /* pGetTextExtentExPoint */
@@ -841,9 +839,6 @@ static const struct gdi_dc_funcs psdrv_funcs =
     NULL,                               /* pSwapBuffers */
     NULL,                               /* pUnrealizePalette */
     NULL,                               /* pWidenPath */
-    NULL,                               /* pwglCreateContext */
-    NULL,                               /* pwglCreateContextAttribsARB */
-    NULL,                               /* pwglGetProcAddress */
     NULL,                               /* wine_get_wgl_driver */
     GDI_PRIORITY_GRAPHICS_DRV           /* priority */
 };

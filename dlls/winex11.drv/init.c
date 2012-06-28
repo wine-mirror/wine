@@ -447,15 +447,6 @@ static inline void opengl_error(void)
 }
 
 /***********************************************************************
- *		X11DRV_ChoosePixelFormat
- */
-static int X11DRV_ChoosePixelFormat( PHYSDEV dev, const PIXELFORMATDESCRIPTOR *ppfd )
-{
-    opengl_error();
-    return 0;
-}
-
-/***********************************************************************
  *		X11DRV_DescribePixelFormat
  */
 static int X11DRV_DescribePixelFormat( PHYSDEV dev, int fmt, UINT size, PIXELFORMATDESCRIPTOR *ppfd )
@@ -473,33 +464,6 @@ static BOOL X11DRV_SetPixelFormat( PHYSDEV dev, int fmt, const PIXELFORMATDESCRI
     return FALSE;
 }
 
-/***********************************************************************
- *		X11DRV_wglCreateContext
- */
-static HGLRC X11DRV_wglCreateContext( PHYSDEV dev )
-{
-    opengl_error();
-    return NULL;
-}
-
-/***********************************************************************
- *		X11DRV_wglCreateContextAttribsARB
- */
-static HGLRC X11DRV_wglCreateContextAttribsARB( PHYSDEV dev, HGLRC hShareContext, const int* attribList )
-{
-    opengl_error();
-    return NULL;
-}
-
-/***********************************************************************
- *		X11DRV_wglGetProcAddress
- */
-static PROC X11DRV_wglGetProcAddress( LPCSTR proc )
-{
-    opengl_error();
-    return NULL;
-}
-
 
 static const struct gdi_dc_funcs x11drv_funcs =
 {
@@ -511,7 +475,6 @@ static const struct gdi_dc_funcs x11drv_funcs =
     NULL,                               /* pArcTo */
     NULL,                               /* pBeginPath */
     NULL,                               /* pBlendImage */
-    X11DRV_ChoosePixelFormat,           /* pChoosePixelFormat */
     X11DRV_Chord,                       /* pChord */
     NULL,                               /* pCloseFigure */
     X11DRV_CreateCompatibleDC,          /* pCreateCompatibleDC */
@@ -555,7 +518,6 @@ static const struct gdi_dc_funcs x11drv_funcs =
     X11DRV_GetNearestColor,             /* pGetNearestColor */
     NULL,                               /* pGetOutlineTextMetrics */
     NULL,                               /* pGetPixel */
-    NULL,                               /* pGetPixelFormat */
     X11DRV_GetSystemPaletteEntries,     /* pGetSystemPaletteEntries */
     NULL,                               /* pGetTextCharsetInfo */
     NULL,                               /* pGetTextExtentExPoint */
@@ -634,9 +596,6 @@ static const struct gdi_dc_funcs x11drv_funcs =
     NULL,                               /* pSwapBuffers */
     X11DRV_UnrealizePalette,            /* pUnrealizePalette */
     NULL,                               /* pWidenPath */
-    X11DRV_wglCreateContext,            /* pwglCreateContext */
-    X11DRV_wglCreateContextAttribsARB,  /* pwglCreateContextAttribsARB */
-    X11DRV_wglGetProcAddress,           /* pwglGetProcAddress */
     NULL,                               /* wine_get_wgl_driver */
     GDI_PRIORITY_GRAPHICS_DRV           /* priority */
 };

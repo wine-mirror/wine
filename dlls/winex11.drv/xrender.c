@@ -2474,7 +2474,6 @@ static const struct gdi_dc_funcs xrender_funcs =
     NULL,                               /* pArcTo */
     NULL,                               /* pBeginPath */
     xrenderdrv_BlendImage,              /* pBlendImage */
-    NULL,                               /* pChoosePixelFormat */
     NULL,                               /* pChord */
     NULL,                               /* pCloseFigure */
     xrenderdrv_CreateCompatibleDC,      /* pCreateCompatibleDC */
@@ -2518,7 +2517,6 @@ static const struct gdi_dc_funcs xrender_funcs =
     NULL,                               /* pGetNearestColor */
     NULL,                               /* pGetOutlineTextMetrics */
     NULL,                               /* pGetPixel */
-    NULL,                               /* pGetPixelFormat */
     NULL,                               /* pGetSystemPaletteEntries */
     NULL,                               /* pGetTextCharsetInfo */
     NULL,                               /* pGetTextExtentExPoint */
@@ -2597,9 +2595,6 @@ static const struct gdi_dc_funcs xrender_funcs =
     NULL,                               /* pSwapBuffers */
     NULL,                               /* pUnrealizePalette */
     NULL,                               /* pWidenPath */
-    NULL,                               /* pwglCreateContext */
-    NULL,                               /* pwglCreateContextAttribsARB */
-    NULL,                               /* pwglGetProcAddress */
     NULL,                               /* wine_get_wgl_driver */
     GDI_PRIORITY_GRAPHICS_DRV + 10      /* priority */
 };

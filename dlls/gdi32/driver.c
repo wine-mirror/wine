@@ -198,11 +198,6 @@ static BOOL nulldrv_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
     return TRUE;
 }
 
-static INT nulldrv_ChoosePixelFormat( PHYSDEV dev, const PIXELFORMATDESCRIPTOR *descr )
-{
-    return 0;
-}
-
 static BOOL nulldrv_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
                            INT xstart, INT ystart, INT xend, INT yend )
 {
@@ -387,11 +382,6 @@ static DWORD nulldrv_GetKerningPairs( PHYSDEV dev, DWORD count, LPKERNINGPAIR pa
 }
 
 static UINT nulldrv_GetOutlineTextMetrics( PHYSDEV dev, UINT size, LPOUTLINETEXTMETRICW otm )
-{
-    return 0;
-}
-
-static INT nulldrv_GetPixelFormat( PHYSDEV dev )
 {
     return 0;
 }
@@ -670,21 +660,6 @@ static BOOL nulldrv_UnrealizePalette( HPALETTE palette )
     return FALSE;
 }
 
-static HGLRC nulldrv_wglCreateContext( PHYSDEV dev )
-{
-    return 0;
-}
-
-static HGLRC nulldrv_wglCreateContextAttribsARB( PHYSDEV dev, HGLRC share_ctx, const int *attribs )
-{
-    return 0;
-}
-
-static PROC nulldrv_wglGetProcAddress( LPCSTR name )
-{
-    return NULL;
-}
-
 static const struct wgl_funcs *nulldrv_wine_get_wgl_driver( PHYSDEV dev, UINT version )
 {
     return NULL;
@@ -700,7 +675,6 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_ArcTo,                      /* pArcTo */
     nulldrv_BeginPath,                  /* pBeginPath */
     nulldrv_BlendImage,                 /* pBlendImage */
-    nulldrv_ChoosePixelFormat,          /* pChoosePixelFormat */
     nulldrv_Chord,                      /* pChord */
     nulldrv_CloseFigure,                /* pCloseFigure */
     nulldrv_CreateCompatibleDC,         /* pCreateCompatibleDC */
@@ -744,7 +718,6 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_GetNearestColor,            /* pGetNearestColor */
     nulldrv_GetOutlineTextMetrics,      /* pGetOutlineTextMetrics */
     nulldrv_GetPixel,                   /* pGetPixel */
-    nulldrv_GetPixelFormat,             /* pGetPixelFormat */
     nulldrv_GetSystemPaletteEntries,    /* pGetSystemPaletteEntries */
     nulldrv_GetTextCharsetInfo,         /* pGetTextCharsetInfo */
     nulldrv_GetTextExtentExPoint,       /* pGetTextExtentExPoint */
@@ -823,9 +796,6 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_SwapBuffers,                /* pSwapBuffers */
     nulldrv_UnrealizePalette,           /* pUnrealizePalette */
     nulldrv_WidenPath,                  /* pWidenPath */
-    nulldrv_wglCreateContext,           /* pwglCreateContext */
-    nulldrv_wglCreateContextAttribsARB, /* pwglCreateContextAttribsARB */
-    nulldrv_wglGetProcAddress,          /* pwglGetProcAddress */
     nulldrv_wine_get_wgl_driver,        /* wine_get_wgl_driver */
 
     GDI_PRIORITY_NULL_DRV               /* priority */

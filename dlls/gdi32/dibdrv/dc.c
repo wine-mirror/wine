@@ -403,7 +403,6 @@ const struct gdi_dc_funcs dib_driver =
     dibdrv_ArcTo,                       /* pArcTo */
     NULL,                               /* pBeginPath */
     dibdrv_BlendImage,                  /* pBlendImage */
-    NULL,                               /* pChoosePixelFormat */
     dibdrv_Chord,                       /* pChord */
     NULL,                               /* pCloseFigure */
     NULL,                               /* pCreateCompatibleDC */
@@ -447,7 +446,6 @@ const struct gdi_dc_funcs dib_driver =
     dibdrv_GetNearestColor,             /* pGetNearestColor */
     NULL,                               /* pGetOutlineTextMetrics */
     dibdrv_GetPixel,                    /* pGetPixel */
-    NULL,                               /* pGetPixelFormat */
     NULL,                               /* pGetSystemPaletteEntries */
     NULL,                               /* pGetTextCharsetInfo */
     NULL,                               /* pGetTextExtentExPoint */
@@ -526,9 +524,6 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pSwapBuffers */
     NULL,                               /* pUnrealizePalette */
     NULL,                               /* pWidenPath */
-    NULL,                               /* pwglCreateContext */
-    NULL,                               /* pwglCreateContextAttribsARB */
-    NULL,                               /* pwglGetProcAddress */
     NULL,                               /* wine_get_wgl_driver */
     GDI_PRIORITY_DIB_DRV                /* priority */
 };
