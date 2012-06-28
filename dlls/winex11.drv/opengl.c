@@ -1413,36 +1413,37 @@ static BOOL glxdrv_wglCopyContext(HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask)
     return TRUE;
 }
 
-/**
- * X11DRV_wglCreateContext
- *
- * For OpenGL32 wglCreateContext.
+/***********************************************************************
+ *		glxdrv_wglCreateContext
  */
-static HGLRC glxdrv_wglCreateContext(PHYSDEV dev)
+static HGLRC glxdrv_wglCreateContext( HDC hdc )
 {
-    struct glx_physdev *physdev = get_glxdrv_dev( dev );
+    struct x11drv_escape_get_drawable escape;
     Wine_GLContext *ret;
     WineGLPixelFormat *fmt;
     int fmt_count = 0;
 
-    TRACE("(%p)->(PF:%d)\n", dev->hdc, physdev->pixel_format);
+    TRACE( "(%p)\n", hdc );
 
-    if (!has_opengl()) return 0;
+    escape.code = X11DRV_GET_DRAWABLE;
+    if (!ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape.code), (LPCSTR)&escape.code,
+                    sizeof(escape), (LPSTR)&escape ))
+        return 0;
 
-    fmt = ConvertPixelFormatWGLtoGLX(gdi_display, physdev->pixel_format, TRUE /* Offscreen */, &fmt_count);
+    fmt = ConvertPixelFormatWGLtoGLX(gdi_display, escape.pixel_format, TRUE /* Offscreen */, &fmt_count);
     /* We can render using the iPixelFormat (1) of Wine's Main visual AND using some offscreen formats.
      * Note that standard WGL-calls don't recognize offscreen-only formats. For that reason pbuffers
      * use a sort of 'proxy' HDC (wglGetPbufferDCARB).
      * If this fails something is very wrong on the system. */
     if(!fmt) {
-        ERR("Cannot get FB Config for iPixelFormat %d, expect problems!\n", physdev->pixel_format);
+        ERR("Cannot get FB Config for iPixelFormat %d, expect problems!\n", escape.pixel_format);
         SetLastError(ERROR_INVALID_PIXEL_FORMAT);
         return NULL;
     }
 
     if (!(ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ret)))) return 0;
 
-    ret->hdc = dev->hdc;
+    ret->hdc = hdc;
     ret->fmt = fmt;
     ret->has_been_current = FALSE;
     ret->sharing = FALSE;
@@ -3591,7 +3592,7 @@ static const struct gdi_dc_funcs glxdrv_funcs =
     glxdrv_SwapBuffers,                 /* pSwapBuffers */
     NULL,                               /* pUnrealizePalette */
     NULL,                               /* pWidenPath */
-    glxdrv_wglCreateContext,            /* pwglCreateContext */
+    NULL,                               /* pwglCreateContext */
     NULL,                               /* pwglCreateContextAttribsARB */
     glxdrv_wglGetProcAddress,           /* pwglGetProcAddress */
     glxdrv_wine_get_wgl_driver,         /* wine_get_wgl_driver */
@@ -3601,6 +3602,7 @@ static const struct gdi_dc_funcs glxdrv_funcs =
 static const struct wgl_funcs glxdrv_wgl_funcs =
 {
     glxdrv_wglCopyContext,              /* p_wglCopyContext */
+    glxdrv_wglCreateContext,            /* p_wglCreateContext */
     glxdrv_wglCreateContextAttribsARB,  /* p_wglCreateContextAttribsARB */
     glxdrv_wglDeleteContext,            /* p_wglDeleteContext */
     glxdrv_wglGetCurrentDC,             /* p_wglGetCurrentDC */

@@ -62,26 +62,6 @@ static DC* OPENGL_GetDefaultDC(void)
 }
 
 /***********************************************************************
- *		wglCreateContext (OPENGL32.@)
- */
-HGLRC WINAPI wglCreateContext(HDC hdc)
-{
-    HGLRC ret = 0;
-    DC * dc = get_dc_ptr( hdc );
-
-    TRACE("(%p)\n",hdc);
-
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pwglCreateContext );
-        update_dc( dc );
-        ret = physdev->funcs->pwglCreateContext( physdev );
-        release_dc_ptr( dc );
-    }
-    return ret;
-}
-
-/***********************************************************************
  *		Internal wglGetProcAddress for retrieving WGL extensions
  */
 PROC WINAPI wglGetProcAddress(LPCSTR func)

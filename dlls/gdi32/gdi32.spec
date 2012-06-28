@@ -499,7 +499,6 @@
 ################################################################
 # Wine extensions: OpenGL support
 #
-@ stdcall -private wglCreateContext(long)
 @ stdcall -private wglGetProcAddress(str)
 
 ################################################################
