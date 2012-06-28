@@ -883,6 +883,15 @@ static const IHTMLDOMNodeVtbl HTMLDOMNodeVtbl = {
     HTMLDOMNode_get_nextSibling
 };
 
+static HTMLDOMNode *get_node_obj(HTMLDocumentNode *This, IUnknown *iface)
+{
+    IHTMLDOMNode *node;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(iface, &IID_IHTMLDOMNode, (void**)&node);
+    return hres == S_OK && node->lpVtbl == &HTMLDOMNodeVtbl ? impl_from_IHTMLDOMNode(node) : NULL;
+}
+
 static inline HTMLDOMNode *impl_from_IHTMLDOMNode2(IHTMLDOMNode2 *iface)
 {
     return CONTAINING_RECORD(iface, HTMLDOMNode, IHTMLDOMNode2_iface);
@@ -1115,29 +1124,6 @@ HRESULT get_node(HTMLDocumentNode *This, nsIDOMNode *nsnode, BOOL create, HTMLDO
     }
 
     return create_node(This, nsnode, ret);
-}
-
-/*
- * FIXME
- * We should use better way for getting node object (like private interface)
- * or avoid it at all.
- */
-static HTMLDOMNode *get_node_obj(HTMLDocumentNode *This, IUnknown *iface)
-{
-    HTMLDOMNode *iter = This->nodes;
-    IHTMLDOMNode *node;
-
-    IUnknown_QueryInterface(iface, &IID_IHTMLDOMNode, (void**)&node);
-
-    while(iter) {
-        if(&iter->IHTMLDOMNode_iface == node)
-            return iter;
-        iter = iter->next;
-    }
-
-    FIXME("Not found %p\n", iface);
-    IHTMLDOMNode_Release(node);
-    return NULL;
 }
 
 void release_nodes(HTMLDocumentNode *This)
