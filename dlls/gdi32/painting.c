@@ -509,35 +509,6 @@ BOOL WINAPI GdiSetPixelFormat( HDC hdc, INT iPixelFormat, const PIXELFORMATDESCR
 
 
 /******************************************************************************
- * GetPixelFormat [GDI32.@]
- * Gets index of pixel format of DC
- *
- * PARAMETERS
- *    hdc [I] Device context whose pixel format index is sought
- *
- * RETURNS
- *    Success: Currently selected pixel format
- *    Failure: 0
- */
-INT WINAPI GetPixelFormat( HDC hdc )
-{
-    INT ret = 0;
-    DC * dc = get_dc_ptr( hdc );
-
-    TRACE("(%p)\n",hdc);
-
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pGetPixelFormat );
-        update_dc( dc );
-        ret = physdev->funcs->pGetPixelFormat( physdev );
-        release_dc_ptr( dc );
-    }
-    return ret;
-}
-
-
-/******************************************************************************
  * GdiDescribePixelFormat [GDI32.@]
  *
  * Probably not the correct semantics, it's supposed to be an internal backend for DescribePixelFormat.

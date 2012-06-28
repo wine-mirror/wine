@@ -49,7 +49,6 @@ WINE_DECLARE_DEBUG_CHANNEL(opengl);
 static struct
 {
     PROC  (WINAPI *p_wglGetProcAddress)(LPCSTR  lpszProc);
-    INT   (WINAPI *p_GetPixelFormat)(HDC hdc);
 
     /* internal WGL functions */
     void  (WINAPI *p_wglFinish)(void);
@@ -361,7 +360,7 @@ INT WINAPI wglDescribePixelFormat(HDC hdc, INT iPixelFormat, UINT nBytes,
  */
 INT WINAPI wglGetPixelFormat(HDC hdc)
 {
-  return wine_wgl.p_GetPixelFormat(hdc);
+    return wgl_driver->p_GetPixelFormat( hdc );
 }
 
 /***********************************************************************
@@ -1129,7 +1128,6 @@ static BOOL process_attach(void)
   }
 
   wine_wgl.p_wglGetProcAddress = (void *)GetProcAddress(mod_gdi32, "wglGetProcAddress");
-  wine_wgl.p_GetPixelFormat = (void *)GetProcAddress(mod_gdi32, "GetPixelFormat");
 
   /* internal WGL functions */
   wine_wgl.p_wglFinish = (void *)wine_wgl.p_wglGetProcAddress("wglFinish");

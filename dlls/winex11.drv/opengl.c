@@ -1281,41 +1281,43 @@ static int glxdrv_DescribePixelFormat(PHYSDEV dev, int iPixelFormat,
   return ret;
 }
 
-/**
- * glxdrv_GetPixelFormat
- *
- * Get the pixel-format id used by this DC
+/***********************************************************************
+ *		glxdrv_GetPixelFormat
  */
-static int glxdrv_GetPixelFormat(PHYSDEV dev)
+static int glxdrv_GetPixelFormat( HDC hdc )
 {
-  struct glx_physdev *physdev = get_glxdrv_dev( dev );
-  WineGLPixelFormat *fmt;
-  int tmp;
+    struct x11drv_escape_get_drawable escape;
+    WineGLPixelFormat *fmt;
+    int tmp;
 
-  if (!physdev->pixel_format) return 0;  /* not set yet */
+    TRACE( "(%p)\n", hdc );
 
-  fmt = ConvertPixelFormatWGLtoGLX(gdi_display, physdev->pixel_format, TRUE, &tmp);
-  if(!fmt)
-  {
-    ERR("Unable to find a WineGLPixelFormat for iPixelFormat=%d\n", physdev->pixel_format);
-    return 0;
-  }
-  else if(fmt->offscreenOnly)
-  {
-    /* Offscreen formats can't be used with traditional WGL calls.
-     * As has been verified on Windows GetPixelFormat doesn't fail but returns iPixelFormat=1. */
-     TRACE("Returning iPixelFormat=1 for offscreen format: %d\n", fmt->iPixelFormat);
-    return 1;
-  }
+    escape.code = X11DRV_GET_DRAWABLE;
+    if (!ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape.code), (LPCSTR)&escape.code,
+                    sizeof(escape), (LPSTR)&escape ))
+        return 0;
 
-  TRACE("(%p): returns %d\n", dev->hdc, physdev->pixel_format);
-  return physdev->pixel_format;
+    if (!escape.pixel_format) return 0;  /* not set yet */
+
+    fmt = ConvertPixelFormatWGLtoGLX(gdi_display, escape.pixel_format, TRUE, &tmp);
+    if (!fmt)
+    {
+        ERR("Unable to find a WineGLPixelFormat for iPixelFormat=%d\n", escape.pixel_format);
+        return 0;
+    }
+    if (fmt->offscreenOnly)
+    {
+        /* Offscreen formats can't be used with traditional WGL calls.
+         * As has been verified on Windows GetPixelFormat doesn't fail but returns iPixelFormat=1. */
+        TRACE("Returning iPixelFormat=1 for offscreen format: %d\n", fmt->iPixelFormat);
+        return 1;
+    }
+    TRACE("(%p): returns %d\n", hdc, escape.pixel_format);
+    return escape.pixel_format;
 }
 
-/**
- * glxdrv_SetPixelFormat
- *
- * Set the pixel-format id used by this DC
+/***********************************************************************
+ *		glxdrv_SetPixelFormat
  */
 static BOOL glxdrv_SetPixelFormat(PHYSDEV dev, int iPixelFormat, const PIXELFORMATDESCRIPTOR *ppfd)
 {
@@ -3513,7 +3515,7 @@ static const struct gdi_dc_funcs glxdrv_funcs =
     NULL,                               /* pGetNearestColor */
     NULL,                               /* pGetOutlineTextMetrics */
     NULL,                               /* pGetPixel */
-    glxdrv_GetPixelFormat,              /* pGetPixelFormat */
+    NULL,                               /* pGetPixelFormat */
     NULL,                               /* pGetSystemPaletteEntries */
     NULL,                               /* pGetTextCharsetInfo */
     NULL,                               /* pGetTextExtentExPoint */
@@ -3601,6 +3603,7 @@ static const struct gdi_dc_funcs glxdrv_funcs =
 
 static const struct wgl_funcs glxdrv_wgl_funcs =
 {
+    glxdrv_GetPixelFormat,              /* p_GetPixelFormat */
     glxdrv_wglCopyContext,              /* p_wglCopyContext */
     glxdrv_wglCreateContext,            /* p_wglCreateContext */
     glxdrv_wglCreateContextAttribsARB,  /* p_wglCreateContextAttribsARB */
