@@ -27,6 +27,9 @@
 #include <stdio.h>
 
 #include "wined3d_private.h"
+#ifndef USE_WIN32_OPENGL
+#include "wine/gdi_driver.h"
+#endif
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
@@ -5386,14 +5389,14 @@ static BOOL InitAdapters(struct wined3d *wined3d)
 #define USE_GL_FUNC(pfn) pfn = (void*)GetProcAddress(mod_gl, #pfn);
 #else
     /* To bypass the opengl32 thunks load wglGetProcAddress from gdi32 instead of opengl32 */
-    pwglGetProcAddress = (void*)GetProcAddress(GetModuleHandleA("gdi32.dll"), "wglGetProcAddress");
+    {
+        HDC hdc = GetDC( 0 );
+        const struct wgl_funcs *wgl_driver = __wine_get_wgl_driver( hdc, WINE_GDI_DRIVER_VERSION );
+        pwglGetProcAddress = wgl_driver->p_wglGetProcAddress;
+        ReleaseDC( 0, hdc );
+    }
 #define USE_GL_FUNC(pfn) pfn = (void*)pwglGetProcAddress(#pfn);
 #endif
-
-    if(!pwglGetProcAddress) {
-        ERR("Unable to load wglGetProcAddress!\n");
-        goto nogl_adapter;
-    }
 
 /* Load WGL core functions from opengl32.dll */
 #define USE_WGL_FUNC(pfn) p##pfn = (void*)GetProcAddress(mod_gl, #pfn);
@@ -5407,13 +5410,8 @@ static BOOL InitAdapters(struct wined3d *wined3d)
     /* Load glFinish and glFlush from opengl32.dll even if we're not using WIN32 opengl
      * otherwise because we have to use winex11.drv's override
      */
-#ifdef USE_WIN32_OPENGL
     wglFinish = (void*)GetProcAddress(mod_gl, "glFinish");
     wglFlush = (void*)GetProcAddress(mod_gl, "glFlush");
-#else
-    wglFinish = (void*)pwglGetProcAddress("wglFinish");
-    wglFlush = (void*)pwglGetProcAddress("wglFlush");
-#endif
 
     glEnableWINE = glEnable;
     glDisableWINE = glDisable;

@@ -497,11 +497,6 @@
 @ stub pstackConnect
 
 ################################################################
-# Wine extensions: OpenGL support
-#
-@ stdcall -private wglGetProcAddress(str)
-
-################################################################
 # Wine extensions: Win16 functions that are needed by other dlls
 #
 @ stdcall GetDCHook(long ptr)

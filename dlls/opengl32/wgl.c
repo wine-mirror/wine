@@ -48,8 +48,6 @@ WINE_DECLARE_DEBUG_CHANNEL(opengl);
 
 static struct
 {
-    PROC  (WINAPI *p_wglGetProcAddress)(LPCSTR  lpszProc);
-
     /* internal WGL functions */
     void  (WINAPI *p_wglFinish)(void);
     void  (WINAPI *p_wglFlush)(void);
@@ -508,7 +506,7 @@ PROC WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
     /* If the function name starts with a 'w', it is a WGL extension */
     if(lpszProc[0] == 'w')
     {
-        local_func = wine_wgl.p_wglGetProcAddress( lpszProc );
+        local_func = wgl_driver->p_wglGetProcAddress( lpszProc );
         if (local_func == (void *)1)  /* special function that needs a wrapper */
         {
             ext_ret = bsearch( &ext, wgl_extensions, sizeof(wgl_extensions)/sizeof(wgl_extensions[0]),
@@ -531,7 +529,7 @@ PROC WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
         WARN("Extension '%s' required by function '%s' not supported!\n", ext_ret->extension, lpszProc);
     }
 
-    local_func = wine_wgl.p_wglGetProcAddress(ext_ret->name);
+    local_func = wgl_driver->p_wglGetProcAddress(ext_ret->name);
 
     /* After that, look at the extensions defined in the Linux OpenGL library */
     if (local_func == NULL) {
@@ -1113,27 +1111,16 @@ BOOL WINAPI DECLSPEC_HOTPATCH wglSwapBuffers( HDC hdc )
    creating a rendering context.... */
 static BOOL process_attach(void)
 {
-  HMODULE mod_gdi32;
   HDC hdc = GetDC( 0 );
 
   wgl_driver = __wine_get_wgl_driver( hdc, WINE_GDI_DRIVER_VERSION );
   ReleaseDC( 0, hdc );
 
-  mod_gdi32 = GetModuleHandleA( "gdi32.dll" );
-
-  if (!mod_gdi32)
-  {
-      ERR("GDI32 not loaded. Cannot create default context.\n");
-      return FALSE;
-  }
-
-  wine_wgl.p_wglGetProcAddress = (void *)GetProcAddress(mod_gdi32, "wglGetProcAddress");
-
   /* internal WGL functions */
-  wine_wgl.p_wglFinish = (void *)wine_wgl.p_wglGetProcAddress("wglFinish");
-  wine_wgl.p_wglFlush = (void *)wine_wgl.p_wglGetProcAddress("wglFlush");
-  wine_wgl.p_wglGetCurrentContext = (void *)wine_wgl.p_wglGetProcAddress("wglGetCurrentContext");
-  wine_wgl.p_wglGetIntegerv = (void *)wine_wgl.p_wglGetProcAddress("wglGetIntegerv");
+  wine_wgl.p_wglFinish = (void *)wgl_driver->p_wglGetProcAddress("wglFinish");
+  wine_wgl.p_wglFlush = (void *)wgl_driver->p_wglGetProcAddress("wglFlush");
+  wine_wgl.p_wglGetCurrentContext = (void *)wgl_driver->p_wglGetProcAddress("wglGetCurrentContext");
+  wine_wgl.p_wglGetIntegerv = (void *)wgl_driver->p_wglGetProcAddress("wglGetIntegerv");
   return TRUE;
 }
 

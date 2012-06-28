@@ -1521,10 +1521,8 @@ static HDC WINAPI X11DRV_wglGetCurrentReadDCARB(void)
     return ret;
 }
 
-/**
- * glxdrv_wglGetProcAddress
- *
- * For OpenGL32 wglGetProcAddress.
+/***********************************************************************
+ *		glxdrv_wglGetProcAddress
  */
 static PROC glxdrv_wglGetProcAddress(LPCSTR lpszProc)
 {
@@ -1534,8 +1532,6 @@ static PROC glxdrv_wglGetProcAddress(LPCSTR lpszProc)
     int padding = 32 - strlen(lpszProc);
     if (padding < 0)
         padding = 0;
-
-    if (!has_opengl()) return NULL;
 
     /* Check the table of WGL extensions to see if we need to return a WGL extension
      * or a function pointer to a native OpenGL function. */
@@ -3596,7 +3592,7 @@ static const struct gdi_dc_funcs glxdrv_funcs =
     NULL,                               /* pWidenPath */
     NULL,                               /* pwglCreateContext */
     NULL,                               /* pwglCreateContextAttribsARB */
-    glxdrv_wglGetProcAddress,           /* pwglGetProcAddress */
+    NULL,                               /* pwglGetProcAddress */
     glxdrv_wine_get_wgl_driver,         /* wine_get_wgl_driver */
     GDI_PRIORITY_GRAPHICS_DRV + 20      /* priority */
 };
@@ -3609,6 +3605,7 @@ static const struct wgl_funcs glxdrv_wgl_funcs =
     glxdrv_wglCreateContextAttribsARB,  /* p_wglCreateContextAttribsARB */
     glxdrv_wglDeleteContext,            /* p_wglDeleteContext */
     glxdrv_wglGetCurrentDC,             /* p_wglGetCurrentDC */
+    glxdrv_wglGetProcAddress,           /* p_wglGetProcAddress */
     glxdrv_wglMakeContextCurrentARB,    /* p_wglMakeContextCurrentARB */
     glxdrv_wglMakeCurrent,              /* p_wglMakeCurrent */
     glxdrv_wglShareLists,               /* p_wglShareLists */

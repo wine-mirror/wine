@@ -46,46 +46,6 @@ static INT (WINAPI *wglGetPixelFormat)(HDC);
 static BOOL (WINAPI *wglSetPixelFormat)(HDC,INT,const PIXELFORMATDESCRIPTOR*);
 static BOOL (WINAPI *wglSwapBuffers)(HDC);
 
-static HDC default_hdc = 0;
-
-/* We route all wgl functions from opengl32.dll through gdi32.dll to
- * the display driver. Various wgl calls have a hDC as one of their parameters.
- * Using get_dc_ptr we get access to the functions exported by the driver.
- * Some functions don't receive a hDC. This function creates a global hdc and
- * if there's already a global hdc, it returns it.
- */
-static DC* OPENGL_GetDefaultDC(void)
-{
-    if(!default_hdc)
-        default_hdc = CreateDCA("DISPLAY", NULL, NULL, NULL);
-
-    return get_dc_ptr(default_hdc);
-}
-
-/***********************************************************************
- *		Internal wglGetProcAddress for retrieving WGL extensions
- */
-PROC WINAPI wglGetProcAddress(LPCSTR func)
-{
-    PROC ret = NULL;
-    DC *dc;
-
-    if(!func)
-	return NULL;
-
-    TRACE("func: '%s'\n", func);
-
-    /* Retrieve the global hDC to get access to the driver.  */
-    dc = OPENGL_GetDefaultDC();
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pwglGetProcAddress );
-        ret = physdev->funcs->pwglGetProcAddress(func);
-        release_dc_ptr( dc );
-    }
-    return ret;
-}
-
 /***********************************************************************
  *      __wine_get_wgl_driver  (GDI32.@)
  */
