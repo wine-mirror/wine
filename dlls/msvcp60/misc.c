@@ -101,7 +101,7 @@ void free_lockit(void) {
     DeleteCriticalSection(&lockit_cs);
 }
 
-_Lockit* __thiscall _Lockit_ctor_locktype(_Lockit *this, int locktype)
+static _Lockit* __thiscall _Lockit_ctor_locktype(_Lockit *this, int locktype)
 {
     EnterCriticalSection(&lockit_cs);
     return this;

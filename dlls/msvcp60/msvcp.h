@@ -266,7 +266,6 @@ typedef struct {
 
 void init_lockit(void);
 void free_lockit(void);
-_Lockit* __thiscall _Lockit_ctor_locktype(_Lockit*, int);
 void __thiscall _Lockit_dtor(_Lockit*);
 
 /* class mutex */
