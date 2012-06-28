@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <assert.h>
 
 #define COBJMACROS
 
@@ -1117,15 +1118,6 @@ static HRESULT HTMLInputElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
     return HTMLElement_QI(&This->element.node, riid, ppv);
 }
 
-static void HTMLInputElement_destructor(HTMLDOMNode *iface)
-{
-    HTMLInputElement *This = impl_from_HTMLDOMNode(iface);
-
-    nsIDOMHTMLInputElement_Release(This->nsinput);
-
-    HTMLElement_destructor(&This->element.node);
-}
-
 static HRESULT HTMLInputElementImpl_fire_event(HTMLDOMNode *iface, eventid_t eid, BOOL *handled)
 {
     HTMLInputElement *This = impl_from_HTMLDOMNode(iface);
@@ -1159,7 +1151,7 @@ static HRESULT HTMLInputElementImpl_get_disabled(HTMLDOMNode *iface, VARIANT_BOO
 
 static const NodeImplVtbl HTMLInputElementImplVtbl = {
     HTMLInputElement_QI,
-    HTMLInputElement_destructor,
+    HTMLElement_destructor,
     HTMLElement_clone,
     HTMLElement_get_attr_col,
     NULL,
@@ -1194,14 +1186,13 @@ HRESULT HTMLInputElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem
     ret->IHTMLInputTextElement_iface.lpVtbl = &HTMLInputTextElementVtbl;
     ret->element.node.vtbl = &HTMLInputElementImplVtbl;
 
-    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLInputElement, (void**)&ret->nsinput);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIDOMHTMLInputElement interface: %08x\n", nsres);
-        heap_free(ret);
-        return E_FAIL;
-    }
-
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLInputElement_dispex);
+
+    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLInputElement, (void**)&ret->nsinput);
+
+    /* Share nsinput reference with nsnode */
+    assert(nsres == NS_OK && (nsIDOMNode*)ret->nsinput == ret->element.node.nsnode);
+    nsIDOMNode_Release(ret->element.node.nsnode);
 
     *elem = &ret->element;
     return S_OK;
