@@ -495,11 +495,10 @@ static HRESULT WINAPI HTMLDOMNode_insertBefore(IHTMLDOMNode *iface, IHTMLDOMNode
                                                VARIANT refChild, IHTMLDOMNode **node)
 {
     HTMLDOMNode *This = impl_from_IHTMLDOMNode(iface);
-    nsIDOMNode *nsnode, *nsref = NULL;
-    HTMLDOMNode *new_child;
-    HTMLDOMNode *node_obj;
+    HTMLDOMNode *new_child, *node_obj, *ref_node = NULL;
+    nsIDOMNode *nsnode;
     nsresult nsres;
-    HRESULT hres;
+    HRESULT hres = S_OK;
 
     TRACE("(%p)->(%p %s %p)\n", This, newChild, debugstr_variant(&refChild), node);
 
@@ -513,27 +512,31 @@ static HRESULT WINAPI HTMLDOMNode_insertBefore(IHTMLDOMNode *iface, IHTMLDOMNode
     case VT_NULL:
         break;
     case VT_DISPATCH: {
-        HTMLDOMNode *ref_node;
-
         ref_node = get_node_obj(This->doc, (IUnknown*)V_DISPATCH(&refChild));
         if(!ref_node) {
             ERR("unvalid node\n");
-            return E_FAIL;
+            hres = E_FAIL;
+            break;
         }
-
-        nsref = ref_node->nsnode;
         break;
     }
     default:
         FIXME("unimplemented refChild %s\n", debugstr_variant(&refChild));
-        return E_NOTIMPL;
+        hres = E_NOTIMPL;
     }
 
-    nsres = nsIDOMNode_InsertBefore(This->nsnode, new_child->nsnode, nsref, &nsnode);
-    if(NS_FAILED(nsres)) {
-        ERR("InsertBefore failed: %08x\n", nsres);
-        return E_FAIL;
+    if(SUCCEEDED(hres)) {
+        nsres = nsIDOMNode_InsertBefore(This->nsnode, new_child->nsnode, ref_node ? ref_node->nsnode : NULL, &nsnode);
+        if(NS_FAILED(nsres)) {
+            ERR("InsertBefore failed: %08x\n", nsres);
+            hres = E_FAIL;
+        }
     }
+    node_release(new_child);
+    if(ref_node)
+        node_release(ref_node);
+    if(FAILED(hres))
+        return hres;
 
     hres = get_node(This->doc, nsnode, TRUE, &node_obj);
     nsIDOMNode_Release(nsnode);
@@ -560,6 +563,7 @@ static HRESULT WINAPI HTMLDOMNode_removeChild(IHTMLDOMNode *iface, IHTMLDOMNode 
         return E_FAIL;
 
     nsres = nsIDOMNode_RemoveChild(This->nsnode, node_obj->nsnode, &nsnode);
+    node_release(node_obj);
     if(NS_FAILED(nsres)) {
         ERR("RemoveChild failed: %08x\n", nsres);
         return E_FAIL;
@@ -579,8 +583,7 @@ static HRESULT WINAPI HTMLDOMNode_replaceChild(IHTMLDOMNode *iface, IHTMLDOMNode
                                                IHTMLDOMNode *oldChild, IHTMLDOMNode **node)
 {
     HTMLDOMNode *This = impl_from_IHTMLDOMNode(iface);
-    HTMLDOMNode *node_new;
-    HTMLDOMNode *node_old;
+    HTMLDOMNode *node_new, *node_old, *ret_node;
     nsIDOMNode *nsnode;
     nsresult nsres;
     HRESULT hres;
@@ -592,22 +595,23 @@ static HRESULT WINAPI HTMLDOMNode_replaceChild(IHTMLDOMNode *iface, IHTMLDOMNode
         return E_FAIL;
 
     node_old = get_node_obj(This->doc, (IUnknown*)oldChild);
-    if(!node_old)
-        return E_FAIL;
-
-    nsres = nsIDOMNode_ReplaceChild(This->nsnode, node_new->nsnode, node_old->nsnode, &nsnode);
-    if(NS_FAILED(nsres)) {
+    if(!node_old) {
+        node_release(node_new);
         return E_FAIL;
     }
 
-    nsnode = node_new->nsnode;
+    nsres = nsIDOMNode_ReplaceChild(This->nsnode, node_new->nsnode, node_old->nsnode, &nsnode);
+    node_release(node_new);
+    node_release(node_old);
+    if(NS_FAILED(nsres))
+        return E_FAIL;
 
-    hres = get_node(This->doc, nsnode, TRUE, &node_new);
+    hres = get_node(This->doc, nsnode, TRUE, &ret_node);
     nsIDOMNode_Release(nsnode);
     if(FAILED(hres))
         return hres;
 
-    *node = &node_new->IHTMLDOMNode_iface;
+    *node = &ret_node->IHTMLDOMNode_iface;
     return S_OK;
 }
 
@@ -676,9 +680,10 @@ static HRESULT WINAPI HTMLDOMNode_appendChild(IHTMLDOMNode *iface, IHTMLDOMNode 
         return E_FAIL;
 
     nsres = nsIDOMNode_AppendChild(This->nsnode, node_obj->nsnode, &nsnode);
+    node_release(node_obj);
     if(NS_FAILED(nsres)) {
-        WARN("AppendChild failed: %08x\n", nsres);
-        nsnode = node_obj->nsnode;
+        ERR("AppendChild failed: %08x\n", nsres);
+        return E_FAIL;
     }
 
     hres = get_node(This->doc, nsnode, TRUE, &node_obj);
@@ -1123,7 +1128,6 @@ static HTMLDOMNode *get_node_obj(HTMLDocumentNode *This, IUnknown *iface)
     IHTMLDOMNode *node;
 
     IUnknown_QueryInterface(iface, &IID_IHTMLDOMNode, (void**)&node);
-    IHTMLDOMNode_Release(node);
 
     while(iter) {
         if(&iter->IHTMLDOMNode_iface == node)
@@ -1132,6 +1136,7 @@ static HTMLDOMNode *get_node_obj(HTMLDocumentNode *This, IUnknown *iface)
     }
 
     FIXME("Not found %p\n", iface);
+    IHTMLDOMNode_Release(node);
     return NULL;
 }
 
