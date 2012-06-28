@@ -2488,20 +2488,69 @@ GpStatus WINGDIPAPI GdipGetPropertyItem(GpImage *image, PROPID id, UINT size,
     return InvalidParameter;
 }
 
-GpStatus WINGDIPAPI GdipGetPropertyItemSize(GpImage *image, PROPID pid,
-    UINT* size)
+static UINT propvariant_size(PROPVARIANT *value)
 {
-    static int calls;
+    switch (value->vt & ~VT_VECTOR)
+    {
+    case VT_EMPTY:
+        return 0;
+    case VT_I1:
+    case VT_UI1:
+        if (!(value->vt & VT_VECTOR)) return 1;
+        return value->u.caub.cElems;
+    case VT_I2:
+    case VT_UI2:
+        if (!(value->vt & VT_VECTOR)) return 2;
+        return value->u.caui.cElems * 2;
+    case VT_I4:
+    case VT_UI4:
+    case VT_R4:
+        if (!(value->vt & VT_VECTOR)) return 4;
+        return value->u.caul.cElems * 4;
+    case VT_I8:
+    case VT_UI8:
+    case VT_R8:
+        if (!(value->vt & VT_VECTOR)) return 8;
+        return value->u.cauh.cElems * 8;
+    case VT_LPSTR:
+        return value->u.pszVal ? strlen(value->u.pszVal) + 1 : 0;
+    case VT_BLOB:
+        return value->u.blob.cbSize;
+    default:
+        FIXME("not supported variant type %d\n", value->vt);
+        return 0;
+    }
+}
 
-    TRACE("%p %x %p\n", image, pid, size);
+GpStatus WINGDIPAPI GdipGetPropertyItemSize(GpImage *image, PROPID propid, UINT *size)
+{
+    HRESULT hr;
+    IWICMetadataReader *reader;
+    PROPVARIANT id, value;
 
-    if(!size || !image)
-        return InvalidParameter;
+    TRACE("(%p,%#x,%p)\n", image, propid, size);
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    if (!size || !image) return InvalidParameter;
 
-    return NotImplemented;
+    if (image->type != ImageTypeBitmap)
+    {
+        FIXME("Not implemented for type %d\n", image->type);
+        return NotImplemented;
+    }
+
+    reader = ((GpBitmap *)image)->metadata_reader;
+    if (!reader) return PropertyNotFound;
+
+    id.vt = VT_UI2;
+    id.u.uiVal = propid;
+    hr = IWICMetadataReader_GetValue(reader, NULL, &id, &value);
+    if (FAILED(hr)) return PropertyNotFound;
+
+    *size = propvariant_size(&value);
+    if (*size) *size += sizeof(PropertyItem);
+    PropVariantClear(&value);
+
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipGetPropertySize(GpImage *image, UINT* size, UINT* num)
