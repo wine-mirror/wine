@@ -106,11 +106,13 @@ struct view
 
 struct query
 {
+    LONG refs;
     struct view *view;
     struct list mem;
 };
 
-void free_query( struct query * ) DECLSPEC_HIDDEN;
+void addref_query( struct query * ) DECLSPEC_HIDDEN;
+void release_query( struct query *query ) DECLSPEC_HIDDEN;
 HRESULT exec_query( const WCHAR *, IEnumWbemClassObject ** ) DECLSPEC_HIDDEN;
 HRESULT parse_query( const WCHAR *, struct view **, struct list * ) DECLSPEC_HIDDEN;
 HRESULT create_view( const struct property *, const WCHAR *, const struct expr *,

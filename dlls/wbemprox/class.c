@@ -60,7 +60,7 @@ static ULONG WINAPI enum_class_object_Release(
     if (!refs)
     {
         TRACE("destroying %p\n", ec);
-        free_query( ec->query );
+        release_query( ec->query );
         heap_free( ec );
     }
     return refs;
@@ -198,6 +198,7 @@ HRESULT EnumWbemClassObject_create(
     ec->IEnumWbemClassObject_iface.lpVtbl = &enum_class_object_vtbl;
     ec->refs  = 1;
     ec->query = query;
+    addref_query( query );
     ec->index = 0;
 
     *ppObj = &ec->IEnumWbemClassObject_iface;

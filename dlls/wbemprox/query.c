@@ -395,16 +395,17 @@ static HRESULT execute_view( struct view *view )
     return S_OK;
 }
 
-static struct query *alloc_query(void)
+static struct query *create_query(void)
 {
     struct query *query;
 
     if (!(query = heap_alloc( sizeof(*query) ))) return NULL;
     list_init( &query->mem );
+    query->refs = 1;
     return query;
 }
 
-void free_query( struct query *query )
+static void free_query( struct query *query )
 {
     struct list *mem, *next;
 
@@ -416,13 +417,23 @@ void free_query( struct query *query )
     heap_free( query );
 }
 
+void addref_query( struct query *query )
+{
+    InterlockedIncrement( &query->refs );
+}
+
+void release_query( struct query *query )
+{
+    if (!InterlockedDecrement( &query->refs )) free_query( query );
+}
+
 HRESULT exec_query( const WCHAR *str, IEnumWbemClassObject **result )
 {
     HRESULT hr;
     struct query *query;
 
     *result = NULL;
-    if (!(query = alloc_query())) return E_OUTOFMEMORY;
+    if (!(query = create_query())) return E_OUTOFMEMORY;
     hr = parse_query( str, &query->view, &query->mem );
     if (hr != S_OK) goto done;
     hr = execute_view( query->view );
@@ -430,7 +441,7 @@ HRESULT exec_query( const WCHAR *str, IEnumWbemClassObject **result )
     hr = EnumWbemClassObject_create( NULL, query, (void **)result );
 
 done:
-    if (hr != S_OK) free_query( query );
+    release_query( query );
     return hr;
 }
 
