@@ -61,34 +61,6 @@ void __thiscall mutex_unlock(mutex *this)
     ReleaseMutex(this->mutex);
 }
 
-/* ?_Mutex_Lock@_Mutex@std@@CAXPAV12@@Z */
-/* ?_Mutex_Lock@_Mutex@std@@CAXPEAV12@@Z */
-void CDECL mutex_mutex_lock(mutex *m)
-{
-    mutex_lock(m);
-}
-
-/* ?_Mutex_Unlock@_Mutex@std@@CAXPAV12@@Z */
-/* ?_Mutex_Unlock@_Mutex@std@@CAXPEAV12@@Z */
-void CDECL mutex_mutex_unlock(mutex *m)
-{
-    mutex_unlock(m);
-}
-
-/* ?_Mutex_ctor@_Mutex@std@@CAXPAV12@@Z */
-/* ?_Mutex_ctor@_Mutex@std@@CAXPEAV12@@Z */
-void CDECL mutex_mutex_ctor(mutex *m)
-{
-    mutex_ctor(m);
-}
-
-/* ?_Mutex_dtor@_Mutex@std@@CAXPAV12@@Z */
-/* ?_Mutex_dtor@_Mutex@std@@CAXPEAV12@@Z */
-void CDECL mutex_mutex_dtor(mutex *m)
-{
-    mutex_dtor(m);
-}
-
 static CRITICAL_SECTION lockit_cs;
 
 void init_lockit(void) {
@@ -121,58 +93,4 @@ DEFINE_THISCALL_WRAPPER(_Lockit_dtor, 4)
 void __thiscall _Lockit_dtor(_Lockit *this)
 {
     LeaveCriticalSection(&lockit_cs);
-}
-
-/* wctype */
-unsigned short __cdecl wctype(const char *property)
-{
-    static const struct {
-        const char *name;
-        unsigned short mask;
-    } properties[] = {
-        { "alnum", _DIGIT|_ALPHA },
-        { "alpha", _ALPHA },
-        { "cntrl", _CONTROL },
-        { "digit", _DIGIT },
-        { "graph", _DIGIT|_PUNCT|_ALPHA },
-        { "lower", _LOWER },
-        { "print", _DIGIT|_PUNCT|_BLANK|_ALPHA },
-        { "punct", _PUNCT },
-        { "space", _SPACE },
-        { "upper", _UPPER },
-        { "xdigit", _HEX }
-    };
-    int i;
-
-    for(i=0; i<sizeof(properties)/sizeof(properties[0]); i++)
-        if(!strcmp(property, properties[i].name))
-            return properties[i].mask;
-
-    return 0;
-}
-
-typedef void (__cdecl *MSVCP_new_handler_func)(void);
-static MSVCP_new_handler_func MSVCP_new_handler;
-static int __cdecl new_handler_wrapper(MSVCP_size_t unused)
-{
-    MSVCP_new_handler();
-    return 1;
-}
-
-/* ?set_new_handler@std@@YAP6AXXZP6AXXZ@Z */
-MSVCP_new_handler_func __cdecl set_new_handler(MSVCP_new_handler_func new_handler)
-{
-    MSVCP_new_handler_func old_handler = MSVCP_new_handler;
-
-    TRACE("%p\n", new_handler);
-
-    MSVCP_new_handler = new_handler;
-    MSVCRT_set_new_handler(new_handler ? new_handler_wrapper : NULL);
-    return old_handler;
-}
-
-/* ?set_new_handler@std@@YAP6AXXZH@Z */
-MSVCP_new_handler_func __cdecl set_new_handler_reset(int unused)
-{
-    return set_new_handler(NULL);
 }

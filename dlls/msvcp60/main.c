@@ -98,24 +98,3 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
     return TRUE;
 }
-
-/* ?_BADOFF@std@@3JB -> long const std::_BADOFF */
-/* ?_BADOFF@std@@3_JB -> __int64 const std::_BADOFF */
-const INT_PTR std_BADOFF = -1;
-
-/* ?_BADOFF_func@std@@YAABJXZ -> long const & __cdecl std::_BADOFF_func(void) */
-/* ?_BADOFF_func@std@@YAAEB_JXZ -> __int64 const & __ptr64 __cdecl std::_BADOFF_func(void) */
-const INT_PTR * __cdecl std_BADOFF_func(void)
-{
-    return &std_BADOFF;
-}
-
-/* ?_Fpz@std@@3_JA  __int64 std::_Fpz */
-__int64 std_Fpz = 0;
-
-/* ?_Fpz_func@std@@YAAA_JXZ -> __int64 & __cdecl std::_Fpz_func(void) */
-/* ?_Fpz_func@std@@YAAEA_JXZ -> __int64 & __ptr64 __cdecl std::_Fpz_func(void) */
-__int64 * __cdecl std_Fpz_func(void)
-{
-    return &std_Fpz;
-}

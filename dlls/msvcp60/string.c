@@ -2154,12 +2154,6 @@ basic_string_wchar* __thiscall basic_string_wchar_ctor_cstr_alloc(
     return this;
 }
 
-basic_string_wchar* __thiscall MSVCP_basic_string_wchar_ctor_cstr(
-        basic_string_wchar *this, const wchar_t *str)
-{
-    return basic_string_wchar_ctor_cstr_alloc(this, str, NULL);
-}
-
 /* ??0?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAE@IGABV?$allocator@G@1@@Z */
 /* ??0?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEAA@_KGAEBV?$allocator@G@1@@Z */
 DEFINE_THISCALL_WRAPPER(basic_string_wchar_ctor_ch_alloc, 16)
