@@ -148,8 +148,11 @@ static HRESULT WINAPI enum_class_object_Clone(
     IEnumWbemClassObject *iface,
     IEnumWbemClassObject **ppEnum )
 {
-    FIXME("%p, %p\n", iface, ppEnum);
-    return E_NOTIMPL;
+    struct enum_class_object *ec = impl_from_IEnumWbemClassObject( iface );
+
+    TRACE("%p, %p\n", iface, ppEnum);
+
+    return EnumWbemClassObject_create( NULL, ec->query, (void **)ppEnum );
 }
 
 static HRESULT WINAPI enum_class_object_Skip(
