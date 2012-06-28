@@ -2942,71 +2942,65 @@ UINT CDECL wined3d_get_adapter_mode_count(const struct wined3d *wined3d, UINT ad
 HRESULT CDECL wined3d_enum_adapter_modes(const struct wined3d *wined3d, UINT adapter_idx,
         enum wined3d_format_id format_id, UINT mode_idx, struct wined3d_display_mode *mode)
 {
+    const struct wined3d_adapter *adapter;
+    const struct wined3d_format *format;
+    UINT format_bits;
+    DEVMODEW m;
+    UINT i = 0;
+    int j = 0;
+
     TRACE("wined3d %p, adapter_idx %u, format %s, mode_idx %u, mode %p.\n",
             wined3d, adapter_idx, debug_d3dformat(format_id), mode_idx, mode);
 
     if (!mode || adapter_idx >= wined3d->adapter_count)
         return WINED3DERR_INVALIDCALL;
 
-    /* TODO: Store modes per adapter and read it from the adapter structure */
-    if (!adapter_idx)
+    adapter = &wined3d->adapters[adapter_idx];
+    format = wined3d_get_format(&adapter->gl_info, format_id);
+    format_bits = format->byte_count * CHAR_BIT;
+
+    memset(&m, 0, sizeof(m));
+    m.dmSize = sizeof(m);
+
+    while (i <= mode_idx)
     {
-        const struct wined3d_format *format = wined3d_get_format(&wined3d->adapters[adapter_idx].gl_info, format_id);
-        UINT format_bits = format->byte_count * CHAR_BIT;
-        DEVMODEW DevModeW;
-        UINT i = 0;
-        int j = 0;
-
-        ZeroMemory(&DevModeW, sizeof(DevModeW));
-        DevModeW.dmSize = sizeof(DevModeW);
-
-        /* If we are filtering to a specific format (D3D9), then need to skip
-           all unrelated modes, but if mode is irrelevant (D3D8), then we can
-           just count through the ones with valid bit depths */
-        while (i <= mode_idx)
+        if (!EnumDisplaySettingsExW(adapter->DeviceName, j++, &m, 0))
         {
-            if (!EnumDisplaySettingsExW(NULL, j++, &DevModeW, 0))
-            {
-                WARN("Invalid mode_idx %u.\n", mode_idx);
-                return WINED3DERR_INVALIDCALL;
-            }
-
-            if (format_id == WINED3DFMT_UNKNOWN)
-            {
-                /* This is for D3D8, do not enumerate P8 here */
-                if (DevModeW.dmBitsPerPel == 32 || DevModeW.dmBitsPerPel == 16) ++i;
-            }
-            else if (DevModeW.dmBitsPerPel == format_bits)
-            {
-                ++i;
-            }
+            WARN("Invalid mode_idx %u.\n", mode_idx);
+            return WINED3DERR_INVALIDCALL;
         }
 
-        mode->width = DevModeW.dmPelsWidth;
-        mode->height = DevModeW.dmPelsHeight;
-        mode->refresh_rate = DEFAULT_REFRESH_RATE;
-        if (DevModeW.dmFields & DM_DISPLAYFREQUENCY)
-            mode->refresh_rate = DevModeW.dmDisplayFrequency;
-
         if (format_id == WINED3DFMT_UNKNOWN)
-            mode->format_id = pixelformat_for_depth(DevModeW.dmBitsPerPel);
-        else
-            mode->format_id = format_id;
-
-        if (!(DevModeW.dmFields & DM_DISPLAYFLAGS))
-            mode->scanline_ordering = WINED3D_SCANLINE_ORDERING_UNKNOWN;
-        else if (DevModeW.u2.dmDisplayFlags & DM_INTERLACED)
-            mode->scanline_ordering = WINED3D_SCANLINE_ORDERING_INTERLACED;
-        else
-            mode->scanline_ordering = WINED3D_SCANLINE_ORDERING_PROGRESSIVE;
-
-        TRACE("%ux%u@%u %u bpp, %s %#x.\n", mode->width, mode->height, mode->refresh_rate,
-                DevModeW.dmBitsPerPel, debug_d3dformat(mode->format_id), mode->scanline_ordering);
+        {
+            /* This is for d3d8, do not enumerate P8 here. */
+            if (m.dmBitsPerPel == 32 || m.dmBitsPerPel == 16) ++i;
+        }
+        else if (m.dmBitsPerPel == format_bits)
+        {
+            ++i;
+        }
     }
+
+    mode->width = m.dmPelsWidth;
+    mode->height = m.dmPelsHeight;
+    mode->refresh_rate = DEFAULT_REFRESH_RATE;
+    if (m.dmFields & DM_DISPLAYFREQUENCY)
+        mode->refresh_rate = m.dmDisplayFrequency;
+
+    if (format_id == WINED3DFMT_UNKNOWN)
+        mode->format_id = pixelformat_for_depth(m.dmBitsPerPel);
     else
-    {
-        FIXME("Adapter not primary display.\n");
-    }
+        mode->format_id = format_id;
+
+    if (!(m.dmFields & DM_DISPLAYFLAGS))
+        mode->scanline_ordering = WINED3D_SCANLINE_ORDERING_UNKNOWN;
+    else if (m.u2.dmDisplayFlags & DM_INTERLACED)
+        mode->scanline_ordering = WINED3D_SCANLINE_ORDERING_INTERLACED;
+    else
+        mode->scanline_ordering = WINED3D_SCANLINE_ORDERING_PROGRESSIVE;
+
+    TRACE("%ux%u@%u %u bpp, %s %#x.\n", mode->width, mode->height, mode->refresh_rate,
+            m.dmBitsPerPel, debug_d3dformat(mode->format_id), mode->scanline_ordering);
 
     return WINED3D_OK;
 }
