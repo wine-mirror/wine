@@ -726,7 +726,46 @@ static void test_metadata_IFD(void)
     PropVariantClear(&value);
 
     hr = IWICMetadataReader_GetValueByIndex(reader, count, &schema, NULL, NULL);
-    ok(hr == E_INVALIDARG, "GetValueByIndex should fail\n");
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
+
+    PropVariantInit(&schema);
+    PropVariantInit(&id);
+    PropVariantInit(&value);
+
+    hr = IWICMetadataReader_GetValue(reader, &schema, &id, &value);
+    ok(hr == WINCODEC_ERR_PROPERTYNOTFOUND, "expected WINCODEC_ERR_PROPERTYNOTFOUND, got %#x\n", hr);
+
+    hr = IWICMetadataReader_GetValue(reader, NULL, &id, NULL);
+    ok(hr == WINCODEC_ERR_PROPERTYNOTFOUND, "expected WINCODEC_ERR_PROPERTYNOTFOUND, got %#x\n", hr);
+
+    hr = IWICMetadataReader_GetValue(reader, &schema, NULL, NULL);
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
+
+    hr = IWICMetadataReader_GetValue(reader, &schema, &id, NULL);
+    ok(hr == WINCODEC_ERR_PROPERTYNOTFOUND, "expected WINCODEC_ERR_PROPERTYNOTFOUND, got %#x\n", hr);
+
+    hr = IWICMetadataReader_GetValue(reader, &schema, NULL, &value);
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
+
+    id.vt = VT_UI2;
+    U(id).uiVal = 0xf00e;
+    hr = IWICMetadataReader_GetValue(reader, NULL, &id, NULL);
+    ok(hr == S_OK, "GetValue error %#x\n", hr);
+
+    /* schema is ignored by Ifd metadata reader */
+    schema.vt = VT_UI4;
+    U(schema).ulVal = 0xdeadbeef;
+    hr = IWICMetadataReader_GetValue(reader, &schema, &id, &value);
+    ok(hr == S_OK, "GetValue error %#x\n", hr);
+    ok(value.vt == VT_LPSTR, "unexpected vt: %i\n", id.vt);
+    ok(!strcmp(U(value).pszVal, "Hello World!"), "unexpected value: %s\n", U(value).pszVal);
+    PropVariantClear(&value);
+
+    hr = IWICMetadataReader_GetValue(reader, NULL, &id, &value);
+    ok(hr == S_OK, "GetValue error %#x\n", hr);
+    ok(value.vt == VT_LPSTR, "unexpected vt: %i\n", id.vt);
+    ok(!strcmp(U(value).pszVal, "Hello World!"), "unexpected value: %s\n", U(value).pszVal);
+    PropVariantClear(&value);
 
     hr = IWICMetadataReader_QueryInterface(reader, &IID_IWICMetadataBlockReader, (void**)&blockreader);
     ok(hr == E_NOINTERFACE, "QueryInterface failed, hr=%x\n", hr);
