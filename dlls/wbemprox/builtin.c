@@ -63,6 +63,12 @@ static const WCHAR prop_commandlineW[] =
     {'C','o','m','m','a','n','d','L','i','n','e',0};
 static const WCHAR prop_cpustatusW[] =
     {'C','p','u','S','t','a','t','u','s',0};
+static const WCHAR prop_currentbitsperpixelW[] =
+    {'C','u','r','r','e','n','t','B','i','t','s','P','e','r','P','i','x','e','l',0};
+static const WCHAR prop_currenthorizontalresW[] =
+    {'C','u','r','r','e','n','t','H','o','r','i','z','o','n','t','a','l','R','e','s','o','l','u','t','i','o','n',0};
+static const WCHAR prop_currentverticalresW[] =
+    {'C','u','r','r','e','n','t','V','e','r','t','i','c','a','l','R','e','s','o','l','u','t','i','o','n',0};
 static const WCHAR prop_descriptionW[] =
     {'D','e','s','c','r','i','p','t','i','o','n',0};
 static const WCHAR prop_deviceidW[] =
@@ -75,6 +81,8 @@ static const WCHAR prop_manufacturerW[] =
     {'M','a','n','u','f','a','c','t','u','r','e','r',0};
 static const WCHAR prop_modelW[] =
     {'M','o','d','e','l',0};
+static const WCHAR prop_nameW[] =
+    {'N','a','m','e',0};
 static const WCHAR prop_netconnectionstatusW[] =
     {'N','e','t','C','o','n','n','e','c','t','i','o','n','S','t','a','t','u','s',0};
 static const WCHAR prop_numlogicalprocessorsW[] =
@@ -152,8 +160,12 @@ static const struct column col_processor[] =
 };
 static const struct column col_videocontroller[] =
 {
-    { prop_adapterramW,  CIM_UINT32 },
-    { prop_deviceidW,    CIM_STRING|COL_FLAG_KEY }
+    { prop_adapterramW,           CIM_UINT32 },
+    { prop_currentbitsperpixelW,  CIM_UINT32 },
+    { prop_currenthorizontalresW, CIM_UINT32 },
+    { prop_currentverticalresW,   CIM_UINT32 },
+    { prop_deviceidW,             CIM_STRING|COL_FLAG_KEY },
+    { prop_nameW,                 CIM_STRING|COL_FLAG_DYNAMIC }
 };
 
 static const WCHAR bios_descriptionW[] =
@@ -235,7 +247,11 @@ struct record_processor
 struct record_videocontroller
 {
     UINT32       adapter_ram;
+    UINT32       current_bitsperpixel;
+    UINT32       current_horizontalres;
+    UINT32       current_verticalres;
     const WCHAR *device_id;
+    const WCHAR *name;
 };
 #include "poppack.h"
 
@@ -438,6 +454,19 @@ static void fill_os( struct table *table )
     table->num_rows = 1;
 }
 
+static UINT32 get_bits_per_pixel( UINT *hres, UINT *vres )
+{
+    HDC hdc = GetDC( NULL );
+    UINT32 ret;
+
+    if (!hdc) return 32;
+    ret = GetDeviceCaps( hdc, BITSPIXEL );
+    *hres = GetDeviceCaps( hdc, HORZRES );
+    *vres = GetDeviceCaps( hdc, VERTRES );
+    ReleaseDC( NULL, hdc );
+    return ret;
+}
+
 static void fill_videocontroller( struct table *table )
 {
 
@@ -446,7 +475,8 @@ static void fill_videocontroller( struct table *table )
     IDXGIFactory *factory = NULL;
     IDXGIAdapter *adapter = NULL;
     DXGI_ADAPTER_DESC desc;
-    UINT vidmem = 512 * 1024 * 1024;
+    UINT hres = 1024, vres = 768, vidmem = 512 * 1024 * 1024;
+    const WCHAR *name = videocontroller_deviceidW;
 
     if (!(table->data = heap_alloc( sizeof(*rec) ))) return;
 
@@ -457,12 +487,20 @@ static void fill_videocontroller( struct table *table )
     if (FAILED(hr)) goto done;
 
     hr = IDXGIAdapter_GetDesc( adapter, &desc );
-    if (SUCCEEDED(hr)) vidmem = desc.DedicatedVideoMemory;
+    if (SUCCEEDED(hr))
+    {
+        vidmem = desc.DedicatedVideoMemory;
+        name   = desc.Description;
+    }
 
 done:
     rec = (struct record_videocontroller *)table->data;
-    rec->device_id   = videocontroller_deviceidW;
-    rec->adapter_ram = vidmem;
+    rec->adapter_ram           = vidmem;
+    rec->current_bitsperpixel  = get_bits_per_pixel( &hres, &vres );
+    rec->current_horizontalres = hres;
+    rec->current_verticalres   = vres;
+    rec->device_id             = videocontroller_deviceidW;
+    rec->name                  = heap_strdupW( name );
 
     TRACE("created 1 row\n");
     table->num_rows = 1;
