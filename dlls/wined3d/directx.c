@@ -2954,7 +2954,6 @@ HRESULT CDECL wined3d_enum_adapter_modes(const struct wined3d *wined3d, UINT ada
         const struct wined3d_format *format = wined3d_get_format(&wined3d->adapters[adapter_idx].gl_info, format_id);
         UINT format_bits = format->byte_count * CHAR_BIT;
         DEVMODEW DevModeW;
-        int ModeIdx = 0;
         UINT i = 0;
         int j = 0;
 
@@ -2983,34 +2982,23 @@ HRESULT CDECL wined3d_enum_adapter_modes(const struct wined3d *wined3d, UINT ada
             }
         }
 
-        ModeIdx = j - 1;
+        mode->width = DevModeW.dmPelsWidth;
+        mode->height = DevModeW.dmPelsHeight;
+        mode->refresh_rate = DEFAULT_REFRESH_RATE;
+        if (DevModeW.dmFields & DM_DISPLAYFREQUENCY)
+            mode->refresh_rate = DevModeW.dmDisplayFrequency;
 
-        /* Now get the display mode via the calculated index */
-        if (EnumDisplaySettingsExW(NULL, ModeIdx, &DevModeW, 0))
-        {
-            mode->width = DevModeW.dmPelsWidth;
-            mode->height = DevModeW.dmPelsHeight;
-            mode->refresh_rate = DEFAULT_REFRESH_RATE;
-            if (DevModeW.dmFields & DM_DISPLAYFREQUENCY)
-                mode->refresh_rate = DevModeW.dmDisplayFrequency;
-
-            if (format_id == WINED3DFMT_UNKNOWN)
-                mode->format_id = pixelformat_for_depth(DevModeW.dmBitsPerPel);
-            else
-                mode->format_id = format_id;
-
-            if (!(DevModeW.dmFields & DM_DISPLAYFLAGS))
-                mode->scanline_ordering = WINED3D_SCANLINE_ORDERING_UNKNOWN;
-            else if (DevModeW.u2.dmDisplayFlags & DM_INTERLACED)
-                mode->scanline_ordering = WINED3D_SCANLINE_ORDERING_INTERLACED;
-            else
-                mode->scanline_ordering = WINED3D_SCANLINE_ORDERING_PROGRESSIVE;
-        }
+        if (format_id == WINED3DFMT_UNKNOWN)
+            mode->format_id = pixelformat_for_depth(DevModeW.dmBitsPerPel);
         else
-        {
-            TRACE("Requested mode %u out of range.\n", mode_idx);
-            return WINED3DERR_INVALIDCALL;
-        }
+            mode->format_id = format_id;
+
+        if (!(DevModeW.dmFields & DM_DISPLAYFLAGS))
+            mode->scanline_ordering = WINED3D_SCANLINE_ORDERING_UNKNOWN;
+        else if (DevModeW.u2.dmDisplayFlags & DM_INTERLACED)
+            mode->scanline_ordering = WINED3D_SCANLINE_ORDERING_INTERLACED;
+        else
+            mode->scanline_ordering = WINED3D_SCANLINE_ORDERING_PROGRESSIVE;
 
         TRACE("%ux%u@%u %u bpp, %s %#x.\n", mode->width, mode->height, mode->refresh_rate,
                 DevModeW.dmBitsPerPel, debug_d3dformat(mode->format_id), mode->scanline_ordering);
