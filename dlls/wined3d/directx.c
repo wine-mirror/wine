@@ -2894,48 +2894,41 @@ HMONITOR CDECL wined3d_get_adapter_monitor(const struct wined3d *wined3d, UINT a
 UINT CDECL wined3d_get_adapter_mode_count(const struct wined3d *wined3d, UINT adapter_idx,
         enum wined3d_format_id format_id)
 {
+    const struct wined3d_adapter *adapter;
+    const struct wined3d_format *format;
+    unsigned int i = 0;
+    unsigned int j = 0;
+    UINT format_bits;
+    DEVMODEW mode;
+
     TRACE("wined3d %p, adapter_idx %u, format %s.\n", wined3d, adapter_idx, debug_d3dformat(format_id));
 
     if (adapter_idx >= wined3d->adapter_count)
         return 0;
 
-    /* TODO: Store modes per adapter and read it from the adapter structure */
-    if (!adapter_idx)
+    adapter = &wined3d->adapters[adapter_idx];
+    format = wined3d_get_format(&adapter->gl_info, format_id);
+    format_bits = format->byte_count * CHAR_BIT;
+
+    memset(&mode, 0, sizeof(mode));
+    mode.dmSize = sizeof(mode);
+
+    while (EnumDisplaySettingsExW(adapter->DeviceName, j++, &mode, 0))
     {
-        const struct wined3d_format *format = wined3d_get_format(&wined3d->adapters[adapter_idx].gl_info, format_id);
-        UINT format_bits = format->byte_count * CHAR_BIT;
-        unsigned int i = 0;
-        unsigned int j = 0;
-        DEVMODEW mode;
-
-        memset(&mode, 0, sizeof(mode));
-        mode.dmSize = sizeof(mode);
-
-        while (EnumDisplaySettingsExW(NULL, j, &mode, 0))
+        if (format_id == WINED3DFMT_UNKNOWN)
         {
-            ++j;
-
-            if (format_id == WINED3DFMT_UNKNOWN)
-            {
-                /* This is for D3D8, do not enumerate P8 here */
-                if (mode.dmBitsPerPel == 32 || mode.dmBitsPerPel == 16) ++i;
-            }
-            else if (mode.dmBitsPerPel == format_bits)
-            {
-                ++i;
-            }
+            /* This is for d3d8, do not enumerate P8 here. */
+            if (mode.dmBitsPerPel == 32 || mode.dmBitsPerPel == 16) ++i;
         }
-
-        TRACE("Returning %u matching modes (out of %u total) for adapter %u.\n", i, j, adapter_idx);
-
-        return i;
-    }
-    else
-    {
-        FIXME("Adapter not primary display.\n");
+        else if (mode.dmBitsPerPel == format_bits)
+        {
+            ++i;
+        }
     }
 
-    return 0;
+    TRACE("Returning %u matching modes (out of %u total) for adapter %u.\n", i, j, adapter_idx);
+
+    return i;
 }
 
 /* Note: dx9 supplies a format. Calls from d3d8 supply WINED3DFMT_UNKNOWN */
