@@ -290,12 +290,7 @@ static HRESULT WINAPI class_object_Get(
 
     TRACE("%p, %s, %08x, %p, %p, %p\n", iface, debugstr_w(wszName), lFlags, pVal, pType, plFlavor);
 
-    if (plFlavor)
-    {
-        FIXME("flavor parameter not supported\n");
-        *plFlavor = 0;
-    }
-    return get_propval( view, co->index, wszName, pVal, pType );
+    return get_propval( view, co->index, wszName, pVal, pType, plFlavor );
 }
 
 static HRESULT WINAPI class_object_Put(

@@ -120,7 +120,7 @@ HRESULT create_view( const struct property *, const WCHAR *, const struct expr *
 void destroy_view( struct view * ) DECLSPEC_HIDDEN;
 struct table *get_table( const WCHAR * ) DECLSPEC_HIDDEN;
 HRESULT get_propval( const struct view *, UINT, const WCHAR *, VARIANT *,
-                     CIMTYPE * ) DECLSPEC_HIDDEN;
+                     CIMTYPE *, LONG * ) DECLSPEC_HIDDEN;
 HRESULT get_properties( const struct view *, SAFEARRAY ** ) DECLSPEC_HIDDEN;
 
 HRESULT WbemLocator_create(IUnknown *, LPVOID *) DECLSPEC_HIDDEN;

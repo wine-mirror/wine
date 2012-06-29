@@ -597,7 +597,7 @@ static UINT count_selected_props( const struct view *view )
 }
 
 static HRESULT get_system_propval( const struct view *view, UINT index, const WCHAR *name,
-                                   VARIANT *ret, CIMTYPE *type )
+                                   VARIANT *ret, CIMTYPE *type, LONG *flavor )
 {
     static const WCHAR classW[] = {'_','_','C','L','A','S','S',0};
     static const WCHAR genusW[] = {'_','_','G','E','N','U','S',0};
@@ -606,6 +606,8 @@ static HRESULT get_system_propval( const struct view *view, UINT index, const WC
     static const WCHAR propcountW[] = {'_','_','P','R','O','P','E','R','T','Y','_','C','O','U','N','T',0};
     static const WCHAR relpathW[] = {'_','_','R','E','L','P','A','T','H',0};
     static const WCHAR serverW[] = {'_','_','S','E','R','V','E','R',0};
+
+    if (flavor) *flavor = WBEM_FLAVOR_ORIGIN_SYSTEM;
 
     if (!strcmpiW( name, classW ))
     {
@@ -616,8 +618,8 @@ static HRESULT get_system_propval( const struct view *view, UINT index, const WC
     }
     if (!strcmpiW( name, genusW ))
     {
-        V_VT( ret ) = VT_INT;
-        V_INT( ret ) = WBEM_GENUS_INSTANCE; /* FIXME */
+        V_VT( ret ) = VT_I4;
+        V_I4( ret ) = WBEM_GENUS_INSTANCE; /* FIXME */
         if (type) *type = CIM_SINT32;
         return S_OK;
     }
@@ -637,8 +639,8 @@ static HRESULT get_system_propval( const struct view *view, UINT index, const WC
     }
     if (!strcmpiW( name, propcountW ))
     {
-        V_VT( ret ) = VT_INT;
-        V_INT( ret ) = count_selected_props( view );
+        V_VT( ret ) = VT_I4;
+        V_I4( ret ) = count_selected_props( view );
         if (type) *type = CIM_SINT32;
         return S_OK;
     }
@@ -660,13 +662,14 @@ static HRESULT get_system_propval( const struct view *view, UINT index, const WC
     return WBEM_E_NOT_FOUND;
 }
 
-HRESULT get_propval( const struct view *view, UINT index, const WCHAR *name, VARIANT *ret, CIMTYPE *type )
+HRESULT get_propval( const struct view *view, UINT index, const WCHAR *name, VARIANT *ret,
+                     CIMTYPE *type, LONG *flavor )
 {
     HRESULT hr;
     UINT column, row = view->result[index];
     LONGLONG val;
 
-    if (is_system_prop( name )) return get_system_propval( view, index, name, ret, type );
+    if (is_system_prop( name )) return get_system_propval( view, index, name, ret, type, flavor );
     if (!is_selected_prop( view, name )) return WBEM_E_NOT_FOUND;
 
     hr = get_column_index( view->table, name, &column );
@@ -711,6 +714,7 @@ HRESULT get_propval( const struct view *view, UINT index, const WCHAR *name, VAR
         return WBEM_E_FAILED;
     }
     if (type) *type = view->table->columns[column].type & COL_TYPE_MASK;
+    if (flavor) *flavor = 0;
     return S_OK;
 }
 

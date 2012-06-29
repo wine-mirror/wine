@@ -201,6 +201,24 @@ typedef [v1_enum] enum tag_WBEM_CONDITION_FLAG_TYPE
     WBEM_MASK_CLASS_CONDITION           = 0x300
 } WBEM_CONDITION_FLAG_TYPE;
 
+typedef [v1_enum] enum tag_WBEM_FLAVOR_TYPE
+{
+    WBEM_FLAVOR_DONT_PROPAGATE                  = 0,
+    WBEM_FLAVOR_FLAG_PROPAGATE_TO_INSTANCE      = 0x1,
+    WBEM_FLAVOR_FLAG_PROPAGATE_TO_DERIVED_CLASS = 0x2,
+    WBEM_FLAVOR_MASK_PROPAGATION                = 0xf,
+    WBEM_FLAVOR_OVERRIDABLE                     = 0,
+    WBEM_FLAVOR_NOT_OVERRIDABLE                 = 0x10,
+    WBEM_FLAVOR_MASK_PERMISSIONS                = 0x10,
+    WBEM_FLAVOR_ORIGIN_LOCAL                    = 0,
+    WBEM_FLAVOR_ORIGIN_PROPAGATED               = 0x20,
+    WBEM_FLAVOR_ORIGIN_SYSTEM                   = 0x40,
+    WBEM_FLAVOR_MASK_ORIGIN                     = 0x60,
+    WBEM_FLAVOR_NOT_AMENDED                     = 0,
+    WBEM_FLAVOR_AMENDED                         = 0x80,
+    WBEM_FLAVOR_MASK_AMENDED                    = 0x80
+} WBEM_FLAVOR_TYPE;
+
 typedef [v1_enum] enum tag_WBEM_GENUS_TYPE
 {
     WBEM_GENUS_CLASS = 1,
