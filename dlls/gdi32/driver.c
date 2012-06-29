@@ -686,7 +686,7 @@ static void nulldrv_wglDeleteContext( struct wgl_context *context )
 {
 }
 
-static HDC nulldrv_wglGetCurrentDC(void)
+static HDC nulldrv_wglGetCurrentDC( struct wgl_context *context )
 {
     return 0;
 }

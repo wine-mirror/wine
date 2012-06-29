@@ -1728,11 +1728,8 @@ static BOOL glxdrv_wglShareLists(struct wgl_context *org, struct wgl_context *de
 /***********************************************************************
  *		glxdrv_wglGetCurrentDC
  */
-static HDC glxdrv_wglGetCurrentDC(void)
+static HDC glxdrv_wglGetCurrentDC( struct wgl_context *ctx )
 {
-    struct wgl_context *ctx = NtCurrentTeb()->glContext;
-
-    if (!ctx) return NULL;
     TRACE("hdc %p\n", ctx->hdc);
     return ctx->hdc;
 }
