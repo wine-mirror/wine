@@ -732,6 +732,75 @@ static HRESULT WINAPI domelem_get_nodeTypedValue(
     return hr;
 }
 
+static HRESULT encode_base64(const BYTE *buf, int len, BSTR *ret)
+{
+    static const char b64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    const BYTE *d = buf;
+    int bytes, pad_bytes, div, i;
+    DWORD needed;
+    WCHAR *ptr;
+
+    bytes = (len*8 + 5)/6;
+    pad_bytes = (bytes % 4) ? 4 - (bytes % 4) : 0;
+
+    TRACE("%d, bytes is %d, pad bytes is %d\n", len, bytes, pad_bytes);
+    needed = bytes + pad_bytes + 1;
+
+    *ret = SysAllocStringLen(NULL, needed);
+    if (!*ret) return E_OUTOFMEMORY;
+
+    /* Three bytes of input give 4 chars of output */
+    div = len / 3;
+
+    ptr = *ret;
+    i = 0;
+    while (div > 0)
+    {
+        /* first char is the first 6 bits of the first byte*/
+        *ptr++ = b64[ ( d[0] >> 2) & 0x3f ];
+        /* second char is the last 2 bits of the first byte and the first 4
+         * bits of the second byte */
+        *ptr++ = b64[ ((d[0] << 4) & 0x30) | (d[1] >> 4 & 0x0f)];
+        /* third char is the last 4 bits of the second byte and the first 2
+         * bits of the third byte */
+        *ptr++ = b64[ ((d[1] << 2) & 0x3c) | (d[2] >> 6 & 0x03)];
+        /* fourth char is the remaining 6 bits of the third byte */
+        *ptr++ = b64[   d[2]       & 0x3f];
+        i += 4;
+        d += 3;
+        div--;
+    }
+
+    switch (pad_bytes)
+    {
+        case 1:
+            /* first char is the first 6 bits of the first byte*/
+            *ptr++ = b64[ ( d[0] >> 2) & 0x3f ];
+            /* second char is the last 2 bits of the first byte and the first 4
+             * bits of the second byte */
+            *ptr++ = b64[ ((d[0] << 4) & 0x30) | (d[1] >> 4 & 0x0f)];
+            /* third char is the last 4 bits of the second byte padded with
+             * two zeroes */
+            *ptr++ = b64[ ((d[1] << 2) & 0x3c) ];
+            /* fourth char is a = to indicate one byte of padding */
+            *ptr++ = '=';
+            break;
+        case 2:
+            /* first char is the first 6 bits of the first byte*/
+            *ptr++ = b64[ ( d[0] >> 2) & 0x3f ];
+            /* second char is the last 2 bits of the first byte padded with
+             * four zeroes*/
+            *ptr++ = b64[ ((d[0] << 4) & 0x30)];
+            /* third char is = to indicate padding */
+            *ptr++ = '=';
+            /* fourth char is = to indicate padding */
+            *ptr++ = '=';
+            break;
+    }
+
+    return S_OK;
+}
+
 static HRESULT WINAPI domelem_put_nodeTypedValue(
     IXMLDOMElement *iface,
     VARIANT value)
@@ -743,9 +812,10 @@ static HRESULT WINAPI domelem_put_nodeTypedValue(
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&value));
 
     dt = element_get_dt(get_element(This));
-    /* for untyped node coerce to BSTR and set */
-    if (dt == DT_INVALID)
+    switch (dt)
     {
+    /* for untyped node coerce to BSTR and set */
+    case DT_INVALID:
         if (V_VT(&value) != VT_BSTR)
         {
             VARIANT content;
@@ -759,9 +829,43 @@ static HRESULT WINAPI domelem_put_nodeTypedValue(
         }
         else
             hr = node_set_content(&This->node, V_BSTR(&value));
-    }
-    else
-    {
+        break;
+    case DT_BIN_BASE64:
+        if (V_VT(&value) == VT_BSTR)
+            hr = node_set_content(&This->node, V_BSTR(&value));
+        else if (V_VT(&value) == (VT_UI1|VT_ARRAY))
+        {
+            UINT dim = SafeArrayGetDim(V_ARRAY(&value));
+            LONG lbound, ubound;
+            BSTR encoded;
+            BYTE *ptr;
+            int len;
+
+            if (dim > 1)
+                FIXME("unexpected array dimension count %u\n", dim);
+
+            SafeArrayGetUBound(V_ARRAY(&value), 1, &ubound);
+            SafeArrayGetLBound(V_ARRAY(&value), 1, &lbound);
+
+            len = (ubound - lbound + 1)*SafeArrayGetElemsize(V_ARRAY(&value));
+
+            hr = SafeArrayAccessData(V_ARRAY(&value), (void*)&ptr);
+            if (FAILED(hr)) return hr;
+
+            hr = encode_base64(ptr, len, &encoded);
+            SafeArrayUnaccessData(V_ARRAY(&value));
+            if (FAILED(hr)) return hr;
+
+            hr = node_set_content(&This->node, encoded);
+            SysFreeString(encoded);
+        }
+        else
+        {
+            FIXME("unhandled variant type %d for dt:%s\n", V_VT(&value), debugstr_dt(dt));
+            return E_NOTIMPL;
+        }
+        break;
+    default:
         FIXME("not implemented for dt:%s\n", debugstr_dt(dt));
         return E_NOTIMPL;
     }

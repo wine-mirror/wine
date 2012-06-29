@@ -9076,8 +9076,13 @@ static void test_put_nodeTypedValue(void)
 {
     IXMLDOMDocument *doc;
     IXMLDOMElement *elem;
-    VARIANT type;
+    VARIANT type, value;
+    LONG ubound, lbound;
+    IXMLDOMNode *node;
+    SAFEARRAY *array;
     HRESULT hr;
+    BYTE *ptr;
+    BSTR str;
 
     doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
@@ -9109,6 +9114,93 @@ static void test_put_nodeTypedValue(void)
     ok(memcmp(V_BSTR(&type), _bstr_("1"), 2*sizeof(WCHAR)) == 0,
        "got %s, expected \"1\"\n", wine_dbgstr_w(V_BSTR(&type)));
     VariantClear(&type);
+
+    hr = IXMLDOMElement_get_firstChild(elem, &node);
+    EXPECT_HR(hr, S_OK);
+    hr = IXMLDOMElement_removeChild(elem, node, NULL);
+    EXPECT_HR(hr, S_OK);
+    IXMLDOMNode_Release(node);
+
+    hr = IXMLDOMDocument_appendChild(doc, (IXMLDOMNode*)elem, NULL);
+    EXPECT_HR(hr, S_OK);
+
+    /* bin.base64 */
+    hr = IXMLDOMElement_put_dataType(elem, _bstr_("bin.base64"));
+    EXPECT_HR(hr, S_OK);
+
+    V_VT(&value) = VT_BSTR;
+    V_BSTR(&value) = _bstr_("ABCD");
+    hr = IXMLDOMElement_put_nodeTypedValue(elem, value);
+    EXPECT_HR(hr, S_OK);
+
+    V_VT(&value) = VT_EMPTY;
+    hr = IXMLDOMElement_get_nodeTypedValue(elem, &value);
+    EXPECT_HR(hr, S_OK);
+    ok(V_VT(&value) == (VT_UI1|VT_ARRAY), "got %d\n", V_VT(&value));
+    ok(SafeArrayGetDim(V_ARRAY(&value)) == 1, "got wrong dimension\n");
+    ubound = 0;
+    hr = SafeArrayGetUBound(V_ARRAY(&value), 1, &ubound);
+    EXPECT_HR(hr, S_OK);
+    ok(ubound == 2, "got %d\n", ubound);
+    lbound = 0;
+    hr = SafeArrayGetLBound(V_ARRAY(&value), 1, &lbound);
+    EXPECT_HR(hr, S_OK);
+    ok(lbound == 0, "got %d\n", lbound);
+    hr = SafeArrayAccessData(V_ARRAY(&value), (void*)&ptr);
+    EXPECT_HR(hr, S_OK);
+    ok(ptr[0] == 0, "got %x\n", ptr[0]);
+    ok(ptr[1] == 0x10, "got %x\n", ptr[1]);
+    ok(ptr[2] == 0x83, "got %x\n", ptr[2]);
+    SafeArrayUnaccessData(V_ARRAY(&value));
+    VariantClear(&value);
+
+    /* when set as VT_BSTR it's stored as is */
+    hr = IXMLDOMElement_get_firstChild(elem, &node);
+    EXPECT_HR(hr, S_OK);
+    hr = IXMLDOMNode_get_text(node, &str);
+    EXPECT_HR(hr, S_OK);
+    ok(!lstrcmpW(str, _bstr_("ABCD")), "%s\n", wine_dbgstr_w(str));
+    IXMLDOMNode_Release(node);
+
+    array = SafeArrayCreateVector(VT_UI1, 0, 7);
+    hr = SafeArrayAccessData(array, (void*)&ptr);
+    EXPECT_HR(hr, S_OK);
+    memcpy(ptr, "dGVzdA=", strlen("dGVzdA="));
+    SafeArrayUnaccessData(V_ARRAY(&value));
+
+    V_VT(&value) = VT_UI1|VT_ARRAY;
+    V_ARRAY(&value) = array;
+    hr = IXMLDOMElement_put_nodeTypedValue(elem, value);
+    EXPECT_HR(hr, S_OK);
+
+    V_VT(&value) = VT_EMPTY;
+    hr = IXMLDOMElement_get_nodeTypedValue(elem, &value);
+    EXPECT_HR(hr, S_OK);
+    ok(V_VT(&value) == (VT_UI1|VT_ARRAY), "got %d\n", V_VT(&value));
+    ok(SafeArrayGetDim(V_ARRAY(&value)) == 1, "got wrong dimension\n");
+    ubound = 0;
+    hr = SafeArrayGetUBound(V_ARRAY(&value), 1, &ubound);
+    EXPECT_HR(hr, S_OK);
+    ok(ubound == 6, "got %d\n", ubound);
+    lbound = 0;
+    hr = SafeArrayGetLBound(V_ARRAY(&value), 1, &lbound);
+    EXPECT_HR(hr, S_OK);
+    ok(lbound == 0, "got %d\n", lbound);
+    hr = SafeArrayAccessData(V_ARRAY(&value), (void*)&ptr);
+    EXPECT_HR(hr, S_OK);
+    ok(!memcmp(ptr, "dGVzdA=", strlen("dGVzdA=")), "got wrong data, %s\n", ptr);
+    SafeArrayUnaccessData(V_ARRAY(&value));
+    VariantClear(&value);
+
+    /* if set with VT_UI1|VT_ARRAY it's encoded */
+    hr = IXMLDOMElement_get_firstChild(elem, &node);
+    EXPECT_HR(hr, S_OK);
+    hr = IXMLDOMNode_get_text(node, &str);
+    EXPECT_HR(hr, S_OK);
+    ok(!lstrcmpW(str, _bstr_("ZEdWemRBPQ==")), "%s\n", wine_dbgstr_w(str));
+    IXMLDOMNode_Release(node);
+
+    SafeArrayDestroyData(array);
 
     IXMLDOMElement_Release(elem);
     IXMLDOMDocument_Release(doc);
