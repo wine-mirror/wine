@@ -274,7 +274,9 @@ typedef struct _basic_string_wchar
     MSVCP_size_t res;
 } basic_string_wchar;
 
-basic_string_wchar* __thiscall MSVCP_basic_string_wchar_ctor_cstr(basic_string_wchar*, const wchar_t*);
+basic_string_wchar* __thiscall MSVCP_basic_string_wchar_ctor(basic_string_wchar*);
+basic_string_wchar* __stdcall MSVCP_basic_string_wchar_ctor_cstr(basic_string_wchar*, const wchar_t*);
+basic_string_wchar* __thiscall MSVCP_basic_string_wchar_ctor_cstr_len(basic_string_wchar*, const wchar_t*, MSVCP_size_t);
 void __thiscall MSVCP_basic_string_wchar_dtor(basic_string_wchar*);
 const wchar_t* __thiscall MSVCP_basic_string_wchar_c_str(const basic_string_wchar*);
 void __thiscall MSVCP_basic_string_wchar_clear(basic_string_wchar*);
