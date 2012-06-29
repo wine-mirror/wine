@@ -694,24 +694,30 @@ static void test_bitmap_rendering( BOOL use_dib )
 struct wgl_thread_param
 {
     HANDLE test_finished;
+    HWND hwnd;
     HGLRC hglrc;
-    BOOL hglrc_deleted;
-    DWORD last_error;
+    BOOL make_current;
+    BOOL make_current_error;
+    BOOL deleted;
+    DWORD deleted_error;
 };
 
 static DWORD WINAPI wgl_thread(void *param)
 {
     struct wgl_thread_param *p = param;
+    HDC hdc = GetDC( p->hwnd );
 
     SetLastError(0xdeadbeef);
-    p->hglrc_deleted = wglDeleteContext(p->hglrc);
-    p->last_error = GetLastError();
+    p->make_current = wglMakeCurrent(hdc, p->hglrc);
+    p->make_current_error = GetLastError();
+    p->deleted = wglDeleteContext(p->hglrc);
+    p->deleted_error = GetLastError();
+    ReleaseDC( p->hwnd, hdc );
     SetEvent(p->test_finished);
-
     return 0;
 }
 
-static void test_deletecontext(HDC hdc)
+static void test_deletecontext(HWND hwnd, HDC hdc)
 {
     struct wgl_thread_param thread_params;
     HGLRC hglrc = wglCreateContext(hdc);
@@ -740,14 +746,17 @@ static void test_deletecontext(HDC hdc)
      * This differs from GLX which does allow it but it delays actual deletion until the context becomes not current.
      */
     thread_params.hglrc = hglrc;
+    thread_params.hwnd  = hwnd;
     thread_params.test_finished = CreateEvent(NULL, FALSE, FALSE, NULL);
     thread_handle = CreateThread(NULL, 0, wgl_thread, &thread_params, 0, &tid);
     ok(!!thread_handle, "Failed to create thread, last error %#x.\n", GetLastError());
     if(thread_handle)
     {
         WaitForSingleObject(thread_handle, INFINITE);
-        ok(thread_params.hglrc_deleted == FALSE, "Attempt to delete WGL context from another thread passed but should fail!\n");
-        ok(thread_params.last_error == ERROR_BUSY, "Expected last error to be ERROR_BUSY, got %u\n", thread_params.last_error);
+        ok(!thread_params.make_current, "Attempt to make WGL context from another thread passed\n");
+        ok(thread_params.make_current_error == ERROR_BUSY, "Expected last error to be ERROR_BUSY, got %u\n", thread_params.make_current_error);
+        ok(!thread_params.deleted, "Attempt to delete WGL context from another thread passed\n");
+        ok(thread_params.deleted_error == ERROR_BUSY, "Expected last error to be ERROR_BUSY, got %u\n", thread_params.deleted_error);
     }
     CloseHandle(thread_params.test_finished);
 
@@ -1469,6 +1478,7 @@ START_TEST(opengl)
          * any WGL call :( On Wine this would work but not on real Windows because there can be different implementations (software, ICD, MCD).
          */
         init_functions();
+        test_deletecontext(hwnd, hdc);
         /* The lack of wglGetExtensionsStringARB in general means broken software rendering or the lack of decent OpenGL support, skip tests in such cases */
         if (!pwglGetExtensionsStringARB)
         {
@@ -1477,7 +1487,6 @@ START_TEST(opengl)
         }
 
         test_getprocaddress(hdc);
-        test_deletecontext(hdc);
         test_makecurrent(hdc);
         test_setpixelformat(hdc);
         test_destroy(hdc);

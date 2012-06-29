@@ -223,12 +223,20 @@ BOOL WINAPI wglMakeCurrent(HDC hdc, HGLRC hglrc)
     if (hglrc)
     {
         if (!(ptr = get_handle_ptr( hglrc ))) return FALSE;
-        ret = wgl_driver->p_wglMakeCurrent( hdc, ptr->context );
-        if (ret)
+        if (!ptr->tid || ptr->tid == GetCurrentThreadId())
         {
-            if (prev) prev->tid = 0;
-            ptr->tid = GetCurrentThreadId();
-            NtCurrentTeb()->glCurrentRC = hglrc;
+            ret = wgl_driver->p_wglMakeCurrent( hdc, ptr->context );
+            if (ret)
+            {
+                if (prev) prev->tid = 0;
+                ptr->tid = GetCurrentThreadId();
+                NtCurrentTeb()->glCurrentRC = hglrc;
+            }
+        }
+        else
+        {
+            SetLastError( ERROR_BUSY );
+            ret = FALSE;
         }
         release_handle_ptr( ptr );
     }
@@ -278,12 +286,20 @@ static BOOL WINAPI wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, HGLRC h
     if (hglrc)
     {
         if (!(ptr = get_handle_ptr( hglrc ))) return FALSE;
-        ret = wgl_driver->p_wglMakeContextCurrentARB( draw_hdc, read_hdc, ptr->context );
-        if (ret)
+        if (!ptr->tid || ptr->tid == GetCurrentThreadId())
         {
-            if (prev) prev->tid = 0;
-            ptr->tid = GetCurrentThreadId();
-            NtCurrentTeb()->glCurrentRC = hglrc;
+            ret = wgl_driver->p_wglMakeContextCurrentARB( draw_hdc, read_hdc, ptr->context );
+            if (ret)
+            {
+                if (prev) prev->tid = 0;
+                ptr->tid = GetCurrentThreadId();
+                NtCurrentTeb()->glCurrentRC = hglrc;
+            }
+        }
+        else
+        {
+            SetLastError( ERROR_BUSY );
+            ret = FALSE;
         }
         release_handle_ptr( ptr );
     }
