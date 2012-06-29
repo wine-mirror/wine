@@ -207,7 +207,7 @@ int wmain (int argc, WCHAR *argv[])
 	static const WCHAR unixW[] = { '/', 'u', 'n', 'i', 'x', 0 };
 	static const WCHAR progIDOpenW[] =
 		{ '/', 'p', 'r', 'o', 'g', 'I', 'D', 'O', 'p', 'e', 'n', 0};
-	static const WCHAR openW[] = { '/', 'o', 'p', 'e', 'n', 0 };
+	static const WCHAR openW[] = { 'o', 'p', 'e', 'n', 0 };
 	static const WCHAR cmdW[] = { 'c', 'm', 'd', '.', 'e', 'x', 'e', 0 };
 
 	memset(&sei, 0, sizeof(sei));
