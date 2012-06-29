@@ -3459,6 +3459,15 @@ GpStatus WINGDIPAPI GdipSaveImageToStream(GpImage *image, IStream* stream,
 }
 
 /*****************************************************************************
+ * GdipSaveAdd [GDIPLUS.@]
+ */
+GpStatus WINGDIPAPI GdipSaveAdd(GpImage *image, GDIPCONST EncoderParameters *params)
+{
+    FIXME("(%p,%p): stub\n", image, params);
+    return Ok;
+}
+
+/*****************************************************************************
  * GdipGetImagePalette [GDIPLUS.@]
  */
 GpStatus WINGDIPAPI GdipGetImagePalette(GpImage *image, ColorPalette *palette, INT size)
