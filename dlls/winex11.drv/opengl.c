@@ -115,7 +115,6 @@ struct wgl_context
     HDC hdc;
     BOOL has_been_current;
     BOOL sharing;
-    DWORD tid;
     BOOL gl3_context;
     XVisualInfo *vis;
     WineGLPixelFormat *fmt;
@@ -1453,17 +1452,9 @@ static struct wgl_context *glxdrv_wglCreateContext( HDC hdc )
 /***********************************************************************
  *		glxdrv_wglDeleteContext
  */
-static BOOL glxdrv_wglDeleteContext(struct wgl_context *ctx)
+static void glxdrv_wglDeleteContext(struct wgl_context *ctx)
 {
     TRACE("(%p)\n", ctx);
-
-    /* WGL doesn't allow deletion of a context which is current in another thread */
-    if (ctx->tid != 0 && ctx->tid != GetCurrentThreadId())
-    {
-        TRACE("Cannot delete context=%p because it is current in another thread.\n", ctx);
-        SetLastError(ERROR_BUSY);
-        return FALSE;
-    }
 
     wine_tsx11_lock();
     list_remove( &ctx->entry );
@@ -1474,7 +1465,6 @@ static BOOL glxdrv_wglDeleteContext(struct wgl_context *ctx)
     wine_tsx11_unlock();
 
     HeapFree( GetProcessHeap(), 0, ctx );
-    return TRUE;
 }
 
 /**
@@ -1551,15 +1541,12 @@ static GLXPixmap get_context_pixmap( HDC hdc, struct wgl_context *ctx )
 static BOOL glxdrv_wglMakeCurrent(HDC hdc, struct wgl_context *ctx)
 {
     BOOL ret;
-    struct wgl_context *prev_ctx = NtCurrentTeb()->glContext;
     struct x11drv_escape_get_drawable escape;
 
     TRACE("(%p,%p)\n", hdc, ctx);
 
     if (!ctx)
     {
-        if (prev_ctx) prev_ctx->tid = 0;
-
         wine_tsx11_lock();
         ret = pglXMakeCurrent(gdi_display, None, NULL);
         wine_tsx11_unlock();
@@ -1603,11 +1590,9 @@ static BOOL glxdrv_wglMakeCurrent(HDC hdc, struct wgl_context *ctx)
 
         if (ret)
         {
-            if (prev_ctx) prev_ctx->tid = 0;
             NtCurrentTeb()->glContext = ctx;
 
             ctx->has_been_current = TRUE;
-            ctx->tid = GetCurrentThreadId();
             ctx->hdc = hdc;
             ctx->read_hdc = hdc;
             ctx->drawables[0] = escape.drawable;
@@ -1629,7 +1614,6 @@ static BOOL glxdrv_wglMakeCurrent(HDC hdc, struct wgl_context *ctx)
  */
 static BOOL glxdrv_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct wgl_context *ctx )
 {
-    struct wgl_context *prev_ctx = NtCurrentTeb()->glContext;
     struct x11drv_escape_get_drawable escape_draw, escape_read;
     BOOL ret;
 
@@ -1637,8 +1621,6 @@ static BOOL glxdrv_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct 
 
     if (!ctx)
     {
-        if (prev_ctx) prev_ctx->tid = 0;
-
         wine_tsx11_lock();
         ret = pglXMakeCurrent(gdi_display, None, NULL);
         wine_tsx11_unlock();
@@ -1673,10 +1655,7 @@ static BOOL glxdrv_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct 
         ret = pglXMakeContextCurrent(gdi_display, escape_draw.drawable, escape_read.drawable, ctx->ctx);
         if (ret)
         {
-            if (prev_ctx) prev_ctx->tid = 0;
-
             ctx->has_been_current = TRUE;
-            ctx->tid = GetCurrentThreadId();
             ctx->hdc = draw_hdc;
             ctx->read_hdc = read_hdc;
             ctx->drawables[0] = escape_draw.drawable;

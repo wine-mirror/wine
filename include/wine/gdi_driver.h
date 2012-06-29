@@ -234,7 +234,7 @@ struct wgl_funcs
     BOOL                (*p_wglCopyContext)(struct wgl_context*,struct wgl_context*,UINT);
     struct wgl_context* (*p_wglCreateContext)(HDC);
     struct wgl_context* (*p_wglCreateContextAttribsARB)(HDC,struct wgl_context*,const int*);
-    BOOL                (*p_wglDeleteContext)(struct wgl_context*);
+    void                (*p_wglDeleteContext)(struct wgl_context*);
     HDC                 (*p_wglGetCurrentDC)(void);
     PROC                (*p_wglGetProcAddress)(LPCSTR);
     BOOL                (*p_wglMakeContextCurrentARB)(HDC,HDC,struct wgl_context*);

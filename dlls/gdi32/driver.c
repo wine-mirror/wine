@@ -682,9 +682,8 @@ static struct wgl_context *nulldrv_wglCreateContextAttribsARB( HDC hdc, struct w
     return 0;
 }
 
-static BOOL nulldrv_wglDeleteContext( struct wgl_context *context )
+static void nulldrv_wglDeleteContext( struct wgl_context *context )
 {
-    return FALSE;
 }
 
 static HDC nulldrv_wglGetCurrentDC(void)
