@@ -10,7 +10,8 @@ C_SRCS = \
 	mesh.c \
 	shader.c \
 	surface.c \
-	texture.c
+	texture.c \
+	volume.c
 
 RC_SRCS = rsrc.rc
 
