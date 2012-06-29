@@ -2892,7 +2892,7 @@ HMONITOR CDECL wined3d_get_adapter_monitor(const struct wined3d *wined3d, UINT a
 
 /* Note: dx9 supplies a format. Calls from d3d8 supply WINED3DFMT_UNKNOWN */
 UINT CDECL wined3d_get_adapter_mode_count(const struct wined3d *wined3d, UINT adapter_idx,
-        enum wined3d_format_id format_id)
+        enum wined3d_format_id format_id, enum wined3d_scanline_ordering scanline_ordering)
 {
     const struct wined3d_adapter *adapter;
     const struct wined3d_format *format;
@@ -2901,7 +2901,8 @@ UINT CDECL wined3d_get_adapter_mode_count(const struct wined3d *wined3d, UINT ad
     UINT format_bits;
     DEVMODEW mode;
 
-    TRACE("wined3d %p, adapter_idx %u, format %s.\n", wined3d, adapter_idx, debug_d3dformat(format_id));
+    TRACE("wined3d %p, adapter_idx %u, format %s, scanline_ordering %#x.\n",
+            wined3d, adapter_idx, debug_d3dformat(format_id), scanline_ordering);
 
     if (adapter_idx >= wined3d->adapter_count)
         return 0;
@@ -2915,6 +2916,17 @@ UINT CDECL wined3d_get_adapter_mode_count(const struct wined3d *wined3d, UINT ad
 
     while (EnumDisplaySettingsExW(adapter->DeviceName, j++, &mode, 0))
     {
+        if (mode.dmFields & DM_DISPLAYFLAGS)
+        {
+            if (scanline_ordering == WINED3D_SCANLINE_ORDERING_PROGRESSIVE
+                    && (mode.u2.dmDisplayFlags & DM_INTERLACED))
+                continue;
+
+            if (scanline_ordering == WINED3D_SCANLINE_ORDERING_INTERLACED
+                    && !(mode.u2.dmDisplayFlags & DM_INTERLACED))
+                continue;
+        }
+
         if (format_id == WINED3DFMT_UNKNOWN)
         {
             /* This is for d3d8, do not enumerate P8 here. */
@@ -4406,7 +4418,8 @@ HRESULT CDECL wined3d_check_device_type(const struct wined3d *wined3d, UINT adap
     }
 
     /* If the requested display format is not available, don't continue. */
-    mode_count = wined3d_get_adapter_mode_count(wined3d, adapter_idx, display_format);
+    mode_count = wined3d_get_adapter_mode_count(wined3d, adapter_idx,
+            display_format, WINED3D_SCANLINE_ORDERING_UNKNOWN);
     if (!mode_count)
     {
         TRACE("No available modes for display format %s.\n", debug_d3dformat(display_format));

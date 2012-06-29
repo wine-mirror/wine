@@ -146,7 +146,8 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetDisplayModeList(IDXGIOutput *ifa
     wined3d_format = wined3dformat_from_dxgi_format(format);
 
     EnterCriticalSection(&dxgi_cs);
-    max_count = wined3d_get_adapter_mode_count(wined3d, This->adapter->ordinal, wined3d_format);
+    max_count = wined3d_get_adapter_mode_count(wined3d, This->adapter->ordinal,
+            wined3d_format, WINED3D_SCANLINE_ORDERING_UNKNOWN);
 
     if (!desc)
     {

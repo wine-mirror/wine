@@ -164,7 +164,8 @@ static UINT WINAPI d3d9_GetAdapterModeCount(IDirect3D9Ex *iface, UINT adapter, D
         return 0;
 
     wined3d_mutex_lock();
-    ret = wined3d_get_adapter_mode_count(d3d9->wined3d, adapter, wined3dformat_from_d3dformat(format));
+    ret = wined3d_get_adapter_mode_count(d3d9->wined3d, adapter,
+            wined3dformat_from_d3dformat(format), WINED3D_SCANLINE_ORDERING_UNKNOWN);
     wined3d_mutex_unlock();
 
     return ret;
@@ -477,9 +478,20 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH d3d9_CreateDevice(IDirect3D9Ex *iface, U
 static UINT WINAPI d3d9_GetAdapterModeCountEx(IDirect3D9Ex *iface,
         UINT adapter, const D3DDISPLAYMODEFILTER *filter)
 {
-    FIXME("iface %p, adapter %u, filter %p stub!\n", iface, adapter, filter);
+    struct d3d9 *d3d9 = impl_from_IDirect3D9Ex(iface);
+    UINT ret;
 
-    return 0;
+    TRACE("iface %p, adapter %u, filter %p.\n", iface, adapter, filter);
+
+    if (filter->Format != D3DFMT_X8R8G8B8 && filter->Format != D3DFMT_R5G6B5)
+        return 0;
+
+    wined3d_mutex_lock();
+    ret = wined3d_get_adapter_mode_count(d3d9->wined3d, adapter,
+            wined3dformat_from_d3dformat(filter->Format), filter->ScanLineOrdering);
+    wined3d_mutex_unlock();
+
+    return ret;
 }
 
 static HRESULT WINAPI d3d9_EnumAdapterModesEx(IDirect3D9Ex *iface,
