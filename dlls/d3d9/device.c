@@ -584,11 +584,12 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH d3d9_device_Present(IDirect3DDevice9Ex *
             iface, src_rect, dst_rect, dst_window_override, dirty_region);
 
     wined3d_mutex_lock();
-    hr = wined3d_device_present(device->wined3d_device, src_rect, dst_rect, dst_window_override, dirty_region);
+    hr = wined3d_device_present(device->wined3d_device, src_rect, dst_rect,
+            dst_window_override, dirty_region, 0);
     wined3d_mutex_unlock();
 
     return hr;
- }
+}
 
 static HRESULT WINAPI d3d9_device_GetBackBuffer(IDirect3DDevice9Ex *iface, UINT swapchain,
         UINT backbuffer_idx, D3DBACKBUFFER_TYPE backbuffer_type, IDirect3DSurface9 **backbuffer)
@@ -2818,10 +2819,19 @@ static HRESULT WINAPI d3d9_device_PresentEx(IDirect3DDevice9Ex *iface,
         const RECT *src_rect, const RECT *dst_rect, HWND dst_window_override,
         const RGNDATA *dirty_region, DWORD flags)
 {
-    FIXME("iface %p, src_rect %p, dst_rect %p, dst_window_override %p, dirty_region %p, flags %#x stub!\n",
-            iface, src_rect, dst_rect, dst_window_override, dirty_region, flags);
+    struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, src_rect %s, dst_rect %s, dst_window_override %p, dirty_region %p, flags %#x.\n",
+            iface, wine_dbgstr_rect(src_rect), wine_dbgstr_rect(dst_rect),
+            dst_window_override, dirty_region, flags);
+
+    wined3d_mutex_lock();
+    hr = wined3d_device_present(device->wined3d_device, src_rect, dst_rect,
+            dst_window_override, dirty_region, flags);
+    wined3d_mutex_unlock();
+
+    return hr;
 }
 
 static HRESULT WINAPI d3d9_device_GetGPUThreadPriority(IDirect3DDevice9Ex *iface, INT *priority)

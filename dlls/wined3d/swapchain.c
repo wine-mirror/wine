@@ -150,6 +150,9 @@ HRESULT CDECL wined3d_swapchain_present(struct wined3d_swapchain *swapchain,
             swapchain, wine_dbgstr_rect(src_rect), wine_dbgstr_rect(dst_rect),
             dst_window_override, dirty_region, flags);
 
+    if (flags)
+        FIXME("Ignoring flags %#x.\n", flags);
+
     if (!swapchain->back_buffers)
     {
         WARN("Swapchain doesn't have a backbuffer, returning WINED3DERR_INVALIDCALL\n");

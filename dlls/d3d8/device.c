@@ -610,7 +610,8 @@ static HRESULT WINAPI d3d8_device_Present(IDirect3DDevice8 *iface, const RECT *s
             iface, wine_dbgstr_rect(src_rect), wine_dbgstr_rect(dst_rect), dst_window_override, dirty_region);
 
     wined3d_mutex_lock();
-    hr = wined3d_device_present(device->wined3d_device, src_rect, dst_rect, dst_window_override, dirty_region);
+    hr = wined3d_device_present(device->wined3d_device, src_rect, dst_rect,
+            dst_window_override, dirty_region, 0);
     wined3d_mutex_unlock();
 
     return hr;
