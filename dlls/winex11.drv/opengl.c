@@ -110,7 +110,8 @@ typedef struct wine_glpixelformat {
     DWORD       dwFlags; /* We store some PFD_* flags in here for emulated bitmap formats */
 } WineGLPixelFormat;
 
-typedef struct wine_glcontext {
+struct wgl_context
+{
     HDC hdc;
     BOOL has_been_current;
     BOOL sharing;
@@ -128,7 +129,7 @@ typedef struct wine_glcontext {
     GLXPixmap glxpixmap;      /* GLX pixmap for memory DCs */
     SIZE pixmap_size;         /* pixmap size for memory DCs */
     struct list entry;
-} Wine_GLContext;
+};
 
 typedef struct wine_glpbuffer {
     Drawable   drawable;
@@ -613,15 +614,7 @@ failed:
     return FALSE;
 }
 
-static inline BOOL is_valid_context( Wine_GLContext *ctx )
-{
-    Wine_GLContext *ptr;
-    LIST_FOR_EACH_ENTRY( ptr, &context_list, struct wine_glcontext, entry )
-        if (ptr == ctx) return TRUE;
-    return FALSE;
-}
-
-static int describeContext(Wine_GLContext* ctx) {
+static int describeContext( struct wgl_context *ctx ) {
     int tmp;
     int ctx_vis_id;
     TRACE(" Context %p have (vis:%p):\n", ctx, ctx->vis);
@@ -1081,8 +1074,8 @@ static int pixelformat_from_fbconfig_id(XID fbconfig_id)
 /* Mark any allocated context using the glx drawable 'old' to use 'new' */
 void mark_drawable_dirty(Drawable old, Drawable new)
 {
-    Wine_GLContext *ctx;
-    LIST_FOR_EACH_ENTRY( ctx, &context_list, struct wine_glcontext, entry )
+    struct wgl_context *ctx;
+    LIST_FOR_EACH_ENTRY( ctx, &context_list, struct wgl_context, entry )
     {
         if (old == ctx->drawables[0]) {
             ctx->drawables[0] = new;
@@ -1096,7 +1089,7 @@ void mark_drawable_dirty(Drawable old, Drawable new)
 }
 
 /* Given the current context, make sure its drawable is sync'd */
-static inline void sync_context(Wine_GLContext *context)
+static inline void sync_context(struct wgl_context *context)
 {
     if(context && context->refresh_drawables) {
         if (glxRequireVersion(3))
@@ -1109,7 +1102,7 @@ static inline void sync_context(Wine_GLContext *context)
 }
 
 
-static GLXContext create_glxcontext(Display *display, Wine_GLContext *context, GLXContext shareList)
+static GLXContext create_glxcontext(Display *display, struct wgl_context *context, GLXContext shareList)
 {
     GLXContext ctx;
 
@@ -1400,12 +1393,9 @@ static BOOL glxdrv_SetPixelFormat(PHYSDEV dev, int iPixelFormat, const PIXELFORM
 /***********************************************************************
  *		glxdrv_wglCopyContext
  */
-static BOOL glxdrv_wglCopyContext(HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask)
+static BOOL glxdrv_wglCopyContext(struct wgl_context *src, struct wgl_context *dst, UINT mask)
 {
-    Wine_GLContext *src = (Wine_GLContext*)hglrcSrc;
-    Wine_GLContext *dst = (Wine_GLContext*)hglrcDst;
-
-    TRACE("hglrcSrc: (%p), hglrcDst: (%p), mask: %#x\n", hglrcSrc, hglrcDst, mask);
+    TRACE("%p -> %p mask %#x\n", src, dst, mask);
 
     wine_tsx11_lock();
     pglXCopyContext(gdi_display, src->ctx, dst->ctx, mask);
@@ -1418,10 +1408,10 @@ static BOOL glxdrv_wglCopyContext(HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask)
 /***********************************************************************
  *		glxdrv_wglCreateContext
  */
-static HGLRC glxdrv_wglCreateContext( HDC hdc )
+static struct wgl_context *glxdrv_wglCreateContext( HDC hdc )
 {
     struct x11drv_escape_get_drawable escape;
-    Wine_GLContext *ret;
+    struct wgl_context *ret;
     WineGLPixelFormat *fmt;
     int fmt_count = 0;
 
@@ -1457,24 +1447,15 @@ static HGLRC glxdrv_wglCreateContext( HDC hdc )
     wine_tsx11_unlock();
 
     TRACE(" creating context %p (GL context creation delayed)\n", ret);
-    return (HGLRC) ret;
+    return ret;
 }
 
 /***********************************************************************
  *		glxdrv_wglDeleteContext
  */
-static BOOL glxdrv_wglDeleteContext(HGLRC hglrc)
+static BOOL glxdrv_wglDeleteContext(struct wgl_context *ctx)
 {
-    Wine_GLContext *ctx = (Wine_GLContext *) hglrc;
-
-    TRACE("(%p)\n", hglrc);
-
-    if (!is_valid_context(ctx))
-    {
-        WARN("Error deleting context !\n");
-        SetLastError(ERROR_INVALID_HANDLE);
-        return FALSE;
-    }
+    TRACE("(%p)\n", ctx);
 
     /* WGL doesn't allow deletion of a context which is current in another thread */
     if (ctx->tid != 0 && ctx->tid != GetCurrentThreadId())
@@ -1482,15 +1463,6 @@ static BOOL glxdrv_wglDeleteContext(HGLRC hglrc)
         TRACE("Cannot delete context=%p because it is current in another thread.\n", ctx);
         SetLastError(ERROR_BUSY);
         return FALSE;
-    }
-
-    /* WGL makes a context not current if it is active before deletion. GLX waits until the context is not current. */
-    if (ctx == NtCurrentTeb()->glContext)
-    {
-        wine_tsx11_lock();
-        pglXMakeCurrent(gdi_display, None, NULL);
-        wine_tsx11_unlock();
-        NtCurrentTeb()->glContext = NULL;
     }
 
     wine_tsx11_lock();
@@ -1513,7 +1485,7 @@ static BOOL glxdrv_wglDeleteContext(HGLRC hglrc)
 static HDC WINAPI X11DRV_wglGetCurrentReadDCARB(void) 
 {
     HDC ret = 0;
-    Wine_GLContext *ctx = NtCurrentTeb()->glContext;
+    struct wgl_context *ctx = NtCurrentTeb()->glContext;
 
     if (ctx) ret = ctx->read_hdc;
 
@@ -1554,7 +1526,7 @@ static PROC glxdrv_wglGetProcAddress(LPCSTR lpszProc)
     return NULL;
 }
 
-static GLXPixmap get_context_pixmap( HDC hdc, struct wine_glcontext *ctx )
+static GLXPixmap get_context_pixmap( HDC hdc, struct wgl_context *ctx )
 {
     if (!ctx->pixmap)
     {
@@ -1576,16 +1548,15 @@ static GLXPixmap get_context_pixmap( HDC hdc, struct wine_glcontext *ctx )
 /***********************************************************************
  *		glxdrv_wglMakeCurrent
  */
-static BOOL glxdrv_wglMakeCurrent(HDC hdc, HGLRC hglrc)
+static BOOL glxdrv_wglMakeCurrent(HDC hdc, struct wgl_context *ctx)
 {
     BOOL ret;
-    Wine_GLContext *prev_ctx = NtCurrentTeb()->glContext;
-    Wine_GLContext *ctx = (Wine_GLContext *) hglrc;
+    struct wgl_context *prev_ctx = NtCurrentTeb()->glContext;
     struct x11drv_escape_get_drawable escape;
 
-    TRACE("(%p,%p)\n", hdc, hglrc);
+    TRACE("(%p,%p)\n", hdc, ctx);
 
-    if (hglrc == NULL)
+    if (!ctx)
     {
         if (prev_ctx) prev_ctx->tid = 0;
 
@@ -1656,16 +1627,15 @@ static BOOL glxdrv_wglMakeCurrent(HDC hdc, HGLRC hglrc)
 /***********************************************************************
  *		glxdrv_wglMakeContextCurrentARB
  */
-static BOOL glxdrv_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, HGLRC hglrc )
+static BOOL glxdrv_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct wgl_context *ctx )
 {
-    Wine_GLContext *ctx = (Wine_GLContext *)hglrc;
-    Wine_GLContext *prev_ctx = NtCurrentTeb()->glContext;
+    struct wgl_context *prev_ctx = NtCurrentTeb()->glContext;
     struct x11drv_escape_get_drawable escape_draw, escape_read;
     BOOL ret;
 
-    TRACE("(%p,%p,%p)\n", draw_hdc, read_hdc, hglrc);
+    TRACE("(%p,%p,%p)\n", draw_hdc, read_hdc, ctx);
 
-    if (hglrc == NULL)
+    if (!ctx)
     {
         if (prev_ctx) prev_ctx->tid = 0;
 
@@ -1673,6 +1643,7 @@ static BOOL glxdrv_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, HGLRC h
         ret = pglXMakeCurrent(gdi_display, None, NULL);
         wine_tsx11_unlock();
         NtCurrentTeb()->glContext = NULL;
+        return TRUE;
     }
 
     escape_draw.code = X11DRV_GET_DRAWABLE;
@@ -1725,11 +1696,8 @@ static BOOL glxdrv_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, HGLRC h
 /***********************************************************************
  *		glxdrv_wglShareLists
  */
-static BOOL glxdrv_wglShareLists(HGLRC hglrc1, HGLRC hglrc2)
+static BOOL glxdrv_wglShareLists(struct wgl_context *org, struct wgl_context *dest)
 {
-    Wine_GLContext *org  = (Wine_GLContext *) hglrc1;
-    Wine_GLContext *dest = (Wine_GLContext *) hglrc2;
-
     TRACE("(%p, %p)\n", org, dest);
 
     /* Sharing of display lists works differently in GLX and WGL. In case of GLX it is done
@@ -1783,7 +1751,7 @@ static BOOL glxdrv_wglShareLists(HGLRC hglrc1, HGLRC hglrc2)
  */
 static HDC glxdrv_wglGetCurrentDC(void)
 {
-    Wine_GLContext *ctx = NtCurrentTeb()->glContext;
+    struct wgl_context *ctx = NtCurrentTeb()->glContext;
 
     if (!ctx) return NULL;
     TRACE("hdc %p\n", ctx->hdc);
@@ -1798,7 +1766,7 @@ static void WINAPI X11DRV_wglGetIntegerv(GLenum pname, GLint* params)
     {
     case GL_DEPTH_BITS:
         {
-            Wine_GLContext *ctx = NtCurrentTeb()->glContext;
+            struct wgl_context *ctx = NtCurrentTeb()->glContext;
 
             pglGetIntegerv(pname, params);
             /**
@@ -1814,7 +1782,7 @@ static void WINAPI X11DRV_wglGetIntegerv(GLenum pname, GLint* params)
         }
     case GL_ALPHA_BITS:
         {
-            Wine_GLContext *ctx = NtCurrentTeb()->glContext;
+            struct wgl_context *ctx = NtCurrentTeb()->glContext;
 
             pglXGetFBConfigAttrib(gdi_display, ctx->fmt->fbconfig, GLX_ALPHA_SIZE, params);
             TRACE("returns GL_ALPHA_BITS as '%d'\n", *params);
@@ -1827,7 +1795,7 @@ static void WINAPI X11DRV_wglGetIntegerv(GLenum pname, GLint* params)
     wine_tsx11_unlock();
 }
 
-static void flush_pixmap( struct wine_glcontext *ctx )
+static void flush_pixmap( struct wgl_context *ctx )
 {
     char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
     BITMAPINFO *info = (BITMAPINFO *)buffer;
@@ -1874,7 +1842,7 @@ static void flush_gl_drawable( struct glx_physdev *physdev )
 
 static void WINAPI X11DRV_wglFinish(void)
 {
-    Wine_GLContext *ctx = NtCurrentTeb()->glContext;
+    struct wgl_context *ctx = NtCurrentTeb()->glContext;
     enum x11drv_escape_codes code = X11DRV_FLUSH_GL_DRAWABLE;
 
     wine_tsx11_lock();
@@ -1890,7 +1858,7 @@ static void WINAPI X11DRV_wglFinish(void)
 
 static void WINAPI X11DRV_wglFlush(void)
 {
-    Wine_GLContext *ctx = NtCurrentTeb()->glContext;
+    struct wgl_context *ctx = NtCurrentTeb()->glContext;
     enum x11drv_escape_codes code = X11DRV_FLUSH_GL_DRAWABLE;
 
     wine_tsx11_lock();
@@ -1907,10 +1875,11 @@ static void WINAPI X11DRV_wglFlush(void)
 /***********************************************************************
  *		glxdrv_wglCreateContextAttribsARB
  */
-static HGLRC glxdrv_wglCreateContextAttribsARB( HDC hdc, HGLRC hShareContext, const int* attribList )
+static struct wgl_context *glxdrv_wglCreateContextAttribsARB( HDC hdc, struct wgl_context *hShareContext,
+                                                              const int* attribList )
 {
     struct x11drv_escape_get_drawable escape;
-    Wine_GLContext *ret;
+    struct wgl_context *ret;
     WineGLPixelFormat *fmt;
     int fmt_count = 0;
 
@@ -1994,7 +1963,7 @@ static HGLRC glxdrv_wglCreateContextAttribsARB( HDC hdc, HGLRC hShareContext, co
     list_add_head( &context_list, &ret->entry );
     wine_tsx11_unlock();
     TRACE(" creating context %p\n", ret);
-    return (HGLRC) ret;
+    return ret;
 }
 
 /**
@@ -3262,7 +3231,7 @@ BOOL destroy_glxpixmap(Display *display, XID glxpixmap)
 static BOOL glxdrv_SwapBuffers(PHYSDEV dev)
 {
   struct glx_physdev *physdev = get_glxdrv_dev( dev );
-  Wine_GLContext *ctx = NtCurrentTeb()->glContext;
+  struct wgl_context *ctx = NtCurrentTeb()->glContext;
 
   TRACE("(%p)\n", dev->hdc);
 

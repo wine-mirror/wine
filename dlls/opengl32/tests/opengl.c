@@ -895,7 +895,7 @@ static void test_opengl3(HDC hdc)
         HGLRC gl3Ctx;
         DWORD error;
         gl3Ctx = pwglCreateContextAttribsARB(hdc, (HGLRC)0xdeadbeef, 0);
-        todo_wine ok(gl3Ctx == 0, "pwglCreateContextAttribsARB using an invalid shareList passed\n");
+        ok(gl3Ctx == 0, "pwglCreateContextAttribsARB using an invalid shareList passed\n");
         error = GetLastError();
         /* The Nvidia implementation seems to return hresults instead of win32 error codes */
         todo_wine ok(error == ERROR_INVALID_OPERATION ||

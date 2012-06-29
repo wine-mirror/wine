@@ -198,7 +198,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 39
+#define WINE_GDI_DRIVER_VERSION 40
 
 #define GDI_PRIORITY_NULL_DRV        0  /* null driver */
 #define GDI_PRIORITY_FONT_DRV      100  /* any font driver */
@@ -226,18 +226,20 @@ static inline void push_dc_driver( PHYSDEV *dev, PHYSDEV physdev, const struct g
 
 /* OpenGL support */
 
+struct wgl_context;
+
 struct wgl_funcs
 {
-    INT   (*p_GetPixelFormat)(HDC);
-    BOOL  (*p_wglCopyContext)(HGLRC,HGLRC,UINT);
-    HGLRC (*p_wglCreateContext)(HDC);
-    HGLRC (*p_wglCreateContextAttribsARB)(HDC,HGLRC,const int*);
-    BOOL  (*p_wglDeleteContext)(HGLRC);
-    HDC   (*p_wglGetCurrentDC)(void);
-    PROC  (*p_wglGetProcAddress)(LPCSTR);
-    BOOL  (*p_wglMakeContextCurrentARB)(HDC,HDC,HGLRC);
-    BOOL  (*p_wglMakeCurrent)(HDC,HGLRC);
-    BOOL  (*p_wglShareLists)(HGLRC,HGLRC);
+    INT                 (*p_GetPixelFormat)(HDC);
+    BOOL                (*p_wglCopyContext)(struct wgl_context*,struct wgl_context*,UINT);
+    struct wgl_context* (*p_wglCreateContext)(HDC);
+    struct wgl_context* (*p_wglCreateContextAttribsARB)(HDC,struct wgl_context*,const int*);
+    BOOL                (*p_wglDeleteContext)(struct wgl_context*);
+    HDC                 (*p_wglGetCurrentDC)(void);
+    PROC                (*p_wglGetProcAddress)(LPCSTR);
+    BOOL                (*p_wglMakeContextCurrentARB)(HDC,HDC,struct wgl_context*);
+    BOOL                (*p_wglMakeCurrent)(HDC,struct wgl_context*);
+    BOOL                (*p_wglShareLists)(struct wgl_context*,struct wgl_context*);
 };
 
 /* the DC hook support is only exported on Win16, the 32-bit version is a Wine extension */

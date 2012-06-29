@@ -666,22 +666,23 @@ static BOOL nulldrv_UnrealizePalette( HPALETTE palette )
     return FALSE;
 }
 
-static BOOL nulldrv_wglCopyContext( HGLRC src, HGLRC dst, UINT mask )
+static BOOL nulldrv_wglCopyContext( struct wgl_context *src, struct wgl_context *dst, UINT mask )
 {
     return FALSE;
 }
 
-static HGLRC nulldrv_wglCreateContext( HDC hdc )
+static struct wgl_context *nulldrv_wglCreateContext( HDC hdc )
 {
     return 0;
 }
 
-static HGLRC nulldrv_wglCreateContextAttribsARB( HDC hdc, HGLRC share_ctx, const int *attribs )
+static struct wgl_context *nulldrv_wglCreateContextAttribsARB( HDC hdc, struct wgl_context *share_ctx,
+                                                               const int *attribs )
 {
     return 0;
 }
 
-static BOOL nulldrv_wglDeleteContext( HGLRC hglrc )
+static BOOL nulldrv_wglDeleteContext( struct wgl_context *context )
 {
     return FALSE;
 }
@@ -696,17 +697,17 @@ static PROC nulldrv_wglGetProcAddress( LPCSTR name )
     return NULL;
 }
 
-static BOOL nulldrv_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, HGLRC hglrc )
+static BOOL nulldrv_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct wgl_context *context )
 {
     return FALSE;
 }
 
-static BOOL nulldrv_wglMakeCurrent( HDC hdc, HGLRC hglrc )
+static BOOL nulldrv_wglMakeCurrent( HDC hdc, struct wgl_context *context )
 {
     return FALSE;
 }
 
-static BOOL nulldrv_wglShareLists( HGLRC org, HGLRC dst )
+static BOOL nulldrv_wglShareLists( struct wgl_context *org, struct wgl_context *dst )
 {
     return FALSE;
 }
