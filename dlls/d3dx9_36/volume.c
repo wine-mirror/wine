@@ -141,3 +141,46 @@ HRESULT WINAPI D3DXLoadVolumeFromMemory(IDirect3DVolume9 *dst_volume,
 
     return D3D_OK;
 }
+
+HRESULT WINAPI D3DXLoadVolumeFromVolume(IDirect3DVolume9 *dst_volume,
+                                        const PALETTEENTRY *dst_palette,
+                                        const D3DBOX *dst_box,
+                                        IDirect3DVolume9 *src_volume,
+                                        const PALETTEENTRY *src_palette,
+                                        const D3DBOX *src_box,
+                                        DWORD filter,
+                                        D3DCOLOR color_key)
+{
+    HRESULT hr;
+    D3DBOX box;
+    D3DVOLUME_DESC desc;
+    D3DLOCKED_BOX locked_box;
+
+    TRACE("(%p, %p, %p, %p, %p, %p, %#x, %#x)\n",
+            dst_volume, dst_palette, dst_box, src_volume, src_palette, src_box,
+            filter, color_key);
+
+    if (!dst_volume || !src_volume) return D3DERR_INVALIDCALL;
+
+    IDirect3DVolume9_GetDesc(src_volume, &desc);
+
+    if (!src_box)
+    {
+        box.Left = box.Top = 0;
+        box.Right = desc.Width;
+        box.Bottom = desc.Height;
+        box.Front = 0;
+        box.Back = desc.Depth;
+    }
+    else box = *src_box;
+
+    hr = IDirect3DVolume9_LockBox(src_volume, &locked_box, &box, D3DLOCK_READONLY);
+    if (FAILED(hr)) return hr;
+
+    hr = D3DXLoadVolumeFromMemory(dst_volume, dst_palette, dst_box,
+            locked_box.pBits, desc.Format, locked_box.RowPitch, locked_box.SlicePitch,
+            src_palette, &box, filter, color_key);
+
+    IDirect3DVolume9_UnlockBox(src_volume);
+    return hr;
+}

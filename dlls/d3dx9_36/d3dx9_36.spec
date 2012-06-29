@@ -195,7 +195,7 @@
 @ stdcall D3DXLoadVolumeFromMemory(ptr ptr ptr ptr long long long ptr ptr long long)
 @ stub D3DXLoadVolumeFromResourceA(ptr ptr ptr long ptr ptr long long ptr)
 @ stub D3DXLoadVolumeFromResourceW(ptr ptr ptr long ptr ptr long long ptr)
-@ stub D3DXLoadVolumeFromVolume(ptr ptr ptr ptr ptr ptr long long)
+@ stdcall D3DXLoadVolumeFromVolume(ptr ptr ptr ptr ptr ptr long long)
 @ stdcall D3DXMatrixAffineTransformation(ptr float ptr ptr ptr)
 @ stdcall D3DXMatrixAffineTransformation2D(ptr float ptr float ptr)
 @ stdcall D3DXMatrixDecompose(ptr ptr ptr ptr)
