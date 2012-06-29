@@ -97,6 +97,8 @@ static const WCHAR prop_pprocessidW[] =
     {'P','a','r','e','n','t','P','r','o','c','e','s','s','I','D',0};
 static const WCHAR prop_processidW[] =
     {'P','r','o','c','e','s','s','I','D',0};
+static const WCHAR prop_processoridW[] =
+    {'P','r','o','c','e','s','s','o','r','I','d',0};
 static const WCHAR prop_releasedateW[] =
     {'R','e','l','e','a','s','e','D','a','t','e',0};
 static const WCHAR prop_serialnumberW[] =
@@ -156,7 +158,8 @@ static const struct column col_processor[] =
 {
     { prop_cpustatusW,    CIM_UINT16 },
     { prop_deviceidW,     CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
-    { prop_manufacturerW, CIM_STRING }
+    { prop_manufacturerW, CIM_STRING },
+    { prop_processoridW,  CIM_STRING|COL_FLAG_DYNAMIC }
 };
 static const struct column col_videocontroller[] =
 {
@@ -243,6 +246,7 @@ struct record_processor
     UINT16       cpu_status;
     const WCHAR *device_id;
     const WCHAR *manufacturer;
+    const WCHAR *processor_id;
 };
 struct record_videocontroller
 {
@@ -401,15 +405,31 @@ done:
     CloseHandle( snap );
 }
 
+static inline void do_cpuid( unsigned int ax, unsigned int *p )
+{
+#ifdef __i386__
+    __asm__("pushl %%ebx\n\t"
+                "cpuid\n\t"
+                "movl %%ebx, %%esi\n\t"
+                "popl %%ebx"
+                : "=a" (p[0]), "=S" (p[1]), "=c" (p[2]), "=d" (p[3])
+                :  "0" (ax));
+#endif
+}
+
 static void fill_processor( struct table *table )
 {
     static const WCHAR fmtW[] = {'C','P','U','%','u',0};
-    WCHAR device_id[14];
+    static const WCHAR fmt_cpuidW[] = {'%','0','8','X','%','0','8','X',0};
+    WCHAR device_id[14], cpu_id[17];
     struct record_processor *rec;
     UINT i, offset = 0, count = get_processor_count();
+    unsigned int regs[4] = {0, 0, 0, 0};
 
     if (!(table->data = heap_alloc( sizeof(*rec) * count ))) return;
 
+    do_cpuid( 1, regs );
+    sprintfW( cpu_id, fmt_cpuidW, regs[3], regs[0] );
     for (i = 0; i < count; i++)
     {
         rec = (struct record_processor *)(table->data + offset);
@@ -417,6 +437,7 @@ static void fill_processor( struct table *table )
         rec->manufacturer = processor_manufacturerW;
         sprintfW( device_id, fmtW, i );
         rec->device_id    = heap_strdupW( device_id );
+        rec->processor_id = heap_strdupW( cpu_id );
         offset += sizeof(*rec);
     }
 
