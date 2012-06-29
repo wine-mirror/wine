@@ -181,6 +181,14 @@ typedef struct {
      */
 } basic_istringstream_char;
 
+typedef struct {
+    basic_iostream_char base;
+    basic_stringbuf_char strbuf;
+    /* virtual inheritance
+     * basic_ios_char basic_ios;
+     */
+} basic_stringstream_char;
+
 extern const vtable_ptr MSVCP_iosb_vtable;
 
 /* ??_7ios_base@std@@6B@ */
@@ -271,6 +279,13 @@ const int basic_istringstream_char_vbtable[] = {0, sizeof(basic_istringstream_ch
 /* ??_7?$basic_istringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_istringstream_char_vtable;
 
+/* ??_8?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@7B?$basic_istream@DU?$char_traits@D@std@@@1@@ */
+const int basic_stringstream_char_vbtable1[] = {0, sizeof(basic_stringstream_char)};
+/* ??_8?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@7B?$basic_ostream@DU?$char_traits@D@std@@@1@@ */
+const int basic_stringstream_char_vbtable2[] = {0, sizeof(basic_stringstream_char)-FIELD_OFFSET(basic_stringstream_char, base.base2)};
+/* ??_7?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@6B@ */
+extern const vtable_ptr MSVCP_basic_stringstream_char_vtable;
+
 DEFINE_RTTI_DATA0(iosb, 0, ".?AV?$_Iosb@H@std@@");
 DEFINE_RTTI_DATA1(ios_base, 0, &iosb_rtti_base_descriptor, ".?AV?$_Iosb@H@std@@");
 DEFINE_RTTI_DATA2(basic_ios_char, 0, &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
@@ -321,7 +336,7 @@ DEFINE_RTTI_DATA4(basic_ifstream_char, sizeof(basic_ifstream_char),
         &basic_istream_char_rtti_base_descriptor, &basic_ios_char_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
         ".?AV?$basic_ifstream@DU?$char_traits@D@std@@@std@@");
-DEFINE_RTTI_DATA9(basic_fstream_char, sizeof(basic_fstream_char), &basic_istream_char_rtti_base_descriptor,
+DEFINE_RTTI_DATA8(basic_fstream_char, sizeof(basic_fstream_char),
         &basic_istream_char_rtti_base_descriptor, &basic_ios_char_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
         &basic_ostream_char_rtti_base_descriptor, &basic_ios_char_rtti_base_descriptor,
@@ -335,6 +350,12 @@ DEFINE_RTTI_DATA4(basic_istringstream_char, sizeof(basic_istringstream_char),
         &basic_ostream_char_rtti_base_descriptor, &basic_ios_char_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
         ".?AV?$basic_istringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@");
+DEFINE_RTTI_DATA8(basic_stringstream_char, sizeof(basic_stringstream_char),
+        &basic_istream_char_rtti_base_descriptor, &basic_ios_char_rtti_base_descriptor,
+        &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
+        &basic_ostream_char_rtti_base_descriptor, &basic_ios_char_rtti_base_descriptor,
+        &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
+        ".?AV?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@");
 
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
@@ -425,6 +446,7 @@ void __asm_dummy_vtables(void) {
     __ASM_VTABLE(basic_fstream_char, "");
     __ASM_VTABLE(basic_ostringstream_char, "");
     __ASM_VTABLE(basic_istringstream_char, "");
+    __ASM_VTABLE(basic_stringstream_char, "");
 #ifndef __GNUC__
 }
 #endif
@@ -8310,6 +8332,138 @@ void __thiscall basic_istringstream_char_str_set(basic_istringstream_char *this,
 /* ?str@?$basic_istringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
 DEFINE_THISCALL_WRAPPER(basic_istringstream_char_str_get, 8)
 basic_string_char* __thiscall basic_istringstream_char_str_get(const basic_istringstream_char *this, basic_string_char *ret)
+{
+    TRACE("(%p %p)\n", this, ret);
+    return basic_stringbuf_char_str_get(&this->strbuf, ret);
+}
+
+/* ??0?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@H@Z */
+/* ??0?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@H@Z */
+DEFINE_THISCALL_WRAPPER(basic_stringstream_char_ctor_str, 16)
+basic_stringstream_char* __thiscall basic_stringstream_char_ctor_str(basic_stringstream_char *this,
+        const basic_string_char *str, int mode, MSVCP_bool virt_init)
+{
+    basic_ios_char *basic_ios;
+
+    TRACE("(%p %p %d %d)\n", this, str, mode, virt_init);
+
+    if(virt_init) {
+        this->base.base1.vbtable = basic_stringstream_char_vbtable1;
+        this->base.base2.vbtable = basic_stringstream_char_vbtable2;
+        basic_ios = basic_istream_char_get_basic_ios(&this->base.base1);
+        basic_ios_char_ctor(basic_ios);
+    }else {
+        basic_ios = basic_istream_char_get_basic_ios(&this->base.base1);
+    }
+
+    basic_stringbuf_char_ctor_str(&this->strbuf, str, mode);
+    basic_iostream_char_ctor(&this->base, &this->strbuf.base, FALSE);
+    basic_ios->base.vtable = &MSVCP_basic_stringstream_char_vtable;
+    return this;
+}
+
+/* ??0?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@H@Z */
+/* ??0?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@H@Z */
+DEFINE_THISCALL_WRAPPER(basic_stringstream_char_ctor_mode, 12)
+basic_stringstream_char* __thiscall basic_stringstream_char_ctor_mode(
+        basic_stringstream_char *this, int mode, MSVCP_bool virt_init)
+{
+    basic_ios_char *basic_ios;
+
+    TRACE("(%p %d %d)\n", this, mode, virt_init);
+
+    if(virt_init) {
+        this->base.base1.vbtable = basic_stringstream_char_vbtable1;
+        this->base.base2.vbtable = basic_stringstream_char_vbtable2;
+        basic_ios = basic_istream_char_get_basic_ios(&this->base.base1);
+        basic_ios_char_ctor(basic_ios);
+    }else {
+        basic_ios = basic_istream_char_get_basic_ios(&this->base.base1);
+    }
+
+    basic_stringbuf_char_ctor_mode(&this->strbuf, mode);
+    basic_iostream_char_ctor(&this->base, &this->strbuf.base, FALSE);
+    basic_ios->base.vtable = &MSVCP_basic_stringstream_char_vtable;
+    return this;
+}
+
+/* ??_F?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEXXZ */
+/* ??_F?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(basic_stringstream_char_ctor, 8)
+basic_stringstream_char* __thiscall basic_stringstream_char_ctor(
+        basic_stringstream_char *this, MSVCP_bool virt_init)
+{
+    return basic_stringstream_char_ctor_mode(
+            this, OPENMODE_out|OPENMODE_in, virt_init);
+}
+
+/* ??1?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@UAE@XZ */
+/* ??1?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@UEAA@XZ */
+DEFINE_THISCALL_WRAPPER(basic_stringstream_char_dtor, 4)
+void __thiscall basic_stringstream_char_dtor(basic_stringstream_char *this)
+{
+    TRACE("(%p)\n", this);
+
+    basic_iostream_char_dtor(&this->base);
+    basic_stringbuf_char_dtor(&this->strbuf);
+}
+
+/* ??_D?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEXXZ */
+/* ??_D?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(basic_stringstream_char_vbase_dtor, 4)
+void __thiscall basic_stringstream_char_vbase_dtor(basic_stringstream_char *this)
+{
+    TRACE("(%p)\n", this);
+
+    basic_stringstream_char_dtor(this);
+    basic_ios_char_dtor(basic_istream_char_get_basic_ios(&this->base.base1));
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_stringstream_char_vector_dtor, 8)
+basic_stringstream_char* __thiscall MSVCP_basic_stringstream_char_vector_dtor(basic_ios_char *base, unsigned int flags)
+{
+    basic_stringstream_char *this = (basic_stringstream_char *)((char*)base - basic_stringstream_char_vbtable1[1] + basic_stringstream_char_vbtable1[0]);
+
+    TRACE("(%p %x)\n", this, flags);
+
+    if(flags & 2) {
+        /* we have an array, with the number of elements stored before the first object */
+        int i, *ptr = (int *)this-1;
+
+        for(i=*ptr-1; i>=0; i--)
+            basic_stringstream_char_vbase_dtor(this+i);
+        MSVCRT_operator_delete(ptr);
+    } else {
+        basic_stringstream_char_vbase_dtor(this);
+        if(flags & 1)
+            MSVCRT_operator_delete(this);
+    }
+
+    return this;
+}
+
+/* ?rdbuf@?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEPAV?$basic_stringbuf@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
+/* ?rdbuf@?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBAPEAV?$basic_stringbuf@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
+DEFINE_THISCALL_WRAPPER(basic_stringstream_char_rdbuf, 4)
+basic_stringbuf_char* __thiscall basic_stringstream_char_rdbuf(const basic_stringstream_char *this)
+{
+    TRACE("(%p)\n", this);
+    return (basic_stringbuf_char*)&this->strbuf;
+}
+
+/* ?str@?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEXABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@@Z */
+/* ?str@?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAXAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@@Z */
+DEFINE_THISCALL_WRAPPER(basic_stringstream_char_str_set, 8)
+void __thiscall basic_stringstream_char_str_set(basic_stringstream_char *this, const basic_string_char *str)
+{
+    TRACE("(%p %p)\n", this, str);
+    basic_stringbuf_char_str_set(&this->strbuf, str);
+}
+
+/* ?str@?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
+/* ?str@?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
+DEFINE_THISCALL_WRAPPER(basic_stringstream_char_str_get, 8)
+basic_string_char* __thiscall basic_stringstream_char_str_get(const basic_stringstream_char *this, basic_string_char *ret)
 {
     TRACE("(%p %p)\n", this, ret);
     return basic_stringbuf_char_str_get(&this->strbuf, ret);
