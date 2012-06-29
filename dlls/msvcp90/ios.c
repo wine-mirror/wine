@@ -165,6 +165,14 @@ typedef struct {
      */
 } basic_fstream_char;
 
+typedef struct {
+    basic_ostream_char base;
+    basic_stringbuf_char strbuf;
+    /* virtual inheritance
+     * basic_ios_char basic_ios;
+     */
+} basic_ostringstream_char;
+
 extern const vtable_ptr MSVCP_iosb_vtable;
 
 /* ??_7ios_base@std@@6B@ */
@@ -245,6 +253,11 @@ const int basic_fstream_char_vbtable2[] = {0, sizeof(basic_fstream_char)-FIELD_O
 /* ??_7?$basic_fstream@DU?$char_traits@D@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_fstream_char_vtable;
 
+/* ??_8?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@7B@ */
+const int basic_ostringstream_char_vbtable[] = {0, sizeof(basic_ostringstream_char)};
+/* ??_7?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@6B@ */
+extern const vtable_ptr MSVCP_basic_ostringstream_char_vtable;
+
 DEFINE_RTTI_DATA0(iosb, 0, ".?AV?$_Iosb@H@std@@");
 DEFINE_RTTI_DATA1(ios_base, 0, &iosb_rtti_base_descriptor, ".?AV?$_Iosb@H@std@@");
 DEFINE_RTTI_DATA2(basic_ios_char, 0, &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
@@ -301,6 +314,10 @@ DEFINE_RTTI_DATA9(basic_fstream_char, sizeof(basic_fstream_char), &basic_istream
         &basic_ostream_char_rtti_base_descriptor, &basic_ios_char_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
         ".?AV?$basic_fstream@DU?$char_traits@D@std@@@std@@");
+DEFINE_RTTI_DATA4(basic_ostringstream_char, sizeof(basic_ostringstream_char),
+        &basic_ostream_char_rtti_base_descriptor, &basic_ios_char_rtti_base_descriptor,
+        &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
+        ".?AV?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@");
 
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
@@ -389,6 +406,7 @@ void __asm_dummy_vtables(void) {
     __ASM_VTABLE(basic_ofstream_char, "");
     __ASM_VTABLE(basic_ifstream_char, "");
     __ASM_VTABLE(basic_fstream_char, "");
+    __ASM_VTABLE(basic_ostringstream_char, "");
 #ifndef __GNUC__
 }
 #endif
@@ -2521,7 +2539,7 @@ void __thiscall basic_stringbuf_char__Init(basic_stringbuf_char *this, const cha
 /* ??0?$basic_stringbuf@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@H@Z */
 DEFINE_THISCALL_WRAPPER(basic_stringbuf_char_ctor_str, 12)
 basic_stringbuf_char* __thiscall basic_stringbuf_char_ctor_str(basic_stringbuf_char *this,
-        basic_string_char *str, IOSB_openmode mode)
+        const basic_string_char *str, IOSB_openmode mode)
 {
     TRACE("(%p %p %d)\n", this, str, mode);
 
@@ -2789,7 +2807,7 @@ fpos_int* __thiscall basic_stringbuf_char_seekpos(basic_stringbuf_char *this,
 /* ?str@?$basic_stringbuf@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEXABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@@Z */
 /* ?str@?$basic_stringbuf@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAXAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@@Z */
 DEFINE_THISCALL_WRAPPER(basic_stringbuf_char_str_set, 8)
-void __thiscall basic_stringbuf_char_str_set(basic_stringbuf_char *this, basic_string_char *str)
+void __thiscall basic_stringbuf_char_str_set(basic_stringbuf_char *this, const basic_string_char *str)
 {
     TRACE("(%p %p)\n", this, str);
 
@@ -2799,9 +2817,8 @@ void __thiscall basic_stringbuf_char_str_set(basic_stringbuf_char *this, basic_s
 
 /* ?str@?$basic_stringbuf@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
 /* ?str@?$basic_stringbuf@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
-
 DEFINE_THISCALL_WRAPPER(basic_stringbuf_char_str_get, 8)
-basic_string_char* __thiscall basic_stringbuf_char_str_get(basic_stringbuf_char *this, basic_string_char *ret)
+basic_string_char* __thiscall basic_stringbuf_char_str_get(const basic_stringbuf_char *this, basic_string_char *ret)
 {
     char *ptr;
 
@@ -8020,6 +8037,135 @@ basic_filebuf_char* __thiscall basic_fstream_char_rdbuf(const basic_fstream_char
 {
     TRACE("(%p)\n", this);
     return (basic_filebuf_char*)&this->filebuf;
+}
+
+/* ??0?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@H@Z */
+/* ??0?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@H@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostringstream_char_ctor_str, 16)
+basic_ostringstream_char* __thiscall basic_ostringstream_char_ctor_str(basic_ostringstream_char *this,
+        const basic_string_char *str, int mode, MSVCP_bool virt_init)
+{
+    basic_ios_char *basic_ios;
+
+    TRACE("(%p %p %d %d)\n", this, str, mode, virt_init);
+
+    if(virt_init) {
+        this->base.vbtable = basic_ostringstream_char_vbtable;
+        basic_ios = basic_ostream_char_get_basic_ios(&this->base);
+        basic_ios_char_ctor(basic_ios);
+    }else {
+        basic_ios = basic_ostream_char_get_basic_ios(&this->base);
+    }
+
+    basic_stringbuf_char_ctor_str(&this->strbuf, str, mode|OPENMODE_out);
+    basic_ostream_char_ctor(&this->base, &this->strbuf.base, FALSE, FALSE);
+    basic_ios->base.vtable = &MSVCP_basic_ostringstream_char_vtable;
+    return this;
+}
+
+/* ??0?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@H@Z */
+/* ??0?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@H@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostringstream_char_ctor_mode, 12)
+basic_ostringstream_char* __thiscall basic_ostringstream_char_ctor_mode(
+        basic_ostringstream_char *this, int mode, MSVCP_bool virt_init)
+{
+    basic_ios_char *basic_ios;
+
+    TRACE("(%p %d %d)\n", this, mode, virt_init);
+
+    if(virt_init) {
+        this->base.vbtable = basic_ostringstream_char_vbtable;
+        basic_ios = basic_ostream_char_get_basic_ios(&this->base);
+        basic_ios_char_ctor(basic_ios);
+    }else {
+        basic_ios = basic_ostream_char_get_basic_ios(&this->base);
+    }
+
+    basic_stringbuf_char_ctor_mode(&this->strbuf, mode|OPENMODE_out);
+    basic_ostream_char_ctor(&this->base, &this->strbuf.base, FALSE, FALSE);
+    basic_ios->base.vtable = &MSVCP_basic_ostringstream_char_vtable;
+    return this;
+}
+
+/* ??_F?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEXXZ */
+/* ??_F?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(basic_ostringstream_char_ctor, 8)
+basic_ostringstream_char* __thiscall basic_ostringstream_char_ctor(
+        basic_ostringstream_char *this, MSVCP_bool virt_init)
+{
+    return basic_ostringstream_char_ctor_mode(this, 0, virt_init);
+}
+
+/* ??1?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@UAE@XZ */
+/* ??1?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@UEAA@XZ */
+DEFINE_THISCALL_WRAPPER(basic_ostringstream_char_dtor, 4)
+void __thiscall basic_ostringstream_char_dtor(basic_ostringstream_char *this)
+{
+    TRACE("(%p)\n", this);
+
+    basic_stringbuf_char_dtor(&this->strbuf);
+    basic_ostream_char_dtor(&this->base);
+}
+
+/* ??_D?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEXXZ */
+/* ??_D?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(basic_ostringstream_char_vbase_dtor, 4)
+void __thiscall basic_ostringstream_char_vbase_dtor(basic_ostringstream_char *this)
+{
+    TRACE("(%p)\n", this);
+
+    basic_ostringstream_char_dtor(this);
+    basic_ios_char_dtor(basic_ostream_char_get_basic_ios(&this->base));
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_ostringstream_char_vector_dtor, 8)
+basic_ostringstream_char* __thiscall MSVCP_basic_ostringstream_char_vector_dtor(basic_ios_char *base, unsigned int flags)
+{
+    basic_ostringstream_char *this = (basic_ostringstream_char *)((char*)base - basic_ostringstream_char_vbtable[1] + basic_ostringstream_char_vbtable[0]);
+
+    TRACE("(%p %x)\n", this, flags);
+
+    if(flags & 2) {
+        /* we have an array, with the number of elements stored before the first object */
+        int i, *ptr = (int *)this-1;
+
+        for(i=*ptr-1; i>=0; i--)
+            basic_ostringstream_char_vbase_dtor(this+i);
+        MSVCRT_operator_delete(ptr);
+    } else {
+        basic_ostringstream_char_vbase_dtor(this);
+        if(flags & 1)
+            MSVCRT_operator_delete(this);
+    }
+
+    return this;
+}
+
+/* ?rdbuf@?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEPAV?$basic_stringbuf@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
+/* ?rdbuf@?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBAPEAV?$basic_stringbuf@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
+DEFINE_THISCALL_WRAPPER(basic_ostringstream_char_rdbuf, 4)
+basic_stringbuf_char* __thiscall basic_ostringstream_char_rdbuf(const basic_ostringstream_char *this)
+{
+    TRACE("(%p)\n", this);
+    return (basic_stringbuf_char*)&this->strbuf;
+}
+
+/* ?str@?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEXABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@@Z */
+/* ?str@?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAXAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostringstream_char_str_set, 8)
+void __thiscall basic_ostringstream_char_str_set(basic_ostringstream_char *this, const basic_string_char *str)
+{
+    TRACE("(%p %p)\n", this, str);
+    basic_stringbuf_char_str_set(&this->strbuf, str);
+}
+
+/* ?str@?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
+/* ?str@?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
+DEFINE_THISCALL_WRAPPER(basic_ostringstream_char_str_get, 8)
+basic_string_char* __thiscall basic_ostringstream_char_str_get(const basic_ostringstream_char *this, basic_string_char *ret)
+{
+    TRACE("(%p %p)\n", this, ret);
+    return basic_stringbuf_char_str_get(&this->strbuf, ret);
 }
 
 static void __cdecl setprecision_func(ios_base *base, streamsize prec)
