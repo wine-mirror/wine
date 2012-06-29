@@ -2671,6 +2671,7 @@ static inline IDirect3DRMFrameImpl *unsafe_impl_from_IDirect3DRMFrame3(IDirect3D
 HRESULT Direct3DRMFrame_create(REFIID riid, IUnknown* parent, IUnknown** ret_iface)
 {
     IDirect3DRMFrameImpl* object;
+    HRESULT hr;
 
     TRACE("(%s, %p, %p)\n", wine_dbgstr_guid(riid), parent, ret_iface);
 
@@ -2687,18 +2688,18 @@ HRESULT Direct3DRMFrame_create(REFIID riid, IUnknown* parent, IUnknown** ret_ifa
 
     memcpy(&object->transform[0][0], &identity[0][0], sizeof(D3DRMMATRIX4D));
 
-    if (IsEqualGUID(riid, &IID_IDirect3DRMFrame3))
+    if (parent)
     {
-        if (parent)
-            IDirect3DRMFrame3_AddChild((IDirect3DRMFrame3*)parent, &object->IDirect3DRMFrame3_iface);
-        *ret_iface = (IUnknown*)&object->IDirect3DRMFrame3_iface;
-    }
-    else
-    {
-        if (parent)
-            IDirect3DRMFrame2_AddChild((IDirect3DRMFrame2*)parent, (IDirect3DRMFrame*)&object->IDirect3DRMFrame2_iface);
-        *ret_iface = (IUnknown*)&object->IDirect3DRMFrame2_iface;
+        IDirect3DRMFrame3 *p;
+
+        hr = IDirect3DRMFrame_QueryInterface(parent, &IID_IDirect3DRMFrame3, (void**)&p);
+        if (hr != S_OK)
+            return hr;
+        IDirect3DRMFrame_Release(parent);
+        IDirect3DRMFrame3_AddChild(p, &object->IDirect3DRMFrame3_iface);
     }
 
+    hr = IDirect3DRMFrame3_QueryInterface(&object->IDirect3DRMFrame3_iface, riid, (void**)ret_iface);
+    IDirect3DRMFrame3_Release(&object->IDirect3DRMFrame3_iface);
     return S_OK;
 }
