@@ -977,6 +977,144 @@ HRESULT WINAPI D3DXCreateVolumeTexture(LPDIRECT3DDEVICE9 device,
                                                 usage, format, pool, texture, NULL);
 }
 
+HRESULT WINAPI D3DXCreateVolumeTextureFromFileA(IDirect3DDevice9 *device,
+                                                const char *filename,
+                                                IDirect3DVolumeTexture9 **volume_texture)
+{
+    int len;
+    HRESULT hr;
+    void *data;
+    DWORD data_size;
+    WCHAR *filenameW;
+
+    TRACE("(%p, %s, %p): relay\n",
+            device, debugstr_a(filename), volume_texture);
+
+    if (!filename) return D3DERR_INVALIDCALL;
+
+    len = MultiByteToWideChar(CP_ACP, 0, filename, -1, NULL, 0);
+    filenameW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    if (!filenameW) return E_OUTOFMEMORY;
+    MultiByteToWideChar(CP_ACP, 0, filename, -1, filenameW, len);
+
+    hr = map_view_of_file(filenameW, &data, &data_size);
+    HeapFree(GetProcessHeap(), 0, filenameW);
+    if (FAILED(hr)) return D3DXERR_INVALIDDATA;
+
+    hr = D3DXCreateVolumeTextureFromFileInMemoryEx(device, data, data_size, D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT,
+            D3DX_DEFAULT, 0, D3DFMT_UNKNOWN, D3DPOOL_MANAGED, D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, NULL, volume_texture);
+
+    UnmapViewOfFile(data);
+    return hr;
+}
+
+HRESULT WINAPI D3DXCreateVolumeTextureFromFileW(IDirect3DDevice9 *device,
+                                                const WCHAR *filename,
+                                                IDirect3DVolumeTexture9 **volume_texture)
+{
+    HRESULT hr;
+    void *data;
+    DWORD data_size;
+
+    TRACE("(%p, %s, %p): relay\n",
+            device, debugstr_w(filename), volume_texture);
+
+    if (!filename) return D3DERR_INVALIDCALL;
+
+    hr = map_view_of_file(filename, &data, &data_size);
+    if (FAILED(hr)) return D3DXERR_INVALIDDATA;
+
+    hr = D3DXCreateVolumeTextureFromFileInMemoryEx(device, data, data_size, D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT,
+            D3DX_DEFAULT, 0, D3DFMT_UNKNOWN, D3DPOOL_MANAGED, D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, NULL, volume_texture);
+
+    UnmapViewOfFile(data);
+    return hr;
+}
+
+HRESULT WINAPI D3DXCreateVolumeTextureFromFileExA(IDirect3DDevice9 *device,
+                                                  const char *filename,
+                                                  UINT width,
+                                                  UINT height,
+                                                  UINT depth,
+                                                  UINT mip_levels,
+                                                  DWORD usage,
+                                                  D3DFORMAT format,
+                                                  D3DPOOL pool,
+                                                  DWORD filter,
+                                                  DWORD mip_filter,
+                                                  D3DCOLOR color_key,
+                                                  D3DXIMAGE_INFO *src_info,
+                                                  PALETTEENTRY *palette,
+                                                  IDirect3DVolumeTexture9 **volume_texture)
+{
+    int len;
+    HRESULT hr;
+    WCHAR *filenameW;
+    void *data;
+    DWORD data_size;
+
+    TRACE("(%p, %s, %u, %u, %u, %u, %#x, %#x, %#x, %#x, %#x, %#x, %p, %p, %p): relay\n",
+            device, debugstr_a(filename), width, height, depth, mip_levels,
+            usage, format, pool, filter, mip_filter, color_key, src_info,
+            palette, volume_texture);
+
+    if (!filename) return D3DERR_INVALIDCALL;
+
+    len = MultiByteToWideChar(CP_ACP, 0, filename, -1, NULL, 0);
+    filenameW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    if (!filenameW) return E_OUTOFMEMORY;
+    MultiByteToWideChar(CP_ACP, 0, filename, -1, filenameW, len);
+
+    hr = map_view_of_file(filenameW, &data, &data_size);
+    HeapFree(GetProcessHeap(), 0, filenameW);
+    if (FAILED(hr)) return D3DXERR_INVALIDDATA;
+
+    hr = D3DXCreateVolumeTextureFromFileInMemoryEx(device, data, data_size, width, height, depth,
+            mip_levels, usage, format, pool, filter, mip_filter, color_key, src_info, palette,
+            volume_texture);
+
+    UnmapViewOfFile(data);
+    return hr;
+}
+
+HRESULT WINAPI D3DXCreateVolumeTextureFromFileExW(IDirect3DDevice9 *device,
+                                                  const WCHAR *filename,
+                                                  UINT width,
+                                                  UINT height,
+                                                  UINT depth,
+                                                  UINT mip_levels,
+                                                  DWORD usage,
+                                                  D3DFORMAT format,
+                                                  D3DPOOL pool,
+                                                  DWORD filter,
+                                                  DWORD mip_filter,
+                                                  D3DCOLOR color_key,
+                                                  D3DXIMAGE_INFO *src_info,
+                                                  PALETTEENTRY *palette,
+                                                  IDirect3DVolumeTexture9 **volume_texture)
+{
+    HRESULT hr;
+    void *data;
+    DWORD data_size;
+
+    TRACE("(%p, %s, %u, %u, %u, %u, %#x, %#x, %#x, %#x, %#x, %#x, %p, %p, %p): relay\n",
+            device, debugstr_w(filename), width, height, depth, mip_levels,
+            usage, format, pool, filter, mip_filter, color_key, src_info,
+            palette, volume_texture);
+
+    if (!filename) return D3DERR_INVALIDCALL;
+
+    hr = map_view_of_file(filename, &data, &data_size);
+    if (FAILED(hr)) return D3DXERR_INVALIDDATA;
+
+    hr = D3DXCreateVolumeTextureFromFileInMemoryEx(device, data, data_size, width, height, depth,
+            mip_levels, usage, format, pool, filter, mip_filter, color_key, src_info, palette,
+            volume_texture);
+
+    UnmapViewOfFile(data);
+    return hr;
+}
+
 HRESULT WINAPI D3DXCreateVolumeTextureFromFileInMemory(IDirect3DDevice9 *device,
                                                        const void *data,
                                                        UINT data_size,
