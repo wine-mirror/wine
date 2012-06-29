@@ -106,8 +106,12 @@ static HRESULT WINAPI client_security_SetBlanket(
     void *pAuthInfo,
     DWORD Capabilities )
 {
+    static const OLECHAR defaultW[] =
+        {'<','C','O','L','E','_','D','E','F','A','U','L','T','_','P','R','I','N','C','I','P','A','L','>',0};
+    const OLECHAR *princname = (pServerPrincName == COLE_DEFAULT_PRINCIPAL) ? defaultW : pServerPrincName;
+
     FIXME("%p, %p, %u, %u, %s, %u, %u, %p, 0x%08x\n", iface, pProxy, AuthnSvc, AuthzSvc,
-          debugstr_w(pServerPrincName), AuthnLevel, ImpLevel, pAuthInfo, Capabilities);
+          debugstr_w(princname), AuthnLevel, ImpLevel, pAuthInfo, Capabilities);
     return WBEM_NO_ERROR;
 }
 
