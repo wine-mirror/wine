@@ -3002,6 +3002,7 @@ HRESULT CDECL wined3d_get_adapter_display_mode(const struct wined3d *wined3d, UI
         struct wined3d_display_mode *mode, enum wined3d_display_rotation *rotation)
 {
     const struct wined3d_adapter *adapter;
+    DEVMODEW m;
 
     TRACE("wined3d %p, adapter_idx %u, display_mode %p, rotation %p.\n",
             wined3d, adapter_idx, mode, rotation);
@@ -3011,66 +3012,57 @@ HRESULT CDECL wined3d_get_adapter_display_mode(const struct wined3d *wined3d, UI
 
     adapter = &wined3d->adapters[adapter_idx];
 
-    if (!adapter_idx)
+    memset(&m, 0, sizeof(m));
+    m.dmSize = sizeof(m);
+
+    EnumDisplaySettingsExW(adapter->DeviceName, ENUM_CURRENT_SETTINGS, &m, 0);
+    mode->width = m.dmPelsWidth;
+    mode->height = m.dmPelsHeight;
+    mode->refresh_rate = DEFAULT_REFRESH_RATE;
+    if (m.dmFields & DM_DISPLAYFREQUENCY)
+        mode->refresh_rate = m.dmDisplayFrequency;
+    mode->format_id = pixelformat_for_depth(m.dmBitsPerPel);
+
+    /* Lie about the format. X11 can't change the color depth, and some apps
+     * are pretty angry if they SetDisplayMode from 24 to 16 bpp and find out
+     * that GetDisplayMode still returns 24 bpp. This should probably be
+     * handled in winex11 instead. */
+    if (adapter->screen_format && adapter->screen_format != mode->format_id)
     {
-        DEVMODEW DevModeW;
-
-        ZeroMemory(&DevModeW, sizeof(DevModeW));
-        DevModeW.dmSize = sizeof(DevModeW);
-
-        EnumDisplaySettingsExW(NULL, ENUM_CURRENT_SETTINGS, &DevModeW, 0);
-        mode->width = DevModeW.dmPelsWidth;
-        mode->height = DevModeW.dmPelsHeight;
-        mode->refresh_rate = DEFAULT_REFRESH_RATE;
-        if (DevModeW.dmFields & DM_DISPLAYFREQUENCY)
-            mode->refresh_rate = DevModeW.dmDisplayFrequency;
-        mode->format_id = pixelformat_for_depth(DevModeW.dmBitsPerPel);
-
-        /* Lie about the format. X11 can't change the color depth, and some
-         * apps are pretty angry if they SetDisplayMode from 24 to 16 bpp and
-         * find out that GetDisplayMode still returns 24 bpp. This should
-         * probably be handled in winex11 instead. */
-        if (adapter->screen_format && adapter->screen_format != mode->format_id)
-        {
-            WARN("Overriding format %s with stored format %s.\n",
-                    debug_d3dformat(mode->format_id),
-                    debug_d3dformat(adapter->screen_format));
-            mode->format_id = adapter->screen_format;
-        }
-
-        if (!(DevModeW.dmFields & DM_DISPLAYFLAGS))
-            mode->scanline_ordering = WINED3D_SCANLINE_ORDERING_UNKNOWN;
-        else if (DevModeW.u2.dmDisplayFlags & DM_INTERLACED)
-            mode->scanline_ordering = WINED3D_SCANLINE_ORDERING_INTERLACED;
-        else
-            mode->scanline_ordering = WINED3D_SCANLINE_ORDERING_PROGRESSIVE;
-
-        if (rotation)
-        {
-            switch (DevModeW.u1.s2.dmDisplayOrientation)
-            {
-                case DMDO_DEFAULT:
-                    *rotation = WINED3D_DISPLAY_ROTATION_0;
-                    break;
-                case DMDO_90:
-                    *rotation = WINED3D_DISPLAY_ROTATION_90;
-                    break;
-                case DMDO_180:
-                    *rotation = WINED3D_DISPLAY_ROTATION_180;
-                    break;
-                case DMDO_270:
-                    *rotation = WINED3D_DISPLAY_ROTATION_270;
-                    break;
-                default:
-                    FIXME("Unhandled display rotation %#x.\n", DevModeW.u1.s2.dmDisplayOrientation);
-                    *rotation = WINED3D_DISPLAY_ROTATION_UNSPECIFIED;
-                    break;
-            }
-        }
+        WARN("Overriding format %s with stored format %s.\n",
+                debug_d3dformat(mode->format_id),
+                debug_d3dformat(adapter->screen_format));
+        mode->format_id = adapter->screen_format;
     }
+
+    if (!(m.dmFields & DM_DISPLAYFLAGS))
+        mode->scanline_ordering = WINED3D_SCANLINE_ORDERING_UNKNOWN;
+    else if (m.u2.dmDisplayFlags & DM_INTERLACED)
+        mode->scanline_ordering = WINED3D_SCANLINE_ORDERING_INTERLACED;
     else
+        mode->scanline_ordering = WINED3D_SCANLINE_ORDERING_PROGRESSIVE;
+
+    if (rotation)
     {
-        FIXME("Adapter not primary display.\n");
+        switch (m.u1.s2.dmDisplayOrientation)
+        {
+            case DMDO_DEFAULT:
+                *rotation = WINED3D_DISPLAY_ROTATION_0;
+                break;
+            case DMDO_90:
+                *rotation = WINED3D_DISPLAY_ROTATION_90;
+                break;
+            case DMDO_180:
+                *rotation = WINED3D_DISPLAY_ROTATION_180;
+                break;
+            case DMDO_270:
+                *rotation = WINED3D_DISPLAY_ROTATION_270;
+                break;
+            default:
+                FIXME("Unhandled display rotation %#x.\n", m.u1.s2.dmDisplayOrientation);
+                *rotation = WINED3D_DISPLAY_ROTATION_UNSPECIFIED;
+                break;
+        }
     }
 
     TRACE("Returning %ux%u@%u %s %#x.\n", mode->width, mode->height,
