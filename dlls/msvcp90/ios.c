@@ -2611,17 +2611,80 @@ basic_stringbuf_char* __thiscall MSVCP_basic_stringbuf_char_vector_dtor(basic_st
 DEFINE_THISCALL_WRAPPER(basic_stringbuf_char_overflow, 8)
 int __thiscall basic_stringbuf_char_overflow(basic_stringbuf_char *this, int meta)
 {
-    FIXME("(%p %x) stub\n", this, meta);
-    return 0;
+    MSVCP_size_t oldsize, size;
+    char *ptr, *buf;
+
+    TRACE("(%p %x)\n", this, meta);
+
+    if(meta == EOF)
+        return !EOF;
+    if(this->state & STRINGBUF_no_write)
+        return EOF;
+
+    ptr = basic_streambuf_char_pptr(&this->base);
+    if((this->state&STRINGBUF_append) && ptr<this->seekhigh)
+        basic_streambuf_char_setp_next(&this->base, basic_streambuf_char_pbase(&this->base),
+                this->seekhigh, basic_streambuf_char_epptr(&this->base));
+
+    if(ptr && ptr<basic_streambuf_char_epptr(&this->base))
+        return (*basic_streambuf_char__Pninc(&this->base) = meta);
+
+    oldsize = (ptr ? basic_streambuf_char_epptr(&this->base)-basic_streambuf_char_eback(&this->base): 0);
+    size = oldsize|0xf;
+    size += size/2;
+    buf = MSVCRT_operator_new(size);
+    if(!buf) {
+        ERR("Out of memory\n");
+        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+    }
+
+    if(!oldsize) {
+        this->seekhigh = buf;
+        basic_streambuf_char_setp(&this->base, buf, buf+size);
+        if(this->state & STRINGBUF_no_read)
+            basic_streambuf_char_setg(&this->base, buf, NULL, buf);
+        else
+            basic_streambuf_char_setg(&this->base, buf, buf, buf+1);
+
+        this->state |= STRINGBUF_allocated;
+    }else {
+        ptr = basic_streambuf_char_eback(&this->base);
+        memcpy(buf, ptr, oldsize);
+
+        this->seekhigh = buf+(this->seekhigh-ptr);
+        basic_streambuf_char_setp_next(&this->base, buf,
+                buf+(basic_streambuf_char_pptr(&this->base)-ptr), buf+size);
+        if(this->state & STRINGBUF_no_read)
+            basic_streambuf_char_setg(&this->base, buf, NULL, buf);
+        else
+            basic_streambuf_char_setg(&this->base, buf,
+                    buf+(basic_streambuf_char_gptr(&this->base)-ptr),
+                    basic_streambuf_char_pptr(&this->base)+1);
+
+        MSVCRT_operator_delete(ptr);
+    }
+
+    return (*basic_streambuf_char__Pninc(&this->base) = meta);
 }
 
 /* ?pbackfail@?$basic_stringbuf@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@MAEHH@Z */
 /* ?pbackfail@?$basic_stringbuf@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@MEAAHH@Z */
 DEFINE_THISCALL_WRAPPER(basic_stringbuf_char_pbackfail, 8)
-int __thiscall basic_stringbuf_char_pbackfail(basic_stringbuf_char *this, int type)
+int __thiscall basic_stringbuf_char_pbackfail(basic_stringbuf_char *this, int c)
 {
-    FIXME("(%p %x) stub\n", this, type);
-    return 0;
+    char *cur;
+
+    TRACE("(%p %x)\n", this, c);
+
+    cur = basic_streambuf_char_gptr(&this->base);
+    if(!cur || cur==basic_streambuf_char_eback(&this->base)
+            || (c!=EOF && c!=cur[-1] && this->state&STRINGBUF_no_write))
+        return EOF;
+
+    if(c != EOF)
+        cur[-1] = c;
+    basic_streambuf_char_gbump(&this->base, -1);
+    return c==EOF ? !EOF : c;
 }
 
 /* ?underflow@?$basic_stringbuf@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@MAEHXZ */
@@ -2629,26 +2692,98 @@ int __thiscall basic_stringbuf_char_pbackfail(basic_stringbuf_char *this, int ty
 DEFINE_THISCALL_WRAPPER(basic_stringbuf_char_underflow, 4)
 int __thiscall basic_stringbuf_char_underflow(basic_stringbuf_char *this)
 {
-    FIXME("(%p) stub\n", this);
-    return 0;
+    char *ptr, *cur;
+
+    TRACE("(%p)\n", this);
+
+    cur = basic_streambuf_char_gptr(&this->base);
+    if(!cur || this->state&STRINGBUF_no_read)
+        return EOF;
+
+    ptr  = basic_streambuf_char_pptr(&this->base);
+    if(this->seekhigh < ptr)
+        this->seekhigh = ptr;
+
+    ptr = basic_streambuf_char_egptr(&this->base);
+    if(this->seekhigh > ptr)
+        basic_streambuf_char_setg(&this->base, basic_streambuf_char_eback(&this->base), cur, this->seekhigh);
+
+    if(cur < this->seekhigh)
+        return *cur;
+    return EOF;
 }
 
 /* ?seekoff@?$basic_stringbuf@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@MAE?AV?$fpos@H@2@JHH@Z */
 /* ?seekoff@?$basic_stringbuf@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@MEAA?AV?$fpos@H@2@_JHH@Z */
-DEFINE_THISCALL_WRAPPER(basic_stringbuf_char_seekoff, 16)
-int __thiscall basic_stringbuf_char_seekoff(basic_stringbuf_char *this, int off, int way, int which)
+DEFINE_THISCALL_WRAPPER(basic_stringbuf_char_seekoff, 20)
+fpos_int* __thiscall basic_stringbuf_char_seekoff(basic_stringbuf_char *this,
+        fpos_int *ret, streamoff off, int way, int mode)
 {
-    FIXME("(%p %d %d %d) stub\n", this, off, way, which);
-    return 0;
+    char *beg, *cur_r, *cur_w;
+
+    TRACE("(%p %p %ld %d %d)\n", this, ret, off, way, mode);
+
+    cur_w = basic_streambuf_char_pptr(&this->base);
+    if(cur_w > this->seekhigh)
+        this->seekhigh = cur_w;
+
+    ret->off = 0;
+    ret->state = 0;
+
+    beg = basic_streambuf_char_eback(&this->base);
+    cur_r = basic_streambuf_char_gptr(&this->base);
+    if((mode & OPENMODE_in) && cur_r) {
+        if(way==SEEKDIR_cur && !(mode & OPENMODE_out))
+            off += cur_r-beg;
+        else if(way == SEEKDIR_end)
+            off += this->seekhigh-beg;
+        else if(way != SEEKDIR_beg)
+            off = -1;
+
+        if(off<0 || off>this->seekhigh-beg) {
+            off = -1;
+        }else {
+            basic_streambuf_char_gbump(&this->base, beg-cur_r+off);
+            if((mode & OPENMODE_out) && cur_w) {
+                basic_streambuf_char_setp_next(&this->base, beg,
+                        basic_streambuf_char_gptr(&this->base),
+                        basic_streambuf_char_epptr(&this->base));
+            }
+        }
+    }else if((mode & OPENMODE_out) && cur_w) {
+        if(way == SEEKDIR_cur)
+            off += cur_w-beg;
+        else if(way == SEEKDIR_end)
+            off += this->seekhigh-beg;
+        else if(way != SEEKDIR_beg)
+            off = -1;
+
+        if(off<0 || off>this->seekhigh-beg)
+            off = -1;
+        else
+            basic_streambuf_char_pbump(&this->base, beg-cur_w+off);
+    }else {
+        off = -1;
+    }
+
+    ret->pos = off;
+    return ret;
 }
 
 /* ?seekpos@?$basic_stringbuf@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@MAE?AV?$fpos@H@2@V32@H@Z */
 /* ?seekpos@?$basic_stringbuf@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@MEAA?AV?$fpos@H@2@V32@H@Z */
-DEFINE_THISCALL_WRAPPER(basic_stringbuf_char_seekpos, 12)
-int __thiscall basic_stringbuf_char_seekpos(basic_stringbuf_char *this, int pos_type, int openmode)
+DEFINE_THISCALL_WRAPPER(basic_stringbuf_char_seekpos, 36)
+fpos_int* __thiscall basic_stringbuf_char_seekpos(basic_stringbuf_char *this,
+        fpos_int *ret, fpos_int pos, int mode)
 {
-    FIXME("(%p %d %d) stub\n", this, pos_type, openmode);
-    return 0;
+    TRACE("(%p %p %s %d)\n", this, ret, debugstr_fpos_int(&pos), mode);
+
+    if(pos.off==0 && pos.pos==-1 && pos.state==0) {
+        *ret = pos;
+        return ret;
+    }
+
+    return basic_stringbuf_char_seekoff(this, ret, pos.off, SEEKDIR_beg, mode);
 }
 
 /* ?str@?$basic_stringbuf@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEXABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@@Z */
@@ -2672,24 +2807,21 @@ basic_string_char* __thiscall basic_stringbuf_char_str_get(basic_stringbuf_char 
 
     TRACE("(%p)\n", this);
 
-    if(!(this->state & STRINGBUF_no_read) && basic_streambuf_char_gptr(&this->base)) {
-        ptr = basic_streambuf_char_eback(&this->base);
-        MSVCP_basic_string_char_ctor_cstr_len(ret, ptr, basic_streambuf_char_egptr(&this->base) - ptr);
-        return ret;
-    }
-
     if(!(this->state & STRINGBUF_no_write) && basic_streambuf_char_pptr(&this->base)) {
         char *pptr;
 
         ptr = basic_streambuf_char_pbase(&this->base);
         pptr = basic_streambuf_char_pptr(&this->base);
 
-        MSVCP_basic_string_char_ctor_cstr_len(ret, ptr, (this->seekhigh < pptr ? pptr : this->seekhigh) - ptr);
-        return ret;
+        return MSVCP_basic_string_char_ctor_cstr_len(ret, ptr, (this->seekhigh < pptr ? pptr : this->seekhigh) - ptr);
     }
 
-    MSVCP_basic_string_char_ctor(ret);
-    return ret;
+    if(!(this->state & STRINGBUF_no_read) && basic_streambuf_char_gptr(&this->base)) {
+        ptr = basic_streambuf_char_eback(&this->base);
+        return MSVCP_basic_string_char_ctor_cstr_len(ret, ptr, basic_streambuf_char_egptr(&this->base) - ptr);
+    }
+
+    return MSVCP_basic_string_char_ctor(ret);
 }
 
 /* ??0ios_base@std@@IAE@XZ */
