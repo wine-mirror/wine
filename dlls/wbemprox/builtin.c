@@ -32,6 +32,7 @@
 #include "initguid.h"
 #include "d3d10.h"
 #include "winternl.h"
+#include "winioctl.h"
 
 #include "wine/debug.h"
 #include "wbemprox_private.h"
@@ -42,6 +43,8 @@ static const WCHAR class_biosW[] =
     {'W','i','n','3','2','_','B','I','O','S',0};
 static const WCHAR class_compsysW[] =
     {'W','i','n','3','2','_','C','o','m','p','u','t','e','r','S','y','s','t','e','m',0};
+static const WCHAR class_logicaldiskW[] =
+    {'W','i','n','3','2','_','L','o','g','i','c','a','l','D','i','s','k',0};
 static const WCHAR class_networkadapterW[] =
     {'W','i','n','3','2','_','N','e','t','w','o','r','k','A','d','a','p','t','e','r',0};
 static const WCHAR class_osW[] =
@@ -73,6 +76,12 @@ static const WCHAR prop_descriptionW[] =
     {'D','e','s','c','r','i','p','t','i','o','n',0};
 static const WCHAR prop_deviceidW[] =
     {'D','e','v','i','c','e','I','d',0};
+static const WCHAR prop_drivetypeW[] =
+    {'D','r','i','v','e','T','y','p','e',0};
+static const WCHAR prop_filesystemW[] =
+    {'F','i','l','e','S','y','s','t','e','m',0};
+static const WCHAR prop_freespaceW[] =
+    {'F','r','e','e','S','p','a','c','e',0};
 static const WCHAR prop_handleW[] =
     {'H','a','n','d','l','e',0};
 static const WCHAR prop_interfaceindexW[] =
@@ -103,6 +112,8 @@ static const WCHAR prop_releasedateW[] =
     {'R','e','l','e','a','s','e','D','a','t','e',0};
 static const WCHAR prop_serialnumberW[] =
     {'S','e','r','i','a','l','N','u','m','b','e','r',0};
+static const WCHAR prop_sizeW[] =
+    {'S','i','z','e',0};
 static const WCHAR prop_speedW[] =
     {'S','p','e','e','d',0};
 static const WCHAR prop_systemdirectoryW[] =
@@ -128,6 +139,14 @@ static const struct column col_compsys[] =
     { prop_numlogicalprocessorsW, CIM_UINT32 },
     { prop_numprocessorsW,        CIM_UINT32 },
     { prop_totalphysicalmemoryW,  CIM_UINT64 }
+};
+static const struct column col_logicaldisk[] =
+{
+    { prop_deviceidW,   CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
+    { prop_drivetypeW,  CIM_UINT32 },
+    { prop_filesystemW, CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_freespaceW,  CIM_UINT64 },
+    { prop_sizeW,       CIM_UINT64 }
 };
 static const struct column col_networkadapter[] =
 {
@@ -216,6 +235,14 @@ struct record_computersystem
     UINT32       num_processors;
     UINT64       total_physical_memory;
 };
+struct record_logicaldisk
+{
+    const WCHAR *device_id;
+    UINT32       drivetype;
+    const WCHAR *filesystem;
+    UINT64       freespace;
+    UINT64       size;
+};
 struct record_networkadapter
 {
     const WCHAR *device_id;
@@ -297,6 +324,79 @@ static void fill_compsys( struct table *table )
 
     TRACE("created 1 row\n");
     table->num_rows = 1;
+}
+
+static WCHAR *get_filesystem( const WCHAR *root )
+{
+    static const WCHAR ntfsW[] = {'N','T','F','S',0};
+    WCHAR buffer[MAX_PATH + 1];
+
+    if (GetVolumeInformationW( root, NULL, 0, NULL, NULL, NULL, buffer, MAX_PATH + 1 ))
+        return heap_strdupW( buffer );
+    return heap_strdupW( ntfsW );
+}
+
+static UINT64 get_freespace( const WCHAR *dir, UINT64 *disksize )
+{
+    WCHAR root[] = {'\\','\\','.','\\','A',':',0};
+    ULARGE_INTEGER free;
+    DISK_GEOMETRY_EX info;
+    HANDLE handle;
+
+    free.QuadPart = 512 * 1024 * 1024;
+    GetDiskFreeSpaceExW( dir, NULL, NULL, &free );
+
+    root[4] = dir[0];
+    handle = CreateFileW( root, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0 );
+    if (handle != INVALID_HANDLE_VALUE)
+    {
+        if (DeviceIoControl( handle, IOCTL_DISK_GET_DRIVE_GEOMETRY_EX, NULL, 0, &info, sizeof(info), NULL, NULL ))
+            *disksize = info.DiskSize.QuadPart;
+        CloseHandle( handle );
+    }
+    return free.QuadPart;
+}
+
+static void fill_logicaldisk( struct table *table )
+{
+    static const WCHAR fmtW[] = {'%','c',':',0};
+    WCHAR device_id[3], root[] = {'A',':','\\',0};
+    struct record_logicaldisk *rec;
+    UINT i, num_rows = 0, offset = 0, count = 4, type;
+    UINT64 size = 1024 * 1024 * 1024;
+    DWORD drives = GetLogicalDrives();
+
+    if (!(table->data = heap_alloc( count * sizeof(*rec) ))) return;
+
+    for (i = 0; i < sizeof(drives); i++)
+    {
+        if (drives & (1 << i))
+        {
+            root[0] = 'A' + i;
+            type = GetDriveTypeW( root );
+            if (type != DRIVE_FIXED && type != DRIVE_CDROM && type != DRIVE_REMOVABLE)
+                continue;
+
+            if (num_rows > count)
+            {
+                BYTE *data;
+                count *= 2;
+                if (!(data = heap_realloc( table->data, count * sizeof(*rec) ))) return;
+                table->data = data;
+            }
+            rec = (struct record_logicaldisk *)(table->data + offset);
+            sprintfW( device_id, fmtW, 'A' + i );
+            rec->device_id  = heap_strdupW( device_id );
+            rec->drivetype  = type;
+            rec->filesystem = get_filesystem( root );
+            rec->freespace  = get_freespace( root, &size );
+            rec->size       = size;
+            offset += sizeof(*rec);
+            num_rows++;
+        }
+    }
+    TRACE("created %u rows\n", num_rows);
+    table->num_rows = num_rows;
 }
 
 static UINT16 get_connection_status( IF_OPER_STATUS status )
@@ -534,6 +634,7 @@ static struct table classtable[] =
 {
     { class_biosW, SIZEOF(col_bios), col_bios, SIZEOF(data_bios), (BYTE *)data_bios, NULL },
     { class_compsysW, SIZEOF(col_compsys), col_compsys, 0, NULL, fill_compsys },
+    { class_logicaldiskW, SIZEOF(col_logicaldisk), col_logicaldisk, 0, NULL, fill_logicaldisk },
     { class_networkadapterW, SIZEOF(col_networkadapter), col_networkadapter, 0, NULL, fill_networkadapter },
     { class_osW, SIZEOF(col_os), col_os, 0, NULL, fill_os },
     { class_processW, SIZEOF(col_process), col_process, 0, NULL, fill_process },
