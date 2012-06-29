@@ -702,12 +702,12 @@ HRESULT get_propval( const struct view *view, UINT index, const WCHAR *name, VAR
         V_UI4( ret ) = val;
         break;
     case CIM_SINT64:
-        V_VT( ret ) = VT_I8;
-        V_I8( ret ) = val;
+        V_VT( ret ) = VT_BSTR;
+        V_BSTR( ret ) = get_value_bstr( view->table, row, column );
         break;
     case CIM_UINT64:
-        V_VT( ret ) = VT_UI8;
-        V_UI8( ret ) = val;
+        V_VT( ret ) = VT_BSTR;
+        V_BSTR( ret ) = get_value_bstr( view->table, row, column );
         break;
     default:
         ERR("unhandled column type %u\n", view->table->columns[column].type);
