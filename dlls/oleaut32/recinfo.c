@@ -439,11 +439,18 @@ static HRESULT WINAPI IRecordInfoImpl_GetFieldNames(IRecordInfo *iface, ULONG *p
     return S_OK;
 }
 
-static BOOL WINAPI IRecordInfoImpl_IsMatchingType(IRecordInfo *iface, IRecordInfo *pRecordInfo)
+static BOOL WINAPI IRecordInfoImpl_IsMatchingType(IRecordInfo *iface, IRecordInfo *info2)
 {
     IRecordInfoImpl *This = impl_from_IRecordInfo(iface);
+    GUID guid2;
 
-    FIXME("(%p)->(%p) stub\n", This, pRecordInfo);
+    TRACE( "(%p)->(%p)\n", This, info2 );
+
+    IRecordInfo_GetGuid( info2, &guid2 );
+    if (IsEqualGUID( &This->guid, &guid2 )) return TRUE;
+
+    FIXME( "records have different guids (%s %s) but could still match\n",
+           debugstr_guid( &This->guid ), debugstr_guid( &guid2 ) );
 
     return FALSE;
 }
