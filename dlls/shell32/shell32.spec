@@ -403,6 +403,7 @@
 @ stdcall SHQueryRecycleBinA(str ptr)
 @ stdcall SHQueryRecycleBinW(wstr ptr)
 @ stdcall SHSetLocalizedName(wstr wstr long)
+@ stdcall SHSetUnreadMailCountW(wstr long wstr)
 @ stdcall SHUpdateRecycleBinIcon()
 @ stdcall SheChangeDirA(str)
 @ stub SheChangeDirExA

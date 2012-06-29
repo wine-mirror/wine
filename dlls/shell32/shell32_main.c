@@ -1282,14 +1282,29 @@ LRESULT CALLBACK ShellHookProc(DWORD a, DWORD b, DWORD c)
     return 0;
 }
 
+/***********************************************************************
+ *              SHGetLocalizedName (SHELL32.@)
+ */
 HRESULT WINAPI SHGetLocalizedName(LPCWSTR path, LPWSTR module, UINT size, INT *res)
 {
     FIXME("%s %p %u %p: stub\n", debugstr_w(path), module, size, res);
     return E_NOTIMPL;
 }
 
+/***********************************************************************
+ *              SetCurrentProcessExplicitAppUserModelID (SHELL32.@)
+ */
 HRESULT WINAPI SetCurrentProcessExplicitAppUserModelID(PCWSTR appid)
 {
     FIXME("%s: stub\n", debugstr_w(appid));
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
+ *              SHSetUnreadMailCountW (SHELL32.@)
+ */
+HRESULT WINAPI SHSetUnreadMailCountW(LPCWSTR mailaddress, DWORD count, LPCWSTR executecommand)
+{
+    FIXME("%s %x %s: stub\n", debugstr_w(mailaddress), count, debugstr_w(executecommand));
     return E_NOTIMPL;
 }
