@@ -1359,40 +1359,39 @@ static void test_D3DXCreateVolumeTextureFromFileInMemory(IDirect3DDevice9 *devic
     IDirect3DVolumeTexture9 *volume_texture;
     D3DVOLUME_DESC volume_desc;
 
-    todo_wine {
-        hr = D3DXCreateVolumeTextureFromFileInMemory(NULL, dds_volume_map, sizeof(dds_volume_map), &volume_texture);
-        ok(hr == D3DERR_INVALIDCALL, "D3DXCreateVolumeTextureFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+    hr = D3DXCreateVolumeTextureFromFileInMemory(NULL, dds_volume_map, sizeof(dds_volume_map), &volume_texture);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXCreateVolumeTextureFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
 
-        hr = D3DXCreateVolumeTextureFromFileInMemory(device, NULL, sizeof(dds_volume_map), &volume_texture);
-        ok(hr == D3DERR_INVALIDCALL, "D3DXCreateVolumeTextureFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+    hr = D3DXCreateVolumeTextureFromFileInMemory(device, NULL, sizeof(dds_volume_map), &volume_texture);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXCreateVolumeTextureFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
 
-        hr = D3DXCreateVolumeTextureFromFileInMemory(device, dds_volume_map, 0, &volume_texture);
-        ok(hr == D3DERR_INVALIDCALL, "D3DXCreateVolumeTextureFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+    hr = D3DXCreateVolumeTextureFromFileInMemory(device, dds_volume_map, 0, &volume_texture);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXCreateVolumeTextureFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
 
-        hr = D3DXCreateVolumeTextureFromFileInMemory(device, dds_volume_map, sizeof(dds_volume_map), NULL);
-        ok(hr == D3DERR_INVALIDCALL, "D3DXCreateVolumeTextureFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+    hr = D3DXCreateVolumeTextureFromFileInMemory(device, dds_volume_map, sizeof(dds_volume_map), NULL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXCreateVolumeTextureFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
 
-        hr = D3DXCreateVolumeTextureFromFileInMemory(device, dds_volume_map, sizeof(dds_volume_map), &volume_texture);
-        if (SUCCEEDED(hr))
-        {
-            levelcount = IDirect3DVolumeTexture9_GetLevelCount(volume_texture);
-            ok(levelcount == 3, "GetLevelCount returned %u, expected 3\n", levelcount);
+    hr = D3DXCreateVolumeTextureFromFileInMemory(device, dds_volume_map, sizeof(dds_volume_map), &volume_texture);
+    ok(hr == D3D_OK, "D3DXCreateVolumeTextureFromFileInMemory returned %#x, expected %#x\n", hr, D3D_OK);
+    if (SUCCEEDED(hr))
+    {
+        levelcount = IDirect3DVolumeTexture9_GetLevelCount(volume_texture);
+        ok(levelcount == 3, "GetLevelCount returned %u, expected 3\n", levelcount);
 
-            hr = IDirect3DVolumeTexture9_GetLevelDesc(volume_texture, 0, &volume_desc);
-            ok(hr == D3D_OK, "GetLevelDesc returend %#x, expected %#x\n", hr, D3D_OK);
-            ok(volume_desc.Width == 4, "Got width %u, expected 4\n", volume_desc.Width);
-            ok(volume_desc.Height == 4, "Got height %u, expected 4\n", volume_desc.Height);
-            ok(volume_desc.Depth == 2, "Got depth %u, expected 2\n", volume_desc.Depth);
+        hr = IDirect3DVolumeTexture9_GetLevelDesc(volume_texture, 0, &volume_desc);
+        ok(hr == D3D_OK, "GetLevelDesc returend %#x, expected %#x\n", hr, D3D_OK);
+        ok(volume_desc.Width == 4, "Got width %u, expected 4\n", volume_desc.Width);
+        ok(volume_desc.Height == 4, "Got height %u, expected 4\n", volume_desc.Height);
+        ok(volume_desc.Depth == 2, "Got depth %u, expected 2\n", volume_desc.Depth);
 
-            hr = IDirect3DVolumeTexture9_GetLevelDesc(volume_texture, 1, &volume_desc);
-            ok(hr == D3D_OK, "GetLevelDesc returned %#x, expected %#x\n", hr, D3D_OK);
-            ok(volume_desc.Width == 2, "Got width %u, expected 2\n", volume_desc.Width);
-            ok(volume_desc.Height == 2, "Got height %u, expected 2\n", volume_desc.Height);
-            ok(volume_desc.Depth == 1, "Got depth %u, expected 1\n", volume_desc.Depth);
+        hr = IDirect3DVolumeTexture9_GetLevelDesc(volume_texture, 1, &volume_desc);
+        ok(hr == D3D_OK, "GetLevelDesc returned %#x, expected %#x\n", hr, D3D_OK);
+        ok(volume_desc.Width == 2, "Got width %u, expected 2\n", volume_desc.Width);
+        ok(volume_desc.Height == 2, "Got height %u, expected 2\n", volume_desc.Height);
+        ok(volume_desc.Depth == 1, "Got depth %u, expected 1\n", volume_desc.Depth);
 
-            ref = IDirect3DVolumeTexture9_Release(volume_texture);
-            ok(ref == 0, "Invalid reference count. Got %u, expected 0\n", ref);
-        }
+        ref = IDirect3DVolumeTexture9_Release(volume_texture);
+        ok(ref == 0, "Invalid reference count. Got %u, expected 0\n", ref);
     }
 }
 
