@@ -3186,17 +3186,12 @@ HRESULT CDECL wined3d_get_adapter_identifier(const struct wined3d *wined3d,
     /* Note that d3d8 doesn't supply a device name. */
     if (identifier->device_name_size)
     {
-        static const char *device_name = "\\\\.\\DISPLAY1"; /* FIXME: May depend on desktop? */
-
-        len = strlen(device_name);
-        if (len >= identifier->device_name_size)
+        if (!WideCharToMultiByte(CP_ACP, 0, adapter->DeviceName, -1, identifier->device_name,
+                identifier->device_name_size, NULL, NULL))
         {
-            ERR("Device name size too small.\n");
+            ERR("Failed to convert device name, last error %#x.\n", GetLastError());
             return WINED3DERR_INVALIDCALL;
         }
-
-        memcpy(identifier->device_name, device_name, len);
-        identifier->device_name[len] = '\0';
     }
 
     identifier->driver_version.u.HighPart = adapter->driver_info.version_high;
