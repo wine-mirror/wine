@@ -132,7 +132,7 @@ static const struct column col_compsys[] =
 static const struct column col_networkadapter[] =
 {
     { prop_deviceidW,            CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
-    { prop_interfaceindexW,      CIM_SINT32 },
+    { prop_interfaceindexW,      CIM_UINT32 },
     { prop_netconnectionstatusW, CIM_UINT16 },
     { prop_speedW,               CIM_UINT64 }
 };
