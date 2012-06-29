@@ -3127,7 +3127,7 @@ HRESULT CDECL wined3d_set_adapter_display_mode(struct wined3d *wined3d,
         return WINED3D_OK;
     }
 
-    ret = ChangeDisplaySettingsExW(NULL, &devmode, NULL, CDS_FULLSCREEN, NULL);
+    ret = ChangeDisplaySettingsExW(adapter->DeviceName, &devmode, NULL, CDS_FULLSCREEN, NULL);
     if (ret != DISP_CHANGE_SUCCESSFUL)
     {
         if (devmode.dmDisplayFrequency)
@@ -3135,7 +3135,7 @@ HRESULT CDECL wined3d_set_adapter_display_mode(struct wined3d *wined3d,
             WARN("ChangeDisplaySettingsExW failed, trying without the refresh rate.\n");
             devmode.dmFields &= ~DM_DISPLAYFREQUENCY;
             devmode.dmDisplayFrequency = 0;
-            ret = ChangeDisplaySettingsExW(NULL, &devmode, NULL, CDS_FULLSCREEN, NULL);
+            ret = ChangeDisplaySettingsExW(adapter->DeviceName, &devmode, NULL, CDS_FULLSCREEN, NULL);
         }
         if (ret != DISP_CHANGE_SUCCESSFUL)
             return WINED3DERR_NOTAVAILABLE;
