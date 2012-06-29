@@ -131,8 +131,9 @@ msgstr ""
 "gebruik maken van embedded HTML. Wine kan het automatisch voor u downloaden "
 "en installeren.\n"
 "\n"
-"Noot: Het wordt aanbevolen om distributiepakketten te gebruiken. Zie <a "
-"href=http://wiki.winehq.org/Gecko</a> voor details."
+"Noot: Het wordt aanbevolen om distributiepakketten te gebruiken. Zie <a href="
+"\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> voor "
+"details."
 
 #: appwiz.rc:106 appwiz.rc:121
 msgid "&Install"
@@ -186,8 +187,9 @@ msgstr ""
 "gebruik maken van embedded HTML. Wine kan het automatisch voor u downloaden "
 "en installeren.\n"
 "\n"
-"Noot: Het wordt aanbevolen om distributiepakketten te gebruiken. Zie <a "
-"href=http://wiki.winehq.org/Gecko voor details."
+"Noot: Het wordt aanbevolen om distributiepakketten te gebruiken. Zie <a href="
+"\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> voor "
+"details."
 
 #: appwiz.rc:28
 msgid "Add/Remove Programs"
