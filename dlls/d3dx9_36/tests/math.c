@@ -2444,6 +2444,34 @@ static void test_D3DXSHMultiply3(void)
         ok(relative_error(c[i], expected[i]) < admitted_error, "Expected[%d] = %f, received = %f\n", i, expected[i], c[i]);
 }
 
+static void test_D3DXSHScale(void)
+{
+    unsigned int i, order;
+    FLOAT a[100], b[100], expected, *received_array;
+
+    for (i = 0; i < 100; i++)
+    {
+        a[i] = i;
+        b[i] = i;
+    }
+
+    for (order = 0; order < 10; order++)
+    {
+        received_array = D3DXSHScale(b, order, a, 5.0f);
+        ok(received_array == b, "Expected %p, received %p", b, received_array);
+
+        for (i = 0; i < 100; i++)
+        {
+            if (i < order * order)
+                expected = 5.0f * a[i];
+            /* D3DXSHScale does not modify the elements of the array after the order * order-th element */
+            else
+                expected = a[i];
+            ok(relative_error(b[i], expected) < admitted_error, "order %d, element %d, expected %f, received %f", order, i, expected, b[i]);
+        }
+    }
+}
+
 START_TEST(math)
 {
     D3DXColorTest();
@@ -2463,4 +2491,5 @@ START_TEST(math)
     test_D3DXSHAdd();
     test_D3DXSHDot();
     test_D3DXSHMultiply3();
+    test_D3DXSHScale();
 }

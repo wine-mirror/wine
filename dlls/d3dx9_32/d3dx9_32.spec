@@ -287,7 +287,7 @@
 @ stdcall D3DXSHPRTCompSuperCluster(ptr ptr long long ptr ptr) d3dx9_36.D3DXSHPRTCompSuperCluster
 @ stdcall D3DXSHRotate(ptr long ptr ptr) d3dx9_36.D3DXSHRotate
 @ stdcall D3DXSHRotateZ(ptr long long ptr) d3dx9_36.D3DXSHRotateZ
-@ stdcall D3DXSHScale(ptr long ptr ptr) d3dx9_36.D3DXSHScale
+@ stdcall D3DXSHScale(ptr long ptr float) d3dx9_36.D3DXSHScale
 @ stdcall D3DXSimplifyMesh(ptr ptr ptr ptr long long ptr) d3dx9_36.D3DXSimplifyMesh
 @ stdcall D3DXSphereBoundProbe(ptr float ptr ptr) d3dx9_36.D3DXSphereBoundProbe
 @ stdcall D3DXSplitMesh(ptr ptr long long ptr ptr ptr ptr ptr) d3dx9_36.D3DXSplitMesh

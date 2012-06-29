@@ -2093,3 +2093,15 @@ FLOAT* WINAPI D3DXSHMultiply3(FLOAT *out, CONST FLOAT *a, CONST FLOAT *b)
 
     return out;
 }
+
+FLOAT* WINAPI D3DXSHScale(FLOAT *out, UINT order, CONST FLOAT *a, CONST FLOAT scale)
+{
+    UINT i;
+
+    TRACE("out %p, order %u, a %p, scale %f\n", out, order, a, scale);
+
+    for (i = 0; i < order * order; i++)
+        out[i] = a[i] * scale;
+
+    return out;
+}

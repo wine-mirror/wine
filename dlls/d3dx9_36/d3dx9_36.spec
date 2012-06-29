@@ -289,7 +289,7 @@
 @ stub D3DXSHPRTCompSuperCluster(ptr ptr long long ptr ptr)
 @ stub D3DXSHRotate(ptr long ptr ptr)
 @ stub D3DXSHRotateZ(ptr long long ptr)
-@ stub D3DXSHScale(ptr long ptr ptr)
+@ stdcall D3DXSHScale(ptr long ptr float)
 @ stub D3DXSimplifyMesh(ptr ptr ptr ptr long long ptr)
 @ stdcall D3DXSphereBoundProbe(ptr float ptr ptr)
 @ stub D3DXSplitMesh(ptr ptr long long ptr ptr ptr ptr ptr)
