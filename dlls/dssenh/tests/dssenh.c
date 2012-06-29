@@ -179,7 +179,225 @@ static void test_acquire_context(void)
         "Expected NTE_EXISTS, got %08x\n", GetLastError());
 }
 
+struct keylength_test {
+    ALG_ID algid;
+    DWORD flags;
+    BOOL expectedResult;
+    DWORD expectedError;
+    BOOL brokenResult;
+    DWORD brokenError;
+};
+
+static const struct keylength_test baseDSS_keylength[] = {
+    /* AT_KEYEXCHANGE is not supported by the base DSS provider */
+    {AT_KEYEXCHANGE, 448 << 16, FALSE, NTE_BAD_ALGID, FALSE, NTE_BAD_FLAGS}, /* WinNT4 and Win2k */
+    {AT_KEYEXCHANGE, 512 << 16, FALSE, NTE_BAD_ALGID, TRUE}, /* success on WinNT4 */
+    {AT_KEYEXCHANGE, 1024 << 16, FALSE, NTE_BAD_ALGID, TRUE}, /* success on WinNT4 */
+    {AT_KEYEXCHANGE, 1088 << 16, FALSE, NTE_BAD_ALGID, FALSE, NTE_BAD_FLAGS},/* WinNT4 and Win2k */
+    /* min 512 max 1024 increment by 64 */
+    {AT_SIGNATURE, 448 << 16, FALSE, NTE_BAD_FLAGS},
+    {AT_SIGNATURE, 512 << 16, TRUE},
+    {AT_SIGNATURE, 513 << 16, FALSE, NTE_FAIL, FALSE, NTE_BAD_FLAGS}, /* WinNT4 and Win2k */
+    {AT_SIGNATURE, 768 << 16, TRUE},
+    {AT_SIGNATURE, 1024 << 16, TRUE},
+    {AT_SIGNATURE, 1088 << 16, FALSE, NTE_BAD_FLAGS},
+    /* CALG_DH_EPHEM is not supported by the base DSS provider */
+    {CALG_DH_EPHEM, 448 << 16, FALSE, NTE_BAD_ALGID, FALSE, NTE_BAD_FLAGS}, /* WinNT4 and Win2k */
+    {CALG_DH_EPHEM, 512 << 16, FALSE, NTE_BAD_ALGID, TRUE}, /* success on WinNT4 */
+    {CALG_DH_EPHEM, 1024 << 16, FALSE, NTE_BAD_ALGID, TRUE}, /* success on WinNT4 */
+    {CALG_DH_EPHEM, 1088 << 16, FALSE, NTE_BAD_ALGID, FALSE, NTE_BAD_FLAGS}, /* WinNT4 and Win2k */
+    /* CALG_DH_SF is not supported by the base DSS provider */
+    {CALG_DH_SF, 448 << 16, FALSE, NTE_BAD_ALGID, FALSE, NTE_BAD_FLAGS}, /* WinNT4 and Win2k */
+    {CALG_DH_SF, 512 << 16, FALSE, NTE_BAD_ALGID, TRUE}, /* success on WinNT4 */
+    {CALG_DH_SF, 1024 << 16, FALSE, NTE_BAD_ALGID, TRUE}, /* success on WinNT4 */
+    {CALG_DH_SF, 1088 << 16, FALSE, NTE_BAD_ALGID, FALSE, NTE_BAD_FLAGS}, /* WinNT4 and Win2k */
+    /* min 512 max 1024, increment by 64 */
+    {CALG_DSS_SIGN, 448 << 16, FALSE, NTE_BAD_FLAGS},
+    {CALG_DSS_SIGN, 512 << 16, TRUE},
+    {CALG_DSS_SIGN, 513 << 16, FALSE, NTE_FAIL, FALSE, NTE_BAD_FLAGS}, /* WinNT4 and Win2k */
+    {CALG_DSS_SIGN, 768 << 16, TRUE},
+    {CALG_DSS_SIGN, 1024 << 16, TRUE},
+    {CALG_DSS_SIGN, 1088 << 16, FALSE, NTE_BAD_FLAGS}
+};
+
+static const struct keylength_test dssDH_keylength[] = {
+    /* min 512 max 1024, increment by 64 */
+    {AT_KEYEXCHANGE, 448 << 16, FALSE, NTE_BAD_FLAGS},
+    {AT_KEYEXCHANGE, 512 << 16, TRUE},
+    {AT_KEYEXCHANGE, 513 << 16, FALSE,  NTE_FAIL, FALSE, NTE_BAD_FLAGS}, /* WinNT4 and Win2k */
+    {AT_KEYEXCHANGE, 768 << 16, TRUE},
+    {AT_KEYEXCHANGE, 1024 << 16, TRUE},
+    {AT_KEYEXCHANGE, 1088 << 16, FALSE, NTE_BAD_FLAGS},
+    {AT_SIGNATURE, 448 << 16, FALSE, NTE_BAD_FLAGS},
+    {AT_SIGNATURE, 512 << 16, TRUE},
+    {AT_SIGNATURE, 513 << 16, FALSE,  NTE_FAIL, FALSE, NTE_BAD_FLAGS}, /* WinNT4 and Win2k */
+    {AT_SIGNATURE, 768 << 16, TRUE},
+    {AT_SIGNATURE, 1024 << 16, TRUE},
+    {AT_SIGNATURE, 1088 << 16, FALSE, NTE_BAD_FLAGS},
+    {CALG_DH_EPHEM, 448 << 16, FALSE, NTE_BAD_FLAGS},
+    {CALG_DH_EPHEM, 512 << 16, TRUE},
+    {CALG_DH_EPHEM, 513 << 16, FALSE,  NTE_FAIL, FALSE, NTE_BAD_FLAGS}, /* WinNT4 and Win2k */
+    {CALG_DH_EPHEM, 768 << 16, TRUE},
+    {CALG_DH_EPHEM, 1024 << 16, TRUE},
+    {CALG_DH_EPHEM, 1088 << 16, FALSE, NTE_BAD_FLAGS},
+    {CALG_DH_SF, 448 << 16, FALSE, NTE_BAD_FLAGS},
+    {CALG_DH_SF, 512 << 16, TRUE},
+    {CALG_DH_SF, 513 << 16, FALSE,  NTE_FAIL, FALSE, NTE_BAD_FLAGS}, /* WinNT4 and Win2k */
+    {CALG_DH_SF, 768 << 16, TRUE},
+    {CALG_DH_SF, 1024 << 16, TRUE},
+    {CALG_DH_SF, 1088 << 16, FALSE, NTE_BAD_FLAGS},
+    {CALG_DSS_SIGN, 448 << 16, FALSE, NTE_BAD_FLAGS},
+    {CALG_DSS_SIGN, 512 << 16, TRUE},
+    {CALG_DSS_SIGN, 513 << 16, FALSE,  NTE_FAIL, FALSE, NTE_BAD_FLAGS}, /* WinNT4 and Win2k */
+    {CALG_DSS_SIGN, 768 << 16, TRUE},
+    {CALG_DSS_SIGN, 1024 << 16, TRUE},
+    {CALG_DSS_SIGN, 1088 << 16, FALSE, NTE_BAD_FLAGS}
+};
+
+static const struct keylength_test dssENH_keylength[] = {
+    /* min 512 max 1024 (AT_KEYEXCHANGE max 4096), increment by 64*/
+    {AT_KEYEXCHANGE, 448 << 16, FALSE, NTE_BAD_FLAGS},
+    {AT_KEYEXCHANGE, 512 << 16, TRUE},
+    {AT_KEYEXCHANGE, 513 << 16, FALSE,  NTE_FAIL, FALSE, NTE_BAD_FLAGS}, /* WinNT4 and Win2k */
+    {AT_KEYEXCHANGE, 768 << 16, TRUE},
+    {AT_KEYEXCHANGE, 1024 << 16, TRUE},
+    {AT_KEYEXCHANGE, 1088 << 16, TRUE},
+    {AT_KEYEXCHANGE, 2048 << 16, TRUE},
+    /* Keylength too large - test bot timeout.
+    {AT_KEYEXCHANGE, 3072 << 16, TRUE},
+    {AT_KEYEXCHANGE, 4096 << 16, TRUE}, */
+    {AT_KEYEXCHANGE, 4160 << 16, FALSE, NTE_BAD_FLAGS},
+    {AT_SIGNATURE, 448 << 16, FALSE, NTE_BAD_FLAGS},
+    {AT_SIGNATURE, 512 << 16, TRUE},
+    {AT_SIGNATURE, 513 << 16, FALSE,  NTE_FAIL, FALSE, NTE_BAD_FLAGS}, /* WinNT4 and Win2k */
+    {AT_SIGNATURE, 768 << 16, TRUE},
+    {AT_SIGNATURE, 1024 << 16, TRUE},
+    {AT_SIGNATURE, 1032 << 16, FALSE, NTE_BAD_FLAGS},
+    {CALG_DH_EPHEM, 448 << 16, FALSE, NTE_BAD_FLAGS},
+    {CALG_DH_EPHEM, 512 << 16, TRUE},
+    {CALG_DH_EPHEM, 513 << 16, FALSE,  NTE_FAIL, FALSE, NTE_BAD_FLAGS}, /* WinNT4 and Win2k */
+    {CALG_DH_EPHEM, 768 << 16, TRUE},
+    {CALG_DH_EPHEM, 1024 << 16, TRUE},
+    {CALG_DH_EPHEM, 1040 << 16, FALSE, NTE_BAD_FLAGS},
+    {CALG_DH_SF, 448 << 16, FALSE, NTE_BAD_FLAGS},
+    {CALG_DH_SF, 512 << 16, TRUE},
+    {CALG_DH_SF, 513 << 16, FALSE,  NTE_FAIL, FALSE, NTE_BAD_FLAGS}, /* WinNT4 and Win2k */
+    {CALG_DH_SF, 768 << 16, TRUE},
+    {CALG_DH_SF, 1024 << 16, TRUE},
+    {CALG_DH_SF, 1032 << 16, FALSE, NTE_BAD_FLAGS},
+    {CALG_DSS_SIGN, 448 << 16, FALSE, NTE_BAD_FLAGS},
+    {CALG_DSS_SIGN, 512 << 16, TRUE},
+    {CALG_DSS_SIGN, 513 << 16, FALSE,  NTE_FAIL, FALSE, NTE_BAD_FLAGS}, /* WinNT4 and Win2k */
+    {CALG_DSS_SIGN, 768 << 16, TRUE},
+    {CALG_DSS_SIGN, 1024 << 16, TRUE},
+    {CALG_DSS_SIGN, 1088 << 16, FALSE, NTE_BAD_FLAGS}
+};
+
+static void test_keylength_array(HCRYPTPROV hProv,const struct keylength_test *tests, int testLen)
+{
+    HCRYPTKEY key;
+    BOOL result;
+    int i;
+
+    for (i = 0; i < testLen; i++)
+    {
+        SetLastError(0xdeadbeef);
+        result = CryptGenKey(hProv, tests[i].algid, tests[i].flags, &key);
+
+        /* success */
+        if(tests[i].expectedResult)
+        {
+            ok(result, "Expected a key, got %08x\n", GetLastError());
+            result = CryptDestroyKey(key);
+            ok(result, "Expected no errors.\n");
+        }
+        else
+        {   /* error but success on older system */
+            if(tests[i].brokenResult)
+                ok((!result && GetLastError() == tests[i].expectedError) ||
+                    broken(result), "Expected a key, got %x.\n", GetLastError());
+            else
+            {
+                /* error */
+                if(!tests[i].brokenError)
+                    ok(!result && GetLastError() == tests[i].expectedError,
+                        "Expected a key, got %x.\n", GetLastError());
+
+                /* error but different error on older system */
+                else
+                    ok(!result && (GetLastError() == tests[i].expectedError ||
+                        broken(GetLastError() == tests[i].brokenError)),
+                        "Expected a key, got %x.\n", GetLastError());
+            }
+        }
+    }
+}
+
+#define TESTLEN(x) (sizeof(x) / sizeof((x)[0]))
+
+static void test_keylength(void)
+{
+    HCRYPTPROV hProv = 0;
+    BOOL result;
+
+    /* acquire base dss provider */
+    result = CryptAcquireContextA(
+        &hProv, NULL, MS_DEF_DSS_PROV_A, PROV_DSS, CRYPT_VERIFYCONTEXT);
+    if(!result)
+    {
+        skip("DSSENH is currently not available, skipping key length tests.\n");
+        return;
+    }
+    ok(result, "Expected no errors.\n");
+
+    /* perform keylength tests */
+    test_keylength_array(hProv, baseDSS_keylength, TESTLEN(baseDSS_keylength));
+
+    result = CryptReleaseContext(hProv, 0);
+    ok(result, "Expected release of CSP provider.\n");
+
+    /* acquire diffie hellman dss provider */
+    result = CryptAcquireContextA(
+        &hProv, NULL, MS_DEF_DSS_DH_PROV, PROV_DSS_DH, CRYPT_VERIFYCONTEXT);
+    ok(result, "Expected no errors.\n");
+
+    /* perform keylength tests */
+    test_keylength_array(hProv, dssDH_keylength, TESTLEN(dssDH_keylength));
+
+    result = CryptReleaseContext(hProv, 0);
+    ok(result, "Expected release of CSP provider.\n");
+
+    /* acquire enhanced dss provider */
+    SetLastError(0xdeadbeef);
+    result = CryptAcquireContextA(
+        &hProv, NULL, MS_ENH_DSS_DH_PROV, PROV_DSS_DH, CRYPT_VERIFYCONTEXT);
+    if(!result && GetLastError() == NTE_KEYSET_NOT_DEF)
+    {
+        win_skip("DSSENH and Schannel provider is broken on WinNT4\n");
+        return;
+    }
+    ok(result, "Expected no errors.\n");
+
+    /* perform keylength tests */
+    test_keylength_array(hProv, dssENH_keylength, TESTLEN(dssENH_keylength));
+
+    result = CryptReleaseContext(hProv, 0);
+    ok(result, "Expected release of CSP provider.\n");
+
+    /* acquire schannel dss provider */
+    result = CryptAcquireContextA(
+        &hProv, NULL, MS_DEF_DH_SCHANNEL_PROV, PROV_DH_SCHANNEL, CRYPT_VERIFYCONTEXT);
+    ok(result, "Expected no errors.\n");
+
+    /* perform keylength tests */
+    test_keylength_array(hProv, dssENH_keylength, TESTLEN(dssENH_keylength));
+
+    result = CryptReleaseContext(hProv, 0);
+    ok(result, "Expected release of CSP provider.\n");
+}
+
 START_TEST(dssenh)
 {
     test_acquire_context();
+    test_keylength();
 }
