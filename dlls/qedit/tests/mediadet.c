@@ -132,7 +132,9 @@ static BOOL init_tests(void)
 static void test_mediadet(void)
 {
     HRESULT hr;
+    struct unk_impl unk_obj = {{&unk_vtbl}, 19, NULL};
     IMediaDet *pM = NULL;
+    ULONG refcount;
     BSTR filename = NULL;
     LONG nstrms = 0;
     LONG strm;
@@ -140,6 +142,22 @@ static void test_mediadet(void)
     double fps;
     int flags;
     int i;
+
+    /* COM aggregation */
+    hr = CoCreateInstance(&CLSID_MediaDet, &unk_obj.IUnknown_iface, CLSCTX_INPROC_SERVER,
+            &IID_IUnknown, (void**)&unk_obj.inner_unk);
+    ok(hr == S_OK, "CoCreateInstance failed: %08x\n", hr);
+
+    hr = IUnknown_QueryInterface(unk_obj.inner_unk, &IID_IMediaDet, (void**)&pM);
+    ok(hr == S_OK, "QueryInterface for IID_IMediaDet failed: %08x\n", hr);
+    refcount = IMediaDet_AddRef(pM);
+    ok(refcount == unk_obj.ref, "MediaDet just pretends to support COM aggregation\n");
+    refcount = IMediaDet_Release(pM);
+    ok(refcount == unk_obj.ref, "MediaDet just pretends to support COM aggregation\n");
+    refcount = IMediaDet_Release(pM);
+    ok(refcount == 19, "Refcount should be back at 19 but is %u\n", refcount);
+
+    IUnknown_Release(unk_obj.inner_unk);
 
     /* test.avi has one video stream.  */
     hr = CoCreateInstance(&CLSID_MediaDet, NULL, CLSCTX_INPROC_SERVER,
