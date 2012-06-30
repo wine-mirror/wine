@@ -513,7 +513,11 @@ static HRESULT WINAPI enumvariant_Next(
 
     /* we need to advance one step more for some reason */
     if (ret_count)
+    {
+        node = NULL;
         IXMLDOMSelection_nextNode(This->selection, &node);
+        if (node) IXMLDOMNode_Release(node);
+    }
 
     return celt == 0 ? S_OK : S_FALSE;
 }
