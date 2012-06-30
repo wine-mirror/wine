@@ -1194,7 +1194,11 @@ BOOL WINAPI WinHttpDetectAutoProxyConfigUrl( DWORD flags, LPWSTR *url )
         set_last_error( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
-    if (flags & WINHTTP_AUTO_DETECT_TYPE_DHCP) FIXME("discovery via DHCP not supported\n");
+    if (flags & WINHTTP_AUTO_DETECT_TYPE_DHCP)
+    {
+        static int fixme_shown;
+        if (!fixme_shown++) FIXME("discovery via DHCP not supported\n");
+    }
     if (flags & WINHTTP_AUTO_DETECT_TYPE_DNS_A)
     {
 #ifdef HAVE_GETADDRINFO
