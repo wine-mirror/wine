@@ -4130,6 +4130,7 @@ static void test_get_childNodes(void)
     IXMLDOMElement *element;
     IUnknown *unk1, *unk2;
     HRESULT hr;
+    VARIANT v;
     BSTR str;
     LONG len;
 
@@ -4153,8 +4154,7 @@ static void test_get_childNodes(void)
     /* refcount tests for IEnumVARIANT support */
     EXPECT_REF(node_list, 1);
     hr = IXMLDOMNodeList_QueryInterface(node_list, &IID_IEnumVARIANT, (void**)&enum1);
-if (hr == S_OK)
-{
+    EXPECT_HR(hr, S_OK);
     EXPECT_REF(node_list, 1);
     EXPECT_REF(enum1, 2);
 
@@ -4199,8 +4199,45 @@ if (hr == S_OK)
     IEnumVARIANT_Release(enum3);
     IEnumVARIANT_Release(enum2);
 
+    /* iteration tests */
+    hr = IXMLDOMNodeList_get_item(node_list, 0, &node);
+    EXPECT_HR(hr, S_OK);
+    hr = IXMLDOMNode_get_nodeName(node, &str);
+    EXPECT_HR(hr, S_OK);
+    ok(!lstrcmpW(str, _bstr_("bs")), "got %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+    IXMLDOMNode_Release(node);
+
+    hr = IXMLDOMNodeList_nextNode(node_list, &node);
+    EXPECT_HR(hr, S_OK);
+    hr = IXMLDOMNode_get_nodeName(node, &str);
+    EXPECT_HR(hr, S_OK);
+    ok(!lstrcmpW(str, _bstr_("bs")), "got %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+    IXMLDOMNode_Release(node);
+
+    V_VT(&v) = VT_EMPTY;
+    hr = IEnumVARIANT_Next(enum1, 1, &v, NULL);
+    EXPECT_HR(hr, S_OK);
+    ok(V_VT(&v) == VT_DISPATCH, "got var type %d\n", V_VT(&v));
+    hr = IDispatch_QueryInterface(V_DISPATCH(&v), &IID_IXMLDOMNode, (void**)&node);
+    EXPECT_HR(hr, S_OK);
+    hr = IXMLDOMNode_get_nodeName(node, &str);
+    EXPECT_HR(hr, S_OK);
+    ok(!lstrcmpW(str, _bstr_("bs")), "got node name %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+    IXMLDOMNode_Release(node);
+    VariantClear(&v);
+
+    hr = IXMLDOMNodeList_nextNode(node_list, &node);
+    EXPECT_HR(hr, S_OK);
+    hr = IXMLDOMNode_get_nodeName(node, &str);
+    EXPECT_HR(hr, S_OK);
+    ok(!lstrcmpW(str, _bstr_("pr")), "got %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+    IXMLDOMNode_Release(node);
+
     IEnumVARIANT_Release(enum1);
-}
 
     hr = IXMLDOMNodeList_get_item( node_list, 2, &node );
     EXPECT_HR(hr, S_OK);

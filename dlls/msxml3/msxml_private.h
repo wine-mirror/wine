@@ -256,6 +256,13 @@ struct nodemap_funcs
     HRESULT (*next_node)(const xmlNodePtr,LONG*,IXMLDOMNode**);
 };
 
+/* used by IEnumVARIANT to access outer object items */
+struct enumvariant_funcs
+{
+    HRESULT (*get_item)(IUnknown*, LONG, IDispatch**);
+    HRESULT (*next)(IUnknown*);
+};
+
 /* constructors */
 extern IUnknown         *create_domdoc( xmlNodePtr ) DECLSPEC_HIDDEN;
 extern IUnknown         *create_xmldoc( void ) DECLSPEC_HIDDEN;
@@ -273,6 +280,7 @@ extern IUnknown         *create_doc_fragment( xmlNodePtr ) DECLSPEC_HIDDEN;
 extern IUnknown         *create_doc_entity_ref( xmlNodePtr ) DECLSPEC_HIDDEN;
 extern IUnknown         *create_doc_type( xmlNodePtr ) DECLSPEC_HIDDEN;
 extern HRESULT           create_selection( xmlNodePtr, xmlChar*, IXMLDOMNodeList** ) DECLSPEC_HIDDEN;
+extern HRESULT           create_enumvariant( IUnknown*, BOOL, const struct enumvariant_funcs*, IEnumVARIANT**) DECLSPEC_HIDDEN;
 
 /* data accessors */
 xmlNodePtr xmlNodePtr_from_domnode( IXMLDOMNode *iface, xmlElementType type ) DECLSPEC_HIDDEN;

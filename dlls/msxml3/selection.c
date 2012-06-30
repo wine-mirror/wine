@@ -59,12 +59,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 int registerNamespaces(xmlXPathContextPtr ctxt);
 xmlChar* XSLPattern_to_XPath(xmlXPathContextPtr ctxt, xmlChar const* xslpat_str);
 
-struct enumvariant_funcs
-{
-    HRESULT (*get_item)(IUnknown*, LONG, IDispatch**);
-    HRESULT (*next)(IUnknown*);
-};
-
 typedef struct
 {
     IEnumVARIANT IEnumVARIANT_iface;
@@ -117,8 +111,6 @@ static inline enumvariant *impl_from_IEnumVARIANT( IEnumVARIANT *iface )
     return CONTAINING_RECORD(iface, enumvariant, IEnumVARIANT_iface);
 }
 
-static HRESULT create_enumvariant(IUnknown*, BOOL, IEnumVARIANT**);
-
 static HRESULT WINAPI domselection_QueryInterface(
     IXMLDOMSelection *iface,
     REFIID riid,
@@ -141,7 +133,7 @@ static HRESULT WINAPI domselection_QueryInterface(
     {
         if (!This->enumvariant)
         {
-            HRESULT hr = create_enumvariant((IUnknown*)iface, FALSE, &This->enumvariant);
+            HRESULT hr = create_enumvariant((IUnknown*)iface, FALSE, &selection_enumvariant, &This->enumvariant);
             if (FAILED(hr)) return hr;
         }
 
@@ -316,7 +308,7 @@ static HRESULT WINAPI domselection_get__newEnum(
 
     TRACE("(%p)->(%p)\n", This, enumv);
 
-    return create_enumvariant((IUnknown*)iface, TRUE, (IEnumVARIANT**)enumv);
+    return create_enumvariant((IUnknown*)iface, TRUE, &selection_enumvariant, (IEnumVARIANT**)enumv);
 }
 
 static HRESULT WINAPI domselection_get_expr(
@@ -577,7 +569,7 @@ static const struct IEnumVARIANTVtbl EnumVARIANTVtbl =
     enumvariant_Clone
 };
 
-static HRESULT create_enumvariant(IUnknown *outer, BOOL own, IEnumVARIANT **penum)
+HRESULT create_enumvariant(IUnknown *outer, BOOL own, const struct enumvariant_funcs *funcs, IEnumVARIANT **penum)
 {
     enumvariant *This;
 
@@ -589,7 +581,7 @@ static HRESULT create_enumvariant(IUnknown *outer, BOOL own, IEnumVARIANT **penu
     This->outer = outer;
     This->own = own;
     This->pos = 0;
-    This->funcs = &selection_enumvariant;
+    This->funcs = funcs;
 
     if (This->own)
         IUnknown_AddRef(This->outer);
