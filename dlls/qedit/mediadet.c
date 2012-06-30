@@ -33,8 +33,10 @@
 WINE_DEFAULT_DEBUG_CHANNEL(qedit);
 
 typedef struct MediaDetImpl {
+    IUnknown IUnknown_inner;
     IMediaDet IMediaDet_iface;
-    LONG refCount;
+    IUnknown *outer_unk;
+    LONG ref;
     IGraphBuilder *graph;
     IBaseFilter *source;
     IBaseFilter *splitter;
@@ -42,6 +44,11 @@ typedef struct MediaDetImpl {
     LONG cur_stream;
     IPin *cur_pin;
 } MediaDetImpl;
+
+static inline MediaDetImpl *impl_from_IUnknown(IUnknown *iface)
+{
+    return CONTAINING_RECORD(iface, MediaDetImpl, IUnknown_inner);
+}
 
 static inline MediaDetImpl *impl_from_IMediaDet(IMediaDet *iface)
 {
@@ -62,45 +69,79 @@ static void MD_cleanup(MediaDetImpl *This)
     This->cur_stream = 0;
 }
 
-static ULONG WINAPI MediaDet_AddRef(IMediaDet* iface)
+/* MediaDet inner IUnknown */
+static HRESULT WINAPI MediaDet_inner_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
 {
-    MediaDetImpl *This = impl_from_IMediaDet(iface);
-    ULONG refCount = InterlockedIncrement(&This->refCount);
-    TRACE("(%p)->() AddRef from %d\n", This, refCount - 1);
-    return refCount;
+    MediaDetImpl *This = impl_from_IUnknown(iface);
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+
+    *ppv = NULL;
+    if (IsEqualIID(riid, &IID_IUnknown))
+        *ppv = &This->IUnknown_inner;
+    else if IsEqualIID(riid, &IID_IMediaDet)
+        *ppv = &This->IMediaDet_iface;
+    else
+        WARN("(%p, %s,%p): not found\n", This, debugstr_guid(riid), ppv);
+
+    if (!*ppv)
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
 }
 
-static ULONG WINAPI MediaDet_Release(IMediaDet* iface)
+static ULONG WINAPI MediaDet_inner_AddRef(IUnknown *iface)
 {
-    MediaDetImpl *This = impl_from_IMediaDet(iface);
-    ULONG refCount = InterlockedDecrement(&This->refCount);
-    TRACE("(%p)->() Release from %d\n", This, refCount + 1);
+    MediaDetImpl *This = impl_from_IUnknown(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
 
-    if (refCount == 0)
+    TRACE("(%p) new ref = %u\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI MediaDet_inner_Release(IUnknown *iface)
+{
+    MediaDetImpl *This = impl_from_IUnknown(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) new ref = %u\n", This, ref);
+
+    if (ref == 0)
     {
         MD_cleanup(This);
         CoTaskMemFree(This);
         return 0;
     }
 
-    return refCount;
+    return ref;
 }
 
-static HRESULT WINAPI MediaDet_QueryInterface(IMediaDet* iface, REFIID riid,
-                                              void **ppvObject)
+static const IUnknownVtbl mediadet_vtbl =
+{
+    MediaDet_inner_QueryInterface,
+    MediaDet_inner_AddRef,
+    MediaDet_inner_Release,
+};
+
+/* IMediaDet implementation */
+static HRESULT WINAPI MediaDet_QueryInterface(IMediaDet *iface, REFIID riid, void **ppv)
 {
     MediaDetImpl *This = impl_from_IMediaDet(iface);
-    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppvObject);
+    return IUnknown_QueryInterface(This->outer_unk, riid, ppv);
+}
 
-    if (IsEqualIID(riid, &IID_IUnknown) ||
-        IsEqualIID(riid, &IID_IMediaDet)) {
-        MediaDet_AddRef(iface);
-        *ppvObject = This;
-        return S_OK;
-    }
-    *ppvObject = NULL;
-    WARN("(%p, %s,%p): not found\n", This, debugstr_guid(riid), ppvObject);
-    return E_NOINTERFACE;
+static ULONG WINAPI MediaDet_AddRef(IMediaDet *iface)
+{
+    MediaDetImpl *This = impl_from_IMediaDet(iface);
+    return IUnknown_AddRef(This->outer_unk);
+}
+
+static ULONG WINAPI MediaDet_Release(IMediaDet *iface)
+{
+    MediaDetImpl *This = impl_from_IMediaDet(iface);
+    return IUnknown_Release(This->outer_unk);
 }
 
 static HRESULT WINAPI MediaDet_get_Filter(IMediaDet* iface, IUnknown **pVal)
@@ -603,9 +644,6 @@ HRESULT MediaDet_create(IUnknown * pUnkOuter, LPVOID * ppv) {
 
     TRACE("(%p,%p)\n", ppv, pUnkOuter);
 
-    if (pUnkOuter)
-        return CLASS_E_NOAGGREGATION;
-
     obj = CoTaskMemAlloc(sizeof(MediaDetImpl));
     if (NULL == obj) {
         *ppv = NULL;
@@ -613,7 +651,8 @@ HRESULT MediaDet_create(IUnknown * pUnkOuter, LPVOID * ppv) {
     }
     ZeroMemory(obj, sizeof(MediaDetImpl));
 
-    obj->refCount = 1;
+    obj->ref = 1;
+    obj->IUnknown_inner.lpVtbl = &mediadet_vtbl;
     obj->IMediaDet_iface.lpVtbl = &IMediaDet_VTable;
     obj->graph = NULL;
     obj->source = NULL;
@@ -623,5 +662,11 @@ HRESULT MediaDet_create(IUnknown * pUnkOuter, LPVOID * ppv) {
     obj->cur_stream = 0;
     *ppv = obj;
 
+    if (pUnkOuter)
+        obj->outer_unk = pUnkOuter;
+    else
+        obj->outer_unk = &obj->IUnknown_inner;
+
+    *ppv = &obj->IUnknown_inner;
     return S_OK;
 }
