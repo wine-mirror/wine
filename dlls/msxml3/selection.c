@@ -433,8 +433,14 @@ static HRESULT WINAPI enumvariant_QueryInterface(
 
     *ppvObject = NULL;
 
-    if ( IsEqualGUID( riid, &IID_IUnknown ) ||
-         IsEqualGUID( riid, &IID_IEnumVARIANT ))
+    if (IsEqualGUID( riid, &IID_IUnknown ))
+    {
+        if (This->own)
+            *ppvObject = &This->IEnumVARIANT_iface;
+        else
+            return IXMLDOMSelection_QueryInterface(This->selection, riid, ppvObject);
+    }
+    else if (IsEqualGUID( riid, &IID_IEnumVARIANT ))
     {
         *ppvObject = &This->IEnumVARIANT_iface;
     }
@@ -563,7 +569,9 @@ static HRESULT create_enumvariant(IXMLDOMSelection *selection, BOOL own, IUnknow
     if (This->own)
         IXMLDOMSelection_AddRef(selection);
 
-    return IEnumVARIANT_QueryInterface(&This->IEnumVARIANT_iface, &IID_IUnknown, (void**)penum);
+    *penum = (IUnknown*)&This->IEnumVARIANT_iface;
+    IUnknown_AddRef(*penum);
+    return S_OK;
 }
 
 static HRESULT domselection_get_dispid(IUnknown *iface, BSTR name, DWORD flags, DISPID *dispid)

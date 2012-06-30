@@ -40,7 +40,7 @@
 #include "wine/debug.h"
 
 /* This file implements the object returned by childNodes property. Note that this is
- * not the IXMLDOMNodeList returned by XPath querites - it's implemented in queryresult.c.
+ * not the IXMLDOMNodeList returned by XPath queries - it's implemented in selection.c.
  * They are different because the list returned by childNodes:
  *  - is "live" - changes to the XML tree are automatically reflected in the list
  *  - doesn't supports IXMLDOMSelection

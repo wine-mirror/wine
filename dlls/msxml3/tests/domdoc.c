@@ -4122,13 +4122,15 @@ static void test_get_text(void)
 
 static void test_get_childNodes(void)
 {
-    BSTR str;
+    IXMLDOMNodeList *node_list, *node_list2;
+    IEnumVARIANT *enum1, *enum2, *enum3;
     VARIANT_BOOL b;
     IXMLDOMDocument *doc;
-    IXMLDOMElement *element;
     IXMLDOMNode *node, *node2;
-    IXMLDOMNodeList *node_list, *node_list2;
+    IXMLDOMElement *element;
+    IUnknown *unk1, *unk2;
     HRESULT hr;
+    BSTR str;
     LONG len;
 
     doc = create_document(&IID_IXMLDOMDocument);
@@ -4147,6 +4149,58 @@ static void test_get_childNodes(void)
     hr = IXMLDOMNodeList_get_length( node_list, &len );
     EXPECT_HR(hr, S_OK);
     ok( len == 4, "len %d\n", len);
+
+    /* refcount tests for IEnumVARIANT support */
+    EXPECT_REF(node_list, 1);
+    hr = IXMLDOMNodeList_QueryInterface(node_list, &IID_IEnumVARIANT, (void**)&enum1);
+if (hr == S_OK)
+{
+    EXPECT_REF(node_list, 1);
+    EXPECT_REF(enum1, 2);
+
+    EXPECT_REF(node_list, 1);
+    hr = IXMLDOMNodeList_QueryInterface(node_list, &IID_IEnumVARIANT, (void**)&enum2);
+    EXPECT_HR(hr, S_OK);
+    EXPECT_REF(node_list, 1);
+    ok(enum2 == enum1, "got %p, %p\n", enum2, enum1);
+    IEnumVARIANT_Release(enum2);
+
+    hr = IXMLDOMNodeList_QueryInterface(node_list, &IID_IUnknown, (void**)&unk1);
+    EXPECT_HR(hr, S_OK);
+    hr = IEnumVARIANT_QueryInterface(enum1, &IID_IUnknown, (void**)&unk2);
+    EXPECT_HR(hr, S_OK);
+    EXPECT_REF(node_list, 3);
+    EXPECT_REF(enum1, 2);
+    ok(unk1 == unk2, "got %p, %p\n", unk1, unk2);
+    IUnknown_Release(unk1);
+    IUnknown_Release(unk2);
+
+    EXPECT_REF(node_list, 1);
+    hr = IXMLDOMNodeList__newEnum(node_list, (IUnknown**)&enum2);
+    EXPECT_HR(hr, S_OK);
+    EXPECT_REF(node_list, 2);
+    EXPECT_REF(enum2, 1);
+    ok(enum2 != enum1, "got %p, %p\n", enum2, enum1);
+
+    /* enumerator created with _newEnum() doesn't share IUnknown* with main object */
+    hr = IXMLDOMNodeList_QueryInterface(node_list, &IID_IUnknown, (void**)&unk1);
+    EXPECT_HR(hr, S_OK);
+    hr = IEnumVARIANT_QueryInterface(enum2, &IID_IUnknown, (void**)&unk2);
+    EXPECT_HR(hr, S_OK);
+    EXPECT_REF(node_list, 3);
+    EXPECT_REF(enum2, 2);
+    ok(unk1 != unk2, "got %p, %p\n", unk1, unk2);
+    IUnknown_Release(unk1);
+    IUnknown_Release(unk2);
+
+    hr = IXMLDOMNodeList__newEnum(node_list, (IUnknown**)&enum3);
+    EXPECT_HR(hr, S_OK);
+    ok(enum2 != enum3, "got %p, %p\n", enum2, enum3);
+    IEnumVARIANT_Release(enum3);
+    IEnumVARIANT_Release(enum2);
+
+    IEnumVARIANT_Release(enum1);
+}
 
     hr = IXMLDOMNodeList_get_item( node_list, 2, &node );
     EXPECT_HR(hr, S_OK);
@@ -10171,6 +10225,7 @@ static void test_selection(void)
     IXMLDOMSelection *selection, *selection2;
     IEnumVARIANT *enum1, *enum2, *enum3;
     IXMLDOMNodeList *list;
+    IUnknown *unk1, *unk2;
     IXMLDOMDocument *doc;
     IDispatchEx *dispex;
     IXMLDOMNode *node;
@@ -10218,6 +10273,25 @@ static void test_selection(void)
     ok(enum1 != NULL, "got %p\n", enum1);
     EXPECT_REF(enum1, 2);
 
+    EXPECT_REF(selection, 1);
+    hr = IXMLDOMSelection_QueryInterface(selection, &IID_IUnknown, (void**)&unk1);
+    EXPECT_HR(hr, S_OK);
+    EXPECT_REF(selection, 2);
+    EXPECT_REF(enum1, 2);
+
+    /* enumerator and selection object return same IUnknown* */
+    hr = IEnumVARIANT_QueryInterface(enum1, &IID_IUnknown, (void**)&unk2);
+    EXPECT_HR(hr, S_OK);
+    EXPECT_REF(selection, 3);
+    EXPECT_REF(enum1, 2);
+    ok(unk2 == unk1, "got %p, %p\n", unk1, unk2);
+    IUnknown_Release(unk2);
+
+    EXPECT_REF(selection, 2);
+    IEnumVARIANT_AddRef(enum1);
+    EXPECT_REF(selection, 2);
+    IEnumVARIANT_Release(enum1);
+
     enum3 = NULL;
     hr = IXMLDOMSelection_QueryInterface(selection, &IID_IEnumVARIANT, (void**)&enum3);
     EXPECT_HR(hr, S_OK);
@@ -10226,7 +10300,7 @@ static void test_selection(void)
     EXPECT_REF(enum1, 3);
     IEnumVARIANT_Release(enum3);
 
-    EXPECT_REF(selection, 1);
+    EXPECT_REF(selection, 2);
     EXPECT_REF(enum1, 2);
 
     enum2 = NULL;
@@ -10234,11 +10308,19 @@ static void test_selection(void)
     EXPECT_HR(hr, S_OK);
     ok(enum2 != NULL, "got %p\n", enum2);
 
-    EXPECT_REF(selection, 2);
+    EXPECT_REF(selection, 3);
     EXPECT_REF(enum1, 2);
     EXPECT_REF(enum2, 1);
 
     ok(enum1 != enum2, "got %p, %p\n", enum1, enum2);
+
+    hr = IEnumVARIANT_QueryInterface(enum2, &IID_IUnknown, (void**)&unk2);
+    EXPECT_HR(hr, S_OK);
+    EXPECT_REF(selection, 3);
+    EXPECT_REF(enum2, 2);
+    ok(unk2 != unk1, "got %p, %p\n", unk1, unk2);
+    IUnknown_Release(unk2);
+    IUnknown_Release(unk1);
 
     selection2 = NULL;
     hr = IEnumVARIANT_QueryInterface(enum1, &IID_IXMLDOMSelection, (void**)&selection2);
@@ -10368,6 +10450,7 @@ static void test_selection(void)
     SysFreeString(name);
     IXMLDOMNode_Release(node);
     VariantClear(&v);
+    IEnumVARIANT_Release(enum1);
 
     hr = IXMLDOMSelection_nextNode(selection, &node);
     EXPECT_HR(hr, S_OK);
