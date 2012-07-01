@@ -10113,7 +10113,7 @@ msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
 msgstr ""
-"Número de Volume de Série é %1!04x!-%2!04x!\n"
+"Número de Série do Volume é %1!04x!-%2!04x!\n"
 "\n"
 
 #: cmd.rc:345
