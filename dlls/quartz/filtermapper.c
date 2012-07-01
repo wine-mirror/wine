@@ -55,11 +55,6 @@ typedef struct FilterMapper3Impl
     LONG ref;
 } FilterMapper3Impl;
 
-static const IUnknownVtbl IInner_VTable;
-static const IFilterMapper3Vtbl fm3vtbl;
-static const IFilterMapperVtbl fmvtbl;
-static const IAMFilterDataVtbl AMFilterDataVtbl;
-
 static inline FilterMapper3Impl *impl_from_IFilterMapper3( IFilterMapper3 *iface )
 {
     return CONTAINING_RECORD(iface, FilterMapper3Impl, IFilterMapper3_iface);
@@ -178,50 +173,6 @@ static void delete_vector(struct Vector * v)
     CoTaskMemFree(v->pData);
     v->current = 0;
     v->capacity = 0;
-}
-
-HRESULT FilterMapper2_create(IUnknown *pUnkOuter, LPVOID *ppObj)
-{
-    FilterMapper3Impl * pFM2impl;
-
-    TRACE("(%p, %p)\n", pUnkOuter, ppObj);
-
-    pFM2impl = CoTaskMemAlloc(sizeof(*pFM2impl));
-    if (!pFM2impl)
-        return E_OUTOFMEMORY;
-
-    pFM2impl->IUnknown_inner.lpVtbl = &IInner_VTable;
-    pFM2impl->IFilterMapper3_iface.lpVtbl = &fm3vtbl;
-    pFM2impl->IFilterMapper_iface.lpVtbl = &fmvtbl;
-    pFM2impl->IAMFilterData_iface.lpVtbl = &AMFilterDataVtbl;
-    pFM2impl->ref = 1;
-
-    if (pUnkOuter)
-        pFM2impl->outer_unk = pUnkOuter;
-    else
-        pFM2impl->outer_unk = &pFM2impl->IUnknown_inner;
-
-    *ppObj = &pFM2impl->IUnknown_inner;
-
-    TRACE("-- created at %p\n", pFM2impl);
-
-    return S_OK;
-}
-
-HRESULT FilterMapper_create(IUnknown *pUnkOuter, LPVOID *ppObj)
-{
-    FilterMapper3Impl *pFM2impl;
-    HRESULT hr;
-
-    TRACE("(%p, %p)\n", pUnkOuter, ppObj);
-
-    hr = FilterMapper2_create(pUnkOuter, (LPVOID*)&pFM2impl);
-    if (FAILED(hr))
-        return hr;
-
-    *ppObj = &pFM2impl->IFilterMapper_iface;
-
-    return hr;
 }
 
 /*** IUnknown (inner) methods ***/
@@ -1737,3 +1688,47 @@ static const IAMFilterDataVtbl AMFilterDataVtbl = {
     AMFilterData_ParseFilterData,
     AMFilterData_CreateFilterData
 };
+
+HRESULT FilterMapper2_create(IUnknown *pUnkOuter, LPVOID *ppObj)
+{
+    FilterMapper3Impl * pFM2impl;
+
+    TRACE("(%p, %p)\n", pUnkOuter, ppObj);
+
+    pFM2impl = CoTaskMemAlloc(sizeof(*pFM2impl));
+    if (!pFM2impl)
+        return E_OUTOFMEMORY;
+
+    pFM2impl->IUnknown_inner.lpVtbl = &IInner_VTable;
+    pFM2impl->IFilterMapper3_iface.lpVtbl = &fm3vtbl;
+    pFM2impl->IFilterMapper_iface.lpVtbl = &fmvtbl;
+    pFM2impl->IAMFilterData_iface.lpVtbl = &AMFilterDataVtbl;
+    pFM2impl->ref = 1;
+
+    if (pUnkOuter)
+        pFM2impl->outer_unk = pUnkOuter;
+    else
+        pFM2impl->outer_unk = &pFM2impl->IUnknown_inner;
+
+    *ppObj = &pFM2impl->IUnknown_inner;
+
+    TRACE("-- created at %p\n", pFM2impl);
+
+    return S_OK;
+}
+
+HRESULT FilterMapper_create(IUnknown *pUnkOuter, LPVOID *ppObj)
+{
+    FilterMapper3Impl *pFM2impl;
+    HRESULT hr;
+
+    TRACE("(%p, %p)\n", pUnkOuter, ppObj);
+
+    hr = FilterMapper2_create(pUnkOuter, (LPVOID*)&pFM2impl);
+    if (FAILED(hr))
+        return hr;
+
+    *ppObj = &pFM2impl->IFilterMapper_iface;
+
+    return hr;
+}
