@@ -42,12 +42,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
-static const IBaseFilterVtbl VideoRenderer_Vtbl;
-static const IUnknownVtbl IInner_VTable;
-static const IBasicVideoVtbl IBasicVideo_VTable;
-static const IVideoWindowVtbl IVideoWindow_VTable;
-static const IAMFilterMiscFlagsVtbl IAMFilterMiscFlags_Vtbl;
-
 typedef struct VideoRendererImpl
 {
     BaseRenderer renderer;
@@ -640,62 +634,6 @@ static const BaseControlVideoFuncTable renderer_BaseControlVideoFuncTable = {
     VideoRenderer_SetTargetRect
 };
 
-HRESULT VideoRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
-{
-    HRESULT hr;
-    VideoRendererImpl * pVideoRenderer;
-
-    TRACE("(%p, %p)\n", pUnkOuter, ppv);
-
-    *ppv = NULL;
-
-    pVideoRenderer = CoTaskMemAlloc(sizeof(VideoRendererImpl));
-    pVideoRenderer->IUnknown_inner.lpVtbl = &IInner_VTable;
-    pVideoRenderer->IAMFilterMiscFlags_iface.lpVtbl = &IAMFilterMiscFlags_Vtbl;
-
-    pVideoRenderer->init = 0;
-    ZeroMemory(&pVideoRenderer->SourceRect, sizeof(RECT));
-    ZeroMemory(&pVideoRenderer->DestRect, sizeof(RECT));
-    ZeroMemory(&pVideoRenderer->WindowPos, sizeof(RECT));
-
-    if (pUnkOuter)
-        pVideoRenderer->outer_unk = pUnkOuter;
-    else
-        pVideoRenderer->outer_unk = &pVideoRenderer->IUnknown_inner;
-
-    hr = BaseRenderer_Init(&pVideoRenderer->renderer, &VideoRenderer_Vtbl, pUnkOuter, &CLSID_VideoRenderer, (DWORD_PTR)(__FILE__ ": VideoRendererImpl.csFilter"), &BaseFuncTable);
-
-    if (FAILED(hr))
-        goto fail;
-
-    hr = BaseControlWindow_Init(&pVideoRenderer->baseControlWindow, &IVideoWindow_VTable, &pVideoRenderer->renderer.filter, &pVideoRenderer->renderer.filter.csFilter, &pVideoRenderer->renderer.pInputPin->pin, &renderer_BaseWindowFuncTable);
-    if (FAILED(hr))
-        goto fail;
-
-    hr = BaseControlVideo_Init(&pVideoRenderer->baseControlVideo, &IBasicVideo_VTable, &pVideoRenderer->renderer.filter, &pVideoRenderer->renderer.filter.csFilter, &pVideoRenderer->renderer.pInputPin->pin, &renderer_BaseControlVideoFuncTable);
-    if (FAILED(hr))
-        goto fail;
-
-    if (!CreateRenderingSubsystem(pVideoRenderer)) {
-        hr = E_FAIL;
-        goto fail;
-    }
-
-    *ppv = &pVideoRenderer->IUnknown_inner;
-    return S_OK;
-
-fail:
-    BaseRendererImpl_Release(&pVideoRenderer->renderer.filter.IBaseFilter_iface);
-    CoTaskMemFree(pVideoRenderer);
-    return hr;
-}
-
-HRESULT VideoRendererDefault_create(IUnknown * pUnkOuter, LPVOID * ppv)
-{
-    /* TODO: Attempt to use the VMR-7 renderer instead when possible */
-    return VideoRenderer_create(pUnkOuter, ppv);
-}
-
 static inline VideoRendererImpl *impl_from_IUnknown(IUnknown *iface)
 {
     return CONTAINING_RECORD(iface, VideoRendererImpl, IUnknown_inner);
@@ -1060,3 +998,65 @@ static const IAMFilterMiscFlagsVtbl IAMFilterMiscFlags_Vtbl = {
     AMFilterMiscFlags_Release,
     AMFilterMiscFlags_GetMiscFlags
 };
+
+HRESULT VideoRenderer_create(IUnknown *pUnkOuter, void **ppv)
+{
+    HRESULT hr;
+    VideoRendererImpl * pVideoRenderer;
+
+    TRACE("(%p, %p)\n", pUnkOuter, ppv);
+
+    *ppv = NULL;
+
+    pVideoRenderer = CoTaskMemAlloc(sizeof(VideoRendererImpl));
+    pVideoRenderer->IUnknown_inner.lpVtbl = &IInner_VTable;
+    pVideoRenderer->IAMFilterMiscFlags_iface.lpVtbl = &IAMFilterMiscFlags_Vtbl;
+
+    pVideoRenderer->init = 0;
+    ZeroMemory(&pVideoRenderer->SourceRect, sizeof(RECT));
+    ZeroMemory(&pVideoRenderer->DestRect, sizeof(RECT));
+    ZeroMemory(&pVideoRenderer->WindowPos, sizeof(RECT));
+
+    if (pUnkOuter)
+        pVideoRenderer->outer_unk = pUnkOuter;
+    else
+        pVideoRenderer->outer_unk = &pVideoRenderer->IUnknown_inner;
+
+    hr = BaseRenderer_Init(&pVideoRenderer->renderer, &VideoRenderer_Vtbl, pUnkOuter,
+            &CLSID_VideoRenderer, (DWORD_PTR)(__FILE__ ": VideoRendererImpl.csFilter"),
+            &BaseFuncTable);
+
+    if (FAILED(hr))
+        goto fail;
+
+    hr = BaseControlWindow_Init(&pVideoRenderer->baseControlWindow, &IVideoWindow_VTable,
+            &pVideoRenderer->renderer.filter, &pVideoRenderer->renderer.filter.csFilter,
+            &pVideoRenderer->renderer.pInputPin->pin, &renderer_BaseWindowFuncTable);
+    if (FAILED(hr))
+        goto fail;
+
+    hr = BaseControlVideo_Init(&pVideoRenderer->baseControlVideo, &IBasicVideo_VTable,
+            &pVideoRenderer->renderer.filter, &pVideoRenderer->renderer.filter.csFilter,
+            &pVideoRenderer->renderer.pInputPin->pin, &renderer_BaseControlVideoFuncTable);
+    if (FAILED(hr))
+        goto fail;
+
+    if (!CreateRenderingSubsystem(pVideoRenderer)) {
+        hr = E_FAIL;
+        goto fail;
+    }
+
+    *ppv = &pVideoRenderer->IUnknown_inner;
+    return S_OK;
+
+fail:
+    BaseRendererImpl_Release(&pVideoRenderer->renderer.filter.IBaseFilter_iface);
+    CoTaskMemFree(pVideoRenderer);
+    return hr;
+}
+
+HRESULT VideoRendererDefault_create(IUnknown * pUnkOuter, LPVOID * ppv)
+{
+    /* TODO: Attempt to use the VMR-7 renderer instead when possible */
+    return VideoRenderer_create(pUnkOuter, ppv);
+}
