@@ -12055,6 +12055,78 @@ static void test_put_data(void)
     free_bstrs();
 }
 
+static void test_putref_schemas(void)
+{
+    IXMLDOMSchemaCollection *cache;
+    IXMLDOMDocument2 *doc;
+    VARIANT schema;
+    HRESULT hr;
+
+    doc = create_document(&IID_IXMLDOMDocument2);
+    if (!doc) return;
+    cache = create_cache(&IID_IXMLDOMSchemaCollection);
+
+    /* set to NULL iface when no schema is set */
+    V_VT(&schema) = VT_DISPATCH;
+    V_DISPATCH(&schema) = NULL;
+    hr = IXMLDOMDocument2_putref_schemas(doc, schema);
+    EXPECT_HR(hr, S_OK);
+
+    V_VT(&schema) = VT_UNKNOWN;
+    V_UNKNOWN(&schema) = NULL;
+    hr = IXMLDOMDocument2_putref_schemas(doc, schema);
+    EXPECT_HR(hr, S_OK);
+
+    /* set as VT_DISPATCH, reset with it */
+    V_VT(&schema) = VT_DISPATCH;
+    V_DISPATCH(&schema) = (IDispatch*)cache;
+    hr = IXMLDOMDocument2_putref_schemas(doc, schema);
+    EXPECT_HR(hr, S_OK);
+
+    V_DISPATCH(&schema) = NULL;
+    hr = IXMLDOMDocument2_get_schemas(doc, &schema);
+    EXPECT_HR(hr, S_OK);
+    ok(V_DISPATCH(&schema) == (IDispatch*)cache, "got %p\n", V_DISPATCH(&schema));
+
+    V_VT(&schema) = VT_DISPATCH;
+    V_DISPATCH(&schema) = NULL;
+    hr = IXMLDOMDocument2_putref_schemas(doc, schema);
+    EXPECT_HR(hr, S_OK);
+
+    V_DISPATCH(&schema) = (IDispatch*)0xdeadbeef;
+    V_VT(&schema) = VT_I2;
+    hr = IXMLDOMDocument2_get_schemas(doc, &schema);
+    EXPECT_HR(hr, S_FALSE);
+    ok(V_DISPATCH(&schema) == NULL, "got %p\n", V_DISPATCH(&schema));
+    ok(V_VT(&schema) == VT_NULL, "got %d\n", V_VT(&schema));
+
+    /* set as VT_UNKNOWN, reset with it */
+    V_VT(&schema) = VT_UNKNOWN;
+    V_UNKNOWN(&schema) = (IUnknown*)cache;
+    hr = IXMLDOMDocument2_putref_schemas(doc, schema);
+    EXPECT_HR(hr, S_OK);
+
+    V_DISPATCH(&schema) = NULL;
+    hr = IXMLDOMDocument2_get_schemas(doc, &schema);
+    EXPECT_HR(hr, S_OK);
+    ok(V_DISPATCH(&schema) == (IDispatch*)cache, "got %p\n", V_DISPATCH(&schema));
+
+    V_VT(&schema) = VT_UNKNOWN;
+    V_UNKNOWN(&schema) = NULL;
+    hr = IXMLDOMDocument2_putref_schemas(doc, schema);
+    EXPECT_HR(hr, S_OK);
+
+    V_DISPATCH(&schema) = (IDispatch*)0xdeadbeef;
+    V_VT(&schema) = VT_I2;
+    hr = IXMLDOMDocument2_get_schemas(doc, &schema);
+    EXPECT_HR(hr, S_FALSE);
+    ok(V_DISPATCH(&schema) == NULL, "got %p\n", V_DISPATCH(&schema));
+    ok(V_VT(&schema) == VT_NULL, "got %d\n", V_VT(&schema));
+
+    IXMLDOMSchemaCollection_Release(cache);
+    IXMLDOMDocument2_Release(doc);
+}
+
 START_TEST(domdoc)
 {
     IXMLDOMDocument *doc;
@@ -12134,6 +12206,7 @@ START_TEST(domdoc)
     test_nodeValue();
     test_get_namespaces();
     test_put_data();
+    test_putref_schemas();
 
     test_xsltemplate();
 

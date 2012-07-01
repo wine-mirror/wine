@@ -2553,22 +2553,23 @@ static HRESULT WINAPI domdoc_get_namespaces(
 
 static HRESULT WINAPI domdoc_get_schemas(
     IXMLDOMDocument3* iface,
-    VARIANT* var1 )
+    VARIANT* schema )
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    HRESULT hr = S_FALSE;
     IXMLDOMSchemaCollection2* cur_schema = This->properties->schemaCache;
+    HRESULT hr = S_FALSE;
 
-    TRACE("(%p)->(%p)\n", This, var1);
+    TRACE("(%p)->(%p)\n", This, schema);
 
-    VariantInit(var1); /* Test shows we don't call VariantClear here */
-    V_VT(var1) = VT_NULL;
+    V_VT(schema) = VT_NULL;
+    /* just to reset pointer part, cause that's what application is expected to use */
+    V_DISPATCH(schema) = NULL;
 
     if(cur_schema)
     {
-        hr = IXMLDOMSchemaCollection2_QueryInterface(cur_schema, &IID_IDispatch, (void**)&V_DISPATCH(var1));
+        hr = IXMLDOMSchemaCollection2_QueryInterface(cur_schema, &IID_IDispatch, (void**)&V_DISPATCH(schema));
         if(SUCCEEDED(hr))
-            V_VT(var1) = VT_DISPATCH;
+            V_VT(schema) = VT_DISPATCH;
     }
     return hr;
 }
@@ -2585,13 +2586,19 @@ static HRESULT WINAPI domdoc_putref_schemas(
     switch(V_VT(&schema))
     {
     case VT_UNKNOWN:
-        hr = IUnknown_QueryInterface(V_UNKNOWN(&schema), &IID_IXMLDOMSchemaCollection, (void**)&new_schema);
-        break;
-
+        if (V_UNKNOWN(&schema))
+        {
+            hr = IUnknown_QueryInterface(V_UNKNOWN(&schema), &IID_IXMLDOMSchemaCollection, (void**)&new_schema);
+            break;
+        }
+        /* fallthrough */
     case VT_DISPATCH:
-        hr = IDispatch_QueryInterface(V_DISPATCH(&schema), &IID_IXMLDOMSchemaCollection, (void**)&new_schema);
-        break;
-
+        if (V_DISPATCH(&schema))
+        {
+            hr = IDispatch_QueryInterface(V_DISPATCH(&schema), &IID_IXMLDOMSchemaCollection, (void**)&new_schema);
+            break;
+        }
+        /* fallthrough */
     case VT_NULL:
     case VT_EMPTY:
         hr = S_OK;
