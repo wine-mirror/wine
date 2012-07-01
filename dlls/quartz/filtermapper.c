@@ -47,14 +47,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
 typedef struct FilterMapper3Impl
 {
+    IUnknown IUnknown_inner;
     IFilterMapper3 IFilterMapper3_iface;
     IFilterMapper IFilterMapper_iface;
     IAMFilterData IAMFilterData_iface;
-    const IUnknownVtbl *IInner_vtbl;
-    LONG refCount;
-    IUnknown * pUnkOuter;
-    BOOL bUnkOuterValid;
-    BOOL bAggregatable;
+    IUnknown *outer_unk;
+    LONG ref;
 } FilterMapper3Impl;
 
 static const IUnknownVtbl IInner_VTable;
@@ -77,9 +75,9 @@ static inline FilterMapper3Impl *impl_from_IAMFilterData( IAMFilterData *iface )
     return CONTAINING_RECORD(iface, FilterMapper3Impl, IAMFilterData_iface);
 }
 
-static inline FilterMapper3Impl *impl_from_inner_IUnknown( IUnknown *iface )
+static inline FilterMapper3Impl *impl_from_IUnknown( IUnknown *iface )
 {
-    return (FilterMapper3Impl *)((char*)iface - FIELD_OFFSET(FilterMapper3Impl, IInner_vtbl));
+    return CONTAINING_RECORD(iface, FilterMapper3Impl, IUnknown_inner);
 }
 
 static const WCHAR wszClsidSlash[] = {'C','L','S','I','D','\\',0};
@@ -192,16 +190,18 @@ HRESULT FilterMapper2_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     if (!pFM2impl)
         return E_OUTOFMEMORY;
 
-    pFM2impl->pUnkOuter = pUnkOuter;
-    pFM2impl->bUnkOuterValid = FALSE;
-    pFM2impl->bAggregatable = FALSE;
-    pFM2impl->IInner_vtbl = &IInner_VTable;
+    pFM2impl->IUnknown_inner.lpVtbl = &IInner_VTable;
     pFM2impl->IFilterMapper3_iface.lpVtbl = &fm3vtbl;
     pFM2impl->IFilterMapper_iface.lpVtbl = &fmvtbl;
     pFM2impl->IAMFilterData_iface.lpVtbl = &AMFilterDataVtbl;
-    pFM2impl->refCount = 1;
+    pFM2impl->ref = 1;
 
-    *ppObj = pFM2impl;
+    if (pUnkOuter)
+        pFM2impl->outer_unk = pUnkOuter;
+    else
+        pFM2impl->outer_unk = &pFM2impl->IUnknown_inner;
+
+    *ppObj = &pFM2impl->IUnknown_inner;
 
     TRACE("-- created at %p\n", pFM2impl);
 
@@ -226,21 +226,17 @@ HRESULT FilterMapper_create(IUnknown *pUnkOuter, LPVOID *ppObj)
 
 /*** IUnknown (inner) methods ***/
 
-static HRESULT WINAPI Inner_QueryInterface(IUnknown * iface, REFIID riid, LPVOID * ppv)
+static HRESULT WINAPI Inner_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
 {
-    FilterMapper3Impl *This = impl_from_inner_IUnknown(iface);
+    FilterMapper3Impl *This = impl_from_IUnknown(iface);
+
     TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), ppv);
 
-    if (This->bAggregatable)
-        This->bUnkOuterValid = TRUE;
-
     *ppv = NULL;
-
     if (IsEqualIID(riid, &IID_IUnknown))
-        *ppv = &This->IInner_vtbl;
-    else if (IsEqualIID(riid, &IID_IFilterMapper2) ||
-        IsEqualIID(riid, &IID_IFilterMapper3))
-        *ppv = This;
+        *ppv = &This->IUnknown_inner;
+    else if (IsEqualIID(riid, &IID_IFilterMapper2) || IsEqualIID(riid, &IID_IFilterMapper3))
+        *ppv = &This->IFilterMapper3_iface;
     else if (IsEqualIID(riid, &IID_IFilterMapper))
         *ppv = &This->IFilterMapper_iface;
     else if (IsEqualIID(riid, &IID_IAMFilterData))
@@ -256,29 +252,27 @@ static HRESULT WINAPI Inner_QueryInterface(IUnknown * iface, REFIID riid, LPVOID
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI Inner_AddRef(IUnknown * iface)
+static ULONG WINAPI Inner_AddRef(IUnknown *iface)
 {
-    FilterMapper3Impl *This = impl_from_inner_IUnknown(iface);
-    ULONG refCount = InterlockedIncrement(&This->refCount);
+    FilterMapper3Impl *This = impl_from_IUnknown(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->() AddRef from %d\n", This, refCount - 1);
+    TRACE("(%p)->(): new ref = %d\n", This, ref);
 
-    return refCount;
+    return ref;
 }
 
-static ULONG WINAPI Inner_Release(IUnknown * iface)
+static ULONG WINAPI Inner_Release(IUnknown *iface)
 {
-    FilterMapper3Impl *This = impl_from_inner_IUnknown(iface);
-    ULONG refCount = InterlockedDecrement(&This->refCount);
+    FilterMapper3Impl *This = impl_from_IUnknown(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->() Release from %d\n", This, refCount + 1);
+    TRACE("(%p)->(): new ref = %d\n", This, ref);
 
-    if (refCount == 0)
-    {
+    if (ref == 0)
         CoTaskMemFree(This);
-        return 0;
-    }
-    return refCount;
+
+    return ref;
 }
 
 static const IUnknownVtbl IInner_VTable =
@@ -292,48 +286,21 @@ static HRESULT WINAPI FilterMapper3_QueryInterface(IFilterMapper3 * iface, REFII
 {
     FilterMapper3Impl *This = impl_from_IFilterMapper3(iface);
 
-    if (This->bAggregatable)
-        This->bUnkOuterValid = TRUE;
-
-    if (This->pUnkOuter)
-    {
-        if (This->bAggregatable)
-            return IUnknown_QueryInterface(This->pUnkOuter, riid, ppv);
-
-        if (IsEqualIID(riid, &IID_IUnknown))
-        {
-            HRESULT hr;
-
-            IUnknown_AddRef((IUnknown *)&(This->IInner_vtbl));
-            hr = IUnknown_QueryInterface((IUnknown *)&(This->IInner_vtbl), riid, ppv);
-            IUnknown_Release((IUnknown *)&(This->IInner_vtbl));
-            This->bAggregatable = TRUE;
-            return hr;
-        }
-
-        *ppv = NULL;
-        return E_NOINTERFACE;
-    }
-
-    return IUnknown_QueryInterface((IUnknown *)&(This->IInner_vtbl), riid, ppv);
+    return IUnknown_QueryInterface(This->outer_unk, riid, ppv);
 }
 
 static ULONG WINAPI FilterMapper3_AddRef(IFilterMapper3 * iface)
 {
     FilterMapper3Impl *This = impl_from_IFilterMapper3(iface);
 
-    if (This->pUnkOuter && This->bUnkOuterValid)
-        return IUnknown_AddRef(This->pUnkOuter);
-    return IUnknown_AddRef((IUnknown *)&(This->IInner_vtbl));
+    return IUnknown_AddRef(This->outer_unk);
 }
 
 static ULONG WINAPI FilterMapper3_Release(IFilterMapper3 * iface)
 {
     FilterMapper3Impl *This = impl_from_IFilterMapper3(iface);
 
-    if (This->pUnkOuter && This->bUnkOuterValid)
-        return IUnknown_Release(This->pUnkOuter);
-    return IUnknown_Release((IUnknown *)&(This->IInner_vtbl));
+    return IUnknown_Release(This->outer_unk);
 }
 
 /*** IFilterMapper3 methods ***/
@@ -1206,14 +1173,14 @@ static ULONG WINAPI FilterMapper_AddRef(IFilterMapper * iface)
 {
     FilterMapper3Impl *This = impl_from_IFilterMapper(iface);
 
-    return FilterMapper3_AddRef(&This->IFilterMapper3_iface);
+    return IUnknown_AddRef(This->outer_unk);
 }
 
 static ULONG WINAPI FilterMapper_Release(IFilterMapper * iface)
 {
     FilterMapper3Impl *This = impl_from_IFilterMapper(iface);
 
-    return FilterMapper3_Release(&This->IFilterMapper3_iface);
+    return IUnknown_Release(This->outer_unk);
 }
 
 /*** IFilterMapper methods ***/
@@ -1708,21 +1675,21 @@ static HRESULT WINAPI AMFilterData_QueryInterface(IAMFilterData * iface, REFIID 
 {
     FilterMapper3Impl *This = impl_from_IAMFilterData(iface);
 
-    return FilterMapper3_QueryInterface(&This->IFilterMapper3_iface, riid, ppv);
+    return IUnknown_QueryInterface(This->outer_unk, riid, ppv);
 }
 
 static ULONG WINAPI AMFilterData_AddRef(IAMFilterData * iface)
 {
     FilterMapper3Impl *This = impl_from_IAMFilterData(iface);
 
-    return FilterMapper3_AddRef(&This->IFilterMapper3_iface);
+    return IUnknown_AddRef(This->outer_unk);
 }
 
 static ULONG WINAPI AMFilterData_Release(IAMFilterData * iface)
 {
     FilterMapper3Impl *This = impl_from_IAMFilterData(iface);
 
-    return FilterMapper3_Release(&This->IFilterMapper3_iface);
+    return IUnknown_Release(This->outer_unk);
 }
 
 /*** IAMFilterData methods ***/
