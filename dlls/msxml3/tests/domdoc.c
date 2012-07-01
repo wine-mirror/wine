@@ -11700,7 +11700,8 @@ static void test_get_namespaces(void)
 {
     IXMLDOMSchemaCollection *collection, *collection2;
     IXMLDOMDocument2 *doc, *doc2;
-    IEnumVARIANT *enumv;
+    IEnumVARIANT *enumv, *enum2;
+    IUnknown *unk1, *unk2;
     IXMLDOMNode *node;
     VARIANT_BOOL b;
     HRESULT hr;
@@ -11789,34 +11790,43 @@ static void test_get_namespaces(void)
 
     /* enumerate */
     enumv = (void*)0xdeadbeef;
+    EXPECT_REF(collection, 2);
     hr = IXMLDOMSchemaCollection_get__newEnum(collection, (IUnknown**)&enumv);
-todo_wine
     EXPECT_HR(hr, S_OK);
-    if (hr == S_OK)
-    {
-        ok(enumv != NULL, "got %p\n", enumv);
+    EXPECT_REF(collection, 3);
+    ok(enumv != NULL, "got %p\n", enumv);
 
-        V_VT(&v) = VT_EMPTY;
-        hr = IEnumVARIANT_Next(enumv, 1, &v, NULL);
-        EXPECT_HR(hr, S_OK);
-        ok(V_VT(&v) == VT_BSTR, "got %d\n", V_VT(&v));
-        ok(!lstrcmpW(V_BSTR(&v), _bstr_("http://blah.org")), "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
-        VariantClear(&v);
+    hr = IXMLDOMSchemaCollection_QueryInterface(collection, &IID_IUnknown, (void**)&unk1);
+    EXPECT_HR(hr, S_OK);
+    hr = IEnumVARIANT_QueryInterface(enumv, &IID_IUnknown, (void**)&unk2);
+    EXPECT_HR(hr, S_OK);
+    ok(unk1 != unk2, "got %p, %p\n", unk1, unk2);
+    IUnknown_Release(unk1);
+    IUnknown_Release(unk2);
 
-        V_VT(&v) = VT_EMPTY;
-        hr = IEnumVARIANT_Next(enumv, 1, &v, NULL);
-        EXPECT_HR(hr, S_OK);
-        ok(V_VT(&v) == VT_BSTR, "got %d\n", V_VT(&v));
-        ok(!lstrcmpW(V_BSTR(&v), _bstr_("http://blahblah.org")), "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
-        VariantClear(&v);
+    hr = IXMLDOMSchemaCollection_QueryInterface(collection, &IID_IEnumVARIANT, (void**)&enum2);
+    EXPECT_HR(hr, E_NOINTERFACE);
 
-        V_VT(&v) = VT_NULL;
-        hr = IEnumVARIANT_Next(enumv, 1, &v, NULL);
-        EXPECT_HR(hr, S_FALSE);
-        ok(V_VT(&v) == VT_EMPTY, "got %d\n", V_VT(&v));
+    V_VT(&v) = VT_EMPTY;
+    hr = IEnumVARIANT_Next(enumv, 1, &v, NULL);
+    EXPECT_HR(hr, S_OK);
+    ok(V_VT(&v) == VT_BSTR, "got %d\n", V_VT(&v));
+    ok(!lstrcmpW(V_BSTR(&v), _bstr_("http://blah.org")), "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
 
-        IEnumVARIANT_Release(enumv);
-    }
+    V_VT(&v) = VT_EMPTY;
+    hr = IEnumVARIANT_Next(enumv, 1, &v, NULL);
+    EXPECT_HR(hr, S_OK);
+    ok(V_VT(&v) == VT_BSTR, "got %d\n", V_VT(&v));
+    ok(!lstrcmpW(V_BSTR(&v), _bstr_("http://blahblah.org")), "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
+    V_VT(&v) = VT_NULL;
+    hr = IEnumVARIANT_Next(enumv, 1, &v, NULL);
+    EXPECT_HR(hr, S_FALSE);
+    ok(V_VT(&v) == VT_EMPTY, "got %d\n", V_VT(&v));
+
+    IEnumVARIANT_Release(enumv);
     IXMLDOMSchemaCollection_Release(collection);
 
     IXMLDOMDocument2_Release(doc);
@@ -11900,33 +11910,29 @@ todo_wine
     /* enumerate */
     enumv = (void*)0xdeadbeef;
     hr = IXMLDOMSchemaCollection_get__newEnum(collection, (IUnknown**)&enumv);
-todo_wine
     EXPECT_HR(hr, S_OK);
-    if (hr == S_OK)
-    {
-        ok(enumv != NULL, "got %p\n", enumv);
+    ok(enumv != NULL, "got %p\n", enumv);
 
-        V_VT(&v) = VT_EMPTY;
-        hr = IEnumVARIANT_Next(enumv, 1, &v, NULL);
-        EXPECT_HR(hr, S_OK);
-        ok(V_VT(&v) == VT_BSTR, "got %d\n", V_VT(&v));
-        ok(!lstrcmpW(V_BSTR(&v), _bstr_("http://blah.org")), "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
-        VariantClear(&v);
+    V_VT(&v) = VT_EMPTY;
+    hr = IEnumVARIANT_Next(enumv, 1, &v, NULL);
+    EXPECT_HR(hr, S_OK);
+    ok(V_VT(&v) == VT_BSTR, "got %d\n", V_VT(&v));
+    ok(!lstrcmpW(V_BSTR(&v), _bstr_("http://blah.org")), "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
 
-        V_VT(&v) = VT_EMPTY;
-        hr = IEnumVARIANT_Next(enumv, 1, &v, NULL);
-        EXPECT_HR(hr, S_OK);
-        ok(V_VT(&v) == VT_BSTR, "got %d\n", V_VT(&v));
-        ok(!lstrcmpW(V_BSTR(&v), _bstr_("http://blahblah.org")), "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
-        VariantClear(&v);
+    V_VT(&v) = VT_EMPTY;
+    hr = IEnumVARIANT_Next(enumv, 1, &v, NULL);
+    EXPECT_HR(hr, S_OK);
+    ok(V_VT(&v) == VT_BSTR, "got %d\n", V_VT(&v));
+    ok(!lstrcmpW(V_BSTR(&v), _bstr_("http://blahblah.org")), "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
 
-        V_VT(&v) = VT_NULL;
-        hr = IEnumVARIANT_Next(enumv, 1, &v, NULL);
-        EXPECT_HR(hr, S_FALSE);
-        ok(V_VT(&v) == VT_EMPTY, "got %d\n", V_VT(&v));
+    V_VT(&v) = VT_NULL;
+    hr = IEnumVARIANT_Next(enumv, 1, &v, NULL);
+    EXPECT_HR(hr, S_FALSE);
+    ok(V_VT(&v) == VT_EMPTY, "got %d\n", V_VT(&v));
 
-        IEnumVARIANT_Release(enumv);
-    }
+    IEnumVARIANT_Release(enumv);
     IXMLDOMSchemaCollection_Release(collection);
     IXMLDOMDocument2_Release(doc);
     free_bstrs();

@@ -288,6 +288,17 @@ static void validate_serror(void* ctx, xmlErrorPtr err)
 }
 #endif
 
+static HRESULT schema_cache_get_item(IUnknown *iface, LONG index, VARIANT *item)
+{
+    V_VT(item) = VT_BSTR;
+    return IXMLDOMSchemaCollection2_get_namespaceURI((IXMLDOMSchemaCollection2*)iface, index, &V_BSTR(item));
+}
+
+static const struct enumvariant_funcs schemacache_enumvariant = {
+    schema_cache_get_item,
+    NULL
+};
+
 static inline HRESULT Schema_validate_tree(xmlSchemaPtr schema, xmlNodePtr tree)
 {
     xmlSchemaValidCtxtPtr svctx;
@@ -1327,14 +1338,11 @@ static HRESULT WINAPI schema_cache_addCollection(IXMLDOMSchemaCollection2* iface
     return S_OK;
 }
 
-static HRESULT WINAPI schema_cache_get__newEnum(IXMLDOMSchemaCollection2* iface,
-                                                IUnknown** ppUnk)
+static HRESULT WINAPI schema_cache_get__newEnum(IXMLDOMSchemaCollection2* iface, IUnknown** enumv)
 {
     schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
-    FIXME("(%p)->(%p): stub\n", This, ppUnk);
-    if (ppUnk)
-        *ppUnk = NULL;
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, enumv);
+    return create_enumvariant((IUnknown*)iface, TRUE, &schemacache_enumvariant, (IEnumVARIANT**)enumv);
 }
 
 static HRESULT WINAPI schema_cache_validate(IXMLDOMSchemaCollection2* iface)

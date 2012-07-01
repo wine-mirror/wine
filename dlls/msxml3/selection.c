@@ -83,9 +83,10 @@ typedef struct
     IEnumVARIANT *enumvariant;
 } domselection;
 
-static HRESULT selection_get_item(IUnknown *iface, LONG index, IDispatch** item)
+static HRESULT selection_get_item(IUnknown *iface, LONG index, VARIANT* item)
 {
-    return IXMLDOMSelection_get_item((IXMLDOMSelection*)iface, index, (IXMLDOMNode**)item);
+    V_VT(item) = VT_DISPATCH;
+    return IXMLDOMSelection_get_item((IXMLDOMSelection*)iface, index, (IXMLDOMNode**)&V_DISPATCH(item));
 }
 
 static HRESULT selection_next(IUnknown *iface)
@@ -510,15 +511,12 @@ static HRESULT WINAPI enumvariant_Next(
 
     for (; celt > 0; celt--, var++, This->pos++)
     {
-        IDispatch *disp = NULL;
-        HRESULT hr;
-
-        hr = This->funcs->get_item(This->outer, This->pos, &disp);
-        if (hr != S_OK) break;
-
-        V_VT(var) = VT_DISPATCH;
-        V_DISPATCH(var) = disp;
-
+        HRESULT hr = This->funcs->get_item(This->outer, This->pos, var);
+        if (hr != S_OK)
+        {
+            V_VT(var) = VT_EMPTY;
+            break;
+        }
         ret_count++;
     }
 

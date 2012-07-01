@@ -62,9 +62,10 @@ typedef struct
     IEnumVARIANT *enumvariant;
 } xmlnodelist;
 
-static HRESULT nodelist_get_item(IUnknown *iface, LONG index, IDispatch** item)
+static HRESULT nodelist_get_item(IUnknown *iface, LONG index, VARIANT *item)
 {
-    return IXMLDOMNodeList_get_item((IXMLDOMNodeList*)iface, index, (IXMLDOMNode**)item);
+    V_VT(item) = VT_DISPATCH;
+    return IXMLDOMNodeList_get_item((IXMLDOMNodeList*)iface, index, (IXMLDOMNode**)&V_DISPATCH(item));
 }
 
 static const struct enumvariant_funcs nodelist_enumvariant = {

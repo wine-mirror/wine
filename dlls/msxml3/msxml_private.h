@@ -259,7 +259,7 @@ struct nodemap_funcs
 /* used by IEnumVARIANT to access outer object items */
 struct enumvariant_funcs
 {
-    HRESULT (*get_item)(IUnknown*, LONG, IDispatch**);
+    HRESULT (*get_item)(IUnknown*, LONG, VARIANT*);
     HRESULT (*next)(IUnknown*);
 };
 
