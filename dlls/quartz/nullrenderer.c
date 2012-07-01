@@ -183,21 +183,26 @@ static const IUnknownVtbl IInner_VTable =
     NullRendererInner_Release
 };
 
+static inline NullRendererImpl *impl_from_IBaseFilter(IBaseFilter *iface)
+{
+    return CONTAINING_RECORD(iface, NullRendererImpl, renderer.filter.IBaseFilter_iface);
+}
+
 static HRESULT WINAPI NullRenderer_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv)
 {
-    NullRendererImpl *This = (NullRendererImpl *)iface;
+    NullRendererImpl *This = impl_from_IBaseFilter(iface);
     return IUnknown_QueryInterface(This->outer_unk, riid, ppv);
 }
 
 static ULONG WINAPI NullRenderer_AddRef(IBaseFilter * iface)
 {
-    NullRendererImpl *This = (NullRendererImpl *)iface;
+    NullRendererImpl *This = impl_from_IBaseFilter(iface);
     return IUnknown_AddRef(This->outer_unk);
 }
 
 static ULONG WINAPI NullRenderer_Release(IBaseFilter * iface)
 {
-    NullRendererImpl *This = (NullRendererImpl *)iface;
+    NullRendererImpl *This = impl_from_IBaseFilter(iface);
     return IUnknown_Release(This->outer_unk);
 }
 
