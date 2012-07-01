@@ -124,10 +124,13 @@ static HRESULT WINAPI DSCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter
     IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
     HRESULT hres;
     LPUNKNOWN punk;
-    
+
     TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,debugstr_guid(riid),ppobj);
 
     *ppobj = NULL;
+    if(pOuter && !IsEqualGUID(&IID_IUnknown, riid))
+        return E_NOINTERFACE;
+
     hres = This->pfnCreateInstance(pOuter, (LPVOID *) &punk);
     if (SUCCEEDED(hres)) {
         hres = IUnknown_QueryInterface(punk, riid, ppobj);
