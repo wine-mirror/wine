@@ -50,7 +50,7 @@ typedef struct NullRendererImpl
     BaseRenderer renderer;
 
     const IUnknownVtbl * IInner_vtbl;
-    const IAMFilterMiscFlagsVtbl *IAMFilterMiscFlags_vtbl;
+    IAMFilterMiscFlags IAMFilterMiscFlags_iface;
 
     IUnknown * pUnkOuter;
     BOOL bUnkOuterValid;
@@ -104,7 +104,7 @@ HRESULT NullRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
     pNullRenderer->bUnkOuterValid = FALSE;
     pNullRenderer->bAggregatable = FALSE;
     pNullRenderer->IInner_vtbl = &IInner_VTable;
-    pNullRenderer->IAMFilterMiscFlags_vtbl = &IAMFilterMiscFlags_Vtbl;
+    pNullRenderer->IAMFilterMiscFlags_iface.lpVtbl = &IAMFilterMiscFlags_Vtbl;
 
     hr = BaseRenderer_Init(&pNullRenderer->renderer, &NullRenderer_Vtbl, pUnkOuter, &CLSID_NullRenderer, (DWORD_PTR)(__FILE__ ": NullRendererImpl.csFilter"), &RendererFuncTable);
 
@@ -132,7 +132,7 @@ static HRESULT WINAPI NullRendererInner_QueryInterface(IUnknown * iface, REFIID 
     if (IsEqualIID(riid, &IID_IUnknown))
         *ppv = &This->IInner_vtbl;
     else if (IsEqualIID(riid, &IID_IAMFilterMiscFlags))
-        *ppv = &This->IAMFilterMiscFlags_vtbl;
+        *ppv = &This->IAMFilterMiscFlags_iface;
     else
     {
         HRESULT hr;
@@ -248,26 +248,32 @@ static const IBaseFilterVtbl NullRenderer_Vtbl =
     BaseFilterImpl_QueryVendorInfo
 };
 
-static NullRendererImpl *from_IAMFilterMiscFlags(IAMFilterMiscFlags *iface) {
-    return (NullRendererImpl*)((char*)iface - offsetof(NullRendererImpl, IAMFilterMiscFlags_vtbl));
+static NullRendererImpl *impl_from_IAMFilterMiscFlags(IAMFilterMiscFlags *iface)
+{
+    return CONTAINING_RECORD(iface, NullRendererImpl, IAMFilterMiscFlags_iface);
 }
 
-static HRESULT WINAPI AMFilterMiscFlags_QueryInterface(IAMFilterMiscFlags *iface, REFIID riid, void **ppv) {
-    NullRendererImpl *This = from_IAMFilterMiscFlags(iface);
+static HRESULT WINAPI AMFilterMiscFlags_QueryInterface(IAMFilterMiscFlags *iface, REFIID riid,
+        void **ppv)
+{
+    NullRendererImpl *This = impl_from_IAMFilterMiscFlags(iface);
     return IUnknown_QueryInterface((IUnknown*)This, riid, ppv);
 }
 
-static ULONG WINAPI AMFilterMiscFlags_AddRef(IAMFilterMiscFlags *iface) {
-    NullRendererImpl *This = from_IAMFilterMiscFlags(iface);
+static ULONG WINAPI AMFilterMiscFlags_AddRef(IAMFilterMiscFlags *iface)
+{
+    NullRendererImpl *This = impl_from_IAMFilterMiscFlags(iface);
     return IUnknown_AddRef((IUnknown*)This);
 }
 
-static ULONG WINAPI AMFilterMiscFlags_Release(IAMFilterMiscFlags *iface) {
-    NullRendererImpl *This = from_IAMFilterMiscFlags(iface);
+static ULONG WINAPI AMFilterMiscFlags_Release(IAMFilterMiscFlags *iface)
+{
+    NullRendererImpl *This = impl_from_IAMFilterMiscFlags(iface);
     return IUnknown_Release((IUnknown*)This);
 }
 
-static ULONG WINAPI AMFilterMiscFlags_GetMiscFlags(IAMFilterMiscFlags *iface) {
+static ULONG WINAPI AMFilterMiscFlags_GetMiscFlags(IAMFilterMiscFlags *iface)
+{
     return AM_FILTER_MISC_FLAGS_IS_RENDERER;
 }
 
