@@ -41,10 +41,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
-static const IBaseFilterVtbl NullRenderer_Vtbl;
-static const IUnknownVtbl IInner_VTable;
-static const IAMFilterMiscFlagsVtbl IAMFilterMiscFlags_Vtbl;
-
 typedef struct NullRendererImpl
 {
     BaseRenderer renderer;
@@ -85,39 +81,6 @@ static const BaseRendererFuncTable RendererFuncTable = {
     NULL,
     NULL,
 };
-
-HRESULT NullRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
-{
-    HRESULT hr;
-    NullRendererImpl * pNullRenderer;
-
-    TRACE("(%p, %p)\n", pUnkOuter, ppv);
-
-    *ppv = NULL;
-
-    pNullRenderer = CoTaskMemAlloc(sizeof(NullRendererImpl));
-    pNullRenderer->IUnknown_inner.lpVtbl = &IInner_VTable;
-    pNullRenderer->IAMFilterMiscFlags_iface.lpVtbl = &IAMFilterMiscFlags_Vtbl;
-
-    if (pUnkOuter)
-        pNullRenderer->outer_unk = pUnkOuter;
-    else
-        pNullRenderer->outer_unk = &pNullRenderer->IUnknown_inner;
-
-    hr = BaseRenderer_Init(&pNullRenderer->renderer, &NullRenderer_Vtbl, pUnkOuter,
-            &CLSID_NullRenderer, (DWORD_PTR)(__FILE__ ": NullRendererImpl.csFilter"),
-            &RendererFuncTable);
-
-    if (FAILED(hr))
-    {
-        BaseRendererImpl_Release(&pNullRenderer->renderer.filter.IBaseFilter_iface);
-        CoTaskMemFree(pNullRenderer);
-    }
-    else
-        *ppv = &pNullRenderer->IUnknown_inner;
-
-    return S_OK;
-}
 
 static inline NullRendererImpl *impl_from_IUnknown(IUnknown *iface)
 {
@@ -260,3 +223,36 @@ static const IAMFilterMiscFlagsVtbl IAMFilterMiscFlags_Vtbl = {
     AMFilterMiscFlags_Release,
     AMFilterMiscFlags_GetMiscFlags
 };
+
+HRESULT NullRenderer_create(IUnknown *pUnkOuter, void **ppv)
+{
+    HRESULT hr;
+    NullRendererImpl *pNullRenderer;
+
+    TRACE("(%p, %p)\n", pUnkOuter, ppv);
+
+    *ppv = NULL;
+
+    pNullRenderer = CoTaskMemAlloc(sizeof(NullRendererImpl));
+    pNullRenderer->IUnknown_inner.lpVtbl = &IInner_VTable;
+    pNullRenderer->IAMFilterMiscFlags_iface.lpVtbl = &IAMFilterMiscFlags_Vtbl;
+
+    if (pUnkOuter)
+        pNullRenderer->outer_unk = pUnkOuter;
+    else
+        pNullRenderer->outer_unk = &pNullRenderer->IUnknown_inner;
+
+    hr = BaseRenderer_Init(&pNullRenderer->renderer, &NullRenderer_Vtbl, pUnkOuter,
+            &CLSID_NullRenderer, (DWORD_PTR)(__FILE__ ": NullRendererImpl.csFilter"),
+            &RendererFuncTable);
+
+    if (FAILED(hr))
+    {
+        BaseRendererImpl_Release(&pNullRenderer->renderer.filter.IBaseFilter_iface);
+        CoTaskMemFree(pNullRenderer);
+    }
+    else
+        *ppv = &pNullRenderer->IUnknown_inner;
+
+    return S_OK;
+}
