@@ -469,15 +469,15 @@ static HRESULT WINAPI WshShortcut_put_TargetPath(IWshShortcut *iface, BSTR Path)
 static HRESULT WINAPI WshShortcut_get_WindowStyle(IWshShortcut *iface, int *ShowCmd)
 {
     WshShortcut *This = impl_from_IWshShortcut(iface);
-    FIXME("(%p)->(%p): stub\n", This, ShowCmd);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, ShowCmd);
+    return IShellLinkW_GetShowCmd(This->link, ShowCmd);
 }
 
 static HRESULT WINAPI WshShortcut_put_WindowStyle(IWshShortcut *iface, int ShowCmd)
 {
     WshShortcut *This = impl_from_IWshShortcut(iface);
-    FIXME("(%p)->(%d): stub\n", This, ShowCmd);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%d)\n", This, ShowCmd);
+    return IShellLinkW_SetShowCmd(This->link, ShowCmd);
 }
 
 static HRESULT WINAPI WshShortcut_get_WorkingDirectory(IWshShortcut *iface, BSTR *WorkingDirectory)
