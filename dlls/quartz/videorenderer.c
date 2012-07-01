@@ -55,7 +55,7 @@ typedef struct VideoRendererImpl
     BaseControlVideo baseControlVideo;
 
     const IUnknownVtbl * IInner_vtbl;
-    const IAMFilterMiscFlagsVtbl *IAMFilterMiscFlags_vtbl;
+    IAMFilterMiscFlags IAMFilterMiscFlags_iface;
 
     BOOL init;
     HANDLE hThread;
@@ -656,7 +656,7 @@ HRESULT VideoRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
     pVideoRenderer->bUnkOuterValid = FALSE;
     pVideoRenderer->bAggregatable = FALSE;
     pVideoRenderer->IInner_vtbl = &IInner_VTable;
-    pVideoRenderer->IAMFilterMiscFlags_vtbl = &IAMFilterMiscFlags_Vtbl;
+    pVideoRenderer->IAMFilterMiscFlags_iface.lpVtbl = &IAMFilterMiscFlags_Vtbl;
 
     pVideoRenderer->init = 0;
     ZeroMemory(&pVideoRenderer->SourceRect, sizeof(RECT));
@@ -711,7 +711,7 @@ static HRESULT WINAPI VideoRendererInner_QueryInterface(IUnknown * iface, REFIID
     else if (IsEqualIID(riid, &IID_IVideoWindow))
         *ppv = &This->baseControlWindow.IVideoWindow_iface;
     else if (IsEqualIID(riid, &IID_IAMFilterMiscFlags))
-        *ppv = &This->IAMFilterMiscFlags_vtbl;
+        *ppv = &This->IAMFilterMiscFlags_iface;
     else
     {
         HRESULT hr;
@@ -1050,26 +1050,32 @@ static const IVideoWindowVtbl IVideoWindow_VTable =
     BaseControlWindowImpl_IsCursorHidden
 };
 
-static VideoRendererImpl *from_IAMFilterMiscFlags(IAMFilterMiscFlags *iface) {
-    return (VideoRendererImpl*)((char*)iface - offsetof(VideoRendererImpl, IAMFilterMiscFlags_vtbl));
+static VideoRendererImpl *impl_from_IAMFilterMiscFlags(IAMFilterMiscFlags *iface)
+{
+    return CONTAINING_RECORD(iface, VideoRendererImpl, IAMFilterMiscFlags_iface);
 }
 
-static HRESULT WINAPI AMFilterMiscFlags_QueryInterface(IAMFilterMiscFlags *iface, REFIID riid, void **ppv) {
-    VideoRendererImpl *This = from_IAMFilterMiscFlags(iface);
+static HRESULT WINAPI AMFilterMiscFlags_QueryInterface(IAMFilterMiscFlags *iface, REFIID riid,
+        void **ppv)
+{
+    VideoRendererImpl *This = impl_from_IAMFilterMiscFlags(iface);
     return IUnknown_QueryInterface((IUnknown*)This, riid, ppv);
 }
 
-static ULONG WINAPI AMFilterMiscFlags_AddRef(IAMFilterMiscFlags *iface) {
-    VideoRendererImpl *This = from_IAMFilterMiscFlags(iface);
+static ULONG WINAPI AMFilterMiscFlags_AddRef(IAMFilterMiscFlags *iface)
+{
+    VideoRendererImpl *This = impl_from_IAMFilterMiscFlags(iface);
     return IUnknown_AddRef((IUnknown*)This);
 }
 
-static ULONG WINAPI AMFilterMiscFlags_Release(IAMFilterMiscFlags *iface) {
-    VideoRendererImpl *This = from_IAMFilterMiscFlags(iface);
+static ULONG WINAPI AMFilterMiscFlags_Release(IAMFilterMiscFlags *iface)
+{
+    VideoRendererImpl *This = impl_from_IAMFilterMiscFlags(iface);
     return IUnknown_Release((IUnknown*)This);
 }
 
-static ULONG WINAPI AMFilterMiscFlags_GetMiscFlags(IAMFilterMiscFlags *iface) {
+static ULONG WINAPI AMFilterMiscFlags_GetMiscFlags(IAMFilterMiscFlags *iface)
+{
     return AM_FILTER_MISC_FLAGS_IS_RENDERER;
 }
 
