@@ -668,8 +668,6 @@ HRESULT VideoRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
     if (FAILED(hr))
         goto fail;
 
-    *ppv = pVideoRenderer;
-
     hr = BaseControlWindow_Init(&pVideoRenderer->baseControlWindow, &IVideoWindow_VTable, &pVideoRenderer->renderer.filter, &pVideoRenderer->renderer.filter.csFilter, &pVideoRenderer->renderer.pInputPin->pin, &renderer_BaseWindowFuncTable);
     if (FAILED(hr))
         goto fail;
@@ -678,10 +676,14 @@ HRESULT VideoRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
     if (FAILED(hr))
         goto fail;
 
-    if (!CreateRenderingSubsystem(pVideoRenderer))
-        return E_FAIL;
+    if (!CreateRenderingSubsystem(pVideoRenderer)) {
+        hr = E_FAIL;
+        goto fail;
+    }
 
-    return hr;
+    *ppv = pVideoRenderer;
+    return S_OK;
+
 fail:
     BaseRendererImpl_Release(&pVideoRenderer->renderer.filter.IBaseFilter_iface);
     CoTaskMemFree(pVideoRenderer);
