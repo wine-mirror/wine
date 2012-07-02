@@ -801,6 +801,23 @@ static HRESULT encode_base64(const BYTE *buf, int len, BSTR *ret)
     return S_OK;
 }
 
+static HRESULT encode_binhex(const BYTE *buf, int len, BSTR *ret)
+{
+    static const char byte_to_hex[16] = "0123456789abcdef";
+    int i;
+
+    *ret = SysAllocStringLen(NULL, len*2);
+    if (!*ret) return E_OUTOFMEMORY;
+
+    for (i = 0; i < len; i++)
+    {
+        (*ret)[2*i]   = byte_to_hex[buf[i] >> 4];
+        (*ret)[2*i+1] = byte_to_hex[0x0f & buf[i]];
+    }
+
+    return S_OK;
+}
+
 static HRESULT WINAPI domelem_put_nodeTypedValue(
     IXMLDOMElement *iface,
     VARIANT value)
@@ -853,6 +870,39 @@ static HRESULT WINAPI domelem_put_nodeTypedValue(
             if (FAILED(hr)) return hr;
 
             hr = encode_base64(ptr, len, &encoded);
+            SafeArrayUnaccessData(V_ARRAY(&value));
+            if (FAILED(hr)) return hr;
+
+            hr = node_set_content(&This->node, encoded);
+            SysFreeString(encoded);
+        }
+        else
+        {
+            FIXME("unhandled variant type %d for dt:%s\n", V_VT(&value), debugstr_dt(dt));
+            return E_NOTIMPL;
+        }
+        break;
+    case DT_BIN_HEX:
+        if (V_VT(&value) == (VT_UI1|VT_ARRAY))
+        {
+            UINT dim = SafeArrayGetDim(V_ARRAY(&value));
+            LONG lbound, ubound;
+            BSTR encoded;
+            BYTE *ptr;
+            int len;
+
+            if (dim > 1)
+                FIXME("unexpected array dimension count %u\n", dim);
+
+            SafeArrayGetUBound(V_ARRAY(&value), 1, &ubound);
+            SafeArrayGetLBound(V_ARRAY(&value), 1, &lbound);
+
+            len = (ubound - lbound + 1)*SafeArrayGetElemsize(V_ARRAY(&value));
+
+            hr = SafeArrayAccessData(V_ARRAY(&value), (void*)&ptr);
+            if (FAILED(hr)) return hr;
+
+            hr = encode_binhex(ptr, len, &encoded);
             SafeArrayUnaccessData(V_ARRAY(&value));
             if (FAILED(hr)) return hr;
 
