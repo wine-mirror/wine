@@ -1151,6 +1151,7 @@ static const struct gpu_description gpu_description_table[] =
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD6550D,        "AMD Radeon HD 6550D",              DRIVER_AMD_R600,         1024},
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD6600,         "AMD Radeon HD 6600 Series",        DRIVER_AMD_R600,         1024},
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD6600M,        "AMD Radeon HD 6600M Series",       DRIVER_AMD_R600,         512 },
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD6700,         "AMD Radeon HD 6700 Series",        DRIVER_AMD_R600,         1024},
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD6800,         "AMD Radeon HD 6800 Series",        DRIVER_AMD_R600,         1024},
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD6900,         "AMD Radeon HD 6900 Series",        DRIVER_AMD_R600,         2048},
     /* Intel cards */
@@ -1713,6 +1714,7 @@ static enum wined3d_pci_device select_card_amd_binary(const struct wined3d_gl_in
             {"HD 6800", CARD_AMD_RADEON_HD6800},
             {"HD 6770M",CARD_AMD_RADEON_HD6600M},
             {"HD 6750M",CARD_AMD_RADEON_HD6600M},
+            {"HD 6700", CARD_AMD_RADEON_HD6700},
             {"HD 6630M",CARD_AMD_RADEON_HD6600M},
             {"HD 6600M",CARD_AMD_RADEON_HD6600M},
             {"HD 6600", CARD_AMD_RADEON_HD6600},
