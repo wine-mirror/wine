@@ -136,14 +136,14 @@ static const struct column col_compsys[] =
     { prop_descriptionW,          CIM_STRING },
     { prop_manufacturerW,         CIM_STRING },
     { prop_modelW,                CIM_STRING },
-    { prop_numlogicalprocessorsW, CIM_UINT32 },
-    { prop_numprocessorsW,        CIM_UINT32 },
+    { prop_numlogicalprocessorsW, CIM_UINT32, VT_I4 },
+    { prop_numprocessorsW,        CIM_UINT32, VT_I4 },
     { prop_totalphysicalmemoryW,  CIM_UINT64 }
 };
 static const struct column col_logicaldisk[] =
 {
     { prop_deviceidW,   CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
-    { prop_drivetypeW,  CIM_UINT32 },
+    { prop_drivetypeW,  CIM_UINT32, VT_I4 },
     { prop_filesystemW, CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_freespaceW,  CIM_UINT64 },
     { prop_sizeW,       CIM_UINT64 }
@@ -151,8 +151,8 @@ static const struct column col_logicaldisk[] =
 static const struct column col_networkadapter[] =
 {
     { prop_deviceidW,            CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
-    { prop_interfaceindexW,      CIM_UINT32 },
-    { prop_netconnectionstatusW, CIM_UINT16 },
+    { prop_interfaceindexW,      CIM_UINT32, VT_I4 },
+    { prop_netconnectionstatusW, CIM_UINT16, VT_I4 },
     { prop_speedW,               CIM_UINT64 }
 };
 static const struct column col_os[] =
@@ -160,7 +160,7 @@ static const struct column col_os[] =
     { prop_captionW,         CIM_STRING },
     { prop_csdversionW,      CIM_STRING },
     { prop_osarchitectureW,  CIM_STRING },
-    { prop_oslanguageW,      CIM_UINT32 },
+    { prop_oslanguageW,      CIM_UINT32, VT_I4 },
     { prop_systemdirectoryW, CIM_STRING }
 };
 static const struct column col_process[] =
@@ -169,9 +169,9 @@ static const struct column col_process[] =
     { prop_commandlineW, CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_descriptionW, CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_handleW,      CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
-    { prop_pprocessidW,  CIM_UINT32 },
-    { prop_processidW,   CIM_UINT32 },
-    { prop_threadcountW, CIM_UINT32 }
+    { prop_pprocessidW,  CIM_UINT32, VT_I4 },
+    { prop_processidW,   CIM_UINT32, VT_I4 },
+    { prop_threadcountW, CIM_UINT32, VT_I4 }
 };
 static const struct column col_processor[] =
 {
