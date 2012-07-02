@@ -184,7 +184,7 @@ struct d3d9_swapchain
     IDirect3DDevice9Ex *parent_device;
 };
 
-HRESULT d3d9_swapchain_create(struct d3d9_device *device, D3DPRESENT_PARAMETERS *present_parameters,
+HRESULT d3d9_swapchain_create(struct d3d9_device *device, struct wined3d_swapchain_desc *desc,
         struct d3d9_swapchain **swapchain) DECLSPEC_HIDDEN;
 
 struct d3d9_surface
