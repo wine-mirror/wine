@@ -3093,8 +3093,9 @@ static void test_tiff_properties(void)
         prop_item = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, prop_size);
         status = GdipGetPropertyItem(image, prop_id[i], prop_size, prop_item);
         expect(Ok, status);
+        ok(prop_item->value == prop_item + 1, "expected item->value %p, got %p\n", prop_item + 1, prop_item->value);
         ok(td[i].type == prop_item->type ||
-           /* Win7 stopped using proper but not documented types, and it's
+           /* Win7 stopped using proper but not documented types, and it
               looks broken since TypeFloat and TypeDouble now reported as
               TypeUndefined, and signed types reported as unsigned. */
            broken(prop_item->type == documented_type(td[i].type)),
