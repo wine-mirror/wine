@@ -723,8 +723,12 @@ static HRESULT WINAPI BitmapEncoderInfo_GetVersion(IWICBitmapEncoderInfo *iface,
 static HRESULT WINAPI BitmapEncoderInfo_GetSpecVersion(IWICBitmapEncoderInfo *iface, UINT cchSpecVersion,
     WCHAR *wzSpecVersion, UINT *pcchActual)
 {
-    FIXME("(%p,%u,%p,%p): stub\n", iface, cchSpecVersion, wzSpecVersion, pcchActual);
-    return E_NOTIMPL;
+    BitmapEncoderInfo *This = impl_from_IWICBitmapEncoderInfo(iface);
+
+    TRACE("(%p,%u,%p,%p)\n", iface, cchSpecVersion, wzSpecVersion, pcchActual);
+
+    return ComponentInfo_GetStringValue(This->classkey, specversion_valuename,
+        cchSpecVersion, wzSpecVersion, pcchActual);
 }
 
 static HRESULT WINAPI BitmapEncoderInfo_GetFriendlyName(IWICBitmapEncoderInfo *iface, UINT cchFriendlyName,
