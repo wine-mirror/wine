@@ -67,8 +67,6 @@ MAKE_FUNCPTR(TIFFReadEncodedStrip);
 MAKE_FUNCPTR(TIFFReadEncodedTile);
 MAKE_FUNCPTR(TIFFSetDirectory);
 MAKE_FUNCPTR(TIFFSetField);
-MAKE_FUNCPTR(TIFFSetWarningHandler);
-MAKE_FUNCPTR(TIFFSetWarningHandlerExt);
 MAKE_FUNCPTR(TIFFWriteDirectory);
 MAKE_FUNCPTR(TIFFWriteScanline);
 #undef MAKE_FUNCPTR
@@ -82,6 +80,8 @@ static void *load_libtiff(void)
     if (!libtiff_handle &&
         (libtiff_handle = wine_dlopen(SONAME_LIBTIFF, RTLD_NOW, NULL, 0)) != NULL)
     {
+        void * (*pTIFFSetWarningHandler)(void *);
+        void * (*pTIFFSetWarningHandlerExt)(void *);
 
 #define LOAD_FUNCPTR(f) \
     if((p##f = wine_dlsym(libtiff_handle, #f, NULL, 0)) == NULL) { \
@@ -101,18 +101,17 @@ static void *load_libtiff(void)
         LOAD_FUNCPTR(TIFFReadEncodedTile);
         LOAD_FUNCPTR(TIFFSetDirectory);
         LOAD_FUNCPTR(TIFFSetField);
-        LOAD_FUNCPTR(TIFFSetWarningHandler);
-        LOAD_FUNCPTR(TIFFSetWarningHandlerExt);
         LOAD_FUNCPTR(TIFFWriteDirectory);
         LOAD_FUNCPTR(TIFFWriteScanline);
 #undef LOAD_FUNCPTR
 
+        if ((pTIFFSetWarningHandler = wine_dlsym(libtiff_handle, "TIFFSetWarningHandler", NULL, 0)))
+            pTIFFSetWarningHandler(NULL);
+        if ((pTIFFSetWarningHandlerExt = wine_dlsym(libtiff_handle, "TIFFSetWarningHandlerExt", NULL, 0)))
+            pTIFFSetWarningHandlerExt(NULL);
     }
 
     result = libtiff_handle;
-
-    pTIFFSetWarningHandler(NULL);
-    pTIFFSetWarningHandlerExt(NULL);
 
     LeaveCriticalSection(&init_tiff_cs);
     return result;
