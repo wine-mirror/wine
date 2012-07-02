@@ -46,6 +46,7 @@ static const WCHAR containerformat_valuename[] = {'C','o','n','t','a','i','n','e
 static const WCHAR metadataformat_valuename[] = {'M','e','t','a','d','a','t','a','F','o','r','m','a','t',0};
 static const WCHAR vendor_valuename[] = {'V','e','n','d','o','r',0};
 static const WCHAR version_valuename[] = {'V','e','r','s','i','o','n',0};
+static const WCHAR specversion_valuename[] = {'S','p','e','c','V','e','r','s','i','o','n',0};
 static const WCHAR bitsperpixel_valuename[] = {'B','i','t','L','e','n','g','t','h',0};
 static const WCHAR channelcount_valuename[] = {'C','h','a','n','n','e','l','C','o','u','n','t',0};
 static const WCHAR channelmasks_keyname[] = {'C','h','a','n','n','e','l','M','a','s','k','s',0};
@@ -257,8 +258,12 @@ static HRESULT WINAPI BitmapDecoderInfo_GetVersion(IWICBitmapDecoderInfo *iface,
 static HRESULT WINAPI BitmapDecoderInfo_GetSpecVersion(IWICBitmapDecoderInfo *iface, UINT cchSpecVersion,
     WCHAR *wzSpecVersion, UINT *pcchActual)
 {
-    FIXME("(%p,%u,%p,%p): stub\n", iface, cchSpecVersion, wzSpecVersion, pcchActual);
-    return E_NOTIMPL;
+    BitmapDecoderInfo *This = impl_from_IWICBitmapDecoderInfo(iface);
+
+    TRACE("(%p,%u,%p,%p)\n", iface, cchSpecVersion, wzSpecVersion, pcchActual);
+
+    return ComponentInfo_GetStringValue(This->classkey, specversion_valuename,
+        cchSpecVersion, wzSpecVersion, pcchActual);
 }
 
 static HRESULT WINAPI BitmapDecoderInfo_GetFriendlyName(IWICBitmapDecoderInfo *iface, UINT cchFriendlyName,
