@@ -31,6 +31,7 @@ struct column
 {
     const WCHAR *name;
     UINT type;
+    VARTYPE vartype; /* 0 for default mapping */
 };
 
 struct table

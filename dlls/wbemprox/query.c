@@ -662,11 +662,43 @@ static HRESULT get_system_propval( const struct view *view, UINT index, const WC
     return WBEM_E_NOT_FOUND;
 }
 
+static void set_variant( VARTYPE vartype, LONGLONG val, BSTR val_bstr, VARIANT *ret )
+{
+    switch (vartype)
+    {
+    case VT_BSTR:
+        V_VT( ret ) = VT_BSTR;
+        V_BSTR( ret ) = val_bstr;
+        return;
+    case VT_I2:
+        V_VT( ret ) = VT_I2;
+        V_I2( ret ) = val;
+        return;
+    case VT_UI2:
+        V_VT( ret ) = VT_UI2;
+        V_UI2( ret ) = val;
+        return;
+    case VT_I4:
+        V_VT( ret ) = VT_I4;
+        V_I4( ret ) = val;
+        return;
+    case VT_UI4:
+        V_VT( ret ) = VT_UI4;
+        V_UI4( ret ) = val;
+        return;
+    default:
+        ERR("unhandled variant type %u\n", vartype);
+        return;
+    }
+}
+
 HRESULT get_propval( const struct view *view, UINT index, const WCHAR *name, VARIANT *ret,
                      CIMTYPE *type, LONG *flavor )
 {
     HRESULT hr;
     UINT column, row = view->result[index];
+    VARTYPE vartype;
+    BSTR val_bstr = NULL;
     LONGLONG val;
 
     if (is_system_prop( name )) return get_system_propval( view, index, name, ret, type, flavor );
@@ -675,6 +707,8 @@ HRESULT get_propval( const struct view *view, UINT index, const WCHAR *name, VAR
     hr = get_column_index( view->table, name, &column );
     if (hr != S_OK) return WBEM_E_NOT_FOUND;
 
+    vartype = view->table->columns[column].vartype;
+
     hr = get_value( view->table, row, column, &val );
     if (hr != S_OK) return hr;
 
@@ -682,37 +716,34 @@ HRESULT get_propval( const struct view *view, UINT index, const WCHAR *name, VAR
     {
     case CIM_STRING:
     case CIM_DATETIME:
-        V_VT( ret ) = VT_BSTR;
-        V_BSTR( ret ) = SysAllocString( (const WCHAR *)(INT_PTR)val );
+        vartype = VT_BSTR;
+        val_bstr = SysAllocString( (const WCHAR *)(INT_PTR)val );
         break;
     case CIM_SINT16:
-        V_VT( ret ) = VT_I2;
-        V_I2( ret ) = val;
+        if (!vartype) vartype = VT_I2;
         break;
     case CIM_UINT16:
-        V_VT( ret ) = VT_UI2;
-        V_UI2( ret ) = val;
+        if (!vartype) vartype = VT_UI2;
         break;
     case CIM_SINT32:
-        V_VT( ret ) = VT_I4;
-        V_I4( ret ) = val;
+        if (!vartype) vartype = VT_I4;
         break;
     case CIM_UINT32:
-        V_VT( ret ) = VT_UI4;
-        V_UI4( ret ) = val;
+        if (!vartype) vartype = VT_UI4;
         break;
     case CIM_SINT64:
-        V_VT( ret ) = VT_BSTR;
-        V_BSTR( ret ) = get_value_bstr( view->table, row, column );
+        vartype = VT_BSTR;
+        val_bstr = get_value_bstr( view->table, row, column );
         break;
     case CIM_UINT64:
-        V_VT( ret ) = VT_BSTR;
-        V_BSTR( ret ) = get_value_bstr( view->table, row, column );
+        vartype = VT_BSTR;
+        val_bstr = get_value_bstr( view->table, row, column );
         break;
     default:
         ERR("unhandled column type %u\n", view->table->columns[column].type);
         return WBEM_E_FAILED;
     }
+    set_variant( vartype, val, val_bstr, ret );
     if (type) *type = view->table->columns[column].type & COL_TYPE_MASK;
     if (flavor) *flavor = 0;
     return S_OK;
