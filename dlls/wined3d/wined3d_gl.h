@@ -3693,86 +3693,10 @@ typedef void (WINE_GLAPI *PGLFNGETCOMBINERSTAGEPARAMETERFVNVPROC)(GLenum stage, 
 #define GL_GENERATE_MIPMAP_HINT_SGIS                        0x8192
 #endif
 
-/* WGL_ARB_extensions_string */
-typedef const char *(WINAPI *WINED3D_PFNWGLGETEXTENSIONSSTRINGARBPROC)(HDC hdc);
-
-/* WGL_ARB_multisample */
-#ifndef WGL_ARB_multisample
-#define WGL_ARB_multisample 1
-#define WGL_SAMPLE_BUFFERS_ARB                              0x2041
-#define WGL_SAMPLES_ARB                                     0x2042
-#endif
-
-/* WGL_ARB_pixel_format */
-#ifndef WGL_ARB_pixel_format
-#define WGL_ARB_pixel_format 1
-#define WGL_NUMBER_PIXEL_FORMATS_ARB                        0x2000
-#define WGL_DRAW_TO_WINDOW_ARB                              0x2001
-#define WGL_DRAW_TO_BITMAP_ARB                              0x2002
-#define WGL_ACCELERATION_ARB                                0x2003
-#define WGL_NEED_PALETTE_ARB                                0x2004
-#define WGL_NEED_SYSTEM_PALETTE_ARB                         0x2005
-#define WGL_SWAP_LAYER_BUFFERS_ARB                          0x2006
-#define WGL_SWAP_METHOD_ARB                                 0x2007
-#define WGL_NUMBER_OVERLAYS_ARB                             0x2008
-#define WGL_NUMBER_UNDERLAYS_ARB                            0x2009
-#define WGL_TRANSPARENT_ARB                                 0x200a
-#define WGL_TRANSPARENT_RED_VALUE_ARB                       0x2037
-#define WGL_TRANSPARENT_GREEN_VALUE_ARB                     0x2038
-#define WGL_TRANSPARENT_BLUE_VALUE_ARB                      0x2039
-#define WGL_TRANSPARENT_ALPHA_VALUE_ARB                     0x203a
-#define WGL_TRANSPARENT_INDEX_VALUE_ARB                     0x203b
-#define WGL_SHARE_DEPTH_ARB                                 0x200c
-#define WGL_SHARE_STENCIL_ARB                               0x200d
-#define WGL_SHARE_ACCUM_ARB                                 0x200e
-#define WGL_SUPPORT_GDI_ARB                                 0x200f
-#define WGL_SUPPORT_OPENGL_ARB                              0x2010
-#define WGL_DOUBLE_BUFFER_ARB                               0x2011
-#define WGL_STEREO_ARB                                      0x2012
-#define WGL_PIXEL_TYPE_ARB                                  0x2013
-#define WGL_COLOR_BITS_ARB                                  0x2014
-#define WGL_RED_BITS_ARB                                    0x2015
-#define WGL_RED_SHIFT_ARB                                   0x2016
-#define WGL_GREEN_BITS_ARB                                  0x2017
-#define WGL_GREEN_SHIFT_ARB                                 0x2018
-#define WGL_BLUE_BITS_ARB                                   0x2019
-#define WGL_BLUE_SHIFT_ARB                                  0x201a
-#define WGL_ALPHA_BITS_ARB                                  0x201b
-#define WGL_ALPHA_SHIFT_ARB                                 0x201c
-#define WGL_ACCUM_BITS_ARB                                  0x201d
-#define WGL_ACCUM_RED_BITS_ARB                              0x201e
-#define WGL_ACCUM_GREEN_BITS_ARB                            0x201f
-#define WGL_ACCUM_BLUE_BITS_ARB                             0x2020
-#define WGL_ACCUM_ALPHA_BITS_ARB                            0x2021
-#define WGL_DEPTH_BITS_ARB                                  0x2022
-#define WGL_STENCIL_BITS_ARB                                0x2023
-#define WGL_AUX_BUFFERS_ARB                                 0x2024
-#define WGL_NO_ACCELERATION_ARB                             0x2025
-#define WGL_GENERIC_ACCELERATION_ARB                        0x2026
-#define WGL_FULL_ACCELERATION_ARB                           0x2027
-#define WGL_SWAP_EXCHANGE_ARB                               0x2028
-#define WGL_SWAP_COPY_ARB                                   0x2029
-#define WGL_SWAP_UNDEFINED_ARB                              0x202a
-#define WGL_TYPE_RGBA_ARB                                   0x202b
-#define WGL_TYPE_COLORINDEX_ARB                             0x202c
-#endif
-typedef BOOL (WINAPI *WINED3D_PFNWGLGETPIXELFORMATATTRIBIVARBPROC)(HDC hdc, int iPixelFormat,
-        int iLayerPlane, UINT nAttributes, const int *piAttributes, int *piValues);
-typedef BOOL (WINAPI *WINED3D_PFNWGLGETPIXELFORMATATTRIBFVARBPROC)(HDC hdc, int iPixelFormat,
-        int iLayerPlane, UINT nAttributes, const int *piAttributes, FLOAT *pfValues);
-typedef BOOL (WINAPI *WINED3D_PFNWGLCHOOSEPIXELFORMATARBPROC)(HDC hdc, const int *piAttribIList,
-        const FLOAT *pfAttribFList, UINT nMaxFormats, int *piFormats, UINT *nNumFormats);
-
-/* WGL_ARB_pixel_format_float */
-#ifndef WGL_ARB_pixel_format_float
-#define WGL_ARB_pixel_format_float 1
-#define WGL_TYPE_RGBA_FLOAT_ARB                             0x21a0
-#endif
+#include "wine/wglext.h"
 
 /* WGL_WINE_pixel_format_passthrough */
-typedef BOOL (WINAPI *WINED3D_PFNWGLSETPIXELFORMATWINE)(HDC hdc, int iPixelFormat);
-
-typedef BOOL (WINAPI *WINED3D_PFNWGLSWAPINTERVALEXTPROC)(int interval);
+typedef BOOL (WINAPI *PFNWGLSETPIXELFORMATWINE)(HDC hdc, int iPixelFormat);
 
 #define GL_EXT_FUNCS_GEN \
     /* GL_APPLE_fence */ \
@@ -4515,11 +4439,11 @@ typedef BOOL (WINAPI *WINED3D_PFNWGLSWAPINTERVALEXTPROC)(int interval);
             glFinalCombinerInputNV,                     NV_REGISTER_COMBINERS,          NULL) \
 
 #define WGL_EXT_FUNCS_GEN \
-    USE_GL_FUNC(WINED3D_PFNWGLGETEXTENSIONSSTRINGARBPROC,       wglGetExtensionsStringARB,      0, NULL) \
-    USE_GL_FUNC(WINED3D_PFNWGLGETPIXELFORMATATTRIBIVARBPROC,    wglGetPixelFormatAttribivARB,   0, NULL) \
-    USE_GL_FUNC(WINED3D_PFNWGLGETPIXELFORMATATTRIBFVARBPROC,    wglGetPixelFormatAttribfvARB,   0, NULL) \
-    USE_GL_FUNC(WINED3D_PFNWGLCHOOSEPIXELFORMATARBPROC,         wglChoosePixelFormatARB,        0, NULL) \
-    USE_GL_FUNC(WINED3D_PFNWGLSETPIXELFORMATWINE,               wglSetPixelFormatWINE,          0, NULL) \
-    USE_GL_FUNC(WINED3D_PFNWGLSWAPINTERVALEXTPROC,              wglSwapIntervalEXT,             0, NULL)
+    USE_GL_FUNC(PFNWGLGETEXTENSIONSSTRINGARBPROC,       wglGetExtensionsStringARB,      0, NULL) \
+    USE_GL_FUNC(PFNWGLGETPIXELFORMATATTRIBIVARBPROC,    wglGetPixelFormatAttribivARB,   0, NULL) \
+    USE_GL_FUNC(PFNWGLGETPIXELFORMATATTRIBFVARBPROC,    wglGetPixelFormatAttribfvARB,   0, NULL) \
+    USE_GL_FUNC(PFNWGLCHOOSEPIXELFORMATARBPROC,         wglChoosePixelFormatARB,        0, NULL) \
+    USE_GL_FUNC(PFNWGLSETPIXELFORMATWINE,               wglSetPixelFormatWINE,          0, NULL) \
+    USE_GL_FUNC(PFNWGLSWAPINTERVALEXTPROC,              wglSwapIntervalEXT,             0, NULL)
 
 #endif /* __WINE_WINED3D_GL */
