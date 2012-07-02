@@ -70,6 +70,7 @@ static inline BaseMemAllocator *impl_from_IMemAllocator(IMemAllocator *iface)
 
 static const IMemAllocatorVtbl BaseMemAllocator_VTable;
 static const IMediaSample2Vtbl StdMediaSample2_VTable;
+static inline StdMediaSample2 *unsafe_impl_from_IMediaSample(IMediaSample * iface);
 
 #define AM_SAMPLE2_PROP_SIZE_WRITABLE FIELD_OFFSET(AM_SAMPLE2_PROPERTIES, pbBuffer)
 
@@ -356,9 +357,9 @@ static HRESULT WINAPI BaseMemAllocator_GetBuffer(IMemAllocator * iface, IMediaSa
 static HRESULT WINAPI BaseMemAllocator_ReleaseBuffer(IMemAllocator * iface, IMediaSample * pSample)
 {
     BaseMemAllocator *This = impl_from_IMemAllocator(iface);
-    StdMediaSample2 * pStdSample = (StdMediaSample2 *)pSample;
+    StdMediaSample2 * pStdSample = unsafe_impl_from_IMediaSample(pSample);
     HRESULT hr = S_OK;
-    
+
     TRACE("(%p)->(%p)\n", This, pSample);
 
     /* FIXME: make sure that sample is currently on the used list */
@@ -790,6 +791,16 @@ static const IMediaSample2Vtbl StdMediaSample2_VTable =
     StdMediaSample2_GetProperties,
     StdMediaSample2_SetProperties
 };
+
+static inline StdMediaSample2 *unsafe_impl_from_IMediaSample(IMediaSample * iface)
+{
+    IMediaSample2 *iface2 = (IMediaSample2 *)iface;
+
+    if (!iface)
+        return NULL;
+    assert(iface2->lpVtbl == &StdMediaSample2_VTable);
+    return impl_from_IMediaSample2(iface2);
+}
 
 typedef struct StdMemAllocator
 {
