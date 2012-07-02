@@ -238,7 +238,7 @@ BOOL PSDRV_WriteSetBuiltinFont(PHYSDEV dev)
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
 
     return PSDRV_WriteSetFont(dev, physDev->font.fontinfo.Builtin.afm->FontName,
-			      physDev->font.size, physDev->font.escapement);
+                              physDev->font.size, physDev->font.escapement, FALSE);
 }
 
 BOOL PSDRV_WriteBuiltinGlyphShow(PHYSDEV dev, LPCWSTR str, INT count)

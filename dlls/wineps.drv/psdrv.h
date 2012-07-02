@@ -489,7 +489,8 @@ extern BOOL PSDRV_WriteLineTo(PHYSDEV dev, INT x, INT y) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_WriteStroke(PHYSDEV dev) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_WriteRectangle(PHYSDEV dev, INT x, INT y, INT width, INT height) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_WriteRRectangle(PHYSDEV dev, INT x, INT y, INT width, INT height) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_WriteSetFont(PHYSDEV dev, const char *name, matrix size, INT escapement) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_WriteSetFont(PHYSDEV dev, const char *name, matrix size, INT escapement,
+                               BOOL fake_italic) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_WriteGlyphShow(PHYSDEV dev, LPCSTR g_name) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_WriteSetPen(PHYSDEV dev) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_WriteArc(PHYSDEV dev, INT x, INT y, INT w, INT h,

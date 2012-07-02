@@ -129,11 +129,23 @@ static const char psrectangle[] = /* x, y, width, height, -width */
 static const char psglyphshow[] = /* glyph name */
 "/%s glyphshow\n";
 
-static const char pssetfont[] = /* fontname, xx_scale, xy_scale, yx_scale, yy_scale, escapement */
-"/%s findfont\n"
-"[%d %d %d %d 0 0]\n"
+static const char psfindfont[] = /* fontname */
+"/%s findfont\n";
+
+static const char psfakeitalic[] =
+"[1 0 0.25 1 0 0]\n";
+
+static const char pssizematrix[] =
+"[%d %d %d %d 0 0]\n";
+
+static const char psconcat[] =
+"matrix concatmatrix\n";
+
+static const char psrotatefont[] = /* escapement */
 "%d 10 div matrix rotate\n"
-"matrix concatmatrix\n"
+"matrix concatmatrix\n";
+
+static const char pssetfont[] =
 "makefont setfont\n";
 
 static const char pssetline[] = /* width, join, endcap */
@@ -554,22 +566,36 @@ BOOL PSDRV_WriteCurveTo(PHYSDEV dev, POINT pts[3])
     return PSDRV_WriteSpool(dev, buf, strlen(buf));
 }
 
-
-BOOL PSDRV_WriteSetFont(PHYSDEV dev, const char *name, matrix size, INT escapement)
+BOOL PSDRV_WriteSetFont(PHYSDEV dev, const char *name, matrix size, INT escapement, BOOL fake_italic)
 {
     char *buf;
 
-    buf = HeapAlloc( GetProcessHeap(), 0, sizeof(pssetfont) + strlen(name) + 40 );
+    buf = HeapAlloc( GetProcessHeap(), 0, strlen(name) + 256 );
 
     if(!buf) {
         WARN("HeapAlloc failed\n");
         return FALSE;
     }
 
-    sprintf(buf, pssetfont, name, size.xx, size.xy, size.yx, size.yy, -escapement);
+    sprintf( buf, psfindfont, name );
+    PSDRV_WriteSpool( dev, buf, strlen(buf) );
 
-    PSDRV_WriteSpool(dev, buf, strlen(buf));
+    if (fake_italic) PSDRV_WriteSpool( dev, psfakeitalic, sizeof(psfakeitalic) - 1 );
+
+    sprintf( buf, pssizematrix, size.xx, size.xy, size.yx, size.yy );
+    PSDRV_WriteSpool( dev, buf, strlen(buf) );
+
+    if (fake_italic) PSDRV_WriteSpool( dev, psconcat, sizeof(psconcat) - 1 );
+
+    if (escapement)
+    {
+        sprintf( buf, psrotatefont, -escapement );
+        PSDRV_WriteSpool( dev, buf, strlen(buf) );
+    }
+
+    PSDRV_WriteSpool( dev, pssetfont, sizeof(pssetfont) - 1 );
     HeapFree( GetProcessHeap(), 0, buf );
+
     return TRUE;
 }
 

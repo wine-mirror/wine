@@ -239,6 +239,24 @@ static inline float ps_round(float f)
 {
     return (f > 0) ? (f + 0.5) : (f - 0.5);
 }
+
+static BOOL is_fake_italic( HDC hdc )
+{
+    TEXTMETRICW tm;
+    BYTE head[54]; /* the head table is 54 bytes long */
+    WORD mac_style;
+
+    GetTextMetricsW( hdc, &tm );
+    if (!tm.tmItalic) return FALSE;
+
+    if (GetFontData( hdc, MS_MAKE_TAG('h','e','a','d'), 0, head, sizeof(head) ) == GDI_ERROR)
+        return FALSE;
+
+    mac_style = GET_BE_WORD( head + 44 );
+    TRACE( "mac style %04x\n", mac_style );
+    return !(mac_style & 2);
+}
+
 /****************************************************************************
  *  PSDRV_WriteSetDownloadFont
  *
@@ -328,7 +346,8 @@ BOOL PSDRV_WriteSetDownloadFont(PHYSDEV dev)
     }
 
 
-    PSDRV_WriteSetFont(dev, ps_name, physDev->font.size, physDev->font.escapement);
+    PSDRV_WriteSetFont(dev, ps_name, physDev->font.size, physDev->font.escapement,
+                       is_fake_italic( dev->hdc ));
 
     HeapFree(GetProcessHeap(), 0, ps_name);
     HeapFree(GetProcessHeap(), 0, potm);
