@@ -149,7 +149,7 @@ static const struct wined3d_parent_ops d3d8_swapchain_wined3d_parent_ops =
     d3d8_swapchain_wined3d_object_released,
 };
 
-HRESULT swapchain_init(struct d3d8_swapchain *swapchain, struct d3d8_device *device,
+static HRESULT swapchain_init(struct d3d8_swapchain *swapchain, struct d3d8_device *device,
         struct wined3d_swapchain_desc *desc)
 {
     HRESULT hr;
@@ -171,6 +171,31 @@ HRESULT swapchain_init(struct d3d8_swapchain *swapchain, struct d3d8_device *dev
 
     swapchain->parent_device = &device->IDirect3DDevice8_iface;
     IDirect3DDevice8_AddRef(swapchain->parent_device);
+
+    return D3D_OK;
+}
+
+HRESULT d3d8_swapchain_create(struct d3d8_device *device, struct wined3d_swapchain_desc *desc,
+        struct d3d8_swapchain **swapchain)
+{
+    struct d3d8_swapchain *object;
+    HRESULT hr;
+
+    if (!(object = HeapAlloc(GetProcessHeap(),  HEAP_ZERO_MEMORY, sizeof(*object))))
+    {
+        ERR("Failed to allocate swapchain memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    if (FAILED(hr = swapchain_init(object, device, desc)))
+    {
+        WARN("Failed to initialize swapchain, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created swapchain %p.\n", object);
+    *swapchain = object;
 
     return D3D_OK;
 }

@@ -511,13 +511,6 @@ static HRESULT WINAPI d3d8_device_CreateAdditionalSwapChain(IDirect3DDevice8 *if
     TRACE("iface %p, present_parameters %p, swapchain %p.\n",
             iface, present_parameters, swapchain);
 
-    object = HeapAlloc(GetProcessHeap(),  HEAP_ZERO_MEMORY, sizeof(*object));
-    if (!object)
-    {
-        ERR("Failed to allocate swapchain memory.\n");
-        return E_OUTOFMEMORY;
-    }
-
     desc.backbuffer_width = present_parameters->BackBufferWidth;
     desc.backbuffer_height = present_parameters->BackBufferHeight;
     desc.backbuffer_format = wined3dformat_from_d3dformat(present_parameters->BackBufferFormat);
@@ -534,7 +527,8 @@ static HRESULT WINAPI d3d8_device_CreateAdditionalSwapChain(IDirect3DDevice8 *if
     desc.swap_interval = present_parameters->FullScreen_PresentationInterval;
     desc.auto_restore_display_mode = TRUE;
 
-    hr = swapchain_init(object, device, &desc);
+    if (SUCCEEDED(hr = d3d8_swapchain_create(device, &desc, &object)))
+        *swapchain = &object->IDirect3DSwapChain8_iface;
 
     present_parameters->BackBufferWidth = desc.backbuffer_width;
     present_parameters->BackBufferHeight = desc.backbuffer_height;
@@ -549,16 +543,6 @@ static HRESULT WINAPI d3d8_device_CreateAdditionalSwapChain(IDirect3DDevice8 *if
     present_parameters->Flags = desc.flags;
     present_parameters->FullScreen_RefreshRateInHz = desc.refresh_rate;
     present_parameters->FullScreen_PresentationInterval = desc.swap_interval;
-
-    if (FAILED(hr))
-    {
-        WARN("Failed to initialize swapchain, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
-        return hr;
-    }
-
-    TRACE("Created swapchain %p.\n", object);
-    *swapchain = &object->IDirect3DSwapChain8_iface;
 
     return D3D_OK;
 }
@@ -605,7 +589,7 @@ static HRESULT WINAPI d3d8_device_Reset(IDirect3DDevice8 *iface,
     swapchain_desc.backbuffer_width = present_parameters->BackBufferWidth;
     swapchain_desc.backbuffer_height = present_parameters->BackBufferHeight;
     swapchain_desc.backbuffer_format = wined3dformat_from_d3dformat(present_parameters->BackBufferFormat);
-    swapchain_desc.backbuffer_count = present_parameters->BackBufferCount;
+    swapchain_desc.backbuffer_count = max(1, present_parameters->BackBufferCount);
     swapchain_desc.multisample_type = present_parameters->MultiSampleType;
     swapchain_desc.multisample_quality = 0; /* d3d9 only */
     swapchain_desc.swap_effect = present_parameters->SwapEffect;
@@ -2982,54 +2966,21 @@ static HRESULT CDECL device_parent_create_swapchain(struct wined3d_device_parent
         struct wined3d_swapchain_desc *desc, struct wined3d_swapchain **swapchain)
 {
     struct d3d8_device *device = device_from_device_parent(device_parent);
-    D3DPRESENT_PARAMETERS local_parameters;
-    IDirect3DSwapChain8 *d3d_swapchain;
+    struct d3d8_swapchain *d3d_swapchain;
     HRESULT hr;
 
     TRACE("device_parent %p, desc %p, swapchain %p.\n", device_parent, desc, swapchain);
 
-    /* Copy the presentation parameters */
-    local_parameters.BackBufferWidth = desc->backbuffer_width;
-    local_parameters.BackBufferHeight = desc->backbuffer_height;
-    local_parameters.BackBufferFormat = d3dformat_from_wined3dformat(desc->backbuffer_format);
-    local_parameters.BackBufferCount = desc->backbuffer_count;
-    local_parameters.MultiSampleType = desc->multisample_type;
-    local_parameters.SwapEffect = desc->swap_effect;
-    local_parameters.hDeviceWindow = desc->device_window;
-    local_parameters.Windowed = desc->windowed;
-    local_parameters.EnableAutoDepthStencil = desc->enable_auto_depth_stencil;
-    local_parameters.AutoDepthStencilFormat = d3dformat_from_wined3dformat(desc->auto_depth_stencil_format);
-    local_parameters.Flags = desc->flags;
-    local_parameters.FullScreen_RefreshRateInHz = desc->refresh_rate;
-    local_parameters.FullScreen_PresentationInterval = desc->swap_interval;
-
-    hr = IDirect3DDevice8_CreateAdditionalSwapChain(&device->IDirect3DDevice8_iface,
-            &local_parameters, &d3d_swapchain);
-    if (FAILED(hr))
+    if (FAILED(hr = d3d8_swapchain_create(device, desc, &d3d_swapchain)))
     {
         WARN("Failed to create swapchain, hr %#x.\n", hr);
         *swapchain = NULL;
         return hr;
     }
 
-    *swapchain = ((struct d3d8_swapchain *)d3d_swapchain)->wined3d_swapchain;
+    *swapchain = d3d_swapchain->wined3d_swapchain;
     wined3d_swapchain_incref(*swapchain);
-    IDirect3DSwapChain8_Release(d3d_swapchain);
-
-    /* Copy back the presentation parameters */
-    desc->backbuffer_width = local_parameters.BackBufferWidth;
-    desc->backbuffer_height = local_parameters.BackBufferHeight;
-    desc->backbuffer_format = wined3dformat_from_d3dformat(local_parameters.BackBufferFormat);
-    desc->backbuffer_count = local_parameters.BackBufferCount;
-    desc->multisample_type = local_parameters.MultiSampleType;
-    desc->swap_effect = local_parameters.SwapEffect;
-    desc->device_window = local_parameters.hDeviceWindow;
-    desc->windowed = local_parameters.Windowed;
-    desc->enable_auto_depth_stencil = local_parameters.EnableAutoDepthStencil;
-    desc->auto_depth_stencil_format = wined3dformat_from_d3dformat(local_parameters.AutoDepthStencilFormat);
-    desc->flags = local_parameters.Flags;
-    desc->refresh_rate = local_parameters.FullScreen_RefreshRateInHz;
-    desc->swap_interval = local_parameters.FullScreen_PresentationInterval;
+    IDirect3DSwapChain8_Release(&d3d_swapchain->IDirect3DSwapChain8_iface);
 
     return hr;
 }
@@ -3121,7 +3072,7 @@ HRESULT device_init(struct d3d8_device *device, struct d3d8 *parent, struct wine
     swapchain_desc.backbuffer_width = parameters->BackBufferWidth;
     swapchain_desc.backbuffer_height = parameters->BackBufferHeight;
     swapchain_desc.backbuffer_format = wined3dformat_from_d3dformat(parameters->BackBufferFormat);
-    swapchain_desc.backbuffer_count = parameters->BackBufferCount;
+    swapchain_desc.backbuffer_count = max(1, parameters->BackBufferCount);
     swapchain_desc.multisample_type = parameters->MultiSampleType;
     swapchain_desc.multisample_quality = 0; /* d3d9 only */
     swapchain_desc.swap_effect = parameters->SwapEffect;
