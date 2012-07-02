@@ -2390,19 +2390,6 @@ GpStatus WINGDIPAPI GdipGetMetafileHeaderFromStream(IStream *stream,
     return Ok;
 }
 
-GpStatus WINGDIPAPI GdipGetAllPropertyItems(GpImage *image, UINT size,
-    UINT num, PropertyItem* items)
-{
-    static int calls;
-
-    TRACE("(%p, %u, %u, %p)\n", image, size, num, items);
-
-    if(!(calls++))
-        FIXME("not implemented\n");
-
-    return InvalidParameter;
-}
-
 GpStatus WINGDIPAPI GdipGetPropertyCount(GpImage *image, UINT *num)
 {
     TRACE("(%p, %p)\n", image, num);
@@ -2725,6 +2712,86 @@ GpStatus WINGDIPAPI GdipGetPropertySize(GpImage *image, UINT *size, UINT *count)
 
     *count = prop_count;
     *size = prop_size;
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipGetAllPropertyItems(GpImage *image, UINT size,
+                                            UINT count, PropertyItem *buf)
+{
+    GpStatus status;
+    HRESULT hr;
+    IWICMetadataReader *reader;
+    IWICEnumMetadataItem *enumerator;
+    UINT prop_count, prop_size, i;
+    PROPVARIANT id, value;
+    char *item_value;
+
+    TRACE("(%p,%u,%u,%p)\n", image, size, count, buf);
+
+    if (!image || !buf) return InvalidParameter;
+
+    if (image->type != ImageTypeBitmap)
+    {
+        FIXME("Not implemented for type %d\n", image->type);
+        return NotImplemented;
+    }
+
+    status = GdipGetPropertySize(image, &prop_size, &prop_count);
+    if (status != Ok) return status;
+
+    if (prop_count != count || prop_size != size) return InvalidParameter;
+
+    reader = ((GpBitmap *)image)->metadata_reader;
+    if (!reader) return PropertyNotFound;
+
+    hr = IWICMetadataReader_GetEnumerator(reader, &enumerator);
+    if (FAILED(hr)) return hresult_to_status(hr);
+
+    IWICEnumMetadataItem_Reset(enumerator);
+
+    item_value = (char *)(buf + prop_count);
+
+    PropVariantInit(&id);
+    PropVariantInit(&value);
+
+    for (i = 0; i < prop_count; i++)
+    {
+        PropertyItem *item;
+        UINT items_returned, item_size;
+
+        hr = IWICEnumMetadataItem_Next(enumerator, 1, NULL, &id, &value, &items_returned);
+        if (hr != S_OK) break;
+
+        if (id.vt != VT_UI2)
+        {
+            FIXME("not supported propvariant type for id: %u\n", id.vt);
+            continue;
+        }
+
+        item_size = propvariant_size(&value);
+        if (item_size)
+        {
+            item = HeapAlloc(GetProcessHeap(), 0, item_size + sizeof(*item));
+
+            propvariant_to_item(&value, item, item_size + sizeof(*item), id.u.uiVal);
+            buf[i].id = item->id;
+            buf[i].type = item->type;
+            buf[i].length = item_size;
+            buf[i].value = item_value;
+            memcpy(item_value, item->value, item_size);
+            item_value += item_size;
+
+            HeapFree(GetProcessHeap(), 0, item);
+        }
+
+        PropVariantClear(&id);
+        PropVariantClear(&value);
+    }
+
+    IWICEnumMetadataItem_Release(enumerator);
+
+    if (hr != S_OK) return PropertyNotFound;
+
     return Ok;
 }
 
