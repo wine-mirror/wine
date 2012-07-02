@@ -2671,16 +2671,61 @@ GpStatus WINGDIPAPI GdipGetPropertyItem(GpImage *image, PROPID propid, UINT size
     return stat;
 }
 
-GpStatus WINGDIPAPI GdipGetPropertySize(GpImage *image, UINT* size, UINT* num)
+GpStatus WINGDIPAPI GdipGetPropertySize(GpImage *image, UINT *size, UINT *count)
 {
-    static int calls;
+    HRESULT hr;
+    IWICMetadataReader *reader;
+    IWICEnumMetadataItem *enumerator;
+    UINT prop_count, prop_size, i;
+    PROPVARIANT id, value;
 
-    TRACE("(%p,%p,%p)\n", image, size, num);
+    TRACE("(%p,%p,%p)\n", image, size, count);
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    if (!image || !size || !count) return InvalidParameter;
 
-    return InvalidParameter;
+    if (image->type != ImageTypeBitmap)
+    {
+        FIXME("Not implemented for type %d\n", image->type);
+        return NotImplemented;
+    }
+
+    reader = ((GpBitmap *)image)->metadata_reader;
+    if (!reader) return PropertyNotFound;
+
+    hr = IWICMetadataReader_GetCount(reader, &prop_count);
+    if (FAILED(hr)) return hresult_to_status(hr);
+
+    hr = IWICMetadataReader_GetEnumerator(reader, &enumerator);
+    if (FAILED(hr)) return hresult_to_status(hr);
+
+    IWICEnumMetadataItem_Reset(enumerator);
+
+    prop_size = 0;
+
+    PropVariantInit(&id);
+    PropVariantInit(&value);
+
+    for (i = 0; i < prop_count; i++)
+    {
+        UINT items_returned, item_size;
+
+        hr = IWICEnumMetadataItem_Next(enumerator, 1, NULL, &id, &value, &items_returned);
+        if (hr != S_OK) break;
+
+        item_size = propvariant_size(&value);
+        if (item_size) prop_size += sizeof(PropertyItem) + item_size;
+
+        PropVariantClear(&id);
+        PropVariantClear(&value);
+    }
+
+    IWICEnumMetadataItem_Release(enumerator);
+
+    if (hr != S_OK) return PropertyNotFound;
+
+    *count = prop_count;
+    *size = prop_size;
+    return Ok;
 }
 
 struct image_format_dimension
