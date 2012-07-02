@@ -809,9 +809,14 @@ typedef struct StdMemAllocator
     LPVOID pMemory;
 } StdMemAllocator;
 
+static inline StdMemAllocator *StdMemAllocator_from_IMemAllocator(IMemAllocator * iface)
+{
+    return CONTAINING_RECORD(iface, StdMemAllocator, base.IMemAllocator_iface);
+}
+
 static HRESULT StdMemAllocator_Alloc(IMemAllocator * iface)
 {
-    StdMemAllocator *This = (StdMemAllocator *)iface;
+    StdMemAllocator *This = StdMemAllocator_from_IMemAllocator(iface);
     StdMediaSample2 * pSample = NULL;
     SYSTEM_INFO si;
     LONG i;
@@ -849,7 +854,7 @@ static HRESULT StdMemAllocator_Alloc(IMemAllocator * iface)
 
 static HRESULT StdMemAllocator_Free(IMemAllocator * iface)
 {
-    StdMemAllocator *This = (StdMemAllocator *)iface;
+    StdMemAllocator *This = StdMemAllocator_from_IMemAllocator(iface);
     struct list * cursor;
 
     if (!list_empty(&This->base.used_list))
@@ -882,7 +887,7 @@ static HRESULT StdMemAllocator_Free(IMemAllocator * iface)
 
 static void StdMemAllocator_Destroy(IMemAllocator *iface)
 {
-    StdMemAllocator *This = (StdMemAllocator *)iface;
+    StdMemAllocator *This = StdMemAllocator_from_IMemAllocator(iface);
 
     This->csState.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&This->csState);
