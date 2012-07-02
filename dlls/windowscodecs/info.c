@@ -1238,8 +1238,12 @@ static HRESULT WINAPI PixelFormatInfo_GetVersion(IWICPixelFormatInfo2 *iface, UI
 static HRESULT WINAPI PixelFormatInfo_GetSpecVersion(IWICPixelFormatInfo2 *iface, UINT cchSpecVersion,
     WCHAR *wzSpecVersion, UINT *pcchActual)
 {
-    FIXME("(%p,%u,%p,%p): stub\n", iface, cchSpecVersion, wzSpecVersion, pcchActual);
-    return E_NOTIMPL;
+    PixelFormatInfo *This = impl_from_IWICPixelFormatInfo2(iface);
+
+    TRACE("(%p,%u,%p,%p)\n", iface, cchSpecVersion, wzSpecVersion, pcchActual);
+
+    return ComponentInfo_GetStringValue(This->classkey, specversion_valuename,
+        cchSpecVersion, wzSpecVersion, pcchActual);
 }
 
 static HRESULT WINAPI PixelFormatInfo_GetFriendlyName(IWICPixelFormatInfo2 *iface, UINT cchFriendlyName,
