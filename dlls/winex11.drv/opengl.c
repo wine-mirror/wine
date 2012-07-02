@@ -36,6 +36,14 @@
 #ifdef HAVE_SYS_UN_H
 #include <sys/un.h>
 #endif
+#ifdef HAVE_GL_GL_H
+# include <GL/gl.h>
+#endif
+#ifdef HAVE_GL_GLX_H
+# include <GL/glx.h>
+#endif
+#undef APIENTRY
+#undef GLAPI
 
 #include "x11drv.h"
 #include "winternl.h"
@@ -49,27 +57,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wgl);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 WINE_DECLARE_DEBUG_CHANNEL(fps);
 
-#undef APIENTRY
-#undef CALLBACK
-#undef WINAPI
-
-#ifdef HAVE_GL_GL_H
-# include <GL/gl.h>
-#endif
-#ifdef HAVE_GL_GLX_H
-# include <GL/glx.h>
-#endif
-
-#undef APIENTRY
-#undef CALLBACK
-#undef WINAPI
-
-/* Redefines the constants */
-#define CALLBACK    __stdcall
-#define WINAPI      __stdcall
-#define APIENTRY    WINAPI
-
-#include "wine/wgl.h"
+#include "wine/wglext.h"
 
 /* For compatibility with old Mesa headers */
 #ifndef GLX_SAMPLE_BUFFERS_ARB
@@ -3056,7 +3044,7 @@ static const WineGLExtension WGL_internal_functions =
 };
 
 
-static const WineGLExtension WGL_ARB_create_context =
+static const WineGLExtension WGL_ARB_create_context_extension =
 {
   "WGL_ARB_create_context",
   {
@@ -3064,7 +3052,7 @@ static const WineGLExtension WGL_ARB_create_context =
   }
 };
 
-static const WineGLExtension WGL_ARB_extensions_string =
+static const WineGLExtension WGL_ARB_extensions_string_extension =
 {
   "WGL_ARB_extensions_string",
   {
@@ -3072,7 +3060,7 @@ static const WineGLExtension WGL_ARB_extensions_string =
   }
 };
 
-static const WineGLExtension WGL_ARB_make_current_read =
+static const WineGLExtension WGL_ARB_make_current_read_extension =
 {
   "WGL_ARB_make_current_read",
   {
@@ -3081,12 +3069,12 @@ static const WineGLExtension WGL_ARB_make_current_read =
   }
 };
 
-static const WineGLExtension WGL_ARB_multisample =
+static const WineGLExtension WGL_ARB_multisample_extension =
 {
   "WGL_ARB_multisample",
 };
 
-static const WineGLExtension WGL_ARB_pbuffer =
+static const WineGLExtension WGL_ARB_pbuffer_extension =
 {
   "WGL_ARB_pbuffer",
   {
@@ -3099,7 +3087,7 @@ static const WineGLExtension WGL_ARB_pbuffer =
   }
 };
 
-static const WineGLExtension WGL_ARB_pixel_format =
+static const WineGLExtension WGL_ARB_pixel_format_extension =
 {
   "WGL_ARB_pixel_format",
   {
@@ -3109,7 +3097,7 @@ static const WineGLExtension WGL_ARB_pixel_format =
   }
 };
 
-static const WineGLExtension WGL_ARB_render_texture =
+static const WineGLExtension WGL_ARB_render_texture_extension =
 {
   "WGL_ARB_render_texture",
   {
@@ -3118,7 +3106,7 @@ static const WineGLExtension WGL_ARB_render_texture =
   }
 };
 
-static const WineGLExtension WGL_EXT_extensions_string =
+static const WineGLExtension WGL_EXT_extensions_string_extension =
 {
   "WGL_EXT_extensions_string",
   {
@@ -3126,7 +3114,7 @@ static const WineGLExtension WGL_EXT_extensions_string =
   }
 };
 
-static const WineGLExtension WGL_EXT_swap_control =
+static const WineGLExtension WGL_EXT_swap_control_extension =
 {
   "WGL_EXT_swap_control",
   {
@@ -3135,7 +3123,7 @@ static const WineGLExtension WGL_EXT_swap_control =
   }
 };
 
-static const WineGLExtension WGL_NV_vertex_array_range =
+static const WineGLExtension WGL_NV_vertex_array_range_extension =
 {
   "WGL_NV_vertex_array_range",
   {
@@ -3144,7 +3132,7 @@ static const WineGLExtension WGL_NV_vertex_array_range =
   }
 };
 
-static const WineGLExtension WGL_WINE_pixel_format_passthrough =
+static const WineGLExtension WGL_WINE_pixel_format_passthrough_extension =
 {
   "WGL_WINE_pixel_format_passthrough",
   {
@@ -3166,7 +3154,7 @@ static void X11DRV_WineGL_LoadExtensions(void)
 
     if(glxRequireExtension("GLX_ARB_create_context"))
     {
-        register_extension(&WGL_ARB_create_context);
+        register_extension(&WGL_ARB_create_context_extension);
 
         if(glxRequireExtension("GLX_ARB_create_context_profile"))
             register_extension_string("WGL_ARB_create_context_profile");
@@ -3178,27 +3166,27 @@ static void X11DRV_WineGL_LoadExtensions(void)
         register_extension_string("WGL_ATI_pixel_format_float");
     }
 
-    register_extension(&WGL_ARB_extensions_string);
+    register_extension(&WGL_ARB_extensions_string_extension);
 
     if (glxRequireVersion(3))
-        register_extension(&WGL_ARB_make_current_read);
+        register_extension(&WGL_ARB_make_current_read_extension);
 
     if (glxRequireExtension("GLX_ARB_multisample"))
-        register_extension(&WGL_ARB_multisample);
+        register_extension(&WGL_ARB_multisample_extension);
 
     /* In general pbuffer functionality requires support in the X-server. The functionality is
      * available either when the GLX_SGIX_pbuffer is present or when the GLX server version is 1.3.
      */
     if ( glxRequireVersion(3) && glxRequireExtension("GLX_SGIX_pbuffer") )
-        register_extension(&WGL_ARB_pbuffer);
+        register_extension(&WGL_ARB_pbuffer_extension);
 
-    register_extension(&WGL_ARB_pixel_format);
+    register_extension(&WGL_ARB_pixel_format_extension);
 
     /* Support WGL_ARB_render_texture when there's support or pbuffer based emulation */
     if (glxRequireExtension("GLX_ARB_render_texture") ||
         (glxRequireVersion(3) && glxRequireExtension("GLX_SGIX_pbuffer") && use_render_texture_emulation))
     {
-        register_extension(&WGL_ARB_render_texture);
+        register_extension(&WGL_ARB_render_texture_extension);
 
         /* The WGL version of GLX_NV_float_buffer requires render_texture */
         if(glxRequireExtension("GLX_NV_float_buffer"))
@@ -3211,11 +3199,11 @@ static void X11DRV_WineGL_LoadExtensions(void)
 
     /* EXT Extensions */
 
-    register_extension(&WGL_EXT_extensions_string);
+    register_extension(&WGL_EXT_extensions_string_extension);
 
     /* Load this extension even when it isn't backed by a GLX extension because it is has been around for ages.
      * Games like Call of Duty and K.O.T.O.R. rely on it. Further our emulation is good enough. */
-    register_extension(&WGL_EXT_swap_control);
+    register_extension(&WGL_EXT_swap_control_extension);
 
     if(glxRequireExtension("GLX_EXT_framebuffer_sRGB"))
         register_extension_string("WGL_EXT_framebuffer_sRGB");
@@ -3228,14 +3216,14 @@ static void X11DRV_WineGL_LoadExtensions(void)
 
     /* The OpenGL extension GL_NV_vertex_array_range adds wgl/glX functions which aren't exported as 'real' wgl/glX extensions. */
     if(strstr(WineGLInfo.glExtensions, "GL_NV_vertex_array_range") != NULL)
-        register_extension(&WGL_NV_vertex_array_range);
+        register_extension(&WGL_NV_vertex_array_range_extension);
 
     /* WINE-specific WGL Extensions */
 
     /* In WineD3D we need the ability to set the pixel format more than once (e.g. after a device reset).
      * The default wglSetPixelFormat doesn't allow this, so add our own which allows it.
      */
-    register_extension(&WGL_WINE_pixel_format_passthrough);
+    register_extension(&WGL_WINE_pixel_format_passthrough_extension);
 }
 
 
