@@ -164,7 +164,8 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetDisplayModeList(IDXGIOutput *ifa
         struct wined3d_display_mode mode;
         HRESULT hr;
 
-        hr = wined3d_enum_adapter_modes(wined3d, This->adapter->ordinal, wined3d_format, i, &mode);
+        hr = wined3d_enum_adapter_modes(wined3d, This->adapter->ordinal, wined3d_format,
+                WINED3D_SCANLINE_ORDERING_UNKNOWN, i, &mode);
         if (FAILED(hr))
         {
             WARN("EnumAdapterModes failed, hr %#x.\n", hr);

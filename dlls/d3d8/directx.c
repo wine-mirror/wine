@@ -174,7 +174,8 @@ static HRESULT WINAPI d3d8_EnumAdapterModes(IDirect3D8 *iface, UINT adapter, UIN
             iface, adapter, mode_idx, mode);
 
     wined3d_mutex_lock();
-    hr = wined3d_enum_adapter_modes(d3d8->wined3d, adapter, WINED3DFMT_UNKNOWN, mode_idx, &wined3d_mode);
+    hr = wined3d_enum_adapter_modes(d3d8->wined3d, adapter, WINED3DFMT_UNKNOWN,
+            WINED3D_SCANLINE_ORDERING_UNKNOWN, mode_idx, &wined3d_mode);
     wined3d_mutex_unlock();
 
     if (SUCCEEDED(hr))

@@ -2945,7 +2945,8 @@ UINT CDECL wined3d_get_adapter_mode_count(const struct wined3d *wined3d, UINT ad
 
 /* Note: dx9 supplies a format. Calls from d3d8 supply WINED3DFMT_UNKNOWN */
 HRESULT CDECL wined3d_enum_adapter_modes(const struct wined3d *wined3d, UINT adapter_idx,
-        enum wined3d_format_id format_id, UINT mode_idx, struct wined3d_display_mode *mode)
+        enum wined3d_format_id format_id, enum wined3d_scanline_ordering scanline_ordering,
+        UINT mode_idx, struct wined3d_display_mode *mode)
 {
     const struct wined3d_adapter *adapter;
     const struct wined3d_format *format;
@@ -2954,8 +2955,8 @@ HRESULT CDECL wined3d_enum_adapter_modes(const struct wined3d *wined3d, UINT ada
     UINT i = 0;
     int j = 0;
 
-    TRACE("wined3d %p, adapter_idx %u, format %s, mode_idx %u, mode %p.\n",
-            wined3d, adapter_idx, debug_d3dformat(format_id), mode_idx, mode);
+    TRACE("wined3d %p, adapter_idx %u, format %s, scanline_ordering %#x, mode_idx %u, mode %p.\n",
+            wined3d, adapter_idx, debug_d3dformat(format_id), scanline_ordering, mode_idx, mode);
 
     if (!mode || adapter_idx >= wined3d->adapter_count)
         return WINED3DERR_INVALIDCALL;
@@ -2973,6 +2974,17 @@ HRESULT CDECL wined3d_enum_adapter_modes(const struct wined3d *wined3d, UINT ada
         {
             WARN("Invalid mode_idx %u.\n", mode_idx);
             return WINED3DERR_INVALIDCALL;
+        }
+
+        if (m.dmFields & DM_DISPLAYFLAGS)
+        {
+            if (scanline_ordering == WINED3D_SCANLINE_ORDERING_PROGRESSIVE
+                    && (m.u2.dmDisplayFlags & DM_INTERLACED))
+                continue;
+
+            if (scanline_ordering == WINED3D_SCANLINE_ORDERING_INTERLACED
+                    && !(m.u2.dmDisplayFlags & DM_INTERLACED))
+                continue;
         }
 
         if (format_id == WINED3DFMT_UNKNOWN)
