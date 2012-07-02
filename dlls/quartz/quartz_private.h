@@ -67,16 +67,4 @@ extern void video_unregister_windowclass(void) DECLSPEC_HIDDEN;
 BOOL CompareMediaTypes(const AM_MEDIA_TYPE * pmt1, const AM_MEDIA_TYPE * pmt2, BOOL bWildcards);
 void dump_AM_MEDIA_TYPE(const AM_MEDIA_TYPE * pmt) DECLSPEC_HIDDEN;
 
-typedef struct StdMediaSample2
-{
-    const IMediaSample2Vtbl * lpvtbl;
-
-    LONG ref;
-    AM_SAMPLE2_PROPERTIES props;
-    IMemAllocator * pParent;
-    struct list listentry;
-    LONGLONG tMediaStart;
-    LONGLONG tMediaEnd;
-} StdMediaSample2;
-
 #endif /* __QUARTZ_PRIVATE_INCLUDED__ */
