@@ -335,14 +335,14 @@ static HRESULT WINAPI BaseMemAllocator_GetBuffer(IMemAllocator * iface, IMediaSa
             hr = VFW_E_TIMEOUT;
         else
         {
+            StdMediaSample2 *ms;
             struct list * free = list_head(&This->free_list);
             list_remove(free);
             list_add_head(&This->used_list, free);
 
-            *pSample = (IMediaSample *)LIST_ENTRY(free, StdMediaSample2, listentry);
-
-            assert(((StdMediaSample2 *)*pSample)->ref == 0);
-
+            ms = LIST_ENTRY(free, StdMediaSample2, listentry);
+            assert(ms->ref == 0);
+            *pSample = (IMediaSample *)&ms->IMediaSample2_iface;
             IMediaSample_AddRef(*pSample);
         }
     }
