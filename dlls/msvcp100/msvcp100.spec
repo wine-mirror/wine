@@ -2808,9 +2808,9 @@
 @ extern _FSnan msvcp90._FSnan
 # extern _FXbig
 @ stub _GetLocaleForCP
-@ cdecl _Getcoll() msvcp90._Getcoll
-@ cdecl _Getctype() msvcp90._Getctype
-@ cdecl _Getcvt() msvcp90._Getcvt
+@ cdecl -ret64 _Getcoll() msvcp90._Getcoll
+@ cdecl _Getctype(ptr) msvcp90._Getctype
+@ cdecl -ret64 _Getcvt() msvcp90._Getcvt
 @ stub _Getdateorder
 @ cdecl _Getwctype(long ptr) msvcp90._Getwctype
 @ cdecl _Getwctypes(ptr ptr ptr ptr) msvcp90._Getwctypes

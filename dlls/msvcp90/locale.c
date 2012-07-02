@@ -542,17 +542,20 @@ _Locinfo* __thiscall _Locinfo__Addcats(_Locinfo *this, int category, const char 
 }
 
 /* _Getcoll */
-_Collvec __cdecl _Getcoll(void)
+ULONGLONG __cdecl _Getcoll(void)
 {
-    _Collvec ret;
+    union {
+        _Collvec collvec;
+        ULONGLONG ull;
+    } ret;
     _locale_t locale = _get_current_locale();
 
     TRACE("\n");
 
-    ret.page = locale->locinfo->lc_collate_cp;
-    ret.handle = locale->locinfo->lc_handle[LC_COLLATE];
+    ret.collvec.page = locale->locinfo->lc_collate_cp;
+    ret.collvec.handle = locale->locinfo->lc_handle[LC_COLLATE];
     _free_locale(locale);
-    return ret;
+    return ret.ull;
 }
 
 /* ?_Getcoll@_Locinfo@std@@QBE?AU_Collvec@@XZ */
@@ -560,29 +563,29 @@ _Collvec __cdecl _Getcoll(void)
 DEFINE_THISCALL_WRAPPER(_Locinfo__Getcoll, 8)
 _Collvec* __thiscall _Locinfo__Getcoll(const _Locinfo *this, _Collvec *ret)
 {
-    *ret = _Getcoll();
+    ULONGLONG ull = _Getcoll();
+    memcpy(ret, &ull, sizeof(ull));
     return ret;
 }
 
 /* _Getctype */
-_Ctypevec __cdecl _Getctype(void)
+_Ctypevec* __cdecl _Getctype(_Ctypevec *ret)
 {
-    _Ctypevec ret;
     _locale_t locale = _get_current_locale();
     short *table;
 
     TRACE("\n");
 
-    ret.page = locale->locinfo->lc_codepage;
-    ret.handle = locale->locinfo->lc_handle[LC_COLLATE];
-    ret.delfl = TRUE;
+    ret->page = locale->locinfo->lc_codepage;
+    ret->handle = locale->locinfo->lc_handle[LC_COLLATE];
+    ret->delfl = TRUE;
     table = malloc(sizeof(short[256]));
     if(!table) {
         _free_locale(locale);
         throw_exception(EXCEPTION_BAD_ALLOC, NULL);
     }
     memcpy(table, locale->locinfo->pctype, sizeof(short[256]));
-    ret.table = table;
+    ret->table = table;
     _free_locale(locale);
     return ret;
 }
@@ -592,22 +595,24 @@ _Ctypevec __cdecl _Getctype(void)
 DEFINE_THISCALL_WRAPPER(_Locinfo__Getctype, 8)
 _Ctypevec* __thiscall _Locinfo__Getctype(const _Locinfo *this, _Ctypevec *ret)
 {
-    *ret = _Getctype();
-    return ret;
+    return _Getctype(ret);
 }
 
 /* _Getcvt */
-_Cvtvec __cdecl _Getcvt(void)
+ULONGLONG __cdecl _Getcvt(void)
 {
-    _Cvtvec ret;
     _locale_t locale = _get_current_locale();
+    union {
+        _Cvtvec cvtvec;
+        ULONGLONG ull;
+    } ret;
 
     TRACE("\n");
 
-    ret.page = locale->locinfo->lc_codepage;
-    ret.handle = locale->locinfo->lc_handle[LC_CTYPE];
+    ret.cvtvec.page = locale->locinfo->lc_codepage;
+    ret.cvtvec.handle = locale->locinfo->lc_handle[LC_CTYPE];
     _free_locale(locale);
-    return ret;
+    return ret.ull;
 }
 
 /* ?_Getcvt@_Locinfo@std@@QBE?AU_Cvtvec@@XZ */
@@ -615,7 +620,8 @@ _Cvtvec __cdecl _Getcvt(void)
 DEFINE_THISCALL_WRAPPER(_Locinfo__Getcvt, 8)
 _Cvtvec* __thiscall _Locinfo__Getcvt(const _Locinfo *this, _Cvtvec *ret)
 {
-    *ret = _Getcvt();
+    ULONGLONG ull = _Getcvt();
+    memcpy(ret, &ull, sizeof(ull));
     return ret;
 }
 
