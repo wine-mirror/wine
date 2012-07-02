@@ -53,6 +53,7 @@ static const WCHAR channelmasks_keyname[] = {'C','h','a','n','n','e','l','M','a'
 static const WCHAR numericrepresentation_valuename[] = {'N','u','m','e','r','i','c','R','e','p','r','e','s','e','n','t','a','t','i','o','n',0};
 static const WCHAR supportstransparency_valuename[] = {'S','u','p','p','o','r','t','s','T','r','a','n','s','p','a','r','e','n','c','y',0};
 static const WCHAR requiresfullstream_valuename[] = {'R','e','q','u','i','r','e','s','F','u','l','l','S','t','r','e','a','m',0};
+static const WCHAR supportspadding_valuename[] = {'S','u','p','p','o','r','t','s','P','a','d','d','i','n','g',0};
 
 static HRESULT ComponentInfo_GetStringValue(HKEY classkey, LPCWSTR value,
     UINT buffer_size, WCHAR *buffer, UINT *actual_size)
@@ -1589,8 +1590,9 @@ static HRESULT WINAPI MetadataReaderInfo_DoesRequireFullStream(IWICMetadataReade
 static HRESULT WINAPI MetadataReaderInfo_DoesSupportPadding(IWICMetadataReaderInfo *iface,
     BOOL *param)
 {
-    FIXME("(%p,%p): stub\n", iface, param);
-    return E_NOTIMPL;
+    MetadataReaderInfo *This = impl_from_IWICMetadataReaderInfo(iface);
+    TRACE("(%p,%p)\n", iface, param);
+    return ComponentInfo_GetDWORDValue(This->classkey, supportspadding_valuename, (DWORD *)param);
 }
 
 static HRESULT WINAPI MetadataReaderInfo_DoesRequireFixedSize(IWICMetadataReaderInfo *iface,
