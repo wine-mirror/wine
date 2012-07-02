@@ -63,6 +63,23 @@ static HRESULT get_component_info(const GUID *clsid, IWICComponentInfo **result)
     return hr;
 }
 
+static int is_pixelformat(GUID *format)
+{
+    IWICComponentInfo *info;
+    HRESULT hr;
+    WICComponentType componenttype;
+
+    hr = get_component_info(format, &info);
+    if (FAILED(hr))
+        return FALSE;
+
+    hr = IWICComponentInfo_GetComponentType(info, &componenttype);
+
+    IWICComponentInfo_Release(info);
+
+    return SUCCEEDED(hr) && componenttype == WICPixelFormat;
+}
+
 static void test_decoder_info(void)
 {
     IWICComponentInfo *info;
@@ -72,6 +89,9 @@ static void test_decoder_info(void)
     WCHAR value[256];
     const WCHAR expected_mimetype[] = {'i','m','a','g','e','/','b','m','p',0};
     CLSID clsid;
+    GUID pixelformats[20];
+    UINT num_formats, count;
+    int i;
 
     hr = get_component_info(&CLSID_WICBmpDecoder, &info);
 
@@ -113,6 +133,40 @@ static void test_decoder_info(void)
     ok(hr == S_OK, "GetMimeType failed, hr=%x\n", hr);
     ok(lstrcmpW(value, expected_mimetype) == 0, "GetMimeType returned wrong value %s\n", wine_dbgstr_w(value));
     ok(len == lstrlenW(expected_mimetype)+1, "GetMimeType returned wrong len %i\n", len);
+
+    num_formats = 0xdeadbeef;
+    hr = IWICBitmapDecoderInfo_GetPixelFormats(decoder_info, 0, NULL, &num_formats);
+    ok(hr == S_OK, "GetPixelFormats failed, hr=%x\n", hr);
+    ok(num_formats < 20 && num_formats > 1, "got %d formats\n", num_formats);
+
+    hr = IWICBitmapDecoderInfo_GetPixelFormats(decoder_info, 0, NULL, NULL);
+    ok(hr == E_INVALIDARG, "GetPixelFormats failed, hr=%x\n", hr);
+
+    count = 0xdeadbeef;
+    hr = IWICBitmapDecoderInfo_GetPixelFormats(decoder_info, 0, pixelformats, &count);
+    ok(hr == S_OK, "GetPixelFormats failed, hr=%x\n", hr);
+    ok(count == 0, "got %d formats\n", count);
+
+    count = 0xdeadbeef;
+    hr = IWICBitmapDecoderInfo_GetPixelFormats(decoder_info, 1, pixelformats, &count);
+    ok(hr == S_OK, "GetPixelFormats failed, hr=%x\n", hr);
+    ok(count == 1, "got %d formats\n", count);
+    ok(is_pixelformat(&pixelformats[0]), "got invalid pixel format\n");
+
+    count = 0xdeadbeef;
+    hr = IWICBitmapDecoderInfo_GetPixelFormats(decoder_info, num_formats, pixelformats, &count);
+    ok(hr == S_OK, "GetPixelFormats failed, hr=%x\n", hr);
+    ok(count == num_formats, "got %d formats, expected %d\n", count, num_formats);
+    for (i=0; i<num_formats; i++)
+        ok(is_pixelformat(&pixelformats[i]), "got invalid pixel format\n");
+
+    hr = IWICBitmapDecoderInfo_GetPixelFormats(decoder_info, num_formats, pixelformats, NULL);
+    ok(hr == E_INVALIDARG, "GetPixelFormats failed, hr=%x\n", hr);
+
+    count = 0xdeadbeef;
+    hr = IWICBitmapDecoderInfo_GetPixelFormats(decoder_info, 20, pixelformats, &count);
+    ok(hr == S_OK, "GetPixelFormats failed, hr=%x\n", hr);
+    ok(count == num_formats, "got %d formats, expected %d\n", count, num_formats);
 
     IWICBitmapDecoderInfo_Release(decoder_info);
 

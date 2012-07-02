@@ -42,6 +42,7 @@ static const WCHAR mimetypes_valuename[] = {'M','i','m','e','T','y','p','e','s',
 static const WCHAR author_valuename[] = {'A','u','t','h','o','r',0};
 static const WCHAR friendlyname_valuename[] = {'F','r','i','e','n','d','l','y','N','a','m','e',0};
 static const WCHAR pixelformats_keyname[] = {'P','i','x','e','l','F','o','r','m','a','t','s',0};
+static const WCHAR formats_keyname[] = {'F','o','r','m','a','t','s',0};
 static const WCHAR containerformat_valuename[] = {'C','o','n','t','a','i','n','e','r','F','o','r','m','a','t',0};
 static const WCHAR metadataformat_valuename[] = {'M','e','t','a','d','a','t','a','F','o','r','m','a','t',0};
 static const WCHAR vendor_valuename[] = {'V','e','n','d','o','r',0};
@@ -133,6 +134,68 @@ static HRESULT ComponentInfo_GetDWORDValue(HKEY classkey, LPCWSTR value,
     }
 
     return HRESULT_FROM_WIN32(ret);
+}
+
+static HRESULT ComponentInfo_GetGuidList(HKEY classkey, LPCWSTR subkeyname,
+    UINT buffersize, GUID *buffer, UINT *actual_size)
+{
+    LONG ret;
+    HKEY subkey;
+    UINT items_returned;
+    WCHAR guid_string[39];
+    DWORD guid_string_size;
+    HRESULT hr=S_OK;
+
+    if (!actual_size)
+        return E_INVALIDARG;
+
+    ret = RegOpenKeyExW(classkey, subkeyname, 0, KEY_READ, &subkey);
+    if (ret != ERROR_SUCCESS) return HRESULT_FROM_WIN32(ret);
+
+    if (buffer)
+    {
+        items_returned = 0;
+        guid_string_size = 39;
+        while (items_returned < buffersize)
+        {
+            ret = RegEnumKeyExW(subkey, items_returned, guid_string,
+                &guid_string_size, NULL, NULL, NULL, NULL);
+
+            if (ret != ERROR_SUCCESS)
+            {
+                hr = HRESULT_FROM_WIN32(ret);
+                break;
+            }
+
+            if (guid_string_size != 38)
+            {
+                hr = E_FAIL;
+                break;
+            }
+
+            hr = CLSIDFromString(guid_string, &buffer[items_returned]);
+            if (FAILED(hr))
+                break;
+
+            items_returned++;
+            guid_string_size = 39;
+        }
+
+        if (ret == ERROR_NO_MORE_ITEMS)
+            hr = S_OK;
+
+        *actual_size = items_returned;
+    }
+    else
+    {
+        ret = RegQueryInfoKeyW(subkey, NULL, NULL, NULL, actual_size, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+        if (ret != ERROR_SUCCESS)
+            hr = HRESULT_FROM_WIN32(ret);
+    }
+
+    RegCloseKey(subkey);
+
+    return hr;
 }
 
 typedef struct {
@@ -290,8 +353,9 @@ static HRESULT WINAPI BitmapDecoderInfo_GetContainerFormat(IWICBitmapDecoderInfo
 static HRESULT WINAPI BitmapDecoderInfo_GetPixelFormats(IWICBitmapDecoderInfo *iface,
     UINT cFormats, GUID *pguidPixelFormats, UINT *pcActual)
 {
-    FIXME("(%p,%u,%p,%p): stub\n", iface, cFormats, pguidPixelFormats, pcActual);
-    return E_NOTIMPL;
+    BitmapDecoderInfo *This = impl_from_IWICBitmapDecoderInfo(iface);
+    TRACE("(%p,%u,%p,%p)\n", iface, cFormats, pguidPixelFormats, pcActual);
+    return ComponentInfo_GetGuidList(This->classkey, formats_keyname, cFormats, pguidPixelFormats, pcActual);
 }
 
 static HRESULT WINAPI BitmapDecoderInfo_GetColorManagementVersion(IWICBitmapDecoderInfo *iface,
@@ -755,8 +819,9 @@ static HRESULT WINAPI BitmapEncoderInfo_GetContainerFormat(IWICBitmapEncoderInfo
 static HRESULT WINAPI BitmapEncoderInfo_GetPixelFormats(IWICBitmapEncoderInfo *iface,
     UINT cFormats, GUID *pguidPixelFormats, UINT *pcActual)
 {
-    FIXME("(%p,%u,%p,%p): stub\n", iface, cFormats, pguidPixelFormats, pcActual);
-    return E_NOTIMPL;
+    BitmapEncoderInfo *This = impl_from_IWICBitmapEncoderInfo(iface);
+    TRACE("(%p,%u,%p,%p)\n", iface, cFormats, pguidPixelFormats, pcActual);
+    return ComponentInfo_GetGuidList(This->classkey, formats_keyname, cFormats, pguidPixelFormats, pcActual);
 }
 
 static HRESULT WINAPI BitmapEncoderInfo_GetColorManagementVersion(IWICBitmapEncoderInfo *iface,
