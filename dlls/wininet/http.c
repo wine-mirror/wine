@@ -219,6 +219,7 @@ static DWORD HTTP_HttpQueryInfoW(http_request_t*, DWORD, LPVOID, LPDWORD, LPDWOR
 static LPWSTR HTTP_GetRedirectURL(http_request_t *req, LPCWSTR lpszUrl);
 static UINT HTTP_DecodeBase64(LPCWSTR base64, LPSTR bin);
 static BOOL HTTP_VerifyValidHeader(http_request_t *req, LPCWSTR field);
+static BOOL drain_content(http_request_t*,BOOL);
 
 static CRITICAL_SECTION connection_pool_cs;
 static CRITICAL_SECTION_DEBUG connection_pool_debug =
@@ -1906,22 +1907,6 @@ static void http_release_netconn(http_request_t *req, BOOL reuse)
                           INTERNET_STATUS_CONNECTION_CLOSED, 0, 0);
 }
 
-static void drain_content(http_request_t *req)
-{
-    BOOL try_reuse;
-
-    if (!req->netconn) return;
-
-    if (req->contentLength == -1)
-        try_reuse = FALSE;
-    else if(!strcmpW(req->verb, szHEAD))
-        try_reuse = TRUE;
-    else
-        try_reuse = req->data_stream->vtbl->drain_content(req->data_stream, req);
-
-    http_release_netconn(req, try_reuse);
-}
-
 static BOOL HTTP_KeepAlive(http_request_t *request)
 {
     WCHAR szVersion[10];
@@ -1951,7 +1936,7 @@ static void HTTPREQ_CloseConnection(object_header_t *hdr)
 {
     http_request_t *req = (http_request_t*)hdr;
 
-    drain_content(req);
+    http_release_netconn(req, drain_content(req, FALSE));
 }
 
 static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffer, DWORD *size, BOOL unicode)
@@ -2757,6 +2742,39 @@ static DWORD HTTPREQ_Read(http_request_t *req, void *buffer, DWORD size, DWORD *
     return res;
 }
 
+static BOOL drain_content(http_request_t *req, BOOL blocking)
+{
+    BOOL ret;
+
+    if(!req->netconn || req->contentLength == -1)
+        return FALSE;
+
+    if(!strcmpW(req->verb, szHEAD))
+        return TRUE;
+
+    if(!blocking)
+        return req->data_stream->vtbl->drain_content(req->data_stream, req);
+
+    EnterCriticalSection( &req->read_section );
+
+    while(1) {
+        DWORD bytes_read, res;
+        BYTE buf[4096];
+
+        res = HTTPREQ_Read(req, buf, sizeof(buf), &bytes_read, TRUE);
+        if(res != ERROR_SUCCESS) {
+            ret = FALSE;
+            break;
+        }
+        if(!bytes_read) {
+            ret = TRUE;
+            break;
+        }
+    }
+
+    LeaveCriticalSection( &req->read_section );
+    return ret;
+}
 
 static DWORD HTTPREQ_ReadFile(object_header_t *hdr, void *buffer, DWORD size, DWORD *read)
 {
@@ -4769,10 +4787,8 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
         char *ascii_req;
 
         loop_next = FALSE;
+        reusing_connection = request->netconn != NULL;
 
-        /* like native, just in case the caller forgot to call InternetReadFile
-         * for all the data */
-        drain_content(request);
         if(redirected) {
             request->contentLength = ~0u;
             request->bytesToWrite = 0;
@@ -4807,7 +4823,7 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
  
         TRACE("Request header -> %s\n", debugstr_w(requestString) );
 
-        if ((res = open_http_connection(request, &reusing_connection)) != ERROR_SUCCESS)
+        if (!reusing_connection && (res = open_http_connection(request, &reusing_connection)) != ERROR_SUCCESS)
             break;
 
         /* send the request as ASCII, tack on the optional data */
@@ -4895,7 +4911,7 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
                         heap_free(request->verb);
                         request->verb = heap_strdupW(szGET);
                     }
-                    drain_content(request);
+                    http_release_netconn(request, drain_content(request, FALSE));
                     if ((new_url = HTTP_GetRedirectURL( request, szNewLocation )))
                     {
                         INTERNET_SendCallback(&request->hdr, request->hdr.dwContext, INTERNET_STATUS_REDIRECT,
@@ -4928,6 +4944,10 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
                                                  Host->lpszValue))
                         {
                             heap_free(requestString);
+                            if(!drain_content(request, TRUE)) {
+                                FIXME("Could not drain content\n");
+                                http_release_netconn(request, FALSE);
+                            }
                             loop_next = TRUE;
                             break;
                         }
@@ -4950,6 +4970,10 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
                                                  request->session->appInfo->proxyPassword,
                                                  NULL))
                         {
+                            if(!drain_content(request, TRUE)) {
+                                FIXME("Could not drain content\n");
+                                http_release_netconn(request, FALSE);
+                            }
                             loop_next = TRUE;
                             break;
                         }
@@ -5064,7 +5088,7 @@ static DWORD HTTP_HttpEndRequestW(http_request_t *request, DWORD dwFlags, DWORD_
                 heap_free(request->verb);
                 request->verb = heap_strdupW(szGET);
             }
-            drain_content(request);
+            http_release_netconn(request, drain_content(request, FALSE));
             if ((new_url = HTTP_GetRedirectURL( request, szNewLocation )))
             {
                 INTERNET_SendCallback(&request->hdr, request->hdr.dwContext, INTERNET_STATUS_REDIRECT,
