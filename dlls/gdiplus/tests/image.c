@@ -2674,9 +2674,9 @@ static GpImage *load_image(const BYTE *image_data, UINT image_size)
     BYTE *data;
     HRESULT hr;
     GpStatus status;
-    GpImage *image = NULL;
+    GpImage *image = NULL, *clone;
     ImageType image_type;
-    LONG refcount;
+    LONG refcount, old_refcount;
 
     hmem = GlobalAlloc(0, image_size);
     data = GlobalLock(hmem);
@@ -2695,6 +2695,22 @@ static GpImage *load_image(const BYTE *image_data, UINT image_size)
 
     status = GdipGetImageType(image, &image_type);
     ok(status == Ok, "GdipGetImageType error %d\n", status);
+
+    refcount = obj_refcount(stream);
+    if (image_type == ImageTypeBitmap)
+        ok(refcount > 1, "expected stream refcount > 1, got %d\n", refcount);
+    else
+        ok(refcount == 1, "expected stream refcount 1, got %d\n", refcount);
+    old_refcount = refcount;
+
+    status = GdipCloneImage(image, &clone);
+    ok(status == Ok, "GdipCloneImage error %d\n", status);
+    refcount = obj_refcount(stream);
+    ok(refcount == old_refcount, "expected stream refcount %d, got %d\n", old_refcount, refcount);
+    status = GdipDisposeImage(clone);
+    ok(status == Ok, "GdipDisposeImage error %d\n", status);
+    refcount = obj_refcount(stream);
+    ok(refcount == old_refcount, "expected stream refcount %d, got %d\n", old_refcount, refcount);
 
     refcount = IStream_Release(stream);
     if (image_type == ImageTypeBitmap)
