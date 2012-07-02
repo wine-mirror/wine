@@ -187,7 +187,7 @@ struct d3d8_swapchain
 };
 
 HRESULT swapchain_init(struct d3d8_swapchain *swapchain, struct d3d8_device *device,
-        D3DPRESENT_PARAMETERS *present_parameters) DECLSPEC_HIDDEN;
+        struct wined3d_swapchain_desc *desc) DECLSPEC_HIDDEN;
 
 struct d3d8_surface
 {

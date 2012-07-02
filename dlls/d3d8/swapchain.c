@@ -150,49 +150,18 @@ static const struct wined3d_parent_ops d3d8_swapchain_wined3d_parent_ops =
 };
 
 HRESULT swapchain_init(struct d3d8_swapchain *swapchain, struct d3d8_device *device,
-        D3DPRESENT_PARAMETERS *present_parameters)
+        struct wined3d_swapchain_desc *desc)
 {
-    struct wined3d_swapchain_desc desc;
     HRESULT hr;
 
     swapchain->refcount = 1;
     swapchain->IDirect3DSwapChain8_iface.lpVtbl = &d3d8_swapchain_vtbl;
 
-    desc.backbuffer_width = present_parameters->BackBufferWidth;
-    desc.backbuffer_height = present_parameters->BackBufferHeight;
-    desc.backbuffer_format = wined3dformat_from_d3dformat(present_parameters->BackBufferFormat);
-    desc.backbuffer_count = max(1, present_parameters->BackBufferCount);
-    desc.multisample_type = present_parameters->MultiSampleType;
-    desc.multisample_quality = 0; /* d3d9 only */
-    desc.swap_effect = present_parameters->SwapEffect;
-    desc.device_window = present_parameters->hDeviceWindow;
-    desc.windowed = present_parameters->Windowed;
-    desc.enable_auto_depth_stencil = present_parameters->EnableAutoDepthStencil;
-    desc.auto_depth_stencil_format = wined3dformat_from_d3dformat(present_parameters->AutoDepthStencilFormat);
-    desc.flags = present_parameters->Flags;
-    desc.refresh_rate = present_parameters->FullScreen_RefreshRateInHz;
-    desc.swap_interval = present_parameters->FullScreen_PresentationInterval;
-    desc.auto_restore_display_mode = TRUE;
-
     wined3d_mutex_lock();
-    hr = wined3d_swapchain_create(device->wined3d_device, &desc,
+    hr = wined3d_swapchain_create(device->wined3d_device, desc,
             WINED3D_SURFACE_TYPE_OPENGL, swapchain, &d3d8_swapchain_wined3d_parent_ops,
             &swapchain->wined3d_swapchain);
     wined3d_mutex_unlock();
-
-    present_parameters->BackBufferWidth = desc.backbuffer_width;
-    present_parameters->BackBufferHeight = desc.backbuffer_height;
-    present_parameters->BackBufferFormat = d3dformat_from_wined3dformat(desc.backbuffer_format);
-    present_parameters->BackBufferCount = desc.backbuffer_count;
-    present_parameters->MultiSampleType = desc.multisample_type;
-    present_parameters->SwapEffect = desc.swap_effect;
-    present_parameters->hDeviceWindow = desc.device_window;
-    present_parameters->Windowed = desc.windowed;
-    present_parameters->EnableAutoDepthStencil = desc.enable_auto_depth_stencil;
-    present_parameters->AutoDepthStencilFormat = d3dformat_from_wined3dformat(desc.auto_depth_stencil_format);
-    present_parameters->Flags = desc.flags;
-    present_parameters->FullScreen_RefreshRateInHz = desc.refresh_rate;
-    present_parameters->FullScreen_PresentationInterval = desc.swap_interval;
 
     if (FAILED(hr))
     {

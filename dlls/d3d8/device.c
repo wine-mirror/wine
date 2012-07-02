@@ -504,6 +504,7 @@ static HRESULT WINAPI d3d8_device_CreateAdditionalSwapChain(IDirect3DDevice8 *if
         D3DPRESENT_PARAMETERS *present_parameters, IDirect3DSwapChain8 **swapchain)
 {
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
+    struct wined3d_swapchain_desc desc;
     struct d3d8_swapchain *object;
     HRESULT hr;
 
@@ -517,7 +518,38 @@ static HRESULT WINAPI d3d8_device_CreateAdditionalSwapChain(IDirect3DDevice8 *if
         return E_OUTOFMEMORY;
     }
 
-    hr = swapchain_init(object, device, present_parameters);
+    desc.backbuffer_width = present_parameters->BackBufferWidth;
+    desc.backbuffer_height = present_parameters->BackBufferHeight;
+    desc.backbuffer_format = wined3dformat_from_d3dformat(present_parameters->BackBufferFormat);
+    desc.backbuffer_count = max(1, present_parameters->BackBufferCount);
+    desc.multisample_type = present_parameters->MultiSampleType;
+    desc.multisample_quality = 0; /* d3d9 only */
+    desc.swap_effect = present_parameters->SwapEffect;
+    desc.device_window = present_parameters->hDeviceWindow;
+    desc.windowed = present_parameters->Windowed;
+    desc.enable_auto_depth_stencil = present_parameters->EnableAutoDepthStencil;
+    desc.auto_depth_stencil_format = wined3dformat_from_d3dformat(present_parameters->AutoDepthStencilFormat);
+    desc.flags = present_parameters->Flags;
+    desc.refresh_rate = present_parameters->FullScreen_RefreshRateInHz;
+    desc.swap_interval = present_parameters->FullScreen_PresentationInterval;
+    desc.auto_restore_display_mode = TRUE;
+
+    hr = swapchain_init(object, device, &desc);
+
+    present_parameters->BackBufferWidth = desc.backbuffer_width;
+    present_parameters->BackBufferHeight = desc.backbuffer_height;
+    present_parameters->BackBufferFormat = d3dformat_from_wined3dformat(desc.backbuffer_format);
+    present_parameters->BackBufferCount = desc.backbuffer_count;
+    present_parameters->MultiSampleType = desc.multisample_type;
+    present_parameters->SwapEffect = desc.swap_effect;
+    present_parameters->hDeviceWindow = desc.device_window;
+    present_parameters->Windowed = desc.windowed;
+    present_parameters->EnableAutoDepthStencil = desc.enable_auto_depth_stencil;
+    present_parameters->AutoDepthStencilFormat = d3dformat_from_wined3dformat(desc.auto_depth_stencil_format);
+    present_parameters->Flags = desc.flags;
+    present_parameters->FullScreen_RefreshRateInHz = desc.refresh_rate;
+    present_parameters->FullScreen_PresentationInterval = desc.swap_interval;
+
     if (FAILED(hr))
     {
         WARN("Failed to initialize swapchain, hr %#x.\n", hr);
