@@ -784,10 +784,10 @@ static void test_timer_queue(void)
 
     ret = pDeleteTimerQueueEx(q, INVALID_HANDLE_VALUE);
     ok(ret, "DeleteTimerQueueEx\n");
-    ok(n1 == 1, "Timer callback 1\n");
-    ok(n2 < n3, "Timer callback 2 should be much slower than 3\n");
-    ok(n4 == 0, "Timer callback 4\n");
-    ok(n5 == 1, "Timer callback 5\n");
+    ok(n1 == 1, "Timer callback 1 expected 1 got %d\n", n1);
+    ok(n2 < n3, "Timer callback 2 & 3 expected %d < %d\n", n2, n3);
+    ok(n4 == 0, "Timer callback 4 expected 0 got %d\n", n4);
+    ok(n5 == 1, "Timer callback 5 expected 1 got %d\n", n5);
 
     /* Test synchronous deletion of the timer/queue with event trigger. */
     e = CreateEvent(NULL, TRUE, FALSE, NULL);
