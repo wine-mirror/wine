@@ -47,7 +47,7 @@ static expression_t *new_new_expression(parser_ctx_t*,const WCHAR*);
 static member_expression_t *new_member_expression(parser_ctx_t*,expression_t*,const WCHAR*);
 
 static void *new_statement(parser_ctx_t*,statement_type_t,size_t);
-static statement_t *new_call_statement(parser_ctx_t*,member_expression_t*);
+static statement_t *new_call_statement(parser_ctx_t*,BOOL,member_expression_t*);
 static statement_t *new_assign_statement(parser_ctx_t*,member_expression_t*,expression_t*);
 static statement_t *new_set_statement(parser_ctx_t*,member_expression_t*,expression_t*);
 static statement_t *new_dim_statement(parser_ctx_t*,dim_decl_t*);
@@ -166,8 +166,8 @@ Statement
     | SimpleStatement ':'                   { $$ = $1; }
 
 SimpleStatement
-    : MemberExpression ArgumentList_opt     { $1->args = $2; $$ = new_call_statement(ctx, $1); CHECK_ERROR; }
-    | tCALL MemberExpression Arguments_opt  { $2->args = $3; $$ = new_call_statement(ctx, $2); CHECK_ERROR; }
+    : MemberExpression ArgumentList_opt     { $1->args = $2; $$ = new_call_statement(ctx, FALSE, $1); CHECK_ERROR; }
+    | tCALL MemberExpression Arguments_opt  { $2->args = $3; $$ = new_call_statement(ctx, TRUE, $2); CHECK_ERROR; }
     | MemberExpression Arguments_opt '=' Expression
                                             { $1->args = $2; $$ = new_assign_statement(ctx, $1, $4); CHECK_ERROR; }
     | tDIM DimDeclList                      { $$ = new_dim_statement(ctx, $2); CHECK_ERROR; }
@@ -349,7 +349,7 @@ LiteralExpression
     | tNOTHING                      { $$ = new_expression(ctx, EXPR_NOTHING, 0); CHECK_ERROR; }
 
 PrimaryExpression
-    : '(' Expression ')'            { $$ = $2; }
+    : '(' Expression ')'            { $$ = new_unary_expression(ctx, EXPR_BRACKETS, $2); }
     | tME                           { $$ = new_expression(ctx, EXPR_ME, 0); CHECK_ERROR; }
 
 ClassDeclaration
@@ -558,7 +558,7 @@ static void *new_statement(parser_ctx_t *ctx, statement_type_t type, size_t size
     return stat;
 }
 
-static statement_t *new_call_statement(parser_ctx_t *ctx, member_expression_t *expr)
+static statement_t *new_call_statement(parser_ctx_t *ctx, BOOL is_strict, member_expression_t *expr)
 {
     call_statement_t *stat;
 
@@ -567,6 +567,7 @@ static statement_t *new_call_statement(parser_ctx_t *ctx, member_expression_t *e
         return NULL;
 
     stat->expr = expr;
+    stat->is_strict = is_strict;
     return &stat->stat;
 }
 

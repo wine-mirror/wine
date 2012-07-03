@@ -20,6 +20,7 @@ typedef enum {
     EXPR_ADD,
     EXPR_AND,
     EXPR_BOOL,
+    EXPR_BRACKETS,
     EXPR_CONCAT,
     EXPR_DIV,
     EXPR_DOUBLE,
@@ -127,6 +128,7 @@ typedef struct _statement_t {
 typedef struct {
     statement_t stat;
     member_expression_t *expr;
+    BOOL is_strict;
 } call_statement_t;
 
 typedef struct {
