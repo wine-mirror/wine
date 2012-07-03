@@ -317,7 +317,7 @@ GpStatus hresult_to_status(HRESULT res)
     }
 }
 
-/* converts a given unit to its value in pixels */
+/* converts a given unit to its value in inches */
 REAL convert_unit(REAL logpixels, GpUnit unit)
 {
     switch(unit)
