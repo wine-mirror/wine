@@ -74,7 +74,7 @@ static void test_acquire_context(void)
         &hProv, NULL, MS_DEF_DSS_PROV_A, PROV_DSS, CRYPT_VERIFYCONTEXT);
     if(!result)
     {
-        skip("DSS csp is currently not available, skipping tests.");
+        skip("DSS csp is currently not available, skipping tests.\n");
         return;
     }
     ok(result, "Expected no errors.\n");
