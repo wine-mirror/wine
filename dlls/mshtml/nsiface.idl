@@ -149,6 +149,7 @@ typedef nsISupports nsIDOMDOMTokenList;
 typedef nsISupports nsITransferable;
 typedef nsISupports nsIDOMHTMLHeadElement;
 typedef nsISupports nsIDOMFileList;
+typedef nsISupports nsIDOMFile;
 typedef nsISupports nsIControllers;
 typedef nsISupports nsIDOMValidityState;
 typedef nsISupports nsIPluginInstanceOwner;
@@ -177,6 +178,10 @@ typedef nsISupports nsILocalFile;
 typedef nsISupports nsIDOMHTMLMenuElement;
 typedef nsISupports nsIDOMCaretPosition;
 typedef nsISupports nsIFrameRequestCallback;
+typedef nsISupports nsICycleCollectorListener;
+typedef nsISupports nsIDOMHTMLCanvasElement;
+typedef nsISupports nsIQueryContentEventResult;
+typedef nsISupports nsIDOMBlob;
 
 typedef void *JSContext;
 typedef void *JSObject;
@@ -2620,6 +2625,110 @@ interface nsIDOMEvent : nsISupports
     nsresult StopImmediatePropagation();
 }
 
+[
+    object,
+    uuid(73b48170-55d5-11e1-b86c-0800200c9a66),
+    local
+]
+interface nsIDOMWindowUtils : nsISupports
+{
+    nsresult GetImageAnimationMode(PRUint16 *aImageAnimationMode);
+    nsresult SetImageAnimationMode(PRUint16 aImageAnimationMode);
+    nsresult GetDocCharsetIsForced(bool *aDocCharsetIsForced);
+    nsresult GetCursorType(PRInt16 *_retval);
+    nsresult GetDocumentMetadata(const nsAString *aName, nsAString *_retval);
+    nsresult Redraw(PRUint32 aCount, PRUint32 *_retval);
+    nsresult SetCSSViewport(float aWidthPx, float aHeightPx);
+    nsresult SetDisplayPortForElement(float aXPx, float aYPx, float aWidthPx, float aHeightPx, nsIDOMElement *aElement);
+    nsresult SetResolution(float aXResolution, float aYResolution);
+    nsresult SendMouseEvent(const nsAString *aType, float aX, float aY, PRInt32 aButton,
+            PRInt32 aClickCount, PRInt32 aModifiers, bool aIgnoreRootScrollFrame);
+    nsresult SendTouchEvent(const nsAString *aType, PRUint32 *aIdentifiers, PRInt32 *aXs, PRInt32 *aYs,
+           PRUint32 *aRxs, PRUint32 *aRys, float *aRotationAngles, float *aForces, PRUint32 count, PRInt32 aModifiers,
+           bool aIgnoreRootScrollFrame, bool *_retval);
+    nsresult SendMouseEventToWindow(const nsAString *aType, float aX, float aY, PRInt32 aButton, PRInt32 aClickCount,
+           PRInt32 aModifiers, bool aIgnoreRootScrollFrame);
+    nsresult SendMouseScrollEvent(const nsAString *aType, float aX, float aY, PRInt32 aButton, PRInt32 aScrollFlags,
+           PRInt32 aDelta, PRInt32 aModifiers);
+    nsresult SendKeyEvent(const nsAString *aType, PRInt32 aKeyCode, PRInt32 aCharCode, PRInt32 aModifiers,
+           bool aPreventDefault, bool *_retval);
+    nsresult SendNativeKeyEvent(PRInt32 aNativeKeyboardLayout, PRInt32 aNativeKeyCode, PRInt32 aModifierFlags,
+           const nsAString *aCharacters, const nsAString *aUnmodifiedCharacters);
+  nsresult SendNativeMouseEvent(PRInt32 aScreenX, PRInt32 aScreenY, PRInt32 aNativeMessage, PRInt32 aModifierFlags,
+           nsIDOMElement *aElement);
+    nsresult ActivateNativeMenuItemAt(const nsAString *indexString);
+    nsresult ForceUpdateNativeMenuAt(const nsAString *indexString);
+    nsresult Focus(nsIDOMElement *aElement);
+    nsresult GarbageCollect(nsICycleCollectorListener *aListener, PRInt32 aExtraForgetSkippableCalls);
+    nsresult CycleCollect(nsICycleCollectorListener *aListener, PRInt32 aExtraForgetSkippableCalls);
+    nsresult SendSimpleGestureEvent(const nsAString *aType, float aX, float aY, PRUint32 aDirection, double aDelta,
+           PRInt32 aModifiers);
+    nsresult ElementFromPoint(float aX, float aY, bool aIgnoreRootScrollFrame, bool aFlushLayout, nsIDOMElement **_retval);
+    nsresult NodesFromRect(float aX, float aY, float aTopSize, float aRightSize, float aBottomSize, float aLeftSize,
+           bool aIgnoreRootScrollFrame, bool aFlushLayout, nsIDOMNodeList **_retval);
+    nsresult CompareCanvases(nsIDOMHTMLCanvasElement *aCanvas1, nsIDOMHTMLCanvasElement *aCanvas2,
+           PRUint32 *aMaxDifference, PRUint32 *_retval);
+    nsresult GetIsMozAfterPaintPending(bool *aIsMozAfterPaintPending);
+    nsresult SuppressEventHandling(bool aSuppress);
+    nsresult ClearMozAfterPaintEvents();
+    nsresult DisableNonTestMouseEvents(bool aDisable);
+    nsresult GetScrollXY(bool aFlushLayout, PRInt32 *aScrollX, PRInt32 *aScrollY);
+    nsresult GetIMEIsOpen(bool *aIMEIsOpen);
+    nsresult GetIMEStatus(PRUint32 *aIMEStatus);
+    nsresult GetScreenPixelsPerCSSPixel(float *aScreenPixelsPerCSSPixel);
+    nsresult DispatchDOMEventViaPresShell(nsIDOMNode *aTarget, nsIDOMEvent *aEvent, bool aTrusted, bool *_retval);
+    nsresult GetClassName(const /*JS::Value*/ void *aObject, JSContext* cx, char **_retval);
+    nsresult SendContentCommandEvent(const nsAString *aType, nsITransferable *aTransferable);
+    nsresult SendCompositionEvent(const nsAString *aType, const nsAString *aData, const nsAString *aLocale);
+    nsresult SendTextEvent(const nsAString *aCompositionString, PRInt32 aFirstClauseLength, PRUint32 aFirstClauseAttr,
+           PRInt32 aSecondClauseLength, PRUint32 aSecondClauseAttr, PRInt32 aThirdClauseLength, PRUint32 aThirdClauseAttr,
+           PRInt32 aCaretStart, PRInt32 aCaretLength);
+    nsresult SendQueryContentEvent(PRUint32 aType, PRUint32 aOffset, PRUint32 aLength, PRInt32 aX, PRInt32 aY,
+           nsIQueryContentEventResult **_retval);
+    nsresult SendSelectionSetEvent(PRUint32 aOffset, PRUint32 aLength, bool aReverse, bool *_retval);
+    nsresult GetVisitedDependentComputedStyle(nsIDOMElement *aElement, const nsAString *aPseudoElement,
+           const nsAString *aPropertyName, nsAString *_retval);
+    nsresult GetParent(const /*JS::Value*/ void *obj, JSContext *cx, /*JS::Value*/ void *_retval);
+    nsresult GetOuterWindowID(PRUint64 *aOuterWindowID);
+    nsresult GetCurrentInnerWindowID(PRUint64 *aCurrentInnerWindowID);
+    nsresult EnterModalState();
+    nsresult LeaveModalState();
+    nsresult EnterModalStateWithWindow(nsIDOMWindow **_retval);
+    nsresult LeaveModalStateWithWindow(nsIDOMWindow *aWindow);
+    nsresult IsInModalState(bool *_retval);
+    nsresult SuspendTimeouts();
+    nsresult ResumeTimeouts();
+    nsresult GoOnline();
+    nsresult GetLayerManagerType(nsAString *aLayerManagerType);
+    nsresult StartFrameTimeRecording();
+    nsresult StopFrameTimeRecording(PRUint32 *frameCount, float **frameTime);
+    nsresult GetDisplayDPI(float *aDisplayDPI);
+    nsresult GetOuterWindowWithId(PRUint64 aOuterWindowID, nsIDOMWindow **_retval);
+    nsresult RenderDocument(const void /*nsRect*/ *aRect, PRUint32 aFlags, int /*nscolor*/ aBackgroundColor,
+           void /*gfxContext*/ *aThebesContext);
+    nsresult AdvanceTimeAndRefresh(PRInt64 aMilliseconds);
+    nsresult RestoreNormalRefresh();
+    nsresult ComputeAnimationDistance(nsIDOMElement *element, const nsAString *property, const nsAString *value1,
+           const nsAString *value2, double *_retval);
+    nsresult WrapDOMFile(nsIFile *aFile, nsIDOMFile **_retval);
+    nsresult GetFocusedInputType(char **aFocusedInputType);
+    nsresult FindElementWithViewId(long /*nsViewID*/ aId, nsIDOMElement **_retval);
+    nsresult LeafLayersPartitionWindow(bool *_retval);
+    nsresult GetMayHaveTouchEventListeners(bool *aMayHaveTouchEventListeners);
+    nsresult CheckAndClearPaintedState(nsIDOMElement *aElement, bool *_retval);
+    nsresult GetFileId(nsIDOMBlob *aBlob, PRInt64 *_retval);
+    nsresult GetFileReferences(const nsAString *aDatabaseName, PRInt64 aId, PRInt32 *aRefCnt, PRInt32 *aDBRefCnt,
+           PRInt32 *aSliceRefCnt, bool *_retval);
+    nsresult IsIncrementalGCEnabled(JSContext *cx, bool *_retval);
+    nsresult StartPCCountProfiling(JSContext *cx);
+    nsresult StopPCCountProfiling(JSContext *cx);
+    nsresult PurgePCCounts(JSContext *cx);
+    nsresult GetPCCountScriptCount(JSContext *cx, PRInt32 *_retval);
+    nsresult GetPCCountScriptSummary(PRInt32 script, JSContext *cx, nsAString *_retval);
+    nsresult GetPCCountScriptContents(PRInt32 script, JSContext *cx, nsAString *_retval);
+    nsresult GetPaintingSuppressed(bool *aPaintingSuppressed);
+}
+
 cpp_quote("#define CONTEXT_NONE              0x00")
 cpp_quote("#define CONTEXT_LINK              0x01")
 cpp_quote("#define CONTEXT_IMAGE             0x02")
@@ -2654,7 +2763,7 @@ interface nsIDOMUIEvent : nsIDOMEvent
     nsresult GetPageX(PRInt32 *aPageX);
     nsresult GetPageY(PRInt32 *aPageY);
     nsresult GetWhich(PRUint32 *aWhich);
-    nsresult GetRangeParent(nsIDOMNode * *aRangeParent);
+    nsresult GetRangeParent(nsIDOMNode **aRangeParent);
     nsresult GetRangeOffset(PRInt32 *aRangeOffset);
     nsresult GetCancelBubble(bool *aCancelBubble);
     nsresult SetCancelBubble(bool aCancelBubble);
