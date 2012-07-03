@@ -174,7 +174,7 @@ HRESULT WINAPI D3DXLoadVolumeFromVolume(IDirect3DVolume9 *dst_volume,
     }
     else box = *src_box;
 
-    hr = IDirect3DVolume9_LockBox(src_volume, &locked_box, &box, D3DLOCK_READONLY);
+    hr = IDirect3DVolume9_LockBox(src_volume, &locked_box, NULL, D3DLOCK_READONLY);
     if (FAILED(hr)) return hr;
 
     hr = D3DXLoadVolumeFromMemory(dst_volume, dst_palette, dst_box,
