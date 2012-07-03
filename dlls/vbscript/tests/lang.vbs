@@ -415,6 +415,12 @@ for x = 1 to 100
     Call ok(false, "exit for not escaped the loop?")
 next
 
+do while true
+    for x = 1 to 100
+        exit do
+    next
+loop
+
 Call collectionObj.reset()
 y = 0
 x = 10

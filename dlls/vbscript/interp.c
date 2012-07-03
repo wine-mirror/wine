@@ -894,10 +894,12 @@ static HRESULT interp_step(exec_ctx_t *ctx)
     if(FAILED(hres))
         return hres;
 
-    if(hres == VARCMP_EQ || hres == (gteq_zero ? VARCMP_LT : VARCMP_GT))
+    if(hres == VARCMP_EQ || hres == (gteq_zero ? VARCMP_LT : VARCMP_GT)) {
         ctx->instr++;
-    else
+    }else {
+        stack_popn(ctx, 2);
         instr_jmp(ctx, ctx->instr->arg1.uint);
+    }
     return S_OK;
 }
 

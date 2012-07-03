@@ -682,7 +682,7 @@ static HRESULT compile_foreach_statement(compile_ctx_t *ctx, foreach_statement_t
 
 static HRESULT compile_forto_statement(compile_ctx_t *ctx, forto_statement_t *stat)
 {
-    statement_ctx_t loop_ctx = {0};
+    statement_ctx_t loop_ctx = {2};
     unsigned step_instr, instr;
     BSTR identifier;
     HRESULT hres;
@@ -743,9 +743,12 @@ static HRESULT compile_forto_statement(compile_ctx_t *ctx, forto_statement_t *st
     if(FAILED(hres))
         return hres;
 
-    label_set_addr(ctx, loop_ctx.for_end_label);
+    hres = push_instr_uint(ctx, OP_pop, 2);
+    if(FAILED(hres))
+        return hres;
 
-    return push_instr_uint(ctx, OP_pop, 2);
+    label_set_addr(ctx, loop_ctx.for_end_label);
+    return S_OK;
 }
 
 static HRESULT compile_assignment(compile_ctx_t *ctx, member_expression_t *member_expr, expression_t *value_expr, BOOL is_set)
