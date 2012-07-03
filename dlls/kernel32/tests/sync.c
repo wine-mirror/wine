@@ -704,11 +704,11 @@ static void CALLBACK timer_queue_cb6(PVOID p, BOOLEAN timedOut)
 
 static void test_timer_queue(void)
 {
-    HANDLE q, t1, t2, t3, t4, t5;
-    int n1, n2, n3, n4, n5;
+    HANDLE q, t0, t1, t2, t3, t4, t5;
+    int n0, n1, n2, n3, n4, n5;
     struct timer_queue_data1 d1, d2, d3, d4;
     HANDLE e, et1, et2;
-    BOOL ret;
+    BOOL ret, ret0;
 
     if (!pChangeTimerQueueTimer || !pCreateTimerQueue || !pCreateTimerQueueTimer
         || !pDeleteTimerQueueEx || !pDeleteTimerQueueTimer)
@@ -730,6 +730,18 @@ static void test_timer_queue(void)
     /* Test synchronous deletion of the queue and running timers. */
     q = pCreateTimerQueue();
     ok(q != NULL, "CreateTimerQueue\n");
+
+    /* Not called. */
+    t0 = NULL;
+    n0 = 0;
+    ret = pCreateTimerQueueTimer(&t0, q, timer_queue_cb1, &n0, 0,
+                                 300, 0);
+    ok(ret, "CreateTimerQueueTimer\n");
+    ok(t0 != NULL, "CreateTimerQueueTimer\n");
+    ret0 = pDeleteTimerQueueTimer(q, t0, NULL);
+    ok((!ret0 && GetLastError() == ERROR_IO_PENDING) ||
+       broken(ret0), /* Win 2000 & XP & 2003 */
+       "DeleteTimerQueueTimer ret=%d le=%u\n", ret0, GetLastError());
 
     /* Called once.  */
     t1 = NULL;
@@ -784,6 +796,8 @@ static void test_timer_queue(void)
 
     ret = pDeleteTimerQueueEx(q, INVALID_HANDLE_VALUE);
     ok(ret, "DeleteTimerQueueEx\n");
+    todo_wine
+    ok(n0 == 1 || broken(ret0 && n0 == 0), "Timer callback 0 expected 1 got %d\n", n0);
     ok(n1 == 1, "Timer callback 1 expected 1 got %d\n", n1);
     ok(n2 < n3, "Timer callback 2 & 3 expected %d < %d\n", n2, n3);
     ok(n4 == 0, "Timer callback 4 expected 0 got %d\n", n4);
