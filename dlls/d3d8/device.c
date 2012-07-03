@@ -164,6 +164,25 @@ static UINT vertex_count_from_primitive_count(D3DPRIMITIVETYPE primitive_type, U
     }
 }
 
+static void present_parameters_from_wined3d_swapchain_desc(D3DPRESENT_PARAMETERS *present_parameters,
+        const struct wined3d_swapchain_desc *swapchain_desc)
+{
+    present_parameters->BackBufferWidth = swapchain_desc->backbuffer_width;
+    present_parameters->BackBufferHeight = swapchain_desc->backbuffer_height;
+    present_parameters->BackBufferFormat = d3dformat_from_wined3dformat(swapchain_desc->backbuffer_format);
+    present_parameters->BackBufferCount = swapchain_desc->backbuffer_count;
+    present_parameters->MultiSampleType = swapchain_desc->multisample_type;
+    present_parameters->SwapEffect = swapchain_desc->swap_effect;
+    present_parameters->hDeviceWindow = swapchain_desc->device_window;
+    present_parameters->Windowed = swapchain_desc->windowed;
+    present_parameters->EnableAutoDepthStencil = swapchain_desc->enable_auto_depth_stencil;
+    present_parameters->AutoDepthStencilFormat
+            = d3dformat_from_wined3dformat(swapchain_desc->auto_depth_stencil_format);
+    present_parameters->Flags = swapchain_desc->flags;
+    present_parameters->FullScreen_RefreshRateInHz = swapchain_desc->refresh_rate;
+    present_parameters->FullScreen_PresentationInterval = swapchain_desc->swap_interval;
+}
+
 static void wined3d_swapchain_desc_from_present_parameters(struct wined3d_swapchain_desc *swapchain_desc,
         const D3DPRESENT_PARAMETERS *present_parameters)
 {
@@ -535,20 +554,7 @@ static HRESULT WINAPI d3d8_device_CreateAdditionalSwapChain(IDirect3DDevice8 *if
     wined3d_swapchain_desc_from_present_parameters(&desc, present_parameters);
     if (SUCCEEDED(hr = d3d8_swapchain_create(device, &desc, &object)))
         *swapchain = &object->IDirect3DSwapChain8_iface;
-
-    present_parameters->BackBufferWidth = desc.backbuffer_width;
-    present_parameters->BackBufferHeight = desc.backbuffer_height;
-    present_parameters->BackBufferFormat = d3dformat_from_wined3dformat(desc.backbuffer_format);
-    present_parameters->BackBufferCount = desc.backbuffer_count;
-    present_parameters->MultiSampleType = desc.multisample_type;
-    present_parameters->SwapEffect = desc.swap_effect;
-    present_parameters->hDeviceWindow = desc.device_window;
-    present_parameters->Windowed = desc.windowed;
-    present_parameters->EnableAutoDepthStencil = desc.enable_auto_depth_stencil;
-    present_parameters->AutoDepthStencilFormat = d3dformat_from_wined3dformat(desc.auto_depth_stencil_format);
-    present_parameters->Flags = desc.flags;
-    present_parameters->FullScreen_RefreshRateInHz = desc.refresh_rate;
-    present_parameters->FullScreen_PresentationInterval = desc.swap_interval;
+    present_parameters_from_wined3d_swapchain_desc(present_parameters, &desc);
 
     return D3D_OK;
 }
@@ -3080,19 +3086,7 @@ HRESULT device_init(struct d3d8_device *device, struct d3d8 *parent, struct wine
         goto err;
     }
 
-    parameters->BackBufferWidth = swapchain_desc.backbuffer_width;
-    parameters->BackBufferHeight = swapchain_desc.backbuffer_height;
-    parameters->BackBufferFormat = d3dformat_from_wined3dformat(swapchain_desc.backbuffer_format);
-    parameters->BackBufferCount = swapchain_desc.backbuffer_count;
-    parameters->MultiSampleType = swapchain_desc.multisample_type;
-    parameters->SwapEffect = swapchain_desc.swap_effect;
-    parameters->hDeviceWindow = swapchain_desc.device_window;
-    parameters->Windowed = swapchain_desc.windowed;
-    parameters->EnableAutoDepthStencil = swapchain_desc.enable_auto_depth_stencil;
-    parameters->AutoDepthStencilFormat = d3dformat_from_wined3dformat(swapchain_desc.auto_depth_stencil_format);
-    parameters->Flags = swapchain_desc.flags;
-    parameters->FullScreen_RefreshRateInHz = swapchain_desc.refresh_rate;
-    parameters->FullScreen_PresentationInterval = swapchain_desc.swap_interval;
+    present_parameters_from_wined3d_swapchain_desc(parameters, &swapchain_desc);
 
     device->declArraySize = 16;
     device->decls = HeapAlloc(GetProcessHeap(), 0, device->declArraySize * sizeof(*device->decls));
