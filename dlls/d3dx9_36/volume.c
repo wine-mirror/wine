@@ -142,6 +142,61 @@ HRESULT WINAPI D3DXLoadVolumeFromMemory(IDirect3DVolume9 *dst_volume,
     return D3D_OK;
 }
 
+HRESULT WINAPI D3DXLoadVolumeFromFileInMemory(IDirect3DVolume9 *dst_volume,
+                                              const PALETTEENTRY *dst_palette,
+                                              const D3DBOX *dst_box,
+                                              const void *src_data,
+                                              UINT src_data_size,
+                                              const D3DBOX *src_box,
+                                              DWORD filter,
+                                              D3DCOLOR color_key,
+                                              D3DXIMAGE_INFO *src_info)
+{
+    HRESULT hr;
+    D3DBOX box;
+    D3DXIMAGE_INFO image_info;
+
+    if (!dst_volume || !src_data) return D3DERR_INVALIDCALL;
+
+    hr = D3DXGetImageInfoFromFileInMemory(src_data, src_data_size, &image_info);
+    if (FAILED(hr)) return hr;
+
+    if (src_box)
+    {
+        if (src_box->Right > image_info.Width
+                || src_box->Bottom > image_info.Height
+                || src_box->Back > image_info.Depth)
+            return D3DERR_INVALIDCALL;
+
+        box = *src_box;
+    }
+    else
+    {
+        box.Left = 0;
+        box.Top = 0;
+        box.Right = image_info.Width;
+        box.Bottom = image_info.Height;
+        box.Front = 0;
+        box.Back = image_info.Depth;
+
+    }
+
+    if (image_info.ImageFileFormat != D3DXIFF_DDS)
+    {
+        FIXME("File format %#x is not supported yet\n", image_info.ImageFileFormat);
+        return E_NOTIMPL;
+    }
+
+    hr = load_volume_from_dds(dst_volume, dst_palette, dst_box, src_data, &box,
+            filter, color_key, &image_info);
+    if (FAILED(hr)) return hr;
+
+    if (src_info)
+        *src_info = image_info;
+
+    return D3D_OK;
+}
+
 HRESULT WINAPI D3DXLoadVolumeFromVolume(IDirect3DVolume9 *dst_volume,
                                         const PALETTEENTRY *dst_palette,
                                         const D3DBOX *dst_box,

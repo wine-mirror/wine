@@ -190,7 +190,7 @@
 @ stdcall D3DXLoadSurfaceFromResourceW(ptr ptr ptr ptr wstr ptr long long ptr)
 @ stdcall D3DXLoadSurfaceFromSurface(ptr ptr ptr ptr ptr ptr long long)
 @ stub D3DXLoadVolumeFromFileA(ptr ptr ptr ptr ptr long long ptr)
-@ stub D3DXLoadVolumeFromFileInMemory(ptr ptr ptr ptr long ptr long long ptr)
+@ stdcall D3DXLoadVolumeFromFileInMemory(ptr ptr ptr ptr long ptr long long ptr)
 @ stub D3DXLoadVolumeFromFileW(ptr ptr ptr ptr ptr long long ptr)
 @ stdcall D3DXLoadVolumeFromMemory(ptr ptr ptr ptr long long long ptr ptr long long)
 @ stub D3DXLoadVolumeFromResourceA(ptr ptr ptr long ptr ptr long long ptr)
