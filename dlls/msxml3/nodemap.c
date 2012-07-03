@@ -44,7 +44,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 #ifdef HAVE_LIBXML2
 
-typedef struct _xmlnodemap
+typedef struct
 {
     DispatchEx dispex;
     IXMLDOMNamedNodeMap IXMLDOMNamedNodeMap_iface;
@@ -53,9 +53,21 @@ typedef struct _xmlnodemap
 
     xmlNodePtr node;
     LONG iterator;
+    IEnumVARIANT *enumvariant;
 
     const struct nodemap_funcs *funcs;
 } xmlnodemap;
+
+static HRESULT nodemap_get_item(IUnknown *iface, LONG index, VARIANT *item)
+{
+    V_VT(item) = VT_DISPATCH;
+    return IXMLDOMNamedNodeMap_get_item((IXMLDOMNamedNodeMap*)iface, index, (IXMLDOMNode**)&V_DISPATCH(item));
+}
+
+static const struct enumvariant_funcs nodemap_enumvariant = {
+    nodemap_get_item,
+    NULL
+};
 
 static inline xmlnodemap *impl_from_IXMLDOMNamedNodeMap( IXMLDOMNamedNodeMap *iface )
 {
@@ -79,6 +91,16 @@ static HRESULT WINAPI xmlnodemap_QueryInterface(
         IsEqualGUID( riid, &IID_IXMLDOMNamedNodeMap ) )
     {
         *ppvObject = iface;
+    }
+    else if (IsEqualGUID( riid, &IID_IEnumVARIANT ))
+    {
+        if (!This->enumvariant)
+        {
+            HRESULT hr = create_enumvariant((IUnknown*)iface, FALSE, &nodemap_enumvariant, &This->enumvariant);
+            if (FAILED(hr)) return hr;
+        }
+
+        return IEnumVARIANT_QueryInterface(This->enumvariant, &IID_IEnumVARIANT, ppvObject);
     }
     else if (dispex_query_interface(&This->dispex, riid, ppvObject))
     {
@@ -119,6 +141,7 @@ static ULONG WINAPI xmlnodemap_Release(
     if ( ref == 0 )
     {
         xmldoc_release( This->node->doc );
+        if (This->enumvariant) IEnumVARIANT_Release(This->enumvariant);
         release_dispex(&This->dispex);
         heap_free( This );
     }
@@ -275,11 +298,11 @@ static HRESULT WINAPI xmlnodemap_reset(
 
 static HRESULT WINAPI xmlnodemap__newEnum(
     IXMLDOMNamedNodeMap *iface,
-    IUnknown** ppUnk)
+    IUnknown** enumv)
 {
     xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
-    FIXME("(%p)->(%p)\n", This, ppUnk);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, enumv);
+    return create_enumvariant((IUnknown*)iface, TRUE, &nodemap_enumvariant, (IEnumVARIANT**)enumv);
 }
 
 static const struct IXMLDOMNamedNodeMapVtbl XMLDOMNamedNodeMapVtbl =
@@ -423,6 +446,7 @@ IXMLDOMNamedNodeMap *create_nodemap(xmlNodePtr node, const struct nodemap_funcs 
     This->node = node;
     This->ref = 1;
     This->iterator = 0;
+    This->enumvariant = NULL;
     This->funcs = funcs;
 
     init_dispex(&This->dispex, (IUnknown*)&This->IXMLDOMNamedNodeMap_iface, &xmlnodemap_dispex);

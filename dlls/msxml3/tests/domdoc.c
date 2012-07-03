@@ -1749,6 +1749,11 @@ static const char default_ns_doc[] = {
     "    d=\"d attr\" />"
 };
 
+static const char attributes_map[] = {
+    "<?xml version=\"1.0\"?>"
+    "<a attr1=\"value1\" attr2=\"value2\" attr3=\"value3\" attr4=\"value4\" />"
+};
+
 static const WCHAR nonexistent_fileW[] = {
     'c', ':', '\\', 'N', 'o', 'n', 'e', 'x', 'i', 's', 't', 'e', 'n', 't', '.', 'x', 'm', 'l', 0
 };
@@ -12176,6 +12181,114 @@ static void test_putref_schemas(void)
     IXMLDOMDocument2_Release(doc);
 }
 
+static void test_namedmap_newenum(void)
+{
+    IEnumVARIANT *enum1, *enum2, *enum3;
+    IXMLDOMNamedNodeMap *map;
+    IUnknown *unk1, *unk2;
+    IXMLDOMDocument *doc;
+    IXMLDOMElement *elem;
+    IXMLDOMNode *node;
+    VARIANT_BOOL b;
+    HRESULT hr;
+    VARIANT v;
+    BSTR str;
+
+    doc = create_document(&IID_IXMLDOMDocument);
+
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_(attributes_map), &b);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IXMLDOMDocument_get_documentElement(doc, &elem);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IXMLDOMElement_get_attributes(elem, &map);
+    EXPECT_HR(hr, S_OK);
+    IXMLDOMElement_Release(elem);
+
+    enum1 = NULL;
+    EXPECT_REF(map, 1);
+    hr = IXMLDOMNamedNodeMap_QueryInterface(map, &IID_IEnumVARIANT, (void**)&enum1);
+    EXPECT_HR(hr, S_OK);
+    ok(enum1 != NULL, "got %p\n", enum1);
+    EXPECT_REF(map, 1);
+    EXPECT_REF(enum1, 2);
+
+    enum2 = NULL;
+    hr = IXMLDOMNamedNodeMap_QueryInterface(map, &IID_IEnumVARIANT, (void**)&enum2);
+    EXPECT_HR(hr, S_OK);
+    ok(enum2 == enum1, "got %p\n", enum2);
+
+    IEnumVARIANT_Release(enum2);
+
+    EXPECT_REF(map, 1);
+    hr = IXMLDOMNamedNodeMap__newEnum(map, (IUnknown**)&enum2);
+    EXPECT_HR(hr, S_OK);
+    EXPECT_REF(map, 2);
+    EXPECT_REF(enum2, 1);
+    ok(enum2 != enum1, "got %p, %p\n", enum2, enum1);
+
+    IEnumVARIANT_Release(enum1);
+
+    /* enumerator created with _newEnum() doesn't share IUnknown* with main object */
+    hr = IXMLDOMNamedNodeMap_QueryInterface(map, &IID_IUnknown, (void**)&unk1);
+    EXPECT_HR(hr, S_OK);
+    hr = IEnumVARIANT_QueryInterface(enum2, &IID_IUnknown, (void**)&unk2);
+    EXPECT_HR(hr, S_OK);
+    EXPECT_REF(map, 3);
+    EXPECT_REF(enum2, 2);
+    ok(unk1 != unk2, "got %p, %p\n", unk1, unk2);
+    IUnknown_Release(unk1);
+    IUnknown_Release(unk2);
+
+    hr = IXMLDOMNamedNodeMap__newEnum(map, (IUnknown**)&enum3);
+    EXPECT_HR(hr, S_OK);
+    ok(enum2 != enum3, "got %p, %p\n", enum2, enum3);
+    IEnumVARIANT_Release(enum3);
+
+    /* iteration tests */
+    hr = IXMLDOMNamedNodeMap_get_item(map, 0, &node);
+    EXPECT_HR(hr, S_OK);
+    hr = IXMLDOMNode_get_nodeName(node, &str);
+    EXPECT_HR(hr, S_OK);
+    ok(!lstrcmpW(str, _bstr_("attr1")), "got %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+    IXMLDOMNode_Release(node);
+
+    hr = IXMLDOMNamedNodeMap_nextNode(map, &node);
+    EXPECT_HR(hr, S_OK);
+    hr = IXMLDOMNode_get_nodeName(node, &str);
+    EXPECT_HR(hr, S_OK);
+    ok(!lstrcmpW(str, _bstr_("attr1")), "got %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+    IXMLDOMNode_Release(node);
+
+    V_VT(&v) = VT_EMPTY;
+    hr = IEnumVARIANT_Next(enum2, 1, &v, NULL);
+    EXPECT_HR(hr, S_OK);
+    ok(V_VT(&v) == VT_DISPATCH, "got var type %d\n", V_VT(&v));
+    hr = IDispatch_QueryInterface(V_DISPATCH(&v), &IID_IXMLDOMNode, (void**)&node);
+    EXPECT_HR(hr, S_OK);
+    hr = IXMLDOMNode_get_nodeName(node, &str);
+    EXPECT_HR(hr, S_OK);
+    ok(!lstrcmpW(str, _bstr_("attr1")), "got node name %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+    IXMLDOMNode_Release(node);
+    VariantClear(&v);
+
+    hr = IXMLDOMNamedNodeMap_nextNode(map, &node);
+    EXPECT_HR(hr, S_OK);
+    hr = IXMLDOMNode_get_nodeName(node, &str);
+    EXPECT_HR(hr, S_OK);
+    ok(!lstrcmpW(str, _bstr_("attr2")), "got %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+    IXMLDOMNode_Release(node);
+
+    IEnumVARIANT_Release(enum2);
+    IXMLDOMNamedNodeMap_Release(map);
+    IXMLDOMDocument_Release(doc);
+}
+
 START_TEST(domdoc)
 {
     IXMLDOMDocument *doc;
@@ -12256,6 +12369,7 @@ START_TEST(domdoc)
     test_get_namespaces();
     test_put_data();
     test_putref_schemas();
+    test_namedmap_newenum();
 
     test_xsltemplate();
 
