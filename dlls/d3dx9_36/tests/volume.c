@@ -22,6 +22,23 @@
 #include "wine/test.h"
 #include "d3dx9tex.h"
 
+/* 4x4x2 volume map dds, 2 mipmaps */
+static const unsigned char dds_volume_map[] =
+{
+    0x44,0x44,0x53,0x20,0x7c,0x00,0x00,0x00,0x07,0x10,0x8a,0x00,0x04,0x00,0x00,0x00,
+    0x04,0x00,0x00,0x00,0x10,0x00,0x00,0x00,0x02,0x00,0x00,0x00,0x03,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x20,0x00,0x00,0x00,
+    0x04,0x00,0x00,0x00,0x44,0x58,0x54,0x33,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x08,0x10,0x40,0x00,
+    0x00,0x00,0x20,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xef,0x87,0x0f,0x78,0x05,0x05,0x50,0x50,
+    0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xef,0x87,0x0f,0x78,0x05,0x05,0x50,0x50,
+    0xff,0x00,0xff,0x00,0x00,0x00,0x00,0x00,0x2f,0x7e,0xcf,0x79,0x01,0x54,0x5c,0x5c,
+    0x0f,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x10,0x84,0xef,0x7b,0xaa,0xab,0xab,0xab
+};
+
 #define check_pixel_4bpp(box, x, y, z, color) _check_pixel_4bpp(__LINE__, box, x, y, z, color)
 static inline void _check_pixel_4bpp(unsigned int line, const D3DLOCKED_BOX *box, int x, int y, int z, DWORD expected_color)
 {
@@ -175,6 +192,58 @@ static void test_D3DXLoadVolumeFromMemory(IDirect3DDevice9 *device)
     IDirect3DVolumeTexture9_Release(volume_texture);
 }
 
+static void test_D3DXLoadVolumeFromFileInMemory(IDirect3DDevice9 *device)
+{
+    HRESULT hr;
+    D3DBOX src_box;
+    IDirect3DVolume9 *volume;
+    IDirect3DVolumeTexture9 *volume_texture;
+
+    hr = IDirect3DDevice9_CreateVolumeTexture(device, 4, 4, 2, 1, D3DUSAGE_DYNAMIC, D3DFMT_DXT3, D3DPOOL_DEFAULT,
+            &volume_texture, NULL);
+    if (FAILED(hr))
+    {
+        skip("Failed to create volume texture\n");
+        return;
+    }
+
+    IDirect3DVolumeTexture9_GetVolumeLevel(volume_texture, 0, &volume);
+
+    hr = D3DXLoadVolumeFromFileInMemory(volume, NULL, NULL, dds_volume_map, sizeof(dds_volume_map), NULL, D3DX_DEFAULT, 0, NULL);
+    ok(hr == D3D_OK, "D3DXLoadVolumeFromFileInMemory returned %#x, expected %#x\n", hr, D3D_OK);
+
+    hr = D3DXLoadVolumeFromFileInMemory(volume, NULL, NULL, NULL, sizeof(dds_volume_map), NULL, D3DX_DEFAULT, 0, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadVolumeFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+    hr = D3DXLoadVolumeFromFileInMemory(volume, NULL, NULL, NULL, 0, NULL, D3DX_DEFAULT, 0, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadVolumeFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+    hr = D3DXLoadVolumeFromFileInMemory(volume, NULL, NULL, dds_volume_map, 0, NULL, D3DX_DEFAULT, 0, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadVolumeFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+    hr = D3DXLoadVolumeFromFileInMemory(NULL, NULL, NULL, dds_volume_map, sizeof(dds_volume_map), NULL, D3DX_DEFAULT, 0, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadVolumeFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+    set_box(&src_box, 0, 0, 4, 4, 0, 2);
+    hr = D3DXLoadVolumeFromFileInMemory(volume, NULL, NULL, dds_volume_map, sizeof(dds_volume_map), &src_box, D3DX_DEFAULT, 0, NULL);
+    ok(hr == D3D_OK, "D3DXLoadVolumeFromFileInMemory returned %#x, expected %#x\n", hr, D3D_OK);
+
+    set_box(&src_box, 0, 0, 0, 0, 0, 0);
+    hr = D3DXLoadVolumeFromFileInMemory(volume, NULL, NULL, dds_volume_map, sizeof(dds_volume_map), &src_box, D3DX_DEFAULT, 0, NULL);
+    ok(hr == E_FAIL, "D3DXLoadVolumeFromFileInMemory returned %#x, expected %#x\n", hr, E_FAIL);
+
+    set_box(&src_box, 0, 0, 5, 4, 0, 2);
+    hr = D3DXLoadVolumeFromFileInMemory(volume, NULL, NULL, dds_volume_map, sizeof(dds_volume_map), &src_box, D3DX_DEFAULT, 0, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadVolumeFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+    set_box(&src_box, 0, 0, 4, 4, 0, 3);
+    hr = D3DXLoadVolumeFromFileInMemory(volume, NULL, NULL, dds_volume_map, sizeof(dds_volume_map), &src_box, D3DX_DEFAULT, 0, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadVolumeFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+    IDirect3DVolume9_Release(volume);
+    IDirect3DVolumeTexture9_Release(volume_texture);
+}
+
 START_TEST(volume)
 {
     HWND wnd;
@@ -210,6 +279,7 @@ START_TEST(volume)
     }
 
     test_D3DXLoadVolumeFromMemory(device);
+    test_D3DXLoadVolumeFromFileInMemory(device);
 
     IDirect3DDevice9_Release(device);
     IDirect3D9_Release(d3d);
