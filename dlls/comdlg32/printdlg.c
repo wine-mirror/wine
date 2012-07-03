@@ -1783,9 +1783,13 @@ static LRESULT PRINTDLG_WMCommandA(HWND hDlg, WPARAM wParam,
 	 /* FALLTHROUGH */
     case cmb4:                         /* Printer combobox */
          if (HIWORD(wParam)==CBN_SELCHANGE) {
-	     char   PrinterName[256];
-	     GetDlgItemTextA(hDlg, LOWORD(wParam), PrinterName, 255);
+	     char   *PrinterName;
+	     INT index = SendDlgItemMessageW(hDlg, LOWORD(wParam), CB_GETCURSEL, 0, 0);
+	     INT length = SendDlgItemMessageW(hDlg, LOWORD(wParam), CB_GETLBTEXTLEN, index, 0);
+	     PrinterName = HeapAlloc(GetProcessHeap(),0,length+1);
+	     SendDlgItemMessageA(hDlg, LOWORD(wParam), CB_GETLBTEXT, index, (LPARAM)PrinterName);
 	     PRINTDLG_ChangePrinterA(hDlg, PrinterName, PrintStructures);
+	     HeapFree(GetProcessHeap(),0,PrinterName);
 	 }
 	 break;
 
@@ -1934,9 +1938,14 @@ static LRESULT PRINTDLG_WMCommandW(HWND hDlg, WPARAM wParam,
 	 /* FALLTHROUGH */
     case cmb4:                         /* Printer combobox */
          if (HIWORD(wParam)==CBN_SELCHANGE) {
-	     WCHAR   PrinterName[256];
-	     GetDlgItemTextW(hDlg, LOWORD(wParam), PrinterName, 255);
+	     WCHAR *PrinterName;
+	     INT index = SendDlgItemMessageW(hDlg, LOWORD(wParam), CB_GETCURSEL, 0, 0);
+	     INT length = SendDlgItemMessageW(hDlg, LOWORD(wParam), CB_GETLBTEXTLEN, index, 0);
+
+	     PrinterName = HeapAlloc(GetProcessHeap(),0,sizeof(WCHAR)*(length+1));
+	     SendDlgItemMessageW(hDlg, LOWORD(wParam), CB_GETLBTEXT, index, (LPARAM)PrinterName);
 	     PRINTDLG_ChangePrinterW(hDlg, PrinterName, PrintStructures);
+	     HeapFree(GetProcessHeap(),0,PrinterName);
 	 }
 	 break;
 
@@ -3378,10 +3387,14 @@ static BOOL pagesetup_wm_command(HWND hDlg, WPARAM wParam, LPARAM lParam, pagese
     case cmb1: /* Printer combo */
         if(msg == CBN_SELCHANGE)
         {
-            WCHAR name[256];
-            GetDlgItemTextW(hDlg, id, name, sizeof(name) / sizeof(name[0]));
+            WCHAR *name;
+            INT index = SendDlgItemMessageW(hDlg, id, CB_GETCURSEL, 0, 0);
+            INT length = SendDlgItemMessageW(hDlg, id, CB_GETLBTEXTLEN, index, 0);
+            name = HeapAlloc(GetProcessHeap(),0,sizeof(WCHAR)*(length+1));
+            SendDlgItemMessageW(hDlg, id, CB_GETLBTEXT, index, (LPARAM)name);
             pagesetup_change_printer(name, data);
             pagesetup_init_combos(hDlg, data);
+            HeapFree(GetProcessHeap(),0,name);
         }
         break;
     case cmb2: /* Paper combo */
