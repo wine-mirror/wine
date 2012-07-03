@@ -3348,7 +3348,9 @@ GpStatus WINGDIPAPI GdipSetPropertyItem(GpImage *image, GDIPCONST PropertyItem* 
 {
     static int calls;
 
-    TRACE("(%p,%p)\n", image, item);
+    if (!image || !item) return InvalidParameter;
+
+    TRACE("(%p,%p:%#x,%u,%u,%p)\n", image, item, item->id, item->type, item->length, item->value);
 
     if(!(calls++))
         FIXME("not implemented\n");
