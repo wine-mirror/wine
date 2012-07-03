@@ -946,6 +946,25 @@ static HRESULT compile_exitfor_statement(compile_ctx_t *ctx)
     return push_instr_addr(ctx, OP_jmp, iter->for_end_label);
 }
 
+static HRESULT exit_label(compile_ctx_t *ctx, unsigned jmp_label)
+{
+    statement_ctx_t *iter;
+    unsigned pop_cnt = 0;
+
+    for(iter = ctx->stat_ctx; iter; iter = iter->next)
+        pop_cnt += iter->stack_use;
+
+    if(pop_cnt) {
+        HRESULT hres;
+
+        hres = push_instr_uint(ctx, OP_pop, pop_cnt);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    return push_instr_addr(ctx, OP_jmp, jmp_label);
+}
+
 static HRESULT compile_exitsub_statement(compile_ctx_t *ctx)
 {
     if(!ctx->sub_end_label) {
@@ -953,7 +972,7 @@ static HRESULT compile_exitsub_statement(compile_ctx_t *ctx)
         return E_FAIL;
     }
 
-    return push_instr_addr(ctx, OP_jmp, ctx->sub_end_label);
+    return exit_label(ctx, ctx->sub_end_label);
 }
 
 static HRESULT compile_exitfunc_statement(compile_ctx_t *ctx)
@@ -963,7 +982,7 @@ static HRESULT compile_exitfunc_statement(compile_ctx_t *ctx)
         return E_FAIL;
     }
 
-    return push_instr_addr(ctx, OP_jmp, ctx->func_end_label);
+    return exit_label(ctx, ctx->func_end_label);
 }
 
 static HRESULT compile_exitprop_statement(compile_ctx_t *ctx)
@@ -973,7 +992,7 @@ static HRESULT compile_exitprop_statement(compile_ctx_t *ctx)
         return E_FAIL;
     }
 
-    return push_instr_addr(ctx, OP_jmp, ctx->prop_end_label);
+    return exit_label(ctx, ctx->prop_end_label);
 }
 
 static HRESULT compile_onerror_statement(compile_ctx_t *ctx, onerror_statement_t *stat)

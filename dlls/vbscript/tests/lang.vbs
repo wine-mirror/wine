@@ -489,6 +489,13 @@ End Sub
 
 Call TestSubExit(true)
 
+Sub TestSubExit2
+    for x = 1 to 100
+        Exit Sub
+    next
+End Sub
+Call TestSubExit2
+
 TestSubMultiArgs 1, 2, 3, 4, 5
 Call TestSubMultiArgs(1, 2, 3, 4, 5)
 
@@ -583,6 +590,17 @@ Function TestFuncExit(ByRef a)
 End Function
 
 Call TestFuncExit(true)
+
+Function TestFuncExit2(ByRef a)
+    For x = 1 to 100
+        For y = 1 to 100
+            Exit Function
+        Next
+    Next
+    Call ok(false, "Exit Function not called?")
+End Function
+
+Call TestFuncExit2(true)
 
 Sub SubParseTest
 End Sub : x = false
