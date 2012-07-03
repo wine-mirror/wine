@@ -215,21 +215,7 @@ static HRESULT WINAPI d3d9_swapchain_GetPresentParameters(IDirect3DSwapChain9 *i
     wined3d_mutex_lock();
     hr = wined3d_swapchain_get_desc(swapchain->wined3d_swapchain, &desc);
     wined3d_mutex_unlock();
-
-    parameters->BackBufferWidth = desc.backbuffer_width;
-    parameters->BackBufferHeight = desc.backbuffer_height;
-    parameters->BackBufferFormat = d3dformat_from_wined3dformat(desc.backbuffer_format);
-    parameters->BackBufferCount = desc.backbuffer_count;
-    parameters->MultiSampleType = desc.multisample_type;
-    parameters->MultiSampleQuality = desc.multisample_quality;
-    parameters->SwapEffect = desc.swap_effect;
-    parameters->hDeviceWindow = desc.device_window;
-    parameters->Windowed = desc.windowed;
-    parameters->EnableAutoDepthStencil = desc.enable_auto_depth_stencil;
-    parameters->AutoDepthStencilFormat = d3dformat_from_wined3dformat(desc.auto_depth_stencil_format);
-    parameters->Flags = desc.flags;
-    parameters->FullScreen_RefreshRateInHz = desc.refresh_rate;
-    parameters->PresentationInterval = desc.swap_interval;
+    present_parameters_from_wined3d_swapchain_desc(parameters, &desc);
 
     return hr;
 }
