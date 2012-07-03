@@ -1610,7 +1610,7 @@ static BOOL glxdrv_wglMakeCurrent(HDC hdc, struct wgl_context *ctx)
     }
     else
     {
-        if (escape.gl_type == DC_GL_BITMAP) escape.drawable = get_context_pixmap( hdc, ctx );
+        if (escape.gl_type == DC_GL_BITMAP) escape.gl_drawable = get_context_pixmap( hdc, ctx );
 
         wine_tsx11_lock();
 
@@ -1619,10 +1619,10 @@ static BOOL glxdrv_wglMakeCurrent(HDC hdc, struct wgl_context *ctx)
             pglXGetFBConfigAttrib(gdi_display, ctx->fmt->fbconfig, GLX_VISUAL_ID, &vis_id);
             describeContext(ctx);
             TRACE("hdc %p drawable %lx fmt %u vis %x ctx %p\n", hdc,
-                  escape.drawable, escape.pixel_format, vis_id, ctx->ctx);
+                  escape.gl_drawable, escape.pixel_format, vis_id, ctx->ctx);
         }
 
-        ret = pglXMakeCurrent(gdi_display, escape.drawable, ctx->ctx);
+        ret = pglXMakeCurrent(gdi_display, escape.gl_drawable, ctx->ctx);
 
         if (ret)
         {
@@ -1631,8 +1631,8 @@ static BOOL glxdrv_wglMakeCurrent(HDC hdc, struct wgl_context *ctx)
             ctx->has_been_current = TRUE;
             ctx->hdc = hdc;
             ctx->read_hdc = hdc;
-            ctx->drawables[0] = escape.drawable;
-            ctx->drawables[1] = escape.drawable;
+            ctx->drawables[0] = escape.gl_drawable;
+            ctx->drawables[1] = escape.gl_drawable;
             ctx->refresh_drawables = FALSE;
 
             if (escape.gl_type == DC_GL_BITMAP) pglDrawBuffer(GL_FRONT_LEFT);
@@ -1684,18 +1684,18 @@ static BOOL glxdrv_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct 
     {
         if (!pglXMakeContextCurrent) return FALSE;
 
-        if (escape_draw.gl_type == DC_GL_BITMAP) escape_draw.drawable = get_context_pixmap( draw_hdc, ctx );
-        if (escape_read.gl_type == DC_GL_BITMAP) escape_read.drawable = get_context_pixmap( read_hdc, ctx );
+        if (escape_draw.gl_type == DC_GL_BITMAP) escape_draw.gl_drawable = get_context_pixmap( draw_hdc, ctx );
+        if (escape_read.gl_type == DC_GL_BITMAP) escape_read.gl_drawable = get_context_pixmap( read_hdc, ctx );
 
         wine_tsx11_lock();
-        ret = pglXMakeContextCurrent(gdi_display, escape_draw.drawable, escape_read.drawable, ctx->ctx);
+        ret = pglXMakeContextCurrent(gdi_display, escape_draw.gl_drawable, escape_read.gl_drawable, ctx->ctx);
         if (ret)
         {
             ctx->has_been_current = TRUE;
             ctx->hdc = draw_hdc;
             ctx->read_hdc = read_hdc;
-            ctx->drawables[0] = escape_draw.drawable;
-            ctx->drawables[1] = escape_read.drawable;
+            ctx->drawables[0] = escape_draw.gl_drawable;
+            ctx->drawables[1] = escape_read.gl_drawable;
             ctx->refresh_drawables = FALSE;
             NtCurrentTeb()->glContext = ctx;
         }
