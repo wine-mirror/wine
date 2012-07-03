@@ -2317,12 +2317,12 @@
 @ stub -arch=win64 ?_Makpat@?$_Mpunct@G@std@@AEAAXAEAUpattern@money_base@2@III@Z
 @ stub -arch=win32 ?_Makpat@?$_Mpunct@_W@std@@AAEXAAUpattern@money_base@2@III@Z
 @ stub -arch=win64 ?_Makpat@?$_Mpunct@_W@std@@AEAAXAEAUpattern@money_base@2@III@Z
-@ stub -arch=win32 ?_Myptr@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEPADXZ
-@ stub -arch=win32 ?_Myptr@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEPBDXZ
-@ stub -arch=win32 ?_Myptr@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAEPAGXZ
-@ stub -arch=win32 ?_Myptr@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBEPBGXZ
-@ stub -arch=win32 ?_Myptr@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEPA_WXZ
-@ stub -arch=win32 ?_Myptr@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEPB_WXZ
+@ thiscall -arch=win32 ?_Myptr@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEPADXZ(ptr) msvcp90.?_Myptr@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@IAEPADXZ
+@ thiscall -arch=win32 ?_Myptr@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEPBDXZ(ptr) msvcp90.?_Myptr@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@IBEPBDXZ
+@ thiscall -arch=win32 ?_Myptr@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAEPAGXZ(ptr) msvcp90.?_Myptr@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@IAEPAGXZ
+@ thiscall -arch=win32 ?_Myptr@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBEPBGXZ(ptr) msvcp90.?_Myptr@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@IBEPBGXZ
+@ thiscall -arch=win32 ?_Myptr@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEPA_WXZ(ptr) msvcp90.?_Myptr@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@IAEPA_WXZ
+@ thiscall -arch=win32 ?_Myptr@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEPB_WXZ(ptr) msvcp90.?_Myptr@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@IBEPB_WXZ
 @ stub ?_Nanv@?$_Ctraits@M@std@@SAMM@Z
 @ stub ?_Nanv@?$_Ctraits@N@std@@SANN@Z
 @ stub ?_Nanv@?$_Ctraits@O@std@@SAOO@Z
