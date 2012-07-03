@@ -431,6 +431,15 @@ next
 Call ok(y = 3, "y = " & y)
 Call ok(getVT(x) = "VT_EMPTY*", "getVT(x) = " & getVT(x))
 
+Call collectionObj.reset()
+y = false
+for each x in collectionObj
+    if x = 2 then exit for
+    y = 1
+next
+Call ok(y = 1, "y = " & y)
+Call ok(x = 2, "x = " & x)
+
 if false then
 Sub testsub
     x = true

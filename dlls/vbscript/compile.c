@@ -650,7 +650,8 @@ static HRESULT compile_dowhile_statement(compile_ctx_t *ctx, while_statement_t *
 
 static HRESULT compile_foreach_statement(compile_ctx_t *ctx, foreach_statement_t *stat)
 {
-    unsigned loop_start, loop_end;
+    statement_ctx_t loop_ctx = {1};
+    unsigned loop_start;
     HRESULT hres;
 
     hres = compile_expression(ctx, stat->group_expr);
@@ -661,14 +662,14 @@ static HRESULT compile_foreach_statement(compile_ctx_t *ctx, foreach_statement_t
         return E_OUTOFMEMORY;
 
     loop_start = ctx->instr_cnt;
-    if(!(loop_end = alloc_label(ctx)))
+    if(!(loop_ctx.for_end_label = alloc_label(ctx)))
         return E_OUTOFMEMORY;
 
-    hres = push_instr_uint_bstr(ctx, OP_enumnext, loop_end, stat->identifier);
+    hres = push_instr_uint_bstr(ctx, OP_enumnext, loop_ctx.for_end_label, stat->identifier);
     if(FAILED(hres))
         return hres;
 
-    hres = compile_statement(ctx, NULL, stat->body);
+    hres = compile_statement(ctx, &loop_ctx, stat->body);
     if(FAILED(hres))
         return hres;
 
@@ -676,7 +677,7 @@ static HRESULT compile_foreach_statement(compile_ctx_t *ctx, foreach_statement_t
     if(FAILED(hres))
         return hres;
 
-    label_set_addr(ctx, loop_end);
+    label_set_addr(ctx, loop_ctx.for_end_label);
     return S_OK;
 }
 
