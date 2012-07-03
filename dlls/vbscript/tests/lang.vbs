@@ -415,6 +415,16 @@ for x = 1 to 100
     Call ok(false, "exit for not escaped the loop?")
 next
 
+Call collectionObj.reset()
+y = 0
+x = 10
+for each x in collectionObj
+    y = y+1
+    Call ok(x = y, "x <> y")
+next
+Call ok(y = 3, "y = " & y)
+Call ok(getVT(x) = "VT_EMPTY*", "getVT(x) = " & getVT(x))
+
 if false then
 Sub testsub
     x = true
