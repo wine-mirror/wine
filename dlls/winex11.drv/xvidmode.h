@@ -29,7 +29,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
-#include "ddrawi.h"
 
 void X11DRV_XF86VM_Init(void) DECLSPEC_HIDDEN;
 void X11DRV_XF86VM_Cleanup(void) DECLSPEC_HIDDEN;

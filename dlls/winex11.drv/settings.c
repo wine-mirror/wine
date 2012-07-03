@@ -40,7 +40,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(x11settings);
  * This is done because the array of DDHALMODEINFO structures must be 
  * created for use by DirectDraw anyway.
  */
-static LPDDHALMODEINFO dd_modes = NULL;
+static struct x11drv_mode_info *dd_modes = NULL;
 static unsigned int dd_mode_count = 0;
 static unsigned int dd_max_modes = 0;
 /* All Windows drivers seen so far either support 32 bit depths, or 24 bit depths, but never both. So if we have
@@ -58,11 +58,11 @@ static const char *handler_name;
  * Set the handlers for resolution changing functions
  * and initialize the master list of modes
  */
-LPDDHALMODEINFO X11DRV_Settings_SetHandlers(const char *name,
-                                 int (*pNewGCM)(void),
-                                 LONG (*pNewSCM)(int),
-                                 unsigned int nmodes,
-                                 int reserve_depths)
+struct x11drv_mode_info *X11DRV_Settings_SetHandlers(const char *name,
+                                                     int (*pNewGCM)(void),
+                                                     LONG (*pNewSCM)(int),
+                                                     unsigned int nmodes,
+                                                     int reserve_depths)
 {
     handler_name = name;
     pGetCurrentMode = pNewGCM;
@@ -79,7 +79,7 @@ LPDDHALMODEINFO X11DRV_Settings_SetHandlers(const char *name,
         TRACE("Destroying old display modes array\n");
         HeapFree(GetProcessHeap(), 0, dd_modes);
     }
-    dd_modes = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DDHALMODEINFO) * dd_max_modes);
+    dd_modes = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*dd_modes) * dd_max_modes);
     dd_mode_count = 0;
     TRACE("Initialized new display modes array\n");
     return dd_modes;
@@ -88,7 +88,7 @@ LPDDHALMODEINFO X11DRV_Settings_SetHandlers(const char *name,
 /* Add one mode to the master list */
 void X11DRV_Settings_AddOneMode(unsigned int width, unsigned int height, unsigned int bpp, unsigned int freq)
 {
-    LPDDHALMODEINFO info = &(dd_modes[dd_mode_count]);
+    struct x11drv_mode_info *info = &dd_modes[dd_mode_count];
     DWORD dwBpp = screen_bpp;
     if (dd_mode_count >= dd_max_modes)
     {
@@ -96,16 +96,10 @@ void X11DRV_Settings_AddOneMode(unsigned int width, unsigned int height, unsigne
         return;
     }
     if (bpp == 0) bpp = dwBpp;
-    info->dwWidth        = width;
-    info->dwHeight       = height;
-    info->wRefreshRate   = freq;
-    info->lPitch         = 0;
-    info->dwBPP          = bpp;
-    info->wFlags         = 0;
-    info->dwRBitMask     = 0;
-    info->dwGBitMask     = 0;
-    info->dwBBitMask     = 0;
-    info->dwAlphaBitMask = 0;
+    info->width         = width;
+    info->height        = height;
+    info->refresh_rate  = freq;
+    info->bpp           = bpp;
     TRACE("initialized mode %d: %dx%dx%d @%d Hz (%s)\n", 
           dd_mode_count, width, height, bpp, freq, handler_name);
     dd_mode_count++;
@@ -125,8 +119,8 @@ void X11DRV_Settings_AddDepthModes(void)
         {
             for (i=0; i < existing_modes; i++)
             {
-                X11DRV_Settings_AddOneMode(dd_modes[i].dwWidth, dd_modes[i].dwHeight, 
-                                           depths[j], dd_modes[i].wRefreshRate);
+                X11DRV_Settings_AddOneMode(dd_modes[i].width, dd_modes[i].height,
+                                           depths[j], dd_modes[i].refresh_rate);
             }
         }
     }
@@ -295,10 +289,10 @@ BOOL CDECL X11DRV_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmo
     }
     if (n < dd_mode_count)
     {
-        devmode->dmPelsWidth = dd_modes[n].dwWidth;
-        devmode->dmPelsHeight = dd_modes[n].dwHeight;
-        devmode->dmBitsPerPel = dd_modes[n].dwBPP;
-        devmode->dmDisplayFrequency = dd_modes[n].wRefreshRate;
+        devmode->dmPelsWidth = dd_modes[n].width;
+        devmode->dmPelsHeight = dd_modes[n].height;
+        devmode->dmBitsPerPel = dd_modes[n].bpp;
+        devmode->dmDisplayFrequency = dd_modes[n].refresh_rate;
         devmode->dmFields = DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL |
                             DM_DISPLAYFLAGS;
         if (devmode->dmDisplayFrequency)
@@ -401,23 +395,23 @@ LONG CDECL X11DRV_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
     {
         if (devmode->dmFields & DM_BITSPERPEL)
         {
-            if (dwBpp != dd_modes[i].dwBPP)
+            if (dwBpp != dd_modes[i].bpp)
                 continue;
         }
         if (devmode->dmFields & DM_PELSWIDTH)
         {
-            if (devmode->dmPelsWidth != dd_modes[i].dwWidth)
+            if (devmode->dmPelsWidth != dd_modes[i].width)
                 continue;
         }
         if (devmode->dmFields & DM_PELSHEIGHT)
         {
-            if (devmode->dmPelsHeight != dd_modes[i].dwHeight)
+            if (devmode->dmPelsHeight != dd_modes[i].height)
                 continue;
         }
-        if ((devmode->dmFields & DM_DISPLAYFREQUENCY) && (dd_modes[i].wRefreshRate != 0) &&
+        if ((devmode->dmFields & DM_DISPLAYFREQUENCY) && (dd_modes[i].refresh_rate != 0) &&
             devmode->dmDisplayFrequency != 0)
         {
-            if (devmode->dmDisplayFrequency != dd_modes[i].wRefreshRate)
+            if (devmode->dmDisplayFrequency != dd_modes[i].refresh_rate)
                 continue;
         }
         /* we have a valid mode */

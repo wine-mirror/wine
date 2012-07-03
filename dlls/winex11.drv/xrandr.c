@@ -34,7 +34,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
-#include "ddrawi.h"
 #include "wine/library.h"
 #include "wine/debug.h"
 
@@ -59,7 +58,7 @@ extern int usexrandr;
 
 static int xrandr_event, xrandr_error, xrandr_major, xrandr_minor;
 
-static LPDDHALMODEINFO dd_modes;
+static struct x11drv_mode_info *dd_modes;
 static unsigned int dd_mode_count;
 static XRRScreenSize *real_xrandr_sizes;
 static short **real_xrandr_rates;
@@ -150,9 +149,9 @@ static int X11DRV_XRandR_GetCurrentMode(void)
     wine_tsx11_unlock();
     for (i = 0; i < real_xrandr_modes_count; i++)
     {
-        if ( (dd_modes[i].dwWidth      == real_xrandr_sizes[size].width ) &&
-             (dd_modes[i].dwHeight     == real_xrandr_sizes[size].height) &&
-             (dd_modes[i].wRefreshRate == rate                          ) )
+        if ( (dd_modes[i].width        == real_xrandr_sizes[size].width ) &&
+             (dd_modes[i].height       == real_xrandr_sizes[size].height) &&
+             (dd_modes[i].refresh_rate == rate                          ) )
           {
               res = i;
               break;
@@ -183,26 +182,26 @@ static LONG X11DRV_XRandR_SetCurrentMode(int mode)
     size = pXRRConfigCurrentConfiguration (sc, &rot);
     mode = mode%real_xrandr_modes_count;
 
-    TRACE("Changing Resolution to %dx%d @%d Hz\n", 
-	  dd_modes[mode].dwWidth, 
-	  dd_modes[mode].dwHeight, 
-	  dd_modes[mode].wRefreshRate);
+    TRACE("Changing Resolution to %dx%d @%d Hz\n",
+          dd_modes[mode].width,
+          dd_modes[mode].height,
+          dd_modes[mode].refresh_rate);
 
     for (i = 0; i < real_xrandr_sizes_count; i++)
     {
-        if ( (dd_modes[mode].dwWidth  == real_xrandr_sizes[i].width ) && 
-             (dd_modes[mode].dwHeight == real_xrandr_sizes[i].height) )
+        if ( (dd_modes[mode].width  == real_xrandr_sizes[i].width ) &&
+             (dd_modes[mode].height == real_xrandr_sizes[i].height) )
         {
             size = i;
             if (real_xrandr_rates_count[i])
             {
                 for (j=0; j < real_xrandr_rates_count[i]; j++)
                 {
-                    if (dd_modes[mode].wRefreshRate == real_xrandr_rates[i][j])
+                    if (dd_modes[mode].refresh_rate == real_xrandr_rates[i][j])
                     {
                         rate = real_xrandr_rates[i][j];
-                        TRACE("Resizing X display to %dx%d @%d Hz\n", 
-                              dd_modes[mode].dwWidth, dd_modes[mode].dwHeight, rate);
+                        TRACE("Resizing X display to %dx%d @%d Hz\n",
+                              dd_modes[mode].width, dd_modes[mode].height, rate);
                         stat = pXRRSetScreenConfigAndRate (gdi_display, sc, root, 
                                                           size, rot, rate, CurrentTime);
                         break;
@@ -211,8 +210,8 @@ static LONG X11DRV_XRandR_SetCurrentMode(int mode)
             }
             else
             {
-                TRACE("Resizing X display to %dx%d <default Hz>\n", 
-		      dd_modes[mode].dwWidth, dd_modes[mode].dwHeight);
+                TRACE("Resizing X display to %dx%d <default Hz>\n",
+                      dd_modes[mode].width, dd_modes[mode].height);
                 stat = pXRRSetScreenConfig (gdi_display, sc, root, size, rot, CurrentTime);
             }
             break;
@@ -222,7 +221,7 @@ static LONG X11DRV_XRandR_SetCurrentMode(int mode)
     wine_tsx11_unlock();
     if (stat == RRSetConfigSuccess)
     {
-        X11DRV_resize_desktop( dd_modes[mode].dwWidth, dd_modes[mode].dwHeight );
+        X11DRV_resize_desktop( dd_modes[mode].width, dd_modes[mode].height );
         return DISP_CHANGE_SUCCESSFUL;
     }
 

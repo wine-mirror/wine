@@ -56,7 +56,6 @@ typedef int Status;
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "ddrawi.h"
 #include "wine/gdi_driver.h"
 #include "wine/list.h"
 
@@ -643,17 +642,25 @@ extern int X11DRV_check_error(void) DECLSPEC_HIDDEN;
 extern void X11DRV_X_to_window_rect( struct x11drv_win_data *data, RECT *rect ) DECLSPEC_HIDDEN;
 extern void xinerama_init( unsigned int width, unsigned int height ) DECLSPEC_HIDDEN;
 
+struct x11drv_mode_info
+{
+    unsigned int width;
+    unsigned int height;
+    unsigned int bpp;
+    unsigned int refresh_rate;
+};
+
 extern void X11DRV_init_desktop( Window win, unsigned int width, unsigned int height ) DECLSPEC_HIDDEN;
 extern void X11DRV_resize_desktop(unsigned int width, unsigned int height) DECLSPEC_HIDDEN;
 extern void X11DRV_Settings_AddDepthModes(void) DECLSPEC_HIDDEN;
 extern void X11DRV_Settings_AddOneMode(unsigned int width, unsigned int height, unsigned int bpp, unsigned int freq) DECLSPEC_HIDDEN;
 unsigned int X11DRV_Settings_GetModeCount(void) DECLSPEC_HIDDEN;
 void X11DRV_Settings_Init(void) DECLSPEC_HIDDEN;
-LPDDHALMODEINFO X11DRV_Settings_SetHandlers(const char *name,
-                                            int (*pNewGCM)(void),
-                                            LONG (*pNewSCM)(int),
-                                            unsigned int nmodes,
-                                            int reserve_depths) DECLSPEC_HIDDEN;
+struct x11drv_mode_info *X11DRV_Settings_SetHandlers(const char *name,
+                                                     int (*pNewGCM)(void),
+                                                     LONG (*pNewSCM)(int),
+                                                     unsigned int nmodes,
+                                                     int reserve_depths) DECLSPEC_HIDDEN;
 
 /* XIM support */
 extern BOOL X11DRV_InitXIM( const char *input_style ) DECLSPEC_HIDDEN;

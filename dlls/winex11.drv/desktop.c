@@ -26,13 +26,12 @@
 
 /* avoid conflict with field names in included win32 headers */
 #undef Status
-#include "ddrawi.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 
 /* data for resolution changing */
-static LPDDHALMODEINFO dd_modes;
+static struct x11drv_mode_info *dd_modes;
 static unsigned int dd_mode_count;
 
 static unsigned int max_width;
@@ -76,9 +75,9 @@ static int X11DRV_desktop_GetCurrentMode(void)
     DWORD dwBpp = screen_bpp;
     for (i=0; i<dd_mode_count; i++)
     {
-        if ( (screen_width == dd_modes[i].dwWidth) &&
-             (screen_height == dd_modes[i].dwHeight) && 
-             (dwBpp == dd_modes[i].dwBPP))
+        if ( (screen_width == dd_modes[i].width) &&
+             (screen_height == dd_modes[i].height) &&
+             (dwBpp == dd_modes[i].bpp))
             return i;
     }
     ERR("In unknown mode, returning default\n");
@@ -88,17 +87,17 @@ static int X11DRV_desktop_GetCurrentMode(void)
 static LONG X11DRV_desktop_SetCurrentMode(int mode)
 {
     DWORD dwBpp = screen_bpp;
-    if (dwBpp != dd_modes[mode].dwBPP)
+    if (dwBpp != dd_modes[mode].bpp)
     {
-        FIXME("Cannot change screen BPP from %d to %d\n", dwBpp, dd_modes[mode].dwBPP);
+        FIXME("Cannot change screen BPP from %d to %d\n", dwBpp, dd_modes[mode].bpp);
         /* Ignore the depth mismatch
          *
          * Some (older) applications require a specific bit depth, this will allow them
          * to run. X11drv performs a color depth conversion if needed.
          */
     }
-    TRACE("Resizing Wine desktop window to %dx%d\n", dd_modes[mode].dwWidth, dd_modes[mode].dwHeight);
-    X11DRV_resize_desktop(dd_modes[mode].dwWidth, dd_modes[mode].dwHeight);
+    TRACE("Resizing Wine desktop window to %dx%d\n", dd_modes[mode].width, dd_modes[mode].height);
+    X11DRV_resize_desktop(dd_modes[mode].width, dd_modes[mode].height);
     return DISP_CHANGE_SUCCESSFUL;
 }
 

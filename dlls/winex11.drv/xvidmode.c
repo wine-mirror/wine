@@ -55,7 +55,7 @@ static int xf86vm_gammaramp_size;
 static BOOL xf86vm_use_gammaramp;
 #endif /* X_XF86VidModeSetGammaRamp */
 
-static LPDDHALMODEINFO dd_modes;
+static struct x11drv_mode_info *dd_modes;
 static unsigned int dd_mode_count;
 static XF86VidModeModeInfo** real_xf86vm_modes;
 static unsigned int real_xf86vm_mode_count;
@@ -90,23 +90,18 @@ static void convert_modeinfo( const XF86VidModeModeInfo *mode)
   X11DRV_Settings_AddOneMode(mode->hdisplay, mode->vdisplay, 0, rate);
 }
 
-static void convert_modeline(int dotclock, const XF86VidModeModeLine *mode, LPDDHALMODEINFO info, unsigned int bpp)
+static void convert_modeline(int dotclock, const XF86VidModeModeLine *mode,
+                             struct x11drv_mode_info *info, unsigned int bpp)
 {
-  info->dwWidth      = mode->hdisplay;
-  info->dwHeight     = mode->vdisplay;
+  info->width   = mode->hdisplay;
+  info->height  = mode->vdisplay;
   if (mode->htotal!=0 && mode->vtotal!=0)
-      info->wRefreshRate = dotclock * 1000 / (mode->htotal * mode->vtotal);
+      info->refresh_rate = dotclock * 1000 / (mode->htotal * mode->vtotal);
   else
-      info->wRefreshRate = 0;
+      info->refresh_rate = 0;
   TRACE(" width=%d, height=%d, refresh=%d\n",
-        info->dwWidth, info->dwHeight, info->wRefreshRate);
-  info->lPitch         = 0;
-  info->dwBPP          = bpp;
-  info->wFlags         = 0;
-  info->dwRBitMask     = 0;
-  info->dwGBitMask     = 0;
-  info->dwBBitMask     = 0;
-  info->dwAlphaBitMask = 0;
+        info->width, info->height, info->refresh_rate);
+  info->bpp     = bpp;
 }
 
 static int XVidModeErrorHandler(Display *dpy, XErrorEvent *event, void *arg)
@@ -119,7 +114,7 @@ static int X11DRV_XF86VM_GetCurrentMode(void)
   XF86VidModeModeLine line;
   int dotclock;
   unsigned int i;
-  DDHALMODEINFO cmode;
+  struct x11drv_mode_info cmode;
   DWORD dwBpp = screen_bpp;
 
   TRACE("Querying XVidMode current mode\n");
@@ -140,9 +135,9 @@ static LONG X11DRV_XF86VM_SetCurrentMode(int mode)
 {
   DWORD dwBpp = screen_bpp;
   /* only set modes from the original color depth */
-  if (dwBpp != dd_modes[mode].dwBPP)
+  if (dwBpp != dd_modes[mode].bpp)
   {
-      FIXME("Cannot change screen BPP from %d to %d\n", dwBpp, dd_modes[mode].dwBPP);
+      FIXME("Cannot change screen BPP from %d to %d\n", dwBpp, dd_modes[mode].bpp);
   }
   mode = mode % real_xf86vm_mode_count;
 
@@ -240,7 +235,7 @@ void X11DRV_XF86VM_Init(void)
                                          X11DRV_XF86VM_SetCurrentMode, 
                                          nmodes, 1);
 
-  /* convert modes to DDHALMODEINFO format */
+  /* convert modes to x11drv_mode_info format */
   for (i=0; i<real_xf86vm_mode_count; i++)
   {
       convert_modeinfo(real_xf86vm_modes[i]);
