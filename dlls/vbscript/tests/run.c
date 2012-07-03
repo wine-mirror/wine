@@ -63,6 +63,8 @@ DEFINE_EXPECT(testobj_propput_d);
 DEFINE_EXPECT(testobj_propput_i);
 DEFINE_EXPECT(global_propargput_d);
 DEFINE_EXPECT(global_propargput_i);
+DEFINE_EXPECT(global_propargput1_d);
+DEFINE_EXPECT(global_propargput1_i);
 
 #define DISPID_GLOBAL_REPORTSUCCESS 1000
 #define DISPID_GLOBAL_TRACE         1001
@@ -74,8 +76,9 @@ DEFINE_EXPECT(global_propargput_i);
 #define DISPID_GLOBAL_ISNULLDISP    1007
 #define DISPID_GLOBAL_TESTDISP      1008
 #define DISPID_GLOBAL_REFOBJ        1009
-#define DISPID_GLOBAL_PROPARGPUT    1010
-#define DISPID_GLOBAL_COUNTER       1011
+#define DISPID_GLOBAL_COUNTER       1010
+#define DISPID_GLOBAL_PROPARGPUT    1011
+#define DISPID_GLOBAL_PROPARGPUT1   1012
 
 #define DISPID_TESTOBJ_PROPGET      2000
 #define DISPID_TESTOBJ_PROPPUT      2001
@@ -609,6 +612,12 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
         *pid = DISPID_GLOBAL_PROPARGPUT;
         return S_OK;
     }
+    if(!strcmp_wa(bstrName, "propargput1")) {
+        CHECK_EXPECT(global_propargput1_d);
+        test_grfdex(grfdex, fdexNameCaseInsensitive);
+        *pid = DISPID_GLOBAL_PROPARGPUT1;
+        return S_OK;
+    }
     if(!strcmp_wa(bstrName, "counter")) {
         test_grfdex(grfdex, fdexNameCaseInsensitive);
         *pid = DISPID_GLOBAL_COUNTER;
@@ -817,6 +826,27 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
 
         ok(V_VT(pdp->rgvarg+2) == VT_I2, "V_VT(psp->rgvargs+2) = %d\n", V_VT(pdp->rgvarg+2));
         ok(V_I2(pdp->rgvarg+2) == 1, "V_I2(psp->rgvargs+2) = %d\n", V_I2(pdp->rgvarg+2));
+        return S_OK;
+
+    case DISPID_GLOBAL_PROPARGPUT1:
+        CHECK_EXPECT(global_propargput1_i);
+
+        ok(wFlags == DISPATCH_PROPERTYPUT, "wFlags = %x\n", wFlags);
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(pdp->rgvarg != NULL, "rgvarg == NULL\n");
+        ok(pdp->rgdispidNamedArgs != NULL, "rgdispidNamedArgs == NULL\n");
+        ok(pdp->cArgs == 2, "cArgs = %d\n", pdp->cArgs);
+        ok(pdp->cNamedArgs == 1, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pdp->rgdispidNamedArgs[0] == DISPID_PROPERTYPUT, "pdp->rgdispidNamedArgs[0] = %d\n", pdp->rgdispidNamedArgs[0]);
+        ok(!pvarRes, "pvarRes != NULL\n");
+        ok(pei != NULL, "pei == NULL\n");
+
+        ok(V_VT(pdp->rgvarg) == VT_I2, "V_VT(psp->rgvargs) = %d\n", V_VT(pdp->rgvarg));
+        ok(V_I2(pdp->rgvarg) == 0, "V_I2(psp->rgvargs) = %d\n", V_I2(pdp->rgvarg));
+
+        ok(V_VT(pdp->rgvarg+1) == VT_I2, "V_VT(psp->rgvargs+1) = %d\n", V_VT(pdp->rgvarg+1));
+        ok(V_I2(pdp->rgvarg+1) == 1, "V_I2(psp->rgvargs+1) = %d\n", V_I2(pdp->rgvarg+1));
+
         return S_OK;
 
     case DISPID_GLOBAL_COUNTER:
@@ -1293,6 +1323,18 @@ static void run_tests(void)
     parse_script_a("test.propargput(counter(), counter()) = counter()");
     CHECK_CALLED(global_propargput_d);
     CHECK_CALLED(global_propargput_i);
+
+    SET_EXPECT(global_propargput1_d);
+    SET_EXPECT(global_propargput1_i);
+    parse_script_a("propargput1 (counter()) = counter()");
+    CHECK_CALLED(global_propargput1_d);
+    CHECK_CALLED(global_propargput1_i);
+
+    SET_EXPECT(global_propargput1_d);
+    SET_EXPECT(global_propargput1_i);
+    parse_script_a("test.propargput1(counter()) = counter()");
+    CHECK_CALLED(global_propargput1_d);
+    CHECK_CALLED(global_propargput1_i);
 
     parse_script_a("x = 1\n Call ok(x = 1, \"x = \" & x)");
 
