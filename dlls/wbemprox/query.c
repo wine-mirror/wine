@@ -63,7 +63,7 @@ static UINT get_column_size( const struct table *table, UINT column )
     case CIM_STRING:
         return sizeof(WCHAR *);
     default:
-        ERR("unkown column type %u\n", table->columns[column].type & COL_TYPE_MASK);
+        ERR("unknown column type %u\n", table->columns[column].type & COL_TYPE_MASK);
         break;
     }
     return sizeof(INT32);

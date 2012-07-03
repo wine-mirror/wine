@@ -5530,7 +5530,7 @@ num_get* num_get_char_use_facet(const locale *loc)
 /* Copies number to dest buffer, validates grouping and skips separators.
  * Updates first so it points past the number, all digits are skipped.
  * Returns how exponent needs to changed.
- * Size of dest buffer is not specified, assuming it's not smaller then 32:
+ * Size of dest buffer is not specified, assuming it's not smaller than 32:
  * strlen(+0.e+) + 22(digits) + 4(expontent) + 1(nullbyte)
  */
 int __cdecl num_get_char__Getffld(const num_get *this, char *dest, istreambuf_iterator_char *first,
@@ -5685,7 +5685,7 @@ int __cdecl num_get_char__Getffldx(const num_get *this, char *dest, istreambuf_i
 /* Copies number to dest buffer, validates grouping and skips separators.
  * Updates first so it points past the number, all digits are skipped.
  * Returns number base (8, 10 or 16).
- * Size of dest buffer is not specified, assuming it's not smaller then 25:
+ * Size of dest buffer is not specified, assuming it's not smaller than 25:
  * 22(8^22>2^64)+1(detect overflows)+1(sign)+1(nullbyte) = 25
  */
 int __cdecl num_get_char__Getifld(const num_get *this, char *dest, istreambuf_iterator_char *first,

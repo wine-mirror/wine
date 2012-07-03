@@ -605,7 +605,7 @@ HRESULT _build_action_map(LPDIRECTINPUTDEVICE8W iface, LPDIACTIONFORMATW lpdiaf,
 
     for (i=0; i < lpdiaf->dwNumActions; i++)
     {
-        /* Don't touch an user configured action */
+        /* Don't touch a user configured action */
         if (lpdiaf->rgoAction[i].dwHow == DIAH_USERCONFIG) continue;
 
         if ((lpdiaf->rgoAction[i].dwSemantic & devMask) == devMask)
@@ -619,7 +619,7 @@ HRESULT _build_action_map(LPDIRECTINPUTDEVICE8W iface, LPDIACTIONFORMATW lpdiaf,
             if (type == DIDFT_PSHBUTTON) type = DIDFT_BUTTON;
             if (type == DIDFT_RELAXIS) type = DIDFT_AXIS;
 
-            /* Assure that the object exists */
+            /* Make sure the object exists */
             odf = dataformat_to_odf_by_type(df, inst, type);
 
             if (odf != NULL)
@@ -632,7 +632,7 @@ HRESULT _build_action_map(LPDIRECTINPUTDEVICE8W iface, LPDIACTIONFORMATW lpdiaf,
         }
         else if (!(dwFlags & DIDBAM_PRESERVE))
         {
-            /* we must clear action data belonging to other devices */
+            /* We must clear action data belonging to other devices */
             memset(&lpdiaf->rgoAction[i].guidInstance, 0, sizeof(GUID));
             lpdiaf->rgoAction[i].dwHow = DIAH_UNMAPPED;
         }

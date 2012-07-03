@@ -5605,7 +5605,7 @@ static struct WS_hostent *WS_create_he(char *name, int aliases, int aliases_size
     memset(p_to, 0, size);
 
     /* Use the memory in the same way winsock does.
-     * First set the pointer for aliases, second set the pointers for addressess.
+     * First set the pointer for aliases, second set the pointers for addresses.
      * Third fill the addresses indexes, fourth jump aliases names size.
      * Fifth fill the hostname.
      * NOTE: This method is valid for OS version's >= XP.

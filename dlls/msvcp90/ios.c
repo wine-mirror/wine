@@ -2494,7 +2494,7 @@ int __thiscall basic_filebuf_char_uflow(basic_filebuf_char *this)
         }
     }
 
-    FIXME("buffer is to small\n");
+    FIXME("buffer is too small\n");
     return EOF;
 }
 

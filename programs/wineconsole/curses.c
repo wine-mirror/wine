@@ -670,7 +670,7 @@ static unsigned WCCURSES_FillMouse(INPUT_RECORD* ir)
     WINE_TRACE("[%u]: (%d, %d) %08lx\n", 
                mevt.id, mevt.x, mevt.y, (unsigned long)mevt.bstate);
 
-    /* macros to ease mapping ncurse button numbering to windows' one */
+    /* macros to ease mapping ncurses button numbering to windows' one */
 #define	BTN1_BIT	FROM_LEFT_1ST_BUTTON_PRESSED
 #define	BTN2_BIT	RIGHTMOST_BUTTON_PRESSED
 #define	BTN3_BIT	FROM_LEFT_2ND_BUTTON_PRESSED
