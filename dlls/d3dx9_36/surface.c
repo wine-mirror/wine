@@ -317,8 +317,8 @@ static HRESULT calculate_dds_surface_size(const D3DXIMAGE_INFO *img_info,
 static HRESULT get_image_info_from_dds(const void *buffer, UINT length, D3DXIMAGE_INFO *info)
 {
    UINT i;
-   UINT faces = 0;
-   UINT width, height;
+   UINT faces = 1;
+   UINT width, height, depth;
    const struct dds_header *header = buffer;
    UINT expected_length = 0;
 
@@ -347,6 +347,7 @@ static HRESULT get_image_info_from_dds(const void *buffer, UINT length, D3DXIMAG
    else if (header->caps2 & DDS_CAPS2_CUBEMAP)
    {
        DWORD face;
+       faces = 0;
        for (face = DDS_CAPS2_CUBEMAP_POSITIVEX; face <= DDS_CAPS2_CUBEMAP_NEGATIVEZ; face <<= 1)
        {
            if (header->caps2 & face)
@@ -356,20 +357,22 @@ static HRESULT get_image_info_from_dds(const void *buffer, UINT length, D3DXIMAG
    }
    else
    {
-       faces = 1;
        info->ResourceType = D3DRTYPE_TEXTURE;
    }
 
    /* calculate the expected length */
    width = info->Width;
    height = info->Height;
+   depth = info->Depth;
    for (i = 0; i < info->MipLevels; i++)
    {
        UINT pitch, size = 0;
        calculate_dds_surface_size(info, width, height, &pitch, &size);
+       size *= depth;
        expected_length += size;
        width = max(1, width / 2);
        height = max(1, height / 2);
+       depth = max(1, depth / 2);
    }
 
    expected_length *= faces;
