@@ -27,6 +27,15 @@
 WINE_DEFAULT_DEBUG_CHANNEL(vbscript);
 WINE_DECLARE_DEBUG_CHANNEL(vbscript_disas);
 
+typedef struct _statement_ctx_t {
+    unsigned stack_use;
+
+    unsigned while_end_label;
+    unsigned for_end_label;
+
+    struct _statement_ctx_t *next;
+} statement_ctx_t;
+
 typedef struct {
     parser_ctx_t parser;
 
@@ -34,12 +43,12 @@ typedef struct {
     unsigned instr_size;
     vbscode_t *code;
 
+    statement_ctx_t *stat_ctx;
+
     unsigned *labels;
     unsigned labels_size;
     unsigned labels_cnt;
 
-    unsigned while_end_label;
-    unsigned for_end_label;
     unsigned sub_end_label;
     unsigned func_end_label;
     unsigned prop_end_label;
@@ -58,7 +67,7 @@ typedef struct {
 } compile_ctx_t;
 
 static HRESULT compile_expression(compile_ctx_t*,expression_t*);
-static HRESULT compile_statement(compile_ctx_t*,statement_t*);
+static HRESULT compile_statement(compile_ctx_t*,statement_ctx_t*,statement_t*);
 
 static const struct {
     const char *op_str;
@@ -524,7 +533,7 @@ static HRESULT compile_if_statement(compile_ctx_t *ctx, if_statement_t *stat)
     if(!cnd_jmp)
         return E_OUTOFMEMORY;
 
-    hres = compile_statement(ctx, stat->if_stat);
+    hres = compile_statement(ctx, NULL, stat->if_stat);
     if(FAILED(hres))
         return hres;
 
@@ -549,7 +558,7 @@ static HRESULT compile_if_statement(compile_ctx_t *ctx, if_statement_t *stat)
         if(!cnd_jmp)
             return E_OUTOFMEMORY;
 
-        hres = compile_statement(ctx, elseif_decl->stat);
+        hres = compile_statement(ctx, NULL, elseif_decl->stat);
         if(FAILED(hres))
             return hres;
 
@@ -561,7 +570,7 @@ static HRESULT compile_if_statement(compile_ctx_t *ctx, if_statement_t *stat)
     instr_ptr(ctx, cnd_jmp)->arg1.uint = ctx->instr_cnt;
 
     if(stat->else_stat) {
-        hres = compile_statement(ctx, stat->else_stat);
+        hres = compile_statement(ctx, NULL, stat->else_stat);
         if(FAILED(hres))
             return hres;
     }
@@ -573,7 +582,8 @@ static HRESULT compile_if_statement(compile_ctx_t *ctx, if_statement_t *stat)
 
 static HRESULT compile_while_statement(compile_ctx_t *ctx, while_statement_t *stat)
 {
-    unsigned start_addr, prev_label;
+    statement_ctx_t stat_ctx = {0}, *loop_ctx;
+    unsigned start_addr;
     unsigned jmp_end;
     HRESULT hres;
 
@@ -587,11 +597,15 @@ static HRESULT compile_while_statement(compile_ctx_t *ctx, while_statement_t *st
     if(!jmp_end)
         return E_OUTOFMEMORY;
 
-    prev_label = ctx->while_end_label;
-    if(stat->stat.type != STAT_WHILE && !(ctx->while_end_label = alloc_label(ctx)))
-        return E_OUTOFMEMORY;
+    if(stat->stat.type == STAT_WHILE) {
+        loop_ctx = NULL;
+    }else {
+        if(!(stat_ctx.while_end_label = alloc_label(ctx)))
+            return E_OUTOFMEMORY;
+        loop_ctx = &stat_ctx;
+    }
 
-    hres = compile_statement(ctx, stat->body);
+    hres = compile_statement(ctx, loop_ctx, stat->body);
     if(FAILED(hres))
         return hres;
 
@@ -601,26 +615,24 @@ static HRESULT compile_while_statement(compile_ctx_t *ctx, while_statement_t *st
 
     instr_ptr(ctx, jmp_end)->arg1.uint = ctx->instr_cnt;
 
-    if(stat->stat.type != STAT_WHILE) {
-        label_set_addr(ctx, ctx->while_end_label);
-        ctx->while_end_label = prev_label;
-    }
+    if(loop_ctx)
+        label_set_addr(ctx, stat_ctx.while_end_label);
 
     return S_OK;
 }
 
 static HRESULT compile_dowhile_statement(compile_ctx_t *ctx, while_statement_t *stat)
 {
-    unsigned start_addr, prev_label;
+    statement_ctx_t loop_ctx = {0};
+    unsigned start_addr;
     HRESULT hres;
 
     start_addr = ctx->instr_cnt;
 
-    prev_label = ctx->while_end_label;
-    if(!(ctx->while_end_label = alloc_label(ctx)))
+    if(!(loop_ctx.while_end_label = alloc_label(ctx)))
         return E_OUTOFMEMORY;
 
-    hres = compile_statement(ctx, stat->body);
+    hres = compile_statement(ctx, &loop_ctx, stat->body);
     if(FAILED(hres))
         return hres;
 
@@ -632,8 +644,7 @@ static HRESULT compile_dowhile_statement(compile_ctx_t *ctx, while_statement_t *
     if(FAILED(hres))
         return hres;
 
-    label_set_addr(ctx, ctx->while_end_label);
-    ctx->while_end_label = prev_label;
+    label_set_addr(ctx, loop_ctx.while_end_label);
     return S_OK;
 }
 
@@ -657,7 +668,7 @@ static HRESULT compile_foreach_statement(compile_ctx_t *ctx, foreach_statement_t
     if(FAILED(hres))
         return hres;
 
-    hres = compile_statement(ctx, stat->body);
+    hres = compile_statement(ctx, NULL, stat->body);
     if(FAILED(hres))
         return hres;
 
@@ -671,7 +682,8 @@ static HRESULT compile_foreach_statement(compile_ctx_t *ctx, foreach_statement_t
 
 static HRESULT compile_forto_statement(compile_ctx_t *ctx, forto_statement_t *stat)
 {
-    unsigned step_instr, instr, prev_label;
+    statement_ctx_t loop_ctx = {0};
+    unsigned step_instr, instr;
     BSTR identifier;
     HRESULT hres;
 
@@ -708,18 +720,17 @@ static HRESULT compile_forto_statement(compile_ctx_t *ctx, forto_statement_t *st
             return hres;
     }
 
-    prev_label = ctx->for_end_label;
-    ctx->for_end_label = alloc_label(ctx);
-    if(!ctx->for_end_label)
+    loop_ctx.for_end_label = alloc_label(ctx);
+    if(!loop_ctx.for_end_label)
         return E_OUTOFMEMORY;
 
     step_instr = push_instr(ctx, OP_step);
     if(!step_instr)
         return E_OUTOFMEMORY;
     instr_ptr(ctx, step_instr)->arg2.bstr = identifier;
-    instr_ptr(ctx, step_instr)->arg1.uint = ctx->for_end_label;
+    instr_ptr(ctx, step_instr)->arg1.uint = loop_ctx.for_end_label;
 
-    hres = compile_statement(ctx, stat->body);
+    hres = compile_statement(ctx, &loop_ctx, stat->body);
     if(FAILED(hres))
         return hres;
 
@@ -732,8 +743,7 @@ static HRESULT compile_forto_statement(compile_ctx_t *ctx, forto_statement_t *st
     if(FAILED(hres))
         return hres;
 
-    label_set_addr(ctx, ctx->for_end_label);
-    ctx->for_end_label = prev_label;
+    label_set_addr(ctx, loop_ctx.for_end_label);
 
     return push_instr_uint(ctx, OP_pop, 2);
 }
@@ -883,22 +893,54 @@ static HRESULT compile_function_statement(compile_ctx_t *ctx, function_statement
 
 static HRESULT compile_exitdo_statement(compile_ctx_t *ctx)
 {
-    if(!ctx->while_end_label) {
+    statement_ctx_t *iter;
+    unsigned pop_cnt = 0;
+
+    for(iter = ctx->stat_ctx; iter; iter = iter->next) {
+        pop_cnt += iter->stack_use;
+        if(iter->while_end_label)
+            break;
+    }
+    if(!iter) {
         FIXME("Exit Do outside Do Loop\n");
         return E_FAIL;
     }
 
-    return push_instr_addr(ctx, OP_jmp, ctx->while_end_label);
+    if(pop_cnt) {
+        HRESULT hres;
+
+        hres = push_instr_uint(ctx, OP_pop, pop_cnt);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    return push_instr_addr(ctx, OP_jmp, iter->while_end_label);
 }
 
 static HRESULT compile_exitfor_statement(compile_ctx_t *ctx)
 {
-    if(!ctx->for_end_label) {
-        FIXME("Exit For outside For Loop\n");
+    statement_ctx_t *iter;
+    unsigned pop_cnt = 0;
+
+    for(iter = ctx->stat_ctx; iter; iter = iter->next) {
+        pop_cnt += iter->stack_use;
+        if(iter->for_end_label)
+            break;
+    }
+    if(!iter) {
+        FIXME("Exit For outside For loop\n");
         return E_FAIL;
     }
 
-    return push_instr_addr(ctx, OP_jmp, ctx->for_end_label);
+    if(pop_cnt) {
+        HRESULT hres;
+
+        hres = push_instr_uint(ctx, OP_pop, pop_cnt);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    return push_instr_addr(ctx, OP_jmp, iter->for_end_label);
 }
 
 static HRESULT compile_exitsub_statement(compile_ctx_t *ctx)
@@ -936,9 +978,14 @@ static HRESULT compile_onerror_statement(compile_ctx_t *ctx, onerror_statement_t
     return push_instr_int(ctx, OP_errmode, stat->resume_next);
 }
 
-static HRESULT compile_statement(compile_ctx_t *ctx, statement_t *stat)
+static HRESULT compile_statement(compile_ctx_t *ctx, statement_ctx_t *stat_ctx, statement_t *stat)
 {
     HRESULT hres;
+
+    if(stat_ctx) {
+        stat_ctx->next = ctx->stat_ctx;
+        ctx->stat_ctx = stat_ctx;
+    }
 
     while(stat) {
         switch(stat->type) {
@@ -1009,6 +1056,11 @@ static HRESULT compile_statement(compile_ctx_t *ctx, statement_t *stat)
         stat = stat->next;
     }
 
+    if(stat_ctx) {
+        assert(ctx->stat_ctx == stat_ctx);
+        ctx->stat_ctx = stat_ctx->next;
+    }
+
     return S_OK;
 }
 
@@ -1033,8 +1085,6 @@ static HRESULT compile_func(compile_ctx_t *ctx, statement_t *stat, function_t *f
 
     func->code_off = ctx->instr_cnt;
 
-    ctx->while_end_label = 0;
-    ctx->for_end_label = 0;
     ctx->sub_end_label = 0;
     ctx->func_end_label = 0;
     ctx->prop_end_label = 0;
@@ -1065,13 +1115,10 @@ static HRESULT compile_func(compile_ctx_t *ctx, statement_t *stat, function_t *f
     ctx->func = func;
     ctx->dim_decls = NULL;
     ctx->const_decls = NULL;
-    hres = compile_statement(ctx, stat);
+    hres = compile_statement(ctx, NULL, stat);
     ctx->func = NULL;
     if(FAILED(hres))
         return hres;
-
-    assert(!ctx->while_end_label);
-    assert(!ctx->for_end_label);
 
     if(ctx->sub_end_label)
         label_set_addr(ctx, ctx->sub_end_label);
@@ -1500,6 +1547,7 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, vbscode_t **ret)
     ctx.classes = NULL;
     ctx.labels = NULL;
     ctx.global_consts = NULL;
+    ctx.stat_ctx = NULL;
     ctx.labels_cnt = ctx.labels_size = 0;
 
     hres = compile_func(&ctx, ctx.parser.stats, &ctx.code->global_code);
