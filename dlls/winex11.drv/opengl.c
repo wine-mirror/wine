@@ -44,6 +44,7 @@
 #endif
 #undef APIENTRY
 #undef GLAPI
+#undef WINGDIAPI
 
 #include "x11drv.h"
 #include "winternl.h"
