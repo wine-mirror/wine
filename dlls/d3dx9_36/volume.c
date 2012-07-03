@@ -21,6 +21,65 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
+HRESULT WINAPI D3DXLoadVolumeFromFileA(IDirect3DVolume9 *dst_volume,
+                                       const PALETTEENTRY *dst_palette,
+                                       const D3DBOX *dst_box,
+                                       const char *filename,
+                                       const D3DBOX *src_box,
+                                       DWORD filter,
+                                       D3DCOLOR color_key,
+                                       D3DXIMAGE_INFO *info)
+{
+    HRESULT hr;
+    int length;
+    WCHAR *filenameW;
+
+    TRACE("(%p, %p, %p, %s, %p, %#x, %#x, %p)\n",
+            dst_volume, dst_palette, dst_box, debugstr_a(filename), src_box,
+            filter, color_key, info);
+
+    if (!dst_volume || !filename) return D3DERR_INVALIDCALL;
+
+    length = MultiByteToWideChar(CP_ACP, 0, filename, -1, NULL, 0);
+    filenameW = HeapAlloc(GetProcessHeap(), 0, length * sizeof(*filenameW));
+    if (!filenameW) return E_OUTOFMEMORY;
+
+    hr = D3DXLoadVolumeFromFileW(dst_volume, dst_palette, dst_box, filenameW,
+            src_box, filter, color_key, info);
+    HeapFree(GetProcessHeap(), 0, filenameW);
+
+    return hr;
+}
+
+HRESULT WINAPI D3DXLoadVolumeFromFileW(IDirect3DVolume9 *dst_volume,
+                                       const PALETTEENTRY *dst_palette,
+                                       const D3DBOX *dst_box,
+                                       const WCHAR *filename,
+                                       const D3DBOX *src_box,
+                                       DWORD filter,
+                                       D3DCOLOR color_key,
+                                       D3DXIMAGE_INFO *info)
+{
+    HRESULT hr;
+    void *data;
+    UINT data_size;
+
+    TRACE("(%p, %p, %p, %s, %p, %#x, %#x, %p)\n",
+            dst_volume, dst_palette, dst_box, debugstr_w(filename), src_box,
+            filter, color_key, info);
+
+    if (!dst_volume || !filename) return D3DERR_INVALIDCALL;
+
+    if (FAILED(map_view_of_file(filename, &data, &data_size)))
+        return D3DXERR_INVALIDDATA;
+
+    hr = D3DXLoadVolumeFromFileInMemory(dst_volume, dst_palette, dst_box,
+            data, data_size, src_box, filter, color_key, info);
+    UnmapViewOfFile(data);
+
+    return hr;
+}
+
 HRESULT WINAPI D3DXLoadVolumeFromMemory(IDirect3DVolume9 *dst_volume,
                                         const PALETTEENTRY *dst_palette,
                                         const D3DBOX *dst_box,
