@@ -2458,7 +2458,7 @@ static void test_D3DXSHScale(void)
     for (order = 0; order < 10; order++)
     {
         received_array = D3DXSHScale(b, order, a, 5.0f);
-        ok(received_array == b, "Expected %p, received %p", b, received_array);
+        ok(received_array == b, "Expected %p, received %p\n", b, received_array);
 
         for (i = 0; i < 100; i++)
         {
@@ -2467,7 +2467,7 @@ static void test_D3DXSHScale(void)
             /* D3DXSHScale does not modify the elements of the array after the order * order-th element */
             else
                 expected = a[i];
-            ok(relative_error(b[i], expected) < admitted_error, "order %d, element %d, expected %f, received %f", order, i, expected, b[i]);
+            ok(relative_error(b[i], expected) < admitted_error, "order %d, element %d, expected %f, received %f\n", order, i, expected, b[i]);
         }
     }
 }
