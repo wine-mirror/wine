@@ -2389,10 +2389,37 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_GetMatrixArray(ID3DXBaseEffect *iface,
 static HRESULT WINAPI ID3DXBaseEffectImpl_SetMatrixPointerArray(ID3DXBaseEffect *iface, D3DXHANDLE parameter, CONST D3DXMATRIX **matrix, UINT count)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
+    struct d3dx_parameter *param = get_valid_parameter(This, parameter);
 
-    FIXME("iface %p, parameter %p, matrix %p, count %u stub\n", This, parameter, matrix, count);
+    TRACE("iface %p, parameter %p, matrix %p, count %u\n", This, parameter, matrix, count);
 
-    return E_NOTIMPL;
+    if (param && count <= param->element_count)
+    {
+        UINT i;
+
+        switch (param->class)
+        {
+            case D3DXPC_MATRIX_ROWS:
+                for (i = 0; i < count; ++i)
+                {
+                    set_matrix(get_parameter_struct(param->member_handles[i]), matrix[i]);
+                }
+                return D3D_OK;
+
+            case D3DXPC_SCALAR:
+            case D3DXPC_VECTOR:
+            case D3DXPC_OBJECT:
+                break;
+
+            default:
+                FIXME("Unhandled class %s\n", debug_d3dxparameter_class(param->class));
+                break;
+        }
+    }
+
+    WARN("Invalid argument specified\n");
+
+    return D3DERR_INVALIDCALL;
 }
 
 static HRESULT WINAPI ID3DXBaseEffectImpl_GetMatrixPointerArray(ID3DXBaseEffect *iface, D3DXHANDLE parameter, D3DXMATRIX **matrix, UINT count)
