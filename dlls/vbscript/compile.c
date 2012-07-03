@@ -290,6 +290,24 @@ static HRESULT push_instr_bstr_uint(compile_ctx_t *ctx, vbsop_t op, const WCHAR 
     return S_OK;
 }
 
+static HRESULT push_instr_uint_bstr(compile_ctx_t *ctx, vbsop_t op, unsigned arg1, const WCHAR *arg2)
+{
+    unsigned instr;
+    BSTR bstr;
+
+    bstr = alloc_bstr_arg(ctx, arg2);
+    if(!bstr)
+        return E_OUTOFMEMORY;
+
+    instr = push_instr(ctx, op);
+    if(!instr)
+        return E_OUTOFMEMORY;
+
+    instr_ptr(ctx, instr)->arg1.uint = arg1;
+    instr_ptr(ctx, instr)->arg2.bstr = bstr;
+    return S_OK;
+}
+
 #define LABEL_FLAG 0x80000000
 
 static unsigned alloc_label(compile_ctx_t *ctx)
@@ -621,8 +639,34 @@ static HRESULT compile_dowhile_statement(compile_ctx_t *ctx, while_statement_t *
 
 static HRESULT compile_foreach_statement(compile_ctx_t *ctx, foreach_statement_t *stat)
 {
-    FIXME("for each loop not implemented\n");
-    return E_NOTIMPL;
+    unsigned loop_start, loop_end;
+    HRESULT hres;
+
+    hres = compile_expression(ctx, stat->group_expr);
+    if(FAILED(hres))
+        return hres;
+
+    if(!push_instr(ctx, OP_newenum))
+        return E_OUTOFMEMORY;
+
+    loop_start = ctx->instr_cnt;
+    if(!(loop_end = alloc_label(ctx)))
+        return E_OUTOFMEMORY;
+
+    hres = push_instr_uint_bstr(ctx, OP_enumnext, loop_end, stat->identifier);
+    if(FAILED(hres))
+        return hres;
+
+    hres = compile_statement(ctx, stat->body);
+    if(FAILED(hres))
+        return hres;
+
+    hres = push_instr_addr(ctx, OP_jmp, loop_start);
+    if(FAILED(hres))
+        return hres;
+
+    label_set_addr(ctx, loop_end);
+    return S_OK;
 }
 
 static HRESULT compile_forto_statement(compile_ctx_t *ctx, forto_statement_t *stat)
