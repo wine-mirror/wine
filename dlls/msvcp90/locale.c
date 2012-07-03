@@ -8175,6 +8175,22 @@ const locale* __cdecl locale_classic(void)
     return &classic_locale;
 }
 
+/* ?empty@locale@std@@SA?AV12@XZ */
+locale* __cdecl locale_empty(locale *ret)
+{
+    TRACE("\n");
+
+    locale__Init();
+
+    ret->ptr = MSVCRT_operator_new(sizeof(locale__Locimp));
+    if(!ret->ptr) {
+        ERR("Out of memory\n");
+        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+    }
+    locale__Locimp_ctor_transparent(ret->ptr, TRUE);
+    return ret;
+}
+
 /* ?name@locale@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
 /* ?name@locale@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
 DEFINE_THISCALL_WRAPPER(locale_name, 8)

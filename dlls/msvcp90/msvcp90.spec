@@ -3704,7 +3704,7 @@
 @ cdecl -arch=win64 ?empty@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEBA_NXZ(ptr) MSVCP_basic_string_wchar_empty
 @ thiscall -arch=win32 ?empty@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBE_NXZ(ptr) MSVCP_basic_string_wchar_empty
 @ cdecl -arch=win64 ?empty@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_NXZ(ptr) MSVCP_basic_string_wchar_empty
-@ stub ?empty@locale@std@@SA?AV12@XZ
+@ cdecl ?empty@locale@std@@SA?AV12@XZ(ptr) locale_empty
 @ thiscall -arch=win32 ?encoding@codecvt_base@std@@QBEHXZ(ptr) codecvt_base_encoding
 @ cdecl -arch=win64 ?encoding@codecvt_base@std@@QEBAHXZ(ptr) codecvt_base_encoding
 @ thiscall -arch=win32 ?end@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE?AV?$_String_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ(ptr ptr) MSVCP_basic_string_char_end
