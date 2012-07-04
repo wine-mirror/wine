@@ -2513,7 +2513,7 @@ int __thiscall basic_filebuf_char_underflow(basic_filebuf_char *this)
         return *basic_streambuf_char_gptr(&this->base);
 
     ret = call_basic_filebuf_char_uflow(this);
-    if(ret)
+    if(ret != EOF)
         ret = call_basic_filebuf_char_pbackfail(this, ret);
     return ret;
 }
