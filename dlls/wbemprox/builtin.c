@@ -39,6 +39,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wbemprox);
 
+static const WCHAR class_baseboardW[] =
+    {'W','i','n','3','2','_','B','a','s','e','B','o','a','r','d',0};
 static const WCHAR class_biosW[] =
     {'W','i','n','3','2','_','B','I','O','S',0};
 static const WCHAR class_compsysW[] =
@@ -118,12 +120,20 @@ static const WCHAR prop_speedW[] =
     {'S','p','e','e','d',0};
 static const WCHAR prop_systemdirectoryW[] =
     {'S','y','s','t','e','m','D','i','r','e','c','t','o','r','y',0};
+static const WCHAR prop_tagW[] =
+    {'T','a','g',0};
 static const WCHAR prop_threadcountW[] =
     {'T','h','r','e','a','d','C','o','u','n','t',0};
 static const WCHAR prop_totalphysicalmemoryW[] =
     {'T','o','t','a','l','P','h','y','s','i','c','a','l','M','e','m','o','r','y',0};
 
 /* column definitions must be kept in sync with record structures below */
+static const struct column col_baseboard[] =
+{
+    { prop_manufacturerW,  CIM_STRING },
+    { prop_serialnumberW,  CIM_STRING },
+    { prop_tagW,           CIM_STRING|COL_FLAG_KEY }
+};
 static const struct column col_bios[] =
 {
     { prop_descriptionW,  CIM_STRING },
@@ -190,6 +200,12 @@ static const struct column col_videocontroller[] =
     { prop_nameW,                 CIM_STRING|COL_FLAG_DYNAMIC }
 };
 
+static const WCHAR baseboard_manufacturerW[] =
+    {'I','n','t','e','l',' ','C','o','r','p','o','r','a','t','i','o','n',0};
+static const WCHAR baseboard_serialnumberW[] =
+    {'N','o','n','e',0};
+static const WCHAR baseboard_tagW[] =
+    {'B','a','s','e',' ','B','o','a','r','d',0};
 static const WCHAR bios_descriptionW[] =
     {'D','e','f','a','u','l','t',' ','S','y','s','t','e','m',' ','B','I','O','S',0};
 static const WCHAR bios_manufacturerW[] =
@@ -219,6 +235,12 @@ static const WCHAR videocontroller_deviceidW[] =
     {'V','i','d','e','o','C','o','n','t','r','o','l','l','e','r','1',0};
 
 #include "pshpack1.h"
+struct record_baseboard
+{
+    const WCHAR *manufacturer;
+    const WCHAR *serialnumber;
+    const WCHAR *tag;
+};
 struct record_bios
 {
     const WCHAR *description;
@@ -286,6 +308,10 @@ struct record_videocontroller
 };
 #include "poppack.h"
 
+static const struct record_baseboard data_baseboard[] =
+{
+    { baseboard_manufacturerW, baseboard_serialnumberW, baseboard_tagW }
+};
 static const struct record_bios data_bios[] =
 {
     { bios_descriptionW, bios_manufacturerW, bios_releasedateW, bios_serialnumberW }
@@ -632,6 +658,7 @@ done:
 
 static struct table classtable[] =
 {
+    { class_baseboardW, SIZEOF(col_baseboard), col_baseboard, SIZEOF(data_baseboard), (BYTE *)data_baseboard },
     { class_biosW, SIZEOF(col_bios), col_bios, SIZEOF(data_bios), (BYTE *)data_bios, NULL },
     { class_compsysW, SIZEOF(col_compsys), col_compsys, 0, NULL, fill_compsys },
     { class_logicaldiskW, SIZEOF(col_logicaldisk), col_logicaldisk, 0, NULL, fill_logicaldisk },
