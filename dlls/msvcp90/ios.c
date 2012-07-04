@@ -4924,8 +4924,30 @@ basic_ostream_char* __thiscall basic_ostream_char_print_ldouble(basic_ostream_ch
 DEFINE_THISCALL_WRAPPER(basic_ostream_char_print_streambuf, 8)
 basic_ostream_char* __thiscall basic_ostream_char_print_streambuf(basic_ostream_char *this, basic_streambuf_char *val)
 {
-    FIXME("(%p %p) stub\n", this, val);
-    return NULL;
+    basic_ios_char *base = basic_ostream_char_get_basic_ios(this);
+    IOSB_iostate state = IOSTATE_badbit;
+    int c = '\n';
+
+    TRACE("(%p %p)\n", this, val);
+
+    if(basic_ostream_char_sentry_create(this)) {
+        for(c = basic_streambuf_char_sgetc(val); c!=EOF;
+                c = basic_streambuf_char_snextc(val)) {
+            state = IOSTATE_goodbit;
+
+            if(basic_streambuf_char_sputc(base->strbuf, c) == EOF) {
+                state = IOSTATE_badbit;
+                break;
+            }
+        }
+    }else {
+        state = IOSTATE_badbit;
+    }
+    basic_ostream_char_sentry_destroy(this);
+
+    ios_base_width_set(&base->base, 0);
+    basic_ios_char_setstate(base, state);
+    return this;
 }
 
 /* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@PBX@Z */
@@ -5058,10 +5080,111 @@ basic_ostream_char* __cdecl basic_ostream_char_print_bstr(basic_ostream_char *os
                     state = IOSTATE_badbit;
         }
 
-        for(; pad!=0; pad--) {
-            if(basic_streambuf_char_sputc(base->strbuf, base->fillch) == EOF) {
+        if(state == IOSTATE_goodbit) {
+            for(; pad!=0; pad--) {
+                if(basic_streambuf_char_sputc(base->strbuf, base->fillch) == EOF) {
+                    state = IOSTATE_badbit;
+                    break;
+                }
+            }
+        }
+
+        base->base.wide = 0;
+    }else {
+        state = IOSTATE_badbit;
+    }
+    basic_ostream_char_sentry_destroy(ostr);
+
+    basic_ios_char_setstate(base, state);
+    return ostr;
+}
+
+/* ??$?6U?$char_traits@D@std@@@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@0@AAV10@C@Z */
+/* ??$?6U?$char_traits@D@std@@@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@0@AEAV10@C@Z */
+/* ??$?6U?$char_traits@D@std@@@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@0@AAV10@D@Z */
+/* ??$?6U?$char_traits@D@std@@@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@0@AEAV10@D@Z */
+/* ??$?6U?$char_traits@D@std@@@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@0@AAV10@E@Z */
+/* ??$?6U?$char_traits@D@std@@@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@0@AEAV10@E@Z */
+basic_ostream_char* __cdecl basic_ostream_char_print_ch(basic_ostream_char *ostr, char ch)
+{
+    basic_ios_char *base = basic_ostream_char_get_basic_ios(ostr);
+    IOSB_iostate state = IOSTATE_goodbit;
+
+    TRACE("(%p %d)\n", ostr, ch);
+
+    if(basic_ostream_char_sentry_create(ostr)) {
+        streamsize pad = (base->base.wide>1 ? base->base.wide-1 : 0);
+
+        if((base->base.fmtfl & FMTFLAG_adjustfield) != FMTFLAG_left) {
+            for(; pad!=0; pad--) {
+                if(basic_streambuf_char_sputc(base->strbuf, base->fillch) == EOF) {
+                    state = IOSTATE_badbit;
+                    break;
+                }
+            }
+        }
+
+        if(state == IOSTATE_goodbit) {
+            if(basic_streambuf_char_sputc(base->strbuf, ch) == EOF)
                 state = IOSTATE_badbit;
-                break;
+        }
+
+        if(state == IOSTATE_goodbit) {
+            for(; pad!=0; pad--) {
+                if(basic_streambuf_char_sputc(base->strbuf, base->fillch) == EOF) {
+                    state = IOSTATE_badbit;
+                    break;
+                }
+            }
+        }
+
+        base->base.wide = 0;
+    }else {
+        state = IOSTATE_badbit;
+    }
+    basic_ostream_char_sentry_destroy(ostr);
+
+    basic_ios_char_setstate(base, state);
+    return ostr;
+}
+
+/* ??$?6U?$char_traits@D@std@@@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@0@AAV10@PBC@Z */
+/* ??$?6U?$char_traits@D@std@@@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@0@AEAV10@PEBC@Z */
+/* ??$?6U?$char_traits@D@std@@@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@0@AAV10@PBD@Z */
+/* ??$?6U?$char_traits@D@std@@@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@0@AEAV10@PEBD@Z */
+/* ??$?6U?$char_traits@D@std@@@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@0@AAV10@PBE@Z */
+/* ??$?6U?$char_traits@D@std@@@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@0@AEAV10@PEBE@Z */
+basic_ostream_char* __cdecl basic_ostream_char_print_str(basic_ostream_char *ostr, const char *str)
+{
+    basic_ios_char *base = basic_ostream_char_get_basic_ios(ostr);
+    IOSB_iostate state = IOSTATE_goodbit;
+
+    TRACE("(%p %s)\n", ostr, str);
+
+    if(basic_ostream_char_sentry_create(ostr)) {
+        MSVCP_size_t len = strlen(str);
+        streamsize pad = (base->base.wide>len ? base->base.wide-len : 0);
+
+        if((base->base.fmtfl & FMTFLAG_adjustfield) != FMTFLAG_left) {
+            for(; pad!=0; pad--) {
+                if(basic_streambuf_char_sputc(base->strbuf, base->fillch) == EOF) {
+                    state = IOSTATE_badbit;
+                    break;
+                }
+            }
+        }
+
+        if(state == IOSTATE_goodbit) {
+            if(basic_streambuf_char_sputn(base->strbuf, str, len) != len)
+                state = IOSTATE_badbit;
+        }
+
+        if(state == IOSTATE_goodbit) {
+            for(; pad!=0; pad--) {
+                if(basic_streambuf_char_sputc(base->strbuf, base->fillch) == EOF) {
+                    state = IOSTATE_badbit;
+                    break;
+                }
             }
         }
 
