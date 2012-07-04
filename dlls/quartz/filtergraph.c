@@ -1991,7 +1991,7 @@ static HRESULT WINAPI MediaControl_Run(IMediaControl *iface)
     This->EcCompleteCount = 0;
 
     if (This->defaultclock && !This->refClock)
-        IFilterGraph2_SetDefaultSyncSource((IFilterGraph2*)This);
+        IFilterGraph2_SetDefaultSyncSource(&This->IFilterGraph2_iface);
 
     if (This->refClock)
     {
