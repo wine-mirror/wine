@@ -80,15 +80,21 @@ static char* (__thiscall *p_char_allocate)(void*, size_t);
 static void (__thiscall *p_char_construct)(void*, char*, const char*);
 static size_t (__thiscall *p_char_max_size)(void*);
 
-void* (__thiscall *p_collate_char_ctor_refs)(void*, size_t);
-int (__thiscall *p_collate_char_compare)(const void*, const char*,
+static void* (__thiscall *p_collate_char_ctor_refs)(void*, size_t);
+static int (__thiscall *p_collate_char_compare)(const void*, const char*,
         const char*, const char*, const char*);
-void (__thiscall *p_collate_char_dtor)(void*);
-void* (__thiscall *p_numpunct_char_ctor)(void*);
-basic_string_char* (__thiscall *p_numpunct_char_falsename)(void*,basic_string_char*);
-void (__thiscall *p_numpunct_char_dtor)(void*);
+static void (__thiscall *p_collate_char_dtor)(void*);
+static void* (__thiscall *p_numpunct_char_ctor)(void*);
+static basic_string_char* (__thiscall *p_numpunct_char_falsename)(void*,basic_string_char*);
+static void (__thiscall *p_numpunct_char_dtor)(void*);
 static void (__thiscall *p_basic_string_char_dtor)(basic_string_char*);
 static const char* (__thiscall *p_basic_string_char_cstr)(basic_string_char*);
+
+static const int *basic_ostringstream_char_vbtable;
+static /*basic_ostringstream_char*/void* (__thiscall *p_basic_ostringstream_char_ctor_mode)(
+        /*basic_ostringstream_char*/void*, int, /*MSVCP_bool*/int);
+static void (__thiscall *p_basic_ostringstream_char_dtor)(/*basic_ostringstream_char*/void*);
+static void (__thiscall *p_basic_ostringstream_char_vbase_dtor)(/*basic_ostringstream_char*/void*);
 
 static int invalid_parameter = 0;
 static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
@@ -179,6 +185,7 @@ static BOOL init(void)
     SET(p_wctype, "wctype");
     SET(p__Getctype, "_Getctype");
     SET(p__Getcoll, "_Getcoll");
+    SET(basic_ostringstream_char_vbtable, "??_8?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@7B@");
     if(sizeof(void*) == 8) { /* 64-bit initialization */
         SET(p_char_assign, "?assign@?$char_traits@D@std@@SAXAEADAEBD@Z");
         SET(p_wchar_assign, "?assign@?$char_traits@_W@std@@SAXAEA_WAEB_W@Z");
@@ -207,6 +214,13 @@ static BOOL init(void)
                 "??1?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@XZ");
         SET(p_basic_string_char_cstr,
                 "?c_str@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBAPEBDXZ");
+
+        SET(p_basic_ostringstream_char_ctor_mode,
+                "??0?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@H@Z");
+        SET(p_basic_ostringstream_char_dtor,
+                "??1?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@UEAA@XZ");
+        SET(p_basic_ostringstream_char_vbase_dtor,
+                "??_D?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAXXZ");
     } else {
         SET(p_char_assign, "?assign@?$char_traits@D@std@@SAXAADABD@Z");
         SET(p_wchar_assign, "?assign@?$char_traits@_W@std@@SAXAA_WAB_W@Z");
@@ -235,6 +249,13 @@ static BOOL init(void)
                 "??1?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@XZ");
         SET(p_basic_string_char_cstr,
                 "?c_str@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEPBDXZ");
+
+        SET(p_basic_ostringstream_char_ctor_mode,
+                "??0?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@H@Z");
+        SET(p_basic_ostringstream_char_dtor,
+                "??1?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@UAE@XZ");
+        SET(p_basic_ostringstream_char_vbase_dtor,
+                "??_D?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEXXZ");
     }
 
     init_thiscall_thunk();
@@ -464,6 +485,17 @@ static void test_virtual_call(void)
     call_func1(p_numpunct_char_dtor, this);
 }
 
+static void test_virtual_base_dtors(void)
+{
+    char this[512];
+
+    call_func3(p_basic_ostringstream_char_ctor_mode, this, 0, 1);
+    call_func1(p_basic_ostringstream_char_vbase_dtor, this);
+
+    call_func3(p_basic_ostringstream_char_ctor_mode, this, 0, 0);
+    call_func1(p_basic_ostringstream_char_dtor, this+basic_ostringstream_char_vbtable[1]);
+}
+
 START_TEST(misc)
 {
     if(!init())
@@ -476,6 +508,7 @@ START_TEST(misc)
     test__Getctype();
     test__Getcoll();
     test_virtual_call();
+    test_virtual_base_dtors();
 
     test_allocator_char();
 
