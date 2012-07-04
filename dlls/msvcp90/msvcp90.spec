@@ -80,10 +80,10 @@
 @ cdecl -arch=win64 ??$?6U?$char_traits@D@std@@@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@0@AEAV10@PEBD@Z(ptr str) basic_ostream_char_print_str
 @ cdecl -arch=win32 ??$?6U?$char_traits@D@std@@@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@0@AAV10@PBE@Z(ptr ptr) basic_ostream_char_print_str
 @ cdecl -arch=win64 ??$?6U?$char_traits@D@std@@@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@0@AEAV10@PEBE@Z(ptr ptr) basic_ostream_char_print_str
-@ stub -arch=win32 ??$?6_WU?$char_traits@_W@std@@@std@@YAAAV?$basic_ostream@_WU?$char_traits@_W@std@@@0@AAV10@PB_W@Z
-@ stub -arch=win64 ??$?6_WU?$char_traits@_W@std@@@std@@YAAEAV?$basic_ostream@_WU?$char_traits@_W@std@@@0@AEAV10@PEB_W@Z
-@ stub -arch=win32 ??$?6_WU?$char_traits@_W@std@@@std@@YAAAV?$basic_ostream@_WU?$char_traits@_W@std@@@0@AAV10@_W@Z
-@ stub -arch=win64 ??$?6_WU?$char_traits@_W@std@@@std@@YAAEAV?$basic_ostream@_WU?$char_traits@_W@std@@@0@AEAV10@_W@Z
+@ cdecl -arch=win32 ??$?6_WU?$char_traits@_W@std@@@std@@YAAAV?$basic_ostream@_WU?$char_traits@_W@std@@@0@AAV10@PB_W@Z(ptr wstr) basic_ostream_wchar_print_str
+@ cdecl -arch=win64 ??$?6_WU?$char_traits@_W@std@@@std@@YAAEAV?$basic_ostream@_WU?$char_traits@_W@std@@@0@AEAV10@PEB_W@Z(ptr wstr) basic_ostream_wchar_print_str
+@ cdecl -arch=win32 ??$?6_WU?$char_traits@_W@std@@@std@@YAAAV?$basic_ostream@_WU?$char_traits@_W@std@@@0@AAV10@_W@Z(ptr long) basic_ostream_wchar_print_ch
+@ cdecl -arch=win64 ??$?6_WU?$char_traits@_W@std@@@std@@YAAEAV?$basic_ostream@_WU?$char_traits@_W@std@@@0@AEAV10@_W@Z(ptr long) basic_ostream_wchar_print_ch
 @ cdecl -arch=win32 ??$?6_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YAAAV?$basic_ostream@_WU?$char_traits@_W@std@@@0@AAV10@ABV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@@Z(ptr ptr) basic_ostream_wchar_print_bstr
 @ cdecl -arch=win64 ??$?6_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YAAEAV?$basic_ostream@_WU?$char_traits@_W@std@@@0@AEAV10@AEBV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@@Z(ptr ptr) basic_ostream_wchar_print_bstr
 @ cdecl -arch=win32 ??$?8DU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@0@Z(ptr ptr) MSVCP_basic_string_char_equal
