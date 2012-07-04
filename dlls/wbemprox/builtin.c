@@ -187,7 +187,8 @@ static const struct column col_processor[] =
 {
     { prop_cpustatusW,    CIM_UINT16 },
     { prop_deviceidW,     CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
-    { prop_manufacturerW, CIM_STRING },
+    { prop_manufacturerW, CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_nameW,         CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_processoridW,  CIM_STRING|COL_FLAG_DYNAMIC }
 };
 static const struct column col_videocontroller[] =
@@ -229,8 +230,6 @@ static const WCHAR os_32bitW[] =
     {'3','2','-','b','i','t',0};
 static const WCHAR os_64bitW[] =
     {'6','4','-','b','i','t',0};
-static const WCHAR processor_manufacturerW[] =
-    {'G','e','n','u','i','n','e','I','n','t','e','l',0};
 static const WCHAR videocontroller_deviceidW[] =
     {'V','i','d','e','o','C','o','n','t','r','o','l','l','e','r','1',0};
 
@@ -295,6 +294,7 @@ struct record_processor
     UINT16       cpu_status;
     const WCHAR *device_id;
     const WCHAR *manufacturer;
+    const WCHAR *name;
     const WCHAR *processor_id;
 };
 struct record_videocontroller
@@ -543,27 +543,75 @@ static inline void do_cpuid( unsigned int ax, unsigned int *p )
 #endif
 }
 
+static void get_processor_id( WCHAR *processor_id )
+{
+    static const WCHAR fmtW[] = {'%','0','8','X','%','0','8','X',0};
+    unsigned int regs[4] = {0, 0, 0, 0};
+
+    do_cpuid( 1, regs );
+    sprintfW( processor_id, fmtW, regs[3], regs[0] );
+}
+static void regs_to_str( unsigned int *regs, unsigned int len, WCHAR *buffer )
+{
+    unsigned int i;
+    unsigned char *p = (unsigned char *)regs;
+
+    for (i = 0; i < len; i++)
+    {
+        buffer[i] = *p++;
+    }
+    buffer[i] = 0;
+    return;
+}
+static void get_processor_manufacturer( WCHAR *manufacturer )
+{
+    unsigned int tmp, regs[4] = {0, 0, 0, 0};
+
+    do_cpuid( 0, regs );
+    tmp = regs[2];      /* swap edx and ecx */
+    regs[2] = regs[3];
+    regs[3] = tmp;
+
+    regs_to_str( regs + 1, 12, manufacturer );
+}
+static void get_processor_name( WCHAR *name )
+{
+    unsigned int regs[4] = {0, 0, 0, 0};
+
+    do_cpuid( 0x80000000, regs );
+    if (regs[0] >= 0x80000004)
+    {
+        do_cpuid( 0x80000002, regs );
+        regs_to_str( regs, 16, name );
+        do_cpuid( 0x80000003, regs );
+        regs_to_str( regs, 16, name + 16 );
+        do_cpuid( 0x80000004, regs );
+        regs_to_str( regs, 16, name + 32 );
+    }
+}
+
 static void fill_processor( struct table *table )
 {
     static const WCHAR fmtW[] = {'C','P','U','%','u',0};
-    static const WCHAR fmt_cpuidW[] = {'%','0','8','X','%','0','8','X',0};
-    WCHAR device_id[14], cpu_id[17];
+    WCHAR device_id[14], processor_id[17], manufacturer[13], name[49] = {0};
     struct record_processor *rec;
     UINT i, offset = 0, count = get_processor_count();
-    unsigned int regs[4] = {0, 0, 0, 0};
 
     if (!(table->data = heap_alloc( sizeof(*rec) * count ))) return;
 
-    do_cpuid( 1, regs );
-    sprintfW( cpu_id, fmt_cpuidW, regs[3], regs[0] );
+    get_processor_id( processor_id );
+    get_processor_manufacturer( manufacturer );
+    get_processor_name( name );
+
     for (i = 0; i < count; i++)
     {
         rec = (struct record_processor *)(table->data + offset);
         rec->cpu_status   = 1; /* CPU Enabled */
-        rec->manufacturer = processor_manufacturerW;
         sprintfW( device_id, fmtW, i );
         rec->device_id    = heap_strdupW( device_id );
-        rec->processor_id = heap_strdupW( cpu_id );
+        rec->manufacturer = heap_strdupW( manufacturer );
+        rec->name         = heap_strdupW( name );
+        rec->processor_id = heap_strdupW( processor_id );
         offset += sizeof(*rec);
     }
 
