@@ -5824,7 +5824,7 @@ static void test_combobox_messages(void)
 
     flush_sequence();
     SetWindowPos(combo, 0, 10, 10, 120, 130, SWP_NOZORDER);
-    ok_sequence(WmSetPosComboSeq, "repositioning messages on a ComboBox", TRUE);
+    ok_sequence(WmSetPosComboSeq, "repositioning messages on a ComboBox", FALSE);
 
     DestroyWindow(combo);
     DestroyWindow(parent);
