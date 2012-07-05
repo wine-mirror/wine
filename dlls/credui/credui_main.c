@@ -800,3 +800,12 @@ DWORD WINAPI CredUIReadSSOCredW(PCWSTR pszRealm, PWSTR *ppszUsername)
         *ppszUsername = NULL;
     return ERROR_NOT_FOUND;
 }
+
+/******************************************************************************
+ * CredUIInitControls [CREDUI.@]
+ */
+BOOL WINAPI CredUIInitControls(void)
+{
+    FIXME("() stub\n");
+    return TRUE;
+}
