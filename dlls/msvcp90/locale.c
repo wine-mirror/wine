@@ -4441,7 +4441,7 @@ static int num_get__Getffld(const num_get *this, char *dest, istreambuf_iterator
     char *dest_beg = dest, *num_end = dest+25, *exp_end = dest+31, *groups = NULL;
     wchar_t sep, digits[11], *digits_pos;
     const char *grouping;
-    BOOL error = TRUE, dest_empty = TRUE;
+    BOOL error = FALSE, got_digit = FALSE, dest_empty = TRUE;
 
     TRACE("(%p %p %p %p)\n", dest, first, last, loc);
 
@@ -4485,7 +4485,7 @@ static int num_get__Getffld(const num_get *this, char *dest, istreambuf_iterator
                 break;
             }
         }else {
-            error = FALSE;
+            got_digit = TRUE;
             if(dest_empty && first->val == digits[0])
                 continue;
             dest_empty = FALSE;
@@ -4532,8 +4532,10 @@ static int num_get__Getffld(const num_get *this, char *dest, istreambuf_iterator
         istreambuf_iterator_wchar_inc(first);
 
         if(dest_empty) {
-            for(; first->strbuf && first->val==digits[0]; istreambuf_iterator_wchar_inc(first))
+            for(; first->strbuf && first->val==digits[0]; istreambuf_iterator_wchar_inc(first)) {
+                got_digit = TRUE;
                 exp--;
+            }
 
             if(!first->strbuf || !wcschr(digits, first->val))
                 dest--;
@@ -4543,8 +4545,15 @@ static int num_get__Getffld(const num_get *this, char *dest, istreambuf_iterator
     for(; first->strbuf; istreambuf_iterator_wchar_inc(first)) {
         if(!(digits_pos = wcschr(digits, first->val)))
             break;
-        else if(dest<num_end)
+        else if(dest<num_end) {
+            got_digit = TRUE;
             *dest++ = '0'+digits_pos-digits;
+        }
+    }
+
+    if(!got_digit) {
+        *dest_beg = '\0';
+        return 0;
     }
 
     if(first->strbuf && (first->val==mb_to_wc('e', &this->cvt) || first->val==mb_to_wc('E', &this->cvt))) {
@@ -5541,7 +5550,7 @@ int __cdecl num_get_char__Getffld(const num_get *this, char *dest, istreambuf_it
     int groups_no = 0, cur_group = 0, exp = 0;
     char *dest_beg = dest, *num_end = dest+25, *exp_end = dest+31, *groups = NULL, sep;
     const char *grouping;
-    BOOL error = TRUE, dest_empty = TRUE;
+    BOOL error = FALSE, got_digit = FALSE, dest_empty = TRUE;
 
     TRACE("(%p %p %p %p)\n", dest, first, last, loc);
 
@@ -5578,7 +5587,7 @@ int __cdecl num_get_char__Getffld(const num_get *this, char *dest, istreambuf_it
                 break;
             }
         }else {
-            error = FALSE;
+            got_digit = TRUE;
             if(dest_empty && first->val == '0')
                 continue;
             dest_empty = FALSE;
@@ -5625,8 +5634,10 @@ int __cdecl num_get_char__Getffld(const num_get *this, char *dest, istreambuf_it
         istreambuf_iterator_char_inc(first);
 
         if(dest_empty) {
-            for(; first->strbuf && first->val=='0'; istreambuf_iterator_char_inc(first))
+            for(; first->strbuf && first->val=='0'; istreambuf_iterator_char_inc(first)) {
+                got_digit = TRUE;
                 exp--;
+            }
 
             if(!first->strbuf || first->val<'1' || first->val>'9')
                 dest--;
@@ -5636,8 +5647,15 @@ int __cdecl num_get_char__Getffld(const num_get *this, char *dest, istreambuf_it
     for(; first->strbuf; istreambuf_iterator_char_inc(first)) {
         if(first->val<'0' || first->val>'9')
             break;
-        else if(dest<num_end)
+        else if(dest<num_end) {
+            got_digit = TRUE;
             *dest++ = first->val;
+        }
+    }
+
+    if(!got_digit) {
+        *dest_beg = '\0';
+        return 0;
     }
 
     if(first->strbuf && (first->val=='e' || first->val=='E')) {
