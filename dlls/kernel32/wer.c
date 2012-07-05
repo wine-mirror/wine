@@ -51,3 +51,15 @@ HRESULT WINAPI WerRegisterRuntimeExceptionModule(PCWSTR callbackdll, PVOID conte
     FIXME("(%s, %p) stub!\n", debugstr_w(callbackdll), context);
     return S_OK;
 }
+
+/***********************************************************************
+ * WerSetFlags (KERNEL32.@)
+ *
+ * Sets error reporting flags for the current process.
+ */
+
+HRESULT WINAPI WerSetFlags(DWORD flags)
+{
+    FIXME("(%d) stub!\n", flags);
+    return E_NOTIMPL;
+}
