@@ -3,7 +3,7 @@
 @ stdcall CheckTrustEx(ptr ptr ptr ptr ptr)
 @ stdcall -private DllCanUnloadNow()
 @ stdcall -private DllGetClassObject(ptr ptr ptr)
-@ stub DllInstall
+@ stdcall DllInstall(long wstr)
 @ stdcall -private DllRegisterServer()
 @ stdcall -private DllUnregisterServer()
 @ stub DownloadFile

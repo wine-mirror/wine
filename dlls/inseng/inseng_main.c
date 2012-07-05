@@ -92,3 +92,12 @@ BOOL WINAPI CheckTrustEx( LPVOID a, LPVOID b, LPVOID c, LPVOID d, LPVOID e )
     FIXME("%p %p %p %p %p\n", a, b, c, d, e );
     return TRUE;
 }
+
+/***********************************************************************
+ *  DllInstall (INSENG.@)
+ */
+HRESULT WINAPI DllInstall(BOOL bInstall, LPCWSTR cmdline)
+{
+    FIXME("(%s, %s): stub\n", bInstall ? "TRUE" : "FALSE", debugstr_w(cmdline));
+    return S_OK;
+}
