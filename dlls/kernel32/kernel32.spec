@@ -516,6 +516,7 @@
 @ stdcall GetDllDirectoryW(long ptr)
 @ stdcall GetDriveTypeA(str)
 @ stdcall GetDriveTypeW(wstr)
+@ stdcall GetDynamicTimeZoneInformation(ptr)
 @ stdcall GetEnvironmentStrings() GetEnvironmentStringsA
 @ stdcall GetEnvironmentStringsA()
 @ stdcall GetEnvironmentStringsW()

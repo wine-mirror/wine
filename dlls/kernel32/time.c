@@ -1066,3 +1066,13 @@ BOOL WINAPI GetSystemTimes(LPFILETIME lpIdleTime, LPFILETIME lpKernelTime, LPFIL
 
     return FALSE;
 }
+
+/***********************************************************************
+ *           GetDynamicTimeZoneInformation   (KERNEL32.@)
+ */
+DWORD WINAPI GetDynamicTimeZoneInformation(PDYNAMIC_TIME_ZONE_INFORMATION info)
+{
+    FIXME("(%p) stub!\n", info);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return TIME_ZONE_ID_INVALID;
+}
