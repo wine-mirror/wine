@@ -761,9 +761,9 @@ HRESULT assembly_get_name(ASSEMBLY *assembly, LPWSTR *name)
 
     ptr += FIELD_OFFSET(ASSEMBLYTABLE, PublicKey) + assembly->blobsz;
     if (assembly->stringsz == sizeof(DWORD))
-        stridx = *((DWORD *)ptr);
+        stridx = *(DWORD *)ptr;
     else
-        stridx = *((WORD *)ptr);
+        stridx = *(WORD *)ptr;
 
     *name = assembly_dup_str(assembly, stridx);
     if (!*name)
@@ -910,5 +910,54 @@ done:
 HRESULT assembly_get_runtime_version(ASSEMBLY *assembly, LPSTR *version)
 {
     *version = assembly->metadatahdr->Version;
+    return S_OK;
+}
+
+HRESULT assembly_get_external_files(ASSEMBLY *assembly, LPWSTR **files, DWORD *count)
+{
+    LONG offset;
+    INT i, num_rows;
+    WCHAR **ret;
+    BYTE *ptr;
+    DWORD idx;
+
+    *count = 0;
+
+    offset = assembly->tables[TableFromToken(mdtFile)].offset;
+    if (offset == -1)
+        return S_OK;
+
+    ptr = assembly_data_offset(assembly, offset);
+    if (!ptr)
+        return S_OK;
+
+    num_rows = assembly->tables[TableFromToken(mdtFile)].rows;
+    if (num_rows <= 0)
+        return S_OK;
+
+    ret = HeapAlloc(GetProcessHeap(), 0, num_rows * sizeof(WCHAR *));
+    if (!ret)
+        return E_OUTOFMEMORY;
+
+    for (i = 0; i < num_rows; i++)
+    {
+        ptr += sizeof(DWORD); /* skip Flags field */
+        if (assembly->stringsz == sizeof(DWORD))
+            idx = *(DWORD *)ptr;
+        else
+            idx = *(WORD *)ptr;
+
+        ret[i] = assembly_dup_str(assembly, idx);
+        if (!ret[i])
+        {
+            for (; i >= 0; i--) HeapFree(GetProcessHeap(), 0, ret[i]);
+            HeapFree(GetProcessHeap(), 0, ret);
+            return E_OUTOFMEMORY;
+        }
+        ptr += assembly->stringsz; /* skip Name field */
+        ptr += assembly->blobsz; /* skip Hash field */
+    }
+    *count = num_rows;
+    *files = ret;
     return S_OK;
 }

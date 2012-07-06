@@ -436,6 +436,7 @@ HRESULT assembly_get_version(ASSEMBLY *assembly, LPWSTR *version) DECLSPEC_HIDDE
 PEKIND assembly_get_architecture(ASSEMBLY *assembly) DECLSPEC_HIDDEN;
 HRESULT assembly_get_pubkey_token(ASSEMBLY *assembly, LPWSTR *token) DECLSPEC_HIDDEN;
 HRESULT assembly_get_runtime_version(ASSEMBLY *assembly, LPSTR *version) DECLSPEC_HIDDEN;
+HRESULT assembly_get_external_files(ASSEMBLY *assembly, LPWSTR **files, DWORD *count) DECLSPEC_HIDDEN;
 
 extern HRESULT IAssemblyName_SetPath(IAssemblyName *iface, LPCWSTR path) DECLSPEC_HIDDEN;
 extern HRESULT IAssemblyName_GetPath(IAssemblyName *iface, LPWSTR buf, ULONG *len) DECLSPEC_HIDDEN;
