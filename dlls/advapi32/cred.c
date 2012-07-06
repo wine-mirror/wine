@@ -2161,3 +2161,69 @@ BOOL WINAPI CredUnmarshalCredentialW( LPCWSTR cred, PCRED_MARSHAL_TYPE type, PVO
     }
     return TRUE;
 }
+
+/******************************************************************************
+ * CredIsMarshaledCredentialW [ADVAPI32.@]
+ *
+ * Check, if the name parameter is a marshaled credential, hash or binary blob
+ *
+ * PARAMS
+ *  name    the name to check
+ *
+ * RETURNS
+ *  TRUE:  the name parameter is a marshaled credential, hash or binary blob
+ *  FALSE: the name is a plain username
+ */
+BOOL WINAPI CredIsMarshaledCredentialW(LPCWSTR name)
+{
+    TRACE("(%s)\n", debugstr_w(name));
+
+    if (name && name[0] == '@' && name[1] == '@' && name[2] > 'A' && name[3])
+    {
+        char hash[CERT_HASH_LENGTH + 2];
+        int len = strlenW(name + 3 );
+        DWORD size;
+
+        if ((name[2] - 'A') == CertCredential && (len == 27) && cred_decode(name + 3, len, hash))
+            return TRUE;
+
+        if (((name[2] - 'A') == UsernameTargetCredential) &&
+            (len >= 9) && cred_decode(name + 3, 6, (char *)&size) && size)
+            return TRUE;
+
+        if ((name[2] - 'A') == BinaryBlobCredential)
+            FIXME("BinaryBlobCredential not checked\n");
+
+        if ((name[2] - 'A') > BinaryBlobCredential)
+            TRACE("unknown type: %d\n", (name[2] - 'A'));
+    }
+
+    SetLastError(ERROR_INVALID_PARAMETER);
+    return FALSE;
+}
+
+/******************************************************************************
+ * CredIsMarshaledCredentialA [ADVAPI32.@]
+ *
+ * See CredIsMarshaledCredentialW
+ *
+ */
+BOOL WINAPI CredIsMarshaledCredentialA(LPCSTR name)
+{
+    LPWSTR nameW = NULL;
+    BOOL res;
+    int len;
+
+    TRACE("(%s)\n", debugstr_a(name));
+
+    if (name)
+    {
+        len = MultiByteToWideChar(CP_ACP, 0, name, -1, NULL, 0);
+        nameW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, name, -1, nameW, len);
+    }
+
+    res = CredIsMarshaledCredentialW(nameW);
+    HeapFree(GetProcessHeap(), 0, nameW);
+    return res;
+}

@@ -144,8 +144,8 @@
 @ stdcall CredGetSessionTypes(long ptr)
 # @ stub CredGetTargetInfoA
 # @ stub CredGetTargetInfoW
-# @ stub CredIsMarshaledCredentialA
-# @ stub CredIsMarshaledCredentialW
+@ stdcall CredIsMarshaledCredentialA(str)
+@ stdcall CredIsMarshaledCredentialW(wstr)
 # @ stub CredIsProtectedA
 # @ stub CredIsProtectedW
 @ stdcall CredMarshalCredentialA(long ptr ptr)

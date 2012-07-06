@@ -248,6 +248,9 @@ WINADVAPI BOOL  WINAPI CredEnumerateW(LPCWSTR,DWORD,DWORD *,PCREDENTIALW **);
 #define                CredEnumerate WINELIB_NAME_AW(CredEnumerate)
 WINADVAPI VOID  WINAPI CredFree(PVOID);
 WINADVAPI BOOL  WINAPI CredGetSessionTypes(DWORD,LPDWORD);
+WINADVAPI BOOL  WINAPI CredIsMarshaledCredentialA(LPCSTR);
+WINADVAPI BOOL  WINAPI CredIsMarshaledCredentialW(LPCWSTR);
+#define                CredIsMarshaledCredential WINELIB_NAME_AW(CredIsMarshaledCredential)
 WINADVAPI BOOL  WINAPI CredMarshalCredentialA(CRED_MARSHAL_TYPE,PVOID,LPSTR *);
 WINADVAPI BOOL  WINAPI CredMarshalCredentialW(CRED_MARSHAL_TYPE,PVOID,LPWSTR *);
 #define                CredMarshalCredential WINELIB_NAME_AW(CredMarshalCredential)
