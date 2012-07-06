@@ -37,6 +37,7 @@ static BOOL (WINAPI *pCredWriteA)(PCREDENTIALA,DWORD);
 static BOOL (WINAPI *pCredReadDomainCredentialsA)(PCREDENTIAL_TARGET_INFORMATIONA,DWORD,DWORD*,PCREDENTIALA**);
 static BOOL (WINAPI *pCredMarshalCredentialA)(CRED_MARSHAL_TYPE,PVOID,LPSTR *);
 static BOOL (WINAPI *pCredUnmarshalCredentialA)(LPCSTR,PCRED_MARSHAL_TYPE,PVOID);
+static BOOL (WINAPI *pCredIsMarshaledCredentialA)(LPCSTR);
 
 #define TEST_TARGET_NAME  "credtest.winehq.org"
 #define TEST_TARGET_NAME2 "credtest2.winehq.org"
@@ -630,6 +631,67 @@ static void test_CredUnmarshalCredentialA(void)
     pCredFree( username );
 }
 
+static void test_CredIsMarshaledCredentialA(void)
+{
+    int i;
+    BOOL res;
+    BOOL expected = TRUE;
+
+    const char * ptr[] = {
+        /* CertCredential */
+        "@@BXlmblBAAAAAAAAAAAAAAAAAAAAA",   /* hash for 'W','i','n','e' */
+        "@@BAAAAAAAAAAAAAAAAAAAAAAAAAAA",   /* hash for all 0 */
+
+        /* UsernameTargetCredential */
+        "@@CCAAAAA0BA",                     /* "t" */
+        "@@CIAAAAA0BQZAMHA0BA",             /* "test" */
+
+        /* todo: BinaryBlobCredential */
+
+        /* not marshaled names return always FALSE */
+        "winetest",
+        "",
+        "@@",
+        "@@A",
+        "@@AA",
+        "@@AAA",
+        "@@B",
+        "@@BB",
+        "@@BBB",
+
+        /* CertCredential */
+        "@@BAAAAAAAAAAAAAAAAAAAAAAAAAAAA",  /* to long */
+        "@@BAAAAAAAAAAAAAAAAAAAAAAAAAA",    /* to short */
+        "@@BAAAAAAAAAAAAAAAAAAAAAAAAAA+",   /* bad char */
+        "@@BAAAAAAAAAAAAAAAAAAAAAAAAAA:",
+        "@@BAAAAAAAAAAAAAAAAAAAAAAAAAA>",
+        "@@BAAAAAAAAAAAAAAAAAAAAAAAAAA<",
+
+        "@@C",
+        "@@CC",
+        "@@CCC",
+        "@@D",
+        "@@DD",
+        "@@DDD",
+        NULL};
+
+    for (i = 0; ptr[i]; i++)
+    {
+        if (*ptr[i] != '@')
+            expected = FALSE;
+
+        SetLastError(0xdeadbeef);
+        res = pCredIsMarshaledCredentialA(ptr[i]);
+        if (expected)
+            ok(res != FALSE, "%d: got %d and %u for %s (expected TRUE)\n", i, res, GetLastError(), ptr[i]);
+        else
+        {
+            /* Windows returns ERROR_INVALID_PARAMETER here, but that's not documented */
+            ok(!res, "%d: got %d and %u for %s (expected FALSE)\n", i, res, GetLastError(), ptr[i]);
+        }
+    }
+}
+
 START_TEST(cred)
 {
     DWORD persists[CRED_TYPE_MAXIMUM];
@@ -644,6 +706,7 @@ START_TEST(cred)
     pCredReadDomainCredentialsA = (void *)GetProcAddress(GetModuleHandle("advapi32.dll"), "CredReadDomainCredentialsA");
     pCredMarshalCredentialA = (void *)GetProcAddress(GetModuleHandle("advapi32.dll"), "CredMarshalCredentialA");
     pCredUnmarshalCredentialA = (void *)GetProcAddress(GetModuleHandle("advapi32.dll"), "CredUnmarshalCredentialA");
+    pCredIsMarshaledCredentialA = (void *)GetProcAddress(GetModuleHandle("advapi32.dll"), "CredIsMarshaledCredentialA");
 
     if (!pCredEnumerateA || !pCredFree || !pCredWriteA || !pCredDeleteA || !pCredReadA)
     {
@@ -690,4 +753,5 @@ START_TEST(cred)
 
     test_CredMarshalCredentialA();
     test_CredUnmarshalCredentialA();
+    test_CredIsMarshaledCredentialA();
 }
