@@ -2557,7 +2557,14 @@ INT16 WINAPIV wsprintf16( LPSTR buffer, LPCSTR spec, VA_LIST16 valist )
  */
 INT16 WINAPI lstrcmp16( LPCSTR str1, LPCSTR str2 )
 {
-    return strcmp( str1, str2 );
+    int ret;
+    /* Looks too complicated, but in optimized strcpy we might get
+    * a 32bit wide difference and would truncate it to 16 bit, so
+     * erroneously returning equality. */
+    ret = strcmp( str1, str2 );
+    if (ret < 0) return -1;
+    if (ret > 0) return  1;
+    return 0;
 }
 
 
