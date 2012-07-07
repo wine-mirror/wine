@@ -457,12 +457,19 @@ static HRESULT WINAPI RecycleBin_BindToStorage(IShellFolder2 *This, LPCITEMIDLIS
 static HRESULT WINAPI RecycleBin_CompareIDs(IShellFolder2 *iface, LPARAM lParam, LPCITEMIDLIST pidl1, LPCITEMIDLIST pidl2)
 {
     RecycleBin *This = impl_from_IShellFolder2(iface);
+    int ret;
 
     /* TODO */
     TRACE("(%p, %p, %p, %p)\n", This, (void *)lParam, pidl1, pidl2);
     if (pidl1->mkid.cb != pidl2->mkid.cb)
         return MAKE_HRESULT(SEVERITY_SUCCESS, 0, pidl1->mkid.cb - pidl2->mkid.cb);
-    return MAKE_HRESULT(SEVERITY_SUCCESS, 0, (unsigned short)memcmp(pidl1->mkid.abID, pidl2->mkid.abID, pidl1->mkid.cb));
+    /* Looks too complicated, but in optimized memcpy we might get
+     * a 32bit wide difference and would truncate it to 16 bit, so
+     * erroneously returning equality. */
+    ret = memcmp(pidl1->mkid.abID, pidl2->mkid.abID, pidl1->mkid.cb);
+    if (ret < 0) ret = -1;
+    if (ret > 0) ret =  1;
+    return MAKE_HRESULT(SEVERITY_SUCCESS, 0, (unsigned short)ret);
 }
 
 static HRESULT WINAPI RecycleBin_CreateViewObject(IShellFolder2 *iface, HWND hwndOwner, REFIID riid, void **ppv)
