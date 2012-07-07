@@ -3683,6 +3683,18 @@ BOOL WINAPI SetupDiCallClassInstaller(
 }
 
 /***********************************************************************
+ *		SetupDiGetDeviceInstallParamsW (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiGetDeviceInstallParamsW(
+       HDEVINFO DeviceInfoSet,
+       PSP_DEVINFO_DATA DeviceInfoData,
+       PSP_DEVINSTALL_PARAMS_W DeviceInstallParams)
+{
+    FIXME("%p %p %p\n", DeviceInfoSet, DeviceInfoData, DeviceInstallParams);
+    return FALSE;
+}
+
+/***********************************************************************
  *		SetupDiGetDeviceInstallParamsA (SETUPAPI.@)
  */
 BOOL WINAPI SetupDiGetDeviceInstallParamsA(
