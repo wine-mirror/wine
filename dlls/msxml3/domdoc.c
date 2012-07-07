@@ -2328,13 +2328,14 @@ static int XMLCALL domdoc_stream_save_writecallback(void *ctx, const char *buffe
     HRESULT hr;
 
     hr = IStream_Write((IStream*)ctx, buffer, len, &written);
+    TRACE("0x%08x %p %d %u\n", hr, buffer, len, written);
     if (hr != S_OK)
     {
         WARN("stream write error: 0x%08x\n", hr);
         return -1;
     }
     else
-        return written;
+        return len;
 }
 
 static int XMLCALL domdoc_stream_save_closecallback(void *ctx)
