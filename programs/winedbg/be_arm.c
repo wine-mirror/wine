@@ -127,6 +127,35 @@ static UINT arm_disasm_branch(UINT inst, ADDRESS64 *addr)
     return 0;
 }
 
+static UINT arm_disasm_mul(UINT inst, ADDRESS64 *addr)
+{
+    short accu = (inst >> 21) & 0x01;
+    short condcodes = (inst >> 20) & 0x01;
+
+    if (accu)
+        dbg_printf("\n\tmla%s%s\t%s, %s, %s, %s", get_cond(inst), condcodes ? "s" : "",
+                   tbl_regs[get_nibble(inst, 4)], tbl_regs[get_nibble(inst, 0)],
+                   tbl_regs[get_nibble(inst, 2)], tbl_regs[get_nibble(inst, 3)]);
+    else
+        dbg_printf("\n\tmul%s%s\t%s, %s, %s", get_cond(inst), condcodes ? "s" : "",
+                   tbl_regs[get_nibble(inst, 4)], tbl_regs[get_nibble(inst, 0)],
+                   tbl_regs[get_nibble(inst, 2)]);
+    return 0;
+}
+
+static UINT arm_disasm_longmul(UINT inst, ADDRESS64 *addr)
+{
+    short sign = (inst >> 22) & 0x01;
+    short accu = (inst >> 21) & 0x01;
+    short condcodes = (inst >> 20) & 0x01;
+
+    dbg_printf("\n\t%s%s%s%s\t%s, %s, %s, %s", sign ? "s" : "u", accu ? "mlal" : "mull",
+               get_cond(inst), condcodes ? "s" : "",
+               tbl_regs[get_nibble(inst, 3)], tbl_regs[get_nibble(inst, 4)],
+               tbl_regs[get_nibble(inst, 0)], tbl_regs[get_nibble(inst, 2)]);
+    return 0;
+}
+
 static UINT arm_disasm_branchreg(UINT inst, ADDRESS64 *addr)
 {
     dbg_printf("\n\tb%s\t%s", get_cond(inst), tbl_regs[get_nibble(inst, 0)]);
@@ -696,6 +725,8 @@ struct inst_arm
 
 static const struct inst_arm tbl_arm[] = {
     { 0x0e000000, 0x0a000000, arm_disasm_branch },
+    { 0x0fc000f0, 0x00000090, arm_disasm_mul },
+    { 0x0f8000f0, 0x00800090, arm_disasm_longmul },
     { 0x0e000090, 0x00000090, arm_disasm_halfwordtrans },
     { 0x0ffffff0, 0x012fff00, arm_disasm_branchreg },
     { 0x0ffffff0, 0x012fff10, arm_disasm_branchxchg },
