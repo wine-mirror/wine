@@ -591,9 +591,17 @@ static void VCP_UI_RegisterProgressClass(void)
 static RETERR16 VCP_UI_NodeCompare(LPVIRTNODE vn1, LPVIRTNODE vn2)
 {
     LPCSTR file1, file2;
+    int ret;
     file1 = vsmGetStringRawName16(vn1->vfsSrc.vhstrFileName);
     file2 = vsmGetStringRawName16(vn2->vfsSrc.vhstrFileName);
-    return (RETERR16)strcmp(file1, file2);
+
+    ret = strcmp(file1, file2);
+    /* Looks too complicated, but in optimized strcpy we might get
+     * a 32bit wide difference and would truncate it to 16 bit, so
+     * erroneously returning equality. */
+    if (ret < 0) return -1;
+    if (ret > 0) return  1;
+    return 0;
 }
 
 static RETERR16 VCP_UI_CopyStart(void)
