@@ -254,7 +254,14 @@ SEGPTR WINAPI KERNEL_AnsiLower16( SEGPTR strOrChar )
  */
 INT16 WINAPI KERNEL_lstrcmp16( LPCSTR str1, LPCSTR str2 )
 {
-    return (INT16)strcmp( str1, str2 );
+    int ret = strcmp( str1, str2 );
+
+    /* Looks too complicated, but in optimized strcpy we might get
+     * a 32bit wide difference and would truncate it to 16 bit, so
+     * erroneously returning equality. */
+    if (ret < 0) return -1;
+    if (ret > 0) return  1;
+    return 0;
 }
 
 /***********************************************************************
