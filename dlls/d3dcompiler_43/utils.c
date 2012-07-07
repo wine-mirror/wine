@@ -1058,10 +1058,8 @@ static const char *debug_node_type(enum hlsl_ir_node_type type)
         "HLSL_IR_FUNCTION_DECL",
     };
 
-    if (type > sizeof(names) / sizeof(names[0]))
-    {
+    if (type >= sizeof(names) / sizeof(names[0]))
         return "Unexpected node type";
-    }
     return names[type];
 }
 
