@@ -662,6 +662,9 @@ struct x11drv_mode_info *X11DRV_Settings_SetHandlers(const char *name,
                                                      unsigned int nmodes,
                                                      int reserve_depths) DECLSPEC_HIDDEN;
 
+void X11DRV_XF86VM_Init(void) DECLSPEC_HIDDEN;
+void X11DRV_XF86VM_Cleanup(void) DECLSPEC_HIDDEN;
+
 /* XIM support */
 extern BOOL X11DRV_InitXIM( const char *input_style ) DECLSPEC_HIDDEN;
 extern XIC X11DRV_CreateIC(XIM xim, struct x11drv_win_data *data) DECLSPEC_HIDDEN;

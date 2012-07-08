@@ -34,8 +34,6 @@
 #include <X11/extensions/xf86vmproto.h>
 #endif
 
-#include "xvidmode.h"
-
 #include "windef.h"
 #include "wingdi.h"
 #include "ddrawi.h"
@@ -406,6 +404,17 @@ static BOOL X11DRV_XF86VM_SetGammaRamp(LPDDGAMMARAMP ramp)
   wine_tsx11_unlock();
 #endif /* X_XF86VidModeSetGamma */
   return ret;
+}
+
+#else /* SONAME_LIBXXF86VM */
+
+void X11DRV_XF86VM_Init(void)
+{
+    TRACE("XVidMode support not compiled in.\n");
+}
+
+void X11DRV_XF86VM_Cleanup(void)
+{
 }
 
 #endif /* SONAME_LIBXXF86VM */
