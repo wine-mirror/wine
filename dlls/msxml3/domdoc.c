@@ -488,7 +488,6 @@ static xmlDocPtr doparse(domdoc* This, char const* ptr, int len, xmlCharEncoding
         xmlSAX2EndElementNs,            /* endElementNs */
         sax_serror                      /* serror */
     };
-    xmlInitParser();
 
     pctx = xmlCreateMemoryParserCtxt(ptr, len);
     if (!pctx)
