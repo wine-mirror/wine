@@ -668,6 +668,7 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
     struct schan_buffers *out_buffers;
     struct schan_credentials *cred;
     struct schan_transport transport;
+    SIZE_T expected_size = ~0UL;
     SECURITY_STATUS ret;
 
     TRACE("%p %p %s 0x%08x %d %d %p %d %p %p %p %p\n", phCredential, phContext,
@@ -714,7 +715,7 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
     }
     else
     {
-        unsigned int expected_size;
+        SIZE_T record_size = 0;
         unsigned char *ptr;
         SecBuffer *buffer;
         int idx;
@@ -727,16 +728,28 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
             return SEC_E_INCOMPLETE_MESSAGE;
 
         buffer = &pInput->pBuffers[idx];
-        if (buffer->cbBuffer < 5)
-            return SEC_E_INCOMPLETE_MESSAGE;
-
         ptr = buffer->pvBuffer;
-        expected_size = 5 + ((ptr[3] << 8) | ptr[4]);
-        if (buffer->cbBuffer < expected_size)
+        expected_size = 0;
+
+        while (buffer->cbBuffer > expected_size + 5)
         {
-            TRACE("Expected %u bytes, but buffer only contains %u bytes.\n", expected_size, buffer->cbBuffer);
+            record_size = 5 + ((ptr[3] << 8) | ptr[4]);
+
+            if (buffer->cbBuffer < expected_size + record_size)
+                break;
+
+            expected_size += record_size;
+            ptr += record_size;
+        }
+
+        if (!expected_size)
+        {
+            TRACE("Expected at least %lu bytes, but buffer only contains %u bytes.\n",
+                    max(6, record_size), buffer->cbBuffer);
             return SEC_E_INCOMPLETE_MESSAGE;
         }
+
+        TRACE("Using expected_size %lu.\n", expected_size);
 
         ctx = schan_get_object(phContext->dwLower, SCHAN_HANDLE_CTX);
     }
@@ -745,6 +758,7 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
 
     transport.ctx = ctx;
     init_schan_buffers(&transport.in, pInput, schan_init_sec_ctx_get_next_buffer);
+    transport.in.limit = expected_size;
     init_schan_buffers(&transport.out, pOutput, schan_init_sec_ctx_get_next_buffer);
     schan_imp_set_session_transport(ctx->session, &transport);
 
