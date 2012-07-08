@@ -209,7 +209,6 @@ static void init_libxslt(void)
 #endif
 }
 
-
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 {
     MSXML_hInstance = hInstDLL;

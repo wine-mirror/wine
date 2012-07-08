@@ -1504,9 +1504,16 @@ static const WCHAR szComplete6[] = {
     '<','o','p','e','n','>','<','/','o','p','e','n','>','\n',0
 };
 
-static const CHAR szNonUnicodeXML[] =
-"<?xml version='1.0' encoding='Windows-1252'?>\n"
-"<open></open>\n";
+#define DECL_WIN_1252 \
+"<?xml version=\"1.0\" encoding=\"Windows-1252\"?>"
+
+static const char win1252xml[] =
+DECL_WIN_1252
+"<open></open>";
+
+static const char win1252decl[] =
+DECL_WIN_1252
+;
 
 static const char szExampleXML[] =
 "<?xml version='1.0' encoding='utf-8'?>\n"
@@ -2327,7 +2334,7 @@ if (0)
 
     /* try a BSTR containing a Windows-1252 document */
     b = VARIANT_TRUE;
-    str = SysAllocStringByteLen( szNonUnicodeXML, sizeof(szNonUnicodeXML) - 1 );
+    str = SysAllocStringByteLen( win1252xml, strlen(win1252xml) );
     r = IXMLDOMDocument_loadXML( doc, str, &b );
     ok( r == S_FALSE, "loadXML succeeded\n");
     ok( b == VARIANT_FALSE, "succeeded in loading XML string\n");
@@ -7238,10 +7245,14 @@ static void test_save(void)
     IXMLDOMElement *root;
     BSTR sOrig, sNew, filename;
     char buffer[100];
+    IStream *stream;
+    HGLOBAL global;
+    VARIANT_BOOL b;
     DWORD read = 0;
     VARIANT dest;
     HANDLE hfile;
     HRESULT hr;
+    char *ptr;
 
     doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
@@ -7326,6 +7337,40 @@ static void test_save(void)
 
     hr = IXMLDOMDocument_save(doc, dest);
     EXPECT_HR(hr, S_OK);
+
+    /* loaded data contains xml declaration */
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_(win1252xml), &b);
+    EXPECT_HR(hr, S_OK);
+
+    CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    V_VT(&dest) = VT_UNKNOWN;
+    V_UNKNOWN(&dest) = (IUnknown*)stream;
+    hr = IXMLDOMDocument_save(doc, dest);
+    EXPECT_HR(hr, S_OK);
+
+    hr = GetHGlobalFromStream(stream, &global);
+    EXPECT_HR(hr, S_OK);
+    ptr = GlobalLock(global);
+    ok(!memcmp(ptr, win1252decl, strlen(win1252decl)), "got wrong xml declaration\n");
+    GlobalUnlock(global);
+    IStream_Release(stream);
+
+    /* loaded data without xml declaration */
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_("<a/>"), &b);
+    EXPECT_HR(hr, S_OK);
+
+    CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    V_VT(&dest) = VT_UNKNOWN;
+    V_UNKNOWN(&dest) = (IUnknown*)stream;
+    hr = IXMLDOMDocument_save(doc, dest);
+    EXPECT_HR(hr, S_OK);
+
+    hr = GetHGlobalFromStream(stream, &global);
+    EXPECT_HR(hr, S_OK);
+    ptr = GlobalLock(global);
+    ok(ptr[0] == '<' && ptr[1] != '?', "got wrong start tag %c%c\n", ptr[0], ptr[1]);
+    GlobalUnlock(global);
+    IStream_Release(stream);
 
     IXMLDOMDocument_Release(doc);
     free_bstrs();
@@ -10697,7 +10742,7 @@ static void test_load(void)
     ok(hfile != INVALID_HANDLE_VALUE, "failed to create test file\n");
     if(hfile == INVALID_HANDLE_VALUE) return;
 
-    ret = WriteFile(hfile, szNonUnicodeXML, sizeof(szNonUnicodeXML)-1, &written, NULL);
+    ret = WriteFile(hfile, win1252xml, strlen(win1252xml), &written, NULL);
     ok(ret, "WriteFile failed\n");
 
     CloseHandle(hfile);

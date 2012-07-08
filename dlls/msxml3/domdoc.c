@@ -371,13 +371,17 @@ void xmldoc_link_xmldecl(xmlDocPtr doc, xmlNodePtr node)
 /* unlinks a first "<?xml" child if it was created */
 xmlNodePtr xmldoc_unlink_xmldecl(xmlDocPtr doc)
 {
-    xmlNodePtr node;
+    static const xmlChar xmlA[] = "xml";
+    xmlNodePtr node, first_child;
 
     assert(doc != NULL);
 
-    if (doc->standalone != -1)
+    /* xml declaration node could be created automatically after parsing or added
+       to a tree later */
+    first_child = doc->children;
+    if (first_child && first_child->type == XML_PI_NODE && xmlStrEqual(first_child->name, xmlA))
     {
-        node = doc->children;
+        node = first_child;
         xmlUnlinkNode( node );
     }
     else
@@ -2383,8 +2387,9 @@ static HRESULT WINAPI domdoc_save(
             ret = IUnknown_QueryInterface(pUnk, &IID_IStream, (void**)&stream);
             if(ret == S_OK)
             {
+                int options = get_doc(This)->standalone == -1 ? XML_SAVE_NO_DECL : 0;
                 ctx = xmlSaveToIO(domdoc_stream_save_writecallback,
-                    domdoc_stream_save_closecallback, stream, NULL, XML_SAVE_NO_DECL);
+                    domdoc_stream_save_closecallback, stream, NULL, options);
 
                 if(!ctx)
                 {
