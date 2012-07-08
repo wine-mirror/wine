@@ -20,8 +20,11 @@
 
 #include "config.h"
 #include "wine/port.h"
+#include "wine/debug.h"
 #include <string.h>
 #include <stdio.h>
+
+WINE_DEFAULT_DEBUG_CHANNEL(xrandr);
 
 #ifdef SONAME_LIBXRANDR
 
@@ -29,15 +32,10 @@
 #include <X11/extensions/Xrandr.h>
 #include "x11drv.h"
 
-#include "xrandr.h"
-
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "wine/library.h"
-#include "wine/debug.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(xrandr);
 
 static void *xrandr_handle;
 
@@ -297,6 +295,13 @@ void X11DRV_XRandR_Init(void)
 
     TRACE("Available DD modes: count=%d\n", dd_mode_count);
     TRACE("Enabling XRandR\n");
+}
+
+#else /* SONAME_LIBXRANDR */
+
+void X11DRV_XRandR_Init(void)
+{
+    TRACE("XRandR support not compiled in.\n");
 }
 
 #endif /* SONAME_LIBXRANDR */

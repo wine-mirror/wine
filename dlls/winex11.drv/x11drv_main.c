@@ -47,7 +47,6 @@
 #include "winreg.h"
 
 #include "x11drv.h"
-#include "xrandr.h"
 #include "xcomposite.h"
 #include "wine/server.h"
 #include "wine/debug.h"
@@ -576,10 +575,8 @@ static BOOL process_attach(void)
 
     /* initialize XVidMode */
     X11DRV_XF86VM_Init();
-#ifdef SONAME_LIBXRANDR
     /* initialize XRandR */
     X11DRV_XRandR_Init();
-#endif
 #ifdef SONAME_LIBXCOMPOSITE
     X11DRV_XComposite_Init();
 #endif
