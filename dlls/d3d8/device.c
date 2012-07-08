@@ -598,7 +598,7 @@ static HRESULT WINAPI d3d8_device_Reset(IDirect3DDevice8 *iface,
 
     wined3d_mutex_lock();
     wined3d_swapchain_desc_from_present_parameters(&swapchain_desc, present_parameters);
-    if (SUCCEEDED(hr = wined3d_device_reset(device->wined3d_device, &swapchain_desc, reset_enum_callback)))
+    if (SUCCEEDED(hr = wined3d_device_reset(device->wined3d_device, &swapchain_desc, NULL, reset_enum_callback)))
     {
         hr = wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_POINTSIZE_MIN, 0);
         device->lost = FALSE;

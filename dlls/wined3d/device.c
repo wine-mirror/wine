@@ -5136,18 +5136,18 @@ err:
 
 /* Do not call while under the GL lock. */
 HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
-        const struct wined3d_swapchain_desc *swapchain_desc,
+        const struct wined3d_swapchain_desc *swapchain_desc, const struct wined3d_display_mode *mode,
         wined3d_device_reset_cb callback)
 {
     struct wined3d_resource *resource, *cursor;
     struct wined3d_swapchain *swapchain;
-    struct wined3d_display_mode mode;
+    struct wined3d_display_mode m;
     BOOL DisplayModeChanged = FALSE;
     BOOL update_desc = FALSE;
     unsigned int i;
     HRESULT hr;
 
-    TRACE("device %p, swapchain_desc %p.\n", device, swapchain_desc);
+    TRACE("device %p, swapchain_desc %p, mode %p, callback %p.\n", device, swapchain_desc, mode, callback);
 
     if (FAILED(hr = wined3d_device_get_swapchain(device, 0, &swapchain)))
     {
@@ -5254,21 +5254,26 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     if (swapchain_desc->enable_auto_depth_stencil)
         wined3d_device_set_depth_stencil(device, device->auto_depth_stencil);
 
-    if (swapchain_desc->windowed)
+    if (mode)
     {
-        mode.width = swapchain->orig_width;
-        mode.height = swapchain->orig_height;
-        mode.refresh_rate = 0;
-        mode.format_id = swapchain->desc.backbuffer_format;
-        mode.scanline_ordering = WINED3D_SCANLINE_ORDERING_UNKNOWN;
+        DisplayModeChanged = TRUE;
+        m = *mode;
+    }
+    else if (swapchain_desc->windowed)
+    {
+        m.width = swapchain->orig_width;
+        m.height = swapchain->orig_height;
+        m.refresh_rate = 0;
+        m.format_id = swapchain->desc.backbuffer_format;
+        m.scanline_ordering = WINED3D_SCANLINE_ORDERING_UNKNOWN;
     }
     else
     {
-        mode.width = swapchain_desc->backbuffer_width;
-        mode.height = swapchain_desc->backbuffer_height;
-        mode.refresh_rate = swapchain_desc->refresh_rate;
-        mode.format_id = swapchain_desc->backbuffer_format;
-        mode.scanline_ordering = WINED3D_SCANLINE_ORDERING_UNKNOWN;
+        m.width = swapchain_desc->backbuffer_width;
+        m.height = swapchain_desc->backbuffer_height;
+        m.refresh_rate = swapchain_desc->refresh_rate;
+        m.format_id = swapchain_desc->backbuffer_format;
+        m.scanline_ordering = WINED3D_SCANLINE_ORDERING_UNKNOWN;
     }
 
     /* Should Width == 800 && Height == 0 set 800x600? */
@@ -5339,7 +5344,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     if (!swapchain_desc->windowed != !swapchain->desc.windowed
             || DisplayModeChanged)
     {
-        if (FAILED(hr = wined3d_set_adapter_display_mode(device->wined3d, device->adapter->ordinal, &mode)))
+        if (FAILED(hr = wined3d_set_adapter_display_mode(device->wined3d, device->adapter->ordinal, &m)))
         {
             WARN("Failed to set display mode, hr %#x.\n", hr);
             wined3d_swapchain_decref(swapchain);

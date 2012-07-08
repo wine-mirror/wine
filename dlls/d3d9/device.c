@@ -583,7 +583,7 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH d3d9_device_Reset(IDirect3DDevice9Ex *if
 
     wined3d_mutex_lock();
     wined3d_swapchain_desc_from_present_parameters(&swapchain_desc, present_parameters);
-    hr = wined3d_device_reset(device->wined3d_device, &swapchain_desc, reset_enum_callback);
+    hr = wined3d_device_reset(device->wined3d_device, &swapchain_desc, NULL, reset_enum_callback);
     if (FAILED(hr))
         device->not_reset = TRUE;
     else
@@ -2954,9 +2954,33 @@ static HRESULT WINAPI d3d9_device_CreateDepthStencilSurfaceEx(IDirect3DDevice9Ex
 static HRESULT WINAPI d3d9_device_ResetEx(IDirect3DDevice9Ex *iface,
         D3DPRESENT_PARAMETERS *present_parameters, D3DDISPLAYMODEEX *mode)
 {
-    FIXME("iface %p, present_parameters %p, mode %p stub!\n", iface, present_parameters, mode);
+    struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
+    struct wined3d_swapchain_desc swapchain_desc;
+    struct wined3d_display_mode wined3d_mode;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, present_parameters %p, mode %p.\n", iface, present_parameters, mode);
+
+    if (mode)
+    {
+        wined3d_mode.width = mode->Width;
+        wined3d_mode.height = mode->Height;
+        wined3d_mode.refresh_rate = mode->RefreshRate;
+        wined3d_mode.format_id = wined3dformat_from_d3dformat(mode->Format);
+        wined3d_mode.scanline_ordering = mode->ScanLineOrdering;
+    }
+
+    wined3d_mutex_lock();
+    wined3d_swapchain_desc_from_present_parameters(&swapchain_desc, present_parameters);
+    hr = wined3d_device_reset(device->wined3d_device, &swapchain_desc,
+            mode ? &wined3d_mode : NULL, reset_enum_callback);
+    if (FAILED(hr))
+        device->not_reset = TRUE;
+    else
+        device->not_reset = FALSE;
+    wined3d_mutex_unlock();
+
+    return hr;
 }
 
 static HRESULT WINAPI d3d9_device_GetDisplayModeEx(IDirect3DDevice9Ex *iface,
