@@ -2403,6 +2403,8 @@ static HRESULT WINAPI domdoc_save(
     case VT_BSTR:
     case VT_BSTR | VT_BYREF:
         {
+            int options = get_doc(This)->standalone == -1 ? XML_SAVE_NO_DECL : 0;
+
             /* save with file path */
             HANDLE handle = CreateFileW( (V_VT(&destination) & VT_BYREF)? *V_BSTRREF(&destination) : V_BSTR(&destination),
                                          GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
@@ -2414,7 +2416,7 @@ static HRESULT WINAPI domdoc_save(
 
             /* disable top XML declaration */
             ctx = xmlSaveToIO(domdoc_save_writecallback, domdoc_save_closecallback,
-                              handle, NULL, XML_SAVE_NO_DECL);
+                              handle, NULL, options);
             if (!ctx)
             {
                 CloseHandle(handle);
