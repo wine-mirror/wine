@@ -3304,6 +3304,18 @@ static void test_Close(IWebBrowser2 *wb, BOOL do_download)
     IOleObject_Release(oo);
 }
 
+#define TEST_DOWNLOAD    0x0001
+#define TEST_NOOLECMD    0x0002
+#define TEST_NODOCHOST   0x0004
+
+static void init_test(DWORD flags)
+{
+    is_downloading = (flags & TEST_DOWNLOAD) != 0;
+    is_first_load = TRUE;
+    use_container_olecmd = !(flags & TEST_NOOLECMD);
+    use_container_dochostui = !(flags & TEST_NODOCHOST);
+}
+
 static void test_WebBrowser(BOOL do_download, BOOL do_close)
 {
     IUnknown *unk = NULL;
@@ -3313,10 +3325,7 @@ static void test_WebBrowser(BOOL do_download, BOOL do_close)
     if (FAILED(create_WebBrowser(&unk)))
         return;
 
-    is_downloading = FALSE;
-    is_first_load = TRUE;
-    use_container_olecmd = TRUE;
-    use_container_dochostui = TRUE;
+    init_test(do_download ? TEST_DOWNLOAD : 0);
 
     hres = IUnknown_QueryInterface(unk, &IID_IWebBrowser2, (void**)&wb);
     ok(hres == S_OK, "Could not get IWebBrowser2 iface: %08x\n", hres);
@@ -3426,10 +3435,7 @@ static void test_WebBrowser_slim_container(void)
     HRESULT hres;
     ULONG ref;
 
-    is_downloading = FALSE;
-    is_first_load = TRUE;
-    use_container_olecmd = FALSE;
-    use_container_dochostui = FALSE;
+    init_test(TEST_NOOLECMD|TEST_NODOCHOST);
 
     /* Setup stage */
     if (FAILED(create_WebBrowser(&unk)))
@@ -3465,9 +3471,7 @@ static void test_WebBrowser_DoVerb(void)
     ULONG ref;
     BOOL res;
 
-    is_downloading = FALSE;
-    is_first_load = TRUE;
-    use_container_olecmd = FALSE;
+    init_test(0);
 
     if (FAILED(create_WebBrowser(&unk)))
         return;
