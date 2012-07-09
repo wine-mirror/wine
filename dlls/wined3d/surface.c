@@ -2661,6 +2661,9 @@ static void surface_allocate_surface(struct wined3d_surface *surface, const stru
         internal = format->glInternal;
     }
 
+    if (!internal)
+        FIXME("No GL internal format for format %s.\n", debug_d3dformat(format->id));
+
     if (format->flags & WINED3DFMT_FLAG_HEIGHT_SCALE)
     {
         height *= format->height_scale.numerator;
