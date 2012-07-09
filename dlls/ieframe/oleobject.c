@@ -557,8 +557,8 @@ static HRESULT WINAPI OleObject_DoVerb(IOleObject *iface, LONG iVerb, struct tag
 {
     WebBrowser *This = impl_from_IOleObject(iface);
 
-    TRACE("(%p)->(%d %p %p %d %p %p)\n", This, iVerb, lpmsg, pActiveSite, lindex, hwndParent,
-            lprcPosRect);
+    TRACE("(%p)->(%d %p %p %d %p %s)\n", This, iVerb, lpmsg, pActiveSite, lindex, hwndParent,
+          wine_dbgstr_rect(lprcPosRect));
 
     switch (iVerb)
     {
@@ -573,6 +573,8 @@ static HRESULT WINAPI OleObject_DoVerb(IOleObject *iface, LONG iVerb, struct tag
         return activate_inplace(This, pActiveSite);
     case OLEIVERB_HIDE:
         TRACE("OLEIVERB_HIDE\n");
+        if(This->inplace)
+            IOleInPlaceSite_OnInPlaceDeactivate(This->inplace);
         if(This->shell_embedding_hwnd)
             ShowWindow(This->shell_embedding_hwnd, SW_HIDE);
         return S_OK;
