@@ -21,20 +21,14 @@
 #include "config.h"
 #include "wine/port.h"
 #include "wine/debug.h"
-#include <string.h>
-#include <stdio.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(xrandr);
 
 #ifdef SONAME_LIBXRANDR
 
-#include <X11/Xlib.h>
 #include <X11/extensions/Xrandr.h>
 #include "x11drv.h"
 
-#include "windef.h"
-#include "winbase.h"
-#include "wingdi.h"
 #include "wine/library.h"
 
 static void *xrandr_handle;
