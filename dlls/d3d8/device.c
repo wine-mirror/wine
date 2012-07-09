@@ -2856,7 +2856,7 @@ static HRESULT CDECL device_parent_create_surface(struct wined3d_device_parent *
 
 static HRESULT CDECL device_parent_create_rendertarget(struct wined3d_device_parent *device_parent,
         void *container_parent, UINT width, UINT height, enum wined3d_format_id format,
-        enum wined3d_multisample_type multisample_type, DWORD multisample_quality, BOOL lockable,
+        enum wined3d_multisample_type multisample_type, DWORD multisample_quality,
         struct wined3d_surface **surface)
 {
     struct d3d8_device *device = device_from_device_parent(device_parent);
@@ -2864,12 +2864,12 @@ static HRESULT CDECL device_parent_create_rendertarget(struct wined3d_device_par
     HRESULT hr;
 
     TRACE("device_parent %p, container_parent %p, width %u, height %u, format %#x, multisample_type %#x,\n"
-            "\tmultisample_quality %u, lockable %u, surface %p.\n",
+            "\tmultisample_quality %u, surface %p.\n",
             device_parent, container_parent, width, height, format,
-            multisample_type, multisample_quality, lockable, surface);
+            multisample_type, multisample_quality, surface);
 
     hr = IDirect3DDevice8_CreateRenderTarget(&device->IDirect3DDevice8_iface, width, height,
-            d3dformat_from_wined3dformat(format), multisample_type, lockable, (IDirect3DSurface8 **)&d3d_surface);
+            d3dformat_from_wined3dformat(format), multisample_type, TRUE, (IDirect3DSurface8 **)&d3d_surface);
     if (FAILED(hr))
     {
         WARN("Failed to create rendertarget, hr %#x.\n", hr);

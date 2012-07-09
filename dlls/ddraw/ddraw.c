@@ -5444,17 +5444,16 @@ static const struct wined3d_parent_ops ddraw_frontbuffer_parent_ops =
 
 static HRESULT CDECL device_parent_create_rendertarget(struct wined3d_device_parent *device_parent,
         void *container_parent, UINT width, UINT height, enum wined3d_format_id format,
-        enum wined3d_multisample_type multisample_type, DWORD multisample_quality, BOOL lockable,
+        enum wined3d_multisample_type multisample_type, DWORD multisample_quality,
         struct wined3d_surface **surface)
 {
     struct ddraw *ddraw = ddraw_from_device_parent(device_parent);
-    DWORD flags = 0;
     HRESULT hr;
 
     TRACE("device_parent %p, container_parent %p, width %u, height %u, format %#x, multisample_type %#x,\n"
-            "\tmultisample_quality %u, lockable %u, surface %p.\n",
+            "\tmultisample_quality %u, surface %p.\n",
             device_parent, container_parent, width, height, format, multisample_type,
-            multisample_quality, lockable, surface);
+            multisample_quality, surface);
 
     if (ddraw->wined3d_frontbuffer)
     {
@@ -5462,12 +5461,9 @@ static HRESULT CDECL device_parent_create_rendertarget(struct wined3d_device_par
         return E_FAIL;
     }
 
-    if (lockable)
-        flags |= WINED3D_SURFACE_MAPPABLE;
-
     hr = wined3d_surface_create(ddraw->wined3d_device, width, height, format, 0,
             WINED3DUSAGE_RENDERTARGET, WINED3D_POOL_DEFAULT, multisample_type, multisample_quality,
-            DefaultSurfaceType, flags, ddraw, &ddraw_frontbuffer_parent_ops, surface);
+            DefaultSurfaceType, WINED3D_SURFACE_MAPPABLE, ddraw, &ddraw_frontbuffer_parent_ops, surface);
     if (SUCCEEDED(hr))
         ddraw->wined3d_frontbuffer = *surface;
 
