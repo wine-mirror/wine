@@ -666,12 +666,11 @@ done:
 
 static VOID set_installer_properties(MSIPACKAGE *package)
 {
-    WCHAR pth[MAX_PATH];
     WCHAR *ptr;
     OSVERSIONINFOEXW OSVersion;
     MEMORYSTATUSEX msex;
     DWORD verval, len;
-    WCHAR verstr[10], bufstr[20];
+    WCHAR pth[MAX_PATH], verstr[11], bufstr[22];
     HDC dc;
     HKEY hkey;
     LPWSTR username, companyname;
@@ -701,14 +700,13 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     static const WCHAR szVersion9x[] = {'V','e','r','s','i','o','n','9','X',0};
     static const WCHAR szVersionNT[] = {'V','e','r','s','i','o','n','N','T',0};
     static const WCHAR szMsiNTProductType[] = {'M','s','i','N','T','P','r','o','d','u','c','t','T','y','p','e',0};
-    static const WCHAR szFormat[] = {'%','l','i',0};
+    static const WCHAR szFormat[] = {'%','u',0};
+    static const WCHAR szFormat2[] = {'%','u','.','%','u',0};
     static const WCHAR szWindowsBuild[] = {'W','i','n','d','o','w','s','B','u','i','l','d',0};
     static const WCHAR szServicePackLevel[] = {'S','e','r','v','i','c','e','P','a','c','k','L','e','v','e','l',0};
-    static const WCHAR szSix[] = {'6',0 };
     static const WCHAR szVersionMsi[] = { 'V','e','r','s','i','o','n','M','s','i',0 };
     static const WCHAR szVersionDatabase[] = { 'V','e','r','s','i','o','n','D','a','t','a','b','a','s','e',0 };
     static const WCHAR szPhysicalMemory[] = { 'P','h','y','s','i','c','a','l','M','e','m','o','r','y',0 };
-    static const WCHAR szFormat2[] = {'%','l','i','.','%','l','i',0};
     static const WCHAR szScreenX[] = {'S','c','r','e','e','n','X',0};
     static const WCHAR szScreenY[] = {'S','c','r','e','e','n','Y',0};
     static const WCHAR szColorBits[] = {'C','o','l','o','r','B','i','t','s',0};
@@ -871,8 +869,8 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     }
     sprintfW(verstr, szFormat, OSVersion.dwBuildNumber);
     msi_set_property(package->db, szWindowsBuild, verstr);
-    /* just fudge this */
-    msi_set_property(package->db, szServicePackLevel, szSix);
+    sprintfW(verstr, szFormat, OSVersion.wServicePackMajor);
+    msi_set_property(package->db, szServicePackLevel, verstr);
 
     sprintfW( bufstr, szFormat2, MSI_MAJORVERSION, MSI_MINORVERSION);
     msi_set_property( package->db, szVersionMsi, bufstr );
