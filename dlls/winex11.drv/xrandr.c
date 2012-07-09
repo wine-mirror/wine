@@ -96,32 +96,6 @@ static int XRandRErrorHandler(Display *dpy, XErrorEvent *event, void *arg)
     return 1;
 }
 
-
-/* create the mode structures */
-static void make_modes(void)
-{
-    int i, j;
-
-    for (i=0; i<real_xrandr_sizes_count; i++)
-    {
-        if (real_xrandr_rates_count[i])
-        {
-            for (j=0; j < real_xrandr_rates_count[i]; j++)
-            {
-                X11DRV_Settings_AddOneMode(real_xrandr_sizes[i].width, 
-                                           real_xrandr_sizes[i].height, 
-                                           0, real_xrandr_rates[i][j]);
-            }
-        }
-        else
-        {
-            X11DRV_Settings_AddOneMode(real_xrandr_sizes[i].width, 
-                                       real_xrandr_sizes[i].height, 
-                                       0, 0);
-        }
-    }
-}
-
 static int X11DRV_XRandR_GetCurrentMode(void)
 {
     SizeID size;
@@ -221,10 +195,79 @@ static LONG X11DRV_XRandR_SetCurrentMode(int mode)
     return DISP_CHANGE_FAILED;
 }
 
+static void xrandr_init_modes(void)
+{
+    int i, j, nmodes = 0;
+
+    real_xrandr_sizes = pXRRSizes( gdi_display, DefaultScreen(gdi_display), &real_xrandr_sizes_count);
+    if (real_xrandr_sizes_count <= 0) return;
+
+    TRACE("XRandR: found %u sizes.\n", real_xrandr_sizes_count);
+    real_xrandr_rates = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                   sizeof(short *) * real_xrandr_sizes_count );
+    real_xrandr_rates_count = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                         sizeof(int) * real_xrandr_sizes_count );
+    for (i = 0; i < real_xrandr_sizes_count; ++i)
+    {
+        real_xrandr_rates[i] = pXRRRates( gdi_display, DefaultScreen(gdi_display),
+                                          i, &real_xrandr_rates_count[i] );
+        TRACE("- at %d: %dx%d (%d rates):", i, real_xrandr_sizes[i].width,
+              real_xrandr_sizes[i].height, real_xrandr_rates_count[i]);
+        if (real_xrandr_rates_count[i])
+        {
+            nmodes += real_xrandr_rates_count[i];
+            for (j = 0; j < real_xrandr_rates_count[i]; ++j)
+            {
+                if (j > 0)
+                    TRACE(",");
+                TRACE("  %d", real_xrandr_rates[i][j]);
+            }
+        }
+        else
+        {
+            ++nmodes;
+            TRACE(" <default>");
+        }
+        TRACE(" Hz\n");
+    }
+
+    real_xrandr_modes_count = nmodes;
+    TRACE("XRandR modes: count=%d\n", nmodes);
+
+    dd_modes = X11DRV_Settings_SetHandlers( "XRandR",
+                                            X11DRV_XRandR_GetCurrentMode,
+                                            X11DRV_XRandR_SetCurrentMode,
+                                            nmodes, 1 );
+
+    for (i = 0; i < real_xrandr_sizes_count; ++i)
+    {
+        if (real_xrandr_rates_count[i])
+        {
+            for (j = 0; j < real_xrandr_rates_count[i]; ++j)
+            {
+                X11DRV_Settings_AddOneMode( real_xrandr_sizes[i].width,
+                                            real_xrandr_sizes[i].height,
+                                            0, real_xrandr_rates[i][j] );
+            }
+        }
+        else
+        {
+            X11DRV_Settings_AddOneMode( real_xrandr_sizes[i].width,
+                                        real_xrandr_sizes[i].height,
+                                        0, 0 );
+        }
+    }
+
+    X11DRV_Settings_AddDepthModes();
+    dd_mode_count = X11DRV_Settings_GetModeCount();
+
+    TRACE("Available DD modes: count=%d\n", dd_mode_count);
+    TRACE("Enabling XRandR\n");
+}
+
 void X11DRV_XRandR_Init(void)
 {
     Bool ok;
-    int i, nmodes = 0;
 
     if (xrandr_major) return; /* already initialized? */
     if (!usexrandr) return; /* disabled in config */
@@ -243,52 +286,9 @@ void X11DRV_XRandR_Init(void)
     if (ok)
     {
         TRACE("Found XRandR - major: %d, minor: %d\n", xrandr_major, xrandr_minor);
-        /* retrieve modes */
-        real_xrandr_sizes = pXRRSizes(gdi_display, DefaultScreen(gdi_display), &real_xrandr_sizes_count);
-        ok = (real_xrandr_sizes_count>0);
-    }
-    if (ok)
-    {
-        TRACE("XRandR: found %u resolutions sizes\n", real_xrandr_sizes_count);
-        real_xrandr_rates = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(short *) * real_xrandr_sizes_count);
-        real_xrandr_rates_count = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(int) * real_xrandr_sizes_count);
-        for (i=0; i < real_xrandr_sizes_count; i++)
-        {
-            real_xrandr_rates[i] = pXRRRates (gdi_display, DefaultScreen(gdi_display), i, &(real_xrandr_rates_count[i]));
-	    TRACE("- at %d: %dx%d (%d rates):", i, real_xrandr_sizes[i].width, real_xrandr_sizes[i].height, real_xrandr_rates_count[i]);
-            if (real_xrandr_rates_count[i])
-            {
-                int j;
-                nmodes += real_xrandr_rates_count[i];
-		for (j = 0; j < real_xrandr_rates_count[i]; ++j) {
-		  if (j > 0) TRACE(",");
-		  TRACE("  %d", real_xrandr_rates[i][j]);
-		}
-            }
-            else
-            {
-                nmodes++;
-		TRACE(" <default>");
-            }
-	    TRACE(" Hz\n");
-        }
+        xrandr_init_modes();
     }
     wine_tsx11_unlock();
-    if (!ok) return;
-
-    real_xrandr_modes_count = nmodes;
-    TRACE("XRandR modes: count=%d\n", nmodes);
-
-    dd_modes = X11DRV_Settings_SetHandlers("XRandR", 
-                                           X11DRV_XRandR_GetCurrentMode, 
-                                           X11DRV_XRandR_SetCurrentMode, 
-                                           nmodes, 1);
-    make_modes();
-    X11DRV_Settings_AddDepthModes();
-    dd_mode_count = X11DRV_Settings_GetModeCount();
-
-    TRACE("Available DD modes: count=%d\n", dd_mode_count);
-    TRACE("Enabling XRandR\n");
 }
 
 #else /* SONAME_LIBXRANDR */
