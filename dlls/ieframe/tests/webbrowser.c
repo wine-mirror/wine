@@ -1753,8 +1753,7 @@ static HWND create_container_window(void)
 
     RegisterClassExW(&wndclass);
     return CreateWindowW(wszWebBrowserContainer, wszWebBrowserContainer,
-            WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-            CW_USEDEFAULT, NULL, NULL, NULL, NULL);
+            WS_OVERLAPPEDWINDOW, 10, 10, 600, 600, NULL, NULL, NULL, NULL);
 }
 
 static void test_DoVerb(IUnknown *unk)
@@ -1803,6 +1802,40 @@ static void test_DoVerb(IUnknown *unk)
     ok(hres == S_OK, "DoVerb failed: %08x\n", hres);
 
     IOleObject_Release(oleobj);
+}
+
+static void call_DoVerb(IUnknown *unk, LONG verb)
+{
+    IOleObject *oleobj;
+    RECT rect = {60,60,600,600};
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IOleObject, (void**)&oleobj);
+    ok(hres == S_OK, "QueryInterface(IID_OleObject) failed: %08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    hres = IOleObject_DoVerb(oleobj, verb, NULL, &ClientSite,
+                             -1, container_hwnd, &rect);
+    ok(hres == S_OK, "DoVerb failed: %08x\n", hres);
+
+    IOleObject_Release(oleobj);
+}
+
+static HWND get_hwnd(IUnknown *unk)
+{
+    IOleInPlaceObject *inplace;
+    HWND hwnd;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IOleInPlaceObject, (void**)&inplace);
+    ok(hres == S_OK, "QueryInterface(IID_OleInPlaceObject) failed: %08x\n", hres);
+
+    hres = IOleInPlaceObject_GetWindow(inplace, &hwnd);
+    ok(hres == S_OK, "GetWindow failed: %08x\n", hres);
+
+    IOleInPlaceObject_Release(inplace);
+    return hwnd;
 }
 
 static void test_GetMiscStatus(IOleObject *oleobj)
@@ -3423,6 +3456,62 @@ static void test_WebBrowser_slim_container(void)
     ok(ref == 0, "ref=%d, expected 0\n", ref);
 }
 
+static void test_WebBrowser_DoVerb(void)
+{
+    IUnknown *unk = NULL;
+    HRESULT hres;
+    RECT rect;
+    HWND hwnd;
+    ULONG ref;
+    BOOL res;
+
+    is_downloading = FALSE;
+    is_first_load = TRUE;
+    use_container_olecmd = FALSE;
+
+    if (FAILED(create_WebBrowser(&unk)))
+        return;
+    hres = IUnknown_QueryInterface(unk, &IID_IWebBrowser2, (void**)&wb);
+    ok(hres == S_OK, "QueryInterface(IID_IWebBrowser) failed: %08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    test_ClientSite(unk, &ClientSite, FALSE);
+
+    SET_EXPECT(CanInPlaceActivate);
+    SET_EXPECT(Site_GetWindow);
+    SET_EXPECT(OnInPlaceActivate);
+    SET_EXPECT(GetWindowContext);
+    SET_EXPECT(ShowObject);
+    SET_EXPECT(GetContainer);
+    SET_EXPECT(Frame_GetWindow);
+    call_DoVerb(unk, OLEIVERB_INPLACEACTIVATE);
+    CHECK_CALLED(CanInPlaceActivate);
+    CHECK_CALLED(Site_GetWindow);
+    CHECK_CALLED(OnInPlaceActivate);
+    CHECK_CALLED(GetWindowContext);
+    CHECK_CALLED(ShowObject);
+    CHECK_CALLED(GetContainer);
+    CHECK_CALLED(Frame_GetWindow);
+
+    hwnd = get_hwnd(unk);
+
+    memset(&rect, 0xa, sizeof(rect));
+    res = GetWindowRect(hwnd, &rect);
+    ok(res, "GetWindowRect failed: %u\n", GetLastError());
+
+    SET_EXPECT(OnInPlaceDeactivate);
+    call_DoVerb(unk, OLEIVERB_HIDE);
+    CHECK_CALLED(OnInPlaceDeactivate);
+
+    test_ClientSite(unk, NULL, FALSE);
+
+    IWebBrowser2_Release(wb);
+    ref = IUnknown_Release(unk);
+    ok(ref == 0, "ref=%d, expected 0\n", ref);
+}
+
+
 /* Check if Internet Explorer is configured to run in "Enhanced Security Configuration" (aka hardened mode) */
 /* Note: this code is duplicated in dlls/mshtml/tests/mshtml_test.h and dlls/urlmon/tests/sec_mgr.c */
 static BOOL is_ie_hardened(void)
@@ -3461,6 +3550,8 @@ START_TEST(webbrowser)
         win_skip("Skipping http tests in hardened mode\n");
     }
 
+    trace("Testing WebBrowser DoVerb\n");
+    test_WebBrowser_DoVerb();
     trace("Testing WebBrowser (with close)...\n");
     test_WebBrowser(TRUE, TRUE);
     trace("Testing WebBrowser w/o container-based olecmd...\n");
