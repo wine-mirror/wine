@@ -801,6 +801,8 @@ static http_status_t cupsGetPPD3_wrapper( http_t *http, const char *name,
 
     if (pcupsGetPPD3) return pcupsGetPPD3( http, name, modtime, buffer, bufsize );
 
+    if (!pcupsGetPPD) return HTTP_NOT_FOUND;
+
     TRACE( "No cupsGetPPD3 implementation, so calling cupsGetPPD\n" );
 
     *modtime = 0;
