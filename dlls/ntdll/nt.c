@@ -920,9 +920,9 @@ void fill_cpu_info(void)
 #else
 #error Unknown CPU
 #endif
-    cached_sci.Revision   	= 0;
-    cached_sci.Reserved         = 0;
-    cached_sci.FeatureSet       = 0x1fff; /* FIXME: set some sensible defaults out of ProcessFeatures[] */
+    cached_sci.Revision   = 0;
+    cached_sci.Reserved   = 0;
+    cached_sci.FeatureSet = 0x1fff;
 
     NtCurrentTeb()->Peb->NumberOfProcessors = 1;
 
@@ -1049,13 +1049,22 @@ void fill_cpu_info(void)
                 if (strstr(value, "tsc"))
                     user_shared_data->ProcessorFeatures[PF_RDTSC_INSTRUCTION_AVAILABLE] = TRUE;
                 if (strstr(value, "3dnow"))
+                {
                     user_shared_data->ProcessorFeatures[PF_3DNOW_INSTRUCTIONS_AVAILABLE] = TRUE;
+                    cached_sci.FeatureSet |= CPU_FEATURE_3DNOW;
+                }
                 /* This will also catch sse2, but we have sse itself
                  * if we have sse2, so no problem */
                 if (strstr(value, "sse"))
+                {
                     user_shared_data->ProcessorFeatures[PF_XMMI_INSTRUCTIONS_AVAILABLE] = TRUE;
+                    cached_sci.FeatureSet |= CPU_FEATURE_SSE;
+                }
                 if (strstr(value, "sse2"))
+                {
                     user_shared_data->ProcessorFeatures[PF_XMMI64_INSTRUCTIONS_AVAILABLE] = TRUE;
+                    cached_sci.FeatureSet |= CPU_FEATURE_SSE2;
+                }
                 if (strstr(value, "pni"))
                     user_shared_data->ProcessorFeatures[PF_SSE3_INSTRUCTIONS_AVAILABLE] = TRUE;
                 if (strstr(value, "pae"))
