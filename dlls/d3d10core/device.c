@@ -1444,7 +1444,7 @@ static HRESULT CDECL device_parent_create_rendertarget(struct wined3d_device_par
 
 static HRESULT CDECL device_parent_create_depth_stencil(struct wined3d_device_parent *device_parent,
         UINT width, UINT height, enum wined3d_format_id format, enum wined3d_multisample_type multisample_type,
-        DWORD multisample_quality, BOOL discard, struct wined3d_surface **surface)
+        DWORD multisample_quality, struct wined3d_surface **surface)
 {
     struct d3d10_device *device = device_from_wined3d_device_parent(device_parent);
     struct d3d10_texture2d *texture;
@@ -1452,8 +1452,8 @@ static HRESULT CDECL device_parent_create_depth_stencil(struct wined3d_device_pa
     HRESULT hr;
 
     FIXME("device_parent %p, width %u, height %u, format %#x, multisample_type %#x,\n"
-            "\tmultisample_quality %u, discard %u, surface %p partial stub!\n",
-            device_parent, width, height, format, multisample_type, multisample_quality, discard, surface);
+            "\tmultisample_quality %u, surface %p partial stub!\n",
+            device_parent, width, height, format, multisample_type, multisample_quality, surface);
 
     FIXME("Implement DXGI<->wined3d usage conversion\n");
 

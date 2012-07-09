@@ -2888,15 +2888,15 @@ static HRESULT CDECL device_parent_create_rendertarget(struct wined3d_device_par
 
 static HRESULT CDECL device_parent_create_depth_stencil(struct wined3d_device_parent *device_parent,
         UINT width, UINT height, enum wined3d_format_id format, enum wined3d_multisample_type multisample_type,
-        DWORD multisample_quality, BOOL discard, struct wined3d_surface **surface)
+        DWORD multisample_quality, struct wined3d_surface **surface)
 {
     struct d3d8_device *device = device_from_device_parent(device_parent);
     struct d3d8_surface *d3d_surface;
     HRESULT hr;
 
     TRACE("device_parent %p, width %u, height %u, format %#x, multisample_type %#x,\n"
-            "\tmultisample_quality %u, discard %u, surface %p.\n",
-            device_parent, width, height, format, multisample_type, multisample_quality, discard, surface);
+            "\tmultisample_quality %u, surface %p.\n",
+            device_parent, width, height, format, multisample_type, multisample_quality, surface);
 
     hr = IDirect3DDevice8_CreateDepthStencilSurface(&device->IDirect3DDevice8_iface, width, height,
             d3dformat_from_wined3dformat(format), multisample_type, (IDirect3DSurface8 **)&d3d_surface);

@@ -1070,12 +1070,10 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, enum wined3d_
         TRACE("Creating depth/stencil buffer.\n");
         if (!device->auto_depth_stencil)
         {
-            hr = device->device_parent->ops->create_depth_stencil(device->device_parent,
+            if (FAILED(hr = device->device_parent->ops->create_depth_stencil(device->device_parent,
                     swapchain->desc.backbuffer_width, swapchain->desc.backbuffer_height,
                     swapchain->desc.auto_depth_stencil_format, swapchain->desc.multisample_type,
-                    swapchain->desc.multisample_quality, FALSE /* FIXME: Discard */,
-                    &device->auto_depth_stencil);
-            if (FAILED(hr))
+                    swapchain->desc.multisample_quality, &device->auto_depth_stencil)))
             {
                 WARN("Failed to create the auto depth stencil, hr %#x.\n", hr);
                 goto err;
