@@ -2352,7 +2352,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                 memcpy(expected_value, &blob[res_value_offset], res_desc->Bytes);
                 for (l = 0; l < element; ++l)
                 {
-                    matrix_pointer_array[l] = (D3DXMATRIX *)&input_value[l * sizeof(**matrix_pointer_array) / sizeof(*matrix_pointer_array)];
+                    matrix_pointer_array[l] = (D3DXMATRIX *)&input_value[l * sizeof(**matrix_pointer_array) / sizeof(FLOAT)];
                 }
                 hr = effect->lpVtbl->SetMatrixPointerArray(effect, parameter, matrix_pointer_array, element);
                 if (res_desc->Class == D3DXPC_MATRIX_ROWS && res_desc->Elements >= element)
@@ -2462,7 +2462,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                 memcpy(expected_value, &blob[res_value_offset], res_desc->Bytes);
                 for (l = 0; l < element; ++l)
                 {
-                    matrix_pointer_array[l] = (D3DXMATRIX *)&input_value[l * sizeof(**matrix_pointer_array) / sizeof(*matrix_pointer_array)];
+                    matrix_pointer_array[l] = (D3DXMATRIX *)&input_value[l * sizeof(**matrix_pointer_array) / sizeof(FLOAT)];
                 }
                 hr = effect->lpVtbl->SetMatrixTransposePointerArray(effect, parameter, matrix_pointer_array, element);
                 if (res_desc->Class == D3DXPC_MATRIX_ROWS && res_desc->Elements >= element)
