@@ -603,7 +603,13 @@ static UINT SHELL_FindExecutable(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpOpera
     {
         TRACE("SearchPathW returned non-zero\n");
         lpFile = xlpFile;
-        /* Hey, isn't this value ignored?  Why make this call?  Shouldn't we return here?  --dank*/
+        /* The file was found in the application-supplied default directory (or the system search path) */
+    }
+    else if (lpPath && SearchPathW(NULL, lpFile, wszExe, sizeof(xlpFile)/sizeof(WCHAR), xlpFile, NULL))
+    {
+        TRACE("SearchPathW returned non-zero\n");
+        lpFile = xlpFile;
+        /* The file was found in one of the directories in the system-wide search path */
     }
 
     attribs = GetFileAttributesW(lpFile);

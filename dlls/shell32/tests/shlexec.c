@@ -1307,6 +1307,7 @@ static void test_filename(void)
 
 static void test_find_executable(void)
 {
+    char notepad_path[MAX_PATH];
     char filename[MAX_PATH];
     char command[MAX_PATH];
     const filename_tests_t* test;
@@ -1328,6 +1329,21 @@ static void test_find_executable(void)
     ok(rc == SE_ERR_FNF || rc > 32 /* nt4 */, "FindExecutable(NULL) returned %ld\n", rc);
     ok(strcmp(command, "your word") != 0, "FindExecutable(NULL) returned command=[%s]\n", command);
     }
+
+    GetSystemDirectoryA( notepad_path, MAX_PATH );
+    strcat( notepad_path, "\\notepad.exe" );
+
+    /* Search for something that should be in the system-wide search path (no default directory) */
+    strcpy(command, "your word");
+    rc=(INT_PTR)FindExecutableA("notepad.exe", NULL, command);
+    ok(rc > 32, "FindExecutable(%s) returned %ld\n", "notepad.exe", rc);
+    ok(strcasecmp(command, notepad_path) == 0, "FindExecutable(%s) returned command=[%s]\n", "notepad.exe", command);
+
+    /* Search for something that should be in the system-wide search path (with default directory) */
+    strcpy(command, "your word");
+    rc=(INT_PTR)FindExecutableA("notepad.exe", tmpdir, command);
+    ok(rc > 32, "FindExecutable(%s) returned %ld\n", "notepad.exe", rc);
+    ok(strcasecmp(command, notepad_path) == 0, "FindExecutable(%s) returned command=[%s]\n", "notepad.exe", command);
 
     strcpy(command, "your word");
     rc=(INT_PTR)FindExecutableA(tmpdir, NULL, command);
