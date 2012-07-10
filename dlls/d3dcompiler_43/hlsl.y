@@ -918,7 +918,8 @@ expr:                     assignment_expr
 
 %%
 
-struct bwriter_shader *parse_hlsl(enum shader_type type, DWORD version, const char *entrypoint, char **messages)
+struct bwriter_shader *parse_hlsl(enum shader_type type, DWORD major, DWORD minor,
+        const char *entrypoint, char **messages)
 {
     struct hlsl_ir_function_decl *function;
     struct hlsl_scope *scope, *next_scope;

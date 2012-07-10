@@ -266,9 +266,10 @@ row_major               {return KW_ROW_MAJOR;           }
 
 %%
 
-struct bwriter_shader *parse_hlsl(enum shader_type type, DWORD version, const char *entrypoint, char **messages);
+struct bwriter_shader *parse_hlsl(enum shader_type type, DWORD major, DWORD minor,
+        const char *entrypoint, char **messages);
 
-struct bwriter_shader *parse_hlsl_shader(const char *text, enum shader_type type, DWORD version,
+struct bwriter_shader *parse_hlsl_shader(const char *text, enum shader_type type, DWORD major, DWORD minor,
         const char *entrypoint, char **messages)
 {
     struct bwriter_shader *ret = NULL;
@@ -277,7 +278,7 @@ struct bwriter_shader *parse_hlsl_shader(const char *text, enum shader_type type
     buffer = hlsl__scan_string(text);
     hlsl__switch_to_buffer(buffer);
 
-    ret = parse_hlsl(type, version, entrypoint, messages);
+    ret = parse_hlsl(type, major, minor, entrypoint, messages);
 
     hlsl__delete_buffer(buffer);
     return ret;

@@ -874,7 +874,7 @@ struct hlsl_ir_deref *new_var_deref(struct hlsl_ir_var *var) DECLSPEC_HIDDEN;
 void push_scope(struct hlsl_parse_ctx *ctx) DECLSPEC_HIDDEN;
 BOOL pop_scope(struct hlsl_parse_ctx *ctx) DECLSPEC_HIDDEN;
 struct hlsl_ir_function_decl *new_func_decl(const char *name, struct hlsl_type *return_type, struct list *parameters) DECLSPEC_HIDDEN;
-struct bwriter_shader *parse_hlsl_shader(const char *text, enum shader_type type, DWORD version,
+struct bwriter_shader *parse_hlsl_shader(const char *text, enum shader_type type, DWORD major, DWORD minor,
         const char *entrypoint, char **messages) DECLSPEC_HIDDEN;
 
 const char *debug_hlsl_type(const struct hlsl_type *type) DECLSPEC_HIDDEN;
