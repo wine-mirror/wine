@@ -15288,6 +15288,7 @@ wine_fn_config_dll monodebg.vxd enable_win16
 wine_fn_config_dll mountmgr.sys enable_mountmgr_sys
 wine_fn_config_dll mouse.drv16 enable_win16
 wine_fn_config_dll mpr enable_mpr implib,po
+wine_fn_config_test dlls/mpr/tests mpr_test
 wine_fn_config_dll mprapi enable_mprapi implib
 wine_fn_config_dll msacm.dll16 enable_win16
 wine_fn_config_dll msacm32.drv enable_msacm32_drv

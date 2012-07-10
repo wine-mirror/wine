@@ -1,0 +1,7 @@
+TESTDLL   = mpr.dll
+IMPORTS   = mpr
+
+C_SRCS = \
+	mpr.c
+
+@MAKE_TEST_RULES@
