@@ -473,31 +473,31 @@ type:                     base_type
 
 base_type:                KW_VOID
                             {
-                                $$ = new_hlsl_type("void", HLSL_CLASS_SCALAR, HLSL_TYPE_VOID, 1, 1);
+                                $$ = new_hlsl_type(d3dcompiler_strdup("void"), HLSL_CLASS_SCALAR, HLSL_TYPE_VOID, 1, 1);
                             }
                         | KW_SAMPLER
                             {
-                                $$ = new_hlsl_type("sampler", HLSL_CLASS_OBJECT, HLSL_TYPE_SAMPLER, 1, 1);
+                                $$ = new_hlsl_type(d3dcompiler_strdup("sampler"), HLSL_CLASS_OBJECT, HLSL_TYPE_SAMPLER, 1, 1);
                                 $$->sampler_dim = HLSL_SAMPLER_DIM_GENERIC;
                             }
                         | KW_SAMPLER1D
                             {
-                                $$ = new_hlsl_type("sampler1D", HLSL_CLASS_OBJECT, HLSL_TYPE_SAMPLER, 1, 1);
+                                $$ = new_hlsl_type(d3dcompiler_strdup("sampler1D"), HLSL_CLASS_OBJECT, HLSL_TYPE_SAMPLER, 1, 1);
                                 $$->sampler_dim = HLSL_SAMPLER_DIM_1D;
                             }
                         | KW_SAMPLER2D
                             {
-                                $$ = new_hlsl_type("sampler2D", HLSL_CLASS_OBJECT, HLSL_TYPE_SAMPLER, 1, 1);
+                                $$ = new_hlsl_type(d3dcompiler_strdup("sampler2D"), HLSL_CLASS_OBJECT, HLSL_TYPE_SAMPLER, 1, 1);
                                 $$->sampler_dim = HLSL_SAMPLER_DIM_2D;
                             }
                         | KW_SAMPLER3D
                             {
-                                $$ = new_hlsl_type("sampler3D", HLSL_CLASS_OBJECT, HLSL_TYPE_SAMPLER, 1, 1);
+                                $$ = new_hlsl_type(d3dcompiler_strdup("sampler3D"), HLSL_CLASS_OBJECT, HLSL_TYPE_SAMPLER, 1, 1);
                                 $$->sampler_dim = HLSL_SAMPLER_DIM_3D;
                             }
                         | KW_SAMPLERCUBE
                             {
-                                $$ = new_hlsl_type("samplerCUBE", HLSL_CLASS_OBJECT, HLSL_TYPE_SAMPLER, 1, 1);
+                                $$ = new_hlsl_type(d3dcompiler_strdup("samplerCUBE"), HLSL_CLASS_OBJECT, HLSL_TYPE_SAMPLER, 1, 1);
                                 $$->sampler_dim = HLSL_SAMPLER_DIM_CUBE;
                             }
                         | TYPE_IDENTIFIER
