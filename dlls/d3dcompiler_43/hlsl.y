@@ -926,6 +926,8 @@ struct bwriter_shader *parse_hlsl(enum shader_type type, DWORD major, DWORD mino
     struct hlsl_type *hlsl_type, *next_type;
     struct hlsl_ir_var *var, *next_var;
 
+    hlsl_ctx.status = PARSE_SUCCESS;
+    hlsl_ctx.messages.size = hlsl_ctx.messages.capacity = 0;
     hlsl_ctx.line_no = 1;
     hlsl_ctx.source_file = d3dcompiler_strdup("");
     hlsl_ctx.cur_scope = NULL;
@@ -949,6 +951,20 @@ struct bwriter_shader *parse_hlsl(enum shader_type type, DWORD major, DWORD mino
             if (func->body)
                 debug_dump_ir_function(func);
         }
+    }
+
+    TRACE("Compilation status = %d\n", hlsl_ctx.status);
+    if (messages)
+    {
+        if (hlsl_ctx.messages.size)
+            *messages = hlsl_ctx.messages.string;
+        else
+            *messages = NULL;
+    }
+    else
+    {
+        if (hlsl_ctx.messages.capacity)
+            d3dcompiler_free(hlsl_ctx.messages.string);
     }
 
     d3dcompiler_free(hlsl_ctx.source_file);
