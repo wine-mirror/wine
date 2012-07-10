@@ -24,6 +24,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(vbscript);
 
+#define FDEX_VERSION_MASK 0xf0000000
+
 static inline BOOL is_func_id(vbdisp_t *This, DISPID id)
 {
     return id < This->desc->func_cnt;
@@ -325,6 +327,8 @@ static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DW
     vbdisp_t *This = impl_from_IDispatchEx(iface);
 
     TRACE("(%p)->(%s %x %p)\n", This, debugstr_w(bstrName), grfdex, pid);
+
+    grfdex &= ~FDEX_VERSION_MASK;
 
     if(!This->desc)
         return E_UNEXPECTED;

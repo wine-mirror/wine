@@ -333,6 +333,11 @@ static void test_disp(IDispatch *disp)
     ok(id == -1, "id = %d\n", id);
     SysFreeString(str);
 
+    str = a2bstr("publicProp");
+    hres = IDispatchEx_GetDispID(dispex, str, 0x80000000|fdexNameCaseInsensitive, &public_prop_id);
+    SysFreeString(str);
+    ok(hres == S_OK, "GetDispID(publicProp) failed: %08x\n", hres);
+
     IDispatchEx_Release(dispex);
 }
 
