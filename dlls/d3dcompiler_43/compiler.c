@@ -496,14 +496,43 @@ static HRESULT compile_shader(const char *preproc_shader, const char *target, co
     struct bwriter_shader *shader;
     char *messages = NULL;
     HRESULT hr;
-    DWORD *res, size;
+    DWORD *res, size, major, minor;
     ID3DBlob *buffer;
     char *pos;
+    enum shader_type shader_type;
 
     TRACE("Preprocessed shader source: %s\n", debugstr_a(preproc_shader));
 
-    FIXME("Parse compilation target.\n");
-    shader = parse_hlsl_shader(preproc_shader, ST_VERTEX, 2, 0, entrypoint, &messages);
+    TRACE("Parsing compilation target %s.\n", debugstr_a(target));
+    if (strlen(target) != 6 || target[1] != 's' || target[2] != '_' || target[4] != '_')
+    {
+        FIXME("Unknown compilation target %s.\n", debugstr_a(target));
+        return D3DERR_INVALIDCALL;
+    }
+
+    if (target[0] == 'v')
+        shader_type = ST_VERTEX;
+    else if (target[0] == 'p')
+        shader_type = ST_PIXEL;
+    else
+    {
+        FIXME("Unsupported shader target type %s.\n", debugstr_a(target));
+        return D3DERR_INVALIDCALL;
+    }
+
+    major = target[3] - '0';
+    if (major == 0 || major > 5)
+    {
+        FIXME("Unsupported shader target major version %d.\n", major);
+        return D3DERR_INVALIDCALL;
+    }
+    minor = target[5] - '0';
+    if (minor > 1 || (minor == 1 && (shader_type != ST_VERTEX || major > 1)))
+    {
+        FIXME("Unsupported shader target minor version %d.\n", minor);
+        return D3DERR_INVALIDCALL;
+    }
+    shader = parse_hlsl_shader(preproc_shader, shader_type, major, minor, entrypoint, &messages);
 
     if (messages)
     {
