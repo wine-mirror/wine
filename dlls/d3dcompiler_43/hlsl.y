@@ -307,7 +307,7 @@ hlsl_prog:                /* empty */
 preproc_directive:        PRE_LINE STRING
                             {
                                 TRACE("Updating line information to file %s, line %u\n", debugstr_a($2), $1);
-                                hlsl_ctx.line_no = $1 - 1;
+                                hlsl_ctx.line_no = $1;
                                 d3dcompiler_free(hlsl_ctx.source_file);
                                 hlsl_ctx.source_file = $2;
                             }
