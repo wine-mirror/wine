@@ -576,8 +576,7 @@ LRESULT NC_HandleNCHitTest( HWND hwnd, POINT pt )
             rect.top += GetSystemMetrics(SM_CYCAPTION) - 1;
         if (!PtInRect( &rect, pt ))
         {
-            BOOL min_or_max_box = (style & WS_MAXIMIZEBOX) ||
-                                  (style & WS_MINIMIZEBOX);
+            BOOL min_or_max_box = (style & WS_SYSMENU) && (style & (WS_MINIMIZEBOX|WS_MAXIMIZEBOX));
             if (ex_style & WS_EX_LAYOUTRTL)
             {
                 /* Check system menu */
