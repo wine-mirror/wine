@@ -1189,19 +1189,21 @@ GpStatus WINGDIPAPI GdipFlattenPath(GpPath *path, GpMatrix* matrix, REAL flatnes
     GpPointF pt;
     INT i = 1;
     INT startidx = 0;
+    GpStatus stat;
 
     TRACE("(%p, %p, %.2f)\n", path, matrix, flatness);
 
     if(!path)
         return InvalidParameter;
 
-    if(matrix){
-        WARN("transformation not supported yet!\n");
-        return NotImplemented;
-    }
-
     if(path->pathdata.Count == 0)
         return Ok;
+
+    if(matrix){
+        stat = GdipTransformPath(path, matrix);
+        if (stat != Ok)
+            return stat;
+    }
 
     pt = path->pathdata.Points[0];
     if(!init_path_list(&list, pt.X, pt.Y))
