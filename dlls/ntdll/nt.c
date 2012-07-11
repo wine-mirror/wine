@@ -1217,7 +1217,7 @@ void fill_cpu_info(void)
         unsigned long long longVal;
         int value;
         int cputype;
-        char buffer[256];
+        char buffer[1024];
 
         valSize = sizeof(int);
         if (sysctlbyname ("hw.optional.floatingpoint", &value, &valSize, NULL, 0) == 0)
@@ -1280,6 +1280,7 @@ void fill_cpu_info(void)
                 if (sysctlbyname ("machdep.cpu.features", buffer, &valSize, NULL, 0) == 0)
                 {
                     cached_sci.Revision |= value;
+                    if (!valSize) FIXME("Buffer not large enough, please increase\n");
                     if (strstr(buffer, "CX8"))   user_shared_data->ProcessorFeatures[PF_COMPARE_EXCHANGE_DOUBLE] = TRUE;
                     if (strstr(buffer, "CX16"))  user_shared_data->ProcessorFeatures[PF_COMPARE_EXCHANGE128] = TRUE;
                     if (strstr(buffer, "MMX"))   user_shared_data->ProcessorFeatures[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
