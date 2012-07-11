@@ -6699,9 +6699,16 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
             goto release;
         }
 
-        if (srcwidth & (src_format->block_width - 1) || srcheight & (src_format->block_height - 1))
+        if (!surface_check_block_align(src_surface, src_rect))
         {
-            WARN("Rectangle not block-aligned.\n");
+            WARN("Source rectangle not block-aligned.\n");
+            hr = WINED3DERR_INVALIDCALL;
+            goto release;
+        }
+
+        if (!surface_check_block_align(dst_surface, dst_rect))
+        {
+            WARN("Destination rectangle not block-aligned.\n");
             hr = WINED3DERR_INVALIDCALL;
             goto release;
         }
