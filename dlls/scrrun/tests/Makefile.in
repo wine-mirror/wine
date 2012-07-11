@@ -1,5 +1,5 @@
 TESTDLL   = scrrun.dll
-IMPORTS   = ole32 shlwapi uuid
+IMPORTS   = ole32 shlwapi uuid oleaut32
 
 C_SRCS = \
 	filesystem.c

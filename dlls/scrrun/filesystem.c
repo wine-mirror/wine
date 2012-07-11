@@ -213,12 +213,14 @@ static HRESULT WINAPI filesys_DriveExists(IFileSystem3 *iface, BSTR DriveSpec,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI filesys_FileExists(IFileSystem3 *iface, BSTR FileSpec,
-                                            VARIANT_BOOL *pfExists)
+static HRESULT WINAPI filesys_FileExists(IFileSystem3 *iface, BSTR path, VARIANT_BOOL *ret)
 {
-    FIXME("%p %s %p\n", iface, debugstr_w(FileSpec), pfExists);
+    TRACE("%p %s %p\n", iface, debugstr_w(path), ret);
 
-    return E_NOTIMPL;
+    if (!ret) return E_POINTER;
+
+    *ret = GetFileAttributesW(path) != INVALID_FILE_ATTRIBUTES ? VARIANT_TRUE : VARIANT_FALSE;
+    return S_OK;
 }
 
 static HRESULT WINAPI filesys_FolderExists(IFileSystem3 *iface, BSTR FolderSpec,

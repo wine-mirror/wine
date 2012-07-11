@@ -22,6 +22,7 @@
 
 #include "windows.h"
 #include "ole2.h"
+#include "oleauto.h"
 #include "dispex.h"
 
 #include "wine/test.h"
@@ -31,11 +32,14 @@
 
 static void test_interfaces(void)
 {
+    static const WCHAR pathW[] = {'p','a','t','h',0};
     HRESULT hr;
     IDispatch *disp;
     IDispatchEx *dispex;
     IFileSystem3 *fs3;
     IObjectWithSite *site;
+    VARIANT_BOOL b;
+    BSTR path;
 
     hr = CoCreateInstance(&CLSID_FileSystemObject, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IDispatch, (void**)&disp);
@@ -46,7 +50,6 @@ static void test_interfaces(void)
 
     hr = IDispatch_QueryInterface(disp, &IID_IFileSystem3, (void**)&fs3);
     ok(hr == S_OK, "got 0x%08x, expected 0x%08x\n", hr, S_OK);
-    IFileSystem3_Release(fs3);
 
     hr = IDispatch_QueryInterface(disp, &IID_IObjectWithSite, (void**)&site);
     ok(hr == E_NOINTERFACE, "got 0x%08x, expected 0x%08x\n", hr, E_NOINTERFACE);
@@ -54,6 +57,22 @@ static void test_interfaces(void)
     hr = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
     ok(hr == E_NOINTERFACE, "got 0x%08x, expected 0x%08x\n", hr, E_NOINTERFACE);
 
+    b = VARIANT_TRUE;
+    hr = IFileSystem3_FileExists(fs3, NULL, &b);
+    ok(hr == S_OK, "got 0x%08x, expected 0x%08x\n", hr, S_OK);
+    ok(b == VARIANT_FALSE, "got %x\n", b);
+
+    hr = IFileSystem3_FileExists(fs3, NULL, NULL);
+    ok(hr == E_POINTER, "got 0x%08x, expected 0x%08x\n", hr, E_POINTER);
+
+    path = SysAllocString(pathW);
+    b = VARIANT_TRUE;
+    hr = IFileSystem3_FileExists(fs3, path, &b);
+    ok(hr == S_OK, "got 0x%08x, expected 0x%08x\n", hr, S_OK);
+    ok(b == VARIANT_FALSE, "got %x\n", b);
+    SysFreeString(path);
+
+    IFileSystem3_Release(fs3);
     IDispatch_Release(disp);
 }
 
