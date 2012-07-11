@@ -49,8 +49,6 @@ MAKE_FUNCPTR(XRRSizes)
 
 extern int usexrandr;
 
-static int xrandr_event, xrandr_error, xrandr_major, xrandr_minor;
-
 static struct x11drv_mode_info *dd_modes;
 static unsigned int dd_mode_count;
 static XRRScreenSize *real_xrandr_sizes;
@@ -268,21 +266,23 @@ static void xrandr_init_modes(void)
 
 void X11DRV_XRandR_Init(void)
 {
+    int event_base, error_base, minor;
+    static int major;
     Bool ok;
 
-    if (xrandr_major) return; /* already initialized? */
+    if (major) return; /* already initialized? */
     if (!usexrandr) return; /* disabled in config */
     if (root_window != DefaultRootWindow( gdi_display )) return;
     if (!load_xrandr()) return;  /* can't load the Xrandr library */
 
     /* see if Xrandr is available */
     wine_tsx11_lock();
-    if (!pXRRQueryExtension( gdi_display, &xrandr_event, &xrandr_error )) goto done;
+    if (!pXRRQueryExtension( gdi_display, &event_base, &error_base )) goto done;
     X11DRV_expect_error( gdi_display, XRandRErrorHandler, NULL );
-    ok = pXRRQueryVersion( gdi_display, &xrandr_major, &xrandr_minor );
+    ok = pXRRQueryVersion( gdi_display, &major, &minor );
     if (X11DRV_check_error() || !ok) goto done;
 
-    TRACE("Found XRandR %d.%d.\n", xrandr_major, xrandr_minor);
+    TRACE("Found XRandR %d.%d.\n", major, minor);
     xrandr_init_modes();
 
 done:
