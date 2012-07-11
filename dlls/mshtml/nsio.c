@@ -973,7 +973,7 @@ static HTMLOuterWindow *get_channel_window(nsChannel *This)
 
 typedef struct {
     task_t header;
-    HTMLDocumentNode *doc;
+    HTMLInnerWindow *window;
     nsChannelBSC *bscallback;
 } start_binding_task_t;
 
@@ -981,7 +981,7 @@ static void start_binding_proc(task_t *_task)
 {
     start_binding_task_t *task = (start_binding_task_t*)_task;
 
-    start_binding(NULL, task->doc, (BSCallback*)task->bscallback, NULL);
+    start_binding(NULL, task->window, (BSCallback*)task->bscallback, NULL);
 }
 
 static void start_binding_task_destr(task_t *_task)
@@ -1022,7 +1022,7 @@ static nsresult async_open(nsChannel *This, HTMLOuterWindow *window, BOOL is_doc
     }else {
         start_binding_task_t *task = heap_alloc(sizeof(start_binding_task_t));
 
-        task->doc = window->base.inner_window->doc;
+        task->window = window->base.inner_window;
         task->bscallback = bscallback;
         push_task(&task->header, start_binding_proc, start_binding_task_destr, window->base.inner_window->doc->basedoc.task_magic);
     }

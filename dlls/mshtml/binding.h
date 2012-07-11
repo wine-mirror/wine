@@ -72,7 +72,7 @@ struct BSCallback {
     IMoniker *mon;
     IBinding *binding;
 
-    HTMLDocumentNode *doc;
+    HTMLInnerWindow *window;
 
     struct list entry;
 };

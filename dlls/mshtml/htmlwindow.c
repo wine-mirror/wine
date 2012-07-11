@@ -2588,6 +2588,7 @@ static HRESULT create_inner_window(HTMLOuterWindow *outer_window, HTMLDocumentNo
         return E_OUTOFMEMORY;
 
     list_init(&window->script_hosts);
+    list_init(&window->bindings);
 
     window->base.outer_window = outer_window;
     window->base.inner_window = window;
@@ -2670,7 +2671,7 @@ static HRESULT window_set_docnode(HTMLOuterWindow *window, HTMLDocumentNode *doc
         if(window->doc_obj && window == window->doc_obj->basedoc.window)
             window->base.inner_window->doc->basedoc.cp_container.forward_container = NULL;
         detach_events(window->base.inner_window->doc);
-        abort_document_bindings(window->base.inner_window->doc);
+        abort_window_bindings(window->base.inner_window);
         release_script_hosts(window->base.inner_window);
     }
 

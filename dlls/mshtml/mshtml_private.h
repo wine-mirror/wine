@@ -360,6 +360,8 @@ struct HTMLInnerWindow {
     global_prop_t *global_props;
     DWORD global_prop_cnt;
     DWORD global_prop_size;
+
+    struct list bindings;
 };
 
 typedef enum {
@@ -652,7 +654,6 @@ struct HTMLDocumentNode {
 
     BOOL skip_mutation_notif;
 
-    struct list bindings;
     struct list selection_list;
     struct list range_list;
     struct list plugin_hosts;
@@ -752,13 +753,13 @@ nsIWritableVariant *create_nsvariant(void) DECLSPEC_HIDDEN;
 void set_window_bscallback(HTMLOuterWindow*,nsChannelBSC*) DECLSPEC_HIDDEN;
 void set_current_mon(HTMLOuterWindow*,IMoniker*) DECLSPEC_HIDDEN;
 void set_current_uri(HTMLOuterWindow*,IUri*) DECLSPEC_HIDDEN;
-HRESULT start_binding(HTMLOuterWindow*,HTMLDocumentNode*,BSCallback*,IBindCtx*) DECLSPEC_HIDDEN;
+HRESULT start_binding(HTMLOuterWindow*,HTMLInnerWindow*,BSCallback*,IBindCtx*) DECLSPEC_HIDDEN;
 HRESULT async_start_doc_binding(HTMLOuterWindow*,nsChannelBSC*) DECLSPEC_HIDDEN;
-void abort_document_bindings(HTMLDocumentNode*) DECLSPEC_HIDDEN;
+void abort_window_bindings(HTMLInnerWindow*) DECLSPEC_HIDDEN;
 void set_download_state(HTMLDocumentObj*,int) DECLSPEC_HIDDEN;
 void call_docview_84(HTMLDocumentObj*) DECLSPEC_HIDDEN;
 
-HRESULT bind_mon_to_buffer(HTMLDocumentNode*,IMoniker*,void**,DWORD*) DECLSPEC_HIDDEN;
+HRESULT bind_mon_to_buffer(HTMLInnerWindow*,IMoniker*,void**,DWORD*) DECLSPEC_HIDDEN;
 
 void set_ready_state(HTMLOuterWindow*,READYSTATE) DECLSPEC_HIDDEN;
 

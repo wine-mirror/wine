@@ -299,8 +299,8 @@ static HRESULT WINAPI BindStatusCallback_OnStartBinding(IBindStatusCallback *ifa
     IBinding_AddRef(pbind);
     This->binding = pbind;
 
-    if(This->doc)
-        list_add_head(&This->doc->bindings, &This->entry);
+    if(This->window)
+        list_add_head(&This->window->bindings, &This->entry);
 
     return This->vtbl->start_binding(This);
 }
@@ -349,7 +349,7 @@ static HRESULT WINAPI BindStatusCallback_OnStopBinding(IBindStatusCallback *ifac
 
     list_remove(&This->entry);
     list_init(&This->entry);
-    This->doc = NULL;
+    This->window = NULL;
 
     return hres;
 }
@@ -585,8 +585,8 @@ static HRESULT WINAPI BSCServiceProvider_QueryService(IServiceProvider *iface,
 
     TRACE("(%p)->(%s %s %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
 
-    if(This->doc && IsEqualGUID(guidService, &IID_IWindowForBindingUI))
-        return IServiceProvider_QueryService(&This->doc->basedoc.IServiceProvider_iface, guidService, riid, ppv);
+    if(This->window && IsEqualGUID(guidService, &IID_IWindowForBindingUI))
+        return IServiceProvider_QueryService(&This->window->base.IServiceProvider_iface, guidService, riid, ppv);
     return E_NOINTERFACE;
 }
 
@@ -717,16 +717,16 @@ static HRESULT process_response_headers(nsChannelBSC *This, const WCHAR *headers
     return S_OK;
 }
 
-HRESULT start_binding(HTMLOuterWindow *window, HTMLDocumentNode *doc, BSCallback *bscallback, IBindCtx *bctx)
+HRESULT start_binding(HTMLOuterWindow *window, HTMLInnerWindow *inner_window, BSCallback *bscallback, IBindCtx *bctx)
 {
     IStream *str = NULL;
     HRESULT hres;
 
-    TRACE("(%p %p %p %p)\n", window, doc, bscallback, bctx);
+    TRACE("(%p %p %p %p)\n", window, inner_window, bscallback, bctx);
 
-    bscallback->doc = doc;
-    if(!doc && window)
-        bscallback->doc = window->base.inner_window->doc;
+    bscallback->window = inner_window;
+    if(!inner_window && window)
+        bscallback->window = window->base.inner_window;
 
     /* NOTE: IE7 calls IsSystemMoniker here*/
 
@@ -871,14 +871,14 @@ static BufferBSC *create_bufferbsc(IMoniker *mon)
     return ret;
 }
 
-HRESULT bind_mon_to_buffer(HTMLDocumentNode *doc, IMoniker *mon, void **buf, DWORD *size)
+HRESULT bind_mon_to_buffer(HTMLInnerWindow *window, IMoniker *mon, void **buf, DWORD *size)
 {
     BufferBSC *bsc = create_bufferbsc(mon);
     HRESULT hres;
 
     *buf = NULL;
 
-    hres = start_binding(NULL, doc, &bsc->bsc, NULL);
+    hres = start_binding(NULL, window, &bsc->bsc, NULL);
     if(SUCCEEDED(hres)) {
         hres = bsc->hres;
         if(SUCCEEDED(hres)) {
@@ -998,12 +998,9 @@ static HRESULT on_start_nsrequest(nsChannelBSC *This)
         list_remove(&This->bsc.entry);
         list_init(&This->bsc.entry);
         update_window_doc(This->window);
-        if(This->window->base.inner_window->doc != This->bsc.doc) {
-            if(This->bsc.doc)
-                list_remove(&This->bsc.entry);
-            This->bsc.doc = This->window->base.inner_window->doc;
-        }
-        list_add_head(&This->bsc.doc->bindings, &This->bsc.entry);
+        if(This->window->base.inner_window != This->bsc.window)
+            This->bsc.window = This->window->base.inner_window;
+        list_add_head(&This->bsc.window->bindings, &This->bsc.entry);
         if(This->window->readystate != READYSTATE_LOADING)
             set_ready_state(This->window, READYSTATE_LOADING);
     }
@@ -1334,7 +1331,7 @@ static HRESULT async_stop_request(nsChannelBSC *This)
 
     IBindStatusCallback_AddRef(&This->bsc.IBindStatusCallback_iface);
     task->bsc = This;
-    push_task(&task->header, stop_request_proc, stop_request_task_destr, This->bsc.doc->basedoc.doc_obj->basedoc.task_magic);
+    push_task(&task->header, stop_request_proc, stop_request_task_destr, This->window->doc_obj->basedoc.task_magic);
     return S_OK;
 }
 
@@ -1658,7 +1655,7 @@ void set_window_bscallback(HTMLOuterWindow *window, nsChannelBSC *callback)
     if(window->bscallback) {
         if(window->bscallback->bsc.binding)
             IBinding_Abort(window->bscallback->bsc.binding);
-        window->bscallback->bsc.doc = NULL;
+        window->bscallback->bsc.window = NULL;
         window->bscallback->window = NULL;
         IBindStatusCallback_Release(&window->bscallback->bsc.IBindStatusCallback_iface);
     }
@@ -1668,7 +1665,7 @@ void set_window_bscallback(HTMLOuterWindow *window, nsChannelBSC *callback)
     if(callback) {
         callback->window = window;
         IBindStatusCallback_AddRef(&callback->bsc.IBindStatusCallback_iface);
-        callback->bsc.doc = window->base.inner_window->doc;
+        callback->bsc.window = window->base.inner_window;
     }
 }
 
@@ -1711,15 +1708,15 @@ HRESULT async_start_doc_binding(HTMLOuterWindow *window, nsChannelBSC *bscallbac
     return S_OK;
 }
 
-void abort_document_bindings(HTMLDocumentNode *doc)
+void abort_window_bindings(HTMLInnerWindow *window)
 {
     BSCallback *iter, *next;
 
-    LIST_FOR_EACH_ENTRY_SAFE(iter, next, &doc->bindings, BSCallback, entry) {
+    LIST_FOR_EACH_ENTRY_SAFE(iter, next, &window->bindings, BSCallback, entry) {
         TRACE("Aborting %p\n", iter);
 
-        if(iter->doc)
-            remove_target_tasks(iter->doc->basedoc.task_magic);
+        if(iter->window && iter->window->doc)
+            remove_target_tasks(iter->window->doc->basedoc.task_magic);
 
         if(iter->binding)
             IBinding_Abort(iter->binding);
@@ -1729,7 +1726,7 @@ void abort_document_bindings(HTMLDocumentNode *doc)
             iter->vtbl->stop_binding(iter, E_ABORT);
         }
 
-        iter->doc = NULL;
+        iter->window = NULL;
     }
 }
 
@@ -1746,7 +1743,7 @@ HRESULT channelbsc_load_stream(nsChannelBSC *bscallback, IStream *stream)
     if(!bscallback->nschannel->content_type)
         return E_OUTOFMEMORY;
 
-    list_add_head(&bscallback->bsc.doc->bindings, &bscallback->bsc.entry);
+    list_add_head(&bscallback->bsc.window->bindings, &bscallback->bsc.entry);
     if(stream)
         hres = read_stream_data(bscallback, stream);
     if(SUCCEEDED(hres))

@@ -2216,7 +2216,6 @@ static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLOuterWindo
             &doc->node.dispex.IDispatchEx_iface);
     HTMLDocumentNode_SecMgr_Init(doc);
 
-    list_init(&doc->bindings);
     list_init(&doc->selection_list);
     list_init(&doc->range_list);
     list_init(&doc->plugin_hosts);

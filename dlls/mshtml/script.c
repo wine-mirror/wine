@@ -659,7 +659,7 @@ static void parse_extern_script(ScriptHost *script_host, LPCWSTR src)
     if(FAILED(hres))
         return;
 
-    hres = bind_mon_to_buffer(script_host->window->base.inner_window->doc, mon, (void**)&buf, &size);
+    hres = bind_mon_to_buffer(script_host->window, mon, (void**)&buf, &size);
     IMoniker_Release(mon);
     if(FAILED(hres))
         return;
