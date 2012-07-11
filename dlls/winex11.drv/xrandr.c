@@ -277,18 +277,15 @@ void X11DRV_XRandR_Init(void)
 
     /* see if Xrandr is available */
     wine_tsx11_lock();
-    ok = pXRRQueryExtension(gdi_display, &xrandr_event, &xrandr_error);
-    if (ok)
-    {
-        X11DRV_expect_error(gdi_display, XRandRErrorHandler, NULL);
-        ok = pXRRQueryVersion(gdi_display, &xrandr_major, &xrandr_minor);
-        if (X11DRV_check_error()) ok = FALSE;
-    }
-    if (ok)
-    {
-        TRACE("Found XRandR - major: %d, minor: %d\n", xrandr_major, xrandr_minor);
-        xrandr_init_modes();
-    }
+    if (!pXRRQueryExtension( gdi_display, &xrandr_event, &xrandr_error )) goto done;
+    X11DRV_expect_error( gdi_display, XRandRErrorHandler, NULL );
+    ok = pXRRQueryVersion( gdi_display, &xrandr_major, &xrandr_minor );
+    if (X11DRV_check_error() || !ok) goto done;
+
+    TRACE("Found XRandR %d.%d.\n", xrandr_major, xrandr_minor);
+    xrandr_init_modes();
+
+done:
     wine_tsx11_unlock();
 }
 
