@@ -225,25 +225,11 @@ static const char *iocodex(DWORD code)
  */
 typedef struct
 {
-    UCHAR DataLength[2];
-    UCHAR Reserved0[2];
-    UCHAR BookVersion : 4;
-    UCHAR BookType : 4;
-    UCHAR MinimumRate : 4;
-    UCHAR DiskSize : 4;
-    UCHAR LayerType : 4;
-    UCHAR TrackPath : 1;
-    UCHAR NumberOfLayers : 2;
-    UCHAR Reserved1 : 1;
-    UCHAR TrackDensity : 4;
-    UCHAR LinearDensity : 4;
-    ULONG StartingDataSector;
-    ULONG EndDataSector;
-    ULONG EndLayerZeroSector;
-    UCHAR Reserved5 : 7;
-    UCHAR BCAFlag : 1;
-    UCHAR Reserved6;
+    DVD_DESCRIPTOR_HEADER Header;
+    DVD_LAYER_DESCRIPTOR Descriptor;
+    UCHAR Padding;
 } internal_dvd_layer_descriptor;
+C_ASSERT(sizeof(internal_dvd_layer_descriptor) == 22);
 
 
 static NTSTATUS CDROM_ReadTOC(int, int, CDROM_TOC*);
@@ -2560,26 +2546,24 @@ static NTSTATUS DVD_ReadStructure(int dev, const DVD_READ_STRUCTURE *structure, 
             internal_dvd_layer_descriptor *p = (internal_dvd_layer_descriptor *) layer;
             struct dvd_layer *l = &s.physical.layer[s.physical.layer_num];
 
-            p->DataLength[0] = 2;
-            p->DataLength[1] = 8;
-            p->Reserved0[0] = 0;
-            p->Reserved0[1] = 0;
-            p->BookVersion = l->book_version;
-            p->BookType = l->book_type;
-            p->MinimumRate = l->min_rate;
-            p->DiskSize = l->disc_size;
-            p->LayerType = l->layer_type;
-            p->TrackPath = l->track_path;
-            p->NumberOfLayers = l->nlayers;
-            p->Reserved1 = 0;
-            p->TrackDensity = l->track_density;
-            p->LinearDensity = l->linear_density;
-            p->StartingDataSector = GET_BE_DWORD(l->start_sector);
-            p->EndDataSector = GET_BE_DWORD(l->end_sector);
-            p->EndLayerZeroSector = GET_BE_DWORD(l->end_sector_l0);
-            p->Reserved5 = 0;
-            p->BCAFlag = l->bca;
-            p->Reserved6 = 0;
+            p->Header.Length = 0x0802;
+            p->Header.Reserved[0] = 0;
+            p->Header.Reserved[1] = 0;
+            p->Descriptor.BookVersion = l->book_version;
+            p->Descriptor.BookType = l->book_type;
+            p->Descriptor.MinimumRate = l->min_rate;
+            p->Descriptor.DiskSize = l->disc_size;
+            p->Descriptor.LayerType = l->layer_type;
+            p->Descriptor.TrackPath = l->track_path;
+            p->Descriptor.NumberOfLayers = l->nlayers;
+            p->Descriptor.Reserved1 = 0;
+            p->Descriptor.TrackDensity = l->track_density;
+            p->Descriptor.LinearDensity = l->linear_density;
+            p->Descriptor.StartingDataSector = GET_BE_DWORD(l->start_sector);
+            p->Descriptor.EndDataSector = GET_BE_DWORD(l->end_sector);
+            p->Descriptor.EndLayerZeroSector = GET_BE_DWORD(l->end_sector_l0);
+            p->Descriptor.Reserved5 = 0;
+            p->Descriptor.BCAFlag = l->bca;
         }
         break;
 
@@ -2685,26 +2669,24 @@ static NTSTATUS DVD_ReadStructure(int dev, const DVD_READ_STRUCTURE *structure, 
         switch(structure->Format)
         {
         case DvdPhysicalDescriptor:
-            nt_desc.xlayer->DataLength[0] = 2;
-            nt_desc.xlayer->DataLength[1] = 8;
-            nt_desc.xlayer->Reserved0[0] = 0;
-            nt_desc.xlayer->Reserved0[1] = 0;
-            nt_desc.xlayer->BookVersion = desc.phys.partVersion;
-            nt_desc.xlayer->BookType = desc.phys.bookType;
-            nt_desc.xlayer->MinimumRate = desc.phys.minimumRate;
-            nt_desc.xlayer->DiskSize = desc.phys.discSize;
-            nt_desc.xlayer->LayerType = desc.phys.layerType;
-            nt_desc.xlayer->TrackPath = desc.phys.trackPath;
-            nt_desc.xlayer->NumberOfLayers = desc.phys.numberOfLayers;
-            nt_desc.xlayer->Reserved1 = 0;
-            nt_desc.xlayer->TrackDensity = desc.phys.trackDensity;
-            nt_desc.xlayer->LinearDensity = desc.phys.linearDensity;
-            nt_desc.xlayer->BCAFlag = desc.phys.bcaFlag;
-            nt_desc.xlayer->StartingDataSector = *(DWORD *)&desc.phys.zero1;
-            nt_desc.xlayer->EndDataSector = *(DWORD *)&desc.phys.zero2;
-            nt_desc.xlayer->EndLayerZeroSector = *(DWORD *)&desc.phys.zero3;
-            nt_desc.xlayer->Reserved5 = 0;
-            nt_desc.xlayer->Reserved6 = 0;
+            nt_desc.xlayer->Header.Length = 0x0802;
+            nt_desc.xlayer->Header.Reserved[0] = 0;
+            nt_desc.xlayer->Header.Reserved[1] = 0;
+            nt_desc.xlayer->Descriptor.BookVersion = desc.phys.partVersion;
+            nt_desc.xlayer->Descriptor.BookType = desc.phys.bookType;
+            nt_desc.xlayer->Descriptor.MinimumRate = desc.phys.minimumRate;
+            nt_desc.xlayer->Descriptor.DiskSize = desc.phys.discSize;
+            nt_desc.xlayer->Descriptor.LayerType = desc.phys.layerType;
+            nt_desc.xlayer->Descriptor.TrackPath = desc.phys.trackPath;
+            nt_desc.xlayer->Descriptor.NumberOfLayers = desc.phys.numberOfLayers;
+            nt_desc.xlayer->Descriptor.Reserved1 = 0;
+            nt_desc.xlayer->Descriptor.TrackDensity = desc.phys.trackDensity;
+            nt_desc.xlayer->Descriptor.LinearDensity = desc.phys.linearDensity;
+            nt_desc.xlayer->Descriptor.StartingDataSector = GET_BE_DWORD(*(DWORD *)&desc.phys.zero1);
+            nt_desc.xlayer->Descriptor.EndDataSector = GET_BE_DWORD(*(DWORD *)&desc.phys.zero2);
+            nt_desc.xlayer->Descriptor.EndLayerZeroSector = GET_BE_DWORD(*(DWORD *)&desc.phys.zero3);
+            nt_desc.xlayer->Descriptor.Reserved5 = 0;
+            nt_desc.xlayer->Descriptor.BCAFlag = desc.phys.bcaFlag;
             break;
 
         case DvdCopyrightDescriptor:
