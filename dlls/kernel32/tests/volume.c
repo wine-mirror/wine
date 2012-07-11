@@ -749,6 +749,7 @@ static void test_dvd_read_structure(HANDLE handle)
     DVD_READ_STRUCTURE dvdReadStructure;
     DVD_LAYER_DESCRIPTOR dvdLayerDescriptor;
     struct COMPLETE_DVD_LAYER_DESCRIPTOR completeDvdLayerDescriptor;
+    DVD_COPYRIGHT_DESCRIPTOR dvdCopyrightDescriptor;
 
     dvdReadStructure.BlockByteOffset.QuadPart = 0;
     dvdReadStructure.SessionId = 0;
@@ -817,6 +818,26 @@ static void test_dvd_read_structure(HANDLE handle)
         &completeDvdLayerDescriptor, sizeof(struct COMPLETE_DVD_LAYER_DESCRIPTOR), &nbBytes, NULL);
         ok( (!ret && GetLastError() == ERROR_INVALID_PARAMETER),
             "IOCTL_DVD_READ_STRUCTURE should have failed\n");
+    }
+
+
+    /* DvdCopyrightDescriptor */
+    dvdReadStructure.Format = 1;
+
+    SetLastError(0xdeadbeef);
+
+    /* Strangely, with NULL lpOutBuffer, last error is insufficient buffer, not invalid parameter as we could expect */
+    ret = DeviceIoControl(handle, IOCTL_DVD_READ_STRUCTURE, &dvdReadStructure, sizeof(DVD_READ_STRUCTURE),
+        NULL, sizeof(DVD_COPYRIGHT_DESCRIPTOR), &nbBytes, NULL);
+    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "IOCTL_DVD_READ_STRUCTURE should have failed %d %u\n", ret, GetLastError());
+
+    for(i=0; i<sizeof(DVD_COPYRIGHT_DESCRIPTOR); i++)
+    {
+        SetLastError(0xdeadbeef);
+
+        ret = DeviceIoControl(handle, IOCTL_DVD_READ_STRUCTURE, &dvdReadStructure, sizeof(DVD_READ_STRUCTURE),
+            &dvdCopyrightDescriptor, i, &nbBytes, NULL);
+        ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "IOCTL_DVD_READ_STRUCTURE should have failed %d %u\n", ret, GetLastError());
     }
 }
 

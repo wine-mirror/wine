@@ -3083,7 +3083,7 @@ NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
     case IOCTL_DVD_READ_STRUCTURE:
         sz = sizeof(DVD_LAYER_DESCRIPTOR);
         if (lpInBuffer == NULL || nInBufferSize != sizeof(DVD_READ_STRUCTURE)) status = STATUS_INVALID_PARAMETER;
-        else if (nOutBufferSize < sz) status = STATUS_BUFFER_TOO_SMALL;
+        else if (nOutBufferSize < sz || !lpOutBuffer) status = STATUS_BUFFER_TOO_SMALL;
         else
         {
             TRACE("doing DVD_READ_STRUCTURE\n");
