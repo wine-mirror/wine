@@ -1356,7 +1356,7 @@ static void CDECL device_parent_mode_changed(struct wined3d_device_parent *devic
     TRACE("device_parent %p.\n", device_parent);
 }
 
-static HRESULT CDECL device_parent_create_surface(struct wined3d_device_parent *device_parent,
+static HRESULT CDECL device_parent_create_texture_surface(struct wined3d_device_parent *device_parent,
         void *container_parent, UINT width, UINT height, enum wined3d_format_id format, DWORD usage,
         enum wined3d_pool pool, UINT level, enum wined3d_cubemap_face face, struct wined3d_surface **surface)
 {
@@ -1398,20 +1398,19 @@ static HRESULT CDECL device_parent_create_surface(struct wined3d_device_parent *
     return S_OK;
 }
 
-static HRESULT CDECL device_parent_create_rendertarget(struct wined3d_device_parent *device_parent,
-        void *container_parent, UINT width, UINT height, enum wined3d_format_id format,
-        enum wined3d_multisample_type multisample_type, DWORD multisample_quality,
-        struct wined3d_surface **surface)
+static HRESULT CDECL device_parent_create_swapchain_surface(struct wined3d_device_parent *device_parent,
+        void *container_parent, UINT width, UINT height, enum wined3d_format_id format_id, DWORD usage,
+        enum wined3d_multisample_type multisample_type, DWORD multisample_quality, struct wined3d_surface **surface)
 {
     struct d3d10_device *device = device_from_wined3d_device_parent(device_parent);
     struct d3d10_texture2d *texture;
     D3D10_TEXTURE2D_DESC desc;
     HRESULT hr;
 
-    FIXME("device_parent %p, container_parent %p, width %u, height %u, format %#x, multisample_type %#x,\n"
-            "\tmultisample_quality %u, surface %p partial stub!\n",
-            device_parent, container_parent, width, height, format, multisample_type,
-            multisample_quality, surface);
+    FIXME("device_parent %p, container_parent %p, width %u, height %u, format_id %#x, usage %#x,\n"
+            "\tmultisample_type %#x, multisample_quality %u, surface %p partial stub!\n",
+            device_parent, container_parent, width, height, format_id, usage,
+            multisample_type, multisample_quality, surface);
 
     FIXME("Implement DXGI<->wined3d usage conversion\n");
 
@@ -1419,49 +1418,7 @@ static HRESULT CDECL device_parent_create_rendertarget(struct wined3d_device_par
     desc.Height = height;
     desc.MipLevels = 1;
     desc.ArraySize = 1;
-    desc.Format = dxgi_format_from_wined3dformat(format);
-    desc.SampleDesc.Count = multisample_type ? multisample_type : 1;
-    desc.SampleDesc.Quality = multisample_quality;
-    desc.Usage = D3D10_USAGE_DEFAULT;
-    desc.BindFlags = D3D10_BIND_RENDER_TARGET;
-    desc.CPUAccessFlags = 0;
-    desc.MiscFlags = 0;
-
-    hr = d3d10_device_CreateTexture2D(&device->ID3D10Device_iface, &desc, NULL,
-            (ID3D10Texture2D **)&texture);
-    if (FAILED(hr))
-    {
-        ERR("CreateTexture2D failed, returning %#x\n", hr);
-        return hr;
-    }
-
-    *surface = texture->wined3d_surface;
-    wined3d_surface_incref(*surface);
-    ID3D10Texture2D_Release(&texture->ID3D10Texture2D_iface);
-
-    return S_OK;
-}
-
-static HRESULT CDECL device_parent_create_depth_stencil(struct wined3d_device_parent *device_parent,
-        UINT width, UINT height, enum wined3d_format_id format, enum wined3d_multisample_type multisample_type,
-        DWORD multisample_quality, struct wined3d_surface **surface)
-{
-    struct d3d10_device *device = device_from_wined3d_device_parent(device_parent);
-    struct d3d10_texture2d *texture;
-    D3D10_TEXTURE2D_DESC desc;
-    HRESULT hr;
-
-    FIXME("device_parent %p, width %u, height %u, format %#x, multisample_type %#x,\n"
-            "\tmultisample_quality %u, surface %p partial stub!\n",
-            device_parent, width, height, format, multisample_type, multisample_quality, surface);
-
-    FIXME("Implement DXGI<->wined3d usage conversion\n");
-
-    desc.Width = width;
-    desc.Height = height;
-    desc.MipLevels = 1;
-    desc.ArraySize = 1;
-    desc.Format = dxgi_format_from_wined3dformat(format);
+    desc.Format = dxgi_format_from_wined3dformat(format_id);
     desc.SampleDesc.Count = multisample_type ? multisample_type : 1;
     desc.SampleDesc.Quality = multisample_quality;
     desc.Usage = D3D10_USAGE_DEFAULT;
@@ -1538,9 +1495,8 @@ static const struct wined3d_device_parent_ops d3d10_wined3d_device_parent_ops =
 {
     device_parent_wined3d_device_created,
     device_parent_mode_changed,
-    device_parent_create_surface,
-    device_parent_create_rendertarget,
-    device_parent_create_depth_stencil,
+    device_parent_create_swapchain_surface,
+    device_parent_create_texture_surface,
     device_parent_create_volume,
     device_parent_create_swapchain,
 };

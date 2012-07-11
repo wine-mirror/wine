@@ -1997,15 +1997,13 @@ struct wined3d_device_parent_ops
 {
     void (__cdecl *wined3d_device_created)(struct wined3d_device_parent *device_parent, struct wined3d_device *device);
     void (__cdecl *mode_changed)(struct wined3d_device_parent *device_parent);
-    HRESULT (__cdecl *create_surface)(struct wined3d_device_parent *device_parent, void *container_parent,
+    HRESULT (__cdecl *create_swapchain_surface)(struct wined3d_device_parent *device_parent, void *container_parent,
+            UINT width, UINT height, enum wined3d_format_id format_id, DWORD usage,
+            enum wined3d_multisample_type multisample_type, DWORD multisample_quality,
+            struct wined3d_surface **surface);
+    HRESULT (__cdecl *create_texture_surface)(struct wined3d_device_parent *device_parent, void *container_parent,
             UINT width, UINT height, enum wined3d_format_id format_id, DWORD usage, enum wined3d_pool pool,
             UINT level, enum wined3d_cubemap_face face, struct wined3d_surface **surface);
-    HRESULT (__cdecl *create_rendertarget)(struct wined3d_device_parent *device_parent, void *container_parent,
-            UINT width, UINT height, enum wined3d_format_id format_id, enum wined3d_multisample_type multisample_type,
-            DWORD multisample_quality, struct wined3d_surface **surface);
-    HRESULT (__cdecl *create_depth_stencil)(struct wined3d_device_parent *device_parent,
-            UINT width, UINT height, enum wined3d_format_id format_id, enum wined3d_multisample_type multisample_type,
-            DWORD multisample_quality, struct wined3d_surface **surface);
     HRESULT (__cdecl *create_volume)(struct wined3d_device_parent *device_parent, void *container_parent,
             UINT width, UINT height, UINT depth, enum wined3d_format_id format_id, enum wined3d_pool pool, DWORD usage,
             struct wined3d_volume **volume);

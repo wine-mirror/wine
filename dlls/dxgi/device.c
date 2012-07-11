@@ -189,7 +189,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_CreateSurface(IWineDXGIDevice *ifac
         struct wined3d_surface *wined3d_surface;
         IUnknown *parent;
 
-        hr = device_parent->ops->create_surface(device_parent, NULL, desc->Width, desc->Height,
+        hr = device_parent->ops->create_texture_surface(device_parent, NULL, desc->Width, desc->Height,
                 wined3dformat_from_dxgi_format(desc->Format), usage, WINED3D_POOL_DEFAULT, 0,
                 WINED3D_CUBEMAP_FACE_POSITIVE_X, &wined3d_surface);
         if (FAILED(hr))

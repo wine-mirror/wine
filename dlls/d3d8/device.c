@@ -2815,7 +2815,7 @@ static void CDECL device_parent_mode_changed(struct wined3d_device_parent *devic
     TRACE("device_parent %p.\n", device_parent);
 }
 
-static HRESULT CDECL device_parent_create_surface(struct wined3d_device_parent *device_parent,
+static HRESULT CDECL device_parent_create_texture_surface(struct wined3d_device_parent *device_parent,
         void *container_parent, UINT width, UINT height, enum wined3d_format_id format, DWORD usage,
         enum wined3d_pool pool, UINT level, enum wined3d_cubemap_face face, struct wined3d_surface **surface)
 {
@@ -2854,55 +2854,24 @@ static HRESULT CDECL device_parent_create_surface(struct wined3d_device_parent *
     return hr;
 }
 
-static HRESULT CDECL device_parent_create_rendertarget(struct wined3d_device_parent *device_parent,
-        void *container_parent, UINT width, UINT height, enum wined3d_format_id format,
-        enum wined3d_multisample_type multisample_type, DWORD multisample_quality,
-        struct wined3d_surface **surface)
+static HRESULT CDECL device_parent_create_swapchain_surface(struct wined3d_device_parent *device_parent,
+        void *container_parent, UINT width, UINT height, enum wined3d_format_id format_id, DWORD usage,
+        enum wined3d_multisample_type multisample_type, DWORD multisample_quality, struct wined3d_surface **surface)
 {
     struct d3d8_device *device = device_from_device_parent(device_parent);
     struct d3d8_surface *d3d_surface;
     HRESULT hr;
 
-    TRACE("device_parent %p, container_parent %p, width %u, height %u, format %#x, multisample_type %#x,\n"
-            "\tmultisample_quality %u, surface %p.\n",
-            device_parent, container_parent, width, height, format,
+    TRACE("device_parent %p, container_parent %p, width %u, height %u, format_id %#x, usage %#x,\n"
+            "\tmultisample_type %#x, multisample_quality %u, surface %p.\n",
+            device_parent, container_parent, width, height, format_id, usage,
             multisample_type, multisample_quality, surface);
 
-    hr = IDirect3DDevice8_CreateRenderTarget(&device->IDirect3DDevice8_iface, width, height,
-            d3dformat_from_wined3dformat(format), multisample_type, TRUE, (IDirect3DSurface8 **)&d3d_surface);
-    if (FAILED(hr))
+    if (FAILED(hr = d3d8_device_CreateSurface(device, width, height, d3dformat_from_wined3dformat(format_id),
+            TRUE, FALSE, 0, (IDirect3DSurface8 **)&d3d_surface, usage, D3DPOOL_DEFAULT, multisample_type,
+            multisample_quality)))
     {
-        WARN("Failed to create rendertarget, hr %#x.\n", hr);
-        return hr;
-    }
-
-    *surface = d3d_surface->wined3d_surface;
-    wined3d_surface_incref(*surface);
-
-    d3d_surface->container = (IUnknown *)&device->IDirect3DDevice8_iface;
-    /* Implicit surfaces are created with an refcount of 0 */
-    IDirect3DSurface8_Release(&d3d_surface->IDirect3DSurface8_iface);
-
-    return hr;
-}
-
-static HRESULT CDECL device_parent_create_depth_stencil(struct wined3d_device_parent *device_parent,
-        UINT width, UINT height, enum wined3d_format_id format, enum wined3d_multisample_type multisample_type,
-        DWORD multisample_quality, struct wined3d_surface **surface)
-{
-    struct d3d8_device *device = device_from_device_parent(device_parent);
-    struct d3d8_surface *d3d_surface;
-    HRESULT hr;
-
-    TRACE("device_parent %p, width %u, height %u, format %#x, multisample_type %#x,\n"
-            "\tmultisample_quality %u, surface %p.\n",
-            device_parent, width, height, format, multisample_type, multisample_quality, surface);
-
-    hr = IDirect3DDevice8_CreateDepthStencilSurface(&device->IDirect3DDevice8_iface, width, height,
-            d3dformat_from_wined3dformat(format), multisample_type, (IDirect3DSurface8 **)&d3d_surface);
-    if (FAILED(hr))
-    {
-        WARN("Failed to create depth/stencil surface, hr %#x.\n", hr);
+        WARN("Failed to create surface, hr %#x.\n", hr);
         return hr;
     }
 
@@ -2985,9 +2954,8 @@ static const struct wined3d_device_parent_ops d3d8_wined3d_device_parent_ops =
 {
     device_parent_wined3d_device_created,
     device_parent_mode_changed,
-    device_parent_create_surface,
-    device_parent_create_rendertarget,
-    device_parent_create_depth_stencil,
+    device_parent_create_swapchain_surface,
+    device_parent_create_texture_surface,
     device_parent_create_volume,
     device_parent_create_swapchain,
 };

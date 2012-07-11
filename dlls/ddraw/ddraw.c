@@ -5360,7 +5360,7 @@ static void CDECL device_parent_mode_changed(struct wined3d_device_parent *devic
         ERR("Failed to resize window.\n");
 }
 
-static HRESULT CDECL device_parent_create_surface(struct wined3d_device_parent *device_parent,
+static HRESULT CDECL device_parent_create_texture_surface(struct wined3d_device_parent *device_parent,
         void *container_parent, UINT width, UINT height, enum wined3d_format_id format, DWORD usage,
         enum wined3d_pool pool, UINT level, enum wined3d_cubemap_face face, struct wined3d_surface **surface)
 {
@@ -5442,18 +5442,17 @@ static const struct wined3d_parent_ops ddraw_frontbuffer_parent_ops =
     ddraw_frontbuffer_destroyed,
 };
 
-static HRESULT CDECL device_parent_create_rendertarget(struct wined3d_device_parent *device_parent,
-        void *container_parent, UINT width, UINT height, enum wined3d_format_id format,
-        enum wined3d_multisample_type multisample_type, DWORD multisample_quality,
-        struct wined3d_surface **surface)
+static HRESULT CDECL device_parent_create_swapchain_surface(struct wined3d_device_parent *device_parent,
+        void *container_parent, UINT width, UINT height, enum wined3d_format_id format_id, DWORD usage,
+        enum wined3d_multisample_type multisample_type, DWORD multisample_quality, struct wined3d_surface **surface)
 {
     struct ddraw *ddraw = ddraw_from_device_parent(device_parent);
     HRESULT hr;
 
-    TRACE("device_parent %p, container_parent %p, width %u, height %u, format %#x, multisample_type %#x,\n"
-            "\tmultisample_quality %u, surface %p.\n",
-            device_parent, container_parent, width, height, format, multisample_type,
-            multisample_quality, surface);
+    TRACE("device_parent %p, container_parent %p, width %u, height %u, format_id %#x, usage %#x,\n"
+            "\tmultisample_type %#x, multisample_quality %u, surface %p.\n",
+            device_parent, container_parent, width, height, format_id, usage,
+            multisample_type, multisample_quality, surface);
 
     if (ddraw->wined3d_frontbuffer)
     {
@@ -5461,21 +5460,12 @@ static HRESULT CDECL device_parent_create_rendertarget(struct wined3d_device_par
         return E_FAIL;
     }
 
-    hr = wined3d_surface_create(ddraw->wined3d_device, width, height, format, 0,
-            WINED3DUSAGE_RENDERTARGET, WINED3D_POOL_DEFAULT, multisample_type, multisample_quality,
-            DefaultSurfaceType, WINED3D_SURFACE_MAPPABLE, ddraw, &ddraw_frontbuffer_parent_ops, surface);
-    if (SUCCEEDED(hr))
+    if (SUCCEEDED(hr = wined3d_surface_create(ddraw->wined3d_device, width, height, format_id, 0,
+            usage, WINED3D_POOL_DEFAULT, multisample_type, multisample_quality, DefaultSurfaceType,
+            WINED3D_SURFACE_MAPPABLE, ddraw, &ddraw_frontbuffer_parent_ops, surface)))
         ddraw->wined3d_frontbuffer = *surface;
 
     return hr;
-}
-
-static HRESULT CDECL device_parent_create_depth_stencil(struct wined3d_device_parent *device_parent,
-        UINT width, UINT height, enum wined3d_format_id format, enum wined3d_multisample_type multisample_type,
-        DWORD multisample_quality, struct wined3d_surface **surface)
-{
-    ERR("DirectDraw doesn't have and shouldn't try creating implicit depth buffers.\n");
-    return E_NOTIMPL;
 }
 
 static HRESULT CDECL device_parent_create_volume(struct wined3d_device_parent *device_parent,
@@ -5518,9 +5508,8 @@ static const struct wined3d_device_parent_ops ddraw_wined3d_device_parent_ops =
 {
     device_parent_wined3d_device_created,
     device_parent_mode_changed,
-    device_parent_create_surface,
-    device_parent_create_rendertarget,
-    device_parent_create_depth_stencil,
+    device_parent_create_swapchain_surface,
+    device_parent_create_texture_surface,
     device_parent_create_volume,
     device_parent_create_swapchain,
 };

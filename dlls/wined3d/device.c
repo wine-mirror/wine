@@ -5234,10 +5234,11 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
 
         TRACE("Creating the depth stencil buffer\n");
 
-        if (FAILED(hr = device->device_parent->ops->create_depth_stencil(device->device_parent,
-                swapchain_desc->backbuffer_width, swapchain_desc->backbuffer_height,
-                swapchain_desc->auto_depth_stencil_format, swapchain_desc->multisample_type,
-                swapchain_desc->multisample_quality, &device->auto_depth_stencil)))
+        if (FAILED(hr = device->device_parent->ops->create_swapchain_surface(device->device_parent,
+                device->device_parent, swapchain_desc->backbuffer_width, swapchain_desc->backbuffer_height,
+                swapchain_desc->auto_depth_stencil_format, WINED3DUSAGE_DEPTHSTENCIL,
+                swapchain_desc->multisample_type, swapchain_desc->multisample_quality,
+                &device->auto_depth_stencil)))
         {
             ERR("Failed to create the depth stencil buffer, hr %#x.\n", hr);
             wined3d_swapchain_decref(swapchain);
