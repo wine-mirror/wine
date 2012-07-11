@@ -26,6 +26,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(xrandr);
 
 #ifdef SONAME_LIBXRANDR
 
+#include <X11/Xlib.h>
 #include <X11/extensions/Xrandr.h>
 #include "x11drv.h"
 
