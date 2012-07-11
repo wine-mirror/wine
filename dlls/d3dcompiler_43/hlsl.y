@@ -251,6 +251,7 @@ static unsigned int components_count_expr_list(struct list *list)
 %type <boolval> boolean
 %type <type> base_type
 %type <type> type
+%type <list> declaration_statement
 %type <list> complex_initializer
 %type <list> initializer_expr_list
 %type <instr> initializer_expr
@@ -530,6 +531,8 @@ base_type:                KW_VOID
 
 declaration_statement:    declaration
                             {
+                                $$ = d3dcompiler_alloc(sizeof(*$$));
+                                list_init($$);
                             }
 
 declaration:              var_modifiers type variables_def ';'
@@ -713,8 +716,7 @@ statement_list:           statement
 
 statement:                declaration_statement
                             {
-                                $$ = d3dcompiler_alloc(sizeof(*$$));
-                                list_init($$);
+                                $$ = $1;
                             }
                         | expr_statement
                             {
