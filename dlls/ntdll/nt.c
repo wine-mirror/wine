@@ -1279,7 +1279,6 @@ void fill_cpu_info(void)
                 valSize = sizeof(buffer);
                 if (sysctlbyname ("machdep.cpu.features", buffer, &valSize, NULL, 0) == 0)
                 {
-                    cached_sci.Revision |= value;
                     if (!valSize) FIXME("Buffer not large enough, please increase\n");
                     if (strstr(buffer, "CX8"))   user_shared_data->ProcessorFeatures[PF_COMPARE_EXCHANGE_DOUBLE] = TRUE;
                     if (strstr(buffer, "CX16"))  user_shared_data->ProcessorFeatures[PF_COMPARE_EXCHANGE128] = TRUE;
