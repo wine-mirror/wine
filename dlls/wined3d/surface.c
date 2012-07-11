@@ -2520,6 +2520,27 @@ static HRESULT d3dfmt_get_conv(const struct wined3d_surface *surface, BOOL need_
     return WINED3D_OK;
 }
 
+static BOOL surface_check_block_align(struct wined3d_surface *surface, const RECT *rect)
+{
+    UINT width_mask, height_mask;
+
+    if (!rect->left && !rect->top
+            && rect->right == surface->resource.width
+            && rect->bottom == surface->resource.height)
+        return TRUE;
+
+    /* This assumes power of two block sizes, but NPOT block sizes would be
+     * silly anyway. */
+    width_mask = surface->resource.format->block_width - 1;
+    height_mask = surface->resource.format->block_height - 1;
+
+    if (!(rect->left & width_mask) && !(rect->top & height_mask)
+            && !(rect->right & width_mask) && !(rect->bottom & height_mask))
+        return TRUE;
+
+    return FALSE;
+}
+
 HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const POINT *dst_point,
         struct wined3d_surface *src_surface, const RECT *src_rect)
 {
@@ -2533,9 +2554,9 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
     UINT update_w, update_h;
     UINT dst_w, dst_h;
     UINT src_w, src_h;
+    RECT r, dst_rect;
     UINT src_pitch;
     POINT p;
-    RECT r;
 
     TRACE("dst_surface %p, dst_point %s, src_surface %p, src_rect %s.\n",
             dst_surface, wine_dbgstr_point(dst_point),
@@ -2593,22 +2614,23 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
         return WINED3DERR_INVALIDCALL;
     }
 
-    /* NPOT block sizes would be silly. */
-    if ((src_format->flags & WINED3DFMT_FLAG_BLOCKS)
-            && ((update_w & (src_format->block_width - 1) || update_h & (src_format->block_height - 1))
-            && (src_w != update_w || dst_w != update_w || src_h != update_h || dst_h != update_h)))
+    if ((src_format->flags & WINED3DFMT_FLAG_BLOCKS) && !surface_check_block_align(src_surface, src_rect))
     {
-        WARN("Update rect not block-aligned.\n");
+        WARN("Source rectangle not block-aligned.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    SetRect(&dst_rect, dst_point->x, dst_point->y, dst_point->x + update_w, dst_point->y + update_h);
+    if ((dst_format->flags & WINED3DFMT_FLAG_BLOCKS) && !surface_check_block_align(dst_surface, &dst_rect))
+    {
+        WARN("Destination rectangle not block-aligned.\n");
         return WINED3DERR_INVALIDCALL;
     }
 
     /* Use wined3d_surface_blt() instead of uploading directly if we need conversion. */
     d3dfmt_get_conv(dst_surface, FALSE, TRUE, &format, &convert);
     if (convert != WINED3D_CT_NONE || format.convert)
-    {
-        RECT dst_rect = {dst_point->x,  dst_point->y, dst_point->x + update_w, dst_point->y + update_h};
         return wined3d_surface_blt(dst_surface, &dst_rect, src_surface, src_rect, 0, NULL, WINED3D_TEXF_POINT);
-    }
 
     context = context_acquire(dst_surface->resource.device, NULL);
     gl_info = context->gl_info;
@@ -3859,23 +3881,15 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
         WARN("Surface is already mapped.\n");
         return WINED3DERR_INVALIDCALL;
     }
-    if ((format->flags & WINED3DFMT_FLAG_BLOCKS)
-            && rect && (rect->left || rect->top
-            || rect->right != surface->resource.width
-            || rect->bottom != surface->resource.height))
+
+    if ((format->flags & WINED3DFMT_FLAG_BLOCKS) && rect
+            && !surface_check_block_align(surface, rect))
     {
-        UINT width_mask = format->block_width - 1;
-        UINT height_mask = format->block_height - 1;
+        WARN("Map rect %s is misaligned for %ux%u blocks.\n",
+                wine_dbgstr_rect(rect), format->block_width, format->block_height);
 
-        if ((rect->left & width_mask) || (rect->right & width_mask)
-                || (rect->top & height_mask) || (rect->bottom & height_mask))
-        {
-            WARN("Map rect %s is misaligned for %ux%u blocks.\n",
-                    wine_dbgstr_rect(rect), format->block_width, format->block_height);
-
-            if (surface->resource.pool == WINED3D_POOL_DEFAULT)
-                return WINED3DERR_INVALIDCALL;
-        }
+        if (surface->resource.pool == WINED3D_POOL_DEFAULT)
+            return WINED3DERR_INVALIDCALL;
     }
 
     ++surface->resource.map_count;
