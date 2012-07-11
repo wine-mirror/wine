@@ -226,9 +226,9 @@ void destroy_view( struct view *view )
     heap_free( view );
 }
 
-static BOOL eval_like( LONGLONG lval, LONGLONG rval )
+static BOOL eval_like( const WCHAR *lstr, const WCHAR *rstr )
 {
-    const WCHAR *p = (const WCHAR *)(INT_PTR)lval, *q = (const WCHAR *)(INT_PTR)rval;
+    const WCHAR *p = lstr, *q = rstr;
 
     while (*p && *q)
     {
@@ -244,10 +244,48 @@ static BOOL eval_like( LONGLONG lval, LONGLONG rval )
     return TRUE;
 }
 
+static HRESULT eval_strcmp( UINT op, const WCHAR *lstr, const WCHAR *rstr, LONGLONG *val )
+{
+    switch (op)
+    {
+    case OP_EQ:
+        *val = !strcmpW( lstr, rstr );
+        break;
+    case OP_GT:
+        *val = strcmpW( lstr, rstr ) > 0;
+        break;
+    case OP_LT:
+        *val = strcmpW( lstr, rstr ) < 0;
+        break;
+    case OP_LE:
+        *val = strcmpW( lstr, rstr ) <= 0;
+        break;
+    case OP_GE:
+        *val = strcmpW( lstr, rstr ) >= 0;
+        break;
+    case OP_NE:
+        *val = strcmpW( lstr, rstr );
+        break;
+    case OP_LIKE:
+        *val = eval_like( lstr, rstr );
+        break;
+    default:
+        ERR("unhandled operator %u\n", op);
+        return WBEM_E_INVALID_QUERY;
+    }
+    return S_OK;
+}
+
+static inline BOOL is_strcmp( const struct complex_expr *expr )
+{
+    return ((expr->left->type == EXPR_PROPVAL && expr->right->type == EXPR_SVAL) ||
+            (expr->left->type == EXPR_SVAL && expr->right->type == EXPR_PROPVAL));
+}
+
 static HRESULT eval_cond( const struct table *, UINT, const struct expr *, LONGLONG * );
 
-static BOOL eval_binary( const struct table *table, UINT row, const struct complex_expr *expr,
-                         LONGLONG *val )
+static HRESULT eval_binary( const struct table *table, UINT row, const struct complex_expr *expr,
+                            LONGLONG *val )
 {
     HRESULT lret, rret;
     LONGLONG lval, rval;
@@ -256,6 +294,13 @@ static BOOL eval_binary( const struct table *table, UINT row, const struct compl
     rret = eval_cond( table, row, expr->right, &rval );
     if (lret != S_OK || rret != S_OK) return WBEM_E_INVALID_QUERY;
 
+    if (is_strcmp( expr ))
+    {
+        const WCHAR *lstr = (const WCHAR *)(INT_PTR)lval;
+        const WCHAR *rstr = (const WCHAR *)(INT_PTR)rval;
+
+        return eval_strcmp( expr->op, lstr, rstr, val );
+    }
     switch (expr->op)
     {
     case OP_EQ:
@@ -282,11 +327,8 @@ static BOOL eval_binary( const struct table *table, UINT row, const struct compl
     case OP_NE:
         *val = (lval != rval);
         break;
-    case OP_LIKE:
-        *val = eval_like( lval, rval );
-        break;
     default:
-        ERR("unknown operator %u\n", expr->op);
+        ERR("unhandled operator %u\n", expr->op);
         return WBEM_E_INVALID_QUERY;
     }
     return S_OK;
