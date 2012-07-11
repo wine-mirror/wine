@@ -582,8 +582,33 @@ static HRESULT Global_StrComp(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, V
 
 static HRESULT Global_LCase(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    BSTR str;
+    HRESULT hres;
+
+    TRACE("%s\n", debugstr_variant(arg));
+
+    if(V_VT(arg) == VT_NULL) {
+        if(res)
+            V_VT(res) = VT_NULL;
+        return S_OK;
+    }
+
+    hres = to_string(arg, &str);
+    if(FAILED(hres))
+        return hres;
+
+    if(res) {
+        WCHAR *ptr;
+
+        for(ptr = str; *ptr; ptr++)
+            *ptr = tolowerW(*ptr);
+
+        V_VT(res) = VT_BSTR;
+        V_BSTR(res) = str;
+    }else {
+        SysFreeString(str);
+    }
+    return S_OK;
 }
 
 static HRESULT Global_UCase(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)

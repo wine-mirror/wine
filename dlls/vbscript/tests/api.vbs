@@ -159,4 +159,18 @@ TestUCase 0.123, "0.123"
 TestUCase Empty, ""
 Call ok(getVT(UCase(Null)) = "VT_NULL", "getVT(UCase(Null)) = " & getVT(UCase(Null)))
 
+Sub TestLCase(str, ex)
+    x = LCase(str)
+    Call ok(x = ex, "LCase(" & str & ") = " & x & " expected " & ex)
+End Sub
+
+TestLCase "test", "test"
+TestLCase "123aBC?", "123abc?"
+TestLCase "", ""
+TestLCase 1, "1"
+TestLCase true, "true"
+TestLCase 0.123, "0.123"
+TestLCase Empty, ""
+Call ok(getVT(LCase(Null)) = "VT_NULL", "getVT(LCase(Null)) = " & getVT(LCase(Null)))
+
 Call reportSuccess()
