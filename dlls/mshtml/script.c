@@ -573,10 +573,10 @@ static HRESULT WINAPI ASServiceProvider_QueryService(IServiceProvider *iface, RE
     if(IsEqualGUID(&SID_SInternetHostSecurityManager, guidService)) {
         TRACE("(%p)->(SID_SInternetHostSecurityManager)\n", This);
 
-        if(!This->window || !This->window->base.inner_window->doc)
+        if(!This->window || !This->window->doc)
             return E_NOINTERFACE;
 
-        return IInternetHostSecurityManager_QueryInterface(&This->window->base.inner_window->doc->IInternetHostSecurityManager_iface,
+        return IInternetHostSecurityManager_QueryInterface(&This->window->doc->IInternetHostSecurityManager_iface,
                 riid, ppv);
     }
 
