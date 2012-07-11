@@ -113,7 +113,13 @@ typedef struct DVD_READ_STRUCTURE {
 
         /* From 0 to 4 */
         UCHAR LayerNumber;
-}DVD_READ_STRUCTURE, * PDVD_READ_STRUCTURE;
+} DVD_READ_STRUCTURE, *PDVD_READ_STRUCTURE;
+
+typedef struct _DVD_DESCRIPTOR_HEADER {
+    USHORT Length;
+    UCHAR Reserved[2];
+} DVD_DESCRIPTOR_HEADER, *PDVD_DESCRIPTOR_HEADER;
+C_ASSERT(sizeof(DVD_DESCRIPTOR_HEADER) == 4);
 
 typedef struct _DVD_LAYER_DESCRIPTOR
 {
@@ -154,6 +160,7 @@ typedef struct _DVD_LAYER_DESCRIPTOR
     /* 0 indicates no BCA data */
     UCHAR BCAFlag : 1;
 }DVD_LAYER_DESCRIPTOR, * PDVD_LAYER_DESCRIPTOR;
+C_ASSERT(sizeof(DVD_LAYER_DESCRIPTOR) == 17);
 
 typedef struct _DVD_COPYRIGHT_DESCRIPTOR
 {
