@@ -730,6 +730,48 @@ static void test_GetVolumePathNamesForVolumeNameW(void)
     ok(error == ERROR_FILE_NOT_FOUND, "expected ERROR_FILE_NOT_FOUND got %u\n", error);
 }
 
+static void test_cdrom_ioctl(void)
+{
+    char drive_letter, drive_path[] = "A:\\", drive_full_path[] = "\\\\.\\A:";
+    DWORD bitmask;
+    HANDLE handle;
+
+    bitmask = GetLogicalDrives();
+    if(!bitmask)
+    {
+        trace("GetLogicalDrives failed : %u\n", GetLastError());
+        return;
+    }
+
+    for(drive_letter='A'; drive_letter<='Z'; drive_letter++)
+    {
+        if(!(bitmask & (1 << (drive_letter-'A') )))
+            continue;
+
+        drive_path[0] = drive_letter;
+        if(GetDriveTypeA(drive_path) != DRIVE_CDROM)
+        {
+            trace("Skipping %c:, not a CDROM drive.\n", drive_letter);
+            continue;
+        }
+
+        trace("Testing with %c:\n", drive_letter);
+
+        drive_full_path[4] = drive_letter;
+        handle = CreateFileA(drive_full_path, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0);
+        if(handle == INVALID_HANDLE_VALUE)
+        {
+            trace("Failed to open the device : %u\n", GetLastError());
+            continue;
+        }
+
+        /* Add your tests here */
+
+        CloseHandle(handle);
+    }
+
+}
+
 START_TEST(volume)
 {
     hdll = GetModuleHandleA("kernel32.dll");
@@ -756,4 +798,5 @@ START_TEST(volume)
     test_disk_extents();
     test_GetVolumePathNamesForVolumeNameA();
     test_GetVolumePathNamesForVolumeNameW();
+    test_cdrom_ioctl();
 }
