@@ -41,6 +41,7 @@ struct mem_file_desc
 
 static struct mem_file_desc current_shader;
 static ID3DInclude *current_include;
+static const char *initial_filename;
 
 #define INCLUDES_INITIAL_CAPACITY 4
 
@@ -179,7 +180,7 @@ static void *wpp_open_mem(const char *filename, int type)
     struct mem_file_desc *desc;
     HRESULT hr;
 
-    if(filename[0] == '\0') /* "" means to load the initial shader */
+    if(!strcmp(filename, initial_filename))
     {
         current_shader.pos = 0;
         return &current_shader;
@@ -310,7 +311,7 @@ static int wpp_close_output(void)
     return 1;
 }
 
-static HRESULT preprocess_shader(const void *data, SIZE_T data_size,
+static HRESULT preprocess_shader(const void *data, SIZE_T data_size, const char *filename,
         const D3D_SHADER_MACRO *defines, ID3DInclude *include, ID3DBlob **error_messages)
 {
     int ret;
@@ -347,8 +348,9 @@ static HRESULT preprocess_shader(const void *data, SIZE_T data_size,
     wpp_messages = NULL;
     current_shader.buffer = data;
     current_shader.size = data_size;
+    initial_filename = filename ? filename : "";
 
-    ret = wpp_parse("", NULL);
+    ret = wpp_parse(initial_filename, NULL);
     if (!wpp_close_output())
         ret = 1;
     if (ret)
@@ -481,7 +483,7 @@ HRESULT WINAPI D3DAssemble(const void *data, SIZE_T datasize, const char *filena
     if (shader) *shader = NULL;
     if (error_messages) *error_messages = NULL;
 
-    hr = preprocess_shader(data, datasize, defines, include, error_messages);
+    hr = preprocess_shader(data, datasize, filename, defines, include, error_messages);
     if (SUCCEEDED(hr))
         hr = assemble_shader(wpp_output, shader, error_messages);
 
@@ -615,7 +617,7 @@ HRESULT WINAPI D3DCompile(const void *data, SIZE_T data_size, const char *filena
 
     EnterCriticalSection(&wpp_mutex);
 
-    hr = preprocess_shader(data, data_size, defines, include, error_messages);
+    hr = preprocess_shader(data, data_size, filename, defines, include, error_messages);
     if (SUCCEEDED(hr))
         hr = compile_shader(wpp_output, target, entrypoint, shader, error_messages);
 
@@ -639,7 +641,7 @@ HRESULT WINAPI D3DPreprocess(const void *data, SIZE_T size, const char *filename
     if (shader) *shader = NULL;
     if (error_messages) *error_messages = NULL;
 
-    hr = preprocess_shader(data, size, defines, include, error_messages);
+    hr = preprocess_shader(data, size, filename, defines, include, error_messages);
 
     if (SUCCEEDED(hr))
     {
