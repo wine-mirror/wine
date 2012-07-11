@@ -927,6 +927,7 @@ void push_scope(struct hlsl_parse_ctx *ctx)
         ERR("Out of memory!\n");
         return;
     }
+    TRACE("Pushing a new scope\n");
     list_init(&new_scope->vars);
     list_init(&new_scope->types);
     new_scope->upper = ctx->cur_scope;
@@ -940,6 +941,7 @@ BOOL pop_scope(struct hlsl_parse_ctx *ctx)
     if (!prev_scope)
         return FALSE;
 
+    TRACE("Popping current scope\n");
     ctx->cur_scope = prev_scope;
     return TRUE;
 }
