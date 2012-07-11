@@ -999,16 +999,16 @@ const char *debug_hlsl_type(const struct hlsl_type *type)
         return debugstr_a(type->name);
 
     if (type->type == HLSL_CLASS_STRUCT)
-        name = "<anonymous struct>";
-    else
-        name = debug_base_type(type);
+        return "<anonymous struct>";
+
+    name = debug_base_type(type);
 
     if (type->type == HLSL_CLASS_SCALAR)
         return wine_dbg_sprintf("%s", name);
     if (type->type == HLSL_CLASS_VECTOR)
-        return wine_dbg_sprintf("vector<%s, %u>", name, type->dimx);
+        return wine_dbg_sprintf("%s%u", name, type->dimx);
     if (type->type == HLSL_CLASS_MATRIX)
-        return wine_dbg_sprintf("matrix<%s, %u, %u>", name, type->dimx, type->dimy);
+        return wine_dbg_sprintf("%s%ux%u", name, type->dimx, type->dimy);
     return "unexpected_type";
 }
 
