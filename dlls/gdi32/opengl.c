@@ -34,9 +34,7 @@
 #include "winternl.h"
 #include "winnt.h"
 #include "gdi_private.h"
-#include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(wgl);
 
 static const WCHAR opengl32W[] = {'o','p','e','n','g','l','3','2','.','d','l','l',0};
 static HMODULE opengl32;
