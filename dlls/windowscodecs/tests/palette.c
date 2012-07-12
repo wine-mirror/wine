@@ -223,6 +223,23 @@ static void generate_halftone64_palette(DWORD *entries, UINT count)
     }
 }
 
+static void generate_halftone256_palette(DWORD *entries, UINT count)
+{
+    static const BYTE halftone_values_b[4] = { 0x00,0x55,0xaa,0xff };
+    static const BYTE halftone_values_gr[8] = { 0x00,0x24,0x49,0x6d,0x92,0xb6,0xdb,0xff };
+    UINT i;
+
+    assert(count == 256);
+
+    for (i = 0; i < 256; i++)
+    {
+        entries[i] = 0xff000000;
+        entries[i] |= halftone_values_b[i%4];
+        entries[i] |= halftone_values_gr[(i/4)%8] << 8;
+        entries[i] |= halftone_values_gr[(i/32)%8] << 16;
+    }
+}
+
 static void test_predefined_palette(void)
 {
     static struct test_data
@@ -240,6 +257,7 @@ static void test_predefined_palette(void)
         { WICBitmapPaletteTypeFixedGray256, 0, 1, 256, { 0 } },
         { WICBitmapPaletteTypeFixedHalftone8, 0, 0, 16, { 0 } },
         { WICBitmapPaletteTypeFixedHalftone64, 0, 0, 72, { 0 } },
+        { WICBitmapPaletteTypeFixedHalftone256, 0, 0, 256, { 0 } },
     };
     IWICImagingFactory *factory;
     IWICPalette *palette;
@@ -298,6 +316,8 @@ static void test_predefined_palette(void)
                 generate_halftone8_palette(td[i].color, td[i].count);
             else if (td[i].type == WICBitmapPaletteTypeFixedHalftone64)
                 generate_halftone64_palette(td[i].color, td[i].count);
+            else if (td[i].type == WICBitmapPaletteTypeFixedHalftone256)
+                generate_halftone256_palette(td[i].color, td[i].count);
 
             for (j = 0; j < count; j++)
             {

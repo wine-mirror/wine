@@ -188,6 +188,27 @@ static WICColor *generate_halftone64_palette(UINT *count)
     return entries;
 }
 
+static WICColor *generate_halftone256_palette(UINT *count)
+{
+    WICColor *entries;
+    UINT i;
+
+    *count = 256;
+    entries = HeapAlloc(GetProcessHeap(), 0, 256 * sizeof(WICColor));
+    if (!entries) return NULL;
+
+    for (i = 0; i < 256; i++)
+    {
+        static const BYTE halftone_values_b[4] = { 0x00,0x55,0xaa,0xff };
+        static const BYTE halftone_values_gr[8] = { 0x00,0x24,0x49,0x6d,0x92,0xb6,0xdb,0xff };
+        entries[i] = 0xff000000;
+        entries[i] |= halftone_values_b[i%4];
+        entries[i] |= halftone_values_gr[(i/4)%8] << 8;
+        entries[i] |= halftone_values_gr[(i/32)%8] << 16;
+    }
+    return entries;
+}
+
 static HRESULT WINAPI PaletteImpl_InitializePredefined(IWICPalette *iface,
     WICBitmapPaletteType type, BOOL add_transparent)
 {
@@ -234,6 +255,11 @@ static HRESULT WINAPI PaletteImpl_InitializePredefined(IWICPalette *iface,
 
     case WICBitmapPaletteTypeFixedHalftone64:
         colors = generate_halftone64_palette(&count);
+        if (!colors) return E_OUTOFMEMORY;
+        break;
+
+    case WICBitmapPaletteTypeFixedHalftone256:
+        colors = generate_halftone256_palette(&count);
         if (!colors) return E_OUTOFMEMORY;
         break;
 
