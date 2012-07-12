@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <assert.h>
 
 #define COBJMACROS
 
@@ -148,6 +149,19 @@ static void test_custom_palette(void)
     IWICImagingFactory_Release(factory);
 }
 
+static void generate_gray16_palette(DWORD *entries, UINT count)
+{
+    UINT i;
+
+    assert(count == 16);
+
+    for (i = 0; i < 16; i++)
+    {
+        entries[i] = 0xff000000;
+        entries[i] |= (i << 20) | (i << 16) | (i << 12) | (i << 8) | (i << 4) | i;
+    }
+}
+
 static void test_predefined_palette(void)
 {
     static struct test_data
@@ -161,6 +175,7 @@ static void test_predefined_palette(void)
         { WICBitmapPaletteTypeFixedBW, 1, 1, 2, { 0xff000000, 0xffffffff } },
         { WICBitmapPaletteTypeFixedGray4, 0, 1, 4,
           { 0xff000000, 0xff555555, 0xffaaaaaa, 0xffffffff } },
+        { WICBitmapPaletteTypeFixedGray16, 0, 1, 16, { 0 } },
     };
     IWICImagingFactory *factory;
     IWICPalette *palette;
@@ -210,6 +225,10 @@ static void test_predefined_palette(void)
         if (ret == td[i].count)
         {
             UINT j;
+
+            if (td[i].type == WICBitmapPaletteTypeFixedGray16)
+                generate_gray16_palette(td[i].color, td[i].count);
+
             for (j = 0; j < count; j++)
             {
                 ok(color[j] == td[i].color[j], "%u:[%u]: expected %#x, got %#x\n",

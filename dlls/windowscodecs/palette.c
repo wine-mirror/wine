@@ -98,6 +98,23 @@ static ULONG WINAPI PaletteImpl_Release(IWICPalette *iface)
     return ref;
 }
 
+static WICColor *generate_gray16_palette(UINT *count)
+{
+    WICColor *entries;
+    UINT i;
+
+    *count = 16;
+    entries = HeapAlloc(GetProcessHeap(), 0, 16 * sizeof(WICColor));
+    if (!entries) return NULL;
+
+    for (i = 0; i < 16; i++)
+    {
+        entries[i] = 0xff000000;
+        entries[i] |= (i<<20) | (i<<16) | (i<<12) | (i<<8) | (i<<4) | i;
+    }
+    return entries;
+}
+
 static HRESULT WINAPI PaletteImpl_InitializePredefined(IWICPalette *iface,
     WICBitmapPaletteType type, BOOL add_transparent)
 {
@@ -125,6 +142,11 @@ static HRESULT WINAPI PaletteImpl_InitializePredefined(IWICPalette *iface,
         colors[1] = 0xff555555;
         colors[2] = 0xffaaaaaa;
         colors[3] = 0xffffffff;
+        break;
+
+    case WICBitmapPaletteTypeFixedGray16:
+        colors = generate_gray16_palette(&count);
+        if (!colors) return E_OUTOFMEMORY;
         break;
 
     default:
