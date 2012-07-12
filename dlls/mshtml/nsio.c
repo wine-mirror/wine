@@ -1016,9 +1016,12 @@ static nsresult async_open(nsChannel *This, HTMLOuterWindow *window, BOOL is_doc
     channelbsc_set_channel(bscallback, This, listener, context);
 
     if(is_doc_channel) {
-        set_window_bscallback(window, bscallback);
-        async_start_doc_binding(window, bscallback);
+        hres = create_pending_window(window, bscallback);
+        if(SUCCEEDED(hres))
+            async_start_doc_binding(window, window->pending_window);
         IUnknown_Release((IUnknown*)bscallback);
+        if(FAILED(hres))
+            return NS_ERROR_UNEXPECTED;
     }else {
         start_binding_task_t *task = heap_alloc(sizeof(start_binding_task_t));
 

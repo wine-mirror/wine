@@ -326,7 +326,7 @@ struct HTMLOuterWindow {
     HTMLFrameBase *frame_element;
     READYSTATE readystate;
 
-    nsChannelBSC *bscallback;
+    HTMLInnerWindow *pending_window;
     IMoniker *mon;
     IUri *uri;
     BSTR url;
@@ -361,6 +361,7 @@ struct HTMLInnerWindow {
     DWORD global_prop_cnt;
     DWORD global_prop_size;
 
+    nsChannelBSC *bscallback;
     struct list bindings;
 };
 
@@ -665,7 +666,7 @@ HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument*,HTMLDocumentObj*,HTMLOuterWind
 HRESULT create_document_fragment(nsIDOMNode*,HTMLDocumentNode*,HTMLDocumentNode**) DECLSPEC_HIDDEN;
 
 HRESULT HTMLOuterWindow_Create(HTMLDocumentObj*,nsIDOMWindow*,HTMLOuterWindow*,HTMLOuterWindow**) DECLSPEC_HIDDEN;
-HRESULT update_window_doc(HTMLOuterWindow*) DECLSPEC_HIDDEN;
+HRESULT update_window_doc(HTMLInnerWindow*) DECLSPEC_HIDDEN;
 HTMLOuterWindow *nswindow_to_window(const nsIDOMWindow*) DECLSPEC_HIDDEN;
 void get_top_window(HTMLOuterWindow*,HTMLOuterWindow**) DECLSPEC_HIDDEN;
 HRESULT HTMLOptionElementFactory_Create(HTMLInnerWindow*,HTMLOptionElementFactory**) DECLSPEC_HIDDEN;
@@ -750,11 +751,11 @@ void get_editor_controller(NSContainer*) DECLSPEC_HIDDEN;
 nsresult get_nsinterface(nsISupports*,REFIID,void**) DECLSPEC_HIDDEN;
 nsIWritableVariant *create_nsvariant(void) DECLSPEC_HIDDEN;
 
-void set_window_bscallback(HTMLOuterWindow*,nsChannelBSC*) DECLSPEC_HIDDEN;
+HRESULT create_pending_window(HTMLOuterWindow*,nsChannelBSC*) DECLSPEC_HIDDEN;
 void set_current_mon(HTMLOuterWindow*,IMoniker*) DECLSPEC_HIDDEN;
 void set_current_uri(HTMLOuterWindow*,IUri*) DECLSPEC_HIDDEN;
 HRESULT start_binding(HTMLOuterWindow*,HTMLInnerWindow*,BSCallback*,IBindCtx*) DECLSPEC_HIDDEN;
-HRESULT async_start_doc_binding(HTMLOuterWindow*,nsChannelBSC*) DECLSPEC_HIDDEN;
+HRESULT async_start_doc_binding(HTMLOuterWindow*,HTMLInnerWindow*) DECLSPEC_HIDDEN;
 void abort_window_bindings(HTMLInnerWindow*) DECLSPEC_HIDDEN;
 void set_download_state(HTMLDocumentObj*,int) DECLSPEC_HIDDEN;
 void call_docview_84(HTMLDocumentObj*) DECLSPEC_HIDDEN;

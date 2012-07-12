@@ -370,9 +370,9 @@ HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, nsChannel
         hres = load_nsuri(This->window, nsuri, bscallback, 0/*LOAD_INITIAL_DOCUMENT_URI*/);
         nsISupports_Release((nsISupports*)nsuri); /* FIXME */
         if(SUCCEEDED(hres))
-            set_window_bscallback(This->window, bscallback);
+            hres = create_pending_window(This->window, bscallback);
         if(bscallback != async_bsc)
-            IUnknown_Release((IUnknown*)bscallback);
+            IUnknown_Release(&bscallback->bsc.IBindStatusCallback_iface);
     }
 
     if(FAILED(hres)) {
@@ -538,7 +538,7 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
     if(FAILED(hres))
         return hres;
 
-    return start_binding(This->window, NULL, (BSCallback*)This->window->bscallback, pibc);
+    return start_binding(This->window, This->window->pending_window, (BSCallback*)This->window->pending_window->bscallback, pibc);
 }
 
 static HRESULT WINAPI PersistMoniker_Save(IPersistMoniker *iface, IMoniker *pimkName,
@@ -810,7 +810,7 @@ static HRESULT WINAPI PersistStreamInit_Load(IPersistStreamInit *iface, LPSTREAM
     if(FAILED(hres))
         return hres;
 
-    return channelbsc_load_stream(This->window->bscallback, pStm);
+    return channelbsc_load_stream(This->window->pending_window, pStm);
 }
 
 static HRESULT WINAPI PersistStreamInit_Save(IPersistStreamInit *iface, LPSTREAM pStm,
@@ -869,7 +869,7 @@ static HRESULT WINAPI PersistStreamInit_InitNew(IPersistStreamInit *iface)
     if(FAILED(hres))
         return hres;
 
-    return channelbsc_load_stream(This->window->bscallback, NULL);
+    return channelbsc_load_stream(This->window->pending_window, NULL);
 }
 
 static const IPersistStreamInitVtbl PersistStreamInitVtbl = {

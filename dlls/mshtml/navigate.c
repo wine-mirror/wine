@@ -725,8 +725,6 @@ HRESULT start_binding(HTMLOuterWindow *window, HTMLInnerWindow *inner_window, BS
     TRACE("(%p %p %p %p)\n", window, inner_window, bscallback, bctx);
 
     bscallback->window = inner_window;
-    if(!inner_window && window)
-        bscallback->window = window->base.inner_window;
 
     /* NOTE: IE7 calls IsSystemMoniker here*/
 
@@ -995,12 +993,7 @@ static HRESULT on_start_nsrequest(nsChannelBSC *This)
     }
 
     if(This->window) {
-        list_remove(&This->bsc.entry);
-        list_init(&This->bsc.entry);
-        update_window_doc(This->window);
-        if(This->window->base.inner_window != This->bsc.window)
-            This->bsc.window = This->window->base.inner_window;
-        list_add_head(&This->bsc.window->bindings, &This->bsc.entry);
+        update_window_doc(This->bsc.window);
         if(This->window->readystate != READYSTATE_LOADING)
             set_ready_state(This->window, READYSTATE_LOADING);
     }
@@ -1331,6 +1324,7 @@ static HRESULT async_stop_request(nsChannelBSC *This)
 
     IBindStatusCallback_AddRef(&This->bsc.IBindStatusCallback_iface);
     task->bsc = This;
+
     push_task(&task->header, stop_request_proc, stop_request_task_destr, This->window->doc_obj->basedoc.task_magic);
     return S_OK;
 }
@@ -1650,59 +1644,40 @@ HRESULT create_channelbsc(IMoniker *mon, const WCHAR *headers, BYTE *post_data, 
     return S_OK;
 }
 
-void set_window_bscallback(HTMLOuterWindow *window, nsChannelBSC *callback)
-{
-    if(window->bscallback) {
-        if(window->bscallback->bsc.binding)
-            IBinding_Abort(window->bscallback->bsc.binding);
-        window->bscallback->bsc.window = NULL;
-        window->bscallback->window = NULL;
-        IBindStatusCallback_Release(&window->bscallback->bsc.IBindStatusCallback_iface);
-    }
-
-    window->bscallback = callback;
-
-    if(callback) {
-        callback->window = window;
-        IBindStatusCallback_AddRef(&callback->bsc.IBindStatusCallback_iface);
-        callback->bsc.window = window->base.inner_window;
-    }
-}
-
 typedef struct {
     task_t header;
     HTMLOuterWindow *window;
-    nsChannelBSC *bscallback;
+    HTMLInnerWindow *pending_window;
 } start_doc_binding_task_t;
 
 static void start_doc_binding_proc(task_t *_task)
 {
     start_doc_binding_task_t *task = (start_doc_binding_task_t*)_task;
 
-    start_binding(task->window, NULL, (BSCallback*)task->bscallback, NULL);
+    start_binding(task->window, task->pending_window, &task->pending_window->bscallback->bsc, NULL);
 }
 
 static void start_doc_binding_task_destr(task_t *_task)
 {
     start_doc_binding_task_t *task = (start_doc_binding_task_t*)_task;
 
-    IBindStatusCallback_Release(&task->bscallback->bsc.IBindStatusCallback_iface);
+    IHTMLWindow2_Release(&task->pending_window->base.IHTMLWindow2_iface);
     heap_free(task);
 }
 
-HRESULT async_start_doc_binding(HTMLOuterWindow *window, nsChannelBSC *bscallback)
+HRESULT async_start_doc_binding(HTMLOuterWindow *window, HTMLInnerWindow *pending_window)
 {
     start_doc_binding_task_t *task;
 
-    TRACE("%p\n", bscallback);
+    TRACE("%p\n", pending_window);
 
     task = heap_alloc(sizeof(start_doc_binding_task_t));
     if(!task)
         return E_OUTOFMEMORY;
 
     task->window = window;
-    task->bscallback = bscallback;
-    IBindStatusCallback_AddRef(&bscallback->bsc.IBindStatusCallback_iface);
+    task->pending_window = pending_window;
+    IHTMLWindow2_AddRef(&pending_window->base.IHTMLWindow2_iface);
 
     push_task(&task->header, start_doc_binding_proc, start_doc_binding_task_destr, window->task_magic);
     return S_OK;
@@ -1710,28 +1685,40 @@ HRESULT async_start_doc_binding(HTMLOuterWindow *window, nsChannelBSC *bscallbac
 
 void abort_window_bindings(HTMLInnerWindow *window)
 {
-    BSCallback *iter, *next;
+    BSCallback *iter;
 
-    LIST_FOR_EACH_ENTRY_SAFE(iter, next, &window->bindings, BSCallback, entry) {
+    while(!list_empty(&window->bindings)) {
+        iter = LIST_ENTRY(window->bindings.next, BSCallback, entry);
+
         TRACE("Aborting %p\n", iter);
+
+        IBindStatusCallback_AddRef(&iter->IBindStatusCallback_iface);
 
         if(iter->window && iter->window->doc)
             remove_target_tasks(iter->window->doc->basedoc.task_magic);
 
         if(iter->binding)
             IBinding_Abort(iter->binding);
-        else {
-            list_remove(&iter->entry);
-            list_init(&iter->entry);
+        else
             iter->vtbl->stop_binding(iter, E_ABORT);
-        }
 
         iter->window = NULL;
+        list_remove(&iter->entry);
+        list_init(&iter->entry);
+
+        IBindStatusCallback_Release(&iter->IBindStatusCallback_iface);
+    }
+
+    if(window->bscallback) {
+        window->bscallback->window = NULL;
+        IBindStatusCallback_Release(&window->bscallback->bsc.IBindStatusCallback_iface);
+        window->bscallback = NULL;
     }
 }
 
-HRESULT channelbsc_load_stream(nsChannelBSC *bscallback, IStream *stream)
+HRESULT channelbsc_load_stream(HTMLInnerWindow *pending_window, IStream *stream)
 {
+    nsChannelBSC *bscallback = pending_window->bscallback;
     HRESULT hres = S_OK;
 
     if(!bscallback->nschannel) {
@@ -1743,7 +1730,7 @@ HRESULT channelbsc_load_stream(nsChannelBSC *bscallback, IStream *stream)
     if(!bscallback->nschannel->content_type)
         return E_OUTOFMEMORY;
 
-    list_add_head(&bscallback->bsc.window->bindings, &bscallback->bsc.entry);
+    bscallback->bsc.window = pending_window;
     if(stream)
         hres = read_stream_data(bscallback, stream);
     if(SUCCEEDED(hres))
@@ -1839,14 +1826,14 @@ static void navigate_proc(task_t *_task)
 
     hres = set_moniker(&task->window->doc_obj->basedoc, task->mon, NULL, task->bscallback, TRUE);
     if(SUCCEEDED(hres))
-        start_binding(task->window, NULL, (BSCallback*)task->bscallback, NULL);
+        start_binding(task->window, task->window->pending_window, &task->bscallback->bsc, NULL);
 }
 
 static void navigate_task_destr(task_t *_task)
 {
     navigate_task_t *task = (navigate_task_t*)_task;
 
-    IUnknown_Release((IUnknown*)task->bscallback);
+    IBindStatusCallback_Release(&task->bscallback->bsc.IBindStatusCallback_iface);
     IMoniker_Release(task->mon);
     heap_free(task);
 }
@@ -1946,7 +1933,7 @@ HRESULT super_navigate(HTMLOuterWindow *window, IUri *uri, const WCHAR *headers,
 
         task = heap_alloc(sizeof(*task));
         if(!task) {
-            IUnknown_Release((IUnknown*)bsc);
+            IBindStatusCallback_Release(&bsc->bsc.IBindStatusCallback_iface);
             IMoniker_Release(mon);
             return E_OUTOFMEMORY;
         }
@@ -1963,7 +1950,7 @@ HRESULT super_navigate(HTMLOuterWindow *window, IUri *uri, const WCHAR *headers,
     }else {
         navigate_javascript_task_t *task;
 
-        IUnknown_Release((IUnknown*)bsc);
+        IBindStatusCallback_Release(&bsc->bsc.IBindStatusCallback_iface);
         IMoniker_Release(mon);
 
         task = heap_alloc(sizeof(*task));

@@ -197,8 +197,13 @@ static ULONG WINAPI HTMLWindow2_AddRef(IHTMLWindow2 *iface)
 
 static void release_outer_window(HTMLOuterWindow *This)
 {
+    if(This->pending_window) {
+        abort_window_bindings(This->pending_window);
+        This->pending_window->base.outer_window = NULL;
+        IHTMLWindow2_Release(&This->pending_window->base.IHTMLWindow2_iface);
+    }
+
     remove_target_tasks(This->task_magic);
-    set_window_bscallback(This, NULL);
     set_current_mon(This, NULL);
     detach_inner_window(This);
     release_children(This);
@@ -228,9 +233,14 @@ static void release_inner_window(HTMLInnerWindow *This)
 {
     unsigned i;
 
+    TRACE("%p\n", This);
+
+    abort_window_bindings(This);
     release_script_hosts(This);
 
-    htmldoc_release(&This->doc->basedoc);
+    if(This->doc)
+        htmldoc_release(&This->doc->basedoc);
+
     release_dispex(&This->dispex);
 
     for(i=0; i < This->global_prop_cnt; i++)
@@ -2596,7 +2606,7 @@ static void *alloc_window(size_t size)
     return window;
 }
 
-static HRESULT create_inner_window(HTMLOuterWindow *outer_window, HTMLDocumentNode *doc_node, HTMLInnerWindow **ret)
+static HRESULT create_inner_window(HTMLOuterWindow *outer_window, HTMLInnerWindow **ret)
 {
     HTMLInnerWindow *window;
 
@@ -2609,9 +2619,6 @@ static HRESULT create_inner_window(HTMLOuterWindow *outer_window, HTMLDocumentNo
 
     window->base.outer_window = outer_window;
     window->base.inner_window = window;
-
-    htmldoc_addref(&doc_node->basedoc);
-    window->doc = doc_node;
 
     init_dispex(&window->dispex, (IUnknown*)&window->base.IHTMLWindow2_iface, &HTMLWindow_dispex);
 
@@ -2651,7 +2658,9 @@ HRESULT HTMLOuterWindow_Create(HTMLDocumentObj *doc_obj, nsIDOMWindow *nswindow,
     window->scriptmode = parent ? parent->scriptmode : SCRIPTMODE_GECKO;
     window->readystate = READYSTATE_UNINITIALIZED;
 
-    hres = update_window_doc(window);
+    hres = create_pending_window(window, NULL);
+    if(SUCCEEDED(hres))
+        hres = update_window_doc(window->pending_window);
     if(FAILED(hres)) {
         IHTMLWindow2_Release(&window->base.IHTMLWindow2_iface);
         return hres;
@@ -2675,54 +2684,54 @@ HRESULT HTMLOuterWindow_Create(HTMLDocumentObj *doc_obj, nsIDOMWindow *nswindow,
         list_add_tail(&parent->children, &window->sibling_entry);
     }
 
+    TRACE("%p inner_window %p\n", window, window->base.inner_window);
+
     *ret = window;
     return S_OK;
 }
 
-static HRESULT window_set_docnode(HTMLOuterWindow *window, HTMLDocumentNode *doc_node)
+HRESULT create_pending_window(HTMLOuterWindow *outer_window, nsChannelBSC *channelbsc)
 {
-    HTMLInnerWindow *inner_window;
+    HTMLInnerWindow *pending_window;
     HRESULT hres;
 
-    hres = create_inner_window(window, doc_node, &inner_window);
+    hres = create_inner_window(outer_window, &pending_window);
     if(FAILED(hres))
         return hres;
 
-    detach_inner_window(window);
-    window->base.inner_window = inner_window;
+    if(channelbsc) {
+        IBindStatusCallback_AddRef(&channelbsc->bsc.IBindStatusCallback_iface);
+        pending_window->bscallback = channelbsc;
 
-    if(window->doc_obj && window->doc_obj->basedoc.window == window) {
-        if(window->doc_obj->basedoc.doc_node)
-            htmldoc_release(&window->doc_obj->basedoc.doc_node->basedoc);
-        window->doc_obj->basedoc.doc_node = doc_node;
-        if(doc_node)
-            htmldoc_addref(&doc_node->basedoc);
+        channelbsc->window = outer_window;
     }
 
-    if(doc_node && window->doc_obj && window->doc_obj->usermode == EDITMODE) {
-        nsAString mode_str;
-        nsresult nsres;
-
-        static const PRUnichar onW[] = {'o','n',0};
-
-        nsAString_Init(&mode_str, onW);
-        nsres = nsIDOMHTMLDocument_SetDesignMode(doc_node->nsdoc, &mode_str);
-        nsAString_Finish(&mode_str);
-        if(NS_FAILED(nsres))
-            ERR("SetDesignMode failed: %08x\n", nsres);
+    if(outer_window->pending_window) {
+        abort_window_bindings(outer_window->pending_window);
+        outer_window->pending_window->base.outer_window = NULL;
+        IHTMLWindow2_Release(&outer_window->pending_window->base.IHTMLWindow2_iface);
     }
 
+    outer_window->pending_window = pending_window;
     return S_OK;
 }
 
-HRESULT update_window_doc(HTMLOuterWindow *window)
+HRESULT update_window_doc(HTMLInnerWindow *window)
 {
+    HTMLOuterWindow *outer_window = window->base.outer_window;
     nsIDOMHTMLDocument *nshtmldoc;
     nsIDOMDocument *nsdoc;
     nsresult nsres;
     HRESULT hres;
 
-    nsres = nsIDOMWindow_GetDocument(window->nswindow, &nsdoc);
+    assert(!window->doc);
+
+    if(!outer_window) {
+        ERR("NULL outer window\n");
+        return E_UNEXPECTED;
+    }
+
+    nsres = nsIDOMWindow_GetDocument(outer_window->nswindow, &nsdoc);
     if(NS_FAILED(nsres) || !nsdoc) {
         ERR("GetDocument failed: %08x\n", nsres);
         return E_FAIL;
@@ -2735,21 +2744,40 @@ HRESULT update_window_doc(HTMLOuterWindow *window)
         return E_FAIL;
     }
 
-    if(!window->base.inner_window || window->base.inner_window->doc->nsdoc != nshtmldoc) {
-        HTMLDocumentNode *doc;
+    hres = create_doc_from_nsdoc(nshtmldoc, outer_window->doc_obj, outer_window, &window->doc);
+    nsIDOMHTMLDocument_Release(nshtmldoc);
+    if(FAILED(hres))
+        return hres;
 
-        hres = create_doc_from_nsdoc(nshtmldoc, window->doc_obj, window, &doc);
-        if(SUCCEEDED(hres)) {
-            hres = window_set_docnode(window, doc);
-            htmldoc_release(&doc->basedoc);
-        }else {
-            ERR("create_doc_from_nsdoc failed: %08x\n", hres);
-        }
-    }else {
-        hres = S_OK;
+    if(outer_window->doc_obj->usermode == EDITMODE) {
+        nsAString mode_str;
+        nsresult nsres;
+
+        static const PRUnichar onW[] = {'o','n',0};
+
+        nsAString_Init(&mode_str, onW);
+        nsres = nsIDOMHTMLDocument_SetDesignMode(window->doc->nsdoc, &mode_str);
+        nsAString_Finish(&mode_str);
+        if(NS_FAILED(nsres))
+            ERR("SetDesignMode failed: %08x\n", nsres);
     }
 
-    nsIDOMHTMLDocument_Release(nshtmldoc);
+    if(window != outer_window->pending_window) {
+        ERR("not current pending window\n");
+        return S_OK;
+    }
+
+    detach_inner_window(outer_window);
+    outer_window->base.inner_window = window;
+    outer_window->pending_window = NULL;
+
+    if(outer_window->doc_obj && (outer_window->doc_obj->basedoc.window == outer_window || !outer_window->doc_obj->basedoc.window)) {
+        if(outer_window->doc_obj->basedoc.doc_node)
+            htmldoc_release(&outer_window->doc_obj->basedoc.doc_node->basedoc);
+        outer_window->doc_obj->basedoc.doc_node = window->doc;
+        htmldoc_addref(&window->doc->basedoc);
+    }
+
     return hres;
 }
 
