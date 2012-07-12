@@ -3295,6 +3295,53 @@ static void test_GdipGetAllPropertyItems(void)
     GdipDisposeImage(image);
 }
 
+static void test_tiff_palette(void)
+{
+    GpStatus status;
+    GpImage *image;
+    PixelFormat format;
+    INT size;
+    struct
+    {
+        ColorPalette pal;
+        ARGB entry[256];
+    } palette;
+
+    /* 1bpp TIFF without palette */
+    image = load_image((const BYTE *)&TIFF_data, sizeof(TIFF_data));
+    ok(image != 0, "Failed to load TIFF image data\n");
+    if (!image) return;
+
+    status = GdipGetImagePixelFormat(image, &format);
+    expect(Ok, status);
+todo_wine
+    ok(format == PixelFormat1bppIndexed, "expected PixelFormat1bppIndexed, got %#x\n", format);
+
+    status = GdipGetImagePaletteSize(image, &size);
+    ok(status == Ok || broken(status == GenericError), /* XP */
+       "GdipGetImagePaletteSize error %d\n", status);
+    if (status == GenericError)
+    {
+        GdipDisposeImage(image);
+        return;
+    }
+todo_wine
+    expect(sizeof(ColorPalette) + sizeof(ARGB), size);
+
+    status = GdipGetImagePalette(image, &palette.pal, size);
+    expect(Ok, status);
+    expect(0, palette.pal.Flags);
+todo_wine
+    expect(2, palette.pal.Count);
+    if (palette.pal.Count == 2)
+    {
+        ok(palette.pal.Entries[0] == 0xff000000, "expected 0xff000000, got %#x\n", palette.pal.Entries[0]);
+        ok(palette.pal.Entries[1] == 0xffffffff, "expected 0xffffffff, got %#x\n", palette.pal.Entries[1]);
+    }
+
+    GdipDisposeImage(image);
+}
+
 START_TEST(image)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -3307,6 +3354,7 @@ START_TEST(image)
 
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
+    test_tiff_palette();
     test_GdipGetAllPropertyItems();
     test_tiff_properties();
     test_image_properties();
