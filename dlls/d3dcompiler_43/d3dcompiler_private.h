@@ -705,7 +705,7 @@ struct hlsl_ir_node
     enum hlsl_ir_node_type type;
     struct hlsl_type *data_type;
 
-    char *source_file;
+    const char *source_file;
     unsigned int line;
     unsigned int column;
 };
@@ -823,8 +823,11 @@ struct parse_variable_def
 
 struct hlsl_parse_ctx
 {
-    char *source_file;
+    const char **source_files;
+    unsigned int source_files_count;
+    const char *source_file;
     unsigned int line_no;
+    unsigned int column;
     enum parse_status status;
     struct compilation_messages messages;
 

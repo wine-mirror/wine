@@ -29,6 +29,14 @@
 #include "hlsl.tab.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(hlsl_parser);
+
+#define YY_USER_ACTION                               \
+   do {                                              \
+      hlsl_lloc.first_column = hlsl_ctx.column;      \
+      hlsl_lloc.first_line = hlsl_ctx.line_no;       \
+      hlsl_ctx.column += yyleng;                     \
+   } while(0);
+
 %}
 
 %option noyywrap nounput noinput
@@ -206,6 +214,7 @@ row_major               {return KW_ROW_MAJOR;           }
 {WS}+                   {}
 {NEWLINE}               {
                             hlsl_ctx.line_no++;
+                            hlsl_ctx.column = 1;
                         }
 
 ^#                      {

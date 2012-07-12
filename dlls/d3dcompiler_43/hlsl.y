@@ -95,7 +95,7 @@ void hlsl_report_message(const char *filename, DWORD line, DWORD column,
 
 static void hlsl_error(const char *s)
 {
-    hlsl_report_message(hlsl_ctx.source_file, hlsl_ctx.line_no, 1, HLSL_LEVEL_ERROR, "%s", s);
+    hlsl_report_message(hlsl_ctx.source_file, hlsl_ctx.line_no, hlsl_ctx.column, HLSL_LEVEL_ERROR, "%s", s);
 }
 
 static void debug_dump_decl(struct hlsl_type *type, DWORD modifiers, const char *declname, unsigned int line_no)
@@ -177,6 +177,7 @@ static unsigned int components_count_expr_list(struct list *list)
 
 %}
 
+%locations
 %error-verbose
 
 %union
@@ -360,8 +361,19 @@ preproc_directive:        PRE_LINE STRING
                             {
                                 TRACE("Updating line information to file %s, line %u\n", debugstr_a($2), $1);
                                 hlsl_ctx.line_no = $1;
-                                d3dcompiler_free(hlsl_ctx.source_file);
-                                hlsl_ctx.source_file = $2;
+                                if (strcmp($2, hlsl_ctx.source_file))
+                                {
+                                    const char **new_array;
+
+                                    hlsl_ctx.source_file = $2;
+                                    new_array = d3dcompiler_realloc(hlsl_ctx.source_files,
+                                            sizeof(*hlsl_ctx.source_files) * hlsl_ctx.source_files_count + 1);
+                                    if (new_array)
+                                    {
+                                        hlsl_ctx.source_files = new_array;
+                                        hlsl_ctx.source_files[hlsl_ctx.source_files_count++] = $2;
+                                    }
+                                }
                             }
 
 any_identifier:           VAR_IDENTIFIER
@@ -978,11 +990,16 @@ struct bwriter_shader *parse_hlsl(enum shader_type type, DWORD major, DWORD mino
     struct hlsl_scope *scope, *next_scope;
     struct hlsl_type *hlsl_type, *next_type;
     struct hlsl_ir_var *var, *next_var;
+    unsigned int i;
 
     hlsl_ctx.status = PARSE_SUCCESS;
     hlsl_ctx.messages.size = hlsl_ctx.messages.capacity = 0;
-    hlsl_ctx.line_no = 1;
+    hlsl_ctx.line_no = hlsl_ctx.column = 1;
     hlsl_ctx.source_file = d3dcompiler_strdup("");
+    hlsl_ctx.source_files = d3dcompiler_alloc(sizeof(*hlsl_ctx.source_files));
+    if (hlsl_ctx.source_files)
+        hlsl_ctx.source_files[0] = hlsl_ctx.source_file;
+    hlsl_ctx.source_files_count = 1;
     hlsl_ctx.cur_scope = NULL;
     hlsl_ctx.matrix_majority = HLSL_COLUMN_MAJOR;
     list_init(&hlsl_ctx.scopes);
@@ -1020,7 +1037,10 @@ struct bwriter_shader *parse_hlsl(enum shader_type type, DWORD major, DWORD mino
             d3dcompiler_free(hlsl_ctx.messages.string);
     }
 
-    d3dcompiler_free(hlsl_ctx.source_file);
+    for (i = 0; i < hlsl_ctx.source_files_count; ++i)
+        d3dcompiler_free((void *)hlsl_ctx.source_files[i]);
+    d3dcompiler_free(hlsl_ctx.source_files);
+
     TRACE("Freeing functions IR.\n");
     LIST_FOR_EACH_ENTRY(function, &hlsl_ctx.functions, struct hlsl_ir_function_decl, node.entry)
         free_function(function);
