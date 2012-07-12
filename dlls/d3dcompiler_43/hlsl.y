@@ -136,7 +136,7 @@ static BOOL declare_variable(struct hlsl_ir_var *decl, BOOL local)
         struct hlsl_ir_var *old = get_variable(hlsl_ctx.cur_scope, decl->name);
 
         hlsl_message("Line %u: \"%s\" already declared.\n", hlsl_ctx.line_no, decl->name);
-        hlsl_message("Line %u: \"%s\" was previously declared here.\n", old->node.line, decl->name);
+        hlsl_message("Line %u: \"%s\" was previously declared here.\n", old->node.loc.line, decl->name);
         set_parse_status(&hlsl_ctx.status, PARSE_ERR);
         return FALSE;
     }
@@ -616,7 +616,7 @@ declaration:              var_modifiers type variables_def ';'
                                     var->name = v->name;
                                     var->modifiers = $1;
                                     var->semantic = v->semantic;
-                                    var->node.line = hlsl_ctx.line_no;
+                                    var->node.loc.line = hlsl_ctx.line_no;
                                     if (v->initializer)
                                     {
                                         FIXME("Variable with an initializer.\n");

@@ -816,7 +816,7 @@ BOOL add_func_parameter(struct list *list, struct parse_parameter *param, unsign
     }
     decl->node.type = HLSL_IR_VAR;
     decl->node.data_type = param->type;
-    decl->node.line = line;
+    decl->node.loc.line = line;
     decl->name = param->name;
     decl->semantic = param->semantic;
     decl->modifiers = param->modifiers;

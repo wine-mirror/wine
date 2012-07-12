@@ -690,6 +690,13 @@ struct hlsl_struct_field
     DWORD modifiers;
 };
 
+struct source_location
+{
+    const char *file;
+    unsigned int line;
+    unsigned int col;
+};
+
 enum hlsl_ir_node_type
 {
     HLSL_IR_VAR = 0,
@@ -705,9 +712,7 @@ struct hlsl_ir_node
     enum hlsl_ir_node_type type;
     struct hlsl_type *data_type;
 
-    const char *source_file;
-    unsigned int line;
-    unsigned int column;
+    struct source_location loc;
 };
 
 #define HLSL_STORAGE_EXTERN          0x00000001
