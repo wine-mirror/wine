@@ -361,6 +361,8 @@ struct HTMLInnerWindow {
     DWORD global_prop_cnt;
     DWORD global_prop_size;
 
+    LONG task_magic;
+
     nsChannelBSC *bscallback;
     struct list bindings;
 };

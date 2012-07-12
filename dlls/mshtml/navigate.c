@@ -1325,7 +1325,7 @@ static HRESULT async_stop_request(nsChannelBSC *This)
     IBindStatusCallback_AddRef(&This->bsc.IBindStatusCallback_iface);
     task->bsc = This;
 
-    push_task(&task->header, stop_request_proc, stop_request_task_destr, This->window->doc_obj->basedoc.task_magic);
+    push_task(&task->header, stop_request_proc, stop_request_task_destr, This->bsc.window->task_magic);
     return S_OK;
 }
 
@@ -1679,7 +1679,7 @@ HRESULT async_start_doc_binding(HTMLOuterWindow *window, HTMLInnerWindow *pendin
     task->pending_window = pending_window;
     IHTMLWindow2_AddRef(&pending_window->base.IHTMLWindow2_iface);
 
-    push_task(&task->header, start_doc_binding_proc, start_doc_binding_task_destr, window->task_magic);
+    push_task(&task->header, start_doc_binding_proc, start_doc_binding_task_destr, pending_window->task_magic);
     return S_OK;
 }
 
@@ -1687,15 +1687,14 @@ void abort_window_bindings(HTMLInnerWindow *window)
 {
     BSCallback *iter;
 
+    remove_target_tasks(window->task_magic);
+
     while(!list_empty(&window->bindings)) {
         iter = LIST_ENTRY(window->bindings.next, BSCallback, entry);
 
         TRACE("Aborting %p\n", iter);
 
         IBindStatusCallback_AddRef(&iter->IBindStatusCallback_iface);
-
-        if(iter->window && iter->window->doc)
-            remove_target_tasks(iter->window->doc->basedoc.task_magic);
 
         if(iter->binding)
             IBinding_Abort(iter->binding);

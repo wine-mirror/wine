@@ -235,6 +235,7 @@ static void release_inner_window(HTMLInnerWindow *This)
 
     TRACE("%p\n", This);
 
+    remove_target_tasks(This->task_magic);
     abort_window_bindings(This);
     release_script_hosts(This);
 
@@ -2621,6 +2622,8 @@ static HRESULT create_inner_window(HTMLOuterWindow *outer_window, HTMLInnerWindo
     window->base.inner_window = window;
 
     init_dispex(&window->dispex, (IUnknown*)&window->base.IHTMLWindow2_iface, &HTMLWindow_dispex);
+
+    window->task_magic = get_task_target_magic();
 
     *ret = window;
     return S_OK;
