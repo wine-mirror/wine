@@ -146,25 +146,7 @@ static BOOL declare_variable(struct hlsl_ir_var *decl, BOOL local)
     return TRUE;
 }
 
-static DWORD add_modifier(DWORD modifiers, DWORD mod)
-{
-    if (modifiers & mod)
-    {
-        hlsl_message("Line %u: modifier '%s' already specified.\n",
-                     hlsl_ctx.line_no, debug_modifiers(mod));
-        set_parse_status(&hlsl_ctx.status, PARSE_ERR);
-        return modifiers;
-    }
-    if (mod & (HLSL_MODIFIER_ROW_MAJOR | HLSL_MODIFIER_COLUMN_MAJOR)
-            && modifiers & (HLSL_MODIFIER_ROW_MAJOR | HLSL_MODIFIER_COLUMN_MAJOR))
-    {
-        hlsl_message("Line %u: more than one matrix majority keyword.\n",
-                hlsl_ctx.line_no);
-        set_parse_status(&hlsl_ctx.status, PARSE_ERR);
-        return modifiers;
-    }
-    return modifiers | mod;
-}
+static DWORD add_modifier(DWORD modifiers, DWORD mod, const struct YYLTYPE *loc);
 
 static unsigned int components_count_expr_list(struct list *list)
 {
@@ -691,47 +673,47 @@ var_modifiers:            /* Empty */
                             }
                         | KW_EXTERN var_modifiers
                             {
-                                $$ = add_modifier($2, HLSL_STORAGE_EXTERN);
+                                $$ = add_modifier($2, HLSL_STORAGE_EXTERN, &@1);
                             }
                         | KW_NOINTERPOLATION var_modifiers
                             {
-                                $$ = add_modifier($2, HLSL_STORAGE_NOINTERPOLATION);
+                                $$ = add_modifier($2, HLSL_STORAGE_NOINTERPOLATION, &@1);
                             }
                         | KW_PRECISE var_modifiers
                             {
-                                $$ = add_modifier($2, HLSL_MODIFIER_PRECISE);
+                                $$ = add_modifier($2, HLSL_MODIFIER_PRECISE, &@1);
                             }
                         | KW_SHARED var_modifiers
                             {
-                                $$ = add_modifier($2, HLSL_STORAGE_SHARED);
+                                $$ = add_modifier($2, HLSL_STORAGE_SHARED, &@1);
                             }
                         | KW_GROUPSHARED var_modifiers
                             {
-                                $$ = add_modifier($2, HLSL_STORAGE_GROUPSHARED);
+                                $$ = add_modifier($2, HLSL_STORAGE_GROUPSHARED, &@1);
                             }
                         | KW_STATIC var_modifiers
                             {
-                                $$ = add_modifier($2, HLSL_STORAGE_STATIC);
+                                $$ = add_modifier($2, HLSL_STORAGE_STATIC, &@1);
                             }
                         | KW_UNIFORM var_modifiers
                             {
-                                $$ = add_modifier($2, HLSL_STORAGE_UNIFORM);
+                                $$ = add_modifier($2, HLSL_STORAGE_UNIFORM, &@1);
                             }
                         | KW_VOLATILE var_modifiers
                             {
-                                $$ = add_modifier($2, HLSL_STORAGE_VOLATILE);
+                                $$ = add_modifier($2, HLSL_STORAGE_VOLATILE, &@1);
                             }
                         | KW_CONST var_modifiers
                             {
-                                $$ = add_modifier($2, HLSL_MODIFIER_CONST);
+                                $$ = add_modifier($2, HLSL_MODIFIER_CONST, &@1);
                             }
                         | KW_ROW_MAJOR var_modifiers
                             {
-                                $$ = add_modifier($2, HLSL_MODIFIER_ROW_MAJOR);
+                                $$ = add_modifier($2, HLSL_MODIFIER_ROW_MAJOR, &@1);
                             }
                         | KW_COLUMN_MAJOR var_modifiers
                             {
-                                $$ = add_modifier($2, HLSL_MODIFIER_COLUMN_MAJOR);
+                                $$ = add_modifier($2, HLSL_MODIFIER_COLUMN_MAJOR, &@1);
                             }
 
 complex_initializer:      initializer_expr
@@ -993,6 +975,24 @@ static void set_location(struct source_location *loc, const struct YYLTYPE *l)
     loc->file = hlsl_ctx.source_file;
     loc->line = l->first_line;
     loc->col = l->first_column;
+}
+
+static DWORD add_modifier(DWORD modifiers, DWORD mod, const struct YYLTYPE *loc)
+{
+    if (modifiers & mod)
+    {
+        hlsl_report_message(hlsl_ctx.source_file, loc->first_line, loc->first_column, HLSL_LEVEL_ERROR,
+                "modifier '%s' already specified", debug_modifiers(mod));
+        return modifiers;
+    }
+    if (mod & (HLSL_MODIFIER_ROW_MAJOR | HLSL_MODIFIER_COLUMN_MAJOR)
+            && modifiers & (HLSL_MODIFIER_ROW_MAJOR | HLSL_MODIFIER_COLUMN_MAJOR))
+    {
+        hlsl_report_message(hlsl_ctx.source_file, loc->first_line, loc->first_column, HLSL_LEVEL_ERROR,
+                "more than one matrix majority keyword");
+        return modifiers;
+    }
+    return modifiers | mod;
 }
 
 struct bwriter_shader *parse_hlsl(enum shader_type type, DWORD major, DWORD minor,
