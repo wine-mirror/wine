@@ -878,7 +878,7 @@ static HRESULT WINAPI TiffFrameDecode_CopyPalette(IWICBitmapFrameDecode *iface,
     if (!ret)
     {
         WARN("Couldn't read color map\n");
-        return E_FAIL;
+        return WINCODEC_ERR_PALETTEUNAVAILABLE;
     }
 
     for (i=0; i<color_count; i++)

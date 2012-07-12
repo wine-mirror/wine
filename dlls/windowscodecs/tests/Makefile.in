@@ -8,6 +8,7 @@ C_SRCS = \
 	info.c \
 	metadata.c \
 	palette.c \
-	stream.c
+	stream.c \
+	tiffformat.c
 
 @MAKE_TEST_RULES@
