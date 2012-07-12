@@ -1,5 +1,6 @@
 /*
  * Copyright 2009 Vincent Povirk for CodeWeavers
+ * Copyright 2012 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -175,6 +176,29 @@ static void generate_gray256_palette(DWORD *entries, UINT count)
     }
 }
 
+static void generate_halftone8_palette(DWORD *entries, UINT count)
+{
+    UINT i;
+
+    assert(count == 16);
+
+    for (i = 0; i < 8; i++)
+    {
+        entries[i] = 0xff000000;
+        if (i & 1) entries[i] |= 0xff;
+        if (i & 2) entries[i] |= 0xff00;
+        if (i & 4) entries[i] |= 0xff0000;
+    }
+
+    for (i = 8; i < 16; i++)
+    {
+        static const DWORD halftone[8] = { 0xc0c0c0, 0x808080, 0x800000, 0x008000,
+                                           0x000080, 0x808000, 0x800080, 0x008080 };
+        entries[i] = 0xff000000;
+        entries[i] |= halftone[i-8];
+    }
+}
+
 static void test_predefined_palette(void)
 {
     static struct test_data
@@ -190,6 +214,7 @@ static void test_predefined_palette(void)
           { 0xff000000, 0xff555555, 0xffaaaaaa, 0xffffffff } },
         { WICBitmapPaletteTypeFixedGray16, 0, 1, 16, { 0 } },
         { WICBitmapPaletteTypeFixedGray256, 0, 1, 256, { 0 } },
+        { WICBitmapPaletteTypeFixedHalftone8, 0, 0, 16, { 0 } },
     };
     IWICImagingFactory *factory;
     IWICPalette *palette;
@@ -244,6 +269,8 @@ static void test_predefined_palette(void)
                 generate_gray16_palette(td[i].color, td[i].count);
             else if (td[i].type == WICBitmapPaletteTypeFixedGray256)
                 generate_gray256_palette(td[i].color, td[i].count);
+            else if (td[i].type == WICBitmapPaletteTypeFixedHalftone8)
+                generate_halftone8_palette(td[i].color, td[i].count);
 
             for (j = 0; j < count; j++)
             {

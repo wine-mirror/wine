@@ -1,5 +1,6 @@
 /*
  * Copyright 2009 Vincent Povirk for CodeWeavers
+ * Copyright 2012 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -132,6 +133,33 @@ static WICColor *generate_gray256_palette(UINT *count)
     return entries;
 }
 
+static WICColor *generate_halftone8_palette(UINT *count)
+{
+    WICColor *entries;
+    UINT i;
+
+    *count = 16;
+    entries = HeapAlloc(GetProcessHeap(), 0, 16 * sizeof(WICColor));
+    if (!entries) return NULL;
+
+    for (i = 0; i < 8; i++)
+    {
+        entries[i] = 0xff000000;
+        if (i & 1) entries[i] |= 0xff;
+        if (i & 2) entries[i] |= 0xff00;
+        if (i & 4) entries[i] |= 0xff0000;
+    }
+
+    for (i = 8; i < 16; i++)
+    {
+        static const DWORD halftone[8] = { 0xc0c0c0, 0x808080, 0x800000, 0x008000,
+                                           0x000080, 0x808000, 0x800080, 0x008080 };
+        entries[i] = 0xff000000;
+        entries[i] |= halftone[i-8];
+    }
+    return entries;
+}
+
 static HRESULT WINAPI PaletteImpl_InitializePredefined(IWICPalette *iface,
     WICBitmapPaletteType type, BOOL add_transparent)
 {
@@ -168,6 +196,11 @@ static HRESULT WINAPI PaletteImpl_InitializePredefined(IWICPalette *iface,
 
     case WICBitmapPaletteTypeFixedGray256:
         colors = generate_gray256_palette(&count);
+        if (!colors) return E_OUTOFMEMORY;
+        break;
+
+    case WICBitmapPaletteTypeFixedHalftone8:
+        colors = generate_halftone8_palette(&count);
         if (!colors) return E_OUTOFMEMORY;
         break;
 
