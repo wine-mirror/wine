@@ -840,7 +840,16 @@ struct hlsl_parse_ctx
 
 extern struct hlsl_parse_ctx hlsl_ctx DECLSPEC_HIDDEN;
 
+enum hlsl_error_level
+{
+    HLSL_LEVEL_ERROR = 0,
+    HLSL_LEVEL_WARNING,
+    HLSL_LEVEL_NOTE,
+};
+
 void hlsl_message(const char *fmt, ...) PRINTF_ATTR(1,2) DECLSPEC_HIDDEN;
+void hlsl_report_message(const char *filename, DWORD line, DWORD column,
+        enum hlsl_error_level level, const char *fmt, ...) PRINTF_ATTR(5,6) DECLSPEC_HIDDEN;
 
 static inline struct hlsl_ir_deref *deref_from_node(const struct hlsl_ir_node *node)
 {

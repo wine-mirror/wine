@@ -41,10 +41,61 @@ void hlsl_message(const char *fmt, ...)
     va_end(args);
 }
 
+static const char *hlsl_get_error_level_name(enum hlsl_error_level level)
+{
+    const char *names[] =
+    {
+        "error",
+        "warning",
+        "note",
+    };
+    return names[level];
+}
+
+void hlsl_report_message(const char *filename, DWORD line, DWORD column,
+        enum hlsl_error_level level, const char *fmt, ...)
+{
+    va_list args;
+    char *string = NULL;
+    int rc, size = 0;
+
+    while (1)
+    {
+        va_start(args, fmt);
+        rc = vsnprintf(string, size, fmt, args);
+        va_end(args);
+
+        if (rc >= 0 && rc < size)
+            break;
+
+        if (rc >= size)
+            size = rc + 1;
+        else
+            size = size ? size * 2 : 32;
+
+        if (!string)
+            string = d3dcompiler_alloc(size);
+        else
+            string = d3dcompiler_realloc(string, size);
+        if (!string)
+        {
+            ERR("Error reallocating memory for a string.\n");
+            return;
+        }
+    }
+
+    hlsl_message("%s:%u:%u: %s: %s\n", filename, line, column, hlsl_get_error_level_name(level), string);
+    d3dcompiler_free(string);
+
+    if (level == HLSL_LEVEL_ERROR)
+        set_parse_status(&hlsl_ctx.status, PARSE_ERR);
+    else if (level == HLSL_LEVEL_WARNING)
+        set_parse_status(&hlsl_ctx.status, PARSE_WARN);
+}
+
 static void hlsl_error(const char *s)
 {
-    hlsl_message("Line %u: %s\n", hlsl_ctx.line_no, s);
-    set_parse_status(&hlsl_ctx.status, PARSE_ERR);
+    hlsl_report_message(hlsl_ctx.source_file, hlsl_ctx.line_no, 1, HLSL_LEVEL_ERROR, "%s", s);
 }
 
 static void debug_dump_decl(struct hlsl_type *type, DWORD modifiers, const char *declname, unsigned int line_no)
