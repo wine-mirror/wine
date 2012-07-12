@@ -162,6 +162,19 @@ static void generate_gray16_palette(DWORD *entries, UINT count)
     }
 }
 
+static void generate_gray256_palette(DWORD *entries, UINT count)
+{
+    UINT i;
+
+    assert(count == 256);
+
+    for (i = 0; i < 256; i++)
+    {
+        entries[i] = 0xff000000;
+        entries[i] |= (i << 16) | (i << 8) | i;
+    }
+}
+
 static void test_predefined_palette(void)
 {
     static struct test_data
@@ -176,6 +189,7 @@ static void test_predefined_palette(void)
         { WICBitmapPaletteTypeFixedGray4, 0, 1, 4,
           { 0xff000000, 0xff555555, 0xffaaaaaa, 0xffffffff } },
         { WICBitmapPaletteTypeFixedGray16, 0, 1, 16, { 0 } },
+        { WICBitmapPaletteTypeFixedGray256, 0, 1, 256, { 0 } },
     };
     IWICImagingFactory *factory;
     IWICPalette *palette;
@@ -228,6 +242,8 @@ static void test_predefined_palette(void)
 
             if (td[i].type == WICBitmapPaletteTypeFixedGray16)
                 generate_gray16_palette(td[i].color, td[i].count);
+            else if (td[i].type == WICBitmapPaletteTypeFixedGray256)
+                generate_gray256_palette(td[i].color, td[i].count);
 
             for (j = 0; j < count; j++)
             {
