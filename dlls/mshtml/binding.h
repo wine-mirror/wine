@@ -82,12 +82,11 @@ typedef struct nsProtocolStream nsProtocolStream;
 struct nsChannelBSC {
     BSCallback bsc;
 
-    HTMLOuterWindow *window;
-
     nsChannel *nschannel;
     nsIStreamListener *nslistener;
     nsISupports *nscontext;
     BOOL is_js;
+    BOOL is_doc_channel;
 
     nsProtocolStream *nsstream;
 };
@@ -110,7 +109,7 @@ void prepare_for_binding(HTMLDocument*,IMoniker*,BOOL) DECLSPEC_HIDDEN;
 HRESULT super_navigate(HTMLOuterWindow*,IUri*,const WCHAR*,BYTE*,DWORD) DECLSPEC_HIDDEN;
 HRESULT navigate_new_window(HTMLOuterWindow*,IUri*,const WCHAR*,IHTMLWindow2**) DECLSPEC_HIDDEN;
 
-HRESULT create_channelbsc(IMoniker*,const WCHAR*,BYTE*,DWORD,nsChannelBSC**) DECLSPEC_HIDDEN;
+HRESULT create_channelbsc(IMoniker*,const WCHAR*,BYTE*,DWORD,BOOL,nsChannelBSC**) DECLSPEC_HIDDEN;
 HRESULT channelbsc_load_stream(HTMLInnerWindow*,IStream*) DECLSPEC_HIDDEN;
 void channelbsc_set_channel(nsChannelBSC*,nsChannel*,nsIStreamListener*,nsISupports*) DECLSPEC_HIDDEN;
 IUri *nsuri_get_uri(nsWineURI*) DECLSPEC_HIDDEN;

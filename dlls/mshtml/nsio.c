@@ -981,7 +981,7 @@ static void start_binding_proc(task_t *_task)
 {
     start_binding_task_t *task = (start_binding_task_t*)_task;
 
-    start_binding(NULL, task->window, (BSCallback*)task->bscallback, NULL);
+    start_binding(task->window, (BSCallback*)task->bscallback, NULL);
 }
 
 static void start_binding_task_destr(task_t *_task)
@@ -1008,7 +1008,7 @@ static nsresult async_open(nsChannel *This, HTMLOuterWindow *window, BOOL is_doc
     if(is_doc_channel)
         set_current_mon(window, mon);
 
-    hres = create_channelbsc(mon, NULL, NULL, 0, &bscallback);
+    hres = create_channelbsc(mon, NULL, NULL, 0, is_doc_channel, &bscallback);
     IMoniker_Release(mon);
     if(FAILED(hres))
         return NS_ERROR_UNEXPECTED;

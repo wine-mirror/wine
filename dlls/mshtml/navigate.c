@@ -717,19 +717,16 @@ static HRESULT process_response_headers(nsChannelBSC *This, const WCHAR *headers
     return S_OK;
 }
 
-HRESULT start_binding(HTMLOuterWindow *window, HTMLInnerWindow *inner_window, BSCallback *bscallback, IBindCtx *bctx)
+HRESULT start_binding(HTMLInnerWindow *inner_window, BSCallback *bscallback, IBindCtx *bctx)
 {
     IStream *str = NULL;
     HRESULT hres;
 
-    TRACE("(%p %p %p %p)\n", window, inner_window, bscallback, bctx);
+    TRACE("(%p %p %p)\n", inner_window, bscallback, bctx);
 
     bscallback->window = inner_window;
 
     /* NOTE: IE7 calls IsSystemMoniker here*/
-
-    if(window && bscallback->mon != window->mon)
-        set_current_mon(window, bscallback->mon);
 
     if(bctx) {
         RegisterBindStatusCallback(bctx, &bscallback->IBindStatusCallback_iface, NULL, 0);
@@ -876,7 +873,7 @@ HRESULT bind_mon_to_buffer(HTMLInnerWindow *window, IMoniker *mon, void **buf, D
 
     *buf = NULL;
 
-    hres = start_binding(NULL, window, &bsc->bsc, NULL);
+    hres = start_binding(window, &bsc->bsc, NULL);
     if(SUCCEEDED(hres)) {
         hres = bsc->hres;
         if(SUCCEEDED(hres)) {
@@ -992,10 +989,10 @@ static HRESULT on_start_nsrequest(nsChannelBSC *This)
         return E_FAIL;
     }
 
-    if(This->window) {
+    if(This->is_doc_channel) {
         update_window_doc(This->bsc.window);
-        if(This->window->readystate != READYSTATE_LOADING)
-            set_ready_state(This->window, READYSTATE_LOADING);
+        if(This->bsc.window->base.outer_window->readystate != READYSTATE_LOADING)
+            set_ready_state(This->bsc.window->base.outer_window, READYSTATE_LOADING);
     }
 
     return S_OK;
@@ -1078,7 +1075,7 @@ static HRESULT read_stream_data(nsChannelBSC *This, IStream *stream)
                 WCHAR *mime;
 
                 hres = FindMimeFromData(NULL, NULL, This->nsstream->buf, This->nsstream->buf_size,
-                        This->window ? mimeTextHtml : NULL, 0, &mime, 0);
+                        This->is_doc_channel ? mimeTextHtml : NULL, 0, &mime, 0);
                 if(FAILED(hres))
                     return hres;
 
@@ -1191,11 +1188,11 @@ static nsresult NSAPI nsAsyncVerifyRedirectCallback_AsyncOnChannelRedirect(nsIAs
             ERR("AddRequest failed: %08x\n", nsres);
     }
 
-    if(This->bsc->window) {
+    if(This->bsc->is_doc_channel) {
         IUri *uri = nsuri_get_uri(This->nschannel->uri);
 
         if(uri) {
-            set_current_uri(This->bsc->window, uri);
+            set_current_uri(This->bsc->bsc.window->base.outer_window, uri);
             IUri_Release(uri);
         }else {
             WARN("Could not get IUri from nsWineURI\n");
@@ -1265,8 +1262,8 @@ static HRESULT nsChannelBSC_start_binding(BSCallback *bsc)
 {
     nsChannelBSC *This = nsChannelBSC_from_BSCallback(bsc);
 
-    if(This->window)
-        This->window->base.inner_window->doc->skip_mutation_notif = FALSE;
+    if(This->is_doc_channel)
+        This->bsc.window->base.outer_window->base.inner_window->doc->skip_mutation_notif = FALSE;
 
     return S_OK;
 }
@@ -1331,6 +1328,7 @@ static HRESULT async_stop_request(nsChannelBSC *This)
 
 static void handle_navigation_error(nsChannelBSC *This, DWORD result)
 {
+    HTMLOuterWindow *outer_window;
     HTMLDocumentObj *doc;
     IOleCommandTarget *olecmd;
     BOOL is_error_url;
@@ -1341,15 +1339,17 @@ static void handle_navigation_error(nsChannelBSC *This, DWORD result)
     BSTR unk;
     HRESULT hres;
 
-    if(!This->window)
+    if(!This->is_doc_channel)
         return;
 
-    doc = This->window->doc_obj;
+    outer_window = This->bsc.window->base.outer_window;
+
+    doc = outer_window->doc_obj;
     if(!doc || !doc->doc_object_service || !doc->client)
         return;
 
     hres = IDocObjectService_IsErrorUrl(doc->doc_object_service,
-            This->window->url, &is_error_url);
+            outer_window->url, &is_error_url);
     if(FAILED(hres) || is_error_url)
         return;
 
@@ -1373,12 +1373,12 @@ static void handle_navigation_error(nsChannelBSC *This, DWORD result)
 
     ind = 1;
     V_VT(&var) = VT_BSTR;
-    V_BSTR(&var) = This->window->url;
+    V_BSTR(&var) = outer_window->url;
     SafeArrayPutElement(sa, &ind, &var);
 
     ind = 3;
     V_VT(&var) = VT_UNKNOWN;
-    V_UNKNOWN(&var) = (IUnknown*)&This->window->base.IHTMLWindow2_iface;
+    V_UNKNOWN(&var) = (IUnknown*)&outer_window->base.IHTMLWindow2_iface;
     SafeArrayPutElement(sa, &ind, &var);
 
     /* FIXME: what are the following fields for? */
@@ -1426,7 +1426,7 @@ static HRESULT nsChannelBSC_stop_binding(BSCallback *bsc, HRESULT result)
     if(result != E_ABORT) {
         if(FAILED(result))
             handle_navigation_error(This, result);
-        else if(This->window) {
+        else if(This->is_doc_channel) {
             result = async_stop_request(This);
             if(SUCCEEDED(result))
                 return S_OK;
@@ -1610,7 +1610,8 @@ static const BSCallbackVtbl nsChannelBSCVtbl = {
     nsChannelBSC_beginning_transaction
 };
 
-HRESULT create_channelbsc(IMoniker *mon, const WCHAR *headers, BYTE *post_data, DWORD post_data_size, nsChannelBSC **retval)
+HRESULT create_channelbsc(IMoniker *mon, const WCHAR *headers, BYTE *post_data, DWORD post_data_size,
+        BOOL is_doc_binding, nsChannelBSC **retval)
 {
     nsChannelBSC *ret;
 
@@ -1619,6 +1620,7 @@ HRESULT create_channelbsc(IMoniker *mon, const WCHAR *headers, BYTE *post_data, 
         return E_OUTOFMEMORY;
 
     init_bscallback(&ret->bsc, &nsChannelBSCVtbl, mon, BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA);
+    ret->is_doc_channel = is_doc_binding;
 
     if(headers) {
         ret->bsc.headers = heap_strdupW(headers);
@@ -1654,7 +1656,8 @@ static void start_doc_binding_proc(task_t *_task)
 {
     start_doc_binding_task_t *task = (start_doc_binding_task_t*)_task;
 
-    start_binding(task->window, task->pending_window, &task->pending_window->bscallback->bsc, NULL);
+    set_current_mon(task->window, task->pending_window->bscallback->bsc.mon);
+    start_binding(task->pending_window, &task->pending_window->bscallback->bsc, NULL);
 }
 
 static void start_doc_binding_task_destr(task_t *_task)
@@ -1709,7 +1712,6 @@ void abort_window_bindings(HTMLInnerWindow *window)
     }
 
     if(window->bscallback) {
-        window->bscallback->window = NULL;
         IBindStatusCallback_Release(&window->bscallback->bsc.IBindStatusCallback_iface);
         window->bscallback = NULL;
     }
@@ -1824,8 +1826,10 @@ static void navigate_proc(task_t *_task)
     HRESULT hres;
 
     hres = set_moniker(&task->window->doc_obj->basedoc, task->mon, NULL, task->bscallback, TRUE);
-    if(SUCCEEDED(hres))
-        start_binding(task->window, task->window->pending_window, &task->bscallback->bsc, NULL);
+    if(SUCCEEDED(hres)) {
+        set_current_mon(task->window, task->bscallback->bsc.mon);
+        start_binding(task->window->pending_window, &task->bscallback->bsc, NULL);
+    }
 }
 
 static void navigate_task_destr(task_t *_task)
@@ -1918,7 +1922,7 @@ HRESULT super_navigate(HTMLOuterWindow *window, IUri *uri, const WCHAR *headers,
     /* FIXME: Why not set_ready_state? */
     window->readystate = READYSTATE_UNINITIALIZED;
 
-    hres = create_channelbsc(mon, headers, post_data, post_data_size, &bsc);
+    hres = create_channelbsc(mon, headers, post_data, post_data_size, TRUE, &bsc);
     if(FAILED(hres)) {
         IMoniker_Release(mon);
         return hres;
@@ -1977,7 +1981,7 @@ HRESULT navigate_new_window(HTMLOuterWindow *window, IUri *uri, const WCHAR *nam
     nsChannelBSC *bsc;
     HRESULT hres;
 
-    hres = create_channelbsc(NULL, NULL, NULL, 0, &bsc);
+    hres = create_channelbsc(NULL, NULL, NULL, 0, FALSE, &bsc);
     if(FAILED(hres))
         return hres;
 
@@ -2041,7 +2045,7 @@ HRESULT hlink_frame_navigate(HTMLDocument *doc, LPCWSTR url, nsChannel *nschanne
     if(FAILED(hres))
         return S_OK;
 
-    hres = create_channelbsc(NULL, NULL, NULL, 0, &callback);
+    hres = create_channelbsc(NULL, NULL, NULL, 0, FALSE, &callback);
     if(FAILED(hres)) {
         IHlinkFrame_Release(hlink_frame);
         return hres;

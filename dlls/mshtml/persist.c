@@ -360,7 +360,7 @@ HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, nsChannel
         if(async_bsc)
             bscallback = async_bsc;
         else
-            hres = create_channelbsc(mon, NULL, NULL, 0, &bscallback);
+            hres = create_channelbsc(mon, NULL, NULL, 0, TRUE, &bscallback);
     }
 
     if(SUCCEEDED(hres)) {
@@ -538,7 +538,7 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
     if(FAILED(hres))
         return hres;
 
-    return start_binding(This->window, This->window->pending_window, (BSCallback*)This->window->pending_window->bscallback, pibc);
+    return start_binding(This->window->pending_window, (BSCallback*)This->window->pending_window->bscallback, pibc);
 }
 
 static HRESULT WINAPI PersistMoniker_Save(IPersistMoniker *iface, IMoniker *pimkName,

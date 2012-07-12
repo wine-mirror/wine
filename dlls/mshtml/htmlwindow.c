@@ -2705,8 +2705,6 @@ HRESULT create_pending_window(HTMLOuterWindow *outer_window, nsChannelBSC *chann
     if(channelbsc) {
         IBindStatusCallback_AddRef(&channelbsc->bsc.IBindStatusCallback_iface);
         pending_window->bscallback = channelbsc;
-
-        channelbsc->window = outer_window;
     }
 
     if(outer_window->pending_window) {
