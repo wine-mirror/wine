@@ -32,6 +32,9 @@ int hlsl_lex(void);
 
 struct hlsl_parse_ctx hlsl_ctx;
 
+struct YYLTYPE;
+static void set_location(struct source_location *loc, const struct YYLTYPE *l);
+
 void hlsl_message(const char *fmt, ...)
 {
     va_list args;
@@ -125,9 +128,8 @@ static BOOL declare_variable(struct hlsl_ir_var *decl, BOOL local)
                 | HLSL_STORAGE_GROUPSHARED | HLSL_STORAGE_UNIFORM);
         if (invalid)
         {
-            hlsl_message("Line %u: modifier '%s' invalid for local variables.\n",
-                    hlsl_ctx.line_no, debug_modifiers(invalid));
-            set_parse_status(&hlsl_ctx.status, PARSE_ERR);
+            hlsl_report_message(decl->node.loc.file, decl->node.loc.line, decl->node.loc.col, HLSL_LEVEL_ERROR,
+                    "modifier '%s' invalid for local variables", debug_modifiers(invalid));
         }
     }
     ret = add_declaration(hlsl_ctx.cur_scope, decl, local);
@@ -135,9 +137,10 @@ static BOOL declare_variable(struct hlsl_ir_var *decl, BOOL local)
     {
         struct hlsl_ir_var *old = get_variable(hlsl_ctx.cur_scope, decl->name);
 
-        hlsl_message("Line %u: \"%s\" already declared.\n", hlsl_ctx.line_no, decl->name);
-        hlsl_message("Line %u: \"%s\" was previously declared here.\n", old->node.loc.line, decl->name);
-        set_parse_status(&hlsl_ctx.status, PARSE_ERR);
+        hlsl_report_message(decl->node.loc.file, decl->node.loc.line, decl->node.loc.col, HLSL_LEVEL_ERROR,
+                "\"%s\" already declared", decl->name);
+        hlsl_report_message(old->node.loc.file, old->node.loc.line, old->node.loc.col, HLSL_LEVEL_NOTE,
+                "\"%s\" was previously declared here", old->name);
         return FALSE;
     }
     return TRUE;
@@ -613,10 +616,10 @@ declaration:              var_modifiers type variables_def ';'
                                         var->node.data_type = new_array_type($2, v->array_size);
                                     else
                                         var->node.data_type = $2;
+                                    var->node.loc = v->loc;
                                     var->name = v->name;
                                     var->modifiers = $1;
                                     var->semantic = v->semantic;
-                                    var->node.loc.line = hlsl_ctx.line_no;
                                     if (v->initializer)
                                     {
                                         FIXME("Variable with an initializer.\n");
@@ -655,6 +658,7 @@ variables_def:            variable_def
 variable_def:             any_identifier array semantic
                             {
                                 $$ = d3dcompiler_alloc(sizeof(*$$));
+                                set_location(&$$->loc, &@1);
                                 $$->name = $1;
                                 $$->array_size = $2;
                                 $$->semantic = $3;
@@ -663,6 +667,7 @@ variable_def:             any_identifier array semantic
                             {
                                 TRACE("Declaration with initializer.\n");
                                 $$ = d3dcompiler_alloc(sizeof(*$$));
+                                set_location(&$$->loc, &@1);
                                 $$->name = $1;
                                 $$->array_size = $2;
                                 $$->semantic = $3;
@@ -982,6 +987,13 @@ expr:                     assignment_expr
                             }
 
 %%
+
+static void set_location(struct source_location *loc, const struct YYLTYPE *l)
+{
+    loc->file = hlsl_ctx.source_file;
+    loc->line = l->first_line;
+    loc->col = l->first_column;
+}
 
 struct bwriter_shader *parse_hlsl(enum shader_type type, DWORD major, DWORD minor,
         const char *entrypoint, char **messages)

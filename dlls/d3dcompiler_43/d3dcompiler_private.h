@@ -820,6 +820,8 @@ struct parse_parameter
 struct parse_variable_def
 {
     struct list entry;
+    struct source_location loc;
+
     char *name;
     unsigned int array_size;
     char *semantic;
