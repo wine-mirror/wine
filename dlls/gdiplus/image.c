@@ -1973,6 +1973,7 @@ static void move_bitmap(GpBitmap *dst, GpBitmap *src, BOOL clobber_palette)
     assert(dst->image.type == ImageTypeBitmap);
 
     GdipFree(dst->bitmapbits);
+    GdipFree(dst->own_bits);
     DeleteDC(dst->hdc);
     DeleteObject(dst->hbitmap);
 
