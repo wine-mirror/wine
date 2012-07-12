@@ -138,7 +138,8 @@ static BOOL ReadChmSystem(CHMInfo *chm)
                 chm->codePage = CP_ACP;
             break;
         case 0x5:
-            TRACE("Default window is %s\n", debugstr_an(buf, entry.len));
+            TRACE("Window name is %s\n", debugstr_an(buf, entry.len));
+            chm->defWindow = strdupnAtoW(buf, entry.len);
             break;
         case 0x6:
             TRACE("Compiled file is %s\n", debugstr_an(buf, entry.len));
@@ -268,7 +269,7 @@ BOOL LoadWinTypeFromCHM(HHInfo *info)
         memset((void*)&(info->WinType), 0, sizeof(info->WinType));
         info->WinType.cbStruct=sizeof(info->WinType);
         info->WinType.fUniCodeStrings=TRUE;
-        info->WinType.pszType=strdupW(defaultwinW);
+        info->WinType.pszType = strdupW(info->pCHMInfo->defWindow ? info->pCHMInfo->defWindow : defaultwinW);
         info->WinType.pszToc = strdupW(info->pCHMInfo->defToc ? info->pCHMInfo->defToc : null);
         info->WinType.pszIndex = strdupW(null);
         info->WinType.fsValidMembers=0;
@@ -530,6 +531,7 @@ CHMInfo *CloseCHM(CHMInfo *chm)
     }
 
     heap_free(chm->strings);
+    heap_free(chm->defWindow);
     heap_free(chm->defTitle);
     heap_free(chm->defTopic);
     heap_free(chm->defToc);

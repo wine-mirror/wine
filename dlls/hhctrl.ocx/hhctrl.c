@@ -41,6 +41,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(htmlhelp);
 HINSTANCE hhctrl_hinstance;
 BOOL hh_process = FALSE;
 
+extern struct list window_list;
+
 BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved)
 {
     TRACE("(%p,%d,%p)\n", hInstance, fdwReason, lpvReserved);
@@ -98,7 +100,7 @@ static const char *command_to_string(UINT command)
 #undef X
 }
 
-static BOOL resolve_filename(const WCHAR *filename, WCHAR *fullname, DWORD buflen, const WCHAR **index, const WCHAR **window)
+static BOOL resolve_filename(const WCHAR *filename, WCHAR *fullname, DWORD buflen, WCHAR **index, WCHAR **window)
 {
     const WCHAR *extra;
     WCHAR chm_file[MAX_PATH];
@@ -164,14 +166,15 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
         HHInfo *info;
         BOOL res;
         NMHDR nmhdr;
+        WCHAR *window = NULL;
         const WCHAR *index = NULL;
+        WCHAR *default_index = NULL;
         int tab_index = TAB_CONTENTS;
-        const WCHAR *default_index = NULL;
 
         if (!filename)
             return NULL;
 
-        if (!resolve_filename(filename, fullname, MAX_PATH, &default_index, NULL))
+        if (!resolve_filename(filename, fullname, MAX_PATH, &default_index, &window))
         {
             WARN("can't find %s\n", debugstr_w(filename));
             return 0;
@@ -180,10 +183,18 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
 
         info = CreateHelpViewer(fullname);
         if(!info)
+        {
+            heap_free(default_index);
+            heap_free(window);
             return NULL;
+        }
 
         if(!index)
             index = info->WinType.pszFile;
+        if(!info->pszType)
+            info->WinType.pszType = info->pszType = window;
+        else
+            heap_free(window);
 
         /* called to load a specified topic */
         switch(command)
@@ -196,9 +207,7 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
         }
 
         res = NavigateToChm(info, info->pCHMInfo->szFile, index);
-
-        if (default_index)
-            heap_free((WCHAR*)default_index);
+        heap_free(default_index);
 
         if(!res)
         {
@@ -266,6 +275,16 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
         {
             FIXME("HH_PRETRANSLATEMESSAGE unimplemented\n");
             warned = TRUE;
+        }
+        return 0;
+    }
+    case HH_CLOSE_ALL: {
+        HHInfo *info, *next;
+
+        LIST_FOR_EACH_ENTRY_SAFE(info, next, &window_list, HHInfo, entry)
+        {
+            TRACE("Destroying window %s.\n", debugstr_w(info->WinType.pszType));
+            ReleaseHelpViewer(info);
         }
         return 0;
     }

@@ -40,6 +40,7 @@
 
 #include "wine/itss.h"
 #include "wine/unicode.h"
+#include "wine/list.h"
 
 #define WB_GOBACK     0
 #define WB_GOFORWARD  1
@@ -103,6 +104,7 @@ typedef struct CHMInfo
     DWORD strings_size;
 
     WCHAR *compiledFile;
+    WCHAR *defWindow;
     WCHAR *defTopic;
     WCHAR *defTitle;
     WCHAR *defToc;
@@ -157,6 +159,7 @@ typedef struct {
     LPWSTR pszUrlJump2;
     LPWSTR pszCustomTabs;
 
+    struct list entry;
     CHMInfo *pCHMInfo;
     ContentItem *content;
     IndexItem *index;

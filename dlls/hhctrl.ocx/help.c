@@ -48,6 +48,8 @@ static void ExpandContract(HHInfo *pHHInfo);
 #define TAB_MARGIN  8
 #define EDIT_HEIGHT         20
 
+struct list window_list = LIST_INIT(window_list);
+
 static const WCHAR szEmpty[] = {0};
 
 struct html_encoded_symbol {
@@ -1740,6 +1742,8 @@ void ReleaseHelpViewer(HHInfo *info)
     if (!info)
         return;
 
+    list_remove(&info->entry);
+
     /* Free allocated strings */
     heap_free(info->pszType);
     heap_free(info->pszCaption);
@@ -1798,6 +1802,7 @@ HHInfo *CreateHelpViewer(LPCWSTR filename)
         return NULL;
     }
 
+    list_add_tail(&window_list, &info->entry);
     return info;
 }
 
