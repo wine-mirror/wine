@@ -1971,8 +1971,6 @@ static void move_bitmap(GpBitmap *dst, GpBitmap *src, BOOL clobber_palette)
 {
     assert(src->image.type == ImageTypeBitmap);
     assert(dst->image.type == ImageTypeBitmap);
-    assert(src->image.stream == NULL);
-    assert(dst->image.stream == NULL);
 
     GdipFree(dst->bitmapbits);
     DeleteDC(dst->hdc);
@@ -2001,6 +1999,12 @@ static void move_bitmap(GpBitmap *dst, GpBitmap *src, BOOL clobber_palette)
     if (dst->metadata_reader)
         IWICMetadataReader_Release(dst->metadata_reader);
     dst->metadata_reader = src->metadata_reader;
+    if (dst->image.stream)
+        IStream_Release(dst->image.stream);
+    dst->image.stream = src->image.stream;
+    dst->image.frame_count = src->image.frame_count;
+    dst->image.current_frame = src->image.current_frame;
+    dst->image.format = src->image.format;
 
     src->image.type = ~0;
     GdipFree(src);

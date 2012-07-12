@@ -2345,6 +2345,17 @@ static void test_multiframegif(void)
     expect(Ok, stat);
     expect(0xffffffff, color);
 
+    /* rotate/flip discards the information about other frames */
+    stat = GdipImageRotateFlip((GpImage*)bmp, Rotate90FlipNone);
+    expect(Ok, stat);
+
+    count = 12345;
+    stat = GdipImageGetFrameCount((GpImage*)bmp, &dimension, &count);
+    expect(Ok, stat);
+    expect(1, count);
+
+    expect_rawformat(&ImageFormatMemoryBMP, (GpImage*)bmp, __LINE__, FALSE);
+
     GdipDisposeImage((GpImage*)bmp);
     IStream_Release(stream);
 
