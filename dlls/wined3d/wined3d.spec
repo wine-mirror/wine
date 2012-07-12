@@ -193,6 +193,7 @@
 @ cdecl wined3d_surface_create(ptr long long long long long long long long long long ptr ptr ptr)
 @ cdecl wined3d_surface_decref(ptr)
 @ cdecl wined3d_surface_flip(ptr ptr long)
+@ cdecl wined3d_surface_from_resource(ptr)
 @ cdecl wined3d_surface_get_blt_status(ptr long)
 @ cdecl wined3d_surface_get_flip_status(ptr long)
 @ cdecl wined3d_surface_get_overlay_position(ptr ptr ptr)

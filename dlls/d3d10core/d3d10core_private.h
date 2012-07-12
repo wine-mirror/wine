@@ -90,7 +90,7 @@ struct d3d10_texture2d
     LONG refcount;
 
     IUnknown *dxgi_surface;
-    struct wined3d_surface *wined3d_surface;
+    struct wined3d_texture *wined3d_texture;
     D3D10_TEXTURE2D_DESC desc;
 };
 

@@ -2325,6 +2325,7 @@ HRESULT __cdecl wined3d_surface_create(struct wined3d_device *device, UINT width
         const struct wined3d_parent_ops *parent_ops, struct wined3d_surface **surface);
 ULONG __cdecl wined3d_surface_decref(struct wined3d_surface *surface);
 HRESULT __cdecl wined3d_surface_flip(struct wined3d_surface *surface, struct wined3d_surface *override, DWORD flags);
+struct wined3d_surface * __cdecl wined3d_surface_from_resource(struct wined3d_resource *resource);
 HRESULT __cdecl wined3d_surface_get_blt_status(const struct wined3d_surface *surface, DWORD flags);
 HRESULT __cdecl wined3d_surface_get_flip_status(const struct wined3d_surface *surface, DWORD flags);
 HRESULT __cdecl wined3d_surface_get_overlay_position(const struct wined3d_surface *surface, LONG *x, LONG *y);

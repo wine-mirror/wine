@@ -66,8 +66,8 @@ static ULONG STDMETHODCALLTYPE d3d10_texture2d_AddRef(ID3D10Texture2D *iface)
 
     TRACE("%p increasing refcount to %u\n", This, refcount);
 
-    if (refcount == 1 && This->wined3d_surface)
-        wined3d_surface_incref(This->wined3d_surface);
+    if (refcount == 1)
+        wined3d_texture_incref(This->wined3d_texture);
 
     return refcount;
 }
@@ -88,12 +88,7 @@ static ULONG STDMETHODCALLTYPE d3d10_texture2d_Release(ID3D10Texture2D *iface)
     TRACE("%p decreasing refcount to %u\n", This, refcount);
 
     if (!refcount)
-    {
-        if (This->wined3d_surface)
-            wined3d_surface_decref(This->wined3d_surface);
-        else
-            d3d10_texture2d_wined3d_object_released(This);
-    }
+        wined3d_texture_decref(This->wined3d_texture);
 
     return refcount;
 }
@@ -233,20 +228,23 @@ HRESULT d3d10_texture2d_init(struct d3d10_texture2d *texture, struct d3d10_devic
             ERR("Failed to create DXGI surface, returning %#x\n", hr);
             return hr;
         }
+    }
 
-        FIXME("Implement DXGI<->wined3d usage conversion\n");
+    FIXME("Implement DXGI<->wined3d usage conversion\n");
+    if (desc->ArraySize != 1)
+        FIXME("Array textures not implemented.\n");
+    if (desc->SampleDesc.Count > 1)
+        FIXME("Multisampled textures not implemented.\n");
 
-        hr = wined3d_surface_create(device->wined3d_device, desc->Width, desc->Height,
-                wined3dformat_from_dxgi_format(desc->Format), 0, desc->Usage, WINED3D_POOL_DEFAULT,
-                desc->SampleDesc.Count > 1 ? desc->SampleDesc.Count : WINED3D_MULTISAMPLE_NONE,
-                desc->SampleDesc.Quality, WINED3D_SURFACE_TYPE_OPENGL, 0, texture, &d3d10_texture2d_wined3d_parent_ops,
-                &texture->wined3d_surface);
-        if (FAILED(hr))
-        {
-            ERR("CreateSurface failed, returning %#x\n", hr);
+    hr = wined3d_texture_create_2d(device->wined3d_device, desc->Width, desc->Height,
+            desc->MipLevels, desc->Usage, wined3dformat_from_dxgi_format(desc->Format), WINED3D_POOL_DEFAULT,
+            texture, &d3d10_texture2d_wined3d_parent_ops, &texture->wined3d_texture);
+    if (FAILED(hr))
+    {
+        WARN("Failed to create wined3d texture, hr %#x.\n", hr);
+        if (texture->dxgi_surface)
             IDXGISurface_Release(texture->dxgi_surface);
-            return hr;
-        }
+        return hr;
     }
 
     return S_OK;
