@@ -117,6 +117,16 @@ static HRESULT WINAPI PaletteImpl_InitializePredefined(IWICPalette *iface,
         colors[1] = 0xffffffff;
         break;
 
+    case WICBitmapPaletteTypeFixedGray4:
+        count = 4;
+        colors = HeapAlloc(GetProcessHeap(), 0, count * sizeof(WICColor));
+        if (!colors) return E_OUTOFMEMORY;
+        colors[0] = 0xff000000;
+        colors[1] = 0xff555555;
+        colors[2] = 0xffaaaaaa;
+        colors[3] = 0xffffffff;
+        break;
+
     default:
         FIXME("(%p,%u,%d): stub\n", iface, type, add_transparent);
         return E_NOTIMPL;

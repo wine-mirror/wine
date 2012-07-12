@@ -159,6 +159,8 @@ static void test_predefined_palette(void)
     } td[] =
     {
         { WICBitmapPaletteTypeFixedBW, 1, 1, 2, { 0xff000000, 0xffffffff } },
+        { WICBitmapPaletteTypeFixedGray4, 0, 1, 4,
+          { 0xff000000, 0xff555555, 0xffaaaaaa, 0xffffffff } },
     };
     IWICImagingFactory *factory;
     IWICPalette *palette;
