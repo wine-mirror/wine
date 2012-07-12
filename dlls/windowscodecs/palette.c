@@ -99,10 +99,37 @@ static ULONG WINAPI PaletteImpl_Release(IWICPalette *iface)
 }
 
 static HRESULT WINAPI PaletteImpl_InitializePredefined(IWICPalette *iface,
-    WICBitmapPaletteType ePaletteType, BOOL fAddTransparentColor)
+    WICBitmapPaletteType type, BOOL add_transparent)
 {
-    FIXME("(%p,%u,%i): stub\n", iface, ePaletteType, fAddTransparentColor);
-    return E_NOTIMPL;
+    PaletteImpl *This = impl_from_IWICPalette(iface);
+    WICColor *colors;
+    UINT count;
+
+    TRACE("(%p,%u,%d)\n", iface, type, add_transparent);
+
+    switch (type)
+    {
+    case WICBitmapPaletteTypeFixedBW:
+        count = 2;
+        colors = HeapAlloc(GetProcessHeap(), 0, count * sizeof(WICColor));
+        if (!colors) return E_OUTOFMEMORY;
+        colors[0] = 0xff000000;
+        colors[1] = 0xffffffff;
+        break;
+
+    default:
+        FIXME("(%p,%u,%d): stub\n", iface, type, add_transparent);
+        return E_NOTIMPL;
+    }
+
+    EnterCriticalSection(&This->lock);
+    HeapFree(GetProcessHeap(), 0, This->colors);
+    This->colors = colors;
+    This->count = count;
+    This->type = type;
+    LeaveCriticalSection(&This->lock);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI PaletteImpl_InitializeCustom(IWICPalette *iface,

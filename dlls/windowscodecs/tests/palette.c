@@ -148,11 +148,85 @@ static void test_custom_palette(void)
     IWICImagingFactory_Release(factory);
 }
 
+static void test_predefined_palette(void)
+{
+    static struct test_data
+    {
+        WICBitmapPaletteType type;
+        BOOL is_bw, is_gray;
+        UINT count;
+        WICColor color[256];
+    } td[] =
+    {
+        { WICBitmapPaletteTypeFixedBW, 1, 1, 2, { 0xff000000, 0xffffffff } },
+    };
+    IWICImagingFactory *factory;
+    IWICPalette *palette;
+    HRESULT hr;
+    WICBitmapPaletteType type;
+    UINT count, i, ret;
+    BOOL bret;
+    WICColor color[256];
+
+    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IWICImagingFactory, (void **)&factory);
+    ok(hr == S_OK, "CoCreateInstance error %#x\n", hr);
+
+    for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
+    {
+        hr = IWICImagingFactory_CreatePalette(factory, &palette);
+        ok(hr == S_OK, "%u: CreatePalette error %#x\n", i, hr);
+
+        hr = IWICPalette_InitializePredefined(palette, td[i].type, FALSE);
+        ok(hr == S_OK, "%u: InitializePredefined error %#x\n", i, hr);
+
+        bret = -1;
+        hr = IWICPalette_IsBlackWhite(palette, &bret);
+        ok(hr == S_OK, "%u: IsBlackWhite error %#x\n", i, hr);
+        ok(bret == td[i].is_bw ||
+           broken(td[i].type == WICBitmapPaletteTypeFixedBW && bret != td[i].is_bw), /* XP */
+           "%u: expected %d, got %d\n",i, td[i].is_bw, bret);
+
+        bret = -1;
+        hr = IWICPalette_IsGrayscale(palette, &bret);
+        ok(hr == S_OK, "%u: IsGrayscale error %#x\n", i, hr);
+        ok(bret == td[i].is_gray, "%u: expected %d, got %d\n", i, td[i].is_gray, bret);
+
+        type = -1;
+        hr = IWICPalette_GetType(palette, &type);
+        ok(hr == S_OK, "%u: GetType error %#x\n", i, hr);
+        ok(type == td[i].type, "%u: expected %#x, got %#x\n", i, td[i].type, type);
+
+        count = 0xdeadbeef;
+        hr = IWICPalette_GetColorCount(palette, &count);
+        ok(hr == S_OK, "%u: GetColorCount error %#x\n", i, hr);
+        ok(count == td[i].count, "%u: expected %u, got %u\n", i, td[i].count, count);
+
+        hr = IWICPalette_GetColors(palette, count, color, &ret);
+        ok(hr == S_OK, "%u: GetColors error %#x\n", i, hr);
+        ok(ret == count, "%u: expected %u, got %u\n", i, count, ret);
+        if (ret == td[i].count)
+        {
+            UINT j;
+            for (j = 0; j < count; j++)
+            {
+                ok(color[j] == td[i].color[j], "%u:[%u]: expected %#x, got %#x\n",
+                   i, j, td[i].color[j], color[j]);
+            }
+        }
+
+        IWICPalette_Release(palette);
+    }
+
+    IWICImagingFactory_Release(factory);
+}
+
 START_TEST(palette)
 {
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     test_custom_palette();
+    test_predefined_palette();
 
     CoUninitialize();
 }
