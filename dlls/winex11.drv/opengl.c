@@ -2224,8 +2224,7 @@ static HDC WINAPI X11DRV_wglGetPbufferDCARB(HPBUFFERARB hPbuffer)
     escape.code = X11DRV_SET_DRAWABLE;
     escape.drawable = object->drawable;
     escape.mode = IncludeInferiors;
-    SetRect( &escape.drawable_rect, 0, 0, object->width, object->height );
-    escape.dc_rect = escape.drawable_rect;
+    SetRect( &escape.dc_rect, 0, 0, object->width, object->height );
     escape.fbconfig_id = object->fmt->fmt_id;
     escape.gl_drawable = object->drawable;
     escape.pixmap = 0;

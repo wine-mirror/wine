@@ -144,7 +144,6 @@ static BOOL X11DRV_CreateDC( PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
 
     physDev->depth         = screen_depth;
     physDev->color_shifts  = &X11DRV_PALETTE_default_shifts;
-    physDev->drawable_rect = virtual_screen_rect;
     SetRect( &physDev->dc_rect, 0, 0, virtual_screen_rect.right - virtual_screen_rect.left,
              virtual_screen_rect.bottom - virtual_screen_rect.top );
     push_dc_driver( pdev, &physDev->dev, &x11drv_funcs );
@@ -165,8 +164,7 @@ static BOOL X11DRV_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
     if (!physDev) return FALSE;
 
     physDev->depth  = 1;
-    SetRect( &physDev->drawable_rect, 0, 0, 1, 1 );
-    physDev->dc_rect = physDev->drawable_rect;
+    SetRect( &physDev->dc_rect, 0, 0, 1, 1 );
     push_dc_driver( pdev, &physDev->dev, &x11drv_funcs );
     if (orig) return TRUE;  /* we already went through Xrender if we have an orig device */
     if (xrender_funcs && !xrender_funcs->pCreateCompatibleDC( NULL, pdev )) return FALSE;
@@ -352,13 +350,11 @@ static INT X11DRV_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_d
                     const struct x11drv_escape_set_drawable *data = in_data;
                     physDev->dc_rect = data->dc_rect;
                     physDev->drawable = data->drawable;
-                    physDev->drawable_rect = data->drawable_rect;
                     wine_tsx11_lock();
                     XSetSubwindowMode( gdi_display, physDev->gc, data->mode );
                     wine_tsx11_unlock();
-                    TRACE( "SET_DRAWABLE hdc %p drawable %lx dc_rect %s drawable_rect %s\n",
-                           dev->hdc, physDev->drawable, wine_dbgstr_rect(&physDev->dc_rect),
-                           wine_dbgstr_rect(&physDev->drawable_rect) );
+                    TRACE( "SET_DRAWABLE hdc %p drawable %lx dc_rect %s\n",
+                           dev->hdc, physDev->drawable, wine_dbgstr_rect(&physDev->dc_rect) );
                     return TRUE;
                 }
                 break;
