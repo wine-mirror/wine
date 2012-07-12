@@ -181,7 +181,7 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
         }
         index = default_index;
 
-        info = CreateHelpViewer(fullname);
+        info = CreateHelpViewer(fullname, caller);
         if(!info)
         {
             heap_free(default_index);
@@ -253,7 +253,7 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
             return 0;
         }
 
-        info = CreateHelpViewer(fullname);
+        info = CreateHelpViewer(fullname, caller);
         if(!info)
             return NULL;
 

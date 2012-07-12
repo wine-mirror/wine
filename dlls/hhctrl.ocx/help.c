@@ -1585,7 +1585,7 @@ static LRESULT CALLBACK Help_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPA
 
 static BOOL HH_CreateHelpWindow(HHInfo *info)
 {
-    HWND hWnd;
+    HWND hWnd, parent = 0;
     RECT winPos = info->WinType.rcWindowPos;
     WNDCLASSEXW wcex;
     DWORD dwStyles, dwExStyles;
@@ -1613,7 +1613,11 @@ static BOOL HH_CreateHelpWindow(HHInfo *info)
 
     /* Read in window parameters if available */
     if (info->WinType.fsValidMembers & HHWIN_PARAM_STYLES)
-        dwStyles = info->WinType.dwStyles | WS_OVERLAPPEDWINDOW;
+    {
+        dwStyles = info->WinType.dwStyles;
+        if (!(info->WinType.dwStyles & WS_CHILD))
+            dwStyles |= WS_OVERLAPPEDWINDOW;
+    }
     else
         dwStyles = WS_OVERLAPPEDWINDOW | WS_VISIBLE |
                    WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
@@ -1655,8 +1659,11 @@ static BOOL HH_CreateHelpWindow(HHInfo *info)
     caption = info->WinType.pszCaption;
     if (!*caption) caption = info->pCHMInfo->defTitle;
 
+    if (info->WinType.dwStyles & WS_CHILD)
+        parent = info->WinType.hwndCaller;
+
     hWnd = CreateWindowExW(dwExStyles, windowClassW, caption,
-                           dwStyles, x, y, width, height, NULL, NULL, hhctrl_hinstance, NULL);
+                           dwStyles, x, y, width, height, parent, NULL, hhctrl_hinstance, NULL);
     if (!hWnd)
         return FALSE;
 
@@ -1773,7 +1780,7 @@ void ReleaseHelpViewer(HHInfo *info)
     OleUninitialize();
 }
 
-HHInfo *CreateHelpViewer(LPCWSTR filename)
+HHInfo *CreateHelpViewer(LPCWSTR filename, HWND caller)
 {
     HHInfo *info = heap_alloc_zero(sizeof(HHInfo));
     int i;
@@ -1796,6 +1803,7 @@ HHInfo *CreateHelpViewer(LPCWSTR filename)
         ReleaseHelpViewer(info);
         return NULL;
     }
+    info->WinType.hwndCaller = caller;
 
     if(!CreateViewer(info)) {
         ReleaseHelpViewer(info);
