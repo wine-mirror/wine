@@ -2918,7 +2918,7 @@ msgstr "映射"
 
 #: dinput.rc:53
 msgid "Show Assigned First"
-msgstr ""
+msgstr "優先顯示已指派的"
 
 #: dinput.rc:34
 msgid "Action"
@@ -2938,71 +2938,71 @@ msgstr "已使用 %1!u!MB，剩餘 %2!u!MB"
 
 #: gdi32.rc:25
 msgid "Western"
-msgstr ""
+msgstr "西歐語言"
 
 #: gdi32.rc:26
 msgid "Central European"
-msgstr ""
+msgstr "中歐語言"
 
 #: gdi32.rc:27
 msgid "Cyrillic"
-msgstr ""
+msgstr "斯拉夫語"
 
 #: gdi32.rc:28
 msgid "Greek"
-msgstr ""
+msgstr "希臘語"
 
 #: gdi32.rc:29
 msgid "Turkish"
-msgstr ""
+msgstr "土耳其語"
 
 #: gdi32.rc:30
 msgid "Hebrew"
-msgstr ""
+msgstr "希伯來語"
 
 #: gdi32.rc:31
 msgid "Arabic"
-msgstr ""
+msgstr "阿拉伯語"
 
 #: gdi32.rc:32
 msgid "Baltic"
-msgstr ""
+msgstr "波羅的海語"
 
 #: gdi32.rc:33
 msgid "Vietnamese"
-msgstr ""
+msgstr "越南語"
 
 #: gdi32.rc:34
 msgid "Thai"
-msgstr ""
+msgstr "泰語"
 
 #: gdi32.rc:35
 msgid "Japanese"
-msgstr ""
+msgstr "日語"
 
 #: gdi32.rc:36
 msgid "CHINESE_GB2312"
-msgstr ""
+msgstr "簡化字漢語"
 
 #: gdi32.rc:37
 msgid "Hangul"
-msgstr ""
+msgstr "韓語諺文"
 
 #: gdi32.rc:38
 msgid "CHINESE_BIG5"
-msgstr ""
+msgstr "傳統字漢語"
 
 #: gdi32.rc:39
 msgid "Hangul(Johab)"
-msgstr ""
+msgstr "韓語諺文(組合型)"
 
 #: gdi32.rc:40
 msgid "Symbol"
-msgstr ""
+msgstr "符號"
 
 #: gdi32.rc:41
 msgid "OEM/DOS"
-msgstr ""
+msgstr "OEM/DOS"
 
 #: gphoto2.rc:27
 msgid "Files on Camera"
@@ -3034,7 +3034,7 @@ msgstr "正在傳輸"
 
 #: gphoto2.rc:43
 msgid "Transferring... Please Wait"
-msgstr "正在傳輸... 請稍候"
+msgstr "正在傳輸… 請稍候"
 
 #: gphoto2.rc:48
 msgid "Connecting to camera"
@@ -3042,7 +3042,7 @@ msgstr "連接照相機"
 
 #: gphoto2.rc:52
 msgid "Connecting to camera... Please Wait"
-msgstr "正在連接照相機... 請稍候"
+msgstr "正在連接照相機… 請稍候"
 
 #: hhctrl.rc:56
 msgid "S&ync"
@@ -3071,7 +3071,7 @@ msgstr "重新整理(&R)"
 
 #: hhctrl.rc:62 winhlp32.rc:31
 msgid "&Print..."
-msgstr "列印(&P)..."
+msgstr "列印(&P)…"
 
 #: hhctrl.rc:28 taskmgr.rc:89
 msgid "&Contents"
@@ -3136,7 +3136,7 @@ msgstr "向前"
 
 #: iccvid.rc:25 iccvid.rc:26
 msgid "Cinepak Video codec"
-msgstr ""
+msgstr "Cinepak 視訊編碼解碼器"
 
 #: ieframe.rc:25 shell32.rc:111 notepad.rc:26 oleview.rc:27 oleview.rc:77
 #: progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25 winhlp32.rc:28
@@ -3154,19 +3154,19 @@ msgstr "視窗(&W)"
 
 #: ieframe.rc:31 view.rc:30 winhlp32.rc:29
 msgid "&Open..."
-msgstr "開啟(&O)..."
+msgstr "開啟(&O)…"
 
 #: ieframe.rc:33 notepad.rc:30 wordpad.rc:31
 msgid "Save &as..."
-msgstr "另存為(&A)..."
+msgstr "另存為(&A)…"
 
 #: ieframe.rc:35
 msgid "Print &format..."
-msgstr "列印格式(&F)..."
+msgstr "列印格式(&F)…"
 
 #: ieframe.rc:36
 msgid "Pr&int..."
-msgstr "列印(&I)..."
+msgstr "列印(&I)…"
 
 #: ieframe.rc:37 wordpad.rc:34
 msgid "Print previe&w"
@@ -3190,7 +3190,7 @@ msgstr "我的最愛(&F)"
 
 #: ieframe.rc:52 regedit.rc:73
 msgid "&Add to Favorites..."
-msgstr "新增到我的最愛(&A)..."
+msgstr "新增到我的最愛(&A)…"
 
 #: ieframe.rc:57
 msgid "&About Internet Explorer"
@@ -3202,7 +3202,7 @@ msgstr "開啟連結(&O)"
 
 #: ieframe.rc:90
 msgid "Specify the URL you wish to open in Internet Explorer"
-msgstr ""
+msgstr "指定您希望在 Internet Explorer 中開啟的網址"
 
 #: ieframe.rc:91
 msgid "Open:"
@@ -3215,7 +3215,7 @@ msgstr "首頁"
 
 #: ieframe.rc:68 winhlp32.rc:66
 msgid "Print..."
-msgstr "列印..."
+msgstr "列印…"
 
 #: ieframe.rc:73
 msgid "Address"
@@ -3243,7 +3243,7 @@ msgstr "首頁"
 
 #: inetcpl.rc:47
 msgid "You can choose the address that will be used as your home page."
-msgstr ""
+msgstr "您可以選擇將被做為首頁的位址。"
 
 #: inetcpl.rc:50
 msgid "&Current page"
@@ -3263,15 +3263,15 @@ msgstr "瀏覽紀錄"
 
 #: inetcpl.rc:54
 msgid "You can delete cached pages, cookies and other data."
-msgstr "您可以刪除網頁快取、cookies 和其他資料。"
+msgstr "您可以刪除網頁快取、訊餅和其他資料。"
 
 #: inetcpl.rc:56
 msgid "Delete &files..."
-msgstr "刪除檔案(&F)..."
+msgstr "刪除檔案(&F)…"
 
 #: inetcpl.rc:57
 msgid "&Settings..."
-msgstr "設定(&S)..."
+msgstr "設定(&S)…"
 
 #: inetcpl.rc:65
 msgid "Delete browsing history"
@@ -3282,6 +3282,8 @@ msgid ""
 "Temporary internet files\n"
 "Cached copies of webpages, images and certificates."
 msgstr ""
+"暫時的網際網路檔案\n"
+"已快取的網頁、影像和憑證。"
 
 #: inetcpl.rc:70
 msgid ""
@@ -3289,24 +3291,32 @@ msgid ""
 "Files saved on your computer by websites, which store things like user "
 "preferences and login information."
 msgstr ""
+"訊餅\n"
+"由網站儲存於您電腦的檔案，其存有諸如使用者偏好設定和登入資訊。"
 
 #: inetcpl.rc:72
 msgid ""
 "History\n"
 "List of websites you have accessed."
 msgstr ""
+"歷史記錄\n"
+"您曾存取過的網站清單。"
 
 #: inetcpl.rc:74
 msgid ""
 "Form data\n"
 "Usernames and other information you have entered into forms."
 msgstr ""
+"表單資料\n"
+"使用者名稱和其他您曾輸入表單的資訊。"
 
 #: inetcpl.rc:76
 msgid ""
 "Passwords\n"
 "Saved passwords you have entered into forms."
 msgstr ""
+"密碼\n"
+"您曾輸入表單的已儲存密碼。"
 
 #: inetcpl.rc:79 progman.rc:64
 msgid "Delete"
@@ -3320,15 +3330,15 @@ msgstr "安全性"
 msgid ""
 "Certificates are used for your personal identification and to identify "
 "certificate authorities and publishers."
-msgstr ""
+msgstr "憑證是做為您的個人識別，以及識別憑證授權機構和發行者。"
 
 #: inetcpl.rc:111
 msgid "Certificates..."
-msgstr "憑證..."
+msgstr "憑證…"
 
 #: inetcpl.rc:112
 msgid "Publishers..."
-msgstr "發行者..."
+msgstr "發行者…"
 
 #: inetcpl.rc:28
 msgid "Internet Settings"
@@ -3360,7 +3370,7 @@ msgstr "中"
 
 #: inetcpl.rc:35
 msgid "Increased"
-msgstr ""
+msgstr "已增加"
 
 #: inetcpl.rc:36
 msgid "High"
@@ -3368,59 +3378,51 @@ msgstr "高"
 
 #: joy.rc:33
 msgid "Joysticks"
-msgstr ""
+msgstr "搖桿"
 
 #: joy.rc:36 winecfg.rc:204
 msgid "&Disable"
 msgstr "停用(&D)"
 
 #: joy.rc:37
-#, fuzzy
-#| msgid "&enable"
 msgid "&Enable"
 msgstr "啟用(&E)"
 
 #: joy.rc:38
-#, fuzzy
-#| msgid "Disconnected"
 msgid "Connected"
-msgstr "離線"
+msgstr "已連線"
 
 #: joy.rc:40
-#, fuzzy
-#| msgid "&Disable"
 msgid "Disabled"
-msgstr "停用(&D)"
+msgstr "已停用"
 
 #: joy.rc:46
 msgid "Test Joystick"
-msgstr ""
+msgstr "測試搖桿"
 
 #: joy.rc:50
 msgid "Buttons"
-msgstr ""
+msgstr "按鈕"
 
 #: joy.rc:59
 msgid "Test Force Feedback"
-msgstr ""
+msgstr "測試應力回饋"
 
 #: joy.rc:28
-#, fuzzy
-#| msgid "Create Control"
 msgid "Game Controllers"
-msgstr "建立控制項"
+msgstr "遊戲控制器"
 
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
-msgstr ""
+msgstr "轉換物件到基本類型時發生錯誤"
 
 #: jscript.rc:26
 msgid "Invalid procedure call or argument"
-msgstr ""
+msgstr "無效的程序呼叫或引數"
 
 #: jscript.rc:27
 msgid "Subscript out of range"
-msgstr ""
+msgstr "註標超出範圍"
 
 #: jscript.rc:28
 msgid "Object required"
@@ -3428,11 +3430,11 @@ msgstr "需要物件"
 
 #: jscript.rc:29
 msgid "Automation server can't create object"
-msgstr ""
+msgstr "自動作業伺服器無法建立物件"
 
 #: jscript.rc:30
 msgid "Object doesn't support this property or method"
-msgstr ""
+msgstr "物件不支援這個屬性或方法"
 
 #: jscript.rc:31
 msgid "Object doesn't support this action"
@@ -3440,7 +3442,7 @@ msgstr "物件不支援此動作"
 
 #: jscript.rc:32
 msgid "Argument not optional"
-msgstr ""
+msgstr "引數並非可選的"
 
 #: jscript.rc:33
 msgid "Syntax error"
@@ -3448,33 +3450,31 @@ msgstr "語法錯誤"
 
 #: jscript.rc:34
 msgid "Expected ';'"
-msgstr ""
+msgstr "預期為『；』"
 
 #: jscript.rc:35
 msgid "Expected '('"
-msgstr ""
+msgstr "預期為『(』"
 
 #: jscript.rc:36
 msgid "Expected ')'"
-msgstr ""
+msgstr "預期為『)』"
 
 #: jscript.rc:37
-#, fuzzy
-#| msgid "Invalid parameter.\n"
 msgid "Invalid character"
-msgstr "無效的參數。\n"
+msgstr "無效的字元"
 
 #: jscript.rc:38
 msgid "Unterminated string constant"
-msgstr ""
+msgstr "未終結的字串常數"
 
 #: jscript.rc:39
 msgid "Can't have 'break' outside of loop"
-msgstr ""
+msgstr "在迴圈之外不可有『break』"
 
 #: jscript.rc:40
 msgid "Can't have 'continue' outside of loop"
-msgstr ""
+msgstr "在迴圈之外不可有『continue』"
 
 #: jscript.rc:41
 msgid "Label redefined"
@@ -3490,31 +3490,31 @@ msgstr "條件編譯已被關閉"
 
 #: jscript.rc:46
 msgid "Number expected"
-msgstr ""
+msgstr "預期為編號"
 
 #: jscript.rc:44
 msgid "Function expected"
-msgstr ""
+msgstr "預期為函式"
 
 #: jscript.rc:45
 msgid "'[object]' is not a date object"
-msgstr ""
+msgstr "『[object]』並非日期物件"
 
 #: jscript.rc:47
 msgid "Object expected"
-msgstr ""
+msgstr "預期為物件"
 
 #: jscript.rc:48
 msgid "Illegal assignment"
-msgstr ""
+msgstr "不合法的指派"
 
 #: jscript.rc:49
 msgid "'|' is undefined"
-msgstr ""
+msgstr "『|』未定義"
 
 #: jscript.rc:50
 msgid "Boolean object expected"
-msgstr ""
+msgstr "預期為布林物件"
 
 #: jscript.rc:51
 msgid "Cannot delete '|'"
@@ -3522,41 +3522,39 @@ msgstr "無法刪除 '|'"
 
 #: jscript.rc:52
 msgid "VBArray object expected"
-msgstr ""
+msgstr "預期為 VBArray 物件"
 
 #: jscript.rc:53
 msgid "JScript object expected"
-msgstr ""
+msgstr "預期為 JScript 物件"
 
 #: jscript.rc:54
 msgid "Syntax error in regular expression"
-msgstr ""
+msgstr "正規表示式語法發生錯誤"
 
 #: jscript.rc:56
 msgid "URI to be encoded contains invalid characters"
-msgstr ""
+msgstr "要編碼的 URI 內含無效字元"
 
 #: jscript.rc:55
 msgid "URI to be decoded is incorrect"
-msgstr ""
+msgstr "要解碼的 URI 不正確"
 
 #: jscript.rc:57
 msgid "Number of fraction digits is out of range"
-msgstr ""
+msgstr "小數位數超出範圍"
 
 #: jscript.rc:58
-#, fuzzy
-#| msgid "Print range"
 msgid "Precision is out of range"
-msgstr "列印範圍"
+msgstr "精確度超出範圍"
 
 #: jscript.rc:59
 msgid "Array length must be a finite positive integer"
-msgstr ""
+msgstr "陣列長度必須是有限正整數"
 
 #: jscript.rc:60
 msgid "Array object expected"
-msgstr ""
+msgstr "預期為陣列物件"
 
 #: winerror.mc:26
 msgid "Success.\n"
@@ -3564,7 +3562,7 @@ msgstr "成功。\n"
 
 #: winerror.mc:31
 msgid "Invalid function.\n"
-msgstr ""
+msgstr "無效的函式。\n"
 
 #: winerror.mc:36
 msgid "File not found.\n"
@@ -3584,11 +3582,11 @@ msgstr "存取被拒。\n"
 
 #: winerror.mc:56
 msgid "Invalid handle.\n"
-msgstr ""
+msgstr "無效的控柄。\n"
 
 #: winerror.mc:61
 msgid "Memory trashed.\n"
-msgstr ""
+msgstr "記憶體已回收。\n"
 
 #: winerror.mc:66
 msgid "Not enough memory.\n"
@@ -3596,15 +3594,15 @@ msgstr "記憶體不足。\n"
 
 #: winerror.mc:71
 msgid "Invalid block.\n"
-msgstr ""
+msgstr "無效的區塊。\n"
 
 #: winerror.mc:76
 msgid "Bad environment.\n"
-msgstr ""
+msgstr "不當的環境。\n"
 
 #: winerror.mc:81
 msgid "Bad format.\n"
-msgstr ""
+msgstr "不當的格式。\n"
 
 #: winerror.mc:86
 msgid "Invalid access.\n"
@@ -3620,51 +3618,51 @@ msgstr "記憶體不足。\n"
 
 #: winerror.mc:101
 msgid "Invalid drive.\n"
-msgstr ""
+msgstr "無效的儲存裝置。\n"
 
 #: winerror.mc:106
 msgid "Can't delete current directory.\n"
-msgstr ""
+msgstr "無法刪除現行目錄。\n"
 
 #: winerror.mc:111
 msgid "Not same device.\n"
-msgstr ""
+msgstr "並非相同裝置。\n"
 
 #: winerror.mc:116
 msgid "No more files.\n"
-msgstr ""
+msgstr "沒有檔案了。\n"
 
 #: winerror.mc:121
 msgid "Write protected.\n"
-msgstr ""
+msgstr "防止寫入的。\n"
 
 #: winerror.mc:126
 msgid "Bad unit.\n"
-msgstr ""
+msgstr "不當的單位。\n"
 
 #: winerror.mc:131
 msgid "Not ready.\n"
-msgstr ""
+msgstr "未就緒。\n"
 
 #: winerror.mc:136
 msgid "Bad command.\n"
-msgstr ""
+msgstr "不當的命令。\n"
 
 #: winerror.mc:141
 msgid "CRC error.\n"
-msgstr ""
+msgstr "循環冗餘檢查錯誤。\n"
 
 #: winerror.mc:146
 msgid "Bad length.\n"
-msgstr ""
+msgstr "不當長度。\n"
 
 #: winerror.mc:151 winerror.mc:526
 msgid "Seek error.\n"
-msgstr ""
+msgstr "尋指錯誤。\n"
 
 #: winerror.mc:156
 msgid "Not DOS disk.\n"
-msgstr ""
+msgstr "不是 DOS 磁碟。\n"
 
 #: winerror.mc:161
 msgid "Sector not found.\n"
@@ -3684,11 +3682,11 @@ msgstr "讀取錯誤。\n"
 
 #: winerror.mc:181
 msgid "General failure.\n"
-msgstr ""
+msgstr "一般失敗。\n"
 
 #: winerror.mc:186
 msgid "Sharing violation.\n"
-msgstr ""
+msgstr "共享違規。\n"
 
 #: winerror.mc:191
 msgid "Lock violation.\n"
@@ -3696,11 +3694,11 @@ msgstr "鎖定違規。\n"
 
 #: winerror.mc:196
 msgid "Wrong disk.\n"
-msgstr ""
+msgstr "錯誤磁碟。\n"
 
 #: winerror.mc:201
 msgid "Sharing buffer exceeded.\n"
-msgstr ""
+msgstr "超出共享緩衝區。\n"
 
 #: winerror.mc:206
 msgid "End of file.\n"
@@ -3712,19 +3710,19 @@ msgstr "磁碟已滿。\n"
 
 #: winerror.mc:216
 msgid "Request not supported.\n"
-msgstr ""
+msgstr "要求不受支援。\n"
 
 #: winerror.mc:221
 msgid "Remote machine not listening.\n"
-msgstr ""
+msgstr "遠端機器未傾聽。\n"
 
 #: winerror.mc:226
 msgid "Duplicate network name.\n"
-msgstr ""
+msgstr "重複的網路名稱。\n"
 
 #: winerror.mc:231
 msgid "Bad network path.\n"
-msgstr ""
+msgstr "不當的網路路徑。\n"
 
 #: winerror.mc:236
 msgid "Network busy.\n"
@@ -3736,23 +3734,23 @@ msgstr "裝置不存在。\n"
 
 #: winerror.mc:246
 msgid "Too many commands.\n"
-msgstr ""
+msgstr "太多命令。\n"
 
 #: winerror.mc:251
 msgid "Adapter hardware error.\n"
-msgstr ""
+msgstr "調適器硬體錯誤。\n"
 
 #: winerror.mc:256
 msgid "Bad network response.\n"
-msgstr ""
+msgstr "不當的網路回應。\n"
 
 #: winerror.mc:261
 msgid "Unexpected network error.\n"
-msgstr ""
+msgstr "未預期的網路錯誤。\n"
 
 #: winerror.mc:266
 msgid "Bad remote adapter.\n"
-msgstr ""
+msgstr "不當的遠端調適器。\n"
 
 #: winerror.mc:271
 msgid "Print queue full.\n"
@@ -3760,7 +3758,7 @@ msgstr "列印佇列已滿。\n"
 
 #: winerror.mc:276
 msgid "No spool space.\n"
-msgstr ""
+msgstr "沒有暫存空間。\n"
 
 #: winerror.mc:281
 msgid "Print canceled.\n"
@@ -3768,27 +3766,27 @@ msgstr "已取消列印。\n"
 
 #: winerror.mc:286
 msgid "Network name deleted.\n"
-msgstr ""
+msgstr "網路名稱被刪除。\n"
 
 #: winerror.mc:291
 msgid "Network access denied.\n"
-msgstr ""
+msgstr "存取網路被拒絕。\n"
 
 #: winerror.mc:296
 msgid "Bad device type.\n"
-msgstr ""
+msgstr "不當的裝置類型。\n"
 
 #: winerror.mc:301
 msgid "Bad network name.\n"
-msgstr ""
+msgstr "不當的網路名稱。\n"
 
 #: winerror.mc:306
 msgid "Too many network names.\n"
-msgstr ""
+msgstr "太多網路名稱。\n"
 
 #: winerror.mc:311
 msgid "Too many network sessions.\n"
-msgstr ""
+msgstr "太多網路執行期間。\n"
 
 #: winerror.mc:316
 msgid "Sharing paused.\n"
@@ -3796,11 +3794,11 @@ msgstr "已暫停分享。\n"
 
 #: winerror.mc:321
 msgid "Request not accepted.\n"
-msgstr ""
+msgstr "要求未被接受。\n"
 
 #: winerror.mc:326
 msgid "Redirector paused.\n"
-msgstr ""
+msgstr "已暫停重新導向。\n"
 
 #: winerror.mc:331
 msgid "File exists.\n"
@@ -3812,11 +3810,11 @@ msgstr "無法建立。\n"
 
 #: winerror.mc:341
 msgid "Int24 failure.\n"
-msgstr "中斷 24H 失敗。\n"
+msgstr "Int24 失敗。\n"
 
 #: winerror.mc:346
 msgid "Out of structures.\n"
-msgstr ""
+msgstr "超出結構。\n"
 
 #: winerror.mc:351
 msgid "Already assigned.\n"
@@ -3836,39 +3834,39 @@ msgstr "網路寫入錯誤。\n"
 
 #: winerror.mc:371
 msgid "No process slots.\n"
-msgstr ""
+msgstr "沒有進程插槽。\n"
 
 #: winerror.mc:376
 msgid "Too many semaphores.\n"
-msgstr ""
+msgstr "太多號誌。\n"
 
 #: winerror.mc:381
 msgid "Exclusive semaphore already owned.\n"
-msgstr ""
+msgstr "已擁有互斥號誌。\n"
 
 #: winerror.mc:386
 msgid "Semaphore is set.\n"
-msgstr ""
+msgstr "已設定號誌。\n"
 
 #: winerror.mc:391
 msgid "Too many semaphore requests.\n"
-msgstr ""
+msgstr "太多號誌要求。\n"
 
 #: winerror.mc:396
 msgid "Invalid at interrupt time.\n"
-msgstr ""
+msgstr "於插斷時間無效。\n"
 
 #: winerror.mc:401
 msgid "Semaphore owner died.\n"
-msgstr ""
+msgstr "號誌擁有者已死。\n"
 
 #: winerror.mc:406
 msgid "Semaphore user limit.\n"
-msgstr ""
+msgstr "號誌使用者限制。\n"
 
 #: winerror.mc:411
 msgid "Insert disk for drive %1.\n"
-msgstr ""
+msgstr "插入磁碟於儲存裝置 %1。\n"
 
 #: winerror.mc:416
 msgid "Drive locked.\n"
@@ -3876,7 +3874,7 @@ msgstr "已鎖定儲存裝置。\n"
 
 #: winerror.mc:421
 msgid "Broken pipe.\n"
-msgstr ""
+msgstr "中斷的管線。\n"
 
 #: winerror.mc:426
 msgid "Open failed.\n"
@@ -3888,23 +3886,23 @@ msgstr "緩衝區溢位。\n"
 
 #: winerror.mc:441
 msgid "No more search handles.\n"
-msgstr ""
+msgstr "沒有搜尋控柄了。\n"
 
 #: winerror.mc:446
 msgid "Invalid target handle.\n"
-msgstr ""
+msgstr "無效的目標控柄。\n"
 
 #: winerror.mc:451
 msgid "Invalid IOCTL.\n"
-msgstr ""
+msgstr "無效的 IOCTL。\n"
 
 #: winerror.mc:456
 msgid "Invalid verify switch.\n"
-msgstr ""
+msgstr "無效的驗證切換。\n"
 
 #: winerror.mc:461
 msgid "Bad driver level.\n"
-msgstr ""
+msgstr "不當的驅動程式層級。\n"
 
 #: winerror.mc:466
 msgid "Call not implemented.\n"
@@ -3912,7 +3910,7 @@ msgstr "呼叫尚未實作。\n"
 
 #: winerror.mc:471
 msgid "Semaphore timeout.\n"
-msgstr ""
+msgstr "號誌逾時。\n"
 
 #: winerror.mc:476
 msgid "Insufficient buffer.\n"
@@ -3924,11 +3922,11 @@ msgstr "無效的名稱。\n"
 
 #: winerror.mc:486
 msgid "Invalid level.\n"
-msgstr ""
+msgstr "無效的層級。\n"
 
 #: winerror.mc:491
 msgid "No volume label.\n"
-msgstr ""
+msgstr "沒有卷冊標籤。\n"
 
 #: winerror.mc:496
 msgid "Module not found.\n"
@@ -3936,59 +3934,59 @@ msgstr "找不到模組。\n"
 
 #: winerror.mc:501
 msgid "Procedure not found.\n"
-msgstr ""
+msgstr "找不到程序。\n"
 
 #: winerror.mc:506
 msgid "No children to wait for.\n"
-msgstr ""
+msgstr "沒有要等待的子進程。\n"
 
 #: winerror.mc:511
 msgid "Child process has not completed.\n"
-msgstr ""
+msgstr "子進程未已完成。\n"
 
 #: winerror.mc:516
 msgid "Invalid use of direct access handle.\n"
-msgstr ""
+msgstr "直接存取控柄的使用無效。\n"
 
 #: winerror.mc:521
 msgid "Negative seek.\n"
-msgstr ""
+msgstr "負向尋指。\n"
 
 #: winerror.mc:531
 msgid "Drive is a JOIN target.\n"
-msgstr ""
+msgstr "儲存裝置是個 JOIN 目標。\n"
 
 #: winerror.mc:536
 msgid "Drive is already JOINed.\n"
-msgstr ""
+msgstr "儲存裝置已被 JOIN。\n"
 
 #: winerror.mc:541
 msgid "Drive is already SUBSTed.\n"
-msgstr ""
+msgstr "儲存裝置已被 SUBST。\n"
 
 #: winerror.mc:546
 msgid "Drive is not JOINed.\n"
-msgstr ""
+msgstr "儲存裝置未被 JOIN。\n"
 
 #: winerror.mc:551
 msgid "Drive is not SUBSTed.\n"
-msgstr ""
+msgstr "儲存裝置未被 SUBST。\n"
 
 #: winerror.mc:556
 msgid "Attempt to JOIN onto a JOINed drive.\n"
-msgstr ""
+msgstr "試圖 JOIN 到已被 JOIN 的儲存裝置。\n"
 
 #: winerror.mc:561
 msgid "Attempt to SUBST onto a SUBSTed drive.\n"
-msgstr ""
+msgstr "試圖 SUBST 到已被 SUBST 的儲存裝置。\n"
 
 #: winerror.mc:566
 msgid "Attempt to JOIN to a SUBSTed drive.\n"
-msgstr ""
+msgstr "試圖 JOIN 到已被 SUBST 的儲存裝置。\n"
 
 #: winerror.mc:571
 msgid "Attempt to SUBST to a JOINed drive.\n"
-msgstr ""
+msgstr "試圖 SUBST 到已被 JOIN 的儲存裝置。\n"
 
 #: winerror.mc:576
 msgid "Drive is busy.\n"
@@ -3996,11 +3994,11 @@ msgstr "裝置忙碌中。\n"
 
 #: winerror.mc:581
 msgid "Same drive.\n"
-msgstr ""
+msgstr "相同儲存裝置。\n"
 
 #: winerror.mc:586
 msgid "Not toplevel directory.\n"
-msgstr ""
+msgstr "並非最上層目錄。\n"
 
 #: winerror.mc:591
 msgid "Directory is not empty.\n"
@@ -4008,75 +4006,75 @@ msgstr "目錄不是空的。\n"
 
 #: winerror.mc:596
 msgid "Path is in use as a SUBST.\n"
-msgstr ""
+msgstr "路徑被使用為 SUBST。\n"
 
 #: winerror.mc:601
 msgid "Path is in use as a JOIN.\n"
-msgstr ""
+msgstr "路徑被使用為 JOIN。\n"
 
 #: winerror.mc:606
 msgid "Path is busy.\n"
-msgstr "該路徑忙碌中。\n"
+msgstr "路徑忙碌中。\n"
 
 #: winerror.mc:611
 msgid "Already a SUBST target.\n"
-msgstr ""
+msgstr "已經是個 SUBST 目標。\n"
 
 #: winerror.mc:616
 msgid "System trace not specified or disallowed.\n"
-msgstr ""
+msgstr "尚未指定系統追蹤或是不允許。\n"
 
 #: winerror.mc:621
 msgid "Event count for DosMuxSemWait incorrect.\n"
-msgstr ""
+msgstr "用於 DosMuxSemWait 的事件計數不正確。\n"
 
 #: winerror.mc:626
 msgid "Too many waiters for DosMuxSemWait.\n"
-msgstr ""
+msgstr "太多 DosMuxSemWait 的等待者。\n"
 
 #: winerror.mc:631
 msgid "DosSemMuxWait list invalid.\n"
-msgstr ""
+msgstr "DosSemMuxWait 清單無效。\n"
 
 #: winerror.mc:636
 msgid "Volume label too long.\n"
-msgstr ""
+msgstr "卷冊標籤太長。\n"
 
 #: winerror.mc:641
 msgid "Too many TCBs.\n"
-msgstr ""
+msgstr "太多 TCBs。\n"
 
 #: winerror.mc:646
 msgid "Signal refused.\n"
-msgstr ""
+msgstr "信號被拒絕。\n"
 
 #: winerror.mc:651
 msgid "Segment discarded.\n"
-msgstr ""
+msgstr "資料段被捨棄。\n"
 
 #: winerror.mc:656
 msgid "Segment not locked.\n"
-msgstr ""
+msgstr "無法鎖定資料段。\n"
 
 #: winerror.mc:661
 msgid "Bad thread ID address.\n"
-msgstr ""
+msgstr "不當的執行緒識別號位址。\n"
 
 #: winerror.mc:666
 msgid "Bad arguments to DosExecPgm.\n"
-msgstr ""
+msgstr "不當的 DosExecPgm 引數。\n"
 
 #: winerror.mc:671
 msgid "Path is invalid.\n"
-msgstr ""
+msgstr "路徑無效。\n"
 
 #: winerror.mc:676
 msgid "Signal pending.\n"
-msgstr ""
+msgstr "信號擱置。\n"
 
 #: winerror.mc:681
 msgid "Max system-wide thread count reached.\n"
-msgstr ""
+msgstr "已達最大系統層級執行緒數量。\n"
 
 #: winerror.mc:686
 msgid "Lock failed.\n"
@@ -4092,15 +4090,15 @@ msgstr "取消違規。\n"
 
 #: winerror.mc:701
 msgid "Atomic locks not supported.\n"
-msgstr ""
+msgstr "不支援基元鎖定。\n"
 
 #: winerror.mc:706
 msgid "Invalid segment number.\n"
-msgstr ""
+msgstr "無效的資料段編號。\n"
 
 #: winerror.mc:711
 msgid "Invalid ordinal for %1.\n"
-msgstr ""
+msgstr "無效的 %1 序數。\n"
 
 #: winerror.mc:716
 msgid "File already exists.\n"
@@ -4112,75 +4110,75 @@ msgstr "無效的旗標號碼。\n"
 
 #: winerror.mc:726
 msgid "Semaphore name not found.\n"
-msgstr ""
+msgstr "找不到號誌名稱。\n"
 
 #: winerror.mc:731
 msgid "Invalid starting code segment for %1.\n"
-msgstr ""
+msgstr "無效的 %1 程式碼起始資料段。\n"
 
 #: winerror.mc:736
 msgid "Invalid starting stack segment for %1.\n"
-msgstr ""
+msgstr "無效的 %1 起始堆疊資料段。\n"
 
 #: winerror.mc:741
 msgid "Invalid module type for %1.\n"
-msgstr ""
+msgstr "無效的 %1 模組型態。\n"
 
 #: winerror.mc:746
 msgid "Invalid EXE signature in %1.\n"
-msgstr ""
+msgstr "%1 中無效的 EXE 簽名。\n"
 
 #: winerror.mc:751
 msgid "EXE %1 is marked invalid.\n"
-msgstr ""
+msgstr "EXE %1 被標記為無效。\n"
 
 #: winerror.mc:756
 msgid "Bad EXE format for %1.\n"
-msgstr ""
+msgstr "%1 的不當 EXE 格式。\n"
 
 #: winerror.mc:761
 msgid "Iterated data exceeds 64k in %1.\n"
-msgstr ""
+msgstr "%1 的迭代資料超出 64k。\n"
 
 #: winerror.mc:766
 msgid "Invalid MinAllocSize in %1.\n"
-msgstr ""
+msgstr "%1 的 MinAllocSize 無效。\n"
 
 #: winerror.mc:771
 msgid "Dynlink from invalid ring.\n"
-msgstr ""
+msgstr "Dynlink 來自無效的環。\n"
 
 #: winerror.mc:776
 msgid "IOPL not enabled.\n"
-msgstr ""
+msgstr "IOPL 未啟用。\n"
 
 #: winerror.mc:781
 msgid "Invalid SEGDPL in %1.\n"
-msgstr ""
+msgstr "%1 的 SEGDPL 無效。\n"
 
 #: winerror.mc:786
 msgid "Auto data segment exceeds 64k.\n"
-msgstr ""
+msgstr "自動資料區段超出 64k。\n"
 
 #: winerror.mc:791
 msgid "Ring 2 segment must be movable.\n"
-msgstr ""
+msgstr "環 2 資料段必須可被移動。\n"
 
 #: winerror.mc:796
 msgid "Relocation chain exceeds segment limit in %1.\n"
-msgstr ""
+msgstr "%1 的重定址鏈接超出資料段限制。\n"
 
 #: winerror.mc:801
 msgid "Infinite loop in relocation chain in %1.\n"
-msgstr ""
+msgstr "%1 重定址鏈接中有無窮迴圈。\n"
 
 #: winerror.mc:806
 msgid "Environment variable not found.\n"
-msgstr ""
+msgstr "找不到環境變數。\n"
 
 #: winerror.mc:811
 msgid "No signal sent.\n"
-msgstr ""
+msgstr "未發送任何信號。\n"
 
 #: winerror.mc:816
 msgid "File name is too long.\n"
@@ -4188,47 +4186,47 @@ msgstr "檔案名稱過長。\n"
 
 #: winerror.mc:821
 msgid "Ring 2 stack in use.\n"
-msgstr ""
+msgstr "環 2 堆疊使用中。\n"
 
 #: winerror.mc:826
 msgid "Error in use of filename wildcards.\n"
-msgstr ""
+msgstr "使用檔名萬用字元時發生錯誤。\n"
 
 #: winerror.mc:831
 msgid "Invalid signal number.\n"
-msgstr "無效的訊號號碼。\n"
+msgstr "無效的信號編號。\n"
 
 #: winerror.mc:836
 msgid "Error setting signal handler.\n"
-msgstr ""
+msgstr "設定信號處理程式時發生錯誤。\n"
 
 #: winerror.mc:841
 msgid "Segment locked.\n"
-msgstr ""
+msgstr "已鎖定資料段。\n"
 
 #: winerror.mc:846
 msgid "Too many modules.\n"
-msgstr ""
+msgstr "太多模組。\n"
 
 #: winerror.mc:851
 msgid "Nesting LoadModule calls not allowed.\n"
-msgstr ""
+msgstr "不允許巢狀 LoadModule 呼叫。\n"
 
 #: winerror.mc:856
 msgid "Machine type mismatch.\n"
-msgstr ""
+msgstr "機器型態不匹配。\n"
 
 #: winerror.mc:861
 msgid "Bad pipe.\n"
-msgstr ""
+msgstr "不當的管線。\n"
 
 #: winerror.mc:866
 msgid "Pipe busy.\n"
-msgstr ""
+msgstr "管線忙碌。\n"
 
 #: winerror.mc:871
 msgid "Pipe closed.\n"
-msgstr ""
+msgstr "管線關閉。\n"
 
 #: winerror.mc:876
 msgid "Pipe not connected.\n"
@@ -4236,27 +4234,27 @@ msgstr "管線未連接。\n"
 
 #: winerror.mc:881
 msgid "More data available.\n"
-msgstr ""
+msgstr "更多資料可用。\n"
 
 #: winerror.mc:886
 msgid "Session canceled.\n"
-msgstr "工作階段已取消。\n"
+msgstr "已取消工作階段。\n"
 
 #: winerror.mc:891
 msgid "Invalid extended attribute name.\n"
-msgstr ""
+msgstr "無效的進階屬性名稱。\n"
 
 #: winerror.mc:896
 msgid "Extended attribute list inconsistent.\n"
-msgstr ""
+msgstr "進階屬性清單不一致。\n"
 
 #: winerror.mc:901
 msgid "No more data available.\n"
-msgstr ""
+msgstr "已無更多可用資料。\n"
 
 #: winerror.mc:906
 msgid "Cannot use Copy API.\n"
-msgstr ""
+msgstr "無法使用複製 API。\n"
 
 #: winerror.mc:911
 msgid "Directory name invalid.\n"
@@ -4264,211 +4262,211 @@ msgstr "無效的目錄名稱。\n"
 
 #: winerror.mc:916
 msgid "Extended attributes didn't fit.\n"
-msgstr ""
+msgstr "進階屬性並未符合。\n"
 
 #: winerror.mc:921
 msgid "Extended attribute file corrupt.\n"
-msgstr ""
+msgstr "進階屬性檔案損壞。\n"
 
 #: winerror.mc:926
 msgid "Extended attribute table full.\n"
-msgstr ""
+msgstr "進階屬性表格已滿。\n"
 
 #: winerror.mc:931
 msgid "Invalid extended attribute handle.\n"
-msgstr ""
+msgstr "無效的進階屬性控柄。\n"
 
 #: winerror.mc:936
 msgid "Extended attributes not supported.\n"
-msgstr "不支援延伸屬性。\n"
+msgstr "不支援進階屬性。\n"
 
 #: winerror.mc:941
 msgid "Mutex not owned by caller.\n"
-msgstr ""
+msgstr "Mutex 非由呼叫者所擁有。\n"
 
 #: winerror.mc:946
 msgid "Too many posts to semaphore.\n"
-msgstr ""
+msgstr "號誌太多貼文。\n"
 
 #: winerror.mc:951
 msgid "Read/WriteProcessMemory partially completed.\n"
-msgstr ""
+msgstr "讀取/寫入進程記憶體已部分完成。\n"
 
 #: winerror.mc:956
 msgid "The oplock wasn't granted.\n"
-msgstr ""
+msgstr "未被授與 oplock。\n"
 
 #: winerror.mc:961
 msgid "Invalid oplock message received.\n"
-msgstr ""
+msgstr "接收到無效的 oplock 訊息。\n"
 
 #: winerror.mc:966
 msgid "Message 0x%1 not found in file %2.\n"
-msgstr ""
+msgstr "在檔案 %2 中找不到訊息 0x%1。\n"
 
 #: winerror.mc:971
 msgid "Invalid address.\n"
-msgstr ""
+msgstr "無效的位址。\n"
 
 #: winerror.mc:976
 msgid "Arithmetic overflow.\n"
-msgstr ""
+msgstr "算術溢位。\n"
 
 #: winerror.mc:981
 msgid "Pipe connected.\n"
-msgstr ""
+msgstr "管線已連結。\n"
 
 #: winerror.mc:986
 msgid "Pipe listening.\n"
-msgstr ""
+msgstr "管線傾聽中。\n"
 
 #: winerror.mc:991
 msgid "Extended attribute access denied.\n"
-msgstr ""
+msgstr "拒絕讀取進階屬性。\n"
 
 #: winerror.mc:996
 msgid "I/O operation aborted.\n"
-msgstr "I/O 操作取消。\n"
+msgstr "已取消 I/O 操作。\n"
 
 #: winerror.mc:1001
 msgid "Overlapped I/O incomplete.\n"
-msgstr ""
+msgstr "重疊 I/O 未完成。\n"
 
 #: winerror.mc:1006
 msgid "Overlapped I/O pending.\n"
-msgstr ""
+msgstr "重疊 I/O 擱置中。\n"
 
 #: winerror.mc:1011
 msgid "No access to memory location.\n"
-msgstr ""
+msgstr "無法存取記憶體位置。\n"
 
 #: winerror.mc:1016
 msgid "Swap error.\n"
-msgstr ""
+msgstr "交換區錯誤。\n"
 
 #: winerror.mc:1021
 msgid "Stack overflow.\n"
-msgstr ""
+msgstr "堆疊上限溢位。\n"
 
 #: winerror.mc:1026
 msgid "Invalid message.\n"
-msgstr ""
+msgstr "無效的訊息。\n"
 
 #: winerror.mc:1031
 msgid "Cannot complete.\n"
-msgstr ""
+msgstr "無法完成。\n"
 
 #: winerror.mc:1036
 msgid "Invalid flags.\n"
-msgstr ""
+msgstr "無效的旗標。\n"
 
 #: winerror.mc:1041
 msgid "Unrecognized volume.\n"
-msgstr ""
+msgstr "無法辨識的卷冊。\n"
 
 #: winerror.mc:1046
 msgid "File invalid.\n"
-msgstr ""
+msgstr "無效的檔案。\n"
 
 #: winerror.mc:1051
 msgid "Cannot run full-screen.\n"
-msgstr ""
+msgstr "無法全螢幕運行。\n"
 
 #: winerror.mc:1056
 msgid "Nonexistent token.\n"
-msgstr ""
+msgstr "不存在的字組。\n"
 
 #: winerror.mc:1061
 msgid "Registry corrupt.\n"
-msgstr "登錄損毀。\n"
+msgstr "註冊表損毀。\n"
 
 #: winerror.mc:1066
 msgid "Invalid key.\n"
-msgstr "無效的機碼。\n"
+msgstr "無效的索引鍵。\n"
 
 #: winerror.mc:1071
 msgid "Can't open registry key.\n"
-msgstr "無法開啟登錄機碼。\n"
+msgstr "無法開啟註冊表索引鍵。\n"
 
 #: winerror.mc:1076
 msgid "Can't read registry key.\n"
-msgstr "無法讀取登錄機碼。\n"
+msgstr "無法讀取註冊表索引鍵。\n"
 
 #: winerror.mc:1081
 msgid "Can't write registry key.\n"
-msgstr "無法寫入登錄機碼。\n"
+msgstr "無法寫入註冊表索引鍵。\n"
 
 #: winerror.mc:1086
 msgid "Registry has been recovered.\n"
-msgstr "登錄已復原。\n"
+msgstr "註冊表已復原。\n"
 
 #: winerror.mc:1091
 msgid "Registry is corrupt.\n"
-msgstr "登錄損毀。\n"
+msgstr "註冊表損毀。\n"
 
 #: winerror.mc:1096
 msgid "I/O to registry failed.\n"
-msgstr ""
+msgstr "註冊表 I/O 時失敗。\n"
 
 #: winerror.mc:1101
 msgid "Not registry file.\n"
-msgstr "非登錄檔。\n"
+msgstr "非註冊表檔案。\n"
 
 #: winerror.mc:1106
 msgid "Key deleted.\n"
-msgstr "機碼已刪除。\n"
+msgstr "索引鍵已刪除。\n"
 
 #: winerror.mc:1111
 msgid "No registry log space.\n"
-msgstr ""
+msgstr "沒有註冊表記錄檔空間。\n"
 
 #: winerror.mc:1116
 msgid "Registry key has subkeys.\n"
-msgstr ""
+msgstr "註冊表索引鍵有子項。\n"
 
 #: winerror.mc:1121
 msgid "Subkey must be volatile.\n"
-msgstr ""
+msgstr "子項必須是易變的。\n"
 
 #: winerror.mc:1126
 msgid "Notify change request in progress.\n"
-msgstr ""
+msgstr "通知變更要求正在進行。\n"
 
 #: winerror.mc:1131
 msgid "Dependent services are running.\n"
-msgstr ""
+msgstr "附屬服務正在執行中。\n"
 
 #: winerror.mc:1136
 msgid "Invalid service control.\n"
-msgstr ""
+msgstr "無效的服務控制。\n"
 
 #: winerror.mc:1141
 msgid "Service request timeout.\n"
-msgstr ""
+msgstr "服務要求逾時。\n"
 
 #: winerror.mc:1146
 msgid "Cannot create service thread.\n"
-msgstr ""
+msgstr "無法建立服務執行緒。\n"
 
 #: winerror.mc:1151
 msgid "Service database locked.\n"
-msgstr ""
+msgstr "服務資料庫已鎖定。\n"
 
 #: winerror.mc:1156
 msgid "Service already running.\n"
-msgstr ""
+msgstr "服務已在執行中。\n"
 
 #: winerror.mc:1161
 msgid "Invalid service account.\n"
-msgstr ""
+msgstr "無效的服務帳號。\n"
 
 #: winerror.mc:1166
 msgid "Service is disabled.\n"
-msgstr ""
+msgstr "服務已停用。\n"
 
 #: winerror.mc:1171
 msgid "Circular dependency.\n"
-msgstr ""
+msgstr "循環相依性。\n"
 
 #: winerror.mc:1176
 msgid "Service does not exist.\n"
@@ -4476,19 +4474,19 @@ msgstr "服務不存在。\n"
 
 #: winerror.mc:1181
 msgid "Service cannot accept control message.\n"
-msgstr ""
+msgstr "服務無法接受控制訊息。\n"
 
 #: winerror.mc:1186
 msgid "Service not active.\n"
-msgstr ""
+msgstr "服務現未啟用。\n"
 
 #: winerror.mc:1191
 msgid "Service controller connect failed.\n"
-msgstr ""
+msgstr "服務控制器連接失敗。\n"
 
 #: winerror.mc:1196
 msgid "Exception in service.\n"
-msgstr ""
+msgstr "服務發生異常。\n"
 
 #: winerror.mc:1201
 msgid "Database does not exist.\n"
@@ -4496,171 +4494,171 @@ msgstr "資料庫不存在。\n"
 
 #: winerror.mc:1206
 msgid "Service-specific error.\n"
-msgstr ""
+msgstr "服務限定的錯誤。\n"
 
 #: winerror.mc:1211
 msgid "Process aborted.\n"
-msgstr "行程取消。\n"
+msgstr "進程已取消。\n"
 
 #: winerror.mc:1216
 msgid "Service dependency failed.\n"
-msgstr ""
+msgstr "服務相依性失敗。\n"
 
 #: winerror.mc:1221
 msgid "Service login failed.\n"
-msgstr ""
+msgstr "服務登入失敗。\n"
 
 #: winerror.mc:1226
 msgid "Service start-hang.\n"
-msgstr ""
+msgstr "服務啟動即掛機。\n"
 
 #: winerror.mc:1231
 msgid "Invalid service lock.\n"
-msgstr ""
+msgstr "無效的服務鎖定。\n"
 
 #: winerror.mc:1236
 msgid "Service marked for delete.\n"
-msgstr ""
+msgstr "服務已標記將刪除。\n"
 
 #: winerror.mc:1241
 msgid "Service exists.\n"
-msgstr ""
+msgstr "服務已存在。\n"
 
 #: winerror.mc:1246
 msgid "System running last-known-good config.\n"
-msgstr ""
+msgstr "系統執行最後已知正常的組配。\n"
 
 #: winerror.mc:1251
 msgid "Service dependency deleted.\n"
-msgstr ""
+msgstr "服務相依性已刪除。\n"
 
 #: winerror.mc:1256
 msgid "Boot already accepted as last-good config.\n"
-msgstr ""
+msgstr "開機已被接受為最後正常的組配。\n"
 
 #: winerror.mc:1261
 msgid "Service not started since last boot.\n"
-msgstr ""
+msgstr "服務自從最後一次開機即無法啟動。\n"
 
 #: winerror.mc:1266
 msgid "Duplicate service name.\n"
-msgstr ""
+msgstr "重複的服務名稱。\n"
 
 #: winerror.mc:1271
 msgid "Different service account.\n"
-msgstr ""
+msgstr "不同的服務帳號。\n"
 
 #: winerror.mc:1276
 msgid "Driver failure cannot be detected.\n"
-msgstr ""
+msgstr "無法偵測到驅動程式的失敗。\n"
 
 #: winerror.mc:1281
 msgid "Process abort cannot be detected.\n"
-msgstr ""
+msgstr "無法偵測到進程中止。\n"
 
 #: winerror.mc:1286
 msgid "No recovery program for service.\n"
-msgstr ""
+msgstr "沒有復原程式用於服務。\n"
 
 #: winerror.mc:1291
 msgid "Service not implemented by exe.\n"
-msgstr ""
+msgstr "服務尚未由 exe 實作。\n"
 
 #: winerror.mc:1296
 msgid "End of media.\n"
-msgstr ""
+msgstr "媒體的結束。\n"
 
 #: winerror.mc:1301
 msgid "Filemark detected.\n"
-msgstr ""
+msgstr "偵測到檔案標記。\n"
 
 #: winerror.mc:1306
 msgid "Beginning of media.\n"
-msgstr ""
+msgstr "媒體的起始部分。\n"
 
 #: winerror.mc:1311
 msgid "Setmark detected.\n"
-msgstr ""
+msgstr "偵測到集合標記。\n"
 
 #: winerror.mc:1316
 msgid "No data detected.\n"
-msgstr ""
+msgstr "偵測不到資料。\n"
 
 #: winerror.mc:1321
 msgid "Partition failure.\n"
-msgstr ""
+msgstr "分割區失敗。\n"
 
 #: winerror.mc:1326
 msgid "Invalid block length.\n"
-msgstr ""
+msgstr "無效的區塊長度。\n"
 
 #: winerror.mc:1331
 msgid "Device not partitioned.\n"
-msgstr ""
+msgstr "裝置未設分割區。\n"
 
 #: winerror.mc:1336
 msgid "Unable to lock media.\n"
-msgstr ""
+msgstr "無法鎖定媒體。\n"
 
 #: winerror.mc:1341
 msgid "Unable to unload media.\n"
-msgstr ""
+msgstr "無法卸載媒體。\n"
 
 #: winerror.mc:1346
 msgid "Media changed.\n"
-msgstr ""
+msgstr "媒體已變更。\n"
 
 #: winerror.mc:1351
 msgid "I/O bus reset.\n"
-msgstr ""
+msgstr "I/O 匯流排重置。\n"
 
 #: winerror.mc:1356
 msgid "No media in drive.\n"
-msgstr ""
+msgstr "在儲存裝置中沒有媒體。\n"
 
 #: winerror.mc:1361
 msgid "No Unicode translation.\n"
-msgstr ""
+msgstr "沒有萬國碼轉譯。\n"
 
 #: winerror.mc:1366
 msgid "DLL init failed.\n"
-msgstr ""
+msgstr "動態連結函式庫初始失敗。\n"
 
 #: winerror.mc:1371
 msgid "Shutdown in progress.\n"
-msgstr ""
+msgstr "關機正在進行。\n"
 
 #: winerror.mc:1376
 msgid "No shutdown in progress.\n"
-msgstr ""
+msgstr "沒有關機正在進行。\n"
 
 #: winerror.mc:1381
 msgid "I/O device error.\n"
-msgstr ""
+msgstr "I/O 裝置錯誤。\n"
 
 #: winerror.mc:1386
 msgid "No serial devices found.\n"
-msgstr ""
+msgstr "找不到任何序列裝置。\n"
 
 #: winerror.mc:1391
 msgid "Shared IRQ busy.\n"
-msgstr ""
+msgstr "共享 IRQ 忙碌中。\n"
 
 #: winerror.mc:1396
 msgid "Serial I/O completed.\n"
-msgstr ""
+msgstr "序列 I/O 已完成。\n"
 
 #: winerror.mc:1401
 msgid "Serial I/O counter timeout.\n"
-msgstr ""
+msgstr "序列 I/O 計數器逾時。\n"
 
 #: winerror.mc:1406
 msgid "Floppy ID address mark not found.\n"
-msgstr ""
+msgstr "找不到軟碟識別號位址標記。\n"
 
 #: winerror.mc:1411
 msgid "Floppy reports wrong cylinder.\n"
-msgstr ""
+msgstr "軟碟回報錯誤的磁柱。\n"
 
 #: winerror.mc:1416
 msgid "Unknown floppy error.\n"
@@ -4668,7 +4666,7 @@ msgstr "未知的軟碟錯誤。\n"
 
 #: winerror.mc:1421
 msgid "Floppy registers inconsistent.\n"
-msgstr ""
+msgstr "軟碟註冊表不一致。\n"
 
 #: winerror.mc:1426
 msgid "Hard disk recalibrate failed.\n"
@@ -4684,7 +4682,7 @@ msgstr "硬碟重置失敗。\n"
 
 #: winerror.mc:1441
 msgid "End of tape media.\n"
-msgstr ""
+msgstr "磁帶媒體的結束。\n"
 
 #: winerror.mc:1446
 msgid "Not enough server memory.\n"
@@ -4696,31 +4694,31 @@ msgstr "可能發生死結。\n"
 
 #: winerror.mc:1456
 msgid "Incorrect alignment.\n"
-msgstr ""
+msgstr "不正確的對齊。\n"
 
 #: winerror.mc:1461
 msgid "Set-power-state vetoed.\n"
-msgstr ""
+msgstr "設定電源狀態被否決。\n"
 
 #: winerror.mc:1466
 msgid "Set-power-state failed.\n"
-msgstr ""
+msgstr "設定電源狀態失敗。\n"
 
 #: winerror.mc:1471
 msgid "Too many links.\n"
-msgstr ""
+msgstr "太多鏈結。\n"
 
 #: winerror.mc:1476
 msgid "Newer windows version needed.\n"
-msgstr ""
+msgstr "需要較新 Windows 版本。\n"
 
 #: winerror.mc:1481
 msgid "Wrong operating system.\n"
-msgstr ""
+msgstr "錯誤的作業系統。\n"
 
 #: winerror.mc:1486
 msgid "Single-instance application.\n"
-msgstr ""
+msgstr "單一實體應用程式。\n"
 
 #: winerror.mc:1491
 msgid "Real-mode application.\n"
