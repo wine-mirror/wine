@@ -225,17 +225,7 @@ static nsresult before_async_open(nsChannel *channel, NSContainer *container, BO
 {
     HTMLDocumentObj *doc = container->doc;
     BSTR display_uri;
-    DWORD hlnf = 0;
     HRESULT hres;
-
-    if(!doc) {
-        NSContainer *container_iter = container;
-
-        hlnf = HLNF_OPENINNEWWINDOW;
-        while(!container_iter->doc)
-            container_iter = container_iter->parent;
-        doc = container_iter->doc;
-    }
 
     if(!doc->client) {
         *cancel = TRUE;
@@ -246,18 +236,13 @@ static nsresult before_async_open(nsChannel *channel, NSContainer *container, BO
     if(FAILED(hres))
         return NS_ERROR_FAILURE;
 
-    if(!hlnf) {
-        BOOL b;
-
-        b = !exec_shldocvw_67(doc, display_uri);
-        if(b) {
-            SysFreeString(display_uri);
-            *cancel = FALSE;
-            return NS_OK;
-        }
+    if(!exec_shldocvw_67(doc, display_uri)) {
+        SysFreeString(display_uri);
+        *cancel = FALSE;
+        return NS_OK;
     }
 
-    hres = hlink_frame_navigate(&doc->basedoc, display_uri, channel, hlnf, cancel);
+    hres = hlink_frame_navigate(&doc->basedoc, display_uri, channel, 0, cancel);
     SysFreeString(display_uri);
     if(FAILED(hres))
         *cancel = TRUE;
