@@ -5,13 +5,14 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: N/A\n"
-"Last-Translator: Automatically generated\n"
-"Language-Team: none\n"
+"PO-Revision-Date: 2012-07-07 00:06+0800\n"
+"Last-Translator: Wei-Lun Chao <bluebat@member.fsf.org>\n"
+"Language-Team: Chinese (traditional) <zh-l10n@linux.org.tw>\n"
 "Language: Chinese (Taiwan)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 
 #: appwiz.rc:55
 msgid "Install/Uninstall"
@@ -21,24 +22,20 @@ msgstr "安裝/移除"
 msgid ""
 "To install a new program from a floppy disk, CD-ROM drive, or your hard "
 "drive, click Install."
-msgstr "要從軟碟，光碟或硬碟安裝新程式，請按「安裝」。"
+msgstr "要從軟碟、光碟或硬碟安裝新程式，請按「安裝」。"
 
 #: appwiz.rc:59
 msgid "&Install..."
-msgstr "安裝(&I)..."
+msgstr "安裝(&I)…"
 
 #: appwiz.rc:62
-#, fuzzy
-#| msgid ""
-#| "The following software can be automatically removed. To remove a program "
-#| "or to modify its installed components, select it from the list and click "
-#| "Change/Remove."
 msgid ""
 "The following software can be automatically removed. To remove a program or "
 "to modify its installed components, select it from the list and click Modify/"
 "Remove."
 msgstr ""
-"下列軟體可以自動解除安裝。 按「新增/移除」可以移除程式或者調整已安裝元件。"
+"下列軟體可以自動解除安裝。 從清單中選取它並按下「新增/移除」，可以移除程式或"
+"者調整已安裝元件。"
 
 #: appwiz.rc:64
 msgid "&Support Information"
@@ -46,7 +43,7 @@ msgstr "技術支援資訊(&S)"
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87
 msgid "&Modify..."
-msgstr "修改(&M)..."
+msgstr "修改(&M)…"
 
 #: appwiz.rc:66 appwiz.rc:42 cryptui.rc:343 msacm32.rc:37 winecfg.rc:191
 #: winecfg.rc:228 wordpad.rc:245
@@ -156,21 +153,10 @@ msgid "Cancel"
 msgstr "取消"
 
 #: appwiz.rc:112
-#, fuzzy
-#| msgid "Wine Gecko Installer"
 msgid "Wine Mono Installer"
-msgstr "Wine Gecko 安裝程式"
+msgstr "Wine Mono 安裝程式"
 
 #: appwiz.rc:115
-#, fuzzy
-#| msgid ""
-#| "Wine could not find a Gecko package which is needed for applications "
-#| "embedding HTML to work correctly. Wine can automatically download and "
-#| "install it for you.\n"
-#| "\n"
-#| "Note: it is recommended to use your distribution's packages instead. See "
-#| "<a href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> "
-#| "for details."
 msgid ""
 "Wine could not find a Mono package which is needed for .NET applications to "
 "work correctly. Wine can automatically download and install it for you.\n"
@@ -179,11 +165,11 @@ msgid ""
 "href=\"http://wiki.winehq.org/Mono\">http://wiki.winehq.org/Mono</a> for "
 "details."
 msgstr ""
-"Wine 需要安裝 Gecko 套件才能正確顯示嵌在應用程式中的 HTML 網頁。Wine 可以自動"
-"幫您下載並安裝 Gecko。\n"
+"Wine 需要安裝 Mono 套件才能正確執行 .NET 應用程式。Wine 可以自動幫您下載並安"
+"裝它。\n"
 "\n"
 "備註：建議您使用發行版所附的套件。詳情請見 <a href=\"http://wiki.winehq.org/"
-"Gecko\">http://wiki.winehq.org/Gecko</a>"
+"Mono\">http://wiki.winehq.org/Mono</a>"
 
 #: appwiz.rc:28
 msgid "Add/Remove Programs"
@@ -203,7 +189,7 @@ msgstr "應用程式"
 msgid ""
 "Unable to execute the uninstaller, '%s'. Do you want to remove the uninstall "
 "entry for this program from the registry?"
-msgstr "無法執行移除程式「%s」。 您想將這個移除程式從登錄檔中刪除嗎？"
+msgstr "無法執行移除程式「%s」。 您想將這個移除程式從註冊表中刪除嗎？"
 
 #: appwiz.rc:33
 msgid "Not specified"
@@ -240,17 +226,17 @@ msgstr "修改/移除(&M)"
 
 #: appwiz.rc:48
 msgid "Downloading..."
-msgstr "正在下載..."
+msgstr "正在下載…"
 
 #: appwiz.rc:49
 msgid "Installing..."
-msgstr "正在安裝..."
+msgstr "正在安裝…"
 
 #: appwiz.rc:50
 msgid ""
 "Unexpected checksum of downloaded file. Aborting installation of corrupted "
 "file."
-msgstr ""
+msgstr "已下載檔案的總和檢查碼不符預期。放棄安裝已損壞檔案。"
 
 #: avifil32.rc:39
 msgid "Compress options"
@@ -262,7 +248,7 @@ msgstr "選擇來源(&C)："
 
 #: avifil32.rc:45 wordpad.rc:73
 msgid "&Options..."
-msgstr "選項(&O)..."
+msgstr "選項(&O)…"
 
 #: avifil32.rc:46
 msgid "&Interleave every"
@@ -306,7 +292,7 @@ msgstr "未壓縮"
 
 #: browseui.rc:25
 msgid "Canceling..."
-msgstr "正在取消..."
+msgstr "正在取消…"
 
 #: comctl32.rc:49 winefile.rc:157
 msgid "Properties for %s"
@@ -357,7 +343,7 @@ msgstr "重置(&e)"
 #: progman.rc:199 progman.rc:216 regedit.rc:76 taskmgr.rc:87 winefile.rc:79
 #: winemine.rc:48 winhlp32.rc:53 wordpad.rc:91
 msgid "&Help"
-msgstr "說明(&H)"
+msgstr "求助(&H)"
 
 #: comctl32.rc:84
 msgid "Move &Up"
@@ -432,7 +418,7 @@ msgstr "唯讀(&R)"
 
 #: comdlg32.rc:173
 msgid "Save As..."
-msgstr "另存新檔..."
+msgstr "另存新檔…"
 
 #: comdlg32.rc:186 comdlg32.rc:141
 msgid "Save As"
@@ -485,7 +471,7 @@ msgstr "列印至檔案(&L)"
 
 #: comdlg32.rc:212
 msgid "Condensed"
-msgstr ""
+msgstr "已壓縮"
 
 #: comdlg32.rc:218 comdlg32.rc:389
 msgid "Print Setup"
@@ -505,7 +491,7 @@ msgstr "[無]"
 
 #: comdlg32.rc:224
 msgid "Specific &Printer"
-msgstr ""
+msgstr "特定的印表機(&P)"
 
 #: comdlg32.rc:229 comdlg32.rc:415 comdlg32.rc:434 wineps.rc:31
 msgid "Orientation"
@@ -776,7 +762,7 @@ msgstr "下(&B)："
 
 #: comdlg32.rc:448
 msgid "P&rinter..."
-msgstr "印表機(&R)..."
+msgstr "印表機(&R)…"
 
 #: comdlg32.rc:456
 msgid "Look &in:"
@@ -892,7 +878,7 @@ msgstr "黑色"
 
 #: comdlg32.rc:118 wordpad.rc:115
 msgid "Maroon"
-msgstr ""
+msgstr "暗紅"
 
 #: comdlg32.rc:119 wordpad.rc:116
 msgid "Green"
@@ -912,7 +898,7 @@ msgstr "紫色"
 
 #: comdlg32.rc:123 wordpad.rc:120
 msgid "Teal"
-msgstr ""
+msgstr "藍綠"
 
 #: comdlg32.rc:124 wordpad.rc:121
 msgid "Gray"
@@ -940,7 +926,7 @@ msgstr "藍色"
 
 #: comdlg32.rc:130 wordpad.rc:127
 msgid "Fuchsia"
-msgstr ""
+msgstr "桃紅"
 
 #: comdlg32.rc:131 wordpad.rc:128
 msgid "Aqua"
@@ -1020,7 +1006,7 @@ msgstr ""
 
 #: comdlg32.rc:137
 msgid "Select a font size between %1!d! and %2!d! points."
-msgstr ""
+msgstr "選取介於 %1!d! 和 %2!d! 點的字型尺寸。"
 
 #: comdlg32.rc:138 ieframe.rc:32
 msgid "&Save"
@@ -1104,7 +1090,7 @@ msgstr "正在處理；"
 
 #: comdlg32.rc:95
 msgid "Initializing; "
-msgstr "正在啓動；"
+msgstr "正在初始化；"
 
 #: comdlg32.rc:96
 msgid "Warming up; "
