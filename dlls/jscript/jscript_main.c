@@ -136,10 +136,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 {
     TRACE("(%p %d %p)\n", hInstDLL, fdwReason, lpv);
 
-    switch(fdwReason)
-    {
-    case DLL_WINE_PREATTACH:
-        return FALSE;  /* prefer native version */
+    switch(fdwReason) {
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls(hInstDLL);
         jscript_hinstance = hInstDLL;
