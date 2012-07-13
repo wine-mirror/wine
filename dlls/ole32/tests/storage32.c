@@ -2995,6 +2995,34 @@ static void test_hglobal_storage_creation(void)
     ILockBytes_Release(ilb);
 }
 
+static void test_convert(void)
+{
+    static const WCHAR filename[] = {'s','t','o','r','a','g','e','.','s','t','g',0};
+    IStorage *stg;
+    HRESULT hr;
+
+    hr = GetConvertStg(NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = StgCreateDocfile( filename, STGM_CREATE | STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, &stg);
+    ok(hr == S_OK, "StgCreateDocfile failed\n");
+    hr = GetConvertStg(stg);
+    ok(hr == STG_E_FILENOTFOUND, "got 0x%08x\n", hr);
+    hr = SetConvertStg(stg, TRUE);
+todo_wine {
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = GetConvertStg(stg);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = SetConvertStg(stg, FALSE);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = GetConvertStg(stg);
+    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+}
+    IStorage_Release(stg);
+
+    DeleteFileW(filename);
+}
+
 START_TEST(storage32)
 {
     CHAR temp[MAX_PATH];
@@ -3038,4 +3066,5 @@ START_TEST(storage32)
     test_copyto_locking();
     test_copyto_recursive();
     test_hglobal_storage_creation();
+    test_convert();
 }

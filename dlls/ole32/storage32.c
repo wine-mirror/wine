@@ -9400,12 +9400,42 @@ HRESULT WINAPI OleConvertIStorageToOLESTREAM (
     return hRes;
 }
 
+enum stream_1ole_flags {
+    OleStream_LinkedObject = 0x00000001,
+    OleStream_Convert      = 0x00000100
+};
+
 /***********************************************************************
  *		GetConvertStg (OLE32.@)
  */
-HRESULT WINAPI GetConvertStg(IStorage *stg) {
-    FIXME("unimplemented stub!\n");
-    return E_FAIL;
+HRESULT WINAPI GetConvertStg(IStorage *stg)
+{
+    static const WCHAR stream_1oleW[] = {1,'O','l','e',0};
+    static const DWORD version_magic = 0x02000001;
+    DWORD header[2];
+    IStream *stream;
+    HRESULT hr;
+    ULONG len;
+
+    TRACE("%p\n", stg);
+
+    if (!stg) return E_INVALIDARG;
+
+    hr = IStorage_OpenStream(stg, stream_1oleW, NULL, STGM_READ | STGM_SHARE_EXCLUSIVE, 0, &stream);
+    if (FAILED(hr)) return hr;
+
+    len = 0;
+    hr = IStream_Read(stream, header, sizeof(header), &len);
+    IStream_Release(stream);
+    if (FAILED(hr)) return hr;
+
+    if (header[0] != version_magic)
+    {
+        ERR("got wrong version magic for \1Ole stream, 0x%08x\n", header[0]);
+        return E_FAIL;
+    }
+
+    return header[1] & OleStream_Convert ? S_OK : S_FALSE;
 }
 
 /******************************************************************************
