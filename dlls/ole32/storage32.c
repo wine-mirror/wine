@@ -65,6 +65,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(storage);
 static const BYTE STORAGE_magic[8]    ={0xd0,0xcf,0x11,0xe0,0xa1,0xb1,0x1a,0xe1};
 static const BYTE STORAGE_oldmagic[8] ={0xd0,0xcf,0x11,0xe0,0x0e,0x11,0xfc,0x0d};
 
+static inline StorageBaseImpl *impl_from_IStorage( IStorage *iface )
+{
+    return CONTAINING_RECORD(iface, StorageBaseImpl, IStorage_iface);
+}
+
 /****************************************************************************
  * Storage32InternalImpl definitions.
  *
@@ -358,7 +363,7 @@ static HRESULT WINAPI StorageBaseImpl_QueryInterface(
   REFIID             riid,
   void**             ppvObject)
 {
-  StorageBaseImpl *This = (StorageBaseImpl *)iface;
+  StorageBaseImpl *This = impl_from_IStorage(iface);
 
   if ( (This==0) || (ppvObject==0) )
     return E_INVALIDARG;
@@ -394,7 +399,7 @@ static HRESULT WINAPI StorageBaseImpl_QueryInterface(
 static ULONG WINAPI StorageBaseImpl_AddRef(
             IStorage* iface)
 {
-  StorageBaseImpl *This = (StorageBaseImpl *)iface;
+  StorageBaseImpl *This = impl_from_IStorage(iface);
   ULONG ref = InterlockedIncrement(&This->ref);
 
   TRACE("(%p) AddRef to %d\n", This, ref);
@@ -413,7 +418,7 @@ static ULONG WINAPI StorageBaseImpl_AddRef(
 static ULONG WINAPI StorageBaseImpl_Release(
       IStorage* iface)
 {
-  StorageBaseImpl *This = (StorageBaseImpl *)iface;
+  StorageBaseImpl *This = impl_from_IStorage(iface);
 
   ULONG ref = InterlockedDecrement(&This->ref);
 
@@ -447,7 +452,7 @@ static HRESULT WINAPI StorageBaseImpl_OpenStream(
   DWORD            reserved2, /* [in]  */
   IStream**        ppstm)     /* [out] */
 {
-  StorageBaseImpl *This = (StorageBaseImpl *)iface;
+  StorageBaseImpl *This = impl_from_IStorage(iface);
   StgStreamImpl*    newStream;
   DirEntry          currentEntry;
   DirRef            streamEntryRef;
@@ -562,7 +567,7 @@ static HRESULT WINAPI StorageBaseImpl_OpenStorage(
   DWORD            reserved,      /* [in] */
   IStorage**       ppstg)         /* [out] */
 {
-  StorageBaseImpl *This = (StorageBaseImpl *)iface;
+  StorageBaseImpl *This = impl_from_IStorage(iface);
   StorageInternalImpl*   newStorage;
   StorageBaseImpl*       newTransactedStorage;
   DirEntry               currentEntry;
@@ -659,11 +664,11 @@ static HRESULT WINAPI StorageBaseImpl_OpenStorage(
           goto end;
         }
 
-        *ppstg = (IStorage*)newTransactedStorage;
+        *ppstg = &newTransactedStorage->IStorage_iface;
       }
       else
       {
-        *ppstg = (IStorage*)newStorage;
+        *ppstg = &newStorage->base.IStorage_iface;
       }
 
       list_add_tail(&This->storageHead, &newStorage->ParentListEntry);
@@ -698,7 +703,7 @@ static HRESULT WINAPI StorageBaseImpl_EnumElements(
   DWORD           reserved3, /* [in] */
   IEnumSTATSTG**  ppenum)    /* [out] */
 {
-  StorageBaseImpl *This = (StorageBaseImpl *)iface;
+  StorageBaseImpl *This = impl_from_IStorage(iface);
   IEnumSTATSTGImpl* newEnum;
 
   TRACE("(%p, %d, %p, %d, %p)\n",
@@ -738,7 +743,7 @@ static HRESULT WINAPI StorageBaseImpl_Stat(
   STATSTG*         pstatstg,     /* [out] */
   DWORD            grfStatFlag)  /* [in] */
 {
-  StorageBaseImpl *This = (StorageBaseImpl *)iface;
+  StorageBaseImpl *This = impl_from_IStorage(iface);
   DirEntry       currentEntry;
   HRESULT        res = STG_E_UNKNOWN;
 
@@ -795,7 +800,7 @@ static HRESULT WINAPI StorageBaseImpl_RenameElement(
             const OLECHAR*   pwcsOldName,  /* [in] */
             const OLECHAR*   pwcsNewName)  /* [in] */
 {
-  StorageBaseImpl *This = (StorageBaseImpl *)iface;
+  StorageBaseImpl *This = impl_from_IStorage(iface);
   DirEntry          currentEntry;
   DirRef            currentEntryRef;
 
@@ -879,7 +884,7 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
             DWORD            reserved2, /* [in] */
             IStream**        ppstm)     /* [out] */
 {
-  StorageBaseImpl *This = (StorageBaseImpl *)iface;
+  StorageBaseImpl *This = impl_from_IStorage(iface);
   StgStreamImpl*    newStream;
   DirEntry          currentEntry, newStreamEntry;
   DirRef            currentEntryRef, newStreamEntryRef;
@@ -1030,7 +1035,7 @@ static HRESULT WINAPI StorageBaseImpl_SetClass(
   IStorage*        iface,
   REFCLSID         clsid) /* [in] */
 {
-  StorageBaseImpl *This = (StorageBaseImpl *)iface;
+  StorageBaseImpl *This = impl_from_IStorage(iface);
   HRESULT hRes;
   DirEntry currentEntry;
 
@@ -1076,7 +1081,7 @@ static HRESULT WINAPI StorageBaseImpl_CreateStorage(
   DWORD            reserved2, /* [in] */
   IStorage       **ppstg)   /* [out] */
 {
-  StorageBaseImpl* const This=(StorageBaseImpl*)iface;
+  StorageBaseImpl* This = impl_from_IStorage(iface);
 
   DirEntry         currentEntry;
   DirEntry         newEntry;
@@ -1340,15 +1345,12 @@ static HRESULT StorageImpl_DestroyDirEntry(
   StorageBaseImpl *base,
   DirRef index)
 {
-  HRESULT hr;
   BYTE emptyData[RAW_DIRENTRY_SIZE];
   StorageImpl *storage = (StorageImpl*)base;
 
   memset(emptyData, 0, RAW_DIRENTRY_SIZE);
 
-  hr = StorageImpl_WriteRawDirEntry(storage, index, emptyData);
-
-  return hr;
+  return StorageImpl_WriteRawDirEntry(storage, index, emptyData);
 }
 
 
@@ -1762,7 +1764,7 @@ static HRESULT WINAPI StorageBaseImpl_CopyTo(
   SNB         snbExclude,   /* [unique][in] */
   IStorage*   pstgDest)     /* [unique][in] */
 {
-  StorageBaseImpl* const This=(StorageBaseImpl*)iface;
+  StorageBaseImpl *This = impl_from_IStorage(iface);
 
   BOOL         skip_storage = FALSE, skip_stream = FALSE;
   int          i;
@@ -1798,15 +1800,15 @@ static HRESULT WINAPI StorageBaseImpl_CopyTo(
 
       if (pstgDestAncestor->lpVtbl == &TransactedSnapshotImpl_Vtbl)
       {
-        TransactedSnapshotImpl *impl = (TransactedSnapshotImpl*) pstgDestAncestor;
+        TransactedSnapshotImpl *snapshot = (TransactedSnapshotImpl*) pstgDestAncestor;
 
-        pstgDestAncestor = (IStorage*)impl->transactedParent;
+        pstgDestAncestor = &snapshot->transactedParent->IStorage_iface;
       }
       else if (pstgDestAncestor->lpVtbl == &Storage32InternalImpl_Vtbl)
       {
-        StorageInternalImpl *impl = (StorageInternalImpl*) pstgDestAncestor;
+        StorageInternalImpl *internal = (StorageInternalImpl*) pstgDestAncestor;
 
-        pstgDestAncestor = (IStorage*)impl->parentStorage;
+        pstgDestAncestor = &internal->parentStorage->IStorage_iface;
       }
       else
         break;
@@ -1869,9 +1871,9 @@ static HRESULT WINAPI StorageImpl_Commit(
   IStorage*   iface,
   DWORD         grfCommitFlags)/* [in] */
 {
-  StorageBaseImpl* const base=(StorageBaseImpl*)iface;
+  StorageBaseImpl* This = impl_from_IStorage(iface);
   TRACE("(%p %d)\n", iface, grfCommitFlags);
-  return StorageBaseImpl_Flush(base);
+  return StorageBaseImpl_Flush(This);
 }
 
 /*************************************************************************
@@ -1901,7 +1903,7 @@ static HRESULT WINAPI StorageBaseImpl_DestroyElement(
   IStorage*     iface,
   const OLECHAR *pwcsName)/* [string][in] */
 {
-  StorageBaseImpl* const This=(StorageBaseImpl*)iface;
+  StorageBaseImpl *This = impl_from_IStorage(iface);
 
   HRESULT           hr = S_OK;
   DirEntry          entryToDelete;
@@ -2075,7 +2077,7 @@ static HRESULT deleteStorageContents(
    * Open the storage and enumerate it
    */
   hr = StorageBaseImpl_OpenStorage(
-        (IStorage*)parentStorage,
+        &parentStorage->IStorage_iface,
         entryDataToDelete.name,
         0,
         STGM_WRITE | STGM_SHARE_EXCLUSIVE,
@@ -2151,7 +2153,7 @@ static HRESULT deleteStreamContents(
   size.u.HighPart = 0;
   size.u.LowPart = 0;
 
-  hr = StorageBaseImpl_OpenStream((IStorage*)parentStorage,
+  hr = StorageBaseImpl_OpenStream(&parentStorage->IStorage_iface,
         entryDataToDelete.name, NULL, STGM_WRITE | STGM_SHARE_EXCLUSIVE, 0, &pis);
 
   if (hr!=S_OK)
@@ -2323,7 +2325,7 @@ static HRESULT WINAPI StorageBaseImpl_SetStateBits(
   DWORD         grfStateBits,/* [in] */
   DWORD         grfMask)     /* [in] */
 {
-  StorageBaseImpl* const This = (StorageBaseImpl*)iface;
+  StorageBaseImpl *This = impl_from_IStorage(iface);
 
   if (This->reverted)
     return STG_E_REVERTED;
@@ -2715,7 +2717,7 @@ static HRESULT StorageImpl_Construct(
 
   list_init(&This->base.storageHead);
 
-  This->base.lpVtbl = &Storage32Impl_Vtbl;
+  This->base.IStorage_iface.lpVtbl = &Storage32Impl_Vtbl;
   This->base.pssVtbl = &IPropertySetStorage_Vtbl;
   This->base.baseVtbl = &StorageImpl_BaseVtbl;
   This->base.openFlags = (openFlags & ~STGM_CREATE);
@@ -2934,7 +2936,7 @@ static HRESULT StorageImpl_Construct(
 end:
   if (FAILED(hr))
   {
-    IStorage_Release((IStorage*)This);
+    IStorage_Release(&This->base.IStorage_iface);
     *result = NULL;
   }
   else
@@ -4646,7 +4648,7 @@ static HRESULT WINAPI TransactedSnapshotImpl_Commit(
   IStorage*            iface,
   DWORD                  grfCommitFlags)  /* [in] */
 {
-  TransactedSnapshotImpl* This = (TransactedSnapshotImpl*) iface;
+  TransactedSnapshotImpl* This = (TransactedSnapshotImpl*)impl_from_IStorage(iface);
   TransactedDirEntry *root_entry;
   DirRef i, dir_root_ref;
   DirEntry data;
@@ -4751,7 +4753,7 @@ static HRESULT WINAPI TransactedSnapshotImpl_Commit(
 static HRESULT WINAPI TransactedSnapshotImpl_Revert(
   IStorage*            iface)
 {
-  TransactedSnapshotImpl* This = (TransactedSnapshotImpl*) iface;
+  TransactedSnapshotImpl* This = (TransactedSnapshotImpl*)impl_from_IStorage(iface);
   ULARGE_INTEGER zero;
   ULONG i;
 
@@ -4797,11 +4799,11 @@ static void TransactedSnapshotImpl_Destroy( StorageBaseImpl *iface)
 {
   TransactedSnapshotImpl* This = (TransactedSnapshotImpl*) iface;
 
-  TransactedSnapshotImpl_Revert((IStorage*)iface);
+  TransactedSnapshotImpl_Revert(&This->base.IStorage_iface);
 
-  IStorage_Release((IStorage*)This->transactedParent);
+  IStorage_Release(&This->transactedParent->IStorage_iface);
 
-  IStorage_Release((IStorage*)This->scratch);
+  IStorage_Release(&This->scratch->IStorage_iface);
 
   HeapFree(GetProcessHeap(), 0, This->entries);
 
@@ -5088,7 +5090,9 @@ static HRESULT TransactedSnapshotImpl_Construct(StorageBaseImpl *parentStorage,
   *result = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(TransactedSnapshotImpl));
   if (*result)
   {
-    (*result)->base.lpVtbl = &TransactedSnapshotImpl_Vtbl;
+    IStorage *scratch;
+
+    (*result)->base.IStorage_iface.lpVtbl = &TransactedSnapshotImpl_Vtbl;
 
     /* This is OK because the property set storage functions use the IStorage functions. */
     (*result)->base.pssVtbl = parentStorage->pssVtbl;
@@ -5105,16 +5109,15 @@ static HRESULT TransactedSnapshotImpl_Construct(StorageBaseImpl *parentStorage,
 
     /* Create a new temporary storage to act as the scratch file. */
     hr = StgCreateDocfile(NULL, STGM_READWRITE|STGM_SHARE_EXCLUSIVE|STGM_CREATE|STGM_DELETEONRELEASE,
-        0, (IStorage**)&(*result)->scratch);
+        0, &scratch);
+    (*result)->scratch = impl_from_IStorage(scratch);
 
     if (SUCCEEDED(hr))
     {
         ULONG num_entries = 20;
 
         (*result)->entries = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(TransactedDirEntry) * num_entries);
-
         (*result)->entries_size = num_entries;
-
         (*result)->firstFreeEntry = 0;
 
         if ((*result)->entries)
@@ -5128,7 +5131,7 @@ static HRESULT TransactedSnapshotImpl_Construct(StorageBaseImpl *parentStorage,
         }
         else
         {
-            IStorage_Release((IStorage*)(*result)->scratch);
+            IStorage_Release(scratch);
 
             hr = E_OUTOFMEMORY;
         }
@@ -5177,7 +5180,7 @@ static HRESULT Storage_Construct(
   {
     hr = Storage_ConstructTransacted(&newStorage->base, &newTransactedStorage);
     if (FAILED(hr))
-      IStorage_Release((IStorage*)newStorage);
+      IStorage_Release(&newStorage->base.IStorage_iface);
     else
       *result = newTransactedStorage;
   }
@@ -5310,9 +5313,9 @@ static HRESULT WINAPI StorageInternalImpl_Commit(
   IStorage*            iface,
   DWORD                  grfCommitFlags)  /* [in] */
 {
-  StorageBaseImpl* base = (StorageBaseImpl*) iface;
+  StorageBaseImpl* This = impl_from_IStorage(iface);
   TRACE("(%p,%x)\n", iface, grfCommitFlags);
-  return StorageBaseImpl_Flush(base);
+  return StorageBaseImpl_Flush(This);
 }
 
 /******************************************************************************
@@ -5329,7 +5332,7 @@ static HRESULT WINAPI StorageInternalImpl_Revert(
 
 static void IEnumSTATSTGImpl_Destroy(IEnumSTATSTGImpl* This)
 {
-  IStorage_Release((IStorage*)This->parentStorage);
+  IStorage_Release(&This->parentStorage->IStorage_iface);
   HeapFree(GetProcessHeap(), 0, This);
 }
 
@@ -5613,7 +5616,7 @@ static IEnumSTATSTGImpl* IEnumSTATSTGImpl_Construct(
      * enumeration out-lives the storage in the client application.
      */
     newEnumeration->parentStorage = parentStorage;
-    IStorage_AddRef((IStorage*)newEnumeration->parentStorage);
+    IStorage_AddRef(&newEnumeration->parentStorage->IStorage_iface);
 
     newEnumeration->storageDirEntry   = storageDirEntry;
 
@@ -5689,7 +5692,7 @@ static StorageInternalImpl* StorageInternalImpl_Construct(
     /*
      * Initialize the virtual function table.
      */
-    newStorage->base.lpVtbl = &Storage32InternalImpl_Vtbl;
+    newStorage->base.IStorage_iface.lpVtbl = &Storage32InternalImpl_Vtbl;
     newStorage->base.pssVtbl = &IPropertySetStorage_Vtbl;
     newStorage->base.baseVtbl = &StorageInternalImpl_BaseVtbl;
     newStorage->base.openFlags = (openFlags & ~STGM_CREATE);
@@ -7401,9 +7404,8 @@ static HRESULT create_storagefile(
     goto end;
   }
 
-  hr = IStorage_QueryInterface((IStorage*)newStorage, riid, ppstgOpen);
-
-  IStorage_Release((IStorage*)newStorage);
+  hr = IStorage_QueryInterface(&newStorage->IStorage_iface, riid, ppstgOpen);
+  IStorage_Release(&newStorage->IStorage_iface);
 
 end:
   TRACE("<-- %p  r = %08x\n", *ppstgOpen, hr);
@@ -7493,17 +7495,13 @@ HRESULT WINAPI StgCreateStorageEx(const WCHAR* pwcsName, DWORD grfMode, DWORD st
  *              StgCreatePropSetStg       [OLE32.@]
  */
 HRESULT WINAPI StgCreatePropSetStg(IStorage *pstg, DWORD reserved,
- IPropertySetStorage **ppPropSetStg)
+ IPropertySetStorage **propset)
 {
-    HRESULT hr;
-
-    TRACE("(%p, 0x%x, %p)\n", pstg, reserved, ppPropSetStg);
+    TRACE("(%p, 0x%x, %p)\n", pstg, reserved, propset);
     if (reserved)
-        hr = STG_E_INVALIDPARAMETER;
-    else
-        hr = StorageBaseImpl_QueryInterface(pstg, &IID_IPropertySetStorage,
-         (void**)ppPropSetStg);
-    return hr;
+        return STG_E_INVALIDPARAMETER;
+
+    return IStorage_QueryInterface(pstg, &IID_IPropertySetStorage, (void**)propset);
 }
 
 /******************************************************************************
@@ -7720,10 +7718,7 @@ HRESULT WINAPI StgOpenStorage(
     goto end;
   }
 
-  /*
-   * Get an "out" pointer for the caller.
-   */
-  *ppstgOpen = (IStorage*)newStorage;
+  *ppstgOpen = &newStorage->IStorage_iface;
 
 end:
   TRACE("<-- %08x, IStorage %p\n", hr, ppstgOpen ? *ppstgOpen : NULL);
@@ -7763,10 +7758,7 @@ HRESULT WINAPI StgCreateDocfileOnILockBytes(
     return hr;
   }
 
-  /*
-   * Get an "out" pointer for the caller.
-   */
-  *ppstgOpen = (IStorage*)newStorage;
+  *ppstgOpen = &newStorage->IStorage_iface;
 
   return hr;
 }
@@ -7811,10 +7803,7 @@ HRESULT WINAPI StgOpenStorageOnILockBytes(
     return hr;
   }
 
-  /*
-   * Get an "out" pointer for the caller.
-   */
-  *ppstgOpen = (IStorage*)newStorage;
+  *ppstgOpen = &newStorage->IStorage_iface;
 
   return hr;
 }
@@ -7873,17 +7862,13 @@ HRESULT WINAPI StgIsStorageILockBytes(ILockBytes *plkbyt)
  */
 HRESULT WINAPI WriteClassStg(IStorage* pStg, REFCLSID rclsid)
 {
-  HRESULT hRes;
-
   if(!pStg)
     return E_INVALIDARG;
 
   if(!rclsid)
     return STG_E_INVALIDPOINTER;
 
-  hRes = IStorage_SetClass(pStg, rclsid);
-
-  return hRes;
+  return IStorage_SetClass(pStg, rclsid);
 }
 
 /***********************************************************************

@@ -2321,7 +2321,7 @@ static HRESULT create_EnumSTATPROPSETSTG(
     StorageImpl *This,
     IEnumSTATPROPSETSTG** ppenum)
 {
-    IStorage *stg = (IStorage*) &This->base.lpVtbl;
+    IStorage *stg = &This->base.IStorage_iface;
     IEnumSTATSTG *penum = NULL;
     STATSTG stat;
     ULONG count;

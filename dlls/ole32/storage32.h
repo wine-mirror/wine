@@ -165,20 +165,19 @@ HRESULT OLECONVERT_CreateCompObjStream(LPSTORAGE pStorage, LPCSTR strOleTypeName
 
 
 /****************************************************************************
- * Storage32BaseImpl definitions.
+ * StorageBaseImpl definitions.
  *
  * This structure defines the base information contained in all implementations
- * of IStorage32 contained in this file storage implementation.
+ * of IStorage contained in this file storage implementation.
  *
- * In OOP terms, this is the base class for all the IStorage32 implementations
+ * In OOP terms, this is the base class for all the IStorage implementations
  * contained in this file.
  */
 struct StorageBaseImpl
 {
-  const IStorageVtbl *lpVtbl;    /* Needs to be the first item in the struct
-			    * since we want to cast this in a Storage32 pointer */
-
+  IStorage IStorage_iface;
   const IPropertySetStorageVtbl *pssVtbl; /* interface for adding a properties stream */
+  LONG ref;
 
   /*
    * Stream tracking list
@@ -190,11 +189,6 @@ struct StorageBaseImpl
    * Storage tracking list
    */
   struct list storageHead;
-
-  /*
-   * Reference count of this object
-   */
-  LONG ref;
 
   /*
    * TRUE if this object has been invalidated
