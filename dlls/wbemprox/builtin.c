@@ -88,6 +88,8 @@ static const WCHAR prop_handleW[] =
     {'H','a','n','d','l','e',0};
 static const WCHAR prop_interfaceindexW[] =
     {'I','n','t','e','r','f','a','c','e','I','n','d','e','x',0};
+static const WCHAR prop_macaddressW[] =
+    {'M','A','C','A','d','d','r','e','s','s',0};
 static const WCHAR prop_manufacturerW[] =
     {'M','a','n','u','f','a','c','t','u','r','e','r',0};
 static const WCHAR prop_modelW[] =
@@ -104,6 +106,8 @@ static const WCHAR prop_osarchitectureW[] =
     {'O','S','A','r','c','h','i','t','e','c','t','u','r','e',0};
 static const WCHAR prop_oslanguageW[] =
     {'O','S','L','a','n','g','u','a','g','e',0};
+static const WCHAR prop_pnpdeviceidW[] =
+    {'P','N','P','D','e','v','i','c','e','I','D',0};
 static const WCHAR prop_pprocessidW[] =
     {'P','a','r','e','n','t','P','r','o','c','e','s','s','I','D',0};
 static const WCHAR prop_processidW[] =
@@ -162,7 +166,9 @@ static const struct column col_networkadapter[] =
 {
     { prop_deviceidW,            CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
     { prop_interfaceindexW,      CIM_UINT32, VT_I4 },
+    { prop_macaddressW,          CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_netconnectionstatusW, CIM_UINT16, VT_I4 },
+    { prop_pnpdeviceidW,         CIM_STRING },
     { prop_speedW,               CIM_UINT64 }
 };
 static const struct column col_os[] =
@@ -221,6 +227,10 @@ static const WCHAR compsys_manufacturerW[] =
     {'T','h','e',' ','W','i','n','e',' ','P','r','o','j','e','c','t',0};
 static const WCHAR compsys_modelW[] =
     {'W','i','n','e',0};
+static const WCHAR networkadapter_pnpdeviceidW[]=
+    {'P','C','I','\\','V','E','N','_','8','0','8','6','&','D','E','V','_','1','0','0','E','&',
+     'S','U','B','S','Y','S','_','0','0','1','E','8','0','8','6','&','R','E','V','_','0','2','\\',
+     '3','&','2','6','7','A','6','1','6','A','&','1','&','1','8',0};
 static const WCHAR os_captionW[] =
     {'M','i','c','r','o','s','o','f','t',' ','W','i','n','d','o','w','s',' ','X','P',' ',
      'V','e','r','s','i','o','n',' ','=',' ','5','.','1','.','2','6','0','0',0};
@@ -268,7 +278,9 @@ struct record_networkadapter
 {
     const WCHAR *device_id;
     INT32        interface_index;
+    const WCHAR *mac_address;
     UINT16       netconnection_status;
+    const WCHAR *pnpdevice_id;
     UINT64       speed;
 };
 struct record_operatingsystem
@@ -439,6 +451,17 @@ static UINT16 get_connection_status( IF_OPER_STATUS status )
     }
     return 0;
 }
+static WCHAR *get_mac_address( const BYTE *addr, DWORD len )
+{
+    static const WCHAR fmtW[] =
+        {'%','0','2','x',':','%','0','2','x',':','%','0','2','x',':',
+         '%','0','2','x',':','%','0','2','x',':','%','0','2','x',0};
+    WCHAR *ret;
+
+    if (len != 6 || !(ret = heap_alloc( 18 * sizeof(WCHAR) ))) return NULL;
+    sprintfW( ret, fmtW, addr[0], addr[1], addr[2], addr[3], addr[4], addr[5] );
+    return ret;
+}
 
 static void fill_networkadapter( struct table *table )
 {
@@ -470,7 +493,9 @@ static void fill_networkadapter( struct table *table )
         sprintfW( device_id, fmtW, aa->u.s.IfIndex );
         rec->device_id            = heap_strdupW( device_id );
         rec->interface_index      = aa->u.s.IfIndex;
+        rec->mac_address          = get_mac_address( aa->PhysicalAddress, aa->PhysicalAddressLength );
         rec->netconnection_status = get_connection_status( aa->OperStatus );
+        rec->pnpdevice_id         = networkadapter_pnpdeviceidW;
         rec->speed                = 1000000;
         offset += sizeof(*rec);
     }
