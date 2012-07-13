@@ -6638,11 +6638,11 @@ msgstr "HTML 檔案"
 
 #: mshtml.rc:26
 msgid "Downloading from %s..."
-msgstr "從 %s 下載中..."
+msgstr "從 %s 下載中…"
 
 #: mshtml.rc:25
 msgid "Done"
-msgstr ""
+msgstr "已完成"
 
 #: msi.rc:27
 msgid ""
@@ -6690,6 +6690,35 @@ msgid ""
 "\t/help\n"
 "\t/?\n"
 msgstr ""
+"Windows 安裝程式 %s\n"
+"\n"
+"用法：\n"
+"msiexec 命令 {必要參數} [可選參數]\n"
+"\n"
+"安裝產品：\n"
+"\t/i {套件|產品編號} [內容]\n"
+"\t/package {套件|產品編號} [內容]\n"
+"\t/a 套件 [內容]\n"
+"修復安裝：\n"
+"\t/f[p|o|e|d|c|a|u|m|s|v] {套件|產品編號}\n"
+"解除安裝產品：\n"
+"\t/uninstall {套件|產品編號} [內容]\n"
+"\t/x {套件|產品編號} [內容]\n"
+"通告產品：\n"
+"\t/j[u|m] 套件 [/t 變換] [/g 語言識別號]\n"
+"套用修補程式：\n"
+"\t/p 修補套件 [內容]\n"
+"\t/p 修補套件/a 套件 [內容]\n"
+"用於以上命令的記錄檔和 UI 修飾鍵：\n"
+"\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] 日誌檔案\n"
+"\t/q{|n|b|r|f|n+|b+|b-}\n"
+"註冊 MSI 服務：\n"
+"\t/y\n"
+"移除註冊 MSI 服務：\n"
+"\t/z\n"
+"顯示這份說明：\n"
+"\t/help\n"
+"\t/?\n"
 
 #: msi.rc:57
 msgid "enter which folder contains %s"
@@ -6713,13 +6742,15 @@ msgstr "選擇包含 %s 的檔案夾"
 
 #: msrle32.rc:28
 msgid "Wine MS-RLE video codec"
-msgstr ""
+msgstr "Wine MS-RLE 視訊編碼解碼器"
 
 #: msrle32.rc:29
 msgid ""
 "Wine MS-RLE video codec\n"
 "Copyright 2002 by Michael Guennewig"
 msgstr ""
+"Wine MS-RLE 視訊編碼解碼器\n"
+"著作權 2002 Michael Guennewig"
 
 #: msvfw32.rc:30
 msgid "Video Compression"
@@ -6731,7 +6762,7 @@ msgstr "壓縮器(&C)："
 
 #: msvfw32.rc:39
 msgid "Con&figure..."
-msgstr "組態(&F)..."
+msgstr "組態(&F)…"
 
 #: msvfw32.rc:40
 msgid "&About"
@@ -6751,7 +6782,7 @@ msgstr "資料速率(&D)"
 
 #: msvfw32.rc:52
 msgid "kB/s"
-msgstr ""
+msgstr "kB/s"
 
 #: msvfw32.rc:25
 msgid "Full Frames (Uncompressed)"
@@ -6759,11 +6790,11 @@ msgstr "全畫格(未壓縮)"
 
 #: msvidc32.rc:26
 msgid "Wine Video 1 video codec"
-msgstr ""
+msgstr "Wine 視訊 1 視訊編碼解碼器"
 
 #: oleacc.rc:27
 msgid "unknown object"
-msgstr ""
+msgstr "不明物件"
 
 #: oleacc.rc:28
 msgid "title bar"
@@ -6779,7 +6810,7 @@ msgstr "捲軸"
 
 #: oleacc.rc:31
 msgid "grip"
-msgstr ""
+msgstr "握把"
 
 #: oleacc.rc:32
 msgid "sound"
@@ -6791,11 +6822,11 @@ msgstr "游標"
 
 #: oleacc.rc:34
 msgid "caret"
-msgstr ""
+msgstr "插字符號"
 
 #: oleacc.rc:35
 msgid "alert"
-msgstr ""
+msgstr "警示"
 
 #: oleacc.rc:36
 msgid "window"
@@ -6803,7 +6834,7 @@ msgstr "視窗"
 
 #: oleacc.rc:37
 msgid "client"
-msgstr ""
+msgstr "客戶端"
 
 #: oleacc.rc:38
 msgid "popup menu"
@@ -6811,7 +6842,7 @@ msgstr "彈出式選單"
 
 #: oleacc.rc:39
 msgid "menu item"
-msgstr ""
+msgstr "功能表項目"
 
 #: oleacc.rc:40
 msgid "tool tip"
@@ -6827,23 +6858,23 @@ msgstr "文件"
 
 #: oleacc.rc:43
 msgid "pane"
-msgstr ""
+msgstr "窗格"
 
 #: oleacc.rc:44
 msgid "chart"
-msgstr ""
+msgstr "圖表"
 
 #: oleacc.rc:45
 msgid "dialog"
-msgstr ""
+msgstr "對話框"
 
 #: oleacc.rc:46
 msgid "border"
-msgstr ""
+msgstr "邊框"
 
 #: oleacc.rc:47
 msgid "grouping"
-msgstr ""
+msgstr "分組"
 
 #: oleacc.rc:48
 msgid "separator"
@@ -6863,15 +6894,15 @@ msgstr "表格"
 
 #: oleacc.rc:52
 msgid "column header"
-msgstr ""
+msgstr "欄首"
 
 #: oleacc.rc:53
 msgid "row header"
-msgstr ""
+msgstr "列首"
 
 #: oleacc.rc:54
 msgid "column"
-msgstr "行"
+msgstr "欄"
 
 #: oleacc.rc:55
 msgid "row"
@@ -6879,51 +6910,51 @@ msgstr "列"
 
 #: oleacc.rc:56
 msgid "cell"
-msgstr ""
+msgstr "儲存格"
 
 #: oleacc.rc:57
 msgid "link"
-msgstr ""
+msgstr "鏈結"
 
 #: oleacc.rc:58
 msgid "help balloon"
-msgstr ""
+msgstr "說明泡泡"
 
 #: oleacc.rc:59
 msgid "character"
-msgstr ""
+msgstr "字元"
 
 #: oleacc.rc:60
 msgid "list"
-msgstr ""
+msgstr "清單"
 
 #: oleacc.rc:61
 msgid "list item"
-msgstr ""
+msgstr "清單項目"
 
 #: oleacc.rc:62
 msgid "outline"
-msgstr ""
+msgstr "描邊"
 
 #: oleacc.rc:63
 msgid "outline item"
-msgstr ""
+msgstr "描邊項目"
 
 #: oleacc.rc:64
 msgid "page tab"
-msgstr ""
+msgstr "頁面頁標"
 
 #: oleacc.rc:65
 msgid "property page"
-msgstr ""
+msgstr "內容頁面"
 
 #: oleacc.rc:66
 msgid "indicator"
-msgstr ""
+msgstr "指示器"
 
 #: oleacc.rc:67
 msgid "graphic"
-msgstr ""
+msgstr "圖形"
 
 #: oleacc.rc:68
 msgid "static text"
@@ -6935,47 +6966,47 @@ msgstr "文字"
 
 #: oleacc.rc:70
 msgid "push button"
-msgstr ""
+msgstr "按鈕"
 
 #: oleacc.rc:71
 msgid "check button"
-msgstr ""
+msgstr "檢查按鈕"
 
 #: oleacc.rc:72
 msgid "radio button"
-msgstr ""
+msgstr "單選按鈕"
 
 #: oleacc.rc:73
 msgid "combo box"
-msgstr ""
+msgstr "複合方塊"
 
 #: oleacc.rc:74
 msgid "drop down"
-msgstr ""
+msgstr "下拉選單"
 
 #: oleacc.rc:75
 msgid "progress bar"
-msgstr ""
+msgstr "進度條"
 
 #: oleacc.rc:76
 msgid "dial"
-msgstr ""
+msgstr "撥號"
 
 #: oleacc.rc:77
 msgid "hot key field"
-msgstr ""
+msgstr "快速鍵欄位"
 
 #: oleacc.rc:78
 msgid "slider"
-msgstr ""
+msgstr "滑動軸"
 
 #: oleacc.rc:79
 msgid "spin box"
-msgstr ""
+msgstr "數值調整框"
 
 #: oleacc.rc:80
 msgid "diagram"
-msgstr ""
+msgstr "圖表"
 
 #: oleacc.rc:81
 msgid "animation"
@@ -6983,27 +7014,27 @@ msgstr "動畫"
 
 #: oleacc.rc:82
 msgid "equation"
-msgstr ""
+msgstr "方程式"
 
 #: oleacc.rc:83
 msgid "drop down button"
-msgstr ""
+msgstr "下拉按鈕"
 
 #: oleacc.rc:84
 msgid "menu button"
-msgstr ""
+msgstr "選單按鈕"
 
 #: oleacc.rc:85
 msgid "grid drop down button"
-msgstr ""
+msgstr "格線下拉按鈕"
 
 #: oleacc.rc:86
 msgid "white space"
-msgstr ""
+msgstr "空白"
 
 #: oleacc.rc:87
 msgid "page tab list"
-msgstr ""
+msgstr "頁面頁標清單"
 
 #: oleacc.rc:88
 msgid "clock"
@@ -7011,7 +7042,7 @@ msgstr "時鐘"
 
 #: oleacc.rc:89
 msgid "split button"
-msgstr ""
+msgstr "分割按鈕"
 
 #: oleacc.rc:90 ipconfig.rc:33
 msgid "IP address"
@@ -7019,7 +7050,7 @@ msgstr "IP 位址"
 
 #: oleacc.rc:91
 msgid "outline button"
-msgstr ""
+msgstr "描邊按鈕"
 
 #: oleaut32.rc:27 oleview.rc:144
 msgid "True"
@@ -7063,7 +7094,7 @@ msgstr "建立於檔案"
 
 #: oledlg.rc:65
 msgid "&Add Control..."
-msgstr "新增控制項(&A)..."
+msgstr "新增控制項(&A)…"
 
 #: oledlg.rc:66
 msgid "Display As Icon"
@@ -7071,7 +7102,7 @@ msgstr "顯示為圖示"
 
 #: oledlg.rc:68 setupapi.rc:58
 msgid "Browse..."
-msgstr "瀏覽..."
+msgstr "瀏覽…"
 
 #: oledlg.rc:69
 msgid "File:"
@@ -7104,7 +7135,7 @@ msgstr "顯示為圖示(&D)"
 
 #: oledlg.rc:92
 msgid "Change &Icon..."
-msgstr "變更圖示(&I)..."
+msgstr "變更圖示(&I)…"
 
 #: oledlg.rc:25
 msgid "Insert a new %s object into your document"
@@ -7195,7 +7226,7 @@ msgstr "正在掃描"
 
 #: sane.rc:44
 msgid "SCANNING... Please Wait"
-msgstr "正在掃描... 請稍候"
+msgstr "正在掃描… 請稍候"
 
 #: sane.rc:31
 msgctxt "unit: pixels"
@@ -7248,7 +7279,7 @@ msgstr "停止位元"
 
 #: setupapi.rc:36
 msgid "Copying Files..."
-msgstr "複製檔案..."
+msgstr "複製檔案…"
 
 #: setupapi.rc:42
 msgid "Destination:"
@@ -7292,7 +7323,7 @@ msgstr "向前(&O)"
 
 #: shdoclc.rc:41
 msgid "&Save Background As..."
-msgstr "將背景存為(&S)..."
+msgstr "將背景存為(&S)…"
 
 #: shdoclc.rc:42
 msgid "Set As Back&ground"
@@ -7316,7 +7347,7 @@ msgstr "建立捷徑(&T)"
 
 #: shdoclc.rc:50 shdoclc.rc:81 shdoclc.rc:134 shdoclc.rc:161 shdoclc.rc:185
 msgid "Add to &Favorites..."
-msgstr "新增至我的最愛(&F)..."
+msgstr "新增至我的最愛(&F)…"
 
 #: shdoclc.rc:51
 msgid "&View Source"
@@ -7340,7 +7371,7 @@ msgstr "在新視窗開啟連結(&N)"
 
 #: shdoclc.rc:65 shdoclc.rc:126 shdoclc.rc:148 shdoclc.rc:172
 msgid "Save Target &As..."
-msgstr "另存目標(&A)..."
+msgstr "另存目標(&A)…"
 
 #: shdoclc.rc:66 shdoclc.rc:127 shdoclc.rc:149 shdoclc.rc:173
 msgid "&Print Target"
@@ -7352,15 +7383,15 @@ msgstr "顯示圖片(&H)"
 
 #: shdoclc.rc:69 shdoclc.rc:176
 msgid "&Save Picture As..."
-msgstr "另存圖片(&S)..."
+msgstr "另存圖片(&S)…"
 
 #: shdoclc.rc:70
 msgid "&E-mail Picture..."
-msgstr "電郵圖片(&E)..."
+msgstr "電子郵件圖片(&E)…"
 
 #: shdoclc.rc:71
 msgid "Pr&int Picture..."
-msgstr "列印圖片(&I)..."
+msgstr "列印圖片(&I)…"
 
 #: shdoclc.rc:72
 msgid "&Go to My Pictures"
@@ -7372,7 +7403,7 @@ msgstr "設為背景(&G)"
 
 #: shdoclc.rc:74 shdoclc.rc:154 shdoclc.rc:178
 msgid "Set as &Desktop Item..."
-msgstr "設為桌面項目(&D)..."
+msgstr "設為桌面項目(&D)…"
 
 #: shdoclc.rc:76 shdoclc.rc:90 shdoclc.rc:114 shdoclc.rc:156 shdoclc.rc:180
 #: user32.rc:57 wordpad.rc:101
@@ -7411,11 +7442,11 @@ msgstr "格(&C)"
 
 #: shdoclc.rc:103
 msgid "&Row"
-msgstr "行(&R)"
+msgstr "列(&R)"
 
 #: shdoclc.rc:104
 msgid "&Column"
-msgstr "列(&O)"
+msgstr "欄(&O)"
 
 #: shdoclc.rc:105
 msgid "&Table"
@@ -7447,7 +7478,7 @@ msgstr "剪下"
 
 #: shdoclc.rc:152
 msgid "&Save Video As..."
-msgstr "將視訊另存為(&S)..."
+msgstr "將視訊另存為(&S)…"
 
 #: shdoclc.rc:163 shdoclc.rc:187
 msgid "Play"
@@ -7503,7 +7534,7 @@ msgstr "記憶體監控"
 
 #: shdoclc.rc:207
 msgid "Performance Meters"
-msgstr ""
+msgstr "效能量尺"
 
 #: shdoclc.rc:208
 msgid "Save HTML"
@@ -7622,7 +7653,7 @@ msgstr "自動排列(&A)"
 
 #: shell32.rc:57
 msgid "Line up Icons"
-msgstr ""
+msgstr "貼齊圖示"
 
 #: shell32.rc:62
 msgid "Paste as Link"
@@ -7651,7 +7682,7 @@ msgstr "回復(&R)"
 
 #: shell32.rc:83
 msgid "&Erase"
-msgstr ""
+msgstr "清除(&E)"
 
 #: shell32.rc:95
 msgid "E&xplore"
@@ -7676,7 +7707,7 @@ msgstr "結束(&X)"
 
 #: shell32.rc:127
 msgid "&About Control Panel"
-msgstr "關於控制台(&A)"
+msgstr "關於控制臺(&A)"
 
 #: shell32.rc:270 shell32.rc:285
 msgid "Browse for Folder"
@@ -7735,7 +7766,7 @@ msgstr "開啟(&O):"
 #: shell32.rc:339 progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:234
 #: winefile.rc:130
 msgid "&Browse..."
-msgstr "瀏覽(&B)..."
+msgstr "瀏覽(&B)…"
 
 #: shell32.rc:135 shell32.rc:139 winefile.rc:105
 msgid "Size"
@@ -7771,7 +7802,7 @@ msgstr "群組"
 
 #: shell32.rc:145
 msgid "Original location"
-msgstr ""
+msgstr "原來的位置"
 
 #: shell32.rc:146
 msgid "Date deleted"
@@ -7788,7 +7819,7 @@ msgstr "我的電腦"
 
 #: shell32.rc:156
 msgid "Control Panel"
-msgstr "Wine 控制台"
+msgstr "Wine 控制臺"
 
 #: shell32.rc:163
 msgid "Select"
@@ -7853,7 +7884,7 @@ msgstr "樣板"
 
 #: shell32.rc:210
 msgid "PrintHood"
-msgstr ""
+msgstr "印表套頁"
 
 #: shell32.rc:211 winhlp32.rc:45
 msgid "History"
@@ -7861,7 +7892,7 @@ msgstr "紀錄"
 
 #: shell32.rc:212
 msgid "Program Files"
-msgstr ""
+msgstr "程式檔案"
 
 #: shell32.rc:214
 msgid "My Pictures"
@@ -7869,7 +7900,7 @@ msgstr "我的圖片"
 
 #: shell32.rc:215
 msgid "Common Files"
-msgstr ""
+msgstr "共同檔案"
 
 #: shell32.rc:216 shell32.rc:147 shell32.rc:232
 msgid "Documents"
