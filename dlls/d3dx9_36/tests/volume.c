@@ -58,7 +58,7 @@ static inline void set_box(D3DBOX *box, UINT left, UINT top, UINT right, UINT bo
 
 static void test_D3DXLoadVolumeFromMemory(IDirect3DDevice9 *device)
 {
-    int i;
+    int i, x, y, z;
     HRESULT hr;
     D3DBOX src_box, dst_box;
     D3DLOCKED_BOX locked_box;
@@ -108,6 +108,21 @@ static void test_D3DXLoadVolumeFromMemory(IDirect3DDevice9 *device)
 
     IDirect3DVolume9_LockBox(volume, &locked_box, &dst_box, D3DLOCK_READONLY);
     for (i = 0; i < 16; i++) check_pixel_4bpp(&locked_box, i % 4, i / 4, 0, pixels[i]);
+    IDirect3DVolume9_UnlockBox(volume);
+
+    hr = D3DXLoadVolumeFromMemory(volume, NULL, NULL, pixels, D3DFMT_A8R8G8B8, 16, sizeof(pixels), NULL, &src_box, D3DX_FILTER_NONE, 0);
+    ok(hr == D3D_OK, "D3DXLoadVolumeFromMemory returned %#x, expected %#x\n", hr, D3D_OK);
+
+    IDirect3DVolume9_LockBox(volume, &locked_box, NULL, D3DLOCK_READONLY);
+    for (i = 0; i < 16; i++) check_pixel_4bpp(&locked_box, i % 4, i / 4, 0, pixels[i]);
+    for (z = 0; z < 4; z++)
+    {
+        for (y = 0; y < 256; y++)
+        {
+            for (x = 0; x < 256; x++)
+                if (z != 0 || y >= 4 || x >= 4) check_pixel_4bpp(&locked_box, x, y, z, 0);
+        }
+    }
     IDirect3DVolume9_UnlockBox(volume);
 
     set_box(&src_box, 0, 0, 2, 2, 1, 2);

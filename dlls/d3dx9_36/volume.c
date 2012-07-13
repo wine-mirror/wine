@@ -194,8 +194,43 @@ HRESULT WINAPI D3DXLoadVolumeFromMemory(IDirect3DVolume9 *dst_volume,
     }
     else
     {
-        FIXME("Stretching or format conversion not implemented\n");
-        return E_NOTIMPL;
+        const BYTE *src_addr;
+        SIZE src_size, dst_size;
+
+        if (src_format_desc->bytes_per_pixel > 4 || dst_format_desc->bytes_per_pixel > 4
+                || src_format_desc->block_height != 1 || src_format_desc->block_width != 1
+                || dst_format_desc->block_height != 1 || dst_format_desc->block_width != 1)
+        {
+            FIXME("Pixel format conversion not implemented %#x -> %#x\n",
+                    src_format_desc->format, dst_format_desc->format);
+            return E_NOTIMPL;
+        }
+
+        src_size.cx = src_width;
+        src_size.cy = src_height;
+        dst_size.cx = dst_width;
+        dst_size.cy = dst_height;
+
+        src_addr = src_memory;
+        src_addr += src_box->Front * src_slice_pitch;
+        src_addr += src_box->Top * src_row_pitch;
+        src_addr += src_box->Left * src_format_desc->bytes_per_pixel;
+
+        hr = IDirect3DVolume9_LockBox(dst_volume, &locked_box, dst_box, 0);
+        if (FAILED(hr)) return hr;
+
+        if ((filter & 0xf) == D3DX_FILTER_NONE)
+        {
+            copy_simple_data(src_memory, src_row_pitch, src_slice_pitch, src_size, src_depth, src_format_desc,
+                    locked_box.pBits, locked_box.RowPitch, locked_box.SlicePitch, dst_size, dst_depth, dst_format_desc, color_key);
+        }
+        else
+        {
+            FIXME("Filtering for volume textures not implemented\n");
+            return E_NOTIMPL;
+        }
+
+        IDirect3DVolume9_UnlockBox(dst_volume);
     }
 
     return D3D_OK;
