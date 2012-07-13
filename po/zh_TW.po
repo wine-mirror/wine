@@ -1198,645 +1198,645 @@ msgstr "大寫鎖定已開啟"
 
 #: crypt32.rc:27
 msgid "Authority Key Identifier"
-msgstr ""
+msgstr "授權金鑰識別碼"
 
 #: crypt32.rc:28
 msgid "Key Attributes"
-msgstr ""
+msgstr "金鑰屬性"
 
 #: crypt32.rc:29
 msgid "Key Usage Restriction"
-msgstr ""
+msgstr "金鑰用法限制"
 
 #: crypt32.rc:30
 msgid "Subject Alternative Name"
-msgstr ""
+msgstr "主體替代名稱"
 
 #: crypt32.rc:31
 msgid "Issuer Alternative Name"
-msgstr ""
+msgstr "發證者替代名稱"
 
 #: crypt32.rc:32
 msgid "Basic Constraints"
-msgstr ""
+msgstr "基本條件約束"
 
 #: crypt32.rc:33
 msgid "Key Usage"
-msgstr ""
+msgstr "金鑰用法"
 
 #: crypt32.rc:34
 msgid "Certificate Policies"
-msgstr ""
+msgstr "憑證策略"
 
 #: crypt32.rc:35
 msgid "Subject Key Identifier"
-msgstr ""
+msgstr "主體金鑰識別碼"
 
 #: crypt32.rc:36
 msgid "CRL Reason Code"
-msgstr ""
+msgstr "CRL 原因編碼"
 
 #: crypt32.rc:37
 msgid "CRL Distribution Points"
-msgstr ""
+msgstr "CRL 發布點"
 
 #: crypt32.rc:38
 msgid "Enhanced Key Usage"
-msgstr ""
+msgstr "進階金鑰用法"
 
 #: crypt32.rc:39
 msgid "Authority Information Access"
-msgstr ""
+msgstr "授權資訊存取"
 
 #: crypt32.rc:40
 msgid "Certificate Extensions"
-msgstr ""
+msgstr "憑證延伸"
 
 #: crypt32.rc:41
 msgid "Next Update Location"
-msgstr ""
+msgstr "下一個更新位置"
 
 #: crypt32.rc:42
 msgid "Yes or No Trust"
-msgstr ""
+msgstr "是或否信賴"
 
 #: crypt32.rc:43
 msgid "Email Address"
-msgstr ""
+msgstr "電子郵件地址"
 
 #: crypt32.rc:44
 msgid "Unstructured Name"
-msgstr ""
+msgstr "無結構的名稱"
 
 #: crypt32.rc:45
 msgid "Content Type"
-msgstr ""
+msgstr "內容類型"
 
 #: crypt32.rc:46
 msgid "Message Digest"
-msgstr ""
+msgstr "訊息摘要"
 
 #: crypt32.rc:47
 msgid "Signing Time"
-msgstr ""
+msgstr "簽署時間"
 
 #: crypt32.rc:48
 msgid "Counter Sign"
-msgstr ""
+msgstr "計數器符號"
 
 #: crypt32.rc:49
 msgid "Challenge Password"
-msgstr ""
+msgstr "挑戰密碼"
 
 #: crypt32.rc:50
 msgid "Unstructured Address"
-msgstr ""
+msgstr "無結構的位址"
 
 #: crypt32.rc:51
 msgid "S/MIME Capabilities"
-msgstr ""
+msgstr "S/MIME 能力"
 
 #: crypt32.rc:52
 msgid "Prefer Signed Data"
-msgstr ""
+msgstr "偏好已簽署資料"
 
 #: crypt32.rc:53 cryptdlg.rc:31
 msgctxt "Certification Practice Statement"
 msgid "CPS"
-msgstr ""
+msgstr "CPS"
 
 #: crypt32.rc:54 cryptdlg.rc:32
 msgid "User Notice"
-msgstr ""
+msgstr "使用者通知"
 
 #: crypt32.rc:55
 msgid "On-line Certificate Status Protocol"
-msgstr ""
+msgstr "線上憑證狀態協定"
 
 #: crypt32.rc:56
 msgid "Certification Authority Issuer"
-msgstr ""
+msgstr "憑證授權發證者"
 
 #: crypt32.rc:57
 msgid "Certification Template Name"
-msgstr ""
+msgstr "憑證模板名稱"
 
 #: crypt32.rc:58
 msgid "Certificate Type"
-msgstr ""
+msgstr "憑證類型"
 
 #: crypt32.rc:59
 msgid "Certificate Manifold"
-msgstr ""
+msgstr "憑證複本"
 
 #: crypt32.rc:60
 msgid "Netscape Cert Type"
-msgstr ""
+msgstr "Netscape 憑證型態"
 
 #: crypt32.rc:61
 msgid "Netscape Base URL"
-msgstr ""
+msgstr "Netscape 基準網址"
 
 #: crypt32.rc:62
 msgid "Netscape Revocation URL"
-msgstr ""
+msgstr "Netscape 廢止網址"
 
 #: crypt32.rc:63
 msgid "Netscape CA Revocation URL"
-msgstr ""
+msgstr "Netscape CA 廢止網址"
 
 #: crypt32.rc:64
 msgid "Netscape Cert Renewal URL"
-msgstr ""
+msgstr "Netscape 憑證重申網址"
 
 #: crypt32.rc:65
 msgid "Netscape CA Policy URL"
-msgstr ""
+msgstr "Netscape CA 策略網址"
 
 #: crypt32.rc:66
 msgid "Netscape SSL ServerName"
-msgstr ""
+msgstr "Netscape SSL 伺服器名稱"
 
 #: crypt32.rc:67
 msgid "Netscape Comment"
-msgstr ""
+msgstr "Netscape 評論"
 
 #: crypt32.rc:68
 msgid "Country/Region"
-msgstr ""
+msgstr "國家/區域"
 
 #: crypt32.rc:69
 msgid "Organization"
-msgstr ""
+msgstr "組織"
 
 #: crypt32.rc:70
 msgid "Organizational Unit"
-msgstr ""
+msgstr "組織單位"
 
 #: crypt32.rc:71
 msgid "Common Name"
-msgstr ""
+msgstr "一般名稱"
 
 #: crypt32.rc:72
 msgid "Locality"
-msgstr ""
+msgstr "地區"
 
 #: crypt32.rc:73
 msgid "State or Province"
-msgstr ""
+msgstr "州或省"
 
 #: crypt32.rc:74
 msgid "Title"
-msgstr ""
+msgstr "頭銜"
 
 #: crypt32.rc:75
 msgid "Given Name"
-msgstr ""
+msgstr "名字"
 
 #: crypt32.rc:76
 msgid "Initials"
-msgstr ""
+msgstr "縮寫"
 
 #: crypt32.rc:77
 msgid "Surname"
-msgstr ""
+msgstr "姓氏"
 
 #: crypt32.rc:78
 msgid "Domain Component"
-msgstr ""
+msgstr "區域部分"
 
 #: crypt32.rc:79
 msgid "Street Address"
-msgstr ""
+msgstr "街道地址"
 
 #: crypt32.rc:80
 msgid "Serial Number"
-msgstr ""
+msgstr "門牌號碼"
 
 #: crypt32.rc:81
 msgid "CA Version"
-msgstr ""
+msgstr "CA 版本"
 
 #: crypt32.rc:82
 msgid "Cross CA Version"
-msgstr ""
+msgstr "交叉 CA 版本"
 
 #: crypt32.rc:83
 msgid "Serialized Signature Serial Number"
-msgstr ""
+msgstr "序列化的簽名序號"
 
 #: crypt32.rc:84
 msgid "Principal Name"
-msgstr ""
+msgstr "主要名稱"
 
 #: crypt32.rc:85
 msgid "Windows Product Update"
-msgstr ""
+msgstr "Windows 產品更新"
 
 #: crypt32.rc:86
 msgid "Enrollment Name Value Pair"
-msgstr ""
+msgstr "註冊名稱值對"
 
 #: crypt32.rc:87
 msgid "OS Version"
-msgstr ""
+msgstr "作業系統版本"
 
 #: crypt32.rc:88
 msgid "Enrollment CSP"
-msgstr ""
+msgstr "註冊 CSP"
 
 #: crypt32.rc:89
 msgid "CRL Number"
-msgstr ""
+msgstr "CRL 數字"
 
 #: crypt32.rc:90
 msgid "Delta CRL Indicator"
-msgstr ""
+msgstr "Delta CRL 指示器"
 
 #: crypt32.rc:91
 msgid "Issuing Distribution Point"
-msgstr ""
+msgstr "議題發布點"
 
 #: crypt32.rc:92
 msgid "Freshest CRL"
-msgstr ""
+msgstr "最新 CRL"
 
 #: crypt32.rc:93
 msgid "Name Constraints"
-msgstr ""
+msgstr "名稱條件約束"
 
 #: crypt32.rc:94
 msgid "Policy Mappings"
-msgstr ""
+msgstr "策略映射"
 
 #: crypt32.rc:95
 msgid "Policy Constraints"
-msgstr ""
+msgstr "策略條件約束"
 
 #: crypt32.rc:96
 msgid "Cross-Certificate Distribution Points"
-msgstr ""
+msgstr "交叉憑證發布點"
 
 #: crypt32.rc:97
 msgid "Application Policies"
-msgstr ""
+msgstr "應用程式策略"
 
 #: crypt32.rc:98
 msgid "Application Policy Mappings"
-msgstr ""
+msgstr "應用程式策略映射"
 
 #: crypt32.rc:99
 msgid "Application Policy Constraints"
-msgstr ""
+msgstr "應用程式策略條件約束"
 
 #: crypt32.rc:100
 msgid "CMC Data"
-msgstr ""
+msgstr "CMC 資料"
 
 #: crypt32.rc:101
 msgid "CMC Response"
-msgstr ""
+msgstr "CMC 回應"
 
 #: crypt32.rc:102
 msgid "Unsigned CMC Request"
-msgstr ""
+msgstr "未簽署的 CMC 要求"
 
 #: crypt32.rc:103
 msgid "CMC Status Info"
-msgstr ""
+msgstr "CMC 狀態資訊"
 
 #: crypt32.rc:104
 msgid "CMC Extensions"
-msgstr ""
+msgstr "CMC 延伸"
 
 #: crypt32.rc:105
 msgid "CMC Attributes"
-msgstr ""
+msgstr "CMC 屬性"
 
 #: crypt32.rc:106
 msgid "PKCS 7 Data"
-msgstr ""
+msgstr "PKCS 7 資料"
 
 #: crypt32.rc:107
 msgid "PKCS 7 Signed"
-msgstr ""
+msgstr "PKCS 7 簽署"
 
 #: crypt32.rc:108
 msgid "PKCS 7 Enveloped"
-msgstr ""
+msgstr "PKCS 7 封套"
 
 #: crypt32.rc:109
 msgid "PKCS 7 Signed Enveloped"
-msgstr ""
+msgstr "PKCS 7 簽署封套"
 
 #: crypt32.rc:110
 msgid "PKCS 7 Digested"
-msgstr ""
+msgstr "PKCS 7 摘要"
 
 #: crypt32.rc:111
 msgid "PKCS 7 Encrypted"
-msgstr ""
+msgstr "PKCS 7 加密"
 
 #: crypt32.rc:112
 msgid "Previous CA Certificate Hash"
-msgstr ""
+msgstr "前一個 CA 憑證雜湊"
 
 #: crypt32.rc:113
 msgid "Virtual Base CRL Number"
-msgstr ""
+msgstr "虛擬基底 CRL 數字"
 
 #: crypt32.rc:114
 msgid "Next CRL Publish"
-msgstr ""
+msgstr "下一個 CRL 發布"
 
 #: crypt32.rc:115
 msgid "CA Encryption Certificate"
-msgstr ""
+msgstr "CA 加密憑證"
 
 #: crypt32.rc:116 cryptui.rc:145
 msgid "Key Recovery Agent"
-msgstr ""
+msgstr "金鑰復原代理程式"
 
 #: crypt32.rc:117
 msgid "Certificate Template Information"
-msgstr ""
+msgstr "憑證模板資訊"
 
 #: crypt32.rc:118
 msgid "Enterprise Root OID"
-msgstr ""
+msgstr "企業根 OID"
 
 #: crypt32.rc:119
 msgid "Dummy Signer"
-msgstr ""
+msgstr "虛設簽署人"
 
 #: crypt32.rc:120
 msgid "Encrypted Private Key"
-msgstr ""
+msgstr "加密的私鑰"
 
 #: crypt32.rc:121
 msgid "Published CRL Locations"
-msgstr ""
+msgstr "發布的 CRL 位置"
 
 #: crypt32.rc:122
 msgid "Enforce Certificate Chain Policy"
-msgstr ""
+msgstr "強制憑證鏈策略"
 
 #: crypt32.rc:123
 msgid "Transaction Id"
-msgstr ""
+msgstr "異動作業識別號"
 
 #: crypt32.rc:124
 msgid "Sender Nonce"
-msgstr ""
+msgstr "當前傳送者"
 
 #: crypt32.rc:125
 msgid "Recipient Nonce"
-msgstr ""
+msgstr "當前收件者"
 
 #: crypt32.rc:126
 msgid "Reg Info"
-msgstr ""
+msgstr "註冊資訊"
 
 #: crypt32.rc:127
 msgid "Get Certificate"
-msgstr ""
+msgstr "提取憑證"
 
 #: crypt32.rc:128
 msgid "Get CRL"
-msgstr ""
+msgstr "提取 CRL"
 
 #: crypt32.rc:129
 msgid "Revoke Request"
-msgstr ""
+msgstr "取消要求"
 
 #: crypt32.rc:130
 msgid "Query Pending"
-msgstr ""
+msgstr "查詢擱置"
 
 #: crypt32.rc:131 cryptui.rc:92
 msgid "Certificate Trust List"
-msgstr ""
+msgstr "憑證信賴清單"
 
 #: crypt32.rc:132
 msgid "Archived Key Certificate Hash"
-msgstr ""
+msgstr "封存的金鑰憑證雜湊"
 
 #: crypt32.rc:133
 msgid "Private Key Usage Period"
-msgstr ""
+msgstr "私鑰使用週期"
 
 #: crypt32.rc:134
 msgid "Client Information"
-msgstr ""
+msgstr "客戶端資訊"
 
 #: crypt32.rc:135
 msgid "Server Authentication"
-msgstr ""
+msgstr "伺服器認證"
 
 #: crypt32.rc:136
 msgid "Client Authentication"
-msgstr ""
+msgstr "客戶端認證"
 
 #: crypt32.rc:137
 msgid "Code Signing"
-msgstr ""
+msgstr "編碼簽署"
 
 #: crypt32.rc:138
 msgid "Secure Email"
-msgstr ""
+msgstr "安全電子郵件"
 
 #: crypt32.rc:139
 msgid "Time Stamping"
-msgstr ""
+msgstr "時間戳記"
 
 #: crypt32.rc:140
 msgid "Microsoft Trust List Signing"
-msgstr ""
+msgstr "Microsoft 信賴清單簽署"
 
 #: crypt32.rc:141
 msgid "Microsoft Time Stamping"
-msgstr ""
+msgstr "Microsoft 時間戳記"
 
 #: crypt32.rc:142
 msgid "IP security end system"
-msgstr ""
+msgstr "IP 安全終端系統"
 
 #: crypt32.rc:143
 msgid "IP security tunnel termination"
-msgstr ""
+msgstr "IP 安全遂道終端"
 
 #: crypt32.rc:144
 msgid "IP security user"
-msgstr ""
+msgstr "IP 安全使用者"
 
 #: crypt32.rc:145
 msgid "Encrypting File System"
-msgstr ""
+msgstr "加密檔案系統"
 
 #: crypt32.rc:146 cryptui.rc:130
 msgid "Windows Hardware Driver Verification"
-msgstr ""
+msgstr "Windows 硬體驅動程式查核"
 
 #: crypt32.rc:147 cryptui.rc:131
 msgid "Windows System Component Verification"
-msgstr ""
+msgstr "Windows 系統成分查核"
 
 #: crypt32.rc:148 cryptui.rc:132
 msgid "OEM Windows System Component Verification"
-msgstr ""
+msgstr "OEM Windows 系統成分查核"
 
 #: crypt32.rc:149 cryptui.rc:133
 msgid "Embedded Windows System Component Verification"
-msgstr ""
+msgstr "嵌入式 Windows 系統成分查核"
 
 #: crypt32.rc:150 cryptui.rc:140
 msgid "Key Pack Licenses"
-msgstr ""
+msgstr "金鑰包裝授權"
 
 #: crypt32.rc:151 cryptui.rc:141
 msgid "License Server Verification"
-msgstr ""
+msgstr "授權伺服器查核"
 
 #: crypt32.rc:152 cryptui.rc:143
 msgid "Smart Card Logon"
-msgstr ""
+msgstr "智慧卡登錄"
 
 #: crypt32.rc:153 cryptui.rc:139
 msgid "Digital Rights"
-msgstr ""
+msgstr "數位權限"
 
 #: crypt32.rc:154 cryptui.rc:135
 msgid "Qualified Subordination"
-msgstr ""
+msgstr "合格的隸屬"
 
 #: crypt32.rc:155 cryptui.rc:136
 msgid "Key Recovery"
-msgstr ""
+msgstr "金鑰復原"
 
 #: crypt32.rc:156 cryptui.rc:137
 msgid "Document Signing"
-msgstr ""
+msgstr "文件簽署"
 
 #: crypt32.rc:157
 msgid "IP security IKE intermediate"
-msgstr ""
+msgstr "IP 安全 IKE 中介"
 
 #: crypt32.rc:158 cryptui.rc:129
 msgid "File Recovery"
-msgstr ""
+msgstr "檔案復原"
 
 #: crypt32.rc:159 cryptui.rc:134
 msgid "Root List Signer"
-msgstr ""
+msgstr "根清單簽署人"
 
 #: crypt32.rc:160
 msgid "All application policies"
-msgstr ""
+msgstr "所有應用程式策略"
 
 #: crypt32.rc:161 cryptui.rc:146
 msgid "Directory Service Email Replication"
-msgstr ""
+msgstr "目錄服務電子郵件複寫"
 
 #: crypt32.rc:162 cryptui.rc:142
 msgid "Certificate Request Agent"
-msgstr ""
+msgstr "憑證請求代理程式"
 
 #: crypt32.rc:163 cryptui.rc:138
 msgid "Lifetime Signing"
-msgstr ""
+msgstr "生命期簽署"
 
 #: crypt32.rc:164
 msgid "All issuance policies"
-msgstr ""
+msgstr "所有發布策略"
 
 #: crypt32.rc:169
 msgid "Trusted Root Certification Authorities"
-msgstr ""
+msgstr "信賴的根憑證授權者"
 
 #: crypt32.rc:170
 msgid "Personal"
-msgstr ""
+msgstr "個人的"
 
 #: crypt32.rc:171
 msgid "Intermediate Certification Authorities"
-msgstr ""
+msgstr "中介憑證授權者"
 
 #: crypt32.rc:172
 msgid "Other People"
-msgstr ""
+msgstr "其他人"
 
 #: crypt32.rc:173
 msgid "Trusted Publishers"
-msgstr ""
+msgstr "信賴的發行者"
 
 #: crypt32.rc:174
 msgid "Untrusted Certificates"
-msgstr ""
+msgstr "不可信的憑證"
 
 #: crypt32.rc:179
 msgid "KeyID="
-msgstr ""
+msgstr "KeyID="
 
 #: crypt32.rc:180
 msgid "Certificate Issuer"
-msgstr ""
+msgstr "憑證發證者"
 
 #: crypt32.rc:181
 msgid "Certificate Serial Number="
-msgstr ""
+msgstr "憑證序號="
 
 #: crypt32.rc:182
 msgid "Other Name="
-msgstr ""
+msgstr "其他名稱="
 
 #: crypt32.rc:183
 msgid "Email Address="
-msgstr ""
+msgstr "電子郵件地址="
 
 #: crypt32.rc:184
 msgid "DNS Name="
-msgstr ""
+msgstr "DNS 名稱="
 
 #: crypt32.rc:185
 msgid "Directory Address"
-msgstr ""
+msgstr "目錄位址"
 
 #: crypt32.rc:186
 msgid "URL="
-msgstr ""
+msgstr "網址="
 
 #: crypt32.rc:187
 msgid "IP Address="
-msgstr ""
+msgstr "IP 位址="
 
 #: crypt32.rc:188
 msgid "Mask="
-msgstr ""
+msgstr "遮罩="
 
 #: crypt32.rc:189
 msgid "Registered ID="
-msgstr ""
+msgstr "已註冊的識別號="
 
 #: crypt32.rc:190
 msgid "Unknown Key Usage"
-msgstr ""
+msgstr "不明金鑰用法"
 
 #: crypt32.rc:191
 msgid "Subject Type="
-msgstr ""
+msgstr "主體型態="
 
 #: crypt32.rc:192
 msgctxt "Certificate Authority"
 msgid "CA"
-msgstr ""
+msgstr "CA"
 
 #: crypt32.rc:193
 msgid "End Entity"
-msgstr ""
+msgstr "終端實體"
 
 #: crypt32.rc:194
 msgid "Path Length Constraint="
-msgstr ""
+msgstr "路徑長度條件約束="
 
 #: crypt32.rc:195
 msgctxt "path length"
@@ -1845,84 +1845,84 @@ msgstr "無"
 
 #: crypt32.rc:196
 msgid "Information Not Available"
-msgstr ""
+msgstr "資訊無法使用"
 
 #: crypt32.rc:197
 msgid "Authority Info Access"
-msgstr ""
+msgstr "授權資訊存取"
 
 #: crypt32.rc:198
 msgid "Access Method="
-msgstr ""
+msgstr "存取方法="
 
 #: crypt32.rc:199
 msgctxt "Online Certificate Status Protocol"
 msgid "OCSP"
-msgstr ""
+msgstr "OCSP"
 
 #: crypt32.rc:200
 msgid "CA Issuers"
-msgstr ""
+msgstr "CA 發證者"
 
 #: crypt32.rc:201
 msgid "Unknown Access Method"
-msgstr ""
+msgstr "不明存取方法"
 
 #: crypt32.rc:202
 msgid "Alternative Name"
-msgstr ""
+msgstr "另類名稱"
 
 #: crypt32.rc:203
 msgid "CRL Distribution Point"
-msgstr ""
+msgstr "CRL 發布點"
 
 #: crypt32.rc:204
 msgid "Distribution Point Name"
-msgstr ""
+msgstr "發布點名稱"
 
 #: crypt32.rc:205
 msgid "Full Name"
-msgstr ""
+msgstr "全名"
 
 #: crypt32.rc:206
 msgid "RDN Name"
-msgstr ""
+msgstr "RDN 名稱"
 
 #: crypt32.rc:207
 msgid "CRL Reason="
-msgstr ""
+msgstr "CRL 原因="
 
 #: crypt32.rc:208
 msgid "CRL Issuer"
-msgstr ""
+msgstr "CRL 發證者"
 
 #: crypt32.rc:209
 msgid "Key Compromise"
-msgstr ""
+msgstr "金鑰折衷"
 
 #: crypt32.rc:210
 msgid "CA Compromise"
-msgstr ""
+msgstr "CA 折衷"
 
 #: crypt32.rc:211
 msgid "Affiliation Changed"
-msgstr ""
+msgstr "會籍變更"
 
 #: crypt32.rc:212
 msgid "Superseded"
-msgstr ""
+msgstr "已取代"
 
 #: crypt32.rc:213
 msgid "Operation Ceased"
-msgstr ""
+msgstr "作業終了"
 
 #: crypt32.rc:214
 msgid "Certificate Hold"
-msgstr ""
+msgstr "憑證暫停"
 
 #: crypt32.rc:215
 msgid "Financial Information="
-msgstr ""
+msgstr "金融資訊="
 
 #: crypt32.rc:216 taskmgr.rc:397
 msgid "Available"
@@ -1930,11 +1930,11 @@ msgstr "可用"
 
 #: crypt32.rc:217
 msgid "Not Available"
-msgstr ""
+msgstr "無法使用"
 
 #: crypt32.rc:218
 msgid "Meets Criteria="
-msgstr ""
+msgstr "會面準則="
 
 #: crypt32.rc:219 cryptui.rc:163 oleaut32.rc:29 wininet.rc:80 ipconfig.rc:44
 msgid "Yes"
@@ -1946,119 +1946,119 @@ msgstr "否"
 
 #: crypt32.rc:221
 msgid "Digital Signature"
-msgstr ""
+msgstr "數位簽名"
 
 #: crypt32.rc:222
 msgid "Non-Repudiation"
-msgstr ""
+msgstr "不可否認性"
 
 #: crypt32.rc:223
 msgid "Key Encipherment"
-msgstr ""
+msgstr "金鑰編密"
 
 #: crypt32.rc:224
 msgid "Data Encipherment"
-msgstr ""
+msgstr "資料加密"
 
 #: crypt32.rc:225
 msgid "Key Agreement"
-msgstr ""
+msgstr "金鑰協定"
 
 #: crypt32.rc:226
 msgid "Certificate Signing"
-msgstr ""
+msgstr "憑證簽署"
 
 #: crypt32.rc:227
 msgid "Off-line CRL Signing"
-msgstr ""
+msgstr "離線 CRL 簽署"
 
 #: crypt32.rc:228
 msgid "CRL Signing"
-msgstr ""
+msgstr "CRL 簽署"
 
 #: crypt32.rc:229
 msgid "Encipher Only"
-msgstr ""
+msgstr "只譯為密文"
 
 #: crypt32.rc:230
 msgid "Decipher Only"
-msgstr ""
+msgstr "只解開密文"
 
 #: crypt32.rc:231
 msgid "SSL Client Authentication"
-msgstr ""
+msgstr "SSL 客戶端認證"
 
 #: crypt32.rc:232
 msgid "SSL Server Authentication"
-msgstr ""
+msgstr "SSL 伺服器認證"
 
 #: crypt32.rc:233
 msgid "S/MIME"
-msgstr ""
+msgstr "S/MIME"
 
 #: crypt32.rc:234
 msgid "Signature"
-msgstr ""
+msgstr "簽名"
 
 #: crypt32.rc:235
 msgid "SSL CA"
-msgstr ""
+msgstr "SSL CA"
 
 #: crypt32.rc:236
 msgid "S/MIME CA"
-msgstr ""
+msgstr "S/MIME CA"
 
 #: crypt32.rc:237
 msgid "Signature CA"
-msgstr ""
+msgstr "簽名 CA"
 
 #: cryptdlg.rc:27
 msgid "Certificate Policy"
-msgstr ""
+msgstr "憑證策略"
 
 #: cryptdlg.rc:28
 msgid "Policy Identifier: "
-msgstr ""
+msgstr "策略識別碼："
 
 #: cryptdlg.rc:29
 msgid "Policy Qualifier Info"
-msgstr ""
+msgstr "策略限定元資訊"
 
 #: cryptdlg.rc:30
 msgid "Policy Qualifier Id="
-msgstr ""
+msgstr "策略限定元識別號="
 
 #: cryptdlg.rc:33
 msgid "Qualifier"
-msgstr ""
+msgstr "限定元"
 
 #: cryptdlg.rc:34
 msgid "Notice Reference"
-msgstr ""
+msgstr "通知參考"
 
 #: cryptdlg.rc:35
 msgid "Organization="
-msgstr ""
+msgstr "組織="
 
 #: cryptdlg.rc:36
 msgid "Notice Number="
-msgstr ""
+msgstr "通知數字="
 
 #: cryptdlg.rc:37
 msgid "Notice Text="
-msgstr ""
+msgstr "通知文字="
 
 #: cryptui.rc:177 cryptui.rc:232 inetcpl.rc:43
 msgid "General"
-msgstr ""
+msgstr "一般"
 
 #: cryptui.rc:188
 msgid "&Install Certificate..."
-msgstr "安裝憑證(&I)..."
+msgstr "安裝憑證(&I)…"
 
 #: cryptui.rc:189
 msgid "Issuer &Statement"
-msgstr ""
+msgstr "發證者敘述(&S)"
 
 #: cryptui.rc:197
 msgid "&Show:"
@@ -2066,11 +2066,11 @@ msgstr "顯示(&S)："
 
 #: cryptui.rc:202
 msgid "&Edit Properties..."
-msgstr "編輯屬性(&E)..."
+msgstr "編輯屬性(&E)…"
 
 #: cryptui.rc:203
 msgid "&Copy to File..."
-msgstr "複製到檔案(&C)..."
+msgstr "複製到檔案(&C)…"
 
 #: cryptui.rc:207
 msgid "Certification Path"
@@ -2090,7 +2090,7 @@ msgstr "憑證狀態(&S)："
 
 #: cryptui.rc:221
 msgid "Disclaimer"
-msgstr ""
+msgstr "免責聲明"
 
 #: cryptui.rc:228
 msgid "More &Info"
@@ -2098,7 +2098,7 @@ msgstr "更多資訊(&I)"
 
 #: cryptui.rc:236
 msgid "&Friendly name:"
-msgstr ""
+msgstr "易記名稱(&F)："
 
 #: cryptui.rc:238 progman.rc:151 progman.rc:167
 msgid "&Description:"
@@ -2106,44 +2106,44 @@ msgstr "描述(&D)："
 
 #: cryptui.rc:240
 msgid "Certificate purposes"
-msgstr ""
+msgstr "憑證目的"
 
 #: cryptui.rc:241
 msgid "&Enable all purposes for this certificate"
-msgstr ""
+msgstr "啟用這個憑證的全部目的(&E)"
 
 #: cryptui.rc:243
 msgid "D&isable all purposes for this certificate"
-msgstr ""
+msgstr "停用這個憑證的全部目的(&I)"
 
 #: cryptui.rc:245
 msgid "Enable &only the following purposes for this certificate:"
-msgstr ""
+msgstr "只有啟用這個憑證的下列目的(&O)："
 
 #: cryptui.rc:250
 msgid "Add &Purpose..."
-msgstr ""
+msgstr "加入目的(&P)…"
 
 #: cryptui.rc:254
 msgid "Add Purpose"
-msgstr ""
+msgstr "加入目的"
 
 #: cryptui.rc:257
 msgid ""
 "Add the object identifier (OID) for the certificate purpose you wish to add:"
-msgstr ""
+msgstr "加入您所希望的憑證目的物件識別符號 (OID)："
 
 #: cryptui.rc:265 cryptui.rc:66
 msgid "Select Certificate Store"
-msgstr ""
+msgstr "選取憑證儲存處"
 
 #: cryptui.rc:268
 msgid "Select the certificate store you want to use:"
-msgstr ""
+msgstr "選取您要使用的憑證儲存處："
 
 #: cryptui.rc:271
 msgid "&Show physical stores"
-msgstr ""
+msgstr "顯示實體儲存(&S)"
 
 #: cryptui.rc:277 cryptui.rc:288 cryptui.rc:305 cryptui.rc:319 cryptui.rc:68
 msgid "Certificate Import Wizard"
@@ -2165,6 +2165,12 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
+"這個精靈協助您從檔案匯入憑證、憑證撤銷清單以及憑證信賴清單到憑證儲存處。\n"
+"\n"
+"憑證可用於識別您或您正在通訊的電腦。 它也可以用於認證以及對訊息簽署。 憑證儲"
+"存處收藏了憑證、憑證撤銷清單以及憑證信賴清單。\n"
+"\n"
+"要繼續，請按下一步。"
 
 #: cryptui.rc:291 cryptui.rc:427
 msgid "&File name:"
@@ -2172,39 +2178,40 @@ msgstr "檔案名稱(&F)："
 
 #: cryptui.rc:293 cryptui.rc:315 cryptui.rc:429 winecfg.rc:295
 msgid "B&rowse..."
-msgstr "瀏覽(&R)..."
+msgstr "瀏覽(&R)…"
 
 #: cryptui.rc:294
 msgid ""
 "Note: The following file formats may contain more than one certificate, "
 "certificate revocation list, or certificate trust list:"
 msgstr ""
+"註記：下列檔案格式也許會包含超過一個的憑證、憑證撤銷清單或憑證信賴清單："
 
 #: cryptui.rc:296
 msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (*.p7b)"
-msgstr ""
+msgstr "密碼訊息語法標準/PKCS #7 訊息 (*.p7b)"
 
 #: cryptui.rc:298
 msgid "Personal Information Exchange/PKCS #12 (*.pfx; *.p12)"
-msgstr ""
+msgstr "個人資訊交換/PKCS #12 (*.pfx; *.p12)"
 
 #: cryptui.rc:300 cryptui.rc:78 cryptui.rc:159
 msgid "Microsoft Serialized Certificate Store (*.sst)"
-msgstr ""
+msgstr "Microsoft 序列化憑證儲存處 (*.sst)"
 
 #: cryptui.rc:308
 msgid ""
 "Wine can automatically select the certificate store, or you can specify a "
 "location for the certificates."
-msgstr ""
+msgstr "Wine 可以自動選取憑證儲存處，或者您可以指定用於憑證的位置。"
 
 #: cryptui.rc:310
 msgid "&Automatically select certificate store"
-msgstr ""
+msgstr "自動選取憑證儲存處(&A)"
 
 #: cryptui.rc:312
 msgid "&Place all certificates in the following store:"
-msgstr ""
+msgstr "將所有憑證放置於下列儲存(&P)："
 
 #: cryptui.rc:322
 msgid "Completing the Certificate Import Wizard"
@@ -2216,7 +2223,7 @@ msgstr "您已經成功地完成憑證匯入精靈。"
 
 #: cryptui.rc:326 cryptui.rc:440
 msgid "You have specified the following settings:"
-msgstr ""
+msgstr "您已指定下列設定值："
 
 #: cryptui.rc:334 cryptui.rc:119 inetcpl.rc:108
 msgid "Certificates"
@@ -2224,23 +2231,23 @@ msgstr "憑證"
 
 #: cryptui.rc:337
 msgid "I&ntended purpose:"
-msgstr ""
+msgstr "預定目的(&N)："
 
 #: cryptui.rc:341
 msgid "&Import..."
-msgstr "匯入(&I)..."
+msgstr "匯入(&I)…"
 
 #: cryptui.rc:342 regedit.rc:109
 msgid "&Export..."
-msgstr "匯出(&E)..."
+msgstr "匯出(&E)…"
 
 #: cryptui.rc:344
 msgid "&Advanced..."
-msgstr "進階(&A)..."
+msgstr "進階(&A)…"
 
 #: cryptui.rc:345
 msgid "Certificate intended purposes"
-msgstr ""
+msgstr "憑證預定目的"
 
 #: cryptui.rc:347 ieframe.rc:42 shell32.rc:40 shell32.rc:117 oleview.rc:56
 #: oleview.rc:58 oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:45
@@ -2254,16 +2261,16 @@ msgstr "進階選項"
 
 #: cryptui.rc:355
 msgid "Certificate purpose"
-msgstr ""
+msgstr "憑證目的"
 
 #: cryptui.rc:356
 msgid ""
 "Select one or more purposes to be listed when Advanced Purposes is selected."
-msgstr ""
+msgstr "當進階目的已選時選取一或多個要列出的目的。"
 
 #: cryptui.rc:358
 msgid "&Certificate purposes:"
-msgstr ""
+msgstr "憑證目的(&C)："
 
 #: cryptui.rc:367 cryptui.rc:378 cryptui.rc:391 cryptui.rc:401 cryptui.rc:424
 #: cryptui.rc:433 cryptui.rc:147
@@ -2286,24 +2293,30 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
+"這個精靈協助您從憑證儲存處匯出憑證、憑證撤銷清單以及憑證信賴清單到檔案。\n"
+"\n"
+"憑證可用於識別您或您用以通訊的電腦。它也可以被用於認證以及簽署訊息。 憑證儲存"
+"處收藏了憑證、憑證撤銷清單以及憑證信賴清單。\n"
+"\n"
+"要繼續請按下一步。"
 
 #: cryptui.rc:381
 msgid ""
 "If you choose to export the private key, you will be prompted for a password "
 "to protect the private key on a later page."
-msgstr ""
+msgstr "如果您選擇要匯出私鑰，將於後續頁面向您提示要求密碼以保護私鑰。"
 
 #: cryptui.rc:382
 msgid "Do you wish to export the private key?"
-msgstr "您要匯出私人密鑰嗎？"
+msgstr "您要匯出私鑰嗎？"
 
 #: cryptui.rc:383
 msgid "&Yes, export the private key"
-msgstr "是(&Y)，匯出私人密鑰。"
+msgstr "是(&Y)，匯出私鑰。"
 
 #: cryptui.rc:385
 msgid "N&o, do not export the private key"
-msgstr "否(&N)，不要匯出私人密鑰。"
+msgstr "否(&N)，不要匯出私鑰。"
 
 #: cryptui.rc:396
 msgid "&Confirm password:"
@@ -2315,35 +2328,35 @@ msgstr "請選擇您要使用的格式："
 
 #: cryptui.rc:405
 msgid "&DER-encoded X.509 (*.cer)"
-msgstr ""
+msgstr "&DER-encoded X.509 (*.cer)"
 
 #: cryptui.rc:407
 msgid "Ba&se64-encoded X.509 (*.cer):"
-msgstr ""
+msgstr "Ba&se64-encoded X.509 (*.cer)："
 
 #: cryptui.rc:409
 msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (*.p7b)"
-msgstr ""
+msgstr "密碼訊息語法標準/PK&CS #7 訊息 (*.p7b)"
 
 #: cryptui.rc:411
 msgid "&Include all certificates in the certification path if possible"
-msgstr ""
+msgstr "儘量在憑證路徑中包含所有憑證(&I)"
 
 #: cryptui.rc:413
 msgid "&Personal Information Exchange/PKCS #12 (*.pfx)"
-msgstr ""
+msgstr "個人資訊交換/&PKCS #12 (*.pfx)"
 
 #: cryptui.rc:415
 msgid "Incl&ude all certificates in the certification path if possible"
-msgstr ""
+msgstr "儘量在憑證路徑中包含所有憑證(&U)"
 
 #: cryptui.rc:417
 msgid "&Enable strong encryption"
-msgstr ""
+msgstr "啟用強型加密(&E)"
 
 #: cryptui.rc:419
 msgid "Delete the private &key if the export is successful"
-msgstr ""
+msgstr "如果匯出成功就刪除私鑰(&K)"
 
 #: cryptui.rc:436
 msgid "Completing the Certificate Export Wizard"
@@ -2355,7 +2368,7 @@ msgstr "您已經成功地完成憑證匯出精靈"
 
 #: cryptui.rc:27 cryptui.rc:90
 msgid "Certificate"
-msgstr ""
+msgstr "憑證"
 
 #: cryptui.rc:28
 msgid "Certificate Information"
@@ -2365,93 +2378,93 @@ msgstr "憑證資訊"
 msgid ""
 "This certificate has an invalid signature. The certificate may have been "
 "altered or corrupted."
-msgstr ""
+msgstr "這個憑證的簽名無效。憑證也許已被改變或已損壞。"
 
 #: cryptui.rc:30
 msgid ""
 "This root certificate is not trusted. To trust it, add it to your system's "
 "trusted root certificate store."
-msgstr ""
+msgstr "這個根憑證未被信賴。要信賴它，就將它加入您系統的信賴根憑證儲存處。"
 
 #: cryptui.rc:31
 msgid "This certificate could not be validated to a trusted root certificate."
-msgstr ""
+msgstr "這個憑證無法被驗證為信賴的根憑證。"
 
 #: cryptui.rc:32
 msgid "This certificate's issuer could not be found."
-msgstr ""
+msgstr "找不到這個憑證的發證者。"
 
 #: cryptui.rc:33
 msgid "All the intended purposes of this certificate could not be verified."
-msgstr ""
+msgstr "這個憑證的所有預定目的都無法被驗證。"
 
 #: cryptui.rc:34
 msgid "This certificate is intended for the following purposes:"
-msgstr ""
+msgstr "這個憑證是適用於下列目的："
 
 #: cryptui.rc:35
 msgid "Issued to: "
-msgstr ""
+msgstr "發證對象："
 
 #: cryptui.rc:36
 msgid "Issued by: "
-msgstr ""
+msgstr "發證來源："
 
 #: cryptui.rc:37
 msgid "Valid from "
-msgstr ""
+msgstr "有效自 "
 
 #: cryptui.rc:38
 msgid " to "
-msgstr ""
+msgstr " 到 "
 
 #: cryptui.rc:39
 msgid "This certificate has an invalid signature."
-msgstr ""
+msgstr "這個憑證的簽名無效。"
 
 #: cryptui.rc:40
 msgid "This certificate has expired or is not yet valid."
-msgstr ""
+msgstr "這個憑證已過期或尚未生效。"
 
 #: cryptui.rc:41
 msgid "This certificate's validity period exceeds that of its issuer."
-msgstr ""
+msgstr "這個憑證的有效期限超過它的發證者。"
 
 #: cryptui.rc:42
 msgid "This certificate was revoked by its issuer."
-msgstr ""
+msgstr "這個憑證已被它的發證者取消。"
 
 #: cryptui.rc:43
 msgid "This certificate is OK."
-msgstr ""
+msgstr "這個憑證已確認。"
 
 #: cryptui.rc:44
 msgid "Field"
-msgstr ""
+msgstr "欄位"
 
 #: cryptui.rc:45
 msgid "Value"
-msgstr ""
+msgstr "值"
 
 #: cryptui.rc:46 cryptui.rc:99 cryptui.rc:105
 msgid "<All>"
-msgstr ""
+msgstr "<所有>"
 
 #: cryptui.rc:47
 msgid "Version 1 Fields Only"
-msgstr ""
+msgstr "只有版本 1 欄位"
 
 #: cryptui.rc:48
 msgid "Extensions Only"
-msgstr ""
+msgstr "只有進階屬性"
 
 #: cryptui.rc:49
 msgid "Critical Extensions Only"
-msgstr ""
+msgstr "只有關鍵進階屬性"
 
 #: cryptui.rc:50
 msgid "Properties Only"
-msgstr ""
+msgstr "只有屬性"
 
 #: cryptui.rc:52
 msgid "Serial number"
@@ -2459,23 +2472,23 @@ msgstr "序號"
 
 #: cryptui.rc:53
 msgid "Issuer"
-msgstr ""
+msgstr "發證者"
 
 #: cryptui.rc:54
 msgid "Valid from"
-msgstr ""
+msgstr "有效自"
 
 #: cryptui.rc:55
 msgid "Valid to"
-msgstr ""
+msgstr "有效到"
 
 #: cryptui.rc:56
 msgid "Subject"
-msgstr ""
+msgstr "主體"
 
 #: cryptui.rc:57
 msgid "Public key"
-msgstr ""
+msgstr "公鑰"
 
 #: cryptui.rc:58
 msgid "%1 (%2!d! bits)"
@@ -2483,15 +2496,15 @@ msgstr "%1 (%2!d! 位元)"
 
 #: cryptui.rc:59
 msgid "SHA1 hash"
-msgstr ""
+msgstr "SHA1 雜湊"
 
 #: cryptui.rc:60
 msgid "Enhanced key usage (property)"
-msgstr ""
+msgstr "進階金鑰用法 (內容)"
 
 #: cryptui.rc:61
 msgid "Friendly name"
-msgstr ""
+msgstr "易記名稱"
 
 #: cryptui.rc:62 shell32.rc:239 ipconfig.rc:41
 msgid "Description"
@@ -2503,67 +2516,67 @@ msgstr "憑證屬性"
 
 #: cryptui.rc:64
 msgid "Please enter an OID in the form 1.2.3.4"
-msgstr ""
+msgstr "請以 1.2.3.4 的形式輸入 OID"
 
 #: cryptui.rc:65
 msgid "The OID you entered already exists."
-msgstr ""
+msgstr "您輸入的 OID 已經存在。"
 
 #: cryptui.rc:67
 msgid "Please select a certificate store."
-msgstr ""
+msgstr "請選取憑證儲存處。"
 
 #: cryptui.rc:69
 msgid ""
 "The file contains objects that do not match the given criteria. Please "
 "select another file."
-msgstr ""
+msgstr "檔案含有不匹配給定準則的物件。請選取另一個檔案。"
 
 #: cryptui.rc:70
 msgid "File to Import"
-msgstr ""
+msgstr "要匯入的檔案"
 
 #: cryptui.rc:71
 msgid "Specify the file you want to import."
-msgstr ""
+msgstr "指定您要匯入的檔案。"
 
 #: cryptui.rc:72 cryptui.rc:95
 msgid "Certificate Store"
-msgstr ""
+msgstr "憑證儲存處"
 
 #: cryptui.rc:73
 msgid ""
 "Certificate stores are collections of certificates, certificate revocation "
 "lists, and certificate trust lists."
-msgstr ""
+msgstr "憑證儲存處收藏了憑證、憑證撤銷清單以及憑證信賴清單。"
 
 #: cryptui.rc:74
 msgid "X.509 Certificate (*.cer; *.crt)"
-msgstr ""
+msgstr "X.509 憑證 (*.cer; *.crt)"
 
 #: cryptui.rc:75
 msgid "Personal Information Exchange (*.pfx; *.p12)"
-msgstr ""
+msgstr "個人資訊交換 (*.pfx; *.p12)"
 
 #: cryptui.rc:76 cryptui.rc:155
 msgid "Certificate Revocation List (*.crl)"
-msgstr ""
+msgstr "憑證撤銷清單 (*.crl)"
 
 #: cryptui.rc:77 cryptui.rc:156
 msgid "Certificate Trust List (*.stl)"
-msgstr ""
+msgstr "憑證信賴清單 (*.stl)"
 
 #: cryptui.rc:79
 msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
-msgstr ""
+msgstr "CMS/PKCS #7 訊息 (*.spc; *.p7b)"
 
 #: cryptui.rc:81
 msgid "Please select a file."
-msgstr ""
+msgstr "請選取檔案。"
 
 #: cryptui.rc:82
 msgid "The file format is not recognized. Please select another file."
-msgstr ""
+msgstr "檔案格式無法辨識。請選取另一個檔案。"
 
 #: cryptui.rc:83
 msgid "Could not open "
@@ -2571,15 +2584,15 @@ msgstr "無法開啟 "
 
 #: cryptui.rc:84
 msgid "Determined by the program"
-msgstr ""
+msgstr "由程式所決定"
 
 #: cryptui.rc:85
 msgid "Please select a store"
-msgstr ""
+msgstr "請選取儲存處"
 
 #: cryptui.rc:86
 msgid "Certificate Store Selected"
-msgstr ""
+msgstr "憑證儲存處已選"
 
 #: cryptui.rc:87
 msgid "Automatically determined by the program"
@@ -2595,47 +2608,47 @@ msgstr "內容"
 
 #: cryptui.rc:91
 msgid "Certificate Revocation List"
-msgstr ""
+msgstr "憑證撤銷清單"
 
 #: cryptui.rc:93
 msgid "CMS/PKCS #7 Message"
-msgstr ""
+msgstr "CMS/PKCS #7 訊息"
 
 #: cryptui.rc:94
 msgid "Personal Information Exchange"
-msgstr ""
+msgstr "個人資訊交換"
 
 #: cryptui.rc:96
 msgid "The import was successful."
-msgstr ""
+msgstr "已成功匯入。"
 
 #: cryptui.rc:97
 msgid "The import failed."
-msgstr ""
+msgstr "匯入失敗。"
 
 #: cryptui.rc:98
 msgid "Arial"
-msgstr ""
+msgstr "Arial"
 
 #: cryptui.rc:100
 msgid "<Advanced Purposes>"
-msgstr ""
+msgstr "<進階目的>"
 
 #: cryptui.rc:101
 msgid "Issued To"
-msgstr ""
+msgstr "發證對象"
 
 #: cryptui.rc:102
 msgid "Issued By"
-msgstr ""
+msgstr "發證來源"
 
 #: cryptui.rc:103
 msgid "Expiration Date"
-msgstr ""
+msgstr "過期日期"
 
 #: cryptui.rc:104
 msgid "Friendly Name"
-msgstr ""
+msgstr "易記名稱"
 
 #: cryptui.rc:106 cryptui.rc:120
 msgid "<None>"
@@ -2647,6 +2660,8 @@ msgid ""
 "sign messages with it.\n"
 "Are you sure you want to remove this certificate?"
 msgstr ""
+"您將不能再以這個憑證解密訊息，或用它簽署訊息。\n"
+"確定要移除這個憑證？"
 
 #: cryptui.rc:108
 msgid ""
@@ -2654,6 +2669,8 @@ msgid ""
 "sign messages with them.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
+"您將不能再以這些憑證解密訊息，或用它們簽署訊息。\n"
+"確定要移除這些憑證？"
 
 #: cryptui.rc:109
 msgid ""
@@ -2661,6 +2678,8 @@ msgid ""
 "verify messages signed with it.\n"
 "Are you sure you want to remove this certificate?"
 msgstr ""
+"您將不能再以這個憑證加密訊息，或驗證以它簽署的訊息。\n"
+"確定要移除這個憑證？"
 
 #: cryptui.rc:110
 msgid ""
@@ -2668,6 +2687,8 @@ msgid ""
 "verify messages signed with it.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
+"您將不能再以這些憑證加密訊息，或驗證以它們簽署的訊息。\n"
+"確定要移除這些憑證？"
 
 #: cryptui.rc:111
 msgid ""
@@ -2675,6 +2696,8 @@ msgid ""
 "trusted.\n"
 "Are you sure you want to remove this certificate?"
 msgstr ""
+"由這個憑證授權者所發的憑證將不再被信賴。\n"
+"確定要移除這個憑證？"
 
 #: cryptui.rc:112
 msgid ""
@@ -2682,6 +2705,8 @@ msgid ""
 "trusted.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
+"由這些憑證授權者所發的憑證將不再被信賴。\n"
+"確定要移除這些憑證？"
 
 #: cryptui.rc:113
 msgid ""
@@ -2689,6 +2714,8 @@ msgid ""
 "certification authorities it issued, will no longer be trusted.\n"
 "Are you sure you want to remove this trusted root certificate?"
 msgstr ""
+"由這個憑證授權者所發的憑證，或是任何由它發證的憑證授權者，將不再被信賴。\n"
+"確定要移除這個信賴的根憑證？"
 
 #: cryptui.rc:114
 msgid ""
@@ -2696,64 +2723,72 @@ msgid ""
 "certification authorities they issued, will no longer be trusted.\n"
 "Are you sure you want to remove these trusted root certificates?"
 msgstr ""
+"由這些憑證授權者所發的憑證，或是任何由它們發證的憑證授權者，將不再被信賴。\n"
+"確定要移除這些信賴的根憑證？"
 
 #: cryptui.rc:115
 msgid ""
 "Software signed by this publisher will no longer be trusted.\n"
 "Are you sure you want to remove this certificate?"
 msgstr ""
+"由這個發行者簽署的軟體將不再被信賴。\n"
+"確定要移除這個憑證？"
 
 #: cryptui.rc:116
 msgid ""
 "Software signed by these publishers will no longer be trusted.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
+"由這些發行者簽署的軟體將不再被信賴。\n"
+"確定要移除這些憑證？"
 
 #: cryptui.rc:117
 msgid "Are you sure you want to remove this certificate?"
-msgstr ""
+msgstr "確定要移除這個憑證？"
 
 #: cryptui.rc:118
 msgid "Are you sure you want to remove these certificates?"
-msgstr ""
+msgstr "確定要移除這些憑證？"
 
 #: cryptui.rc:121
 msgid "Ensures the identity of a remote computer"
-msgstr ""
+msgstr "確保遠端電腦的身分"
 
 #: cryptui.rc:122
 msgid "Proves your identity to a remote computer"
-msgstr ""
+msgstr "向遠端電腦證明您的身分"
 
 #: cryptui.rc:123
 msgid ""
 "Ensures software came from software publisher\n"
 "Protects software from alteration after publication"
 msgstr ""
+"請確認軟體是來自軟體發行者\n"
+"保護軟體以避免發行之後的變更"
 
 #: cryptui.rc:124
 msgid "Protects e-mail messages"
-msgstr ""
+msgstr "保護電子郵件訊息"
 
 #: cryptui.rc:125
 msgid "Allows secure communication over the Internet"
-msgstr ""
+msgstr "允許在網際網路上保密通訊"
 
 #: cryptui.rc:126
 msgid "Allows data to be signed with the current time"
-msgstr ""
+msgstr "允許以目前的時間簽署資料"
 
 #: cryptui.rc:127
 msgid "Allows you to digitally sign a certificate trust list"
-msgstr ""
+msgstr "允許您數位簽署憑證信賴清單"
 
 #: cryptui.rc:128
 msgid "Allows data on disk to be encrypted"
-msgstr ""
+msgstr "允許磁碟上的資料被加密"
 
 #: cryptui.rc:144
 msgid "Private Key Archival"
-msgstr ""
+msgstr "私鑰檔案的"
 
 #: cryptui.rc:148
 msgid "Export Format"
@@ -2761,7 +2796,7 @@ msgstr "匯出格式"
 
 #: cryptui.rc:149
 msgid "Choose the format in which the content will be saved."
-msgstr ""
+msgstr "選擇將用來儲存內容的格式。"
 
 #: cryptui.rc:150
 msgid "Export Filename"
@@ -2769,7 +2804,7 @@ msgstr "匯出檔名"
 
 #: cryptui.rc:151
 msgid "Specify the name of the file in which the content will be saved."
-msgstr ""
+msgstr "指定將會儲存內容的檔案名稱。"
 
 #: cryptui.rc:152
 msgid "The specified file already exists. Do you want to replace it?"
@@ -2777,19 +2812,19 @@ msgstr "檔案已經存在。您要取代嗎？"
 
 #: cryptui.rc:153
 msgid "DER-Encoded Binary X.509 (*.cer)"
-msgstr ""
+msgstr "DER 編碼二進位 X.509 (*.cer)"
 
 #: cryptui.rc:154
 msgid "Base64-Encoded X.509 (*.cer)"
-msgstr ""
+msgstr "Base64 編碼 X.509 (*.cer)"
 
 #: cryptui.rc:157
 msgid "CMS/PKCS #7 Messages (*.p7b)"
-msgstr ""
+msgstr "CMS/PKCS #7 訊息 (*.p7b)"
 
 #: cryptui.rc:158
 msgid "Personal Information Exchange (*.pfx)"
-msgstr ""
+msgstr "個人資訊交換 (*.pfx)"
 
 #: cryptui.rc:160
 msgid "File Format"
@@ -2797,7 +2832,7 @@ msgstr "檔案格式"
 
 #: cryptui.rc:161
 msgid "Include all certificates in certificate path"
-msgstr ""
+msgstr "包含所有在憑證路徑中的憑證"
 
 #: cryptui.rc:162
 msgid "Export keys"
@@ -2805,21 +2840,21 @@ msgstr "匯出密鑰"
 
 #: cryptui.rc:165
 msgid "The export was successful."
-msgstr ""
+msgstr "已成功匯出。"
 
 #: cryptui.rc:166
 msgid "The export failed."
-msgstr ""
+msgstr "匯出失敗。"
 
 #: cryptui.rc:167
 msgid "Export Private Key"
-msgstr ""
+msgstr "匯出私鑰"
 
 #: cryptui.rc:168
 msgid ""
 "The certificate contains a private key which may be exported along with the "
 "certificate."
-msgstr ""
+msgstr "含有私鑰的憑證可以隨附於憑證匯出。"
 
 #: cryptui.rc:169
 msgid "Enter Password"
@@ -2827,19 +2862,19 @@ msgstr "輸入密碼"
 
 #: cryptui.rc:170
 msgid "You may password-protect a private key."
-msgstr ""
+msgstr "您可以以密碼保護私鑰。"
 
 #: cryptui.rc:171
 msgid "The passwords do not match."
-msgstr ""
+msgstr "密碼不匹配。"
 
 #: cryptui.rc:172
 msgid "Note: The private key for this certificate could not be opened."
-msgstr ""
+msgstr "註記：用於這個憑證的私鑰無法開啟。"
 
 #: cryptui.rc:173
 msgid "Note: The private key for this certificate is not exportable."
-msgstr ""
+msgstr "註記：用於這個憑證的私鑰不可匯出。"
 
 #: devenum.rc:32
 msgid "Default DirectSound"
@@ -2847,7 +2882,7 @@ msgstr "預設 DirectSound 裝置"
 
 #: devenum.rc:33
 msgid "DirectSound: %s"
-msgstr ""
+msgstr "DirectSound：%s"
 
 #: devenum.rc:34
 msgid "Default WaveOut Device"
