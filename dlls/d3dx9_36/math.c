@@ -1995,6 +1995,23 @@ FLOAT WINAPI D3DXSHDot(UINT order, CONST FLOAT *a, CONST FLOAT *b)
     return s;
 }
 
+FLOAT* WINAPI D3DXSHMultiply2(FLOAT *out, CONST FLOAT *a, CONST FLOAT *b)
+{
+    FLOAT ta, tb;
+
+    TRACE("(%p, %p, %p)\n", out, a, b);
+
+    ta = 0.28209479f * a[0];
+    tb = 0.28209479f * b[0];
+
+    out[0]= 0.28209479f * D3DXSHDot(2, a, b);
+    out[1] = ta * b[1] + tb * a[1];
+    out[2] = ta * b[2] + tb * a[2];
+    out[3] = ta * b[3] + tb * a[3];
+
+    return out;
+}
+
 FLOAT* WINAPI D3DXSHMultiply3(FLOAT *out, CONST FLOAT *a, CONST FLOAT *b)
 {
     FLOAT t, ta, tb;

@@ -2422,6 +2422,28 @@ static void test_D3DXSHDot(void)
     return;
 }
 
+static void test_D3DXSHMultiply2(void)
+{
+    unsigned int i;
+    FLOAT a[20], b[20], c[20];
+    /* D3DXSHMultiply2 only modifies the first 4 elements of the array */
+    const FLOAT expected[20] =
+    { 3.418594f, 1.698211f, 1.703853f, 1.709494f, 4.0f, 5.0f,
+      6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f,
+      14.0f, 15.0f, 16.0f, 17.0f, 18.0f, 19.0f };
+
+    for (i = 0; i < 20; i++)
+    {
+        a[i] = 1.0f + i / 100.0f;
+        b[i] = 3.0f - i / 100.0f;
+        c[i] = i;
+    }
+
+    D3DXSHMultiply2(c, a, b);
+    for (i = 0; i < 20; i++)
+        ok(relative_error(c[i], expected[i]) < admitted_error, "Expected[%d] = %f, received = %f\n", i, expected[i], c[i]);
+}
+
 static void test_D3DXSHMultiply3(void)
 {
     unsigned int i;
@@ -2490,6 +2512,7 @@ START_TEST(math)
     test_D3DXFloat_Array();
     test_D3DXSHAdd();
     test_D3DXSHDot();
+    test_D3DXSHMultiply2();
     test_D3DXSHMultiply3();
     test_D3DXSHScale();
 }

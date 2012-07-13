@@ -279,7 +279,7 @@
 @ stub D3DXSHEvalDirectionalLight(long ptr long long long long ptr ptr ptr)
 @ stub D3DXSHEvalHemisphereLight(long ptr long long ptr ptr ptr)
 @ stub D3DXSHEvalSphericalLight(long ptr long long long long ptr ptr ptr)
-@ stub D3DXSHMultiply2(ptr ptr ptr)
+@ stdcall D3DXSHMultiply2(ptr ptr ptr)
 @ stdcall D3DXSHMultiply3(ptr ptr ptr)
 @ stub D3DXSHMultiply4(ptr ptr ptr)
 @ stub D3DXSHMultiply5(ptr ptr ptr)
