@@ -646,6 +646,47 @@ static func_disp_t *create_func_disp(DispatchEx *obj, func_info_t *info)
     return ret;
 }
 
+static HRESULT invoke_disp_value(DispatchEx *This, IDispatch *func_disp, LCID lcid, WORD flags, DISPPARAMS *dp,
+        VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
+{
+    DISPID named_arg = DISPID_THIS;
+    DISPPARAMS new_dp = {NULL, &named_arg, 0, 1};
+    IDispatchEx *dispex;
+    HRESULT hres;
+
+    if(dp->cNamedArgs) {
+        FIXME("named args not supported\n");
+        return E_NOTIMPL;
+    }
+
+    new_dp.rgvarg = heap_alloc((dp->cArgs+1)*sizeof(VARIANTARG));
+    if(!new_dp.rgvarg)
+        return E_OUTOFMEMORY;
+
+    new_dp.cArgs = dp->cArgs+1;
+    memcpy(new_dp.rgvarg+1, dp->rgvarg, dp->cArgs*sizeof(VARIANTARG));
+
+    V_VT(new_dp.rgvarg) = VT_DISPATCH;
+    V_DISPATCH(new_dp.rgvarg) = (IDispatch*)&This->IDispatchEx_iface;
+
+    hres = IDispatch_QueryInterface(func_disp, &IID_IDispatchEx, (void**)&dispex);
+    TRACE(">>>\n");
+    if(SUCCEEDED(hres)) {
+        hres = IDispatchEx_InvokeEx(dispex, DISPID_VALUE, lcid, flags, &new_dp, res, ei, caller);
+        IDispatchEx_Release(dispex);
+    }else {
+        ULONG err = 0;
+        hres = IDispatch_Invoke(func_disp, DISPID_VALUE, &IID_NULL, lcid, flags, &new_dp, res, ei, &err);
+    }
+    if(SUCCEEDED(hres))
+        TRACE("<<< %s\n", debugstr_variant(res));
+    else
+        WARN("<<< %08x\n", hres);
+
+    heap_free(new_dp.rgvarg);
+    return hres;
+}
+
 static HRESULT function_invoke(DispatchEx *This, func_info_t *func, WORD flags, DISPPARAMS *dp, VARIANT *res,
         EXCEPINFO *ei)
 {
@@ -1108,45 +1149,13 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
             if(!pvarRes)
                 return E_INVALIDARG;
             /* fall through */
-        case DISPATCH_METHOD: {
-            DISPID named_arg = DISPID_THIS;
-            DISPPARAMS dp = {NULL, &named_arg, 0, 1};
-            IDispatchEx *dispex;
-
+        case DISPATCH_METHOD:
             if(V_VT(&prop->var) != VT_DISPATCH) {
                 FIXME("invoke %s\n", debugstr_variant(&prop->var));
                 return E_NOTIMPL;
             }
 
-            if(pdp->cNamedArgs) {
-                FIXME("named args not supported\n");
-                return E_NOTIMPL;
-            }
-
-            dp.rgvarg = heap_alloc((pdp->cArgs+1)*sizeof(VARIANTARG));
-            if(!dp.rgvarg)
-                return E_OUTOFMEMORY;
-
-            dp.cArgs = pdp->cArgs+1;
-            memcpy(dp.rgvarg+1, pdp->rgvarg, pdp->cArgs*sizeof(VARIANTARG));
-
-            V_VT(dp.rgvarg) = VT_DISPATCH;
-            V_DISPATCH(dp.rgvarg) = (IDispatch*)&This->IDispatchEx_iface;
-
-            hres = IDispatch_QueryInterface(V_DISPATCH(&prop->var), &IID_IDispatchEx, (void**)&dispex);
-            TRACE("%s call\n", debugstr_w(This->dynamic_data->props[idx].name));
-            if(SUCCEEDED(hres)) {
-                hres = IDispatchEx_InvokeEx(dispex, DISPID_VALUE, lcid, wFlags, &dp, pvarRes, pei, pspCaller);
-                IDispatchEx_Release(dispex);
-            }else {
-                ULONG err = 0;
-                hres = IDispatch_Invoke(V_DISPATCH(&prop->var), DISPID_VALUE, &IID_NULL, lcid, wFlags, pdp, pvarRes, pei, &err);
-            }
-            TRACE("%s ret %08x\n", debugstr_w(This->dynamic_data->props[idx].name), hres);
-
-            heap_free(dp.rgvarg);
-            return hres;
-        }
+            return invoke_disp_value(This, V_DISPATCH(&prop->var), lcid, wFlags, pdp, pvarRes, pei, pspCaller);
         case DISPATCH_PROPERTYGET:
             if(prop->flags & DYNPROP_DELETED)
                 return DISP_E_UNKNOWNNAME;
