@@ -11439,7 +11439,7 @@ msgstr "暫停(&P)"
 
 #: taskmgr.rc:68 taskmgr.rc:256
 msgid "&Select Columns..."
-msgstr "選擇欄位(&S)..."
+msgstr "選擇欄(&S)…"
 
 #: taskmgr.rc:69 taskmgr.rc:258
 msgid "&CPU History"
@@ -11986,47 +11986,47 @@ msgstr "取消工作管理員隱藏狀態"
 
 #: taskmgr.rc:230
 msgid "Removes the process from the system"
-msgstr "將行程從系統中移除"
+msgstr "將進程從系統中移除"
 
 #: taskmgr.rc:232
 msgid "Removes this process and all descendants from the system"
-msgstr "將行程及其附屬行程從系統中移除"
+msgstr "將進程及其附屬進程從系統中移除"
 
 #: taskmgr.rc:233
 msgid "Attaches the debugger to this process"
-msgstr "將除錯器接到本行程"
+msgstr "將除錯器接到本進程"
 
 #: taskmgr.rc:235
 msgid "Controls which processors the process will be allowed to run on"
-msgstr "控制各行程使用那個處理器"
+msgstr "控制各進程使用那個處理器"
 
 #: taskmgr.rc:237
 msgid "Sets process to the REALTIME priority class"
-msgstr "將行程設為即時優先等級"
+msgstr "將進程設為即時優先等級"
 
 #: taskmgr.rc:238
 msgid "Sets process to the HIGH priority class"
-msgstr "將行程設為高優先級"
+msgstr "將進程設為高優先級"
 
 #: taskmgr.rc:240
 msgid "Sets process to the ABOVE NORMAL priority class"
-msgstr "將行程設為中等以上優先級"
+msgstr "將進程設為中等以上優先級"
 
 #: taskmgr.rc:242
 msgid "Sets process to the NORMAL priority class"
-msgstr "將行程設為中等優先級"
+msgstr "將進程設為中等優先級"
 
 #: taskmgr.rc:244
 msgid "Sets process to the BELOW NORMAL priority class"
-msgstr "將行程設為中等以下優先級"
+msgstr "將進程設為中等以下優先級"
 
 #: taskmgr.rc:245
 msgid "Sets process to the LOW priority class"
-msgstr "將行程設為低優先級"
+msgstr "將進程設為低優先級"
 
 #: taskmgr.rc:247
 msgid "Controls Debug Channels"
-msgstr ""
+msgstr "控制項除錯頻道"
 
 #: taskmgr.rc:264
 msgid "Performance"
@@ -12038,7 +12038,7 @@ msgstr "CPU 使用率: %3d%%"
 
 #: taskmgr.rc:266
 msgid "Processes: %d"
-msgstr "處理程序：%d"
+msgstr "進程：%d"
 
 #: taskmgr.rc:267
 msgid "Mem Usage: %1!u!kB / %2!u!kB"
@@ -12050,11 +12050,11 @@ msgstr "影像名稱"
 
 #: taskmgr.rc:273
 msgid "PID"
-msgstr ""
+msgstr "PID"
 
 #: taskmgr.rc:274
 msgid "CPU"
-msgstr ""
+msgstr "CPU"
 
 #: taskmgr.rc:275
 msgid "CPU Time"
@@ -12094,19 +12094,19 @@ msgstr "PF 差異"
 
 #: taskmgr.rc:286
 msgid "VM Size"
-msgstr "VM 大小"
+msgstr "虛擬機器大小"
 
 #: taskmgr.rc:287
 msgid "Paged Pool"
-msgstr "分頁池"
+msgstr "置換頁池"
 
 #: taskmgr.rc:288
 msgid "NP Pool"
-msgstr ""
+msgstr "非置換頁池"
 
 #: taskmgr.rc:289
 msgid "Base Pri"
-msgstr ""
+msgstr "基底優先權"
 
 #: taskmgr.rc:301
 msgid "Task Manager Warning"
@@ -12118,10 +12118,13 @@ msgid ""
 "cause undesired results including system instability. Are you\n"
 "sure you want to change the priority class?"
 msgstr ""
+"警告：變更這個進程的優先權類別也許會\n"
+"造成預料之外的結果像是系統的不穩定。\n"
+"您確定要變更優先權類別嗎？"
 
 #: taskmgr.rc:305
 msgid "Unable to Change Priority"
-msgstr ""
+msgstr "無法變更優先權"
 
 #: taskmgr.rc:310
 msgid ""
@@ -12131,32 +12134,39 @@ msgid ""
 "data before it is terminated. Are you sure you want to\n"
 "terminate the process?"
 msgstr ""
+"警告：終止進程可以造成 undesired\n"
+"結果包含失真的資料和系統 instability。\n"
+"進程將無法被給定的 chance 到儲存它的狀態或\n"
+"資料之前它被終止。確定要\n"
+"終止進程？"
 
 #: taskmgr.rc:311
 msgid "Unable to Terminate Process"
-msgstr ""
+msgstr "無法終止進程"
 
 #: taskmgr.rc:313
 msgid ""
 "WARNING: Debugging this process may result in loss of data.\n"
 "Are you sure you wish to attach the debugger?"
 msgstr ""
+"警告：對這個進程偵錯也許會導致資料失真。\n"
+"您確定希望要附加除錯程式？"
 
 #: taskmgr.rc:314
 msgid "Unable to Debug Process"
-msgstr ""
+msgstr "無法對進程進行除錯"
 
 #: taskmgr.rc:315
 msgid "The process must have affinity with at least one processor"
-msgstr ""
+msgstr "進程必須有具備至少一個處理器的近似者"
 
 #: taskmgr.rc:316
 msgid "Invalid Option"
-msgstr ""
+msgstr "無效的選項"
 
 #: taskmgr.rc:317
 msgid "Unable to Access or Set Process Affinity"
-msgstr ""
+msgstr "無法存取或設定進程近似者"
 
 #: taskmgr.rc:322
 msgid "System Idle Process"
@@ -12185,7 +12195,7 @@ msgid ""
 "Do you want to remove the uninstall entry from the registry?"
 msgstr ""
 "移除指令執行失敗「%s」, 可能是找不到可執行程式。\n"
-"您要將這項移除指令從登錄檔中刪除嗎？"
+"您要將這項移除指令從註冊表中刪除嗎？"
 
 #: view.rc:33
 msgid "&Pan"
@@ -12222,9 +12232,9 @@ msgid ""
 "\n"
 "If you terminate the process you may lose all unsaved data."
 msgstr ""
-"正在模擬關機，但此程序沒有反應。\n"
+"正在模擬關機，但此程式沒有反應。\n"
 "\n"
-"如果您中斷程式，可能會遺失尚未儲存的資料。"
+"如果您中斷進程，可能會遺失尚未儲存的資料。"
 
 #: wineboot.rc:39
 msgid "Wine"
@@ -12232,7 +12242,7 @@ msgstr "Wine"
 
 #: wineboot.rc:43
 msgid "The Wine configuration in %s is being updated, please wait..."
-msgstr "正在更新 %s 的 Wine 設定，請稍候..."
+msgstr "正在更新 %s 的 Wine 設定，請稍候…"
 
 #: winecfg.rc:132
 msgid ""
@@ -12242,7 +12252,7 @@ msgid ""
 "option) any later version."
 msgstr ""
 "這個程式是自由軟體；您可以遵照自由軟體基金會所制定的 GNU LGPL 2.1 版或者更新"
-"版本的許可條款來修改和重新散佈這個程式。"
+"版本的許可條款來修改和重新散布這個程式。"
 
 #: winecfg.rc:134
 msgid "Windows registration information"
@@ -12271,7 +12281,7 @@ msgstr ""
 
 #: winecfg.rc:150
 msgid "&Add application..."
-msgstr "新增程式設定(&A)..."
+msgstr "新增程式設定(&A)…"
 
 #: winecfg.rc:151
 msgid "&Remove application"
@@ -12311,7 +12321,7 @@ msgstr "螢幕解析度"
 
 #: winecfg.rc:175
 msgid "This is a sample text using 10 point Tahoma"
-msgstr ""
+msgstr "這是使用 10 點 Tahoma 字型的範例文字"
 
 #: winecfg.rc:182
 msgid "DLL overrides"
@@ -12340,7 +12350,7 @@ msgstr "已有的函式庫覆載(&O)："
 
 #: winecfg.rc:190
 msgid "&Edit..."
-msgstr "編輯(&E)..."
+msgstr "編輯(&E)…"
 
 #: winecfg.rc:196
 msgid "Edit Override"
@@ -12378,11 +12388,11 @@ msgstr "儲存裝置對應"
 msgid ""
 "Failed to connect to the mount manager, the drive configuration cannot be "
 "edited."
-msgstr ""
+msgstr "連線到掛載管理員時失敗，無法編輯磁碟組態。"
 
 #: winecfg.rc:227
 msgid "&Add..."
-msgstr "加入(&A)..."
+msgstr "加入(&A)…"
 
 #: winecfg.rc:229
 msgid "Auto&detect"
@@ -12402,7 +12412,7 @@ msgstr "裝置(&V)："
 
 #: winecfg.rc:242
 msgid "Bro&wse..."
-msgstr "瀏覽(&W)..."
+msgstr "瀏覽(&W)…"
 
 #: winecfg.rc:244
 msgid "&Label:"
@@ -12450,11 +12460,11 @@ msgstr "外觀"
 
 #: winecfg.rc:275
 msgid "&Theme:"
-msgstr "佈景主題(&T)："
+msgstr "布景主題(&T)："
 
 #: winecfg.rc:277
 msgid "&Install theme..."
-msgstr "安裝佈景主題(&I)..."
+msgstr "安裝布景主題(&I)…"
 
 #: winecfg.rc:282
 msgid "It&em:"
@@ -12490,7 +12500,7 @@ msgstr "隱藏進階選項(&A)"
 
 #: winecfg.rc:36
 msgid "(No Theme)"
-msgstr "(無佈景主題)"
+msgstr "(無布景主題)"
 
 #: winecfg.rc:37
 msgid "Graphics"
@@ -12514,11 +12524,11 @@ msgstr "Wine 設定"
 
 #: winecfg.rc:43
 msgid "Theme files (*.msstyles; *.theme)"
-msgstr "佈景主題檔案 (*.msstyles；*.theme)"
+msgstr "布景主題檔案 (*.msstyles; *.theme)"
 
 #: winecfg.rc:44
 msgid "Select a theme file"
-msgstr "選擇一個佈景主題檔案"
+msgstr "選擇一個布景主題檔案"
 
 #: winecfg.rc:45
 msgid "Folder"
