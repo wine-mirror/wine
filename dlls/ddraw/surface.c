@@ -712,14 +712,11 @@ static HRESULT WINAPI ddraw_surface7_GetAttachedSurface(IDirectDrawSurface7 *ifa
         surf = This->complex_array[i];
         if(!surf) break;
 
-        if (TRACE_ON(ddraw))
-        {
-            TRACE("Surface: (%p) caps: %x,%x,%x,%x\n", surf,
-                   surf->surface_desc.ddsCaps.dwCaps,
-                   surf->surface_desc.ddsCaps.dwCaps2,
-                   surf->surface_desc.ddsCaps.dwCaps3,
-                   surf->surface_desc.ddsCaps.dwCaps4);
-        }
+        TRACE("Surface: (%p) caps: %#x, %#x, %#x, %#x.\n", surf,
+                surf->surface_desc.ddsCaps.dwCaps,
+                surf->surface_desc.ddsCaps.dwCaps2,
+                surf->surface_desc.ddsCaps.dwCaps3,
+                surf->surface_desc.ddsCaps.dwCaps4);
 
         if (((surf->surface_desc.ddsCaps.dwCaps & our_caps.dwCaps) == our_caps.dwCaps) &&
             ((surf->surface_desc.ddsCaps.dwCaps2 & our_caps.dwCaps2) == our_caps.dwCaps2)) {
@@ -745,14 +742,11 @@ static HRESULT WINAPI ddraw_surface7_GetAttachedSurface(IDirectDrawSurface7 *ifa
 
     while( (surf = surf->next_attached) )
     {
-        if (TRACE_ON(ddraw))
-        {
-            TRACE("Surface: (%p) caps: %x,%x,%x,%x\n", surf,
-                   surf->surface_desc.ddsCaps.dwCaps,
-                   surf->surface_desc.ddsCaps.dwCaps2,
-                   surf->surface_desc.ddsCaps.dwCaps3,
-                   surf->surface_desc.ddsCaps.dwCaps4);
-        }
+        TRACE("Surface: (%p) caps: %#x, %#x, %#x, %#x.\n", surf,
+                surf->surface_desc.ddsCaps.dwCaps,
+                surf->surface_desc.ddsCaps.dwCaps2,
+                surf->surface_desc.ddsCaps.dwCaps3,
+                surf->surface_desc.ddsCaps.dwCaps4);
 
         if (((surf->surface_desc.ddsCaps.dwCaps & our_caps.dwCaps) == our_caps.dwCaps) &&
             ((surf->surface_desc.ddsCaps.dwCaps2 & our_caps.dwCaps2) == our_caps.dwCaps2)) {
