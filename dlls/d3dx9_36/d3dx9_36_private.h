@@ -67,6 +67,9 @@ const PixelFormatDesc *get_format_info_idx(int idx) DECLSPEC_HIDDEN;
 void copy_simple_data(const BYTE *src, UINT src_row_pitch, UINT src_slice_pitch, SIZE src_size, UINT src_depth, const PixelFormatDesc *src_format,
         BYTE *dst, UINT dst_row_pitch, UINT dst_slice_pitch, SIZE dst_size, UINT dst_depth, const PixelFormatDesc *dst_format,
         D3DCOLOR color_key) DECLSPEC_HIDDEN;
+void point_filter_simple_data(const BYTE *src, UINT src_row_pitch, UINT src_slice_pitch, SIZE src_size, UINT src_depth, const PixelFormatDesc *src_format,
+        BYTE *dst, UINT dst_row_pitch, UINT dst_slice_pitch, SIZE dst_size, UINT dst_depth, const PixelFormatDesc *dst_format,
+        D3DCOLOR color_key) DECLSPEC_HIDDEN;
 
 HRESULT load_texture_from_dds(IDirect3DTexture9 *texture, const void *src_data, const PALETTEENTRY *palette,
     DWORD filter, D3DCOLOR color_key, const D3DXIMAGE_INFO *src_info) DECLSPEC_HIDDEN;

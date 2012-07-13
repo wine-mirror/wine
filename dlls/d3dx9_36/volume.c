@@ -226,8 +226,11 @@ HRESULT WINAPI D3DXLoadVolumeFromMemory(IDirect3DVolume9 *dst_volume,
         }
         else
         {
-            FIXME("Filtering for volume textures not implemented\n");
-            return E_NOTIMPL;
+            if ((filter & 0xf) != D3DX_FILTER_POINT)
+                FIXME("Unhandled filter %#x.\n", filter);
+
+            point_filter_simple_data(src_addr, src_row_pitch, src_slice_pitch, src_size, src_depth, src_format_desc,
+                    locked_box.pBits, locked_box.RowPitch, locked_box.SlicePitch, dst_size, dst_depth, dst_format_desc, color_key);
         }
 
         IDirect3DVolume9_UnlockBox(dst_volume);
