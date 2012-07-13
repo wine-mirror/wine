@@ -4754,47 +4754,47 @@ msgstr "找不到 DLL 檔。\n"
 
 #: winerror.mc:1516
 msgid "Out of user handles.\n"
-msgstr ""
+msgstr "超出使用者控柄。\n"
 
 #: winerror.mc:1521
 msgid "Message can only be used in synchronous calls.\n"
-msgstr ""
+msgstr "訊息只能用於同步的呼叫。\n"
 
 #: winerror.mc:1526
 msgid "The source element is empty.\n"
-msgstr ""
+msgstr "來源元件是空的。\n"
 
 #: winerror.mc:1531
 msgid "The destination element is full.\n"
-msgstr ""
+msgstr "目的元件已滿。\n"
 
 #: winerror.mc:1536
 msgid "The element address is invalid.\n"
-msgstr ""
+msgstr "元件位址無效。\n"
 
 #: winerror.mc:1541
 msgid "The magazine is not present.\n"
-msgstr ""
+msgstr "儲存架不存在。\n"
 
 #: winerror.mc:1546
 msgid "The device needs reinitialization.\n"
-msgstr ""
+msgstr "裝置需要重新初始化。\n"
 
 #: winerror.mc:1551
 msgid "The device requires cleaning.\n"
-msgstr ""
+msgstr "裝置需要清潔。\n"
 
 #: winerror.mc:1556
 msgid "The device door is open.\n"
-msgstr ""
+msgstr "裝置匣門已開啟。\n"
 
 #: winerror.mc:1561
 msgid "The device is not connected.\n"
-msgstr "裝置未連線。\n"
+msgstr "裝置未連接。\n"
 
 #: winerror.mc:1566
 msgid "Element not found.\n"
-msgstr ""
+msgstr "找不到元件。\n"
 
 #: winerror.mc:1571
 msgid "No match found.\n"
@@ -4802,31 +4802,31 @@ msgstr "找不到相符的。\n"
 
 #: winerror.mc:1576
 msgid "Property set not found.\n"
-msgstr ""
+msgstr "找不到屬性集。\n"
 
 #: winerror.mc:1581
 msgid "Point not found.\n"
-msgstr ""
+msgstr "找不到點。\n"
 
 #: winerror.mc:1586
 msgid "No running tracking service.\n"
-msgstr ""
+msgstr "沒在執行追蹤服務。\n"
 
 #: winerror.mc:1591
 msgid "No such volume ID.\n"
-msgstr ""
+msgstr "沒有此類卷冊識別號。\n"
 
 #: winerror.mc:1596
 msgid "Unable to remove the file to be replaced.\n"
-msgstr ""
+msgstr "無法移除被置換的檔案。\n"
 
 #: winerror.mc:1601
 msgid "Unable to move the replacement file into place.\n"
-msgstr ""
+msgstr "無法移動置換檔案進入位置。\n"
 
 #: winerror.mc:1606
 msgid "Moving the replacement file failed.\n"
-msgstr ""
+msgstr "移動置換檔案失敗。\n"
 
 #: winerror.mc:1611
 msgid "The journal is being deleted.\n"
@@ -4834,51 +4834,51 @@ msgstr "正在刪除日誌。\n"
 
 #: winerror.mc:1616
 msgid "The journal is not active.\n"
-msgstr ""
+msgstr "日誌現未啟用。\n"
 
 #: winerror.mc:1621
 msgid "Potential matching file found.\n"
-msgstr ""
+msgstr "找到可能的匹配檔案。\n"
 
 #: winerror.mc:1626
 msgid "The journal entry was deleted.\n"
-msgstr ""
+msgstr "日誌條目已被刪除。\n"
 
 #: winerror.mc:1631
 msgid "Invalid device name.\n"
-msgstr ""
+msgstr "無效的裝置名稱。\n"
 
 #: winerror.mc:1636
 msgid "Connection unavailable.\n"
-msgstr ""
+msgstr "連接不得使用。\n"
 
 #: winerror.mc:1641
 msgid "Device already remembered.\n"
-msgstr ""
+msgstr "裝置已被記住。\n"
 
 #: winerror.mc:1646
 msgid "No network or bad path.\n"
-msgstr ""
+msgstr "沒有網路或不當的路徑。\n"
 
 #: winerror.mc:1651
 msgid "Invalid network provider name.\n"
-msgstr ""
+msgstr "無效的網路提供者名稱。\n"
 
 #: winerror.mc:1656
 msgid "Cannot open network connection profile.\n"
-msgstr ""
+msgstr "無法開啟網路連線側寫檔。\n"
 
 #: winerror.mc:1661
 msgid "Corrupt network connection profile.\n"
-msgstr ""
+msgstr "損壞的網路連線側寫檔。\n"
 
 #: winerror.mc:1666
 msgid "Not a container.\n"
-msgstr ""
+msgstr "不是一個容器。\n"
 
 #: winerror.mc:1671
 msgid "Extended error.\n"
-msgstr ""
+msgstr "進階錯誤。\n"
 
 #: winerror.mc:1676
 msgid "Invalid group name.\n"
@@ -4914,31 +4914,31 @@ msgstr "無效的訊息名稱。\n"
 
 #: winerror.mc:1721
 msgid "Invalid message destination.\n"
-msgstr ""
+msgstr "無效的訊息目的地。\n"
 
 #: winerror.mc:1726
 msgid "Session credential conflict.\n"
-msgstr ""
+msgstr "作業階段憑據發生衝突。\n"
 
 #: winerror.mc:1731
 msgid "Remote session limit exceeded.\n"
-msgstr ""
+msgstr "已超出遠端作業階段限制。\n"
 
 #: winerror.mc:1736
 msgid "Duplicate domain or workgroup name.\n"
-msgstr ""
+msgstr "重複網域或工作群組名稱。\n"
 
 #: winerror.mc:1741
 msgid "No network.\n"
-msgstr ""
+msgstr "沒有網路。\n"
 
 #: winerror.mc:1746
 msgid "Operation canceled by user.\n"
-msgstr ""
+msgstr "作業被使用者取消。\n"
 
 #: winerror.mc:1751
 msgid "File has a user-mapped section.\n"
-msgstr ""
+msgstr "檔案具有使用者對應區段。\n"
 
 #: winerror.mc:1756 winerror.mc:3741
 msgid "Connection refused.\n"
@@ -4946,15 +4946,15 @@ msgstr "連線被拒。\n"
 
 #: winerror.mc:1761
 msgid "Connection gracefully closed.\n"
-msgstr ""
+msgstr "已平順關閉連接。\n"
 
 #: winerror.mc:1766
 msgid "Address already associated with transport endpoint.\n"
-msgstr ""
+msgstr "位址已關聯至傳輸端點。\n"
 
 #: winerror.mc:1771
 msgid "Address not associated with transport endpoint.\n"
-msgstr ""
+msgstr "位址未關聯至傳輸端點。\n"
 
 #: winerror.mc:1776
 msgid "Connection invalid.\n"
@@ -4962,55 +4962,55 @@ msgstr "連線無效。\n"
 
 #: winerror.mc:1781
 msgid "Connection is active.\n"
-msgstr ""
+msgstr "連接現正使用。\n"
 
 #: winerror.mc:1786
 msgid "Network unreachable.\n"
-msgstr ""
+msgstr "無法連線網路。\n"
 
 #: winerror.mc:1791
 msgid "Host unreachable.\n"
-msgstr ""
+msgstr "無法連線主機。\n"
 
 #: winerror.mc:1796
 msgid "Protocol unreachable.\n"
-msgstr ""
+msgstr "無法連線協定。\n"
 
 #: winerror.mc:1801
 msgid "Port unreachable.\n"
-msgstr ""
+msgstr "無法連線通訊埠。\n"
 
 #: winerror.mc:1806
 msgid "Request aborted.\n"
-msgstr ""
+msgstr "已放棄要求。\n"
 
 #: winerror.mc:1811
 msgid "Connection aborted.\n"
-msgstr ""
+msgstr "已放棄連接。\n"
 
 #: winerror.mc:1816
 msgid "Please retry operation.\n"
-msgstr ""
+msgstr "請重試操作。\n"
 
 #: winerror.mc:1821
 msgid "Connection count limit reached.\n"
-msgstr ""
+msgstr "達到了連接數限制。\n"
 
 #: winerror.mc:1826
 msgid "Login time restriction.\n"
-msgstr ""
+msgstr "登入時間限制。\n"
 
 #: winerror.mc:1831
 msgid "Login workstation restriction.\n"
-msgstr ""
+msgstr "登入工作站限制。\n"
 
 #: winerror.mc:1836
 msgid "Incorrect network address.\n"
-msgstr ""
+msgstr "不正確網路位址。\n"
 
 #: winerror.mc:1841
 msgid "Service already registered.\n"
-msgstr ""
+msgstr "服務已註冊。\n"
 
 #: winerror.mc:1846
 msgid "Service not found.\n"
@@ -5022,11 +5022,11 @@ msgstr "使用者未被認證。\n"
 
 #: winerror.mc:1856
 msgid "User not logged on.\n"
-msgstr ""
+msgstr "使用者未被記錄。\n"
 
 #: winerror.mc:1861
 msgid "Continue work in progress.\n"
-msgstr ""
+msgstr "繼續進行工作。\n"
 
 #: winerror.mc:1866
 msgid "Already initialized.\n"
@@ -5034,95 +5034,95 @@ msgstr "已經初始化。\n"
 
 #: winerror.mc:1871
 msgid "No more local devices.\n"
-msgstr ""
+msgstr "已無更多本地裝置。\n"
 
 #: winerror.mc:1876
 msgid "The site does not exist.\n"
-msgstr ""
+msgstr "站臺不存在。\n"
 
 #: winerror.mc:1881
 msgid "The domain controller already exists.\n"
-msgstr ""
+msgstr "網域控制器已經存在。\n"
 
 #: winerror.mc:1886
 msgid "Supported only when connected.\n"
-msgstr ""
+msgstr "只有連線時才支援。\n"
 
 #: winerror.mc:1891
 msgid "Perform operation even when nothing changed.\n"
-msgstr ""
+msgstr "即使沒有變更任何東西時也進行作業。\n"
 
 #: winerror.mc:1896
 msgid "The user profile is invalid.\n"
-msgstr ""
+msgstr "使用者側寫檔無效。\n"
 
 #: winerror.mc:1901
 msgid "Not supported on Small Business Server.\n"
-msgstr ""
+msgstr "不支援小型商務伺服器。\n"
 
 #: winerror.mc:1906
 msgid "Not all privileges assigned.\n"
-msgstr ""
+msgstr "並非所有權限都被指派。\n"
 
 #: winerror.mc:1911
 msgid "Some security IDs not mapped.\n"
-msgstr ""
+msgstr "某些安全識別號未對應。\n"
 
 #: winerror.mc:1916
 msgid "No quotas for account.\n"
-msgstr ""
+msgstr "帳號沒有配額。\n"
 
 #: winerror.mc:1921
 msgid "Local user session key.\n"
-msgstr ""
+msgstr "本地使用者作業階段金鑰。\n"
 
 #: winerror.mc:1926
 msgid "Password too complex for LM.\n"
-msgstr ""
+msgstr "本機的密碼太複雜。\n"
 
 #: winerror.mc:1931
 msgid "Unknown revision.\n"
-msgstr ""
+msgstr "不明修訂。\n"
 
 #: winerror.mc:1936
 msgid "Incompatible revision levels.\n"
-msgstr ""
+msgstr "不相容的修訂等級。\n"
 
 #: winerror.mc:1941
 msgid "Invalid owner.\n"
-msgstr ""
+msgstr "無效的擁有者。\n"
 
 #: winerror.mc:1946
 msgid "Invalid primary group.\n"
-msgstr ""
+msgstr "無效的主要群組。\n"
 
 #: winerror.mc:1951
 msgid "No impersonation token.\n"
-msgstr ""
+msgstr "沒有假冒字組。\n"
 
 #: winerror.mc:1956
 msgid "Can't disable mandatory group.\n"
-msgstr ""
+msgstr "無法停用必要群組。\n"
 
 #: winerror.mc:1961
 msgid "No logon servers available.\n"
-msgstr ""
+msgstr "沒有可用的登錄伺服器。\n"
 
 #: winerror.mc:1966
 msgid "No such logon session.\n"
-msgstr ""
+msgstr "沒有此類登錄作業階段。\n"
 
 #: winerror.mc:1971
 msgid "No such privilege.\n"
-msgstr ""
+msgstr "沒有此類權限。\n"
 
 #: winerror.mc:1976
 msgid "Privilege not held.\n"
-msgstr ""
+msgstr "未持有權限。\n"
 
 #: winerror.mc:1981
 msgid "Invalid account name.\n"
-msgstr ""
+msgstr "無效的帳號名稱。\n"
 
 #: winerror.mc:1986
 msgid "User already exists.\n"
@@ -5150,7 +5150,7 @@ msgstr "使用者不在群組內。\n"
 
 #: winerror.mc:2016
 msgid "Can't delete last admin user.\n"
-msgstr "無法刪除唯一的管理員。\n"
+msgstr "無法刪除最後一位管理員。\n"
 
 #: winerror.mc:2021
 msgid "Wrong password.\n"
@@ -5158,11 +5158,11 @@ msgstr "密碼錯誤。\n"
 
 #: winerror.mc:2026
 msgid "Ill-formed password.\n"
-msgstr ""
+msgstr "不當形式的密碼。\n"
 
 #: winerror.mc:2031
 msgid "Password restriction.\n"
-msgstr ""
+msgstr "密碼限制。\n"
 
 #: winerror.mc:2036
 msgid "Logon failure.\n"
@@ -5170,15 +5170,15 @@ msgstr "登入失敗。\n"
 
 #: winerror.mc:2041
 msgid "Account restriction.\n"
-msgstr ""
+msgstr "帳號限制。\n"
 
 #: winerror.mc:2046
 msgid "Invalid logon hours.\n"
-msgstr ""
+msgstr "無效的登錄時數。\n"
 
 #: winerror.mc:2051
 msgid "Invalid workstation.\n"
-msgstr ""
+msgstr "無效的工作站。\n"
 
 #: winerror.mc:2056
 msgid "Password expired.\n"
@@ -5190,35 +5190,35 @@ msgstr "帳號已停用。\n"
 
 #: winerror.mc:2066
 msgid "No security ID mapped.\n"
-msgstr ""
+msgstr "沒有對應的安全識別號。\n"
 
 #: winerror.mc:2071
 msgid "Too many LUIDs requested.\n"
-msgstr ""
+msgstr "要求了太多 LUID。\n"
 
 #: winerror.mc:2076
 msgid "LUIDs exhausted.\n"
-msgstr ""
+msgstr "LUID 已耗盡。\n"
 
 #: winerror.mc:2081
 msgid "Invalid sub authority.\n"
-msgstr ""
+msgstr "無效的子授權。\n"
 
 #: winerror.mc:2086
 msgid "Invalid ACL.\n"
-msgstr ""
+msgstr "無效的 ACL。\n"
 
 #: winerror.mc:2091
 msgid "Invalid SID.\n"
-msgstr ""
+msgstr "無效的 SID。\n"
 
 #: winerror.mc:2096
 msgid "Invalid security descriptor.\n"
-msgstr ""
+msgstr "無效的安全描述元。\n"
 
 #: winerror.mc:2101
 msgid "Bad inherited ACL.\n"
-msgstr ""
+msgstr "不當繼承的 ACL。\n"
 
 #: winerror.mc:2106
 msgid "Server disabled.\n"
@@ -5226,59 +5226,59 @@ msgstr "伺服器已停用。\n"
 
 #: winerror.mc:2111
 msgid "Server not disabled.\n"
-msgstr ""
+msgstr "伺服器未停用。\n"
 
 #: winerror.mc:2116
 msgid "Invalid ID authority.\n"
-msgstr ""
+msgstr "無效的識別號授權。\n"
 
 #: winerror.mc:2121
 msgid "Allotted space exceeded.\n"
-msgstr ""
+msgstr "超出所分配的空格。\n"
 
 #: winerror.mc:2126
 msgid "Invalid group attributes.\n"
-msgstr ""
+msgstr "無效的群組屬性。\n"
 
 #: winerror.mc:2131
 msgid "Bad impersonation level.\n"
-msgstr ""
+msgstr "不當的假冒等級。\n"
 
 #: winerror.mc:2136
 msgid "Can't open anonymous security token.\n"
-msgstr ""
+msgstr "無法開啟匿名安全性代表字組。\n"
 
 #: winerror.mc:2141
 msgid "Bad validation class.\n"
-msgstr ""
+msgstr "不當的驗證類別。\n"
 
 #: winerror.mc:2146
 msgid "Bad token type.\n"
-msgstr ""
+msgstr "不當的字組型態。\n"
 
 #: winerror.mc:2151
 msgid "No security on object.\n"
-msgstr ""
+msgstr "物件沒有安全性。\n"
 
 #: winerror.mc:2156
 msgid "Can't access domain information.\n"
-msgstr ""
+msgstr "無法存取網域資訊。\n"
 
 #: winerror.mc:2161
 msgid "Invalid server state.\n"
-msgstr ""
+msgstr "無效的伺服器狀態。\n"
 
 #: winerror.mc:2166
 msgid "Invalid domain state.\n"
-msgstr ""
+msgstr "無效的網域狀態。\n"
 
 #: winerror.mc:2171
 msgid "Invalid domain role.\n"
-msgstr ""
+msgstr "無效的網域角色。\n"
 
 #: winerror.mc:2176
 msgid "No such domain.\n"
-msgstr ""
+msgstr "沒有此類網域。\n"
 
 #: winerror.mc:2181
 msgid "Domain already exists.\n"
@@ -5286,339 +5286,339 @@ msgstr "網域已經存在。\n"
 
 #: winerror.mc:2186
 msgid "Domain limit exceeded.\n"
-msgstr ""
+msgstr "超出網域限制。\n"
 
 #: winerror.mc:2191
 msgid "Internal database corruption.\n"
-msgstr ""
+msgstr "內部資料庫損壞。\n"
 
 #: winerror.mc:2196
 msgid "Internal error.\n"
-msgstr ""
+msgstr "內部錯誤。\n"
 
 #: winerror.mc:2201
 msgid "Generic access types not mapped.\n"
-msgstr ""
+msgstr "通用存取類型未對應。\n"
 
 #: winerror.mc:2206
 msgid "Bad descriptor format.\n"
-msgstr ""
+msgstr "不當的描述元格式。\n"
 
 #: winerror.mc:2211
 msgid "Not a logon process.\n"
-msgstr ""
+msgstr "不是個登錄進程。\n"
 
 #: winerror.mc:2216
 msgid "Logon session ID exists.\n"
-msgstr ""
+msgstr "登錄期間識別碼已存在。\n"
 
 #: winerror.mc:2221
 msgid "Unknown authentication package.\n"
-msgstr ""
+msgstr "不明認證套件。\n"
 
 #: winerror.mc:2226
 msgid "Bad logon session state.\n"
-msgstr ""
+msgstr "不當的登錄作業階段狀態。\n"
 
 #: winerror.mc:2231
 msgid "Logon session ID collision.\n"
-msgstr ""
+msgstr "登錄期間識別碼產生碰撞。\n"
 
 #: winerror.mc:2236
 msgid "Invalid logon type.\n"
-msgstr ""
+msgstr "無效的登錄型態。\n"
 
 #: winerror.mc:2241
 msgid "Cannot impersonate.\n"
-msgstr ""
+msgstr "無法假冒。\n"
 
 #: winerror.mc:2246
 msgid "Invalid transaction state.\n"
-msgstr ""
+msgstr "無效的異動作業狀態。\n"
 
 #: winerror.mc:2251
 msgid "Security DB commit failure.\n"
-msgstr ""
+msgstr "安全資料庫認可失敗。\n"
 
 #: winerror.mc:2256
 msgid "Account is built-in.\n"
-msgstr ""
+msgstr "帳號為內建。\n"
 
 #: winerror.mc:2261
 msgid "Group is built-in.\n"
-msgstr ""
+msgstr "群組為內建。\n"
 
 #: winerror.mc:2266
 msgid "User is built-in.\n"
-msgstr ""
+msgstr "使用者為內建。\n"
 
 #: winerror.mc:2271
 msgid "Group is primary for user.\n"
-msgstr ""
+msgstr "其為使用者的主要群組。\n"
 
 #: winerror.mc:2276
 msgid "Token already in use.\n"
-msgstr ""
+msgstr "字組已使用中。\n"
 
 #: winerror.mc:2281
 msgid "No such local group.\n"
-msgstr ""
+msgstr "沒有此類本地群組。\n"
 
 #: winerror.mc:2286
 msgid "User not in local group.\n"
-msgstr ""
+msgstr "使用者不在本地群組中。\n"
 
 #: winerror.mc:2291
 msgid "User already in local group.\n"
-msgstr ""
+msgstr "使用者已在本地群組中。\n"
 
 #: winerror.mc:2296
 msgid "Local group already exists.\n"
-msgstr ""
+msgstr "本地群組已存在。\n"
 
 #: winerror.mc:2301 winerror.mc:2326
 msgid "Logon type not granted.\n"
-msgstr ""
+msgstr "登錄型態未授與。\n"
 
 #: winerror.mc:2306
 msgid "Too many secrets.\n"
-msgstr ""
+msgstr "太多隱密。\n"
 
 #: winerror.mc:2311
 msgid "Secret too long.\n"
-msgstr ""
+msgstr "隱密太長。\n"
 
 #: winerror.mc:2316
 msgid "Internal security DB error.\n"
-msgstr ""
+msgstr "內部安全資料庫錯誤。\n"
 
 #: winerror.mc:2321
 msgid "Too many context IDs.\n"
-msgstr ""
+msgstr "太多文脈識別號。\n"
 
 #: winerror.mc:2331
 msgid "Cross-encrypted NT password required.\n"
-msgstr ""
+msgstr "必須輸入交叉加密過的 NT 密碼。\n"
 
 #: winerror.mc:2336
 msgid "No such member.\n"
-msgstr ""
+msgstr "沒有此類成員。\n"
 
 #: winerror.mc:2341
 msgid "Invalid member.\n"
-msgstr ""
+msgstr "無效的成員。\n"
 
 #: winerror.mc:2346
 msgid "Too many SIDs.\n"
-msgstr ""
+msgstr "太多 SID。\n"
 
 #: winerror.mc:2351
 msgid "Cross-encrypted LM password required.\n"
-msgstr ""
+msgstr "必須輸入交叉加密過的本機密碼。\n"
 
 #: winerror.mc:2356
 msgid "No inheritable components.\n"
-msgstr ""
+msgstr "沒有可繼承的成分。\n"
 
 #: winerror.mc:2361
 msgid "File or directory corrupt.\n"
-msgstr ""
+msgstr "檔案或目錄損壞。\n"
 
 #: winerror.mc:2366
 msgid "Disk is corrupt.\n"
-msgstr ""
+msgstr "磁碟已損壞。\n"
 
 #: winerror.mc:2371
 msgid "No user session key.\n"
-msgstr ""
+msgstr "沒有使用者作業階段金鑰。\n"
 
 #: winerror.mc:2376
 msgid "License quota exceeded.\n"
-msgstr ""
+msgstr "超出授權配額。\n"
 
 #: winerror.mc:2381
 msgid "Wrong target name.\n"
-msgstr ""
+msgstr "錯誤目標名稱。\n"
 
 #: winerror.mc:2386
 msgid "Mutual authentication failed.\n"
-msgstr ""
+msgstr "相互認證失敗。\n"
 
 #: winerror.mc:2391
 msgid "Time skew between client and server.\n"
-msgstr ""
+msgstr "客戶端與伺服端的時間偏斜。\n"
 
 #: winerror.mc:2396
 msgid "Invalid window handle.\n"
-msgstr ""
+msgstr "無效的視窗控柄。\n"
 
 #: winerror.mc:2401
 msgid "Invalid menu handle.\n"
-msgstr ""
+msgstr "無效的選單控柄。\n"
 
 #: winerror.mc:2406
 msgid "Invalid cursor handle.\n"
-msgstr ""
+msgstr "無效的游標控柄。\n"
 
 #: winerror.mc:2411
 msgid "Invalid accelerator table handle.\n"
-msgstr ""
+msgstr "無效的加速功能表格控柄。\n"
 
 #: winerror.mc:2416
 msgid "Invalid hook handle.\n"
-msgstr ""
+msgstr "無效的攔截控柄。\n"
 
 #: winerror.mc:2421
 msgid "Invalid DWP handle.\n"
-msgstr ""
+msgstr "無效的 DWP 控柄。\n"
 
 #: winerror.mc:2426
 msgid "Can't create top-level child window.\n"
-msgstr ""
+msgstr "無法建立最上層子視窗。\n"
 
 #: winerror.mc:2431
 msgid "Can't find window class.\n"
-msgstr ""
+msgstr "找不到視窗類別。\n"
 
 #: winerror.mc:2436
 msgid "Window owned by another thread.\n"
-msgstr ""
+msgstr "視窗由另外的執行緒所擁有。\n"
 
 #: winerror.mc:2441
 msgid "Hotkey already registered.\n"
-msgstr "熱鍵已經被註冊。\n"
+msgstr "熱鍵已被註冊。\n"
 
 #: winerror.mc:2446
 msgid "Class already exists.\n"
-msgstr ""
+msgstr "類別已存在。\n"
 
 #: winerror.mc:2451
 msgid "Class does not exist.\n"
-msgstr ""
+msgstr "類別不存在。\n"
 
 #: winerror.mc:2456
 msgid "Class has open windows.\n"
-msgstr ""
+msgstr "類別已開啟多個視窗。\n"
 
 #: winerror.mc:2461
 msgid "Invalid index.\n"
-msgstr ""
+msgstr "無效的索引。\n"
 
 #: winerror.mc:2466
 msgid "Invalid icon handle.\n"
-msgstr ""
+msgstr "無效的圖示控柄。\n"
 
 #: winerror.mc:2471
 msgid "Private dialog index.\n"
-msgstr ""
+msgstr "私人的對話框索引。\n"
 
 #: winerror.mc:2476
 msgid "List box ID not found.\n"
-msgstr ""
+msgstr "找不到清單方塊識別號。\n"
 
 #: winerror.mc:2481
 msgid "No wildcard characters.\n"
-msgstr ""
+msgstr "沒有萬用字元字元。\n"
 
 #: winerror.mc:2486
 msgid "Clipboard not open.\n"
-msgstr "無法開啟剪貼簿。\n"
+msgstr "未開啟剪貼簿。\n"
 
 #: winerror.mc:2491
 msgid "Hotkey not registered.\n"
-msgstr ""
+msgstr "快速鍵未註冊。\n"
 
 #: winerror.mc:2496
 msgid "Not a dialog window.\n"
-msgstr ""
+msgstr "不是個對話框視窗。\n"
 
 #: winerror.mc:2501
 msgid "Control ID not found.\n"
-msgstr ""
+msgstr "找不到控制識別號。\n"
 
 #: winerror.mc:2506
 msgid "Invalid combobox message.\n"
-msgstr ""
+msgstr "無效的複合方塊訊息。\n"
 
 #: winerror.mc:2511
 msgid "Not a combobox window.\n"
-msgstr ""
+msgstr "不是複合方塊視窗。\n"
 
 #: winerror.mc:2516
 msgid "Invalid edit height.\n"
-msgstr ""
+msgstr "無效的編輯高度。\n"
 
 #: winerror.mc:2521
 msgid "DC not found.\n"
-msgstr ""
+msgstr "找不到 DC。\n"
 
 #: winerror.mc:2526
 msgid "Invalid hook filter.\n"
-msgstr ""
+msgstr "無效的攔截篩選器。\n"
 
 #: winerror.mc:2531
 msgid "Invalid filter procedure.\n"
-msgstr ""
+msgstr "無效的篩選器程序。\n"
 
 #: winerror.mc:2536
 msgid "Hook procedure needs module handle.\n"
-msgstr ""
+msgstr "攔截程序需要模組控柄。\n"
 
 #: winerror.mc:2541
 msgid "Global-only hook procedure.\n"
-msgstr ""
+msgstr "僅限全域的攔截程序。\n"
 
 #: winerror.mc:2546
 msgid "Journal hook already set.\n"
-msgstr ""
+msgstr "已經設定日誌攔截。\n"
 
 #: winerror.mc:2551
 msgid "Hook procedure not installed.\n"
-msgstr ""
+msgstr "尚未安裝攔截程序。\n"
 
 #: winerror.mc:2556
 msgid "Invalid list box message.\n"
-msgstr ""
+msgstr "無效的清單方塊訊息。\n"
 
 #: winerror.mc:2561
 msgid "Invalid LB_SETCOUNT sent.\n"
-msgstr ""
+msgstr "已發送的 LB_SETCOUNT 無效。\n"
 
 #: winerror.mc:2566
 msgid "No tab stops on this list box.\n"
-msgstr ""
+msgstr "這個清單方塊沒有定位停駐點。\n"
 
 #: winerror.mc:2571
 msgid "Can't destroy object owned by another thread.\n"
-msgstr ""
+msgstr "無法銷毀由另外執行緒所擁有的物件。\n"
 
 #: winerror.mc:2576
 msgid "Child window menus not allowed.\n"
-msgstr ""
+msgstr "不允許子視窗選單。\n"
 
 #: winerror.mc:2581
 msgid "Window has no system menu.\n"
-msgstr ""
+msgstr "視窗沒有任何系統選單。\n"
 
 #: winerror.mc:2586
 msgid "Invalid message box style.\n"
-msgstr ""
+msgstr "無效的訊息方塊樣式。\n"
 
 #: winerror.mc:2591
 msgid "Invalid SPI parameter.\n"
-msgstr ""
+msgstr "無效的 SPI 參數。\n"
 
 #: winerror.mc:2596
 msgid "Screen already locked.\n"
-msgstr ""
+msgstr "螢幕已鎖定。\n"
 
 #: winerror.mc:2601
 msgid "Window handles have different parents.\n"
-msgstr ""
+msgstr "視窗控柄有不同的上層。\n"
 
 #: winerror.mc:2606
 msgid "Not a child window.\n"
-msgstr ""
+msgstr "不是子視窗。\n"
 
 #: winerror.mc:2611
 msgid "Invalid GW command.\n"
@@ -5626,51 +5626,51 @@ msgstr "數字格式無效。\n"
 
 #: winerror.mc:2616
 msgid "Invalid thread ID.\n"
-msgstr ""
+msgstr "無效的執行緒識別號。\n"
 
 #: winerror.mc:2621
 msgid "Not an MDI child window.\n"
-msgstr ""
+msgstr "不是多重文件介面子視窗。\n"
 
 #: winerror.mc:2626
 msgid "Popup menu already active.\n"
-msgstr ""
+msgstr "快顯功能表已啟用。\n"
 
 #: winerror.mc:2631
 msgid "No scrollbars.\n"
-msgstr ""
+msgstr "沒有捲動軸。\n"
 
 #: winerror.mc:2636
 msgid "Invalid scrollbar range.\n"
-msgstr ""
+msgstr "無效的捲動軸範圍。\n"
 
 #: winerror.mc:2641
 msgid "Invalid ShowWin command.\n"
-msgstr ""
+msgstr "無效的 ShowWin 命令。\n"
 
 #: winerror.mc:2646
 msgid "No system resources.\n"
-msgstr ""
+msgstr "沒有系統資源。\n"
 
 #: winerror.mc:2651
 msgid "No non-paged system resources.\n"
-msgstr ""
+msgstr "沒有非置換頁的系統資源。\n"
 
 #: winerror.mc:2656
 msgid "No paged system resources.\n"
-msgstr ""
+msgstr "非置換頁的系統資源。\n"
 
 #: winerror.mc:2661
 msgid "No working set quota.\n"
-msgstr ""
+msgstr "沒有正常使用的設定配額。\n"
 
 #: winerror.mc:2666
 msgid "No page file quota.\n"
-msgstr ""
+msgstr "沒有暫存檔案配額。\n"
 
 #: winerror.mc:2671
 msgid "Exceeded commitment limit.\n"
-msgstr ""
+msgstr "超出承諾限制。\n"
 
 #: winerror.mc:2676
 msgid "Menu item not found.\n"
@@ -5678,63 +5678,63 @@ msgstr "找不到選單項目。\n"
 
 #: winerror.mc:2681
 msgid "Invalid keyboard handle.\n"
-msgstr ""
+msgstr "無效的鍵盤控柄。\n"
 
 #: winerror.mc:2686
 msgid "Hook type not allowed.\n"
-msgstr ""
+msgstr "不允許攔截型態。\n"
 
 #: winerror.mc:2691
 msgid "Interactive window station required.\n"
-msgstr ""
+msgstr "需要互動式視窗站。\n"
 
 #: winerror.mc:2696
 msgid "Timeout.\n"
-msgstr ""
+msgstr "逾時。\n"
 
 #: winerror.mc:2701
 msgid "Invalid monitor handle.\n"
-msgstr ""
+msgstr "無效的監視器控柄。\n"
 
 #: winerror.mc:2706
 msgid "Event log file corrupt.\n"
-msgstr ""
+msgstr "事件記錄檔案損壞。\n"
 
 #: winerror.mc:2711
 msgid "Event log can't start.\n"
-msgstr ""
+msgstr "無法開始事件記錄。\n"
 
 #: winerror.mc:2716
 msgid "Event log file full.\n"
-msgstr ""
+msgstr "事件記錄檔案已滿。\n"
 
 #: winerror.mc:2721
 msgid "Event log file changed.\n"
-msgstr ""
+msgstr "事件記錄檔案已變更。\n"
 
 #: winerror.mc:2726
 msgid "Installer service failed.\n"
-msgstr ""
+msgstr "安裝服務失敗。\n"
 
 #: winerror.mc:2731
 msgid "Installation aborted by user.\n"
-msgstr ""
+msgstr "使用者已放棄安裝。\n"
 
 #: winerror.mc:2736
 msgid "Installation failure.\n"
-msgstr ""
+msgstr "安裝已失敗。\n"
 
 #: winerror.mc:2741
 msgid "Installation suspended.\n"
-msgstr ""
+msgstr "安裝已懸置。\n"
 
 #: winerror.mc:2746
 msgid "Unknown product.\n"
-msgstr ""
+msgstr "不明產品。\n"
 
 #: winerror.mc:2751
 msgid "Unknown feature.\n"
-msgstr ""
+msgstr "不明特徵。\n"
 
 #: winerror.mc:2756
 msgid "Unknown component.\n"
@@ -5746,7 +5746,7 @@ msgstr "未知的屬性。\n"
 
 #: winerror.mc:2766
 msgid "Invalid handle state.\n"
-msgstr ""
+msgstr "無效的控柄狀態。\n"
 
 #: winerror.mc:2771
 msgid "Bad configuration.\n"
@@ -5762,7 +5762,7 @@ msgstr "本功能的安裝來源不存在。\n"
 
 #: winerror.mc:2786
 msgid "Wrong installation package version.\n"
-msgstr ""
+msgstr "錯誤安裝套件版本。\n"
 
 #: winerror.mc:2791
 msgid "Product uninstalled.\n"
@@ -5770,7 +5770,7 @@ msgstr "產品已解除安裝。\n"
 
 #: winerror.mc:2796
 msgid "Invalid query syntax.\n"
-msgstr ""
+msgstr "無效的查詢語法。\n"
 
 #: winerror.mc:2801
 msgid "Invalid field.\n"
@@ -5786,7 +5786,7 @@ msgstr "安裝程式已在執行中。\n"
 
 #: winerror.mc:2816
 msgid "Installation package failed to open.\n"
-msgstr ""
+msgstr "無法開啟安裝套件。\n"
 
 #: winerror.mc:2821
 msgid "Installation package is invalid.\n"
@@ -5794,31 +5794,31 @@ msgstr "無效的安裝套件。\n"
 
 #: winerror.mc:2826
 msgid "Installer user interface failed.\n"
-msgstr ""
+msgstr "安裝程式使用者介面失敗。\n"
 
 #: winerror.mc:2831
 msgid "Failed to open installation log file.\n"
-msgstr ""
+msgstr "開啟安裝記錄檔時失敗。\n"
 
 #: winerror.mc:2836
 msgid "Installation language not supported.\n"
-msgstr "不支援的安裝語言。\n"
+msgstr "不受支援的安裝語言。\n"
 
 #: winerror.mc:2841
 msgid "Installation transform failed to apply.\n"
-msgstr ""
+msgstr "無法套用安裝變換。\n"
 
 #: winerror.mc:2846
 msgid "Installation package rejected.\n"
-msgstr ""
+msgstr "已拒絕安裝套件。\n"
 
 #: winerror.mc:2851
 msgid "Function could not be called.\n"
-msgstr ""
+msgstr "函式無法被呼叫。\n"
 
 #: winerror.mc:2856
 msgid "Function failed.\n"
-msgstr ""
+msgstr "函式失敗。\n"
 
 #: winerror.mc:2861
 msgid "Invalid table.\n"
@@ -5826,11 +5826,11 @@ msgstr "無效的表格。\n"
 
 #: winerror.mc:2866
 msgid "Data type mismatch.\n"
-msgstr ""
+msgstr "資料類型不匹配。\n"
 
 #: winerror.mc:2871 winerror.mc:3081
 msgid "Unsupported type.\n"
-msgstr ""
+msgstr "不受支援的型態。\n"
 
 #: winerror.mc:2876
 msgid "Creation failed.\n"
@@ -5842,15 +5842,15 @@ msgstr "無法寫入暫存資料夾。\n"
 
 #: winerror.mc:2886
 msgid "Installation platform not supported.\n"
-msgstr "不支援的安裝平台。\n"
+msgstr "不受支援的安裝平臺。\n"
 
 #: winerror.mc:2891
 msgid "Installer not used.\n"
-msgstr ""
+msgstr "安裝程式未使用。\n"
 
 #: winerror.mc:2896
 msgid "Failed to open the patch package.\n"
-msgstr ""
+msgstr "開啟修補程式套件時失敗。\n"
 
 #: winerror.mc:2901
 msgid "Invalid patch package.\n"
@@ -5858,11 +5858,11 @@ msgstr "無效的更新套件。\n"
 
 #: winerror.mc:2906
 msgid "Unsupported patch package.\n"
-msgstr ""
+msgstr "不受支援的修補程式套件。\n"
 
 #: winerror.mc:2911
 msgid "Another version is installed.\n"
-msgstr ""
+msgstr "已安裝另外的版本。\n"
 
 #: winerror.mc:2916
 msgid "Invalid command line.\n"
@@ -5870,79 +5870,79 @@ msgstr "無效的命令列。\n"
 
 #: winerror.mc:2921
 msgid "Remote installation not allowed.\n"
-msgstr ""
+msgstr "不允許遠端安裝。\n"
 
 #: winerror.mc:2926
 msgid "Reboot initiated after successful install.\n"
-msgstr ""
+msgstr "成功安裝之後重新開機啟動。\n"
 
 #: winerror.mc:2931
 msgid "Invalid string binding.\n"
-msgstr ""
+msgstr "無效的字串繫結。\n"
 
 #: winerror.mc:2936
 msgid "Wrong kind of binding.\n"
-msgstr ""
+msgstr "錯誤的繫結種類。\n"
 
 #: winerror.mc:2941
 msgid "Invalid binding.\n"
-msgstr ""
+msgstr "無效的繫結。\n"
 
 #: winerror.mc:2946
 msgid "RPC protocol sequence not supported.\n"
-msgstr ""
+msgstr "不支援 RPC 協定序列。\n"
 
 #: winerror.mc:2951
 msgid "Invalid RPC protocol sequence.\n"
-msgstr ""
+msgstr "無效的 RPC 協定序列。\n"
 
 #: winerror.mc:2956
 msgid "Invalid string UUID.\n"
-msgstr ""
+msgstr "無效的字串 UUID。\n"
 
 #: winerror.mc:2961
 msgid "Invalid endpoint format.\n"
-msgstr ""
+msgstr "無效的終點格式。\n"
 
 #: winerror.mc:2966
 msgid "Invalid network address.\n"
-msgstr ""
+msgstr "無效的網路位址。\n"
 
 #: winerror.mc:2971
 msgid "No endpoint found.\n"
-msgstr ""
+msgstr "找不到任何終點。\n"
 
 #: winerror.mc:2976
 msgid "Invalid timeout value.\n"
-msgstr ""
+msgstr "無效的逾時值。\n"
 
 #: winerror.mc:2981
 msgid "Object UUID not found.\n"
-msgstr ""
+msgstr "找不到物件 UUID。\n"
 
 #: winerror.mc:2986
 msgid "UUID already registered.\n"
-msgstr ""
+msgstr "UUID 已註冊。\n"
 
 #: winerror.mc:2991
 msgid "UUID type already registered.\n"
-msgstr ""
+msgstr "UUID 型態已註冊。\n"
 
 #: winerror.mc:2996
 msgid "Server already listening.\n"
-msgstr ""
+msgstr "伺服器已傾聽。\n"
 
 #: winerror.mc:3001
 msgid "No protocol sequences registered.\n"
-msgstr ""
+msgstr "沒有已註冊的協定序列。\n"
 
 #: winerror.mc:3006
 msgid "RPC server not listening.\n"
-msgstr ""
+msgstr "RPC 伺服器未傾聽。\n"
 
 #: winerror.mc:3011
 msgid "Unknown manager type.\n"
-msgstr ""
+msgstr "不明管理員型態。\n"
 
 #: winerror.mc:3016
 msgid "Unknown interface.\n"
@@ -5950,15 +5950,15 @@ msgstr "未知的介面。\n"
 
 #: winerror.mc:3021
 msgid "No bindings.\n"
-msgstr ""
+msgstr "沒有繫結。\n"
 
 #: winerror.mc:3026
 msgid "No protocol sequences.\n"
-msgstr ""
+msgstr "沒有協定序列。\n"
 
 #: winerror.mc:3031
 msgid "Can't create endpoint.\n"
-msgstr ""
+msgstr "無法建立終點。\n"
 
 #: winerror.mc:3036
 msgid "Out of resources.\n"
@@ -5966,11 +5966,11 @@ msgstr "資源不足。\n"
 
 #: winerror.mc:3041
 msgid "RPC server unavailable.\n"
-msgstr ""
+msgstr "RPC 伺服器不得使用。\n"
 
 #: winerror.mc:3046
 msgid "RPC server too busy.\n"
-msgstr ""
+msgstr "RPC 伺服器太忙碌。\n"
 
 #: winerror.mc:3051
 msgid "Invalid network options.\n"
@@ -5978,111 +5978,111 @@ msgstr "無效的網路選項。\n"
 
 #: winerror.mc:3056
 msgid "No RPC call active.\n"
-msgstr ""
+msgstr "沒有現用的 RPC 呼叫。\n"
 
 #: winerror.mc:3061
 msgid "RPC call failed.\n"
-msgstr ""
+msgstr "RPC 呼叫失敗。\n"
 
 #: winerror.mc:3066
 msgid "RPC call failed and didn't execute.\n"
-msgstr ""
+msgstr "RPC 呼叫失敗而未執行。\n"
 
 #: winerror.mc:3071
 msgid "RPC protocol error.\n"
-msgstr ""
+msgstr "RPC 協定發生錯誤。\n"
 
 #: winerror.mc:3076
 msgid "Unsupported transfer syntax.\n"
-msgstr ""
+msgstr "不受支援的轉送語法。\n"
 
 #: winerror.mc:3086
 msgid "Invalid tag.\n"
-msgstr ""
+msgstr "無效的標定。\n"
 
 #: winerror.mc:3091
 msgid "Invalid array bounds.\n"
-msgstr ""
+msgstr "無效的陣列邊界。\n"
 
 #: winerror.mc:3096
 msgid "No entry name.\n"
-msgstr ""
+msgstr "沒有條目名稱。\n"
 
 #: winerror.mc:3101
 msgid "Invalid name syntax.\n"
-msgstr ""
+msgstr "無效的名稱語法。\n"
 
 #: winerror.mc:3106
 msgid "Unsupported name syntax.\n"
-msgstr ""
+msgstr "不受支援的名稱語法。\n"
 
 #: winerror.mc:3111
 msgid "No network address.\n"
-msgstr ""
+msgstr "沒有網路位址。\n"
 
 #: winerror.mc:3116
 msgid "Duplicate endpoint.\n"
-msgstr ""
+msgstr "重複的終點。\n"
 
 #: winerror.mc:3121
 msgid "Unknown authentication type.\n"
-msgstr ""
+msgstr "不明認證類型。\n"
 
 #: winerror.mc:3126
 msgid "Maximum calls too low.\n"
-msgstr ""
+msgstr "太低的呼叫數最大值。\n"
 
 #: winerror.mc:3131
 msgid "String too long.\n"
-msgstr ""
+msgstr "字串太長。\n"
 
 #: winerror.mc:3136
 msgid "Protocol sequence not found.\n"
-msgstr ""
+msgstr "找不到協定序列。\n"
 
 #: winerror.mc:3141
 msgid "Procedure number out of range.\n"
-msgstr ""
+msgstr "程序數量超出範圍。\n"
 
 #: winerror.mc:3146
 msgid "Binding has no authentication data.\n"
-msgstr ""
+msgstr "繫結沒有任何認證資料。\n"
 
 #: winerror.mc:3151
 msgid "Unknown authentication service.\n"
-msgstr ""
+msgstr "不明認證服務。\n"
 
 #: winerror.mc:3156
 msgid "Unknown authentication level.\n"
-msgstr ""
+msgstr "不明認證等級。\n"
 
 #: winerror.mc:3161
 msgid "Invalid authentication identity.\n"
-msgstr ""
+msgstr "無效的認證身分。\n"
 
 #: winerror.mc:3166
 msgid "Unknown authorization service.\n"
-msgstr ""
+msgstr "不明授權服務。\n"
 
 #: winerror.mc:3171
 msgid "Invalid entry.\n"
-msgstr ""
+msgstr "無效的條目。\n"
 
 #: winerror.mc:3176
 msgid "Can't perform operation.\n"
-msgstr ""
+msgstr "無法進行作業。\n"
 
 #: winerror.mc:3181
 msgid "Endpoints not registered.\n"
-msgstr ""
+msgstr "終點未註冊。\n"
 
 #: winerror.mc:3186
 msgid "Nothing to export.\n"
-msgstr ""
+msgstr "沒有任何東西可匯出。\n"
 
 #: winerror.mc:3191
 msgid "Incomplete name.\n"
-msgstr ""
+msgstr "不完整的名稱。\n"
 
 #: winerror.mc:3196
 msgid "Invalid version option.\n"
@@ -6090,159 +6090,159 @@ msgstr "無效的版本選項。\n"
 
 #: winerror.mc:3201
 msgid "No more members.\n"
-msgstr ""
+msgstr "已無更多成員。\n"
 
 #: winerror.mc:3206
 msgid "Not all objects unexported.\n"
-msgstr ""
+msgstr "並非所有物件被取消匯出。\n"
 
 #: winerror.mc:3211
 msgid "Interface not found.\n"
-msgstr ""
+msgstr "找不到介面。\n"
 
 #: winerror.mc:3216
 msgid "Entry already exists.\n"
-msgstr ""
+msgstr "條目已經存在。\n"
 
 #: winerror.mc:3221
 msgid "Entry not found.\n"
-msgstr ""
+msgstr "找不到條目。\n"
 
 #: winerror.mc:3226
 msgid "Name service unavailable.\n"
-msgstr ""
+msgstr "名稱服務不得使用。\n"
 
 #: winerror.mc:3231
 msgid "Invalid network address family.\n"
-msgstr ""
+msgstr "無效的網路位址家族。\n"
 
 #: winerror.mc:3236
 msgid "Operation not supported.\n"
-msgstr ""
+msgstr "操作不受支援。\n"
 
 #: winerror.mc:3241
 msgid "No security context available.\n"
-msgstr ""
+msgstr "沒有可用安全文脈。\n"
 
 #: winerror.mc:3246
 msgid "RPCInternal error.\n"
-msgstr ""
+msgstr "RPCInternal 發生錯誤。\n"
 
 #: winerror.mc:3251
 msgid "RPC divide-by-zero.\n"
-msgstr ""
+msgstr "RPC 被零除。\n"
 
 #: winerror.mc:3256
 msgid "Address error.\n"
-msgstr ""
+msgstr "位址錯誤。\n"
 
 #: winerror.mc:3261
 msgid "Floating-point divide-by-zero.\n"
-msgstr ""
+msgstr "浮點數被零除。\n"
 
 #: winerror.mc:3266
 msgid "Floating-point underflow.\n"
-msgstr ""
+msgstr "浮點數下限溢位。\n"
 
 #: winerror.mc:3271
 msgid "Floating-point overflow.\n"
-msgstr ""
+msgstr "浮點數溢位。\n"
 
 #: winerror.mc:3276
 msgid "No more entries.\n"
-msgstr ""
+msgstr "已無更多條目。\n"
 
 #: winerror.mc:3281
 msgid "Character translation table open failed.\n"
-msgstr ""
+msgstr "開啟字元翻譯表格時失敗。\n"
 
 #: winerror.mc:3286
 msgid "Character translation table file too small.\n"
-msgstr ""
+msgstr "字元翻譯表格檔案太小。\n"
 
 #: winerror.mc:3291
 msgid "Null context handle.\n"
-msgstr ""
+msgstr "空值文脈控柄。\n"
 
 #: winerror.mc:3296
 msgid "Context handle damaged.\n"
-msgstr ""
+msgstr "文脈控柄受損害。\n"
 
 #: winerror.mc:3301
 msgid "Binding handle mismatch.\n"
-msgstr ""
+msgstr "繫結控柄不匹配。\n"
 
 #: winerror.mc:3306
 msgid "Cannot get call handle.\n"
-msgstr ""
+msgstr "無法提取呼叫控柄。\n"
 
 #: winerror.mc:3311
 msgid "Null reference pointer.\n"
-msgstr ""
+msgstr "空值參考指標。\n"
 
 #: winerror.mc:3316
 msgid "Enumeration value out of range.\n"
-msgstr ""
+msgstr "列舉類型值超出範圍。\n"
 
 #: winerror.mc:3321
 msgid "Byte count too small.\n"
-msgstr ""
+msgstr "位元組數量太小。\n"
 
 #: winerror.mc:3326
 msgid "Bad stub data.\n"
-msgstr ""
+msgstr "不當的殘餘資料。\n"
 
 #: winerror.mc:3331
 msgid "Invalid user buffer.\n"
-msgstr ""
+msgstr "無效的使用者緩衝區。\n"
 
 #: winerror.mc:3336
 msgid "Unrecognized media.\n"
-msgstr ""
+msgstr "無法辨識的媒體。\n"
 
 #: winerror.mc:3341
 msgid "No trust secret.\n"
-msgstr ""
+msgstr "沒有信賴隱密。\n"
 
 #: winerror.mc:3346
 msgid "No trust SAM account.\n"
-msgstr ""
+msgstr "沒有信賴 SAM 帳號。\n"
 
 #: winerror.mc:3351
 msgid "Trusted domain failure.\n"
-msgstr ""
+msgstr "信賴的網域失敗。\n"
 
 #: winerror.mc:3356
 msgid "Trusted relationship failure.\n"
-msgstr ""
+msgstr "信賴的關聯性失敗。\n"
 
 #: winerror.mc:3361
 msgid "Trust logon failure.\n"
-msgstr ""
+msgstr "信賴登錄失敗。\n"
 
 #: winerror.mc:3366
 msgid "RPC call already in progress.\n"
-msgstr ""
+msgstr "RPC 呼叫已正進行。\n"
 
 #: winerror.mc:3371
 msgid "NETLOGON is not started.\n"
-msgstr ""
+msgstr "NETLOGON 未被啟始。\n"
 
 #: winerror.mc:3376
 msgid "Account expired.\n"
-msgstr ""
+msgstr "帳號已過期。\n"
 
 #: winerror.mc:3381
 msgid "Redirector has open handles.\n"
-msgstr ""
+msgstr "重導器已開啟控柄。\n"
 
 #: winerror.mc:3386
 msgid "Printer driver already installed.\n"
-msgstr ""
+msgstr "印表機驅動程式已安裝。\n"
 
 #: winerror.mc:3391
 msgid "Unknown port.\n"
-msgstr ""
+msgstr "不明通訊埠。\n"
 
 #: winerror.mc:3396
 msgid "Unknown printer driver.\n"
@@ -6250,11 +6250,11 @@ msgstr "未知的印表機驅動程式。\n"
 
 #: winerror.mc:3401
 msgid "Unknown print processor.\n"
-msgstr ""
+msgstr "不明列印處理器。\n"
 
 #: winerror.mc:3406
 msgid "Invalid separator file.\n"
-msgstr ""
+msgstr "無效的分隔符號檔案。\n"
 
 #: winerror.mc:3411
 msgid "Invalid priority.\n"
@@ -6278,143 +6278,143 @@ msgstr "無效的資料類型。\n"
 
 #: winerror.mc:3436
 msgid "Invalid environment.\n"
-msgstr ""
+msgstr "無效的環境。\n"
 
 #: winerror.mc:3441
 msgid "No more bindings.\n"
-msgstr ""
+msgstr "已無更多繫結。\n"
 
 #: winerror.mc:3446
 msgid "Can't logon with interdomain trust account.\n"
-msgstr ""
+msgstr "無法以網域間信賴帳號登錄。\n"
 
 #: winerror.mc:3451
 msgid "Can't logon with workstation trust account.\n"
-msgstr ""
+msgstr "無法以工作站信賴帳號登錄。\n"
 
 #: winerror.mc:3456
 msgid "Can't logon with server trust account.\n"
-msgstr ""
+msgstr "無法以伺服器信賴帳號登錄。\n"
 
 #: winerror.mc:3461
 msgid "Domain trust information inconsistent.\n"
-msgstr ""
+msgstr "網域信賴資訊不一致。\n"
 
 #: winerror.mc:3466
 msgid "Server has open handles.\n"
-msgstr ""
+msgstr "伺服器已開啟控柄。\n"
 
 #: winerror.mc:3471
 msgid "Resource data not found.\n"
-msgstr ""
+msgstr "找不到資源資料。\n"
 
 #: winerror.mc:3476
 msgid "Resource type not found.\n"
-msgstr ""
+msgstr "找不到資源類型。\n"
 
 #: winerror.mc:3481
 msgid "Resource name not found.\n"
-msgstr ""
+msgstr "找不到資源名稱。\n"
 
 #: winerror.mc:3486
 msgid "Resource language not found.\n"
-msgstr ""
+msgstr "找不到資源語言。\n"
 
 #: winerror.mc:3491
 msgid "Not enough quota.\n"
-msgstr ""
+msgstr "配額不足。\n"
 
 #: winerror.mc:3496
 msgid "No interfaces.\n"
-msgstr ""
+msgstr "沒有介面。\n"
 
 #: winerror.mc:3501
 msgid "RPC call canceled.\n"
-msgstr ""
+msgstr "RPC 呼叫已取消。\n"
 
 #: winerror.mc:3506
 msgid "Binding incomplete.\n"
-msgstr ""
+msgstr "繫結不完整。\n"
 
 #: winerror.mc:3511
 msgid "RPC comm failure.\n"
-msgstr ""
+msgstr "RPC 指令失敗。\n"
 
 #: winerror.mc:3516
 msgid "Unsupported authorization level.\n"
-msgstr ""
+msgstr "不受支援的授權等級。\n"
 
 #: winerror.mc:3521
 msgid "No principal name registered.\n"
-msgstr ""
+msgstr "沒有已註冊的主要名稱。\n"
 
 #: winerror.mc:3526
 msgid "Not an RPC error.\n"
-msgstr ""
+msgstr "不是一個 RPC 錯誤。\n"
 
 #: winerror.mc:3531
 msgid "UUID is local only.\n"
-msgstr ""
+msgstr "UUID 只限本地。\n"
 
 #: winerror.mc:3536
 msgid "Security package error.\n"
-msgstr ""
+msgstr "安全套件發生錯誤。\n"
 
 #: winerror.mc:3541
 msgid "Thread not canceled.\n"
-msgstr ""
+msgstr "執行緒未取消。\n"
 
 #: winerror.mc:3546
 msgid "Invalid handle operation.\n"
-msgstr ""
+msgstr "無效的控柄作業。\n"
 
 #: winerror.mc:3551
 msgid "Wrong serializing package version.\n"
-msgstr ""
+msgstr "錯誤的序列套件版本。\n"
 
 #: winerror.mc:3556
 msgid "Wrong stub version.\n"
-msgstr ""
+msgstr "錯誤的殘餘版本。\n"
 
 #: winerror.mc:3561
 msgid "Invalid pipe object.\n"
-msgstr ""
+msgstr "無效的管線物件。\n"
 
 #: winerror.mc:3566
 msgid "Wrong pipe order.\n"
-msgstr ""
+msgstr "錯誤的管線排序。\n"
 
 #: winerror.mc:3571
 msgid "Wrong pipe version.\n"
-msgstr ""
+msgstr "錯誤的管線版本。\n"
 
 #: winerror.mc:3576
 msgid "Group member not found.\n"
-msgstr ""
+msgstr "找不到群組成員。\n"
 
 #: winerror.mc:3581
 msgid "Can't create endpoint mapper DB.\n"
-msgstr ""
+msgstr "無法建立終點映射器資料庫。\n"
 
 #: winerror.mc:3586
 msgid "Invalid object.\n"
-msgstr ""
+msgstr "無效的物件。\n"
 
 #: winerror.mc:3591
 msgid "Invalid time.\n"
-msgstr ""
+msgstr "無效的時間。\n"
 
 #: winerror.mc:3596
 msgid "Invalid form name.\n"
-msgstr ""
+msgstr "無效的表單名稱。\n"
 
 #: winerror.mc:3601
 msgid "Invalid form size.\n"
-msgstr ""
+msgstr "無效的表單大小。\n"
 
 #: winerror.mc:3606
 msgid "Already awaiting printer handle.\n"
-msgstr ""
+msgstr "已經在等待印表機控柄。\n"
 
 #: winerror.mc:3611
 msgid "Printer deleted.\n"
@@ -6422,19 +6422,19 @@ msgstr "印表機已刪除。\n"
 
 #: winerror.mc:3616
 msgid "Invalid printer state.\n"
-msgstr ""
+msgstr "無效的印表機狀態。\n"
 
 #: winerror.mc:3621
 msgid "User must change password.\n"
-msgstr ""
+msgstr "使用者必須變更密碼。\n"
 
 #: winerror.mc:3626
 msgid "Domain controller not found.\n"
-msgstr ""
+msgstr "找不到網域控制器。\n"
 
 #: winerror.mc:3631
 msgid "Account locked out.\n"
-msgstr ""
+msgstr "帳號被鎖在外部。\n"
 
 #: winerror.mc:3636
 msgid "Invalid pixel format.\n"
@@ -6442,83 +6442,83 @@ msgstr "無效的像素格式。\n"
 
 #: winerror.mc:3641
 msgid "Invalid driver.\n"
-msgstr ""
+msgstr "無效的驅動程式。\n"
 
 #: winerror.mc:3646
 msgid "Invalid object resolver set.\n"
-msgstr ""
+msgstr "無效的物件分解器設定。\n"
 
 #: winerror.mc:3651
 msgid "Incomplete RPC send.\n"
-msgstr ""
+msgstr "不完整的 RPC 發送。\n"
 
 #: winerror.mc:3656
 msgid "Invalid asynchronous RPC handle.\n"
-msgstr ""
+msgstr "無效的非同步 RPC 控柄。\n"
 
 #: winerror.mc:3661
 msgid "Invalid asynchronous RPC call.\n"
-msgstr ""
+msgstr "無效的非同步 RPC 呼叫。\n"
 
 #: winerror.mc:3666
 msgid "RPC pipe closed.\n"
-msgstr ""
+msgstr "RPC 管線已關閉。\n"
 
 #: winerror.mc:3671
 msgid "Discipline error on RPC pipe.\n"
-msgstr ""
+msgstr "RPC 管線規律發生錯誤。\n"
 
 #: winerror.mc:3676
 msgid "No data on RPC pipe.\n"
-msgstr ""
+msgstr "RPC 管線沒有資料。\n"
 
 #: winerror.mc:3681
 msgid "No site name available.\n"
-msgstr ""
+msgstr "沒有可用站臺名稱。\n"
 
 #: winerror.mc:3686
 msgid "The file cannot be accessed.\n"
-msgstr ""
+msgstr "無法存取檔案。\n"
 
 #: winerror.mc:3691
 msgid "The filename cannot be resolved.\n"
-msgstr ""
+msgstr "無法解析檔名。\n"
 
 #: winerror.mc:3696
 msgid "RPC entry type mismatch.\n"
-msgstr ""
+msgstr "RPC 條目型態不匹配。\n"
 
 #: winerror.mc:3701
 msgid "Not all objects could be exported.\n"
-msgstr ""
+msgstr "並非所有物件可被匯出。\n"
 
 #: winerror.mc:3706
 msgid "The interface could not be exported.\n"
-msgstr ""
+msgstr "無法匯出介面。\n"
 
 #: winerror.mc:3711
 msgid "The profile could not be added.\n"
-msgstr ""
+msgstr "無法加入側寫檔。\n"
 
 #: winerror.mc:3716
 msgid "The profile element could not be added.\n"
-msgstr ""
+msgstr "無法加入側寫檔元件。\n"
 
 #: winerror.mc:3721
 msgid "The profile element could not be removed.\n"
-msgstr ""
+msgstr "無法移除側寫檔元件。\n"
 
 #: winerror.mc:3726
 msgid "The group element could not be added.\n"
-msgstr ""
+msgstr "無法加入群組元件。\n"
 
 #: winerror.mc:3731
 msgid "The group element could not be removed.\n"
-msgstr ""
+msgstr "無法移除群組元件。\n"
 
 #: winerror.mc:3736
 msgid "The username could not be found.\n"
-msgstr ""
+msgstr "無法找到使用者名稱。\n"
 
 #: localspl.rc:28 localui.rc:28 winspool.rc:27
 msgid "Local Port"
@@ -6562,7 +6562,7 @@ msgstr "這個連接埠沒有可設定選項"
 
 #: mapi32.rc:28
 msgid "Mail sending failed as you do not have a MAPI mail client installed."
-msgstr ""
+msgstr "由於您沒有安裝一個 MAPI 郵件客戶端，郵件發送已失敗。"
 
 #: mapi32.rc:29
 msgid "Send Mail"
@@ -6602,7 +6602,7 @@ msgstr "聲音選擇"
 
 #: msacm32.rc:36 winedbg.rc:73
 msgid "&Save As..."
-msgstr "另存為(&S)..."
+msgstr "另存為(&S)…"
 
 #: msacm32.rc:39
 msgid "&Format:"
