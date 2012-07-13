@@ -208,7 +208,6 @@ static VOID TREEVIEW_Invalidate(const TREEVIEW_INFO *, const TREEVIEW_ITEM *);
 static LRESULT TREEVIEW_DoSelectItem(TREEVIEW_INFO *, INT, HTREEITEM, INT);
 static VOID TREEVIEW_SetFirstVisible(TREEVIEW_INFO *, TREEVIEW_ITEM *, BOOL);
 static LRESULT TREEVIEW_EnsureVisible(TREEVIEW_INFO *, HTREEITEM, BOOL);
-static LRESULT TREEVIEW_RButtonUp(const TREEVIEW_INFO *, const POINT *);
 static LRESULT TREEVIEW_EndEditLabelNow(TREEVIEW_INFO *infoPtr, BOOL bCancel);
 static VOID TREEVIEW_UpdateScrollBars(TREEVIEW_INFO *infoPtr);
 static LRESULT TREEVIEW_HScroll(TREEVIEW_INFO *, WPARAM);
@@ -4260,29 +4259,17 @@ TREEVIEW_RButtonDown(TREEVIEW_INFO *infoPtr, LPARAM lParam)
 	SetFocus(infoPtr->hwnd);
 	if(!TREEVIEW_SendSimpleNotify(infoPtr, NM_RCLICK))
 	{
-	    TREEVIEW_RButtonUp(infoPtr, &ht.pt);
+	    /* Change to screen coordinate for WM_CONTEXTMENU */
+	    ClientToScreen(infoPtr->hwnd, &ht.pt);
+
+	    /* Send a WM_CONTEXTMENU message in response to the RBUTTONUP */
+	    SendMessageW(infoPtr->hwnd, WM_CONTEXTMENU,
+		(WPARAM)infoPtr->hwnd, MAKELPARAM(ht.pt.x, ht.pt.y));
 	}
     }
 
     return 0;
 }
-
-static LRESULT
-TREEVIEW_RButtonUp(const TREEVIEW_INFO *infoPtr, const POINT *pPt)
-{
-    TVHITTESTINFO ht;
-
-    ht.pt = *pPt;
-
-    /* Change to screen coordinate for WM_CONTEXTMENU */
-    ClientToScreen(infoPtr->hwnd, &ht.pt);
-
-    /* Send a WM_CONTEXTMENU message in response to the RBUTTONUP */
-    SendMessageW(infoPtr->hwnd, WM_CONTEXTMENU,
-        (WPARAM)infoPtr->hwnd, MAKELPARAM(ht.pt.x, ht.pt.y));
-    return 0;
-}
-
 
 static LRESULT
 TREEVIEW_CreateDragImage(TREEVIEW_INFO *infoPtr, LPARAM lParam)
