@@ -95,8 +95,7 @@ HRESULT WINAPI D3DXLoadVolumeFromMemory(IDirect3DVolume9 *dst_volume,
     HRESULT hr;
     D3DVOLUME_DESC desc;
     D3DLOCKED_BOX locked_box;
-    UINT dst_width, dst_height, dst_depth;
-    UINT src_width, src_height, src_depth;
+    struct volume dst_size, src_size;
     const PixelFormatDesc *src_format_desc, *dst_format_desc;
 
     TRACE("(%p, %p, %p, %p, %#x, %u, %u, %p, %p, %x, %x)\n", dst_volume, dst_palette, dst_box,
@@ -116,15 +115,15 @@ HRESULT WINAPI D3DXLoadVolumeFromMemory(IDirect3DVolume9 *dst_volume,
 
     IDirect3DVolume9_GetDesc(dst_volume, &desc);
 
-    src_width = src_box->Right - src_box->Left;
-    src_height = src_box->Bottom - src_box->Top;
-    src_depth = src_box->Back - src_box->Front;
+    src_size.width = src_box->Right - src_box->Left;
+    src_size.height = src_box->Bottom - src_box->Top;
+    src_size.depth = src_box->Back - src_box->Front;
 
     if (!dst_box)
     {
-        dst_width = desc.Width;
-        dst_height = desc.Height;
-        dst_depth = desc.Depth;
+        dst_size.width = desc.Width;
+        dst_size.height = desc.Height;
+        dst_size.depth = desc.Depth;
     }
     else
     {
@@ -135,9 +134,9 @@ HRESULT WINAPI D3DXLoadVolumeFromMemory(IDirect3DVolume9 *dst_volume,
         if (dst_box->Front >= dst_box->Back || dst_box->Back > desc.Depth)
             return D3DERR_INVALIDCALL;
 
-        dst_width = dst_box->Right - dst_box->Left;
-        dst_height = dst_box->Bottom - dst_box->Top;
-        dst_depth = dst_box->Back - dst_box->Front;
+        dst_size.width = dst_box->Right - dst_box->Left;
+        dst_size.height = dst_box->Bottom - dst_box->Top;
+        dst_size.depth = dst_box->Back - dst_box->Front;
     }
 
     src_format_desc = get_format_info(src_format);
@@ -149,20 +148,20 @@ HRESULT WINAPI D3DXLoadVolumeFromMemory(IDirect3DVolume9 *dst_volume,
         return E_NOTIMPL;
 
     if (desc.Format == src_format
-            && dst_width == src_width && dst_height == src_height && dst_depth == src_depth)
+            && dst_size.width == src_size.width && dst_size.height == src_size.height && dst_size.depth == src_size.depth)
     {
         UINT row, slice;
         BYTE *dst_addr;
         const BYTE *src_addr;
-        UINT row_block_count = (src_width + src_format_desc->block_width - 1) / src_format_desc->block_width;
-        UINT row_count = (src_height + src_format_desc->block_height - 1) / src_format_desc->block_height;
+        UINT row_block_count = (src_size.width + src_format_desc->block_width - 1) / src_format_desc->block_width;
+        UINT row_count = (src_size.height + src_format_desc->block_height - 1) / src_format_desc->block_height;
 
         if (src_box->Left & (src_format_desc->block_width - 1)
                 || src_box->Top & (src_format_desc->block_height - 1)
                 || (src_box->Right & (src_format_desc->block_width - 1)
-                    && src_width != desc.Width)
+                    && src_size.width != desc.Width)
                 || (src_box->Bottom & (src_format_desc->block_height - 1)
-                    && src_height != desc.Height))
+                    && src_size.height != desc.Height))
         {
             FIXME("Source box (%u, %u, %u, %u) is misaligned\n",
                     src_box->Left, src_box->Top, src_box->Right, src_box->Bottom);
@@ -172,7 +171,7 @@ HRESULT WINAPI D3DXLoadVolumeFromMemory(IDirect3DVolume9 *dst_volume,
         hr = IDirect3DVolume9_LockBox(dst_volume, &locked_box, dst_box, 0);
         if (FAILED(hr)) return hr;
 
-        for (slice = 0; slice < src_depth; slice++)
+        for (slice = 0; slice < src_size.depth; slice++)
         {
             src_addr = src_memory;
             src_addr += (src_box->Front + slice) * src_slice_pitch;
@@ -195,7 +194,6 @@ HRESULT WINAPI D3DXLoadVolumeFromMemory(IDirect3DVolume9 *dst_volume,
     else
     {
         const BYTE *src_addr;
-        SIZE src_size, dst_size;
 
         if (src_format_desc->bytes_per_pixel > 4 || dst_format_desc->bytes_per_pixel > 4
                 || src_format_desc->block_height != 1 || src_format_desc->block_width != 1
@@ -205,11 +203,6 @@ HRESULT WINAPI D3DXLoadVolumeFromMemory(IDirect3DVolume9 *dst_volume,
                     src_format_desc->format, dst_format_desc->format);
             return E_NOTIMPL;
         }
-
-        src_size.cx = src_width;
-        src_size.cy = src_height;
-        dst_size.cx = dst_width;
-        dst_size.cy = dst_height;
 
         src_addr = src_memory;
         src_addr += src_box->Front * src_slice_pitch;
@@ -221,16 +214,16 @@ HRESULT WINAPI D3DXLoadVolumeFromMemory(IDirect3DVolume9 *dst_volume,
 
         if ((filter & 0xf) == D3DX_FILTER_NONE)
         {
-            copy_simple_data(src_memory, src_row_pitch, src_slice_pitch, src_size, src_depth, src_format_desc,
-                    locked_box.pBits, locked_box.RowPitch, locked_box.SlicePitch, dst_size, dst_depth, dst_format_desc, color_key);
+            copy_simple_data(src_memory, src_row_pitch, src_slice_pitch, &src_size, src_format_desc,
+                    locked_box.pBits, locked_box.RowPitch, locked_box.SlicePitch, &dst_size, dst_format_desc, color_key);
         }
         else
         {
             if ((filter & 0xf) != D3DX_FILTER_POINT)
                 FIXME("Unhandled filter %#x.\n", filter);
 
-            point_filter_simple_data(src_addr, src_row_pitch, src_slice_pitch, src_size, src_depth, src_format_desc,
-                    locked_box.pBits, locked_box.RowPitch, locked_box.SlicePitch, dst_size, dst_depth, dst_format_desc, color_key);
+            point_filter_simple_data(src_addr, src_row_pitch, src_slice_pitch, &src_size, src_format_desc,
+                    locked_box.pBits, locked_box.RowPitch, locked_box.SlicePitch, &dst_size, dst_format_desc, color_key);
         }
 
         IDirect3DVolume9_UnlockBox(dst_volume);
