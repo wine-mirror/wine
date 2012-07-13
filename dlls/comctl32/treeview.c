@@ -4043,8 +4043,6 @@ TREEVIEW_TrackMouse(const TREEVIEW_INFO *infoPtr, POINT pt)
 	    else if (msg.message >= WM_LBUTTONDOWN &&
 		     msg.message <= WM_RBUTTONDBLCLK)
 	    {
-		if (msg.message == WM_RBUTTONUP)
-		    TREEVIEW_RButtonUp(infoPtr, &pt);
 		break;
 	    }
 
@@ -4259,6 +4257,7 @@ TREEVIEW_RButtonDown(TREEVIEW_INFO *infoPtr, LPARAM lParam)
     }
     else
     {
+	TREEVIEW_RButtonUp(infoPtr, &ht.pt);
 	SetFocus(infoPtr->hwnd);
 	TREEVIEW_SendSimpleNotify(infoPtr, NM_RCLICK);
     }
