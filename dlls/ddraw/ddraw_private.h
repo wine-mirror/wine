@@ -92,9 +92,6 @@ struct ddraw
     HWND                    devicewindow;
     HWND                    dest_window;
 
-    /* Helpers for surface creation */
-    struct ddraw_surface *tex_root;
-
     /* For the dll unload cleanup code */
     struct list ddraw_list_entry;
     /* The surface list - can't relay this to WineD3D

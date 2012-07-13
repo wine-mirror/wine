@@ -3093,11 +3093,7 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
 
     /* Create a WineD3DTexture if a texture was requested */
     if (desc2.ddsCaps.dwCaps & DDSCAPS_TEXTURE)
-    {
-        ddraw->tex_root = object;
         ddraw_surface_create_texture(object);
-        ddraw->tex_root = NULL;
-    }
 
     return hr;
 }
@@ -5364,15 +5360,16 @@ static HRESULT CDECL device_parent_create_texture_surface(struct wined3d_device_
         void *container_parent, UINT width, UINT height, enum wined3d_format_id format, DWORD usage,
         enum wined3d_pool pool, UINT level, enum wined3d_cubemap_face face, struct wined3d_surface **surface)
 {
-    struct ddraw *ddraw = ddraw_from_device_parent(device_parent);
+    struct ddraw_surface *tex_root = container_parent;
     struct ddraw_surface *surf = NULL;
+    DDSCAPS2 searchcaps;
     UINT i = 0;
-    DDSCAPS2 searchcaps = ddraw->tex_root->surface_desc.ddsCaps;
 
     TRACE("device_parent %p, container_parent %p, width %u, height %u, format %#x, usage %#x,\n"
             "\tpool %#x, level %u, face %u, surface %p.\n",
             device_parent, container_parent, width, height, format, usage, pool, level, face, surface);
 
+    searchcaps = tex_root->surface_desc.ddsCaps;
     searchcaps.dwCaps2 &= ~DDSCAPS2_CUBEMAP_ALLFACES;
     switch (face)
     {
@@ -5382,7 +5379,7 @@ static HRESULT CDECL device_parent_create_texture_surface(struct wined3d_device_
             {
                 searchcaps.dwCaps2 |= DDSCAPS2_CUBEMAP_POSITIVEX;
             }
-            surf = ddraw->tex_root; break;
+            surf = tex_root; break;
         case WINED3D_CUBEMAP_FACE_NEGATIVE_X:
             TRACE("Asked for negative x\n");
             searchcaps.dwCaps2 |= DDSCAPS2_CUBEMAP_NEGATIVEX; break;
@@ -5405,7 +5402,7 @@ static HRESULT CDECL device_parent_create_texture_surface(struct wined3d_device_
     if (!surf)
     {
         IDirectDrawSurface7 *attached;
-        IDirectDrawSurface7_GetAttachedSurface(&ddraw->tex_root->IDirectDrawSurface7_iface, &searchcaps, &attached);
+        IDirectDrawSurface7_GetAttachedSurface(&tex_root->IDirectDrawSurface7_iface, &searchcaps, &attached);
         surf = unsafe_impl_from_IDirectDrawSurface7(attached);
         IDirectDrawSurface7_Release(attached);
     }
