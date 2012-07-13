@@ -7924,11 +7924,11 @@ msgstr "視訊"
 
 #: shell32.rc:213
 msgid "Program Files (x86)"
-msgstr ""
+msgstr "程式檔案 (x86)"
 
 #: shell32.rc:221
 msgid "Contacts"
-msgstr ""
+msgstr "聯絡人"
 
 #: shell32.rc:222 winefile.rc:110
 msgid "Links"
@@ -7936,7 +7936,7 @@ msgstr "連結"
 
 #: shell32.rc:223
 msgid "Slide Shows"
-msgstr ""
+msgstr "投影片放映"
 
 #: shell32.rc:224
 msgid "Playlists"
@@ -7952,7 +7952,7 @@ msgstr "位置"
 
 #: shell32.rc:150
 msgid "Model"
-msgstr ""
+msgstr "式樣"
 
 #: shell32.rc:225
 msgid "Sample Music"
@@ -7972,7 +7972,7 @@ msgstr "範例影片"
 
 #: shell32.rc:229
 msgid "Saved Games"
-msgstr ""
+msgstr "儲存的遊戲"
 
 #: shell32.rc:230
 msgid "Searches"
@@ -7988,31 +7988,31 @@ msgstr "下載"
 
 #: shell32.rc:166
 msgid "Unable to create new Folder: Permission denied."
-msgstr ""
+msgstr "無法建立新的資料夾：權限被拒絕。"
 
 #: shell32.rc:167
 msgid "Error during creation of a new folder"
-msgstr ""
+msgstr "在建立新資料夾的期間發生錯誤"
 
 #: shell32.rc:168
 msgid "Confirm file deletion"
-msgstr ""
+msgstr "確認檔案的刪除"
 
 #: shell32.rc:169
 msgid "Confirm folder deletion"
-msgstr ""
+msgstr "確認資料夾的刪除"
 
 #: shell32.rc:170
 msgid "Are you sure you want to delete '%1'?"
-msgstr ""
+msgstr "確定要刪除『%1』？"
 
 #: shell32.rc:171
 msgid "Are you sure you want to delete these %1 items?"
-msgstr ""
+msgstr "確定要刪除這 %1 個項目？"
 
 #: shell32.rc:178
 msgid "Confirm file overwrite"
-msgstr ""
+msgstr "確認檔案的覆寫"
 
 #: shell32.rc:177
 msgid ""
@@ -8020,27 +8020,30 @@ msgid ""
 "\n"
 "Do you want to replace it?"
 msgstr ""
+"這個資料夾已經含有名為『%1』的檔案。\n"
+"\n"
+"您要置換它嗎？"
 
 #: shell32.rc:172
 msgid "Are you sure you want to delete the selected item(s)?"
-msgstr ""
+msgstr "確定要刪除已選項目？"
 
 #: shell32.rc:174
 msgid ""
 "Are you sure that you want to send '%1' and all its content to the Trash?"
-msgstr ""
+msgstr "您確定要將『%1』和它的所有內容送到回收筒？"
 
 #: shell32.rc:173
 msgid "Are you sure that you want to send '%1' to the Trash?"
-msgstr ""
+msgstr "您確定要將『%1』送到回收筒？"
 
 #: shell32.rc:175
 msgid "Are you sure that you want to send these %1 items to the Trash?"
-msgstr ""
+msgstr "您確定要將這 %1 個項目送到回收筒？"
 
 #: shell32.rc:176
 msgid "The item '%1' can't be sent to Trash. Do you want to delete it instead?"
-msgstr ""
+msgstr "項目『%1』未送到回收筒。您要代之以刪除它嗎？"
 
 #: shell32.rc:183
 msgid ""
@@ -8050,6 +8053,11 @@ msgid ""
 "selected folder they will be replaced. Do you still want to move or copy\n"
 "the folder?"
 msgstr ""
+"這個資料夾已經含有名為『%1』的資料夾。\n"
+"\n"
+"如果在目的資料夾中的檔案，和在已選資料夾中\n"
+"的檔案同名，那麼它們將被置換。您仍然要移動或複製\n"
+"資料夾嗎？"
 
 #: shell32.rc:235
 msgid "New Folder"
@@ -8057,15 +8065,15 @@ msgstr "新資料夾"
 
 #: shell32.rc:237
 msgid "Wine Control Panel"
-msgstr "Wine 控制台"
+msgstr "Wine 控制臺"
 
 #: shell32.rc:192
 msgid "Unable to display Run File dialog box (internal error)"
-msgstr ""
+msgstr "無法顯示「執行檔案」對話方塊 (內部錯誤)"
 
 #: shell32.rc:193
 msgid "Unable to display Browse dialog box (internal error)"
-msgstr ""
+msgstr "無法顯示「瀏覽」對話方塊 (內部錯誤)"
 
 #: shell32.rc:195
 msgid "Executable files (*.exe)"
@@ -8073,19 +8081,19 @@ msgstr "可執行檔 (*.exe)"
 
 #: shell32.rc:241
 msgid "There is no Windows program configured to open this type of file."
-msgstr ""
+msgstr "沒有任何 Windows 程式被組配以開啟這種型態的檔案。"
 
 #: shell32.rc:243
 msgid "Are you sure you wish to permanently delete '%1'?"
-msgstr ""
+msgstr "您確定希望永久刪除『%1』？"
 
 #: shell32.rc:244
 msgid "Are you sure you wish to permanently delete these %1 items?"
-msgstr ""
+msgstr "您確定希望永久刪除這 %1 個項目？"
 
 #: shell32.rc:245
 msgid "Confirm deletion"
-msgstr ""
+msgstr "確認刪除"
 
 #: shell32.rc:246
 msgid ""
@@ -8093,6 +8101,9 @@ msgid ""
 "\n"
 "Do you want to replace it?"
 msgstr ""
+"檔案已經存在於路徑 %1。\n"
+"\n"
+"您要置換它嗎？"
 
 #: shell32.rc:247
 msgid ""
@@ -8100,10 +8111,13 @@ msgid ""
 "\n"
 "Do you want to replace it?"
 msgstr ""
+"資料夾已經存在於路徑 %1。\n"
+"\n"
+"您要置換它嗎？"
 
 #: shell32.rc:248
 msgid "Confirm overwrite"
-msgstr ""
+msgstr "確認覆寫"
 
 #: shell32.rc:265
 msgid ""
@@ -8121,14 +8135,24 @@ msgid ""
 "along with Wine; if not, write to the Free Software Foundation, Inc., 51 "
 "Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 msgstr ""
+"Wine 是自由軟體；您可以遵循由自由軟體基金會發布的 GNU 較寬鬆通用公共授權，再"
+"次散布它和/或修改它；您可以採用版本 2.1 的授權，或 (您自行選擇的) 任何後續的"
+"版本。\n"
+"\n"
+"Wine 的發行是希望它能夠有用，但是沒有任何擔保；亦無對於某一特定目的之適售性與"
+"適用性的暗示性擔保。參看 GNU 較寬鬆通用公共授權以獲得更多細節。\n"
+"\n"
+"您應該已收到隨附於 Wine 的 GNU 較寬鬆通用公共授權複本；若無則請寫信到 Free "
+"Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA "
+"02110-1301, USA."
 
 #: shell32.rc:253
 msgid "Wine License"
-msgstr ""
+msgstr "Wine 授權"
 
 #: shell32.rc:155
 msgid "Trash"
-msgstr ""
+msgstr "回收筒"
 
 #: shlwapi.rc:35 user32.rc:68 regedit.rc:176 winecfg.rc:84 winefile.rc:94
 msgid "Error"
@@ -8192,7 +8216,7 @@ msgstr "關閉(&C)\tCtrl+F4"
 
 #: user32.rc:48
 msgid "Nex&t\tCtrl+F6"
-msgstr ""
+msgstr "下一個(&T)\tCtrl+F6"
 
 #: user32.rc:79
 msgid "&Abort"
@@ -8220,7 +8244,7 @@ msgstr "選擇視窗"
 
 #: user32.rc:69
 msgid "&More Windows..."
-msgstr "更多視窗(&M)..."
+msgstr "更多視窗(&M)…"
 
 #: wineps.rc:28
 msgid "Paper Si&ze:"
@@ -8248,7 +8272,7 @@ msgstr "安全警告"
 
 #: wininet.rc:77
 msgid "There is a problem with the certificate for this site."
-msgstr ""
+msgstr "這個站臺的憑證有問題。"
 
 #: wininet.rc:79
 msgid "Do you want to continue anyway?"
@@ -8260,458 +8284,487 @@ msgstr "區域網路連線"
 
 #: wininet.rc:26
 msgid "The certificate is issued by an unknown or untrusted publisher."
-msgstr ""
+msgstr "憑證由不明或不可信的發行者所發放。"
 
 #: wininet.rc:27
 msgid "The date on the certificate is invalid."
-msgstr ""
+msgstr "憑證上的日期無效。"
 
 #: wininet.rc:28
 msgid "The name on the certificate does not match the site."
-msgstr ""
+msgstr "憑證上的名稱不匹配站臺。"
 
 #: wininet.rc:29
 msgid ""
 "There is at least one unspecified security problem with this certificate."
-msgstr ""
+msgstr "有至少一個未指定的安全問題與這個憑證相關。"
 
 #: winmm.rc:28
 msgid "The specified command was carried out."
-msgstr ""
+msgstr "指定的命令被帶出。"
 
 #: winmm.rc:29
 msgid "Undefined external error."
-msgstr ""
+msgstr "未定義的外部錯誤。"
 
 #: winmm.rc:30
 msgid "A device ID has been used that is out of range for your system."
-msgstr ""
+msgstr "裝置識別號已被用於超出您的系統範圍。"
 
 #: winmm.rc:31
 msgid "The driver was not enabled."
-msgstr ""
+msgstr "驅動程式未被啟用。"
 
 #: winmm.rc:32
 msgid ""
 "The specified device is already in use. Wait until it is free, and then try "
 "again."
-msgstr ""
+msgstr "指定的裝置已在使用中。等到它可用時，然後再試一次。"
 
 #: winmm.rc:33
 msgid "The specified device handle is invalid."
-msgstr ""
+msgstr "指定的裝置控柄無效。"
 
 #: winmm.rc:34
 msgid "There is no driver installed on your system!"
-msgstr ""
+msgstr "沒有任何驅動程式已安裝於您的系統！"
 
 #: winmm.rc:35 winmm.rc:61
 msgid ""
 "Not enough memory available for this task. Quit one or more applications to "
 "increase available memory, and then try again."
 msgstr ""
+"可用於這個任務的記憶體不足。離開一或多個應用程式以增加可用記憶體，然後再試一"
+"次。"
 
 #: winmm.rc:36
 msgid ""
 "This function is not supported. Use the Capabilities function to determine "
 "which functions and messages the driver supports."
-msgstr ""
+msgstr "這個函式未被支援。使用功能函式以決定驅動程式支援何項函式和訊息。"
 
 #: winmm.rc:37
 msgid "An error number was specified that is not defined in the system."
-msgstr ""
+msgstr "被指定的錯誤代號未被定義於系統中。"
 
 #: winmm.rc:38
 msgid "An invalid flag was passed to a system function."
-msgstr ""
+msgstr "無效的旗標被傳遞到系統函式。"
 
 #: winmm.rc:39
 msgid "An invalid parameter was passed to a system function."
-msgstr ""
+msgstr "無效的參數被傳遞到系統函式。"
 
 #: winmm.rc:42
 msgid ""
 "The specified format is not supported or cannot be translated. Use the "
 "Capabilities function to determine the supported formats."
-msgstr ""
+msgstr "指定的格式未被支援或無法翻譯。使用功能函式以決定支援的格式。"
 
 #: winmm.rc:43 winmm.rc:49
 msgid ""
 "Cannot perform this operation while media data is still playing. Reset the "
 "device, or wait until the data is finished playing."
 msgstr ""
+"當媒體資料仍在播放中將無法進行這個作業。請重置裝置，或是等到資料已完成播放。"
 
 #: winmm.rc:44
 msgid ""
 "The wave header was not prepared. Use the Prepare function to prepare the "
 "header, and then try again."
-msgstr ""
+msgstr "wave 標頭尚未就緒。使用「準備功能」以準備標頭，然後再試一次。"
 
 #: winmm.rc:45
 msgid ""
 "Cannot open the device without using the WAVE_ALLOWSYNC flag. Use the flag, "
 "and then try again."
 msgstr ""
+"無法在不使用 WAVE_ALLOWSYNC 旗標的狀態下開啟裝置。使用旗標，然後再試一次。"
 
 #: winmm.rc:48
 msgid ""
 "The MIDI header was not prepared. Use the Prepare function to prepare the "
 "header, and then try again."
-msgstr ""
+msgstr "MIDI 標頭尚未就緒。使用「準備功能」以準備標頭，然後再試一次。"
 
 #: winmm.rc:50
 msgid ""
 "A MIDI map was not found. There may be a problem with the driver, or the "
 "MIDIMAP.CFG file may be corrupt or missing."
 msgstr ""
+"找不到 MIDI 對映。也許是驅動程式的問題，或者 MIDIMAP.CFG 檔案已損壞或缺少。"
 
 #: winmm.rc:51
 msgid ""
 "The port is transmitting data to the device. Wait until the data has been "
 "transmitted, and then try again."
-msgstr ""
+msgstr "通訊埠正在傳送資料給裝置。等到資料傳輸完成，然後再試一次。"
 
 #: winmm.rc:52
 msgid ""
 "The current MIDI Mapper setup refers to a MIDI device that is not installed "
 "on the system. Use MIDI Mapper to edit the setup."
 msgstr ""
+"目前的 MIDI 對映表設定，參照了未被安裝於系統上的 MIDI 裝置。使用 MIDI 對映表"
+"以編輯設定。"
 
 #: winmm.rc:53
 msgid ""
 "The current MIDI setup is damaged. Copy the original MIDIMAP.CFG file to the "
 "Windows SYSTEM directory, and then try again."
 msgstr ""
+"目前的 MIDI 設定已受損。複製原來的 MIDIMAP.CFG 檔案到 Windows 系統目錄，然後"
+"再試一次。"
 
 #: winmm.rc:56
 msgid "Invalid MCI device ID. Use the ID returned when opening the MCI device."
 msgstr ""
+"無效的多媒體控制介面裝置識別號。開啟多媒體控制介面裝置時使用回傳的識別號。"
 
 #: winmm.rc:57
 msgid "The driver cannot recognize the specified command parameter."
-msgstr ""
+msgstr "驅動程式無法識別指定的命令參數。"
 
 #: winmm.rc:58
 msgid "The driver cannot recognize the specified command."
-msgstr ""
+msgstr "驅動程式無法識別指定的命令。"
 
 #: winmm.rc:59
 msgid ""
 "There is a problem with your media device. Make sure it is working correctly "
 "or contact the device manufacturer."
-msgstr ""
+msgstr "您的媒體裝置有問題。請確定它作用正確或與裝置製造商聯絡。"
 
 #: winmm.rc:60
 msgid "The specified device is not open or is not recognized by MCI."
-msgstr ""
+msgstr "指定的裝置未開啟或未被多媒體控制介面辨識出來。"
 
 #: winmm.rc:62
 msgid ""
 "The device name is already being used as an alias by this application. Use a "
 "unique alias."
-msgstr ""
+msgstr "裝置名稱已被這個應用程式用做別名。請使用唯一的別名。"
 
 #: winmm.rc:63
 msgid ""
 "There is an undetectable problem in loading the specified device driver."
-msgstr ""
+msgstr "載入指定的裝置驅動程式時發生無法偵測的問題。"
 
 #: winmm.rc:64
 msgid "No command was specified."
-msgstr ""
+msgstr "沒有任何命令被指定。"
 
 #: winmm.rc:65
 msgid ""
 "The output string was too large to fit in the return buffer. Increase the "
 "size of the buffer."
-msgstr ""
+msgstr "輸出字串太大而不適合回傳緩衝區。請增加緩衝區的大小。"
 
 #: winmm.rc:66
 msgid ""
 "The specified command requires a character-string parameter. Please provide "
 "one."
-msgstr ""
+msgstr "指定的命令需要字串參數。請提供一個。"
 
 #: winmm.rc:67
 msgid "The specified integer is invalid for this command."
-msgstr ""
+msgstr "指定的整數對於這個命令無效。"
 
 #: winmm.rc:68
 msgid ""
 "The device driver returned an invalid return type. Check with the device "
 "manufacturer about obtaining a new driver."
-msgstr ""
+msgstr "裝置驅動程式回傳無效的類型。請詢問裝置製造商以得到新的驅動程式。"
 
 #: winmm.rc:69
 msgid ""
 "There is a problem with the device driver. Check with the device "
 "manufacturer about obtaining a new driver."
-msgstr ""
+msgstr "裝置驅動程式有問題。請詢問裝置製造商以得到新的驅動程式。"
 
 #: winmm.rc:70
 msgid "The specified command requires a parameter. Please supply one."
-msgstr ""
+msgstr "指定的命令需要參數。請提供一個。"
 
 #: winmm.rc:71
 msgid "The MCI device you are using does not support the specified command."
-msgstr ""
+msgstr "您正在使用的多媒體控制介面裝置不支援指定的命令。"
 
 #: winmm.rc:72
 msgid ""
 "Cannot find the specified file. Make sure the path and filename are correct."
-msgstr ""
+msgstr "找不到指定的檔案。請確定路徑和檔名正確。"
 
 #: winmm.rc:73
 msgid "The device driver is not ready."
-msgstr ""
+msgstr "裝置驅動程式未就緒。"
 
 #: winmm.rc:74
 msgid "A problem occurred in initializing MCI. Try restarting Windows."
-msgstr ""
+msgstr "初始化多媒體控制介面時發生問題。嘗試重新啟動 Windows。"
 
 #: winmm.rc:75
 msgid ""
 "There is a problem with the device driver. The driver has closed. Cannot "
 "access error."
-msgstr ""
+msgstr "裝置驅動程式有問題。驅動程式已關閉。發生無法存取的錯誤。"
 
 #: winmm.rc:76
 msgid "Cannot use 'all' as the device name with the specified command."
-msgstr ""
+msgstr "無法使用『all』做為指定命令的裝置名稱。"
 
 #: winmm.rc:77
 msgid ""
 "Errors occurred in more than one device. Specify each command and device "
 "separately to determine which devices caused the error."
 msgstr ""
+"在一個以上的裝置中發生錯誤。每個命令分別指定裝置以決定何項裝置造成了錯誤。"
 
 #: winmm.rc:78
 msgid "Cannot determine the device type from the given filename extension."
-msgstr ""
+msgstr "無法從給定的副檔名決定裝置類型。"
 
 #: winmm.rc:79
 msgid "The specified parameter is out of range for the specified command."
-msgstr ""
+msgstr "指定的參數超出指定命令的範圍。"
 
 #: winmm.rc:80
 msgid "The specified parameters cannot be used together."
-msgstr ""
+msgstr "指定的參數無法一起使用。"
 
 #: winmm.rc:81
 msgid ""
 "Cannot save the specified file. Make sure you have enough disk space or are "
 "still connected to the network."
-msgstr ""
+msgstr "無法儲存指定的檔案。請確定您有足夠的磁碟空間，或是仍然連線到網路。"
 
 #: winmm.rc:82
 msgid ""
 "Cannot find the specified device. Make sure it is installed or that the "
 "device name is spelled correctly."
-msgstr ""
+msgstr "找不到指定的裝置。請確定它已安裝，或是該裝置名稱的拼寫正確。"
 
 #: winmm.rc:83
 msgid ""
 "The specified device is now being closed. Wait a few seconds, and then try "
 "again."
-msgstr ""
+msgstr "指定的裝置現在被關閉。請等待數秒，然後再試一次。"
 
 #: winmm.rc:84
 msgid ""
 "The specified alias is already being used in this application. Use a unique "
 "alias."
-msgstr ""
+msgstr "指定的別名已被用於這個應用程式。使用唯一的別名。"
 
 #: winmm.rc:85
 msgid "The specified parameter is invalid for this command."
-msgstr ""
+msgstr "指定的參數對於這個命令無效。"
 
 #: winmm.rc:86
 msgid ""
 "The device driver is already in use. To share it, use the 'shareable' "
 "parameter with each 'open' command."
 msgstr ""
+"裝置驅動程式已在使用中。要分享它，請使用『shareable』參數於每個『open』命令。"
 
 #: winmm.rc:87
 msgid ""
 "The specified command requires an alias, file, driver, or device name. "
 "Please supply one."
-msgstr ""
+msgstr "指定的命令需要一個別名、檔案、驅動程式或裝置名稱。請提供一個。"
 
 #: winmm.rc:88
 msgid ""
 "The specified value for the time format is invalid. Refer to the MCI "
 "documentation for valid formats."
-msgstr ""
+msgstr "指定的值用於時間格式無效。參考多媒體控制介面文件用於有效格式。"
 
 #: winmm.rc:89
 msgid ""
 "A closing double-quotation mark is missing from the parameter value. Please "
 "supply one."
-msgstr ""
+msgstr "參數值缺少一個右側的雙引號。請提供一個。"
 
 #: winmm.rc:90
 msgid "A parameter or value was specified twice. Only specify it once."
-msgstr ""
+msgstr "參數或值被指定了兩次。只要指定它一次。"
 
 #: winmm.rc:91
 msgid ""
 "The specified file cannot be played on the specified MCI device. The file "
 "may be corrupt, or not in the correct format."
 msgstr ""
+"指定的檔案無法在指定的多媒體控制介面裝置上播放。檔案也許已經損壞，或者並非正"
+"確格式。"
 
 #: winmm.rc:92
 msgid "A null parameter block was passed to MCI."
-msgstr ""
+msgstr "空的參數區塊被傳遞到多媒體控制介面。"
 
 #: winmm.rc:93
 msgid "Cannot save an unnamed file. Supply a filename."
-msgstr ""
+msgstr "無法儲存未命名的檔案。請提供一個檔名。"
 
 #: winmm.rc:94
 msgid "You must specify an alias when using the 'new' parameter."
-msgstr ""
+msgstr "使用『new』參數時，您必須指定別名。"
 
 #: winmm.rc:95
 msgid "Cannot use the 'notify' flag with auto-opened devices."
-msgstr ""
+msgstr "無法於自動開啟的裝置使用『notify』旗標。"
 
 #: winmm.rc:96
 msgid "Cannot use a filename with the specified device."
-msgstr ""
+msgstr "無法於指定裝置使用檔名。"
 
 #: winmm.rc:97
 msgid ""
 "Cannot carry out the commands in the order specified. Correct the command "
 "sequence, and then try again."
-msgstr ""
+msgstr "無法以指定的順多帶出命令。請修正命令序列，然後再試一次。"
 
 #: winmm.rc:98
 msgid ""
 "Cannot carry out the specified command on an auto-opened device. Wait until "
 "the device is closed, and then try again."
-msgstr ""
+msgstr "無法於自動開啟的裝置帶出指定的命令。請等到裝置關閉，然後再試一次。"
 
 #: winmm.rc:99
 msgid ""
 "The filename is invalid. Make sure the filename is not longer than 8 "
 "characters, followed by a period and an extension."
-msgstr ""
+msgstr "檔名無效。請確定檔名長度不超過 8 個字元，然後接著句點和延伸檔名。"
 
 #: winmm.rc:100
 msgid ""
 "Cannot specify extra characters after a string enclosed in quotation marks."
-msgstr ""
+msgstr "夾於引號的字串之後無法指定額外字元。"
 
 #: winmm.rc:101
 msgid ""
 "The specified device is not installed on the system. Use the Drivers option "
 "in Control Panel to install the device."
-msgstr ""
+msgstr "指定的裝置未被安裝在系統上。請使用控制面板中的驅動程式選項以安裝裝置。"
 
 #: winmm.rc:102
 msgid ""
 "Cannot access the specified file or MCI device. Try changing directories or "
 "restarting your computer."
 msgstr ""
+"無法存取指定的檔案或多媒體控制介面裝置。請嘗試變更目錄或重新啟動您的電腦。"
 
 #: winmm.rc:103
 msgid ""
 "Cannot access the specified file or MCI device because the application "
 "cannot change directories."
-msgstr ""
+msgstr "無法存取指定的檔案或多媒體控制介面裝置，因為應用程式無法變更目錄。"
 
 #: winmm.rc:104
 msgid ""
 "Cannot access specified file or MCI device because the application cannot "
 "change drives."
-msgstr ""
+msgstr "無法存取指定的檔案或多媒體控制介面裝置，因為應用程式無法變更磁碟。"
 
 #: winmm.rc:105
 msgid "Specify a device or driver name that is less than 79 characters."
-msgstr ""
+msgstr "請指定少於 79 個字元的裝置或驅動程式名稱。"
 
 #: winmm.rc:106
 msgid "Specify a device or driver name that is less than 69 characters."
-msgstr ""
+msgstr "請指定少於 69 個字元的裝置或驅動程式名稱。"
 
 #: winmm.rc:107
 msgid ""
 "The specified command requires an integer parameter. Please provide one."
-msgstr ""
+msgstr "指定的命令需要整數參數。請提供一個。"
 
 #: winmm.rc:108
 msgid ""
 "All wave devices that can play files in the current format are in use. Wait "
 "until a wave device is free, and then try again."
 msgstr ""
+"所有可以用目前格式播放檔案的 wave 裝置都在使用中。請等到 wave 裝置有空時，然"
+"後再試一次。"
 
 #: winmm.rc:109
 msgid ""
 "Cannot set the current wave device for play back because it is in use. Wait "
 "until the device is free, and then try again."
 msgstr ""
+"無法設定目前的 wave 裝置去播放，因為它正在使用中。請等到裝置有空時，然後再試"
+"一次。"
 
 #: winmm.rc:110
 msgid ""
 "All wave devices that can record files in the current format are in use. "
 "Wait until a wave device is free, and then try again."
 msgstr ""
+"所有可以用目前格式記錄檔案的 wave 裝置都在使用中。請等到 wave 裝置有空時，然"
+"後再試一次。"
 
 #: winmm.rc:111
 msgid ""
 "Cannot set the current wave device for recording because it is in use. Wait "
 "until the device is free, and then try again."
 msgstr ""
+"無法設定目前的 wave 裝置去記錄，因為它正在使用中。請等到裝置有空時，然後再試"
+"一次。"
 
 #: winmm.rc:112
 msgid "Any compatible waveform playback device may be used."
-msgstr ""
+msgstr "也許可以使用任何相容的波形播放控制裝置。"
 
 #: winmm.rc:113
 msgid "Any compatible waveform recording device may be used."
-msgstr ""
+msgstr "也許可以使用任何相容的波形記錄裝置。"
 
 #: winmm.rc:114
 msgid ""
 "No wave device that can play files in the current format is installed. Use "
 "the Drivers option to install the wave device."
 msgstr ""
+"沒有任何可以用目前格式播放檔案的 wave 裝置已被安裝。請使用驅動程式選項以安裝 "
+"wave 裝置。"
 
 #: winmm.rc:115
 msgid ""
 "The device you are trying to play to cannot recognize the current file "
 "format."
-msgstr ""
+msgstr "您正在嘗試用以播放的裝置無法識別目前的檔案格式。"
 
 #: winmm.rc:116
 msgid ""
 "No wave device that can record files in the current format is installed. Use "
 "the Drivers option to install the wave device."
 msgstr ""
+"沒有安裝任何能以目前的格式記錄檔案的 wave 裝置。使用「驅動程式」選項以安裝 "
+"wave 裝置。"
 
 #: winmm.rc:117
 msgid ""
 "The device you are trying to record from cannot recognize the current file "
 "format."
-msgstr ""
+msgstr "您正在嘗試記錄的裝置無法識別目前的檔案格式。"
 
 #: winmm.rc:122
 msgid ""
 "The time formats of the \"song pointer\" and SMPTE are mutually exclusive. "
 "You can't use them together."
-msgstr ""
+msgstr "「歌曲指標」的時間格式和 SMPTE 彼此互斥。您無法一起使用它們。"
 
 #: winmm.rc:124
 msgid ""
 "The specified MIDI port is already in use. Wait until it is free; then try "
 "again."
-msgstr ""
+msgstr "指定的 MIDI 通訊埠已在使用中。等到它可用時；然後再試一次。"
 
 #: winmm.rc:127
 msgid ""
 "The specified MIDI device is not installed on the system. Use the Drivers "
 "option from the Control Panel to install a MIDI device."
 msgstr ""
+"指定的 MIDI 裝置未被安裝在系統上。使用「控制面板」中的「驅動程式」選項以安裝 "
+"MIDI 裝置。"
 
 #: winmm.rc:125
 msgid ""
@@ -8719,46 +8772,52 @@ msgid ""
 "on the system. Use the MIDI Mapper option from the Control Panel to edit the "
 "setup."
 msgstr ""
+"目前的 MIDI 對映表設定，參照了未被安裝在系統上的 MIDI 裝置。使用「控制面板」"
+"中的「MIDI 對映表」選項以編輯設定。"
 
 #: winmm.rc:126
 msgid "An error occurred with the specified port."
-msgstr ""
+msgstr "指定的通訊埠發生了錯誤。"
 
 #: winmm.rc:129
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
 "these applications; then, try again."
 msgstr ""
+"所有多媒體計時器正被其他應用程式使用中。離開其中某一個應用程式；然後再試一"
+"次。"
 
 #: winmm.rc:128
 msgid "The system doesn't have a current MIDI port specified."
-msgstr ""
+msgstr "系統尚未指定當前的 MIDI 通訊埠。"
 
 #: winmm.rc:123
 msgid ""
 "The system has no installed MIDI devices. Use the Drivers option from the "
 "Control Panel to install a MIDI driver."
 msgstr ""
+"系統沒有任何已安裝的 MIDI 裝置。使用「控制面板」中的「驅動程式」選項以安裝 "
+"MIDI 驅動程式。"
 
 #: winmm.rc:118
 msgid "There is no display window."
-msgstr ""
+msgstr "沒有任何顯示視窗。"
 
 #: winmm.rc:119
 msgid "Could not create or use window."
-msgstr ""
+msgstr "無法建立或使用視窗。"
 
 #: winmm.rc:120
 msgid ""
 "Cannot read the specified file. Make sure the file is still present, or "
 "check your disk or network connection."
-msgstr ""
+msgstr "無法讀取指定的檔案。確定檔案仍然存在，或者檢查看看您的磁碟或網路連線。"
 
 #: winmm.rc:121
 msgid ""
 "Cannot write to the specified file. Make sure you have enough disk space or "
 "are still connected to the network."
-msgstr ""
+msgstr "無法寫入指定的檔案。確定您有足夠的磁碟空間或是仍然連線到網路。"
 
 #: winspool.rc:34
 msgid "Print to File"
@@ -8770,7 +8829,7 @@ msgstr "輸出檔案名稱(&O)："
 
 #: winspool.rc:28
 msgid "The output file already exists. Click OK to overwrite."
-msgstr "輸出檔案已存在, 按'確定'覆蓋。"
+msgstr "輸出檔案已存在, 按「確定」以覆寫。"
 
 #: winspool.rc:29
 msgid "Unable to create the output file."
@@ -8790,103 +8849,103 @@ msgstr "協定錯誤"
 
 #: wldap32.rc:30
 msgid "Time Limit Exceeded"
-msgstr ""
+msgstr "超出了時間限制"
 
 #: wldap32.rc:31
 msgid "Size Limit Exceeded"
-msgstr ""
+msgstr "超出了大小限制"
 
 #: wldap32.rc:32
 msgid "Compare False"
-msgstr ""
+msgstr "比較為假"
 
 #: wldap32.rc:33
 msgid "Compare True"
-msgstr ""
+msgstr "比較為真"
 
 #: wldap32.rc:34
 msgid "Authentication Method Not Supported"
-msgstr ""
+msgstr "認證方法不受支援"
 
 #: wldap32.rc:35
 msgid "Strong Authentication Required"
-msgstr ""
+msgstr "要求強力認證"
 
 #: wldap32.rc:36
 msgid "Referral (v2)"
-msgstr ""
+msgstr "參照 (v2)"
 
 #: wldap32.rc:37
 msgid "Referral"
-msgstr ""
+msgstr "參照"
 
 #: wldap32.rc:38
 msgid "Administration Limit Exceeded"
-msgstr ""
+msgstr "超出了管理限制"
 
 #: wldap32.rc:39
 msgid "Unavailable Critical Extension"
-msgstr ""
+msgstr "不得使用關鍵副檔名"
 
 #: wldap32.rc:40
 msgid "Confidentiality Required"
-msgstr ""
+msgstr "要求機密性"
 
 #: wldap32.rc:43
 msgid "No Such Attribute"
-msgstr ""
+msgstr "沒有此類屬性"
 
 #: wldap32.rc:44
 msgid "Undefined Type"
-msgstr ""
+msgstr "未定義的型態"
 
 #: wldap32.rc:45
 msgid "Inappropriate Matching"
-msgstr ""
+msgstr "不適當的匹配"
 
 #: wldap32.rc:46
 msgid "Constraint Violation"
-msgstr ""
+msgstr "限制違規"
 
 #: wldap32.rc:47
 msgid "Attribute Or Value Exists"
-msgstr ""
+msgstr "屬性或值存在"
 
 #: wldap32.rc:48
 msgid "Invalid Syntax"
-msgstr ""
+msgstr "無效的語法"
 
 #: wldap32.rc:59
 msgid "No Such Object"
-msgstr ""
+msgstr "沒有此類物件"
 
 #: wldap32.rc:60
 msgid "Alias Problem"
-msgstr ""
+msgstr "別名問題"
 
 #: wldap32.rc:61
 msgid "Invalid DN Syntax"
-msgstr ""
+msgstr "無效的 DN 語法"
 
 #: wldap32.rc:62
 msgid "Is Leaf"
-msgstr ""
+msgstr "是枝葉"
 
 #: wldap32.rc:63
 msgid "Alias Dereference Problem"
-msgstr ""
+msgstr "別名去除參考的問題"
 
 #: wldap32.rc:75
 msgid "Inappropriate Authentication"
-msgstr ""
+msgstr "不適當的認證"
 
 #: wldap32.rc:76
 msgid "Invalid Credentials"
-msgstr ""
+msgstr "無效的憑據"
 
 #: wldap32.rc:77
 msgid "Insufficient Rights"
-msgstr ""
+msgstr "不足的權限"
 
 #: wldap32.rc:78
 msgid "Busy"
@@ -8894,67 +8953,67 @@ msgstr "忙碌"
 
 #: wldap32.rc:79
 msgid "Unavailable"
-msgstr ""
+msgstr "不得使用"
 
 #: wldap32.rc:80
 msgid "Unwilling To Perform"
-msgstr ""
+msgstr "無進行意願"
 
 #: wldap32.rc:81
 msgid "Loop Detected"
-msgstr ""
+msgstr "偵測到迴圈"
 
 #: wldap32.rc:87
 msgid "Sort Control Missing"
-msgstr ""
+msgstr "缺少排序控制"
 
 #: wldap32.rc:88
 msgid "Index range error"
-msgstr ""
+msgstr "索引範圍錯誤"
 
 #: wldap32.rc:91
 msgid "Naming Violation"
-msgstr ""
+msgstr "命名違規"
 
 #: wldap32.rc:92
 msgid "Object Class Violation"
-msgstr ""
+msgstr "物件類別違規"
 
 #: wldap32.rc:93
 msgid "Not allowed on Non-leaf"
-msgstr ""
+msgstr "於非尾節點不允許"
 
 #: wldap32.rc:94
 msgid "Not allowed on RDN"
-msgstr ""
+msgstr "於 RDN 不允許"
 
 #: wldap32.rc:95
 msgid "Already Exists"
-msgstr ""
+msgstr "已經存在"
 
 #: wldap32.rc:96
 msgid "No Object Class Mods"
-msgstr ""
+msgstr "沒有物件類別方法"
 
 #: wldap32.rc:97
 msgid "Results Too Large"
-msgstr ""
+msgstr "結果太大"
 
 #: wldap32.rc:98
 msgid "Affects Multiple DSAs"
-msgstr ""
+msgstr "影響多重 DSAs"
 
 #: wldap32.rc:107
 msgid "Other"
-msgstr ""
+msgstr "其他"
 
 #: wldap32.rc:108
 msgid "Server Down"
-msgstr ""
+msgstr "伺服器停機"
 
 #: wldap32.rc:109
 msgid "Local Error"
-msgstr ""
+msgstr "本地錯誤"
 
 #: wldap32.rc:110
 msgid "Encoding Error"
@@ -8970,11 +9029,11 @@ msgstr "逾時"
 
 #: wldap32.rc:113
 msgid "Auth Unknown"
-msgstr ""
+msgstr "認證不明的"
 
 #: wldap32.rc:114
 msgid "Filter Error"
-msgstr ""
+msgstr "篩選器錯誤"
 
 #: wldap32.rc:115
 msgid "User Canceled"
@@ -8986,41 +9045,43 @@ msgstr "參數錯誤"
 
 #: wldap32.rc:117
 msgid "No Memory"
-msgstr ""
+msgstr "沒有記憶體"
 
 #: wldap32.rc:118
 msgid "Can't connect to the LDAP server"
-msgstr ""
+msgstr "無法連線到 LDAP 伺服器"
 
 #: wldap32.rc:119
 msgid "Operation not supported by this version of the LDAP protocol"
-msgstr ""
+msgstr "動作不受這個版本的 LDAP 協定所支援"
 
 #: wldap32.rc:120
 msgid "Specified control was not found in message"
-msgstr ""
+msgstr "在訊息中找不到指定的控制"
 
 #: wldap32.rc:121
 msgid "No result present in message"
-msgstr ""
+msgstr "在訊息中沒有結果呈現"
 
 #: wldap32.rc:122
 msgid "More results returned"
-msgstr ""
+msgstr "回傳了更多結果"
 
 #: wldap32.rc:123
 msgid "Loop while handling referrals"
-msgstr ""
+msgstr "處理參照時產生迴圈"
 
 #: wldap32.rc:124
 msgid "Referral hop limit exceeded"
-msgstr ""
+msgstr "超出了參照躍點限制"
 
 #: attrib.rc:27 cmd.rc:325
 msgid ""
 "Not Yet Implemented\n"
 "\n"
 msgstr ""
+"尚未實作\n"
+"\n"
 
 #: attrib.rc:28 cmd.rc:328
 msgid "%1: File Not Found\n"
@@ -9047,6 +9108,24 @@ msgid ""
 "  /S  Processes matching files in the current folder and all subfolders.\n"
 "  /D  Processes folders as well.\n"
 msgstr ""
+"ATTRIB - 顯示或變更檔案屬性。\n"
+"\n"
+"語法：\n"
+"ATTRIB [+R | -R] [+A | -A ] [+S | -S] [+H | -H] [儲存裝置:][路徑][檔名]\n"
+"       [/S [/D]]\n"
+"\n"
+"其中：\n"
+"\n"
+"  +   設定一個屬性。\n"
+"  -   清空一個屬性。\n"
+"  R   唯讀檔案屬性。\n"
+"  A   封存檔案屬性。\n"
+"  S   系統檔案屬性。\n"
+"  H   隱藏檔案屬性。\n"
+"  [儲存裝置:][路徑][檔名]\n"
+"      指定 attrib 要處理的一個或多個檔案。\n"
+"  /S  處理在目前資料夾和所有子資料夾中的匹配檔案。\n"
+"  /D  同樣處理資料夾。\n"
 
 #: clock.rc:29
 msgid "Ana&log"
@@ -9058,7 +9137,7 @@ msgstr "數位時鐘(&T)"
 
 #: clock.rc:32 notepad.rc:50 winecfg.rc:289 winefile.rc:60 wordpad.rc:81
 msgid "&Font..."
-msgstr "字型(&F)..."
+msgstr "字型(&F)…"
 
 #: clock.rc:34
 msgid "&Without Titlebar"
