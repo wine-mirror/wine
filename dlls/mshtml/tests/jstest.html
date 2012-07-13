@@ -91,6 +91,20 @@ function test_clone_node() {
     ok(cloned.style.filter === "alpha(opacity=50)", "cloned.style.filter = " + cloned.style.filter);
 }
 
+function test_getter_call() {
+    document.body.innerHTML = '<div id="divid"></div>';
+
+    var e = document.getElementById("divid");
+
+    e.myfunc = function(x) { this.myfinc_called = x; };
+    e.myfunc("test");
+    ok(e.myfinc_called === "test", "e.myfinc_called = " + e.myfinc_called);
+
+    e.onmousedown = function(x) { this.onmousedown_called = x; };
+    e.onmousedown("test");
+    ok(e.onmousedown_called === "test", "e.onmousedown_called = " + e.onmousedown_called);
+}
+
 var globalVar = false;
 
 function runTest() {
@@ -106,6 +120,7 @@ function runTest() {
     test_createDocumentFragment();
     test_document_name_as_index();
     test_remove_style_attribute();
+    test_getter_call();
 
     var r = window.execScript("globalVar = true;");
     ok(r === undefined, "execScript returned " + r);
