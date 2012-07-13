@@ -4257,9 +4257,11 @@ TREEVIEW_RButtonDown(TREEVIEW_INFO *infoPtr, LPARAM lParam)
     }
     else
     {
-	TREEVIEW_RButtonUp(infoPtr, &ht.pt);
 	SetFocus(infoPtr->hwnd);
-	TREEVIEW_SendSimpleNotify(infoPtr, NM_RCLICK);
+	if(!TREEVIEW_SendSimpleNotify(infoPtr, NM_RCLICK))
+	{
+	    TREEVIEW_RButtonUp(infoPtr, &ht.pt);
+	}
     }
 
     return 0;
