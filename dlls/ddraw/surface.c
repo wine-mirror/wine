@@ -5590,14 +5590,22 @@ static const struct wined3d_parent_ops ddraw_texture_wined3d_parent_ops =
 HRESULT ddraw_surface_create_texture(struct ddraw_surface *surface)
 {
     const DDSURFACEDESC2 *desc = &surface->surface_desc;
+    struct ddraw_surface *mip, **attach;
+    struct wined3d_resource *resource;
     enum wined3d_format_id format;
+    UINT layers, levels, i, j;
     enum wined3d_pool pool;
-    UINT levels;
+    HRESULT hr;
 
     if (desc->ddsCaps.dwCaps & DDSCAPS_MIPMAP)
         levels = desc->u2.dwMipMapCount;
     else
         levels = 1;
+
+    if (desc->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
+        layers = 6;
+    else
+        layers = 1;
 
     /* DDSCAPS_SYSTEMMEMORY textures are in WINED3D_POOL_SYSTEM_MEM.
      * Should I forward the MANAGED cap to the managed pool? */
@@ -5608,11 +5616,36 @@ HRESULT ddraw_surface_create_texture(struct ddraw_surface *surface)
 
     format = PixelFormat_DD2WineD3D(&surface->surface_desc.u4.ddpfPixelFormat);
     if (desc->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
-        return wined3d_texture_create_cube(surface->ddraw->wined3d_device, desc->dwWidth,
+        hr = wined3d_texture_create_cube(surface->ddraw->wined3d_device, desc->dwWidth,
                 levels, 0, format, pool, surface, &ddraw_texture_wined3d_parent_ops, &surface->wined3d_texture);
     else
-        return wined3d_texture_create_2d(surface->ddraw->wined3d_device, desc->dwWidth, desc->dwHeight,
+        hr = wined3d_texture_create_2d(surface->ddraw->wined3d_device, desc->dwWidth, desc->dwHeight,
                 levels, 0, format, pool, surface, &ddraw_texture_wined3d_parent_ops, &surface->wined3d_texture);
+
+    if (FAILED(hr))
+    {
+        WARN("Failed to create wined3d texture, hr %#x.\n", hr);
+        return hr;
+    }
+
+    for (i = 0; i < layers; ++i)
+    {
+        attach = &surface->complex_array[layers - 1 - i];
+
+        for (j = 0; j < levels; ++j)
+        {
+            resource = wined3d_texture_get_sub_resource(surface->wined3d_texture, i * levels + j);
+            mip = wined3d_resource_get_parent(resource);
+
+            if (mip == surface)
+                continue;
+
+            *attach = mip;
+            attach = &mip->complex_array[0];
+        }
+    }
+
+    return DD_OK;
 }
 
 HRESULT ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw,

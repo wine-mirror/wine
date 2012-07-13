@@ -2639,71 +2639,6 @@ static HRESULT ddraw_create_surface(struct ddraw *ddraw, DDSURFACEDESC2 *pDDSD,
 
     return DD_OK;
 }
-/*****************************************************************************
- * CreateAdditionalSurfaces
- *
- * Creates a new mipmap chain.
- *
- * Params:
- *  root: Root surface to attach the newly created chain to
- *  count: number of surfaces to create
- *  DDSD: Description of the surface. Intentionally not a pointer to avoid side
- *        effects on the caller
- *  CubeFaceRoot: Whether the new surface is a root of a cube map face. This
- *                creates an additional surface without the mipmapping flags
- *
- *****************************************************************************/
-static HRESULT CreateAdditionalSurfaces(struct ddraw *ddraw, struct ddraw_surface *root,
-        UINT count, DDSURFACEDESC2 DDSD, BOOL CubeFaceRoot, UINT version)
-{
-    struct ddraw_surface *last = root;
-    UINT i, j, level = 0;
-    HRESULT hr;
-
-    for (i = 0; i < count; ++i)
-    {
-        struct ddraw_surface *object2 = NULL;
-
-        /* increase the mipmap level, but only if a mipmap is created
-         * In this case, also halve the size
-         */
-        if(DDSD.ddsCaps.dwCaps & DDSCAPS_MIPMAP && !CubeFaceRoot)
-        {
-            level++;
-            if(DDSD.dwWidth > 1) DDSD.dwWidth /= 2;
-            if(DDSD.dwHeight > 1) DDSD.dwHeight /= 2;
-            /* Set the mipmap sublevel flag according to msdn */
-            DDSD.ddsCaps.dwCaps2 |= DDSCAPS2_MIPMAPSUBLEVEL;
-        }
-        else
-        {
-            DDSD.ddsCaps.dwCaps2 &= ~DDSCAPS2_MIPMAPSUBLEVEL;
-        }
-        CubeFaceRoot = FALSE;
-
-        hr = ddraw_create_surface(ddraw, &DDSD, &object2, level, version);
-        if(hr != DD_OK)
-        {
-            return hr;
-        }
-
-        /* Add the new surface to the complex attachment array */
-        for(j = 0; j < MAX_COMPLEX_ATTACHED; j++)
-        {
-            if(last->complex_array[j]) continue;
-            last->complex_array[j] = object2;
-            break;
-        }
-        last = object2;
-
-        /* Remove the (possible) back buffer cap from the new surface description,
-         * because only one surface in the flipping chain is a back buffer, one
-         * is a front buffer, the others are just primary surfaces.
-         */
-        DDSD.ddsCaps.dwCaps &= ~DDSCAPS_BACKBUFFER;
-    }
-    return DD_OK;
-}
 
 static HRESULT CDECL ddraw_reset_enum_callback(struct wined3d_resource *resource)
 {
@@ -2793,7 +2728,6 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
     struct ddraw_surface *object = NULL;
     struct wined3d_display_mode mode;
     HRESULT hr;
-    LONG extra_surfaces = 0;
     DDSURFACEDESC2 desc2;
     const DWORD sysvidmem = DDSCAPS_VIDEOMEMORY | DDSCAPS_SYSTEMMEMORY;
 
@@ -2984,7 +2918,6 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
             /* Not-complex mipmap -> Mipmapcount = 1 */
             desc2.u2.dwMipMapCount = 1;
         }
-        extra_surfaces = desc2.u2.dwMipMapCount - 1;
 
         /* There's a mipmap count in the created surface in any case */
         desc2.dwFlags |= DDSD_MIPMAPCOUNT;
@@ -3046,46 +2979,39 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
      */
     if(DDSD->dwFlags & DDSD_BACKBUFFERCOUNT)
     {
-        extra_surfaces = DDSD->dwBackBufferCount;
+        struct ddraw_surface *last = object;
+        UINT i;
+
         desc2.ddsCaps.dwCaps &= ~DDSCAPS_FRONTBUFFER; /* It's not a front buffer */
         desc2.ddsCaps.dwCaps |= DDSCAPS_BACKBUFFER;
         desc2.dwBackBufferCount = 0;
-    }
 
-    hr = DD_OK;
-    if(desc2.ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
-    {
-        desc2.ddsCaps.dwCaps2 &= ~DDSCAPS2_CUBEMAP_ALLFACES;
-        desc2.ddsCaps.dwCaps2 |=  DDSCAPS2_CUBEMAP_NEGATIVEZ;
-        hr |= CreateAdditionalSurfaces(ddraw, object, extra_surfaces + 1, desc2, TRUE, version);
-        desc2.ddsCaps.dwCaps2 &= ~DDSCAPS2_CUBEMAP_NEGATIVEZ;
-        desc2.ddsCaps.dwCaps2 |=  DDSCAPS2_CUBEMAP_POSITIVEZ;
-        hr |= CreateAdditionalSurfaces(ddraw, object, extra_surfaces + 1, desc2, TRUE, version);
-        desc2.ddsCaps.dwCaps2 &= ~DDSCAPS2_CUBEMAP_POSITIVEZ;
-        desc2.ddsCaps.dwCaps2 |=  DDSCAPS2_CUBEMAP_NEGATIVEY;
-        hr |= CreateAdditionalSurfaces(ddraw, object, extra_surfaces + 1, desc2, TRUE, version);
-        desc2.ddsCaps.dwCaps2 &= ~DDSCAPS2_CUBEMAP_NEGATIVEY;
-        desc2.ddsCaps.dwCaps2 |=  DDSCAPS2_CUBEMAP_POSITIVEY;
-        hr |= CreateAdditionalSurfaces(ddraw, object, extra_surfaces + 1, desc2, TRUE, version);
-        desc2.ddsCaps.dwCaps2 &= ~DDSCAPS2_CUBEMAP_POSITIVEY;
-        desc2.ddsCaps.dwCaps2 |=  DDSCAPS2_CUBEMAP_NEGATIVEX;
-        hr |= CreateAdditionalSurfaces(ddraw, object, extra_surfaces + 1, desc2, TRUE, version);
-        desc2.ddsCaps.dwCaps2 &= ~DDSCAPS2_CUBEMAP_NEGATIVEX;
-        desc2.ddsCaps.dwCaps2 |=  DDSCAPS2_CUBEMAP_POSITIVEX;
-    }
+        for (i = 0; i < DDSD->dwBackBufferCount; ++i)
+        {
+            struct ddraw_surface *object2 = NULL;
 
-    hr |= CreateAdditionalSurfaces(ddraw, object, extra_surfaces, desc2, FALSE, version);
-    if(hr != DD_OK)
-    {
-        /* This destroys and possibly created surfaces too */
-        if (version == 7)
-            IDirectDrawSurface7_Release(&object->IDirectDrawSurface7_iface);
-        else if (version == 4)
-            IDirectDrawSurface4_Release(&object->IDirectDrawSurface4_iface);
-        else
-            IDirectDrawSurface_Release(&object->IDirectDrawSurface_iface);
+            if (FAILED(hr = ddraw_create_surface(ddraw, &desc2, &object2, 0, version)))
+            {
+                if (version == 7)
+                    IDirectDrawSurface7_Release(&object->IDirectDrawSurface7_iface);
+                else if (version == 4)
+                    IDirectDrawSurface4_Release(&object->IDirectDrawSurface4_iface);
+                else
+                    IDirectDrawSurface_Release(&object->IDirectDrawSurface_iface);
 
-        return hr;
+                return hr;
+            }
+
+            /* Add the new surface to the complex attachment array. */
+            last->complex_array[0] = object2;
+            last = object2;
+
+            /* Remove the (possible) back buffer cap from the new surface
+             * description, because only one surface in the flipping chain is a
+             * back buffer, one is a front buffer, the others are just primary
+             * surfaces. */
+            desc2.ddsCaps.dwCaps &= ~DDSCAPS_BACKBUFFER;
+        }
     }
 
     if (desc2.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
@@ -5360,72 +5286,76 @@ static HRESULT CDECL device_parent_create_texture_surface(struct wined3d_device_
         void *container_parent, UINT width, UINT height, enum wined3d_format_id format, DWORD usage,
         enum wined3d_pool pool, UINT level, enum wined3d_cubemap_face face, struct wined3d_surface **surface)
 {
+    struct ddraw *ddraw = ddraw_from_device_parent(device_parent);
     struct ddraw_surface *tex_root = container_parent;
-    struct ddraw_surface *surf = NULL;
-    DDSCAPS2 searchcaps;
-    UINT i = 0;
+    DDSURFACEDESC2 desc = tex_root->surface_desc;
+    struct ddraw_surface *ddraw_surface;
+    HRESULT hr;
 
     TRACE("device_parent %p, container_parent %p, width %u, height %u, format %#x, usage %#x,\n"
             "\tpool %#x, level %u, face %u, surface %p.\n",
             device_parent, container_parent, width, height, format, usage, pool, level, face, surface);
 
-    searchcaps = tex_root->surface_desc.ddsCaps;
-    searchcaps.dwCaps2 &= ~DDSCAPS2_CUBEMAP_ALLFACES;
-    switch (face)
+    /* The ddraw root surface is created before the wined3d texture. */
+    if (!level && face == WINED3D_CUBEMAP_FACE_POSITIVE_X)
     {
-        case WINED3D_CUBEMAP_FACE_POSITIVE_X:
-            TRACE("Asked for positive x\n");
-            if (searchcaps.dwCaps2 & DDSCAPS2_CUBEMAP)
-            {
-                searchcaps.dwCaps2 |= DDSCAPS2_CUBEMAP_POSITIVEX;
-            }
-            surf = tex_root; break;
-        case WINED3D_CUBEMAP_FACE_NEGATIVE_X:
-            TRACE("Asked for negative x\n");
-            searchcaps.dwCaps2 |= DDSCAPS2_CUBEMAP_NEGATIVEX; break;
-        case WINED3D_CUBEMAP_FACE_POSITIVE_Y:
-            TRACE("Asked for positive y\n");
-            searchcaps.dwCaps2 |= DDSCAPS2_CUBEMAP_POSITIVEY; break;
-        case WINED3D_CUBEMAP_FACE_NEGATIVE_Y:
-            TRACE("Asked for negative y\n");
-            searchcaps.dwCaps2 |= DDSCAPS2_CUBEMAP_NEGATIVEY; break;
-        case WINED3D_CUBEMAP_FACE_POSITIVE_Z:
-            TRACE("Asked for positive z\n");
-            searchcaps.dwCaps2 |= DDSCAPS2_CUBEMAP_POSITIVEZ; break;
-        case WINED3D_CUBEMAP_FACE_NEGATIVE_Z:
-            TRACE("Asked for negative z\n");
-            searchcaps.dwCaps2 |= DDSCAPS2_CUBEMAP_NEGATIVEZ; break;
-        default:
-            ERR("Unexpected cube face.\n");
+        ddraw_surface = tex_root;
+        goto done;
     }
 
-    if (!surf)
-    {
-        IDirectDrawSurface7 *attached;
-        IDirectDrawSurface7_GetAttachedSurface(&tex_root->IDirectDrawSurface7_iface, &searchcaps, &attached);
-        surf = unsafe_impl_from_IDirectDrawSurface7(attached);
-        IDirectDrawSurface7_Release(attached);
-    }
-    if (!surf) ERR("root search surface not found\n");
+    desc.dwWidth = width;
+    desc.dwHeight = height;
+    if (level)
+        desc.ddsCaps.dwCaps2 |= DDSCAPS2_MIPMAPSUBLEVEL;
+    else
+        desc.ddsCaps.dwCaps2 &= ~DDSCAPS2_MIPMAPSUBLEVEL;
 
-    /* Find the wanted mipmap. There are enough mipmaps in the chain */
-    while (i < level)
+    if (desc.ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
     {
-        IDirectDrawSurface7 *attached;
-        IDirectDrawSurface7_GetAttachedSurface(&surf->IDirectDrawSurface7_iface, &searchcaps, &attached);
-        if(!attached) ERR("Surface not found\n");
-        surf = impl_from_IDirectDrawSurface7(attached);
-        IDirectDrawSurface7_Release(attached);
-        ++i;
+        desc.ddsCaps.dwCaps2 &= ~DDSCAPS2_CUBEMAP_ALLFACES;
+
+        switch (face)
+        {
+            case WINED3D_CUBEMAP_FACE_POSITIVE_X:
+                desc.ddsCaps.dwCaps2 |= DDSCAPS2_CUBEMAP_POSITIVEX;
+                break;
+
+            case WINED3D_CUBEMAP_FACE_NEGATIVE_X:
+                desc.ddsCaps.dwCaps2 |= DDSCAPS2_CUBEMAP_NEGATIVEX;
+                break;
+
+            case WINED3D_CUBEMAP_FACE_POSITIVE_Y:
+                desc.ddsCaps.dwCaps2 |= DDSCAPS2_CUBEMAP_POSITIVEY;
+                break;
+
+            case WINED3D_CUBEMAP_FACE_NEGATIVE_Y:
+                desc.ddsCaps.dwCaps2 |= DDSCAPS2_CUBEMAP_NEGATIVEY;
+                break;
+
+            case WINED3D_CUBEMAP_FACE_POSITIVE_Z:
+                desc.ddsCaps.dwCaps2 |= DDSCAPS2_CUBEMAP_POSITIVEZ;
+                break;
+
+            case WINED3D_CUBEMAP_FACE_NEGATIVE_Z:
+                desc.ddsCaps.dwCaps2 |= DDSCAPS2_CUBEMAP_NEGATIVEZ;
+                break;
+
+            default:
+                ERR("Unexpected cube face.\n");
+                return DDERR_INVALIDPARAMS;
+        }
+
     }
 
-    /* Return the surface */
-    *surface = surf->wined3d_surface;
+    /* FIXME: Validate that format, usage, pool, etc. really make sense. */
+    if (FAILED(hr = ddraw_create_surface(ddraw, &desc, &ddraw_surface, 0, tex_root->version)))
+        return hr;
+
+done:
+    *surface = ddraw_surface->wined3d_surface;
     wined3d_surface_incref(*surface);
 
-    TRACE("Returning wineD3DSurface %p, it belongs to surface %p\n", *surface, surf);
-
-    return D3D_OK;
+    return DD_OK;
 }
 
 static void STDMETHODCALLTYPE ddraw_frontbuffer_destroyed(void *parent)
