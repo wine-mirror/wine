@@ -65,8 +65,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(storage);
 static const BYTE STORAGE_magic[8]    ={0xd0,0xcf,0x11,0xe0,0xa1,0xb1,0x1a,0xe1};
 static const BYTE STORAGE_oldmagic[8] ={0xd0,0xcf,0x11,0xe0,0x0e,0x11,0xfc,0x0d};
 
-static const char rootEntryName[] = "Root Entry";
-
 /****************************************************************************
  * Storage32InternalImpl definitions.
  *
@@ -2874,21 +2872,21 @@ static HRESULT StorageImpl_Construct(
    */
   if (create)
   {
+    static const WCHAR rootentryW[] = {'R','o','o','t',' ','E','n','t','r','y',0};
     DirEntry rootEntry;
     /*
      * Initialize the directory table
      */
     memset(&rootEntry, 0, sizeof(rootEntry));
-    MultiByteToWideChar( CP_ACP, 0, rootEntryName, -1, rootEntry.name,
-                         sizeof(rootEntry.name)/sizeof(WCHAR) );
-    rootEntry.sizeOfNameString = (strlenW(rootEntry.name)+1) * sizeof(WCHAR);
+    strcpyW(rootEntry.name, rootentryW);
+    rootEntry.sizeOfNameString = sizeof(rootentryW);
     rootEntry.stgType          = STGTY_ROOT;
-    rootEntry.leftChild = DIRENTRY_NULL;
-    rootEntry.rightChild     = DIRENTRY_NULL;
+    rootEntry.leftChild        = DIRENTRY_NULL;
+    rootEntry.rightChild       = DIRENTRY_NULL;
     rootEntry.dirRootEntry     = DIRENTRY_NULL;
     rootEntry.startingBlock    = BLOCK_END_OF_CHAIN;
-    rootEntry.size.u.HighPart    = 0;
-    rootEntry.size.u.LowPart     = 0;
+    rootEntry.size.u.HighPart  = 0;
+    rootEntry.size.u.LowPart   = 0;
 
     StorageImpl_WriteDirEntry(This, 0, &rootEntry);
   }
