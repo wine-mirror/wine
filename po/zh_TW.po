@@ -10937,57 +10937,62 @@ msgid ""
 "REG [ ADD | DELETE | QUERY ]\n"
 "REG command /?\n"
 msgstr ""
+"這個命令的語法是：\n"
+"\n"
+"REG [ ADD | DELETE | QUERY ]\n"
+"REG 命令 /?\n"
 
 #: reg.rc:28
 msgid ""
 "REG ADD key_name [/v value_name | /ve] [/t type] [/s separator] [/d data] [/"
 "f]\n"
 msgstr ""
+"REG ADD 索引鍵名稱 [/v 值名稱 | /ve] [/t 型態] [/s 分隔符號] [/d 資料] [/f]\n"
 
 #: reg.rc:29
 msgid "REG DELETE key_name [/v value_name | /ve | /va] [/f]\n"
-msgstr ""
+msgstr "REG DELETE 索引鍵名稱 [/v 值名稱 | /ve | /va] [/f]\n"
 
 #: reg.rc:30
 msgid "REG QUERY key_name [/v value_name | /ve] [/s]\n"
-msgstr ""
+msgstr "REG QUERY 索引鍵名稱 [/v 值名稱 | /ve] [/s]\n"
 
 #: reg.rc:31
 msgid "The operation completed successfully\n"
-msgstr ""
+msgstr "作業已成功完成\n"
 
 #: reg.rc:32
 msgid "Error: Invalid key name\n"
-msgstr ""
+msgstr "錯誤：無效的索引鍵名稱\n"
 
 #: reg.rc:33
 msgid "Error: Invalid command line parameters\n"
-msgstr ""
+msgstr "錯誤：無效的命令列參數\n"
 
 #: reg.rc:34
 msgid "Error: Unable to add keys to remote machine\n"
-msgstr ""
+msgstr "錯誤：無法加入索引鍵到遠端機器\n"
 
 #: reg.rc:35
 msgid ""
 "Error: The system was unable to find the specified registry key or value\n"
-msgstr ""
+msgstr "錯誤：系統無法找到指定的註冊表索引鍵或值\n"
 
 #: regedit.rc:31
 msgid "&Registry"
-msgstr "登錄檔(&R)"
+msgstr "註冊表(&R)"
 
 #: regedit.rc:33
 msgid "&Import Registry File..."
-msgstr "匯入登錄檔(&I)..."
+msgstr "匯入註冊表檔案(&I)…"
 
 #: regedit.rc:34
 msgid "&Export Registry File..."
-msgstr "匯出登錄檔(&E)..."
+msgstr "匯出註冊表檔案(&E)…"
 
 #: regedit.rc:46 regedit.rc:97
 msgid "&Key"
-msgstr "機碼(&K)"
+msgstr "索引鍵(&K)"
 
 #: regedit.rc:48 regedit.rc:99
 msgid "&String Value"
@@ -11015,11 +11020,11 @@ msgstr "重新命名(&R)\tF2"
 
 #: regedit.rc:58 regedit.rc:110
 msgid "&Copy Key Name"
-msgstr "複製機碼名稱(&C)"
+msgstr "複製索引鍵名稱(&C)"
 
 #: regedit.rc:60 regedit.rc:112 wordpad.rc:50
 msgid "&Find...\tCtrl+F"
-msgstr "搜尋(&F)...\tCtrl+F"
+msgstr "搜尋(&F)…\tCtrl+F"
 
 #: regedit.rc:61
 msgid "Find Ne&xt\tF3"
@@ -11035,19 +11040,19 @@ msgstr "分割(&L)"
 
 #: regedit.rc:74
 msgid "&Remove Favorite..."
-msgstr "移除我的最愛(&R)..."
+msgstr "移除我的最愛(&R)…"
 
 #: regedit.rc:79
 msgid "&About Registry Editor"
-msgstr "關於登錄檔編輯器(&A)"
+msgstr "關於註冊表編輯器(&A)"
 
 #: regedit.rc:88
 msgid "Modify Binary Data..."
-msgstr "修改二進位資料..."
+msgstr "修改二進位資料…"
 
 #: regedit.rc:215
 msgid "Export registry"
-msgstr "匯出登錄檔"
+msgstr "匯出註冊表"
 
 #: regedit.rc:217
 msgid "S&elected branch:"
@@ -11063,7 +11068,7 @@ msgstr "在這找："
 
 #: regedit.rc:229
 msgid "Keys"
-msgstr "機碼"
+msgstr "索引鍵"
 
 #: regedit.rc:230
 msgid "Value names"
@@ -11127,7 +11132,7 @@ msgstr "編輯多字串"
 
 #: regedit.rc:134
 msgid "Contains commands for working with the whole registry"
-msgstr "含有與登錄檔有關的全部指令"
+msgstr "含有與註冊表有關的全部指令"
 
 #: regedit.rc:135
 msgid "Contains commands for editing values or keys"
@@ -11135,11 +11140,11 @@ msgstr "含有與編輯數值有關的全部指令"
 
 #: regedit.rc:136
 msgid "Contains commands for customizing the registry window"
-msgstr "含有與自訂話登錄視窗有關的全部指令"
+msgstr "含有與自訂註冊表視窗有關的全部指令"
 
 #: regedit.rc:137
 msgid "Contains commands for accessing frequently used keys"
-msgstr "含有與使用常用機碼有關的全部指令"
+msgstr "含有與使用常用索引鍵有關的全部指令"
 
 #: regedit.rc:138
 msgid ""
@@ -11156,23 +11161,23 @@ msgstr "資料"
 
 #: regedit.rc:129
 msgid "Registry Editor"
-msgstr "登錄檔編輯器"
+msgstr "註冊表編輯器"
 
 #: regedit.rc:191
 msgid "Import Registry File"
-msgstr "匯入登錄檔"
+msgstr "匯入註冊表檔案"
 
 #: regedit.rc:192
 msgid "Export Registry File"
-msgstr "匯出登錄檔"
+msgstr "匯出註冊表檔案"
 
 #: regedit.rc:193
 msgid "Registry files (*.reg)"
-msgstr "登錄檔 (*.reg)"
+msgstr "註冊表檔案 (*.reg)"
 
 #: regedit.rc:194
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
-msgstr "Win9x/NT4 登錄檔 (REGEDIT4)"
+msgstr "Win9x/NT4 註冊表檔案 (REGEDIT4)"
 
 #: regedit.rc:201
 msgid "(Default)"
@@ -11192,15 +11197,15 @@ msgstr "(未知 %d)"
 
 #: regedit.rc:160
 msgid "Quits the registry editor"
-msgstr "結束登錄檔編輯器"
+msgstr "結束註冊表編輯器"
 
 #: regedit.rc:161
 msgid "Adds keys to the favorites list"
-msgstr "將機碼新增到我的最愛"
+msgstr "將索引鍵新增到我的最愛"
 
 #: regedit.rc:162
 msgid "Removes keys from the favorites list"
-msgstr "從我的最愛中刪除機碼"
+msgstr "從我的最愛中刪除索引鍵"
 
 #: regedit.rc:163
 msgid "Shows or hides the status bar"
@@ -11224,11 +11229,11 @@ msgstr "重新命名選擇項目"
 
 #: regedit.rc:168
 msgid "Copies the name of the selected key to the clipboard"
-msgstr "將機碼的名稱複製到剪貼簿"
+msgstr "將索引鍵的名稱複製到剪貼簿"
 
 #: regedit.rc:169
 msgid "Finds a text string in a key, value or data"
-msgstr "在機碼、值或資料中找字串"
+msgstr "在索引鍵、值或資料中找字串"
 
 #: regedit.rc:170
 msgid "Finds next occurrence of text specified in previous search"
@@ -11240,7 +11245,7 @@ msgstr "修改值的資料"
 
 #: regedit.rc:145
 msgid "Adds a new key"
-msgstr "新增一個新的機碼"
+msgstr "新增一個新的索引鍵"
 
 #: regedit.rc:146
 msgid "Adds a new string value"
@@ -11256,15 +11261,15 @@ msgstr "新增一個新的雙字組值"
 
 #: regedit.rc:150
 msgid "Imports a text file into the registry"
-msgstr "將文本檔案匯入登錄檔"
+msgstr "將文本檔案匯入註冊表"
 
 #: regedit.rc:152
 msgid "Exports all or part of the registry to a text file"
-msgstr "將登錄檔導出到文本檔案"
+msgstr "將註冊表導出到文本檔案"
 
 #: regedit.rc:153
 msgid "Prints all or part of the registry"
-msgstr "列印登錄檔的全部或部分"
+msgstr "列印註冊表的全部或部分"
 
 #: regedit.rc:155
 msgid "Displays program information, version number and copyright"
@@ -11276,7 +11281,7 @@ msgstr "無法查詢數值「%s」"
 
 #: regedit.rc:179
 msgid "Can't edit keys of this type (%u)"
-msgstr "無法編輯這類型的機碼 (%u)"
+msgstr "無法編輯這類型的索引鍵 (%u)"
 
 #: regedit.rc:180
 msgid "Value is too big (%u)"
@@ -11300,15 +11305,15 @@ msgstr "您確認要刪除這些數值嗎？"
 
 #: regedit.rc:184
 msgid "New Key #%d"
-msgstr "機碼 #%d"
+msgstr "索引鍵 #%d"
 
 #: regedit.rc:185
 msgid "New Value #%d"
-msgstr "新機碼 #%d"
+msgstr "新索引鍵 #%d"
 
 #: regedit.rc:177
 msgid "Can't query key '%s'"
-msgstr "無法查詢機碼「%s」"
+msgstr "無法查詢索引鍵「%s」"
 
 #: regedit.rc:149
 msgid "Adds a new multi string value"
@@ -11316,7 +11321,7 @@ msgstr "新增一個多字串值"
 
 #: regedit.rc:171
 msgid "Exports selected branch of the registry to a text file"
-msgstr ""
+msgstr "匯出註冊表的所選分支到文字檔"
 
 #: start.rc:52
 msgid ""
@@ -11324,71 +11329,73 @@ msgid ""
 "specified file.\n"
 "ShellExecuteEx failed"
 msgstr ""
+"無法啟始應用程式，或是沒有與指定檔案關聯的應用程式。\n"
+"ShellExecuteEx 失敗"
 
 #: start.rc:54
 msgid "Could not translate the specified Unix filename to a DOS filename."
-msgstr ""
+msgstr "無法翻譯指定的 Unix 檔名到 DOS 檔名。"
 
 #: taskkill.rc:27
 msgid "Usage: taskkill [/?] [/f] [/im ProcessName | /pid ProcessID]\n"
-msgstr ""
+msgstr "用法：taskkill [/?] [/f] [/im 進程名稱 | /pid 進程識別號]\n"
 
 #: taskkill.rc:28
 msgid "Error: Unknown or invalid command line option specified.\n"
-msgstr ""
+msgstr "錯誤：指定了不明或無效的命令列選項。\n"
 
 #: taskkill.rc:29
 msgid "Error: Invalid command line parameter specified.\n"
-msgstr ""
+msgstr "錯誤：指定了無效的命令列參數。\n"
 
 #: taskkill.rc:30
 msgid "Error: One of options /im or /pid must be specified.\n"
-msgstr ""
+msgstr "錯誤：選項 /im 或 /pid 之一必須被指定。\n"
 
 #: taskkill.rc:31
 msgid "Error: Option %1 expects a command line parameter.\n"
-msgstr ""
+msgstr "錯誤：選項 %1 預期有一個命令列參數。\n"
 
 #: taskkill.rc:32
 msgid "Error: Options /im and /pid are mutually exclusive.\n"
-msgstr ""
+msgstr "錯誤：選項 /im 和 /pid 彼此互斥。\n"
 
 #: taskkill.rc:33
 msgid "Close message sent to top-level windows of process with PID %1!u!.\n"
-msgstr ""
+msgstr "已發送關閉訊息給具有 PID %1!u! 的進程的最上層視窗。\n"
 
 #: taskkill.rc:34
 msgid ""
 "Close message sent to top-level windows of process \"%1\" with PID %2!u!.\n"
-msgstr ""
+msgstr "已發送關閉訊息給具有 PID %2!u! 的進程「%1」的最上層視窗。\n"
 
 #: taskkill.rc:35
 msgid "Process with PID %1!u! was forcibly terminated.\n"
-msgstr ""
+msgstr "具有 PID %1!u! 的進程已被強制終止。\n"
 
 #: taskkill.rc:36
 msgid "Process \"%1\" with PID %2!u! was forcibly terminated.\n"
-msgstr ""
+msgstr "具有 PID %2!u! 的進程「%1」已被強制終止。\n"
 
 #: taskkill.rc:37
 msgid "Error: Could not find process \"%1\".\n"
-msgstr ""
+msgstr "錯誤：找不到進程「%1」。\n"
 
 #: taskkill.rc:38
 msgid "Error: Unable to enumerate the process list.\n"
-msgstr ""
+msgstr "錯誤：無法列舉進程清單。\n"
 
 #: taskkill.rc:39
 msgid "Error: Unable to terminate process \"%1\".\n"
-msgstr ""
+msgstr "錯誤：無法終止進程「%1」。\n"
 
 #: taskkill.rc:40
 msgid "Error: Process self-termination is not permitted.\n"
-msgstr ""
+msgstr "錯誤：不允許進程自我終止。\n"
 
 #: taskmgr.rc:37 taskmgr.rc:108
 msgid "&New Task (Run...)"
-msgstr "新工作(&N)..."
+msgstr "新工作(&N)…"
 
 #: taskmgr.rc:39
 msgid "E&xit Task Manager"
@@ -11484,15 +11491,15 @@ msgstr "結束工作(&E)"
 
 #: taskmgr.rc:130
 msgid "&Go To Process"
-msgstr "跳到處理程序(&G)"
+msgstr "跳到進程(&G)"
 
 #: taskmgr.rc:149 taskmgr.rc:363
 msgid "&End Process"
-msgstr "結束處理程序(&E)"
+msgstr "結束進程(&E)"
 
 #: taskmgr.rc:150
 msgid "End Process &Tree"
-msgstr "結束行程樹(&T)"
+msgstr "結束進程樹(&T)"
 
 #: taskmgr.rc:152 winedbg.rc:29
 msgid "&Debug"
@@ -11516,11 +11523,11 @@ msgstr "正常以下(&B)"
 
 #: taskmgr.rc:169
 msgid "Set &Affinity..."
-msgstr "設定親和度(&A)..."
+msgstr "設定親和度(&A)…"
 
 #: taskmgr.rc:170
 msgid "Edit Debug &Channels..."
-msgstr "編輯除錯通道(&C)..."
+msgstr "編輯除錯通道(&C)…"
 
 #: taskmgr.rc:338 taskmgr.rc:180 taskmgr.rc:181
 msgid "Task Manager"
@@ -11528,11 +11535,11 @@ msgstr "工作管理員"
 
 #: taskmgr.rc:351
 msgid "&New Task..."
-msgstr "新工作(&N)..."
+msgstr "新工作(&N)…"
 
 #: taskmgr.rc:364
 msgid "&Show processes from all users"
-msgstr "顯示所有使用者的處理程序(&S)"
+msgstr "顯示所有使用者的進程(&S)"
 
 #: taskmgr.rc:372
 msgid "CPU usage"
@@ -11568,7 +11575,7 @@ msgstr "執行緒"
 
 #: taskmgr.rc:380 taskmgr.rc:263
 msgid "Processes"
-msgstr "處理程序"
+msgstr "進程"
 
 #: taskmgr.rc:387 taskmgr.rc:396 taskmgr.rc:405
 msgid "Total"
@@ -11588,11 +11595,11 @@ msgstr "系統快取"
 
 #: taskmgr.rc:406
 msgid "Paged"
-msgstr "分頁"
+msgstr "置換頁"
 
 #: taskmgr.rc:407
 msgid "Nonpaged"
-msgstr "未分頁"
+msgstr "非置換頁"
 
 #: taskmgr.rc:414
 msgid "CPU usage history"
@@ -11614,7 +11621,7 @@ msgstr "處理器親和度"
 msgid ""
 "The Processor Affinity setting controls which CPUs the process will be "
 "allowed to execute on."
-msgstr "處理器親和度設定控制各行程使用CPU分配情況。"
+msgstr "處理器親和度設定控制各進程使用CPU分配情況。"
 
 #: taskmgr.rc:446
 msgid "CPU 0"
@@ -11746,12 +11753,12 @@ msgstr "CPU 31"
 
 #: taskmgr.rc:514
 msgid "Select Columns"
-msgstr "選擇顯示內容"
+msgstr "選擇顯示欄"
 
 #: taskmgr.rc:519
 msgid ""
 "Select the columns that will appear on the Process page of the Task Manager."
-msgstr "請選擇工作管理員中行程分頁的顯示內容。"
+msgstr "請選擇工作管理員中進程分頁的顯示欄。"
 
 #: taskmgr.rc:521
 msgid "&Image Name"
@@ -11759,7 +11766,7 @@ msgstr "程式名稱(&I)"
 
 #: taskmgr.rc:523
 msgid "&PID (Process Identifier)"
-msgstr "&PID (行程編號)"
+msgstr "&PID (進程編號)"
 
 #: taskmgr.rc:525
 msgid "&CPU Usage"
@@ -11815,11 +11822,11 @@ msgstr "虛擬記憶體大小(&V)"
 
 #: taskmgr.rc:551
 msgid "Pa&ged Pool"
-msgstr ""
+msgstr "置換頁池(&G)"
 
 #: taskmgr.rc:553
 msgid "N&on-paged Pool"
-msgstr ""
+msgstr "非置換頁池(&O)"
 
 #: taskmgr.rc:555
 msgid "Base P&riority"
@@ -11947,7 +11954,7 @@ msgstr "顯示 16-位元工作及有關的ntvdm.exe"
 
 #: taskmgr.rc:216
 msgid "Select which columns will be visible on the Process page"
-msgstr "選擇在行程分頁的顯示內容"
+msgstr "選擇在進程分頁的顯示欄"
 
 #: taskmgr.rc:217
 msgid "Displays kernel time in the performance graphs"
