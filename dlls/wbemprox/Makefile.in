@@ -7,6 +7,7 @@ C_SRCS = \
 	main.c \
 	query.c \
 	services.c \
+	table.c \
 	wbemlocator.c
 
 IDL_R_SRCS = wbemprox.idl

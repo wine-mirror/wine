@@ -815,7 +815,7 @@ done:
     if (factory) IDXGIFactory_Release( factory );
 }
 
-static struct table classtable[] =
+static struct table builtin_classes[] =
 {
     { class_baseboardW, SIZEOF(col_baseboard), col_baseboard, SIZEOF(data_baseboard), (BYTE *)data_baseboard },
     { class_biosW, SIZEOF(col_bios), col_bios, SIZEOF(data_bios), (BYTE *)data_bios },
@@ -830,19 +830,14 @@ static struct table classtable[] =
     { class_videocontrollerW, SIZEOF(col_videocontroller), col_videocontroller, 0, NULL, fill_videocontroller }
 };
 
-struct table *get_table( const WCHAR *name )
+void init_table_list( void )
 {
+    static struct list tables = LIST_INIT( tables );
     UINT i;
-    struct table *table = NULL;
 
-    for (i = 0; i < SIZEOF(classtable); i++)
+    for (i = 0; i < SIZEOF(builtin_classes); i++)
     {
-        if (!strcmpiW( classtable[i].name, name ))
-        {
-            table = &classtable[i];
-            if (table->fill && !table->data) table->fill( table );
-            break;
-        }
+        list_add_tail( &tables, &builtin_classes[i].entry );
     }
-    return table;
+    table_list = &tables;
 }
