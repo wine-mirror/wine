@@ -18,6 +18,7 @@
 
 #include <stdarg.h>
 #include <assert.h>
+#include <limits.h>
 
 #define COBJMACROS
 
@@ -273,15 +274,34 @@ static HRESULT WINAPI HTMLInputElement_get_size(IHTMLInputElement *iface, LONG *
 static HRESULT WINAPI HTMLInputElement_put_maxLength(IHTMLInputElement *iface, LONG v)
 {
     HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
-    FIXME("(%p)->(%d)\n", This, v);
-    return E_NOTIMPL;
+    nsresult nsres;
+
+    TRACE("(%p)->(%d)\n", This, v);
+
+    nsres = nsIDOMHTMLInputElement_SetMaxLength(This->nsinput, v);
+    if(NS_FAILED(nsres)) {
+        /* FIXME: Gecko throws an error on negative values, while MSHTML should accept them */
+        FIXME("SetMaxLength failed\n");
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLInputElement_get_maxLength(IHTMLInputElement *iface, LONG *p)
 {
     HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    PRInt32 max_length;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMHTMLInputElement_GetMaxLength(This->nsinput, &max_length);
+    assert(nsres == NS_OK);
+
+    /* Gecko reports -1 as default value, while MSHTML uses INT_MAX */
+    *p = max_length == -1 ? INT_MAX : max_length;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLInputElement_select(IHTMLInputElement *iface)
