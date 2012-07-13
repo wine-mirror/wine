@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <stdio.h>
 
 #define COBJMACROS
 
@@ -93,6 +94,18 @@ static const struct tiff_1bpp_data
 };
 #include "poppack.h"
 
+static const char *debugstr_guid(const GUID *guid)
+{
+    static char buf[50];
+
+    if (!guid) return "(null)";
+    sprintf(buf, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+            guid->Data1, guid->Data2, guid->Data3, guid->Data4[0],
+            guid->Data4[1], guid->Data4[2], guid->Data4[3], guid->Data4[4],
+            guid->Data4[5], guid->Data4[6], guid->Data4[7]);
+    return buf;
+}
+
 static IWICBitmapDecoder *create_decoder(IWICImagingFactory *factory,
                                          const void *image_data, UINT image_size)
 {
@@ -130,6 +143,7 @@ static void test_tiff_palette(void)
     IWICBitmapDecoder *decoder;
     IWICBitmapFrameDecode *frame;
     IWICPalette *palette;
+    GUID format;
 
     hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IWICImagingFactory, (void **)&factory);
@@ -140,6 +154,11 @@ static void test_tiff_palette(void)
     ok(decoder != 0, "Failed to load TIFF image data\n");
     hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame);
     ok(hr == S_OK, "GetFrame error %#x\n", hr);
+
+    hr = IWICBitmapFrameDecode_GetPixelFormat(frame, &format);
+    ok(hr == S_OK, "GetPixelFormat error %#x\n", hr);
+    ok(IsEqualGUID(&format, &GUID_WICPixelFormatBlackWhite),
+       "got wrong format %s\n", debugstr_guid(&format));
 
     hr = IWICImagingFactory_CreatePalette(factory, &palette);
     ok(hr == S_OK, "CreatePalette error %#x\n", hr);
