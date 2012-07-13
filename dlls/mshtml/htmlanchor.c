@@ -314,15 +314,32 @@ static HRESULT WINAPI HTMLAnchorElement_get_Methods(IHTMLAnchorElement *iface, B
 static HRESULT WINAPI HTMLAnchorElement_put_name(IHTMLAnchorElement *iface, BSTR v)
 {
     HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    nsAString nsstr;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    nsAString_InitDepend(&nsstr, v);
+    nsres = nsIDOMHTMLAnchorElement_SetName(This->nsanchor, &nsstr);
+    nsAString_Finish(&nsstr);
+    if(NS_FAILED(nsres))
+        return E_FAIL;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLAnchorElement_get_name(IHTMLAnchorElement *iface, BSTR *p)
 {
     HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString name_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&name_str, NULL);
+    nsres = nsIDOMHTMLAnchorElement_GetName(This->nsanchor, &name_str);
+
+    return return_nsstr(nsres, &name_str, p);
 }
 
 static HRESULT WINAPI HTMLAnchorElement_put_host(IHTMLAnchorElement *iface, BSTR v)

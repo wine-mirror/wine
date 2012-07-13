@@ -1296,6 +1296,37 @@ static void _test_anchor_put_target(unsigned line, IUnknown *unk, const char *ta
     SysFreeString(str);
 }
 
+#define test_anchor_name(a,h) _test_anchor_name(__LINE__,a,h)
+static void _test_anchor_name(unsigned line, IUnknown *unk, const char *name)
+{
+    IHTMLAnchorElement *anchor = _get_anchor_iface(line, unk);
+    BSTR str;
+    HRESULT hres;
+
+    hres = IHTMLAnchorElement_get_name(anchor, &str);
+    ok_(__FILE__,line)(hres == S_OK, "get_name failed: %08x\n", hres);
+    if(name)
+        ok_(__FILE__,line)(!strcmp_wa(str, name), "name = %s, expected %s\n", wine_dbgstr_w(str), name);
+    else
+        ok_(__FILE__,line)(str == NULL, "name = %s, expected NULL\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+}
+
+#define test_anchor_put_name(a,h) _test_anchor_put_name(__LINE__,a,h)
+static void _test_anchor_put_name(unsigned line, IUnknown *unk, const char *name)
+{
+    IHTMLAnchorElement *anchor = _get_anchor_iface(line, unk);
+    BSTR str;
+    HRESULT hres;
+
+    str = name ? a2bstr(name) : NULL;
+    hres = IHTMLAnchorElement_put_name(anchor, str);
+    ok_(__FILE__,line)(hres == S_OK, "put_name failed: %08x\n", hres);
+    SysFreeString(str);
+
+    _test_anchor_name(line, unk, name);
+}
+
 
 #define test_option_text(o,t) _test_option_text(__LINE__,o,t)
 static void _test_option_text(unsigned line, IHTMLOptionElement *option, const char *text)
@@ -5407,6 +5438,11 @@ static void test_elems(IHTMLDocument2 *doc)
         /* Restore the target */
         test_anchor_put_target((IUnknown*)elem, NULL);
         test_anchor_get_target((IUnknown*)elem, NULL);
+
+        test_anchor_name((IUnknown*)elem, "x");
+        test_anchor_put_name((IUnknown*)elem, "anchor name");
+        test_anchor_put_name((IUnknown*)elem, NULL);
+        test_anchor_put_name((IUnknown*)elem, "x");
 
         IHTMLElement_Release(elem);
     }
