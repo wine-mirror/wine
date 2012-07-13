@@ -61,8 +61,8 @@ static HRESULT get_surface(D3DRESOURCETYPE type, LPDIRECT3DBASETEXTURE9 tex,
     }
 }
 
-HRESULT WINAPI D3DXFilterTexture(LPDIRECT3DBASETEXTURE9 texture,
-                                 CONST PALETTEENTRY *palette,
+HRESULT WINAPI D3DXFilterTexture(IDirect3DBaseTexture9 *texture,
+                                 const PALETTEENTRY *palette,
                                  UINT srclevel,
                                  DWORD filter)
 {
@@ -70,7 +70,7 @@ HRESULT WINAPI D3DXFilterTexture(LPDIRECT3DBASETEXTURE9 texture,
     HRESULT hr;
     D3DRESOURCETYPE type;
 
-    TRACE("(%p, %p, %d, %d)\n", texture, palette, srclevel, filter);
+    TRACE("(%p, %p, %u, %#x)\n", texture, palette, srclevel, filter);
 
     if (!texture)
         return D3DERR_INVALIDCALL;
@@ -137,9 +137,48 @@ HRESULT WINAPI D3DXFilterTexture(LPDIRECT3DBASETEXTURE9 texture,
             return D3D_OK;
         }
 
+        case D3DRTYPE_VOLUMETEXTURE:
+        {
+            D3DVOLUME_DESC desc;
+            int level, level_count;
+            IDirect3DVolume9 *top_volume, *mip_volume;
+            IDirect3DVolumeTexture9 *volume_texture = (IDirect3DVolumeTexture9*) texture;
+
+            IDirect3DVolumeTexture9_GetLevelDesc(volume_texture, srclevel, &desc);
+
+            if (filter == D3DX_DEFAULT)
+            {
+                if (is_pow2(desc.Width) && is_pow2(desc.Height) && is_pow2(desc.Depth))
+                    filter = D3DX_FILTER_BOX;
+                else
+                    filter = D3DX_FILTER_BOX | D3DX_FILTER_DITHER;
+            }
+
+            hr = IDirect3DVolumeTexture9_GetVolumeLevel(volume_texture, srclevel, &top_volume);
+            if (FAILED(hr))
+                return hr;
+
+            level_count = IDirect3DVolumeTexture9_GetLevelCount(volume_texture);
+            for (level = srclevel + 1; level < level_count; level++)
+            {
+                IDirect3DVolumeTexture9_GetVolumeLevel(volume_texture, level, &mip_volume);
+                hr = D3DXLoadVolumeFromVolume(mip_volume, palette, NULL, top_volume, palette, NULL, filter, 0);
+                IDirect3DVolume9_Release(top_volume);
+                top_volume = mip_volume;
+
+                if (FAILED(hr))
+                    break;
+            }
+
+            IDirect3DVolume9_Release(top_volume);
+            if (FAILED(hr))
+                return hr;
+
+            return D3D_OK;
+        }
+
         default:
-            FIXME("Implement volume texture filtering\n");
-            return E_NOTIMPL;
+            return D3DERR_INVALIDCALL;
     }
 }
 

@@ -751,6 +751,7 @@ static void test_D3DXFilterTexture(IDirect3DDevice9 *device)
 {
     IDirect3DTexture9 *tex;
     IDirect3DCubeTexture9 *cubetex;
+    IDirect3DVolumeTexture9 *voltex;
     HRESULT hr;
 
     hr = IDirect3DDevice9_CreateTexture(device, 256, 256, 5, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &tex, NULL);
@@ -834,6 +835,32 @@ static void test_D3DXFilterTexture(IDirect3DDevice9 *device)
     }
     else
         skip("Failed to create texture\n");
+
+    /* Volume texture test */
+    hr = IDirect3DDevice9_CreateVolumeTexture(device, 256, 256, 4, 0, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &voltex, NULL);
+    if (SUCCEEDED(hr))
+    {
+        DWORD level_count = IDirect3DVolumeTexture9_GetLevelCount(voltex);
+
+        hr = D3DXFilterTexture((IDirect3DBaseTexture9*) voltex, NULL, 0, D3DX_FILTER_NONE);
+        ok(hr == D3D_OK, "D3DXFilterTexture returned %#x, expected %#x\n", hr, D3D_OK);
+
+        hr = D3DXFilterTexture((IDirect3DBaseTexture9*) voltex, NULL, 0, D3DX_DEFAULT);
+        ok(hr == D3D_OK, "D3DXFilterTexture returned %#x, expected %#x\n", hr, D3D_OK);
+
+        hr = D3DXFilterTexture((IDirect3DBaseTexture9*) voltex, NULL, 0, D3DX_FILTER_BOX);
+        ok(hr == D3D_OK, "D3DXFilterTexture returned %#x, expected %#x\n", hr, D3D_OK);
+
+        hr = D3DXFilterTexture((IDirect3DBaseTexture9*) voltex, NULL, level_count - 1, D3DX_DEFAULT);
+        ok(hr == D3D_OK, "D3DXFilterTexture returned %#x, expected %#x\n", hr, D3D_OK);
+
+        hr = D3DXFilterTexture((IDirect3DBaseTexture9*) voltex, NULL, level_count, D3DX_DEFAULT);
+        ok(hr == D3DERR_INVALIDCALL, "D3DXFilterTexture returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+        IDirect3DVolumeTexture9_Release(voltex);
+    }
+    else
+        skip("Failed to create volume texture\n");
 
     /* Test textures with D3DUSAGE_AUTOGENMIPMAP usage */
     if (!is_autogenmipmap_supported(device, D3DRTYPE_TEXTURE))
