@@ -728,6 +728,9 @@ static void set_variant( VARTYPE vartype, LONGLONG val, BSTR val_bstr, VARIANT *
         V_VT( ret ) = VT_UI4;
         V_UI4( ret ) = val;
         return;
+    case VT_NULL:
+        V_VT( ret ) = VT_NULL;
+        return;
     default:
         ERR("unhandled variant type %u\n", vartype);
         return;
@@ -758,8 +761,13 @@ HRESULT get_propval( const struct view *view, UINT index, const WCHAR *name, VAR
     {
     case CIM_STRING:
     case CIM_DATETIME:
-        vartype = VT_BSTR;
-        val_bstr = SysAllocString( (const WCHAR *)(INT_PTR)val );
+        if (val)
+        {
+            vartype = VT_BSTR;
+            val_bstr = SysAllocString( (const WCHAR *)(INT_PTR)val );
+        }
+        else
+            vartype = VT_NULL;
         break;
     case CIM_SINT16:
         if (!vartype) vartype = VT_I2;
