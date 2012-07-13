@@ -82,16 +82,6 @@ static inline FormatConverter *impl_from_IWICFormatConverter(IWICFormatConverter
     return CONTAINING_RECORD(iface, FormatConverter, IWICFormatConverter_iface);
 }
 
-static void make_grayscale_palette(WICColor *colors, UINT num_colors)
-{
-    int i, v;
-    for (i=0; i<num_colors; i++)
-    {
-        v = i * 255 / (num_colors-1);
-        colors[i] = 0xff000000 | v<<16 | v<<8 | v;
-    }
-}
-
 static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRect *prc,
     UINT cbStride, UINT cbBufferSize, BYTE *pbBuffer, enum pixelformat source_format)
 {
@@ -248,21 +238,19 @@ static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRe
             IWICPalette *palette;
             UINT actualcolors;
 
+            res = PaletteImpl_Create(&palette);
+            if (FAILED(res)) return res;
+
             if (source_format == format_4bppIndexed)
-            {
-                res = PaletteImpl_Create(&palette);
-                if (FAILED(res)) return res;
-
                 res = IWICBitmapSource_CopyPalette(This->source, palette);
-                if (SUCCEEDED(res))
-                    res = IWICPalette_GetColors(palette, 16, colors, &actualcolors);
-
-                IWICPalette_Release(palette);
-
-                if (FAILED(res)) return res;
-            }
             else
-                make_grayscale_palette(colors, 16);
+                res = IWICPalette_InitializePredefined(palette, WICBitmapPaletteTypeFixedGray16, FALSE);
+
+            if (SUCCEEDED(res))
+                res = IWICPalette_GetColors(palette, 16, colors, &actualcolors);
+
+            IWICPalette_Release(palette);
+            if (FAILED(res)) return res;
 
             srcstride = (prc->Width+1)/2;
             srcdatasize = srcstride * prc->Height;
