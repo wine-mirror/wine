@@ -3326,7 +3326,6 @@ static void test_tiff_palette(void)
 
     status = GdipGetImagePixelFormat(image, &format);
     expect(Ok, status);
-todo_wine
     ok(format == PixelFormat1bppIndexed, "expected PixelFormat1bppIndexed, got %#x\n", format);
 
     status = GdipGetImagePaletteSize(image, &size);
@@ -3337,13 +3336,12 @@ todo_wine
         GdipDisposeImage(image);
         return;
     }
-todo_wine
     expect(sizeof(ColorPalette) + sizeof(ARGB), size);
 
     status = GdipGetImagePalette(image, &palette.pal, size);
     expect(Ok, status);
-    expect(0, palette.pal.Flags);
 todo_wine
+    expect(0, palette.pal.Flags);
     expect(2, palette.pal.Count);
     if (palette.pal.Count == 2)
     {
