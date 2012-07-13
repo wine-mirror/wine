@@ -208,7 +208,7 @@ static void update_desktop_fullscreen( unsigned int width, unsigned int height)
     Display *display = thread_display();
     XEvent xev;
 
-    if (!display || root_window != DefaultRootWindow( display )) return;
+    if (!display || root_window == DefaultRootWindow( display )) return;
 
     xev.xclient.type = ClientMessage;
     xev.xclient.window = root_window;
