@@ -4274,17 +4274,12 @@ TREEVIEW_RButtonUp(const TREEVIEW_INFO *infoPtr, const POINT *pPt)
 
     ht.pt = *pPt;
 
-    TREEVIEW_HitTest(infoPtr, &ht);
+    /* Change to screen coordinate for WM_CONTEXTMENU */
+    ClientToScreen(infoPtr->hwnd, &ht.pt);
 
-    if (ht.hItem)
-    {
-        /* Change to screen coordinate for WM_CONTEXTMENU */
-        ClientToScreen(infoPtr->hwnd, &ht.pt);
-
-        /* Send a WM_CONTEXTMENU message in response to the RBUTTONUP */
-        SendMessageW(infoPtr->hwnd, WM_CONTEXTMENU,
-            (WPARAM)infoPtr->hwnd, MAKELPARAM(ht.pt.x, ht.pt.y));
-    }
+    /* Send a WM_CONTEXTMENU message in response to the RBUTTONUP */
+    SendMessageW(infoPtr->hwnd, WM_CONTEXTMENU,
+        (WPARAM)infoPtr->hwnd, MAKELPARAM(ht.pt.x, ht.pt.y));
     return 0;
 }
 
