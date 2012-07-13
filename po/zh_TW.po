@@ -12596,7 +12596,7 @@ msgstr "預設組態"
 
 #: winecfg.rc:59
 msgid "Wine Programs (*.exe; *.exe.so)"
-msgstr "Wine 程式 (*.exe；*.exe.so)"
+msgstr "Wine 程式 (*.exe; *.exe.so)"
 
 #: winecfg.rc:60
 msgid "Use global settings"
@@ -12607,9 +12607,8 @@ msgid "Select an executable file"
 msgstr "選擇一個可執行檔"
 
 #: winecfg.rc:66
-#, fuzzy
 msgid "Autodetect"
-msgstr "自動偵測(&D)"
+msgstr "自動偵測"
 
 #: winecfg.rc:67
 msgid "Local hard disk"
@@ -12779,7 +12778,7 @@ msgstr "按鈕替換背景"
 
 #: winecfg.rc:117
 msgid "Hot Tracked Item"
-msgstr ""
+msgstr "熱門軌段的項目"
 
 #: winecfg.rc:118
 msgid "Active Title Bar Gradient"
@@ -12947,7 +12946,7 @@ msgstr "螢幕緩衝區大小必須大於或等於視窗緩衝區"
 
 #: wineconsole.rc:34
 msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
-msgstr "每個字都是 %1!u! 個像素寬，%2!u! 個像素高"
+msgstr "每個字元都是 %1!u! 個像素寬，%2!u! 個像素高"
 
 #: wineconsole.rc:35
 msgid "This is a test"
@@ -12955,25 +12954,27 @@ msgstr "這是一段測試訊息"
 
 #: wineconsole.rc:41
 msgid "wineconsole: Couldn't parse event id\n"
-msgstr ""
+msgstr "wineconsole：無法剖析事件識別號\n"
 
 #: wineconsole.rc:42
 msgid "wineconsole: Invalid backend\n"
-msgstr ""
+msgstr "wineconsole：無效的後端程式\n"
 
 #: wineconsole.rc:43
 msgid "wineconsole: Unrecognized command line option\n"
-msgstr ""
+msgstr "wineconsole：無法辨識的命令列選項\n"
 
 #: wineconsole.rc:44
 msgid "Starts a program in a Wine console\n"
-msgstr ""
+msgstr "在 Wine 主控臺中啟始一個程式\n"
 
 #: wineconsole.rc:45
 msgid ""
 "wineconsole: Starting program %s failed.\n"
 "The command is invalid.\n"
 msgstr ""
+"wineconsole：啟始程式 %s 時失敗。\n"
+"命令無效。\n"
 
 #: wineconsole.rc:47
 msgid ""
@@ -12983,6 +12984,11 @@ msgid ""
 "\n"
 "Options:\n"
 msgstr ""
+"\n"
+"用法：\n"
+"  wineconsole [選項] <命令>\n"
+"\n"
+"選項：\n"
 
 #: wineconsole.rc:49
 msgid ""
@@ -12991,10 +12997,12 @@ msgid ""
 "                           try to setup the current terminal as a Wine "
 "console.\n"
 msgstr ""
+"  --backend={user|curses}  選擇 user 將衍生新的視窗，curses 將\n"
+"                           試著設定目前的終端機做為 Wine 主控臺。\n"
 
 #: wineconsole.rc:50
 msgid "  <command>                The Wine program to launch in the console.\n"
-msgstr ""
+msgstr "  <命令>                   要在主控臺中啟動的 Wine 程式。\n"
 
 #: wineconsole.rc:51
 msgid ""
@@ -13004,6 +13012,11 @@ msgid ""
 "Starts the Wine command prompt in a Wine console.\n"
 "\n"
 msgstr ""
+"\n"
+"範例：\n"
+"  wineconsole cmd\n"
+"在 Wine 主控臺中啟始 Wine 指令提示符號。\n"
+"\n"
 
 #: winedbg.rc:46
 msgid "Program Error"
@@ -13013,7 +13026,7 @@ msgstr "程式錯誤"
 msgid ""
 "The program %s has encountered a serious problem and needs to close. We are "
 "sorry for the inconvenience."
-msgstr ""
+msgstr "程式 %s 遇到了嚴重的問題而需要關閉。我們對於造成的不便感到抱歉。"
 
 #: winedbg.rc:55
 msgid ""
@@ -13021,6 +13034,8 @@ msgid ""
 "may want to check the <a href=\"http://appdb.winehq.org\">Application "
 "Database</a> for tips about running this application."
 msgstr ""
+"這個可能是由 Wine 中的程式問題或缺失所造成。您可能要檢查<a href=\"http://"
+"appdb.winehq.org\">應用程式資料庫</a>以獲得關於執行這個應用程式的祕訣。"
 
 #: winedbg.rc:58
 msgid "Show &Details"
@@ -13037,26 +13052,29 @@ msgid ""
 "button, then <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a> "
 "and attach that file to the report."
 msgstr ""
+"如果這個問題在 Windows 之下不會出現且未曾被報告，您可以使用「另存新檔」 按鈕"
+"將詳細的資訊儲存到檔案，然後<a href=\"http://wiki.winehq.org/Bugs\">發送錯誤"
+"報告</a>並附加該檔案到報告中。"
 
 #: winedbg.rc:35
 msgid "Wine program crash"
-msgstr ""
+msgstr "Wine 程式當機"
 
 #: winedbg.rc:36
 msgid "Internal errors - invalid parameters received"
-msgstr ""
+msgstr "內部錯誤 - 收到無效的參數"
 
 #: winedbg.rc:37
 msgid "(unidentified)"
-msgstr ""
+msgstr "(未經識別的)"
 
 #: winedbg.rc:40
 msgid "Saving failed"
-msgstr ""
+msgstr "儲存失敗"
 
 #: winedbg.rc:41
 msgid "Loading detailed information, please wait..."
-msgstr ""
+msgstr "正在載入詳細資訊，請稍待…"
 
 #: winefile.rc:26
 msgid "&Open\tEnter"
@@ -13064,7 +13082,7 @@ msgstr "開啟(&O)\tEnter"
 
 #: winefile.rc:30
 msgid "Re&name..."
-msgstr "重新命名(&N)..."
+msgstr "重新命名(&N)…"
 
 #: winefile.rc:31
 msgid "Propert&ies\tAlt+Enter"
@@ -13072,11 +13090,11 @@ msgstr "屬性(&I)\tAlt+Enter"
 
 #: winefile.rc:33
 msgid "&Run..."
-msgstr "執行(&R)..."
+msgstr "執行(&R)…"
 
 #: winefile.rc:35
 msgid "Cr&eate Directory..."
-msgstr "建立目錄(&E)..."
+msgstr "建立目錄(&E)…"
 
 #: winefile.rc:40
 msgid "&Disk"
@@ -13084,7 +13102,7 @@ msgstr "磁碟(&D)"
 
 #: winefile.rc:41
 msgid "Connect &Network Drive..."
-msgstr "連線至網路儲存裝置(&N)..."
+msgstr "連線至網路儲存裝置(&N)…"
 
 #: winefile.rc:42
 msgid "&Disconnect Network Drive"
@@ -13116,7 +13134,7 @@ msgstr "按日期排列(&D)"
 
 #: winefile.rc:56
 msgid "Filter by&..."
-msgstr ""
+msgstr "篩選依照…(&.)"
 
 #: winefile.rc:63
 msgid "&Drivebar"
@@ -13188,7 +13206,7 @@ msgstr "最後修改："
 
 #: winefile.rc:168
 msgid "Cop&yright:"
-msgstr ""
+msgstr "著作權(&Y)："
 
 #: winefile.rc:170
 msgid "Size:"
