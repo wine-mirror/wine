@@ -2983,6 +2983,7 @@ static GpStatus decode_image_wic(IStream* stream, REFCLSID clsid, UINT active_fr
                 gdip_format = PixelFormat32bppARGB;
                 IWICBitmapSource_Release(bmp_source);
             }
+            TRACE("%s => %#x\n", wine_dbgstr_guid(&wic_format), gdip_format);
         }
 
         if (SUCCEEDED(hr)) /* got source */
@@ -3063,6 +3064,8 @@ end:
         bitmap->image.frame_count = frame_count;
         bitmap->image.current_frame = active_frame;
         bitmap->image.stream = stream;
+        if (IsEqualGUID(&wic_format, &GUID_WICPixelFormatBlackWhite))
+            bitmap->image.palette_flags = 0;
         /* Pin the source stream */
         IStream_AddRef(stream);
     }

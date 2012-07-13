@@ -3340,7 +3340,6 @@ static void test_tiff_palette(void)
 
     status = GdipGetImagePalette(image, &palette.pal, size);
     expect(Ok, status);
-todo_wine
     expect(0, palette.pal.Flags);
     expect(2, palette.pal.Count);
     if (palette.pal.Count == 2)
