@@ -9173,40 +9173,49 @@ msgid ""
 "Changes to default directory, environment variables etc made within a\n"
 "called procedure are inherited by the caller.\n"
 msgstr ""
+"CALL <批次檔名> 是使用在批次檔之內以執行其他\n"
+"批次檔中的指令。從其他的批次檔離開時，控制權會\n"
+"回到呼叫它的檔案。CALL 命令可以提供參數給\n"
+"被呼叫的程序。\n"
+"\n"
+"在被呼叫的程序中變更預設目錄、環境變數等動作，\n"
+"將會由呼叫者所繼承。\n"
 
 #: cmd.rc:40
 msgid ""
 "CD <dir> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
 msgstr ""
+"CD <目錄> 是 CHDIR 的簡短版本。它會變更目前的\n"
+"預設目錄。\n"
 
 #: cmd.rc:41
 msgid "CHDIR <dir> changes the current default directory.\n"
-msgstr ""
+msgstr "CHDIR <目錄> 變更目前的預設目錄。\n"
 
 #: cmd.rc:43
 msgid "CLS clears the console screen.\n"
-msgstr ""
+msgstr "CLS 清空主控臺螢幕。\n"
 
 #: cmd.rc:45
 msgid "COPY <filename> copies a file.\n"
-msgstr ""
+msgstr "COPY <檔名> 複製檔案。\n"
 
 #: cmd.rc:46
 msgid "CTTY changes the input/output device.\n"
-msgstr ""
+msgstr "CTTY 變更輸入/輸出裝置。\n"
 
 #: cmd.rc:47
 msgid "DATE shows or changes the system date.\n"
-msgstr ""
+msgstr "DATE 顯示或變更系統日期。\n"
 
 #: cmd.rc:48
 msgid "DEL <filename> deletes a file or set of files.\n"
-msgstr ""
+msgstr "DEL <檔名> 刪除檔案或一組檔案。\n"
 
 #: cmd.rc:49
 msgid "DIR lists the contents of a directory.\n"
-msgstr ""
+msgstr "DIR 列出目錄的內容。\n"
 
 #: cmd.rc:59
 msgid ""
@@ -9219,10 +9228,18 @@ msgid ""
 "default). The ECHO OFF command can be prevented from displaying by\n"
 "preceding it with an @ sign.\n"
 msgstr ""
+"ECHO <字串> 在目前的終端機裝置上顯示 <字串>。\n"
+"\n"
+"ECHO ON 會使得在批次檔中的所有後續命令，於執行之前\n"
+"先被顯示在終端機裝置上。\n"
+"\n"
+"ECHO OFF 則與前述的 ECHO ON 效果相反 (ECHO 的預設為\n"
+"OFF)。ECHO OFF 命令本身可以藉由前置 @ 符號\n"
+"來防止它被顯示。\n"
 
 #: cmd.rc:61
 msgid "ERASE <filename> deletes a file or set of files.\n"
-msgstr ""
+msgstr "ERASE <檔名> 刪除一個檔案或一組檔案。\n"
 
 #: cmd.rc:69
 msgid ""
@@ -9233,6 +9250,12 @@ msgid ""
 "The requirement to double the % sign when using FOR in a batch file does\n"
 "not exist in wine's cmd.\n"
 msgstr ""
+"FOR 命令用來向檔案集合中的每一個檔案執行命令。\n"
+"\n"
+"語法：FOR %變數 IN (集合) DO 命令\n"
+"\n"
+"在批次檔中使用 FOR 時必須重覆 % 符號的需求\n"
+"並不存在於 wine 的 cmd 中。\n"
 
 #: cmd.rc:81
 msgid ""
@@ -9247,12 +9270,24 @@ msgid ""
 "\n"
 "GOTO has no effect when used interactively.\n"
 msgstr ""
+"GOTO 命令在批次檔內將執行順序轉移到另一個\n"
+"敘述。\n"
+"\n"
+"做為 GOTO 目標之用的標籤長度最多可以是 255 字元，\n"
+"但是不可以包含空格 (這是與其他作業系統不同的\n"
+"地方)。如果兩個以上相同的標籤存在於批次檔中，\n"
+"將會一律執行第一個。試圖前往不存在的標籤會\n"
+"終止批次檔的執行。\n"
+"\n"
+"GOTO 用於互動模式中將沒有任何效果。\n"
 
 #: cmd.rc:84
 msgid ""
 "HELP <command> shows brief help details on a topic.\n"
 "HELP without an argument shows all CMD built-in commands.\n"
 msgstr ""
+"HELP <命令> 顯示關於某一主題的簡明細節。\n"
+"HELP 不加引數時將顯示 CMD 所有的內建命令。\n"
 
 #: cmd.rc:94
 msgid ""
@@ -9265,6 +9300,14 @@ msgid ""
 "In the second form of the command, string1 and string2 must be in double\n"
 "quotes. The comparison is not case-sensitive.\n"
 msgstr ""
+"IF 用於有條件地執行命令。\n"
+"\n"
+"語法：IF [NOT] EXIST 檔名 命令\n"
+"      IF [NOT] 字串一==字串二 命令\n"
+"      IF [NOT] ERRORLEVEL 數字 命令\n"
+"\n"
+"在命令的第二種形式中，字串一和字串二必須位於雙引號之中。\n"
+"比較的動作是不分大小寫的。\n"
 
 #: cmd.rc:100
 msgid ""
@@ -9274,14 +9317,19 @@ msgid ""
 "The command will prompt you for the new volume label for the given drive.\n"
 "You can display the disk volume label with the VOL command.\n"
 msgstr ""
+"LABEL 用於設定磁碟卷冊標籤。\n"
+"\n"
+"語法：LABEL [裝置代號:]\n"
+"命令將向您提示詢問新的卷冊標籤用於給定的儲存裝置。\n"
+"您可以利用 VOL 命令來顯示磁碟卷冊標籤。\n"
 
 #: cmd.rc:103
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
-msgstr ""
+msgstr "MD <名稱> 是 MKDIR 的縮寫版本。它會建立子目錄。\n"
 
 #: cmd.rc:104
 msgid "MKDIR <name> creates a subdirectory.\n"
-msgstr ""
+msgstr "MKDIR <名稱> 建立子目錄。\n"
 
 #: cmd.rc:111
 msgid ""
@@ -9293,6 +9341,12 @@ msgid ""
 "\n"
 "MOVE fails if the old and new locations are on different DOS drive letters.\n"
 msgstr ""
+"MOVE 將檔案或目錄重新放置到檔案系統內的新地點。\n"
+"\n"
+"如果被移動的項目是目錄，那麼該項目之下的所有\n"
+"檔案和子目錄都會被移動。\n"
+"\n"
+"如果舊的和新的位置在不同的 DOS 儲存裝置代號之上，MOVE 將會失敗。\n"
 
 #: cmd.rc:122
 msgid ""
@@ -9306,6 +9360,15 @@ msgid ""
 "variable, for example:\n"
 "PATH %PATH%;c:\\temp\n"
 msgstr ""
+"PATH 顯示或變更 cmd 的搜尋路徑。\n"
+"\n"
+"輸入 PATH 將會顯示目前的路徑設定 (根據註冊表\n"
+"進行初始化)。要變更設定就在\n"
+"PATH 命令之後緊接新的值。\n"
+"\n"
+"也可以藉由 PATH 環境變數來修改 PATH，\n"
+"舉例來說：\n"
+"PATH %PATH%;c:\\temp\n"
 
 #: cmd.rc:128
 msgid ""
@@ -9314,6 +9377,10 @@ msgid ""
 "It is mainly useful in batch files to allow the user to read the output\n"
 "of a previous command before it scrolls off the screen.\n"
 msgstr ""
+"PAUSE 在螢幕上顯示訊息以要求使用者按下一個鍵。\n"
+"\n"
+"主要用於批次檔中，以允許使用者在前一個命令的\n"
+"輸出捲動離開螢幕之前能夠去讀取它。\n"
 
 #: cmd.rc:149
 msgid ""
@@ -9337,28 +9404,48 @@ msgid ""
 "The prompt can also be changed by altering the PROMPT environment variable,\n"
 "so the command 'SET PROMPT=text' has the same effect as 'PROMPT text'.\n"
 msgstr ""
+"PROMPT 設定命令列的提示。\n"
+"\n"
+"跟隨著 PROMPT 命令的字串 (以及緊接於後的空格)\n"
+"將會在 cmd 等待輸入時出現於一列的起始部分。\n"
+"\n"
+"下列字元串有特殊平均顯示：\n"
+"\n"
+"$$    錢幣符號            $_    送列鍵              $b    管線符號 (|)\n"
+"$d    目前日期            $e    退出                $g    > 符號\n"
+"$l    < 符號              $n    目前儲存裝置        $p    目前路徑\n"
+"$q    等號                $t    目前時間            $v    cmd 版本\n"
+"\n"
+"要注意的是，輸入不加提示字串的 PROMPT 命令將會重置\n"
+"提示字串為預設，也就是在大於 (>) 符號之後接著現行目錄\n"
+"(包含目前儲存裝置字母) (如同指令提示符號 $p$g)。\n"
+"\n"
+"提示字串也可以經由改變 PROMPT 環境變數而變更，\n"
+"因此命令『SET PROMPT=文字』與『PROMPT 文字』具有相同的效果。\n"
 
 #: cmd.rc:153
 msgid ""
 "A command line beginning with REM (followed by a space) performs no\n"
 "action, and can therefore be used as a comment in a batch file.\n"
 msgstr ""
+"以 REM 起始的命令列 (之後緊接空格) 不會進行任何\n"
+"動作，因而可以做為批次檔中的註釋。\n"
 
 #: cmd.rc:156
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
-msgstr ""
+msgstr "REN <檔名> 是 RENAME 的簡短版本。它會重新命名檔案。\n"
 
 #: cmd.rc:157
 msgid "RENAME <filename> renames a file.\n"
-msgstr ""
+msgstr "RENAME <檔名> 重新命名檔案。\n"
 
 #: cmd.rc:159
 msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
-msgstr ""
+msgstr "RD <目錄> 是 RMDIR 的簡短版本。它會刪除子目錄。\n"
 
 #: cmd.rc:160
 msgid "RMDIR <dir> deletes a subdirectory.\n"
-msgstr ""
+msgstr "RMDIR <目錄> 刪除子目錄。\n"
 
 #: cmd.rc:204
 msgid ""
@@ -9379,6 +9466,21 @@ msgid ""
 "many more values than in a native Win32 implementation. Note that it is\n"
 "not possible to affect the operating system environment from within cmd.\n"
 msgstr ""
+"SET 顯示或變更 cmd 的環境變數。\n"
+"\n"
+"不接參數的 SET 將顯示目前的全部環境。\n"
+"\n"
+"要建立或修改環境變數的語法是：\n"
+"\n"
+"SET <變數名稱>=<變數值>\n"
+"\n"
+"其中 <變數名稱> 和 <變數值> 都是字串。在等號之前必須沒有\n"
+"空格，而變數名稱也不可以嵌入空格。\n"
+"\n"
+"在 Wine 之下，下層的作業系統環境也被\n"
+"包含於 Win32 環境之中，因此通常會比在原生的 Win32 實作中\n"
+"還要多出更多變數值。要注意的是，從 cmd 之中是不可能\n"
+"去影響作業系統的環境。\n"
 
 #: cmd.rc:209
 msgid ""
@@ -9386,6 +9488,9 @@ msgid ""
 "the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n"
 "if called from the command line.\n"
 msgstr ""
+"SHIFT 在批次檔中用來從參數列表的前端移除一個\n"
+"參數，因此參數 2 會成為參數 1 …等等。如果從命令列呼叫它，\n"
+"將不會有任何效果。\n"
 
 #: cmd.rc:186 start.rc:50
 msgid ""
@@ -9416,20 +9521,46 @@ msgid ""
 "/ProgIDOpen  Open a document using the specified progID.\n"
 "/?           Display this help and exit.\n"
 msgstr ""
+"啟始一個程式，或是利用關聯該檔案字尾的程式來開啟文件。\n"
+"用法：\n"
+"start [選項] 程式檔案名稱 [...]\n"
+"start [選項] 文件檔案名稱\n"
+"\n"
+"選項：\n"
+"「標題」     指定子視窗的標題。\n"
+"/d 目錄      在指定的目錄中啟始程式。\n"
+"/b           無法為程式建立新的主控臺。\n"
+"/i           以新的環境變數啟始程式。\n"
+"/min         啟始程式時縮到最小。\n"
+"/max         啟始程式時放到最大。\n"
+"/low         在閒置優先權類別中啟始程式。\n"
+"/normal      在一般優先權類別中啟始程式。\n"
+"/high        在高優先權類別中啟始程式。\n"
+"/realtime    在即時優先權類別中啟始程式。\n"
+"/abovenormal 在正常之上優先權類別中啟始程式。\n"
+"/belownormal 在正常之下優先權類別中啟始程式。\n"
+"/node n      在指定的 NUMA 節點之上啟始程式。\n"
+"/affinity 遮罩 以指定的近似遮罩啟始程式。\n"
+"/wait        等待啟始的程式直到完成，然後以它的離開代碼離開。\n"
+"/unix        使用 Unix 檔名並如同 Windows 檔案總管來啟始檔案。\n"
+"/ProgIDOpen  使用指定的 progID 開啟文件。\n"
+"/?           顯示這份說明然後離開。\n"
 
 #: cmd.rc:211
 msgid "TIME sets or shows the current system time.\n"
-msgstr ""
+msgstr "TIME 設定或顯示目前的系統時間。\n"
 
 #: cmd.rc:213
 msgid "TITLE <string> sets the window title for the cmd window.\n"
-msgstr ""
+msgstr "TITLE <字串> 設定 cmd 視窗的視窗標題。\n"
 
 #: cmd.rc:217
 msgid ""
 "TYPE <filename> copies <filename> to the console device (or elsewhere\n"
 "if redirected). No check is made that the file is readable text.\n"
 msgstr ""
+"TYPE <檔名> 將 <檔名> 的內容複製到主控臺裝置 (或是其他被\n"
+"重新導向的地方)。不會檢查該檔案是否為可讀的文字。\n"
 
 #: cmd.rc:226
 msgid ""
@@ -9441,20 +9572,29 @@ msgid ""
 "\n"
 "The verify flag has no function in Wine.\n"
 msgstr ""
+"VERIFY 用來設定、清空或測試驗證旗標。有效的形式包括：\n"
+"\n"
+"VERIFY ON\t設定旗標。\n"
+"VERIFY OFF\t清空旗標。\n"
+"VERIFY\t\t依情況顯示 ON 或 OFF。\n"
+"\n"
+"驗證旗標在 Wine 中沒有任何功能。\n"
 
 #: cmd.rc:229
 msgid "VER displays the version of cmd you are running.\n"
-msgstr ""
+msgstr "VER 顯示您正在執行的 cmd 版本。\n"
 
 #: cmd.rc:231
 msgid "VOL shows the volume label of a disk device.\n"
-msgstr ""
+msgstr "VOL 顯示磁碟裝置的卷冊標籤。\n"
 
 #: cmd.rc:235
 msgid ""
 "ENDLOCAL ends localization of environment changes in a batch file\n"
 "which were introduced by a preceding SETLOCAL.\n"
 msgstr ""
+"ENDLOCAL 在批次檔中結束本地的環境變更\n"
+"而這些是由之前的 SETLOCAL 所引入。\n"
 
 #: cmd.rc:243
 msgid ""
@@ -9465,16 +9605,24 @@ msgid ""
 "file, whichever comes first), at which point the previous environment\n"
 "settings are restored.\n"
 msgstr ""
+"SETLOCAL 在批次檔中開始本地的環境變更。\n"
+"\n"
+"SETLOCAL 之後完成的環境變更對於批次檔而言為本地，\n"
+"並被保留直到遇到下一個 ENDLOCAL (或是檔案\n"
+"的結束，取決於誰先出現)，前一個環境的設定值\n"
+"則於該點被儲存。\n"
 
 #: cmd.rc:246
 msgid ""
 "PUSHD <directoryname> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
 msgstr ""
+"PUSHD <目錄名> 儲存目前的目錄到\n"
+"堆疊中，然後變更現行目錄到所給定的目錄。\n"
 
 #: cmd.rc:248
 msgid "POPD changes current directory to the last one saved with PUSHD.\n"
-msgstr ""
+msgstr "POPD 變更現行目錄到上一個利用 PUSHD 儲存的目錄。\n"
 
 #: cmd.rc:256
 msgid ""
@@ -9487,6 +9635,13 @@ msgid ""
 "Specifying no file type after the equal sign removes the current "
 "association, if any.\n"
 msgstr ""
+"ASSOC 顯示或修改副檔名的關聯。\n"
+"\n"
+"語法：ASSOC [.ext[=[檔案型態]]]\n"
+"\n"
+"ASSOC 不加參數將顯示目前的檔案關聯。\n"
+"如果只使用副檔名，則顯示它目前的關聯。\n"
+"在等號之號如果沒有指定檔案類型就移除目前的任何關聯。\n"
 
 #: cmd.rc:267
 msgid ""
@@ -9501,10 +9656,17 @@ msgid ""
 "Specifying no open command after the equal sign removes the command string "
 "associated to the specified file type.\n"
 msgstr ""
+"FTYPE 顯示或修改開啟命令所關聯的檔案類型。\n"
+"\n"
+"語法：FTYPE [檔案型態[=[開啟命令]]]\n"
+"\n"
+"如果不加參數，則顯示開啟命令目前所定義的檔案型態。\n"
+"如果只使用檔案類型，則顯示關聯的任何開啟命令字串。\n"
+"在等號之號如果沒有指定檔案類型就移除對於給定檔案型態的任何關聯命令字串。\n"
 
 #: cmd.rc:269
 msgid "MORE displays output of files or piped input in pages.\n"
-msgstr ""
+msgstr "MORE 以分頁的方式顯示檔案的輸出或管線的輸入。\n"
 
 #: cmd.rc:273
 msgid ""
@@ -9512,12 +9674,17 @@ msgid ""
 "presses an allowed Key from a selectable list.\n"
 "CHOICE is mainly used to build a menu selection in a batch file.\n"
 msgstr ""
+"CHOICE 顯示文字並等待，直到使用者\n"
+"從可選取的清單中按下允許的鍵。\n"
+"CHOICE 主要用來在批次檔中建構選單選擇。\n"
 
 #: cmd.rc:277
 msgid ""
 "EXIT terminates the current command session and returns\n"
 "to the operating system or shell from which you invoked cmd.\n"
 msgstr ""
+"EXIT 終止目前的命令作業階段並回到\n"
+"您從其調用 cmd 的作業系統或命令殼。\n"
 
 #: cmd.rc:315
 msgid ""
@@ -9560,56 +9727,94 @@ msgid ""
 "\n"
 "Enter HELP <command> for further information on any of the above commands.\n"
 msgstr ""
+"CMD 內建命令包括：\n"
+"ASSOC\t\t顯示或修改副檔名關聯\n"
+"ATTRIB\t\t顯示或變更 DOS 檔案屬性\n"
+"CALL\t\t從另一個批次檔內部調用\n"
+"CD (CHDIR)\t變更目前的預設目錄\n"
+"CHOICE\t\t從可選清單等待按鍵\n"
+"CLS\t\t清空主控臺螢幕\n"
+"COPY\t\t複製檔案\n"
+"CTTY\t\t變更輸入/輸出裝置\n"
+"DATE\t\t顯示或變更系統日期\n"
+"DEL (DELETE)\t刪除一個檔案或一組檔案\n"
+"DIR\t\t列出目錄的內容\n"
+"ECHO\t\t直接複製文字到主控臺輸出\n"
+"ENDLOCAL\t在批次檔中結束本地環境變更\n"
+"FTYPE\t\t顯示或修改與檔案類型關聯的開啟命令\n"
+"HELP\t\t顯示主題的簡潔說明\n"
+"MD (MKDIR)\t建立子目錄\n"
+"MORE\t\t分頁顯示輸出\n"
+"MOVE\t\t移動一個檔案、一組檔案或樹狀目錄\n"
+"PATH\t\t設定或顯示搜尋路徑\n"
+"PAUSE\t\t懸置執行中的批次檔\n"
+"POPD\t\t還原到上一次以 PUSHD 儲存的目錄\n"
+"PROMPT\t\t變更指令提示符號\n"
+"PUSHD\t\t變更為新的目錄並儲存目前的\n"
+"REN (RENAME)\t重新命名檔案\n"
+"RD (RMDIR)\t刪除子目錄\n"
+"SET\t\t設定或顯示環境變數\n"
+"SETLOCAL\t在批次檔中開始本地環境變更\n"
+"START\t\t啟始程式或以關聯的程式開啟文件\n"
+"TIME\t\t設定或顯示目前的系統時間\n"
+"TITLE\t\t設定用於 CMD 作業階段的視窗標題\n"
+"TYPE\t\t印出文字檔的內容\n"
+"VER\t\t顯示目前的 CMD 版本\n"
+"VOL\t\t顯示磁碟裝置的卷冊標籤\n"
+"XCOPY\t\t複製來源檔案或樹狀目錄到目的地\n"
+"EXIT\t\t關閉 CMD\n"
+"\n"
+"輸入 HELP <命令> 以獲得關於以上任何命令的進一步資訊。\n"
 
 #: cmd.rc:317
 msgid "Are you sure?"
-msgstr ""
+msgstr "您確定嗎？"
 
 #: cmd.rc:318 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
-msgstr ""
+msgstr "Y"
 
 #: cmd.rc:319 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
-msgstr ""
+msgstr "N"
 
 #: cmd.rc:320
 msgid "File association missing for extension %1\n"
-msgstr ""
+msgstr "缺少用於延伸檔名 %1 的檔案關聯\n"
 
 #: cmd.rc:321
 msgid "No open command associated with file type '%1'\n"
-msgstr ""
+msgstr "沒有與檔案類型『%1』相關聯的開啟命令\n"
 
 #: cmd.rc:322
 msgid "Overwrite %1?"
-msgstr ""
+msgstr "覆寫 %1？"
 
 #: cmd.rc:323
 msgid "More..."
-msgstr ""
+msgstr "更多…"
 
 #: cmd.rc:324
 msgid "Line in Batch processing possibly truncated. Using:\n"
-msgstr ""
+msgstr "命令列於批次處理時可能會被截斷。使用：\n"
 
 #: cmd.rc:326
 msgid "Argument missing\n"
-msgstr ""
+msgstr "缺少引數\n"
 
 #: cmd.rc:327
 msgid "Syntax error\n"
-msgstr ""
+msgstr "語法錯誤\n"
 
 #: cmd.rc:329
 msgid "No help available for %1\n"
-msgstr ""
+msgstr "沒有關於 %1 的說明\n"
 
 #: cmd.rc:330
 msgid "Target to GOTO not found\n"
-msgstr ""
+msgstr "找不到 GOTO 的目標\n"
 
 #: cmd.rc:331
 msgid "Current Date is %1\n"
@@ -9637,12 +9842,12 @@ msgstr "開啟「%1」失敗\n"
 
 #: cmd.rc:337
 msgid "Cannot call batch label outside of a batch script\n"
-msgstr ""
+msgstr "無法呼叫批次命令稿外部的批次標籤\n"
 
 #: cmd.rc:338 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
-msgstr ""
+msgstr "A"
 
 #: cmd.rc:339
 msgid "Delete %1?"
@@ -9650,15 +9855,15 @@ msgstr "刪除 %1？"
 
 #: cmd.rc:340
 msgid "Echo is %1\n"
-msgstr ""
+msgstr "回應為 %1\n"
 
 #: cmd.rc:341
 msgid "Verify is %1\n"
-msgstr ""
+msgstr "驗證為 %1\n"
 
 #: cmd.rc:342
 msgid "Verify must be ON or OFF\n"
-msgstr ""
+msgstr "驗證必須為 ON 或 OFF\n"
 
 #: cmd.rc:343
 msgid "Parameter error\n"
@@ -9669,42 +9874,44 @@ msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
 msgstr ""
+"卷冊序號是 %1!04x!-%2!04x!\n"
+"\n"
 
 #: cmd.rc:345
 msgid "Volume label (11 characters, <Enter> for none)?"
-msgstr ""
+msgstr "卷冊標籤 (11 個字元，<Enter> 表示沒有)？"
 
 #: cmd.rc:346
 msgid "PATH not found\n"
-msgstr ""
+msgstr "找不到 PATH\n"
 
 #: cmd.rc:347
 msgid "Press any key to continue... "
-msgstr ""
+msgstr "按下任何鍵繼續…"
 
 #: cmd.rc:348
 msgid "Wine Command Prompt"
-msgstr ""
+msgstr "Wine 命令提示符號"
 
 #: cmd.rc:349
 msgid "CMD Version %1!S!\n"
-msgstr ""
+msgstr "CMD 版本 %1!S!\n"
 
 #: cmd.rc:350
 msgid "More? "
-msgstr ""
+msgstr "更多？"
 
 #: cmd.rc:351
 msgid "The input line is too long.\n"
-msgstr ""
+msgstr "輸入列太長。\n"
 
 #: cmd.rc:352
 msgid "Volume in drive %1!c! is %2\n"
-msgstr ""
+msgstr "位於儲存裝置 %1!c! 的卷冊為 %2\n"
 
 #: cmd.rc:353
 msgid "Volume in drive %1!c! has no label.\n"
-msgstr ""
+msgstr "位於儲存裝置 %1!c! 的卷冊沒有任何標籤。\n"
 
 #: cmd.rc:354
 msgid " (Yes|No)"
@@ -9720,11 +9927,11 @@ msgstr "DirectX 診斷工具"
 
 #: dxdiag.rc:28
 msgid "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
-msgstr ""
+msgstr "用法：dxdiag [/whql:off | /whql:on] [/t 檔名 | /x 檔名]"
 
 #: explorer.rc:28
 msgid "Wine Explorer"
-msgstr ""
+msgstr "Wine 檔案總管"
 
 #: explorer.rc:29
 msgid "Location:"
@@ -9732,29 +9939,29 @@ msgstr "位址："
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"
-msgstr ""
+msgstr "用法：主機名稱\n"
 
 #: hostname.rc:28
 msgid "Error: Invalid option '%c'.\n"
-msgstr ""
+msgstr "錯誤：無效的選項『%c』。\n"
 
 #: hostname.rc:29
 msgid ""
 "Error: Setting the system hostname is not possible with the hostname "
 "utility.\n"
-msgstr ""
+msgstr "錯誤：不能利用主機名稱公用程式來設定系統主機名稱。\n"
 
 #: ipconfig.rc:27
 msgid "Usage: ipconfig [ /? | /all ]\n"
-msgstr ""
+msgstr "用法：ipconfig [ /? | /all ]\n"
 
 #: ipconfig.rc:28
 msgid "Error: Unknown or invalid command line parameters specified\n"
-msgstr ""
+msgstr "錯誤：指定了不明或無效的命令列參數\n"
 
 #: ipconfig.rc:29
 msgid "%1 adapter %2\n"
-msgstr ""
+msgstr "%1 配接卡 %2\n"
 
 #: ipconfig.rc:30
 msgid "Ethernet"
@@ -9762,7 +9969,7 @@ msgstr "乙太網路"
 
 #: ipconfig.rc:32
 msgid "Connection-specific DNS suffix"
-msgstr ""
+msgstr "特定連線的 DNS 字尾"
 
 #: ipconfig.rc:34
 msgid "Hostname"
@@ -9782,23 +9989,23 @@ msgstr "點對點"
 
 #: ipconfig.rc:38
 msgid "Mixed"
-msgstr ""
+msgstr "混雜"
 
 #: ipconfig.rc:39
 msgid "Hybrid"
-msgstr ""
+msgstr "並用"
 
 #: ipconfig.rc:40
 msgid "IP routing enabled"
-msgstr ""
+msgstr "IP 路由已啟用"
 
 #: ipconfig.rc:42
 msgid "Physical address"
-msgstr ""
+msgstr "實體位址"
 
 #: ipconfig.rc:43
 msgid "DHCP enabled"
-msgstr ""
+msgstr "DHCP 已啟用"
 
 #: ipconfig.rc:46
 msgid "Default gateway"
@@ -9814,6 +10021,13 @@ msgid ""
 "\n"
 "Where 'command' is one of HELP, START, STOP or USE.\n"
 msgstr ""
+"這個命令的語法是：\n"
+"\n"
+"NET 命令 [引數]\n"
+"    或\n"
+"NET 命令 /HELP\n"
+"\n"
+"其中『命令』可以是 HELP, START, STOP 或 USE 之一。\n"
 
 #: net.rc:28
 msgid ""
@@ -9824,6 +10038,12 @@ msgid ""
 "Displays the list of running services if 'service' is omitted. Otherwise "
 "'service' is the name of the service to start.\n"
 msgstr ""
+"這個命令的語法是：\n"
+"\n"
+"NET START [服務]\n"
+"\n"
+"如果『服務』被省略，就顯示執行中服務的清單，否則『服務』表示要啟動的服務名"
+"稱。\n"
 
 #: net.rc:29
 msgid ""
@@ -9833,10 +10053,15 @@ msgid ""
 "\n"
 "Where 'service' is the name of the service to stop.\n"
 msgstr ""
+"這個命令的語法是：\n"
+"\n"
+"NET STOP 服務\n"
+"\n"
+"其中『服務』是要停止的服務名稱。\n"
 
 #: net.rc:30
 msgid "Stopping dependent service: %1\n"
-msgstr ""
+msgstr "正在停止附屬服務：%1\n"
 
 #: net.rc:31
 msgid "Could not stop service %1\n"
@@ -9844,39 +10069,39 @@ msgstr "無法停止服務 %1。\n"
 
 #: net.rc:32
 msgid "Could not get handle to service control manager.\n"
-msgstr ""
+msgstr "無法獲得服務控制管理員控柄。\n"
 
 #: net.rc:33
 msgid "Could not get handle to service.\n"
-msgstr ""
+msgstr "無法獲得服務控柄。\n"
 
 #: net.rc:34
 msgid "The %1 service is starting.\n"
-msgstr ""
+msgstr "%1 服務正在開始。\n"
 
 #: net.rc:35
 msgid "The %1 service was started successfully.\n"
-msgstr ""
+msgstr "%1 服務已成功開始。\n"
 
 #: net.rc:36
 msgid "The %1 service failed to start.\n"
-msgstr ""
+msgstr "%1 服務無法開始。\n"
 
 #: net.rc:37
 msgid "The %1 service is stopping.\n"
-msgstr ""
+msgstr "%1 服務正在停止。\n"
 
 #: net.rc:38
 msgid "The %1 service was stopped successfully.\n"
-msgstr ""
+msgstr "%1 服務已成功停止。\n"
 
 #: net.rc:39
 msgid "The %1 service failed to stop.\n"
-msgstr ""
+msgstr "%1 服務無法停止。\n"
 
 #: net.rc:41
 msgid "There are no entries in the list.\n"
-msgstr ""
+msgstr "在清單中沒有條目。\n"
 
 #: net.rc:42
 msgid ""
@@ -9884,34 +10109,37 @@ msgid ""
 "Status  Local   Remote\n"
 "---------------------------------------------------------------\n"
 msgstr ""
+"\n"
+"狀態    本地    遠端\n"
+"---------------------------------------------------------------\n"
 
 #: net.rc:43
 msgid "%1      %2      %3      Open resources: %4!u!\n"
-msgstr ""
+msgstr "%1      %2      %3      開啟資源：%4!u!\n"
 
 #: net.rc:45
 msgid "Paused"
-msgstr "暫停"
+msgstr "已暫停"
 
 #: net.rc:46
 msgid "Disconnected"
-msgstr "離線"
+msgstr "已離線"
 
 #: net.rc:47
 msgid "A network error occurred"
-msgstr "網路發生錯誤"
+msgstr "網路發生了錯誤"
 
 #: net.rc:48
 msgid "Connection is being made"
-msgstr ""
+msgstr "正在進行連接"
 
 #: net.rc:49
 msgid "Reconnecting"
-msgstr "重新連線中"
+msgstr "正在重新連線"
 
 #: net.rc:40
 msgid "The following services are running:\n"
-msgstr ""
+msgstr "下列服務正在執行：\n"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
@@ -9919,7 +10147,7 @@ msgstr "新增(&N)\tCtrl+N"
 
 #: notepad.rc:28 wordpad.rc:29
 msgid "&Open...\tCtrl+O"
-msgstr "開啟(&O)...\tCtrl+O"
+msgstr "開啟(&O)…\tCtrl+O"
 
 #: notepad.rc:29 wordpad.rc:30
 msgid "&Save\tCtrl+S"
@@ -9927,15 +10155,15 @@ msgstr "儲存(&S)\tCtrl+S"
 
 #: notepad.rc:32 regedit.rc:36 wordpad.rc:33
 msgid "&Print...\tCtrl+P"
-msgstr "列印(&P)...\tCtrl+P"
+msgstr "列印(&P)…\tCtrl+P"
 
 #: notepad.rc:33 wordpad.rc:35
 msgid "Page Se&tup..."
-msgstr "版面設定(&T)..."
+msgstr "版面設定(&T)…"
 
 #: notepad.rc:34
 msgid "P&rinter Setup..."
-msgstr "列印設定(&R)..."
+msgstr "列印設定(&R)…"
 
 #: notepad.rc:38 regedit.rc:40 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
 msgid "&Edit"
@@ -9972,11 +10200,11 @@ msgstr "插入日期時間(&T)\tF5"
 
 #: notepad.rc:49
 msgid "&Wrap long lines"
-msgstr "自動換行(&W)"
+msgstr "自動換列(&W)"
 
 #: notepad.rc:53
 msgid "&Search...\tCtrl+F"
-msgstr "尋找(&S)...\tCtrl+F"
+msgstr "尋找(&S)…\tCtrl+F"
 
 #: notepad.rc:54
 msgid "&Search next\tF3"
@@ -9984,7 +10212,7 @@ msgstr "找下一個(&S)\tF3"
 
 #: notepad.rc:55 wordpad.rc:52
 msgid "&Replace...\tCtrl+H"
-msgstr "取代(&R)...\tCtrl+H"
+msgstr "取代(&R)…\tCtrl+H"
 
 #: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:80
 msgid "&Contents\tF1"
@@ -10025,22 +10253,22 @@ msgstr "編碼:"
 #: notepad.rc:129 wordpad.rc:278
 msgctxt "accelerator Select All"
 msgid "A"
-msgstr ""
+msgstr "A"
 
 #: notepad.rc:130 wordpad.rc:280
 msgctxt "accelerator Copy"
 msgid "C"
-msgstr ""
+msgstr "C"
 
 #: notepad.rc:131 regedit.rc:320 wordpad.rc:276
 msgctxt "accelerator Find"
 msgid "F"
-msgstr ""
+msgstr "F"
 
 #: notepad.rc:132 wordpad.rc:277
 msgctxt "accelerator Replace"
 msgid "H"
-msgstr ""
+msgstr "H"
 
 #: notepad.rc:133 wordpad.rc:286
 msgctxt "accelerator New"
@@ -10055,27 +10283,27 @@ msgstr "O"
 #: notepad.rc:135 regedit.rc:321 wordpad.rc:289
 msgctxt "accelerator Print"
 msgid "P"
-msgstr ""
+msgstr "P"
 
 #: notepad.rc:136 wordpad.rc:288
 msgctxt "accelerator Save"
 msgid "S"
-msgstr ""
+msgstr "S"
 
 #: notepad.rc:137
 msgctxt "accelerator Paste"
 msgid "V"
-msgstr ""
+msgstr "V"
 
 #: notepad.rc:138 wordpad.rc:279
 msgctxt "accelerator Cut"
 msgid "X"
-msgstr ""
+msgstr "X"
 
 #: notepad.rc:139 wordpad.rc:281
 msgctxt "accelerator Undo"
 msgid "Z"
-msgstr ""
+msgstr "Z"
 
 #: notepad.rc:66
 msgid "Page &p"
@@ -10123,15 +10351,15 @@ msgstr "找不到「%s」。"
 
 #: notepad.rc:82
 msgid "Unicode (UTF-16)"
-msgstr ""
+msgstr "萬國碼 (UTF-16)"
 
 #: notepad.rc:83
 msgid "Unicode (UTF-16 big-endian)"
-msgstr ""
+msgstr "萬國碼 (UTF-16 大尾序)"
 
 #: notepad.rc:84
 msgid "Unicode (UTF-8)"
-msgstr ""
+msgstr "萬國碼 (UTF-8)"
 
 #: notepad.rc:91
 msgid ""
@@ -10142,14 +10370,20 @@ msgid ""
 "one of the Unicode options in the Encoding drop down list.\n"
 "Continue?"
 msgstr ""
+"%1\n"
+"這個檔案含有萬國碼字元，如果以 %2 編碼\n"
+"儲存這個檔案，您將會失去它們。\n"
+"要保留這些字元，請按一下取消，然後在編碼\n"
+"的下拉選單中選取一個萬國碼選項。\n"
+"要繼續嗎？"
 
 #: oleview.rc:29
 msgid "&Bind to file..."
-msgstr "檔案綁定(&B)..."
+msgstr "檔案綁定(&B)…"
 
 #: oleview.rc:30
 msgid "&View TypeLib..."
-msgstr "查看 &TypeLib..."
+msgstr "查看 &TypeLib…"
 
 #: oleview.rc:32
 msgid "&System Configuration"
@@ -10157,7 +10391,7 @@ msgstr "系統設定(&S)"
 
 #: oleview.rc:33
 msgid "&Run the Registry Editor"
-msgstr "執行登錄檔編輯器(&R)"
+msgstr "執行註冊表編輯器(&R)"
 
 #: oleview.rc:37
 msgid "&Object"
@@ -10169,11 +10403,11 @@ msgstr "&CoCreateInstance 參數"
 
 #: oleview.rc:41
 msgid "&In-process server"
-msgstr ""
+msgstr "同進程伺服器(&I)"
 
 #: oleview.rc:42
 msgid "In-process &handler"
-msgstr ""
+msgstr "同進程處理常式(&H)"
 
 #: oleview.rc:43
 msgid "&Local server"
@@ -10193,7 +10427,7 @@ msgstr "建立實例(&I)"
 
 #: oleview.rc:50
 msgid "Create Instance &On..."
-msgstr "建立實例在(&O)..."
+msgstr "建立實例在(&O)…"
 
 #: oleview.rc:51
 msgid "&Release Instance"
@@ -10233,7 +10467,7 @@ msgstr "關於 OleView(&A)"
 
 #: oleview.rc:79
 msgid "&Save as..."
-msgstr "另存為(&S)..."
+msgstr "另存為(&S)…"
 
 #: oleview.rc:84
 msgid "&Group by type kind"
@@ -10241,7 +10475,7 @@ msgstr "按類型分組(&G)"
 
 #: oleview.rc:154
 msgid "Connect to another machine"
-msgstr "連接到另外一台電腦"
+msgstr "連接到另外一臺電腦"
 
 #: oleview.rc:157
 msgid "&Machine name:"
@@ -10268,7 +10502,7 @@ msgid ""
 "These settings change only registry values.\n"
 "They have no effect on Wine performance."
 msgstr ""
-"這些設定只改變登錄檔內的值。\n"
+"這些設定只改變註冊表內的值。\n"
 "它對Wine的性能沒有影響。"
 
 #: oleview.rc:178
@@ -10321,7 +10555,7 @@ msgstr "版本 1.0"
 
 #: oleview.rc:100
 msgid "TypeLib files (*.tlb; *.olb; *.dll; *.ocx; *.exe)"
-msgstr "TypeLib 檔案 (*.tlb；*.olb；*.dll；*.ocx；*.exe)"
+msgstr "TypeLib 檔案 (*.tlb; *.olb; *.dll; *.ocx; *.exe)"
 
 #: oleview.rc:103
 msgid "Bind to file via a File Moniker"
@@ -10337,7 +10571,7 @@ msgstr "修改本機分散式 COM 設定"
 
 #: oleview.rc:106
 msgid "Run the Wine registry editor"
-msgstr "執行 Wine 登錄檔編輯器"
+msgstr "執行 Wine 註冊表編輯器"
 
 #: oleview.rc:107
 msgid "Quit the application. Prompts to save changes"
@@ -10390,19 +10624,19 @@ msgstr "顯示程式資訊、版本號及版權"
 
 #: oleview.rc:113
 msgid "Ask for an in-process server when calling CoGetClassObject"
-msgstr ""
+msgstr "呼叫 CoGetClassObject 時要求一個同進程伺服器"
 
 #: oleview.rc:114
 msgid "Ask for an in-process handler when calling CoGetClassObject"
-msgstr ""
+msgstr "呼叫 CoGetClassObject 時要求一個同進程處理常式"
 
 #: oleview.rc:115
 msgid "Ask for a local server when calling CoGetClassObject"
-msgstr ""
+msgstr "呼叫 CoGetClassObject 時要求一個本機伺服器"
 
 #: oleview.rc:116
 msgid "Ask for a remote server when calling CoGetClassObject"
-msgstr ""
+msgstr "呼叫 CoGetClassObject 時要求一個遠端伺服器"
 
 #: oleview.rc:128
 msgid "ObjectClasses"
@@ -10442,7 +10676,7 @@ msgstr "介面"
 
 #: oleview.rc:138
 msgid "Registry"
-msgstr "登錄檔"
+msgstr "註冊表"
 
 #: oleview.rc:139
 msgid "Implementation"
@@ -10486,7 +10720,7 @@ msgstr "按類別分組"
 
 #: progman.rc:30
 msgid "&New..."
-msgstr "新增(&N)..."
+msgstr "新增(&N)…"
 
 #: progman.rc:31
 msgid "O&pen\tEnter"
@@ -10494,11 +10728,11 @@ msgstr "開啟(&P)\tEnter"
 
 #: progman.rc:32 winefile.rc:27
 msgid "&Move...\tF7"
-msgstr "移動(&M)...\tF7"
+msgstr "移動(&M)…\tF7"
 
 #: progman.rc:33 winefile.rc:28
 msgid "&Copy...\tF8"
-msgstr "複製(&C)...\tF8"
+msgstr "複製(&C)…\tF8"
 
 #: progman.rc:35
 msgid "&Properties\tAlt+Enter"
@@ -10506,7 +10740,7 @@ msgstr "屬性(&P)\tAlt+Enter"
 
 #: progman.rc:37
 msgid "&Execute..."
-msgstr "執行(&E)..."
+msgstr "執行(&E)…"
 
 #: progman.rc:39
 msgid "E&xit Windows"
@@ -10610,7 +10844,7 @@ msgstr "啟動後最小化(&M)"
 
 #: progman.rc:180
 msgid "Change &icon..."
-msgstr "變更圖示(&I)..."
+msgstr "變更圖示(&I)…"
 
 #: progman.rc:189
 msgid "Change Icon"
