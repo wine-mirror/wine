@@ -13235,7 +13235,7 @@ msgstr "版本資訊"
 #: winefile.rc:194
 msgctxt "accelerator Fullscreen"
 msgid "S"
-msgstr ""
+msgstr "S"
 
 #: winefile.rc:87
 msgid "Applying font settings"
@@ -13243,7 +13243,7 @@ msgstr "字型設定套用中"
 
 #: winefile.rc:88
 msgid "Error while selecting new font."
-msgstr ""
+msgstr "選取新字型時發生錯誤。"
 
 #: winefile.rc:93
 msgid "Wine File Manager"
@@ -13251,15 +13251,15 @@ msgstr "Wine 檔案管理員"
 
 #: winefile.rc:95
 msgid "root fs"
-msgstr ""
+msgstr "根檔案系統"
 
 #: winefile.rc:96
 msgid "unixfs"
-msgstr ""
+msgstr "unixfs"
 
 #: winefile.rc:98
 msgid "Shell"
-msgstr ""
+msgstr "命令殼"
 
 #: winefile.rc:99 winhlp32.rc:107 winhlp32.rc:82
 msgid "Not yet implemented"
@@ -13267,38 +13267,38 @@ msgstr "尚未實作"
 
 #: winefile.rc:106
 msgid "CDate"
-msgstr ""
+msgstr "CDate"
 
 #: winefile.rc:107
 msgid "ADate"
-msgstr ""
+msgstr "ADate"
 
 #: winefile.rc:108
 msgid "MDate"
-msgstr ""
+msgstr "MDate"
 
 #: winefile.rc:109
 msgid "Index/Inode"
-msgstr ""
+msgstr "索引/Inode"
 
 #: winefile.rc:114
 msgid "%1 of %2 free"
-msgstr ""
+msgstr "%2 中剩下 %1"
 
 #: winefile.rc:115
 msgctxt "unit kilobyte"
 msgid "kB"
-msgstr ""
+msgstr "kB"
 
 #: winefile.rc:116
 msgctxt "unit megabyte"
 msgid "MB"
-msgstr ""
+msgstr "MB"
 
 #: winefile.rc:117
 msgctxt "unit gigabyte"
 msgid "GB"
-msgstr ""
+msgstr "GB"
 
 #: winemine.rc:34
 msgid "&Game"
@@ -13310,7 +13310,7 @@ msgstr "新遊戲(&N)\tF2"
 
 #: winemine.rc:37
 msgid "Question &Marks"
-msgstr ""
+msgstr "問號(&M)"
 
 #: winemine.rc:39
 msgid "&Beginner"
@@ -13326,7 +13326,7 @@ msgstr "專家(&E)"
 
 #: winemine.rc:42
 msgid "&Custom..."
-msgstr "自訂(&C)..."
+msgstr "自訂(&C)…"
 
 #: winemine.rc:44
 msgid "&Fastest Times"
@@ -13478,33 +13478,27 @@ msgstr "無法開啟檔案「%s」。 您想要自己搜尋這個檔案嗎？"
 
 #: winhlp32.rc:90
 msgid "Cannot find a richedit implementation... Aborting"
-msgstr "找不到 richedit... 終止"
+msgstr "找不到 richedit… 終止"
 
 #: winhlp32.rc:91
 msgid "Help topics: "
 msgstr "說明主題："
 
 #: wmic.rc:25
-#, fuzzy
-#| msgid "Extended attributes not supported.\n"
 msgid "Error: Command line not supported\n"
-msgstr "不支援延伸屬性。\n"
+msgstr "錯誤：不支援命令列\n"
 
 #: wmic.rc:26
-#, fuzzy
-#| msgid "Sector not found.\n"
 msgid "Error: Alias not found\n"
-msgstr "找不到磁區。\n"
+msgstr "錯誤：找不到別名\n"
 
 #: wmic.rc:27
-#, fuzzy
-#| msgid "Invalid key.\n"
 msgid "Error: Invalid query\n"
-msgstr "無效的機碼。\n"
+msgstr "錯誤：無效的查詢\n"
 
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
-msgstr "新增(&N)...\tCtrl+N"
+msgstr "新增(&N)…\tCtrl+N"
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"
@@ -13568,7 +13562,7 @@ msgstr "插入(&I)"
 
 #: wordpad.rc:77
 msgid "&Date and time..."
-msgstr "日期時間(&D)..."
+msgstr "日期時間(&D)…"
 
 #: wordpad.rc:79
 msgid "F&ormat"
@@ -13580,11 +13574,11 @@ msgstr "子彈點(&B)"
 
 #: wordpad.rc:83 wordpad.rc:106
 msgid "&Paragraph..."
-msgstr "段落(&P)..."
+msgstr "段落(&P)…"
 
 #: wordpad.rc:84
 msgid "&Tabs..."
-msgstr "標籤(&T)..."
+msgstr "標籤(&T)…"
 
 #: wordpad.rc:85
 msgid "Backgroun&d"
@@ -13636,7 +13630,7 @@ msgstr "右"
 
 #: wordpad.rc:229
 msgid "First line"
-msgstr "第一行"
+msgstr "第一列"
 
 #: wordpad.rc:231
 msgid "Alignment"
@@ -13656,11 +13650,11 @@ msgstr "全部刪除(&L)"
 
 #: wordpad.rc:256
 msgid "Line wrapping"
-msgstr "自動換行"
+msgstr "自動換列"
 
 #: wordpad.rc:257
 msgid "&No line wrapping"
-msgstr "關閉自動換行(&N)"
+msgstr "關閉自動換列(&N)"
 
 #: wordpad.rc:258
 msgid "Wrap text by the &window border"
@@ -13677,37 +13671,37 @@ msgstr "工具列"
 #: wordpad.rc:273
 msgctxt "accelerator Align Left"
 msgid "L"
-msgstr ""
+msgstr "L"
 
 #: wordpad.rc:274
 msgctxt "accelerator Align Center"
 msgid "E"
-msgstr ""
+msgstr "E"
 
 #: wordpad.rc:275
 msgctxt "accelerator Align Right"
 msgid "R"
-msgstr ""
+msgstr "R"
 
 #: wordpad.rc:282
 msgctxt "accelerator Redo"
 msgid "Y"
-msgstr ""
+msgstr "Y"
 
 #: wordpad.rc:283
 msgctxt "accelerator Bold"
 msgid "B"
-msgstr ""
+msgstr "B"
 
 #: wordpad.rc:284
 msgctxt "accelerator Italic"
 msgid "I"
-msgstr ""
+msgstr "I"
 
 #: wordpad.rc:285
 msgctxt "accelerator Underline"
 msgid "U"
-msgstr ""
+msgstr "U"
 
 #: wordpad.rc:136
 msgid "All documents (*.*)"
@@ -13719,15 +13713,15 @@ msgstr "純文字文件 (*.txt)"
 
 #: wordpad.rc:138
 msgid "Unicode text document (*.txt)"
-msgstr "統一碼文字文件 (*.txt)"
+msgstr "萬國碼文字文件 (*.txt)"
 
 #: wordpad.rc:139
 msgid "Rich text format (*.rtf)"
-msgstr "RTF豐富格式 (*.rtf)"
+msgstr "豐富文字格式 (*.rtf)"
 
 #: wordpad.rc:140
 msgid "Rich text document"
-msgstr "RTF豐富格式檔案"
+msgstr "豐富文字格式檔案"
 
 #: wordpad.rc:141
 msgid "Text document"
@@ -13735,7 +13729,7 @@ msgstr "純文字文件"
 
 #: wordpad.rc:142
 msgid "Unicode text document"
-msgstr "統一碼文字文件"
+msgstr "萬國碼文字文件"
 
 #: wordpad.rc:143
 msgid "Printer files (*.prn)"
@@ -13828,11 +13822,11 @@ msgstr "您已經選擇儲存為純文字格式, 這可能導致格式遺失。 
 
 #: wordpad.rc:187
 msgid "Invalid number format."
-msgstr ""
+msgstr "無效的數字格式。"
 
 #: wordpad.rc:188
 msgid "OLE storage documents are not supported."
-msgstr ""
+msgstr "OLE 儲存體文件未被支援。"
 
 #: wordpad.rc:189
 msgid "Could not save the file."
@@ -13856,19 +13850,19 @@ msgstr "列印功能尚未實作。"
 
 #: wordpad.rc:194
 msgid "Cannot add more than 32 tab stops."
-msgstr ""
+msgstr "無法加入超過 32 個定位停駐點。"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"
-msgstr ""
+msgstr "啟動 Wordpad 時失敗"
 
 #: xcopy.rc:27
 msgid "Invalid number of parameters - Use xcopy /? for help\n"
-msgstr ""
+msgstr "無效的參數數量 - 使用 xcopy /? 以獲得說明\n"
 
 #: xcopy.rc:28
 msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
-msgstr ""
+msgstr "無效的參數『%1』- 使用 xcopy /? 以獲得說明\n"
 
 #: xcopy.rc:29
 msgid "Press <Enter> to begin copying\n"
@@ -13876,7 +13870,7 @@ msgstr "請按 <Enter> 鍵開始複製\n"
 
 #: xcopy.rc:30
 msgid "%1!d! file(s) would be copied\n"
-msgstr ""
+msgstr "%1!d! 個檔案將被複製\n"
 
 #: xcopy.rc:31
 msgid "%1!d! file(s) copied\n"
@@ -13888,32 +13882,35 @@ msgid ""
 "on the target?\n"
 "(F - File, D - Directory)\n"
 msgstr ""
+"『%1』是一個在目標上的\n"
+"檔名或目錄？\n"
+"(F - 檔案，D - 目錄)\n"
 
 #: xcopy.rc:35
 msgid "%1? (Yes|No)\n"
-msgstr "%1？ (是｜否)\n"
+msgstr "%1？ (Yes|No)\n"
 
 #: xcopy.rc:36
 msgid "Overwrite %1? (Yes|No|All)\n"
-msgstr "是否覆蓋 %1？ (是｜否｜全部皆是)\n"
+msgstr "是否覆蓋 %1？ (Yes|No|All)\n"
 
 #: xcopy.rc:37
 msgid "Copying of '%1' to '%2' failed with r/c %3!d!\n"
-msgstr ""
+msgstr "將『%1』複製到『%2』時失敗並獲得 r/c %3!d!\n"
 
 #: xcopy.rc:39
 msgid "Failed during reading of '%1'\n"
-msgstr ""
+msgstr "在讀取『%1』的期間發生了失敗\n"
 
 #: xcopy.rc:43
 msgctxt "File key"
 msgid "F"
-msgstr ""
+msgstr "F"
 
 #: xcopy.rc:44
 msgctxt "Directory key"
 msgid "D"
-msgstr ""
+msgstr "D"
 
 #: xcopy.rc:77
 msgid ""
@@ -13950,3 +13947,34 @@ msgid ""
 "\t\tthan source.\n"
 "\n"
 msgstr ""
+"XCOPY - 將來源檔案或樹狀目錄複製到目的。\n"
+"\n"
+"語法：\n"
+"XCOPY 來源 [目的] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
+"\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
+"\n"
+"位置：\n"
+"\n"
+"[/I]  如果目的不存在且複製兩個或更多檔案時，\n"
+"\t將目的假設為目錄。\n"
+"[/S]  複製目錄和子目錄。\n"
+"[/E]  複製目錄和子目錄，包含任何空目錄。\n"
+"[/Q]  在複製期間不列出名稱，亦即安靜模式。\n"
+"[/F]  在複製期間顯示完整的來源和目的名稱。\n"
+"[/L]  模擬操作，顯示會被複製的名稱。\n"
+"[/W]  在開始複製操作之前進行提示。\n"
+"[/T]  建立空的目錄結構但是不複製檔案。\n"
+"[/Y]  覆寫檔案時抑制提示。\n"
+"[/-Y] 覆寫檔案時啟用提示。\n"
+"[/P]  於複製每個來源檔案之前提示。\n"
+"[/N]  使用簡稱複製。\n"
+"[/U]  只複製已經存在目的中的檔案。\n"
+"[/R]  覆寫任何唯讀檔案。\n"
+"[/H]  複製時包括隱藏和系統檔案。\n"
+"[/C]  即使在複製期間發生錯誤仍然繼續。\n"
+"[/A]  只複製具有封存屬性的檔案。\n"
+"[/M]  只複製具有封存屬性的檔案，\n"
+"\t但會移除封存屬性。\n"
+"[/D | /D:m-d-y] 複製新檔案或是於給定日期之後修改的檔案。\n"
+"\t\t如果沒有給定日期，只有當目的比來源舊時才複製。\n"
+"\n"
