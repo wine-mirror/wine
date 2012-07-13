@@ -4263,7 +4263,7 @@ TREEVIEW_RButtonDown(TREEVIEW_INFO *infoPtr, LPARAM lParam)
 	    ClientToScreen(infoPtr->hwnd, &ht.pt);
 
 	    /* Send a WM_CONTEXTMENU message in response to the RBUTTONUP */
-	    SendMessageW(infoPtr->hwnd, WM_CONTEXTMENU,
+	    SendMessageW(infoPtr->hwndNotify, WM_CONTEXTMENU,
 		(WPARAM)infoPtr->hwnd, MAKELPARAM(ht.pt.x, ht.pt.y));
 	}
     }
