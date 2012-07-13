@@ -524,10 +524,10 @@ static HRESULT WINAPI StorageBaseImpl_OpenStream(
 
     newStream = StgStreamImpl_Construct(This, grfMode, streamEntryRef);
 
-    if (newStream!=0)
+    if (newStream)
     {
       newStream->grfMode = grfMode;
-      *ppstm = (IStream*)newStream;
+      *ppstm = &newStream->IStream_iface;
 
       IStream_AddRef(*ppstm);
 
@@ -1007,10 +1007,9 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
    */
   newStream = StgStreamImpl_Construct(This, grfMode, newStreamEntryRef);
 
-  if (newStream != 0)
+  if (newStream)
   {
-    *ppstm = (IStream*)newStream;
-
+    *ppstm = &newStream->IStream_iface;
     IStream_AddRef(*ppstm);
   }
   else
@@ -1684,11 +1683,19 @@ static HRESULT StorageBaseImpl_CopyChildEntryTo(StorageBaseImpl *This,
        */
       if (hr == S_OK)
       {
-        pstrChild = (IStream*)StgStreamImpl_Construct(This, STGM_READ|STGM_SHARE_EXCLUSIVE, srcEntry);
-        if (pstrChild)
-          IStream_AddRef(pstrChild);
+        StgStreamImpl *streamimpl = StgStreamImpl_Construct(This, STGM_READ|STGM_SHARE_EXCLUSIVE, srcEntry);
+
+        if (streamimpl)
+        {
+          pstrChild = &streamimpl->IStream_iface;
+          if (pstrChild)
+            IStream_AddRef(pstrChild);
+        }
         else
+        {
+          pstrChild = NULL;
           hr = E_OUTOFMEMORY;
+        }
       }
 
       if (hr == S_OK)

@@ -418,24 +418,18 @@ SmallBlockChainStream* Storage32Impl_BigBlocksToSmallBlocks(
 /****************************************************************************
  * StgStreamImpl definitions.
  *
- * This class implements the IStream32 interface and represents a stream
+ * This class implements the IStream interface and represents a stream
  * located inside a storage object.
  */
 struct StgStreamImpl
 {
-  const IStreamVtbl *lpVtbl;  /* Needs to be the first item in the struct
-			 * since we want to cast this to an IStream pointer */
+  IStream IStream_iface;
+  LONG ref;
 
   /*
    * We are an entry in the storage object's stream handler list
    */
-
   struct list StrmListEntry;
-
-  /*
-   * Reference count
-   */
-  LONG		     ref;
 
   /*
    * Storage that is the parent(owner) of the stream
@@ -457,6 +451,11 @@ struct StgStreamImpl
    */
   ULARGE_INTEGER     currentPosition;
 };
+
+static inline StgStreamImpl *impl_from_IStream( IStream *iface )
+{
+    return CONTAINING_RECORD(iface, StgStreamImpl, IStream_iface);
+}
 
 /*
  * Method definition for the StgStreamImpl class.
