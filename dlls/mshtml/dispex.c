@@ -849,7 +849,7 @@ static HRESULT builtin_propget(DispatchEx *This, func_info_t *func, DISPPARAMS *
     IUnknown *iface;
     HRESULT hres;
 
-    if(dp->cArgs) {
+    if(dp && dp->cArgs) {
         FIXME("cArgs %d\n", dp->cArgs);
         return E_NOTIMPL;
     }
@@ -961,7 +961,25 @@ static HRESULT invoke_builtin_prop(DispatchEx *This, DISPID id, LCID lcid, WORD 
         hres = builtin_propget(This, func, dp, res);
         break;
     default:
-        hres = typeinfo_invoke(This, func, flags, dp, res, ei);
+        if(!func->get_vtbl_off) {
+            hres = typeinfo_invoke(This, func, flags, dp, res, ei);
+        }else {
+            VARIANT v;
+
+            hres = builtin_propget(This, func, NULL, &v);
+            if(FAILED(hres))
+                return hres;
+
+            if(V_VT(&v) != VT_DISPATCH) {
+                FIXME("Not a function %s\n", debugstr_variant(&v));
+                VariantClear(&v);
+                return E_FAIL;
+            }
+
+            hres = invoke_disp_value(This, V_DISPATCH(&v), lcid, flags, dp, res, ei, caller);
+
+            IDispatch_Release(V_DISPATCH(&v));
+        }
     }
 
     return hres;
