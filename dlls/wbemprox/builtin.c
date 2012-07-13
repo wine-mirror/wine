@@ -51,10 +51,14 @@ static const WCHAR class_networkadapterW[] =
     {'W','i','n','3','2','_','N','e','t','w','o','r','k','A','d','a','p','t','e','r',0};
 static const WCHAR class_osW[] =
     {'W','i','n','3','2','_','O','p','e','r','a','t','i','n','g','S','y','s','t','e','m',0};
+static const WCHAR class_paramsW[] =
+    {'_','_','P','A','R','A','M','E','T','E','R','S',0};
 static const WCHAR class_processW[] =
     {'W','i','n','3','2','_','P','r','o','c','e','s','s',0};
 static const WCHAR class_processorW[] =
     {'W','i','n','3','2','_','P','r','o','c','e','s','s','o','r',0};
+static const WCHAR class_stdregprovW[] =
+    {'S','t','d','R','e','g','P','r','o','v',0};
 static const WCHAR class_videocontrollerW[] =
     {'W','i','n','3','2','_','V','i','d','e','o','C','o','n','t','r','o','l','l','e','r',0};
 
@@ -62,22 +66,28 @@ static const WCHAR prop_adapterramW[] =
     {'A','d','a','p','t','e','r','R','A','M',0};
 static const WCHAR prop_captionW[] =
     {'C','a','p','t','i','o','n',0};
-static const WCHAR prop_csdversionW[] =
-    {'C','S','D','V','e','r','s','i','o','n',0};
+static const WCHAR prop_classW[] =
+    {'C','l','a','s','s',0};
 static const WCHAR prop_commandlineW[] =
     {'C','o','m','m','a','n','d','L','i','n','e',0};
 static const WCHAR prop_cpustatusW[] =
     {'C','p','u','S','t','a','t','u','s',0};
+static const WCHAR prop_csdversionW[] =
+    {'C','S','D','V','e','r','s','i','o','n',0};
 static const WCHAR prop_currentbitsperpixelW[] =
     {'C','u','r','r','e','n','t','B','i','t','s','P','e','r','P','i','x','e','l',0};
 static const WCHAR prop_currenthorizontalresW[] =
     {'C','u','r','r','e','n','t','H','o','r','i','z','o','n','t','a','l','R','e','s','o','l','u','t','i','o','n',0};
 static const WCHAR prop_currentverticalresW[] =
     {'C','u','r','r','e','n','t','V','e','r','t','i','c','a','l','R','e','s','o','l','u','t','i','o','n',0};
+static const WCHAR prop_defaultvalueW[] =
+    {'D','e','f','a','u','l','t','V','a','l','u','e',0};
 static const WCHAR prop_descriptionW[] =
     {'D','e','s','c','r','i','p','t','i','o','n',0};
 static const WCHAR prop_deviceidW[] =
     {'D','e','v','i','c','e','I','d',0};
+static const WCHAR prop_directionW[] =
+    {'D','i','r','e','c','t','i','o','n',0};
 static const WCHAR prop_drivetypeW[] =
     {'D','r','i','v','e','T','y','p','e',0};
 static const WCHAR prop_filesystemW[] =
@@ -92,6 +102,8 @@ static const WCHAR prop_macaddressW[] =
     {'M','A','C','A','d','d','r','e','s','s',0};
 static const WCHAR prop_manufacturerW[] =
     {'M','a','n','u','f','a','c','t','u','r','e','r',0};
+static const WCHAR prop_methodW[] =
+    {'M','e','t','h','o','d',0};
 static const WCHAR prop_modelW[] =
     {'M','o','d','e','l',0};
 static const WCHAR prop_nameW[] =
@@ -106,6 +118,8 @@ static const WCHAR prop_osarchitectureW[] =
     {'O','S','A','r','c','h','i','t','e','c','t','u','r','e',0};
 static const WCHAR prop_oslanguageW[] =
     {'O','S','L','a','n','g','u','a','g','e',0};
+static const WCHAR prop_parameterW[] =
+    {'P','a','r','a','m','e','t','e','r',0};
 static const WCHAR prop_pnpdeviceidW[] =
     {'P','N','P','D','e','v','i','c','e','I','D',0};
 static const WCHAR prop_pprocessidW[] =
@@ -130,6 +144,24 @@ static const WCHAR prop_threadcountW[] =
     {'T','h','r','e','a','d','C','o','u','n','t',0};
 static const WCHAR prop_totalphysicalmemoryW[] =
     {'T','o','t','a','l','P','h','y','s','i','c','a','l','M','e','m','o','r','y',0};
+static const WCHAR prop_typeW[] =
+    {'T','y','p','e',0};
+
+static const WCHAR method_enumkeyW[] =
+    {'E','n','u','m','K','e','y',0};
+static const WCHAR method_enumvaluesW[] =
+    {'E','n','u','m','V','a','l','u','e','s',0};
+
+static const WCHAR param_defkeyW[] =
+    {'h','D','e','f','K','e','y',0};
+static const WCHAR param_namesW[] =
+    {'N','a','m','e','s',0};
+static const WCHAR param_returnvalueW[] =
+    {'R','e','t','u','r','n','V','a','l','u','e',0};
+static const WCHAR param_subkeynameW[] =
+    {'s','S','u','b','K','e','y','N','a','m','e',0};
+static const WCHAR param_typesW[] =
+    {'T','y','p','e','s',0};
 
 /* column definitions must be kept in sync with record structures below */
 static const struct column col_baseboard[] =
@@ -179,6 +211,15 @@ static const struct column col_os[] =
     { prop_oslanguageW,      CIM_UINT32, VT_I4 },
     { prop_systemdirectoryW, CIM_STRING }
 };
+static const struct column col_params[] =
+{
+    { prop_classW,        CIM_STRING },
+    { prop_methodW,       CIM_STRING },
+    { prop_directionW,    CIM_SINT32 },
+    { prop_parameterW,    CIM_STRING },
+    { prop_typeW,         CIM_UINT32 },
+    { prop_defaultvalueW, CIM_UINT32 }
+};
 static const struct column col_process[] =
 {
     { prop_captionW,     CIM_STRING|COL_FLAG_DYNAMIC },
@@ -196,6 +237,11 @@ static const struct column col_processor[] =
     { prop_manufacturerW, CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_nameW,         CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_processoridW,  CIM_STRING|COL_FLAG_DYNAMIC }
+};
+static const struct column col_stdregprov[] =
+{
+    { method_enumkeyW,    CIM_OBJECT|COL_FLAG_METHOD },
+    { method_enumvaluesW, CIM_OBJECT|COL_FLAG_METHOD }
 };
 static const struct column col_videocontroller[] =
 {
@@ -291,6 +337,15 @@ struct record_operatingsystem
     UINT32       oslanguage;
     const WCHAR *systemdirectory;
 };
+struct record_params
+{
+    const WCHAR *class;
+    const WCHAR *method;
+    INT32        direction;
+    const WCHAR *parameter;
+    UINT32       type;
+    UINT32       defaultvalue;
+};
 struct record_process
 {
     const WCHAR *caption;
@@ -309,6 +364,11 @@ struct record_processor
     const WCHAR *name;
     const WCHAR *processor_id;
 };
+struct record_stdregprov
+{
+    class_method *enumkey;
+    class_method *enumvalues;
+};
 struct record_videocontroller
 {
     UINT32       adapter_ram;
@@ -320,6 +380,17 @@ struct record_videocontroller
 };
 #include "poppack.h"
 
+static HRESULT reg_enumkey( IWbemClassObject *in, IWbemClassObject **out )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+static HRESULT reg_enumvalues( IWbemClassObject *in, IWbemClassObject **out )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
 static const struct record_baseboard data_baseboard[] =
 {
     { baseboard_manufacturerW, baseboard_serialnumberW, baseboard_tagW }
@@ -327,6 +398,22 @@ static const struct record_baseboard data_baseboard[] =
 static const struct record_bios data_bios[] =
 {
     { bios_descriptionW, bios_manufacturerW, bios_releasedateW, bios_serialnumberW }
+};
+static const struct record_params data_params[] =
+{
+    { class_stdregprovW, method_enumkeyW, 1, param_defkeyW, CIM_UINT32, 0x80000002 },
+    { class_stdregprovW, method_enumkeyW, 1, param_subkeynameW, CIM_STRING },
+    { class_stdregprovW, method_enumkeyW, -1, param_returnvalueW, CIM_UINT32 },
+    { class_stdregprovW, method_enumkeyW, -1, param_namesW, CIM_STRING|CIM_FLAG_ARRAY },
+    { class_stdregprovW, method_enumvaluesW, 1, param_defkeyW, CIM_UINT32, 0x80000002 },
+    { class_stdregprovW, method_enumvaluesW, 1, param_subkeynameW, CIM_STRING },
+    { class_stdregprovW, method_enumvaluesW, -1, param_returnvalueW, CIM_UINT32 },
+    { class_stdregprovW, method_enumvaluesW, -1, param_namesW, CIM_STRING|CIM_FLAG_ARRAY },
+    { class_stdregprovW, method_enumvaluesW, -1, param_typesW, CIM_SINT32|CIM_FLAG_ARRAY }
+};
+static const struct record_stdregprov data_stdregprov[] =
+{
+    { reg_enumkey, reg_enumvalues }
 };
 
 static UINT get_processor_count(void)
@@ -586,7 +673,6 @@ static void regs_to_str( unsigned int *regs, unsigned int len, WCHAR *buffer )
         buffer[i] = *p++;
     }
     buffer[i] = 0;
-    return;
 }
 static void get_processor_manufacturer( WCHAR *manufacturer )
 {
@@ -732,13 +818,15 @@ done:
 static struct table classtable[] =
 {
     { class_baseboardW, SIZEOF(col_baseboard), col_baseboard, SIZEOF(data_baseboard), (BYTE *)data_baseboard },
-    { class_biosW, SIZEOF(col_bios), col_bios, SIZEOF(data_bios), (BYTE *)data_bios, NULL },
+    { class_biosW, SIZEOF(col_bios), col_bios, SIZEOF(data_bios), (BYTE *)data_bios },
     { class_compsysW, SIZEOF(col_compsys), col_compsys, 0, NULL, fill_compsys },
     { class_logicaldiskW, SIZEOF(col_logicaldisk), col_logicaldisk, 0, NULL, fill_logicaldisk },
     { class_networkadapterW, SIZEOF(col_networkadapter), col_networkadapter, 0, NULL, fill_networkadapter },
     { class_osW, SIZEOF(col_os), col_os, 0, NULL, fill_os },
+    { class_paramsW, SIZEOF(col_params), col_params, SIZEOF(data_params), (BYTE *)data_params },
     { class_processW, SIZEOF(col_process), col_process, 0, NULL, fill_process },
     { class_processorW, SIZEOF(col_processor), col_processor, 0, NULL, fill_processor },
+    { class_stdregprovW, SIZEOF(col_stdregprov), col_stdregprov, SIZEOF(data_stdregprov), (BYTE *)data_stdregprov },
     { class_videocontrollerW, SIZEOF(col_videocontroller), col_videocontroller, 0, NULL, fill_videocontroller }
 };
 

@@ -26,6 +26,9 @@ IClientSecurity client_security;
 #define COL_TYPE_MASK    0x0000ffff
 #define COL_FLAG_DYNAMIC 0x00010000
 #define COL_FLAG_KEY     0x00020000
+#define COL_FLAG_METHOD  0x00040000
+
+typedef HRESULT (class_method)(IWbemClassObject *, IWbemClassObject **);
 
 struct column
 {

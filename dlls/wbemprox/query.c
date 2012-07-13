@@ -626,12 +626,28 @@ done:
     return ret;
 }
 
-static UINT count_selected_props( const struct view *view )
+static inline BOOL is_method( const struct table *table, UINT column )
+{
+    return table->columns[column].type & COL_FLAG_METHOD;
+}
+
+static UINT count_properties( const struct view *view )
+{
+    UINT i, num_props = 0;
+
+    for (i = 0; i < view->table->num_cols; i++)
+    {
+        if (!is_method( view->table, i)) num_props++;
+    }
+    return num_props;
+}
+
+static UINT count_selected_properties( const struct view *view )
 {
     const struct property *prop = view->proplist;
     UINT count;
 
-    if (!prop) return view->table->num_cols;
+    if (!prop) return count_properties( view );
 
     count = 1;
     while ((prop = prop->next)) count++;
@@ -682,7 +698,7 @@ static HRESULT get_system_propval( const struct view *view, UINT index, const WC
     if (!strcmpiW( name, propcountW ))
     {
         V_VT( ret ) = VT_I4;
-        V_I4( ret ) = count_selected_props( view );
+        V_I4( ret ) = count_selected_properties( view );
         if (type) *type = CIM_SINT32;
         return S_OK;
     }
@@ -750,7 +766,7 @@ HRESULT get_propval( const struct view *view, UINT index, const WCHAR *name, VAR
     if (!is_selected_prop( view, name )) return WBEM_E_NOT_FOUND;
 
     hr = get_column_index( view->table, name, &column );
-    if (hr != S_OK) return WBEM_E_NOT_FOUND;
+    if (hr != S_OK || is_method( view->table, column )) return WBEM_E_NOT_FOUND;
 
     vartype = view->table->columns[column].vartype;
 
@@ -804,11 +820,14 @@ HRESULT get_properties( const struct view *view, SAFEARRAY **props )
     SAFEARRAY *sa;
     BSTR str;
     LONG i;
+    UINT num_props = count_properties( view );
 
-    if (!(sa = SafeArrayCreateVector( VT_BSTR, 0, view->table->num_cols ))) return E_OUTOFMEMORY;
+    if (!(sa = SafeArrayCreateVector( VT_BSTR, 0, num_props ))) return E_OUTOFMEMORY;
 
     for (i = 0; i < view->table->num_cols; i++)
     {
+        if (is_method( view->table, i )) continue;
+
         str = SysAllocString( view->table->columns[i].name );
         if (!str || SafeArrayPutElement( sa, &i, str ) != S_OK)
         {
