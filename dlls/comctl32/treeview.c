@@ -4259,12 +4259,9 @@ TREEVIEW_RButtonDown(TREEVIEW_INFO *infoPtr, LPARAM lParam)
 	SetFocus(infoPtr->hwnd);
 	if(!TREEVIEW_SendSimpleNotify(infoPtr, NM_RCLICK))
 	{
-	    /* Change to screen coordinate for WM_CONTEXTMENU */
-	    ClientToScreen(infoPtr->hwnd, &ht.pt);
-
 	    /* Send a WM_CONTEXTMENU message in response to the RBUTTONUP */
 	    SendMessageW(infoPtr->hwndNotify, WM_CONTEXTMENU,
-		(WPARAM)infoPtr->hwnd, MAKELPARAM(ht.pt.x, ht.pt.y));
+		(WPARAM)infoPtr->hwnd, (LPARAM)GetMessagePos());
 	}
     }
 
