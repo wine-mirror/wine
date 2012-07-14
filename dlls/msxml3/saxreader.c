@@ -177,6 +177,8 @@ typedef struct
     IVBSAXLexicalHandler *vblexicalHandler;
     ISAXDeclHandler *declHandler;
     IVBSAXDeclHandler *vbdeclHandler;
+    ISAXDTDHandler *dtdHandler;
+    IVBSAXDTDHandler *vbdtdHandler;
     xmlSAXHandler sax;
     BOOL isParsing;
     struct bstrpool pool;
@@ -2358,22 +2360,49 @@ static HRESULT internal_putContentHandler(
     return S_OK;
 }
 
-static HRESULT internal_getDTDHandler(
-        saxreader* This,
-        void *pDTDHandler,
-        BOOL vbInterface)
+static HRESULT internal_getDTDHandler(saxreader* This, void *dtdHandler, BOOL vbInterface)
 {
-    FIXME("(%p)->(%p) stub\n", This, pDTDHandler);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, dtdHandler);
+
+    if (!dtdHandler) return E_POINTER;
+
+    if ((vbInterface && This->vbdtdHandler) || (!vbInterface && This->dtdHandler))
+    {
+        if (vbInterface)
+            IVBSAXContentHandler_AddRef(This->vbdtdHandler);
+        else
+            ISAXContentHandler_AddRef(This->dtdHandler);
+    }
+    if (vbInterface) *(IVBSAXDTDHandler**)dtdHandler = This->vbdtdHandler;
+    else *(ISAXDTDHandler**)dtdHandler = This->dtdHandler;
+
+    return S_OK;
 }
 
-static HRESULT internal_putDTDHandler(
-        saxreader* This,
-        void *pDTDHandler,
-        BOOL vbInterface)
+static HRESULT internal_putDTDHandler(saxreader* This, void *dtdHandler, BOOL vbInterface)
 {
-    FIXME("(%p)->(%p) stub\n", This, pDTDHandler);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, dtdHandler);
+
+    if (dtdHandler)
+    {
+        if (vbInterface)
+            IVBSAXDTDHandler_AddRef((IVBSAXDTDHandler*)dtdHandler);
+        else
+            ISAXDTDHandler_AddRef((ISAXDTDHandler*)dtdHandler);
+    }
+    if ((vbInterface && This->vbdtdHandler) || (!vbInterface && This->dtdHandler))
+    {
+        if (vbInterface)
+            IVBSAXDTDHandler_Release(This->vbdtdHandler);
+        else
+            ISAXDTDHandler_Release(This->dtdHandler);
+    }
+    if (vbInterface)
+        This->vbdtdHandler = dtdHandler;
+    else
+        This->dtdHandler = dtdHandler;
+
+    return S_OK;
 }
 
 static HRESULT internal_getErrorHandler(
@@ -2808,6 +2837,12 @@ static ULONG WINAPI saxxmlreader_Release(
 
         if(This->vbdeclHandler)
             IVBSAXDeclHandler_Release(This->vbdeclHandler);
+
+        if(This->dtdHandler)
+            ISAXDTDHandler_Release(This->dtdHandler);
+
+        if(This->vbdtdHandler)
+            IVBSAXDTDHandler_Release(This->vbdtdHandler);
 
         free_bstr_pool(&This->pool);
 
@@ -3306,6 +3341,8 @@ HRESULT SAXXMLReader_create(MSXML_VERSION version, IUnknown *outer, LPVOID *ppOb
     reader->vblexicalHandler = NULL;
     reader->declHandler = NULL;
     reader->vbdeclHandler = NULL;
+    reader->dtdHandler = NULL;
+    reader->vbdtdHandler = NULL;
     reader->isParsing = FALSE;
     reader->pool.pool = NULL;
     reader->pool.index = 0;
