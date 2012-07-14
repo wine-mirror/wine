@@ -314,7 +314,7 @@ static HRESULT WINAPI BmpFrameEncode_WriteSource(IWICBitmapFrameEncode *iface,
         This->stride*(This->height-This->lineswritten),
         This->bits + This->stride*This->lineswritten);
 
-    This->lineswritten += rc.Height;
+    This->lineswritten += prc->Height;
 
     return S_OK;
 }
