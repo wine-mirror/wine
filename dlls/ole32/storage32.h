@@ -176,7 +176,7 @@ HRESULT OLECONVERT_CreateCompObjStream(LPSTORAGE pStorage, LPCSTR strOleTypeName
 struct StorageBaseImpl
 {
   IStorage IStorage_iface;
-  const IPropertySetStorageVtbl *pssVtbl; /* interface for adding a properties stream */
+  IPropertySetStorage IPropertySetStorage_iface; /* interface for adding a properties stream */
   LONG ref;
 
   /*

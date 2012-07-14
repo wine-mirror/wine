@@ -57,7 +57,7 @@ static void StgStreamImpl_Destroy(StgStreamImpl* This)
 
   /*
    * Release the reference we are holding on the parent storage.
-   * IStorage_Release((IStorage*)This->parentStorage);
+   * IStorage_Release(&This->parentStorage->IStorage_iface);
    *
    * No, don't do this. Some apps call IStorage_Release without
    * calling IStream_Release first. If we grab a reference the
@@ -719,7 +719,7 @@ StgStreamImpl* StgStreamImpl_Construct(
      * We want to nail-down the reference to the storage in case the
      * stream out-lives the storage in the client application.
      *
-     * -- IStorage_AddRef((IStorage*)newStream->parentStorage);
+     * -- IStorage_AddRef(&newStream->parentStorage->IStorage_iface);
      *
      * No, don't do this. Some apps call IStorage_Release without
      * calling IStream_Release first. If we grab a reference the

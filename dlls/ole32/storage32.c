@@ -373,11 +373,11 @@ static HRESULT WINAPI StorageBaseImpl_QueryInterface(
   if (IsEqualGUID(&IID_IUnknown, riid) ||
       IsEqualGUID(&IID_IStorage, riid))
   {
-    *ppvObject = This;
+    *ppvObject = &This->IStorage_iface;
   }
   else if (IsEqualGUID(&IID_IPropertySetStorage, riid))
   {
-    *ppvObject = &This->pssVtbl;
+    *ppvObject = &This->IPropertySetStorage_iface;
   }
 
   if ((*ppvObject)==0)
@@ -2718,7 +2718,7 @@ static HRESULT StorageImpl_Construct(
   list_init(&This->base.storageHead);
 
   This->base.IStorage_iface.lpVtbl = &Storage32Impl_Vtbl;
-  This->base.pssVtbl = &IPropertySetStorage_Vtbl;
+  This->base.IPropertySetStorage_iface.lpVtbl = &IPropertySetStorage_Vtbl;
   This->base.baseVtbl = &StorageImpl_BaseVtbl;
   This->base.openFlags = (openFlags & ~STGM_CREATE);
   This->base.ref = 1;
@@ -5095,8 +5095,7 @@ static HRESULT TransactedSnapshotImpl_Construct(StorageBaseImpl *parentStorage,
     (*result)->base.IStorage_iface.lpVtbl = &TransactedSnapshotImpl_Vtbl;
 
     /* This is OK because the property set storage functions use the IStorage functions. */
-    (*result)->base.pssVtbl = parentStorage->pssVtbl;
-
+    (*result)->base.IPropertySetStorage_iface.lpVtbl = parentStorage->IPropertySetStorage_iface.lpVtbl;
     (*result)->base.baseVtbl = &TransactedSnapshotImpl_BaseVtbl;
 
     list_init(&(*result)->base.strmHead);
@@ -5693,7 +5692,7 @@ static StorageInternalImpl* StorageInternalImpl_Construct(
      * Initialize the virtual function table.
      */
     newStorage->base.IStorage_iface.lpVtbl = &Storage32InternalImpl_Vtbl;
-    newStorage->base.pssVtbl = &IPropertySetStorage_Vtbl;
+    newStorage->base.IPropertySetStorage_iface.lpVtbl = &IPropertySetStorage_Vtbl;
     newStorage->base.baseVtbl = &StorageInternalImpl_BaseVtbl;
     newStorage->base.openFlags = (openFlags & ~STGM_CREATE);
 
@@ -9519,7 +9518,7 @@ HRESULT WINAPI ReadClassStm(IStream *pStm,CLSID *pclsid)
     /* clear the output args */
     *pclsid = CLSID_NULL;
 
-    res = IStream_Read(pStm,(void*)pclsid,sizeof(CLSID),&nbByte);
+    res = IStream_Read(pStm, pclsid, sizeof(CLSID), &nbByte);
 
     if (FAILED(res))
         return res;

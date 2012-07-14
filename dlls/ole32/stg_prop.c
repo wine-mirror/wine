@@ -60,7 +60,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(storage);
 
 static inline StorageImpl *impl_from_IPropertySetStorage( IPropertySetStorage *iface )
 {
-    return (StorageImpl *)((char*)iface - FIELD_OFFSET(StorageImpl, base.pssVtbl));
+    return CONTAINING_RECORD(iface, StorageImpl, base.IPropertySetStorage_iface);
 }
 
 /* These are documented in MSDN,
@@ -2100,7 +2100,7 @@ static HRESULT WINAPI IPropertySetStorage_fnQueryInterface(
     void** ppvObject)
 {
     StorageImpl *This = impl_from_IPropertySetStorage(ppstg);
-    return IStorage_QueryInterface( (IStorage*)This, riid, ppvObject );
+    return IStorage_QueryInterface( &This->base.IStorage_iface, riid, ppvObject );
 }
 
 /************************************************************************
@@ -2112,7 +2112,7 @@ static ULONG WINAPI IPropertySetStorage_fnAddRef(
     IPropertySetStorage *ppstg)
 {
     StorageImpl *This = impl_from_IPropertySetStorage(ppstg);
-    return IStorage_AddRef( (IStorage*)This );
+    return IStorage_AddRef( &This->base.IStorage_iface );
 }
 
 /************************************************************************
@@ -2124,7 +2124,7 @@ static ULONG WINAPI IPropertySetStorage_fnRelease(
     IPropertySetStorage *ppstg)
 {
     StorageImpl *This = impl_from_IPropertySetStorage(ppstg);
-    return IStorage_Release( (IStorage*)This );
+    return IStorage_Release( &This->base.IStorage_iface );
 }
 
 /************************************************************************
@@ -2173,7 +2173,7 @@ static HRESULT WINAPI IPropertySetStorage_fnCreate(
     if (FAILED(r))
         goto end;
 
-    r = IStorage_CreateStream( (IStorage*)This, name, grfMode, 0, 0, &stm );
+    r = IStorage_CreateStream( &This->base.IStorage_iface, name, grfMode, 0, 0, &stm );
     if (FAILED(r))
         goto end;
 
@@ -2218,7 +2218,7 @@ static HRESULT WINAPI IPropertySetStorage_fnOpen(
     if (FAILED(r))
         goto end;
 
-    r = IStorage_OpenStream((IStorage*) This, name, 0, grfMode, 0, &stm );
+    r = IStorage_OpenStream( &This->base.IStorage_iface, name, 0, grfMode, 0, &stm );
     if (FAILED(r))
         goto end;
 
@@ -2237,7 +2237,6 @@ static HRESULT WINAPI IPropertySetStorage_fnDelete(
     REFFMTID rfmtid)
 {
     StorageImpl *This = impl_from_IPropertySetStorage(ppstg);
-    IStorage *stg = NULL;
     WCHAR name[CCH_MAX_PROPSTG_NAME];
     HRESULT r;
 
@@ -2250,8 +2249,7 @@ static HRESULT WINAPI IPropertySetStorage_fnDelete(
     if (FAILED(r))
         return r;
 
-    stg = (IStorage*) This;
-    return IStorage_DestroyElement(stg, name);
+    return IStorage_DestroyElement(&This->base.IStorage_iface, name);
 }
 
 /************************************************************************
