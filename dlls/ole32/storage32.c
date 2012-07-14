@@ -365,7 +365,7 @@ static HRESULT WINAPI StorageBaseImpl_QueryInterface(
 {
   StorageBaseImpl *This = impl_from_IStorage(iface);
 
-  if ( (This==0) || (ppvObject==0) )
+  if (!ppvObject)
     return E_INVALIDARG;
 
   *ppvObject = 0;
@@ -379,8 +379,7 @@ static HRESULT WINAPI StorageBaseImpl_QueryInterface(
   {
     *ppvObject = &This->IPropertySetStorage_iface;
   }
-
-  if ((*ppvObject)==0)
+  else
     return E_NOINTERFACE;
 
   IStorage_AddRef(iface);
@@ -578,7 +577,7 @@ static HRESULT WINAPI StorageBaseImpl_OpenStorage(
 	iface, debugstr_w(pwcsName), pstgPriority,
 	grfMode, snbExclude, reserved, ppstg);
 
-  if ( (This==0) || (pwcsName==NULL) || (ppstg==0) )
+  if ((pwcsName==NULL) || (ppstg==0) )
   {
     res = E_INVALIDARG;
     goto end;
@@ -709,7 +708,7 @@ static HRESULT WINAPI StorageBaseImpl_EnumElements(
   TRACE("(%p, %d, %p, %d, %p)\n",
 	iface, reserved1, reserved2, reserved3, ppenum);
 
-  if ( (This==0) || (ppenum==0))
+  if (!ppenum)
     return E_INVALIDARG;
 
   if (This->reverted)
@@ -719,7 +718,7 @@ static HRESULT WINAPI StorageBaseImpl_EnumElements(
               This,
               This->storageDirEntry);
 
-  if (newEnum!=0)
+  if (newEnum)
   {
     *ppenum = &newEnum->IEnumSTATSTG_iface;
 
@@ -750,7 +749,7 @@ static HRESULT WINAPI StorageBaseImpl_Stat(
   TRACE("(%p, %p, %x)\n",
 	iface, pstatstg, grfStatFlag);
 
-  if ( (This==0) || (pstatstg==0))
+  if (!pstatstg)
   {
     res = E_INVALIDARG;
     goto end;
@@ -2076,7 +2075,7 @@ static HRESULT deleteStorageContents(
   /*
    * Open the storage and enumerate it
    */
-  hr = StorageBaseImpl_OpenStorage(
+  hr = IStorage_OpenStorage(
         &parentStorage->IStorage_iface,
         entryDataToDelete.name,
         0,
@@ -2209,11 +2208,11 @@ static HRESULT removeFromTree(
   DirRef        parentStorageIndex,
   DirRef        deletedIndex)
 {
-  HRESULT hr                     = S_OK;
   DirEntry   entryToDelete;
   DirEntry   parentEntry;
   DirRef parentEntryRef;
   ULONG typeOfRelation;
+  HRESULT hr;
 
   hr = StorageBaseImpl_ReadDirEntry(This, deletedIndex, &entryToDelete);
 
