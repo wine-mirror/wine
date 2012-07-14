@@ -2332,6 +2332,11 @@ static void test_saxreader_properties(void)
         ok(V_UNKNOWN(&v) == NULL, "got %p\n", V_UNKNOWN(&v));
 
         /* block QueryInterface on handler riid */
+        V_VT(&v) = VT_UNKNOWN;
+        V_UNKNOWN(&v) = ptr->iface;
+        hr = ISAXXMLReader_putProperty(reader, _bstr_(ptr->prop_name), v);
+        EXPECT_HR(hr, S_OK);
+
         init_saxlexicalhandler(&lexicalhandler, E_NOINTERFACE);
         init_saxdeclhandler(&declhandler, E_NOINTERFACE);
 
@@ -2342,6 +2347,13 @@ static void test_saxreader_properties(void)
         hr = ISAXXMLReader_putProperty(reader, _bstr_(ptr->prop_name), v);
         EXPECT_HR(hr, E_NOINTERFACE);
         EXPECT_REF(ptr->iface, 1);
+
+        V_VT(&v) = VT_EMPTY;
+        V_UNKNOWN(&v) = (IUnknown*)0xdeadbeef;
+        hr = ISAXXMLReader_getProperty(reader, _bstr_(ptr->prop_name), &v);
+        EXPECT_HR(hr, S_OK);
+        ok(V_VT(&v) == VT_UNKNOWN, "got %d\n", V_VT(&v));
+        ok(V_UNKNOWN(&v) != NULL, "got %p\n", V_UNKNOWN(&v));
 
         ptr++;
     }
