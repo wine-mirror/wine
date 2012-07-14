@@ -10749,6 +10749,13 @@ static void test_load(void)
 
     doc = create_document(&IID_IXMLDOMDocument);
 
+    /* null pointer as input */
+    V_VT(&src) = VT_UNKNOWN;
+    V_UNKNOWN(&src) = NULL;
+    hr = IXMLDOMDocument_load(doc, src, &b);
+    EXPECT_HR(hr, E_INVALIDARG);
+    ok(b == VARIANT_FALSE, "got %d\n", b);
+
     path = _bstr_("test.xml");
 
     /* load from path: VT_BSTR */

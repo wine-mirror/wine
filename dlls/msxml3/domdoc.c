@@ -2093,6 +2093,7 @@ static HRESULT WINAPI domdoc_load(
         }
         break;
     case VT_UNKNOWN:
+        if (!V_UNKNOWN(&source)) return E_INVALIDARG;
         hr = IUnknown_QueryInterface(V_UNKNOWN(&source), &IID_IXMLDOMDocument3, (void**)&pNewDoc);
         if(hr == S_OK)
         {
