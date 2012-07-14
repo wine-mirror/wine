@@ -9383,7 +9383,7 @@ HRESULT WINAPI OleConvertIStorageToOLESTREAM (
 
 enum stream_1ole_flags {
     OleStream_LinkedObject = 0x00000001,
-    OleStream_Convert      = 0x00000100
+    OleStream_Convert      = 0x00000004
 };
 
 /***********************************************************************
@@ -9396,7 +9396,6 @@ HRESULT WINAPI GetConvertStg(IStorage *stg)
     DWORD header[2];
     IStream *stream;
     HRESULT hr;
-    ULONG len;
 
     TRACE("%p\n", stg);
 
@@ -9405,18 +9404,87 @@ HRESULT WINAPI GetConvertStg(IStorage *stg)
     hr = IStorage_OpenStream(stg, stream_1oleW, NULL, STGM_READ | STGM_SHARE_EXCLUSIVE, 0, &stream);
     if (FAILED(hr)) return hr;
 
-    len = 0;
-    hr = IStream_Read(stream, header, sizeof(header), &len);
+    hr = IStream_Read(stream, header, sizeof(header), NULL);
     IStream_Release(stream);
     if (FAILED(hr)) return hr;
 
     if (header[0] != version_magic)
     {
-        ERR("got wrong version magic for \1Ole stream, 0x%08x\n", header[0]);
+        ERR("got wrong version magic for 1Ole stream, 0x%08x\n", header[0]);
         return E_FAIL;
     }
 
     return header[1] & OleStream_Convert ? S_OK : S_FALSE;
+}
+
+/***********************************************************************
+ *		SetConvertStg (OLE32.@)
+ */
+HRESULT WINAPI SetConvertStg(IStorage *storage, BOOL convert)
+{
+    static const WCHAR stream_1oleW[] = {1,'O','l','e',0};
+    static const DWORD version_magic = 0x02000001;
+    DWORD flags = convert ? OleStream_Convert : 0;
+    IStream *stream;
+    HRESULT hr;
+
+    TRACE("(%p, %d)\n", storage, convert);
+
+    hr = IStorage_CreateStream(storage, stream_1oleW, STGM_WRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &stream);
+    if (hr == S_OK)
+    {
+        struct empty_1ole_stream {
+            DWORD version_magic;
+            DWORD flags;
+            BYTE  padding[12];
+        };
+        struct empty_1ole_stream stream_data;
+
+        stream_data.version_magic = version_magic;
+        stream_data.flags = flags;
+        memset(stream_data.padding, 0, sizeof(stream_data.padding));
+
+        hr = IStream_Write(stream, &stream_data, sizeof(stream_data), NULL);
+        IStream_Release(stream);
+    }
+    else if (hr == STG_E_FILEALREADYEXISTS)
+    {
+        DWORD header[2];
+
+        hr = IStorage_OpenStream(storage, stream_1oleW, NULL, STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, &stream);
+        if (FAILED(hr)) return hr;
+
+        hr = IStream_Read(stream, header, sizeof(header), NULL);
+        if (FAILED(hr))
+        {
+            IStream_Release(stream);
+            return hr;
+        }
+
+        /* update flag if differs */
+        if ((header[1] ^ flags) & OleStream_Convert)
+        {
+            LARGE_INTEGER pos;
+
+            if (header[1] & OleStream_Convert)
+                flags = header[1] & ~OleStream_Convert;
+            else
+                flags = header[1] |  OleStream_Convert;
+
+            pos.QuadPart = sizeof(DWORD);
+            hr = IStream_Seek(stream, pos, STREAM_SEEK_SET, NULL);
+            if (FAILED(hr))
+            {
+                IStream_Release(stream);
+                return hr;
+            }
+
+            hr = IStream_Write(stream, &flags, sizeof(flags), NULL);
+        }
+        IStream_Release(stream);
+    }
+
+    return hr;
 }
 
 /******************************************************************************

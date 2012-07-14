@@ -44,15 +44,6 @@ HRESULT WINAPI  OleCreateLinkToFile(LPCOLESTR lpszFileName, REFIID riid,
 }
 
 /******************************************************************************
- *              SetConvertStg        [OLE32.@]
- */
-HRESULT WINAPI SetConvertStg(LPSTORAGE pStg, BOOL fConvert)
-{
-  FIXME("(%p,%x), stub!\n", pStg, fConvert);
-  return E_NOTIMPL;
-}
-
-/******************************************************************************
  *              OleCreateLink        [OLE32.@]
  */
 HRESULT WINAPI OleCreateLink(LPMONIKER pmkLinkSrc, REFIID riid, DWORD renderopt, LPFORMATETC lpFormatEtc,

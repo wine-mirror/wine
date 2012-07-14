@@ -3009,7 +3009,8 @@ static void test_convert(void)
     hr = GetConvertStg(stg);
     ok(hr == STG_E_FILENOTFOUND, "got 0x%08x\n", hr);
     hr = SetConvertStg(stg, TRUE);
-todo_wine {
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = SetConvertStg(stg, TRUE);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     hr = GetConvertStg(stg);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -3017,7 +3018,7 @@ todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     hr = GetConvertStg(stg);
     ok(hr == S_FALSE, "got 0x%08x\n", hr);
-}
+
     IStorage_Release(stg);
 
     DeleteFileW(filename);
