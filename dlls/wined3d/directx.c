@@ -2405,7 +2405,6 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
     gl_info->limits.fragment_samplers = 1;
     gl_info->limits.vertex_samplers = 0;
     gl_info->limits.combined_samplers = gl_info->limits.fragment_samplers + gl_info->limits.vertex_samplers;
-    gl_info->limits.sampler_stages = 1;
     gl_info->limits.vertex_attribs = 16;
     gl_info->limits.glsl_vs_float_constants = 0;
     gl_info->limits.glsl_ps_float_constants = 0;
@@ -2760,11 +2759,6 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
     adapter->fragment_pipe->get_caps(gl_info, &fragment_caps);
     gl_info->limits.texture_stages = fragment_caps.MaxTextureBlendStages;
     TRACE("Max texture stages: %u.\n", gl_info->limits.texture_stages);
-
-    /* In some cases the number of texture stages can be larger than the number
-     * of samplers. The GF4 for example can use only 2 samplers (no fragment
-     * shaders), but 8 texture stages (register combiners). */
-    gl_info->limits.sampler_stages = max(gl_info->limits.fragment_samplers, gl_info->limits.texture_stages);
 
     if (gl_info->supported[ARB_FRAMEBUFFER_OBJECT])
     {
