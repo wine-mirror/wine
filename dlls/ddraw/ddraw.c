@@ -5348,7 +5348,7 @@ static HRESULT CDECL device_parent_create_texture_surface(struct wined3d_device_
     }
 
     /* FIXME: Validate that format, usage, pool, etc. really make sense. */
-    if (FAILED(hr = ddraw_create_surface(ddraw, &desc, &ddraw_surface, 0, tex_root->version)))
+    if (FAILED(hr = ddraw_create_surface(ddraw, &desc, &ddraw_surface, level, tex_root->version)))
         return hr;
 
 done:
