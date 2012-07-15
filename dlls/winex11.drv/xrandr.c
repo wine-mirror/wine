@@ -53,8 +53,8 @@ MAKE_FUNCPTR(XRRFreeOutputInfo)
 MAKE_FUNCPTR(XRRFreeScreenResources)
 MAKE_FUNCPTR(XRRGetCrtcInfo)
 MAKE_FUNCPTR(XRRGetOutputInfo)
-MAKE_FUNCPTR(XRRGetScreenResources)
 MAKE_FUNCPTR(XRRSetCrtcConfig)
+static typeof(XRRGetScreenResources) *xrandr_get_screen_resources;
 static RRMode *xrandr12_modes;
 #endif
 
@@ -96,7 +96,6 @@ static int load_xrandr(void)
         LOAD_FUNCPTR(XRRFreeScreenResources)
         LOAD_FUNCPTR(XRRGetCrtcInfo)
         LOAD_FUNCPTR(XRRGetOutputInfo)
-        LOAD_FUNCPTR(XRRGetScreenResources)
         LOAD_FUNCPTR(XRRSetCrtcConfig)
         r = 2;
 #endif
@@ -273,7 +272,7 @@ static int xrandr12_get_current_mode(void)
     int i, ret = -1;
 
     wine_tsx11_lock();
-    if (!(resources = pXRRGetScreenResources( gdi_display, root_window )))
+    if (!(resources = xrandr_get_screen_resources( gdi_display, root_window )))
     {
         wine_tsx11_unlock();
         ERR("Failed to get screen resources.\n");
@@ -322,7 +321,7 @@ static LONG xrandr12_set_current_mode( int mode )
     mode = mode % xrandr_mode_count;
 
     wine_tsx11_lock();
-    if (!(resources = pXRRGetScreenResources( gdi_display, root_window )))
+    if (!(resources = xrandr_get_screen_resources( gdi_display, root_window )))
     {
         wine_tsx11_unlock();
         ERR("Failed to get screen resources.\n");
@@ -364,7 +363,7 @@ static void xrandr12_init_modes(void)
     XRRCrtcInfo *crtc_info;
     int i, j;
 
-    if (!(resources = pXRRGetScreenResources( gdi_display, root_window )))
+    if (!(resources = xrandr_get_screen_resources( gdi_display, root_window )))
     {
         ERR("Failed to get screen resources.\n");
         return;
@@ -459,6 +458,14 @@ void X11DRV_XRandR_Init(void)
 
 #ifdef HAVE_XRRGETSCREENRESOURCES
     if (ret >= 2 && (major > 1 || (major == 1 && minor >= 2)))
+    {
+        if (major > 1 || (major == 1 && minor >= 3))
+            xrandr_get_screen_resources = wine_dlsym( xrandr_handle, "XRRGetScreenResourcesCurrent", NULL, 0 );
+        if (!xrandr_get_screen_resources)
+            xrandr_get_screen_resources = wine_dlsym( xrandr_handle, "XRRGetScreenResources", NULL, 0 );
+    }
+
+    if (xrandr_get_screen_resources)
         xrandr12_init_modes();
     else
 #endif
