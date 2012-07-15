@@ -38,7 +38,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(relay);
 
-#if defined(__i386__) || defined(__x86_64__)
+#if defined(__i386__) || defined(__x86_64__) || defined(__arm__)
 
 WINE_DECLARE_DEBUG_CHANNEL(timestamp);
 
@@ -355,6 +355,37 @@ __ASM_GLOBAL_FUNC( call_entry_point,
                    __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
                    __ASM_CFI(".cfi_same_value %ebp\n\t")
                    "ret" )
+#elif defined(__arm__)
+__ASM_GLOBAL_FUNC( call_entry_point,
+                   "push {r4, r5, LR}\n\t"
+                   "mov r4, r0\n\t"
+                   "mov r5, SP\n\t"
+                   "lsl r3, r1, #2\n\t"
+                   "cmp r3, #0\n\t"
+                   "beq 5f\n\t"
+                   "sub SP, SP, r3\n\t"
+                   "bic SP, SP, #15\n\t"
+                   "1:\tsub r3, r3, #4\n\t"
+                   "ldr r0, [r2, r3]\n\t"
+                   "str r0, [SP, r3]\n\t"
+                   "cmp r3, #0\n\t"
+                   "bgt 1b\n\t"
+                   "cmp r1, #1\n\t"
+                   "bgt 2f\n\t"
+                   "pop {r0}\n\t"
+                   "b 5f\n\t"
+                   "2:\tcmp r1, #2\n\t"
+                   "bgt 3f\n\t"
+                   "pop {r0-r1}\n\t"
+                   "b 5f\n\t"
+                   "3:\tcmp r1, #3\n\t"
+                   "bgt 4f\n\t"
+                   "pop {r0-r2}\n\t"
+                   "b 5f\n\t"
+                   "4:\tpop {r0-r3}\n\t"
+                   "5:\tblx r4\n\t"
+                   "mov SP, r5\n\t"
+                   "pop {r4, r5, PC}" )
 #else
 __ASM_GLOBAL_FUNC( call_entry_point,
                    "pushq %rbp\n\t"
