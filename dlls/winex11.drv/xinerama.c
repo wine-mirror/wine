@@ -177,6 +177,7 @@ void xinerama_init( unsigned int width, unsigned int height )
     }
 
     primary = get_primary();
+    SetRectEmpty( &virtual_screen_rect );
 
     /* coordinates (0,0) have to point to the primary monitor origin */
     OffsetRect( &rect, -primary->rcMonitor.left, -primary->rcMonitor.top );
@@ -184,17 +185,17 @@ void xinerama_init( unsigned int width, unsigned int height )
     {
         OffsetRect( &monitors[i].rcMonitor, rect.left, rect.top );
         OffsetRect( &monitors[i].rcWork, rect.left, rect.top );
+        UnionRect( &virtual_screen_rect, &virtual_screen_rect, &monitors[i].rcMonitor );
         TRACE( "monitor %p: %s work %s%s\n",
                index_to_monitor(i), wine_dbgstr_rect(&monitors[i].rcMonitor),
                wine_dbgstr_rect(&monitors[i].rcWork),
                (monitors[i].dwFlags & MONITORINFOF_PRIMARY) ? " (primary)" : "" );
     }
 
-    virtual_screen_rect = rect;
     screen_width = primary->rcMonitor.right - primary->rcMonitor.left;
     screen_height = primary->rcMonitor.bottom - primary->rcMonitor.top;
     TRACE( "virtual size: %s primary size: %dx%d\n",
-           wine_dbgstr_rect(&rect), screen_width, screen_height );
+           wine_dbgstr_rect(&virtual_screen_rect), screen_width, screen_height );
 
     wine_tsx11_unlock();
 }
