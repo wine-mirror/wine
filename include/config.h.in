@@ -1145,6 +1145,9 @@
 /* Define if Xrender has the XRenderSetPictureTransform function */
 #undef HAVE_XRENDERSETPICTURETRANSFORM
 
+/* Define if Xrandr has the XRRGetScreenResources function */
+#undef HAVE_XRRGETSCREENRESOURCES
+
 /* Define to 1 if you have the `z' library (-lz). */
 #undef HAVE_ZLIB
 

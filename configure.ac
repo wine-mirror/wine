@@ -1051,7 +1051,12 @@ then
         then
                 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <X11/Xlib.h>
 #include <X11/extensions/Xrandr.h>]], [[static typeof(XRRSetScreenConfigAndRate) * func; if (func) return 0;]])],
-                  [WINE_CHECK_SONAME(Xrandr,XRRQueryExtension,,,[$X_LIBS $XLIB $X_EXTRA_LIBS])])
+                  [WINE_CHECK_SONAME(Xrandr,XRRQueryExtension,
+                    [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <X11/extensions/Xrandr.h>]],
+                        [[static typeof(XRRGetScreenResources) *f; if (f) return 0;]])],
+                      [AC_DEFINE(HAVE_XRRGETSCREENRESOURCES, 1,
+                        [Define if Xrandr has the XRRGetScreenResources function])])],,
+                    [$X_LIBS $XLIB $X_EXTRA_LIBS])])
         fi
         WINE_NOTICE_WITH(xrandr,[test "x$ac_cv_lib_soname_Xrandr" = "x"],
                          [libxrandr ${notice_platform}development files not found, XRandr won't be supported.])
