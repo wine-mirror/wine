@@ -103,24 +103,19 @@ static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRe
             IWICPalette *palette;
             UINT actualcolors;
 
+            res = PaletteImpl_Create(&palette);
+            if (FAILED(res)) return res;
+
             if (source_format == format_1bppIndexed)
-            {
-                res = PaletteImpl_Create(&palette);
-                if (FAILED(res)) return res;
-
                 res = IWICBitmapSource_CopyPalette(This->source, palette);
-                if (SUCCEEDED(res))
-                    res = IWICPalette_GetColors(palette, 2, colors, &actualcolors);
-
-                IWICPalette_Release(palette);
-
-                if (FAILED(res)) return res;
-            }
             else
-            {
-                colors[0] = 0xff000000;
-                colors[1] = 0xffffffff;
-            }
+                res = IWICPalette_InitializePredefined(palette, WICBitmapPaletteTypeFixedBW, FALSE);
+
+            if (SUCCEEDED(res))
+                res = IWICPalette_GetColors(palette, 2, colors, &actualcolors);
+
+            IWICPalette_Release(palette);
+            if (FAILED(res)) return res;
 
             srcstride = (prc->Width+7)/8;
             srcdatasize = srcstride * prc->Height;
