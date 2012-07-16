@@ -2181,8 +2181,9 @@ HRESULT WINAPI WICConvertBitmapSource(REFWICPixelFormatGUID dstFormat, IWICBitma
 
     if (converter)
     {
-        *ppIDst = (IWICBitmapSource*)converter;
-        return S_OK;
+        res = IWICFormatConverter_QueryInterface(converter, &IID_IWICBitmapSource, (void **)ppIDst);
+        IWICFormatConverter_Release(converter);
+        return res;
     }
     else
     {
