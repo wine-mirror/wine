@@ -388,7 +388,6 @@ static void test_makecurrent(HDC winhdc)
 {
     BOOL ret;
     HGLRC hglrc;
-    DWORD error;
 
     hglrc = wglCreateContext(winhdc);
     ok( hglrc != 0, "wglCreateContext failed\n" );
@@ -411,9 +410,9 @@ static void test_makecurrent(HDC winhdc)
 
     SetLastError( 0xdeadbeef );
     ret = wglMakeCurrent( NULL, NULL );
-    ok( !ret, "wglMakeCurrent succeeded\n" );
-    error = GetLastError();
-    ok( error == ERROR_INVALID_HANDLE, "Expected ERROR_INVALID_HANDLE, got error=%x\n", error);
+    ok( !ret || broken(ret) /* nt4 */, "wglMakeCurrent succeeded\n" );
+    if (!ret) ok( GetLastError() == ERROR_INVALID_HANDLE,
+                  "Expected ERROR_INVALID_HANDLE, got error=%x\n", GetLastError() );
 
     ret = wglMakeCurrent( winhdc, NULL );
     ok( ret, "wglMakeCurrent failed\n" );
@@ -428,9 +427,9 @@ static void test_makecurrent(HDC winhdc)
 
     SetLastError( 0xdeadbeef );
     ret = wglMakeCurrent( NULL, NULL );
-    ok( !ret, "wglMakeCurrent succeeded\n" );
-    error = GetLastError();
-    ok( error == ERROR_INVALID_HANDLE, "Expected ERROR_INVALID_HANDLE, got error=%x\n", error);
+    ok( !ret || broken(ret) /* nt4 */, "wglMakeCurrent succeeded\n" );
+    if (!ret) ok( GetLastError() == ERROR_INVALID_HANDLE,
+                  "Expected ERROR_INVALID_HANDLE, got error=%x\n", GetLastError() );
 
     ret = wglMakeCurrent( winhdc, hglrc );
     ok( ret, "wglMakeCurrent failed\n" );
@@ -808,6 +807,7 @@ static void test_getprocaddress(HDC hdc)
     if (!gl_extension_supported(extensions, "GL_ARB_multitexture"))
     {
         skip("skipping test because lack of GL_ARB_multitexture support\n");
+        return;
     }
 
     func = wglGetProcAddress("glActiveTextureARB");
@@ -1478,7 +1478,10 @@ START_TEST(opengl)
          * any WGL call :( On Wine this would work but not on real Windows because there can be different implementations (software, ICD, MCD).
          */
         init_functions();
+        test_getprocaddress(hdc);
         test_deletecontext(hwnd, hdc);
+        test_makecurrent(hdc);
+
         /* The lack of wglGetExtensionsStringARB in general means broken software rendering or the lack of decent OpenGL support, skip tests in such cases */
         if (!pwglGetExtensionsStringARB)
         {
@@ -1486,8 +1489,6 @@ START_TEST(opengl)
             return;
         }
 
-        test_getprocaddress(hdc);
-        test_makecurrent(hdc);
         test_setpixelformat(hdc);
         test_destroy(hdc);
         test_sharelists(hdc);
