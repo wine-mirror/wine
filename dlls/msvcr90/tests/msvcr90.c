@@ -72,6 +72,8 @@ static unsigned __int64 (__cdecl *p_strtoui64)(const char *, char **, int);
 static errno_t (__cdecl *p_itoa_s)(int,char*,size_t,int);
 static int (__cdecl *p_wcsncat_s)(wchar_t *dst, size_t elem, const wchar_t *src, size_t count);
 static void (__cdecl *p_qsort_s)(void *, size_t, size_t, int (__cdecl *)(void *, const void *, const void *), void *);
+static void* (__cdecl *p_bsearch_s)(const void *, const void *, size_t, size_t,
+                                    int (__cdecl *compare)(void *, const void *, const void *), void *);
 static int (__cdecl *p_controlfp_s)(unsigned int *, unsigned int, unsigned int);
 static int (__cdecl *p_atoflt)(_CRT_FLOAT *, char *);
 static unsigned int (__cdecl *p_set_abort_behavior)(unsigned int, unsigned int);
@@ -134,6 +136,7 @@ static void* (WINAPI *pEncodePointer)(void *);
 
 static int cb_called[4];
 static int g_qsort_s_context_counter;
+static int g_bsearch_s_context_counter;
 
 static inline int almost_equal_f(float f1, float f2)
 {
@@ -250,6 +253,7 @@ static BOOL init(void)
     SET(p_itoa_s, "_itoa_s");
     SET(p_wcsncat_s,"wcsncat_s" );
     SET(p_qsort_s, "qsort_s");
+    SET(p_bsearch_s, "bsearch_s");
     SET(p_controlfp_s, "_controlfp_s");
     SET(p_atoflt, "_atoflt");
     SET(p_set_abort_behavior, "_set_abort_behavior");
@@ -750,6 +754,49 @@ static void test_qsort_s(void)
     ok(!strcmp(strarr[6],"World"),  "badly sorted, strarr[6] is %s\n", strarr[6]);
 }
 
+static void test_bsearch_s(void)
+{
+    int arr[7] = { 1, 3, 4, 8, 16, 23, 42 };
+    int *x, l, i, j = 1;
+
+    errno = 0xdeadbeef;
+    SET_EXPECT(invalid_parameter_handler);
+    x = p_bsearch_s(NULL, NULL, 0, 0, NULL, NULL);
+    ok(x == NULL, "Expected bsearch_s to return NULL, got %p\n", x);
+    CHECK_CALLED(invalid_parameter_handler);
+
+    g_bsearch_s_context_counter = 0;
+    SET_EXPECT(invalid_parameter_handler);
+    x = p_bsearch_s(&l, arr, j, 0, intcomparefunc, &g_bsearch_s_context_counter);
+    ok(x == NULL, "Expected bsearch_s to return NULL, got %p\n", x);
+    ok(g_bsearch_s_context_counter == 0, "callback shouldn't have been called\n");
+    CHECK_CALLED(invalid_parameter_handler);
+
+    g_bsearch_s_context_counter = 0;
+    SET_EXPECT(invalid_parameter_handler);
+    x = p_bsearch_s(&l, arr, j, sizeof(arr[0]), NULL, &g_bsearch_s_context_counter);
+    ok(x == NULL, "Expected bsearch_s to return NULL, got %p\n", x);
+    ok(g_bsearch_s_context_counter == 0, "callback shouldn't have been called\n");
+    CHECK_CALLED(invalid_parameter_handler);
+    ok(errno == 0xdeadbeef, "errno = %x\n", errno);
+
+    /* just try all array sizes */
+    for (j=1;j<sizeof(arr)/sizeof(arr[0]);j++) {
+        for (i=0;i<j;i++) {
+            l = arr[i];
+            g_bsearch_s_context_counter = 0;
+            x = p_bsearch_s(&l, arr, j, sizeof(arr[0]), intcomparefunc, &g_bsearch_s_context_counter);
+            ok (x == &arr[i], "bsearch_s did not find %d entry in loopsize %d.\n", i, j);
+            ok(g_bsearch_s_context_counter > 0, "callback wasn't called\n");
+        }
+        l = 4242;
+        g_bsearch_s_context_counter = 0;
+        x = p_bsearch_s(&l, arr, j, sizeof(arr[0]), intcomparefunc, &g_bsearch_s_context_counter);
+        ok (x == NULL, "bsearch_s did find 4242 entry in loopsize %d.\n", j);
+        ok(g_bsearch_s_context_counter > 0, "callback wasn't called\n");
+    }
+}
+
 static void test_controlfp_s(void)
 {
     unsigned int cur;
@@ -1162,6 +1209,7 @@ START_TEST(msvcr90)
     test__itoa_s();
     test_wcsncat_s();
     test_qsort_s();
+    test_bsearch_s();
     test_controlfp_s();
     test__atoflt();
     test__set_abort_behavior();
