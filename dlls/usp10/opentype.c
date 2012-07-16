@@ -314,6 +314,34 @@ typedef struct {
     WORD YDeviceTable;
 } GPOS_AnchorFormat3;
 
+typedef struct {
+    WORD PosFormat;
+    WORD MarkCoverage;
+    WORD BaseCoverage;
+    WORD ClassCount;
+    WORD MarkArray;
+    WORD BaseArray;
+} GPOS_MarkBasePosFormat1;
+
+typedef struct {
+    WORD BaseAnchor[1];
+} GPOS_BaseRecord;
+
+typedef struct {
+    WORD BaseCount;
+    GPOS_BaseRecord BaseRecord[1];
+} GPOS_BaseArray;
+
+typedef struct {
+    WORD Class;
+    WORD MarkAnchor;
+} GPOS_MarkRecord;
+
+typedef struct {
+    WORD MarkCount;
+    GPOS_MarkRecord MarkRecord[1];
+} GPOS_MarkArray;
+
 /**********
  * CMAP
  **********/
@@ -971,16 +999,106 @@ static VOID GPOS_get_anchor_values(LPCVOID table, LPPOINT pt, WORD ppem)
     }
 }
 
+static void GPOS_convert_design_units_to_device(LPOUTLINETEXTMETRICW lpotm, LPLOGFONTW lplogfont, int desX, int desY, double *devX, double *devY)
+{
+    int emHeight = lpotm->otmTextMetrics.tmAscent + lpotm->otmTextMetrics.tmDescent - lpotm->otmTextMetrics.tmInternalLeading;
+
+    TRACE("emHeight %i lfWidth %i\n",emHeight, lplogfont->lfWidth);
+    *devX = (desX * emHeight) / (double)lpotm->otmEMSquare;
+    *devY = (desY * emHeight) / (double)lpotm->otmEMSquare;
+    if (lplogfont->lfWidth)
+        FIXME("Font with lfWidth set no handled properly\n");
+}
+
+static VOID GPOS_apply_MarkToBase(const OT_LookupTable *look, const WORD *glyphs, INT glyph_index, INT write_dir, INT glyph_count, INT ppem, LPPOINT pt)
+{
+    int j;
+
+    TRACE("MarkToBase Attachment Positioning Subtable\n");
+
+    for (j = 0; j < GET_BE_WORD(look->SubTableCount); j++)
+    {
+        int offset;
+        const GPOS_MarkBasePosFormat1 *mbpf1;
+        offset = GET_BE_WORD(look->SubTable[j]);
+        mbpf1 = (const GPOS_MarkBasePosFormat1*)((const BYTE*)look+offset);
+        if (GET_BE_WORD(mbpf1->PosFormat) == 1)
+        {
+            int offset = GET_BE_WORD(mbpf1->MarkCoverage);
+            int mark_index;
+            mark_index = GSUB_is_glyph_covered((const BYTE*)mbpf1+offset, glyphs[glyph_index]);
+            if (mark_index != -1)
+            {
+                int base_index;
+                offset = GET_BE_WORD(mbpf1->BaseCoverage);
+                base_index = GSUB_is_glyph_covered((const BYTE*)mbpf1+offset, glyphs[glyph_index - write_dir]);
+                if (base_index != -1)
+                {
+                    const GPOS_MarkArray *ma;
+                    const GPOS_MarkRecord *mr;
+                    const GPOS_BaseArray *ba;
+                    const GPOS_BaseRecord *br;
+                    int mark_class;
+                    int class_count = GET_BE_WORD(mbpf1->ClassCount);
+                    int baserecord_size;
+                    POINT base_pt;
+                    POINT mark_pt;
+                    TRACE("Mark %x(%i) and base %x(%i)\n",glyphs[glyph_index], mark_index, glyphs[glyph_index - write_dir], base_index);
+                    offset = GET_BE_WORD(mbpf1->MarkArray);
+                    ma = (const GPOS_MarkArray*)((const BYTE*)mbpf1 + offset);
+                    if (mark_index > GET_BE_WORD(ma->MarkCount))
+                    {
+                        ERR("Mark index exeeded mark count\n");
+                        return;
+                    }
+                    mr = &ma->MarkRecord[mark_index];
+                    mark_class = GET_BE_WORD(mr->Class);
+                    TRACE("Mark Class %i total classes %i\n",mark_class,class_count);
+                    offset = GET_BE_WORD(mbpf1->BaseArray);
+                    ba = (const GPOS_BaseArray*)((const BYTE*)mbpf1 + offset);
+                    baserecord_size = class_count * sizeof(WORD);
+                    br = (const GPOS_BaseRecord*)((const BYTE*)ba + sizeof(WORD) + (baserecord_size * base_index));
+                    offset = GET_BE_WORD(br->BaseAnchor[mark_class]);
+                    GPOS_get_anchor_values((const BYTE*)ba + offset, &base_pt, ppem);
+                    offset = GET_BE_WORD(mr->MarkAnchor);
+                    GPOS_get_anchor_values((const BYTE*)ma + offset, &mark_pt, ppem);
+                    TRACE("Offset on base is %i,%i design units\n",base_pt.x,base_pt.y);
+                    TRACE("Offset on mark is %i,%i design units\n",mark_pt.x, mark_pt.y);
+                    pt->x += base_pt.x - mark_pt.x;
+                    pt->y += base_pt.y - mark_pt.y;
+                    TRACE("Resulting cumulative offset is %i,%i design units\n",pt->x,pt->y);
+                }
+            }
+        }
+        else
+            FIXME("Unhandled Mark To Base Format %i\n",GET_BE_WORD(mbpf1->PosFormat));
+    }
+}
+
 static INT GPOS_apply_lookup(LPOUTLINETEXTMETRICW lpotm, LPLOGFONTW lplogfont, INT* piAdvance, const OT_LookupList* lookup, INT lookup_index, const WORD *glyphs, INT glyph_index, INT write_dir, INT glyph_count, GOFFSET *pGoffset)
 {
     int offset;
     const OT_LookupTable *look;
+    int ppem = lpotm->otmTextMetrics.tmAscent + lpotm->otmTextMetrics.tmDescent - lpotm->otmTextMetrics.tmInternalLeading;
 
     offset = GET_BE_WORD(lookup->Lookup[lookup_index]);
     look = (const OT_LookupTable*)((const BYTE*)lookup + offset);
     TRACE("type %i, flag %x, subtables %i\n",GET_BE_WORD(look->LookupType),GET_BE_WORD(look->LookupFlag),GET_BE_WORD(look->SubTableCount));
     switch(GET_BE_WORD(look->LookupType))
     {
+        case 4:
+        {
+            double devX, devY;
+            POINT desU = {0,0};
+            GPOS_apply_MarkToBase(look, glyphs, glyph_index, write_dir, glyph_count, ppem, &desU);
+            if (desU.x || desU.y)
+            {
+                GPOS_convert_design_units_to_device(lpotm, lplogfont, desU.x, desU.y, &devX, &devY);
+                pGoffset[glyph_index].du += ((int)(devX+0.5) - piAdvance[glyph_index-1]);
+                pGoffset[glyph_index].dv += (int)(devY+0.5);
+            }
+            break;
+        }
         default:
             FIXME("We do not handle SubType %i\n",GET_BE_WORD(look->LookupType));
     }
