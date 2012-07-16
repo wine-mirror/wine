@@ -315,6 +315,17 @@ typedef struct {
 } GPOS_AnchorFormat3;
 
 typedef struct {
+    WORD XPlacement;
+    WORD YPlacement;
+    WORD XAdvance;
+    WORD YAdvance;
+    WORD XPlaDevice;
+    WORD YPlaDevice;
+    WORD XAdvDevice;
+    WORD YAdvDevice;
+} GPOS_ValueRecord;
+
+typedef struct {
     WORD PosFormat;
     WORD MarkCoverage;
     WORD BaseCoverage;
@@ -1008,6 +1019,33 @@ static void GPOS_convert_design_units_to_device(LPOUTLINETEXTMETRICW lpotm, LPLO
     *devY = (desY * emHeight) / (double)lpotm->otmEMSquare;
     if (lplogfont->lfWidth)
         FIXME("Font with lfWidth set no handled properly\n");
+}
+
+static INT GPOS_get_value_record(WORD ValueFormat, const WORD data[], GPOS_ValueRecord *record)
+{
+    INT offset = 0;
+    if (ValueFormat & 0x0001) record->XPlacement = GET_BE_WORD(data[offset++]);
+    if (ValueFormat & 0x0002) record->YPlacement = GET_BE_WORD(data[offset++]);
+    if (ValueFormat & 0x0004) record->XAdvance = GET_BE_WORD(data[offset++]);
+    if (ValueFormat & 0x0008) record->YAdvance = GET_BE_WORD(data[offset++]);
+    if (ValueFormat & 0x0010) record->XPlaDevice = GET_BE_WORD(data[offset++]);
+    if (ValueFormat & 0x0020) record->YPlaDevice = GET_BE_WORD(data[offset++]);
+    if (ValueFormat & 0x0040) record->XAdvDevice = GET_BE_WORD(data[offset++]);
+    if (ValueFormat & 0x0080) record->YAdvDevice = GET_BE_WORD(data[offset++]);
+    return offset;
+}
+
+static VOID GPOS_get_value_record_offsets(const BYTE* head, GPOS_ValueRecord *ValueRecord,  WORD ValueFormat, INT ppem, LPPOINT ptPlacement, LPPOINT ptAdvance)
+{
+    if (ValueFormat & 0x0001) ptPlacement->x += (short)ValueRecord->XPlacement;
+    if (ValueFormat & 0x0002) ptPlacement->y += (short)ValueRecord->YPlacement;
+    if (ValueFormat & 0x0004) ptAdvance->x += (short)ValueRecord->XAdvance;
+    if (ValueFormat & 0x0008) ptAdvance->y += (short)ValueRecord->YAdvance;
+    if (ValueFormat & 0x0010) ptPlacement->x += GPOS_get_device_table_value((const OT_DeviceTable*)(head + ValueRecord->XPlaDevice), ppem);
+    if (ValueFormat & 0x0020) ptPlacement->y += GPOS_get_device_table_value((const OT_DeviceTable*)(head + ValueRecord->YPlaDevice), ppem);
+    if (ValueFormat & 0x0040) ptAdvance->x += GPOS_get_device_table_value((const OT_DeviceTable*)(head + ValueRecord->XAdvDevice), ppem);
+    if (ValueFormat & 0x0080) ptAdvance->y += GPOS_get_device_table_value((const OT_DeviceTable*)(head + ValueRecord->YAdvDevice), ppem);
+    if (ValueFormat & 0xFF00) FIXME("Unhandled Value Format %x\n",ValueFormat&0xFF00);
 }
 
 static VOID GPOS_apply_MarkToBase(const OT_LookupTable *look, const WORD *glyphs, INT glyph_index, INT write_dir, INT glyph_count, INT ppem, LPPOINT pt)
