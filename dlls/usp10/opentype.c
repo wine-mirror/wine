@@ -327,6 +327,13 @@ typedef struct {
 
 typedef struct {
     WORD PosFormat;
+    WORD Coverage;
+    WORD ValueFormat;
+    WORD Value[1];
+} GPOS_SinglePosFormat1;
+
+typedef struct {
+    WORD PosFormat;
     WORD MarkCoverage;
     WORD BaseCoverage;
     WORD ClassCount;
@@ -1048,6 +1055,34 @@ static VOID GPOS_get_value_record_offsets(const BYTE* head, GPOS_ValueRecord *Va
     if (ValueFormat & 0xFF00) FIXME("Unhandled Value Format %x\n",ValueFormat&0xFF00);
 }
 
+static VOID GPOS_apply_SingleAdjustment(const OT_LookupTable *look, const WORD *glyphs, INT glyph_index, INT write_dir, INT glyph_count, INT ppem, LPPOINT ptAdjust, LPPOINT ptAdvance)
+{
+    int j;
+
+    TRACE("Single Adjustment Positioning Subtable\n");
+
+    for (j = 0; j < GET_BE_WORD(look->SubTableCount); j++)
+    {
+        const GPOS_SinglePosFormat1 *spf1;
+        WORD offset = GET_BE_WORD(look->SubTable[j]);
+        spf1 = (const GPOS_SinglePosFormat1*)((const BYTE*)look+offset);
+        if (GET_BE_WORD(spf1->PosFormat == 1))
+        {
+            offset = GET_BE_WORD(spf1->Coverage);
+            if (GSUB_is_glyph_covered((const BYTE*)spf1+offset, glyphs[glyph_index]) != -1)
+            {
+                GPOS_ValueRecord ValueRecord = {0,0,0,0,0,0,0,0};
+                WORD ValueFormat = GET_BE_WORD(spf1->ValueFormat);
+                GPOS_get_value_record(ValueFormat, spf1->Value, &ValueRecord);
+                GPOS_get_value_record_offsets((const BYTE*)spf1, &ValueRecord,  ValueFormat, ppem, ptAdjust, ptAdvance);
+                TRACE("Glyph Adjusted by %i,%i\n",ValueRecord.XPlacement,ValueRecord.YPlacement);
+            }
+        }
+        else
+            FIXME("Single Adjustment Positioning: Format 2 Unhandled\n");
+    }
+}
+
 static VOID GPOS_apply_MarkToBase(const OT_LookupTable *look, const WORD *glyphs, INT glyph_index, INT write_dir, INT glyph_count, INT ppem, LPPOINT pt)
 {
     int j;
@@ -1124,6 +1159,26 @@ static INT GPOS_apply_lookup(LPOUTLINETEXTMETRICW lpotm, LPLOGFONTW lplogfont, I
     TRACE("type %i, flag %x, subtables %i\n",GET_BE_WORD(look->LookupType),GET_BE_WORD(look->LookupFlag),GET_BE_WORD(look->SubTableCount));
     switch(GET_BE_WORD(look->LookupType))
     {
+        case 1:
+        {
+            double devX, devY;
+            POINT adjust = {0,0};
+            POINT advance = {0,0};
+            GPOS_apply_SingleAdjustment(look, glyphs, glyph_index, write_dir, glyph_count, ppem, &adjust, &advance);
+            if (adjust.x || adjust.y)
+            {
+                GPOS_convert_design_units_to_device(lpotm, lplogfont, adjust.x, adjust.y, &devX, &devY);
+                pGoffset[glyph_index].du += (int)(devX+0.5);
+                pGoffset[glyph_index].dv += (int)(devY+0.5);
+            }
+            if (advance.x || advance.y)
+            {
+                GPOS_convert_design_units_to_device(lpotm, lplogfont, advance.x, advance.y, &devX, &devY);
+                piAdvance[glyph_index] += (int)(devX+0.5);
+                if (advance.y)
+                    FIXME("Unhandled adjustment to Y advancement\n");
+            }
+        }
         case 4:
         {
             double devX, devY;
