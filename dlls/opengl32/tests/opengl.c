@@ -1205,7 +1205,7 @@ static void test_destroy(HDC oldhdc)
     glClear(GL_COLOR_BUFFER_BIT);
     glFinish();
     glerr = glGetError();
-    todo_wine ok(glerr == GL_INVALID_OPERATION, "Failed glClear, error %#x.\n", glerr);
+    ok(glerr == GL_INVALID_OPERATION, "Failed glClear, error %#x.\n", glerr);
     SetLastError(0xdeadbeef);
     ret = SwapBuffers(dc);
     err = GetLastError();
@@ -1363,7 +1363,7 @@ static void test_destroy_read(HDC oldhdc)
     glClear(GL_COLOR_BUFFER_BIT);
     glFinish();
     glerr = glGetError();
-    todo_wine ok(glerr == GL_INVALID_OPERATION, "Failed glClear, error %#x.\n", glerr);
+    ok(glerr == GL_INVALID_OPERATION, "Failed glClear, error %#x.\n", glerr);
     SetLastError(0xdeadbeef);
     ret = SwapBuffers(draw_dc);
     err = GetLastError();

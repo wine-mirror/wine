@@ -225,9 +225,9 @@ sub ConvertVarName($)
 #
 # This functions generates the thunk for a given function.
 #
-sub GenerateThunk($$$$$)
+sub GenerateThunk($$$$)
 {
-    my ($func_ref, $comment, $prefix, $thread_safe, $local_var) = @_;
+    my ($func_ref, $comment, $prefix, $local_var) = @_;
     my $ret = "";
     my $call_arg = "";
     my $trace_call_arg = "";
@@ -282,8 +282,9 @@ sub GenerateThunk($$$$$)
 	}
     }
     $ret .= 'void ' if (!@{$func_ref->[2]});
-    $ret = "$ret) {\n";
-    if ($func_ref->[1] ne "void" && $thread_safe) {
+    $ret .= ") {\n";
+    $ret .= "  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;\n" unless $local_var;
+    if ($func_ref->[1] ne "void" && $gen_thread_safe) {
 	$ret = "$ret  " . ConvertType($func_ref->[1]) . " ret_value;\n";
     }
     $ret .= $local_var;
@@ -294,7 +295,7 @@ sub GenerateThunk($$$$$)
 	}
 	$ret = "$ret);\n";
     }
-    if ($thread_safe) {
+    if ($gen_thread_safe) {
 	$ret .= "  ENTER_GL();\n";
         $ret .= "  ";
         if ($func_ref->[1] ne "void") {
@@ -806,9 +807,9 @@ print NORM "
 
 WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 ";
-foreach (sort keys %norm_functions) {
-    my $string = GenerateThunk($norm_functions{$_}, 1, "", $gen_thread_safe, "");
 
+foreach (sort keys %norm_functions) {
+    my $string = GenerateThunk($norm_functions{$_}, 1, "funcs->gl.p_", "");
     print NORM "\n$string" if $string;
 }
 
@@ -864,7 +865,7 @@ foreach (sort keys %ext_functions) {
     }
     $local_var .= 'void ' if (!@{$func_ref->[2]});
     $local_var .= ") = extension_funcs[EXT_$func_ref->[0]];\n";
-    print EXT "\nstatic ", GenerateThunk($ext_functions{$_}, 0, $ext_prefix, $gen_thread_safe, $local_var);
+    print EXT "\nstatic ", GenerateThunk($ext_functions{$_}, 0, $ext_prefix, $local_var);
 }
 
 # Then the table giving the string <-> function correspondence */
