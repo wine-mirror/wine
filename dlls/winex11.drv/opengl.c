@@ -314,6 +314,7 @@ MAKE_FUNCPTR(glXGetVisualFromFBConfig)
 MAKE_FUNCPTR(glXMakeContextCurrent)
 MAKE_FUNCPTR(glXQueryDrawable)
 MAKE_FUNCPTR(glXGetCurrentReadDrawable)
+#undef MAKE_FUNCPTR
 
 /* GLX Extensions */
 static GLXContext (*pglXCreateContextAttribsARB)(Display *dpy, GLXFBConfig config, GLXContext share_context, Bool direct, const int *attrib_list);
@@ -331,21 +332,6 @@ static void (*pglXCopySubBufferMESA)(Display *dpy, GLXDrawable drawable, int x, 
 static void (*pglFinish)(void);
 static void (*pglFlush)(void);
 static void (*pglGetIntegerv)(GLenum,GLint*);
-
-MAKE_FUNCPTR(glBindTexture)
-MAKE_FUNCPTR(glBitmap)
-MAKE_FUNCPTR(glCopyTexSubImage1D)
-MAKE_FUNCPTR(glCopyTexImage2D)
-MAKE_FUNCPTR(glCopyTexSubImage2D)
-MAKE_FUNCPTR(glDrawBuffer)
-MAKE_FUNCPTR(glEndList)
-MAKE_FUNCPTR(glGetError)
-MAKE_FUNCPTR(glGetString)
-MAKE_FUNCPTR(glNewList)
-MAKE_FUNCPTR(glPixelStorei)
-MAKE_FUNCPTR(glReadPixels)
-MAKE_FUNCPTR(glTexImage2D)
-#undef MAKE_FUNCPTR
 
 static void wglFinish(void);
 static void wglFlush(void);
@@ -413,9 +399,9 @@ static BOOL X11DRV_WineGL_InitOpenglInfo(void)
         ERR_(winediag)( "Unable to activate OpenGL context, most likely your OpenGL drivers haven't been installed correctly\n" );
         goto done;
     }
-    gl_renderer = (const char *)pglGetString(GL_RENDERER);
-    WineGLInfo.glVersion = (const char *) pglGetString(GL_VERSION);
-    str = (const char *) pglGetString(GL_EXTENSIONS);
+    gl_renderer = (const char *)opengl_funcs.gl.p_glGetString(GL_RENDERER);
+    WineGLInfo.glVersion = (const char *) opengl_funcs.gl.p_glGetString(GL_VERSION);
+    str = (const char *) opengl_funcs.gl.p_glGetString(GL_EXTENSIONS);
     WineGLInfo.glExtensions = HeapAlloc(GetProcessHeap(), 0, strlen(str)+1);
     strcpy(WineGLInfo.glExtensions, str);
 
@@ -566,21 +552,6 @@ static BOOL has_opengl(void)
     LOAD_FUNCPTR(glXMakeContextCurrent);
     LOAD_FUNCPTR(glXGetCurrentReadDrawable);
     LOAD_FUNCPTR(glXGetFBConfigs);
-
-    /* Standard OpenGL calls */
-    LOAD_FUNCPTR(glBindTexture);
-    LOAD_FUNCPTR(glBitmap);
-    LOAD_FUNCPTR(glCopyTexSubImage1D);
-    LOAD_FUNCPTR(glCopyTexImage2D);
-    LOAD_FUNCPTR(glCopyTexSubImage2D);
-    LOAD_FUNCPTR(glDrawBuffer);
-    LOAD_FUNCPTR(glEndList);
-    LOAD_FUNCPTR(glGetError);
-    LOAD_FUNCPTR(glGetString);
-    LOAD_FUNCPTR(glNewList);
-    LOAD_FUNCPTR(glPixelStorei);
-    LOAD_FUNCPTR(glReadPixels);
-    LOAD_FUNCPTR(glTexImage2D);
 #undef LOAD_FUNCPTR
 
 /* It doesn't matter if these fail. They'll only be used if the driver reports
@@ -1664,7 +1635,7 @@ static BOOL glxdrv_wglMakeCurrent(HDC hdc, struct wgl_context *ctx)
             ctx->drawables[1] = escape.gl_drawable;
             ctx->refresh_drawables = FALSE;
 
-            if (escape.gl_type == DC_GL_BITMAP) pglDrawBuffer(GL_FRONT_LEFT);
+            if (escape.gl_type == DC_GL_BITMAP) opengl_funcs.gl.p_glDrawBuffer(GL_FRONT_LEFT);
         }
         else
             SetLastError(ERROR_INVALID_HANDLE);
@@ -2837,8 +2808,8 @@ static GLboolean WINAPI X11DRV_wglBindTexImageARB(HPBUFFERARB hPbuffer, int iBuf
 
         /* Make sure that the prev_binded_texture is set as the current texture state isn't shared between contexts.
          * After that upload the pbuffer texture data. */
-        pglBindTexture(object->texture_target, prev_binded_texture);
-        pglCopyTexImage2D(object->texture_target, 0, object->use_render_texture, 0, 0, object->width, object->height, 0);
+        opengl_funcs.gl.p_glBindTexture(object->texture_target, prev_binded_texture);
+        opengl_funcs.gl.p_glCopyTexImage2D(object->texture_target, 0, object->use_render_texture, 0, 0, object->width, object->height, 0);
 
         /* Switch back to the original drawable and upload the pbuffer-texture */
         pglXMakeCurrent(object->display, prev_drawable, prev_context);
