@@ -617,6 +617,7 @@ static int compar(const void *elt_a, const void *elt_b) {
 /* Check if a GL extension is supported */
 static BOOL is_extension_supported(const char* extension)
 {
+    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
     const char *gl_ext_string = (const char*)wine_glGetString(GL_EXTENSIONS);
 
     TRACE("Checking for extension '%s'\n", extension);
@@ -642,7 +643,7 @@ static BOOL is_extension_supported(const char* extension)
      * Check if we are searching for a core GL function */
     if(strncmp(extension, "GL_VERSION_", 11) == 0)
     {
-        const GLubyte *gl_version = glGetString(GL_VERSION);
+        const GLubyte *gl_version = funcs->gl.p_glGetString(GL_VERSION);
         const char *version = extension + 11; /* Move past 'GL_VERSION_' */
 
         if(!gl_version) {
@@ -806,14 +807,15 @@ BOOL WINAPI wglSwapLayerBuffers(HDC hdc,
  */
 static BOOL wglUseFontBitmaps_common( HDC hdc, DWORD first, DWORD count, DWORD listBase, BOOL unicode )
 {
+    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
      GLYPHMETRICS gm;
      unsigned int glyph, size = 0;
      void *bitmap = NULL, *gl_bitmap = NULL;
      int org_alignment;
      BOOL ret = TRUE;
 
-     glGetIntegerv(GL_UNPACK_ALIGNMENT, &org_alignment);
-     glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+     funcs->gl.p_glGetIntegerv(GL_UNPACK_ALIGNMENT, &org_alignment);
+     funcs->gl.p_glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 
      for (glyph = first; glyph < first + count; glyph++) {
          static const MAT2 identity = { {0,1},{0,0},{0,0},{0,1} };
@@ -883,20 +885,20 @@ static BOOL wglUseFontBitmaps_common( HDC hdc, DWORD first, DWORD count, DWORD l
              }
          }
 
-         glNewList(listBase++, GL_COMPILE);
+         funcs->gl.p_glNewList(listBase++, GL_COMPILE);
          if (needed_size != 0) {
-             glBitmap(gm.gmBlackBoxX, gm.gmBlackBoxY,
+             funcs->gl.p_glBitmap(gm.gmBlackBoxX, gm.gmBlackBoxY,
                      0 - gm.gmptGlyphOrigin.x, (int) gm.gmBlackBoxY - gm.gmptGlyphOrigin.y,
                      gm.gmCellIncX, gm.gmCellIncY,
                      gl_bitmap);
          } else {
              /* This is the case of 'empty' glyphs like the space character */
-             glBitmap(0, 0, 0, 0, gm.gmCellIncX, gm.gmCellIncY, NULL);
+             funcs->gl.p_glBitmap(0, 0, 0, 0, gm.gmCellIncX, gm.gmCellIncY, NULL);
          }
-         glEndList();
+         funcs->gl.p_glEndList();
      }
 
-     glPixelStorei(GL_UNPACK_ALIGNMENT, org_alignment);
+     funcs->gl.p_glPixelStorei(GL_UNPACK_ALIGNMENT, org_alignment);
      HeapFree(GetProcessHeap(), 0, bitmap);
      HeapFree(GetProcessHeap(), 0, gl_bitmap);
      return ret;
@@ -965,21 +967,24 @@ static void fixed_to_double(POINTFX fixed, UINT em_size, GLdouble vertex[3])
 
 static void tess_callback_vertex(GLvoid *vertex)
 {
+    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
     GLdouble *dbl = vertex;
     TRACE("%f, %f, %f\n", dbl[0], dbl[1], dbl[2]);
-    glVertex3dv(vertex);
+    funcs->gl.p_glVertex3dv(vertex);
 }
 
 static void tess_callback_begin(GLenum which)
 {
+    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
     TRACE("%d\n", which);
-    glBegin(which);
+    funcs->gl.p_glBegin(which);
 }
 
 static void tess_callback_end(void)
 {
+    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
     TRACE("\n");
-    glEnd();
+    funcs->gl.p_glEnd();
 }
 
 /***********************************************************************
@@ -995,6 +1000,7 @@ static BOOL wglUseFontOutlines_common(HDC hdc,
                                       LPGLYPHMETRICSFLOAT lpgmf,
                                       BOOL unicode)
 {
+    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
     UINT glyph;
     const MAT2 identity = {{0,1},{0,0},{0,0},{0,1}};
     GLUtesselator *tess;
@@ -1068,7 +1074,7 @@ static BOOL wglUseFontOutlines_common(HDC hdc,
             lpgmf++;
         }
 
-	glNewList(listBase++, GL_COMPILE);
+	funcs->gl.p_glNewList(listBase++, GL_COMPILE);
         pgluTessBeginPolygon(tess, NULL);
 
         pph = (TTPOLYGONHEADER*)buf;
@@ -1128,8 +1134,8 @@ static BOOL wglUseFontOutlines_common(HDC hdc,
 
 error_in_list:
         pgluTessEndPolygon(tess);
-        glTranslated((GLdouble)gm.gmCellIncX / em_size, (GLdouble)gm.gmCellIncY / em_size, 0.0);
-        glEndList();
+        funcs->gl.p_glTranslated((GLdouble)gm.gmCellIncX / em_size, (GLdouble)gm.gmCellIncY / em_size, 0.0);
+        funcs->gl.p_glEndList();
         HeapFree(GetProcessHeap(), 0, buf);
         HeapFree(GetProcessHeap(), 0, vertices);
     }
@@ -1248,6 +1254,7 @@ static char *build_gl_extensions( const char *extensions )
  */
 const GLubyte * WINAPI wine_glGetString( GLenum name )
 {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   static const GLubyte *gl_extensions;
 
   /* this is for buggy nvidia driver, crashing if called from a different
@@ -1255,11 +1262,11 @@ const GLubyte * WINAPI wine_glGetString( GLenum name )
   if(wglGetCurrentContext() == NULL)
     return NULL;
 
-  if (name != GL_EXTENSIONS) return glGetString(name);
+  if (name != GL_EXTENSIONS) return funcs->gl.p_glGetString(name);
 
   if (!gl_extensions)
   {
-      const char *orig_ext = (const char *)glGetString(GL_EXTENSIONS);
+      const char *orig_ext = (const char *)funcs->gl.p_glGetString(GL_EXTENSIONS);
       char *new_ext = build_gl_extensions( orig_ext );
       if (InterlockedCompareExchangePointer( (void **)&gl_extensions, new_ext, NULL ))
           HeapFree( GetProcessHeap(), 0, new_ext );

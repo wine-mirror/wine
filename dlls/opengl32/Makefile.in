@@ -2,7 +2,6 @@ MODULE    = opengl32.dll
 IMPORTLIB = opengl32
 IMPORTS   = user32 gdi32 advapi32
 EXTRAINCL = @X_CFLAGS@
-EXTRALIBS = @X_LIBS@ @X_PRE_LIBS@ @XLIB@ @X_EXTRA_LIBS@ @OPENGL_LIBS@
 
 C_SRCS = \
 	opengl_ext.c \
