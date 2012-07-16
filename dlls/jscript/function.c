@@ -647,7 +647,7 @@ static HRESULT set_constructor_prop(script_ctx_t *ctx, jsdisp_t *constr, jsdisp_
 
     V_VT(&v) = VT_DISPATCH;
     V_DISPATCH(&v) = to_disp(constr);
-    return jsdisp_propput_name(prot, constructorW, &v, NULL);
+    return jsdisp_propput_dontenum(prot, constructorW, &v);
 }
 
 HRESULT create_builtin_constructor(script_ctx_t *ctx, builtin_invoke_t value_proc, const WCHAR *name,
@@ -684,6 +684,8 @@ HRESULT create_source_function(script_ctx_t *ctx, bytecode_t *code, function_cod
     hres = create_function(ctx, NULL, PROPF_CONSTR, FALSE, NULL, &function);
     if(SUCCEEDED(hres)) {
         hres = set_prototype(ctx, &function->dispex, prototype);
+        if(SUCCEEDED(hres))
+            hres = set_constructor_prop(ctx, &function->dispex, prototype);
         if(FAILED(hres))
             jsdisp_release(&function->dispex);
     }

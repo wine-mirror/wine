@@ -91,8 +91,15 @@ ok(Function.prototype.prototype === undefined, "Function.prototype.prototype is 
 ok(Date.prototype !== undefined, "Date.prototype is undefined");
 ok(Date.prototype.prototype === undefined, "Date.prototype is not undefined");
 
-function testConstructor(constr, name) {
+function testConstructor(constr, name, inst) {
     ok(constr.prototype.constructor === constr, name + ".prototype.constructor !== " + name);
+    ok(constr.prototype.hasOwnProperty("constructor"), name + ".prototype.hasOwnProperty('constructor')");
+
+    if(!inst)
+        inst = new constr();
+
+    ok(inst.constructor === constr, "(new " + name + "()).constructor !== " + name);
+    ok(!inst.hasOwnProperty("constructor"), "(new " + name + "()).hasOwnProperty('constructor')");
 }
 
 testConstructor(Object, "Object");
@@ -100,10 +107,10 @@ testConstructor(String, "String");
 testConstructor(Array, "Array");
 testConstructor(Boolean, "Boolean");
 testConstructor(Number, "Number");
-testConstructor(RegExp, "RegExp");
+testConstructor(RegExp, "RegExp", /x/);
 testConstructor(Function, "Function");
 testConstructor(Date, "Date");
-testConstructor(VBArray, "VBArray");
+testConstructor(VBArray, "VBArray", new VBArray(createArray()));
 testConstructor(Error, "Error");
 testConstructor(EvalError, "EvalError");
 testConstructor(RangeError, "RangeError");
@@ -194,11 +201,13 @@ function testConstr1() {
 }
 
 testConstr1.prototype.pvar = 1;
+ok(testConstr1.prototype.constructor === testConstr1, "testConstr1.prototype.constructor !== testConstr1");
 
 var obj2 = new testConstr1(true);
 ok(typeof(obj2) === "object", "typeof(obj2) is not object");
 ok(obj2.constructor === testConstr1, "unexpected obj2.constructor");
 ok(obj2.pvar === 1, "obj2.pvar is not 1");
+ok(!obj2.hasOwnProperty('constructor'), "obj2.hasOwnProperty('constructor')");
 
 testConstr1.prototype.pvar = 2;
 ok(obj2.pvar === 2, "obj2.pvar is not 2");

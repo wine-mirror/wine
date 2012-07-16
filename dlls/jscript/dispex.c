@@ -922,7 +922,6 @@ HRESULT init_dispex_from_constr(jsdisp_t *dispex, script_ctx_t *ctx, const built
     dispex_prop_t *prop;
     HRESULT hres;
 
-    static const WCHAR constructorW[] = {'c','o','n','s','t','r','u','c','t','o','r',0};
     static const WCHAR prototypeW[] = {'p','r','o','t','o','t','y','p','e',0};
 
     hres = find_prop_name_prot(constr, string_hash(prototypeW), prototypeW, &prop);
@@ -947,21 +946,6 @@ HRESULT init_dispex_from_constr(jsdisp_t *dispex, script_ctx_t *ctx, const built
 
     if(prot)
         jsdisp_release(prot);
-    if(FAILED(hres))
-        return hres;
-
-    hres = ensure_prop_name(dispex, constructorW, FALSE, 0, &prop);
-    if(SUCCEEDED(hres)) {
-        jsexcept_t jsexcept;
-        VARIANT var;
-
-        var_set_jsdisp(&var, constr);
-        memset(&jsexcept, 0, sizeof(jsexcept));
-        hres = prop_put(dispex, prop, &var, &jsexcept, NULL/*FIXME*/);
-    }
-    if(FAILED(hres))
-        jsdisp_release(dispex);
-
     return hres;
 }
 
@@ -1239,6 +1223,18 @@ HRESULT jsdisp_propput_const(jsdisp_t *obj, const WCHAR *name, VARIANT *val)
     HRESULT hres;
 
     hres = ensure_prop_name(obj, name, FALSE, PROPF_ENUM|PROPF_CONST, &prop);
+    if(FAILED(hres))
+        return hres;
+
+    return VariantCopy(&prop->u.var, val);
+}
+
+HRESULT jsdisp_propput_dontenum(jsdisp_t *obj, const WCHAR *name, VARIANT *val)
+{
+    dispex_prop_t *prop;
+    HRESULT hres;
+
+    hres = ensure_prop_name(obj, name, FALSE, 0, &prop);
     if(FAILED(hres))
         return hres;
 
