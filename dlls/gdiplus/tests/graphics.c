@@ -3350,9 +3350,7 @@ static void test_GdipMeasureString(void)
         expect(Ok, status);
         expectf(0.0, bounds.X);
         expectf(0.0, bounds.Y);
-todo_wine
         expectf_(102.499985, bounds.Width, 11.5);
-todo_wine
         expectf_(31.968744, bounds.Height, 3.1);
     }
     else
@@ -3372,9 +3370,7 @@ todo_wine
     expect(Ok, status);
     expectf(0.0, bounds.X);
     expectf(0.0, bounds.Y);
-todo_wine
     expectf_(76.875000, bounds.Width, 10.0);
-todo_wine
     expectf_(23.976563, bounds.Height, 2.1);
 
     status = GdipSetPageUnit(graphics, UnitMillimeter);
@@ -3391,9 +3387,7 @@ todo_wine
     expect(Ok, status);
     expectf(0.0, bounds.X);
     expectf(0.0, bounds.Y);
-todo_wine
     expectf_(27.119789, bounds.Width, 2.7);
-todo_wine
     expectf_(8.458398, bounds.Height, 0.8);
 
     GdipDeleteStringFormat(format);

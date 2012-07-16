@@ -4908,6 +4908,30 @@ static GpStatus measure_ranges_callback(HDC hdc,
     return stat;
 }
 
+static void rect_to_pixels(const RectF *in, const GpGraphics *graphics, RectF *out)
+{
+    REAL dpi;
+
+    GdipGetDpiX((GpGraphics *)graphics, &dpi);
+    out->X = units_to_pixels(in->X, graphics->unit, dpi);
+    out->Width = units_to_pixels(in->Width, graphics->unit, dpi);
+    GdipGetDpiY((GpGraphics *)graphics, &dpi);
+    out->Y = units_to_pixels(in->Y, graphics->unit, dpi);
+    out->Height = units_to_pixels(in->Height, graphics->unit, dpi);
+}
+
+static void rect_to_units(const RectF *in, const GpGraphics *graphics, RectF *out)
+{
+    REAL dpi;
+
+    GdipGetDpiX((GpGraphics *)graphics, &dpi);
+    out->X = pixels_to_units(in->X, graphics->unit, dpi);
+    out->Width = pixels_to_units(in->Width, graphics->unit, dpi);
+    GdipGetDpiY((GpGraphics *)graphics, &dpi);
+    out->Y = pixels_to_units(in->Y, graphics->unit, dpi);
+    out->Height = pixels_to_units(in->Height, graphics->unit, dpi);
+}
+
 GpStatus WINGDIPAPI GdipMeasureCharacterRanges(GpGraphics* graphics,
         GDIPCONST WCHAR* string, INT length, GDIPCONST GpFont* font,
         GDIPCONST RectF* layoutRect, GDIPCONST GpStringFormat *stringFormat,
@@ -5011,6 +5035,7 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
     struct measure_string_args args;
     HDC temp_hdc=NULL, hdc;
     GpPointF pt[3];
+    RectF rect_pixels;
 
     TRACE("(%p, %s, %i, %p, %s, %p, %p, %p, %p)\n", graphics,
         debugstr_wn(string, length), length, font, debugstr_rectf(rect), format,
@@ -5048,8 +5073,10 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
     get_font_hfont(graphics, font, &gdifont);
     oldfont = SelectObject(hdc, gdifont);
 
-    bounds->X = rect->X;
-    bounds->Y = rect->Y;
+    rect_to_pixels(rect, graphics, &rect_pixels);
+
+    bounds->X = rect_pixels.X;
+    bounds->Y = rect_pixels.Y;
     bounds->Width = 0.0;
     bounds->Height = 0.0;
 
@@ -5057,8 +5084,10 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
     args.codepointsfitted = codepointsfitted;
     args.linesfilled = linesfilled;
 
-    gdip_format_string(hdc, string, length, font, rect, format,
+    gdip_format_string(hdc, string, length, font, &rect_pixels, format,
         measure_string_callback, &args);
+
+    rect_to_units(bounds, graphics, bounds);
 
     SelectObject(hdc, oldfont);
     DeleteObject(gdifont);
