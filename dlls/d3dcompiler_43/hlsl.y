@@ -430,9 +430,12 @@ parameters:               scope_start
 
 param_list:               parameter
                             {
+                                struct source_location loc;
+
                                 $$ = d3dcompiler_alloc(sizeof(*$$));
                                 list_init($$);
-                                if (!add_func_parameter($$, &$1, hlsl_ctx.line_no))
+                                set_location(&loc, &@1);
+                                if (!add_func_parameter($$, &$1, &loc))
                                 {
                                     ERR("Error adding function parameter %s.\n", $1.name);
                                     set_parse_status(&hlsl_ctx.status, PARSE_ERR);
@@ -441,12 +444,14 @@ param_list:               parameter
                             }
                         | param_list ',' parameter
                             {
+                                struct source_location loc;
+
                                 $$ = $1;
-                                if (!add_func_parameter($$, &$3, hlsl_ctx.line_no))
+                                set_location(&loc, &@3);
+                                if (!add_func_parameter($$, &$3, &loc))
                                 {
-                                    hlsl_message("Line %u: duplicate parameter %s.\n",
-                                            hlsl_ctx.line_no, $3.name);
-                                    set_parse_status(&hlsl_ctx.status, PARSE_ERR);
+                                    hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_ERROR,
+                                            "duplicate parameter %s", $3.name);
                                     return 1;
                                 }
                             }

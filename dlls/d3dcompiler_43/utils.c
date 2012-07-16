@@ -805,7 +805,7 @@ void free_declaration(struct hlsl_ir_var *decl)
     d3dcompiler_free(decl);
 }
 
-BOOL add_func_parameter(struct list *list, struct parse_parameter *param, unsigned int line)
+BOOL add_func_parameter(struct list *list, struct parse_parameter *param, const struct source_location *loc)
 {
     struct hlsl_ir_var *decl = d3dcompiler_alloc(sizeof(*decl));
 
@@ -816,7 +816,7 @@ BOOL add_func_parameter(struct list *list, struct parse_parameter *param, unsign
     }
     decl->node.type = HLSL_IR_VAR;
     decl->node.data_type = param->type;
-    decl->node.loc.line = line;
+    decl->node.loc = *loc;
     decl->name = param->name;
     decl->semantic = param->semantic;
     decl->modifiers = param->modifiers;
