@@ -366,6 +366,30 @@ REAL units_to_pixels(REAL units, GpUnit unit, REAL dpi)
     }
 }
 
+/* converts value in pixels to a given unit */
+REAL pixels_to_units(REAL pixels, GpUnit unit, REAL dpi)
+{
+    switch (unit)
+    {
+    case UnitPixel:
+    case UnitWorld:
+    case UnitDisplay:
+        return pixels;
+    case UnitPoint:
+        return pixels / dpi / inch_per_point;
+    case UnitInch:
+        return pixels / dpi;
+        break;
+    case UnitDocument:
+        return pixels * 300.0 / dpi;
+    case UnitMillimeter:
+        return pixels * mm_per_inch / dpi;
+    default:
+        FIXME("Unhandled unit type: %d\n", unit);
+        return 0;
+    }
+}
+
 /* Calculates Bezier points from cardinal spline points. */
 void calc_curve_bezier(CONST GpPointF *pts, REAL tension, REAL *x1,
     REAL *y1, REAL *x2, REAL *y2)

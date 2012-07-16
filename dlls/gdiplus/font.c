@@ -523,18 +523,29 @@ GpStatus WINGDIPAPI GdipGetFontHeight(GDIPCONST GpFont *font,
 {
     REAL dpi;
     GpStatus stat;
+    REAL font_height;
 
     TRACE("%p %p %p\n", font, graphics, height);
 
-    if (graphics)
-    {
-        stat = GdipGetDpiY((GpGraphics*)graphics, &dpi);
-        if (stat != Ok) return stat;
-    }
-    else
-        dpi = font->family->dpi;
+    stat = GdipGetFontHeightGivenDPI(font, font->family->dpi, &font_height);
+    if (stat != Ok) return stat;
 
-    return GdipGetFontHeightGivenDPI(font, dpi, height);
+    if (!graphics)
+    {
+        *height = font_height;
+        TRACE("%s,%d => %f\n",
+              debugstr_w(font->family->FamilyName), font->otm.otmTextMetrics.tmHeight, *height);
+        return Ok;
+    }
+
+    stat = GdipGetDpiY((GpGraphics *)graphics, &dpi);
+    if (stat != Ok) return stat;
+
+    *height = pixels_to_units(font_height, graphics->unit, dpi);
+
+    TRACE("%s,%d(unit %d) => %f\n",
+          debugstr_w(font->family->FamilyName), font->otm.otmTextMetrics.tmHeight, graphics->unit, *height);
+    return Ok;
 }
 
 /*******************************************************************************

@@ -3363,7 +3363,6 @@ todo_wine
 
     status = GdipGetFontHeight(font, graphics, &rval);
     expect(Ok, status);
-todo_wine
     expectf(21.726563, rval);
     status = GdipGetFontSize(font, &rval);
     expect(Ok, status);
@@ -3383,7 +3382,6 @@ todo_wine
 
     status = GdipGetFontHeight(font, graphics, &rval);
     expect(Ok, status);
-todo_wine
     expectf(7.664648, rval);
     status = GdipGetFontSize(font, &rval);
     expect(Ok, status);
