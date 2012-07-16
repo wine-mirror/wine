@@ -6720,7 +6720,7 @@ static void test_mixed_package(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine\\msitest", 0, KEY_ALL_ACCESS|KEY_WOW64_32KEY, &hkey);
-    ok(res == ERROR_FILE_NOT_FOUND, "32-bit component key not removed\n");
+    ok(res == ERROR_FILE_NOT_FOUND || broken(!res), "32-bit component key not removed\n");
 
     res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine\\msitest", 0, KEY_ALL_ACCESS|KEY_WOW64_64KEY, &hkey);
     ok(res == ERROR_FILE_NOT_FOUND, "64-bit component key not removed\n");
@@ -6747,7 +6747,7 @@ static void test_mixed_package(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine\\msitest", 0, KEY_ALL_ACCESS|KEY_WOW64_32KEY, &hkey);
-    ok(res == ERROR_FILE_NOT_FOUND, "32-bit component key not removed\n");
+    ok(res == ERROR_FILE_NOT_FOUND || broken(!res), "32-bit component key not removed\n");
 
     res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine\\msitest", 0, KEY_ALL_ACCESS|KEY_WOW64_64KEY, &hkey);
     ok(res == ERROR_FILE_NOT_FOUND, "64-bit component key not removed\n");
