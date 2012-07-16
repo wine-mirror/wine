@@ -2553,7 +2553,6 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
     struct wined3d_format format;
     UINT update_w, update_h;
     UINT dst_w, dst_h;
-    UINT src_w, src_h;
     RECT r, dst_rect;
     UINT src_pitch;
     POINT p;
@@ -2597,9 +2596,6 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
         WARN("Invalid source rectangle.\n");
         return WINED3DERR_INVALIDCALL;
     }
-
-    src_w = src_surface->resource.width;
-    src_h = src_surface->resource.height;
 
     dst_w = dst_surface->resource.width;
     dst_h = dst_surface->resource.height;
