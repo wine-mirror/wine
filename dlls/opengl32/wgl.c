@@ -47,14 +47,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(wgl);
 WINE_DECLARE_DEBUG_CHANNEL(opengl);
 
-static struct
-{
-    /* internal WGL functions */
-    void  (WINAPI *p_wglFinish)(void);
-    void  (WINAPI *p_wglFlush)(void);
-    void  (WINAPI *p_wglGetIntegerv)(GLenum pname, GLint* params);
-} wine_wgl;
-
 #ifdef SONAME_LIBGLU
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f;
 MAKE_FUNCPTR(gluNewTess)
@@ -1205,24 +1197,6 @@ GLint WINAPI wine_glDebugEntry( GLint unknown1, GLint unknown2 )
     return 0;
 }
 
-/***********************************************************************
- *              glFinish (OPENGL32.@)
- */
-void WINAPI wine_glFinish( void )
-{
-    TRACE("()\n");
-    wine_wgl.p_wglFinish();
-}
-
-/***********************************************************************
- *              glFlush (OPENGL32.@)
- */
-void WINAPI wine_glFlush( void )
-{
-    TRACE("()\n");
-    wine_wgl.p_wglFlush();
-}
-
 /* build the extension string by filtering out the disabled extensions */
 static char *build_gl_extensions( const char *extensions )
 {
@@ -1294,37 +1268,12 @@ const GLubyte * WINAPI wine_glGetString( GLenum name )
 }
 
 /***********************************************************************
- *              glGetIntegerv (OPENGL32.@)
- */
-void WINAPI wine_glGetIntegerv( GLenum pname, GLint* params )
-{
-    wine_wgl.p_wglGetIntegerv(pname, params);
-}
-
-/***********************************************************************
  *              wglSwapBuffers (OPENGL32.@)
  */
 BOOL WINAPI DECLSPEC_HOTPATCH wglSwapBuffers( HDC hdc )
 {
     return GdiSwapBuffers(hdc);
 }
-
-/* This is for brain-dead applications that use OpenGL functions before even
-   creating a rendering context.... */
-static BOOL process_attach(void)
-{
-  HDC hdc = GetDC( 0 );
-  const struct wgl_funcs *funcs = get_dc_funcs( hdc );
-
-  ReleaseDC( 0, hdc );
-
-  /* internal WGL functions */
-  wine_wgl.p_wglFinish = (void *)funcs->p_wglGetProcAddress("wglFinish");
-  wine_wgl.p_wglFlush = (void *)funcs->p_wglGetProcAddress("wglFlush");
-  wine_wgl.p_wglGetIntegerv = (void *)funcs->p_wglGetProcAddress("wglGetIntegerv");
-  return TRUE;
-}
-
 
 /**********************************************************************/
 
@@ -1344,7 +1293,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
         opengl32_handle = hinst;
         DisableThreadLibraryCalls(hinst);
         NtCurrentTeb()->glTable = &null_opengl_funcs;
-        return process_attach();
+        break;
     case DLL_THREAD_ATTACH:
         NtCurrentTeb()->glTable = &null_opengl_funcs;
         break;

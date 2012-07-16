@@ -812,6 +812,24 @@ void WINAPI wine_glFeedbackBuffer( GLsizei size, GLenum type, GLfloat* buffer ) 
 }
 
 /***********************************************************************
+ *              glFinish (OPENGL32.@)
+ */
+void WINAPI wine_glFinish( void ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("()\n");
+  funcs->gl.p_glFinish( );
+}
+
+/***********************************************************************
+ *              glFlush (OPENGL32.@)
+ */
+void WINAPI wine_glFlush( void ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("()\n");
+  funcs->gl.p_glFlush( );
+}
+
+/***********************************************************************
  *              glFogf (OPENGL32.@)
  */
 void WINAPI wine_glFogf( GLenum pname, GLfloat param ) {
@@ -926,6 +944,15 @@ void WINAPI wine_glGetFloatv( GLenum pname, GLfloat* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", pname, params );
   funcs->gl.p_glGetFloatv( pname, params );
+}
+
+/***********************************************************************
+ *              glGetIntegerv (OPENGL32.@)
+ */
+void WINAPI wine_glGetIntegerv( GLenum pname, GLint* params ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %p)\n", pname, params );
+  funcs->gl.p_glGetIntegerv( pname, params );
 }
 
 /***********************************************************************

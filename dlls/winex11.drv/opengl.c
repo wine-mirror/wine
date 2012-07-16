@@ -328,6 +328,10 @@ static void  (*pglXFreeMemoryNV)(GLvoid *pointer);
 static void (*pglXCopySubBufferMESA)(Display *dpy, GLXDrawable drawable, int x, int y, int width, int height);
 
 /* Standard OpenGL */
+static void (*pglFinish)(void);
+static void (*pglFlush)(void);
+static void (*pglGetIntegerv)(GLenum,GLint*);
+
 MAKE_FUNCPTR(glBindTexture)
 MAKE_FUNCPTR(glBitmap)
 MAKE_FUNCPTR(glCopyTexSubImage1D)
@@ -336,15 +340,16 @@ MAKE_FUNCPTR(glCopyTexSubImage2D)
 MAKE_FUNCPTR(glDrawBuffer)
 MAKE_FUNCPTR(glEndList)
 MAKE_FUNCPTR(glGetError)
-MAKE_FUNCPTR(glGetIntegerv)
 MAKE_FUNCPTR(glGetString)
 MAKE_FUNCPTR(glNewList)
 MAKE_FUNCPTR(glPixelStorei)
 MAKE_FUNCPTR(glReadPixels)
 MAKE_FUNCPTR(glTexImage2D)
-MAKE_FUNCPTR(glFinish)
-MAKE_FUNCPTR(glFlush)
 #undef MAKE_FUNCPTR
+
+static void wglFinish(void);
+static void wglFlush(void);
+static void wglGetIntegerv(GLenum pname, GLint* params);
 
 static int GLXErrorHandler(Display *dpy, XErrorEvent *event, void *arg)
 {
@@ -513,6 +518,14 @@ static BOOL has_opengl(void)
         }
     }
 
+    /* redirect some standard OpenGL functions */
+#define REDIRECT(func) \
+    do { p##func = opengl_funcs.gl.p_##func; opengl_funcs.gl.p_##func = w##func; } while(0)
+    REDIRECT( glFinish );
+    REDIRECT( glFlush );
+    REDIRECT( glGetIntegerv );
+#undef REDIRECT
+
     pglXGetProcAddressARB = wine_dlsym(opengl_handle, "glXGetProcAddressARB", NULL, 0);
     if (pglXGetProcAddressARB == NULL) {
         ERR("Could not find glXGetProcAddressARB in libGL, disabling OpenGL.\n");
@@ -563,14 +576,11 @@ static BOOL has_opengl(void)
     LOAD_FUNCPTR(glDrawBuffer);
     LOAD_FUNCPTR(glEndList);
     LOAD_FUNCPTR(glGetError);
-    LOAD_FUNCPTR(glGetIntegerv);
     LOAD_FUNCPTR(glGetString);
     LOAD_FUNCPTR(glNewList);
     LOAD_FUNCPTR(glPixelStorei);
     LOAD_FUNCPTR(glReadPixels);
     LOAD_FUNCPTR(glTexImage2D);
-    LOAD_FUNCPTR(glFinish);
-    LOAD_FUNCPTR(glFlush);
 #undef LOAD_FUNCPTR
 
 /* It doesn't matter if these fail. They'll only be used if the driver reports
@@ -1791,7 +1801,7 @@ static HDC glxdrv_wglGetCurrentDC( struct wgl_context *ctx )
 }
 
 /* WGL helper function which handles differences in glGetIntegerv from WGL and GLX */
-static void WINAPI X11DRV_wglGetIntegerv(GLenum pname, GLint* params)
+static void wglGetIntegerv(GLenum pname, GLint* params)
 {
     wine_tsx11_lock();
     switch(pname)
@@ -1872,7 +1882,7 @@ static void flush_gl_drawable( struct glx_physdev *physdev )
 }
 
 
-static void WINAPI X11DRV_wglFinish(void)
+static void wglFinish(void)
 {
     struct wgl_context *ctx = NtCurrentTeb()->glContext;
     enum x11drv_escape_codes code = X11DRV_FLUSH_GL_DRAWABLE;
@@ -1888,7 +1898,7 @@ static void WINAPI X11DRV_wglFinish(void)
     }
 }
 
-static void WINAPI X11DRV_wglFlush(void)
+static void wglFlush(void)
 {
     struct wgl_context *ctx = NtCurrentTeb()->glContext;
     enum x11drv_escape_codes code = X11DRV_FLUSH_GL_DRAWABLE;
@@ -3052,17 +3062,6 @@ static BOOL register_extension(const WineGLExtension * ext)
     return TRUE;
 }
 
-static const WineGLExtension WGL_internal_functions =
-{
-  "",
-  {
-    { "wglFinish", X11DRV_wglFinish },
-    { "wglFlush", X11DRV_wglFlush },
-    { "wglGetIntegerv", X11DRV_wglGetIntegerv },
-  }
-};
-
-
 static const WineGLExtension WGL_ARB_create_context_extension =
 {
   "WGL_ARB_create_context",
@@ -3165,9 +3164,6 @@ static const WineGLExtension WGL_WINE_pixel_format_passthrough_extension =
 static void X11DRV_WineGL_LoadExtensions(void)
 {
     WineGLInfo.wglExtensions[0] = 0;
-
-    /* Load Wine internal functions */
-    register_extension(&WGL_internal_functions);
 
     /* ARB Extensions */
 

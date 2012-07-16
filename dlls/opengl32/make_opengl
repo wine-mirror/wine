@@ -235,9 +235,6 @@ sub GenerateThunk($$$)
 
     return "" if $func_ref->[0] eq "glDebugEntry";
     return "" if $func_ref->[0] eq "glGetString";
-    return "" if $func_ref->[0] eq "glGetIntegerv";
-    return "" if $func_ref->[0] eq "glFinish";
-    return "" if $func_ref->[0] eq "glFlush";
 
     # If for opengl_norm.c, generate a nice heading otherwise Patrik won't be happy :-)
     # Patrik says: Well I would be even happier if a (OPENGL32.@) was added as well. Done. :-)
