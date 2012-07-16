@@ -146,6 +146,13 @@ static OPENTYPE_FEATURE_RECORD latin_features[] =
     { MS_MAKE_TAG('c','l','i','g'), 1},
 };
 
+static OPENTYPE_FEATURE_RECORD latin_gpos_features[] =
+{
+    { MS_MAKE_TAG('k','e','r','n'), 1},
+    { MS_MAKE_TAG('m','a','r','k'), 1},
+    { MS_MAKE_TAG('m','k','m','k'), 1},
+};
+
 static OPENTYPE_FEATURE_RECORD arabic_features[] =
 {
     { MS_MAKE_TAG('r','l','i','g'), 1},
@@ -165,9 +172,23 @@ static const char* required_arabic_features[] =
     NULL
 };
 
+static OPENTYPE_FEATURE_RECORD arabic_gpos_features[] =
+{
+    { MS_MAKE_TAG('c','u','r','s'), 1},
+    { MS_MAKE_TAG('k','e','r','n'), 1},
+    { MS_MAKE_TAG('m','a','r','k'), 1},
+    { MS_MAKE_TAG('m','k','m','k'), 1},
+};
+
 static OPENTYPE_FEATURE_RECORD hebrew_features[] =
 {
     { MS_MAKE_TAG('d','l','i','g'), 0},
+};
+
+static OPENTYPE_FEATURE_RECORD hebrew_gpos_features[] =
+{
+    { MS_MAKE_TAG('k','e','r','n'), 1},
+    { MS_MAKE_TAG('m','a','r','k'), 1},
 };
 
 static OPENTYPE_FEATURE_RECORD syriac_features[] =
@@ -190,6 +211,13 @@ static const char* required_syriac_features[] =
     NULL
 };
 
+static OPENTYPE_FEATURE_RECORD syriac_gpos_features[] =
+{
+    { MS_MAKE_TAG('k','e','r','n'), 1},
+    { MS_MAKE_TAG('m','a','r','k'), 1},
+    { MS_MAKE_TAG('m','k','m','k'), 1},
+};
+
 static OPENTYPE_FEATURE_RECORD sinhala_features[] =
 {
     /* Presentation forms */
@@ -204,6 +232,12 @@ static OPENTYPE_FEATURE_RECORD tibetan_features[] =
     { MS_MAKE_TAG('b','l','w','s'), 1},
 };
 
+static OPENTYPE_FEATURE_RECORD tibetan_gpos_features[] =
+{
+    { MS_MAKE_TAG('a','b','v','m'), 1},
+    { MS_MAKE_TAG('b','l','w','m'), 1},
+};
+
 static OPENTYPE_FEATURE_RECORD phags_features[] =
 {
     { MS_MAKE_TAG('a','b','v','s'), 1},
@@ -214,6 +248,13 @@ static OPENTYPE_FEATURE_RECORD phags_features[] =
 static OPENTYPE_FEATURE_RECORD thai_features[] =
 {
     { MS_MAKE_TAG('c','c','m','p'), 1},
+};
+
+static OPENTYPE_FEATURE_RECORD thai_gpos_features[] =
+{
+    { MS_MAKE_TAG('k','e','r','n'), 1},
+    { MS_MAKE_TAG('m','a','r','k'), 1},
+    { MS_MAKE_TAG('m','k','m','k'), 1},
 };
 
 static const char* required_lao_features[] =
@@ -246,6 +287,14 @@ static OPENTYPE_FEATURE_RECORD devanagari_features[] =
     { MS_MAKE_TAG('p','s','t','s'), 1},
     { MS_MAKE_TAG('h','a','l','n'), 1},
     { MS_MAKE_TAG('c','a','l','t'), 1},
+};
+
+static OPENTYPE_FEATURE_RECORD devanagari_gpos_features[] =
+{
+    { MS_MAKE_TAG('k','e','r','n'), 1},
+    { MS_MAKE_TAG('d','i','s','t'), 1},
+    { MS_MAKE_TAG('a','b','v','m'), 1},
+    { MS_MAKE_TAG('b','l','w','m'), 1},
 };
 
 static OPENTYPE_FEATURE_RECORD myanmar_features[] =
@@ -364,6 +413,14 @@ static const char* required_khmer_features[] =
     NULL
 };
 
+static OPENTYPE_FEATURE_RECORD khmer_gpos_features[] =
+{
+    { MS_MAKE_TAG('d','i','s','t'), 1},
+    { MS_MAKE_TAG('b','l','w','m'), 1},
+    { MS_MAKE_TAG('a','b','v','m'), 1},
+    { MS_MAKE_TAG('m','k','m','k'), 1},
+};
+
 static OPENTYPE_FEATURE_RECORD ethiopic_features[] =
 {
     { MS_MAKE_TAG('c','c','m','p'), 1},
@@ -393,59 +450,59 @@ typedef struct ScriptShapeDataTag {
 static const ScriptShapeData ShapingData[] =
 {
     {{ standard_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
-    {{ latin_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
-    {{ latin_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
-    {{ latin_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ latin_features, 2}, {latin_gpos_features, 3}, NULL, 0, NULL, NULL},
+    {{ latin_features, 2}, {latin_gpos_features, 3}, NULL, 0, NULL, NULL},
+    {{ latin_features, 2}, {latin_gpos_features, 3}, NULL, 0, NULL, NULL},
     {{ standard_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
-    {{ latin_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
-    {{ arabic_features, 6}, {NULL, 0}, required_arabic_features, 0, ContextualShape_Arabic, ShapeCharGlyphProp_Arabic},
-    {{ arabic_features, 6}, {NULL, 0}, required_arabic_features, 0, ContextualShape_Arabic, ShapeCharGlyphProp_Arabic},
-    {{ hebrew_features, 1}, {NULL, 0}, NULL, 0, ContextualShape_Hebrew, ShapeCharGlyphProp_Hebrew},
-    {{ syriac_features, 4}, {NULL, 0}, required_syriac_features, 0, ContextualShape_Syriac, ShapeCharGlyphProp_None},
-    {{ arabic_features, 6}, {NULL, 0}, required_arabic_features, 0, ContextualShape_Arabic, ShapeCharGlyphProp_Arabic},
+    {{ latin_features, 2}, {latin_gpos_features, 3}, NULL, 0, NULL, NULL},
+    {{ arabic_features, 6}, {arabic_gpos_features, 4}, required_arabic_features, 0, ContextualShape_Arabic, ShapeCharGlyphProp_Arabic},
+    {{ arabic_features, 6}, {arabic_gpos_features, 4}, required_arabic_features, 0, ContextualShape_Arabic, ShapeCharGlyphProp_Arabic},
+    {{ hebrew_features, 1}, {hebrew_gpos_features, 2}, NULL, 0, ContextualShape_Hebrew, ShapeCharGlyphProp_Hebrew},
+    {{ syriac_features, 4}, {syriac_gpos_features, 3}, required_syriac_features, 0, ContextualShape_Syriac, ShapeCharGlyphProp_None},
+    {{ arabic_features, 6}, {arabic_gpos_features, 4}, required_arabic_features, 0, ContextualShape_Arabic, ShapeCharGlyphProp_Arabic},
     {{ NULL, 0}, {NULL, 0}, NULL, 0, ContextualShape_Thaana, ShapeCharGlyphProp_None},
-    {{ standard_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
-    {{ standard_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
-    {{ standard_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
-    {{ standard_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ standard_features, 2}, {latin_gpos_features, 3}, NULL, 0, NULL, NULL},
+    {{ standard_features, 2}, {latin_gpos_features, 3}, NULL, 0, NULL, NULL},
+    {{ standard_features, 2}, {latin_gpos_features, 3}, NULL, 0, NULL, NULL},
+    {{ standard_features, 2}, {latin_gpos_features, 3}, NULL, 0, NULL, NULL},
     {{ sinhala_features, 3}, {NULL, 0}, NULL, 0, ContextualShape_Sinhala, ShapeCharGlyphProp_Sinhala},
-    {{ tibetan_features, 2}, {NULL, 0}, NULL, 0, NULL, ShapeCharGlyphProp_Tibet},
-    {{ tibetan_features, 2}, {NULL, 0}, NULL, 0, NULL, ShapeCharGlyphProp_Tibet},
+    {{ tibetan_features, 2}, {tibetan_gpos_features, 2}, NULL, 0, NULL, ShapeCharGlyphProp_Tibet},
+    {{ tibetan_features, 2}, {tibetan_gpos_features, 2}, NULL, 0, NULL, ShapeCharGlyphProp_Tibet},
     {{ phags_features, 3}, {NULL, 0}, NULL, 0, ContextualShape_Phags_pa, ShapeCharGlyphProp_Thai},
-    {{ thai_features, 1}, {NULL, 0}, NULL, 0, ContextualShape_Thai, ShapeCharGlyphProp_Thai},
-    {{ thai_features, 1}, {NULL, 0}, NULL, 0, ContextualShape_Thai, NULL},
-    {{ thai_features, 1}, {NULL, 0}, required_lao_features, 0, ContextualShape_Lao, ShapeCharGlyphProp_Thai},
-    {{ thai_features, 1}, {NULL, 0}, required_lao_features, 0, ContextualShape_Lao, ShapeCharGlyphProp_Thai},
-    {{ devanagari_features, 6}, {NULL, 0}, required_devanagari_features, MS_MAKE_TAG('d','e','v','2'), ContextualShape_Devanagari, ShapeCharGlyphProp_Devanagari},
-    {{ devanagari_features, 6}, {NULL, 0}, required_devanagari_features, MS_MAKE_TAG('d','e','v','2'), ContextualShape_Devanagari, NULL},
-    {{ devanagari_features, 6}, {NULL, 0}, required_bengali_features, MS_MAKE_TAG('b','n','g','2'), ContextualShape_Bengali, ShapeCharGlyphProp_Bengali},
-    {{ devanagari_features, 6}, {NULL, 0}, required_bengali_features, MS_MAKE_TAG('b','n','g','2'), ContextualShape_Bengali, NULL},
-    {{ devanagari_features, 6}, {NULL, 0}, required_bengali_features, MS_MAKE_TAG('b','n','g','2'), ContextualShape_Bengali, ShapeCharGlyphProp_Bengali},
-    {{ devanagari_features, 6}, {NULL, 0}, required_gurmukhi_features, MS_MAKE_TAG('g','u','r','2'), ContextualShape_Gurmukhi, ShapeCharGlyphProp_Gurmukhi},
-    {{ devanagari_features, 6}, {NULL, 0}, required_gurmukhi_features, MS_MAKE_TAG('g','u','r','2'), ContextualShape_Gurmukhi, NULL},
-    {{ devanagari_features, 6}, {NULL, 0}, required_devanagari_features, MS_MAKE_TAG('g','j','r','2'), ContextualShape_Gujarati, ShapeCharGlyphProp_Gujarati},
-    {{ devanagari_features, 6}, {NULL, 0}, required_devanagari_features, MS_MAKE_TAG('g','j','r','2'), ContextualShape_Gujarati, NULL},
-    {{ devanagari_features, 6}, {NULL, 0}, required_devanagari_features, MS_MAKE_TAG('g','j','r','2'), ContextualShape_Gujarati, ShapeCharGlyphProp_Gujarati},
-    {{ devanagari_features, 6}, {NULL, 0}, required_oriya_features, MS_MAKE_TAG('o','r','y','2'), ContextualShape_Oriya, ShapeCharGlyphProp_Oriya},
-    {{ devanagari_features, 6}, {NULL, 0}, required_oriya_features, MS_MAKE_TAG('o','r','y','2'), ContextualShape_Oriya, NULL},
-    {{ devanagari_features, 6}, {NULL, 0}, required_tamil_features, MS_MAKE_TAG('t','a','m','2'), ContextualShape_Tamil, ShapeCharGlyphProp_Tamil},
-    {{ devanagari_features, 6}, {NULL, 0}, required_tamil_features, MS_MAKE_TAG('t','a','m','2'), ContextualShape_Tamil, NULL},
-    {{ devanagari_features, 6}, {NULL, 0}, required_telugu_features, MS_MAKE_TAG('t','e','l','2'), ContextualShape_Telugu, ShapeCharGlyphProp_Telugu},
-    {{ devanagari_features, 6}, {NULL, 0}, required_telugu_features, MS_MAKE_TAG('t','e','l','2'), ContextualShape_Telugu, NULL},
-    {{ devanagari_features, 6}, {NULL, 0}, required_telugu_features, MS_MAKE_TAG('k','n','d','2'), ContextualShape_Kannada, ShapeCharGlyphProp_Kannada},
-    {{ devanagari_features, 6}, {NULL, 0}, required_telugu_features, MS_MAKE_TAG('k','n','d','2'), ContextualShape_Kannada, NULL},
-    {{ devanagari_features, 6}, {NULL, 0}, required_telugu_features, MS_MAKE_TAG('m','l','m','2'), ContextualShape_Malayalam, ShapeCharGlyphProp_Malayalam},
-    {{ devanagari_features, 6}, {NULL, 0}, required_telugu_features, MS_MAKE_TAG('m','l','m','2'), ContextualShape_Malayalam, NULL},
+    {{ thai_features, 1}, {thai_gpos_features, 3}, NULL, 0, ContextualShape_Thai, ShapeCharGlyphProp_Thai},
+    {{ thai_features, 1}, {thai_gpos_features, 3}, NULL, 0, ContextualShape_Thai, NULL},
+    {{ thai_features, 1}, {thai_gpos_features, 3}, required_lao_features, 0, ContextualShape_Lao, ShapeCharGlyphProp_Thai},
+    {{ thai_features, 1}, {thai_gpos_features, 3}, required_lao_features, 0, ContextualShape_Lao, ShapeCharGlyphProp_Thai},
+    {{ devanagari_features, 6}, {devanagari_gpos_features, 4}, required_devanagari_features, MS_MAKE_TAG('d','e','v','2'), ContextualShape_Devanagari, ShapeCharGlyphProp_Devanagari},
+    {{ devanagari_features, 6}, {devanagari_gpos_features, 4}, required_devanagari_features, MS_MAKE_TAG('d','e','v','2'), ContextualShape_Devanagari, NULL},
+    {{ devanagari_features, 6}, {devanagari_gpos_features, 4}, required_bengali_features, MS_MAKE_TAG('b','n','g','2'), ContextualShape_Bengali, ShapeCharGlyphProp_Bengali},
+    {{ devanagari_features, 6}, {devanagari_gpos_features, 4}, required_bengali_features, MS_MAKE_TAG('b','n','g','2'), ContextualShape_Bengali, NULL},
+    {{ devanagari_features, 6}, {devanagari_gpos_features, 4}, required_bengali_features, MS_MAKE_TAG('b','n','g','2'), ContextualShape_Bengali, ShapeCharGlyphProp_Bengali},
+    {{ devanagari_features, 6}, {devanagari_gpos_features, 4}, required_gurmukhi_features, MS_MAKE_TAG('g','u','r','2'), ContextualShape_Gurmukhi, ShapeCharGlyphProp_Gurmukhi},
+    {{ devanagari_features, 6}, {devanagari_gpos_features, 4}, required_gurmukhi_features, MS_MAKE_TAG('g','u','r','2'), ContextualShape_Gurmukhi, NULL},
+    {{ devanagari_features, 6}, {devanagari_gpos_features, 4}, required_devanagari_features, MS_MAKE_TAG('g','j','r','2'), ContextualShape_Gujarati, ShapeCharGlyphProp_Gujarati},
+    {{ devanagari_features, 6}, {devanagari_gpos_features, 4}, required_devanagari_features, MS_MAKE_TAG('g','j','r','2'), ContextualShape_Gujarati, NULL},
+    {{ devanagari_features, 6}, {devanagari_gpos_features, 4}, required_devanagari_features, MS_MAKE_TAG('g','j','r','2'), ContextualShape_Gujarati, ShapeCharGlyphProp_Gujarati},
+    {{ devanagari_features, 6}, {devanagari_gpos_features, 4}, required_oriya_features, MS_MAKE_TAG('o','r','y','2'), ContextualShape_Oriya, ShapeCharGlyphProp_Oriya},
+    {{ devanagari_features, 6}, {devanagari_gpos_features, 4}, required_oriya_features, MS_MAKE_TAG('o','r','y','2'), ContextualShape_Oriya, NULL},
+    {{ devanagari_features, 6}, {devanagari_gpos_features, 4}, required_tamil_features, MS_MAKE_TAG('t','a','m','2'), ContextualShape_Tamil, ShapeCharGlyphProp_Tamil},
+    {{ devanagari_features, 6}, {devanagari_gpos_features, 4}, required_tamil_features, MS_MAKE_TAG('t','a','m','2'), ContextualShape_Tamil, NULL},
+    {{ devanagari_features, 6}, {devanagari_gpos_features, 4}, required_telugu_features, MS_MAKE_TAG('t','e','l','2'), ContextualShape_Telugu, ShapeCharGlyphProp_Telugu},
+    {{ devanagari_features, 6}, {devanagari_gpos_features, 4}, required_telugu_features, MS_MAKE_TAG('t','e','l','2'), ContextualShape_Telugu, NULL},
+    {{ devanagari_features, 6}, {devanagari_gpos_features, 4}, required_telugu_features, MS_MAKE_TAG('k','n','d','2'), ContextualShape_Kannada, ShapeCharGlyphProp_Kannada},
+    {{ devanagari_features, 6}, {devanagari_gpos_features, 4}, required_telugu_features, MS_MAKE_TAG('k','n','d','2'), ContextualShape_Kannada, NULL},
+    {{ devanagari_features, 6}, {devanagari_gpos_features, 4}, required_telugu_features, MS_MAKE_TAG('m','l','m','2'), ContextualShape_Malayalam, ShapeCharGlyphProp_Malayalam},
+    {{ devanagari_features, 6}, {devanagari_gpos_features, 4}, required_telugu_features, MS_MAKE_TAG('m','l','m','2'), ContextualShape_Malayalam, NULL},
     {{ standard_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
-    {{ latin_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ latin_features, 2}, {latin_gpos_features, 3}, NULL, 0, NULL, NULL},
     {{ standard_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
     {{ myanmar_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
     {{ myanmar_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
     {{ standard_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
     {{ standard_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
     {{ standard_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
-    {{ khmer_features, 5}, {NULL, 0}, required_khmer_features, 0, ContextualShape_Khmer, ShapeCharGlyphProp_Khmer},
-    {{ khmer_features, 5}, {NULL, 0}, required_khmer_features, 0, ContextualShape_Khmer, ShapeCharGlyphProp_Khmer},
+    {{ khmer_features, 5}, {khmer_gpos_features, 4}, required_khmer_features, 0, ContextualShape_Khmer, ShapeCharGlyphProp_Khmer},
+    {{ khmer_features, 5}, {khmer_gpos_features, 4}, required_khmer_features, 0, ContextualShape_Khmer, ShapeCharGlyphProp_Khmer},
     {{ NULL, 0}, {NULL, 0}, NULL, 0, NULL, NULL},
     {{ NULL, 0}, {NULL, 0}, NULL, 0, NULL, NULL},
     {{ NULL, 0}, {NULL, 0}, NULL, 0, NULL, NULL},
@@ -471,9 +528,9 @@ static const ScriptShapeData ShapingData[] =
     {{ NULL, 0}, {NULL, 0}, NULL, 0, NULL, NULL},
     {{ NULL, 0}, {NULL, 0}, NULL, 0, NULL, NULL},
     {{ NULL, 0}, {NULL, 0}, NULL, 0, NULL, NULL},
-    {{ hebrew_features, 1}, {NULL, 0}, NULL, 0, ContextualShape_Hebrew, NULL},
-    {{ latin_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
-    {{ thai_features, 1}, {NULL, 0}, NULL, 0, ContextualShape_Thai, ShapeCharGlyphProp_Thai},
+    {{ hebrew_features, 1}, {hebrew_gpos_features, 2}, NULL, 0, ContextualShape_Hebrew, NULL},
+    {{ latin_features, 2}, {latin_gpos_features, 3}, NULL, 0, NULL, NULL},
+    {{ thai_features, 1}, {thai_gpos_features, 3}, NULL, 0, ContextualShape_Thai, ShapeCharGlyphProp_Thai},
 };
 
 extern scriptData scriptInformation[];
