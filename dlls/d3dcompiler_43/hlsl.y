@@ -944,6 +944,20 @@ add_expr:                 mul_expr
                             {
                                 $$ = $1;
                             }
+                        | add_expr '+' mul_expr
+                            {
+                                struct source_location loc;
+
+                                set_location(&loc, &@2);
+                                $$ = &hlsl_add($1, $3, &loc)->node;
+                            }
+                        | add_expr '-' mul_expr
+                            {
+                                struct source_location loc;
+
+                                set_location(&loc, &@2);
+                                $$ = &hlsl_sub($1, $3, &loc)->node;
+                            }
 
 shift_expr:               add_expr
                             {
