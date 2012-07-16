@@ -164,7 +164,7 @@ static HGLRC alloc_handle( struct wgl_context *context, const struct wgl_funcs *
 
 static void free_handle_ptr( struct wgl_handle *ptr )
 {
-    ptr->handle &= ~0xffff;
+    ptr->handle |= 0xffff;
     ptr->context = (struct wgl_context *)next_free;
     ptr->funcs = NULL;
     next_free = ptr;
