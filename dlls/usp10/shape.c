@@ -565,13 +565,13 @@ static LoadedFeature* load_GSUB_feature(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCac
                 language = MS_MAKE_TAG('d','f','l','t');
             attempt--;
 
-            OpenType_GSUB_GetFontFeatureTags(psc, script, language, FALSE, MS_MAKE_TAG(feat[0],feat[1],feat[2],feat[3]), 1, &tags, &cTags, &feature);
+            OpenType_GetFontFeatureTags(psc, script, language, FALSE, MS_MAKE_TAG(feat[0],feat[1],feat[2],feat[3]), 1, &tags, &cTags, &feature);
 
         } while(attempt && !feature);
 
         /* try in the default (latin) table */
         if (!feature)
-            OpenType_GSUB_GetFontFeatureTags(psc, MS_MAKE_TAG('l','a','t','n'), MS_MAKE_TAG('d','f','l','t'), FALSE, MS_MAKE_TAG(feat[0],feat[1],feat[2],feat[3]), 1, &tags, &cTags, &feature);
+            OpenType_GetFontFeatureTags(psc, MS_MAKE_TAG('l','a','t','n'), MS_MAKE_TAG('d','f','l','t'), FALSE, MS_MAKE_TAG(feat[0],feat[1],feat[2],feat[3]), 1, &tags, &cTags, &feature);
     }
 
     TRACE("Feature %s located at %p\n",debugstr_an(feat,4),feature);
@@ -3294,7 +3294,7 @@ HRESULT SHAPE_GetFontFeatureTags( HDC hdc, ScriptCache *psc,
         filter = TRUE;
     }
 
-    hr = OpenType_GSUB_GetFontFeatureTags(psc, tagScript, tagLangSys, filter, 0x00000000, cMaxTags, pFeatureTags, pcTags, NULL);
+    hr = OpenType_GetFontFeatureTags(psc, tagScript, tagLangSys, filter, 0x00000000, cMaxTags, pFeatureTags, pcTags, NULL);
 
     if (FAILED(hr))
         *pcTags = 0;

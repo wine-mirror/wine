@@ -1153,7 +1153,7 @@ static void GSUB_initialize_feature_cache(LPCVOID table, LoadedLanguage *languag
 {
     int i;
 
-    if (!language->feature_count && language->gsub_table)
+    if (language->gsub_table)
     {
         const OT_LangSys *lang = language->gsub_table;
         const GSUB_Header *header = (const GSUB_Header *)table;
@@ -1186,7 +1186,77 @@ static void GSUB_initialize_feature_cache(LPCVOID table, LoadedLanguage *languag
     }
 }
 
-HRESULT OpenType_GSUB_GetFontFeatureTags(ScriptCache *psc, OPENTYPE_TAG script_tag, OPENTYPE_TAG language_tag, BOOL filtered, OPENTYPE_TAG searchingFor, int cMaxTags, OPENTYPE_TAG *pFeatureTags, int *pcTags, LoadedFeature** feature)
+static void GPOS_expand_feature_cache(LPCVOID table, LoadedLanguage *language)
+{
+    int i, count;
+    const OT_LangSys *lang = language->gpos_table;
+    const GPOS_Header *header = (const GPOS_Header *)table;
+    const OT_FeatureList *feature_list;
+
+    if (!lang)
+        return;
+
+    count = GET_BE_WORD(lang->FeatureCount);
+    feature_list = (const OT_FeatureList*)((const BYTE*)header + GET_BE_WORD(header->FeatureList));
+
+    TRACE("%i features\n",count);
+    if (!language->feature_count)
+    {
+        language->feature_count = count;
+
+        if (language->feature_count)
+        {
+            language->features = HeapAlloc(GetProcessHeap(),0,sizeof(LoadedFeature)*language->feature_count);
+
+            for (i = 0; i < language->feature_count; i++)
+            {
+                const OT_Feature *feature;
+                int j;
+                int index = GET_BE_WORD(lang->FeatureIndex[i]);
+
+                language->features[i].tag = MS_MAKE_TAG(feature_list->FeatureRecord[index].FeatureTag[0], feature_list->FeatureRecord[index].FeatureTag[1], feature_list->FeatureRecord[index].FeatureTag[2], feature_list->FeatureRecord[index].FeatureTag[3]);
+                language->features[i].feature = ((const BYTE*)feature_list + GET_BE_WORD(feature_list->FeatureRecord[index].Feature));
+                feature = (const OT_Feature*)language->features[i].feature;
+                language->features[i].lookup_count = GET_BE_WORD(feature->LookupCount);
+                language->features[i].lookups = HeapAlloc(GetProcessHeap(),0,sizeof(WORD) * language->features[i].lookup_count);
+                for (j = 0; j < language->features[i].lookup_count; j++)
+                    language->features[i].lookups[j] = GET_BE_WORD(feature->LookupListIndex[j]);
+            }
+        }
+    }
+    else if (count)
+    {
+        language->features = HeapReAlloc(GetProcessHeap(),0,language->features, sizeof(LoadedFeature)*(language->feature_count + count));
+
+        for (i = 0; i < count; i++)
+        {
+            const OT_Feature *feature;
+            int j;
+            int index = GET_BE_WORD(lang->FeatureIndex[i]);
+            int idx = language->feature_count + i;
+
+            language->features[idx].tag = MS_MAKE_TAG(feature_list->FeatureRecord[index].FeatureTag[0], feature_list->FeatureRecord[index].FeatureTag[1], feature_list->FeatureRecord[index].FeatureTag[2], feature_list->FeatureRecord[index].FeatureTag[3]);
+            language->features[idx].feature = ((const BYTE*)feature_list + GET_BE_WORD(feature_list->FeatureRecord[index].Feature));
+            feature = (const OT_Feature*)language->features[idx].feature;
+            language->features[idx].lookup_count = GET_BE_WORD(feature->LookupCount);
+            language->features[idx].lookups = HeapAlloc(GetProcessHeap(),0,sizeof(WORD) * language->features[idx].lookup_count);
+            for (j = 0; j < language->features[idx].lookup_count; j++)
+                language->features[idx].lookups[j] = GET_BE_WORD(feature->LookupListIndex[j]);
+        }
+        language->feature_count += count;
+    }
+}
+
+static void _initialize_feature_cache(ScriptCache *psc, LoadedLanguage *language)
+{
+    if (!language->feature_count)
+    {
+        GSUB_initialize_feature_cache(psc->GSUB_Table, language);
+        GPOS_expand_feature_cache(psc->GPOS_Table, language);
+    }
+}
+
+HRESULT OpenType_GetFontFeatureTags(ScriptCache *psc, OPENTYPE_TAG script_tag, OPENTYPE_TAG language_tag, BOOL filtered, OPENTYPE_TAG searchingFor, int cMaxTags, OPENTYPE_TAG *pFeatureTags, int *pcTags, LoadedFeature** feature)
 {
     int i;
     HRESULT rc = S_OK;
@@ -1215,7 +1285,7 @@ HRESULT OpenType_GSUB_GetFontFeatureTags(ScriptCache *psc, OPENTYPE_TAG script_t
 
     _initialize_language_cache(script);
 
-    if (script->default_language.gsub_table && script->default_language.tag == language_tag)
+    if ((script->default_language.gsub_table || script->default_language.gpos_table) && script->default_language.tag == language_tag)
         language = &script->default_language;
     else
     {
@@ -1235,7 +1305,7 @@ HRESULT OpenType_GSUB_GetFontFeatureTags(ScriptCache *psc, OPENTYPE_TAG script_t
         return S_OK;
     }
 
-    GSUB_initialize_feature_cache(psc->GSUB_Table, language);
+    _initialize_feature_cache(psc, language);
 
     *pcTags = language->feature_count;
 
