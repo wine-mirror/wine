@@ -286,6 +286,34 @@ typedef struct {
     WORD LookupList;
 } GPOS_Header;
 
+typedef struct {
+    WORD StartSize;
+    WORD EndSize;
+    WORD DeltaFormat;
+    WORD DeltaValue[1];
+} OT_DeviceTable;
+
+typedef struct {
+    WORD AnchorFormat;
+    WORD XCoordinate;
+    WORD YCoordinate;
+} GPOS_AnchorFormat1;
+
+typedef struct {
+    WORD AnchorFormat;
+    WORD XCoordinate;
+    WORD YCoordinate;
+    WORD AnchorPoint;
+} GPOS_AnchorFormat2;
+
+typedef struct {
+    WORD AnchorFormat;
+    WORD XCoordinate;
+    WORD YCoordinate;
+    WORD XDeviceTable;
+    WORD YDeviceTable;
+} GPOS_AnchorFormat3;
+
 /**********
  * CMAP
  **********/
@@ -872,6 +900,76 @@ INT OpenType_apply_GSUB_lookup(LPCVOID table, INT lookup_index, WORD *glyphs, IN
 /**********
  * GPOS
  **********/
+static INT GPOS_get_device_table_value(const OT_DeviceTable *DeviceTable, WORD ppem)
+{
+    static const WORD mask[3] = {3,0xf,0xff};
+    if (DeviceTable && ppem >= GET_BE_WORD(DeviceTable->StartSize) && ppem  <= GET_BE_WORD(DeviceTable->EndSize))
+    {
+        int format = GET_BE_WORD(DeviceTable->DeltaFormat);
+        int index = ppem - GET_BE_WORD(DeviceTable->StartSize);
+        int value;
+        TRACE("device table, format %i, index %i\n",format, index);
+        index = index << format;
+        value = (DeviceTable->DeltaValue[index/sizeof(WORD)] << (index%sizeof(WORD)))&mask[format-1];
+        TRACE("offset %i, value %i\n",index, value);
+        if (value > mask[format-1]/2)
+            value = -1 * ((mask[format-1]+1) - value);
+        return value;
+    }
+    return 0;
+}
+
+static VOID GPOS_get_anchor_values(LPCVOID table, LPPOINT pt, WORD ppem)
+{
+    const GPOS_AnchorFormat1* anchor1 = (const GPOS_AnchorFormat1*)table;
+
+    switch (GET_BE_WORD(anchor1->AnchorFormat))
+    {
+        case 1:
+        {
+            TRACE("Anchor Format 1\n");
+            pt->x = (short)GET_BE_WORD(anchor1->XCoordinate);
+            pt->y = (short)GET_BE_WORD(anchor1->YCoordinate);
+            break;
+        }
+        case 2:
+        {
+            const GPOS_AnchorFormat2* anchor2 = (const GPOS_AnchorFormat2*)table;
+            TRACE("Anchor Format 2\n");
+            pt->x = (short)GET_BE_WORD(anchor2->XCoordinate);
+            pt->y = (short)GET_BE_WORD(anchor2->YCoordinate);
+            break;
+        }
+        case 3:
+        {
+            int offset;
+            const GPOS_AnchorFormat3* anchor3 = (const GPOS_AnchorFormat3*)table;
+            TRACE("Anchor Format 3\n");
+            pt->x = (short)GET_BE_WORD(anchor3->XCoordinate);
+            pt->y = (short)GET_BE_WORD(anchor3->YCoordinate);
+            offset = GET_BE_WORD(anchor3->XDeviceTable);
+            TRACE("ppem %i\n",ppem);
+            if (offset)
+            {
+                const OT_DeviceTable* DeviceTableX = NULL;
+                DeviceTableX = (const OT_DeviceTable*)((const BYTE*)anchor3 + offset);
+                pt->x += GPOS_get_device_table_value(DeviceTableX, ppem);
+            }
+            offset = GET_BE_WORD(anchor3->YDeviceTable);
+            if (offset)
+            {
+                const OT_DeviceTable* DeviceTableY = NULL;
+                DeviceTableY = (const OT_DeviceTable*)((const BYTE*)anchor3 + offset);
+                pt->y += GPOS_get_device_table_value(DeviceTableY, ppem);
+            }
+            break;
+        }
+        default:
+            ERR("Unknown Anchor Format %i\n",GET_BE_WORD(anchor1->AnchorFormat));
+            pt->x = 0;
+            pt->y = 0;
+    }
+}
 
 static INT GPOS_apply_lookup(LPOUTLINETEXTMETRICW lpotm, LPLOGFONTW lplogfont, INT* piAdvance, const OT_LookupList* lookup, INT lookup_index, const WORD *glyphs, INT glyph_index, INT write_dir, INT glyph_count, GOFFSET *pGoffset)
 {
