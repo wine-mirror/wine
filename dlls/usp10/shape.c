@@ -3264,11 +3264,11 @@ HRESULT SHAPE_GetFontLanguageTags( HDC hdc, ScriptCache *psc,
     if (psa && psc->userLang != 0)
         searching = psc->userLang;
 
-    hr = OpenType_GSUB_GetFontLanguageTags(psc, tagScript, searching, cMaxTags, pLangSysTags, pcTags, NULL);
+    hr = OpenType_GetFontLanguageTags(psc, tagScript, searching, cMaxTags, pLangSysTags, pcTags);
     if (FAILED(hr))
     {
         fellback = TRUE;
-        hr = OpenType_GSUB_GetFontLanguageTags(psc, MS_MAKE_TAG('l','a','t','n'), searching, cMaxTags, pLangSysTags, pcTags, NULL);
+        hr = OpenType_GetFontLanguageTags(psc, MS_MAKE_TAG('l','a','t','n'), searching, cMaxTags, pLangSysTags, pcTags);
     }
 
     if (FAILED(hr) || fellback)

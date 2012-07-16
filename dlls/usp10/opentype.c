@@ -992,7 +992,7 @@ static void GSUB_initialize_language_cache(LoadedScript *script)
 {
     int i;
 
-    if (!script->language_count && script->gsub_table)
+    if (script->gsub_table)
     {
         DWORD offset;
         const OT_Script* table = script->gsub_table;
@@ -1001,12 +1001,12 @@ static void GSUB_initialize_language_cache(LoadedScript *script)
         if (offset)
         {
             script->default_language.tag = MS_MAKE_TAG('d','f','l','t');
-            script->default_language.table = (const BYTE*)table + offset;
+            script->default_language.gsub_table = (const BYTE*)table + offset;
         }
 
         if (script->language_count)
         {
-            TRACE("Deflang %p, LangCount %i\n",script->default_language.table, script->language_count);
+            TRACE("Deflang %p, LangCount %i\n",script->default_language.gsub_table, script->language_count);
 
             script->languages = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(LoadedLanguage) * script->language_count);
 
@@ -1014,13 +1014,79 @@ static void GSUB_initialize_language_cache(LoadedScript *script)
             {
                 int offset = GET_BE_WORD(table->LangSysRecord[i].LangSys);
                 script->languages[i].tag = MS_MAKE_TAG(table->LangSysRecord[i].LangSysTag[0], table->LangSysRecord[i].LangSysTag[1], table->LangSysRecord[i].LangSysTag[2], table->LangSysRecord[i].LangSysTag[3]);
-                script->languages[i].table = ((const BYTE*)table + offset);
+                script->languages[i].gsub_table = ((const BYTE*)table + offset);
             }
         }
     }
 }
 
-HRESULT OpenType_GSUB_GetFontLanguageTags(ScriptCache *psc, OPENTYPE_TAG script_tag, OPENTYPE_TAG searchingFor, int cMaxTags, OPENTYPE_TAG *pLanguageTags, int *pcTags, LPCVOID* language_table)
+static void GPOS_expand_language_cache(LoadedScript *script)
+{
+    int count;
+    const OT_Script* table = script->gpos_table;
+    DWORD offset;
+
+    if (!table)
+        return;
+
+    offset = GET_BE_WORD(table->DefaultLangSys);
+    if (offset)
+        script->default_language.gpos_table = (const BYTE*)table + offset;
+
+    count = GET_BE_WORD(table->LangSysCount);
+
+    TRACE("Deflang %p, LangCount %i\n",script->default_language.gpos_table, count);
+    if (!script->language_count)
+    {
+        int i;
+        script->language_count = count;
+
+        script->languages = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(LoadedLanguage) * script->language_count);
+
+        for (i = 0; i < script->language_count; i++)
+        {
+            int offset = GET_BE_WORD(table->LangSysRecord[i].LangSys);
+            script->languages[i].tag = MS_MAKE_TAG(table->LangSysRecord[i].LangSysTag[0], table->LangSysRecord[i].LangSysTag[1], table->LangSysRecord[i].LangSysTag[2], table->LangSysRecord[i].LangSysTag[3]);
+            script->languages[i].gpos_table = ((const BYTE*)table + offset);
+        }
+    }
+    else if (count)
+    {
+        int i,j;
+        for (i = 0; i < count; i++)
+        {
+            int offset = GET_BE_WORD(table->LangSysRecord[i].LangSys);
+            OPENTYPE_TAG tag = MS_MAKE_TAG(table->LangSysRecord[i].LangSysTag[0], table->LangSysRecord[i].LangSysTag[1], table->LangSysRecord[i].LangSysTag[2], table->LangSysRecord[i].LangSysTag[3]);
+
+            for (j = 0; j < script->language_count; j++)
+            {
+                if (script->languages[j].tag == tag)
+                {
+                    script->languages[j].gpos_table = ((const BYTE*)table + offset);
+                    break;
+                }
+            }
+            if (j == script->language_count)
+            {
+                script->language_count++;
+                script->languages = HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,script->languages, sizeof(LoadedLanguage) * script->language_count);
+                script->languages[j].tag = tag;
+                script->languages[j].gpos_table = ((const BYTE*)table + offset);
+            }
+        }
+    }
+}
+
+static void _initialize_language_cache(LoadedScript *script)
+{
+    if (!script->language_count)
+    {
+        GSUB_initialize_language_cache(script);
+        GPOS_expand_language_cache(script);
+    }
+}
+
+HRESULT OpenType_GetFontLanguageTags(ScriptCache *psc, OPENTYPE_TAG script_tag, OPENTYPE_TAG searchingFor, int cMaxTags, OPENTYPE_TAG *pLanguageTags, int *pcTags)
 {
     int i;
     HRESULT rc = S_OK;
@@ -1040,7 +1106,7 @@ HRESULT OpenType_GSUB_GetFontLanguageTags(ScriptCache *psc, OPENTYPE_TAG script_
     if (!script)
         return E_INVALIDARG;
 
-    GSUB_initialize_language_cache(script);
+    _initialize_language_cache(script);
 
     if (!searchingFor && cMaxTags < script->language_count)
         rc = E_OUTOFMEMORY;
@@ -1060,15 +1126,13 @@ HRESULT OpenType_GSUB_GetFontLanguageTags(ScriptCache *psc, OPENTYPE_TAG script_
             {
                 pLanguageTags[0] = script->languages[i].tag;
                 *pcTags = 1;
-                if (language_table)
-                    *language_table = script->languages[i].table;
                 rc = S_OK;
                 break;
             }
         }
     }
 
-    if (script->default_language.table)
+    if (script->default_language.gsub_table)
     {
         if (i < cMaxTags)
             pLanguageTags[i] = script->default_language.tag;
@@ -1076,8 +1140,6 @@ HRESULT OpenType_GSUB_GetFontLanguageTags(ScriptCache *psc, OPENTYPE_TAG script_
         if (searchingFor  && FAILED(rc))
         {
             pLanguageTags[0] = script->default_language.tag;
-            if (language_table)
-                *language_table = script->default_language.table;
         }
         i++;
         *pcTags = (*pcTags) + 1;
@@ -1091,9 +1153,9 @@ static void GSUB_initialize_feature_cache(LPCVOID table, LoadedLanguage *languag
 {
     int i;
 
-    if (!language->feature_count)
+    if (!language->feature_count && language->gsub_table)
     {
-        const OT_LangSys *lang= language->table;
+        const OT_LangSys *lang = language->gsub_table;
         const GSUB_Header *header = (const GSUB_Header *)table;
         const OT_FeatureList *feature_list;
 
@@ -1151,9 +1213,9 @@ HRESULT OpenType_GSUB_GetFontFeatureTags(ScriptCache *psc, OPENTYPE_TAG script_t
             return E_INVALIDARG;
     }
 
-    GSUB_initialize_language_cache(script);
+    _initialize_language_cache(script);
 
-    if (script->default_language.table && script->default_language.tag == language_tag)
+    if (script->default_language.gsub_table && script->default_language.tag == language_tag)
         language = &script->default_language;
     else
     {

@@ -137,7 +137,8 @@ typedef struct {
 
 typedef struct {
     OPENTYPE_TAG tag;
-    LPCVOID table;
+    LPCVOID gsub_table;
+    LPCVOID gpos_table;
     INT feature_count;
     LoadedFeature *features;
 } LoadedLanguage;
@@ -236,5 +237,5 @@ DWORD OpenType_CMAP_GetGlyphIndex(HDC hdc, ScriptCache *psc, DWORD utf32c, LPWOR
 void OpenType_GDEF_UpdateGlyphProps(HDC hdc, ScriptCache *psc, const WORD *pwGlyphs, const WORD cGlyphs, WORD* pwLogClust, const WORD cChars, SCRIPT_GLYPHPROP *pGlyphProp) DECLSPEC_HIDDEN;
 INT OpenType_apply_GSUB_lookup(LPCVOID table, INT lookup_index, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count) DECLSPEC_HIDDEN;
 HRESULT OpenType_GetFontScriptTags(ScriptCache *psc, OPENTYPE_TAG searchingFor, int cMaxTags, OPENTYPE_TAG *pScriptTags, int *pcTags) DECLSPEC_HIDDEN;
-HRESULT OpenType_GSUB_GetFontLanguageTags(ScriptCache *psc, OPENTYPE_TAG script_tag, OPENTYPE_TAG searchingFor, int cMaxTags, OPENTYPE_TAG *pLanguageTags, int *pcTags, LPCVOID* language_table) DECLSPEC_HIDDEN;
+HRESULT OpenType_GetFontLanguageTags(ScriptCache *psc, OPENTYPE_TAG script_tag, OPENTYPE_TAG searchingFor, int cMaxTags, OPENTYPE_TAG *pLanguageTags, int *pcTags) DECLSPEC_HIDDEN;
 HRESULT OpenType_GSUB_GetFontFeatureTags(ScriptCache *psc, OPENTYPE_TAG script_tag, OPENTYPE_TAG language_tag, BOOL filtered, OPENTYPE_TAG searchingFor, int cMaxTags, OPENTYPE_TAG *pFeatureTags, int *pcTags, LoadedFeature** feature) DECLSPEC_HIDDEN;
