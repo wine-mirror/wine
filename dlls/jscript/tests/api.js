@@ -2545,6 +2545,7 @@ ok(Date.length == 7, "Date.length = " + Date.length);
 ok(Enumerator.length == 7, "Enumerator.length = " + Enumerator.length);
 ok(Error.length == 1, "Error.length = " + Error.length);
 ok(EvalError.length == 1, "EvalError.length = " + EvalError.length);
+ok(RegExpError.length == 1, "RegExpError.length = " + RegExpError.length);
 ok(Function.length == 1, "Function.length = " + Function.length);
 ok(GetObject.length == 2, "GetObject.length = " + GetObject.length);
 ok(Number.length == 1, "Number.length = " + Number.length);

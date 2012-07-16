@@ -108,7 +108,7 @@ testConstructor(Error, "Error");
 testConstructor(EvalError, "EvalError");
 testConstructor(RangeError, "RangeError");
 testConstructor(ReferenceError, "ReferenceError");
-//testConstructor(RegExpError, "RegExpError");
+testConstructor(RegExpError, "RegExpError");
 testConstructor(SyntaxError, "SyntaxError");
 testConstructor(TypeError, "TypeError");
 testConstructor(URIError, "URIError");

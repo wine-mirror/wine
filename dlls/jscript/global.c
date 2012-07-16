@@ -48,6 +48,7 @@ static const WCHAR NumberW[] = {'N','u','m','b','e','r',0};
 static const WCHAR ObjectW[] = {'O','b','j','e','c','t',0};
 static const WCHAR StringW[] = {'S','t','r','i','n','g',0};
 static const WCHAR RegExpW[] = {'R','e','g','E','x','p',0};
+static const WCHAR RegExpErrorW[] = {'R','e','g','E','x','p','E','r','r','o','r',0};
 static const WCHAR ActiveXObjectW[] = {'A','c','t','i','v','e','X','O','b','j','e','c','t',0};
 static const WCHAR VBArrayW[] = {'V','B','A','r','r','a','y',0};
 static const WCHAR EnumeratorW[] = {'E','n','u','m','e','r','a','t','o','r',0};
@@ -170,6 +171,14 @@ static HRESULT JSGlobal_RangeError(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
     TRACE("\n");
 
     return constructor_call(ctx->range_error_constr, flags, argc, argv, retv, ei);
+}
+
+static HRESULT JSGlobal_RegExpError(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
+        VARIANT *retv, jsexcept_t *ei)
+{
+    TRACE("\n");
+
+    return constructor_call(ctx->regexp_error_constr, flags, argc, argv, retv, ei);
 }
 
 static HRESULT JSGlobal_ReferenceError(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
@@ -1155,6 +1164,7 @@ static const builtin_prop_t JSGlobal_props[] = {
     {RangeErrorW,                JSGlobal_RangeError,                PROPF_CONSTR|1},
     {ReferenceErrorW,            JSGlobal_ReferenceError,            PROPF_CONSTR|1},
     {RegExpW,                    JSGlobal_RegExp,                    PROPF_CONSTR|2},
+    {RegExpErrorW,               JSGlobal_RegExpError,               PROPF_CONSTR|1},
     {ScriptEngineW,              JSGlobal_ScriptEngine,              PROPF_METHOD},
     {ScriptEngineBuildVersionW,  JSGlobal_ScriptEngineBuildVersion,  PROPF_METHOD},
     {ScriptEngineMajorVersionW,  JSGlobal_ScriptEngineMajorVersion,  PROPF_METHOD},
