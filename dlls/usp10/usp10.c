@@ -3176,6 +3176,8 @@ HRESULT WINAPI ScriptTextOut(const HDC hdc, SCRIPT_CACHE *psc, int x, int y, UIN
                              const int *piJustify, const GOFFSET *pGoffset)
 {
     HRESULT hr = S_OK;
+    INT i;
+    INT *lpDx;
 
     TRACE("(%p, %p, %d, %d, %04x, %p, %p, %p, %d, %p, %d, %p, %p, %p)\n",
          hdc, psc, x, y, fuOptions, lprc, psa, pwcReserved, iReserved, pwGlyphs, cGlyphs,
@@ -3189,6 +3191,45 @@ HRESULT WINAPI ScriptTextOut(const HDC hdc, SCRIPT_CACHE *psc, int x, int y, UIN
     if  (!psa->fNoGlyphIndex)                                     /* Have Glyphs?                      */
         fuOptions |= ETO_GLYPH_INDEX;                             /* Say don't do translation to glyph */
 
+    lpDx = heap_alloc(cGlyphs * sizeof(INT) * 2);
+
+    if (pGoffset)
+    {
+        for (i = 0; i < cGlyphs; i++)
+            if (!(fuOptions&ETO_PDY) && pGoffset[i].dv)
+                fuOptions |= ETO_PDY;
+    }
+    for (i = 0; i < cGlyphs; i++)
+    {
+        int idx = i;
+        if (fuOptions&ETO_PDY)
+        {
+            idx *=2;
+            lpDx[idx+1] = 0;
+        }
+        lpDx[idx] = piAdvance[i];
+    }
+    if (pGoffset)
+    {
+        for (i = 1; i < cGlyphs; i++)
+        {
+            int idx = i;
+            int prev_idx = i-1;
+            if (fuOptions&ETO_PDY)
+            {
+                idx*=2;
+                prev_idx = idx-2;
+            }
+            lpDx[prev_idx] += pGoffset[i].du;
+            lpDx[idx] -= pGoffset[i].du;
+            if (fuOptions&ETO_PDY)
+            {
+                lpDx[prev_idx+1] += pGoffset[i].dv;
+                lpDx[idx+1] -= pGoffset[i].dv;
+            }
+        }
+    }
+
     if (psa->fRTL && psa->fLogicalOrder)
     {
         int i;
@@ -3201,13 +3242,15 @@ HRESULT WINAPI ScriptTextOut(const HDC hdc, SCRIPT_CACHE *psc, int x, int y, UIN
         for (i = 0; i < cGlyphs; i++)
             rtlGlyphs[i] = pwGlyphs[cGlyphs-1-i];
 
-        if (!ExtTextOutW(hdc, x, y, fuOptions, lprc, rtlGlyphs, cGlyphs, NULL))
+        if (!ExtTextOutW(hdc, x, y, fuOptions, lprc, rtlGlyphs, cGlyphs, lpDx))
             hr = S_FALSE;
         heap_free(rtlGlyphs);
     }
     else
-        if (!ExtTextOutW(hdc, x, y, fuOptions, lprc, pwGlyphs, cGlyphs, NULL))
+        if (!ExtTextOutW(hdc, x, y, fuOptions, lprc, pwGlyphs, cGlyphs, lpDx))
             hr = S_FALSE;
+
+    heap_free(lpDx);
 
     return hr;
 }
