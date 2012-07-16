@@ -132,8 +132,17 @@ static BOOL declare_variable(struct hlsl_ir_var *decl, BOOL local)
                     "modifier '%s' invalid for local variables", debug_modifiers(invalid));
         }
     }
+    else
+    {
+        if (find_function(decl->name))
+        {
+            hlsl_report_message(decl->node.loc.file, decl->node.loc.line, decl->node.loc.col, HLSL_LEVEL_ERROR,
+                    "redefinition of '%s'", decl->name);
+            return FALSE;
+        }
+    }
     ret = add_declaration(hlsl_ctx.cur_scope, decl, local);
-    if (ret == FALSE)
+    if (!ret)
     {
         struct hlsl_ir_var *old = get_variable(hlsl_ctx.cur_scope, decl->name);
 
@@ -381,6 +390,13 @@ func_declaration:         func_prototype compound_statement
 
 func_prototype:           var_modifiers type var_identifier '(' parameters ')' semantic
                             {
+                                if (get_variable(hlsl_ctx.globals, $3))
+                                {
+                                    hlsl_report_message(hlsl_ctx.source_file, @3.first_line, @3.first_column,
+                                            HLSL_LEVEL_ERROR, "redefinition of '%s'\n", $3);
+                                    return 1;
+                                }
+
                                 $$ = new_func_decl($3, $2, $5);
                                 if (!$$)
                                 {
