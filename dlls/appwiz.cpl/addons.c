@@ -175,25 +175,31 @@ static void set_status(DWORD id)
     SendMessageW(status, WM_SETTEXT, 0, (LPARAM)buf);
 }
 
-static BOOL install_file(const WCHAR *file_name)
+enum install_res {
+    INSTALL_OK = 0,
+    INSTALL_FAILED,
+    INSTALL_NEXT,
+};
+
+static enum install_res install_file(const WCHAR *file_name)
 {
     ULONG res;
 
     res = MsiInstallProductW(file_name, NULL);
     if(res != ERROR_SUCCESS) {
         ERR("MsiInstallProduct failed: %u\n", res);
-        return FALSE;
+        return INSTALL_FAILED;
     }
 
-    return TRUE;
+    return INSTALL_OK;
 }
 
-static BOOL install_from_unix_file(const char *dir, const char *subdir, const char *file_name)
+static enum install_res install_from_unix_file(const char *dir, const char *subdir, const char *file_name)
 {
     LPWSTR dos_file_name;
     char *file_path;
     int fd, len;
-    BOOL ret;
+    enum install_res ret;
 
     static WCHAR * (CDECL *wine_get_dos_file_name)(const char*);
     static const WCHAR kernel32W[] = {'k','e','r','n','e','l','3','2','.','d','l','l',0};
@@ -201,7 +207,7 @@ static BOOL install_from_unix_file(const char *dir, const char *subdir, const ch
     len = strlen(dir);
     file_path = heap_alloc(len+strlen(subdir)+strlen(file_name)+3);
     if(!file_path)
-        return FALSE;
+        return INSTALL_FAILED;
 
     memcpy(file_path, dir, len);
     if(len && file_path[len-1] != '/' && file_path[len-1] != '\\')
@@ -217,7 +223,7 @@ static BOOL install_from_unix_file(const char *dir, const char *subdir, const ch
     if(fd == -1) {
         TRACE("%s not found\n", debugstr_a(file_path));
         heap_free(file_path);
-        return FALSE;
+        return INSTALL_NEXT;
     }
 
     close(fd);
@@ -230,7 +236,7 @@ static BOOL install_from_unix_file(const char *dir, const char *subdir, const ch
 	if(!dos_file_name) {
 	    ERR("Could not get dos file name of %s\n", debugstr_a(file_path));
             heap_free(file_path);
-	    return FALSE;
+	    return INSTALL_FAILED;
 	}
     } else { /* Windows mode */
 	UINT res;
@@ -265,16 +271,16 @@ static HKEY open_config_key(void)
     return res == ERROR_SUCCESS ? ret : NULL;
 }
 
-static BOOL install_from_registered_dir(void)
+static enum install_res install_from_registered_dir(void)
 {
     char *package_dir;
     HKEY hkey;
     DWORD res, type, size = MAX_PATH;
-    BOOL ret;
+    enum install_res ret;
 
     hkey = open_config_key();
     if(!hkey)
-        return FALSE;
+        return INSTALL_NEXT;
 
     package_dir = heap_alloc(size);
     res = RegGetValueA(hkey, NULL, addon->dir_config_key, RRF_RT_ANY, &type, (PBYTE)package_dir, &size);
@@ -283,9 +289,12 @@ static BOOL install_from_registered_dir(void)
         res = RegGetValueA(hkey, NULL, addon->dir_config_key, RRF_RT_ANY, &type, (PBYTE)package_dir, &size);
     }
     RegCloseKey(hkey);
-    if(res != ERROR_SUCCESS || (type != REG_SZ && type != REG_EXPAND_SZ)) {
+    if(res == ERROR_FILE_NOT_FOUND) {
         heap_free(package_dir);
-        return FALSE;
+        return INSTALL_NEXT;
+    } else if(res != ERROR_SUCCESS || (type != REG_SZ && type != REG_EXPAND_SZ)) {
+        heap_free(package_dir);
+        return INSTALL_FAILED;
     }
 
     TRACE("Trying %s/%s\n", debugstr_a(package_dir), debugstr_a(addon->file_name));
@@ -296,7 +305,7 @@ static BOOL install_from_registered_dir(void)
     return ret;
 }
 
-static BOOL install_from_default_dir(void)
+static enum install_res install_from_default_dir(void)
 {
     const char *data_dir, *package_dir;
     char *dir_buf = NULL;
@@ -312,15 +321,15 @@ static BOOL install_from_default_dir(void)
         strcpy(dir_buf+len, "/../");
         package_dir = dir_buf;
     }else {
-        return FALSE;
+        return INSTALL_NEXT;
     }
 
     ret = install_from_unix_file(package_dir, addon->subdir_name, addon->file_name);
     heap_free(dir_buf);
 
-    if (!ret)
+    if (ret == INSTALL_NEXT)
         ret = install_from_unix_file(INSTALL_DATADIR "/wine/", addon->subdir_name, addon->file_name);
-    if (!ret && strcmp(INSTALL_DATADIR, "/usr/share"))
+    if (ret == INSTALL_NEXT && strcmp(INSTALL_DATADIR, "/usr/share"))
         ret = install_from_unix_file("/usr/share/wine/", addon->subdir_name, addon->file_name);
     return ret;
 }
@@ -588,9 +597,9 @@ BOOL install_addon(addon_t addon_type)
      * - /usr/share/wine/$addon_subdir/
      * - download from URL stored in $url_config_key value of HKCU/Wine/Software/$config_key key
      */
-    if(!install_from_registered_dir()
-       && !install_from_default_dir()
-       && (url = get_url()))
+    if (install_from_registered_dir() == INSTALL_NEXT
+        && install_from_default_dir() == INSTALL_NEXT
+        && (url = get_url()))
         DialogBoxW(hInst, addon->dialog_template, 0, installer_proc);
 
     heap_free(url);
