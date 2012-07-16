@@ -35,6 +35,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
 
+static const REAL mm_per_inch = 25.4;
+static const REAL inch_per_point = 1.0/72.0;
+
 static Status WINAPI NotificationHook(ULONG_PTR *token)
 {
     TRACE("%p\n", token);
@@ -337,6 +340,29 @@ REAL convert_unit(REAL logpixels, GpUnit unit)
         case UnitDisplay:
         default:
             return 1.0;
+    }
+}
+
+/* converts a given unit to its value in pixels */
+REAL units_to_pixels(REAL units, GpUnit unit, REAL dpi)
+{
+    switch (unit)
+    {
+    case UnitPixel:
+    case UnitWorld:
+    case UnitDisplay:
+        return units;
+    case UnitPoint:
+        return units * dpi * inch_per_point;
+    case UnitInch:
+        return units * dpi;
+    case UnitDocument:
+        return units * dpi / 300.0; /* Per MSDN */
+    case UnitMillimeter:
+        return units * dpi / mm_per_inch;
+    default:
+        FIXME("Unhandled unit type: %d\n", unit);
+        return 0;
     }
 }
 

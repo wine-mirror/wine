@@ -118,40 +118,7 @@ typedef struct
 
 static GpStatus clone_font_family(const GpFontFamily *, GpFontFamily **);
 
-static const REAL mm_per_inch = 25.4;
-static const REAL inch_per_point = 1.0/72.0;
-
 static GpFontCollection installedFontCollection = {0};
-
-static LONG em_size_to_pixel(REAL em_size, Unit unit, LONG dpi)
-{
-    switch (unit)
-    {
-    default:
-        FIXME("Unhandled unit type: %d\n", unit);
-        return 0;
-
-    case UnitPixel:
-    case UnitWorld:
-        /* FIXME: Figure out when World != Pixel */
-        return em_size;
-    case UnitDisplay:
-        FIXME("Unknown behavior for UnitDisplay! Please report!\n");
-        /* FIXME: Figure out how this works...
-         * MSDN says that if "DISPLAY" is a monitor, then pixel should be
-         * used. That's not what I got. Tests on Windows revealed no output,
-         * and the tests in tests/font crash windows */
-        return 0;
-    case UnitPoint:
-        return em_size * dpi * inch_per_point;
-    case UnitInch:
-        return em_size * dpi;
-    case UnitDocument:
-        return em_size * dpi / 300.0; /* Per MSDN */
-    case UnitMillimeter:
-        return em_size * dpi / mm_per_inch;
-    }
-}
 
 /*******************************************************************************
  * GdipCreateFont [GDIPLUS.@]
@@ -195,7 +162,7 @@ GpStatus WINGDIPAPI GdipCreateFont(GDIPCONST GpFontFamily *fontFamily,
     stat = GdipGetFamilyName(fontFamily, lfw.lfFaceName, LANG_NEUTRAL);
     if (stat != Ok) return stat;
 
-    lfw.lfHeight = -em_size_to_pixel(emSize, unit, fontFamily->dpi);
+    lfw.lfHeight = -units_to_pixels(emSize, unit, fontFamily->dpi);
     lfw.lfWeight = style & FontStyleBold ? FW_BOLD : FW_REGULAR;
     lfw.lfItalic = style & FontStyleItalic;
     lfw.lfUnderline = style & FontStyleUnderline;
@@ -483,7 +450,7 @@ GpStatus WINGDIPAPI GdipGetLogFontA(GpFont *font, GpGraphics *graphics,
 void get_log_fontW(const GpFont *font, GpGraphics *graphics, LOGFONTW *lf)
 {
     /* FIXME: use graphics */
-    lf->lfHeight = -em_size_to_pixel(font->emSize, font->unit, font->family->dpi);
+    lf->lfHeight = -units_to_pixels(font->emSize, font->unit, font->family->dpi);
     lf->lfWidth = 0;
     lf->lfEscapement = 0;
     lf->lfOrientation = 0;
@@ -590,47 +557,24 @@ GpStatus WINGDIPAPI GdipGetFontHeightGivenDPI(GDIPCONST GpFont *font, REAL dpi, 
     GpStatus stat;
     INT style;
     UINT16 line_spacing, em_height;
-    REAL font_height, font_size;
+    REAL font_size;
 
     if (!font || !height) return InvalidParameter;
 
     TRACE("%p (%s), %f, %p\n", font,
             debugstr_w(font->family->FamilyName), dpi, height);
 
-    font_size = get_font_size(font);
+    font_size = units_to_pixels(get_font_size(font), font->unit, dpi);
     style = get_font_style(font);
     stat = GdipGetLineSpacing(font->family, style, &line_spacing);
     if (stat != Ok) return stat;
     stat = GdipGetEmHeight(font->family, style, &em_height);
     if (stat != Ok) return stat;
 
-    font_height = (REAL)line_spacing * font_size / (REAL)em_height;
+    *height = (REAL)line_spacing * font_size / (REAL)em_height;
 
-    switch (font->unit)
-    {
-        case UnitPixel:
-        case UnitWorld:
-            *height = font_height;
-            break;
-        case UnitPoint:
-            *height = font_height * dpi * inch_per_point;
-            break;
-        case UnitInch:
-            *height = font_height * dpi;
-            break;
-        case UnitDocument:
-            *height = font_height * (dpi / 300.0);
-            break;
-        case UnitMillimeter:
-            *height = font_height * (dpi / mm_per_inch);
-            break;
-        default:
-            FIXME("Unhandled unit type: %d\n", font->unit);
-            return NotImplemented;
-    }
-
-    TRACE("%s,%d(unit %d) => %f\n",
-          debugstr_w(font->family->FamilyName), font->otm.otmTextMetrics.tmHeight, font->unit, *height);
+    TRACE("%s,%d => %f\n",
+          debugstr_w(font->family->FamilyName), font->otm.otmTextMetrics.tmHeight, *height);
 
     return Ok;
 }
