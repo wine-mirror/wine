@@ -984,6 +984,7 @@ HRESULT WINAPI ScriptFreeCache(SCRIPT_CACHE *psc)
         heap_free(((ScriptCache *)*psc)->GSUB_Table);
         heap_free(((ScriptCache *)*psc)->GDEF_Table);
         heap_free(((ScriptCache *)*psc)->CMAP_Table);
+        heap_free(((ScriptCache *)*psc)->GPOS_Table);
         for (i = 0; i < ((ScriptCache *)*psc)->script_count; i++)
         {
             int j;

@@ -603,6 +603,27 @@ static VOID *load_gsub_table(HDC hdc)
     return GSUB_Table;
 }
 
+static VOID *load_gpos_table(HDC hdc)
+{
+    VOID* GPOS_Table = NULL;
+    int length = GetFontData(hdc, MS_MAKE_TAG('G', 'P', 'O', 'S'), 0, NULL, 0);
+    if (length != GDI_ERROR)
+    {
+        GPOS_Table = HeapAlloc(GetProcessHeap(),0,length);
+        GetFontData(hdc, MS_MAKE_TAG('G', 'P', 'O', 'S'), 0, GPOS_Table, length);
+        TRACE("Loaded GPOS table of %i bytes\n",length);
+    }
+    return GPOS_Table;
+}
+
+static VOID load_ot_tables(HDC hdc, ScriptCache *psc)
+{
+    if (!psc->GSUB_Table)
+        psc->GSUB_Table = load_gsub_table(hdc);
+    if (!psc->GPOS_Table)
+        psc->GPOS_Table = load_gpos_table(hdc);
+}
+
 INT SHAPE_does_GSUB_feature_apply_to_chars(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, const WCHAR *chars, INT write_dir, INT count, const char* feature)
 {
     WORD *glyphs;
@@ -957,8 +978,7 @@ static void ContextualShape_Arabic(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *p
         dirL = 1;
     }
 
-    if (!psc->GSUB_Table)
-        psc->GSUB_Table = load_gsub_table(hdc);
+    load_ot_tables(hdc, psc);
 
     context_type = HeapAlloc(GetProcessHeap(),0,cChars);
     context_shape = HeapAlloc(GetProcessHeap(),0,sizeof(INT) * cChars);
@@ -1179,8 +1199,7 @@ static void ContextualShape_Syriac(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *p
         dirL = 1;
     }
 
-    if (!psc->GSUB_Table)
-        psc->GSUB_Table = load_gsub_table(hdc);
+    load_ot_tables(hdc, psc);
 
     if (!psc->GSUB_Table)
         return;
@@ -1314,8 +1333,7 @@ static void ContextualShape_Phags_pa(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS 
         dirL = 1;
     }
 
-    if (!psc->GSUB_Table)
-        psc->GSUB_Table = load_gsub_table(hdc);
+    load_ot_tables(hdc, psc);
 
     if (!psc->GSUB_Table)
         return;
@@ -2650,8 +2668,7 @@ static void ContextualShape_Mongolian(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS
     else
         dirL = 1;
 
-    if (!psc->GSUB_Table)
-        psc->GSUB_Table = load_gsub_table(hdc);
+    load_ot_tables(hdc, psc);
 
     if (!psc->GSUB_Table)
         return;
@@ -3153,8 +3170,7 @@ void SHAPE_CharGlyphProp(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const 
 
 void SHAPE_ContextualShaping(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
 {
-    if (!psc->GSUB_Table)
-        psc->GSUB_Table = load_gsub_table(hdc);
+    load_ot_tables(hdc, psc);
 
     if (ShapingData[psa->eScript].contextProc)
         ShapingData[psa->eScript].contextProc(hdc, psc, psa, pwcChars, cChars, pwOutGlyphs, pcGlyphs, cMaxGlyphs, pwLogClust);
@@ -3168,8 +3184,7 @@ static void SHAPE_ApplyOpenTypeFeatures(HDC hdc, ScriptCache *psc, SCRIPT_ANALYS
     if (!rpRangeProperties)
         return;
 
-    if (!psc->GSUB_Table)
-        psc->GSUB_Table = load_gsub_table(hdc);
+    load_ot_tables(hdc, psc);
 
     if (!psc->GSUB_Table)
         return;
@@ -3202,8 +3217,7 @@ HRESULT SHAPE_CheckFontForRequiredFeatures(HDC hdc, ScriptCache *psc, SCRIPT_ANA
     if (!ShapingData[psa->eScript].requiredFeatures)
         return S_OK;
 
-    if (!psc->GSUB_Table)
-        psc->GSUB_Table = load_gsub_table(hdc);
+    load_ot_tables(hdc, psc);
 
     /* we need to have at least one of the required features */
     i = 0;
@@ -3225,8 +3239,7 @@ HRESULT SHAPE_GetFontScriptTags( HDC hdc, ScriptCache *psc,
     HRESULT hr;
     OPENTYPE_TAG searching = 0x00000000;
 
-    if (!psc->GSUB_Table)
-        psc->GSUB_Table = load_gsub_table(hdc);
+    load_ot_tables(hdc, psc);
 
     if (psa && scriptInformation[psa->eScript].scriptTag)
         searching = scriptInformation[psa->eScript].scriptTag;
@@ -3246,8 +3259,7 @@ HRESULT SHAPE_GetFontLanguageTags( HDC hdc, ScriptCache *psc,
     OPENTYPE_TAG searching = 0x00000000;
     BOOL fellback = FALSE;
 
-    if (!psc->GSUB_Table)
-        psc->GSUB_Table = load_gsub_table(hdc);
+    load_ot_tables(hdc, psc);
 
     if (psa && psc->userLang != 0)
         searching = psc->userLang;
@@ -3274,8 +3286,7 @@ HRESULT SHAPE_GetFontFeatureTags( HDC hdc, ScriptCache *psc,
     HRESULT hr;
     BOOL filter = FALSE;
 
-    if (!psc->GSUB_Table)
-        psc->GSUB_Table = load_gsub_table(hdc);
+    load_ot_tables(hdc, psc);
 
     if (psa && scriptInformation[psa->eScript].scriptTag)
     {

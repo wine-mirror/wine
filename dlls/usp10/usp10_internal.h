@@ -164,6 +164,7 @@ typedef struct {
     LPVOID GDEF_Table;
     LPVOID CMAP_Table;
     LPVOID CMAP_format12_Table;
+    LPVOID GPOS_Table;
     INT script_count;
     LoadedScript *scripts;
 
