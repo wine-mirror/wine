@@ -34,6 +34,16 @@ struct COMPLETE_DVD_LAYER_DESCRIPTOR
 #include <poppack.h>
 C_ASSERT(sizeof(struct COMPLETE_DVD_LAYER_DESCRIPTOR) == 22);
 
+#include <pshpack1.h>
+struct COMPLETE_DVD_MANUFACTURER_DESCRIPTOR
+{
+    DVD_DESCRIPTOR_HEADER Header;
+    DVD_MANUFACTURER_DESCRIPTOR Descriptor;
+    UCHAR Padding;
+};
+#include <poppack.h>
+C_ASSERT(sizeof(struct COMPLETE_DVD_MANUFACTURER_DESCRIPTOR) == 2053);
+
 static HINSTANCE hdll;
 static BOOL (WINAPI * pGetVolumeNameForVolumeMountPointA)(LPCSTR, LPSTR, DWORD);
 static BOOL (WINAPI * pGetVolumeNameForVolumeMountPointW)(LPCWSTR, LPWSTR, DWORD);
@@ -750,6 +760,7 @@ static void test_dvd_read_structure(HANDLE handle)
     DVD_LAYER_DESCRIPTOR dvdLayerDescriptor;
     struct COMPLETE_DVD_LAYER_DESCRIPTOR completeDvdLayerDescriptor;
     DVD_COPYRIGHT_DESCRIPTOR dvdCopyrightDescriptor;
+    struct COMPLETE_DVD_MANUFACTURER_DESCRIPTOR completeDvdManufacturerDescriptor;
 
     dvdReadStructure.BlockByteOffset.QuadPart = 0;
     dvdReadStructure.SessionId = 0;
@@ -839,6 +850,31 @@ static void test_dvd_read_structure(HANDLE handle)
             &dvdCopyrightDescriptor, i, &nbBytes, NULL);
         ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "IOCTL_DVD_READ_STRUCTURE should have failed %d %u\n", ret, GetLastError());
     }
+
+
+    /* DvdManufacturerDescriptor */
+    dvdReadStructure.Format = 4;
+
+    SetLastError(0xdeadbeef);
+
+    ret = DeviceIoControl(handle, IOCTL_DVD_READ_STRUCTURE, &dvdReadStructure, sizeof(DVD_READ_STRUCTURE),
+        &completeDvdManufacturerDescriptor, sizeof(DVD_MANUFACTURER_DESCRIPTOR), &nbBytes, NULL);
+    ok(ret || broken(GetLastError() == ERROR_NOT_READY),
+        "IOCTL_DVD_READ_STRUCTURE (DvdManufacturerDescriptor) failed, last error = %u\n", GetLastError());
+    if(!ret)
+        return;
+
+    /* Confirm there is always a header before the actual data */
+    ok( completeDvdManufacturerDescriptor.Header.Length == 0x0802, "Length is 0x%04x instead of 0x0802\n", completeDvdManufacturerDescriptor.Header.Length);
+    ok( completeDvdManufacturerDescriptor.Header.Reserved[0] == 0, "Reserved[0] is %x instead of 0\n", completeDvdManufacturerDescriptor.Header.Reserved[0]);
+    ok( completeDvdManufacturerDescriptor.Header.Reserved[1] == 0, "Reserved[1] is %x instead of 0\n", completeDvdManufacturerDescriptor.Header.Reserved[1]);
+
+    SetLastError(0xdeadbeef);
+
+    /* Basic parameter check */
+    ret = DeviceIoControl(handle, IOCTL_DVD_READ_STRUCTURE, &dvdReadStructure, sizeof(DVD_READ_STRUCTURE),
+        NULL, sizeof(DVD_MANUFACTURER_DESCRIPTOR), &nbBytes, NULL);
+    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "IOCTL_DVD_READ_STRUCTURE should have failed %d %u\n", ret, GetLastError());
 }
 
 static void test_cdrom_ioctl(void)

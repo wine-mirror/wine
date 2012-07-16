@@ -231,6 +231,13 @@ typedef struct
 } internal_dvd_layer_descriptor;
 C_ASSERT(sizeof(internal_dvd_layer_descriptor) == 22);
 
+typedef struct
+{
+    DVD_DESCRIPTOR_HEADER Header;
+    DVD_MANUFACTURER_DESCRIPTOR Descriptor;
+    UCHAR Padding;
+} internal_dvd_manufacturer_descriptor;
+C_ASSERT(sizeof(internal_dvd_manufacturer_descriptor) == 2053);
 
 static NTSTATUS CDROM_ReadTOC(int, int, CDROM_TOC*);
 static NTSTATUS CDROM_GetStatusCode(int);
@@ -2595,9 +2602,12 @@ static NTSTATUS DVD_ReadStructure(int dev, const DVD_READ_STRUCTURE *structure, 
 
     case DvdManufacturerDescriptor:
         {
-            PDVD_MANUFACTURER_DESCRIPTOR p = (PDVD_MANUFACTURER_DESCRIPTOR) layer;
+            internal_dvd_manufacturer_descriptor *p = (internal_dvd_manufacturer_descriptor*) layer;
 
-            memcpy(p->ManufacturingInformation, s.manufact.value, 2048);
+            p->Header.Length = 0x0802;
+            p->Header.Reserved[0] = 0;
+            p->Header.Reserved[1] = 0;
+            memcpy(p->Descriptor.ManufacturingInformation, s.manufact.value, 2048);
         }
         break;
 
@@ -2620,7 +2630,7 @@ static NTSTATUS DVD_ReadStructure(int dev, const DVD_READ_STRUCTURE *structure, 
         internal_dvd_layer_descriptor *xlayer;
         PDVD_COPYRIGHT_DESCRIPTOR copy;
         PDVD_DISK_KEY_DESCRIPTOR disk_key;
-        PDVD_MANUFACTURER_DESCRIPTOR manf;
+        internal_dvd_manufacturer_descriptor *manf;
     } nt_desc;
 
     nt_desc.layer = layer;
@@ -2705,8 +2715,11 @@ static NTSTATUS DVD_ReadStructure(int dev, const DVD_READ_STRUCTURE *structure, 
             break;
 
         case DvdManufacturerDescriptor:
+            nt_desc.manf->Header.Length = 0x0802;
+            nt_desc.manf->Header.Reserved[0] = 0;
+            nt_desc.manf->Header.Reserved[1] = 0;
             memcpy(
-                nt_desc.manf->ManufacturingInformation,
+                nt_desc.manf->Descriptor.ManufacturingInformation,
                 desc.manf.discManufacturingInfo,
                 2048);
             break;
