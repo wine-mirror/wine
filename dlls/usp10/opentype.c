@@ -117,76 +117,76 @@ typedef struct {
 typedef struct {
     CHAR ScriptTag[4];
     WORD Script;
-} GSUB_ScriptRecord;
+} OT_ScriptRecord;
 
 typedef struct {
     WORD ScriptCount;
-    GSUB_ScriptRecord ScriptRecord[1];
-} GSUB_ScriptList;
+    OT_ScriptRecord ScriptRecord[1];
+} OT_ScriptList;
 
 typedef struct {
     CHAR LangSysTag[4];
     WORD LangSys;
-} GSUB_LangSysRecord;
+} OT_LangSysRecord;
 
 typedef struct {
     WORD DefaultLangSys;
     WORD LangSysCount;
-    GSUB_LangSysRecord LangSysRecord[1];
-} GSUB_Script;
+    OT_LangSysRecord LangSysRecord[1];
+} OT_Script;
 
 typedef struct {
     WORD LookupOrder; /* Reserved */
     WORD ReqFeatureIndex;
     WORD FeatureCount;
     WORD FeatureIndex[1];
-} GSUB_LangSys;
+} OT_LangSys;
 
 typedef struct {
     CHAR FeatureTag[4];
     WORD Feature;
-} GSUB_FeatureRecord;
+} OT_FeatureRecord;
 
 typedef struct {
     WORD FeatureCount;
-    GSUB_FeatureRecord FeatureRecord[1];
-} GSUB_FeatureList;
+    OT_FeatureRecord FeatureRecord[1];
+} OT_FeatureList;
 
 typedef struct {
     WORD FeatureParams; /* Reserved */
     WORD LookupCount;
     WORD LookupListIndex[1];
-} GSUB_Feature;
+} OT_Feature;
 
 typedef struct {
     WORD LookupCount;
     WORD Lookup[1];
-} GSUB_LookupList;
+} OT_LookupList;
 
 typedef struct {
     WORD LookupType;
     WORD LookupFlag;
     WORD SubTableCount;
     WORD SubTable[1];
-} GSUB_LookupTable;
+} OT_LookupTable;
 
 typedef struct {
     WORD CoverageFormat;
     WORD GlyphCount;
     WORD GlyphArray[1];
-} GSUB_CoverageFormat1;
+} OT_CoverageFormat1;
 
 typedef struct {
     WORD Start;
     WORD End;
     WORD StartCoverageIndex;
-} GSUB_RangeRecord;
+} OT_RangeRecord;
 
 typedef struct {
     WORD CoverageFormat;
     WORD RangeCount;
-    GSUB_RangeRecord RangeRecord[1];
-} GSUB_CoverageFormat2;
+    OT_RangeRecord RangeRecord[1];
+} OT_CoverageFormat2;
 
 typedef struct {
     WORD SubstFormat; /* = 1 */
@@ -485,11 +485,11 @@ void OpenType_GDEF_UpdateGlyphProps(HDC hdc, ScriptCache *psc, const WORD *pwGly
 /**********
  * GSUB
  **********/
-static INT GSUB_apply_lookup(const GSUB_LookupList* lookup, INT lookup_index, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count);
+static INT GSUB_apply_lookup(const OT_LookupList* lookup, INT lookup_index, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count);
 
 static INT GSUB_is_glyph_covered(LPCVOID table , UINT glyph)
 {
-    const GSUB_CoverageFormat1* cf1;
+    const OT_CoverageFormat1* cf1;
 
     cf1 = table;
 
@@ -505,10 +505,10 @@ static INT GSUB_is_glyph_covered(LPCVOID table , UINT glyph)
     }
     else if (GET_BE_WORD(cf1->CoverageFormat) == 2)
     {
-        const GSUB_CoverageFormat2* cf2;
+        const OT_CoverageFormat2* cf2;
         int i;
         int count;
-        cf2 = (const GSUB_CoverageFormat2*)cf1;
+        cf2 = (const OT_CoverageFormat2*)cf1;
 
         count = GET_BE_WORD(cf2->RangeCount);
         TRACE("Coverage Format 2, %i ranges\n",count);
@@ -531,7 +531,7 @@ static INT GSUB_is_glyph_covered(LPCVOID table , UINT glyph)
     return -1;
 }
 
-static INT GSUB_apply_SingleSubst(const GSUB_LookupTable *look, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count)
+static INT GSUB_apply_SingleSubst(const OT_LookupTable *look, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count)
 {
     int j;
     TRACE("Single Substitution Subtable\n");
@@ -580,7 +580,7 @@ static INT GSUB_apply_SingleSubst(const GSUB_LookupTable *look, WORD *glyphs, IN
     return GSUB_E_NOGLYPH;
 }
 
-static INT GSUB_apply_MultipleSubst(const GSUB_LookupTable *look, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count)
+static INT GSUB_apply_MultipleSubst(const OT_LookupTable *look, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count)
 {
     int j;
     TRACE("Multiple Substitution Subtable\n");
@@ -628,7 +628,7 @@ static INT GSUB_apply_MultipleSubst(const GSUB_LookupTable *look, WORD *glyphs, 
     return GSUB_E_NOGLYPH;
 }
 
-static INT GSUB_apply_AlternateSubst(const GSUB_LookupTable *look, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count)
+static INT GSUB_apply_AlternateSubst(const OT_LookupTable *look, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count)
 {
     int j;
     TRACE("Alternate Substitution Subtable\n");
@@ -662,7 +662,7 @@ static INT GSUB_apply_AlternateSubst(const GSUB_LookupTable *look, WORD *glyphs,
     return GSUB_E_NOGLYPH;
 }
 
-static INT GSUB_apply_LigatureSubst(const GSUB_LookupTable *look, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count)
+static INT GSUB_apply_LigatureSubst(const OT_LookupTable *look, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count)
 {
     int j;
 
@@ -727,7 +727,7 @@ static INT GSUB_apply_LigatureSubst(const GSUB_LookupTable *look, WORD *glyphs, 
     return GSUB_E_NOGLYPH;
 }
 
-static INT GSUB_apply_ChainContextSubst(const GSUB_LookupList* lookup, const GSUB_LookupTable *look, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count)
+static INT GSUB_apply_ChainContextSubst(const OT_LookupList* lookup, const OT_LookupTable *look, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count)
 {
     int j;
     BOOL done = FALSE;
@@ -826,13 +826,13 @@ static INT GSUB_apply_ChainContextSubst(const GSUB_LookupList* lookup, const GSU
     return -1;
 }
 
-static INT GSUB_apply_lookup(const GSUB_LookupList* lookup, INT lookup_index, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count)
+static INT GSUB_apply_lookup(const OT_LookupList* lookup, INT lookup_index, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count)
 {
     int offset;
-    const GSUB_LookupTable *look;
+    const OT_LookupTable *look;
 
     offset = GET_BE_WORD(lookup->Lookup[lookup_index]);
-    look = (const GSUB_LookupTable*)((const BYTE*)lookup + offset);
+    look = (const OT_LookupTable*)((const BYTE*)lookup + offset);
     TRACE("type %i, flag %x, subtables %i\n",GET_BE_WORD(look->LookupType),GET_BE_WORD(look->LookupFlag),GET_BE_WORD(look->SubTableCount));
     switch(GET_BE_WORD(look->LookupType))
     {
@@ -855,7 +855,7 @@ static INT GSUB_apply_lookup(const GSUB_LookupList* lookup, INT lookup_index, WO
 INT OpenType_apply_GSUB_lookup(LPCVOID table, INT lookup_index, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count)
 {
     const GSUB_Header *header = (const GSUB_Header *)table;
-    const GSUB_LookupList *lookup = (const GSUB_LookupList*)((const BYTE*)header + GET_BE_WORD(header->LookupList));
+    const OT_LookupList *lookup = (const OT_LookupList*)((const BYTE*)header + GET_BE_WORD(header->LookupList));
 
     return GSUB_apply_lookup(lookup, lookup_index, glyphs, glyph_index, write_dir, glyph_count);
 }
@@ -866,9 +866,9 @@ static void GSUB_initialize_script_cache(ScriptCache *psc)
 
     if (!psc->script_count)
     {
-        const GSUB_ScriptList *script;
+        const OT_ScriptList *script;
         const GSUB_Header* header = (const GSUB_Header*)psc->GSUB_Table;
-        script = (const GSUB_ScriptList*)((const BYTE*)header + GET_BE_WORD(header->ScriptList));
+        script = (const OT_ScriptList*)((const BYTE*)header + GET_BE_WORD(header->ScriptList));
         psc->script_count = GET_BE_WORD(script->ScriptCount);
         TRACE("initializing %i scripts in this font\n",psc->script_count);
         if (psc->script_count)
@@ -925,7 +925,7 @@ static void GSUB_initialize_language_cache(LoadedScript *script)
     if (!script->language_count)
     {
         DWORD offset;
-        const GSUB_Script* table = script->table;
+        const OT_Script* table = script->table;
         script->language_count = GET_BE_WORD(table->LangSysCount);
         offset = GET_BE_WORD(table->DefaultLangSys);
         if (offset)
@@ -1023,9 +1023,9 @@ static void GSUB_initialize_feature_cache(LPCVOID table, LoadedLanguage *languag
 
     if (!language->feature_count)
     {
-        const GSUB_LangSys *lang= language->table;
+        const OT_LangSys *lang= language->table;
         const GSUB_Header *header = (const GSUB_Header *)table;
-        const GSUB_FeatureList *feature_list;
+        const OT_FeatureList *feature_list;
 
         language->feature_count = GET_BE_WORD(lang->FeatureCount);
         TRACE("%i features\n",language->feature_count);
@@ -1034,17 +1034,17 @@ static void GSUB_initialize_feature_cache(LPCVOID table, LoadedLanguage *languag
         {
             language->features = HeapAlloc(GetProcessHeap(),0,sizeof(LoadedFeature)*language->feature_count);
 
-            feature_list = (const GSUB_FeatureList*)((const BYTE*)header + GET_BE_WORD(header->FeatureList));
+            feature_list = (const OT_FeatureList*)((const BYTE*)header + GET_BE_WORD(header->FeatureList));
 
             for (i = 0; i < language->feature_count; i++)
             {
-                const GSUB_Feature *feature;
+                const OT_Feature *feature;
                 int j;
                 int index = GET_BE_WORD(lang->FeatureIndex[i]);
 
                 language->features[i].tag = MS_MAKE_TAG(feature_list->FeatureRecord[index].FeatureTag[0], feature_list->FeatureRecord[index].FeatureTag[1], feature_list->FeatureRecord[index].FeatureTag[2], feature_list->FeatureRecord[index].FeatureTag[3]);
                 language->features[i].feature = ((const BYTE*)feature_list + GET_BE_WORD(feature_list->FeatureRecord[index].Feature));
-                feature = (const GSUB_Feature*)language->features[i].feature;
+                feature = (const OT_Feature*)language->features[i].feature;
                 language->features[i].lookup_count = GET_BE_WORD(feature->LookupCount);
                 language->features[i].lookups = HeapAlloc(GetProcessHeap(),0,sizeof(WORD) * language->features[i].lookup_count);
                 for (j = 0; j < language->features[i].lookup_count; j++)
