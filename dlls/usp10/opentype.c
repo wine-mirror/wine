@@ -334,6 +334,26 @@ typedef struct {
 
 typedef struct {
     WORD PosFormat;
+    WORD Coverage;
+    WORD ValueFormat1;
+    WORD ValueFormat2;
+    WORD PairSetCount;
+    WORD PairSetOffset[1];
+} GPOS_PairPosFormat1;
+
+typedef struct {
+    WORD SecondGlyph;
+    WORD Value1[1];
+    WORD Value2[1];
+} GPOS_PairValueRecord;
+
+typedef struct {
+    WORD PairValueCount;
+    GPOS_PairValueRecord PairValueRecord[1];
+} GPOS_PairSet;
+
+typedef struct {
+    WORD PosFormat;
     WORD MarkCoverage;
     WORD BaseCoverage;
     WORD ClassCount;
@@ -1083,6 +1103,67 @@ static VOID GPOS_apply_SingleAdjustment(const OT_LookupTable *look, const WORD *
     }
 }
 
+static INT GPOS_apply_PairAdjustment(const OT_LookupTable *look, const WORD *glyphs, INT glyph_index, INT write_dir, INT glyph_count, INT ppem, LPPOINT ptAdjust, LPPOINT ptAdvance)
+{
+    int j;
+
+    TRACE("Pair Adjustment Positioning Subtable\n");
+
+    for (j = 0; j < GET_BE_WORD(look->SubTableCount); j++)
+    {
+        const GPOS_PairPosFormat1 *ppf1;
+        WORD offset = GET_BE_WORD(look->SubTable[j]);
+        ppf1 = (const GPOS_PairPosFormat1*)((const BYTE*)look+offset);
+        if (GET_BE_WORD(ppf1->PosFormat) == 1)
+        {
+            offset = GET_BE_WORD(ppf1->Coverage);
+            if (GSUB_is_glyph_covered((const BYTE*)ppf1+offset, glyphs[glyph_index]) != -1)
+            {
+                int i;
+                int count = GET_BE_WORD(ppf1->PairSetCount);
+                for (i = 0; i < count; i++)
+                {
+                    int k;
+                    int pair_count;
+                    const GPOS_PairSet *ps;
+                    offset = GET_BE_WORD(ppf1->PairSetOffset[i]);
+                    ps = (const GPOS_PairSet*)((const BYTE*)ppf1+offset);
+                    pair_count = GET_BE_WORD(ps->PairValueCount);
+                    for (k = 0; k < pair_count; k++)
+                    {
+                        if (glyphs[glyph_index+write_dir] == GET_BE_WORD(ps->PairValueRecord[k].SecondGlyph))
+                        {
+                            GPOS_ValueRecord ValueRecord1 = {0,0,0,0,0,0,0,0};
+                            GPOS_ValueRecord ValueRecord2 = {0,0,0,0,0,0,0,0};
+                            WORD ValueFormat1 = GET_BE_WORD(ppf1->ValueFormat1);
+                            WORD ValueFormat2 = GET_BE_WORD(ppf1->ValueFormat2);
+
+                            TRACE("Format 1: Found Pair %x,%x\n",glyphs[glyph_index],glyphs[glyph_index+write_dir]);
+
+                            offset = GPOS_get_value_record(ValueFormat1, ps->PairValueRecord[k].Value1, &ValueRecord1);
+                            GPOS_get_value_record(ValueFormat2, (WORD*)((const BYTE*)(ps->PairValueRecord[k].Value2)+offset), &ValueRecord2);
+                            if (ValueFormat1)
+                            {
+                                GPOS_get_value_record_offsets((const BYTE*)ppf1, &ValueRecord1,  ValueFormat1, ppem, &ptAdjust[0], &ptAdvance[0]);
+                                TRACE("Glyph 1 resulting cumulative offset is %i,%i design units\n",ptAdjust[0].x,ptAdjust[0].y);
+                            }
+                            if (ValueFormat2)
+                            {
+                                GPOS_get_value_record_offsets((const BYTE*)ppf1, &ValueRecord2,  ValueFormat2, ppem, &ptAdjust[1], &ptAdvance[1]);
+                                TRACE("Glyph 2 resulting cumulative offset is %i,%i design units\n",ptAdjust[1].x,ptAdjust[1].y);
+                                return glyph_index+2;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        else
+            FIXME("Pair Adjustment Positioning: Format %i Unhandled\n",GET_BE_WORD(ppf1->PosFormat));
+    }
+    return glyph_index+1;
+}
+
 static VOID GPOS_apply_MarkToBase(const OT_LookupTable *look, const WORD *glyphs, INT glyph_index, INT write_dir, INT glyph_count, INT ppem, LPPOINT pt)
 {
     int j;
@@ -1178,6 +1259,37 @@ static INT GPOS_apply_lookup(LPOUTLINETEXTMETRICW lpotm, LPLOGFONTW lplogfont, I
                 if (advance.y)
                     FIXME("Unhandled adjustment to Y advancement\n");
             }
+        }
+        case 2:
+        {
+            POINT advance[2]= {{0,0},{0,0}};
+            POINT adjust[2]= {{0,0},{0,0}};
+            double devX, devY;
+            int index;
+            index = GPOS_apply_PairAdjustment(look, glyphs, glyph_index, write_dir, glyph_count, ppem, adjust, advance);
+            if (adjust[0].x || adjust[0].y)
+            {
+                GPOS_convert_design_units_to_device(lpotm, lplogfont, adjust[0].x, adjust[0].y, &devX, &devY);
+                pGoffset[glyph_index].du += (int)(devX+0.5);
+                pGoffset[glyph_index].dv += (int)(devY+0.5);
+            }
+            if (advance[0].x || advance[0].y)
+            {
+                GPOS_convert_design_units_to_device(lpotm, lplogfont, advance[0].x, advance[0].y, &devX, &devY);
+                piAdvance[glyph_index] += (int)(devX+0.5);
+            }
+            if (adjust[1].x || adjust[1].y)
+            {
+                GPOS_convert_design_units_to_device(lpotm, lplogfont, adjust[1].x, adjust[1].y, &devX, &devY);
+                pGoffset[glyph_index + write_dir].du += (int)(devX+0.5);
+                pGoffset[glyph_index + write_dir].dv += (int)(devY+0.5);
+            }
+            if (advance[1].x || advance[1].y)
+            {
+                GPOS_convert_design_units_to_device(lpotm, lplogfont, advance[1].x, advance[1].y, &devX, &devY);
+                piAdvance[glyph_index + write_dir] += (int)(devX+0.5);
+            }
+            return index;
         }
         case 4:
         {
