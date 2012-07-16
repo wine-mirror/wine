@@ -625,7 +625,7 @@ HRESULT create_number_constr(script_ctx_t *ctx, jsdisp_t *object_prototype, jsdi
         return hres;
 
     number->value = 0;
-    hres = create_builtin_function(ctx, NumberConstr_value, NumberW, NULL,
+    hres = create_builtin_constructor(ctx, NumberConstr_value, NumberW, NULL,
             PROPF_CONSTR|1, &number->dispex, ret);
 
     jsdisp_release(&number->dispex);

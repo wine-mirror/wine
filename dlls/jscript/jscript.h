@@ -225,6 +225,8 @@ VARIANT_BOOL jsdisp_is_own_prop(jsdisp_t *obj, BSTR name) DECLSPEC_HIDDEN;
 
 HRESULT create_builtin_function(script_ctx_t*,builtin_invoke_t,const WCHAR*,const builtin_info_t*,DWORD,
         jsdisp_t*,jsdisp_t**) DECLSPEC_HIDDEN;
+HRESULT create_builtin_constructor(script_ctx_t*,builtin_invoke_t,const WCHAR*,const builtin_info_t*,DWORD,
+        jsdisp_t*,jsdisp_t**) DECLSPEC_HIDDEN;
 HRESULT Function_value(script_ctx_t*,vdisp_t*,WORD,unsigned,VARIANT*,VARIANT*,jsexcept_t*) DECLSPEC_HIDDEN;
 HRESULT Function_invoke(jsdisp_t*,IDispatch*,WORD,unsigned,VARIANT*,VARIANT*,jsexcept_t*);
 

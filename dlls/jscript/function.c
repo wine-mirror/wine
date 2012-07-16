@@ -639,6 +639,31 @@ HRESULT create_builtin_function(script_ctx_t *ctx, builtin_invoke_t value_proc, 
     return S_OK;
 }
 
+HRESULT create_builtin_constructor(script_ctx_t *ctx, builtin_invoke_t value_proc, const WCHAR *name,
+        const builtin_info_t *builtin_info, DWORD flags, jsdisp_t *prototype, jsdisp_t **ret)
+{
+    jsdisp_t *constr;
+    VARIANT v;
+    HRESULT hres;
+
+    static const WCHAR constructorW[] = {'c','o','n','s','t','r','u','c','t','o','r',0};
+
+    hres = create_builtin_function(ctx, value_proc, name, builtin_info, flags, prototype, &constr);
+    if(FAILED(hres))
+        return hres;
+
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = to_disp(constr);
+    hres = jsdisp_propput_name(prototype, constructorW, &v, NULL);
+    if(FAILED(hres)) {
+        jsdisp_release(constr);
+        return hres;
+    }
+
+    *ret = constr;
+    return S_OK;
+}
+
 HRESULT create_source_function(script_ctx_t *ctx, bytecode_t *code, function_code_t *func_code,
         scope_chain_t *scope_chain, jsdisp_t **ret)
 {

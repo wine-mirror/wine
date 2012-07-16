@@ -91,6 +91,8 @@ ok(Function.prototype.prototype === undefined, "Function.prototype.prototype is 
 ok(Date.prototype !== undefined, "Date.prototype is undefined");
 ok(Date.prototype.prototype === undefined, "Date.prototype is not undefined");
 
+ok(Number.prototype.constructor === Number, "Number.prototype.constructor !== Number");
+
 Function.prototype.test = true;
 ok(testFunc1.test === true, "testFunc1.test !== true");
 ok(Function.test === true, "Function.test !== true");
