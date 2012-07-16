@@ -7,7 +7,7 @@
 #define WINE_GLAPI
 #endif
 
-#define WINE_WGL_DRIVER_VERSION 2
+#define WINE_WGL_DRIVER_VERSION 3
 
 struct wgl_context;
 
@@ -17,12 +17,10 @@ struct opengl_funcs
     {
         BOOL       (WINE_GLAPI *p_wglCopyContext)(struct wgl_context *,struct wgl_context *,UINT);
         struct wgl_context * (WINE_GLAPI *p_wglCreateContext)(HDC);
-        struct wgl_context * (WINE_GLAPI *p_wglCreateContextAttribsARB)(HDC,struct wgl_context *,const int *);
         void       (WINE_GLAPI *p_wglDeleteContext)(struct wgl_context *);
         HDC        (WINE_GLAPI *p_wglGetCurrentDC)(struct wgl_context *);
         INT        (WINE_GLAPI *p_wglGetPixelFormat)(HDC);
         PROC       (WINE_GLAPI *p_wglGetProcAddress)(LPCSTR);
-        BOOL       (WINE_GLAPI *p_wglMakeContextCurrentARB)(HDC,HDC,struct wgl_context *);
         BOOL       (WINE_GLAPI *p_wglMakeCurrent)(HDC,struct wgl_context *);
         BOOL       (WINE_GLAPI *p_wglShareLists)(struct wgl_context *,struct wgl_context *);
     } wgl;
@@ -2433,6 +2431,27 @@ struct opengl_funcs
         void       (WINE_GLAPI *p_glWindowPos4sMESA)(GLshort,GLshort,GLshort,GLshort);
         void       (WINE_GLAPI *p_glWindowPos4svMESA)(const GLshort*);
         void       (WINE_GLAPI *p_glWriteMaskEXT)(GLuint,GLuint,GLenum,GLenum,GLenum,GLenum);
+        GLvoid*    (WINE_GLAPI *p_wglAllocateMemoryNV)(GLsizei,GLfloat,GLfloat,GLfloat);
+        BOOL       (WINE_GLAPI *p_wglBindTexImageARB)(HANDLE,int);
+        BOOL       (WINE_GLAPI *p_wglChoosePixelFormatARB)(HDC,const int*,const FLOAT*,UINT,int*,UINT*);
+        struct wgl_context * (WINE_GLAPI *p_wglCreateContextAttribsARB)(HDC,struct wgl_context *,const int*);
+        HANDLE     (WINE_GLAPI *p_wglCreatePbufferARB)(HDC,int,int,int,const int*);
+        BOOL       (WINE_GLAPI *p_wglDestroyPbufferARB)(HANDLE);
+        void       (WINE_GLAPI *p_wglFreeMemoryNV)(void*);
+        HDC        (WINE_GLAPI *p_wglGetCurrentReadDCARB)(void);
+        const GLubyte * (WINE_GLAPI *p_wglGetExtensionsStringARB)(HDC);
+        const GLubyte * (WINE_GLAPI *p_wglGetExtensionsStringEXT)(void);
+        HDC        (WINE_GLAPI *p_wglGetPbufferDCARB)(HANDLE);
+        BOOL       (WINE_GLAPI *p_wglGetPixelFormatAttribfvARB)(HDC,int,int,UINT,const int*,FLOAT*);
+        BOOL       (WINE_GLAPI *p_wglGetPixelFormatAttribivARB)(HDC,int,int,UINT,const int*,int*);
+        int        (WINE_GLAPI *p_wglGetSwapIntervalEXT)(void);
+        BOOL       (WINE_GLAPI *p_wglMakeContextCurrentARB)(HDC,HDC,struct wgl_context *);
+        BOOL       (WINE_GLAPI *p_wglQueryPbufferARB)(HANDLE,int,int*);
+        int        (WINE_GLAPI *p_wglReleasePbufferDCARB)(HANDLE,HDC);
+        BOOL       (WINE_GLAPI *p_wglReleaseTexImageARB)(HANDLE,int);
+        BOOL       (WINE_GLAPI *p_wglSetPbufferAttribARB)(HANDLE,const int*);
+        BOOL       (WINE_GLAPI *p_wglSetPixelFormatWINE)(HDC,int);
+        BOOL       (WINE_GLAPI *p_wglSwapIntervalEXT)(int);
     } ext;
 };
 

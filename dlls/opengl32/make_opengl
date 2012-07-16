@@ -5,12 +5,12 @@ use strict;
 #
 #   make_opengl [opengl_version]
 #
-#     - It needs the gl.spec and gl.tm files in the current directory.
-#       These files are hosted in the OpenGL extension registry at
-#       opengl.org:
+#     - It needs files from the OpenGL extension registry:
 #
 #       http://www.opengl.org/registry/api/gl.spec
 #       http://www.opengl.org/registry/api/gl.tm
+#       http://www.opengl.org/registry/api/wgl.tm
+#       http://www.opengl.org/registry/api/wglext.spec
 #
 #       If they are not found in the current directory the script will
 #       attempt to download them from there.
@@ -139,8 +139,19 @@ my %debug_conv =
      "GLDEBUGPROCARB" => "%p",
      "GLDEBUGPROCAMD" => "%p",
      "GLvdpauSurfaceNV" => "%ld",
+     "int" => "%d",
+     "unsigned int" => "%u",
+     "UINT" => "%u",
+     "DWORD" => "%u",
+     "BOOL" => "%u",
      "INT64" => "%s,wine_dbgstr_longlong(%s)",
-     "UINT64" => "%s,wine_dbgstr_longlong(%s)"
+     "UINT64" => "%s,wine_dbgstr_longlong(%s)",
+     "LPVOID" => "%p",
+     "HANDLE" => "%p",
+     "HDC" => "%p",
+     "HGLRC" => "%p",
+     "HPBUFFERARB" => "%p",
+     "HPBUFFEREXT" => "%p",
     );
 
 #
@@ -191,8 +202,12 @@ sub ConvertType($)
               "GLvdpauSurfaceNV" => "INT_PTR",
               "struct _cl_context" => "void",
               "struct _cl_event" => "void",
+              "HGLRC" => "struct wgl_context *",
               "GLDEBUGPROCARB" => "void *",
-              "GLDEBUGPROCAMD" => "void *" );
+              "GLDEBUGPROCAMD" => "void *",
+              "HPBUFFERARB" => "HANDLE",
+              "HPBUFFEREXT" => "HANDLE",
+        );
 
     foreach my $org (reverse sort keys %hash) {
 	if ($type =~ /$org/) {
@@ -235,6 +250,7 @@ sub GenerateThunk($$$$)
 
     return "" if $name eq "glDebugEntry";
     return "" if $name eq "glGetString";
+    return "" if $func_ref->[2] && $func_ref->[2] =~ /WGL_/;
 
     # If for opengl_norm.c, generate a nice heading otherwise Patrik won't be happy :-)
     # Patrik says: Well I would be even happier if a (OPENGL32.@) was added as well. Done. :-)
@@ -360,6 +376,13 @@ sub get_func_proto($$)
     return $ret;
 }
 
+sub get_func_link_name($$)
+{
+    my ($name, $func) = @_;
+    return $name if ($func->[2] =~ /^WGL_/);
+    return "wine_$name";
+}
+
 #
 # Extract and checks the number of arguments
 #
@@ -390,24 +413,31 @@ if ($version eq "1.0") {
 #
 -f "gl.spec" || system "wget http://www.opengl.org/registry/api/gl.spec" || die "cannot download gl.spec";
 -f "gl.tm" || system "wget http://www.opengl.org/registry/api/gl.tm" || die "cannot download gl.tm";
-
-#
-# Open the registry files
-#
-open(TYPES,    "gl.tm")   || die "Could not open gl.tm";
-open(REGISTRY, "gl.spec") || die "Could not open gl.spec";
+-f "wgl.tm" || system "wget http://www.opengl.org/registry/api/wgl.tm" || die "cannot download wgl.tm";
+-f "wglext.spec" || system "wget http://www.opengl.org/registry/api/wglext.spec" || die "cannot download wglext.spec";
 
 #
 # First, create a mapping between the pseudo types used in the spec file
 # and OpenGL types using the 'gl.tm' file.
 #
 my %pseudo_to_opengl = ();
-while (my $line = <TYPES>) {
-    if ($line !~ /\w*\#/) {
-	my ($pseudo, $opengl) = ($line =~ /(\w*),\*,\*,\s*(.*),\*,\*/);
-	$pseudo_to_opengl{$pseudo} = $opengl;
+
+sub load_types($)
+{
+    my $file = shift;
+    open TYPES, "<$file" or die "Could not open $file";
+    while (my $line = <TYPES>) {
+        if ($line !~ /\w*\#/) {
+            my ($pseudo, $opengl) = ($line =~ /(\w*),\*,\*,\s*(.*),\*,\*/);
+            $pseudo_to_opengl{$pseudo} = $opengl;
+        }
     }
+    close TYPES;
 }
+
+load_types( "wgl.tm" );
+load_types( "gl.tm" );
+
 # This is to override the 'void' -> '*' bogus conversion
 $pseudo_to_opengl{"void"} = "void";
 $pseudo_to_opengl{"sync"} = "GLvoid*";
@@ -579,7 +609,9 @@ my %ext_functions  =
                                                 [ "GLvoid *", "pointer" ] ], "GL_SGIS_multitexture" ],
     "glSelectTextureSGIS" => [ "void", [ [ "GLenum", "target" ] ], "GL_SGIS_multitexture" ],
     "glSelectTextureCoordSetSGIS" => [ "void", [ [ "GLenum", "target" ] ], "GL_SGIS_multitexture" ],
-    "glDeleteObjectBufferATI" => [ "void", [ [ "GLuint", "buffer" ] ], "GL_ATI_vertex_array_object" ]
+    "glDeleteObjectBufferATI" => [ "void", [ [ "GLuint", "buffer" ] ], "GL_ATI_vertex_array_object" ],
+    "wglSetPixelFormatWINE" => [ "BOOL", [ [ "HDC", "hdc" ],
+                                           [ "int", "format" ] ], "WGL_WINE_pixel_format_passthrough" ],
    );
 
 
@@ -589,26 +621,39 @@ my %wgl_functions =
                                     [ "struct wgl_context *", "dst" ],
                                     [ "UINT", "mask" ] ] ],
     "wglCreateContext" => [ "struct wgl_context *", [ [ "HDC", "hdc" ] ] ],
-    "wglCreateContextAttribsARB" => [ "struct wgl_context *", [ [ "HDC", "hdc" ],
-                                                                [ "struct wgl_context *", "share_ctx" ],
-                                                                [ "const int *", "attribs" ] ] ],
     "wglDeleteContext" => [ "void", [ [ "struct wgl_context *", "context" ] ] ],
     "wglGetCurrentDC" => [ "HDC", [ [ "struct wgl_context *", "context" ] ] ],
     "wglGetPixelFormat" => [ "INT", [ [ "HDC", "hdc" ] ] ],
     "wglGetProcAddress" => [ "PROC", [ [ "LPCSTR", "name" ] ] ],
-    "wglMakeContextCurrentARB" => [ "BOOL", [ [ "HDC", "draw_hdc" ],
-                                              [ "HDC", "read_hdc" ],
-                                              [ "struct wgl_context *", "context" ] ] ],
     "wglMakeCurrent" => [ "BOOL", [ [ "HDC", "hdc" ],
                                     [ "struct wgl_context *", "context" ] ] ],
     "wglShareLists" => [ "BOOL", [ [ "struct wgl_context *", "org" ],
                                    [ "struct wgl_context *", "dst" ] ] ],
    );
 
-my @arg_names;
-my %arg_types;
-while (my $line = <REGISTRY>) {
-    if ($line =~ /^\w*\(.*\)/) {
+my %supported_wgl_extensions =
+   (
+    "WGL_ARB_create_context" => 1,
+    "WGL_ARB_extensions_string" => 1,
+    "WGL_ARB_make_current_read" => 1,
+    "WGL_ARB_pbuffer" => 1,
+    "WGL_ARB_pixel_format" => 1,
+    "WGL_ARB_render_texture" => 1,
+    "WGL_EXT_extensions_string" => 1,
+    "WGL_EXT_swap_control" => 1,
+    "WGL_NV_vertex_array_range" => 1,
+    "WGL_WINE_pixel_format_passthrough" => 1,
+   );
+
+sub parse_registry_file($)
+{
+    my $file = shift;
+    my @arg_names;
+    my %arg_types;
+    open REGISTRY, "<$file" or die "cannot open $file";
+    while (my $line = <REGISTRY>) {
+        next unless ($line =~ /^\w*\(.*\)/);
+
 	# Get the function name (NOTE: the 'gl' prefix needs to be added later)
 	my ($funcname, $args) = ($line =~ /^(\w*)\((.*)\)/);
 	# and the argument names
@@ -692,17 +737,19 @@ while (my $line = <REGISTRY>) {
 	# Now, put in one or the other hash table
 	if ($norm_categories{$category}) {
 	    $norm_functions{"gl$funcname"} = [ $ret_type, $arg_ref ];
+        } elsif ($file =~ /^wgl/) {
+            if (defined $supported_wgl_extensions{"WGL_$category"}) {
+                $ext_functions{"wgl$funcname"} = [ $ret_type, $arg_ref, "WGL_$category" ];
+            }
 	} else {
 	    $ext_functions{"gl$funcname"} = [ $ret_type, $arg_ref, "GL_$category" ];
 	}
     }
+    close REGISTRY;
 }
 
-#
-# Clean up the input files
-#
-close(TYPES);
-close(REGISTRY);
+parse_registry_file( "gl.spec" );
+parse_registry_file( "wglext.spec" );
 
 #
 # Get the current wgl_driver.h version
@@ -866,6 +913,8 @@ print EXT "
 #include <stdarg.h>
 #include \"opengl_ext.h\"
 #include \"winternl.h\"
+#define WGL_WGLEXT_PROTOTYPES
+#include \"wine/wglext.h\"
 #include \"wine/wgl_driver.h\"
 #include \"wine/debug.h\"
 
@@ -876,18 +925,18 @@ WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 # The thunks themselves....
 my $count = keys %ext_functions;
 print EXT "const int extension_registry_size = $count;\n";
-print EXT "\n/* The thunks themselves....*/";
 foreach (sort keys %ext_functions) {
-    print EXT "\nstatic ", GenerateThunk($_, $ext_functions{$_}, 0, "ext");
+    my $string = GenerateThunk($_, $ext_functions{$_}, 0, "ext");
+    print EXT "\nstatic $string" if $string;
 }
 
 # Then the table giving the string <-> function correspondence */
-print EXT "\n\n/* The table giving the correspondence between names and functions */\n";
-print EXT "const OpenGL_extension extension_registry[$count] = {\n";
+print EXT "\nconst OpenGL_extension extension_registry[$count] = {\n";
 my $i = 0;
 foreach (sort keys %ext_functions) {
     my $func_ref = $ext_functions{$_};
-    print EXT "  { \"$_\", \"$func_ref->[2]\", wine_$_ }";
+    my $link_name = get_func_link_name( $_, $func_ref );
+    print EXT "  { \"$_\", \"$func_ref->[2]\", $link_name }";
     if ($i != $count-1) {
 	print EXT ",";
     }

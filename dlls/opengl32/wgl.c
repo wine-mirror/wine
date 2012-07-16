@@ -39,6 +39,8 @@
 #undef near
 #include <GL/glu.h>
 #endif
+#define WGL_WGLEXT_PROTOTYPES
+#include "wine/wglext.h"
 #include "wine/gdi_driver.h"
 #include "wine/wgl_driver.h"
 #include "wine/library.h"
@@ -262,18 +264,20 @@ BOOL WINAPI wglMakeCurrent(HDC hdc, HGLRC hglrc)
 }
 
 /***********************************************************************
- *		wglCreateContextAttribsARB  (wrapper for the extension function returned by the driver)
+ *		wglCreateContextAttribsARB
+ *
+ * Provided by the WGL_ARB_create_context extension.
  */
-static HGLRC WINAPI wglCreateContextAttribsARB( HDC hdc, HGLRC share, const int *attribs )
+HGLRC WINAPI wglCreateContextAttribsARB( HDC hdc, HGLRC share, const int *attribs )
 {
     HGLRC ret = 0;
     struct wgl_context *context;
     struct wgl_handle *share_ptr = NULL;
     struct opengl_funcs *funcs = get_dc_funcs( hdc );
 
-    if (!funcs) return 0;
+    if (!funcs || !funcs->ext.p_wglCreateContextAttribsARB) return 0;
     if (share && !(share_ptr = get_handle_ptr( share ))) return 0;
-    if ((context = funcs->wgl.p_wglCreateContextAttribsARB( hdc, share_ptr ? share_ptr->context : NULL,
+    if ((context = funcs->ext.p_wglCreateContextAttribsARB( hdc, share_ptr ? share_ptr->context : NULL,
                                                             attribs )))
     {
         ret = alloc_handle( context, funcs );
@@ -285,9 +289,11 @@ static HGLRC WINAPI wglCreateContextAttribsARB( HDC hdc, HGLRC share, const int 
 }
 
 /***********************************************************************
- *		wglMakeContextCurrentARB  (wrapper for the extension function returned by the driver)
+ *		wglMakeContextCurrentARB
+ *
+ * Provided by the WGL_ARB_make_current_read extension.
  */
-static BOOL WINAPI wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, HGLRC hglrc )
+BOOL WINAPI wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, HGLRC hglrc )
 {
     BOOL ret = TRUE;
     struct wgl_handle *ptr, *prev = get_current_handle_ptr();
@@ -297,7 +303,8 @@ static BOOL WINAPI wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, HGLRC h
         if (!(ptr = get_handle_ptr( hglrc ))) return FALSE;
         if (!ptr->tid || ptr->tid == GetCurrentThreadId())
         {
-            ret = ptr->funcs->wgl.p_wglMakeContextCurrentARB( draw_hdc, read_hdc, ptr->context );
+            ret = (ptr->funcs->ext.p_wglMakeContextCurrentARB &&
+                   ptr->funcs->ext.p_wglMakeContextCurrentARB( draw_hdc, read_hdc, ptr->context ));
             if (ret)
             {
                 if (prev) prev->tid = 0;
@@ -321,6 +328,19 @@ static BOOL WINAPI wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, HGLRC h
         NtCurrentTeb()->glTable = &null_opengl_funcs;
     }
     return ret;
+}
+
+/***********************************************************************
+ *		wglGetCurrentReadDCARB
+ *
+ * Provided by the WGL_ARB_make_current_read extension.
+ */
+HDC WINAPI wglGetCurrentReadDCARB(void)
+{
+    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+
+    if (!funcs->ext.p_wglGetCurrentReadDCARB) return 0;
+    return funcs->ext.p_wglGetCurrentReadDCARB();
 }
 
 /***********************************************************************
@@ -666,16 +686,13 @@ static BOOL is_extension_supported(const char* extension)
     return FALSE;
 }
 
-static const OpenGL_extension wgl_extensions[] =
-{
-    { "wglCreateContextAttribsARB", "WGL_ARB_create_context", wglCreateContextAttribsARB },
-    { "wglMakeContextCurrentARB", "WGL_ARB_make_current_read", wglMakeContextCurrentARB },
-};
-
 /***********************************************************************
  *		wglGetProcAddress (OPENGL32.@)
  */
-PROC WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
+PROC WINAPI wglGetProcAddress(LPCSTR lpszProc)
+{
+  struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  void **func_ptr;
   void *local_func;
   OpenGL_extension  ext;
   const OpenGL_extension *ext_ret;
@@ -699,30 +716,15 @@ PROC WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
   ext.name = lpszProc;
   ext_ret = bsearch(&ext, extension_registry, extension_registry_size,
                     sizeof(OpenGL_extension), compar);
+  if (!ext_ret)
+  {
+      WARN("Extension '%s' not defined in opengl32.dll's function table!\n", lpszProc);
+      return NULL;
+  }
 
-  /* If nothing was found, we are looking for a WGL extension or an unknown GL extension. */
-  if (ext_ret == NULL) {
-    /* If the function name starts with a 'w', it is a WGL extension */
-    if(lpszProc[0] == 'w')
-    {
-        local_func = context->funcs->wgl.p_wglGetProcAddress( lpszProc );
-        if (local_func == (void *)1)  /* special function that needs a wrapper */
-        {
-            ext_ret = bsearch( &ext, wgl_extensions, sizeof(wgl_extensions)/sizeof(wgl_extensions[0]),
-                               sizeof(OpenGL_extension), compar );
-            if (ext_ret) return ext_ret->func;
-
-            FIXME( "wrapper missing for %s\n", lpszProc );
-            return NULL;
-        }
-        return local_func;
-    }
-
-    /* We are dealing with an unknown GL extension */
-    WARN("Extension '%s' not defined in opengl32.dll's function table!\n", lpszProc);
-    return NULL;
-  } else { /* We are looking for an OpenGL extension */
-
+  func_ptr = (void **)&funcs->ext + (ext_ret - extension_registry);
+  if (!*func_ptr)
+  {
     /* Check if the GL extension required by the function is available */
     if(!is_extension_supported(ext_ret->extension)) {
         WARN("Extension '%s' required by function '%s' not supported!\n", ext_ret->extension, lpszProc);
@@ -754,13 +756,12 @@ PROC WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
       }
 
       return ret;
-    } else {
-      struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-      *((void **)&funcs->ext + (ext_ret - extension_registry)) = local_func;
-      TRACE("returning function (%p)\n", ext_ret->func);
-      return ext_ret->func;
     }
+    *func_ptr = local_func;
   }
+
+  TRACE("returning function (%p)\n", ext_ret->func);
+  return ext_ret->func;
 }
 
 /***********************************************************************
@@ -804,6 +805,249 @@ BOOL WINAPI wglSwapLayerBuffers(HDC hdc,
   }
 
   return TRUE;
+}
+
+/***********************************************************************
+ *		wglAllocateMemoryNV
+ *
+ * Provided by the WGL_NV_vertex_array_range extension.
+ */
+void * WINAPI wglAllocateMemoryNV( GLsizei size, GLfloat readfreq, GLfloat writefreq, GLfloat priority )
+{
+    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+
+    if (!funcs->ext.p_wglAllocateMemoryNV) return NULL;
+    return funcs->ext.p_wglAllocateMemoryNV( size, readfreq, writefreq, priority );
+}
+
+/***********************************************************************
+ *		wglFreeMemoryNV
+ *
+ * Provided by the WGL_NV_vertex_array_range extension.
+ */
+void WINAPI wglFreeMemoryNV( void *pointer )
+{
+    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+
+    if (funcs->ext.p_wglFreeMemoryNV) funcs->ext.p_wglFreeMemoryNV( pointer );
+}
+
+/***********************************************************************
+ *		wglBindTexImageARB
+ *
+ * Provided by the WGL_ARB_render_texture extension.
+ */
+BOOL WINAPI wglBindTexImageARB( HPBUFFERARB handle, int buffer )
+{
+    /* FIXME: get functions from pbuffer handle */
+    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+
+    if (!funcs->ext.p_wglBindTexImageARB) return FALSE;
+    return funcs->ext.p_wglBindTexImageARB( handle, buffer );
+}
+
+/***********************************************************************
+ *		wglReleaseTexImageARB
+ *
+ * Provided by the WGL_ARB_render_texture extension.
+ */
+BOOL WINAPI wglReleaseTexImageARB( HPBUFFERARB handle, int buffer )
+{
+    /* FIXME: get functions from pbuffer handle */
+    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+
+    if (!funcs->ext.p_wglReleaseTexImageARB) return FALSE;
+    return funcs->ext.p_wglReleaseTexImageARB( handle, buffer );
+}
+
+/***********************************************************************
+ *		wglSetPbufferAttribARB
+ *
+ * Provided by the WGL_ARB_render_texture extension.
+ */
+BOOL WINAPI wglSetPbufferAttribARB( HPBUFFERARB handle, const int *attribs )
+{
+    /* FIXME: get functions from pbuffer handle */
+    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+
+    if (!funcs->ext.p_wglSetPbufferAttribARB) return FALSE;
+    return funcs->ext.p_wglSetPbufferAttribARB( handle, attribs );
+}
+
+/***********************************************************************
+ *		wglChoosePixelFormatARB
+ *
+ * Provided by the WGL_ARB_pixel_format extension.
+ */
+BOOL WINAPI wglChoosePixelFormatARB( HDC hdc, const int *iattribs, const FLOAT *fattribs,
+                                     UINT max, int *formats, UINT *count )
+{
+    const struct opengl_funcs *funcs = get_dc_funcs( hdc );
+
+    if (!funcs || !funcs->ext.p_wglChoosePixelFormatARB) return FALSE;
+    return funcs->ext.p_wglChoosePixelFormatARB( hdc, iattribs, fattribs, max, formats, count );
+}
+
+/***********************************************************************
+ *		wglGetPixelFormatAttribivARB
+ *
+ * Provided by the WGL_ARB_pixel_format extension.
+ */
+BOOL WINAPI wglGetPixelFormatAttribivARB( HDC hdc, int format, int layer, UINT count, const int *attribs,
+                                          int *values )
+{
+    const struct opengl_funcs *funcs = get_dc_funcs( hdc );
+
+    if (!funcs || !funcs->ext.p_wglGetPixelFormatAttribivARB) return FALSE;
+    return funcs->ext.p_wglGetPixelFormatAttribivARB( hdc, format, layer, count, attribs, values );
+}
+
+/***********************************************************************
+ *		wglGetPixelFormatAttribfvARB
+ *
+ * Provided by the WGL_ARB_pixel_format extension.
+ */
+BOOL WINAPI wglGetPixelFormatAttribfvARB( HDC hdc, int format, int layer, UINT count, const int *attribs,
+                                          FLOAT *values )
+{
+    const struct opengl_funcs *funcs = get_dc_funcs( hdc );
+
+    if (!funcs || !funcs->ext.p_wglGetPixelFormatAttribfvARB) return FALSE;
+    return funcs->ext.p_wglGetPixelFormatAttribfvARB( hdc, format, layer, count, attribs, values );
+}
+
+/***********************************************************************
+ *		wglCreatePbufferARB
+ *
+ * Provided by the WGL_ARB_pbuffer extension.
+ */
+HPBUFFERARB WINAPI wglCreatePbufferARB( HDC hdc, int format, int width, int height, const int *attribs )
+{
+    const struct opengl_funcs *funcs = get_dc_funcs( hdc );
+
+    if (!funcs || !funcs->ext.p_wglCreatePbufferARB) return 0;
+    return funcs->ext.p_wglCreatePbufferARB( hdc, format, width, height, attribs );
+}
+
+/***********************************************************************
+ *		wglGetPbufferDCARB
+ *
+ * Provided by the WGL_ARB_pbuffer extension.
+ */
+HDC WINAPI wglGetPbufferDCARB( HPBUFFERARB handle )
+{
+    /* FIXME: get functions from pbuffer handle */
+    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+
+    if (!funcs->ext.p_wglGetPbufferDCARB) return 0;
+    return funcs->ext.p_wglGetPbufferDCARB( handle );
+}
+
+/***********************************************************************
+ *		wglReleasePbufferDCARB
+ *
+ * Provided by the WGL_ARB_pbuffer extension.
+ */
+int WINAPI wglReleasePbufferDCARB( HPBUFFERARB handle, HDC hdc )
+{
+    /* FIXME: get functions from pbuffer handle */
+    const struct opengl_funcs *funcs = get_dc_funcs( hdc );
+
+    if (!funcs || !funcs->ext.p_wglReleasePbufferDCARB) return 0;
+    return funcs->ext.p_wglReleasePbufferDCARB( handle, hdc );
+}
+
+/***********************************************************************
+ *		wglDestroyPbufferARB
+ *
+ * Provided by the WGL_ARB_pbuffer extension.
+ */
+BOOL WINAPI wglDestroyPbufferARB( HPBUFFERARB handle )
+{
+    /* FIXME: get functions from pbuffer handle */
+    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+
+    if (!funcs->ext.p_wglDestroyPbufferARB) return FALSE;
+    return funcs->ext.p_wglDestroyPbufferARB( handle );
+}
+
+/***********************************************************************
+ *		wglQueryPbufferARB
+ *
+ * Provided by the WGL_ARB_pbuffer extension.
+ */
+BOOL WINAPI wglQueryPbufferARB( HPBUFFERARB handle, int attrib, int *value )
+{
+    /* FIXME: get functions from pbuffer handle */
+    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+
+    if (!funcs->ext.p_wglQueryPbufferARB) return FALSE;
+    return funcs->ext.p_wglQueryPbufferARB( handle, attrib, value );
+}
+
+/***********************************************************************
+ *		wglGetExtensionsStringARB
+ *
+ * Provided by the WGL_ARB_extensions_string extension.
+ */
+const char * WINAPI wglGetExtensionsStringARB( HDC hdc )
+{
+    const struct opengl_funcs *funcs = get_dc_funcs( hdc );
+
+    if (!funcs || !funcs->ext.p_wglGetExtensionsStringARB) return NULL;
+    return (const char *)funcs->ext.p_wglGetExtensionsStringARB( hdc );
+}
+
+/***********************************************************************
+ *		wglGetExtensionsStringEXT
+ *
+ * Provided by the WGL_EXT_extensions_string extension.
+ */
+const char * WINAPI wglGetExtensionsStringEXT(void)
+{
+    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+
+    if (!funcs->ext.p_wglGetExtensionsStringEXT) return NULL;
+    return (const char *)funcs->ext.p_wglGetExtensionsStringEXT();
+}
+
+/***********************************************************************
+ *		wglSwapIntervalEXT
+ *
+ * Provided by the WGL_EXT_swap_control extension.
+ */
+BOOL WINAPI wglSwapIntervalEXT( int interval )
+{
+    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+
+    if (!funcs->ext.p_wglSwapIntervalEXT) return FALSE;
+    return funcs->ext.p_wglSwapIntervalEXT( interval );
+}
+
+/***********************************************************************
+ *		wglGetSwapIntervalEXT
+ *
+ * Provided by the WGL_EXT_swap_control extension.
+ */
+int WINAPI wglGetSwapIntervalEXT(void)
+{
+    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+
+    if (!funcs->ext.p_wglGetSwapIntervalEXT) return FALSE;
+    return funcs->ext.p_wglGetSwapIntervalEXT();
+}
+
+/***********************************************************************
+ *		wglSetPixelFormatWINE
+ *
+ * Provided by the WGL_WINE_pixel_format_passthrough extension.
+ */
+BOOL WINAPI wglSetPixelFormatWINE( HDC hdc, int format )
+{
+    const struct opengl_funcs *funcs = get_dc_funcs( hdc );
+
+    if (!funcs || !funcs->ext.p_wglSetPixelFormatWINE) return FALSE;
+    return funcs->ext.p_wglSetPixelFormatWINE( hdc, format );
 }
 
 /***********************************************************************

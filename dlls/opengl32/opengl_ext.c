@@ -5,14 +5,15 @@
 #include <stdarg.h>
 #include "opengl_ext.h"
 #include "winternl.h"
+#define WGL_WGLEXT_PROTOTYPES
+#include "wine/wglext.h"
 #include "wine/wgl_driver.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 
-const int extension_registry_size = 2064;
+const int extension_registry_size = 2085;
 
-/* The thunks themselves....*/
 static void WINAPI wine_glActiveProgramEXT( GLuint program ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", program );
@@ -12397,9 +12398,7 @@ static void WINAPI wine_glWriteMaskEXT( GLuint res, GLuint in, GLenum outX, GLen
   funcs->ext.p_glWriteMaskEXT( res, in, outX, outY, outZ, outW );
 }
 
-
-/* The table giving the correspondence between names and functions */
-const OpenGL_extension extension_registry[2064] = {
+const OpenGL_extension extension_registry[2085] = {
   { "glActiveProgramEXT", "GL_EXT_separate_shader_objects", wine_glActiveProgramEXT },
   { "glActiveShaderProgram", "GL_ARB_separate_shader_objects", wine_glActiveShaderProgram },
   { "glActiveStencilFaceEXT", "GL_EXT_stencil_two_side", wine_glActiveStencilFaceEXT },
@@ -14463,5 +14462,26 @@ const OpenGL_extension extension_registry[2064] = {
   { "glWindowPos4ivMESA", "GL_MESA_window_pos", wine_glWindowPos4ivMESA },
   { "glWindowPos4sMESA", "GL_MESA_window_pos", wine_glWindowPos4sMESA },
   { "glWindowPos4svMESA", "GL_MESA_window_pos", wine_glWindowPos4svMESA },
-  { "glWriteMaskEXT", "GL_EXT_vertex_shader", wine_glWriteMaskEXT }
+  { "glWriteMaskEXT", "GL_EXT_vertex_shader", wine_glWriteMaskEXT },
+  { "wglAllocateMemoryNV", "WGL_NV_vertex_array_range", wglAllocateMemoryNV },
+  { "wglBindTexImageARB", "WGL_ARB_render_texture", wglBindTexImageARB },
+  { "wglChoosePixelFormatARB", "WGL_ARB_pixel_format", wglChoosePixelFormatARB },
+  { "wglCreateContextAttribsARB", "WGL_ARB_create_context", wglCreateContextAttribsARB },
+  { "wglCreatePbufferARB", "WGL_ARB_pbuffer", wglCreatePbufferARB },
+  { "wglDestroyPbufferARB", "WGL_ARB_pbuffer", wglDestroyPbufferARB },
+  { "wglFreeMemoryNV", "WGL_NV_vertex_array_range", wglFreeMemoryNV },
+  { "wglGetCurrentReadDCARB", "WGL_ARB_make_current_read", wglGetCurrentReadDCARB },
+  { "wglGetExtensionsStringARB", "WGL_ARB_extensions_string", wglGetExtensionsStringARB },
+  { "wglGetExtensionsStringEXT", "WGL_EXT_extensions_string", wglGetExtensionsStringEXT },
+  { "wglGetPbufferDCARB", "WGL_ARB_pbuffer", wglGetPbufferDCARB },
+  { "wglGetPixelFormatAttribfvARB", "WGL_ARB_pixel_format", wglGetPixelFormatAttribfvARB },
+  { "wglGetPixelFormatAttribivARB", "WGL_ARB_pixel_format", wglGetPixelFormatAttribivARB },
+  { "wglGetSwapIntervalEXT", "WGL_EXT_swap_control", wglGetSwapIntervalEXT },
+  { "wglMakeContextCurrentARB", "WGL_ARB_make_current_read", wglMakeContextCurrentARB },
+  { "wglQueryPbufferARB", "WGL_ARB_pbuffer", wglQueryPbufferARB },
+  { "wglReleasePbufferDCARB", "WGL_ARB_pbuffer", wglReleasePbufferDCARB },
+  { "wglReleaseTexImageARB", "WGL_ARB_render_texture", wglReleaseTexImageARB },
+  { "wglSetPbufferAttribARB", "WGL_ARB_render_texture", wglSetPbufferAttribARB },
+  { "wglSetPixelFormatWINE", "WGL_WINE_pixel_format_passthrough", wglSetPixelFormatWINE },
+  { "wglSwapIntervalEXT", "WGL_EXT_swap_control", wglSwapIntervalEXT }
 };

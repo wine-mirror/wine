@@ -111,14 +111,6 @@ WINE_DECLARE_DEBUG_CHANNEL(fps);
 #define GLX_FLOAT_COMPONENTS_NV           0x20B0
 
 
-typedef struct wine_glextension {
-    const char *extName;
-    struct {
-        const char *funcName;
-        void *funcAddress;
-    } extEntryPoints[9];
-} WineGLExtension;
-
 struct WineGLInfo {
     const char *glVersion;
     char *glExtensions;
@@ -215,10 +207,6 @@ static struct opengl_funcs opengl_funcs;
 #define USE_GL_FUNC(name) #name,
 static const char *opengl_func_names[] = { ALL_WGL_FUNCS };
 #undef USE_GL_FUNC
-
-#define MAX_EXTENSIONS 16
-static const WineGLExtension *WineGLExtensionList[MAX_EXTENSIONS];
-static int WineGLExtensionListSize;
 
 static void X11DRV_WineGL_LoadExtensions(void);
 static WineGLPixelFormat* ConvertPixelFormatWGLtoGLX(Display *display, int iPixelFormat, BOOL AllowOffscreen, int *fmt_count);
@@ -1506,7 +1494,7 @@ static void glxdrv_wglDeleteContext(struct wgl_context *ctx)
  *
  * For OpenGL32 wglGetCurrentReadDCARB.
  */
-static HDC WINAPI X11DRV_wglGetCurrentReadDCARB(void) 
+static HDC X11DRV_wglGetCurrentReadDCARB(void)
 {
     HDC ret = 0;
     struct wgl_context *ctx = NtCurrentTeb()->glContext;
@@ -1522,32 +1510,8 @@ static HDC WINAPI X11DRV_wglGetCurrentReadDCARB(void)
  */
 static PROC glxdrv_wglGetProcAddress(LPCSTR lpszProc)
 {
-    int i, j;
-    const WineGLExtension *ext;
-
-    int padding = 32 - strlen(lpszProc);
-    if (padding < 0)
-        padding = 0;
-
-    /* Check the table of WGL extensions to see if we need to return a WGL extension
-     * or a function pointer to a native OpenGL function. */
-    if(strncmp(lpszProc, "wgl", 3) != 0) {
-        return pglXGetProcAddressARB((const GLubyte*)lpszProc);
-    } else {
-        TRACE("('%s'):%*s", lpszProc, padding, " ");
-        for (i = 0; i < WineGLExtensionListSize; ++i) {
-            ext = WineGLExtensionList[i];
-            for (j = 0; ext->extEntryPoints[j].funcName; ++j) {
-                if (strcmp(ext->extEntryPoints[j].funcName, lpszProc) == 0) {
-                    TRACE("(%p) - WineGL\n", ext->extEntryPoints[j].funcAddress);
-                    return ext->extEntryPoints[j].funcAddress;
-                }
-            }
-        }
-    }
-
-    WARN("(%s) - not found\n", lpszProc);
-    return NULL;
+    if (!strncmp(lpszProc, "wgl", 3)) return NULL;
+    return pglXGetProcAddressARB((const GLubyte*)lpszProc);
 }
 
 static GLXPixmap get_context_pixmap( HDC hdc, struct wgl_context *ctx )
@@ -1644,9 +1608,9 @@ static BOOL glxdrv_wglMakeCurrent(HDC hdc, struct wgl_context *ctx)
 }
 
 /***********************************************************************
- *		glxdrv_wglMakeContextCurrentARB
+ *		X11DRV_wglMakeContextCurrentARB
  */
-static BOOL glxdrv_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct wgl_context *ctx )
+static BOOL X11DRV_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct wgl_context *ctx )
 {
     struct x11drv_escape_get_drawable escape_draw, escape_read;
     BOOL ret;
@@ -1883,9 +1847,9 @@ static void wglFlush(void)
 }
 
 /***********************************************************************
- *		glxdrv_wglCreateContextAttribsARB
+ *		X11DRV_wglCreateContextAttribsARB
  */
-static struct wgl_context *glxdrv_wglCreateContextAttribsARB( HDC hdc, struct wgl_context *hShareContext,
+static struct wgl_context *X11DRV_wglCreateContextAttribsARB( HDC hdc, struct wgl_context *hShareContext,
                                                               const int* attribList )
 {
     struct x11drv_escape_get_drawable escape;
@@ -1981,9 +1945,10 @@ static struct wgl_context *glxdrv_wglCreateContextAttribsARB( HDC hdc, struct wg
  *
  * WGL_ARB_extensions_string: wglGetExtensionsStringARB
  */
-static const char * WINAPI X11DRV_wglGetExtensionsStringARB(HDC hdc) {
+static const GLubyte *X11DRV_wglGetExtensionsStringARB(HDC hdc)
+{
     TRACE("() returning \"%s\"\n", WineGLInfo.wglExtensions);
-    return WineGLInfo.wglExtensions;
+    return (const GLubyte *)WineGLInfo.wglExtensions;
 }
 
 /**
@@ -1991,7 +1956,8 @@ static const char * WINAPI X11DRV_wglGetExtensionsStringARB(HDC hdc) {
  *
  * WGL_ARB_pbuffer: wglCreatePbufferARB
  */
-static HPBUFFERARB WINAPI X11DRV_wglCreatePbufferARB(HDC hdc, int iPixelFormat, int iWidth, int iHeight, const int *piAttribList)
+static HANDLE X11DRV_wglCreatePbufferARB( HDC hdc, int iPixelFormat, int iWidth, int iHeight,
+                                          const int *piAttribList )
 {
     Wine_GLPBuffer* object = NULL;
     WineGLPixelFormat *fmt = NULL;
@@ -2184,7 +2150,7 @@ create_failed:
  *
  * WGL_ARB_pbuffer: wglDestroyPbufferARB
  */
-static GLboolean WINAPI X11DRV_wglDestroyPbufferARB(HPBUFFERARB hPbuffer)
+static BOOL X11DRV_wglDestroyPbufferARB(HANDLE hPbuffer)
 {
     Wine_GLPBuffer* object = (Wine_GLPBuffer *)hPbuffer;
     TRACE("(%p)\n", hPbuffer);
@@ -2204,7 +2170,7 @@ static GLboolean WINAPI X11DRV_wglDestroyPbufferARB(HPBUFFERARB hPbuffer)
  *
  * WGL_ARB_pbuffer: wglGetPbufferDCARB
  */
-static HDC WINAPI X11DRV_wglGetPbufferDCARB(HPBUFFERARB hPbuffer)
+static HDC X11DRV_wglGetPbufferDCARB(HANDLE hPbuffer)
 {
     struct x11drv_escape_set_drawable escape;
     Wine_GLPBuffer* object = (Wine_GLPBuffer *)hPbuffer;
@@ -2237,7 +2203,7 @@ static HDC WINAPI X11DRV_wglGetPbufferDCARB(HPBUFFERARB hPbuffer)
  *
  * WGL_ARB_pbuffer: wglQueryPbufferARB
  */
-static GLboolean WINAPI X11DRV_wglQueryPbufferARB(HPBUFFERARB hPbuffer, int iAttribute, int *piValue)
+static BOOL X11DRV_wglQueryPbufferARB(HANDLE hPbuffer, int iAttribute, int *piValue)
 {
     Wine_GLPBuffer* object = (Wine_GLPBuffer *)hPbuffer;
     TRACE("(%p, 0x%x, %p)\n", hPbuffer, iAttribute, piValue);
@@ -2334,7 +2300,7 @@ static GLboolean WINAPI X11DRV_wglQueryPbufferARB(HPBUFFERARB hPbuffer, int iAtt
  *
  * WGL_ARB_pbuffer: wglReleasePbufferDCARB
  */
-static int WINAPI X11DRV_wglReleasePbufferDCARB(HPBUFFERARB hPbuffer, HDC hdc)
+static int X11DRV_wglReleasePbufferDCARB(HANDLE hPbuffer, HDC hdc)
 {
     TRACE("(%p, %p)\n", hPbuffer, hdc);
     return DeleteDC(hdc);
@@ -2345,7 +2311,7 @@ static int WINAPI X11DRV_wglReleasePbufferDCARB(HPBUFFERARB hPbuffer, HDC hdc)
  *
  * WGL_ARB_pbuffer: wglSetPbufferAttribARB
  */
-static GLboolean WINAPI X11DRV_wglSetPbufferAttribARB(HPBUFFERARB hPbuffer, const int *piAttribList)
+static BOOL X11DRV_wglSetPbufferAttribARB( HANDLE hPbuffer, const int *piAttribList )
 {
     Wine_GLPBuffer* object = (Wine_GLPBuffer *)hPbuffer;
     GLboolean ret = GL_FALSE;
@@ -2370,7 +2336,8 @@ static GLboolean WINAPI X11DRV_wglSetPbufferAttribARB(HPBUFFERARB hPbuffer, cons
  *
  * WGL_ARB_pixel_format: wglChoosePixelFormatARB
  */
-static GLboolean WINAPI X11DRV_wglChoosePixelFormatARB(HDC hdc, const int *piAttribIList, const FLOAT *pfAttribFList, UINT nMaxFormats, int *piFormats, UINT *nNumFormats)
+static BOOL X11DRV_wglChoosePixelFormatARB( HDC hdc, const int *piAttribIList, const FLOAT *pfAttribFList,
+                                            UINT nMaxFormats, int *piFormats, UINT *nNumFormats )
 {
     int gl_test = 0;
     int attribs[256];
@@ -2477,7 +2444,8 @@ static GLboolean WINAPI X11DRV_wglChoosePixelFormatARB(HDC hdc, const int *piAtt
  *
  * WGL_ARB_pixel_format: wglGetPixelFormatAttribivARB
  */
-static GLboolean WINAPI X11DRV_wglGetPixelFormatAttribivARB(HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, const int *piAttributes, int *piValues)
+static BOOL X11DRV_wglGetPixelFormatAttribivARB( HDC hdc, int iPixelFormat, int iLayerPlane,
+                                                 UINT nAttributes, const int *piAttributes, int *piValues )
 {
     UINT i;
     WineGLPixelFormat *fmt = NULL;
@@ -2726,7 +2694,8 @@ pix_error:
  *
  * WGL_ARB_pixel_format: wglGetPixelFormatAttribfvARB
  */
-static GLboolean WINAPI X11DRV_wglGetPixelFormatAttribfvARB(HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, const int *piAttributes, FLOAT *pfValues)
+static BOOL X11DRV_wglGetPixelFormatAttribfvARB( HDC hdc, int iPixelFormat, int iLayerPlane,
+                                                 UINT nAttributes, const int *piAttributes, FLOAT *pfValues )
 {
     int *attr;
     int ret;
@@ -2760,7 +2729,7 @@ static GLboolean WINAPI X11DRV_wglGetPixelFormatAttribfvARB(HDC hdc, int iPixelF
  *
  * WGL_ARB_render_texture: wglBindTexImageARB
  */
-static GLboolean WINAPI X11DRV_wglBindTexImageARB(HPBUFFERARB hPbuffer, int iBuffer)
+static BOOL X11DRV_wglBindTexImageARB(HANDLE hPbuffer, int iBuffer)
 {
     Wine_GLPBuffer* object = (Wine_GLPBuffer *)hPbuffer;
     GLboolean ret = GL_FALSE;
@@ -2823,7 +2792,7 @@ static GLboolean WINAPI X11DRV_wglBindTexImageARB(HPBUFFERARB hPbuffer, int iBuf
  *
  * WGL_ARB_render_texture: wglReleaseTexImageARB
  */
-static GLboolean WINAPI X11DRV_wglReleaseTexImageARB(HPBUFFERARB hPbuffer, int iBuffer)
+static BOOL X11DRV_wglReleaseTexImageARB(HANDLE hPbuffer, int iBuffer)
 {
     Wine_GLPBuffer* object = (Wine_GLPBuffer *)hPbuffer;
     GLboolean ret = GL_FALSE;
@@ -2848,9 +2817,10 @@ static GLboolean WINAPI X11DRV_wglReleaseTexImageARB(HPBUFFERARB hPbuffer, int i
  *
  * WGL_EXT_extensions_string: wglGetExtensionsStringEXT
  */
-static const char * WINAPI X11DRV_wglGetExtensionsStringEXT(void) {
+static const GLubyte *X11DRV_wglGetExtensionsStringEXT(void)
+{
     TRACE("() returning \"%s\"\n", WineGLInfo.wglExtensions);
-    return WineGLInfo.wglExtensions;
+    return (const GLubyte *)WineGLInfo.wglExtensions;
 }
 
 /**
@@ -2858,7 +2828,8 @@ static const char * WINAPI X11DRV_wglGetExtensionsStringEXT(void) {
  *
  * WGL_EXT_swap_control: wglGetSwapIntervalEXT
  */
-static int WINAPI X11DRV_wglGetSwapIntervalEXT(VOID) {
+static int X11DRV_wglGetSwapIntervalEXT(void)
+{
     /* GLX_SGI_swap_control doesn't have any provisions for getting the swap
      * interval, so the swap interval has to be tracked. */
     TRACE("()\n");
@@ -2870,7 +2841,8 @@ static int WINAPI X11DRV_wglGetSwapIntervalEXT(VOID) {
  *
  * WGL_EXT_swap_control: wglSwapIntervalEXT
  */
-static BOOL WINAPI X11DRV_wglSwapIntervalEXT(int interval) {
+static BOOL X11DRV_wglSwapIntervalEXT(int interval)
+{
     BOOL ret = TRUE;
 
     TRACE("(%d)\n", interval);
@@ -2909,45 +2881,12 @@ static BOOL WINAPI X11DRV_wglSwapIntervalEXT(int interval) {
 }
 
 /**
- * X11DRV_wglAllocateMemoryNV
- *
- * WGL_NV_vertex_array_range: wglAllocateMemoryNV
- */
-static void* WINAPI X11DRV_wglAllocateMemoryNV(GLsizei size, GLfloat readfreq, GLfloat writefreq, GLfloat priority) {
-    void *ret = NULL;
-    TRACE("(%d, %f, %f, %f)\n", size, readfreq, writefreq, priority );
-
-    if (pglXAllocateMemoryNV)
-    {
-        wine_tsx11_lock();
-        ret = pglXAllocateMemoryNV(size, readfreq, writefreq, priority);
-        wine_tsx11_unlock();
-    }
-    return ret;
-}
-
-/**
- * X11DRV_wglFreeMemoryNV
- *
- * WGL_NV_vertex_array_range: wglFreeMemoryNV
- */
-static void WINAPI X11DRV_wglFreeMemoryNV(GLvoid* pointer) {
-    TRACE("(%p)\n", pointer);
-    if (pglXFreeMemoryNV == NULL)
-        return;
-
-    wine_tsx11_lock();
-    pglXFreeMemoryNV(pointer);
-    wine_tsx11_unlock();
-}
-
-/**
  * X11DRV_wglSetPixelFormatWINE
  *
  * WGL_WINE_pixel_format_passthrough: wglSetPixelFormatWINE
  * This is a WINE-specific wglSetPixelFormat which can set the pixel format multiple times.
  */
-static BOOL WINAPI X11DRV_wglSetPixelFormatWINE(HDC hdc, int format)
+static BOOL X11DRV_wglSetPixelFormatWINE(HDC hdc, int format)
 {
     WineGLPixelFormat *fmt;
     int value;
@@ -3006,7 +2945,7 @@ static BOOL glxRequireExtension(const char *requiredExtension)
     return TRUE;
 }
 
-static void register_extension_string(const char *ext)
+static void register_extension(const char *ext)
 {
     if (WineGLInfo.wglExtensions[0])
         strcat(WineGLInfo.wglExtensions, " ");
@@ -3014,117 +2953,6 @@ static void register_extension_string(const char *ext)
 
     TRACE("'%s'\n", ext);
 }
-
-static BOOL register_extension(const WineGLExtension * ext)
-{
-    int i;
-
-    assert( WineGLExtensionListSize < MAX_EXTENSIONS );
-    WineGLExtensionList[WineGLExtensionListSize++] = ext;
-
-    register_extension_string(ext->extName);
-
-    for (i = 0; ext->extEntryPoints[i].funcName; ++i)
-        TRACE("    - '%s'\n", ext->extEntryPoints[i].funcName);
-
-    return TRUE;
-}
-
-static const WineGLExtension WGL_ARB_create_context_extension =
-{
-  "WGL_ARB_create_context",
-  {
-    { "wglCreateContextAttribsARB", (void *)1 /* called through the glxdrv_wgl_funcs driver */ },
-  }
-};
-
-static const WineGLExtension WGL_ARB_extensions_string_extension =
-{
-  "WGL_ARB_extensions_string",
-  {
-    { "wglGetExtensionsStringARB", X11DRV_wglGetExtensionsStringARB },
-  }
-};
-
-static const WineGLExtension WGL_ARB_make_current_read_extension =
-{
-  "WGL_ARB_make_current_read",
-  {
-    { "wglGetCurrentReadDCARB", X11DRV_wglGetCurrentReadDCARB },
-    { "wglMakeContextCurrentARB", (void *)1 /* called through the glxdrv_wgl_funcs driver */ },
-  }
-};
-
-static const WineGLExtension WGL_ARB_multisample_extension =
-{
-  "WGL_ARB_multisample",
-};
-
-static const WineGLExtension WGL_ARB_pbuffer_extension =
-{
-  "WGL_ARB_pbuffer",
-  {
-    { "wglCreatePbufferARB", X11DRV_wglCreatePbufferARB },
-    { "wglDestroyPbufferARB", X11DRV_wglDestroyPbufferARB },
-    { "wglGetPbufferDCARB", X11DRV_wglGetPbufferDCARB },
-    { "wglQueryPbufferARB", X11DRV_wglQueryPbufferARB },
-    { "wglReleasePbufferDCARB", X11DRV_wglReleasePbufferDCARB },
-    { "wglSetPbufferAttribARB", X11DRV_wglSetPbufferAttribARB },
-  }
-};
-
-static const WineGLExtension WGL_ARB_pixel_format_extension =
-{
-  "WGL_ARB_pixel_format",
-  {
-    { "wglChoosePixelFormatARB", X11DRV_wglChoosePixelFormatARB },
-    { "wglGetPixelFormatAttribfvARB", X11DRV_wglGetPixelFormatAttribfvARB },
-    { "wglGetPixelFormatAttribivARB", X11DRV_wglGetPixelFormatAttribivARB },
-  }
-};
-
-static const WineGLExtension WGL_ARB_render_texture_extension =
-{
-  "WGL_ARB_render_texture",
-  {
-    { "wglBindTexImageARB", X11DRV_wglBindTexImageARB },
-    { "wglReleaseTexImageARB", X11DRV_wglReleaseTexImageARB },
-  }
-};
-
-static const WineGLExtension WGL_EXT_extensions_string_extension =
-{
-  "WGL_EXT_extensions_string",
-  {
-    { "wglGetExtensionsStringEXT", X11DRV_wglGetExtensionsStringEXT },
-  }
-};
-
-static const WineGLExtension WGL_EXT_swap_control_extension =
-{
-  "WGL_EXT_swap_control",
-  {
-    { "wglSwapIntervalEXT", X11DRV_wglSwapIntervalEXT },
-    { "wglGetSwapIntervalEXT", X11DRV_wglGetSwapIntervalEXT },
-  }
-};
-
-static const WineGLExtension WGL_NV_vertex_array_range_extension =
-{
-  "WGL_NV_vertex_array_range",
-  {
-    { "wglAllocateMemoryNV", X11DRV_wglAllocateMemoryNV },
-    { "wglFreeMemoryNV", X11DRV_wglFreeMemoryNV },
-  }
-};
-
-static const WineGLExtension WGL_WINE_pixel_format_passthrough_extension =
-{
-  "WGL_WINE_pixel_format_passthrough",
-  {
-    { "wglSetPixelFormatWINE", X11DRV_wglSetPixelFormatWINE },
-  }
-};
 
 /**
  * X11DRV_WineGL_LoadExtensions
@@ -3137,76 +2965,102 @@ static void X11DRV_WineGL_LoadExtensions(void)
 
     if(glxRequireExtension("GLX_ARB_create_context"))
     {
-        register_extension(&WGL_ARB_create_context_extension);
+        register_extension( "WGL_ARB_create_context" );
+        opengl_funcs.ext.p_wglCreateContextAttribsARB = X11DRV_wglCreateContextAttribsARB;
 
         if(glxRequireExtension("GLX_ARB_create_context_profile"))
-            register_extension_string("WGL_ARB_create_context_profile");
+            register_extension("WGL_ARB_create_context_profile");
     }
 
     if(glxRequireExtension("GLX_ARB_fbconfig_float"))
     {
-        register_extension_string("WGL_ARB_pixel_format_float");
-        register_extension_string("WGL_ATI_pixel_format_float");
+        register_extension("WGL_ARB_pixel_format_float");
+        register_extension("WGL_ATI_pixel_format_float");
     }
 
-    register_extension(&WGL_ARB_extensions_string_extension);
+    register_extension( "WGL_ARB_extensions_string" );
+    opengl_funcs.ext.p_wglGetExtensionsStringARB = X11DRV_wglGetExtensionsStringARB;
 
     if (glxRequireVersion(3))
-        register_extension(&WGL_ARB_make_current_read_extension);
+    {
+        register_extension( "WGL_ARB_make_current_read" );
+        opengl_funcs.ext.p_wglGetCurrentReadDCARB   = X11DRV_wglGetCurrentReadDCARB;
+        opengl_funcs.ext.p_wglMakeContextCurrentARB = X11DRV_wglMakeContextCurrentARB;
+    }
 
-    if (glxRequireExtension("GLX_ARB_multisample"))
-        register_extension(&WGL_ARB_multisample_extension);
+    if (glxRequireExtension("GLX_ARB_multisample")) register_extension( "WGL_ARB_multisample" );
 
     /* In general pbuffer functionality requires support in the X-server. The functionality is
      * available either when the GLX_SGIX_pbuffer is present or when the GLX server version is 1.3.
      */
     if ( glxRequireVersion(3) && glxRequireExtension("GLX_SGIX_pbuffer") )
-        register_extension(&WGL_ARB_pbuffer_extension);
+    {
+        register_extension( "WGL_ARB_pbuffer" );
+        opengl_funcs.ext.p_wglCreatePbufferARB    = X11DRV_wglCreatePbufferARB;
+        opengl_funcs.ext.p_wglDestroyPbufferARB   = X11DRV_wglDestroyPbufferARB;
+        opengl_funcs.ext.p_wglGetPbufferDCARB     = X11DRV_wglGetPbufferDCARB;
+        opengl_funcs.ext.p_wglQueryPbufferARB     = X11DRV_wglQueryPbufferARB;
+        opengl_funcs.ext.p_wglReleasePbufferDCARB = X11DRV_wglReleasePbufferDCARB;
+        opengl_funcs.ext.p_wglSetPbufferAttribARB = X11DRV_wglSetPbufferAttribARB;
+    }
 
-    register_extension(&WGL_ARB_pixel_format_extension);
+    register_extension( "WGL_ARB_pixel_format" );
+    opengl_funcs.ext.p_wglChoosePixelFormatARB      = X11DRV_wglChoosePixelFormatARB;
+    opengl_funcs.ext.p_wglGetPixelFormatAttribfvARB = X11DRV_wglGetPixelFormatAttribfvARB;
+    opengl_funcs.ext.p_wglGetPixelFormatAttribivARB = X11DRV_wglGetPixelFormatAttribivARB;
 
     /* Support WGL_ARB_render_texture when there's support or pbuffer based emulation */
     if (glxRequireExtension("GLX_ARB_render_texture") ||
         (glxRequireVersion(3) && glxRequireExtension("GLX_SGIX_pbuffer") && use_render_texture_emulation))
     {
-        register_extension(&WGL_ARB_render_texture_extension);
+        register_extension( "WGL_ARB_render_texture" );
+        opengl_funcs.ext.p_wglBindTexImageARB    = X11DRV_wglBindTexImageARB;
+        opengl_funcs.ext.p_wglReleaseTexImageARB = X11DRV_wglReleaseTexImageARB;
 
         /* The WGL version of GLX_NV_float_buffer requires render_texture */
         if(glxRequireExtension("GLX_NV_float_buffer"))
-            register_extension_string("WGL_NV_float_buffer");
+            register_extension("WGL_NV_float_buffer");
 
         /* Again there's no GLX equivalent for this extension, so depend on the required GL extension */
         if(strstr(WineGLInfo.glExtensions, "GL_NV_texture_rectangle") != NULL)
-            register_extension_string("WGL_NV_texture_rectangle");
+            register_extension("WGL_NV_texture_rectangle");
     }
 
     /* EXT Extensions */
 
-    register_extension(&WGL_EXT_extensions_string_extension);
+    register_extension( "WGL_EXT_extensions_string" );
+    opengl_funcs.ext.p_wglGetExtensionsStringEXT = X11DRV_wglGetExtensionsStringEXT;
 
     /* Load this extension even when it isn't backed by a GLX extension because it is has been around for ages.
      * Games like Call of Duty and K.O.T.O.R. rely on it. Further our emulation is good enough. */
-    register_extension(&WGL_EXT_swap_control_extension);
+    register_extension( "WGL_EXT_swap_control" );
+    opengl_funcs.ext.p_wglSwapIntervalEXT = X11DRV_wglSwapIntervalEXT;
+    opengl_funcs.ext.p_wglGetSwapIntervalEXT = X11DRV_wglGetSwapIntervalEXT;
 
     if(glxRequireExtension("GLX_EXT_framebuffer_sRGB"))
-        register_extension_string("WGL_EXT_framebuffer_sRGB");
+        register_extension("WGL_EXT_framebuffer_sRGB");
 
     if(glxRequireExtension("GLX_EXT_fbconfig_packed_float"))
-        register_extension_string("WGL_EXT_pixel_format_packed_float");
+        register_extension("WGL_EXT_pixel_format_packed_float");
 
     if (glxRequireExtension("GLX_EXT_swap_control"))
         has_swap_control = TRUE;
 
     /* The OpenGL extension GL_NV_vertex_array_range adds wgl/glX functions which aren't exported as 'real' wgl/glX extensions. */
     if(strstr(WineGLInfo.glExtensions, "GL_NV_vertex_array_range") != NULL)
-        register_extension(&WGL_NV_vertex_array_range_extension);
+    {
+        register_extension( "WGL_NV_vertex_array_range" );
+        opengl_funcs.ext.p_wglAllocateMemoryNV = pglXAllocateMemoryNV;
+        opengl_funcs.ext.p_wglFreeMemoryNV = pglXFreeMemoryNV;
+    }
 
     /* WINE-specific WGL Extensions */
 
     /* In WineD3D we need the ability to set the pixel format more than once (e.g. after a device reset).
      * The default wglSetPixelFormat doesn't allow this, so add our own which allows it.
      */
-    register_extension(&WGL_WINE_pixel_format_passthrough_extension);
+    register_extension( "WGL_WINE_pixel_format_passthrough" );
+    opengl_funcs.ext.p_wglSetPixelFormatWINE = X11DRV_wglSetPixelFormatWINE;
 }
 
 
@@ -3555,12 +3409,10 @@ static struct opengl_funcs opengl_funcs =
     {
         glxdrv_wglCopyContext,              /* p_wglCopyContext */
         glxdrv_wglCreateContext,            /* p_wglCreateContext */
-        glxdrv_wglCreateContextAttribsARB,  /* p_wglCreateContextAttribsARB */
         glxdrv_wglDeleteContext,            /* p_wglDeleteContext */
         glxdrv_wglGetCurrentDC,             /* p_wglGetCurrentDC */
         glxdrv_wglGetPixelFormat,           /* p_wglGetPixelFormat */
         glxdrv_wglGetProcAddress,           /* p_wglGetProcAddress */
-        glxdrv_wglMakeContextCurrentARB,    /* p_wglMakeContextCurrentARB */
         glxdrv_wglMakeCurrent,              /* p_wglMakeCurrent */
         glxdrv_wglShareLists,               /* p_wglShareLists */
     }
