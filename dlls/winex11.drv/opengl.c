@@ -48,6 +48,7 @@
 
 #include "x11drv.h"
 #include "winternl.h"
+#include "wine/wgl_driver.h"
 #include "wine/library.h"
 #include "wine/debug.h"
 
@@ -209,6 +210,12 @@ static struct WineGLInfo WineGLInfo = { 0 };
 static int use_render_texture_emulation = 1;
 static BOOL has_swap_control;
 static int swap_interval = 1;
+
+static struct opengl_funcs opengl_funcs;
+
+#define USE_GL_FUNC(name) #name,
+static const char *opengl_func_names[] = { ALL_WGL_FUNCS };
+#undef USE_GL_FUNC
 
 #define MAX_EXTENSIONS 16
 static const WineGLExtension *WineGLExtensionList[MAX_EXTENSIONS];
@@ -482,6 +489,7 @@ static BOOL has_opengl(void)
 
     char buffer[200];
     int error_base, event_base;
+    unsigned int i;
 
     if (init_done) return (opengl_handle != NULL);
     init_done = 1;
@@ -494,6 +502,15 @@ static BOOL has_opengl(void)
         ERR( "Failed to load libGL: %s\n", buffer );
         ERR( "OpenGL support is disabled.\n");
         return FALSE;
+    }
+
+    for (i = 0; i < sizeof(opengl_func_names)/sizeof(opengl_func_names[0]); i++)
+    {
+        if (!(((void **)&opengl_funcs.gl)[i] = wine_dlsym( opengl_handle, opengl_func_names[i], NULL, 0 )))
+        {
+            ERR( "%s not found in libGL, disabling OpenGL.\n", opengl_func_names[i] );
+            goto failed;
+        }
     }
 
     pglXGetProcAddressARB = wine_dlsym(opengl_handle, "glXGetProcAddressARB", NULL, 0);
@@ -1627,6 +1644,7 @@ static BOOL glxdrv_wglMakeCurrent(HDC hdc, struct wgl_context *ctx)
 
         if (ret)
         {
+            NtCurrentTeb()->glTable = &opengl_funcs;
             NtCurrentTeb()->glContext = ctx;
 
             ctx->has_been_current = TRUE;
@@ -1698,6 +1716,7 @@ static BOOL glxdrv_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct 
             ctx->drawables[0] = escape_draw.gl_drawable;
             ctx->drawables[1] = escape_read.gl_drawable;
             ctx->refresh_drawables = FALSE;
+            NtCurrentTeb()->glTable = &opengl_funcs;
             NtCurrentTeb()->glContext = ctx;
         }
         else
