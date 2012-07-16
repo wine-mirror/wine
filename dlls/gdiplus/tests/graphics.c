@@ -24,9 +24,9 @@
 #include "wine/test.h"
 #include <math.h>
 
-#define expect(expected, got) ok(got == expected, "Expected %.8x, got %.8x\n", expected, got)
-#define expectf_(expected, got, precision) ok(fabs(expected - got) < precision, "Expected %.2f, got %.2f\n", expected, got)
-#define expectf(expected, got) expectf_(expected, got, 0.0001)
+#define expect(expected, got) ok((got) == (expected), "Expected %d, got %d\n", (INT)(expected), (INT)(got))
+#define expectf_(expected, got, precision) ok(fabs((expected) - (got)) < (precision), "Expected %f, got %f\n", (expected), (got))
+#define expectf(expected, got) expectf_((expected), (got), 0.0001)
 #define TABLE_LEN (23)
 
 static HWND hwnd;
@@ -3304,6 +3304,108 @@ static void test_getdc_scaled(void)
     GdipDisposeImage((GpImage*)bitmap);
 }
 
+static void test_GdipMeasureString(void)
+{
+    static const WCHAR fontname[] = { 'T','a','h','o','m','a',0 };
+    static const WCHAR string[] = { '1','2','3','4','5','6','7',0 };
+    GpStatus status;
+    GpGraphics *graphics;
+    GpFontFamily *family;
+    GpFont *font;
+    HDC hdc;
+    GpStringFormat *format;
+    RectF bounds, rc = { 0.0, 0.0, 0.0, 0.0 };
+    REAL rval, dpi;
+
+    hdc = CreateCompatibleDC(0);
+    ok(hdc != 0, "CreateCompatibleDC failed\n");
+    status = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, status);
+    status = GdipGetDpiY(graphics, &dpi);
+    expect(Ok, status);
+    status = GdipCreateFontFamilyFromName(fontname, NULL, &family);
+    expect(Ok, status);
+    status = GdipCreateFont(family, 18.0, FontStyleRegular, UnitPoint, &font);
+    expect(Ok, status);
+    status = GdipCreateStringFormat(0, LANG_NEUTRAL, &format);
+    expect(Ok, status);
+
+    if (dpi == 96.0)
+    {
+        status = GdipSetPageUnit(graphics, UnitDisplay);
+        expect(Ok, status);
+
+        status = GdipGetFontHeightGivenDPI(font, dpi, &rval);
+        expect(Ok, status);
+        expectf(28.968750, rval);
+
+        status = GdipGetFontHeight(font, graphics, &rval);
+        expect(Ok, status);
+        expectf(28.968750, rval);
+        status = GdipGetFontSize(font, &rval);
+        expect(Ok, status);
+        expectf(18.0, rval);
+
+        status = GdipMeasureString(graphics, string, -1, font, &rc, format, &bounds, NULL, NULL);
+        expect(Ok, status);
+        expectf(0.0, bounds.X);
+        expectf(0.0, bounds.Y);
+todo_wine
+        expectf_(102.499985, bounds.Width, 11.5);
+todo_wine
+        expectf_(31.968744, bounds.Height, 3.1);
+    }
+    else
+        skip("screen resolution %f dpi, test runs at 96 dpi\n", dpi);
+
+    status = GdipSetPageUnit(graphics, UnitPoint);
+    expect(Ok, status);
+
+    status = GdipGetFontHeight(font, graphics, &rval);
+    expect(Ok, status);
+todo_wine
+    expectf(21.726563, rval);
+    status = GdipGetFontSize(font, &rval);
+    expect(Ok, status);
+    expectf(18.0, rval);
+
+    status = GdipMeasureString(graphics, string, -1, font, &rc, format, &bounds, NULL, NULL);
+    expect(Ok, status);
+    expectf(0.0, bounds.X);
+    expectf(0.0, bounds.Y);
+todo_wine
+    expectf_(76.875000, bounds.Width, 10.0);
+todo_wine
+    expectf_(23.976563, bounds.Height, 2.1);
+
+    status = GdipSetPageUnit(graphics, UnitMillimeter);
+    expect(Ok, status);
+
+    status = GdipGetFontHeight(font, graphics, &rval);
+    expect(Ok, status);
+todo_wine
+    expectf(7.664648, rval);
+    status = GdipGetFontSize(font, &rval);
+    expect(Ok, status);
+    expectf(18.0, rval);
+
+    status = GdipMeasureString(graphics, string, -1, font, &rc, format, &bounds, NULL, NULL);
+    expect(Ok, status);
+    expectf(0.0, bounds.X);
+    expectf(0.0, bounds.Y);
+todo_wine
+    expectf_(27.119789, bounds.Width, 2.7);
+todo_wine
+    expectf_(8.458398, bounds.Height, 0.8);
+
+    GdipDeleteStringFormat(format);
+    GdipDeleteFont(font);
+    GdipDeleteFontFamily(family);
+    GdipDeleteGraphics(graphics);
+
+    DeleteDC(hdc);
+}
+
 START_TEST(graphics)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -3330,6 +3432,7 @@ START_TEST(graphics)
 
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
+    test_GdipMeasureString();
     test_constructor_destructor();
     test_save_restore();
     test_GdipFillClosedCurve2();
