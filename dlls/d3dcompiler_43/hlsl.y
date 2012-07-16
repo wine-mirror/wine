@@ -396,6 +396,11 @@ func_prototype:           var_modifiers type var_identifier '(' parameters ')' s
                                             HLSL_LEVEL_ERROR, "redefinition of '%s'\n", $3);
                                     return 1;
                                 }
+                                if ($2->base_type == HLSL_TYPE_VOID && $7)
+                                {
+                                    hlsl_report_message(hlsl_ctx.source_file, @7.first_line, @7.first_column,
+                                            HLSL_LEVEL_ERROR, "void function with a semantic");
+                                }
 
                                 $$ = new_func_decl($3, $2, $5);
                                 if (!$$)
