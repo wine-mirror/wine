@@ -3044,6 +3044,8 @@ HRESULT WINAPI ScriptPlaceOpenType( HDC hdc, SCRIPT_CACHE *psc, SCRIPT_ANALYSIS 
         if (piAdvance) piAdvance[i] = abc.abcA + abc.abcB + abc.abcC;
     }
 
+    SHAPE_ApplyOpenTypePositions(hdc, (ScriptCache *)*psc, psa, pwGlyphs, cGlyphs, piAdvance, pGoffset);
+
     if (pABC) TRACE("Total for run: abcA=%d, abcB=%d, abcC=%d\n", pABC->abcA, pABC->abcB, pABC->abcC);
     return S_OK;
 }

@@ -382,6 +382,7 @@ static OPENTYPE_FEATURE_RECORD mongolian_features[] =
 
 typedef struct ScriptShapeDataTag {
     TEXTRANGE_PROPERTIES   defaultTextRange;
+    TEXTRANGE_PROPERTIES   defaultGPOSTextRange;
     const char**           requiredFeatures;
     OPENTYPE_TAG           newOtTag;
     ContextualShapingProc  contextProc;
@@ -391,88 +392,88 @@ typedef struct ScriptShapeDataTag {
 /* in order of scripts */
 static const ScriptShapeData ShapingData[] =
 {
-    {{ standard_features, 2}, NULL, 0, NULL, NULL},
-    {{ latin_features, 2}, NULL, 0, NULL, NULL},
-    {{ latin_features, 2}, NULL, 0, NULL, NULL},
-    {{ latin_features, 2}, NULL, 0, NULL, NULL},
-    {{ standard_features, 2}, NULL, 0, NULL, NULL},
-    {{ latin_features, 2}, NULL, 0, NULL, NULL},
-    {{ arabic_features, 6}, required_arabic_features, 0, ContextualShape_Arabic, ShapeCharGlyphProp_Arabic},
-    {{ arabic_features, 6}, required_arabic_features, 0, ContextualShape_Arabic, ShapeCharGlyphProp_Arabic},
-    {{ hebrew_features, 1}, NULL, 0, ContextualShape_Hebrew, ShapeCharGlyphProp_Hebrew},
-    {{ syriac_features, 4}, required_syriac_features, 0, ContextualShape_Syriac, ShapeCharGlyphProp_None},
-    {{ arabic_features, 6}, required_arabic_features, 0, ContextualShape_Arabic, ShapeCharGlyphProp_Arabic},
-    {{ NULL, 0}, NULL, 0, ContextualShape_Thaana, ShapeCharGlyphProp_None},
-    {{ standard_features, 2}, NULL, 0, NULL, NULL},
-    {{ standard_features, 2}, NULL, 0, NULL, NULL},
-    {{ standard_features, 2}, NULL, 0, NULL, NULL},
-    {{ standard_features, 2}, NULL, 0, NULL, NULL},
-    {{ sinhala_features, 3}, NULL, 0, ContextualShape_Sinhala, ShapeCharGlyphProp_Sinhala},
-    {{ tibetan_features, 2}, NULL, 0, NULL, ShapeCharGlyphProp_Tibet},
-    {{ tibetan_features, 2}, NULL, 0, NULL, ShapeCharGlyphProp_Tibet},
-    {{ phags_features, 3}, NULL, 0, ContextualShape_Phags_pa, ShapeCharGlyphProp_Thai},
-    {{ thai_features, 1}, NULL, 0, ContextualShape_Thai, ShapeCharGlyphProp_Thai},
-    {{ thai_features, 1}, NULL, 0, ContextualShape_Thai, NULL},
-    {{ thai_features, 1}, required_lao_features, 0, ContextualShape_Lao, ShapeCharGlyphProp_Thai},
-    {{ thai_features, 1}, required_lao_features, 0, ContextualShape_Lao, ShapeCharGlyphProp_Thai},
-    {{ devanagari_features, 6}, required_devanagari_features, MS_MAKE_TAG('d','e','v','2'), ContextualShape_Devanagari, ShapeCharGlyphProp_Devanagari},
-    {{ devanagari_features, 6}, required_devanagari_features, MS_MAKE_TAG('d','e','v','2'), ContextualShape_Devanagari, NULL},
-    {{ devanagari_features, 6}, required_bengali_features, MS_MAKE_TAG('b','n','g','2'), ContextualShape_Bengali, ShapeCharGlyphProp_Bengali},
-    {{ devanagari_features, 6}, required_bengali_features, MS_MAKE_TAG('b','n','g','2'), ContextualShape_Bengali, NULL},
-    {{ devanagari_features, 6}, required_bengali_features, MS_MAKE_TAG('b','n','g','2'), ContextualShape_Bengali, ShapeCharGlyphProp_Bengali},
-    {{ devanagari_features, 6}, required_gurmukhi_features, MS_MAKE_TAG('g','u','r','2'), ContextualShape_Gurmukhi, ShapeCharGlyphProp_Gurmukhi},
-    {{ devanagari_features, 6}, required_gurmukhi_features, MS_MAKE_TAG('g','u','r','2'), ContextualShape_Gurmukhi, NULL},
-    {{ devanagari_features, 6}, required_devanagari_features, MS_MAKE_TAG('g','j','r','2'), ContextualShape_Gujarati, ShapeCharGlyphProp_Gujarati},
-    {{ devanagari_features, 6}, required_devanagari_features, MS_MAKE_TAG('g','j','r','2'), ContextualShape_Gujarati, NULL},
-    {{ devanagari_features, 6}, required_devanagari_features, MS_MAKE_TAG('g','j','r','2'), ContextualShape_Gujarati, ShapeCharGlyphProp_Gujarati},
-    {{ devanagari_features, 6}, required_oriya_features, MS_MAKE_TAG('o','r','y','2'), ContextualShape_Oriya, ShapeCharGlyphProp_Oriya},
-    {{ devanagari_features, 6}, required_oriya_features, MS_MAKE_TAG('o','r','y','2'), ContextualShape_Oriya, NULL},
-    {{ devanagari_features, 6}, required_tamil_features, MS_MAKE_TAG('t','a','m','2'), ContextualShape_Tamil, ShapeCharGlyphProp_Tamil},
-    {{ devanagari_features, 6}, required_tamil_features, MS_MAKE_TAG('t','a','m','2'), ContextualShape_Tamil, NULL},
-    {{ devanagari_features, 6}, required_telugu_features, MS_MAKE_TAG('t','e','l','2'), ContextualShape_Telugu, ShapeCharGlyphProp_Telugu},
-    {{ devanagari_features, 6}, required_telugu_features, MS_MAKE_TAG('t','e','l','2'), ContextualShape_Telugu, NULL},
-    {{ devanagari_features, 6}, required_telugu_features, MS_MAKE_TAG('k','n','d','2'), ContextualShape_Kannada, ShapeCharGlyphProp_Kannada},
-    {{ devanagari_features, 6}, required_telugu_features, MS_MAKE_TAG('k','n','d','2'), ContextualShape_Kannada, NULL},
-    {{ devanagari_features, 6}, required_telugu_features, MS_MAKE_TAG('m','l','m','2'), ContextualShape_Malayalam, ShapeCharGlyphProp_Malayalam},
-    {{ devanagari_features, 6}, required_telugu_features, MS_MAKE_TAG('m','l','m','2'), ContextualShape_Malayalam, NULL},
-    {{ standard_features, 2}, NULL, 0, NULL, NULL},
-    {{ latin_features, 2}, NULL, 0, NULL, NULL},
-    {{ standard_features, 2}, NULL, 0, NULL, NULL},
-    {{ myanmar_features, 2}, NULL, 0, NULL, NULL},
-    {{ myanmar_features, 2}, NULL, 0, NULL, NULL},
-    {{ standard_features, 2}, NULL, 0, NULL, NULL},
-    {{ standard_features, 2}, NULL, 0, NULL, NULL},
-    {{ standard_features, 2}, NULL, 0, NULL, NULL},
-    {{ khmer_features, 5}, required_khmer_features, 0, ContextualShape_Khmer, ShapeCharGlyphProp_Khmer},
-    {{ khmer_features, 5}, required_khmer_features, 0, ContextualShape_Khmer, ShapeCharGlyphProp_Khmer},
-    {{ NULL, 0}, NULL, 0, NULL, NULL},
-    {{ NULL, 0}, NULL, 0, NULL, NULL},
-    {{ NULL, 0}, NULL, 0, NULL, NULL},
-    {{ NULL, 0}, NULL, 0, NULL, NULL},
-    {{ NULL, 0}, NULL, 0, NULL, NULL},
-    {{ NULL, 0}, NULL, 0, NULL, NULL},
-    {{ ethiopic_features, 4}, NULL, 0, NULL, NULL},
-    {{ ethiopic_features, 4}, NULL, 0, NULL, NULL},
-    {{ mongolian_features, 4}, NULL, 0, ContextualShape_Mongolian, NULL},
-    {{ mongolian_features, 4}, NULL, 0, ContextualShape_Mongolian, NULL},
-    {{ NULL, 0}, NULL, 0, NULL, NULL},
-    {{ NULL, 0}, NULL, 0, NULL, NULL},
-    {{ NULL, 0}, NULL, 0, NULL, NULL},
-    {{ NULL, 0}, NULL, 0, NULL, NULL},
-    {{ NULL, 0}, NULL, 0, NULL, NULL},
-    {{ NULL, 0}, NULL, 0, NULL, NULL},
-    {{ NULL, 0}, NULL, 0, NULL, NULL},
-    {{ NULL, 0}, NULL, 0, NULL, NULL},
-    {{ NULL, 0}, NULL, 0, NULL, NULL},
-    {{ NULL, 0}, NULL, 0, NULL, NULL},
-    {{ NULL, 0}, NULL, 0, NULL, NULL},
-    {{ NULL, 0}, NULL, 0, NULL, NULL},
-    {{ NULL, 0}, NULL, 0, NULL, NULL},
-    {{ NULL, 0}, NULL, 0, NULL, NULL},
-    {{ NULL, 0}, NULL, 0, NULL, NULL},
-    {{ hebrew_features, 1}, NULL, 0, ContextualShape_Hebrew, NULL},
-    {{ latin_features, 2}, NULL, 0, NULL, NULL},
-    {{ thai_features, 1}, NULL, 0, ContextualShape_Thai, ShapeCharGlyphProp_Thai},
+    {{ standard_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ latin_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ latin_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ latin_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ standard_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ latin_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ arabic_features, 6}, {NULL, 0}, required_arabic_features, 0, ContextualShape_Arabic, ShapeCharGlyphProp_Arabic},
+    {{ arabic_features, 6}, {NULL, 0}, required_arabic_features, 0, ContextualShape_Arabic, ShapeCharGlyphProp_Arabic},
+    {{ hebrew_features, 1}, {NULL, 0}, NULL, 0, ContextualShape_Hebrew, ShapeCharGlyphProp_Hebrew},
+    {{ syriac_features, 4}, {NULL, 0}, required_syriac_features, 0, ContextualShape_Syriac, ShapeCharGlyphProp_None},
+    {{ arabic_features, 6}, {NULL, 0}, required_arabic_features, 0, ContextualShape_Arabic, ShapeCharGlyphProp_Arabic},
+    {{ NULL, 0}, {NULL, 0}, NULL, 0, ContextualShape_Thaana, ShapeCharGlyphProp_None},
+    {{ standard_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ standard_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ standard_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ standard_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ sinhala_features, 3}, {NULL, 0}, NULL, 0, ContextualShape_Sinhala, ShapeCharGlyphProp_Sinhala},
+    {{ tibetan_features, 2}, {NULL, 0}, NULL, 0, NULL, ShapeCharGlyphProp_Tibet},
+    {{ tibetan_features, 2}, {NULL, 0}, NULL, 0, NULL, ShapeCharGlyphProp_Tibet},
+    {{ phags_features, 3}, {NULL, 0}, NULL, 0, ContextualShape_Phags_pa, ShapeCharGlyphProp_Thai},
+    {{ thai_features, 1}, {NULL, 0}, NULL, 0, ContextualShape_Thai, ShapeCharGlyphProp_Thai},
+    {{ thai_features, 1}, {NULL, 0}, NULL, 0, ContextualShape_Thai, NULL},
+    {{ thai_features, 1}, {NULL, 0}, required_lao_features, 0, ContextualShape_Lao, ShapeCharGlyphProp_Thai},
+    {{ thai_features, 1}, {NULL, 0}, required_lao_features, 0, ContextualShape_Lao, ShapeCharGlyphProp_Thai},
+    {{ devanagari_features, 6}, {NULL, 0}, required_devanagari_features, MS_MAKE_TAG('d','e','v','2'), ContextualShape_Devanagari, ShapeCharGlyphProp_Devanagari},
+    {{ devanagari_features, 6}, {NULL, 0}, required_devanagari_features, MS_MAKE_TAG('d','e','v','2'), ContextualShape_Devanagari, NULL},
+    {{ devanagari_features, 6}, {NULL, 0}, required_bengali_features, MS_MAKE_TAG('b','n','g','2'), ContextualShape_Bengali, ShapeCharGlyphProp_Bengali},
+    {{ devanagari_features, 6}, {NULL, 0}, required_bengali_features, MS_MAKE_TAG('b','n','g','2'), ContextualShape_Bengali, NULL},
+    {{ devanagari_features, 6}, {NULL, 0}, required_bengali_features, MS_MAKE_TAG('b','n','g','2'), ContextualShape_Bengali, ShapeCharGlyphProp_Bengali},
+    {{ devanagari_features, 6}, {NULL, 0}, required_gurmukhi_features, MS_MAKE_TAG('g','u','r','2'), ContextualShape_Gurmukhi, ShapeCharGlyphProp_Gurmukhi},
+    {{ devanagari_features, 6}, {NULL, 0}, required_gurmukhi_features, MS_MAKE_TAG('g','u','r','2'), ContextualShape_Gurmukhi, NULL},
+    {{ devanagari_features, 6}, {NULL, 0}, required_devanagari_features, MS_MAKE_TAG('g','j','r','2'), ContextualShape_Gujarati, ShapeCharGlyphProp_Gujarati},
+    {{ devanagari_features, 6}, {NULL, 0}, required_devanagari_features, MS_MAKE_TAG('g','j','r','2'), ContextualShape_Gujarati, NULL},
+    {{ devanagari_features, 6}, {NULL, 0}, required_devanagari_features, MS_MAKE_TAG('g','j','r','2'), ContextualShape_Gujarati, ShapeCharGlyphProp_Gujarati},
+    {{ devanagari_features, 6}, {NULL, 0}, required_oriya_features, MS_MAKE_TAG('o','r','y','2'), ContextualShape_Oriya, ShapeCharGlyphProp_Oriya},
+    {{ devanagari_features, 6}, {NULL, 0}, required_oriya_features, MS_MAKE_TAG('o','r','y','2'), ContextualShape_Oriya, NULL},
+    {{ devanagari_features, 6}, {NULL, 0}, required_tamil_features, MS_MAKE_TAG('t','a','m','2'), ContextualShape_Tamil, ShapeCharGlyphProp_Tamil},
+    {{ devanagari_features, 6}, {NULL, 0}, required_tamil_features, MS_MAKE_TAG('t','a','m','2'), ContextualShape_Tamil, NULL},
+    {{ devanagari_features, 6}, {NULL, 0}, required_telugu_features, MS_MAKE_TAG('t','e','l','2'), ContextualShape_Telugu, ShapeCharGlyphProp_Telugu},
+    {{ devanagari_features, 6}, {NULL, 0}, required_telugu_features, MS_MAKE_TAG('t','e','l','2'), ContextualShape_Telugu, NULL},
+    {{ devanagari_features, 6}, {NULL, 0}, required_telugu_features, MS_MAKE_TAG('k','n','d','2'), ContextualShape_Kannada, ShapeCharGlyphProp_Kannada},
+    {{ devanagari_features, 6}, {NULL, 0}, required_telugu_features, MS_MAKE_TAG('k','n','d','2'), ContextualShape_Kannada, NULL},
+    {{ devanagari_features, 6}, {NULL, 0}, required_telugu_features, MS_MAKE_TAG('m','l','m','2'), ContextualShape_Malayalam, ShapeCharGlyphProp_Malayalam},
+    {{ devanagari_features, 6}, {NULL, 0}, required_telugu_features, MS_MAKE_TAG('m','l','m','2'), ContextualShape_Malayalam, NULL},
+    {{ standard_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ latin_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ standard_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ myanmar_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ myanmar_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ standard_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ standard_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ standard_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ khmer_features, 5}, {NULL, 0}, required_khmer_features, 0, ContextualShape_Khmer, ShapeCharGlyphProp_Khmer},
+    {{ khmer_features, 5}, {NULL, 0}, required_khmer_features, 0, ContextualShape_Khmer, ShapeCharGlyphProp_Khmer},
+    {{ NULL, 0}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ NULL, 0}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ NULL, 0}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ NULL, 0}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ NULL, 0}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ NULL, 0}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ ethiopic_features, 4}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ ethiopic_features, 4}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ mongolian_features, 4}, {NULL, 0}, NULL, 0, ContextualShape_Mongolian, NULL},
+    {{ mongolian_features, 4}, {NULL, 0}, NULL, 0, ContextualShape_Mongolian, NULL},
+    {{ NULL, 0}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ NULL, 0}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ NULL, 0}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ NULL, 0}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ NULL, 0}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ NULL, 0}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ NULL, 0}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ NULL, 0}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ NULL, 0}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ NULL, 0}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ NULL, 0}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ NULL, 0}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ NULL, 0}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ NULL, 0}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ NULL, 0}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ hebrew_features, 1}, {NULL, 0}, NULL, 0, ContextualShape_Hebrew, NULL},
+    {{ latin_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
+    {{ thai_features, 1}, {NULL, 0}, NULL, 0, ContextualShape_Thai, ShapeCharGlyphProp_Thai},
 };
 
 extern scriptData scriptInformation[];
@@ -544,11 +545,11 @@ static OPENTYPE_TAG get_opentype_script(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCac
     }
 }
 
-static LoadedFeature* load_GSUB_feature(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache *psc, const char* feat)
+static LoadedFeature* load_OT_feature(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache *psc, const char* feat)
 {
     LoadedFeature *feature = NULL;
 
-    if (psc->GSUB_Table)
+    if (psc->GSUB_Table || psc->GPOS_Table)
     {
         int attempt = 2;
         OPENTYPE_TAG tags;
@@ -582,7 +583,7 @@ static INT apply_GSUB_feature_to_glyph(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCach
 {
     LoadedFeature *feature;
 
-    feature = load_GSUB_feature(hdc, psa, psc, feat);
+    feature = load_OT_feature(hdc, psa, psc, feat);
     if (!feature)
         return GSUB_E_NOFEATURE;
 
@@ -767,7 +768,7 @@ static int apply_GSUB_feature(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, W
         LoadedFeature *feature;
         int lookup_index;
 
-        feature = load_GSUB_feature(hdc, psa, psc, feat);
+        feature = load_OT_feature(hdc, psa, psc, feat);
         if (!feature)
             return GSUB_E_NOFEATURE;
 
@@ -799,6 +800,19 @@ static int apply_GSUB_feature(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, W
         return *pcGlyphs;
     }
     return GSUB_E_NOFEATURE;
+}
+
+static VOID GPOS_apply_feature(LPOUTLINETEXTMETRICW lpotm, LPLOGFONTW lplogfont, INT* piAdvance, LPCVOID header, LoadedFeature *feature, const WORD *glyphs, INT write_dir, INT glyph_count, GOFFSET *pGoffset)
+{
+    int i;
+
+    TRACE("%i lookups\n", feature->lookup_count);
+    for (i = 0; i < feature->lookup_count; i++)
+    {
+        int j;
+        for (j = 0; j < glyph_count; )
+            j = OpenType_apply_GPOS_lookup(lpotm, lplogfont, piAdvance, header, feature->lookups[i], glyphs, j, write_dir, glyph_count, pGoffset);
+    }
 }
 
 static inline BOOL get_GSUB_Indic2(SCRIPT_ANALYSIS *psa, ScriptCache *psc)
@@ -1949,17 +1963,17 @@ static void ShapeIndicSyllables(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa,
 {
     int c;
     int overall_shift = 0;
-    LoadedFeature *locl = (modern)?load_GSUB_feature(hdc, psa, psc, "locl"):NULL;
-    LoadedFeature *nukt = load_GSUB_feature(hdc, psa, psc, "nukt");
-    LoadedFeature *akhn = load_GSUB_feature(hdc, psa, psc, "akhn");
-    LoadedFeature *rkrf = (modern)?load_GSUB_feature(hdc, psa, psc, "rkrf"):NULL;
-    LoadedFeature *pstf = load_GSUB_feature(hdc, psa, psc, "pstf");
-    LoadedFeature *vatu = (!rkrf)?load_GSUB_feature(hdc, psa, psc, "vatu"):NULL;
-    LoadedFeature *cjct = (modern)?load_GSUB_feature(hdc, psa, psc, "cjct"):NULL;
-    BOOL rphf = (load_GSUB_feature(hdc, psa, psc, "rphf") != NULL);
-    BOOL pref = (load_GSUB_feature(hdc, psa, psc, "pref") != NULL);
-    BOOL blwf = (load_GSUB_feature(hdc, psa, psc, "blwf") != NULL);
-    BOOL half = (load_GSUB_feature(hdc, psa, psc, "half") != NULL);
+    LoadedFeature *locl = (modern)?load_OT_feature(hdc, psa, psc, "locl"):NULL;
+    LoadedFeature *nukt = load_OT_feature(hdc, psa, psc, "nukt");
+    LoadedFeature *akhn = load_OT_feature(hdc, psa, psc, "akhn");
+    LoadedFeature *rkrf = (modern)?load_OT_feature(hdc, psa, psc, "rkrf"):NULL;
+    LoadedFeature *pstf = load_OT_feature(hdc, psa, psc, "pstf");
+    LoadedFeature *vatu = (!rkrf)?load_OT_feature(hdc, psa, psc, "vatu"):NULL;
+    LoadedFeature *cjct = (modern)?load_OT_feature(hdc, psa, psc, "cjct"):NULL;
+    BOOL rphf = (load_OT_feature(hdc, psa, psc, "rphf") != NULL);
+    BOOL pref = (load_OT_feature(hdc, psa, psc, "pref") != NULL);
+    BOOL blwf = (load_OT_feature(hdc, psa, psc, "blwf") != NULL);
+    BOOL half = (load_OT_feature(hdc, psa, psc, "half") != NULL);
     IndicSyllable glyph_indexs;
 
     for (c = 0; c < syllable_count; c++)
@@ -3209,6 +3223,51 @@ rpRangeProperties = &ShapingData[psa->eScript].defaultTextRange;
     SHAPE_ApplyOpenTypeFeatures(hdc, psc, psa, pwOutGlyphs, pcGlyphs, cMaxGlyphs, cChars, rpRangeProperties, pwLogClust);
 }
 
+void SHAPE_ApplyOpenTypePositions(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WORD* pwGlyphs, INT cGlyphs, int *piAdvance, GOFFSET *pGoffset )
+{
+    const TEXTRANGE_PROPERTIES *rpRangeProperties;
+    int i;
+    INT dirL;
+    LPOUTLINETEXTMETRICW lpotm;
+    LOGFONTW lf;
+    HFONT hfont;
+
+    rpRangeProperties = &ShapingData[psa->eScript].defaultGPOSTextRange;
+
+    if (!rpRangeProperties)
+        return;
+
+    load_ot_tables(hdc, psc);
+
+    if (!psc->GPOS_Table)
+        return;
+
+    i = GetOutlineTextMetricsW( hdc, 0, NULL);
+    lpotm = HeapAlloc(GetProcessHeap(),0,i);
+    GetOutlineTextMetricsW( hdc, i, lpotm);
+    hfont = GetCurrentObject(hdc, OBJ_FONT);
+    GetObjectW(hfont, sizeof(lf), &lf);
+
+    if (!psa->fLogicalOrder && psa->fRTL)
+        dirL = -1;
+    else
+        dirL = 1;
+
+    for (i = 0; i < rpRangeProperties->cotfRecords; i++)
+    {
+        if (rpRangeProperties->potfRecords[i].lParameter > 0)
+        {
+            LoadedFeature *feature;
+
+            feature = load_OT_feature(hdc, psa, psc, (const char*)&rpRangeProperties->potfRecords[i].tagFeature);
+            if (!feature)
+                continue;
+
+            GPOS_apply_feature(lpotm, &lf, piAdvance, psc->GPOS_Table, feature, pwGlyphs, dirL, cGlyphs, pGoffset);
+        }
+    }
+}
+
 HRESULT SHAPE_CheckFontForRequiredFeatures(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa)
 {
     LoadedFeature *feature;
@@ -3223,7 +3282,7 @@ HRESULT SHAPE_CheckFontForRequiredFeatures(HDC hdc, ScriptCache *psc, SCRIPT_ANA
     i = 0;
     while (ShapingData[psa->eScript].requiredFeatures[i])
     {
-        feature = load_GSUB_feature(hdc, psa, psc, ShapingData[psa->eScript].requiredFeatures[i]);
+        feature = load_OT_feature(hdc, psa, psc, ShapingData[psa->eScript].requiredFeatures[i]);
         if (feature)
             return S_OK;
         i++;

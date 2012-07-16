@@ -869,6 +869,34 @@ INT OpenType_apply_GSUB_lookup(LPCVOID table, INT lookup_index, WORD *glyphs, IN
     return GSUB_apply_lookup(lookup, lookup_index, glyphs, glyph_index, write_dir, glyph_count);
 }
 
+/**********
+ * GPOS
+ **********/
+
+static INT GPOS_apply_lookup(LPOUTLINETEXTMETRICW lpotm, LPLOGFONTW lplogfont, INT* piAdvance, const OT_LookupList* lookup, INT lookup_index, const WORD *glyphs, INT glyph_index, INT write_dir, INT glyph_count, GOFFSET *pGoffset)
+{
+    int offset;
+    const OT_LookupTable *look;
+
+    offset = GET_BE_WORD(lookup->Lookup[lookup_index]);
+    look = (const OT_LookupTable*)((const BYTE*)lookup + offset);
+    TRACE("type %i, flag %x, subtables %i\n",GET_BE_WORD(look->LookupType),GET_BE_WORD(look->LookupFlag),GET_BE_WORD(look->SubTableCount));
+    switch(GET_BE_WORD(look->LookupType))
+    {
+        default:
+            FIXME("We do not handle SubType %i\n",GET_BE_WORD(look->LookupType));
+    }
+    return glyph_index+1;
+}
+
+INT OpenType_apply_GPOS_lookup(LPOUTLINETEXTMETRICW lpotm, LPLOGFONTW lplogfont, INT* piAdvance, LPCVOID table, INT lookup_index, const WORD *glyphs, INT glyph_index, INT write_dir, INT glyph_count, GOFFSET *pGoffset)
+{
+    const GPOS_Header *header = (const GPOS_Header *)table;
+    const OT_LookupList *lookup = (const OT_LookupList*)((const BYTE*)header + GET_BE_WORD(header->LookupList));
+
+    return GPOS_apply_lookup(lpotm, lplogfont, piAdvance, lookup, lookup_index, glyphs, glyph_index, write_dir, glyph_count, pGoffset);
+}
+
 static void GSUB_initialize_script_cache(ScriptCache *psc)
 {
     int i;
