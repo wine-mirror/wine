@@ -1669,7 +1669,7 @@ HRESULT create_string_constr(script_ctx_t *ctx, jsdisp_t *object_prototype, jsdi
     if(FAILED(hres))
         return hres;
 
-    hres = create_builtin_function(ctx, StringConstr_value, StringW, &StringConstr_info,
+    hres = create_builtin_constructor(ctx, StringConstr_value, StringW, &StringConstr_info,
             PROPF_CONSTR|1, &string->dispex, ret);
 
     jsdisp_release(&string->dispex);

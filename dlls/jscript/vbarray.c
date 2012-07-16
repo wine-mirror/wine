@@ -326,7 +326,7 @@ HRESULT create_vbarray_constr(script_ctx_t *ctx, jsdisp_t *object_prototype, jsd
     if(FAILED(hres))
         return hres;
 
-    hres = create_builtin_function(ctx, VBArrayConstr_value, VBArrayW, NULL, PROPF_CONSTR|1, &vbarray->dispex, ret);
+    hres = create_builtin_constructor(ctx, VBArrayConstr_value, VBArrayW, NULL, PROPF_CONSTR|1, &vbarray->dispex, ret);
 
     jsdisp_release(&vbarray->dispex);
     return hres;

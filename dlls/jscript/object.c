@@ -264,7 +264,7 @@ HRESULT create_object_constr(script_ctx_t *ctx, jsdisp_t *object_prototype, jsdi
 {
     static const WCHAR ObjectW[] = {'O','b','j','e','c','t',0};
 
-    return create_builtin_function(ctx, ObjectConstr_value, ObjectW, NULL, PROPF_CONSTR,
+    return create_builtin_constructor(ctx, ObjectConstr_value, ObjectW, NULL, PROPF_CONSTR,
             object_prototype, ret);
 }
 

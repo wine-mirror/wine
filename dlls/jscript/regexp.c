@@ -4143,7 +4143,7 @@ HRESULT create_regexp_constr(script_ctx_t *ctx, jsdisp_t *object_prototype, jsdi
     if(FAILED(hres))
         return hres;
 
-    hres = create_builtin_function(ctx, RegExpConstr_value, RegExpW, &RegExpConstr_info,
+    hres = create_builtin_constructor(ctx, RegExpConstr_value, RegExpW, &RegExpConstr_info,
             PROPF_CONSTR|2, &regexp->dispex, ret);
 
     jsdisp_release(&regexp->dispex);

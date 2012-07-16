@@ -190,7 +190,7 @@ HRESULT create_bool_constr(script_ctx_t *ctx, jsdisp_t *object_prototype, jsdisp
     if(FAILED(hres))
         return hres;
 
-    hres = create_builtin_function(ctx, BoolConstr_value, BooleanW, NULL,
+    hres = create_builtin_constructor(ctx, BoolConstr_value, BooleanW, NULL,
             PROPF_CONSTR|1, &bool->dispex, ret);
 
     jsdisp_release(&bool->dispex);

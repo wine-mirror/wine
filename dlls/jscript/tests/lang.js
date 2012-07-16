@@ -91,7 +91,19 @@ ok(Function.prototype.prototype === undefined, "Function.prototype.prototype is 
 ok(Date.prototype !== undefined, "Date.prototype is undefined");
 ok(Date.prototype.prototype === undefined, "Date.prototype is not undefined");
 
-ok(Number.prototype.constructor === Number, "Number.prototype.constructor !== Number");
+function testConstructor(constr, name) {
+    ok(constr.prototype.constructor === constr, name + ".prototype.constructor !== " + name);
+}
+
+testConstructor(Object, "Object");
+testConstructor(String, "String");
+testConstructor(Array, "Array");
+testConstructor(Boolean, "Boolean");
+testConstructor(Number, "Number");
+testConstructor(RegExp, "RegExp");
+//testConstructor(Function, "Function");
+testConstructor(Date, "Date");
+testConstructor(VBArray, "VBArray");
 
 Function.prototype.test = true;
 ok(testFunc1.test === true, "testFunc1.test !== true");
