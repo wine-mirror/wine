@@ -277,6 +277,15 @@ typedef struct{
     WORD Alternate[1];
 } GSUB_AlternateSet;
 
+/* These are all structures needed for the GPOS table */
+
+typedef struct {
+    DWORD version;
+    WORD ScriptList;
+    WORD FeatureList;
+    WORD LookupList;
+} GPOS_Header;
+
 /**********
  * CMAP
  **********/
@@ -864,7 +873,7 @@ static void GSUB_initialize_script_cache(ScriptCache *psc)
 {
     int i;
 
-    if (!psc->script_count)
+    if (psc->GSUB_Table)
     {
         const OT_ScriptList *script;
         const GSUB_Header* header = (const GSUB_Header*)psc->GSUB_Table;
@@ -878,18 +887,81 @@ static void GSUB_initialize_script_cache(ScriptCache *psc)
             {
                 int offset = GET_BE_WORD(script->ScriptRecord[i].Script);
                 psc->scripts[i].tag = MS_MAKE_TAG(script->ScriptRecord[i].ScriptTag[0], script->ScriptRecord[i].ScriptTag[1], script->ScriptRecord[i].ScriptTag[2], script->ScriptRecord[i].ScriptTag[3]);
-                psc->scripts[i].table = ((const BYTE*)script + offset);
+                psc->scripts[i].gsub_table = ((const BYTE*)script + offset);
             }
         }
     }
 }
 
-HRESULT OpenType_GSUB_GetFontScriptTags(ScriptCache *psc, OPENTYPE_TAG searchingFor, int cMaxTags, OPENTYPE_TAG *pScriptTags, int *pcTags, LPCVOID* script_table)
+static void GPOS_expand_script_cache(ScriptCache *psc)
+{
+    int i, count;
+    const OT_ScriptList *script;
+    const GPOS_Header* header = (const GPOS_Header*)psc->GPOS_Table;
+
+    if (!header)
+        return;
+
+    script = (const OT_ScriptList*)((const BYTE*)header + GET_BE_WORD(header->ScriptList));
+    count = GET_BE_WORD(script->ScriptCount);
+
+    if (!psc->script_count)
+    {
+        psc->script_count = count;
+        TRACE("initializing %i scripts in this font\n",psc->script_count);
+        if (psc->script_count)
+        {
+            psc->scripts = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(LoadedScript) * psc->script_count);
+            for (i = 0; i < psc->script_count; i++)
+            {
+                int offset = GET_BE_WORD(script->ScriptRecord[i].Script);
+                psc->scripts[i].tag = MS_MAKE_TAG(script->ScriptRecord[i].ScriptTag[0], script->ScriptRecord[i].ScriptTag[1], script->ScriptRecord[i].ScriptTag[2], script->ScriptRecord[i].ScriptTag[3]);
+                psc->scripts[i].gpos_table = ((const BYTE*)script + offset);
+            }
+        }
+    }
+    else
+    {
+        for (i = 0; i < count; i++)
+        {
+            int j;
+            int offset = GET_BE_WORD(script->ScriptRecord[i].Script);
+            OPENTYPE_TAG tag = MS_MAKE_TAG(script->ScriptRecord[i].ScriptTag[0], script->ScriptRecord[i].ScriptTag[1], script->ScriptRecord[i].ScriptTag[2], script->ScriptRecord[i].ScriptTag[3]);
+            for (j = 0; j < psc->script_count; j++)
+            {
+                if (psc->scripts[j].tag == tag)
+                {
+                    psc->scripts[j].gpos_table = ((const BYTE*)script + offset);
+                    break;
+                }
+            }
+            if (j == psc->script_count)
+            {
+                psc->script_count++;
+                psc->scripts = HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,psc->scripts, sizeof(LoadedScript) * psc->script_count);
+                psc->scripts[j].tag = tag;
+                psc->scripts[j].gpos_table = ((const BYTE*)script + offset);
+            }
+        }
+    }
+}
+
+static void _initialize_script_cache(ScriptCache *psc)
+{
+    if (!psc->script_count)
+    {
+        GSUB_initialize_script_cache(psc);
+        GPOS_expand_script_cache(psc);
+    }
+}
+
+HRESULT OpenType_GetFontScriptTags(ScriptCache *psc, OPENTYPE_TAG searchingFor, int cMaxTags, OPENTYPE_TAG *pScriptTags, int *pcTags)
 {
     int i;
     HRESULT rc = S_OK;
 
-    GSUB_initialize_script_cache(psc);
+    _initialize_script_cache(psc);
+
     *pcTags = psc->script_count;
 
     if (!searchingFor && cMaxTags < *pcTags)
@@ -908,8 +980,6 @@ HRESULT OpenType_GSUB_GetFontScriptTags(ScriptCache *psc, OPENTYPE_TAG searching
             {
                 pScriptTags[0] = psc->scripts[i].tag;
                 *pcTags = 1;
-                if (script_table)
-                    *script_table = psc->scripts[i].table;
                 rc = S_OK;
                 break;
             }
@@ -922,10 +992,10 @@ static void GSUB_initialize_language_cache(LoadedScript *script)
 {
     int i;
 
-    if (!script->language_count)
+    if (!script->language_count && script->gsub_table)
     {
         DWORD offset;
-        const OT_Script* table = script->table;
+        const OT_Script* table = script->gsub_table;
         script->language_count = GET_BE_WORD(table->LangSysCount);
         offset = GET_BE_WORD(table->DefaultLangSys);
         if (offset)
@@ -956,7 +1026,7 @@ HRESULT OpenType_GSUB_GetFontLanguageTags(ScriptCache *psc, OPENTYPE_TAG script_
     HRESULT rc = S_OK;
     LoadedScript *script = NULL;
 
-    GSUB_initialize_script_cache(psc);
+    _initialize_script_cache(psc);
 
     for (i = 0; i < psc->script_count; i++)
     {
@@ -1061,7 +1131,7 @@ HRESULT OpenType_GSUB_GetFontFeatureTags(ScriptCache *psc, OPENTYPE_TAG script_t
     LoadedScript *script = NULL;
     LoadedLanguage *language = NULL;
 
-    GSUB_initialize_script_cache(psc);
+    _initialize_script_cache(psc);
 
     for (i = 0; i < psc->script_count; i++)
     {

@@ -807,7 +807,7 @@ static inline BOOL get_GSUB_Indic2(SCRIPT_ANALYSIS *psa, ScriptCache *psc)
     HRESULT hr;
     int count = 0;
 
-    hr = OpenType_GSUB_GetFontScriptTags(psc, ShapingData[psa->eScript].newOtTag, 1, &tag, &count, NULL);
+    hr = OpenType_GetFontScriptTags(psc, ShapingData[psa->eScript].newOtTag, 1, &tag, &count);
 
     return(SUCCEEDED(hr));
 }
@@ -3244,7 +3244,7 @@ HRESULT SHAPE_GetFontScriptTags( HDC hdc, ScriptCache *psc,
     if (psa && scriptInformation[psa->eScript].scriptTag)
         searching = scriptInformation[psa->eScript].scriptTag;
 
-    hr = OpenType_GSUB_GetFontScriptTags(psc, searching, cMaxTags, pScriptTags, pcTags, NULL);
+    hr = OpenType_GetFontScriptTags(psc, searching, cMaxTags, pScriptTags, pcTags);
     if (FAILED(hr))
         *pcTags = 0;
     return hr;
