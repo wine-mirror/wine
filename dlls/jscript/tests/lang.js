@@ -104,6 +104,14 @@ testConstructor(RegExp, "RegExp");
 testConstructor(Function, "Function");
 testConstructor(Date, "Date");
 testConstructor(VBArray, "VBArray");
+testConstructor(Error, "Error");
+testConstructor(EvalError, "EvalError");
+testConstructor(RangeError, "RangeError");
+testConstructor(ReferenceError, "ReferenceError");
+//testConstructor(RegExpError, "RegExpError");
+testConstructor(SyntaxError, "SyntaxError");
+testConstructor(TypeError, "TypeError");
+testConstructor(URIError, "URIError");
 
 Function.prototype.test = true;
 ok(testFunc1.test === true, "testFunc1.test !== true");
