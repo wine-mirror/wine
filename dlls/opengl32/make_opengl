@@ -225,30 +225,30 @@ sub ConvertVarName($)
 #
 # This functions generates the thunk for a given function.
 #
-sub GenerateThunk($$$)
+sub GenerateThunk($$$$)
 {
-    my ($func_ref, $comment, $prefix) = @_;
+    my ($name, $func_ref, $comment, $prefix) = @_;
     my $ret = "";
     my $call_arg = "";
     my $trace_call_arg = "";
     my $trace_arg = "";
 
-    return "" if $func_ref->[0] eq "glDebugEntry";
-    return "" if $func_ref->[0] eq "glGetString";
+    return "" if $name eq "glDebugEntry";
+    return "" if $name eq "glGetString";
 
     # If for opengl_norm.c, generate a nice heading otherwise Patrik won't be happy :-)
     # Patrik says: Well I would be even happier if a (OPENGL32.@) was added as well. Done. :-)
     if ($comment eq 1) {
 	$ret = "$ret/***********************************************************************\n";
-	$ret = "$ret *              $func_ref->[0] (OPENGL32.\@)\n";
+	$ret = "$ret *              $name (OPENGL32.\@)\n";
 	$ret = "$ret */\n";
     }
-    $ret = $ret . ConvertType($func_ref->[1]) . " WINAPI wine_$func_ref->[0]( ";
-    for (my $i = 0; $i < @{$func_ref->[2]}; $i++) {
+    $ret = $ret . ConvertType($func_ref->[0]) . " WINAPI wine_$name( ";
+    for (my $i = 0; $i < @{$func_ref->[1]}; $i++) {
 	## Quick debug code :-)
-	## print $func_ref->[2]->[$i]->[1] . "\n";
-	my $type = $func_ref->[2]->[$i]->[0];
-	my $name = ConvertVarName($func_ref->[2]->[$i]->[1]);
+	## print $func_ref->[1]->[$i]->[1] . "\n";
+	my $type = $func_ref->[1]->[$i]->[0];
+	my $name = ConvertVarName($func_ref->[1]->[$i]->[1]);
 	$ret .= ConvertType($type) . " $name";
 	$call_arg .= $name;
 	if ($type =~ /\*/) {
@@ -267,7 +267,7 @@ sub GenerateThunk($$$)
             }
 	}
 	else { printf "Unknown type %s\n", $type; }
-	if ($i+1 < @{$func_ref->[2]}) {
+	if ($i+1 < @{$func_ref->[1]}) {
 	    $ret .= ", ";
 	    $call_arg .= ", ";
 	    $trace_call_arg .= ", ";
@@ -278,11 +278,11 @@ sub GenerateThunk($$$)
 	    $trace_call_arg .= " ";
 	}
     }
-    $ret .= 'void ' if (!@{$func_ref->[2]});
+    $ret .= 'void ' if (!@{$func_ref->[1]});
     $ret .= ") {\n";
     $ret .= "  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;\n";
-    if ($func_ref->[1] ne "void" && $gen_thread_safe) {
-	$ret = "$ret  " . ConvertType($func_ref->[1]) . " ret_value;\n";
+    if ($func_ref->[0] ne "void" && $gen_thread_safe) {
+	$ret = "$ret  " . ConvertType($func_ref->[0]) . " ret_value;\n";
     }
     if ($gen_traces) {
 	$ret = "$ret  TRACE(\"($trace_arg)\\n\"";
@@ -294,21 +294,21 @@ sub GenerateThunk($$$)
     if ($gen_thread_safe) {
 	$ret .= "  ENTER_GL();\n";
         $ret .= "  ";
-        if ($func_ref->[1] ne "void") {
+        if ($func_ref->[0] ne "void") {
             $ret .= "ret_value = ";
         }
-        $ret .= "funcs->$prefix.p_$func_ref->[0]( $call_arg);\n";
+        $ret .= "funcs->$prefix.p_$name( $call_arg);\n";
 	$ret .= "  LEAVE_GL();\n";
-        if ($func_ref->[1] ne "void") {
+        if ($func_ref->[0] ne "void") {
             $ret .= "  return ret_value;\n"
         }
     }
     else {
         $ret .= "  ";
-        if ($func_ref->[1] ne "void") {
+        if ($func_ref->[0] ne "void") {
             $ret .= "return ";
         }
-        $ret .= "funcs->$prefix.p_$func_ref->[0]( $call_arg);\n";
+        $ret .= "funcs->$prefix.p_$name( $call_arg);\n";
     }
     $ret = "$ret}\n";
 
@@ -316,28 +316,28 @@ sub GenerateThunk($$$)
     return $ret;
 }
 
-sub generate_null_func($)
+sub generate_null_func($$)
 {
-    my ($func_ref) = @_;
+    my ($name, $func_ref) = @_;
     my $ret;
 
-    return "" if $func_ref->[0] eq "glDebugEntry";
+    return "" if $name eq "glDebugEntry";
 
-    $ret = "static " . ConvertType($func_ref->[1]) . " null_$func_ref->[0]( ";
-    for (my $i = 0; $i < @{$func_ref->[2]}; $i++) {
-	my $type = $func_ref->[2]->[$i]->[0];
-	my $name = ConvertVarName($func_ref->[2]->[$i]->[1]);
+    $ret = "static " . ConvertType($func_ref->[0]) . " null_$name( ";
+    for (my $i = 0; $i < @{$func_ref->[1]}; $i++) {
+	my $type = $func_ref->[1]->[$i]->[0];
+	my $name = ConvertVarName($func_ref->[1]->[$i]->[1]);
 	$ret .= ConvertType($type) . " $name";
-	$ret .= "," if ($i+1 < @{$func_ref->[2]});
+	$ret .= "," if ($i+1 < @{$func_ref->[1]});
         $ret .= " ";
     }
-    $ret .= 'void ' if (!@{$func_ref->[2]});
+    $ret .= 'void ' if (!@{$func_ref->[1]});
     $ret .= ") {";
-    if ($func_ref->[0] eq "glGetError")
+    if ($name eq "glGetError")
     {
         $ret .= " return GL_INVALID_OPERATION;";
     }
-    elsif ($func_ref->[1] ne "void")
+    elsif ($func_ref->[0] ne "void")
     {
         $ret .= " return 0;";
     }
@@ -345,17 +345,17 @@ sub generate_null_func($)
     return $ret;
 }
 
-sub get_func_proto($)
+sub get_func_proto($$)
 {
-    my $func = shift;
-    my $ret = sprintf "%-10s", ConvertType($func->[1]);
-    $ret .= " (WINE_GLAPI *p_$func->[0])(";
-    for (my $i = 0; $i < @{$func->[2]}; $i++)
+    my ($name, $func) = @_;
+    my $ret = sprintf "%-10s", ConvertType($func->[0]);
+    $ret .= " (WINE_GLAPI *p_$name)(";
+    for (my $i = 0; $i < @{$func->[1]}; $i++)
     {
-	$ret .= ConvertType($func->[2]->[$i]->[0]);
-        $ret .= "," if ($i+1 < @{$func->[2]});
+	$ret .= ConvertType($func->[1]->[$i]->[0]);
+        $ret .= "," if ($i+1 < @{$func->[1]});
     }
-    $ret .= "void" unless @{$func->[2]};
+    $ret .= "void" unless @{$func->[1]};
     $ret .= ")";
     return $ret;
 }
@@ -454,8 +454,8 @@ $pseudo_to_opengl{"UInt64EXT"} = "UINT64";
 #     [ "GLfloat", "ymove" ],
 #     [ "GLubyte *", "bitmap"] ] ];
 #
-my %norm_functions = ( "glDebugEntry" => [ "glDebugEntry", "GLint", [[ "GLint", "unknown1" ],
-                                                                     [ "GLint", "unknown2" ]] ] );
+my %norm_functions = ( "glDebugEntry" => [ "GLint", [[ "GLint", "unknown1" ],
+                                                     [ "GLint", "unknown2" ]] ] );
 
 #
 # This stores various extensions NOT part of the GL extension registry but still
@@ -463,123 +463,124 @@ my %norm_functions = ( "glDebugEntry" => [ "glDebugEntry", "GLint", [[ "GLint", 
 #
 
 my %ext_functions  =
-    ( "glDeleteBufferRegion" => [ "glDeleteBufferRegion", "void", [ [ "GLenum", "region" ] ], "glDeleteBufferRegion", "GL_KTX_buffer_region" ],
-      "glReadBufferRegion" => [ "glReadBufferRegion", "void", [ [ "GLenum", "region" ],
-								[ "GLint", "x" ],
-								[ "GLint", "y" ],
-								[ "GLsizei", "width" ],
-								[ "GLsizei", "height" ] ], "glReadBufferRegion", "GL_KTX_buffer_region" ],
-      "glDrawBufferRegion" => [ "glDrawBufferRegion", "void", [ [ "GLenum", "region" ],
-								[ "GLint", "x" ],
-								[ "GLint", "y" ],
-								[ "GLsizei", "width" ],
-								[ "GLsizei", "height" ],
-								[ "GLint", "xDest" ],
-								[ "GLint", "yDest" ] ], "glDrawBufferRegion", "GL_KTX_buffer_region" ],
-      "glBufferRegionEnabled" => [ "glBufferRegionEnabled", "GLuint", [ ], "glBufferRegionEnabled",  "GL_KTX_buffer_region" ],
-      "glNewBufferRegion" => [ "glNewBufferRegion", "GLuint", [ [ "GLenum", "type" ] ], "glNewBufferRegion", "GL_KTX_buffer_region" ],
-      "glMTexCoord2fSGIS" => [ "glMTexCoord2fSGIS", "void", [ [ "GLenum", "target" ],
-							      [ "GLfloat", "s" ],
-							      [ "GLfloat", "t" ] ], "glMTexCoord2fSGIS", "GL_SGIS_multitexture" ],
-      "glMTexCoord2fvSGIS" => [ "glMTexCoord2fvSGIS", "void", [ [ "GLenum", "target" ],
-								[ "GLfloat *", "v" ] ], "glMTexCoord2fvSGIS", "GL_SGIS_multitexture" ],
-      "glMultiTexCoord1dSGIS" => [ "glMultiTexCoord1dSGIS", "void", [ [ "GLenum", "target" ],
-								      [ "GLdouble", "s" ] ],  "glMultiTexCoord1dSGIS", "GL_SGIS_multitexture" ],
-      "glMultiTexCoord1dvSGIS" => [ "glMultiTexCoord1dvSGIS", "void", [ [ "GLenum", "target" ],
-									[ "GLdouble *", "v" ] ], "glMultiTexCoord1dvSGIS", "GL_SGIS_multitexture" ],
-      "glMultiTexCoord1fSGIS" => [ "glMultiTexCoord1fSGIS", "void", [ [ "GLenum", "target" ],
-								      [ "GLfloat", "s" ] ], "glMultiTexCoord1fSGIS", "GL_SGIS_multitexture" ],
-      "glMultiTexCoord1fvSGIS" => [ "glMultiTexCoord1fvSGIS", "void", [ [ "GLenum", "target" ],
-									[ "const GLfloat *", "v" ] ], "glMultiTexCoord1fvSGIS", "GL_SGIS_multitexture" ],
-      "glMultiTexCoord1iSGIS" => [ "glMultiTexCoord1iSGIS", "void", [ [ "GLenum", "target" ],
-								      [ "GLint", "s" ] ], "glMultiTexCoord1iSGIS", "GL_SGIS_multitexture" ],
-      "glMultiTexCoord1ivSGIS" => [ "glMultiTexCoord1ivSGIS", "void", [ [ "GLenum", "target" ],
-									[ "GLint *", "v" ] ], "glMultiTexCoord1ivSGIS", "GL_SGIS_multitexture" ],
-      "glMultiTexCoord1sSGIS" => [ "glMultiTexCoord1sSGIS", "void", [ [ "GLenum", "target" ],
-								      [ "GLshort", "s" ] ], "glMultiTexCoord1sSGIS", "GL_SGIS_multitexture" ],
-      "glMultiTexCoord1svSGIS" => [ "glMultiTexCoord1svSGIS", "void", [ [ "GLenum", "target" ],
-									[ "GLshort *", "v" ] ], "glMultiTexCoord1svSGIS", "GL_SGIS_multitexture" ],
-      "glMultiTexCoord2dSGIS" => [ "glMultiTexCoord2dSGIS", "void", [ [ "GLenum", "target" ],
-								      [ "GLdouble", "s"],
-								      [ "GLdouble", "t" ] ], "glMultiTexCoord2dSGIS", "GL_SGIS_multitexture" ],
-      "glMultiTexCoord2dvSGIS" => [ "glMultiTexCoord2dvSGIS", "void", [ [ "GLenum", "target" ],
-									[ "GLdouble *", "v" ] ], "glMultiTexCoord2dvSGIS", "GL_SGIS_multitexture" ],
-      "glMultiTexCoord2fSGIS" => [ "glMultiTexCoord2fSGIS", "void", [ [ "GLenum", "target" ],
-								      [ "GLfloat", "s" ],
-								      [ "GLfloat", "t" ] ], "glMultiTexCoord2fSGIS", "GL_SGIS_multitexture" ],
-      "glMultiTexCoord2fvSGIS" => [ "glMultiTexCoord2fvSGIS", "void", [ [ "GLenum", "target" ],
-									[ "GLfloat *", "v" ] ], "glMultiTexCoord2fvSGIS", "GL_SGIS_multitexture" ],
-      "glMultiTexCoord2iSGIS" => [ "glMultiTexCoord2iSGIS", "void", [ [ "GLenum", "target" ],
-								      [ "GLint", "s" ],
-								      [ "GLint", "t" ] ], "glMultiTexCoord2iSGIS", "GL_SGIS_multitexture" ],
-      "glMultiTexCoord2ivSGIS" => [ "glMultiTexCoord2ivSGIS", "void", [ [ "GLenum", "target" ],
-									[ "GLint *", "v" ] ], "glMultiTexCoord2ivSGIS", "GL_SGIS_multitexture" ],
-      "glMultiTexCoord2sSGIS" => [ "glMultiTexCoord2sSGIS", "void", [ [ "GLenum", "target" ],
-								      [ "GLshort", "s" ],
-								      [ "GLshort", "t" ] ], "glMultiTexCoord2sSGIS", "GL_SGIS_multitexture" ],
-      "glMultiTexCoord2svSGIS" => [ "glMultiTexCoord2svSGIS", "void", [ [ "GLenum", "target" ],
-									[ "GLshort *", "v" ] ], "glMultiTexCoord2svSGIS", "GL_SGIS_multitexture" ],
-      "glMultiTexCoord3dSGIS" => [ "glMultiTexCoord3dSGIS", "void", [ [ "GLenum", "target" ],
-								      [ "GLdouble", "s" ],
-								      [ "GLdouble", "t" ],
-								      [ "GLdouble", "r" ] ], "glMultiTexCoord3dSGIS", "GL_SGIS_multitexture" ],
-      "glMultiTexCoord3dvSGIS" => [ "glMultiTexCoord3dvSGIS", "void", [ [ "GLenum", "target" ],
-									[ "GLdouble *", "v" ] ], "glMultiTexCoord3dvSGIS", "GL_SGIS_multitexture" ],
-      "glMultiTexCoord3fSGIS" => [ "glMultiTexCoord3fSGIS", "void", [ [ "GLenum", "target" ],
-								      [ "GLfloat", "s" ],
-								      [ "GLfloat", "t" ],
-								      [ "GLfloat", "r" ] ], "glMultiTexCoord3fSGIS", "GL_SGIS_multitexture" ],
-      "glMultiTexCoord3fvSGIS" => [ "glMultiTexCoord3fvSGIS", "void", [ [ "GLenum", "target" ],
-									[ "GLfloat *", "v" ] ], "glMultiTexCoord3fvSGIS", "GL_SGIS_multitexture" ],
-      "glMultiTexCoord3iSGIS" => [ "glMultiTexCoord3iSGIS", "void", [ [ "GLenum", "target" ],
-								      [ "GLint", "s" ],
-								      [ "GLint", "t" ],
-								      [ "GLint", "r" ] ], "glMultiTexCoord3iSGIS", "GL_SGIS_multitexture" ],
-      "glMultiTexCoord3ivSGIS" => [ "glMultiTexCoord3ivSGIS", "void", [ [ "GLenum", "target" ],
-									[ "GLint *", "v" ] ], "glMultiTexCoord3ivSGIS", "GL_SGIS_multitexture" ],
-      "glMultiTexCoord3sSGIS" => [ "glMultiTexCoord3sSGIS", "void", [ [ "GLenum", "target" ],
-								      [ "GLshort", "s" ],
-								      [ "GLshort", "t" ],
-								      [ "GLshort", "r" ] ], "glMultiTexCoord3sSGIS", "GL_SGIS_multitexture" ],
-      "glMultiTexCoord3svSGIS" => [ "glMultiTexCoord3svSGIS", "void", [ [ "GLenum", "target" ],
-									[ "GLshort *", "v" ] ], "glMultiTexCoord3svSGIS", "GL_SGIS_multitexture" ],
-      "glMultiTexCoord4dSGIS" => [ "glMultiTexCoord4dSGIS", "void", [ [ "GLenum", "target" ],
-								      [ "GLdouble", "s" ],
-								      [ "GLdouble", "t" ],
-								      [ "GLdouble", "r" ],
-								      [ "GLdouble", "q" ] ], "glMultiTexCoord4dSGIS", "GL_SGIS_multitexture" ],
-      "glMultiTexCoord4dvSGIS" => [ "glMultiTexCoord4dvSGIS", "void", [ [ "GLenum", "target" ],
-									[ "GLdouble *", "v" ] ], "glMultiTexCoord4dvSGIS", "GL_SGIS_multitexture" ],
-      "glMultiTexCoord4fSGIS" => [ "glMultiTexCoord4fSGIS", "void", [ [ "GLenum", "target" ],
-								      [ "GLfloat", "s" ],
-								      [ "GLfloat", "t" ],
-								      [ "GLfloat", "r" ],
-								      [ "GLfloat", "q" ] ], "glMultiTexCoord4fSGIS", "GL_SGIS_multitexture" ],
-      "glMultiTexCoord4fvSGIS" => [ "glMultiTexCoord4fvSGIS", "void", [ [ "GLenum", "target" ],
-									[ "GLfloat *", "v" ] ], "glMultiTexCoord4fvSGIS", "GL_SGIS_multitexture" ],
-      "glMultiTexCoord4iSGIS" => [ "glMultiTexCoord4iSGIS", "void", [ [ "GLenum", "target" ],
-								      [ "GLint", "s" ],
-								      [ "GLint", "t" ],
-								      [ "GLint", "r" ],
-								      [ "GLint", "q" ] ], "glMultiTexCoord4iSGIS", "GL_SGIS_multitexture" ],
-      "glMultiTexCoord4ivSGIS" => [ "glMultiTexCoord4ivSGIS", "void", [ [ "GLenum", "target" ],
-									[ "GLint *", "v" ] ], "glMultiTexCoord4ivSGIS", "GL_SGIS_multitexture" ],
-      "glMultiTexCoord4sSGIS" => [ "glMultiTexCoord4sSGIS", "void", [ [ "GLenum", "target" ],
-								      [ "GLshort", "s" ],
-								      [ "GLshort", "t" ],
-								      [ "GLshort", "r" ],
-								      [ "GLshort", "q" ] ], "glMultiTexCoord4sSGIS", "GL_SGIS_multitexture" ],
-      "glMultiTexCoord4svSGIS" => [ "glMultiTexCoord4svSGIS", "void", [ [ "GLenum", "target" ],
-									[ "GLshort *", "v" ] ], "glMultiTexCoord4svSGIS", "GL_SGIS_multitexture" ],
-      "glMultiTexCoordPointerSGIS" => [ "glMultiTexCoordPointerSGIS", "void", [ [ "GLenum", "target" ],
-										[ "GLint", "size" ],
-										[ "GLenum", "type" ],
-										[ "GLsizei", "stride" ],
-										[ "GLvoid *", "pointer" ] ], "glMultiTexCoordPointerSGIS", "GL_SGIS_multitexture" ],
-      "glSelectTextureSGIS" => [ "glSelectTextureSGIS", "void", [ [ "GLenum", "target" ] ], "glSelectTextureSGIS", "GL_SGIS_multitexture" ],
-      "glSelectTextureCoordSetSGIS" => [ "glSelectTextureCoordSetSGIS", "void", [ [ "GLenum", "target" ] ], "glSelectTextureCoordSetSGIS", "GL_SGIS_multitexture" ],
-      "glDeleteObjectBufferATI" => [ "glDeleteObjectBufferATI", "void", [ [ "GLuint", "buffer" ] ], "glDeleteObjectBufferATI", "GL_ATI_vertex_array_object" ]
-      );
+   (
+    "glDeleteBufferRegion" => [ "void", [ [ "GLenum", "region" ] ], "GL_KTX_buffer_region" ],
+    "glReadBufferRegion" => [ "void", [ [ "GLenum", "region" ],
+                                        [ "GLint", "x" ],
+                                        [ "GLint", "y" ],
+                                        [ "GLsizei", "width" ],
+                                        [ "GLsizei", "height" ] ], "GL_KTX_buffer_region" ],
+    "glDrawBufferRegion" => [ "void", [ [ "GLenum", "region" ],
+                                        [ "GLint", "x" ],
+                                        [ "GLint", "y" ],
+                                        [ "GLsizei", "width" ],
+                                        [ "GLsizei", "height" ],
+                                        [ "GLint", "xDest" ],
+                                        [ "GLint", "yDest" ] ], "GL_KTX_buffer_region" ],
+    "glBufferRegionEnabled" => [ "GLuint", [ ], "GL_KTX_buffer_region" ],
+    "glNewBufferRegion" => [ "GLuint", [ [ "GLenum", "type" ] ], "GL_KTX_buffer_region" ],
+    "glMTexCoord2fSGIS" => [ "void", [ [ "GLenum", "target" ],
+                                       [ "GLfloat", "s" ],
+                                       [ "GLfloat", "t" ] ], "GL_SGIS_multitexture" ],
+    "glMTexCoord2fvSGIS" => [ "void", [ [ "GLenum", "target" ],
+                                        [ "GLfloat *", "v" ] ], "GL_SGIS_multitexture" ],
+    "glMultiTexCoord1dSGIS" => [ "void", [ [ "GLenum", "target" ],
+                                           [ "GLdouble", "s" ] ],  "GL_SGIS_multitexture" ],
+    "glMultiTexCoord1dvSGIS" => [ "void", [ [ "GLenum", "target" ],
+                                            [ "GLdouble *", "v" ] ], "GL_SGIS_multitexture" ],
+    "glMultiTexCoord1fSGIS" => [ "void", [ [ "GLenum", "target" ],
+                                           [ "GLfloat", "s" ] ], "GL_SGIS_multitexture" ],
+    "glMultiTexCoord1fvSGIS" => [ "void", [ [ "GLenum", "target" ],
+                                            [ "const GLfloat *", "v" ] ], "GL_SGIS_multitexture" ],
+    "glMultiTexCoord1iSGIS" => [ "void", [ [ "GLenum", "target" ],
+                                           [ "GLint", "s" ] ], "GL_SGIS_multitexture" ],
+    "glMultiTexCoord1ivSGIS" => [ "void", [ [ "GLenum", "target" ],
+                                            [ "GLint *", "v" ] ], "GL_SGIS_multitexture" ],
+    "glMultiTexCoord1sSGIS" => [ "void", [ [ "GLenum", "target" ],
+                                           [ "GLshort", "s" ] ], "GL_SGIS_multitexture" ],
+    "glMultiTexCoord1svSGIS" => [ "void", [ [ "GLenum", "target" ],
+                                            [ "GLshort *", "v" ] ], "GL_SGIS_multitexture" ],
+    "glMultiTexCoord2dSGIS" => [ "void", [ [ "GLenum", "target" ],
+                                           [ "GLdouble", "s"],
+                                           [ "GLdouble", "t" ] ], "GL_SGIS_multitexture" ],
+    "glMultiTexCoord2dvSGIS" => [ "void", [ [ "GLenum", "target" ],
+                                            [ "GLdouble *", "v" ] ], "GL_SGIS_multitexture" ],
+    "glMultiTexCoord2fSGIS" => [ "void", [ [ "GLenum", "target" ],
+                                           [ "GLfloat", "s" ],
+                                           [ "GLfloat", "t" ] ], "GL_SGIS_multitexture" ],
+    "glMultiTexCoord2fvSGIS" => [ "void", [ [ "GLenum", "target" ],
+                                            [ "GLfloat *", "v" ] ], "GL_SGIS_multitexture" ],
+    "glMultiTexCoord2iSGIS" => [ "void", [ [ "GLenum", "target" ],
+                                           [ "GLint", "s" ],
+                                           [ "GLint", "t" ] ], "GL_SGIS_multitexture" ],
+    "glMultiTexCoord2ivSGIS" => [ "void", [ [ "GLenum", "target" ],
+                                            [ "GLint *", "v" ] ], "GL_SGIS_multitexture" ],
+    "glMultiTexCoord2sSGIS" => [ "void", [ [ "GLenum", "target" ],
+                                           [ "GLshort", "s" ],
+                                           [ "GLshort", "t" ] ], "GL_SGIS_multitexture" ],
+    "glMultiTexCoord2svSGIS" => [ "void", [ [ "GLenum", "target" ],
+                                            [ "GLshort *", "v" ] ], "GL_SGIS_multitexture" ],
+    "glMultiTexCoord3dSGIS" => [ "void", [ [ "GLenum", "target" ],
+                                           [ "GLdouble", "s" ],
+                                           [ "GLdouble", "t" ],
+                                           [ "GLdouble", "r" ] ], "GL_SGIS_multitexture" ],
+    "glMultiTexCoord3dvSGIS" => [ "void", [ [ "GLenum", "target" ],
+                                            [ "GLdouble *", "v" ] ], "GL_SGIS_multitexture" ],
+    "glMultiTexCoord3fSGIS" => [ "void", [ [ "GLenum", "target" ],
+                                           [ "GLfloat", "s" ],
+                                           [ "GLfloat", "t" ],
+                                           [ "GLfloat", "r" ] ], "GL_SGIS_multitexture" ],
+    "glMultiTexCoord3fvSGIS" => [ "void", [ [ "GLenum", "target" ],
+                                            [ "GLfloat *", "v" ] ], "GL_SGIS_multitexture" ],
+    "glMultiTexCoord3iSGIS" => [ "void", [ [ "GLenum", "target" ],
+                                           [ "GLint", "s" ],
+                                           [ "GLint", "t" ],
+                                           [ "GLint", "r" ] ], "GL_SGIS_multitexture" ],
+    "glMultiTexCoord3ivSGIS" => [ "void", [ [ "GLenum", "target" ],
+                                            [ "GLint *", "v" ] ], "GL_SGIS_multitexture" ],
+    "glMultiTexCoord3sSGIS" => [ "void", [ [ "GLenum", "target" ],
+                                           [ "GLshort", "s" ],
+                                           [ "GLshort", "t" ],
+                                           [ "GLshort", "r" ] ], "GL_SGIS_multitexture" ],
+    "glMultiTexCoord3svSGIS" => [ "void", [ [ "GLenum", "target" ],
+                                            [ "GLshort *", "v" ] ], "GL_SGIS_multitexture" ],
+    "glMultiTexCoord4dSGIS" => [ "void", [ [ "GLenum", "target" ],
+                                           [ "GLdouble", "s" ],
+                                           [ "GLdouble", "t" ],
+                                           [ "GLdouble", "r" ],
+                                           [ "GLdouble", "q" ] ], "GL_SGIS_multitexture" ],
+    "glMultiTexCoord4dvSGIS" => [ "void", [ [ "GLenum", "target" ],
+                                            [ "GLdouble *", "v" ] ], "GL_SGIS_multitexture" ],
+    "glMultiTexCoord4fSGIS" => [ "void", [ [ "GLenum", "target" ],
+                                           [ "GLfloat", "s" ],
+                                           [ "GLfloat", "t" ],
+                                           [ "GLfloat", "r" ],
+                                           [ "GLfloat", "q" ] ], "GL_SGIS_multitexture" ],
+    "glMultiTexCoord4fvSGIS" => [ "void", [ [ "GLenum", "target" ],
+                                            [ "GLfloat *", "v" ] ], "GL_SGIS_multitexture" ],
+    "glMultiTexCoord4iSGIS" => [ "void", [ [ "GLenum", "target" ],
+                                           [ "GLint", "s" ],
+                                           [ "GLint", "t" ],
+                                           [ "GLint", "r" ],
+                                           [ "GLint", "q" ] ], "GL_SGIS_multitexture" ],
+    "glMultiTexCoord4ivSGIS" => [ "void", [ [ "GLenum", "target" ],
+                                            [ "GLint *", "v" ] ], "GL_SGIS_multitexture" ],
+    "glMultiTexCoord4sSGIS" => [ "void", [ [ "GLenum", "target" ],
+                                           [ "GLshort", "s" ],
+                                           [ "GLshort", "t" ],
+                                           [ "GLshort", "r" ],
+                                           [ "GLshort", "q" ] ], "GL_SGIS_multitexture" ],
+    "glMultiTexCoord4svSGIS" => [ "void", [ [ "GLenum", "target" ],
+                                            [ "GLshort *", "v" ] ], "GL_SGIS_multitexture" ],
+    "glMultiTexCoordPointerSGIS" => [ "void", [ [ "GLenum", "target" ],
+                                                [ "GLint", "size" ],
+                                                [ "GLenum", "type" ],
+                                                [ "GLsizei", "stride" ],
+                                                [ "GLvoid *", "pointer" ] ], "GL_SGIS_multitexture" ],
+    "glSelectTextureSGIS" => [ "void", [ [ "GLenum", "target" ] ], "GL_SGIS_multitexture" ],
+    "glSelectTextureCoordSetSGIS" => [ "void", [ [ "GLenum", "target" ] ], "GL_SGIS_multitexture" ],
+    "glDeleteObjectBufferATI" => [ "void", [ [ "GLuint", "buffer" ] ], "GL_ATI_vertex_array_object" ]
+   );
 
 my @arg_names;
 my %arg_types;
@@ -663,17 +664,12 @@ while (my $line = <REGISTRY>) {
 
 	    push @$arg_ref, [ $arg_types{$arg_names[$i]}, $arg_names[$i] ];
 	}
-	my $func_ref = [ "gl$funcname",
-                         $ret_type,
-                         $arg_ref,
-                         "gl$funcname",
-                         "GL_$category" ];
 
 	# Now, put in one or the other hash table
 	if ($norm_categories{$category}) {
-	    $norm_functions{"gl$funcname"} = $func_ref;
+	    $norm_functions{"gl$funcname"} = [ $ret_type, $arg_ref ];
 	} else {
-	    $ext_functions{"gl$funcname"} = $func_ref;
+	    $ext_functions{"gl$funcname"} = [ $ret_type, $arg_ref, "GL_$category" ];
 	}
     }
 }
@@ -715,14 +711,14 @@ print HEADER "    struct\n    {\n";
 foreach (sort keys %norm_functions)
 {
     next if $_ eq "glDebugEntry";
-    printf HEADER "        %s;\n", get_func_proto($norm_functions{$_});
+    printf HEADER "        %s;\n", get_func_proto($_, $norm_functions{$_});
 }
 print HEADER "    } gl;\n\n";
 
 print HEADER "    struct\n    {\n";
 foreach (sort keys %ext_functions)
 {
-    printf HEADER "        %s;\n", get_func_proto($ext_functions{$_});
+    printf HEADER "        %s;\n", get_func_proto($_, $ext_functions{$_});
 }
 print HEADER "    } ext;\n";
 print HEADER "};\n\n";
@@ -744,10 +740,9 @@ close HEADER;
 open(SPEC, ">$spec_file");
 
 foreach (sort keys %norm_functions) {
-    my $func_name = $norm_functions{$_}->[0];
-    print SPEC "@  stdcall $func_name( ";
-    for (my $i = 0; $i < @{$norm_functions{$_}->[2]}; $i++) {
-	my $type = $norm_functions{$_}->[2]->[$i]->[0];
+    print SPEC "@  stdcall $_( ";
+    for (my $i = 0; $i < @{$norm_functions{$_}->[1]}; $i++) {
+	my $type = $norm_functions{$_}->[1]->[$i]->[0];
 	if ($type =~ /\*/) {
 	    print SPEC "ptr ";
 	} elsif (defined($arg_conv{$type})) {
@@ -756,7 +751,7 @@ foreach (sort keys %norm_functions) {
 	    die "No conversion for GL type $type...\n";
 	}
     }
-    print SPEC ") wine_$func_name\n";
+    print SPEC ") wine_$_\n";
 }
 
 print SPEC "@  stdcall wglChoosePixelFormat(long ptr)
@@ -805,14 +800,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 ";
 
 foreach (sort keys %norm_functions) {
-    my $string = GenerateThunk($norm_functions{$_}, 1, "gl");
+    my $string = GenerateThunk($_, $norm_functions{$_}, 1, "gl");
     print NORM "\n$string" if $string;
 }
 
 print NORM "\n";
 
 foreach (sort keys %norm_functions) {
-    print NORM generate_null_func($norm_functions{$_});
+    print NORM generate_null_func($_, $norm_functions{$_});
 }
 
 print NORM "\n#define USE_GL_FUNC(name) null_##name,\n";
@@ -844,7 +839,7 @@ my $count = keys %ext_functions;
 print EXT "const int extension_registry_size = $count;\n";
 print EXT "\n/* The thunks themselves....*/";
 foreach (sort keys %ext_functions) {
-    print EXT "\nstatic ", GenerateThunk($ext_functions{$_}, 0, "ext");
+    print EXT "\nstatic ", GenerateThunk($_, $ext_functions{$_}, 0, "ext");
 }
 
 # Then the table giving the string <-> function correspondence */
@@ -853,10 +848,7 @@ print EXT "const OpenGL_extension extension_registry[$count] = {\n";
 my $i = 0;
 foreach (sort keys %ext_functions) {
     my $func_ref = $ext_functions{$_};
-    if ($func_ref->[0] eq $func_ref->[3])
-    {
-        print EXT "  { \"$func_ref->[0]\", \"$func_ref->[4]\", wine_$func_ref->[0] }";
-    }
+    print EXT "  { \"$_\", \"$func_ref->[2]\", wine_$_ }";
     if ($i != $count-1) {
 	print EXT ",";
     }
