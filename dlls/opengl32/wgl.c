@@ -65,16 +65,21 @@ enum wgl_handle_type
     HANDLE_TYPE_MASK = 15 << 12
 };
 
+struct opengl_context
+{
+    DWORD               tid;      /* thread that the context is current in */
+    struct wgl_context *drv_ctx;  /* driver context */
+};
+
 struct wgl_handle
 {
     UINT                 handle;
-    DWORD                tid;
     struct opengl_funcs *funcs;
     union
     {
-        struct wgl_context *context;  /* for HANDLE_CONTEXT */
-        struct wgl_pbuffer *pbuffer;  /* for HANDLE_PBUFFER */
-        struct wgl_handle  *next;     /* for free handles */
+        struct opengl_context *context;  /* for HANDLE_CONTEXT */
+        struct wgl_pbuffer    *pbuffer;  /* for HANDLE_PBUFFER */
+        struct wgl_handle     *next;     /* for free handles */
     } u;
 };
 
@@ -183,7 +188,8 @@ BOOL WINAPI wglCopyContext(HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask)
     if ((dst = get_handle_ptr( hglrcDst, HANDLE_CONTEXT )))
     {
         if (src->funcs != dst->funcs) SetLastError( ERROR_INVALID_HANDLE );
-        else ret = src->funcs->wgl.p_wglCopyContext( src->u.context, dst->u.context, mask );
+        else ret = src->funcs->wgl.p_wglCopyContext( src->u.context->drv_ctx,
+                                                     dst->u.context->drv_ctx, mask );
     }
     release_handle_ptr( dst );
     release_handle_ptr( src );
@@ -199,14 +205,15 @@ BOOL WINAPI wglDeleteContext(HGLRC hglrc)
 
     if (!ptr) return FALSE;
 
-    if (ptr->tid && ptr->tid != GetCurrentThreadId())
+    if (ptr->u.context->tid && ptr->u.context->tid != GetCurrentThreadId())
     {
         SetLastError( ERROR_BUSY );
         release_handle_ptr( ptr );
         return FALSE;
     }
     if (hglrc == NtCurrentTeb()->glCurrentRC) wglMakeCurrent( 0, 0 );
-    ptr->funcs->wgl.p_wglDeleteContext( ptr->u.context );
+    ptr->funcs->wgl.p_wglDeleteContext( ptr->u.context->drv_ctx );
+    HeapFree( GetProcessHeap(), 0, ptr->u.context );
     free_handle_ptr( ptr );
     return TRUE;
 }
@@ -222,13 +229,13 @@ BOOL WINAPI wglMakeCurrent(HDC hdc, HGLRC hglrc)
     if (hglrc)
     {
         if (!(ptr = get_handle_ptr( hglrc, HANDLE_CONTEXT ))) return FALSE;
-        if (!ptr->tid || ptr->tid == GetCurrentThreadId())
+        if (!ptr->u.context->tid || ptr->u.context->tid == GetCurrentThreadId())
         {
-            ret = ptr->funcs->wgl.p_wglMakeCurrent( hdc, ptr->u.context );
+            ret = ptr->funcs->wgl.p_wglMakeCurrent( hdc, ptr->u.context->drv_ctx );
             if (ret)
             {
-                if (prev) prev->tid = 0;
-                ptr->tid = GetCurrentThreadId();
+                if (prev) prev->u.context->tid = 0;
+                ptr->u.context->tid = GetCurrentThreadId();
                 NtCurrentTeb()->glCurrentRC = hglrc;
                 NtCurrentTeb()->glTable = ptr->funcs;
             }
@@ -243,7 +250,7 @@ BOOL WINAPI wglMakeCurrent(HDC hdc, HGLRC hglrc)
     else if (prev)
     {
         if (!prev->funcs->wgl.p_wglMakeCurrent( 0, NULL )) return FALSE;
-        prev->tid = 0;
+        prev->u.context->tid = 0;
         NtCurrentTeb()->glCurrentRC = 0;
         NtCurrentTeb()->glTable = &null_opengl_funcs;
     }
@@ -263,17 +270,23 @@ BOOL WINAPI wglMakeCurrent(HDC hdc, HGLRC hglrc)
 HGLRC WINAPI wglCreateContextAttribsARB( HDC hdc, HGLRC share, const int *attribs )
 {
     HGLRC ret = 0;
-    struct wgl_context *context;
+    struct wgl_context *drv_ctx;
     struct wgl_handle *share_ptr = NULL;
+    struct opengl_context *context;
     struct opengl_funcs *funcs = get_dc_funcs( hdc );
 
     if (!funcs || !funcs->ext.p_wglCreateContextAttribsARB) return 0;
     if (share && !(share_ptr = get_handle_ptr( share, HANDLE_CONTEXT ))) return 0;
-    if ((context = funcs->ext.p_wglCreateContextAttribsARB( hdc, share_ptr ? share_ptr->u.context : NULL,
-                                                            attribs )))
+    if ((drv_ctx = funcs->ext.p_wglCreateContextAttribsARB( hdc,
+                                              share_ptr ? share_ptr->u.context->drv_ctx : NULL, attribs )))
     {
-        ret = alloc_handle( HANDLE_CONTEXT, funcs, context );
-        if (!ret) funcs->wgl.p_wglDeleteContext( context );
+        if ((context = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*context) )))
+        {
+            context->drv_ctx = drv_ctx;
+            if (!(ret = alloc_handle( HANDLE_CONTEXT, funcs, context )))
+                HeapFree( GetProcessHeap(), 0, context );
+        }
+        if (!ret) funcs->wgl.p_wglDeleteContext( drv_ctx );
     }
     release_handle_ptr( share_ptr );
     return ret;
@@ -293,14 +306,15 @@ BOOL WINAPI wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, HGLRC hglrc )
     if (hglrc)
     {
         if (!(ptr = get_handle_ptr( hglrc, HANDLE_CONTEXT ))) return FALSE;
-        if (!ptr->tid || ptr->tid == GetCurrentThreadId())
+        if (!ptr->u.context->tid || ptr->u.context->tid == GetCurrentThreadId())
         {
             ret = (ptr->funcs->ext.p_wglMakeContextCurrentARB &&
-                   ptr->funcs->ext.p_wglMakeContextCurrentARB( draw_hdc, read_hdc, ptr->u.context ));
+                   ptr->funcs->ext.p_wglMakeContextCurrentARB( draw_hdc, read_hdc,
+                                                               ptr->u.context->drv_ctx ));
             if (ret)
             {
-                if (prev) prev->tid = 0;
-                ptr->tid = GetCurrentThreadId();
+                if (prev) prev->u.context->tid = 0;
+                ptr->u.context->tid = GetCurrentThreadId();
                 NtCurrentTeb()->glCurrentRC = hglrc;
                 NtCurrentTeb()->glTable = ptr->funcs;
             }
@@ -315,7 +329,7 @@ BOOL WINAPI wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, HGLRC hglrc )
     else if (prev)
     {
         if (!prev->funcs->wgl.p_wglMakeCurrent( 0, NULL )) return FALSE;
-        prev->tid = 0;
+        prev->u.context->tid = 0;
         NtCurrentTeb()->glCurrentRC = 0;
         NtCurrentTeb()->glTable = &null_opengl_funcs;
     }
@@ -347,7 +361,7 @@ BOOL WINAPI wglShareLists(HGLRC hglrcSrc, HGLRC hglrcDst)
     if ((dst = get_handle_ptr( hglrcDst, HANDLE_CONTEXT )))
     {
         if (src->funcs != dst->funcs) SetLastError( ERROR_INVALID_HANDLE );
-        else ret = src->funcs->wgl.p_wglShareLists( src->u.context, dst->u.context );
+        else ret = src->funcs->wgl.p_wglShareLists( src->u.context->drv_ctx, dst->u.context->drv_ctx );
     }
     release_handle_ptr( dst );
     release_handle_ptr( src );
@@ -361,7 +375,7 @@ HDC WINAPI wglGetCurrentDC(void)
 {
     struct wgl_handle *context = get_current_context_ptr();
     if (!context) return 0;
-    return context->funcs->wgl.p_wglGetCurrentDC( context->u.context );
+    return context->funcs->wgl.p_wglGetCurrentDC( context->u.context->drv_ctx );
 }
 
 /***********************************************************************
@@ -370,13 +384,19 @@ HDC WINAPI wglGetCurrentDC(void)
 HGLRC WINAPI wglCreateContext(HDC hdc)
 {
     HGLRC ret = 0;
-    struct wgl_context *context;
+    struct wgl_context *drv_ctx;
+    struct opengl_context *context;
     struct opengl_funcs *funcs = get_dc_funcs( hdc );
 
     if (!funcs) return 0;
-    if (!(context = funcs->wgl.p_wglCreateContext( hdc ))) return 0;
-    ret = alloc_handle( HANDLE_CONTEXT, funcs, context );
-    if (!ret) funcs->wgl.p_wglDeleteContext( context );
+    if (!(drv_ctx = funcs->wgl.p_wglCreateContext( hdc ))) return 0;
+    if ((context = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*context) )))
+    {
+        context->drv_ctx = drv_ctx;
+        if (!(ret = alloc_handle( HANDLE_CONTEXT, funcs, context )))
+            HeapFree( GetProcessHeap(), 0, context );
+    }
+    if (!ret) funcs->wgl.p_wglDeleteContext( drv_ctx );
     return ret;
 }
 
