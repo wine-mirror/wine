@@ -3317,6 +3317,7 @@ static void test_tiff_palette(void)
         ColorPalette pal;
         ARGB entry[256];
     } palette;
+    ARGB *entries = palette.pal.Entries;
 
     /* 1bpp TIFF without palette */
     image = load_image((const BYTE *)&TIFF_data, sizeof(TIFF_data));
@@ -3346,8 +3347,8 @@ todo_wine
     expect(2, palette.pal.Count);
     if (palette.pal.Count == 2)
     {
-        ok(palette.pal.Entries[0] == 0xff000000, "expected 0xff000000, got %#x\n", palette.pal.Entries[0]);
-        ok(palette.pal.Entries[1] == 0xffffffff, "expected 0xffffffff, got %#x\n", palette.pal.Entries[1]);
+        ok(entries[0] == 0xff000000, "expected 0xff000000, got %#x\n", entries[0]);
+        ok(entries[1] == 0xffffffff, "expected 0xffffffff, got %#x\n", entries[1]);
     }
 
     GdipDisposeImage(image);
