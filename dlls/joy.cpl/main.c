@@ -424,9 +424,11 @@ static INT_PTR CALLBACK test_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
                 }
                 break;
 
-                case PSN_RESET:
+                case PSN_RESET: /* intentional fall-through */
+                case PSN_KILLACTIVE:
                     /* Stop input thread */
                     data->stop = TRUE;
+                    MsgWaitForMultipleObjects(1, &thread, FALSE, INFINITE, 0);
                     CloseHandle(thread);
                 break;
             }
