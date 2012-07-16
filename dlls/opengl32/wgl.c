@@ -40,6 +40,7 @@
 #include <GL/glu.h>
 #endif
 #include "wine/gdi_driver.h"
+#include "wine/wgl_driver.h"
 #include "wine/library.h"
 #include "wine/debug.h"
 
@@ -69,6 +70,8 @@ MAKE_FUNCPTR(gluTessVertex)
 
 static HMODULE opengl32_handle;
 static void* libglu_handle = NULL;
+
+extern struct opengl_funcs null_opengl_funcs;
 
 const GLubyte * WINAPI wine_glGetString( GLenum name );
 
@@ -253,6 +256,7 @@ BOOL WINAPI wglMakeCurrent(HDC hdc, HGLRC hglrc)
         if (!prev->funcs->p_wglMakeCurrent( 0, NULL )) return FALSE;
         prev->tid = 0;
         NtCurrentTeb()->glCurrentRC = 0;
+        NtCurrentTeb()->glTable = &null_opengl_funcs;
     }
     else if (!hdc)
     {
@@ -318,6 +322,7 @@ static BOOL WINAPI wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, HGLRC h
         if (!prev->funcs->p_wglMakeCurrent( 0, NULL )) return FALSE;
         prev->tid = 0;
         NtCurrentTeb()->glCurrentRC = 0;
+        NtCurrentTeb()->glTable = &null_opengl_funcs;
     }
     return ret;
 }
@@ -1338,7 +1343,11 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     case DLL_PROCESS_ATTACH:
         opengl32_handle = hinst;
         DisableThreadLibraryCalls(hinst);
+        NtCurrentTeb()->glTable = &null_opengl_funcs;
         return process_attach();
+    case DLL_THREAD_ATTACH:
+        NtCurrentTeb()->glTable = &null_opengl_funcs;
+        break;
     case DLL_PROCESS_DETACH:
         process_detach();
         break;

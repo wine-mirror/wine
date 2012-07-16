@@ -2,7 +2,10 @@
 /* Auto-generated file... Do not edit ! */
 
 #include "config.h"
+#include <stdarg.h>
 #include "opengl_ext.h"
+#include "winternl.h"
+#include "wine/wgl_driver.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(opengl);
@@ -2662,3 +2665,344 @@ void WINAPI wine_glViewport( GLint x, GLint y, GLsizei width, GLsizei height ) {
   TRACE("(%d, %d, %d, %d)\n", x, y, width, height );
   glViewport( x, y, width, height );
 }
+
+static void null_glAccum( GLenum op, GLfloat value ) { }
+static void null_glAlphaFunc( GLenum func, GLfloat ref ) { }
+static GLboolean null_glAreTexturesResident( GLsizei n, GLuint* textures, GLboolean* residences ) { return 0; }
+static void null_glArrayElement( GLint i ) { }
+static void null_glBegin( GLenum mode ) { }
+static void null_glBindTexture( GLenum target, GLuint texture ) { }
+static void null_glBitmap( GLsizei width, GLsizei height, GLfloat xorig, GLfloat yorig, GLfloat xmove, GLfloat ymove, GLubyte* bitmap ) { }
+static void null_glBlendFunc( GLenum sfactor, GLenum dfactor ) { }
+static void null_glCallList( GLuint list ) { }
+static void null_glCallLists( GLsizei n, GLenum type, GLvoid* lists ) { }
+static void null_glClear( GLbitfield mask ) { }
+static void null_glClearAccum( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha ) { }
+static void null_glClearColor( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha ) { }
+static void null_glClearDepth( GLdouble depth ) { }
+static void null_glClearIndex( GLfloat c ) { }
+static void null_glClearStencil( GLint s ) { }
+static void null_glClipPlane( GLenum plane, GLdouble* equation ) { }
+static void null_glColor3b( GLbyte red, GLbyte green, GLbyte blue ) { }
+static void null_glColor3bv( GLbyte* v ) { }
+static void null_glColor3d( GLdouble red, GLdouble green, GLdouble blue ) { }
+static void null_glColor3dv( GLdouble* v ) { }
+static void null_glColor3f( GLfloat red, GLfloat green, GLfloat blue ) { }
+static void null_glColor3fv( GLfloat* v ) { }
+static void null_glColor3i( GLint red, GLint green, GLint blue ) { }
+static void null_glColor3iv( GLint* v ) { }
+static void null_glColor3s( GLshort red, GLshort green, GLshort blue ) { }
+static void null_glColor3sv( GLshort* v ) { }
+static void null_glColor3ub( GLubyte red, GLubyte green, GLubyte blue ) { }
+static void null_glColor3ubv( GLubyte* v ) { }
+static void null_glColor3ui( GLuint red, GLuint green, GLuint blue ) { }
+static void null_glColor3uiv( GLuint* v ) { }
+static void null_glColor3us( GLushort red, GLushort green, GLushort blue ) { }
+static void null_glColor3usv( GLushort* v ) { }
+static void null_glColor4b( GLbyte red, GLbyte green, GLbyte blue, GLbyte alpha ) { }
+static void null_glColor4bv( GLbyte* v ) { }
+static void null_glColor4d( GLdouble red, GLdouble green, GLdouble blue, GLdouble alpha ) { }
+static void null_glColor4dv( GLdouble* v ) { }
+static void null_glColor4f( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha ) { }
+static void null_glColor4fv( GLfloat* v ) { }
+static void null_glColor4i( GLint red, GLint green, GLint blue, GLint alpha ) { }
+static void null_glColor4iv( GLint* v ) { }
+static void null_glColor4s( GLshort red, GLshort green, GLshort blue, GLshort alpha ) { }
+static void null_glColor4sv( GLshort* v ) { }
+static void null_glColor4ub( GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha ) { }
+static void null_glColor4ubv( GLubyte* v ) { }
+static void null_glColor4ui( GLuint red, GLuint green, GLuint blue, GLuint alpha ) { }
+static void null_glColor4uiv( GLuint* v ) { }
+static void null_glColor4us( GLushort red, GLushort green, GLushort blue, GLushort alpha ) { }
+static void null_glColor4usv( GLushort* v ) { }
+static void null_glColorMask( GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha ) { }
+static void null_glColorMaterial( GLenum face, GLenum mode ) { }
+static void null_glColorPointer( GLint size, GLenum type, GLsizei stride, GLvoid* pointer ) { }
+static void null_glCopyPixels( GLint x, GLint y, GLsizei width, GLsizei height, GLenum type ) { }
+static void null_glCopyTexImage1D( GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLint border ) { }
+static void null_glCopyTexImage2D( GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border ) { }
+static void null_glCopyTexSubImage1D( GLenum target, GLint level, GLint xoffset, GLint x, GLint y, GLsizei width ) { }
+static void null_glCopyTexSubImage2D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height ) { }
+static void null_glCullFace( GLenum mode ) { }
+static void null_glDeleteLists( GLuint list, GLsizei range ) { }
+static void null_glDeleteTextures( GLsizei n, GLuint* textures ) { }
+static void null_glDepthFunc( GLenum func ) { }
+static void null_glDepthMask( GLboolean flag ) { }
+static void null_glDepthRange( GLdouble nearParam, GLdouble farParam ) { }
+static void null_glDisable( GLenum cap ) { }
+static void null_glDisableClientState( GLenum array ) { }
+static void null_glDrawArrays( GLenum mode, GLint first, GLsizei count ) { }
+static void null_glDrawBuffer( GLenum mode ) { }
+static void null_glDrawElements( GLenum mode, GLsizei count, GLenum type, GLvoid* indices ) { }
+static void null_glDrawPixels( GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid* pixels ) { }
+static void null_glEdgeFlag( GLboolean flag ) { }
+static void null_glEdgeFlagPointer( GLsizei stride, GLvoid* pointer ) { }
+static void null_glEdgeFlagv( GLboolean* flag ) { }
+static void null_glEnable( GLenum cap ) { }
+static void null_glEnableClientState( GLenum array ) { }
+static void null_glEnd( void ) { }
+static void null_glEndList( void ) { }
+static void null_glEvalCoord1d( GLdouble u ) { }
+static void null_glEvalCoord1dv( GLdouble* u ) { }
+static void null_glEvalCoord1f( GLfloat u ) { }
+static void null_glEvalCoord1fv( GLfloat* u ) { }
+static void null_glEvalCoord2d( GLdouble u, GLdouble v ) { }
+static void null_glEvalCoord2dv( GLdouble* u ) { }
+static void null_glEvalCoord2f( GLfloat u, GLfloat v ) { }
+static void null_glEvalCoord2fv( GLfloat* u ) { }
+static void null_glEvalMesh1( GLenum mode, GLint i1, GLint i2 ) { }
+static void null_glEvalMesh2( GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 ) { }
+static void null_glEvalPoint1( GLint i ) { }
+static void null_glEvalPoint2( GLint i, GLint j ) { }
+static void null_glFeedbackBuffer( GLsizei size, GLenum type, GLfloat* buffer ) { }
+static void null_glFinish( void ) { }
+static void null_glFlush( void ) { }
+static void null_glFogf( GLenum pname, GLfloat param ) { }
+static void null_glFogfv( GLenum pname, GLfloat* params ) { }
+static void null_glFogi( GLenum pname, GLint param ) { }
+static void null_glFogiv( GLenum pname, GLint* params ) { }
+static void null_glFrontFace( GLenum mode ) { }
+static void null_glFrustum( GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble zNear, GLdouble zFar ) { }
+static GLuint null_glGenLists( GLsizei range ) { return 0; }
+static void null_glGenTextures( GLsizei n, GLuint* textures ) { }
+static void null_glGetBooleanv( GLenum pname, GLboolean* params ) { }
+static void null_glGetClipPlane( GLenum plane, GLdouble* equation ) { }
+static void null_glGetDoublev( GLenum pname, GLdouble* params ) { }
+static GLenum null_glGetError( void ) { return GL_INVALID_OPERATION; }
+static void null_glGetFloatv( GLenum pname, GLfloat* params ) { }
+static void null_glGetIntegerv( GLenum pname, GLint* params ) { }
+static void null_glGetLightfv( GLenum light, GLenum pname, GLfloat* params ) { }
+static void null_glGetLightiv( GLenum light, GLenum pname, GLint* params ) { }
+static void null_glGetMapdv( GLenum target, GLenum query, GLdouble* v ) { }
+static void null_glGetMapfv( GLenum target, GLenum query, GLfloat* v ) { }
+static void null_glGetMapiv( GLenum target, GLenum query, GLint* v ) { }
+static void null_glGetMaterialfv( GLenum face, GLenum pname, GLfloat* params ) { }
+static void null_glGetMaterialiv( GLenum face, GLenum pname, GLint* params ) { }
+static void null_glGetPixelMapfv( GLenum map, GLfloat* values ) { }
+static void null_glGetPixelMapuiv( GLenum map, GLuint* values ) { }
+static void null_glGetPixelMapusv( GLenum map, GLushort* values ) { }
+static void null_glGetPointerv( GLenum pname, GLvoid** params ) { }
+static void null_glGetPolygonStipple( GLubyte* mask ) { }
+static const GLubyte * null_glGetString( GLenum name ) { return 0; }
+static void null_glGetTexEnvfv( GLenum target, GLenum pname, GLfloat* params ) { }
+static void null_glGetTexEnviv( GLenum target, GLenum pname, GLint* params ) { }
+static void null_glGetTexGendv( GLenum coord, GLenum pname, GLdouble* params ) { }
+static void null_glGetTexGenfv( GLenum coord, GLenum pname, GLfloat* params ) { }
+static void null_glGetTexGeniv( GLenum coord, GLenum pname, GLint* params ) { }
+static void null_glGetTexImage( GLenum target, GLint level, GLenum format, GLenum type, GLvoid* pixels ) { }
+static void null_glGetTexLevelParameterfv( GLenum target, GLint level, GLenum pname, GLfloat* params ) { }
+static void null_glGetTexLevelParameteriv( GLenum target, GLint level, GLenum pname, GLint* params ) { }
+static void null_glGetTexParameterfv( GLenum target, GLenum pname, GLfloat* params ) { }
+static void null_glGetTexParameteriv( GLenum target, GLenum pname, GLint* params ) { }
+static void null_glHint( GLenum target, GLenum mode ) { }
+static void null_glIndexMask( GLuint mask ) { }
+static void null_glIndexPointer( GLenum type, GLsizei stride, GLvoid* pointer ) { }
+static void null_glIndexd( GLdouble c ) { }
+static void null_glIndexdv( GLdouble* c ) { }
+static void null_glIndexf( GLfloat c ) { }
+static void null_glIndexfv( GLfloat* c ) { }
+static void null_glIndexi( GLint c ) { }
+static void null_glIndexiv( GLint* c ) { }
+static void null_glIndexs( GLshort c ) { }
+static void null_glIndexsv( GLshort* c ) { }
+static void null_glIndexub( GLubyte c ) { }
+static void null_glIndexubv( GLubyte* c ) { }
+static void null_glInitNames( void ) { }
+static void null_glInterleavedArrays( GLenum format, GLsizei stride, GLvoid* pointer ) { }
+static GLboolean null_glIsEnabled( GLenum cap ) { return 0; }
+static GLboolean null_glIsList( GLuint list ) { return 0; }
+static GLboolean null_glIsTexture( GLuint texture ) { return 0; }
+static void null_glLightModelf( GLenum pname, GLfloat param ) { }
+static void null_glLightModelfv( GLenum pname, GLfloat* params ) { }
+static void null_glLightModeli( GLenum pname, GLint param ) { }
+static void null_glLightModeliv( GLenum pname, GLint* params ) { }
+static void null_glLightf( GLenum light, GLenum pname, GLfloat param ) { }
+static void null_glLightfv( GLenum light, GLenum pname, GLfloat* params ) { }
+static void null_glLighti( GLenum light, GLenum pname, GLint param ) { }
+static void null_glLightiv( GLenum light, GLenum pname, GLint* params ) { }
+static void null_glLineStipple( GLint factor, GLushort pattern ) { }
+static void null_glLineWidth( GLfloat width ) { }
+static void null_glListBase( GLuint base ) { }
+static void null_glLoadIdentity( void ) { }
+static void null_glLoadMatrixd( GLdouble* m ) { }
+static void null_glLoadMatrixf( GLfloat* m ) { }
+static void null_glLoadName( GLuint name ) { }
+static void null_glLogicOp( GLenum opcode ) { }
+static void null_glMap1d( GLenum target, GLdouble u1, GLdouble u2, GLint stride, GLint order, GLdouble* points ) { }
+static void null_glMap1f( GLenum target, GLfloat u1, GLfloat u2, GLint stride, GLint order, GLfloat* points ) { }
+static void null_glMap2d( GLenum target, GLdouble u1, GLdouble u2, GLint ustride, GLint uorder, GLdouble v1, GLdouble v2, GLint vstride, GLint vorder, GLdouble* points ) { }
+static void null_glMap2f( GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder, GLfloat v1, GLfloat v2, GLint vstride, GLint vorder, GLfloat* points ) { }
+static void null_glMapGrid1d( GLint un, GLdouble u1, GLdouble u2 ) { }
+static void null_glMapGrid1f( GLint un, GLfloat u1, GLfloat u2 ) { }
+static void null_glMapGrid2d( GLint un, GLdouble u1, GLdouble u2, GLint vn, GLdouble v1, GLdouble v2 ) { }
+static void null_glMapGrid2f( GLint un, GLfloat u1, GLfloat u2, GLint vn, GLfloat v1, GLfloat v2 ) { }
+static void null_glMaterialf( GLenum face, GLenum pname, GLfloat param ) { }
+static void null_glMaterialfv( GLenum face, GLenum pname, GLfloat* params ) { }
+static void null_glMateriali( GLenum face, GLenum pname, GLint param ) { }
+static void null_glMaterialiv( GLenum face, GLenum pname, GLint* params ) { }
+static void null_glMatrixMode( GLenum mode ) { }
+static void null_glMultMatrixd( GLdouble* m ) { }
+static void null_glMultMatrixf( GLfloat* m ) { }
+static void null_glNewList( GLuint list, GLenum mode ) { }
+static void null_glNormal3b( GLbyte nx, GLbyte ny, GLbyte nz ) { }
+static void null_glNormal3bv( GLbyte* v ) { }
+static void null_glNormal3d( GLdouble nx, GLdouble ny, GLdouble nz ) { }
+static void null_glNormal3dv( GLdouble* v ) { }
+static void null_glNormal3f( GLfloat nx, GLfloat ny, GLfloat nz ) { }
+static void null_glNormal3fv( GLfloat* v ) { }
+static void null_glNormal3i( GLint nx, GLint ny, GLint nz ) { }
+static void null_glNormal3iv( GLint* v ) { }
+static void null_glNormal3s( GLshort nx, GLshort ny, GLshort nz ) { }
+static void null_glNormal3sv( GLshort* v ) { }
+static void null_glNormalPointer( GLenum type, GLsizei stride, GLvoid* pointer ) { }
+static void null_glOrtho( GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble zNear, GLdouble zFar ) { }
+static void null_glPassThrough( GLfloat token ) { }
+static void null_glPixelMapfv( GLenum map, GLint mapsize, GLfloat* values ) { }
+static void null_glPixelMapuiv( GLenum map, GLint mapsize, GLuint* values ) { }
+static void null_glPixelMapusv( GLenum map, GLint mapsize, GLushort* values ) { }
+static void null_glPixelStoref( GLenum pname, GLfloat param ) { }
+static void null_glPixelStorei( GLenum pname, GLint param ) { }
+static void null_glPixelTransferf( GLenum pname, GLfloat param ) { }
+static void null_glPixelTransferi( GLenum pname, GLint param ) { }
+static void null_glPixelZoom( GLfloat xfactor, GLfloat yfactor ) { }
+static void null_glPointSize( GLfloat size ) { }
+static void null_glPolygonMode( GLenum face, GLenum mode ) { }
+static void null_glPolygonOffset( GLfloat factor, GLfloat units ) { }
+static void null_glPolygonStipple( GLubyte* mask ) { }
+static void null_glPopAttrib( void ) { }
+static void null_glPopClientAttrib( void ) { }
+static void null_glPopMatrix( void ) { }
+static void null_glPopName( void ) { }
+static void null_glPrioritizeTextures( GLsizei n, GLuint* textures, GLfloat* priorities ) { }
+static void null_glPushAttrib( GLbitfield mask ) { }
+static void null_glPushClientAttrib( GLbitfield mask ) { }
+static void null_glPushMatrix( void ) { }
+static void null_glPushName( GLuint name ) { }
+static void null_glRasterPos2d( GLdouble x, GLdouble y ) { }
+static void null_glRasterPos2dv( GLdouble* v ) { }
+static void null_glRasterPos2f( GLfloat x, GLfloat y ) { }
+static void null_glRasterPos2fv( GLfloat* v ) { }
+static void null_glRasterPos2i( GLint x, GLint y ) { }
+static void null_glRasterPos2iv( GLint* v ) { }
+static void null_glRasterPos2s( GLshort x, GLshort y ) { }
+static void null_glRasterPos2sv( GLshort* v ) { }
+static void null_glRasterPos3d( GLdouble x, GLdouble y, GLdouble z ) { }
+static void null_glRasterPos3dv( GLdouble* v ) { }
+static void null_glRasterPos3f( GLfloat x, GLfloat y, GLfloat z ) { }
+static void null_glRasterPos3fv( GLfloat* v ) { }
+static void null_glRasterPos3i( GLint x, GLint y, GLint z ) { }
+static void null_glRasterPos3iv( GLint* v ) { }
+static void null_glRasterPos3s( GLshort x, GLshort y, GLshort z ) { }
+static void null_glRasterPos3sv( GLshort* v ) { }
+static void null_glRasterPos4d( GLdouble x, GLdouble y, GLdouble z, GLdouble w ) { }
+static void null_glRasterPos4dv( GLdouble* v ) { }
+static void null_glRasterPos4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w ) { }
+static void null_glRasterPos4fv( GLfloat* v ) { }
+static void null_glRasterPos4i( GLint x, GLint y, GLint z, GLint w ) { }
+static void null_glRasterPos4iv( GLint* v ) { }
+static void null_glRasterPos4s( GLshort x, GLshort y, GLshort z, GLshort w ) { }
+static void null_glRasterPos4sv( GLshort* v ) { }
+static void null_glReadBuffer( GLenum mode ) { }
+static void null_glReadPixels( GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid* pixels ) { }
+static void null_glRectd( GLdouble x1, GLdouble y1, GLdouble x2, GLdouble y2 ) { }
+static void null_glRectdv( GLdouble* v1, GLdouble* v2 ) { }
+static void null_glRectf( GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2 ) { }
+static void null_glRectfv( GLfloat* v1, GLfloat* v2 ) { }
+static void null_glRecti( GLint x1, GLint y1, GLint x2, GLint y2 ) { }
+static void null_glRectiv( GLint* v1, GLint* v2 ) { }
+static void null_glRects( GLshort x1, GLshort y1, GLshort x2, GLshort y2 ) { }
+static void null_glRectsv( GLshort* v1, GLshort* v2 ) { }
+static GLint null_glRenderMode( GLenum mode ) { return 0; }
+static void null_glRotated( GLdouble angle, GLdouble x, GLdouble y, GLdouble z ) { }
+static void null_glRotatef( GLfloat angle, GLfloat x, GLfloat y, GLfloat z ) { }
+static void null_glScaled( GLdouble x, GLdouble y, GLdouble z ) { }
+static void null_glScalef( GLfloat x, GLfloat y, GLfloat z ) { }
+static void null_glScissor( GLint x, GLint y, GLsizei width, GLsizei height ) { }
+static void null_glSelectBuffer( GLsizei size, GLuint* buffer ) { }
+static void null_glShadeModel( GLenum mode ) { }
+static void null_glStencilFunc( GLenum func, GLint ref, GLuint mask ) { }
+static void null_glStencilMask( GLuint mask ) { }
+static void null_glStencilOp( GLenum fail, GLenum zfail, GLenum zpass ) { }
+static void null_glTexCoord1d( GLdouble s ) { }
+static void null_glTexCoord1dv( GLdouble* v ) { }
+static void null_glTexCoord1f( GLfloat s ) { }
+static void null_glTexCoord1fv( GLfloat* v ) { }
+static void null_glTexCoord1i( GLint s ) { }
+static void null_glTexCoord1iv( GLint* v ) { }
+static void null_glTexCoord1s( GLshort s ) { }
+static void null_glTexCoord1sv( GLshort* v ) { }
+static void null_glTexCoord2d( GLdouble s, GLdouble t ) { }
+static void null_glTexCoord2dv( GLdouble* v ) { }
+static void null_glTexCoord2f( GLfloat s, GLfloat t ) { }
+static void null_glTexCoord2fv( GLfloat* v ) { }
+static void null_glTexCoord2i( GLint s, GLint t ) { }
+static void null_glTexCoord2iv( GLint* v ) { }
+static void null_glTexCoord2s( GLshort s, GLshort t ) { }
+static void null_glTexCoord2sv( GLshort* v ) { }
+static void null_glTexCoord3d( GLdouble s, GLdouble t, GLdouble r ) { }
+static void null_glTexCoord3dv( GLdouble* v ) { }
+static void null_glTexCoord3f( GLfloat s, GLfloat t, GLfloat r ) { }
+static void null_glTexCoord3fv( GLfloat* v ) { }
+static void null_glTexCoord3i( GLint s, GLint t, GLint r ) { }
+static void null_glTexCoord3iv( GLint* v ) { }
+static void null_glTexCoord3s( GLshort s, GLshort t, GLshort r ) { }
+static void null_glTexCoord3sv( GLshort* v ) { }
+static void null_glTexCoord4d( GLdouble s, GLdouble t, GLdouble r, GLdouble q ) { }
+static void null_glTexCoord4dv( GLdouble* v ) { }
+static void null_glTexCoord4f( GLfloat s, GLfloat t, GLfloat r, GLfloat q ) { }
+static void null_glTexCoord4fv( GLfloat* v ) { }
+static void null_glTexCoord4i( GLint s, GLint t, GLint r, GLint q ) { }
+static void null_glTexCoord4iv( GLint* v ) { }
+static void null_glTexCoord4s( GLshort s, GLshort t, GLshort r, GLshort q ) { }
+static void null_glTexCoord4sv( GLshort* v ) { }
+static void null_glTexCoordPointer( GLint size, GLenum type, GLsizei stride, GLvoid* pointer ) { }
+static void null_glTexEnvf( GLenum target, GLenum pname, GLfloat param ) { }
+static void null_glTexEnvfv( GLenum target, GLenum pname, GLfloat* params ) { }
+static void null_glTexEnvi( GLenum target, GLenum pname, GLint param ) { }
+static void null_glTexEnviv( GLenum target, GLenum pname, GLint* params ) { }
+static void null_glTexGend( GLenum coord, GLenum pname, GLdouble param ) { }
+static void null_glTexGendv( GLenum coord, GLenum pname, GLdouble* params ) { }
+static void null_glTexGenf( GLenum coord, GLenum pname, GLfloat param ) { }
+static void null_glTexGenfv( GLenum coord, GLenum pname, GLfloat* params ) { }
+static void null_glTexGeni( GLenum coord, GLenum pname, GLint param ) { }
+static void null_glTexGeniv( GLenum coord, GLenum pname, GLint* params ) { }
+static void null_glTexImage1D( GLenum target, GLint level, GLint internalformat, GLsizei width, GLint border, GLenum format, GLenum type, GLvoid* pixels ) { }
+static void null_glTexImage2D( GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, GLvoid* pixels ) { }
+static void null_glTexParameterf( GLenum target, GLenum pname, GLfloat param ) { }
+static void null_glTexParameterfv( GLenum target, GLenum pname, GLfloat* params ) { }
+static void null_glTexParameteri( GLenum target, GLenum pname, GLint param ) { }
+static void null_glTexParameteriv( GLenum target, GLenum pname, GLint* params ) { }
+static void null_glTexSubImage1D( GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, GLvoid* pixels ) { }
+static void null_glTexSubImage2D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid* pixels ) { }
+static void null_glTranslated( GLdouble x, GLdouble y, GLdouble z ) { }
+static void null_glTranslatef( GLfloat x, GLfloat y, GLfloat z ) { }
+static void null_glVertex2d( GLdouble x, GLdouble y ) { }
+static void null_glVertex2dv( GLdouble* v ) { }
+static void null_glVertex2f( GLfloat x, GLfloat y ) { }
+static void null_glVertex2fv( GLfloat* v ) { }
+static void null_glVertex2i( GLint x, GLint y ) { }
+static void null_glVertex2iv( GLint* v ) { }
+static void null_glVertex2s( GLshort x, GLshort y ) { }
+static void null_glVertex2sv( GLshort* v ) { }
+static void null_glVertex3d( GLdouble x, GLdouble y, GLdouble z ) { }
+static void null_glVertex3dv( GLdouble* v ) { }
+static void null_glVertex3f( GLfloat x, GLfloat y, GLfloat z ) { }
+static void null_glVertex3fv( GLfloat* v ) { }
+static void null_glVertex3i( GLint x, GLint y, GLint z ) { }
+static void null_glVertex3iv( GLint* v ) { }
+static void null_glVertex3s( GLshort x, GLshort y, GLshort z ) { }
+static void null_glVertex3sv( GLshort* v ) { }
+static void null_glVertex4d( GLdouble x, GLdouble y, GLdouble z, GLdouble w ) { }
+static void null_glVertex4dv( GLdouble* v ) { }
+static void null_glVertex4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w ) { }
+static void null_glVertex4fv( GLfloat* v ) { }
+static void null_glVertex4i( GLint x, GLint y, GLint z, GLint w ) { }
+static void null_glVertex4iv( GLint* v ) { }
+static void null_glVertex4s( GLshort x, GLshort y, GLshort z, GLshort w ) { }
+static void null_glVertex4sv( GLshort* v ) { }
+static void null_glVertexPointer( GLint size, GLenum type, GLsizei stride, GLvoid* pointer ) { }
+static void null_glViewport( GLint x, GLint y, GLsizei width, GLsizei height ) { }
+
+#define USE_GL_FUNC(name) null_##name,
+struct opengl_funcs null_opengl_funcs = { { ALL_WGL_FUNCS } };
+#undef USE_GL_FUNC

@@ -319,6 +319,35 @@ sub GenerateThunk($$$$$)
     return $ret;
 }
 
+sub generate_null_func($)
+{
+    my ($func_ref) = @_;
+    my $ret;
+
+    return "" if $func_ref->[0] eq "glDebugEntry";
+
+    $ret = "static " . ConvertType($func_ref->[1]) . " null_$func_ref->[0]( ";
+    for (my $i = 0; $i < @{$func_ref->[2]}; $i++) {
+	my $type = $func_ref->[2]->[$i]->[0];
+	my $name = ConvertVarName($func_ref->[2]->[$i]->[1]);
+	$ret .= ConvertType($type) . " $name";
+	$ret .= "," if ($i+1 < @{$func_ref->[2]});
+        $ret .= " ";
+    }
+    $ret .= 'void ' if (!@{$func_ref->[2]});
+    $ret .= ") {";
+    if ($func_ref->[0] eq "glGetError")
+    {
+        $ret .= " return GL_INVALID_OPERATION;";
+    }
+    elsif ($func_ref->[1] ne "void")
+    {
+        $ret .= " return 0;";
+    }
+    $ret .= " }\n";
+    return $ret;
+}
+
 sub get_func_proto($)
 {
     my $func = shift;
@@ -769,7 +798,10 @@ print NORM "
 /* Auto-generated file... Do not edit ! */
 
 #include \"config.h\"
+#include <stdarg.h>
 #include \"opengl_ext.h\"
+#include \"winternl.h\"
+#include \"wine/wgl_driver.h\"
 #include \"wine/debug.h\"
 
 WINE_DEFAULT_DEBUG_CHANNEL(opengl);
@@ -779,6 +811,17 @@ foreach (sort keys %norm_functions) {
 
     print NORM "\n$string" if $string;
 }
+
+print NORM "\n";
+
+foreach (sort keys %norm_functions) {
+    print NORM generate_null_func($norm_functions{$_});
+}
+
+print NORM "\n#define USE_GL_FUNC(name) null_##name,\n";
+print NORM "struct opengl_funcs null_opengl_funcs = { { ALL_WGL_FUNCS } };\n";
+print NORM "#undef USE_GL_FUNC\n";
+
 close(NORM);
 
 #
