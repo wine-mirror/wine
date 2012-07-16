@@ -15,12 +15,6 @@ use strict;
 #       If they are not found in the current directory the script will
 #       attempt to download them from there.
 #
-#       The files used to be hosted and maintained by SGI. You can still find
-#       find them in the sample implementation CVS tree which is located at
-#       CVS_ROOT/projects/ogl-sample/main/doc/registry/specs.
-#       You can also find them on the web at the following URL :
-#         http://oss.sgi.com/cgi-bin/cvsweb.cgi/projects/ogl-sample/main/doc/registry/specs/
-#
 #     - opengl_version is the OpenGL version emulated by the library
 #       (can be 1.0 to 1.5). The default is 1.1.
 #
@@ -44,7 +38,11 @@ use strict;
 #       OpenGL work (as they are resolved at run-time using
 #       glXGetProcAddressARB).
 #
+#     - include/wine/wgl_driver.h: definitions for the tables of OpenGL functions.
+#
+#
 # Copyright 2000 Lionel Ulmer
+# Copyright 2012 Alexandre Julliard
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -318,6 +316,21 @@ sub GenerateThunk($$$$$)
     $ret = "$ret}\n";
 
     # Return this string....
+    return $ret;
+}
+
+sub get_func_proto($)
+{
+    my $func = shift;
+    my $ret = sprintf "%-10s", ConvertType($func->[1]);
+    $ret .= " (WINE_GLAPI *p_$func->[0])(";
+    for (my $i = 0; $i < @{$func->[2]}; $i++)
+    {
+	$ret .= ConvertType($func->[2]->[$i]->[0]);
+        $ret .= "," if ($i+1 < @{$func->[2]});
+    }
+    $ret .= "void" unless @{$func->[2]};
+    $ret .= ")";
     return $ret;
 }
 
@@ -644,6 +657,60 @@ while (my $line = <REGISTRY>) {
 #
 close(TYPES);
 close(REGISTRY);
+
+#
+# Get the current wgl_driver.h version
+#
+my $wgl_version = 0;
+open HEADER, "<../../include/wine/wgl_driver.h" or die "cannot open wgl_driver.h";
+while (<HEADER>)
+{
+    next unless /^#define WINE_WGL_DRIVER_VERSION (\d+)/;
+    $wgl_version = $1;
+    last;
+}
+close HEADER;
+
+#
+# Generate the wgl_driver.h file
+#
+open HEADER, ">../../include/wine/wgl_driver.h" or die "cannot create wgl_driver.h";
+print HEADER "/* Automatically generated from http://www.opengl.org/registry/api files; DO NOT EDIT! */\n\n";
+print HEADER "#ifndef __WINE_WGL_DRIVER_H\n";
+print HEADER "#define __WINE_WGL_DRIVER_H\n\n";
+print HEADER "#ifndef WINE_GLAPI\n";
+print HEADER "#define WINE_GLAPI\n";
+print HEADER "#endif\n\n";
+
+printf HEADER "#define WINE_WGL_DRIVER_VERSION %u\n\n", $wgl_version + 1;
+
+print HEADER "struct opengl_funcs\n{\n";
+print HEADER "    struct\n    {\n";
+foreach (sort keys %norm_functions)
+{
+    next if $_ eq "glDebugEntry";
+    printf HEADER "        %s;\n", get_func_proto($norm_functions{$_});
+}
+print HEADER "    } gl;\n\n";
+
+print HEADER "    struct\n    {\n";
+foreach (sort keys %ext_functions)
+{
+    printf HEADER "        %s;\n", get_func_proto($ext_functions{$_});
+}
+print HEADER "    } ext;\n";
+print HEADER "};\n\n";
+
+print HEADER "#define ALL_WGL_FUNCS";
+foreach (sort keys %norm_functions)
+{
+    next if $_ eq "glDebugEntry";
+    printf HEADER " \\\n    USE_GL_FUNC(\%s)", $_;
+}
+print HEADER "\n\n";
+
+print HEADER "#endif /* __WINE_WGL_DRIVER_H */\n";
+close HEADER;
 
 #
 # Now, generate the output files. First, the spec file.
