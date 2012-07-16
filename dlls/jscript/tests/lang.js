@@ -101,7 +101,7 @@ testConstructor(Array, "Array");
 testConstructor(Boolean, "Boolean");
 testConstructor(Number, "Number");
 testConstructor(RegExp, "RegExp");
-//testConstructor(Function, "Function");
+testConstructor(Function, "Function");
 testConstructor(Date, "Date");
 testConstructor(VBArray, "VBArray");
 
