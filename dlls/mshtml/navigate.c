@@ -1339,7 +1339,7 @@ static void handle_navigation_error(nsChannelBSC *This, DWORD result)
     BSTR unk;
     HRESULT hres;
 
-    if(!This->is_doc_channel)
+    if(!This->is_doc_channel || !This->bsc.window)
         return;
 
     outer_window = This->bsc.window->base.outer_window;
