@@ -2342,62 +2342,11 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info, DWORD gl_version)
 #undef USE_GL_FUNC
 }
 
-/* Context activation is done by the caller. */
-static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
+static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
 {
-    struct wined3d_driver_info *driver_info = &adapter->driver_info;
-    struct wined3d_gl_info *gl_info = &adapter->gl_info;
-    const char *GL_Extensions    = NULL;
-    const char *WGL_Extensions   = NULL;
-    const char *gl_vendor_str, *gl_renderer_str, *gl_version_str;
-    struct fragment_caps fragment_caps;
-    enum wined3d_gl_vendor gl_vendor;
-    enum wined3d_pci_vendor card_vendor;
-    enum wined3d_pci_device device;
-    GLint       gl_max;
-    GLfloat     gl_floatv[2];
-    unsigned    i;
-    HDC         hdc;
-    DWORD gl_version;
+    GLfloat gl_floatv[2];
+    GLint gl_max;
 
-    TRACE("adapter %p.\n", adapter);
-
-    ENTER_GL();
-
-    gl_renderer_str = (const char *)glGetString(GL_RENDERER);
-    TRACE("GL_RENDERER: %s.\n", debugstr_a(gl_renderer_str));
-    if (!gl_renderer_str)
-    {
-        LEAVE_GL();
-        ERR("Received a NULL GL_RENDERER.\n");
-        return FALSE;
-    }
-
-    gl_vendor_str = (const char *)glGetString(GL_VENDOR);
-    TRACE("GL_VENDOR: %s.\n", debugstr_a(gl_vendor_str));
-    if (!gl_vendor_str)
-    {
-        LEAVE_GL();
-        ERR("Received a NULL GL_VENDOR.\n");
-        return FALSE;
-    }
-
-    /* Parse the GL_VERSION field into major and minor information */
-    gl_version_str = (const char *)glGetString(GL_VERSION);
-    TRACE("GL_VERSION: %s.\n", debugstr_a(gl_version_str));
-    if (!gl_version_str)
-    {
-        LEAVE_GL();
-        ERR("Received a NULL GL_VERSION.\n");
-        return FALSE;
-    }
-    gl_version = wined3d_parse_gl_version(gl_version_str);
-
-    /*
-     * Initialize openGL extension related variables
-     *  with Default values
-     */
-    memset(gl_info->supported, 0, sizeof(gl_info->supported));
     gl_info->limits.blends = 1;
     gl_info->limits.buffers = 1;
     gl_info->limits.textures = 1;
@@ -2417,7 +2366,6 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
     gl_info->limits.arb_ps_instructions = 0;
     gl_info->limits.arb_ps_temps = 0;
 
-    /* Retrieve opengl defaults */
     glGetIntegerv(GL_MAX_CLIP_PLANES, &gl_max);
     gl_info->limits.clipplanes = min(WINED3DMAXUSERCLIPPLANES, gl_max);
     TRACE("Clip plane support - max planes %d.\n", gl_max);
@@ -2435,120 +2383,6 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
     gl_info->limits.pointsize_max = gl_floatv[1];
     TRACE("Maximum point size support - max point size %f.\n", gl_floatv[1]);
 
-    /* Parse the gl supported features, in theory enabling parts of our code appropriately. */
-    GL_Extensions = (const char *)glGetString(GL_EXTENSIONS);
-    if (!GL_Extensions)
-    {
-        LEAVE_GL();
-        ERR("Received a NULL GL_EXTENSIONS.\n");
-        return FALSE;
-    }
-
-    LEAVE_GL();
-
-    gl_info->supported[WINED3D_GL_EXT_NONE] = TRUE;
-
-    TRACE("GL extensions reported:\n");
-    parse_extension_string(gl_info, GL_Extensions, gl_extension_map,
-            sizeof(gl_extension_map) / sizeof(*gl_extension_map));
-
-    /* Now work out what GL support this card really has */
-    load_gl_funcs( gl_info, gl_version );
-
-    hdc = pwglGetCurrentDC();
-    /* Not all GL drivers might offer WGL extensions e.g. VirtualBox. */
-    if (GL_EXTCALL(wglGetExtensionsStringARB))
-        WGL_Extensions = GL_EXTCALL(wglGetExtensionsStringARB(hdc));
-    if (!WGL_Extensions)
-        WARN("WGL extensions not supported.\n");
-    else
-        parse_extension_string(gl_info, WGL_Extensions, wgl_extension_map,
-                sizeof(wgl_extension_map) / sizeof(*wgl_extension_map));
-
-    ENTER_GL();
-
-    /* Now mark all the extensions supported which are included in the opengl core version. Do this *after*
-     * loading the functions, otherwise the code above will load the extension entry points instead of the
-     * core functions, which may not work. */
-    for (i = 0; i < (sizeof(gl_extension_map) / sizeof(*gl_extension_map)); ++i)
-    {
-        if (!gl_info->supported[gl_extension_map[i].extension]
-                && gl_extension_map[i].version <= gl_version && gl_extension_map[i].version)
-        {
-            TRACE(" GL CORE: %s support.\n", gl_extension_map[i].extension_string);
-            gl_info->supported[gl_extension_map[i].extension] = TRUE;
-        }
-    }
-
-    if (gl_version >= MAKEDWORD_VERSION(2, 0)) gl_info->supported[WINED3D_GL_VERSION_2_0] = TRUE;
-
-    if (gl_info->supported[APPLE_FENCE])
-    {
-        /* GL_NV_fence and GL_APPLE_fence provide the same functionality basically.
-         * The apple extension interacts with some other apple exts. Disable the NV
-         * extension if the apple one is support to prevent confusion in other parts
-         * of the code. */
-        gl_info->supported[NV_FENCE] = FALSE;
-    }
-    if (gl_info->supported[APPLE_FLOAT_PIXELS])
-    {
-        /* GL_APPLE_float_pixels == GL_ARB_texture_float + GL_ARB_half_float_pixel
-         *
-         * The enums are the same:
-         * GL_RGBA16F_ARB     = GL_RGBA_FLOAT16_APPLE = 0x881A
-         * GL_RGB16F_ARB      = GL_RGB_FLOAT16_APPLE  = 0x881B
-         * GL_RGBA32F_ARB     = GL_RGBA_FLOAT32_APPLE = 0x8814
-         * GL_RGB32F_ARB      = GL_RGB_FLOAT32_APPLE  = 0x8815
-         * GL_HALF_FLOAT_ARB  = GL_HALF_APPLE         = 0x140B
-         */
-        if (!gl_info->supported[ARB_TEXTURE_FLOAT])
-        {
-            TRACE(" IMPLIED: GL_ARB_texture_float support (by GL_APPLE_float_pixels).\n");
-            gl_info->supported[ARB_TEXTURE_FLOAT] = TRUE;
-        }
-        if (!gl_info->supported[ARB_HALF_FLOAT_PIXEL])
-        {
-            TRACE(" IMPLIED: GL_ARB_half_float_pixel support (by GL_APPLE_float_pixels).\n");
-            gl_info->supported[ARB_HALF_FLOAT_PIXEL] = TRUE;
-        }
-    }
-    if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
-    {
-        /* GL_ARB_map_buffer_range and GL_APPLE_flush_buffer_range provide the same
-         * functionality. Prefer the ARB extension */
-        gl_info->supported[APPLE_FLUSH_BUFFER_RANGE] = FALSE;
-    }
-    if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
-    {
-        TRACE(" IMPLIED: NVIDIA (NV) Texture Gen Reflection support.\n");
-        gl_info->supported[NV_TEXGEN_REFLECTION] = TRUE;
-    }
-    if (!gl_info->supported[ARB_DEPTH_CLAMP] && gl_info->supported[NV_DEPTH_CLAMP])
-    {
-        TRACE(" IMPLIED: ARB_depth_clamp support (by NV_depth_clamp).\n");
-        gl_info->supported[ARB_DEPTH_CLAMP] = TRUE;
-    }
-    if (!gl_info->supported[ARB_VERTEX_ARRAY_BGRA] && gl_info->supported[EXT_VERTEX_ARRAY_BGRA])
-    {
-        TRACE(" IMPLIED: ARB_vertex_array_bgra support (by EXT_vertex_array_bgra).\n");
-        gl_info->supported[ARB_VERTEX_ARRAY_BGRA] = TRUE;
-    }
-    if (!gl_info->supported[ARB_TEXTURE_COMPRESSION_RGTC] && gl_info->supported[EXT_TEXTURE_COMPRESSION_RGTC])
-    {
-        TRACE(" IMPLIED: ARB_texture_compression_rgtc support (by EXT_texture_compression_rgtc).\n");
-        gl_info->supported[ARB_TEXTURE_COMPRESSION_RGTC] = TRUE;
-    }
-    if (gl_info->supported[NV_TEXTURE_SHADER2])
-    {
-        if (gl_info->supported[NV_REGISTER_COMBINERS])
-        {
-            /* Also disable ATI_FRAGMENT_SHADER if register combiners and texture_shader2
-             * are supported. The nv extensions provide the same functionality as the
-             * ATI one, and a bit more(signed pixelformats). */
-            gl_info->supported[ATI_FRAGMENT_SHADER] = FALSE;
-        }
-    }
-
     if (gl_info->supported[ARB_MAP_BUFFER_ALIGNMENT])
     {
         glGetIntegerv(GL_MIN_MAP_BUFFER_ALIGNMENT, &gl_max);
@@ -2564,7 +2398,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
         gl_info->limits.general_combiners = gl_max;
         TRACE("Max general combiners: %d.\n", gl_max);
     }
-    if (gl_info->supported[ARB_DRAW_BUFFERS])
+    if (gl_info->supported[ARB_DRAW_BUFFERS] && wined3d_settings.offscreen_rendering_mode != ORM_FBO)
     {
         glGetIntegerv(GL_MAX_DRAW_BUFFERS_ARB, &gl_max);
         gl_info->limits.buffers = gl_max;
@@ -2687,8 +2521,6 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
         GL_EXTCALL(glGetProgramivARB(GL_VERTEX_PROGRAM_ARB, GL_MAX_PROGRAM_NATIVE_INSTRUCTIONS_ARB, &gl_max));
         gl_info->limits.arb_vs_instructions = gl_max;
         TRACE("Max ARB_VERTEX_PROGRAM native instructions: %d.\n", gl_info->limits.arb_vs_instructions);
-
-        if (test_arb_vs_offset_limit(gl_info)) gl_info->quirks |= WINED3D_QUIRK_ARB_VS_OFFSET_LIMIT;
     }
     if (gl_info->supported[ARB_VERTEX_SHADER])
     {
@@ -2705,24 +2537,182 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
         gl_info->limits.glsl_varyings = gl_max;
         TRACE("Max GLSL varyings: %u (%u 4 component varyings).\n", gl_max, gl_max / 4);
     }
-    if (gl_info->supported[ARB_SHADING_LANGUAGE_100])
-    {
-        const char *str = (const char *)glGetString(GL_SHADING_LANGUAGE_VERSION_ARB);
-        unsigned int major, minor;
 
-        TRACE("GLSL version string: %s.\n", debugstr_a(str));
-
-        /* The format of the GLSL version string is "major.minor[.release] [vendor info]". */
-        sscanf(str, "%u.%u", &major, &minor);
-        gl_info->glsl_version = MAKEDWORD_VERSION(major, minor);
-    }
     if (gl_info->supported[NV_LIGHT_MAX_EXPONENT])
-    {
         glGetFloatv(GL_MAX_SHININESS_NV, &gl_info->limits.shininess);
-    }
     else
-    {
         gl_info->limits.shininess = 128.0f;
+
+    if ((gl_info->supported[ARB_FRAMEBUFFER_OBJECT] || gl_info->supported[EXT_FRAMEBUFFER_MULTISAMPLE])
+            && wined3d_settings.allow_multisampling)
+    {
+        glGetIntegerv(GL_MAX_SAMPLES, &gl_max);
+        gl_info->limits.samples = gl_max;
+    }
+}
+
+/* Context activation is done by the caller. */
+static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
+{
+    struct wined3d_driver_info *driver_info = &adapter->driver_info;
+    const char *gl_vendor_str, *gl_renderer_str, *gl_version_str;
+    struct wined3d_gl_info *gl_info = &adapter->gl_info;
+    enum wined3d_pci_vendor card_vendor;
+    struct fragment_caps fragment_caps;
+    const char *WGL_Extensions = NULL;
+    const char *GL_Extensions = NULL;
+    enum wined3d_gl_vendor gl_vendor;
+    enum wined3d_pci_device device;
+    DWORD gl_version;
+    unsigned int i;
+    HDC hdc;
+
+    TRACE("adapter %p.\n", adapter);
+
+    ENTER_GL();
+
+    gl_renderer_str = (const char *)glGetString(GL_RENDERER);
+    TRACE("GL_RENDERER: %s.\n", debugstr_a(gl_renderer_str));
+    if (!gl_renderer_str)
+    {
+        LEAVE_GL();
+        ERR("Received a NULL GL_RENDERER.\n");
+        return FALSE;
+    }
+
+    gl_vendor_str = (const char *)glGetString(GL_VENDOR);
+    TRACE("GL_VENDOR: %s.\n", debugstr_a(gl_vendor_str));
+    if (!gl_vendor_str)
+    {
+        LEAVE_GL();
+        ERR("Received a NULL GL_VENDOR.\n");
+        return FALSE;
+    }
+
+    /* Parse the GL_VERSION field into major and minor information */
+    gl_version_str = (const char *)glGetString(GL_VERSION);
+    TRACE("GL_VERSION: %s.\n", debugstr_a(gl_version_str));
+    if (!gl_version_str)
+    {
+        LEAVE_GL();
+        ERR("Received a NULL GL_VERSION.\n");
+        return FALSE;
+    }
+    gl_version = wined3d_parse_gl_version(gl_version_str);
+
+    /* Parse the gl supported features, in theory enabling parts of our code appropriately. */
+    GL_Extensions = (const char *)glGetString(GL_EXTENSIONS);
+    if (!GL_Extensions)
+    {
+        LEAVE_GL();
+        ERR("Received a NULL GL_EXTENSIONS.\n");
+        return FALSE;
+    }
+
+    LEAVE_GL();
+
+    memset(gl_info->supported, 0, sizeof(gl_info->supported));
+    gl_info->supported[WINED3D_GL_EXT_NONE] = TRUE;
+
+    TRACE("GL extensions reported:\n");
+    parse_extension_string(gl_info, GL_Extensions, gl_extension_map,
+            sizeof(gl_extension_map) / sizeof(*gl_extension_map));
+
+    /* Now work out what GL support this card really has. */
+    load_gl_funcs( gl_info, gl_version );
+
+    hdc = pwglGetCurrentDC();
+    /* Not all GL drivers might offer WGL extensions e.g. VirtualBox. */
+    if (GL_EXTCALL(wglGetExtensionsStringARB))
+        WGL_Extensions = GL_EXTCALL(wglGetExtensionsStringARB(hdc));
+    if (!WGL_Extensions)
+        WARN("WGL extensions not supported.\n");
+    else
+        parse_extension_string(gl_info, WGL_Extensions, wgl_extension_map,
+                sizeof(wgl_extension_map) / sizeof(*wgl_extension_map));
+
+    ENTER_GL();
+
+    /* Now mark all the extensions supported which are included in the opengl core version. Do this *after*
+     * loading the functions, otherwise the code above will load the extension entry points instead of the
+     * core functions, which may not work. */
+    for (i = 0; i < (sizeof(gl_extension_map) / sizeof(*gl_extension_map)); ++i)
+    {
+        if (!gl_info->supported[gl_extension_map[i].extension]
+                && gl_extension_map[i].version <= gl_version && gl_extension_map[i].version)
+        {
+            TRACE(" GL CORE: %s support.\n", gl_extension_map[i].extension_string);
+            gl_info->supported[gl_extension_map[i].extension] = TRUE;
+        }
+    }
+
+    if (gl_version >= MAKEDWORD_VERSION(2, 0)) gl_info->supported[WINED3D_GL_VERSION_2_0] = TRUE;
+
+    if (gl_info->supported[APPLE_FENCE])
+    {
+        /* GL_NV_fence and GL_APPLE_fence provide the same functionality basically.
+         * The apple extension interacts with some other apple exts. Disable the NV
+         * extension if the apple one is support to prevent confusion in other parts
+         * of the code. */
+        gl_info->supported[NV_FENCE] = FALSE;
+    }
+    if (gl_info->supported[APPLE_FLOAT_PIXELS])
+    {
+        /* GL_APPLE_float_pixels == GL_ARB_texture_float + GL_ARB_half_float_pixel
+         *
+         * The enums are the same:
+         * GL_RGBA16F_ARB     = GL_RGBA_FLOAT16_APPLE = 0x881a
+         * GL_RGB16F_ARB      = GL_RGB_FLOAT16_APPLE  = 0x881b
+         * GL_RGBA32F_ARB     = GL_RGBA_FLOAT32_APPLE = 0x8814
+         * GL_RGB32F_ARB      = GL_RGB_FLOAT32_APPLE  = 0x8815
+         * GL_HALF_FLOAT_ARB  = GL_HALF_APPLE         = 0x140b
+         */
+        if (!gl_info->supported[ARB_TEXTURE_FLOAT])
+        {
+            TRACE(" IMPLIED: GL_ARB_texture_float support (by GL_APPLE_float_pixels).\n");
+            gl_info->supported[ARB_TEXTURE_FLOAT] = TRUE;
+        }
+        if (!gl_info->supported[ARB_HALF_FLOAT_PIXEL])
+        {
+            TRACE(" IMPLIED: GL_ARB_half_float_pixel support (by GL_APPLE_float_pixels).\n");
+            gl_info->supported[ARB_HALF_FLOAT_PIXEL] = TRUE;
+        }
+    }
+    if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
+    {
+        /* GL_ARB_map_buffer_range and GL_APPLE_flush_buffer_range provide the same
+         * functionality. Prefer the ARB extension */
+        gl_info->supported[APPLE_FLUSH_BUFFER_RANGE] = FALSE;
+    }
+    if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
+    {
+        TRACE(" IMPLIED: NVIDIA (NV) Texture Gen Reflection support.\n");
+        gl_info->supported[NV_TEXGEN_REFLECTION] = TRUE;
+    }
+    if (!gl_info->supported[ARB_DEPTH_CLAMP] && gl_info->supported[NV_DEPTH_CLAMP])
+    {
+        TRACE(" IMPLIED: ARB_depth_clamp support (by NV_depth_clamp).\n");
+        gl_info->supported[ARB_DEPTH_CLAMP] = TRUE;
+    }
+    if (!gl_info->supported[ARB_VERTEX_ARRAY_BGRA] && gl_info->supported[EXT_VERTEX_ARRAY_BGRA])
+    {
+        TRACE(" IMPLIED: ARB_vertex_array_bgra support (by EXT_vertex_array_bgra).\n");
+        gl_info->supported[ARB_VERTEX_ARRAY_BGRA] = TRUE;
+    }
+    if (!gl_info->supported[ARB_TEXTURE_COMPRESSION_RGTC] && gl_info->supported[EXT_TEXTURE_COMPRESSION_RGTC])
+    {
+        TRACE(" IMPLIED: ARB_texture_compression_rgtc support (by EXT_texture_compression_rgtc).\n");
+        gl_info->supported[ARB_TEXTURE_COMPRESSION_RGTC] = TRUE;
+    }
+    if (gl_info->supported[NV_TEXTURE_SHADER2])
+    {
+        if (gl_info->supported[NV_REGISTER_COMBINERS])
+        {
+            /* Also disable ATI_FRAGMENT_SHADER if register combiners and texture_shader2
+             * are supported. The nv extensions provide the same functionality as the
+             * ATI one, and a bit more(signed pixelformats). */
+            gl_info->supported[ATI_FRAGMENT_SHADER] = FALSE;
+        }
     }
     if (gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO])
     {
@@ -2748,6 +2738,24 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
         /* GL_ARB_half_float_vertex is a subset of GL_NV_half_float. */
         gl_info->supported[ARB_HALF_FLOAT_VERTEX] = TRUE;
     }
+
+    wined3d_adapter_init_limits(gl_info);
+
+    if (gl_info->supported[ARB_VERTEX_PROGRAM] && test_arb_vs_offset_limit(gl_info))
+        gl_info->quirks |= WINED3D_QUIRK_ARB_VS_OFFSET_LIMIT;
+
+    if (gl_info->supported[ARB_SHADING_LANGUAGE_100])
+    {
+        const char *str = (const char *)glGetString(GL_SHADING_LANGUAGE_VERSION_ARB);
+        unsigned int major, minor;
+
+        TRACE("GLSL version string: %s.\n", debugstr_a(str));
+
+        /* The format of the GLSL version string is "major.minor[.release] [vendor info]". */
+        sscanf(str, "%u.%u", &major, &minor);
+        gl_info->glsl_version = MAKEDWORD_VERSION(major, minor);
+    }
+
     checkGLcall("extension detection");
 
     LEAVE_GL();
@@ -2781,11 +2789,6 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
         gl_info->fbo_ops.glGetFramebufferAttachmentParameteriv = gl_info->glGetFramebufferAttachmentParameteriv;
         gl_info->fbo_ops.glBlitFramebuffer = gl_info->glBlitFramebuffer;
         gl_info->fbo_ops.glGenerateMipmap = gl_info->glGenerateMipmap;
-        if (wined3d_settings.allow_multisampling)
-        {
-            glGetIntegerv(GL_MAX_SAMPLES, &gl_max);
-            gl_info->limits.samples = gl_max;
-        }
     }
     else
     {
@@ -2821,18 +2824,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
         if (gl_info->supported[EXT_FRAMEBUFFER_MULTISAMPLE])
         {
             gl_info->fbo_ops.glRenderbufferStorageMultisample = gl_info->glRenderbufferStorageMultisampleEXT;
-            if (wined3d_settings.allow_multisampling)
-            {
-                glGetIntegerv(GL_MAX_SAMPLES, &gl_max);
-                gl_info->limits.samples = gl_max;
-            }
         }
-    }
-
-    /* MRTs are currently only supported when FBOs are used. */
-    if (wined3d_settings.offscreen_rendering_mode != ORM_FBO)
-    {
-        gl_info->limits.buffers = 1;
     }
 
     gl_vendor = wined3d_guess_gl_vendor(gl_info, gl_vendor_str, gl_renderer_str);
