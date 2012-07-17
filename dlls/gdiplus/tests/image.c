@@ -3351,6 +3351,226 @@ static void test_tiff_palette(void)
     GdipDisposeImage(image);
 }
 
+static void test_bitmapbits(void)
+{
+    /* 8 x 2 bitmap */
+    static const BYTE pixels_24[48] =
+    {
+        0xff,0xff,0xff, 0,0,0, 0xff,0xff,0xff, 0,0,0,
+        0xff,0xff,0xff, 0,0,0, 0xff,0xff,0xff, 0,0,0,
+        0xff,0xff,0xff, 0,0,0, 0xff,0xff,0xff, 0,0,0,
+        0xff,0xff,0xff, 0,0,0, 0xff,0xff,0xff, 0,0,0
+    };
+    static const BYTE pixels_00[48] =
+    {
+        0,0,0, 0,0,0, 0,0,0, 0,0,0,
+        0,0,0, 0,0,0, 0,0,0, 0,0,0,
+        0,0,0, 0,0,0, 0,0,0, 0,0,0,
+        0,0,0, 0,0,0, 0,0,0, 0,0,0
+    };
+    static const BYTE pixels_24_77[64] =
+    {
+        0xff,0xff,0xff, 0,0,0, 0xff,0xff,0xff, 0,0,0,
+        0xff,0xff,0xff, 0,0,0, 0xff,0xff,0xff, 0,0,0,
+        0x77,0x77,0x77,0x77,0x77,0x77,0x77,0x77,
+        0xff,0xff,0xff, 0,0,0, 0xff,0xff,0xff, 0,0,0,
+        0xff,0xff,0xff, 0,0,0, 0xff,0xff,0xff, 0,0,0,
+        0x77,0x77,0x77,0x77,0x77,0x77,0x77,0x77
+    };
+    static const BYTE pixels_77[64] =
+    {
+        0x77,0x77,0x77,0x77,0x77,0x77,0x77,0x77,
+        0x77,0x77,0x77,0x77,0x77,0x77,0x77,0x77,
+        0x77,0x77,0x77,0x77,0x77,0x77,0x77,0x77,
+        0x77,0x77,0x77,0x77,0x77,0x77,0x77,0x77,
+        0x77,0x77,0x77,0x77,0x77,0x77,0x77,0x77,
+        0x77,0x77,0x77,0x77,0x77,0x77,0x77,0x77,
+        0x77,0x77,0x77,0x77,0x77,0x77,0x77,0x77,
+        0x77,0x77,0x77,0x77,0x77,0x77,0x77,0x77
+    };
+#if 0 /* FIXME: these tests crash gdiplus in Wine */
+    static const BYTE pixels_8[16] =
+    {
+        0x01,0,0x01,0,0x01,0,0x01,0,
+        0x01,0,0x01,0,0x01,0,0x01,0
+    };
+    static const BYTE pixels_8_77[64] =
+    {
+        0x01,0,0x01,0,0x01,0,0x01,0,
+        0x77,0x77,0x77,0x77,0x77,0x77,0x77,0x77,
+        0x77,0x77,0x77,0x77,0x77,0x77,0x77,0x77,
+        0x77,0x77,0x77,0x77,0x77,0x77,0x77,0x77,
+        0x01,0,0x01,0,0x01,0,0x01,0,
+        0x77,0x77,0x77,0x77,0x77,0x77,0x77,0x77,
+        0x77,0x77,0x77,0x77,0x77,0x77,0x77,0x77,
+        0x77,0x77,0x77,0x77,0x77,0x77,0x77,0x77
+    };
+    static const BYTE pixels_1_77[64] =
+    {
+        0xaa,0x77,0x77,0x77,0x77,0x77,0x77,0x77,
+        0x77,0x77,0x77,0x77,0x77,0x77,0x77,0x77,
+        0x77,0x77,0x77,0x77,0x77,0x77,0x77,0x77,
+        0x77,0x77,0x77,0x77,0x77,0x77,0x77,0x77,
+        0xaa,0x77,0x77,0x77,0x77,0x77,0x77,0x77,
+        0x77,0x77,0x77,0x77,0x77,0x77,0x77,0x77,
+        0x77,0x77,0x77,0x77,0x77,0x77,0x77,0x77,
+        0x77,0x77,0x77,0x77,0x77,0x77,0x77,0x77
+    };
+    static const BYTE pixels_1[8] = {0xaa,0,0,0,0xaa,0,0,0};
+#endif
+    static const struct test_data
+    {
+        PixelFormat format;
+        UINT bpp;
+        ImageLockMode mode;
+        UINT stride, size;
+        const BYTE *pixels;
+        const BYTE *pixels_unlocked;
+    } td[] =
+    {
+        /* 0 */
+        { PixelFormat24bppRGB, 24, 0xfff0, 24, 48, pixels_24, pixels_00 },
+
+        { PixelFormat24bppRGB, 24, 0, 24, 48, pixels_24, pixels_00 },
+        { PixelFormat24bppRGB, 24, ImageLockModeRead, 24, 48, pixels_24, pixels_00 },
+        { PixelFormat24bppRGB, 24, ImageLockModeWrite, 24, 48, pixels_24, pixels_00 },
+        { PixelFormat24bppRGB, 24, ImageLockModeRead|ImageLockModeWrite, 24, 48, pixels_24, pixels_00 },
+        { PixelFormat24bppRGB, 24, ImageLockModeRead|ImageLockModeUserInputBuf, 32, 64, pixels_24_77, pixels_24 },
+        { PixelFormat24bppRGB, 24, ImageLockModeWrite|ImageLockModeUserInputBuf, 32, 64, pixels_77, pixels_00 },
+        { PixelFormat24bppRGB, 24, ImageLockModeUserInputBuf, 32, 64, pixels_77, pixels_24 },
+#if 0 /* FIXME: these tests crash gdiplus in Wine */
+        /* 8 */
+        { PixelFormat8bppIndexed, 8, 0, 8, 16, pixels_8, pixels_24 },
+        { PixelFormat8bppIndexed, 8, ImageLockModeRead, 8, 16, pixels_8, pixels_24 },
+        { PixelFormat8bppIndexed, 8, ImageLockModeWrite, 8, 16, pixels_8, pixels_00 },
+        { PixelFormat8bppIndexed, 8, ImageLockModeRead|ImageLockModeWrite, 8, 16, pixels_8, pixels_00 },
+        { PixelFormat8bppIndexed, 8, ImageLockModeRead|ImageLockModeUserInputBuf, 32, 64, pixels_8_77, pixels_24 },
+        { PixelFormat8bppIndexed, 8, ImageLockModeWrite|ImageLockModeUserInputBuf, 32, 64, pixels_77, pixels_00 },
+        { PixelFormat8bppIndexed, 8, ImageLockModeUserInputBuf, 32, 64, pixels_77, pixels_24 },
+        /* 15 */
+        { PixelFormat1bppIndexed, 1, 0, 4, 8, pixels_1, pixels_24 },
+        { PixelFormat1bppIndexed, 1, ImageLockModeRead, 4, 8, pixels_1, pixels_24 },
+        { PixelFormat1bppIndexed, 1, ImageLockModeWrite, 4, 8, pixels_1, pixels_00 },
+        { PixelFormat1bppIndexed, 1, ImageLockModeRead|ImageLockModeWrite, 4, 8, pixels_1, pixels_00 },
+        { PixelFormat1bppIndexed, 1, ImageLockModeRead|ImageLockModeUserInputBuf, 32, 64, pixels_1_77, pixels_24 },
+        { PixelFormat1bppIndexed, 1, ImageLockModeWrite|ImageLockModeUserInputBuf, 32, 64, pixels_77, pixels_00 },
+        { PixelFormat1bppIndexed, 1, ImageLockModeUserInputBuf, 32, 64, pixels_77, pixels_24 },
+#endif
+    };
+    BYTE buf[64];
+    GpStatus status;
+    GpBitmap *bitmap;
+    UINT i;
+    BitmapData data;
+    struct
+    {
+        ColorPalette pal;
+        ARGB entries[1];
+    } palette;
+    ARGB *entries = palette.pal.Entries;
+
+    for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
+    {
+        BYTE pixels[sizeof(pixels_24)];
+        memcpy(pixels, pixels_24, sizeof(pixels_24));
+        status = GdipCreateBitmapFromScan0(8, 2, 24, PixelFormat24bppRGB, pixels, &bitmap);
+        expect(Ok, status);
+
+        /* associate known palette with pixel data */
+        palette.pal.Flags = PaletteFlagsGrayScale;
+        palette.pal.Count = 2;
+        entries[0] = 0xff000000;
+        entries[1] = 0xffffffff;
+        status = GdipSetImagePalette((GpImage *)bitmap, &palette.pal);
+        expect(Ok, status);
+
+        memset(&data, 0xfe, sizeof(data));
+        if (td[i].mode & ImageLockModeUserInputBuf)
+        {
+            memset(buf, 0x77, sizeof(buf));
+            data.Scan0 = buf;
+            data.Stride = 32;
+        }
+        status = GdipBitmapLockBits(bitmap, NULL, td[i].mode, td[i].format, &data);
+        ok(status == Ok || broken(status == InvalidParameter) /* XP */, "%u: GdipBitmapLockBits error %d\n", i, status);
+        if (status != Ok)
+        {
+            GdipDisposeImage((GpImage *)bitmap);
+            continue;
+        }
+        ok(data.Width == 8, "%u: expected 8, got %d\n", i, data.Width);
+        ok(data.Height == 2, "%u: expected 2, got %d\n", i, data.Height);
+        ok(td[i].stride == data.Stride, "%u: expected %d, got %d\n", i, td[i].stride, data.Stride);
+        ok(td[i].format == data.PixelFormat, "%u: expected %d, got %d\n", i, td[i].format, data.PixelFormat);
+        ok(td[i].size == data.Height * data.Stride, "%u: expected %d, got %d\n", i, td[i].size, data.Height * data.Stride);
+        if (td[i].mode & ImageLockModeUserInputBuf)
+            ok(data.Scan0 == buf, "%u: got wrong buffer\n", i);
+        if (td[i].size == data.Height * data.Stride)
+        {
+            UINT j, match, width_bytes = (data.Width * td[i].bpp) / 8;
+
+            match = 1;
+            for (j = 0; j < data.Height; j++)
+            {
+                if (memcmp((const BYTE *)data.Scan0 + j * data.Stride, td[i].pixels + j * data.Stride, width_bytes) != 0)
+                {
+                    match = 0;
+                    break;
+                }
+            }
+            if ((td[i].mode & (ImageLockModeRead|ImageLockModeUserInputBuf)) || td[i].format == PixelFormat24bppRGB)
+            {
+                ok(match,
+                   "%u: data should match\n", i);
+                if (!match)
+                {
+                    BYTE *bits = data.Scan0;
+                    printf("%u: data mismatch for format %#x:", i, td[i].format);
+                    for (j = 0; j < td[i].size; j++)
+                        printf(" %02x", bits[j]);
+                    printf("\n");
+                }
+            }
+            else
+                ok(!match, "%u: data shouldn't match\n", i);
+
+            memset(data.Scan0, 0, td[i].size);
+        }
+
+        status = GdipBitmapUnlockBits(bitmap, &data);
+        ok(status == Ok, "%u: GdipBitmapUnlockBits error %d\n", i, status);
+
+        memset(&data, 0xfe, sizeof(data));
+        status = GdipBitmapLockBits(bitmap, NULL, ImageLockModeRead, PixelFormat24bppRGB, &data);
+        ok(status == Ok, "%u: GdipBitmapLockBits error %d\n", i, status);
+        ok(data.Width == 8, "%u: expected 8, got %d\n", i, data.Width);
+        ok(data.Height == 2, "%u: expected 2, got %d\n", i, data.Height);
+        ok(data.Stride == 24, "%u: expected 24, got %d\n", i, data.Stride);
+        ok(data.PixelFormat == PixelFormat24bppRGB, "%u: got wrong pixel format %d\n", i, data.PixelFormat);
+        ok(data.Height * data.Stride == 48, "%u: expected 48, got %d\n", i, data.Height * data.Stride);
+        if (data.Height * data.Stride == 48)
+        {
+            int match = memcmp(data.Scan0, td[i].pixels_unlocked, 48) == 0;
+            ok(match, "%u: data should match\n", i);
+            if (!match)
+            {
+                UINT j;
+                BYTE *bits = data.Scan0;
+                printf("%u: data mismatch for format %#x:", i, td[i].format);
+                for (j = 0; j < 48; j++)
+                    printf(" %02x", bits[j]);
+                printf("\n");
+            }
+        }
+
+        status = GdipBitmapUnlockBits(bitmap, &data);
+        ok(status == Ok, "%u: GdipBitmapUnlockBits error %d\n", i, status);
+
+        status = GdipDisposeImage((GpImage *)bitmap);
+        expect(Ok, status);
+    }
+}
+
 START_TEST(image)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -3363,6 +3583,7 @@ START_TEST(image)
 
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
+    test_bitmapbits();
     test_tiff_palette();
     test_GdipGetAllPropertyItems();
     test_tiff_properties();
