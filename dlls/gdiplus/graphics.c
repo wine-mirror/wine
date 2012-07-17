@@ -2318,10 +2318,7 @@ GpStatus WINGDIPAPI GdipCreateMetafileFromEmf(HENHMETAFILE hemf, BOOL delete,
 
     (*metafile)->image.type = ImageTypeMetafile;
     memcpy(&(*metafile)->image.format, &ImageFormatWMF, sizeof(GUID));
-    (*metafile)->image.palette_flags = 0;
-    (*metafile)->image.palette_count = 0;
-    (*metafile)->image.palette_size = 0;
-    (*metafile)->image.palette_entries = NULL;
+    (*metafile)->image.palette = NULL;
     (*metafile)->image.xres = (REAL)copy->szlDevice.cx;
     (*metafile)->image.yres = (REAL)copy->szlDevice.cy;
     (*metafile)->bounds.X = (REAL)copy->rclBounds.left;
@@ -3276,7 +3273,8 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
 
                 convert_pixels(bitmap->width, bitmap->height,
                     bitmap->width*4, temp_bits, dst_format,
-                    bitmap->stride, bitmap->bits, bitmap->format, bitmap->image.palette_entries);
+                    bitmap->stride, bitmap->bits, bitmap->format,
+                    bitmap->image.palette ? bitmap->image.palette->Entries : NULL);
             }
             else
             {

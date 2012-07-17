@@ -290,7 +290,7 @@ GpStatus WINGDIPAPI GdipBitmapGetPixel(GpBitmap* bitmap, INT x, INT y,
     }
 
     if (bitmap->format & PixelFormatIndexed)
-        *color = bitmap->image.palette_entries[index];
+        *color = bitmap->image.palette->Entries[index];
     else
         *color = a<<24|r<<16|g<<8|b;
 
@@ -311,8 +311,8 @@ static inline UINT get_palette_index(BYTE r, BYTE g, BYTE b, BYTE a, GpBitmap* b
        tables and thus may actually be slower if this method is called only few times per
        every image.
     */
-    for(i=0;i<bitmap->image.palette_size;i++) {
-        ARGB color=bitmap->image.palette_entries[i];
+    for(i=0;i<bitmap->image.palette->Count;i++) {
+        ARGB color=bitmap->image.palette->Entries[i];
         distance=abs(b-(color & 0xff)) + abs(g-(color>>8 & 0xff)) + abs(r-(color>>16 & 0xff)) + abs(a-(color>>24 & 0xff));
         if (distance<best_distance) {
             best_distance=distance;
@@ -1012,7 +1012,7 @@ GpStatus WINGDIPAPI GdipBitmapLockBits(GpBitmap* bitmap, GDIPCONST GpRect* rect,
             lockeddata->Stride, lockeddata->Scan0, format,
             bitmap->stride,
             bitmap->bits + bitmap->stride * act_rect.Y + PIXELFORMATBPP(bitmap->format) * act_rect.X / 8,
-            bitmap->format, bitmap->image.palette_entries);
+            bitmap->format, bitmap->image.palette ? bitmap->image.palette->Entries : NULL);
 
         if (stat != Ok)
         {
@@ -1770,10 +1770,7 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
     (*bitmap)->image.flags = ImageFlagsNone;
     (*bitmap)->image.frame_count = 1;
     (*bitmap)->image.current_frame = 0;
-    (*bitmap)->image.palette_flags = 0;
-    (*bitmap)->image.palette_count = 0;
-    (*bitmap)->image.palette_size = 0;
-    (*bitmap)->image.palette_entries = NULL;
+    (*bitmap)->image.palette = NULL;
     (*bitmap)->image.xres = xres;
     (*bitmap)->image.yres = yres;
     (*bitmap)->width = width;
@@ -1796,29 +1793,30 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
         format == PixelFormat4bppIndexed ||
         format == PixelFormat8bppIndexed)
     {
-        (*bitmap)->image.palette_size = (*bitmap)->image.palette_count = 1 << PIXELFORMATBPP(format);
-        (*bitmap)->image.palette_entries = GdipAlloc(sizeof(ARGB) * ((*bitmap)->image.palette_size));
+        (*bitmap)->image.palette = GdipAlloc(sizeof(UINT) * 2 + sizeof(ARGB) * (1 << PIXELFORMATBPP(format)));
 
-        if (!(*bitmap)->image.palette_entries)
+        if (!(*bitmap)->image.palette)
         {
             GdipDisposeImage(&(*bitmap)->image);
             *bitmap = NULL;
             return OutOfMemory;
         }
 
+        (*bitmap)->image.palette->Count = 1 << PIXELFORMATBPP(format);
+
         if (format == PixelFormat1bppIndexed)
         {
-            (*bitmap)->image.palette_flags = PaletteFlagsGrayScale;
-            (*bitmap)->image.palette_entries[0] = 0xff000000;
-            (*bitmap)->image.palette_entries[1] = 0xffffffff;
+            (*bitmap)->image.palette->Flags = PaletteFlagsGrayScale;
+            (*bitmap)->image.palette->Entries[0] = 0xff000000;
+            (*bitmap)->image.palette->Entries[1] = 0xffffffff;
         }
         else
         {
             if (format == PixelFormat8bppIndexed)
-                (*bitmap)->image.palette_flags = PaletteFlagsHalftone;
+                (*bitmap)->image.palette->Flags = PaletteFlagsHalftone;
 
-            generate_halftone_palette((*bitmap)->image.palette_entries,
-                (*bitmap)->image.palette_count);
+            generate_halftone_palette((*bitmap)->image.palette->Entries,
+                (*bitmap)->image.palette->Count);
         }
     }
 
@@ -1979,13 +1977,11 @@ static void move_bitmap(GpBitmap *dst, GpBitmap *src, BOOL clobber_palette)
 
     if (clobber_palette)
     {
-        GdipFree(dst->image.palette_entries);
-        dst->image.palette_flags = src->image.palette_flags;
-        dst->image.palette_count = src->image.palette_count;
-        dst->image.palette_entries = src->image.palette_entries;
+        GdipFree(dst->image.palette);
+        dst->image.palette = src->image.palette;
     }
     else
-        GdipFree(src->image.palette_entries);
+        GdipFree(src->image.palette);
 
     dst->image.xres = src->image.xres;
     dst->image.yres = src->image.yres;
@@ -2048,7 +2044,7 @@ static GpStatus free_image_data(GpImage *image)
         IPicture_Release(image->picture);
     if (image->stream)
         IStream_Release(image->stream);
-    GdipFree(image->palette_entries);
+    GdipFree(image->palette);
 
     return Ok;
 }
@@ -2237,10 +2233,10 @@ GpStatus WINGDIPAPI GdipGetImagePaletteSize(GpImage *image, INT *size)
     if(!image || !size)
         return InvalidParameter;
 
-    if (image->palette_count == 0)
+    if (!image->palette || image->palette->Count == 0)
         *size = sizeof(ColorPalette);
     else
-        *size = sizeof(UINT)*2 + sizeof(ARGB)*image->palette_count;
+        *size = sizeof(UINT)*2 + sizeof(ARGB)*image->palette->Count;
 
     TRACE("<-- %u\n", *size);
 
@@ -3065,7 +3061,7 @@ end:
         bitmap->image.current_frame = active_frame;
         bitmap->image.stream = stream;
         if (IsEqualGUID(&wic_format, &GUID_WICPixelFormatBlackWhite))
-            bitmap->image.palette_flags = 0;
+            bitmap->image.palette->Flags = 0;
         /* Pin the source stream */
         IStream_AddRef(stream);
     }
@@ -3140,10 +3136,7 @@ static GpStatus decode_image_olepicture_metafile(IStream* stream, REFCLSID clsid
     (*image)->flags   = ImageFlagsNone;
     (*image)->frame_count = 1;
     (*image)->current_frame = 0;
-    (*image)->palette_flags = 0;
-    (*image)->palette_count = 0;
-    (*image)->palette_size = 0;
-    (*image)->palette_entries = NULL;
+    (*image)->palette = NULL;
 
     TRACE("<-- %p\n", *image);
 
@@ -3598,21 +3591,32 @@ GpStatus WINGDIPAPI GdipSaveAdd(GpImage *image, GDIPCONST EncoderParameters *par
  */
 GpStatus WINGDIPAPI GdipGetImagePalette(GpImage *image, ColorPalette *palette, INT size)
 {
+    INT count;
+
     TRACE("(%p,%p,%i)\n", image, palette, size);
 
     if (!image || !palette)
         return InvalidParameter;
 
-    if (size < (sizeof(UINT)*2+sizeof(ARGB)*image->palette_count))
+    count = image->palette ? image->palette->Count : 0;
+
+    if (size < (sizeof(UINT)*2+sizeof(ARGB)*count))
     {
         TRACE("<-- InsufficientBuffer\n");
         return InsufficientBuffer;
     }
 
-    palette->Flags = image->palette_flags;
-    palette->Count = image->palette_count;
-    memcpy(palette->Entries, image->palette_entries, sizeof(ARGB)*image->palette_count);
-
+    if (image->palette)
+    {
+        palette->Flags = image->palette->Flags;
+        palette->Count = image->palette->Count;
+        memcpy(palette->Entries, image->palette->Entries, sizeof(ARGB)*image->palette->Count);
+    }
+    else
+    {
+        palette->Flags = 0;
+        palette->Count = 0;
+    }
     return Ok;
 }
 
@@ -3622,26 +3626,21 @@ GpStatus WINGDIPAPI GdipGetImagePalette(GpImage *image, ColorPalette *palette, I
 GpStatus WINGDIPAPI GdipSetImagePalette(GpImage *image,
     GDIPCONST ColorPalette *palette)
 {
+    ColorPalette *new_palette;
+
     TRACE("(%p,%p)\n", image, palette);
 
     if(!image || !palette || palette->Count > 256)
         return InvalidParameter;
 
-    if (palette->Count > image->palette_size)
-    {
-        ARGB *new_palette;
+    new_palette = GdipAlloc(2 * sizeof(UINT) + palette->Count * sizeof(ARGB));
+    if (!new_palette) return OutOfMemory;
 
-        new_palette = GdipAlloc(sizeof(ARGB) * palette->Count);
-        if (!new_palette) return OutOfMemory;
-
-        GdipFree(image->palette_entries);
-        image->palette_entries = new_palette;
-        image->palette_size = palette->Count;
-    }
-
-    image->palette_flags = palette->Flags;
-    image->palette_count = palette->Count;
-    memcpy(image->palette_entries, palette->Entries, sizeof(ARGB)*palette->Count);
+    GdipFree(image->palette);
+    image->palette = new_palette;
+    image->palette->Flags = palette->Flags;
+    image->palette->Count = palette->Count;
+    memcpy(image->palette->Entries, palette->Entries, sizeof(ARGB)*palette->Count);
 
     return Ok;
 }

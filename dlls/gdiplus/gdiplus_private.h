@@ -267,10 +267,7 @@ struct GpImage{
     GUID format;
     UINT flags;
     UINT frame_count, current_frame;
-    UINT palette_flags;
-    UINT palette_count;
-    UINT palette_size;
-    ARGB *palette_entries;
+    ColorPalette *palette;
     REAL xres, yres;
 };
 
