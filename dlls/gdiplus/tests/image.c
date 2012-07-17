@@ -3404,7 +3404,6 @@ static void test_bitmapbits(void)
         0x77,0x77,0x77,0x77,0x77,0x77,0x77,0x77,
         0x77,0x77,0x77,0x77,0x77,0x77,0x77,0x77
     };
-#if 0 /* FIXME: these tests crash gdiplus in Wine */
     static const BYTE pixels_1_77[64] =
     {
         0xaa,0x77,0x77,0x77,0x77,0x77,0x77,0x77,
@@ -3417,7 +3416,6 @@ static void test_bitmapbits(void)
         0x77,0x77,0x77,0x77,0x77,0x77,0x77,0x77
     };
     static const BYTE pixels_1[8] = {0xaa,0,0,0,0xaa,0,0,0};
-#endif
     static const struct test_data
     {
         PixelFormat format;
@@ -3446,7 +3444,6 @@ static void test_bitmapbits(void)
         { PixelFormat8bppIndexed, 8, ImageLockModeRead|ImageLockModeUserInputBuf, 32, 64, pixels_8_77, pixels_24 },
         { PixelFormat8bppIndexed, 8, ImageLockModeWrite|ImageLockModeUserInputBuf, 32, 64, pixels_77, pixels_00 },
         { PixelFormat8bppIndexed, 8, ImageLockModeUserInputBuf, 32, 64, pixels_77, pixels_24 },
-#if 0 /* FIXME: these tests crash gdiplus in Wine */
         /* 15 */
         { PixelFormat1bppIndexed, 1, 0, 4, 8, pixels_1, pixels_24 },
         { PixelFormat1bppIndexed, 1, ImageLockModeRead, 4, 8, pixels_1, pixels_24 },
@@ -3455,7 +3452,6 @@ static void test_bitmapbits(void)
         { PixelFormat1bppIndexed, 1, ImageLockModeRead|ImageLockModeUserInputBuf, 32, 64, pixels_1_77, pixels_24 },
         { PixelFormat1bppIndexed, 1, ImageLockModeWrite|ImageLockModeUserInputBuf, 32, 64, pixels_77, pixels_00 },
         { PixelFormat1bppIndexed, 1, ImageLockModeUserInputBuf, 32, 64, pixels_77, pixels_24 },
-#endif
     };
     BYTE buf[64];
     GpStatus status;
