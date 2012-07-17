@@ -297,11 +297,14 @@ GpStatus WINGDIPAPI GdipBitmapGetPixel(GpBitmap* bitmap, INT x, INT y,
     return Ok;
 }
 
-static inline UINT get_palette_index(BYTE r, BYTE g, BYTE b, BYTE a, GpBitmap* bitmap) {
+static inline UINT get_palette_index(BYTE r, BYTE g, BYTE b, BYTE a, ColorPalette *palette)
+{
     BYTE index = 0;
     int best_distance = 0x7fff;
     int distance;
     int i;
+
+    if (!palette) return 0;
     /* This algorithm scans entire palette,
        computes difference from desired color (all color components have equal weight)
        and returns the index of color with least difference.
@@ -311,8 +314,8 @@ static inline UINT get_palette_index(BYTE r, BYTE g, BYTE b, BYTE a, GpBitmap* b
        tables and thus may actually be slower if this method is called only few times per
        every image.
     */
-    for(i=0;i<bitmap->image.palette->Count;i++) {
-        ARGB color=bitmap->image.palette->Entries[i];
+    for(i=0;i<palette->Count;i++) {
+        ARGB color=palette->Entries[i];
         distance=abs(b-(color & 0xff)) + abs(g-(color>>8 & 0xff)) + abs(r-(color>>16 & 0xff)) + abs(a-(color>>24 & 0xff));
         if (distance<best_distance) {
             best_distance=distance;
@@ -323,25 +326,25 @@ static inline UINT get_palette_index(BYTE r, BYTE g, BYTE b, BYTE a, GpBitmap* b
 }
 
 static inline void setpixel_8bppIndexed(BYTE r, BYTE g, BYTE b, BYTE a,
-    BYTE *row, UINT x, GpBitmap* bitmap)
+    BYTE *row, UINT x, ColorPalette *palette)
 {
-     BYTE index = get_palette_index(r,g,b,a,bitmap);
+     BYTE index = get_palette_index(r,g,b,a,palette);
      row[x]=index;
 }
 
 static inline void setpixel_1bppIndexed(BYTE r, BYTE g, BYTE b, BYTE a,
-    BYTE *row, UINT x, GpBitmap* bitmap)
+    BYTE *row, UINT x, ColorPalette *palette)
 {
-    row[x/8]  = (row[x/8] & ~(1<<(7-x%8))) | (get_palette_index(r,g,b,a,bitmap)<<(7-x%8));
+    row[x/8]  = (row[x/8] & ~(1<<(7-x%8))) | (get_palette_index(r,g,b,a,palette)<<(7-x%8));
 }
 
 static inline void setpixel_4bppIndexed(BYTE r, BYTE g, BYTE b, BYTE a,
-    BYTE *row, UINT x, GpBitmap* bitmap)
+    BYTE *row, UINT x, ColorPalette *palette)
 {
     if (x & 1)
-        row[x/2] = (row[x/2] & 0xf0) | get_palette_index(r,g,b,a,bitmap);
+        row[x/2] = (row[x/2] & 0xf0) | get_palette_index(r,g,b,a,palette);
     else
-        row[x/2] = (row[x/2] & 0x0f) | get_palette_index(r,g,b,a,bitmap)<<4;
+        row[x/2] = (row[x/2] & 0x0f) | get_palette_index(r,g,b,a,palette)<<4;
 }
 
 static inline void setpixel_16bppGrayScale(BYTE r, BYTE g, BYTE b, BYTE a,
@@ -483,13 +486,13 @@ GpStatus WINGDIPAPI GdipBitmapSetPixel(GpBitmap* bitmap, INT x, INT y,
             setpixel_64bppPARGB(r,g,b,a,row,x);
             break;
         case PixelFormat8bppIndexed:
-            setpixel_8bppIndexed(r,g,b,a,row,x,bitmap);
+            setpixel_8bppIndexed(r,g,b,a,row,x,bitmap->image.palette);
             break;
         case PixelFormat4bppIndexed:
-            setpixel_4bppIndexed(r,g,b,a,row,x,bitmap);
+            setpixel_4bppIndexed(r,g,b,a,row,x,bitmap->image.palette);
             break;
         case PixelFormat1bppIndexed:
-            setpixel_1bppIndexed(r,g,b,a,row,x,bitmap);
+            setpixel_1bppIndexed(r,g,b,a,row,x,bitmap->image.palette);
             break;
         default:
             FIXME("not implemented for format 0x%x\n", bitmap->format);
