@@ -6333,12 +6333,18 @@ static void ffp_blit_p8_upload_palette(const struct wined3d_surface *surface, co
 {
     BYTE table[256][4];
     BOOL colorkey_active = (surface->CKeyFlags & WINEDDSD_CKSRCBLT) ? TRUE : FALSE;
+    GLenum target;
+
+    if (surface->container.type == WINED3D_CONTAINER_TEXTURE)
+        target = surface->container.u.texture->target;
+    else
+        target = surface->texture_target;
 
     d3dfmt_p8_init_palette(surface, table, colorkey_active);
 
     TRACE("Using GL_EXT_PALETTED_TEXTURE for 8-bit paletted texture support\n");
     ENTER_GL();
-    GL_EXTCALL(glColorTableEXT(surface->texture_target, GL_RGBA, 256, GL_RGBA, GL_UNSIGNED_BYTE, table));
+    GL_EXTCALL(glColorTableEXT(target, GL_RGBA, 256, GL_RGBA, GL_UNSIGNED_BYTE, table));
     LEAVE_GL();
 }
 
