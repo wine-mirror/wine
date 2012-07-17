@@ -160,7 +160,7 @@ HRESULT FileLockBytesImpl_Construct(HANDLE hFile, DWORD openFlags, LPCWSTR pwcsN
  * Ole Convert support
  */
 
-void OLECONVERT_CreateOleStream(LPSTORAGE pStorage) DECLSPEC_HIDDEN;
+HRESULT STORAGE_CreateOleStream(IStorage*, DWORD) DECLSPEC_HIDDEN;
 HRESULT OLECONVERT_CreateCompObjStream(LPSTORAGE pStorage, LPCSTR strOleTypeName) DECLSPEC_HIDDEN;
 
 

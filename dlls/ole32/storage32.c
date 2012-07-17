@@ -8520,18 +8520,18 @@ static DWORD OLECONVERT_WriteOLE20ToBuffer(LPSTORAGE pStorage, BYTE **pData)
 }
 
 /*************************************************************************
- * OLECONVERT_CreateOleStream [Internal]
+ * STORAGE_CreateOleStream [Internal]
  *
  * Creates the "\001OLE" stream in the IStorage if necessary.
  *
  * PARAMS
- *     pStorage     [I] Dest storage to create the stream in
+ *     storage     [I] Dest storage to create the stream in
+ *     flags       [I] flags to be set for newly created stream
  *
  * RETURNS
- *     Nothing
+ *     HRESULT return value
  *
  * NOTES
- *     This function is used by OleConvertOLESTREAMToIStorage only.
  *
  *     This stream is still unknown, MS Word seems to have extra data
  *     but since the data is stored in the OLESTREAM there should be
@@ -8539,28 +8539,32 @@ static DWORD OLECONVERT_WriteOLE20ToBuffer(LPSTORAGE pStorage, BYTE **pData)
  *     deleted it will create it with this default data.
  *
  */
-void OLECONVERT_CreateOleStream(LPSTORAGE pStorage)
+HRESULT STORAGE_CreateOleStream(IStorage *storage, DWORD flags)
 {
-    HRESULT hRes;
-    IStream *pStream;
-    static const WCHAR wstrStreamName[] = {1,'O', 'l', 'e', 0};
-    BYTE pOleStreamHeader [] =
-    {
-        0x01, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00
-    };
+    static const WCHAR stream_1oleW[] = {1,'O','l','e',0};
+    static const DWORD version_magic = 0x02000001;
+    IStream *stream;
+    HRESULT hr;
 
-    /* Create stream if not present */
-    hRes = IStorage_CreateStream(pStorage, wstrStreamName,
-        STGM_WRITE  | STGM_SHARE_EXCLUSIVE, 0, 0, &pStream );
-
-    if(hRes == S_OK)
+    hr = IStorage_CreateStream(storage, stream_1oleW, STGM_WRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &stream);
+    if (hr == S_OK)
     {
-        /* Write default Data */
-        hRes = IStream_Write(pStream, pOleStreamHeader, sizeof(pOleStreamHeader), NULL);
-        IStream_Release(pStream);
+        struct empty_1ole_stream {
+            DWORD version_magic;
+            DWORD flags;
+            BYTE  padding[12];
+        };
+        struct empty_1ole_stream stream_data;
+
+        stream_data.version_magic = version_magic;
+        stream_data.flags = flags;
+        memset(stream_data.padding, 0, sizeof(stream_data.padding));
+
+        hr = IStream_Write(stream, &stream_data, sizeof(stream_data), NULL);
+        IStream_Release(stream);
     }
+
+    return hr;
 }
 
 /* write a string to a stream, preceded by its length */
@@ -9291,7 +9295,7 @@ HRESULT WINAPI OleConvertOLESTREAMToIStorage (
         if(hRes == S_OK)
         {
             /*Create the Ole Stream if necessary */
-            OLECONVERT_CreateOleStream(pstg);
+            STORAGE_CreateOleStream(pstg, 0);
         }
     }
 
@@ -9418,33 +9422,16 @@ HRESULT WINAPI GetConvertStg(IStorage *stg)
  */
 HRESULT WINAPI SetConvertStg(IStorage *storage, BOOL convert)
 {
-    static const WCHAR stream_1oleW[] = {1,'O','l','e',0};
-    static const DWORD version_magic = 0x02000001;
     DWORD flags = convert ? OleStream_Convert : 0;
-    IStream *stream;
     HRESULT hr;
 
     TRACE("(%p, %d)\n", storage, convert);
 
-    hr = IStorage_CreateStream(storage, stream_1oleW, STGM_WRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &stream);
-    if (hr == S_OK)
+    hr = STORAGE_CreateOleStream(storage, flags);
+    if (hr == STG_E_FILEALREADYEXISTS)
     {
-        struct empty_1ole_stream {
-            DWORD version_magic;
-            DWORD flags;
-            BYTE  padding[12];
-        };
-        struct empty_1ole_stream stream_data;
-
-        stream_data.version_magic = version_magic;
-        stream_data.flags = flags;
-        memset(stream_data.padding, 0, sizeof(stream_data.padding));
-
-        hr = IStream_Write(stream, &stream_data, sizeof(stream_data), NULL);
-        IStream_Release(stream);
-    }
-    else if (hr == STG_E_FILEALREADYEXISTS)
-    {
+        static const WCHAR stream_1oleW[] = {1,'O','l','e',0};
+        IStream *stream;
         DWORD header[2];
 
         hr = IStorage_OpenStream(storage, stream_1oleW, NULL, STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, &stream);
