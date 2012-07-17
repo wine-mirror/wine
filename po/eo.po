@@ -3369,6 +3369,16 @@ msgstr ""
 msgid "Test Force Feedback"
 msgstr ""
 
+#: joy.rc:63
+#, fuzzy
+#| msgid "Available formats"
+msgid "Available Effects"
+msgstr "Disponeblaj formatoj"
+
+#: joy.rc:65
+msgid "Press any button in the controller to activate the chosen effect."
+msgstr ""
+
 #: joy.rc:28
 #, fuzzy
 #| msgid "Create Control"

@@ -3444,6 +3444,16 @@ msgstr "버튼"
 msgid "Test Force Feedback"
 msgstr "강제 피드백 시험"
 
+#: joy.rc:63
+#, fuzzy
+#| msgid "Available formats"
+msgid "Available Effects"
+msgstr "가능한 형식"
+
+#: joy.rc:65
+msgid "Press any button in the controller to activate the chosen effect."
+msgstr ""
+
 #: joy.rc:28
 msgid "Game Controllers"
 msgstr "게임 컨트롤러"

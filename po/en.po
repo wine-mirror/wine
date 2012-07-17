@@ -3452,6 +3452,14 @@ msgstr "Buttons"
 msgid "Test Force Feedback"
 msgstr "Test Force Feedback"
 
+#: joy.rc:63
+msgid "Available Effects"
+msgstr "Available Effects"
+
+#: joy.rc:65
+msgid "Press any button in the controller to activate the chosen effect."
+msgstr "Press any button in the controller to activate the chosen effect."
+
 #: joy.rc:28
 msgid "Game Controllers"
 msgstr "Game Controllers"

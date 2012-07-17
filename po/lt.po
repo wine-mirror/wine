@@ -3462,6 +3462,16 @@ msgstr "Mygtukai"
 msgid "Test Force Feedback"
 msgstr "Testuoti „Force Feedback“"
 
+#: joy.rc:63
+#, fuzzy
+#| msgid "Available formats"
+msgid "Available Effects"
+msgstr "Galimi formatai"
+
+#: joy.rc:65
+msgid "Press any button in the controller to activate the chosen effect."
+msgstr ""
+
 #: joy.rc:28
 msgid "Game Controllers"
 msgstr "Žaidimų valdikliai"

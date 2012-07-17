@@ -3408,6 +3408,16 @@ msgstr "按鈕"
 msgid "Test Force Feedback"
 msgstr "測試應力回饋"
 
+#: joy.rc:63
+#, fuzzy
+#| msgid "Available formats"
+msgid "Available Effects"
+msgstr "可用格式"
+
+#: joy.rc:65
+msgid "Press any button in the controller to activate the chosen effect."
+msgstr ""
+
 #: joy.rc:28
 msgid "Game Controllers"
 msgstr "遊戲控制器"
