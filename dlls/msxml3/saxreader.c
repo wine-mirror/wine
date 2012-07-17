@@ -324,6 +324,12 @@ static inline saxlocator *impl_from_ISAXAttributes( ISAXAttributes *iface )
     return CONTAINING_RECORD(iface, saxlocator, ISAXAttributes_iface);
 }
 
+static inline int saxreader_has_handler(const saxlocator *locator, enum saxhandler_type type)
+{
+    return (locator->vbInterface && locator->saxreader->saxhandlers[type].vbhandler) ||
+          (!locator->vbInterface && locator->saxreader->saxhandlers[type].handler);
+}
+
 /* property names */
 static const WCHAR PropertyCharsetW[] = {
     'c','h','a','r','s','e','t',0
@@ -392,24 +398,6 @@ static inline HRESULT get_feature_value(const saxreader *reader, saxreader_featu
 static BOOL is_namespaces_enabled(const saxreader *reader)
 {
     return (reader->version < MSXML4) || (reader->features & Namespaces);
-}
-
-static inline int has_content_handler(const saxlocator *locator)
-{
-    return  (locator->vbInterface && locator->saxreader->saxhandlers[SAXContentHandler].vbhandler) ||
-           (!locator->vbInterface && locator->saxreader->saxhandlers[SAXContentHandler].handler);
-}
-
-static inline int has_lexical_handler(const saxlocator *locator)
-{
-    return  (locator->vbInterface && locator->saxreader->saxhandlers[SAXLexicalHandler].vbhandler) ||
-           (!locator->vbInterface && locator->saxreader->saxhandlers[SAXLexicalHandler].handler);
-}
-
-static inline int has_error_handler(const saxlocator *locator)
-{
-    return  (locator->vbInterface && locator->saxreader->saxhandlers[SAXErrorHandler].vbhandler) ||
-           (!locator->vbInterface && locator->saxreader->saxhandlers[SAXErrorHandler].handler);
 }
 
 static BSTR build_qname(BSTR prefix, BSTR local)
@@ -639,7 +627,7 @@ static void format_error_message_from_id(saxlocator *This, HRESULT hr)
     xmlStopParser(This->pParserCtxt);
     This->ret = hr;
 
-    if(has_error_handler(This))
+    if (saxreader_has_handler(This, SAXErrorHandler))
     {
         WCHAR msg[1024];
         if(!FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM,
@@ -1323,7 +1311,7 @@ static void libxmlStartDocument(void *ctx)
             This->column++;
     }
 
-    if(has_content_handler(This))
+    if (saxreader_has_handler(This, SAXContentHandler))
     {
         if(This->vbInterface)
             hr = IVBSAXContentHandler_startDocument(handler->vbhandler);
@@ -1353,7 +1341,7 @@ static void libxmlEndDocument(void *ctx)
 
     if(This->ret != S_OK) return;
 
-    if(has_content_handler(This))
+    if (saxreader_has_handler(This, SAXContentHandler))
     {
         if(This->vbInterface)
             hr = IVBSAXContentHandler_endDocument(handler->vbhandler);
@@ -1395,7 +1383,7 @@ static void libxmlStartElementNS(
     {
         int i;
 
-        for (i = 0; i < nb_namespaces && has_content_handler(This); i++)
+        for (i = 0; i < nb_namespaces && saxreader_has_handler(This, SAXContentHandler); i++)
         {
             if (This->vbInterface)
                 hr = IVBSAXContentHandler_startPrefixMapping(
@@ -1420,7 +1408,7 @@ static void libxmlStartElementNS(
 
     uri = find_element_uri(This, URI);
     hr = SAXAttributes_populate(This, nb_namespaces, namespaces, nb_attributes, attributes);
-    if (hr == S_OK && has_content_handler(This))
+    if (hr == S_OK && saxreader_has_handler(This, SAXContentHandler))
     {
         BSTR local;
 
@@ -1488,7 +1476,7 @@ static void libxmlEndElementNS(
     uri = find_element_uri(This, URI);
     element = pop_element_ns(This);
 
-    if (!has_content_handler(This))
+    if (!saxreader_has_handler(This, SAXContentHandler))
     {
         This->nb_attributes = 0;
         free_element_entry(element);
@@ -1523,7 +1511,7 @@ static void libxmlEndElementNS(
     if (is_namespaces_enabled(This->saxreader))
     {
         int i = -1;
-        while (iterate_endprefix_index(This, element, &i) && has_content_handler(This))
+        while (iterate_endprefix_index(This, element, &i) && saxreader_has_handler(This, SAXContentHandler))
         {
             if (This->vbInterface)
                 hr = IVBSAXContentHandler_endPrefixMapping(
@@ -1554,7 +1542,7 @@ static void libxmlCharacters(
     xmlChar *cur, *end;
     BOOL lastEvent = FALSE;
 
-    if(!(has_content_handler(This))) return;
+    if (!saxreader_has_handler(This, SAXContentHandler)) return;
 
     update_position(This, FALSE);
     cur = (xmlChar*)This->pParserCtxt->input->cur;
@@ -1644,7 +1632,7 @@ static void libxmlSetDocumentLocator(
     struct saxcontenthandler_iface *handler = saxreader_get_contenthandler(This->saxreader);
     HRESULT hr = S_OK;
 
-    if(has_content_handler(This))
+    if (saxreader_has_handler(This, SAXContentHandler))
     {
         if(This->vbInterface)
             hr = IVBSAXContentHandler_putref_documentLocator(handler->vbhandler,
@@ -1678,7 +1666,7 @@ static void libxmlComment(void *ctx, const xmlChar *value)
     for(; p>=This->pParserCtxt->input->base && *p!='\n' && *p!='\r'; p--)
         This->column++;
 
-    if (!has_lexical_handler(This)) return;
+    if (!saxreader_has_handler(This, SAXLexicalHandler)) return;
 
     bValue = pooled_bstr_from_xmlChar(&This->saxreader->pool, value);
 
@@ -1717,7 +1705,7 @@ static void libxmlFatalError(void *ctx, const char *msg, ...)
         TRACE("fatal error for %p: %s\n", This, debugstr_w(error));
     }
 
-    if(!has_error_handler(This))
+    if (!saxreader_has_handler(This, SAXErrorHandler))
     {
         xmlStopParser(This->pParserCtxt);
         This->ret = E_FAIL;
@@ -1767,7 +1755,7 @@ static void libxmlCDataBlock(void *ctx, const xmlChar *value, int len)
     for(; beg>=This->pParserCtxt->input->base && *beg!='\n' && *beg!='\r'; beg--)
         This->column++;
 
-    if (has_lexical_handler(This))
+    if (saxreader_has_handler(This, SAXLexicalHandler))
     {
        if (This->vbInterface)
            hr = IVBSAXLexicalHandler_startCDATA(lexical->vbhandler);
@@ -1801,7 +1789,7 @@ static void libxmlCDataBlock(void *ctx, const xmlChar *value, int len)
 
         if(change) *end = '\n';
 
-        if (has_content_handler(This))
+        if (saxreader_has_handler(This, SAXContentHandler))
         {
             Chars = pooled_bstr_from_xmlCharN(&This->saxreader->pool, cur, end-cur+1);
             if (This->vbInterface)
@@ -1820,7 +1808,7 @@ static void libxmlCDataBlock(void *ctx, const xmlChar *value, int len)
         cur = end;
     }
 
-    if (has_lexical_handler(This))
+    if (saxreader_has_handler(This, SAXLexicalHandler))
     {
         if (This->vbInterface)
             hr = IVBSAXLexicalHandler_endCDATA(lexical->vbhandler);
