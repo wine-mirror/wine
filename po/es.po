@@ -646,7 +646,7 @@ msgstr "Sólo &palabra completa"
 msgid "Match &Case"
 msgstr "&Mayúsculas/minúsculas"
 
-#: comdlg32.rc:317
+#: comdlg32.rc:317 joy.rc:67
 msgid "Direction"
 msgstr "Dirección"
 
@@ -3495,7 +3495,9 @@ msgid "Available Effects"
 msgstr "Formatos disponibles"
 
 #: joy.rc:65
-msgid "Press any button in the controller to activate the chosen effect."
+msgid ""
+"Press any button in the controller to activate the chosen effect. The effect "
+"direction can be changed with the controller axis."
 msgstr ""
 
 #: joy.rc:28

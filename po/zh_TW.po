@@ -623,7 +623,7 @@ msgstr "全字拼寫須符合(&W)"
 msgid "Match &Case"
 msgstr "大小寫視為相異(&C)"
 
-#: comdlg32.rc:317
+#: comdlg32.rc:317 joy.rc:67
 msgid "Direction"
 msgstr "方向"
 
@@ -3415,7 +3415,9 @@ msgid "Available Effects"
 msgstr "可用格式"
 
 #: joy.rc:65
-msgid "Press any button in the controller to activate the chosen effect."
+msgid ""
+"Press any button in the controller to activate the chosen effect. The effect "
+"direction can be changed with the controller axis."
 msgstr ""
 
 #: joy.rc:28

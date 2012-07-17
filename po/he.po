@@ -641,7 +641,7 @@ msgstr "התאמת מילים &שלמות בלבד"
 msgid "Match &Case"
 msgstr "התאמת &רשיות"
 
-#: comdlg32.rc:317
+#: comdlg32.rc:317 joy.rc:67
 msgid "Direction"
 msgstr "כיוון"
 
@@ -3463,7 +3463,9 @@ msgid "Available Effects"
 msgstr "התבניות הזמינות"
 
 #: joy.rc:65
-msgid "Press any button in the controller to activate the chosen effect."
+msgid ""
+"Press any button in the controller to activate the chosen effect. The effect "
+"direction can be changed with the controller axis."
 msgstr ""
 
 #: joy.rc:28

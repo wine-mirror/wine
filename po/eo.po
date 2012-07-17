@@ -625,7 +625,7 @@ msgstr "Nur tutan &vorton"
 msgid "Match &Case"
 msgstr "Atenti &Usklecon"
 
-#: comdlg32.rc:317
+#: comdlg32.rc:317 joy.rc:67
 msgid "Direction"
 msgstr "Direkto"
 
@@ -3376,7 +3376,9 @@ msgid "Available Effects"
 msgstr "Disponeblaj formatoj"
 
 #: joy.rc:65
-msgid "Press any button in the controller to activate the chosen effect."
+msgid ""
+"Press any button in the controller to activate the chosen effect. The effect "
+"direction can be changed with the controller axis."
 msgstr ""
 
 #: joy.rc:28

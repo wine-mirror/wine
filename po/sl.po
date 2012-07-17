@@ -652,7 +652,7 @@ msgstr "&Samo cele besede"
 msgid "Match &Case"
 msgstr "&Razlikuj velikost črk"
 
-#: comdlg32.rc:317
+#: comdlg32.rc:317 joy.rc:67
 msgid "Direction"
 msgstr "Smer iskanja"
 
@@ -3499,7 +3499,9 @@ msgid "Available Effects"
 msgstr "Razpoložljive oblike"
 
 #: joy.rc:65
-msgid "Press any button in the controller to activate the chosen effect."
+msgid ""
+"Press any button in the controller to activate the chosen effect. The effect "
+"direction can be changed with the controller axis."
 msgstr ""
 
 #: joy.rc:28

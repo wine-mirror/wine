@@ -634,7 +634,7 @@ msgstr "Tenkina tik &visas žodis"
 msgid "Match &Case"
 msgstr "Skirti raidžių &dydį"
 
-#: comdlg32.rc:317
+#: comdlg32.rc:317 joy.rc:67
 msgid "Direction"
 msgstr "Kryptis"
 
@@ -3469,7 +3469,9 @@ msgid "Available Effects"
 msgstr "Galimi formatai"
 
 #: joy.rc:65
-msgid "Press any button in the controller to activate the chosen effect."
+msgid ""
+"Press any button in the controller to activate the chosen effect. The effect "
+"direction can be changed with the controller axis."
 msgstr ""
 
 #: joy.rc:28

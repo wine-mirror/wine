@@ -67,6 +67,7 @@ static BOOL CALLBACK enum_callback(const DIDEVICEINSTANCEW *instance, void *cont
 {
     struct JoystickData *data = context;
     struct Joystick *joystick;
+    DIPROPRANGE proprange;
     DIDEVCAPS caps;
 
     if (data->joysticks == NULL)
@@ -91,6 +92,16 @@ static BOOL CALLBACK enum_callback(const DIDEVICEINSTANCEW *instance, void *cont
     joystick->forcefeedback = caps.dwFlags & DIDC_FORCEFEEDBACK;
 
     if (joystick->forcefeedback) data->num_ff++;
+
+    /* Set axis range to ease the GUI visualization */
+    proprange.diph.dwSize = sizeof(DIPROPRANGE);
+    proprange.diph.dwHeaderSize = sizeof(DIPROPHEADER);
+    proprange.diph.dwHow = DIPH_DEVICE;
+    proprange.diph.dwObj = 0;
+    proprange.lMin = TEST_AXIS_MIN;
+    proprange.lMax = TEST_AXIS_MAX;
+
+    IDirectInputDevice_SetProperty(joystick->device, DIPROP_RANGE, &proprange.diph);
 
     return DIENUM_CONTINUE;
 }
@@ -340,28 +351,12 @@ static void draw_joystick_buttons(HWND hwnd, struct JoystickData* data)
 static void draw_joystick_axes(HWND hwnd, struct JoystickData* data)
 {
     int i;
-    struct Joystick *joy;
-    DIPROPRANGE propRange;
     HINSTANCE hinst = (HINSTANCE) GetWindowLongPtrW(hwnd, GWLP_HINSTANCE);
     static const WCHAR button_class[] = {'B','u','t','t','o','n','\0'};
     static const WCHAR axes_names[TEST_MAX_AXES][7] = { {'X',',','Y','\0'}, {'R','x',',','R','y','\0'},
                                                         {'Z',',','R','z','\0'}, {'P','O','V','\0'} };
     static const DWORD axes_idc[TEST_MAX_AXES] = { IDC_TESTGROUPXY, IDC_TESTGROUPRXRY,
                                                    IDC_TESTGROUPZRZ, IDC_TESTGROUPPOV };
-
-    /* Set axis range to ease the GUI visualization */
-    for (i = 0; i < data->num_joysticks; i++)
-    {
-        joy = &data->joysticks[i];
-        propRange.diph.dwSize = sizeof(DIPROPRANGE);
-        propRange.diph.dwHeaderSize = sizeof(DIPROPHEADER);
-        propRange.diph.dwHow = DIPH_DEVICE;
-        propRange.diph.dwObj = 0;
-        propRange.lMin = TEST_AXIS_MIN;
-        propRange.lMax = TEST_AXIS_MAX;
-
-        IDirectInputDevice_SetProperty(joy->device, DIPROP_RANGE, &propRange.diph);
-    }
 
     for (i = 0; i < TEST_MAX_AXES; i++)
     {
@@ -453,6 +448,17 @@ static INT_PTR CALLBACK test_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
  * Joystick force feedback testing functions
  *
  */
+static void draw_ff_axis(HWND hwnd, struct JoystickData *data)
+{
+    HINSTANCE hinst = (HINSTANCE) GetWindowLongPtrW(hwnd, GWLP_HINSTANCE);
+    static WCHAR button_class[] = {'B','u','t','t','o','n','\0'};
+
+    /* Draw direction axis */
+    data->ff_axis = CreateWindowW( button_class, NULL, WS_CHILD | WS_VISIBLE,
+        FF_AXIS_X, FF_AXIS_Y,
+        FF_AXIS_SIZE_X, FF_AXIS_SIZE_Y,
+        hwnd, (HMENU) IDC_FFAXIS, NULL, hinst);
+}
 
 static void initialize_effects_list(HWND hwnd, struct Joystick* joy)
 {
@@ -500,15 +506,26 @@ static DWORD WINAPI ff_input_thread(void *param)
         int i;
         struct Joystick *joy = &data->joysticks[data->chosen_joystick];
         int chosen_effect = joy->chosen_effect;
+        DIEFFECT *dieffect;
+        DWORD flags = DIEP_AXES | DIEP_DIRECTION | DIEP_NORESTART;
 
         /* Skip this if we have no effects */
         if (joy->num_effects == 0 || chosen_effect < 0) continue;
 
         poll_input(joy, &state);
 
+        /* Set ff parameters and draw the axis */
+        dieffect = &joy->effects[chosen_effect].params;
+        dieffect->rgdwAxes[0] = state.lX;
+        dieffect->rgdwAxes[1] = state.lY;
+
+        SetWindowPos(data->ff_axis, 0, FF_AXIS_X + state.lX, FF_AXIS_Y + state.lY,
+                     0, 0, SWP_NOZORDER | SWP_NOSIZE);
+
         for (i=0; i < joy->num_buttons; i++)
             if (state.rgbButtons[i])
             {
+                IDirectInputEffect_SetParameters(joy->effects[chosen_effect].effect, dieffect, flags);
                 IDirectInputEffect_Start(joy->effects[chosen_effect].effect, 1, 0);
                 break;
             }
@@ -645,6 +662,8 @@ static INT_PTR CALLBACK ff_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
 
                 }
             }
+
+            draw_ff_axis(hwnd, data);
 
             return TRUE;
         }

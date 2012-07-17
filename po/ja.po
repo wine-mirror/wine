@@ -635,7 +635,7 @@ msgstr "単語単位で検索(&W)"
 msgid "Match &Case"
 msgstr "大文字と小文字を区別する(&C)"
 
-#: comdlg32.rc:317
+#: comdlg32.rc:317 joy.rc:67
 msgid "Direction"
 msgstr "検索する方向"
 
@@ -3453,7 +3453,9 @@ msgid "Available Effects"
 msgstr "利用できる形式"
 
 #: joy.rc:65
-msgid "Press any button in the controller to activate the chosen effect."
+msgid ""
+"Press any button in the controller to activate the chosen effect. The effect "
+"direction can be changed with the controller axis."
 msgstr ""
 
 #: joy.rc:28

@@ -660,7 +660,7 @@ msgstr "Pouze &celá slova"
 msgid "Match &Case"
 msgstr "&Rozlišovat velikost"
 
-#: comdlg32.rc:317
+#: comdlg32.rc:317 joy.rc:67
 msgid "Direction"
 msgstr "Směr"
 
@@ -3509,7 +3509,9 @@ msgid "Available Effects"
 msgstr "Dostupné formáty"
 
 #: joy.rc:65
-msgid "Press any button in the controller to activate the chosen effect."
+msgid ""
+"Press any button in the controller to activate the chosen effect. The effect "
+"direction can be changed with the controller axis."
 msgstr ""
 
 #: joy.rc:28

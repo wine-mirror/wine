@@ -642,7 +642,7 @@ msgstr "&Само цели думи"
 msgid "Match &Case"
 msgstr "&Чувствителен регистър"
 
-#: comdlg32.rc:317
+#: comdlg32.rc:317 joy.rc:67
 msgid "Direction"
 msgstr "Посока"
 
@@ -3460,7 +3460,9 @@ msgid "Available Effects"
 msgstr "На&пред"
 
 #: joy.rc:65
-msgid "Press any button in the controller to activate the chosen effect."
+msgid ""
+"Press any button in the controller to activate the chosen effect. The effect "
+"direction can be changed with the controller axis."
 msgstr ""
 
 #: joy.rc:28

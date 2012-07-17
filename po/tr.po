@@ -617,7 +617,7 @@ msgstr "Yalnızca &Tam Sözcükleri Bul"
 msgid "Match &Case"
 msgstr "BÜYÜK/küçük Harf &Duyarlı"
 
-#: comdlg32.rc:317
+#: comdlg32.rc:317 joy.rc:67
 msgid "Direction"
 msgstr "Yön"
 
@@ -3366,7 +3366,9 @@ msgid "Available Effects"
 msgstr "Mevcut biçimler"
 
 #: joy.rc:65
-msgid "Press any button in the controller to activate the chosen effect."
+msgid ""
+"Press any button in the controller to activate the chosen effect. The effect "
+"direction can be changed with the controller axis."
 msgstr ""
 
 #: joy.rc:28

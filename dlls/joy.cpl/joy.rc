@@ -62,7 +62,9 @@ FONT 8, "Ms Shell Dlg"
     COMBOBOX        IDC_FFSELECTCOMBO, 5, 5, 100, 30, CBS_DROPDOWNLIST | CBS_HASSTRINGS
     LTEXT           "Available Effects", IDC_STATIC, 10, 30, 100, 10
     LISTBOX         IDC_FFEFFECTLIST, 10, 40, 180, 70, WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY
-    LTEXT           "Press any button in the controller to activate the chosen effect.", IDC_STATIC, 10, 110, 210, 25
+    LTEXT           "Press any button in the controller to activate the chosen effect. The effect direction can be changed with the controller axis.",
+                    IDC_STATIC, 10, 110, 210, 25
+    GROUPBOX        "Direction", IDC_STATIC, 220, 30, 60, 60
 }
 
 #define WINE_FILENAME_STR "joy.cpl"
