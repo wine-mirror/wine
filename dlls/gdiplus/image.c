@@ -501,7 +501,8 @@ GpStatus WINGDIPAPI GdipBitmapSetPixel(GpBitmap* bitmap, INT x, INT y,
 
 GpStatus convert_pixels(INT width, INT height,
     INT dst_stride, BYTE *dst_bits, PixelFormat dst_format,
-    INT src_stride, const BYTE *src_bits, PixelFormat src_format, ARGB *src_palette)
+    INT src_stride, const BYTE *src_bits, PixelFormat src_format,
+    ColorPalette *palette)
 {
     INT x, y;
 
@@ -518,9 +519,10 @@ GpStatus convert_pixels(INT width, INT height,
     for (x=0; x<width; x++) \
         for (y=0; y<height; y++) { \
             BYTE index; \
-            BYTE *color; \
+            ARGB argb; \
+            BYTE *color = (BYTE *)&argb; \
             getpixel_function(&index, src_bits+src_stride*y, x); \
-            color = (BYTE*)(&src_palette[index]); \
+            argb = (palette && index < palette->Count) ? palette->Entries[index] : 0; \
             setpixel_function(color[2], color[1], color[0], color[3], dst_bits+dst_stride*y, x); \
         } \
     return Ok; \
@@ -1012,7 +1014,7 @@ GpStatus WINGDIPAPI GdipBitmapLockBits(GpBitmap* bitmap, GDIPCONST GpRect* rect,
             lockeddata->Stride, lockeddata->Scan0, format,
             bitmap->stride,
             bitmap->bits + bitmap->stride * act_rect.Y + PIXELFORMATBPP(bitmap->format) * act_rect.X / 8,
-            bitmap->format, bitmap->image.palette ? bitmap->image.palette->Entries : NULL);
+            bitmap->format, bitmap->image.palette);
 
         if (stat != Ok)
         {
