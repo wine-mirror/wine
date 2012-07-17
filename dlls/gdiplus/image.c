@@ -953,7 +953,7 @@ GpStatus WINGDIPAPI GdipBitmapLockBits(GpBitmap* bitmap, GDIPCONST GpRect* rect,
         lockeddata->Scan0 = bitmap->bits + (bitspp / 8) * act_rect.X +
                             bitmap->stride * act_rect.Y;
 
-        bitmap->lockmode = flags;
+        bitmap->lockmode = flags | ImageLockModeRead;
         bitmap->numlocks++;
 
         return Ok;
@@ -1022,7 +1022,7 @@ GpStatus WINGDIPAPI GdipBitmapLockBits(GpBitmap* bitmap, GDIPCONST GpRect* rect,
         }
     }
 
-    bitmap->lockmode = flags;
+    bitmap->lockmode = flags | ImageLockModeRead;
     bitmap->numlocks++;
     bitmap->lockx = act_rect.X;
     bitmap->locky = act_rect.Y;
