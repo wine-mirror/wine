@@ -20,6 +20,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <assert.h>
 
 #define COBJMACROS
 
@@ -104,9 +105,7 @@ static HRESULT confirm_safety_load(HTMLDocumentNode *This, struct CONFIRMSAFETY 
         CATID init_catid = CATID_SafeForInitializing;
 
         hres = ICatInformation_IsClassOfCategories(This->catmgr, &cs->clsid, 1, &init_catid, 0, NULL);
-        if(FAILED(hres))
-            return hres;
-
+        assert(SUCCEEDED(hres));
         *ret = hres == S_OK ? URLPOLICY_ALLOW : URLPOLICY_DISALLOW;
     }
 
