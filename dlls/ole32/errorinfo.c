@@ -160,7 +160,7 @@ static HRESULT WINAPI IErrorInfoImpl_QueryInterface(
 
 	*ppvoid = NULL;
 
-	if(IsEqualIID(riid, &IID_IErrorInfo))
+	if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IErrorInfo))
 	{
 	  *ppvoid = &This->IErrorInfo_iface;
 	}
