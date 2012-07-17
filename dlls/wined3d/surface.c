@@ -6340,6 +6340,12 @@ static void ffp_blit_p8_upload_palette(const struct wined3d_surface *surface, co
 static HRESULT ffp_blit_set(void *blit_priv, struct wined3d_context *context, const struct wined3d_surface *surface)
 {
     enum complex_fixup fixup = get_complex_fixup(surface->resource.format->color_fixup);
+    GLenum target;
+
+    if (surface->container.type == WINED3D_CONTAINER_TEXTURE)
+        target = surface->container.u.texture->target;
+    else
+        target = surface->texture_target;
 
     /* When EXT_PALETTED_TEXTURE is around, palette conversion is done by the GPU
      * else the surface is converted in software at upload time in LoadLocation.
@@ -6349,8 +6355,8 @@ static HRESULT ffp_blit_set(void *blit_priv, struct wined3d_context *context, co
         ffp_blit_p8_upload_palette(surface, context->gl_info);
 
     ENTER_GL();
-    glEnable(surface->texture_target);
-    checkGLcall("glEnable(surface->texture_target)");
+    glEnable(target);
+    checkGLcall("glEnable(target)");
     LEAVE_GL();
     return WINED3D_OK;
 }
