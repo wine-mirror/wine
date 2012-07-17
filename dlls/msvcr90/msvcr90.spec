@@ -1474,7 +1474,7 @@
 @ cdecl tanh(double) msvcrt.tanh
 @ cdecl -arch=x86_64 tanhf(float) msvcrt.tanhf
 @ cdecl tmpfile() msvcrt.tmpfile
-@ stub tmpfile_s
+@ cdecl tmpfile_s(ptr) msvcrt.tmpfile_s
 @ cdecl tmpnam(ptr) msvcrt.tmpnam
 @ stub tmpnam_s
 @ cdecl tolower(long) msvcrt.tolower

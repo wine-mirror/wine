@@ -3792,6 +3792,18 @@ MSVCRT_FILE* CDECL MSVCRT_tmpfile(void)
   return file;
 }
 
+/*********************************************************************
+ *      tmpfile_s (MSVCRT.@)
+ */
+int CDECL MSVCRT_tmpfile_s(MSVCRT_FILE** file)
+{
+    if (!MSVCRT_CHECK_PMT(file != NULL))
+        return MSVCRT_EINVAL;
+
+    *file = MSVCRT_tmpfile();
+    return 0;
+}
+
 static int puts_clbk_file_a(void *file, int len, const char *str)
 {
     return MSVCRT_fwrite(str, sizeof(char), len, file);

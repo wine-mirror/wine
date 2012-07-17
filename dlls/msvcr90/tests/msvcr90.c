@@ -75,6 +75,7 @@ static void (__cdecl *p_qsort_s)(void *, size_t, size_t, int (__cdecl *)(void *,
 static void* (__cdecl *p_bsearch_s)(const void *, const void *, size_t, size_t,
                                     int (__cdecl *compare)(void *, const void *, const void *), void *);
 static int (__cdecl *p_controlfp_s)(unsigned int *, unsigned int, unsigned int);
+static int (__cdecl *p_tmpfile_s)(FILE**);
 static int (__cdecl *p_atoflt)(_CRT_FLOAT *, char *);
 static unsigned int (__cdecl *p_set_abort_behavior)(unsigned int, unsigned int);
 static int (__cdecl *p_sopen_s)(int*, const char*, int, int, int);
@@ -255,6 +256,7 @@ static BOOL init(void)
     SET(p_qsort_s, "qsort_s");
     SET(p_bsearch_s, "bsearch_s");
     SET(p_controlfp_s, "_controlfp_s");
+    SET(p_tmpfile_s, "tmpfile_s");
     SET(p_atoflt, "_atoflt");
     SET(p_set_abort_behavior, "_set_abort_behavior");
     SET(p_sopen_s, "_sopen_s");
@@ -833,6 +835,18 @@ static void test_controlfp_s(void)
     ok( cur != 0xdeadbeef, "value not set\n" );
 }
 
+static void test_tmpfile_s( void )
+{
+    int ret;
+
+    errno = 0xdeadbeef;
+    SET_EXPECT(invalid_parameter_handler);
+    ret = p_tmpfile_s(NULL);
+    ok(ret == EINVAL, "Expected tmpfile_s to return EINVAL, got %i\n", ret);
+    CHECK_CALLED(invalid_parameter_handler);
+    ok(errno == 0xdeadbeef, "errno = %x\n", errno);
+}
+
 typedef struct
 {
     const char *str;
@@ -1211,6 +1225,7 @@ START_TEST(msvcr90)
     test_qsort_s();
     test_bsearch_s();
     test_controlfp_s();
+    test_tmpfile_s();
     test__atoflt();
     test__set_abort_behavior();
     test__sopen_s();

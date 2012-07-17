@@ -1422,7 +1422,7 @@
 @ cdecl -arch=x86_64 tanhf(float) MSVCRT_tanhf
 @ cdecl time(ptr) MSVCRT_time
 @ cdecl tmpfile() MSVCRT_tmpfile
-# stub tmpfile_s(ptr)
+@ cdecl tmpfile_s(ptr) MSVCRT_tmpfile_s
 @ cdecl tmpnam(ptr) MSVCRT_tmpnam
 # stub tmpnam_s(ptr long)
 @ cdecl tolower(long) MSVCRT_tolower

@@ -1463,7 +1463,7 @@
 @ cdecl tan(double) msvcrt.tan
 @ cdecl tanh(double) msvcrt.tanh
 @ cdecl tmpfile() msvcrt.tmpfile
-@ stub tmpfile_s
+@ cdecl tmpfile_s(ptr) msvcrt.tmpfile_s
 @ cdecl tmpnam(ptr) msvcrt.tmpnam
 @ stub tmpnam_s
 @ cdecl tolower(long) msvcrt.tolower
