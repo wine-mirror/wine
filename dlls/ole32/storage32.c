@@ -2152,7 +2152,7 @@ static HRESULT deleteStreamContents(
   size.u.HighPart = 0;
   size.u.LowPart = 0;
 
-  hr = StorageBaseImpl_OpenStream(&parentStorage->IStorage_iface,
+  hr = IStorage_OpenStream(&parentStorage->IStorage_iface,
         entryDataToDelete.name, NULL, STGM_WRITE | STGM_SHARE_EXCLUSIVE, 0, &pis);
 
   if (hr!=S_OK)
@@ -4798,14 +4798,10 @@ static void TransactedSnapshotImpl_Destroy( StorageBaseImpl *iface)
 {
   TransactedSnapshotImpl* This = (TransactedSnapshotImpl*) iface;
 
-  TransactedSnapshotImpl_Revert(&This->base.IStorage_iface);
-
+  IStorage_Revert(&This->base.IStorage_iface);
   IStorage_Release(&This->transactedParent->IStorage_iface);
-
   IStorage_Release(&This->scratch->IStorage_iface);
-
   HeapFree(GetProcessHeap(), 0, This->entries);
-
   HeapFree(GetProcessHeap(), 0, This);
 }
 

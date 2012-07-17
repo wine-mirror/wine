@@ -657,7 +657,7 @@ static HRESULT WINAPI StgStreamImpl_Clone(
 
   seek_pos.QuadPart = This->currentPosition.QuadPart;
 
-  hres=StgStreamImpl_Seek (*ppstm, seek_pos, STREAM_SEEK_SET, NULL);
+  hres = IStream_Seek(*ppstm, seek_pos, STREAM_SEEK_SET, NULL);
 
   assert (SUCCEEDED(hres));
 
