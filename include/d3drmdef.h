@@ -154,10 +154,10 @@ typedef struct _D3DRMIMAGE {
     int bytes_per_line;
     void* buffer1;
     void* buffer2;
-    unsigned long red_mask;
-    unsigned long green_mask;
-    unsigned long blue_mask;
-    unsigned long alpha_mask;
+    ULONG red_mask;
+    ULONG green_mask;
+    ULONG blue_mask;
+    ULONG alpha_mask;
     int palette_size;
     D3DRMPALETTEENTRY* palette;
 } D3DRMIMAGE, *LPD3DRMIMAGE;
