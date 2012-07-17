@@ -541,6 +541,16 @@ GpStatus convert_pixels(INT width, INT height,
     return Ok; \
 } while (0);
 
+#define convert_rgb_to_indexed(getpixel_function, setpixel_function) do { \
+    for (x=0; x<width; x++) \
+        for (y=0; y<height; y++) { \
+            BYTE r, g, b, a; \
+            getpixel_function(&r, &g, &b, &a, src_bits+src_stride*y, x); \
+            setpixel_function(r, g, b, a, dst_bits+dst_stride*y, x, palette); \
+        } \
+    return Ok; \
+} while (0);
+
     switch (src_format)
     {
     case PixelFormat1bppIndexed:
@@ -627,6 +637,8 @@ GpStatus convert_pixels(INT width, INT height,
     case PixelFormat16bppGrayScale:
         switch (dst_format)
         {
+        case PixelFormat8bppIndexed:
+            convert_rgb_to_indexed(getpixel_16bppGrayScale, setpixel_8bppIndexed);
         case PixelFormat16bppRGB555:
             convert_rgb_to_rgb(getpixel_16bppGrayScale, setpixel_16bppRGB555);
         case PixelFormat16bppRGB565:
@@ -652,6 +664,8 @@ GpStatus convert_pixels(INT width, INT height,
     case PixelFormat16bppRGB555:
         switch (dst_format)
         {
+        case PixelFormat8bppIndexed:
+            convert_rgb_to_indexed(getpixel_16bppRGB555, setpixel_8bppIndexed);
         case PixelFormat16bppGrayScale:
             convert_rgb_to_rgb(getpixel_16bppRGB555, setpixel_16bppGrayScale);
         case PixelFormat16bppRGB565:
@@ -677,6 +691,8 @@ GpStatus convert_pixels(INT width, INT height,
     case PixelFormat16bppRGB565:
         switch (dst_format)
         {
+        case PixelFormat8bppIndexed:
+            convert_rgb_to_indexed(getpixel_16bppRGB565, setpixel_8bppIndexed);
         case PixelFormat16bppGrayScale:
             convert_rgb_to_rgb(getpixel_16bppRGB565, setpixel_16bppGrayScale);
         case PixelFormat16bppRGB555:
@@ -702,6 +718,8 @@ GpStatus convert_pixels(INT width, INT height,
     case PixelFormat16bppARGB1555:
         switch (dst_format)
         {
+        case PixelFormat8bppIndexed:
+            convert_rgb_to_indexed(getpixel_16bppARGB1555, setpixel_8bppIndexed);
         case PixelFormat16bppGrayScale:
             convert_rgb_to_rgb(getpixel_16bppARGB1555, setpixel_16bppGrayScale);
         case PixelFormat16bppRGB555:
@@ -727,6 +745,8 @@ GpStatus convert_pixels(INT width, INT height,
     case PixelFormat24bppRGB:
         switch (dst_format)
         {
+        case PixelFormat8bppIndexed:
+            convert_rgb_to_indexed(getpixel_24bppRGB, setpixel_8bppIndexed);
         case PixelFormat16bppGrayScale:
             convert_rgb_to_rgb(getpixel_24bppRGB, setpixel_16bppGrayScale);
         case PixelFormat16bppRGB555:
@@ -752,6 +772,8 @@ GpStatus convert_pixels(INT width, INT height,
     case PixelFormat32bppRGB:
         switch (dst_format)
         {
+        case PixelFormat8bppIndexed:
+            convert_rgb_to_indexed(getpixel_32bppRGB, setpixel_8bppIndexed);
         case PixelFormat16bppGrayScale:
             convert_rgb_to_rgb(getpixel_32bppRGB, setpixel_16bppGrayScale);
         case PixelFormat16bppRGB555:
@@ -777,6 +799,8 @@ GpStatus convert_pixels(INT width, INT height,
     case PixelFormat32bppARGB:
         switch (dst_format)
         {
+        case PixelFormat8bppIndexed:
+            convert_rgb_to_indexed(getpixel_32bppARGB, setpixel_8bppIndexed);
         case PixelFormat16bppGrayScale:
             convert_rgb_to_rgb(getpixel_32bppARGB, setpixel_16bppGrayScale);
         case PixelFormat16bppRGB555:
@@ -801,6 +825,8 @@ GpStatus convert_pixels(INT width, INT height,
     case PixelFormat32bppPARGB:
         switch (dst_format)
         {
+        case PixelFormat8bppIndexed:
+            convert_rgb_to_indexed(getpixel_32bppPARGB, setpixel_8bppIndexed);
         case PixelFormat16bppGrayScale:
             convert_rgb_to_rgb(getpixel_32bppPARGB, setpixel_16bppGrayScale);
         case PixelFormat16bppRGB555:
@@ -826,6 +852,8 @@ GpStatus convert_pixels(INT width, INT height,
     case PixelFormat48bppRGB:
         switch (dst_format)
         {
+        case PixelFormat8bppIndexed:
+            convert_rgb_to_indexed(getpixel_48bppRGB, setpixel_8bppIndexed);
         case PixelFormat16bppGrayScale:
             convert_rgb_to_rgb(getpixel_48bppRGB, setpixel_16bppGrayScale);
         case PixelFormat16bppRGB555:
@@ -851,6 +879,8 @@ GpStatus convert_pixels(INT width, INT height,
     case PixelFormat64bppARGB:
         switch (dst_format)
         {
+        case PixelFormat8bppIndexed:
+            convert_rgb_to_indexed(getpixel_64bppARGB, setpixel_8bppIndexed);
         case PixelFormat16bppGrayScale:
             convert_rgb_to_rgb(getpixel_64bppARGB, setpixel_16bppGrayScale);
         case PixelFormat16bppRGB555:
@@ -876,6 +906,8 @@ GpStatus convert_pixels(INT width, INT height,
     case PixelFormat64bppPARGB:
         switch (dst_format)
         {
+        case PixelFormat8bppIndexed:
+            convert_rgb_to_indexed(getpixel_64bppPARGB, setpixel_8bppIndexed);
         case PixelFormat16bppGrayScale:
             convert_rgb_to_rgb(getpixel_64bppPARGB, setpixel_16bppGrayScale);
         case PixelFormat16bppRGB555:
