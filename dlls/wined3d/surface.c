@@ -4888,6 +4888,12 @@ static void fb_copy_to_texture_direct(struct wined3d_surface *dst_surface, struc
     struct wined3d_context *context;
     BOOL upsidedown = FALSE;
     RECT dst_rect = *dst_rect_in;
+    GLenum dst_target;
+
+    if (dst_surface->container.type == WINED3D_CONTAINER_TEXTURE)
+        dst_target = dst_surface->container.u.texture->target;
+    else
+        dst_target = dst_surface->texture_target;
 
     /* Make sure that the top pixel is always above the bottom pixel, and keep a separate upside down flag
      * glCopyTexSubImage is a bit picky about the parameters we pass to it
@@ -4905,7 +4911,7 @@ static void fb_copy_to_texture_direct(struct wined3d_surface *dst_surface, struc
     ENTER_GL();
 
     /* Bind the target texture */
-    context_bind_texture(context, dst_surface->texture_target, dst_surface->texture_name);
+    context_bind_texture(context, dst_target, dst_surface->texture_name);
     if (surface_is_offscreen(src_surface))
     {
         TRACE("Reading from an offscreen target\n");
