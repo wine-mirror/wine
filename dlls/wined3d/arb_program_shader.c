@@ -7196,8 +7196,13 @@ static HRESULT arbfp_blit_set(void *blit_priv, struct wined3d_context *context, 
     float size[4] = {(float) surface->pow2Width, (float) surface->pow2Height, 1.0f, 1.0f};
     struct arbfp_blit_priv *priv = blit_priv;
     enum complex_fixup fixup;
-    GLenum textype = surface->texture_target;
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    GLenum textype;
+
+    if (surface->container.type == WINED3D_CONTAINER_TEXTURE)
+        textype = surface->container.u.texture->target;
+    else
+        textype = surface->texture_target;
 
     if (surface->flags & SFLAG_CONVERTED)
     {
