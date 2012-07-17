@@ -335,6 +335,14 @@ typedef struct {
 typedef struct {
     WORD PosFormat;
     WORD Coverage;
+    WORD ValueFormat;
+    WORD ValueCount;
+    WORD Value[1];
+} GPOS_SinglePosFormat2;
+
+typedef struct {
+    WORD PosFormat;
+    WORD Coverage;
     WORD ValueFormat1;
     WORD ValueFormat2;
     WORD PairSetCount;
@@ -1086,7 +1094,7 @@ static VOID GPOS_apply_SingleAdjustment(const OT_LookupTable *look, const WORD *
         const GPOS_SinglePosFormat1 *spf1;
         WORD offset = GET_BE_WORD(look->SubTable[j]);
         spf1 = (const GPOS_SinglePosFormat1*)((const BYTE*)look+offset);
-        if (GET_BE_WORD(spf1->PosFormat == 1))
+        if (GET_BE_WORD(spf1->PosFormat) == 1)
         {
             offset = GET_BE_WORD(spf1->Coverage);
             if (GSUB_is_glyph_covered((const BYTE*)spf1+offset, glyphs[glyph_index]) != -1)
@@ -1098,8 +1106,30 @@ static VOID GPOS_apply_SingleAdjustment(const OT_LookupTable *look, const WORD *
                 TRACE("Glyph Adjusted by %i,%i\n",ValueRecord.XPlacement,ValueRecord.YPlacement);
             }
         }
+        else if (GET_BE_WORD(spf1->PosFormat) == 2)
+        {
+            int index;
+            const GPOS_SinglePosFormat2 *spf2;
+            spf2 = (const GPOS_SinglePosFormat2*)spf1;
+            offset = GET_BE_WORD(spf2->Coverage);
+            index  = GSUB_is_glyph_covered((const BYTE*)spf2+offset, glyphs[glyph_index]);
+            if (index != -1)
+            {
+                int size;
+                GPOS_ValueRecord ValueRecord = {0,0,0,0,0,0,0,0};
+                WORD ValueFormat = GET_BE_WORD(spf2->ValueFormat);
+                size = GPOS_get_value_record(ValueFormat, spf2->Value, &ValueRecord);
+                if (index > 0)
+                {
+                    offset = size * index;
+                    GPOS_get_value_record(ValueFormat, &spf2->Value[offset], &ValueRecord);
+                }
+                GPOS_get_value_record_offsets((const BYTE*)spf2, &ValueRecord,  ValueFormat, ppem, ptAdjust, ptAdvance);
+                TRACE("Glyph Adjusted by %i,%i\n",ValueRecord.XPlacement,ValueRecord.YPlacement);
+            }
+        }
         else
-            FIXME("Single Adjustment Positioning: Format 2 Unhandled\n");
+            FIXME("Single Adjustment Positioning: Format %i Unhandled\n",GET_BE_WORD(spf1->PosFormat));
     }
 }
 
