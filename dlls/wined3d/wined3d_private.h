@@ -785,11 +785,11 @@ extern void (CDECL *wine_tsx11_unlock_ptr)(void) DECLSPEC_HIDDEN;
 extern int num_lock DECLSPEC_HIDDEN;
 
 #if 0
-#define ENTER_GL() ++num_lock; if (num_lock > 1) FIXME("Recursive use of GL lock to: %d\n", num_lock); wine_tsx11_lock_ptr()
-#define LEAVE_GL() if (num_lock != 1) FIXME("Recursive use of GL lock: %d\n", num_lock); --num_lock; wine_tsx11_unlock_ptr()
-#else
 #define ENTER_GL() wine_tsx11_lock_ptr()
 #define LEAVE_GL() wine_tsx11_unlock_ptr()
+#else
+#define ENTER_GL() do {} while(0)
+#define LEAVE_GL() do {} while(0)
 #endif
 
 /*****************************************************************************
