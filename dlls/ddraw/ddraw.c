@@ -1620,31 +1620,27 @@ static HRESULT WINAPI ddraw1_GetMonitorFrequency(IDirectDraw *iface, DWORD *freq
     return ddraw7_GetMonitorFrequency(&ddraw->IDirectDraw7_iface, frequency);
 }
 
-/*****************************************************************************
- * IDirectDraw7::GetVerticalBlankStatus
- *
- * Returns the Vertical blank status of the monitor. This should be in WineD3D
- * too basically, but as it's a semi stub, I didn't create a function there
- *
- * Params:
- *  status: Pointer to a BOOL to be filled with the vertical blank status
- *
- * Returns
- *  DD_OK on success
- *  DDERR_INVALIDPARAMS if status is NULL
- *
- *****************************************************************************/
 static HRESULT WINAPI ddraw7_GetVerticalBlankStatus(IDirectDraw7 *iface, BOOL *status)
 {
-    static BOOL fake_vblank;
+    struct ddraw *ddraw = impl_from_IDirectDraw7(iface);
+    struct wined3d_raster_status raster_status;
+    HRESULT hr;
 
     TRACE("iface %p, status %p.\n", iface, status);
 
     if(!status)
         return DDERR_INVALIDPARAMS;
 
-    *status = fake_vblank;
-    fake_vblank = !fake_vblank;
+    wined3d_mutex_lock();
+    hr = wined3d_get_adapter_raster_status(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &raster_status);
+    wined3d_mutex_unlock();
+    if (FAILED(hr))
+    {
+        WARN("Failed to get raster status, hr %#x.\n", hr);
+        return hr;
+    }
+
+    *status = raster_status.in_vblank;
 
     return DD_OK;
 }
