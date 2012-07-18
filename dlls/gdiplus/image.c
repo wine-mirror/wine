@@ -42,7 +42,26 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
 
 #define PIXELFORMATBPP(x) ((x) ? ((x) >> 8) & 255 : 24)
 
-static ColorPalette *get_palette(IWICBitmapFrameDecode *frame)
+static const struct
+{
+    const WICPixelFormatGUID *wic_format;
+    PixelFormat gdip_format;
+    /* predefined palette type to use for pixel format conversions */
+    WICBitmapPaletteType palette_type;
+} pixel_formats[] =
+{
+    { &GUID_WICPixelFormatBlackWhite, PixelFormat1bppIndexed, WICBitmapPaletteTypeFixedBW },
+    { &GUID_WICPixelFormat1bppIndexed, PixelFormat1bppIndexed, WICBitmapPaletteTypeFixedBW },
+    { &GUID_WICPixelFormat8bppIndexed, PixelFormat8bppIndexed, WICBitmapPaletteTypeFixedHalftone256 },
+    { &GUID_WICPixelFormat16bppBGR555, PixelFormat16bppRGB555, WICBitmapPaletteTypeFixedHalftone256 },
+    { &GUID_WICPixelFormat24bppBGR, PixelFormat24bppRGB, WICBitmapPaletteTypeFixedHalftone256 },
+    { &GUID_WICPixelFormat32bppBGR, PixelFormat32bppRGB, WICBitmapPaletteTypeFixedHalftone256 },
+    { &GUID_WICPixelFormat32bppBGRA, PixelFormat32bppARGB, WICBitmapPaletteTypeFixedHalftone256 },
+    { &GUID_WICPixelFormat32bppPBGRA, PixelFormat32bppPARGB, WICBitmapPaletteTypeFixedHalftone256 },
+    { NULL }
+};
+
+static ColorPalette *get_palette(IWICBitmapFrameDecode *frame, WICBitmapPaletteType palette_type)
 {
     HRESULT hr;
     IWICImagingFactory *factory;
@@ -57,6 +76,11 @@ static ColorPalette *get_palette(IWICBitmapFrameDecode *frame)
     if (hr == S_OK)
     {
         hr = IWICBitmapFrameDecode_CopyPalette(frame, wic_palette);
+        if (hr != S_OK)
+        {
+            TRACE("using predefined palette %#x\n", palette_type);
+            hr = IWICPalette_InitializePredefined(wic_palette, palette_type, FALSE);
+        }
         if (hr == S_OK)
         {
             UINT count;
@@ -3003,29 +3027,6 @@ GpStatus WINGDIPAPI GdipLoadImageFromFileICM(GDIPCONST WCHAR* filename,GpImage *
     return GdipLoadImageFromFile(filename, image);
 }
 
-static const WICPixelFormatGUID * const wic_pixel_formats[] = {
-    &GUID_WICPixelFormatBlackWhite,
-    &GUID_WICPixelFormat1bppIndexed,
-    &GUID_WICPixelFormat8bppIndexed,
-    &GUID_WICPixelFormat16bppBGR555,
-    &GUID_WICPixelFormat24bppBGR,
-    &GUID_WICPixelFormat32bppBGR,
-    &GUID_WICPixelFormat32bppBGRA,
-    &GUID_WICPixelFormat32bppPBGRA,
-    NULL
-};
-
-static const PixelFormat wic_gdip_formats[] = {
-    PixelFormat1bppIndexed,
-    PixelFormat1bppIndexed,
-    PixelFormat8bppIndexed,
-    PixelFormat16bppRGB555,
-    PixelFormat24bppRGB,
-    PixelFormat32bppRGB,
-    PixelFormat32bppARGB,
-    PixelFormat32bppPARGB,
-};
-
 static GpStatus decode_image_wic(IStream* stream, REFCLSID clsid, UINT active_frame, GpImage **image)
 {
     GpStatus status=Ok;
@@ -3038,6 +3039,7 @@ static GpStatus decode_image_wic(IStream* stream, REFCLSID clsid, UINT active_fr
     WICPixelFormatGUID wic_format;
     PixelFormat gdip_format=0;
     ColorPalette *palette = NULL;
+    WICBitmapPaletteType palette_type = WICBitmapPaletteTypeFixedHalftone256;
     int i;
     UINT width, height, frame_count;
     BitmapData lockeddata;
@@ -3066,12 +3068,13 @@ static GpStatus decode_image_wic(IStream* stream, REFCLSID clsid, UINT active_fr
             IWICBitmapSource *bmp_source;
             IWICBitmapFrameDecode_QueryInterface(frame, &IID_IWICBitmapSource, (void **)&bmp_source);
 
-            for (i=0; wic_pixel_formats[i]; i++)
+            for (i=0; pixel_formats[i].wic_format; i++)
             {
-                if (IsEqualGUID(&wic_format, wic_pixel_formats[i]))
+                if (IsEqualGUID(&wic_format, pixel_formats[i].wic_format))
                 {
                     source = bmp_source;
-                    gdip_format = wic_gdip_formats[i];
+                    gdip_format = pixel_formats[i].gdip_format;
+                    palette_type = pixel_formats[i].palette_type;
                     break;
                 }
             }
@@ -3146,7 +3149,7 @@ static GpStatus decode_image_wic(IStream* stream, REFCLSID clsid, UINT active_fr
             IWICMetadataBlockReader_Release(block_reader);
         }
 
-        palette = get_palette(frame);
+        palette = get_palette(frame, palette_type);
         IWICBitmapFrameDecode_Release(frame);
     }
 
@@ -3566,30 +3569,21 @@ static GpStatus encode_image_WIC(GpImage *image, IStream* stream,
 
         if (SUCCEEDED(hr))
         {
-            for (i=0; wic_pixel_formats[i]; i++)
+            for (i=0; pixel_formats[i].wic_format; i++)
             {
-                if (wic_gdip_formats[i] == bitmap->format)
-                    break;
+                if (pixel_formats[i].gdip_format == bitmap->format)
+                {
+                    memcpy(&wicformat, pixel_formats[i].wic_format, sizeof(GUID));
+                    gdipformat = bitmap->format;
+                }
             }
-            if (wic_pixel_formats[i])
-                memcpy(&wicformat, wic_pixel_formats[i], sizeof(GUID));
-            else
+            if (!gdipformat)
+            {
                 memcpy(&wicformat, &GUID_WICPixelFormat32bppBGRA, sizeof(GUID));
+                gdipformat = PixelFormat32bppARGB;
+            }
 
             hr = IWICBitmapFrameEncode_SetPixelFormat(frameencode, &wicformat);
-
-            for (i=0; wic_pixel_formats[i]; i++)
-            {
-                if (IsEqualGUID(&wicformat, wic_pixel_formats[i]))
-                    break;
-            }
-            if (wic_pixel_formats[i])
-                gdipformat = wic_gdip_formats[i];
-            else
-            {
-                ERR("cannot provide pixel format %s\n", debugstr_guid(&wicformat));
-                hr = E_FAIL;
-            }
         }
 
         if (SUCCEEDED(hr))
