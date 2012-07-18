@@ -52,6 +52,7 @@ static const struct
 {
     { &GUID_WICPixelFormatBlackWhite, PixelFormat1bppIndexed, WICBitmapPaletteTypeFixedBW },
     { &GUID_WICPixelFormat1bppIndexed, PixelFormat1bppIndexed, WICBitmapPaletteTypeFixedBW },
+    { &GUID_WICPixelFormat8bppGray, PixelFormat8bppIndexed, WICBitmapPaletteTypeFixedGray256 },
     { &GUID_WICPixelFormat8bppIndexed, PixelFormat8bppIndexed, WICBitmapPaletteTypeFixedHalftone256 },
     { &GUID_WICPixelFormat16bppBGR555, PixelFormat16bppRGB555, WICBitmapPaletteTypeFixedHalftone256 },
     { &GUID_WICPixelFormat24bppBGR, PixelFormat24bppRGB, WICBitmapPaletteTypeFixedHalftone256 },
