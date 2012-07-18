@@ -94,8 +94,6 @@ static HRESULT WINAPI StgStreamImpl_QueryInterface(
   *ppvObject = 0;
 
   if (IsEqualIID(&IID_IUnknown, riid) ||
-      IsEqualIID(&IID_IPersist, riid) ||
-      IsEqualIID(&IID_IPersistStream, riid) ||
       IsEqualIID(&IID_ISequentialStream, riid) ||
       IsEqualIID(&IID_IStream, riid))
   {

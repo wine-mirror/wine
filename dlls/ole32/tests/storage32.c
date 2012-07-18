@@ -315,6 +315,7 @@ static void test_storage_stream(void)
     LARGE_INTEGER pos;
     ULARGE_INTEGER p;
     unsigned char buffer[0x100];
+    IUnknown *unk;
 
     DeleteFileA(filenameA);
 
@@ -347,6 +348,13 @@ static void test_storage_stream(void)
     /* now really create a stream and delete it */
     r = IStorage_CreateStream(stg, stmname, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, 0, &stm );
     ok(r==S_OK, "IStorage->CreateStream failed\n");
+
+    /* test for support interfaces */
+    r = IStream_QueryInterface(stm, &IID_IPersist, (void**)&unk);
+    ok(r==E_NOINTERFACE, "got 0x%08x\n", r);
+    r = IStream_QueryInterface(stm, &IID_IPersistStream, (void**)&unk);
+    ok(r==E_NOINTERFACE, "got 0x%08x\n", r);
+
     r = IStream_Release(stm);
     ok(r == 0, "wrong ref count\n");
     r = IStorage_CreateStream(stg, stmname, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, 0, &stm );
