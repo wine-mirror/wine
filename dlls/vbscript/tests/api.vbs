@@ -154,8 +154,8 @@ TestUCase "test", "TEST"
 TestUCase "123aBC?", "123ABC?"
 TestUCase "", ""
 TestUCase 1, "1"
-TestUCase true, "TRUE"
-TestUCase 0.123, "0.123"
+if isEnglishLang then TestUCase true, "TRUE"
+TestUCase 0.123, doubleAsString(0.123)
 TestUCase Empty, ""
 Call ok(getVT(UCase(Null)) = "VT_NULL", "getVT(UCase(Null)) = " & getVT(UCase(Null)))
 
@@ -168,8 +168,8 @@ TestLCase "test", "test"
 TestLCase "123aBC?", "123abc?"
 TestLCase "", ""
 TestLCase 1, "1"
-TestLCase true, "true"
-TestLCase 0.123, "0.123"
+if isEnglishLang then TestLCase true, "true"
+TestLCase 0.123, doubleAsString(0.123)
 TestLCase Empty, ""
 Call ok(getVT(LCase(Null)) = "VT_NULL", "getVT(LCase(Null)) = " & getVT(LCase(Null)))
 

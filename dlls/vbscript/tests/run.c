@@ -82,6 +82,7 @@ DEFINE_EXPECT(Next);
 #define DISPID_GLOBAL_PROPARGPUT    1011
 #define DISPID_GLOBAL_PROPARGPUT1   1012
 #define DISPID_GLOBAL_COLLOBJ       1013
+#define DISPID_GLOBAL_DOUBLEASSTRING 1014
 
 #define DISPID_TESTOBJ_PROPGET      2000
 #define DISPID_TESTOBJ_PROPPUT      2001
@@ -90,7 +91,7 @@ DEFINE_EXPECT(Next);
 
 static const WCHAR testW[] = {'t','e','s','t',0};
 
-static BOOL strict_dispid_check;
+static BOOL strict_dispid_check, is_english;
 static const char *test_name = "(null)";
 static int test_counter;
 
@@ -815,6 +816,11 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
         *pid = DISPID_GLOBAL_COUNTER;
         return S_OK;
     }
+    if(!strcmp_wa(bstrName, "doubleAsString")) {
+        test_grfdex(grfdex, fdexNameCaseInsensitive);
+        *pid = DISPID_GLOBAL_DOUBLEASSTRING;
+        return S_OK;
+    }
 
     if(strict_dispid_check && strcmp_wa(bstrName, "x"))
         ok(0, "unexpected call %s %x\n", wine_dbgstr_w(bstrName), grfdex);
@@ -905,12 +911,7 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
         ok(pei != NULL, "pei == NULL\n");
 
         V_VT(pvarRes) = VT_BOOL;
-        if(is_lang_english()) {
-            V_BOOL(pvarRes) = VARIANT_TRUE;
-        }else {
-            skip("Skipping some tests in non-English UIs\n");
-            V_BOOL(pvarRes) = VARIANT_FALSE;
-        }
+        V_BOOL(pvarRes) = is_english ? VARIANT_TRUE : VARIANT_FALSE;
         return S_OK;
 
     case DISPID_GLOBAL_VBVAR:
@@ -1069,6 +1070,15 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
         V_VT(pvarRes) = VT_I2;
         V_I2(pvarRes) = test_counter++;
         return S_OK;
+
+    case DISPID_GLOBAL_DOUBLEASSTRING:
+        ok(wFlags == (INVOKE_FUNC|INVOKE_PROPERTYGET), "wFlags = %x\n", wFlags);
+        ok(pdp->cArgs == 1, "cArgs = %d\n", pdp->cArgs);
+        ok(V_VT(pdp->rgvarg) == VT_R8, "V_VT(pdp->rgvarg) = %d\n", V_VT(pdp->rgvarg));
+        ok(pvarRes != NULL, "pvarRes == NULL\n");
+
+        V_VT(pvarRes) = VT_BSTR;
+        return VarBstrFromR8(V_R8(pdp->rgvarg), 0, 0, &V_BSTR(pvarRes));
     }
 
     ok(0, "unexpected call %d\n", id);
@@ -1589,6 +1599,10 @@ START_TEST(run)
 {
     int argc;
     char **argv;
+
+    is_english = is_lang_english();
+    if(!is_english)
+        skip("Skipping some tests in non-English UIs\n");
 
     argc = winetest_get_mainargs(&argv);
 
