@@ -1983,11 +1983,6 @@ static void depth_buffer_test(IDirect3DDevice8 *device)
 
     hr = IDirect3DDevice8_SetRenderTarget(device, backbuffer, depth_stencil);
     ok(SUCCEEDED(hr), "SetRenderTarget failed, hr %#x.\n", hr);
-    IDirect3DSurface8_Release(depth_stencil);
-    IDirect3DSurface8_Release(backbuffer);
-    IDirect3DSurface8_Release(rt3);
-    IDirect3DSurface8_Release(rt2);
-    IDirect3DSurface8_Release(rt1);
 
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_ZWRITEENABLE, FALSE);
     ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
@@ -2015,6 +2010,12 @@ static void depth_buffer_test(IDirect3DDevice8 *device)
 
     hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
+
+    IDirect3DSurface8_Release(depth_stencil);
+    IDirect3DSurface8_Release(backbuffer);
+    IDirect3DSurface8_Release(rt3);
+    IDirect3DSurface8_Release(rt2);
+    IDirect3DSurface8_Release(rt1);
 }
 
 /* Test that partial depth copies work the way they're supposed to. The clear
@@ -2086,10 +2087,6 @@ static void depth_buffer2_test(IDirect3DDevice8 *device)
 
     hr = IDirect3DDevice8_SetRenderTarget(device, backbuffer, depth_stencil);
     ok(SUCCEEDED(hr), "SetRenderTarget failed, hr %#x.\n", hr);
-    IDirect3DSurface8_Release(depth_stencil);
-    IDirect3DSurface8_Release(backbuffer);
-    IDirect3DSurface8_Release(rt2);
-    IDirect3DSurface8_Release(rt1);
 
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_ZWRITEENABLE, FALSE);
     ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
@@ -2115,6 +2112,11 @@ static void depth_buffer2_test(IDirect3DDevice8 *device)
 
     hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
+
+    IDirect3DSurface8_Release(depth_stencil);
+    IDirect3DSurface8_Release(backbuffer);
+    IDirect3DSurface8_Release(rt2);
+    IDirect3DSurface8_Release(rt1);
 }
 
 static void intz_test(IDirect3DDevice8 *device)

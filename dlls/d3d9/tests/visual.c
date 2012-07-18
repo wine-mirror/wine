@@ -11362,10 +11362,6 @@ static void depth_buffer_test(IDirect3DDevice9 *device)
 
     hr = IDirect3DDevice9_SetRenderTarget(device, 0, backbuffer);
     ok(SUCCEEDED(hr), "SetRenderTarget failed, hr %#x.\n", hr);
-    IDirect3DSurface9_Release(backbuffer);
-    IDirect3DSurface9_Release(rt3);
-    IDirect3DSurface9_Release(rt2);
-    IDirect3DSurface9_Release(rt1);
 
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZWRITEENABLE, FALSE);
     ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
@@ -11393,6 +11389,11 @@ static void depth_buffer_test(IDirect3DDevice9 *device)
 
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
+
+    IDirect3DSurface9_Release(backbuffer);
+    IDirect3DSurface9_Release(rt3);
+    IDirect3DSurface9_Release(rt2);
+    IDirect3DSurface9_Release(rt1);
 }
 
 /* Test that partial depth copies work the way they're supposed to. The clear
@@ -11461,9 +11462,6 @@ static void depth_buffer2_test(IDirect3DDevice9 *device)
 
     hr = IDirect3DDevice9_SetRenderTarget(device, 0, backbuffer);
     ok(SUCCEEDED(hr), "SetRenderTarget failed, hr %#x.\n", hr);
-    IDirect3DSurface9_Release(backbuffer);
-    IDirect3DSurface9_Release(rt2);
-    IDirect3DSurface9_Release(rt1);
 
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZWRITEENABLE, FALSE);
     ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
@@ -11489,6 +11487,10 @@ static void depth_buffer2_test(IDirect3DDevice9 *device)
 
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
+
+    IDirect3DSurface9_Release(backbuffer);
+    IDirect3DSurface9_Release(rt2);
+    IDirect3DSurface9_Release(rt1);
 }
 
 static void depth_blit_test(IDirect3DDevice9 *device)
@@ -11595,9 +11597,6 @@ static void depth_blit_test(IDirect3DDevice9 *device)
     ok(SUCCEEDED(hr), "Clear failed, hr %#x.\n", hr);
     hr = IDirect3DDevice9_StretchRect(device, ds2, NULL, ds1, NULL, D3DTEXF_POINT);
     ok(SUCCEEDED(hr), "StretchRect failed, hr %#x.\n", hr);
-    IDirect3DSurface9_Release(ds3);
-    IDirect3DSurface9_Release(ds2);
-    IDirect3DSurface9_Release(ds1);
 
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZWRITEENABLE, FALSE);
     ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
@@ -11624,6 +11623,10 @@ static void depth_blit_test(IDirect3DDevice9 *device)
 
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
+
+    IDirect3DSurface9_Release(ds3);
+    IDirect3DSurface9_Release(ds2);
+    IDirect3DSurface9_Release(ds1);
 }
 
 static void intz_test(IDirect3DDevice9 *device)
