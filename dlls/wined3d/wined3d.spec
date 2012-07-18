@@ -14,6 +14,7 @@
 @ cdecl wined3d_get_adapter_identifier(ptr long long ptr)
 @ cdecl wined3d_get_adapter_mode_count(ptr long long long)
 @ cdecl wined3d_get_adapter_monitor(ptr long)
+@ cdecl wined3d_get_adapter_raster_status(ptr long ptr)
 @ cdecl wined3d_get_device_caps(ptr long long ptr)
 @ cdecl wined3d_incref(ptr)
 @ cdecl wined3d_register_software_device(ptr ptr)

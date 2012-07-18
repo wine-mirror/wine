@@ -1931,60 +1931,28 @@ static HRESULT WINAPI ddraw1_WaitForVerticalBlank(IDirectDraw *iface, DWORD flag
     return ddraw7_WaitForVerticalBlank(&ddraw->IDirectDraw7_iface, flags, event);
 }
 
-/*****************************************************************************
- * IDirectDraw7::GetScanLine
- *
- * Returns the scan line that is being drawn on the monitor
- *
- * Parameters:
- *  Scanline: Address to write the scan line value to
- *
- * Returns:
- *  Always returns DD_OK
- *
- *****************************************************************************/
 static HRESULT WINAPI ddraw7_GetScanLine(IDirectDraw7 *iface, DWORD *Scanline)
 {
     struct ddraw *ddraw = impl_from_IDirectDraw7(iface);
-    struct wined3d_display_mode mode;
-    static BOOL hide = FALSE;
-    DWORD time, frame_progress, lines;
+    struct wined3d_raster_status raster_status;
     HRESULT hr;
 
     TRACE("iface %p, line %p.\n", iface, Scanline);
 
-    /* This function is called often, so print the fixme only once */
-    if(!hide)
-    {
-        FIXME("iface %p, line %p partial stub!\n", iface, Scanline);
-        hide = TRUE;
-    }
-
     wined3d_mutex_lock();
-    hr = wined3d_get_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &mode, NULL);
+    hr = wined3d_get_adapter_raster_status(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &raster_status);
     wined3d_mutex_unlock();
     if (FAILED(hr))
     {
-        ERR("Failed to get display mode, hr %#x.\n", hr);
+        WARN("Failed to get raster status, hr %#x.\n", hr);
         return hr;
     }
 
-    /* Fake the line sweeping of the monitor */
-    /* FIXME: We should synchronize with a source to keep the refresh rate */
+    *Scanline = raster_status.scan_line;
 
-    /* Simulate a 60Hz display */
-    time = GetTickCount();
-    frame_progress = time & 15; /* time % (1000 / 60) */
-    if (!frame_progress)
-    {
-        *Scanline = 0;
+    if (raster_status.in_vblank)
         return DDERR_VERTICALBLANKINPROGRESS;
-    }
 
-    /* Convert frame_progress to estimated scan line. Return any line from
-     * block determined by time. Some lines may be never returned */
-    lines = mode.height / 15;
-    *Scanline = (frame_progress - 1) * lines + time % lines;
     return DD_OK;
 }
 

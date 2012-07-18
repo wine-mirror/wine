@@ -220,47 +220,10 @@ HRESULT CDECL wined3d_swapchain_get_back_buffer(const struct wined3d_swapchain *
 HRESULT CDECL wined3d_swapchain_get_raster_status(const struct wined3d_swapchain *swapchain,
         struct wined3d_raster_status *raster_status)
 {
-    static BOOL warned;
-    LARGE_INTEGER counter, freq_per_sec;
-    LONGLONG freq_per_frame, freq_per_line;
-    struct wined3d_display_mode mode;
+    TRACE("swapchain %p, raster_status %p.\n", swapchain, raster_status);
 
-    /* No OpenGL equivalent */
-    if (!warned)
-    {
-        FIXME("swapchain %p, raster_status %p semi-stub!\n", swapchain, raster_status);
-        warned = TRUE;
-    }
-
-    /* Obtaining the raster status is a widely implemented but optional
-     * feature. When this method returns OK StarCraft 2 expects the
-     * raster_status->InVBlank value to actually change over time.
-     * And Endless Alice Crysis doesn't care even if this method fails.
-     * Thus this method returns OK and fakes raster_status by
-     * QueryPerformanceCounter. */
-
-    if (!QueryPerformanceCounter(&counter) || !QueryPerformanceFrequency(&freq_per_sec))
-        return WINED3DERR_INVALIDCALL;
-
-    if (FAILED(wined3d_swapchain_get_display_mode(swapchain, &mode, NULL)))
-        return WINED3DERR_INVALIDCALL;
-    if (mode.refresh_rate == DEFAULT_REFRESH_RATE)
-        mode.refresh_rate = 60;
-
-    freq_per_frame = freq_per_sec.QuadPart / mode.refresh_rate;
-    /* Assume 20 scan lines in the vertical blank */
-    freq_per_line = freq_per_frame / (mode.height + 20);
-    raster_status->scan_line = (counter.QuadPart % freq_per_frame) / freq_per_line;
-    if (raster_status->scan_line < mode.height)
-        raster_status->in_vblank = FALSE;
-    else
-    {
-        raster_status->scan_line = 0;
-        raster_status->in_vblank = TRUE;
-    }
-    TRACE("Returning fake value, in_vblank %u, scan_line %u.\n",
-          raster_status->in_vblank, raster_status->scan_line);
-    return WINED3D_OK;
+    return wined3d_get_adapter_raster_status(swapchain->device->wined3d,
+            swapchain->device->adapter->ordinal, raster_status);
 }
 
 HRESULT CDECL wined3d_swapchain_get_display_mode(const struct wined3d_swapchain *swapchain,
