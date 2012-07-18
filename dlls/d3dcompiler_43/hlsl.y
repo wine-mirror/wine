@@ -109,6 +109,15 @@ static void debug_dump_decl(struct hlsl_type *type, DWORD modifiers, const char 
     TRACE("%s %s;\n", debug_hlsl_type(type), declname);
 }
 
+static void check_invalid_matrix_modifiers(DWORD modifiers, struct source_location *loc)
+{
+    if (modifiers & (HLSL_MODIFIER_ROW_MAJOR | HLSL_MODIFIER_COLUMN_MAJOR))
+    {
+        hlsl_report_message(loc->file, loc->line, loc->col, HLSL_LEVEL_ERROR,
+                "'row_major' or 'column_major' modifiers are only allowed for matrices");
+    }
+}
+
 static BOOL declare_variable(struct hlsl_ir_var *decl, BOOL local)
 {
     BOOL ret;
@@ -122,6 +131,9 @@ static BOOL declare_variable(struct hlsl_ir_var *decl, BOOL local)
                     ? HLSL_MODIFIER_ROW_MAJOR : HLSL_MODIFIER_COLUMN_MAJOR;
         }
     }
+    else
+        check_invalid_matrix_modifiers(decl->modifiers, &decl->node.loc);
+
     if (local)
     {
         DWORD invalid = decl->modifiers & (HLSL_STORAGE_EXTERN | HLSL_STORAGE_SHARED
