@@ -3006,6 +3006,7 @@ GpStatus WINGDIPAPI GdipLoadImageFromFileICM(GDIPCONST WCHAR* filename,GpImage *
 static const WICPixelFormatGUID * const wic_pixel_formats[] = {
     &GUID_WICPixelFormatBlackWhite,
     &GUID_WICPixelFormat1bppIndexed,
+    &GUID_WICPixelFormat8bppIndexed,
     &GUID_WICPixelFormat16bppBGR555,
     &GUID_WICPixelFormat24bppBGR,
     &GUID_WICPixelFormat32bppBGR,
@@ -3017,6 +3018,7 @@ static const WICPixelFormatGUID * const wic_pixel_formats[] = {
 static const PixelFormat wic_gdip_formats[] = {
     PixelFormat1bppIndexed,
     PixelFormat1bppIndexed,
+    PixelFormat8bppIndexed,
     PixelFormat16bppRGB555,
     PixelFormat24bppRGB,
     PixelFormat32bppRGB,
