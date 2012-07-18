@@ -2403,7 +2403,7 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
         gl_info->limits.general_combiners = gl_max;
         TRACE("Max general combiners: %d.\n", gl_max);
     }
-    if (gl_info->supported[ARB_DRAW_BUFFERS] && wined3d_settings.offscreen_rendering_mode != ORM_FBO)
+    if (gl_info->supported[ARB_DRAW_BUFFERS] && wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
         glGetIntegerv(GL_MAX_DRAW_BUFFERS_ARB, &gl_max);
         gl_info->limits.buffers = gl_max;
