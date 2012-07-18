@@ -3820,90 +3820,92 @@ static void test_effect_state_groups(ID3D10Device *device)
     HRESULT hr;
 
     hr = create_effect(fx_test_state_groups, 0, device, NULL, &effect);
-    todo_wine ok(SUCCEEDED(hr), "Failed to create effect, hr %#x.\n", hr);
-    if (FAILED(hr))
-        return;
+    ok(SUCCEEDED(hr), "Failed to create effect, hr %#x.\n", hr);
 
     v = effect->lpVtbl->GetVariableByName(effect, "sampler0");
     s = v->lpVtbl->AsSampler(v);
+    memset(&sampler_desc, 0, sizeof(sampler_desc));
     s->lpVtbl->GetBackingStore(s, 0, &sampler_desc);
-    ok(sampler_desc.Filter == D3D10_FILTER_MIN_MAG_MIP_LINEAR, "Got unexpected Filter %#x.\n", sampler_desc.Filter);
-    ok(sampler_desc.AddressU == D3D10_TEXTURE_ADDRESS_WRAP, "Got unexpected AddressU %#x.\n", sampler_desc.AddressU);
-    ok(sampler_desc.AddressV == D3D10_TEXTURE_ADDRESS_MIRROR, "Got unexpected AddressV %#x.\n", sampler_desc.AddressV);
-    ok(sampler_desc.AddressW == D3D10_TEXTURE_ADDRESS_CLAMP, "Got unexpected AddressW %#x.\n", sampler_desc.AddressW);
-    ok(sampler_desc.MipLODBias == -1.0f, "Got unexpected MipLODBias %.8e.\n", sampler_desc.MipLODBias);
-    ok(sampler_desc.MaxAnisotropy == 4, "Got unexpected MaxAnisotropy %#x.\n", sampler_desc.MaxAnisotropy);
-    ok(sampler_desc.ComparisonFunc == D3D10_COMPARISON_ALWAYS, "Got unexpected ComparisonFunc %#x.\n",
+    todo_wine ok(sampler_desc.Filter == D3D10_FILTER_MIN_MAG_MIP_LINEAR, "Got unexpected Filter %#x.\n", sampler_desc.Filter);
+    todo_wine ok(sampler_desc.AddressU == D3D10_TEXTURE_ADDRESS_WRAP, "Got unexpected AddressU %#x.\n", sampler_desc.AddressU);
+    todo_wine ok(sampler_desc.AddressV == D3D10_TEXTURE_ADDRESS_MIRROR, "Got unexpected AddressV %#x.\n", sampler_desc.AddressV);
+    todo_wine ok(sampler_desc.AddressW == D3D10_TEXTURE_ADDRESS_CLAMP, "Got unexpected AddressW %#x.\n", sampler_desc.AddressW);
+    todo_wine ok(sampler_desc.MipLODBias == -1.0f, "Got unexpected MipLODBias %.8e.\n", sampler_desc.MipLODBias);
+    todo_wine ok(sampler_desc.MaxAnisotropy == 4, "Got unexpected MaxAnisotropy %#x.\n", sampler_desc.MaxAnisotropy);
+    todo_wine ok(sampler_desc.ComparisonFunc == D3D10_COMPARISON_ALWAYS, "Got unexpected ComparisonFunc %#x.\n",
             sampler_desc.ComparisonFunc);
-    ok(sampler_desc.BorderColor[0] == 1.0f, "Got unexpected BorderColor[0] %.8e.\n", sampler_desc.BorderColor[0]);
-    ok(sampler_desc.BorderColor[1] == 2.0f, "Got unexpected BorderColor[1] %.8e.\n", sampler_desc.BorderColor[1]);
-    ok(sampler_desc.BorderColor[2] == 3.0f, "Got unexpected BorderColor[2] %.8e.\n", sampler_desc.BorderColor[2]);
-    ok(sampler_desc.BorderColor[3] == 4.0f, "Got unexpected BorderColor[3] %.8e.\n", sampler_desc.BorderColor[3]);
-    ok(sampler_desc.MinLOD == 6.0f, "Got unexpected MinLOD %.8e.\n", sampler_desc.MinLOD);
-    ok(sampler_desc.MaxLOD == 5.0f, "Got unexpected MaxLOD %.8e.\n", sampler_desc.MaxLOD);
+    todo_wine ok(sampler_desc.BorderColor[0] == 1.0f, "Got unexpected BorderColor[0] %.8e.\n", sampler_desc.BorderColor[0]);
+    todo_wine ok(sampler_desc.BorderColor[1] == 2.0f, "Got unexpected BorderColor[1] %.8e.\n", sampler_desc.BorderColor[1]);
+    todo_wine ok(sampler_desc.BorderColor[2] == 3.0f, "Got unexpected BorderColor[2] %.8e.\n", sampler_desc.BorderColor[2]);
+    todo_wine ok(sampler_desc.BorderColor[3] == 4.0f, "Got unexpected BorderColor[3] %.8e.\n", sampler_desc.BorderColor[3]);
+    todo_wine ok(sampler_desc.MinLOD == 6.0f, "Got unexpected MinLOD %.8e.\n", sampler_desc.MinLOD);
+    todo_wine ok(sampler_desc.MaxLOD == 5.0f, "Got unexpected MaxLOD %.8e.\n", sampler_desc.MaxLOD);
 
     v = effect->lpVtbl->GetVariableByName(effect, "blend_state");
     b = v->lpVtbl->AsBlend(v);
+    memset(&blend_desc, 0, sizeof(blend_desc));
     b->lpVtbl->GetBackingStore(b, 0, &blend_desc);
     ok(!blend_desc.AlphaToCoverageEnable, "Got unexpected AlphaToCoverageEnable %#x.\n",
             blend_desc.AlphaToCoverageEnable);
-    ok(blend_desc.BlendEnable[0], "Got unexpected BlendEnable[0] %#x.\n", blend_desc.BlendEnable[0]);
+    todo_wine ok(blend_desc.BlendEnable[0], "Got unexpected BlendEnable[0] %#x.\n", blend_desc.BlendEnable[0]);
     ok(!blend_desc.BlendEnable[7], "Got unexpected BlendEnable[7] %#x.\n", blend_desc.BlendEnable[7]);
-    ok(blend_desc.SrcBlend == D3D10_BLEND_ONE, "Got unexpected SrcBlend %#x.\n", blend_desc.SrcBlend);
-    ok(blend_desc.DestBlend == D3D10_BLEND_SRC_COLOR, "Got unexpected DestBlend %#x.\n", blend_desc.DestBlend);
-    ok(blend_desc.BlendOp == D3D10_BLEND_OP_MIN, "Got unexpected BlendOp %#x.\n", blend_desc.BlendOp);
-    ok(blend_desc.SrcBlendAlpha == D3D10_BLEND_SRC_ALPHA, "Got unexpected SrcBlendAlpha %#x.\n",
+    todo_wine ok(blend_desc.SrcBlend == D3D10_BLEND_ONE, "Got unexpected SrcBlend %#x.\n", blend_desc.SrcBlend);
+    todo_wine ok(blend_desc.DestBlend == D3D10_BLEND_SRC_COLOR, "Got unexpected DestBlend %#x.\n", blend_desc.DestBlend);
+    todo_wine ok(blend_desc.BlendOp == D3D10_BLEND_OP_MIN, "Got unexpected BlendOp %#x.\n", blend_desc.BlendOp);
+    todo_wine ok(blend_desc.SrcBlendAlpha == D3D10_BLEND_SRC_ALPHA, "Got unexpected SrcBlendAlpha %#x.\n",
             blend_desc.SrcBlendAlpha);
-    ok(blend_desc.DestBlendAlpha == D3D10_BLEND_INV_SRC_ALPHA, "Got unexpected DestBlendAlpha %#x.\n",
+    todo_wine ok(blend_desc.DestBlendAlpha == D3D10_BLEND_INV_SRC_ALPHA, "Got unexpected DestBlendAlpha %#x.\n",
             blend_desc.DestBlendAlpha);
-    ok(blend_desc.BlendOpAlpha == D3D10_BLEND_OP_MAX, "Got unexpected BlendOpAlpha %#x.\n", blend_desc.BlendOpAlpha);
-    ok(blend_desc.RenderTargetWriteMask[0] == 0x8, "Got unexpected RenderTargetWriteMask[0] %#x.\n",
+    todo_wine ok(blend_desc.BlendOpAlpha == D3D10_BLEND_OP_MAX, "Got unexpected BlendOpAlpha %#x.\n", blend_desc.BlendOpAlpha);
+    todo_wine ok(blend_desc.RenderTargetWriteMask[0] == 0x8, "Got unexpected RenderTargetWriteMask[0] %#x.\n",
             blend_desc.RenderTargetWriteMask[0]);
-    ok(blend_desc.RenderTargetWriteMask[7] == 0x7, "Got unexpected RenderTargetWriteMask[7] %#x.\n",
+    todo_wine ok(blend_desc.RenderTargetWriteMask[7] == 0x7, "Got unexpected RenderTargetWriteMask[7] %#x.\n",
             blend_desc.RenderTargetWriteMask[7]);
 
     v = effect->lpVtbl->GetVariableByName(effect, "ds_state");
     d = v->lpVtbl->AsDepthStencil(v);
+    memset(&ds_desc, 0, sizeof(ds_desc));
     d->lpVtbl->GetBackingStore(d, 0, &ds_desc);
     ok(!ds_desc.DepthEnable, "Got unexpected DepthEnable %#x.\n", ds_desc.DepthEnable);
     ok(ds_desc.DepthWriteMask == D3D10_DEPTH_WRITE_MASK_ZERO, "Got unexpected DepthWriteMask %#x.\n",
             ds_desc.DepthWriteMask);
-    ok(ds_desc.DepthFunc == D3D10_COMPARISON_EQUAL, "Got unexpected DepthFunc %#x.\n", ds_desc.DepthFunc);
-    ok(ds_desc.StencilEnable, "Got unexpected StencilEnable %#x.\n", ds_desc.StencilEnable);
-    ok(ds_desc.StencilReadMask == 0x4, "Got unexpected StencilReadMask %#x.\n", ds_desc.StencilReadMask);
-    ok(ds_desc.StencilWriteMask == 0x5, "Got unexpected StencilWriteMask %#x.\n", ds_desc.StencilWriteMask);
-    ok(ds_desc.FrontFace.StencilFailOp == D3D10_STENCIL_OP_INVERT, "Got unexpected FrontFaceStencilFail %#x.\n",
+    todo_wine ok(ds_desc.DepthFunc == D3D10_COMPARISON_EQUAL, "Got unexpected DepthFunc %#x.\n", ds_desc.DepthFunc);
+    todo_wine ok(ds_desc.StencilEnable, "Got unexpected StencilEnable %#x.\n", ds_desc.StencilEnable);
+    todo_wine ok(ds_desc.StencilReadMask == 0x4, "Got unexpected StencilReadMask %#x.\n", ds_desc.StencilReadMask);
+    todo_wine ok(ds_desc.StencilWriteMask == 0x5, "Got unexpected StencilWriteMask %#x.\n", ds_desc.StencilWriteMask);
+    todo_wine ok(ds_desc.FrontFace.StencilFailOp == D3D10_STENCIL_OP_INVERT, "Got unexpected FrontFaceStencilFail %#x.\n",
             ds_desc.FrontFace.StencilFailOp);
-    ok(ds_desc.FrontFace.StencilDepthFailOp == D3D10_STENCIL_OP_INCR,
+    todo_wine ok(ds_desc.FrontFace.StencilDepthFailOp == D3D10_STENCIL_OP_INCR,
             "Got unexpected FrontFaceStencilDepthFail %#x.\n", ds_desc.FrontFace.StencilDepthFailOp);
-    ok(ds_desc.FrontFace.StencilPassOp == D3D10_STENCIL_OP_DECR, "Got unexpected FrontFaceStencilPass %#x.\n",
+    todo_wine ok(ds_desc.FrontFace.StencilPassOp == D3D10_STENCIL_OP_DECR, "Got unexpected FrontFaceStencilPass %#x.\n",
             ds_desc.FrontFace.StencilPassOp);
-    ok(ds_desc.FrontFace.StencilFunc == D3D10_COMPARISON_LESS_EQUAL, "Got unexpected FrontFaceStencilFunc %#x.\n",
+    todo_wine ok(ds_desc.FrontFace.StencilFunc == D3D10_COMPARISON_LESS_EQUAL, "Got unexpected FrontFaceStencilFunc %#x.\n",
             ds_desc.FrontFace.StencilFunc);
-    ok(ds_desc.BackFace.StencilFailOp == D3D10_STENCIL_OP_REPLACE, "Got unexpected BackFaceStencilFail %#x.\n",
+    todo_wine ok(ds_desc.BackFace.StencilFailOp == D3D10_STENCIL_OP_REPLACE, "Got unexpected BackFaceStencilFail %#x.\n",
             ds_desc.BackFace.StencilFailOp);
-    ok(ds_desc.BackFace.StencilDepthFailOp == D3D10_STENCIL_OP_INCR_SAT,
+    todo_wine ok(ds_desc.BackFace.StencilDepthFailOp == D3D10_STENCIL_OP_INCR_SAT,
             "Got unexpected BackFaceStencilDepthFail %#x.\n", ds_desc.BackFace.StencilDepthFailOp);
-    ok(ds_desc.BackFace.StencilPassOp == D3D10_STENCIL_OP_DECR_SAT, "Got unexpected BackFaceStencilPass %#x.\n",
+    todo_wine ok(ds_desc.BackFace.StencilPassOp == D3D10_STENCIL_OP_DECR_SAT, "Got unexpected BackFaceStencilPass %#x.\n",
             ds_desc.BackFace.StencilPassOp);
-    ok(ds_desc.BackFace.StencilFunc == D3D10_COMPARISON_GREATER_EQUAL, "Got unexpected BackFaceStencilFunc %#x.\n",
+    todo_wine ok(ds_desc.BackFace.StencilFunc == D3D10_COMPARISON_GREATER_EQUAL, "Got unexpected BackFaceStencilFunc %#x.\n",
             ds_desc.BackFace.StencilFunc);
 
     v = effect->lpVtbl->GetVariableByName(effect, "rast_state");
     r = v->lpVtbl->AsRasterizer(v);
+    memset(&rast_desc, 0, sizeof(rast_desc));
     r->lpVtbl->GetBackingStore(r, 0, &rast_desc);
-    ok(rast_desc.FillMode == D3D10_FILL_WIREFRAME, "Got unexpected FillMode %#x.\n", rast_desc.FillMode);
-    ok(rast_desc.CullMode == D3D10_CULL_FRONT, "Got unexpected CullMode %#x.\n", rast_desc.CullMode);
-    ok(rast_desc.FrontCounterClockwise, "Got unexpected FrontCounterClockwise %#x.\n",
+    todo_wine ok(rast_desc.FillMode == D3D10_FILL_WIREFRAME, "Got unexpected FillMode %#x.\n", rast_desc.FillMode);
+    todo_wine ok(rast_desc.CullMode == D3D10_CULL_FRONT, "Got unexpected CullMode %#x.\n", rast_desc.CullMode);
+    todo_wine ok(rast_desc.FrontCounterClockwise, "Got unexpected FrontCounterClockwise %#x.\n",
             rast_desc.FrontCounterClockwise);
-    ok(rast_desc.DepthBias == -4, "Got unexpected DepthBias %#x.\n", rast_desc.DepthBias);
-    ok(rast_desc.DepthBiasClamp == 0.5f, "Got unexpected DepthBiasClamp %.8e.\n", rast_desc.DepthBiasClamp);
-    ok(rast_desc.SlopeScaledDepthBias == 0.25f, "Got unexpected SlopeScaledDepthBias %.8e.\n",
+    todo_wine ok(rast_desc.DepthBias == -4, "Got unexpected DepthBias %#x.\n", rast_desc.DepthBias);
+    todo_wine ok(rast_desc.DepthBiasClamp == 0.5f, "Got unexpected DepthBiasClamp %.8e.\n", rast_desc.DepthBiasClamp);
+    todo_wine ok(rast_desc.SlopeScaledDepthBias == 0.25f, "Got unexpected SlopeScaledDepthBias %.8e.\n",
             rast_desc.SlopeScaledDepthBias);
     ok(!rast_desc.DepthClipEnable, "Got unexpected DepthClipEnable %#x.\n", rast_desc.DepthClipEnable);
-    ok(rast_desc.ScissorEnable, "Got unexpected ScissorEnable %#x.\n", rast_desc.ScissorEnable);
-    ok(rast_desc.MultisampleEnable, "Got unexpected MultisampleEnable %#x.\n", rast_desc.MultisampleEnable);
-    ok(rast_desc.AntialiasedLineEnable, "Got unexpected AntialiasedLineEnable %#x.\n",
+    todo_wine ok(rast_desc.ScissorEnable, "Got unexpected ScissorEnable %#x.\n", rast_desc.ScissorEnable);
+    todo_wine ok(rast_desc.MultisampleEnable, "Got unexpected MultisampleEnable %#x.\n", rast_desc.MultisampleEnable);
+    todo_wine ok(rast_desc.AntialiasedLineEnable, "Got unexpected AntialiasedLineEnable %#x.\n",
             rast_desc.AntialiasedLineEnable);
 
     technique = effect->lpVtbl->GetTechniqueByName(effect, "tech0");
@@ -3922,7 +3924,12 @@ static void test_effect_state_groups(ID3D10Device *device)
     ok(pass_desc.BlendFactor[2] == 0.7f, "Got unexpected BlendFactor[2] %.8e.\n", pass_desc.BlendFactor[2]);
     ok(pass_desc.BlendFactor[3] == 0.8f, "Got unexpected BlendFactor[3] %.8e.\n", pass_desc.BlendFactor[3]);
     hr = pass->lpVtbl->Apply(pass, 0);
-    ok(SUCCEEDED(hr), "Failed to apply pass, hr %#x.\n", hr);
+    todo_wine ok(SUCCEEDED(hr), "Failed to apply pass, hr %#x.\n", hr);
+    if (FAILED(hr))
+    {
+        effect->lpVtbl->Release(effect);
+        return;
+    }
 
     ID3D10Device_OMGetBlendState(device, &blend_state, blend_factor, &sample_mask);
     ID3D10BlendState_GetDesc(blend_state, &blend_desc);

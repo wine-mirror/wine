@@ -921,6 +921,10 @@ static BOOL read_int32_value(DWORD value, D3D_SHADER_VARIABLE_TYPE in_type, INT 
 {
     switch (in_type)
     {
+        case D3D10_SVT_FLOAT:
+            out_data[idx] = *(float *)&value;
+            return TRUE;
+
         case D3D10_SVT_INT:
             out_data[idx] = value;
             return TRUE;
@@ -1015,6 +1019,16 @@ static HRESULT parse_fx10_object(struct d3d10_effect_object *o, const char **ptr
                 case D3D10_EOT_GEOMETRYSHADER:
                     TRACE("Geometry shader\n");
                     o->data = &anonymous_gs;
+                    hr = S_OK;
+                    break;
+
+                case D3D10_EOT_STENCIL_REF:
+                    if (!read_value_list(data + offset, D3D10_SVT_UINT, 1, &o->pass->stencil_ref))
+                    {
+                        ERR("Failed to read stencil ref.\n");
+                        return E_FAIL;
+                    }
+
                     hr = S_OK;
                     break;
 
@@ -2576,6 +2590,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_GetDesc(ID3D10EffectPass *ifa
         }
     }
 
+    desc->StencilRef = This->stencil_ref;
     desc->SampleMask = This->sample_mask;
     memcpy(desc->BlendFactor, This->blend_factor, 4 * sizeof(float));
 
