@@ -6688,7 +6688,7 @@ static void test_FlashWindowEx(void)
 {
     HWND hwnd;
     FLASHWINFO finfo;
-    BOOL ret;
+    BOOL prev, ret;
 
     if (!pFlashWindowEx)
     {
@@ -6757,8 +6757,7 @@ static void test_FlashWindowEx(void)
        "FlashWindowEx returned with %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
-    ret = pFlashWindowEx(&finfo);
-    ok(ret, "previous window state should be active\n");
+    prev = pFlashWindowEx(&finfo);
 
     ok(finfo.cbSize == sizeof(FLASHWINFO), "FlashWindowEx modified cdSize to %x\n", finfo.cbSize);
     ok(finfo.hwnd == hwnd, "FlashWindowEx modified hwnd to %p\n", finfo.hwnd);
@@ -6770,7 +6769,7 @@ static void test_FlashWindowEx(void)
     SetLastError(0xdeadbeef);
     ret = pFlashWindowEx(&finfo);
 todo_wine
-    ok(!ret, "previous window state should not be active\n");
+    ok(prev != ret, "previous window state should be different\n");
 
     DestroyWindow( hwnd );
 }
