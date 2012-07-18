@@ -2816,86 +2816,22 @@ static void OLE_FreeClipDataArray(ULONG count, CLIPDATA * pClipDataArray)
 
 /***********************************************************************
  *           PropSysAllocString			    [OLE32.@]
- * NOTES:
- *  Basically a copy of SysAllocStringLen.
+ * NOTES
+ *  Forward to oleaut32.
  */
 BSTR WINAPI PropSysAllocString(LPCOLESTR str)
 {
-    DWORD  bufferSize;
-    DWORD* newBuffer;
-    WCHAR* stringBuffer;
-    int len;
-
-    if (!str) return 0;
-
-    len = lstrlenW(str);
-    /*
-     * Find the length of the buffer passed-in, in bytes.
-     */
-    bufferSize = len * sizeof (WCHAR);
-
-    /*
-     * Allocate a new buffer to hold the string.
-     * Don't forget to keep an empty spot at the beginning of the
-     * buffer for the character count and an extra character at the
-     * end for the NULL.
-     */
-    newBuffer = HeapAlloc(GetProcessHeap(), 0,
-                          bufferSize + sizeof(WCHAR) + sizeof(DWORD));
-
-    /*
-     * If the memory allocation failed, return a null pointer.
-     */
-    if (newBuffer==0)
-      return 0;
-
-    /*
-     * Copy the length of the string in the placeholder.
-     */
-    *newBuffer = bufferSize;
-
-    /*
-     * Skip the byte count.
-     */
-    newBuffer++;
-
-    memcpy(newBuffer, str, bufferSize);
-
-    /*
-     * Make sure that there is a nul character at the end of the
-     * string.
-     */
-    stringBuffer = (WCHAR*)newBuffer;
-    stringBuffer[len] = '\0';
-
-    return stringBuffer;
+    return SysAllocString(str);
 }
 
 /***********************************************************************
  *           PropSysFreeString			    [OLE32.@]
  * NOTES
- *  Copy of SysFreeString.
+ *  Forward to oleaut32.
  */
 void WINAPI PropSysFreeString(LPOLESTR str)
 {
-    DWORD* bufferPointer;
-
-    /* NULL is a valid parameter */
-    if(!str) return;
-
-    /*
-     * We have to be careful when we free a BSTR pointer, it points to
-     * the beginning of the string but it skips the byte count contained
-     * before the string.
-     */
-    bufferPointer = (DWORD*)str;
-
-    bufferPointer--;
-
-    /*
-     * Free the memory from its "real" origin.
-     */
-    HeapFree(GetProcessHeap(), 0, bufferPointer);
+    SysFreeString(str);
 }
 
 /******************************************************************************
