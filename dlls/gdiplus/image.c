@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2007 Google (Evan Stade)
+ * Copyright (C) 2012 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -40,6 +41,46 @@
 WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
 
 #define PIXELFORMATBPP(x) ((x) ? ((x) >> 8) & 255 : 24)
+
+static ColorPalette *get_palette(IWICBitmapFrameDecode *frame)
+{
+    HRESULT hr;
+    IWICImagingFactory *factory;
+    IWICPalette *wic_palette;
+    ColorPalette *palette = NULL;
+
+    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IWICImagingFactory, (void **)&factory);
+    if (hr != S_OK) return NULL;
+
+    hr = IWICImagingFactory_CreatePalette(factory, &wic_palette);
+    if (hr == S_OK)
+    {
+        hr = IWICBitmapFrameDecode_CopyPalette(frame, wic_palette);
+        if (hr == S_OK)
+        {
+            UINT count;
+            BOOL mono, gray;
+
+            IWICPalette_IsBlackWhite(wic_palette, &mono);
+            IWICPalette_IsGrayscale(wic_palette, &gray);
+
+            IWICPalette_GetColorCount(wic_palette, &count);
+            palette = HeapAlloc(GetProcessHeap(), 0, 2 * sizeof(UINT) + count * sizeof(ARGB));
+            IWICPalette_GetColors(wic_palette, count, palette->Entries, &palette->Count);
+
+            if (mono)
+                palette->Flags = 0;
+            else if (gray)
+                palette->Flags = PaletteFlagsGrayScale;
+            else
+                palette->Flags = PaletteFlagsHalftone;
+        }
+        IWICPalette_Release(wic_palette);
+    }
+    IWICImagingFactory_Release(factory);
+    return palette;
+}
 
 static INT ipicture_pixel_height(IPicture *pic)
 {
@@ -2994,6 +3035,7 @@ static GpStatus decode_image_wic(IStream* stream, REFCLSID clsid, UINT active_fr
     IWICMetadataBlockReader *block_reader;
     WICPixelFormatGUID wic_format;
     PixelFormat gdip_format=0;
+    ColorPalette *palette = NULL;
     int i;
     UINT width, height, frame_count;
     BitmapData lockeddata;
@@ -3102,6 +3144,7 @@ static GpStatus decode_image_wic(IStream* stream, REFCLSID clsid, UINT active_fr
             IWICMetadataBlockReader_Release(block_reader);
         }
 
+        palette = get_palette(frame);
         IWICBitmapFrameDecode_Release(frame);
     }
 
@@ -3119,8 +3162,16 @@ end:
         bitmap->image.frame_count = frame_count;
         bitmap->image.current_frame = active_frame;
         bitmap->image.stream = stream;
-        if (IsEqualGUID(&wic_format, &GUID_WICPixelFormatBlackWhite))
-            bitmap->image.palette->Flags = 0;
+        if (palette)
+        {
+            GdipFree(bitmap->image.palette);
+            bitmap->image.palette = palette;
+        }
+        else
+        {
+            if (IsEqualGUID(&wic_format, &GUID_WICPixelFormatBlackWhite))
+                bitmap->image.palette->Flags = 0;
+        }
         /* Pin the source stream */
         IStream_AddRef(stream);
     }
