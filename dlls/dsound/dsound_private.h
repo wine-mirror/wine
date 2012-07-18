@@ -42,8 +42,6 @@ extern int ds_default_bits_per_sample DECLSPEC_HIDDEN;
 typedef struct IDirectSoundImpl              IDirectSoundImpl;
 typedef struct IDirectSound_IUnknown         IDirectSound_IUnknown;
 typedef struct IDirectSound_IDirectSound     IDirectSound_IDirectSound;
-typedef struct IDirectSound8_IUnknown        IDirectSound8_IUnknown;
-typedef struct IDirectSound8_IDirectSound    IDirectSound8_IDirectSound;
 typedef struct IDirectSound8_IDirectSound8   IDirectSound8_IDirectSound8;
 typedef struct IDirectSoundBufferImpl        IDirectSoundBufferImpl;
 typedef struct IDirectSoundCaptureImpl       IDirectSoundCaptureImpl;
