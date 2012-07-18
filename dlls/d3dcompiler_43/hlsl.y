@@ -1012,45 +1012,119 @@ shift_expr:               add_expr
                             {
                                 $$ = $1;
                             }
+                        | shift_expr OP_LEFTSHIFT add_expr
+                            {
+                                FIXME("Left shift\n");
+                            }
+                        | shift_expr OP_RIGHTSHIFT add_expr
+                            {
+                                FIXME("Right shift\n");
+                            }
 
 relational_expr:          shift_expr
                             {
                                 $$ = $1;
+                            }
+                        | relational_expr '<' shift_expr
+                            {
+                                struct source_location loc;
+
+                                set_location(&loc, &@2);
+                                $$ = &hlsl_lt($1, $3, &loc)->node;
+                            }
+                        | relational_expr '>' shift_expr
+                            {
+                                struct source_location loc;
+
+                                set_location(&loc, &@2);
+                                $$ = &hlsl_gt($1, $3, &loc)->node;
+                            }
+                        | relational_expr OP_LE shift_expr
+                            {
+                                struct source_location loc;
+
+                                set_location(&loc, &@2);
+                                $$ = &hlsl_le($1, $3, &loc)->node;
+                            }
+                        | relational_expr OP_GE shift_expr
+                            {
+                                struct source_location loc;
+
+                                set_location(&loc, &@2);
+                                $$ = &hlsl_ge($1, $3, &loc)->node;
                             }
 
 equality_expr:            relational_expr
                             {
                                 $$ = $1;
                             }
+                        | equality_expr OP_EQ relational_expr
+                            {
+                                struct source_location loc;
+
+                                set_location(&loc, &@2);
+                                $$ = &hlsl_eq($1, $3, &loc)->node;
+                            }
+                        | equality_expr OP_NE relational_expr
+                            {
+                                struct source_location loc;
+
+                                set_location(&loc, &@2);
+                                $$ = &hlsl_ne($1, $3, &loc)->node;
+                            }
 
 bitand_expr:              equality_expr
                             {
                                 $$ = $1;
+                            }
+                        | bitand_expr '&' equality_expr
+                            {
+                                FIXME("bitwise AND\n");
                             }
 
 bitxor_expr:              bitand_expr
                             {
                                 $$ = $1;
                             }
+                        | bitxor_expr '^' bitand_expr
+                            {
+                                FIXME("bitwise XOR\n");
+                            }
 
 bitor_expr:               bitxor_expr
                             {
                                 $$ = $1;
+                            }
+                        | bitor_expr '|' bitxor_expr
+                            {
+                                FIXME("bitwise OR\n");
                             }
 
 logicand_expr:            bitor_expr
                             {
                                 $$ = $1;
                             }
+                        | logicand_expr OP_AND bitor_expr
+                            {
+                                FIXME("logic AND\n");
+                            }
 
 logicor_expr:             logicand_expr
                             {
                                 $$ = $1;
                             }
+                        | logicor_expr OP_OR logicand_expr
+                            {
+                                FIXME("logic OR\n");
+                            }
 
 conditional_expr:         logicor_expr
                             {
                                 $$ = $1;
+                            }
+                        | logicor_expr '?' expr ':' assignment_expr
+                            {
+                                FIXME("ternary operator\n");
                             }
 
 assignment_expr:          conditional_expr

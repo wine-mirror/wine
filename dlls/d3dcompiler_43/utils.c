@@ -1246,6 +1246,84 @@ struct hlsl_ir_expr *hlsl_sub(struct hlsl_ir_node *op1, struct hlsl_ir_node *op2
     return expr;
 }
 
+struct hlsl_ir_expr *hlsl_lt(struct hlsl_ir_node *op1, struct hlsl_ir_node *op2,
+        struct source_location *loc)
+{
+    struct hlsl_ir_expr *expr;
+    struct hlsl_ir_node *ops[3];
+
+    ops[0] = op1;
+    ops[1] = op2;
+    ops[2] = NULL;
+    expr = new_expr(HLSL_IR_BINOP_LESS, ops, loc);
+    return expr;
+}
+
+struct hlsl_ir_expr *hlsl_gt(struct hlsl_ir_node *op1, struct hlsl_ir_node *op2,
+        struct source_location *loc)
+{
+    struct hlsl_ir_expr *expr;
+    struct hlsl_ir_node *ops[3];
+
+    ops[0] = op1;
+    ops[1] = op2;
+    ops[2] = NULL;
+    expr = new_expr(HLSL_IR_BINOP_GREATER, ops, loc);
+    return expr;
+}
+
+struct hlsl_ir_expr *hlsl_le(struct hlsl_ir_node *op1, struct hlsl_ir_node *op2,
+        struct source_location *loc)
+{
+    struct hlsl_ir_expr *expr;
+    struct hlsl_ir_node *ops[3];
+
+    ops[0] = op1;
+    ops[1] = op2;
+    ops[2] = NULL;
+    expr = new_expr(HLSL_IR_BINOP_LEQUAL, ops, loc);
+    return expr;
+}
+
+struct hlsl_ir_expr *hlsl_ge(struct hlsl_ir_node *op1, struct hlsl_ir_node *op2,
+        struct source_location *loc)
+{
+    struct hlsl_ir_expr *expr;
+    struct hlsl_ir_node *ops[3];
+
+    ops[0] = op1;
+    ops[1] = op2;
+    ops[2] = NULL;
+    expr = new_expr(HLSL_IR_BINOP_GEQUAL, ops, loc);
+    return expr;
+}
+
+struct hlsl_ir_expr *hlsl_eq(struct hlsl_ir_node *op1, struct hlsl_ir_node *op2,
+        struct source_location *loc)
+{
+    struct hlsl_ir_expr *expr;
+    struct hlsl_ir_node *ops[3];
+
+    ops[0] = op1;
+    ops[1] = op2;
+    ops[2] = NULL;
+    expr = new_expr(HLSL_IR_BINOP_EQUAL, ops, loc);
+    return expr;
+}
+
+struct hlsl_ir_expr *hlsl_ne(struct hlsl_ir_node *op1, struct hlsl_ir_node *op2,
+        struct source_location *loc)
+{
+    struct hlsl_ir_expr *expr;
+    struct hlsl_ir_node *ops[3];
+
+    ops[0] = op1;
+    ops[1] = op2;
+    ops[2] = NULL;
+    expr = new_expr(HLSL_IR_BINOP_NEQUAL, ops, loc);
+    return expr;
+}
+
 struct hlsl_ir_deref *new_var_deref(struct hlsl_ir_var *var)
 {
     struct hlsl_ir_deref *deref = d3dcompiler_alloc(sizeof(*deref));

@@ -984,6 +984,18 @@ struct hlsl_ir_expr *hlsl_add(struct hlsl_ir_node *op1, struct hlsl_ir_node *op2
         struct source_location *loc) DECLSPEC_HIDDEN;
 struct hlsl_ir_expr *hlsl_sub(struct hlsl_ir_node *op1, struct hlsl_ir_node *op2,
         struct source_location *loc) DECLSPEC_HIDDEN;
+struct hlsl_ir_expr *hlsl_lt(struct hlsl_ir_node *op1, struct hlsl_ir_node *op2,
+        struct source_location *loc) DECLSPEC_HIDDEN;
+struct hlsl_ir_expr *hlsl_gt(struct hlsl_ir_node *op1, struct hlsl_ir_node *op2,
+        struct source_location *loc) DECLSPEC_HIDDEN;
+struct hlsl_ir_expr *hlsl_le(struct hlsl_ir_node *op1, struct hlsl_ir_node *op2,
+        struct source_location *loc) DECLSPEC_HIDDEN;
+struct hlsl_ir_expr *hlsl_ge(struct hlsl_ir_node *op1, struct hlsl_ir_node *op2,
+        struct source_location *loc) DECLSPEC_HIDDEN;
+struct hlsl_ir_expr *hlsl_eq(struct hlsl_ir_node *op1, struct hlsl_ir_node *op2,
+        struct source_location *loc) DECLSPEC_HIDDEN;
+struct hlsl_ir_expr *hlsl_ne(struct hlsl_ir_node *op1, struct hlsl_ir_node *op2,
+        struct source_location *loc) DECLSPEC_HIDDEN;
 struct hlsl_ir_deref *new_var_deref(struct hlsl_ir_var *var) DECLSPEC_HIDDEN;
 void push_scope(struct hlsl_parse_ctx *ctx) DECLSPEC_HIDDEN;
 BOOL pop_scope(struct hlsl_parse_ctx *ctx) DECLSPEC_HIDDEN;
