@@ -2171,6 +2171,73 @@ FLOAT* WINAPI D3DXSHMultiply3(FLOAT *out, CONST FLOAT *a, CONST FLOAT *b)
     return out;
 }
 
+FLOAT* WINAPI D3DXSHRotateZ(FLOAT *out, UINT order, FLOAT angle, CONST FLOAT *in)
+{
+    FLOAT c1a, c2a, c3a, c4a, c5a, s1a, s2a, s3a, s4a, s5a;
+
+    c1a = cos( angle );
+    c2a = cos( 2.0f * angle );
+    c3a = cos( 3.0f * angle );
+    c4a = cos( 4.0f * angle );
+    c5a = cos( 5.0f * angle );
+    s1a = sin( angle );
+    s2a = sin( 2.0f * angle );
+    s3a = sin( 3.0f * angle );
+    s4a = sin( 4.0f * angle );
+    s5a = sin( 5.0f * angle );
+
+    out[0] = in[0];
+    out[1] = c1a * in[1] + s1a * in[3];
+    out[2] = in[2];
+    out[3] =  c1a * in[3] - s1a * in[1];
+    if ( order <= D3DXSH_MINORDER )
+        return out;
+
+    out[4] = c2a * in[4] + s2a * in[8];
+    out[5] = c1a * in[5] + s1a * in[7];
+    out[6] = in[6];
+    out[7] = c1a * in[7] - s1a * in[5];
+    out[8] = c2a * in[8] - s2a * in[4];
+    if ( order == 3 )
+        return out;
+
+    out[9] = c3a * in[9] + s3a * in[15];
+    out[10] = c2a * in[10] + s2a * in[14];
+    out[11] = c1a * in[11] + s1a * in[13];
+    out[12] = in[12];
+    out[13] = c1a * in[13] - s1a * in[11];
+    out[14] = c2a * in[14] - s2a * in[10];
+    out[15] = c3a * in[15] - s3a * in[9];
+    if ( order == 4 )
+        return out;
+
+    out[16] = c4a * in[16] + s4a * in[24];
+    out[17] = c3a * in[17] + s3a * in[23];
+    out[18] = c2a * in[18] + s2a * in[22];
+    out[19] = c1a * in[19] + s1a * in[21];
+    out[20] = in[20];
+    out[21] = c1a * in[21] - s1a * in[19];
+    out[22] = c2a * in[22] - s2a * in[18];
+    out[23] = c3a * in[23] - s3a * in[17];
+    out[24] = c4a * in[24] - s4a * in[16];
+    if ( order == 5 )
+        return out;
+
+    out[25] = c5a * in[25] + s5a * in[35];
+    out[26] = c4a * in[26] + s4a * in[34];
+    out[27] = c3a * in[27] + s3a * in[33];
+    out[28] = c2a * in[28] + s2a * in[32];
+    out[29] = c1a * in[29] + s1a * in[31];
+    out[30] = in[30];
+    out[31] = c1a * in[31] - s1a * in[29];
+    out[32] = c2a * in[32] - s2a * in[28];
+    out[33] = c3a * in[33] - s3a * in[27];
+    out[34] = c4a * in[34] - s4a * in[26];
+    out[35] = c5a * in[35] - s5a * in[25];
+
+    return out;
+}
+
 FLOAT* WINAPI D3DXSHScale(FLOAT *out, UINT order, CONST FLOAT *a, CONST FLOAT scale)
 {
     UINT i;

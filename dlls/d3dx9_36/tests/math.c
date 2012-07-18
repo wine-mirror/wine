@@ -2502,6 +2502,56 @@ static void test_D3DXSHMultiply3(void)
         ok(relative_error(c[i], expected[i]) < admitted_error, "Expected[%d] = %f, received = %f\n", i, expected[i], c[i]);
 }
 
+static void test_D3DXSHRotateZ(void)
+{
+    unsigned int i, j, order, square;
+    FLOAT angle[] = { D3DX_PI / 3.0f, -D3DX_PI / 3.0f, 4.0f * D3DX_PI / 3.0f, }, expected, in[100], out[100], *received_ptr, table[] =
+    { /* Angle =  D3DX_PI / 3.0f */
+      1.01f, 4.477762f, 3.010000f, 0.264289f, 5.297888f, 9.941864f, 7.010000f, -1.199813f,
+      -8.843789f, -10.010002f, 7.494040f, 18.138016f, 13.010000, -3.395966f, -17.039942f,
+      -16.009998f, -30.164297f, -18.010004f, 10.422242f, 29.066219f, 21.010000f, -6.324171f,
+      -27.968145f, -24.009998f, 2.226099f, -18.180565, -43.824551f, -28.010004f, 14.082493f,
+      42.726471f,  31.010000f, -9.984426f, -41.628399f, -34.009995f, 5.886358f, 40.530331f,
+      /* Angle =  D3DX_PI / 3.0f */
+      1.01f, -2.467762f, 3.010000f, 3.745711f, -10.307890f, -3.931864f, 7.010000f, 9.209813f,
+      -0.166214f, -10.010002f, -18.504044f, -6.128017f, 13.010000f, 17.405966f, 2.029938f,
+      -16.009998f, 13.154303f, -18.010004f, -29.432247f, -9.056221f, 21.010000f, 28.334169f,
+      4.958139f, -24.010002f, -27.236092f, 44.190582f, 16.814558f, -28.009996f, -43.092499f,
+      -12.716474f, 31.010000f, 41.994423f, 8.618393f, -34.010002f, -40.896347f, -4.520310f,
+      /* Angle =  4.0f * D3DX_PI / 3.0f */
+      1.01f, -4.477762f, 3.010000f, -0.264289f, 5.297887f, -9.941864f, 7.010000f, 1.199814f,
+      -8.843788f, 10.010004f, 7.494038f, -18.138016f, 13.010000f, 3.395967f, -17.039940f,
+      16.009996f, -30.164293f, 18.010006f, 10.422239f, -29.066219f, 21.010000f, 6.324172f,
+      -27.968143f, 24.009993f, 2.226105f, 18.180552f, -43.824543f, 28.010008f, 14.082489f,
+      -42.726471f, 31.010000f, 9.984427f, -41.628399f, 34.009987f, 5.886366f, -40.530327, };
+
+    for (i = 0; i < 100; i++)
+        in[i] = i + 1.01f;
+
+    for (j = 0; j < 3; j++)
+    {
+        for (order = 0; order < 10; order++)
+        {
+            for (i = 0; i < 100; i++)
+                out[i] = ( i + 1.0f ) * ( i + 1.0f );
+
+            received_ptr = D3DXSHRotateZ(out, order, angle[j], in);
+            ok(received_ptr == out, "angle %f, order %u, Expected %p, received %p\n", angle[j], order, out, received_ptr);
+
+            for (i = 0; i < 100; i++)
+            {
+                /* order = 0 or order = 1 behaves like order = D3DXSH_MINORDER */
+                square = ( order <= D3DXSH_MINORDER ) ? D3DXSH_MINORDER * D3DXSH_MINORDER : order * order;
+                expected = table[36 * j + i];
+                if ( i >= square || ( (order >= D3DXSH_MAXORDER) && ( i >= D3DXSH_MAXORDER * D3DXSH_MAXORDER ) ) )
+                    expected = ( i + 1.0f ) * ( i + 1.0f );
+
+                ok(relative_error(out[i], expected) < admitted_error, "angle %f, order %u index %u, Expected %f, received %f\n", angle[j], order, i, expected, out[i]);
+            }
+        }
+    }
+}
+
 static void test_D3DXSHScale(void)
 {
     unsigned int i, order;
@@ -2551,5 +2601,6 @@ START_TEST(math)
     test_D3DXSHEvalDirection();
     test_D3DXSHMultiply2();
     test_D3DXSHMultiply3();
+    test_D3DXSHRotateZ();
     test_D3DXSHScale();
 }
