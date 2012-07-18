@@ -8552,13 +8552,17 @@ HRESULT STORAGE_CreateOleStream(IStorage *storage, DWORD flags)
         struct empty_1ole_stream {
             DWORD version_magic;
             DWORD flags;
-            BYTE  padding[12];
+            DWORD update_options;
+            DWORD reserved;
+            DWORD mon_stream_size;
         };
         struct empty_1ole_stream stream_data;
 
         stream_data.version_magic = version_magic;
         stream_data.flags = flags;
-        memset(stream_data.padding, 0, sizeof(stream_data.padding));
+        stream_data.update_options = 0;
+        stream_data.reserved = 0;
+        stream_data.mon_stream_size = 0;
 
         hr = IStream_Write(stream, &stream_data, sizeof(stream_data), NULL);
         IStream_Release(stream);
