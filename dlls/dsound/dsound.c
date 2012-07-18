@@ -77,9 +77,8 @@ static ULONG WINAPI IDirectSound8_IDirectSound8_AddRef(LPDIRECTSOUND8 iface);
  */
 struct IDirectSoundImpl
 {
-    LONG                        ref;
-
-    DirectSoundDevice          *device;
+    LONG                numIfaces;
+    DirectSoundDevice  *device;
     BOOL                has_ds8;
     LPUNKNOWN                   pUnknown;
     LPDIRECTSOUND               pDS;
@@ -217,29 +216,12 @@ static HRESULT DSOUND_QueryInterface(
     return E_NOINTERFACE;
 }
 
-static ULONG IDirectSoundImpl_AddRef(
-    LPDIRECTSOUND8 iface)
+static void directsound_destroy(IDirectSoundImpl *This)
 {
-    IDirectSoundImpl *This = (IDirectSoundImpl *)iface;
-    ULONG ref = InterlockedIncrement(&(This->ref));
-    TRACE("(%p) ref was %d\n", This, ref - 1);
-    return ref;
-}
-
-static ULONG IDirectSoundImpl_Release(
-    LPDIRECTSOUND8 iface)
-{
-    IDirectSoundImpl *This = (IDirectSoundImpl *)iface;
-    ULONG ref = InterlockedDecrement(&(This->ref));
-    TRACE("(%p) ref was %d\n", This, ref + 1);
-
-    if (!ref) {
-        if (This->device)
-            DirectSoundDevice_Release(This->device);
-        HeapFree(GetProcessHeap(),0,This);
-        TRACE("(%p) released\n", This);
-    }
-    return ref;
+    if (This->device)
+        DirectSoundDevice_Release(This->device);
+    HeapFree(GetProcessHeap(),0,This);
+    TRACE("(%p) released\n", This);
 }
 
 static HRESULT IDirectSoundImpl_Create(IDirectSound8 **ppDS, BOOL has_ds8)
@@ -255,7 +237,7 @@ static HRESULT IDirectSoundImpl_Create(IDirectSound8 **ppDS, BOOL has_ds8)
         return DSERR_OUTOFMEMORY;
     }
 
-    pDS->ref    = 0;
+    pDS->numIfaces = 0;
     pDS->device = NULL;
     pDS->has_ds8 = has_ds8;
 
@@ -292,9 +274,9 @@ static ULONG WINAPI IDirectSound_IUnknown_Release(
     IDirectSound_IUnknown *This = (IDirectSound_IUnknown *)iface;
     ULONG ref = InterlockedDecrement(&(This->ref));
     TRACE("(%p) ref was %d\n", This, ref + 1);
-    if (!ref) {
+    if (!ref && !InterlockedDecrement(&((IDirectSoundImpl *)This->pds)->numIfaces)) {
         ((IDirectSoundImpl*)This->pds)->pUnknown = NULL;
-        IDirectSoundImpl_Release(This->pds);
+        directsound_destroy((IDirectSoundImpl*)This->pds);
         HeapFree(GetProcessHeap(), 0, This);
         TRACE("(%p) released\n", This);
     }
@@ -337,7 +319,7 @@ static HRESULT IDirectSound_IUnknown_Create(
     pdsunk->ref = 0;
     pdsunk->pds = pds;
 
-    IDirectSoundImpl_AddRef(pds);
+    InterlockedIncrement(&((IDirectSoundImpl *)pds)->numIfaces);
     *ppunk = (LPUNKNOWN)pdsunk;
 
     return DS_OK;
@@ -371,9 +353,9 @@ static ULONG WINAPI IDirectSound_IDirectSound_Release(
     IDirectSound_IDirectSound *This = (IDirectSound_IDirectSound *)iface;
     ULONG ref = InterlockedDecrement(&(This->ref));
     TRACE("(%p) ref was %d\n", This, ref + 1);
-    if (!ref) {
+    if (!ref && !InterlockedDecrement(&((IDirectSoundImpl *)This->pds)->numIfaces)) {
         ((IDirectSoundImpl*)This->pds)->pDS = NULL;
-        IDirectSoundImpl_Release(This->pds);
+        directsound_destroy((IDirectSoundImpl*)This->pds);
         HeapFree(GetProcessHeap(), 0, This);
         TRACE("(%p) released\n", This);
     }
@@ -499,7 +481,7 @@ static HRESULT IDirectSound_IDirectSound_Create(
     pdsds->ref = 0;
     pdsds->pds = pds;
 
-    IDirectSoundImpl_AddRef(pds);
+    InterlockedIncrement(&((IDirectSoundImpl *)pds)->numIfaces);
     *ppds = (LPDIRECTSOUND)pdsds;
 
     return DS_OK;
@@ -533,9 +515,9 @@ static ULONG WINAPI IDirectSound8_IDirectSound8_Release(
     IDirectSound8_IDirectSound8 *This = (IDirectSound8_IDirectSound8 *)iface;
     ULONG ref = InterlockedDecrement(&(This->ref));
     TRACE("(%p) ref was %d\n", This, ref + 1);
-    if (!ref) {
+    if (!ref && !InterlockedDecrement(&((IDirectSoundImpl *)This->pds)->numIfaces)) {
         ((IDirectSoundImpl*)This->pds)->pDS8 = NULL;
-        IDirectSoundImpl_Release(This->pds);
+        directsound_destroy((IDirectSoundImpl*)This->pds);
         HeapFree(GetProcessHeap(), 0, This);
         TRACE("(%p) released\n", This);
     }
@@ -671,7 +653,7 @@ static HRESULT IDirectSound8_IDirectSound8_Create(
     pdsds->ref = 0;
     pdsds->pds = pds;
 
-    IDirectSoundImpl_AddRef(pds);
+    InterlockedIncrement(&((IDirectSoundImpl *)pds)->numIfaces);
     *ppds = (LPDIRECTSOUND8)pdsds;
 
     return DS_OK;
