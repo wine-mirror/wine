@@ -85,8 +85,6 @@ struct IDirectSoundImpl
     LPDIRECTSOUND8              pDS8;
 };
 
-static HRESULT IDirectSoundImpl_Create(IDirectSound8 **ppds, BOOL has_ds8);
-
 static ULONG WINAPI IDirectSound_IUnknown_AddRef(LPUNKNOWN iface);
 static ULONG WINAPI IDirectSound_IDirectSound_AddRef(LPDIRECTSOUND iface);
 
@@ -222,28 +220,6 @@ static void directsound_destroy(IDirectSoundImpl *This)
         DirectSoundDevice_Release(This->device);
     HeapFree(GetProcessHeap(),0,This);
     TRACE("(%p) released\n", This);
-}
-
-static HRESULT IDirectSoundImpl_Create(IDirectSound8 **ppDS, BOOL has_ds8)
-{
-    IDirectSoundImpl* pDS;
-    TRACE("(%p)\n",ppDS);
-
-    /* Allocate memory */
-    pDS = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectSoundImpl));
-    if (pDS == NULL) {
-        WARN("out of memory\n");
-        *ppDS = NULL;
-        return DSERR_OUTOFMEMORY;
-    }
-
-    pDS->numIfaces = 0;
-    pDS->device = NULL;
-    pDS->has_ds8 = has_ds8;
-
-    *ppDS = (LPDIRECTSOUND8)pDS;
-
-    return DS_OK;
 }
 
 /*******************************************************************************
@@ -659,6 +635,25 @@ static HRESULT IDirectSound8_IDirectSound8_Create(
     return DS_OK;
 }
 
+static HRESULT IDirectSoundImpl_Create(void **ppv, BOOL has_ds8)
+{
+    IDirectSoundImpl *obj;
+
+    *ppv = NULL;
+    obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*obj));
+    if (!obj) {
+        WARN("out of memory\n");
+        return DSERR_OUTOFMEMORY;
+    }
+
+    obj->numIfaces = 0;
+    obj->device = NULL;
+    obj->has_ds8 = has_ds8;
+
+    *ppv = obj;
+    return DS_OK;
+}
+
 HRESULT DSOUND_Create(
     REFIID riid,
     LPDIRECTSOUND *ppDS)
@@ -676,7 +671,7 @@ HRESULT DSOUND_Create(
     /* Get dsound configuration */
     setup_dsound_options();
 
-    hr = IDirectSoundImpl_Create(&pDS, FALSE);
+    hr = IDirectSoundImpl_Create((void **)&pDS, FALSE);
     if (hr == DS_OK) {
         hr = IDirectSound_IDirectSound_Create(pDS, ppDS);
         if (*ppDS)
@@ -764,7 +759,7 @@ HRESULT DSOUND_Create8(
     /* Get dsound configuration */
     setup_dsound_options();
 
-    hr = IDirectSoundImpl_Create(&pDS, TRUE);
+    hr = IDirectSoundImpl_Create((void **)&pDS, TRUE);
     if (hr == DS_OK) {
         hr = IDirectSound8_IDirectSound8_Create(pDS, ppDS);
         if (*ppDS)
