@@ -917,6 +917,20 @@ static BOOL read_float_value(DWORD value, D3D_SHADER_VARIABLE_TYPE in_type, floa
     }
 }
 
+static BOOL read_int32_value(DWORD value, D3D_SHADER_VARIABLE_TYPE in_type, INT *out_data, UINT idx)
+{
+    switch (in_type)
+    {
+        case D3D10_SVT_INT:
+            out_data[idx] = value;
+            return TRUE;
+
+        default:
+            FIXME("Unhandled in_type %#x.\n", in_type);
+            return FALSE;
+    }
+}
+
 static BOOL read_value_list(const char *ptr, D3D_SHADER_VARIABLE_TYPE out_type,
         UINT out_size, void *out_data)
 {
@@ -941,6 +955,11 @@ static BOOL read_value_list(const char *ptr, D3D_SHADER_VARIABLE_TYPE out_type,
         {
             case D3D10_SVT_FLOAT:
                 if (!read_float_value(value, in_type, out_data, i))
+                    return FALSE;
+                break;
+
+            case D3D10_SVT_UINT:
+                if (!read_int32_value(value, in_type, out_data, i))
                     return FALSE;
                 break;
 
@@ -996,6 +1015,16 @@ static HRESULT parse_fx10_object(struct d3d10_effect_object *o, const char **ptr
                 case D3D10_EOT_GEOMETRYSHADER:
                     TRACE("Geometry shader\n");
                     o->data = &anonymous_gs;
+                    hr = S_OK;
+                    break;
+
+                case D3D10_EOT_SAMPLE_MASK:
+                    if (!read_value_list(data + offset, D3D10_SVT_UINT, 1, &o->pass->sample_mask))
+                    {
+                        FIXME("Failed to read sample mask.\n");
+                        return E_FAIL;
+                    }
+
                     hr = S_OK;
                     break;
 
@@ -2547,6 +2576,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_GetDesc(ID3D10EffectPass *ifa
         }
     }
 
+    desc->SampleMask = This->sample_mask;
     memcpy(desc->BlendFactor, This->blend_factor, 4 * sizeof(float));
 
     return S_OK;

@@ -53,6 +53,7 @@ enum d3d10_effect_object_type
     D3D10_EOT_PIXELSHADER = 0x7,
     D3D10_EOT_GEOMETRYSHADER = 0x8,
     D3D10_EOT_BLEND_FACTOR = 0xa,
+    D3D10_EOT_SAMPLE_MASK = 0xb,
 };
 
 enum d3d10_effect_object_operation
@@ -158,6 +159,7 @@ struct d3d10_effect_pass
     struct d3d10_effect_object *objects;
     struct d3d10_effect_variable *annotations;
 
+    UINT sample_mask;
     float blend_factor[4];
 };
 
