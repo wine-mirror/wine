@@ -44,14 +44,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 /*****************************************************************************
  * IDirectSound COM components
  */
-struct IDirectSound_IUnknown {
-    const IUnknownVtbl         *lpVtbl;
-    LONG                        ref;
-    LPDIRECTSOUND8              pds;
-};
-
-static HRESULT IDirectSound_IUnknown_Create(LPDIRECTSOUND8 pds, LPUNKNOWN * ppunk);
-
 struct IDirectSound_IDirectSound {
     const IDirectSoundVtbl     *lpVtbl;
     LONG                        ref;
@@ -72,20 +64,15 @@ struct IDirectSound8_IDirectSound8 {
 static HRESULT IDirectSound8_IDirectSound8_Create(LPDIRECTSOUND8 pds, LPDIRECTSOUND8 * ppds);
 static ULONG WINAPI IDirectSound8_IDirectSound8_AddRef(LPDIRECTSOUND8 iface);
 
-/*****************************************************************************
- * IDirectSound implementation structure
- */
-struct IDirectSoundImpl
-{
-    LONG                numIfaces;
+typedef struct IDirectSoundImpl {
+    IUnknown            IUnknown_iface;  /* Separate refcount, not for COM aggregation */
+    LONG                ref, numIfaces;
     DirectSoundDevice  *device;
     BOOL                has_ds8;
-    LPUNKNOWN                   pUnknown;
     LPDIRECTSOUND               pDS;
     LPDIRECTSOUND8              pDS8;
-};
+} IDirectSoundImpl;
 
-static ULONG WINAPI IDirectSound_IUnknown_AddRef(LPUNKNOWN iface);
 static ULONG WINAPI IDirectSound_IDirectSound_AddRef(LPDIRECTSOUND iface);
 
 const char * dumpCooperativeLevel(DWORD level)
@@ -172,16 +159,8 @@ static HRESULT DSOUND_QueryInterface(
     }
 
     if (IsEqualIID(riid, &IID_IUnknown)) {
-        if (!This->pUnknown) {
-            IDirectSound_IUnknown_Create(iface, &This->pUnknown);
-            if (!This->pUnknown) {
-                WARN("IDirectSound_IUnknown_Create() failed\n");
-                *ppobj = NULL;
-                return E_NOINTERFACE;
-            }
-        }
-        IDirectSound_IUnknown_AddRef(This->pUnknown);
-        *ppobj = This->pUnknown;
+        IUnknown_AddRef(&This->IUnknown_iface);
+        *ppobj = &This->IUnknown_iface;
         return S_OK;
     } else if (IsEqualIID(riid, &IID_IDirectSound)) {
         if (!This->pDS) {
@@ -223,83 +202,52 @@ static void directsound_destroy(IDirectSoundImpl *This)
 }
 
 /*******************************************************************************
- *		IDirectSound_IUnknown
+ *      IUnknown Implementation for DirectSound
  */
-static HRESULT WINAPI IDirectSound_IUnknown_QueryInterface(
-    LPUNKNOWN iface,
-    REFIID riid,
-    LPVOID * ppobj)
+static inline IDirectSoundImpl *impl_from_IUnknown(IUnknown *iface)
 {
-    IDirectSound_IUnknown *This = (IDirectSound_IUnknown *)iface;
-    TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
-    return DSOUND_QueryInterface(This->pds, riid, ppobj);
+    return CONTAINING_RECORD(iface, IDirectSoundImpl, IUnknown_iface);
 }
 
-static ULONG WINAPI IDirectSound_IUnknown_AddRef(
-    LPUNKNOWN iface)
+static HRESULT WINAPI IUnknownImpl_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
 {
-    IDirectSound_IUnknown *This = (IDirectSound_IUnknown *)iface;
-    ULONG ref = InterlockedIncrement(&(This->ref));
-    TRACE("(%p) ref was %d\n", This, ref - 1);
+    IDirectSoundImpl *This = impl_from_IUnknown(iface);
+    TRACE("(%p,%s,%p)\n", This, debugstr_guid(riid), ppv);
+    return DSOUND_QueryInterface((IDirectSound8 *)This, riid, ppv);
+}
+
+static ULONG WINAPI IUnknownImpl_AddRef(IUnknown *iface)
+{
+    IDirectSoundImpl *This = impl_from_IUnknown(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(ref == 1)
+        InterlockedIncrement(&This->numIfaces);
+
     return ref;
 }
 
-static ULONG WINAPI IDirectSound_IUnknown_Release(
-    LPUNKNOWN iface)
+static ULONG WINAPI IUnknownImpl_Release(IUnknown *iface)
 {
-    IDirectSound_IUnknown *This = (IDirectSound_IUnknown *)iface;
-    ULONG ref = InterlockedDecrement(&(This->ref));
-    TRACE("(%p) ref was %d\n", This, ref + 1);
-    if (!ref && !InterlockedDecrement(&((IDirectSoundImpl *)This->pds)->numIfaces)) {
-        ((IDirectSoundImpl*)This->pds)->pUnknown = NULL;
-        directsound_destroy((IDirectSoundImpl*)This->pds);
-        HeapFree(GetProcessHeap(), 0, This);
-        TRACE("(%p) released\n", This);
-    }
+    IDirectSoundImpl *This = impl_from_IUnknown(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if (!ref && !InterlockedDecrement(&This->numIfaces))
+        directsound_destroy(This);
+
     return ref;
 }
 
-static const IUnknownVtbl DirectSound_Unknown_Vtbl =
+static const IUnknownVtbl unk_vtbl =
 {
-    IDirectSound_IUnknown_QueryInterface,
-    IDirectSound_IUnknown_AddRef,
-    IDirectSound_IUnknown_Release
+    IUnknownImpl_QueryInterface,
+    IUnknownImpl_AddRef,
+    IUnknownImpl_Release
 };
-
-static HRESULT IDirectSound_IUnknown_Create(
-    LPDIRECTSOUND8 pds,
-    LPUNKNOWN * ppunk)
-{
-    IDirectSound_IUnknown * pdsunk;
-    TRACE("(%p,%p)\n",pds,ppunk);
-
-    if (ppunk == NULL) {
-        ERR("invalid parameter: ppunk == NULL\n");
-        return DSERR_INVALIDPARAM;
-    }
-
-    if (pds == NULL) {
-        ERR("invalid parameter: pds == NULL\n");
-        *ppunk = NULL;
-        return DSERR_INVALIDPARAM;
-    }
-
-    pdsunk = HeapAlloc(GetProcessHeap(),0,sizeof(*pdsunk));
-    if (pdsunk == NULL) {
-        WARN("out of memory\n");
-        *ppunk = NULL;
-        return DSERR_OUTOFMEMORY;
-    }
-
-    pdsunk->lpVtbl = &DirectSound_Unknown_Vtbl;
-    pdsunk->ref = 0;
-    pdsunk->pds = pds;
-
-    InterlockedIncrement(&((IDirectSoundImpl *)pds)->numIfaces);
-    *ppunk = (LPUNKNOWN)pdsunk;
-
-    return DS_OK;
-}
 
 /*******************************************************************************
  *		IDirectSound_IDirectSound
@@ -646,6 +594,8 @@ static HRESULT IDirectSoundImpl_Create(void **ppv, BOOL has_ds8)
         return DSERR_OUTOFMEMORY;
     }
 
+    obj->IUnknown_iface.lpVtbl = &unk_vtbl;
+    obj->ref = 0;
     obj->numIfaces = 0;
     obj->device = NULL;
     obj->has_ds8 = has_ds8;
