@@ -640,11 +640,6 @@ declaration:              var_modifiers type variables_def ';'
                                     var->name = v->name;
                                     var->modifiers = $1;
                                     var->semantic = v->semantic;
-                                    if (v->initializer)
-                                    {
-                                        FIXME("Variable with an initializer.\n");
-                                        free_instr_list(v->initializer);
-                                    }
 
                                     if (hlsl_ctx.cur_scope == hlsl_ctx.globals)
                                     {
@@ -652,11 +647,27 @@ declaration:              var_modifiers type variables_def ';'
                                         local = FALSE;
                                     }
 
+                                    if (var->modifiers & HLSL_MODIFIER_CONST && !v->initializer)
+                                    {
+                                        hlsl_report_message(v->loc.file, v->loc.line, v->loc.col,
+                                                HLSL_LEVEL_ERROR, "const variable without initializer");
+                                        free_declaration(var);
+                                        d3dcompiler_free(v);
+                                        continue;
+                                    }
+
                                     ret = declare_variable(var, local);
-                                    if (ret == FALSE)
+                                    if (!ret)
                                         free_declaration(var);
                                     else
                                         TRACE("Declared variable %s.\n", var->name);
+
+                                    if (v->initializer)
+                                    {
+                                        FIXME("Variable with an initializer.\n");
+                                        free_instr_list(v->initializer);
+                                    }
+
                                     d3dcompiler_free(v);
                                 }
                                 d3dcompiler_free($3);
