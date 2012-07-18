@@ -974,6 +974,12 @@ BOOL find_function(const char *name) DECLSPEC_HIDDEN;
 unsigned int components_count_type(struct hlsl_type *type) DECLSPEC_HIDDEN;
 struct hlsl_ir_expr *new_expr(enum hlsl_ir_expr_op op, struct hlsl_ir_node **operands,
         struct source_location *loc) DECLSPEC_HIDDEN;
+struct hlsl_ir_expr *hlsl_mul(struct hlsl_ir_node *op1, struct hlsl_ir_node *op2,
+        struct source_location *loc) DECLSPEC_HIDDEN;
+struct hlsl_ir_expr *hlsl_div(struct hlsl_ir_node *op1, struct hlsl_ir_node *op2,
+        struct source_location *loc) DECLSPEC_HIDDEN;
+struct hlsl_ir_expr *hlsl_mod(struct hlsl_ir_node *op1, struct hlsl_ir_node *op2,
+        struct source_location *loc) DECLSPEC_HIDDEN;
 struct hlsl_ir_expr *hlsl_add(struct hlsl_ir_node *op1, struct hlsl_ir_node *op2,
         struct source_location *loc) DECLSPEC_HIDDEN;
 struct hlsl_ir_expr *hlsl_sub(struct hlsl_ir_node *op1, struct hlsl_ir_node *op2,

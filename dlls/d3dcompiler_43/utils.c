@@ -1181,6 +1181,45 @@ struct hlsl_ir_expr *new_expr(enum hlsl_ir_expr_op op, struct hlsl_ir_node **ope
     return expr;
 }
 
+struct hlsl_ir_expr *hlsl_mul(struct hlsl_ir_node *op1, struct hlsl_ir_node *op2,
+        struct source_location *loc)
+{
+    struct hlsl_ir_expr *expr;
+    struct hlsl_ir_node *ops[3];
+
+    ops[0] = op1;
+    ops[1] = op2;
+    ops[2] = NULL;
+    expr = new_expr(HLSL_IR_BINOP_MUL, ops, loc);
+    return expr;
+}
+
+struct hlsl_ir_expr *hlsl_div(struct hlsl_ir_node *op1, struct hlsl_ir_node *op2,
+        struct source_location *loc)
+{
+    struct hlsl_ir_expr *expr;
+    struct hlsl_ir_node *ops[3];
+
+    ops[0] = op1;
+    ops[1] = op2;
+    ops[2] = NULL;
+    expr = new_expr(HLSL_IR_BINOP_DIV, ops, loc);
+    return expr;
+}
+
+struct hlsl_ir_expr *hlsl_mod(struct hlsl_ir_node *op1, struct hlsl_ir_node *op2,
+        struct source_location *loc)
+{
+    struct hlsl_ir_expr *expr;
+    struct hlsl_ir_node *ops[3];
+
+    ops[0] = op1;
+    ops[1] = op2;
+    ops[2] = NULL;
+    expr = new_expr(HLSL_IR_BINOP_MOD, ops, loc);
+    return expr;
+}
+
 struct hlsl_ir_expr *hlsl_add(struct hlsl_ir_node *op1, struct hlsl_ir_node *op2,
         struct source_location *loc)
 {

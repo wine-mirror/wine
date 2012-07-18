@@ -967,6 +967,27 @@ mul_expr:                 unary_expr
                             {
                                 $$ = $1;
                             }
+                        | mul_expr '*' unary_expr
+                            {
+                                struct source_location loc;
+
+                                set_location(&loc, &@2);
+                                $$ = &hlsl_mul($1, $3, &loc)->node;
+                            }
+                        | mul_expr '/' unary_expr
+                            {
+                                struct source_location loc;
+
+                                set_location(&loc, &@2);
+                                $$ = &hlsl_div($1, $3, &loc)->node;
+                            }
+                        | mul_expr '%' unary_expr
+                            {
+                                struct source_location loc;
+
+                                set_location(&loc, &@2);
+                                $$ = &hlsl_mod($1, $3, &loc)->node;
+                            }
 
 add_expr:                 mul_expr
                             {
