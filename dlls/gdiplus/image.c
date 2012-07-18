@@ -76,7 +76,9 @@ static ColorPalette *get_palette(IWICBitmapFrameDecode *frame, WICBitmapPaletteT
     hr = IWICImagingFactory_CreatePalette(factory, &wic_palette);
     if (hr == S_OK)
     {
-        hr = IWICBitmapFrameDecode_CopyPalette(frame, wic_palette);
+        hr = WINCODEC_ERR_PALETTEUNAVAILABLE;
+        if (frame)
+            hr = IWICBitmapFrameDecode_CopyPalette(frame, wic_palette);
         if (hr != S_OK)
         {
             TRACE("using predefined palette %#x\n", palette_type);
