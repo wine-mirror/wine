@@ -143,6 +143,12 @@ static BOOL declare_variable(struct hlsl_ir_var *decl, BOOL local)
             hlsl_report_message(decl->node.loc.file, decl->node.loc.line, decl->node.loc.col, HLSL_LEVEL_ERROR,
                     "modifier '%s' invalid for local variables", debug_modifiers(invalid));
         }
+        if (decl->semantic)
+        {
+            hlsl_report_message(decl->node.loc.file, decl->node.loc.line, decl->node.loc.col, HLSL_LEVEL_ERROR,
+                    "semantics are not allowed on local variables");
+            return FALSE;
+        }
     }
     else
     {
@@ -685,7 +691,6 @@ variables_def:            variable_def
                                 list_add_tail($$, &$3->entry);
                             }
 
-                          /* FIXME: Local variables can't have semantics. */
 variable_def:             any_identifier array semantic
                             {
                                 $$ = d3dcompiler_alloc(sizeof(*$$));
