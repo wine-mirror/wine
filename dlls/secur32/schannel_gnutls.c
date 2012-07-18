@@ -228,7 +228,9 @@ static DWORD schannel_get_protocol(gnutls_protocol_t proto)
     switch (proto)
     {
     case GNUTLS_SSL3: return SP_PROT_SSL3_CLIENT;
-    case GNUTLS_TLS1_0: return SP_PROT_TLS1_CLIENT;
+    case GNUTLS_TLS1_0: return SP_PROT_TLS1_0_CLIENT;
+    case GNUTLS_TLS1_1: return SP_PROT_TLS1_1_CLIENT;
+    case GNUTLS_TLS1_2: return SP_PROT_TLS1_2_CLIENT;
     default:
         FIXME("unknown protocol %d\n", proto);
         return 0;
