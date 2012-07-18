@@ -758,9 +758,9 @@ PROC WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
 
       return ret;
     } else {
+      struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+      *((void **)&funcs->ext + (ext_ret - extension_registry)) = local_func;
       TRACE("returning function (%p)\n", ext_ret->func);
-      extension_funcs[ext_ret - extension_registry] = local_func;
-
       return ext_ret->func;
     }
   }

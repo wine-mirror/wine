@@ -225,9 +225,9 @@ sub ConvertVarName($)
 #
 # This functions generates the thunk for a given function.
 #
-sub GenerateThunk($$$$)
+sub GenerateThunk($$$)
 {
-    my ($func_ref, $comment, $prefix, $local_var) = @_;
+    my ($func_ref, $comment, $prefix) = @_;
     my $ret = "";
     my $call_arg = "";
     my $trace_call_arg = "";
@@ -283,11 +283,10 @@ sub GenerateThunk($$$$)
     }
     $ret .= 'void ' if (!@{$func_ref->[2]});
     $ret .= ") {\n";
-    $ret .= "  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;\n" unless $local_var;
+    $ret .= "  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;\n";
     if ($func_ref->[1] ne "void" && $gen_thread_safe) {
 	$ret = "$ret  " . ConvertType($func_ref->[1]) . " ret_value;\n";
     }
-    $ret .= $local_var;
     if ($gen_traces) {
 	$ret = "$ret  TRACE(\"($trace_arg)\\n\"";
 	if ($trace_arg ne "") {
@@ -301,7 +300,7 @@ sub GenerateThunk($$$$)
         if ($func_ref->[1] ne "void") {
             $ret .= "ret_value = ";
         }
-        $ret .= "$prefix$func_ref->[0]( $call_arg);\n";
+        $ret .= "funcs->$prefix.p_$func_ref->[0]( $call_arg);\n";
 	$ret .= "  LEAVE_GL();\n";
         if ($func_ref->[1] ne "void") {
             $ret .= "  return ret_value;\n"
@@ -312,7 +311,7 @@ sub GenerateThunk($$$$)
         if ($func_ref->[1] ne "void") {
             $ret .= "return ";
         }
-        $ret .= "$prefix$func_ref->[0]( $call_arg);\n";
+        $ret .= "funcs->$prefix.p_$func_ref->[0]( $call_arg);\n";
     }
     $ret = "$ret}\n";
 
@@ -809,7 +808,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 ";
 
 foreach (sort keys %norm_functions) {
-    my $string = GenerateThunk($norm_functions{$_}, 1, "funcs->gl.p_", "");
+    my $string = GenerateThunk($norm_functions{$_}, 1, "gl");
     print NORM "\n$string" if $string;
 }
 
@@ -833,7 +832,10 @@ print EXT "
 /* Auto-generated file... Do not edit ! */
 
 #include \"config.h\"
+#include <stdarg.h>
 #include \"opengl_ext.h\"
+#include \"winternl.h\"
+#include \"wine/wgl_driver.h\"
 #include \"wine/debug.h\"
 
 WINE_DEFAULT_DEBUG_CHANNEL(opengl);
@@ -842,35 +844,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 
 # The thunks themselves....
 my $count = keys %ext_functions;
-print EXT "enum extensions\n{\n";
-foreach (sort keys %ext_functions) {
-    my $func_ref = $ext_functions{$_};
-    print EXT "    EXT_$func_ref->[0],\n";
-}
-print EXT "    NB_EXTENSIONS\n};\n\n";
-print EXT "const int extension_registry_size = NB_EXTENSIONS;\n";
-print EXT "void *extension_funcs[NB_EXTENSIONS];\n";
+print EXT "const int extension_registry_size = $count;\n";
 print EXT "\n/* The thunks themselves....*/";
 foreach (sort keys %ext_functions) {
-    my $func_ref = $ext_functions{$_};
-    my $local_var = "  " . ConvertType($func_ref->[1]) . " (*$ext_prefix$func_ref->[0])( ";
-    for (my $i = 0; $i < @{$func_ref->[2]}; $i++) {
-	my $type = ConvertType($func_ref->[2]->[$i]->[0]);
-	$local_var .= "$type";
-	if ($i+1 < @{$func_ref->[2]}) {
-	    $local_var .= ", ";
-	} else {
-	    $local_var .= " ";
-	}
-    }
-    $local_var .= 'void ' if (!@{$func_ref->[2]});
-    $local_var .= ") = extension_funcs[EXT_$func_ref->[0]];\n";
-    print EXT "\nstatic ", GenerateThunk($ext_functions{$_}, 0, $ext_prefix, $local_var);
+    print EXT "\nstatic ", GenerateThunk($ext_functions{$_}, 0, "ext");
 }
 
 # Then the table giving the string <-> function correspondence */
 print EXT "\n\n/* The table giving the correspondence between names and functions */\n";
-print EXT "const OpenGL_extension extension_registry[NB_EXTENSIONS] = {\n";
+print EXT "const OpenGL_extension extension_registry[$count] = {\n";
 my $i = 0;
 foreach (sort keys %ext_functions) {
     my $func_ref = $ext_functions{$_};
