@@ -47,9 +47,9 @@ static BOOL (WINAPI *wglSwapBuffers)(HDC);
 /***********************************************************************
  *      __wine_get_wgl_driver  (GDI32.@)
  */
-const struct wgl_funcs * CDECL __wine_get_wgl_driver( HDC hdc, UINT version )
+struct opengl_funcs * CDECL __wine_get_wgl_driver( HDC hdc, UINT version )
 {
-    const struct wgl_funcs *ret = NULL;
+    struct opengl_funcs *ret = NULL;
     DC * dc = get_dc_ptr( hdc );
 
     if (dc)

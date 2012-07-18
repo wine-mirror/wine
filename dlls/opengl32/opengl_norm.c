@@ -3024,7 +3024,16 @@ void WINAPI wine_glViewport( GLint x, GLint y, GLsizei width, GLsizei height ) {
   TRACE("(%d, %d, %d, %d)\n", x, y, width, height );
   funcs->gl.p_glViewport( x, y, width, height );
 }
-
+static BOOL null_wglCopyContext( struct wgl_context * src, struct wgl_context * dst, UINT mask ) { return 0; }
+static struct wgl_context * null_wglCreateContext( HDC hdc ) { return 0; }
+static struct wgl_context * null_wglCreateContextAttribsARB( HDC hdc, struct wgl_context * share_ctx, const int * attribs ) { return 0; }
+static void null_wglDeleteContext( struct wgl_context * context ) { }
+static HDC null_wglGetCurrentDC( struct wgl_context * context ) { return 0; }
+static INT null_wglGetPixelFormat( HDC hdc ) { return 0; }
+static PROC null_wglGetProcAddress( LPCSTR name ) { return 0; }
+static BOOL null_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct wgl_context * context ) { return 0; }
+static BOOL null_wglMakeCurrent( HDC hdc, struct wgl_context * context ) { return 0; }
+static BOOL null_wglShareLists( struct wgl_context * org, struct wgl_context * dst ) { return 0; }
 static void null_glAccum( GLenum op, GLfloat value ) { }
 static void null_glAlphaFunc( GLenum func, GLfloat ref ) { }
 static GLboolean null_glAreTexturesResident( GLsizei n, const GLuint* textures, GLboolean* residences ) { return 0; }
@@ -3362,6 +3371,21 @@ static void null_glVertex4sv( const GLshort* v ) { }
 static void null_glVertexPointer( GLint size, GLenum type, GLsizei stride, const GLvoid* pointer ) { }
 static void null_glViewport( GLint x, GLint y, GLsizei width, GLsizei height ) { }
 
+struct opengl_funcs null_opengl_funcs =
+{
+    {
+        null_wglCopyContext,
+        null_wglCreateContext,
+        null_wglCreateContextAttribsARB,
+        null_wglDeleteContext,
+        null_wglGetCurrentDC,
+        null_wglGetPixelFormat,
+        null_wglGetProcAddress,
+        null_wglMakeContextCurrentARB,
+        null_wglMakeCurrent,
+        null_wglShareLists,
+    },
 #define USE_GL_FUNC(name) null_##name,
-struct opengl_funcs null_opengl_funcs = { { ALL_WGL_FUNCS } };
+    { ALL_WGL_FUNCS }
 #undef USE_GL_FUNC
+};

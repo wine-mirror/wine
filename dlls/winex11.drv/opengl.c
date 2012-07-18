@@ -197,7 +197,6 @@ struct glx_physdev
     Pixmap             pixmap;        /* pixmap for a DL_GL_PIXMAP_WIN drawable */
 };
 
-static const struct wgl_funcs glxdrv_wgl_funcs;
 static const struct gdi_dc_funcs glxdrv_funcs;
 
 static inline struct glx_physdev *get_glxdrv_dev( PHYSDEV dev )
@@ -1309,9 +1308,9 @@ static int glxdrv_DescribePixelFormat(PHYSDEV dev, int iPixelFormat,
 }
 
 /***********************************************************************
- *		glxdrv_GetPixelFormat
+ *		glxdrv_wglGetPixelFormat
  */
-static int glxdrv_GetPixelFormat( HDC hdc )
+static int glxdrv_wglGetPixelFormat( HDC hdc )
 {
     struct x11drv_escape_get_drawable escape;
     WineGLPixelFormat *fmt;
@@ -1625,7 +1624,6 @@ static BOOL glxdrv_wglMakeCurrent(HDC hdc, struct wgl_context *ctx)
 
         if (ret)
         {
-            NtCurrentTeb()->glTable = &opengl_funcs;
             NtCurrentTeb()->glContext = ctx;
 
             ctx->has_been_current = TRUE;
@@ -1697,7 +1695,6 @@ static BOOL glxdrv_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct 
             ctx->drawables[0] = escape_draw.gl_drawable;
             ctx->drawables[1] = escape_read.gl_drawable;
             ctx->refresh_drawables = FALSE;
-            NtCurrentTeb()->glTable = &opengl_funcs;
             NtCurrentTeb()->glContext = ctx;
         }
         else
@@ -3404,15 +3401,15 @@ static INT glxdrv_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_d
 /**********************************************************************
  *           glxdrv_wine_get_wgl_driver
  */
-static const struct wgl_funcs * glxdrv_wine_get_wgl_driver( PHYSDEV dev, UINT version )
+static struct opengl_funcs * glxdrv_wine_get_wgl_driver( PHYSDEV dev, UINT version )
 {
-    if (version != WINE_GDI_DRIVER_VERSION)
+    if (version != WINE_WGL_DRIVER_VERSION)
     {
-        ERR( "version mismatch, opengl32 wants %u but driver has %u\n", version, WINE_GDI_DRIVER_VERSION );
+        ERR( "version mismatch, opengl32 wants %u but driver has %u\n", version, WINE_WGL_DRIVER_VERSION );
         return NULL;
     }
 
-    if (has_opengl()) return &glxdrv_wgl_funcs;
+    if (has_opengl()) return &opengl_funcs;
 
     dev = GET_NEXT_PHYSDEV( dev, wine_get_wgl_driver );
     return dev->funcs->wine_get_wgl_driver( dev, version );
@@ -3553,18 +3550,20 @@ static const struct gdi_dc_funcs glxdrv_funcs =
     GDI_PRIORITY_GRAPHICS_DRV + 20      /* priority */
 };
 
-static const struct wgl_funcs glxdrv_wgl_funcs =
+static struct opengl_funcs opengl_funcs =
 {
-    glxdrv_GetPixelFormat,              /* p_GetPixelFormat */
-    glxdrv_wglCopyContext,              /* p_wglCopyContext */
-    glxdrv_wglCreateContext,            /* p_wglCreateContext */
-    glxdrv_wglCreateContextAttribsARB,  /* p_wglCreateContextAttribsARB */
-    glxdrv_wglDeleteContext,            /* p_wglDeleteContext */
-    glxdrv_wglGetCurrentDC,             /* p_wglGetCurrentDC */
-    glxdrv_wglGetProcAddress,           /* p_wglGetProcAddress */
-    glxdrv_wglMakeContextCurrentARB,    /* p_wglMakeContextCurrentARB */
-    glxdrv_wglMakeCurrent,              /* p_wglMakeCurrent */
-    glxdrv_wglShareLists,               /* p_wglShareLists */
+    {
+        glxdrv_wglCopyContext,              /* p_wglCopyContext */
+        glxdrv_wglCreateContext,            /* p_wglCreateContext */
+        glxdrv_wglCreateContextAttribsARB,  /* p_wglCreateContextAttribsARB */
+        glxdrv_wglDeleteContext,            /* p_wglDeleteContext */
+        glxdrv_wglGetCurrentDC,             /* p_wglGetCurrentDC */
+        glxdrv_wglGetPixelFormat,           /* p_wglGetPixelFormat */
+        glxdrv_wglGetProcAddress,           /* p_wglGetProcAddress */
+        glxdrv_wglMakeContextCurrentARB,    /* p_wglMakeContextCurrentARB */
+        glxdrv_wglMakeCurrent,              /* p_wglMakeCurrent */
+        glxdrv_wglShareLists,               /* p_wglShareLists */
+    }
 };
 
 const struct gdi_dc_funcs *get_glx_driver(void)

@@ -582,6 +582,29 @@ my %ext_functions  =
     "glDeleteObjectBufferATI" => [ "void", [ [ "GLuint", "buffer" ] ], "GL_ATI_vertex_array_object" ]
    );
 
+
+my %wgl_functions =
+   (
+    "wglCopyContext" => [ "BOOL", [ [ "struct wgl_context *", "src" ],
+                                    [ "struct wgl_context *", "dst" ],
+                                    [ "UINT", "mask" ] ] ],
+    "wglCreateContext" => [ "struct wgl_context *", [ [ "HDC", "hdc" ] ] ],
+    "wglCreateContextAttribsARB" => [ "struct wgl_context *", [ [ "HDC", "hdc" ],
+                                                                [ "struct wgl_context *", "share_ctx" ],
+                                                                [ "const int *", "attribs" ] ] ],
+    "wglDeleteContext" => [ "void", [ [ "struct wgl_context *", "context" ] ] ],
+    "wglGetCurrentDC" => [ "HDC", [ [ "struct wgl_context *", "context" ] ] ],
+    "wglGetPixelFormat" => [ "INT", [ [ "HDC", "hdc" ] ] ],
+    "wglGetProcAddress" => [ "PROC", [ [ "LPCSTR", "name" ] ] ],
+    "wglMakeContextCurrentARB" => [ "BOOL", [ [ "HDC", "draw_hdc" ],
+                                              [ "HDC", "read_hdc" ],
+                                              [ "struct wgl_context *", "context" ] ] ],
+    "wglMakeCurrent" => [ "BOOL", [ [ "HDC", "hdc" ],
+                                    [ "struct wgl_context *", "context" ] ] ],
+    "wglShareLists" => [ "BOOL", [ [ "struct wgl_context *", "org" ],
+                                   [ "struct wgl_context *", "dst" ] ] ],
+   );
+
 my @arg_names;
 my %arg_types;
 while (my $line = <REGISTRY>) {
@@ -707,7 +730,16 @@ print HEADER "#endif\n\n";
 
 printf HEADER "#define WINE_WGL_DRIVER_VERSION %u\n\n", $wgl_version + 1;
 
+print HEADER "struct wgl_context;\n\n";
+
 print HEADER "struct opengl_funcs\n{\n";
+print HEADER "    struct\n    {\n";
+foreach (sort keys %wgl_functions)
+{
+    printf HEADER "        %s;\n", get_func_proto($_, $wgl_functions{$_});
+}
+print HEADER "    } wgl;\n\n";
+
 print HEADER "    struct\n    {\n";
 foreach (sort keys %norm_functions)
 {
@@ -732,6 +764,7 @@ foreach (sort keys %norm_functions)
 }
 print HEADER "\n\n";
 
+print HEADER "extern struct opengl_funcs * CDECL __wine_get_wgl_driver( HDC hdc, UINT version );\n\n";
 print HEADER "#endif /* __WINE_WGL_DRIVER_H */\n";
 close HEADER;
 
@@ -805,15 +838,20 @@ foreach (sort keys %norm_functions) {
     print NORM "\n$string" if $string;
 }
 
-print NORM "\n";
-
+foreach (sort keys %wgl_functions) {
+    print NORM generate_null_func($_, $wgl_functions{$_});
+}
 foreach (sort keys %norm_functions) {
     print NORM generate_null_func($_, $norm_functions{$_});
 }
 
-print NORM "\n#define USE_GL_FUNC(name) null_##name,\n";
-print NORM "struct opengl_funcs null_opengl_funcs = { { ALL_WGL_FUNCS } };\n";
+print NORM "\nstruct opengl_funcs null_opengl_funcs =\n{\n    {\n";
+foreach (sort keys %wgl_functions) { print NORM "        null_$_,\n"; }
+print NORM "    },\n";
+print NORM "#define USE_GL_FUNC(name) null_##name,\n";
+print NORM "    { ALL_WGL_FUNCS }\n";
 print NORM "#undef USE_GL_FUNC\n";
+print NORM "};\n";
 
 close(NORM);
 

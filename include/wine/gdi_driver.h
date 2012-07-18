@@ -22,7 +22,7 @@
 #define __WINE_WINE_GDI_DRIVER_H
 
 struct gdi_dc_funcs;
-struct wgl_funcs;
+struct opengl_funcs;
 
 typedef struct gdi_physdev
 {
@@ -191,14 +191,14 @@ struct gdi_dc_funcs
     BOOL     (*pSwapBuffers)(PHYSDEV);
     BOOL     (*pUnrealizePalette)(HPALETTE);
     BOOL     (*pWidenPath)(PHYSDEV);
-    const struct wgl_funcs * (*wine_get_wgl_driver)(PHYSDEV,UINT);
+    struct opengl_funcs * (*wine_get_wgl_driver)(PHYSDEV,UINT);
 
     /* priority order for the driver on the stack */
     UINT       priority;
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 41
+#define WINE_GDI_DRIVER_VERSION 42
 
 #define GDI_PRIORITY_NULL_DRV        0  /* null driver */
 #define GDI_PRIORITY_FONT_DRV      100  /* any font driver */
@@ -224,24 +224,6 @@ static inline void push_dc_driver( PHYSDEV *dev, PHYSDEV physdev, const struct g
     *dev = physdev;
 }
 
-/* OpenGL support */
-
-struct wgl_context;
-
-struct wgl_funcs
-{
-    INT                 (*p_GetPixelFormat)(HDC);
-    BOOL                (*p_wglCopyContext)(struct wgl_context*,struct wgl_context*,UINT);
-    struct wgl_context* (*p_wglCreateContext)(HDC);
-    struct wgl_context* (*p_wglCreateContextAttribsARB)(HDC,struct wgl_context*,const int*);
-    void                (*p_wglDeleteContext)(struct wgl_context*);
-    HDC                 (*p_wglGetCurrentDC)(struct wgl_context*);
-    PROC                (*p_wglGetProcAddress)(LPCSTR);
-    BOOL                (*p_wglMakeContextCurrentARB)(HDC,HDC,struct wgl_context*);
-    BOOL                (*p_wglMakeCurrent)(HDC,struct wgl_context*);
-    BOOL                (*p_wglShareLists)(struct wgl_context*,struct wgl_context*);
-};
-
 /* the DC hook support is only exported on Win16, the 32-bit version is a Wine extension */
 
 #define DCHC_INVALIDVISRGN      0x0001
@@ -257,6 +239,6 @@ WINGDIAPI WORD      WINAPI SetHookFlags(HDC,WORD);
 
 extern void CDECL __wine_make_gdi_object_system( HGDIOBJ handle, BOOL set );
 extern void CDECL __wine_set_visible_region( HDC hdc, HRGN hrgn, const RECT *vis_rect );
-extern const struct wgl_funcs * CDECL __wine_get_wgl_driver( HDC hdc, UINT version );
+extern struct opengl_funcs * CDECL __wine_get_wgl_driver( HDC hdc, UINT version );
 
 #endif /* __WINE_WINE_GDI_DRIVER_H */

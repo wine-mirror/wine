@@ -50,7 +50,6 @@ static struct list drivers = LIST_INIT( drivers );
 static struct graphics_driver *display_driver;
 
 const struct gdi_dc_funcs *font_driver = NULL;
-static const struct wgl_funcs null_wgl_driver;
 
 static CRITICAL_SECTION driver_section;
 static CRITICAL_SECTION_DEBUG critsect_debug =
@@ -387,11 +386,6 @@ static UINT nulldrv_GetOutlineTextMetrics( PHYSDEV dev, UINT size, LPOUTLINETEXT
     return 0;
 }
 
-static INT nulldrv_GetPixelFormat( HDC hdc )
-{
-    return 0;
-}
-
 static UINT nulldrv_GetSystemPaletteEntries( PHYSDEV dev, UINT start, UINT count, PALETTEENTRY *entries )
 {
     return 0;
@@ -666,59 +660,9 @@ static BOOL nulldrv_UnrealizePalette( HPALETTE palette )
     return FALSE;
 }
 
-static BOOL nulldrv_wglCopyContext( struct wgl_context *src, struct wgl_context *dst, UINT mask )
+static struct opengl_funcs *nulldrv_wine_get_wgl_driver( PHYSDEV dev, UINT version )
 {
-    return FALSE;
-}
-
-static struct wgl_context *nulldrv_wglCreateContext( HDC hdc )
-{
-    return 0;
-}
-
-static struct wgl_context *nulldrv_wglCreateContextAttribsARB( HDC hdc, struct wgl_context *share_ctx,
-                                                               const int *attribs )
-{
-    return 0;
-}
-
-static void nulldrv_wglDeleteContext( struct wgl_context *context )
-{
-}
-
-static HDC nulldrv_wglGetCurrentDC( struct wgl_context *context )
-{
-    return 0;
-}
-
-static PROC nulldrv_wglGetProcAddress( LPCSTR name )
-{
-    return NULL;
-}
-
-static BOOL nulldrv_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct wgl_context *context )
-{
-    return FALSE;
-}
-
-static BOOL nulldrv_wglMakeCurrent( HDC hdc, struct wgl_context *context )
-{
-    return FALSE;
-}
-
-static BOOL nulldrv_wglShareLists( struct wgl_context *org, struct wgl_context *dst )
-{
-    return FALSE;
-}
-
-static const struct wgl_funcs *nulldrv_wine_get_wgl_driver( PHYSDEV dev, UINT version )
-{
-    if (version != WINE_GDI_DRIVER_VERSION)
-    {
-        ERR( "version mismatch, opengl32 wants %u but driver has %u\n", version, WINE_GDI_DRIVER_VERSION );
-        return NULL;
-    }
-    return &null_wgl_driver;
+    return (void *)-1;
 }
 
 const struct gdi_dc_funcs null_driver =
@@ -857,19 +801,6 @@ const struct gdi_dc_funcs null_driver =
     GDI_PRIORITY_NULL_DRV               /* priority */
 };
 
-static const struct wgl_funcs null_wgl_driver =
-{
-    nulldrv_GetPixelFormat,             /* p_GetPixelFormat */
-    nulldrv_wglCopyContext,             /* p_wglCopyContext */
-    nulldrv_wglCreateContext,           /* p_wglCreateContext */
-    nulldrv_wglCreateContextAttribsARB, /* p_wglCreateContextAttribsARB */
-    nulldrv_wglDeleteContext,           /* p_wglDeleteContext */
-    nulldrv_wglGetCurrentDC,            /* p_wglGetCurrentDC */
-    nulldrv_wglGetProcAddress,          /* p_wglGetProcAddress */
-    nulldrv_wglMakeContextCurrentARB,   /* p_wglMakeContextCurrentARB */
-    nulldrv_wglMakeCurrent,             /* p_wglMakeCurrent */
-    nulldrv_wglShareLists,              /* p_wglShareLists */
-};
 
 /*****************************************************************************
  *      DRIVER_GetDriverName

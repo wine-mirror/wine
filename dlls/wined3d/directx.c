@@ -28,7 +28,7 @@
 
 #include "wined3d_private.h"
 #ifndef USE_WIN32_OPENGL
-#include "wine/gdi_driver.h"
+#include "wine/wgl_driver.h"
 #endif
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
@@ -5415,9 +5415,13 @@ static BOOL InitAdapters(struct wined3d *wined3d)
     /* To bypass the opengl32 thunks load wglGetProcAddress from gdi32 instead of opengl32 */
     {
         HDC hdc = GetDC( 0 );
-        const struct wgl_funcs *wgl_driver = __wine_get_wgl_driver( hdc, WINE_GDI_DRIVER_VERSION );
-        pwglGetProcAddress = wgl_driver->p_wglGetProcAddress;
+        const struct opengl_funcs *wgl_driver = __wine_get_wgl_driver( hdc, WINE_WGL_DRIVER_VERSION );
+
+        if (wgl_driver && wgl_driver != (void *)-1)
+            pwglGetProcAddress = wgl_driver->wgl.p_wglGetProcAddress;
+
         ReleaseDC( 0, hdc );
+        if (!pwglGetProcAddress) goto nogl_adapter;
     }
 #define USE_GL_FUNC(pfn) pfn = (void*)pwglGetProcAddress(#pfn);
 #endif

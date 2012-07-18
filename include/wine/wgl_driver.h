@@ -7,10 +7,26 @@
 #define WINE_GLAPI
 #endif
 
-#define WINE_WGL_DRIVER_VERSION 1
+#define WINE_WGL_DRIVER_VERSION 2
+
+struct wgl_context;
 
 struct opengl_funcs
 {
+    struct
+    {
+        BOOL       (WINE_GLAPI *p_wglCopyContext)(struct wgl_context *,struct wgl_context *,UINT);
+        struct wgl_context * (WINE_GLAPI *p_wglCreateContext)(HDC);
+        struct wgl_context * (WINE_GLAPI *p_wglCreateContextAttribsARB)(HDC,struct wgl_context *,const int *);
+        void       (WINE_GLAPI *p_wglDeleteContext)(struct wgl_context *);
+        HDC        (WINE_GLAPI *p_wglGetCurrentDC)(struct wgl_context *);
+        INT        (WINE_GLAPI *p_wglGetPixelFormat)(HDC);
+        PROC       (WINE_GLAPI *p_wglGetProcAddress)(LPCSTR);
+        BOOL       (WINE_GLAPI *p_wglMakeContextCurrentARB)(HDC,HDC,struct wgl_context *);
+        BOOL       (WINE_GLAPI *p_wglMakeCurrent)(HDC,struct wgl_context *);
+        BOOL       (WINE_GLAPI *p_wglShareLists)(struct wgl_context *,struct wgl_context *);
+    } wgl;
+
     struct
     {
         void       (WINE_GLAPI *p_glAccum)(GLenum,GLfloat);
@@ -2757,5 +2773,7 @@ struct opengl_funcs
     USE_GL_FUNC(glVertex4sv) \
     USE_GL_FUNC(glVertexPointer) \
     USE_GL_FUNC(glViewport)
+
+extern struct opengl_funcs * CDECL __wine_get_wgl_driver( HDC hdc, UINT version );
 
 #endif /* __WINE_WGL_DRIVER_H */
