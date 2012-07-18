@@ -865,6 +865,10 @@ static HRESULT parse_fx10_anonymous_shader(struct d3d10_effect *e, struct d3d10_
             shader = "geometryshader";
             t->basetype = D3D10_SVT_GEOMETRYSHADER;
             break;
+
+        default:
+            FIXME("Unhandled object type %#x.\n", otype);
+            return E_FAIL;
     }
 
     if (!copy_name(shader, &t->name))
@@ -897,6 +901,56 @@ static HRESULT parse_fx10_anonymous_shader(struct d3d10_effect *e, struct d3d10_
     TRACE("Variable semantic: %s.\n", debugstr_a(v->semantic));
 
     return S_OK;
+}
+
+static BOOL read_float_value(DWORD value, D3D_SHADER_VARIABLE_TYPE in_type, float *out_data, UINT idx)
+{
+    switch (in_type)
+    {
+        case D3D10_SVT_FLOAT:
+            out_data[idx] = *(float *)&value;
+            return TRUE;
+
+        default:
+            FIXME("Unhandled in_type %#x.\n", in_type);
+            return FALSE;
+    }
+}
+
+static BOOL read_value_list(const char *ptr, D3D_SHADER_VARIABLE_TYPE out_type,
+        UINT out_size, void *out_data)
+{
+    D3D_SHADER_VARIABLE_TYPE in_type;
+    DWORD t, value;
+    DWORD count, i;
+
+    read_dword(&ptr, &count);
+    if (count != out_size)
+        return FALSE;
+
+    TRACE("%u values:\n", count);
+    for (i = 0; i < count; ++i)
+    {
+        read_dword(&ptr, &t);
+        read_dword(&ptr, &value);
+
+        in_type = d3d10_variable_type(t, FALSE);
+        TRACE("\t%s: %#x.\n", debug_d3d10_shader_variable_type(in_type), value);
+
+        switch (out_type)
+        {
+            case D3D10_SVT_FLOAT:
+                if (!read_float_value(value, in_type, out_data, i))
+                    return FALSE;
+                break;
+
+            default:
+                FIXME("Unhandled out_type %#x.\n", out_type);
+                return FALSE;
+        }
+    }
+
+    return TRUE;
 }
 
 static HRESULT parse_fx10_object(struct d3d10_effect_object *o, const char **ptr, const char *data)
@@ -942,6 +996,16 @@ static HRESULT parse_fx10_object(struct d3d10_effect_object *o, const char **ptr
                 case D3D10_EOT_GEOMETRYSHADER:
                     TRACE("Geometry shader\n");
                     o->data = &anonymous_gs;
+                    hr = S_OK;
+                    break;
+
+                case D3D10_EOT_BLEND_FACTOR:
+                    if (!read_value_list(data + offset, D3D10_SVT_FLOAT, 4, &o->pass->blend_factor[0]))
+                    {
+                        FIXME("Failed to read blend factor.\n");
+                        return E_FAIL;
+                    }
+
                     hr = S_OK;
                     break;
 
@@ -2482,6 +2546,8 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_GetDesc(ID3D10EffectPass *ifa
             break;
         }
     }
+
+    memcpy(desc->BlendFactor, This->blend_factor, 4 * sizeof(float));
 
     return S_OK;
 }
