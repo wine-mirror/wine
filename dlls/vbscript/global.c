@@ -124,26 +124,16 @@ static HRESULT to_int(VARIANT *v, int *ret)
 
 static HRESULT to_string(VARIANT *v, BSTR *ret)
 {
-    static const WCHAR trueW[] = {'T','r','u','e',0};
-    static const WCHAR falseW[] = {'F','a','l','s','e',0};
+    VARIANT dst;
+    HRESULT hres;
 
-    switch(V_VT(v)) {
-    case VT_BOOL:
-        *ret = SysAllocString(V_BOOL(v) ? trueW : falseW);
-        return *ret ? S_OK : E_OUTOFMEMORY;
-    default: {
-        VARIANT dst;
-        HRESULT hres;
+    V_VT(&dst) = VT_EMPTY;
+    hres = VariantChangeType(&dst, v, VARIANT_LOCALBOOL, VT_BSTR);
+    if(FAILED(hres))
+        return hres;
 
-        V_VT(&dst) = VT_EMPTY;
-        hres = VariantChangeTypeEx(&dst, v, MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT), 0, VT_BSTR);
-        if(FAILED(hres))
-            return hres;
-
-        *ret = V_BSTR(&dst);
-        return S_OK;
-    }
-    }
+    *ret = V_BSTR(&dst);
+    return S_OK;
 }
 
 static IUnknown *create_object(script_ctx_t *ctx, const WCHAR *progid)
