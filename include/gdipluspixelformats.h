@@ -49,6 +49,31 @@ typedef INT PixelFormat;
 #define    PixelFormat32bppCMYK         (15 | (32 << 8))
 #define    PixelFormatMax               16
 
+static inline BOOL IsIndexedPixelFormat(PixelFormat format)
+{
+    return (format & PixelFormatIndexed) ? TRUE : FALSE;
+}
+
+static inline BOOL IsAlphaPixelFormat(PixelFormat format)
+{
+    return (format & PixelFormatAlpha) ? TRUE : FALSE;
+}
+
+static inline BOOL IsCanonicalPixelFormat(PixelFormat format)
+{
+    return (format & PixelFormatCanonical) ? TRUE : FALSE;
+}
+
+static inline BOOL IsExtendedPixelFormat(PixelFormat format)
+{
+    return (format & PixelFormatExtended) ? TRUE : FALSE;
+}
+
+static inline UINT GetPixelFormatSize(PixelFormat format)
+{
+    return (format >> 8) & 0xff;
+}
+
 #ifdef __cplusplus
 
 struct ColorPalette
