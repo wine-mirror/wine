@@ -1991,6 +1991,10 @@ static BOOL pattern_brush(dibdrv_physdev *pdev, dib_brush *brush, dib_info *dib,
 static BOOL null_brush(dibdrv_physdev *pdev, dib_brush *brush, dib_info *dib,
                        int num, const RECT *rects, INT rop)
 {
+    if (rop == 1)
+    {
+        ERR("(%p, %s, BLACKNESS)\n", pdev, wine_dbgstr_rect(rects));
+    }
     return TRUE;
 }
 
@@ -2174,15 +2178,4 @@ COLORREF dibdrv_SetDCBrushColor( PHYSDEV dev, COLORREF color )
         select_brush( pdev, &pdev->brush, &logbrush, NULL );
     }
     return color;
-}
-
-BOOL brush_rect(dibdrv_physdev *pdev, dib_brush *brush, const RECT *rect, HRGN clip, INT rop)
-{
-    struct clipped_rects clipped_rects;
-    BOOL ret;
-
-    if (!get_clipped_rects( &pdev->dib, rect, clip, &clipped_rects )) return TRUE;
-    ret = brush->rects( pdev, brush, &pdev->dib, clipped_rects.count, clipped_rects.rects, rop );
-    free_clipped_rects( &clipped_rects );
-    return ret;
 }

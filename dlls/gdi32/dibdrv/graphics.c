@@ -26,18 +26,30 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dib);
 
+static BOOL brush_rect( dibdrv_physdev *pdev, dib_brush *brush, const RECT *rect, HRGN clip )
+{
+    struct clipped_rects clipped_rects;
+    BOOL ret;
+
+    if (!get_clipped_rects( &pdev->dib, rect, clip, &clipped_rects )) return TRUE;
+    ret = brush->rects( pdev, brush, &pdev->dib, clipped_rects.count, clipped_rects.rects,
+                        GetROP2( pdev->dev.hdc ));
+    free_clipped_rects( &clipped_rects );
+    return ret;
+}
+
 /* paint a region with the brush (note: the region can be modified) */
 static BOOL brush_region( dibdrv_physdev *pdev, HRGN region )
 {
     if (pdev->clip) CombineRgn( region, region, pdev->clip, RGN_AND );
-    return brush_rect( pdev, &pdev->brush, NULL, region, GetROP2( pdev->dev.hdc ));
+    return brush_rect( pdev, &pdev->brush, NULL, region );
 }
 
 /* paint a region with the pen (note: the region can be modified) */
 static BOOL pen_region( dibdrv_physdev *pdev, HRGN region )
 {
     if (pdev->clip) CombineRgn( region, region, pdev->clip, RGN_AND );
-    return brush_rect( pdev, &pdev->pen_brush, NULL, region, GetROP2( pdev->dev.hdc ));
+    return brush_rect( pdev, &pdev->pen_brush, NULL, region );
 }
 
 static RECT get_device_rect( HDC hdc, int left, int top, int right, int bottom, BOOL rtl_correction )
@@ -916,11 +928,34 @@ static inline INT get_rop2_from_rop(INT rop)
 BOOL dibdrv_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
+    dib_brush *brush = &pdev->brush;
+    int rop2 = get_rop2_from_rop( rop );
+    struct clipped_rects clipped_rects;
+    DWORD and = 0, xor = 0;
+    BOOL ret = TRUE;
 
     TRACE("(%p, %d, %d, %d, %d, %06x)\n", dev, dst->x, dst->y, dst->width, dst->height, rop);
 
     add_clipped_bounds( pdev, &dst->visrect, 0 );
-    return brush_rect( pdev, &pdev->brush, &dst->visrect, pdev->clip, get_rop2_from_rop(rop) );
+    if (!get_clipped_rects( &pdev->dib, &dst->visrect, pdev->clip, &clipped_rects )) return TRUE;
+
+    switch (rop2)  /* shortcuts for rops that don't involve the brush */
+    {
+    case R2_NOT:   and = ~0u;
+        /* fall through */
+    case R2_WHITE: xor = ~0u;
+        /* fall through */
+    case R2_BLACK:
+        pdev->dib.funcs->solid_rects( &pdev->dib, clipped_rects.count, clipped_rects.rects, and, xor );
+        /* fall through */
+    case R2_NOP:
+        break;
+    default:
+        ret = brush->rects( pdev, brush, &pdev->dib, clipped_rects.count, clipped_rects.rects, rop2 );
+        break;
+    }
+    free_clipped_rects( &clipped_rects );
+    return ret;
 }
 
 /***********************************************************************
@@ -945,7 +980,7 @@ BOOL dibdrv_PaintRgn( PHYSDEV dev, HRGN rgn )
         rect = get_device_rect( dev->hdc, region->rects[i].left, region->rects[i].top,
                                 region->rects[i].right, region->rects[i].bottom, FALSE );
         add_bounds_rect( &bounds, &rect );
-        brush_rect( pdev, &pdev->brush, &rect, pdev->clip, GetROP2( dev->hdc ) );
+        brush_rect( pdev, &pdev->brush, &rect, pdev->clip );
     }
 
     release_wine_region( rgn );
@@ -1142,7 +1177,7 @@ BOOL dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
         rect.top    += (pdev->pen_width + 1) / 2;
         rect.right  -= pdev->pen_width / 2;
         rect.bottom -= pdev->pen_width / 2;
-        ret = brush_rect( pdev, &pdev->brush, &rect, pdev->clip, GetROP2(dev->hdc) );
+        ret = brush_rect( pdev, &pdev->brush, &rect, pdev->clip );
     }
     return ret;
 }
