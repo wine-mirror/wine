@@ -41,6 +41,32 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
+static inline void *heap_alloc(size_t len)
+{
+    return HeapAlloc(GetProcessHeap(), 0, len);
+}
+
+static inline BOOL heap_free(void *mem)
+{
+    return HeapFree(GetProcessHeap(), 0, mem);
+}
+
+static inline WCHAR *heap_strdupW(const WCHAR *str)
+{
+    WCHAR *ret = NULL;
+
+    if(str) {
+        size_t size;
+
+        size = (strlenW(str)+1)*sizeof(WCHAR);
+        ret = heap_alloc(size);
+        if(ret)
+            memcpy(ret, str, size);
+    }
+
+    return ret;
+}
+
 /* this code is from SysAllocStringLen (ole2disp.c in oleaut32) */
 static BSTR ERRORINFO_SysAllocString(const OLECHAR* in)
 {
@@ -129,7 +155,7 @@ typedef struct ErrorInfoImpl
     LONG ref;
 
     GUID m_Guid;
-    BSTR bstrSource;
+    WCHAR *source;
     BSTR bstrDescription;
     BSTR bstrHelpFile;
     DWORD m_dwHelpContext;
@@ -203,7 +229,7 @@ static ULONG WINAPI IErrorInfoImpl_Release(
 	{
 	  TRACE("-- destroying IErrorInfo(%p)\n",This);
 
-          ERRORINFO_SysFreeString(This->bstrSource);
+          heap_free(This->source);
           ERRORINFO_SysFreeString(This->bstrDescription);
           ERRORINFO_SysFreeString(This->bstrHelpFile);
 	  HeapFree(GetProcessHeap(),0,This);
@@ -231,7 +257,7 @@ static HRESULT WINAPI IErrorInfoImpl_GetSource(
 	TRACE("(%p)->(pBstrSource=%p)\n",This,pBstrSource);
 	if (pBstrSource == NULL)
 	    return E_INVALIDARG;
-	*pBstrSource = ERRORINFO_SysAllocString(This->bstrSource);
+	*pBstrSource = SysAllocString(This->source);
 	return S_OK;
 }
 
@@ -329,9 +355,9 @@ static HRESULT WINAPI ICreateErrorInfoImpl_SetSource(
 {
 	ErrorInfoImpl *This = impl_from_ICreateErrorInfo(iface);
 	TRACE("(%p): %s\n",This, debugstr_w(szSource));
-	if (This->bstrSource != NULL)
-	    ERRORINFO_SysFreeString(This->bstrSource);
-	This->bstrSource = ERRORINFO_SysAllocString(szSource);
+
+	heap_free(This->source);
+	This->source = heap_strdupW(szSource);
 
 	return S_OK;
 }
@@ -423,7 +449,7 @@ static const ISupportErrorInfoVtbl SupportErrorInfoVtbl =
 
 static IErrorInfo* IErrorInfoImpl_Constructor(void)
 {
-    ErrorInfoImpl *This = HeapAlloc(GetProcessHeap(), 0, sizeof(ErrorInfoImpl));
+    ErrorInfoImpl *This = heap_alloc(sizeof(ErrorInfoImpl));
 
     if (!This) return NULL;
 
@@ -431,7 +457,7 @@ static IErrorInfo* IErrorInfoImpl_Constructor(void)
     This->ICreateErrorInfo_iface.lpVtbl = &CreateErrorInfoVtbl;
     This->ISupportErrorInfo_iface.lpVtbl = &SupportErrorInfoVtbl;
     This->ref = 1;
-    This->bstrSource = NULL;
+    This->source = NULL;
     This->bstrDescription = NULL;
     This->bstrHelpFile = NULL;
     This->m_dwHelpContext = 0;
