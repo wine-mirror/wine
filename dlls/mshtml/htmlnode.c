@@ -1123,6 +1123,7 @@ static nsresult NSAPI HTMLDOMNode_traverse(void *ccp, void *p, nsCycleCollection
 
     if(This->nsnode)
         note_cc_edge((nsISupports*)This->nsnode, "This->nsnode", cb);
+    dispex_traverse(&This->dispex, cb);
 
     return NS_OK;
 }
@@ -1132,6 +1133,8 @@ static nsresult NSAPI HTMLDOMNode_unlink(void *p)
     HTMLDOMNode *This = impl_from_IHTMLDOMNode(p);
 
     TRACE("%p\n", This);
+
+    dispex_unlink(&This->dispex);
 
     if(This->nsnode) {
         nsIDOMNode *nsnode = This->nsnode;

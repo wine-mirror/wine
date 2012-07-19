@@ -258,6 +258,8 @@ HRESULT dispex_get_dprop_ref(DispatchEx*,const WCHAR*,BOOL,VARIANT**) DECLSPEC_H
 HRESULT get_dispids(tid_t,DWORD*,DISPID**) DECLSPEC_HIDDEN;
 HRESULT remove_prop(DispatchEx*,BSTR,VARIANT_BOOL*) DECLSPEC_HIDDEN;
 HRESULT dispex_get_dynid(DispatchEx*,const WCHAR*,DISPID*) DECLSPEC_HIDDEN;
+void dispex_traverse(DispatchEx*,nsCycleCollectionTraversalCallback*) DECLSPEC_HIDDEN;
+void dispex_unlink(DispatchEx*) DECLSPEC_HIDDEN;
 void release_typelib(void) DECLSPEC_HIDDEN;
 HRESULT get_htmldoc_classinfo(ITypeInfo **typeinfo) DECLSPEC_HIDDEN;
 

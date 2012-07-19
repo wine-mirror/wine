@@ -1377,6 +1377,38 @@ BOOL dispex_query_interface(DispatchEx *This, REFIID riid, void **ppv)
     return TRUE;
 }
 
+void dispex_traverse(DispatchEx *This, nsCycleCollectionTraversalCallback *cb)
+{
+    dynamic_prop_t *prop;
+
+    if(!This->dynamic_data)
+        return;
+
+    for(prop = This->dynamic_data->props; prop < This->dynamic_data->props + This->dynamic_data->prop_cnt; prop++) {
+        if(V_VT(&prop->var) == VT_DISPATCH)
+            note_cc_edge((nsISupports*)V_DISPATCH(&prop->var), "dispex_data", cb);
+    }
+
+    /* FIXME: Traverse func_disps */
+}
+
+void dispex_unlink(DispatchEx *This)
+{
+    dynamic_prop_t *prop;
+
+    if(!This->dynamic_data)
+        return;
+
+    for(prop = This->dynamic_data->props; prop < This->dynamic_data->props + This->dynamic_data->prop_cnt; prop++) {
+        if(V_VT(&prop->var) == VT_DISPATCH) {
+            V_VT(&prop->var) = VT_EMPTY;
+            IDispatch_Release(V_DISPATCH(&prop->var));
+        }else {
+            VariantClear(&prop->var);
+        }
+    }
+}
+
 void release_dispex(DispatchEx *This)
 {
     dynamic_prop_t *prop;
