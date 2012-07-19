@@ -156,7 +156,7 @@ typedef struct ErrorInfoImpl
 
     GUID m_Guid;
     WCHAR *source;
-    BSTR bstrDescription;
+    WCHAR *description;
     BSTR bstrHelpFile;
     DWORD m_dwHelpContext;
 } ErrorInfoImpl;
@@ -230,7 +230,7 @@ static ULONG WINAPI IErrorInfoImpl_Release(
 	  TRACE("-- destroying IErrorInfo(%p)\n",This);
 
           heap_free(This->source);
-          ERRORINFO_SysFreeString(This->bstrDescription);
+          heap_free(This->description);
           ERRORINFO_SysFreeString(This->bstrHelpFile);
 	  HeapFree(GetProcessHeap(),0,This);
 	  return 0;
@@ -270,7 +270,7 @@ static HRESULT WINAPI IErrorInfoImpl_GetDescription(
 	TRACE("(%p)->(pBstrDescription=%p)\n",This,pBstrDescription);
 	if (pBstrDescription == NULL)
 	    return E_INVALIDARG;
-	*pBstrDescription = ERRORINFO_SysAllocString(This->bstrDescription);
+	*pBstrDescription = SysAllocString(This->description);
 
 	return S_OK;
 }
@@ -368,10 +368,9 @@ static HRESULT WINAPI ICreateErrorInfoImpl_SetDescription(
 {
 	ErrorInfoImpl *This = impl_from_ICreateErrorInfo(iface);
 	TRACE("(%p): %s\n",This, debugstr_w(szDescription));
-	if (This->bstrDescription != NULL)
-	    ERRORINFO_SysFreeString(This->bstrDescription);
-	This->bstrDescription = ERRORINFO_SysAllocString(szDescription);
 
+	heap_free(This->description);
+	This->description = heap_strdupW(szDescription);
 	return S_OK;
 }
 
@@ -458,7 +457,7 @@ static IErrorInfo* IErrorInfoImpl_Constructor(void)
     This->ISupportErrorInfo_iface.lpVtbl = &SupportErrorInfoVtbl;
     This->ref = 1;
     This->source = NULL;
-    This->bstrDescription = NULL;
+    This->description = NULL;
     This->bstrHelpFile = NULL;
     This->m_dwHelpContext = 0;
 
