@@ -115,6 +115,57 @@ static inline struct d3d10_effect_variable *impl_from_ID3D10EffectVariable(ID3D1
     return CONTAINING_RECORD(iface, struct d3d10_effect_variable, ID3D10EffectVariable_iface);
 }
 
+struct d3d10_effect_state_property_info
+{
+    UINT id;
+    const char *name;
+    D3D_SHADER_VARIABLE_TYPE type;
+    UINT size;
+    UINT count;
+    D3D_SHADER_VARIABLE_TYPE container_type;
+    LONG offset;
+};
+
+static const struct d3d10_effect_state_property_info property_info[] =
+{
+    {0x0c, "RasterizerState.FillMode",                    D3D10_SVT_INT,   1, 1, D3D10_SVT_RASTERIZER,   FIELD_OFFSET(D3D10_RASTERIZER_DESC, FillMode)                       },
+    {0x0d, "RasterizerState.CullMode",                    D3D10_SVT_INT,   1, 1, D3D10_SVT_RASTERIZER,   FIELD_OFFSET(D3D10_RASTERIZER_DESC, CullMode)                       },
+    {0x0e, "RasterizerState.FrontCounterClockwise",       D3D10_SVT_BOOL,  1, 1, D3D10_SVT_RASTERIZER,   FIELD_OFFSET(D3D10_RASTERIZER_DESC, FrontCounterClockwise)          },
+    {0x0f, "RasterizerState.DepthBias",                   D3D10_SVT_INT,   1, 1, D3D10_SVT_RASTERIZER,   FIELD_OFFSET(D3D10_RASTERIZER_DESC, DepthBias)                      },
+    {0x10, "RasterizerState.DepthBiasClamp",              D3D10_SVT_FLOAT, 1, 1, D3D10_SVT_RASTERIZER,   FIELD_OFFSET(D3D10_RASTERIZER_DESC, DepthBiasClamp)                 },
+    {0x11, "RasterizerState.SlopeScaledDepthBias",        D3D10_SVT_FLOAT, 1, 1, D3D10_SVT_RASTERIZER,   FIELD_OFFSET(D3D10_RASTERIZER_DESC, SlopeScaledDepthBias)           },
+    {0x12, "RasterizerState.DepthClipEnable",             D3D10_SVT_BOOL,  1, 1, D3D10_SVT_RASTERIZER,   FIELD_OFFSET(D3D10_RASTERIZER_DESC, DepthClipEnable)                },
+    {0x13, "RasterizerState.ScissorEnable",               D3D10_SVT_BOOL,  1, 1, D3D10_SVT_RASTERIZER,   FIELD_OFFSET(D3D10_RASTERIZER_DESC, ScissorEnable)                  },
+    {0x14, "RasterizerState.MultisampleEnable",           D3D10_SVT_BOOL,  1, 1, D3D10_SVT_RASTERIZER,   FIELD_OFFSET(D3D10_RASTERIZER_DESC, MultisampleEnable)              },
+    {0x15, "RasterizerState.AntialiasedLineEnable",       D3D10_SVT_BOOL,  1, 1, D3D10_SVT_RASTERIZER,   FIELD_OFFSET(D3D10_RASTERIZER_DESC, AntialiasedLineEnable)          },
+};
+
+static const D3D10_RASTERIZER_DESC default_rasterizer_desc =
+{
+    D3D10_FILL_SOLID,
+    D3D10_CULL_BACK,
+    FALSE,
+    0,
+    0.0f,
+    0.0f,
+    TRUE,
+    FALSE,
+    FALSE,
+    FALSE,
+};
+
+struct d3d10_effect_state_storage_info
+{
+    D3D_SHADER_VARIABLE_TYPE id;
+    size_t size;
+    const void *default_state;
+};
+
+static const struct d3d10_effect_state_storage_info d3d10_effect_state_storage_info[] =
+{
+    {D3D10_SVT_RASTERIZER,   sizeof(default_rasterizer_desc),    &default_rasterizer_desc   },
+};
+
 static BOOL copy_name(const char *ptr, char **name)
 {
     size_t name_len;
@@ -903,6 +954,32 @@ static HRESULT parse_fx10_anonymous_shader(struct d3d10_effect *e, struct d3d10_
     return S_OK;
 }
 
+const struct d3d10_effect_state_property_info *get_property_info(UINT id)
+{
+    unsigned int i;
+
+    for (i = 0; i < sizeof(property_info) / sizeof(*property_info); ++i)
+    {
+        if (property_info[i].id == id)
+            return &property_info[i];
+    }
+
+    return NULL;
+}
+
+static const struct d3d10_effect_state_storage_info *get_storage_info(D3D_SHADER_VARIABLE_TYPE id)
+{
+    unsigned int i;
+
+    for (i = 0; i < sizeof(d3d10_effect_state_storage_info) / sizeof(*d3d10_effect_state_storage_info); ++i)
+    {
+        if (d3d10_effect_state_storage_info[i].id == id)
+            return &d3d10_effect_state_storage_info[i];
+    }
+
+    return NULL;
+}
+
 static BOOL read_float_value(DWORD value, D3D_SHADER_VARIABLE_TYPE in_type, float *out_data, UINT idx)
 {
     switch (in_type)
@@ -926,6 +1003,7 @@ static BOOL read_int32_value(DWORD value, D3D_SHADER_VARIABLE_TYPE in_type, INT 
             return TRUE;
 
         case D3D10_SVT_INT:
+        case D3D10_SVT_BOOL:
             out_data[idx] = value;
             return TRUE;
 
@@ -936,7 +1014,7 @@ static BOOL read_int32_value(DWORD value, D3D_SHADER_VARIABLE_TYPE in_type, INT 
 }
 
 static BOOL read_value_list(const char *ptr, D3D_SHADER_VARIABLE_TYPE out_type,
-        UINT out_size, void *out_data)
+        UINT out_base, UINT out_size, void *out_data)
 {
     D3D_SHADER_VARIABLE_TYPE in_type;
     DWORD t, value;
@@ -949,6 +1027,8 @@ static BOOL read_value_list(const char *ptr, D3D_SHADER_VARIABLE_TYPE out_type,
     TRACE("%u values:\n", count);
     for (i = 0; i < count; ++i)
     {
+        UINT out_idx = out_base * out_size + i;
+
         read_dword(&ptr, &t);
         read_dword(&ptr, &value);
 
@@ -958,18 +1038,72 @@ static BOOL read_value_list(const char *ptr, D3D_SHADER_VARIABLE_TYPE out_type,
         switch (out_type)
         {
             case D3D10_SVT_FLOAT:
-                if (!read_float_value(value, in_type, out_data, i))
+                if (!read_float_value(value, in_type, out_data, out_idx))
                     return FALSE;
                 break;
 
+            case D3D10_SVT_INT:
             case D3D10_SVT_UINT:
-                if (!read_int32_value(value, in_type, out_data, i))
+            case D3D10_SVT_BOOL:
+                if (!read_int32_value(value, in_type, out_data, out_idx))
                     return FALSE;
                 break;
 
             default:
                 FIXME("Unhandled out_type %#x.\n", out_type);
                 return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
+static BOOL parse_fx10_state_group(const char **ptr, const char *data,
+        D3D_SHADER_VARIABLE_TYPE container_type, void *container)
+{
+    const struct d3d10_effect_state_property_info *property_info;
+    UINT value_offset;
+    unsigned int i;
+    DWORD count;
+    UINT idx;
+    UINT id;
+
+    read_dword(ptr, &count);
+    TRACE("Property count: %#x.\n", count);
+
+    for (i = 0; i < count; ++i)
+    {
+        read_dword(ptr, &id);
+        read_dword(ptr, &idx);
+        skip_dword_unknown("read property", ptr, 1);
+        read_dword(ptr, &value_offset);
+
+        if (!(property_info = get_property_info(id)))
+        {
+            FIXME("Failed to find property info for property %#x.\n", id);
+            return FALSE;
+        }
+
+        TRACE("Property %s[%#x] = value list @ offset %#x.\n",
+                property_info->name, idx, value_offset);
+
+        if (property_info->container_type != container_type)
+        {
+            ERR("FAIL1\n");
+            return FALSE;
+        }
+
+        if (idx >= property_info->count)
+        {
+            ERR("FAIL2\n");
+            return FALSE;
+        }
+
+        if (!read_value_list(data + value_offset, property_info->type, idx,
+                property_info->size, (char *)container + property_info->offset))
+        {
+            ERR("FAIL3\n");
+            return FALSE;
         }
     }
 
@@ -1023,7 +1157,7 @@ static HRESULT parse_fx10_object(struct d3d10_effect_object *o, const char **ptr
                     break;
 
                 case D3D10_EOT_STENCIL_REF:
-                    if (!read_value_list(data + offset, D3D10_SVT_UINT, 1, &o->pass->stencil_ref))
+                    if (!read_value_list(data + offset, D3D10_SVT_UINT, 0, 1, &o->pass->stencil_ref))
                     {
                         ERR("Failed to read stencil ref.\n");
                         return E_FAIL;
@@ -1033,7 +1167,7 @@ static HRESULT parse_fx10_object(struct d3d10_effect_object *o, const char **ptr
                     break;
 
                 case D3D10_EOT_SAMPLE_MASK:
-                    if (!read_value_list(data + offset, D3D10_SVT_UINT, 1, &o->pass->sample_mask))
+                    if (!read_value_list(data + offset, D3D10_SVT_UINT, 0, 1, &o->pass->sample_mask))
                     {
                         FIXME("Failed to read sample mask.\n");
                         return E_FAIL;
@@ -1043,7 +1177,7 @@ static HRESULT parse_fx10_object(struct d3d10_effect_object *o, const char **ptr
                     break;
 
                 case D3D10_EOT_BLEND_FACTOR:
-                    if (!read_value_list(data + offset, D3D10_SVT_FLOAT, 4, &o->pass->blend_factor[0]))
+                    if (!read_value_list(data + offset, D3D10_SVT_FLOAT, 0, 4, &o->pass->blend_factor[0]))
                     {
                         FIXME("Failed to read blend factor.\n");
                         return E_FAIL;
@@ -1370,7 +1504,6 @@ static HRESULT parse_fx10_local_variable(struct d3d10_effect_variable *v, const 
 
         case D3D10_SVT_DEPTHSTENCIL:
         case D3D10_SVT_BLEND:
-        case D3D10_SVT_RASTERIZER:
         case D3D10_SVT_SAMPLER:
             TRACE("SVT is a state.\n");
             for (i = 0; i < max(v->type->element_count, 1); ++i)
@@ -1385,6 +1518,41 @@ static HRESULT parse_fx10_local_variable(struct d3d10_effect_variable *v, const 
                 {
                     skip_dword_unknown("state object attribute", ptr, 4);
                 }
+            }
+            break;
+
+        case D3D10_SVT_RASTERIZER:
+            {
+                const struct d3d10_effect_state_storage_info *storage_info;
+                unsigned int count = max(v->type->element_count, 1);
+                unsigned char *desc;
+
+                if (!(storage_info = get_storage_info(v->type->basetype)))
+                {
+                    FIXME("Failed to get backing store info for type %s.\n",
+                            debug_d3d10_shader_variable_type(v->type->basetype));
+                    return E_FAIL;
+                }
+
+                if (!(desc = HeapAlloc(GetProcessHeap(), 0, count * storage_info->size)))
+                {
+                    ERR("Failed to allocate backing store memory.\n");
+                    return E_OUTOFMEMORY;
+                }
+
+                for (i = 0; i < count; ++i)
+                {
+                    memcpy(&desc[i * storage_info->size], storage_info->default_state, storage_info->size);
+
+                    if (!parse_fx10_state_group(ptr, data, v->type->basetype, &desc[i * storage_info->size]))
+                    {
+                        ERR("Failed to read property list.\n");
+                        HeapFree(GetProcessHeap(), 0, desc);
+                        return E_FAIL;
+                    }
+                }
+
+                v->data = desc;
             }
             break;
 
