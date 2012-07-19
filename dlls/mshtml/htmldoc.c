@@ -2085,8 +2085,10 @@ static void HTMLDocumentNode_destructor(HTMLDOMNode *iface)
     while(!list_empty(&This->plugin_hosts))
         detach_plugin_host(LIST_ENTRY(list_head(&This->plugin_hosts), PluginHost, entry));
 
-    if(This->nsdoc)
+    if(This->nsdoc) {
         release_document_mutation(This);
+        nsIDOMHTMLDocument_Release(This->nsdoc);
+    }
 
     heap_free(This->event_vector);
     destroy_htmldoc(&This->basedoc);
@@ -2099,10 +2101,44 @@ static HRESULT HTMLDocumentNode_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, HT
     return E_NOTIMPL;
 }
 
+static void HTMLDocumentNode_traverse(HTMLDOMNode *iface, nsCycleCollectionTraversalCallback *cb)
+{
+    HTMLDocumentNode *This = impl_from_HTMLDOMNode(iface);
+
+    if(This->nsdoc)
+        note_cc_edge((nsISupports*)This->nsdoc, "This->nsdoc", cb);
+}
+
+static void HTMLDocumentNode_unlink(HTMLDOMNode *iface)
+{
+    HTMLDocumentNode *This = impl_from_HTMLDOMNode(iface);
+
+    if(This->nsdoc) {
+        nsIDOMHTMLDocument *nsdoc = This->nsdoc;
+
+        release_document_mutation(This);
+        This->nsdoc = NULL;
+        nsIDOMHTMLDocument_Release(nsdoc);
+    }
+}
+
 static const NodeImplVtbl HTMLDocumentNodeImplVtbl = {
     HTMLDocumentNode_QI,
     HTMLDocumentNode_destructor,
-    HTMLDocumentNode_clone
+    HTMLDocumentNode_clone,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    HTMLDocumentNode_traverse,
+    HTMLDocumentNode_unlink
 };
 
 static HRESULT HTMLDocumentFragment_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, HTMLDOMNode **ret)
@@ -2236,8 +2272,7 @@ HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocumentObj *doc_ob
 
     HTMLDOMNode_Init(doc, &doc->node, (nsIDOMNode*)nsdoc);
 
-    /* No AddRef, share the reference with nsnode */
-    assert((nsIDOMNode*)nsdoc == doc->node.nsnode);
+    nsIDOMHTMLDocument_AddRef(nsdoc);
     doc->nsdoc = nsdoc;
 
     init_document_mutation(doc);

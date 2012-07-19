@@ -587,6 +587,8 @@ typedef struct {
     HRESULT (*get_dispid)(HTMLDOMNode*,BSTR,DWORD,DISPID*);
     HRESULT (*invoke)(HTMLDOMNode*,DISPID,LCID,WORD,DISPPARAMS*,VARIANT*,EXCEPINFO*,IServiceProvider*);
     HRESULT (*bind_to_tree)(HTMLDOMNode*);
+    void (*traverse)(HTMLDOMNode*,nsCycleCollectionTraversalCallback*);
+    void (*unlink)(HTMLDOMNode*);
 } NodeImplVtbl;
 
 struct HTMLDOMNode {

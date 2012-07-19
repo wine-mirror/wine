@@ -1125,6 +1125,9 @@ static nsresult NSAPI HTMLDOMNode_traverse(void *ccp, void *p, nsCycleCollection
         note_cc_edge((nsISupports*)This->nsnode, "This->nsnode", cb);
     dispex_traverse(&This->dispex, cb);
 
+    if(This->vtbl->traverse)
+        This->vtbl->traverse(This, cb);
+
     return NS_OK;
 }
 
@@ -1133,6 +1136,9 @@ static nsresult NSAPI HTMLDOMNode_unlink(void *p)
     HTMLDOMNode *This = impl_from_IHTMLDOMNode(p);
 
     TRACE("%p\n", This);
+
+    if(This->vtbl->unlink)
+        This->vtbl->unlink(This);
 
     dispex_unlink(&This->dispex);
 
