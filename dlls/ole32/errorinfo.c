@@ -67,86 +67,6 @@ static inline WCHAR *heap_strdupW(const WCHAR *str)
     return ret;
 }
 
-/* this code is from SysAllocStringLen (ole2disp.c in oleaut32) */
-static BSTR ERRORINFO_SysAllocString(const OLECHAR* in)
-{
-    DWORD  bufferSize;
-    DWORD* newBuffer;
-    WCHAR* stringBuffer;
-    DWORD len;
-
-    if (in == NULL)
-	return NULL;
-    /*
-     * Find the length of the buffer passed-in, in bytes.
-     */
-    len = strlenW(in);
-    bufferSize = len * sizeof (WCHAR);
-
-    /*
-     * Allocate a new buffer to hold the string.
-     * don't forget to keep an empty spot at the beginning of the
-     * buffer for the character count and an extra character at the
-     * end for the '\0'.
-     */
-    newBuffer = HeapAlloc(GetProcessHeap(), 0,
-                                 bufferSize + sizeof(WCHAR) + sizeof(DWORD));
-
-    /*
-     * If the memory allocation failed, return a null pointer.
-     */
-    if (newBuffer==0)
-      return 0;
-
-    /*
-     * Copy the length of the string in the placeholder.
-     */
-    *newBuffer = bufferSize;
-
-    /*
-     * Skip the byte count.
-     */
-    newBuffer++;
-
-    /*
-     * Copy the information in the buffer.  It is not possible to pass 
-     * a NULL pointer here. 
-     */
-    memcpy(newBuffer, in, bufferSize);
-
-    /*
-     * Make sure that there is a nul character at the end of the
-     * string.
-     */
-    stringBuffer = (WCHAR*)newBuffer;
-    stringBuffer[len] = 0;
-
-    return stringBuffer;
-}
-
-/* this code is from SysFreeString (ole2disp.c in oleaut32)*/
-static VOID ERRORINFO_SysFreeString(BSTR in)
-{
-    DWORD* bufferPointer;
-
-    /* NULL is a valid parameter */
-    if(!in) return;
-
-    /*
-     * We have to be careful when we free a BSTR pointer, it points to
-     * the beginning of the string but it skips the byte count contained
-     * before the string.
-     */
-    bufferPointer = (DWORD*)in;
-
-    bufferPointer--;
-
-    /*
-     * Free the memory from it's "real" origin.
-     */
-    HeapFree(GetProcessHeap(), 0, bufferPointer);
-}
-
 typedef struct ErrorInfoImpl
 {
     IErrorInfo IErrorInfo_iface;
@@ -157,7 +77,7 @@ typedef struct ErrorInfoImpl
     GUID m_Guid;
     WCHAR *source;
     WCHAR *description;
-    BSTR bstrHelpFile;
+    WCHAR *help_file;
     DWORD m_dwHelpContext;
 } ErrorInfoImpl;
 
@@ -231,9 +151,8 @@ static ULONG WINAPI IErrorInfoImpl_Release(
 
           heap_free(This->source);
           heap_free(This->description);
-          ERRORINFO_SysFreeString(This->bstrHelpFile);
-	  HeapFree(GetProcessHeap(),0,This);
-	  return 0;
+          heap_free(This->help_file);
+          heap_free(This);
 	}
 	return ref;
 }
@@ -284,7 +203,7 @@ static HRESULT WINAPI IErrorInfoImpl_GetHelpFile(
 	TRACE("(%p)->(pBstrHelpFile=%p)\n",This, pBstrHelpFile);
 	if (pBstrHelpFile == NULL)
 	    return E_INVALIDARG;
-	*pBstrHelpFile = ERRORINFO_SysAllocString(This->bstrHelpFile);
+	*pBstrHelpFile = SysAllocString(This->help_file);
 
 	return S_OK;
 }
@@ -380,9 +299,8 @@ static HRESULT WINAPI ICreateErrorInfoImpl_SetHelpFile(
 {
 	ErrorInfoImpl *This = impl_from_ICreateErrorInfo(iface);
 	TRACE("(%p,%s)\n",This,debugstr_w(szHelpFile));
-	if (This->bstrHelpFile != NULL)
-	    ERRORINFO_SysFreeString(This->bstrHelpFile);
-	This->bstrHelpFile = ERRORINFO_SysAllocString(szHelpFile);
+	heap_free(This->help_file);
+	This->help_file = heap_strdupW(szHelpFile);
 	return S_OK;
 }
 
@@ -458,7 +376,7 @@ static IErrorInfo* IErrorInfoImpl_Constructor(void)
     This->ref = 1;
     This->source = NULL;
     This->description = NULL;
-    This->bstrHelpFile = NULL;
+    This->help_file = NULL;
     This->m_dwHelpContext = 0;
 
     return &This->IErrorInfo_iface;
