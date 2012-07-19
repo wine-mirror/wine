@@ -3337,7 +3337,7 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device, DWO
                     warned = TRUE;
                 }
 
-                *( (DWORD *) dest_ptr) = 0xFF000000;
+                *(DWORD *)dest_ptr = 0xff000000;
                 dest_ptr += sizeof(DWORD);
             }
             else

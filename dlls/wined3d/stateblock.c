@@ -1228,7 +1228,7 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
     state->render_states[WINED3D_RS_COLORWRITEENABLE1] = 0x0000000f;
     state->render_states[WINED3D_RS_COLORWRITEENABLE2] = 0x0000000f;
     state->render_states[WINED3D_RS_COLORWRITEENABLE3] = 0x0000000f;
-    state->render_states[WINED3D_RS_BLENDFACTOR] = 0xFFFFFFFF;
+    state->render_states[WINED3D_RS_BLENDFACTOR] = 0xffffffff;
     state->render_states[WINED3D_RS_SRGBWRITEENABLE] = 0;
     state->render_states[WINED3D_RS_DEPTHBIAS] = 0;
     state->render_states[WINED3D_RS_WRAP8] = 0;

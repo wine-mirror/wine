@@ -586,7 +586,7 @@ static void shaderconstant(struct wined3d_context *context, const struct wined3d
 
 static void state_clipping(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    DWORD enable  = 0xFFFFFFFF;
+    DWORD enable  = 0xffffffff;
     DWORD disable = 0x00000000;
 
     if (use_vs(state))
@@ -3819,7 +3819,7 @@ static void transform_worldex(struct wined3d_context *context, const struct wine
      * GL_MODELVIEW2_ARB:  0x8722
      * GL_MODELVIEW3_ARB:  0x8723
      * etc
-     * GL_MODELVIEW31_ARB: 0x873F
+     * GL_MODELVIEW31_ARB: 0x873f
      */
     if(matrix == 1) glMat = GL_MODELVIEW1_ARB;
     else glMat = GL_MODELVIEW2_ARB - 2 + matrix;

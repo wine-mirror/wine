@@ -3820,9 +3820,9 @@ do { \
             BYTE *d = buf;
             for (x = 0; x < width; ++x, d += 3)
             {
-                d[0] = (color      ) & 0xFF;
-                d[1] = (color >>  8) & 0xFF;
-                d[2] = (color >> 16) & 0xFF;
+                d[0] = (color      ) & 0xff;
+                d[1] = (color >>  8) & 0xff;
+                d[2] = (color >> 16) & 0xff;
             }
             break;
         }
@@ -4635,7 +4635,7 @@ void d3dfmt_p8_init_palette(const struct wined3d_surface *surface, BYTE table[25
             else if (pal->flags & WINEDDPCAPS_ALPHA)
                 table[i][3] = pal->palents[i].peFlags;
             else
-                table[i][3] = 0xFF;
+                table[i][3] = 0xff;
         }
     }
 }
@@ -4704,7 +4704,7 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
                 Dest = (WORD *) (dst + y * outpitch);
                 for (x = 0; x < width; x++ ) {
                     WORD color = *Source++;
-                    *Dest = ((color & 0xFFC0) | ((color & 0x1F) << 1));
+                    *Dest = ((color & 0xffc0) | ((color & 0x1f) << 1));
                     if (!color_in_range(&surface->src_blt_color_key, color))
                         *Dest |= 0x0001;
                     Dest++;
@@ -6757,7 +6757,7 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
             case BLACKNESS:
                 hr = _Blt_ColorFill(dbuf, dstwidth, dstheight, bpp, dst_map.row_pitch, 0);
                 break;
-            case 0xAA0029: /* No-op */
+            case 0xaa0029: /* No-op */
                 break;
             case WHITENESS:
                 hr = _Blt_ColorFill(dbuf, dstwidth, dstheight, bpp, dst_map.row_pitch, ~0U);
@@ -6916,8 +6916,8 @@ do { \
         else
         {
             LONG dstyinc = dst_map.row_pitch, dstxinc = bpp;
-            DWORD keylow = 0xFFFFFFFF, keyhigh = 0, keymask = 0xFFFFFFFF;
-            DWORD destkeylow = 0x0, destkeyhigh = 0xFFFFFFFF, destkeymask = 0xFFFFFFFF;
+            DWORD keylow = 0xffffffff, keyhigh = 0, keymask = 0xffffffff;
+            DWORD destkeylow = 0x0, destkeyhigh = 0xffffffff, destkeymask = 0xffffffff;
             if (flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYDEST | WINEDDBLT_KEYSRCOVERRIDE | WINEDDBLT_KEYDESTOVERRIDE))
             {
                 /* The color keying flags are checked for correctness in ddraw */

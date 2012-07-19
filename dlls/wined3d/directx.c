@@ -4914,8 +4914,8 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
                                   WINED3DVTXPCAPS_VERTEXFOG         |
                                   WINED3DVTXPCAPS_TEXGEN;
 
-    caps->MaxPrimitiveCount   = 0xFFFFF; /* For now set 2^20-1 which is used by most >=Geforce3/Radeon8500 cards */
-    caps->MaxVertexIndex      = 0xFFFFF;
+    caps->MaxPrimitiveCount   = 0xfffff; /* For now set 2^20-1 which is used by most >=Geforce3/Radeon8500 cards */
+    caps->MaxVertexIndex      = 0xfffff;
     caps->MaxStreams          = MAX_STREAMS;
     caps->MaxStreamStride     = 1024;
 

@@ -187,10 +187,11 @@ static inline GLenum wined3d_gl_min_mip_filter(const struct min_lookup min_mip_l
  *
  * See GL_NV_half_float for a reference of the FLOAT16 / GL_HALF format
  */
-static inline float float_16_to_32(const unsigned short *in) {
+static inline float float_16_to_32(const unsigned short *in)
+{
     const unsigned short s = ((*in) & 0x8000);
-    const unsigned short e = ((*in) & 0x7C00) >> 10;
-    const unsigned short m = (*in) & 0x3FF;
+    const unsigned short e = ((*in) & 0x7c00) >> 10;
+    const unsigned short m = (*in) & 0x3ff;
     const float sgn = (s ? -1.0f : 1.0f);
 
     if(e == 0) {
@@ -800,15 +801,15 @@ extern int num_lock DECLSPEC_HIDDEN;
 /* ------------------ */
 #define GL_EXTCALL(f) (gl_info->f)
 
-#define D3DCOLOR_B_R(dw) (((dw) >> 16) & 0xFF)
-#define D3DCOLOR_B_G(dw) (((dw) >>  8) & 0xFF)
-#define D3DCOLOR_B_B(dw) (((dw) >>  0) & 0xFF)
-#define D3DCOLOR_B_A(dw) (((dw) >> 24) & 0xFF)
+#define D3DCOLOR_B_R(dw) (((dw) >> 16) & 0xff)
+#define D3DCOLOR_B_G(dw) (((dw) >>  8) & 0xff)
+#define D3DCOLOR_B_B(dw) (((dw) >>  0) & 0xff)
+#define D3DCOLOR_B_A(dw) (((dw) >> 24) & 0xff)
 
-#define D3DCOLOR_R(dw) (((float) (((dw) >> 16) & 0xFF)) / 255.0f)
-#define D3DCOLOR_G(dw) (((float) (((dw) >>  8) & 0xFF)) / 255.0f)
-#define D3DCOLOR_B(dw) (((float) (((dw) >>  0) & 0xFF)) / 255.0f)
-#define D3DCOLOR_A(dw) (((float) (((dw) >> 24) & 0xFF)) / 255.0f)
+#define D3DCOLOR_R(dw) (((float) (((dw) >> 16) & 0xff)) / 255.0f)
+#define D3DCOLOR_G(dw) (((float) (((dw) >>  8) & 0xff)) / 255.0f)
+#define D3DCOLOR_B(dw) (((float) (((dw) >>  0) & 0xff)) / 255.0f)
+#define D3DCOLOR_A(dw) (((float) (((dw) >> 24) & 0xff)) / 255.0f)
 
 #define D3DCOLORTOGLFLOAT4(dw, vec) do { \
   (vec)[0] = D3DCOLOR_R(dw); \
@@ -1329,10 +1330,10 @@ enum wined3d_pci_device
     CARD_AMD_RADEON_HD6550D         = 0x9640,
     CARD_AMD_RADEON_HD6600          = 0x6758,
     CARD_AMD_RADEON_HD6600M         = 0x6741,
-    CARD_AMD_RADEON_HD6700          = 0x68BA,
+    CARD_AMD_RADEON_HD6700          = 0x68ba,
     CARD_AMD_RADEON_HD6800          = 0x6739,
     CARD_AMD_RADEON_HD6900          = 0x6719,
-    CARD_AMD_RADEON_HD7900          = 0x679A,
+    CARD_AMD_RADEON_HD7900          = 0x679a,
 
     CARD_NVIDIA_RIVA_128            = 0x0018,
     CARD_NVIDIA_RIVA_TNT            = 0x0020,
@@ -1353,7 +1354,7 @@ enum wined3d_pci_device
     CARD_NVIDIA_GEFORCE_7300        = 0x01d7, /* GeForce Go 7300 */
     CARD_NVIDIA_GEFORCE_7600        = 0x0391,
     CARD_NVIDIA_GEFORCE_7800GT      = 0x0092,
-    CARD_NVIDIA_GEFORCE_8200        = 0x0849, /* Other PCI ID 0x084B */
+    CARD_NVIDIA_GEFORCE_8200        = 0x0849, /* Other PCI ID 0x084b */
     CARD_NVIDIA_GEFORCE_8300GS      = 0x0423,
     CARD_NVIDIA_GEFORCE_8400GS      = 0x0404,
     CARD_NVIDIA_GEFORCE_8500GT      = 0x0421,

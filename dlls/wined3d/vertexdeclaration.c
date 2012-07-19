@@ -315,7 +315,7 @@ static unsigned int convert_fvf_to_declaration(const struct wined3d_gl_info *gl_
     BOOL has_specular = !!(fvf & WINED3DFVF_SPECULAR);
 
     DWORD num_textures = (fvf & WINED3DFVF_TEXCOUNT_MASK) >> WINED3DFVF_TEXCOUNT_SHIFT;
-    DWORD texcoords = (fvf & 0xFFFF0000) >> 16;
+    DWORD texcoords = (fvf & 0xffff0000) >> 16;
     struct wined3d_fvf_convert_state state;
     unsigned int size;
     unsigned int idx;
