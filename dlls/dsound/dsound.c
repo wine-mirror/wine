@@ -116,37 +116,6 @@ static void _dump_DSBCAPS(DWORD xmask) {
             TRACE("%s ",flags[i].name);
 }
 
-/*******************************************************************************
- *		IDirectSoundImpl_DirectSound
- */
-static HRESULT DSOUND_QueryInterface(
-    LPDIRECTSOUND8 iface,
-    REFIID riid,
-    LPVOID * ppobj)
-{
-    IDirectSoundImpl *This = (IDirectSoundImpl *)iface;
-    TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
-
-    if (ppobj == NULL) {
-        WARN("invalid parameter\n");
-        return E_INVALIDARG;
-    }
-
-    if (IsEqualIID(riid, &IID_IUnknown)) {
-        IUnknown_AddRef(&This->IUnknown_iface);
-        *ppobj = &This->IUnknown_iface;
-        return S_OK;
-    } else if (IsEqualIID(riid, &IID_IDirectSound) || (This->has_ds8 && IsEqualIID(riid, &IID_IDirectSound8))) {
-        IDirectSound8_AddRef(&This->IDirectSound8_iface);
-        *ppobj = &This->IDirectSound8_iface;
-        return S_OK;
-    }
-
-    *ppobj = NULL;
-    WARN("Unknown IID %s\n",debugstr_guid(riid));
-    return E_NOINTERFACE;
-}
-
 static void directsound_destroy(IDirectSoundImpl *This)
 {
     if (This->device)
@@ -166,8 +135,27 @@ static inline IDirectSoundImpl *impl_from_IUnknown(IUnknown *iface)
 static HRESULT WINAPI IUnknownImpl_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
 {
     IDirectSoundImpl *This = impl_from_IUnknown(iface);
+
     TRACE("(%p,%s,%p)\n", This, debugstr_guid(riid), ppv);
-    return DSOUND_QueryInterface((IDirectSound8 *)This, riid, ppv);
+
+    if (!ppv) {
+        WARN("invalid parameter\n");
+        return E_INVALIDARG;
+    }
+    *ppv = NULL;
+
+    if (IsEqualIID(riid, &IID_IUnknown))
+        *ppv = &This->IUnknown_iface;
+    else if (IsEqualIID(riid, &IID_IDirectSound) ||
+            (IsEqualIID(riid, &IID_IDirectSound8) && This->has_ds8))
+        *ppv = &This->IDirectSound8_iface;
+    else {
+        WARN("unknown IID %s\n", debugstr_guid(riid));
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
 }
 
 static ULONG WINAPI IUnknownImpl_AddRef(IUnknown *iface)
