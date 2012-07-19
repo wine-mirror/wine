@@ -7399,7 +7399,7 @@ HRESULT arbfp_blit_surface(struct wined3d_device *device, DWORD filter,
     if (wined3d_settings.strict_draw_ordering
             || (dst_surface->container.type == WINED3D_CONTAINER_SWAPCHAIN
             && (dst_surface->container.u.swapchain->front_buffer == dst_surface)))
-        wglFlush(); /* Flush to ensure ordering across contexts. */
+        glFlush(); /* Flush to ensure ordering across contexts. */
 
     context_release(context);
 

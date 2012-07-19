@@ -635,7 +635,7 @@ static void buffer_sync_apple(struct wined3d_buffer *This, DWORD flags, const st
         }
 
         /* Since we don't know about old draws a glFinish is needed once */
-        wglFinish();
+        glFinish();
         return;
     }
     TRACE("Synchronizing buffer %p\n", This);
@@ -663,7 +663,7 @@ drop_query:
         This->query = NULL;
     }
 
-    wglFinish();
+    glFinish();
     ENTER_GL();
     GL_EXTCALL(glBufferParameteriAPPLE(This->buffer_type_hint, GL_BUFFER_SERIALIZED_MODIFY_APPLE, GL_TRUE));
     checkGLcall("glBufferParameteriAPPLE(This->buffer_type_hint, GL_BUFFER_SERIALIZED_MODIFY_APPLE, GL_TRUE)");
@@ -1195,7 +1195,7 @@ void CDECL wined3d_buffer_unmap(struct wined3d_buffer *buffer)
 
         GL_EXTCALL(glUnmapBufferARB(buffer->buffer_type_hint));
         LEAVE_GL();
-        if (wined3d_settings.strict_draw_ordering) wglFlush(); /* Flush to ensure ordering across contexts. */
+        if (wined3d_settings.strict_draw_ordering) glFlush(); /* Flush to ensure ordering across contexts. */
         context_release(context);
 
         buffer->resource.allocatedMemory = NULL;

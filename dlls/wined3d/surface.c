@@ -1136,7 +1136,7 @@ static void wined3d_surface_depth_blt_fbo(const struct wined3d_device *device, s
     LEAVE_GL();
 
     if (wined3d_settings.strict_draw_ordering)
-        wglFlush(); /* Flush to ensure ordering across contexts. */
+        glFlush(); /* Flush to ensure ordering across contexts. */
 
     context_release(context);
 }
@@ -1259,7 +1259,7 @@ static void surface_blt_fbo(const struct wined3d_device *device, enum wined3d_te
     if (wined3d_settings.strict_draw_ordering
             || (dst_location == SFLAG_INDRAWABLE
             && dst_surface->container.u.swapchain->front_buffer == dst_surface))
-        wglFlush();
+        glFlush();
 
     context_release(context);
 }
@@ -2378,7 +2378,7 @@ static void surface_upload_data(struct wined3d_surface *surface, const struct wi
     LEAVE_GL();
 
     if (wined3d_settings.strict_draw_ordering)
-        wglFlush();
+        glFlush();
 
     if (gl_info->quirks & WINED3D_QUIRK_FBO_TEX_UPDATE)
     {
@@ -4575,7 +4575,7 @@ static void flush_to_framebuffer_drawpixels(struct wined3d_surface *surface,
     if (wined3d_settings.strict_draw_ordering
             || (surface->container.type == WINED3D_CONTAINER_SWAPCHAIN
             && surface->container.u.swapchain->front_buffer == surface))
-        wglFlush();
+        glFlush();
 
     context_release(context);
 }
@@ -5260,7 +5260,7 @@ static void fb_copy_to_texture_hwstretch(struct wined3d_surface *dst_surface, st
 
     LEAVE_GL();
 
-    if (wined3d_settings.strict_draw_ordering) wglFlush(); /* Flush to ensure ordering across contexts. */
+    if (wined3d_settings.strict_draw_ordering) glFlush(); /* Flush to ensure ordering across contexts. */
 
     context_release(context);
 
@@ -5363,7 +5363,7 @@ static void surface_blt_to_drawable(const struct wined3d_device *device,
     if (wined3d_settings.strict_draw_ordering
             || (dst_surface->container.type == WINED3D_CONTAINER_SWAPCHAIN
             && (dst_surface->container.u.swapchain->front_buffer == dst_surface)))
-        wglFlush(); /* Flush to ensure ordering across contexts. */
+        glFlush(); /* Flush to ensure ordering across contexts. */
 
     context_release(context);
 }
@@ -5794,7 +5794,7 @@ void surface_load_ds_location(struct wined3d_surface *surface, struct wined3d_co
 
         LEAVE_GL();
 
-        if (wined3d_settings.strict_draw_ordering) wglFlush(); /* Flush to ensure ordering across contexts. */
+        if (wined3d_settings.strict_draw_ordering) glFlush(); /* Flush to ensure ordering across contexts. */
     }
     else if (location == SFLAG_INDRAWABLE)
     {
@@ -5812,7 +5812,7 @@ void surface_load_ds_location(struct wined3d_surface *surface, struct wined3d_co
 
         LEAVE_GL();
 
-        if (wined3d_settings.strict_draw_ordering) wglFlush(); /* Flush to ensure ordering across contexts. */
+        if (wined3d_settings.strict_draw_ordering) glFlush(); /* Flush to ensure ordering across contexts. */
     }
     else
     {

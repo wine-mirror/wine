@@ -1095,6 +1095,8 @@ void (WINE_GLAPI *glEvalMesh2)(GLenum mode, GLint i1, GLint i2, GLint j1, GLint 
 void (WINE_GLAPI *glEvalPoint1)(GLint i) DECLSPEC_HIDDEN;
 void (WINE_GLAPI *glEvalPoint2)(GLint i, GLint j) DECLSPEC_HIDDEN;
 void (WINE_GLAPI *glFeedbackBuffer)(GLsizei size, GLenum type, GLfloat *buffer) DECLSPEC_HIDDEN;
+void (WINE_GLAPI *glFinish)(void) DECLSPEC_HIDDEN;
+void (WINE_GLAPI *glFlush)(void) DECLSPEC_HIDDEN;
 void (WINE_GLAPI *glFogf)(GLenum pname, GLfloat param) DECLSPEC_HIDDEN;
 void (WINE_GLAPI *glFogfv)(GLenum pname, const GLfloat *params) DECLSPEC_HIDDEN;
 void (WINE_GLAPI *glFogi)(GLenum pname, GLint param) DECLSPEC_HIDDEN;
@@ -1353,15 +1355,6 @@ void (WINE_GLAPI *glVertex4sv)(const GLshort *v) DECLSPEC_HIDDEN;
 void (WINE_GLAPI *glVertexPointer)(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer) DECLSPEC_HIDDEN;
 void (WINE_GLAPI *glViewport)(GLint x, GLint y, GLsizei width, GLsizei height) DECLSPEC_HIDDEN;
 
-/* glFinish and glFlush are always loaded from opengl32.dll, thus they always have
- * __stdcall calling convention.
- *
- * They are wgl functions and must not be called inside the gl lock, give them a
- * name that makes this clear
- */
-void (__stdcall *wglFinish)(void) DECLSPEC_HIDDEN;
-void (__stdcall *wglFlush)(void) DECLSPEC_HIDDEN;
-
 /* WGL functions */
 HGLRC (WINAPI *pwglCreateContext)(HDC) DECLSPEC_HIDDEN;
 BOOL (WINAPI *pwglDeleteContext)(HGLRC) DECLSPEC_HIDDEN;
@@ -1461,6 +1454,8 @@ BOOL (WINAPI *pwglShareLists)(HGLRC, HGLRC) DECLSPEC_HIDDEN;
     USE_GL_FUNC(glEvalPoint1) \
     USE_GL_FUNC(glEvalPoint2) \
     USE_GL_FUNC(glFeedbackBuffer) \
+    USE_GL_FUNC(glFinish) \
+    USE_GL_FUNC(glFlush) \
     USE_GL_FUNC(glFogf) \
     USE_GL_FUNC(glFogfv) \
     USE_GL_FUNC(glFogi) \

@@ -556,7 +556,7 @@ static void test_pbo_functionality(struct wined3d_gl_info *gl_info)
     GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
     LEAVE_GL();
 
-    wglFinish(); /* just to be sure */
+    glFinish(); /* just to be sure */
 
     memset(check, 0, sizeof(check));
     ENTER_GL();
@@ -5408,11 +5408,14 @@ static BOOL InitAdapters(struct wined3d *wined3d)
         }
     }
 
+/* Dynamically load all GL core functions */
 #ifdef USE_WIN32_OPENGL
     pwglGetProcAddress = (void*)GetProcAddress(mod_gl, "wglGetProcAddress");
 #define USE_GL_FUNC(pfn) pfn = (void*)GetProcAddress(mod_gl, #pfn);
+    GL_FUNCS_GEN;
+#undef USE_GL_FUNC
 #else
-    /* To bypass the opengl32 thunks load wglGetProcAddress from gdi32 instead of opengl32 */
+    /* To bypass the opengl32 thunks retrieve functions from the WGL driver instead of opengl32 */
     {
         HDC hdc = GetDC( 0 );
         const struct opengl_funcs *wgl_driver = __wine_get_wgl_driver( hdc, WINE_WGL_DRIVER_VERSION );
@@ -5422,24 +5425,16 @@ static BOOL InitAdapters(struct wined3d *wined3d)
 
         ReleaseDC( 0, hdc );
         if (!pwglGetProcAddress) goto nogl_adapter;
+#define USE_GL_FUNC(pfn) pfn = wgl_driver->gl.p_##pfn;
+        GL_FUNCS_GEN;
+#undef USE_GL_FUNC
     }
-#define USE_GL_FUNC(pfn) pfn = (void*)pwglGetProcAddress(#pfn);
 #endif
 
 /* Load WGL core functions from opengl32.dll */
 #define USE_WGL_FUNC(pfn) p##pfn = (void*)GetProcAddress(mod_gl, #pfn);
     WGL_FUNCS_GEN;
 #undef USE_WGL_FUNC
-
-/* Dynamically load all GL core functions */
-    GL_FUNCS_GEN;
-#undef USE_GL_FUNC
-
-    /* Load glFinish and glFlush from opengl32.dll even if we're not using WIN32 opengl
-     * otherwise because we have to use winex11.drv's override
-     */
-    wglFinish = (void*)GetProcAddress(mod_gl, "glFinish");
-    wglFlush = (void*)GetProcAddress(mod_gl, "glFlush");
 
     glEnableWINE = glEnable;
     glDisableWINE = glDisable;

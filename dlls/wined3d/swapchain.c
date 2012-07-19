@@ -564,7 +564,7 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain, const RECT
     }
 
     if (swapchain->num_contexts > 1)
-        wglFinish();
+        glFinish();
     SwapBuffers(context->hdc); /* TODO: cycle through the swapchain buffers */
 
     TRACE("SwapBuffers called, Starting new frame\n");

@@ -819,7 +819,7 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
     if (wined3d_settings.strict_draw_ordering || (flags & WINED3DCLEAR_TARGET
             && target->container.type == WINED3D_CONTAINER_SWAPCHAIN
             && target->container.u.swapchain->front_buffer == target))
-        wglFlush(); /* Flush to ensure ordering across contexts. */
+        glFlush(); /* Flush to ensure ordering across contexts. */
 
     context_release(context);
 }
@@ -3811,7 +3811,7 @@ HRESULT CDECL wined3d_device_end_scene(struct wined3d_device *device)
 
     context = context_acquire(device, NULL);
     /* We only have to do this if we need to read the, swapbuffers performs a flush for us */
-    wglFlush();
+    glFlush();
     /* No checkGLcall here to avoid locking the lock just for checking a call that hardly ever
      * fails. */
     context_release(context);

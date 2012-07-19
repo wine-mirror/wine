@@ -767,7 +767,7 @@ void drawPrimitive(struct wined3d_device *device, UINT index_count, UINT StartId
         wined3d_event_query_issue(device->buffer_queries[i], device);
     }
 
-    if (wined3d_settings.strict_draw_ordering) wglFlush(); /* Flush to ensure ordering across contexts. */
+    if (wined3d_settings.strict_draw_ordering) glFlush(); /* Flush to ensure ordering across contexts. */
 
     context_release(context);
 
