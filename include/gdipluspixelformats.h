@@ -74,6 +74,13 @@ static inline UINT GetPixelFormatSize(PixelFormat format)
     return (format >> 8) & 0xff;
 }
 
+enum PaletteFlags
+{
+    PaletteFlagsHasAlpha        = 1,
+    PaletteFlagsGrayScale       = 2,
+    PaletteFlagsHalftone        = 4
+};
+
 #ifdef __cplusplus
 
 struct ColorPalette
