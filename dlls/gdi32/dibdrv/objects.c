@@ -1991,10 +1991,6 @@ static BOOL pattern_brush(dibdrv_physdev *pdev, dib_brush *brush, dib_info *dib,
 static BOOL null_brush(dibdrv_physdev *pdev, dib_brush *brush, dib_info *dib,
                        int num, const RECT *rects, INT rop)
 {
-    if (rop == 1)
-    {
-        ERR("(%p, %s, BLACKNESS)\n", pdev, wine_dbgstr_rect(rects));
-    }
     return TRUE;
 }
 
