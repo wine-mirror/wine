@@ -603,8 +603,6 @@ struct HTMLDOMNode {
     HTMLDocumentNode *doc;
     event_target_t *event_target;
     ConnectionPointContainer *cp_container;
-
-    HTMLDOMNode *next;
 };
 
 static inline void node_addref(HTMLDOMNode *node)
@@ -673,7 +671,6 @@ struct HTMLDocumentNode {
     LONG ref;
 
     nsIDOMHTMLDocument *nsdoc;
-    HTMLDOMNode *nodes;
     BOOL content_ready;
     event_target_t *body_event_target;
 
@@ -881,7 +878,6 @@ HRESULT HTMLFrameBase_QI(HTMLFrameBase*,REFIID,void**) DECLSPEC_HIDDEN;
 void HTMLFrameBase_destructor(HTMLFrameBase*) DECLSPEC_HIDDEN;
 
 HRESULT get_node(HTMLDocumentNode*,nsIDOMNode*,BOOL,HTMLDOMNode**) DECLSPEC_HIDDEN;
-void release_nodes(HTMLDocumentNode*) DECLSPEC_HIDDEN;
 
 HTMLElement *unsafe_impl_from_IHTMLElement(IHTMLElement*) DECLSPEC_HIDDEN;
 

@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <assert.h>
 
 #define COBJMACROS
 
@@ -1028,6 +1029,8 @@ void HTMLDOMNode_destructor(HTMLDOMNode *This)
 {
     if(This->nsnode)
         nsIDOMNode_Release(This->nsnode);
+    if(This->doc && &This->doc->node != This)
+        htmldoc_release(&This->doc->basedoc);
     if(This->event_target)
         release_event_target(This->event_target);
 }
@@ -1045,17 +1048,23 @@ static const NodeImplVtbl HTMLDOMNodeImplVtbl = {
 
 void HTMLDOMNode_Init(HTMLDocumentNode *doc, HTMLDOMNode *node, nsIDOMNode *nsnode)
 {
+    nsresult nsres;
+
     node->IHTMLDOMNode_iface.lpVtbl = &HTMLDOMNodeVtbl;
     node->IHTMLDOMNode2_iface.lpVtbl = &HTMLDOMNode2Vtbl;
-    ccref_init(&node->ccref, &doc->node != node ? 2 : 1);
+
+    ccref_init(&node->ccref, 1);
+
+    if(&doc->node != node)
+        htmldoc_addref(&doc->basedoc);
     node->doc = doc;
 
     if(nsnode)
         nsIDOMNode_AddRef(nsnode);
     node->nsnode = nsnode;
 
-    node->next = doc->nodes;
-    doc->nodes = node;
+    nsres = nsIDOMNode_SetMshtmlNode(nsnode, (nsISupports*)&node->IHTMLDOMNode_iface);
+    assert(nsres == NS_OK);
 }
 
 static HRESULT create_node(HTMLDocumentNode *doc, nsIDOMNode *nsnode, HTMLDOMNode **ret)
@@ -1123,6 +1132,8 @@ static nsresult NSAPI HTMLDOMNode_traverse(void *ccp, void *p, nsCycleCollection
 
     if(This->nsnode)
         note_cc_edge((nsISupports*)This->nsnode, "This->nsnode", cb);
+    if(This->doc && &This->doc->node != This)
+        note_cc_edge((nsISupports*)&This->doc->node.IHTMLDOMNode_iface, "This->doc", cb);
     dispex_traverse(&This->dispex, cb);
 
     if(This->vtbl->traverse)
@@ -1148,6 +1159,14 @@ static nsresult NSAPI HTMLDOMNode_unlink(void *p)
         nsIDOMNode_Release(nsnode);
     }
 
+    if(This->doc && &This->doc->node != This) {
+        HTMLDocument *doc = &This->doc->basedoc;
+        This->doc = NULL;
+        htmldoc_release(doc);
+    }else {
+        This->doc = NULL;
+    }
+
     return NS_OK;
 }
 
@@ -1162,43 +1181,23 @@ void init_node_cc(void)
     ccp_init(&node_ccp, &node_ccp_callback);
 }
 
-/*
- * FIXME
- * List looks really ugly here. We should use a better data structure or
- * (better) find a way to store HTMLDOMelement pointer in nsIDOMNode.
- */
-
 HRESULT get_node(HTMLDocumentNode *This, nsIDOMNode *nsnode, BOOL create, HTMLDOMNode **ret)
 {
-    HTMLDOMNode *iter = This->nodes;
+    nsISupports *unk = NULL;
+    nsresult nsres;
 
-    while(iter) {
-        if(iter->nsnode == nsnode)
-            break;
-        iter = iter->next;
+    nsres = nsIDOMNode_GetMshtmlNode(nsnode, &unk);
+    assert(nsres == NS_OK);
+
+    if(unk) {
+        *ret = get_node_obj(This, (IUnknown*)unk);
+        return NS_OK;
     }
 
-    if(iter || !create) {
-        if(iter)
-            IHTMLDOMNode_AddRef(&iter->IHTMLDOMNode_iface);
-        *ret = iter;
+    if(!create) {
+        *ret = NULL;
         return S_OK;
     }
 
     return create_node(This, nsnode, ret);
-}
-
-void release_nodes(HTMLDocumentNode *This)
-{
-    HTMLDOMNode *iter, *next;
-
-    if(!This->nodes)
-        return;
-
-    for(iter = This->nodes; iter; iter = next) {
-        next = iter->next;
-        iter->doc = NULL;
-        if(&This->node != iter)
-            IHTMLDOMNode_Release(&iter->IHTMLDOMNode_iface);
-    }
 }
