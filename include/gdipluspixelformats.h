@@ -46,7 +46,8 @@ typedef INT PixelFormat;
 #define    PixelFormat48bppRGB          (12 | (48 << 8) | PixelFormatExtended)
 #define    PixelFormat64bppARGB         (13 | (64 << 8) | PixelFormatAlpha  | PixelFormatCanonical | PixelFormatExtended)
 #define    PixelFormat64bppPARGB        (14 | (64 << 8) | PixelFormatAlpha  | PixelFormatPAlpha | PixelFormatExtended)
-#define    PixelFormatMax               15
+#define    PixelFormat32bppCMYK         (15 | (32 << 8))
+#define    PixelFormatMax               16
 
 #ifdef __cplusplus
 
