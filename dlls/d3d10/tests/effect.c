@@ -3894,20 +3894,19 @@ static void test_effect_state_groups(ID3D10Device *device)
 
     v = effect->lpVtbl->GetVariableByName(effect, "rast_state");
     r = v->lpVtbl->AsRasterizer(v);
-    memset(&rast_desc, 0, sizeof(rast_desc));
     r->lpVtbl->GetBackingStore(r, 0, &rast_desc);
-    todo_wine ok(rast_desc.FillMode == D3D10_FILL_WIREFRAME, "Got unexpected FillMode %#x.\n", rast_desc.FillMode);
-    todo_wine ok(rast_desc.CullMode == D3D10_CULL_FRONT, "Got unexpected CullMode %#x.\n", rast_desc.CullMode);
-    todo_wine ok(rast_desc.FrontCounterClockwise, "Got unexpected FrontCounterClockwise %#x.\n",
+    ok(rast_desc.FillMode == D3D10_FILL_WIREFRAME, "Got unexpected FillMode %#x.\n", rast_desc.FillMode);
+    ok(rast_desc.CullMode == D3D10_CULL_FRONT, "Got unexpected CullMode %#x.\n", rast_desc.CullMode);
+    ok(rast_desc.FrontCounterClockwise, "Got unexpected FrontCounterClockwise %#x.\n",
             rast_desc.FrontCounterClockwise);
-    todo_wine ok(rast_desc.DepthBias == -4, "Got unexpected DepthBias %#x.\n", rast_desc.DepthBias);
-    todo_wine ok(rast_desc.DepthBiasClamp == 0.5f, "Got unexpected DepthBiasClamp %.8e.\n", rast_desc.DepthBiasClamp);
-    todo_wine ok(rast_desc.SlopeScaledDepthBias == 0.25f, "Got unexpected SlopeScaledDepthBias %.8e.\n",
+    ok(rast_desc.DepthBias == -4, "Got unexpected DepthBias %#x.\n", rast_desc.DepthBias);
+    ok(rast_desc.DepthBiasClamp == 0.5f, "Got unexpected DepthBiasClamp %.8e.\n", rast_desc.DepthBiasClamp);
+    ok(rast_desc.SlopeScaledDepthBias == 0.25f, "Got unexpected SlopeScaledDepthBias %.8e.\n",
             rast_desc.SlopeScaledDepthBias);
     ok(!rast_desc.DepthClipEnable, "Got unexpected DepthClipEnable %#x.\n", rast_desc.DepthClipEnable);
-    todo_wine ok(rast_desc.ScissorEnable, "Got unexpected ScissorEnable %#x.\n", rast_desc.ScissorEnable);
-    todo_wine ok(rast_desc.MultisampleEnable, "Got unexpected MultisampleEnable %#x.\n", rast_desc.MultisampleEnable);
-    todo_wine ok(rast_desc.AntialiasedLineEnable, "Got unexpected AntialiasedLineEnable %#x.\n",
+    ok(rast_desc.ScissorEnable, "Got unexpected ScissorEnable %#x.\n", rast_desc.ScissorEnable);
+    ok(rast_desc.MultisampleEnable, "Got unexpected MultisampleEnable %#x.\n", rast_desc.MultisampleEnable);
+    ok(rast_desc.AntialiasedLineEnable, "Got unexpected AntialiasedLineEnable %#x.\n",
             rast_desc.AntialiasedLineEnable);
 
     technique = effect->lpVtbl->GetTechniqueByName(effect, "tech0");
@@ -4145,17 +4144,16 @@ static void test_effect_state_group_defaults(ID3D10Device *device)
 
     v = effect->lpVtbl->GetVariableByName(effect, "rast_state");
     r = v->lpVtbl->AsRasterizer(v);
-    memset(&rast_desc, 0, sizeof(rast_desc));
     r->lpVtbl->GetBackingStore(r, 0, &rast_desc);
-    todo_wine ok(rast_desc.FillMode == D3D10_FILL_SOLID, "Got unexpected FillMode %#x.\n", rast_desc.FillMode);
-    todo_wine ok(rast_desc.CullMode == D3D10_CULL_BACK, "Got unexpected CullMode %#x.\n", rast_desc.CullMode);
+    ok(rast_desc.FillMode == D3D10_FILL_SOLID, "Got unexpected FillMode %#x.\n", rast_desc.FillMode);
+    ok(rast_desc.CullMode == D3D10_CULL_BACK, "Got unexpected CullMode %#x.\n", rast_desc.CullMode);
     ok(!rast_desc.FrontCounterClockwise, "Got unexpected FrontCounterClockwise %#x.\n",
             rast_desc.FrontCounterClockwise);
     ok(rast_desc.DepthBias == 0, "Got unexpected DepthBias %#x.\n", rast_desc.DepthBias);
     ok(rast_desc.DepthBiasClamp == 0.0f, "Got unexpected DepthBiasClamp %.8e.\n", rast_desc.DepthBiasClamp);
     ok(rast_desc.SlopeScaledDepthBias == 0.0f, "Got unexpected SlopeScaledDepthBias %.8e.\n",
             rast_desc.SlopeScaledDepthBias);
-    todo_wine ok(rast_desc.DepthClipEnable, "Got unexpected DepthClipEnable %#x.\n", rast_desc.DepthClipEnable);
+    ok(rast_desc.DepthClipEnable, "Got unexpected DepthClipEnable %#x.\n", rast_desc.DepthClipEnable);
     ok(!rast_desc.ScissorEnable, "Got unexpected ScissorEnable %#x.\n", rast_desc.ScissorEnable);
     ok(!rast_desc.MultisampleEnable, "Got unexpected MultisampleEnable %#x.\n", rast_desc.MultisampleEnable);
     ok(!rast_desc.AntialiasedLineEnable, "Got unexpected AntialiasedLineEnable %#x.\n",
