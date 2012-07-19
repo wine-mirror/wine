@@ -39,7 +39,6 @@ extern int ds_default_bits_per_sample DECLSPEC_HIDDEN;
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-typedef struct IDirectSound_IDirectSound     IDirectSound_IDirectSound;
 typedef struct IDirectSoundBufferImpl        IDirectSoundBufferImpl;
 typedef struct IDirectSoundCaptureImpl       IDirectSoundCaptureImpl;
 typedef struct IDirectSoundCaptureBufferImpl IDirectSoundCaptureBufferImpl;

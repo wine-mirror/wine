@@ -1146,9 +1146,9 @@ static void test_COM(void)
     hr = IDirectSound8_QueryInterface(ds8, &IID_IDirectSound, (void**)&ds);
     ok(hr == S_OK, "QueryInterface for IID_IDirectSound failed: %08x\n", hr);
     refcount = IDirectSound8_AddRef(ds8);
-    todo_wine ok(refcount == 4, "refcount == %u, expected 4\n", refcount);
+    ok(refcount == 4, "refcount == %u, expected 4\n", refcount);
     refcount = IDirectSound_AddRef(ds);
-    todo_wine ok(refcount == 5, "refcount == %u, expected 5\n", refcount);
+    ok(refcount == 5, "refcount == %u, expected 5\n", refcount);
 
     /* Separate refcount for IUnknown */
     hr = IDirectSound_QueryInterface(ds, &IID_IUnknown, (void**)&unk);
@@ -1160,7 +1160,7 @@ static void test_COM(void)
     refcount = IUnknown_AddRef(unk8);
     ok(refcount == 4, "refcount == %u, expected 4\n", refcount);
     refcount = IDirectSound_AddRef(ds);
-    todo_wine ok(refcount == 6, "refcount == %u, expected 6\n", refcount);
+    ok(refcount == 6, "refcount == %u, expected 6\n", refcount);
 
     while (IDirectSound_Release(ds));
     while (IUnknown_Release(unk));
