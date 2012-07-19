@@ -173,7 +173,7 @@ EXIT:
 static void IDirectSound_tests(void)
 {
     HRESULT rc;
-    LPDIRECTSOUND dso=NULL;
+    IDirectSound *dso=(IDirectSound*)0xdeadbeef;
     LPCLASSFACTORY cf=NULL;
 
     trace("Testing IDirectSound\n");
@@ -187,6 +187,12 @@ static void IDirectSound_tests(void)
                         &IID_IUnknown, (void**)&cf);
     ok(rc==S_OK,"CoGetClassObject(CLSID_DirectSound, IID_IUnknown) "
        "failed: %08x\n", rc);
+
+    /* COM aggregation */
+    rc=CoCreateInstance(&CLSID_DirectSound, (IUnknown*)&dso, CLSCTX_INPROC_SERVER,
+                        &IID_IDirectSound, (void**)&dso);
+    ok(rc==CLASS_E_NOAGGREGATION || broken(rc==DSERR_INVALIDPARAM),
+       "DirectMusicPerformance create failed: %08x, expected CLASS_E_NOAGGREGATION\n", rc);
 
     /* try the COM class factory method of creation with no device specified */
     rc=CoCreateInstance(&CLSID_DirectSound, NULL, CLSCTX_INPROC_SERVER,

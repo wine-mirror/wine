@@ -1116,6 +1116,56 @@ static void test_first_device(void)
     ok(hr == S_OK, "DirectSoundEnumerateA failed: %08x\n", hr);
 }
 
+static void test_COM(void)
+{
+    IDirectSound *ds;
+    IDirectSound8 *ds8 = (IDirectSound8*)0xdeadbeef;
+    IUnknown *unk, *unk8;
+    ULONG refcount;
+    HRESULT hr;
+
+    /* COM aggregation */
+    hr = CoCreateInstance(&CLSID_DirectSound8, (IUnknown*)&ds, CLSCTX_INPROC_SERVER,
+            &IID_IUnknown, (void**)&ds8);
+    ok(hr == CLASS_E_NOAGGREGATION,
+            "DirectSound create failed: %08x, expected CLASS_E_NOAGGREGATION\n", hr);
+    ok(!ds8, "ds8 = %p\n", ds8);
+
+    /* Invalid RIID */
+    hr = CoCreateInstance(&CLSID_DirectSound8, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectSound3DBuffer, (void**)&ds8);
+    ok(hr == E_NOINTERFACE,
+            "DirectSound create failed: %08x, expected E_NOINTERFACE\n", hr);
+
+    /* Same refcount for IDirectSound and IDirectSound8 */
+    hr = CoCreateInstance(&CLSID_DirectSound8, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectSound8,
+            (void**)&ds8);
+    ok(hr == S_OK, "DirectSound create failed: %08x, expected S_OK\n", hr);
+    refcount = IDirectSound8_AddRef(ds8);
+    ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
+    hr = IDirectSound8_QueryInterface(ds8, &IID_IDirectSound, (void**)&ds);
+    ok(hr == S_OK, "QueryInterface for IID_IDirectSound failed: %08x\n", hr);
+    refcount = IDirectSound8_AddRef(ds8);
+    todo_wine ok(refcount == 4, "refcount == %u, expected 4\n", refcount);
+    refcount = IDirectSound_AddRef(ds);
+    todo_wine ok(refcount == 5, "refcount == %u, expected 5\n", refcount);
+
+    /* Separate refcount for IUnknown */
+    hr = IDirectSound_QueryInterface(ds, &IID_IUnknown, (void**)&unk);
+    ok(hr == S_OK, "QueryInterface for IID_IUnknown failed: %08x\n", hr);
+    refcount = IUnknown_AddRef(unk);
+    ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
+    hr = IDirectSound_QueryInterface(ds8, &IID_IUnknown, (void**)&unk8);
+    ok(hr == S_OK, "QueryInterface for IID_IUnknown failed: %08x\n", hr);
+    refcount = IUnknown_AddRef(unk8);
+    ok(refcount == 4, "refcount == %u, expected 4\n", refcount);
+    refcount = IDirectSound_AddRef(ds);
+    todo_wine ok(refcount == 6, "refcount == %u, expected 6\n", refcount);
+
+    while (IDirectSound_Release(ds));
+    while (IUnknown_Release(unk));
+}
+
 START_TEST(dsound8)
 {
     HMODULE hDsound;
@@ -1132,6 +1182,7 @@ START_TEST(dsound8)
             "DirectSoundCreate8");
         if (pDirectSoundCreate8)
         {
+            test_COM();
             IDirectSound8_tests();
             dsound8_tests();
             test_hw_buffers();
