@@ -347,6 +347,21 @@ static BOOL load_xul(const PRUnichar *gre_path)
 
 #undef NS_DLSYM
 
+#define NS_DLSYM(func) \
+    func = (void *)GetProcAddress(xul_handle, #func); \
+    if(!func) \
+        ERR("Could not GetProcAddress(" #func ") failed\n")
+
+    NS_DLSYM(ccref_incr);
+    NS_DLSYM(ccref_decr);
+    NS_DLSYM(ccref_init);
+    NS_DLSYM(ccref_unmark_if_purple);
+    NS_DLSYM(ccp_init);
+    NS_DLSYM(describe_cc_node);
+    NS_DLSYM(note_cc_edge);
+
+#undef NS_DLSYM
+
     return TRUE;
 }
 
@@ -560,6 +575,8 @@ static BOOL init_xpcom(const PRUnichar *gre_path)
         register_nsservice(registrar, pServMgr);
         nsIComponentRegistrar_Release(registrar);
     }
+
+    init_node_cc();
 
     return TRUE;
 }

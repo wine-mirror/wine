@@ -3450,6 +3450,13 @@ interface nsIDocumentObserver : nsIMutationObserver
 
 [
     object,
+    uuid(c61eac14-5f7a-4481-965e-7eaa6effa85f),
+    local
+]
+interface nsCycleCollectionISupports {}
+
+[
+    object,
     uuid(3682dd99-8560-44f4-9b8f-ccce9d7b96fb),
     local
 ]

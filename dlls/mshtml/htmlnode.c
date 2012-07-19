@@ -312,7 +312,7 @@ static HRESULT WINAPI HTMLDOMNode_QueryInterface(IHTMLDOMNode *iface,
 static ULONG WINAPI HTMLDOMNode_AddRef(IHTMLDOMNode *iface)
 {
     HTMLDOMNode *This = impl_from_IHTMLDOMNode(iface);
-    LONG ref = InterlockedIncrement(&This->ref);
+    LONG ref = ccref_incr(&This->ccref, (nsISupports*)&This->IHTMLDOMNode_iface);
 
     TRACE("(%p) ref=%d\n", This, ref);
 
@@ -322,7 +322,7 @@ static ULONG WINAPI HTMLDOMNode_AddRef(IHTMLDOMNode *iface)
 static ULONG WINAPI HTMLDOMNode_Release(IHTMLDOMNode *iface)
 {
     HTMLDOMNode *This = impl_from_IHTMLDOMNode(iface);
-    LONG ref = InterlockedDecrement(&This->ref);
+    LONG ref = ccref_decr(&This->ccref, (nsISupports*)&This->IHTMLDOMNode_iface);
 
     TRACE("(%p) ref=%d\n", This, ref);
 
@@ -977,6 +977,8 @@ static const IHTMLDOMNode2Vtbl HTMLDOMNode2Vtbl = {
     HTMLDOMNode2_get_ownerDocument
 };
 
+static nsXPCOMCycleCollectionParticipant node_ccp;
+
 HRESULT HTMLDOMNode_QI(HTMLDOMNode *This, REFIID riid, void **ppv)
 {
     *ppv = NULL;
@@ -1001,6 +1003,14 @@ HRESULT HTMLDOMNode_QI(HTMLDOMNode *This, REFIID riid, void **ppv)
     }else if(IsEqualGUID(&IID_IHTMLDOMNode2, riid)) {
         TRACE("(%p)->(IID_IHTMLDOMNode2 %p)\n", This, ppv);
         *ppv = &This->IHTMLDOMNode2_iface;
+    }else if(IsEqualGUID(&IID_nsXPCOMCycleCollectionParticipant, riid)) {
+        TRACE("(%p)->(IID_nsXPCOMCycleCollectionParticipant %p)\n", This, ppv);
+        *ppv = &node_ccp;
+        return NS_OK;
+    }else if(IsEqualGUID(&IID_nsCycleCollectionISupports, riid)) {
+        TRACE("(%p)->(IID_nsCycleCollectionISupports %p)\n", This, ppv);
+        *ppv = &This->IHTMLDOMNode_iface;
+        return NS_OK;
     }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }
@@ -1037,11 +1047,8 @@ void HTMLDOMNode_Init(HTMLDocumentNode *doc, HTMLDOMNode *node, nsIDOMNode *nsno
 {
     node->IHTMLDOMNode_iface.lpVtbl = &HTMLDOMNodeVtbl;
     node->IHTMLDOMNode2_iface.lpVtbl = &HTMLDOMNode2Vtbl;
-    node->ref = 2;
+    ccref_init(&node->ccref, &doc->node != node ? 2 : 1);
     node->doc = doc;
-
-    if(&doc->node != node)
-        node->ref++; /* one extra for list entry reference */
 
     if(nsnode)
         nsIDOMNode_AddRef(nsnode);
@@ -1098,6 +1105,52 @@ static HRESULT create_node(HTMLDocumentNode *doc, nsIDOMNode *nsnode, HTMLDOMNod
 
     TRACE("type %d ret %p\n", node_type, *ret);
     return S_OK;
+}
+
+static void NSAPI HTMLDOMNode_unmark_if_purple(void *p)
+{
+    HTMLDOMNode *This = impl_from_IHTMLDOMNode(p);
+    ccref_unmark_if_purple(&This->ccref);
+}
+
+static nsresult NSAPI HTMLDOMNode_traverse(void *ccp, void *p, nsCycleCollectionTraversalCallback *cb)
+{
+    HTMLDOMNode *This = impl_from_IHTMLDOMNode(p);
+
+    TRACE("%p\n", This);
+
+    describe_cc_node(&This->ccref, sizeof(*This), "HTMLDOMNode", cb);
+
+    if(This->nsnode)
+        note_cc_edge((nsISupports*)This->nsnode, "This->nsnode", cb);
+
+    return NS_OK;
+}
+
+static nsresult NSAPI HTMLDOMNode_unlink(void *p)
+{
+    HTMLDOMNode *This = impl_from_IHTMLDOMNode(p);
+
+    TRACE("%p\n", This);
+
+    if(This->nsnode) {
+        nsIDOMNode *nsnode = This->nsnode;
+        This->nsnode = NULL;
+        nsIDOMNode_Release(nsnode);
+    }
+
+    return NS_OK;
+}
+
+void init_node_cc(void)
+{
+    static const CCObjCallback node_ccp_callback = {
+        HTMLDOMNode_unmark_if_purple,
+        HTMLDOMNode_traverse,
+        HTMLDOMNode_unlink
+    };
+
+    ccp_init(&node_ccp, &node_ccp_callback);
 }
 
 /*

@@ -225,6 +225,32 @@ struct DispatchEx {
     dispex_dynamic_data_t *dynamic_data;
 };
 
+typedef struct {
+    void *x;
+} nsCycleCollectingAutoRefCnt;
+
+typedef struct {
+    void *x[3];
+} nsXPCOMCycleCollectionParticipant;
+
+typedef struct nsCycleCollectionTraversalCallback nsCycleCollectionTraversalCallback;
+
+typedef struct {
+    void (NSAPI *unmark_if_purple)(void*);
+    nsresult (NSAPI *traverse)(void*,void*,nsCycleCollectionTraversalCallback*);
+    nsresult (NSAPI *unlink)(void*);
+} CCObjCallback;
+
+DEFINE_GUID(IID_nsXPCOMCycleCollectionParticipant, 0x9674489b,0x1f6f,0x4550,0xa7,0x30, 0xcc,0xae,0xdd,0x10,0x4c,0xf9);
+
+nsrefcnt (__cdecl *ccref_incr)(nsCycleCollectingAutoRefCnt*,nsISupports*);
+nsrefcnt (__cdecl *ccref_decr)(nsCycleCollectingAutoRefCnt*,nsISupports*);
+void (__cdecl *ccref_init)(nsCycleCollectingAutoRefCnt*,nsrefcnt);
+void (__cdecl *ccref_unmark_if_purple)(nsCycleCollectingAutoRefCnt*);
+void (__cdecl *ccp_init)(nsXPCOMCycleCollectionParticipant*,const CCObjCallback*);
+void (__cdecl *describe_cc_node)(nsCycleCollectingAutoRefCnt*,size_t,const char*,nsCycleCollectionTraversalCallback*);
+void (__cdecl *note_cc_edge)(nsISupports*,const char*,nsCycleCollectionTraversalCallback*);
+
 void init_dispex(DispatchEx*,IUnknown*,dispex_static_data_t*) DECLSPEC_HIDDEN;
 void release_dispex(DispatchEx*) DECLSPEC_HIDDEN;
 BOOL dispex_query_interface(DispatchEx*,REFIID,void**) DECLSPEC_HIDDEN;
@@ -567,7 +593,7 @@ struct HTMLDOMNode {
     IHTMLDOMNode2 IHTMLDOMNode2_iface;
     const NodeImplVtbl *vtbl;
 
-    LONG ref;
+    nsCycleCollectingAutoRefCnt ccref;
 
     nsIDOMNode *nsnode;
     HTMLDocumentNode *doc;
@@ -722,6 +748,8 @@ void register_nsservice(nsIComponentRegistrar*,nsIServiceManager*) DECLSPEC_HIDD
 void init_nsio(nsIComponentManager*,nsIComponentRegistrar*) DECLSPEC_HIDDEN;
 void release_nsio(void) DECLSPEC_HIDDEN;
 BOOL is_gecko_path(const char*) DECLSPEC_HIDDEN;
+
+void init_node_cc(void);
 
 HRESULT nsuri_to_url(LPCWSTR,BOOL,BSTR*) DECLSPEC_HIDDEN;
 BOOL compare_ignoring_frag(IUri*,IUri*) DECLSPEC_HIDDEN;
