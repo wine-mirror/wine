@@ -21,6 +21,8 @@
 #include "d3d10.h"
 #include "wine/test.h"
 
+#include <float.h>
+
 static ID3D10Device *create_device(void)
 {
     ID3D10Device *device;
@@ -4004,6 +4006,180 @@ static void test_effect_state_groups(ID3D10Device *device)
     effect->lpVtbl->Release(effect);
 }
 
+#if 0
+RasterizerState rast_state {};
+DepthStencilState ds_state {};
+BlendState blend_state {};
+SamplerState sampler0 {};
+
+technique10 tech0
+{
+    pass pass0
+    {
+    }
+};
+#endif
+static DWORD fx_test_state_group_defaults[] =
+{
+    0x43425844, 0x920e6905, 0x58225fcd, 0x3b65b423,
+    0x67e96b6c, 0x00000001, 0x000001f4, 0x00000001,
+    0x00000024, 0x30315846, 0x000001c8, 0xfeff1001,
+    0x00000001, 0x00000000, 0x00000004, 0x00000000,
+    0x00000000, 0x00000000, 0x00000001, 0x000000ec,
+    0x00000000, 0x00000000, 0x00000001, 0x00000001,
+    0x00000001, 0x00000001, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x6f6c4724,
+    0x736c6162, 0x73615200, 0x69726574, 0x5372657a,
+    0x65746174, 0x00000d00, 0x00000200, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000400,
+    0x73617200, 0x74735f74, 0x00657461, 0x74706544,
+    0x65745368, 0x6c69636e, 0x74617453, 0x00440065,
+    0x00020000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00030000, 0x73640000, 0x6174735f,
+    0x42006574, 0x646e656c, 0x74617453, 0x007b0065,
+    0x00020000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00020000, 0x6c620000, 0x5f646e65,
+    0x74617473, 0x61530065, 0x656c706d, 0x61745372,
+    0xae006574, 0x02000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x15000000, 0x73000000,
+    0x6c706d61, 0x00307265, 0x68636574, 0x61700030,
+    0x00307373, 0x00000004, 0x00000000, 0x00000000,
+    0x00000000, 0xffffffff, 0x00000000, 0x00000039,
+    0x0000001d, 0x00000000, 0xffffffff, 0x00000000,
+    0x00000000, 0x00000072, 0x00000056, 0x00000000,
+    0xffffffff, 0x00000000, 0x00000000, 0x000000a2,
+    0x00000086, 0x00000000, 0xffffffff, 0x00000000,
+    0x00000000, 0x000000d7, 0x000000bb, 0x00000000,
+    0xffffffff, 0x00000000, 0x00000000, 0x000000e0,
+    0x00000001, 0x00000000, 0x000000e6, 0x00000000,
+    0x00000000,
+};
+
+static void test_effect_state_group_defaults(ID3D10Device *device)
+{
+    ID3D10EffectDepthStencilVariable *d;
+    ID3D10EffectRasterizerVariable *r;
+    ID3D10EffectTechnique *technique;
+    D3D10_DEPTH_STENCIL_DESC ds_desc;
+    D3D10_RASTERIZER_DESC rast_desc;
+    D3D10_SAMPLER_DESC sampler_desc;
+    ID3D10EffectSamplerVariable *s;
+    ID3D10EffectBlendVariable *b;
+    D3D10_BLEND_DESC blend_desc;
+    D3D10_PASS_DESC pass_desc;
+    ID3D10EffectVariable *v;
+    ID3D10EffectPass *pass;
+    ID3D10Effect *effect;
+    HRESULT hr;
+
+    hr = create_effect(fx_test_state_group_defaults, 0, device, NULL, &effect);
+    ok(SUCCEEDED(hr), "Failed to create effect, hr %#x.\n", hr);
+
+    v = effect->lpVtbl->GetVariableByName(effect, "sampler0");
+    s = v->lpVtbl->AsSampler(v);
+    memset(&sampler_desc, 0, sizeof(sampler_desc));
+    s->lpVtbl->GetBackingStore(s, 0, &sampler_desc);
+    ok(sampler_desc.Filter == D3D10_FILTER_MIN_MAG_MIP_POINT, "Got unexpected Filter %#x.\n", sampler_desc.Filter);
+    todo_wine ok(sampler_desc.AddressU == D3D10_TEXTURE_ADDRESS_WRAP, "Got unexpected AddressU %#x.\n", sampler_desc.AddressU);
+    todo_wine ok(sampler_desc.AddressV == D3D10_TEXTURE_ADDRESS_WRAP, "Got unexpected AddressV %#x.\n", sampler_desc.AddressV);
+    todo_wine ok(sampler_desc.AddressW == D3D10_TEXTURE_ADDRESS_WRAP, "Got unexpected AddressW %#x.\n", sampler_desc.AddressW);
+    ok(sampler_desc.MipLODBias == 0.0f, "Got unexpected MipLODBias %.8e.\n", sampler_desc.MipLODBias);
+    todo_wine ok(sampler_desc.MaxAnisotropy == 16, "Got unexpected MaxAnisotropy %#x.\n", sampler_desc.MaxAnisotropy);
+    todo_wine ok(sampler_desc.ComparisonFunc == D3D10_COMPARISON_NEVER, "Got unexpected ComparisonFunc %#x.\n",
+            sampler_desc.ComparisonFunc);
+    ok(sampler_desc.BorderColor[0] == 0.0f, "Got unexpected BorderColor[0] %.8e.\n", sampler_desc.BorderColor[0]);
+    ok(sampler_desc.BorderColor[1] == 0.0f, "Got unexpected BorderColor[1] %.8e.\n", sampler_desc.BorderColor[1]);
+    ok(sampler_desc.BorderColor[2] == 0.0f, "Got unexpected BorderColor[2] %.8e.\n", sampler_desc.BorderColor[2]);
+    ok(sampler_desc.BorderColor[3] == 0.0f, "Got unexpected BorderColor[3] %.8e.\n", sampler_desc.BorderColor[3]);
+    ok(sampler_desc.MinLOD == 0.0f, "Got unexpected MinLOD %.8e.\n", sampler_desc.MinLOD);
+    todo_wine ok(sampler_desc.MaxLOD == FLT_MAX, "Got unexpected MaxLOD %.8e.\n", sampler_desc.MaxLOD);
+
+    v = effect->lpVtbl->GetVariableByName(effect, "blend_state");
+    b = v->lpVtbl->AsBlend(v);
+    memset(&blend_desc, 0, sizeof(blend_desc));
+    b->lpVtbl->GetBackingStore(b, 0, &blend_desc);
+    ok(!blend_desc.AlphaToCoverageEnable, "Got unexpected AlphaToCoverageEnable %#x.\n",
+            blend_desc.AlphaToCoverageEnable);
+    ok(!blend_desc.BlendEnable[0], "Got unexpected BlendEnable[0] %#x.\n", blend_desc.BlendEnable[0]);
+    ok(!blend_desc.BlendEnable[7], "Got unexpected BlendEnable[7] %#x.\n", blend_desc.BlendEnable[7]);
+    todo_wine ok(blend_desc.SrcBlend == D3D10_BLEND_SRC_ALPHA, "Got unexpected SrcBlend %#x.\n", blend_desc.SrcBlend);
+    todo_wine ok(blend_desc.DestBlend == D3D10_BLEND_INV_SRC_ALPHA, "Got unexpected DestBlend %#x.\n", blend_desc.DestBlend);
+    todo_wine ok(blend_desc.BlendOp == D3D10_BLEND_OP_ADD, "Got unexpected BlendOp %#x.\n", blend_desc.BlendOp);
+    todo_wine ok(blend_desc.SrcBlendAlpha == D3D10_BLEND_SRC_ALPHA, "Got unexpected SrcBlendAlpha %#x.\n",
+            blend_desc.SrcBlendAlpha);
+    todo_wine ok(blend_desc.DestBlendAlpha == D3D10_BLEND_INV_SRC_ALPHA, "Got unexpected DestBlendAlpha %#x.\n",
+            blend_desc.DestBlendAlpha);
+    todo_wine ok(blend_desc.BlendOpAlpha == D3D10_BLEND_OP_ADD, "Got unexpected BlendOpAlpha %#x.\n", blend_desc.BlendOpAlpha);
+    todo_wine ok(blend_desc.RenderTargetWriteMask[0] == 0xf, "Got unexpected RenderTargetWriteMask[0] %#x.\n",
+            blend_desc.RenderTargetWriteMask[0]);
+    todo_wine ok(blend_desc.RenderTargetWriteMask[7] == 0xf, "Got unexpected RenderTargetWriteMask[7] %#x.\n",
+            blend_desc.RenderTargetWriteMask[7]);
+
+    v = effect->lpVtbl->GetVariableByName(effect, "ds_state");
+    d = v->lpVtbl->AsDepthStencil(v);
+    memset(&ds_desc, 0, sizeof(ds_desc));
+    d->lpVtbl->GetBackingStore(d, 0, &ds_desc);
+    todo_wine ok(ds_desc.DepthEnable, "Got unexpected DepthEnable %#x.\n", ds_desc.DepthEnable);
+    todo_wine ok(ds_desc.DepthWriteMask == D3D10_DEPTH_WRITE_MASK_ALL, "Got unexpected DepthWriteMask %#x.\n",
+            ds_desc.DepthWriteMask);
+    todo_wine ok(ds_desc.DepthFunc == D3D10_COMPARISON_LESS, "Got unexpected DepthFunc %#x.\n", ds_desc.DepthFunc);
+    ok(!ds_desc.StencilEnable, "Got unexpected StencilEnable %#x.\n", ds_desc.StencilEnable);
+    todo_wine ok(ds_desc.StencilReadMask == 0xff, "Got unexpected StencilReadMask %#x.\n", ds_desc.StencilReadMask);
+    todo_wine ok(ds_desc.StencilWriteMask == 0xff, "Got unexpected StencilWriteMask %#x.\n", ds_desc.StencilWriteMask);
+    todo_wine ok(ds_desc.FrontFace.StencilFailOp == D3D10_STENCIL_OP_KEEP, "Got unexpected FrontFaceStencilFail %#x.\n",
+            ds_desc.FrontFace.StencilFailOp);
+    todo_wine ok(ds_desc.FrontFace.StencilDepthFailOp == D3D10_STENCIL_OP_KEEP,
+            "Got unexpected FrontFaceStencilDepthFail %#x.\n", ds_desc.FrontFace.StencilDepthFailOp);
+    todo_wine ok(ds_desc.FrontFace.StencilPassOp == D3D10_STENCIL_OP_KEEP, "Got unexpected FrontFaceStencilPass %#x.\n",
+            ds_desc.FrontFace.StencilPassOp);
+    todo_wine ok(ds_desc.FrontFace.StencilFunc == D3D10_COMPARISON_ALWAYS, "Got unexpected FrontFaceStencilFunc %#x.\n",
+            ds_desc.FrontFace.StencilFunc);
+    todo_wine ok(ds_desc.BackFace.StencilFailOp == D3D10_STENCIL_OP_KEEP, "Got unexpected BackFaceStencilFail %#x.\n",
+            ds_desc.BackFace.StencilFailOp);
+    todo_wine ok(ds_desc.BackFace.StencilDepthFailOp == D3D10_STENCIL_OP_KEEP,
+            "Got unexpected BackFaceStencilDepthFail %#x.\n", ds_desc.BackFace.StencilDepthFailOp);
+    todo_wine ok(ds_desc.BackFace.StencilPassOp == D3D10_STENCIL_OP_KEEP, "Got unexpected BackFaceStencilPass %#x.\n",
+            ds_desc.BackFace.StencilPassOp);
+    todo_wine ok(ds_desc.BackFace.StencilFunc == D3D10_COMPARISON_ALWAYS, "Got unexpected BackFaceStencilFunc %#x.\n",
+            ds_desc.BackFace.StencilFunc);
+
+    v = effect->lpVtbl->GetVariableByName(effect, "rast_state");
+    r = v->lpVtbl->AsRasterizer(v);
+    memset(&rast_desc, 0, sizeof(rast_desc));
+    r->lpVtbl->GetBackingStore(r, 0, &rast_desc);
+    todo_wine ok(rast_desc.FillMode == D3D10_FILL_SOLID, "Got unexpected FillMode %#x.\n", rast_desc.FillMode);
+    todo_wine ok(rast_desc.CullMode == D3D10_CULL_BACK, "Got unexpected CullMode %#x.\n", rast_desc.CullMode);
+    ok(!rast_desc.FrontCounterClockwise, "Got unexpected FrontCounterClockwise %#x.\n",
+            rast_desc.FrontCounterClockwise);
+    ok(rast_desc.DepthBias == 0, "Got unexpected DepthBias %#x.\n", rast_desc.DepthBias);
+    ok(rast_desc.DepthBiasClamp == 0.0f, "Got unexpected DepthBiasClamp %.8e.\n", rast_desc.DepthBiasClamp);
+    ok(rast_desc.SlopeScaledDepthBias == 0.0f, "Got unexpected SlopeScaledDepthBias %.8e.\n",
+            rast_desc.SlopeScaledDepthBias);
+    todo_wine ok(rast_desc.DepthClipEnable, "Got unexpected DepthClipEnable %#x.\n", rast_desc.DepthClipEnable);
+    ok(!rast_desc.ScissorEnable, "Got unexpected ScissorEnable %#x.\n", rast_desc.ScissorEnable);
+    ok(!rast_desc.MultisampleEnable, "Got unexpected MultisampleEnable %#x.\n", rast_desc.MultisampleEnable);
+    ok(!rast_desc.AntialiasedLineEnable, "Got unexpected AntialiasedLineEnable %#x.\n",
+            rast_desc.AntialiasedLineEnable);
+
+    technique = effect->lpVtbl->GetTechniqueByName(effect, "tech0");
+    ok(!!technique, "Failed to get technique.\n");
+    pass = technique->lpVtbl->GetPassByName(technique, "pass0");
+    ok(!!pass, "Failed to get pass.\n");
+    hr = pass->lpVtbl->GetDesc(pass, &pass_desc);
+    ok(SUCCEEDED(hr), "Failed to get pass desc, hr %#x.\n", hr);
+    ok(!strcmp(pass_desc.Name, "pass0"), "Got unexpected Name \"%s\".\n", pass_desc.Name);
+    ok(!pass_desc.Annotations, "Got unexpected Annotations %#x.\n", pass_desc.Annotations);
+    ok(!pass_desc.pIAInputSignature, "Got unexpected pIAInputSignature %p.\n", pass_desc.pIAInputSignature);
+    ok(pass_desc.StencilRef == 0, "Got unexpected StencilRef %#x.\n", pass_desc.StencilRef);
+    ok(pass_desc.SampleMask == 0, "Got unexpected SampleMask %#x.\n", pass_desc.SampleMask);
+    ok(pass_desc.BlendFactor[0] == 0.0f, "Got unexpected BlendFactor[0] %.8e.\n", pass_desc.BlendFactor[0]);
+    ok(pass_desc.BlendFactor[1] == 0.0f, "Got unexpected BlendFactor[1] %.8e.\n", pass_desc.BlendFactor[1]);
+    ok(pass_desc.BlendFactor[2] == 0.0f, "Got unexpected BlendFactor[2] %.8e.\n", pass_desc.BlendFactor[2]);
+    ok(pass_desc.BlendFactor[3] == 0.0f, "Got unexpected BlendFactor[3] %.8e.\n", pass_desc.BlendFactor[3]);
+
+    effect->lpVtbl->Release(effect);
+}
+
 START_TEST(effect)
 {
     ID3D10Device *device;
@@ -4025,6 +4201,7 @@ START_TEST(effect)
     test_effect_local_shader(device);
     test_effect_get_variable_by(device);
     test_effect_state_groups(device);
+    test_effect_state_group_defaults(device);
 
     refcount = ID3D10Device_Release(device);
     ok(!refcount, "Device has %u references left\n", refcount);
