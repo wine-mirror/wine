@@ -62,7 +62,6 @@ struct IDirectSound8_IDirectSound8 {
 };
 
 static HRESULT IDirectSound8_IDirectSound8_Create(LPDIRECTSOUND8 pds, LPDIRECTSOUND8 * ppds);
-static ULONG WINAPI IDirectSound8_IDirectSound8_AddRef(LPDIRECTSOUND8 iface);
 
 typedef struct IDirectSoundImpl {
     IUnknown            IUnknown_iface;  /* Separate refcount, not for COM aggregation */
@@ -183,7 +182,7 @@ static HRESULT DSOUND_QueryInterface(
                 return E_NOINTERFACE;
             }
         }
-        IDirectSound8_IDirectSound8_AddRef(This->pDS8);
+        IDirectSound8_AddRef(This->pDS8);
         *ppobj = This->pDS8;
         return S_OK;
     }
@@ -412,20 +411,17 @@ static HRESULT IDirectSound_IDirectSound_Create(
 }
 
 /*******************************************************************************
- *		IDirectSound8_IDirectSound8
+ *      IDirectSound8 Implementation
  */
-static HRESULT WINAPI IDirectSound8_IDirectSound8_QueryInterface(
-    LPDIRECTSOUND8 iface,
-    REFIID riid,
-    LPVOID * ppobj)
+static HRESULT WINAPI IDirectSound8Impl_QueryInterface(IDirectSound8 *iface, REFIID riid,
+        void **ppobj)
 {
     IDirectSound8_IDirectSound8 *This = (IDirectSound8_IDirectSound8 *)iface;
     TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
     return DSOUND_QueryInterface(This->pds, riid, ppobj);
 }
 
-static ULONG WINAPI IDirectSound8_IDirectSound8_AddRef(
-    LPDIRECTSOUND8 iface)
+static ULONG WINAPI IDirectSound8Impl_AddRef(IDirectSound8 *iface)
 {
     IDirectSound8_IDirectSound8 *This = (IDirectSound8_IDirectSound8 *)iface;
     ULONG ref = InterlockedIncrement(&(This->ref));
@@ -433,8 +429,7 @@ static ULONG WINAPI IDirectSound8_IDirectSound8_AddRef(
     return ref;
 }
 
-static ULONG WINAPI IDirectSound8_IDirectSound8_Release(
-    LPDIRECTSOUND8 iface)
+static ULONG WINAPI IDirectSound8Impl_Release(IDirectSound8 *iface)
 {
     IDirectSound8_IDirectSound8 *This = (IDirectSound8_IDirectSound8 *)iface;
     ULONG ref = InterlockedDecrement(&(This->ref));
@@ -448,104 +443,88 @@ static ULONG WINAPI IDirectSound8_IDirectSound8_Release(
     return ref;
 }
 
-static HRESULT WINAPI IDirectSound8_IDirectSound8_CreateSoundBuffer(
-    LPDIRECTSOUND8 iface,
-    LPCDSBUFFERDESC dsbd,
-    LPLPDIRECTSOUNDBUFFER ppdsb,
-    LPUNKNOWN lpunk)
+static HRESULT WINAPI IDirectSound8Impl_CreateSoundBuffer(IDirectSound8 *iface,
+        const DSBUFFERDESC *dsbd, IDirectSoundBuffer **ppdsb, IUnknown *lpunk)
 {
     IDirectSound8_IDirectSound8 *This = (IDirectSound8_IDirectSound8 *)iface;
     TRACE("(%p,%p,%p,%p)\n",This,dsbd,ppdsb,lpunk);
     return DirectSoundDevice_CreateSoundBuffer(((IDirectSoundImpl *)This->pds)->device,dsbd,ppdsb,lpunk,TRUE);
 }
 
-static HRESULT WINAPI IDirectSound8_IDirectSound8_GetCaps(
-    LPDIRECTSOUND8 iface,
-    LPDSCAPS lpDSCaps)
+static HRESULT WINAPI IDirectSound8Impl_GetCaps(IDirectSound8 *iface, DSCAPS *lpDSCaps)
 {
     IDirectSound8_IDirectSound8 *This = (IDirectSound8_IDirectSound8 *)iface;
     TRACE("(%p,%p)\n",This,lpDSCaps);
     return DirectSoundDevice_GetCaps(((IDirectSoundImpl *)This->pds)->device, lpDSCaps);
 }
 
-static HRESULT WINAPI IDirectSound8_IDirectSound8_DuplicateSoundBuffer(
-    LPDIRECTSOUND8 iface,
-    LPDIRECTSOUNDBUFFER psb,
-    LPLPDIRECTSOUNDBUFFER ppdsb)
+static HRESULT WINAPI IDirectSound8Impl_DuplicateSoundBuffer(IDirectSound8 *iface,
+        IDirectSoundBuffer *psb, IDirectSoundBuffer **ppdsb)
 {
     IDirectSound8_IDirectSound8 *This = (IDirectSound8_IDirectSound8 *)iface;
     TRACE("(%p,%p,%p)\n",This,psb,ppdsb);
     return DirectSoundDevice_DuplicateSoundBuffer(((IDirectSoundImpl *)This->pds)->device,psb,ppdsb);
 }
 
-static HRESULT WINAPI IDirectSound8_IDirectSound8_SetCooperativeLevel(
-    LPDIRECTSOUND8 iface,
-    HWND hwnd,
-    DWORD level)
+static HRESULT WINAPI IDirectSound8Impl_SetCooperativeLevel(IDirectSound8 *iface, HWND hwnd,
+        DWORD level)
 {
     IDirectSound8_IDirectSound8 *This = (IDirectSound8_IDirectSound8 *)iface;
     TRACE("(%p,%p,%s)\n",This,hwnd,dumpCooperativeLevel(level));
     return DirectSoundDevice_SetCooperativeLevel(((IDirectSoundImpl *)This->pds)->device, hwnd, level);
 }
 
-static HRESULT WINAPI IDirectSound8_IDirectSound8_Compact(
-    LPDIRECTSOUND8 iface)
+static HRESULT WINAPI IDirectSound8Impl_Compact(IDirectSound8 *iface)
 {
     IDirectSound8_IDirectSound8 *This = (IDirectSound8_IDirectSound8 *)iface;
     TRACE("(%p)\n", This);
     return DirectSoundDevice_Compact(((IDirectSoundImpl *)This->pds)->device);
 }
 
-static HRESULT WINAPI IDirectSound8_IDirectSound8_GetSpeakerConfig(
-    LPDIRECTSOUND8 iface,
-    LPDWORD lpdwSpeakerConfig)
+static HRESULT WINAPI IDirectSound8Impl_GetSpeakerConfig(IDirectSound8 *iface,
+        DWORD *lpdwSpeakerConfig)
 {
     IDirectSound8_IDirectSound8 *This = (IDirectSound8_IDirectSound8 *)iface;
     TRACE("(%p, %p)\n", This, lpdwSpeakerConfig);
     return DirectSoundDevice_GetSpeakerConfig(((IDirectSoundImpl *)This->pds)->device,lpdwSpeakerConfig);
 }
 
-static HRESULT WINAPI IDirectSound8_IDirectSound8_SetSpeakerConfig(
-    LPDIRECTSOUND8 iface,
-    DWORD config)
+static HRESULT WINAPI IDirectSound8Impl_SetSpeakerConfig(IDirectSound8 *iface, DWORD config)
 {
     IDirectSound8_IDirectSound8 *This = (IDirectSound8_IDirectSound8 *)iface;
     TRACE("(%p,0x%08x)\n",This,config);
     return DirectSoundDevice_SetSpeakerConfig(((IDirectSoundImpl *)This->pds)->device,config);
 }
 
-static HRESULT WINAPI IDirectSound8_IDirectSound8_Initialize(
-    LPDIRECTSOUND8 iface,
-    LPCGUID lpcGuid)
+static HRESULT WINAPI IDirectSound8Impl_Initialize(IDirectSound8 *iface, const GUID *lpcGuid)
 {
     IDirectSound8_IDirectSound8 *This = (IDirectSound8_IDirectSound8 *)iface;
     TRACE("(%p, %s)\n", This, debugstr_guid(lpcGuid));
     return DirectSoundDevice_Initialize(&((IDirectSoundImpl *)This->pds)->device,lpcGuid);
 }
 
-static HRESULT WINAPI IDirectSound8_IDirectSound8_VerifyCertification(
-    LPDIRECTSOUND8 iface,
-    LPDWORD pdwCertified)
+static HRESULT WINAPI IDirectSound8Impl_VerifyCertification(IDirectSound8 *iface,
+        DWORD *pdwCertified)
 {
     IDirectSound8_IDirectSound8 *This = (IDirectSound8_IDirectSound8 *)iface;
     TRACE("(%p, %p)\n", This, pdwCertified);
     return DirectSoundDevice_VerifyCertification(((IDirectSoundImpl *)This->pds)->device,pdwCertified);
 }
 
-static const IDirectSound8Vtbl DirectSound8_DirectSound8_Vtbl =
+static const IDirectSound8Vtbl ds8_vtbl =
 {
-    IDirectSound8_IDirectSound8_QueryInterface,
-    IDirectSound8_IDirectSound8_AddRef,
-    IDirectSound8_IDirectSound8_Release,
-    IDirectSound8_IDirectSound8_CreateSoundBuffer,
-    IDirectSound8_IDirectSound8_GetCaps,
-    IDirectSound8_IDirectSound8_DuplicateSoundBuffer,
-    IDirectSound8_IDirectSound8_SetCooperativeLevel,
-    IDirectSound8_IDirectSound8_Compact,
-    IDirectSound8_IDirectSound8_GetSpeakerConfig,
-    IDirectSound8_IDirectSound8_SetSpeakerConfig,
-    IDirectSound8_IDirectSound8_Initialize,
-    IDirectSound8_IDirectSound8_VerifyCertification
+    IDirectSound8Impl_QueryInterface,
+    IDirectSound8Impl_AddRef,
+    IDirectSound8Impl_Release,
+    IDirectSound8Impl_CreateSoundBuffer,
+    IDirectSound8Impl_GetCaps,
+    IDirectSound8Impl_DuplicateSoundBuffer,
+    IDirectSound8Impl_SetCooperativeLevel,
+    IDirectSound8Impl_Compact,
+    IDirectSound8Impl_GetSpeakerConfig,
+    IDirectSound8Impl_SetSpeakerConfig,
+    IDirectSound8Impl_Initialize,
+    IDirectSound8Impl_VerifyCertification
 };
 
 static HRESULT IDirectSound8_IDirectSound8_Create(
@@ -573,7 +552,7 @@ static HRESULT IDirectSound8_IDirectSound8_Create(
         return DSERR_OUTOFMEMORY;
     }
 
-    pdsds->lpVtbl = &DirectSound8_DirectSound8_Vtbl;
+    pdsds->lpVtbl = &ds8_vtbl;
     pdsds->ref = 0;
     pdsds->pds = pds;
 
