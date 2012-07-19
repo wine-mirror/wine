@@ -583,9 +583,12 @@ static HRESULT IDirectSound8_IDirectSound8_Create(
     return DS_OK;
 }
 
-static HRESULT IDirectSoundImpl_Create(void **ppv, BOOL has_ds8)
+static HRESULT IDirectSoundImpl_Create(REFIID riid, void **ppv, BOOL has_ds8)
 {
     IDirectSoundImpl *obj;
+    HRESULT hr;
+
+    TRACE("(%s, %p)\n", debugstr_guid(riid), ppv);
 
     *ppv = NULL;
     obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*obj));
@@ -594,48 +597,28 @@ static HRESULT IDirectSoundImpl_Create(void **ppv, BOOL has_ds8)
         return DSERR_OUTOFMEMORY;
     }
 
+    setup_dsound_options();
+
     obj->IUnknown_iface.lpVtbl = &unk_vtbl;
-    obj->ref = 0;
-    obj->numIfaces = 0;
+    obj->ref = 1;
+    obj->numIfaces = 1;
     obj->device = NULL;
     obj->has_ds8 = has_ds8;
 
-    *ppv = obj;
-    return DS_OK;
-}
-
-HRESULT DSOUND_Create(
-    REFIID riid,
-    LPDIRECTSOUND *ppDS)
-{
-    LPDIRECTSOUND8 pDS;
-    HRESULT hr;
-    TRACE("(%s, %p)\n", debugstr_guid(riid), ppDS);
-
-    if (!IsEqualIID(riid, &IID_IUnknown) &&
-        !IsEqualIID(riid, &IID_IDirectSound)) {
-        *ppDS = 0;
-        return E_NOINTERFACE;
-    }
-
-    /* Get dsound configuration */
-    setup_dsound_options();
-
-    hr = IDirectSoundImpl_Create((void **)&pDS, FALSE);
-    if (hr == DS_OK) {
-        hr = IDirectSound_IDirectSound_Create(pDS, ppDS);
-        if (*ppDS)
-            IDirectSound_IDirectSound_AddRef(*ppDS);
-        else {
-            WARN("IDirectSound_IDirectSound_Create failed\n");
-            IDirectSound8_Release(pDS);
-        }
-    } else {
-        WARN("IDirectSoundImpl_Create failed\n");
-        *ppDS = 0;
-    }
+    hr = IUnknown_QueryInterface(&obj->IUnknown_iface, riid, ppv);
+    IUnknown_Release(&obj->IUnknown_iface);
 
     return hr;
+}
+
+HRESULT DSOUND_Create(REFIID riid, void **ppv)
+{
+    return IDirectSoundImpl_Create(riid, ppv, FALSE);
+}
+
+HRESULT DSOUND_Create8(REFIID riid, void **ppv)
+{
+    return IDirectSoundImpl_Create(riid, ppv, TRUE);
 }
 
 /*******************************************************************************
@@ -674,7 +657,7 @@ HRESULT WINAPI DirectSoundCreate(
         return DSERR_INVALIDPARAM;
     }
 
-    hr = DSOUND_Create(&IID_IDirectSound, &pDS);
+    hr = DSOUND_Create(&IID_IDirectSound, (void **)&pDS);
     if (hr == DS_OK) {
         hr = IDirectSound_Initialize(pDS, lpcGUID);
         if (hr != DS_OK) {
@@ -687,41 +670,6 @@ HRESULT WINAPI DirectSoundCreate(
     }
 
     *ppDS = pDS;
-
-    return hr;
-}
-
-HRESULT DSOUND_Create8(
-    REFIID riid,
-    LPDIRECTSOUND8 *ppDS)
-{
-    LPDIRECTSOUND8 pDS;
-    HRESULT hr;
-    TRACE("(%s, %p)\n", debugstr_guid(riid), ppDS);
-
-    if (!IsEqualIID(riid, &IID_IUnknown) &&
-        !IsEqualIID(riid, &IID_IDirectSound) &&
-        !IsEqualIID(riid, &IID_IDirectSound8)) {
-        *ppDS = 0;
-        return E_NOINTERFACE;
-    }
-
-    /* Get dsound configuration */
-    setup_dsound_options();
-
-    hr = IDirectSoundImpl_Create((void **)&pDS, TRUE);
-    if (hr == DS_OK) {
-        hr = IDirectSound8_IDirectSound8_Create(pDS, ppDS);
-        if (*ppDS)
-            IDirectSound8_IDirectSound8_AddRef(*ppDS);
-        else {
-            WARN("IDirectSound8_IDirectSound8_Create failed\n");
-            IDirectSound8_Release(pDS);
-        }
-    } else {
-        WARN("IDirectSoundImpl_Create failed\n");
-        *ppDS = 0;
-    }
 
     return hr;
 }
@@ -762,7 +710,7 @@ HRESULT WINAPI DirectSoundCreate8(
         return DSERR_INVALIDPARAM;
     }
 
-    hr = DSOUND_Create8(&IID_IDirectSound8, &pDS);
+    hr = DSOUND_Create8(&IID_IDirectSound8, (void **)&pDS);
     if (hr == DS_OK) {
         hr = IDirectSound8_Initialize(pDS, lpcGUID);
         if (hr != DS_OK) {

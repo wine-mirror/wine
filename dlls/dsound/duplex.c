@@ -557,7 +557,7 @@ IDirectSoundFullDuplexImpl_Initialize(
         return DSERR_ALREADYINITIALIZED;
     }
 
-    hr = DSOUND_Create8(&IID_IDirectSound8, &This->renderer_device);
+    hr = DSOUND_Create8(&IID_IDirectSound8, (void **)&This->renderer_device);
     if (SUCCEEDED(hr))
         hr = IDirectSound_Initialize(This->renderer_device, pRendererGuid);
     if (hr != DS_OK) {

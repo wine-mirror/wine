@@ -264,8 +264,8 @@ HRESULT IKsPrivatePropertySetImpl_Create(REFIID riid, IKsPropertySet **piks) DEC
 
 /* dsound.c */
 
-HRESULT DSOUND_Create(REFIID riid, LPDIRECTSOUND *ppDS) DECLSPEC_HIDDEN;
-HRESULT DSOUND_Create8(REFIID riid, LPDIRECTSOUND8 *ppDS) DECLSPEC_HIDDEN;
+HRESULT DSOUND_Create(REFIID riid, void **ppv) DECLSPEC_HIDDEN;
+HRESULT DSOUND_Create8(REFIID riid, void **ppv) DECLSPEC_HIDDEN;
 
 /* primary.c */
 
