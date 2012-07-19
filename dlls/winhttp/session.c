@@ -229,14 +229,14 @@ HINTERNET WINAPI WinHttpOpen( LPCWSTR agent, DWORD access, LPCWSTR proxy, LPCWST
         session->access = info.dwAccessType;
         if (info.lpszProxy && !(session->proxy_server = strdupW( info.lpszProxy )))
         {
-            GlobalFree( (LPWSTR)info.lpszProxy );
-            GlobalFree( (LPWSTR)info.lpszProxyBypass );
+            GlobalFree( info.lpszProxy );
+            GlobalFree( info.lpszProxyBypass );
             goto end;
         }
         if (info.lpszProxyBypass && !(session->proxy_bypass = strdupW( info.lpszProxyBypass )))
         {
-            GlobalFree( (LPWSTR)info.lpszProxy );
-            GlobalFree( (LPWSTR)info.lpszProxyBypass );
+            GlobalFree( info.lpszProxy );
+            GlobalFree( info.lpszProxyBypass );
             goto end;
         }
     }

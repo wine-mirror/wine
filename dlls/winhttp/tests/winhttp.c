@@ -46,9 +46,9 @@ static BOOL proxy_active(void)
     {
         active = (proxy_info.lpszProxy != NULL);
         if (active)
-            GlobalFree((HGLOBAL) proxy_info.lpszProxy);
+            GlobalFree(proxy_info.lpszProxy);
         if (proxy_info.lpszProxyBypass != NULL)
-            GlobalFree((HGLOBAL) proxy_info.lpszProxyBypass);
+            GlobalFree(proxy_info.lpszProxyBypass);
     }
     else
        active = FALSE;
@@ -1005,8 +1005,8 @@ static void set_default_proxy_reg_value( BYTE *buf, DWORD len, DWORD type )
 
 static void test_set_default_proxy_config(void)
 {
-    static const WCHAR wideString[] = { 0x226f, 0x575b, 0 };
-    static const WCHAR normalString[] = { 'f','o','o',0 };
+    static WCHAR wideString[] = { 0x226f, 0x575b, 0 };
+    static WCHAR normalString[] = { 'f','o','o',0 };
     DWORD type, len;
     BYTE *saved_proxy_settings = NULL;
     WINHTTP_PROXY_INFO info;
@@ -2699,8 +2699,8 @@ static void test_WinHttpGetProxyForUrl(void)
         trace("%u\n", info.dwAccessType);
         trace("%s\n", wine_dbgstr_w(info.lpszProxy));
         trace("%s\n", wine_dbgstr_w(info.lpszProxyBypass));
-        GlobalFree( (WCHAR *)info.lpszProxy );
-        GlobalFree( (WCHAR *)info.lpszProxyBypass );
+        GlobalFree( info.lpszProxy );
+        GlobalFree( info.lpszProxyBypass );
     }
     WinHttpCloseHandle( session );
 }

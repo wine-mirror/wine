@@ -487,8 +487,8 @@ typedef struct
 typedef struct
 {
     DWORD dwAccessType;
-    LPCWSTR lpszProxy;
-    LPCWSTR lpszProxyBypass;
+    LPWSTR lpszProxy;
+    LPWSTR lpszProxyBypass;
 } WINHTTP_PROXY_INFO, *LPWINHTTP_PROXY_INFO;
 typedef WINHTTP_PROXY_INFO WINHTTP_PROXY_INFOW;
 typedef LPWINHTTP_PROXY_INFO LPWINHTTP_PROXY_INFOW;
