@@ -617,7 +617,7 @@ while (my $line = <REGISTRY>) {
 	    } elsif ($line =~ /^\t*category/) {
 		($category) = ($line =~ /^\t*category\s*([\w-]*)/);
 	    } elsif ($line =~ /^\t*param/) {
-		my ($name, $base_type, $ext) = ($line =~ /\t*param\s*(\w*)\s*(\w*) (.*)/);
+		my ($name, $base_type, $dir, $ext) = ($line =~ /\t*param\s*(\w*)\s*(\w*) (in|out)\s+(.*)/);
 		my $ptr = 0;
 		unless (defined($name)) {
 		    chomp $line;
@@ -644,7 +644,8 @@ while (my $line = <REGISTRY>) {
 		    die "Unsupported return type in function $funcname for type $base_type (line $line)\n";
 		}
 		if ($ptr) {
-		    $type = "$type*";
+		    $type .= "*";
+		    $type = "const $type" if $dir eq "in";
 		}
 
 		$arg_types{$name} = $type;

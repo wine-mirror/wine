@@ -31,7 +31,7 @@ void WINAPI wine_glAlphaFunc( GLenum func, GLfloat ref ) {
 /***********************************************************************
  *              glAreTexturesResident (OPENGL32.@)
  */
-GLboolean WINAPI wine_glAreTexturesResident( GLsizei n, GLuint* textures, GLboolean* residences ) {
+GLboolean WINAPI wine_glAreTexturesResident( GLsizei n, const GLuint* textures, GLboolean* residences ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p, %p)\n", n, textures, residences );
   return funcs->gl.p_glAreTexturesResident( n, textures, residences );
@@ -67,7 +67,7 @@ void WINAPI wine_glBindTexture( GLenum target, GLuint texture ) {
 /***********************************************************************
  *              glBitmap (OPENGL32.@)
  */
-void WINAPI wine_glBitmap( GLsizei width, GLsizei height, GLfloat xorig, GLfloat yorig, GLfloat xmove, GLfloat ymove, GLubyte* bitmap ) {
+void WINAPI wine_glBitmap( GLsizei width, GLsizei height, GLfloat xorig, GLfloat yorig, GLfloat xmove, GLfloat ymove, const GLubyte* bitmap ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %f, %f, %f, %f, %p)\n", width, height, xorig, yorig, xmove, ymove, bitmap );
   funcs->gl.p_glBitmap( width, height, xorig, yorig, xmove, ymove, bitmap );
@@ -94,7 +94,7 @@ void WINAPI wine_glCallList( GLuint list ) {
 /***********************************************************************
  *              glCallLists (OPENGL32.@)
  */
-void WINAPI wine_glCallLists( GLsizei n, GLenum type, GLvoid* lists ) {
+void WINAPI wine_glCallLists( GLsizei n, GLenum type, const GLvoid* lists ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", n, type, lists );
   funcs->gl.p_glCallLists( n, type, lists );
@@ -157,7 +157,7 @@ void WINAPI wine_glClearStencil( GLint s ) {
 /***********************************************************************
  *              glClipPlane (OPENGL32.@)
  */
-void WINAPI wine_glClipPlane( GLenum plane, GLdouble* equation ) {
+void WINAPI wine_glClipPlane( GLenum plane, const GLdouble* equation ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", plane, equation );
   funcs->gl.p_glClipPlane( plane, equation );
@@ -175,7 +175,7 @@ void WINAPI wine_glColor3b( GLbyte red, GLbyte green, GLbyte blue ) {
 /***********************************************************************
  *              glColor3bv (OPENGL32.@)
  */
-void WINAPI wine_glColor3bv( GLbyte* v ) {
+void WINAPI wine_glColor3bv( const GLbyte* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glColor3bv( v );
@@ -193,7 +193,7 @@ void WINAPI wine_glColor3d( GLdouble red, GLdouble green, GLdouble blue ) {
 /***********************************************************************
  *              glColor3dv (OPENGL32.@)
  */
-void WINAPI wine_glColor3dv( GLdouble* v ) {
+void WINAPI wine_glColor3dv( const GLdouble* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glColor3dv( v );
@@ -211,7 +211,7 @@ void WINAPI wine_glColor3f( GLfloat red, GLfloat green, GLfloat blue ) {
 /***********************************************************************
  *              glColor3fv (OPENGL32.@)
  */
-void WINAPI wine_glColor3fv( GLfloat* v ) {
+void WINAPI wine_glColor3fv( const GLfloat* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glColor3fv( v );
@@ -229,7 +229,7 @@ void WINAPI wine_glColor3i( GLint red, GLint green, GLint blue ) {
 /***********************************************************************
  *              glColor3iv (OPENGL32.@)
  */
-void WINAPI wine_glColor3iv( GLint* v ) {
+void WINAPI wine_glColor3iv( const GLint* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glColor3iv( v );
@@ -247,7 +247,7 @@ void WINAPI wine_glColor3s( GLshort red, GLshort green, GLshort blue ) {
 /***********************************************************************
  *              glColor3sv (OPENGL32.@)
  */
-void WINAPI wine_glColor3sv( GLshort* v ) {
+void WINAPI wine_glColor3sv( const GLshort* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glColor3sv( v );
@@ -265,7 +265,7 @@ void WINAPI wine_glColor3ub( GLubyte red, GLubyte green, GLubyte blue ) {
 /***********************************************************************
  *              glColor3ubv (OPENGL32.@)
  */
-void WINAPI wine_glColor3ubv( GLubyte* v ) {
+void WINAPI wine_glColor3ubv( const GLubyte* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glColor3ubv( v );
@@ -283,7 +283,7 @@ void WINAPI wine_glColor3ui( GLuint red, GLuint green, GLuint blue ) {
 /***********************************************************************
  *              glColor3uiv (OPENGL32.@)
  */
-void WINAPI wine_glColor3uiv( GLuint* v ) {
+void WINAPI wine_glColor3uiv( const GLuint* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glColor3uiv( v );
@@ -301,7 +301,7 @@ void WINAPI wine_glColor3us( GLushort red, GLushort green, GLushort blue ) {
 /***********************************************************************
  *              glColor3usv (OPENGL32.@)
  */
-void WINAPI wine_glColor3usv( GLushort* v ) {
+void WINAPI wine_glColor3usv( const GLushort* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glColor3usv( v );
@@ -319,7 +319,7 @@ void WINAPI wine_glColor4b( GLbyte red, GLbyte green, GLbyte blue, GLbyte alpha 
 /***********************************************************************
  *              glColor4bv (OPENGL32.@)
  */
-void WINAPI wine_glColor4bv( GLbyte* v ) {
+void WINAPI wine_glColor4bv( const GLbyte* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glColor4bv( v );
@@ -337,7 +337,7 @@ void WINAPI wine_glColor4d( GLdouble red, GLdouble green, GLdouble blue, GLdoubl
 /***********************************************************************
  *              glColor4dv (OPENGL32.@)
  */
-void WINAPI wine_glColor4dv( GLdouble* v ) {
+void WINAPI wine_glColor4dv( const GLdouble* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glColor4dv( v );
@@ -355,7 +355,7 @@ void WINAPI wine_glColor4f( GLfloat red, GLfloat green, GLfloat blue, GLfloat al
 /***********************************************************************
  *              glColor4fv (OPENGL32.@)
  */
-void WINAPI wine_glColor4fv( GLfloat* v ) {
+void WINAPI wine_glColor4fv( const GLfloat* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glColor4fv( v );
@@ -373,7 +373,7 @@ void WINAPI wine_glColor4i( GLint red, GLint green, GLint blue, GLint alpha ) {
 /***********************************************************************
  *              glColor4iv (OPENGL32.@)
  */
-void WINAPI wine_glColor4iv( GLint* v ) {
+void WINAPI wine_glColor4iv( const GLint* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glColor4iv( v );
@@ -391,7 +391,7 @@ void WINAPI wine_glColor4s( GLshort red, GLshort green, GLshort blue, GLshort al
 /***********************************************************************
  *              glColor4sv (OPENGL32.@)
  */
-void WINAPI wine_glColor4sv( GLshort* v ) {
+void WINAPI wine_glColor4sv( const GLshort* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glColor4sv( v );
@@ -409,7 +409,7 @@ void WINAPI wine_glColor4ub( GLubyte red, GLubyte green, GLubyte blue, GLubyte a
 /***********************************************************************
  *              glColor4ubv (OPENGL32.@)
  */
-void WINAPI wine_glColor4ubv( GLubyte* v ) {
+void WINAPI wine_glColor4ubv( const GLubyte* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glColor4ubv( v );
@@ -427,7 +427,7 @@ void WINAPI wine_glColor4ui( GLuint red, GLuint green, GLuint blue, GLuint alpha
 /***********************************************************************
  *              glColor4uiv (OPENGL32.@)
  */
-void WINAPI wine_glColor4uiv( GLuint* v ) {
+void WINAPI wine_glColor4uiv( const GLuint* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glColor4uiv( v );
@@ -445,7 +445,7 @@ void WINAPI wine_glColor4us( GLushort red, GLushort green, GLushort blue, GLusho
 /***********************************************************************
  *              glColor4usv (OPENGL32.@)
  */
-void WINAPI wine_glColor4usv( GLushort* v ) {
+void WINAPI wine_glColor4usv( const GLushort* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glColor4usv( v );
@@ -472,7 +472,7 @@ void WINAPI wine_glColorMaterial( GLenum face, GLenum mode ) {
 /***********************************************************************
  *              glColorPointer (OPENGL32.@)
  */
-void WINAPI wine_glColorPointer( GLint size, GLenum type, GLsizei stride, GLvoid* pointer ) {
+void WINAPI wine_glColorPointer( GLint size, GLenum type, GLsizei stride, const GLvoid* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p)\n", size, type, stride, pointer );
   funcs->gl.p_glColorPointer( size, type, stride, pointer );
@@ -544,7 +544,7 @@ void WINAPI wine_glDeleteLists( GLuint list, GLsizei range ) {
 /***********************************************************************
  *              glDeleteTextures (OPENGL32.@)
  */
-void WINAPI wine_glDeleteTextures( GLsizei n, GLuint* textures ) {
+void WINAPI wine_glDeleteTextures( GLsizei n, const GLuint* textures ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", n, textures );
   funcs->gl.p_glDeleteTextures( n, textures );
@@ -616,7 +616,7 @@ void WINAPI wine_glDrawBuffer( GLenum mode ) {
 /***********************************************************************
  *              glDrawElements (OPENGL32.@)
  */
-void WINAPI wine_glDrawElements( GLenum mode, GLsizei count, GLenum type, GLvoid* indices ) {
+void WINAPI wine_glDrawElements( GLenum mode, GLsizei count, GLenum type, const GLvoid* indices ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p)\n", mode, count, type, indices );
   funcs->gl.p_glDrawElements( mode, count, type, indices );
@@ -625,7 +625,7 @@ void WINAPI wine_glDrawElements( GLenum mode, GLsizei count, GLenum type, GLvoid
 /***********************************************************************
  *              glDrawPixels (OPENGL32.@)
  */
-void WINAPI wine_glDrawPixels( GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid* pixels ) {
+void WINAPI wine_glDrawPixels( GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid* pixels ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %p)\n", width, height, format, type, pixels );
   funcs->gl.p_glDrawPixels( width, height, format, type, pixels );
@@ -643,7 +643,7 @@ void WINAPI wine_glEdgeFlag( GLboolean flag ) {
 /***********************************************************************
  *              glEdgeFlagPointer (OPENGL32.@)
  */
-void WINAPI wine_glEdgeFlagPointer( GLsizei stride, GLvoid* pointer ) {
+void WINAPI wine_glEdgeFlagPointer( GLsizei stride, const GLvoid* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", stride, pointer );
   funcs->gl.p_glEdgeFlagPointer( stride, pointer );
@@ -652,7 +652,7 @@ void WINAPI wine_glEdgeFlagPointer( GLsizei stride, GLvoid* pointer ) {
 /***********************************************************************
  *              glEdgeFlagv (OPENGL32.@)
  */
-void WINAPI wine_glEdgeFlagv( GLboolean* flag ) {
+void WINAPI wine_glEdgeFlagv( const GLboolean* flag ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", flag );
   funcs->gl.p_glEdgeFlagv( flag );
@@ -706,7 +706,7 @@ void WINAPI wine_glEvalCoord1d( GLdouble u ) {
 /***********************************************************************
  *              glEvalCoord1dv (OPENGL32.@)
  */
-void WINAPI wine_glEvalCoord1dv( GLdouble* u ) {
+void WINAPI wine_glEvalCoord1dv( const GLdouble* u ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", u );
   funcs->gl.p_glEvalCoord1dv( u );
@@ -724,7 +724,7 @@ void WINAPI wine_glEvalCoord1f( GLfloat u ) {
 /***********************************************************************
  *              glEvalCoord1fv (OPENGL32.@)
  */
-void WINAPI wine_glEvalCoord1fv( GLfloat* u ) {
+void WINAPI wine_glEvalCoord1fv( const GLfloat* u ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", u );
   funcs->gl.p_glEvalCoord1fv( u );
@@ -742,7 +742,7 @@ void WINAPI wine_glEvalCoord2d( GLdouble u, GLdouble v ) {
 /***********************************************************************
  *              glEvalCoord2dv (OPENGL32.@)
  */
-void WINAPI wine_glEvalCoord2dv( GLdouble* u ) {
+void WINAPI wine_glEvalCoord2dv( const GLdouble* u ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", u );
   funcs->gl.p_glEvalCoord2dv( u );
@@ -760,7 +760,7 @@ void WINAPI wine_glEvalCoord2f( GLfloat u, GLfloat v ) {
 /***********************************************************************
  *              glEvalCoord2fv (OPENGL32.@)
  */
-void WINAPI wine_glEvalCoord2fv( GLfloat* u ) {
+void WINAPI wine_glEvalCoord2fv( const GLfloat* u ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", u );
   funcs->gl.p_glEvalCoord2fv( u );
@@ -841,7 +841,7 @@ void WINAPI wine_glFogf( GLenum pname, GLfloat param ) {
 /***********************************************************************
  *              glFogfv (OPENGL32.@)
  */
-void WINAPI wine_glFogfv( GLenum pname, GLfloat* params ) {
+void WINAPI wine_glFogfv( GLenum pname, const GLfloat* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", pname, params );
   funcs->gl.p_glFogfv( pname, params );
@@ -859,7 +859,7 @@ void WINAPI wine_glFogi( GLenum pname, GLint param ) {
 /***********************************************************************
  *              glFogiv (OPENGL32.@)
  */
-void WINAPI wine_glFogiv( GLenum pname, GLint* params ) {
+void WINAPI wine_glFogiv( GLenum pname, const GLint* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", pname, params );
   funcs->gl.p_glFogiv( pname, params );
@@ -1174,7 +1174,7 @@ void WINAPI wine_glIndexMask( GLuint mask ) {
 /***********************************************************************
  *              glIndexPointer (OPENGL32.@)
  */
-void WINAPI wine_glIndexPointer( GLenum type, GLsizei stride, GLvoid* pointer ) {
+void WINAPI wine_glIndexPointer( GLenum type, GLsizei stride, const GLvoid* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", type, stride, pointer );
   funcs->gl.p_glIndexPointer( type, stride, pointer );
@@ -1192,7 +1192,7 @@ void WINAPI wine_glIndexd( GLdouble c ) {
 /***********************************************************************
  *              glIndexdv (OPENGL32.@)
  */
-void WINAPI wine_glIndexdv( GLdouble* c ) {
+void WINAPI wine_glIndexdv( const GLdouble* c ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", c );
   funcs->gl.p_glIndexdv( c );
@@ -1210,7 +1210,7 @@ void WINAPI wine_glIndexf( GLfloat c ) {
 /***********************************************************************
  *              glIndexfv (OPENGL32.@)
  */
-void WINAPI wine_glIndexfv( GLfloat* c ) {
+void WINAPI wine_glIndexfv( const GLfloat* c ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", c );
   funcs->gl.p_glIndexfv( c );
@@ -1228,7 +1228,7 @@ void WINAPI wine_glIndexi( GLint c ) {
 /***********************************************************************
  *              glIndexiv (OPENGL32.@)
  */
-void WINAPI wine_glIndexiv( GLint* c ) {
+void WINAPI wine_glIndexiv( const GLint* c ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", c );
   funcs->gl.p_glIndexiv( c );
@@ -1246,7 +1246,7 @@ void WINAPI wine_glIndexs( GLshort c ) {
 /***********************************************************************
  *              glIndexsv (OPENGL32.@)
  */
-void WINAPI wine_glIndexsv( GLshort* c ) {
+void WINAPI wine_glIndexsv( const GLshort* c ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", c );
   funcs->gl.p_glIndexsv( c );
@@ -1264,7 +1264,7 @@ void WINAPI wine_glIndexub( GLubyte c ) {
 /***********************************************************************
  *              glIndexubv (OPENGL32.@)
  */
-void WINAPI wine_glIndexubv( GLubyte* c ) {
+void WINAPI wine_glIndexubv( const GLubyte* c ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", c );
   funcs->gl.p_glIndexubv( c );
@@ -1282,7 +1282,7 @@ void WINAPI wine_glInitNames( void ) {
 /***********************************************************************
  *              glInterleavedArrays (OPENGL32.@)
  */
-void WINAPI wine_glInterleavedArrays( GLenum format, GLsizei stride, GLvoid* pointer ) {
+void WINAPI wine_glInterleavedArrays( GLenum format, GLsizei stride, const GLvoid* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", format, stride, pointer );
   funcs->gl.p_glInterleavedArrays( format, stride, pointer );
@@ -1327,7 +1327,7 @@ void WINAPI wine_glLightModelf( GLenum pname, GLfloat param ) {
 /***********************************************************************
  *              glLightModelfv (OPENGL32.@)
  */
-void WINAPI wine_glLightModelfv( GLenum pname, GLfloat* params ) {
+void WINAPI wine_glLightModelfv( GLenum pname, const GLfloat* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", pname, params );
   funcs->gl.p_glLightModelfv( pname, params );
@@ -1345,7 +1345,7 @@ void WINAPI wine_glLightModeli( GLenum pname, GLint param ) {
 /***********************************************************************
  *              glLightModeliv (OPENGL32.@)
  */
-void WINAPI wine_glLightModeliv( GLenum pname, GLint* params ) {
+void WINAPI wine_glLightModeliv( GLenum pname, const GLint* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", pname, params );
   funcs->gl.p_glLightModeliv( pname, params );
@@ -1363,7 +1363,7 @@ void WINAPI wine_glLightf( GLenum light, GLenum pname, GLfloat param ) {
 /***********************************************************************
  *              glLightfv (OPENGL32.@)
  */
-void WINAPI wine_glLightfv( GLenum light, GLenum pname, GLfloat* params ) {
+void WINAPI wine_glLightfv( GLenum light, GLenum pname, const GLfloat* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", light, pname, params );
   funcs->gl.p_glLightfv( light, pname, params );
@@ -1381,7 +1381,7 @@ void WINAPI wine_glLighti( GLenum light, GLenum pname, GLint param ) {
 /***********************************************************************
  *              glLightiv (OPENGL32.@)
  */
-void WINAPI wine_glLightiv( GLenum light, GLenum pname, GLint* params ) {
+void WINAPI wine_glLightiv( GLenum light, GLenum pname, const GLint* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", light, pname, params );
   funcs->gl.p_glLightiv( light, pname, params );
@@ -1426,7 +1426,7 @@ void WINAPI wine_glLoadIdentity( void ) {
 /***********************************************************************
  *              glLoadMatrixd (OPENGL32.@)
  */
-void WINAPI wine_glLoadMatrixd( GLdouble* m ) {
+void WINAPI wine_glLoadMatrixd( const GLdouble* m ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", m );
   funcs->gl.p_glLoadMatrixd( m );
@@ -1435,7 +1435,7 @@ void WINAPI wine_glLoadMatrixd( GLdouble* m ) {
 /***********************************************************************
  *              glLoadMatrixf (OPENGL32.@)
  */
-void WINAPI wine_glLoadMatrixf( GLfloat* m ) {
+void WINAPI wine_glLoadMatrixf( const GLfloat* m ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", m );
   funcs->gl.p_glLoadMatrixf( m );
@@ -1462,7 +1462,7 @@ void WINAPI wine_glLogicOp( GLenum opcode ) {
 /***********************************************************************
  *              glMap1d (OPENGL32.@)
  */
-void WINAPI wine_glMap1d( GLenum target, GLdouble u1, GLdouble u2, GLint stride, GLint order, GLdouble* points ) {
+void WINAPI wine_glMap1d( GLenum target, GLdouble u1, GLdouble u2, GLint stride, GLint order, const GLdouble* points ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %f, %f, %d, %d, %p)\n", target, u1, u2, stride, order, points );
   funcs->gl.p_glMap1d( target, u1, u2, stride, order, points );
@@ -1471,7 +1471,7 @@ void WINAPI wine_glMap1d( GLenum target, GLdouble u1, GLdouble u2, GLint stride,
 /***********************************************************************
  *              glMap1f (OPENGL32.@)
  */
-void WINAPI wine_glMap1f( GLenum target, GLfloat u1, GLfloat u2, GLint stride, GLint order, GLfloat* points ) {
+void WINAPI wine_glMap1f( GLenum target, GLfloat u1, GLfloat u2, GLint stride, GLint order, const GLfloat* points ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %f, %f, %d, %d, %p)\n", target, u1, u2, stride, order, points );
   funcs->gl.p_glMap1f( target, u1, u2, stride, order, points );
@@ -1480,7 +1480,7 @@ void WINAPI wine_glMap1f( GLenum target, GLfloat u1, GLfloat u2, GLint stride, G
 /***********************************************************************
  *              glMap2d (OPENGL32.@)
  */
-void WINAPI wine_glMap2d( GLenum target, GLdouble u1, GLdouble u2, GLint ustride, GLint uorder, GLdouble v1, GLdouble v2, GLint vstride, GLint vorder, GLdouble* points ) {
+void WINAPI wine_glMap2d( GLenum target, GLdouble u1, GLdouble u2, GLint ustride, GLint uorder, GLdouble v1, GLdouble v2, GLint vstride, GLint vorder, const GLdouble* points ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %f, %f, %d, %d, %f, %f, %d, %d, %p)\n", target, u1, u2, ustride, uorder, v1, v2, vstride, vorder, points );
   funcs->gl.p_glMap2d( target, u1, u2, ustride, uorder, v1, v2, vstride, vorder, points );
@@ -1489,7 +1489,7 @@ void WINAPI wine_glMap2d( GLenum target, GLdouble u1, GLdouble u2, GLint ustride
 /***********************************************************************
  *              glMap2f (OPENGL32.@)
  */
-void WINAPI wine_glMap2f( GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder, GLfloat v1, GLfloat v2, GLint vstride, GLint vorder, GLfloat* points ) {
+void WINAPI wine_glMap2f( GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder, GLfloat v1, GLfloat v2, GLint vstride, GLint vorder, const GLfloat* points ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %f, %f, %d, %d, %f, %f, %d, %d, %p)\n", target, u1, u2, ustride, uorder, v1, v2, vstride, vorder, points );
   funcs->gl.p_glMap2f( target, u1, u2, ustride, uorder, v1, v2, vstride, vorder, points );
@@ -1543,7 +1543,7 @@ void WINAPI wine_glMaterialf( GLenum face, GLenum pname, GLfloat param ) {
 /***********************************************************************
  *              glMaterialfv (OPENGL32.@)
  */
-void WINAPI wine_glMaterialfv( GLenum face, GLenum pname, GLfloat* params ) {
+void WINAPI wine_glMaterialfv( GLenum face, GLenum pname, const GLfloat* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", face, pname, params );
   funcs->gl.p_glMaterialfv( face, pname, params );
@@ -1561,7 +1561,7 @@ void WINAPI wine_glMateriali( GLenum face, GLenum pname, GLint param ) {
 /***********************************************************************
  *              glMaterialiv (OPENGL32.@)
  */
-void WINAPI wine_glMaterialiv( GLenum face, GLenum pname, GLint* params ) {
+void WINAPI wine_glMaterialiv( GLenum face, GLenum pname, const GLint* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", face, pname, params );
   funcs->gl.p_glMaterialiv( face, pname, params );
@@ -1579,7 +1579,7 @@ void WINAPI wine_glMatrixMode( GLenum mode ) {
 /***********************************************************************
  *              glMultMatrixd (OPENGL32.@)
  */
-void WINAPI wine_glMultMatrixd( GLdouble* m ) {
+void WINAPI wine_glMultMatrixd( const GLdouble* m ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", m );
   funcs->gl.p_glMultMatrixd( m );
@@ -1588,7 +1588,7 @@ void WINAPI wine_glMultMatrixd( GLdouble* m ) {
 /***********************************************************************
  *              glMultMatrixf (OPENGL32.@)
  */
-void WINAPI wine_glMultMatrixf( GLfloat* m ) {
+void WINAPI wine_glMultMatrixf( const GLfloat* m ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", m );
   funcs->gl.p_glMultMatrixf( m );
@@ -1615,7 +1615,7 @@ void WINAPI wine_glNormal3b( GLbyte nx, GLbyte ny, GLbyte nz ) {
 /***********************************************************************
  *              glNormal3bv (OPENGL32.@)
  */
-void WINAPI wine_glNormal3bv( GLbyte* v ) {
+void WINAPI wine_glNormal3bv( const GLbyte* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glNormal3bv( v );
@@ -1633,7 +1633,7 @@ void WINAPI wine_glNormal3d( GLdouble nx, GLdouble ny, GLdouble nz ) {
 /***********************************************************************
  *              glNormal3dv (OPENGL32.@)
  */
-void WINAPI wine_glNormal3dv( GLdouble* v ) {
+void WINAPI wine_glNormal3dv( const GLdouble* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glNormal3dv( v );
@@ -1651,7 +1651,7 @@ void WINAPI wine_glNormal3f( GLfloat nx, GLfloat ny, GLfloat nz ) {
 /***********************************************************************
  *              glNormal3fv (OPENGL32.@)
  */
-void WINAPI wine_glNormal3fv( GLfloat* v ) {
+void WINAPI wine_glNormal3fv( const GLfloat* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glNormal3fv( v );
@@ -1669,7 +1669,7 @@ void WINAPI wine_glNormal3i( GLint nx, GLint ny, GLint nz ) {
 /***********************************************************************
  *              glNormal3iv (OPENGL32.@)
  */
-void WINAPI wine_glNormal3iv( GLint* v ) {
+void WINAPI wine_glNormal3iv( const GLint* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glNormal3iv( v );
@@ -1687,7 +1687,7 @@ void WINAPI wine_glNormal3s( GLshort nx, GLshort ny, GLshort nz ) {
 /***********************************************************************
  *              glNormal3sv (OPENGL32.@)
  */
-void WINAPI wine_glNormal3sv( GLshort* v ) {
+void WINAPI wine_glNormal3sv( const GLshort* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glNormal3sv( v );
@@ -1696,7 +1696,7 @@ void WINAPI wine_glNormal3sv( GLshort* v ) {
 /***********************************************************************
  *              glNormalPointer (OPENGL32.@)
  */
-void WINAPI wine_glNormalPointer( GLenum type, GLsizei stride, GLvoid* pointer ) {
+void WINAPI wine_glNormalPointer( GLenum type, GLsizei stride, const GLvoid* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", type, stride, pointer );
   funcs->gl.p_glNormalPointer( type, stride, pointer );
@@ -1723,7 +1723,7 @@ void WINAPI wine_glPassThrough( GLfloat token ) {
 /***********************************************************************
  *              glPixelMapfv (OPENGL32.@)
  */
-void WINAPI wine_glPixelMapfv( GLenum map, GLint mapsize, GLfloat* values ) {
+void WINAPI wine_glPixelMapfv( GLenum map, GLint mapsize, const GLfloat* values ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", map, mapsize, values );
   funcs->gl.p_glPixelMapfv( map, mapsize, values );
@@ -1732,7 +1732,7 @@ void WINAPI wine_glPixelMapfv( GLenum map, GLint mapsize, GLfloat* values ) {
 /***********************************************************************
  *              glPixelMapuiv (OPENGL32.@)
  */
-void WINAPI wine_glPixelMapuiv( GLenum map, GLint mapsize, GLuint* values ) {
+void WINAPI wine_glPixelMapuiv( GLenum map, GLint mapsize, const GLuint* values ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", map, mapsize, values );
   funcs->gl.p_glPixelMapuiv( map, mapsize, values );
@@ -1741,7 +1741,7 @@ void WINAPI wine_glPixelMapuiv( GLenum map, GLint mapsize, GLuint* values ) {
 /***********************************************************************
  *              glPixelMapusv (OPENGL32.@)
  */
-void WINAPI wine_glPixelMapusv( GLenum map, GLint mapsize, GLushort* values ) {
+void WINAPI wine_glPixelMapusv( GLenum map, GLint mapsize, const GLushort* values ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", map, mapsize, values );
   funcs->gl.p_glPixelMapusv( map, mapsize, values );
@@ -1822,7 +1822,7 @@ void WINAPI wine_glPolygonOffset( GLfloat factor, GLfloat units ) {
 /***********************************************************************
  *              glPolygonStipple (OPENGL32.@)
  */
-void WINAPI wine_glPolygonStipple( GLubyte* mask ) {
+void WINAPI wine_glPolygonStipple( const GLubyte* mask ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", mask );
   funcs->gl.p_glPolygonStipple( mask );
@@ -1867,7 +1867,7 @@ void WINAPI wine_glPopName( void ) {
 /***********************************************************************
  *              glPrioritizeTextures (OPENGL32.@)
  */
-void WINAPI wine_glPrioritizeTextures( GLsizei n, GLuint* textures, GLfloat* priorities ) {
+void WINAPI wine_glPrioritizeTextures( GLsizei n, const GLuint* textures, const GLfloat* priorities ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p, %p)\n", n, textures, priorities );
   funcs->gl.p_glPrioritizeTextures( n, textures, priorities );
@@ -1921,7 +1921,7 @@ void WINAPI wine_glRasterPos2d( GLdouble x, GLdouble y ) {
 /***********************************************************************
  *              glRasterPos2dv (OPENGL32.@)
  */
-void WINAPI wine_glRasterPos2dv( GLdouble* v ) {
+void WINAPI wine_glRasterPos2dv( const GLdouble* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glRasterPos2dv( v );
@@ -1939,7 +1939,7 @@ void WINAPI wine_glRasterPos2f( GLfloat x, GLfloat y ) {
 /***********************************************************************
  *              glRasterPos2fv (OPENGL32.@)
  */
-void WINAPI wine_glRasterPos2fv( GLfloat* v ) {
+void WINAPI wine_glRasterPos2fv( const GLfloat* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glRasterPos2fv( v );
@@ -1957,7 +1957,7 @@ void WINAPI wine_glRasterPos2i( GLint x, GLint y ) {
 /***********************************************************************
  *              glRasterPos2iv (OPENGL32.@)
  */
-void WINAPI wine_glRasterPos2iv( GLint* v ) {
+void WINAPI wine_glRasterPos2iv( const GLint* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glRasterPos2iv( v );
@@ -1975,7 +1975,7 @@ void WINAPI wine_glRasterPos2s( GLshort x, GLshort y ) {
 /***********************************************************************
  *              glRasterPos2sv (OPENGL32.@)
  */
-void WINAPI wine_glRasterPos2sv( GLshort* v ) {
+void WINAPI wine_glRasterPos2sv( const GLshort* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glRasterPos2sv( v );
@@ -1993,7 +1993,7 @@ void WINAPI wine_glRasterPos3d( GLdouble x, GLdouble y, GLdouble z ) {
 /***********************************************************************
  *              glRasterPos3dv (OPENGL32.@)
  */
-void WINAPI wine_glRasterPos3dv( GLdouble* v ) {
+void WINAPI wine_glRasterPos3dv( const GLdouble* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glRasterPos3dv( v );
@@ -2011,7 +2011,7 @@ void WINAPI wine_glRasterPos3f( GLfloat x, GLfloat y, GLfloat z ) {
 /***********************************************************************
  *              glRasterPos3fv (OPENGL32.@)
  */
-void WINAPI wine_glRasterPos3fv( GLfloat* v ) {
+void WINAPI wine_glRasterPos3fv( const GLfloat* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glRasterPos3fv( v );
@@ -2029,7 +2029,7 @@ void WINAPI wine_glRasterPos3i( GLint x, GLint y, GLint z ) {
 /***********************************************************************
  *              glRasterPos3iv (OPENGL32.@)
  */
-void WINAPI wine_glRasterPos3iv( GLint* v ) {
+void WINAPI wine_glRasterPos3iv( const GLint* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glRasterPos3iv( v );
@@ -2047,7 +2047,7 @@ void WINAPI wine_glRasterPos3s( GLshort x, GLshort y, GLshort z ) {
 /***********************************************************************
  *              glRasterPos3sv (OPENGL32.@)
  */
-void WINAPI wine_glRasterPos3sv( GLshort* v ) {
+void WINAPI wine_glRasterPos3sv( const GLshort* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glRasterPos3sv( v );
@@ -2065,7 +2065,7 @@ void WINAPI wine_glRasterPos4d( GLdouble x, GLdouble y, GLdouble z, GLdouble w )
 /***********************************************************************
  *              glRasterPos4dv (OPENGL32.@)
  */
-void WINAPI wine_glRasterPos4dv( GLdouble* v ) {
+void WINAPI wine_glRasterPos4dv( const GLdouble* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glRasterPos4dv( v );
@@ -2083,7 +2083,7 @@ void WINAPI wine_glRasterPos4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w ) {
 /***********************************************************************
  *              glRasterPos4fv (OPENGL32.@)
  */
-void WINAPI wine_glRasterPos4fv( GLfloat* v ) {
+void WINAPI wine_glRasterPos4fv( const GLfloat* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glRasterPos4fv( v );
@@ -2101,7 +2101,7 @@ void WINAPI wine_glRasterPos4i( GLint x, GLint y, GLint z, GLint w ) {
 /***********************************************************************
  *              glRasterPos4iv (OPENGL32.@)
  */
-void WINAPI wine_glRasterPos4iv( GLint* v ) {
+void WINAPI wine_glRasterPos4iv( const GLint* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glRasterPos4iv( v );
@@ -2119,7 +2119,7 @@ void WINAPI wine_glRasterPos4s( GLshort x, GLshort y, GLshort z, GLshort w ) {
 /***********************************************************************
  *              glRasterPos4sv (OPENGL32.@)
  */
-void WINAPI wine_glRasterPos4sv( GLshort* v ) {
+void WINAPI wine_glRasterPos4sv( const GLshort* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glRasterPos4sv( v );
@@ -2155,7 +2155,7 @@ void WINAPI wine_glRectd( GLdouble x1, GLdouble y1, GLdouble x2, GLdouble y2 ) {
 /***********************************************************************
  *              glRectdv (OPENGL32.@)
  */
-void WINAPI wine_glRectdv( GLdouble* v1, GLdouble* v2 ) {
+void WINAPI wine_glRectdv( const GLdouble* v1, const GLdouble* v2 ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p, %p)\n", v1, v2 );
   funcs->gl.p_glRectdv( v1, v2 );
@@ -2173,7 +2173,7 @@ void WINAPI wine_glRectf( GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2 ) {
 /***********************************************************************
  *              glRectfv (OPENGL32.@)
  */
-void WINAPI wine_glRectfv( GLfloat* v1, GLfloat* v2 ) {
+void WINAPI wine_glRectfv( const GLfloat* v1, const GLfloat* v2 ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p, %p)\n", v1, v2 );
   funcs->gl.p_glRectfv( v1, v2 );
@@ -2191,7 +2191,7 @@ void WINAPI wine_glRecti( GLint x1, GLint y1, GLint x2, GLint y2 ) {
 /***********************************************************************
  *              glRectiv (OPENGL32.@)
  */
-void WINAPI wine_glRectiv( GLint* v1, GLint* v2 ) {
+void WINAPI wine_glRectiv( const GLint* v1, const GLint* v2 ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p, %p)\n", v1, v2 );
   funcs->gl.p_glRectiv( v1, v2 );
@@ -2209,7 +2209,7 @@ void WINAPI wine_glRects( GLshort x1, GLshort y1, GLshort x2, GLshort y2 ) {
 /***********************************************************************
  *              glRectsv (OPENGL32.@)
  */
-void WINAPI wine_glRectsv( GLshort* v1, GLshort* v2 ) {
+void WINAPI wine_glRectsv( const GLshort* v1, const GLshort* v2 ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p, %p)\n", v1, v2 );
   funcs->gl.p_glRectsv( v1, v2 );
@@ -2326,7 +2326,7 @@ void WINAPI wine_glTexCoord1d( GLdouble s ) {
 /***********************************************************************
  *              glTexCoord1dv (OPENGL32.@)
  */
-void WINAPI wine_glTexCoord1dv( GLdouble* v ) {
+void WINAPI wine_glTexCoord1dv( const GLdouble* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glTexCoord1dv( v );
@@ -2344,7 +2344,7 @@ void WINAPI wine_glTexCoord1f( GLfloat s ) {
 /***********************************************************************
  *              glTexCoord1fv (OPENGL32.@)
  */
-void WINAPI wine_glTexCoord1fv( GLfloat* v ) {
+void WINAPI wine_glTexCoord1fv( const GLfloat* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glTexCoord1fv( v );
@@ -2362,7 +2362,7 @@ void WINAPI wine_glTexCoord1i( GLint s ) {
 /***********************************************************************
  *              glTexCoord1iv (OPENGL32.@)
  */
-void WINAPI wine_glTexCoord1iv( GLint* v ) {
+void WINAPI wine_glTexCoord1iv( const GLint* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glTexCoord1iv( v );
@@ -2380,7 +2380,7 @@ void WINAPI wine_glTexCoord1s( GLshort s ) {
 /***********************************************************************
  *              glTexCoord1sv (OPENGL32.@)
  */
-void WINAPI wine_glTexCoord1sv( GLshort* v ) {
+void WINAPI wine_glTexCoord1sv( const GLshort* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glTexCoord1sv( v );
@@ -2398,7 +2398,7 @@ void WINAPI wine_glTexCoord2d( GLdouble s, GLdouble t ) {
 /***********************************************************************
  *              glTexCoord2dv (OPENGL32.@)
  */
-void WINAPI wine_glTexCoord2dv( GLdouble* v ) {
+void WINAPI wine_glTexCoord2dv( const GLdouble* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glTexCoord2dv( v );
@@ -2416,7 +2416,7 @@ void WINAPI wine_glTexCoord2f( GLfloat s, GLfloat t ) {
 /***********************************************************************
  *              glTexCoord2fv (OPENGL32.@)
  */
-void WINAPI wine_glTexCoord2fv( GLfloat* v ) {
+void WINAPI wine_glTexCoord2fv( const GLfloat* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glTexCoord2fv( v );
@@ -2434,7 +2434,7 @@ void WINAPI wine_glTexCoord2i( GLint s, GLint t ) {
 /***********************************************************************
  *              glTexCoord2iv (OPENGL32.@)
  */
-void WINAPI wine_glTexCoord2iv( GLint* v ) {
+void WINAPI wine_glTexCoord2iv( const GLint* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glTexCoord2iv( v );
@@ -2452,7 +2452,7 @@ void WINAPI wine_glTexCoord2s( GLshort s, GLshort t ) {
 /***********************************************************************
  *              glTexCoord2sv (OPENGL32.@)
  */
-void WINAPI wine_glTexCoord2sv( GLshort* v ) {
+void WINAPI wine_glTexCoord2sv( const GLshort* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glTexCoord2sv( v );
@@ -2470,7 +2470,7 @@ void WINAPI wine_glTexCoord3d( GLdouble s, GLdouble t, GLdouble r ) {
 /***********************************************************************
  *              glTexCoord3dv (OPENGL32.@)
  */
-void WINAPI wine_glTexCoord3dv( GLdouble* v ) {
+void WINAPI wine_glTexCoord3dv( const GLdouble* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glTexCoord3dv( v );
@@ -2488,7 +2488,7 @@ void WINAPI wine_glTexCoord3f( GLfloat s, GLfloat t, GLfloat r ) {
 /***********************************************************************
  *              glTexCoord3fv (OPENGL32.@)
  */
-void WINAPI wine_glTexCoord3fv( GLfloat* v ) {
+void WINAPI wine_glTexCoord3fv( const GLfloat* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glTexCoord3fv( v );
@@ -2506,7 +2506,7 @@ void WINAPI wine_glTexCoord3i( GLint s, GLint t, GLint r ) {
 /***********************************************************************
  *              glTexCoord3iv (OPENGL32.@)
  */
-void WINAPI wine_glTexCoord3iv( GLint* v ) {
+void WINAPI wine_glTexCoord3iv( const GLint* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glTexCoord3iv( v );
@@ -2524,7 +2524,7 @@ void WINAPI wine_glTexCoord3s( GLshort s, GLshort t, GLshort r ) {
 /***********************************************************************
  *              glTexCoord3sv (OPENGL32.@)
  */
-void WINAPI wine_glTexCoord3sv( GLshort* v ) {
+void WINAPI wine_glTexCoord3sv( const GLshort* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glTexCoord3sv( v );
@@ -2542,7 +2542,7 @@ void WINAPI wine_glTexCoord4d( GLdouble s, GLdouble t, GLdouble r, GLdouble q ) 
 /***********************************************************************
  *              glTexCoord4dv (OPENGL32.@)
  */
-void WINAPI wine_glTexCoord4dv( GLdouble* v ) {
+void WINAPI wine_glTexCoord4dv( const GLdouble* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glTexCoord4dv( v );
@@ -2560,7 +2560,7 @@ void WINAPI wine_glTexCoord4f( GLfloat s, GLfloat t, GLfloat r, GLfloat q ) {
 /***********************************************************************
  *              glTexCoord4fv (OPENGL32.@)
  */
-void WINAPI wine_glTexCoord4fv( GLfloat* v ) {
+void WINAPI wine_glTexCoord4fv( const GLfloat* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glTexCoord4fv( v );
@@ -2578,7 +2578,7 @@ void WINAPI wine_glTexCoord4i( GLint s, GLint t, GLint r, GLint q ) {
 /***********************************************************************
  *              glTexCoord4iv (OPENGL32.@)
  */
-void WINAPI wine_glTexCoord4iv( GLint* v ) {
+void WINAPI wine_glTexCoord4iv( const GLint* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glTexCoord4iv( v );
@@ -2596,7 +2596,7 @@ void WINAPI wine_glTexCoord4s( GLshort s, GLshort t, GLshort r, GLshort q ) {
 /***********************************************************************
  *              glTexCoord4sv (OPENGL32.@)
  */
-void WINAPI wine_glTexCoord4sv( GLshort* v ) {
+void WINAPI wine_glTexCoord4sv( const GLshort* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glTexCoord4sv( v );
@@ -2605,7 +2605,7 @@ void WINAPI wine_glTexCoord4sv( GLshort* v ) {
 /***********************************************************************
  *              glTexCoordPointer (OPENGL32.@)
  */
-void WINAPI wine_glTexCoordPointer( GLint size, GLenum type, GLsizei stride, GLvoid* pointer ) {
+void WINAPI wine_glTexCoordPointer( GLint size, GLenum type, GLsizei stride, const GLvoid* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p)\n", size, type, stride, pointer );
   funcs->gl.p_glTexCoordPointer( size, type, stride, pointer );
@@ -2623,7 +2623,7 @@ void WINAPI wine_glTexEnvf( GLenum target, GLenum pname, GLfloat param ) {
 /***********************************************************************
  *              glTexEnvfv (OPENGL32.@)
  */
-void WINAPI wine_glTexEnvfv( GLenum target, GLenum pname, GLfloat* params ) {
+void WINAPI wine_glTexEnvfv( GLenum target, GLenum pname, const GLfloat* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", target, pname, params );
   funcs->gl.p_glTexEnvfv( target, pname, params );
@@ -2641,7 +2641,7 @@ void WINAPI wine_glTexEnvi( GLenum target, GLenum pname, GLint param ) {
 /***********************************************************************
  *              glTexEnviv (OPENGL32.@)
  */
-void WINAPI wine_glTexEnviv( GLenum target, GLenum pname, GLint* params ) {
+void WINAPI wine_glTexEnviv( GLenum target, GLenum pname, const GLint* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", target, pname, params );
   funcs->gl.p_glTexEnviv( target, pname, params );
@@ -2659,7 +2659,7 @@ void WINAPI wine_glTexGend( GLenum coord, GLenum pname, GLdouble param ) {
 /***********************************************************************
  *              glTexGendv (OPENGL32.@)
  */
-void WINAPI wine_glTexGendv( GLenum coord, GLenum pname, GLdouble* params ) {
+void WINAPI wine_glTexGendv( GLenum coord, GLenum pname, const GLdouble* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", coord, pname, params );
   funcs->gl.p_glTexGendv( coord, pname, params );
@@ -2677,7 +2677,7 @@ void WINAPI wine_glTexGenf( GLenum coord, GLenum pname, GLfloat param ) {
 /***********************************************************************
  *              glTexGenfv (OPENGL32.@)
  */
-void WINAPI wine_glTexGenfv( GLenum coord, GLenum pname, GLfloat* params ) {
+void WINAPI wine_glTexGenfv( GLenum coord, GLenum pname, const GLfloat* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", coord, pname, params );
   funcs->gl.p_glTexGenfv( coord, pname, params );
@@ -2695,7 +2695,7 @@ void WINAPI wine_glTexGeni( GLenum coord, GLenum pname, GLint param ) {
 /***********************************************************************
  *              glTexGeniv (OPENGL32.@)
  */
-void WINAPI wine_glTexGeniv( GLenum coord, GLenum pname, GLint* params ) {
+void WINAPI wine_glTexGeniv( GLenum coord, GLenum pname, const GLint* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", coord, pname, params );
   funcs->gl.p_glTexGeniv( coord, pname, params );
@@ -2704,7 +2704,7 @@ void WINAPI wine_glTexGeniv( GLenum coord, GLenum pname, GLint* params ) {
 /***********************************************************************
  *              glTexImage1D (OPENGL32.@)
  */
-void WINAPI wine_glTexImage1D( GLenum target, GLint level, GLint internalformat, GLsizei width, GLint border, GLenum format, GLenum type, GLvoid* pixels ) {
+void WINAPI wine_glTexImage1D( GLenum target, GLint level, GLint internalformat, GLsizei width, GLint border, GLenum format, GLenum type, const GLvoid* pixels ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %p)\n", target, level, internalformat, width, border, format, type, pixels );
   funcs->gl.p_glTexImage1D( target, level, internalformat, width, border, format, type, pixels );
@@ -2713,7 +2713,7 @@ void WINAPI wine_glTexImage1D( GLenum target, GLint level, GLint internalformat,
 /***********************************************************************
  *              glTexImage2D (OPENGL32.@)
  */
-void WINAPI wine_glTexImage2D( GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, GLvoid* pixels ) {
+void WINAPI wine_glTexImage2D( GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid* pixels ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %p)\n", target, level, internalformat, width, height, border, format, type, pixels );
   funcs->gl.p_glTexImage2D( target, level, internalformat, width, height, border, format, type, pixels );
@@ -2731,7 +2731,7 @@ void WINAPI wine_glTexParameterf( GLenum target, GLenum pname, GLfloat param ) {
 /***********************************************************************
  *              glTexParameterfv (OPENGL32.@)
  */
-void WINAPI wine_glTexParameterfv( GLenum target, GLenum pname, GLfloat* params ) {
+void WINAPI wine_glTexParameterfv( GLenum target, GLenum pname, const GLfloat* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", target, pname, params );
   funcs->gl.p_glTexParameterfv( target, pname, params );
@@ -2749,7 +2749,7 @@ void WINAPI wine_glTexParameteri( GLenum target, GLenum pname, GLint param ) {
 /***********************************************************************
  *              glTexParameteriv (OPENGL32.@)
  */
-void WINAPI wine_glTexParameteriv( GLenum target, GLenum pname, GLint* params ) {
+void WINAPI wine_glTexParameteriv( GLenum target, GLenum pname, const GLint* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", target, pname, params );
   funcs->gl.p_glTexParameteriv( target, pname, params );
@@ -2758,7 +2758,7 @@ void WINAPI wine_glTexParameteriv( GLenum target, GLenum pname, GLint* params ) 
 /***********************************************************************
  *              glTexSubImage1D (OPENGL32.@)
  */
-void WINAPI wine_glTexSubImage1D( GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, GLvoid* pixels ) {
+void WINAPI wine_glTexSubImage1D( GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const GLvoid* pixels ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %p)\n", target, level, xoffset, width, format, type, pixels );
   funcs->gl.p_glTexSubImage1D( target, level, xoffset, width, format, type, pixels );
@@ -2767,7 +2767,7 @@ void WINAPI wine_glTexSubImage1D( GLenum target, GLint level, GLint xoffset, GLs
 /***********************************************************************
  *              glTexSubImage2D (OPENGL32.@)
  */
-void WINAPI wine_glTexSubImage2D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid* pixels ) {
+void WINAPI wine_glTexSubImage2D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid* pixels ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %p)\n", target, level, xoffset, yoffset, width, height, format, type, pixels );
   funcs->gl.p_glTexSubImage2D( target, level, xoffset, yoffset, width, height, format, type, pixels );
@@ -2803,7 +2803,7 @@ void WINAPI wine_glVertex2d( GLdouble x, GLdouble y ) {
 /***********************************************************************
  *              glVertex2dv (OPENGL32.@)
  */
-void WINAPI wine_glVertex2dv( GLdouble* v ) {
+void WINAPI wine_glVertex2dv( const GLdouble* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glVertex2dv( v );
@@ -2821,7 +2821,7 @@ void WINAPI wine_glVertex2f( GLfloat x, GLfloat y ) {
 /***********************************************************************
  *              glVertex2fv (OPENGL32.@)
  */
-void WINAPI wine_glVertex2fv( GLfloat* v ) {
+void WINAPI wine_glVertex2fv( const GLfloat* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glVertex2fv( v );
@@ -2839,7 +2839,7 @@ void WINAPI wine_glVertex2i( GLint x, GLint y ) {
 /***********************************************************************
  *              glVertex2iv (OPENGL32.@)
  */
-void WINAPI wine_glVertex2iv( GLint* v ) {
+void WINAPI wine_glVertex2iv( const GLint* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glVertex2iv( v );
@@ -2857,7 +2857,7 @@ void WINAPI wine_glVertex2s( GLshort x, GLshort y ) {
 /***********************************************************************
  *              glVertex2sv (OPENGL32.@)
  */
-void WINAPI wine_glVertex2sv( GLshort* v ) {
+void WINAPI wine_glVertex2sv( const GLshort* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glVertex2sv( v );
@@ -2875,7 +2875,7 @@ void WINAPI wine_glVertex3d( GLdouble x, GLdouble y, GLdouble z ) {
 /***********************************************************************
  *              glVertex3dv (OPENGL32.@)
  */
-void WINAPI wine_glVertex3dv( GLdouble* v ) {
+void WINAPI wine_glVertex3dv( const GLdouble* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glVertex3dv( v );
@@ -2893,7 +2893,7 @@ void WINAPI wine_glVertex3f( GLfloat x, GLfloat y, GLfloat z ) {
 /***********************************************************************
  *              glVertex3fv (OPENGL32.@)
  */
-void WINAPI wine_glVertex3fv( GLfloat* v ) {
+void WINAPI wine_glVertex3fv( const GLfloat* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glVertex3fv( v );
@@ -2911,7 +2911,7 @@ void WINAPI wine_glVertex3i( GLint x, GLint y, GLint z ) {
 /***********************************************************************
  *              glVertex3iv (OPENGL32.@)
  */
-void WINAPI wine_glVertex3iv( GLint* v ) {
+void WINAPI wine_glVertex3iv( const GLint* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glVertex3iv( v );
@@ -2929,7 +2929,7 @@ void WINAPI wine_glVertex3s( GLshort x, GLshort y, GLshort z ) {
 /***********************************************************************
  *              glVertex3sv (OPENGL32.@)
  */
-void WINAPI wine_glVertex3sv( GLshort* v ) {
+void WINAPI wine_glVertex3sv( const GLshort* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glVertex3sv( v );
@@ -2947,7 +2947,7 @@ void WINAPI wine_glVertex4d( GLdouble x, GLdouble y, GLdouble z, GLdouble w ) {
 /***********************************************************************
  *              glVertex4dv (OPENGL32.@)
  */
-void WINAPI wine_glVertex4dv( GLdouble* v ) {
+void WINAPI wine_glVertex4dv( const GLdouble* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glVertex4dv( v );
@@ -2965,7 +2965,7 @@ void WINAPI wine_glVertex4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w ) {
 /***********************************************************************
  *              glVertex4fv (OPENGL32.@)
  */
-void WINAPI wine_glVertex4fv( GLfloat* v ) {
+void WINAPI wine_glVertex4fv( const GLfloat* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glVertex4fv( v );
@@ -2983,7 +2983,7 @@ void WINAPI wine_glVertex4i( GLint x, GLint y, GLint z, GLint w ) {
 /***********************************************************************
  *              glVertex4iv (OPENGL32.@)
  */
-void WINAPI wine_glVertex4iv( GLint* v ) {
+void WINAPI wine_glVertex4iv( const GLint* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glVertex4iv( v );
@@ -3001,7 +3001,7 @@ void WINAPI wine_glVertex4s( GLshort x, GLshort y, GLshort z, GLshort w ) {
 /***********************************************************************
  *              glVertex4sv (OPENGL32.@)
  */
-void WINAPI wine_glVertex4sv( GLshort* v ) {
+void WINAPI wine_glVertex4sv( const GLshort* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glVertex4sv( v );
@@ -3010,7 +3010,7 @@ void WINAPI wine_glVertex4sv( GLshort* v ) {
 /***********************************************************************
  *              glVertexPointer (OPENGL32.@)
  */
-void WINAPI wine_glVertexPointer( GLint size, GLenum type, GLsizei stride, GLvoid* pointer ) {
+void WINAPI wine_glVertexPointer( GLint size, GLenum type, GLsizei stride, const GLvoid* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p)\n", size, type, stride, pointer );
   funcs->gl.p_glVertexPointer( size, type, stride, pointer );
@@ -3027,56 +3027,56 @@ void WINAPI wine_glViewport( GLint x, GLint y, GLsizei width, GLsizei height ) {
 
 static void null_glAccum( GLenum op, GLfloat value ) { }
 static void null_glAlphaFunc( GLenum func, GLfloat ref ) { }
-static GLboolean null_glAreTexturesResident( GLsizei n, GLuint* textures, GLboolean* residences ) { return 0; }
+static GLboolean null_glAreTexturesResident( GLsizei n, const GLuint* textures, GLboolean* residences ) { return 0; }
 static void null_glArrayElement( GLint i ) { }
 static void null_glBegin( GLenum mode ) { }
 static void null_glBindTexture( GLenum target, GLuint texture ) { }
-static void null_glBitmap( GLsizei width, GLsizei height, GLfloat xorig, GLfloat yorig, GLfloat xmove, GLfloat ymove, GLubyte* bitmap ) { }
+static void null_glBitmap( GLsizei width, GLsizei height, GLfloat xorig, GLfloat yorig, GLfloat xmove, GLfloat ymove, const GLubyte* bitmap ) { }
 static void null_glBlendFunc( GLenum sfactor, GLenum dfactor ) { }
 static void null_glCallList( GLuint list ) { }
-static void null_glCallLists( GLsizei n, GLenum type, GLvoid* lists ) { }
+static void null_glCallLists( GLsizei n, GLenum type, const GLvoid* lists ) { }
 static void null_glClear( GLbitfield mask ) { }
 static void null_glClearAccum( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha ) { }
 static void null_glClearColor( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha ) { }
 static void null_glClearDepth( GLdouble depth ) { }
 static void null_glClearIndex( GLfloat c ) { }
 static void null_glClearStencil( GLint s ) { }
-static void null_glClipPlane( GLenum plane, GLdouble* equation ) { }
+static void null_glClipPlane( GLenum plane, const GLdouble* equation ) { }
 static void null_glColor3b( GLbyte red, GLbyte green, GLbyte blue ) { }
-static void null_glColor3bv( GLbyte* v ) { }
+static void null_glColor3bv( const GLbyte* v ) { }
 static void null_glColor3d( GLdouble red, GLdouble green, GLdouble blue ) { }
-static void null_glColor3dv( GLdouble* v ) { }
+static void null_glColor3dv( const GLdouble* v ) { }
 static void null_glColor3f( GLfloat red, GLfloat green, GLfloat blue ) { }
-static void null_glColor3fv( GLfloat* v ) { }
+static void null_glColor3fv( const GLfloat* v ) { }
 static void null_glColor3i( GLint red, GLint green, GLint blue ) { }
-static void null_glColor3iv( GLint* v ) { }
+static void null_glColor3iv( const GLint* v ) { }
 static void null_glColor3s( GLshort red, GLshort green, GLshort blue ) { }
-static void null_glColor3sv( GLshort* v ) { }
+static void null_glColor3sv( const GLshort* v ) { }
 static void null_glColor3ub( GLubyte red, GLubyte green, GLubyte blue ) { }
-static void null_glColor3ubv( GLubyte* v ) { }
+static void null_glColor3ubv( const GLubyte* v ) { }
 static void null_glColor3ui( GLuint red, GLuint green, GLuint blue ) { }
-static void null_glColor3uiv( GLuint* v ) { }
+static void null_glColor3uiv( const GLuint* v ) { }
 static void null_glColor3us( GLushort red, GLushort green, GLushort blue ) { }
-static void null_glColor3usv( GLushort* v ) { }
+static void null_glColor3usv( const GLushort* v ) { }
 static void null_glColor4b( GLbyte red, GLbyte green, GLbyte blue, GLbyte alpha ) { }
-static void null_glColor4bv( GLbyte* v ) { }
+static void null_glColor4bv( const GLbyte* v ) { }
 static void null_glColor4d( GLdouble red, GLdouble green, GLdouble blue, GLdouble alpha ) { }
-static void null_glColor4dv( GLdouble* v ) { }
+static void null_glColor4dv( const GLdouble* v ) { }
 static void null_glColor4f( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha ) { }
-static void null_glColor4fv( GLfloat* v ) { }
+static void null_glColor4fv( const GLfloat* v ) { }
 static void null_glColor4i( GLint red, GLint green, GLint blue, GLint alpha ) { }
-static void null_glColor4iv( GLint* v ) { }
+static void null_glColor4iv( const GLint* v ) { }
 static void null_glColor4s( GLshort red, GLshort green, GLshort blue, GLshort alpha ) { }
-static void null_glColor4sv( GLshort* v ) { }
+static void null_glColor4sv( const GLshort* v ) { }
 static void null_glColor4ub( GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha ) { }
-static void null_glColor4ubv( GLubyte* v ) { }
+static void null_glColor4ubv( const GLubyte* v ) { }
 static void null_glColor4ui( GLuint red, GLuint green, GLuint blue, GLuint alpha ) { }
-static void null_glColor4uiv( GLuint* v ) { }
+static void null_glColor4uiv( const GLuint* v ) { }
 static void null_glColor4us( GLushort red, GLushort green, GLushort blue, GLushort alpha ) { }
-static void null_glColor4usv( GLushort* v ) { }
+static void null_glColor4usv( const GLushort* v ) { }
 static void null_glColorMask( GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha ) { }
 static void null_glColorMaterial( GLenum face, GLenum mode ) { }
-static void null_glColorPointer( GLint size, GLenum type, GLsizei stride, GLvoid* pointer ) { }
+static void null_glColorPointer( GLint size, GLenum type, GLsizei stride, const GLvoid* pointer ) { }
 static void null_glCopyPixels( GLint x, GLint y, GLsizei width, GLsizei height, GLenum type ) { }
 static void null_glCopyTexImage1D( GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLint border ) { }
 static void null_glCopyTexImage2D( GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border ) { }
@@ -3084,7 +3084,7 @@ static void null_glCopyTexSubImage1D( GLenum target, GLint level, GLint xoffset,
 static void null_glCopyTexSubImage2D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height ) { }
 static void null_glCullFace( GLenum mode ) { }
 static void null_glDeleteLists( GLuint list, GLsizei range ) { }
-static void null_glDeleteTextures( GLsizei n, GLuint* textures ) { }
+static void null_glDeleteTextures( GLsizei n, const GLuint* textures ) { }
 static void null_glDepthFunc( GLenum func ) { }
 static void null_glDepthMask( GLboolean flag ) { }
 static void null_glDepthRange( GLdouble nearParam, GLdouble farParam ) { }
@@ -3092,23 +3092,23 @@ static void null_glDisable( GLenum cap ) { }
 static void null_glDisableClientState( GLenum array ) { }
 static void null_glDrawArrays( GLenum mode, GLint first, GLsizei count ) { }
 static void null_glDrawBuffer( GLenum mode ) { }
-static void null_glDrawElements( GLenum mode, GLsizei count, GLenum type, GLvoid* indices ) { }
-static void null_glDrawPixels( GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid* pixels ) { }
+static void null_glDrawElements( GLenum mode, GLsizei count, GLenum type, const GLvoid* indices ) { }
+static void null_glDrawPixels( GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid* pixels ) { }
 static void null_glEdgeFlag( GLboolean flag ) { }
-static void null_glEdgeFlagPointer( GLsizei stride, GLvoid* pointer ) { }
-static void null_glEdgeFlagv( GLboolean* flag ) { }
+static void null_glEdgeFlagPointer( GLsizei stride, const GLvoid* pointer ) { }
+static void null_glEdgeFlagv( const GLboolean* flag ) { }
 static void null_glEnable( GLenum cap ) { }
 static void null_glEnableClientState( GLenum array ) { }
 static void null_glEnd( void ) { }
 static void null_glEndList( void ) { }
 static void null_glEvalCoord1d( GLdouble u ) { }
-static void null_glEvalCoord1dv( GLdouble* u ) { }
+static void null_glEvalCoord1dv( const GLdouble* u ) { }
 static void null_glEvalCoord1f( GLfloat u ) { }
-static void null_glEvalCoord1fv( GLfloat* u ) { }
+static void null_glEvalCoord1fv( const GLfloat* u ) { }
 static void null_glEvalCoord2d( GLdouble u, GLdouble v ) { }
-static void null_glEvalCoord2dv( GLdouble* u ) { }
+static void null_glEvalCoord2dv( const GLdouble* u ) { }
 static void null_glEvalCoord2f( GLfloat u, GLfloat v ) { }
-static void null_glEvalCoord2fv( GLfloat* u ) { }
+static void null_glEvalCoord2fv( const GLfloat* u ) { }
 static void null_glEvalMesh1( GLenum mode, GLint i1, GLint i2 ) { }
 static void null_glEvalMesh2( GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 ) { }
 static void null_glEvalPoint1( GLint i ) { }
@@ -3117,9 +3117,9 @@ static void null_glFeedbackBuffer( GLsizei size, GLenum type, GLfloat* buffer ) 
 static void null_glFinish( void ) { }
 static void null_glFlush( void ) { }
 static void null_glFogf( GLenum pname, GLfloat param ) { }
-static void null_glFogfv( GLenum pname, GLfloat* params ) { }
+static void null_glFogfv( GLenum pname, const GLfloat* params ) { }
 static void null_glFogi( GLenum pname, GLint param ) { }
-static void null_glFogiv( GLenum pname, GLint* params ) { }
+static void null_glFogiv( GLenum pname, const GLint* params ) { }
 static void null_glFrontFace( GLenum mode ) { }
 static void null_glFrustum( GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble zNear, GLdouble zFar ) { }
 static GLuint null_glGenLists( GLsizei range ) { return 0; }
@@ -3155,70 +3155,70 @@ static void null_glGetTexParameterfv( GLenum target, GLenum pname, GLfloat* para
 static void null_glGetTexParameteriv( GLenum target, GLenum pname, GLint* params ) { }
 static void null_glHint( GLenum target, GLenum mode ) { }
 static void null_glIndexMask( GLuint mask ) { }
-static void null_glIndexPointer( GLenum type, GLsizei stride, GLvoid* pointer ) { }
+static void null_glIndexPointer( GLenum type, GLsizei stride, const GLvoid* pointer ) { }
 static void null_glIndexd( GLdouble c ) { }
-static void null_glIndexdv( GLdouble* c ) { }
+static void null_glIndexdv( const GLdouble* c ) { }
 static void null_glIndexf( GLfloat c ) { }
-static void null_glIndexfv( GLfloat* c ) { }
+static void null_glIndexfv( const GLfloat* c ) { }
 static void null_glIndexi( GLint c ) { }
-static void null_glIndexiv( GLint* c ) { }
+static void null_glIndexiv( const GLint* c ) { }
 static void null_glIndexs( GLshort c ) { }
-static void null_glIndexsv( GLshort* c ) { }
+static void null_glIndexsv( const GLshort* c ) { }
 static void null_glIndexub( GLubyte c ) { }
-static void null_glIndexubv( GLubyte* c ) { }
+static void null_glIndexubv( const GLubyte* c ) { }
 static void null_glInitNames( void ) { }
-static void null_glInterleavedArrays( GLenum format, GLsizei stride, GLvoid* pointer ) { }
+static void null_glInterleavedArrays( GLenum format, GLsizei stride, const GLvoid* pointer ) { }
 static GLboolean null_glIsEnabled( GLenum cap ) { return 0; }
 static GLboolean null_glIsList( GLuint list ) { return 0; }
 static GLboolean null_glIsTexture( GLuint texture ) { return 0; }
 static void null_glLightModelf( GLenum pname, GLfloat param ) { }
-static void null_glLightModelfv( GLenum pname, GLfloat* params ) { }
+static void null_glLightModelfv( GLenum pname, const GLfloat* params ) { }
 static void null_glLightModeli( GLenum pname, GLint param ) { }
-static void null_glLightModeliv( GLenum pname, GLint* params ) { }
+static void null_glLightModeliv( GLenum pname, const GLint* params ) { }
 static void null_glLightf( GLenum light, GLenum pname, GLfloat param ) { }
-static void null_glLightfv( GLenum light, GLenum pname, GLfloat* params ) { }
+static void null_glLightfv( GLenum light, GLenum pname, const GLfloat* params ) { }
 static void null_glLighti( GLenum light, GLenum pname, GLint param ) { }
-static void null_glLightiv( GLenum light, GLenum pname, GLint* params ) { }
+static void null_glLightiv( GLenum light, GLenum pname, const GLint* params ) { }
 static void null_glLineStipple( GLint factor, GLushort pattern ) { }
 static void null_glLineWidth( GLfloat width ) { }
 static void null_glListBase( GLuint base ) { }
 static void null_glLoadIdentity( void ) { }
-static void null_glLoadMatrixd( GLdouble* m ) { }
-static void null_glLoadMatrixf( GLfloat* m ) { }
+static void null_glLoadMatrixd( const GLdouble* m ) { }
+static void null_glLoadMatrixf( const GLfloat* m ) { }
 static void null_glLoadName( GLuint name ) { }
 static void null_glLogicOp( GLenum opcode ) { }
-static void null_glMap1d( GLenum target, GLdouble u1, GLdouble u2, GLint stride, GLint order, GLdouble* points ) { }
-static void null_glMap1f( GLenum target, GLfloat u1, GLfloat u2, GLint stride, GLint order, GLfloat* points ) { }
-static void null_glMap2d( GLenum target, GLdouble u1, GLdouble u2, GLint ustride, GLint uorder, GLdouble v1, GLdouble v2, GLint vstride, GLint vorder, GLdouble* points ) { }
-static void null_glMap2f( GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder, GLfloat v1, GLfloat v2, GLint vstride, GLint vorder, GLfloat* points ) { }
+static void null_glMap1d( GLenum target, GLdouble u1, GLdouble u2, GLint stride, GLint order, const GLdouble* points ) { }
+static void null_glMap1f( GLenum target, GLfloat u1, GLfloat u2, GLint stride, GLint order, const GLfloat* points ) { }
+static void null_glMap2d( GLenum target, GLdouble u1, GLdouble u2, GLint ustride, GLint uorder, GLdouble v1, GLdouble v2, GLint vstride, GLint vorder, const GLdouble* points ) { }
+static void null_glMap2f( GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder, GLfloat v1, GLfloat v2, GLint vstride, GLint vorder, const GLfloat* points ) { }
 static void null_glMapGrid1d( GLint un, GLdouble u1, GLdouble u2 ) { }
 static void null_glMapGrid1f( GLint un, GLfloat u1, GLfloat u2 ) { }
 static void null_glMapGrid2d( GLint un, GLdouble u1, GLdouble u2, GLint vn, GLdouble v1, GLdouble v2 ) { }
 static void null_glMapGrid2f( GLint un, GLfloat u1, GLfloat u2, GLint vn, GLfloat v1, GLfloat v2 ) { }
 static void null_glMaterialf( GLenum face, GLenum pname, GLfloat param ) { }
-static void null_glMaterialfv( GLenum face, GLenum pname, GLfloat* params ) { }
+static void null_glMaterialfv( GLenum face, GLenum pname, const GLfloat* params ) { }
 static void null_glMateriali( GLenum face, GLenum pname, GLint param ) { }
-static void null_glMaterialiv( GLenum face, GLenum pname, GLint* params ) { }
+static void null_glMaterialiv( GLenum face, GLenum pname, const GLint* params ) { }
 static void null_glMatrixMode( GLenum mode ) { }
-static void null_glMultMatrixd( GLdouble* m ) { }
-static void null_glMultMatrixf( GLfloat* m ) { }
+static void null_glMultMatrixd( const GLdouble* m ) { }
+static void null_glMultMatrixf( const GLfloat* m ) { }
 static void null_glNewList( GLuint list, GLenum mode ) { }
 static void null_glNormal3b( GLbyte nx, GLbyte ny, GLbyte nz ) { }
-static void null_glNormal3bv( GLbyte* v ) { }
+static void null_glNormal3bv( const GLbyte* v ) { }
 static void null_glNormal3d( GLdouble nx, GLdouble ny, GLdouble nz ) { }
-static void null_glNormal3dv( GLdouble* v ) { }
+static void null_glNormal3dv( const GLdouble* v ) { }
 static void null_glNormal3f( GLfloat nx, GLfloat ny, GLfloat nz ) { }
-static void null_glNormal3fv( GLfloat* v ) { }
+static void null_glNormal3fv( const GLfloat* v ) { }
 static void null_glNormal3i( GLint nx, GLint ny, GLint nz ) { }
-static void null_glNormal3iv( GLint* v ) { }
+static void null_glNormal3iv( const GLint* v ) { }
 static void null_glNormal3s( GLshort nx, GLshort ny, GLshort nz ) { }
-static void null_glNormal3sv( GLshort* v ) { }
-static void null_glNormalPointer( GLenum type, GLsizei stride, GLvoid* pointer ) { }
+static void null_glNormal3sv( const GLshort* v ) { }
+static void null_glNormalPointer( GLenum type, GLsizei stride, const GLvoid* pointer ) { }
 static void null_glOrtho( GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble zNear, GLdouble zFar ) { }
 static void null_glPassThrough( GLfloat token ) { }
-static void null_glPixelMapfv( GLenum map, GLint mapsize, GLfloat* values ) { }
-static void null_glPixelMapuiv( GLenum map, GLint mapsize, GLuint* values ) { }
-static void null_glPixelMapusv( GLenum map, GLint mapsize, GLushort* values ) { }
+static void null_glPixelMapfv( GLenum map, GLint mapsize, const GLfloat* values ) { }
+static void null_glPixelMapuiv( GLenum map, GLint mapsize, const GLuint* values ) { }
+static void null_glPixelMapusv( GLenum map, GLint mapsize, const GLushort* values ) { }
 static void null_glPixelStoref( GLenum pname, GLfloat param ) { }
 static void null_glPixelStorei( GLenum pname, GLint param ) { }
 static void null_glPixelTransferf( GLenum pname, GLfloat param ) { }
@@ -3227,50 +3227,50 @@ static void null_glPixelZoom( GLfloat xfactor, GLfloat yfactor ) { }
 static void null_glPointSize( GLfloat size ) { }
 static void null_glPolygonMode( GLenum face, GLenum mode ) { }
 static void null_glPolygonOffset( GLfloat factor, GLfloat units ) { }
-static void null_glPolygonStipple( GLubyte* mask ) { }
+static void null_glPolygonStipple( const GLubyte* mask ) { }
 static void null_glPopAttrib( void ) { }
 static void null_glPopClientAttrib( void ) { }
 static void null_glPopMatrix( void ) { }
 static void null_glPopName( void ) { }
-static void null_glPrioritizeTextures( GLsizei n, GLuint* textures, GLfloat* priorities ) { }
+static void null_glPrioritizeTextures( GLsizei n, const GLuint* textures, const GLfloat* priorities ) { }
 static void null_glPushAttrib( GLbitfield mask ) { }
 static void null_glPushClientAttrib( GLbitfield mask ) { }
 static void null_glPushMatrix( void ) { }
 static void null_glPushName( GLuint name ) { }
 static void null_glRasterPos2d( GLdouble x, GLdouble y ) { }
-static void null_glRasterPos2dv( GLdouble* v ) { }
+static void null_glRasterPos2dv( const GLdouble* v ) { }
 static void null_glRasterPos2f( GLfloat x, GLfloat y ) { }
-static void null_glRasterPos2fv( GLfloat* v ) { }
+static void null_glRasterPos2fv( const GLfloat* v ) { }
 static void null_glRasterPos2i( GLint x, GLint y ) { }
-static void null_glRasterPos2iv( GLint* v ) { }
+static void null_glRasterPos2iv( const GLint* v ) { }
 static void null_glRasterPos2s( GLshort x, GLshort y ) { }
-static void null_glRasterPos2sv( GLshort* v ) { }
+static void null_glRasterPos2sv( const GLshort* v ) { }
 static void null_glRasterPos3d( GLdouble x, GLdouble y, GLdouble z ) { }
-static void null_glRasterPos3dv( GLdouble* v ) { }
+static void null_glRasterPos3dv( const GLdouble* v ) { }
 static void null_glRasterPos3f( GLfloat x, GLfloat y, GLfloat z ) { }
-static void null_glRasterPos3fv( GLfloat* v ) { }
+static void null_glRasterPos3fv( const GLfloat* v ) { }
 static void null_glRasterPos3i( GLint x, GLint y, GLint z ) { }
-static void null_glRasterPos3iv( GLint* v ) { }
+static void null_glRasterPos3iv( const GLint* v ) { }
 static void null_glRasterPos3s( GLshort x, GLshort y, GLshort z ) { }
-static void null_glRasterPos3sv( GLshort* v ) { }
+static void null_glRasterPos3sv( const GLshort* v ) { }
 static void null_glRasterPos4d( GLdouble x, GLdouble y, GLdouble z, GLdouble w ) { }
-static void null_glRasterPos4dv( GLdouble* v ) { }
+static void null_glRasterPos4dv( const GLdouble* v ) { }
 static void null_glRasterPos4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w ) { }
-static void null_glRasterPos4fv( GLfloat* v ) { }
+static void null_glRasterPos4fv( const GLfloat* v ) { }
 static void null_glRasterPos4i( GLint x, GLint y, GLint z, GLint w ) { }
-static void null_glRasterPos4iv( GLint* v ) { }
+static void null_glRasterPos4iv( const GLint* v ) { }
 static void null_glRasterPos4s( GLshort x, GLshort y, GLshort z, GLshort w ) { }
-static void null_glRasterPos4sv( GLshort* v ) { }
+static void null_glRasterPos4sv( const GLshort* v ) { }
 static void null_glReadBuffer( GLenum mode ) { }
 static void null_glReadPixels( GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid* pixels ) { }
 static void null_glRectd( GLdouble x1, GLdouble y1, GLdouble x2, GLdouble y2 ) { }
-static void null_glRectdv( GLdouble* v1, GLdouble* v2 ) { }
+static void null_glRectdv( const GLdouble* v1, const GLdouble* v2 ) { }
 static void null_glRectf( GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2 ) { }
-static void null_glRectfv( GLfloat* v1, GLfloat* v2 ) { }
+static void null_glRectfv( const GLfloat* v1, const GLfloat* v2 ) { }
 static void null_glRecti( GLint x1, GLint y1, GLint x2, GLint y2 ) { }
-static void null_glRectiv( GLint* v1, GLint* v2 ) { }
+static void null_glRectiv( const GLint* v1, const GLint* v2 ) { }
 static void null_glRects( GLshort x1, GLshort y1, GLshort x2, GLshort y2 ) { }
-static void null_glRectsv( GLshort* v1, GLshort* v2 ) { }
+static void null_glRectsv( const GLshort* v1, const GLshort* v2 ) { }
 static GLint null_glRenderMode( GLenum mode ) { return 0; }
 static void null_glRotated( GLdouble angle, GLdouble x, GLdouble y, GLdouble z ) { }
 static void null_glRotatef( GLfloat angle, GLfloat x, GLfloat y, GLfloat z ) { }
@@ -3283,83 +3283,83 @@ static void null_glStencilFunc( GLenum func, GLint ref, GLuint mask ) { }
 static void null_glStencilMask( GLuint mask ) { }
 static void null_glStencilOp( GLenum fail, GLenum zfail, GLenum zpass ) { }
 static void null_glTexCoord1d( GLdouble s ) { }
-static void null_glTexCoord1dv( GLdouble* v ) { }
+static void null_glTexCoord1dv( const GLdouble* v ) { }
 static void null_glTexCoord1f( GLfloat s ) { }
-static void null_glTexCoord1fv( GLfloat* v ) { }
+static void null_glTexCoord1fv( const GLfloat* v ) { }
 static void null_glTexCoord1i( GLint s ) { }
-static void null_glTexCoord1iv( GLint* v ) { }
+static void null_glTexCoord1iv( const GLint* v ) { }
 static void null_glTexCoord1s( GLshort s ) { }
-static void null_glTexCoord1sv( GLshort* v ) { }
+static void null_glTexCoord1sv( const GLshort* v ) { }
 static void null_glTexCoord2d( GLdouble s, GLdouble t ) { }
-static void null_glTexCoord2dv( GLdouble* v ) { }
+static void null_glTexCoord2dv( const GLdouble* v ) { }
 static void null_glTexCoord2f( GLfloat s, GLfloat t ) { }
-static void null_glTexCoord2fv( GLfloat* v ) { }
+static void null_glTexCoord2fv( const GLfloat* v ) { }
 static void null_glTexCoord2i( GLint s, GLint t ) { }
-static void null_glTexCoord2iv( GLint* v ) { }
+static void null_glTexCoord2iv( const GLint* v ) { }
 static void null_glTexCoord2s( GLshort s, GLshort t ) { }
-static void null_glTexCoord2sv( GLshort* v ) { }
+static void null_glTexCoord2sv( const GLshort* v ) { }
 static void null_glTexCoord3d( GLdouble s, GLdouble t, GLdouble r ) { }
-static void null_glTexCoord3dv( GLdouble* v ) { }
+static void null_glTexCoord3dv( const GLdouble* v ) { }
 static void null_glTexCoord3f( GLfloat s, GLfloat t, GLfloat r ) { }
-static void null_glTexCoord3fv( GLfloat* v ) { }
+static void null_glTexCoord3fv( const GLfloat* v ) { }
 static void null_glTexCoord3i( GLint s, GLint t, GLint r ) { }
-static void null_glTexCoord3iv( GLint* v ) { }
+static void null_glTexCoord3iv( const GLint* v ) { }
 static void null_glTexCoord3s( GLshort s, GLshort t, GLshort r ) { }
-static void null_glTexCoord3sv( GLshort* v ) { }
+static void null_glTexCoord3sv( const GLshort* v ) { }
 static void null_glTexCoord4d( GLdouble s, GLdouble t, GLdouble r, GLdouble q ) { }
-static void null_glTexCoord4dv( GLdouble* v ) { }
+static void null_glTexCoord4dv( const GLdouble* v ) { }
 static void null_glTexCoord4f( GLfloat s, GLfloat t, GLfloat r, GLfloat q ) { }
-static void null_glTexCoord4fv( GLfloat* v ) { }
+static void null_glTexCoord4fv( const GLfloat* v ) { }
 static void null_glTexCoord4i( GLint s, GLint t, GLint r, GLint q ) { }
-static void null_glTexCoord4iv( GLint* v ) { }
+static void null_glTexCoord4iv( const GLint* v ) { }
 static void null_glTexCoord4s( GLshort s, GLshort t, GLshort r, GLshort q ) { }
-static void null_glTexCoord4sv( GLshort* v ) { }
-static void null_glTexCoordPointer( GLint size, GLenum type, GLsizei stride, GLvoid* pointer ) { }
+static void null_glTexCoord4sv( const GLshort* v ) { }
+static void null_glTexCoordPointer( GLint size, GLenum type, GLsizei stride, const GLvoid* pointer ) { }
 static void null_glTexEnvf( GLenum target, GLenum pname, GLfloat param ) { }
-static void null_glTexEnvfv( GLenum target, GLenum pname, GLfloat* params ) { }
+static void null_glTexEnvfv( GLenum target, GLenum pname, const GLfloat* params ) { }
 static void null_glTexEnvi( GLenum target, GLenum pname, GLint param ) { }
-static void null_glTexEnviv( GLenum target, GLenum pname, GLint* params ) { }
+static void null_glTexEnviv( GLenum target, GLenum pname, const GLint* params ) { }
 static void null_glTexGend( GLenum coord, GLenum pname, GLdouble param ) { }
-static void null_glTexGendv( GLenum coord, GLenum pname, GLdouble* params ) { }
+static void null_glTexGendv( GLenum coord, GLenum pname, const GLdouble* params ) { }
 static void null_glTexGenf( GLenum coord, GLenum pname, GLfloat param ) { }
-static void null_glTexGenfv( GLenum coord, GLenum pname, GLfloat* params ) { }
+static void null_glTexGenfv( GLenum coord, GLenum pname, const GLfloat* params ) { }
 static void null_glTexGeni( GLenum coord, GLenum pname, GLint param ) { }
-static void null_glTexGeniv( GLenum coord, GLenum pname, GLint* params ) { }
-static void null_glTexImage1D( GLenum target, GLint level, GLint internalformat, GLsizei width, GLint border, GLenum format, GLenum type, GLvoid* pixels ) { }
-static void null_glTexImage2D( GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, GLvoid* pixels ) { }
+static void null_glTexGeniv( GLenum coord, GLenum pname, const GLint* params ) { }
+static void null_glTexImage1D( GLenum target, GLint level, GLint internalformat, GLsizei width, GLint border, GLenum format, GLenum type, const GLvoid* pixels ) { }
+static void null_glTexImage2D( GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid* pixels ) { }
 static void null_glTexParameterf( GLenum target, GLenum pname, GLfloat param ) { }
-static void null_glTexParameterfv( GLenum target, GLenum pname, GLfloat* params ) { }
+static void null_glTexParameterfv( GLenum target, GLenum pname, const GLfloat* params ) { }
 static void null_glTexParameteri( GLenum target, GLenum pname, GLint param ) { }
-static void null_glTexParameteriv( GLenum target, GLenum pname, GLint* params ) { }
-static void null_glTexSubImage1D( GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, GLvoid* pixels ) { }
-static void null_glTexSubImage2D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid* pixels ) { }
+static void null_glTexParameteriv( GLenum target, GLenum pname, const GLint* params ) { }
+static void null_glTexSubImage1D( GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const GLvoid* pixels ) { }
+static void null_glTexSubImage2D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid* pixels ) { }
 static void null_glTranslated( GLdouble x, GLdouble y, GLdouble z ) { }
 static void null_glTranslatef( GLfloat x, GLfloat y, GLfloat z ) { }
 static void null_glVertex2d( GLdouble x, GLdouble y ) { }
-static void null_glVertex2dv( GLdouble* v ) { }
+static void null_glVertex2dv( const GLdouble* v ) { }
 static void null_glVertex2f( GLfloat x, GLfloat y ) { }
-static void null_glVertex2fv( GLfloat* v ) { }
+static void null_glVertex2fv( const GLfloat* v ) { }
 static void null_glVertex2i( GLint x, GLint y ) { }
-static void null_glVertex2iv( GLint* v ) { }
+static void null_glVertex2iv( const GLint* v ) { }
 static void null_glVertex2s( GLshort x, GLshort y ) { }
-static void null_glVertex2sv( GLshort* v ) { }
+static void null_glVertex2sv( const GLshort* v ) { }
 static void null_glVertex3d( GLdouble x, GLdouble y, GLdouble z ) { }
-static void null_glVertex3dv( GLdouble* v ) { }
+static void null_glVertex3dv( const GLdouble* v ) { }
 static void null_glVertex3f( GLfloat x, GLfloat y, GLfloat z ) { }
-static void null_glVertex3fv( GLfloat* v ) { }
+static void null_glVertex3fv( const GLfloat* v ) { }
 static void null_glVertex3i( GLint x, GLint y, GLint z ) { }
-static void null_glVertex3iv( GLint* v ) { }
+static void null_glVertex3iv( const GLint* v ) { }
 static void null_glVertex3s( GLshort x, GLshort y, GLshort z ) { }
-static void null_glVertex3sv( GLshort* v ) { }
+static void null_glVertex3sv( const GLshort* v ) { }
 static void null_glVertex4d( GLdouble x, GLdouble y, GLdouble z, GLdouble w ) { }
-static void null_glVertex4dv( GLdouble* v ) { }
+static void null_glVertex4dv( const GLdouble* v ) { }
 static void null_glVertex4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w ) { }
-static void null_glVertex4fv( GLfloat* v ) { }
+static void null_glVertex4fv( const GLfloat* v ) { }
 static void null_glVertex4i( GLint x, GLint y, GLint z, GLint w ) { }
-static void null_glVertex4iv( GLint* v ) { }
+static void null_glVertex4iv( const GLint* v ) { }
 static void null_glVertex4s( GLshort x, GLshort y, GLshort z, GLshort w ) { }
-static void null_glVertex4sv( GLshort* v ) { }
-static void null_glVertexPointer( GLint size, GLenum type, GLsizei stride, GLvoid* pointer ) { }
+static void null_glVertex4sv( const GLshort* v ) { }
+static void null_glVertexPointer( GLint size, GLenum type, GLsizei stride, const GLvoid* pointer ) { }
 static void null_glViewport( GLint x, GLint y, GLsizei width, GLsizei height ) { }
 
 #define USE_GL_FUNC(name) null_##name,
