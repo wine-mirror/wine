@@ -2872,6 +2872,9 @@ static HRESULT WINAPI domdoc_setProperty(
                 while (*pTokEnd != ' ' && *pTokEnd != 0)
                     ++pTokEnd;
 
+                /* so it failed to advance which means we've got some trailing spaces */
+                if (pTokEnd == pTokBegin) break;
+
                 if (xmlStrncmp(pTokBegin, (xmlChar const*)"xmlns", 5) != 0)
                 {
                     hr = E_FAIL;
