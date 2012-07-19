@@ -4868,12 +4868,7 @@ static void psorigin(struct wined3d_context *context, const struct wined3d_state
     const struct wined3d_gl_info *gl_info = context->gl_info;
     GLint origin = context->render_offscreen ? GL_LOWER_LEFT : GL_UPPER_LEFT;
 
-    if (glPointParameteri)
-    {
-        glPointParameteri(GL_POINT_SPRITE_COORD_ORIGIN, origin);
-        checkGLcall("glPointParameteri(GL_POINT_SPRITE_COORD_ORIGIN, ...)");
-    }
-    else if (gl_info->supported[NV_POINT_SPRITE])
+    if (gl_info->supported[NV_POINT_SPRITE])
     {
         GL_EXTCALL(glPointParameteriNV(GL_POINT_SPRITE_COORD_ORIGIN, origin));
         checkGLcall("glPointParameteriNV(GL_POINT_SPRITE_COORD_ORIGIN, ...)");

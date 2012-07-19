@@ -1352,8 +1352,6 @@ void (WINE_GLAPI *glVertex4s)(GLshort x, GLshort y, GLshort z, GLshort w) DECLSP
 void (WINE_GLAPI *glVertex4sv)(const GLshort *v) DECLSPEC_HIDDEN;
 void (WINE_GLAPI *glVertexPointer)(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer) DECLSPEC_HIDDEN;
 void (WINE_GLAPI *glViewport)(GLint x, GLint y, GLsizei width, GLsizei height) DECLSPEC_HIDDEN;
-void (WINE_GLAPI *glPointParameterfv)(GLenum pname, const GLfloat *params) DECLSPEC_HIDDEN;
-void (WINE_GLAPI *glPointParameteri)(GLenum name, GLint value) DECLSPEC_HIDDEN;
 
 /* glFinish and glFlush are always loaded from opengl32.dll, thus they always have
  * __stdcall calling convention.
@@ -1708,8 +1706,6 @@ BOOL (WINAPI *pwglShareLists)(HGLRC, HGLRC) DECLSPEC_HIDDEN;
     USE_GL_FUNC(glVertex4sv) \
     USE_GL_FUNC(glVertexPointer) \
     USE_GL_FUNC(glViewport) \
-    USE_GL_FUNC(glPointParameterfv) \
-    USE_GL_FUNC(glPointParameteri) \
 
 #define WGL_FUNCS_GEN \
     USE_WGL_FUNC(wglCreateContext) \
@@ -4419,9 +4415,9 @@ typedef BOOL (WINAPI *PFNWGLSETPIXELFORMATWINE)(HDC hdc, int iPixelFormat);
             glVertexAttribs4hvNV,                       NV_HALF_FLOAT,                  NULL) \
     /* GL_NV_point_sprite */ \
     USE_GL_FUNC(PGLFNPOINTPARAMETERIVNVPROC, \
-            glPointParameterivNV,                       NV_POINT_SPRITE,                NULL) \
+            glPointParameterivNV,                       NV_POINT_SPRITE,                glPointParameteriv) \
     USE_GL_FUNC(PGLFNPOINTPARAMETERINVPROC, \
-            glPointParameteriNV,                        NV_POINT_SPRITE,                NULL) \
+            glPointParameteriNV,                        NV_POINT_SPRITE,                glPointParameteri) \
     /* GL_NV_register_combiners */ \
     USE_GL_FUNC(PGLFNCOMBINERINPUTNVPROC, \
             glCombinerInputNV,                          NV_REGISTER_COMBINERS,          NULL) \

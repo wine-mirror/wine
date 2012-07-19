@@ -655,7 +655,7 @@ void drawPrimitive(struct wined3d_device *device, UINT index_count, UINT StartId
     }
 
     if ((!context->gl_info->supported[WINED3D_GL_VERSION_2_0]
-            || (!glPointParameteri && !context->gl_info->supported[NV_POINT_SPRITE]))
+            || !context->gl_info->supported[NV_POINT_SPRITE])
             && context->render_offscreen
             && state->render_states[WINED3D_RS_POINTSPRITEENABLE]
             && state->gl_primitive_type == GL_POINTS)

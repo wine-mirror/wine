@@ -188,7 +188,7 @@ static const struct wined3d_extension_map gl_extension_map[] =
     {"GL_NV_fragment_program_option",       NV_FRAGMENT_PROGRAM_OPTION,     0                           },
     {"GL_NV_half_float",                    NV_HALF_FLOAT,                  0                           },
     {"GL_NV_light_max_exponent",            NV_LIGHT_MAX_EXPONENT,          0                           },
-    {"GL_NV_point_sprite",                  NV_POINT_SPRITE,                0                           },
+    {"GL_NV_point_sprite",                  NV_POINT_SPRITE,                MAKEDWORD_VERSION(1, 4)     },
     {"GL_NV_register_combiners",            NV_REGISTER_COMBINERS,          0                           },
     {"GL_NV_register_combiners2",           NV_REGISTER_COMBINERS2,         0                           },
     {"GL_NV_texgen_reflection",             NV_TEXGEN_REFLECTION,           0                           },
