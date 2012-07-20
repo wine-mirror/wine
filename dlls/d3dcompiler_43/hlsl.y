@@ -568,7 +568,7 @@ type:                     base_type
 
 base_type:                KW_VOID
                             {
-                                $$ = new_hlsl_type(d3dcompiler_strdup("void"), HLSL_CLASS_SCALAR, HLSL_TYPE_VOID, 1, 1);
+                                $$ = new_hlsl_type(d3dcompiler_strdup("void"), HLSL_CLASS_OBJECT, HLSL_TYPE_VOID, 1, 1);
                             }
                         | KW_SAMPLER
                             {
