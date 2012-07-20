@@ -754,8 +754,89 @@ static HRESULT compile_forto_statement(compile_ctx_t *ctx, forto_statement_t *st
 
 static HRESULT compile_select_statement(compile_ctx_t *ctx, select_statement_t *stat)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    unsigned end_label, case_cnt = 0, *case_labels = NULL, i;
+    case_clausule_t *case_iter;
+    expression_t *expr_iter;
+    HRESULT hres;
+
+    hres = compile_expression(ctx, stat->expr);
+    if(FAILED(hres))
+        return hres;
+
+    if(!push_instr(ctx, OP_val))
+        return E_OUTOFMEMORY;
+
+    end_label = alloc_label(ctx);
+    if(!end_label)
+        return E_OUTOFMEMORY;
+
+    for(case_iter = stat->case_clausules; case_iter; case_iter = case_iter->next)
+        case_cnt++;
+
+    if(case_cnt) {
+        case_labels = heap_alloc(case_cnt*sizeof(*case_labels));
+        if(!case_labels)
+            return E_OUTOFMEMORY;
+    }
+
+    for(case_iter = stat->case_clausules, i=0; case_iter; case_iter = case_iter->next, i++) {
+        case_labels[i] = alloc_label(ctx);
+        if(!case_labels[i]) {
+            hres = E_OUTOFMEMORY;
+            break;
+        }
+
+        if(!case_iter->expr)
+            break;
+
+        for(expr_iter = case_iter->expr; expr_iter; expr_iter = expr_iter->next) {
+            hres = compile_expression(ctx, expr_iter);
+            if(FAILED(hres))
+                break;
+
+            hres = push_instr_addr(ctx, OP_case, case_labels[i]);
+            if(FAILED(hres))
+                break;
+        }
+    }
+
+    if(FAILED(hres)) {
+        heap_free(case_labels);
+        return hres;
+    }
+
+    hres = push_instr_uint(ctx, OP_pop, 1);
+    if(FAILED(hres)) {
+        heap_free(case_labels);
+        return hres;
+    }
+
+    hres = push_instr_addr(ctx, OP_jmp, case_iter ? case_labels[i] : end_label);
+    if(FAILED(hres)) {
+        heap_free(case_labels);
+        return hres;
+    }
+
+    for(case_iter = stat->case_clausules, i=0; case_iter; case_iter = case_iter->next, i++) {
+        label_set_addr(ctx, case_labels[i]);
+        hres = compile_statement(ctx, NULL, case_iter->stat);
+        if(FAILED(hres))
+            break;
+
+        if(!case_iter->next)
+            break;
+
+        hres = push_instr_addr(ctx, OP_jmp, end_label);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    heap_free(case_labels);
+    if(FAILED(hres))
+        return hres;
+
+    label_set_addr(ctx, end_label);
+    return S_OK;
 }
 
 static HRESULT compile_assignment(compile_ctx_t *ctx, member_expression_t *member_expr, expression_t *value_expr, BOOL is_set)

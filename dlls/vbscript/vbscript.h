@@ -189,6 +189,7 @@ typedef enum {
     X(assign_ident,   1, ARG_BSTR,    ARG_UINT)   \
     X(assign_member,  1, ARG_BSTR,    ARG_UINT)   \
     X(bool,           1, ARG_INT,     0)          \
+    X(case,           0, ARG_ADDR,    0)          \
     X(concat,         1, 0,           0)          \
     X(const,          1, ARG_BSTR,    0)          \
     X(div,            1, 0,           0)          \
