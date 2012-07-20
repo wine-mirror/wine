@@ -30,6 +30,7 @@ static const WCHAR andW[] = {'a','n','d',0};
 static const WCHAR byrefW[] = {'b','y','r','e','f',0};
 static const WCHAR byvalW[] = {'b','y','v','a','l',0};
 static const WCHAR callW[] = {'c','a','l','l',0};
+static const WCHAR caseW[] = {'c','a','s','e',0};
 static const WCHAR classW[] = {'c','l','a','s','s',0};
 static const WCHAR constW[] = {'c','o','n','s','t',0};
 static const WCHAR defaultW[] = {'d','e','f','a','u','l','t',0};
@@ -70,6 +71,7 @@ static const WCHAR propertyW[] = {'p','r','o','p','e','r','t','y',0};
 static const WCHAR publicW[] = {'p','u','b','l','i','c',0};
 static const WCHAR remW[] = {'r','e','m',0};
 static const WCHAR resumeW[] = {'r','e','s','u','m','e',0};
+static const WCHAR selectW[] = {'s','e','l','e','c','t',0};
 static const WCHAR setW[] = {'s','e','t',0};
 static const WCHAR stepW[] = {'s','t','e','p',0};
 static const WCHAR stopW[] = {'s','t','o','p',0};
@@ -90,6 +92,7 @@ static const struct {
     {byrefW,     tBYREF},
     {byvalW,     tBYVAL},
     {callW,      tCALL},
+    {caseW,      tCASE},
     {classW,     tCLASS},
     {constW,     tCONST},
     {defaultW,   tDEFAULT},
@@ -130,6 +133,7 @@ static const struct {
     {publicW,    tPUBLIC},
     {remW,       tREM},
     {resumeW,    tRESUME},
+    {selectW,    tSELECT},
     {setW,       tSET},
     {stepW,      tSTEP},
     {stopW,      tSTOP},

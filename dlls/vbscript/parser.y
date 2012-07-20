@@ -58,12 +58,14 @@ static statement_t *new_if_statement(parser_ctx_t*,expression_t*,statement_t*,el
 static statement_t *new_function_statement(parser_ctx_t*,function_decl_t*);
 static statement_t *new_onerror_statement(parser_ctx_t*,BOOL);
 static statement_t *new_const_statement(parser_ctx_t*,const_decl_t*);
+static statement_t *new_select_statement(parser_ctx_t*,expression_t*,case_clausule_t*);
 
 static dim_decl_t *new_dim_decl(parser_ctx_t*,const WCHAR*,dim_decl_t*);
 static elseif_decl_t *new_elseif_decl(parser_ctx_t*,expression_t*,statement_t*);
 static function_decl_t *new_function_decl(parser_ctx_t*,const WCHAR*,function_type_t,unsigned,arg_decl_t*,statement_t*);
 static arg_decl_t *new_argument_decl(parser_ctx_t*,const WCHAR*,BOOL);
 static const_decl_t *new_const_decl(parser_ctx_t*,const WCHAR*,expression_t*);
+static case_clausule_t *new_case_clausule(parser_ctx_t*,expression_t*,statement_t*,case_clausule_t*);
 
 static class_decl_t *new_class_decl(parser_ctx_t*);
 static class_decl_t *add_class_function(parser_ctx_t*,class_decl_t*,function_decl_t*);
@@ -94,6 +96,7 @@ static const WCHAR propertyW[] = {'p','r','o','p','e','r','t','y',0};
     arg_decl_t *arg_decl;
     class_decl_t *class_decl;
     const_decl_t *const_decl;
+    case_clausule_t *case_clausule;
     unsigned uint;
     LONG lng;
     BOOL bool;
@@ -107,6 +110,7 @@ static const WCHAR propertyW[] = {'p','r','o','p','e','r','t','y',0};
 %token tCALL tDIM tSUB tFUNCTION tPROPERTY tGET tLET tCONST
 %token tIF tELSE tELSEIF tEND tTHEN tEXIT
 %token tWHILE tWEND tDO tLOOP tUNTIL tFOR tTO tSTEP tEACH tIN
+%token tSELECT tCASE
 %token tBYREF tBYVAL
 %token tOPTION tEXPLICIT
 %token tSTOP
@@ -122,7 +126,7 @@ static const WCHAR propertyW[] = {'p','r','o','p','e','r','t','y',0};
 %type <expression> ConcatExpression AdditiveExpression ModExpression IntdivExpression MultiplicativeExpression ExpExpression
 %type <expression> NotExpression UnaryExpression AndExpression OrExpression XorExpression EqvExpression
 %type <member> MemberExpression
-%type <expression> Arguments_opt ArgumentList_opt ArgumentList Step_opt
+%type <expression> Arguments_opt ArgumentList_opt Step_opt ExpressionList
 %type <bool> OptionExplicit_opt DoType
 %type <arg_decl> ArgumentsDecl_opt ArgumentDeclList ArgumentDecl
 %type <func_decl> FunctionDecl PropertyDecl
@@ -132,6 +136,7 @@ static const WCHAR propertyW[] = {'p','r','o','p','e','r','t','y',0};
 %type <dim_decl> DimDeclList
 %type <const_decl> ConstDecl ConstDeclList
 %type <string> Identifier
+%type <case_clausule> CaseClausules
 
 %%
 
@@ -196,6 +201,8 @@ SimpleStatement
                                             { $$ = new_forto_statement(ctx, $2, $4, $6, $7, $9); CHECK_ERROR; }
     | tFOR tEACH Identifier tIN Expression tNL StatementsNl_opt tNEXT
                                             { $$ = new_foreach_statement(ctx, $3, $5, $7); }
+    | tSELECT tCASE Expression tNL CaseClausules tEND tSELECT
+                                            { $$ = new_select_statement(ctx, $3, $5); }
 
 MemberExpression
     : Identifier                            { $$ = new_member_expression(ctx, NULL, $1); CHECK_ERROR; }
@@ -247,21 +254,27 @@ Else_opt
     : /* empty */                           { $$ = NULL; }
     | tELSE tNL StatementsNl                { $$ = $3; }
 
+CaseClausules
+    : /* empty */                          { $$ = NULL; }
+    | tCASE tELSE tNL StatementsNl         { $$ = new_case_clausule(ctx, NULL, $4, NULL); }
+    | tCASE ExpressionList tNL StatementsNl_opt CaseClausules
+                                           { $$ = new_case_clausule(ctx, $2, $4, $5); }
+
 Arguments_opt
     : EmptyBrackets_opt             { $$ = NULL; }
-    | '(' ArgumentList ')'          { $$ = $2; }
+    | '(' ExpressionList ')'        { $$ = $2; }
 
 ArgumentList_opt
     : EmptyBrackets_opt             { $$ = NULL; }
-    | ArgumentList                  { $$ = $1; }
-
-ArgumentList
-    : Expression                    { $$ = $1; }
-    | Expression ',' ArgumentList   { $1->next = $3; $$ = $1; }
+    | ExpressionList                { $$ = $1; }
 
 EmptyBrackets_opt
     : /* empty */
     | tEMPTYBRACKETS
+
+ExpressionList
+    : Expression                    { $$ = $1; }
+    | Expression ',' ExpressionList { $1->next = $3; $$ = $1; }
 
 Expression
     : EqvExpression                             { $$ = $1; }
@@ -695,6 +708,33 @@ static statement_t *new_if_statement(parser_ctx_t *ctx, expression_t *expr, stat
     stat->elseifs = elseif_decl;
     stat->else_stat = else_stat;
     return &stat->stat;
+}
+
+static statement_t *new_select_statement(parser_ctx_t *ctx, expression_t *expr, case_clausule_t *case_clausules)
+{
+    select_statement_t *stat;
+
+    stat = new_statement(ctx, STAT_SELECT, sizeof(*stat));
+    if(!stat)
+        return NULL;
+
+    stat->expr = expr;
+    stat->case_clausules = case_clausules;
+    return &stat->stat;
+}
+
+static case_clausule_t *new_case_clausule(parser_ctx_t *ctx, expression_t *expr, statement_t *stat, case_clausule_t *next)
+{
+    case_clausule_t *ret;
+
+    ret = parser_alloc(ctx, sizeof(*ret));
+    if(!ret)
+        return NULL;
+
+    ret->expr = expr;
+    ret->stat = stat;
+    ret->next = next;
+    return ret;
 }
 
 static statement_t *new_onerror_statement(parser_ctx_t *ctx, BOOL resume_next)

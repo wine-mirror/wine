@@ -752,6 +752,12 @@ static HRESULT compile_forto_statement(compile_ctx_t *ctx, forto_statement_t *st
     return S_OK;
 }
 
+static HRESULT compile_select_statement(compile_ctx_t *ctx, select_statement_t *stat)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
 static HRESULT compile_assignment(compile_ctx_t *ctx, member_expression_t *member_expr, expression_t *value_expr, BOOL is_set)
 {
     unsigned args_cnt;
@@ -1057,6 +1063,9 @@ static HRESULT compile_statement(compile_ctx_t *ctx, statement_ctx_t *stat_ctx, 
             break;
         case STAT_ONERROR:
             hres = compile_onerror_statement(ctx, (onerror_statement_t*)stat);
+            break;
+        case STAT_SELECT:
+            hres = compile_select_statement(ctx, (select_statement_t*)stat);
             break;
         case STAT_SET:
             hres = compile_assign_statement(ctx, (assign_statement_t*)stat, TRUE);
