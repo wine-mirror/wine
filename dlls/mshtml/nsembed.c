@@ -79,6 +79,20 @@ static ATOM nscontainer_class;
 static WCHAR gecko_path[MAX_PATH];
 static unsigned gecko_path_len;
 
+static nsresult create_nsfile(const PRUnichar *path, nsIFile **ret)
+{
+    nsAString str;
+    nsresult nsres;
+
+    nsAString_InitDepend(&str, path);
+    nsres = NS_NewLocalFile(&str, FALSE, ret);
+    nsAString_Finish(&str);
+
+    if(NS_FAILED(nsres))
+        WARN("NS_NewLocalFile failed: %08x\n", nsres);
+    return nsres;
+}
+
 static nsresult NSAPI nsDirectoryServiceProvider_QueryInterface(nsIDirectoryServiceProvider *iface,
         nsIIDRef riid, void **result)
 {
@@ -113,7 +127,6 @@ static nsresult create_profile_directory(void)
     static const WCHAR wine_geckoW[] = {'\\','w','i','n','e','_','g','e','c','k','o',0};
 
     WCHAR path[MAX_PATH + sizeof(wine_geckoW)/sizeof(WCHAR)];
-    nsAString str;
     cpp_bool exists;
     nsresult nsres;
     HRESULT hres;
@@ -125,13 +138,9 @@ static nsresult create_profile_directory(void)
     }
 
     strcatW(path, wine_geckoW);
-    nsAString_InitDepend(&str, path);
-    nsres = NS_NewLocalFile(&str, FALSE, &profile_directory);
-    nsAString_Finish(&str);
-    if(NS_FAILED(nsres)) {
-        ERR("NS_NewLocalFile failed: %08x\n", nsres);
+    nsres = create_nsfile(path, &profile_directory);
+    if(NS_FAILED(nsres))
         return nsres;
-    }
 
     nsres = nsIFile_Exists(profile_directory, &exists);
     if(NS_FAILED(nsres)) {
@@ -525,16 +534,12 @@ static void set_preferences(void)
 static BOOL init_xpcom(const PRUnichar *gre_path)
 {
     nsIComponentRegistrar *registrar = NULL;
-    nsAString path;
     nsIFile *gre_dir;
     WCHAR *ptr;
     nsresult nsres;
 
-    nsAString_InitDepend(&path, gre_path);
-    nsres = NS_NewLocalFile(&path, FALSE, &gre_dir);
-    nsAString_Finish(&path);
+    nsres = create_nsfile(gre_path, &gre_dir);
     if(NS_FAILED(nsres)) {
-        ERR("NS_NewLocalFile failed: %08x\n", nsres);
         FreeLibrary(xul_handle);
         return FALSE;
     }
