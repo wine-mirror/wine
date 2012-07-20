@@ -920,6 +920,26 @@ postfix_expr:             primary_expr
                             {
                                 $$ = $1;
                             }
+                        | postfix_expr OP_INC
+                            {
+                                struct hlsl_ir_node *operands[3];
+                                struct source_location loc;
+
+                                operands[0] = $1;
+                                operands[1] = operands[2] = NULL;
+                                set_location(&loc, &@2);
+                                $$ = &new_expr(HLSL_IR_BINOP_POSTINC, operands, &loc)->node;
+                            }
+                        | postfix_expr OP_DEC
+                            {
+                                struct hlsl_ir_node *operands[3];
+                                struct source_location loc;
+
+                                operands[0] = $1;
+                                operands[1] = operands[2] = NULL;
+                                set_location(&loc, &@2);
+                                $$ = &new_expr(HLSL_IR_BINOP_POSTDEC, operands, &loc)->node;
+                            }
                           /* "var_modifiers" doesn't make sense in this case, but it's needed
                              in the grammar to avoid shift/reduce conflicts. */
                         | var_modifiers type '(' initializer_expr_list ')'
