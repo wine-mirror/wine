@@ -316,11 +316,9 @@ static void (*pglXCopySubBufferMESA)(Display *dpy, GLXDrawable drawable, int x, 
 /* Standard OpenGL */
 static void (*pglFinish)(void);
 static void (*pglFlush)(void);
-static void (*pglGetIntegerv)(GLenum,GLint*);
 
 static void wglFinish(void);
 static void wglFlush(void);
-static void wglGetIntegerv(GLenum pname, GLint* params);
 
 static int GLXErrorHandler(Display *dpy, XErrorEvent *event, void *arg)
 {
@@ -494,7 +492,6 @@ static BOOL has_opengl(void)
     do { p##func = opengl_funcs.gl.p_##func; opengl_funcs.gl.p_##func = w##func; } while(0)
     REDIRECT( glFinish );
     REDIRECT( glFlush );
-    REDIRECT( glGetIntegerv );
 #undef REDIRECT
 
     pglXGetProcAddressARB = wine_dlsym(opengl_handle, "glXGetProcAddressARB", NULL, 0);
@@ -1730,43 +1727,6 @@ static HDC glxdrv_wglGetCurrentDC( struct wgl_context *ctx )
     return ctx->hdc;
 }
 
-/* WGL helper function which handles differences in glGetIntegerv from WGL and GLX */
-static void wglGetIntegerv(GLenum pname, GLint* params)
-{
-    wine_tsx11_lock();
-    switch(pname)
-    {
-    case GL_DEPTH_BITS:
-        {
-            struct wgl_context *ctx = NtCurrentTeb()->glContext;
-
-            pglGetIntegerv(pname, params);
-            /**
-             * if we cannot find a Wine Context
-             * we only have the default wine desktop context,
-             * so if we have only a 24 depth say we have 32
-             */
-            if (!ctx && *params == 24) {
-                *params = 32;
-            }
-            TRACE("returns GL_DEPTH_BITS as '%d'\n", *params);
-            break;
-        }
-    case GL_ALPHA_BITS:
-        {
-            struct wgl_context *ctx = NtCurrentTeb()->glContext;
-
-            pglXGetFBConfigAttrib(gdi_display, ctx->fmt->fbconfig, GLX_ALPHA_SIZE, params);
-            TRACE("returns GL_ALPHA_BITS as '%d'\n", *params);
-            break;
-        }
-    default:
-        pglGetIntegerv(pname, params);
-        break;
-    }
-    wine_tsx11_unlock();
-}
-
 static void flush_pixmap( struct wgl_context *ctx )
 {
     char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
@@ -2735,7 +2695,7 @@ static BOOL X11DRV_wglBindTexImageARB( struct wgl_pbuffer *object, int iBuffer )
         TRACE("drawable=%lx, context=%p\n", object->drawable, prev_context);
         tmp_context = pglXCreateNewContext(gdi_display, object->fmt->fbconfig, object->fmt->render_type, prev_context, True);
 
-        pglGetIntegerv(object->texture_bind_target, &prev_binded_texture);
+        opengl_funcs.gl.p_glGetIntegerv(object->texture_bind_target, &prev_binded_texture);
 
         /* Switch to our pbuffer */
         pglXMakeCurrent(gdi_display, object->drawable, tmp_context);
