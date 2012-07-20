@@ -482,8 +482,9 @@ static inline ULONG get_table_size(const ASSEMBLY *assembly, DWORD index)
 
 static HRESULT parse_clr_tables(ASSEMBLY *assembly, ULONG offset)
 {
-    DWORD i, previ, offidx;
+    DWORD i, count;
     ULONG currofs;
+    ULONGLONG mask;
 
     currofs = offset;
     assembly->tableshdr = assembly_data_offset(assembly, currofs);
@@ -502,44 +503,22 @@ static HRESULT parse_clr_tables(ASSEMBLY *assembly, ULONG offset)
     if (!assembly->numrows)
         return E_FAIL;
 
-    assembly->numtables = 0;
-    for (i = 0; i < MAX_CLR_TABLES; i++)
-    {
-        if ((i < 32 && (assembly->tableshdr->MaskValid.u.LowPart >> i) & 1) ||
-            (i >= 32 && (assembly->tableshdr->MaskValid.u.HighPart >> i) & 1))
-        {
-            assembly->numtables++;
-        }
-    }
-
-    currofs += assembly->numtables * sizeof(DWORD);
     memset(assembly->tables, -1, MAX_CLR_TABLES * sizeof(CLRTABLE));
 
-    if (assembly->tableshdr->MaskValid.u.LowPart & 1)
-        assembly->tables[0].offset = currofs;
-
-    offidx = 0;
-    for (i = 0; i < MAX_CLR_TABLES; i++)
+    for (i = count = 0, mask = 1; i < MAX_CLR_TABLES; i++, mask <<= 1)
     {
-        if ((i < 32 && (assembly->tableshdr->MaskValid.u.LowPart >> i) & 1) ||
-            (i >= 32 && (assembly->tableshdr->MaskValid.u.HighPart >> i) & 1))
-        {
-            assembly->tables[i].rows = assembly->numrows[offidx];
-            offidx++;
-        }
+        if (assembly->tableshdr->MaskValid.QuadPart & mask)
+            assembly->tables[i].rows = assembly->numrows[count++];
     }
+    assembly->numtables = count;
+    currofs += assembly->numtables * sizeof(DWORD);
 
-    previ = 0;
-    offidx = 1;
-    for (i = 1; i < MAX_CLR_TABLES; i++)
+    for (i = 0, mask = 1; i < MAX_CLR_TABLES; i++, mask <<= 1)
     {
-        if ((i < 32 && (assembly->tableshdr->MaskValid.u.LowPart >> i) & 1) ||
-            (i >= 32 && (assembly->tableshdr->MaskValid.u.HighPart >> i) & 1))
+        if (assembly->tableshdr->MaskValid.QuadPart & mask)
         {
-            currofs += get_table_size(assembly, previ) * assembly->numrows[offidx - 1];
             assembly->tables[i].offset = currofs;
-            offidx++;
-            previ = i;
+            currofs += get_table_size(assembly, i) * assembly->tables[i].rows;
         }
     }
 
