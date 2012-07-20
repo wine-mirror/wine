@@ -7802,6 +7802,68 @@ methods:
 }
 
 /*****************************************************************************
+ *    IHTMLXMLHttpRequest interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3051040a-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLXMLHttpRequest : IDispatch
+{
+    [propget, id(DISPID_IHTMLXMLHTTPREQUEST_READYSTATE)]
+    HRESULT readyState([out, retval] long *p);
+
+    [propget, id(DISPID_IHTMLXMLHTTPREQUEST_RESPONSEBODY)]
+    HRESULT responseBody([out, retval] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLXMLHTTPREQUEST_RESPONSETEXT)]
+    HRESULT responseText([out, retval] BSTR *p);
+
+    [propget, id(DISPID_IHTMLXMLHTTPREQUEST_RESPONSEXML)]
+    HRESULT responseXML([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLXMLHTTPREQUEST_STATUS)]
+    HRESULT status([out, retval] long *p);
+
+    [propget, id(DISPID_IHTMLXMLHTTPREQUEST_STATUSTEXT)]
+    HRESULT statusText([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLXMLHTTPREQUEST_ONREADYSTATECHANGE), displaybind, bindable]
+    HRESULT onreadystatechange([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLXMLHTTPREQUEST_ONREADYSTATECHANGE), displaybind, bindable]
+    HRESULT onreadystatechange([out, retval] VARIANT *p);
+
+    [id(DISPID_IHTMLXMLHTTPREQUEST_ABORT)] HRESULT abort();
+
+    [id(DISPID_IHTMLXMLHTTPREQUEST_OPEN)]
+    HRESULT open(
+            [in] BSTR bstrMethod,
+            [in] BSTR bstrUrl,
+            [in] VARIANT varAsync,
+            [in, optional] VARIANT varUser,
+            [in, optional] VARIANT varPassword);
+
+    [id(DISPID_IHTMLXMLHTTPREQUEST_SEND)]
+    HRESULT send([in, optional] VARIANT varBody);
+
+    [id(DISPID_IHTMLXMLHTTPREQUEST_GETALLRESPONSEHEADERS)]
+    HRESULT getAllResponseHeaders([out, retval] BSTR *p);
+
+    [id(DISPID_IHTMLXMLHTTPREQUEST_GETRESPONSEHEADER)]
+    HRESULT getResponseHeader(
+            [in] BSTR bstrHeader,
+            [out, retval] BSTR *p);
+
+    [id(DISPID_IHTMLXMLHTTPREQUEST_SETREQUESTHEADER)]
+    HRESULT setRequestHeader(
+            [in] BSTR bstrHeader,
+            [in] BSTR bstrValue);
+}
+
+/*****************************************************************************
  *    IHTMLControlElement interface
  */
 [
