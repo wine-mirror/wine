@@ -2865,10 +2865,23 @@ INT WINAPI FoldStringW(DWORD dwFlags, LPCWSTR src, INT srclen,
  *
  * See CompareStringA.
  */
-INT WINAPI CompareStringW(LCID lcid, DWORD style,
+INT WINAPI CompareStringW(LCID lcid, DWORD flags,
                           LPCWSTR str1, INT len1, LPCWSTR str2, INT len2)
 {
+    return CompareStringEx(NULL, flags, str1, len1, str2, len2, NULL, NULL, 0);
+}
+
+/******************************************************************************
+ *           CompareStringEx    (KERNEL32.@)
+ */
+INT WINAPI CompareStringEx(LPCWSTR locale, DWORD flags, LPCWSTR str1, INT len1,
+                           LPCWSTR str2, INT len2, LPNLSVERSIONINFO version, LPVOID reserved, LPARAM lParam)
+{
     INT ret;
+
+    if (version) FIXME("unexpected version parameter\n");
+    if (reserved) FIXME("unexpected reserved value\n");
+    if (lParam) FIXME("unexpected lParam\n");
 
     if (!str1 || !str2)
     {
@@ -2876,7 +2889,7 @@ INT WINAPI CompareStringW(LCID lcid, DWORD style,
         return 0;
     }
 
-    if( style & ~(NORM_IGNORECASE|NORM_IGNORENONSPACE|NORM_IGNORESYMBOLS|
+    if( flags & ~(NORM_IGNORECASE|NORM_IGNORENONSPACE|NORM_IGNORESYMBOLS|
         SORT_STRINGSORT|NORM_IGNOREKANATYPE|NORM_IGNOREWIDTH|LOCALE_USE_CP_ACP|0x10000000) )
     {
         SetLastError(ERROR_INVALID_FLAGS);
@@ -2884,13 +2897,13 @@ INT WINAPI CompareStringW(LCID lcid, DWORD style,
     }
 
     /* this style is related to diacritics in Arabic, Japanese, and Hebrew */
-    if (style & 0x10000000)
-        WARN("Ignoring unknown style 0x10000000\n");
+    if (flags & 0x10000000)
+        WARN("Ignoring unknown flags 0x10000000\n");
 
     if (len1 < 0) len1 = strlenW(str1);
     if (len2 < 0) len2 = strlenW(str2);
 
-    ret = wine_compare_string(style, str1, len1, str2, len2);
+    ret = wine_compare_string(flags, str1, len1, str2, len2);
 
     if (ret) /* need to translate result */
         return (ret < 0) ? CSTR_LESS_THAN : CSTR_GREATER_THAN;
@@ -2904,7 +2917,7 @@ INT WINAPI CompareStringW(LCID lcid, DWORD style,
  *
  * PARAMS
  *  lcid  [I] LCID for the comparison
- *  style [I] Flags for the comparison (NORM_ constants from "winnls.h").
+ *  flags [I] Flags for the comparison (NORM_ constants from "winnls.h").
  *  str1  [I] First string to compare
  *  len1  [I] Length of str1, or -1 if str1 is NUL terminated
  *  str2  [I] Second string to compare
@@ -2915,7 +2928,7 @@ INT WINAPI CompareStringW(LCID lcid, DWORD style,
  *           str1 is less than, equal to or greater than str2 respectively.
  *  Failure: FALSE. Use GetLastError() to determine the cause.
  */
-INT WINAPI CompareStringA(LCID lcid, DWORD style,
+INT WINAPI CompareStringA(LCID lcid, DWORD flags,
                           LPCSTR str1, INT len1, LPCSTR str2, INT len2)
 {
     WCHAR *buf1W = NtCurrentTeb()->StaticUnicodeBuffer;
@@ -2932,7 +2945,7 @@ INT WINAPI CompareStringA(LCID lcid, DWORD style,
     if (len1 < 0) len1 = strlen(str1);
     if (len2 < 0) len2 = strlen(str2);
 
-    if (!(style & LOCALE_USE_CP_ACP)) locale_cp = get_lcid_codepage( lcid );
+    if (!(flags & LOCALE_USE_CP_ACP)) locale_cp = get_lcid_codepage( lcid );
 
     if (len1)
     {
@@ -2981,7 +2994,7 @@ INT WINAPI CompareStringA(LCID lcid, DWORD style,
         str2W = buf2W;
     }
 
-    ret = CompareStringW(lcid, style, str1W, len1W, str2W, len2W);
+    ret = CompareStringEx(NULL, flags, str1W, len1W, str2W, len2W, NULL, NULL, 0);
 
     if (str1W != buf1W) HeapFree(GetProcessHeap(), 0, str1W);
     if (str2W != buf2W) HeapFree(GetProcessHeap(), 0, str2W);
