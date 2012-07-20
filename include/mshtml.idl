@@ -131,6 +131,7 @@ interface IHTMLElement2;
 interface IHTMLStyleSheetsCollection;
 interface IHTMLFrameBase;
 interface IHTMLStorage;
+interface IDOMEvent;
 
 /*****************************************************************************
  *    IHTMLFiltersCollection interface
@@ -7975,6 +7976,22 @@ methods:
     VARIANT ontimeout();
 
     WINE_IHTMLDOMCONSTRUCTOR_DISPINTERFACE_DECL;
+
+
+    [id(DISPID_IEVENTTARGET_ADDEVENTLISTENER)]
+    void addEventListener(
+            [in] BSTR type,
+            [in] IDispatch *listener,
+            [in] VARIANT_BOOL useCapture);
+
+    [id(DISPID_IEVENTTARGET_REMOVEEVENTLISTENER)]
+    void removeEventListener(
+            [in] BSTR type,
+            [in] IDispatch *listener,
+            [in] VARIANT_BOOL useCapture);
+
+    [id(DISPID_IEVENTTARGET_DISPATCHEVENT)]
+    VARIANT_BOOL dispatchEvent([in] IDOMEvent *evt);
 }
 
 /*****************************************************************************
@@ -17205,6 +17222,98 @@ interface IHTMLStorage : IDispatch
 
     [id(DISPID_IHTMLSTORAGE_CLEAR)]
     HRESULT clear();
+}
+
+/*****************************************************************************
+ *    IDOMEventTarget interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(305104b9-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IEventTarget : IDispatch
+{
+    [id(DISPID_IEVENTTARGET_ADDEVENTLISTENER)]
+    HRESULT addEventListener(
+            [in] BSTR type,
+            [in] IDispatch *listener,
+            [in] VARIANT_BOOL useCapture);
+
+    [id(DISPID_IEVENTTARGET_REMOVEEVENTLISTENER)]
+    HRESULT removeEventListener(
+            [in] BSTR type,
+            [in] IDispatch *listener,
+            [in] VARIANT_BOOL useCapture);
+
+    [id(DISPID_IEVENTTARGET_DISPATCHEVENT)]
+    HRESULT dispatchEvent(
+            [in] IDOMEvent *evt,
+            [out, retval] VARIANT_BOOL *pfResult);
+}
+
+/*****************************************************************************
+ *    IDOMEvent interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(305104ba-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IDOMEvent : IDispatch
+{
+    [propget, id(DISPID_IDOMEVENT_BUBBLES)]
+    HRESULT bubbles([out, retval] VARIANT_BOOL *p);
+
+    [propget, id(DISPID_IDOMEVENT_CANCELABLE)]
+    HRESULT cancelable([out, retval] VARIANT_BOOL *p);
+
+    [propget, id(DISPID_IDOMEVENT_CURRENTTARGET)]
+    HRESULT currentTarget([out, retval] IEventTarget **p);
+
+    [propget, id(DISPID_IDOMEVENT_DEFAULTPREVENTED)]
+    HRESULT defaultPrevented([out, retval] VARIANT_BOOL *p);
+
+    [propget, id(DISPID_IDOMEVENT_EVENTPHASE)]
+    HRESULT eventPhase([out, retval] USHORT *p);
+
+    [propget, id(DISPID_IDOMEVENT_TARGET)]
+    HRESULT target([out, retval] IEventTarget **p);
+
+    [propget, id(DISPID_IDOMEVENT_TIMESTAMP)]
+    HRESULT timeStamp([out, retval] ULONGLONG *p);
+
+    [propget, id(DISPID_IDOMEVENT_TYPE)]
+    HRESULT type([out, retval] BSTR *p);
+
+    [id(DISPID_IDOMEVENT_INITEVENT)]
+    HRESULT initEvent(
+            [in] BSTR eventType,
+            [in] VARIANT_BOOL canBubble,
+            [in] VARIANT_BOOL cancelable);
+
+    [id(DISPID_IDOMEVENT_PREVENTDEFAULT)]
+    HRESULT preventDefault();
+
+    [id(DISPID_IDOMEVENT_STOPPROPAGATION)]
+    HRESULT stopPropagation();
+
+    [id(DISPID_IDOMEVENT_STOPIMMEDIATEPROPAGATION)]
+    HRESULT stopImmediatePropagation();
+
+    [propget, id(DISPID_IDOMEVENT_ISTRUSTED)]
+    HRESULT isTrusted([out, retval] VARIANT_BOOL *p);
+
+    [propput, id(DISPID_IDOMEVENT_CANCELBUBBLE)]
+    HRESULT cancelBubble([in] VARIANT_BOOL v);
+
+    [propget, id(DISPID_IDOMEVENT_CANCELBUBBLE)]
+    HRESULT cancelBubble([out, retval] VARIANT_BOOL *p);
+
+    [propget, id(DISPID_IDOMEVENT_SRCELEMENT)]
+    HRESULT srcElement([out, retval] IHTMLElement **p);
 }
 
 /*****************************************************************************
