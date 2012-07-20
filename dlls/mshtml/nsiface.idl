@@ -95,6 +95,7 @@ interface nsIDOMRange;
 interface nsIDOMEventTarget;
 interface nsISelection;
 interface nsIDOMHTMLSelectElement;
+interface nsIFile;
 
 interface IMoniker;
 
@@ -448,6 +449,17 @@ interface nsIURL : nsIURI
     nsresult SetFileExtension(const nsACString *aFileExtension);
     nsresult GetCommonBaseSpec(nsIURI *aURIToCompare, nsACString *_retval);
     nsresult GetRelativeSpec(nsIURI *aURIToCompare, nsACString *_retval);
+}
+
+[
+    object,
+    uuid(7750029c-1b0a-414e-8359-a77f24a2a0a6),
+    local
+]
+interface nsIFileURL : nsIURL
+{
+    nsresult GetFile(nsIFile **aFile);
+    nsresult SetFile(nsIFile *aFile);
 }
 
 [

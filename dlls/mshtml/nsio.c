@@ -53,7 +53,7 @@ static nsINetUtil *net_util;
 static const char *request_method_strings[] = {"GET", "PUT", "POST"};
 
 struct  nsWineURI {
-    nsIURL nsIURL_iface;
+    nsIFileURL nsIFileURL_iface; /* For non-file URL objects, it's just nsIURL */
     nsIStandardURL nsIStandardURL_iface;
 
     LONG ref;
@@ -273,7 +273,7 @@ HRESULT load_nsuri(HTMLOuterWindow *window, nsWineURI *uri, nsChannelBSC *channe
     uri->channel_bsc = channelbsc;
     doc = window->base.inner_window->doc;
     doc->skip_mutation_notif = TRUE;
-    nsres = nsIDocShell_LoadURI(doc_shell, (nsIURI*)&uri->nsIURL_iface, NULL, flags, FALSE);
+    nsres = nsIDocShell_LoadURI(doc_shell, (nsIURI*)&uri->nsIFileURL_iface, NULL, flags, FALSE);
     if(doc == window->base.inner_window->doc)
         doc->skip_mutation_notif = FALSE;
     uri->channel_bsc = NULL;
@@ -528,7 +528,7 @@ static nsrefcnt NSAPI nsChannel_Release(nsIHttpChannel *iface)
     LONG ref = InterlockedDecrement(&This->ref);
 
     if(!ref) {
-        nsIURI_Release(&This->uri->nsIURL_iface);
+        nsIURI_Release(&This->uri->nsIFileURL_iface);
         if(This->owner)
             nsISupports_Release(This->owner);
         if(This->post_data_stream)
@@ -559,7 +559,7 @@ static nsresult NSAPI nsChannel_GetName(nsIHttpChannel *iface, nsACString *aName
 
     TRACE("(%p)->(%p)\n", This, aName);
 
-    return nsIURI_GetSpec(&This->uri->nsIURL_iface, aName);
+    return nsIURI_GetSpec(&This->uri->nsIFileURL_iface, aName);
 }
 
 static nsresult NSAPI nsChannel_IsPending(nsIHttpChannel *iface, cpp_bool *_retval)
@@ -688,7 +688,7 @@ static nsresult NSAPI nsChannel_GetURI(nsIHttpChannel *iface, nsIURI **aURI)
 
     TRACE("(%p)->(%p)\n", This, aURI);
 
-    nsIURI_AddRef(&This->uri->nsIURL_iface);
+    nsIURI_AddRef(&This->uri->nsIFileURL_iface);
     *aURI = (nsIURI*)This->uri;
 
     return NS_OK;
@@ -902,7 +902,7 @@ static HTMLOuterWindow *get_window_from_load_group(nsChannel *This)
     window = wine_uri->window_ref ? wine_uri->window_ref->window : NULL;
     if(window)
         IHTMLWindow2_AddRef(&window->base.IHTMLWindow2_iface);
-    nsIURI_Release(&wine_uri->nsIURL_iface);
+    nsIURI_Release(&wine_uri->nsIFileURL_iface);
 
     return window;
 }
@@ -1772,26 +1772,29 @@ static nsresult get_uri_string(nsWineURI *This, Uri_PROPERTY prop, nsACString *r
     return NS_OK;
 }
 
-static inline nsWineURI *impl_from_nsIURL(nsIURL *iface)
+static inline nsWineURI *impl_from_nsIFileURL(nsIFileURL *iface)
 {
-    return CONTAINING_RECORD(iface, nsWineURI, nsIURL_iface);
+    return CONTAINING_RECORD(iface, nsWineURI, nsIFileURL_iface);
 }
 
-static nsresult NSAPI nsURI_QueryInterface(nsIURL *iface, nsIIDRef riid, void **result)
+static nsresult NSAPI nsURI_QueryInterface(nsIFileURL *iface, nsIIDRef riid, void **result)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
 
     *result = NULL;
 
     if(IsEqualGUID(&IID_nsISupports, riid)) {
         TRACE("(%p)->(IID_nsISupports %p)\n", This, result);
-        *result = &This->nsIURL_iface;
+        *result = &This->nsIFileURL_iface;
     }else if(IsEqualGUID(&IID_nsIURI, riid)) {
         TRACE("(%p)->(IID_nsIURI %p)\n", This, result);
-        *result = &This->nsIURL_iface;
+        *result = &This->nsIFileURL_iface;
     }else if(IsEqualGUID(&IID_nsIURL, riid)) {
         TRACE("(%p)->(IID_nsIURL %p)\n", This, result);
-        *result = &This->nsIURL_iface;
+        *result = &This->nsIFileURL_iface;
+    }else if(IsEqualGUID(&IID_nsIFileURL, riid)) {
+        TRACE("(%p)->(IID_nsIFileURL %p)\n", This, result);
+        *result = This->scheme == URL_SCHEME_FILE ? &This->nsIFileURL_iface : NULL;
     }else if(IsEqualGUID(&IID_nsIMutable, riid)) {
         TRACE("(%p)->(IID_nsIMutable %p)\n", This, result);
         *result = &This->nsIStandardURL_iface;
@@ -1804,7 +1807,7 @@ static nsresult NSAPI nsURI_QueryInterface(nsIURL *iface, nsIIDRef riid, void **
     }
 
     if(*result) {
-        nsIURI_AddRef(&This->nsIURL_iface);
+        nsIURI_AddRef(&This->nsIFileURL_iface);
         return NS_OK;
     }
 
@@ -1812,9 +1815,9 @@ static nsresult NSAPI nsURI_QueryInterface(nsIURL *iface, nsIIDRef riid, void **
     return NS_NOINTERFACE;
 }
 
-static nsrefcnt NSAPI nsURI_AddRef(nsIURL *iface)
+static nsrefcnt NSAPI nsURI_AddRef(nsIFileURL *iface)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) ref=%d\n", This, ref);
@@ -1822,9 +1825,9 @@ static nsrefcnt NSAPI nsURI_AddRef(nsIURL *iface)
     return ref;
 }
 
-static nsrefcnt NSAPI nsURI_Release(nsIURL *iface)
+static nsrefcnt NSAPI nsURI_Release(nsIFileURL *iface)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) ref=%d\n", This, ref);
@@ -1842,18 +1845,18 @@ static nsrefcnt NSAPI nsURI_Release(nsIURL *iface)
     return ref;
 }
 
-static nsresult NSAPI nsURI_GetSpec(nsIURL *iface, nsACString *aSpec)
+static nsresult NSAPI nsURI_GetSpec(nsIFileURL *iface, nsACString *aSpec)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
 
     TRACE("(%p)->(%p)\n", This, aSpec);
 
     return get_uri_string(This, Uri_PROPERTY_DISPLAY_URI, aSpec);
 }
 
-static nsresult NSAPI nsURI_SetSpec(nsIURL *iface, const nsACString *aSpec)
+static nsresult NSAPI nsURI_SetSpec(nsIFileURL *iface, const nsACString *aSpec)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
     const char *speca;
     WCHAR *spec;
     IUri *uri;
@@ -1886,16 +1889,16 @@ static nsresult NSAPI nsURI_SetSpec(nsIURL *iface, const nsACString *aSpec)
     return NS_OK;
 }
 
-static nsresult NSAPI nsURI_GetPrePath(nsIURL *iface, nsACString *aPrePath)
+static nsresult NSAPI nsURI_GetPrePath(nsIFileURL *iface, nsACString *aPrePath)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
     FIXME("(%p)->(%p)\n", This, aPrePath);
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
-static nsresult NSAPI nsURI_GetScheme(nsIURL *iface, nsACString *aScheme)
+static nsresult NSAPI nsURI_GetScheme(nsIFileURL *iface, nsACString *aScheme)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
     DWORD scheme;
     HRESULT hres;
 
@@ -1918,9 +1921,9 @@ static nsresult NSAPI nsURI_GetScheme(nsIURL *iface, nsACString *aScheme)
     return get_uri_string(This, Uri_PROPERTY_SCHEME_NAME, aScheme);
 }
 
-static nsresult NSAPI nsURI_SetScheme(nsIURL *iface, const nsACString *aScheme)
+static nsresult NSAPI nsURI_SetScheme(nsIFileURL *iface, const nsACString *aScheme)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
     const char *schemea;
     WCHAR *scheme;
     HRESULT hres;
@@ -1943,9 +1946,9 @@ static nsresult NSAPI nsURI_SetScheme(nsIURL *iface, const nsACString *aScheme)
     return NS_OK;
 }
 
-static nsresult NSAPI nsURI_GetUserPass(nsIURL *iface, nsACString *aUserPass)
+static nsresult NSAPI nsURI_GetUserPass(nsIFileURL *iface, nsACString *aUserPass)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
     BSTR user, pass;
     HRESULT hres;
 
@@ -1975,9 +1978,9 @@ static nsresult NSAPI nsURI_GetUserPass(nsIURL *iface, nsACString *aUserPass)
     return NS_OK;
 }
 
-static nsresult NSAPI nsURI_SetUserPass(nsIURL *iface, const nsACString *aUserPass)
+static nsresult NSAPI nsURI_SetUserPass(nsIFileURL *iface, const nsACString *aUserPass)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
     WCHAR *user = NULL, *pass = NULL, *buf = NULL;
     const char *user_pass;
     HRESULT hres;
@@ -2016,18 +2019,18 @@ static nsresult NSAPI nsURI_SetUserPass(nsIURL *iface, const nsACString *aUserPa
     return SUCCEEDED(hres) ? NS_OK : NS_ERROR_FAILURE;
 }
 
-static nsresult NSAPI nsURI_GetUsername(nsIURL *iface, nsACString *aUsername)
+static nsresult NSAPI nsURI_GetUsername(nsIFileURL *iface, nsACString *aUsername)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
 
     TRACE("(%p)->(%p)\n", This, aUsername);
 
     return get_uri_string(This, Uri_PROPERTY_USER_NAME, aUsername);
 }
 
-static nsresult NSAPI nsURI_SetUsername(nsIURL *iface, const nsACString *aUsername)
+static nsresult NSAPI nsURI_SetUsername(nsIFileURL *iface, const nsACString *aUsername)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
     const char *usera;
     WCHAR *user;
     HRESULT hres;
@@ -2050,18 +2053,18 @@ static nsresult NSAPI nsURI_SetUsername(nsIURL *iface, const nsACString *aUserna
     return NS_OK;
 }
 
-static nsresult NSAPI nsURI_GetPassword(nsIURL *iface, nsACString *aPassword)
+static nsresult NSAPI nsURI_GetPassword(nsIFileURL *iface, nsACString *aPassword)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
 
     TRACE("(%p)->(%p)\n", This, aPassword);
 
     return get_uri_string(This, Uri_PROPERTY_PASSWORD, aPassword);
 }
 
-static nsresult NSAPI nsURI_SetPassword(nsIURL *iface, const nsACString *aPassword)
+static nsresult NSAPI nsURI_SetPassword(nsIFileURL *iface, const nsACString *aPassword)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
     const char *passa;
     WCHAR *pass;
     HRESULT hres;
@@ -2084,9 +2087,9 @@ static nsresult NSAPI nsURI_SetPassword(nsIURL *iface, const nsACString *aPasswo
     return NS_OK;
 }
 
-static nsresult NSAPI nsURI_GetHostPort(nsIURL *iface, nsACString *aHostPort)
+static nsresult NSAPI nsURI_GetHostPort(nsIFileURL *iface, nsACString *aHostPort)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
     const WCHAR *ptr;
     char *vala;
     BSTR val;
@@ -2118,9 +2121,9 @@ static nsresult NSAPI nsURI_GetHostPort(nsIURL *iface, nsACString *aHostPort)
     return NS_OK;
 }
 
-static nsresult NSAPI nsURI_SetHostPort(nsIURL *iface, const nsACString *aHostPort)
+static nsresult NSAPI nsURI_SetHostPort(nsIFileURL *iface, const nsACString *aHostPort)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
 
     WARN("(%p)->(%s)\n", This, debugstr_nsacstr(aHostPort));
 
@@ -2128,18 +2131,18 @@ static nsresult NSAPI nsURI_SetHostPort(nsIURL *iface, const nsACString *aHostPo
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
-static nsresult NSAPI nsURI_GetHost(nsIURL *iface, nsACString *aHost)
+static nsresult NSAPI nsURI_GetHost(nsIFileURL *iface, nsACString *aHost)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
 
     TRACE("(%p)->(%p)\n", This, aHost);
 
     return get_uri_string(This, Uri_PROPERTY_HOST, aHost);
 }
 
-static nsresult NSAPI nsURI_SetHost(nsIURL *iface, const nsACString *aHost)
+static nsresult NSAPI nsURI_SetHost(nsIFileURL *iface, const nsACString *aHost)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
     const char *hosta;
     WCHAR *host;
     HRESULT hres;
@@ -2162,9 +2165,9 @@ static nsresult NSAPI nsURI_SetHost(nsIURL *iface, const nsACString *aHost)
     return NS_OK;
 }
 
-static nsresult NSAPI nsURI_GetPort(nsIURL *iface, PRInt32 *aPort)
+static nsresult NSAPI nsURI_GetPort(nsIFileURL *iface, PRInt32 *aPort)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
     DWORD port;
     HRESULT hres;
 
@@ -2183,9 +2186,9 @@ static nsresult NSAPI nsURI_GetPort(nsIURL *iface, PRInt32 *aPort)
     return NS_OK;
 }
 
-static nsresult NSAPI nsURI_SetPort(nsIURL *iface, PRInt32 aPort)
+static nsresult NSAPI nsURI_SetPort(nsIFileURL *iface, PRInt32 aPort)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
     HRESULT hres;
 
     TRACE("(%p)->(%d)\n", This, aPort);
@@ -2197,18 +2200,18 @@ static nsresult NSAPI nsURI_SetPort(nsIURL *iface, PRInt32 aPort)
     return SUCCEEDED(hres) ? NS_OK : NS_ERROR_FAILURE;
 }
 
-static nsresult NSAPI nsURI_GetPath(nsIURL *iface, nsACString *aPath)
+static nsresult NSAPI nsURI_GetPath(nsIFileURL *iface, nsACString *aPath)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
 
     TRACE("(%p)->(%p)\n", This, aPath);
 
     return get_uri_string(This, Uri_PROPERTY_PATH, aPath);
 }
 
-static nsresult NSAPI nsURI_SetPath(nsIURL *iface, const nsACString *aPath)
+static nsresult NSAPI nsURI_SetPath(nsIFileURL *iface, const nsACString *aPath)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
     const char *patha;
     WCHAR *path;
     HRESULT hres;
@@ -2231,9 +2234,9 @@ static nsresult NSAPI nsURI_SetPath(nsIURL *iface, const nsACString *aPath)
     return NS_OK;
 }
 
-static nsresult NSAPI nsURI_Equals(nsIURL *iface, nsIURI *other, cpp_bool *_retval)
+static nsresult NSAPI nsURI_Equals(nsIFileURL *iface, nsIURI *other, cpp_bool *_retval)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
     nsWineURI *other_obj;
     nsresult nsres;
     HRESULT hres;
@@ -2261,13 +2264,13 @@ static nsresult NSAPI nsURI_Equals(nsIURL *iface, nsIURI *other, cpp_bool *_retv
         nsres = NS_ERROR_UNEXPECTED;
     }
 
-    nsIURI_Release(&other_obj->nsIURL_iface);
+    nsIURI_Release(&other_obj->nsIFileURL_iface);
     return nsres;
 }
 
-static nsresult NSAPI nsURI_SchemeIs(nsIURL *iface, const char *scheme, cpp_bool *_retval)
+static nsresult NSAPI nsURI_SchemeIs(nsIFileURL *iface, const char *scheme, cpp_bool *_retval)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
     WCHAR buf[INTERNET_MAX_SCHEME_LENGTH];
     BSTR scheme_name;
     HRESULT hres;
@@ -2287,9 +2290,9 @@ static nsresult NSAPI nsURI_SchemeIs(nsIURL *iface, const char *scheme, cpp_bool
     return NS_OK;
 }
 
-static nsresult NSAPI nsURI_Clone(nsIURL *iface, nsIURI **_retval)
+static nsresult NSAPI nsURI_Clone(nsIFileURL *iface, nsIURI **_retval)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
     nsWineURI *wine_uri;
     nsresult nsres;
 
@@ -2304,14 +2307,14 @@ static nsresult NSAPI nsURI_Clone(nsIURL *iface, nsIURI **_retval)
         return nsres;
     }
 
-    *_retval = (nsIURI*)&wine_uri->nsIURL_iface;
+    *_retval = (nsIURI*)&wine_uri->nsIFileURL_iface;
     return NS_OK;
 }
 
-static nsresult NSAPI nsURI_Resolve(nsIURL *iface, const nsACString *aRelativePath,
+static nsresult NSAPI nsURI_Resolve(nsIFileURL *iface, const nsACString *aRelativePath,
         nsACString *_retval)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
     const char *patha;
     IUri *new_uri;
     WCHAR *path;
@@ -2352,34 +2355,34 @@ static nsresult NSAPI nsURI_Resolve(nsIURL *iface, const nsACString *aRelativePa
     return NS_OK;
 }
 
-static nsresult NSAPI nsURI_GetAsciiSpec(nsIURL *iface, nsACString *aAsciiSpec)
+static nsresult NSAPI nsURI_GetAsciiSpec(nsIFileURL *iface, nsACString *aAsciiSpec)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
 
     TRACE("(%p)->(%p)\n", This, aAsciiSpec);
 
-    return nsIURI_GetSpec(&This->nsIURL_iface, aAsciiSpec);
+    return nsIURI_GetSpec(&This->nsIFileURL_iface, aAsciiSpec);
 }
 
-static nsresult NSAPI nsURI_GetAsciiHost(nsIURL *iface, nsACString *aAsciiHost)
+static nsresult NSAPI nsURI_GetAsciiHost(nsIFileURL *iface, nsACString *aAsciiHost)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
 
     WARN("(%p)->(%p) FIXME: Use Uri_PUNYCODE_IDN_HOST flag\n", This, aAsciiHost);
 
     return get_uri_string(This, Uri_PROPERTY_HOST, aAsciiHost);
 }
 
-static nsresult NSAPI nsURI_GetOriginCharset(nsIURL *iface, nsACString *aOriginCharset)
+static nsresult NSAPI nsURI_GetOriginCharset(nsIFileURL *iface, nsACString *aOriginCharset)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
     FIXME("(%p)->(%p)\n", This, aOriginCharset);
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
-static nsresult NSAPI nsURL_GetRef(nsIURL *iface, nsACString *aRef)
+static nsresult NSAPI nsURL_GetRef(nsIFileURL *iface, nsACString *aRef)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
     char *refa = NULL;
     BSTR ref;
     HRESULT hres;
@@ -2403,9 +2406,9 @@ static nsresult NSAPI nsURL_GetRef(nsIURL *iface, nsACString *aRef)
     return NS_OK;
 }
 
-static nsresult NSAPI nsURL_SetRef(nsIURL *iface, const nsACString *aRef)
+static nsresult NSAPI nsURL_SetRef(nsIFileURL *iface, const nsACString *aRef)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
     const char *refa;
     WCHAR *ref;
     HRESULT hres;
@@ -2428,9 +2431,9 @@ static nsresult NSAPI nsURL_SetRef(nsIURL *iface, const nsACString *aRef)
     return NS_OK;
 }
 
-static nsresult NSAPI nsURI_EqualsExceptRef(nsIURL *iface, nsIURI *other, cpp_bool *_retval)
+static nsresult NSAPI nsURI_EqualsExceptRef(nsIFileURL *iface, nsIURI *other, cpp_bool *_retval)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
     nsWineURI *other_obj;
     nsresult nsres;
 
@@ -2450,13 +2453,13 @@ static nsresult NSAPI nsURI_EqualsExceptRef(nsIURL *iface, nsIURI *other, cpp_bo
         nsres = NS_ERROR_UNEXPECTED;
     }
 
-    nsIURI_Release(&other_obj->nsIURL_iface);
+    nsIURI_Release(&other_obj->nsIFileURL_iface);
     return nsres;
 }
 
-static nsresult NSAPI nsURI_CloneIgnoreRef(nsIURL *iface, nsIURI **_retval)
+static nsresult NSAPI nsURI_CloneIgnoreRef(nsIFileURL *iface, nsIURI **_retval)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
     nsWineURI *wine_uri;
     IUri *uri;
     nsresult nsres;
@@ -2477,22 +2480,22 @@ static nsresult NSAPI nsURI_CloneIgnoreRef(nsIURL *iface, nsIURI **_retval)
         return nsres;
     }
 
-    *_retval = (nsIURI*)&wine_uri->nsIURL_iface;
+    *_retval = (nsIURI*)&wine_uri->nsIFileURL_iface;
     return NS_OK;
 }
 
-static nsresult NSAPI nsURI_GetSpecIgnoringRef(nsIURL *iface, nsACString *aSpecIgnoringRef)
+static nsresult NSAPI nsURI_GetSpecIgnoringRef(nsIFileURL *iface, nsACString *aSpecIgnoringRef)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
 
     FIXME("(%p)->(%p)\n", This, aSpecIgnoringRef);
 
-    return nsIURL_GetSpec(&This->nsIURL_iface, aSpecIgnoringRef);
+    return nsIURL_GetSpec(&This->nsIFileURL_iface, aSpecIgnoringRef);
 }
 
-static nsresult NSAPI nsURI_GetHasRef(nsIURL *iface, cpp_bool *aHasRef)
+static nsresult NSAPI nsURI_GetHasRef(nsIFileURL *iface, cpp_bool *aHasRef)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
     BOOL b;
     HRESULT hres;
 
@@ -2509,39 +2512,39 @@ static nsresult NSAPI nsURI_GetHasRef(nsIURL *iface, cpp_bool *aHasRef)
     return NS_OK;
 }
 
-static nsresult NSAPI nsURL_GetFilePath(nsIURL *iface, nsACString *aFilePath)
+static nsresult NSAPI nsURL_GetFilePath(nsIFileURL *iface, nsACString *aFilePath)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
 
     TRACE("(%p)->(%p)\n", This, aFilePath);
 
-    return nsIURL_GetPath(&This->nsIURL_iface, aFilePath);
+    return nsIURL_GetPath(&This->nsIFileURL_iface, aFilePath);
 }
 
-static nsresult NSAPI nsURL_SetFilePath(nsIURL *iface, const nsACString *aFilePath)
+static nsresult NSAPI nsURL_SetFilePath(nsIFileURL *iface, const nsACString *aFilePath)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
 
     TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aFilePath));
 
     if(!This->is_mutable)
         return NS_ERROR_UNEXPECTED;
 
-    return nsIURL_SetPath(&This->nsIURL_iface, aFilePath);
+    return nsIURL_SetPath(&This->nsIFileURL_iface, aFilePath);
 }
 
-static nsresult NSAPI nsURL_GetQuery(nsIURL *iface, nsACString *aQuery)
+static nsresult NSAPI nsURL_GetQuery(nsIFileURL *iface, nsACString *aQuery)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
 
     TRACE("(%p)->(%p)\n", This, aQuery);
 
     return get_uri_string(This, Uri_PROPERTY_QUERY, aQuery);
 }
 
-static nsresult NSAPI nsURL_SetQuery(nsIURL *iface, const nsACString *aQuery)
+static nsresult NSAPI nsURL_SetQuery(nsIFileURL *iface, const nsACString *aQuery)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
     const char *querya;
     WCHAR *query;
     HRESULT hres;
@@ -2591,9 +2594,9 @@ static nsresult get_uri_path(nsWineURI *This, BSTR *path, const WCHAR **file, co
     return NS_OK;
 }
 
-static nsresult NSAPI nsURL_GetDirectory(nsIURL *iface, nsACString *aDirectory)
+static nsresult NSAPI nsURL_GetDirectory(nsIFileURL *iface, nsACString *aDirectory)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
     const WCHAR *file;
     BSTR path;
     nsresult nsres;
@@ -2609,9 +2612,9 @@ static nsresult NSAPI nsURL_GetDirectory(nsIURL *iface, nsACString *aDirectory)
     return nsres;
 }
 
-static nsresult NSAPI nsURL_SetDirectory(nsIURL *iface, const nsACString *aDirectory)
+static nsresult NSAPI nsURL_SetDirectory(nsIFileURL *iface, const nsACString *aDirectory)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
 
     WARN("(%p)->(%s)\n", This, debugstr_nsacstr(aDirectory));
 
@@ -2619,9 +2622,9 @@ static nsresult NSAPI nsURL_SetDirectory(nsIURL *iface, const nsACString *aDirec
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
-static nsresult NSAPI nsURL_GetFileName(nsIURL *iface, nsACString *aFileName)
+static nsresult NSAPI nsURL_GetFileName(nsIFileURL *iface, nsACString *aFileName)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
     const WCHAR *file;
     BSTR path;
     nsresult nsres;
@@ -2637,16 +2640,16 @@ static nsresult NSAPI nsURL_GetFileName(nsIURL *iface, nsACString *aFileName)
     return nsres;
 }
 
-static nsresult NSAPI nsURL_SetFileName(nsIURL *iface, const nsACString *aFileName)
+static nsresult NSAPI nsURL_SetFileName(nsIFileURL *iface, const nsACString *aFileName)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_nsacstr(aFileName));
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
-static nsresult NSAPI nsURL_GetFileBaseName(nsIURL *iface, nsACString *aFileBaseName)
+static nsresult NSAPI nsURL_GetFileBaseName(nsIFileURL *iface, nsACString *aFileBaseName)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
     const WCHAR *file, *ext;
     BSTR path;
     nsresult nsres;
@@ -2662,44 +2665,58 @@ static nsresult NSAPI nsURL_GetFileBaseName(nsIURL *iface, nsACString *aFileBase
     return nsres;
 }
 
-static nsresult NSAPI nsURL_SetFileBaseName(nsIURL *iface, const nsACString *aFileBaseName)
+static nsresult NSAPI nsURL_SetFileBaseName(nsIFileURL *iface, const nsACString *aFileBaseName)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_nsacstr(aFileBaseName));
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
-static nsresult NSAPI nsURL_GetFileExtension(nsIURL *iface, nsACString *aFileExtension)
+static nsresult NSAPI nsURL_GetFileExtension(nsIFileURL *iface, nsACString *aFileExtension)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
 
     TRACE("(%p)->(%p)\n", This, aFileExtension);
 
     return get_uri_string(This, Uri_PROPERTY_EXTENSION, aFileExtension);
 }
 
-static nsresult NSAPI nsURL_SetFileExtension(nsIURL *iface, const nsACString *aFileExtension)
+static nsresult NSAPI nsURL_SetFileExtension(nsIFileURL *iface, const nsACString *aFileExtension)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_nsacstr(aFileExtension));
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
-static nsresult NSAPI nsURL_GetCommonBaseSpec(nsIURL *iface, nsIURI *aURIToCompare, nsACString *_retval)
+static nsresult NSAPI nsURL_GetCommonBaseSpec(nsIFileURL *iface, nsIURI *aURIToCompare, nsACString *_retval)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
     FIXME("(%p)->(%p %p)\n", This, aURIToCompare, _retval);
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
-static nsresult NSAPI nsURL_GetRelativeSpec(nsIURL *iface, nsIURI *aURIToCompare, nsACString *_retval)
+static nsresult NSAPI nsURL_GetRelativeSpec(nsIFileURL *iface, nsIURI *aURIToCompare, nsACString *_retval)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *This = impl_from_nsIFileURL(iface);
     FIXME("(%p)->(%p %p)\n", This, aURIToCompare, _retval);
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
-static const nsIURLVtbl nsURLVtbl = {
+static nsresult NSAPI nsFileURL_GetFile(nsIFileURL *iface, nsIFile **aFile)
+{
+    nsWineURI *This = impl_from_nsIFileURL(iface);
+    FIXME("(%p)->(%p)\n", This, aFile);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsFileURL_SetFile(nsIFileURL *iface, nsIFile *aFile)
+{
+    nsWineURI *This = impl_from_nsIFileURL(iface);
+    FIXME("(%p)->(%p)\n", This, aFile);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static const nsIFileURLVtbl nsFileURLVtbl = {
     nsURI_QueryInterface,
     nsURI_AddRef,
     nsURI_Release,
@@ -2748,7 +2765,9 @@ static const nsIURLVtbl nsURLVtbl = {
     nsURL_GetFileExtension,
     nsURL_SetFileExtension,
     nsURL_GetCommonBaseSpec,
-    nsURL_GetRelativeSpec
+    nsURL_GetRelativeSpec,
+    nsFileURL_GetFile,
+    nsFileURL_SetFile
 };
 
 static inline nsWineURI *impl_from_nsIStandardURL(nsIStandardURL *iface)
@@ -2760,19 +2779,19 @@ static nsresult NSAPI nsStandardURL_QueryInterface(nsIStandardURL *iface, nsIIDR
         void **result)
 {
     nsWineURI *This = impl_from_nsIStandardURL(iface);
-    return nsIURL_QueryInterface(&This->nsIURL_iface, riid, result);
+    return nsIURL_QueryInterface(&This->nsIFileURL_iface, riid, result);
 }
 
 static nsrefcnt NSAPI nsStandardURL_AddRef(nsIStandardURL *iface)
 {
     nsWineURI *This = impl_from_nsIStandardURL(iface);
-    return nsIURL_AddRef(&This->nsIURL_iface);
+    return nsIURL_AddRef(&This->nsIFileURL_iface);
 }
 
 static nsrefcnt NSAPI nsStandardURL_Release(nsIStandardURL *iface)
 {
     nsWineURI *This = impl_from_nsIStandardURL(iface);
-    return nsIURL_Release(&This->nsIURL_iface);
+    return nsIURL_Release(&This->nsIFileURL_iface);
 }
 
 static nsresult NSAPI nsStandardURL_GetMutable(nsIStandardURL *iface, cpp_bool *aMutable)
@@ -2817,7 +2836,7 @@ static nsresult create_nsuri(IUri *iuri, HTMLOuterWindow *window, NSContainer *c
     nsWineURI *ret = heap_alloc_zero(sizeof(nsWineURI));
     HRESULT hres;
 
-    ret->nsIURL_iface.lpVtbl = &nsURLVtbl;
+    ret->nsIFileURL_iface.lpVtbl = &nsFileURLVtbl;
     ret->nsIStandardURL_iface.lpVtbl = &nsStandardURLVtbl;
     ret->ref = 1;
     ret->is_mutable = TRUE;
@@ -2878,7 +2897,7 @@ static nsresult create_nschannel(nsWineURI *uri, nsChannel **ret)
     list_init(&channel->response_headers);
     list_init(&channel->request_headers);
 
-    nsIURL_AddRef(&uri->nsIURL_iface);
+    nsIURL_AddRef(&uri->nsIFileURL_iface);
     channel->uri = uri;
 
     *ret = channel;
@@ -2906,7 +2925,7 @@ HRESULT create_redirect_nschannel(const WCHAR *url, nsChannel *orig_channel, nsC
         return E_FAIL;
 
     nsres = create_nschannel(uri, &channel);
-    nsIURL_Release(&uri->nsIURL_iface);
+    nsIURL_Release(&uri->nsIFileURL_iface);
     if(NS_FAILED(nsres))
         return E_FAIL;
 
@@ -3219,11 +3238,11 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
     nsres = create_nsuri(urlmon_uri, window, NULL, &wine_uri);
     IUri_Release(urlmon_uri);
     if(base_wine_uri)
-        nsIURI_Release(&base_wine_uri->nsIURL_iface);
+        nsIURI_Release(&base_wine_uri->nsIFileURL_iface);
     if(NS_FAILED(nsres))
         return nsres;
 
-    *_retval = (nsIURI*)&wine_uri->nsIURL_iface;
+    *_retval = (nsIURI*)&wine_uri->nsIFileURL_iface;
     return nsres;
 }
 
@@ -3250,7 +3269,7 @@ static nsresult NSAPI nsIOService_NewChannelFromURI(nsIIOService *iface, nsIURI 
     }
 
     nsres = create_nschannel(wine_uri, &ret);
-    nsIURL_Release(&wine_uri->nsIURL_iface);
+    nsIURL_Release(&wine_uri->nsIFileURL_iface);
     if(NS_FAILED(nsres))
         return nsres;
 
@@ -3546,7 +3565,7 @@ nsresult on_start_uri_open(NSContainer *nscontainer, nsIURI *uri, cpp_bool *_ret
             *_retval = translate_url(nscontainer->doc, wine_uri);
     }
 
-    nsIURI_Release(&wine_uri->nsIURL_iface);
+    nsIURI_Release(&wine_uri->nsIFileURL_iface);
     return NS_OK;
 }
 
