@@ -163,13 +163,10 @@ struct wgl_context
 struct wgl_pbuffer
 {
     Drawable   drawable;
-    Display*   display;
     WineGLPixelFormat* fmt;
     int        width;
     int        height;
     int*       attribList;
-    HDC        hdc;
-
     int        use_render_texture; /* This is also the internal texture format */
     int        texture_bind_target;
     int        texture_bpp;
@@ -1968,16 +1965,10 @@ static struct wgl_pbuffer *X11DRV_wglCreatePbufferARB( HDC hdc, int iPixelFormat
 
     TRACE("(%p, %d, %d, %d, %p)\n", hdc, iPixelFormat, iWidth, iHeight, piAttribList);
 
-    if (0 >= iPixelFormat) {
-        ERR("(%p): unexpected iPixelFormat(%d) <= 0, returns NULL\n", hdc, iPixelFormat);
-        SetLastError(ERROR_INVALID_PIXEL_FORMAT);
-        return NULL; /* unexpected error */
-    }
-
     /* Convert the WGL pixelformat to a GLX format, if it fails then the format is invalid */
     fmt = ConvertPixelFormatWGLtoGLX(gdi_display, iPixelFormat, TRUE /* Offscreen */, &nCfgs);
     if(!fmt) {
-        ERR("(%p): unexpected iPixelFormat(%d) > nFormats(%d), returns NULL\n", hdc, iPixelFormat, nCfgs);
+        ERR("(%p): invalid pixel format %d\n", hdc, iPixelFormat);
         SetLastError(ERROR_INVALID_PIXEL_FORMAT);
         return NULL;
     }
@@ -1987,8 +1978,6 @@ static struct wgl_pbuffer *X11DRV_wglCreatePbufferARB( HDC hdc, int iPixelFormat
         SetLastError(ERROR_NO_SYSTEM_RESOURCES);
         return NULL;
     }
-    object->hdc = hdc;
-    object->display = gdi_display;
     object->width = iWidth;
     object->height = iHeight;
     object->fmt = fmt;
@@ -2156,7 +2145,7 @@ static BOOL X11DRV_wglDestroyPbufferARB( struct wgl_pbuffer *object )
     TRACE("(%p)\n", object);
 
     wine_tsx11_lock();
-    pglXDestroyPbuffer(object->display, object->drawable);
+    pglXDestroyPbuffer(gdi_display, object->drawable);
     wine_tsx11_unlock();
     HeapFree(GetProcessHeap(), 0, object);
     return GL_TRUE;
@@ -2201,12 +2190,12 @@ static BOOL X11DRV_wglQueryPbufferARB( struct wgl_pbuffer *object, int iAttribut
     switch (iAttribute) {
         case WGL_PBUFFER_WIDTH_ARB:
             wine_tsx11_lock();
-            pglXQueryDrawable(object->display, object->drawable, GLX_WIDTH, (unsigned int*) piValue);
+            pglXQueryDrawable(gdi_display, object->drawable, GLX_WIDTH, (unsigned int*) piValue);
             wine_tsx11_unlock();
             break;
         case WGL_PBUFFER_HEIGHT_ARB:
             wine_tsx11_lock();
-            pglXQueryDrawable(object->display, object->drawable, GLX_HEIGHT, (unsigned int*) piValue);
+            pglXQueryDrawable(gdi_display, object->drawable, GLX_HEIGHT, (unsigned int*) piValue);
             wine_tsx11_unlock();
             break;
 
@@ -2757,7 +2746,7 @@ static BOOL X11DRV_wglBindTexImageARB( struct wgl_pbuffer *object, int iBuffer )
         opengl_funcs.gl.p_glCopyTexImage2D(object->texture_target, 0, object->use_render_texture, 0, 0, object->width, object->height, 0);
 
         /* Switch back to the original drawable and upload the pbuffer-texture */
-        pglXMakeCurrent(object->display, prev_drawable, prev_context);
+        pglXMakeCurrent(gdi_display, prev_drawable, prev_context);
         pglXDestroyContext(gdi_display, tmp_context);
         wine_tsx11_unlock();
         return GL_TRUE;
