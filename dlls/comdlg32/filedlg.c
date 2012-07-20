@@ -252,7 +252,9 @@ static BOOL GetFileName95(FileOpenDlgInfos *fodInfos)
 {
 
     LRESULT lRes;
-    LPVOID template;
+    LPCVOID origTemplate;
+    DWORD dwSize;
+    LPDLGTEMPLATEW template;
     HRSRC hRes;
     HANDLE hDlgTmpl = 0;
     HRESULT hr;
@@ -271,12 +273,19 @@ static BOOL GetFileName95(FileOpenDlgInfos *fodInfos)
         COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
         return FALSE;
     }
-    if (!(hDlgTmpl = LoadResource(COMDLG32_hInstance, hRes )) ||
-        !(template = LockResource( hDlgTmpl )))
+    if (!(dwSize = SizeofResource(COMDLG32_hInstance, hRes)) ||
+        !(hDlgTmpl = LoadResource(COMDLG32_hInstance, hRes)) ||
+        !(origTemplate = LockResource(hDlgTmpl)))
     {
         COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
         return FALSE;
     }
+    if (!(template = HeapAlloc(GetProcessHeap(), 0, dwSize)))
+    {
+        COMDLG32_SetCommDlgExtendedError(CDERR_MEMALLOCFAILURE);
+        return FALSE;
+    }
+    memcpy(template, origTemplate, dwSize);
 
     /* msdn: explorer style dialogs permit sizing by default.
      * The OFN_ENABLESIZING flag is only needed when a hook or
@@ -287,12 +296,12 @@ static BOOL GetFileName95(FileOpenDlgInfos *fodInfos)
 
     if (fodInfos->ofnInfos->Flags & OFN_ENABLESIZING)
     {
-        ((LPDLGTEMPLATEW)template)->style |= WS_SIZEBOX;
+        template->style |= WS_SIZEBOX;
         fodInfos->sizedlg.cx = fodInfos->sizedlg.cy = 0;
         fodInfos->initial_size.x = fodInfos->initial_size.y = 0;
     }
     else
-        ((LPDLGTEMPLATEW)template)->style &= ~WS_SIZEBOX;
+        template->style &= ~WS_SIZEBOX;
 
 
     /* old style hook messages */
@@ -321,6 +330,8 @@ static BOOL GetFileName95(FileOpenDlgInfos *fodInfos)
                                      (LPARAM) fodInfos);
     if (SUCCEEDED(hr)) 
         OleUninitialize();
+
+    HeapFree(GetProcessHeap(), 0, template);
 
     /* Unable to create the dialog */
     if( lRes == -1)
