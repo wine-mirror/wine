@@ -700,6 +700,7 @@ struct source_location
 enum hlsl_ir_node_type
 {
     HLSL_IR_VAR = 0,
+    HLSL_IR_ASSIGNMENT,
     HLSL_IR_CONSTANT,
     HLSL_IR_CONSTRUCTOR,
     HLSL_IR_DEREF,
@@ -748,6 +749,14 @@ struct hlsl_ir_function_decl
     const char *semantic;
     struct list *parameters;
     struct list *body;
+};
+
+struct hlsl_ir_assignment
+{
+    struct hlsl_ir_node node;
+    struct hlsl_ir_node *lhs;
+    struct hlsl_ir_node *rhs;
+    unsigned char writemask;
 };
 
 enum hlsl_ir_expr_op {
@@ -960,6 +969,12 @@ void hlsl_message(const char *fmt, ...) PRINTF_ATTR(1,2) DECLSPEC_HIDDEN;
 void hlsl_report_message(const char *filename, DWORD line, DWORD column,
         enum hlsl_error_level level, const char *fmt, ...) PRINTF_ATTR(5,6) DECLSPEC_HIDDEN;
 
+static inline struct hlsl_ir_var *var_from_node(const struct hlsl_ir_node *node)
+{
+    assert(node->type == HLSL_IR_VAR);
+    return CONTAINING_RECORD(node, struct hlsl_ir_var, node);
+}
+
 static inline struct hlsl_ir_expr *expr_from_node(const struct hlsl_ir_node *node)
 {
     assert(node->type == HLSL_IR_EXPR);
@@ -976,6 +991,12 @@ static inline struct hlsl_ir_constant *constant_from_node(const struct hlsl_ir_n
 {
     assert(node->type == HLSL_IR_CONSTANT);
     return CONTAINING_RECORD(node, struct hlsl_ir_constant, node);
+}
+
+static inline struct hlsl_ir_assignment *assignment_from_node(const struct hlsl_ir_node *node)
+{
+    assert(node->type == HLSL_IR_ASSIGNMENT);
+    return CONTAINING_RECORD(node, struct hlsl_ir_assignment, node);
 }
 
 static inline struct hlsl_ir_constructor *constructor_from_node(const struct hlsl_ir_node *node)
@@ -1020,6 +1041,8 @@ struct hlsl_ir_expr *hlsl_eq(struct hlsl_ir_node *op1, struct hlsl_ir_node *op2,
 struct hlsl_ir_expr *hlsl_ne(struct hlsl_ir_node *op1, struct hlsl_ir_node *op2,
         struct source_location *loc) DECLSPEC_HIDDEN;
 struct hlsl_ir_deref *new_var_deref(struct hlsl_ir_var *var) DECLSPEC_HIDDEN;
+struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *left, enum parse_assign_op assign_op,
+        DWORD writemask, struct hlsl_ir_node *right) DECLSPEC_HIDDEN;
 void push_scope(struct hlsl_parse_ctx *ctx) DECLSPEC_HIDDEN;
 BOOL pop_scope(struct hlsl_parse_ctx *ctx) DECLSPEC_HIDDEN;
 struct hlsl_ir_function_decl *new_func_decl(const char *name, struct hlsl_type *return_type, struct list *parameters) DECLSPEC_HIDDEN;

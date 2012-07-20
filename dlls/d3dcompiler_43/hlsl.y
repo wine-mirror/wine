@@ -1213,7 +1213,10 @@ assignment_expr:          conditional_expr
                             }
                         | unary_expr assign_op assignment_expr
                             {
-                                FIXME("Assignment\n");
+                                $$ = make_assignment($1, $2, BWRITERSP_WRITEMASK_ALL, $3);
+                                if (!$$)
+                                    return 1;
+                                set_location(&$$->loc, &@2);
                             }
 
 assign_op:                '='
