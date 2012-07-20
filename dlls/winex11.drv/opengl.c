@@ -160,7 +160,8 @@ struct wgl_context
     struct list entry;
 };
 
-typedef struct wine_glpbuffer {
+struct wgl_pbuffer
+{
     Drawable   drawable;
     Display*   display;
     WineGLPixelFormat* fmt;
@@ -177,7 +178,7 @@ typedef struct wine_glpbuffer {
     GLenum     texture_type;
     GLuint     texture;
     int        texture_level;
-} Wine_GLPBuffer;
+};
 
 struct glx_physdev
 {
@@ -647,7 +648,7 @@ static int describeContext( struct wgl_context *ctx ) {
     return ctx_vis_id;
 }
 
-static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_GLPBuffer* pbuf) {
+static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, struct wgl_pbuffer* pbuf) {
   int nAttribs = 0;
   unsigned cur = 0; 
   int pop;
@@ -1956,10 +1957,10 @@ static const GLubyte *X11DRV_wglGetExtensionsStringARB(HDC hdc)
  *
  * WGL_ARB_pbuffer: wglCreatePbufferARB
  */
-static HANDLE X11DRV_wglCreatePbufferARB( HDC hdc, int iPixelFormat, int iWidth, int iHeight,
-                                          const int *piAttribList )
+static struct wgl_pbuffer *X11DRV_wglCreatePbufferARB( HDC hdc, int iPixelFormat, int iWidth, int iHeight,
+                                                       const int *piAttribList )
 {
-    Wine_GLPBuffer* object = NULL;
+    struct wgl_pbuffer* object = NULL;
     WineGLPixelFormat *fmt = NULL;
     int nCfgs = 0;
     int attribs[256];
@@ -1978,13 +1979,13 @@ static HANDLE X11DRV_wglCreatePbufferARB( HDC hdc, int iPixelFormat, int iWidth,
     if(!fmt) {
         ERR("(%p): unexpected iPixelFormat(%d) > nFormats(%d), returns NULL\n", hdc, iPixelFormat, nCfgs);
         SetLastError(ERROR_INVALID_PIXEL_FORMAT);
-        goto create_failed; /* unexpected error */
+        return NULL;
     }
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(Wine_GLPBuffer));
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (NULL == object) {
         SetLastError(ERROR_NO_SYSTEM_RESOURCES);
-        goto create_failed; /* unexpected error */
+        return NULL;
     }
     object->hdc = hdc;
     object->display = gdi_display;
@@ -2137,7 +2138,7 @@ static HANDLE X11DRV_wglCreatePbufferARB( HDC hdc, int iPixelFormat, int iWidth,
         goto create_failed; /* unexpected error */
     }
     TRACE("->(%p)\n", object);
-    return (HPBUFFERARB)object;
+    return object;
 
 create_failed:
     HeapFree(GetProcessHeap(), 0, object);
@@ -2150,14 +2151,10 @@ create_failed:
  *
  * WGL_ARB_pbuffer: wglDestroyPbufferARB
  */
-static BOOL X11DRV_wglDestroyPbufferARB(HANDLE hPbuffer)
+static BOOL X11DRV_wglDestroyPbufferARB( struct wgl_pbuffer *object )
 {
-    Wine_GLPBuffer* object = (Wine_GLPBuffer *)hPbuffer;
-    TRACE("(%p)\n", hPbuffer);
-    if (NULL == object) {
-        SetLastError(ERROR_INVALID_HANDLE);
-        return GL_FALSE;
-    }
+    TRACE("(%p)\n", object);
+
     wine_tsx11_lock();
     pglXDestroyPbuffer(object->display, object->drawable);
     wine_tsx11_unlock();
@@ -2170,16 +2167,10 @@ static BOOL X11DRV_wglDestroyPbufferARB(HANDLE hPbuffer)
  *
  * WGL_ARB_pbuffer: wglGetPbufferDCARB
  */
-static HDC X11DRV_wglGetPbufferDCARB(HANDLE hPbuffer)
+static HDC X11DRV_wglGetPbufferDCARB( struct wgl_pbuffer *object )
 {
     struct x11drv_escape_set_drawable escape;
-    Wine_GLPBuffer* object = (Wine_GLPBuffer *)hPbuffer;
     HDC hdc;
-
-    if (NULL == object) {
-        SetLastError(ERROR_INVALID_HANDLE);
-        return NULL;
-    }
 
     hdc = CreateDCA( "DISPLAY", NULL, NULL, NULL );
     if (!hdc) return 0;
@@ -2194,7 +2185,7 @@ static HDC X11DRV_wglGetPbufferDCARB(HANDLE hPbuffer)
     escape.gl_type = DC_GL_PBUFFER;
     ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
 
-    TRACE( "(%p)->(%p)\n", hPbuffer, hdc );
+    TRACE( "(%p)->(%p)\n", object, hdc );
     return hdc;
 }
 
@@ -2203,14 +2194,10 @@ static HDC X11DRV_wglGetPbufferDCARB(HANDLE hPbuffer)
  *
  * WGL_ARB_pbuffer: wglQueryPbufferARB
  */
-static BOOL X11DRV_wglQueryPbufferARB(HANDLE hPbuffer, int iAttribute, int *piValue)
+static BOOL X11DRV_wglQueryPbufferARB( struct wgl_pbuffer *object, int iAttribute, int *piValue )
 {
-    Wine_GLPBuffer* object = (Wine_GLPBuffer *)hPbuffer;
-    TRACE("(%p, 0x%x, %p)\n", hPbuffer, iAttribute, piValue);
-    if (NULL == object) {
-        SetLastError(ERROR_INVALID_HANDLE);
-        return GL_FALSE;
-    }
+    TRACE("(%p, 0x%x, %p)\n", object, iAttribute, piValue);
+
     switch (iAttribute) {
         case WGL_PBUFFER_WIDTH_ARB:
             wine_tsx11_lock();
@@ -2300,9 +2287,9 @@ static BOOL X11DRV_wglQueryPbufferARB(HANDLE hPbuffer, int iAttribute, int *piVa
  *
  * WGL_ARB_pbuffer: wglReleasePbufferDCARB
  */
-static int X11DRV_wglReleasePbufferDCARB(HANDLE hPbuffer, HDC hdc)
+static int X11DRV_wglReleasePbufferDCARB( struct wgl_pbuffer *object, HDC hdc )
 {
-    TRACE("(%p, %p)\n", hPbuffer, hdc);
+    TRACE("(%p, %p)\n", object, hdc);
     return DeleteDC(hdc);
 }
 
@@ -2311,16 +2298,12 @@ static int X11DRV_wglReleasePbufferDCARB(HANDLE hPbuffer, HDC hdc)
  *
  * WGL_ARB_pbuffer: wglSetPbufferAttribARB
  */
-static BOOL X11DRV_wglSetPbufferAttribARB( HANDLE hPbuffer, const int *piAttribList )
+static BOOL X11DRV_wglSetPbufferAttribARB( struct wgl_pbuffer *object, const int *piAttribList )
 {
-    Wine_GLPBuffer* object = (Wine_GLPBuffer *)hPbuffer;
     GLboolean ret = GL_FALSE;
 
-    WARN("(%p, %p): alpha-testing, report any problem\n", hPbuffer, piAttribList);
-    if (NULL == object) {
-        SetLastError(ERROR_INVALID_HANDLE);
-        return GL_FALSE;
-    }
+    WARN("(%p, %p): alpha-testing, report any problem\n", object, piAttribList);
+
     if (!object->use_render_texture) {
         SetLastError(ERROR_INVALID_HANDLE);
         return GL_FALSE;
@@ -2729,16 +2712,12 @@ static BOOL X11DRV_wglGetPixelFormatAttribfvARB( HDC hdc, int iPixelFormat, int 
  *
  * WGL_ARB_render_texture: wglBindTexImageARB
  */
-static BOOL X11DRV_wglBindTexImageARB(HANDLE hPbuffer, int iBuffer)
+static BOOL X11DRV_wglBindTexImageARB( struct wgl_pbuffer *object, int iBuffer )
 {
-    Wine_GLPBuffer* object = (Wine_GLPBuffer *)hPbuffer;
     GLboolean ret = GL_FALSE;
 
-    TRACE("(%p, %d)\n", hPbuffer, iBuffer);
-    if (NULL == object) {
-        SetLastError(ERROR_INVALID_HANDLE);
-        return GL_FALSE;
-    }
+    TRACE("(%p, %d)\n", object, iBuffer);
+
     if (!object->use_render_texture) {
         SetLastError(ERROR_INVALID_HANDLE);
         return GL_FALSE;
@@ -2792,16 +2771,12 @@ static BOOL X11DRV_wglBindTexImageARB(HANDLE hPbuffer, int iBuffer)
  *
  * WGL_ARB_render_texture: wglReleaseTexImageARB
  */
-static BOOL X11DRV_wglReleaseTexImageARB(HANDLE hPbuffer, int iBuffer)
+static BOOL X11DRV_wglReleaseTexImageARB( struct wgl_pbuffer *object, int iBuffer )
 {
-    Wine_GLPBuffer* object = (Wine_GLPBuffer *)hPbuffer;
     GLboolean ret = GL_FALSE;
 
-    TRACE("(%p, %d)\n", hPbuffer, iBuffer);
-    if (NULL == object) {
-        SetLastError(ERROR_INVALID_HANDLE);
-        return GL_FALSE;
-    }
+    TRACE("(%p, %d)\n", object, iBuffer);
+
     if (!object->use_render_texture) {
         SetLastError(ERROR_INVALID_HANDLE);
         return GL_FALSE;

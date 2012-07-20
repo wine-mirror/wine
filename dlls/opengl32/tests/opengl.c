@@ -208,7 +208,7 @@ static void test_pbuffers(HDC hdc)
         trace("iPixelFormat returned by GetPixelFormat: %d\n", res);
         trace("PixelFormat from wglChoosePixelFormatARB: %d\n", iPixelFormat);
 
-        pwglReleasePbufferDCARB(pbuffer, hdc);
+        pwglReleasePbufferDCARB(pbuffer, pbuffer_hdc);
     }
     else skip("Pbuffer test for onscreen pixelformat skipped as no onscreen format with pbuffer capabilities have been found\n");
 

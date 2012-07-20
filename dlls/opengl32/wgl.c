@@ -81,6 +81,7 @@ extern BOOL WINAPI GdiSwapBuffers( HDC hdc );
 enum wgl_handle_type
 {
     HANDLE_CONTEXT = 0 << 12,
+    HANDLE_PBUFFER = 1 << 12,
     HANDLE_TYPE_MASK = 15 << 12
 };
 
@@ -92,6 +93,7 @@ struct wgl_handle
     union
     {
         struct wgl_context *context;  /* for HANDLE_CONTEXT */
+        struct wgl_pbuffer *pbuffer;  /* for HANDLE_PBUFFER */
         struct wgl_handle  *next;     /* for free handles */
     } u;
 };
@@ -849,11 +851,13 @@ void WINAPI wglFreeMemoryNV( void *pointer )
  */
 BOOL WINAPI wglBindTexImageARB( HPBUFFERARB handle, int buffer )
 {
-    /* FIXME: get functions from pbuffer handle */
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+    struct wgl_handle *ptr = get_handle_ptr( handle, HANDLE_PBUFFER );
+    BOOL ret;
 
-    if (!funcs->ext.p_wglBindTexImageARB) return FALSE;
-    return funcs->ext.p_wglBindTexImageARB( handle, buffer );
+    if (!ptr) return FALSE;
+    ret = ptr->funcs->ext.p_wglBindTexImageARB( ptr->u.pbuffer, buffer );
+    release_handle_ptr( ptr );
+    return ret;
 }
 
 /***********************************************************************
@@ -863,11 +867,13 @@ BOOL WINAPI wglBindTexImageARB( HPBUFFERARB handle, int buffer )
  */
 BOOL WINAPI wglReleaseTexImageARB( HPBUFFERARB handle, int buffer )
 {
-    /* FIXME: get functions from pbuffer handle */
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+    struct wgl_handle *ptr = get_handle_ptr( handle, HANDLE_PBUFFER );
+    BOOL ret;
 
-    if (!funcs->ext.p_wglReleaseTexImageARB) return FALSE;
-    return funcs->ext.p_wglReleaseTexImageARB( handle, buffer );
+    if (!ptr) return FALSE;
+    ret = ptr->funcs->ext.p_wglReleaseTexImageARB( ptr->u.pbuffer, buffer );
+    release_handle_ptr( ptr );
+    return ret;
 }
 
 /***********************************************************************
@@ -877,11 +883,13 @@ BOOL WINAPI wglReleaseTexImageARB( HPBUFFERARB handle, int buffer )
  */
 BOOL WINAPI wglSetPbufferAttribARB( HPBUFFERARB handle, const int *attribs )
 {
-    /* FIXME: get functions from pbuffer handle */
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+    struct wgl_handle *ptr = get_handle_ptr( handle, HANDLE_PBUFFER );
+    BOOL ret;
 
-    if (!funcs->ext.p_wglSetPbufferAttribARB) return FALSE;
-    return funcs->ext.p_wglSetPbufferAttribARB( handle, attribs );
+    if (!ptr) return FALSE;
+    ret = ptr->funcs->ext.p_wglSetPbufferAttribARB( ptr->u.pbuffer, attribs );
+    release_handle_ptr( ptr );
+    return ret;
 }
 
 /***********************************************************************
@@ -933,10 +941,15 @@ BOOL WINAPI wglGetPixelFormatAttribfvARB( HDC hdc, int format, int layer, UINT c
  */
 HPBUFFERARB WINAPI wglCreatePbufferARB( HDC hdc, int format, int width, int height, const int *attribs )
 {
-    const struct opengl_funcs *funcs = get_dc_funcs( hdc );
+    HPBUFFERARB ret = 0;
+    struct wgl_pbuffer *pbuffer;
+    struct opengl_funcs *funcs = get_dc_funcs( hdc );
 
     if (!funcs || !funcs->ext.p_wglCreatePbufferARB) return 0;
-    return funcs->ext.p_wglCreatePbufferARB( hdc, format, width, height, attribs );
+    if (!(pbuffer = funcs->ext.p_wglCreatePbufferARB( hdc, format, width, height, attribs ))) return 0;
+    ret = alloc_handle( HANDLE_PBUFFER, funcs, pbuffer );
+    if (!ret) funcs->ext.p_wglDestroyPbufferARB( pbuffer );
+    return ret;
 }
 
 /***********************************************************************
@@ -946,11 +959,13 @@ HPBUFFERARB WINAPI wglCreatePbufferARB( HDC hdc, int format, int width, int heig
  */
 HDC WINAPI wglGetPbufferDCARB( HPBUFFERARB handle )
 {
-    /* FIXME: get functions from pbuffer handle */
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+    struct wgl_handle *ptr = get_handle_ptr( handle, HANDLE_PBUFFER );
+    HDC ret;
 
-    if (!funcs->ext.p_wglGetPbufferDCARB) return 0;
-    return funcs->ext.p_wglGetPbufferDCARB( handle );
+    if (!ptr) return 0;
+    ret = ptr->funcs->ext.p_wglGetPbufferDCARB( ptr->u.pbuffer );
+    release_handle_ptr( ptr );
+    return ret;
 }
 
 /***********************************************************************
@@ -960,11 +975,13 @@ HDC WINAPI wglGetPbufferDCARB( HPBUFFERARB handle )
  */
 int WINAPI wglReleasePbufferDCARB( HPBUFFERARB handle, HDC hdc )
 {
-    /* FIXME: get functions from pbuffer handle */
-    const struct opengl_funcs *funcs = get_dc_funcs( hdc );
+    struct wgl_handle *ptr = get_handle_ptr( handle, HANDLE_PBUFFER );
+    BOOL ret;
 
-    if (!funcs || !funcs->ext.p_wglReleasePbufferDCARB) return 0;
-    return funcs->ext.p_wglReleasePbufferDCARB( handle, hdc );
+    if (!ptr) return FALSE;
+    ret = ptr->funcs->ext.p_wglReleasePbufferDCARB( ptr->u.pbuffer, hdc );
+    release_handle_ptr( ptr );
+    return ret;
 }
 
 /***********************************************************************
@@ -974,11 +991,12 @@ int WINAPI wglReleasePbufferDCARB( HPBUFFERARB handle, HDC hdc )
  */
 BOOL WINAPI wglDestroyPbufferARB( HPBUFFERARB handle )
 {
-    /* FIXME: get functions from pbuffer handle */
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+    struct wgl_handle *ptr = get_handle_ptr( handle, HANDLE_PBUFFER );
 
-    if (!funcs->ext.p_wglDestroyPbufferARB) return FALSE;
-    return funcs->ext.p_wglDestroyPbufferARB( handle );
+    if (!ptr) return FALSE;
+    ptr->funcs->ext.p_wglDestroyPbufferARB( ptr->u.pbuffer );
+    free_handle_ptr( ptr );
+    return TRUE;
 }
 
 /***********************************************************************
@@ -988,11 +1006,13 @@ BOOL WINAPI wglDestroyPbufferARB( HPBUFFERARB handle )
  */
 BOOL WINAPI wglQueryPbufferARB( HPBUFFERARB handle, int attrib, int *value )
 {
-    /* FIXME: get functions from pbuffer handle */
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+    struct wgl_handle *ptr = get_handle_ptr( handle, HANDLE_PBUFFER );
+    BOOL ret;
 
-    if (!funcs->ext.p_wglQueryPbufferARB) return FALSE;
-    return funcs->ext.p_wglQueryPbufferARB( handle, attrib, value );
+    if (!ptr) return FALSE;
+    ret = ptr->funcs->ext.p_wglQueryPbufferARB( ptr->u.pbuffer, attrib, value );
+    release_handle_ptr( ptr );
+    return ret;
 }
 
 /***********************************************************************

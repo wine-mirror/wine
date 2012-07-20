@@ -205,8 +205,8 @@ sub ConvertType($)
               "HGLRC" => "struct wgl_context *",
               "GLDEBUGPROCARB" => "void *",
               "GLDEBUGPROCAMD" => "void *",
-              "HPBUFFERARB" => "HANDLE",
-              "HPBUFFEREXT" => "HANDLE",
+              "HPBUFFERARB" => "struct wgl_pbuffer *",
+              "HPBUFFEREXT" => "struct wgl_pbuffer *",
         );
 
     foreach my $org (reverse sort keys %hash) {
@@ -777,7 +777,8 @@ print HEADER "#endif\n\n";
 
 printf HEADER "#define WINE_WGL_DRIVER_VERSION %u\n\n", $wgl_version + 1;
 
-print HEADER "struct wgl_context;\n\n";
+print HEADER "struct wgl_context;\n";
+print HEADER "struct wgl_pbuffer;\n\n";
 
 print HEADER "struct opengl_funcs\n{\n";
 print HEADER "    struct\n    {\n";
