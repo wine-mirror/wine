@@ -440,6 +440,62 @@ next
 Call ok(y = 1, "y = " & y)
 Call ok(x = 2, "x = " & x)
 
+x = false
+select case 3
+    case 2
+        Call ok(false, "unexpected case")
+    case 2
+        Call ok(false, "unexpected case")
+    case 4
+        Call ok(false, "unexpected case")
+    case "test"
+    case "another case"
+        Call ok(false, "unexpected case")
+    case 0, false, 2+1, 10
+        x = true
+    case ok(false, "unexpected case")
+        Call ok(false, "unexpected case")
+    case else
+        Call ok(false, "unexpected case")
+end select
+Call ok(x, "wrong case")
+
+x = false
+select case 3
+    case 3
+        x = true
+end select
+Call ok(x, "wrong case")
+
+x = false
+select case 2+2
+    case 3
+        Call ok(false, "unexpected case")
+    case else
+        x = true
+end select
+Call ok(x, "wrong case")
+
+y = "3"
+x = false
+select case y
+    case "3"
+        x = true
+    case 3
+        Call ok(false, "unexpected case")
+end select
+Call ok(x, "wrong case")
+
+select case 0
+    case 1
+        Call ok(false, "unexpected case")
+    case "2"
+        Call ok(false, "unexpected case")
+end select
+
+select case 0
+end select
+
 if false then
 Sub testsub
     x = true
