@@ -3509,8 +3509,7 @@ static GpStatus encode_image_WIC(GpImage *image, IStream* stream,
             hr = IWICBitmapFrameEncode_SetSize(frameencode, width, height);
 
         if (SUCCEEDED(hr))
-            /* FIXME: use the resolution from the image */
-            hr = IWICBitmapFrameEncode_SetResolution(frameencode, 96.0, 96.0);
+            hr = IWICBitmapFrameEncode_SetResolution(frameencode, image->xres, image->yres);
 
         if (SUCCEEDED(hr))
         {
