@@ -78,12 +78,22 @@ extern BOOL WINAPI GdiSwapBuffers( HDC hdc );
 
 #define MAX_WGL_HANDLES 1024
 
+enum wgl_handle_type
+{
+    HANDLE_CONTEXT = 0 << 12,
+    HANDLE_TYPE_MASK = 15 << 12
+};
+
 struct wgl_handle
 {
     UINT                 handle;
     DWORD                tid;
-    struct wgl_context  *context;
     struct opengl_funcs *funcs;
+    union
+    {
+        struct wgl_context *context;  /* for HANDLE_CONTEXT */
+        struct wgl_handle  *next;     /* for free handles */
+    } u;
 };
 
 static struct wgl_handle wgl_handles[MAX_WGL_HANDLES];
@@ -106,24 +116,24 @@ static inline struct opengl_funcs *get_dc_funcs( HDC hdc )
     return funcs;
 }
 
-static inline HGLRC next_handle( struct wgl_handle *ptr )
+static inline HANDLE next_handle( struct wgl_handle *ptr, enum wgl_handle_type type )
 {
     WORD generation = HIWORD( ptr->handle ) + 1;
     if (!generation) generation++;
-    ptr->handle = MAKELONG( ptr - wgl_handles, generation );
+    ptr->handle = MAKELONG( ptr - wgl_handles, generation ) | type;
     return ULongToHandle( ptr->handle );
 }
 
-/* the current handle is assumed valid and doesn't need locking */
-static inline struct wgl_handle *get_current_handle_ptr(void)
+/* the current context is assumed valid and doesn't need locking */
+static inline struct wgl_handle *get_current_context_ptr(void)
 {
     if (!NtCurrentTeb()->glCurrentRC) return NULL;
-    return &wgl_handles[LOWORD(NtCurrentTeb()->glCurrentRC)];
+    return &wgl_handles[LOWORD(NtCurrentTeb()->glCurrentRC) & ~HANDLE_TYPE_MASK];
 }
 
-static struct wgl_handle *get_handle_ptr( HGLRC handle )
+static struct wgl_handle *get_handle_ptr( HANDLE handle, enum wgl_handle_type type )
 {
-    unsigned int index = LOWORD( handle );
+    unsigned int index = LOWORD( handle ) & ~HANDLE_TYPE_MASK;
 
     EnterCriticalSection( &wgl_section );
     if (index < handle_count && ULongToHandle(wgl_handles[index].handle) == handle)
@@ -139,22 +149,22 @@ static void release_handle_ptr( struct wgl_handle *ptr )
     if (ptr) LeaveCriticalSection( &wgl_section );
 }
 
-static HGLRC alloc_handle( struct wgl_context *context, struct opengl_funcs *funcs )
+static HANDLE alloc_handle( enum wgl_handle_type type, struct opengl_funcs *funcs, void *user_ptr )
 {
-    HGLRC handle = 0;
+    HANDLE handle = 0;
     struct wgl_handle *ptr = NULL;
 
     EnterCriticalSection( &wgl_section );
     if ((ptr = next_free))
-        next_free = (struct wgl_handle *)next_free->context;
+        next_free = next_free->u.next;
     else if (handle_count < MAX_WGL_HANDLES)
         ptr = &wgl_handles[handle_count++];
 
     if (ptr)
     {
-        ptr->context = context;
         ptr->funcs = funcs;
-        handle = next_handle( ptr );
+        ptr->u.context = user_ptr;
+        handle = next_handle( ptr, type );
     }
     else SetLastError( ERROR_NOT_ENOUGH_MEMORY );
     LeaveCriticalSection( &wgl_section );
@@ -164,7 +174,7 @@ static HGLRC alloc_handle( struct wgl_context *context, struct opengl_funcs *fun
 static void free_handle_ptr( struct wgl_handle *ptr )
 {
     ptr->handle |= 0xffff;
-    ptr->context = (struct wgl_context *)next_free;
+    ptr->u.next = next_free;
     ptr->funcs = NULL;
     next_free = ptr;
     LeaveCriticalSection( &wgl_section );
@@ -187,11 +197,11 @@ BOOL WINAPI wglCopyContext(HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask)
     struct wgl_handle *src, *dst;
     BOOL ret = FALSE;
 
-    if (!(src = get_handle_ptr( hglrcSrc ))) return FALSE;
-    if ((dst = get_handle_ptr( hglrcDst )))
+    if (!(src = get_handle_ptr( hglrcSrc, HANDLE_CONTEXT ))) return FALSE;
+    if ((dst = get_handle_ptr( hglrcDst, HANDLE_CONTEXT )))
     {
         if (src->funcs != dst->funcs) SetLastError( ERROR_INVALID_HANDLE );
-        else ret = src->funcs->wgl.p_wglCopyContext( src->context, dst->context, mask );
+        else ret = src->funcs->wgl.p_wglCopyContext( src->u.context, dst->u.context, mask );
     }
     release_handle_ptr( dst );
     release_handle_ptr( src );
@@ -203,7 +213,7 @@ BOOL WINAPI wglCopyContext(HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask)
  */
 BOOL WINAPI wglDeleteContext(HGLRC hglrc)
 {
-    struct wgl_handle *ptr = get_handle_ptr( hglrc );
+    struct wgl_handle *ptr = get_handle_ptr( hglrc, HANDLE_CONTEXT );
 
     if (!ptr) return FALSE;
 
@@ -214,7 +224,7 @@ BOOL WINAPI wglDeleteContext(HGLRC hglrc)
         return FALSE;
     }
     if (hglrc == NtCurrentTeb()->glCurrentRC) wglMakeCurrent( 0, 0 );
-    ptr->funcs->wgl.p_wglDeleteContext( ptr->context );
+    ptr->funcs->wgl.p_wglDeleteContext( ptr->u.context );
     free_handle_ptr( ptr );
     return TRUE;
 }
@@ -225,14 +235,14 @@ BOOL WINAPI wglDeleteContext(HGLRC hglrc)
 BOOL WINAPI wglMakeCurrent(HDC hdc, HGLRC hglrc)
 {
     BOOL ret = TRUE;
-    struct wgl_handle *ptr, *prev = get_current_handle_ptr();
+    struct wgl_handle *ptr, *prev = get_current_context_ptr();
 
     if (hglrc)
     {
-        if (!(ptr = get_handle_ptr( hglrc ))) return FALSE;
+        if (!(ptr = get_handle_ptr( hglrc, HANDLE_CONTEXT ))) return FALSE;
         if (!ptr->tid || ptr->tid == GetCurrentThreadId())
         {
-            ret = ptr->funcs->wgl.p_wglMakeCurrent( hdc, ptr->context );
+            ret = ptr->funcs->wgl.p_wglMakeCurrent( hdc, ptr->u.context );
             if (ret)
             {
                 if (prev) prev->tid = 0;
@@ -276,11 +286,11 @@ HGLRC WINAPI wglCreateContextAttribsARB( HDC hdc, HGLRC share, const int *attrib
     struct opengl_funcs *funcs = get_dc_funcs( hdc );
 
     if (!funcs || !funcs->ext.p_wglCreateContextAttribsARB) return 0;
-    if (share && !(share_ptr = get_handle_ptr( share ))) return 0;
-    if ((context = funcs->ext.p_wglCreateContextAttribsARB( hdc, share_ptr ? share_ptr->context : NULL,
+    if (share && !(share_ptr = get_handle_ptr( share, HANDLE_CONTEXT ))) return 0;
+    if ((context = funcs->ext.p_wglCreateContextAttribsARB( hdc, share_ptr ? share_ptr->u.context : NULL,
                                                             attribs )))
     {
-        ret = alloc_handle( context, funcs );
+        ret = alloc_handle( HANDLE_CONTEXT, funcs, context );
         if (!ret) funcs->wgl.p_wglDeleteContext( context );
     }
     release_handle_ptr( share_ptr );
@@ -296,15 +306,15 @@ HGLRC WINAPI wglCreateContextAttribsARB( HDC hdc, HGLRC share, const int *attrib
 BOOL WINAPI wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, HGLRC hglrc )
 {
     BOOL ret = TRUE;
-    struct wgl_handle *ptr, *prev = get_current_handle_ptr();
+    struct wgl_handle *ptr, *prev = get_current_context_ptr();
 
     if (hglrc)
     {
-        if (!(ptr = get_handle_ptr( hglrc ))) return FALSE;
+        if (!(ptr = get_handle_ptr( hglrc, HANDLE_CONTEXT ))) return FALSE;
         if (!ptr->tid || ptr->tid == GetCurrentThreadId())
         {
             ret = (ptr->funcs->ext.p_wglMakeContextCurrentARB &&
-                   ptr->funcs->ext.p_wglMakeContextCurrentARB( draw_hdc, read_hdc, ptr->context ));
+                   ptr->funcs->ext.p_wglMakeContextCurrentARB( draw_hdc, read_hdc, ptr->u.context ));
             if (ret)
             {
                 if (prev) prev->tid = 0;
@@ -351,11 +361,11 @@ BOOL WINAPI wglShareLists(HGLRC hglrcSrc, HGLRC hglrcDst)
     BOOL ret = FALSE;
     struct wgl_handle *src, *dst;
 
-    if (!(src = get_handle_ptr( hglrcSrc ))) return FALSE;
-    if ((dst = get_handle_ptr( hglrcDst )))
+    if (!(src = get_handle_ptr( hglrcSrc, HANDLE_CONTEXT ))) return FALSE;
+    if ((dst = get_handle_ptr( hglrcDst, HANDLE_CONTEXT )))
     {
         if (src->funcs != dst->funcs) SetLastError( ERROR_INVALID_HANDLE );
-        else ret = src->funcs->wgl.p_wglShareLists( src->context, dst->context );
+        else ret = src->funcs->wgl.p_wglShareLists( src->u.context, dst->u.context );
     }
     release_handle_ptr( dst );
     release_handle_ptr( src );
@@ -367,9 +377,9 @@ BOOL WINAPI wglShareLists(HGLRC hglrcSrc, HGLRC hglrcDst)
  */
 HDC WINAPI wglGetCurrentDC(void)
 {
-    struct wgl_handle *context = get_current_handle_ptr();
+    struct wgl_handle *context = get_current_context_ptr();
     if (!context) return 0;
-    return context->funcs->wgl.p_wglGetCurrentDC( context->context );
+    return context->funcs->wgl.p_wglGetCurrentDC( context->u.context );
 }
 
 /***********************************************************************
@@ -383,7 +393,7 @@ HGLRC WINAPI wglCreateContext(HDC hdc)
 
     if (!funcs) return 0;
     if (!(context = funcs->wgl.p_wglCreateContext( hdc ))) return 0;
-    ret = alloc_handle( context, funcs );
+    ret = alloc_handle( HANDLE_CONTEXT, funcs, context );
     if (!ret) funcs->wgl.p_wglDeleteContext( context );
     return ret;
 }
@@ -696,7 +706,7 @@ PROC WINAPI wglGetProcAddress(LPCSTR lpszProc)
   void *local_func;
   OpenGL_extension  ext;
   const OpenGL_extension *ext_ret;
-  struct wgl_handle *context = get_current_handle_ptr();
+  struct wgl_handle *context = get_current_context_ptr();
 
   TRACE("(%s)\n", lpszProc);
 
