@@ -1302,6 +1302,20 @@ static HRESULT interp_imp(exec_ctx_t *ctx)
     return stack_push(ctx, &v);
 }
 
+static HRESULT var_cmp(exec_ctx_t *ctx, VARIANT *l, VARIANT *r)
+{
+    TRACE("%s %s\n", debugstr_variant(l), debugstr_variant(r));
+
+    if(V_VT(l) == VT_NULL || V_VT(r) == VT_NULL) {
+        FIXME("comparing nulls is not implemented\n");
+        return E_NOTIMPL;
+    }
+
+    /* FIXME: Fix comparing string to number */
+
+    return VarCmp(l, r, ctx->script->lcid, 0);
+ }
+
 static HRESULT cmp_oper(exec_ctx_t *ctx)
 {
     variant_val_t l, r;
@@ -1313,16 +1327,11 @@ static HRESULT cmp_oper(exec_ctx_t *ctx)
 
     hres = stack_pop_val(ctx, &l);
     if(SUCCEEDED(hres)) {
-        if(V_VT(l.v) == VT_NULL || V_VT(r.v) == VT_NULL) {
-            FIXME("comparing nulls is not implemented\n");
-            hres = E_NOTIMPL;
-        }else {
-            hres = VarCmp(l.v, r.v, ctx->script->lcid, 0);
-        }
+        hres = var_cmp(ctx, l.v, r.v);
+        release_val(&l);
     }
 
     release_val(&r);
-    release_val(&l);
     return hres;
 }
 
@@ -1424,8 +1433,29 @@ static HRESULT interp_lteq(exec_ctx_t *ctx)
 
 static HRESULT interp_case(exec_ctx_t *ctx)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    const unsigned arg = ctx->instr->arg1.uint;
+    variant_val_t v;
+    HRESULT hres;
+
+    TRACE("%d\n", arg);
+
+    hres = stack_pop_val(ctx, &v);
+    if(FAILED(hres))
+        return hres;
+
+    hres = var_cmp(ctx, stack_top(ctx, 0), v.v);
+    release_val(&v);
+    if(FAILED(hres))
+        return hres;
+
+    if(hres == VARCMP_EQ) {
+        stack_popn(ctx, 1);
+        instr_jmp(ctx, arg);
+    }else {
+        ctx->instr++;
+    }
+
+    return S_OK;
 }
 
 static HRESULT disp_cmp(IDispatch *disp1, IDispatch *disp2, VARIANT_BOOL *ret)
