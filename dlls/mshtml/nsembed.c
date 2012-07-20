@@ -79,7 +79,7 @@ static ATOM nscontainer_class;
 static WCHAR gecko_path[MAX_PATH];
 static unsigned gecko_path_len;
 
-static nsresult create_nsfile(const PRUnichar *path, nsIFile **ret)
+nsresult create_nsfile(const PRUnichar *path, nsIFile **ret)
 {
     nsAString str;
     nsresult nsres;

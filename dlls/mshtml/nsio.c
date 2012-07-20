@@ -2705,8 +2705,19 @@ static nsresult NSAPI nsURL_GetRelativeSpec(nsIFileURL *iface, nsIURI *aURIToCom
 static nsresult NSAPI nsFileURL_GetFile(nsIFileURL *iface, nsIFile **aFile)
 {
     nsWineURI *This = impl_from_nsIFileURL(iface);
-    FIXME("(%p)->(%p)\n", This, aFile);
-    return NS_ERROR_NOT_IMPLEMENTED;
+    WCHAR path[MAX_PATH];
+    DWORD size;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, aFile);
+
+    hres = CoInternetParseIUri(This->uri, PARSE_PATH_FROM_URL, 0, path, sizeof(path)/sizeof(WCHAR), &size, 0);
+    if(FAILED(hres)) {
+        WARN("CoInternetParseIUri failed: %08x\n", hres);
+        return NS_ERROR_FAILURE;
+    }
+
+    return create_nsfile(path, aFile);
 }
 
 static nsresult NSAPI nsFileURL_SetFile(nsIFileURL *iface, nsIFile *aFile)

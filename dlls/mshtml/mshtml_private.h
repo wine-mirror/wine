@@ -781,6 +781,7 @@ HRESULT nsnode_to_nsstring(nsIDOMNode*,nsAString*) DECLSPEC_HIDDEN;
 void get_editor_controller(NSContainer*) DECLSPEC_HIDDEN;
 nsresult get_nsinterface(nsISupports*,REFIID,void**) DECLSPEC_HIDDEN;
 nsIWritableVariant *create_nsvariant(void) DECLSPEC_HIDDEN;
+nsresult create_nsfile(const PRUnichar*,nsIFile**) DECLSPEC_HIDDEN;
 
 HRESULT create_pending_window(HTMLOuterWindow*,nsChannelBSC*) DECLSPEC_HIDDEN;
 void set_current_mon(HTMLOuterWindow*,IMoniker*) DECLSPEC_HIDDEN;
