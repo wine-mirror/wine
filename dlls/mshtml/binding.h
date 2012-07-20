@@ -47,7 +47,6 @@ typedef struct {
     REQUEST_METHOD request_method;
     struct list response_headers;
     struct list request_headers;
-    UINT url_scheme;
 } nsChannel;
 
 typedef struct BSCallbackVtbl BSCallbackVtbl;

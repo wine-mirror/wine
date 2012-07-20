@@ -65,6 +65,7 @@ struct  nsWineURI {
     IUriBuilder *uri_builder;
     BOOL is_doc_uri;
     BOOL is_mutable;
+    DWORD scheme;
 };
 
 static BOOL ensure_uri(nsWineURI *This)
@@ -321,7 +322,7 @@ static void set_uri_window(nsWineURI *This, HTMLOuterWindow *window)
 
 static inline BOOL is_http_channel(nsChannel *This)
 {
-    return This->url_scheme == URL_SCHEME_HTTP || This->url_scheme == URL_SCHEME_HTTPS;
+    return This->uri->scheme == URL_SCHEME_HTTP || This->uri->scheme == URL_SCHEME_HTTPS;
 }
 
 static http_header_t *find_http_header(struct list *headers, const WCHAR *name, int len)
@@ -2814,6 +2815,7 @@ static const nsIStandardURLVtbl nsStandardURLVtbl = {
 static nsresult create_nsuri(IUri *iuri, HTMLOuterWindow *window, NSContainer *container, nsWineURI **_retval)
 {
     nsWineURI *ret = heap_alloc_zero(sizeof(nsWineURI));
+    HRESULT hres;
 
     ret->nsIURL_iface.lpVtbl = &nsURLVtbl;
     ret->nsIStandardURL_iface.lpVtbl = &nsStandardURLVtbl;
@@ -2825,6 +2827,10 @@ static nsresult create_nsuri(IUri *iuri, HTMLOuterWindow *window, NSContainer *c
 
     IUri_AddRef(iuri);
     ret->uri = iuri;
+
+    hres = IUri_GetScheme(iuri, &ret->scheme);
+    if(FAILED(hres))
+        ret->scheme = URL_SCHEME_UNKNOWN;
 
     TRACE("retval=%p\n", ret);
     *_retval = ret;
@@ -2856,7 +2862,6 @@ HRESULT create_doc_uri(HTMLOuterWindow *window, WCHAR *url, nsWineURI **ret)
 static nsresult create_nschannel(nsWineURI *uri, nsChannel **ret)
 {
     nsChannel *channel;
-    HRESULT hres;
 
     if(!ensure_uri(uri))
         return NS_ERROR_UNEXPECTED;
@@ -2875,10 +2880,6 @@ static nsresult create_nschannel(nsWineURI *uri, nsChannel **ret)
 
     nsIURL_AddRef(&uri->nsIURL_iface);
     channel->uri = uri;
-
-    hres = IUri_GetScheme(uri->uri, &channel->url_scheme);
-    if(FAILED(hres))
-        channel->url_scheme = URL_SCHEME_UNKNOWN;
 
     *ret = channel;
     return NS_OK;
