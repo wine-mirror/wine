@@ -904,6 +904,14 @@ struct parse_variable_def
     struct list *initializer;
 };
 
+enum parse_unary_op
+{
+    UNARY_OP_PLUS,
+    UNARY_OP_MINUS,
+    UNARY_OP_LOGICNOT,
+    UNARY_OP_BITNOT,
+};
+
 struct hlsl_parse_ctx
 {
     const char **source_files;

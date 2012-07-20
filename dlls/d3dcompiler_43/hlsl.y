@@ -206,6 +206,7 @@ static unsigned int components_count_expr_list(struct list *list)
     struct hlsl_ir_function_decl *function;
     struct parse_parameter parameter;
     struct parse_variable_def *variable_def;
+    enum parse_unary_op unary_op;
 }
 
 %token KW_BLENDSTATE
@@ -350,6 +351,7 @@ static unsigned int components_count_expr_list(struct list *list)
 %type <instr> conditional_expr
 %type <instr> assignment_expr
 %type <list> expr_statement
+%type <unary_op> unary_op
 %type <modifiers> input_mod
 %%
 
@@ -981,6 +983,62 @@ postfix_expr:             primary_expr
 unary_expr:               postfix_expr
                             {
                                 $$ = $1;
+                            }
+                        | OP_INC unary_expr
+                            {
+                                struct hlsl_ir_node *operands[3];
+                                struct source_location loc;
+
+                                operands[0] = $2;
+                                operands[1] = operands[2] = NULL;
+                                set_location(&loc, &@1);
+                                $$ = &new_expr(HLSL_IR_BINOP_PREINC, operands, &loc)->node;
+                            }
+                        | OP_DEC unary_expr
+                            {
+                                struct hlsl_ir_node *operands[3];
+                                struct source_location loc;
+
+                                operands[0] = $2;
+                                operands[1] = operands[2] = NULL;
+                                set_location(&loc, &@1);
+                                $$ = &new_expr(HLSL_IR_BINOP_PREDEC, operands, &loc)->node;
+                            }
+                        | unary_op unary_expr
+                            {
+                                enum hlsl_ir_expr_op ops[] = {0, HLSL_IR_UNOP_NEG,
+                                        HLSL_IR_UNOP_LOGIC_NOT, HLSL_IR_UNOP_BIT_NOT};
+                                struct hlsl_ir_node *operands[3];
+                                struct source_location loc;
+
+                                if ($1 == UNARY_OP_PLUS)
+                                {
+                                    $$ = $2;
+                                }
+                                else
+                                {
+                                    operands[0] = $2;
+                                    operands[1] = operands[2] = NULL;
+                                    set_location(&loc, &@1);
+                                    $$ = &new_expr(ops[$1], operands, &loc)->node;
+                                }
+                            }
+
+unary_op:                 '+'
+                            {
+                                $$ = UNARY_OP_PLUS;
+                            }
+                        | '-'
+                            {
+                                $$ = UNARY_OP_MINUS;
+                            }
+                        | '!'
+                            {
+                                $$ = UNARY_OP_LOGICNOT;
+                            }
+                        | '~'
+                            {
+                                $$ = UNARY_OP_BITNOT;
                             }
 
 mul_expr:                 unary_expr
