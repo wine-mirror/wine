@@ -912,6 +912,21 @@ enum parse_unary_op
     UNARY_OP_BITNOT,
 };
 
+enum parse_assign_op
+{
+    ASSIGN_OP_ASSIGN,
+    ASSIGN_OP_ADD,
+    ASSIGN_OP_SUB,
+    ASSIGN_OP_MUL,
+    ASSIGN_OP_DIV,
+    ASSIGN_OP_MOD,
+    ASSIGN_OP_LSHIFT,
+    ASSIGN_OP_RSHIFT,
+    ASSIGN_OP_AND,
+    ASSIGN_OP_OR,
+    ASSIGN_OP_XOR,
+};
+
 struct hlsl_parse_ctx
 {
     const char **source_files;

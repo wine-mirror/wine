@@ -207,6 +207,7 @@ static unsigned int components_count_expr_list(struct list *list)
     struct parse_parameter parameter;
     struct parse_variable_def *variable_def;
     enum parse_unary_op unary_op;
+    enum parse_assign_op assign_op;
 }
 
 %token KW_BLENDSTATE
@@ -352,6 +353,7 @@ static unsigned int components_count_expr_list(struct list *list)
 %type <instr> assignment_expr
 %type <list> expr_statement
 %type <unary_op> unary_op
+%type <assign_op> assign_op
 %type <modifiers> input_mod
 %%
 
@@ -1208,6 +1210,55 @@ conditional_expr:         logicor_expr
 assignment_expr:          conditional_expr
                             {
                                 $$ = $1;
+                            }
+                        | unary_expr assign_op assignment_expr
+                            {
+                                FIXME("Assignment\n");
+                            }
+
+assign_op:                '='
+                            {
+                                $$ = ASSIGN_OP_ASSIGN;
+                            }
+                        | OP_ADDASSIGN
+                            {
+                                $$ = ASSIGN_OP_ADD;
+                            }
+                        | OP_SUBASSIGN
+                            {
+                                $$ = ASSIGN_OP_SUB;
+                            }
+                        | OP_MULASSIGN
+                            {
+                                $$ = ASSIGN_OP_MUL;
+                            }
+                        | OP_DIVASSIGN
+                            {
+                                $$ = ASSIGN_OP_DIV;
+                            }
+                        | OP_MODASSIGN
+                            {
+                                $$ = ASSIGN_OP_MOD;
+                            }
+                        | OP_LEFTSHIFTASSIGN
+                            {
+                                $$ = ASSIGN_OP_LSHIFT;
+                            }
+                        | OP_RIGHTSHIFTASSIGN
+                            {
+                                $$ = ASSIGN_OP_RSHIFT;
+                            }
+                        | OP_ANDASSIGN
+                            {
+                                $$ = ASSIGN_OP_AND;
+                            }
+                        | OP_ORASSIGN
+                            {
+                                $$ = ASSIGN_OP_OR;
+                            }
+                        | OP_XORASSIGN
+                            {
+                                $$ = ASSIGN_OP_XOR;
                             }
 
 expr:                     assignment_expr
