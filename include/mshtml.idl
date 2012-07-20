@@ -7864,6 +7864,120 @@ interface IHTMLXMLHttpRequest : IDispatch
 }
 
 /*****************************************************************************
+ *    IHTMLXMLHttpRequest2 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(30510482-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLXMLHttpRequest2 : IDispatch
+{
+    [propput, id(DISPID_IHTMLXMLHTTPREQUEST2_TIMEOUT)]
+    HRESULT timeout([in] long v);
+
+    [propget, id(DISPID_IHTMLXMLHTTPREQUEST2_TIMEOUT)]
+    HRESULT timeout([out, retval] long *p);
+
+    [propput, id(DISPID_IHTMLXMLHTTPREQUEST2_ONTIMEOUT), displaybind, bindable]
+    HRESULT ontimeout([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLXMLHTTPREQUEST2_ONTIMEOUT), displaybind, bindable]
+    HRESULT ontimeout([out, retval] VARIANT *p);
+}
+
+/*****************************************************************************
+ *    IHTMLXMLHttpRequestFactory interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3051040c-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLXMLHttpRequestFactory : IDispatch
+{
+    [id(DISPID_IHTMLXMLHTTPREQUESTFACTORY_CREATE)]
+    HRESULT create([out, retval] IHTMLXMLHttpRequest **p);
+}
+
+/*****************************************************************************
+ *    DispHTMLXMLHttpRequest dispinterface
+ */
+[
+    hidden,
+    uuid(3050f596-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispHTMLXMLHttpRequest
+{
+properties:
+methods:
+    [propget, id(DISPID_IHTMLXMLHTTPREQUEST_READYSTATE)]
+    long readyState();
+
+    [propget, id(DISPID_IHTMLXMLHTTPREQUEST_RESPONSEBODY)]
+    VARIANT responseBody();
+
+    [propget, id(DISPID_IHTMLXMLHTTPREQUEST_RESPONSETEXT)]
+    BSTR responseText();
+
+    [propget, id(DISPID_IHTMLXMLHTTPREQUEST_RESPONSEXML)]
+    IDispatch *responseXML();
+
+    [propget, id(DISPID_IHTMLXMLHTTPREQUEST_STATUS)]
+    long status();
+
+    [propget, id(DISPID_IHTMLXMLHTTPREQUEST_STATUSTEXT)]
+    BSTR statusText();
+
+    [propput, id(DISPID_IHTMLXMLHTTPREQUEST_ONREADYSTATECHANGE), displaybind, bindable]
+    void onreadystatechange(VARIANT v);
+
+    [propget, id(DISPID_IHTMLXMLHTTPREQUEST_ONREADYSTATECHANGE), displaybind, bindable]
+    VARIANT onreadystatechange();
+
+    [id(DISPID_IHTMLXMLHTTPREQUEST_ABORT)]
+    void abort();
+
+    [id(DISPID_IHTMLXMLHTTPREQUEST_OPEN)]
+    void open(
+            [in] BSTR bstrMethod,
+            [in] BSTR bstrUrl,
+            [in] VARIANT varAsync,
+            [in, optional] VARIANT varUser,
+            [in, optional] VARIANT varPassword);
+
+    [id(DISPID_IHTMLXMLHTTPREQUEST_SEND)]
+    void send([in, optional] VARIANT varBody);
+
+    [id(DISPID_IHTMLXMLHTTPREQUEST_GETALLRESPONSEHEADERS)]
+    BSTR getAllResponseHeaders();
+
+    [id(DISPID_IHTMLXMLHTTPREQUEST_GETRESPONSEHEADER)]
+    BSTR getResponseHeader([in] BSTR bstrHeader);
+
+    [id(DISPID_IHTMLXMLHTTPREQUEST_SETREQUESTHEADER)]
+    void setRequestHeader(
+            [in] BSTR bstrHeader,
+            [in] BSTR bstrValue);
+
+    [propput, id(DISPID_IHTMLXMLHTTPREQUEST2_TIMEOUT)]
+    void timeout(long v);
+
+    [propget, id(DISPID_IHTMLXMLHTTPREQUEST2_TIMEOUT)]
+    long timeout();
+
+    [propput, id(DISPID_IHTMLXMLHTTPREQUEST2_ONTIMEOUT), displaybind, bindable]
+    void ontimeout(VARIANT v);
+
+    [propget, id(DISPID_IHTMLXMLHTTPREQUEST2_ONTIMEOUT), displaybind, bindable]
+    VARIANT ontimeout();
+
+    WINE_IHTMLDOMCONSTRUCTOR_DISPINTERFACE_DECL;
+}
+
+/*****************************************************************************
  *    IHTMLControlElement interface
  */
 [
