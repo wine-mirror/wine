@@ -132,6 +132,7 @@ SRCDIR_INCLUDES = \
 	advpub.h \
 	af_irda.h \
 	amaudio.h \
+	appcompatapi.h \
 	appmgmt.h \
 	asynot.idl \
 	asysta.idl \
