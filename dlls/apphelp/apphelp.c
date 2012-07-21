@@ -19,6 +19,8 @@
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
+#include <appcompatapi.h>
+
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(apphelp);
@@ -70,6 +72,7 @@ PDB WINAPI SdbCreateDatabase( LPCWSTR path, PATH_TYPE type )
 
 BOOL WINAPI ApphelpCheckShellObject( REFCLSID clsid, BOOL shim, ULONGLONG *flags )
 {
-    FIXME("stub: %s %p\n", debugstr_guid(clsid), flags );
+    TRACE("(%s, %d, %p)\n", debugstr_guid(clsid), shim, flags);
+    if (flags) *flags = 0;
     return TRUE;
 }
