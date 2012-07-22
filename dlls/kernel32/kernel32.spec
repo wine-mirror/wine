@@ -634,6 +634,7 @@
 @ stdcall GetStringTypeW(long wstr long ptr)
 @ stdcall GetSystemDefaultLCID()
 @ stdcall GetSystemDefaultLangID()
+@ stdcall GetSystemDefaultLocaleName(ptr long)
 @ stdcall GetSystemDefaultUILanguage()
 @ stdcall GetSystemDEPPolicy()
 @ stdcall GetSystemDirectoryA(ptr long)
