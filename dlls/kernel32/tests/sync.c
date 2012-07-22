@@ -38,6 +38,7 @@ static HANDLE (WINAPI *pOpenWaitableTimerA)(DWORD,BOOL,LPCSTR);
 static HANDLE (WINAPI *pCreateMemoryResourceNotification)(MEMORY_RESOURCE_NOTIFICATION_TYPE);
 static BOOL   (WINAPI *pQueryMemoryResourceNotification)(HANDLE, PBOOL);
 static VOID   (WINAPI *pInitOnceInitialize)(PINIT_ONCE);
+static BOOL   (WINAPI *pInitOnceExecuteOnce)(PINIT_ONCE,PINIT_ONCE_FN,PVOID,LPVOID*);
 
 static void test_signalandwait(void)
 {
@@ -1136,19 +1137,71 @@ static void test_WaitForMultipleObjects(void)
         if (maxevents[i]) CloseHandle(maxevents[i]);
 }
 
+static BOOL g_initcallback_ret, g_initcallback_called;
+
+BOOL CALLBACK initonce_callback(INIT_ONCE *initonce, void *parameter, void **ctxt)
+{
+    g_initcallback_called = TRUE;
+    /* zero bit set means here that initialization is taking place - initialization locked */
+    ok(initonce->Ptr == (void*)0x1, "got %p\n", initonce->Ptr);
+    ok(parameter == (void*)0xdeadbeef, "got wrong parameter\n");
+    return g_initcallback_ret;
+}
+
 static void test_initonce(void)
 {
     INIT_ONCE initonce;
+    void *ctxt;
+    BOOL ret;
 
-    if (!pInitOnceInitialize)
+    if (!pInitOnceInitialize || !pInitOnceExecuteOnce)
     {
-        win_skip("one-time initialization API not supported\n");
+        skip("one-time initialization API not supported\n");
         return;
     }
 
     initonce.Ptr = (void*)0xdeadbeef;
     pInitOnceInitialize(&initonce);
     ok(initonce.Ptr == NULL, "got %p\n", initonce.Ptr);
+
+    /* initialisation completed successfully */
+    g_initcallback_ret = TRUE;
+    ctxt = NULL;
+    ret = pInitOnceExecuteOnce(&initonce, &initonce_callback, (void*)0xdeadbeef, &ctxt);
+    ok(ret, "got wrong ret value %d\n", ret);
+    ok(initonce.Ptr == (void*)0x2, "got %p\n", initonce.Ptr);
+    ok(ctxt == (void*)0x0, "got %p\n", ctxt);
+    ok(g_initcallback_called, "got %d\n", g_initcallback_called);
+
+    /* so it's been called already so won't be called again */
+    ctxt = NULL;
+    g_initcallback_called = FALSE;
+    ret = pInitOnceExecuteOnce(&initonce, &initonce_callback, (void*)0xdeadbeef, &ctxt);
+    ok(ret, "got wrong ret value %d\n", ret);
+    ok(initonce.Ptr == (void*)0x2, "got %p\n", initonce.Ptr);
+    ok(ctxt == (void*)0, "got %p\n", ctxt);
+    ok(!g_initcallback_called, "got %d\n", g_initcallback_called);
+
+    pInitOnceInitialize(&initonce);
+    g_initcallback_called = FALSE;
+    /* 2 lower order bits should never be used, you'll get a crash in result */
+    ctxt = (void*)0xFFFFFFF0;
+    ret = pInitOnceExecuteOnce(&initonce, &initonce_callback, (void*)0xdeadbeef, &ctxt);
+    ok(ret, "got wrong ret value %d\n", ret);
+    ok(initonce.Ptr == (void*)0xFFFFFFF2, "got %p\n", initonce.Ptr);
+    ok(ctxt == (void*)0xFFFFFFF0, "got %p\n", ctxt);
+    ok(g_initcallback_called, "got %d\n", g_initcallback_called);
+
+    /* callback failed */
+    g_initcallback_ret = FALSE;
+    g_initcallback_called = FALSE;
+    ctxt = NULL;
+    pInitOnceInitialize(&initonce);
+    ret = pInitOnceExecuteOnce(&initonce, &initonce_callback, (void*)0xdeadbeef, &ctxt);
+    ok(!ret, "got wrong ret value %d\n", ret);
+    ok(initonce.Ptr == NULL, "got %p\n", initonce.Ptr);
+    ok(ctxt == NULL, "got %p\n", ctxt);
+    ok(g_initcallback_called, "got %d\n", g_initcallback_called);
 }
 
 START_TEST(sync)
@@ -1164,6 +1217,7 @@ START_TEST(sync)
     pCreateMemoryResourceNotification = (void *)GetProcAddress(hdll, "CreateMemoryResourceNotification");
     pQueryMemoryResourceNotification = (void *)GetProcAddress(hdll, "QueryMemoryResourceNotification");
     pInitOnceInitialize = (void *)GetProcAddress(hdll, "InitOnceInitialize");
+    pInitOnceExecuteOnce = (void *)GetProcAddress(hdll, "InitOnceExecuteOnce");
 
     test_signalandwait();
     test_mutex();
