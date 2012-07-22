@@ -4235,9 +4235,9 @@ typedef BOOL (WINAPI *PFNWGLSETPIXELFORMATWINE)(HDC hdc, int iPixelFormat);
     USE_GL_FUNC(PGLFNVERTEXATTRIBIPOINTEREXTPROC, \
             glVertexAttribIPointerEXT,                  EXT_GPU_SHADER4,                NULL) \
     USE_GL_FUNC(PGLFNGETVERTEXATTRIBIIVEXTPROC, \
-            glVertexAttribIivEXT,                       EXT_GPU_SHADER4,                NULL) \
+            glGetVertexAttribIivEXT,                    EXT_GPU_SHADER4,                NULL) \
     USE_GL_FUNC(PGLFNGETVERTEXATTRIBIUIVEXTPROC, \
-            glVertexAttribIuivEXT,                      EXT_GPU_SHADER4,                NULL) \
+            glGetVertexAttribIuivEXT,                   EXT_GPU_SHADER4,                NULL) \
     USE_GL_FUNC(PGLFNUNIFORM1UIEXTPROC, \
             glUniform1uiEXT,                            EXT_GPU_SHADER4,                NULL) \
     USE_GL_FUNC(PGLFNUNIFORM2UIEXTPROC, \
