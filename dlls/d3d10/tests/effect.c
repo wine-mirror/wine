@@ -3866,30 +3866,29 @@ static void test_effect_state_groups(ID3D10Device *device)
 
     v = effect->lpVtbl->GetVariableByName(effect, "ds_state");
     d = v->lpVtbl->AsDepthStencil(v);
-    memset(&ds_desc, 0, sizeof(ds_desc));
     d->lpVtbl->GetBackingStore(d, 0, &ds_desc);
     ok(!ds_desc.DepthEnable, "Got unexpected DepthEnable %#x.\n", ds_desc.DepthEnable);
     ok(ds_desc.DepthWriteMask == D3D10_DEPTH_WRITE_MASK_ZERO, "Got unexpected DepthWriteMask %#x.\n",
             ds_desc.DepthWriteMask);
-    todo_wine ok(ds_desc.DepthFunc == D3D10_COMPARISON_EQUAL, "Got unexpected DepthFunc %#x.\n", ds_desc.DepthFunc);
-    todo_wine ok(ds_desc.StencilEnable, "Got unexpected StencilEnable %#x.\n", ds_desc.StencilEnable);
-    todo_wine ok(ds_desc.StencilReadMask == 0x4, "Got unexpected StencilReadMask %#x.\n", ds_desc.StencilReadMask);
-    todo_wine ok(ds_desc.StencilWriteMask == 0x5, "Got unexpected StencilWriteMask %#x.\n", ds_desc.StencilWriteMask);
-    todo_wine ok(ds_desc.FrontFace.StencilFailOp == D3D10_STENCIL_OP_INVERT, "Got unexpected FrontFaceStencilFail %#x.\n",
+    ok(ds_desc.DepthFunc == D3D10_COMPARISON_EQUAL, "Got unexpected DepthFunc %#x.\n", ds_desc.DepthFunc);
+    ok(ds_desc.StencilEnable, "Got unexpected StencilEnable %#x.\n", ds_desc.StencilEnable);
+    ok(ds_desc.StencilReadMask == 0x4, "Got unexpected StencilReadMask %#x.\n", ds_desc.StencilReadMask);
+    ok(ds_desc.StencilWriteMask == 0x5, "Got unexpected StencilWriteMask %#x.\n", ds_desc.StencilWriteMask);
+    ok(ds_desc.FrontFace.StencilFailOp == D3D10_STENCIL_OP_INVERT, "Got unexpected FrontFaceStencilFail %#x.\n",
             ds_desc.FrontFace.StencilFailOp);
-    todo_wine ok(ds_desc.FrontFace.StencilDepthFailOp == D3D10_STENCIL_OP_INCR,
+    ok(ds_desc.FrontFace.StencilDepthFailOp == D3D10_STENCIL_OP_INCR,
             "Got unexpected FrontFaceStencilDepthFail %#x.\n", ds_desc.FrontFace.StencilDepthFailOp);
-    todo_wine ok(ds_desc.FrontFace.StencilPassOp == D3D10_STENCIL_OP_DECR, "Got unexpected FrontFaceStencilPass %#x.\n",
+    ok(ds_desc.FrontFace.StencilPassOp == D3D10_STENCIL_OP_DECR, "Got unexpected FrontFaceStencilPass %#x.\n",
             ds_desc.FrontFace.StencilPassOp);
-    todo_wine ok(ds_desc.FrontFace.StencilFunc == D3D10_COMPARISON_LESS_EQUAL, "Got unexpected FrontFaceStencilFunc %#x.\n",
+    ok(ds_desc.FrontFace.StencilFunc == D3D10_COMPARISON_LESS_EQUAL, "Got unexpected FrontFaceStencilFunc %#x.\n",
             ds_desc.FrontFace.StencilFunc);
-    todo_wine ok(ds_desc.BackFace.StencilFailOp == D3D10_STENCIL_OP_REPLACE, "Got unexpected BackFaceStencilFail %#x.\n",
+    ok(ds_desc.BackFace.StencilFailOp == D3D10_STENCIL_OP_REPLACE, "Got unexpected BackFaceStencilFail %#x.\n",
             ds_desc.BackFace.StencilFailOp);
-    todo_wine ok(ds_desc.BackFace.StencilDepthFailOp == D3D10_STENCIL_OP_INCR_SAT,
+    ok(ds_desc.BackFace.StencilDepthFailOp == D3D10_STENCIL_OP_INCR_SAT,
             "Got unexpected BackFaceStencilDepthFail %#x.\n", ds_desc.BackFace.StencilDepthFailOp);
-    todo_wine ok(ds_desc.BackFace.StencilPassOp == D3D10_STENCIL_OP_DECR_SAT, "Got unexpected BackFaceStencilPass %#x.\n",
+    ok(ds_desc.BackFace.StencilPassOp == D3D10_STENCIL_OP_DECR_SAT, "Got unexpected BackFaceStencilPass %#x.\n",
             ds_desc.BackFace.StencilPassOp);
-    todo_wine ok(ds_desc.BackFace.StencilFunc == D3D10_COMPARISON_GREATER_EQUAL, "Got unexpected BackFaceStencilFunc %#x.\n",
+    ok(ds_desc.BackFace.StencilFunc == D3D10_COMPARISON_GREATER_EQUAL, "Got unexpected BackFaceStencilFunc %#x.\n",
             ds_desc.BackFace.StencilFunc);
 
     v = effect->lpVtbl->GetVariableByName(effect, "rast_state");
@@ -4116,30 +4115,29 @@ static void test_effect_state_group_defaults(ID3D10Device *device)
 
     v = effect->lpVtbl->GetVariableByName(effect, "ds_state");
     d = v->lpVtbl->AsDepthStencil(v);
-    memset(&ds_desc, 0, sizeof(ds_desc));
     d->lpVtbl->GetBackingStore(d, 0, &ds_desc);
-    todo_wine ok(ds_desc.DepthEnable, "Got unexpected DepthEnable %#x.\n", ds_desc.DepthEnable);
-    todo_wine ok(ds_desc.DepthWriteMask == D3D10_DEPTH_WRITE_MASK_ALL, "Got unexpected DepthWriteMask %#x.\n",
+    ok(ds_desc.DepthEnable, "Got unexpected DepthEnable %#x.\n", ds_desc.DepthEnable);
+    ok(ds_desc.DepthWriteMask == D3D10_DEPTH_WRITE_MASK_ALL, "Got unexpected DepthWriteMask %#x.\n",
             ds_desc.DepthWriteMask);
-    todo_wine ok(ds_desc.DepthFunc == D3D10_COMPARISON_LESS, "Got unexpected DepthFunc %#x.\n", ds_desc.DepthFunc);
+    ok(ds_desc.DepthFunc == D3D10_COMPARISON_LESS, "Got unexpected DepthFunc %#x.\n", ds_desc.DepthFunc);
     ok(!ds_desc.StencilEnable, "Got unexpected StencilEnable %#x.\n", ds_desc.StencilEnable);
-    todo_wine ok(ds_desc.StencilReadMask == 0xff, "Got unexpected StencilReadMask %#x.\n", ds_desc.StencilReadMask);
-    todo_wine ok(ds_desc.StencilWriteMask == 0xff, "Got unexpected StencilWriteMask %#x.\n", ds_desc.StencilWriteMask);
-    todo_wine ok(ds_desc.FrontFace.StencilFailOp == D3D10_STENCIL_OP_KEEP, "Got unexpected FrontFaceStencilFail %#x.\n",
+    ok(ds_desc.StencilReadMask == 0xff, "Got unexpected StencilReadMask %#x.\n", ds_desc.StencilReadMask);
+    ok(ds_desc.StencilWriteMask == 0xff, "Got unexpected StencilWriteMask %#x.\n", ds_desc.StencilWriteMask);
+    ok(ds_desc.FrontFace.StencilFailOp == D3D10_STENCIL_OP_KEEP, "Got unexpected FrontFaceStencilFail %#x.\n",
             ds_desc.FrontFace.StencilFailOp);
-    todo_wine ok(ds_desc.FrontFace.StencilDepthFailOp == D3D10_STENCIL_OP_KEEP,
+    ok(ds_desc.FrontFace.StencilDepthFailOp == D3D10_STENCIL_OP_KEEP,
             "Got unexpected FrontFaceStencilDepthFail %#x.\n", ds_desc.FrontFace.StencilDepthFailOp);
-    todo_wine ok(ds_desc.FrontFace.StencilPassOp == D3D10_STENCIL_OP_KEEP, "Got unexpected FrontFaceStencilPass %#x.\n",
+    ok(ds_desc.FrontFace.StencilPassOp == D3D10_STENCIL_OP_KEEP, "Got unexpected FrontFaceStencilPass %#x.\n",
             ds_desc.FrontFace.StencilPassOp);
-    todo_wine ok(ds_desc.FrontFace.StencilFunc == D3D10_COMPARISON_ALWAYS, "Got unexpected FrontFaceStencilFunc %#x.\n",
+    ok(ds_desc.FrontFace.StencilFunc == D3D10_COMPARISON_ALWAYS, "Got unexpected FrontFaceStencilFunc %#x.\n",
             ds_desc.FrontFace.StencilFunc);
-    todo_wine ok(ds_desc.BackFace.StencilFailOp == D3D10_STENCIL_OP_KEEP, "Got unexpected BackFaceStencilFail %#x.\n",
+    ok(ds_desc.BackFace.StencilFailOp == D3D10_STENCIL_OP_KEEP, "Got unexpected BackFaceStencilFail %#x.\n",
             ds_desc.BackFace.StencilFailOp);
-    todo_wine ok(ds_desc.BackFace.StencilDepthFailOp == D3D10_STENCIL_OP_KEEP,
+    ok(ds_desc.BackFace.StencilDepthFailOp == D3D10_STENCIL_OP_KEEP,
             "Got unexpected BackFaceStencilDepthFail %#x.\n", ds_desc.BackFace.StencilDepthFailOp);
-    todo_wine ok(ds_desc.BackFace.StencilPassOp == D3D10_STENCIL_OP_KEEP, "Got unexpected BackFaceStencilPass %#x.\n",
+    ok(ds_desc.BackFace.StencilPassOp == D3D10_STENCIL_OP_KEEP, "Got unexpected BackFaceStencilPass %#x.\n",
             ds_desc.BackFace.StencilPassOp);
-    todo_wine ok(ds_desc.BackFace.StencilFunc == D3D10_COMPARISON_ALWAYS, "Got unexpected BackFaceStencilFunc %#x.\n",
+    ok(ds_desc.BackFace.StencilFunc == D3D10_COMPARISON_ALWAYS, "Got unexpected BackFaceStencilFunc %#x.\n",
             ds_desc.BackFace.StencilFunc);
 
     v = effect->lpVtbl->GetVariableByName(effect, "rast_state");
