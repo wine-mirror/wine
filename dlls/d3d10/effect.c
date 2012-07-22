@@ -138,6 +138,20 @@ static const struct d3d10_effect_state_property_info property_info[] =
     {0x13, "RasterizerState.ScissorEnable",               D3D10_SVT_BOOL,  1, 1, D3D10_SVT_RASTERIZER,   FIELD_OFFSET(D3D10_RASTERIZER_DESC, ScissorEnable)                  },
     {0x14, "RasterizerState.MultisampleEnable",           D3D10_SVT_BOOL,  1, 1, D3D10_SVT_RASTERIZER,   FIELD_OFFSET(D3D10_RASTERIZER_DESC, MultisampleEnable)              },
     {0x15, "RasterizerState.AntialiasedLineEnable",       D3D10_SVT_BOOL,  1, 1, D3D10_SVT_RASTERIZER,   FIELD_OFFSET(D3D10_RASTERIZER_DESC, AntialiasedLineEnable)          },
+    {0x16, "DepthStencilState.DepthEnable",               D3D10_SVT_BOOL,  1, 1, D3D10_SVT_DEPTHSTENCIL, FIELD_OFFSET(D3D10_DEPTH_STENCIL_DESC, DepthEnable)                 },
+    {0x17, "DepthStencilState.DepthWriteMask",            D3D10_SVT_INT,   1, 1, D3D10_SVT_DEPTHSTENCIL, FIELD_OFFSET(D3D10_DEPTH_STENCIL_DESC, DepthWriteMask)              },
+    {0x18, "DepthStencilState.DepthFunc",                 D3D10_SVT_INT,   1, 1, D3D10_SVT_DEPTHSTENCIL, FIELD_OFFSET(D3D10_DEPTH_STENCIL_DESC, DepthFunc)                   },
+    {0x19, "DepthStencilState.StencilEnable",             D3D10_SVT_BOOL,  1, 1, D3D10_SVT_DEPTHSTENCIL, FIELD_OFFSET(D3D10_DEPTH_STENCIL_DESC, StencilEnable)               },
+    {0x1a, "DepthStencilState.StencilReadMask",           D3D10_SVT_UINT8, 1, 1, D3D10_SVT_DEPTHSTENCIL, FIELD_OFFSET(D3D10_DEPTH_STENCIL_DESC, StencilReadMask)             },
+    {0x1b, "DepthStencilState.StencilWriteMask",          D3D10_SVT_UINT8, 1, 1, D3D10_SVT_DEPTHSTENCIL, FIELD_OFFSET(D3D10_DEPTH_STENCIL_DESC, StencilWriteMask)            },
+    {0x1c, "DepthStencilState.FrontFaceStencilFail",      D3D10_SVT_INT,   1, 1, D3D10_SVT_DEPTHSTENCIL, FIELD_OFFSET(D3D10_DEPTH_STENCIL_DESC, FrontFace.StencilFailOp)     },
+    {0x1d, "DepthStencilState.FrontFaceStencilDepthFail", D3D10_SVT_INT,   1, 1, D3D10_SVT_DEPTHSTENCIL, FIELD_OFFSET(D3D10_DEPTH_STENCIL_DESC, FrontFace.StencilDepthFailOp)},
+    {0x1e, "DepthStencilState.FrontFaceStencilPass",      D3D10_SVT_INT,   1, 1, D3D10_SVT_DEPTHSTENCIL, FIELD_OFFSET(D3D10_DEPTH_STENCIL_DESC, FrontFace.StencilPassOp)     },
+    {0x1f, "DepthStencilState.FrontFaceStencilFunc",      D3D10_SVT_INT,   1, 1, D3D10_SVT_DEPTHSTENCIL, FIELD_OFFSET(D3D10_DEPTH_STENCIL_DESC, FrontFace.StencilFunc)       },
+    {0x20, "DepthStencilState.BackFaceStencilFail",       D3D10_SVT_INT,   1, 1, D3D10_SVT_DEPTHSTENCIL, FIELD_OFFSET(D3D10_DEPTH_STENCIL_DESC, BackFace.StencilFailOp)      },
+    {0x21, "DepthStencilState.BackFaceStencilDepthFail",  D3D10_SVT_INT,   1, 1, D3D10_SVT_DEPTHSTENCIL, FIELD_OFFSET(D3D10_DEPTH_STENCIL_DESC, BackFace.StencilDepthFailOp) },
+    {0x22, "DepthStencilState.BackFaceStencilPass",       D3D10_SVT_INT,   1, 1, D3D10_SVT_DEPTHSTENCIL, FIELD_OFFSET(D3D10_DEPTH_STENCIL_DESC, BackFace.StencilPassOp)      },
+    {0x23, "DepthStencilState.BackFaceStencilFunc",       D3D10_SVT_INT,   1, 1, D3D10_SVT_DEPTHSTENCIL, FIELD_OFFSET(D3D10_DEPTH_STENCIL_DESC, BackFace.StencilFunc)        },
 };
 
 static const D3D10_RASTERIZER_DESC default_rasterizer_desc =
@@ -154,6 +168,18 @@ static const D3D10_RASTERIZER_DESC default_rasterizer_desc =
     FALSE,
 };
 
+static const D3D10_DEPTH_STENCIL_DESC default_depth_stencil_desc =
+{
+    TRUE,
+    D3D10_DEPTH_WRITE_MASK_ALL,
+    D3D10_COMPARISON_LESS,
+    FALSE,
+    D3D10_DEFAULT_STENCIL_READ_MASK,
+    D3D10_DEFAULT_STENCIL_WRITE_MASK,
+    {D3D10_STENCIL_OP_KEEP, D3D10_STENCIL_OP_KEEP, D3D10_STENCIL_OP_KEEP, D3D10_COMPARISON_ALWAYS},
+    {D3D10_STENCIL_OP_KEEP, D3D10_STENCIL_OP_KEEP, D3D10_STENCIL_OP_KEEP, D3D10_COMPARISON_ALWAYS},
+};
+
 struct d3d10_effect_state_storage_info
 {
     D3D_SHADER_VARIABLE_TYPE id;
@@ -164,6 +190,7 @@ struct d3d10_effect_state_storage_info
 static const struct d3d10_effect_state_storage_info d3d10_effect_state_storage_info[] =
 {
     {D3D10_SVT_RASTERIZER,   sizeof(default_rasterizer_desc),    &default_rasterizer_desc   },
+    {D3D10_SVT_DEPTHSTENCIL, sizeof(default_depth_stencil_desc), &default_depth_stencil_desc},
 };
 
 static BOOL copy_name(const char *ptr, char **name)
@@ -1013,6 +1040,20 @@ static BOOL read_int32_value(DWORD value, D3D_SHADER_VARIABLE_TYPE in_type, INT 
     }
 }
 
+static BOOL read_int8_value(DWORD value, D3D_SHADER_VARIABLE_TYPE in_type, INT8 *out_data, UINT idx)
+{
+    switch (in_type)
+    {
+        case D3D10_SVT_INT:
+            out_data[idx] = value;
+            return TRUE;
+
+        default:
+            FIXME("Unhandled in_type %#x.\n", in_type);
+            return FALSE;
+    }
+}
+
 static BOOL read_value_list(const char *ptr, D3D_SHADER_VARIABLE_TYPE out_type,
         UINT out_base, UINT out_size, void *out_data)
 {
@@ -1046,6 +1087,11 @@ static BOOL read_value_list(const char *ptr, D3D_SHADER_VARIABLE_TYPE out_type,
             case D3D10_SVT_UINT:
             case D3D10_SVT_BOOL:
                 if (!read_int32_value(value, in_type, out_data, out_idx))
+                    return FALSE;
+                break;
+
+            case D3D10_SVT_UINT8:
+                if (!read_int8_value(value, in_type, out_data, out_idx))
                     return FALSE;
                 break;
 
@@ -1502,7 +1548,6 @@ static HRESULT parse_fx10_local_variable(struct d3d10_effect_variable *v, const 
             }
             break;
 
-        case D3D10_SVT_DEPTHSTENCIL:
         case D3D10_SVT_BLEND:
         case D3D10_SVT_SAMPLER:
             TRACE("SVT is a state.\n");
@@ -1521,6 +1566,7 @@ static HRESULT parse_fx10_local_variable(struct d3d10_effect_variable *v, const 
             }
             break;
 
+        case D3D10_SVT_DEPTHSTENCIL:
         case D3D10_SVT_RASTERIZER:
             {
                 const struct d3d10_effect_state_storage_info *storage_info;
