@@ -1720,7 +1720,6 @@ enum wined3d_gl_extension
     APPLE_FENCE,
     APPLE_FLOAT_PIXELS,
     APPLE_FLUSH_BUFFER_RANGE,
-    APPLE_FLUSH_RENDER,
     APPLE_YCBCR_422,
     /* ARB */
     ARB_COLOR_BUFFER_FLOAT,
@@ -1886,10 +1885,6 @@ typedef void (WINE_GLAPI *PGLFNFINISHOBJECTAPPLEPROC)(GLenum, GLuint);
 #endif
 typedef void (WINE_GLAPI *PGLFNBUFFERPARAMETERIAPPLE)(GLenum target, GLenum pname, GLint param);
 typedef void (WINE_GLAPI *PGLFNFLUSHMAPPEDBUFFERRANGEAPPLE)(GLenum target, GLintptr offset, GLsizeiptr size);
-
-/* GL_APPLE_flush_render */
-typedef void (WINE_GLAPI *PGLFNFLUSHRENDERAPPLEPROC)(void);
-typedef void (WINE_GLAPI *PGLFNFINISHRENDERAPPLEPROC)(void);
 
 /* GL_APPLE_ycbcr_422 */
 #ifndef GL_APPLE_ycbcr_422
@@ -3712,11 +3707,6 @@ typedef BOOL (WINAPI *PFNWGLSETPIXELFORMATWINE)(HDC hdc, int iPixelFormat);
             glBufferParameteriAPPLE,                    APPLE_FLUSH_BUFFER_RANGE,       NULL) \
     USE_GL_FUNC(PGLFNFLUSHMAPPEDBUFFERRANGEAPPLE, \
             glFlushMappedBufferRangeAPPLE,              APPLE_FLUSH_BUFFER_RANGE,       NULL) \
-    /* GL_APPLE_flush_render */ \
-    USE_GL_FUNC(PGLFNFLUSHRENDERAPPLEPROC, \
-            glFlushRenderAPPLE,                         APPLE_FLUSH_RENDER,             NULL) \
-    USE_GL_FUNC(PGLFNFINISHRENDERAPPLEPROC, \
-            glFinishRenderAPPLE,                        APPLE_FLUSH_RENDER,             NULL) \
     /* GL_ARB_color_buffer_float */ \
     USE_GL_FUNC(PGLFNCLAMPCOLORARBPROC, \
             glClampColorARB,                            ARB_COLOR_BUFFER_FLOAT,         NULL) \

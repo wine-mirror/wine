@@ -91,7 +91,6 @@ static const struct wined3d_extension_map gl_extension_map[] =
     {"GL_APPLE_fence",                      APPLE_FENCE,                    0                           },
     {"GL_APPLE_float_pixels",               APPLE_FLOAT_PIXELS,             0                           },
     {"GL_APPLE_flush_buffer_range",         APPLE_FLUSH_BUFFER_RANGE,       0                           },
-    {"GL_APPLE_flush_render",               APPLE_FLUSH_RENDER,             0                           },
     {"GL_APPLE_ycbcr_422",                  APPLE_YCBCR_422,                0                           },
 
     /* ARB */
@@ -1413,7 +1412,6 @@ static enum wined3d_gl_vendor wined3d_guess_gl_vendor(const struct wined3d_gl_in
      * DirectDraw, not OpenGL. */
     if (gl_info->supported[APPLE_FENCE]
             && gl_info->supported[APPLE_CLIENT_STORAGE]
-            && gl_info->supported[APPLE_FLUSH_RENDER]
             && gl_info->supported[APPLE_YCBCR_422])
         return GL_VENDOR_APPLE;
 
