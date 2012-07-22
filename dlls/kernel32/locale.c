@@ -1416,14 +1416,10 @@ INT WINAPI GetLocaleInfoW( LCID lcid, LCTYPE lctype, LPWSTR buffer, INT len )
 
 /******************************************************************************
  *           GetLocaleInfoEx (KERNEL32.@)
- *
- * FIXME: Should probably be a wrapper around GetLocaleInfo() (or vice-versa).
  */
 INT WINAPI GetLocaleInfoEx(LPCWSTR locale, LCTYPE info, LPWSTR buffer, INT len)
 {
-    FIXME("(locale=%s,info=0x%x,%p,%d): stub!\n", debugstr_w(locale), info, buffer, len);
-    SetLastError(ERROR_INVALID_PARAMETER);
-    return 0;
+    return GetLocaleInfoW(LocaleNameToLCID(locale, 0), info, buffer, len);
 }
 
 /******************************************************************************
