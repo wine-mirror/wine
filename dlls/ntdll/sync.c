@@ -1463,3 +1463,8 @@ NTSTATUS NTDLL_AddCompletion( HANDLE hFile, ULONG_PTR CompletionValue,
     SERVER_END_REQ;
     return status;
 }
+
+VOID NTAPI RtlRunOnceInitialize(PRTL_RUN_ONCE initonce)
+{
+    initonce->Ptr = NULL;
+}

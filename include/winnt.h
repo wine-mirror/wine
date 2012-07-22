@@ -5087,6 +5087,13 @@ typedef struct _RTL_SRWLOCK {
 typedef VOID (NTAPI * WAITORTIMERCALLBACKFUNC) (PVOID, BOOLEAN );
 typedef VOID (NTAPI * PFLS_CALLBACK_FUNCTION) ( PVOID );
 
+#define RTL_RUN_ONCE_INIT {0}
+typedef union _RTL_RUN_ONCE {
+    PVOID Ptr;
+} RTL_RUN_ONCE, *PRTL_RUN_ONCE;
+
+NTSYSAPI VOID NTAPI RtlRunOnceInitialize(PRTL_RUN_ONCE);
+
 #include <pshpack8.h>
 typedef struct _IO_COUNTERS {
     ULONGLONG DECLSPEC_ALIGN(8) ReadOperationCount;

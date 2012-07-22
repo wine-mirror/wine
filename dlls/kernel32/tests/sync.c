@@ -37,6 +37,7 @@ static BOOL   (WINAPI *pDeleteTimerQueueTimer)(HANDLE, HANDLE, HANDLE);
 static HANDLE (WINAPI *pOpenWaitableTimerA)(DWORD,BOOL,LPCSTR);
 static HANDLE (WINAPI *pCreateMemoryResourceNotification)(MEMORY_RESOURCE_NOTIFICATION_TYPE);
 static BOOL   (WINAPI *pQueryMemoryResourceNotification)(HANDLE, PBOOL);
+static VOID   (WINAPI *pInitOnceInitialize)(PINIT_ONCE);
 
 static void test_signalandwait(void)
 {
@@ -1135,6 +1136,21 @@ static void test_WaitForMultipleObjects(void)
         if (maxevents[i]) CloseHandle(maxevents[i]);
 }
 
+static void test_initonce(void)
+{
+    INIT_ONCE initonce;
+
+    if (!pInitOnceInitialize)
+    {
+        win_skip("one-time initialization API not supported\n");
+        return;
+    }
+
+    initonce.Ptr = (void*)0xdeadbeef;
+    pInitOnceInitialize(&initonce);
+    ok(initonce.Ptr == NULL, "got %p\n", initonce.Ptr);
+}
+
 START_TEST(sync)
 {
     HMODULE hdll = GetModuleHandle("kernel32");
@@ -1147,6 +1163,7 @@ START_TEST(sync)
     pOpenWaitableTimerA = (void*)GetProcAddress(hdll, "OpenWaitableTimerA");
     pCreateMemoryResourceNotification = (void *)GetProcAddress(hdll, "CreateMemoryResourceNotification");
     pQueryMemoryResourceNotification = (void *)GetProcAddress(hdll, "QueryMemoryResourceNotification");
+    pInitOnceInitialize = (void *)GetProcAddress(hdll, "InitOnceInitialize");
 
     test_signalandwait();
     test_mutex();
@@ -1158,4 +1175,5 @@ START_TEST(sync)
     test_timer_queue();
     test_WaitForSingleObject();
     test_WaitForMultipleObjects();
+    test_initonce();
 }
