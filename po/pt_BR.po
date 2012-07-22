@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-02-29 21:39-0300\n"
+"PO-Revision-Date: 2012-07-22 16:28-0300\n"
 "Last-Translator: Gustavo Henrique Milaré <gugamilare@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Portuguese (Brazil)\n"
@@ -30,11 +30,6 @@ msgid "&Install..."
 msgstr "&Instalar..."
 
 #: appwiz.rc:62
-#, fuzzy
-#| msgid ""
-#| "The following software can be automatically removed. To remove a program "
-#| "or to modify its installed components, select it from the list and click "
-#| "Change/Remove."
 msgid ""
 "The following software can be automatically removed. To remove a program or "
 "to modify its installed components, select it from the list and click Modify/"
@@ -163,21 +158,10 @@ msgid "Cancel"
 msgstr "Cancelar"
 
 #: appwiz.rc:112
-#, fuzzy
-#| msgid "Wine Gecko Installer"
 msgid "Wine Mono Installer"
-msgstr "Instalador Wine Gecko"
+msgstr "Instalador Wine Mono"
 
 #: appwiz.rc:115
-#, fuzzy
-#| msgid ""
-#| "Wine could not find a Gecko package which is needed for applications "
-#| "embedding HTML to work correctly. Wine can automatically download and "
-#| "install it for you.\n"
-#| "\n"
-#| "Note: it is recommended to use your distribution's packages instead. See "
-#| "<a href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> "
-#| "for details."
 msgid ""
 "Wine could not find a Mono package which is needed for .NET applications to "
 "work correctly. Wine can automatically download and install it for you.\n"
@@ -186,13 +170,13 @@ msgid ""
 "href=\"http://wiki.winehq.org/Mono\">http://wiki.winehq.org/Mono</a> for "
 "details."
 msgstr ""
-"O Wine não pôde encontrar o pacote Gecko que é necessário para aplicativos "
-"com HTML embutido funcionarem corretamente. O Wine pode automaticamente "
-"efetuar o download e instalá-lo para você.\n"
+"O Wine não pôde encontrar o pacote Mono que é necessário para aplicativos ."
+"NET funcionarem corretamente. O Wine pode automaticamente efetuar o download "
+"e instalá-lo para você.\n"
 "\n"
 "Nota: é recomendável usar os pacotes da sua distribuição em vez disso. Veja "
-"<a href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> "
-"para mais detalhes."
+"<a href=\"http://wiki.winehq.org/Mono\">http://wiki.winehq.org/Mono</a> para "
+"mais detalhes."
 
 #: appwiz.rc:28
 msgid "Add/Remove Programs"
@@ -2226,14 +2210,10 @@ msgstr ""
 "lista de revogação de certificados ou lista de certificados confiáveis:"
 
 #: cryptui.rc:296
-#, fuzzy
-#| msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (.p7b)"
 msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (*.p7b)"
 msgstr "Padrão de Sintaxe de Mensagem Criptográfica/Mensagens PKCS #7 (.p7b)"
 
 #: cryptui.rc:298
-#, fuzzy
-#| msgid "Personal Information Exchange/PKCS #12 (.pfx, .p12)"
 msgid "Personal Information Exchange/PKCS #12 (*.pfx; *.p12)"
 msgstr "Troca de Informações Pessoais/PKCS #12 (.pfx, .p12)"
 
@@ -2379,20 +2359,14 @@ msgid "Select the format you want to use:"
 msgstr "Selecione o formato que deseja utilizar:"
 
 #: cryptui.rc:405
-#, fuzzy
-#| msgid "&DER-encoded X.509 (.cer)"
 msgid "&DER-encoded X.509 (*.cer)"
 msgstr "&DER-codificado X.509 (.cer)"
 
 #: cryptui.rc:407
-#, fuzzy
-#| msgid "Ba&se64-encoded X.509 (.cer):"
 msgid "Ba&se64-encoded X.509 (*.cer):"
 msgstr "Ba&se64-codificado X.509 (.cer):"
 
 #: cryptui.rc:409
-#, fuzzy
-#| msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (.p7b)"
 msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (*.p7b)"
 msgstr "Padrão de Sintaxe de Mensagem &Criptográfica/PKCS #7 Mensagem (.p7b)"
 
@@ -2401,8 +2375,6 @@ msgid "&Include all certificates in the certification path if possible"
 msgstr "&Incluir todos os certificados no caminho do certificado se possível"
 
 #: cryptui.rc:413
-#, fuzzy
-#| msgid "&Personal Information Exchange/PKCS #12 (.pfx)"
 msgid "&Personal Information Exchange/PKCS #12 (*.pfx)"
 msgstr "Troca de Informações &Pessoais/PKCS #12 (.pfx)"
 
@@ -3472,22 +3444,16 @@ msgid "&Disable"
 msgstr "&Desativar"
 
 #: joy.rc:37
-#, fuzzy
-#| msgid "&enable"
 msgid "&Enable"
-msgstr "&habilitar"
+msgstr "&Habilitar"
 
 #: joy.rc:38
-#, fuzzy
-#| msgid "Disconnected"
 msgid "Connected"
-msgstr "Desconectado"
+msgstr "Conectado"
 
 #: joy.rc:40
-#, fuzzy
-#| msgid "&Disable"
 msgid "Disabled"
-msgstr "&Desativar"
+msgstr "Desativado"
 
 #: joy.rc:46
 msgid "Test Joystick"
@@ -3502,10 +3468,8 @@ msgid "Test Force Feedback"
 msgstr ""
 
 #: joy.rc:63
-#, fuzzy
-#| msgid "Available formats"
 msgid "Available Effects"
-msgstr "Formatos Disponíveis"
+msgstr "Efeitos Disponíveis"
 
 #: joy.rc:65
 msgid ""
@@ -3514,10 +3478,8 @@ msgid ""
 msgstr ""
 
 #: joy.rc:28
-#, fuzzy
-#| msgid "Create Control"
 msgid "Game Controllers"
-msgstr "Criar controle"
+msgstr "Controles de Jogos"
 
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
@@ -3568,10 +3530,8 @@ msgid "Expected ')'"
 msgstr "')' esperado"
 
 #: jscript.rc:37
-#, fuzzy
-#| msgid "Invalid parameter.\n"
 msgid "Invalid character"
-msgstr "Parâmetro inválido.\n"
+msgstr "Caractere inválido"
 
 #: jscript.rc:38
 msgid "Unterminated string constant"
@@ -3650,16 +3610,12 @@ msgid "URI to be decoded is incorrect"
 msgstr "URI a ser codificado está incorreto"
 
 #: jscript.rc:57
-#, fuzzy
-#| msgid "Enumeration value out of range.\n"
 msgid "Number of fraction digits is out of range"
-msgstr "Valor de enumeração fora dos limites.\n"
+msgstr "Número de dígitos fracionários fora do limite"
 
 #: jscript.rc:58
-#, fuzzy
-#| msgid "Subscript out of range"
 msgid "Precision is out of range"
-msgstr "Subscript fora de alcance"
+msgstr "Precisão fora do limite"
 
 #: jscript.rc:59
 msgid "Array length must be a finite positive integer"
@@ -6765,37 +6721,6 @@ msgid "insert disk %s"
 msgstr "insira disco %s"
 
 #: msi.rc:30
-#, fuzzy
-#| msgid ""
-#| "Windows Installer %s\n"
-#| "\n"
-#| "Usage:\n"
-#| "msiexec command {required parameter} [optional parameter]\n"
-#| "\n"
-#| "Install a product:\n"
-#| "\t/i {package|product_code} [property]\n"
-#| "\t/package {package|product_code} [property]\n"
-#| "\t/a package [property]\n"
-#| "Repair an installation:\n"
-#| "\t/f[p|o|e|d|c|a|u|m|s|v] {package|product_code}\n"
-#| "Uninstall a product:\n"
-#| "\t/uninstall {package|product_code} [property]\n"
-#| "\t/x {package|product_code} [property]\n"
-#| "Advertise a product:\n"
-#| "\t/j[u|m] package [/t transform] [/g languageid]\n"
-#| "Apply a patch:\n"
-#| "\t/p patch_package [property]\n"
-#| "\t/p patch_package /a package [property]\n"
-#| "Log and UI Modifiers for above commands:\n"
-#| "\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] logfile\n"
-#| "\t/q{|n|b|r|f|n+|b+|b-}\n"
-#| "Register MSI Service:\n"
-#| "\t/y\n"
-#| "Unregister MSI Service:\n"
-#| "\t/z\n"
-#| "Display this help:\n"
-#| "\t/help\n"
-#| "\t/?\n"
 msgid ""
 "Windows Installer %s\n"
 "\n"
@@ -6846,7 +6771,7 @@ msgstr ""
 "Aplicar um patch:\n"
 "\t/p pacotedepatch [propriedade]\n"
 "\t/p pacotedepatch /a pacote [propriedade]\n"
-"Modificadores Log e UI para os comandos acima:\n"
+"Modificadores de log e interface de usuário para os comandos acima:\n"
 "\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] logfile\n"
 "\t/q{|n|b|r|f|n+|b+|b-}\n"
 "Registrar Serviço MSI:\n"
@@ -12893,9 +12818,8 @@ msgid "Select an executable file"
 msgstr "Selecione um arquivo executável"
 
 #: winecfg.rc:66
-#, fuzzy
 msgid "Autodetect"
-msgstr "Auto &Detectar"
+msgstr "Auto detectar"
 
 #: winecfg.rc:67
 msgid "Local hard disk"
@@ -13778,22 +13702,16 @@ msgid "Help topics: "
 msgstr "Tópicos de ajuda: "
 
 #: wmic.rc:25
-#, fuzzy
-#| msgid "Error: Invalid command line parameters\n"
 msgid "Error: Command line not supported\n"
-msgstr "Erro: Parâmetros da linha de comandos inválidos\n"
+msgstr "Erro: Parâmetros da linha de comandos não suportados\n"
 
 #: wmic.rc:26
-#, fuzzy
-#| msgid "Property set not found.\n"
 msgid "Error: Alias not found\n"
-msgstr "Propriedade não encontrada.\n"
+msgstr "Erro: alias não encontrado\n"
 
 #: wmic.rc:27
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "Error: Invalid query\n"
-msgstr "Erro: Nome de chave inválido\n"
+msgstr "Erro: Consulta inválida\n"
 
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
