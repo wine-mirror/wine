@@ -29,3 +29,8 @@ HRESULT WINAPI AtlCreateRegistrar(IRegistrar** ppReg)
     FIXME("(%p) stub\n", ppReg);
     return E_NOTIMPL;
 }
+
+DWORD WINAPI AtlGetVersion(void *pReserved)
+{
+   return 0x0800;
+}
