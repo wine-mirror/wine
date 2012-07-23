@@ -174,12 +174,12 @@ static unsigned get_stream_by_name(struct pdb_reader* reader, const char* name)
 
     if (reader->read_file == pdb_jg_read_file)
     {
-        str = &reader->u.jg.root->names[0];
+        str = reader->u.jg.root->names;
         cbstr = reader->u.jg.root->cbNames;
     }
     else
     {
-        str = &reader->u.ds.root->names[0];
+        str = reader->u.ds.root->names;
         cbstr = reader->u.ds.root->cbNames;
     }
 
@@ -740,7 +740,7 @@ static void pdb_jg_dump(void)
                reader.u.jg.root->Age,
                (unsigned)reader.u.jg.root->cbNames);
 
-        pdw = (DWORD*)(&reader.u.jg.root->names[0] + reader.u.jg.root->cbNames);
+        pdw = (DWORD*)(reader.u.jg.root->names + reader.u.jg.root->cbNames);
         numok = *pdw++;
         count = *pdw++;
         printf("\tStreams directory:\n"
@@ -895,7 +895,7 @@ static void pdb_ds_dump(void)
                reader.u.ds.root->Age,
                get_guid_str(&reader.u.ds.root->guid),
                reader.u.ds.root->cbNames);
-        pdw = (DWORD*)(&reader.u.ds.root->names[0] + reader.u.ds.root->cbNames);
+        pdw = (DWORD*)(reader.u.ds.root->names + reader.u.ds.root->cbNames);
         numok = *pdw++;
         count = *pdw++;
         printf("\tStreams directory:\n"

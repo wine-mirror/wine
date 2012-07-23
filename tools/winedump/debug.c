@@ -500,7 +500,7 @@ static const char *get_coff_name( const IMAGE_SYMBOL *coff_sym, const char *coff
       {
          memcpy(namebuff, coff_sym->N.ShortName, 8);
          namebuff[8] = '\0';
-         nampnt = &namebuff[0];
+         nampnt = namebuff;
       }
    else
       {

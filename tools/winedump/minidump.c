@@ -102,7 +102,7 @@ void mdmp_dump(void)
         case ThreadListStream:
         {
             const MINIDUMP_THREAD_LIST* mtl = (const MINIDUMP_THREAD_LIST*)stream;
-            const MINIDUMP_THREAD*      mt = &mtl->Threads[0];
+            const MINIDUMP_THREAD*      mt = mtl->Threads;
             unsigned int                i;
 
             printf("Threads: %u\n", mtl->NumberOfThreads);
@@ -129,7 +129,7 @@ void mdmp_dump(void)
         case 0xFFF0:
         {
             const MINIDUMP_MODULE_LIST* mml = (const MINIDUMP_MODULE_LIST*)stream;
-            const MINIDUMP_MODULE*      mm = &mml->Modules[0];
+            const MINIDUMP_MODULE*      mm = mml->Modules;
             unsigned int                i;
             const char*                 p1;
             const char*                 p2;
@@ -224,7 +224,7 @@ void mdmp_dump(void)
         case MemoryListStream:
         {
             const MINIDUMP_MEMORY_LIST*         mml = (const MINIDUMP_MEMORY_LIST*)stream;
-            const MINIDUMP_MEMORY_DESCRIPTOR*   mmd = &mml->MemoryRanges[0];
+            const MINIDUMP_MEMORY_DESCRIPTOR*   mmd = mml->MemoryRanges;
             unsigned int                        i;
 
             printf("Memory Ranges: %u\n", mml->NumberOfMemoryRanges);
@@ -333,7 +333,7 @@ void mdmp_dump(void)
             if (msi->ProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL)
             {
                 printf("  x86.VendorId: %.12s\n",
-                       (const char*)&msi->Cpu.X86CpuInfo.VendorId[0]);
+                       (const char*)msi->Cpu.X86CpuInfo.VendorId);
                 printf("  x86.VersionInformation: %x\n",
                        msi->Cpu.X86CpuInfo.VersionInformation);
                 printf("  x86.FeatureInformation: %x\n",
