@@ -4182,6 +4182,66 @@ static void test_mime_types_col(IOmNavigator *nav)
     ok(!ref, "ref=%d\n", ref);
 }
 
+#define test_framebase_name(a,b) _test_framebase_name(__LINE__,a,b)
+static void _test_framebase_name(unsigned line, IHTMLElement *elem, const char *name)
+{
+    BSTR str = (void*)0xdeadbeef;
+    IHTMLFrameBase *fbase;
+    HRESULT hres;
+
+    hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLFrameBase, (void**)&fbase);
+    ok(hres == S_OK, "Could not get IHTMLFrameBase interface: 0x%08x\n", hres);
+
+    hres = IHTMLFrameBase_get_name(fbase, &str);
+    ok_(__FILE__,line)(hres == S_OK, "IHTMLFrameBase_get_name failed: 0x%08x\n", hres);
+    if(name)
+        ok_(__FILE__,line)(!strcmp_wa(str, name), "name = %s, expected %s\n", wine_dbgstr_w(str), name);
+    else
+        ok_(__FILE__,line)(!str, "name = %s, expected NULL\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    IHTMLFrameBase_Release(fbase);
+}
+
+static void test_framebase(IUnknown *unk)
+{
+    IHTMLFrameBase *fbase;
+    BSTR str;
+    HRESULT hres;
+
+    /* get/put scrolling */
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLFrameBase, (void**)&fbase);
+    ok(hres == S_OK, "Could not get IHTMLFrameBase interface: 0x%08x\n", hres);
+
+    hres = IHTMLFrameBase_get_scrolling(fbase, &str);
+    ok(hres == S_OK, "IHTMLFrameBase_get_scrolling failed: 0x%08x\n", hres);
+    ok(!strcmp_wa(str, "auto"), "get_scrolling should have given 'auto', gave: %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    str = a2bstr("no");
+    hres = IHTMLFrameBase_put_scrolling(fbase, str);
+    ok(hres == S_OK, "IHTMLFrameBase_put_scrolling failed: 0x%08x\n", hres);
+    SysFreeString(str);
+
+    hres = IHTMLFrameBase_get_scrolling(fbase, &str);
+    ok(hres == S_OK, "IHTMLFrameBase_get_scrolling failed: 0x%08x\n", hres);
+    ok(!strcmp_wa(str, "no"), "get_scrolling should have given 'no', gave: %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    str = a2bstr("junk");
+    hres = IHTMLFrameBase_put_scrolling(fbase, str);
+    ok(hres == E_INVALIDARG, "IHTMLFrameBase_put_scrolling should have failed "
+            "with E_INVALIDARG, instead: 0x%08x\n", hres);
+    SysFreeString(str);
+
+    hres = IHTMLFrameBase_get_scrolling(fbase, &str);
+    ok(hres == S_OK, "IHTMLFrameBase_get_scrolling failed: 0x%08x\n", hres);
+    ok(!strcmp_wa(str, "no"), "get_scrolling should have given 'no', gave: %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    IHTMLFrameBase_Release(fbase);
+}
+
 #define test_language_string(a,b) _test_language_string(__LINE__,a,b)
 static void _test_language_string(unsigned line, const WCHAR *lang, LCID lcid)
 {
@@ -4938,6 +4998,7 @@ static void test_iframe_elem(IHTMLElement *elem)
     };
 
     test_frame_doc((IUnknown*)elem, TRUE);
+    test_framebase((IUnknown*)elem);
 
     content_window = get_frame_content_window((IUnknown*)elem);
     test_window_length(content_window, 0);
@@ -6111,8 +6172,6 @@ static void test_frameset(IHTMLDocument2 *doc)
     IHTMLWindow2 *window;
     IHTMLFramesCollection2 *frames;
     IHTMLElement *elem;
-    IHTMLFrameBase *fbase;
-    BSTR str;
     HRESULT hres;
 
     window = get_doc_window(doc);
@@ -6142,57 +6201,16 @@ static void test_frameset(IHTMLDocument2 *doc)
     elem = get_doc_elem_by_id(doc, "nm1");
     test_elem_id((IUnknown*)elem, "fr1");
 
-    /* get/put scrolling */
-    hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLFrameBase, (void**)&fbase);
-    ok(hres == S_OK, "Could not get IHTMLFrameBase interface: 0x%08x\n", hres);
+    test_framebase((IUnknown*)elem);
+    test_framebase_name(elem, "nm1");
 
-    hres = IHTMLFrameBase_get_scrolling(fbase, &str);
-    ok(hres == S_OK, "IHTMLFrameBase_get_scrolling failed: 0x%08x\n", hres);
-    ok(!strcmp_wa(str, "auto"), "get_scrolling should have given 'auto', gave: %s\n", wine_dbgstr_w(str));
-    SysFreeString(str);
-
-    str = a2bstr("no");
-    hres = IHTMLFrameBase_put_scrolling(fbase, str);
-    ok(hres == S_OK, "IHTMLFrameBase_put_scrolling failed: 0x%08x\n", hres);
-    SysFreeString(str);
-
-    hres = IHTMLFrameBase_get_scrolling(fbase, &str);
-    ok(hres == S_OK, "IHTMLFrameBase_get_scrolling failed: 0x%08x\n", hres);
-    ok(!strcmp_wa(str, "no"), "get_scrolling should have given 'no', gave: %s\n", wine_dbgstr_w(str));
-    SysFreeString(str);
-
-    str = a2bstr("junk");
-    hres = IHTMLFrameBase_put_scrolling(fbase, str);
-    ok(hres == E_INVALIDARG, "IHTMLFrameBase_put_scrolling should have failed "
-            "with E_INVALIDARG, instead: 0x%08x\n", hres);
-    SysFreeString(str);
-
-    hres = IHTMLFrameBase_get_scrolling(fbase, &str);
-    ok(hres == S_OK, "IHTMLFrameBase_get_scrolling failed: 0x%08x\n", hres);
-    ok(!strcmp_wa(str, "no"), "get_scrolling should have given 'no', gave: %s\n", wine_dbgstr_w(str));
-    SysFreeString(str);
-
-    /* get_name */
-    hres = IHTMLFrameBase_get_name(fbase, &str);
-    ok(hres == S_OK, "IHTMLFrameBase_get_name failed: 0x%08x\n", hres);
-    ok(!strcmp_wa(str, "nm1"), "get_name should have given 'nm1', gave: %s\n", wine_dbgstr_w(str));
-    SysFreeString(str);
-
-    IHTMLFrameBase_Release(fbase);
     IHTMLElement_Release(elem);
 
     /* get_name with no name attr */
     elem = get_doc_elem_by_id(doc, "fr3");
-    hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLFrameBase, (void**)&fbase);
-    ok(hres == S_OK, "Could not get IHTMLFrameBase interface: 0x%08x\n", hres);
-
-    hres = IHTMLFrameBase_get_name(fbase, &str);
-    ok(hres == S_OK, "IHTMLFrameBase_get_name failed: 0x%08x\n", hres);
-    ok(str == NULL, "get_name should have given 'null', gave: %s\n", wine_dbgstr_w(str));
-    SysFreeString(str);
-
-    IHTMLFrameBase_Release(fbase);
+    test_framebase_name(elem, NULL);
     IHTMLElement_Release(elem);
+
     IHTMLWindow2_Release(window);
 }
 
