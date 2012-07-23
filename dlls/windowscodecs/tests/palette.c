@@ -402,6 +402,16 @@ static void test_predefined_palette(void)
                           &IID_IWICImagingFactory, (void **)&factory);
     ok(hr == S_OK, "CoCreateInstance error %#x\n", hr);
 
+    hr = IWICImagingFactory_CreatePalette(factory, &palette);
+    ok(hr == S_OK, "CreatePalette error %#x\n", hr);
+    hr = IWICPalette_InitializePredefined(palette, WICBitmapPaletteTypeCustom, FALSE);
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
+    hr = IWICPalette_InitializePredefined(palette, WICBitmapPaletteTypeMedianCut, FALSE);
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
+    hr = IWICPalette_InitializePredefined(palette, 0x0f, FALSE);
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
+    IWICPalette_Release(palette);
+
     for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
     {
         hr = IWICImagingFactory_CreatePalette(factory, &palette);

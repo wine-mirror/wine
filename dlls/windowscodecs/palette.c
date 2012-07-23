@@ -403,8 +403,8 @@ static HRESULT WINAPI PaletteImpl_InitializePredefined(IWICPalette *iface,
         break;
 
     default:
-        FIXME("(%p,%u,%d): stub\n", iface, type, add_transparent);
-        return E_NOTIMPL;
+        WARN("invalid palette type %u\n", type);
+        return E_INVALIDARG;
     }
 
     EnterCriticalSection(&This->lock);
