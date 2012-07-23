@@ -89,18 +89,11 @@ HPALETTE PALETTE_Init(void)
 
     palPtr->palVersion = 0x300;
     palPtr->palNumEntries = 20;
-    for (i = 0; i < 10; i++)
+    for (i = 0; i < 20; i++)
     {
-        palPtr->palPalEntry[i].peRed   = entries[i].rgbRed;
-        palPtr->palPalEntry[i].peGreen = entries[i].rgbGreen;
-        palPtr->palPalEntry[i].peBlue  = entries[i].rgbBlue;
-        palPtr->palPalEntry[i].peFlags = 0;
-    }
-    for (i = 10; i < 20; i++)
-    {
-        palPtr->palPalEntry[i].peRed   = entries[236 + i].rgbRed;
-        palPtr->palPalEntry[i].peGreen = entries[236 + i].rgbGreen;
-        palPtr->palPalEntry[i].peBlue  = entries[236 + i].rgbBlue;
+        palPtr->palPalEntry[i].peRed   = entries[i < 10 ? i : 236 + i].rgbRed;
+        palPtr->palPalEntry[i].peGreen = entries[i < 10 ? i : 236 + i].rgbGreen;
+        palPtr->palPalEntry[i].peBlue  = entries[i < 10 ? i : 236 + i].rgbBlue;
         palPtr->palPalEntry[i].peFlags = 0;
     }
     return CreatePalette( palPtr );
