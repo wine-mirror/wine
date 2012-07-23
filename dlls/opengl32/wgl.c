@@ -34,36 +34,16 @@
 #include "winnt.h"
 
 #include "opengl_ext.h"
-#ifdef HAVE_GL_GLU_H
-#undef far
-#undef near
-#include <GL/glu.h>
-#endif
 #define WGL_WGLEXT_PROTOTYPES
 #include "wine/wglext.h"
 #include "wine/gdi_driver.h"
 #include "wine/wgl_driver.h"
-#include "wine/library.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wgl);
 WINE_DECLARE_DEBUG_CHANNEL(opengl);
 
-#ifdef SONAME_LIBGLU
-#define MAKE_FUNCPTR(f) static typeof(f) * p##f;
-MAKE_FUNCPTR(gluNewTess)
-MAKE_FUNCPTR(gluDeleteTess)
-MAKE_FUNCPTR(gluTessBeginContour)
-MAKE_FUNCPTR(gluTessBeginPolygon)
-MAKE_FUNCPTR(gluTessCallback)
-MAKE_FUNCPTR(gluTessEndContour)
-MAKE_FUNCPTR(gluTessEndPolygon)
-MAKE_FUNCPTR(gluTessVertex)
-#undef MAKE_FUNCPTR
-#endif /* SONAME_LIBGLU */
-
 static HMODULE opengl32_handle;
-static void* libglu_handle = NULL;
 
 extern struct opengl_funcs null_opengl_funcs;
 
@@ -1198,42 +1178,51 @@ BOOL WINAPI wglUseFontBitmapsW(HDC hdc, DWORD first, DWORD count, DWORD listBase
     return wglUseFontBitmaps_common( hdc, first, count, listBase, TRUE );
 }
 
-#ifdef SONAME_LIBGLU
+/* FIXME: should probably have a glu.h header */
 
-static void *load_libglu(void)
+typedef struct GLUtesselator GLUtesselator;
+typedef void (WINAPI *_GLUfuncptr)(void);
+
+#define GLU_TESS_BEGIN  100100
+#define GLU_TESS_VERTEX 100101
+#define GLU_TESS_END    100102
+
+static GLUtesselator * (WINAPI *pgluNewTess)(void);
+static void (WINAPI *pgluDeleteTess)(GLUtesselator *tess);
+static void (WINAPI *pgluTessBeginPolygon)(GLUtesselator *tess, void *polygon_data);
+static void (WINAPI *pgluTessEndPolygon)(GLUtesselator *tess);
+static void (WINAPI *pgluTessCallback)(GLUtesselator *tess, GLenum which, _GLUfuncptr fn);
+static void (WINAPI *pgluTessBeginContour)(GLUtesselator *tess);
+static void (WINAPI *pgluTessEndContour)(GLUtesselator *tess);
+static void (WINAPI *pgluTessVertex)(GLUtesselator *tess, GLdouble *location, GLvoid* data);
+
+static HMODULE load_libglu(void)
 {
+    static const WCHAR glu32W[] = {'g','l','u','3','2','.','d','l','l',0};
     static int already_loaded;
-    void *handle;
+    static HMODULE module;
 
-    if (already_loaded) return libglu_handle;
+    if (already_loaded) return module;
     already_loaded = 1;
 
-    TRACE("Trying to load GLU library: %s\n", SONAME_LIBGLU);
-    handle = wine_dlopen(SONAME_LIBGLU, RTLD_NOW, NULL, 0);
-    if (!handle)
+    TRACE("Trying to load GLU library\n");
+    module = LoadLibraryW( glu32W );
+    if (!module)
     {
-        WARN("Failed to load %s\n", SONAME_LIBGLU);
+        WARN("Failed to load glu32\n");
         return NULL;
     }
-
-#define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(handle, #f, NULL, 0)) == NULL) goto sym_not_found;
-LOAD_FUNCPTR(gluNewTess)
-LOAD_FUNCPTR(gluDeleteTess)
-LOAD_FUNCPTR(gluTessBeginContour)
-LOAD_FUNCPTR(gluTessBeginPolygon)
-LOAD_FUNCPTR(gluTessCallback)
-LOAD_FUNCPTR(gluTessEndContour)
-LOAD_FUNCPTR(gluTessEndPolygon)
-LOAD_FUNCPTR(gluTessVertex)
+#define LOAD_FUNCPTR(f) p##f = (void *)GetProcAddress( module, #f )
+    LOAD_FUNCPTR(gluNewTess);
+    LOAD_FUNCPTR(gluDeleteTess);
+    LOAD_FUNCPTR(gluTessBeginContour);
+    LOAD_FUNCPTR(gluTessBeginPolygon);
+    LOAD_FUNCPTR(gluTessCallback);
+    LOAD_FUNCPTR(gluTessEndContour);
+    LOAD_FUNCPTR(gluTessEndPolygon);
+    LOAD_FUNCPTR(gluTessVertex);
 #undef LOAD_FUNCPTR
-    libglu_handle = handle;
-    return handle;
-
-sym_not_found:
-    WARN("Unable to load function ptrs from libGLU\n");
-    /* Close the library as we won't use it */
-    wine_dlclose(handle, NULL, 0);
-    return NULL;
+    return module;
 }
 
 static void fixed_to_double(POINTFX fixed, UINT em_size, GLdouble vertex[3])
@@ -1243,7 +1232,7 @@ static void fixed_to_double(POINTFX fixed, UINT em_size, GLdouble vertex[3])
     vertex[2] = 0.0;
 }
 
-static void tess_callback_vertex(GLvoid *vertex)
+static void WINAPI tess_callback_vertex(GLvoid *vertex)
 {
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
     GLdouble *dbl = vertex;
@@ -1251,14 +1240,14 @@ static void tess_callback_vertex(GLvoid *vertex)
     funcs->gl.p_glVertex3dv(vertex);
 }
 
-static void tess_callback_begin(GLenum which)
+static void WINAPI tess_callback_begin(GLenum which)
 {
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
     TRACE("%d\n", which);
     funcs->gl.p_glBegin(which);
 }
 
-static void tess_callback_end(void)
+static void WINAPI tess_callback_end(void)
 {
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
     TRACE("\n");
@@ -1292,7 +1281,7 @@ static BOOL wglUseFontOutlines_common(HDC hdc,
 
     if (!load_libglu())
     {
-        ERR("libGLU is required for this function but isn't loaded\n");
+        ERR("glu32 is required for this function but isn't available\n");
         return FALSE;
     }
 
@@ -1425,24 +1414,6 @@ error_in_list:
 
 }
 
-#else /* SONAME_LIBGLU */
-
-static BOOL wglUseFontOutlines_common(HDC hdc,
-                                      DWORD first,
-                                      DWORD count,
-                                      DWORD listBase,
-                                      FLOAT deviation,
-                                      FLOAT extrusion,
-                                      int format,
-                                      LPGLYPHMETRICSFLOAT lpgmf,
-                                      BOOL unicode)
-{
-    FIXME("Unable to compile in wglUseFontOutlines support without GL/glu.h\n");
-    return FALSE;
-}
-
-#endif /* SONAME_LIBGLU */
-
 /***********************************************************************
  *		wglUseFontOutlinesA (OPENGL32.@)
  */
@@ -1560,13 +1531,6 @@ BOOL WINAPI DECLSPEC_HOTPATCH wglSwapBuffers( HDC hdc )
     return GdiSwapBuffers(hdc);
 }
 
-/**********************************************************************/
-
-static void process_detach(void)
-{
-  if (libglu_handle) wine_dlclose(libglu_handle, NULL, 0);
-}
-
 /***********************************************************************
  *           OpenGL initialisation routine
  */
@@ -1581,9 +1545,6 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
         break;
     case DLL_THREAD_ATTACH:
         NtCurrentTeb()->glTable = &null_opengl_funcs;
-        break;
-    case DLL_PROCESS_DETACH:
-        process_detach();
         break;
     }
     return TRUE;
