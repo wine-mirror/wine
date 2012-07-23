@@ -241,6 +241,24 @@ static void generate_halftone64_palette(DWORD *entries, UINT count)
     }
 }
 
+static void generate_halftone125_palette(DWORD *entries, UINT count)
+{
+    static const BYTE halftone_values[5] = { 0x00,0x40,0x80,0xbf,0xff };
+    UINT i;
+
+    assert(count == 126);
+
+    for (i = 0; i < 125; i++)
+    {
+        entries[i] = 0xff000000;
+        entries[i] |= halftone_values[i%5];
+        entries[i] |= halftone_values[(i/5)%5] << 8;
+        entries[i] |= halftone_values[(i/25)%5] << 16;
+    }
+
+    entries[i] = 0xffc0c0c0;
+}
+
 static void generate_halftone256_palette(DWORD *entries, UINT count)
 {
     static const BYTE halftone_values_b[4] = { 0x00,0x55,0xaa,0xff };
@@ -276,6 +294,7 @@ static void test_predefined_palette(void)
         { WICBitmapPaletteTypeFixedHalftone8, 0, 0, 16, { 0 } },
         { WICBitmapPaletteTypeFixedHalftone27, 0, 0, 28, { 0 } },
         { WICBitmapPaletteTypeFixedHalftone64, 0, 0, 72, { 0 } },
+        { WICBitmapPaletteTypeFixedHalftone125, 0, 0, 126, { 0 } },
         { WICBitmapPaletteTypeFixedHalftone256, 0, 0, 256, { 0 } },
     };
     IWICImagingFactory *factory;
@@ -337,6 +356,8 @@ static void test_predefined_palette(void)
                 generate_halftone27_palette(td[i].color, td[i].count);
             else if (td[i].type == WICBitmapPaletteTypeFixedHalftone64)
                 generate_halftone64_palette(td[i].color, td[i].count);
+            else if (td[i].type == WICBitmapPaletteTypeFixedHalftone125)
+                generate_halftone125_palette(td[i].color, td[i].count);
             else if (td[i].type == WICBitmapPaletteTypeFixedHalftone256)
                 generate_halftone256_palette(td[i].color, td[i].count);
 
