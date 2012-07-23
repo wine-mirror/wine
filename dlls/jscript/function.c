@@ -571,6 +571,20 @@ static const builtin_info_t Function_info = {
     NULL
 };
 
+static const builtin_prop_t FunctionInst_props[] = {
+    {argumentsW,             Function_arguments,             0},
+    {lengthW,                Function_length,                0}
+};
+
+static const builtin_info_t FunctionInst_info = {
+    JSCLASS_FUNCTION,
+    {NULL, Function_value, 0},
+    sizeof(FunctionInst_props)/sizeof(*FunctionInst_props),
+    FunctionInst_props,
+    Function_destructor,
+    NULL
+};
+
 static HRESULT create_function(script_ctx_t *ctx, const builtin_info_t *builtin_info, DWORD flags,
         BOOL funcprot, jsdisp_t *prototype, FunctionInstance **ret)
 {
@@ -582,11 +596,11 @@ static HRESULT create_function(script_ctx_t *ctx, const builtin_info_t *builtin_
         return E_OUTOFMEMORY;
 
     if(funcprot)
-        hres = init_dispex(&function->dispex, ctx, &Function_info, prototype);
+        hres = init_dispex(&function->dispex, ctx, builtin_info, prototype);
     else if(builtin_info)
         hres = init_dispex_from_constr(&function->dispex, ctx, builtin_info, ctx->function_constr);
     else
-        hres = init_dispex_from_constr(&function->dispex, ctx, &Function_info, ctx->function_constr);
+        hres = init_dispex_from_constr(&function->dispex, ctx, &FunctionInst_info, ctx->function_constr);
     if(FAILED(hres))
         return hres;
 
@@ -835,14 +849,14 @@ HRESULT init_function_constr(script_ctx_t *ctx, jsdisp_t *object_prototype)
 
     static const WCHAR FunctionW[] = {'F','u','n','c','t','i','o','n',0};
 
-    hres = create_function(ctx, NULL, PROPF_CONSTR, TRUE, object_prototype, &prot);
+    hres = create_function(ctx, &Function_info, PROPF_CONSTR, TRUE, object_prototype, &prot);
     if(FAILED(hres))
         return hres;
 
     prot->value_proc = FunctionProt_value;
     prot->name = prototypeW;
 
-    hres = create_function(ctx, NULL, PROPF_CONSTR|1, TRUE, &prot->dispex, &constr);
+    hres = create_function(ctx, &FunctionInst_info, PROPF_CONSTR|1, TRUE, &prot->dispex, &constr);
     if(SUCCEEDED(hres)) {
         constr->value_proc = FunctionConstr_value;
         constr->name = FunctionW;
