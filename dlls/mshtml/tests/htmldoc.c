@@ -6874,7 +6874,7 @@ static void test_HTMLDocument_http(BOOL with_wbapp)
         test_put_href(doc, FALSE, "#test", "http://www.winehq.org/#test", FALSE, TRUE, 0);
         test_travellog(doc);
     }
-    test_put_href(doc, FALSE, NULL, "javascript:external&&undefined", TRUE, FALSE, 0);
+    test_put_href(doc, FALSE, NULL, "javascript:external%20&&undefined", TRUE, FALSE, 0);
     test_put_href(doc, FALSE, NULL, "about:blank", FALSE, FALSE, support_wbapp ? DWL_EXPECT_HISTUPDATE : 0);
     test_put_href(doc, TRUE, NULL, "about:replace", FALSE, FALSE, 0);
 

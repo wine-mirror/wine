@@ -1789,6 +1789,12 @@ static void navigate_javascript_proc(task_t *_task)
     if(FAILED(hres))
         return;
 
+    hres = UrlUnescapeW(code, NULL, NULL, URL_UNESCAPE_INPLACE);
+    if(FAILED(hres)) {
+        SysFreeString(code);
+        return;
+    }
+
     set_download_state(window->doc_obj, 1);
 
     V_VT(&v) = VT_EMPTY;
