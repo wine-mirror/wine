@@ -232,6 +232,34 @@ static WICColor *generate_halftone125_palette(UINT *count)
     return entries;
 }
 
+static WICColor *generate_halftone216_palette(UINT *count)
+{
+    WICColor *entries;
+    UINT i;
+
+    *count = 224;
+    entries = HeapAlloc(GetProcessHeap(), 0, 224 * sizeof(WICColor));
+    if (!entries) return NULL;
+
+    for (i = 0; i < 216; i++)
+    {
+        static const BYTE halftone_values[6] = { 0x00,0x33,0x66,0x99,0xcc,0xff };
+        entries[i] = 0xff000000;
+        entries[i] |= halftone_values[i%6];
+        entries[i] |= halftone_values[(i/6)%6] << 8;
+        entries[i] |= halftone_values[(i/36)%6] << 16;
+    }
+
+    for (i = 216; i < 224; i++)
+    {
+        static const DWORD halftone[8] = { 0xc0c0c0, 0x808080, 0x800000, 0x008000,
+                                           0x000080, 0x808000, 0x800080, 0x008080 };
+        entries[i] = 0xff000000;
+        entries[i] |= halftone[i-216];
+    }
+    return entries;
+}
+
 static WICColor *generate_halftone256_palette(UINT *count)
 {
     WICColor *entries;
@@ -309,6 +337,11 @@ static HRESULT WINAPI PaletteImpl_InitializePredefined(IWICPalette *iface,
 
     case WICBitmapPaletteTypeFixedHalftone125:
         colors = generate_halftone125_palette(&count);
+        if (!colors) return E_OUTOFMEMORY;
+        break;
+
+    case WICBitmapPaletteTypeFixedHalftone216:
+        colors = generate_halftone216_palette(&count);
         if (!colors) return E_OUTOFMEMORY;
         break;
 
