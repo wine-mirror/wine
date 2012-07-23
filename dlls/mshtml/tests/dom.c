@@ -4239,6 +4239,19 @@ static void test_framebase(IUnknown *unk)
     ok(!strcmp_wa(str, "no"), "get_scrolling should have given 'no', gave: %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
+    hres = IHTMLFrameBase_get_frameBorder(fbase, &str);
+    ok(hres == S_OK, "get_frameBorder failed: %08x\n", hres);
+    ok(!str, "frameBorder = %s\n", wine_dbgstr_w(str));
+
+    str = a2bstr("1");
+    hres = IHTMLFrameBase_put_frameBorder(fbase, str);
+    ok(hres == S_OK, "put_frameBorder failed: %08x\n", hres);
+    SysFreeString(str);
+
+    hres = IHTMLFrameBase_get_frameBorder(fbase, &str);
+    ok(hres == S_OK, "get_frameBorder failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "1"), "frameBorder = %s, expected \"1\"\n", wine_dbgstr_w(str));
+
     IHTMLFrameBase_Release(fbase);
 }
 
