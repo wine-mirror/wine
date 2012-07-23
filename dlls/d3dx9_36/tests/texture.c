@@ -758,6 +758,9 @@ static void test_D3DXFilterTexture(IDirect3DDevice9 *device)
 
     if (SUCCEEDED(hr))
     {
+        hr = D3DXFilterTexture((IDirect3DBaseTexture9*) tex, NULL, D3DX_DEFAULT, D3DX_FILTER_NONE);
+        ok(hr == D3D_OK, "D3DXFilterTexture returned %#x, expected %#x\n", hr, D3D_OK);
+
         hr = D3DXFilterTexture((IDirect3DBaseTexture9*) tex, NULL, 0, D3DX_FILTER_NONE);
         ok(hr == D3D_OK, "D3DXFilterTexture returned %#x, expected %#x\n", hr, D3D_OK);
 

@@ -78,7 +78,9 @@ HRESULT WINAPI D3DXFilterTexture(IDirect3DBaseTexture9 *texture,
     if ((filter & 0xFFFF) > D3DX_FILTER_BOX && filter != D3DX_DEFAULT)
         return D3DERR_INVALIDCALL;
 
-    if (srclevel >= IDirect3DBaseTexture9_GetLevelCount(texture))
+    if (srclevel == D3DX_DEFAULT)
+        srclevel = 0;
+    else if (srclevel >= IDirect3DBaseTexture9_GetLevelCount(texture))
         return D3DERR_INVALIDCALL;
 
     switch (type = IDirect3DBaseTexture9_GetType(texture))
