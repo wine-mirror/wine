@@ -48,7 +48,6 @@
 
 #include "x11drv.h"
 #include "winternl.h"
-#include "wine/wgl_driver.h"
 #include "wine/library.h"
 #include "wine/debug.h"
 
@@ -59,6 +58,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wgl);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 WINE_DECLARE_DEBUG_CHANNEL(fps);
 
+#include "wine/wgl_driver.h"
 #include "wine/wglext.h"
 
 /* For compatibility with old Mesa headers */
