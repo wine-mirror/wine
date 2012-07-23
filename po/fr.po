@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-06-22 07:46+0100\n"
+"PO-Revision-Date: 2012-07-23 07:34+0100\n"
 "Last-Translator: Frédéric Delanoy <frederic.delanoy@gmail.com>\n"
 "Language-Team: none\n"
 "Language: French\n"
@@ -3479,16 +3479,16 @@ msgid "Test Force Feedback"
 msgstr "Tester le retour de force"
 
 #: joy.rc:63
-#, fuzzy
-#| msgid "Available formats"
 msgid "Available Effects"
-msgstr "Formats disponibles"
+msgstr "Effets disponibles"
 
 #: joy.rc:65
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."
 msgstr ""
+"Appuyez sur un bouton du contrôleur pour activer l'effet choisi. La "
+"direction de l'effet peut être modifiée en utilisant l'axe du contrôleur."
 
 #: joy.rc:28
 msgid "Game Controllers"
