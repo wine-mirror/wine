@@ -952,7 +952,7 @@ static BOOL convertible_data_type(struct hlsl_type *type)
     return type->type != HLSL_CLASS_OBJECT;
 }
 
-BOOL implicit_compatible_data_types(struct hlsl_type *t1, struct hlsl_type *t2)
+static BOOL implicit_compatible_data_types(struct hlsl_type *t1, struct hlsl_type *t2)
 {
     if (!convertible_data_type(t1) || !convertible_data_type(t2))
         return FALSE;
@@ -1043,7 +1043,7 @@ static BOOL expr_compatible_data_types(struct hlsl_type *t1, struct hlsl_type *t
     return FALSE;
 }
 
-enum hlsl_base_type expr_common_base_type(enum hlsl_base_type t1, enum hlsl_base_type t2)
+static enum hlsl_base_type expr_common_base_type(enum hlsl_base_type t1, enum hlsl_base_type t2)
 {
     enum hlsl_base_type types[] =
     {
@@ -1740,7 +1740,7 @@ static void debug_dump_ir_constant(const struct hlsl_ir_constant *constant)
         TRACE("}");
 }
 
-const char *debug_expr_op(const struct hlsl_ir_expr *expr)
+static const char *debug_expr_op(const struct hlsl_ir_expr *expr)
 {
     static const char *op_names[] =
     {
@@ -1843,7 +1843,7 @@ static void debug_dump_ir_constructor(const struct hlsl_ir_constructor *construc
     TRACE(")");
 }
 
-const char *debug_writemask(DWORD writemask)
+static const char *debug_writemask(DWORD writemask)
 {
     char string[5], components[] = {'x', 'y', 'z', 'w'};
     unsigned int i = 0, pos = 0;
@@ -1859,7 +1859,7 @@ const char *debug_writemask(DWORD writemask)
     return wine_dbg_sprintf(".%s", string);
 }
 
-void debug_dump_ir_assignment(const struct hlsl_ir_assignment *assign)
+static void debug_dump_ir_assignment(const struct hlsl_ir_assignment *assign)
 {
     TRACE("= (");
     debug_dump_instr(assign->lhs);
@@ -1870,7 +1870,7 @@ void debug_dump_ir_assignment(const struct hlsl_ir_assignment *assign)
     TRACE(")");
 }
 
-void debug_dump_instr(const struct hlsl_ir_node *instr)
+static void debug_dump_instr(const struct hlsl_ir_node *instr)
 {
     switch (instr->type)
     {
