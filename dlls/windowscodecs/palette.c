@@ -133,13 +133,13 @@ static WICColor *generate_gray256_palette(UINT *count)
     return entries;
 }
 
-static WICColor *generate_halftone8_palette(UINT *count)
+static WICColor *generate_halftone8_palette(UINT *count, BOOL add_transparent)
 {
     WICColor *entries;
     UINT i;
 
-    *count = 16;
-    entries = HeapAlloc(GetProcessHeap(), 0, 16 * sizeof(WICColor));
+    *count = add_transparent ? 17 : 16;
+    entries = HeapAlloc(GetProcessHeap(), 0, *count * sizeof(WICColor));
     if (!entries) return NULL;
 
     for (i = 0; i < 8; i++)
@@ -157,16 +157,20 @@ static WICColor *generate_halftone8_palette(UINT *count)
         entries[i] = 0xff000000;
         entries[i] |= halftone[i-8];
     }
+
+    if (add_transparent)
+        entries[i] = 0;
+
     return entries;
 }
 
-static WICColor *generate_halftone27_palette(UINT *count)
+static WICColor *generate_halftone27_palette(UINT *count, BOOL add_transparent)
 {
     WICColor *entries;
     UINT i;
 
-    *count = 28;
-    entries = HeapAlloc(GetProcessHeap(), 0, 28 * sizeof(WICColor));
+    *count = add_transparent ? 29 : 28;
+    entries = HeapAlloc(GetProcessHeap(), 0, *count * sizeof(WICColor));
     if (!entries) return NULL;
 
     for (i = 0; i < 27; i++)
@@ -178,17 +182,20 @@ static WICColor *generate_halftone27_palette(UINT *count)
         entries[i] |= halftone_values[(i/9)%3] << 16;
     }
 
-    entries[i] = 0xffc0c0c0;
+    entries[i++] = 0xffc0c0c0;
+    if (add_transparent)
+        entries[i] = 0;
+
     return entries;
 }
 
-static WICColor *generate_halftone64_palette(UINT *count)
+static WICColor *generate_halftone64_palette(UINT *count, BOOL add_transparent)
 {
     WICColor *entries;
     UINT i;
 
-    *count = 72;
-    entries = HeapAlloc(GetProcessHeap(), 0, 72 * sizeof(WICColor));
+    *count = add_transparent ? 73 : 72;
+    entries = HeapAlloc(GetProcessHeap(), 0, *count * sizeof(WICColor));
     if (!entries) return NULL;
 
     for (i = 0; i < 64; i++)
@@ -207,16 +214,20 @@ static WICColor *generate_halftone64_palette(UINT *count)
         entries[i] = 0xff000000;
         entries[i] |= halftone[i-64];
     }
+
+    if (add_transparent)
+        entries[i] = 0;
+
     return entries;
 }
 
-static WICColor *generate_halftone125_palette(UINT *count)
+static WICColor *generate_halftone125_palette(UINT *count, BOOL add_transparent)
 {
     WICColor *entries;
     UINT i;
 
-    *count = 126;
-    entries = HeapAlloc(GetProcessHeap(), 0, 126 * sizeof(WICColor));
+    *count = add_transparent ? 127 : 126;
+    entries = HeapAlloc(GetProcessHeap(), 0, *count * sizeof(WICColor));
     if (!entries) return NULL;
 
     for (i = 0; i < 125; i++)
@@ -228,17 +239,20 @@ static WICColor *generate_halftone125_palette(UINT *count)
         entries[i] |= halftone_values[(i/25)%5] << 16;
     }
 
-    entries[i] = 0xffc0c0c0;
+    entries[i++] = 0xffc0c0c0;
+    if (add_transparent)
+        entries[i] = 0;
+
     return entries;
 }
 
-static WICColor *generate_halftone216_palette(UINT *count)
+static WICColor *generate_halftone216_palette(UINT *count, BOOL add_transparent)
 {
     WICColor *entries;
     UINT i;
 
-    *count = 224;
-    entries = HeapAlloc(GetProcessHeap(), 0, 224 * sizeof(WICColor));
+    *count = add_transparent ? 225 : 224;
+    entries = HeapAlloc(GetProcessHeap(), 0, *count * sizeof(WICColor));
     if (!entries) return NULL;
 
     for (i = 0; i < 216; i++)
@@ -257,16 +271,20 @@ static WICColor *generate_halftone216_palette(UINT *count)
         entries[i] = 0xff000000;
         entries[i] |= halftone[i-216];
     }
+
+    if (add_transparent)
+        entries[i] = 0;
+
     return entries;
 }
 
-static WICColor *generate_halftone252_palette(UINT *count)
+static WICColor *generate_halftone252_palette(UINT *count, BOOL add_transparent)
 {
     WICColor *entries;
     UINT i;
 
-    *count = 252;
-    entries = HeapAlloc(GetProcessHeap(), 0, 252 * sizeof(WICColor));
+    *count = add_transparent ? 253 : 252;
+    entries = HeapAlloc(GetProcessHeap(), 0, *count * sizeof(WICColor));
     if (!entries) return NULL;
 
     for (i = 0; i < 252; i++)
@@ -278,10 +296,14 @@ static WICColor *generate_halftone252_palette(UINT *count)
         entries[i] |= halftone_values_g[(i/6)%7] << 8;
         entries[i] |= halftone_values_rb[(i/42)%6] << 16;
     }
+
+    if (add_transparent)
+        entries[i] = 0;
+
     return entries;
 }
 
-static WICColor *generate_halftone256_palette(UINT *count)
+static WICColor *generate_halftone256_palette(UINT *count, BOOL add_transparent)
 {
     WICColor *entries;
     UINT i;
@@ -299,6 +321,10 @@ static WICColor *generate_halftone256_palette(UINT *count)
         entries[i] |= halftone_values_gr[(i/4)%8] << 8;
         entries[i] |= halftone_values_gr[(i/32)%8] << 16;
     }
+
+    if (add_transparent)
+        entries[255] = 0;
+
     return entries;
 }
 
@@ -342,37 +368,37 @@ static HRESULT WINAPI PaletteImpl_InitializePredefined(IWICPalette *iface,
         break;
 
     case WICBitmapPaletteTypeFixedHalftone8:
-        colors = generate_halftone8_palette(&count);
+        colors = generate_halftone8_palette(&count, add_transparent);
         if (!colors) return E_OUTOFMEMORY;
         break;
 
     case WICBitmapPaletteTypeFixedHalftone27:
-        colors = generate_halftone27_palette(&count);
+        colors = generate_halftone27_palette(&count, add_transparent);
         if (!colors) return E_OUTOFMEMORY;
         break;
 
     case WICBitmapPaletteTypeFixedHalftone64:
-        colors = generate_halftone64_palette(&count);
+        colors = generate_halftone64_palette(&count, add_transparent);
         if (!colors) return E_OUTOFMEMORY;
         break;
 
     case WICBitmapPaletteTypeFixedHalftone125:
-        colors = generate_halftone125_palette(&count);
+        colors = generate_halftone125_palette(&count, add_transparent);
         if (!colors) return E_OUTOFMEMORY;
         break;
 
     case WICBitmapPaletteTypeFixedHalftone216:
-        colors = generate_halftone216_palette(&count);
+        colors = generate_halftone216_palette(&count, add_transparent);
         if (!colors) return E_OUTOFMEMORY;
         break;
 
     case WICBitmapPaletteTypeFixedHalftone252:
-        colors = generate_halftone252_palette(&count);
+        colors = generate_halftone252_palette(&count, add_transparent);
         if (!colors) return E_OUTOFMEMORY;
         break;
 
     case WICBitmapPaletteTypeFixedHalftone256:
-        colors = generate_halftone256_palette(&count);
+        colors = generate_halftone256_palette(&count, add_transparent);
         if (!colors) return E_OUTOFMEMORY;
         break;
 
