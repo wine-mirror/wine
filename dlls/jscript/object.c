@@ -211,6 +211,14 @@ static const builtin_info_t Object_info = {
     NULL
 };
 
+static const builtin_info_t ObjectInst_info = {
+    JSCLASS_OBJECT,
+    {NULL, Object_value, 0},
+    0, NULL,
+    Object_destructor,
+    NULL
+};
+
 static HRESULT ObjectConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
         VARIANT *retv, jsexcept_t *ei)
 {
@@ -282,7 +290,7 @@ HRESULT create_object(script_ctx_t *ctx, jsdisp_t *constr, jsdisp_t **ret)
     if(!object)
         return E_OUTOFMEMORY;
 
-    hres = init_dispex_from_constr(object, ctx, &Object_info, constr ? constr : ctx->object_constr);
+    hres = init_dispex_from_constr(object, ctx, &ObjectInst_info, constr ? constr : ctx->object_constr);
     if(FAILED(hres)) {
         heap_free(object);
         return hres;
