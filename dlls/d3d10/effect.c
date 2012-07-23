@@ -981,7 +981,7 @@ static HRESULT parse_fx10_anonymous_shader(struct d3d10_effect *e, struct d3d10_
     return S_OK;
 }
 
-const struct d3d10_effect_state_property_info *get_property_info(UINT id)
+static const struct d3d10_effect_state_property_info *get_property_info(UINT id)
 {
     unsigned int i;
 
