@@ -21,6 +21,7 @@ C_SRCS = \
 LEX_SRCS   = parser.l
 BISON_SRCS = parser.y
 
+EXTRADEFS   = -DDEFAULT_INCLUDE_DIR=\"$(includedir)/windows/\"
 INSTALLDIRS = $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)
 
 all: $(PROGRAMS)

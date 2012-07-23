@@ -643,6 +643,10 @@ int main(int argc,char *argv[])
     }
   }
 
+#ifdef DEFAULT_INCLUDE_DIR
+  wpp_add_include_path(DEFAULT_INCLUDE_DIR);
+#endif
+
   if(do_everything) {
     set_everything(TRUE);
   }
