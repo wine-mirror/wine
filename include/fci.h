@@ -25,7 +25,9 @@
 extern "C" {
 #endif /* defined(__cplusplus) */
 
+#ifndef _WIN64
 #include <pshpack4.h>
+#endif
 
 #ifndef INCLUDED_TYPES_FCI_FDI
 #define INCLUDED_TYPES_FCI_FDI 1
@@ -250,7 +252,9 @@ BOOL __cdecl FCIDestroy(HFCI hfci);
 
 /**********************************************************************/
 
+#ifndef _WIN64
 #include <poppack.h>
+#endif
 
 #ifdef __cplusplus
 } /* extern "C" */
