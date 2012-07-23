@@ -110,7 +110,6 @@ static HRESULT Object_hasOwnProperty(script_ctx_t *ctx, vdisp_t *jsthis, WORD fl
         VARIANT *retv, jsexcept_t *ei)
 {
     BSTR name;
-    BOOL result;
     DISPID id;
     HRESULT hres;
 
@@ -130,14 +129,21 @@ static HRESULT Object_hasOwnProperty(script_ctx_t *ctx, vdisp_t *jsthis, WORD fl
         return hres;
 
     if(is_jsdisp(jsthis)) {
-        result = jsdisp_is_own_prop(jsthis->u.jsdisp, name);
+        VARIANT_BOOL result;
+
+        hres = jsdisp_is_own_prop(jsthis->u.jsdisp, name, &result);
+        if(FAILED(hres))
+            return hres;
+
         if(retv) {
             V_VT(retv) = VT_BOOL;
             V_BOOL(retv) = result;
         }
 
         return S_OK;
-    } else if(is_dispex(jsthis)) {
+    }
+
+    if(is_dispex(jsthis)) {
         hres = IDispatchEx_GetDispID(jsthis->u.dispex, name,
                 make_grfdex(ctx, fdexNameCaseSensitive), &id);
     } else {
