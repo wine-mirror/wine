@@ -198,6 +198,19 @@ tmp = "aA1~`!@#$%^&*()_+=-][{}';:/.,<>?\|";
 ok(escape(tmp) === "aA1%7E%60%21@%23%24%25%5E%26*%28%29_+%3D-%5D%5B%7B%7D%27%3B%3A/.%2C%3C%3E%3F%7C", "escape('" + tmp + "') = " + escape(tmp));
 ok(unescape(escape(tmp)) === tmp, "unescape(escape('" + tmp + "')) = " + unescape(escape(tmp)));
 
+ok(Object.prototype.hasOwnProperty('toString'), "Object.prototype.hasOwnProperty('toString') is false");
+ok(Object.prototype.hasOwnProperty('isPrototypeOf'), "Object.prototype.hasOwnProperty('isPrototypeOf') is false");
+ok(Function.prototype.hasOwnProperty('call'), "Function.prototype.hasOwnProperty('call') is false");
+
+obj = new Object();
+
+ok(!obj.hasOwnProperty('toString'), "obj.hasOwnProperty('toString') is true");
+ok(!obj.hasOwnProperty('isPrototypeOf'), "obj.hasOwnProperty('isPrototypeOf') is true");
+ok(!Object.hasOwnProperty('toString'), "Object.hasOwnProperty('toString') is true");
+ok(!Object.hasOwnProperty('isPrototypeOf'), "Object.hasOwnProperty('isPrototypeOf') is true");
+ok(!parseFloat.hasOwnProperty('call'), "parseFloat.hasOwnProperty('call') is true");
+ok(!Function.hasOwnProperty('call'), "Function.hasOwnProperty('call') is true");
+
 tmp = "" + new Object();
 ok(tmp === "[object Object]", "'' + new Object() = " + tmp);
 (tmp = new Array).f = Object.prototype.toString;
@@ -224,6 +237,11 @@ ok(tmp === "[object Object]", "toString.call(this) = " + tmp);
 ok(tmp === "[object Object]", "toString.call(arguments) = " + tmp);
 tmp = Object.prototype.toString.call(new VBArray(createArray()));
 ok(tmp === "[object Object]", "toString.call(new VBArray()) = " + tmp);
+
+function TSTestConstr() {}
+TSTestConstr.prototype = { toString: function() { return "test"; } };
+obj = new TSTestConstr();
+ok(obj.toString() === "test", "obj.toString() = " + obj.toString());
 
 ok(Object(1) instanceof Number, "Object(1) is not instance of Number");
 ok(Object("") instanceof String, "Object('') is not instance of String");
