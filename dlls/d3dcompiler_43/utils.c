@@ -1442,7 +1442,7 @@ struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *left, enum parse_assig
         type = left->data_type;
     else
     {
-        FIXME("Assignments with writemasks not supported yet.");
+        FIXME("Assignments with writemasks not supported yet.\n");
         type = NULL;
     }
     assign->node.type = HLSL_IR_ASSIGNMENT;
@@ -1478,7 +1478,7 @@ struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *left, enum parse_assig
         converted_rhs = implicit_conversion(rhs, type, &rhs->loc);
         if (!converted_rhs)
         {
-            ERR("Couldn't implicitly convert expression to %s.", debug_hlsl_type(type));
+            ERR("Couldn't implicitly convert expression to %s.\n", debug_hlsl_type(type));
             free_instr(lhs);
             free_instr(rhs);
             return NULL;
