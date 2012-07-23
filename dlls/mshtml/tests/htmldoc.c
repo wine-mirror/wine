@@ -191,6 +191,7 @@ DEFINE_EXPECT(GetPendingUrl);
 DEFINE_EXPECT(ActiveElementChanged);
 DEFINE_EXPECT(IsErrorUrl);
 DEFINE_EXPECT(get_LocationURL);
+DEFINE_EXPECT(CountEntries);
 
 static IUnknown *doc_unk;
 static IMoniker *doc_mon;
@@ -3245,7 +3246,7 @@ static HRESULT WINAPI TravelLog_Clone(ITravelLog *iface, ITravelLog **pptl)
 
 static DWORD WINAPI TravelLog_CountEntries(ITravelLog *iface, IUnknown *punk)
 {
-    ok(0, "unexpected call\n");
+    CHECK_EXPECT(CountEntries);
     return E_NOTIMPL;
 }
 
@@ -5069,6 +5070,8 @@ static void test_download(DWORD flags)
     SET_EXPECT(Exec_ShellDocView_140);
     if(!is_js) {
         SET_EXPECT(Exec_MSHTML_PARSECOMPLETE);
+        if(support_wbapp) /* Called on some Vista installations */
+            SET_EXPECT(CountEntries);
         SET_EXPECT(Exec_HTTPEQUIV_DONE);
     }
     SET_EXPECT(SetStatusText);
@@ -5158,6 +5161,8 @@ static void test_download(DWORD flags)
     CLEAR_CALLED(Exec_ShellDocView_140);
     if(!is_js) {
         CHECK_CALLED(Exec_MSHTML_PARSECOMPLETE);
+        if(support_wbapp) /* Called on some Vista installations */
+            CLEAR_CALLED(CountEntries);
         CHECK_CALLED(Exec_HTTPEQUIV_DONE);
     }
     SET_CALLED(SetStatusText);
