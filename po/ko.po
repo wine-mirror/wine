@@ -3445,16 +3445,16 @@ msgid "Test Force Feedback"
 msgstr "강제 피드백 시험"
 
 #: joy.rc:63
-#, fuzzy
-#| msgid "Available formats"
 msgid "Available Effects"
-msgstr "가능한 형식"
+msgstr "가능한 효과들"
 
 #: joy.rc:65
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."
 msgstr ""
+"선택된 효과를 활성화시키려면 컨트롤러에서 아무 버튼이나 누르십시오.이 효과방"
+"향은 컨트롤러 축으로 변경할 수 있습니다."
 
 #: joy.rc:28
 msgid "Game Controllers"
