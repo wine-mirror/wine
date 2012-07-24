@@ -6246,10 +6246,10 @@ static IHTMLDocument2 *create_docfrag(IHTMLDocument2 *doc)
 
 static void test_docfrag(IHTMLDocument2 *doc)
 {
+    IHTMLDocument2 *frag, *owner_doc, *doc_node;
     IHTMLElement *div, *body, *br;
     IHTMLElementCollection *col;
     IHTMLLocation *location;
-    IHTMLDocument2 *frag;
     HRESULT hres;
 
     static const elem_type_t all_types[] = {
@@ -6287,6 +6287,14 @@ static void test_docfrag(IHTMLDocument2 *doc)
     ok(hres == S_OK, "get_all failed: %08x\n", hres);
     test_elem_collection((IUnknown*)col, all_types, sizeof(all_types)/sizeof(all_types[0]));
     IHTMLElementCollection_Release(col);
+
+    div = test_create_elem(frag, "div");
+    owner_doc = get_owner_doc((IUnknown*)div);
+    doc_node = get_doc_node(doc);
+    ok(iface_cmp((IUnknown*)owner_doc, (IUnknown*)doc_node), "owner_doc != doc_node\n");
+    IHTMLDocument2_Release(doc_node);
+    IHTMLDocument2_Release(owner_doc);
+    IHTMLElement_Release(div);
 
     IHTMLDocument2_Release(frag);
 }
