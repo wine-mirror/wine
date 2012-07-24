@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-07-22 16:28-0300\n"
+"PO-Revision-Date: 2012-07-23 22:30-0300\n"
 "Last-Translator: Gustavo Henrique Milaré <gugamilare@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Portuguese (Brazil)\n"
@@ -8545,8 +8545,8 @@ msgid ""
 "The device name is already being used as an alias by this application. Use a "
 "unique alias."
 msgstr ""
-"O nome do dispositivo já está sendo usado como um alias por este aplicativo. "
-"Use um alias único."
+"O nome do dispositivo já está sendo usado como um apelido por este "
+"aplicativo. Use um apelido único."
 
 #: winmm.rc:63
 msgid ""
@@ -8685,8 +8685,8 @@ msgid ""
 "The specified alias is already being used in this application. Use a unique "
 "alias."
 msgstr ""
-"O alias especificado já está sendo utilizado neste aplicativo. Use um alias "
-"único."
+"O apelido especificado já está sendo utilizado neste aplicativo. Use um "
+"apelido único."
 
 #: winmm.rc:85
 msgid "The specified parameter is invalid for this command."
@@ -8705,7 +8705,7 @@ msgid ""
 "The specified command requires an alias, file, driver, or device name. "
 "Please supply one."
 msgstr ""
-"O comando especificado requer um alias, arquivo, driver ou nome de "
+"O comando especificado requer um apelido, arquivo, driver ou nome de "
 "dispositivo. Por favor, forneça um."
 
 #: winmm.rc:88
@@ -8750,7 +8750,7 @@ msgstr ""
 
 #: winmm.rc:94
 msgid "You must specify an alias when using the 'new' parameter."
-msgstr "Você precisa especificar um alias quando utilizar o parâmetro 'new'."
+msgstr "Você precisa especificar um apelido quando utilizar o parâmetro 'new'."
 
 #: winmm.rc:95
 msgid "Cannot use the 'notify' flag with auto-opened devices."
@@ -9102,7 +9102,7 @@ msgstr "Objeto Não Encontrado"
 
 #: wldap32.rc:60
 msgid "Alias Problem"
-msgstr "Problema de Alias"
+msgstr "Problema de Apelido"
 
 #: wldap32.rc:61
 msgid "Invalid DN Syntax"
@@ -9114,7 +9114,7 @@ msgstr "É Leaf"
 
 #: wldap32.rc:63
 msgid "Alias Dereference Problem"
-msgstr "Problema na Referência de Alias"
+msgstr "Problema na Referência de Apelido"
 
 #: wldap32.rc:75
 msgid "Inappropriate Authentication"
@@ -13707,7 +13707,7 @@ msgstr "Erro: Parâmetros da linha de comandos não suportados\n"
 
 #: wmic.rc:26
 msgid "Error: Alias not found\n"
-msgstr "Erro: alias não encontrado\n"
+msgstr "Erro: apelido não encontrado\n"
 
 #: wmic.rc:27
 msgid "Error: Invalid query\n"
