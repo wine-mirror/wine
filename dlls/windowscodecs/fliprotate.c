@@ -60,7 +60,7 @@ static HRESULT WINAPI FlipRotator_QueryInterface(IWICBitmapFlipRotator *iface, R
         IsEqualIID(&IID_IWICBitmapSource, iid) ||
         IsEqualIID(&IID_IWICBitmapFlipRotator, iid))
     {
-        *ppv = This;
+        *ppv = &This->IWICBitmapFlipRotator_iface;
     }
     else
     {
