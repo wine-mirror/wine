@@ -239,6 +239,13 @@ ok(!RegExp.hasOwnProperty('exec'), "RegExp.hasOwnProperty('exec') is true");
 ok(!RegExp.hasOwnProperty('source'), "RegExp.hasOwnProperty('source') is true");
 ok(RegExp.prototype.hasOwnProperty('source'), "RegExp.prototype.hasOwnProperty('source') is false");
 
+obj = new String();
+ok(!obj.hasOwnProperty('charAt'), "obj.hasOwnProperty('charAt') is true");
+ok(obj.hasOwnProperty('length'), "obj.hasOwnProperty('length') is false");
+ok(!String.hasOwnProperty('charAt'), "String.hasOwnProperty('charAt') is true");
+ok(String.prototype.hasOwnProperty('charAt'), "String.prototype.hasOwnProperty('charAt') is false");
+ok(String.prototype.hasOwnProperty('length'), "String.prototype.hasOwnProperty('length') is false");
+
 tmp = "" + new Object();
 ok(tmp === "[object Object]", "'' + new Object() = " + tmp);
 (tmp = new Array).f = Object.prototype.toString;

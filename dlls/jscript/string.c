@@ -1536,6 +1536,19 @@ static const builtin_info_t String_info = {
     NULL
 };
 
+static const builtin_prop_t StringInst_props[] = {
+    {lengthW,                String_length,                0}
+};
+
+static const builtin_info_t StringInst_info = {
+    JSCLASS_STRING,
+    {NULL, String_value, 0},
+    sizeof(StringInst_props)/sizeof(*StringInst_props),
+    StringInst_props,
+    String_destructor,
+    NULL
+};
+
 /* ECMA-262 3rd Edition    15.5.3.2 */
 static HRESULT StringConstr_fromCharCode(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
         unsigned argc, VARIANT *argv, VARIANT *retv, jsexcept_t *ei)
@@ -1635,7 +1648,7 @@ static HRESULT string_alloc(script_ctx_t *ctx, jsdisp_t *object_prototype, Strin
     if(object_prototype)
         hres = init_dispex(&string->dispex, ctx, &String_info, object_prototype);
     else
-        hres = init_dispex_from_constr(&string->dispex, ctx, &String_info, ctx->string_constr);
+        hres = init_dispex_from_constr(&string->dispex, ctx, &StringInst_info, ctx->string_constr);
     if(FAILED(hres)) {
         heap_free(string);
         return hres;
