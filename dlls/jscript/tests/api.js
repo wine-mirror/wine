@@ -211,6 +211,12 @@ ok(!Object.hasOwnProperty('isPrototypeOf'), "Object.hasOwnProperty('isPrototypeO
 ok(!parseFloat.hasOwnProperty('call'), "parseFloat.hasOwnProperty('call') is true");
 ok(!Function.hasOwnProperty('call'), "Function.hasOwnProperty('call') is true");
 
+obj = new Array();
+ok(Array.prototype.hasOwnProperty('sort'), "Array.prototype.hasOwnProperty('sort') is false");
+ok(Array.prototype.hasOwnProperty('length'), "Array.prototype.hasOwnProperty('length') is false");
+ok(!obj.hasOwnProperty('sort'), "obj.hasOwnProperty('sort') is true");
+ok(obj.hasOwnProperty('length'), "obj.hasOwnProperty('length') is true");
+
 tmp = "" + new Object();
 ok(tmp === "[object Object]", "'' + new Object() = " + tmp);
 (tmp = new Array).f = Object.prototype.toString;

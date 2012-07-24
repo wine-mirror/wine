@@ -1100,6 +1100,19 @@ static const builtin_info_t Array_info = {
     Array_on_put
 };
 
+static const builtin_prop_t ArrayInst_props[] = {
+    {lengthW,                Array_length,               0}
+};
+
+static const builtin_info_t ArrayInst_info = {
+    JSCLASS_ARRAY,
+    {NULL, Array_value, 0},
+    sizeof(ArrayInst_props)/sizeof(*ArrayInst_props),
+    ArrayInst_props,
+    Array_destructor,
+    Array_on_put
+};
+
 static HRESULT ArrayConstr_value(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned argc, VARIANT *argv,
         VARIANT *retv, jsexcept_t *ei)
 {
@@ -1161,7 +1174,7 @@ static HRESULT alloc_array(script_ctx_t *ctx, jsdisp_t *object_prototype, ArrayI
     if(object_prototype)
         hres = init_dispex(&array->dispex, ctx, &Array_info, object_prototype);
     else
-        hres = init_dispex_from_constr(&array->dispex, ctx, &Array_info, ctx->array_constr);
+        hres = init_dispex_from_constr(&array->dispex, ctx, &ArrayInst_info, ctx->array_constr);
 
     if(FAILED(hres)) {
         heap_free(array);
