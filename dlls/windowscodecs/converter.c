@@ -852,7 +852,7 @@ static HRESULT WINAPI FormatConverter_QueryInterface(IWICFormatConverter *iface,
         IsEqualIID(&IID_IWICBitmapSource, iid) ||
         IsEqualIID(&IID_IWICFormatConverter, iid))
     {
-        *ppv = This;
+        *ppv = &This->IWICFormatConverter_iface;
     }
     else
     {
@@ -1103,8 +1103,8 @@ HRESULT FormatConverter_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** p
     InitializeCriticalSection(&This->lock);
     This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": FormatConverter.lock");
 
-    ret = IUnknown_QueryInterface((IUnknown*)This, iid, ppv);
-    IUnknown_Release((IUnknown*)This);
+    ret = IWICFormatConverter_QueryInterface(&This->IWICFormatConverter_iface, iid, ppv);
+    IWICFormatConverter_Release(&This->IWICFormatConverter_iface);
 
     return ret;
 }
