@@ -3845,23 +3845,22 @@ static void test_effect_state_groups(ID3D10Device *device)
 
     v = effect->lpVtbl->GetVariableByName(effect, "blend_state");
     b = v->lpVtbl->AsBlend(v);
-    memset(&blend_desc, 0, sizeof(blend_desc));
     b->lpVtbl->GetBackingStore(b, 0, &blend_desc);
     ok(!blend_desc.AlphaToCoverageEnable, "Got unexpected AlphaToCoverageEnable %#x.\n",
             blend_desc.AlphaToCoverageEnable);
-    todo_wine ok(blend_desc.BlendEnable[0], "Got unexpected BlendEnable[0] %#x.\n", blend_desc.BlendEnable[0]);
+    ok(blend_desc.BlendEnable[0], "Got unexpected BlendEnable[0] %#x.\n", blend_desc.BlendEnable[0]);
     ok(!blend_desc.BlendEnable[7], "Got unexpected BlendEnable[7] %#x.\n", blend_desc.BlendEnable[7]);
-    todo_wine ok(blend_desc.SrcBlend == D3D10_BLEND_ONE, "Got unexpected SrcBlend %#x.\n", blend_desc.SrcBlend);
-    todo_wine ok(blend_desc.DestBlend == D3D10_BLEND_SRC_COLOR, "Got unexpected DestBlend %#x.\n", blend_desc.DestBlend);
-    todo_wine ok(blend_desc.BlendOp == D3D10_BLEND_OP_MIN, "Got unexpected BlendOp %#x.\n", blend_desc.BlendOp);
-    todo_wine ok(blend_desc.SrcBlendAlpha == D3D10_BLEND_SRC_ALPHA, "Got unexpected SrcBlendAlpha %#x.\n",
+    ok(blend_desc.SrcBlend == D3D10_BLEND_ONE, "Got unexpected SrcBlend %#x.\n", blend_desc.SrcBlend);
+    ok(blend_desc.DestBlend == D3D10_BLEND_SRC_COLOR, "Got unexpected DestBlend %#x.\n", blend_desc.DestBlend);
+    ok(blend_desc.BlendOp == D3D10_BLEND_OP_MIN, "Got unexpected BlendOp %#x.\n", blend_desc.BlendOp);
+    ok(blend_desc.SrcBlendAlpha == D3D10_BLEND_SRC_ALPHA, "Got unexpected SrcBlendAlpha %#x.\n",
             blend_desc.SrcBlendAlpha);
-    todo_wine ok(blend_desc.DestBlendAlpha == D3D10_BLEND_INV_SRC_ALPHA, "Got unexpected DestBlendAlpha %#x.\n",
+    ok(blend_desc.DestBlendAlpha == D3D10_BLEND_INV_SRC_ALPHA, "Got unexpected DestBlendAlpha %#x.\n",
             blend_desc.DestBlendAlpha);
-    todo_wine ok(blend_desc.BlendOpAlpha == D3D10_BLEND_OP_MAX, "Got unexpected BlendOpAlpha %#x.\n", blend_desc.BlendOpAlpha);
-    todo_wine ok(blend_desc.RenderTargetWriteMask[0] == 0x8, "Got unexpected RenderTargetWriteMask[0] %#x.\n",
+    ok(blend_desc.BlendOpAlpha == D3D10_BLEND_OP_MAX, "Got unexpected BlendOpAlpha %#x.\n", blend_desc.BlendOpAlpha);
+    ok(blend_desc.RenderTargetWriteMask[0] == 0x8, "Got unexpected RenderTargetWriteMask[0] %#x.\n",
             blend_desc.RenderTargetWriteMask[0]);
-    todo_wine ok(blend_desc.RenderTargetWriteMask[7] == 0x7, "Got unexpected RenderTargetWriteMask[7] %#x.\n",
+    ok(blend_desc.RenderTargetWriteMask[7] == 0x7, "Got unexpected RenderTargetWriteMask[7] %#x.\n",
             blend_desc.RenderTargetWriteMask[7]);
 
     v = effect->lpVtbl->GetVariableByName(effect, "ds_state");
@@ -4100,17 +4099,17 @@ static void test_effect_state_group_defaults(ID3D10Device *device)
             blend_desc.AlphaToCoverageEnable);
     ok(!blend_desc.BlendEnable[0], "Got unexpected BlendEnable[0] %#x.\n", blend_desc.BlendEnable[0]);
     ok(!blend_desc.BlendEnable[7], "Got unexpected BlendEnable[7] %#x.\n", blend_desc.BlendEnable[7]);
-    todo_wine ok(blend_desc.SrcBlend == D3D10_BLEND_SRC_ALPHA, "Got unexpected SrcBlend %#x.\n", blend_desc.SrcBlend);
-    todo_wine ok(blend_desc.DestBlend == D3D10_BLEND_INV_SRC_ALPHA, "Got unexpected DestBlend %#x.\n", blend_desc.DestBlend);
-    todo_wine ok(blend_desc.BlendOp == D3D10_BLEND_OP_ADD, "Got unexpected BlendOp %#x.\n", blend_desc.BlendOp);
-    todo_wine ok(blend_desc.SrcBlendAlpha == D3D10_BLEND_SRC_ALPHA, "Got unexpected SrcBlendAlpha %#x.\n",
+    ok(blend_desc.SrcBlend == D3D10_BLEND_SRC_ALPHA, "Got unexpected SrcBlend %#x.\n", blend_desc.SrcBlend);
+    ok(blend_desc.DestBlend == D3D10_BLEND_INV_SRC_ALPHA, "Got unexpected DestBlend %#x.\n", blend_desc.DestBlend);
+    ok(blend_desc.BlendOp == D3D10_BLEND_OP_ADD, "Got unexpected BlendOp %#x.\n", blend_desc.BlendOp);
+    ok(blend_desc.SrcBlendAlpha == D3D10_BLEND_SRC_ALPHA, "Got unexpected SrcBlendAlpha %#x.\n",
             blend_desc.SrcBlendAlpha);
-    todo_wine ok(blend_desc.DestBlendAlpha == D3D10_BLEND_INV_SRC_ALPHA, "Got unexpected DestBlendAlpha %#x.\n",
+    ok(blend_desc.DestBlendAlpha == D3D10_BLEND_INV_SRC_ALPHA, "Got unexpected DestBlendAlpha %#x.\n",
             blend_desc.DestBlendAlpha);
-    todo_wine ok(blend_desc.BlendOpAlpha == D3D10_BLEND_OP_ADD, "Got unexpected BlendOpAlpha %#x.\n", blend_desc.BlendOpAlpha);
-    todo_wine ok(blend_desc.RenderTargetWriteMask[0] == 0xf, "Got unexpected RenderTargetWriteMask[0] %#x.\n",
+    ok(blend_desc.BlendOpAlpha == D3D10_BLEND_OP_ADD, "Got unexpected BlendOpAlpha %#x.\n", blend_desc.BlendOpAlpha);
+    ok(blend_desc.RenderTargetWriteMask[0] == 0xf, "Got unexpected RenderTargetWriteMask[0] %#x.\n",
             blend_desc.RenderTargetWriteMask[0]);
-    todo_wine ok(blend_desc.RenderTargetWriteMask[7] == 0xf, "Got unexpected RenderTargetWriteMask[7] %#x.\n",
+    ok(blend_desc.RenderTargetWriteMask[7] == 0xf, "Got unexpected RenderTargetWriteMask[7] %#x.\n",
             blend_desc.RenderTargetWriteMask[7]);
 
     v = effect->lpVtbl->GetVariableByName(effect, "ds_state");
