@@ -380,8 +380,9 @@ static HRESULT WINAPI MetadataHandler_IsDirty(IWICPersistStream *iface)
 static HRESULT WINAPI MetadataHandler_Load(IWICPersistStream *iface,
     IStream *pStm)
 {
-    FIXME("(%p,%p): stub\n", iface, pStm);
-    return E_NOTIMPL;
+    MetadataHandler *This = impl_from_IWICPersistStream(iface);
+    TRACE("(%p,%p)\n", iface, pStm);
+    return IWICPersistStream_LoadEx(&This->IWICPersistStream_iface, pStm, NULL, WICPersistOptionsDefault);
 }
 
 static HRESULT WINAPI MetadataHandler_Save(IWICPersistStream *iface,
