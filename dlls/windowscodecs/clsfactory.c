@@ -44,7 +44,7 @@ typedef struct {
     HRESULT (*constructor)(IUnknown*,REFIID,void**);
 } classinfo;
 
-static classinfo wic_classes[] = {
+static const classinfo wic_classes[] = {
     {&CLSID_WICImagingFactory, ComponentFactory_CreateInstance},
     {&CLSID_WICBmpDecoder, BmpDecoder_CreateInstance},
     {&CLSID_WICPngDecoder, PngDecoder_CreateInstance},
@@ -66,7 +66,7 @@ static classinfo wic_classes[] = {
 typedef struct {
     IClassFactory           IClassFactory_iface;
     LONG                    ref;
-    classinfo               *info;
+    const classinfo         *info;
 } ClassFactoryImpl;
 
 static inline ClassFactoryImpl *impl_from_IClassFactory(IClassFactory *iface)
@@ -142,7 +142,7 @@ static const IClassFactoryVtbl ClassFactoryImpl_Vtbl = {
     ClassFactoryImpl_LockServer
 };
 
-static HRESULT ClassFactoryImpl_Constructor(classinfo *info, REFIID riid, LPVOID *ppv)
+static HRESULT ClassFactoryImpl_Constructor(const classinfo *info, REFIID riid, LPVOID *ppv)
 {
     ClassFactoryImpl *This;
     HRESULT ret;
@@ -165,7 +165,7 @@ static HRESULT ClassFactoryImpl_Constructor(classinfo *info, REFIID riid, LPVOID
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 {
     HRESULT ret;
-    classinfo *info=NULL;
+    const classinfo *info=NULL;
     int i;
 
     TRACE("(%s,%s,%p)\n", debugstr_guid(rclsid), debugstr_guid(iid), ppv);
