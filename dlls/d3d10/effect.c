@@ -23,6 +23,8 @@
 
 #include "d3d10_private.h"
 
+#include <float.h>
+
 WINE_DEFAULT_DEBUG_CHANNEL(d3d10);
 
 #define D3D10_FX10_TYPE_COLUMN_SHIFT    11
@@ -161,6 +163,16 @@ static const struct d3d10_effect_state_property_info property_info[] =
     {0x2a, "BlendState.DestBlendAlpha",                   D3D10_SVT_INT,   1, 1, D3D10_SVT_BLEND,        FIELD_OFFSET(D3D10_BLEND_DESC,         DestBlendAlpha)              },
     {0x2b, "BlendState.BlendOpAlpha",                     D3D10_SVT_INT,   1, 1, D3D10_SVT_BLEND,        FIELD_OFFSET(D3D10_BLEND_DESC,         BlendOpAlpha)                },
     {0x2c, "BlendState.RenderTargetWriteMask",            D3D10_SVT_UINT8, 1, 8, D3D10_SVT_BLEND,        FIELD_OFFSET(D3D10_BLEND_DESC,         RenderTargetWriteMask)       },
+    {0x2d, "SamplerState.Filter",                         D3D10_SVT_INT,   1, 1, D3D10_SVT_SAMPLER,      FIELD_OFFSET(D3D10_SAMPLER_DESC,       Filter)                      },
+    {0x2e, "SamplerState.AddressU",                       D3D10_SVT_INT,   1, 1, D3D10_SVT_SAMPLER,      FIELD_OFFSET(D3D10_SAMPLER_DESC,       AddressU)                    },
+    {0x2f, "SamplerState.AddressV",                       D3D10_SVT_INT,   1, 1, D3D10_SVT_SAMPLER,      FIELD_OFFSET(D3D10_SAMPLER_DESC,       AddressV)                    },
+    {0x30, "SamplerState.AddressW",                       D3D10_SVT_INT,   1, 1, D3D10_SVT_SAMPLER,      FIELD_OFFSET(D3D10_SAMPLER_DESC,       AddressW)                    },
+    {0x31, "SamplerState.MipMapLODBias",                  D3D10_SVT_FLOAT, 1, 1, D3D10_SVT_SAMPLER,      FIELD_OFFSET(D3D10_SAMPLER_DESC,       MipLODBias)                  },
+    {0x32, "SamplerState.MaxAnisotropy",                  D3D10_SVT_UINT,  1, 1, D3D10_SVT_SAMPLER,      FIELD_OFFSET(D3D10_SAMPLER_DESC,       MaxAnisotropy)               },
+    {0x33, "SamplerState.ComparisonFunc",                 D3D10_SVT_INT,   1, 1, D3D10_SVT_SAMPLER,      FIELD_OFFSET(D3D10_SAMPLER_DESC,       ComparisonFunc)              },
+    {0x34, "SamplerState.BorderColor",                    D3D10_SVT_FLOAT, 4, 1, D3D10_SVT_SAMPLER,      FIELD_OFFSET(D3D10_SAMPLER_DESC,       BorderColor)                 },
+    {0x35, "SamplerState.MinLOD",                         D3D10_SVT_FLOAT, 1, 1, D3D10_SVT_SAMPLER,      FIELD_OFFSET(D3D10_SAMPLER_DESC,       MinLOD)                      },
+    {0x36, "SamplerState.MaxLOD",                         D3D10_SVT_FLOAT, 1, 1, D3D10_SVT_SAMPLER,      FIELD_OFFSET(D3D10_SAMPLER_DESC,       MaxLOD)                      },
 };
 
 static const D3D10_RASTERIZER_DESC default_rasterizer_desc =
@@ -202,6 +214,20 @@ static const D3D10_BLEND_DESC default_blend_desc =
     {0xf, 0xf, 0xf, 0xf, 0xf, 0xf, 0xf, 0xf},
 };
 
+static const D3D10_SAMPLER_DESC default_sampler_desc =
+{
+    D3D10_FILTER_MIN_MAG_MIP_POINT,
+    D3D10_TEXTURE_ADDRESS_WRAP,
+    D3D10_TEXTURE_ADDRESS_WRAP,
+    D3D10_TEXTURE_ADDRESS_WRAP,
+    0.0f,
+    16,
+    D3D10_COMPARISON_NEVER,
+    {0.0f, 0.0f, 0.0f, 0.0f},
+    0.0f,
+    FLT_MAX,
+};
+
 struct d3d10_effect_state_storage_info
 {
     D3D_SHADER_VARIABLE_TYPE id;
@@ -214,6 +240,7 @@ static const struct d3d10_effect_state_storage_info d3d10_effect_state_storage_i
     {D3D10_SVT_RASTERIZER,   sizeof(default_rasterizer_desc),    &default_rasterizer_desc   },
     {D3D10_SVT_DEPTHSTENCIL, sizeof(default_depth_stencil_desc), &default_depth_stencil_desc},
     {D3D10_SVT_BLEND,        sizeof(default_blend_desc),         &default_blend_desc        },
+    {D3D10_SVT_SAMPLER,      sizeof(default_sampler_desc),       &default_sampler_desc      },
 };
 
 static BOOL copy_name(const char *ptr, char **name)
@@ -1038,6 +1065,10 @@ static BOOL read_float_value(DWORD value, D3D_SHADER_VARIABLE_TYPE in_type, floa
             out_data[idx] = *(float *)&value;
             return TRUE;
 
+        case D3D10_SVT_INT:
+            out_data[idx] = (INT)value;
+            return TRUE;
+
         default:
             FIXME("Unhandled in_type %#x.\n", in_type);
             return FALSE;
@@ -1571,26 +1602,10 @@ static HRESULT parse_fx10_local_variable(struct d3d10_effect_variable *v, const 
             }
             break;
 
-        case D3D10_SVT_SAMPLER:
-            TRACE("SVT is a state.\n");
-            for (i = 0; i < max(v->type->element_count, 1); ++i)
-            {
-                unsigned int j;
-                DWORD object_count;
-
-                read_dword(ptr, &object_count);
-                TRACE("Object count: %#x.\n", object_count);
-
-                for (j = 0; j < object_count; ++j)
-                {
-                    skip_dword_unknown("state object attribute", ptr, 4);
-                }
-            }
-            break;
-
         case D3D10_SVT_DEPTHSTENCIL:
         case D3D10_SVT_BLEND:
         case D3D10_SVT_RASTERIZER:
+        case D3D10_SVT_SAMPLER:
             {
                 const struct d3d10_effect_state_storage_info *storage_info;
                 unsigned int count = max(v->type->element_count, 1);
