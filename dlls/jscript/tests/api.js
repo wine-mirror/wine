@@ -227,6 +227,11 @@ ok(!obj.hasOwnProperty('getTime'), "obj.hasOwnProperty('getTime') is true");
 ok(!Date.hasOwnProperty('getTime'), "Date.hasOwnProperty('getTime') is true");
 ok(Date.prototype.hasOwnProperty('getTime'), "Date.prototype.hasOwnProperty('getTime') is false");
 
+obj = new Number();
+ok(!obj.hasOwnProperty('toFixed'), "obj.hasOwnProperty('toFixed') is true");
+ok(!Number.hasOwnProperty('toFixed'), "Number.hasOwnProperty('toFixed') is true");
+ok(Number.prototype.hasOwnProperty('toFixed'), "Number.prototype.hasOwnProperty('toFixed') is false");
+
 tmp = "" + new Object();
 ok(tmp === "[object Object]", "'' + new Object() = " + tmp);
 (tmp = new Array).f = Object.prototype.toString;

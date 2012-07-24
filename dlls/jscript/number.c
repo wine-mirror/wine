@@ -543,6 +543,14 @@ static const builtin_info_t Number_info = {
     NULL
 };
 
+static const builtin_info_t NumberInst_info = {
+    JSCLASS_NUMBER,
+    {NULL, Number_value, 0},
+    0, NULL,
+    NULL,
+    NULL
+};
+
 static HRESULT NumberConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
         VARIANT *retv, jsexcept_t *ei)
 {
@@ -605,7 +613,7 @@ static HRESULT alloc_number(script_ctx_t *ctx, jsdisp_t *object_prototype, Numbe
     if(object_prototype)
         hres = init_dispex(&number->dispex, ctx, &Number_info, object_prototype);
     else
-        hres = init_dispex_from_constr(&number->dispex, ctx, &Number_info, ctx->number_constr);
+        hres = init_dispex_from_constr(&number->dispex, ctx, &NumberInst_info, ctx->number_constr);
     if(FAILED(hres))
         return hres;
 
