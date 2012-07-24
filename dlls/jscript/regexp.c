@@ -3807,6 +3807,23 @@ static const builtin_info_t RegExp_info = {
     NULL
 };
 
+static const builtin_prop_t RegExpInst_props[] = {
+    {globalW,                RegExp_global,                0},
+    {ignoreCaseW,            RegExp_ignoreCase,            0},
+    {lastIndexW,             RegExp_lastIndex,             0},
+    {multilineW,             RegExp_multiline,             0},
+    {sourceW,                RegExp_source,                0}
+};
+
+static const builtin_info_t RegExpInst_info = {
+    JSCLASS_REGEXP,
+    {NULL, RegExp_value, 0},
+    sizeof(RegExpInst_props)/sizeof(*RegExpInst_props),
+    RegExpInst_props,
+    RegExp_destructor,
+    NULL
+};
+
 static HRESULT alloc_regexp(script_ctx_t *ctx, jsdisp_t *object_prototype, RegExpInstance **ret)
 {
     RegExpInstance *regexp;
@@ -3819,7 +3836,7 @@ static HRESULT alloc_regexp(script_ctx_t *ctx, jsdisp_t *object_prototype, RegEx
     if(object_prototype)
         hres = init_dispex(&regexp->dispex, ctx, &RegExp_info, object_prototype);
     else
-        hres = init_dispex_from_constr(&regexp->dispex, ctx, &RegExp_info, ctx->regexp_constr);
+        hres = init_dispex_from_constr(&regexp->dispex, ctx, &RegExpInst_info, ctx->regexp_constr);
 
     if(FAILED(hres)) {
         heap_free(regexp);

@@ -232,6 +232,13 @@ ok(!obj.hasOwnProperty('toFixed'), "obj.hasOwnProperty('toFixed') is true");
 ok(!Number.hasOwnProperty('toFixed'), "Number.hasOwnProperty('toFixed') is true");
 ok(Number.prototype.hasOwnProperty('toFixed'), "Number.prototype.hasOwnProperty('toFixed') is false");
 
+obj = /x/;
+ok(!obj.hasOwnProperty('exec'), "obj.hasOwnProperty('exec') is true");
+ok(obj.hasOwnProperty('source'), "obj.hasOwnProperty('source') is false");
+ok(!RegExp.hasOwnProperty('exec'), "RegExp.hasOwnProperty('exec') is true");
+ok(!RegExp.hasOwnProperty('source'), "RegExp.hasOwnProperty('source') is true");
+ok(RegExp.prototype.hasOwnProperty('source'), "RegExp.prototype.hasOwnProperty('source') is false");
+
 tmp = "" + new Object();
 ok(tmp === "[object Object]", "'' + new Object() = " + tmp);
 (tmp = new Array).f = Object.prototype.toString;
