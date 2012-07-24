@@ -2466,7 +2466,7 @@ int __thiscall basic_filebuf_char_uflow(basic_filebuf_char *this)
         return *basic_streambuf_char__Gninc(&this->base);
 
     c = fgetc(this->file);
-    if(!this->cvt || !c)
+    if(!this->cvt || c==EOF)
         return c;
 
     buf_next = buf;
@@ -2479,7 +2479,7 @@ int __thiscall basic_filebuf_char_uflow(basic_filebuf_char *this)
         case CODECVT_ok:
             if(to_next == &ch) {
                 c = fgetc(this->file);
-                if(!c)
+                if(c == EOF)
                     return EOF;
                 continue;
             }
