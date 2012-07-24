@@ -199,6 +199,29 @@ HRESULT WINAPI WerReportAddDump(HREPORT hReportHandle, HANDLE hProcess, HANDLE h
 }
 
 /***********************************************************************
+ * WerReportAddFile (wer.@)
+ *
+ * Add File to a error report handle.
+ *
+ * PARAMS
+ *  hreport [i] error reporting handle to add the file
+ *  path    [i] path to the file to add
+ *  type    [i] type of the file to add
+ *  flags   [i] flags for the file
+ *
+ * RETURNS
+ *  Success: S_OK
+ *  Failure: A HRESULT error code
+ *
+ */
+HRESULT WINAPI WerReportAddFile(HREPORT hreport, PCWSTR path, WER_FILE_TYPE type, DWORD flags)
+{
+    FIXME("(%p, %s, %d, 0x%x) :stub\n", hreport, debugstr_w(path), type, flags);
+
+    return S_OK;
+}
+
+/***********************************************************************
  * WerReportCloseHandle (wer.@)
  *
  * Close an error reporting handle and free associated resources

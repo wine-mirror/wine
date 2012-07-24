@@ -70,6 +70,16 @@ typedef enum _WER_CONSENT
     WerConsentMax
 } WER_CONSENT;
 
+typedef enum _WER_FILE_TYPE
+{
+    WerFileTypeMicrodump = 1,
+    WerFileTypeMinidump,
+    WerFileTypeHeapdump,
+    WerFileTypeUserDocument,
+    WerFileTypeOther,
+    WerFileTypeMax
+} WER_FILE_TYPE;
+
 typedef enum _WER_REGISTER_FILE_TYPE
 {
     WerRegFileTypeUserDocument = 1,
@@ -166,6 +176,7 @@ typedef struct _WER_EXCEPTION_INFORMATION
 HRESULT WINAPI WerAddExcludedApplication(PCWSTR, BOOL);
 HRESULT WINAPI WerRegisterFile(PCWSTR file, WER_REGISTER_FILE_TYPE regfiletype, DWORD flags);
 HRESULT WINAPI WerRemoveExcludedApplication(PCWSTR, BOOL);
+HRESULT WINAPI WerReportAddFile(HREPORT, PCWSTR, WER_FILE_TYPE, DWORD);
 HRESULT WINAPI WerReportCloseHandle(HREPORT);
 HRESULT WINAPI WerReportCreate(PCWSTR, WER_REPORT_TYPE, PWER_REPORT_INFORMATION, HREPORT*);
 HRESULT WINAPI WerReportSetParameter(HREPORT, DWORD, PCWSTR, PCWSTR);
