@@ -315,7 +315,7 @@ HRESULT WINAPI WerReportSetParameter(HREPORT hreport, DWORD id, PCWSTR name, PCW
 {
     FIXME("(%p, %d, %s, %s) :stub\n", hreport, id, debugstr_w(name), debugstr_w(value));
 
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 /***********************************************************************
