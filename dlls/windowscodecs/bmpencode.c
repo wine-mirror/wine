@@ -87,7 +87,7 @@ static HRESULT WINAPI BmpFrameEncode_QueryInterface(IWICBitmapFrameEncode *iface
     if (IsEqualIID(&IID_IUnknown, iid) ||
         IsEqualIID(&IID_IWICBitmapFrameEncode, iid))
     {
-        *ppv = This;
+        *ppv = &This->IWICBitmapFrameEncode_iface;
     }
     else
     {
@@ -434,7 +434,7 @@ static HRESULT WINAPI BmpEncoder_QueryInterface(IWICBitmapEncoder *iface, REFIID
     if (IsEqualIID(&IID_IUnknown, iid) ||
         IsEqualIID(&IID_IWICBitmapEncoder, iid))
     {
-        *ppv = This;
+        *ppv = &This->IWICBitmapEncoder_iface;
     }
     else
     {
