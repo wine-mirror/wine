@@ -1,0 +1,7 @@
+TESTDLL   = apphelp.dll
+IMPORTS   = ole32
+
+C_SRCS = \
+	apphelp.c
+
+@MAKE_TEST_RULES@
