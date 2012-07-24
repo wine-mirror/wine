@@ -63,7 +63,7 @@ static HRESULT WINAPI BitmapScaler_QueryInterface(IWICBitmapScaler *iface, REFII
         IsEqualIID(&IID_IWICBitmapSource, iid) ||
         IsEqualIID(&IID_IWICBitmapScaler, iid))
     {
-        *ppv = This;
+        *ppv = &This->IWICBitmapScaler_iface;
     }
     else
     {
