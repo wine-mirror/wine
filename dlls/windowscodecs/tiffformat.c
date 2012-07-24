@@ -506,9 +506,10 @@ static HRESULT WINAPI TiffDecoder_QueryInterface(IWICBitmapDecoder *iface, REFII
 
     if (!ppv) return E_INVALIDARG;
 
-    if (IsEqualIID(&IID_IUnknown, iid) || IsEqualIID(&IID_IWICBitmapDecoder, iid))
+    if (IsEqualIID(&IID_IUnknown, iid) ||
+        IsEqualIID(&IID_IWICBitmapDecoder, iid))
     {
-        *ppv = This;
+        *ppv = &This->IWICBitmapDecoder_iface;
     }
     else
     {
@@ -716,7 +717,7 @@ static HRESULT WINAPI TiffDecoder_GetFrame(IWICBitmapDecoder *iface,
             result->cached_tile = HeapAlloc(GetProcessHeap(), 0, decode_info.tile_size);
 
             if (result->cached_tile)
-                *ppIBitmapFrame = (IWICBitmapFrameDecode*)result;
+                *ppIBitmapFrame = &result->IWICBitmapFrameDecode_iface;
             else
             {
                 hr = E_OUTOFMEMORY;
@@ -760,7 +761,7 @@ static HRESULT WINAPI TiffFrameDecode_QueryInterface(IWICBitmapFrameDecode *ifac
         IsEqualIID(&IID_IWICBitmapSource, iid) ||
         IsEqualIID(&IID_IWICBitmapFrameDecode, iid))
     {
-        *ppv = This;
+        *ppv = &This->IWICBitmapFrameDecode_iface;
     }
     else if (IsEqualIID(&IID_IWICMetadataBlockReader, iid))
     {
@@ -1271,8 +1272,8 @@ HRESULT TiffDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     This->tiff = NULL;
     This->initialized = FALSE;
 
-    ret = IUnknown_QueryInterface((IUnknown*)This, iid, ppv);
-    IUnknown_Release((IUnknown*)This);
+    ret = IWICBitmapDecoder_QueryInterface(&This->IWICBitmapDecoder_iface, iid, ppv);
+    IWICBitmapDecoder_Release(&This->IWICBitmapDecoder_iface);
 
     return ret;
 }
@@ -1729,7 +1730,7 @@ static HRESULT WINAPI TiffEncoder_QueryInterface(IWICBitmapEncoder *iface, REFII
     if (IsEqualIID(&IID_IUnknown, iid) ||
         IsEqualIID(&IID_IWICBitmapEncoder, iid))
     {
-        *ppv = This;
+        *ppv = &This->IWICBitmapEncoder_iface;
     }
     else
     {
@@ -1993,8 +1994,8 @@ HRESULT TiffEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     This->num_frames_committed = 0;
     This->committed = FALSE;
 
-    ret = IUnknown_QueryInterface((IUnknown*)This, iid, ppv);
-    IUnknown_Release((IUnknown*)This);
+    ret = IWICBitmapEncoder_QueryInterface(&This->IWICBitmapEncoder_iface, iid, ppv);
+    IWICBitmapEncoder_Release(&This->IWICBitmapEncoder_iface);
 
     return ret;
 }
