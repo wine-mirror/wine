@@ -2305,7 +2305,11 @@ GpStatus WINGDIPAPI GdipGetImageGraphicsContext(GpImage *image,
         stat = GdipCreateFromHDC(hdc, graphics);
 
         if (stat == Ok)
+        {
             (*graphics)->image = image;
+            (*graphics)->xres = image->xres;
+            (*graphics)->yres = image->yres;
+        }
     }
     else if (image->type == ImageTypeMetafile)
         stat = METAFILE_GetGraphicsContext((GpMetafile*)image, graphics);

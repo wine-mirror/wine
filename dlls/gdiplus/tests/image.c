@@ -1517,6 +1517,7 @@ static void test_resolution(void)
 {
     GpStatus stat;
     GpBitmap *bitmap;
+    GpGraphics *graphics;
     REAL res=-1.0;
     HDC screendc;
     int screenxres, screenyres;
@@ -1560,6 +1561,15 @@ static void test_resolution(void)
     expect(Ok, stat);
     expectf((REAL)screenyres, res);
 
+    stat = GdipGetImageGraphicsContext((GpImage*)bitmap, &graphics);
+    expect(Ok, stat);
+    stat = GdipGetDpiX(graphics, &res);
+    expect(Ok, stat);
+    expectf((REAL)screenxres, res);
+    stat = GdipGetDpiY(graphics, &res);
+    expect(Ok, stat);
+    expectf((REAL)screenyres, res);
+
     /* test changing the resolution */
     stat = GdipBitmapSetResolution(bitmap, screenxres*2.0, screenyres*3.0);
     expect(Ok, stat);
@@ -1571,6 +1581,27 @@ static void test_resolution(void)
     stat = GdipGetImageVerticalResolution((GpImage*)bitmap, &res);
     expect(Ok, stat);
     expectf(screenyres*3.0, res);
+
+    stat = GdipGetDpiX(graphics, &res);
+    expect(Ok, stat);
+    expectf((REAL)screenxres, res);
+    stat = GdipGetDpiY(graphics, &res);
+    expect(Ok, stat);
+    expectf((REAL)screenyres, res);
+
+    stat = GdipDeleteGraphics(graphics);
+    expect(Ok, stat);
+
+    stat = GdipGetImageGraphicsContext((GpImage*)bitmap, &graphics);
+    expect(Ok, stat);
+    stat = GdipGetDpiX(graphics, &res);
+    expect(Ok, stat);
+    expectf(screenxres*2.0, res);
+    stat = GdipGetDpiY(graphics, &res);
+    expect(Ok, stat);
+    expectf(screenyres*3.0, res);
+    stat = GdipDeleteGraphics(graphics);
+    expect(Ok, stat);
 
     stat = GdipDisposeImage((GpImage*)bitmap);
     expect(Ok, stat);

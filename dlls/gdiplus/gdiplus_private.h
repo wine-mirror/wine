@@ -156,6 +156,7 @@ struct GpGraphics{
     TextRenderingHint texthint;
     GpUnit unit;    /* page unit */
     REAL scale;     /* page scale */
+    REAL xres, yres;
     GpMatrix * worldtrans; /* world transform */
     BOOL busy;      /* hdc handle obtained by GdipGetDC */
     GpRegion *clip;
