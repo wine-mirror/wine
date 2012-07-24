@@ -58,7 +58,7 @@ static HRESULT WINAPI ComponentFactory_QueryInterface(IWICComponentFactory *ifac
         IsEqualIID(&IID_IWICImagingFactory, iid) ||
         IsEqualIID(&IID_IWICComponentFactory, iid))
     {
-        *ppv = This;
+        *ppv = &This->IWICComponentFactory_iface;
     }
     else
     {
@@ -650,8 +650,8 @@ HRESULT ComponentFactory_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** 
     This->IWICComponentFactory_iface.lpVtbl = &ComponentFactory_Vtbl;
     This->ref = 1;
 
-    ret = IUnknown_QueryInterface((IUnknown*)This, iid, ppv);
-    IUnknown_Release((IUnknown*)This);
+    ret = IWICComponentFactory_QueryInterface(&This->IWICComponentFactory_iface, iid, ppv);
+    IWICComponentFactory_Release(&This->IWICComponentFactory_iface);
 
     return ret;
 }
