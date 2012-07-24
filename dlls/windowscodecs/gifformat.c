@@ -72,7 +72,7 @@ static HRESULT WINAPI GifFrameDecode_QueryInterface(IWICBitmapFrameDecode *iface
         IsEqualIID(&IID_IWICBitmapSource, iid) ||
         IsEqualIID(&IID_IWICBitmapFrameDecode, iid))
     {
-        *ppv = This;
+        *ppv = &This->IWICBitmapFrameDecode_iface;
     }
     else
     {
@@ -299,9 +299,10 @@ static HRESULT WINAPI GifDecoder_QueryInterface(IWICBitmapDecoder *iface, REFIID
 
     if (!ppv) return E_INVALIDARG;
 
-    if (IsEqualIID(&IID_IUnknown, iid) || IsEqualIID(&IID_IWICBitmapDecoder, iid))
+    if (IsEqualIID(&IID_IUnknown, iid) ||
+        IsEqualIID(&IID_IWICBitmapDecoder, iid))
     {
-        *ppv = This;
+        *ppv = &This->IWICBitmapDecoder_iface;
     }
     else
     {
@@ -507,7 +508,7 @@ static HRESULT WINAPI GifDecoder_GetFrame(IWICBitmapDecoder *iface,
     IWICBitmapDecoder_AddRef(iface);
     result->parent = This;
 
-    *ppIBitmapFrame = (IWICBitmapFrameDecode*)result;
+    *ppIBitmapFrame = &result->IWICBitmapFrameDecode_iface;
 
     return S_OK;
 }
@@ -550,8 +551,8 @@ HRESULT GifDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     InitializeCriticalSection(&This->lock);
     This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": GifDecoder.lock");
 
-    ret = IUnknown_QueryInterface((IUnknown*)This, iid, ppv);
-    IUnknown_Release((IUnknown*)This);
+    ret = IWICBitmapDecoder_QueryInterface(&This->IWICBitmapDecoder_iface, iid, ppv);
+    IWICBitmapDecoder_Release(&This->IWICBitmapDecoder_iface);
 
     return ret;
 }
