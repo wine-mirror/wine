@@ -82,9 +82,10 @@ static HRESULT WINAPI ClassFactoryImpl_QueryInterface(IClassFactory *iface,
 
     if (!ppv) return E_INVALIDARG;
 
-    if (IsEqualIID(&IID_IUnknown, iid) || IsEqualIID(&IID_IClassFactory, iid))
+    if (IsEqualIID(&IID_IUnknown, iid) ||
+        IsEqualIID(&IID_IClassFactory, iid))
     {
-        *ppv = This;
+        *ppv = &This->IClassFactory_iface;
     }
     else
     {
@@ -155,8 +156,8 @@ static HRESULT ClassFactoryImpl_Constructor(classinfo *info, REFIID riid, LPVOID
     This->ref = 1;
     This->info = info;
 
-    ret = IClassFactory_QueryInterface((IClassFactory*)This, riid, ppv);
-    IClassFactory_Release((IClassFactory*)This);
+    ret = IClassFactory_QueryInterface(&This->IClassFactory_iface, riid, ppv);
+    IClassFactory_Release(&This->IClassFactory_iface);
 
     return ret;
 }
