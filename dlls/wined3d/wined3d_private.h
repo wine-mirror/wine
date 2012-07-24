@@ -1166,7 +1166,7 @@ struct fragment_caps
 
 struct fragment_pipeline
 {
-    void (*enable_extension)(BOOL enable);
+    void (*enable_extension)(const struct wined3d_gl_info *gl_info, BOOL enable);
     void (*get_caps)(const struct wined3d_gl_info *gl_info, struct fragment_caps *caps);
     HRESULT (*alloc_private)(struct wined3d_device *device);
     void (*free_private)(struct wined3d_device *device);

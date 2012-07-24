@@ -5585,7 +5585,7 @@ struct arbfp_ffp_desc
 };
 
 /* Context activation and GL locking are done by the caller. */
-static void arbfp_enable(BOOL enable)
+static void arbfp_enable(const struct wined3d_gl_info *gl_info, BOOL enable)
 {
     if(enable) {
         glEnable(GL_FRAGMENT_PROGRAM_ARB);

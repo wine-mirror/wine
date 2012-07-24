@@ -1093,7 +1093,7 @@ static const struct StateEntryTemplate atifs_fragmentstate_template[] = {
 };
 
 /* Context activation and GL locking are done by the caller. */
-static void atifs_enable(BOOL enable)
+static void atifs_enable(const struct wined3d_gl_info *gl_info, BOOL enable)
 {
     if(enable) {
         glEnable(GL_FRAGMENT_SHADER_ATI);
