@@ -194,7 +194,7 @@ static HRESULT WINAPI PngDecoder_QueryInterface(IWICBitmapDecoder *iface, REFIID
 
     if (IsEqualIID(&IID_IUnknown, iid) || IsEqualIID(&IID_IWICBitmapDecoder, iid))
     {
-        *ppv = This;
+        *ppv = &This->IWICBitmapDecoder_iface;
     }
     else
     {
@@ -573,11 +573,11 @@ static HRESULT WINAPI PngDecoder_Frame_QueryInterface(IWICBitmapFrameDecode *ifa
         IsEqualIID(&IID_IWICBitmapSource, iid) ||
         IsEqualIID(&IID_IWICBitmapFrameDecode, iid))
     {
-        *ppv = iface;
+        *ppv = &This->IWICBitmapFrameDecode_iface;
     }
     else if (IsEqualIID(&IID_IWICMetadataBlockReader, iid))
     {
-        *ppv = (void**)&This->IWICMetadataBlockReader_iface;
+        *ppv = &This->IWICMetadataBlockReader_iface;
     }
     else
     {
@@ -592,13 +592,13 @@ static HRESULT WINAPI PngDecoder_Frame_QueryInterface(IWICBitmapFrameDecode *ifa
 static ULONG WINAPI PngDecoder_Frame_AddRef(IWICBitmapFrameDecode *iface)
 {
     PngDecoder *This = impl_from_IWICBitmapFrameDecode(iface);
-    return IUnknown_AddRef((IUnknown*)This);
+    return IWICBitmapDecoder_AddRef(&This->IWICBitmapDecoder_iface);
 }
 
 static ULONG WINAPI PngDecoder_Frame_Release(IWICBitmapFrameDecode *iface)
 {
     PngDecoder *This = impl_from_IWICBitmapFrameDecode(iface);
-    return IUnknown_Release((IUnknown*)This);
+    return IWICBitmapDecoder_Release(&This->IWICBitmapDecoder_iface);
 }
 
 static HRESULT WINAPI PngDecoder_Frame_GetSize(IWICBitmapFrameDecode *iface,
@@ -766,13 +766,13 @@ static HRESULT WINAPI PngDecoder_Block_QueryInterface(IWICMetadataBlockReader *i
 static ULONG WINAPI PngDecoder_Block_AddRef(IWICMetadataBlockReader *iface)
 {
     PngDecoder *This = impl_from_IWICMetadataBlockReader(iface);
-    return IUnknown_AddRef((IUnknown*)This);
+    return IWICBitmapDecoder_AddRef(&This->IWICBitmapDecoder_iface);
 }
 
 static ULONG WINAPI PngDecoder_Block_Release(IWICMetadataBlockReader *iface)
 {
     PngDecoder *This = impl_from_IWICMetadataBlockReader(iface);
-    return IUnknown_Release((IUnknown*)This);
+    return IWICBitmapDecoder_Release(&This->IWICBitmapDecoder_iface);
 }
 
 static HRESULT WINAPI PngDecoder_Block_GetContainerFormat(IWICMetadataBlockReader *iface,
@@ -846,8 +846,8 @@ HRESULT PngDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     InitializeCriticalSection(&This->lock);
     This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": PngDecoder.lock");
 
-    ret = IUnknown_QueryInterface((IUnknown*)This, iid, ppv);
-    IUnknown_Release((IUnknown*)This);
+    ret = IWICBitmapDecoder_QueryInterface(&This->IWICBitmapDecoder_iface, iid, ppv);
+    IWICBitmapDecoder_Release(&This->IWICBitmapDecoder_iface);
 
     return ret;
 }
@@ -930,13 +930,13 @@ static HRESULT WINAPI PngFrameEncode_QueryInterface(IWICBitmapFrameEncode *iface
 static ULONG WINAPI PngFrameEncode_AddRef(IWICBitmapFrameEncode *iface)
 {
     PngEncoder *This = impl_from_IWICBitmapFrameEncode(iface);
-    return IUnknown_AddRef((IUnknown*)This);
+    return IWICBitmapEncoder_AddRef(&This->IWICBitmapEncoder_iface);
 }
 
 static ULONG WINAPI PngFrameEncode_Release(IWICBitmapFrameEncode *iface)
 {
     PngEncoder *This = impl_from_IWICBitmapFrameEncode(iface);
-    return IUnknown_Release((IUnknown*)This);
+    return IWICBitmapEncoder_Release(&This->IWICBitmapEncoder_iface);
 }
 
 static HRESULT WINAPI PngFrameEncode_Initialize(IWICBitmapFrameEncode *iface,
@@ -1270,7 +1270,7 @@ static HRESULT WINAPI PngEncoder_QueryInterface(IWICBitmapEncoder *iface, REFIID
     if (IsEqualIID(&IID_IUnknown, iid) ||
         IsEqualIID(&IID_IWICBitmapEncoder, iid))
     {
-        *ppv = This;
+        *ppv = &This->IWICBitmapEncoder_iface;
     }
     else
     {
@@ -1546,8 +1546,8 @@ HRESULT PngEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     InitializeCriticalSection(&This->lock);
     This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": PngEncoder.lock");
 
-    ret = IUnknown_QueryInterface((IUnknown*)This, iid, ppv);
-    IUnknown_Release((IUnknown*)This);
+    ret = IWICBitmapEncoder_QueryInterface(&This->IWICBitmapEncoder_iface, iid, ppv);
+    IWICBitmapEncoder_Release(&This->IWICBitmapEncoder_iface);
 
     return ret;
 }
