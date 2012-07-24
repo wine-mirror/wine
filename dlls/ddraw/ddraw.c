@@ -1568,28 +1568,25 @@ static HRESULT WINAPI ddraw1_GetFourCCCodes(IDirectDraw *iface, DWORD *codes_cou
     return ddraw7_GetFourCCCodes(&ddraw->IDirectDraw7_iface, codes_count, codes);
 }
 
-/*****************************************************************************
- * IDirectDraw7::GetMonitorFrequency
- *
- * Returns the monitor's frequency
- *
- * Exists in Version 1, 2, 4 and 7
- *
- * Params:
- *  Freq: Pointer to a DWORD to write the frequency to
- *
- * Returns
- *  Always returns DD_OK
- *
- *****************************************************************************/
-static HRESULT WINAPI ddraw7_GetMonitorFrequency(IDirectDraw7 *iface, DWORD *Freq)
+static HRESULT WINAPI ddraw7_GetMonitorFrequency(IDirectDraw7 *iface, DWORD *frequency)
 {
-    FIXME("iface %p, frequency %p stub!\n", iface, Freq);
+    struct ddraw *ddraw = impl_from_IDirectDraw7(iface);
+    struct wined3d_display_mode mode;
+    HRESULT hr;
 
-    /* Ideally this should be in WineD3D, as it concerns the screen setup,
-     * but for now this should make the games happy
-     */
-    *Freq = 60;
+    TRACE("iface %p, frequency %p.\n", iface, frequency);
+
+    wined3d_mutex_lock();
+    hr = wined3d_get_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &mode, NULL);
+    wined3d_mutex_unlock();
+    if (FAILED(hr))
+    {
+        WARN("Failed to get display mode, hr %#x.\n", hr);
+        return hr;
+    }
+
+    *frequency = mode.refresh_rate;
+
     return DD_OK;
 }
 
