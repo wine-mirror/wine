@@ -155,8 +155,45 @@ static HRESULT WINAPI HTMLDOMAttribute_get_nodeValue(IHTMLDOMAttribute *iface, V
 static HRESULT WINAPI HTMLDOMAttribute_get_specified(IHTMLDOMAttribute *iface, VARIANT_BOOL *p)
 {
     HTMLDOMAttribute *This = impl_from_IHTMLDOMAttribute(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsIDOMAttr *nsattr;
+    nsAString nsname;
+    BSTR name;
+    nsresult nsres;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(get_dispid_type(This->dispid) != DISPEXPROP_BUILTIN) {
+        *p = VARIANT_TRUE;
+        return S_OK;
+    }
+
+    if(!This->elem || !This->elem->nselem) {
+        FIXME("NULL This->elem\n");
+        return E_UNEXPECTED;
+    }
+
+    hres = IDispatchEx_GetMemberName(&This->elem->node.dispex.IDispatchEx_iface, This->dispid, &name);
+    if(FAILED(hres))
+        return hres;
+
+    /* FIXME: This is not exactly right, we have some attributes that don't map directly to Gecko attributes. */
+    nsAString_InitDepend(&nsname, name);
+    nsres = nsIDOMHTMLElement_GetAttributeNode(This->elem->nselem, &nsname, &nsattr);
+    nsAString_Finish(&nsname);
+    SysFreeString(name);
+    if(NS_FAILED(nsres))
+        return E_FAIL;
+
+    /* If the Gecko attribute node can be found, we know that the attribute is specified.
+       There is no point in calling GetSpecified */
+    if(nsattr) {
+        nsIDOMAttr_Release(nsattr);
+        *p = VARIANT_TRUE;
+    }else {
+        *p = VARIANT_FALSE;
+    }
+    return S_OK;
 }
 
 static const IHTMLDOMAttributeVtbl HTMLDOMAttributeVtbl = {

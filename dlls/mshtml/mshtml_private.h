@@ -263,6 +263,14 @@ void dispex_unlink(DispatchEx*) DECLSPEC_HIDDEN;
 void release_typelib(void) DECLSPEC_HIDDEN;
 HRESULT get_htmldoc_classinfo(ITypeInfo **typeinfo) DECLSPEC_HIDDEN;
 
+typedef enum {
+    DISPEXPROP_CUSTOM,
+    DISPEXPROP_DYNAMIC,
+    DISPEXPROP_BUILTIN
+} dispex_prop_type_t;
+
+dispex_prop_type_t get_dispid_type(DISPID) DECLSPEC_HIDDEN;
+
 typedef struct HTMLWindow HTMLWindow;
 typedef struct HTMLInnerWindow HTMLInnerWindow;
 typedef struct HTMLOuterWindow HTMLOuterWindow;

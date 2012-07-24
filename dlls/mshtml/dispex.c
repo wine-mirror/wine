@@ -385,6 +385,15 @@ static inline BOOL is_dynamic_dispid(DISPID id)
     return DISPID_DYNPROP_0 <= id && id <= DISPID_DYNPROP_MAX;
 }
 
+dispex_prop_type_t get_dispid_type(DISPID id)
+{
+    if(is_dynamic_dispid(id))
+        return DISPEXPROP_DYNAMIC;
+    if(is_custom_dispid(id))
+        return DISPEXPROP_CUSTOM;
+    return DISPEXPROP_BUILTIN;
+}
+
 static HRESULT variant_copy(VARIANT *dest, VARIANT *src)
 {
     if(V_VT(src) == VT_BSTR && !V_BSTR(src)) {

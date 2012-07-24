@@ -2632,6 +2632,17 @@ static void test_attr_collection(IHTMLElement *elem)
     IHTMLAttributeCollection_Release(attr_col);
 }
 
+#define test_attr_specified(a,b) _test_attr_specified(__LINE__,a,b)
+static void _test_attr_specified(unsigned line, IHTMLDOMAttribute *attr, VARIANT_BOOL expected)
+{
+    VARIANT_BOOL specified;
+    HRESULT hres;
+
+    hres = IHTMLDOMAttribute_get_specified(attr, &specified);
+    ok_(__FILE__,line)(hres == S_OK, "get_specified failed: %08x\n", hres);
+    ok_(__FILE__,line)(specified == expected, "specified = %x, expected %x\n", specified, expected);
+}
+
 #define test_input_type(i,t) _test_input_type(__LINE__,i,t)
 static void _test_input_type(unsigned line, IHTMLInputElement *input, const char *extype)
 {
@@ -5721,6 +5732,7 @@ static void test_attr(IHTMLElement *elem)
     test_disp((IUnknown*)attr, &DIID_DispHTMLDOMAttribute, "[object]");
     test_ifaces((IUnknown*)attr, attr_iids);
     test_no_iface((IUnknown*)attr, &IID_IHTMLDOMNode);
+    test_attr_specified(attr, VARIANT_TRUE);
 
     attr2 = get_elem_attr_node((IUnknown*)elem, "id", TRUE);
     ok(iface_cmp((IUnknown*)attr, (IUnknown*)attr2), "attr != attr2\n");
@@ -5736,6 +5748,7 @@ static void test_attr(IHTMLElement *elem)
     get_attr_node_value(attr, &v, VT_BSTR);
     ok(!V_BSTR(&v), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
+    test_attr_specified(attr, VARIANT_TRUE);
     IHTMLDOMAttribute_Release(attr);
 
     V_VT(&v) = VT_I4;
@@ -5744,6 +5757,11 @@ static void test_attr(IHTMLElement *elem)
     attr = get_elem_attr_node((IUnknown*)elem, "dispprop", TRUE);
     get_attr_node_value(attr, &v, VT_I4);
     ok(V_I4(&v) == 100, "V_I4(v) = %d\n", V_I4(&v));
+    test_attr_specified(attr, VARIANT_TRUE);
+    IHTMLDOMAttribute_Release(attr);
+
+    attr = get_elem_attr_node((IUnknown*)elem, "tabIndex", TRUE);
+    test_attr_specified(attr, VARIANT_FALSE);
     IHTMLDOMAttribute_Release(attr);
 }
 
