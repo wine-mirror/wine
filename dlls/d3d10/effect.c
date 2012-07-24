@@ -6569,9 +6569,19 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_sampler_variable_GetSampler(ID3D10
 static HRESULT STDMETHODCALLTYPE d3d10_effect_sampler_variable_GetBackingStore(ID3D10EffectSamplerVariable *iface,
         UINT index, D3D10_SAMPLER_DESC *desc)
 {
-    FIXME("iface %p, index %u, desc %p stub!\n", iface, index, desc);
+    struct d3d10_effect_variable *v = impl_from_ID3D10EffectVariable((ID3D10EffectVariable *)iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, index %u, desc %p.\n", iface, index, desc);
+
+    if (index >= max(v->type->element_count, 1))
+    {
+        WARN("Invalid index %u.\n", index);
+        return E_FAIL;
+    }
+
+    *desc = ((D3D10_SAMPLER_DESC *)v->data)[index];
+
+    return S_OK;
 }
 
 
