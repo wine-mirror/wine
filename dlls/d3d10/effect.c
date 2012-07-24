@@ -152,6 +152,15 @@ static const struct d3d10_effect_state_property_info property_info[] =
     {0x21, "DepthStencilState.BackFaceStencilDepthFail",  D3D10_SVT_INT,   1, 1, D3D10_SVT_DEPTHSTENCIL, FIELD_OFFSET(D3D10_DEPTH_STENCIL_DESC, BackFace.StencilDepthFailOp) },
     {0x22, "DepthStencilState.BackFaceStencilPass",       D3D10_SVT_INT,   1, 1, D3D10_SVT_DEPTHSTENCIL, FIELD_OFFSET(D3D10_DEPTH_STENCIL_DESC, BackFace.StencilPassOp)      },
     {0x23, "DepthStencilState.BackFaceStencilFunc",       D3D10_SVT_INT,   1, 1, D3D10_SVT_DEPTHSTENCIL, FIELD_OFFSET(D3D10_DEPTH_STENCIL_DESC, BackFace.StencilFunc)        },
+    {0x24, "BlendState.AlphaToCoverageEnable",            D3D10_SVT_BOOL,  1, 1, D3D10_SVT_BLEND,        FIELD_OFFSET(D3D10_BLEND_DESC,         AlphaToCoverageEnable)       },
+    {0x25, "BlendState.BlendEnable",                      D3D10_SVT_BOOL,  1, 8, D3D10_SVT_BLEND,        FIELD_OFFSET(D3D10_BLEND_DESC,         BlendEnable)                 },
+    {0x26, "BlendState.SrcBlend",                         D3D10_SVT_INT,   1, 1, D3D10_SVT_BLEND,        FIELD_OFFSET(D3D10_BLEND_DESC,         SrcBlend)                    },
+    {0x27, "BlendState.DestBlend",                        D3D10_SVT_INT,   1, 1, D3D10_SVT_BLEND,        FIELD_OFFSET(D3D10_BLEND_DESC,         DestBlend)                   },
+    {0x28, "BlendState.BlendOp",                          D3D10_SVT_INT,   1, 1, D3D10_SVT_BLEND,        FIELD_OFFSET(D3D10_BLEND_DESC,         BlendOp)                     },
+    {0x29, "BlendState.SrcBlendAlpha",                    D3D10_SVT_INT,   1, 1, D3D10_SVT_BLEND,        FIELD_OFFSET(D3D10_BLEND_DESC,         SrcBlendAlpha)               },
+    {0x2a, "BlendState.DestBlendAlpha",                   D3D10_SVT_INT,   1, 1, D3D10_SVT_BLEND,        FIELD_OFFSET(D3D10_BLEND_DESC,         DestBlendAlpha)              },
+    {0x2b, "BlendState.BlendOpAlpha",                     D3D10_SVT_INT,   1, 1, D3D10_SVT_BLEND,        FIELD_OFFSET(D3D10_BLEND_DESC,         BlendOpAlpha)                },
+    {0x2c, "BlendState.RenderTargetWriteMask",            D3D10_SVT_UINT8, 1, 8, D3D10_SVT_BLEND,        FIELD_OFFSET(D3D10_BLEND_DESC,         RenderTargetWriteMask)       },
 };
 
 static const D3D10_RASTERIZER_DESC default_rasterizer_desc =
@@ -180,6 +189,19 @@ static const D3D10_DEPTH_STENCIL_DESC default_depth_stencil_desc =
     {D3D10_STENCIL_OP_KEEP, D3D10_STENCIL_OP_KEEP, D3D10_STENCIL_OP_KEEP, D3D10_COMPARISON_ALWAYS},
 };
 
+static const D3D10_BLEND_DESC default_blend_desc =
+{
+    FALSE,
+    {FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE},
+    D3D10_BLEND_SRC_ALPHA,
+    D3D10_BLEND_INV_SRC_ALPHA,
+    D3D10_BLEND_OP_ADD,
+    D3D10_BLEND_SRC_ALPHA,
+    D3D10_BLEND_INV_SRC_ALPHA,
+    D3D10_BLEND_OP_ADD,
+    {0xf, 0xf, 0xf, 0xf, 0xf, 0xf, 0xf, 0xf},
+};
+
 struct d3d10_effect_state_storage_info
 {
     D3D_SHADER_VARIABLE_TYPE id;
@@ -191,6 +213,7 @@ static const struct d3d10_effect_state_storage_info d3d10_effect_state_storage_i
 {
     {D3D10_SVT_RASTERIZER,   sizeof(default_rasterizer_desc),    &default_rasterizer_desc   },
     {D3D10_SVT_DEPTHSTENCIL, sizeof(default_depth_stencil_desc), &default_depth_stencil_desc},
+    {D3D10_SVT_BLEND,        sizeof(default_blend_desc),         &default_blend_desc        },
 };
 
 static BOOL copy_name(const char *ptr, char **name)
@@ -1548,7 +1571,6 @@ static HRESULT parse_fx10_local_variable(struct d3d10_effect_variable *v, const 
             }
             break;
 
-        case D3D10_SVT_BLEND:
         case D3D10_SVT_SAMPLER:
             TRACE("SVT is a state.\n");
             for (i = 0; i < max(v->type->element_count, 1); ++i)
@@ -1567,6 +1589,7 @@ static HRESULT parse_fx10_local_variable(struct d3d10_effect_variable *v, const 
             break;
 
         case D3D10_SVT_DEPTHSTENCIL:
+        case D3D10_SVT_BLEND:
         case D3D10_SVT_RASTERIZER:
             {
                 const struct d3d10_effect_state_storage_info *storage_info;
