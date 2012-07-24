@@ -81,134 +81,133 @@ struct wined3d_extension_map
 {
     const char *extension_string;
     enum wined3d_gl_extension extension;
-    DWORD version;
 };
 
 static const struct wined3d_extension_map gl_extension_map[] =
 {
     /* APPLE */
-    {"GL_APPLE_client_storage",             APPLE_CLIENT_STORAGE,           0                           },
-    {"GL_APPLE_fence",                      APPLE_FENCE,                    0                           },
-    {"GL_APPLE_float_pixels",               APPLE_FLOAT_PIXELS,             0                           },
-    {"GL_APPLE_flush_buffer_range",         APPLE_FLUSH_BUFFER_RANGE,       0                           },
-    {"GL_APPLE_ycbcr_422",                  APPLE_YCBCR_422,                0                           },
+    {"GL_APPLE_client_storage",             APPLE_CLIENT_STORAGE          },
+    {"GL_APPLE_fence",                      APPLE_FENCE                   },
+    {"GL_APPLE_float_pixels",               APPLE_FLOAT_PIXELS            },
+    {"GL_APPLE_flush_buffer_range",         APPLE_FLUSH_BUFFER_RANGE      },
+    {"GL_APPLE_ycbcr_422",                  APPLE_YCBCR_422               },
 
     /* ARB */
-    {"GL_ARB_color_buffer_float",           ARB_COLOR_BUFFER_FLOAT,         0                           },
-    {"GL_ARB_depth_buffer_float",           ARB_DEPTH_BUFFER_FLOAT,         0                           },
-    {"GL_ARB_depth_clamp",                  ARB_DEPTH_CLAMP,                0                           },
-    {"GL_ARB_depth_texture",                ARB_DEPTH_TEXTURE,              0                           },
-    {"GL_ARB_draw_buffers",                 ARB_DRAW_BUFFERS,               0                           },
-    {"GL_ARB_draw_elements_base_vertex",    ARB_DRAW_ELEMENTS_BASE_VERTEX,  0                           },
-    {"GL_ARB_fragment_program",             ARB_FRAGMENT_PROGRAM,           0                           },
-    {"GL_ARB_fragment_shader",              ARB_FRAGMENT_SHADER,            0                           },
-    {"GL_ARB_framebuffer_object",           ARB_FRAMEBUFFER_OBJECT,         0                           },
-    {"GL_ARB_geometry_shader4",             ARB_GEOMETRY_SHADER4,           0                           },
-    {"GL_ARB_half_float_pixel",             ARB_HALF_FLOAT_PIXEL,           0                           },
-    {"GL_ARB_half_float_vertex",            ARB_HALF_FLOAT_VERTEX,          0                           },
-    {"GL_ARB_map_buffer_alignment",         ARB_MAP_BUFFER_ALIGNMENT,       0                           },
-    {"GL_ARB_map_buffer_range",             ARB_MAP_BUFFER_RANGE,           0                           },
-    {"GL_ARB_multisample",                  ARB_MULTISAMPLE,                0                           }, /* needs GLX_ARB_MULTISAMPLE as well */
-    {"GL_ARB_multitexture",                 ARB_MULTITEXTURE,               0                           },
-    {"GL_ARB_occlusion_query",              ARB_OCCLUSION_QUERY,            0                           },
-    {"GL_ARB_pixel_buffer_object",          ARB_PIXEL_BUFFER_OBJECT,        0                           },
-    {"GL_ARB_point_parameters",             ARB_POINT_PARAMETERS,           0                           },
-    {"GL_ARB_point_sprite",                 ARB_POINT_SPRITE,               0                           },
-    {"GL_ARB_provoking_vertex",             ARB_PROVOKING_VERTEX,           0                           },
-    {"GL_ARB_shader_objects",               ARB_SHADER_OBJECTS,             0                           },
-    {"GL_ARB_shader_texture_lod",           ARB_SHADER_TEXTURE_LOD,         0                           },
-    {"GL_ARB_shading_language_100",         ARB_SHADING_LANGUAGE_100,       0                           },
-    {"GL_ARB_shadow",                       ARB_SHADOW,                     0                           },
-    {"GL_ARB_sync",                         ARB_SYNC,                       0                           },
-    {"GL_ARB_texture_border_clamp",         ARB_TEXTURE_BORDER_CLAMP,       0                           },
-    {"GL_ARB_texture_compression",          ARB_TEXTURE_COMPRESSION,        0                           },
-    {"GL_ARB_texture_compression_rgtc",     ARB_TEXTURE_COMPRESSION_RGTC,   0                           },
-    {"GL_ARB_texture_cube_map",             ARB_TEXTURE_CUBE_MAP,           0                           },
-    {"GL_ARB_texture_env_add",              ARB_TEXTURE_ENV_ADD,            0                           },
-    {"GL_ARB_texture_env_combine",          ARB_TEXTURE_ENV_COMBINE,        0                           },
-    {"GL_ARB_texture_env_dot3",             ARB_TEXTURE_ENV_DOT3,           0                           },
-    {"GL_ARB_texture_float",                ARB_TEXTURE_FLOAT,              0                           },
-    {"GL_ARB_texture_mirrored_repeat",      ARB_TEXTURE_MIRRORED_REPEAT,    0                           },
-    {"GL_ARB_texture_non_power_of_two",     ARB_TEXTURE_NON_POWER_OF_TWO,   MAKEDWORD_VERSION(2, 0)     },
-    {"GL_ARB_texture_rectangle",            ARB_TEXTURE_RECTANGLE,          0                           },
-    {"GL_ARB_texture_rg",                   ARB_TEXTURE_RG,                 0                           },
-    {"GL_ARB_vertex_array_bgra",            ARB_VERTEX_ARRAY_BGRA,          0                           },
-    {"GL_ARB_vertex_blend",                 ARB_VERTEX_BLEND,               0                           },
-    {"GL_ARB_vertex_buffer_object",         ARB_VERTEX_BUFFER_OBJECT,       0                           },
-    {"GL_ARB_vertex_program",               ARB_VERTEX_PROGRAM,             0                           },
-    {"GL_ARB_vertex_shader",                ARB_VERTEX_SHADER,              0                           },
+    {"GL_ARB_color_buffer_float",           ARB_COLOR_BUFFER_FLOAT        },
+    {"GL_ARB_depth_buffer_float",           ARB_DEPTH_BUFFER_FLOAT        },
+    {"GL_ARB_depth_clamp",                  ARB_DEPTH_CLAMP               },
+    {"GL_ARB_depth_texture",                ARB_DEPTH_TEXTURE             },
+    {"GL_ARB_draw_buffers",                 ARB_DRAW_BUFFERS              },
+    {"GL_ARB_draw_elements_base_vertex",    ARB_DRAW_ELEMENTS_BASE_VERTEX },
+    {"GL_ARB_fragment_program",             ARB_FRAGMENT_PROGRAM          },
+    {"GL_ARB_fragment_shader",              ARB_FRAGMENT_SHADER           },
+    {"GL_ARB_framebuffer_object",           ARB_FRAMEBUFFER_OBJECT        },
+    {"GL_ARB_geometry_shader4",             ARB_GEOMETRY_SHADER4          },
+    {"GL_ARB_half_float_pixel",             ARB_HALF_FLOAT_PIXEL          },
+    {"GL_ARB_half_float_vertex",            ARB_HALF_FLOAT_VERTEX         },
+    {"GL_ARB_map_buffer_alignment",         ARB_MAP_BUFFER_ALIGNMENT      },
+    {"GL_ARB_map_buffer_range",             ARB_MAP_BUFFER_RANGE          },
+    {"GL_ARB_multisample",                  ARB_MULTISAMPLE               }, /* needs GLX_ARB_MULTISAMPLE as well */
+    {"GL_ARB_multitexture",                 ARB_MULTITEXTURE              },
+    {"GL_ARB_occlusion_query",              ARB_OCCLUSION_QUERY           },
+    {"GL_ARB_pixel_buffer_object",          ARB_PIXEL_BUFFER_OBJECT       },
+    {"GL_ARB_point_parameters",             ARB_POINT_PARAMETERS          },
+    {"GL_ARB_point_sprite",                 ARB_POINT_SPRITE              },
+    {"GL_ARB_provoking_vertex",             ARB_PROVOKING_VERTEX          },
+    {"GL_ARB_shader_objects",               ARB_SHADER_OBJECTS            },
+    {"GL_ARB_shader_texture_lod",           ARB_SHADER_TEXTURE_LOD        },
+    {"GL_ARB_shading_language_100",         ARB_SHADING_LANGUAGE_100      },
+    {"GL_ARB_shadow",                       ARB_SHADOW                    },
+    {"GL_ARB_sync",                         ARB_SYNC                      },
+    {"GL_ARB_texture_border_clamp",         ARB_TEXTURE_BORDER_CLAMP      },
+    {"GL_ARB_texture_compression",          ARB_TEXTURE_COMPRESSION       },
+    {"GL_ARB_texture_compression_rgtc",     ARB_TEXTURE_COMPRESSION_RGTC  },
+    {"GL_ARB_texture_cube_map",             ARB_TEXTURE_CUBE_MAP          },
+    {"GL_ARB_texture_env_add",              ARB_TEXTURE_ENV_ADD           },
+    {"GL_ARB_texture_env_combine",          ARB_TEXTURE_ENV_COMBINE       },
+    {"GL_ARB_texture_env_dot3",             ARB_TEXTURE_ENV_DOT3          },
+    {"GL_ARB_texture_float",                ARB_TEXTURE_FLOAT             },
+    {"GL_ARB_texture_mirrored_repeat",      ARB_TEXTURE_MIRRORED_REPEAT   },
+    {"GL_ARB_texture_non_power_of_two",     ARB_TEXTURE_NON_POWER_OF_TWO  },
+    {"GL_ARB_texture_rectangle",            ARB_TEXTURE_RECTANGLE         },
+    {"GL_ARB_texture_rg",                   ARB_TEXTURE_RG                },
+    {"GL_ARB_vertex_array_bgra",            ARB_VERTEX_ARRAY_BGRA         },
+    {"GL_ARB_vertex_blend",                 ARB_VERTEX_BLEND              },
+    {"GL_ARB_vertex_buffer_object",         ARB_VERTEX_BUFFER_OBJECT      },
+    {"GL_ARB_vertex_program",               ARB_VERTEX_PROGRAM            },
+    {"GL_ARB_vertex_shader",                ARB_VERTEX_SHADER             },
 
     /* ATI */
-    {"GL_ATI_fragment_shader",              ATI_FRAGMENT_SHADER,            0                           },
-    {"GL_ATI_separate_stencil",             ATI_SEPARATE_STENCIL,           0                           },
-    {"GL_ATI_texture_compression_3dc",      ATI_TEXTURE_COMPRESSION_3DC,    0                           },
-    {"GL_ATI_texture_env_combine3",         ATI_TEXTURE_ENV_COMBINE3,       0                           },
-    {"GL_ATI_texture_mirror_once",          ATI_TEXTURE_MIRROR_ONCE,        0                           },
+    {"GL_ATI_fragment_shader",              ATI_FRAGMENT_SHADER           },
+    {"GL_ATI_separate_stencil",             ATI_SEPARATE_STENCIL          },
+    {"GL_ATI_texture_compression_3dc",      ATI_TEXTURE_COMPRESSION_3DC   },
+    {"GL_ATI_texture_env_combine3",         ATI_TEXTURE_ENV_COMBINE3      },
+    {"GL_ATI_texture_mirror_once",          ATI_TEXTURE_MIRROR_ONCE       },
 
     /* EXT */
-    {"GL_EXT_blend_color",                  EXT_BLEND_COLOR,                0                           },
-    {"GL_EXT_blend_equation_separate",      EXT_BLEND_EQUATION_SEPARATE,    0                           },
-    {"GL_EXT_blend_func_separate",          EXT_BLEND_FUNC_SEPARATE,        0                           },
-    {"GL_EXT_blend_minmax",                 EXT_BLEND_MINMAX,               0                           },
-    {"GL_EXT_blend_subtract",               EXT_BLEND_SUBTRACT,             0                           },
-    {"GL_EXT_depth_bounds_test",            EXT_DEPTH_BOUNDS_TEST,          0                           },
-    {"GL_EXT_draw_buffers2",                EXT_DRAW_BUFFERS2,              0                           },
-    {"GL_EXT_fog_coord",                    EXT_FOG_COORD,                  0                           },
-    {"GL_EXT_framebuffer_blit",             EXT_FRAMEBUFFER_BLIT,           0                           },
-    {"GL_EXT_framebuffer_multisample",      EXT_FRAMEBUFFER_MULTISAMPLE,    0                           },
-    {"GL_EXT_framebuffer_object",           EXT_FRAMEBUFFER_OBJECT,         0                           },
-    {"GL_EXT_gpu_program_parameters",       EXT_GPU_PROGRAM_PARAMETERS,     0                           },
-    {"GL_EXT_gpu_shader4",                  EXT_GPU_SHADER4,                0                           },
-    {"GL_EXT_packed_depth_stencil",         EXT_PACKED_DEPTH_STENCIL,       0                           },
-    {"GL_EXT_paletted_texture",             EXT_PALETTED_TEXTURE,           0                           },
-    {"GL_EXT_point_parameters",             EXT_POINT_PARAMETERS,           0                           },
-    {"GL_EXT_provoking_vertex",             EXT_PROVOKING_VERTEX,           0                           },
-    {"GL_EXT_secondary_color",              EXT_SECONDARY_COLOR,            0                           },
-    {"GL_EXT_stencil_two_side",             EXT_STENCIL_TWO_SIDE,           0                           },
-    {"GL_EXT_stencil_wrap",                 EXT_STENCIL_WRAP,               0                           },
-    {"GL_EXT_texture3D",                    EXT_TEXTURE3D,                  MAKEDWORD_VERSION(1, 2)     },
-    {"GL_EXT_texture_compression_rgtc",     EXT_TEXTURE_COMPRESSION_RGTC,   0                           },
-    {"GL_EXT_texture_compression_s3tc",     EXT_TEXTURE_COMPRESSION_S3TC,   0                           },
-    {"GL_EXT_texture_env_add",              EXT_TEXTURE_ENV_ADD,            0                           },
-    {"GL_EXT_texture_env_combine",          EXT_TEXTURE_ENV_COMBINE,        0                           },
-    {"GL_EXT_texture_env_dot3",             EXT_TEXTURE_ENV_DOT3,           0                           },
-    {"GL_EXT_texture_filter_anisotropic",   EXT_TEXTURE_FILTER_ANISOTROPIC, 0                           },
-    {"GL_EXT_texture_lod_bias",             EXT_TEXTURE_LOD_BIAS,           0                           },
-    {"GL_EXT_texture_sRGB",                 EXT_TEXTURE_SRGB,               0                           },
-    {"GL_EXT_texture_sRGB_decode",          EXT_TEXTURE_SRGB_DECODE,        0                           },
-    {"GL_EXT_vertex_array_bgra",            EXT_VERTEX_ARRAY_BGRA,          0                           },
+    {"GL_EXT_blend_color",                  EXT_BLEND_COLOR               },
+    {"GL_EXT_blend_equation_separate",      EXT_BLEND_EQUATION_SEPARATE   },
+    {"GL_EXT_blend_func_separate",          EXT_BLEND_FUNC_SEPARATE       },
+    {"GL_EXT_blend_minmax",                 EXT_BLEND_MINMAX              },
+    {"GL_EXT_blend_subtract",               EXT_BLEND_SUBTRACT            },
+    {"GL_EXT_depth_bounds_test",            EXT_DEPTH_BOUNDS_TEST         },
+    {"GL_EXT_draw_buffers2",                EXT_DRAW_BUFFERS2             },
+    {"GL_EXT_fog_coord",                    EXT_FOG_COORD                 },
+    {"GL_EXT_framebuffer_blit",             EXT_FRAMEBUFFER_BLIT          },
+    {"GL_EXT_framebuffer_multisample",      EXT_FRAMEBUFFER_MULTISAMPLE   },
+    {"GL_EXT_framebuffer_object",           EXT_FRAMEBUFFER_OBJECT        },
+    {"GL_EXT_gpu_program_parameters",       EXT_GPU_PROGRAM_PARAMETERS    },
+    {"GL_EXT_gpu_shader4",                  EXT_GPU_SHADER4               },
+    {"GL_EXT_packed_depth_stencil",         EXT_PACKED_DEPTH_STENCIL      },
+    {"GL_EXT_paletted_texture",             EXT_PALETTED_TEXTURE          },
+    {"GL_EXT_point_parameters",             EXT_POINT_PARAMETERS          },
+    {"GL_EXT_provoking_vertex",             EXT_PROVOKING_VERTEX          },
+    {"GL_EXT_secondary_color",              EXT_SECONDARY_COLOR           },
+    {"GL_EXT_stencil_two_side",             EXT_STENCIL_TWO_SIDE          },
+    {"GL_EXT_stencil_wrap",                 EXT_STENCIL_WRAP              },
+    {"GL_EXT_texture3D",                    EXT_TEXTURE3D                 },
+    {"GL_EXT_texture_compression_rgtc",     EXT_TEXTURE_COMPRESSION_RGTC  },
+    {"GL_EXT_texture_compression_s3tc",     EXT_TEXTURE_COMPRESSION_S3TC  },
+    {"GL_EXT_texture_env_add",              EXT_TEXTURE_ENV_ADD           },
+    {"GL_EXT_texture_env_combine",          EXT_TEXTURE_ENV_COMBINE       },
+    {"GL_EXT_texture_env_dot3",             EXT_TEXTURE_ENV_DOT3          },
+    {"GL_EXT_texture_filter_anisotropic",   EXT_TEXTURE_FILTER_ANISOTROPIC},
+    {"GL_EXT_texture_lod_bias",             EXT_TEXTURE_LOD_BIAS          },
+    {"GL_EXT_texture_sRGB",                 EXT_TEXTURE_SRGB              },
+    {"GL_EXT_texture_sRGB_decode",          EXT_TEXTURE_SRGB_DECODE       },
+    {"GL_EXT_vertex_array_bgra",            EXT_VERTEX_ARRAY_BGRA         },
 
     /* NV */
-    {"GL_NV_depth_clamp",                   NV_DEPTH_CLAMP,                 0                           },
-    {"GL_NV_fence",                         NV_FENCE,                       0                           },
-    {"GL_NV_fog_distance",                  NV_FOG_DISTANCE,                0                           },
-    {"GL_NV_fragment_program",              NV_FRAGMENT_PROGRAM,            0                           },
-    {"GL_NV_fragment_program2",             NV_FRAGMENT_PROGRAM2,           0                           },
-    {"GL_NV_fragment_program_option",       NV_FRAGMENT_PROGRAM_OPTION,     0                           },
-    {"GL_NV_half_float",                    NV_HALF_FLOAT,                  0                           },
-    {"GL_NV_light_max_exponent",            NV_LIGHT_MAX_EXPONENT,          0                           },
-    {"GL_NV_point_sprite",                  NV_POINT_SPRITE,                MAKEDWORD_VERSION(1, 4)     },
-    {"GL_NV_register_combiners",            NV_REGISTER_COMBINERS,          0                           },
-    {"GL_NV_register_combiners2",           NV_REGISTER_COMBINERS2,         0                           },
-    {"GL_NV_texgen_reflection",             NV_TEXGEN_REFLECTION,           0                           },
-    {"GL_NV_texture_env_combine4",          NV_TEXTURE_ENV_COMBINE4,        0                           },
-    {"GL_NV_texture_shader",                NV_TEXTURE_SHADER,              0                           },
-    {"GL_NV_texture_shader2",               NV_TEXTURE_SHADER2,             0                           },
-    {"GL_NV_vertex_program",                NV_VERTEX_PROGRAM,              0                           },
-    {"GL_NV_vertex_program1_1",             NV_VERTEX_PROGRAM1_1,           0                           },
-    {"GL_NV_vertex_program2",               NV_VERTEX_PROGRAM2,             0                           },
-    {"GL_NV_vertex_program2_option",        NV_VERTEX_PROGRAM2_OPTION,      0                           },
-    {"GL_NV_vertex_program3",               NV_VERTEX_PROGRAM3,             0                           },
+    {"GL_NV_depth_clamp",                   NV_DEPTH_CLAMP                },
+    {"GL_NV_fence",                         NV_FENCE                      },
+    {"GL_NV_fog_distance",                  NV_FOG_DISTANCE               },
+    {"GL_NV_fragment_program",              NV_FRAGMENT_PROGRAM           },
+    {"GL_NV_fragment_program2",             NV_FRAGMENT_PROGRAM2          },
+    {"GL_NV_fragment_program_option",       NV_FRAGMENT_PROGRAM_OPTION    },
+    {"GL_NV_half_float",                    NV_HALF_FLOAT                 },
+    {"GL_NV_light_max_exponent",            NV_LIGHT_MAX_EXPONENT         },
+    {"GL_NV_point_sprite",                  NV_POINT_SPRITE               },
+    {"GL_NV_register_combiners",            NV_REGISTER_COMBINERS         },
+    {"GL_NV_register_combiners2",           NV_REGISTER_COMBINERS2        },
+    {"GL_NV_texgen_reflection",             NV_TEXGEN_REFLECTION          },
+    {"GL_NV_texture_env_combine4",          NV_TEXTURE_ENV_COMBINE4       },
+    {"GL_NV_texture_shader",                NV_TEXTURE_SHADER             },
+    {"GL_NV_texture_shader2",               NV_TEXTURE_SHADER2            },
+    {"GL_NV_vertex_program",                NV_VERTEX_PROGRAM             },
+    {"GL_NV_vertex_program1_1",             NV_VERTEX_PROGRAM1_1          },
+    {"GL_NV_vertex_program2",               NV_VERTEX_PROGRAM2            },
+    {"GL_NV_vertex_program2_option",        NV_VERTEX_PROGRAM2_OPTION     },
+    {"GL_NV_vertex_program3",               NV_VERTEX_PROGRAM3            },
 
     /* SGI */
-    {"GL_SGIS_generate_mipmap",             SGIS_GENERATE_MIPMAP,           0                           },
+    {"GL_SGIS_generate_mipmap",             SGIS_GENERATE_MIPMAP          },
 };
 
 static const struct wined3d_extension_map wgl_extension_map[] =
 {
-    {"WGL_ARB_pixel_format",                WGL_ARB_PIXEL_FORMAT,               0                        },
-    {"WGL_EXT_swap_control",                WGL_EXT_SWAP_CONTROL,               0                        },
-    {"WGL_WINE_pixel_format_passthrough",   WGL_WINE_PIXEL_FORMAT_PASSTHROUGH,  0                        },
+    {"WGL_ARB_pixel_format",                WGL_ARB_PIXEL_FORMAT             },
+    {"WGL_EXT_swap_control",                WGL_EXT_SWAP_CONTROL             },
+    {"WGL_WINE_pixel_format_passthrough",   WGL_WINE_PIXEL_FORMAT_PASSTHROUGH},
 };
 
 /**********************************************************
@@ -445,18 +444,6 @@ static inline BOOL test_arb_vs_offset_limit(const struct wined3d_gl_info *gl_inf
     checkGLcall("ARB vp offset limit test cleanup");
 
     return ret;
-}
-
-static DWORD ver_for_ext(enum wined3d_gl_extension ext)
-{
-    unsigned int i;
-
-    for (i = 0; i < (sizeof(gl_extension_map) / sizeof(*gl_extension_map)); ++i)
-    {
-        if (gl_extension_map[i].extension == ext)
-            return gl_extension_map[i].version;
-    }
-    return 0;
 }
 
 static BOOL match_amd_r300_to_500(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
@@ -2330,17 +2317,8 @@ static void parse_extension_string(struct wined3d_gl_info *gl_info, const char *
 
 static void load_gl_funcs(struct wined3d_gl_info *gl_info, DWORD gl_version)
 {
-    DWORD ver;
-
-#define USE_GL_FUNC(type, pfn, ext, replace) \
-    if (gl_info->supported[ext]) gl_info->pfn = (type)pwglGetProcAddress(#pfn); \
-    else if ((ver = ver_for_ext(ext)) && ver <= gl_version) gl_info->pfn = (type)pwglGetProcAddress(#replace); \
-    else gl_info->pfn = NULL;
-
-    GL_EXT_FUNCS_GEN;
-#undef USE_GL_FUNC
-
 #define USE_GL_FUNC(type, pfn, ext, replace) gl_info->pfn = (type)pwglGetProcAddress(#pfn);
+    GL_EXT_FUNCS_GEN;
     WGL_EXT_FUNCS_GEN;
 #undef USE_GL_FUNC
 }
@@ -2567,7 +2545,6 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
     enum wined3d_gl_vendor gl_vendor;
     enum wined3d_pci_device device;
     DWORD gl_version;
-    unsigned int i;
     HDC hdc;
 
     TRACE("adapter %p.\n", adapter);
@@ -2634,19 +2611,26 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
         parse_extension_string(gl_info, WGL_Extensions, wgl_extension_map,
                 sizeof(wgl_extension_map) / sizeof(*wgl_extension_map));
 
-    ENTER_GL();
-
-    /* Now mark all the extensions supported which are included in the opengl core version. Do this *after*
-     * loading the functions, otherwise the code above will load the extension entry points instead of the
-     * core functions, which may not work. */
-    for (i = 0; i < (sizeof(gl_extension_map) / sizeof(*gl_extension_map)); ++i)
+    if (!gl_info->supported[EXT_TEXTURE3D] && gl_version >= MAKEDWORD_VERSION(1, 2))
     {
-        if (!gl_info->supported[gl_extension_map[i].extension]
-                && gl_extension_map[i].version <= gl_version && gl_extension_map[i].version)
-        {
-            TRACE(" GL CORE: %s support.\n", gl_extension_map[i].extension_string);
-            gl_info->supported[gl_extension_map[i].extension] = TRUE;
-        }
+        TRACE("GL CORE: GL_EXT_texture3D support.\n");
+        gl_info->glTexImage3DEXT = (void *)pwglGetProcAddress("glTexImage3D");
+        gl_info->glTexSubImage3DEXT = (void *)pwglGetProcAddress("glTexSubImage3D");
+        gl_info->supported[EXT_TEXTURE3D] = TRUE;
+    }
+
+    if (!gl_info->supported[NV_POINT_SPRITE] && gl_version >= MAKEDWORD_VERSION(1, 4))
+    {
+        TRACE("GL CORE: GL_NV_point_sprite support.\n");
+        gl_info->glPointParameterivNV = (void *)pwglGetProcAddress("glPointParameteriv");
+        gl_info->glPointParameteriNV = (void *)pwglGetProcAddress("glPointParameteri");
+        gl_info->supported[NV_POINT_SPRITE] = TRUE;
+    }
+
+    if (!gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] && gl_version >= MAKEDWORD_VERSION(2, 0))
+    {
+        TRACE("GL CORE: GL_ARB_texture_non_power_of_two support.\n");
+        gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] = TRUE;
     }
 
     if (gl_version >= MAKEDWORD_VERSION(2, 0)) gl_info->supported[WINED3D_GL_VERSION_2_0] = TRUE;
@@ -2741,6 +2725,8 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
         /* GL_ARB_half_float_vertex is a subset of GL_NV_half_float. */
         gl_info->supported[ARB_HALF_FLOAT_VERTEX] = TRUE;
     }
+
+    ENTER_GL();
 
     wined3d_adapter_init_limits(gl_info);
 
