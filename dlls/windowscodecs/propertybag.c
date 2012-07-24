@@ -54,7 +54,7 @@ static HRESULT WINAPI PropertyBag_QueryInterface(IPropertyBag2 *iface, REFIID ii
     if (IsEqualIID(&IID_IUnknown, iid) ||
         IsEqualIID(&IID_IPropertyBag2, iid))
     {
-        *ppv = This;
+        *ppv = &This->IPropertyBag2_iface;
     }
     else
     {
