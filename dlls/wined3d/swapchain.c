@@ -325,20 +325,20 @@ static void swapchain_blit(const struct wined3d_swapchain *swapchain,
 
         ENTER_GL();
         context_apply_fbo_state_blit(context, GL_READ_FRAMEBUFFER, backbuffer, NULL, location);
-        glReadBuffer(GL_COLOR_ATTACHMENT0);
+        gl_info->gl_ops.gl.p_glReadBuffer(GL_COLOR_ATTACHMENT0);
         context_check_fbo_status(context, GL_READ_FRAMEBUFFER);
 
         context_apply_fbo_state_blit(context, GL_DRAW_FRAMEBUFFER, swapchain->front_buffer, NULL, SFLAG_INDRAWABLE);
         context_set_draw_buffer(context, GL_BACK);
         context_invalidate_state(context, STATE_FRAMEBUFFER);
 
-        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        gl_info->gl_ops.gl.p_glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
         context_invalidate_state(context, STATE_RENDER(WINED3D_RS_COLORWRITEENABLE));
         context_invalidate_state(context, STATE_RENDER(WINED3D_RS_COLORWRITEENABLE1));
         context_invalidate_state(context, STATE_RENDER(WINED3D_RS_COLORWRITEENABLE2));
         context_invalidate_state(context, STATE_RENDER(WINED3D_RS_COLORWRITEENABLE3));
 
-        glDisable(GL_SCISSOR_TEST);
+        gl_info->gl_ops.gl.p_glDisable(GL_SCISSOR_TEST);
         context_invalidate_state(context, STATE_RENDER(WINED3D_RS_SCISSORTESTENABLE));
 
         /* Note that the texture is upside down */
@@ -377,8 +377,8 @@ static void swapchain_blit(const struct wined3d_swapchain *swapchain,
         /* Set up the texture. The surface is not in a wined3d_texture
          * container, so there are no D3D texture settings to dirtify. */
         device->blitter->set_shader(device->blit_priv, context2, backbuffer);
-        glTexParameteri(backbuffer->texture_target, GL_TEXTURE_MIN_FILTER, gl_filter);
-        glTexParameteri(backbuffer->texture_target, GL_TEXTURE_MAG_FILTER, gl_filter);
+        gl_info->gl_ops.gl.p_glTexParameteri(backbuffer->texture_target, GL_TEXTURE_MIN_FILTER, gl_filter);
+        gl_info->gl_ops.gl.p_glTexParameteri(backbuffer->texture_target, GL_TEXTURE_MAG_FILTER, gl_filter);
 
         context_set_draw_buffer(context, GL_BACK);
 
@@ -390,32 +390,33 @@ static void swapchain_blit(const struct wined3d_swapchain *swapchain,
          *
          * Note that context_apply_blit_state() set up viewport and ortho to
          * match the surface size - we want the GL drawable(=window) size. */
-        glPushAttrib(GL_VIEWPORT_BIT);
-        glViewport(dst_rect->left, win_h - dst_rect->bottom, dst_rect->right, win_h - dst_rect->top);
-        glMatrixMode(GL_PROJECTION);
-        glPushMatrix();
-        glLoadIdentity();
+        gl_info->gl_ops.gl.p_glPushAttrib(GL_VIEWPORT_BIT);
+        gl_info->gl_ops.gl.p_glViewport(dst_rect->left, win_h - dst_rect->bottom,
+                dst_rect->right, win_h - dst_rect->top);
+        gl_info->gl_ops.gl.p_glMatrixMode(GL_PROJECTION);
+        gl_info->gl_ops.gl.p_glPushMatrix();
+        gl_info->gl_ops.gl.p_glLoadIdentity();
 
-        glBegin(GL_QUADS);
+        gl_info->gl_ops.gl.p_glBegin(GL_QUADS);
             /* bottom left */
-            glTexCoord2f(tex_left, tex_bottom);
-            glVertex2i(-1, -1);
+            gl_info->gl_ops.gl.p_glTexCoord2f(tex_left, tex_bottom);
+            gl_info->gl_ops.gl.p_glVertex2i(-1, -1);
 
             /* top left */
-            glTexCoord2f(tex_left, tex_top);
-            glVertex2i(-1, 1);
+            gl_info->gl_ops.gl.p_glTexCoord2f(tex_left, tex_top);
+            gl_info->gl_ops.gl.p_glVertex2i(-1, 1);
 
             /* top right */
-            glTexCoord2f(tex_right, tex_top);
-            glVertex2i(1, 1);
+            gl_info->gl_ops.gl.p_glTexCoord2f(tex_right, tex_top);
+            gl_info->gl_ops.gl.p_glVertex2i(1, 1);
 
             /* bottom right */
-            glTexCoord2f(tex_right, tex_bottom);
-            glVertex2i(1, -1);
-        glEnd();
+            gl_info->gl_ops.gl.p_glTexCoord2f(tex_right, tex_bottom);
+            gl_info->gl_ops.gl.p_glVertex2i(1, -1);
+        gl_info->gl_ops.gl.p_glEnd();
 
-        glPopMatrix();
-        glPopAttrib();
+        gl_info->gl_ops.gl.p_glPopMatrix();
+        gl_info->gl_ops.gl.p_glPopAttrib();
 
         device->blitter->unset_shader(context->gl_info);
         checkGLcall("Swapchain present blit(manual)\n");
@@ -564,7 +565,7 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain, const RECT
     }
 
     if (swapchain->num_contexts > 1)
-        glFinish();
+        gl_info->gl_ops.gl.p_glFinish();
     SwapBuffers(context->hdc); /* TODO: cycle through the swapchain buffers */
 
     TRACE("SwapBuffers called, Starting new frame\n");

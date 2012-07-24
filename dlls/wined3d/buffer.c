@@ -127,7 +127,7 @@ static void buffer_create_buffer_object(struct wined3d_buffer *This, const struc
     * if an error during VBO creation occurs we can fall back to non-vbo operation
     * with full functionality(but performance loss)
     */
-    while (glGetError() != GL_NO_ERROR);
+    while (gl_info->gl_ops.gl.p_glGetError() != GL_NO_ERROR);
 
     /* Basically the FVF parameter passed to CreateVertexBuffer is no good.
      * The vertex declaration from the device determines how the data in the
@@ -136,7 +136,7 @@ static void buffer_create_buffer_object(struct wined3d_buffer *This, const struc
      * format. */
 
     GL_EXTCALL(glGenBuffersARB(1, &This->buffer_object));
-    error = glGetError();
+    error = gl_info->gl_ops.gl.p_glGetError();
     if (!This->buffer_object || error != GL_NO_ERROR)
     {
         ERR("Failed to create a VBO with error %s (%#x)\n", debug_glerror(error), error);
@@ -147,7 +147,7 @@ static void buffer_create_buffer_object(struct wined3d_buffer *This, const struc
     if (This->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER_ARB)
         device_invalidate_state(This->resource.device, STATE_INDEXBUFFER);
     GL_EXTCALL(glBindBufferARB(This->buffer_type_hint, This->buffer_object));
-    error = glGetError();
+    error = gl_info->gl_ops.gl.p_glGetError();
     if (error != GL_NO_ERROR)
     {
         ERR("Failed to bind the VBO with error %s (%#x)\n", debug_glerror(error), error);
@@ -187,7 +187,7 @@ static void buffer_create_buffer_object(struct wined3d_buffer *This, const struc
      * we're not double buffering, so we can release the heap mem afterwards
      */
     GL_EXTCALL(glBufferDataARB(This->buffer_type_hint, This->resource.size, This->resource.allocatedMemory, gl_usage));
-    error = glGetError();
+    error = gl_info->gl_ops.gl.p_glGetError();
     LEAVE_GL();
     if (error != GL_NO_ERROR)
     {
@@ -635,7 +635,7 @@ static void buffer_sync_apple(struct wined3d_buffer *This, DWORD flags, const st
         }
 
         /* Since we don't know about old draws a glFinish is needed once */
-        glFinish();
+        gl_info->gl_ops.gl.p_glFinish();
         return;
     }
     TRACE("Synchronizing buffer %p\n", This);
@@ -663,7 +663,7 @@ drop_query:
         This->query = NULL;
     }
 
-    glFinish();
+    gl_info->gl_ops.gl.p_glFinish();
     ENTER_GL();
     GL_EXTCALL(glBufferParameteriAPPLE(This->buffer_type_hint, GL_BUFFER_SERIALIZED_MODIFY_APPLE, GL_TRUE));
     checkGLcall("glBufferParameteriAPPLE(This->buffer_type_hint, GL_BUFFER_SERIALIZED_MODIFY_APPLE, GL_TRUE)");
@@ -1195,7 +1195,8 @@ void CDECL wined3d_buffer_unmap(struct wined3d_buffer *buffer)
 
         GL_EXTCALL(glUnmapBufferARB(buffer->buffer_type_hint));
         LEAVE_GL();
-        if (wined3d_settings.strict_draw_ordering) glFlush(); /* Flush to ensure ordering across contexts. */
+        if (wined3d_settings.strict_draw_ordering)
+            gl_info->gl_ops.gl.p_glFlush(); /* Flush to ensure ordering across contexts. */
         context_release(context);
 
         buffer->resource.allocatedMemory = NULL;

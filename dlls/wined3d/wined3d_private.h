@@ -834,14 +834,14 @@ extern int num_lock DECLSPEC_HIDDEN;
 do {                                                                \
     GLint err;                                                      \
     if (!__WINE_IS_DEBUG_ON(_ERR, __wine_dbch___default)) break;    \
-    err = glGetError();                                             \
+    err = gl_info->gl_ops.gl.p_glGetError();                        \
     if (err == GL_NO_ERROR) {                                       \
        TRACE("%s call ok %s / %d\n", A, __FILE__, __LINE__);        \
                                                                     \
     } else do {                                                     \
         ERR(">>>>>>>>>>>>>>>>> %s (%#x) from %s @ %s / %d\n",       \
             debug_glerror(err), err, A, __FILE__, __LINE__);        \
-       err = glGetError();                                          \
+       err = gl_info->gl_ops.gl.p_glGetError();                     \
     } while (err != GL_NO_ERROR);                                   \
 } while(0)
 #else
@@ -2498,8 +2498,9 @@ BOOL is_invalid_op(const struct wined3d_state *state, int stage,
 void set_tex_op_nvrc(const struct wined3d_gl_info *gl_info, const struct wined3d_state *state,
         BOOL is_alpha, int stage, enum wined3d_texture_op op, DWORD arg1, DWORD arg2, DWORD arg3,
         INT texture_idx, DWORD dst) DECLSPEC_HIDDEN;
-void set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords,
-        BOOL transformed, enum wined3d_format_id coordtype, BOOL ffp_can_disable_proj) DECLSPEC_HIDDEN;
+void set_texture_matrix(const struct wined3d_gl_info *gl_info, const float *smat, DWORD flags,
+        BOOL calculatedCoords, BOOL transformed, enum wined3d_format_id coordtype,
+        BOOL ffp_can_disable_proj) DECLSPEC_HIDDEN;
 void texture_activate_dimensions(const struct wined3d_texture *texture,
         const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
 void sampler_texdim(struct wined3d_context *context,

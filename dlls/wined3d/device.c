@@ -646,6 +646,7 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
 {
     const RECT *clear_rect = (rect_count > 0 && rects) ? (const RECT *)rects : NULL;
     struct wined3d_surface *target = rt_count ? fb->render_targets[0] : NULL;
+    const struct wined3d_gl_info *gl_info;
     UINT drawable_width, drawable_height;
     struct wined3d_context *context;
     GLbitfield clear_mask = 0;
@@ -678,6 +679,7 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
         WARN("Invalid context, skipping clear.\n");
         return;
     }
+    gl_info = context->gl_info;
 
     if (target)
     {
@@ -713,14 +715,14 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
     /* Only set the values up once, as they are not changing. */
     if (flags & WINED3DCLEAR_STENCIL)
     {
-        if (context->gl_info->supported[EXT_STENCIL_TWO_SIDE])
+        if (gl_info->supported[EXT_STENCIL_TWO_SIDE])
         {
-            glDisable(GL_STENCIL_TEST_TWO_SIDE_EXT);
+            gl_info->gl_ops.gl.p_glDisable(GL_STENCIL_TEST_TWO_SIDE_EXT);
             context_invalidate_state(context, STATE_RENDER(WINED3D_RS_TWOSIDEDSTENCILMODE));
         }
-        glStencilMask(~0U);
+        gl_info->gl_ops.gl.p_glStencilMask(~0U);
         context_invalidate_state(context, STATE_RENDER(WINED3D_RS_STENCILWRITEMASK));
-        glClearStencil(stencil);
+        gl_info->gl_ops.gl.p_glClearStencil(stencil);
         checkGLcall("glClearStencil");
         clear_mask = clear_mask | GL_STENCIL_BUFFER_BIT;
     }
@@ -731,9 +733,9 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
 
         surface_modify_ds_location(fb->depth_stencil, location, ds_rect.right, ds_rect.bottom);
 
-        glDepthMask(GL_TRUE);
+        gl_info->gl_ops.gl.p_glDepthMask(GL_TRUE);
         context_invalidate_state(context, STATE_RENDER(WINED3D_RS_ZWRITEENABLE));
-        glClearDepth(depth);
+        gl_info->gl_ops.gl.p_glClearDepth(depth);
         checkGLcall("glClearDepth");
         clear_mask = clear_mask | GL_DEPTH_BUFFER_BIT;
     }
@@ -748,12 +750,12 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
                 surface_modify_location(rt, rt->draw_binding, TRUE);
         }
 
-        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        gl_info->gl_ops.gl.p_glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
         context_invalidate_state(context, STATE_RENDER(WINED3D_RS_COLORWRITEENABLE));
         context_invalidate_state(context, STATE_RENDER(WINED3D_RS_COLORWRITEENABLE1));
         context_invalidate_state(context, STATE_RENDER(WINED3D_RS_COLORWRITEENABLE2));
         context_invalidate_state(context, STATE_RENDER(WINED3D_RS_COLORWRITEENABLE3));
-        glClearColor(color->r, color->g, color->b, color->a);
+        gl_info->gl_ops.gl.p_glClearColor(color->r, color->g, color->b, color->a);
         checkGLcall("glClearColor");
         clear_mask = clear_mask | GL_COLOR_BUFFER_BIT;
     }
@@ -762,16 +764,16 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
     {
         if (render_offscreen)
         {
-            glScissor(draw_rect->left, draw_rect->top,
+            gl_info->gl_ops.gl.p_glScissor(draw_rect->left, draw_rect->top,
                     draw_rect->right - draw_rect->left, draw_rect->bottom - draw_rect->top);
         }
         else
         {
-            glScissor(draw_rect->left, drawable_height - draw_rect->bottom,
+            gl_info->gl_ops.gl.p_glScissor(draw_rect->left, drawable_height - draw_rect->bottom,
                         draw_rect->right - draw_rect->left, draw_rect->bottom - draw_rect->top);
         }
         checkGLcall("glScissor");
-        glClear(clear_mask);
+        gl_info->gl_ops.gl.p_glClear(clear_mask);
         checkGLcall("glClear");
     }
     else
@@ -799,17 +801,17 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
 
             if (render_offscreen)
             {
-                glScissor(current_rect.left, current_rect.top,
+                gl_info->gl_ops.gl.p_glScissor(current_rect.left, current_rect.top,
                         current_rect.right - current_rect.left, current_rect.bottom - current_rect.top);
             }
             else
             {
-                glScissor(current_rect.left, drawable_height - current_rect.bottom,
+                gl_info->gl_ops.gl.p_glScissor(current_rect.left, drawable_height - current_rect.bottom,
                           current_rect.right - current_rect.left, current_rect.bottom - current_rect.top);
             }
             checkGLcall("glScissor");
 
-            glClear(clear_mask);
+            gl_info->gl_ops.gl.p_glClear(clear_mask);
             checkGLcall("glClear");
         }
     }
@@ -819,7 +821,7 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
     if (wined3d_settings.strict_draw_ordering || (flags & WINED3DCLEAR_TARGET
             && target->container.type == WINED3D_CONTAINER_SWAPCHAIN
             && target->container.u.swapchain->front_buffer == target))
-        glFlush(); /* Flush to ensure ordering across contexts. */
+        gl_info->gl_ops.gl.p_glFlush(); /* Flush to ensure ordering across contexts. */
 
     context_release(context);
 }
@@ -989,7 +991,7 @@ static void create_dummy_textures(struct wined3d_device *device, struct wined3d_
     if (gl_info->supported[APPLE_CLIENT_STORAGE])
     {
         /* The dummy texture does not have client storage backing */
-        glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
+        gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
         checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE)");
     }
 
@@ -1001,36 +1003,38 @@ static void create_dummy_textures(struct wined3d_device *device, struct wined3d_
         /* Make appropriate texture active */
         context_active_texture(context, gl_info, i);
 
-        glGenTextures(1, &device->dummy_texture_2d[i]);
+        gl_info->gl_ops.gl.p_glGenTextures(1, &device->dummy_texture_2d[i]);
         checkGLcall("glGenTextures");
         TRACE("Dummy 2D texture %u given name %u.\n", i, device->dummy_texture_2d[i]);
 
-        glBindTexture(GL_TEXTURE_2D, device->dummy_texture_2d[i]);
+        gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D, device->dummy_texture_2d[i]);
         checkGLcall("glBindTexture");
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1, 1, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, &color);
+        gl_info->gl_ops.gl.p_glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1, 1, 0,
+                GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, &color);
         checkGLcall("glTexImage2D");
 
         if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
         {
-            glGenTextures(1, &device->dummy_texture_rect[i]);
+            gl_info->gl_ops.gl.p_glGenTextures(1, &device->dummy_texture_rect[i]);
             checkGLcall("glGenTextures");
             TRACE("Dummy rectangle texture %u given name %u.\n", i, device->dummy_texture_rect[i]);
 
-            glBindTexture(GL_TEXTURE_RECTANGLE_ARB, device->dummy_texture_rect[i]);
+            gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_RECTANGLE_ARB, device->dummy_texture_rect[i]);
             checkGLcall("glBindTexture");
 
-            glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, 1, 1, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, &color);
+            gl_info->gl_ops.gl.p_glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, 1, 1, 0,
+                    GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, &color);
             checkGLcall("glTexImage2D");
         }
 
         if (gl_info->supported[EXT_TEXTURE3D])
         {
-            glGenTextures(1, &device->dummy_texture_3d[i]);
+            gl_info->gl_ops.gl.p_glGenTextures(1, &device->dummy_texture_3d[i]);
             checkGLcall("glGenTextures");
             TRACE("Dummy 3D texture %u given name %u.\n", i, device->dummy_texture_3d[i]);
 
-            glBindTexture(GL_TEXTURE_3D, device->dummy_texture_3d[i]);
+            gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_3D, device->dummy_texture_3d[i]);
             checkGLcall("glBindTexture");
 
             GL_EXTCALL(glTexImage3DEXT(GL_TEXTURE_3D, 0, GL_RGBA8, 1, 1, 1, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, &color));
@@ -1039,16 +1043,17 @@ static void create_dummy_textures(struct wined3d_device *device, struct wined3d_
 
         if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
         {
-            glGenTextures(1, &device->dummy_texture_cube[i]);
+            gl_info->gl_ops.gl.p_glGenTextures(1, &device->dummy_texture_cube[i]);
             checkGLcall("glGenTextures");
             TRACE("Dummy cube texture %u given name %u.\n", i, device->dummy_texture_cube[i]);
 
-            glBindTexture(GL_TEXTURE_CUBE_MAP, device->dummy_texture_cube[i]);
+            gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_CUBE_MAP, device->dummy_texture_cube[i]);
             checkGLcall("glBindTexture");
 
             for (j = GL_TEXTURE_CUBE_MAP_POSITIVE_X; j <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z; ++j)
             {
-                glTexImage2D(j, 0, GL_RGBA8, 1, 1, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, &color);
+                gl_info->gl_ops.gl.p_glTexImage2D(j, 0, GL_RGBA8, 1, 1, 0,
+                        GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, &color);
                 checkGLcall("glTexImage2D");
             }
         }
@@ -1057,7 +1062,7 @@ static void create_dummy_textures(struct wined3d_device *device, struct wined3d_
     if (gl_info->supported[APPLE_CLIENT_STORAGE])
     {
         /* Re-enable because if supported it is enabled by default */
-        glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
+        gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
         checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE)");
     }
 
@@ -1072,23 +1077,23 @@ static void destroy_dummy_textures(struct wined3d_device *device, const struct w
     ENTER_GL();
     if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
     {
-        glDeleteTextures(count, device->dummy_texture_cube);
+        gl_info->gl_ops.gl.p_glDeleteTextures(count, device->dummy_texture_cube);
         checkGLcall("glDeleteTextures(count, device->dummy_texture_cube)");
     }
 
     if (gl_info->supported[EXT_TEXTURE3D])
     {
-        glDeleteTextures(count, device->dummy_texture_3d);
+        gl_info->gl_ops.gl.p_glDeleteTextures(count, device->dummy_texture_3d);
         checkGLcall("glDeleteTextures(count, device->dummy_texture_3d)");
     }
 
     if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
     {
-        glDeleteTextures(count, device->dummy_texture_rect);
+        gl_info->gl_ops.gl.p_glDeleteTextures(count, device->dummy_texture_rect);
         checkGLcall("glDeleteTextures(count, device->dummy_texture_rect)");
     }
 
-    glDeleteTextures(count, device->dummy_texture_2d);
+    gl_info->gl_ops.gl.p_glDeleteTextures(count, device->dummy_texture_2d);
     checkGLcall("glDeleteTextures(count, device->dummy_texture_2d)");
     LEAVE_GL();
 
@@ -1452,7 +1457,7 @@ HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
     if (device->cursorTexture)
     {
         ENTER_GL();
-        glDeleteTextures(1, &device->cursorTexture);
+        gl_info->gl_ops.gl.p_glDeleteTextures(1, &device->cursorTexture);
         LEAVE_GL();
         device->cursorTexture = 0;
     }
@@ -1463,7 +1468,7 @@ HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
     if (device->depth_blt_texture)
     {
         ENTER_GL();
-        glDeleteTextures(1, &device->depth_blt_texture);
+        gl_info->gl_ops.gl.p_glDeleteTextures(1, &device->depth_blt_texture);
         LEAVE_GL();
         device->depth_blt_texture = 0;
     }
@@ -3811,7 +3816,7 @@ HRESULT CDECL wined3d_device_end_scene(struct wined3d_device *device)
 
     context = context_acquire(device, NULL);
     /* We only have to do this if we need to read the, swapbuffers performs a flush for us */
-    glFlush();
+    context->gl_info->gl_ops.gl.p_glFlush();
     /* No checkGLcall here to avoid locking the lock just for checking a call that hardly ever
      * fails. */
     context_release(context);
@@ -4793,7 +4798,7 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
     {
         struct wined3d_context *context = context_acquire(device, NULL);
         ENTER_GL();
-        glDeleteTextures(1, &device->cursorTexture);
+        context->gl_info->gl_ops.gl.p_glDeleteTextures(1, &device->cursorTexture);
         LEAVE_GL();
         context_release(context);
         device->cursorTexture = 0;
@@ -4863,23 +4868,23 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
 
             if (gl_info->supported[APPLE_CLIENT_STORAGE])
             {
-                glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
+                gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
                 checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE)");
             }
 
             invalidate_active_texture(device, context);
             /* Create a new cursor texture */
-            glGenTextures(1, &device->cursorTexture);
+            gl_info->gl_ops.gl.p_glGenTextures(1, &device->cursorTexture);
             checkGLcall("glGenTextures");
             context_bind_texture(context, GL_TEXTURE_2D, device->cursorTexture);
             /* Copy the bitmap memory into the cursor texture */
-            glTexImage2D(GL_TEXTURE_2D, 0, intfmt, width, height, 0, gl_format, type, mem);
+            gl_info->gl_ops.gl.p_glTexImage2D(GL_TEXTURE_2D, 0, intfmt, width, height, 0, gl_format, type, mem);
             checkGLcall("glTexImage2D");
             HeapFree(GetProcessHeap(), 0, mem);
 
             if (gl_info->supported[APPLE_CLIENT_STORAGE])
             {
-                glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
+                gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
                 checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE)");
             }
 
@@ -5044,12 +5049,12 @@ static void delete_opengl_contexts(struct wined3d_device *device, struct wined3d
     ENTER_GL();
     if (device->depth_blt_texture)
     {
-        glDeleteTextures(1, &device->depth_blt_texture);
+        gl_info->gl_ops.gl.p_glDeleteTextures(1, &device->depth_blt_texture);
         device->depth_blt_texture = 0;
     }
     if (device->cursorTexture)
     {
-        glDeleteTextures(1, &device->cursorTexture);
+        gl_info->gl_ops.gl.p_glDeleteTextures(1, &device->cursorTexture);
         device->cursorTexture = 0;
     }
     LEAVE_GL();

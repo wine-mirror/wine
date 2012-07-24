@@ -422,7 +422,7 @@ static inline BOOL test_arb_vs_offset_limit(const struct wined3d_gl_info *gl_inf
         "MOV result.position, C[A0.x + 65];\n"
         "END\n";
 
-    while(glGetError());
+    while (gl_info->gl_ops.gl.p_glGetError());
     GL_EXTCALL(glGenProgramsARB(1, &prog));
     if(!prog) {
         ERR("Failed to create an ARB offset limit test program\n");
@@ -430,10 +430,10 @@ static inline BOOL test_arb_vs_offset_limit(const struct wined3d_gl_info *gl_inf
     GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, prog));
     GL_EXTCALL(glProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
                                   strlen(testcode), testcode));
-    if (glGetError())
+    if (gl_info->gl_ops.gl.p_glGetError())
     {
         TRACE("OpenGL implementation does not allow indirect addressing offsets > 63\n");
-        TRACE("error: %s\n", debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
+        TRACE("error: %s\n", debugstr_a((const char *)gl_info->gl_ops.gl.p_glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
         ret = TRUE;
     } else TRACE("OpenGL implementation allows offsets > 63\n");
 
@@ -521,12 +521,12 @@ static void test_pbo_functionality(struct wined3d_gl_info *gl_info)
 
     ENTER_GL();
 
-    while (glGetError());
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
+    while (gl_info->gl_ops.gl.p_glGetError());
+    gl_info->gl_ops.gl.p_glGenTextures(1, &texture);
+    gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D, texture);
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 4, 4, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, 0);
+    gl_info->gl_ops.gl.p_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+    gl_info->gl_ops.gl.p_glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 4, 4, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, 0);
     checkGLcall("Specifying the PBO test texture");
 
     GL_EXTCALL(glGenBuffersARB(1, &pbo));
@@ -534,20 +534,20 @@ static void test_pbo_functionality(struct wined3d_gl_info *gl_info)
     GL_EXTCALL(glBufferDataARB(GL_PIXEL_UNPACK_BUFFER_ARB, sizeof(pattern), pattern, GL_STREAM_DRAW_ARB));
     checkGLcall("Specifying the PBO test pbo");
 
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 4, 4, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, NULL);
+    gl_info->gl_ops.gl.p_glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 4, 4, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, NULL);
     checkGLcall("Loading the PBO test texture");
 
     GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
     LEAVE_GL();
 
-    glFinish(); /* just to be sure */
+    gl_info->gl_ops.gl.p_glFinish(); /* just to be sure */
 
     memset(check, 0, sizeof(check));
     ENTER_GL();
-    glGetTexImage(GL_TEXTURE_2D, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, check);
+    gl_info->gl_ops.gl.p_glGetTexImage(GL_TEXTURE_2D, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, check);
     checkGLcall("Reading back the PBO test texture");
 
-    glDeleteTextures(1, &texture);
+    gl_info->gl_ops.gl.p_glDeleteTextures(1, &texture);
     GL_EXTCALL(glDeleteBuffersARB(1, &pbo));
     checkGLcall("PBO test cleanup");
 
@@ -606,15 +606,16 @@ static BOOL match_allows_spec_alpha(const struct wined3d_gl_info *gl_info, const
     GLenum error;
     DWORD data[16];
 
-    if (!gl_info->supported[EXT_SECONDARY_COLOR]) return FALSE;
+    if (!gl_info->supported[EXT_SECONDARY_COLOR])
+        return FALSE;
 
     ENTER_GL();
-    while(glGetError());
+    while (gl_info->gl_ops.gl.p_glGetError());
     GL_EXTCALL(glSecondaryColorPointerEXT)(4, GL_UNSIGNED_BYTE, 4, data);
-    error = glGetError();
+    error = gl_info->gl_ops.gl.p_glGetError();
     LEAVE_GL();
 
-    if(error == GL_NO_ERROR)
+    if (error == GL_NO_ERROR)
     {
         TRACE("GL Implementation accepts 4 component specular color pointers\n");
         return TRUE;
@@ -644,7 +645,7 @@ static BOOL match_broken_nv_clip(const struct wined3d_gl_info *gl_info, const ch
     if (!gl_info->supported[NV_VERTEX_PROGRAM2_OPTION]) return FALSE;
 
     ENTER_GL();
-    while(glGetError());
+    while (gl_info->gl_ops.gl.p_glGetError());
 
     GL_EXTCALL(glGenProgramsARB(1, &prog));
     if(!prog)
@@ -656,13 +657,13 @@ static BOOL match_broken_nv_clip(const struct wined3d_gl_info *gl_info, const ch
     GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, prog));
     GL_EXTCALL(glProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
                                   strlen(testcode), testcode));
-    glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &pos);
+    gl_info->gl_ops.gl.p_glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &pos);
     if(pos != -1)
     {
         WARN("GL_NV_vertex_program2_option result.clip[] test failed\n");
-        TRACE("error: %s\n", debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
+        TRACE("error: %s\n", debugstr_a((const char *)gl_info->gl_ops.gl.p_glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
         ret = TRUE;
-        while(glGetError());
+        while (gl_info->gl_ops.gl.p_glGetError());
     }
     else TRACE("GL_NV_vertex_program2_option result.clip[] test passed\n");
 
@@ -688,11 +689,11 @@ static BOOL match_fbo_tex_update(const struct wined3d_gl_info *gl_info, const ch
 
     ENTER_GL();
 
-    glGenTextures(1, &tex);
-    glBindTexture(GL_TEXTURE_2D, tex);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 4, 4, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, NULL);
+    gl_info->gl_ops.gl.p_glGenTextures(1, &tex);
+    gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D, tex);
+    gl_info->gl_ops.gl.p_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    gl_info->gl_ops.gl.p_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    gl_info->gl_ops.gl.p_glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 4, 4, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, NULL);
     checkGLcall("glTexImage2D");
 
     gl_info->fbo_ops.glGenFramebuffers(1, &fbo);
@@ -705,23 +706,23 @@ static BOOL match_fbo_tex_update(const struct wined3d_gl_info *gl_info, const ch
     checkGLcall("glCheckFramebufferStatus");
 
     memset(data, 0x11, sizeof(data));
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 4, 4, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, data);
+    gl_info->gl_ops.gl.p_glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 4, 4, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, data);
     checkGLcall("glTexSubImage2D");
 
-    glClearColor(0.996f, 0.729f, 0.745f, 0.792f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    gl_info->gl_ops.gl.p_glClearColor(0.996f, 0.729f, 0.745f, 0.792f);
+    gl_info->gl_ops.gl.p_glClear(GL_COLOR_BUFFER_BIT);
     checkGLcall("glClear");
 
-    glGetTexImage(GL_TEXTURE_2D, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, data);
+    gl_info->gl_ops.gl.p_glGetTexImage(GL_TEXTURE_2D, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, data);
     checkGLcall("glGetTexImage");
 
     gl_info->fbo_ops.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
     gl_info->fbo_ops.glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glBindTexture(GL_TEXTURE_2D, 0);
+    gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D, 0);
     checkGLcall("glBindTexture");
 
     gl_info->fbo_ops.glDeleteFramebuffers(1, &fbo);
-    glDeleteTextures(1, &tex);
+    gl_info->gl_ops.gl.p_glDeleteTextures(1, &tex);
     checkGLcall("glDeleteTextures");
 
     LEAVE_GL();
@@ -740,18 +741,18 @@ static BOOL match_broken_rgba16(const struct wined3d_gl_info *gl_info, const cha
 
     ENTER_GL();
 
-    glGenTextures(1, &tex);
-    glBindTexture(GL_TEXTURE_2D, tex);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16, 4, 4, 0, GL_RGBA, GL_UNSIGNED_SHORT, NULL);
+    gl_info->gl_ops.gl.p_glGenTextures(1, &tex);
+    gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D, tex);
+    gl_info->gl_ops.gl.p_glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16, 4, 4, 0, GL_RGBA, GL_UNSIGNED_SHORT, NULL);
     checkGLcall("glTexImage2D");
 
-    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_RED_SIZE, &size);
+    gl_info->gl_ops.gl.p_glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_RED_SIZE, &size);
     checkGLcall("glGetTexLevelParameteriv");
     TRACE("Real color depth is %d\n", size);
 
-    glBindTexture(GL_TEXTURE_2D, 0);
+    gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D, 0);
     checkGLcall("glBindTexture");
-    glDeleteTextures(1, &tex);
+    gl_info->gl_ops.gl.p_glDeleteTextures(1, &tex);
     checkGLcall("glDeleteTextures");
 
     LEAVE_GL();
@@ -2350,26 +2351,26 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
     gl_info->limits.arb_ps_instructions = 0;
     gl_info->limits.arb_ps_temps = 0;
 
-    glGetIntegerv(GL_MAX_CLIP_PLANES, &gl_max);
+    gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_CLIP_PLANES, &gl_max);
     gl_info->limits.clipplanes = min(WINED3DMAXUSERCLIPPLANES, gl_max);
     TRACE("Clip plane support - max planes %d.\n", gl_max);
 
-    glGetIntegerv(GL_MAX_LIGHTS, &gl_max);
+    gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_LIGHTS, &gl_max);
     gl_info->limits.lights = gl_max;
     TRACE("Light support - max lights %d.\n", gl_max);
 
-    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &gl_max);
+    gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_TEXTURE_SIZE, &gl_max);
     gl_info->limits.texture_size = gl_max;
     TRACE("Maximum texture size support - max texture size %d.\n", gl_max);
 
-    glGetFloatv(GL_ALIASED_POINT_SIZE_RANGE, gl_floatv);
+    gl_info->gl_ops.gl.p_glGetFloatv(GL_ALIASED_POINT_SIZE_RANGE, gl_floatv);
     gl_info->limits.pointsize_min = gl_floatv[0];
     gl_info->limits.pointsize_max = gl_floatv[1];
     TRACE("Maximum point size support - max point size %f.\n", gl_floatv[1]);
 
     if (gl_info->supported[ARB_MAP_BUFFER_ALIGNMENT])
     {
-        glGetIntegerv(GL_MIN_MAP_BUFFER_ALIGNMENT, &gl_max);
+        gl_info->gl_ops.gl.p_glGetIntegerv(GL_MIN_MAP_BUFFER_ALIGNMENT, &gl_max);
         TRACE("Minimum buffer map alignment: %d.\n", gl_max);
     }
     else
@@ -2378,28 +2379,28 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
     }
     if (gl_info->supported[NV_REGISTER_COMBINERS])
     {
-        glGetIntegerv(GL_MAX_GENERAL_COMBINERS_NV, &gl_max);
+        gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_GENERAL_COMBINERS_NV, &gl_max);
         gl_info->limits.general_combiners = gl_max;
         TRACE("Max general combiners: %d.\n", gl_max);
     }
     if (gl_info->supported[ARB_DRAW_BUFFERS] && wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
-        glGetIntegerv(GL_MAX_DRAW_BUFFERS_ARB, &gl_max);
+        gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_DRAW_BUFFERS_ARB, &gl_max);
         gl_info->limits.buffers = gl_max;
         TRACE("Max draw buffers: %u.\n", gl_max);
     }
     if (gl_info->supported[ARB_MULTITEXTURE])
     {
-        glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &gl_max);
+        gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &gl_max);
         gl_info->limits.textures = min(MAX_TEXTURES, gl_max);
         TRACE("Max textures: %d.\n", gl_info->limits.textures);
 
         if (gl_info->supported[ARB_FRAGMENT_PROGRAM])
         {
             GLint tmp;
-            glGetIntegerv(GL_MAX_TEXTURE_COORDS_ARB, &gl_max);
+            gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_TEXTURE_COORDS_ARB, &gl_max);
             gl_info->limits.texture_coords = min(MAX_TEXTURES, gl_max);
-            glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &tmp);
+            gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &tmp);
             gl_info->limits.fragment_samplers = min(MAX_FRAGMENT_SAMPLERS, tmp);
         }
         else
@@ -2413,11 +2414,11 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
         if (gl_info->supported[ARB_VERTEX_SHADER])
         {
             GLint tmp;
-            glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB, &tmp);
+            gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB, &tmp);
             gl_info->limits.vertex_samplers = tmp;
-            glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB, &tmp);
+            gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB, &tmp);
             gl_info->limits.combined_samplers = tmp;
-            glGetIntegerv(GL_MAX_VERTEX_ATTRIBS_ARB, &tmp);
+            gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_VERTEX_ATTRIBS_ARB, &tmp);
             gl_info->limits.vertex_attribs = tmp;
 
             /* Loading GLSL sampler uniforms is much simpler if we can assume that the sampler setup
@@ -2455,19 +2456,19 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
     }
     if (gl_info->supported[ARB_VERTEX_BLEND])
     {
-        glGetIntegerv(GL_MAX_VERTEX_UNITS_ARB, &gl_max);
+        gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_VERTEX_UNITS_ARB, &gl_max);
         gl_info->limits.blends = gl_max;
         TRACE("Max blends: %u.\n", gl_info->limits.blends);
     }
     if (gl_info->supported[EXT_TEXTURE3D])
     {
-        glGetIntegerv(GL_MAX_3D_TEXTURE_SIZE_EXT, &gl_max);
+        gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_3D_TEXTURE_SIZE_EXT, &gl_max);
         gl_info->limits.texture3d_size = gl_max;
         TRACE("Max texture3D size: %d.\n", gl_info->limits.texture3d_size);
     }
     if (gl_info->supported[EXT_TEXTURE_FILTER_ANISOTROPIC])
     {
-        glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &gl_max);
+        gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &gl_max);
         gl_info->limits.anisotropy = gl_max;
         TRACE("Max anisotropy: %d.\n", gl_info->limits.anisotropy);
     }
@@ -2508,29 +2509,29 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
     }
     if (gl_info->supported[ARB_VERTEX_SHADER])
     {
-        glGetIntegerv(GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB, &gl_max);
+        gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB, &gl_max);
         gl_info->limits.glsl_vs_float_constants = gl_max / 4;
         TRACE("Max ARB_VERTEX_SHADER float constants: %u.\n", gl_info->limits.glsl_vs_float_constants);
     }
     if (gl_info->supported[ARB_FRAGMENT_SHADER])
     {
-        glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB, &gl_max);
+        gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB, &gl_max);
         gl_info->limits.glsl_ps_float_constants = gl_max / 4;
         TRACE("Max ARB_FRAGMENT_SHADER float constants: %u.\n", gl_info->limits.glsl_ps_float_constants);
-        glGetIntegerv(GL_MAX_VARYING_FLOATS_ARB, &gl_max);
+        gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_VARYING_FLOATS_ARB, &gl_max);
         gl_info->limits.glsl_varyings = gl_max;
         TRACE("Max GLSL varyings: %u (%u 4 component varyings).\n", gl_max, gl_max / 4);
     }
 
     if (gl_info->supported[NV_LIGHT_MAX_EXPONENT])
-        glGetFloatv(GL_MAX_SHININESS_NV, &gl_info->limits.shininess);
+        gl_info->gl_ops.gl.p_glGetFloatv(GL_MAX_SHININESS_NV, &gl_info->limits.shininess);
     else
         gl_info->limits.shininess = 128.0f;
 
     if ((gl_info->supported[ARB_FRAMEBUFFER_OBJECT] || gl_info->supported[EXT_FRAMEBUFFER_MULTISAMPLE])
             && wined3d_settings.allow_multisampling)
     {
-        glGetIntegerv(GL_MAX_SAMPLES, &gl_max);
+        gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_SAMPLES, &gl_max);
         gl_info->limits.samples = gl_max;
     }
 }
@@ -2554,7 +2555,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
 
     ENTER_GL();
 
-    gl_renderer_str = (const char *)glGetString(GL_RENDERER);
+    gl_renderer_str = (const char *)gl_info->gl_ops.gl.p_glGetString(GL_RENDERER);
     TRACE("GL_RENDERER: %s.\n", debugstr_a(gl_renderer_str));
     if (!gl_renderer_str)
     {
@@ -2563,7 +2564,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
         return FALSE;
     }
 
-    gl_vendor_str = (const char *)glGetString(GL_VENDOR);
+    gl_vendor_str = (const char *)gl_info->gl_ops.gl.p_glGetString(GL_VENDOR);
     TRACE("GL_VENDOR: %s.\n", debugstr_a(gl_vendor_str));
     if (!gl_vendor_str)
     {
@@ -2573,7 +2574,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
     }
 
     /* Parse the GL_VERSION field into major and minor information */
-    gl_version_str = (const char *)glGetString(GL_VERSION);
+    gl_version_str = (const char *)gl_info->gl_ops.gl.p_glGetString(GL_VERSION);
     TRACE("GL_VERSION: %s.\n", debugstr_a(gl_version_str));
     if (!gl_version_str)
     {
@@ -2584,7 +2585,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
     gl_version = wined3d_parse_gl_version(gl_version_str);
 
     /* Parse the gl supported features, in theory enabling parts of our code appropriately. */
-    GL_Extensions = (const char *)glGetString(GL_EXTENSIONS);
+    GL_Extensions = (const char *)gl_info->gl_ops.gl.p_glGetString(GL_EXTENSIONS);
     if (!GL_Extensions)
     {
         LEAVE_GL();
@@ -2738,7 +2739,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
 
     if (gl_info->supported[ARB_SHADING_LANGUAGE_100])
     {
-        const char *str = (const char *)glGetString(GL_SHADING_LANGUAGE_VERSION_ARB);
+        const char *str = (const char *)gl_info->gl_ops.gl.p_glGetString(GL_SHADING_LANGUAGE_VERSION_ARB);
         unsigned int major, minor;
 
         TRACE("GLSL version string: %s.\n", debugstr_a(str));
@@ -5211,10 +5212,10 @@ static void WINE_GLAPI position_d3dcolor(const void *data)
     DWORD pos = *((const DWORD *)data);
 
     FIXME("Add a test for fixed function position from d3dcolor type\n");
-    glVertex4s(D3DCOLOR_B_R(pos),
-               D3DCOLOR_B_G(pos),
-               D3DCOLOR_B_B(pos),
-               D3DCOLOR_B_A(pos));
+    context_get_current()->gl_info->gl_ops.gl.p_glVertex4s(D3DCOLOR_B_R(pos),
+            D3DCOLOR_B_G(pos),
+            D3DCOLOR_B_B(pos),
+            D3DCOLOR_B_A(pos));
 }
 
 static void WINE_GLAPI position_float4(const void *data)
@@ -5225,11 +5226,11 @@ static void WINE_GLAPI position_float4(const void *data)
     {
         float w = 1.0f / pos[3];
 
-        glVertex4f(pos[0] * w, pos[1] * w, pos[2] * w, w);
+        context_get_current()->gl_info->gl_ops.gl.p_glVertex4f(pos[0] * w, pos[1] * w, pos[2] * w, w);
     }
     else
     {
-        glVertex3fv(pos);
+        context_get_current()->gl_info->gl_ops.gl.p_glVertex3fv(pos);
     }
 }
 
@@ -5237,10 +5238,10 @@ static void WINE_GLAPI diffuse_d3dcolor(const void *data)
 {
     DWORD diffuseColor = *((const DWORD *)data);
 
-    glColor4ub(D3DCOLOR_B_R(diffuseColor),
-               D3DCOLOR_B_G(diffuseColor),
-               D3DCOLOR_B_B(diffuseColor),
-               D3DCOLOR_B_A(diffuseColor));
+    context_get_current()->gl_info->gl_ops.gl.p_glColor4ub(D3DCOLOR_B_R(diffuseColor),
+            D3DCOLOR_B_G(diffuseColor),
+            D3DCOLOR_B_B(diffuseColor),
+            D3DCOLOR_B_A(diffuseColor));
 }
 
 static void WINE_GLAPI specular_d3dcolor(const void *data)
@@ -5262,12 +5263,12 @@ static void fillGLAttribFuncs(const struct wined3d_gl_info *gl_info)
 {
     position_funcs[WINED3D_FFP_EMIT_FLOAT1]      = invalid_func;
     position_funcs[WINED3D_FFP_EMIT_FLOAT2]      = invalid_func;
-    position_funcs[WINED3D_FFP_EMIT_FLOAT3]      = (glAttribFunc)glVertex3fv;
+    position_funcs[WINED3D_FFP_EMIT_FLOAT3]      = (glAttribFunc)gl_info->gl_ops.gl.p_glVertex3fv;
     position_funcs[WINED3D_FFP_EMIT_FLOAT4]      = position_float4;
     position_funcs[WINED3D_FFP_EMIT_D3DCOLOR]    = position_d3dcolor;
     position_funcs[WINED3D_FFP_EMIT_UBYTE4]      = invalid_func;
     position_funcs[WINED3D_FFP_EMIT_SHORT2]      = invalid_func;
-    position_funcs[WINED3D_FFP_EMIT_SHORT4]      = (glAttribFunc)glVertex2sv;
+    position_funcs[WINED3D_FFP_EMIT_SHORT4]      = (glAttribFunc)gl_info->gl_ops.gl.p_glVertex2sv;
     position_funcs[WINED3D_FFP_EMIT_UBYTE4N]     = invalid_func;
     position_funcs[WINED3D_FFP_EMIT_SHORT2N]     = invalid_func;
     position_funcs[WINED3D_FFP_EMIT_SHORT4N]     = invalid_func;
@@ -5280,17 +5281,17 @@ static void fillGLAttribFuncs(const struct wined3d_gl_info *gl_info)
 
     diffuse_funcs[WINED3D_FFP_EMIT_FLOAT1]       = invalid_func;
     diffuse_funcs[WINED3D_FFP_EMIT_FLOAT2]       = invalid_func;
-    diffuse_funcs[WINED3D_FFP_EMIT_FLOAT3]       = (glAttribFunc)glColor3fv;
-    diffuse_funcs[WINED3D_FFP_EMIT_FLOAT4]       = (glAttribFunc)glColor4fv;
+    diffuse_funcs[WINED3D_FFP_EMIT_FLOAT3]       = (glAttribFunc)gl_info->gl_ops.gl.p_glColor3fv;
+    diffuse_funcs[WINED3D_FFP_EMIT_FLOAT4]       = (glAttribFunc)gl_info->gl_ops.gl.p_glColor4fv;
     diffuse_funcs[WINED3D_FFP_EMIT_D3DCOLOR]     = diffuse_d3dcolor;
     diffuse_funcs[WINED3D_FFP_EMIT_UBYTE4]       = invalid_func;
     diffuse_funcs[WINED3D_FFP_EMIT_SHORT2]       = invalid_func;
     diffuse_funcs[WINED3D_FFP_EMIT_SHORT4]       = invalid_func;
-    diffuse_funcs[WINED3D_FFP_EMIT_UBYTE4N]      = (glAttribFunc)glColor4ubv;
+    diffuse_funcs[WINED3D_FFP_EMIT_UBYTE4N]      = (glAttribFunc)gl_info->gl_ops.gl.p_glColor4ubv;
     diffuse_funcs[WINED3D_FFP_EMIT_SHORT2N]      = invalid_func;
-    diffuse_funcs[WINED3D_FFP_EMIT_SHORT4N]      = (glAttribFunc)glColor4sv;
+    diffuse_funcs[WINED3D_FFP_EMIT_SHORT4N]      = (glAttribFunc)gl_info->gl_ops.gl.p_glColor4sv;
     diffuse_funcs[WINED3D_FFP_EMIT_USHORT2N]     = invalid_func;
-    diffuse_funcs[WINED3D_FFP_EMIT_USHORT4N]     = (glAttribFunc)glColor4usv;
+    diffuse_funcs[WINED3D_FFP_EMIT_USHORT4N]     = (glAttribFunc)gl_info->gl_ops.gl.p_glColor4usv;
     diffuse_funcs[WINED3D_FFP_EMIT_UDEC3]        = invalid_func;
     diffuse_funcs[WINED3D_FFP_EMIT_DEC3N]        = invalid_func;
     diffuse_funcs[WINED3D_FFP_EMIT_FLOAT16_2]    = invalid_func;
@@ -5335,8 +5336,8 @@ static void fillGLAttribFuncs(const struct wined3d_gl_info *gl_info)
      */
     normal_funcs[WINED3D_FFP_EMIT_FLOAT1]         = invalid_func;
     normal_funcs[WINED3D_FFP_EMIT_FLOAT2]         = invalid_func;
-    normal_funcs[WINED3D_FFP_EMIT_FLOAT3]         = (glAttribFunc)glNormal3fv;
-    normal_funcs[WINED3D_FFP_EMIT_FLOAT4]         = (glAttribFunc)glNormal3fv; /* Just ignore the 4th value */
+    normal_funcs[WINED3D_FFP_EMIT_FLOAT3]         = (glAttribFunc)gl_info->gl_ops.gl.p_glNormal3fv;
+    normal_funcs[WINED3D_FFP_EMIT_FLOAT4]         = (glAttribFunc)gl_info->gl_ops.gl.p_glNormal3fv; /* Just ignore the 4th value */
     normal_funcs[WINED3D_FFP_EMIT_D3DCOLOR]       = invalid_func;
     normal_funcs[WINED3D_FFP_EMIT_UBYTE4]         = invalid_func;
     normal_funcs[WINED3D_FFP_EMIT_SHORT2]         = invalid_func;
@@ -5380,6 +5381,8 @@ static void fillGLAttribFuncs(const struct wined3d_gl_info *gl_info)
 /* Do not call while under the GL lock. */
 static BOOL InitAdapters(struct wined3d *wined3d)
 {
+    struct wined3d_adapter *adapter = &wined3d->adapters[0];
+    struct wined3d_gl_info *gl_info = &adapter->gl_info;
     static HMODULE mod_gl;
     BOOL ret;
     int ps_selected_mode, vs_selected_mode;
@@ -5405,8 +5408,8 @@ static BOOL InitAdapters(struct wined3d *wined3d)
 
 /* Dynamically load all GL core functions */
 #ifdef USE_WIN32_OPENGL
-#define USE_GL_FUNC(pfn) pfn = (void*)GetProcAddress(mod_gl, #pfn);
-    GL_FUNCS_GEN;
+#define USE_GL_FUNC(f) gl_info->gl_ops.gl.p_##f = (void *)GetProcAddress(mod_gl, #f);
+    ALL_WGL_FUNCS
 #undef USE_GL_FUNC
 #else
     /* To bypass the opengl32 thunks retrieve functions from the WGL driver instead of opengl32 */
@@ -5415,19 +5418,15 @@ static BOOL InitAdapters(struct wined3d *wined3d)
         const struct opengl_funcs *wgl_driver = __wine_get_wgl_driver( hdc, WINE_WGL_DRIVER_VERSION );
         ReleaseDC( 0, hdc );
         if (!wgl_driver || wgl_driver == (void *)-1) goto nogl_adapter;
-#define USE_GL_FUNC(pfn) pfn = wgl_driver->gl.p_##pfn;
-        GL_FUNCS_GEN;
-#undef USE_GL_FUNC
+        gl_info->gl_ops.gl = wgl_driver->gl;
     }
 #endif
 
-    glEnableWINE = glEnable;
-    glDisableWINE = glDisable;
+    glEnableWINE = gl_info->gl_ops.gl.p_glEnable;
+    glDisableWINE = gl_info->gl_ops.gl.p_glDisable;
 
     /* For now only one default adapter */
     {
-        struct wined3d_adapter *adapter = &wined3d->adapters[0];
-        const struct wined3d_gl_info *gl_info = &adapter->gl_info;
         struct wined3d_fake_gl_ctx fake_gl_ctx = {0};
         struct wined3d_pixel_format *cfgs;
         int iPixelFormat;

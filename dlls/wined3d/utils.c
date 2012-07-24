@@ -997,15 +997,16 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct wined
 
     ENTER_GL();
 
-    while(glGetError());
-    glDisable(GL_BLEND);
+    while (gl_info->gl_ops.gl.p_glGetError());
+    gl_info->gl_ops.gl.p_glDisable(GL_BLEND);
 
-    glGenTextures(1, &tex);
-    glBindTexture(GL_TEXTURE_2D, tex);
+    gl_info->gl_ops.gl.p_glGenTextures(1, &tex);
+    gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D, tex);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, format->glInternal, 16, 16, 0, format->glFormat, format->glType, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    gl_info->gl_ops.gl.p_glTexImage2D(GL_TEXTURE_2D, 0, format->glInternal, 16, 16, 0,
+            format->glFormat, format->glType, NULL);
+    gl_info->gl_ops.gl.p_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    gl_info->gl_ops.gl.p_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
     gl_info->fbo_ops.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex, 0);
 
@@ -1039,13 +1040,14 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct wined
             TRACE("Format %s is not supported as FBO color attachment, trying rtInternal format as fallback.\n",
                     debug_d3dformat(format->id));
 
-            while(glGetError());
+            while (gl_info->gl_ops.gl.p_glGetError());
 
             gl_info->fbo_ops.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
 
-            glTexImage2D(GL_TEXTURE_2D, 0, format->rtInternal, 16, 16, 0, format->glFormat, format->glType, NULL);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            gl_info->gl_ops.gl.p_glTexImage2D(GL_TEXTURE_2D, 0, format->rtInternal, 16, 16, 0,
+                    format->glFormat, format->glType, NULL);
+            gl_info->gl_ops.gl.p_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            gl_info->gl_ops.gl.p_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
             gl_info->fbo_ops.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex, 0);
 
@@ -1087,55 +1089,55 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct wined
             checkGLcall("RB attachment");
         }
 
-        glEnable(GL_BLEND);
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-        if (glGetError() == GL_INVALID_FRAMEBUFFER_OPERATION)
+        gl_info->gl_ops.gl.p_glEnable(GL_BLEND);
+        gl_info->gl_ops.gl.p_glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        gl_info->gl_ops.gl.p_glClear(GL_COLOR_BUFFER_BIT);
+        if (gl_info->gl_ops.gl.p_glGetError() == GL_INVALID_FRAMEBUFFER_OPERATION)
         {
-            while(glGetError());
+            while (gl_info->gl_ops.gl.p_glGetError());
             TRACE("Format doesn't support post-pixelshader blending.\n");
             format->flags &= ~WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING;
         }
         else
         {
-            glViewport(0, 0, 16, 16);
-            glDisable(GL_LIGHTING);
-            glMatrixMode(GL_MODELVIEW);
-            glLoadIdentity();
-            glMatrixMode(GL_PROJECTION);
-            glLoadIdentity();
+            gl_info->gl_ops.gl.p_glViewport(0, 0, 16, 16);
+            gl_info->gl_ops.gl.p_glDisable(GL_LIGHTING);
+            gl_info->gl_ops.gl.p_glMatrixMode(GL_MODELVIEW);
+            gl_info->gl_ops.gl.p_glLoadIdentity();
+            gl_info->gl_ops.gl.p_glMatrixMode(GL_PROJECTION);
+            gl_info->gl_ops.gl.p_glLoadIdentity();
 
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            gl_info->gl_ops.gl.p_glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
             /* Draw a full-black quad */
-            glBegin(GL_TRIANGLE_STRIP);
-            glColor4ub(0x00, 0x00, 0x00, 0xff);
-            glVertex3f(-1.0f, -1.0f, 0.0f);
-            glColor4ub(0x00, 0x00, 0x00, 0xff);
-            glVertex3f(1.0f, -1.0f, 0.0f);
-            glColor4ub(0x00, 0x00, 0x00, 0xff);
-            glVertex3f(-1.0f, 1.0f, 0.0f);
-            glColor4ub(0x00, 0x00, 0x00, 0xff);
-            glVertex3f(1.0f, 1.0f, 0.0f);
-            glEnd();
+            gl_info->gl_ops.gl.p_glBegin(GL_TRIANGLE_STRIP);
+            gl_info->gl_ops.gl.p_glColor4ub(0x00, 0x00, 0x00, 0xff);
+            gl_info->gl_ops.gl.p_glVertex3f(-1.0f, -1.0f, 0.0f);
+            gl_info->gl_ops.gl.p_glColor4ub(0x00, 0x00, 0x00, 0xff);
+            gl_info->gl_ops.gl.p_glVertex3f(1.0f, -1.0f, 0.0f);
+            gl_info->gl_ops.gl.p_glColor4ub(0x00, 0x00, 0x00, 0xff);
+            gl_info->gl_ops.gl.p_glVertex3f(-1.0f, 1.0f, 0.0f);
+            gl_info->gl_ops.gl.p_glColor4ub(0x00, 0x00, 0x00, 0xff);
+            gl_info->gl_ops.gl.p_glVertex3f(1.0f, 1.0f, 0.0f);
+            gl_info->gl_ops.gl.p_glEnd();
 
             /* Draw a half-transparent red quad */
-            glBegin(GL_TRIANGLE_STRIP);
-            glColor4ub(0xff, 0x00, 0x00, 0x80);
-            glVertex3f(-1.0f, -1.0f, 0.0f);
-            glColor4ub(0xff, 0x00, 0x00, 0x80);
-            glVertex3f(1.0f, -1.0f, 0.0f);
-            glColor4ub(0xff, 0x00, 0x00, 0x80);
-            glVertex3f(-1.0f, 1.0f, 0.0f);
-            glColor4ub(0xff, 0x00, 0x00, 0x80);
-            glVertex3f(1.0f, 1.0f, 0.0f);
-            glEnd();
+            gl_info->gl_ops.gl.p_glBegin(GL_TRIANGLE_STRIP);
+            gl_info->gl_ops.gl.p_glColor4ub(0xff, 0x00, 0x00, 0x80);
+            gl_info->gl_ops.gl.p_glVertex3f(-1.0f, -1.0f, 0.0f);
+            gl_info->gl_ops.gl.p_glColor4ub(0xff, 0x00, 0x00, 0x80);
+            gl_info->gl_ops.gl.p_glVertex3f(1.0f, -1.0f, 0.0f);
+            gl_info->gl_ops.gl.p_glColor4ub(0xff, 0x00, 0x00, 0x80);
+            gl_info->gl_ops.gl.p_glVertex3f(-1.0f, 1.0f, 0.0f);
+            gl_info->gl_ops.gl.p_glColor4ub(0xff, 0x00, 0x00, 0x80);
+            gl_info->gl_ops.gl.p_glVertex3f(1.0f, 1.0f, 0.0f);
+            gl_info->gl_ops.gl.p_glEnd();
 
-            glGenTextures(1, &tex2);
-            glBindTexture(GL_TEXTURE_2D, tex2);
+            gl_info->gl_ops.gl.p_glGenTextures(1, &tex2);
+            gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D, tex2);
 
-            glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 0, 0, 16, 16, 0);
-            glGetTexImage(GL_TEXTURE_2D, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, readback);
+            gl_info->gl_ops.gl.p_glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 0, 0, 16, 16, 0);
+            gl_info->gl_ops.gl.p_glGetTexImage(GL_TEXTURE_2D, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, readback);
             checkGLcall("Post-pixelshader blending check");
 
             color = readback[7 * 16 + 7];
@@ -1159,8 +1161,8 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct wined
                 format->flags |= WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING;
             }
 
-            glBindTexture(GL_TEXTURE_2D, tex);
-            glDeleteTextures(1, &tex2);
+            gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D, tex);
+            gl_info->gl_ops.gl.p_glDeleteTextures(1, &tex2);
         }
 
         if (gl_info->supported[ARB_FRAMEBUFFER_OBJECT]
@@ -1175,7 +1177,8 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct wined
 
     if (format->glInternal != format->glGammaInternal)
     {
-        glTexImage2D(GL_TEXTURE_2D, 0, format->glGammaInternal, 16, 16, 0, format->glFormat, format->glType, NULL);
+        gl_info->gl_ops.gl.p_glTexImage2D(GL_TEXTURE_2D, 0, format->glGammaInternal, 16, 16, 0,
+                format->glFormat, format->glType, NULL);
         gl_info->fbo_ops.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex, 0);
 
         status = gl_info->fbo_ops.glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -1194,7 +1197,7 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct wined
     else if (status == GL_FRAMEBUFFER_COMPLETE)
         format->flags |= WINED3DFMT_FLAG_FBO_ATTACHABLE_SRGB;
 
-    glDeleteTextures(1, &tex);
+    gl_info->gl_ops.gl.p_glDeleteTextures(1, &tex);
 
     LEAVE_GL();
 }
@@ -1211,8 +1214,8 @@ static void init_format_fbo_compat_info(struct wined3d_gl_info *gl_info)
 
         gl_info->fbo_ops.glGenFramebuffers(1, &fbo);
         gl_info->fbo_ops.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-        glDrawBuffer(GL_COLOR_ATTACHMENT0);
-        glReadBuffer(GL_COLOR_ATTACHMENT0);
+        gl_info->gl_ops.gl.p_glDrawBuffer(GL_COLOR_ATTACHMENT0);
+        gl_info->gl_ops.gl.p_glReadBuffer(GL_COLOR_ATTACHMENT0);
 
         LEAVE_GL();
     }
@@ -1347,59 +1350,61 @@ static BOOL check_filter(const struct wined3d_gl_info *gl_info, GLenum internal)
      */
 
     ENTER_GL();
-    while(glGetError());
+    while (gl_info->gl_ops.gl.p_glGetError());
 
-    glGenTextures(1, &buffer);
-    glBindTexture(GL_TEXTURE_2D, buffer);
+    gl_info->gl_ops.gl.p_glGenTextures(1, &buffer);
+    gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D, buffer);
     memset(readback, 0x7e, sizeof(readback));
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 16, 1, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, readback);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    gl_info->gl_ops.gl.p_glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 16, 1, 0,
+            GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, readback);
+    gl_info->gl_ops.gl.p_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    gl_info->gl_ops.gl.p_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    gl_info->gl_ops.gl.p_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    gl_info->gl_ops.gl.p_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    gl_info->gl_ops.gl.p_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
-    glGenTextures(1, &tex);
-    glBindTexture(GL_TEXTURE_2D, tex);
-    glTexImage2D(GL_TEXTURE_2D, 0, internal, 2, 1, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, data);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-    glEnable(GL_TEXTURE_2D);
+    gl_info->gl_ops.gl.p_glGenTextures(1, &tex);
+    gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D, tex);
+    gl_info->gl_ops.gl.p_glTexImage2D(GL_TEXTURE_2D, 0, internal, 2, 1, 0,
+            GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, data);
+    gl_info->gl_ops.gl.p_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    gl_info->gl_ops.gl.p_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    gl_info->gl_ops.gl.p_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    gl_info->gl_ops.gl.p_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    gl_info->gl_ops.gl.p_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    gl_info->gl_ops.gl.p_glEnable(GL_TEXTURE_2D);
 
     gl_info->fbo_ops.glGenFramebuffers(1, &fbo);
     gl_info->fbo_ops.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     gl_info->fbo_ops.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, buffer, 0);
-    glDrawBuffer(GL_COLOR_ATTACHMENT0);
+    gl_info->gl_ops.gl.p_glDrawBuffer(GL_COLOR_ATTACHMENT0);
 
-    glViewport(0, 0, 16, 1);
-    glDisable(GL_LIGHTING);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
+    gl_info->gl_ops.gl.p_glViewport(0, 0, 16, 1);
+    gl_info->gl_ops.gl.p_glDisable(GL_LIGHTING);
+    gl_info->gl_ops.gl.p_glMatrixMode(GL_MODELVIEW);
+    gl_info->gl_ops.gl.p_glLoadIdentity();
+    gl_info->gl_ops.gl.p_glMatrixMode(GL_PROJECTION);
+    gl_info->gl_ops.gl.p_glLoadIdentity();
 
-    glClearColor(0, 1, 0, 0);
-    glClear(GL_COLOR_BUFFER_BIT);
+    gl_info->gl_ops.gl.p_glClearColor(0, 1, 0, 0);
+    gl_info->gl_ops.gl.p_glClear(GL_COLOR_BUFFER_BIT);
 
-    glBegin(GL_TRIANGLE_STRIP);
-    glTexCoord2f(0.0, 0.0);
-    glVertex2f(-1.0f, -1.0f);
-    glTexCoord2f(1.0, 0.0);
-    glVertex2f(1.0f, -1.0f);
-    glTexCoord2f(0.0, 1.0);
-    glVertex2f(-1.0f, 1.0f);
-    glTexCoord2f(1.0, 1.0);
-    glVertex2f(1.0f, 1.0f);
-    glEnd();
+    gl_info->gl_ops.gl.p_glBegin(GL_TRIANGLE_STRIP);
+    gl_info->gl_ops.gl.p_glTexCoord2f(0.0, 0.0);
+    gl_info->gl_ops.gl.p_glVertex2f(-1.0f, -1.0f);
+    gl_info->gl_ops.gl.p_glTexCoord2f(1.0, 0.0);
+    gl_info->gl_ops.gl.p_glVertex2f(1.0f, -1.0f);
+    gl_info->gl_ops.gl.p_glTexCoord2f(0.0, 1.0);
+    gl_info->gl_ops.gl.p_glVertex2f(-1.0f, 1.0f);
+    gl_info->gl_ops.gl.p_glTexCoord2f(1.0, 1.0);
+    gl_info->gl_ops.gl.p_glVertex2f(1.0f, 1.0f);
+    gl_info->gl_ops.gl.p_glEnd();
 
-    glBindTexture(GL_TEXTURE_2D, buffer);
+    gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D, buffer);
     memset(readback, 0x7f, sizeof(readback));
-    glGetTexImage(GL_TEXTURE_2D, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, readback);
-    if(color_match(readback[6], 0xffffffff, 5) || color_match(readback[6], 0x00000000, 5) ||
-       color_match(readback[9], 0xffffffff, 5) || color_match(readback[9], 0x00000000, 5))
+    gl_info->gl_ops.gl.p_glGetTexImage(GL_TEXTURE_2D, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, readback);
+    if (color_match(readback[6], 0xffffffff, 5) || color_match(readback[6], 0x00000000, 5)
+            || color_match(readback[9], 0xffffffff, 5) || color_match(readback[9], 0x00000000, 5))
     {
         TRACE("Read back colors 0x%08x and 0x%08x close to unfiltered color, assuming no filtering\n",
               readback[6], readback[9]);
@@ -1414,10 +1419,10 @@ static BOOL check_filter(const struct wined3d_gl_info *gl_info, GLenum internal)
 
     gl_info->fbo_ops.glBindFramebuffer(GL_FRAMEBUFFER, 0);
     gl_info->fbo_ops.glDeleteFramebuffers(1, &fbo);
-    glDeleteTextures(1, &tex);
-    glDeleteTextures(1, &buffer);
+    gl_info->gl_ops.gl.p_glDeleteTextures(1, &tex);
+    gl_info->gl_ops.gl.p_glDeleteTextures(1, &buffer);
 
-    if(glGetError())
+    if (gl_info->gl_ops.gl.p_glGetError())
     {
         FIXME("Error during filtering test for format %x, returning no filtering\n", internal);
         ret = FALSE;
@@ -2523,17 +2528,17 @@ BOOL is_invalid_op(const struct wined3d_state *state, int stage,
 
 /* Setup this textures matrix according to the texture flags*/
 /* GL locking is done by the caller (state handler) */
-void set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords, BOOL transformed,
-        enum wined3d_format_id vtx_fmt, BOOL ffp_proj_control)
+void set_texture_matrix(const struct wined3d_gl_info *gl_info, const float *smat, DWORD flags,
+        BOOL calculatedCoords, BOOL transformed, enum wined3d_format_id vtx_fmt, BOOL ffp_proj_control)
 {
     float mat[16];
 
-    glMatrixMode(GL_TEXTURE);
+    gl_info->gl_ops.gl.p_glMatrixMode(GL_TEXTURE);
     checkGLcall("glMatrixMode(GL_TEXTURE)");
 
     if (flags == WINED3D_TTFF_DISABLE || flags == WINED3D_TTFF_COUNT1 || transformed)
     {
-        glLoadIdentity();
+        gl_info->gl_ops.gl.p_glLoadIdentity();
         checkGLcall("glLoadIdentity()");
         return;
     }
@@ -2628,7 +2633,7 @@ void set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords, B
         }
     }
 
-    glLoadMatrixf(mat);
+    gl_info->gl_ops.gl.p_glLoadMatrixf(mat);
     checkGLcall("glLoadMatrixf(mat)");
 }
 
@@ -3182,77 +3187,79 @@ void texture_activate_dimensions(const struct wined3d_texture *texture, const st
         switch (texture->target)
         {
             case GL_TEXTURE_2D:
-                glDisable(GL_TEXTURE_3D);
+                gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_3D);
                 checkGLcall("glDisable(GL_TEXTURE_3D)");
                 if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
                 {
-                    glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+                    gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_CUBE_MAP_ARB);
                     checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
                 }
                 if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
                 {
-                    glDisable(GL_TEXTURE_RECTANGLE_ARB);
+                    gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_RECTANGLE_ARB);
                     checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
                 }
-                glEnable(GL_TEXTURE_2D);
+                gl_info->gl_ops.gl.p_glEnable(GL_TEXTURE_2D);
                 checkGLcall("glEnable(GL_TEXTURE_2D)");
                 break;
             case GL_TEXTURE_RECTANGLE_ARB:
-                glDisable(GL_TEXTURE_2D);
+                gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_2D);
                 checkGLcall("glDisable(GL_TEXTURE_2D)");
-                glDisable(GL_TEXTURE_3D);
+                gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_3D);
                 checkGLcall("glDisable(GL_TEXTURE_3D)");
                 if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
                 {
-                    glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+                    gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_CUBE_MAP_ARB);
                     checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
                 }
-                glEnable(GL_TEXTURE_RECTANGLE_ARB);
+                gl_info->gl_ops.gl.p_glEnable(GL_TEXTURE_RECTANGLE_ARB);
                 checkGLcall("glEnable(GL_TEXTURE_RECTANGLE_ARB)");
                 break;
             case GL_TEXTURE_3D:
                 if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
                 {
-                    glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+                    gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_CUBE_MAP_ARB);
                     checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
                 }
                 if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
                 {
-                    glDisable(GL_TEXTURE_RECTANGLE_ARB);
+                    gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_RECTANGLE_ARB);
                     checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
                 }
-                glDisable(GL_TEXTURE_2D);
+                gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_2D);
                 checkGLcall("glDisable(GL_TEXTURE_2D)");
-                glEnable(GL_TEXTURE_3D);
+                gl_info->gl_ops.gl.p_glEnable(GL_TEXTURE_3D);
                 checkGLcall("glEnable(GL_TEXTURE_3D)");
                 break;
             case GL_TEXTURE_CUBE_MAP_ARB:
-                glDisable(GL_TEXTURE_2D);
+                gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_2D);
                 checkGLcall("glDisable(GL_TEXTURE_2D)");
-                glDisable(GL_TEXTURE_3D);
+                gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_3D);
                 checkGLcall("glDisable(GL_TEXTURE_3D)");
                 if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
                 {
-                    glDisable(GL_TEXTURE_RECTANGLE_ARB);
+                    gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_RECTANGLE_ARB);
                     checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
                 }
-                glEnable(GL_TEXTURE_CUBE_MAP_ARB);
+                gl_info->gl_ops.gl.p_glEnable(GL_TEXTURE_CUBE_MAP_ARB);
                 checkGLcall("glEnable(GL_TEXTURE_CUBE_MAP_ARB)");
               break;
         }
-    } else {
-        glEnable(GL_TEXTURE_2D);
+    }
+    else
+    {
+        gl_info->gl_ops.gl.p_glEnable(GL_TEXTURE_2D);
         checkGLcall("glEnable(GL_TEXTURE_2D)");
-        glDisable(GL_TEXTURE_3D);
+        gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_3D);
         checkGLcall("glDisable(GL_TEXTURE_3D)");
         if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
         {
-            glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+            gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_CUBE_MAP_ARB);
             checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
         }
         if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
         {
-            glDisable(GL_TEXTURE_RECTANGLE_ARB);
+            gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_RECTANGLE_ARB);
             checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
         }
         /* Binding textures is done by samplers. A dummy texture will be bound */
