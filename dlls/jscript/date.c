@@ -2110,6 +2110,14 @@ static const builtin_info_t Date_info = {
     NULL
 };
 
+static const builtin_info_t DateInst_info = {
+    JSCLASS_DATE,
+    {NULL, Date_value, 0},
+    0, NULL,
+    NULL,
+    NULL
+};
+
 static HRESULT create_date(script_ctx_t *ctx, jsdisp_t *object_prototype, DOUBLE time, jsdisp_t **ret)
 {
     DateInstance *date;
@@ -2125,7 +2133,7 @@ static HRESULT create_date(script_ctx_t *ctx, jsdisp_t *object_prototype, DOUBLE
     if(object_prototype)
         hres = init_dispex(&date->dispex, ctx, &Date_info, object_prototype);
     else
-        hres = init_dispex_from_constr(&date->dispex, ctx, &Date_info, ctx->date_constr);
+        hres = init_dispex_from_constr(&date->dispex, ctx, &DateInst_info, ctx->date_constr);
     if(FAILED(hres)) {
         heap_free(date);
         return hres;

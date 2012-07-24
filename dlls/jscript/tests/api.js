@@ -222,6 +222,11 @@ ok(!obj.hasOwnProperty('toString'), "obj.hasOwnProperty('toString') is true");
 ok(!Boolean.hasOwnProperty('toString'), "Boolean.hasOwnProperty('toString') is true");
 ok(Boolean.prototype.hasOwnProperty('toString'), "Boolean.prototype.hasOwnProperty('toString') is false");
 
+obj = new Date();
+ok(!obj.hasOwnProperty('getTime'), "obj.hasOwnProperty('getTime') is true");
+ok(!Date.hasOwnProperty('getTime'), "Date.hasOwnProperty('getTime') is true");
+ok(Date.prototype.hasOwnProperty('getTime'), "Date.prototype.hasOwnProperty('getTime') is false");
+
 tmp = "" + new Object();
 ok(tmp === "[object Object]", "'' + new Object() = " + tmp);
 (tmp = new Array).f = Object.prototype.toString;
