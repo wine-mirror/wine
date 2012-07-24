@@ -46,12 +46,6 @@
 #ifndef __WINE_WINED3D_GL_H
 #define __WINE_WINED3D_GL_H
 
-#ifdef USE_WIN32_OPENGL
-#define WINE_GLAPI __stdcall
-#else
-#define WINE_GLAPI
-#endif
-
 /****************************************************
  * OpenGL 1.0/1.1/1.2/1.3
  *     types, #defines and function pointers

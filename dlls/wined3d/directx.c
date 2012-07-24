@@ -2317,7 +2317,7 @@ static void parse_extension_string(struct wined3d_gl_info *gl_info, const char *
 
 static void load_gl_funcs(struct wined3d_gl_info *gl_info, DWORD gl_version)
 {
-#define USE_GL_FUNC(type, pfn, ext, replace) gl_info->pfn = (type)pwglGetProcAddress(#pfn);
+#define USE_GL_FUNC(type, pfn, ext_id, replace) gl_info->gl_ops.ext.p_##pfn = (void *)pwglGetProcAddress(#pfn);
     GL_EXT_FUNCS_GEN;
     WGL_EXT_FUNCS_GEN;
 #undef USE_GL_FUNC
@@ -2604,7 +2604,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
     hdc = pwglGetCurrentDC();
     /* Not all GL drivers might offer WGL extensions e.g. VirtualBox. */
     if (GL_EXTCALL(wglGetExtensionsStringARB))
-        WGL_Extensions = GL_EXTCALL(wglGetExtensionsStringARB(hdc));
+        WGL_Extensions = (const char *)GL_EXTCALL(wglGetExtensionsStringARB(hdc));
     if (!WGL_Extensions)
         WARN("WGL extensions not supported.\n");
     else
@@ -2614,16 +2614,16 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
     if (!gl_info->supported[EXT_TEXTURE3D] && gl_version >= MAKEDWORD_VERSION(1, 2))
     {
         TRACE("GL CORE: GL_EXT_texture3D support.\n");
-        gl_info->glTexImage3DEXT = (void *)pwglGetProcAddress("glTexImage3D");
-        gl_info->glTexSubImage3DEXT = (void *)pwglGetProcAddress("glTexSubImage3D");
+        gl_info->gl_ops.ext.p_glTexImage3DEXT = (void *)pwglGetProcAddress("glTexImage3D");
+        gl_info->gl_ops.ext.p_glTexSubImage3DEXT = (void *)pwglGetProcAddress("glTexSubImage3D");
         gl_info->supported[EXT_TEXTURE3D] = TRUE;
     }
 
     if (!gl_info->supported[NV_POINT_SPRITE] && gl_version >= MAKEDWORD_VERSION(1, 4))
     {
         TRACE("GL CORE: GL_NV_point_sprite support.\n");
-        gl_info->glPointParameterivNV = (void *)pwglGetProcAddress("glPointParameteriv");
-        gl_info->glPointParameteriNV = (void *)pwglGetProcAddress("glPointParameteri");
+        gl_info->gl_ops.ext.p_glPointParameterivNV = (void *)pwglGetProcAddress("glPointParameteriv");
+        gl_info->gl_ops.ext.p_glPointParameteriNV = (void *)pwglGetProcAddress("glPointParameteri");
         gl_info->supported[NV_POINT_SPRITE] = TRUE;
     }
 
@@ -2759,47 +2759,49 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
 
     if (gl_info->supported[ARB_FRAMEBUFFER_OBJECT])
     {
-        gl_info->fbo_ops.glIsRenderbuffer = gl_info->glIsRenderbuffer;
-        gl_info->fbo_ops.glBindRenderbuffer = gl_info->glBindRenderbuffer;
-        gl_info->fbo_ops.glDeleteRenderbuffers = gl_info->glDeleteRenderbuffers;
-        gl_info->fbo_ops.glGenRenderbuffers = gl_info->glGenRenderbuffers;
-        gl_info->fbo_ops.glRenderbufferStorage = gl_info->glRenderbufferStorage;
-        gl_info->fbo_ops.glRenderbufferStorageMultisample = gl_info->glRenderbufferStorageMultisample;
-        gl_info->fbo_ops.glGetRenderbufferParameteriv = gl_info->glGetRenderbufferParameteriv;
-        gl_info->fbo_ops.glIsFramebuffer = gl_info->glIsFramebuffer;
-        gl_info->fbo_ops.glBindFramebuffer = gl_info->glBindFramebuffer;
-        gl_info->fbo_ops.glDeleteFramebuffers = gl_info->glDeleteFramebuffers;
-        gl_info->fbo_ops.glGenFramebuffers = gl_info->glGenFramebuffers;
-        gl_info->fbo_ops.glCheckFramebufferStatus = gl_info->glCheckFramebufferStatus;
-        gl_info->fbo_ops.glFramebufferTexture1D = gl_info->glFramebufferTexture1D;
-        gl_info->fbo_ops.glFramebufferTexture2D = gl_info->glFramebufferTexture2D;
-        gl_info->fbo_ops.glFramebufferTexture3D = gl_info->glFramebufferTexture3D;
-        gl_info->fbo_ops.glFramebufferRenderbuffer = gl_info->glFramebufferRenderbuffer;
-        gl_info->fbo_ops.glGetFramebufferAttachmentParameteriv = gl_info->glGetFramebufferAttachmentParameteriv;
-        gl_info->fbo_ops.glBlitFramebuffer = gl_info->glBlitFramebuffer;
-        gl_info->fbo_ops.glGenerateMipmap = gl_info->glGenerateMipmap;
+        gl_info->fbo_ops.glIsRenderbuffer = gl_info->gl_ops.ext.p_glIsRenderbuffer;
+        gl_info->fbo_ops.glBindRenderbuffer = gl_info->gl_ops.ext.p_glBindRenderbuffer;
+        gl_info->fbo_ops.glDeleteRenderbuffers = gl_info->gl_ops.ext.p_glDeleteRenderbuffers;
+        gl_info->fbo_ops.glGenRenderbuffers = gl_info->gl_ops.ext.p_glGenRenderbuffers;
+        gl_info->fbo_ops.glRenderbufferStorage = gl_info->gl_ops.ext.p_glRenderbufferStorage;
+        gl_info->fbo_ops.glRenderbufferStorageMultisample = gl_info->gl_ops.ext.p_glRenderbufferStorageMultisample;
+        gl_info->fbo_ops.glGetRenderbufferParameteriv = gl_info->gl_ops.ext.p_glGetRenderbufferParameteriv;
+        gl_info->fbo_ops.glIsFramebuffer = gl_info->gl_ops.ext.p_glIsFramebuffer;
+        gl_info->fbo_ops.glBindFramebuffer = gl_info->gl_ops.ext.p_glBindFramebuffer;
+        gl_info->fbo_ops.glDeleteFramebuffers = gl_info->gl_ops.ext.p_glDeleteFramebuffers;
+        gl_info->fbo_ops.glGenFramebuffers = gl_info->gl_ops.ext.p_glGenFramebuffers;
+        gl_info->fbo_ops.glCheckFramebufferStatus = gl_info->gl_ops.ext.p_glCheckFramebufferStatus;
+        gl_info->fbo_ops.glFramebufferTexture1D = gl_info->gl_ops.ext.p_glFramebufferTexture1D;
+        gl_info->fbo_ops.glFramebufferTexture2D = gl_info->gl_ops.ext.p_glFramebufferTexture2D;
+        gl_info->fbo_ops.glFramebufferTexture3D = gl_info->gl_ops.ext.p_glFramebufferTexture3D;
+        gl_info->fbo_ops.glFramebufferRenderbuffer = gl_info->gl_ops.ext.p_glFramebufferRenderbuffer;
+        gl_info->fbo_ops.glGetFramebufferAttachmentParameteriv
+                = gl_info->gl_ops.ext.p_glGetFramebufferAttachmentParameteriv;
+        gl_info->fbo_ops.glBlitFramebuffer = gl_info->gl_ops.ext.p_glBlitFramebuffer;
+        gl_info->fbo_ops.glGenerateMipmap = gl_info->gl_ops.ext.p_glGenerateMipmap;
     }
     else
     {
         if (gl_info->supported[EXT_FRAMEBUFFER_OBJECT])
         {
-            gl_info->fbo_ops.glIsRenderbuffer = gl_info->glIsRenderbufferEXT;
-            gl_info->fbo_ops.glBindRenderbuffer = gl_info->glBindRenderbufferEXT;
-            gl_info->fbo_ops.glDeleteRenderbuffers = gl_info->glDeleteRenderbuffersEXT;
-            gl_info->fbo_ops.glGenRenderbuffers = gl_info->glGenRenderbuffersEXT;
-            gl_info->fbo_ops.glRenderbufferStorage = gl_info->glRenderbufferStorageEXT;
-            gl_info->fbo_ops.glGetRenderbufferParameteriv = gl_info->glGetRenderbufferParameterivEXT;
-            gl_info->fbo_ops.glIsFramebuffer = gl_info->glIsFramebufferEXT;
-            gl_info->fbo_ops.glBindFramebuffer = gl_info->glBindFramebufferEXT;
-            gl_info->fbo_ops.glDeleteFramebuffers = gl_info->glDeleteFramebuffersEXT;
-            gl_info->fbo_ops.glGenFramebuffers = gl_info->glGenFramebuffersEXT;
-            gl_info->fbo_ops.glCheckFramebufferStatus = gl_info->glCheckFramebufferStatusEXT;
-            gl_info->fbo_ops.glFramebufferTexture1D = gl_info->glFramebufferTexture1DEXT;
-            gl_info->fbo_ops.glFramebufferTexture2D = gl_info->glFramebufferTexture2DEXT;
-            gl_info->fbo_ops.glFramebufferTexture3D = gl_info->glFramebufferTexture3DEXT;
-            gl_info->fbo_ops.glFramebufferRenderbuffer = gl_info->glFramebufferRenderbufferEXT;
-            gl_info->fbo_ops.glGetFramebufferAttachmentParameteriv = gl_info->glGetFramebufferAttachmentParameterivEXT;
-            gl_info->fbo_ops.glGenerateMipmap = gl_info->glGenerateMipmapEXT;
+            gl_info->fbo_ops.glIsRenderbuffer = gl_info->gl_ops.ext.p_glIsRenderbufferEXT;
+            gl_info->fbo_ops.glBindRenderbuffer = gl_info->gl_ops.ext.p_glBindRenderbufferEXT;
+            gl_info->fbo_ops.glDeleteRenderbuffers = gl_info->gl_ops.ext.p_glDeleteRenderbuffersEXT;
+            gl_info->fbo_ops.glGenRenderbuffers = gl_info->gl_ops.ext.p_glGenRenderbuffersEXT;
+            gl_info->fbo_ops.glRenderbufferStorage = gl_info->gl_ops.ext.p_glRenderbufferStorageEXT;
+            gl_info->fbo_ops.glGetRenderbufferParameteriv = gl_info->gl_ops.ext.p_glGetRenderbufferParameterivEXT;
+            gl_info->fbo_ops.glIsFramebuffer = gl_info->gl_ops.ext.p_glIsFramebufferEXT;
+            gl_info->fbo_ops.glBindFramebuffer = gl_info->gl_ops.ext.p_glBindFramebufferEXT;
+            gl_info->fbo_ops.glDeleteFramebuffers = gl_info->gl_ops.ext.p_glDeleteFramebuffersEXT;
+            gl_info->fbo_ops.glGenFramebuffers = gl_info->gl_ops.ext.p_glGenFramebuffersEXT;
+            gl_info->fbo_ops.glCheckFramebufferStatus = gl_info->gl_ops.ext.p_glCheckFramebufferStatusEXT;
+            gl_info->fbo_ops.glFramebufferTexture1D = gl_info->gl_ops.ext.p_glFramebufferTexture1DEXT;
+            gl_info->fbo_ops.glFramebufferTexture2D = gl_info->gl_ops.ext.p_glFramebufferTexture2DEXT;
+            gl_info->fbo_ops.glFramebufferTexture3D = gl_info->gl_ops.ext.p_glFramebufferTexture3DEXT;
+            gl_info->fbo_ops.glFramebufferRenderbuffer = gl_info->gl_ops.ext.p_glFramebufferRenderbufferEXT;
+            gl_info->fbo_ops.glGetFramebufferAttachmentParameteriv
+                    = gl_info->gl_ops.ext.p_glGetFramebufferAttachmentParameterivEXT;
+            gl_info->fbo_ops.glGenerateMipmap = gl_info->gl_ops.ext.p_glGenerateMipmapEXT;
         }
         else if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
         {
@@ -2808,11 +2810,12 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
         }
         if (gl_info->supported[EXT_FRAMEBUFFER_BLIT])
         {
-            gl_info->fbo_ops.glBlitFramebuffer = gl_info->glBlitFramebufferEXT;
+            gl_info->fbo_ops.glBlitFramebuffer = gl_info->gl_ops.ext.p_glBlitFramebufferEXT;
         }
         if (gl_info->supported[EXT_FRAMEBUFFER_MULTISAMPLE])
         {
-            gl_info->fbo_ops.glRenderbufferStorageMultisample = gl_info->glRenderbufferStorageMultisampleEXT;
+            gl_info->fbo_ops.glRenderbufferStorageMultisample
+                    = gl_info->gl_ops.ext.p_glRenderbufferStorageMultisampleEXT;
         }
     }
 

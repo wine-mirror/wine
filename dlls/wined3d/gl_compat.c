@@ -350,18 +350,18 @@ void add_gl_compat_wrappers(struct wined3d_gl_info *gl_info)
     if (!gl_info->supported[ARB_MULTITEXTURE])
     {
         TRACE("Applying GL_ARB_multitexture emulation hooks\n");
-        gl_info->glActiveTextureARB         = wine_glActiveTextureARB;
-        gl_info->glClientActiveTextureARB   = wine_glClientActiveTextureARB;
-        gl_info->glMultiTexCoord1fARB       = wine_glMultiTexCoord1fARB;
-        gl_info->glMultiTexCoord1fvARB      = wine_glMultiTexCoord1fvARB;
-        gl_info->glMultiTexCoord2fARB       = wine_glMultiTexCoord2fARB;
-        gl_info->glMultiTexCoord2fvARB      = wine_glMultiTexCoord2fvARB;
-        gl_info->glMultiTexCoord3fARB       = wine_glMultiTexCoord3fARB;
-        gl_info->glMultiTexCoord3fvARB      = wine_glMultiTexCoord3fvARB;
-        gl_info->glMultiTexCoord4fARB       = wine_glMultiTexCoord4fARB;
-        gl_info->glMultiTexCoord4fvARB      = wine_glMultiTexCoord4fvARB;
-        gl_info->glMultiTexCoord2svARB      = wine_glMultiTexCoord2svARB;
-        gl_info->glMultiTexCoord4svARB      = wine_glMultiTexCoord4svARB;
+        gl_info->gl_ops.ext.p_glActiveTextureARB        = wine_glActiveTextureARB;
+        gl_info->gl_ops.ext.p_glClientActiveTextureARB  = wine_glClientActiveTextureARB;
+        gl_info->gl_ops.ext.p_glMultiTexCoord1fARB      = wine_glMultiTexCoord1fARB;
+        gl_info->gl_ops.ext.p_glMultiTexCoord1fvARB     = wine_glMultiTexCoord1fvARB;
+        gl_info->gl_ops.ext.p_glMultiTexCoord2fARB      = wine_glMultiTexCoord2fARB;
+        gl_info->gl_ops.ext.p_glMultiTexCoord2fvARB     = wine_glMultiTexCoord2fvARB;
+        gl_info->gl_ops.ext.p_glMultiTexCoord3fARB      = wine_glMultiTexCoord3fARB;
+        gl_info->gl_ops.ext.p_glMultiTexCoord3fvARB     = wine_glMultiTexCoord3fvARB;
+        gl_info->gl_ops.ext.p_glMultiTexCoord4fARB      = wine_glMultiTexCoord4fARB;
+        gl_info->gl_ops.ext.p_glMultiTexCoord4fvARB     = wine_glMultiTexCoord4fvARB;
+        gl_info->gl_ops.ext.p_glMultiTexCoord2svARB     = wine_glMultiTexCoord2svARB;
+        gl_info->gl_ops.ext.p_glMultiTexCoord4svARB     = wine_glMultiTexCoord4svARB;
         if(old_multitex_glGetIntegerv) {
             FIXME("GL_ARB_multitexture glGetIntegerv hook already applied\n");
         } else {
@@ -516,26 +516,26 @@ void add_gl_compat_wrappers(struct wined3d_gl_info *gl_info)
         if(old_fogcoord_glFogCoordfEXT) {
             FIXME("GL_EXT_fogcoord glFogCoordfEXT hook already applied\n");
         } else {
-            old_fogcoord_glFogCoordfEXT = gl_info->glFogCoordfEXT;
-            gl_info->glFogCoordfEXT = wine_glFogCoordfEXT;
+            old_fogcoord_glFogCoordfEXT = gl_info->gl_ops.ext.p_glFogCoordfEXT;
+            gl_info->gl_ops.ext.p_glFogCoordfEXT = wine_glFogCoordfEXT;
         }
         if(old_fogcoord_glFogCoordfvEXT) {
             FIXME("GL_EXT_fogcoord glFogCoordfvEXT hook already applied\n");
         } else {
-            old_fogcoord_glFogCoordfvEXT = gl_info->glFogCoordfvEXT;
-            gl_info->glFogCoordfvEXT = wine_glFogCoordfvEXT;
+            old_fogcoord_glFogCoordfvEXT = gl_info->gl_ops.ext.p_glFogCoordfvEXT;
+            gl_info->gl_ops.ext.p_glFogCoordfvEXT = wine_glFogCoordfvEXT;
         }
         if(old_fogcoord_glFogCoorddEXT) {
             FIXME("GL_EXT_fogcoord glFogCoorddEXT hook already applied\n");
         } else {
-            old_fogcoord_glFogCoorddEXT = gl_info->glFogCoorddEXT;
-            gl_info->glFogCoorddEXT = wine_glFogCoorddEXT;
+            old_fogcoord_glFogCoorddEXT = gl_info->gl_ops.ext.p_glFogCoorddEXT;
+            gl_info->gl_ops.ext.p_glFogCoorddEXT = wine_glFogCoorddEXT;
         }
         if(old_fogcoord_glFogCoorddvEXT) {
             FIXME("GL_EXT_fogcoord glFogCoorddvEXT hook already applied\n");
         } else {
-            old_fogcoord_glFogCoorddvEXT = gl_info->glFogCoorddvEXT;
-            gl_info->glFogCoorddvEXT = wine_glFogCoorddvEXT;
+            old_fogcoord_glFogCoorddvEXT = gl_info->gl_ops.ext.p_glFogCoorddvEXT;
+            gl_info->gl_ops.ext.p_glFogCoorddvEXT = wine_glFogCoorddvEXT;
         }
         gl_info->supported[EXT_FOG_COORD] = TRUE;
     }

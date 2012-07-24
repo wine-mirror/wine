@@ -24,6 +24,12 @@
 #ifndef __WINE_WINED3D_PRIVATE_H
 #define __WINE_WINED3D_PRIVATE_H
 
+#ifdef USE_WIN32_OPENGL
+#define WINE_GLAPI __stdcall
+#else
+#define WINE_GLAPI
+#endif
+
 #include <stdarg.h>
 #include <math.h>
 #include <limits.h>
@@ -43,6 +49,7 @@
 #include "wined3d_gl.h"
 #include "wine/list.h"
 #include "wine/rbtree.h"
+#include "wine/wgl_driver.h"
 
 /* Driver quirks */
 #define WINED3D_QUIRK_ARB_VS_OFFSET_LIMIT       0x00000001
@@ -799,7 +806,7 @@ extern int num_lock DECLSPEC_HIDDEN;
 
 /* GL related defines */
 /* ------------------ */
-#define GL_EXTCALL(f) (gl_info->f)
+#define GL_EXTCALL(f) (gl_info->gl_ops.ext.p_##f)
 
 #define D3DCOLOR_B_R(dw) (((dw) >> 16) & 0xff)
 #define D3DCOLOR_B_G(dw) (((dw) >>  8) & 0xff)
@@ -1503,13 +1510,8 @@ struct wined3d_gl_info
     BOOL supported[WINED3D_GL_EXT_COUNT];
     GLint wrap_lookup[WINED3D_TADDRESS_MIRROR_ONCE - WINED3D_TADDRESS_WRAP + 1];
 
+    struct opengl_funcs gl_ops;
     struct wined3d_fbo_ops fbo_ops;
-#define USE_GL_FUNC(type, pfn, ext, replace) type pfn;
-    /* GL function pointers */
-    GL_EXT_FUNCS_GEN
-    /* WGL function pointers */
-    WGL_EXT_FUNCS_GEN
-#undef USE_GL_FUNC
 
     struct wined3d_format *formats;
 };
