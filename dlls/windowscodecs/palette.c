@@ -611,7 +611,7 @@ HRESULT PaletteImpl_Create(IWICPalette **palette)
     InitializeCriticalSection(&This->lock);
     This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": PaletteImpl.lock");
 
-    *palette = (IWICPalette*)This;
+    *palette = &This->IWICPalette_iface;
 
     return S_OK;
 }
