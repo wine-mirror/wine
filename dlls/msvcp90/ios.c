@@ -786,6 +786,7 @@ DEFINE_THISCALL_WRAPPER(basic_streambuf_char__Xsgetn_s, 16)
 streamsize __thiscall basic_streambuf_char__Xsgetn_s(basic_streambuf_char *this, char *ptr, MSVCP_size_t size, streamsize count)
 {
     streamsize copied, chunk;
+    int c;
 
     TRACE("(%p %p %lu %ld)\n", this, ptr, size, count);
 
@@ -800,7 +801,8 @@ streamsize __thiscall basic_streambuf_char__Xsgetn_s(basic_streambuf_char *this,
             *this->prsize -= chunk;
             copied += chunk;
             size -= chunk;
-        }else if((ptr[copied] = call_basic_streambuf_char_uflow(this)) != EOF) {
+        }else if((c = call_basic_streambuf_char_uflow(this)) != EOF) {
+            ptr[copied] = c;
             copied++;
             size--;
         }else {
@@ -1529,6 +1531,7 @@ DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar__Xsgetn_s, 16)
 streamsize __thiscall basic_streambuf_wchar__Xsgetn_s(basic_streambuf_wchar *this, wchar_t *ptr, MSVCP_size_t size, streamsize count)
 {
     streamsize copied, chunk;
+    unsigned short c;
 
     TRACE("(%p %p %lu %ld)\n", this, ptr, size, count);
 
@@ -1543,7 +1546,8 @@ streamsize __thiscall basic_streambuf_wchar__Xsgetn_s(basic_streambuf_wchar *thi
             *this->prsize -= chunk;
             copied += chunk;
             size -= chunk;
-        }else if((ptr[copied] = call_basic_streambuf_wchar_uflow(this)) != WEOF) {
+        }else if((c = call_basic_streambuf_wchar_uflow(this)) != WEOF) {
+            ptr[copied] = c;
             copied++;
             size--;
         }else {
