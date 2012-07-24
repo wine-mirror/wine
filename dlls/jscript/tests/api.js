@@ -217,6 +217,11 @@ ok(Array.prototype.hasOwnProperty('length'), "Array.prototype.hasOwnProperty('le
 ok(!obj.hasOwnProperty('sort'), "obj.hasOwnProperty('sort') is true");
 ok(obj.hasOwnProperty('length'), "obj.hasOwnProperty('length') is true");
 
+obj = new Boolean(false);
+ok(!obj.hasOwnProperty('toString'), "obj.hasOwnProperty('toString') is true");
+ok(!Boolean.hasOwnProperty('toString'), "Boolean.hasOwnProperty('toString') is true");
+ok(Boolean.prototype.hasOwnProperty('toString'), "Boolean.prototype.hasOwnProperty('toString') is false");
+
 tmp = "" + new Object();
 ok(tmp === "[object Object]", "'' + new Object() = " + tmp);
 (tmp = new Array).f = Object.prototype.toString;
