@@ -1123,8 +1123,8 @@
 @ cdecl -arch=win32 ?_Mutex_dtor@_Mutex@std@@CAXPAV12@@Z(ptr) msvcp90.?_Mutex_dtor@_Mutex@std@@CAXPAV12@@Z
 @ cdecl -arch=win64 ?_Mutex_dtor@_Mutex@std@@CAXPEAV12@@Z(ptr) msvcp90.?_Mutex_dtor@_Mutex@std@@CAXPEAV12@@Z
 @ stub ?_Nomemory@std@@YAXXZ
-@ stub -arch=win32 ?_Orphan_all@_Container_base0@std@@QAEXXZ
-@ stub -arch=win64 ?_Orphan_all@_Container_base0@std@@QEAAXXZ
+@ thiscall -arch=win32 ?_Orphan_all@_Container_base0@std@@QAEXXZ(ptr) Container_base0_Orphan_all
+@ cdecl -arch=win64 ?_Orphan_all@_Container_base0@std@@QEAAXXZ(ptr) Container_base0_Orphan_all
 @ stub -arch=win32 ?_Orphan_all@_Container_base12@std@@QAEXXZ
 @ stub -arch=win64 ?_Orphan_all@_Container_base12@std@@QEAAXXZ
 @ thiscall -arch=win32 ?_Osfx@?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEXXZ(ptr) msvcp90.?_Osfx@?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEXXZ
@@ -1202,8 +1202,8 @@
 @ stub -arch=win64 ?_Segment_index_of@_Concurrent_vector_base_v4@details@Concurrency@@KA_K_K@Z
 @ cdecl -arch=win32 ?_Setgloballocale@locale@std@@CAXPAX@Z(ptr) msvcp90.?_Setgloballocale@locale@std@@CAXPAX@Z
 @ cdecl -arch=win64 ?_Setgloballocale@locale@std@@CAXPEAX@Z(ptr) msvcp90.?_Setgloballocale@locale@std@@CAXPEAX@Z
-@ stub -arch=win32 ?_Swap_all@_Container_base0@std@@QAEXAAU12@@Z
-@ stub -arch=win64 ?_Swap_all@_Container_base0@std@@QEAAXAEAU12@@Z
+@ thiscall -arch=win32 ?_Swap_all@_Container_base0@std@@QAEXAAU12@@Z(ptr ptr) Container_base0_Swap_all
+@ cdecl -arch=win64 ?_Swap_all@_Container_base0@std@@QEAAXAEAU12@@Z(ptr ptr) Container_base0_Swap_all
 @ stub -arch=win32 ?_Swap_all@_Container_base12@std@@QAEXAAU12@@Z
 @ stub -arch=win64 ?_Swap_all@_Container_base12@std@@QEAAXAEAU12@@Z
 @ extern ?_Sync@ios_base@std@@0_NA msvcp90.?_Sync@ios_base@std@@0_NA
