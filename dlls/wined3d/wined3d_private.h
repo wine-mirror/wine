@@ -1443,25 +1443,33 @@ enum wined3d_pci_device
 
 struct wined3d_fbo_ops
 {
-    PGLFNGLISRENDERBUFFERPROC                       glIsRenderbuffer;
-    PGLFNGLBINDRENDERBUFFERPROC                     glBindRenderbuffer;
-    PGLFNGLDELETERENDERBUFFERSPROC                  glDeleteRenderbuffers;
-    PGLFNGLGENRENDERBUFFERSPROC                     glGenRenderbuffers;
-    PGLFNGLRENDERBUFFERSTORAGEPROC                  glRenderbufferStorage;
-    PGLFNRENDERBUFFERSTORAGEMULTISAMPLEPROC         glRenderbufferStorageMultisample;
-    PGLFNGLGETRENDERBUFFERPARAMETERIVPROC           glGetRenderbufferParameteriv;
-    PGLFNGLISFRAMEBUFFERPROC                        glIsFramebuffer;
-    PGLFNGLBINDFRAMEBUFFERPROC                      glBindFramebuffer;
-    PGLFNGLDELETEFRAMEBUFFERSPROC                   glDeleteFramebuffers;
-    PGLFNGLGENFRAMEBUFFERSPROC                      glGenFramebuffers;
-    PGLFNGLCHECKFRAMEBUFFERSTATUSPROC               glCheckFramebufferStatus;
-    PGLFNGLFRAMEBUFFERTEXTURE1DPROC                 glFramebufferTexture1D;
-    PGLFNGLFRAMEBUFFERTEXTURE2DPROC                 glFramebufferTexture2D;
-    PGLFNGLFRAMEBUFFERTEXTURE3DPROC                 glFramebufferTexture3D;
-    PGLFNGLFRAMEBUFFERRENDERBUFFERPROC              glFramebufferRenderbuffer;
-    PGLFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVPROC  glGetFramebufferAttachmentParameteriv;
-    PGLFNGLBLITFRAMEBUFFERPROC                      glBlitFramebuffer;
-    PGLFNGLGENERATEMIPMAPPROC                       glGenerateMipmap;
+    GLboolean (WINE_GLAPI *glIsRenderbuffer)(GLuint renderbuffer);
+    void (WINE_GLAPI *glBindRenderbuffer)(GLenum target, GLuint renderbuffer);
+    void (WINE_GLAPI *glDeleteRenderbuffers)(GLsizei n, const GLuint *renderbuffers);
+    void (WINE_GLAPI *glGenRenderbuffers)(GLsizei n, GLuint *renderbuffers);
+    void (WINE_GLAPI *glRenderbufferStorage)(GLenum target, GLenum internalformat,
+            GLsizei width, GLsizei height);
+    void (WINE_GLAPI *glRenderbufferStorageMultisample)(GLenum target, GLsizei samples,
+            GLenum internalformat, GLsizei width, GLsizei height);
+    void (WINE_GLAPI *glGetRenderbufferParameteriv)(GLenum target, GLenum pname, GLint *params);
+    GLboolean (WINE_GLAPI *glIsFramebuffer)(GLuint framebuffer);
+    void (WINE_GLAPI *glBindFramebuffer)(GLenum target, GLuint framebuffer);
+    void (WINE_GLAPI *glDeleteFramebuffers)(GLsizei n, const GLuint *framebuffers);
+    void (WINE_GLAPI *glGenFramebuffers)(GLsizei n, GLuint *framebuffers);
+    GLenum (WINE_GLAPI *glCheckFramebufferStatus)(GLenum target);
+    void (WINE_GLAPI *glFramebufferTexture1D)(GLenum target, GLenum attachment,
+            GLenum textarget, GLuint texture, GLint level);
+    void (WINE_GLAPI *glFramebufferTexture2D)(GLenum target, GLenum attachment,
+            GLenum textarget, GLuint texture, GLint level);
+    void (WINE_GLAPI *glFramebufferTexture3D)(GLenum target, GLenum attachment,
+            GLenum textarget, GLuint texture, GLint level, GLint layer);
+    void (WINE_GLAPI *glFramebufferRenderbuffer)(GLenum target, GLenum attachment,
+            GLenum renderbuffertarget, GLuint renderbuffer);
+    void (WINE_GLAPI *glGetFramebufferAttachmentParameteriv)(GLenum target, GLenum attachment,
+            GLenum pname, GLint *params);
+    void (WINE_GLAPI *glBlitFramebuffer)(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
+            GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
+    void (WINE_GLAPI *glGenerateMipmap)(GLenum target);
 };
 
 struct wined3d_gl_limits
