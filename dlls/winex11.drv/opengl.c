@@ -209,7 +209,6 @@ static const char *opengl_func_names[] = { ALL_WGL_FUNCS };
 static void X11DRV_WineGL_LoadExtensions(void);
 static WineGLPixelFormat* ConvertPixelFormatWGLtoGLX(Display *display, int iPixelFormat, BOOL AllowOffscreen, int *fmt_count);
 static BOOL glxRequireVersion(int requiredVersion);
-static BOOL glxRequireExtension(const char *requiredExtension);
 
 static void dump_PIXELFORMATDESCRIPTOR(const PIXELFORMATDESCRIPTOR *ppfd) {
   TRACE("  - size / version : %d / %d\n", ppfd->nSize, ppfd->nVersion);
@@ -319,6 +318,20 @@ static void (*pglFlush)(void);
 
 static void wglFinish(void);
 static void wglFlush(void);
+
+/* check if the extension is present in the list */
+static BOOL has_extension( const char *list, const char *ext )
+{
+    size_t len = strlen( ext );
+
+    while (list)
+    {
+        while (*list == ' ') list++;
+        if (!strncmp( list, ext, len ) && (!list[len] || list[len] == ' ')) return TRUE;
+        list = strchr( list, ' ' );
+    }
+    return FALSE;
+}
 
 static int GLXErrorHandler(Display *dpy, XErrorEvent *event, void *arg)
 {
@@ -590,7 +603,7 @@ static BOOL has_opengl(void)
         pglXGetFBConfigAttrib = pglXGetProcAddressARB((const GLubyte *) "glXGetFBConfigAttrib");
         pglXGetVisualFromFBConfig = pglXGetProcAddressARB((const GLubyte *) "glXGetVisualFromFBConfig");
         pglXQueryDrawable = pglXGetProcAddressARB((const GLubyte *) "glXQueryDrawable");
-    } else if(glxRequireExtension("GLX_SGIX_fbconfig")) {
+    } else if (has_extension( WineGLInfo.glxExtensions, "GLX_SGIX_fbconfig")) {
         pglXChooseFBConfig = pglXGetProcAddressARB((const GLubyte *) "glXChooseFBConfigSGIX");
         pglXGetFBConfigAttrib = pglXGetProcAddressARB((const GLubyte *) "glXGetFBConfigAttribSGIX");
         pglXGetVisualFromFBConfig = pglXGetProcAddressARB((const GLubyte *) "glXGetVisualFromFBConfigSGIX");
@@ -615,7 +628,7 @@ static BOOL has_opengl(void)
          ERR(" glx_version is %s and GLX_SGIX_fbconfig extension is unsupported. Expect problems.\n", WineGLInfo.glxServerVersion);
     }
 
-    if(glxRequireExtension("GLX_MESA_copy_sub_buffer")) {
+    if (has_extension( WineGLInfo.glxExtensions, "GLX_MESA_copy_sub_buffer")) {
         pglXCopySubBufferMESA = pglXGetProcAddressARB((const GLubyte *) "glXCopySubBufferMESA");
     }
 
@@ -854,7 +867,7 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, struct wgl_
   TRACE("pAttr[?] = GLX_RENDER_TYPE: %#x\n", pixelattrib);
 
   /* Set GLX_FLOAT_COMPONENTS_NV all the time */
-  if(strstr(WineGLInfo.glxExtensions, "GLX_NV_float_buffer")) {
+  if (has_extension(WineGLInfo.glxExtensions, "GLX_NV_float_buffer")) {
     PUSH2(oGLXAttr, GLX_FLOAT_COMPONENTS_NV, nvfloatattrib);
     TRACE("pAttr[?] = GLX_FLOAT_COMPONENTS_NV: %#x\n", nvfloatattrib);
   }
@@ -2860,15 +2873,6 @@ static BOOL glxRequireVersion(int requiredVersion)
     return FALSE;
 }
 
-static BOOL glxRequireExtension(const char *requiredExtension)
-{
-    if (strstr(WineGLInfo.glxExtensions, requiredExtension) == NULL) {
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
 static void register_extension(const char *ext)
 {
     if (WineGLInfo.wglExtensions[0])
@@ -2887,16 +2891,16 @@ static void X11DRV_WineGL_LoadExtensions(void)
 
     /* ARB Extensions */
 
-    if(glxRequireExtension("GLX_ARB_create_context"))
+    if (has_extension( WineGLInfo.glxExtensions, "GLX_ARB_create_context"))
     {
         register_extension( "WGL_ARB_create_context" );
         opengl_funcs.ext.p_wglCreateContextAttribsARB = X11DRV_wglCreateContextAttribsARB;
 
-        if(glxRequireExtension("GLX_ARB_create_context_profile"))
+        if (has_extension( WineGLInfo.glxExtensions, "GLX_ARB_create_context_profile"))
             register_extension("WGL_ARB_create_context_profile");
     }
 
-    if(glxRequireExtension("GLX_ARB_fbconfig_float"))
+    if (has_extension( WineGLInfo.glxExtensions, "GLX_ARB_fbconfig_float"))
     {
         register_extension("WGL_ARB_pixel_format_float");
         register_extension("WGL_ATI_pixel_format_float");
@@ -2912,12 +2916,12 @@ static void X11DRV_WineGL_LoadExtensions(void)
         opengl_funcs.ext.p_wglMakeContextCurrentARB = X11DRV_wglMakeContextCurrentARB;
     }
 
-    if (glxRequireExtension("GLX_ARB_multisample")) register_extension( "WGL_ARB_multisample" );
+    if (has_extension( WineGLInfo.glxExtensions, "GLX_ARB_multisample")) register_extension( "WGL_ARB_multisample" );
 
     /* In general pbuffer functionality requires support in the X-server. The functionality is
      * available either when the GLX_SGIX_pbuffer is present or when the GLX server version is 1.3.
      */
-    if ( glxRequireVersion(3) && glxRequireExtension("GLX_SGIX_pbuffer") )
+    if ( glxRequireVersion(3) && has_extension( WineGLInfo.glxExtensions, "GLX_SGIX_pbuffer") )
     {
         register_extension( "WGL_ARB_pbuffer" );
         opengl_funcs.ext.p_wglCreatePbufferARB    = X11DRV_wglCreatePbufferARB;
@@ -2934,19 +2938,19 @@ static void X11DRV_WineGL_LoadExtensions(void)
     opengl_funcs.ext.p_wglGetPixelFormatAttribivARB = X11DRV_wglGetPixelFormatAttribivARB;
 
     /* Support WGL_ARB_render_texture when there's support or pbuffer based emulation */
-    if (glxRequireExtension("GLX_ARB_render_texture") ||
-        (glxRequireVersion(3) && glxRequireExtension("GLX_SGIX_pbuffer") && use_render_texture_emulation))
+    if (has_extension( WineGLInfo.glxExtensions, "GLX_ARB_render_texture") ||
+        (glxRequireVersion(3) && has_extension( WineGLInfo.glxExtensions, "GLX_SGIX_pbuffer") && use_render_texture_emulation))
     {
         register_extension( "WGL_ARB_render_texture" );
         opengl_funcs.ext.p_wglBindTexImageARB    = X11DRV_wglBindTexImageARB;
         opengl_funcs.ext.p_wglReleaseTexImageARB = X11DRV_wglReleaseTexImageARB;
 
         /* The WGL version of GLX_NV_float_buffer requires render_texture */
-        if(glxRequireExtension("GLX_NV_float_buffer"))
+        if (has_extension( WineGLInfo.glxExtensions, "GLX_NV_float_buffer"))
             register_extension("WGL_NV_float_buffer");
 
         /* Again there's no GLX equivalent for this extension, so depend on the required GL extension */
-        if(strstr(WineGLInfo.glExtensions, "GL_NV_texture_rectangle") != NULL)
+        if (has_extension(WineGLInfo.glExtensions, "GL_NV_texture_rectangle"))
             register_extension("WGL_NV_texture_rectangle");
     }
 
@@ -2961,17 +2965,17 @@ static void X11DRV_WineGL_LoadExtensions(void)
     opengl_funcs.ext.p_wglSwapIntervalEXT = X11DRV_wglSwapIntervalEXT;
     opengl_funcs.ext.p_wglGetSwapIntervalEXT = X11DRV_wglGetSwapIntervalEXT;
 
-    if(glxRequireExtension("GLX_EXT_framebuffer_sRGB"))
+    if (has_extension( WineGLInfo.glxExtensions, "GLX_EXT_framebuffer_sRGB"))
         register_extension("WGL_EXT_framebuffer_sRGB");
 
-    if(glxRequireExtension("GLX_EXT_fbconfig_packed_float"))
+    if (has_extension( WineGLInfo.glxExtensions, "GLX_EXT_fbconfig_packed_float"))
         register_extension("WGL_EXT_pixel_format_packed_float");
 
-    if (glxRequireExtension("GLX_EXT_swap_control"))
+    if (has_extension( WineGLInfo.glxExtensions, "GLX_EXT_swap_control"))
         has_swap_control = TRUE;
 
     /* The OpenGL extension GL_NV_vertex_array_range adds wgl/glX functions which aren't exported as 'real' wgl/glX extensions. */
-    if(strstr(WineGLInfo.glExtensions, "GL_NV_vertex_array_range") != NULL)
+    if (has_extension(WineGLInfo.glExtensions, "GL_NV_vertex_array_range"))
     {
         register_extension( "WGL_NV_vertex_array_range" );
         opengl_funcs.ext.p_wglAllocateMemoryNV = pglXAllocateMemoryNV;
