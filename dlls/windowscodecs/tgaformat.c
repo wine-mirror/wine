@@ -140,7 +140,7 @@ static HRESULT WINAPI TgaDecoder_QueryInterface(IWICBitmapDecoder *iface, REFIID
 
     if (IsEqualIID(&IID_IUnknown, iid) || IsEqualIID(&IID_IWICBitmapDecoder, iid))
     {
-        *ppv = This;
+        *ppv = &This->IWICBitmapDecoder_iface;
     }
     else
     {
@@ -468,13 +468,13 @@ static HRESULT WINAPI TgaDecoder_Frame_QueryInterface(IWICBitmapFrameDecode *ifa
 static ULONG WINAPI TgaDecoder_Frame_AddRef(IWICBitmapFrameDecode *iface)
 {
     TgaDecoder *This = impl_from_IWICBitmapFrameDecode(iface);
-    return IUnknown_AddRef((IUnknown*)This);
+    return IWICBitmapDecoder_AddRef(&This->IWICBitmapDecoder_iface);
 }
 
 static ULONG WINAPI TgaDecoder_Frame_Release(IWICBitmapFrameDecode *iface)
 {
     TgaDecoder *This = impl_from_IWICBitmapFrameDecode(iface);
-    return IUnknown_Release((IUnknown*)This);
+    return IWICBitmapDecoder_Release(&This->IWICBitmapDecoder_iface);
 }
 
 static HRESULT WINAPI TgaDecoder_Frame_GetSize(IWICBitmapFrameDecode *iface,
@@ -962,8 +962,8 @@ HRESULT TgaDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     InitializeCriticalSection(&This->lock);
     This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": TgaDecoder.lock");
 
-    ret = IUnknown_QueryInterface((IUnknown*)This, iid, ppv);
-    IUnknown_Release((IUnknown*)This);
+    ret = IWICBitmapDecoder_QueryInterface(&This->IWICBitmapDecoder_iface, iid, ppv);
+    IWICBitmapDecoder_Release(&This->IWICBitmapDecoder_iface);
 
     return ret;
 }
