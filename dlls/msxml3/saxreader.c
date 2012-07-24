@@ -2295,7 +2295,7 @@ static HRESULT internal_parseBuffer(saxreader *This, const char *buffer, int siz
     return hr;
 }
 
-static HRESULT internal_parseStream(saxreader *This, IStream *stream, BOOL vbInterface)
+static HRESULT internal_parseStream(saxreader *This, ISequentialStream *stream, BOOL vbInterface)
 {
     saxlocator *locator;
     HRESULT hr;
@@ -2304,7 +2304,7 @@ static HRESULT internal_parseStream(saxreader *This, IStream *stream, BOOL vbInt
     int ret;
 
     dataRead = 0;
-    hr = IStream_Read(stream, data, sizeof(data), &dataRead);
+    hr = ISequentialStream_Read(stream, data, sizeof(data), &dataRead);
     if(FAILED(hr)) return hr;
 
     hr = SAXLocator_create(This, &locator, vbInterface);
@@ -2331,7 +2331,7 @@ static HRESULT internal_parseStream(saxreader *This, IStream *stream, BOOL vbInt
         while(1)
         {
             dataRead = 0;
-            hr = IStream_Read(stream, data, sizeof(data), &dataRead);
+            hr = ISequentialStream_Read(stream, data, sizeof(data), &dataRead);
             if (FAILED(hr)) break;
 
             ret = xmlParseChunk(locator->pParserCtxt, data, dataRead, 0);
@@ -2411,7 +2411,7 @@ static HRESULT internal_parse(
         case VT_UNKNOWN:
         case VT_DISPATCH: {
             IPersistStream *persistStream;
-            IStream *stream = NULL;
+            ISequentialStream *stream = NULL;
             IXMLDOMDocument *xmlDoc;
 
             if(IUnknown_QueryInterface(V_UNKNOWN(&varInput),
@@ -2430,29 +2430,44 @@ static HRESULT internal_parse(
             if(IUnknown_QueryInterface(V_UNKNOWN(&varInput),
                         &IID_IPersistStream, (void**)&persistStream) == S_OK)
             {
-                hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+                IStream *stream_copy;
+
+                hr = CreateStreamOnHGlobal(NULL, TRUE, &stream_copy);
                 if(hr != S_OK)
                 {
                     IPersistStream_Release(persistStream);
                     return hr;
                 }
 
-                hr = IPersistStream_Save(persistStream, stream, TRUE);
+                hr = IPersistStream_Save(persistStream, stream_copy, TRUE);
                 IPersistStream_Release(persistStream);
-                if(hr != S_OK)
-                {
-                    IStream_Release(stream);
-                    stream = NULL;
-                }
+                if(hr == S_OK)
+                    IStream_QueryInterface(stream_copy, &IID_ISequentialStream, (void**)&stream);
+
+                IStream_Release(stream_copy);
             }
 
-            if(stream || IUnknown_QueryInterface(V_UNKNOWN(&varInput),
-                        &IID_IStream, (void**)&stream) == S_OK)
+            /* try base interface first */
+            if(!stream)
+            {
+                IUnknown_QueryInterface(V_UNKNOWN(&varInput), &IID_ISequentialStream, (void**)&stream);
+                if (!stream)
+                    /* this should never happen if IStream is implemented properly, but just in case */
+                    IUnknown_QueryInterface(V_UNKNOWN(&varInput), &IID_IStream, (void**)&stream);
+            }
+
+            if(stream)
             {
                 hr = internal_parseStream(This, stream, vbInterface);
-                IStream_Release(stream);
-                break;
+                ISequentialStream_Release(stream);
             }
+            else
+            {
+                WARN("IUnknown* input doesn't support any of expected interfaces\n");
+                hr = E_INVALIDARG;
+            }
+
+            break;
         }
         default:
             WARN("vt %d not implemented\n", V_VT(&varInput));
