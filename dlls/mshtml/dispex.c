@@ -1147,22 +1147,13 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
 
     TRACE("(%p)->(%x %x %x %p %p %p %p)\n", This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
 
-    if(is_custom_dispid(id) && This->data->vtbl && This->data->vtbl->invoke)
+    switch(get_dispid_type(id)) {
+    case DISPEXPROP_CUSTOM:
+        if(!This->data->vtbl || !This->data->vtbl->invoke)
+            return DISP_E_UNKNOWNNAME;
         return This->data->vtbl->invoke(This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
 
-    if(wFlags == DISPATCH_CONSTRUCT) {
-        if(id == DISPID_VALUE) {
-            if(This->data->vtbl && This->data->vtbl->value) {
-                return This->data->vtbl->value(This, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
-            }
-            FIXME("DISPATCH_CONSTRUCT flag but missing value function\n");
-            return E_FAIL;
-        }
-        FIXME("DISPATCH_CONSTRUCT flag without DISPID_VALUE\n");
-        return E_FAIL;
-    }
-
-    if(is_dynamic_dispid(id)) {
+    case DISPEXPROP_DYNAMIC: {
         DWORD idx = id - DISPID_DYNPROP_0;
         dynamic_prop_t *prop;
 
@@ -1209,8 +1200,24 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
             return E_NOTIMPL;
         }
     }
+    case DISPEXPROP_BUILTIN:
+        if(wFlags == DISPATCH_CONSTRUCT) {
+            if(id == DISPID_VALUE) {
+                if(This->data->vtbl && This->data->vtbl->value) {
+                    return This->data->vtbl->value(This, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
+                }
+                FIXME("DISPATCH_CONSTRUCT flag but missing value function\n");
+                return E_FAIL;
+            }
+            FIXME("DISPATCH_CONSTRUCT flag without DISPID_VALUE\n");
+            return E_FAIL;
+        }
 
-    return invoke_builtin_prop(This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
+        return invoke_builtin_prop(This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
+    default:
+        assert(0);
+        return E_FAIL;
+    }
 }
 
 static HRESULT WINAPI DispatchEx_DeleteMemberByName(IDispatchEx *iface, BSTR bstrName, DWORD grfdex)
