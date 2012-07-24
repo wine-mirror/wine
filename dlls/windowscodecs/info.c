@@ -1842,9 +1842,10 @@ static HRESULT WINAPI ComponentEnum_QueryInterface(IEnumUnknown *iface, REFIID i
 
     if (!ppv) return E_INVALIDARG;
 
-    if (IsEqualIID(&IID_IUnknown, iid) || IsEqualIID(&IID_IEnumUnknown, iid))
+    if (IsEqualIID(&IID_IUnknown, iid) ||
+        IsEqualIID(&IID_IEnumUnknown, iid))
     {
-        *ppv = This;
+        *ppv = &This->IEnumUnknown_iface;
     }
     else
     {
@@ -1996,11 +1997,11 @@ static HRESULT WINAPI ComponentEnum_Clone(IEnumUnknown *iface, IEnumUnknown **pp
 
     if (FAILED(ret))
     {
-        IUnknown_Release((IUnknown*)new_enum);
+        IEnumUnknown_Release(&new_enum->IEnumUnknown_iface);
         *ppenum = NULL;
     }
     else
-        *ppenum = (IEnumUnknown*)new_enum;
+        *ppenum = &new_enum->IEnumUnknown_iface;
 
     return ret;
 }
@@ -2091,13 +2092,13 @@ HRESULT CreateComponentEnumerator(DWORD componentTypes, DWORD options, IEnumUnkn
 
     if (SUCCEEDED(hr))
     {
-        IEnumUnknown_Reset((IEnumUnknown*)This);
-        *ppIEnumUnknown = (IEnumUnknown*)This;
+        IEnumUnknown_Reset(&This->IEnumUnknown_iface);
+        *ppIEnumUnknown = &This->IEnumUnknown_iface;
     }
     else
     {
         *ppIEnumUnknown = NULL;
-        IUnknown_Release((IUnknown*)This);
+        IEnumUnknown_Release(&This->IEnumUnknown_iface);
     }
 
     return hr;
