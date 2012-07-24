@@ -94,6 +94,8 @@ static inline BmpDecoder *impl_from_IWICBitmapFrameDecode(IWICBitmapFrameDecode 
 static HRESULT WINAPI BmpFrameDecode_QueryInterface(IWICBitmapFrameDecode *iface, REFIID iid,
     void **ppv)
 {
+    BmpDecoder *This = impl_from_IWICBitmapFrameDecode(iface);
+
     TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), ppv);
 
     if (!ppv) return E_INVALIDARG;
@@ -102,7 +104,7 @@ static HRESULT WINAPI BmpFrameDecode_QueryInterface(IWICBitmapFrameDecode *iface
         IsEqualIID(&IID_IWICBitmapSource, iid) ||
         IsEqualIID(&IID_IWICBitmapFrameDecode, iid))
     {
-        *ppv = iface;
+        *ppv = &This->IWICBitmapFrameDecode_iface;
     }
     else
     {
@@ -964,9 +966,10 @@ static HRESULT WINAPI BmpDecoder_QueryInterface(IWICBitmapDecoder *iface, REFIID
 
     if (!ppv) return E_INVALIDARG;
 
-    if (IsEqualIID(&IID_IUnknown, iid) || IsEqualIID(&IID_IWICBitmapDecoder, iid))
+    if (IsEqualIID(&IID_IUnknown, iid) ||
+        IsEqualIID(&IID_IWICBitmapDecoder, iid))
     {
-        *ppv = This;
+        *ppv = &This->IWICBitmapDecoder_iface;
     }
     else
     {
