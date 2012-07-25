@@ -820,20 +820,20 @@ static int QTMfdi_init(int window, int level, fdi_decomp_state *decomp_state) {
 
   /* initialize arithmetic coding models */
 
-  QTMfdi_initmodel(&QTM(model7), &QTM(m7sym)[0], 7, 0);
+  QTMfdi_initmodel(&QTM(model7), QTM(m7sym), 7, 0);
 
-  QTMfdi_initmodel(&QTM(model00), &QTM(m00sym)[0], 0x40, 0x00);
-  QTMfdi_initmodel(&QTM(model40), &QTM(m40sym)[0], 0x40, 0x40);
-  QTMfdi_initmodel(&QTM(model80), &QTM(m80sym)[0], 0x40, 0x80);
-  QTMfdi_initmodel(&QTM(modelC0), &QTM(mC0sym)[0], 0x40, 0xC0);
+  QTMfdi_initmodel(&QTM(model00), QTM(m00sym), 0x40, 0x00);
+  QTMfdi_initmodel(&QTM(model40), QTM(m40sym), 0x40, 0x40);
+  QTMfdi_initmodel(&QTM(model80), QTM(m80sym), 0x40, 0x80);
+  QTMfdi_initmodel(&QTM(modelC0), QTM(mC0sym), 0x40, 0xC0);
 
   /* model 4 depends on table size, ranges from 20 to 24  */
-  QTMfdi_initmodel(&QTM(model4), &QTM(m4sym)[0], (msz < 24) ? msz : 24, 0);
+  QTMfdi_initmodel(&QTM(model4), QTM(m4sym), (msz < 24) ? msz : 24, 0);
   /* model 5 depends on table size, ranges from 20 to 36  */
-  QTMfdi_initmodel(&QTM(model5), &QTM(m5sym)[0], (msz < 36) ? msz : 36, 0);
+  QTMfdi_initmodel(&QTM(model5), QTM(m5sym), (msz < 36) ? msz : 36, 0);
   /* model 6pos depends on table size, ranges from 20 to 42 */
-  QTMfdi_initmodel(&QTM(model6pos), &QTM(m6psym)[0], msz, 0);
-  QTMfdi_initmodel(&QTM(model6len), &QTM(m6lsym)[0], 27, 0);
+  QTMfdi_initmodel(&QTM(model6pos), QTM(m6psym), msz, 0);
+  QTMfdi_initmodel(&QTM(model6len), QTM(m6lsym), 27, 0);
 
   return DECR_OK;
 }
@@ -2082,7 +2082,7 @@ static int fdi_decomp(const struct fdi_file *fi, int savemode, fdi_decomp_state 
           ZeroMemory(&fdin, sizeof(FDINOTIFICATION));
           fdin.psz1 = (cab->mii.nextname) ? cab->mii.nextname : &emptystring;
           fdin.psz2 = (cab->mii.nextinfo) ? cab->mii.nextinfo : &emptystring;
-          fdin.psz3 = &userpath[0];
+          fdin.psz3 = userpath;
           fdin.fdie = FDIERROR_NONE;
           fdin.pv = pvUser;
 
