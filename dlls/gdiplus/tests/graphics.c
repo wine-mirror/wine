@@ -26,7 +26,7 @@
 
 #define expect(expected, got) ok((got) == (expected), "Expected %d, got %d\n", (INT)(expected), (INT)(got))
 #define expectf_(expected, got, precision) ok(fabs((expected) - (got)) < (precision), "Expected %f, got %f\n", (expected), (got))
-#define expectf(expected, got) expectf_((expected), (got), 0.0001)
+#define expectf(expected, got) expectf_((expected), (got), 0.001)
 #define TABLE_LEN (23)
 
 static HWND hwnd;
@@ -3398,6 +3398,104 @@ static void test_GdipMeasureString(void)
     DeleteDC(hdc);
 }
 
+static GpGraphics *create_graphics(REAL res_x, REAL res_y, GpUnit unit, REAL scale)
+{
+    GpStatus status;
+    union
+    {
+        GpBitmap *bitmap;
+        GpImage *image;
+    } u;
+    GpGraphics *graphics = NULL;
+    REAL res;
+
+    status = GdipCreateBitmapFromScan0(1, 1, 4, PixelFormat24bppRGB, NULL, &u.bitmap);
+    expect(Ok, status);
+
+    status = GdipBitmapSetResolution(u.bitmap, res_x, res_y);
+    expect(Ok, status);
+    status = GdipGetImageHorizontalResolution(u.image, &res);
+    expect(Ok, status);
+    expectf(res_x, res);
+    status = GdipGetImageVerticalResolution(u.image, &res);
+    expect(Ok, status);
+    expectf(res_y, res);
+
+    status = GdipGetImageGraphicsContext(u.image, &graphics);
+    expect(Ok, status);
+    status = GdipDisposeImage(u.image);
+    expect(Ok, status);
+
+    status = GdipGetDpiX(graphics, &res);
+    expect(Ok, status);
+    expectf(res_x, res);
+    status = GdipGetDpiY(graphics, &res);
+    expect(Ok, status);
+    expectf(res_y, res);
+
+    status = GdipSetPageUnit(graphics, unit);
+    expect(Ok, status);
+    status = GdipSetPageScale(graphics, scale);
+    expect(Ok, status);
+
+    return graphics;
+}
+
+static void test_transform(void)
+{
+    static const struct test_data
+    {
+        REAL res_x, res_y, scale;
+        GpUnit unit;
+        GpPointF in[2], out[2];
+    } td[] =
+    {
+        { 96.0, 96.0, 1.0, UnitPixel,
+          { { 100.0, 0.0 }, { 0.0, 100.0 } }, { { 100.0, 0.0 }, { 0.0, 100.0 } } },
+        { 96.0, 96.0, 1.0, UnitDisplay,
+          { { 100.0, 0.0 }, { 0.0, 100.0 } }, { { 100.0, 0.0 }, { 0.0, 100.0 } } },
+        { 96.0, 96.0, 1.0, UnitInch,
+          { { 100.0, 0.0 }, { 0.0, 100.0 } }, { { 9600.0, 0.0 }, { 0.0, 9600.0 } } },
+        { 123.0, 456.0, 1.0, UnitPoint,
+          { { 100.0, 0.0 }, { 0.0, 100.0 } }, { { 170.833313, 0.0 }, { 0.0, 633.333252 } } },
+        { 123.0, 456.0, 1.0, UnitDocument,
+          { { 100.0, 0.0 }, { 0.0, 100.0 } }, { { 40.999996, 0.0 }, { 0.0, 151.999985 } } },
+        { 123.0, 456.0, 2.0, UnitMillimeter,
+          { { 100.0, 0.0 }, { 0.0, 100.0 } }, { { 968.503845, 0.0 }, { 0.0, 3590.550781 } } },
+        { 196.0, 296.0, 1.0, UnitDisplay,
+          { { 100.0, 0.0 }, { 0.0, 100.0 } }, { { 100.0, 0.0 }, { 0.0, 100.0 } } },
+        { 196.0, 296.0, 1.0, UnitPixel,
+          { { 100.0, 0.0 }, { 0.0, 100.0 } }, { { 100.0, 0.0 }, { 0.0, 100.0 } } },
+    };
+    GpStatus status;
+    GpGraphics *graphics;
+    GpPointF ptf[2];
+    UINT i;
+
+    for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
+    {
+        graphics = create_graphics(td[i].res_x, td[i].res_y, td[i].unit, td[i].scale);
+        ptf[0].X = td[i].in[0].X;
+        ptf[0].Y = td[i].in[0].Y;
+        ptf[1].X = td[i].in[1].X;
+        ptf[1].Y = td[i].in[1].Y;
+        status = GdipTransformPoints(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, ptf, 2);
+        expect(Ok, status);
+        expectf(td[i].out[0].X, ptf[0].X);
+        expectf(td[i].out[0].Y, ptf[0].Y);
+        expectf(td[i].out[1].X, ptf[1].X);
+        expectf(td[i].out[1].Y, ptf[1].Y);
+        status = GdipTransformPoints(graphics, CoordinateSpaceWorld, CoordinateSpaceDevice, ptf, 2);
+        expect(Ok, status);
+        expectf(td[i].in[0].X, ptf[0].X);
+        expectf(td[i].in[0].Y, ptf[0].Y);
+        expectf(td[i].in[1].X, ptf[1].X);
+        expectf(td[i].in[1].Y, ptf[1].Y);
+        status = GdipDeleteGraphics(graphics);
+        expect(Ok, status);
+    }
+}
+
 START_TEST(graphics)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -3424,6 +3522,7 @@ START_TEST(graphics)
 
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
+    test_transform();
     test_GdipMeasureString();
     test_constructor_destructor();
     test_save_restore();
