@@ -27,9 +27,7 @@
 #include <stdio.h>
 
 #include "wined3d_private.h"
-#ifndef USE_WIN32_OPENGL
-#include "wine/wgl_driver.h"
-#endif
+#include "winternl.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
@@ -2315,12 +2313,17 @@ static void parse_extension_string(struct wined3d_gl_info *gl_info, const char *
     }
 }
 
-static void load_gl_funcs(struct wined3d_gl_info *gl_info, DWORD gl_version)
+static void load_gl_funcs(struct wined3d_gl_info *gl_info)
 {
-#define USE_GL_FUNC(type, pfn, ext_id, replace) gl_info->gl_ops.ext.p_##pfn = (void *)pwglGetProcAddress(#pfn);
+#define USE_GL_FUNC(pfn) gl_info->gl_ops.ext.p_##pfn = (void *)pwglGetProcAddress(#pfn);
     GL_EXT_FUNCS_GEN;
-    WGL_EXT_FUNCS_GEN;
 #undef USE_GL_FUNC
+
+#ifndef USE_WIN32_OPENGL
+    /* hack: use the functions directly from the TEB table to bypass the thunks */
+    /* note that we still need the above wglGetProcAddress calls to initialize the table */
+    gl_info->gl_ops.ext = ((struct opengl_funcs *)NtCurrentTeb()->glTable)->ext;
+#endif
 }
 
 static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
@@ -2599,7 +2602,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
             sizeof(gl_extension_map) / sizeof(*gl_extension_map));
 
     /* Now work out what GL support this card really has. */
-    load_gl_funcs( gl_info, gl_version );
+    load_gl_funcs( gl_info );
 
     hdc = pwglGetCurrentDC();
     /* Not all GL drivers might offer WGL extensions e.g. VirtualBox. */
@@ -2614,16 +2617,16 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
     if (!gl_info->supported[EXT_TEXTURE3D] && gl_version >= MAKEDWORD_VERSION(1, 2))
     {
         TRACE("GL CORE: GL_EXT_texture3D support.\n");
-        gl_info->gl_ops.ext.p_glTexImage3DEXT = (void *)pwglGetProcAddress("glTexImage3D");
-        gl_info->gl_ops.ext.p_glTexSubImage3DEXT = (void *)pwglGetProcAddress("glTexSubImage3D");
+        gl_info->gl_ops.ext.p_glTexImage3DEXT = (void *)gl_info->gl_ops.ext.p_glTexImage3D;
+        gl_info->gl_ops.ext.p_glTexSubImage3DEXT = gl_info->gl_ops.ext.p_glTexSubImage3D;
         gl_info->supported[EXT_TEXTURE3D] = TRUE;
     }
 
     if (!gl_info->supported[NV_POINT_SPRITE] && gl_version >= MAKEDWORD_VERSION(1, 4))
     {
         TRACE("GL CORE: GL_NV_point_sprite support.\n");
-        gl_info->gl_ops.ext.p_glPointParameterivNV = (void *)pwglGetProcAddress("glPointParameteriv");
-        gl_info->gl_ops.ext.p_glPointParameteriNV = (void *)pwglGetProcAddress("glPointParameteri");
+        gl_info->gl_ops.ext.p_glPointParameterivNV = gl_info->gl_ops.ext.p_glPointParameteriv;
+        gl_info->gl_ops.ext.p_glPointParameteriNV = gl_info->gl_ops.ext.p_glPointParameteri;
         gl_info->supported[NV_POINT_SPRITE] = TRUE;
     }
 
@@ -5395,9 +5398,13 @@ static BOOL InitAdapters(struct wined3d *wined3d)
         }
     }
 
+/* Load WGL core functions from opengl32.dll */
+#define USE_WGL_FUNC(pfn) p##pfn = (void*)GetProcAddress(mod_gl, #pfn);
+    WGL_FUNCS_GEN;
+#undef USE_WGL_FUNC
+
 /* Dynamically load all GL core functions */
 #ifdef USE_WIN32_OPENGL
-    pwglGetProcAddress = (void*)GetProcAddress(mod_gl, "wglGetProcAddress");
 #define USE_GL_FUNC(pfn) pfn = (void*)GetProcAddress(mod_gl, #pfn);
     GL_FUNCS_GEN;
 #undef USE_GL_FUNC
@@ -5406,22 +5413,13 @@ static BOOL InitAdapters(struct wined3d *wined3d)
     {
         HDC hdc = GetDC( 0 );
         const struct opengl_funcs *wgl_driver = __wine_get_wgl_driver( hdc, WINE_WGL_DRIVER_VERSION );
-
-        if (wgl_driver && wgl_driver != (void *)-1)
-            pwglGetProcAddress = wgl_driver->wgl.p_wglGetProcAddress;
-
         ReleaseDC( 0, hdc );
-        if (!pwglGetProcAddress) goto nogl_adapter;
+        if (!wgl_driver || wgl_driver == (void *)-1) goto nogl_adapter;
 #define USE_GL_FUNC(pfn) pfn = wgl_driver->gl.p_##pfn;
         GL_FUNCS_GEN;
 #undef USE_GL_FUNC
     }
 #endif
-
-/* Load WGL core functions from opengl32.dll */
-#define USE_WGL_FUNC(pfn) p##pfn = (void*)GetProcAddress(mod_gl, #pfn);
-    WGL_FUNCS_GEN;
-#undef USE_WGL_FUNC
 
     glEnableWINE = glEnable;
     glDisableWINE = glDisable;

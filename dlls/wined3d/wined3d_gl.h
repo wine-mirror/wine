@@ -1354,7 +1354,7 @@ HGLRC (WINAPI *pwglCreateContext)(HDC) DECLSPEC_HIDDEN;
 BOOL (WINAPI *pwglDeleteContext)(HGLRC) DECLSPEC_HIDDEN;
 HGLRC (WINAPI *pwglGetCurrentContext)(void) DECLSPEC_HIDDEN;
 HDC (WINAPI *pwglGetCurrentDC)(void) DECLSPEC_HIDDEN;
-PROC (WINE_GLAPI *pwglGetProcAddress)(LPCSTR) DECLSPEC_HIDDEN;
+PROC (WINAPI *pwglGetProcAddress)(LPCSTR) DECLSPEC_HIDDEN;
 BOOL (WINAPI *pwglMakeCurrent)(HDC, HGLRC) DECLSPEC_HIDDEN;
 BOOL (WINAPI *pwglShareLists)(HGLRC, HGLRC) DECLSPEC_HIDDEN;
 
@@ -1701,6 +1701,7 @@ BOOL (WINAPI *pwglShareLists)(HGLRC, HGLRC) DECLSPEC_HIDDEN;
     USE_WGL_FUNC(wglDeleteContext) \
     USE_WGL_FUNC(wglGetCurrentContext) \
     USE_WGL_FUNC(wglGetCurrentDC) \
+    USE_WGL_FUNC(wglGetProcAddress) \
     USE_WGL_FUNC(wglMakeCurrent) \
     USE_WGL_FUNC(wglShareLists)
 
@@ -3680,745 +3681,403 @@ typedef BOOL (WINAPI *PFNWGLSETPIXELFORMATWINE)(HDC hdc, int iPixelFormat);
 
 #define GL_EXT_FUNCS_GEN \
     /* GL_APPLE_fence */ \
-    USE_GL_FUNC(PGLFNGENFENCESAPPLEPROC, \
-            glGenFencesAPPLE,                           APPLE_FENCE,                    NULL) \
-    USE_GL_FUNC(PGLFNDELETEFENCESAPPLEPROC, \
-            glDeleteFencesAPPLE,                        APPLE_FENCE,                    NULL) \
-    USE_GL_FUNC(PGLFNSETFENCEAPPLEPROC, \
-            glSetFenceAPPLE,                            APPLE_FENCE,                    NULL) \
-    USE_GL_FUNC(PGLFNTESTFENCEAPPLEPROC, \
-            glTestFenceAPPLE,                           APPLE_FENCE,                    NULL) \
-    USE_GL_FUNC(PGLFNFINISHFENCEAPPLEPROC, \
-            glFinishFenceAPPLE,                         APPLE_FENCE,                    NULL) \
-    USE_GL_FUNC(PGLFNISFENCEAPPLEPROC, \
-            glIsFenceAPPLE,                             APPLE_FENCE,                    NULL) \
-    USE_GL_FUNC(PGLFNTESTOBJECTAPPLEPROC, \
-            glTestObjectAPPLE,                          APPLE_FENCE,                    NULL) \
-    USE_GL_FUNC(PGLFNFINISHOBJECTAPPLEPROC, \
-            glFinishObjectAPPLE,                        APPLE_FENCE,                    NULL) \
+    USE_GL_FUNC(glDeleteFencesAPPLE) \
+    USE_GL_FUNC(glFinishFenceAPPLE) \
+    USE_GL_FUNC(glFinishObjectAPPLE) \
+    USE_GL_FUNC(glGenFencesAPPLE) \
+    USE_GL_FUNC(glIsFenceAPPLE) \
+    USE_GL_FUNC(glSetFenceAPPLE) \
+    USE_GL_FUNC(glTestFenceAPPLE) \
+    USE_GL_FUNC(glTestObjectAPPLE) \
     /* GL_APPLE_flush_buffer_range */ \
-    USE_GL_FUNC(PGLFNBUFFERPARAMETERIAPPLE, \
-            glBufferParameteriAPPLE,                    APPLE_FLUSH_BUFFER_RANGE,       NULL) \
-    USE_GL_FUNC(PGLFNFLUSHMAPPEDBUFFERRANGEAPPLE, \
-            glFlushMappedBufferRangeAPPLE,              APPLE_FLUSH_BUFFER_RANGE,       NULL) \
+    USE_GL_FUNC(glBufferParameteriAPPLE) \
+    USE_GL_FUNC(glFlushMappedBufferRangeAPPLE) \
     /* GL_ARB_color_buffer_float */ \
-    USE_GL_FUNC(PGLFNCLAMPCOLORARBPROC, \
-            glClampColorARB,                            ARB_COLOR_BUFFER_FLOAT,         NULL) \
+    USE_GL_FUNC(glClampColorARB) \
     /* GL_ARB_draw_buffers */ \
-    USE_GL_FUNC(PGLFNDRAWBUFFERSARBPROC, \
-            glDrawBuffersARB,                           ARB_DRAW_BUFFERS,               NULL) \
+    USE_GL_FUNC(glDrawBuffersARB) \
     /* GL_ARB_draw_elements_base_vertex */ \
-    USE_GL_FUNC(PGLFNDRAWELEMENTSBASEVERTEXPROC, \
-            glDrawElementsBaseVertex,                   ARB_DRAW_ELEMENTS_BASE_VERTEX,  NULL) \
-    USE_GL_FUNC(PGLFNDRAWRANGEELEMENTSBASEVERTEXPROC, \
-            glDrawRangeElementsBaseVertex,              ARB_DRAW_ELEMENTS_BASE_VERTEX,  NULL) \
-    USE_GL_FUNC(PGLFNDRAWELEMENTSINSTANCEDBASEVERTEXPROC, \
-            glDrawElementsInstancedBaseVertex,          ARB_DRAW_ELEMENTS_BASE_VERTEX,  NULL) \
-    USE_GL_FUNC(PGLFNMULTIDRAWELEMENTSBASEVERTEXPROC, \
-            glMultiDrawElementsBaseVertex,              ARB_DRAW_ELEMENTS_BASE_VERTEX,  NULL) \
+    USE_GL_FUNC(glDrawElementsBaseVertex) \
+    USE_GL_FUNC(glDrawElementsInstancedBaseVertex) \
+    USE_GL_FUNC(glDrawRangeElementsBaseVertex) \
+    USE_GL_FUNC(glMultiDrawElementsBaseVertex) \
     /* GL_ARB_framebuffer_object */ \
-    USE_GL_FUNC(PGLFNGLISRENDERBUFFERPROC, \
-            glIsRenderbuffer,                           ARB_FRAMEBUFFER_OBJECT,         NULL) \
-    USE_GL_FUNC(PGLFNGLBINDRENDERBUFFERPROC, \
-            glBindRenderbuffer,                         ARB_FRAMEBUFFER_OBJECT,         NULL) \
-    USE_GL_FUNC(PGLFNGLDELETERENDERBUFFERSPROC, \
-            glDeleteRenderbuffers,                      ARB_FRAMEBUFFER_OBJECT,         NULL) \
-    USE_GL_FUNC(PGLFNGLGENRENDERBUFFERSPROC, \
-            glGenRenderbuffers,                         ARB_FRAMEBUFFER_OBJECT,         NULL) \
-    USE_GL_FUNC(PGLFNGLRENDERBUFFERSTORAGEPROC, \
-            glRenderbufferStorage,                      ARB_FRAMEBUFFER_OBJECT,         NULL) \
-    USE_GL_FUNC(PGLFNRENDERBUFFERSTORAGEMULTISAMPLEPROC, \
-            glRenderbufferStorageMultisample,           ARB_FRAMEBUFFER_OBJECT,         NULL) \
-    USE_GL_FUNC(PGLFNGLGETRENDERBUFFERPARAMETERIVPROC, \
-            glGetRenderbufferParameteriv,               ARB_FRAMEBUFFER_OBJECT,         NULL) \
-    USE_GL_FUNC(PGLFNGLISFRAMEBUFFERPROC, \
-            glIsFramebuffer,                            ARB_FRAMEBUFFER_OBJECT,         NULL) \
-    USE_GL_FUNC(PGLFNGLBINDFRAMEBUFFERPROC, \
-            glBindFramebuffer,                          ARB_FRAMEBUFFER_OBJECT,         NULL) \
-    USE_GL_FUNC(PGLFNGLDELETEFRAMEBUFFERSPROC, \
-            glDeleteFramebuffers,                       ARB_FRAMEBUFFER_OBJECT,         NULL) \
-    USE_GL_FUNC(PGLFNGLGENFRAMEBUFFERSPROC, \
-            glGenFramebuffers,                          ARB_FRAMEBUFFER_OBJECT,         NULL) \
-    USE_GL_FUNC(PGLFNGLCHECKFRAMEBUFFERSTATUSPROC, \
-            glCheckFramebufferStatus,                   ARB_FRAMEBUFFER_OBJECT,         NULL) \
-    USE_GL_FUNC(PGLFNGLFRAMEBUFFERTEXTURE1DPROC, \
-            glFramebufferTexture1D,                     ARB_FRAMEBUFFER_OBJECT,         NULL) \
-    USE_GL_FUNC(PGLFNGLFRAMEBUFFERTEXTURE2DPROC, \
-            glFramebufferTexture2D,                     ARB_FRAMEBUFFER_OBJECT,         NULL) \
-    USE_GL_FUNC(PGLFNGLFRAMEBUFFERTEXTURE3DPROC, \
-            glFramebufferTexture3D,                     ARB_FRAMEBUFFER_OBJECT,         NULL) \
-    USE_GL_FUNC(PGLFNGLFRAMEBUFFERTEXTURELAYERPROC,     \
-            glFramebufferTextureLayer,                  ARB_FRAMEBUFFER_OBJECT,         NULL) \
-    USE_GL_FUNC(PGLFNGLFRAMEBUFFERRENDERBUFFERPROC, \
-            glFramebufferRenderbuffer,                  ARB_FRAMEBUFFER_OBJECT,         NULL) \
-    USE_GL_FUNC(PGLFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVPROC, \
-            glGetFramebufferAttachmentParameteriv,      ARB_FRAMEBUFFER_OBJECT,         NULL) \
-    USE_GL_FUNC(PGLFNGLBLITFRAMEBUFFERPROC, \
-            glBlitFramebuffer,                          ARB_FRAMEBUFFER_OBJECT,         NULL) \
-    USE_GL_FUNC(PGLFNGLGENERATEMIPMAPPROC, \
-            glGenerateMipmap,                           ARB_FRAMEBUFFER_OBJECT,         NULL) \
+    USE_GL_FUNC(glBindFramebuffer) \
+    USE_GL_FUNC(glBindRenderbuffer) \
+    USE_GL_FUNC(glBlitFramebuffer) \
+    USE_GL_FUNC(glCheckFramebufferStatus) \
+    USE_GL_FUNC(glDeleteFramebuffers) \
+    USE_GL_FUNC(glDeleteRenderbuffers) \
+    USE_GL_FUNC(glFramebufferRenderbuffer) \
+    USE_GL_FUNC(glFramebufferTexture1D) \
+    USE_GL_FUNC(glFramebufferTexture2D) \
+    USE_GL_FUNC(glFramebufferTexture3D) \
+    USE_GL_FUNC(glFramebufferTextureLayer) \
+    USE_GL_FUNC(glGenFramebuffers) \
+    USE_GL_FUNC(glGenRenderbuffers) \
+    USE_GL_FUNC(glGenerateMipmap) \
+    USE_GL_FUNC(glGetFramebufferAttachmentParameteriv) \
+    USE_GL_FUNC(glGetRenderbufferParameteriv) \
+    USE_GL_FUNC(glIsFramebuffer) \
+    USE_GL_FUNC(glIsRenderbuffer) \
+    USE_GL_FUNC(glRenderbufferStorage) \
+    USE_GL_FUNC(glRenderbufferStorageMultisample) \
     /* GL_ARB_geometry_shader4 */ \
-    USE_GL_FUNC(PGLFNPROGRAMPARAMETERIARBPROC, \
-            glProgramParameteriARB,                     ARB_GEOMETRY_SHADER4,           NULL) \
-    USE_GL_FUNC(PGLFNFRAMEBUFFERTEXTUREARBPROC, \
-            glFramebufferTextureARB,                    ARB_GEOMETRY_SHADER4,           NULL) \
-    USE_GL_FUNC(PGLFNFRAMEBUFFERTEXTURELAYERARBPROC, \
-            glFramebufferTextureLayerARB,               ARB_GEOMETRY_SHADER4,           NULL) \
-    USE_GL_FUNC(PGLFNFRAMEBUFFERTEXTUREFACEARBPROC, \
-            glFramebufferTextureFaceARB,                ARB_GEOMETRY_SHADER4,           NULL) \
+    USE_GL_FUNC(glFramebufferTextureARB) \
+    USE_GL_FUNC(glFramebufferTextureFaceARB) \
+    USE_GL_FUNC(glFramebufferTextureLayerARB) \
+    USE_GL_FUNC(glProgramParameteriARB) \
     /* GL_ARB_map_buffer_range */ \
-    USE_GL_FUNC(PGLFNMAPBUFFERRANGEPROC, \
-            glMapBufferRange,                           ARB_MAP_BUFFER_RANGE,           NULL) \
-    USE_GL_FUNC(PGLFNFLUSHMAPPEDBUFFERRANGEPROC, \
-            glFlushMappedBufferRange,                   ARB_MAP_BUFFER_RANGE,           NULL) \
+    USE_GL_FUNC(glFlushMappedBufferRange) \
+    USE_GL_FUNC(glMapBufferRange) \
     /* GL_ARB_multisample */ \
-    USE_GL_FUNC(WINED3D_PFNGLSAMPLECOVERAGEARBPROC, \
-            glSampleCoverageARB,                        ARB_MULTISAMPLE,                NULL) \
+    USE_GL_FUNC(glSampleCoverageARB) \
     /* GL_ARB_multitexture */ \
-    USE_GL_FUNC(WINED3D_PFNGLACTIVETEXTUREARBPROC, \
-            glActiveTextureARB,                         ARB_MULTITEXTURE,               NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLCLIENTACTIVETEXTUREARBPROC, \
-            glClientActiveTextureARB,                   ARB_MULTITEXTURE,               NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLMULTITEXCOORD1FARBPROC, \
-            glMultiTexCoord1fARB,                       ARB_MULTITEXTURE,               NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLMULTITEXCOORD1FVARBPROC, \
-            glMultiTexCoord1fvARB,                      ARB_MULTITEXTURE,               NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLMULTITEXCOORD2FARBPROC, \
-            glMultiTexCoord2fARB,                       ARB_MULTITEXTURE,               NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLMULTITEXCOORD2FVARBPROC, \
-            glMultiTexCoord2fvARB,                      ARB_MULTITEXTURE,               NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLMULTITEXCOORD3FARBPROC, \
-            glMultiTexCoord3fARB,                       ARB_MULTITEXTURE,               NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLMULTITEXCOORD3FVARBPROC, \
-            glMultiTexCoord3fvARB,                      ARB_MULTITEXTURE,               NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLMULTITEXCOORD4FARBPROC, \
-            glMultiTexCoord4fARB,                       ARB_MULTITEXTURE,               NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLMULTITEXCOORD4FVARBPROC, \
-            glMultiTexCoord4fvARB,                      ARB_MULTITEXTURE,               NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLMULTITEXCOORD2SVARBPROC, \
-            glMultiTexCoord2svARB,                      ARB_MULTITEXTURE,               NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLMULTITEXCOORD4SVARBPROC, \
-            glMultiTexCoord4svARB,                      ARB_MULTITEXTURE,               NULL) \
+    USE_GL_FUNC(glActiveTextureARB) \
+    USE_GL_FUNC(glClientActiveTextureARB) \
+    USE_GL_FUNC(glMultiTexCoord1fARB) \
+    USE_GL_FUNC(glMultiTexCoord1fvARB) \
+    USE_GL_FUNC(glMultiTexCoord2fARB) \
+    USE_GL_FUNC(glMultiTexCoord2fvARB) \
+    USE_GL_FUNC(glMultiTexCoord2svARB) \
+    USE_GL_FUNC(glMultiTexCoord3fARB) \
+    USE_GL_FUNC(glMultiTexCoord3fvARB) \
+    USE_GL_FUNC(glMultiTexCoord4fARB) \
+    USE_GL_FUNC(glMultiTexCoord4fvARB) \
+    USE_GL_FUNC(glMultiTexCoord4svARB) \
     /* GL_ARB_occlusion_query */ \
-    USE_GL_FUNC(PGLFNGENQUERIESARBPROC, \
-            glGenQueriesARB,                            ARB_OCCLUSION_QUERY,            NULL) \
-    USE_GL_FUNC(PGLFNDELETEQUERIESARBPROC, \
-            glDeleteQueriesARB,                         ARB_OCCLUSION_QUERY,            NULL) \
-    USE_GL_FUNC(PGLFNBEGINQUERYARBPROC, \
-            glBeginQueryARB,                            ARB_OCCLUSION_QUERY,            NULL) \
-    USE_GL_FUNC(PGLFNENDQUERYARBPROC, \
-            glEndQueryARB,                              ARB_OCCLUSION_QUERY,            NULL) \
-    USE_GL_FUNC(PGLFNGETQUERYOBJECTIVARBPROC, \
-            glGetQueryObjectivARB,                      ARB_OCCLUSION_QUERY,            NULL) \
-    USE_GL_FUNC(PGLFNGETQUERYOBJECTUIVARBPROC, \
-            glGetQueryObjectuivARB,                     ARB_OCCLUSION_QUERY,            NULL) \
+    USE_GL_FUNC(glBeginQueryARB) \
+    USE_GL_FUNC(glDeleteQueriesARB) \
+    USE_GL_FUNC(glEndQueryARB) \
+    USE_GL_FUNC(glGenQueriesARB) \
+    USE_GL_FUNC(glGetQueryObjectivARB) \
+    USE_GL_FUNC(glGetQueryObjectuivARB) \
     /* GL_ARB_point_parameters */ \
-    USE_GL_FUNC(PGLFNGLPOINTPARAMETERFARBPROC, \
-            glPointParameterfARB,                       ARB_POINT_PARAMETERS,           NULL) \
-    USE_GL_FUNC(PGLFNGLPOINTPARAMETERFVARBPROC, \
-            glPointParameterfvARB,                      ARB_POINT_PARAMETERS,           NULL) \
+    USE_GL_FUNC(glPointParameterfARB) \
+    USE_GL_FUNC(glPointParameterfvARB) \
     /* GL_ARB_provoking_vertex */ \
-    USE_GL_FUNC(PGLFNGLPROVOKINGVERTEXPROC, \
-            glProvokingVertex,                          ARB_PROVOKING_VERTEX,           NULL) \
+    USE_GL_FUNC(glProvokingVertex) \
     /* GL_ARB_shader_objects */ \
-    USE_GL_FUNC(WINED3D_PFNGLGETOBJECTPARAMETERIVARBPROC, \
-            glGetObjectParameterivARB,                  ARB_SHADER_OBJECTS,             NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLGETOBJECTPARAMETERFVARBPROC, \
-            glGetObjectParameterfvARB,                  ARB_SHADER_OBJECTS,             NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLGETUNIFORMLOCATIONARBPROC, \
-            glGetUniformLocationARB,                    ARB_SHADER_OBJECTS,             NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLGETACTIVEUNIFORMARBPROC, \
-            glGetActiveUniformARB,                      ARB_SHADER_OBJECTS,             NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLUNIFORM1IARBPROC, \
-            glUniform1iARB,                             ARB_SHADER_OBJECTS,             NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLUNIFORM2IARBPROC, \
-            glUniform2iARB,                             ARB_SHADER_OBJECTS,             NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLUNIFORM3IARBPROC, \
-            glUniform3iARB,                             ARB_SHADER_OBJECTS,             NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLUNIFORM4IARBPROC, \
-            glUniform4iARB,                             ARB_SHADER_OBJECTS,             NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLUNIFORM1FARBPROC, \
-            glUniform1fARB,                             ARB_SHADER_OBJECTS,             NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLUNIFORM2FARBPROC, \
-            glUniform2fARB,                             ARB_SHADER_OBJECTS,             NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLUNIFORM3FARBPROC, \
-            glUniform3fARB,                             ARB_SHADER_OBJECTS,             NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLUNIFORM4FARBPROC, \
-            glUniform4fARB,                             ARB_SHADER_OBJECTS,             NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLUNIFORM1FVARBPROC, \
-            glUniform1fvARB,                            ARB_SHADER_OBJECTS,             NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLUNIFORM2FVARBPROC, \
-            glUniform2fvARB,                            ARB_SHADER_OBJECTS,             NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLUNIFORM3FVARBPROC, \
-            glUniform3fvARB,                            ARB_SHADER_OBJECTS,             NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLUNIFORM4FVARBPROC, \
-            glUniform4fvARB,                            ARB_SHADER_OBJECTS,             NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLUNIFORM1IVARBPROC, \
-            glUniform1ivARB,                            ARB_SHADER_OBJECTS,             NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLUNIFORM2IVARBPROC, \
-            glUniform2ivARB,                            ARB_SHADER_OBJECTS,             NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLUNIFORM3IVARBPROC, \
-            glUniform3ivARB,                            ARB_SHADER_OBJECTS,             NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLUNIFORM4IVARBPROC, \
-            glUniform4ivARB,                            ARB_SHADER_OBJECTS,             NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLUNIFORMMATRIX2FVARBPROC, \
-            glUniformMatrix2fvARB,                      ARB_SHADER_OBJECTS,             NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLUNIFORMMATRIX3FVARBPROC, \
-            glUniformMatrix3fvARB,                      ARB_SHADER_OBJECTS,             NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLUNIFORMMATRIX4FVARBPROC, \
-            glUniformMatrix4fvARB,                      ARB_SHADER_OBJECTS,             NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLGETUNIFORMFVARBPROC, \
-            glGetUniformfvARB,                          ARB_SHADER_OBJECTS,             NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLGETUNIFORMIVARBPROC, \
-            glGetUniformivARB,                          ARB_SHADER_OBJECTS,             NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLGETINFOLOGARBPROC, \
-            glGetInfoLogARB,                            ARB_SHADER_OBJECTS,             NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLUSEPROGRAMOBJECTARBPROC, \
-            glUseProgramObjectARB,                      ARB_SHADER_OBJECTS,             NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLCREATESHADEROBJECTARBPROC, \
-            glCreateShaderObjectARB,                    ARB_SHADER_OBJECTS,             NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLSHADERSOURCEARBPROC, \
-            glShaderSourceARB,                          ARB_SHADER_OBJECTS,             NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLCOMPILESHADERARBPROC, \
-            glCompileShaderARB,                         ARB_SHADER_OBJECTS,             NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLCREATEPROGRAMOBJECTARBPROC, \
-            glCreateProgramObjectARB,                   ARB_SHADER_OBJECTS,             NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLATTACHOBJECTARBPROC, \
-            glAttachObjectARB,                          ARB_SHADER_OBJECTS,             NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLLINKPROGRAMARBPROC, \
-            glLinkProgramARB,                           ARB_SHADER_OBJECTS,             NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLDETACHOBJECTARBPROC, \
-            glDetachObjectARB,                          ARB_SHADER_OBJECTS,             NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLDELETEOBJECTARBPROC, \
-            glDeleteObjectARB,                          ARB_SHADER_OBJECTS,             NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLVALIDATEPROGRAMARBPROC, \
-            glValidateProgramARB,                       ARB_SHADER_OBJECTS,             NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLGETATTACHEDOBJECTSARBPROC, \
-            glGetAttachedObjectsARB,                    ARB_SHADER_OBJECTS,             NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLGETHANDLEARBPROC, \
-            glGetHandleARB,                             ARB_SHADER_OBJECTS,             NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLGETSHADERSOURCEARBPROC, \
-            glGetShaderSourceARB,                       ARB_SHADER_OBJECTS,             NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLBINDATTRIBLOCATIONARBPROC, \
-            glBindAttribLocationARB,                    ARB_SHADER_OBJECTS,             NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLGETATTRIBLOCATIONARBPROC, \
-            glGetAttribLocationARB,                     ARB_SHADER_OBJECTS,             NULL) \
+    USE_GL_FUNC(glAttachObjectARB) \
+    USE_GL_FUNC(glBindAttribLocationARB) \
+    USE_GL_FUNC(glCompileShaderARB) \
+    USE_GL_FUNC(glCreateProgramObjectARB) \
+    USE_GL_FUNC(glCreateShaderObjectARB) \
+    USE_GL_FUNC(glDeleteObjectARB) \
+    USE_GL_FUNC(glDetachObjectARB) \
+    USE_GL_FUNC(glGetActiveUniformARB) \
+    USE_GL_FUNC(glGetAttachedObjectsARB) \
+    USE_GL_FUNC(glGetAttribLocationARB) \
+    USE_GL_FUNC(glGetHandleARB) \
+    USE_GL_FUNC(glGetInfoLogARB) \
+    USE_GL_FUNC(glGetObjectParameterfvARB) \
+    USE_GL_FUNC(glGetObjectParameterivARB) \
+    USE_GL_FUNC(glGetShaderSourceARB) \
+    USE_GL_FUNC(glGetUniformLocationARB) \
+    USE_GL_FUNC(glGetUniformfvARB) \
+    USE_GL_FUNC(glGetUniformivARB) \
+    USE_GL_FUNC(glLinkProgramARB) \
+    USE_GL_FUNC(glShaderSourceARB) \
+    USE_GL_FUNC(glUniform1fARB) \
+    USE_GL_FUNC(glUniform1fvARB) \
+    USE_GL_FUNC(glUniform1iARB) \
+    USE_GL_FUNC(glUniform1ivARB) \
+    USE_GL_FUNC(glUniform2fARB) \
+    USE_GL_FUNC(glUniform2fvARB) \
+    USE_GL_FUNC(glUniform2iARB) \
+    USE_GL_FUNC(glUniform2ivARB) \
+    USE_GL_FUNC(glUniform3fARB) \
+    USE_GL_FUNC(glUniform3fvARB) \
+    USE_GL_FUNC(glUniform3iARB) \
+    USE_GL_FUNC(glUniform3ivARB) \
+    USE_GL_FUNC(glUniform4fARB) \
+    USE_GL_FUNC(glUniform4fvARB) \
+    USE_GL_FUNC(glUniform4iARB) \
+    USE_GL_FUNC(glUniform4ivARB) \
+    USE_GL_FUNC(glUniformMatrix2fvARB) \
+    USE_GL_FUNC(glUniformMatrix3fvARB) \
+    USE_GL_FUNC(glUniformMatrix4fvARB) \
+    USE_GL_FUNC(glUseProgramObjectARB) \
+    USE_GL_FUNC(glValidateProgramARB) \
     /* GL_ARB_sync */ \
-    USE_GL_FUNC(PGLFNFENCESYNCPROC, \
-            glFenceSync,                                ARB_SYNC,                       NULL) \
-    USE_GL_FUNC(PGLFNISSYNCPROC, \
-            glIsSync,                                   ARB_SYNC,                       NULL) \
-    USE_GL_FUNC(PGLFNDELETESYNCPROC, \
-            glDeleteSync,                               ARB_SYNC,                       NULL) \
-    USE_GL_FUNC(PGLFNCLIENTWAITSYNCPROC, \
-            glClientWaitSync,                           ARB_SYNC,                       NULL) \
-    USE_GL_FUNC(PGLFNWAITSYNCPROC, \
-            glWaitSync,                                 ARB_SYNC,                       NULL) \
-    USE_GL_FUNC(PGLFNGETINTEGER64VPROC, \
-            glGetInteger64v,                            ARB_SYNC,                       NULL) \
-    USE_GL_FUNC(PGLFNGETSYNCIVPROC, \
-            glGetSynciv,                                ARB_SYNC,                       NULL) \
+    USE_GL_FUNC(glClientWaitSync) \
+    USE_GL_FUNC(glDeleteSync) \
+    USE_GL_FUNC(glFenceSync) \
+    USE_GL_FUNC(glGetInteger64v) \
+    USE_GL_FUNC(glGetSynciv) \
+    USE_GL_FUNC(glIsSync) \
+    USE_GL_FUNC(glWaitSync) \
     /* GL_ARB_texture_compression */ \
-    USE_GL_FUNC(PGLFNCOMPRESSEDTEXIMAGE2DPROC, \
-            glCompressedTexImage2DARB,                  ARB_TEXTURE_COMPRESSION,        NULL) \
-    USE_GL_FUNC(PGLFNCOMPRESSEDTEXIMAGE3DPROC, \
-            glCompressedTexImage3DARB,                  ARB_TEXTURE_COMPRESSION,        NULL) \
-    USE_GL_FUNC(PGLFNCOMPRESSEDTEXSUBIMAGE2DPROC, \
-            glCompressedTexSubImage2DARB,               ARB_TEXTURE_COMPRESSION,        NULL) \
-    USE_GL_FUNC(PGLFNCOMPRESSEDTEXSUBIMAGE3DPROC, \
-            glCompressedTexSubImage3DARB,               ARB_TEXTURE_COMPRESSION,        NULL) \
-    USE_GL_FUNC(PGLFNGETCOMPRESSEDTEXIMAGEPROC, \
-            glGetCompressedTexImageARB,                 ARB_TEXTURE_COMPRESSION,        NULL) \
+    USE_GL_FUNC(glCompressedTexImage2DARB) \
+    USE_GL_FUNC(glCompressedTexImage3DARB) \
+    USE_GL_FUNC(glCompressedTexSubImage2DARB) \
+    USE_GL_FUNC(glCompressedTexSubImage3DARB) \
+    USE_GL_FUNC(glGetCompressedTexImageARB) \
     /* GL_ARB_vertex_blend */ \
-    USE_GL_FUNC(PGLFNGLWEIGHTPOINTERARB, \
-            glWeightPointerARB,                         ARB_VERTEX_BLEND,               NULL) \
-    USE_GL_FUNC(PGLFNGLWEIGHTBV, \
-            glWeightbvARB,                              ARB_VERTEX_BLEND,               NULL) \
-    USE_GL_FUNC(PGLFNGLWEIGHTSV, \
-            glWeightsvARB,                              ARB_VERTEX_BLEND,               NULL) \
-    USE_GL_FUNC(PGLFNGLWEIGHTIV, \
-            glWeightivARB,                              ARB_VERTEX_BLEND,               NULL) \
-    USE_GL_FUNC(PGLFNGLWEIGHTFV, \
-            glWeightfvARB,                              ARB_VERTEX_BLEND,               NULL) \
-    USE_GL_FUNC(PGLFNGLWEIGHTDV, \
-            glWeightdvARB,                              ARB_VERTEX_BLEND,               NULL) \
-    USE_GL_FUNC(PGLFNGLWEIGHTUBV, \
-            glWeightubvARB,                             ARB_VERTEX_BLEND,               NULL) \
-    USE_GL_FUNC(PGLFNGLWEIGHTUSV, \
-            glWeightusvARB,                             ARB_VERTEX_BLEND,               NULL) \
-    USE_GL_FUNC(PGLFNGLWEIGHTUIV, \
-            glWeightuivARB,                             ARB_VERTEX_BLEND,               NULL) \
-    USE_GL_FUNC(PGLFNGLVERTEXBLENDARB, \
-            glVertexBlendARB,                           ARB_VERTEX_BLEND,               NULL) \
+    USE_GL_FUNC(glVertexBlendARB) \
+    USE_GL_FUNC(glWeightPointerARB) \
+    USE_GL_FUNC(glWeightbvARB) \
+    USE_GL_FUNC(glWeightdvARB) \
+    USE_GL_FUNC(glWeightfvARB) \
+    USE_GL_FUNC(glWeightivARB) \
+    USE_GL_FUNC(glWeightsvARB) \
+    USE_GL_FUNC(glWeightubvARB) \
+    USE_GL_FUNC(glWeightuivARB) \
+    USE_GL_FUNC(glWeightusvARB) \
     /* GL_ARB_vertex_buffer_object */ \
-    USE_GL_FUNC(PGLFNBINDBUFFERARBPROC, \
-            glBindBufferARB,                            ARB_VERTEX_BUFFER_OBJECT,       NULL) \
-    USE_GL_FUNC(PGLFNDELETEBUFFERSARBPROC, \
-            glDeleteBuffersARB,                         ARB_VERTEX_BUFFER_OBJECT,       NULL) \
-    USE_GL_FUNC(PGLFNGENBUFFERSARBPROC, \
-            glGenBuffersARB,                            ARB_VERTEX_BUFFER_OBJECT,       NULL) \
-    USE_GL_FUNC(PGLFNISBUFFERARBPROC, \
-            glIsBufferARB,                              ARB_VERTEX_BUFFER_OBJECT,       NULL) \
-    USE_GL_FUNC(PGLFNBUFFERDATAARBPROC, \
-            glBufferDataARB,                            ARB_VERTEX_BUFFER_OBJECT,       NULL) \
-    USE_GL_FUNC(PGLFNBUFFERSUBDATAARBPROC, \
-            glBufferSubDataARB,                         ARB_VERTEX_BUFFER_OBJECT,       NULL) \
-    USE_GL_FUNC(PGLFNGETBUFFERSUBDATAARBPROC, \
-            glGetBufferSubDataARB,                      ARB_VERTEX_BUFFER_OBJECT,       NULL) \
-    USE_GL_FUNC(PGLFNMAPBUFFERARBPROC, \
-            glMapBufferARB,                             ARB_VERTEX_BUFFER_OBJECT,       NULL) \
-    USE_GL_FUNC(PGLFNUNMAPBUFFERARBPROC, \
-            glUnmapBufferARB,                           ARB_VERTEX_BUFFER_OBJECT,       NULL) \
-    USE_GL_FUNC(PGLFNGETBUFFERPARAMETERIVARBPROC, \
-            glGetBufferParameterivARB,                  ARB_VERTEX_BUFFER_OBJECT,       NULL) \
-    USE_GL_FUNC(PGLFNGETBUFFERPOINTERVARBPROC, \
-            glGetBufferPointervARB,                     ARB_VERTEX_BUFFER_OBJECT,       NULL) \
+    USE_GL_FUNC(glBindBufferARB) \
+    USE_GL_FUNC(glBufferDataARB) \
+    USE_GL_FUNC(glBufferSubDataARB) \
+    USE_GL_FUNC(glDeleteBuffersARB) \
+    USE_GL_FUNC(glGenBuffersARB) \
+    USE_GL_FUNC(glGetBufferParameterivARB) \
+    USE_GL_FUNC(glGetBufferPointervARB) \
+    USE_GL_FUNC(glGetBufferSubDataARB) \
+    USE_GL_FUNC(glIsBufferARB) \
+    USE_GL_FUNC(glMapBufferARB) \
+    USE_GL_FUNC(glUnmapBufferARB) \
     /* GL_ARB_vertex_program */ \
-    USE_GL_FUNC(PGLFNGENPROGRAMSARBPROC, \
-            glGenProgramsARB,                           ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNBINDPROGRAMARBPROC, \
-            glBindProgramARB,                           ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNPROGRAMSTRINGARBPROC, \
-            glProgramStringARB,                         ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNDELETEPROGRAMSARBPROC, \
-            glDeleteProgramsARB,                        ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNPROGRAMENVPARAMETER4FVARBPROC, \
-            glProgramEnvParameter4fvARB,                ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNPROGRAMLOCALPARAMETER4FVARBPROC, \
-            glProgramLocalParameter4fvARB,              ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIBPOINTERARBPROC, \
-            glVertexAttribPointerARB,                   ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNENABLEVERTEXATTRIBARRAYARBPROC, \
-            glEnableVertexAttribArrayARB,               ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNDISABLEVERTEXATTRIBARRAYARBPROC, \
-            glDisableVertexAttribArrayARB,              ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB1DARBPROC, \
-            glVertexAttrib1dARB,                        ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB1DVARBPROC, \
-            glVertexAttrib1dvARB,                       ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB1FARBPROC, \
-            glVertexAttrib1fARB,                        ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB1FVARBPROC, \
-            glVertexAttrib1fvARB,                       ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB1SARBPROC, \
-            glVertexAttrib1sARB,                        ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB1SVARBPROC, \
-            glVertexAttrib1svARB,                       ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB2DARBPROC, \
-            glVertexAttrib2dARB,                        ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB2DVARBPROC, \
-            glVertexAttrib2dvARB,                       ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB2FARBPROC, \
-            glVertexAttrib2fARB,                        ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB2FVARBPROC, \
-            glVertexAttrib2fvARB,                       ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB2SARBPROC, \
-            glVertexAttrib2sARB,                        ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB2SVARBPROC, \
-            glVertexAttrib2svARB,                       ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB3DARBPROC, \
-            glVertexAttrib3dARB,                        ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB3DVARBPROC, \
-            glVertexAttrib3dvARB,                       ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB3FARBPROC, \
-            glVertexAttrib3fARB,                        ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB3FVARBPROC, \
-            glVertexAttrib3fvARB,                       ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB3SARBPROC, \
-            glVertexAttrib3sARB,                        ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB3SVARBPROC, \
-            glVertexAttrib3svARB,                       ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB4NBVARBPROC, \
-            glVertexAttrib4NbvARB,                      ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB4NIVARBPROC, \
-            glVertexAttrib4NivARB,                      ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB4NSVARBPROC, \
-            glVertexAttrib4NsvARB,                      ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB4NUBARBPROC, \
-            glVertexAttrib4NubARB,                      ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB4NUBVARBPROC, \
-            glVertexAttrib4NubvARB,                     ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB4NUIVARBPROC, \
-            glVertexAttrib4NuivARB,                     ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB4NUSVARBPROC, \
-            glVertexAttrib4NusvARB,                     ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB4BVARBPROC, \
-            glVertexAttrib4bvARB,                       ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB4DARBPROC, \
-            glVertexAttrib4dARB,                        ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB4DVARBPROC, \
-            glVertexAttrib4dvARB,                       ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB4FARBPROC, \
-            glVertexAttrib4fARB,                        ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB4FVARBPROC, \
-            glVertexAttrib4fvARB,                       ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB4IVARBPROC, \
-            glVertexAttrib4ivARB,                       ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB4SARBPROC, \
-            glVertexAttrib4sARB,                        ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB4SVARBPROC, \
-            glVertexAttrib4svARB,                       ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB4UBVARBPROC, \
-            glVertexAttrib4ubvARB,                      ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB4UIVARBPROC, \
-            glVertexAttrib4uivARB,                      ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB4USVARBPROC, \
-            glVertexAttrib4usvARB,                      ARB_VERTEX_PROGRAM,             NULL) \
-    USE_GL_FUNC(PGLFNGETPROGRAMIVARBPROC, \
-            glGetProgramivARB,                          ARB_VERTEX_PROGRAM,             NULL) \
+    USE_GL_FUNC(glBindProgramARB) \
+    USE_GL_FUNC(glDeleteProgramsARB) \
+    USE_GL_FUNC(glDisableVertexAttribArrayARB) \
+    USE_GL_FUNC(glEnableVertexAttribArrayARB) \
+    USE_GL_FUNC(glGenProgramsARB) \
+    USE_GL_FUNC(glGetProgramivARB) \
+    USE_GL_FUNC(glProgramEnvParameter4fvARB) \
+    USE_GL_FUNC(glProgramLocalParameter4fvARB) \
+    USE_GL_FUNC(glProgramStringARB) \
+    USE_GL_FUNC(glVertexAttrib1dARB) \
+    USE_GL_FUNC(glVertexAttrib1dvARB) \
+    USE_GL_FUNC(glVertexAttrib1fARB) \
+    USE_GL_FUNC(glVertexAttrib1fvARB) \
+    USE_GL_FUNC(glVertexAttrib1sARB) \
+    USE_GL_FUNC(glVertexAttrib1svARB) \
+    USE_GL_FUNC(glVertexAttrib2dARB) \
+    USE_GL_FUNC(glVertexAttrib2dvARB) \
+    USE_GL_FUNC(glVertexAttrib2fARB) \
+    USE_GL_FUNC(glVertexAttrib2fvARB) \
+    USE_GL_FUNC(glVertexAttrib2sARB) \
+    USE_GL_FUNC(glVertexAttrib2svARB) \
+    USE_GL_FUNC(glVertexAttrib3dARB) \
+    USE_GL_FUNC(glVertexAttrib3dvARB) \
+    USE_GL_FUNC(glVertexAttrib3fARB) \
+    USE_GL_FUNC(glVertexAttrib3fvARB) \
+    USE_GL_FUNC(glVertexAttrib3sARB) \
+    USE_GL_FUNC(glVertexAttrib3svARB) \
+    USE_GL_FUNC(glVertexAttrib4NbvARB) \
+    USE_GL_FUNC(glVertexAttrib4NivARB) \
+    USE_GL_FUNC(glVertexAttrib4NsvARB) \
+    USE_GL_FUNC(glVertexAttrib4NubARB) \
+    USE_GL_FUNC(glVertexAttrib4NubvARB) \
+    USE_GL_FUNC(glVertexAttrib4NuivARB) \
+    USE_GL_FUNC(glVertexAttrib4NusvARB) \
+    USE_GL_FUNC(glVertexAttrib4bvARB) \
+    USE_GL_FUNC(glVertexAttrib4dARB) \
+    USE_GL_FUNC(glVertexAttrib4dvARB) \
+    USE_GL_FUNC(glVertexAttrib4fARB) \
+    USE_GL_FUNC(glVertexAttrib4fvARB) \
+    USE_GL_FUNC(glVertexAttrib4ivARB) \
+    USE_GL_FUNC(glVertexAttrib4sARB) \
+    USE_GL_FUNC(glVertexAttrib4svARB) \
+    USE_GL_FUNC(glVertexAttrib4ubvARB) \
+    USE_GL_FUNC(glVertexAttrib4uivARB) \
+    USE_GL_FUNC(glVertexAttrib4usvARB) \
+    USE_GL_FUNC(glVertexAttribPointerARB) \
     /* GL_ATI_fragment_shader */ \
-    USE_GL_FUNC(PGLFNGENFRAGMENTSHADERSATI, \
-            glGenFragmentShadersATI,                    ATI_FRAGMENT_SHADER,            NULL) \
-    USE_GL_FUNC(PGLFNBINDFRAGMENTSHADERATI, \
-            glBindFragmentShaderATI,                    ATI_FRAGMENT_SHADER,            NULL) \
-    USE_GL_FUNC(PGLFNDELETEFRAGMENTSHADERATI, \
-            glDeleteFragmentShaderATI,                  ATI_FRAGMENT_SHADER,            NULL) \
-    USE_GL_FUNC(PGLFNBEGINFRAGMENTSHADERATI, \
-            glBeginFragmentShaderATI,                   ATI_FRAGMENT_SHADER,            NULL) \
-    USE_GL_FUNC(PGLFNENDFRAGMENTSHADERATI, \
-            glEndFragmentShaderATI,                     ATI_FRAGMENT_SHADER,            NULL) \
-    USE_GL_FUNC(PGLFNPASSTEXCOORDATI, \
-            glPassTexCoordATI,                          ATI_FRAGMENT_SHADER,            NULL) \
-    USE_GL_FUNC(PGLFNSAMPLEMAPATI, \
-            glSampleMapATI,                             ATI_FRAGMENT_SHADER,            NULL) \
-    USE_GL_FUNC(PGLFNCOLORFRAGMENTOP1ATI, \
-            glColorFragmentOp1ATI,                      ATI_FRAGMENT_SHADER,            NULL) \
-    USE_GL_FUNC(PGLFNCOLORFRAGMENTOP2ATI, \
-            glColorFragmentOp2ATI,                      ATI_FRAGMENT_SHADER,            NULL) \
-    USE_GL_FUNC(PGLFNCOLORFRAGMENTOP3ATI, \
-            glColorFragmentOp3ATI,                      ATI_FRAGMENT_SHADER,            NULL) \
-    USE_GL_FUNC(PGLFNALPHAFRAGMENTOP1ATI, \
-            glAlphaFragmentOp1ATI,                      ATI_FRAGMENT_SHADER,            NULL) \
-    USE_GL_FUNC(PGLFNALPHAFRAGMENTOP2ATI, \
-            glAlphaFragmentOp2ATI,                      ATI_FRAGMENT_SHADER,            NULL) \
-    USE_GL_FUNC(PGLFNALPHAFRAGMENTOP3ATI, \
-            glAlphaFragmentOp3ATI,                      ATI_FRAGMENT_SHADER,            NULL) \
-    USE_GL_FUNC(PGLFNSETFRAGMENTSHADERCONSTANTATI, \
-            glSetFragmentShaderConstantATI,             ATI_FRAGMENT_SHADER,            NULL) \
+    USE_GL_FUNC(glAlphaFragmentOp1ATI) \
+    USE_GL_FUNC(glAlphaFragmentOp2ATI) \
+    USE_GL_FUNC(glAlphaFragmentOp3ATI) \
+    USE_GL_FUNC(glBeginFragmentShaderATI) \
+    USE_GL_FUNC(glBindFragmentShaderATI) \
+    USE_GL_FUNC(glColorFragmentOp1ATI) \
+    USE_GL_FUNC(glColorFragmentOp2ATI) \
+    USE_GL_FUNC(glColorFragmentOp3ATI) \
+    USE_GL_FUNC(glDeleteFragmentShaderATI) \
+    USE_GL_FUNC(glEndFragmentShaderATI) \
+    USE_GL_FUNC(glGenFragmentShadersATI) \
+    USE_GL_FUNC(glPassTexCoordATI) \
+    USE_GL_FUNC(glSampleMapATI) \
+    USE_GL_FUNC(glSetFragmentShaderConstantATI) \
     /* GL_ATI_separate_stencil */ \
-    USE_GL_FUNC(PGLFNSTENCILOPSEPARATEATIPROC, \
-            glStencilOpSeparateATI,                     ATI_SEPARATE_STENCIL,           NULL) \
-    USE_GL_FUNC(PGLFNSTENCILFUNCSEPARATEATIPROC, \
-            glStencilFuncSeparateATI,                   ATI_SEPARATE_STENCIL,           NULL) \
+    USE_GL_FUNC(glStencilOpSeparateATI) \
+    USE_GL_FUNC(glStencilFuncSeparateATI) \
     /* GL_EXT_blend_color */ \
-    USE_GL_FUNC(PGLFNBLENDCOLOREXTPROC, \
-            glBlendColorEXT,                            EXT_BLEND_COLOR,                NULL) \
+    USE_GL_FUNC(glBlendColorEXT) \
     /* GL_EXT_blend_equation_separate */ \
-    USE_GL_FUNC(PGLFNBLENDFUNCSEPARATEEXTPROC, \
-            glBlendFuncSeparateEXT,                     EXT_BLEND_FUNC_SEPARATE,        NULL) \
+    USE_GL_FUNC(glBlendFuncSeparateEXT) \
     /* GL_EXT_blend_func_separate */ \
-    USE_GL_FUNC(PGLFNBLENDEQUATIONSEPARATEEXTPROC, \
-            glBlendEquationSeparateEXT,                 EXT_BLEND_EQUATION_SEPARATE,    NULL) \
+    USE_GL_FUNC(glBlendEquationSeparateEXT) \
     /* GL_EXT_blend_minmax */ \
-    USE_GL_FUNC(PGLFNBLENDEQUATIONEXTPROC, \
-            glBlendEquationEXT,                         EXT_BLEND_MINMAX,               NULL) \
+    USE_GL_FUNC(glBlendEquationEXT) \
     /* GL_EXT_depth_bounds_test */ \
-    USE_GL_FUNC(PGLFNDEPTHBOUNDSEXTPROC, \
-            glDepthBoundsEXT,                           EXT_DEPTH_BOUNDS_TEST,          NULL) \
+    USE_GL_FUNC(glDepthBoundsEXT) \
     /* GL_EXT_draw_buffers2 */ \
-    USE_GL_FUNC(PGLFNCOLORMASKINDEXEDEXTPROC, \
-            glColorMaskIndexedEXT,                      EXT_DRAW_BUFFERS2,              NULL) \
-    USE_GL_FUNC(PGLFNGETBOOLEANINDEXEDVEXTPROC, \
-            glGetBooleanIndexedvEXT,                    EXT_DRAW_BUFFERS2,              NULL) \
-    USE_GL_FUNC(PGLFNGETINTEGERINDEXEDVEXTPROC, \
-            glGetIntegerIndexedvEXT,                    EXT_DRAW_BUFFERS2,              NULL) \
-    USE_GL_FUNC(PGLFNENABLEINDEXEDEXTPROC, \
-            glEnableIndexedEXT,                         EXT_DRAW_BUFFERS2,              NULL) \
-    USE_GL_FUNC(PGLFNDISABLEINDEXEDEXTPROC, \
-            glDisableIndexedEXT,                        EXT_DRAW_BUFFERS2,              NULL) \
-    USE_GL_FUNC(PGLFNISENABLEDINDEXEDEXTPROC, \
-            glIsEnabledIndexedEXT,                      EXT_DRAW_BUFFERS2,              NULL) \
+    USE_GL_FUNC(glColorMaskIndexedEXT) \
+    USE_GL_FUNC(glDisableIndexedEXT) \
+    USE_GL_FUNC(glEnableIndexedEXT) \
+    USE_GL_FUNC(glGetBooleanIndexedvEXT) \
+    USE_GL_FUNC(glGetIntegerIndexedvEXT) \
+    USE_GL_FUNC(glIsEnabledIndexedEXT) \
     /* GL_EXT_fog_coord */ \
-    USE_GL_FUNC(PGLFNGLFOGCOORDFEXTPROC, \
-            glFogCoordfEXT,                             EXT_FOG_COORD,                  NULL) \
-    USE_GL_FUNC(PGLFNGLFOGCOORDFVEXTPROC, \
-            glFogCoordfvEXT,                            EXT_FOG_COORD,                  NULL) \
-    USE_GL_FUNC(PGLFNGLFOGCOORDDEXTPROC, \
-            glFogCoorddEXT,                             EXT_FOG_COORD,                  NULL) \
-    USE_GL_FUNC(PGLFNGLFOGCOORDDVEXTPROC, \
-            glFogCoorddvEXT,                            EXT_FOG_COORD,                  NULL) \
-    USE_GL_FUNC(PGLFNGLFOGCOORDPOINTEREXTPROC, \
-            glFogCoordPointerEXT,                       EXT_FOG_COORD,                  NULL) \
+    USE_GL_FUNC(glFogCoordPointerEXT) \
+    USE_GL_FUNC(glFogCoorddEXT) \
+    USE_GL_FUNC(glFogCoorddvEXT) \
+    USE_GL_FUNC(glFogCoordfEXT) \
+    USE_GL_FUNC(glFogCoordfvEXT) \
     /* GL_EXT_framebuffer_blit */ \
-    USE_GL_FUNC(PGLFNGLBLITFRAMEBUFFEREXTPROC, \
-            glBlitFramebufferEXT,                       EXT_FRAMEBUFFER_BLIT,           NULL) \
+    USE_GL_FUNC(glBlitFramebufferEXT) \
     /* GL_EXT_framebuffer_multisample */ \
-    USE_GL_FUNC(PGLFNRENDERBUFFERSTORAGEMULTISAMPLEEXTPROC, \
-            glRenderbufferStorageMultisampleEXT,        EXT_FRAMEBUFFER_MULTISAMPLE,    NULL) \
+    USE_GL_FUNC(glRenderbufferStorageMultisampleEXT) \
     /* GL_EXT_framebuffer_object */ \
-    USE_GL_FUNC(PGLFNGLISRENDERBUFFEREXTPROC, \
-            glIsRenderbufferEXT,                        EXT_FRAMEBUFFER_OBJECT,         NULL) \
-    USE_GL_FUNC(PGLFNGLBINDRENDERBUFFEREXTPROC, \
-            glBindRenderbufferEXT,                      EXT_FRAMEBUFFER_OBJECT,         NULL) \
-    USE_GL_FUNC(PGLFNGLDELETERENDERBUFFERSEXTPROC, \
-            glDeleteRenderbuffersEXT,                   EXT_FRAMEBUFFER_OBJECT,         NULL) \
-    USE_GL_FUNC(PGLFNGLGENRENDERBUFFERSEXTPROC, \
-            glGenRenderbuffersEXT,                      EXT_FRAMEBUFFER_OBJECT,         NULL) \
-    USE_GL_FUNC(PGLFNGLRENDERBUFFERSTORAGEEXTPROC, \
-            glRenderbufferStorageEXT,                   EXT_FRAMEBUFFER_OBJECT,         NULL) \
-    USE_GL_FUNC(PGLFNGLISFRAMEBUFFEREXTPROC, \
-            glIsFramebufferEXT,                         EXT_FRAMEBUFFER_OBJECT,         NULL) \
-    USE_GL_FUNC(PGLFNGLBINDFRAMEBUFFEREXTPROC, \
-            glBindFramebufferEXT,                       EXT_FRAMEBUFFER_OBJECT,         NULL) \
-    USE_GL_FUNC(PGLFNGLDELETEFRAMEBUFFERSEXTPROC, \
-            glDeleteFramebuffersEXT,                    EXT_FRAMEBUFFER_OBJECT,         NULL) \
-    USE_GL_FUNC(PGLFNGLGENFRAMEBUFFERSEXTPROC, \
-            glGenFramebuffersEXT,                       EXT_FRAMEBUFFER_OBJECT,         NULL) \
-    USE_GL_FUNC(PGLFNGLCHECKFRAMEBUFFERSTATUSEXTPROC, \
-            glCheckFramebufferStatusEXT,                EXT_FRAMEBUFFER_OBJECT,         NULL) \
-    USE_GL_FUNC(PGLFNGLFRAMEBUFFERTEXTURE1DEXTPROC, \
-            glFramebufferTexture1DEXT,                  EXT_FRAMEBUFFER_OBJECT,         NULL) \
-    USE_GL_FUNC(PGLFNGLFRAMEBUFFERTEXTURE2DEXTPROC, \
-            glFramebufferTexture2DEXT,                  EXT_FRAMEBUFFER_OBJECT,         NULL) \
-    USE_GL_FUNC(PGLFNGLFRAMEBUFFERTEXTURE3DEXTPROC, \
-            glFramebufferTexture3DEXT,                  EXT_FRAMEBUFFER_OBJECT,         NULL) \
-    USE_GL_FUNC(PGLFNGLFRAMEBUFFERRENDERBUFFEREXTPROC, \
-            glFramebufferRenderbufferEXT,               EXT_FRAMEBUFFER_OBJECT,         NULL) \
-    USE_GL_FUNC(PGLFNGLGENERATEMIPMAPEXTPROC, \
-            glGenerateMipmapEXT,                        EXT_FRAMEBUFFER_OBJECT,         NULL) \
-    USE_GL_FUNC(PGLFNGLGETRENDERBUFFERPARAMETERIVEXTPROC, \
-            glGetRenderbufferParameterivEXT,            EXT_FRAMEBUFFER_OBJECT,         NULL) \
-    USE_GL_FUNC(PGLFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVEXTPROC, \
-            glGetFramebufferAttachmentParameterivEXT,   EXT_FRAMEBUFFER_OBJECT,         NULL) \
+    USE_GL_FUNC(glBindFramebufferEXT) \
+    USE_GL_FUNC(glBindRenderbufferEXT) \
+    USE_GL_FUNC(glCheckFramebufferStatusEXT) \
+    USE_GL_FUNC(glDeleteFramebuffersEXT) \
+    USE_GL_FUNC(glDeleteRenderbuffersEXT) \
+    USE_GL_FUNC(glFramebufferRenderbufferEXT) \
+    USE_GL_FUNC(glFramebufferTexture1DEXT) \
+    USE_GL_FUNC(glFramebufferTexture2DEXT) \
+    USE_GL_FUNC(glFramebufferTexture3DEXT) \
+    USE_GL_FUNC(glGenFramebuffersEXT) \
+    USE_GL_FUNC(glGenRenderbuffersEXT) \
+    USE_GL_FUNC(glGenerateMipmapEXT) \
+    USE_GL_FUNC(glGetFramebufferAttachmentParameterivEXT) \
+    USE_GL_FUNC(glGetRenderbufferParameterivEXT) \
+    USE_GL_FUNC(glIsFramebufferEXT) \
+    USE_GL_FUNC(glIsRenderbufferEXT) \
+    USE_GL_FUNC(glRenderbufferStorageEXT) \
     /* GL_EXT_gpu_program_parameters */ \
-    USE_GL_FUNC(PGLFNPROGRAMENVPARAMETERS4FVEXTPROC, \
-            glProgramEnvParameters4fvEXT,               EXT_GPU_PROGRAM_PARAMETERS,     NULL) \
-    USE_GL_FUNC(PGLFNPROGRAMLOCALPARAMETERS4FVEXTPROC, \
-            glProgramLocalParameters4fvEXT,             EXT_GPU_PROGRAM_PARAMETERS,     NULL) \
+    USE_GL_FUNC(glProgramEnvParameters4fvEXT) \
+    USE_GL_FUNC(glProgramLocalParameters4fvEXT) \
     /* GL_EXT_gpu_shader4 */\
-    USE_GL_FUNC(PGLFNVERTEXATTRIBI1IEXTPROC, \
-            glVertexAttribI1iEXT,                       EXT_GPU_SHADER4,                NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIBI2IEXTPROC, \
-            glVertexAttribI2iEXT,                       EXT_GPU_SHADER4,                NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIBI3IEXTPROC, \
-            glVertexAttribI3iEXT,                       EXT_GPU_SHADER4,                NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIBI4IEXTPROC, \
-            glVertexAttribI4iEXT,                       EXT_GPU_SHADER4,                NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIBI1UIEXTPROC, \
-            glVertexAttribI1uiEXT,                      EXT_GPU_SHADER4,                NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIBI2UIEXTPROC, \
-            glVertexAttribI2uiEXT,                      EXT_GPU_SHADER4,                NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIBI3UIEXTPROC, \
-            glVertexAttribI3uiEXT,                      EXT_GPU_SHADER4,                NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIBI4UIEXTPROC, \
-            glVertexAttribI4uiEXT,                      EXT_GPU_SHADER4,                NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIBI1IVEXTPROC, \
-            glVertexAttribI1ivEXT,                      EXT_GPU_SHADER4,                NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIBI2IVEXTPROC, \
-            glVertexAttribI2ivEXT,                      EXT_GPU_SHADER4,                NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIBI3IVEXTPROC, \
-            glVertexAttribI3ivEXT,                      EXT_GPU_SHADER4,                NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIBI4IVEXTPROC, \
-            glVertexAttribI4ivEXT,                      EXT_GPU_SHADER4,                NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIBI1UIVEXTPROC, \
-            glVertexAttribI1uivEXT,                     EXT_GPU_SHADER4,                NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIBI2UIVEXTPROC, \
-            glVertexAttribI2uivEXT,                     EXT_GPU_SHADER4,                NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIBI3UIVEXTPROC, \
-            glVertexAttribI3uivEXT,                     EXT_GPU_SHADER4,                NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIBI4UIVEXTPROC, \
-            glVertexAttribI4uivEXT,                     EXT_GPU_SHADER4,                NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIBI4BVEXTPROC, \
-            glVertexAttribI4bvEXT,                      EXT_GPU_SHADER4,                NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIBI4SVEXTPROC, \
-            glVertexAttribI4svEXT,                      EXT_GPU_SHADER4,                NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIBI4UBVEXTPROC, \
-            glVertexAttribI4ubvEXT,                     EXT_GPU_SHADER4,                NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIBI4USVEXTPROC, \
-            glVertexAttribI4usvEXT,                     EXT_GPU_SHADER4,                NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIBIPOINTEREXTPROC, \
-            glVertexAttribIPointerEXT,                  EXT_GPU_SHADER4,                NULL) \
-    USE_GL_FUNC(PGLFNGETVERTEXATTRIBIIVEXTPROC, \
-            glGetVertexAttribIivEXT,                    EXT_GPU_SHADER4,                NULL) \
-    USE_GL_FUNC(PGLFNGETVERTEXATTRIBIUIVEXTPROC, \
-            glGetVertexAttribIuivEXT,                   EXT_GPU_SHADER4,                NULL) \
-    USE_GL_FUNC(PGLFNUNIFORM1UIEXTPROC, \
-            glUniform1uiEXT,                            EXT_GPU_SHADER4,                NULL) \
-    USE_GL_FUNC(PGLFNUNIFORM2UIEXTPROC, \
-            glUniform2uiEXT,                            EXT_GPU_SHADER4,                NULL) \
-    USE_GL_FUNC(PGLFNUNIFORM3UIEXTPROC, \
-            glUniform3uiEXT,                            EXT_GPU_SHADER4,                NULL) \
-    USE_GL_FUNC(PGLFNUNIFORM4UIEXTPROC, \
-            glUniform4uiEXT,                            EXT_GPU_SHADER4,                NULL) \
-    USE_GL_FUNC(PGLFNUNIFORM1UIVEXTPROC, \
-            glUniform1uivEXT,                           EXT_GPU_SHADER4,                NULL) \
-    USE_GL_FUNC(PGLFNUNIFORM2UIVEXTPROC, \
-            glUniform2uivEXT,                           EXT_GPU_SHADER4,                NULL) \
-    USE_GL_FUNC(PGLFNUNIFORM3UIVEXTPROC, \
-            glUniform3uivEXT,                           EXT_GPU_SHADER4,                NULL) \
-    USE_GL_FUNC(PGLFNUNIFORM4UIVEXTPROC, \
-            glUniform4uivEXT,                           EXT_GPU_SHADER4,                NULL) \
-    USE_GL_FUNC(PGLFNGETUNIFORMUIVEXTPROC, \
-            glGetUniformuivEXT,                         EXT_GPU_SHADER4,                NULL) \
-    USE_GL_FUNC(PGLFNBINDFRAGDATALOCATIONEXTPROC, \
-            glBindFragDataLocationEXT,                  EXT_GPU_SHADER4,                NULL) \
-    USE_GL_FUNC(PGLFNGETFRAGDATALOCATIONEXTPROC, \
-            glGetFragDataLocationEXT,                   EXT_GPU_SHADER4,                NULL) \
+    USE_GL_FUNC(glBindFragDataLocationEXT) \
+    USE_GL_FUNC(glGetFragDataLocationEXT) \
+    USE_GL_FUNC(glGetUniformuivEXT) \
+    USE_GL_FUNC(glGetVertexAttribIivEXT) \
+    USE_GL_FUNC(glGetVertexAttribIuivEXT) \
+    USE_GL_FUNC(glUniform1uiEXT) \
+    USE_GL_FUNC(glUniform1uivEXT) \
+    USE_GL_FUNC(glUniform2uiEXT) \
+    USE_GL_FUNC(glUniform2uivEXT) \
+    USE_GL_FUNC(glUniform3uiEXT) \
+    USE_GL_FUNC(glUniform3uivEXT) \
+    USE_GL_FUNC(glUniform4uiEXT) \
+    USE_GL_FUNC(glUniform4uivEXT) \
+    USE_GL_FUNC(glVertexAttribI1iEXT) \
+    USE_GL_FUNC(glVertexAttribI1ivEXT) \
+    USE_GL_FUNC(glVertexAttribI1uiEXT) \
+    USE_GL_FUNC(glVertexAttribI1uivEXT) \
+    USE_GL_FUNC(glVertexAttribI2iEXT) \
+    USE_GL_FUNC(glVertexAttribI2ivEXT) \
+    USE_GL_FUNC(glVertexAttribI2uiEXT) \
+    USE_GL_FUNC(glVertexAttribI2uivEXT) \
+    USE_GL_FUNC(glVertexAttribI3iEXT) \
+    USE_GL_FUNC(glVertexAttribI3ivEXT) \
+    USE_GL_FUNC(glVertexAttribI3uiEXT) \
+    USE_GL_FUNC(glVertexAttribI3uivEXT) \
+    USE_GL_FUNC(glVertexAttribI4bvEXT) \
+    USE_GL_FUNC(glVertexAttribI4iEXT) \
+    USE_GL_FUNC(glVertexAttribI4ivEXT) \
+    USE_GL_FUNC(glVertexAttribI4svEXT) \
+    USE_GL_FUNC(glVertexAttribI4ubvEXT) \
+    USE_GL_FUNC(glVertexAttribI4uiEXT) \
+    USE_GL_FUNC(glVertexAttribI4uivEXT) \
+    USE_GL_FUNC(glVertexAttribI4usvEXT) \
+    USE_GL_FUNC(glVertexAttribIPointerEXT) \
     /* GL_EXT_paletted_texture */ \
-    USE_GL_FUNC(PGLFNGLCOLORTABLEEXTPROC, \
-            glColorTableEXT,                            EXT_PALETTED_TEXTURE,           NULL) \
+    USE_GL_FUNC(glColorTableEXT) \
     /* GL_EXT_point_parameters */ \
-    USE_GL_FUNC(PGLFNGLPOINTPARAMETERFEXTPROC, \
-            glPointParameterfEXT,                       EXT_POINT_PARAMETERS,           NULL) \
-    USE_GL_FUNC(PGLFNGLPOINTPARAMETERFVEXTPROC, \
-            glPointParameterfvEXT,                      EXT_POINT_PARAMETERS,           NULL) \
+    USE_GL_FUNC(glPointParameterfEXT) \
+    USE_GL_FUNC(glPointParameterfvEXT) \
     /* GL_EXT_provoking_vertex */ \
-    USE_GL_FUNC(PGLFNGLPROVOKINGVERTEXEXTPROC, \
-            glProvokingVertexEXT,                       EXT_PROVOKING_VERTEX,           NULL) \
+    USE_GL_FUNC(glProvokingVertexEXT) \
     /* GL_EXT_secondary_color */ \
-    USE_GL_FUNC(PGLFNGLSECONDARYCOLOR3UBEXTPROC, \
-            glSecondaryColor3ubEXT,                     EXT_SECONDARY_COLOR,            NULL) \
-    USE_GL_FUNC(PGLFNGLSECONDARYCOLOR3UBVEXTPROC, \
-            glSecondaryColor3ubvEXT,                    EXT_SECONDARY_COLOR,            NULL) \
-    USE_GL_FUNC(PGLFNGLSECONDARYCOLOR3FEXTPROC, \
-            glSecondaryColor3fEXT,                      EXT_SECONDARY_COLOR,            NULL) \
-    USE_GL_FUNC(PGLFNGLSECONDARYCOLOR3FVEXTPROC, \
-            glSecondaryColor3fvEXT,                     EXT_SECONDARY_COLOR,            NULL) \
-    USE_GL_FUNC(PGLFNGLSECONDARYCOLORPOINTEREXTPROC, \
-            glSecondaryColorPointerEXT,                 EXT_SECONDARY_COLOR,            NULL) \
+    USE_GL_FUNC(glSecondaryColor3fEXT) \
+    USE_GL_FUNC(glSecondaryColor3fvEXT) \
+    USE_GL_FUNC(glSecondaryColor3ubEXT) \
+    USE_GL_FUNC(glSecondaryColor3ubvEXT) \
+    USE_GL_FUNC(glSecondaryColorPointerEXT) \
     /* GL_EXT_stencil_two_side */ \
-    USE_GL_FUNC(PGLFNACTIVESTENCILFACEEXTPROC, \
-            glActiveStencilFaceEXT,                     EXT_STENCIL_TWO_SIDE,           NULL) \
+    USE_GL_FUNC(glActiveStencilFaceEXT) \
     /* GL_EXT_texture3D */ \
-    USE_GL_FUNC(PGLFNGLTEXIMAGE3DEXTPROC, \
-            glTexImage3DEXT,                            EXT_TEXTURE3D,                  glTexImage3D) \
-    USE_GL_FUNC(PGLFNGLTEXSUBIMAGE3DEXTPROC, \
-            glTexSubImage3DEXT,                         EXT_TEXTURE3D,                  glTexSubImage3D) \
+    USE_GL_FUNC(glTexImage3D) \
+    USE_GL_FUNC(glTexImage3DEXT) \
+    USE_GL_FUNC(glTexSubImage3D) \
+    USE_GL_FUNC(glTexSubImage3DEXT) \
     /* GL_NV_fence */ \
-    USE_GL_FUNC(PGLFNGENFENCESNVPROC, \
-            glGenFencesNV,                              NV_FENCE,                       NULL) \
-    USE_GL_FUNC(PGLFNDELETEFENCESNVPROC, \
-            glDeleteFencesNV,                           NV_FENCE,                       NULL) \
-    USE_GL_FUNC(PGLFNSETFENCENVPROC,    \
-            glSetFenceNV,                               NV_FENCE,                       NULL) \
-    USE_GL_FUNC(PGLFNTESTFENCENVPROC, \
-            glTestFenceNV,                              NV_FENCE,                       NULL) \
-    USE_GL_FUNC(PGLFNFINISHFENCENVPROC, \
-            glFinishFenceNV,                            NV_FENCE,                       NULL) \
-    USE_GL_FUNC(PGLFNISFENCENVPROC, \
-            glIsFenceNV,                                NV_FENCE,                       NULL) \
-    USE_GL_FUNC(PGLFNGETFENCEIVNVPROC, \
-            glGetFenceivNV,                             NV_FENCE,                       NULL) \
+    USE_GL_FUNC(glDeleteFencesNV) \
+    USE_GL_FUNC(glFinishFenceNV) \
+    USE_GL_FUNC(glGenFencesNV) \
+    USE_GL_FUNC(glGetFenceivNV) \
+    USE_GL_FUNC(glIsFenceNV) \
+    USE_GL_FUNC(glSetFenceNV) \
+    USE_GL_FUNC(glTestFenceNV) \
     /* GL_NV_half_float */ \
-    USE_GL_FUNC(PGLFNVERTEX2HNVPROC, \
-            glVertex2hNV,                               NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNVERTEX2HVNVPROC, \
-            glVertex2hvNV,                              NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNVERTEX3HNVPROC, \
-            glVertex3hNV,                               NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNVERTEX3HVNVPROC, \
-            glVertex3hvNV,                              NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNVERTEX4HNVPROC, \
-            glVertex4hNV,                               NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNVERTEX4HVNVPROC, \
-            glVertex4hvNV,                              NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNNORMAL3HNVPROC, \
-            glNormal3hNV,                               NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNNORMAL3HVNVPROC, \
-            glNormal3hvNV,                              NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNCOLOR3HNVPROC, \
-            glColor3hNV,                                NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNCOLOR3HVNVPROC, \
-            glColor3hvNV,                               NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNCOLOR4HNVPROC, \
-            glColor4hNV,                                NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNCOLOR4HVNVPROC, \
-            glColor4hvNV,                               NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNTEXCOORD1HNVPROC, \
-            glTexCoord1hNV,                             NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNTEXCOORD1HVNVPROC, \
-            glTexCoord1hvNV,                            NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNTEXCOORD2HNVPROC, \
-            glTexCoord2hNV,                             NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNTEXCOORD2HVNVPROC, \
-            glTexCoord2hvNV,                            NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNTEXCOORD3HNVPROC, \
-            glTexCoord3hNV,                             NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNTEXCOORD3HVNVPROC, \
-            glTexCoord3hvNV,                            NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNTEXCOORD4HNVPROC, \
-            glTexCoord4hNV,                             NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNTEXCOORD4HVNVPROC, \
-            glTexCoord4hvNV,                            NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNMULTITEXCOORD1HNVPROC, \
-            glMultiTexCoord1hNV,                        NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNMULTITEXCOORD1HVNVPROC, \
-            glMultiTexCoord1hvNV,                       NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNMULTITEXCOORD2HNVPROC, \
-            glMultiTexCoord2hNV,                        NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNMULTITEXCOORD2HVNVPROC, \
-            glMultiTexCoord2hvNV,                       NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNMULTITEXCOORD3HNVPROC, \
-            glMultiTexCoord3hNV,                        NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNMULTITEXCOORD3HVNVPROC, \
-            glMultiTexCoord3hvNV,                       NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNMULTITEXCOORD4HNVPROC, \
-            glMultiTexCoord4hNV,                        NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNMULTITEXCOORD4HVNVPROC, \
-            glMultiTexCoord4hvNV,                       NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNFOGCOORDHNVPROC, \
-            glFogCoordhNV,                              NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNFOGCOORDHVNVPROC, \
-            glFogCoordhvNV,                             NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNSECONDARYCOLOR3HNVPROC, \
-            glSecondaryColor3hNV,                       NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNSECONDARYCOLOR3HVNVPROC, \
-            glSecondaryColor3hvNV,                      NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNVERTEXWEIGHTHNVPROC, \
-            glVertexWeighthNV,                          NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNVERTEXWEIGHTHVNVPROC, \
-            glVertexWeighthvNV,                         NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB1HNVPROC, \
-            glVertexAttrib1hNV,                         NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB1HVNVPROC, \
-            glVertexAttrib1hvNV,                        NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB2HNVPROC, \
-            glVertexAttrib2hNV,                         NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB2HVNVPROC, \
-            glVertexAttrib2hvNV,                        NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB3HNVPROC, \
-            glVertexAttrib3hNV,                         NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB3HVNVPROC, \
-            glVertexAttrib3hvNV,                        NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB4HNVPROC, \
-            glVertexAttrib4hNV,                         NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIB4HVNVPROC, \
-            glVertexAttrib4hvNV,                        NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIBS1HVNVPROC, \
-            glVertexAttribs1hvNV,                       NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIBS2HVNVPROC, \
-            glVertexAttribs2hvNV,                       NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIBS3HVNVPROC, \
-            glVertexAttribs3hvNV,                       NV_HALF_FLOAT,                  NULL) \
-    USE_GL_FUNC(PGLFNVERTEXATTRIBS4HVNVPROC, \
-            glVertexAttribs4hvNV,                       NV_HALF_FLOAT,                  NULL) \
+    USE_GL_FUNC(glColor3hNV) \
+    USE_GL_FUNC(glColor3hvNV) \
+    USE_GL_FUNC(glColor4hNV) \
+    USE_GL_FUNC(glColor4hvNV) \
+    USE_GL_FUNC(glFogCoordhNV) \
+    USE_GL_FUNC(glFogCoordhvNV) \
+    USE_GL_FUNC(glMultiTexCoord1hNV) \
+    USE_GL_FUNC(glMultiTexCoord1hvNV) \
+    USE_GL_FUNC(glMultiTexCoord2hNV) \
+    USE_GL_FUNC(glMultiTexCoord2hvNV) \
+    USE_GL_FUNC(glMultiTexCoord3hNV) \
+    USE_GL_FUNC(glMultiTexCoord3hvNV) \
+    USE_GL_FUNC(glMultiTexCoord4hNV) \
+    USE_GL_FUNC(glMultiTexCoord4hvNV) \
+    USE_GL_FUNC(glNormal3hNV) \
+    USE_GL_FUNC(glNormal3hvNV) \
+    USE_GL_FUNC(glSecondaryColor3hNV) \
+    USE_GL_FUNC(glSecondaryColor3hvNV) \
+    USE_GL_FUNC(glTexCoord1hNV) \
+    USE_GL_FUNC(glTexCoord1hvNV) \
+    USE_GL_FUNC(glTexCoord2hNV) \
+    USE_GL_FUNC(glTexCoord2hvNV) \
+    USE_GL_FUNC(glTexCoord3hNV) \
+    USE_GL_FUNC(glTexCoord3hvNV) \
+    USE_GL_FUNC(glTexCoord4hNV) \
+    USE_GL_FUNC(glTexCoord4hvNV) \
+    USE_GL_FUNC(glVertex2hNV) \
+    USE_GL_FUNC(glVertex2hvNV) \
+    USE_GL_FUNC(glVertex3hNV) \
+    USE_GL_FUNC(glVertex3hvNV) \
+    USE_GL_FUNC(glVertex4hNV) \
+    USE_GL_FUNC(glVertex4hvNV) \
+    USE_GL_FUNC(glVertexAttrib1hNV) \
+    USE_GL_FUNC(glVertexAttrib1hvNV) \
+    USE_GL_FUNC(glVertexAttrib2hNV) \
+    USE_GL_FUNC(glVertexAttrib2hvNV) \
+    USE_GL_FUNC(glVertexAttrib3hNV) \
+    USE_GL_FUNC(glVertexAttrib3hvNV) \
+    USE_GL_FUNC(glVertexAttrib4hNV) \
+    USE_GL_FUNC(glVertexAttrib4hvNV) \
+    USE_GL_FUNC(glVertexAttribs1hvNV) \
+    USE_GL_FUNC(glVertexAttribs2hvNV) \
+    USE_GL_FUNC(glVertexAttribs3hvNV) \
+    USE_GL_FUNC(glVertexAttribs4hvNV) \
+    USE_GL_FUNC(glVertexWeighthNV) \
+    USE_GL_FUNC(glVertexWeighthvNV) \
     /* GL_NV_point_sprite */ \
-    USE_GL_FUNC(PGLFNPOINTPARAMETERIVNVPROC, \
-            glPointParameterivNV,                       NV_POINT_SPRITE,                glPointParameteriv) \
-    USE_GL_FUNC(PGLFNPOINTPARAMETERINVPROC, \
-            glPointParameteriNV,                        NV_POINT_SPRITE,                glPointParameteri) \
+    USE_GL_FUNC(glPointParameteri) \
+    USE_GL_FUNC(glPointParameteriNV) \
+    USE_GL_FUNC(glPointParameteriv) \
+    USE_GL_FUNC(glPointParameterivNV) \
     /* GL_NV_register_combiners */ \
-    USE_GL_FUNC(PGLFNCOMBINERINPUTNVPROC, \
-            glCombinerInputNV,                          NV_REGISTER_COMBINERS,          NULL) \
-    USE_GL_FUNC(PGLFNCOMBINEROUTPUTNVPROC, \
-            glCombinerOutputNV,                         NV_REGISTER_COMBINERS,          NULL) \
-    USE_GL_FUNC(PGLFNCOMBINERPARAMETERFNVPROC, \
-            glCombinerParameterfNV,                     NV_REGISTER_COMBINERS,          NULL) \
-    USE_GL_FUNC(PGLFNCOMBINERPARAMETERFVNVPROC, \
-            glCombinerParameterfvNV,                    NV_REGISTER_COMBINERS,          NULL) \
-    USE_GL_FUNC(PGLFNCOMBINERPARAMETERINVPROC, \
-            glCombinerParameteriNV,                     NV_REGISTER_COMBINERS,          NULL) \
-    USE_GL_FUNC(PGLFNCOMBINERPARAMETERIVNVPROC, \
-            glCombinerParameterivNV,                    NV_REGISTER_COMBINERS,          NULL) \
-    USE_GL_FUNC(PGLFNFINALCOMBINERINPUTNVPROC, \
-            glFinalCombinerInputNV,                     NV_REGISTER_COMBINERS,          NULL) \
-
-#define WGL_EXT_FUNCS_GEN \
-    USE_GL_FUNC(PFNWGLGETEXTENSIONSSTRINGARBPROC,       wglGetExtensionsStringARB,      0, NULL) \
-    USE_GL_FUNC(PFNWGLGETPIXELFORMATATTRIBIVARBPROC,    wglGetPixelFormatAttribivARB,   0, NULL) \
-    USE_GL_FUNC(PFNWGLGETPIXELFORMATATTRIBFVARBPROC,    wglGetPixelFormatAttribfvARB,   0, NULL) \
-    USE_GL_FUNC(PFNWGLCHOOSEPIXELFORMATARBPROC,         wglChoosePixelFormatARB,        0, NULL) \
-    USE_GL_FUNC(PFNWGLSETPIXELFORMATWINE,               wglSetPixelFormatWINE,          0, NULL) \
-    USE_GL_FUNC(PFNWGLSWAPINTERVALEXTPROC,              wglSwapIntervalEXT,             0, NULL)
+    USE_GL_FUNC(glCombinerInputNV) \
+    USE_GL_FUNC(glCombinerOutputNV) \
+    USE_GL_FUNC(glCombinerParameterfNV) \
+    USE_GL_FUNC(glCombinerParameterfvNV) \
+    USE_GL_FUNC(glCombinerParameteriNV) \
+    USE_GL_FUNC(glCombinerParameterivNV) \
+    USE_GL_FUNC(glFinalCombinerInputNV) \
+    /* WGL extensions */ \
+    USE_GL_FUNC(wglChoosePixelFormatARB) \
+    USE_GL_FUNC(wglGetExtensionsStringARB) \
+    USE_GL_FUNC(wglGetPixelFormatAttribfvARB) \
+    USE_GL_FUNC(wglGetPixelFormatAttribivARB) \
+    USE_GL_FUNC(wglSetPixelFormatWINE) \
+    USE_GL_FUNC(wglSwapIntervalEXT)
 
 #endif /* __WINE_WINED3D_GL */
