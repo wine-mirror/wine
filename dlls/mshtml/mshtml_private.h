@@ -634,6 +634,7 @@ typedef struct {
 
     nsIDOMHTMLElement *nselem;
     HTMLStyle *style;
+    HTMLStyle *runtime_style;
     HTMLAttributeCollection *attrs;
     WCHAR *filter;
 } HTMLElement;

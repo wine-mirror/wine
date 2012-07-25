@@ -30,6 +30,7 @@
 
 #include "mshtml_private.h"
 #include "htmlevent.h"
+#include "htmlstyle.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
@@ -1188,8 +1189,23 @@ static HRESULT WINAPI HTMLElement2_removeBehavior(IHTMLElement2 *iface, LONG coo
 static HRESULT WINAPI HTMLElement2_get_runtimeStyle(IHTMLElement2 *iface, IHTMLStyle **p)
 {
     HTMLElement *This = impl_from_IHTMLElement2(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    FIXME("(%p)->(%p): hack\n", This, p);
+
+    /* We can't implement correct behavior on top of Gecko (although we could
+       try a bit harder). Making runtimeStyle behave like regular style is
+       enough for most use cases. */
+    if(!This->runtime_style) {
+        HRESULT hres;
+
+        hres = HTMLStyle_Create(This, &This->runtime_style);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    *p = &This->runtime_style->IHTMLStyle_iface;
+    IHTMLStyle_AddRef(*p);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement2_get_behaviorUrns(IHTMLElement2 *iface, IDispatch **p)

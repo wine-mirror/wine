@@ -1563,6 +1563,10 @@ void HTMLElement_destructor(HTMLDOMNode *iface)
         This->style->elem = NULL;
         IHTMLStyle_Release(&This->style->IHTMLStyle_iface);
     }
+    if(This->runtime_style) {
+        This->runtime_style->elem = NULL;
+        IHTMLStyle_Release(&This->runtime_style->IHTMLStyle_iface);
+    }
     if(This->attrs) {
         HTMLDOMAttribute *attr;
 

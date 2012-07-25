@@ -721,6 +721,7 @@ static ULONG WINAPI HTMLStyle_Release(IHTMLStyle *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
+        assert(!This->elem);
         if(This->nsstyle)
             nsIDOMCSSStyleDeclaration_Release(This->nsstyle);
         release_dispex(&This->dispex);
