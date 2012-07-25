@@ -300,8 +300,13 @@ static HRESULT WINAPI class_object_Put(
     VARIANT *pVal,
     CIMTYPE Type )
 {
-    FIXME("%p, %s, %08x, %p, %u\n", iface, debugstr_w(wszName), lFlags, pVal, Type);
-    return E_NOTIMPL;
+    struct class_object *co = impl_from_IWbemClassObject( iface );
+    struct enum_class_object *ec = impl_from_IEnumWbemClassObject( co->iter );
+    struct view *view = ec->query->view;
+
+    TRACE("%p, %s, %08x, %p, %u\n", iface, debugstr_w(wszName), lFlags, pVal, Type);
+
+    return put_propval( view, co->index, wszName, pVal, Type );
 }
 
 static HRESULT WINAPI class_object_Delete(

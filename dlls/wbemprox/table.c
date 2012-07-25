@@ -180,6 +180,49 @@ BSTR get_value_bstr( const struct table *table, UINT row, UINT column )
     return NULL;
 }
 
+HRESULT set_value( const struct table *table, UINT row, UINT column, LONGLONG val,
+                   CIMTYPE type )
+{
+    UINT col_offset, row_size;
+    BYTE *ptr;
+
+    if ((table->columns[column].type & COL_TYPE_MASK) != type) return WBEM_E_TYPE_MISMATCH;
+
+    col_offset = get_column_offset( table, column );
+    row_size = get_row_size( table );
+    ptr = table->data + row * row_size + col_offset;
+
+    switch (table->columns[column].type & COL_TYPE_MASK)
+    {
+    case CIM_DATETIME:
+    case CIM_STRING:
+        *(WCHAR **)ptr = (WCHAR *)(INT_PTR)val;
+        break;
+    case CIM_SINT16:
+        *(INT16 *)ptr = val;
+        break;
+    case CIM_UINT16:
+        *(UINT16 *)ptr = val;
+        break;
+    case CIM_SINT32:
+        *(INT32 *)ptr = val;
+        break;
+    case CIM_UINT32:
+        *(UINT32 *)ptr = val;
+        break;
+    case CIM_SINT64:
+        *(INT64 *)ptr = val;
+        break;
+    case CIM_UINT64:
+        *(UINT64 *)ptr = val;
+        break;
+    default:
+        FIXME("unhandled column type %u\n", type);
+        return WBEM_E_FAILED;
+    }
+    return S_OK;
+}
+
 static void clear_table( struct table *table )
 {
     UINT i, j, type;

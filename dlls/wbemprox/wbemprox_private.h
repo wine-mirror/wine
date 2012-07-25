@@ -137,8 +137,10 @@ void free_table( struct table * ) DECLSPEC_HIDDEN;
 HRESULT get_column_index( const struct table *, const WCHAR *, UINT * ) DECLSPEC_HIDDEN;
 HRESULT get_value( const struct table *, UINT, UINT, LONGLONG * ) DECLSPEC_HIDDEN;
 BSTR get_value_bstr( const struct table *, UINT, UINT ) DECLSPEC_HIDDEN;
+HRESULT set_value( const struct table *, UINT, UINT, LONGLONG, CIMTYPE ) DECLSPEC_HIDDEN;
 HRESULT get_propval( const struct view *, UINT, const WCHAR *, VARIANT *,
                      CIMTYPE *, LONG * ) DECLSPEC_HIDDEN;
+HRESULT put_propval( const struct view *, UINT, const WCHAR *, VARIANT *, CIMTYPE ) DECLSPEC_HIDDEN;
 HRESULT get_properties( const struct view *, SAFEARRAY ** ) DECLSPEC_HIDDEN;
 
 HRESULT WbemLocator_create(IUnknown *, LPVOID *) DECLSPEC_HIDDEN;

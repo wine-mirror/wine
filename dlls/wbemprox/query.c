@@ -641,6 +641,67 @@ HRESULT get_propval( const struct view *view, UINT index, const WCHAR *name, VAR
     return S_OK;
 }
 
+static HRESULT variant_to_longlong( VARIANT *var, LONGLONG *val, CIMTYPE *type )
+{
+    if (!var)
+    {
+        *val = 0;
+        return S_OK;
+    }
+    switch (V_VT( var ))
+    {
+    case VT_BSTR:
+        *val = (INT_PTR)SysAllocString( V_BSTR( var ) );
+        if (!*val) return E_OUTOFMEMORY;
+        *type = CIM_STRING;
+        break;
+    case VT_I2:
+        *val = V_I2( var );
+        *type = CIM_SINT16;
+        break;
+    case VT_UI2:
+        *val = V_UI2( var );
+        *type = CIM_UINT16;
+        break;
+    case VT_I4:
+        *val = V_I4( var );
+        *type = CIM_SINT32;
+        break;
+    case VT_UI4:
+        *val = V_UI4( var );
+        *type = CIM_UINT32;
+        break;
+    case VT_NULL:
+        *val = 0;
+        break;
+    default:
+        ERR("unhandled type %u\n", V_VT( var ));
+        return WBEM_E_FAILED;
+    }
+    return S_OK;
+}
+
+HRESULT put_propval( const struct view *view, UINT index, const WCHAR *name, VARIANT *var, CIMTYPE type )
+{
+    HRESULT hr;
+    UINT column, row = view->result[index];
+    LONGLONG val;
+
+    hr = get_column_index( view->table, name, &column );
+    if (hr != S_OK)
+    {
+        FIXME("no support for creating new properties\n");
+        return WBEM_E_FAILED;
+    }
+    if (is_method( view->table, column ) || !(view->table->columns[column].type & COL_FLAG_DYNAMIC))
+        return WBEM_E_FAILED;
+
+    hr = variant_to_longlong( var, &val, &type );
+    if (hr != S_OK) return hr;
+
+    return set_value( view->table, row, column, val, type );
+}
+
 HRESULT get_properties( const struct view *view, SAFEARRAY **props )
 {
     SAFEARRAY *sa;
