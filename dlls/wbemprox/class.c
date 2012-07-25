@@ -167,7 +167,9 @@ static HRESULT WINAPI enum_class_object_Skip(
 
     if (lTimeout != WBEM_INFINITE) FIXME("timeout not supported\n");
 
-    if (ec->index + nCount >= view->count)
+    if (!view->count) return WBEM_S_FALSE;
+
+    if (nCount > view->count - ec->index)
     {
         ec->index = view->count - 1;
         return WBEM_S_FALSE;
