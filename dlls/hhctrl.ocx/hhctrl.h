@@ -198,6 +198,7 @@ HHInfo *CreateHelpViewer(LPCWSTR,HWND) DECLSPEC_HIDDEN;
 void ReleaseHelpViewer(HHInfo*) DECLSPEC_HIDDEN;
 BOOL NavigateToUrl(HHInfo*,LPCWSTR) DECLSPEC_HIDDEN;
 BOOL NavigateToChm(HHInfo*,LPCWSTR,LPCWSTR) DECLSPEC_HIDDEN;
+void MergeChmProperties(HH_WINTYPEW*,HHInfo*) DECLSPEC_HIDDEN;
 
 void InitSearch(HHInfo *info, const char *needle) DECLSPEC_HIDDEN;
 void ReleaseSearch(HHInfo *info) DECLSPEC_HIDDEN;

@@ -243,6 +243,74 @@ static WCHAR *FindHTMLHelpSetting(HHInfo *info, const WCHAR *extW)
     return filename;
 }
 
+static inline WCHAR *MergeChmString(LPCWSTR src, WCHAR **dst)
+{
+    if(*dst == NULL)
+        *dst = strdupW(src);
+    return *dst;
+}
+
+void MergeChmProperties(HH_WINTYPEW *src, HHInfo *info)
+{
+    DWORD unhandled_params = src->fsValidMembers & ~(HHWIN_PARAM_PROPERTIES|HHWIN_PARAM_STYLES
+                             |HHWIN_PARAM_EXSTYLES|HHWIN_PARAM_RECT|HHWIN_PARAM_NAV_WIDTH
+                             |HHWIN_PARAM_SHOWSTATE|HHWIN_PARAM_INFOTYPES|HHWIN_PARAM_TB_FLAGS
+                             |HHWIN_PARAM_EXPANSION|HHWIN_PARAM_TABPOS|HHWIN_PARAM_TABORDER
+                             |HHWIN_PARAM_HISTORY_COUNT|HHWIN_PARAM_CUR_TAB);
+    HH_WINTYPEW *dst = &info->WinType;
+    DWORD merge = src->fsValidMembers & ~dst->fsValidMembers;
+
+    if (unhandled_params)
+        FIXME("Unsupported fsValidMembers fields: 0x%x\n", unhandled_params);
+
+    if (merge & HHWIN_PARAM_PROPERTIES) dst->fsWinProperties = src->fsWinProperties;
+    if (merge & HHWIN_PARAM_STYLES) dst->dwStyles = src->dwStyles;
+    if (merge & HHWIN_PARAM_EXSTYLES) dst->dwExStyles = src->dwExStyles;
+    if (merge & HHWIN_PARAM_RECT) dst->rcWindowPos = src->rcWindowPos;
+    if (merge & HHWIN_PARAM_NAV_WIDTH) dst->iNavWidth = src->iNavWidth;
+    if (merge & HHWIN_PARAM_SHOWSTATE) dst->nShowState = src->nShowState;
+    if (merge & HHWIN_PARAM_INFOTYPES) dst->paInfoTypes = src->paInfoTypes;
+    if (merge & HHWIN_PARAM_TB_FLAGS) dst->fsToolBarFlags = src->fsToolBarFlags;
+    if (merge & HHWIN_PARAM_EXPANSION) dst->fNotExpanded = src->fNotExpanded;
+    if (merge & HHWIN_PARAM_TABPOS) dst->tabpos = src->tabpos;
+    if (merge & HHWIN_PARAM_TABORDER) memcpy(&dst->tabOrder, &src->tabOrder, sizeof(src->tabOrder));
+    if (merge & HHWIN_PARAM_HISTORY_COUNT) dst->cHistory = src->cHistory;
+    if (merge & HHWIN_PARAM_CUR_TAB) dst->curNavType = src->curNavType;
+    dst->fsValidMembers |= merge;
+
+    /*
+     * Note: We assume that hwndHelp, hwndCaller, hwndToolBar, hwndNavigation, and hwndHTML cannot be
+     * modified by the user.  rcHTML and rcMinSize are not currently supported, so don't bother to copy them.
+     */
+
+    dst->pszType       = MergeChmString(src->pszType, &info->pszType);
+    dst->pszFile       = MergeChmString(src->pszFile, &info->pszFile);
+    dst->pszToc        = MergeChmString(src->pszToc, &info->pszToc);
+    dst->pszIndex      = MergeChmString(src->pszIndex, &info->pszIndex);
+    dst->pszCaption    = MergeChmString(src->pszCaption, &info->pszCaption);
+    dst->pszHome       = MergeChmString(src->pszHome, &info->pszHome);
+    dst->pszJump1      = MergeChmString(src->pszJump1, &info->pszJump1);
+    dst->pszJump2      = MergeChmString(src->pszJump2, &info->pszJump2);
+    dst->pszUrlJump1   = MergeChmString(src->pszUrlJump1, &info->pszUrlJump1);
+    dst->pszUrlJump2   = MergeChmString(src->pszUrlJump2, &info->pszUrlJump2);
+
+    /* FIXME: pszCustomTabs is a list of multiple zero-terminated strings so ReadString won't
+     * work in this case
+     */
+#if 0
+    dst->pszCustomTabs = MergeChmString(src->pszCustomTabs, &info->pszCustomTabs);
+#endif
+}
+
+static inline WCHAR *ConvertChmString(HHInfo *info, const WCHAR **str)
+{
+    WCHAR *ret = NULL;
+
+    if(*str)
+        *str = ret = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)*str));
+    return ret;
+}
+
 /* Loads the HH_WINTYPE data from the CHM file
  *
  * FIXME: There may be more than one window type in the file, so
@@ -251,10 +319,14 @@ static WCHAR *FindHTMLHelpSetting(HHInfo *info, const WCHAR *extW)
 BOOL LoadWinTypeFromCHM(HHInfo *info)
 {
     LARGE_INTEGER liOffset;
+    WCHAR *pszType = NULL, *pszFile = NULL, *pszToc = NULL, *pszIndex = NULL, *pszCaption = NULL;
+    WCHAR *pszHome = NULL, *pszJump1 = NULL, *pszJump2 = NULL, *pszUrlJump1 = NULL, *pszUrlJump2 = NULL;
     IStorage *pStorage = info->pCHMInfo->pStorage;
-    IStream *pStream;
+    IStream *pStream = NULL;
+    HH_WINTYPEW wintype;
     HRESULT hr;
     DWORD cbRead;
+    BOOL ret;
 
     static const WCHAR null[] = {0};
     static const WCHAR toc_extW[] = {'h','h','c',0};
@@ -262,71 +334,78 @@ BOOL LoadWinTypeFromCHM(HHInfo *info)
     static const WCHAR windowsW[] = {'#','W','I','N','D','O','W','S',0};
 
     hr = IStorage_OpenStream(pStorage, windowsW, NULL, STGM_READ, 0, &pStream);
-    if (FAILED(hr))
+    if (SUCCEEDED(hr))
+    {
+        /* jump past the #WINDOWS header */
+        liOffset.QuadPart = sizeof(DWORD) * 2;
+
+        hr = IStream_Seek(pStream, liOffset, STREAM_SEEK_SET, NULL);
+        if (FAILED(hr)) goto done;
+
+        /* read the HH_WINTYPE struct data */
+        hr = IStream_Read(pStream, &wintype, sizeof(wintype), &cbRead);
+        if (FAILED(hr)) goto done;
+
+        /* convert the #STRINGS offsets to actual strings */
+        pszType     = ConvertChmString(info, &wintype.pszType);
+        pszFile     = ConvertChmString(info, &wintype.pszFile);
+        pszToc      = ConvertChmString(info, &wintype.pszToc);
+        pszIndex    = ConvertChmString(info, &wintype.pszIndex);
+        pszCaption  = ConvertChmString(info, &wintype.pszCaption);
+        pszHome     = ConvertChmString(info, &wintype.pszHome);
+        pszJump1    = ConvertChmString(info, &wintype.pszJump1);
+        pszJump2    = ConvertChmString(info, &wintype.pszJump2);
+        pszUrlJump1 = ConvertChmString(info, &wintype.pszUrlJump1);
+        pszUrlJump2 = ConvertChmString(info, &wintype.pszUrlJump2);
+
+        ret = SUCCEEDED(hr);
+    }
+    else
     {
         /* no defined window types so use (hopefully) sane defaults */
         static const WCHAR defaultwinW[] = {'d','e','f','a','u','l','t','w','i','n','\0'};
-        memset((void*)&(info->WinType), 0, sizeof(info->WinType));
-        info->WinType.cbStruct=sizeof(info->WinType);
-        info->WinType.fUniCodeStrings=TRUE;
-        info->WinType.pszType = strdupW(info->pCHMInfo->defWindow ? info->pCHMInfo->defWindow : defaultwinW);
-        info->WinType.pszToc = strdupW(info->pCHMInfo->defToc ? info->pCHMInfo->defToc : null);
-        info->WinType.pszIndex = strdupW(null);
-        info->WinType.fsValidMembers=0;
-        info->WinType.fsWinProperties=HHWIN_PROP_TRI_PANE;
-        info->WinType.pszCaption=strdupW(info->pCHMInfo->defTitle ? info->pCHMInfo->defTitle : null);
-        info->WinType.dwStyles=WS_POPUP;
-        info->WinType.dwExStyles=0;
-        info->WinType.nShowState=SW_SHOW;
-        info->WinType.pszFile=strdupW(info->pCHMInfo->defTopic ? info->pCHMInfo->defTopic : null);
-        info->WinType.curNavType=HHWIN_NAVTYPE_TOC;
-        return TRUE;
+        memset(&wintype, 0, sizeof(wintype));
+        wintype.cbStruct = sizeof(wintype);
+        wintype.fUniCodeStrings = TRUE;
+        wintype.pszType    = pszType     = strdupW(info->pCHMInfo->defWindow ? info->pCHMInfo->defWindow : defaultwinW);
+        wintype.pszFile    = pszFile     = strdupW(info->pCHMInfo->defTopic ? info->pCHMInfo->defTopic : null);
+        wintype.pszToc     = pszToc      = strdupW(info->pCHMInfo->defToc ? info->pCHMInfo->defToc : null);
+        wintype.pszIndex   = pszIndex    = strdupW(null);
+        wintype.pszCaption = pszCaption  = strdupW(info->pCHMInfo->defTitle ? info->pCHMInfo->defTitle : null);
+        wintype.fsValidMembers = 0;
+        wintype.fsWinProperties = HHWIN_PROP_TRI_PANE;
+        wintype.dwStyles = WS_POPUP;
+        wintype.dwExStyles = 0;
+        wintype.nShowState = SW_SHOW;
+        wintype.curNavType = HHWIN_NAVTYPE_TOC;
+        ret = TRUE;
     }
 
-    /* jump past the #WINDOWS header */
-    liOffset.QuadPart = sizeof(DWORD) * 2;
-
-    hr = IStream_Seek(pStream, liOffset, STREAM_SEEK_SET, NULL);
-    if (FAILED(hr)) goto done;
-
-    /* read the HH_WINTYPE struct data */
-    hr = IStream_Read(pStream, &info->WinType, sizeof(info->WinType), &cbRead);
-    if (FAILED(hr)) goto done;
-
-    /* convert the #STRINGS offsets to actual strings */
-
-    info->WinType.pszType      = info->pszType     = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszType));
-    info->WinType.pszCaption   = info->pszCaption  = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszCaption));
-    info->WinType.pszHome      = info->pszHome     = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszHome));
-    info->WinType.pszJump1     = info->pszJump1    = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszJump1));
-    info->WinType.pszJump2     = info->pszJump2    = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszJump2));
-    info->WinType.pszUrlJump1  = info->pszUrlJump1 = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszUrlJump1));
-    info->WinType.pszUrlJump2  = info->pszUrlJump2 = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszUrlJump2));
-
-    if (info->WinType.pszFile)
-        info->WinType.pszFile  = info->pszFile     = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszFile));
-    else
-        info->WinType.pszFile  = strdupW(info->pCHMInfo->defTopic ? info->pCHMInfo->defTopic : null);
-    if (info->WinType.pszToc)
-        info->WinType.pszToc   = info->pszToc      = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszToc));
-    else
+    /* merge the new data with any pre-existing HH_WINTYPE structure */
+    MergeChmProperties(&wintype, info);
+    if (!info->WinType.pszFile)
+        info->WinType.pszFile  = info->pszFile     = strdupW(info->pCHMInfo->defTopic ? info->pCHMInfo->defTopic : null);
+    if (!info->WinType.pszToc)
         info->WinType.pszToc   = info->pszToc      = FindHTMLHelpSetting(info, toc_extW);
-    if (info->WinType.pszIndex)
-        info->WinType.pszIndex = info->pszIndex    = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszIndex));
-    else
+    if (!info->WinType.pszIndex)
         info->WinType.pszIndex = info->pszIndex    = FindHTMLHelpSetting(info, index_extW);
 
-    /* FIXME: pszCustomTabs is a list of multiple zero-terminated strings so ReadString won't
-     * work in this case
-     */
-#if 0
-    info->WinType.pszCustomTabs = info->pszCustomTabs = CHM_ReadString(pChmInfo, (DWORD_PTR)info->WinType.pszCustomTabs);
-#endif
+    heap_free(pszType);
+    heap_free(pszFile);
+    heap_free(pszToc);
+    heap_free(pszIndex);
+    heap_free(pszCaption);
+    heap_free(pszHome);
+    heap_free(pszJump1);
+    heap_free(pszJump2);
+    heap_free(pszUrlJump1);
+    heap_free(pszUrlJump2);
 
 done:
-    IStream_Release(pStream);
+    if (pStream)
+        IStream_Release(pStream);
 
-    return SUCCEEDED(hr);
+    return ret;
 }
 
 LPCWSTR skip_schema(LPCWSTR url)
