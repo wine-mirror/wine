@@ -2702,7 +2702,13 @@ static GpImage *load_image(const BYTE *image_data, UINT image_size)
     ok(refcount == 1, "expected stream refcount 1, got %d\n", refcount);
 
     status = GdipLoadImageFromStream(stream, &image);
-    ok(status == Ok, "GdipLoadImageFromStream error %d\n", status);
+    ok(status == Ok || broken(status == InvalidParameter), /* XP */
+       "GdipLoadImageFromStream error %d\n", status);
+    if (status != Ok)
+    {
+        IStream_Release(stream);
+        return NULL;
+    }
 
     status = GdipGetImageType(image, &image_type);
     ok(status == Ok, "GdipGetImageType error %d\n", status);
@@ -2770,8 +2776,11 @@ static void test_image_properties(void)
     for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
     {
         image = load_image(td[i].image_data, td[i].image_size);
-        ok(image != 0, "%u: failed to load image data\n", i);
-        if (!image) continue;
+        if (!image)
+        {
+            trace("%u: failed to load image data\n", i);
+            continue;
+        }
 
         status = GdipGetImageType(image, &image_type);
         ok(status == Ok, "%u: GdipGetImageType error %d\n", i, status);
