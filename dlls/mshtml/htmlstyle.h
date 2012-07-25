@@ -106,6 +106,7 @@ typedef enum {
     STYLEID_Z_INDEX
 } styleid_t;
 
+HRESULT HTMLStyle_Create(HTMLElement*,HTMLStyle**) DECLSPEC_HIDDEN;
 void HTMLStyle2_Init(HTMLStyle*) DECLSPEC_HIDDEN;
 void HTMLStyle3_Init(HTMLStyle*) DECLSPEC_HIDDEN;
 

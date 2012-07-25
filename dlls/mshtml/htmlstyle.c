@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <assert.h>
 #include <math.h>
 
 #define COBJMACROS
@@ -3039,13 +3040,34 @@ static dispex_static_data_t HTMLStyle_dispex = {
     HTMLStyle_iface_tids
 };
 
-HRESULT HTMLStyle_Create(HTMLElement *elem, nsIDOMCSSStyleDeclaration *nsstyle, HTMLStyle **ret)
+HRESULT HTMLStyle_Create(HTMLElement *elem, HTMLStyle **ret)
 {
+    nsIDOMElementCSSInlineStyle *nselemstyle;
+    nsIDOMCSSStyleDeclaration *nsstyle;
     HTMLStyle *style;
+    nsresult nsres;
+
+    if(!elem->nselem) {
+        FIXME("NULL nselem\n");
+        return E_NOTIMPL;
+    }
+
+    nsres = nsIDOMHTMLElement_QueryInterface(elem->nselem, &IID_nsIDOMElementCSSInlineStyle,
+            (void**)&nselemstyle);
+    assert(nsres == NS_OK);
+
+    nsres = nsIDOMElementCSSInlineStyle_GetStyle(nselemstyle, &nsstyle);
+    nsIDOMElementCSSInlineStyle_Release(nselemstyle);
+    if(NS_FAILED(nsres)) {
+        ERR("GetStyle failed: %08x\n", nsres);
+        return E_FAIL;
+    }
 
     style = heap_alloc_zero(sizeof(HTMLStyle));
-    if(!style)
+    if(!style) {
+        nsIDOMCSSStyleDeclaration_Release(nsstyle);
         return E_OUTOFMEMORY;
+    }
 
     style->IHTMLStyle_iface.lpVtbl = &HTMLStyleVtbl;
     style->ref = 1;

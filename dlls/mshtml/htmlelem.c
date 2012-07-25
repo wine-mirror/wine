@@ -446,32 +446,9 @@ static HRESULT WINAPI HTMLElement_get_style(IHTMLElement *iface, IHTMLStyle **p)
     TRACE("(%p)->(%p)\n", This, p);
 
     if(!This->style) {
-        nsIDOMElementCSSInlineStyle *nselemstyle;
-        nsIDOMCSSStyleDeclaration *nsstyle;
-        nsresult nsres;
         HRESULT hres;
 
-        if(!This->nselem) {
-            FIXME("NULL nselem\n");
-            return E_NOTIMPL;
-        }
-
-        nsres = nsIDOMHTMLElement_QueryInterface(This->nselem, &IID_nsIDOMElementCSSInlineStyle,
-                (void**)&nselemstyle);
-        if(NS_FAILED(nsres)) {
-            ERR("Could not get nsIDOMCSSStyleDeclaration interface: %08x\n", nsres);
-            return E_FAIL;
-        }
-
-        nsres = nsIDOMElementCSSInlineStyle_GetStyle(nselemstyle, &nsstyle);
-        nsIDOMElementCSSInlineStyle_Release(nselemstyle);
-        if(NS_FAILED(nsres)) {
-            ERR("GetStyle failed: %08x\n", nsres);
-            return E_FAIL;
-        }
-
-        hres = HTMLStyle_Create(This, nsstyle, &This->style);
-        nsIDOMCSSStyleDeclaration_Release(nsstyle);
+        hres = HTMLStyle_Create(This, &This->style);
         if(FAILED(hres))
             return hres;
     }
