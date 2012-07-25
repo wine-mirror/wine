@@ -243,9 +243,9 @@ static void clear_table( struct table *table )
             }
         }
     }
-    table->num_rows = 0;
     if (table->fill)
     {
+        table->num_rows = 0;
         heap_free( table->data );
         table->data = NULL;
     }
