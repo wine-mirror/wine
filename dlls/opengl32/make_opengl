@@ -622,7 +622,6 @@ my %wgl_functions =
                                     [ "UINT", "mask" ] ] ],
     "wglCreateContext" => [ "struct wgl_context *", [ [ "HDC", "hdc" ] ] ],
     "wglDeleteContext" => [ "void", [ [ "struct wgl_context *", "context" ] ] ],
-    "wglGetCurrentDC" => [ "HDC", [ [ "struct wgl_context *", "context" ] ] ],
     "wglGetPixelFormat" => [ "INT", [ [ "HDC", "hdc" ] ] ],
     "wglGetProcAddress" => [ "PROC", [ [ "LPCSTR", "name" ] ] ],
     "wglMakeCurrent" => [ "BOOL", [ [ "HDC", "hdc" ],

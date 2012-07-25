@@ -151,7 +151,6 @@ struct wgl_context
     int numAttribs; /* This is needed for delaying wglCreateContextAttribsARB */
     int attribList[16]; /* This is needed for delaying wglCreateContextAttribsARB */
     GLXContext ctx;
-    HDC read_hdc;
     Drawable drawables[2];
     BOOL refresh_drawables;
     Pixmap pixmap;            /* pixmap for memory DCs */
@@ -1497,22 +1496,6 @@ static void glxdrv_wglDeleteContext(struct wgl_context *ctx)
     HeapFree( GetProcessHeap(), 0, ctx );
 }
 
-/**
- * X11DRV_wglGetCurrentReadDCARB
- *
- * For OpenGL32 wglGetCurrentReadDCARB.
- */
-static HDC X11DRV_wglGetCurrentReadDCARB(void)
-{
-    HDC ret = 0;
-    struct wgl_context *ctx = NtCurrentTeb()->glContext;
-
-    if (ctx) ret = ctx->read_hdc;
-
-    TRACE(" returning %p (GL drawable %lu)\n", ret, ctx ? ctx->drawables[1] : 0);
-    return ret;
-}
-
 /***********************************************************************
  *		glxdrv_wglGetProcAddress
  */
@@ -1600,7 +1583,6 @@ static BOOL glxdrv_wglMakeCurrent(HDC hdc, struct wgl_context *ctx)
 
             ctx->has_been_current = TRUE;
             ctx->hdc = hdc;
-            ctx->read_hdc = hdc;
             ctx->drawables[0] = escape.gl_drawable;
             ctx->drawables[1] = escape.gl_drawable;
             ctx->refresh_drawables = FALSE;
@@ -1663,7 +1645,6 @@ static BOOL X11DRV_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct 
         {
             ctx->has_been_current = TRUE;
             ctx->hdc = draw_hdc;
-            ctx->read_hdc = read_hdc;
             ctx->drawables[0] = escape_draw.gl_drawable;
             ctx->drawables[1] = escape_read.gl_drawable;
             ctx->refresh_drawables = FALSE;
@@ -1729,15 +1710,6 @@ static BOOL glxdrv_wglShareLists(struct wgl_context *org, struct wgl_context *de
         return TRUE;
     }
     return FALSE;
-}
-
-/***********************************************************************
- *		glxdrv_wglGetCurrentDC
- */
-static HDC glxdrv_wglGetCurrentDC( struct wgl_context *ctx )
-{
-    TRACE("hdc %p\n", ctx->hdc);
-    return ctx->hdc;
 }
 
 static void flush_pixmap( struct wgl_context *ctx )
@@ -2912,7 +2884,7 @@ static void X11DRV_WineGL_LoadExtensions(void)
     if (glxRequireVersion(3))
     {
         register_extension( "WGL_ARB_make_current_read" );
-        opengl_funcs.ext.p_wglGetCurrentReadDCARB   = X11DRV_wglGetCurrentReadDCARB;
+        opengl_funcs.ext.p_wglGetCurrentReadDCARB   = (void *)1;  /* never called */
         opengl_funcs.ext.p_wglMakeContextCurrentARB = X11DRV_wglMakeContextCurrentARB;
     }
 
@@ -3338,7 +3310,6 @@ static struct opengl_funcs opengl_funcs =
         glxdrv_wglCopyContext,              /* p_wglCopyContext */
         glxdrv_wglCreateContext,            /* p_wglCreateContext */
         glxdrv_wglDeleteContext,            /* p_wglDeleteContext */
-        glxdrv_wglGetCurrentDC,             /* p_wglGetCurrentDC */
         glxdrv_wglGetPixelFormat,           /* p_wglGetPixelFormat */
         glxdrv_wglGetProcAddress,           /* p_wglGetProcAddress */
         glxdrv_wglMakeCurrent,              /* p_wglMakeCurrent */

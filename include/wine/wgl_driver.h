@@ -7,7 +7,7 @@
 #define WINE_GLAPI
 #endif
 
-#define WINE_WGL_DRIVER_VERSION 4
+#define WINE_WGL_DRIVER_VERSION 5
 
 struct wgl_context;
 struct wgl_pbuffer;
@@ -19,7 +19,6 @@ struct opengl_funcs
         BOOL       (WINE_GLAPI *p_wglCopyContext)(struct wgl_context *,struct wgl_context *,UINT);
         struct wgl_context * (WINE_GLAPI *p_wglCreateContext)(HDC);
         void       (WINE_GLAPI *p_wglDeleteContext)(struct wgl_context *);
-        HDC        (WINE_GLAPI *p_wglGetCurrentDC)(struct wgl_context *);
         INT        (WINE_GLAPI *p_wglGetPixelFormat)(HDC);
         PROC       (WINE_GLAPI *p_wglGetProcAddress)(LPCSTR);
         BOOL       (WINE_GLAPI *p_wglMakeCurrent)(HDC,struct wgl_context *);

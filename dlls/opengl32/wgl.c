@@ -68,6 +68,8 @@ enum wgl_handle_type
 struct opengl_context
 {
     DWORD               tid;      /* thread that the context is current in */
+    HDC                 draw_dc;  /* current drawing DC */
+    HDC                 read_dc;  /* current reading DC */
     struct wgl_context *drv_ctx;  /* driver context */
 };
 
@@ -236,6 +238,8 @@ BOOL WINAPI wglMakeCurrent(HDC hdc, HGLRC hglrc)
             {
                 if (prev) prev->u.context->tid = 0;
                 ptr->u.context->tid = GetCurrentThreadId();
+                ptr->u.context->draw_dc = hdc;
+                ptr->u.context->read_dc = hdc;
                 NtCurrentTeb()->glCurrentRC = hglrc;
                 NtCurrentTeb()->glTable = ptr->funcs;
             }
@@ -315,6 +319,8 @@ BOOL WINAPI wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, HGLRC hglrc )
             {
                 if (prev) prev->u.context->tid = 0;
                 ptr->u.context->tid = GetCurrentThreadId();
+                ptr->u.context->draw_dc = draw_hdc;
+                ptr->u.context->read_dc = read_hdc;
                 NtCurrentTeb()->glCurrentRC = hglrc;
                 NtCurrentTeb()->glTable = ptr->funcs;
             }
@@ -343,10 +349,10 @@ BOOL WINAPI wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, HGLRC hglrc )
  */
 HDC WINAPI wglGetCurrentReadDCARB(void)
 {
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+    struct wgl_handle *ptr = get_current_context_ptr();
 
-    if (!funcs->ext.p_wglGetCurrentReadDCARB) return 0;
-    return funcs->ext.p_wglGetCurrentReadDCARB();
+    if (!ptr) return 0;
+    return ptr->u.context->read_dc;
 }
 
 /***********************************************************************
@@ -373,9 +379,10 @@ BOOL WINAPI wglShareLists(HGLRC hglrcSrc, HGLRC hglrcDst)
  */
 HDC WINAPI wglGetCurrentDC(void)
 {
-    struct wgl_handle *context = get_current_context_ptr();
-    if (!context) return 0;
-    return context->funcs->wgl.p_wglGetCurrentDC( context->u.context->drv_ctx );
+    struct wgl_handle *ptr = get_current_context_ptr();
+
+    if (!ptr) return 0;
+    return ptr->u.context->draw_dc;
 }
 
 /***********************************************************************
