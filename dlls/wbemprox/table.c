@@ -44,11 +44,11 @@ HRESULT get_column_index( const struct table *table, const WCHAR *name, UINT *co
     return WBEM_E_INVALID_QUERY;
 }
 
-static UINT get_column_size( const struct table *table, UINT column )
+UINT get_type_size( CIMTYPE type )
 {
-    if (table->columns[column].type & CIM_FLAG_ARRAY) return sizeof(void *);
+    if (type & CIM_FLAG_ARRAY) return sizeof(void *);
 
-    switch (table->columns[column].type & COL_TYPE_MASK)
+    switch (type)
     {
     case CIM_SINT16:
     case CIM_UINT16:
@@ -63,10 +63,15 @@ static UINT get_column_size( const struct table *table, UINT column )
     case CIM_STRING:
         return sizeof(WCHAR *);
     default:
-        ERR("unknown column type %u\n", table->columns[column].type & COL_TYPE_MASK);
+        ERR("unhandled type %u\n", type);
         break;
     }
-    return sizeof(INT32);
+    return sizeof(LONGLONG);
+}
+
+static UINT get_column_size( const struct table *table, UINT column )
+{
+    return get_type_size( table->columns[column].type & COL_TYPE_MASK );
 }
 
 static UINT get_column_offset( const struct table *table, UINT column )

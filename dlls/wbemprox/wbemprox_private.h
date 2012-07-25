@@ -24,6 +24,13 @@ struct list *table_list;
 
 #define SIZEOF(array) (sizeof(array)/sizeof((array)[0]))
 
+enum param_direction
+{
+    PARAM_OUT   = -1,
+    PARAM_INOUT = 0,
+    PARAM_IN    = 1
+};
+
 #define COL_TYPE_MASK    0x0000ffff
 #define COL_FLAG_DYNAMIC 0x00010000
 #define COL_FLAG_KEY     0x00020000
@@ -134,6 +141,7 @@ struct table *create_table( const WCHAR *, UINT, const struct column *, UINT,
 BOOL add_table( struct table * ) DECLSPEC_HIDDEN;
 void free_columns( struct column *, UINT ) DECLSPEC_HIDDEN;
 void free_table( struct table * ) DECLSPEC_HIDDEN;
+UINT get_type_size( CIMTYPE ) DECLSPEC_HIDDEN;
 HRESULT get_column_index( const struct table *, const WCHAR *, UINT * ) DECLSPEC_HIDDEN;
 HRESULT get_value( const struct table *, UINT, UINT, LONGLONG * ) DECLSPEC_HIDDEN;
 BSTR get_value_bstr( const struct table *, UINT, UINT ) DECLSPEC_HIDDEN;
@@ -159,6 +167,12 @@ static void *heap_realloc( void *mem, size_t len ) __WINE_ALLOC_SIZE(2);
 static inline void *heap_realloc( void *mem, size_t len )
 {
     return HeapReAlloc( GetProcessHeap(), 0, mem, len );
+}
+
+static void *heap_alloc_zero( size_t len ) __WINE_ALLOC_SIZE(1);
+static inline void *heap_alloc_zero( size_t len )
+{
+    return HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, len );
 }
 
 static inline BOOL heap_free( void *mem )

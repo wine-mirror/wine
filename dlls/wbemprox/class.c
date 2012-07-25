@@ -441,6 +441,163 @@ static HRESULT WINAPI class_object_InheritsFrom(
     return E_NOTIMPL;
 }
 
+static UINT count_instances( IEnumWbemClassObject *iter )
+{
+    UINT count = 0;
+    while (!IEnumWbemClassObject_Skip( iter, WBEM_INFINITE, 1 )) count++;
+    IEnumWbemClassObject_Reset( iter );
+    return count;
+}
+
+static void set_default_value( CIMTYPE type, UINT val, BYTE *ptr )
+{
+    switch (type)
+    {
+    case CIM_SINT16:
+        *(INT16 *)ptr = val;
+        break;
+    case CIM_UINT16:
+        *(UINT16 *)ptr = val;
+        break;
+    case CIM_SINT32:
+        *(INT32 *)ptr = val;
+        break;
+    case CIM_UINT32:
+        *(UINT32 *)ptr = val;
+        break;
+    default:
+        FIXME("unhandled type %u\n", type);
+        break;
+    }
+}
+
+HRESULT create_signature_columns_and_data( IEnumWbemClassObject *iter, UINT *num_cols,
+                                           struct column **cols, BYTE **data )
+{
+    static const WCHAR parameterW[] = {'P','a','r','a','m','e','t','e','r',0};
+    static const WCHAR typeW[] = {'T','y','p','e',0};
+    static const WCHAR defaultvalueW[] = {'D','e','f','a','u','l','t','V','a','l','u','e',0};
+    struct column *columns;
+    BYTE *row;
+    IWbemClassObject *param;
+    VARIANT val;
+    HRESULT hr = E_OUTOFMEMORY;
+    UINT offset = 0;
+    ULONG count;
+    int i = 0;
+
+    count = count_instances( iter );
+    if (!(columns = heap_alloc( count * sizeof(struct column) ))) return E_OUTOFMEMORY;
+    if (!(row = heap_alloc_zero( count * sizeof(LONGLONG) ))) goto error;
+
+    for (;;)
+    {
+        IEnumWbemClassObject_Next( iter, WBEM_INFINITE, 1, &param, &count );
+        if (!count) break;
+
+        hr = IWbemClassObject_Get( param, parameterW, 0, &val, NULL, NULL );
+        if (hr != S_OK) goto error;
+        columns[i].name = heap_strdupW( V_BSTR( &val ) );
+        VariantClear( &val );
+
+        hr = IWbemClassObject_Get( param, typeW, 0, &val, NULL, NULL );
+        if (hr != S_OK) goto error;
+        columns[i].type    = V_UI4( &val );
+        columns[i].vartype = 0;
+
+        hr = IWbemClassObject_Get( param, defaultvalueW, 0, &val, NULL, NULL );
+        if (hr != S_OK) goto error;
+        if (V_UI4( &val )) set_default_value( columns[i].type, V_UI4( &val ), row + offset );
+        offset += get_type_size( columns[i].type );
+
+        IWbemClassObject_Release( param );
+        i++;
+    }
+    *num_cols = i;
+    *cols = columns;
+    *data = row;
+    return S_OK;
+
+error:
+    for (; i >= 0; i--) heap_free( (WCHAR *)columns[i].name );
+    heap_free( columns );
+    heap_free( row );
+    return hr;
+}
+
+HRESULT create_signature_table( IEnumWbemClassObject *iter, WCHAR *name )
+{
+    HRESULT hr;
+    struct table *table;
+    struct column *columns;
+    UINT num_cols;
+    BYTE *row;
+
+    hr = create_signature_columns_and_data( iter, &num_cols, &columns, &row );
+    if (hr != S_OK) return hr;
+
+    if (!(table = create_table( name, num_cols, columns, 1, row, NULL )))
+    {
+        free_columns( columns, num_cols );
+        heap_free( row );
+        return E_OUTOFMEMORY;
+    }
+    if (!add_table( table )) free_table( table ); /* already exists */
+    return S_OK;
+}
+
+WCHAR *build_signature_table_name( const WCHAR *class, const WCHAR *method, enum param_direction dir )
+{
+    static const WCHAR fmtW[] = {'_','_','%','s','_','%','s','_','%','s',0};
+    static const WCHAR outW[] = {'O','U','T',0};
+    static const WCHAR inW[] = {'I','N',0};
+    UINT len = SIZEOF(fmtW) + SIZEOF(outW) + strlenW( class ) + strlenW( method );
+    WCHAR *ret;
+
+    if (!(ret = heap_alloc( len * sizeof(WCHAR) ))) return NULL;
+    sprintfW( ret, fmtW, class, method, dir == PARAM_IN ? inW : outW );
+    return struprW( ret );
+}
+
+static HRESULT create_signature( const WCHAR *class, const WCHAR *method, enum param_direction dir,
+                                 IWbemClassObject **sig )
+{
+    static const WCHAR selectW[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         '_','_','P','A','R','A','M','E','T','E','R','S',' ','W','H','E','R','E',' ',
+         'C','l','a','s','s','=','\'','%','s','\'',' ','A','N','D',' ',
+         'M','e','t','h','o','d','=','\'','%','s','\'',' ','A','N','D',' ',
+         'D','i','r','e','c','t','i','o','n','%','s',0};
+    static const WCHAR geW[] = {'>','=','0',0};
+    static const WCHAR leW[] = {'<','=','0',0};
+    UINT len = SIZEOF(selectW) + SIZEOF(geW);
+    IEnumWbemClassObject *iter;
+    WCHAR *query, *name;
+    HRESULT hr;
+
+    len += strlenW( class ) + strlenW( method );
+    if (!(query = heap_alloc( len * sizeof(WCHAR) ))) return E_OUTOFMEMORY;
+    sprintfW( query, selectW, class, method, dir >= 0 ? geW : leW );
+
+    hr = exec_query( query, &iter );
+    heap_free( query );
+    if (hr != S_OK) return hr;
+
+    if (!(name = build_signature_table_name( class, method, dir )))
+    {
+        IEnumWbemClassObject_Release( iter );
+        return E_OUTOFMEMORY;
+    }
+    hr = create_signature_table( iter, name );
+    IEnumWbemClassObject_Release( iter );
+    if (hr != S_OK)
+    {
+        heap_free( name );
+        return hr;
+    }
+    return get_object( name, sig );
+}
+
 static HRESULT WINAPI class_object_GetMethod(
     IWbemClassObject *iface,
     LPCWSTR wszName,
@@ -448,8 +605,19 @@ static HRESULT WINAPI class_object_GetMethod(
     IWbemClassObject **ppInSignature,
     IWbemClassObject **ppOutSignature )
 {
-    FIXME("%p, %s, %08x, %p, %p\n", iface, debugstr_w(wszName), lFlags, ppInSignature, ppOutSignature);
-    return E_NOTIMPL;
+    struct class_object *co = impl_from_IWbemClassObject( iface );
+    struct enum_class_object *ec = impl_from_IEnumWbemClassObject( co->iter );
+    struct view *view = ec->query->view;
+    HRESULT hr;
+
+    TRACE("%p, %s, %08x, %p, %p\n", iface, debugstr_w(wszName), lFlags, ppInSignature, ppOutSignature);
+
+    hr = create_signature( view->table->name, wszName, PARAM_IN, ppInSignature );
+    if (hr != S_OK) return hr;
+
+    hr = create_signature( view->table->name, wszName, PARAM_OUT, ppOutSignature );
+    if (hr != S_OK) IWbemClassObject_Release( *ppInSignature );
+    return hr;
 }
 
 static HRESULT WINAPI class_object_PutMethod(
