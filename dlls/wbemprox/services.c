@@ -235,6 +235,38 @@ static HRESULT WINAPI wbem_services_QueryObjectSink(
     return WBEM_E_FAILED;
 }
 
+static HRESULT create_instance_enum( const WCHAR *class, IEnumWbemClassObject **iter )
+{
+    static const WCHAR selectW[] = {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',0};
+    WCHAR *query;
+    HRESULT hr;
+
+    query = heap_alloc( strlenW( class ) * sizeof(WCHAR) + sizeof(selectW) );
+    if (!query) return E_OUTOFMEMORY;
+
+    strcpyW( query, selectW );
+    strcatW( query, class );
+
+    hr = exec_query( query, iter );
+    heap_free( query );
+    return hr;
+}
+
+HRESULT get_object( const WCHAR *path, IWbemClassObject **obj )
+{
+    IEnumWbemClassObject *iter;
+    HRESULT hr;
+
+    /* FIXME: parse path */
+
+    hr = create_instance_enum( path, &iter );
+    if (hr != S_OK) return hr;
+
+    hr = WbemClassObject_create( NULL, iter, 0, (void **)obj );
+    IEnumWbemClassObject_Release( iter );
+    return hr;
+}
+
 static HRESULT WINAPI wbem_services_GetObject(
     IWbemServices *iface,
     const BSTR strObjectPath,
@@ -243,30 +275,12 @@ static HRESULT WINAPI wbem_services_GetObject(
     IWbemClassObject **ppObject,
     IWbemCallResult **ppCallResult )
 {
-    static const WCHAR selectW[] = {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',0};
-    IEnumWbemClassObject *iter;
-    WCHAR *query;
-    HRESULT hr;
-
     TRACE("%p, %s, 0x%08x, %p, %p, %p\n", iface, debugstr_w(strObjectPath), lFlags,
           pCtx, ppObject, ppCallResult);
 
     if (lFlags) FIXME("unsupported flags 0x%08x\n", lFlags);
 
-    /* FIXME: parse path */
-
-    if (!(query = heap_alloc( strlenW( strObjectPath ) * sizeof(WCHAR) + sizeof(selectW) )))
-        return E_OUTOFMEMORY;
-    strcpyW( query, selectW );
-    strcatW( query, strObjectPath );
-
-    hr = exec_query( query, &iter );
-    heap_free( query );
-    if (hr != S_OK) return hr;
-
-    hr = WbemClassObject_create( NULL, iter, 0, (void **)ppObject );
-    IEnumWbemClassObject_Release( iter );
-    return hr;
+    return get_object( strObjectPath, ppObject );
 }
 
 static HRESULT WINAPI wbem_services_GetObjectAsync(
@@ -397,22 +411,11 @@ static HRESULT WINAPI wbem_services_CreateInstanceEnum(
     IWbemContext *pCtx,
     IEnumWbemClassObject **ppEnum )
 {
-    static const WCHAR selectW[] = {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',0};
-    WCHAR *query;
-    HRESULT hr;
-
     TRACE("%p, %s, 0%08x, %p, %p\n", iface, debugstr_w(strClass), lFlags, pCtx, ppEnum);
 
     if (lFlags) FIXME("unsupported flags 0x%08x\n", lFlags);
 
-    if (!(query = heap_alloc( strlenW( strClass ) * sizeof(WCHAR) + sizeof(selectW) )))
-        return E_OUTOFMEMORY;
-    strcpyW( query, selectW );
-    strcatW( query, strClass );
-
-    hr = exec_query( query, ppEnum );
-    heap_free( query );
-    return hr;
+    return create_instance_enum( strClass, ppEnum );
 }
 
 static HRESULT WINAPI wbem_services_CreateInstanceEnumAsync(
