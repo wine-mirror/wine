@@ -67,10 +67,11 @@ enum wgl_handle_type
 
 struct opengl_context
 {
-    DWORD               tid;      /* thread that the context is current in */
-    HDC                 draw_dc;  /* current drawing DC */
-    HDC                 read_dc;  /* current reading DC */
-    struct wgl_context *drv_ctx;  /* driver context */
+    DWORD               tid;         /* thread that the context is current in */
+    HDC                 draw_dc;     /* current drawing DC */
+    HDC                 read_dc;     /* current reading DC */
+    GLubyte            *extensions;  /* extension string */
+    struct wgl_context *drv_ctx;     /* driver context */
 };
 
 struct wgl_handle
@@ -215,6 +216,7 @@ BOOL WINAPI wglDeleteContext(HGLRC hglrc)
     }
     if (hglrc == NtCurrentTeb()->glCurrentRC) wglMakeCurrent( 0, 0 );
     ptr->funcs->wgl.p_wglDeleteContext( ptr->u.context->drv_ctx );
+    HeapFree( GetProcessHeap(), 0, ptr->u.context->extensions );
     HeapFree( GetProcessHeap(), 0, ptr->u.context );
     free_handle_ptr( ptr );
     return TRUE;
@@ -1480,26 +1482,41 @@ GLint WINAPI wine_glDebugEntry( GLint unknown1, GLint unknown2 )
 }
 
 /* build the extension string by filtering out the disabled extensions */
-static char *build_gl_extensions( const char *extensions )
+static GLubyte *filter_extensions( const char *extensions )
 {
-    char *p, *str, *disabled = NULL;
+    static const char *disabled;
+    char *p, *str;
     const char *end;
-    HKEY hkey;
 
     TRACE( "GL_EXTENSIONS:\n" );
 
     if (!extensions) extensions = "";
 
-    /* @@ Wine registry key: HKCU\Software\Wine\OpenGL */
-    if (!RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\OpenGL", &hkey ))
+    if (!disabled)
     {
-        DWORD size, ret = RegQueryValueExA( hkey, "DisabledExtensions", 0, NULL, NULL, &size );
-        if (!ret && (disabled = HeapAlloc( GetProcessHeap(), 0, size )))
-            ret = RegQueryValueExA( hkey, "DisabledExtensions", 0, NULL, (BYTE *)disabled, &size );
-        RegCloseKey( hkey );
-        if (ret) *disabled = 0;
+        HKEY hkey;
+        DWORD size;
+
+        str = NULL;
+        /* @@ Wine registry key: HKCU\Software\Wine\OpenGL */
+        if (!RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\OpenGL", &hkey ))
+        {
+            if (!RegQueryValueExA( hkey, "DisabledExtensions", 0, NULL, NULL, &size ))
+            {
+                str = HeapAlloc( GetProcessHeap(), 0, size );
+                if (RegQueryValueExA( hkey, "DisabledExtensions", 0, NULL, (BYTE *)str, &size )) *str = 0;
+            }
+            RegCloseKey( hkey );
+        }
+        if (str)
+        {
+            if (InterlockedCompareExchangePointer( (void **)&disabled, str, NULL ))
+                HeapFree( GetProcessHeap(), 0, str );
+        }
+        else disabled = "";
     }
 
+    if (!disabled[0]) return NULL;
     if ((str = HeapAlloc( GetProcessHeap(), 0, strlen(extensions) + 2 )))
     {
         p = str;
@@ -1521,8 +1538,7 @@ static char *build_gl_extensions( const char *extensions )
         }
         *p = 0;
     }
-    HeapFree( GetProcessHeap(), 0, disabled );
-    return str;
+    return (GLubyte *)str;
 }
 
 /***********************************************************************
@@ -1530,24 +1546,17 @@ static char *build_gl_extensions( const char *extensions )
  */
 const GLubyte * WINAPI wine_glGetString( GLenum name )
 {
-  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-  static const GLubyte *gl_extensions;
+    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+    const GLubyte *ret = funcs->gl.p_glGetString( name );
 
-  /* this is for buggy nvidia driver, crashing if called from a different
-     thread with no context */
-  if(wglGetCurrentContext() == NULL)
-    return NULL;
-
-  if (name != GL_EXTENSIONS) return funcs->gl.p_glGetString(name);
-
-  if (!gl_extensions)
-  {
-      const char *orig_ext = (const char *)funcs->gl.p_glGetString(GL_EXTENSIONS);
-      char *new_ext = build_gl_extensions( orig_ext );
-      if (InterlockedCompareExchangePointer( (void **)&gl_extensions, new_ext, NULL ))
-          HeapFree( GetProcessHeap(), 0, new_ext );
-  }
-  return gl_extensions;
+    if (name == GL_EXTENSIONS && ret)
+    {
+        struct wgl_handle *ptr = get_current_context_ptr();
+        if (ptr->u.context->extensions ||
+            ((ptr->u.context->extensions = filter_extensions( (const char *)ret ))))
+            ret = ptr->u.context->extensions;
+    }
+    return ret;
 }
 
 /***********************************************************************
