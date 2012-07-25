@@ -255,6 +255,33 @@ static void _test_style_remove_attribute(unsigned line, IHTMLStyle *style, const
     ok_(__FILE__,line)(b == exb, "removeAttribute returned %x, expected %x\n", b, exb);
 }
 
+#define set_text_decoration(a,b) _set_text_decoration(__LINE__,a,b)
+static void _set_text_decoration(unsigned line, IHTMLStyle *style, const char *v)
+{
+    BSTR str;
+    HRESULT hres;
+
+    str = a2bstr(v);
+    hres = IHTMLStyle_put_textDecoration(style, str);
+    ok_(__FILE__,line)(hres == S_OK, "put_textDecoration failed: %08x\n", hres);
+    SysFreeString(str);
+}
+
+#define test_text_decoration(a,b) _test_text_decoration(__LINE__,a,b)
+static void _test_text_decoration(unsigned line, IHTMLStyle *style, const char *exdec)
+{
+    BSTR str;
+    HRESULT hres;
+
+    hres = IHTMLStyle_get_textDecoration(style, &str);
+    ok_(__FILE__,line)(hres == S_OK, "get_textDecoration failed: %08x\n", hres);
+    if(exdec)
+        ok_(__FILE__,line)(!strcmp_wa(str, exdec), "textDecoration = %s, expected %s\n", wine_dbgstr_w(str), exdec);
+    else
+        ok_(__FILE__,line)(!str, "textDecoration = %s, expected NULL\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+}
+
 static void test_set_csstext(IHTMLStyle *style)
 {
     VARIANT v;
@@ -738,35 +765,15 @@ static void test_body_style(IHTMLStyle *style)
     ok(hres == E_INVALIDARG, "put_textDecoration failed: %08x\n", hres);
     SysFreeString(str);
 
-    str = a2bstr("none");
-    hres = IHTMLStyle_put_textDecoration(style, str);
-    ok(hres == S_OK, "put_textDecoration failed: %08x\n", hres);
-    SysFreeString(str);
-
-    str = a2bstr("underline");
-    hres = IHTMLStyle_put_textDecoration(style, str);
-    ok(hres == S_OK, "put_textDecoration failed: %08x\n", hres);
-    SysFreeString(str);
-
-    str = a2bstr("overline");
-    hres = IHTMLStyle_put_textDecoration(style, str);
-    ok(hres == S_OK, "put_textDecoration failed: %08x\n", hres);
-    SysFreeString(str);
-
-    str = a2bstr("line-through");
-    hres = IHTMLStyle_put_textDecoration(style, str);
-    ok(hres == S_OK, "put_textDecoration failed: %08x\n", hres);
-    SysFreeString(str);
-
-    str = a2bstr("blink");
-    hres = IHTMLStyle_put_textDecoration(style, str);
-    ok(hres == S_OK, "put_textDecoration failed: %08x\n", hres);
-    SysFreeString(str);
-
-    hres = IHTMLStyle_get_textDecoration(style, &str);
-    ok(hres == S_OK, "get_textDecoration failed: %08x\n", hres);
-    ok(!strcmp_wa(str, "blink"), "str != blink\n");
-    SysFreeString(str);
+    set_text_decoration(style, "none");
+    test_text_decoration(style, "none");
+    set_text_decoration(style, "underline");
+    set_text_decoration(style, "overline");
+    set_text_decoration(style, "line-through");
+    set_text_decoration(style, "blink");
+    set_text_decoration(style, "overline");
+    set_text_decoration(style, "blink");
+    test_text_decoration(style, "blink");
 
     hres = IHTMLStyle_put_textDecoration(style, sDefault);
     ok(hres == S_OK, "put_textDecoration failed: %08x\n", hres);
@@ -2335,6 +2342,53 @@ static void basic_style_test(IHTMLDocument2 *doc)
     IHTMLElement_Release(elem);
 }
 
+static const char runtimestyle_test_str[] =
+    "<html><head><style>body {text-decoration: auto}</style></head><body></body></html>";
+
+static void runtimestyle_test(IHTMLDocument2 *doc)
+{
+    IHTMLStyle *style, *runtime_style;
+    IHTMLElement2 *elem2;
+    IHTMLElement *elem;
+    BSTR str;
+    HRESULT hres;
+
+    hres = IHTMLDocument2_get_body(doc, &elem);
+    ok(hres == S_OK, "get_body failed: %08x\n", hres);
+
+    elem2 = get_elem2_iface((IUnknown*)elem);
+
+    hres = IHTMLElement2_get_runtimeStyle(elem2, &runtime_style);
+    ok(hres == S_OK, "get_runtimeStyle failed: %08x\n", hres);
+
+    hres = IHTMLElement_get_style(elem, &style);
+    ok(hres == S_OK, "get_style failed: %08x\n", hres);
+
+    test_text_decoration(style, NULL);
+    test_text_decoration(runtime_style, NULL);
+    set_text_decoration(style, "underline");
+    test_text_decoration(style, "underline");
+
+    hres = IHTMLStyle_get_textDecoration(style, &str);
+    ok(hres == S_OK, "get_textDecoration failed: %08x\n", hres);
+    ok(broken(!str) || !strcmp_wa(str, "underline"), "textDecoration = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    set_text_decoration(runtime_style, "blink");
+    test_text_decoration(runtime_style, "blink");
+
+    hres = IHTMLStyle_get_textDecoration(style, &str);
+    ok(hres == S_OK, "get_textDecoration failed: %08x\n", hres);
+    todo_wine
+    ok(!strcmp_wa(str, "underline"), "textDecoration = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    IHTMLStyle_Release(runtime_style);
+    IHTMLStyle_Release(style);
+    IHTMLElement2_Release(elem2);
+    IHTMLElement_Release(elem);
+}
+
 static IHTMLDocument2 *notif_doc;
 static BOOL doc_complete;
 
@@ -2495,6 +2549,7 @@ START_TEST(style)
     CoInitialize(NULL);
 
     run_test(basic_test_str, basic_style_test);
+    run_test(runtimestyle_test_str, runtimestyle_test);
 
     CoUninitialize();
 }
