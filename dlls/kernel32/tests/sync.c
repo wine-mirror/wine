@@ -1183,7 +1183,7 @@ static void test_initonce(void)
     ret = pInitOnceExecuteOnce(&initonce, initonce_callback, (void*)0xdeadbeef, &g_initctxt);
     ok(ret, "got wrong ret value %d\n", ret);
     ok(initonce.Ptr == (void*)0x2, "got %p\n", initonce.Ptr);
-    ok(g_initctxt == (void*)0, "got %p\n", g_initctxt);
+    ok(g_initctxt == NULL, "got %p\n", g_initctxt);
     ok(!g_initcallback_called, "got %d\n", g_initcallback_called);
 
     pInitOnceInitialize(&initonce);
