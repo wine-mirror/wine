@@ -136,7 +136,7 @@ BOOL WINAPI DnsRecordCompare( PDNS_RECORD r1, PDNS_RECORD r2 )
         r1->Flags.DW    != r2->Flags.DW    ||
         r1->dwReserved  != r2->dwReserved) return FALSE;
 
-    wide = (r1->Flags.S.CharSet == DnsCharSetUnicode) ? TRUE : FALSE;
+    wide = r1->Flags.S.CharSet == DnsCharSetUnicode;
     if (dns_strcmpX( r1->pName, r2->pName, wide )) return FALSE;
 
     switch (r1->wType)
