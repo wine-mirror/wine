@@ -1817,7 +1817,7 @@ static const char *debug_expr_op(const struct hlsl_ir_expr *expr)
 }
 
 /* Dumps the expression in a prefix "operator (operands)" form */
-void debug_dump_ir_expr(const struct hlsl_ir_expr *expr)
+static void debug_dump_ir_expr(const struct hlsl_ir_expr *expr)
 {
     unsigned int i;
 
