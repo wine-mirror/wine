@@ -215,7 +215,7 @@ static HRESULT WINAPI HTMLDocument_get_images(IHTMLDocument2 *iface, IHTMLElemen
 
     if(nscoll) {
         *p = create_collection_from_htmlcol(This->doc_node, nscoll);
-        nsIDOMElement_Release(nscoll);
+        nsIDOMHTMLCollection_Release(nscoll);
     }
 
     return S_OK;
@@ -247,7 +247,7 @@ static HRESULT WINAPI HTMLDocument_get_applets(IHTMLDocument2 *iface, IHTMLEleme
 
     if(nscoll) {
         *p = create_collection_from_htmlcol(This->doc_node, nscoll);
-        nsIDOMElement_Release(nscoll);
+        nsIDOMHTMLCollection_Release(nscoll);
     }
 
     return S_OK;
@@ -279,7 +279,7 @@ static HRESULT WINAPI HTMLDocument_get_links(IHTMLDocument2 *iface, IHTMLElement
 
     if(nscoll) {
         *p = create_collection_from_htmlcol(This->doc_node, nscoll);
-        nsIDOMElement_Release(nscoll);
+        nsIDOMHTMLCollection_Release(nscoll);
     }
 
     return S_OK;
@@ -311,7 +311,7 @@ static HRESULT WINAPI HTMLDocument_get_forms(IHTMLDocument2 *iface, IHTMLElement
 
     if(nscoll) {
         *p = create_collection_from_htmlcol(This->doc_node, nscoll);
-        nsIDOMElement_Release(nscoll);
+        nsIDOMHTMLCollection_Release(nscoll);
     }
 
     return S_OK;
@@ -343,7 +343,7 @@ static HRESULT WINAPI HTMLDocument_get_anchors(IHTMLDocument2 *iface, IHTMLEleme
 
     if(nscoll) {
         *p = create_collection_from_htmlcol(This->doc_node, nscoll);
-        nsIDOMElement_Release(nscoll);
+        nsIDOMHTMLCollection_Release(nscoll);
     }
 
     return S_OK;

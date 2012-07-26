@@ -372,7 +372,7 @@ HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, nsChannel
         if(SUCCEEDED(hres))
             hres = create_pending_window(This->window, bscallback);
         if(bscallback != async_bsc)
-            IUnknown_Release(&bscallback->bsc.IBindStatusCallback_iface);
+            IBindStatusCallback_Release(&bscallback->bsc.IBindStatusCallback_iface);
     }
 
     if(FAILED(hres)) {
@@ -483,7 +483,7 @@ static ULONG WINAPI PersistMoniker_Release(IPersistMoniker *iface)
 static HRESULT WINAPI PersistMoniker_GetClassID(IPersistMoniker *iface, CLSID *pClassID)
 {
     HTMLDocument *This = impl_from_IPersistMoniker(iface);
-    return IPersist_GetClassID(&This->IPersistFile_iface, pClassID);
+    return IPersistFile_GetClassID(&This->IPersistFile_iface, pClassID);
 }
 
 static HRESULT WINAPI PersistMoniker_IsDirty(IPersistMoniker *iface)
@@ -773,7 +773,7 @@ static ULONG WINAPI PersistStreamInit_Release(IPersistStreamInit *iface)
 static HRESULT WINAPI PersistStreamInit_GetClassID(IPersistStreamInit *iface, CLSID *pClassID)
 {
     HTMLDocument *This = impl_from_IPersistStreamInit(iface);
-    return IPersist_GetClassID(&This->IPersistFile_iface, pClassID);
+    return IPersistFile_GetClassID(&This->IPersistFile_iface, pClassID);
 }
 
 static HRESULT WINAPI PersistStreamInit_IsDirty(IPersistStreamInit *iface)
@@ -914,7 +914,7 @@ static ULONG WINAPI PersistHistory_Release(IPersistHistory *iface)
 static HRESULT WINAPI PersistHistory_GetClassID(IPersistHistory *iface, CLSID *pClassID)
 {
     HTMLDocument *This = impl_from_IPersistHistory(iface);
-    return IPersist_GetClassID(&This->IPersistFile_iface, pClassID);
+    return IPersistFile_GetClassID(&This->IPersistFile_iface, pClassID);
 }
 
 static HRESULT WINAPI PersistHistory_LoadHistory(IPersistHistory *iface, IStream *pStream, IBindCtx *pbc)

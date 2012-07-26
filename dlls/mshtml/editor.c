@@ -250,7 +250,7 @@ static void remove_child_attr(nsIDOMElement *elem, LPCWSTR tag, nsAString *attr_
 
             remove_child_attr(child_elem, tag, attr_str);
 
-            nsIDOMNode_Release(child_elem);
+            nsIDOMElement_Release(child_elem);
         }
 
         nsIDOMNode_Release(child_node);
@@ -360,7 +360,7 @@ static void set_font_size(HTMLDocument *This, LPCWSTR size)
     nsAString_InitDepend(&size_str, sizeW);
     nsAString_InitDepend(&val_str, size);
 
-    nsIDOMElement_SetAttribute(elem, &size_str, &val_str);
+    nsIDOMHTMLElement_SetAttribute(elem, &size_str, &val_str);
     nsAString_Finish(&val_str);
 
     nsISelection_GetRangeAt(nsselection, 0, &range);
@@ -379,7 +379,7 @@ static void set_font_size(HTMLDocument *This, LPCWSTR size)
 
     nsISelection_Release(nsselection);
     nsIDOMRange_Release(range);
-    nsIDOMElement_Release(elem);
+    nsIDOMHTMLElement_Release(elem);
 
     nsAString_Finish(&size_str);
 
@@ -1168,7 +1168,7 @@ static HRESULT exec_hyperlink(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in,
 
     nsAString_InitDepend(&href_str, hrefW);
     nsAString_InitDepend(&ns_url, url);
-    nsIDOMElement_SetAttribute(anchor_elem, &href_str, &ns_url);
+    nsIDOMHTMLElement_SetAttribute(anchor_elem, &href_str, &ns_url);
     nsAString_Finish(&href_str);
 
     nsISelection_GetIsCollapsed(nsselection, &insert_link_at_caret);
@@ -1177,10 +1177,10 @@ static HRESULT exec_hyperlink(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in,
     if (insert_link_at_caret) {
         nsIDOMNode *text_node, *unused_node;
 
-        nsIDOMDocument_CreateTextNode(This->doc_node->nsdoc, &ns_url, (nsIDOMText **)&text_node);
+        nsIDOMHTMLDocument_CreateTextNode(This->doc_node->nsdoc, &ns_url, (nsIDOMText **)&text_node);
 
         /* wrap the <a> tags around the text element */
-        nsIDOMElement_AppendChild(anchor_elem, text_node, &unused_node);
+        nsIDOMHTMLElement_AppendChild(anchor_elem, text_node, &unused_node);
         nsIDOMNode_Release(text_node);
         nsIDOMNode_Release(unused_node);
     }
@@ -1203,7 +1203,7 @@ static HRESULT exec_hyperlink(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in,
     }
 
     nsISelection_Release(nsselection);
-    nsIDOMElement_Release(anchor_elem);
+    nsIDOMHTMLElement_Release(anchor_elem);
 
     if (cmdexecopt != OLECMDEXECOPT_DONTPROMPTUSER)
         SysFreeString(url);

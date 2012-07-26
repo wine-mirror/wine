@@ -182,7 +182,7 @@ HRESULT create_nselem(HTMLDocumentNode *doc, const WCHAR *tag, nsIDOMHTMLElement
     }
 
     nsAString_InitDepend(&tag_str, tag);
-    nsres = nsIDOMDocument_CreateElement(doc->nsdoc, &tag_str, &nselem);
+    nsres = nsIDOMHTMLDocument_CreateElement(doc->nsdoc, &tag_str, &nselem);
     nsAString_Finish(&tag_str);
     if(NS_FAILED(nsres)) {
         ERR("CreateElement failed: %08x\n", nsres);
@@ -1180,7 +1180,7 @@ static HRESULT WINAPI HTMLElement_insertAdjacentText(IHTMLElement *iface, BSTR w
 
 
     nsAString_InitDepend(&ns_text, text);
-    nsres = nsIDOMDocument_CreateTextNode(This->node.doc->nsdoc, &ns_text, (nsIDOMText **)&nsnode);
+    nsres = nsIDOMHTMLDocument_CreateTextNode(This->node.doc->nsdoc, &ns_text, (nsIDOMText **)&nsnode);
     nsAString_Finish(&ns_text);
 
     if(NS_FAILED(nsres) || !nsnode)
@@ -1802,7 +1802,7 @@ HRESULT HTMLElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, BOOL use_g
 
     TRACE("%s ret %p\n", debugstr_w(class_name), elem);
 
-    nsIDOMElement_Release(nselem);
+    nsIDOMHTMLElement_Release(nselem);
     nsAString_Finish(&class_name_str);
     if(FAILED(hres))
         return hres;

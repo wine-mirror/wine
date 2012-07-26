@@ -439,7 +439,7 @@ HRESULT call_set_active_object(IOleInPlaceUIWindow *window, IOleInPlaceActiveObj
                     sizeof(html_documentW)/sizeof(WCHAR));
     }
 
-    return IOleInPlaceFrame_SetActiveObject(window, act_obj, act_obj ? html_documentW : NULL);
+    return IOleInPlaceUIWindow_SetActiveObject(window, act_obj, act_obj ? html_documentW : NULL);
 }
 
 /**********************************************************
@@ -620,7 +620,7 @@ static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL f
             }
         }
 
-        IOleClientSite_AddRef(This->doc_obj->ipsite);
+        IOleInPlaceSite_AddRef(This->doc_obj->ipsite);
         This->doc_obj->request_uiactivate = FALSE;
         HTMLDocument_LockContainer(This->doc_obj, TRUE);
     }

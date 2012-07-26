@@ -257,7 +257,7 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
 
         This->doc_obj->custom_hostui = FALSE;
 
-        hres = IOleObject_QueryInterface(pClientSite, &IID_IDocHostUIHandler, (void**)&uihandler);
+        hres = IOleClientSite_QueryInterface(pClientSite, &IID_IDocHostUIHandler, (void**)&uihandler);
         if(SUCCEEDED(hres))
             This->doc_obj->hostui = uihandler;
     }

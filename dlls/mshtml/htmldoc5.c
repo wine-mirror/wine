@@ -150,7 +150,7 @@ static HRESULT WINAPI HTMLDocument5_createComment(IHTMLDocument5 *iface, BSTR bs
     }
 
     hres = HTMLCommentElement_Create(This->doc_node, (nsIDOMNode*)nscomment, &elem);
-    nsIDOMElement_Release(nscomment);
+    nsIDOMComment_Release(nscomment);
     if(FAILED(hres))
         return hres;
 

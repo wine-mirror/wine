@@ -1803,7 +1803,7 @@ static HRESULT init_nscontainer(NSContainer *nscontainer)
         return E_FAIL;
     }
 
-    nsres = nsIWebBrowserFocus_QueryInterface(nscontainer->webbrowser, &IID_nsIWebBrowserFocus,
+    nsres = nsIWebBrowser_QueryInterface(nscontainer->webbrowser, &IID_nsIWebBrowserFocus,
             (void**)&nscontainer->focus);
     if(NS_FAILED(nsres)) {
         ERR("Could not get nsIWebBrowserFocus interface: %08x\n", nsres);

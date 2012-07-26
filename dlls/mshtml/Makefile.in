@@ -1,7 +1,7 @@
 MODULE    = mshtml.dll
 IMPORTLIB = mshtml
 IMPORTS   = strmiids uuid urlmon shlwapi shell32 ole32 oleaut32 user32 gdi32 advapi32
-EXTRADEFS = -DCOM_NO_WINDOWS_H
+EXTRADEFS = -DCOM_NO_WINDOWS_H -DWIDL_C_INLINE_WRAPPERS
 DELAYIMPORTS = wininet
 
 C_SRCS = \

@@ -174,14 +174,14 @@ static HRESULT WINAPI OleInPlaceObjectWindowless_GetWindow(IOleInPlaceObjectWind
         HWND *phwnd)
 {
     HTMLDocument *This = impl_from_IOleInPlaceObjectWindowless(iface);
-    return IOleWindow_GetWindow(&This->IOleInPlaceActiveObject_iface, phwnd);
+    return IOleInPlaceActiveObject_GetWindow(&This->IOleInPlaceActiveObject_iface, phwnd);
 }
 
 static HRESULT WINAPI OleInPlaceObjectWindowless_ContextSensitiveHelp(IOleInPlaceObjectWindowless *iface,
         BOOL fEnterMode)
 {
     HTMLDocument *This = impl_from_IOleInPlaceObjectWindowless(iface);
-    return IOleWindow_ContextSensitiveHelp(&This->IOleInPlaceActiveObject_iface, fEnterMode);
+    return IOleInPlaceActiveObject_ContextSensitiveHelp(&This->IOleInPlaceActiveObject_iface, fEnterMode);
 }
 
 static HRESULT WINAPI OleInPlaceObjectWindowless_InPlaceDeactivate(IOleInPlaceObjectWindowless *iface)

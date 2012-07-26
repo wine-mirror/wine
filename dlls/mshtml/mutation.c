@@ -604,13 +604,13 @@ static void NSAPI nsDocumentObserver_BindToDocument(nsIDocumentObserver *iface, 
 
     TRACE("(%p)\n", This);
 
-    nsres = nsISupports_QueryInterface(aContent, &IID_nsIDOMElement, (void**)&nselem);
+    nsres = nsIContent_QueryInterface(aContent, &IID_nsIDOMElement, (void**)&nselem);
     if(NS_SUCCEEDED(nsres)) {
         check_event_attr(This, nselem);
         nsIDOMElement_Release(nselem);
     }
 
-    nsres = nsISupports_QueryInterface(aContent, &IID_nsIDOMComment, (void**)&nscomment);
+    nsres = nsIContent_QueryInterface(aContent, &IID_nsIDOMComment, (void**)&nscomment);
     if(NS_SUCCEEDED(nsres)) {
         TRACE("comment node\n");
 
@@ -618,7 +618,7 @@ static void NSAPI nsDocumentObserver_BindToDocument(nsIDocumentObserver *iface, 
         nsIDOMComment_Release(nscomment);
     }
 
-    nsres = nsISupports_QueryInterface(aContent, &IID_nsIDOMHTMLIFrameElement, (void**)&nsiframe);
+    nsres = nsIContent_QueryInterface(aContent, &IID_nsIDOMHTMLIFrameElement, (void**)&nsiframe);
     if(NS_SUCCEEDED(nsres)) {
         TRACE("iframe node\n");
 
@@ -626,7 +626,7 @@ static void NSAPI nsDocumentObserver_BindToDocument(nsIDocumentObserver *iface, 
         nsIDOMHTMLIFrameElement_Release(nsiframe);
     }
 
-    nsres = nsISupports_QueryInterface(aContent, &IID_nsIDOMHTMLFrameElement, (void**)&nsframe);
+    nsres = nsIContent_QueryInterface(aContent, &IID_nsIDOMHTMLFrameElement, (void**)&nsframe);
     if(NS_SUCCEEDED(nsres)) {
         TRACE("frame node\n");
 
@@ -644,7 +644,7 @@ static void NSAPI nsDocumentObserver_AttemptToExecuteScript(nsIDocumentObserver 
 
     TRACE("(%p)->(%p %p %p)\n", This, aContent, aParser, aBlock);
 
-    nsres = nsISupports_QueryInterface(aContent, &IID_nsIDOMHTMLScriptElement, (void**)&nsscript);
+    nsres = nsIContent_QueryInterface(aContent, &IID_nsIDOMHTMLScriptElement, (void**)&nsscript);
     if(NS_SUCCEEDED(nsres)) {
         TRACE("script node\n");
 

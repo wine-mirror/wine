@@ -119,7 +119,7 @@ static HRESULT WINAPI HTMLObjectElement_get_classid(IHTMLObjectElement *iface, B
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return IHTMLObjectElement2_get_classid(&This->IHTMLObjectElement_iface, p);
+    return IHTMLObjectElement2_get_classid(&This->IHTMLObjectElement2_iface, p);
 }
 
 static HRESULT WINAPI HTMLObjectElement_get_data(IHTMLObjectElement *iface, BSTR *p)
@@ -128,7 +128,7 @@ static HRESULT WINAPI HTMLObjectElement_get_data(IHTMLObjectElement *iface, BSTR
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return IHTMLObjectElement2_get_data(&This->IHTMLObjectElement_iface, p);
+    return IHTMLObjectElement2_get_data(&This->IHTMLObjectElement2_iface, p);
 }
 
 static HRESULT WINAPI HTMLObjectElement_put_recordset(IHTMLObjectElement *iface, IDispatch *v)

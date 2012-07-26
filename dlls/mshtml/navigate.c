@@ -1162,7 +1162,7 @@ static nsrefcnt NSAPI nsAsyncVerifyRedirectCallback_Release(nsIAsyncVerifyRedire
 
     if(!ref) {
         IBindStatusCallback_Release(&This->bsc->bsc.IBindStatusCallback_iface);
-        nsIChannel_Release(&This->nschannel->nsIHttpChannel_iface);
+        nsIHttpChannel_Release(&This->nschannel->nsIHttpChannel_iface);
         heap_free(This);
     }
 
@@ -1178,7 +1178,7 @@ static nsresult NSAPI nsAsyncVerifyRedirectCallback_AsyncOnChannelRedirect(nsIAs
     TRACE("(%p)->(%08x)\n", This, result);
 
     old_nschannel = This->bsc->nschannel;
-    nsIChannel_AddRef(&This->nschannel->nsIHttpChannel_iface);
+    nsIHttpChannel_AddRef(&This->nschannel->nsIHttpChannel_iface);
     This->bsc->nschannel = This->nschannel;
 
     if(This->nschannel->load_group) {
@@ -1228,7 +1228,7 @@ static HRESULT create_redirect_callback(nsChannel *nschannel, nsChannelBSC *bsc,
     callback->nsIAsyncVerifyRedirectCallback_iface.lpVtbl = &nsAsyncVerifyRedirectCallbackVtbl;
     callback->ref = 1;
 
-    nsIChannel_AddRef(&nschannel->nsIHttpChannel_iface);
+    nsIHttpChannel_AddRef(&nschannel->nsIHttpChannel_iface);
     callback->nschannel = nschannel;
 
     IBindStatusCallback_AddRef(&bsc->bsc.IBindStatusCallback_iface);
@@ -1248,7 +1248,7 @@ static void nsChannelBSC_destroy(BSCallback *bsc)
     nsChannelBSC *This = nsChannelBSC_from_BSCallback(bsc);
 
     if(This->nschannel)
-        nsIChannel_Release(&This->nschannel->nsIHttpChannel_iface);
+        nsIHttpChannel_Release(&This->nschannel->nsIHttpChannel_iface);
     if(This->nslistener)
         nsIStreamListener_Release(This->nslistener);
     if(This->nscontext)
@@ -1466,7 +1466,7 @@ static HRESULT handle_redirect(nsChannelBSC *This, const WCHAR *new_url)
         TRACE("%p %p->%p\n", This, This->nschannel, new_channel);
 
         hres = create_redirect_callback(new_channel, This, &callback);
-        nsIChannel_Release(&new_channel->nsIHttpChannel_iface);
+        nsIHttpChannel_Release(&new_channel->nsIHttpChannel_iface);
     }
 
     if(SUCCEEDED(hres)) {
@@ -1745,7 +1745,7 @@ HRESULT channelbsc_load_stream(HTMLInnerWindow *pending_window, IStream *stream)
 
 void channelbsc_set_channel(nsChannelBSC *This, nsChannel *channel, nsIStreamListener *listener, nsISupports *context)
 {
-    nsIChannel_AddRef(&channel->nsIHttpChannel_iface);
+    nsIHttpChannel_AddRef(&channel->nsIHttpChannel_iface);
     This->nschannel = channel;
 
     nsIStreamListener_AddRef(listener);
@@ -2002,7 +2002,7 @@ HRESULT navigate_new_window(HTMLOuterWindow *window, IUri *uri, const WCHAR *nam
     if(SUCCEEDED(hres)) {
         ITargetFramePriv2 *target_frame_priv;
 
-        hres = IWebBrowser_QueryInterface(web_browser, &IID_ITargetFramePriv2, (void**)&target_frame_priv);
+        hres = IWebBrowser2_QueryInterface(web_browser, &IID_ITargetFramePriv2, (void**)&target_frame_priv);
         if(SUCCEEDED(hres)) {
             hres = ITargetFramePriv2_AggregatedNavigation2(target_frame_priv,
                     HLNF_DISABLEWINDOWRESTRICTIONS|HLNF_OPENINNEWWINDOW, bind_ctx, &bsc->bsc.IBindStatusCallback_iface,

@@ -342,7 +342,7 @@ static nsIDOMNode *prev_node(HTMLTxtRange *This, nsIDOMNode *iter)
         nsIDOMHTMLElement *nselem;
 
         nsIDOMHTMLDocument_GetBody(This->doc->nsdoc, &nselem);
-        nsIDOMElement_GetLastChild(nselem, &tmp);
+        nsIDOMHTMLElement_GetLastChild(nselem, &tmp);
         if(!tmp)
             return (nsIDOMNode*)nselem;
 
@@ -351,7 +351,7 @@ static nsIDOMNode *prev_node(HTMLTxtRange *This, nsIDOMNode *iter)
             nsIDOMNode_GetLastChild(ret, &tmp);
         }
 
-        nsIDOMElement_Release(nselem);
+        nsIDOMHTMLElement_Release(nselem);
 
         return ret;
     }
@@ -1048,7 +1048,7 @@ static ULONG WINAPI HTMLTxtRange_Release(IHTMLTxtRange *iface)
 
     if(!ref) {
         if(This->nsrange)
-            nsISelection_Release(This->nsrange);
+            nsIDOMRange_Release(This->nsrange);
         if(This->doc)
             list_remove(&This->entry);
         heap_free(This);
@@ -1806,16 +1806,16 @@ static HRESULT exec_indent(HTMLTxtRange *This, VARIANT *in, VARIANT *out)
     create_nselem(This->doc, pW, &p_elem);
 
     nsIDOMRange_ExtractContents(This->nsrange, &fragment);
-    nsIDOMElement_AppendChild(p_elem, (nsIDOMNode*)fragment, &tmp);
+    nsIDOMHTMLElement_AppendChild(p_elem, (nsIDOMNode*)fragment, &tmp);
     nsIDOMDocumentFragment_Release(fragment);
     nsIDOMNode_Release(tmp);
 
-    nsIDOMElement_AppendChild(blockquote_elem, (nsIDOMNode*)p_elem, &tmp);
-    nsIDOMElement_Release(p_elem);
+    nsIDOMHTMLElement_AppendChild(blockquote_elem, (nsIDOMNode*)p_elem, &tmp);
+    nsIDOMHTMLElement_Release(p_elem);
     nsIDOMNode_Release(tmp);
 
     nsIDOMRange_InsertNode(This->nsrange, (nsIDOMNode*)blockquote_elem);
-    nsIDOMElement_Release(blockquote_elem);
+    nsIDOMHTMLElement_Release(blockquote_elem);
 
     return S_OK;
 }

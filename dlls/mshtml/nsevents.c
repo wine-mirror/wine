@@ -92,7 +92,7 @@ static nsresult NSAPI nsDOMEventListener_QueryInterface(nsIDOMEventListener *ifa
     }
 
     if(*result) {
-        nsIWebBrowserChrome_AddRef(&This->nsIDOMEventListener_iface);
+        nsIDOMEventListener_AddRef(&This->nsIDOMEventListener_iface);
         return NS_OK;
     }
 

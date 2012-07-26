@@ -505,7 +505,7 @@ static nsresult NSAPI nsChannel_QueryInterface(nsIHttpChannel *iface, nsIIDRef r
     }
 
     if(*result) {
-        nsIChannel_AddRef(&This->nsIHttpChannel_iface);
+        nsIHttpChannel_AddRef(&This->nsIHttpChannel_iface);
         return NS_OK;
     }
 
@@ -528,7 +528,7 @@ static nsrefcnt NSAPI nsChannel_Release(nsIHttpChannel *iface)
     LONG ref = InterlockedDecrement(&This->ref);
 
     if(!ref) {
-        nsIURI_Release(&This->uri->nsIFileURL_iface);
+        nsIFileURL_Release(&This->uri->nsIFileURL_iface);
         if(This->owner)
             nsISupports_Release(This->owner);
         if(This->post_data_stream)
@@ -559,7 +559,7 @@ static nsresult NSAPI nsChannel_GetName(nsIHttpChannel *iface, nsACString *aName
 
     TRACE("(%p)->(%p)\n", This, aName);
 
-    return nsIURI_GetSpec(&This->uri->nsIFileURL_iface, aName);
+    return nsIFileURL_GetSpec(&This->uri->nsIFileURL_iface, aName);
 }
 
 static nsresult NSAPI nsChannel_IsPending(nsIHttpChannel *iface, cpp_bool *_retval)
@@ -688,7 +688,7 @@ static nsresult NSAPI nsChannel_GetURI(nsIHttpChannel *iface, nsIURI **aURI)
 
     TRACE("(%p)->(%p)\n", This, aURI);
 
-    nsIURI_AddRef(&This->uri->nsIFileURL_iface);
+    nsIFileURL_AddRef(&This->uri->nsIFileURL_iface);
     *aURI = (nsIURI*)This->uri;
 
     return NS_OK;
@@ -902,7 +902,7 @@ static HTMLOuterWindow *get_window_from_load_group(nsChannel *This)
     window = wine_uri->window_ref ? wine_uri->window_ref->window : NULL;
     if(window)
         IHTMLWindow2_AddRef(&window->base.IHTMLWindow2_iface);
-    nsIURI_Release(&wine_uri->nsIFileURL_iface);
+    nsIFileURL_Release(&wine_uri->nsIFileURL_iface);
 
     return window;
 }
@@ -1416,19 +1416,19 @@ static nsresult NSAPI nsUploadChannel_QueryInterface(nsIUploadChannel *iface, ns
         void **result)
 {
     nsChannel *This = impl_from_nsIUploadChannel(iface);
-    return nsIChannel_QueryInterface(&This->nsIHttpChannel_iface, riid, result);
+    return nsIHttpChannel_QueryInterface(&This->nsIHttpChannel_iface, riid, result);
 }
 
 static nsrefcnt NSAPI nsUploadChannel_AddRef(nsIUploadChannel *iface)
 {
     nsChannel *This = impl_from_nsIUploadChannel(iface);
-    return nsIChannel_AddRef(&This->nsIHttpChannel_iface);
+    return nsIHttpChannel_AddRef(&This->nsIHttpChannel_iface);
 }
 
 static nsrefcnt NSAPI nsUploadChannel_Release(nsIUploadChannel *iface)
 {
     nsChannel *This = impl_from_nsIUploadChannel(iface);
-    return nsIChannel_Release(&This->nsIHttpChannel_iface);
+    return nsIHttpChannel_Release(&This->nsIHttpChannel_iface);
 }
 
 static nsresult NSAPI nsUploadChannel_SetUploadStream(nsIUploadChannel *iface,
@@ -1507,19 +1507,19 @@ static nsresult NSAPI nsHttpChannelInternal_QueryInterface(nsIHttpChannelInterna
         void **result)
 {
     nsChannel *This = impl_from_nsIHttpChannelInternal(iface);
-    return nsIChannel_QueryInterface(&This->nsIHttpChannel_iface, riid, result);
+    return nsIHttpChannel_QueryInterface(&This->nsIHttpChannel_iface, riid, result);
 }
 
 static nsrefcnt NSAPI nsHttpChannelInternal_AddRef(nsIHttpChannelInternal *iface)
 {
     nsChannel *This = impl_from_nsIHttpChannelInternal(iface);
-    return nsIChannel_AddRef(&This->nsIHttpChannel_iface);
+    return nsIHttpChannel_AddRef(&This->nsIHttpChannel_iface);
 }
 
 static nsrefcnt NSAPI nsHttpChannelInternal_Release(nsIHttpChannelInternal *iface)
 {
     nsChannel *This = impl_from_nsIHttpChannelInternal(iface);
-    return nsIChannel_Release(&This->nsIHttpChannel_iface);
+    return nsIHttpChannel_Release(&This->nsIHttpChannel_iface);
 }
 
 static nsresult NSAPI nsHttpChannelInternal_GetDocumentURI(nsIHttpChannelInternal *iface, nsIURI **aDocumentURI)
@@ -1807,7 +1807,7 @@ static nsresult NSAPI nsURI_QueryInterface(nsIFileURL *iface, nsIIDRef riid, voi
     }
 
     if(*result) {
-        nsIURI_AddRef(&This->nsIFileURL_iface);
+        nsIFileURL_AddRef(&This->nsIFileURL_iface);
         return NS_OK;
     }
 
@@ -2264,7 +2264,7 @@ static nsresult NSAPI nsURI_Equals(nsIFileURL *iface, nsIURI *other, cpp_bool *_
         nsres = NS_ERROR_UNEXPECTED;
     }
 
-    nsIURI_Release(&other_obj->nsIFileURL_iface);
+    nsIFileURL_Release(&other_obj->nsIFileURL_iface);
     return nsres;
 }
 
@@ -2361,7 +2361,7 @@ static nsresult NSAPI nsURI_GetAsciiSpec(nsIFileURL *iface, nsACString *aAsciiSp
 
     TRACE("(%p)->(%p)\n", This, aAsciiSpec);
 
-    return nsIURI_GetSpec(&This->nsIFileURL_iface, aAsciiSpec);
+    return nsIFileURL_GetSpec(&This->nsIFileURL_iface, aAsciiSpec);
 }
 
 static nsresult NSAPI nsURI_GetAsciiHost(nsIFileURL *iface, nsACString *aAsciiHost)
@@ -2453,7 +2453,7 @@ static nsresult NSAPI nsURI_EqualsExceptRef(nsIFileURL *iface, nsIURI *other, cp
         nsres = NS_ERROR_UNEXPECTED;
     }
 
-    nsIURI_Release(&other_obj->nsIFileURL_iface);
+    nsIFileURL_Release(&other_obj->nsIFileURL_iface);
     return nsres;
 }
 
@@ -2490,7 +2490,7 @@ static nsresult NSAPI nsURI_GetSpecIgnoringRef(nsIFileURL *iface, nsACString *aS
 
     FIXME("(%p)->(%p)\n", This, aSpecIgnoringRef);
 
-    return nsIURL_GetSpec(&This->nsIFileURL_iface, aSpecIgnoringRef);
+    return nsIFileURL_GetSpec(&This->nsIFileURL_iface, aSpecIgnoringRef);
 }
 
 static nsresult NSAPI nsURI_GetHasRef(nsIFileURL *iface, cpp_bool *aHasRef)
@@ -2518,7 +2518,7 @@ static nsresult NSAPI nsURL_GetFilePath(nsIFileURL *iface, nsACString *aFilePath
 
     TRACE("(%p)->(%p)\n", This, aFilePath);
 
-    return nsIURL_GetPath(&This->nsIFileURL_iface, aFilePath);
+    return nsIFileURL_GetPath(&This->nsIFileURL_iface, aFilePath);
 }
 
 static nsresult NSAPI nsURL_SetFilePath(nsIFileURL *iface, const nsACString *aFilePath)
@@ -2530,7 +2530,7 @@ static nsresult NSAPI nsURL_SetFilePath(nsIFileURL *iface, const nsACString *aFi
     if(!This->is_mutable)
         return NS_ERROR_UNEXPECTED;
 
-    return nsIURL_SetPath(&This->nsIFileURL_iface, aFilePath);
+    return nsIFileURL_SetPath(&This->nsIFileURL_iface, aFilePath);
 }
 
 static nsresult NSAPI nsURL_GetQuery(nsIFileURL *iface, nsACString *aQuery)
@@ -2790,19 +2790,19 @@ static nsresult NSAPI nsStandardURL_QueryInterface(nsIStandardURL *iface, nsIIDR
         void **result)
 {
     nsWineURI *This = impl_from_nsIStandardURL(iface);
-    return nsIURL_QueryInterface(&This->nsIFileURL_iface, riid, result);
+    return nsIFileURL_QueryInterface(&This->nsIFileURL_iface, riid, result);
 }
 
 static nsrefcnt NSAPI nsStandardURL_AddRef(nsIStandardURL *iface)
 {
     nsWineURI *This = impl_from_nsIStandardURL(iface);
-    return nsIURL_AddRef(&This->nsIFileURL_iface);
+    return nsIFileURL_AddRef(&This->nsIFileURL_iface);
 }
 
 static nsrefcnt NSAPI nsStandardURL_Release(nsIStandardURL *iface)
 {
     nsWineURI *This = impl_from_nsIStandardURL(iface);
-    return nsIURL_Release(&This->nsIFileURL_iface);
+    return nsIFileURL_Release(&This->nsIFileURL_iface);
 }
 
 static nsresult NSAPI nsStandardURL_GetMutable(nsIStandardURL *iface, cpp_bool *aMutable)
@@ -2908,7 +2908,7 @@ static nsresult create_nschannel(nsWineURI *uri, nsChannel **ret)
     list_init(&channel->response_headers);
     list_init(&channel->request_headers);
 
-    nsIURL_AddRef(&uri->nsIFileURL_iface);
+    nsIFileURL_AddRef(&uri->nsIFileURL_iface);
     channel->uri = uri;
 
     *ret = channel;
@@ -2936,7 +2936,7 @@ HRESULT create_redirect_nschannel(const WCHAR *url, nsChannel *orig_channel, nsC
         return E_FAIL;
 
     nsres = create_nschannel(uri, &channel);
-    nsIURL_Release(&uri->nsIFileURL_iface);
+    nsIFileURL_Release(&uri->nsIFileURL_iface);
     if(NS_FAILED(nsres))
         return E_FAIL;
 
@@ -3249,7 +3249,7 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
     nsres = create_nsuri(urlmon_uri, window, NULL, &wine_uri);
     IUri_Release(urlmon_uri);
     if(base_wine_uri)
-        nsIURI_Release(&base_wine_uri->nsIFileURL_iface);
+        nsIFileURL_Release(&base_wine_uri->nsIFileURL_iface);
     if(NS_FAILED(nsres))
         return nsres;
 
@@ -3280,7 +3280,7 @@ static nsresult NSAPI nsIOService_NewChannelFromURI(nsIIOService *iface, nsIURI 
     }
 
     nsres = create_nschannel(wine_uri, &ret);
-    nsIURL_Release(&wine_uri->nsIFileURL_iface);
+    nsIFileURL_Release(&wine_uri->nsIFileURL_iface);
     if(NS_FAILED(nsres))
         return nsres;
 
@@ -3576,7 +3576,7 @@ nsresult on_start_uri_open(NSContainer *nscontainer, nsIURI *uri, cpp_bool *_ret
             *_retval = translate_url(nscontainer->doc, wine_uri);
     }
 
-    nsIURI_Release(&wine_uri->nsIFileURL_iface);
+    nsIFileURL_Release(&wine_uri->nsIFileURL_iface);
     return NS_OK;
 }
 

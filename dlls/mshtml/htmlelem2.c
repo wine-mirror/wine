@@ -620,7 +620,7 @@ static HRESULT WINAPI HTMLElement2_getBoundingClientRect(IHTMLElement2 *iface, I
 
     TRACE("(%p)->(%p)\n", This, pRect);
 
-    nsres = nsIDOMElement_GetBoundingClientRect(This->nselem, &nsrect);
+    nsres = nsIDOMHTMLElement_GetBoundingClientRect(This->nselem, &nsrect);
     if(NS_FAILED(nsres) || !nsrect) {
         ERR("GetBoindingClientRect failed: %08x\n", nsres);
         return E_FAIL;
@@ -811,7 +811,7 @@ static HRESULT WINAPI HTMLElement2_get_clientHeight(IHTMLElement2 *iface, LONG *
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsIDOMElement_GetClientHeight(This->nselem, &height);
+    nsIDOMHTMLElement_GetClientHeight(This->nselem, &height);
 
     *p = height;
     return S_OK;
@@ -824,7 +824,7 @@ static HRESULT WINAPI HTMLElement2_get_clientWidth(IHTMLElement2 *iface, LONG *p
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsIDOMElement_GetClientWidth(This->nselem, &width);
+    nsIDOMHTMLElement_GetClientWidth(This->nselem, &width);
 
     *p = width;
     return S_OK;
@@ -838,7 +838,7 @@ static HRESULT WINAPI HTMLElement2_get_clientTop(IHTMLElement2 *iface, LONG *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMElement_GetClientTop(This->nselem, &client_top);
+    nsres = nsIDOMHTMLElement_GetClientTop(This->nselem, &client_top);
     if(NS_FAILED(nsres))
         ERR("GetScrollHeight failed: %08x\n", nsres);
 
@@ -855,7 +855,7 @@ static HRESULT WINAPI HTMLElement2_get_clientLeft(IHTMLElement2 *iface, LONG *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMElement_GetClientLeft(This->nselem, &client_left);
+    nsres = nsIDOMHTMLElement_GetClientLeft(This->nselem, &client_left);
     if(NS_FAILED(nsres))
         ERR("GetScrollHeight failed: %08x\n", nsres);
 
@@ -1008,7 +1008,7 @@ static HRESULT WINAPI HTMLElement2_get_scrollHeight(IHTMLElement2 *iface, LONG *
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMElement_GetScrollHeight(This->nselem, &height);
+    nsres = nsIDOMHTMLElement_GetScrollHeight(This->nselem, &height);
     if(NS_FAILED(nsres))
         ERR("GetScrollHeight failed: %08x\n", nsres);
 
@@ -1025,7 +1025,7 @@ static HRESULT WINAPI HTMLElement2_get_scrollWidth(IHTMLElement2 *iface, LONG *p
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMElement_GetScrollWidth(This->nselem, &width);
+    nsres = nsIDOMHTMLElement_GetScrollWidth(This->nselem, &width);
     if(NS_FAILED(nsres))
         ERR("GetScrollWidth failed: %08x\n", nsres);
 
@@ -1045,7 +1045,7 @@ static HRESULT WINAPI HTMLElement2_put_scrollTop(IHTMLElement2 *iface, LONG v)
         return E_NOTIMPL;
     }
 
-    nsIDOMElement_SetScrollTop(This->nselem, v);
+    nsIDOMHTMLElement_SetScrollTop(This->nselem, v);
     return S_OK;
 }
 
@@ -1057,7 +1057,7 @@ static HRESULT WINAPI HTMLElement2_get_scrollTop(IHTMLElement2 *iface, LONG *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMElement_GetScrollTop(This->nselem, &top);
+    nsres = nsIDOMHTMLElement_GetScrollTop(This->nselem, &top);
     if(NS_FAILED(nsres))
         ERR("GetScrollTop failed: %08x\n", nsres);
 
@@ -1077,7 +1077,7 @@ static HRESULT WINAPI HTMLElement2_put_scrollLeft(IHTMLElement2 *iface, LONG v)
         return E_NOTIMPL;
     }
 
-    nsIDOMElement_SetScrollLeft(This->nselem, v);
+    nsIDOMHTMLElement_SetScrollLeft(This->nselem, v);
     return S_OK;
 }
 
@@ -1097,7 +1097,7 @@ static HRESULT WINAPI HTMLElement2_get_scrollLeft(IHTMLElement2 *iface, LONG *p)
         return E_NOTIMPL;
     }
 
-    nsIDOMElement_GetScrollLeft(This->nselem, &left);
+    nsIDOMHTMLElement_GetScrollLeft(This->nselem, &left);
 
     *p = left;
     TRACE("*p = %d\n", *p);

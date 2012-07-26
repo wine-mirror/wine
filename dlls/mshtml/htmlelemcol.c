@@ -376,7 +376,7 @@ static HRESULT WINAPI HTMLElementCollection_tags(IHTMLElementCollection *iface,
         if(!This->elems[i]->nselem)
             continue;
 
-        nsIDOMElement_GetTagName(This->elems[i]->nselem, &tag_str);
+        nsIDOMHTMLElement_GetTagName(This->elems[i]->nselem, &tag_str);
         nsAString_GetData(&tag_str, &tag);
 
         if(CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE, tag, -1,
