@@ -160,11 +160,7 @@ WCHAR** CDECL __p__wpgmptr(void) { return &MSVCRT__wpgmptr; }
  */
 int CDECL _get_pgmptr(char** p)
 {
-  if (!MSVCRT_CHECK_PMT(p))
-  {
-    *MSVCRT__errno() = MSVCRT_EINVAL;
-    return MSVCRT_EINVAL;
-  }
+  if (!MSVCRT_CHECK_PMT(p)) return MSVCRT_EINVAL;
 
   *p = MSVCRT__pgmptr;
   return 0;
@@ -175,12 +171,7 @@ int CDECL _get_pgmptr(char** p)
  */
 int CDECL _get_wpgmptr(WCHAR** p)
 {
-  if (!MSVCRT_CHECK_PMT(p))
-  {
-    *MSVCRT__errno() = MSVCRT_EINVAL;
-    return MSVCRT_EINVAL;
-  }
-
+  if (!MSVCRT_CHECK_PMT(p)) return MSVCRT_EINVAL;
   *p = MSVCRT__wpgmptr;
   return 0;
 }
@@ -261,11 +252,7 @@ MSVCRT_wchar_t*** CDECL __p___winitenv(void) { return &MSVCRT___winitenv; }
  */
 int CDECL MSVCRT__get_osplatform(int *pValue)
 {
-    if (!MSVCRT_CHECK_PMT(pValue != NULL)) {
-        *MSVCRT__errno() = MSVCRT_EINVAL;
-        return MSVCRT_EINVAL;
-    }
-
+    if (!MSVCRT_CHECK_PMT(pValue != NULL)) return MSVCRT_EINVAL;
     *pValue = MSVCRT__osplatform;
     return 0;
 }

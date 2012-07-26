@@ -2027,10 +2027,9 @@ int CDECL MSVCRT__mbstowcs_s_l(MSVCRT_size_t *ret, MSVCRT_wchar_t *wcstr,
         return 0;
     }
 
-    if(!MSVCRT_CHECK_PMT(mbstr != NULL) || !MSVCRT_CHECK_PMT(wcstr != NULL)) {
-        if(wcstr && size)
-            wcstr[0] = '\0';
-        *MSVCRT__errno() = MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT(wcstr != NULL)) return MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT(mbstr != NULL)) {
+        if(size) wcstr[0] = '\0';
         return MSVCRT_EINVAL;
     }
 
@@ -2045,10 +2044,9 @@ int CDECL MSVCRT__mbstowcs_s_l(MSVCRT_size_t *ret, MSVCRT_wchar_t *wcstr,
     else if(conv==size && (count==MSVCRT__TRUNCATE || wcstr[conv-1]=='\0'))
         wcstr[conv-1] = '\0';
     else {
-        MSVCRT_INVALID_PMT("wcstr[size] is too small");
+        MSVCRT_INVALID_PMT("wcstr[size] is too small", MSVCRT_ERANGE);
         if(size)
             wcstr[0] = '\0';
-        *MSVCRT__errno() = MSVCRT_ERANGE;
         return MSVCRT_ERANGE;
     }
 

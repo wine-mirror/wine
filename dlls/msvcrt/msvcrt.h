@@ -960,8 +960,9 @@ int __cdecl      MSVCRT__tolower_l(int,MSVCRT__locale_t);
  * NB : MSVCRT_call_invalid_parameter_handler is a wrapper around MSVCRT__invalid_parameter in order
  * to do the Ansi to Unicode transformation
  */
-#define MSVCRT_INVALID_PMT(x) MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0)
-#define MSVCRT_CHECK_PMT(x)   ((x) || (MSVCRT_INVALID_PMT(0),FALSE))
+#define MSVCRT_INVALID_PMT(x,err)   (*MSVCRT__errno() = (err), MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0))
+#define MSVCRT_CHECK_PMT_ERR(x,err) ((x) || (MSVCRT_INVALID_PMT( 0, (err) ), FALSE))
+#define MSVCRT_CHECK_PMT(x)         MSVCRT_CHECK_PMT_ERR((x), MSVCRT_EINVAL)
 #endif
 
 #define MSVCRT__ARGMAX 100

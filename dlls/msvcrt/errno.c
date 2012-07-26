@@ -332,11 +332,9 @@ void CDECL MSVCRT_perror(const char* str)
  */
 int CDECL _wcserror_s(MSVCRT_wchar_t* buffer, MSVCRT_size_t nc, int err)
 {
-    if (!MSVCRT_CHECK_PMT(buffer != NULL) || !MSVCRT_CHECK_PMT(nc > 0))
-    {
-        _set_errno(MSVCRT_EINVAL);
-        return MSVCRT_EINVAL;
-    }
+    if (!MSVCRT_CHECK_PMT(buffer != NULL)) return MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT(nc > 0)) return MSVCRT_EINVAL;
+
     if (err < 0 || err > MSVCRT__sys_nerr) err = MSVCRT__sys_nerr;
     MultiByteToWideChar(CP_ACP, 0, MSVCRT__sys_errlist[err], -1, buffer, nc);
     return 0;
@@ -372,8 +370,7 @@ int CDECL __wcserror_s(MSVCRT_wchar_t* buffer, MSVCRT_size_t nc, const MSVCRT_wc
     if (str && *str) len += lstrlenW(str) + 2 /* ': ' */;
     if (len > nc)
     {
-        MSVCRT_INVALID_PMT("buffer[nc] is too small");
-        _set_errno(MSVCRT_ERANGE);
+        MSVCRT_INVALID_PMT("buffer[nc] is too small", MSVCRT_ERANGE);
         return MSVCRT_ERANGE;
     }
     if (str && *str)

@@ -1129,7 +1129,6 @@ int CDECL _controlfp_s(unsigned int *cur, unsigned int newval, unsigned int mask
     if (!MSVCRT_CHECK_PMT( !(newval & mask & ~all_flags) ))
     {
         if (cur) *cur = _controlfp( 0, 0 );  /* retrieve it anyway */
-        *MSVCRT__errno() = MSVCRT_EINVAL;
         return MSVCRT_EINVAL;
     }
     val = _controlfp( newval, mask );
@@ -1324,16 +1323,11 @@ int CDECL _ecvt_s( char *buffer, MSVCRT_size_t length, double number, int ndigit
     char *result;
     const char infret[] = "1#INF";
 
-    if(!MSVCRT_CHECK_PMT(buffer != NULL) || !MSVCRT_CHECK_PMT(decpt != NULL) || !MSVCRT_CHECK_PMT(sign != NULL))
-    {
-        *MSVCRT__errno() = MSVCRT_EINVAL;
-        return MSVCRT_EINVAL;
-    }
-    if(!MSVCRT_CHECK_PMT(length > 2) || !MSVCRT_CHECK_PMT(ndigits < (int)length - 1))
-    {
-        *MSVCRT__errno() = MSVCRT_ERANGE;
-        return MSVCRT_ERANGE;
-    }
+    if (!MSVCRT_CHECK_PMT(buffer != NULL)) return MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT(decpt != NULL)) return MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT(sign != NULL)) return MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT_ERR( length > 2, MSVCRT_ERANGE )) return MSVCRT_ERANGE;
+    if (!MSVCRT_CHECK_PMT_ERR(ndigits < (int)length - 1, MSVCRT_ERANGE )) return MSVCRT_ERANGE;
 
     /* special case - inf */
     if(number == HUGE_VAL || number == -HUGE_VAL)

@@ -637,12 +637,8 @@ int CDECL MSVCRT__access(const char *filename, int mode)
  */
 int CDECL _access_s(const char *filename, int mode)
 {
-  if (!MSVCRT_CHECK_PMT(filename != NULL) ||
-      !MSVCRT_CHECK_PMT((mode & ~(MSVCRT_R_OK | MSVCRT_W_OK)) == 0))
-  {
-     *MSVCRT__errno() = MSVCRT_EINVAL;
-     return -1;
-  }
+  if (!MSVCRT_CHECK_PMT(filename != NULL)) return -1;
+  if (!MSVCRT_CHECK_PMT((mode & ~(MSVCRT_R_OK | MSVCRT_W_OK)) == 0)) return -1;
 
   return MSVCRT__access(filename, mode);
 }
@@ -674,12 +670,8 @@ int CDECL MSVCRT__waccess(const MSVCRT_wchar_t *filename, int mode)
  */
 int CDECL _waccess_s(const MSVCRT_wchar_t *filename, int mode)
 {
-  if (!MSVCRT_CHECK_PMT(filename != NULL) ||
-      !MSVCRT_CHECK_PMT((mode & ~(MSVCRT_R_OK | MSVCRT_W_OK)) == 0))
-  {
-     *MSVCRT__errno() = MSVCRT_EINVAL;
-     return -1;
-  }
+  if (!MSVCRT_CHECK_PMT(filename != NULL)) return -1;
+  if (!MSVCRT_CHECK_PMT((mode & ~(MSVCRT_R_OK | MSVCRT_W_OK)) == 0)) return -1;
 
   return MSVCRT__waccess(filename, mode);
 }
@@ -1717,12 +1709,7 @@ int CDECL MSVCRT__sopen_s( int *fd, const char *path, int oflags, int shflags, i
   TRACE("fd*: %p file: (%s) oflags: 0x%04x shflags: 0x%04x pmode: 0x%04x\n",
         fd, path, oflags, shflags, pmode);
 
-  if (!fd)
-  {
-    MSVCRT_INVALID_PMT("null out fd pointer");
-    *MSVCRT__errno() = MSVCRT_EINVAL;
-    return MSVCRT_EINVAL;
-  }
+  if (!MSVCRT_CHECK_PMT( fd != NULL )) return MSVCRT_EINVAL;
 
   *fd = -1;
   wxflag = split_oflags(oflags);
@@ -1836,12 +1823,7 @@ int CDECL MSVCRT__wsopen_s( int *fd, const MSVCRT_wchar_t* path, int oflags, int
   TRACE("fd*: %p :file (%s) oflags: 0x%04x shflags: 0x%04x pmode: 0x%04x\n",
         fd, debugstr_w(path), oflags, shflags, pmode);
 
-  if (!fd)
-  {
-    MSVCRT_INVALID_PMT("null out fd pointer");
-    *MSVCRT__errno() = MSVCRT_EINVAL;
-    return MSVCRT_EINVAL;
-  }
+  if (!MSVCRT_CHECK_PMT( fd != NULL )) return MSVCRT_EINVAL;
 
   *fd = -1;
   wxflag = split_oflags(oflags);
@@ -3049,11 +3031,9 @@ MSVCRT_FILE * CDECL MSVCRT_fopen(const char *path, const char *mode)
 int CDECL MSVCRT_fopen_s(MSVCRT_FILE** pFile,
         const char *filename, const char *mode)
 {
-    if (!MSVCRT_CHECK_PMT(pFile != NULL) || !MSVCRT_CHECK_PMT(filename != NULL) ||
-        !MSVCRT_CHECK_PMT(mode != NULL)) {
-        *MSVCRT__errno() = MSVCRT_EINVAL;
-        return MSVCRT_EINVAL;
-    }
+    if (!MSVCRT_CHECK_PMT(pFile != NULL)) return MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT(filename != NULL)) return MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT(mode != NULL)) return MSVCRT_EINVAL;
 
     *pFile = MSVCRT_fopen(filename, mode);
 
@@ -3076,11 +3056,9 @@ MSVCRT_FILE * CDECL MSVCRT__wfopen(const MSVCRT_wchar_t *path, const MSVCRT_wcha
 int CDECL MSVCRT__wfopen_s(MSVCRT_FILE** pFile, const MSVCRT_wchar_t *filename,
         const MSVCRT_wchar_t *mode)
 {
-    if (!MSVCRT_CHECK_PMT(pFile != NULL) || !MSVCRT_CHECK_PMT(filename != NULL) ||
-        !MSVCRT_CHECK_PMT(mode != NULL)) {
-        *MSVCRT__errno() = MSVCRT_EINVAL;
-        return MSVCRT_EINVAL;
-    }
+    if (!MSVCRT_CHECK_PMT(pFile != NULL)) return MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT(filename != NULL)) return MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT(mode != NULL)) return MSVCRT_EINVAL;
 
     *pFile = MSVCRT__wfopen(filename, mode);
 
@@ -3286,11 +3264,10 @@ MSVCRT_FILE* CDECL MSVCRT__wfreopen(const MSVCRT_wchar_t *path, const MSVCRT_wch
 int CDECL MSVCRT__wfreopen_s(MSVCRT_FILE** pFile,
         const MSVCRT_wchar_t *path, const MSVCRT_wchar_t *mode, MSVCRT_FILE* file)
 {
-    if (!MSVCRT_CHECK_PMT(pFile != NULL) || !MSVCRT_CHECK_PMT(path != NULL) ||
-        !MSVCRT_CHECK_PMT(mode != NULL) || !MSVCRT_CHECK_PMT(file != NULL)) {
-        *MSVCRT__errno() = MSVCRT_EINVAL;
-        return MSVCRT_EINVAL;
-    }
+    if (!MSVCRT_CHECK_PMT(pFile != NULL)) return MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT(path != NULL)) return MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT(mode != NULL)) return MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT(file != NULL)) return MSVCRT_EINVAL;
 
     *pFile = MSVCRT__wfreopen(path, mode, file);
 
@@ -3328,11 +3305,10 @@ MSVCRT_FILE* CDECL MSVCRT_freopen(const char *path, const char *mode, MSVCRT_FIL
 int CDECL MSVCRT_freopen_s(MSVCRT_FILE** pFile,
         const char *path, const char *mode, MSVCRT_FILE* file)
 {
-    if (!MSVCRT_CHECK_PMT(pFile != NULL) || !MSVCRT_CHECK_PMT(path != NULL) ||
-        !MSVCRT_CHECK_PMT(mode != NULL) || !MSVCRT_CHECK_PMT(file != NULL)) {
-        *MSVCRT__errno() = MSVCRT_EINVAL;
-        return MSVCRT_EINVAL;
-    }
+    if (!MSVCRT_CHECK_PMT(pFile != NULL)) return MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT(path != NULL)) return MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT(mode != NULL)) return MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT(file != NULL)) return MSVCRT_EINVAL;
 
     *pFile = MSVCRT_freopen(path, mode, file);
 
@@ -3797,8 +3773,7 @@ MSVCRT_FILE* CDECL MSVCRT_tmpfile(void)
  */
 int CDECL MSVCRT_tmpfile_s(MSVCRT_FILE** file)
 {
-    if (!MSVCRT_CHECK_PMT(file != NULL))
-        return MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT(file != NULL)) return MSVCRT_EINVAL;
 
     *file = MSVCRT_tmpfile();
     return 0;
@@ -3835,10 +3810,7 @@ int CDECL MSVCRT_vfprintf_s(MSVCRT_FILE* file, const char *format, __ms_va_list 
 {
     int ret;
 
-    if(!MSVCRT_CHECK_PMT(file != NULL)) {
-        *MSVCRT__errno() = MSVCRT_EINVAL;
-        return -1;
-    }
+    if(!MSVCRT_CHECK_PMT(file != NULL)) return -1;
 
     MSVCRT__lock_file(file);
     ret = pf_printf_a(puts_clbk_file_a, file, format, NULL, FALSE, TRUE, arg_clbk_valist, NULL, &valist);
@@ -3868,10 +3840,7 @@ int CDECL MSVCRT_vfwprintf_s(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, __
 {
     int ret;
 
-    if(!MSVCRT_CHECK_PMT( file != NULL)) {
-        *MSVCRT__errno() = MSVCRT_EINVAL;
-        return -1;
-    }
+    if (!MSVCRT_CHECK_PMT( file != NULL )) return -1;
 
     MSVCRT__lock_file(file);
     ret = pf_printf_w(puts_clbk_file_w, file, format, NULL, FALSE, TRUE, arg_clbk_valist, NULL, &valist);

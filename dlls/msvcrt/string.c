@@ -240,11 +240,9 @@ char * CDECL MSVCRT_strtok( char *str, const char *delim )
  */
 char * CDECL MSVCRT_strtok_s(char *str, const char *delim, char **ctx)
 {
-    if (!MSVCRT_CHECK_PMT(delim != NULL) || !MSVCRT_CHECK_PMT(ctx != NULL) ||
-        !MSVCRT_CHECK_PMT(str != NULL || *ctx != NULL)) {
-        *MSVCRT__errno() = MSVCRT_EINVAL;
-        return NULL;
-    }
+    if (!MSVCRT_CHECK_PMT(delim != NULL)) return NULL;
+    if (!MSVCRT_CHECK_PMT(ctx != NULL)) return NULL;
+    if (!MSVCRT_CHECK_PMT(str != NULL || *ctx != NULL)) return NULL;
 
     if(!str)
         str = *ctx;
@@ -295,10 +293,7 @@ double CDECL MSVCRT_strtod_l( const char *str, char **end, MSVCRT__locale_t loca
     double ret;
     BOOL found_digit = FALSE;
 
-    if (!MSVCRT_CHECK_PMT(str != NULL)) {
-        *MSVCRT__errno() = MSVCRT_EINVAL;
-        return 0;
-    }
+    if (!MSVCRT_CHECK_PMT(str != NULL)) return 0;
 
     if(!locale)
         locinfo = get_locinfo();
@@ -682,9 +677,10 @@ int CDECL MSVCRT_strcat_s( char* dst, MSVCRT_size_t elem, const char* src )
 int CDECL MSVCRT_strncat_s( char* dst, MSVCRT_size_t elem, const char* src, MSVCRT_size_t count )
 {
     MSVCRT_size_t i, j;
-    if(!MSVCRT_CHECK_PMT(dst != 0) || !MSVCRT_CHECK_PMT(elem != 0))
-        return MSVCRT_EINVAL;
-    if(!MSVCRT_CHECK_PMT(src != 0))
+
+    if (!MSVCRT_CHECK_PMT(dst != 0)) return MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT(elem != 0)) return MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT(src != 0))
     {
         dst[0] = '\0';
         return MSVCRT_EINVAL;
@@ -844,10 +840,9 @@ __int64 CDECL MSVCRT_strtoi64_l(const char *nptr, char **endptr, int base, MSVCR
 
     TRACE("(%s %p %d %p)\n", debugstr_a(nptr), endptr, base, locale);
 
-    if (!MSVCRT_CHECK_PMT(nptr != NULL) || !MSVCRT_CHECK_PMT(base == 0 || base >= 2) ||
-        !MSVCRT_CHECK_PMT(base <= 36)) {
-        return 0;
-    }
+    if (!MSVCRT_CHECK_PMT(nptr != NULL)) return 0;
+    if (!MSVCRT_CHECK_PMT(base == 0 || base >= 2)) return 0;
+    if (!MSVCRT_CHECK_PMT(base <= 36)) return 0;
 
     while(isspace(*nptr)) nptr++;
 
@@ -924,10 +919,9 @@ unsigned __int64 CDECL MSVCRT_strtoui64_l(const char *nptr, char **endptr, int b
 
     TRACE("(%s %p %d %p)\n", debugstr_a(nptr), endptr, base, locale);
 
-    if (!MSVCRT_CHECK_PMT(nptr != NULL) || !MSVCRT_CHECK_PMT(base == 0 || base >= 2) ||
-        !MSVCRT_CHECK_PMT(base <= 36)) {
-        return 0;
-    }
+    if (!MSVCRT_CHECK_PMT(nptr != NULL)) return 0;
+    if (!MSVCRT_CHECK_PMT(base == 0 || base >= 2)) return 0;
+    if (!MSVCRT_CHECK_PMT(base <= 36)) return 0;
 
     while(isspace(*nptr)) nptr++;
 
@@ -997,13 +991,11 @@ int CDECL _ltoa_s(MSVCRT_long value, char *str, MSVCRT_size_t size, int radix)
     char buffer[33], *pos;
     size_t len;
 
-    if (!MSVCRT_CHECK_PMT(str != NULL) || !MSVCRT_CHECK_PMT(size > 0) ||
-        !MSVCRT_CHECK_PMT(radix >= 2) || !MSVCRT_CHECK_PMT(radix <= 36))
+    if (!MSVCRT_CHECK_PMT(str != NULL)) return MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT(size > 0)) return MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT(radix >= 2 && radix <= 36))
     {
-        if (str && size)
-            str[0] = '\0';
-
-        *MSVCRT__errno() = MSVCRT_EINVAL;
+        str[0] = '\0';
         return MSVCRT_EINVAL;
     }
 
@@ -1055,8 +1047,7 @@ int CDECL _ltoa_s(MSVCRT_long value, char *str, MSVCRT_size_t size, int radix)
             *p++ = *pos--;
 
         str[0] = '\0';
-        MSVCRT_INVALID_PMT("str[size] is too small");
-        *MSVCRT__errno() = MSVCRT_ERANGE;
+        MSVCRT_INVALID_PMT("str[size] is too small", MSVCRT_ERANGE);
         return MSVCRT_ERANGE;
     }
 
@@ -1075,13 +1066,11 @@ int CDECL _ltow_s(MSVCRT_long value, MSVCRT_wchar_t *str, MSVCRT_size_t size, in
     MSVCRT_wchar_t buffer[33], *pos;
     size_t len;
 
-    if (!MSVCRT_CHECK_PMT(str != NULL) || !MSVCRT_CHECK_PMT(size > 0) ||
-        !MSVCRT_CHECK_PMT(radix >= 2) || !MSVCRT_CHECK_PMT(radix <= 36))
+    if (!MSVCRT_CHECK_PMT(str != NULL)) return MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT(size > 0)) return MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT(radix >= 2 && radix <= 36))
     {
-        if (str && size)
-            str[0] = '\0';
-
-        *MSVCRT__errno() = MSVCRT_EINVAL;
+        str[0] = '\0';
         return MSVCRT_EINVAL;
     }
 
@@ -1132,9 +1121,8 @@ int CDECL _ltow_s(MSVCRT_long value, MSVCRT_wchar_t *str, MSVCRT_size_t size, in
         for (pos = buffer + 31, i = 0; i < size; i++)
             *p++ = *pos--;
 
-        MSVCRT_INVALID_PMT("str[size] is too small");
         str[0] = '\0';
-        *MSVCRT__errno() = MSVCRT_ERANGE;
+        MSVCRT_INVALID_PMT("str[size] is too small", MSVCRT_ERANGE);
         return MSVCRT_ERANGE;
     }
 
@@ -1167,9 +1155,11 @@ int CDECL MSVCRT__ui64toa_s(unsigned __int64 value, char *str,
     char buffer[65], *pos;
     int digit;
 
-    if (!MSVCRT_CHECK_PMT(str != NULL) || !MSVCRT_CHECK_PMT(size > 0) ||
-        !MSVCRT_CHECK_PMT(radix>=2) || !MSVCRT_CHECK_PMT(radix<=36)) {
-        *MSVCRT__errno() = MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT(str != NULL)) return MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT(size > 0)) return MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT(radix >= 2 && radix <= 36))
+    {
+        str[0] = '\0';
         return MSVCRT_EINVAL;
     }
 
@@ -1187,8 +1177,7 @@ int CDECL MSVCRT__ui64toa_s(unsigned __int64 value, char *str,
     }while(value != 0);
 
     if(buffer-pos+65 > size) {
-        MSVCRT_INVALID_PMT("str[size] is too small");
-        *MSVCRT__errno() = MSVCRT_EINVAL;
+        MSVCRT_INVALID_PMT("str[size] is too small", MSVCRT_EINVAL);
         return MSVCRT_EINVAL;
     }
 
@@ -1205,9 +1194,11 @@ int CDECL MSVCRT__ui64tow_s( unsigned __int64 value, MSVCRT_wchar_t *str,
     MSVCRT_wchar_t buffer[65], *pos;
     int digit;
 
-    if (!MSVCRT_CHECK_PMT(str != NULL) || !MSVCRT_CHECK_PMT(size > 0) ||
-        !MSVCRT_CHECK_PMT(radix>=2) || !MSVCRT_CHECK_PMT(radix<=36)) {
-        *MSVCRT__errno() = MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT(str != NULL)) return MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT(size > 0)) return MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT(radix >= 2 && radix <= 36))
+    {
+        str[0] = '\0';
         return MSVCRT_EINVAL;
     }
 
@@ -1224,8 +1215,7 @@ int CDECL MSVCRT__ui64tow_s( unsigned __int64 value, MSVCRT_wchar_t *str,
     } while (value != 0);
 
     if(buffer-pos+65 > size) {
-        MSVCRT_INVALID_PMT("str[size] is too small");
-        *MSVCRT__errno() = MSVCRT_EINVAL;
+        MSVCRT_INVALID_PMT("str[size] is too small", MSVCRT_EINVAL);
         return MSVCRT_EINVAL;
     }
 
@@ -1352,13 +1342,11 @@ int CDECL _i64toa_s(__int64 value, char *str, MSVCRT_size_t size, int radix)
     char buffer[65], *pos;
     size_t len;
 
-    if (!MSVCRT_CHECK_PMT(str != NULL) || !MSVCRT_CHECK_PMT(size > 0) ||
-        !MSVCRT_CHECK_PMT(radix >= 2) || !MSVCRT_CHECK_PMT(radix <= 36))
+    if (!MSVCRT_CHECK_PMT(str != NULL)) return MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT(size > 0)) return MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT(radix >= 2 && radix <= 36))
     {
-        if (str && size)
-            str[0] = '\0';
-
-        *MSVCRT__errno() = MSVCRT_EINVAL;
+        str[0] = '\0';
         return MSVCRT_EINVAL;
     }
 
@@ -1410,8 +1398,7 @@ int CDECL _i64toa_s(__int64 value, char *str, MSVCRT_size_t size, int radix)
             *p++ = *pos--;
 
         str[0] = '\0';
-        MSVCRT_INVALID_PMT("str[size] is too small");
-        *MSVCRT__errno() = MSVCRT_ERANGE;
+        MSVCRT_INVALID_PMT("str[size] is too small", MSVCRT_ERANGE);
         return MSVCRT_ERANGE;
     }
 
@@ -1430,13 +1417,11 @@ int CDECL _i64tow_s(__int64 value, MSVCRT_wchar_t *str, MSVCRT_size_t size, int 
     MSVCRT_wchar_t buffer[65], *pos;
     size_t len;
 
-    if (!MSVCRT_CHECK_PMT(str != NULL) || !MSVCRT_CHECK_PMT(size > 0) ||
-        !MSVCRT_CHECK_PMT(radix >= 2) || !MSVCRT_CHECK_PMT(radix <= 36))
+    if (!MSVCRT_CHECK_PMT(str != NULL)) return MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT(size > 0)) return MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT(radix >= 2 && radix <= 36))
     {
-        if (str && size)
-            str[0] = '\0';
-
-        *MSVCRT__errno() = MSVCRT_EINVAL;
+        str[0] = '\0';
         return MSVCRT_EINVAL;
     }
 
@@ -1487,9 +1472,8 @@ int CDECL _i64tow_s(__int64 value, MSVCRT_wchar_t *str, MSVCRT_size_t size, int 
         for (pos = buffer + 63, i = 0; i < size; i++)
             *p++ = *pos--;
 
-        MSVCRT_INVALID_PMT("str[size] is too small");
         str[0] = '\0';
-        *MSVCRT__errno() = MSVCRT_ERANGE;
+        MSVCRT_INVALID_PMT("str[size] is too small", MSVCRT_ERANGE);
         return MSVCRT_ERANGE;
     }
 

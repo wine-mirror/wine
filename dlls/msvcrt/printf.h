@@ -498,8 +498,7 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
             int *used;
 
             if(!n_format_enabled) {
-                MSVCRT_INVALID_PMT("\'n\' format specifier disabled");
-                *MSVCRT__errno() = MSVCRT_EINVAL;
+                MSVCRT_INVALID_PMT("\'n\' format specifier disabled", MSVCRT_EINVAL);
                 return -1;
             }
 

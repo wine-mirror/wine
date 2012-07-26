@@ -1655,12 +1655,9 @@ int CDECL _searchenv_s(const char* file, const char* env, char *buf, MSVCRT_size
   char*envVal, *penv;
   char curPath[MAX_PATH];
 
-  if (!MSVCRT_CHECK_PMT(file != NULL) || !MSVCRT_CHECK_PMT(buf != NULL) ||
-      !MSVCRT_CHECK_PMT(count > 0))
-  {
-      *MSVCRT__errno() = MSVCRT_EINVAL;
-      return MSVCRT_EINVAL;
-  }
+  if (!MSVCRT_CHECK_PMT(file != NULL)) return MSVCRT_EINVAL;
+  if (!MSVCRT_CHECK_PMT(buf != NULL)) return MSVCRT_EINVAL;
+  if (!MSVCRT_CHECK_PMT(count > 0)) return MSVCRT_EINVAL;
 
   *buf = '\0';
 
@@ -1708,8 +1705,7 @@ int CDECL _searchenv_s(const char* file, const char* env, char *buf, MSVCRT_size
     {
       if (strlen(curPath) + 1 > count)
       {
-          MSVCRT_INVALID_PMT("buf[count] is too small");
-          *MSVCRT__errno() = MSVCRT_ERANGE;
+          MSVCRT_INVALID_PMT("buf[count] is too small", MSVCRT_ERANGE);
           return MSVCRT_ERANGE;
       }
       strcpy(buf, curPath);
@@ -1791,12 +1787,10 @@ int CDECL _wsearchenv_s(const MSVCRT_wchar_t* file, const MSVCRT_wchar_t* env,
   MSVCRT_wchar_t*       envVal, *penv;
   MSVCRT_wchar_t        curPath[MAX_PATH];
 
-  if (!MSVCRT_CHECK_PMT(file != NULL) || !MSVCRT_CHECK_PMT(buf != NULL) ||
-      !MSVCRT_CHECK_PMT(count > 0))
-  {
-      *MSVCRT__errno() = MSVCRT_EINVAL;
-      return MSVCRT_EINVAL;
-  }
+  if (!MSVCRT_CHECK_PMT(file != NULL)) return MSVCRT_EINVAL;
+  if (!MSVCRT_CHECK_PMT(buf != NULL)) return MSVCRT_EINVAL;
+  if (!MSVCRT_CHECK_PMT(count > 0)) return MSVCRT_EINVAL;
+
   *buf = '\0';
 
   /* Try CWD first */
@@ -1843,8 +1837,7 @@ int CDECL _wsearchenv_s(const MSVCRT_wchar_t* file, const MSVCRT_wchar_t* env,
     {
       if (strlenW(curPath) + 1 > count)
       {
-          MSVCRT_INVALID_PMT("buf[count] is too small");
-          *MSVCRT__errno() = MSVCRT_ERANGE;
+          MSVCRT_INVALID_PMT("buf[count] is too small", MSVCRT_ERANGE);
           return MSVCRT_ERANGE;
       }
       strcpyW(buf, curPath);
