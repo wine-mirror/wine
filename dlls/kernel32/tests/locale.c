@@ -85,6 +85,7 @@ static BOOL (WINAPI *pIsValidLanguageGroup)(LGRPID, DWORD);
 static INT (WINAPI *pIdnToNameprepUnicode)(DWORD, LPCWSTR, INT, LPWSTR, INT);
 static INT (WINAPI *pIdnToAscii)(DWORD, LPCWSTR, INT, LPWSTR, INT);
 static INT (WINAPI *pIdnToUnicode)(DWORD, LPCWSTR, INT, LPWSTR, INT);
+static INT (WINAPI *pGetLocaleInfoEx)(LPCWSTR, LCTYPE, LPWSTR, INT);
 
 static void InitFunctionPointers(void)
 {
@@ -102,6 +103,7 @@ static void InitFunctionPointers(void)
   pIdnToNameprepUnicode = (void*)GetProcAddress(hKernel32, "IdnToNameprepUnicode");
   pIdnToAscii = (void*)GetProcAddress(hKernel32, "IdnToAscii");
   pIdnToUnicode = (void*)GetProcAddress(hKernel32, "IdnToUnicode");
+  pGetLocaleInfoEx = (void*)GetProcAddress(hKernel32, "GetLocaleInfoEx");
 }
 
 #define eq(received, expected, label, type) \
@@ -131,8 +133,14 @@ static void test_GetLocaleInfoA(void)
   LCID lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
   char buffer[BUFFER_SIZE];
   char expected[BUFFER_SIZE];
+  DWORD val;
 
   ok(lcid == 0x409, "wrong LCID calculated - %d\n", lcid);
+
+  ret = GetLocaleInfoA(lcid, LOCALE_ILANGUAGE|LOCALE_RETURN_NUMBER, (char*)&val, sizeof(val));
+  ok(ret, "got %d\n", ret);
+todo_wine
+  ok(val == lcid, "got 0x%08x\n", val);
 
   /* en and ar use SUBLANG_NEUTRAL, but GetLocaleInfo assume SUBLANG_DEFAULT
      Same is true for zh on pre-Vista, but on Vista and higher GetLocaleInfo
@@ -192,12 +200,39 @@ static void test_GetLocaleInfoA(void)
   ok(!strcmp(buffer, "Monday"), "Expected 'Monday', got '%s'\n", buffer);
 }
 
+struct neutralsublang_name2_t {
+    WCHAR name[3];
+    LCID lcid;
+    LCID lcid_broken;
+};
+
+static const struct neutralsublang_name2_t neutralsublang_names2[] = {
+    { {'a','r',0}, MAKELCID(MAKELANGID(LANG_ARABIC,     SUBLANG_ARABIC_SAUDI_ARABIA), SORT_DEFAULT) },
+    { {'a','z',0}, MAKELCID(MAKELANGID(LANG_AZERI,      SUBLANG_AZERI_LATIN), SORT_DEFAULT) },
+    { {'d','e',0}, MAKELCID(MAKELANGID(LANG_GERMAN,     SUBLANG_GERMAN), SORT_DEFAULT) },
+    { {'e','n',0}, MAKELCID(MAKELANGID(LANG_ENGLISH,    SUBLANG_ENGLISH_US), SORT_DEFAULT) },
+    { {'e','s',0}, MAKELCID(MAKELANGID(LANG_SPANISH,    SUBLANG_SPANISH_MODERN), SORT_DEFAULT),
+                   MAKELCID(MAKELANGID(LANG_SPANISH,    SUBLANG_SPANISH), SORT_DEFAULT) /* vista */ },
+    { {'g','a',0}, MAKELCID(MAKELANGID(LANG_IRISH,      SUBLANG_IRISH_IRELAND), SORT_DEFAULT) },
+    { {'i','t',0}, MAKELCID(MAKELANGID(LANG_ITALIAN,    SUBLANG_ITALIAN), SORT_DEFAULT) },
+    { {'m','s',0}, MAKELCID(MAKELANGID(LANG_MALAY,      SUBLANG_MALAY_MALAYSIA), SORT_DEFAULT) },
+    { {'n','l',0}, MAKELCID(MAKELANGID(LANG_DUTCH,      SUBLANG_DUTCH), SORT_DEFAULT) },
+    { {'p','t',0}, MAKELCID(MAKELANGID(LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN), SORT_DEFAULT) },
+    { {'s','r',0}, MAKELCID(MAKELANGID(LANG_SERBIAN,    SUBLANG_SERBIAN_CROATIA), SORT_DEFAULT) },
+    { {'s','v',0}, MAKELCID(MAKELANGID(LANG_SWEDISH,    SUBLANG_SWEDISH), SORT_DEFAULT) },
+    { {'u','z',0}, MAKELCID(MAKELANGID(LANG_UZBEK,      SUBLANG_UZBEK_LATIN), SORT_DEFAULT) },
+    { {'z','h',0}, MAKELCID(MAKELANGID(LANG_CHINESE,    SUBLANG_CHINESE_SIMPLIFIED), SORT_DEFAULT) },
+    { {0} }
+};
+
 static void test_GetLocaleInfoW(void)
 {
   LCID lcid_en = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
   LCID lcid_ru = MAKELCID(MAKELANGID(LANG_RUSSIAN, SUBLANG_NEUTRAL), SORT_DEFAULT);
+  LCID lcid_en_neut = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL), SORT_DEFAULT);
   WCHAR bufferW[80], buffer2W[80];
   CHAR bufferA[80];
+  DWORD val;
   DWORD ret;
   INT i;
 
@@ -206,6 +241,49 @@ static void test_GetLocaleInfoW(void)
       win_skip("GetLocaleInfoW() isn't implemented\n");
       return;
   }
+
+  ret = GetLocaleInfoW(lcid_en, LOCALE_ILANGUAGE|LOCALE_RETURN_NUMBER, (WCHAR*)&val, sizeof(val)/sizeof(WCHAR));
+  ok(ret, "got %d\n", ret);
+todo_wine
+  ok(val == lcid_en, "got 0x%08x\n", val);
+
+  ret = GetLocaleInfoW(lcid_en_neut, LOCALE_SNAME, bufferW, COUNTOF(bufferW));
+  if (ret)
+  {
+      static const WCHAR slangW[] = {'E','n','g','l','i','s','h',' ','(','U','n','i','t','e','d',' ',
+                                                                     'S','t','a','t','e','s',')',0};
+      static const WCHAR statesW[] = {'U','n','i','t','e','d',' ','S','t','a','t','e','s',0};
+      static const WCHAR enW[] = {'e','n','-','U','S',0};
+      const struct neutralsublang_name2_t *ptr = neutralsublang_names2;
+
+      ok(!lstrcmpW(bufferW, enW), "got wrong name %s\n", wine_dbgstr_w(bufferW));
+
+      ret = GetLocaleInfoW(lcid_en_neut, LOCALE_SCOUNTRY, bufferW, COUNTOF(bufferW));
+      ok(ret, "got %d\n", ret);
+      ok(!lstrcmpW(statesW, bufferW), "got wrong name %s\n", wine_dbgstr_w(bufferW));
+
+      ret = GetLocaleInfoW(lcid_en_neut, LOCALE_SLANGUAGE, bufferW, COUNTOF(bufferW));
+      ok(ret, "got %d\n", ret);
+      ok(!lstrcmpW(slangW, bufferW), "got wrong name %s\n", wine_dbgstr_w(bufferW));
+
+      while (*ptr->name)
+      {
+          LANGID langid;
+
+          /* make neutral lcid */
+          langid = MAKELANGID(PRIMARYLANGID(LANGIDFROMLCID(ptr->lcid)), SUBLANG_NEUTRAL);
+
+          val = 0;
+          GetLocaleInfoW(MAKELCID(langid, SORT_DEFAULT), LOCALE_ILANGUAGE|LOCALE_RETURN_NUMBER, (WCHAR*)&val, sizeof(val)/sizeof(WCHAR));
+      todo_wine
+          ok(val == ptr->lcid || broken(val == ptr->lcid_broken), "%s: got wrong lcid 0x%04x, expected 0x%04x\n",
+              wine_dbgstr_w(ptr->name), val, ptr->lcid);
+          ptr++;
+      }
+  }
+  else
+      win_skip("English neutral locale not supported\n");
+
   ret = GetLocaleInfoW(lcid_ru, LOCALE_SMONTHNAME1, bufferW, COUNTOF(bufferW));
   if (!ret) {
       win_skip("LANG_RUSSIAN locale data unavailable\n");
@@ -1714,11 +1792,36 @@ static void test_LCMapStringEx(void)
     test_lcmapstring_unicode(LCMapStringEx_wrapper, "LCMapStringEx:");
 }
 
-static void test_LocaleNames(void)
+struct neutralsublang_name_t {
+    WCHAR name[3];
+    LCID lcid;
+    int todo;
+};
+
+static const struct neutralsublang_name_t neutralsublang_names[] = {
+    { {'a','r',0}, MAKELCID(MAKELANGID(LANG_ARABIC,     SUBLANG_ARABIC_SAUDI_ARABIA), SORT_DEFAULT) },
+    { {'a','z',0}, MAKELCID(MAKELANGID(LANG_AZERI,      SUBLANG_AZERI_LATIN), SORT_DEFAULT) },
+    { {'d','e',0}, MAKELCID(MAKELANGID(LANG_GERMAN,     SUBLANG_GERMAN), SORT_DEFAULT) },
+    { {'e','n',0}, MAKELCID(MAKELANGID(LANG_ENGLISH,    SUBLANG_ENGLISH_US), SORT_DEFAULT) },
+    { {'e','s',0}, MAKELCID(MAKELANGID(LANG_SPANISH,    SUBLANG_SPANISH_MODERN), SORT_DEFAULT), 1 },
+    { {'g','a',0}, MAKELCID(MAKELANGID(LANG_IRISH,      SUBLANG_IRISH_IRELAND), SORT_DEFAULT), 1 },
+    { {'i','t',0}, MAKELCID(MAKELANGID(LANG_ITALIAN,    SUBLANG_ITALIAN), SORT_DEFAULT) },
+    { {'m','s',0}, MAKELCID(MAKELANGID(LANG_MALAY,      SUBLANG_MALAY_MALAYSIA), SORT_DEFAULT) },
+    { {'n','l',0}, MAKELCID(MAKELANGID(LANG_DUTCH,      SUBLANG_DUTCH), SORT_DEFAULT) },
+    { {'p','t',0}, MAKELCID(MAKELANGID(LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN), SORT_DEFAULT) },
+    { {'s','r',0}, MAKELCID(MAKELANGID(LANG_SERBIAN,    SUBLANG_SERBIAN_SERBIA_LATIN), SORT_DEFAULT), 1 },
+    { {'s','v',0}, MAKELCID(MAKELANGID(LANG_SWEDISH,    SUBLANG_SWEDISH), SORT_DEFAULT) },
+    { {'u','z',0}, MAKELCID(MAKELANGID(LANG_UZBEK,      SUBLANG_UZBEK_LATIN), SORT_DEFAULT) },
+    { {'z','h',0}, MAKELCID(MAKELANGID(LANG_CHINESE,    SUBLANG_CHINESE_SIMPLIFIED), SORT_DEFAULT), 1 },
+    { {0} }
+};
+
+static void test_LocaleNameToLCID(void)
 {
     LCID lcid;
     INT ret;
     WCHAR buffer[LOCALE_NAME_MAX_LENGTH];
+    static const WCHAR enW[] = {'e','n',0};
 
     if (!pLocaleNameToLCID)
     {
@@ -1749,6 +1852,28 @@ static void test_LocaleNames(void)
     ret = pLCIDToLocaleName(lcid, buffer, LOCALE_NAME_MAX_LENGTH, 0);
     ok(ret > 0, "Expected ret > 0, got %d, error %d\n", ret, GetLastError());
     trace("%08x, %s\n", lcid, wine_dbgstr_w(buffer));
+
+    /* english neutral name */
+    lcid = pLocaleNameToLCID(enW, 0);
+    ok(lcid == MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT) ||
+       broken(lcid == 0) /* Vista */, "got 0x%04x\n", lcid);
+    if (lcid)
+    {
+        const struct neutralsublang_name_t *ptr = neutralsublang_names;
+
+        while (*ptr->name)
+        {
+            lcid = pLocaleNameToLCID(ptr->name, 0);
+            if (ptr->todo)
+            todo_wine
+                ok(lcid == ptr->lcid, "%s: got wrong lcid 0x%04x, expected 0x%04x\n",
+                    wine_dbgstr_w(ptr->name), lcid, ptr->lcid);
+            else
+                ok(lcid == ptr->lcid, "%s: got wrong lcid 0x%04x, expected 0x%04x\n",
+                    wine_dbgstr_w(ptr->name), lcid, ptr->lcid);
+            ptr++;
+        }
+    }
 }
 
 /* this requires collation table patch to make it MS compatible */
@@ -3204,14 +3329,75 @@ static void test_IdnToUnicode(void)
     }
 }
 
+static void test_GetLocaleInfoEx(void)
+{
+    static const WCHAR enW[] = {'e','n',0};
+    WCHAR bufferW[80];
+    INT ret;
+
+    if (!pGetLocaleInfoEx)
+    {
+        win_skip("GetLocaleInfoEx not supported\n");
+        return;
+    }
+
+    ret = pGetLocaleInfoEx(enW, LOCALE_SNAME, bufferW, sizeof(bufferW)/sizeof(WCHAR));
+    ok(ret || broken(ret == 0) /* Vista */, "got %d\n", ret);
+    if (ret)
+    {
+        static const WCHAR statesW[] = {'U','n','i','t','e','d',' ','S','t','a','t','e','s',0};
+        static const WCHAR dummyW[] = {'d','u','m','m','y',0};
+        static const WCHAR enusW[] = {'e','n','-','U','S',0};
+        static const WCHAR usaW[] = {'U','S','A',0};
+        static const WCHAR enuW[] = {'E','N','U',0};
+        const struct neutralsublang_name_t *ptr = neutralsublang_names;
+        DWORD val;
+
+todo_wine
+        ok(!lstrcmpW(bufferW, enW), "got %s\n", wine_dbgstr_w(bufferW));
+
+        ret = pGetLocaleInfoEx(enusW, LOCALE_SNAME, bufferW, sizeof(bufferW)/sizeof(WCHAR));
+        ok(ret, "got %d\n", ret);
+        ok(!lstrcmpW(bufferW, enusW), "got %s\n", wine_dbgstr_w(bufferW));
+
+        ret = pGetLocaleInfoEx(enW, LOCALE_SABBREVCTRYNAME, bufferW, sizeof(bufferW)/sizeof(WCHAR));
+        ok(ret, "got %d\n", ret);
+        ok(!lstrcmpW(bufferW, usaW), "got %s\n", wine_dbgstr_w(bufferW));
+
+        ret = pGetLocaleInfoEx(enW, LOCALE_SABBREVLANGNAME, bufferW, sizeof(bufferW)/sizeof(WCHAR));
+        ok(ret, "got %d\n", ret);
+        ok(!lstrcmpW(bufferW, enuW), "got %s\n", wine_dbgstr_w(bufferW));
+
+        ret = pGetLocaleInfoEx(enW, LOCALE_SCOUNTRY, bufferW, sizeof(bufferW)/sizeof(WCHAR));
+        ok(ret, "got %d\n", ret);
+        ok(!lstrcmpW(bufferW, statesW), "got %s\n", wine_dbgstr_w(bufferW));
+
+        bufferW[0] = 0;
+        ret = pGetLocaleInfoEx(dummyW, LOCALE_SNAME, bufferW, sizeof(bufferW)/sizeof(WCHAR));
+todo_wine
+        ok(!ret, "got %d\n", ret);
+
+        while (*ptr->name)
+        {
+            val = 0;
+            pGetLocaleInfoEx(ptr->name, LOCALE_ILANGUAGE|LOCALE_RETURN_NUMBER, (WCHAR*)&val, sizeof(val)/sizeof(WCHAR));
+        todo_wine
+            ok(val == ptr->lcid, "%s: got wrong lcid 0x%04x, expected 0x%04x\n", wine_dbgstr_w(ptr->name), val, ptr->lcid);
+            ptr++;
+        }
+    }
+}
+
 START_TEST(locale)
 {
   InitFunctionPointers();
+
 
   test_EnumTimeFormatsA();
   test_EnumDateFormatsA();
   test_GetLocaleInfoA();
   test_GetLocaleInfoW();
+  test_GetLocaleInfoEx();
   test_GetTimeFormatA();
   test_GetDateFormatA();
   test_GetDateFormatW();
@@ -3221,7 +3407,7 @@ START_TEST(locale)
   test_LCMapStringA();
   test_LCMapStringW();
   test_LCMapStringEx();
-  test_LocaleNames();
+  test_LocaleNameToLCID();
   test_FoldStringA();
   test_FoldStringW();
   test_ConvertDefaultLocale();
