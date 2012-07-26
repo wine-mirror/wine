@@ -5819,3 +5819,5 @@
 @ cdecl -arch=win64 ?facet_Register@facet@locale@std@@CAXPEAV123@@Z(ptr) locale_facet_register
 @ thiscall -arch=win32 ?_Register@facet@locale@std@@QAEXXZ(ptr) locale_facet__Register
 @ cdecl -arch=win64 ?_Register@facet@locale@std@@QEAAXXZ(ptr) locale_facet__Register
+@ stdcall basic_string_char_replace_helper(ptr long long ptr long)
+@ stdcall basic_string_wchar_replace_helper(ptr long long ptr long)
