@@ -876,6 +876,13 @@ void write_args(FILE *h, const var_list_t *args, const char *name, int method, i
         else fprintf(h, ",");
     }
     write_type_decl(h, arg->type, arg->name);
+    if (method == 2) {
+        const expr_t *expr = get_attrp(arg->attrs, ATTR_DEFAULTVALUE);
+        if (expr) {
+            fprintf(h, " = ");
+            write_expr( h, expr, 0, 1, NULL, NULL, "" );
+        }
+    }
     count++;
   }
   if (do_indent) indentation--;
