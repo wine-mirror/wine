@@ -368,6 +368,7 @@ interface IDebugApplication32 : IRemoteDebugApplication
             [out] APPBREAKFLAGS *pabf,
             [out] IRemoteDebugApplicationThread **pprdatSteppingThread);
 
+    cpp_quote("#undef GetCurrentThread")
     HRESULT GetCurrentThread(
             [out] IDebugApplicationThread **pat);
 
