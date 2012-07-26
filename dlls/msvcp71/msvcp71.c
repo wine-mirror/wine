@@ -187,6 +187,14 @@ basic_string_char* __thiscall basic_string_char_replace_iter_iter(basic_string_c
             end.pos-beg.pos, rbeg.pos, rend.pos-rbeg.pos);
 }
 
+/* ?append@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@Vconst_iterator@12@0@Z */
+DEFINE_THISCALL_WRAPPER(basic_string_char_append_iter, 12)
+basic_string_char* __thiscall basic_string_char_append_iter(basic_string_char *this,
+        basic_string_char_iterator beg, basic_string_char_iterator end)
+{
+    return pbasic_string_char_replace(this, this->size, 0, beg.pos, end.pos-beg.pos);
+}
+
 /* ?begin@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAE?AViterator@12@XZ */
 /* ?begin@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBE?AVconst_iterator@12@XZ */
 /* ?begin@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE?AViterator@12@XZ */
@@ -285,6 +293,15 @@ basic_string_wchar* __thiscall basic_string_wchar_replace_iter_iter(basic_string
 {
     return pbasic_string_wchar_replace(this, beg.pos-basic_string_wchar_ptr(this),
             end.pos-beg.pos, rbeg.pos, rend.pos-rbeg.pos);
+}
+
+/* ?append@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAEAAV12@Vconst_iterator@12@0@Z */
+/* ?append@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@Vconst_iterator@12@0@Z */
+DEFINE_THISCALL_WRAPPER(basic_string_wchar_append_iter, 12)
+basic_string_wchar* __thiscall basic_string_wchar_append_iter(basic_string_wchar *this,
+        basic_string_wchar_iterator beg, basic_string_wchar_iterator end)
+{
+    return pbasic_string_wchar_replace(this, this->size, 0, beg.pos, end.pos-beg.pos);
 }
 
 static BOOL init_funcs(void)
