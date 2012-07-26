@@ -5920,6 +5920,13 @@ static void test_create_elems(IHTMLDocument2 *doc)
     test_elem_innertext(body, "insert test");
     test_elem_innerhtml((IUnknown*)body, "insert test");
 
+    node = test_create_text(doc, " Test");
+    V_VT(&var) = VT_DISPATCH;
+    V_DISPATCH(&var) = NULL;
+    test_node_insertbefore((IUnknown*)body, node, &var);
+    test_elem_innertext(body, "insert test Test");
+    IHTMLDOMNode_Release(node);
+
     hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument5, (void**)&doc5);
     if(hres == S_OK)
     {

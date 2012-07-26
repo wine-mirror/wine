@@ -513,6 +513,8 @@ static HRESULT WINAPI HTMLDOMNode_insertBefore(IHTMLDOMNode *iface, IHTMLDOMNode
     case VT_NULL:
         break;
     case VT_DISPATCH: {
+        if(!V_DISPATCH(&refChild))
+            break;
         ref_node = get_node_obj(This->doc, (IUnknown*)V_DISPATCH(&refChild));
         if(!ref_node) {
             ERR("unvalid node\n");
