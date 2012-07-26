@@ -409,7 +409,7 @@ const struct gdi_dc_funcs dib_driver =
     dibdrv_CreateDC,                    /* pCreateDC */
     dibdrv_DeleteDC,                    /* pDeleteDC */
     NULL,                               /* pDeleteObject */
-    NULL,                               /* pDescribePixelFormat */
+    dibdrv_DescribePixelFormat,         /* pDescribePixelFormat */
     NULL,                               /* pDeviceCapabilities */
     dibdrv_Ellipse,                     /* pEllipse */
     NULL,                               /* pEndDoc */
@@ -501,7 +501,7 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pSetMapMode */
     NULL,                               /* pSetMapperFlags */
     dibdrv_SetPixel,                    /* pSetPixel */
-    NULL,                               /* pSetPixelFormat */
+    dibdrv_SetPixelFormat,              /* pSetPixelFormat */
     NULL,                               /* pSetPolyFillMode */
     NULL,                               /* pSetROP2 */
     NULL,                               /* pSetRelAbs */
@@ -524,6 +524,6 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pSwapBuffers */
     NULL,                               /* pUnrealizePalette */
     NULL,                               /* pWidenPath */
-    NULL,                               /* wine_get_wgl_driver */
+    dibdrv_wine_get_wgl_driver,         /* wine_get_wgl_driver */
     GDI_PRIORITY_DIB_DRV                /* priority */
 };

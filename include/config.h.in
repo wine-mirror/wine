@@ -239,6 +239,9 @@
 /* Define to 1 if you have the <GL/gl.h> header file. */
 #undef HAVE_GL_GL_H
 
+/* Define to 1 if you have the <GL/osmesa.h> header file. */
+#undef HAVE_GL_OSMESA_H
+
 /* Define if we have libgphoto2 development environment */
 #undef HAVE_GPHOTO2
 
@@ -1255,6 +1258,9 @@
 
 /* Define to the soname of the libopenal library. */
 #undef SONAME_LIBOPENAL
+
+/* Define to the soname of the libOSMesa library. */
+#undef SONAME_LIBOSMESA
 
 /* Define to the soname of the libpng library. */
 #undef SONAME_LIBPNG

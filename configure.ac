@@ -69,6 +69,8 @@ AC_ARG_WITH(opencl,    AS_HELP_STRING([--without-opencl],[do not use OpenCL]),
 AC_ARG_WITH(opengl,    AS_HELP_STRING([--without-opengl],[do not use OpenGL]))
 AC_ARG_WITH(openssl,   AS_HELP_STRING([--without-openssl],[do not use OpenSSL]),
             [if test "x$withval" = "xno"; then ac_cv_header_openssl_err_h=no; ac_cv_header_openssl_ssl_h=no; fi])
+AC_ARG_WITH(osmesa,     AS_HELP_STRING([--without-osmesa],[do not use the OSMesa library]),
+            [if test "x$withval" = "xno"; then ac_cv_header_GL_osmesa_h=no; fi])
 AC_ARG_WITH(oss,       AS_HELP_STRING([--without-oss],[do not use the OSS sound support]))
 AC_ARG_WITH(png,       AS_HELP_STRING([--without-png],[do not use PNG]),
             [if test "x$withval" = "xno"; then ac_cv_header_png_h=no; fi])
@@ -1091,7 +1093,7 @@ then
     opengl_msg=""
     if test "x$with_opengl" != "xno"
     then
-	AC_CHECK_HEADERS(GL/gl.h GL/glx.h GL/glu.h,,,
+	AC_CHECK_HEADERS(GL/gl.h GL/glx.h GL/glu.h GL/osmesa.h,,,
 [#ifdef HAVE_GL_GLX_H
 # include <GL/glx.h>
 #endif])
@@ -1127,6 +1129,13 @@ This probably prevents linking to OpenGL. Try deleting the file and restarting c
                  fi
                  WINE_NOTICE_WITH(glu,[test "x$ac_cv_lib_soname_GLU" = "x"],
                                  [libGLU ${notice_platform}development files not found, GLU won't be supported.])
+
+                 if test "$ac_cv_header_GL_osmesa_h" = "yes"
+                 then
+                    WINE_CHECK_SONAME(OSMesa,glAccum,,,[$X_LIBS $X_PRE_LIBS $XLIB -lm $X_EXTRA_LIBS])
+                 fi
+                 WINE_NOTICE_WITH(osmesa,[test "x$ac_cv_lib_soname_OSMesa" = "x"],
+                                 [libOSMesa ${notice_platform}development files not found (or too old), OpenGL rendering in bitmaps won't be supported.])
              else
                  opengl_msg="Old Mesa headers detected. Consider upgrading your Mesa libraries."
 	     fi

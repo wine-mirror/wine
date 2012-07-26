@@ -104,6 +104,7 @@ typedef struct tagDC
     SIZE         virtual_size;     /* Initially HORZSIZE,VERTSIZE. Changed by SetVirtualResolution */
     RECT         vis_rect;         /* visible rectangle in screen coords */
     RECT         device_rect;      /* rectangle for the whole device */
+    int          pixel_format;     /* pixel format (for memory DCs) */
     FLOAT        miterLimit;
 
     int           flags;
