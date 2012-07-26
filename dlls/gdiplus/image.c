@@ -3578,6 +3578,7 @@ static GpStatus encode_image_WIC(GpImage *image, IStream* stream,
                 {
                     memcpy(&wicformat, pixel_formats[i].wic_format, sizeof(GUID));
                     gdipformat = bitmap->format;
+                    break;
                 }
             }
             if (!gdipformat)
