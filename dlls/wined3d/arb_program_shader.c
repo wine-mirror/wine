@@ -6999,7 +6999,7 @@ static void upload_palette(const struct wined3d_surface *surface, struct wined3d
     struct wined3d_device *device = surface->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct arbfp_blit_priv *priv = device->blit_priv;
-    BOOL colorkey = (surface->CKeyFlags & WINEDDSD_CKSRCBLT) ? TRUE : FALSE;
+    BOOL colorkey = (surface->CKeyFlags & WINEDDSD_CKSRCBLT) != 0;
 
     d3dfmt_p8_init_palette(surface, table, colorkey);
 

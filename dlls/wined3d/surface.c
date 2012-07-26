@@ -4146,7 +4146,7 @@ void surface_internal_preload(struct wined3d_surface *surface, enum WINED3DSRGB 
         /* TODO: Use already acquired context when possible. */
         context = context_acquire(device, NULL);
 
-        surface_load(surface, srgb == SRGB_SRGB ? TRUE : FALSE);
+        surface_load(surface, srgb == SRGB_SRGB);
 
         if (surface->resource.pool == WINED3D_POOL_DEFAULT)
         {
@@ -6352,7 +6352,7 @@ static void ffp_blit_free(struct wined3d_device *device) { }
 static void ffp_blit_p8_upload_palette(const struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info)
 {
     BYTE table[256][4];
-    BOOL colorkey_active = (surface->CKeyFlags & WINEDDSD_CKSRCBLT) ? TRUE : FALSE;
+    BOOL colorkey_active = (surface->CKeyFlags & WINEDDSD_CKSRCBLT) != 0;
     GLenum target;
 
     if (surface->container.type == WINED3D_CONTAINER_TEXTURE)
