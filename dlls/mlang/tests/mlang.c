@@ -677,7 +677,7 @@ static void test_EnumCodePages(IMultiLanguage2 *iML2, DWORD flags)
     n = 0;
     ret = IEnumCodePage_Next(iEnumCP, 1, &cpinfo2, &n);
     ok(n == 1 && ret == S_OK, "IEnumCodePage_Next: expected 1/S_OK, got %u/%08x\n", n, ret);
-    cpinfo_cmp(&cpinfo[0], &cpinfo2);
+    cpinfo_cmp(cpinfo, &cpinfo2);
 
     if (0)
     {
@@ -782,7 +782,7 @@ static void test_EnumScripts(IMultiLanguage2 *iML2, DWORD flags)
     n = 0;
     ret = IEnumScript_Next(iEnumScript, 1, &sinfo2, &n);
     ok(n == 1 && ret == S_OK, "IEnumScript_Next: expected 1/S_OK, got %u/%08x\n", n, ret);
-    scriptinfo_cmp(&sinfo[0], &sinfo2);
+    scriptinfo_cmp(sinfo, &sinfo2);
 
     if (0)
     {
@@ -861,7 +861,7 @@ static void IMLangFontLink_Test(IMLangFontLink* iMLFL)
 
     dwCodePages = 0;
     processed = 0;
-    ret = IMLangFontLink_GetStrCodePages(iMLFL, &str[0], 1, 0, &dwCodePages, &processed);
+    ret = IMLangFontLink_GetStrCodePages(iMLFL, str, 1, 0, &dwCodePages, &processed);
     ok(ret == S_OK, "IMLangFontLink_GetStrCodePages error %x\n", ret);
     ok(dwCodePages == dwCmpCodePages, "expected %x, got %x\n", dwCmpCodePages, dwCodePages);
     ok(processed == 1, "expected 1, got %d\n", processed);
