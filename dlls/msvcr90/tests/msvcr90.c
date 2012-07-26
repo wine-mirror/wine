@@ -35,7 +35,10 @@
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
 
 #define SET_EXPECT(func) \
-    expect_ ## func = TRUE
+    do { \
+        expect_ ## func = TRUE; \
+        errno = 0xdeadbeef; \
+    }while(0)
 
 #define CHECK_EXPECT2(func) \
     do { \
@@ -49,9 +52,10 @@
         expect_ ## func = FALSE; \
     }while(0)
 
-#define CHECK_CALLED(func) \
+#define CHECK_CALLED(func,error) \
     do { \
         ok(called_ ## func, "expected " #func "\n"); \
+        ok( errno == (error), "got errno %u instead of %u\n", errno, (error) ); \
         expect_ ## func = called_ ## func = FALSE; \
     }while(0)
 
@@ -114,6 +118,9 @@ static int (__cdecl *p_ferror)(FILE*);
 static int (__cdecl *p_flsbuf)(int, FILE*);
 static unsigned long (__cdecl *p_byteswap_ulong)(unsigned long);
 
+/* make sure we use the correct errno */
+#undef errno
+#define errno (*p_errno())
 
 /* type info */
 typedef struct __type_info
@@ -220,6 +227,7 @@ static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
     ok(file == NULL, "file is not NULL\n");
     ok(line == 0, "line = %u\n", line);
     ok(arg == 0, "arg = %lx\n", (UINT_PTR)arg);
+    ok(errno != 0xdeadbeef, "errno not set\n");
 }
 
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(hcrt,y)
@@ -452,37 +460,35 @@ static void test__strtoi64(void)
     __int64 res;
     unsigned __int64 ures;
 
-    errno = 0xdeadbeef;
     SET_EXPECT(invalid_parameter_handler);
     res = p_strtoi64(NULL, NULL, 10);
     ok(res == 0, "res != 0\n");
-    CHECK_CALLED(invalid_parameter_handler);
+    CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     SET_EXPECT(invalid_parameter_handler);
     res = p_strtoi64("123", NULL, 1);
     ok(res == 0, "res != 0\n");
-    CHECK_CALLED(invalid_parameter_handler);
+    CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     SET_EXPECT(invalid_parameter_handler);
     res = p_strtoi64("123", NULL, 37);
     ok(res == 0, "res != 0\n");
-    CHECK_CALLED(invalid_parameter_handler);
+    CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     SET_EXPECT(invalid_parameter_handler);
     ures = p_strtoui64(NULL, NULL, 10);
     ok(ures == 0, "res = %d\n", (int)ures);
-    CHECK_CALLED(invalid_parameter_handler);
+    CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     SET_EXPECT(invalid_parameter_handler);
     ures = p_strtoui64("123", NULL, 1);
     ok(ures == 0, "res = %d\n", (int)ures);
-    CHECK_CALLED(invalid_parameter_handler);
+    CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     SET_EXPECT(invalid_parameter_handler);
     ures = p_strtoui64("123", NULL, 37);
     ok(ures == 0, "res = %d\n", (int)ures);
-    CHECK_CALLED(invalid_parameter_handler);
-    ok(errno == 0xdeadbeef, "errno = %x\n", errno);
+    CHECK_CALLED(invalid_parameter_handler, EINVAL);
 }
 
 static void test__itoa_s(void)
@@ -490,35 +496,31 @@ static void test__itoa_s(void)
     errno_t ret;
     char buffer[33];
 
-    /* _itoa_s (on msvcr90) doesn't set errno (in case of errors) while msvcrt does
-     * as we always set errno in our msvcrt implementation, don't test here that errno
-     * isn't changed
-     */
     SET_EXPECT(invalid_parameter_handler);
     ret = p_itoa_s(0, NULL, 0, 0);
     ok(ret == EINVAL, "Expected _itoa_s to return EINVAL, got %d\n", ret);
-    CHECK_CALLED(invalid_parameter_handler);
+    CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     memset(buffer, 'X', sizeof(buffer));
     SET_EXPECT(invalid_parameter_handler);
     ret = p_itoa_s(0, buffer, 0, 0);
     ok(ret == EINVAL, "Expected _itoa_s to return EINVAL, got %d\n", ret);
     ok(buffer[0] == 'X', "Expected the output buffer to be untouched\n");
-    CHECK_CALLED(invalid_parameter_handler);
+    CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     memset(buffer, 'X', sizeof(buffer));
     SET_EXPECT(invalid_parameter_handler);
     ret = p_itoa_s(0, buffer, sizeof(buffer), 0);
     ok(ret == EINVAL, "Expected _itoa_s to return EINVAL, got %d\n", ret);
     ok(buffer[0] == '\0', "Expected the output buffer to be null terminated\n");
-    CHECK_CALLED(invalid_parameter_handler);
+    CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     memset(buffer, 'X', sizeof(buffer));
     SET_EXPECT(invalid_parameter_handler);
     ret = p_itoa_s(0, buffer, sizeof(buffer), 64);
     ok(ret == EINVAL, "Expected _itoa_s to return EINVAL, got %d\n", ret);
     ok(buffer[0] == '\0', "Expected the output buffer to be null terminated\n");
-    CHECK_CALLED(invalid_parameter_handler);
+    CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     memset(buffer, 'X', sizeof(buffer));
     SET_EXPECT(invalid_parameter_handler);
@@ -526,7 +528,7 @@ static void test__itoa_s(void)
     ok(ret == ERANGE, "Expected _itoa_s to return ERANGE, got %d\n", ret);
     ok(!memcmp(buffer, "\000765", 4),
        "Expected the output buffer to be null terminated with truncated output\n");
-    CHECK_CALLED(invalid_parameter_handler);
+    CHECK_CALLED(invalid_parameter_handler, ERANGE);
 
     memset(buffer, 'X', sizeof(buffer));
     SET_EXPECT(invalid_parameter_handler);
@@ -534,7 +536,7 @@ static void test__itoa_s(void)
     ok(ret == ERANGE, "Expected _itoa_s to return ERANGE, got %d\n", ret);
     ok(!memcmp(buffer, "\0007654321", 8),
        "Expected the output buffer to be null terminated with truncated output\n");
-    CHECK_CALLED(invalid_parameter_handler);
+    CHECK_CALLED(invalid_parameter_handler, ERANGE);
 
     memset(buffer, 'X', sizeof(buffer));
     SET_EXPECT(invalid_parameter_handler);
@@ -542,7 +544,7 @@ static void test__itoa_s(void)
     ok(ret == ERANGE, "Expected _itoa_s to return ERANGE, got %d\n", ret);
     ok(!memcmp(buffer, "\00087654321", 9),
        "Expected the output buffer to be null terminated with truncated output\n");
-    CHECK_CALLED(invalid_parameter_handler);
+    CHECK_CALLED(invalid_parameter_handler, ERANGE);
 
     ret = p_itoa_s(12345678, buffer, 9, 10);
     ok(ret == 0, "Expected _itoa_s to return 0, got %d\n", ret);
@@ -587,17 +589,17 @@ static void test_wcsncat_s(void)
     SET_EXPECT(invalid_parameter_handler);
     ret = p_wcsncat_s(NULL, 4, src, 4);
     ok(ret == EINVAL, "err = %d\n", ret);
-    CHECK_CALLED(invalid_parameter_handler);
+    CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     SET_EXPECT(invalid_parameter_handler);
     ret = p_wcsncat_s(dst, 0, src, 4);
     ok(ret == EINVAL, "err = %d\n", ret);
-    CHECK_CALLED(invalid_parameter_handler);
+    CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     SET_EXPECT(invalid_parameter_handler);
     ret = p_wcsncat_s(dst, 0, src, _TRUNCATE);
     ok(ret == EINVAL, "err = %d\n", ret);
-    CHECK_CALLED(invalid_parameter_handler);
+    CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     ret = p_wcsncat_s(dst, 4, NULL, 0);
     ok(ret == 0, "err = %d\n", ret);
@@ -606,7 +608,7 @@ static void test_wcsncat_s(void)
     SET_EXPECT(invalid_parameter_handler);
     ret = p_wcsncat_s(dst, 2, src, 4);
     ok(ret == ERANGE, "err = %d\n", ret);
-    CHECK_CALLED(invalid_parameter_handler);
+    CHECK_CALLED(invalid_parameter_handler, ERANGE);
 
     dst[0] = 0;
     ret = p_wcsncat_s(dst, 2, src, _TRUNCATE);
@@ -618,7 +620,7 @@ static void test_wcsncat_s(void)
     SET_EXPECT(invalid_parameter_handler);
     ret = p_wcsncat_s(dst, 4, src, 4);
     ok(ret == EINVAL, "err = %d\n", ret);
-    CHECK_CALLED(invalid_parameter_handler);
+    CHECK_CALLED(invalid_parameter_handler, EINVAL);
 }
 
 /* Based on dlls/ntdll/tests/string.c */
@@ -670,45 +672,53 @@ static void test_qsort_s(void)
 
     SET_EXPECT(invalid_parameter_handler);
     p_qsort_s(NULL, 0, 0, NULL, NULL);
-    CHECK_CALLED(invalid_parameter_handler);
+    CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     SET_EXPECT(invalid_parameter_handler);
     p_qsort_s(NULL, 0, 0, intcomparefunc, NULL);
-    CHECK_CALLED(invalid_parameter_handler);
+    CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     SET_EXPECT(invalid_parameter_handler);
     p_qsort_s(NULL, 0, sizeof(int), NULL, NULL);
-    CHECK_CALLED(invalid_parameter_handler);
+    CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     SET_EXPECT(invalid_parameter_handler);
     p_qsort_s(NULL, 1, sizeof(int), intcomparefunc, NULL);
-    CHECK_CALLED(invalid_parameter_handler);
+    CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
+    errno = 0xdeadbeef;
     g_qsort_s_context_counter = 0;
     p_qsort_s(NULL, 0, sizeof(int), intcomparefunc, NULL);
     ok(g_qsort_s_context_counter == 0, "callback shouldn't have been called\n");
+    ok( errno == 0xdeadbeef, "wrong errno %u\n", errno );
 
     /* overflow without side effects, other overflow values crash */
+    errno = 0xdeadbeef;
     g_qsort_s_context_counter = 0;
     p_qsort_s((void*)arr2, (((size_t)1) << (8*sizeof(size_t) - 1)) + 1, sizeof(int), intcomparefunc, &g_qsort_s_context_counter);
     ok(g_qsort_s_context_counter == 0, "callback shouldn't have been called\n");
+    ok( errno == 0xdeadbeef, "wrong errno %u\n", errno );
     ok(arr2[0] == 23, "should remain unsorted, arr2[0] is %d\n", arr2[0]);
     ok(arr2[1] == 42, "should remain unsorted, arr2[1] is %d\n", arr2[1]);
     ok(arr2[2] == 8,  "should remain unsorted, arr2[2] is %d\n", arr2[2]);
     ok(arr2[3] == 4,  "should remain unsorted, arr2[3] is %d\n", arr2[3]);
 
+    errno = 0xdeadbeef;
     g_qsort_s_context_counter = 0;
     p_qsort_s((void*)arr, 0, sizeof(int), intcomparefunc, &g_qsort_s_context_counter);
     ok(g_qsort_s_context_counter == 0, "callback shouldn't have been called\n");
+    ok( errno == 0xdeadbeef, "wrong errno %u\n", errno );
     ok(arr[0] == 23, "badly sorted, nmemb=0, arr[0] is %d\n", arr[0]);
     ok(arr[1] == 42, "badly sorted, nmemb=0, arr[1] is %d\n", arr[1]);
     ok(arr[2] == 8,  "badly sorted, nmemb=0, arr[2] is %d\n", arr[2]);
     ok(arr[3] == 4,  "badly sorted, nmemb=0, arr[3] is %d\n", arr[3]);
     ok(arr[4] == 16, "badly sorted, nmemb=0, arr[4] is %d\n", arr[4]);
 
+    errno = 0xdeadbeef;
     g_qsort_s_context_counter = 0;
     p_qsort_s((void*)arr, 1, sizeof(int), intcomparefunc, &g_qsort_s_context_counter);
     ok(g_qsort_s_context_counter == 0, "callback shouldn't have been called\n");
+    ok( errno == 0xdeadbeef, "wrong errno %u\n", errno );
     ok(arr[0] == 23, "badly sorted, nmemb=1, arr[0] is %d\n", arr[0]);
     ok(arr[1] == 42, "badly sorted, nmemb=1, arr[1] is %d\n", arr[1]);
     ok(arr[2] == 8,  "badly sorted, nmemb=1, arr[2] is %d\n", arr[2]);
@@ -724,7 +734,7 @@ static void test_qsort_s(void)
     ok(arr[2] == 8,  "badly sorted, size=0, arr[2] is %d\n", arr[2]);
     ok(arr[3] == 4,  "badly sorted, size=0, arr[3] is %d\n", arr[3]);
     ok(arr[4] == 16, "badly sorted, size=0, arr[4] is %d\n", arr[4]);
-    CHECK_CALLED(invalid_parameter_handler);
+    CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     g_qsort_s_context_counter = 0;
     p_qsort_s((void*)arr, 5, sizeof(int), intcomparefunc, &g_qsort_s_context_counter);
@@ -761,26 +771,24 @@ static void test_bsearch_s(void)
     int arr[7] = { 1, 3, 4, 8, 16, 23, 42 };
     int *x, l, i, j = 1;
 
-    errno = 0xdeadbeef;
     SET_EXPECT(invalid_parameter_handler);
     x = p_bsearch_s(NULL, NULL, 0, 0, NULL, NULL);
     ok(x == NULL, "Expected bsearch_s to return NULL, got %p\n", x);
-    CHECK_CALLED(invalid_parameter_handler);
+    CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     g_bsearch_s_context_counter = 0;
     SET_EXPECT(invalid_parameter_handler);
     x = p_bsearch_s(&l, arr, j, 0, intcomparefunc, &g_bsearch_s_context_counter);
     ok(x == NULL, "Expected bsearch_s to return NULL, got %p\n", x);
     ok(g_bsearch_s_context_counter == 0, "callback shouldn't have been called\n");
-    CHECK_CALLED(invalid_parameter_handler);
+    CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     g_bsearch_s_context_counter = 0;
     SET_EXPECT(invalid_parameter_handler);
     x = p_bsearch_s(&l, arr, j, sizeof(arr[0]), NULL, &g_bsearch_s_context_counter);
     ok(x == NULL, "Expected bsearch_s to return NULL, got %p\n", x);
     ok(g_bsearch_s_context_counter == 0, "callback shouldn't have been called\n");
-    CHECK_CALLED(invalid_parameter_handler);
-    ok(errno == 0xdeadbeef, "errno = %x\n", errno);
+    CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     /* just try all array sizes */
     for (j=1;j<sizeof(arr)/sizeof(arr[0]);j++) {
@@ -807,14 +815,14 @@ static void test_controlfp_s(void)
     SET_EXPECT(invalid_parameter_handler);
     ret = p_controlfp_s( NULL, ~0, ~0 );
     ok( ret == EINVAL, "wrong result %d\n", ret );
-    CHECK_CALLED(invalid_parameter_handler);
+    CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     cur = 0xdeadbeef;
     SET_EXPECT(invalid_parameter_handler);
     ret = p_controlfp_s( &cur, ~0, ~0 );
     ok( ret == EINVAL, "wrong result %d\n", ret );
     ok( cur != 0xdeadbeef, "value not set\n" );
-    CHECK_CALLED(invalid_parameter_handler);
+    CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     cur = 0xdeadbeef;
     ret = p_controlfp_s( &cur, 0, 0 );
@@ -826,7 +834,7 @@ static void test_controlfp_s(void)
     ret = p_controlfp_s( &cur, 0x80000000, 0x80000000 );
     ok( ret == EINVAL, "wrong result %d\n", ret );
     ok( cur != 0xdeadbeef, "value not set\n" );
-    CHECK_CALLED(invalid_parameter_handler);
+    CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     cur = 0xdeadbeef;
     /* mask is only checked when setting invalid bits */
@@ -839,12 +847,10 @@ static void test_tmpfile_s( void )
 {
     int ret;
 
-    errno = 0xdeadbeef;
     SET_EXPECT(invalid_parameter_handler);
     ret = p_tmpfile_s(NULL);
     ok(ret == EINVAL, "Expected tmpfile_s to return EINVAL, got %i\n", ret);
-    CHECK_CALLED(invalid_parameter_handler);
-    ok(errno == 0xdeadbeef, "errno = %x\n", errno);
+    CHECK_CALLED(invalid_parameter_handler, EINVAL);
 }
 
 typedef struct
@@ -922,7 +928,7 @@ static void test__sopen_s(void)
     SET_EXPECT(invalid_parameter_handler);
     ret = p_sopen_s(NULL, "test", _O_RDONLY, _SH_DENYNO, _S_IREAD);
     ok(ret == EINVAL, "got %d, expected EINVAL\n", ret);
-    CHECK_CALLED(invalid_parameter_handler);
+    CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     fd = 0xdead;
     ret = p_sopen_s(&fd, "test", _O_RDONLY, _SH_DENYNO, _S_IREAD);
@@ -938,7 +944,7 @@ static void test__wsopen_s(void)
     SET_EXPECT(invalid_parameter_handler);
     ret = p_wsopen_s(NULL, testW, _O_RDONLY, _SH_DENYNO, _S_IREAD);
     ok(ret == EINVAL, "got %d, expected EINVAL\n", ret);
-    CHECK_CALLED(invalid_parameter_handler);
+    CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     fd = 0xdead;
     ret = p_wsopen_s(&fd, testW, _O_RDONLY, _SH_DENYNO, _S_IREAD);
