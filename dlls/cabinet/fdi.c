@@ -703,9 +703,9 @@ static BOOL FDI_read_entries(
   pfdici->cFiles    = num_files;
   pfdici->setID     = setid;
   pfdici->iCabinet  = cabidx;
-  pfdici->fReserve  = (flags & cfheadRESERVE_PRESENT) ? TRUE : FALSE;
-  pfdici->hasprev   = (flags & cfheadPREV_CABINET) ? TRUE : FALSE;
-  pfdici->hasnext   = (flags & cfheadNEXT_CABINET) ? TRUE : FALSE;
+  pfdici->fReserve  = (flags & cfheadRESERVE_PRESENT) != 0;
+  pfdici->hasprev   = (flags & cfheadPREV_CABINET) != 0;
+  pfdici->hasnext   = (flags & cfheadNEXT_CABINET) != 0;
   return TRUE;
 }
 
@@ -2815,7 +2815,7 @@ BOOL __cdecl FDICopy(
       fdin.pv = pvUser;
       fdin.psz1 = (char *)file->filename;
       fdin.hf = filehf;
-      fdin.cb = (file->attribs & cffile_A_EXEC) ? TRUE : FALSE; /* FIXME: is that right? */
+      fdin.cb = (file->attribs & cffile_A_EXEC) != 0; /* FIXME: is that right? */
       fdin.date = file->date;
       fdin.time = file->time;
       fdin.attribs = file->attribs; /* FIXME: filter _A_EXEC? */
