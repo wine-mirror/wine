@@ -139,7 +139,6 @@ static void test_GetLocaleInfoA(void)
 
   ret = GetLocaleInfoA(lcid, LOCALE_ILANGUAGE|LOCALE_RETURN_NUMBER, (char*)&val, sizeof(val));
   ok(ret, "got %d\n", ret);
-todo_wine
   ok(val == lcid, "got 0x%08x\n", val);
 
   /* en and ar use SUBLANG_NEUTRAL, but GetLocaleInfo assume SUBLANG_DEFAULT
@@ -204,6 +203,7 @@ struct neutralsublang_name2_t {
     WCHAR name[3];
     LCID lcid;
     LCID lcid_broken;
+    int todo;
 };
 
 static const struct neutralsublang_name2_t neutralsublang_names2[] = {
@@ -212,8 +212,8 @@ static const struct neutralsublang_name2_t neutralsublang_names2[] = {
     { {'d','e',0}, MAKELCID(MAKELANGID(LANG_GERMAN,     SUBLANG_GERMAN), SORT_DEFAULT) },
     { {'e','n',0}, MAKELCID(MAKELANGID(LANG_ENGLISH,    SUBLANG_ENGLISH_US), SORT_DEFAULT) },
     { {'e','s',0}, MAKELCID(MAKELANGID(LANG_SPANISH,    SUBLANG_SPANISH_MODERN), SORT_DEFAULT),
-                   MAKELCID(MAKELANGID(LANG_SPANISH,    SUBLANG_SPANISH), SORT_DEFAULT) /* vista */ },
-    { {'g','a',0}, MAKELCID(MAKELANGID(LANG_IRISH,      SUBLANG_IRISH_IRELAND), SORT_DEFAULT) },
+                   MAKELCID(MAKELANGID(LANG_SPANISH,    SUBLANG_SPANISH), SORT_DEFAULT) /* vista */, 1 },
+    { {'g','a',0}, MAKELCID(MAKELANGID(LANG_IRISH,      SUBLANG_IRISH_IRELAND), SORT_DEFAULT), 0, 1 },
     { {'i','t',0}, MAKELCID(MAKELANGID(LANG_ITALIAN,    SUBLANG_ITALIAN), SORT_DEFAULT) },
     { {'m','s',0}, MAKELCID(MAKELANGID(LANG_MALAY,      SUBLANG_MALAY_MALAYSIA), SORT_DEFAULT) },
     { {'n','l',0}, MAKELCID(MAKELANGID(LANG_DUTCH,      SUBLANG_DUTCH), SORT_DEFAULT) },
@@ -221,7 +221,7 @@ static const struct neutralsublang_name2_t neutralsublang_names2[] = {
     { {'s','r',0}, MAKELCID(MAKELANGID(LANG_SERBIAN,    SUBLANG_SERBIAN_CROATIA), SORT_DEFAULT) },
     { {'s','v',0}, MAKELCID(MAKELANGID(LANG_SWEDISH,    SUBLANG_SWEDISH), SORT_DEFAULT) },
     { {'u','z',0}, MAKELCID(MAKELANGID(LANG_UZBEK,      SUBLANG_UZBEK_LATIN), SORT_DEFAULT) },
-    { {'z','h',0}, MAKELCID(MAKELANGID(LANG_CHINESE,    SUBLANG_CHINESE_SIMPLIFIED), SORT_DEFAULT) },
+    { {'z','h',0}, MAKELCID(MAKELANGID(LANG_CHINESE,    SUBLANG_CHINESE_SIMPLIFIED), SORT_DEFAULT), 0, 1 },
     { {0} }
 };
 
@@ -244,7 +244,6 @@ static void test_GetLocaleInfoW(void)
 
   ret = GetLocaleInfoW(lcid_en, LOCALE_ILANGUAGE|LOCALE_RETURN_NUMBER, (WCHAR*)&val, sizeof(val)/sizeof(WCHAR));
   ok(ret, "got %d\n", ret);
-todo_wine
   ok(val == lcid_en, "got 0x%08x\n", val);
 
   ret = GetLocaleInfoW(lcid_en_neut, LOCALE_SNAME, bufferW, COUNTOF(bufferW));
@@ -275,9 +274,15 @@ todo_wine
 
           val = 0;
           GetLocaleInfoW(MAKELCID(langid, SORT_DEFAULT), LOCALE_ILANGUAGE|LOCALE_RETURN_NUMBER, (WCHAR*)&val, sizeof(val)/sizeof(WCHAR));
-      todo_wine
-          ok(val == ptr->lcid || broken(val == ptr->lcid_broken), "%s: got wrong lcid 0x%04x, expected 0x%04x\n",
-              wine_dbgstr_w(ptr->name), val, ptr->lcid);
+          if (ptr->todo)
+          {
+          todo_wine
+              ok(val == ptr->lcid || (val && broken(val == ptr->lcid_broken)), "%s: got wrong lcid 0x%04x, expected 0x%04x\n",
+                  wine_dbgstr_w(ptr->name), val, ptr->lcid);
+          }
+          else
+              ok(val == ptr->lcid || (val && broken(val == ptr->lcid_broken)), "%s: got wrong lcid 0x%04x, expected 0x%04x\n",
+                  wine_dbgstr_w(ptr->name), val, ptr->lcid);
           ptr++;
       }
   }
@@ -3381,8 +3386,11 @@ todo_wine
         {
             val = 0;
             pGetLocaleInfoEx(ptr->name, LOCALE_ILANGUAGE|LOCALE_RETURN_NUMBER, (WCHAR*)&val, sizeof(val)/sizeof(WCHAR));
-        todo_wine
-            ok(val == ptr->lcid, "%s: got wrong lcid 0x%04x, expected 0x%04x\n", wine_dbgstr_w(ptr->name), val, ptr->lcid);
+            if (ptr->todo)
+            todo_wine
+                ok(val == ptr->lcid, "%s: got wrong lcid 0x%04x, expected 0x%04x\n", wine_dbgstr_w(ptr->name), val, ptr->lcid);
+            else
+                ok(val == ptr->lcid, "%s: got wrong lcid 0x%04x, expected 0x%04x\n", wine_dbgstr_w(ptr->name), val, ptr->lcid);
             ptr++;
         }
     }
