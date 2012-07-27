@@ -286,7 +286,7 @@ BOOL WINAPI SetupQueryInfFileInformationW(PSP_INF_INFORMATION InfInformation,
     if (InfIndex != 0)
         FIXME("Appended INF files are not handled\n");
 
-    ptr = (LPWSTR)&InfInformation->VersionData[0];
+    ptr = (LPWSTR)InfInformation->VersionData;
     len = lstrlenW(ptr);
 
     if (RequiredSize)
@@ -674,7 +674,7 @@ BOOL WINAPI SetupQueryInfOriginalFileInformationW(
         return FALSE;
     }
 
-    inf_path = (LPWSTR)&InfInformation->VersionData[0];
+    inf_path = (LPWSTR)InfInformation->VersionData;
 
     /* FIXME: we should get OriginalCatalogName from CatalogFile line in
      * the original inf file and cache it, but that would require building a

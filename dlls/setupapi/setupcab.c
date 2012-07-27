@@ -283,7 +283,7 @@ static INT_PTR CDECL sc_FNNOTIFY_A(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION p
 
   CHAR mysterio[SIZEOF_MYSTERIO]; /* how big? undocumented! probably 256... */
 
-  memset(&(mysterio[0]), 0, SIZEOF_MYSTERIO);
+  memset(mysterio, 0, SIZEOF_MYSTERIO);
 
   TRACE("(fdint == %d, pfdin == ^%p)\n", fdint, pfdin);
 
@@ -303,7 +303,7 @@ static INT_PTR CDECL sc_FNNOTIFY_A(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION p
     TRACE("  Cabinet Set#: %d\n", pfdin->setID);
     TRACE("  Cabinet Cab#: %d\n", pfdin->iCabinet); */
     WARN("SPFILENOTIFY_CABINETINFO undocumented: guess implementation.\n");
-    ci.CabinetFile = &(phsc->most_recent_cabinet_name[0]);
+    ci.CabinetFile = phsc->most_recent_cabinet_name;
     ci.CabinetPath = pfdin->psz3;
     ci.DiskName = pfdin->psz2;
     ci.SetId = pfdin->setID;
@@ -327,17 +327,17 @@ static INT_PTR CDECL sc_FNNOTIFY_A(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION p
     fici.DosDate = pfdin->date;
     fici.DosTime = pfdin->time;
     fici.DosAttribs = pfdin->attribs;
-    memset(&(fici.FullTargetName[0]), 0, MAX_PATH);
+    memset(fici.FullTargetName, 0, MAX_PATH);
     err = phsc->msghandler(phsc->context, SPFILENOTIFY_FILEINCABINET,
                            (UINT_PTR)&fici, (UINT_PTR)pfdin->psz1);
     if (err == FILEOP_DOIT) {
-      TRACE("  Callback specified filename: %s\n", debugstr_a(&(fici.FullTargetName[0])));
+      TRACE("  Callback specified filename: %s\n", debugstr_a(fici.FullTargetName));
       if (!fici.FullTargetName[0]) {
         WARN("  Empty return string causing abort.\n");
         SetLastError(ERROR_PATH_NOT_FOUND);
         return -1;
       }
-      return sc_cb_open(&(fici.FullTargetName[0]), _O_BINARY | _O_CREAT | _O_WRONLY,  _S_IREAD | _S_IWRITE);
+      return sc_cb_open(fici.FullTargetName, _O_BINARY | _O_CREAT | _O_WRONLY,  _S_IREAD | _S_IWRITE);
     } else {
       TRACE("  Callback skipped file.\n");
       return 0;
@@ -347,7 +347,7 @@ static INT_PTR CDECL sc_FNNOTIFY_A(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION p
     /* TRACE("  File name: %s\n", debugstr_a(pfdin->psz1));
     TRACE("  Exec file? %s\n", (pfdin->cb) ? "Yes" : "No");
     TRACE("  File hndl: %d\n", pfdin->hf); */
-    fp.Source = &(phsc->most_recent_cabinet_name[0]);
+    fp.Source = phsc->most_recent_cabinet_name;
     fp.Target = pfdin->psz1;
     fp.Win32Error = 0;
     fp.Flags = 0;
@@ -374,7 +374,7 @@ static INT_PTR CDECL sc_FNNOTIFY_A(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION p
     ci.SetId = pfdin->setID;
     ci.CabinetNumber = pfdin->iCabinet;
     /* remember the new cabinet name */
-    strcpy(&(phsc->most_recent_cabinet_name[0]), pfdin->psz1);
+    strcpy(phsc->most_recent_cabinet_name, pfdin->psz1);
     err = phsc->msghandler(phsc->context, SPFILENOTIFY_NEEDNEWCABINET, (UINT_PTR)&ci, (UINT_PTR)mysterio);
     if (err) {
       SetLastError(err);
@@ -382,7 +382,7 @@ static INT_PTR CDECL sc_FNNOTIFY_A(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION p
     } else {
       if (mysterio[0]) {
         /* some easy paranoia.  no such carefulness exists on the wide API IIRC */
-        lstrcpynA(pfdin->psz3, &(mysterio[0]), SIZEOF_MYSTERIO);
+        lstrcpynA(pfdin->psz3, mysterio, SIZEOF_MYSTERIO);
       }
       return 0;
     }
@@ -405,10 +405,10 @@ static INT_PTR CDECL sc_FNNOTIFY_W(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION p
   WCHAR buf[MAX_PATH], buf2[MAX_PATH];
   CHAR charbuf[MAX_PATH];
 
-  memset(&(mysterio[0]), 0, SIZEOF_MYSTERIO * sizeof(WCHAR));
-  memset(&(buf[0]), 0, MAX_PATH * sizeof(WCHAR));
-  memset(&(buf2[0]), 0, MAX_PATH * sizeof(WCHAR));
-  memset(&(charbuf[0]), 0, MAX_PATH);
+  memset(mysterio, 0, SIZEOF_MYSTERIO * sizeof(WCHAR));
+  memset(buf, 0, MAX_PATH * sizeof(WCHAR));
+  memset(buf2, 0, MAX_PATH * sizeof(WCHAR));
+  memset(charbuf, 0, MAX_PATH);
 
   TRACE("(fdint == %d, pfdin == ^%p)\n", fdint, pfdin);
 
@@ -428,15 +428,15 @@ static INT_PTR CDECL sc_FNNOTIFY_W(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION p
     TRACE("  Cabinet Set#: %d\n", pfdin->setID);
     TRACE("  Cabinet Cab#: %d\n", pfdin->iCabinet); */
     WARN("SPFILENOTIFY_CABINETINFO undocumented: guess implementation.\n");
-    ci.CabinetFile = &(phsc->most_recent_cabinet_name[0]);
-    len = 1 + MultiByteToWideChar(CP_ACP, 0, pfdin->psz3, -1, &(buf[0]), MAX_PATH);
+    ci.CabinetFile = phsc->most_recent_cabinet_name;
+    len = 1 + MultiByteToWideChar(CP_ACP, 0, pfdin->psz3, -1, buf, MAX_PATH);
     if ((len > MAX_PATH) || (len <= 1))
       buf[0] = '\0';
-    ci.CabinetPath = &(buf[0]);
-    len = 1 + MultiByteToWideChar(CP_ACP, 0, pfdin->psz2, -1, &(buf2[0]), MAX_PATH);
+    ci.CabinetPath = buf;
+    len = 1 + MultiByteToWideChar(CP_ACP, 0, pfdin->psz2, -1, buf2, MAX_PATH);
     if ((len > MAX_PATH) || (len <= 1))
       buf2[0] = '\0';
-    ci.DiskName = &(buf2[0]);
+    ci.DiskName = buf2;
     ci.SetId = pfdin->setID;
     ci.CabinetNumber = pfdin->iCabinet;
     phsc->msghandler(phsc->context, SPFILENOTIFY_CABINETINFO, (UINT_PTR)&ci, 0);
@@ -452,32 +452,32 @@ static INT_PTR CDECL sc_FNNOTIFY_W(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION p
     TRACE("  File date: %u\n", pfdin->date);
     TRACE("  File time: %u\n", pfdin->time);
     TRACE("  File attr: %u\n", pfdin->attribs); */
-    len = 1 + MultiByteToWideChar(CP_ACP, 0, pfdin->psz1, -1, &(buf2[0]), MAX_PATH);
+    len = 1 + MultiByteToWideChar(CP_ACP, 0, pfdin->psz1, -1, buf2, MAX_PATH);
     if ((len > MAX_PATH) || (len <= 1))
       buf2[0] = '\0';
-    fici.NameInCabinet = &(buf2[0]);
+    fici.NameInCabinet = buf2;
     fici.FileSize = pfdin->cb;
     fici.Win32Error = 0;
     fici.DosDate = pfdin->date;
     fici.DosTime = pfdin->time;
     fici.DosAttribs = pfdin->attribs;
-    memset(&(fici.FullTargetName[0]), 0, MAX_PATH * sizeof(WCHAR));
+    memset(fici.FullTargetName, 0, MAX_PATH * sizeof(WCHAR));
     err = phsc->msghandler(phsc->context, SPFILENOTIFY_FILEINCABINET,
                            (UINT_PTR)&fici, (UINT_PTR)pfdin->psz1);
     if (err == FILEOP_DOIT) {
-      TRACE("  Callback specified filename: %s\n", debugstr_w(&(fici.FullTargetName[0])));
+      TRACE("  Callback specified filename: %s\n", debugstr_w(fici.FullTargetName));
       if (fici.FullTargetName[0]) {
-        len = strlenW(&(fici.FullTargetName[0])) + 1;
+        len = strlenW(fici.FullTargetName) + 1;
         if ((len > MAX_PATH ) || (len <= 1))
           return 0;
-        if (!WideCharToMultiByte(CP_ACP, 0, &(fici.FullTargetName[0]), len, &(charbuf[0]), MAX_PATH, 0, 0))
+        if (!WideCharToMultiByte(CP_ACP, 0, fici.FullTargetName, len, charbuf, MAX_PATH, 0, 0))
           return 0;
       } else {
         WARN("Empty buffer string caused abort.\n");
         SetLastError(ERROR_PATH_NOT_FOUND);
         return -1;
       }
-      return sc_cb_open(&(charbuf[0]), _O_BINARY | _O_CREAT | _O_WRONLY,  _S_IREAD | _S_IWRITE);
+      return sc_cb_open(charbuf, _O_BINARY | _O_CREAT | _O_WRONLY,  _S_IREAD | _S_IWRITE);
     } else {
       TRACE("  Callback skipped file.\n");
       return 0;
@@ -487,11 +487,11 @@ static INT_PTR CDECL sc_FNNOTIFY_W(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION p
     /* TRACE("  File name: %s\n", debugstr_a(pfdin->psz1));
     TRACE("  Exec file? %s\n", (pfdin->cb) ? "Yes" : "No");
     TRACE("  File hndl: %d\n", pfdin->hf); */
-    fp.Source = &(phsc->most_recent_cabinet_name[0]);
-    len = 1 + MultiByteToWideChar(CP_ACP, 0, pfdin->psz1, -1, &(buf[0]), MAX_PATH);
+    fp.Source = phsc->most_recent_cabinet_name;
+    len = 1 + MultiByteToWideChar(CP_ACP, 0, pfdin->psz1, -1, buf, MAX_PATH);
     if ((len > MAX_PATH) || (len <= 1))
       buf[0] = '\0';
-    fp.Target = &(buf[0]);
+    fp.Target = buf;
     fp.Win32Error = 0;
     fp.Flags = 0;
     /* a valid fixme -- but occurs too many times */
@@ -512,18 +512,18 @@ static INT_PTR CDECL sc_FNNOTIFY_W(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION p
     TRACE("  Cabinet Set#: %d\n", pfdin->setID);
     TRACE("  Cabinet Cab#: %d\n", pfdin->iCabinet); */
     /* remember the new cabinet name */
-    len = 1 + MultiByteToWideChar(CP_ACP, 0, pfdin->psz1, -1, &(phsc->most_recent_cabinet_name[0]), MAX_PATH);
+    len = 1 + MultiByteToWideChar(CP_ACP, 0, pfdin->psz1, -1, phsc->most_recent_cabinet_name, MAX_PATH);
     if ((len > MAX_PATH) || (len <= 1))
       phsc->most_recent_cabinet_name[0] = '\0';
-    ci.CabinetFile = &(phsc->most_recent_cabinet_name[0]);
-    len = 1 + MultiByteToWideChar(CP_ACP, 0, pfdin->psz3, -1, &(buf[0]), MAX_PATH);
+    ci.CabinetFile = phsc->most_recent_cabinet_name;
+    len = 1 + MultiByteToWideChar(CP_ACP, 0, pfdin->psz3, -1, buf, MAX_PATH);
     if ((len > MAX_PATH) || (len <= 1))
       buf[0] = '\0';
-    ci.CabinetPath = &(buf[0]);
-    len = 1 + MultiByteToWideChar(CP_ACP, 0, pfdin->psz2, -1, &(buf2[0]), MAX_PATH);
+    ci.CabinetPath = buf;
+    len = 1 + MultiByteToWideChar(CP_ACP, 0, pfdin->psz2, -1, buf2, MAX_PATH);
     if ((len > MAX_PATH) || (len <= 1))
       buf2[0] = '\0';
-    ci.DiskName = &(buf2[0]);
+    ci.DiskName = buf2;
     ci.SetId = pfdin->setID;
     ci.CabinetNumber = pfdin->iCabinet;
     err = phsc->msghandler(phsc->context, SPFILENOTIFY_NEEDNEWCABINET, (UINT_PTR)&ci, (UINT_PTR)mysterio);
@@ -532,10 +532,10 @@ static INT_PTR CDECL sc_FNNOTIFY_W(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION p
       return -1;
     } else {
       if (mysterio[0]) {
-        len = strlenW(&(mysterio[0])) + 1;
+        len = strlenW(mysterio) + 1;
         if ((len > 255) || (len <= 1))
           return 0;
-        if (!WideCharToMultiByte(CP_ACP, 0, &(mysterio[0]), len, pfdin->psz3, 255, 0, 0))
+        if (!WideCharToMultiByte(CP_ACP, 0, mysterio, len, pfdin->psz3, 255, 0, 0))
           return 0;
       }
       return 0;
@@ -577,7 +577,7 @@ BOOL WINAPI SetupIterateCabinetA(PCSTR CabinetFile, DWORD Reserved,
     return FALSE;
   }
 
-  fpnsize = GetFullPathNameA(CabinetFile, MAX_PATH, &(pszCabPath[0]), &p);
+  fpnsize = GetFullPathNameA(CabinetFile, MAX_PATH, pszCabPath, &p);
   if (fpnsize > MAX_PATH) {
     SetLastError(ERROR_BAD_PATHNAME);
     return FALSE;
@@ -594,7 +594,7 @@ BOOL WINAPI SetupIterateCabinetA(PCSTR CabinetFile, DWORD Reserved,
   TRACE("path: %s, cabfile: %s\n", debugstr_a(pszCabPath), debugstr_a(pszCabinet));
 
   /* remember the cabinet name */
-  strcpy(&(my_hsc.most_recent_cabinet_name[0]), pszCabinet);
+  strcpy(my_hsc.most_recent_cabinet_name, pszCabinet);
 
   my_hsc.magic = SC_HSC_A_MAGIC;
   my_hsc.msghandler = MsgHandler;
