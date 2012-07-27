@@ -471,7 +471,7 @@ static void set_default_value( CIMTYPE type, UINT val, BYTE *ptr )
     }
 }
 
-HRESULT create_signature_columns_and_data( IEnumWbemClassObject *iter, UINT *num_cols,
+static HRESULT create_signature_columns_and_data( IEnumWbemClassObject *iter, UINT *num_cols,
                                            struct column **cols, BYTE **data )
 {
     static const WCHAR parameterW[] = {'P','a','r','a','m','e','t','e','r',0};
@@ -525,7 +525,7 @@ error:
     return hr;
 }
 
-HRESULT create_signature_table( IEnumWbemClassObject *iter, WCHAR *name )
+static HRESULT create_signature_table( IEnumWbemClassObject *iter, WCHAR *name )
 {
     HRESULT hr;
     struct table *table;
@@ -546,7 +546,7 @@ HRESULT create_signature_table( IEnumWbemClassObject *iter, WCHAR *name )
     return S_OK;
 }
 
-WCHAR *build_signature_table_name( const WCHAR *class, const WCHAR *method, enum param_direction dir )
+static WCHAR *build_signature_table_name( const WCHAR *class, const WCHAR *method, enum param_direction dir )
 {
     static const WCHAR fmtW[] = {'_','_','%','s','_','%','s','_','%','s',0};
     static const WCHAR outW[] = {'O','U','T',0};
