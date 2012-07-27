@@ -2115,7 +2115,7 @@ static HRESULT WINAPI domdoc_load(
         if(hr == S_OK)
         {
             IPersistStream *pDocStream;
-            hr = IUnknown_QueryInterface(iface, &IID_IPersistStream, (void**)&pDocStream);
+            hr = IXMLDOMDocument3_QueryInterface(iface, &IID_IPersistStream, (void**)&pDocStream);
             if(hr == S_OK)
             {
                 hr = IPersistStream_Load(pDocStream, pStream);

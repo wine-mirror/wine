@@ -117,7 +117,7 @@ static HRESULT WINAPI xmlnodemap_QueryInterface(
         return E_NOINTERFACE;
     }
 
-    IXMLDOMElement_AddRef( iface );
+    IXMLDOMNamedNodeMap_AddRef( iface );
 
     return S_OK;
 }

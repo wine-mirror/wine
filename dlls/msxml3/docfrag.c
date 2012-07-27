@@ -90,7 +90,7 @@ static HRESULT WINAPI domfrag_QueryInterface(
         return E_NOINTERFACE;
     }
 
-    IXMLDOMText_AddRef((IUnknown*)*ppvObject);
+    IXMLDOMDocumentFragment_AddRef(iface);
     return S_OK;
 }
 

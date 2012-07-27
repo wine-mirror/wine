@@ -75,7 +75,7 @@ static HRESULT WINAPI xmlparser_QueryInterface(IXMLParser* iface, REFIID riid, v
         return E_NOINTERFACE;
     }
 
-    IXMLParser_AddRef((IUnknown*)*ppvObject);
+    IXMLParser_AddRef(iface);
     return S_OK;
 }
 

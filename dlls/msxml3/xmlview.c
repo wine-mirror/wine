@@ -491,7 +491,7 @@ static inline HRESULT handle_xml_load(BindStatusCallback *This)
         return display_error_page(This);
     }
 
-    hres = IXMLDOMDocument_transformNode(xml, (IXMLDOMNode*)xsl, &bstr);
+    hres = IXMLDOMDocument3_transformNode(xml, (IXMLDOMNode*)xsl, &bstr);
     IXMLDOMDocument3_Release(xsl);
     IXMLDOMDocument3_Release(xml);
     if(FAILED(hres))

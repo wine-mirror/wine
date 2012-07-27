@@ -82,7 +82,7 @@ static HRESULT WINAPI domtext_QueryInterface(
         return E_NOINTERFACE;
     }
 
-    IXMLDOMText_AddRef((IUnknown*)*ppvObject);
+    IXMLDOMText_AddRef(iface);
     return S_OK;
 }
 
