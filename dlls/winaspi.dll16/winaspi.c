@@ -205,7 +205,7 @@ ASPI_DebugPrintCmd(SRB_ExecSCSICmd16 *prb, UINT16 mode)
   TRACE("LinkPointer %x\n", prb->SRB_Rsvd1);
   TRACE("CDB Length: %d\n", prb->SRB_CDBLen);
   TRACE("POST Proc: %x\n", (DWORD) prb->SRB_PostProc);
-  cdb = &prb->CDBByte[0];
+  cdb = prb->CDBByte;
   if (TRACE_ON(aspi))
   {
       TRACE("CDB buffer[");
@@ -225,7 +225,7 @@ ASPI_PrintSenseArea16(SRB_ExecSCSICmd16 *prb)
 
   if (TRACE_ON(aspi))
   {
-      cdb = &prb->CDBByte[0];
+      cdb = prb->CDBByte;
       TRACE("SenseArea[");
       for (i = 0; i < prb->SRB_SenseLen; i++) {
           if (i) TRACE(",");
@@ -288,7 +288,7 @@ ASPI_ExecScsiCmd(DWORD ptrPRB, UINT16 mode)
     in_len = SCSI_OFF + lpPRB->SRB_CDBLen + lpPRB->SRB_BufLen;
     sg_hd = HeapAlloc(GetProcessHeap(), 0, in_len);
     memset(sg_hd, 0, SCSI_OFF);
-    memcpy(sg_hd + 1, &lpPRB->CDBByte[0], lpPRB->SRB_CDBLen);
+    memcpy(sg_hd + 1, lpPRB->CDBByte, lpPRB->SRB_CDBLen);
     if (lpPRB->SRB_BufLen) {
       memcpy(((BYTE *) sg_hd) + SCSI_OFF + lpPRB->SRB_CDBLen, lpBuf, lpPRB->SRB_BufLen);
     }
@@ -298,7 +298,7 @@ ASPI_ExecScsiCmd(DWORD ptrPRB, UINT16 mode)
     in_len = SCSI_OFF + lpPRB->SRB_CDBLen;
     sg_hd = HeapAlloc(GetProcessHeap(), 0, in_len);
     memset(sg_hd, 0, SCSI_OFF);
-    memcpy(sg_hd + 1, &lpPRB->CDBByte[0], lpPRB->SRB_CDBLen);
+    memcpy(sg_hd + 1, lpPRB->CDBByte, lpPRB->SRB_CDBLen);
   }
 
   if (TARGET_TO_HOST(lpPRB)) {
@@ -349,7 +349,7 @@ ASPI_ExecScsiCmd(DWORD ptrPRB, UINT16 mode)
     int sense_len = lpPRB->SRB_SenseLen;
     if (lpPRB->SRB_SenseLen > 16)
       sense_len = 16;
-    memcpy(SENSE_BUFFER(lpPRB), &sg_reply_hdr->sense_buffer[0], sense_len);
+    memcpy(SENSE_BUFFER(lpPRB), sg_reply_hdr->sense_buffer, sense_len);
   }
 
 
