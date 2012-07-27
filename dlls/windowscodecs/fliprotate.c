@@ -179,7 +179,7 @@ static HRESULT WINAPI FlipRotator_CopyPixels(IWICBitmapFlipRotator *iface,
     if (!prc)
     {
         UINT width, height;
-        hr = IWICBitmapSource_GetSize(iface, &width, &height);
+        hr = IWICBitmapFlipRotator_GetSize(iface, &width, &height);
         if (FAILED(hr)) return hr;
         rect.X = 0;
         rect.Y = 0;

@@ -697,14 +697,14 @@ static HRESULT WINAPI IcoDecoder_GetFrame(IWICBitmapDecoder *iface,
 
     LeaveCriticalSection(&This->lock);
 
-    IStream_Release(substream);
+    IWICStream_Release(substream);
 
     return S_OK;
 
 fail:
     LeaveCriticalSection(&This->lock);
     HeapFree(GetProcessHeap(), 0, result);
-    if (substream) IStream_Release(substream);
+    if (substream) IWICStream_Release(substream);
     if (SUCCEEDED(hr)) hr = E_FAIL;
     TRACE("<-- %x\n", hr);
     return hr;
