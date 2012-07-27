@@ -33,6 +33,7 @@
 #include "d3d10.h"
 #include "winternl.h"
 #include "winioctl.h"
+#include "winsvc.h"
 
 #include "wine/debug.h"
 #include "wbemprox_private.h"
@@ -57,6 +58,8 @@ static const WCHAR class_processW[] =
     {'W','i','n','3','2','_','P','r','o','c','e','s','s',0};
 static const WCHAR class_processorW[] =
     {'W','i','n','3','2','_','P','r','o','c','e','s','s','o','r',0};
+static const WCHAR class_serviceW[] =
+    {'W','i','n','3','2','_','S','e','r','v','i','c','e',0};
 static const WCHAR class_stdregprovW[] =
     {'S','t','d','R','e','g','P','r','o','v',0};
 static const WCHAR class_videocontrollerW[] =
@@ -88,6 +91,8 @@ static const WCHAR prop_deviceidW[] =
     {'D','e','v','i','c','e','I','d',0};
 static const WCHAR prop_directionW[] =
     {'D','i','r','e','c','t','i','o','n',0};
+static const WCHAR prop_displaynameW[] =
+    {'D','i','s','p','l','a','y','N','a','m','e',0};
 static const WCHAR prop_drivetypeW[] =
     {'D','r','i','v','e','T','y','p','e',0};
 static const WCHAR prop_filesystemW[] =
@@ -132,10 +137,14 @@ static const WCHAR prop_releasedateW[] =
     {'R','e','l','e','a','s','e','D','a','t','e',0};
 static const WCHAR prop_serialnumberW[] =
     {'S','e','r','i','a','l','N','u','m','b','e','r',0};
+static const WCHAR prop_servicetypeW[] =
+    {'S','e','r','v','i','c','e','T','y','p','e',0};
 static const WCHAR prop_sizeW[] =
     {'S','i','z','e',0};
 static const WCHAR prop_speedW[] =
     {'S','p','e','e','d',0};
+static const WCHAR prop_stateW[] =
+    {'S','t','a','t','e',0};
 static const WCHAR prop_systemdirectoryW[] =
     {'S','y','s','t','e','m','D','i','r','e','c','t','o','r','y',0};
 static const WCHAR prop_tagW[] =
@@ -237,6 +246,14 @@ static const struct column col_processor[] =
     { prop_manufacturerW, CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_nameW,         CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_processoridW,  CIM_STRING|COL_FLAG_DYNAMIC }
+};
+static const struct column col_service[] =
+{
+    { prop_displaynameW,      CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_nameW,             CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
+    { prop_processidW,        CIM_UINT32 },
+    { prop_servicetypeW,      CIM_STRING },
+    { prop_stateW,            CIM_STRING }
 };
 static const struct column col_stdregprov[] =
 {
@@ -363,6 +380,14 @@ struct record_processor
     const WCHAR *manufacturer;
     const WCHAR *name;
     const WCHAR *processor_id;
+};
+struct record_service
+{
+    const WCHAR *displayname;
+    const WCHAR *name;
+    UINT32       process_id;
+    const WCHAR *servicetype;
+    const WCHAR *state;
 };
 struct record_stdregprov
 {
@@ -760,6 +785,98 @@ static void fill_os( struct table *table )
     table->num_rows = 1;
 }
 
+static const WCHAR *get_service_type( DWORD type )
+{
+    static const WCHAR filesystem_driverW[] =
+        {'F','i','l','e',' ','S','y','s','t','e','m',' ','D','r','i','v','e','r',0};
+    static const WCHAR kernel_driverW[] =
+        {'K','e','r','n','e','l',' ','D','r','i','v','e','r',0};
+    static const WCHAR own_processW[] =
+        {'O','w','n',' ','P','r','o','c','e','s','s',0};
+    static const WCHAR share_processW[] =
+        {'S','h','a','r','e',' ','P','r','o','c','e','s','s',0};
+
+    if (type & SERVICE_KERNEL_DRIVER)            return kernel_driverW;
+    else if (type & SERVICE_FILE_SYSTEM_DRIVER)  return filesystem_driverW;
+    else if (type & SERVICE_WIN32_OWN_PROCESS)   return own_processW;
+    else if (type & SERVICE_WIN32_SHARE_PROCESS) return share_processW;
+    else ERR("unhandled type 0x%08x\n", type);
+    return NULL;
+}
+static const WCHAR *get_service_state( DWORD state )
+{
+    static const WCHAR runningW[] =
+        {'R','u','n','n','i','n','g',0};
+    static const WCHAR start_pendingW[] =
+        {'S','t','a','r','t',' ','P','e','n','d','i','n','g',0};
+    static const WCHAR stop_pendingW[] =
+        {'S','t','o','p',' ','P','e','n','d','i','n','g',0};
+    static const WCHAR stoppedW[] =
+        {'S','t','o','p','p','e','d',0};
+    static const WCHAR unknownW[] =
+        {'U','n','k','n','o','w','n',0};
+
+    switch (state)
+    {
+    case SERVICE_STOPPED:       return stoppedW;
+    case SERVICE_START_PENDING: return start_pendingW;
+    case SERVICE_STOP_PENDING:  return stop_pendingW;
+    case SERVICE_RUNNING:       return runningW;
+    default:
+        ERR("unknown state %u\n", state);
+        return unknownW;
+    }
+}
+
+static void fill_service( struct table *table )
+{
+    struct record_service *rec;
+    SC_HANDLE manager;
+    ENUM_SERVICE_STATUS_PROCESSW *tmp, *services = NULL;
+    SERVICE_STATUS_PROCESS *status;
+    UINT i, num_rows = 0, offset = 0, size = 256, needed, count;
+    BOOL ret;
+
+    if (!(manager = OpenSCManagerW( NULL, NULL, SC_MANAGER_ENUMERATE_SERVICE ))) return;
+    if (!(services = heap_alloc( size ))) goto done;
+
+    ret = EnumServicesStatusExW( manager, SC_ENUM_PROCESS_INFO, SERVICE_TYPE_ALL,
+                                 SERVICE_STATE_ALL, (BYTE *)services, size, &needed,
+                                 &count, NULL, NULL );
+    if (!ret)
+    {
+        if (GetLastError() != ERROR_MORE_DATA) goto done;
+        size = needed;
+        if (!(tmp = heap_realloc( services, size ))) goto done;
+        services = tmp;
+        ret = EnumServicesStatusExW( manager, SC_ENUM_PROCESS_INFO, SERVICE_TYPE_ALL,
+                                     SERVICE_STATE_ALL, (BYTE *)services, size, &needed,
+                                     &count, NULL, NULL );
+        if (!ret) goto done;
+    }
+    if (!(table->data = heap_alloc( sizeof(*rec) * count ))) goto done;
+
+    for (i = 0; i < count; i++)
+    {
+        status = &services[i].ServiceStatusProcess;
+        rec = (struct record_service *)(table->data + offset);
+        rec->displayname = heap_strdupW( services[i].lpDisplayName );
+        rec->name        = heap_strdupW( services[i].lpServiceName );
+        rec->process_id  = status->dwProcessId;
+        rec->servicetype = get_service_type( status->dwServiceType );
+        rec->state       = get_service_state( status->dwCurrentState );
+        offset += sizeof(*rec);
+        num_rows++;
+    }
+
+    TRACE("created %u rows\n", num_rows);
+    table->num_rows = num_rows;
+
+done:
+    CloseServiceHandle( manager );
+    heap_free( services );
+}
+
 static UINT32 get_bits_per_pixel( UINT *hres, UINT *vres )
 {
     HDC hdc = GetDC( NULL );
@@ -826,6 +943,7 @@ static struct table builtin_classes[] =
     { class_paramsW, SIZEOF(col_params), col_params, SIZEOF(data_params), (BYTE *)data_params },
     { class_processW, SIZEOF(col_process), col_process, 0, NULL, fill_process },
     { class_processorW, SIZEOF(col_processor), col_processor, 0, NULL, fill_processor },
+    { class_serviceW, SIZEOF(col_service), col_service, 0, NULL, fill_service },
     { class_stdregprovW, SIZEOF(col_stdregprov), col_stdregprov, SIZEOF(data_stdregprov), (BYTE *)data_stdregprov },
     { class_videocontrollerW, SIZEOF(col_videocontroller), col_videocontroller, 0, NULL, fill_videocontroller }
 };
