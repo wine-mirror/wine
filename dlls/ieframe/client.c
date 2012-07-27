@@ -81,7 +81,7 @@ static HRESULT WINAPI ClientSite_QueryInterface(IOleClientSite *iface, REFIID ri
         return E_NOINTERFACE;
     }
 
-    IOleClientSite_AddRef((IUnknown*)*ppv);
+    IUnknown_AddRef((IUnknown*)*ppv);
     return S_OK;
 }
 

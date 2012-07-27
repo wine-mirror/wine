@@ -47,7 +47,7 @@ static HRESULT STDMETHODCALLTYPE taskbar_list_QueryInterface(ITaskbarList4 *ifac
         IsEqualGUID(riid, &IID_ITaskbarList4) ||
         IsEqualGUID(riid, &IID_IUnknown))
     {
-        IUnknown_AddRef(iface);
+        ITaskbarList4_AddRef(iface);
         *object = iface;
         return S_OK;
     }

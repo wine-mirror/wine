@@ -712,19 +712,19 @@ static HRESULT WINAPI IEServiceProvider_QueryInterface(IServiceProvider *iface,
             REFIID riid, LPVOID *ppv)
 {
     InternetExplorer *This = impl_from_IServiceProvider(iface);
-    return IWebBrowser_QueryInterface(&This->IWebBrowser2_iface, riid, ppv);
+    return IWebBrowser2_QueryInterface(&This->IWebBrowser2_iface, riid, ppv);
 }
 
 static ULONG WINAPI IEServiceProvider_AddRef(IServiceProvider *iface)
 {
     InternetExplorer *This = impl_from_IServiceProvider(iface);
-    return IWebBrowser_AddRef(&This->IWebBrowser2_iface);
+    return IWebBrowser2_AddRef(&This->IWebBrowser2_iface);
 }
 
 static ULONG WINAPI IEServiceProvider_Release(IServiceProvider *iface)
 {
     InternetExplorer *This = impl_from_IServiceProvider(iface);
-    return IWebBrowser_Release(&This->IWebBrowser2_iface);
+    return IWebBrowser2_Release(&This->IWebBrowser2_iface);
 }
 
 static HRESULT WINAPI IEServiceProvider_QueryService(IServiceProvider *iface,

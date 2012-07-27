@@ -190,7 +190,7 @@ static void add_favs_to_menu(HMENU favmenu, HMENU menu, LPCWSTR dir)
     res = CoCreateInstance(&CLSID_InternetShortcut, NULL, CLSCTX_INPROC_SERVER, &IID_IUniformResourceLocatorW, (PVOID*)&urlobj);
 
     if(SUCCEEDED(res))
-        res = IUnknown_QueryInterface(urlobj, &IID_IPersistFile, (PVOID*)&urlfile);
+        res = IUnknown_QueryInterface((IUnknown*)urlobj, &IID_IPersistFile, (PVOID*)&urlfile);
 
     if(SUCCEEDED(res))
     {
@@ -243,7 +243,7 @@ static void add_favs_to_menu(HMENU favmenu, HMENU menu, LPCWSTR dir)
         IPersistFile_Release(urlfile);
 
     if(urlobj)
-        IUnknown_Release(urlobj);
+        IUnknown_Release((IUnknown*)urlobj);
 
     FindClose(findhandle);
 }

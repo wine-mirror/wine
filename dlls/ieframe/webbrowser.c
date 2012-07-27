@@ -405,7 +405,7 @@ static HRESULT WINAPI WebBrowser_put_Left(IWebBrowser2 *iface, LONG Left)
 
     /* We don't really change the window position here.
      * We just notify the embedder that he should do so. */
-    return IOleInPlaceSite_OnPosRectChange(This->inplace, &rect);
+    return IOleInPlaceSiteEx_OnPosRectChange(This->inplace, &rect);
 }
 
 static HRESULT WINAPI WebBrowser_get_Top(IWebBrowser2 *iface, LONG *pl)
@@ -433,7 +433,7 @@ static HRESULT WINAPI WebBrowser_put_Top(IWebBrowser2 *iface, LONG Top)
 
     /* We don't really change the window position here.
      * We just notify the embedder that he should do so. */
-    return IOleInPlaceSite_OnPosRectChange(This->inplace, &rect);
+    return IOleInPlaceSiteEx_OnPosRectChange(This->inplace, &rect);
 }
 
 static HRESULT WINAPI WebBrowser_get_Width(IWebBrowser2 *iface, LONG *pl)
@@ -461,7 +461,7 @@ static HRESULT WINAPI WebBrowser_put_Width(IWebBrowser2 *iface, LONG Width)
 
     /* We don't really change the window size here.
      * We just notify the embedder that he should do so. */
-   return IOleInPlaceSite_OnPosRectChange(This->inplace, &rect);
+   return IOleInPlaceSiteEx_OnPosRectChange(This->inplace, &rect);
 }
 
 static HRESULT WINAPI WebBrowser_get_Height(IWebBrowser2 *iface, LONG *pl)
@@ -489,7 +489,7 @@ static HRESULT WINAPI WebBrowser_put_Height(IWebBrowser2 *iface, LONG Height)
 
     /* We don't really change the window size here.
      * We just notify the embedder that he should do so. */
-    return IOleInPlaceSite_OnPosRectChange(This->inplace, &rect);
+    return IOleInPlaceSiteEx_OnPosRectChange(This->inplace, &rect);
 }
 
 static HRESULT WINAPI WebBrowser_get_LocationName(IWebBrowser2 *iface, BSTR *LocationName)
@@ -801,7 +801,7 @@ static HRESULT WINAPI WebBrowser_QueryStatusWB(IWebBrowser2 *iface, OLECMDID cmd
     }
     if (!target && This->doc_host.document)
     {
-        hres = IOleContainer_QueryInterface(This->doc_host.document, &IID_IOleCommandTarget, (LPVOID*)&target);
+        hres = IUnknown_QueryInterface(This->doc_host.document, &IID_IOleCommandTarget, (LPVOID*)&target);
         if(FAILED(hres))
             target = NULL;
     }
@@ -839,7 +839,7 @@ static HRESULT WINAPI WebBrowser_ExecWB(IWebBrowser2 *iface, OLECMDID cmdID,
     }
     if(!target && This->doc_host.document)
     {
-        hres = IOleContainer_QueryInterface(This->doc_host.document, &IID_IOleCommandTarget, (LPVOID*)&target);
+        hres = IUnknown_QueryInterface(This->doc_host.document, &IID_IOleCommandTarget, (LPVOID*)&target);
         if(FAILED(hres))
             target = NULL;
     }
@@ -1123,19 +1123,19 @@ static HRESULT WINAPI WBServiceProvider_QueryInterface(IServiceProvider *iface,
             REFIID riid, LPVOID *ppv)
 {
     WebBrowser *This = impl_from_IServiceProvider(iface);
-    return IWebBrowser_QueryInterface(&This->IWebBrowser2_iface, riid, ppv);
+    return IWebBrowser2_QueryInterface(&This->IWebBrowser2_iface, riid, ppv);
 }
 
 static ULONG WINAPI WBServiceProvider_AddRef(IServiceProvider *iface)
 {
     WebBrowser *This = impl_from_IServiceProvider(iface);
-    return IWebBrowser_AddRef(&This->IWebBrowser2_iface);
+    return IWebBrowser2_AddRef(&This->IWebBrowser2_iface);
 }
 
 static ULONG WINAPI WBServiceProvider_Release(IServiceProvider *iface)
 {
     WebBrowser *This = impl_from_IServiceProvider(iface);
-    return IWebBrowser_Release(&This->IWebBrowser2_iface);
+    return IWebBrowser2_Release(&This->IWebBrowser2_iface);
 }
 
 static HRESULT STDMETHODCALLTYPE WBServiceProvider_QueryService(IServiceProvider *iface,
@@ -1269,7 +1269,7 @@ static HRESULT create_webbrowser(int version, IUnknown *outer, REFIID riid, void
 
     lock_module();
 
-    hres = IWebBrowser_QueryInterface(&ret->IWebBrowser2_iface, riid, ppv);
+    hres = IWebBrowser2_QueryInterface(&ret->IWebBrowser2_iface, riid, ppv);
 
     IWebBrowser2_Release(&ret->IWebBrowser2_iface);
     return hres;

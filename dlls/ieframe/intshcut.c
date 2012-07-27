@@ -834,7 +834,7 @@ static InternetShortcut *create_shortcut(void)
             heap_free(newshortcut);
             return NULL;
         }
-        IPropertySetStorage_Release(dummy);
+        IPropertyStorage_Release(dummy);
     }
 
     return newshortcut;

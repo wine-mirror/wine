@@ -128,5 +128,5 @@ HRESULT WINAPI CUrlHistory_Create(IClassFactory *iface, IUnknown *pOuter, REFIID
     if(pOuter)
         return CLASS_E_NOAGGREGATION;
 
-    return IUrlHistoryStg_QueryInterface(&UrlHistoryStg2, riid, ppv);
+    return IUrlHistoryStg2_QueryInterface(&UrlHistoryStg2, riid, ppv);
 }
