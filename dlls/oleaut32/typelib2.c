@@ -1488,7 +1488,7 @@ static HRESULT ctl2_find_typeinfo_from_offset(
     for (typeinfo = This->typeinfos; typeinfo; typeinfo = typeinfo->next_typeinfo) {
 	if (typeinfo->typeinfo == typeinfodata) {
 	    *ppTinfo = (ITypeInfo *)&typeinfo->ITypeInfo2_iface;
-	    ITypeInfo2_AddRef(*ppTinfo);
+	    ITypeInfo_AddRef(*ppTinfo);
 	    return S_OK;
 	}
     }
@@ -2663,7 +2663,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(
         ITypeInfo *cur, *next;
         TYPEATTR *typeattr;
 
-        hres = ICreateTypeInfo_QueryInterface(iface, &IID_ITypeInfo, (void**)&next);
+        hres = ICreateTypeInfo2_QueryInterface(iface, &IID_ITypeInfo, (void**)&next);
         if(FAILED(hres))
             return hres;
 
@@ -2712,7 +2712,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(
         ITypeInfo *cur, *inherited;
         TYPEATTR *typeattr;
 
-        hres = ICreateTypeInfo_QueryInterface(iface, &IID_ITypeInfo, (void**)&cur);
+        hres = ICreateTypeInfo2_QueryInterface(iface, &IID_ITypeInfo, (void**)&cur);
         if(FAILED(hres))
             return hres;
 
@@ -3202,7 +3202,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetTypeAttr(
     if(!ppTypeAttr)
         return E_INVALIDARG;
 
-    hres = ICreateTypeInfo_LayOut(&This->ICreateTypeInfo2_iface);
+    hres = ICreateTypeInfo2_LayOut(&This->ICreateTypeInfo2_iface);
     if(FAILED(hres))
         return hres;
 
@@ -3653,7 +3653,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetRefTypeInfo(
             if(This->typelib->typelib_typeinfo_offsets[i] == (hRefType&(~0x3))) {
                 *ppTInfo = (ITypeInfo *)&iter->ITypeInfo2_iface;
 
-                ITypeLib_AddRef(*ppTInfo);
+                ITypeInfo_AddRef(*ppTInfo);
                 return S_OK;
             }
             i++;
@@ -4959,7 +4959,7 @@ static HRESULT WINAPI ITypeLib2_fnGetDocumentation(
         if(!iter)
             return TYPE_E_ELEMENTNOTFOUND;
 
-        return ITypeInfo_GetDocumentation(&iter->ITypeInfo2_iface,
+        return ITypeInfo2_GetDocumentation(&iter->ITypeInfo2_iface,
                 -1, pBstrName, pBstrDocString, pdwHelpContext, pBstrHelpFile);
     }
 

@@ -736,7 +736,7 @@ static HRESULT WINAPI PSDispatchFacBuf_QueryInterface(IPSFactoryBuffer *iface, R
     if (IsEqualIID(riid, &IID_IUnknown) ||
         IsEqualIID(riid, &IID_IPSFactoryBuffer))
     {
-        IUnknown_AddRef(iface);
+        IPSFactoryBuffer_AddRef(iface);
         *ppv = iface;
         return S_OK;
     }

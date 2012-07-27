@@ -441,11 +441,11 @@ static void OLEFont_SendNotify(OLEFontImpl* this, DISPID dispID)
         IFontEventsDisp *disp;
 
         IUnknown_QueryInterface(CD.pUnk, &IID_IFontEventsDisp, (LPVOID)&disp);
-        IDispatch_Invoke(disp, DISPID_FONT_CHANGED, &IID_NULL,
-                         LOCALE_NEUTRAL, INVOKE_FUNC, &dispparams, NULL,
-                         NULL, NULL);
+        IFontEventsDisp_Invoke(disp, DISPID_FONT_CHANGED, &IID_NULL,
+                               LOCALE_NEUTRAL, INVOKE_FUNC, &dispparams, NULL,
+                               NULL, NULL);
 
-        IDispatch_Release(disp);
+        IFontEventsDisp_Release(disp);
         IUnknown_Release(CD.pUnk);
     }
     VariantClear(&vararg);

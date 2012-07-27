@@ -246,7 +246,7 @@ _marshal_interface(marshal_state *buf, REFIID riid, LPUNKNOWN pUnk) {
 fail:
     xsize = 0;
     xbuf_add(buf,(LPBYTE)&xsize,sizeof(xsize));
-    if (pStm) IUnknown_Release(pStm);
+    if (pStm) IStream_Release(pStm);
     HeapFree(GetProcessHeap(), 0, tempbuf);
     return hres;
 }
@@ -848,7 +848,7 @@ serialize_param(
 		ELEMDESC *elem2;
 		TYPEDESC *tdesc2;
 
-		hres = ITypeInfo2_GetVarDesc(tinfo2, i, &vdesc);
+		hres = ITypeInfo_GetVarDesc(tinfo2, i, &vdesc);
 		if (hres) {
 		    ERR("Could not get vardesc of %d\n",i);
 		    return hres;
@@ -1138,7 +1138,7 @@ deserialize_param(
 		    for (i=0;i<tattr->cVars;i++) {
 			VARDESC *vdesc;
 
-			hres = ITypeInfo2_GetVarDesc(tinfo2, i, &vdesc);
+			hres = ITypeInfo_GetVarDesc(tinfo2, i, &vdesc);
 			if (hres) {
 			    ERR("Could not get vardesc of %d\n",i);
 			    ITypeInfo_ReleaseTypeAttr(tinfo2, tattr);
@@ -1154,7 +1154,7 @@ deserialize_param(
 			    (DWORD*)(((LPBYTE)arg)+vdesc->u.oInst),
 			    buf
 			);
-                        ITypeInfo2_ReleaseVarDesc(tinfo2, vdesc);
+                        ITypeInfo_ReleaseVarDesc(tinfo2, vdesc);
 		        if (debugout && (i<tattr->cVars-1)) TRACE_(olerelay)(",");
 		    }
 		    if (debugout) TRACE_(olerelay)("}");
@@ -1604,13 +1604,13 @@ static inline TMarshalDispatchChannel *impl_from_IRpcChannelBuffer(IRpcChannelBu
     return CONTAINING_RECORD(iface, TMarshalDispatchChannel, IRpcChannelBuffer_iface);
 }
 
-static HRESULT WINAPI TMarshalDispatchChannel_QueryInterface(LPRPCCHANNELBUFFER iface, REFIID riid, LPVOID *ppv)
+static HRESULT WINAPI TMarshalDispatchChannel_QueryInterface(IRpcChannelBuffer *iface, REFIID riid, LPVOID *ppv)
 {
     *ppv = NULL;
     if (IsEqualIID(riid,&IID_IRpcChannelBuffer) || IsEqualIID(riid,&IID_IUnknown))
     {
         *ppv = iface;
-        IUnknown_AddRef(iface);
+        IRpcChannelBuffer_AddRef(iface);
         return S_OK;
     }
     return E_NOINTERFACE;

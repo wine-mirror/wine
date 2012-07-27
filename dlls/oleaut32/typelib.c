@@ -446,7 +446,7 @@ HRESULT WINAPI LoadTypeLibEx(
             case REGKIND_REGISTER:
                 if (FAILED(res = RegisterTypeLib(*pptLib, szPath, NULL)))
                 {
-                    IUnknown_Release(*pptLib);
+                    ITypeLib_Release(*pptLib);
                     *pptLib = 0;
                 }
                 break;
@@ -2913,7 +2913,7 @@ static HRESULT TLB_ReadTypeLib(LPCWSTR pszFileName, LPWSTR pszPath, UINT cchPath
         {
             TRACE("cache hit\n");
             *ppTypeLib = (ITypeLib2*)entry;
-            ITypeLib_AddRef(*ppTypeLib);
+            ITypeLib2_AddRef(*ppTypeLib);
             LeaveCriticalSection(&cache_section);
             return S_OK;
         }
@@ -4828,7 +4828,7 @@ static HRESULT WINAPI ITypeLibComp_fnQueryInterface(ITypeComp * iface, REFIID ri
 {
     ITypeLibImpl *This = impl_from_ITypeComp(iface);
 
-    return ITypeLib2_QueryInterface((ITypeLib *)This, riid, ppv);
+    return ITypeLib2_QueryInterface((ITypeLib2 *)This, riid, ppv);
 }
 
 static ULONG WINAPI ITypeLibComp_fnAddRef(ITypeComp * iface)
@@ -5068,7 +5068,7 @@ static HRESULT WINAPI ITypeInfo_fnQueryInterface(
         *ppvObject = This;
 
     if(*ppvObject){
-        ITypeInfo_AddRef(iface);
+        ITypeInfo2_AddRef(iface);
         TRACE("-- Interface: (%p)->(%p)\n",ppvObject,*ppvObject);
         return S_OK;
     }
@@ -5598,8 +5598,7 @@ static HRESULT WINAPI ITypeInfo_fnGetNames( ITypeInfo2 *iface, MEMBERID memid,
           /* recursive search */
           ITypeInfo *pTInfo;
           HRESULT result;
-          result=ITypeInfo_GetRefTypeInfo(iface, This->impltypes[0].hRef,
-					  &pTInfo);
+          result = ITypeInfo2_GetRefTypeInfo(iface, This->impltypes[0].hRef, &pTInfo);
           if(SUCCEEDED(result))
 	  {
             result=ITypeInfo_GetNames(pTInfo, memid, rgBstrNames, cMaxNames, pcNames);
@@ -5751,8 +5750,7 @@ static HRESULT WINAPI ITypeInfo_fnGetIDsOfNames( ITypeInfo2 *iface,
     if(This->impltypes) {
         /* recursive search */
         ITypeInfo *pTInfo;
-        ret=ITypeInfo_GetRefTypeInfo(iface,
-                This->impltypes[0].hRef, &pTInfo);
+        ret = ITypeInfo2_GetRefTypeInfo(iface, This->impltypes[0].hRef, &pTInfo);
         if(SUCCEEDED(ret)){
             ret=ITypeInfo_GetIDsOfNames(pTInfo, rgszNames, cNames, pMemId );
             ITypeInfo_Release(pTInfo);
@@ -6750,7 +6748,7 @@ func_fail:
         if(This->impltypes) {
             /* recursive search */
             ITypeInfo *pTInfo;
-            hres = ITypeInfo_GetRefTypeInfo(iface, This->impltypes[0].hRef, &pTInfo);
+            hres = ITypeInfo2_GetRefTypeInfo(iface, This->impltypes[0].hRef, &pTInfo);
             if(SUCCEEDED(hres)){
                 hres = ITypeInfo_Invoke(pTInfo,pIUnk,memid,wFlags,pDispParams,pVarResult,pExcepInfo,pArgErr);
                 ITypeInfo_Release(pTInfo);
@@ -6818,8 +6816,7 @@ static HRESULT WINAPI ITypeInfo_fnGetDocumentation( ITypeInfo2 *iface,
         /* recursive search */
         ITypeInfo *pTInfo;
         HRESULT result;
-        result = ITypeInfo_GetRefTypeInfo(iface, This->impltypes[0].hRef,
-                                        &pTInfo);
+        result = ITypeInfo2_GetRefTypeInfo(iface, This->impltypes[0].hRef, &pTInfo);
         if(SUCCEEDED(result)) {
             result = ITypeInfo_GetDocumentation(pTInfo, memid, pBstrName,
                 pBstrDocString, pdwHelpContext, pBstrHelpFile);
@@ -6983,12 +6980,12 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeInfo(
 
             if(ref_type->pImpTLInfo == TLB_REF_INTERNAL) {
 	        UINT Index;
-		result = ITypeInfo_GetContainingTypeLib(iface, &pTLib, &Index);
+		result = ITypeInfo2_GetContainingTypeLib(iface, &pTLib, &Index);
 	    } else {
                 if(ref_type->pImpTLInfo->pImpTypeLib) {
 		    TRACE("typeinfo in imported typelib that is already loaded\n");
                     pTLib = (ITypeLib*)ref_type->pImpTLInfo->pImpTypeLib;
-		    ITypeLib2_AddRef(pTLib);
+                    ITypeLib_AddRef(pTLib);
 		    result = S_OK;
 		} else {
 		    TRACE("typeinfo in imported typelib that isn't already loaded\n");
@@ -7005,21 +7002,18 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeInfo(
 		    }
 		    if(SUCCEEDED(result)) {
                         ref_type->pImpTLInfo->pImpTypeLib = (ITypeLibImpl*)pTLib;
-			ITypeLib2_AddRef(pTLib);
+                        ITypeLib_AddRef(pTLib);
 		    }
 		}
 	    }
 	    if(SUCCEEDED(result)) {
                 if(ref_type->index == TLB_REF_USE_GUID)
-		    result = ITypeLib2_GetTypeInfoOfGuid(pTLib,
-                                                         &ref_type->guid,
-							 ppTInfo);
+                    result = ITypeLib_GetTypeInfoOfGuid(pTLib, &ref_type->guid, ppTInfo);
 		else
-                    result = ITypeLib2_GetTypeInfo(pTLib, ref_type->index,
-						   ppTInfo);
+                    result = ITypeLib_GetTypeInfo(pTLib, ref_type->index, ppTInfo);
 	    }
 	    if (pTLib != NULL)
-		ITypeLib2_Release(pTLib);
+                ITypeLib_Release(pTLib);
 	}
     }
 
@@ -7045,7 +7039,7 @@ static HRESULT WINAPI ITypeInfo_fnAddressOfMember( ITypeInfo2 *iface,
 
     TRACE("(%p)->(0x%x, 0x%x, %p)\n", This, memid, invKind, ppv);
 
-    hr = ITypeInfo_GetDllEntry(iface, memid, invKind, &dll, &entry, &ordinal);
+    hr = ITypeInfo2_GetDllEntry(iface, memid, invKind, &dll, &entry, &ordinal);
     if (FAILED(hr))
         return hr;
 
@@ -7110,7 +7104,7 @@ static HRESULT WINAPI ITypeInfo_fnCreateInstance( ITypeInfo2 *iface,
         return CLASS_E_NOAGGREGATION;
     }
 
-    hr = ITypeInfo_GetTypeAttr(iface, &pTA);
+    hr = ITypeInfo2_GetTypeAttr(iface, &pTA);
     if(FAILED(hr)) return hr;
 
     if(pTA->typekind != TKIND_COCLASS)
@@ -7139,7 +7133,7 @@ static HRESULT WINAPI ITypeInfo_fnCreateInstance( ITypeInfo2 *iface,
                               riid, ppvObj);
 
 end:
-    ITypeInfo_ReleaseTypeAttr(iface, pTA);
+    ITypeInfo2_ReleaseTypeAttr(iface, pTA);
     return hr;
 }
 
@@ -7174,7 +7168,7 @@ static HRESULT WINAPI ITypeInfo_fnGetContainingTypeLib( ITypeInfo2 *iface,
     
     if (ppTLib) {
       *ppTLib=(LPTYPELIB )(This->pTypeLib);
-      ITypeLib2_AddRef(*ppTLib);
+      ITypeLib_AddRef(*ppTLib);
       TRACE("returning ppTLib=%p\n", *ppTLib);
     }
     
