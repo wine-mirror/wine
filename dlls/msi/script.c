@@ -219,7 +219,7 @@ static HRESULT WINAPI MsiActiveScriptSite_QueryInterface(IActiveScriptSite* ifac
     if (IsEqualGUID(riid, &IID_IUnknown) ||
         IsEqualGUID(riid, &IID_IActiveScriptSite))
     {
-        IClassFactory_AddRef(iface);
+        IActiveScriptSite_AddRef(iface);
         *ppvObject = This;
         return S_OK;
     }

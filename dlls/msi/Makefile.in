@@ -2,6 +2,7 @@ MODULE    = msi.dll
 IMPORTLIB = msi
 IMPORTS   = uuid urlmon wininet comctl32 shell32 shlwapi cabinet oleaut32 ole32 version user32 gdi32 advapi32
 DELAYIMPORTS = odbccp32 wintrust crypt32 imagehlp
+EXTRADEFS = -DWIDL_C_INLINE_WRAPPERS
 
 C_SRCS = \
 	action.c \

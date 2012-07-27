@@ -1439,7 +1439,7 @@ static HRESULT WINAPI mcr_QueryInterface( IWineMsiRemoteCustomAction *iface,
     if( IsEqualCLSID( riid, &IID_IUnknown ) ||
         IsEqualCLSID( riid, &IID_IWineMsiRemoteCustomAction ) )
     {
-        IUnknown_AddRef( iface );
+        IWineMsiRemoteCustomAction_AddRef( iface );
         *ppobj = iface;
         return S_OK;
     }

@@ -2361,7 +2361,7 @@ static HRESULT WINAPI mrp_QueryInterface( IWineMsiRemotePackage *iface,
     if( IsEqualCLSID( riid, &IID_IUnknown ) ||
         IsEqualCLSID( riid, &IID_IWineMsiRemotePackage ) )
     {
-        IUnknown_AddRef( iface );
+        IWineMsiRemotePackage_AddRef( iface );
         *ppobj = iface;
         return S_OK;
     }
