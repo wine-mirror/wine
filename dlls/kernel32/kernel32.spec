@@ -779,6 +779,7 @@
 @ stdcall IsValidCodePage(long)
 @ stdcall IsValidLanguageGroup(long long)
 @ stdcall IsValidLocale(long long)
+@ stdcall IsValidLocaleName(wstr)
 # @ stub IsValidUILanguage
 @ stdcall IsWow64Process(ptr ptr)
 @ stdcall K32EmptyWorkingSet(long)

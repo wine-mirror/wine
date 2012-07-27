@@ -86,6 +86,7 @@ static INT (WINAPI *pIdnToNameprepUnicode)(DWORD, LPCWSTR, INT, LPWSTR, INT);
 static INT (WINAPI *pIdnToAscii)(DWORD, LPCWSTR, INT, LPWSTR, INT);
 static INT (WINAPI *pIdnToUnicode)(DWORD, LPCWSTR, INT, LPWSTR, INT);
 static INT (WINAPI *pGetLocaleInfoEx)(LPCWSTR, LCTYPE, LPWSTR, INT);
+static BOOL (WINAPI *pIsValidLocaleName)(LPCWSTR);
 
 static void InitFunctionPointers(void)
 {
@@ -104,6 +105,7 @@ static void InitFunctionPointers(void)
   pIdnToAscii = (void*)GetProcAddress(hKernel32, "IdnToAscii");
   pIdnToUnicode = (void*)GetProcAddress(hKernel32, "IdnToUnicode");
   pGetLocaleInfoEx = (void*)GetProcAddress(hKernel32, "GetLocaleInfoEx");
+  pIsValidLocaleName = (void*)GetProcAddress(hKernel32, "IsValidLocaleName");
 }
 
 #define eq(received, expected, label, type) \
@@ -3435,6 +3437,30 @@ todo_wine
     }
 }
 
+static void test_IsValidLocaleName(void)
+{
+    static const WCHAR enW[] = {'e','n',0};
+    static const WCHAR enusW[] = {'e','n','-','U','S',0};
+    static const WCHAR zzW[] = {'z','z',0};
+    static const WCHAR zzzzW[] = {'z','z','-','Z','Z',0};
+    BOOL ret;
+
+    if (!pIsValidLocaleName)
+    {
+        win_skip("IsValidLocaleName not supported\n");
+        return;
+    }
+
+    ret = pIsValidLocaleName(enW);
+    ok(ret, "IsValidLocaleName failed\n");
+    ret = pIsValidLocaleName(enusW);
+    ok(ret, "IsValidLocaleName failed\n");
+    ret = pIsValidLocaleName(zzW);
+    ok(!ret, "IsValidLocaleName should have failed\n");
+    ret = pIsValidLocaleName(zzzzW);
+    ok(!ret, "IsValidLocaleName should have failed\n");
+}
+
 START_TEST(locale)
 {
   InitFunctionPointers();
@@ -3468,6 +3494,7 @@ START_TEST(locale)
   test_IdnToNameprepUnicode();
   test_IdnToAscii();
   test_IdnToUnicode();
+  test_IsValidLocaleName();
   /* this requires collation table patch to make it MS compatible */
   if (0) test_sorting();
 }
