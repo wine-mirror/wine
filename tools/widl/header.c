@@ -856,7 +856,7 @@ static void write_method_macro(FILE *header, const type_t *iface, const char *na
       first_iface = 0;
     }
 
-    if (!is_callas(func->attrs)) {
+    if (!is_callas(func->attrs) && !is_inherited_method(iface, func)) {
       const var_t *arg;
 
       fprintf(header, "#define %s_%s(This", name, get_name(func));
@@ -949,7 +949,7 @@ static void write_inline_wrappers(FILE *header, const type_t *iface, const char 
       first_iface = 0;
     }
 
-    if (!is_callas(func->attrs)) {
+    if (!is_callas(func->attrs) && !is_inherited_method(iface, func)) {
       const var_t *arg;
 
       fprintf(header, "static FORCEINLINE ");
