@@ -80,6 +80,8 @@ basic_string_char* (__stdcall *pbasic_string_char_replace)(basic_string_char*,
         MSVCP_size_t, MSVCP_size_t, const char*, MSVCP_size_t);
 basic_string_wchar* (__stdcall *pbasic_string_wchar_replace)(basic_string_wchar*,
         MSVCP_size_t, MSVCP_size_t, const MSVCP_wchar_t*, MSVCP_size_t);
+void (__cdecl *p_String_base_Xlen)(void);
+void (__cdecl *p_String_base_Xran)(void);
 
 typedef struct {
     const char *pos;
@@ -304,6 +306,20 @@ basic_string_wchar* __thiscall basic_string_wchar_append_iter(basic_string_wchar
     return pbasic_string_wchar_replace(this, this->size, 0, beg.pos, end.pos-beg.pos);
 }
 
+/* ?_Xlen@_String_base@std@@QBEXXZ */
+DEFINE_THISCALL_WRAPPER(_String_base__Xlen, 4)
+void __thiscall _String_base__Xlen(const void/*_String_base*/ *this)
+{
+    p_String_base_Xlen();
+}
+
+/* ?_Xran@_String_base@std@@QBEXXZ */
+DEFINE_THISCALL_WRAPPER(_String_base__Xran, 4)
+void __thiscall _String_base__Xran(const void/*_String_base*/ *this)
+{
+    p_String_base_Xran();
+}
+
 static BOOL init_funcs(void)
 {
     HMODULE hmod = GetModuleHandleA("msvcp90.dll");
@@ -312,6 +328,9 @@ static BOOL init_funcs(void)
 
     pbasic_string_char_replace = (void*)GetProcAddress(hmod, "basic_string_char_replace_helper");
     pbasic_string_wchar_replace = (void*)GetProcAddress(hmod, "basic_string_wchar_replace_helper");
+
+    p_String_base_Xlen = (void*)GetProcAddress(hmod, "?_Xlen@_String_base@std@@SAXXZ");
+    p_String_base_Xran = (void*)GetProcAddress(hmod, "?_Xran@_String_base@std@@SAXXZ");
 
     return pbasic_string_char_replace && pbasic_string_wchar_replace;
 }

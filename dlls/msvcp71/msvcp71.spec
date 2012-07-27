@@ -2465,8 +2465,8 @@
 @ cdecl -arch=win64 ?_Unlock@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QEAAXXZ(ptr) msvcp90.?_Unlock@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QEAAXXZ
 @ thiscall -arch=win32 ?_Unlock@_Mutex@std@@QAEXXZ(ptr) msvcp90.?_Unlock@_Mutex@std@@QAEXXZ
 @ cdecl -arch=win64 ?_Unlock@_Mutex@std@@QEAAXXZ(ptr) msvcp90.?_Unlock@_Mutex@std@@QEAAXXZ
-@ stub ?_Xlen@_String_base@std@@QBEXXZ
-@ stub ?_Xran@_String_base@std@@QBEXXZ
+@ thiscall -arch=win32 ?_Xlen@_String_base@std@@QBEXXZ(ptr) _String_base__Xlen
+@ thiscall -arch=win32 ?_Xran@_String_base@std@@QBEXXZ(ptr) _String_base__Xran
 @ thiscall -arch=win32 ?always_noconv@codecvt_base@std@@QBE_NXZ(ptr) msvcp90.?always_noconv@codecvt_base@std@@QBE_NXZ
 @ cdecl -arch=win64 ?always_noconv@codecvt_base@std@@QEBA_NXZ(ptr) msvcp90.?always_noconv@codecvt_base@std@@QEBA_NXZ
 @ thiscall -arch=win32 ?append@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@ABV12@@Z(ptr ptr) msvcp90.?append@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@ABV12@@Z

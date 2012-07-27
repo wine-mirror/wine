@@ -2246,8 +2246,8 @@
 @ stub ?_Tidy@locale@std@@CAXXZ
 @ stub -arch=win32 ?_Tidy@strstreambuf@std@@IAEXXZ
 @ stub -arch=win64 ?_Tidy@strstreambuf@std@@IEAAXXZ
-@ stub ?_Xlen@_String_base@std@@QBEXXZ
-@ stub ?_Xran@_String_base@std@@QBEXXZ
+@ thiscall -arch=win32 ?_Xlen@_String_base@std@@QBEXXZ(ptr) msvcp71.?_Xlen@_String_base@std@@QBEXXZ
+@ thiscall -arch=win32 ?_Xran@_String_base@std@@QBEXXZ(ptr) msvcp71.?_Xran@_String_base@std@@QBEXXZ
 @ stub -arch=win32 ?abs@std@@YAMABV?$complex@M@1@@Z
 @ stub -arch=win64 ?abs@std@@YAMAEBV?$complex@M@1@@Z
 @ stub -arch=win32 ?abs@std@@YANABV?$complex@N@1@@Z
