@@ -102,7 +102,7 @@ static BOOL tgt_process_minidump_read(HANDLE hProcess, const void* addr,
                                MemoryListStream, NULL, &stream, NULL))
     {
         MINIDUMP_MEMORY_LIST*   mml = stream;
-        MINIDUMP_MEMORY_DESCRIPTOR* mmd = &mml->MemoryRanges[0];
+        MINIDUMP_MEMORY_DESCRIPTOR* mmd = mml->MemoryRanges;
         int                     i, found = -1;
         SIZE_T                  ilen, prev_len = 0;
 
@@ -176,7 +176,7 @@ static BOOL is_pe_module_embedded(struct tgt_process_minidump_data* data,
         MINIDUMP_MODULE*        mm;
         unsigned                i;
 
-        for (i = 0, mm = &mml->Modules[0]; i < mml->NumberOfModules; i++, mm++)
+        for (i = 0, mm = mml->Modules; i < mml->NumberOfModules; i++, mm++)
         {
             if (get_addr64(mm->BaseOfImage) <= get_addr64(pe_mm->BaseOfImage) &&
                 get_addr64(mm->BaseOfImage) + mm->SizeOfImage >= get_addr64(pe_mm->BaseOfImage) + pe_mm->SizeOfImage)
@@ -218,7 +218,7 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
         {
             WCHAR*      ptr;
 
-            mm = &mml->Modules[0];
+            mm = mml->Modules;
             mds = (MINIDUMP_STRING*)((char*)data->mapping + mm->ModuleNameRva);
             len = mds->Length / 2;
             memcpy(exec_name, mds->Buffer, mds->Length);
@@ -369,7 +369,7 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
         WCHAR   buffer[MAX_PATH];
 
         mml = stream;
-        for (i = 0, mm = &mml->Modules[0]; i < mml->NumberOfModules; i++, mm++)
+        for (i = 0, mm = mml->Modules; i < mml->NumberOfModules; i++, mm++)
         {
             mds = (MINIDUMP_STRING*)((char*)data->mapping + mm->ModuleNameRva);
             memcpy(nameW, mds->Buffer, mds->Length);
@@ -388,7 +388,7 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
         WCHAR   buffer[MAX_PATH];
 
         mml = stream;
-        for (i = 0, mm = &mml->Modules[0]; i < mml->NumberOfModules; i++, mm++)
+        for (i = 0, mm = mml->Modules; i < mml->NumberOfModules; i++, mm++)
         {
             mds = (MINIDUMP_STRING*)((char*)data->mapping + mm->ModuleNameRva);
             memcpy(nameW, mds->Buffer, mds->Length);

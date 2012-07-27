@@ -1789,7 +1789,7 @@ static enum packet_return packet_query_remote_command(struct gdb_context* gdbctx
     len /= 2;
     hex_from(buffer, hxcmd, len);
 
-    for (qd = &query_details[0]; qd->name != NULL; qd++)
+    for (qd = query_details; qd->name != NULL; qd++)
     {
         if (len < qd->len || strncmp(buffer, qd->name, qd->len) != 0) continue;
         if (!qd->with_arg && len != qd->len) continue;
