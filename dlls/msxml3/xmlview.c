@@ -347,11 +347,11 @@ static inline HRESULT report_data(BindStatusCallback *This)
     ULARGE_INTEGER size;
     HRESULT hres;
 
+    off.QuadPart = 0;
     hres = IStream_Seek(This->stream, off, STREAM_SEEK_CUR, &size);
     if(FAILED(hres))
         return hres;
 
-    off.QuadPart = 0;
     hres = IStream_Seek(This->stream, off, STREAM_SEEK_SET, NULL);
     if(FAILED(hres))
         return hres;
