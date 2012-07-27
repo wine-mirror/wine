@@ -3,6 +3,7 @@ IMPORTLIB = winhttp
 IMPORTS   = uuid user32 advapi32
 DELAYIMPORTS = oleaut32 ole32 crypt32
 EXTRALIBS = @SOCKETLIBS@
+EXTRADEFS = -DWIDL_C_INLINE_WRAPPERS
 
 C_SRCS = \
 	cookie.c \
