@@ -50,6 +50,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 static const WCHAR emptyW[] = {0};
 static const WCHAR text_htmlW[] = {'t','e','x','t','/','h','t','m','l',0};
 
+enum {
+    BOM_NONE,
+    BOM_UTF8,
+    BOM_UTF16
+};
+
 struct nsProtocolStream {
     nsIInputStream nsIInputStream_iface;
 
@@ -607,6 +613,7 @@ static void init_bscallback(BSCallback *This, const BSCallbackVtbl *vtbl, IMonik
     This->vtbl = vtbl;
     This->ref = 1;
     This->bindf = bindf;
+    This->bom = BOM_NONE;
 
     list_init(&This->entry);
 
@@ -617,11 +624,29 @@ static void init_bscallback(BSCallback *This, const BSCallbackVtbl *vtbl, IMonik
 
 static HRESULT read_stream(BSCallback *This, IStream *stream, void *buf, DWORD size, DWORD *ret_size)
 {
-    DWORD read_size = 0;
+    DWORD read_size = 0, skip=0;
+    BYTE *data = buf;
     HRESULT hres;
 
     hres = IStream_Read(stream, buf, size, &read_size);
-    This->readed += (*ret_size = read_size);
+
+    if(!This->readed && This->bom == BOM_NONE) {
+        if(read_size >= 2 && data[0] == 0xff && data[1] == 0xfe) {
+            This->bom = BOM_UTF16;
+            skip = 2;
+        }else if(read_size >= 3 && data[0] == 0xef && data[1] == 0xbb && data[2] == 0xbf) {
+            This->bom = BOM_UTF8;
+            skip = 3;
+        }
+        if(skip) {
+            read_size -= skip;
+            if(read_size)
+                memmove(data, data+skip, read_size);
+        }
+    }
+
+    This->readed += read_size;
+    *ret_size = read_size;
     return hres;
 }
 
@@ -878,8 +903,8 @@ static BufferBSC *create_bufferbsc(IMoniker *mon)
 HRESULT bind_mon_to_wstr(HTMLInnerWindow *window, IMoniker *mon, WCHAR **ret)
 {
     BufferBSC *bsc = create_bufferbsc(mon);
+    int cp = CP_ACP;
     WCHAR *text;
-    DWORD len;
     HRESULT hres;
 
     hres = start_binding(window, &bsc->bsc, NULL);
@@ -890,14 +915,47 @@ HRESULT bind_mon_to_wstr(HTMLInnerWindow *window, IMoniker *mon, WCHAR **ret)
         return hres;
     }
 
-    len = MultiByteToWideChar(CP_ACP, 0, bsc->buf, bsc->bsc.readed, NULL, 0);
-    text = heap_alloc((len+1)*sizeof(WCHAR));
-    if(text) {
+    if(!bsc->bsc.readed) {
+        *ret = NULL;
+        return S_OK;
+    }
+
+    switch(bsc->bsc.bom) {
+    case BOM_UTF16:
+        if(bsc->bsc.readed % sizeof(WCHAR)) {
+            FIXME("The buffer is not a valid utf16 string\n");
+            hres = E_FAIL;
+            break;
+        }
+
+        text = heap_alloc(bsc->bsc.readed+sizeof(WCHAR));
+        if(!text) {
+            hres = E_OUTOFMEMORY;
+            break;
+        }
+
+        memcpy(text, bsc->buf, bsc->bsc.readed);
+        text[bsc->bsc.readed/sizeof(WCHAR)] = 0;
+        break;
+
+    case BOM_UTF8:
+        cp = CP_UTF8;
+        /* fallthrough */
+    default: {
+        DWORD len;
+
+        len = MultiByteToWideChar(cp, 0, bsc->buf, bsc->bsc.readed, NULL, 0);
+        text = heap_alloc((len+1)*sizeof(WCHAR));
+        if(!text) {
+            hres = E_OUTOFMEMORY;
+            break;
+        }
+
         MultiByteToWideChar(CP_ACP, 0, bsc->buf, bsc->bsc.readed, text, len);
         text[len] = 0;
-    }else {
-        hres = E_OUTOFMEMORY;
     }
+    }
+
     IBindStatusCallback_Release(&bsc->bsc.IBindStatusCallback_iface);
     if(FAILED(hres))
         return hres;
@@ -1076,15 +1134,13 @@ static HRESULT read_stream_data(nsChannelBSC *This, IStream *stream)
         This->nsstream->buf_size += read;
 
         if(first_read) {
-            if(This->nsstream->buf_size >= 2
-               && (BYTE)This->nsstream->buf[0] == 0xff
-               && (BYTE)This->nsstream->buf[1] == 0xfe)
-                This->nschannel->charset = heap_strdupA(UTF16_STR);
-            if(This->nsstream->buf_size >= 3
-               && (BYTE)This->nsstream->buf[0] == 0xef
-               && (BYTE)This->nsstream->buf[1] == 0xbb
-               && (BYTE)This->nsstream->buf[2] == 0xbf)
+            switch(This->bsc.bom) {
+            case BOM_UTF8:
                 This->nschannel->charset = heap_strdupA(UTF8_STR);
+                break;
+            case BOM_UTF16:
+                This->nschannel->charset = heap_strdupA(UTF16_STR);
+            }
 
             if(!This->nschannel->content_type) {
                 WCHAR *mime;

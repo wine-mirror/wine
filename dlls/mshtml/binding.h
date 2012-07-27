@@ -67,6 +67,7 @@ struct BSCallback {
     ULONG readed;
     DWORD bindf;
     BOOL bindinfo_ready;
+    int bom;
 
     IMoniker *mon;
     IBinding *binding;
