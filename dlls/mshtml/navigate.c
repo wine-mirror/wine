@@ -772,7 +772,7 @@ typedef struct {
     BSCallback bsc;
 
     DWORD size;
-    BYTE *buf;
+    char *buf;
     HRESULT hres;
 } BufferBSC;
 
@@ -875,27 +875,35 @@ static BufferBSC *create_bufferbsc(IMoniker *mon)
     return ret;
 }
 
-HRESULT bind_mon_to_buffer(HTMLInnerWindow *window, IMoniker *mon, void **buf, DWORD *size)
+HRESULT bind_mon_to_wstr(HTMLInnerWindow *window, IMoniker *mon, WCHAR **ret)
 {
     BufferBSC *bsc = create_bufferbsc(mon);
+    WCHAR *text;
+    DWORD len;
     HRESULT hres;
 
-    *buf = NULL;
-
     hres = start_binding(window, &bsc->bsc, NULL);
-    if(SUCCEEDED(hres)) {
+    if(SUCCEEDED(hres))
         hres = bsc->hres;
-        if(SUCCEEDED(hres)) {
-            *buf = bsc->buf;
-            bsc->buf = NULL;
-            *size = bsc->bsc.readed;
-            bsc->size = 0;
-        }
+    if(FAILED(hres)) {
+        IBindStatusCallback_Release(&bsc->bsc.IBindStatusCallback_iface);
+        return hres;
     }
 
+    len = MultiByteToWideChar(CP_ACP, 0, bsc->buf, bsc->bsc.readed, NULL, 0);
+    text = heap_alloc((len+1)*sizeof(WCHAR));
+    if(text) {
+        MultiByteToWideChar(CP_ACP, 0, bsc->buf, bsc->bsc.readed, text, len);
+        text[len] = 0;
+    }else {
+        hres = E_OUTOFMEMORY;
+    }
     IBindStatusCallback_Release(&bsc->bsc.IBindStatusCallback_iface);
+    if(FAILED(hres))
+        return hres;
 
-    return hres;
+    *ret = text;
+    return S_OK;
 }
 
 static HRESULT read_post_data_stream(nsChannelBSC *This, nsChannel *nschannel)

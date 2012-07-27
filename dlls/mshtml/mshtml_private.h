@@ -801,8 +801,6 @@ void abort_window_bindings(HTMLInnerWindow*) DECLSPEC_HIDDEN;
 void set_download_state(HTMLDocumentObj*,int) DECLSPEC_HIDDEN;
 void call_docview_84(HTMLDocumentObj*) DECLSPEC_HIDDEN;
 
-HRESULT bind_mon_to_buffer(HTMLInnerWindow*,IMoniker*,void**,DWORD*) DECLSPEC_HIDDEN;
-
 void set_ready_state(HTMLOuterWindow*,READYSTATE) DECLSPEC_HIDDEN;
 
 HRESULT HTMLSelectionObject_Create(HTMLDocumentNode*,nsISelection*,IHTMLSelectionObject**) DECLSPEC_HIDDEN;
