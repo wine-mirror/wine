@@ -1142,7 +1142,7 @@ static void test_WaitForMultipleObjects(void)
 static BOOL g_initcallback_ret, g_initcallback_called;
 static void *g_initctxt;
 
-BOOL CALLBACK initonce_callback(INIT_ONCE *initonce, void *parameter, void **ctxt)
+static BOOL CALLBACK initonce_callback(INIT_ONCE *initonce, void *parameter, void **ctxt)
 {
     g_initcallback_called = TRUE;
     /* zero bit set means here that initialization is taking place - initialization locked */
