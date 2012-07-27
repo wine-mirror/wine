@@ -68,7 +68,7 @@ static HRESULT WINAPI FileProtocol_QueryInterface(IInternetProtocolEx *iface, RE
     }
 
     if(*ppv) {
-        IInternetProtocol_AddRef(iface);
+        IInternetProtocolEx_AddRef(iface);
         return S_OK;
     }
 

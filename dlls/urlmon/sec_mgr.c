@@ -877,7 +877,7 @@ static HRESULT WINAPI SecManagerImpl_QueryInterface(IInternetSecurityManagerEx2*
     }
 
     /* Query Interface always increases the reference count by one when it is successful */
-    IInternetSecurityManager_AddRef(iface);
+    IInternetSecurityManagerEx2_AddRef(iface);
 
     return S_OK;
 }
@@ -1371,7 +1371,7 @@ static HRESULT WINAPI ZoneMgrImpl_QueryInterface(IInternetZoneManagerEx2* iface,
     }
 
     *ppvObject = iface;
-    IInternetZoneManager_AddRef(iface);
+    IInternetZoneManagerEx2_AddRef(iface);
     return S_OK;
 }
 
@@ -1745,7 +1745,7 @@ static HRESULT WINAPI ZoneMgrImpl_GetZoneAttributesEx(IInternetZoneManagerEx2* i
     if (dwFlags)
         FIXME("dwFlags 0x%x ignored\n", dwFlags);
 
-    return IInternetZoneManager_GetZoneAttributes(iface, dwZone, pZoneAttributes);
+    return IInternetZoneManagerEx2_GetZoneAttributes(iface, dwZone, pZoneAttributes);
 }
 
 

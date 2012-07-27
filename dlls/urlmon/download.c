@@ -62,7 +62,7 @@ static HRESULT WINAPI DownloadBSC_QueryInterface(IBindStatusCallback *iface,
     }
 
     if(*ppv) {
-        IBindStatusCallback_AddRef((IUnknown*)*ppv);
+        IUnknown_AddRef((IUnknown*)*ppv);
         return S_OK;
     }
 

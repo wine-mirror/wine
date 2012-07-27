@@ -108,7 +108,7 @@ static void read_protocol_data(stgmed_buf_t *stgmed_buf)
     DWORD read;
     HRESULT hres;
 
-    do hres = IInternetProtocol_Read(stgmed_buf->protocol, buf, sizeof(buf), &read);
+    do hres = IInternetProtocolEx_Read(stgmed_buf->protocol, buf, sizeof(buf), &read);
     while(hres == S_OK);
 }
 
@@ -374,7 +374,7 @@ static ULONG WINAPI StgMedUnk_Release(IUnknown *iface)
     if(!ref) {
         if(This->file != INVALID_HANDLE_VALUE)
             CloseHandle(This->file);
-        IInternetProtocol_Release(This->protocol);
+        IInternetProtocolEx_Release(This->protocol);
         heap_free(This->cache_file);
         heap_free(This);
 
@@ -400,7 +400,7 @@ static stgmed_buf_t *create_stgmed_buf(IInternetProtocolEx *protocol)
     ret->hres = S_OK;
     ret->cache_file = NULL;
 
-    IInternetProtocol_AddRef(protocol);
+    IInternetProtocolEx_AddRef(protocol);
     ret->protocol = protocol;
 
     URLMON_LockModule();
@@ -486,7 +486,7 @@ static HRESULT WINAPI ProtocolStream_Read(IStream *iface, void *pv,
     TRACE("(%p)->(%p %d %p)\n", This, pv, cb, pcbRead);
 
     if(This->buf->file == INVALID_HANDLE_VALUE) {
-        hres = This->buf->hres = IInternetProtocol_Read(This->buf->protocol, (PBYTE)pv, cb, &read);
+        hres = This->buf->hres = IInternetProtocolEx_Read(This->buf->protocol, (PBYTE)pv, cb, &read);
     }else {
         hres = ReadFile(This->buf->file, pv, cb, &read, NULL) ? S_OK : INET_E_DOWNLOAD_FAILURE;
     }

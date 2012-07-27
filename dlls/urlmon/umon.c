@@ -77,7 +77,7 @@ static HRESULT WINAPI URLMoniker_QueryInterface(IMoniker *iface, REFIID riid, vo
         return E_NOINTERFACE;
     }
 
-    IMoniker_AddRef((IUnknown*)*ppv);
+    IUnknown_AddRef((IUnknown*)*ppv);
     return S_OK;
 }
 
@@ -331,7 +331,7 @@ static HRESULT WINAPI URLMoniker_IsEqual(IMoniker *iface, IMoniker *pmkOtherMoni
         if(result == 0)
             res = S_OK;
     }
-    IUnknown_Release(bind);
+    IBindCtx_Release(bind);
     return res;
 }
 
