@@ -235,35 +235,108 @@ static HRESULT WINAPI wbem_services_QueryObjectSink(
     return WBEM_E_FAILED;
 }
 
-static HRESULT create_instance_enum( const WCHAR *class, IEnumWbemClassObject **iter )
+struct path
 {
-    static const WCHAR selectW[] = {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',0};
+    WCHAR *class;
+    UINT   class_len;
+    WCHAR *filter;
+    UINT   filter_len;
+};
+
+static HRESULT parse_path( const WCHAR *str, struct path **ret )
+{
+    struct path *path;
+    const WCHAR *p = str, *q;
+    UINT len;
+
+    if (!(path = heap_alloc_zero( sizeof(*path) ))) return E_OUTOFMEMORY;
+
+    while (*p && *p != '.') p++;
+
+    len = p - str;
+    if (!(path->class = heap_alloc( (len + 1) * sizeof(WCHAR) )))
+    {
+        heap_free( path );
+        return E_OUTOFMEMORY;
+    }
+    memcpy( path->class, str, len * sizeof(WCHAR) );
+    path->class[len] = 0;
+    path->class_len = len;
+
+    if (p[0] == '.' && p[1])
+    {
+        q = ++p;
+        while (*q) q++;
+
+        len = q - p;
+        if (!(path->filter = heap_alloc( (len + 1) * sizeof(WCHAR) )))
+        {
+            heap_free( path->class );
+            heap_free( path );
+            return E_OUTOFMEMORY;
+        }
+        memcpy( path->filter, p, len * sizeof(WCHAR) );
+        path->filter[len] = 0;
+        path->filter_len = len;
+    }
+    *ret = path;
+    return S_OK;
+}
+
+static void free_path( struct path *path )
+{
+    heap_free( path->class );
+    heap_free( path->filter );
+    heap_free( path );
+}
+
+static HRESULT create_instance_enum( const struct path *path, IEnumWbemClassObject **iter )
+{
+    static const WCHAR selectW[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','%','s',' ',
+         'W','H','E','R','E',' ','%','s',0};
+    static const WCHAR select_allW[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',0};
     WCHAR *query;
     HRESULT hr;
+    UINT len;
 
-    query = heap_alloc( strlenW( class ) * sizeof(WCHAR) + sizeof(selectW) );
-    if (!query) return E_OUTOFMEMORY;
-
-    strcpyW( query, selectW );
-    strcatW( query, class );
-
+    if (path->filter)
+    {
+        len = path->class_len + path->filter_len + SIZEOF(selectW);
+        if (!(query = heap_alloc( len * sizeof(WCHAR) ))) return E_OUTOFMEMORY;
+        sprintfW( query, selectW, path->class, path->filter );
+    }
+    else
+    {
+        len = path->class_len + SIZEOF(select_allW);
+        if (!(query = heap_alloc( len * sizeof(WCHAR) ))) return E_OUTOFMEMORY;
+        strcpyW( query, select_allW );
+        strcatW( query, path->class );
+    }
     hr = exec_query( query, iter );
     heap_free( query );
     return hr;
 }
 
-HRESULT get_object( const WCHAR *path, IWbemClassObject **obj )
+HRESULT get_object( const WCHAR *object_path, IWbemClassObject **obj )
 {
     IEnumWbemClassObject *iter;
+    struct path *path;
     HRESULT hr;
 
-    /* FIXME: parse path */
-
-    hr = create_instance_enum( path, &iter );
+    hr = parse_path( object_path, &path );
     if (hr != S_OK) return hr;
 
+    hr = create_instance_enum( path, &iter );
+    if (hr != S_OK)
+    {
+        free_path( path );
+        return hr;
+    }
     hr = WbemClassObject_create( NULL, iter, 0, (void **)obj );
     IEnumWbemClassObject_Release( iter );
+    free_path( path );
     return hr;
 }
 
@@ -280,6 +353,11 @@ static HRESULT WINAPI wbem_services_GetObject(
 
     if (lFlags) FIXME("unsupported flags 0x%08x\n", lFlags);
 
+    if (!strObjectPath)
+    {
+        FIXME("no support for creating new classes\n");
+        return WBEM_E_FAILED;
+    }
     return get_object( strObjectPath, ppObject );
 }
 
@@ -411,11 +489,19 @@ static HRESULT WINAPI wbem_services_CreateInstanceEnum(
     IWbemContext *pCtx,
     IEnumWbemClassObject **ppEnum )
 {
+    struct path *path;
+    HRESULT hr;
+
     TRACE("%p, %s, 0%08x, %p, %p\n", iface, debugstr_w(strClass), lFlags, pCtx, ppEnum);
 
     if (lFlags) FIXME("unsupported flags 0x%08x\n", lFlags);
 
-    return create_instance_enum( strClass, ppEnum );
+    hr = parse_path( strClass, &path );
+    if (hr != S_OK) return hr;
+
+    hr = create_instance_enum( path, ppEnum );
+    free_path( path );
+    return hr;
 }
 
 static HRESULT WINAPI wbem_services_CreateInstanceEnumAsync(
