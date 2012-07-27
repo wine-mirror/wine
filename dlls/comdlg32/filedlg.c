@@ -4207,6 +4207,12 @@ static BOOL GetFileName31W(LPOPENFILENAMEW lpofn, /* address of structure with d
     return bRet;
 }
 
+static inline BOOL is_win16_looks(DWORD flags)
+{
+    return (flags & (OFN_ALLOWMULTISELECT|OFN_ENABLEHOOK|OFN_ENABLETEMPLATE) &&
+            !(flags & OFN_EXPLORER));
+}
+
 /* ------------------ APIs ---------------------- */
 
 /***********************************************************************
@@ -4222,18 +4228,13 @@ static BOOL GetFileName31W(LPOPENFILENAMEW lpofn, /* address of structure with d
 BOOL WINAPI GetOpenFileNameA(
 	LPOPENFILENAMEA ofn) /* [in/out] address of init structure */
 {
-    BOOL win16look = FALSE;
-
     TRACE("flags %08x\n", ofn->Flags);
 
     /* OFN_FILEMUSTEXIST implies OFN_PATHMUSTEXIST */
     if (ofn->Flags & OFN_FILEMUSTEXIST)
         ofn->Flags |= OFN_PATHMUSTEXIST;
 
-    if (ofn->Flags & (OFN_ALLOWMULTISELECT|OFN_ENABLEHOOK|OFN_ENABLETEMPLATE))
-        win16look = (ofn->Flags & OFN_EXPLORER) ? FALSE : TRUE;
-
-    if (win16look)
+    if (is_win16_looks(ofn->Flags))
         return GetFileName31A(ofn, OPEN_DIALOG);
     else
         return GetFileDialog95A(ofn, OPEN_DIALOG);
@@ -4252,18 +4253,13 @@ BOOL WINAPI GetOpenFileNameA(
 BOOL WINAPI GetOpenFileNameW(
 	LPOPENFILENAMEW ofn) /* [in/out] address of init structure */
 {
-    BOOL win16look = FALSE;
-
     TRACE("flags %08x\n", ofn->Flags);
 
     /* OFN_FILEMUSTEXIST implies OFN_PATHMUSTEXIST */
     if (ofn->Flags & OFN_FILEMUSTEXIST)
         ofn->Flags |= OFN_PATHMUSTEXIST;
 
-    if (ofn->Flags & (OFN_ALLOWMULTISELECT|OFN_ENABLEHOOK|OFN_ENABLETEMPLATE))
-        win16look = (ofn->Flags & OFN_EXPLORER) ? FALSE : TRUE;
-
-    if (win16look)
+    if (is_win16_looks(ofn->Flags))
         return GetFileName31W(ofn, OPEN_DIALOG);
     else
         return GetFileDialog95W(ofn, OPEN_DIALOG);
@@ -4283,12 +4279,7 @@ BOOL WINAPI GetOpenFileNameW(
 BOOL WINAPI GetSaveFileNameA(
 	LPOPENFILENAMEA ofn) /* [in/out] address of init structure */
 {
-    BOOL win16look = FALSE;
-
-    if (ofn->Flags & (OFN_ALLOWMULTISELECT|OFN_ENABLEHOOK|OFN_ENABLETEMPLATE))
-        win16look = (ofn->Flags & OFN_EXPLORER) ? FALSE : TRUE;
-
-    if (win16look)
+    if (is_win16_looks(ofn->Flags))
         return GetFileName31A(ofn, SAVE_DIALOG);
     else
         return GetFileDialog95A(ofn, SAVE_DIALOG);
@@ -4307,12 +4298,7 @@ BOOL WINAPI GetSaveFileNameA(
 BOOL WINAPI GetSaveFileNameW(
 	LPOPENFILENAMEW ofn) /* [in/out] address of init structure */
 {
-    BOOL win16look = FALSE;
-
-    if (ofn->Flags & (OFN_ALLOWMULTISELECT|OFN_ENABLEHOOK|OFN_ENABLETEMPLATE))
-        win16look = (ofn->Flags & OFN_EXPLORER) ? FALSE : TRUE;
-
-    if (win16look)
+    if (is_win16_looks(ofn->Flags))
         return GetFileName31W(ofn, SAVE_DIALOG);
     else
         return GetFileDialog95W(ofn, SAVE_DIALOG);
