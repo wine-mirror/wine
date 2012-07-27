@@ -107,7 +107,6 @@ enum dc_gl_type
     DC_GL_WINDOW,     /* normal top-level window */
     DC_GL_CHILD_WIN,  /* child window using XComposite */
     DC_GL_PIXMAP_WIN, /* child window using intermediate pixmap */
-    DC_GL_BITMAP,     /* memory DC with a standard bitmap */
     DC_GL_PBUFFER     /* pseudo memory DC using a PBuffer */
 };
 

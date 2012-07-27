@@ -153,9 +153,6 @@ struct wgl_context
     GLXContext ctx;
     Drawable drawables[2];
     BOOL refresh_drawables;
-    Pixmap pixmap;            /* pixmap for memory DCs */
-    GLXPixmap glxpixmap;      /* GLX pixmap for memory DCs */
-    SIZE pixmap_size;         /* pixmap size for memory DCs */
     struct list entry;
 };
 
@@ -1385,18 +1382,7 @@ static BOOL glxdrv_SetPixelFormat(PHYSDEV dev, int iPixelFormat, const PIXELFORM
         }
         /* physDev->current_pf will be set by the DCE update */
     }
-    else if (GetObjectType( physdev->dev.hdc ) == OBJ_MEMDC) {
-        if(!(value&GLX_PIXMAP_BIT)) {
-            WARN("Pixel format %d is not compatible for bitmap rendering\n", iPixelFormat);
-            return FALSE;
-        }
-
-        physdev->pixel_format = iPixelFormat;
-        physdev->type = DC_GL_BITMAP;
-    }
-    else {
-        FIXME("called on a non-window, non-bitmap object?\n");
-    }
+    else FIXME("called on a non-window object?\n");
 
     if (TRACE_ON(wgl)) {
         int gl_test = 0;
@@ -1488,8 +1474,6 @@ static void glxdrv_wglDeleteContext(struct wgl_context *ctx)
     wine_tsx11_lock();
     list_remove( &ctx->entry );
     if (ctx->ctx) pglXDestroyContext( gdi_display, ctx->ctx );
-    if (ctx->glxpixmap) pglXDestroyGLXPixmap( gdi_display, ctx->glxpixmap );
-    if (ctx->pixmap) XFreePixmap( gdi_display, ctx->pixmap );
     if (ctx->vis) XFree( ctx->vis );
     wine_tsx11_unlock();
 
@@ -1503,25 +1487,6 @@ static PROC glxdrv_wglGetProcAddress(LPCSTR lpszProc)
 {
     if (!strncmp(lpszProc, "wgl", 3)) return NULL;
     return pglXGetProcAddressARB((const GLubyte*)lpszProc);
-}
-
-static GLXPixmap get_context_pixmap( HDC hdc, struct wgl_context *ctx )
-{
-    if (!ctx->pixmap)
-    {
-        BITMAP bmp;
-
-        GetObjectW( GetCurrentObject( hdc, OBJ_BITMAP ), sizeof(bmp), &bmp );
-
-        wine_tsx11_lock();
-        ctx->pixmap = XCreatePixmap( gdi_display, root_window,
-                                     bmp.bmWidth, bmp.bmHeight, ctx->vis->depth );
-        ctx->glxpixmap = pglXCreateGLXPixmap( gdi_display, ctx->vis, ctx->pixmap );
-        wine_tsx11_unlock();
-        ctx->pixmap_size.cx = bmp.bmWidth;
-        ctx->pixmap_size.cy = bmp.bmHeight;
-    }
-    return ctx->glxpixmap;
 }
 
 /***********************************************************************
@@ -1563,8 +1528,6 @@ static BOOL glxdrv_wglMakeCurrent(HDC hdc, struct wgl_context *ctx)
     }
     else
     {
-        if (escape.gl_type == DC_GL_BITMAP) escape.gl_drawable = get_context_pixmap( hdc, ctx );
-
         wine_tsx11_lock();
 
         if (TRACE_ON(wgl)) {
@@ -1586,8 +1549,6 @@ static BOOL glxdrv_wglMakeCurrent(HDC hdc, struct wgl_context *ctx)
             ctx->drawables[0] = escape.gl_drawable;
             ctx->drawables[1] = escape.gl_drawable;
             ctx->refresh_drawables = FALSE;
-
-            if (escape.gl_type == DC_GL_BITMAP) opengl_funcs.gl.p_glDrawBuffer(GL_FRONT_LEFT);
         }
         else
             SetLastError(ERROR_INVALID_HANDLE);
@@ -1635,9 +1596,6 @@ static BOOL X11DRV_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct 
     else
     {
         if (!pglXMakeContextCurrent) return FALSE;
-
-        if (escape_draw.gl_type == DC_GL_BITMAP) escape_draw.gl_drawable = get_context_pixmap( draw_hdc, ctx );
-        if (escape_read.gl_type == DC_GL_BITMAP) escape_read.gl_drawable = get_context_pixmap( read_hdc, ctx );
 
         wine_tsx11_lock();
         ret = pglXMakeContextCurrent(gdi_display, escape_draw.gl_drawable, escape_read.gl_drawable, ctx->ctx);
@@ -1690,11 +1648,6 @@ static BOOL glxdrv_wglShareLists(struct wgl_context *org, struct wgl_context *de
     }
     else
     {
-        if((GetObjectType(org->hdc) == OBJ_MEMDC) ^ (GetObjectType(dest->hdc) == OBJ_MEMDC))
-        {
-            WARN("Attempting to share a context between a direct and indirect rendering context, expect issues!\n");
-        }
-
         wine_tsx11_lock();
         describeContext(org);
         describeContext(dest);
@@ -1710,20 +1663,6 @@ static BOOL glxdrv_wglShareLists(struct wgl_context *org, struct wgl_context *de
         return TRUE;
     }
     return FALSE;
-}
-
-static void flush_pixmap( struct wgl_context *ctx )
-{
-    char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
-    BITMAPINFO *info = (BITMAPINFO *)buffer;
-    struct gdi_image_bits bits;
-
-    if (!get_pixmap_image( ctx->pixmap, ctx->pixmap_size.cx, ctx->pixmap_size.cy, ctx->vis, info, &bits ))
-    {
-        HBITMAP bitmap = GetCurrentObject( ctx->hdc, OBJ_BITMAP );
-        SetDIBits( 0, bitmap, 0, ctx->pixmap_size.cy, bits.ptr, info, DIB_RGB_COLORS );
-        if (bits.free) bits.free( &bits );
-    }
 }
 
 static void flush_gl_drawable( struct glx_physdev *physdev )
@@ -1766,11 +1705,7 @@ static void wglFinish(void)
     sync_context(ctx);
     pglFinish();
     wine_tsx11_unlock();
-    if (ctx)
-    {
-        if (ctx->pixmap) flush_pixmap( ctx );
-        else ExtEscape( ctx->hdc, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code, 0, NULL );
-    }
+    ExtEscape( ctx->hdc, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code, 0, NULL );
 }
 
 static void wglFlush(void)
@@ -1782,11 +1717,7 @@ static void wglFlush(void)
     sync_context(ctx);
     pglFlush();
     wine_tsx11_unlock();
-    if (ctx)
-    {
-        if (ctx->pixmap) flush_pixmap( ctx );
-        else ExtEscape( ctx->hdc, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code, 0, NULL );
-    }
+    ExtEscape( ctx->hdc, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code, 0, NULL );
 }
 
 /***********************************************************************
