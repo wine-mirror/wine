@@ -48,6 +48,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define UTF16_STR "utf-16"
 
 static const WCHAR emptyW[] = {0};
+static const WCHAR text_htmlW[] = {'t','e','x','t','/','h','t','m','l',0};
 
 struct nsProtocolStream {
     nsIInputStream nsIInputStream_iface;
@@ -614,6 +615,16 @@ static void init_bscallback(BSCallback *This, const BSCallbackVtbl *vtbl, IMonik
     This->mon = mon;
 }
 
+static HRESULT read_stream(BSCallback *This, IStream *stream, void *buf, DWORD size, DWORD *ret_size)
+{
+    DWORD read_size = 0;
+    HRESULT hres;
+
+    hres = IStream_Read(stream, buf, size, &read_size);
+    This->readed += (*ret_size = read_size);
+    return hres;
+}
+
 static void parse_content_type(nsChannelBSC *This, const WCHAR *value)
 {
     const WCHAR *ptr;
@@ -820,9 +831,7 @@ static HRESULT BufferBSC_read_data(BSCallback *bsc, IStream *stream)
             This->buf = heap_realloc(This->buf, This->size);
         }
 
-        readed = 0;
-        hres = IStream_Read(stream, This->buf+This->bsc.readed, This->size-This->bsc.readed, &readed);
-        This->bsc.readed += readed;
+        hres = read_stream(&This->bsc, stream, This->buf+This->bsc.readed, This->size-This->bsc.readed, &readed);
     }while(hres == S_OK);
 
     return S_OK;
@@ -1031,8 +1040,6 @@ static void on_stop_nsrequest(nsChannelBSC *This, HRESULT result)
 
 static HRESULT read_stream_data(nsChannelBSC *This, IStream *stream)
 {
-    static const WCHAR mimeTextHtml[] = {'t','e','x','t','/','h','t','m','l',0};
-
     DWORD read;
     nsresult nsres;
     HRESULT hres;
@@ -1041,8 +1048,7 @@ static HRESULT read_stream_data(nsChannelBSC *This, IStream *stream)
         BYTE buf[1024];
 
         do {
-            read = 0;
-            hres = IStream_Read(stream, buf, sizeof(buf), &read);
+            hres = read_stream(&This->bsc, stream, buf, sizeof(buf), &read);
         }while(hres == S_OK && read);
 
         return S_OK;
@@ -1052,15 +1058,16 @@ static HRESULT read_stream_data(nsChannelBSC *This, IStream *stream)
         This->nsstream = create_nsprotocol_stream();
 
     do {
-        read = 0;
-        hres = IStream_Read(stream, This->nsstream->buf+This->nsstream->buf_size,
+        BOOL first_read = !This->bsc.readed;
+
+        hres = read_stream(&This->bsc, stream, This->nsstream->buf+This->nsstream->buf_size,
                 sizeof(This->nsstream->buf)-This->nsstream->buf_size, &read);
         if(!read)
             break;
 
         This->nsstream->buf_size += read;
 
-        if(!This->bsc.readed) {
+        if(first_read) {
             if(This->nsstream->buf_size >= 2
                && (BYTE)This->nsstream->buf[0] == 0xff
                && (BYTE)This->nsstream->buf[1] == 0xfe)
@@ -1075,7 +1082,7 @@ static HRESULT read_stream_data(nsChannelBSC *This, IStream *stream)
                 WCHAR *mime;
 
                 hres = FindMimeFromData(NULL, NULL, This->nsstream->buf, This->nsstream->buf_size,
-                        This->is_doc_channel ? mimeTextHtml : NULL, 0, &mime, 0);
+                        This->is_doc_channel ? text_htmlW : NULL, 0, &mime, 0);
                 if(FAILED(hres))
                     return hres;
 
@@ -1089,8 +1096,6 @@ static HRESULT read_stream_data(nsChannelBSC *This, IStream *stream)
 
             on_start_nsrequest(This);
         }
-
-        This->bsc.readed += This->nsstream->buf_size;
 
         nsres = nsIStreamListener_OnDataAvailable(This->nslistener,
                 (nsIRequest*)&This->nschannel->nsIHttpChannel_iface, This->nscontext,
