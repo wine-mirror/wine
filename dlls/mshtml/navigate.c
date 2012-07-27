@@ -851,7 +851,7 @@ static HRESULT BufferBSC_read_data(BSCallback *bsc, IStream *stream)
     }
 
     do {
-        if(This->bsc.readed == This->size) {
+        if(This->bsc.readed >= This->size) {
             This->size <<= 1;
             This->buf = heap_realloc(This->buf, This->size);
         }
