@@ -1435,28 +1435,36 @@ DWORD WINAPI QueryDosDeviceA( LPCSTR devname, LPSTR target, DWORD bufsize )
  */
 DWORD WINAPI GetLogicalDrives(void)
 {
-    const char *config_dir = wine_get_config_dir();
-    struct stat st;
-    char *buffer, *dev;
-    DWORD ret = 0;
-    int i;
+    static const WCHAR dosdevW[] = {'\\','D','o','s','D','e','v','i','c','e','s','\\',0};
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nt_name;
+    DWORD bitmask = 0;
+    NTSTATUS status;
+    HANDLE handle;
 
-    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, strlen(config_dir) + sizeof("/dosdevices/a:") )))
+    RtlInitUnicodeString( &nt_name, dosdevW );
+    nt_name.Length -= sizeof(WCHAR);  /* without trailing slash */
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &nt_name;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    status = NtOpenDirectoryObject( &handle, FILE_LIST_DIRECTORY, &attr );
+    if (!status)
     {
-        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-        return 0;
-    }
-    strcpy( buffer, config_dir );
-    strcat( buffer, "/dosdevices/a:" );
-    dev = buffer + strlen(buffer) - 2;
+        char data[1024];
+        DIRECTORY_BASIC_INFORMATION *info = (DIRECTORY_BASIC_INFORMATION *)data;
+        ULONG ctx = 0, len;
 
-    for (i = 0; i < 26; i++)
-    {
-        *dev = 'a' + i;
-        if (!stat( buffer, &st )) ret |= (1 << i);
+        while (!NtQueryDirectoryObject( handle, info, sizeof(data), 1, 0, &ctx, &len ))
+            if(info->ObjectName.Length == 2*sizeof(WCHAR) && info->ObjectName.Buffer[1] == ':')
+                bitmask |= 1 << (info->ObjectName.Buffer[0] - 'A');
+
+        NtClose( handle );
     }
-    HeapFree( GetProcessHeap(), 0, buffer );
-    return ret;
+
+    return bitmask;
 }
 
 
