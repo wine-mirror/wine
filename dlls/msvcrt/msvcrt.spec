@@ -1339,7 +1339,7 @@
 @ cdecl memchr(ptr long long) ntdll.memchr
 @ cdecl memcmp(ptr ptr long) ntdll.memcmp
 @ cdecl memcpy(ptr ptr long) ntdll.memcpy
-@ cdecl memcpy_s(ptr long ptr long) memmove_s
+@ cdecl memcpy_s(ptr long ptr long)
 @ cdecl memmove(ptr ptr long) ntdll.memmove
 @ cdecl memmove_s(ptr long ptr long)
 @ cdecl memset(ptr long long) ntdll.memset

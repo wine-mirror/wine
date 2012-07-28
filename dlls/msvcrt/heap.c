@@ -554,22 +554,37 @@ int CDECL memmove_s(void *dest, MSVCRT_size_t numberOfElements, const void *src,
     if(!count)
         return 0;
 
-    if(!dest || !src) {
-        if(dest)
-            memset(dest, 0, numberOfElements);
+    if (!MSVCRT_CHECK_PMT(dest != NULL)) return MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT(src != NULL)) return MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT_ERR( count <= numberOfElements, MSVCRT_ERANGE )) return MSVCRT_ERANGE;
 
-        *MSVCRT__errno() = MSVCRT_EINVAL;
+    memmove(dest, src, count);
+    return 0;
+}
+
+/*********************************************************************
+ *		memcpy_s (MSVCRT.@)
+ */
+int CDECL memcpy_s(void *dest, MSVCRT_size_t numberOfElements, const void *src, MSVCRT_size_t count)
+{
+    TRACE("(%p %lu %p %lu)\n", dest, numberOfElements, src, count);
+
+    if(!count)
+        return 0;
+
+    if (!MSVCRT_CHECK_PMT(dest != NULL)) return MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT(src != NULL))
+    {
+        memset(dest, 0, numberOfElements);
         return MSVCRT_EINVAL;
     }
-
-    if(count > numberOfElements) {
+    if (!MSVCRT_CHECK_PMT_ERR( count <= numberOfElements, MSVCRT_ERANGE ))
+    {
         memset(dest, 0, numberOfElements);
-
-        *MSVCRT__errno() = MSVCRT_ERANGE;
         return MSVCRT_ERANGE;
     }
 
-    memmove(dest, src, count);
+    memcpy(dest, src, count);
     return 0;
 }
 

@@ -55,6 +55,8 @@ static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
 #define expect_bin(buf, value, len) { ok(memcmp((buf), value, len) == 0, "Binary buffer mismatch - expected %s, got %s\n", buf_to_string((unsigned char *)value, len, 1), buf_to_string((buf), len, 0)); }
 
 static void* (__cdecl *pmemcpy)(void *, const void *, size_t n);
+static int (__cdecl *p_memcpy_s)(void *, size_t, const void *, size_t);
+static int (__cdecl *p_memmove_s)(void *, size_t, const void *, size_t);
 static int* (__cdecl *pmemcmp)(void *, const void *, size_t n);
 static int (__cdecl *pstrcpy_s)(char *dst, size_t len, const char *src);
 static int (__cdecl *pstrcat_s)(char *dst, size_t len, const char *src);
@@ -495,6 +497,148 @@ static void test_strcpy_s(void)
 
     ret = pstrcpy_s(NULL, sizeof(dest), small);
     ok(ret == EINVAL, "Copying a big string a NULL dest returned %d, expected EINVAL\n", ret);
+}
+
+#define NUMELMS(array) (sizeof(array)/sizeof((array)[0]))
+
+#define okchars(dst, b0, b1, b2, b3, b4, b5, b6, b7) \
+    ok(dst[0] == b0 && dst[1] == b1 && dst[2] == b2 && dst[3] == b3 && \
+       dst[4] == b4 && dst[5] == b5 && dst[6] == b6 && dst[7] == b7, \
+       "Bad result: 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x\n",\
+       dst[0], dst[1], dst[2], dst[3], dst[4], dst[5], dst[6], dst[7])
+
+static void test_memcpy_s(void)
+{
+    static char dest[8];
+    static const char tiny[] = {'T',0,'I','N','Y',0};
+    static const char big[] = {'a','t','o','o','l','o','n','g','s','t','r','i','n','g',0};
+    int ret;
+    if (!p_memcpy_s) {
+        skip("memcpy_s not found\n");
+        return;
+    }
+
+    if (p_set_invalid_parameter_handler)
+        ok(p_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
+            "Invalid parameter handler was already set\n");
+
+    /* Normal */
+    memset(dest, 'X', sizeof(dest));
+    ret = p_memcpy_s(dest, NUMELMS(dest), tiny, NUMELMS(tiny));
+    ok(ret == 0, "Copying a buffer into a big enough destination returned %d, expected 0\n", ret);
+    okchars(dest, tiny[0], tiny[1], tiny[2], tiny[3], tiny[4], tiny[5], 'X', 'X');
+
+    /* Vary source size */
+    errno = 0xdeadbeef;
+    memset(dest, 'X', sizeof(dest));
+    ret = p_memcpy_s(dest, NUMELMS(dest), big, NUMELMS(big));
+    ok(ret == ERANGE, "Copying a big buffer to a small destination returned %d, expected ERANGE\n", ret);
+    ok(errno == ERANGE, "errno is %d, expected ERANGE\n", errno);
+    okchars(dest, 0, 0, 0, 0, 0, 0, 0, 0);
+
+    /* Replace source with NULL */
+    errno = 0xdeadbeef;
+    memset(dest, 'X', sizeof(dest));
+    ret = p_memcpy_s(dest, NUMELMS(dest), NULL, NUMELMS(tiny));
+    ok(ret == EINVAL, "Copying a NULL source buffer returned %d, expected EINVAL\n", ret);
+    ok(errno == EINVAL, "errno is %d, expected EINVAL\n", errno);
+    okchars(dest, 0, 0, 0, 0, 0, 0, 0, 0);
+
+    /* Vary dest size */
+    errno = 0xdeadbeef;
+    memset(dest, 'X', sizeof(dest));
+    ret = p_memcpy_s(dest, 0, tiny, NUMELMS(tiny));
+    ok(ret == ERANGE, "Copying into a destination of size 0 returned %d, expected ERANGE\n", ret);
+    ok(errno == ERANGE, "errno is %d, expected ERANGE\n", errno);
+    okchars(dest, 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X');
+
+    /* Replace dest with NULL */
+    errno = 0xdeadbeef;
+    ret = p_memcpy_s(NULL, NUMELMS(dest), tiny, NUMELMS(tiny));
+    ok(ret == EINVAL, "Copying a tiny buffer to a big NULL destination returned %d, expected EINVAL\n", ret);
+    ok(errno == EINVAL, "errno is %d, expected EINVAL\n", errno);
+
+    /* Combinations */
+    errno = 0xdeadbeef;
+    memset(dest, 'X', sizeof(dest));
+    ret = p_memcpy_s(dest, 0, NULL, NUMELMS(tiny));
+    ok(ret == EINVAL, "Copying a NULL buffer into a destination of size 0 returned %d, expected EINVAL\n", ret);
+    ok(errno == EINVAL, "errno is %d, expected EINVAL\n", errno);
+    okchars(dest, 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X');
+
+    if (p_set_invalid_parameter_handler)
+        ok(p_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
+            "Cannot reset invalid parameter handler\n");
+}
+
+static void test_memmove_s(void)
+{
+    static char dest[8];
+    static const char tiny[] = {'T',0,'I','N','Y',0};
+    static const char big[] = {'a','t','o','o','l','o','n','g','s','t','r','i','n','g',0};
+    int ret;
+    if (!p_memmove_s) {
+        skip("memmove_s not found\n");
+        return;
+    }
+
+    if (p_set_invalid_parameter_handler)
+        ok(p_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
+            "Invalid parameter handler was already set\n");
+
+    /* Normal */
+    memset(dest, 'X', sizeof(dest));
+    ret = p_memmove_s(dest, NUMELMS(dest), tiny, NUMELMS(tiny));
+    ok(ret == 0, "Moving a buffer into a big enough destination returned %d, expected 0\n", ret);
+    okchars(dest, tiny[0], tiny[1], tiny[2], tiny[3], tiny[4], tiny[5], 'X', 'X');
+
+    /* Overlapping */
+    memcpy(dest, big, sizeof(dest));
+    ret = p_memmove_s(dest+1, NUMELMS(dest)-1, dest, NUMELMS(dest)-1);
+    ok(ret == 0, "Moving a buffer up one char returned %d, expected 0\n", ret);
+    okchars(dest, big[0], big[0], big[1], big[2], big[3], big[4], big[5], big[6]);
+
+    /* Vary source size */
+    errno = 0xdeadbeef;
+    memset(dest, 'X', sizeof(dest));
+    ret = p_memmove_s(dest, NUMELMS(dest), big, NUMELMS(big));
+    ok(ret == ERANGE, "Moving a big buffer to a small destination returned %d, expected ERANGE\n", ret);
+    ok(errno == ERANGE, "errno is %d, expected ERANGE\n", errno);
+    okchars(dest, 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X');
+
+    /* Replace source with NULL */
+    errno = 0xdeadbeef;
+    memset(dest, 'X', sizeof(dest));
+    ret = p_memmove_s(dest, NUMELMS(dest), NULL, NUMELMS(tiny));
+    ok(ret == EINVAL, "Moving a NULL source buffer returned %d, expected EINVAL\n", ret);
+    ok(errno == EINVAL, "errno is %d, expected EINVAL\n", errno);
+    okchars(dest, 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X');
+
+    /* Vary dest size */
+    errno = 0xdeadbeef;
+    memset(dest, 'X', sizeof(dest));
+    ret = p_memmove_s(dest, 0, tiny, NUMELMS(tiny));
+    ok(ret == ERANGE, "Moving into a destination of size 0 returned %d, expected ERANGE\n", ret);
+    ok(errno == ERANGE, "errno is %d, expected ERANGE\n", errno);
+    okchars(dest, 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X');
+
+    /* Replace dest with NULL */
+    errno = 0xdeadbeef;
+    ret = p_memmove_s(NULL, NUMELMS(dest), tiny, NUMELMS(tiny));
+    ok(ret == EINVAL, "Moving a tiny buffer to a big NULL destination returned %d, expected EINVAL\n", ret);
+    ok(errno == EINVAL, "errno is %d, expected EINVAL\n", errno);
+
+    /* Combinations */
+    errno = 0xdeadbeef;
+    memset(dest, 'X', sizeof(dest));
+    ret = p_memmove_s(dest, 0, NULL, NUMELMS(tiny));
+    ok(ret == EINVAL, "Moving a NULL buffer into a destination of size 0 returned %d, expected EINVAL\n", ret);
+    ok(errno == EINVAL, "errno is %d, expected EINVAL\n", errno);
+    okchars(dest, 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X');
+
+    if (p_set_invalid_parameter_handler)
+        ok(p_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
+            "Cannot reset invalid parameter handler\n");
 }
 
 static void test_strcat_s(void)
@@ -2129,6 +2273,8 @@ START_TEST(string)
         hMsvcrt = GetModuleHandleA("msvcrtd.dll");
     ok(hMsvcrt != 0, "GetModuleHandleA failed\n");
     SET(pmemcpy,"memcpy");
+    p_memcpy_s = (void*)GetProcAddress( hMsvcrt, "memcpy_s" );
+    p_memmove_s = (void*)GetProcAddress( hMsvcrt, "memmove_s" );
     SET(pmemcmp,"memcmp");
     SET(p_mbctype,"_mbctype");
     SET(p__mb_cur_max,"__mb_cur_max");
@@ -2176,6 +2322,8 @@ START_TEST(string)
    /* test _strdup */
     test_strdup();
     test_strcpy_s();
+    test_memcpy_s();
+    test_memmove_s();
     test_strcat_s();
     test__mbsnbcpy_s();
     test_mbcjisjms();
