@@ -366,7 +366,7 @@ HRESULT WINAPI WerReportSubmit(HREPORT hreport, WER_CONSENT consent, DWORD flags
         return E_INVALIDARG;
 
     *presult = WerDisabled;
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 /***********************************************************************
