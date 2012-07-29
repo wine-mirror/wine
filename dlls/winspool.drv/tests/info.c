@@ -2581,8 +2581,8 @@ static void test_GetPrinterDriver(void)
             HANDLE hf;
 
             /* MSDN is wrong: The Drivers on the win9x-CD's have cVersion=0x0400
-               NT351: 1, NT4.0+w2k(Kernelmode): 2, w2k and above(Usermode): 3  */
-            ok( (di_2->cVersion <= 3) ||
+               NT351: 1, NT4.0+w2k(Kernelmode): 2, w2k-win7(Usermode): 3, win8 and above(Usermode): 4 */
+            ok( (di_2->cVersion <= 4) ||
                 (di_2->cVersion == 0x0400), "di_2->cVersion = %d\n", di_2->cVersion);
             ok(di_2->pName != NULL, "not expected NULL ptr\n");
             ok(di_2->pEnvironment != NULL, "not expected NULL ptr\n");
