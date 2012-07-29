@@ -63,3 +63,9 @@ HRESULT WINAPI WerSetFlags(DWORD flags)
     FIXME("(%d) stub!\n", flags);
     return E_NOTIMPL;
 }
+
+HRESULT WINAPI WerRegisterMemoryBlock(void *block, DWORD size)
+{
+    FIXME("(%p %d) stub\n", block, size);
+    return E_NOTIMPL;
+}
