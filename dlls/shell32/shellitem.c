@@ -285,7 +285,7 @@ static HRESULT WINAPI ShellItem_Compare(IShellItem2 *iface, IShellItem *oth,
     if(hint & (SICHINT_CANONICAL | SICHINT_ALLFIELDS))
         FIXME("Unsupported flags 0x%08x\n", hint);
 
-    ret = IShellItem_GetDisplayName(iface, SIGDN_DESKTOPABSOLUTEEDITING, &dispname);
+    ret = IShellItem2_GetDisplayName(iface, SIGDN_DESKTOPABSOLUTEEDITING, &dispname);
     if(SUCCEEDED(ret))
     {
         ret = IShellItem_GetDisplayName(oth, SIGDN_DESKTOPABSOLUTEEDITING, &dispname_oth);
@@ -303,7 +303,7 @@ static HRESULT WINAPI ShellItem_Compare(IShellItem2 *iface, IShellItem *oth,
         LPWSTR dispname, dispname_oth;
 
         TRACE("Testing filesystem path.\n");
-        ret = IShellItem_GetDisplayName(iface, SIGDN_FILESYSPATH, &dispname);
+        ret = IShellItem2_GetDisplayName(iface, SIGDN_FILESYSPATH, &dispname);
         if(SUCCEEDED(ret))
         {
             ret = IShellItem_GetDisplayName(oth, SIGDN_FILESYSPATH, &dispname_oth);
@@ -571,7 +571,7 @@ HRESULT WINAPI SHCreateShellItem(LPCITEMIDLIST pidlParent,
         {
             IPersistFolder2* ppf2Parent;
 
-            if (FAILED(IPersistFolder2_QueryInterface(psfParent, &IID_IPersistFolder2, (void**)&ppf2Parent)))
+            if (FAILED(IShellFolder_QueryInterface(psfParent, &IID_IPersistFolder2, (void**)&ppf2Parent)))
             {
                 FIXME("couldn't get IPersistFolder2 interface of parent\n");
                 return E_NOINTERFACE;

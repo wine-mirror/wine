@@ -542,7 +542,7 @@ IShellFolder_fnCreateViewObject (IShellFolder2 * iface, HWND hwndOwner,
         *ppvOut = NULL;
 
         if (IsEqualIID (riid, &IID_IDropTarget)) {
-            hr = IShellFolder_QueryInterface (iface, &IID_IDropTarget, ppvOut);
+            hr = IShellFolder2_QueryInterface (iface, &IID_IDropTarget, ppvOut);
         } else if (IsEqualIID (riid, &IID_IContextMenu)) {
             FIXME ("IContextMenu not implemented\n");
             hr = E_NOTIMPL;
@@ -676,7 +676,7 @@ HRESULT SHELL32_CreateExtensionUIObject(IShellFolder2 *iface,
     if(FAILED(hr))
         return hr;
 
-    hr = IShellFolder_GetDisplayNameOf(iface, pidl, SHGDN_FORPARSING, &path);
+    hr = IShellFolder2_GetDisplayNameOf(iface, pidl, SHGDN_FORPARSING, &path);
     if(SUCCEEDED(hr))
         hr = StrRetToStrW(&path, NULL, &file);
     if(FAILED(hr)) {
@@ -760,7 +760,7 @@ IShellFolder_fnGetUIObjectOf (IShellFolder2 * iface,
             SHFree (pidl);
             hr = S_OK;
         } else if (IsEqualIID (riid, &IID_IDropTarget) && (cidl >= 1)) {
-            hr = IShellFolder_QueryInterface (iface, &IID_IDropTarget,
+            hr = IShellFolder2_QueryInterface (iface, &IID_IDropTarget,
              (LPVOID *) & pObj);
         } else if ((IsEqualIID(riid,&IID_IShellLinkW) ||
          IsEqualIID(riid,&IID_IShellLinkA)) && (cidl == 1)) {
@@ -1070,7 +1070,7 @@ IShellFolder_fnGetDetailsOf (IShellFolder2 * iface, LPCITEMIDLIST pidl,
         /* the data from the pidl */
         switch (iColumn) {
         case 0:                /* name */
-            hr = IShellFolder_GetDisplayNameOf (iface, pidl,
+            hr = IShellFolder2_GetDisplayNameOf (iface, pidl,
              SHGDN_NORMAL | SHGDN_INFOLDER, &psd->str);
             break;
         case 1:                /* size */

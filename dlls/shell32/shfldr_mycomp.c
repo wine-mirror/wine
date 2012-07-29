@@ -112,9 +112,9 @@ HRESULT WINAPI ISF_MyComputer_Constructor (IUnknown * pUnkOuter, REFIID riid, LP
     sf->IPersistFolder2_iface.lpVtbl = &vt_PersistFolder2;
     sf->pidlRoot = _ILCreateMyComputer ();    /* my qualified pidl */
 
-    if (FAILED (IUnknown_QueryInterface (&sf->IShellFolder2_iface, riid, ppv)))
+    if (FAILED (IShellFolder2_QueryInterface (&sf->IShellFolder2_iface, riid, ppv)))
     {
-        IUnknown_Release (&sf->IShellFolder2_iface);
+        IShellFolder2_Release (&sf->IShellFolder2_iface);
         return E_NOINTERFACE;
     }
 
@@ -556,7 +556,7 @@ static HRESULT WINAPI ISF_MyComputer_fnGetUIObjectOf (IShellFolder2 * iface,
     }
     else if (IsEqualIID (riid, &IID_IDropTarget) && (cidl >= 1))
     {
-        hr = IShellFolder_QueryInterface (iface, &IID_IDropTarget,
+        hr = IShellFolder2_QueryInterface (iface, &IID_IDropTarget,
                                           (LPVOID *) &pObj);
     }
     else if ((IsEqualIID(riid,&IID_IShellLinkW) ||
@@ -844,7 +844,7 @@ static HRESULT WINAPI ISF_MyComputer_fnGetDetailsOf (IShellFolder2 *iface,
     switch (iColumn)
     {
         case 0:        /* name */
-            hr = IShellFolder_GetDisplayNameOf (iface, pidl,
+            hr = IShellFolder2_GetDisplayNameOf (iface, pidl,
                        SHGDN_NORMAL | SHGDN_INFOLDER, &psd->str);
             break;
         case 1:        /* type */
@@ -912,7 +912,7 @@ static HRESULT WINAPI IMCFldr_PersistFolder2_QueryInterface (
 {
     IMyComputerFolderImpl *This = impl_from_IPersistFolder2(iface);
     TRACE ("(%p)\n", This);
-    return IUnknown_QueryInterface (&This->IShellFolder2_iface, iid, ppvObj);
+    return IShellFolder2_QueryInterface (&This->IShellFolder2_iface, iid, ppvObj);
 }
 
 /************************************************************************
@@ -922,7 +922,7 @@ static ULONG WINAPI IMCFldr_PersistFolder2_AddRef (IPersistFolder2 * iface)
 {
     IMyComputerFolderImpl *This = impl_from_IPersistFolder2(iface);
     TRACE ("(%p)->(count=%u)\n", This, This->ref);
-    return IUnknown_AddRef (&This->IShellFolder2_iface);
+    return IShellFolder2_AddRef (&This->IShellFolder2_iface);
 }
 
 /************************************************************************
@@ -932,7 +932,7 @@ static ULONG WINAPI IMCFldr_PersistFolder2_Release (IPersistFolder2 * iface)
 {
     IMyComputerFolderImpl *This = impl_from_IPersistFolder2(iface);
     TRACE ("(%p)->(count=%u)\n", This, This->ref);
-    return IUnknown_Release (&This->IShellFolder2_iface);
+    return IShellFolder2_Release (&This->IShellFolder2_iface);
 }
 
 /************************************************************************

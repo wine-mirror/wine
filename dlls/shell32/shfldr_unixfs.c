@@ -1022,7 +1022,7 @@ static HRESULT WINAPI ShellFolder2_BindToObject(IShellFolder2* iface, LPCITEMIDL
 
     hr = CreateUnixFolder(NULL, &IID_IPersistFolder3, (void**)&persistFolder, clsidChild);
     if (FAILED(hr)) return hr;
-    hr = IPersistFolder_QueryInterface(persistFolder, riid, ppvOut);
+    hr = IPersistFolder3_QueryInterface(persistFolder, riid, ppvOut);
 
     if (SUCCEEDED(hr)) {
         UnixFolder *subfolder = impl_from_IPersistFolder3(persistFolder);
@@ -1097,7 +1097,7 @@ static HRESULT WINAPI ShellFolder2_CompareIDs(IShellFolder2* iface, LPARAM lPara
     else if (isEmpty2)
         return MAKE_HRESULT(SEVERITY_SUCCESS, 0, (WORD)1);
     else if (SUCCEEDED(IShellFolder2_BindToObject(iface, firstpidl, NULL, &IID_IShellFolder, (void**)&psf))) {
-        hr = IShellFolder_CompareIDs(psf, lParam, pidl1, pidl2);
+        hr = IShellFolder2_CompareIDs(psf, lParam, pidl1, pidl2);
         IShellFolder2_Release(psf);
     }
 
@@ -1261,13 +1261,13 @@ static HRESULT WINAPI ShellFolder2_GetDisplayNameOf(IShellFolder2* iface,
             /* We are looking for the complete path to a file */
 
             /* Get the complete path for the current folder object */
-            hr = IShellFolder_GetDisplayNameOf(iface, (LPITEMIDLIST)&emptyIDL, uFlags, &str);
+            hr = IShellFolder2_GetDisplayNameOf(iface, (LPITEMIDLIST)&emptyIDL, uFlags, &str);
             if (SUCCEEDED(hr)) {
                 hr = StrRetToStrW(&str, NULL, &path);
                 if (SUCCEEDED(hr)) {
 
                     /* Get the child filename */
-                    hr = IShellFolder_GetDisplayNameOf(iface, pidl, SHGDN_FORPARSING | SHGDN_INFOLDER, &str);
+                    hr = IShellFolder2_GetDisplayNameOf(iface, pidl, SHGDN_FORPARSING | SHGDN_INFOLDER, &str);
                     if (SUCCEEDED(hr)) {
                         hr = StrRetToStrW(&str, NULL, &file);
                         if (SUCCEEDED(hr)) {
@@ -1297,7 +1297,7 @@ static HRESULT WINAPI ShellFolder2_GetDisplayNameOf(IShellFolder2* iface,
         } else {
             IShellFolder *pSubFolder;
 
-            hr = IShellFolder_BindToObject(iface, pidl, NULL, &IID_IShellFolder, (void**)&pSubFolder);
+            hr = IShellFolder2_BindToObject(iface, pidl, NULL, &IID_IShellFolder, (void**)&pSubFolder);
             if (SUCCEEDED(hr)) {
                 hr = IShellFolder_GetDisplayNameOf(pSubFolder, (LPITEMIDLIST)&emptyIDL, uFlags, lpName);
                 IShellFolder_Release(pSubFolder);
@@ -1307,7 +1307,7 @@ static HRESULT WINAPI ShellFolder2_GetDisplayNameOf(IShellFolder2* iface,
 
                 /* Might be a file, try binding to its parent */
                 ILRemoveLastID(pidl_parent);
-                hr = IShellFolder_BindToObject(iface, pidl_parent, NULL, &IID_IShellFolder, (void**)&pSubFolder);
+                hr = IShellFolder2_BindToObject(iface, pidl_parent, NULL, &IID_IShellFolder, (void**)&pSubFolder);
                 if (SUCCEEDED(hr)) {
                     hr = IShellFolder_GetDisplayNameOf(pSubFolder, pidl_child, uFlags, lpName);
                     IShellFolder_Release(pSubFolder);

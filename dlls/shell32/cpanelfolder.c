@@ -776,7 +776,7 @@ static HRESULT WINAPI ISF_ControlPanel_fnGetDetailsOf(IShellFolder2 *iface, LPCI
 	psd->str.uType = STRRET_CSTR;
 	switch(iColumn) {
 	case 0:		/* name */
-	    hr = IShellFolder_GetDisplayNameOf(iface, pidl, SHGDN_NORMAL | SHGDN_INFOLDER, &psd->str);
+	    hr = IShellFolder2_GetDisplayNameOf(iface, pidl, SHGDN_NORMAL | SHGDN_INFOLDER, &psd->str);
 	    break;
 	case 1:		/* comment */
             pcpanel = _ILGetCPanelPointer(pidl);

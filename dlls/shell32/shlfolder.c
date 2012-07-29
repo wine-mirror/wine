@@ -159,7 +159,7 @@ HRESULT SHELL32_ParseNextElement (IShellFolder2 * psf, HWND hwndOwner, LPBC pbc,
     TRACE ("(%p, %p, %p, %s)\n", psf, pbc, pidlInOut ? *pidlInOut : NULL, debugstr_w (szNext));
 
     /* get the shellfolder for the child pidl and let it analyse further */
-    hr = IShellFolder_BindToObject (psf, *pidlInOut, pbc, &IID_IShellFolder, (LPVOID *) & psfChild);
+    hr = IShellFolder2_BindToObject (psf, *pidlInOut, pbc, &IID_IShellFolder, (LPVOID *) & psfChild);
 
     if (SUCCEEDED(hr)) {
 	hr = IShellFolder_ParseDisplayName (psfChild, hwndOwner, pbc, szNext, pEaten, &pidlOut, pdwAttributes);
@@ -350,17 +350,17 @@ HRESULT SHELL32_GetDisplayNameOfChild (IShellFolder2 * psf,
     if (pidlFirst) {
 	IShellFolder2 *psfChild;
 
-	hr = IShellFolder_BindToObject (psf, pidlFirst, NULL, &IID_IShellFolder, (LPVOID *) & psfChild);
+	hr = IShellFolder2_BindToObject (psf, pidlFirst, NULL, &IID_IShellFolder, (LPVOID *) & psfChild);
 	if (SUCCEEDED (hr)) {
 	    STRRET strTemp;
 	    LPITEMIDLIST pidlNext = ILGetNext (pidl);
 
-	    hr = IShellFolder_GetDisplayNameOf (psfChild, pidlNext, dwFlags, &strTemp);
+	    hr = IShellFolder2_GetDisplayNameOf (psfChild, pidlNext, dwFlags, &strTemp);
 	    if (SUCCEEDED (hr)) {
 		if(!StrRetToStrNW (szOut, dwOutLen, &strTemp, pidlNext))
                     hr = E_FAIL;
 	    }
-	    IShellFolder_Release (psfChild);
+	    IShellFolder2_Release (psfChild);
 	}
 	ILFree (pidlFirst);
     } else

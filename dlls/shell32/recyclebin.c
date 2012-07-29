@@ -154,7 +154,7 @@ static ULONG WINAPI RecycleBinMenu_Release(IContextMenu2 *iface)
     {
         TRACE("Destroying object\n");
         _ILFreeaPidl(This->apidl,This->cidl);
-        IShellFolder_Release(This->folder);
+        IShellFolder2_Release(This->folder);
         SHFree(This);
     }
     return result;

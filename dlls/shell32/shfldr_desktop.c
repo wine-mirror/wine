@@ -556,7 +556,7 @@ static HRESULT WINAPI ISF_Desktop_fnGetUIObjectOf (IShellFolder2 * iface,
     }
     else if (IsEqualIID (riid, &IID_IDropTarget) && (cidl >= 1))
     {
-        hr = IShellFolder_QueryInterface (iface,
+        hr = IShellFolder2_QueryInterface (iface,
                                           &IID_IDropTarget, (LPVOID *) & pObj);
     }
     else if ((IsEqualIID(riid,&IID_IShellLinkW) ||
@@ -827,7 +827,7 @@ static HRESULT WINAPI ISF_Desktop_fnGetDetailsOf (IShellFolder2 * iface,
     switch (iColumn)
     {
     case 0:        /* name */
-        hr = IShellFolder_GetDisplayNameOf(iface, pidl,
+        hr = IShellFolder2_GetDisplayNameOf(iface, pidl,
                    SHGDN_NORMAL | SHGDN_INFOLDER, &psd->str);
         break;
     case 1:        /* size */
@@ -978,5 +978,5 @@ HRESULT WINAPI ISF_Desktop_Constructor (
         }
     }
 
-    return IUnknown_QueryInterface( &cached_sf->IShellFolder2_iface, riid, ppv );
+    return IShellFolder2_QueryInterface( &cached_sf->IShellFolder2_iface, riid, ppv );
 }

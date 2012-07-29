@@ -449,7 +449,7 @@ static HRESULT WINAPI ISF_NetworkPlaces_fnGetUIObjectOf (IShellFolder2 * iface,
     }
     else if (IsEqualIID (riid, &IID_IDropTarget) && (cidl >= 1))
     {
-        hr = IShellFolder_QueryInterface (iface, &IID_IDropTarget, (LPVOID *) & pObj);
+        hr = IShellFolder2_QueryInterface (iface, &IID_IDropTarget, (LPVOID *) & pObj);
     }
     else
         hr = E_NOINTERFACE;

@@ -901,7 +901,7 @@ HRESULT WINAPI ApplicationAssociationRegistration_Constructor(IUnknown *outer, R
     This->IApplicationAssociationRegistration_iface.lpVtbl = &IApplicationAssociationRegistration_vtbl;
     This->ref = 0;
 
-    hr = IUnknown_QueryInterface(&This->IApplicationAssociationRegistration_iface, riid, ppv);
+    hr = IApplicationAssociationRegistration_QueryInterface(&This->IApplicationAssociationRegistration_iface, riid, ppv);
     if (FAILED(hr))
         SHFree(This);
 

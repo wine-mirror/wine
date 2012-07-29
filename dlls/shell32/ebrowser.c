@@ -417,9 +417,9 @@ static void get_interfaces_from_site(ExplorerBrowserImpl *This)
 
     if(This->pcdb_site)
     {
-        IUnknown_Release(This->pcdb_site);
-        if(This->pcdb2_site) IUnknown_Release(This->pcdb2_site);
-        if(This->pcdb3_site) IUnknown_Release(This->pcdb3_site);
+        ICommDlgBrowser_Release(This->pcdb_site);
+        if(This->pcdb2_site) ICommDlgBrowser2_Release(This->pcdb2_site);
+        if(This->pcdb3_site) ICommDlgBrowser3_Release(This->pcdb3_site);
 
         This->pcdb_site = NULL;
         This->pcdb2_site = NULL;
@@ -666,8 +666,8 @@ static LRESULT navpane_on_wm_size_move(ExplorerBrowserImpl *This)
 
 static LRESULT navpane_on_wm_destroy(ExplorerBrowserImpl *This)
 {
-    INameSpaceTreeControl_TreeUnadvise(This->navpane.pnstc2, This->navpane.nstc_cookie);
-    INameSpaceTreeControl_Release(This->navpane.pnstc2);
+    INameSpaceTreeControl2_TreeUnadvise(This->navpane.pnstc2, This->navpane.nstc_cookie);
+    INameSpaceTreeControl2_Release(This->navpane.pnstc2);
     This->navpane.pnstc2 = NULL;
     return TRUE;
 }
@@ -1197,7 +1197,7 @@ static HRESULT WINAPI IExplorerBrowser_fnBrowseToIDList(IExplorerBrowser *iface,
         hr = SHCreateItemFromIDList(This->current_pidl, &IID_IShellItem, (void**)&psi);
         if(SUCCEEDED(hr))
         {
-            INameSpaceTreeControl_EnsureItemVisible(This->navpane.pnstc2, psi);
+            INameSpaceTreeControl2_EnsureItemVisible(This->navpane.pnstc2, psi);
             IShellItem_Release(psi);
         }
     }
