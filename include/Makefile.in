@@ -32,6 +32,7 @@ PUBLIC_IDL_H_SRCS = \
 	docobj.idl \
 	docobjectservice.idl \
 	downloadmgr.idl \
+	dwrite.idl \
 	dxgi.idl \
 	endpointvolume.idl \
 	exdisp.idl \
@@ -208,6 +209,7 @@ SRCDIR_INCLUDES = \
 	dbt.h \
 	dciddi.h \
 	dciman.h \
+	dcommon.h \
 	dde.h \
 	dde.rh \
 	ddeml.h \

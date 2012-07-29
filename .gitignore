@@ -172,6 +172,7 @@ include/dispex.h
 include/docobj.h
 include/docobjectservice.h
 include/downloadmgr.h
+include/dwrite.h
 include/dxgi.h
 include/endpointvolume.h
 include/exdisp.h

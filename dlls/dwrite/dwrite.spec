@@ -1,1 +1,1 @@
-@ stub DWriteCreateFactory
+@ stdcall DWriteCreateFactory(long ptr ptr)

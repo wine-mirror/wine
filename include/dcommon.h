@@ -1,6 +1,4 @@
 /*
- *    DWrite
- *
  * Copyright 2012 Nikolay Sivov for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
@@ -18,32 +16,14 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <stdarg.h>
+#ifndef __WINE_DCOMMON_H
+#define __WINE_DCOMMON_H
 
-#include "windef.h"
-#include "winbase.h"
-
-#include "dwrite.h"
-
-#include "wine/debug.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
-
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, LPVOID reserved)
+typedef enum DWRITE_MEASURING_MODE
 {
-    switch (reason)
-    {
-    case DLL_WINE_PREATTACH:
-        return FALSE;  /* prefer native version */
-    case DLL_PROCESS_ATTACH:
-        DisableThreadLibraryCalls( hinstDLL );
-        break;
-    }
-    return TRUE;
-}
+    DWRITE_MEASURING_MODE_NATURAL,
+    DWRITE_MEASURING_MODE_GDI_CLASSIC,
+    DWRITE_MEASURING_MODE_GDI_NATURAL
+} DWRITE_MEASURING_MODE;
 
-HRESULT WINAPI DWriteCreateFactory(DWRITE_FACTORY_TYPE type, REFIID riid, IUnknown **factory)
-{
-    FIXME("(%d, %s, %p): stub\n", type, debugstr_guid(riid), factory);
-    return E_NOTIMPL;
-}
+#endif /* __WINE_DCOMMON_H */
