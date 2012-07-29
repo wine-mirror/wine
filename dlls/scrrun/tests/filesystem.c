@@ -33,6 +33,10 @@
 static void test_interfaces(void)
 {
     static const WCHAR pathW[] = {'p','a','t','h',0};
+    static const WCHAR nonexistent_dirW[] = {
+        'c', ':', '\\', 'N', 'o', 'n', 'e', 'x', 'i', 's', 't', 'e', 'n', 't', 0};
+    static const WCHAR file_kernel32W[] = {
+        '\\', 'k', 'e', 'r', 'n', 'e', 'l', '3', '2', '.', 'd', 'l', 'l', 0};
     HRESULT hr;
     IDispatch *disp;
     IDispatchEx *dispex;
@@ -40,6 +44,8 @@ static void test_interfaces(void)
     IObjectWithSite *site;
     VARIANT_BOOL b;
     BSTR path;
+    WCHAR windows_path[MAX_PATH];
+    WCHAR file_path[MAX_PATH];
 
     hr = CoCreateInstance(&CLSID_FileSystemObject, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IDispatch, (void**)&disp);
@@ -47,6 +53,10 @@ static void test_interfaces(void)
         win_skip("Could not create FileSystem object: %08x\n", hr);
         return;
     }
+
+    GetSystemDirectoryW(windows_path, MAX_PATH);
+    lstrcpyW(file_path, windows_path);
+    lstrcatW(file_path, file_kernel32W);
 
     hr = IDispatch_QueryInterface(disp, &IID_IFileSystem3, (void**)&fs3);
     ok(hr == S_OK, "got 0x%08x, expected 0x%08x\n", hr, S_OK);
@@ -70,6 +80,28 @@ static void test_interfaces(void)
     hr = IFileSystem3_FileExists(fs3, path, &b);
     ok(hr == S_OK, "got 0x%08x, expected 0x%08x\n", hr, S_OK);
     ok(b == VARIANT_FALSE, "got %x\n", b);
+    SysFreeString(path);
+
+    /* Folder Exists */
+    hr = IFileSystem3_FolderExists(fs3, NULL, NULL);
+    ok(hr == E_POINTER, "got 0x%08x, expected 0x%08x\n", hr, E_POINTER);
+
+    path = SysAllocString(windows_path);
+    hr = IFileSystem3_FolderExists(fs3, path, &b);
+    ok(hr == S_OK, "got 0x%08x, expected 0x%08x\n", hr, S_OK);
+    ok(b == VARIANT_TRUE, "Folder doesn't exists\n");
+    SysFreeString(path);
+
+    path = SysAllocString(nonexistent_dirW);
+    hr = IFileSystem3_FolderExists(fs3, path, &b);
+    ok(hr == S_OK, "got 0x%08x, expected 0x%08x\n", hr, S_OK);
+    ok(b == VARIANT_FALSE, "Folder exists\n");
+    SysFreeString(path);
+
+    path = SysAllocString(file_path);
+    hr = IFileSystem3_FolderExists(fs3, path, &b);
+    ok(hr == S_OK, "got 0x%08x, expected 0x%08x\n", hr, S_OK);
+    ok(b == VARIANT_FALSE, "Folder exists\n");
     SysFreeString(path);
 
     IFileSystem3_Release(fs3);
