@@ -2793,7 +2793,7 @@ if (0)
     ok( r == E_INVALIDARG, "returns %08x\n", r );
     r = IXMLDOMDocument_createAttribute(doc, str, &node_attr);
     ok( r == S_OK, "returns %08x\n", r );
-    IXMLDOMText_Release( node_attr);
+    IXMLDOMAttribute_Release( node_attr);
     SysFreeString(str);
 
     /* test Processing Instruction */
@@ -2920,10 +2920,10 @@ static void test_domnode( void )
     VariantInit(&var);
     ok( V_VT(&var) == VT_EMPTY, "variant init failed\n");
 
-    r = IXMLDOMNode_get_nodeValue( doc, NULL );
+    r = IXMLDOMDocument_get_nodeValue( doc, NULL );
     ok(r == E_INVALIDARG, "get_nodeValue ret %08x\n", r );
 
-    r = IXMLDOMNode_get_nodeValue( doc, &var );
+    r = IXMLDOMDocument_get_nodeValue( doc, &var );
     ok( r == S_FALSE, "nextNode returned wrong code\n");
     ok( V_VT(&var) == VT_NULL, "variant wasn't empty\n");
     ok( V_BSTR(&var) == NULL, "variant value wasn't null\n");
@@ -2931,18 +2931,18 @@ static void test_domnode( void )
     if (element)
     {
         owner = NULL;
-        r = IXMLDOMNode_get_ownerDocument( element, &owner );
+        r = IXMLDOMElement_get_ownerDocument( element, &owner );
         ok( r == S_OK, "get_ownerDocument return code\n");
         ok( owner != doc, "get_ownerDocument return\n");
         IXMLDOMDocument_Release(owner);
 
         type = NODE_INVALID;
-        r = IXMLDOMNode_get_nodeType( element, &type);
+        r = IXMLDOMElement_get_nodeType( element, &type);
         ok( r == S_OK, "got %08x\n", r);
         ok( type == NODE_ELEMENT, "node not an element\n");
 
         str = NULL;
-        r = IXMLDOMNode_get_baseName( element, &str );
+        r = IXMLDOMElement_get_baseName( element, &str );
         ok( r == S_OK, "get_baseName returned wrong code\n");
         ok( lstrcmpW(str,szlc) == 0, "basename was wrong\n");
         SysFreeString(str);
@@ -3157,7 +3157,7 @@ static void test_domnode( void )
     /* now traverse the tree from the root element */
     if (element)
     {
-        r = IXMLDOMNode_get_childNodes( element, &list );
+        r = IXMLDOMElement_get_childNodes( element, &list );
         ok( r == S_OK, "get_childNodes returned wrong code\n");
 
         /* using get_item for child list doesn't advance the position */
@@ -3175,13 +3175,13 @@ static void test_domnode( void )
 
         node = (void*)0xdeadbeef;
         str = SysAllocString(szdl);
-        r = IXMLDOMNode_selectSingleNode( element, str, &node );
+        r = IXMLDOMElement_selectSingleNode( element, str, &node );
         SysFreeString(str);
         ok( r == S_FALSE, "ret %08x\n", r );
         ok( node == NULL, "node %p\n", node );
 
         str = SysAllocString(szbs);
-        r = IXMLDOMNode_selectSingleNode( element, str, &node );
+        r = IXMLDOMElement_selectSingleNode( element, str, &node );
         SysFreeString(str);
         ok( r == S_OK, "ret %08x\n", r );
         r = IXMLDOMNode_Release( node );
@@ -3380,8 +3380,8 @@ todo_wine {
         EXPECT_REF(unk, 4);
         todo_wine EXPECT_REF(dispex2, 1);
 
-        IDispatch_Release(dispex);
-        IDispatch_Release(dispex2);
+        IDispatchEx_Release(dispex);
+        IDispatchEx_Release(dispex2);
 
         /* try corresponding IXMLDOM* */
         EXPECT_REF(unk, 2);
@@ -4560,7 +4560,7 @@ static void test_removeChild(void)
     r = IXMLDOMNodeList_get_item( root_list, 0, &lc_node );
     ok( r == S_OK, "ret %08x\n", r);
 
-    r = IXMLDOMElement_QueryInterface( lc_node, &IID_IXMLDOMElement, (void**)&lc_element );
+    r = IXMLDOMNode_QueryInterface( lc_node, &IID_IXMLDOMElement, (void**)&lc_element );
     ok( r == S_OK, "ret %08x\n", r);
 
     /* MS quirk: passing wrong interface pointer works, too */
@@ -5333,11 +5333,11 @@ static void test_IXMLDOMDocument2(void)
         IXMLDOMParseError_Release(err);
     }
 
-    r = IXMLDOMDocument_loadXML( doc2, _bstr_(complete4A), &b );
+    r = IXMLDOMDocument2_loadXML( doc2, _bstr_(complete4A), &b );
     ok( r == S_OK, "loadXML failed\n");
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
 
-    ole_check(IXMLDOMDocument2_get_readyState(doc, &res));
+    ole_check(IXMLDOMDocument_get_readyState(doc, &res));
     ok(res == READYSTATE_COMPLETE, "expected READYSTATE_COMPLETE (4), got %i\n", res);
 
     err = NULL;
@@ -5719,10 +5719,10 @@ static void test_whitespace(void)
     check_ws_preserved(doc3, NULL);
     check_ws_ignored(doc4, NULL);
 
-    IXMLDOMDocument_Release(doc1);
-    IXMLDOMDocument_Release(doc2);
-    IXMLDOMDocument_Release(doc3);
-    IXMLDOMDocument_Release(doc4);
+    IXMLDOMDocument2_Release(doc1);
+    IXMLDOMDocument2_Release(doc2);
+    IXMLDOMDocument2_Release(doc3);
+    IXMLDOMDocument2_Release(doc4);
     free_bstrs();
 }
 
@@ -5869,11 +5869,11 @@ if (0)
     /* no results */
     ole_check(IXMLDOMNode_selectNodes(rootNode, _bstr_("c"), &list));
     expect_list_and_release(list, "");
-    ole_check(IXMLDOMDocument_selectNodes(doc, _bstr_("elem//c"), &list));
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("elem//c"), &list));
     expect_list_and_release(list, "");
-    ole_check(IXMLDOMDocument_selectNodes(doc, _bstr_("//elem[4]"), &list));
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("//elem[4]"), &list));
     expect_list_and_release(list, "");
-    ole_check(IXMLDOMDocument_selectNodes(doc, _bstr_("root//elem[0]"), &list));
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("root//elem[0]"), &list));
     expect_list_and_release(list, "");
 
     /* foo undeclared in document node */
@@ -5915,7 +5915,7 @@ if (0)
     /* extra attributes - same thing*/
     ole_expect(IXMLDOMDocument2_setProperty(doc, _bstr_("SelectionNamespaces"),
         _variantbstr_("xmlns:test='urn:uuid:86B2F87F-ACB6-45cd-8B77-9BDB92A01A29' param='test'")), E_FAIL);
-    ole_expect(IXMLDOMDocument_selectNodes(doc, _bstr_("root//foo:c"), &list), E_FAIL);
+    ole_expect(IXMLDOMDocument2_selectNodes(doc, _bstr_("root//foo:c"), &list), E_FAIL);
 
     IXMLDOMNode_Release(rootNode);
     IXMLDOMNode_Release(elem1Node);
@@ -5985,7 +5985,7 @@ if (0)
     IXMLDOMNode_Release(rootNode);
 
     /* and now check for attribute in original document */
-    hr = IXMLDOMDocument_get_documentElement(doc, &elem);
+    hr = IXMLDOMDocument2_get_documentElement(doc, &elem);
     EXPECT_HR(hr, S_OK);
 
     hr = IXMLDOMElement_getAttributeNode(elem, _bstr_("attrtest"), &attr);
@@ -6084,7 +6084,7 @@ static void test_cloneNode(void )
     ole_check(IXMLDOMDocument_loadXML(doc, _bstr_(complete4A), &b));
     ok(b == VARIANT_TRUE, "failed to load XML string\n");
 
-    hr = IXMLDOMNode_selectSingleNode(doc, _bstr_("lc/pr"), &node);
+    hr = IXMLDOMDocument_selectSingleNode(doc, _bstr_("lc/pr"), &node);
     ok( hr == S_OK, "ret %08x\n", hr );
     ok( node != NULL, "node %p\n", node );
 
@@ -7920,7 +7920,7 @@ static void test_TransformWithLoadingLocalFile(void)
     xsl = create_document(&IID_IXMLDOMDocument);
     if (!xsl)
     {
-        IXMLDOMDocument2_Release(doc);
+        IXMLDOMDocument_Release(doc);
         return;
     }
 
@@ -8782,7 +8782,7 @@ static void test_get_ownerDocument(void)
 
     VariantInit(&var);
 
-    ole_check(IXMLDOMDocument_loadXML(doc, _bstr_(complete4A), &b));
+    ole_check(IXMLDOMDocument2_loadXML(doc, _bstr_(complete4A), &b));
     ok(b == VARIANT_TRUE, "failed to load XML string\n");
 
     check_default_props(doc);
@@ -8848,7 +8848,7 @@ static void test_setAttributeNode(void)
     doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
 
-    hr = IXMLDOMDocument2_loadXML( doc, _bstr_(complete4A), &b );
+    hr = IXMLDOMDocument_loadXML( doc, _bstr_(complete4A), &b );
     ok( hr == S_OK, "loadXML failed\n");
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
 
@@ -10144,8 +10144,8 @@ static void test_get_tagName(void)
     ok(!lstrcmpW(str, _bstr_("s:element")), "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
-    IXMLDOMDocument_Release(elem);
-    IXMLDOMDocument_Release(elem2);
+    IXMLDOMElement_Release(elem);
+    IXMLDOMElement_Release(elem2);
     IXMLDOMDocument_Release(doc);
     free_bstrs();
 }
@@ -10504,7 +10504,7 @@ static void test_selection(void)
 
     doc = create_document(&IID_IXMLDOMDocument);
 
-    hr = IXMLDOMDocument2_loadXML(doc, _bstr_(szExampleXML), &b);
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_(szExampleXML), &b);
     EXPECT_HR(hr, S_OK);
 
     hr = IXMLDOMDocument_selectNodes(doc, _bstr_("root"), &list);
@@ -10647,7 +10647,7 @@ static void test_selection(void)
     IXMLDOMNodeList_Release(list);
 
     /* test if IEnumVARIANT touches selection context */
-    hr = IXMLDOMDocument2_loadXML(doc, _bstr_(xpath_simple_list), &b);
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_(xpath_simple_list), &b);
     EXPECT_HR(hr, S_OK);
 
     hr = IXMLDOMDocument_selectNodes(doc, _bstr_("root/*"), &list);
@@ -11490,7 +11490,7 @@ static void test_dispex(void)
     IXMLDOMParseError_Release(error);
 
     /* IXMLDOMNamedNodeMap */
-    hr = IXMLDOMDocument2_loadXML(doc, _bstr_(xpath_simple_list), &b);
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_(xpath_simple_list), &b);
     EXPECT_HR(hr, S_OK);
 
     hr = IXMLDOMDocument_selectNodes(doc, _bstr_("root/a"), &node_list);
@@ -11956,7 +11956,7 @@ static void test_get_namespaces(void)
     EXPECT_HR(hr, S_OK);
     if (hr != S_OK)
     {
-        IXMLDOMDocument_Release(doc);
+        IXMLDOMDocument2_Release(doc);
         return;
     }
     EXPECT_REF(collection, 2);
@@ -12079,7 +12079,7 @@ static void test_get_namespaces(void)
     EXPECT_HR(hr, S_OK);
     if (hr != S_OK)
     {
-        IXMLDOMDocument_Release(doc);
+        IXMLDOMDocument2_Release(doc);
         return;
     }
     EXPECT_REF(collection, 2);
@@ -12124,7 +12124,7 @@ static void test_get_namespaces(void)
     V_DISPATCH(&v) = (IDispatch*)doc2;
     hr = IXMLDOMSchemaCollection_add(collection, _bstr_(xsd_schema1_uri), v);
     EXPECT_HR(hr, E_FAIL);
-    IXMLDOMSchemaCollection_Release(doc2);
+    IXMLDOMDocument2_Release(doc2);
 
     hr = IXMLDOMSchemaCollection_get_namespaceURI(collection, 0, &s);
     EXPECT_HR(hr, S_OK);

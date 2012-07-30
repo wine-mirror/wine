@@ -1,5 +1,6 @@
 TESTDLL   = msxml3.dll
 IMPORTS   = oleaut32 ole32 user32
+EXTRADEFS = -DWIDL_C_INLINE_WRAPPERS
 
 C_SRCS = \
 	domdoc.c \
