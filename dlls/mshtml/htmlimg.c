@@ -809,12 +809,12 @@ static HRESULT WINAPI HTMLImageElementFactory_create(IHTMLImageElementFactory *i
     TRACE("(%p)->(%s %s %p)\n", This, debugstr_variant(&width),
             debugstr_variant(&height), img_elem);
 
-    if(!This->window || !This->window->base.inner_window->doc) {
+    if(!This->window || !This->window->doc) {
         WARN("NULL doc\n");
         return E_UNEXPECTED;
     }
 
-    doc = This->window->base.inner_window->doc;
+    doc = This->window->doc;
 
     *img_elem = NULL;
 
