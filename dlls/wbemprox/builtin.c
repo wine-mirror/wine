@@ -65,6 +65,10 @@ static const WCHAR class_stdregprovW[] =
 static const WCHAR class_videocontrollerW[] =
     {'W','i','n','3','2','_','V','i','d','e','o','C','o','n','t','r','o','l','l','e','r',0};
 
+static const WCHAR prop_acceptpauseW[] =
+    {'A','c','c','e','p','t','P','a','u','s','e',0};
+static const WCHAR prop_acceptstopW[] =
+    {'A','c','c','e','p','t','S','t','o','p',0};
 static const WCHAR prop_adapterramW[] =
     {'A','d','a','p','t','e','r','R','A','M',0};
 static const WCHAR prop_captionW[] =
@@ -249,6 +253,8 @@ static const struct column col_processor[] =
 };
 static const struct column col_service[] =
 {
+    { prop_acceptpauseW,      CIM_BOOLEAN },
+    { prop_acceptstopW,       CIM_BOOLEAN },
     { prop_displaynameW,      CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_nameW,             CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
     { prop_processidW,        CIM_UINT32 },
@@ -383,6 +389,8 @@ struct record_processor
 };
 struct record_service
 {
+    int          accept_pause;
+    int          accept_stop;
     const WCHAR *displayname;
     const WCHAR *name;
     UINT32       process_id;
@@ -860,11 +868,13 @@ static void fill_service( struct table *table )
     {
         status = &services[i].ServiceStatusProcess;
         rec = (struct record_service *)(table->data + offset);
-        rec->displayname = heap_strdupW( services[i].lpDisplayName );
-        rec->name        = heap_strdupW( services[i].lpServiceName );
-        rec->process_id  = status->dwProcessId;
-        rec->servicetype = get_service_type( status->dwServiceType );
-        rec->state       = get_service_state( status->dwCurrentState );
+        rec->accept_pause = (status->dwControlsAccepted & SERVICE_ACCEPT_PAUSE_CONTINUE) ? -1 : 0;
+        rec->accept_stop  = (status->dwControlsAccepted & SERVICE_ACCEPT_STOP) ? -1 : 0;
+        rec->displayname  = heap_strdupW( services[i].lpDisplayName );
+        rec->name         = heap_strdupW( services[i].lpServiceName );
+        rec->process_id   = status->dwProcessId;
+        rec->servicetype  = get_service_type( status->dwServiceType );
+        rec->state        = get_service_state( status->dwCurrentState );
         offset += sizeof(*rec);
         num_rows++;
     }
