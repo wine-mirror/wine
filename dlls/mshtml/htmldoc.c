@@ -2091,8 +2091,13 @@ static void HTMLDocumentNode_destructor(HTMLDOMNode *iface)
         detach_plugin_host(LIST_ENTRY(list_head(&This->plugin_hosts), PluginHost, entry));
 
     if(This->nsdoc) {
+        assert(!This->window);
         release_document_mutation(This);
         nsIDOMHTMLDocument_Release(This->nsdoc);
+    }else if(This->window) {
+        /* document fragments own reference to inner window */
+        IHTMLWindow2_Release(&This->window->base.IHTMLWindow2_iface);
+        This->window = NULL;
     }
 
     heap_free(This->event_vector);
@@ -2124,6 +2129,7 @@ static void HTMLDocumentNode_unlink(HTMLDOMNode *iface)
         release_document_mutation(This);
         This->nsdoc = NULL;
         nsIDOMHTMLDocument_Release(nsdoc);
+        This->window = NULL;
     }
 }
 
@@ -2238,7 +2244,7 @@ static dispex_static_data_t HTMLDocumentNode_dispex = {
     HTMLDocumentNode_iface_tids
 };
 
-static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLOuterWindow *window)
+static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLInnerWindow *window)
 {
     HTMLDocumentNode *doc;
 
@@ -2249,7 +2255,8 @@ static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLOuterWindo
     doc->ref = 1;
     doc->basedoc.doc_node = doc;
     doc->basedoc.doc_obj = doc_obj;
-    doc->basedoc.window = window;
+    doc->basedoc.window = window->base.outer_window;
+    doc->window = window;
 
     init_dispex(&doc->node.dispex, (IUnknown*)&doc->node.IHTMLDOMNode_iface,
             &HTMLDocumentNode_dispex);
@@ -2264,7 +2271,7 @@ static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLOuterWindo
     return doc;
 }
 
-HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocumentObj *doc_obj, HTMLOuterWindow *window, HTMLDocumentNode **ret)
+HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocumentObj *doc_obj, HTMLInnerWindow *window, HTMLDocumentNode **ret)
 {
     HTMLDocumentNode *doc;
 
@@ -2272,7 +2279,7 @@ HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocumentObj *doc_ob
     if(!doc)
         return E_OUTOFMEMORY;
 
-    if(!doc_obj->basedoc.window || window == doc_obj->basedoc.window)
+    if(!doc_obj->basedoc.window || window->base.outer_window == doc_obj->basedoc.window)
         doc->basedoc.cp_container.forward_container = &doc_obj->basedoc.cp_container;
 
     HTMLDOMNode_Init(doc, &doc->node, (nsIDOMNode*)nsdoc);
@@ -2294,9 +2301,11 @@ HRESULT create_document_fragment(nsIDOMNode *nsnode, HTMLDocumentNode *doc_node,
 {
     HTMLDocumentNode *doc_frag;
 
-    doc_frag = alloc_doc_node(doc_node->basedoc.doc_obj, doc_node->basedoc.window);
+    doc_frag = alloc_doc_node(doc_node->basedoc.doc_obj, doc_node->window);
     if(!doc_frag)
         return E_OUTOFMEMORY;
+
+    IHTMLWindow2_AddRef(&doc_frag->window->base.IHTMLWindow2_iface);
 
     HTMLDOMNode_Init(doc_node, &doc_frag->node, nsnode);
     doc_frag->node.vtbl = &HTMLDocumentFragmentImplVtbl;

@@ -239,8 +239,10 @@ static void release_inner_window(HTMLInnerWindow *This)
     abort_window_bindings(This);
     release_script_hosts(This);
 
-    if(This->doc)
+    if(This->doc) {
+        This->doc->window = NULL;
         htmldoc_release(&This->doc->basedoc);
+    }
 
     release_dispex(&This->dispex);
 
@@ -2745,7 +2747,7 @@ HRESULT update_window_doc(HTMLInnerWindow *window)
         return E_FAIL;
     }
 
-    hres = create_doc_from_nsdoc(nshtmldoc, outer_window->doc_obj, outer_window, &window->doc);
+    hres = create_doc_from_nsdoc(nshtmldoc, outer_window->doc_obj, window, &window->doc);
     nsIDOMHTMLDocument_Release(nshtmldoc);
     if(FAILED(hres))
         return hres;
