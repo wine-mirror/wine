@@ -2638,8 +2638,8 @@ static BOOL test_bscholder(IBindStatusCallback *holder)
         CHECK_CALLED_BROKEN(QueryInterface_IHttpNegotiate2); /* IE8 */
         CHECK_CALLED(GetRootSecurityId);
 
-        IHttpNegotiate_Release(http_negotiate2_serv);
-        IHttpNegotiate_Release(http_negotiate2);
+        IHttpNegotiate2_Release(http_negotiate2_serv);
+        IHttpNegotiate2_Release(http_negotiate2);
     }else {
         skip("Could not get IHttpNegotiate2\n");
         ret = FALSE;
