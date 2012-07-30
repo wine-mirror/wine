@@ -167,6 +167,8 @@ static void init(void)
     pSetSecurityDescriptorControl = (void *)GetProcAddress(hmod, "SetSecurityDescriptorControl");
     pGetSecurityInfo = (void *)GetProcAddress(hmod, "GetSecurityInfo");
     pCreateRestrictedToken = (void *)GetProcAddress(hmod, "CreateRestrictedToken");
+    pConvertSidToStringSidA = (void *)GetProcAddress(hmod, "ConvertSidToStringSidA");
+    pConvertStringSidToSidA = (void *)GetProcAddress(hmod, "ConvertStringSidToSidA");
 
     myARGC = winetest_get_mainargs( &myARGV );
 }
@@ -211,12 +213,11 @@ static void test_sid(void)
     BOOL r;
     LPSTR str = NULL;
 
-    pConvertSidToStringSidA = (void *)GetProcAddress( hmod, "ConvertSidToStringSidA" );
-    if( !pConvertSidToStringSidA )
+    if( !pConvertSidToStringSidA || !pConvertStringSidToSidA )
+    {
+        win_skip("ConvertSidToStringSidA or ConvertStringSidToSidA not available\n");
         return;
-    pConvertStringSidToSidA = (void *)GetProcAddress( hmod, "ConvertStringSidToSidA" );
-    if( !pConvertStringSidToSidA )
-        return;
+    }
 
     r = pConvertStringSidToSidA( NULL, NULL );
     ok( !r, "expected failure with NULL parameters\n" );
@@ -4274,6 +4275,56 @@ static void test_kernel_objects_security(void)
     CloseHandle(token);
 }
 
+static void test_TokenIntegrityLevel(void)
+{
+    TOKEN_MANDATORY_LABEL *tml;
+    BYTE buffer[64];        /* using max. 28 byte in win7 x64 */
+    HANDLE token;
+    DWORD size;
+    DWORD res;
+    char *sidname = NULL;
+    static SID medium_level = {SID_REVISION, 1, {SECURITY_MANDATORY_LABEL_AUTHORITY},
+                                                    {SECURITY_MANDATORY_HIGH_RID}};
+    static SID high_level = {SID_REVISION, 1, {SECURITY_MANDATORY_LABEL_AUTHORITY},
+                                                    {SECURITY_MANDATORY_MEDIUM_RID}};
+
+    SetLastError(0xdeadbeef);
+    res = OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token);
+    ok(res, "got %d with %d (expected TRUE)\n", res, GetLastError());
+
+    SetLastError(0xdeadbeef);
+    res = GetTokenInformation(token, TokenIntegrityLevel, buffer, sizeof(buffer), &size);
+
+    /* not supported before Vista */
+    if (!res && (GetLastError() == ERROR_INVALID_PARAMETER))
+    {
+        win_skip("TokenIntegrityLevel not supported\n");
+        CloseHandle(token);
+        return;
+    }
+
+    ok(res, "got %u with %u (expected TRUE)\n", res, GetLastError());
+    if (!res)
+    {
+        CloseHandle(token);
+        return;
+    }
+
+    tml = (TOKEN_MANDATORY_LABEL*) buffer;
+    ok(tml->Label.Attributes == (SE_GROUP_INTEGRITY | SE_GROUP_INTEGRITY_ENABLED),
+        "got 0x%x (expected 0x%x)\n", tml->Label.Attributes, (SE_GROUP_INTEGRITY | SE_GROUP_INTEGRITY_ENABLED));
+
+    SetLastError(0xdeadbeef);
+    res = pConvertSidToStringSidA(tml->Label.Sid, &sidname);
+    ok(res, "got %u and %u\n", res, GetLastError());
+
+    ok(EqualSid(tml->Label.Sid, &medium_level) || EqualSid(tml->Label.Sid, &high_level),
+        "got %s (expected 'S-1-16-8192' or 'S-1-16-12288')\n", sidname);
+
+    LocalFree(sidname);
+    CloseHandle(token);
+}
+
 START_TEST(security)
 {
     init();
@@ -4311,4 +4362,5 @@ START_TEST(security)
     test_GetUserNameA();
     test_GetUserNameW();
     test_CreateRestrictedToken();
+    test_TokenIntegrityLevel();
 }
