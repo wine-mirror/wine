@@ -276,7 +276,7 @@ NTSTATUS WINAPI NtQueryInformationToken(
         0,    /* TokenAccessInformation */
         0,    /* TokenVirtualizationAllowed */
         0,    /* TokenVirtualizationEnabled */
-        0,    /* TokenIntegrityLevel */
+        sizeof(TOKEN_MANDATORY_LABEL) + sizeof(SID), /* TokenIntegrityLevel [sizeof(SID) includes one SubAuthority] */
         0,    /* TokenUIAccess */
         0,    /* TokenMandatoryPolicy */
         0     /* TokenLogonSid */
@@ -505,6 +505,20 @@ NTSTATUS WINAPI NtQueryInformationToken(
         {
             *((DWORD*)tokeninfo) = 0;
             FIXME("QueryInformationToken( ..., TokenSessionId, ...) semi-stub\n");
+        }
+        break;
+    case TokenIntegrityLevel:
+        {
+            /* report always "S-1-16-12288" (high mandatory level) for now */
+            static const SID high_level = {SID_REVISION, 1, {SECURITY_MANDATORY_LABEL_AUTHORITY},
+                                                            {SECURITY_MANDATORY_HIGH_RID}};
+
+            TOKEN_MANDATORY_LABEL *tml = tokeninfo;
+            PSID psid = tml + 1;
+
+            tml->Label.Sid = psid;
+            tml->Label.Attributes = SE_GROUP_INTEGRITY | SE_GROUP_INTEGRITY_ENABLED;
+            memcpy(psid, &high_level, sizeof(SID));
         }
         break;
     default:
