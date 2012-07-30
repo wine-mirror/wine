@@ -1963,6 +1963,32 @@ DWORD WINAPI InternetAttemptConnect(DWORD dwReserved)
 
 
 /***********************************************************************
+ *           convert_url_canonicalization_flags
+ *
+ * Helper for InternetCanonicalizeUrl
+ *
+ * PARAMS
+ *     dwFlags [I] Flags suitable for InternetCanonicalizeUrl
+ *
+ * RETURNS
+ *     Flags suitable for UrlCanonicalize
+ */
+static DWORD convert_url_canonicalization_flags(DWORD dwFlags)
+{
+    DWORD dwUrlFlags = URL_WININET_COMPATIBILITY | URL_ESCAPE_UNSAFE;
+
+    if (dwFlags & ICU_BROWSER_MODE)        dwUrlFlags |= URL_BROWSER_MODE;
+    if (dwFlags & ICU_DECODE)              dwUrlFlags |= URL_UNESCAPE;
+    if (dwFlags & ICU_ENCODE_PERCENT)      dwUrlFlags |= URL_ESCAPE_PERCENT;
+    if (dwFlags & ICU_ENCODE_SPACES_ONLY)  dwUrlFlags |= URL_ESCAPE_SPACES_ONLY;
+    /* Flip this bit to correspond to URL_ESCAPE_UNSAFE */
+    if (dwFlags & ICU_NO_ENCODE)           dwUrlFlags ^= URL_ESCAPE_UNSAFE;
+    if (dwFlags & ICU_NO_META)             dwUrlFlags |= URL_NO_META;
+
+    return dwUrlFlags;
+}
+
+/***********************************************************************
  *           InternetCanonicalizeUrlA (WININET.@)
  *
  * Escape unsafe characters and spaces
@@ -1976,43 +2002,16 @@ BOOL WINAPI InternetCanonicalizeUrlA(LPCSTR lpszUrl, LPSTR lpszBuffer,
 	LPDWORD lpdwBufferLength, DWORD dwFlags)
 {
     HRESULT hr;
-    DWORD dwURLFlags = URL_WININET_COMPATIBILITY | URL_ESCAPE_UNSAFE;
 
     TRACE("(%s, %p, %p, 0x%08x) bufferlength: %d\n", debugstr_a(lpszUrl), lpszBuffer,
         lpdwBufferLength, dwFlags, lpdwBufferLength ? *lpdwBufferLength : -1);
 
-    if(dwFlags & ICU_DECODE)
-    {
-        dwURLFlags |= URL_UNESCAPE;
-        dwFlags &= ~ICU_DECODE;
-    }
-
-    if(dwFlags & ICU_ESCAPE)
-    {
-        dwURLFlags |= URL_UNESCAPE;
-        dwFlags &= ~ICU_ESCAPE;
-    }
-
-    if(dwFlags & ICU_BROWSER_MODE)
-    {
-        dwURLFlags |= URL_BROWSER_MODE;
-        dwFlags &= ~ICU_BROWSER_MODE;
-    }
-
-    if(dwFlags & ICU_NO_ENCODE)
-    {
-        /* Flip this bit to correspond to URL_ESCAPE_UNSAFE */
-        dwURLFlags ^= URL_ESCAPE_UNSAFE;
-        dwFlags &= ~ICU_NO_ENCODE;
-    }
-
-    if (dwFlags) FIXME("Unhandled flags 0x%08x\n", dwFlags);
-
-    hr = UrlCanonicalizeA(lpszUrl, lpszBuffer, lpdwBufferLength, dwURLFlags);
+    dwFlags = convert_url_canonicalization_flags(dwFlags);
+    hr = UrlCanonicalizeA(lpszUrl, lpszBuffer, lpdwBufferLength, dwFlags);
     if (hr == E_POINTER) SetLastError(ERROR_INSUFFICIENT_BUFFER);
     if (hr == E_INVALIDARG) SetLastError(ERROR_INVALID_PARAMETER);
 
-    return (hr == S_OK) ? TRUE : FALSE;
+    return hr == S_OK;
 }
 
 /***********************************************************************
@@ -2029,43 +2028,16 @@ BOOL WINAPI InternetCanonicalizeUrlW(LPCWSTR lpszUrl, LPWSTR lpszBuffer,
     LPDWORD lpdwBufferLength, DWORD dwFlags)
 {
     HRESULT hr;
-    DWORD dwURLFlags = URL_WININET_COMPATIBILITY | URL_ESCAPE_UNSAFE;
 
     TRACE("(%s, %p, %p, 0x%08x) bufferlength: %d\n", debugstr_w(lpszUrl), lpszBuffer,
           lpdwBufferLength, dwFlags, lpdwBufferLength ? *lpdwBufferLength : -1);
 
-    if(dwFlags & ICU_DECODE)
-    {
-        dwURLFlags |= URL_UNESCAPE;
-        dwFlags &= ~ICU_DECODE;
-    }
-
-    if(dwFlags & ICU_ESCAPE)
-    {
-        dwURLFlags |= URL_UNESCAPE;
-        dwFlags &= ~ICU_ESCAPE;
-    }
-
-    if(dwFlags & ICU_BROWSER_MODE)
-    {
-        dwURLFlags |= URL_BROWSER_MODE;
-        dwFlags &= ~ICU_BROWSER_MODE;
-    }
-
-    if(dwFlags & ICU_NO_ENCODE)
-    {
-        /* Flip this bit to correspond to URL_ESCAPE_UNSAFE */
-        dwURLFlags ^= URL_ESCAPE_UNSAFE;
-        dwFlags &= ~ICU_NO_ENCODE;
-    }
-
-    if (dwFlags) FIXME("Unhandled flags 0x%08x\n", dwFlags);
-
-    hr = UrlCanonicalizeW(lpszUrl, lpszBuffer, lpdwBufferLength, dwURLFlags);
+    dwFlags = convert_url_canonicalization_flags(dwFlags);
+    hr = UrlCanonicalizeW(lpszUrl, lpszBuffer, lpdwBufferLength, dwFlags);
     if (hr == E_POINTER) SetLastError(ERROR_INSUFFICIENT_BUFFER);
     if (hr == E_INVALIDARG) SetLastError(ERROR_INVALID_PARAMETER);
 
-    return (hr == S_OK) ? TRUE : FALSE;
+    return hr == S_OK;
 }
 
 /* #################################################### */

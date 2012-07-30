@@ -1098,6 +1098,47 @@ static void InternetCreateUrlA_test(void)
     HeapFree(GetProcessHeap(), 0, szUrl);
 }
 
+static void InternetCanonicalizeUrl_test(void)
+{
+    char src[] = "http://www.winehq.org/%27/ /./>/#>  ";
+    char dst[64];
+    DWORD dstlen;
+
+    dstlen = sizeof(dst);
+    InternetCanonicalizeUrlA(src, dst, &dstlen, 0);
+    ok(strcmp(dst, "http://www.winehq.org/%27/%20/%3E/#>") == 0, "Got \"%s\"\n", dst);
+
+    /* despite what MSDN says, ICU_BROWSER_MODE seems to be ignored */
+    dstlen = sizeof(dst);
+    InternetCanonicalizeUrlA(src, dst, &dstlen, ICU_BROWSER_MODE);
+    ok(strcmp(dst, "http://www.winehq.org/%27/%20/%3E/#>") == 0, "Got \"%s\"\n", dst);
+
+    /* ICU_ESCAPE is supposed to be ignored */
+    dstlen = sizeof(dst);
+    InternetCanonicalizeUrlA(src, dst, &dstlen, ICU_ESCAPE);
+    ok(strcmp(dst, "http://www.winehq.org/%27/%20/%3E/#>") == 0, "Got \"%s\"\n", dst);
+
+    dstlen = sizeof(dst);
+    InternetCanonicalizeUrlA(src, dst, &dstlen, ICU_DECODE);
+    ok(strcmp(dst, "http://www.winehq.org/'/%20/%3E/#>") == 0, "Got \"%s\"\n", dst);
+
+    dstlen = sizeof(dst);
+    InternetCanonicalizeUrlA(src, dst, &dstlen, ICU_ENCODE_PERCENT);
+    ok(strcmp(dst, "http://www.winehq.org/%2527/%20/%3E/#>") == 0, "Got \"%s\"\n", dst);
+
+    dstlen = sizeof(dst);
+    InternetCanonicalizeUrlA(src, dst, &dstlen, ICU_ENCODE_SPACES_ONLY);
+    ok(strcmp(dst, "http://www.winehq.org/%27/%20/>/#>") == 0, "Got \"%s\"\n", dst);
+
+    dstlen = sizeof(dst);
+    InternetCanonicalizeUrlA(src, dst, &dstlen, ICU_NO_ENCODE);
+    ok(strcmp(dst, "http://www.winehq.org/%27/ />/#>") == 0, "Got \"%s\"\n", dst);
+
+    dstlen = sizeof(dst);
+    InternetCanonicalizeUrlA(src, dst, &dstlen, ICU_NO_META);
+    ok(strcmp(dst, "http://www.winehq.org/%27/%20/./%3E/#>") == 0, "Got \"%s\"\n", dst);
+}
+
 START_TEST(url)
 {
     int i;
@@ -1113,4 +1154,5 @@ START_TEST(url)
     InternetCrackUrl_test();
     InternetCrackUrlW_test();
     InternetCreateUrlA_test();
+    InternetCanonicalizeUrl_test();
 }
