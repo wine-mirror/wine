@@ -241,7 +241,7 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
     if(doc->basedoc.doc_obj && doc->basedoc.doc_obj->basedoc.doc_node == doc)
         doc_obj = doc->basedoc.doc_obj;
 
-    connect_scripts(doc->basedoc.window->base.inner_window);
+    connect_scripts(doc->window);
 
     if(doc_obj)
         handle_docobj_load(doc_obj);
