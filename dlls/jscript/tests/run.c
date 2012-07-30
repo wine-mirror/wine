@@ -27,6 +27,22 @@
 
 #include "wine/test.h"
 
+#ifdef _WIN64
+
+#define IActiveScriptParse_QueryInterface IActiveScriptParse64_QueryInterface
+#define IActiveScriptParse_Release IActiveScriptParse64_Release
+#define IActiveScriptParse_InitNew IActiveScriptParse64_InitNew
+#define IActiveScriptParse_ParseScriptText IActiveScriptParse64_ParseScriptText
+
+#else
+
+#define IActiveScriptParse_QueryInterface IActiveScriptParse32_QueryInterface
+#define IActiveScriptParse_Release IActiveScriptParse32_Release
+#define IActiveScriptParse_InitNew IActiveScriptParse32_InitNew
+#define IActiveScriptParse_ParseScriptText IActiveScriptParse32_ParseScriptText
+
+#endif
+
 static const CLSID CLSID_JScript =
     {0xf414c260,0x6ac0,0x11cf,{0xb6,0xd1,0x00,0xaa,0x00,0xbb,0xbb,0x58}};
 static const CLSID CLSID_JScriptEncode =
@@ -1108,7 +1124,7 @@ static HRESULT WINAPI ActiveScriptSite_OnScriptError_CheckError(IActiveScriptSit
     ok(pscripterror != NULL, "ActiveScriptSite_OnScriptError -- expected pscripterror to be set, got NULL\n");
 
     script_error = pscripterror;
-    IUnknown_AddRef(script_error);
+    IActiveScriptError_AddRef(script_error);
 
     CHECK_EXPECT(ActiveScriptSite_OnScriptError);
 
@@ -1186,7 +1202,7 @@ static HRESULT parse_script(DWORD flags, BSTR script_str)
         return hres;
     }
 
-    hres = IActiveScriptParse64_InitNew(parser);
+    hres = IActiveScriptParse_InitNew(parser);
     ok(hres == S_OK, "InitNew failed: %08x\n", hres);
 
     hres = IActiveScript_SetScriptSite(engine, &ActiveScriptSite);
@@ -1204,11 +1220,11 @@ static HRESULT parse_script(DWORD flags, BSTR script_str)
     ok(script_disp != NULL, "script_disp == NULL\n");
     ok(script_disp != (IDispatch*)&Global, "script_disp == Global\n");
 
-    hres = IActiveScriptParse64_ParseScriptText(parser, script_str, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    hres = IActiveScriptParse_ParseScriptText(parser, script_str, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
 
     IDispatch_Release(script_disp);
     IActiveScript_Release(engine);
-    IUnknown_Release(parser);
+    IActiveScriptParse_Release(parser);
 
     return hres;
 }
@@ -1232,7 +1248,7 @@ static HRESULT parse_htmlscript(BSTR script_str)
         return E_FAIL;
     }
 
-    hres = IActiveScriptParse64_InitNew(parser);
+    hres = IActiveScriptParse_InitNew(parser);
     ok(hres == S_OK, "InitNew failed: %08x\n", hres);
 
     hres = IActiveScript_SetScriptSite(engine, &ActiveScriptSite);
@@ -1245,10 +1261,10 @@ static HRESULT parse_htmlscript(BSTR script_str)
     hres = IActiveScript_SetScriptState(engine, SCRIPTSTATE_STARTED);
     ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_STARTED) failed: %08x\n", hres);
 
-    hres = IActiveScriptParse64_ParseScriptText(parser, script_str, NULL, NULL, tmp, 0, 0, 0, NULL, NULL);
+    hres = IActiveScriptParse_ParseScriptText(parser, script_str, NULL, NULL, tmp, 0, 0, 0, NULL, NULL);
 
     IActiveScript_Release(engine);
-    IUnknown_Release(parser);
+    IActiveScriptParse_Release(parser);
     SysFreeString(tmp);
 
     return hres;
@@ -1360,7 +1376,7 @@ static void parse_script_with_error(DWORD flags, BSTR script_str, SCODE errorcod
         return;
     }
 
-    hres = IActiveScriptParse64_InitNew(parser);
+    hres = IActiveScriptParse_InitNew(parser);
     ok(hres == S_OK, "InitNew failed: %08x\n", hres);
 
     hres = IActiveScript_SetScriptSite(engine, &ActiveScriptSite_CheckError);
@@ -1380,7 +1396,7 @@ static void parse_script_with_error(DWORD flags, BSTR script_str, SCODE errorcod
 
     script_error = NULL;
     SET_EXPECT(ActiveScriptSite_OnScriptError);
-    hres = IActiveScriptParse64_ParseScriptText(parser, script_str, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    hres = IActiveScriptParse_ParseScriptText(parser, script_str, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
     todo_wine ok(hres == 0x80020101, "parse_script_with_error should have returned 0x80020101, got: 0x%08x\n", hres);
     todo_wine CHECK_CALLED(ActiveScriptSite_OnScriptError);
 
@@ -1388,12 +1404,12 @@ static void parse_script_with_error(DWORD flags, BSTR script_str, SCODE errorcod
     {
         test_IActiveScriptError(script_error, errorcode, line, pos, script_source, description, line_text);
 
-        IUnknown_Release(script_error);
+        IActiveScriptError_Release(script_error);
     }
 
     IDispatch_Release(script_disp);
     IActiveScript_Release(engine);
-    IUnknown_Release(parser);
+    IActiveScriptParse_Release(parser);
 }
 
 static void parse_script_af(DWORD flags, const char *src)
@@ -1544,7 +1560,7 @@ static void test_isvisible(BOOL global_members)
         return;
     }
 
-    hres = IActiveScriptParse64_InitNew(parser);
+    hres = IActiveScriptParse_InitNew(parser);
     ok(hres == S_OK, "InitNew failed: %08x\n", hres);
 
     hres = IActiveScript_SetScriptSite(engine, &ActiveScriptSite);
@@ -1564,16 +1580,16 @@ static void test_isvisible(BOOL global_members)
 
     if(!global_members)
         SET_EXPECT(GetItemInfo_testVal);
-    hres = IActiveScriptParse64_ParseScriptText(parser, script_textW, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    hres = IActiveScriptParse_ParseScriptText(parser, script_textW, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
     ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
     if(!global_members)
         CHECK_CALLED(GetItemInfo_testVal);
 
-    hres = IActiveScriptParse64_ParseScriptText(parser, script_textW, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    hres = IActiveScriptParse_ParseScriptText(parser, script_textW, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
     ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
 
     IActiveScript_Release(engine);
-    IUnknown_Release(parser);
+    IActiveScriptParse_Release(parser);
 }
 
 static BOOL run_tests(void)

@@ -27,6 +27,22 @@
 
 #include "wine/test.h"
 
+#ifdef _WIN64
+
+#define IActiveScriptParse_QueryInterface IActiveScriptParse64_QueryInterface
+#define IActiveScriptParse_Release IActiveScriptParse64_Release
+#define IActiveScriptParse_InitNew IActiveScriptParse64_InitNew
+#define IActiveScriptParse_ParseScriptText IActiveScriptParse64_ParseScriptText
+
+#else
+
+#define IActiveScriptParse_QueryInterface IActiveScriptParse32_QueryInterface
+#define IActiveScriptParse_Release IActiveScriptParse32_Release
+#define IActiveScriptParse_InitNew IActiveScriptParse32_InitNew
+#define IActiveScriptParse_ParseScriptText IActiveScriptParse32_ParseScriptText
+
+#endif
+
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
 static const CLSID CLSID_JScript =
@@ -437,10 +453,10 @@ static void test_jscript(void)
     test_safety((IUnknown*)script);
     test_invoke_versioning(script);
 
-    hres = IActiveScriptParse64_InitNew(parse);
+    hres = IActiveScriptParse_InitNew(parse);
     ok(hres == S_OK, "InitNew failed: %08x\n", hres);
 
-    hres = IActiveScriptParse64_InitNew(parse);
+    hres = IActiveScriptParse_InitNew(parse);
     ok(hres == E_UNEXPECTED, "InitNew failed: %08x, expected E_UNEXPECTED\n", hres);
 
     hres = IActiveScript_SetScriptSite(script, NULL);
@@ -481,7 +497,7 @@ static void test_jscript(void)
     test_script_dispatch(dispex);
     IDispatchEx_Release(dispex);
 
-    IUnknown_Release(parse);
+    IActiveScriptParse_Release(parse);
 
     ref = IActiveScript_Release(script);
     ok(!ref, "ref = %d\n", ref);
@@ -509,11 +525,11 @@ static void test_jscript2(void)
     test_state(script, SCRIPTSTATE_UNINITIALIZED);
 
     SET_EXPECT(OnStateChange_INITIALIZED);
-    hres = IActiveScriptParse64_InitNew(parse);
+    hres = IActiveScriptParse_InitNew(parse);
     ok(hres == S_OK, "InitNew failed: %08x\n", hres);
     CHECK_CALLED(OnStateChange_INITIALIZED);
 
-    hres = IActiveScriptParse64_InitNew(parse);
+    hres = IActiveScriptParse_InitNew(parse);
     ok(hres == E_UNEXPECTED, "InitNew failed: %08x, expected E_UNEXPECTED\n", hres);
 
     SET_EXPECT(OnStateChange_CONNECTED);
@@ -535,7 +551,7 @@ static void test_jscript2(void)
     test_state(script, SCRIPTSTATE_CLOSED);
     test_no_script_dispatch(script);
 
-    IUnknown_Release(parse);
+    IActiveScriptParse_Release(parse);
 
     ref = IActiveScript_Release(script);
     ok(!ref, "ref = %d\n", ref);
@@ -559,7 +575,7 @@ static void test_jscript_uninitializing(void)
 
     test_state(script, SCRIPTSTATE_UNINITIALIZED);
 
-    hres = IActiveScriptParse64_InitNew(parse);
+    hres = IActiveScriptParse_InitNew(parse);
     ok(hres == S_OK, "InitNew failed: %08x\n", hres);
 
     SET_EXPECT(GetLCID);
@@ -571,7 +587,7 @@ static void test_jscript_uninitializing(void)
 
     test_state(script, SCRIPTSTATE_INITIALIZED);
 
-    hres = IActiveScriptParse64_ParseScriptText(parse, script_textW, NULL, NULL, NULL, 0, 1, 0x42, NULL, NULL);
+    hres = IActiveScriptParse_ParseScriptText(parse, script_textW, NULL, NULL, NULL, 0, 1, 0x42, NULL, NULL);
     ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
 
     hres = IActiveScript_SetScriptSite(script, &ActiveScriptSite);
@@ -630,7 +646,7 @@ static void test_jscript_uninitializing(void)
 
     test_state(script, SCRIPTSTATE_CLOSED);
 
-    IUnknown_Release(parse);
+    IActiveScriptParse_Release(parse);
 
     ref = IActiveScript_Release(script);
     ok(!ref, "ref = %d\n", ref);

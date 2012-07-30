@@ -28,6 +28,22 @@
 
 #include "wine/test.h"
 
+#ifdef _WIN64
+
+#define IActiveScriptParse_QueryInterface IActiveScriptParse64_QueryInterface
+#define IActiveScriptParse_Release IActiveScriptParse64_Release
+#define IActiveScriptParse_InitNew IActiveScriptParse64_InitNew
+#define IActiveScriptParse_ParseScriptText IActiveScriptParse64_ParseScriptText
+
+#else
+
+#define IActiveScriptParse_QueryInterface IActiveScriptParse32_QueryInterface
+#define IActiveScriptParse_Release IActiveScriptParse32_Release
+#define IActiveScriptParse_InitNew IActiveScriptParse32_InitNew
+#define IActiveScriptParse_ParseScriptText IActiveScriptParse32_ParseScriptText
+
+#endif
+
 static const CLSID CLSID_JScript =
     {0xf414c260,0x6ac0,0x11cf,{0xb6,0xd1,0x00,0xaa,0x00,0xbb,0xbb,0x58}};
 
@@ -464,7 +480,7 @@ static void _parse_script_a(unsigned line, IActiveScriptParse *parser, const cha
     HRESULT hres;
 
     str = a2bstr(script);
-    hres = IActiveScriptParse64_ParseScriptText(parser, str, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    hres = IActiveScriptParse_ParseScriptText(parser, str, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
     SysFreeString(str);
     ok_(__FILE__,line)(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
 }
@@ -483,7 +499,7 @@ static IActiveScriptParse *create_script(void)
     hres = IActiveScript_QueryInterface(script, &IID_IActiveScriptParse, (void**)&parser);
     ok(hres == S_OK, "Could not get IActiveScriptParse: %08x\n", hres);
 
-    hres = IActiveScriptParse64_InitNew(parser);
+    hres = IActiveScriptParse_InitNew(parser);
     ok(hres == S_OK, "InitNew failed: %08x\n", hres);
 
     hres = IActiveScript_SetScriptSite(script, &ActiveScriptSite);
@@ -508,7 +524,7 @@ static void run_scripts(void)
 
     parser = create_script();
 
-    hres = IActiveScriptParse64_QueryInterface(parser, &IID_IVariantChangeType, (void**)&script_change_type);
+    hres = IActiveScriptParse_QueryInterface(parser, &IID_IVariantChangeType, (void**)&script_change_type);
     ok(hres == S_OK, "Could not get IVariantChangeType iface: %08x\n", hres);
 
     SET_EXPECT(testArgConv);
@@ -524,7 +540,7 @@ static void run_scripts(void)
     IDispatch_Release(stored_obj);
     IVariantChangeType_Release(script_change_type);
 
-    IUnknown_Release(parser);
+    IActiveScriptParse_Release(parser);
 }
 
 static BOOL check_jscript(void)
@@ -539,12 +555,12 @@ static BOOL check_jscript(void)
         return FALSE;
 
     str = a2bstr("if(!('localeCompare' in String.prototype)) throw 1;");
-    hres = IActiveScriptParse64_ParseScriptText(parser, str, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    hres = IActiveScriptParse_ParseScriptText(parser, str, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
     SysFreeString(str);
 
     if(hres == S_OK)
-        hres = IUnknown_QueryInterface(parser, &IID_IActiveScriptProperty, (void**)&script_prop);
-    IUnknown_Release(parser);
+        hres = IActiveScriptParse_QueryInterface(parser, &IID_IActiveScriptProperty, (void**)&script_prop);
+    IActiveScriptParse_Release(parser);
     if(hres == S_OK)
         IActiveScriptProperty_Release(script_prop);
 
