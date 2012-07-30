@@ -300,6 +300,17 @@ static inline DWORD calc_outcode(const POINT *pt, const RECT *clip)
     return out;
 }
 
+/* crop coordinates to a reasonable range to avoid overflows in calculations */
+static inline POINT crop_coords( POINT pt )
+{
+    if (pt.x >= 0x10000000 || pt.x <= -0x10000000 || pt.y >= 0x10000000 || pt.y <= -0x10000000)
+    {
+        pt.x /= 8;
+        pt.y /= 8;
+    }
+    return pt;
+}
+
 static void init_bres_params( const POINT *start, const POINT *end, bres_params *clip_params,
                               struct line_params *line_params, RECT *rect )
 {
@@ -603,6 +614,7 @@ static BOOL solid_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end, DWORD
     {
         bres_params clip_params;
         struct line_params line_params;
+        POINT p1 = crop_coords( *start ), p2 = crop_coords( *end );
 
         init_bres_params( start, end, &clip_params, &line_params, &rect );
         if (!get_clipped_rects( &pdev->dib, &rect, pdev->clip, &clipped_rects )) return TRUE;
@@ -611,11 +623,11 @@ static BOOL solid_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end, DWORD
             POINT clipped_start, clipped_end;
             int clip_status;
 
-            clip_status = clip_line(start, end, clipped_rects.rects + i, &clip_params, &clipped_start, &clipped_end);
+            clip_status = clip_line( &p1, &p2, clipped_rects.rects + i, &clip_params, &clipped_start, &clipped_end);
             if(clip_status)
             {
-                int m = abs(clipped_start.x - start->x);
-                int n = abs(clipped_start.y - start->y);
+                int m = abs(clipped_start.x - p1.x);
+                int n = abs(clipped_start.y - p1.y);
 
                 if (line_params.x_major)
                 {
@@ -630,7 +642,7 @@ static BOOL solid_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end, DWORD
                     line_params.length = abs( clipped_end.y - clipped_start.y ) + 1;
                 }
 
-                if (clipped_end.x == end->x && clipped_end.y == end->y) line_params.length--;
+                if (clipped_end.x == p2.x && clipped_end.y == p2.y) line_params.length--;
 
                 pdev->dib.funcs->solid_line( &pdev->dib, &clipped_start, &line_params, and, xor );
 
@@ -987,6 +999,7 @@ static BOOL dashed_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
     {
         bres_params clip_params;
         struct line_params line_params;
+        POINT p1 = crop_coords( *start ), p2 = crop_coords( *end );
 
         init_bres_params( start, end, &clip_params, &line_params, &rect );
         get_clipped_rects( &pdev->dib, &rect, pdev->clip, &clipped_rects );
@@ -994,12 +1007,12 @@ static BOOL dashed_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
         {
             POINT clipped_start, clipped_end;
             int clip_status;
-            clip_status = clip_line(start, end, clipped_rects.rects + i, &clip_params, &clipped_start, &clipped_end);
+            clip_status = clip_line(&p1, &p2, clipped_rects.rects + i, &clip_params, &clipped_start, &clipped_end);
 
             if(clip_status)
             {
-                int m = abs(clipped_start.x - start->x);
-                int n = abs(clipped_start.y - start->y);
+                int m = abs(clipped_start.x - p1.x);
+                int n = abs(clipped_start.y - p1.y);
 
                 pdev->dash_pos = start_pos;
 
