@@ -30,7 +30,7 @@
 static void test_custom_palette(void)
 {
     IWICImagingFactory *factory;
-    IWICPalette *palette;
+    IWICPalette *palette, *palette2;
     HRESULT hr;
     WICBitmapPaletteType type=0xffffffff;
     UINT count=1;
@@ -106,6 +106,29 @@ static void test_custom_palette(void)
         ok(SUCCEEDED(hr), "IsGrayscale failed, hr=%x\n", hr);
         ok(!boolresult, "expected FALSE, got TRUE\n");
 
+        hr = IWICImagingFactory_CreatePalette(factory, &palette2);
+        ok(SUCCEEDED(hr), "CreatePalette failed, hr=%x\n", hr);
+
+        hr = IWICPalette_InitializeFromPalette(palette2, palette);
+        ok(SUCCEEDED(hr), "InitializeFromPalette failed, hr=%x\n", hr);
+
+        type = 0xdeadbeef;
+        hr = IWICPalette_GetType(palette2, &type);
+        ok(SUCCEEDED(hr), "GetType failed, hr=%x\n", hr);
+        ok(type == WICBitmapPaletteTypeCustom, "expected WICBitmapPaletteTypeCustom, got %x\n", type);
+
+        count = 0xdeadbeef;
+        hr = IWICPalette_GetColorCount(palette2, &count);
+        ok(SUCCEEDED(hr), "GetColorCount failed, hr=%x\n", hr);
+        ok(count == 4, "expected 4, got %u\n", count);
+
+        memset(colors, 0, sizeof(colors));
+        count = 0xdeadbeef;
+        hr = IWICPalette_GetColors(palette2, 4, colors, &count);
+        ok(SUCCEEDED(hr), "GetColors failed, hr=%x\n", hr);
+        ok(count == 4, "expected 4, got %u\n", count);
+        ok(!memcmp(colors, initcolors, sizeof(colors)), "got unexpected palette data\n");
+
         /* try a palette with some alpha in it */
         colors[2] = 0x80ffffff;
         hr = IWICPalette_InitializeCustom(palette, colors, 4);
@@ -118,6 +141,40 @@ static void test_custom_palette(void)
         /* setting to a 0-color palette is acceptable */
         hr = IWICPalette_InitializeCustom(palette, NULL, 0);
         ok(SUCCEEDED(hr), "InitializeCustom failed, hr=%x\n", hr);
+
+        type = 0xdeadbeef;
+        hr = IWICPalette_GetType(palette, &type);
+        ok(SUCCEEDED(hr), "GetType failed, hr=%x\n", hr);
+        ok(type == WICBitmapPaletteTypeCustom, "expected WICBitmapPaletteTypeCustom, got %x\n", type);
+
+        count = 0xdeadbeef;
+        hr = IWICPalette_GetColorCount(palette, &count);
+        ok(SUCCEEDED(hr), "GetColorCount failed, hr=%x\n", hr);
+        ok(count == 0, "expected 0, got %u\n", count);
+
+        count = 0xdeadbeef;
+        hr = IWICPalette_GetColors(palette, 4, colors, &count);
+        ok(SUCCEEDED(hr), "GetColors failed, hr=%x\n", hr);
+        ok(count == 0, "expected 0, got %u\n", count);
+
+        hr = IWICPalette_InitializeFromPalette(palette2, palette);
+        ok(SUCCEEDED(hr), "InitializeFromPalette failed, hr=%x\n", hr);
+
+        type = 0xdeadbeef;
+        hr = IWICPalette_GetType(palette2, &type);
+        ok(SUCCEEDED(hr), "GetType failed, hr=%x\n", hr);
+        ok(type == WICBitmapPaletteTypeCustom, "expected WICBitmapPaletteTypeCustom, got %x\n", type);
+
+        count = 0xdeadbeef;
+        hr = IWICPalette_GetColorCount(palette2, &count);
+        ok(SUCCEEDED(hr), "GetColorCount failed, hr=%x\n", hr);
+        ok(count == 0, "expected 0, got %u\n", count);
+
+        memset(colors, 0, sizeof(colors));
+        count = 0xdeadbeef;
+        hr = IWICPalette_GetColors(palette2, 4, colors, &count);
+        ok(SUCCEEDED(hr), "GetColors failed, hr=%x\n", hr);
+        ok(count == 0, "expected 0, got %u\n", count);
 
         /* IWICPalette is paranoid about NULL pointers */
         hr = IWICPalette_GetType(palette, NULL);
@@ -144,6 +201,10 @@ static void test_custom_palette(void)
         hr = IWICPalette_IsGrayscale(palette, NULL);
         ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %x\n", hr);
 
+        hr = IWICPalette_InitializeFromPalette(palette, NULL);
+        ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %x\n", hr);
+
+        IWICPalette_Release(palette2);
         IWICPalette_Release(palette);
     }
 

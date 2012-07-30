@@ -455,10 +455,38 @@ static HRESULT WINAPI PaletteImpl_InitializeFromBitmap(IWICPalette *iface,
 }
 
 static HRESULT WINAPI PaletteImpl_InitializeFromPalette(IWICPalette *iface,
-    IWICPalette *pIPalette)
+    IWICPalette *source)
 {
-    FIXME("(%p,%p): stub\n", iface, pIPalette);
-    return E_NOTIMPL;
+    PaletteImpl *This = impl_from_IWICPalette(iface);
+    UINT count;
+    WICColor *colors = NULL;
+    WICBitmapPaletteType type;
+    HRESULT hr;
+
+    TRACE("(%p,%p)\n", iface, source);
+
+    if (!source) return E_INVALIDARG;
+
+    hr = IWICPalette_GetType(source, &type);
+    if (hr != S_OK) return hr;
+    hr = IWICPalette_GetColorCount(source, &count);
+    if (hr != S_OK) return hr;
+    if (count)
+    {
+        colors = HeapAlloc(GetProcessHeap(), 0, sizeof(WICColor) * count);
+        if (!colors) return E_OUTOFMEMORY;
+        hr = IWICPalette_GetColors(source, count, colors, &count);
+        if (hr != S_OK) return hr;
+    }
+
+    EnterCriticalSection(&This->lock);
+    HeapFree(GetProcessHeap(), 0, This->colors);
+    This->colors = colors;
+    This->count = count;
+    This->type = type;
+    LeaveCriticalSection(&This->lock);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI PaletteImpl_GetType(IWICPalette *iface,
