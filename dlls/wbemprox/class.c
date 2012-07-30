@@ -219,6 +219,7 @@ struct class_object
     WCHAR *name;
     IEnumWbemClassObject *iter;
     UINT index;
+    UINT index_method;
 };
 
 static inline struct class_object *impl_from_IWbemClassObject(
@@ -643,8 +644,19 @@ static HRESULT WINAPI class_object_BeginMethodEnumeration(
     IWbemClassObject *iface,
     LONG lEnumFlags)
 {
-    FIXME("%p, %08x\n", iface, lEnumFlags);
-    return E_NOTIMPL;
+    struct class_object *co = impl_from_IWbemClassObject( iface );
+
+    TRACE("%p, %08x\n", iface, lEnumFlags);
+
+    if (lEnumFlags) FIXME("flags 0x%08x not supported\n", lEnumFlags);
+
+    if (co->iter)
+    {
+        WARN("not allowed on instance\n");
+        return WBEM_E_ILLEGAL_OPERATION;
+    }
+    co->index_method = 0;
+    return S_OK;
 }
 
 static HRESULT WINAPI class_object_NextMethod(
@@ -654,15 +666,41 @@ static HRESULT WINAPI class_object_NextMethod(
     IWbemClassObject **ppInSignature,
     IWbemClassObject **ppOutSignature)
 {
-    FIXME("%p, %08x, %p, %p, %p\n", iface, lFlags, pstrName, ppInSignature, ppOutSignature);
-    return E_NOTIMPL;
+    struct class_object *co = impl_from_IWbemClassObject( iface );
+    const WCHAR *method;
+    HRESULT hr;
+
+    TRACE("%p, %08x, %p, %p, %p\n", iface, lFlags, pstrName, ppInSignature, ppOutSignature);
+
+    if (!(method = get_method_name( co->name, co->index_method ))) return WBEM_S_NO_MORE_DATA;
+
+    hr = create_signature( co->name, method, PARAM_IN, ppInSignature );
+    if (hr != S_OK) return hr;
+
+    hr = create_signature( co->name, method, PARAM_OUT, ppOutSignature );
+    if (hr != S_OK) IWbemClassObject_Release( *ppInSignature );
+    else
+    {
+        if (!(*pstrName = SysAllocString( method )))
+        {
+            IWbemClassObject_Release( *ppInSignature );
+            IWbemClassObject_Release( *ppOutSignature );
+            return E_OUTOFMEMORY;
+        }
+        co->index_method++;
+    }
+    return hr;
 }
 
 static HRESULT WINAPI class_object_EndMethodEnumeration(
     IWbemClassObject *iface )
 {
-    FIXME("%p\n", iface);
-    return E_NOTIMPL;
+    struct class_object *co = impl_from_IWbemClassObject( iface );
+
+    TRACE("%p\n", iface);
+
+    co->index_method = 0;
+    return S_OK;
 }
 
 static HRESULT WINAPI class_object_GetMethodQualifierSet(
@@ -732,8 +770,9 @@ HRESULT create_class_object(
         heap_free( co );
         return E_OUTOFMEMORY;
     }
-    co->iter  = iter;
-    co->index = index;
+    co->iter           = iter;
+    co->index          = index;
+    co->index_method   = 0;
     if (iter) IEnumWbemClassObject_AddRef( iter );
 
     *obj = &co->IWbemClassObject_iface;

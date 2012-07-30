@@ -151,6 +151,7 @@ HRESULT get_propval( const struct view *, UINT, const WCHAR *, VARIANT *,
 HRESULT put_propval( const struct view *, UINT, const WCHAR *, VARIANT *, CIMTYPE ) DECLSPEC_HIDDEN;
 HRESULT get_properties( const struct view *, SAFEARRAY ** ) DECLSPEC_HIDDEN;
 HRESULT get_object( const WCHAR *, IWbemClassObject ** ) DECLSPEC_HIDDEN;
+const WCHAR *get_method_name( const WCHAR *, UINT ) DECLSPEC_HIDDEN;
 
 HRESULT WbemLocator_create(IUnknown *, LPVOID *) DECLSPEC_HIDDEN;
 HRESULT WbemServices_create(IUnknown *, const WCHAR *, LPVOID *) DECLSPEC_HIDDEN;
