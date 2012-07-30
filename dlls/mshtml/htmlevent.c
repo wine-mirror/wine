@@ -997,7 +997,7 @@ void fire_event(HTMLDocumentNode *doc, eventid_t eid, BOOL set_event, nsIDOMNode
 
     TRACE("(%p) %s\n", doc, debugstr_w(event_info[eid].name));
 
-    window = doc->basedoc.window->base.inner_window;
+    window = doc->window;
     prev_event = window->event;
     if(set_event) {
         hres = get_node(doc, target, TRUE, &node);
@@ -1388,7 +1388,7 @@ void check_event_attr(HTMLDocumentNode *doc, nsIDOMElement *nselem)
 
             TRACE("%p.%s = %s\n", nselem, debugstr_w(event_info[i].attr_name), debugstr_w(attr_value));
 
-            disp = script_parse_event(doc->basedoc.window->base.inner_window, attr_value);
+            disp = script_parse_event(doc->window, attr_value);
             if(disp) {
                 hres = get_node(doc, (nsIDOMNode*)nselem, TRUE, &node);
                 if(SUCCEEDED(hres)) {
