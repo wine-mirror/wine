@@ -220,6 +220,7 @@ struct class_object
     IEnumWbemClassObject *iter;
     UINT index;
     UINT index_method;
+    UINT index_property;
 };
 
 static inline struct class_object *impl_from_IWbemClassObject(
@@ -351,8 +352,14 @@ static HRESULT WINAPI class_object_BeginEnumeration(
     IWbemClassObject *iface,
     LONG lEnumFlags )
 {
-    FIXME("%p, %08x\n", iface, lEnumFlags);
-    return E_NOTIMPL;
+    struct class_object *co = impl_from_IWbemClassObject( iface );
+
+    TRACE("%p, %08x\n", iface, lEnumFlags);
+
+    if (lEnumFlags) FIXME("flags 0x%08x not supported\n", lEnumFlags);
+
+    co->index_property = 0;
+    return S_OK;
 }
 
 static HRESULT WINAPI class_object_Next(
@@ -363,15 +370,34 @@ static HRESULT WINAPI class_object_Next(
     CIMTYPE *pType,
     LONG *plFlavor )
 {
-    FIXME("%p, %08x, %p, %p, %p, %p\n", iface, lFlags, strName, pVal, pType, plFlavor);
-    return E_NOTIMPL;
+    struct class_object *co = impl_from_IWbemClassObject( iface );
+    struct enum_class_object *ec = impl_from_IEnumWbemClassObject( co->iter );
+    struct view *view = ec->query->view;
+    const WCHAR *property;
+    HRESULT hr;
+
+    TRACE("%p, %08x, %p, %p, %p, %p\n", iface, lFlags, strName, pVal, pType, plFlavor);
+
+    if (!(property = get_property_name( co->name, co->index_property ))) return WBEM_S_NO_MORE_DATA;
+    if (!(*strName = SysAllocString( property ))) return E_OUTOFMEMORY;
+    if ((hr = get_propval( view, co->index, property, pVal, pType, plFlavor ) != S_OK))
+    {
+        SysFreeString( *strName );
+        return hr;
+    }
+    co->index_property++;
+    return S_OK;
 }
 
 static HRESULT WINAPI class_object_EndEnumeration(
     IWbemClassObject *iface )
 {
-    FIXME("%p\n", iface);
-    return E_NOTIMPL;
+    struct class_object *co = impl_from_IWbemClassObject( iface );
+
+    TRACE("%p\n", iface);
+
+    co->index_property = 0;
+    return S_OK;
 }
 
 static HRESULT WINAPI class_object_GetPropertyQualifierSet(
@@ -773,6 +799,7 @@ HRESULT create_class_object(
     co->iter           = iter;
     co->index          = index;
     co->index_method   = 0;
+    co->index_property = 0;
     if (iter) IEnumWbemClassObject_AddRef( iter );
 
     *obj = &co->IWbemClassObject_iface;

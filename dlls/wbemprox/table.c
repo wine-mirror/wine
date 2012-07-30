@@ -349,3 +349,21 @@ const WCHAR *get_method_name( const WCHAR *class, UINT index )
     }
     return NULL;
 }
+
+const WCHAR *get_property_name( const WCHAR *class, UINT index )
+{
+    struct table *table;
+    UINT i, count = 0;
+
+    if (!(table = get_table( class ))) return NULL;
+
+    for (i = 0; i < table->num_cols; i++)
+    {
+        if (!(table->columns[i].type & COL_FLAG_METHOD))
+        {
+            if (index == count) return table->columns[i].name;
+            count++;
+        }
+    }
+    return NULL;
+}
