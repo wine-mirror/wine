@@ -169,7 +169,7 @@ static void _test_ifaces(unsigned line, IUnknown *iface, REFIID *iids)
     HRESULT hres;
 
      for(piid = iids; *piid; piid++) {
-        hres = IDispatch_QueryInterface(iface, *piid, (void**)&unk);
+        hres = IUnknown_QueryInterface(iface, *piid, (void**)&unk);
         ok_(__FILE__,line) (hres == S_OK, "Could not get %s interface: %08x\n", debugstr_guid(*piid), hres);
         if(SUCCEEDED(hres))
             IUnknown_Release(unk);

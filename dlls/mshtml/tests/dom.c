@@ -520,7 +520,7 @@ static void _test_ifaces(unsigned line, IUnknown *iface, REFIID *iids)
     HRESULT hres;
 
      for(piid = iids; *piid; piid++) {
-        hres = IDispatch_QueryInterface(iface, *piid, (void**)&unk);
+        hres = IUnknown_QueryInterface(iface, *piid, (void**)&unk);
         ok_(__FILE__,line) (hres == S_OK, "Could not get %s interface: %08x\n", dbgstr_guid(*piid), hres);
         if(SUCCEEDED(hres))
             IUnknown_Release(unk);
@@ -1516,7 +1516,7 @@ static void _test_comment_attrs(unsigned line, IUnknown *unk)
     IHTMLDOMAttribute_Release(attr);
     IHTMLCommentElement_Release(comment);
     IHTMLElement_Release(elem);
-    IHTMLElement4_Release(elem);
+    IHTMLElement4_Release(elem4);
     SysFreeString(name);
 }
 
@@ -4645,7 +4645,7 @@ static void test_window(IHTMLDocument2 *doc)
     hres = IHTMLDocument2_get_parentWindow(doc, &window);
     ok(hres == S_OK, "get_parentWindow failed: %08x\n", hres);
     test_ifaces((IUnknown*)window, window_iids);
-    hres = IDispatch_QueryInterface(window, &IID_ITravelLogClient, (void**)&unk);
+    hres = IHTMLWindow2_QueryInterface(window, &IID_ITravelLogClient, (void**)&unk);
     if(hres == S_OK)
         IUnknown_Release(unk);
     else
@@ -4670,7 +4670,7 @@ static void test_window(IHTMLDocument2 *doc)
     ok(hres == E_NOINTERFACE, "QueryInterface(IID_ICustomDoc) returned: %08x\n", hres);
     ok(!unk, "unk = %p\n", unk);
 
-    IHTMLDocument_Release(doc2);
+    IHTMLDocument2_Release(doc2);
 
     hres = IHTMLWindow2_get_window(window, &window2);
     ok(hres == S_OK, "get_window failed: %08x\n", hres);
@@ -4874,7 +4874,7 @@ static void test_tr_elem(IHTMLElement *elem)
     test_elem_collection((IUnknown*)col, cell_types, sizeof(cell_types)/sizeof(*cell_types));
     IHTMLElementCollection_Release(col);
 
-    IHTMLTable_Release(row);
+    IHTMLTableRow_Release(row);
 }
 
 static void test_table_elem(IHTMLElement *elem)
@@ -6012,7 +6012,7 @@ static void test_exec(IUnknown *unk, const GUID *grpid, DWORD cmdid, VARIANT *in
     IOleCommandTarget *cmdtrg;
     HRESULT hres;
 
-    hres = IHTMLTxtRange_QueryInterface(unk, &IID_IOleCommandTarget, (void**)&cmdtrg);
+    hres = IUnknown_QueryInterface(unk, &IID_IOleCommandTarget, (void**)&cmdtrg);
     ok(hres == S_OK, "Could not get IOleCommandTarget interface: %08x\n", hres);
 
     hres = IOleCommandTarget_Exec(cmdtrg, grpid, cmdid, 0, in, out);
@@ -6103,7 +6103,7 @@ static void test_frame(IDispatch *disp, const char *exp_id)
     test_elem_type((IUnknown*)frame_elem, ET_FRAME);
     test_frame_doc((IUnknown*)frame_elem, FALSE);
     test_elem_id((IUnknown*)frame_elem, exp_id);
-    IHTMLElement_Release(frame_elem);
+    IHTMLFrameBase_Release(frame_elem);
 
     hres = IDispatch_QueryInterface(disp, &IID_IHTMLWindow2, (void**)&frame2);
     ok(hres == S_OK, "Could not get IHTMLWindow2 interface: 0x%08x\n", hres);

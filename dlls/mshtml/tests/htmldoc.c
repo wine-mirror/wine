@@ -430,7 +430,7 @@ static void _test_GetCurMoniker(unsigned line, IUnknown *unk, IMoniker *exmon, c
     }
 
     SysFreeString(doc_url);
-    IHTMLDocument_Release(doc);
+    IHTMLDocument2_Release(doc);
     if(mon && mon != (void*)0xdeadbeef)
         IMoniker_Release(mon);
 }
@@ -4857,7 +4857,7 @@ static void test_ConnectionPointContainer(IHTMLDocument2 *doc)
     IConnectionPointContainer *container;
     HRESULT hres;
 
-    hres = IUnknown_QueryInterface(doc, &IID_IConnectionPointContainer, (void**)&container);
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IConnectionPointContainer, (void**)&container);
     ok(hres == S_OK, "QueryInterface(IID_IConnectionPointContainer) failed: %08x\n", hres);
     if(FAILED(hres))
         return;
@@ -5200,20 +5200,20 @@ static void test_Persist(IHTMLDocument2 *doc, IMoniker *mon)
     GUID guid;
     HRESULT hres;
 
-    hres = IUnknown_QueryInterface(doc, &IID_IPersistFile, (void**)&persist_file);
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IPersistFile, (void**)&persist_file);
     ok(hres == S_OK, "QueryInterface(IID_IPersist) failed: %08x\n", hres);
     if(SUCCEEDED(hres)) {
-        hres = IPersist_GetClassID(persist_file, NULL);
+        hres = IPersistFile_GetClassID(persist_file, NULL);
         ok(hres == E_INVALIDARG, "GetClassID returned: %08x, expected E_INVALIDARG\n", hres);
 
-        hres = IPersist_GetClassID(persist_file, &guid);
+        hres = IPersistFile_GetClassID(persist_file, &guid);
         ok(hres == S_OK, "GetClassID failed: %08x\n", hres);
         ok(IsEqualGUID(&CLSID_HTMLDocument, &guid), "guid != CLSID_HTMLDocument\n");
 
-        IPersist_Release(persist_file);
+        IPersistFile_Release(persist_file);
     }
 
-    hres = IUnknown_QueryInterface(doc, &IID_IPersistMoniker, (void**)&persist_mon);
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IPersistMoniker, (void**)&persist_mon);
     ok(hres == S_OK, "QueryInterface(IID_IPersistMoniker) failed: %08x\n", hres);
     if(SUCCEEDED(hres)) {
         hres = IPersistMoniker_GetClassID(persist_mon, NULL);
@@ -5570,7 +5570,7 @@ static void test_OleCommandTarget(IHTMLDocument2 *doc)
     int i;
     HRESULT hres;
 
-    hres = IUnknown_QueryInterface(doc, &IID_IOleCommandTarget, (void**)&cmdtrg);
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IOleCommandTarget, (void**)&cmdtrg);
     ok(hres == S_OK, "QueryInterface(IID_IOleCommandTarget failed: %08x\n", hres);
     if(FAILED(hres))
         return;
@@ -5612,7 +5612,7 @@ static void test_OleCommandTarget_fail(IHTMLDocument2 *doc)
         {OLECMDID_GETPRINTTEMPLATE+1, 0xf0f0}
     };
 
-    hres = IUnknown_QueryInterface(doc, &IID_IOleCommandTarget, (void**)&cmdtrg);
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IOleCommandTarget, (void**)&cmdtrg);
     ok(hres == S_OK, "QueryInterface(IIDIOleCommandTarget failed: %08x\n", hres);
     if(FAILED(hres))
         return;
@@ -5659,7 +5659,7 @@ static void test_exec_onunload(IHTMLDocument2 *doc)
     VARIANT var;
     HRESULT hres;
 
-    hres = IUnknown_QueryInterface(doc, &IID_IOleCommandTarget, (void**)&cmdtrg);
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IOleCommandTarget, (void**)&cmdtrg);
     ok(hres == S_OK, "QueryInterface(IID_IOleCommandTarget) failed: %08x\n", hres);
     if(FAILED(hres))
         return;
@@ -5817,7 +5817,7 @@ static void test_IsDirty(IHTMLDocument2 *doc, HRESULT exhres)
     IPersistFile *perfile;
     HRESULT hres;
 
-    hres = IUnknown_QueryInterface(doc, &IID_IPersistStreamInit, (void**)&perinit);
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IPersistStreamInit, (void**)&perinit);
     ok(hres == S_OK, "QueryInterface(IID_IPersistStreamInit failed: %08x\n", hres);
     if(SUCCEEDED(hres)) {
         hres = IPersistStreamInit_IsDirty(perinit);
@@ -5825,7 +5825,7 @@ static void test_IsDirty(IHTMLDocument2 *doc, HRESULT exhres)
         IPersistStreamInit_Release(perinit);
     }
 
-    hres = IUnknown_QueryInterface(doc, &IID_IPersistMoniker, (void**)&permon);
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IPersistMoniker, (void**)&permon);
     ok(hres == S_OK, "QueryInterface(IID_IPersistMoniker failed: %08x\n", hres);
     if(SUCCEEDED(hres)) {
         hres = IPersistMoniker_IsDirty(permon);
@@ -5833,7 +5833,7 @@ static void test_IsDirty(IHTMLDocument2 *doc, HRESULT exhres)
         IPersistMoniker_Release(permon);
     }
 
-    hres = IUnknown_QueryInterface(doc, &IID_IPersistFile, (void**)&perfile);
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IPersistFile, (void**)&perfile);
     ok(hres == S_OK, "QueryInterface(IID_IPersistFile failed: %08x\n", hres);
     if(SUCCEEDED(hres)) {
         hres = IPersistFile_IsDirty(perfile);
@@ -5984,7 +5984,7 @@ static void test_OnAmbientPropertyChange(IHTMLDocument2 *doc)
     IOleControl *control = NULL;
     HRESULT hres;
 
-    hres = IUnknown_QueryInterface(doc, &IID_IOleControl, (void**)&control);
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IOleControl, (void**)&control);
     ok(hres == S_OK, "QueryInterface(IID_IOleControl failed: %08x\n", hres);
     if(FAILED(hres))
         return;
@@ -6033,7 +6033,7 @@ static void test_OnAmbientPropertyChange2(IHTMLDocument2 *doc)
     IOleControl *control = NULL;
     HRESULT hres;
 
-    hres = IUnknown_QueryInterface(doc, &IID_IOleControl, (void**)&control);
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IOleControl, (void**)&control);
     ok(hres == S_OK, "QueryInterface(IID_IOleControl failed: %08x\n", hres);
     if(FAILED(hres))
         return;
@@ -6049,7 +6049,7 @@ static void test_Close(IHTMLDocument2 *doc, BOOL set_client)
     IOleObject *oleobj = NULL;
     HRESULT hres;
 
-    hres = IUnknown_QueryInterface(doc, &IID_IOleObject, (void**)&oleobj);
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IOleObject, (void**)&oleobj);
     ok(hres == S_OK, "QueryInterface(IID_IOleObject) failed: %08x\n", hres);
     if(FAILED(hres))
         return;
@@ -6076,7 +6076,7 @@ static void test_Advise(IHTMLDocument2 *doc)
     DWORD conn;
     HRESULT hres;
 
-    hres = IUnknown_QueryInterface(doc, &IID_IOleObject, (void**)&oleobj);
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IOleObject, (void**)&oleobj);
     ok(hres == S_OK, "QueryInterface(IID_IOleObject) failed: %08x\n", hres);
     if(FAILED(hres))
         return;
@@ -6166,7 +6166,7 @@ static void test_InPlaceDeactivate(IHTMLDocument2 *doc, BOOL expect_call)
     IOleInPlaceObjectWindowless *windowlessobj = NULL;
     HRESULT hres;
 
-    hres = IUnknown_QueryInterface(doc, &IID_IOleInPlaceObjectWindowless,
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IOleInPlaceObjectWindowless,
             (void**)&windowlessobj);
     ok(hres == S_OK, "QueryInterface(IID_IOleInPlaceObjectWindowless) failed: %08x\n", hres);
     if(FAILED(hres))
@@ -6207,7 +6207,7 @@ static void test_Activate(IHTMLDocument2 *doc, DWORD flags)
         IOleDocumentView_Release(view);
     view = NULL;
 
-    hres = IUnknown_QueryInterface(doc, &IID_IOleObject, (void**)&oleobj);
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IOleObject, (void**)&oleobj);
     ok(hres == S_OK, "QueryInterface(IID_IOleObject) failed: %08x\n", hres);
 
     hres = IOleObject_GetUserClassID(oleobj, NULL);
@@ -6369,7 +6369,7 @@ static void test_Navigate(IHTMLDocument2 *doc)
     IHlinkTarget *hlink;
     HRESULT hres;
 
-    hres = IUnknown_QueryInterface(doc, &IID_IHlinkTarget, (void**)&hlink);
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IHlinkTarget, (void**)&hlink);
     ok(hres == S_OK, "QueryInterface(IID_IHlinkTarget) failed: %08x\n", hres);
 
     SET_EXPECT(ActivateMe);
@@ -6495,7 +6495,7 @@ static void test_StreamLoad(IHTMLDocument2 *doc)
     IPersistStreamInit *init;
     HRESULT hres;
 
-    hres = IUnknown_QueryInterface(doc, &IID_IPersistStreamInit, (void**)&init);
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IPersistStreamInit, (void**)&init);
     ok(hres == S_OK, "QueryInterface(IID_IPersistStreamInit) failed: %08x\n", hres);
     if(FAILED(hres))
         return;
@@ -6531,7 +6531,7 @@ static void test_StreamInitNew(IHTMLDocument2 *doc)
     IPersistStreamInit *init;
     HRESULT hres;
 
-    hres = IUnknown_QueryInterface(doc, &IID_IPersistStreamInit, (void**)&init);
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IPersistStreamInit, (void**)&init);
     ok(hres == S_OK, "QueryInterface(IID_IPersistStreamInit) failed: %08x\n", hres);
     if(FAILED(hres))
         return;
@@ -6560,9 +6560,9 @@ static void test_StreamInitNew(IHTMLDocument2 *doc)
     IPersistStreamInit_Release(init);
 }
 
-static void test_QueryInterface(IHTMLDocument2 *doc)
+static void test_QueryInterface(IHTMLDocument2 *htmldoc)
 {
-    IUnknown *qi;
+    IUnknown *qi, *doc = (IUnknown*)htmldoc;
     HRESULT hres;
 
     static const IID IID_UndocumentedScriptIface =
@@ -6904,7 +6904,7 @@ static void test_QueryService(IHTMLDocument2 *doc, BOOL success)
     IHlinkFrame *hf;
     HRESULT hres;
 
-    hres = IUnknown_QueryInterface(doc, &IID_IServiceProvider, (void**)&sp);
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IServiceProvider, (void**)&sp);
     ok(hres == S_OK, "QueryService returned %08x\n", hres);
 
     hres = IServiceProvider_QueryService(sp, &IID_IHlinkFrame, &IID_IHlinkFrame, (void**)&hf);
@@ -6955,7 +6955,7 @@ static void test_HTMLDocument_StreamLoad(void)
     doc = create_document();
     doc_unk = (IUnknown*)doc;
 
-    hres = IUnknown_QueryInterface(doc, &IID_IOleObject, (void**)&oleobj);
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IOleObject, (void**)&oleobj);
     ok(hres == S_OK, "Could not get IOleObject: %08x\n", hres);
 
     hres = IOleObject_Advise(oleobj, (IAdviseSink*)&AdviseSink, &conn);
@@ -7016,7 +7016,7 @@ static void test_HTMLDocument_StreamInitNew(void)
     doc = create_document();
     doc_unk = (IUnknown*)doc;
 
-    hres = IUnknown_QueryInterface(doc, &IID_IOleObject, (void**)&oleobj);
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IOleObject, (void**)&oleobj);
     ok(hres == S_OK, "Could not get IOleObject: %08x\n", hres);
 
     hres = IOleObject_Advise(oleobj, (IAdviseSink*)&AdviseSink, &conn);
@@ -7099,7 +7099,7 @@ static void test_editing_mode(BOOL do_load)
     doc = create_document();
     unk = doc_unk = (IUnknown*)doc;
 
-    hres = IUnknown_QueryInterface(doc, &IID_IOleObject, (void**)&oleobj);
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IOleObject, (void**)&oleobj);
     ok(hres == S_OK, "Could not get IOleObject: %08x\n", hres);
 
     hres = IOleObject_Advise(oleobj, (IAdviseSink*)&AdviseSink, &conn);
@@ -7184,10 +7184,10 @@ static void test_UIActivate(BOOL do_load, BOOL use_ipsex, BOOL use_ipsw)
     ipsex = use_ipsex;
     ipsw = use_ipsw;
 
-    hres = IUnknown_QueryInterface(doc, &IID_IOleObject, (void**)&oleobj);
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IOleObject, (void**)&oleobj);
     ok(hres == S_OK, "QueryInterface(IID_IOleObject) failed: %08x\n", hres);
 
-    hres = IUnknown_QueryInterface(doc, &IID_IOleDocumentView, (void**)&view);
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IOleDocumentView, (void**)&view);
     ok(hres == S_OK, "QueryInterface(IID_IOleDocumentView) failed: %08x\n", hres);
 
     SET_EXPECT(Invoke_AMBIENT_USERMODE);
@@ -7347,14 +7347,14 @@ static void test_HTMLDoc_ISupportErrorInfo(void)
 
     doc = create_document();
 
-    hres = IUnknown_QueryInterface(doc, &IID_ISupportErrorInfo, (void**)&sinfo);
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_ISupportErrorInfo, (void**)&sinfo);
     ok(hres == S_OK, "got %x\n", hres);
     ok(sinfo != NULL, "got %p\n", sinfo);
     if(sinfo)
     {
         hres = ISupportErrorInfo_InterfaceSupportsErrorInfo(sinfo, &IID_IErrorInfo);
         ok(hres == S_FALSE, "Expected S_OK, got %x\n", hres);
-        IUnknown_Release(sinfo);
+        ISupportErrorInfo_Release(sinfo);
     }
 
     release_document(doc);
@@ -7368,7 +7368,7 @@ static void test_IPersistHistory(void)
 
     doc = create_document();
 
-    hres = IUnknown_QueryInterface(doc, &IID_IPersistHistory, (void**)&phist);
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IPersistHistory, (void**)&phist);
     ok(hres == S_OK, "QueryInterface returned %08x, expected S_OK\n", hres);
     if(hres == S_OK)
         IPersistHistory_Release(phist);
