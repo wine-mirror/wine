@@ -316,7 +316,7 @@ static nsresult run_insert_script(HTMLDocumentNode *doc, nsISupports *script_ifa
     if(nsparser)
         nsIParser_BeginEvaluatingParserInsertedScript(nsparser);
 
-    doc_insert_script(doc->basedoc.window->base.inner_window, nsscript);
+    doc_insert_script(doc->window, nsscript);
 
     if(nsparser) {
         nsIParser_EndEvaluatingParserInsertedScript(nsparser);
