@@ -50,6 +50,8 @@ UINT get_type_size( CIMTYPE type )
 
     switch (type)
     {
+    case CIM_BOOLEAN:
+        return sizeof(int);
     case CIM_SINT16:
     case CIM_UINT16:
         return sizeof(INT16);
@@ -102,6 +104,9 @@ HRESULT get_value( const struct table *table, UINT row, UINT column, LONGLONG *v
     }
     switch (table->columns[column].type & COL_TYPE_MASK)
     {
+    case CIM_BOOLEAN:
+        *val = *(const int *)ptr;
+        break;
     case CIM_DATETIME:
     case CIM_STRING:
         *val = (LONGLONG)(INT_PTR)*(const WCHAR **)ptr;

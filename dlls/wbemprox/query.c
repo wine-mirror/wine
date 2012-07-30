@@ -550,6 +550,10 @@ static void set_variant( VARTYPE vartype, LONGLONG val, BSTR val_bstr, VARIANT *
 {
     switch (vartype)
     {
+    case VT_BOOL:
+        V_VT( ret ) = VT_BOOL;
+        V_BOOL( ret ) = val;
+        return;
     case VT_BSTR:
         V_VT( ret ) = VT_BSTR;
         V_BSTR( ret ) = val_bstr;
@@ -601,6 +605,9 @@ HRESULT get_propval( const struct view *view, UINT index, const WCHAR *name, VAR
 
     switch (view->table->columns[column].type & COL_TYPE_MASK)
     {
+    case CIM_BOOLEAN:
+        if (!vartype) vartype = VT_BOOL;
+        break;
     case CIM_STRING:
     case CIM_DATETIME:
         if (val)
@@ -650,6 +657,10 @@ static HRESULT variant_to_longlong( VARIANT *var, LONGLONG *val, CIMTYPE *type )
     }
     switch (V_VT( var ))
     {
+    case VT_BOOL:
+        *val = V_BOOL( var );
+        *type = CIM_BOOLEAN;
+        break;
     case VT_BSTR:
         *val = (INT_PTR)SysAllocString( V_BSTR( var ) );
         if (!*val) return E_OUTOFMEMORY;
