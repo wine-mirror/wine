@@ -458,18 +458,18 @@ static HRESULT WINAPI HTMLOptionElementFactory_create(IHTMLOptionElementFactory 
     TRACE("(%p)->(%s %s %s %s %p)\n", This, debugstr_variant(&text), debugstr_variant(&value),
           debugstr_variant(&defaultselected), debugstr_variant(&selected), optelem);
 
-    if(!This->window || !This->window->base.inner_window->doc) {
+    if(!This->window || !This->window->doc) {
         WARN("NULL doc\n");
         return E_UNEXPECTED;
     }
 
     *optelem = NULL;
 
-    hres = create_nselem(This->window->base.inner_window->doc, optionW, &nselem);
+    hres = create_nselem(This->window->doc, optionW, &nselem);
     if(FAILED(hres))
         return hres;
 
-    hres = get_node(This->window->base.inner_window->doc, (nsIDOMNode*)nselem, TRUE, &node);
+    hres = get_node(This->window->doc, (nsIDOMNode*)nselem, TRUE, &node);
     nsIDOMHTMLElement_Release(nselem);
     if(FAILED(hres))
         return hres;
