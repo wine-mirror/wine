@@ -300,6 +300,39 @@ static inline DWORD calc_outcode(const POINT *pt, const RECT *clip)
     return out;
 }
 
+static void init_bres_params( const POINT *start, const POINT *end, bres_params *clip_params,
+                              struct line_params *line_params, RECT *rect )
+{
+    INT dx = end->x - start->x, dy = end->y - start->y;
+    INT abs_dx = abs(dx), abs_dy = abs(dy);
+
+    clip_params->dx = abs_dx;
+    clip_params->dy = abs_dy;
+    clip_params->octant = get_octant_mask(dx, dy);
+    clip_params->bias   = get_bias( clip_params->octant );
+
+    line_params->bias    = clip_params->bias;
+    line_params->x_major = is_xmajor( clip_params->octant );
+    line_params->x_inc   = is_x_increasing( clip_params->octant ) ? 1 : -1;
+    line_params->y_inc   = is_y_increasing( clip_params->octant ) ? 1 : -1;
+
+    if (line_params->x_major)
+    {
+        line_params->err_add_1 = 2 * abs_dy - 2 * abs_dx;
+        line_params->err_add_2 = 2 * abs_dy;
+    }
+    else
+    {
+        line_params->err_add_1 = 2 * abs_dx - 2 * abs_dy;
+        line_params->err_add_2 = 2 * abs_dx;
+    }
+
+    rect->left   = min( start->x, end->x );
+    rect->top    = min( start->y, end->y );
+    rect->right  = max( start->x, end->x ) + 1;
+    rect->bottom = max( start->y, end->y ) + 1;
+}
+
 /******************************************************************************
  *                clip_line
  *
@@ -570,34 +603,8 @@ static BOOL solid_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end, DWORD
     {
         bres_params clip_params;
         struct line_params line_params;
-        INT dx = end->x - start->x, dy = end->y - start->y;
-        INT abs_dx = abs(dx), abs_dy = abs(dy);
 
-        clip_params.dx = abs_dx;
-        clip_params.dy = abs_dy;
-        clip_params.octant = get_octant_mask(dx, dy);
-        clip_params.bias   = get_bias( clip_params.octant );
-
-        line_params.bias    = clip_params.bias;
-        line_params.x_major = is_xmajor( clip_params.octant );
-        line_params.x_inc   = is_x_increasing( clip_params.octant ) ? 1 : -1;
-        line_params.y_inc   = is_y_increasing( clip_params.octant ) ? 1 : -1;
-
-        if (line_params.x_major)
-        {
-            line_params.err_add_1 = 2 * abs_dy - 2 * abs_dx;
-            line_params.err_add_2 = 2 * abs_dy;
-        }
-        else
-        {
-            line_params.err_add_1 = 2 * abs_dx - 2 * abs_dy;
-            line_params.err_add_2 = 2 * abs_dx;
-        }
-
-        rect.left   = min( start->x, end->x );
-        rect.top    = min( start->y, end->y );
-        rect.right  = max( start->x, end->x ) + 1;
-        rect.bottom = max( start->y, end->y ) + 1;
+        init_bres_params( start, end, &clip_params, &line_params, &rect );
         if (!get_clipped_rects( &pdev->dib, &rect, pdev->clip, &clipped_rects )) return TRUE;
         for (i = 0; i < clipped_rects.count; i++)
         {
@@ -612,12 +619,14 @@ static BOOL solid_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end, DWORD
 
                 if (line_params.x_major)
                 {
-                    line_params.err_start = 2 * abs_dy - abs_dx + m * 2 * abs_dy - n * 2 * abs_dx;
+                    line_params.err_start = 2 * clip_params.dy - clip_params.dx
+                                          + m * 2 * clip_params.dy - n * 2 * clip_params.dx;
                     line_params.length = abs( clipped_end.x - clipped_start.x ) + 1;
                 }
                 else
                 {
-                    line_params.err_start = 2 * abs_dx - abs_dy + n * 2 * abs_dx - m * 2 * abs_dy;
+                    line_params.err_start = 2 * clip_params.dx - clip_params.dy
+                                          + n * 2 * clip_params.dx - m * 2 * clip_params.dy;
                     line_params.length = abs( clipped_end.y - clipped_start.y ) + 1;
                 }
 
@@ -978,34 +987,8 @@ static BOOL dashed_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
     {
         bres_params clip_params;
         struct line_params line_params;
-        INT dx = end->x - start->x, dy = end->y - start->y;
-        INT abs_dx = abs(dx), abs_dy = abs(dy);
 
-        clip_params.dx = abs_dx;
-        clip_params.dy = abs_dy;
-        clip_params.octant = get_octant_mask(dx, dy);
-        clip_params.bias   = get_bias( clip_params.octant );
-
-        line_params.bias    = clip_params.bias;
-        line_params.x_major = is_xmajor( clip_params.octant );
-        line_params.x_inc   = is_x_increasing( clip_params.octant ) ? 1 : -1;
-        line_params.y_inc   = is_y_increasing( clip_params.octant ) ? 1 : -1;
-
-        if (line_params.x_major)
-        {
-            line_params.err_add_1 = 2 * abs_dy - 2 * abs_dx;
-            line_params.err_add_2 = 2 * abs_dy;
-        }
-        else
-        {
-            line_params.err_add_1 = 2 * abs_dx - 2 * abs_dy;
-            line_params.err_add_2 = 2 * abs_dx;
-        }
-
-        rect.left   = min( start->x, end->x );
-        rect.top    = min( start->y, end->y );
-        rect.right  = max( start->x, end->x ) + 1;
-        rect.bottom = max( start->y, end->y ) + 1;
+        init_bres_params( start, end, &clip_params, &line_params, &rect );
         get_clipped_rects( &pdev->dib, &rect, pdev->clip, &clipped_rects );
         for (i = 0; i < clipped_rects.count; i++)
         {
@@ -1022,13 +1005,15 @@ static BOOL dashed_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
 
                 if (line_params.x_major)
                 {
-                    line_params.err_start = 2 * abs_dy - abs_dx + m * 2 * abs_dy - n * 2 * abs_dx;
+                    line_params.err_start = 2 * clip_params.dy - clip_params.dx
+                                          + m * 2 * clip_params.dy - n * 2 * clip_params.dx;
                     line_params.length = abs( clipped_end.x - clipped_start.x ) + 1;
                     skip_dash(pdev, m);
                 }
                 else
                 {
-                    line_params.err_start = 2 * abs_dx - abs_dy + n * 2 * abs_dx - m * 2 * abs_dy;
+                    line_params.err_start = 2 * clip_params.dx - clip_params.dy
+                                          + n * 2 * clip_params.dx - m * 2 * clip_params.dy;
                     line_params.length = abs( clipped_end.y - clipped_start.y ) + 1;
                     skip_dash(pdev, n);
                 }
@@ -1041,9 +1026,9 @@ static BOOL dashed_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
         }
         pdev->dash_pos = start_pos;
         if(line_params.x_major)
-            skip_dash(pdev, abs_dx);
+            skip_dash(pdev, clip_params.dx);
         else
-            skip_dash(pdev, abs_dy);
+            skip_dash(pdev, clip_params.dy);
     }
 
     free_clipped_rects( &clipped_rects );
