@@ -125,7 +125,7 @@ static HRESULT WINAPI enum_class_object_Next(
     *puReturned = 0;
     if (ec->index + uCount > view->count) return WBEM_S_FALSE;
 
-    hr = WbemClassObject_create( NULL, iface, ec->index, (void **)apObjects );
+    hr = create_class_object( view->table->name, iface, ec->index, apObjects );
     if (hr != S_OK) return hr;
 
     ec->index++;
@@ -216,6 +216,7 @@ struct class_object
 {
     IWbemClassObject IWbemClassObject_iface;
     LONG refs;
+    WCHAR *name;
     IEnumWbemClassObject *iter;
     UINT index;
 };
@@ -242,6 +243,7 @@ static ULONG WINAPI class_object_Release(
     {
         TRACE("destroying %p\n", co);
         if (co->iter) IEnumWbemClassObject_Release( co->iter );
+        heap_free( co->name );
         heap_free( co );
     }
     return refs;
@@ -606,16 +608,14 @@ static HRESULT WINAPI class_object_GetMethod(
     IWbemClassObject **ppOutSignature )
 {
     struct class_object *co = impl_from_IWbemClassObject( iface );
-    struct enum_class_object *ec = impl_from_IEnumWbemClassObject( co->iter );
-    struct view *view = ec->query->view;
     HRESULT hr;
 
     TRACE("%p, %s, %08x, %p, %p\n", iface, debugstr_w(wszName), lFlags, ppInSignature, ppOutSignature);
 
-    hr = create_signature( view->table->name, wszName, PARAM_IN, ppInSignature );
+    hr = create_signature( co->name, wszName, PARAM_IN, ppInSignature );
     if (hr != S_OK) return hr;
 
-    hr = create_signature( view->table->name, wszName, PARAM_OUT, ppOutSignature );
+    hr = create_signature( co->name, wszName, PARAM_OUT, ppOutSignature );
     if (hr != S_OK) IWbemClassObject_Release( *ppInSignature );
     return hr;
 }
@@ -714,24 +714,30 @@ static const IWbemClassObjectVtbl class_object_vtbl =
     class_object_GetMethodOrigin
 };
 
-HRESULT WbemClassObject_create(
-    IUnknown *pUnkOuter, IEnumWbemClassObject *iter, UINT index, LPVOID *ppObj )
+HRESULT create_class_object(
+    const WCHAR *name, IEnumWbemClassObject *iter, UINT index, IWbemClassObject **obj )
 {
     struct class_object *co;
 
-    TRACE("%p, %p\n", pUnkOuter, ppObj);
+    TRACE("%s, %p\n", debugstr_w(name), obj);
 
     co = heap_alloc( sizeof(*co) );
     if (!co) return E_OUTOFMEMORY;
 
     co->IWbemClassObject_iface.lpVtbl = &class_object_vtbl;
     co->refs  = 1;
+    co->name  = heap_strdupW( name );
+    if (!co->name)
+    {
+        heap_free( co );
+        return E_OUTOFMEMORY;
+    }
     co->iter  = iter;
     co->index = index;
     if (iter) IEnumWbemClassObject_AddRef( iter );
 
-    *ppObj = &co->IWbemClassObject_iface;
+    *obj = &co->IWbemClassObject_iface;
 
-    TRACE("returning iface %p\n", *ppObj);
+    TRACE("returning iface %p\n", *obj);
     return S_OK;
 }

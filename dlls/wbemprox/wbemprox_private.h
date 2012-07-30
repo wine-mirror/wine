@@ -154,7 +154,8 @@ HRESULT get_object( const WCHAR *, IWbemClassObject ** ) DECLSPEC_HIDDEN;
 
 HRESULT WbemLocator_create(IUnknown *, LPVOID *) DECLSPEC_HIDDEN;
 HRESULT WbemServices_create(IUnknown *, const WCHAR *, LPVOID *) DECLSPEC_HIDDEN;
-HRESULT WbemClassObject_create(IUnknown *, IEnumWbemClassObject *, UINT, LPVOID *) DECLSPEC_HIDDEN;
+HRESULT create_class_object(const WCHAR *, IEnumWbemClassObject *, UINT,
+                            IWbemClassObject **) DECLSPEC_HIDDEN;
 HRESULT EnumWbemClassObject_create(IUnknown *, struct query *, LPVOID *) DECLSPEC_HIDDEN;
 
 static void *heap_alloc( size_t len ) __WINE_ALLOC_SIZE(1);
