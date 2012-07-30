@@ -288,7 +288,7 @@ static IDispatch *_get_document(unsigned line, IWebBrowser2 *wb)
     hres = IDispatch_QueryInterface(disp, &IID_IHTMLDocument2, (void**)&html_doc);
     ok_(__FILE__,line)(hres == S_OK, "Could not get IHTMLDocument iface: %08x\n", hres);
     ok(disp == (IDispatch*)html_doc, "disp != html_doc\n");
-    IHTMLDocument_Release(html_doc);
+    IHTMLDocument2_Release(html_doc);
 
     return disp;
 }
@@ -1750,7 +1750,7 @@ static void test_DoVerb(IWebBrowser2 *unk)
     RECT rect = {0,0,1000,1000};
     HRESULT hres;
 
-    hres = IUnknown_QueryInterface(unk, &IID_IOleObject, (void**)&oleobj);
+    hres = IWebBrowser2_QueryInterface(unk, &IID_IOleObject, (void**)&oleobj);
     ok(hres == S_OK, "QueryInterface(IID_OleObject) failed: %08x\n", hres);
     if(FAILED(hres))
         return;
@@ -1798,7 +1798,7 @@ static void call_DoVerb(IWebBrowser2 *unk, LONG verb)
     RECT rect = {60,60,600,600};
     HRESULT hres;
 
-    hres = IUnknown_QueryInterface(unk, &IID_IOleObject, (void**)&oleobj);
+    hres = IWebBrowser2_QueryInterface(unk, &IID_IOleObject, (void**)&oleobj);
     ok(hres == S_OK, "QueryInterface(IID_OleObject) failed: %08x\n", hres);
     if(FAILED(hres))
         return;
@@ -1816,7 +1816,7 @@ static HWND get_hwnd(IWebBrowser2 *unk)
     HWND hwnd;
     HRESULT hres;
 
-    hres = IUnknown_QueryInterface(unk, &IID_IOleInPlaceObject, (void**)&inplace);
+    hres = IWebBrowser2_QueryInterface(unk, &IID_IOleInPlaceObject, (void**)&inplace);
     ok(hres == S_OK, "QueryInterface(IID_OleInPlaceObject) failed: %08x\n", hres);
 
     hres = IOleInPlaceObject_GetWindow(inplace, &hwnd);
@@ -1859,7 +1859,7 @@ static void test_ClientSite(IWebBrowser2 *unk, IOleClientSite *client, BOOL stop
     HWND hwnd;
     HRESULT hres;
 
-    hres = IUnknown_QueryInterface(unk, &IID_IOleObject, (void**)&oleobj);
+    hres = IWebBrowser2_QueryInterface(unk, &IID_IOleObject, (void**)&oleobj);
     ok(hres == S_OK, "QueryInterface(IID_OleObject) failed: %08x\n", hres);
     if(FAILED(hres))
         return;
@@ -1867,7 +1867,7 @@ static void test_ClientSite(IWebBrowser2 *unk, IOleClientSite *client, BOOL stop
     test_GetMiscStatus(oleobj);
     test_SetHostNames(oleobj);
 
-    hres = IUnknown_QueryInterface(unk, &IID_IOleInPlaceObject, (void**)&inplace);
+    hres = IWebBrowser2_QueryInterface(unk, &IID_IOleInPlaceObject, (void**)&inplace);
     ok(hres == S_OK, "QueryInterface(IID_OleInPlaceObject) failed: %08x\n", hres);
     if(FAILED(hres)) {
         IOleObject_Release(oleobj);
@@ -1929,7 +1929,7 @@ static void test_ClassInfo(IWebBrowser2 *unk)
     GUID guid;
     HRESULT hres;
 
-    hres = IUnknown_QueryInterface(unk, &IID_IProvideClassInfo2, (void**)&class_info);
+    hres = IWebBrowser2_QueryInterface(unk, &IID_IProvideClassInfo2, (void**)&class_info);
     ok(hres == S_OK, "QueryInterface(IID_IProvideClassInfo)  failed: %08x\n", hres);
     if(FAILED(hres))
         return;
@@ -2394,7 +2394,7 @@ static void test_wb_funcs(IWebBrowser2 *wb, BOOL is_clientsite)
     IOleControl *control;
     HRESULT hres;
 
-    hres = IUnknown_QueryInterface(wb, &IID_IOleControl, (void**)&control);
+    hres = IWebBrowser2_QueryInterface(wb, &IID_IOleControl, (void**)&control);
     ok(hres == S_OK, "Could not get IOleControl interface: %08x\n", hres);
 
     test_Silent(wb, control, is_clientsite);
@@ -2410,7 +2410,7 @@ static void test_GetControlInfo(IWebBrowser2 *unk)
     CONTROLINFO info;
     HRESULT hres;
 
-    hres = IUnknown_QueryInterface(unk, &IID_IOleControl, (void**)&control);
+    hres = IWebBrowser2_QueryInterface(unk, &IID_IOleControl, (void**)&control);
     ok(hres == S_OK, "Could not get IOleControl: %08x\n", hres);
     if(FAILED(hres))
         return;
@@ -2440,7 +2440,7 @@ static void test_Extent(IWebBrowser2 *unk)
     if (dpi_x != 96 || dpi_y != 96)
         trace("dpi: %d / %d\n", dpi_y, dpi_y);
 
-    hres = IUnknown_QueryInterface(unk, &IID_IOleObject, (void**)&oleobj);
+    hres = IWebBrowser2_QueryInterface(unk, &IID_IOleObject, (void**)&oleobj);
     ok(hres == S_OK, "Could not get IOleObkect: %08x\n", hres);
     if(FAILED(hres))
         return;
@@ -2510,7 +2510,7 @@ static void test_ConnectionPoint(IWebBrowser2 *unk, BOOL init)
 
     static DWORD dw = 100;
 
-    hres = IUnknown_QueryInterface(unk, &IID_IConnectionPointContainer, (void**)&container);
+    hres = IWebBrowser2_QueryInterface(unk, &IID_IConnectionPointContainer, (void**)&container);
     ok(hres == S_OK, "QueryInterface(IID_IConnectionPointContainer) failed: %08x\n", hres);
     if(FAILED(hres))
         return;
@@ -2801,7 +2801,7 @@ static void test_olecmd(IWebBrowser2 *unk, BOOL loaded)
     OLECMD cmds[3];
     HRESULT hres;
 
-    hres = IUnknown_QueryInterface(unk, &IID_IOleCommandTarget, (void**)&cmdtrg);
+    hres = IWebBrowser2_QueryInterface(unk, &IID_IOleCommandTarget, (void**)&cmdtrg);
     ok(hres == S_OK, "Could not get IOleCommandTarget iface: %08x\n", hres);
     if(FAILED(hres))
         return;
@@ -2831,7 +2831,7 @@ static void test_IServiceProvider(IWebBrowser2 *unk)
     IUnknown *iface;
     HRESULT hres;
 
-    hres = IUnknown_QueryInterface(unk, &IID_IServiceProvider, (void**)&servprov);
+    hres = IWebBrowser2_QueryInterface(unk, &IID_IServiceProvider, (void**)&servprov);
     ok(hres == S_OK, "QueryInterface returned %08x, expected S_OK\n", hres);
     if(FAILED(hres))
         return;
@@ -2909,7 +2909,7 @@ static void test_go_back(IWebBrowser2 *wb, const char *back_url)
     todo_wine CHECK_CALLED(Invoke_COMMANDSTATECHANGE);
 }
 
-static void test_QueryInterface(IWebBrowser2 *unk)
+static void test_QueryInterface(IWebBrowser2 *wb)
 {
     IQuickActivate *qa = (IQuickActivate*)0xdeadbeef;
     IRunnableObject *runnable = (IRunnableObject*)0xdeadbeef;
@@ -2921,6 +2921,7 @@ static void test_QueryInterface(IWebBrowser2 *unk)
     IOleLink *link = (void*)0xdeadbeef;
     IMarshal *marshal = (void*)0xdeadbeef;
     IStdMarshalInfo *marshalinfo = (void*)0xdeadbeef;
+    IUnknown *unk = (IUnknown*)wb;
     HRESULT hres;
 
     hres = IUnknown_QueryInterface(unk, &IID_IQuickActivate, (void**)&qa);
@@ -3054,7 +3055,7 @@ static void test_TranslateAccelerator(IWebBrowser2 *unk)
 
     test_Navigate2(unk, "about:blank");
 
-    hres = IUnknown_QueryInterface(unk, &IID_IOleInPlaceActiveObject, (void**)&pao);
+    hres = IWebBrowser2_QueryInterface(unk, &IID_IOleInPlaceActiveObject, (void**)&pao);
     ok(hres == S_OK, "Got 0x%08x\n", hres);
     if(SUCCEEDED(hres)) {
         /* One accelerator that should be handled by mshtml */
@@ -3075,7 +3076,7 @@ static void test_TranslateAccelerator(IWebBrowser2 *unk)
     test_UIActivate(unk, TRUE);
 
     /* Test again after UIActivate */
-    hres = IUnknown_QueryInterface(unk, &IID_IOleInPlaceActiveObject, (void**)&pao);
+    hres = IWebBrowser2_QueryInterface(unk, &IID_IOleInPlaceActiveObject, (void**)&pao);
     ok(hres == S_OK, "Got 0x%08x\n", hres);
     if(SUCCEEDED(hres)) {
         /* One accelerator that should be handled by mshtml */
@@ -3125,14 +3126,14 @@ static void test_TranslateAccelerator(IWebBrowser2 *unk)
             for(keycode = 0; keycode <= 0x100; keycode++) {
                 msg_a.wParam = keycode;
                 SET_EXPECT(DocHost_TranslateAccelerator);
-                hres = IDocHostUIHandler_TranslateAccelerator(dochost, &msg_a, &CGID_MSHTML, 1234);
+                hres = IDocHostUIHandler2_TranslateAccelerator(dochost, &msg_a, &CGID_MSHTML, 1234);
                 ok(hres == 0xdeadbeef, "Got 0x%08x\n", hres);
                 CHECK_CALLED(DocHost_TranslateAccelerator);
             }
             hr_dochost_TranslateAccelerator = E_NOTIMPL;
 
             SET_EXPECT(DocHost_TranslateAccelerator);
-            hres = IDocHostUIHandler_TranslateAccelerator(dochost, &msg_a, &CGID_MSHTML, 1234);
+            hres = IDocHostUIHandler2_TranslateAccelerator(dochost, &msg_a, &CGID_MSHTML, 1234);
             ok(hres == E_NOTIMPL, "Got 0x%08x\n", hres);
             CHECK_CALLED(DocHost_TranslateAccelerator);
 

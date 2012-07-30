@@ -143,7 +143,7 @@ static void _test_shortcut_url(unsigned line, IUnknown *unk, const char *exurl)
     ok_(__FILE__,line)(!strcmp(url_a, exurl), "unexpected URL, got %s, expected %s\n", url_a, exurl);
     CoTaskMemFree(url_a);
 
-    IUnknown_Release(locator_a);
+    IUnknown_Release((IUnknown*)locator_a);
 }
 
 #define check_string_transform(a,b,c,d,e) _check_string_transform(__LINE__,a,b,c,d,e)
