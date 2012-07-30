@@ -7754,7 +7754,6 @@ static const struct gdi_dc_funcs freetype_funcs =
     freetype_CreateDC,                  /* pCreateDC */
     freetype_DeleteDC,                  /* pDeleteDC */
     NULL,                               /* pDeleteObject */
-    NULL,                               /* pDescribePixelFormat */
     NULL,                               /* pDeviceCapabilities */
     NULL,                               /* pEllipse */
     NULL,                               /* pEndDoc */
@@ -7846,7 +7845,6 @@ static const struct gdi_dc_funcs freetype_funcs =
     NULL,                               /* pSetMapMode */
     NULL,                               /* pSetMapperFlags */
     NULL,                               /* pSetPixel */
-    NULL,                               /* pSetPixelFormat */
     NULL,                               /* pSetPolyFillMode */
     NULL,                               /* pSetROP2 */
     NULL,                               /* pSetRelAbs */

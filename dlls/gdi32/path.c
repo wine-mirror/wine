@@ -2247,7 +2247,6 @@ const struct gdi_dc_funcs path_driver =
     pathdrv_CreateDC,                   /* pCreateDC */
     pathdrv_DeleteDC,                   /* pDeleteDC */
     NULL,                               /* pDeleteObject */
-    NULL,                               /* pDescribePixelFormat */
     NULL,                               /* pDeviceCapabilities */
     pathdrv_Ellipse,                    /* pEllipse */
     NULL,                               /* pEndDoc */
@@ -2339,7 +2338,6 @@ const struct gdi_dc_funcs path_driver =
     NULL,                               /* pSetMapMode */
     NULL,                               /* pSetMapperFlags */
     NULL,                               /* pSetPixel */
-    NULL,                               /* pSetPixelFormat */
     NULL,                               /* pSetPolyFillMode */
     NULL,                               /* pSetROP2 */
     NULL,                               /* pSetRelAbs */

@@ -40,6 +40,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(dib);
 
 #include "wine/wgl_driver.h"
 
+extern BOOL WINAPI GdiSetPixelFormat( HDC hdc, INT fmt, const PIXELFORMATDESCRIPTOR *pfd );
+
 struct wgl_context
 {
     OSMesaContext context;
@@ -135,9 +137,9 @@ failed:
 }
 
 /**********************************************************************
- *	     dibdrv_DescribePixelFormat
+ *	     dibdrv_wglDescribePixelFormat
  */
-int dibdrv_DescribePixelFormat( PHYSDEV dev, int fmt, UINT size, PIXELFORMATDESCRIPTOR *descr )
+int dibdrv_wglDescribePixelFormat( HDC hdc, int fmt, UINT size, PIXELFORMATDESCRIPTOR *descr )
 {
     int ret = sizeof(pixel_formats) / sizeof(pixel_formats[0]);
 
@@ -167,22 +169,6 @@ int dibdrv_DescribePixelFormat( PHYSDEV dev, int fmt, UINT size, PIXELFORMATDESC
     descr->cStencilBits     = pixel_formats[fmt - 1].stencil_bits;
     descr->cAuxBuffers      = 0;
     descr->iLayerType       = PFD_MAIN_PLANE;
-    return ret;
-}
-
-/**********************************************************************
- *	     dibdrv_SetPixelFormat
- */
-BOOL dibdrv_SetPixelFormat( PHYSDEV dev, int fmt, const PIXELFORMATDESCRIPTOR *descr )
-{
-    DC *dc;
-    BOOL ret = TRUE;
-
-    if (fmt <= 0 || fmt > nb_formats) return FALSE;
-    dc = get_dc_ptr( dev->hdc );
-    if (!dc->pixel_format) dc->pixel_format = fmt;
-    else ret = (dc->pixel_format == fmt);
-    release_dc_ptr( dc );
     return ret;
 }
 
@@ -300,6 +286,15 @@ static BOOL dibdrv_wglMakeCurrent( HDC hdc, struct wgl_context *context )
     return ret;
 }
 
+/**********************************************************************
+ *	     dibdrv_wglSetPixelFormat
+ */
+BOOL dibdrv_wglSetPixelFormat( HDC hdc, int fmt, const PIXELFORMATDESCRIPTOR *descr )
+{
+    if (fmt <= 0 || fmt > nb_formats) return FALSE;
+    return GdiSetPixelFormat( hdc, fmt, descr );
+}
+
 /***********************************************************************
  *		dibdrv_wglShareLists
  */
@@ -315,9 +310,11 @@ static struct opengl_funcs opengl_funcs =
         dibdrv_wglCopyContext,        /* p_wglCopyContext */
         dibdrv_wglCreateContext,      /* p_wglCreateContext */
         dibdrv_wglDeleteContext,      /* p_wglDeleteContext */
+        dibdrv_wglDescribePixelFormat,/* p_wglDescribePixelFormat */
         dibdrv_wglGetPixelFormat,     /* p_wglGetPixelFormat */
         dibdrv_wglGetProcAddress,     /* p_wglGetProcAddress */
         dibdrv_wglMakeCurrent,        /* p_wglMakeCurrent */
+        dibdrv_wglSetPixelFormat,     /* p_wglSetPixelFormat */
         dibdrv_wglShareLists,         /* p_wglShareLists */
     }
 };
@@ -341,27 +338,12 @@ struct opengl_funcs *dibdrv_wine_get_wgl_driver( PHYSDEV dev, UINT version )
 #else  /* SONAME_LIBOSMESA */
 
 /**********************************************************************
- *	     dibdrv_DescribePixelFormat
- */
-int dibdrv_DescribePixelFormat( PHYSDEV dev, int fmt, UINT size, PIXELFORMATDESCRIPTOR *descr )
-{
-    return 0;
-}
-
-/**********************************************************************
- *	     dibdrv_SetPixelFormat
- */
-BOOL dibdrv_SetPixelFormat( PHYSDEV dev, int fmt, const PIXELFORMATDESCRIPTOR *descr )
-{
-    return FALSE;
-}
-
-/**********************************************************************
  *	     dibdrv_wine_get_wgl_driver
  */
 struct opengl_funcs *dibdrv_wine_get_wgl_driver( PHYSDEV dev, UINT version )
 {
-    ERR( "OSMesa not compiled in, no OpenGL bitmap support\n" );
+    static int warned;
+    if (!warned++) ERR( "OSMesa not compiled in, no OpenGL bitmap support\n" );
     return (void *)-1;
 }
 

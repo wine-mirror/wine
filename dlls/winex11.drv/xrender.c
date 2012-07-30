@@ -2480,7 +2480,6 @@ static const struct gdi_dc_funcs xrender_funcs =
     xrenderdrv_CreateDC,                /* pCreateDC */
     xrenderdrv_DeleteDC,                /* pDeleteDC */
     NULL,                               /* pDeleteObject */
-    NULL,                               /* pDescribePixelFormat */
     NULL,                               /* pDeviceCapabilities */
     NULL,                               /* pEllipse */
     NULL,                               /* pEndDoc */
@@ -2572,7 +2571,6 @@ static const struct gdi_dc_funcs xrender_funcs =
     NULL,                               /* pSetMapMode */
     NULL,                               /* pSetMapperFlags */
     NULL,                               /* pSetPixel */
-    NULL,                               /* pSetPixelFormat */
     NULL,                               /* pSetPolyFillMode */
     NULL,                               /* pSetROP2 */
     NULL,                               /* pSetRelAbs */

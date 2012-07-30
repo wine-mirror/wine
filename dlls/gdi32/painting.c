@@ -490,21 +490,19 @@ COLORREF WINAPI GetPixel( HDC hdc, INT x, INT y )
  *
  * Probably not the correct semantics, it's supposed to be an internal backend for SetPixelFormat.
  */
-BOOL WINAPI GdiSetPixelFormat( HDC hdc, INT iPixelFormat, const PIXELFORMATDESCRIPTOR *ppfd)
+BOOL WINAPI GdiSetPixelFormat( HDC hdc, INT format, const PIXELFORMATDESCRIPTOR *descr )
 {
-    INT bRet = FALSE;
-    DC * dc = get_dc_ptr( hdc );
+    DC *dc;
+    BOOL ret = TRUE;
 
-    TRACE("(%p,%d,%p)\n",hdc,iPixelFormat,ppfd);
+    TRACE("(%p,%d,%p)\n", hdc, format, descr);
 
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetPixelFormat );
-        update_dc( dc );
-        bRet = physdev->funcs->pSetPixelFormat( physdev, iPixelFormat, ppfd );
-        release_dc_ptr( dc );
-    }
-    return bRet;
+    if (!(dc = get_dc_ptr( hdc ))) return FALSE;
+
+    if (!dc->pixel_format) dc->pixel_format = format;
+    else ret = (dc->pixel_format == format);
+    release_dc_ptr( dc );
+    return ret;
 }
 
 
@@ -513,22 +511,10 @@ BOOL WINAPI GdiSetPixelFormat( HDC hdc, INT iPixelFormat, const PIXELFORMATDESCR
  *
  * Probably not the correct semantics, it's supposed to be an internal backend for DescribePixelFormat.
  */
-INT WINAPI GdiDescribePixelFormat( HDC hdc, INT iPixelFormat, UINT nBytes,
-                                   LPPIXELFORMATDESCRIPTOR ppfd )
+INT WINAPI GdiDescribePixelFormat( HDC hdc, INT format, UINT size, PIXELFORMATDESCRIPTOR *descr )
 {
-    INT ret = 0;
-    DC * dc = get_dc_ptr( hdc );
-
-    TRACE("(%p,%d,%d,%p): stub\n",hdc,iPixelFormat,nBytes,ppfd);
-
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pDescribePixelFormat );
-        update_dc( dc );
-        ret = physdev->funcs->pDescribePixelFormat( physdev, iPixelFormat, nBytes, ppfd );
-        release_dc_ptr( dc );
-    }
-    return ret;
+    FIXME( "(%p,%d,%d,%p): stub\n", hdc, format, size, descr );
+    return 0;
 }
 
 

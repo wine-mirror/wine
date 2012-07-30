@@ -50,7 +50,6 @@ static const struct gdi_dc_funcs EMFDRV_Funcs =
     NULL,                            /* pCreateDC */
     EMFDRV_DeleteDC,                 /* pDeleteDC */
     EMFDRV_DeleteObject,             /* pDeleteObject */
-    NULL,                            /* pDescribePixelFormat */
     NULL,                            /* pDeviceCapabilities */
     EMFDRV_Ellipse,                  /* pEllipse */
     NULL,                            /* pEndDoc */
@@ -142,7 +141,6 @@ static const struct gdi_dc_funcs EMFDRV_Funcs =
     EMFDRV_SetMapMode,               /* pSetMapMode */
     EMFDRV_SetMapperFlags,           /* pSetMapperFlags */
     EMFDRV_SetPixel,                 /* pSetPixel */
-    NULL,                            /* pSetPixelFormat */
     EMFDRV_SetPolyFillMode,          /* pSetPolyFillMode */
     EMFDRV_SetROP2,                  /* pSetROP2 */
     NULL,                            /* pSetRelAbs */

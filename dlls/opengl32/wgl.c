@@ -50,8 +50,6 @@ extern struct opengl_funcs null_opengl_funcs;
 const GLubyte * WINAPI wine_glGetString( GLenum name );
 
 /* internal GDI functions */
-extern INT WINAPI GdiDescribePixelFormat( HDC hdc, INT fmt, UINT size, PIXELFORMATDESCRIPTOR *pfd );
-extern BOOL WINAPI GdiSetPixelFormat( HDC hdc, INT fmt, const PIXELFORMATDESCRIPTOR *pfd );
 extern BOOL WINAPI GdiSwapBuffers( HDC hdc );
 
 /* handle management */
@@ -168,15 +166,6 @@ static void free_handle_ptr( struct wgl_handle *ptr )
     ptr->funcs = NULL;
     next_free = ptr;
     LeaveCriticalSection( &wgl_section );
-}
-
-/***********************************************************************
- *		 wglSetPixelFormat(OPENGL32.@)
- */
-BOOL WINAPI wglSetPixelFormat( HDC hdc, INT iPixelFormat,
-                               const PIXELFORMATDESCRIPTOR *ppfd)
-{
-    return GdiSetPixelFormat(hdc, iPixelFormat, ppfd);
 }
 
 /***********************************************************************
@@ -418,6 +407,16 @@ HGLRC WINAPI wglGetCurrentContext(void)
 }
 
 /***********************************************************************
+ *		wglDescribePixelFormat (OPENGL32.@)
+ */
+INT WINAPI wglDescribePixelFormat(HDC hdc, INT format, UINT size, PIXELFORMATDESCRIPTOR *descr )
+{
+    struct opengl_funcs *funcs = get_dc_funcs( hdc );
+    if (!funcs) return 0;
+    return funcs->wgl.p_wglDescribePixelFormat( hdc, format, size, descr );
+}
+
+/***********************************************************************
  *		wglChoosePixelFormat (OPENGL32.@)
  */
 INT WINAPI wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd)
@@ -432,7 +431,7 @@ INT WINAPI wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd)
                  ppfd->cColorBits, ppfd->cRedBits, ppfd->cGreenBits, ppfd->cBlueBits, ppfd->cAlphaBits,
                  ppfd->cAccumBits, ppfd->cDepthBits, ppfd->cStencilBits, ppfd->cAuxBuffers );
 
-    count = GdiDescribePixelFormat( hdc, 0, 0, NULL );
+    count = wglDescribePixelFormat( hdc, 0, 0, NULL );
     if (!count) return 0;
 
     best_format = 0;
@@ -445,7 +444,7 @@ INT WINAPI wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd)
 
     for (i = 1; i <= count; i++)
     {
-        if (!GdiDescribePixelFormat( hdc, i, sizeof(format), &format )) continue;
+        if (!wglDescribePixelFormat( hdc, i, sizeof(format), &format )) continue;
 
         if (ppfd->iPixelType != format.iPixelType)
         {
@@ -581,15 +580,6 @@ INT WINAPI wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd)
 }
 
 /***********************************************************************
- *		wglDescribePixelFormat (OPENGL32.@)
- */
-INT WINAPI wglDescribePixelFormat(HDC hdc, INT iPixelFormat, UINT nBytes,
-                                LPPIXELFORMATDESCRIPTOR ppfd)
-{
-  return GdiDescribePixelFormat(hdc, iPixelFormat, nBytes, ppfd);
-}
-
-/***********************************************************************
  *		wglGetPixelFormat (OPENGL32.@)
  */
 INT WINAPI wglGetPixelFormat(HDC hdc)
@@ -597,6 +587,16 @@ INT WINAPI wglGetPixelFormat(HDC hdc)
     struct opengl_funcs *funcs = get_dc_funcs( hdc );
     if (!funcs) return 0;
     return funcs->wgl.p_wglGetPixelFormat( hdc );
+}
+
+/***********************************************************************
+ *		 wglSetPixelFormat(OPENGL32.@)
+ */
+BOOL WINAPI wglSetPixelFormat( HDC hdc, INT format, const PIXELFORMATDESCRIPTOR *descr )
+{
+    struct opengl_funcs *funcs = get_dc_funcs( hdc );
+    if (!funcs) return 0;
+    return funcs->wgl.p_wglSetPixelFormat( hdc, format, descr );
 }
 
 /***********************************************************************

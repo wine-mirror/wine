@@ -1161,8 +1161,8 @@ Drawable create_glxpixmap(Display *display, XVisualInfo *vis, Pixmap parent)
  *
  * Get the pixel-format descriptor associated to the given id
  */
-static int glxdrv_DescribePixelFormat(PHYSDEV dev, int iPixelFormat,
-                                      UINT nBytes, PIXELFORMATDESCRIPTOR *ppfd)
+static int glxdrv_wglDescribePixelFormat( HDC hdc, int iPixelFormat,
+                                          UINT nBytes, PIXELFORMATDESCRIPTOR *ppfd)
 {
   /*XVisualInfo *vis;*/
   int value;
@@ -1173,7 +1173,7 @@ static int glxdrv_DescribePixelFormat(PHYSDEV dev, int iPixelFormat,
 
   if (!has_opengl()) return 0;
 
-  TRACE("(%p,%d,%d,%p)\n", dev->hdc, iPixelFormat, nBytes, ppfd);
+  TRACE("(%p,%d,%d,%p)\n", hdc, iPixelFormat, nBytes, ppfd);
 
   /* Look for the iPixelFormat in our list of supported formats. If it is supported we get the index in the FBConfig table and the number of supported formats back */
   fmt = ConvertPixelFormatWGLtoGLX(gdi_display, iPixelFormat, FALSE /* Offscreen */, &fmt_count);
@@ -1335,24 +1335,27 @@ static int glxdrv_wglGetPixelFormat( HDC hdc )
 }
 
 /***********************************************************************
- *		glxdrv_SetPixelFormat
+ *		glxdrv_wglSetPixelFormat
  */
-static BOOL glxdrv_SetPixelFormat(PHYSDEV dev, int iPixelFormat, const PIXELFORMATDESCRIPTOR *ppfd)
+static BOOL glxdrv_wglSetPixelFormat( HDC hdc, int iPixelFormat, const PIXELFORMATDESCRIPTOR *ppfd )
 {
-    struct glx_physdev *physdev = get_glxdrv_dev( dev );
+    struct x11drv_escape_get_drawable escape;
     WineGLPixelFormat *fmt;
     int value;
     HWND hwnd;
 
-    TRACE("(%p,%d,%p)\n", dev->hdc, iPixelFormat, ppfd);
+    TRACE("(%p,%d,%p)\n", hdc, iPixelFormat, ppfd);
 
-    if (!has_opengl()) return FALSE;
+    escape.code = X11DRV_GET_DRAWABLE;
+    if (!ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape.code), (LPCSTR)&escape.code,
+                    sizeof(escape), (LPSTR)&escape ))
+        return 0;
 
-    if(physdev->pixel_format)  /* cannot change it if already set */
-        return (physdev->pixel_format == iPixelFormat);
+    if (escape.pixel_format)  /* cannot change it if already set */
+        return (escape.pixel_format == iPixelFormat);
 
     /* SetPixelFormat is not allowed on the X root_window e.g. GetDC(0) */
-    if(physdev->x11dev->drawable == root_window)
+    if (escape.drawable == root_window)
     {
         ERR("Invalid operation on root_window\n");
         return FALSE;
@@ -1369,7 +1372,7 @@ static BOOL glxdrv_SetPixelFormat(PHYSDEV dev, int iPixelFormat, const PIXELFORM
     pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_DRAWABLE_TYPE, &value);
     wine_tsx11_unlock();
 
-    hwnd = WindowFromDC(physdev->dev.hdc);
+    hwnd = WindowFromDC( hdc );
     if(hwnd) {
         if(!(value&GLX_WINDOW_BIT)) {
             WARN("Pixel format %d is not compatible for window rendering\n", iPixelFormat);
@@ -3116,7 +3119,6 @@ static const struct gdi_dc_funcs glxdrv_funcs =
     glxdrv_CreateDC,                    /* pCreateDC */
     glxdrv_DeleteDC,                    /* pDeleteDC */
     NULL,                               /* pDeleteObject */
-    glxdrv_DescribePixelFormat,         /* pDescribePixelFormat */
     NULL,                               /* pDeviceCapabilities */
     NULL,                               /* pEllipse */
     NULL,                               /* pEndDoc */
@@ -3208,7 +3210,6 @@ static const struct gdi_dc_funcs glxdrv_funcs =
     NULL,                               /* pSetMapMode */
     NULL,                               /* pSetMapperFlags */
     NULL,                               /* pSetPixel */
-    glxdrv_SetPixelFormat,              /* pSetPixelFormat */
     NULL,                               /* pSetPolyFillMode */
     NULL,                               /* pSetROP2 */
     NULL,                               /* pSetRelAbs */
@@ -3241,9 +3242,11 @@ static struct opengl_funcs opengl_funcs =
         glxdrv_wglCopyContext,              /* p_wglCopyContext */
         glxdrv_wglCreateContext,            /* p_wglCreateContext */
         glxdrv_wglDeleteContext,            /* p_wglDeleteContext */
+        glxdrv_wglDescribePixelFormat,      /* p_wglDescribePixelFormat */
         glxdrv_wglGetPixelFormat,           /* p_wglGetPixelFormat */
         glxdrv_wglGetProcAddress,           /* p_wglGetProcAddress */
         glxdrv_wglMakeCurrent,              /* p_wglMakeCurrent */
+        glxdrv_wglSetPixelFormat,           /* p_wglSetPixelFormat */
         glxdrv_wglShareLists,               /* p_wglShareLists */
     }
 };

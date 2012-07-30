@@ -76,7 +76,6 @@ struct gdi_dc_funcs
     BOOL     (*pCreateDC)(PHYSDEV*,LPCWSTR,LPCWSTR,LPCWSTR,const DEVMODEW*);
     BOOL     (*pDeleteDC)(PHYSDEV);
     BOOL     (*pDeleteObject)(PHYSDEV,HGDIOBJ);
-    INT      (*pDescribePixelFormat)(PHYSDEV,INT,UINT,PIXELFORMATDESCRIPTOR *);
     DWORD    (*pDeviceCapabilities)(LPSTR,LPCSTR,LPCSTR,WORD,LPSTR,LPDEVMODEA);
     BOOL     (*pEllipse)(PHYSDEV,INT,INT,INT,INT);
     INT      (*pEndDoc)(PHYSDEV);
@@ -168,7 +167,6 @@ struct gdi_dc_funcs
     INT      (*pSetMapMode)(PHYSDEV,INT);
     DWORD    (*pSetMapperFlags)(PHYSDEV,DWORD);
     COLORREF (*pSetPixel)(PHYSDEV,INT,INT,COLORREF);
-    BOOL     (*pSetPixelFormat)(PHYSDEV,INT,const PIXELFORMATDESCRIPTOR *);
     INT      (*pSetPolyFillMode)(PHYSDEV,INT);
     INT      (*pSetROP2)(PHYSDEV,INT);
     INT      (*pSetRelAbs)(PHYSDEV,INT);
@@ -198,7 +196,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 42
+#define WINE_GDI_DRIVER_VERSION 43
 
 #define GDI_PRIORITY_NULL_DRV        0  /* null driver */
 #define GDI_PRIORITY_FONT_DRV      100  /* any font driver */

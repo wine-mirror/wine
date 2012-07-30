@@ -228,11 +228,6 @@ static BOOL nulldrv_DeleteObject( PHYSDEV dev, HGDIOBJ obj )
     return TRUE;
 }
 
-static INT nulldrv_DescribePixelFormat( PHYSDEV dev, INT format, UINT size, PIXELFORMATDESCRIPTOR * descr )
-{
-    return 0;
-}
-
 static DWORD nulldrv_DeviceCapabilities( LPSTR buffer, LPCSTR device, LPCSTR port,
                                          WORD cap, LPSTR output, DEVMODEA *devmode )
 {
@@ -595,11 +590,6 @@ static COLORREF nulldrv_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
     return color;
 }
 
-static BOOL nulldrv_SetPixelFormat( PHYSDEV dev, INT format, const PIXELFORMATDESCRIPTOR *descr )
-{
-    return FALSE;
-}
-
 static INT nulldrv_SetPolyFillMode( PHYSDEV dev, INT mode )
 {
     return mode;
@@ -681,7 +671,6 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_CreateDC,                   /* pCreateDC */
     nulldrv_DeleteDC,                   /* pDeleteDC */
     nulldrv_DeleteObject,               /* pDeleteObject */
-    nulldrv_DescribePixelFormat,        /* pDescribePixelFormat */
     nulldrv_DeviceCapabilities,         /* pDeviceCapabilities */
     nulldrv_Ellipse,                    /* pEllipse */
     nulldrv_EndDoc,                     /* pEndDoc */
@@ -773,7 +762,6 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_SetMapMode,                 /* pSetMapMode */
     nulldrv_SetMapperFlags,             /* pSetMapperFlags */
     nulldrv_SetPixel,                   /* pSetPixel */
-    nulldrv_SetPixelFormat,             /* pSetPixelFormat */
     nulldrv_SetPolyFillMode,            /* pSetPolyFillMode */
     nulldrv_SetROP2,                    /* pSetROP2 */
     nulldrv_SetRelAbs,                  /* pSetRelAbs */

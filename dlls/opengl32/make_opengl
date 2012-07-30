@@ -622,10 +622,17 @@ my %wgl_functions =
                                     [ "UINT", "mask" ] ] ],
     "wglCreateContext" => [ "struct wgl_context *", [ [ "HDC", "hdc" ] ] ],
     "wglDeleteContext" => [ "void", [ [ "struct wgl_context *", "context" ] ] ],
+    "wglDescribePixelFormat" => [ "INT", [ [ "HDC", "hdc" ],
+                                           [ "INT", "format" ],
+                                           [ "UINT", "size" ],
+                                           [ "PIXELFORMATDESCRIPTOR *", "descr" ] ] ],
     "wglGetPixelFormat" => [ "INT", [ [ "HDC", "hdc" ] ] ],
     "wglGetProcAddress" => [ "PROC", [ [ "LPCSTR", "name" ] ] ],
     "wglMakeCurrent" => [ "BOOL", [ [ "HDC", "hdc" ],
                                     [ "struct wgl_context *", "context" ] ] ],
+    "wglSetPixelFormat" => [ "BOOL", [ [ "HDC", "hdc" ],
+                                       [ "INT", "format" ],
+                                       [ "const PIXELFORMATDESCRIPTOR *", "descr" ] ] ],
     "wglShareLists" => [ "BOOL", [ [ "struct wgl_context *", "org" ],
                                    [ "struct wgl_context *", "dst" ] ] ],
    );
@@ -874,6 +881,7 @@ print NORM "
 #include <stdarg.h>
 #include \"opengl_ext.h\"
 #include \"winternl.h\"
+#include \"wingdi.h\"
 #include \"wine/wgl_driver.h\"
 #include \"wine/debug.h\"
 
@@ -913,6 +921,7 @@ print EXT "
 #include <stdarg.h>
 #include \"opengl_ext.h\"
 #include \"winternl.h\"
+#include \"wingdi.h\"
 #define WGL_WGLEXT_PROTOTYPES
 #include \"wine/wglext.h\"
 #include \"wine/wgl_driver.h\"

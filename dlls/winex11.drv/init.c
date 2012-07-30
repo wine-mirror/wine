@@ -436,31 +436,6 @@ static INT X11DRV_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_d
 }
 
 
-static inline void opengl_error(void)
-{
-    static int warned;
-    if (!warned++) ERR("No OpenGL support compiled in.\n");
-}
-
-/***********************************************************************
- *		X11DRV_DescribePixelFormat
- */
-static int X11DRV_DescribePixelFormat( PHYSDEV dev, int fmt, UINT size, PIXELFORMATDESCRIPTOR *ppfd )
-{
-    opengl_error();
-    return 0;
-}
-
-/***********************************************************************
- *		X11DRV_SetPixelFormat
- */
-static BOOL X11DRV_SetPixelFormat( PHYSDEV dev, int fmt, const PIXELFORMATDESCRIPTOR *ppfd )
-{
-    opengl_error();
-    return FALSE;
-}
-
-
 static const struct gdi_dc_funcs x11drv_funcs =
 {
     NULL,                               /* pAbortDoc */
@@ -477,7 +452,6 @@ static const struct gdi_dc_funcs x11drv_funcs =
     X11DRV_CreateDC,                    /* pCreateDC */
     X11DRV_DeleteDC,                    /* pDeleteDC */
     NULL,                               /* pDeleteObject */
-    X11DRV_DescribePixelFormat,         /* pDescribePixelFormat */
     NULL,                               /* pDeviceCapabilities */
     X11DRV_Ellipse,                     /* pEllipse */
     NULL,                               /* pEndDoc */
@@ -569,7 +543,6 @@ static const struct gdi_dc_funcs x11drv_funcs =
     NULL,                               /* pSetMapMode */
     NULL,                               /* pSetMapperFlags */
     X11DRV_SetPixel,                    /* pSetPixel */
-    X11DRV_SetPixelFormat,              /* pSetPixelFormat */
     NULL,                               /* pSetPolyFillMode */
     NULL,                               /* pSetROP2 */
     NULL,                               /* pSetRelAbs */

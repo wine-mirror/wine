@@ -5,6 +5,7 @@
 #include <stdarg.h>
 #include "opengl_ext.h"
 #include "winternl.h"
+#include "wingdi.h"
 #define WGL_WGLEXT_PROTOTYPES
 #include "wine/wglext.h"
 #include "wine/wgl_driver.h"

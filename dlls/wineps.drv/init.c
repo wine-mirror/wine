@@ -724,7 +724,6 @@ static const struct gdi_dc_funcs psdrv_funcs =
     PSDRV_CreateDC,                     /* pCreateDC */
     PSDRV_DeleteDC,                     /* pDeleteDC */
     NULL,                               /* pDeleteObject */
-    NULL,                               /* pDescribePixelFormat */
     PSDRV_DeviceCapabilities,           /* pDeviceCapabilities */
     PSDRV_Ellipse,                      /* pEllipse */
     PSDRV_EndDoc,                       /* pEndDoc */
@@ -816,7 +815,6 @@ static const struct gdi_dc_funcs psdrv_funcs =
     NULL,                               /* pSetMapMode */
     NULL,                               /* pSetMapperFlags */
     PSDRV_SetPixel,                     /* pSetPixel */
-    NULL,                               /* pSetPixelFormat */
     NULL,                               /* pSetPolyFillMode */
     NULL,                               /* pSetROP2 */
     NULL,                               /* pSetRelAbs */

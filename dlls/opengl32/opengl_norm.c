@@ -5,6 +5,7 @@
 #include <stdarg.h>
 #include "opengl_ext.h"
 #include "winternl.h"
+#include "wingdi.h"
 #include "wine/wgl_driver.h"
 #include "wine/debug.h"
 
@@ -3027,9 +3028,11 @@ void WINAPI wine_glViewport( GLint x, GLint y, GLsizei width, GLsizei height ) {
 static BOOL null_wglCopyContext( struct wgl_context * src, struct wgl_context * dst, UINT mask ) { return 0; }
 static struct wgl_context * null_wglCreateContext( HDC hdc ) { return 0; }
 static void null_wglDeleteContext( struct wgl_context * context ) { }
+static INT null_wglDescribePixelFormat( HDC hdc, INT format, UINT size, PIXELFORMATDESCRIPTOR * descr ) { return 0; }
 static INT null_wglGetPixelFormat( HDC hdc ) { return 0; }
 static PROC null_wglGetProcAddress( LPCSTR name ) { return 0; }
 static BOOL null_wglMakeCurrent( HDC hdc, struct wgl_context * context ) { return 0; }
+static BOOL null_wglSetPixelFormat( HDC hdc, INT format, const PIXELFORMATDESCRIPTOR * descr ) { return 0; }
 static BOOL null_wglShareLists( struct wgl_context * org, struct wgl_context * dst ) { return 0; }
 static void null_glAccum( GLenum op, GLfloat value ) { }
 static void null_glAlphaFunc( GLenum func, GLfloat ref ) { }
@@ -3374,9 +3377,11 @@ struct opengl_funcs null_opengl_funcs =
         null_wglCopyContext,
         null_wglCreateContext,
         null_wglDeleteContext,
+        null_wglDescribePixelFormat,
         null_wglGetPixelFormat,
         null_wglGetProcAddress,
         null_wglMakeCurrent,
+        null_wglSetPixelFormat,
         null_wglShareLists,
     },
 #define USE_GL_FUNC(name) null_##name,
