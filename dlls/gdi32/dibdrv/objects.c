@@ -654,6 +654,87 @@ static BOOL solid_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end, DWORD
     return TRUE;
 }
 
+static void solid_line_region( const dib_info *dib, const POINT *start, const struct line_params *params,
+                               HRGN region )
+{
+    int len, err = params->err_start;
+    RECT rect;
+
+    rect.left   = start->x;
+    rect.top    = start->y;
+    rect.right  = start->x + 1;
+    rect.bottom = start->y + 1;
+
+    if (params->x_major)
+    {
+        if (params->x_inc > 0)
+        {
+            for (len = params->length; len; len--, rect.right++)
+            {
+                if (err + params->bias > 0)
+                {
+                    add_rect_to_region( region, &rect );
+                    rect.left = rect.right;
+                    rect.top += params->y_inc;
+                    rect.bottom += params->y_inc;
+                    err += params->err_add_1;
+                }
+                else err += params->err_add_2;
+            }
+        }
+        else
+        {
+            for (len = params->length; len; len--, rect.left--)
+            {
+                if (err + params->bias > 0)
+                {
+                    add_rect_to_region( region, &rect );
+                    rect.right = rect.left;
+                    rect.top += params->y_inc;
+                    rect.bottom += params->y_inc;
+                    err += params->err_add_1;
+                }
+                else err += params->err_add_2;
+            }
+        }
+    }
+    else
+    {
+        if (params->y_inc > 0)
+        {
+            for (len = params->length; len; len--, rect.bottom++)
+            {
+                if (err + params->bias > 0)
+                {
+                    add_rect_to_region( region, &rect );
+                    rect.top = rect.bottom;
+                    rect.left += params->x_inc;
+                    rect.right += params->x_inc;
+                    err += params->err_add_1;
+                }
+                else err += params->err_add_2;
+            }
+        }
+        else
+        {
+            for (len = params->length; len; len--, rect.top--)
+            {
+                if (err + params->bias > 0)
+                {
+                    add_rect_to_region( region, &rect );
+                    rect.bottom = rect.top;
+                    rect.left += params->x_inc;
+                    rect.right += params->x_inc;
+                    err += params->err_add_1;
+                }
+                else err += params->err_add_2;
+            }
+        }
+    }
+    /* add final rect */
+    add_rect_to_region( region, &rect );
+}
+
 static BOOL solid_pen_line_region( dibdrv_physdev *pdev, POINT *start, POINT *end, HRGN region )
 {
     RECT rect;
@@ -667,99 +748,47 @@ static BOOL solid_pen_line_region( dibdrv_physdev *pdev, POINT *start, POINT *en
     {
         rect.right = end->x;
         order_end_points(&rect.left, &rect.right);
-        add_rect_to_region( region, &rect );
+        if (clip_rect_to_dib( &pdev->dib, &rect )) add_rect_to_region( region, &rect );
     }
     else if(start->x == end->x)
     {
         rect.bottom = end->y;
         order_end_points(&rect.top, &rect.bottom);
-        add_rect_to_region( region, &rect );
+        if (clip_rect_to_dib( &pdev->dib, &rect )) add_rect_to_region( region, &rect );
     }
     else
     {
-        INT dx = end->x - start->x, dy = end->y - start->y;
-        INT abs_dx = abs(dx), abs_dy = abs(dy);
-        DWORD octant = get_octant_mask(dx, dy);
-        INT bias = get_bias( octant );
+        bres_params clip_params;
+        struct line_params line_params;
+        POINT p1 = crop_coords( *start ), p2 = crop_coords( *end );
 
-        if (is_xmajor( octant ))
+        init_bres_params( start, end, &clip_params, &line_params, &rect );
+        if (clip_rect_to_dib( &pdev->dib, &rect ))
         {
-            int y_inc = is_y_increasing( octant ) ? 1 : -1;
-            int err_add_1 = 2 * abs_dy - 2 * abs_dx;
-            int err_add_2 = 2 * abs_dy;
-            int err = 2 * abs_dy - abs_dx;
+            POINT clipped_start, clipped_end;
 
-            if (is_x_increasing( octant ))
+            if (clip_line( &p1, &p2, &rect, &clip_params, &clipped_start, &clipped_end ))
             {
-                for (rect.right = start->x + 1; rect.right <= end->x; rect.right++)
+                int m = abs(clipped_start.x - p1.x);
+                int n = abs(clipped_start.y - p1.y);
+
+                if (line_params.x_major)
                 {
-                    if (err + bias > 0)
-                    {
-                        add_rect_to_region( region, &rect );
-                        rect.left = rect.right;
-                        rect.top += y_inc;
-                        rect.bottom += y_inc;
-                        err += err_add_1;
-                    }
-                    else err += err_add_2;
+                    line_params.err_start = 2 * clip_params.dy - clip_params.dx
+                                          + m * 2 * clip_params.dy - n * 2 * clip_params.dx;
+                    line_params.length = abs( clipped_end.x - clipped_start.x ) + 1;
                 }
-            }
-            else
-            {
-                for (rect.left = start->x; rect.left > end->x; rect.left--)
+                else
                 {
-                    if (err + bias > 0)
-                    {
-                        add_rect_to_region( region, &rect );
-                        rect.right = rect.left;
-                        rect.top += y_inc;
-                        rect.bottom += y_inc;
-                        err += err_add_1;
-                    }
-                    else err += err_add_2;
+                    line_params.err_start = 2 * clip_params.dx - clip_params.dy
+                                          + n * 2 * clip_params.dx - m * 2 * clip_params.dy;
+                    line_params.length = abs( clipped_end.y - clipped_start.y ) + 1;
                 }
+
+                if (clipped_end.x == p2.x && clipped_end.y == p2.y) line_params.length--;
+                solid_line_region( &pdev->dib, &clipped_start, &line_params, region );
             }
         }
-        else
-        {
-            int x_inc = is_x_increasing( octant ) ? 1 : -1;
-            int err_add_1 = 2 * abs_dx - 2 * abs_dy;
-            int err_add_2 = 2 * abs_dx;
-            int err = 2 * abs_dx - abs_dy;
-
-            if (is_y_increasing( octant ))
-            {
-                for (rect.bottom = start->y + 1; rect.bottom <= end->y; rect.bottom++)
-                {
-                    if (err + bias > 0)
-                    {
-                        add_rect_to_region( region, &rect );
-                        rect.top = rect.bottom;
-                        rect.left += x_inc;
-                        rect.right += x_inc;
-                        err += err_add_1;
-                    }
-                    else err += err_add_2;
-                }
-            }
-            else
-            {
-                for (rect.top = start->y; rect.top > end->y; rect.top--)
-                {
-                    if (err + bias > 0)
-                    {
-                        add_rect_to_region( region, &rect );
-                        rect.bottom = rect.top;
-                        rect.left += x_inc;
-                        rect.right += x_inc;
-                        err += err_add_1;
-                    }
-                    else err += err_add_2;
-                }
-            }
-        }
-        /* add final rect */
-        add_rect_to_region( region, &rect );
     }
     return TRUE;
 }

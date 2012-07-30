@@ -255,6 +255,18 @@ DWORD convert_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struct bit
     return ERROR_SUCCESS;
 }
 
+int clip_rect_to_dib( const dib_info *dib, RECT *rc )
+{
+    RECT rect;
+
+    rect.left   = max( 0, -dib->rect.left );
+    rect.top    = max( 0, -dib->rect.top );
+    rect.right  = min( dib->rect.right, dib->width ) - dib->rect.left;
+    rect.bottom = min( dib->rect.bottom, dib->height ) - dib->rect.top;
+    if (is_rect_empty( &rect )) return 0;
+    return intersect_rect( rc, &rect, rc );
+}
+
 int get_clipped_rects( const dib_info *dib, const RECT *rc, HRGN clip, struct clipped_rects *clip_rects )
 {
     const WINEREGION *region;

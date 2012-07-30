@@ -244,6 +244,7 @@ extern void copy_dib_color_info(dib_info *dst, const dib_info *src) DECLSPEC_HID
 extern BOOL convert_dib(dib_info *dst, const dib_info *src) DECLSPEC_HIDDEN;
 extern COLORREF make_rgb_colorref( HDC hdc, dib_info *dib, COLORREF color, BOOL *got_pixel, DWORD *pixel ) DECLSPEC_HIDDEN;
 extern DWORD get_pixel_color(dibdrv_physdev *pdev, COLORREF color, BOOL mono_fixup) DECLSPEC_HIDDEN;
+extern int clip_rect_to_dib( const dib_info *dib, RECT *rc ) DECLSPEC_HIDDEN;
 extern int get_clipped_rects( const dib_info *dib, const RECT *rc, HRGN clip, struct clipped_rects *clip_rects ) DECLSPEC_HIDDEN;
 extern void add_clipped_bounds( dibdrv_physdev *dev, const RECT *rect, HRGN clip ) DECLSPEC_HIDDEN;
 extern int clip_line(const POINT *start, const POINT *end, const RECT *clip,
