@@ -788,6 +788,7 @@ static inline BOOL set_cache_glyph_widths(SCRIPT_CACHE *psc, WORD glyph, ABC *ab
 static HRESULT init_script_cache(const HDC hdc, SCRIPT_CACHE *psc)
 {
     ScriptCache *sc;
+    int size;
 
     if (!psc) return E_INVALIDARG;
     if (*psc) return S_OK;
@@ -798,6 +799,13 @@ static HRESULT init_script_cache(const HDC hdc, SCRIPT_CACHE *psc)
     {
         heap_free(sc);
         return E_INVALIDARG;
+    }
+    size = GetOutlineTextMetricsW(hdc, 0, NULL);
+    if (size)
+    {
+        sc->otm = heap_alloc(size);
+        sc->otm->otmSize = size;
+        GetOutlineTextMetricsW(hdc, size, sc->otm);
     }
     if (!GetObjectW(GetCurrentObject(hdc, OBJ_FONT), sizeof(LOGFONTW), &sc->lf))
     {
@@ -998,6 +1006,7 @@ HRESULT WINAPI ScriptFreeCache(SCRIPT_CACHE *psc)
             heap_free(((ScriptCache *)*psc)->scripts[i].languages);
         }
         heap_free(((ScriptCache *)*psc)->scripts);
+        heap_free(((ScriptCache *)*psc)->otm);
         heap_free(*psc);
         *psc = NULL;
     }
