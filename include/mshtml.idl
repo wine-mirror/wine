@@ -102,6 +102,118 @@ library MSHTML
 
 importlib("stdole2.tlb");
 
+typedef enum _DomConstructor {
+    DomConstructorObject                      = 0,
+    DomConstructorAttr                        = 1,
+    DomConstructorBehaviorUrnsCollection      = 2,
+    DomConstructorBookmarkCollection          = 3,
+    DomConstructorCompatibleInfo              = 4,
+    DomConstructorCompatibleInfoCollection    = 5,
+    DomConstructorControlRangeCollection      = 6,
+    DomConstructorCSSCurrentStyleDeclaration  = 7,
+    DomConstructorCSSRuleList                 = 8,
+    DomConstructorCSSRuleStyleDeclaration     = 9,
+    DomConstructorCSSStyleDeclaration         = 10,
+    DomConstructorCSSStyleRule                = 11,
+    DomConstructorCSSStyleSheet               = 12,
+    DomConstructorDataTransfer                = 13,
+    DomConstructorDOMImplementation           = 14,
+    DomConstructorElement                     = 15,
+    DomConstructorEvent                       = 16,
+    DomConstructorHistory                     = 17,
+    DomConstructorHTCElementBehaviorDefaults  = 18,
+    DomConstructorHTMLAnchorElement           = 19,
+    DomConstructorHTMLAreaElement             = 20,
+    DomConstructorHTMLAreasCollection         = 21,
+    DomConstructorHTMLBaseElement             = 22,
+    DomConstructorHTMLBaseFontElement         = 23,
+    DomConstructorHTMLBGSoundElement          = 24,
+    DomConstructorHTMLBlockElement            = 25,
+    DomConstructorHTMLBodyElement             = 26,
+    DomConstructorHTMLBRElement               = 27,
+    DomConstructorHTMLButtonElement           = 28,
+    DomConstructorHTMLCollection              = 29,
+    DomConstructorHTMLCommentElement          = 30,
+    DomConstructorHTMLDDElement               = 31,
+    DomConstructorHTMLDivElement              = 32,
+    DomConstructorHTMLDocument                = 33,
+    DomConstructorHTMLDListElement            = 34,
+    DomConstructorHTMLDTElement               = 35,
+    DomConstructorHTMLEmbedElement            = 36,
+    DomConstructorHTMLFieldSetElement         = 37,
+    DomConstructorHTMLFontElement             = 38,
+    DomConstructorHTMLFormElement             = 39,
+    DomConstructorHTMLFrameElement            = 40,
+    DomConstructorHTMLFrameSetElement         = 41,
+    DomConstructorHTMLGenericElement          = 42,
+    DomConstructorHTMLHeadElement             = 43,
+    DomConstructorHTMLHeadingElement          = 44,
+    DomConstructorHTMLHRElement               = 45,
+    DomConstructorHTMLHtmlElement             = 46,
+    DomConstructorHTMLIFrameElement           = 47,
+    DomConstructorHTMLImageElement            = 48,
+    DomConstructorHTMLInputElement            = 49,
+    DomConstructorHTMLIsIndexElement          = 50,
+    DomConstructorHTMLLabelElement            = 51,
+    DomConstructorHTMLLegendElement           = 52,
+    DomConstructorHTMLLIElement               = 53,
+    DomConstructorHTMLLinkElement             = 54,
+    DomConstructorHTMLMapElement              = 55,
+    DomConstructorHTMLMarqueeElement          = 56,
+    DomConstructorHTMLMetaElement             = 57,
+    DomConstructorHTMLModelessDialog          = 58,
+    DomConstructorHTMLNamespaceInfo           = 59,
+    DomConstructorHTMLNamespaceInfoCollection = 60,
+    DomConstructorHTMLNextIdElement           = 61,
+    DomConstructorHTMLNoShowElement           = 62,
+    DomConstructorHTMLObjectElement           = 63,
+    DomConstructorHTMLOListElement            = 64,
+    DomConstructorHTMLOptionElement           = 65,
+    DomConstructorHTMLParagraphElement        = 66,
+    DomConstructorHTMLParamElement            = 67,
+    DomConstructorHTMLPhraseElement           = 68,
+    DomConstructorHTMLPluginsCollection       = 69,
+    DomConstructorHTMLPopup                   = 70,
+    DomConstructorHTMLScriptElement           = 71,
+    DomConstructorHTMLSelectElement           = 72,
+    DomConstructorHTMLSpanElement             = 73,
+    DomConstructorHTMLStyleElement            = 74,
+    DomConstructorHTMLTableCaptionElement     = 75,
+    DomConstructorHTMLTableCellElement        = 76,
+    DomConstructorHTMLTableColElement         = 77,
+    DomConstructorHTMLTableElement            = 78,
+    DomConstructorHTMLTableRowElement         = 79,
+    DomConstructorHTMLTableSectionElement     = 80,
+    DomConstructorHTMLTextAreaElement         = 81,
+    DomConstructorHTMLTextElement             = 82,
+    DomConstructorHTMLTitleElement            = 83,
+    DomConstructorHTMLUListElement            = 84,
+    DomConstructorHTMLUnknownElement          = 85,
+    DomConstructorImage                       = 86,
+    DomConstructorLocation                    = 87,
+    DomConstructorNamedNodeMap                = 88,
+    DomConstructorNavigator                   = 89,
+    DomConstructorNodeList                    = 90,
+    DomConstructorOption                      = 91,
+    DomConstructorScreen                      = 92,
+    DomConstructorSelection                   = 93,
+    DomConstructorStaticNodeList              = 94,
+    DomConstructorStorage                     = 95,
+    DomConstructorStyleSheetList              = 96,
+    DomConstructorStyleSheetPage              = 97,
+    DomConstructorStyleSheetPageList          = 98,
+    DomConstructorText                        = 99,
+    DomConstructorTextRange                   = 100,
+    DomConstructorTextRangeCollection         = 101,
+    DomConstructorTextRectangle               = 102,
+    DomConstructorTextRectangleList           = 103,
+    DomConstructorWindow                      = 104,
+    DomConstructorXDomainRequest              = 105,
+    DomConstructorXMLHttpRequest              = 106,
+    DomConstructorMax                         = 107,
+    DomConstructor_Max                        = 2147483647L
+} DomConstructor;
+
 [
     odl,
     oleautomation,
@@ -17408,6 +17520,336 @@ interface IMarkupPointer : IUnknown
         [in] DWORD dwFlags,
         [in] IMarkupPointer *pIEndMatch,
         [in] IMarkupPointer *pIEndSearch);
+}
+
+/*****************************************************************************
+ *    IHTMLDOMConstructorCollection interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3051049c-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLDOMConstructorCollection : IDispatch
+{
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_ATTR)]
+    HRESULT Attr([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_BEHAVIORURNSCOLLECTION)]
+    HRESULT BehaviorUrnsCollection([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_BOOKMARKCOLLECTION)]
+    HRESULT BookmarkCollection([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_COMPATIBLEINFO)]
+    HRESULT CompatibleInfo([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_COMPATIBLEINFOCOLLECTION)]
+    HRESULT CompatibleInfoCollection([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_CONTROLRANGECOLLECTION)]
+    HRESULT ControlRangeCollection([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_CSSCURRENTSTYLEDECLARATION)]
+    HRESULT CSSCurrentStyleDeclaration([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_CSSRULELIST)]
+    HRESULT CSSRuleList([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_CSSRULESTYLEDECLARATION)]
+    HRESULT CSSRuleStyleDeclaration([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_CSSSTYLEDECLARATION)]
+    HRESULT CSSStyleDeclaration([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_CSSSTYLERULE)]
+    HRESULT CSSStyleRule([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_CSSSTYLESHEET)]
+    HRESULT CSSStyleSheet([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_DATATRANSFER)]
+    HRESULT DataTransfer([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_DOMIMPLEMENTATION)]
+    HRESULT DOMImplementation([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_ELEMENT)]
+    HRESULT Element([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_EVENT)]
+    HRESULT Event([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HISTORY)]
+    HRESULT History([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTCELEMENTBEHAVIORDEFAULTS)]
+    HRESULT HTCElementBehaviorDefaults([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLANCHORELEMENT)]
+    HRESULT HTMLAnchorElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLAREAELEMENT)]
+    HRESULT HTMLAreaElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLAREASCOLLECTION)]
+    HRESULT HTMLAreasCollection([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLBASEELEMENT)]
+    HRESULT HTMLBaseElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLBASEFONTELEMENT)]
+    HRESULT HTMLBaseFontElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLBGSOUNDELEMENT)]
+    HRESULT HTMLBGSoundElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLBLOCKELEMENT)]
+    HRESULT HTMLBlockElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLBODYELEMENT)]
+    HRESULT HTMLBodyElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLBRELEMENT)]
+    HRESULT HTMLBRElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLBUTTONELEMENT)]
+    HRESULT HTMLButtonElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLCOLLECTION)]
+    HRESULT HTMLCollection([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLCOMMENTELEMENT)]
+    HRESULT HTMLCommentElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLDDELEMENT)]
+    HRESULT HTMLDDElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLDIVELEMENT)]
+    HRESULT HTMLDivElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLDOCUMENT)]
+    HRESULT HTMLDocument([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLDLISTELEMENT)]
+    HRESULT HTMLDListElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLDTELEMENT)]
+    HRESULT HTMLDTElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLEMBEDELEMENT)]
+    HRESULT HTMLEmbedElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLFIELDSETELEMENT)]
+    HRESULT HTMLFieldSetElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLFONTELEMENT)]
+    HRESULT HTMLFontElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLFORMELEMENT)]
+    HRESULT HTMLFormElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLFRAMEELEMENT)]
+    HRESULT HTMLFrameElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLFRAMESETELEMENT)]
+    HRESULT HTMLFrameSetElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLGENERICELEMENT)]
+    HRESULT HTMLGenericElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLHEADELEMENT)]
+    HRESULT HTMLHeadElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLHEADINGELEMENT)]
+    HRESULT HTMLHeadingElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLHRELEMENT)]
+    HRESULT HTMLHRElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLHTMLELEMENT)]
+    HRESULT HTMLHtmlElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLIFRAMEELEMENT)]
+    HRESULT HTMLIFrameElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLIMAGEELEMENT)]
+    HRESULT HTMLImageElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLINPUTELEMENT)]
+    HRESULT HTMLInputElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLISINDEXELEMENT)]
+    HRESULT HTMLIsIndexElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLLABELELEMENT)]
+    HRESULT HTMLLabelElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLLEGENDELEMENT)]
+    HRESULT HTMLLegendElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLLIELEMENT)]
+    HRESULT HTMLLIElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLLINKELEMENT)]
+    HRESULT HTMLLinkElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLMAPELEMENT)]
+    HRESULT HTMLMapElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLMARQUEEELEMENT)]
+    HRESULT HTMLMarqueeElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLMETAELEMENT)]
+    HRESULT HTMLMetaElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLMODELESSDIALOG)]
+    HRESULT HTMLModelessDialog([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLNAMESPACEINFO)]
+    HRESULT HTMLNamespaceInfo([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLNAMESPACEINFOCOLLECTION)]
+    HRESULT HTMLNamespaceInfoCollection([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLNEXTIDELEMENT)]
+    HRESULT HTMLNextIdElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLNOSHOWELEMENT)]
+    HRESULT HTMLNoShowElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLOBJECTELEMENT)]
+    HRESULT HTMLObjectElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLOLISTELEMENT)]
+    HRESULT HTMLOListElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLOPTIONELEMENT)]
+    HRESULT HTMLOptionElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLPARAGRAPHELEMENT)]
+    HRESULT HTMLParagraphElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLPARAMELEMENT)]
+    HRESULT HTMLParamElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLPHRASEELEMENT)]
+    HRESULT HTMLPhraseElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLPLUGINSCOLLECTION)]
+    HRESULT HTMLPluginsCollection([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLPOPUP)]
+    HRESULT HTMLPopup([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLSCRIPTELEMENT)]
+    HRESULT HTMLScriptElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLSELECTELEMENT)]
+    HRESULT HTMLSelectElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLSPANELEMENT)]
+    HRESULT HTMLSpanElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLSTYLEELEMENT)]
+    HRESULT HTMLStyleElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLTABLECAPTIONELEMENT)]
+    HRESULT HTMLTableCaptionElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLTABLECELLELEMENT)]
+    HRESULT HTMLTableCellElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLTABLECOLELEMENT)]
+    HRESULT HTMLTableColElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLTABLEELEMENT)]
+    HRESULT HTMLTableElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLTABLEROWELEMENT)]
+    HRESULT HTMLTableRowElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLTABLESECTIONELEMENT)]
+    HRESULT HTMLTableSectionElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLTEXTAREAELEMENT)]
+    HRESULT HTMLTextAreaElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLTEXTELEMENT)]
+    HRESULT HTMLTextElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLTITLEELEMENT)]
+    HRESULT HTMLTitleElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLULISTELEMENT)]
+    HRESULT HTMLUListElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_HTMLUNKNOWNELEMENT)]
+    HRESULT HTMLUnknownElement([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_IMAGE)]
+    HRESULT Image([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_LOCATION)]
+    HRESULT Location([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_NAMEDNODEMAP)]
+    HRESULT NamedNodeMap([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_NAVIGATOR)]
+    HRESULT Navigator([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_NODELIST)]
+    HRESULT NodeList([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_OPTION)]
+    HRESULT Option([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_SCREEN)]
+    HRESULT Screen([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_SELECTION)]
+    HRESULT Selection([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_STATICNODELIST)]
+    HRESULT StaticNodeList([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_STORAGE)]
+    HRESULT Storage([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_STYLESHEETLIST)]
+    HRESULT StyleSheetList([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_STYLESHEETPAGE)]
+    HRESULT StyleSheetPage([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_STYLESHEETPAGELIST)]
+    HRESULT StyleSheetPageList([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_TEXT)]
+    HRESULT Text([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_TEXTRANGE)]
+    HRESULT TextRange([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_TEXTRANGECOLLECTION)]
+    HRESULT TextRangeCollection([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_TEXTRECTANGLE)]
+    HRESULT TextRectangle([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_TEXTRECTANGLELIST)]
+    HRESULT TextRectangleList([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_WINDOW)]
+    HRESULT Window([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_XDOMAINREQUEST)]
+    HRESULT XDomainRequest([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTORCOLLECTION_XMLHTTPREQUEST)]
+    HRESULT XMLHttpRequest([out, retval] IDispatch **p);
 }
 
 /*****************************************************************************
