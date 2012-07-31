@@ -417,12 +417,12 @@ BOOL WINAPI FPropCompareProp(LPSPropValue lpPropLeft, ULONG ulOp, LPSPropValue l
 
     switch (ulOp)
     {
-    case RELOP_LT: return iCmp <  0 ? TRUE : FALSE;
-    case RELOP_LE: return iCmp <= 0 ? TRUE : FALSE;
-    case RELOP_GT: return iCmp >  0 ? TRUE : FALSE;
-    case RELOP_GE: return iCmp >= 0 ? TRUE : FALSE;
-    case RELOP_EQ: return iCmp == 0 ? TRUE : FALSE;
-    case RELOP_NE: return iCmp != 0 ? TRUE : FALSE;
+    case RELOP_LT: return iCmp <  0;
+    case RELOP_LE: return iCmp <= 0;
+    case RELOP_GT: return iCmp >  0;
+    case RELOP_GE: return iCmp >= 0;
+    case RELOP_EQ: return iCmp == 0;
+    case RELOP_NE: return iCmp != 0;
     }
     return FALSE;
 }

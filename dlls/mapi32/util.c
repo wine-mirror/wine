@@ -488,7 +488,7 @@ BOOL WINAPI FEqualNames(LPMAPINAMEID lpName1, LPMAPINAMEID lpName2)
     if (lpName1->ulKind == MNID_STRING)
         return !strcmpW(lpName1->Kind.lpwstrName, lpName2->Kind.lpwstrName);
 
-    return lpName1->Kind.lID == lpName2->Kind.lID ? TRUE : FALSE;
+    return lpName1->Kind.lID == lpName2->Kind.lID;
 }
 
 /**************************************************************************
