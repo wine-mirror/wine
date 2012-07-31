@@ -1084,10 +1084,73 @@ static void test_D3DXCreateRenderToEnvMap(IDirect3DDevice9 *device)
     if (SUCCEEDED(hr)) ID3DXRenderToEnvMap_Release(render);
 }
 
+static void test_ID3DXRenderToEnvMap_cube_map(IDirect3DDevice9 *device)
+{
+    HRESULT hr;
+    IDirect3DCubeTexture9 *cube_texture = NULL;
+    ID3DXRenderToEnvMap *render = NULL;
+    struct device_state pre_state;
+    struct device_state current_state;
+
+    hr = IDirect3DDevice9_CreateCubeTexture(device, 256, 0, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
+        &cube_texture, NULL);
+    if (FAILED(hr))
+    {
+        skip("Failed to create cube texture\n");
+        return;
+    }
+
+    hr = retrieve_device_state(device, &pre_state);
+
+    hr = D3DXCreateRenderToEnvMap(device, 256, 0, D3DFMT_A8R8G8B8, TRUE, D3DFMT_D24X8, &render);
+    ok(hr == D3D_OK, "D3DCreateRenderToEnvMap returned %#x, expected %#x\n", hr, D3D_OK);
+    if (SUCCEEDED(hr))
+    {
+        DWORD face;
+
+        hr = ID3DXRenderToEnvMap_End(render, D3DX_FILTER_NONE);
+        ok(hr == D3DERR_INVALIDCALL, "ID3DXRenderToEnvMap::End returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+        hr = ID3DXRenderToEnvMap_BeginCube(render, cube_texture);
+        ok(hr == D3D_OK, "ID3DXRenderToEnvMap::BeginCube returned %#x, expected %#x\n", hr, D3D_OK);
+
+        hr = retrieve_device_state(device, &current_state);
+        ok(SUCCEEDED(hr), "Failed to retrieve device state\n");
+        compare_device_state(&current_state, &pre_state, TRUE);
+        release_device_state(&current_state);
+
+        for (face = D3DCUBEMAP_FACE_POSITIVE_X; face <= D3DCUBEMAP_FACE_NEGATIVE_Z; face++)
+        {
+            hr = ID3DXRenderToEnvMap_Face(render, face, D3DX_FILTER_POINT);
+            ok(hr == D3D_OK, "ID3DXRenderToEnvMap::Face returned %#x, expected %#x\n", hr, D3D_OK);
+
+            hr = retrieve_device_state(device, &current_state);
+            ok(SUCCEEDED(hr), "Failed to retrieve device state\n");
+            compare_device_state(&current_state, &pre_state, FALSE);
+            release_device_state(&current_state);
+        }
+
+        hr = ID3DXRenderToEnvMap_End(render, D3DX_FILTER_POINT);
+        ok(hr == D3D_OK, "ID3DXRenderToEnvMap::End returned %#x, expected %#x\n", hr, D3D_OK);
+
+        hr = retrieve_device_state(device, &current_state);
+        ok(SUCCEEDED(hr), "Failed to retrieve device state\n");
+        compare_device_state(&current_state, &pre_state, TRUE);
+        release_device_state(&current_state);
+
+        check_release((IUnknown *)render, 0);
+    }
+
+    release_device_state(&pre_state);
+
+    check_release((IUnknown *)cube_texture, 0);
+}
+
 static void test_ID3DXRenderToEnvMap(IDirect3DDevice9 *device)
 {
     HRESULT hr;
     ID3DXRenderToEnvMap *render;
+    IDirect3DSurface9 *depth_stencil_surface;
 
     hr = D3DXCreateRenderToEnvMap(device, 256, 0, D3DFMT_A8R8G8B8, FALSE, D3DFMT_UNKNOWN, &render);
     if (SUCCEEDED(hr))
@@ -1124,6 +1187,34 @@ static void test_ID3DXRenderToEnvMap(IDirect3DDevice9 *device)
 
         check_release((IUnknown *)render, 0);
     } else skip("Failed to create ID3DXRenderToEnvMap\n");
+
+    /* make sure there is a depth stencil surface present */
+    hr = IDirect3DDevice9_GetDepthStencilSurface(device, &depth_stencil_surface);
+    if (SUCCEEDED(hr))
+    {
+        IDirect3DSurface9_Release(depth_stencil_surface);
+        depth_stencil_surface = NULL;
+    }
+    else if (hr == D3DERR_NOTFOUND)
+    {
+        hr = IDirect3DDevice9_CreateDepthStencilSurface(device, 256, 256, D3DFMT_D24X8,
+                D3DMULTISAMPLE_NONE, 0, TRUE, &depth_stencil_surface, NULL);
+        if (SUCCEEDED(hr)) IDirect3DDevice9_SetDepthStencilSurface(device, depth_stencil_surface);
+    }
+
+    if (FAILED(hr))
+    {
+        skip("Failed to create depth stencil surface\n");
+        return;
+    }
+
+    test_ID3DXRenderToEnvMap_cube_map(device);
+
+    if (depth_stencil_surface)
+    {
+        IDirect3DDevice9_SetDepthStencilSurface(device, NULL);
+        IDirect3DSurface9_Release(depth_stencil_surface);
+    }
 }
 
 START_TEST(core)
