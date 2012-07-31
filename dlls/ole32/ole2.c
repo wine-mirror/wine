@@ -2953,8 +2953,7 @@ HRESULT WINAPI PropVariantClear(PROPVARIANT * pvar) /* [in/out] */
         CoTaskMemFree(pvar->u.blob.pBlobData);
         break;
     case VT_BSTR:
-        if (pvar->u.bstrVal)
-            PropSysFreeString(pvar->u.bstrVal);
+        PropSysFreeString(pvar->u.bstrVal);
         break;
     case VT_CF:
         if (pvar->u.pclipdata)
