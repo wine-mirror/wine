@@ -1,5 +1,6 @@
 MODULE    = fusion.dll
 IMPORTS   = advapi32 dbghelp shlwapi version user32
+EXTRADEFS = -DWIDL_C_INLINE_WRAPPERS
 
 C_SRCS = \
 	asmcache.c \

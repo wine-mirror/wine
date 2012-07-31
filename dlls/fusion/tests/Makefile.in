@@ -1,5 +1,6 @@
 TESTDLL   = fusion.dll
 IMPORTS   = user32
+EXTRADEFS = -DWIDL_C_INLINE_WRAPPERS
 
 C_SRCS = \
 	asmcache.c \

@@ -84,7 +84,7 @@ static HRESULT WINAPI IAssemblyNameImpl_QueryInterface(IAssemblyName *iface,
     if (IsEqualIID(riid, &IID_IUnknown) ||
         IsEqualIID(riid, &IID_IAssemblyName))
     {
-        IUnknown_AddRef(iface);
+        IAssemblyName_AddRef(iface);
         *ppobj = This;
         return S_OK;
     }
