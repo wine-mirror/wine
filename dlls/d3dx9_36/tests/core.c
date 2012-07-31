@@ -927,6 +927,8 @@ static void test_ID3DXRenderToSurface_device_state(IDirect3DDevice9 *device)
         compare_device_state(&current_state, &pre_state, FALSE);
         release_device_state(&current_state);
 
+        check_release((IUnknown *)render, 0);
+
         /* if EndScene isn't called, the device state isn't restored */
         hr = retrieve_device_state(device, &current_state);
         ok(SUCCEEDED(hr), "Failed to retrieve device state\n");
@@ -936,7 +938,7 @@ static void test_ID3DXRenderToSurface_device_state(IDirect3DDevice9 *device)
         hr = apply_device_state(device, &pre_state);
         ok(SUCCEEDED(hr), "Failed to restore previous device state\n");
 
-        check_release((IUnknown *)render, 0);
+        IDirect3DDevice9_EndScene(device);
     }
 
     release_device_state(&pre_state);
