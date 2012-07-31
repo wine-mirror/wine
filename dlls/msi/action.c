@@ -7045,23 +7045,51 @@ static UINT ACTION_SetODBCFolders( MSIPACKAGE *package )
 
 static UINT ITERATE_RemoveExistingProducts( MSIRECORD *rec, LPVOID param )
 {
+    static const WCHAR fmtW[] =
+        {'m','s','i','e','x','e','c',' ','/','i',' ','%','s',' ','R','E','M','O','V','E','=','%','s',0};
     MSIPACKAGE *package = param;
-    const WCHAR *property = MSI_RecordGetString( rec, 1 );
-    WCHAR *value;
+    const WCHAR *property = MSI_RecordGetString( rec, 7 );
+    UINT len = sizeof(fmtW)/sizeof(fmtW[0]);
+    WCHAR *product, *features, *cmd;
+    STARTUPINFOW si;
+    PROCESS_INFORMATION info;
+    BOOL ret;
 
-    if ((value = msi_dup_property( package->db, property )))
+    if (!(product = msi_dup_property( package->db, property ))) return ERROR_SUCCESS;
+
+    deformat_string( package, MSI_RecordGetString( rec, 6 ), &features );
+
+    len += strlenW( product );
+    if (features)
+        len += strlenW( features );
+    else
+        len += sizeof(szAll) / sizeof(szAll[0]);
+
+    if (!(cmd = msi_alloc( len * sizeof(WCHAR) )))
     {
-        FIXME("remove %s\n", debugstr_w(value));
-        msi_free( value );
+        msi_free( product );
+        msi_free( features );
+        return ERROR_OUTOFMEMORY;
     }
+    sprintfW( cmd, fmtW, product, features ? features : szAll );
+    msi_free( product );
+    msi_free( features );
+
+    memset( &si, 0, sizeof(STARTUPINFOW) );
+    ret = CreateProcessW( NULL, cmd, NULL, NULL, FALSE, 0, NULL, NULL, &si, &info );
+    msi_free( cmd );
+    if (!ret) return GetLastError();
+    CloseHandle( info.hThread );
+
+    WaitForSingleObject( info.hProcess, INFINITE );
+    CloseHandle( info.hProcess );
     return ERROR_SUCCESS;
 }
 
 static UINT ACTION_RemoveExistingProducts( MSIPACKAGE *package )
 {
     static const WCHAR query[] = {
-        'S','E','L','E','C','T',' ','A','c','t','i','o','n','P','r','o','p','e','r','t','y',' ',
-        'F','R','O','M',' ','U','p','g','r','a','d','e',0};
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','U','p','g','r','a','d','e',0};
     MSIQUERY *view;
     UINT r;
 
