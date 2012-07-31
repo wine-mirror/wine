@@ -26,6 +26,7 @@
 #include "initguid.h"
 #include "dwrite.h"
 
+#include "dwrite_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
@@ -168,8 +169,8 @@ static HRESULT WINAPI dwritefactory_CreateTypography(IDWriteFactory *iface, IDWr
 
 static HRESULT WINAPI dwritefactory_GetGdiInterop(IDWriteFactory *iface, IDWriteGdiInterop **gdi_interop)
 {
-    FIXME("(%p): stub\n", gdi_interop);
-    return E_NOTIMPL;
+    TRACE("(%p)\n", gdi_interop);
+    return create_gdiinterop(gdi_interop);
 }
 
 static HRESULT WINAPI dwritefactory_CreateTextLayout(IDWriteFactory *iface, WCHAR const* string,

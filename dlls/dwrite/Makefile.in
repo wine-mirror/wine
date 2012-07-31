@@ -1,6 +1,7 @@
 MODULE = dwrite.dll
 
 C_SRCS = \
+	gdiinterop.c \
 	main.c
 
 @MAKE_DLL_RULES@
