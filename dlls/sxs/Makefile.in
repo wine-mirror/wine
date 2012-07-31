@@ -1,6 +1,7 @@
 MODULE    = sxs.dll
 IMPORTS   = oleaut32 ole32
 IMPORTLIB = sxs
+EXTRADEFS = -DWIDL_C_INLINE_WRAPPERS
 
 C_SRCS = \
 	cache.c \

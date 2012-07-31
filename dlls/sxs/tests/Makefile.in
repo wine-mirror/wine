@@ -1,5 +1,6 @@
 TESTDLL   = sxs.dll
 IMPORTS   = sxs
+EXTRADEFS = -DWIDL_C_INLINE_WRAPPERS
 
 C_SRCS = \
 	cache.c \
