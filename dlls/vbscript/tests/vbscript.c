@@ -27,6 +27,22 @@
 
 #include "wine/test.h"
 
+#ifdef _WIN64
+
+#define IActiveScriptParse_QueryInterface IActiveScriptParse64_QueryInterface
+#define IActiveScriptParse_Release IActiveScriptParse64_Release
+#define IActiveScriptParse_InitNew IActiveScriptParse64_InitNew
+#define IActiveScriptParse_ParseScriptText IActiveScriptParse64_ParseScriptText
+
+#else
+
+#define IActiveScriptParse_QueryInterface IActiveScriptParse32_QueryInterface
+#define IActiveScriptParse_Release IActiveScriptParse32_Release
+#define IActiveScriptParse_InitNew IActiveScriptParse32_InitNew
+#define IActiveScriptParse_ParseScriptText IActiveScriptParse32_ParseScriptText
+
+#endif
+
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
 #define DEFINE_EXPECT(func) \
@@ -344,13 +360,13 @@ static void test_vbscript(void)
     test_state(vbscript, SCRIPTSTATE_UNINITIALIZED);
 
     SET_EXPECT(OnStateChange_INITIALIZED);
-    hres = IActiveScriptParse64_InitNew(parser);
+    hres = IActiveScriptParse_InitNew(parser);
     ok(hres == S_OK, "InitNew failed: %08x\n", hres);
     CHECK_CALLED(OnStateChange_INITIALIZED);
 
     test_state(vbscript, SCRIPTSTATE_INITIALIZED);
 
-    hres = IActiveScriptParse64_InitNew(parser);
+    hres = IActiveScriptParse_InitNew(parser);
     ok(hres == E_UNEXPECTED, "InitNew failed: %08x, expected E_UNEXPECTED\n", hres);
 
     SET_EXPECT(OnStateChange_CONNECTED);
@@ -372,7 +388,7 @@ static void test_vbscript(void)
     test_state(vbscript, SCRIPTSTATE_CLOSED);
     test_no_script_dispatch(vbscript);
 
-    IActiveScriptParse64_Release(parser);
+    IActiveScriptParse_Release(parser);
 
     ref = IActiveScript_Release(vbscript);
     ok(!ref, "ref = %d\n", ref);
@@ -396,7 +412,7 @@ static void test_vbscript_uninitializing(void)
 
     test_state(script, SCRIPTSTATE_UNINITIALIZED);
 
-    hres = IActiveScriptParse64_InitNew(parse);
+    hres = IActiveScriptParse_InitNew(parse);
     ok(hres == S_OK, "InitNew failed: %08x\n", hres);
 
     SET_EXPECT(GetLCID);
@@ -408,7 +424,7 @@ static void test_vbscript_uninitializing(void)
 
     test_state(script, SCRIPTSTATE_INITIALIZED);
 
-    hres = IActiveScriptParse64_ParseScriptText(parse, script_textW, NULL, NULL, NULL, 0, 1, 0x42, NULL, NULL);
+    hres = IActiveScriptParse_ParseScriptText(parse, script_textW, NULL, NULL, NULL, 0, 1, 0x42, NULL, NULL);
     ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
 
     hres = IActiveScript_SetScriptSite(script, &ActiveScriptSite);
@@ -484,7 +500,7 @@ static void test_vbscript_uninitializing(void)
 
     test_state(script, SCRIPTSTATE_CLOSED);
 
-    IUnknown_Release(parse);
+    IActiveScriptParse_Release(parse);
 
     ref = IActiveScript_Release(script);
     ok(!ref, "ref = %d\n", ref);
@@ -513,7 +529,7 @@ static void test_vbscript_release(void)
     test_state(vbscript, SCRIPTSTATE_UNINITIALIZED);
 
     SET_EXPECT(OnStateChange_INITIALIZED);
-    hres = IActiveScriptParse64_InitNew(parser);
+    hres = IActiveScriptParse_InitNew(parser);
     ok(hres == S_OK, "InitNew failed: %08x\n", hres);
     CHECK_CALLED(OnStateChange_INITIALIZED);
 
@@ -526,7 +542,7 @@ static void test_vbscript_release(void)
 
     test_state(vbscript, SCRIPTSTATE_CONNECTED);
 
-    IActiveScriptParse64_Release(parser);
+    IActiveScriptParse_Release(parser);
 
     SET_EXPECT(OnStateChange_DISCONNECTED);
     SET_EXPECT(OnStateChange_INITIALIZED);
@@ -573,7 +589,7 @@ static void test_vbscript_initializing(void)
     CHECK_CALLED(GetLCID);
 
     SET_EXPECT(OnStateChange_INITIALIZED);
-    hres = IActiveScriptParse64_InitNew(parse);
+    hres = IActiveScriptParse_InitNew(parse);
     ok(hres == S_OK, "InitNew failed: %08x\n", hres);
     CHECK_CALLED(OnStateChange_INITIALIZED);
 
@@ -587,7 +603,7 @@ static void test_vbscript_initializing(void)
 
     test_state(script, SCRIPTSTATE_CLOSED);
 
-    IUnknown_Release(parse);
+    IActiveScriptParse_Release(parse);
 
     ref = IActiveScript_Release(script);
     ok(!ref, "ref = %d\n", ref);

@@ -30,6 +30,22 @@
 
 #include "wine/test.h"
 
+#ifdef _WIN64
+
+#define IActiveScriptParse_QueryInterface IActiveScriptParse64_QueryInterface
+#define IActiveScriptParse_Release IActiveScriptParse64_Release
+#define IActiveScriptParse_InitNew IActiveScriptParse64_InitNew
+#define IActiveScriptParse_ParseScriptText IActiveScriptParse64_ParseScriptText
+
+#else
+
+#define IActiveScriptParse_QueryInterface IActiveScriptParse32_QueryInterface
+#define IActiveScriptParse_Release IActiveScriptParse32_Release
+#define IActiveScriptParse_InitNew IActiveScriptParse32_InitNew
+#define IActiveScriptParse_ParseScriptText IActiveScriptParse32_ParseScriptText
+
+#endif
+
 extern const CLSID CLSID_VBScript;
 
 #define DEFINE_EXPECT(func) \
@@ -693,7 +709,7 @@ static void _parse_script_a(unsigned line, IActiveScriptParse *parser, const cha
     HRESULT hres;
 
     str = a2bstr(script);
-    hres = IActiveScriptParse64_ParseScriptText(parser, str, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    hres = IActiveScriptParse_ParseScriptText(parser, str, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
     SysFreeString(str);
     ok_(__FILE__,line)(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
 }
@@ -704,7 +720,7 @@ static HRESULT parse_script_ae(IActiveScriptParse *parser, const char *script)
     HRESULT hres;
 
     str = a2bstr(script);
-    hres = IActiveScriptParse64_ParseScriptText(parser, str, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    hres = IActiveScriptParse_ParseScriptText(parser, str, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
     SysFreeString(str);
 
     return hres;
@@ -737,7 +753,7 @@ static IActiveScriptParse *create_script(BOOL use_sec_mgr)
     hres = IActiveScript_QueryInterface(script, &IID_IActiveScriptParse, (void**)&parser);
     ok(hres == S_OK, "Could not get IActiveScriptParse: %08x\n", hres);
 
-    hres = IActiveScriptParse64_InitNew(parser);
+    hres = IActiveScriptParse_InitNew(parser);
     ok(hres == S_OK, "InitNew failed: %08x\n", hres);
 
     hres = IActiveScript_SetScriptSite(script, &ActiveScriptSite);
@@ -776,14 +792,14 @@ static void test_CreateObject(void)
     CHECK_CALLED(QI_IObjectWithSite);
     CHECK_CALLED(reportSuccess);
 
-    IUnknown_Release(parser);
+    IActiveScriptParse_Release(parser);
 
     parser = create_script(TRUE);
 
     hres = parse_script_ae(parser, "Call CreateObject(\"Wine.TestABC\")");
     ok(hres == VB_E_CANNOT_CREATE_OBJ, "hres = %08x\n", hres);
 
-    IUnknown_Release(parser);
+    IActiveScriptParse_Release(parser);
 
     parser = create_script(TRUE);
     QS_SecMgr_hres = E_NOINTERFACE;
@@ -793,7 +809,7 @@ static void test_CreateObject(void)
     ok(hres == VB_E_CANNOT_CREATE_OBJ, "hres = %08x\n", hres);
     CHECK_CALLED(Host_QS_SecMgr);
 
-    IUnknown_Release(parser);
+    IActiveScriptParse_Release(parser);
 
     parser = create_script(TRUE);
     ProcessUrlAction_hres = E_FAIL;
@@ -805,7 +821,7 @@ static void test_CreateObject(void)
     CHECK_CALLED(Host_QS_SecMgr);
     CHECK_CALLED(ProcessUrlAction);
 
-    IUnknown_Release(parser);
+    IActiveScriptParse_Release(parser);
 
     parser = create_script(TRUE);
     ProcessUrlAction_policy = URLPOLICY_DISALLOW;
@@ -817,7 +833,7 @@ static void test_CreateObject(void)
     CHECK_CALLED(Host_QS_SecMgr);
     CHECK_CALLED(ProcessUrlAction);
 
-    IUnknown_Release(parser);
+    IActiveScriptParse_Release(parser);
 
     parser = create_script(TRUE);
     CreateInstance_hres = E_FAIL;
@@ -831,7 +847,7 @@ static void test_CreateObject(void)
     CHECK_CALLED(ProcessUrlAction);
     CHECK_CALLED(CreateInstance);
 
-    IUnknown_Release(parser);
+    IActiveScriptParse_Release(parser);
 
     parser = create_script(TRUE);
     QueryCustomPolicy_hres = E_FAIL;
@@ -847,7 +863,7 @@ static void test_CreateObject(void)
     CHECK_CALLED(CreateInstance);
     CHECK_CALLED(QueryCustomPolicy);
 
-    IUnknown_Release(parser);
+    IActiveScriptParse_Release(parser);
 
     parser = create_script(TRUE);
     QueryCustomPolicy_psize = 6;
@@ -866,7 +882,7 @@ static void test_CreateObject(void)
     CHECK_CALLED(QI_IObjectWithSite);
     CHECK_CALLED(reportSuccess);
 
-    IUnknown_Release(parser);
+    IActiveScriptParse_Release(parser);
 
     parser = create_script(TRUE);
     QueryCustomPolicy_policy = URLPOLICY_DISALLOW;
@@ -905,7 +921,7 @@ static void test_CreateObject(void)
     CHECK_CALLED(CreateInstance);
     CHECK_CALLED(QueryCustomPolicy);
 
-    IUnknown_Release(parser);
+    IActiveScriptParse_Release(parser);
 
     parser = create_script(FALSE);
 
@@ -917,7 +933,7 @@ static void test_CreateObject(void)
     CHECK_CALLED(QI_IObjectWithSite);
     CHECK_CALLED(reportSuccess);
 
-    IUnknown_Release(parser);
+    IActiveScriptParse_Release(parser);
 
     parser = create_script(TRUE);
     object_with_site = &ObjectWithSite;
@@ -952,7 +968,7 @@ static void test_CreateObject(void)
     CHECK_CALLED(QI_IObjectWithSite);
     CHECK_CALLED(SetSite);
 
-    IUnknown_Release(parser);
+    IActiveScriptParse_Release(parser);
 }
 
 static BOOL init_key(const char *key_name, const char *def_value, BOOL init)

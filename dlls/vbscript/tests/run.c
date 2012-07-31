@@ -27,6 +27,22 @@
 
 #include "wine/test.h"
 
+#ifdef _WIN64
+
+#define IActiveScriptParse_QueryInterface IActiveScriptParse64_QueryInterface
+#define IActiveScriptParse_Release IActiveScriptParse64_Release
+#define IActiveScriptParse_InitNew IActiveScriptParse64_InitNew
+#define IActiveScriptParse_ParseScriptText IActiveScriptParse64_ParseScriptText
+
+#else
+
+#define IActiveScriptParse_QueryInterface IActiveScriptParse32_QueryInterface
+#define IActiveScriptParse_Release IActiveScriptParse32_Release
+#define IActiveScriptParse_InitNew IActiveScriptParse32_InitNew
+#define IActiveScriptParse_ParseScriptText IActiveScriptParse32_ParseScriptText
+
+#endif
+
 extern const CLSID CLSID_VBScript;
 
 #define DEFINE_EXPECT(func) \
@@ -1230,7 +1246,7 @@ static HRESULT parse_script(DWORD flags, BSTR script_str)
         return hres;
     }
 
-    hres = IActiveScriptParse64_InitNew(parser);
+    hres = IActiveScriptParse_InitNew(parser);
     ok(hres == S_OK, "InitNew failed: %08x\n", hres);
 
     hres = IActiveScript_SetScriptSite(engine, &ActiveScriptSite);
@@ -1250,14 +1266,14 @@ static HRESULT parse_script(DWORD flags, BSTR script_str)
 
     test_counter = 0;
 
-    hres = IActiveScriptParse64_ParseScriptText(parser, script_str, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    hres = IActiveScriptParse_ParseScriptText(parser, script_str, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
 
     IActiveScript_Close(engine);
 
     IDispatch_Release(script_disp);
     IActiveScript_Release(engine);
 
-    ref = IUnknown_Release(parser);
+    ref = IActiveScriptParse_Release(parser);
     ok(!ref, "ref=%d\n", ref);
     return hres;
 }
@@ -1294,7 +1310,7 @@ static void test_gc(void)
     hres = IActiveScript_QueryInterface(engine, &IID_IActiveScriptParse, (void**)&parser);
     ok(hres == S_OK, "Could not get IActiveScriptParse: %08x\n", hres);
 
-    hres = IActiveScriptParse64_InitNew(parser);
+    hres = IActiveScriptParse_InitNew(parser);
     ok(hres == S_OK, "InitNew failed: %08x\n", hres);
 
     hres = IActiveScript_SetScriptSite(engine, &ActiveScriptSite);
@@ -1319,7 +1335,7 @@ static void test_gc(void)
             "set x.ref = x\n"
             "set x = nothing\n");
 
-    hres = IActiveScriptParse64_ParseScriptText(parser, src, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    hres = IActiveScriptParse_ParseScriptText(parser, src, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
     ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
     SysFreeString(src);
 
@@ -1330,7 +1346,7 @@ static void test_gc(void)
     CHECK_CALLED(global_success_i);
 
     IActiveScript_Release(engine);
-    IUnknown_Release(parser);
+    IActiveScriptParse_Release(parser);
 }
 
 static HRESULT test_global_vars_ref(BOOL use_close)
@@ -1353,7 +1369,7 @@ static HRESULT test_global_vars_ref(BOOL use_close)
         return hres;
     }
 
-    hres = IActiveScriptParse64_InitNew(parser);
+    hres = IActiveScriptParse_InitNew(parser);
     ok(hres == S_OK, "InitNew failed: %08x\n", hres);
 
     hres = IActiveScript_SetScriptSite(engine, &ActiveScriptSite);
@@ -1368,7 +1384,7 @@ static HRESULT test_global_vars_ref(BOOL use_close)
     refobj_ref = 0;
 
     script_str = a2bstr("Dim x\nset x = RefObj\n");
-    hres = IActiveScriptParse64_ParseScriptText(parser, script_str, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    hres = IActiveScriptParse_ParseScriptText(parser, script_str, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
     SysFreeString(script_str);
 
     ok(refobj_ref, "refobj_ref = 0\n");
@@ -1385,7 +1401,7 @@ static HRESULT test_global_vars_ref(BOOL use_close)
 
     IActiveScript_Release(engine);
 
-    ref = IUnknown_Release(parser);
+    ref = IActiveScriptParse_Release(parser);
     ok(!ref, "ref=%d\n", ref);
     return hres;
 }
