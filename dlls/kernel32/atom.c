@@ -78,7 +78,7 @@ static RTL_ATOM_TABLE get_local_table(DWORD entries)
  */
 BOOL WINAPI InitAtomTable( DWORD entries )
 {
-    return get_local_table( entries ) ? TRUE : FALSE;
+    return get_local_table( entries ) != 0;
 }
 
 /******************************************************************

@@ -3397,7 +3397,7 @@ static BOOL NLS_EnumSystemLanguageGroups(ENUMLANGUAGEGROUP_CALLBACKS *lpProcs)
         if (NLS_RegEnumValue( hKey, ulIndex, szNumber, sizeof(szNumber),
                               szValue, sizeof(szValue) ))
         {
-            BOOL bInstalled = szValue[0] == '1' ? TRUE : FALSE;
+            BOOL bInstalled = szValue[0] == '1';
             LGRPID lgrpid = strtoulW( szNumber, NULL, 16 );
 
             TRACE("grpid %s (%sinstalled)\n", debugstr_w(szNumber),

@@ -319,7 +319,7 @@ HANDLE WINAPI CreateToolhelp32Snapshot( DWORD flags, DWORD process )
         if (flags & TH32CS_SNAPTHREAD)  sect_size += num_thd * sizeof(THREADENTRY32);
         if (flags & TH32CS_SNAPHEAPLIST)FIXME("Unimplemented: heap list snapshot\n");
 
-        sa.bInheritHandle = (flags & TH32CS_INHERIT) ? TRUE : FALSE;
+        sa.bInheritHandle = (flags & TH32CS_INHERIT) != 0;
         sa.lpSecurityDescriptor = NULL;
 
         hSnapShot = CreateFileMappingW( INVALID_HANDLE_VALUE, &sa,

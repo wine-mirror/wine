@@ -1383,7 +1383,7 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
         qos.Length = sizeof(qos);
         qos.ImpersonationLevel = (attributes >> 16) & 0x3;
         qos.ContextTrackingMode = attributes & SECURITY_CONTEXT_TRACKING ? SECURITY_DYNAMIC_TRACKING : SECURITY_STATIC_TRACKING;
-        qos.EffectiveOnly = attributes & SECURITY_EFFECTIVE_ONLY ? TRUE : FALSE;
+        qos.EffectiveOnly = (attributes & SECURITY_EFFECTIVE_ONLY) != 0;
         attr.SecurityQualityOfService = &qos;
     }
     else
