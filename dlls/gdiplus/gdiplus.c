@@ -379,7 +379,6 @@ REAL pixels_to_units(REAL pixels, GpUnit unit, REAL dpi)
         return pixels * point_per_inch / dpi;
     case UnitInch:
         return pixels / dpi;
-        break;
     case UnitDocument:
         return pixels * 300.0 / dpi;
     case UnitMillimeter:
