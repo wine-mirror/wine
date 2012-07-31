@@ -481,7 +481,7 @@ static	BOOL		MMIO_Destroy(LPWINE_MMIO wm)
 	wm = NULL;
     }
     LeaveCriticalSection(&WINMM_cs);
-    return wm ? FALSE : TRUE;
+    return !wm;
 }
 
 /****************************************************************

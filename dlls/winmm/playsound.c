@@ -525,7 +525,7 @@ static BOOL MULTIMEDIA_PlaySound(const void* pszSound, HMODULE hmod, DWORD fdwSo
     if (fdwSound & SND_ASYNC)
     {
         HANDLE      handle;
-        wps->bLoop = (fdwSound & SND_LOOP) ? TRUE : FALSE;
+        wps->bLoop = (fdwSound & SND_LOOP) != 0;
         if ((handle = CreateThread(NULL, 0, proc_PlaySound, wps, 0, NULL)) != 0) {
             SetThreadPriority(handle, THREAD_PRIORITY_TIME_CRITICAL);
             CloseHandle(handle);

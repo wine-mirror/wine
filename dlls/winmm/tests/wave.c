@@ -605,7 +605,7 @@ static void wave_out_test_deviceOut(int device, double duration,
     WORD nChannels = pwfx->nChannels;
     WORD wBitsPerSample = pwfx->wBitsPerSample;
     DWORD nSamplesPerSec = pwfx->nSamplesPerSec;
-    BOOL has_volume = pcaps->dwSupport & WAVECAPS_VOLUME ? TRUE : FALSE;
+    BOOL has_volume = (pcaps->dwSupport & WAVECAPS_VOLUME) != 0;
     double paused = 0.0;
     DWORD_PTR callback = 0;
     DWORD_PTR callback_instance = 0;

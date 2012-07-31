@@ -1778,7 +1778,7 @@ static LRESULT WINMM_Reset(HWAVE hwave)
     IAudioClient_Reset(device->client);
 
     cb_info = device->cb_info;
-    is_out = device->render ? TRUE : FALSE;
+    is_out = device->render != NULL;
 
     LeaveCriticalSection(&device->lock);
 
