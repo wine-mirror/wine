@@ -2435,6 +2435,10 @@ WINBASEAPI LONGLONG WINAPI InterlockedCompareExchange64(LONGLONG volatile*,LONGL
 
 #else  /* __i386__ */
 
+#if defined(__x86_64__) && defined(_MSC_VER)
+#pragma intrinsic(_InterlockedCompareExchange)
+#endif
+
 static FORCEINLINE LONG WINAPI InterlockedCompareExchange( LONG volatile *dest, LONG xchg, LONG compare )
 {
 #if defined(__x86_64__) && defined(__GNUC__)
@@ -2442,11 +2446,17 @@ static FORCEINLINE LONG WINAPI InterlockedCompareExchange( LONG volatile *dest, 
     __asm__ __volatile__( "lock; cmpxchgl %2,(%1)"
                           : "=a" (ret) : "r" (dest), "r" (xchg), "0" (compare) : "memory" );
     return ret;
+#elif defined(__x86_64__) && defined(_MSC_VER)
+    return _InterlockedCompareExchange( dest, xchg, compare );
 #else
     extern int interlocked_cmpxchg( int *dest, int xchg, int compare );
     return interlocked_cmpxchg( (int *)dest, xchg, compare );
 #endif
 }
+
+#if defined(__x86_64__) && defined(_MSC_VER)
+#pragma intrinsic(_InterlockedCompareExchangePointer)
+#endif
 
 static FORCEINLINE PVOID WINAPI InterlockedCompareExchangePointer( PVOID volatile *dest, PVOID xchg, PVOID compare )
 {
@@ -2455,11 +2465,17 @@ static FORCEINLINE PVOID WINAPI InterlockedCompareExchangePointer( PVOID volatil
     __asm__ __volatile__( "lock; cmpxchgq %2,(%1)"
                           : "=a" (ret) : "r" (dest), "r" (xchg), "0" (compare) : "memory" );
     return ret;
+#elif defined(__x86_64__) && defined(_MSC_VER)
+    return _InterlockedCompareExchangePointer( dest, xchg, compare );
 #else
     extern void *interlocked_cmpxchg_ptr( void **dest, void *xchg, void *compare );
     return interlocked_cmpxchg_ptr( (void **)dest, xchg, compare );
 #endif
 }
+
+#if defined(__x86_64__) && defined(_MSC_VER)
+#pragma intrinsic(_InterlockedCompareExchange64)
+#endif
 
 static FORCEINLINE LONGLONG WINAPI InterlockedCompareExchange64( LONGLONG volatile *dest, LONGLONG xchg, LONGLONG compare )
 {
@@ -2468,11 +2484,17 @@ static FORCEINLINE LONGLONG WINAPI InterlockedCompareExchange64( LONGLONG volati
     __asm__ __volatile__( "lock; cmpxchgq %2,(%1)"
                           : "=a" (ret) : "r" (dest), "r" (xchg), "0" (compare) : "memory" );
     return ret;
+#elif defined(__x86_64__) && defined(_MSC_VER)
+    return _InterlockedCompareExchange64( dest, xchg, compare );
 #else
     extern __int64 interlocked_cmpxchg64( __int64 *dest, __int64 xchg, __int64 compare );
     return interlocked_cmpxchg64( (__int64 *)dest, xchg, compare );
 #endif
 }
+
+#if defined(__x86_64__) && defined(_MSC_VER)
+#pragma intrinsic(_InterlockedExchange)
+#endif
 
 static FORCEINLINE LONG WINAPI InterlockedExchange( LONG volatile *dest, LONG val )
 {
@@ -2481,11 +2503,17 @@ static FORCEINLINE LONG WINAPI InterlockedExchange( LONG volatile *dest, LONG va
     __asm__ __volatile__( "lock; xchgl %0,(%1)"
                           : "=r" (ret) :"r" (dest), "0" (val) : "memory" );
     return ret;
+#elif defined(__x86_64__) && defined(_MSC_VER)
+    return _InterlockedExchange( dest, val );
 #else
     extern int interlocked_xchg( int *dest, int val );
     return interlocked_xchg( (int *)dest, val );
 #endif
 }
+
+#if defined(__x86_64__) && defined(_MSC_VER)
+#pragma intrinsic(_InterlockedExchangePointer)
+#endif
 
 static FORCEINLINE PVOID WINAPI InterlockedExchangePointer( PVOID volatile *dest, PVOID val )
 {
@@ -2494,11 +2522,17 @@ static FORCEINLINE PVOID WINAPI InterlockedExchangePointer( PVOID volatile *dest
     __asm__ __volatile__( "lock; xchgq %0,(%1)"
                           : "=r" (ret) :"r" (dest), "0" (val) : "memory" );
     return ret;
+#elif defined(__x86_64__) && defined(_MSC_VER)
+    return _InterlockedExchangePointer( dest, val );
 #else
     extern void *interlocked_xchg_ptr( void **dest, void *val );
     return interlocked_xchg_ptr( (void **)dest, val );
 #endif
 }
+
+#if defined(__x86_64__) && defined(_MSC_VER)
+#pragma intrinsic(_InterlockedExchangeAdd)
+#endif
 
 static FORCEINLINE LONG WINAPI InterlockedExchangeAdd( LONG volatile *dest, LONG incr )
 {
@@ -2507,20 +2541,38 @@ static FORCEINLINE LONG WINAPI InterlockedExchangeAdd( LONG volatile *dest, LONG
     __asm__ __volatile__( "lock; xaddl %0,(%1)"
                           : "=r" (ret) : "r" (dest), "0" (incr) : "memory" );
     return ret;
+#elif defined(__x86_64__) && defined(_MSC_VER)
+    return _InterlockedExchangeAdd( dest, incr );
 #else
     extern int interlocked_xchg_add( int *dest, int incr );
     return interlocked_xchg_add( (int *)dest, incr );
 #endif
 }
 
+#if defined(__x86_64__) && defined(_MSC_VER)
+#pragma intrinsic(_InterlockedIncrement)
+#endif
+
 static FORCEINLINE LONG WINAPI InterlockedIncrement( LONG volatile *dest )
 {
+#if defined(__x86_64__) && defined(_MSC_VER)
+    return _InterlockedIncrement( dest );
+#else
     return InterlockedExchangeAdd( dest, 1 ) + 1;
+#endif
 }
+
+#if defined(__x86_64__) && defined(_MSC_VER)
+#pragma intrinsic(_InterlockedDecrement)
+#endif
 
 static FORCEINLINE LONG WINAPI InterlockedDecrement( LONG volatile *dest )
 {
+#if defined(__x86_64__) && defined(_MSC_VER)
+    return _InterlockedDecrement( dest );
+#else
     return InterlockedExchangeAdd( dest, -1 ) - 1;
+#endif
 }
 
 #endif  /* __i386__ */
