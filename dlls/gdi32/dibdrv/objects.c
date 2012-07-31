@@ -616,7 +616,7 @@ static BOOL solid_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end, DWORD
         struct line_params line_params;
         POINT p1 = crop_coords( *start ), p2 = crop_coords( *end );
 
-        init_bres_params( start, end, &clip_params, &line_params, &rect );
+        init_bres_params( &p1, &p2, &clip_params, &line_params, &rect );
         if (!get_clipped_rects( &pdev->dib, &rect, pdev->clip, &clipped_rects )) return TRUE;
         for (i = 0; i < clipped_rects.count; i++)
         {
@@ -762,7 +762,7 @@ static BOOL solid_pen_line_region( dibdrv_physdev *pdev, POINT *start, POINT *en
         struct line_params line_params;
         POINT p1 = crop_coords( *start ), p2 = crop_coords( *end );
 
-        init_bres_params( start, end, &clip_params, &line_params, &rect );
+        init_bres_params( &p1, &p2, &clip_params, &line_params, &rect );
         if (clip_rect_to_dib( &pdev->dib, &rect ))
         {
             POINT clipped_start, clipped_end;
@@ -1030,7 +1030,7 @@ static BOOL dashed_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
         struct line_params line_params;
         POINT p1 = crop_coords( *start ), p2 = crop_coords( *end );
 
-        init_bres_params( start, end, &clip_params, &line_params, &rect );
+        init_bres_params( &p1, &p2, &clip_params, &line_params, &rect );
         get_clipped_rects( &pdev->dib, &rect, pdev->clip, &clipped_rects );
         for (i = 0; i < clipped_rects.count; i++)
         {
