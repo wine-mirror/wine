@@ -2221,14 +2221,6 @@ static FORCEINLINE struct _TEB * WINAPI NtCurrentTeb(void)
     __asm__(".byte 0x65\n\tmovq (0x30),%0" : "=r" (teb));
     return teb;
 }
-#elif defined(__x86_64__) && defined (_MSC_VER)
-static FORCEINLINE struct _TEB * WINAPI NtCurrentTeb(void)
-{
-  struct _TEB *teb;
-  __asm mov rax, gs:[0x30];
-  __asm mov teb, rax;
-  return teb;
-}
 #else
 extern struct _TEB * WINAPI NtCurrentTeb(void);
 #endif
