@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-07-07 00:06+0800\n"
+"PO-Revision-Date: 2012-07-28 00:06+0800\n"
 "Last-Translator: Wei-Lun Chao <bluebat@member.fsf.org>\n"
 "Language-Team: Chinese (traditional) <zh-l10n@linux.org.tw>\n"
 "Language: Chinese (Taiwan)\n"
@@ -3409,16 +3409,16 @@ msgid "Test Force Feedback"
 msgstr "測試應力回饋"
 
 #: joy.rc:63
-#, fuzzy
-#| msgid "Available formats"
 msgid "Available Effects"
-msgstr "可用格式"
+msgstr "可用效果"
 
 #: joy.rc:65
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."
 msgstr ""
+"請按下控制器中的任何按鈕以啟用所選的效果。效果的方向可以利用控制器的軸向來變"
+"更。"
 
 #: joy.rc:28
 msgid "Game Controllers"
@@ -6894,7 +6894,7 @@ msgstr "表格"
 
 #: oleacc.rc:52
 msgid "column header"
-msgstr "欄首"
+msgstr "行首"
 
 #: oleacc.rc:53
 msgid "row header"
@@ -6902,7 +6902,7 @@ msgstr "列首"
 
 #: oleacc.rc:54
 msgid "column"
-msgstr "欄"
+msgstr "行"
 
 #: oleacc.rc:55
 msgid "row"
@@ -7231,27 +7231,27 @@ msgstr "正在掃描… 請稍候"
 #: sane.rc:31
 msgctxt "unit: pixels"
 msgid "px"
-msgstr "px"
+msgstr "像素"
 
 #: sane.rc:32
 msgctxt "unit: bits"
 msgid "b"
-msgstr "b"
+msgstr "位元"
 
 #: sane.rc:34 winecfg.rc:174
 msgctxt "unit: dots/inch"
 msgid "dpi"
-msgstr "dpi"
+msgstr "點/英吋"
 
 #: sane.rc:35
 msgctxt "unit: percent"
 msgid "%"
-msgstr "%"
+msgstr "百分比"
 
 #: sane.rc:36
 msgctxt "unit: microseconds"
 msgid "us"
-msgstr "µs"
+msgstr "微秒"
 
 #: serialui.rc:25
 msgid "Settings for %s"
@@ -7446,7 +7446,7 @@ msgstr "列(&R)"
 
 #: shdoclc.rc:104
 msgid "&Column"
-msgstr "欄(&O)"
+msgstr "行(&O)"
 
 #: shdoclc.rc:105
 msgid "&Table"
@@ -11439,7 +11439,7 @@ msgstr "暫停(&P)"
 
 #: taskmgr.rc:68 taskmgr.rc:256
 msgid "&Select Columns..."
-msgstr "選擇欄(&S)…"
+msgstr "選擇行(&S)…"
 
 #: taskmgr.rc:69 taskmgr.rc:258
 msgid "&CPU History"
@@ -11753,12 +11753,12 @@ msgstr "CPU 31"
 
 #: taskmgr.rc:514
 msgid "Select Columns"
-msgstr "選擇顯示欄"
+msgstr "選擇顯示行"
 
 #: taskmgr.rc:519
 msgid ""
 "Select the columns that will appear on the Process page of the Task Manager."
-msgstr "請選擇工作管理員中進程分頁的顯示欄。"
+msgstr "請選擇工作管理員中進程分頁的顯示行。"
 
 #: taskmgr.rc:521
 msgid "&Image Name"
@@ -11954,7 +11954,7 @@ msgstr "顯示 16-位元工作及有關的ntvdm.exe"
 
 #: taskmgr.rc:216
 msgid "Select which columns will be visible on the Process page"
-msgstr "選擇在進程分頁的顯示欄"
+msgstr "選擇在進程分頁的顯示行"
 
 #: taskmgr.rc:217
 msgid "Displays kernel time in the performance graphs"
@@ -13394,11 +13394,11 @@ msgstr "Copyright 2000 Joshua Thielen"
 
 #: winhlp32.rc:32
 msgid "Printer &setup..."
-msgstr "印表機設定(&S)..."
+msgstr "印表機設定(&S)…"
 
 #: winhlp32.rc:39
 msgid "&Annotate..."
-msgstr "註釋(&A)..."
+msgstr "註釋(&A)…"
 
 #: winhlp32.rc:41
 msgid "&Bookmark"
@@ -13406,7 +13406,7 @@ msgstr "書籤(&B)"
 
 #: winhlp32.rc:42
 msgid "&Define..."
-msgstr "定義(&D)..."
+msgstr "定義(&D)…"
 
 #: winhlp32.rc:46 winhlp32.rc:67
 msgid "Fonts"
@@ -13438,7 +13438,7 @@ msgstr "關於 Wine 說明(&A)"
 
 #: winhlp32.rc:64
 msgid "Annotation..."
-msgstr "註釋..."
+msgstr "註釋…"
 
 #: winhlp32.rc:65
 msgid "Copy"
