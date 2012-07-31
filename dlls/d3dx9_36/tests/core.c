@@ -1084,6 +1084,48 @@ static void test_D3DXCreateRenderToEnvMap(IDirect3DDevice9 *device)
     if (SUCCEEDED(hr)) ID3DXRenderToEnvMap_Release(render);
 }
 
+static void test_ID3DXRenderToEnvMap(IDirect3DDevice9 *device)
+{
+    HRESULT hr;
+    ID3DXRenderToEnvMap *render;
+
+    hr = D3DXCreateRenderToEnvMap(device, 256, 0, D3DFMT_A8R8G8B8, FALSE, D3DFMT_UNKNOWN, &render);
+    if (SUCCEEDED(hr))
+    {
+        ULONG ref_count;
+        IDirect3DDevice9 *out_device;
+
+        hr = ID3DXRenderToEnvMap_GetDesc(render, NULL);
+        ok(hr == D3DERR_INVALIDCALL, "ID3DXRenderToEnvMap::GetDesc returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+        hr = ID3DXRenderToEnvMap_GetDevice(render, NULL);
+        ok(hr == D3DERR_INVALIDCALL, "ID3DXRenderToEnvMap::GetDevice returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+        ref_count = get_ref((IUnknown *)device);
+        hr = ID3DXRenderToEnvMap_GetDevice(render, &out_device);
+        ok(hr == D3D_OK, "ID3DXRenderToEnvMap::GetDevice returned %#x, expected %#x\n", hr, D3D_OK);
+        ok(out_device == device, "ID3DXRenderToEnvMap::GetDevice returned different device\n");
+        check_release((IUnknown *)device, ref_count);
+
+        hr = ID3DXRenderToEnvMap_End(render, D3DX_FILTER_NONE);
+        ok(hr == D3DERR_INVALIDCALL, "ID3DXRenderToEnvMap::End returned %#x, expected %#x\n", hr, D3D_OK);
+
+        hr = ID3DXRenderToEnvMap_BeginCube(render, NULL);
+        ok(hr == D3DERR_INVALIDCALL, "ID3DXRenderToEnvMap::BeginCube returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+        hr = ID3DXRenderToEnvMap_BeginHemisphere(render, NULL, NULL);
+        todo_wine ok(hr == D3DERR_INVALIDCALL, "ID3DXRenderToEnvMap::BeginHemisphere returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+        hr = ID3DXRenderToEnvMap_BeginParabolic(render, NULL, NULL);
+        todo_wine ok(hr == D3DERR_INVALIDCALL, "ID3DXRenderToEnvMap::BeginParabolic returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+        hr = ID3DXRenderToEnvMap_BeginSphere(render, NULL);
+        todo_wine ok(hr == D3DERR_INVALIDCALL, "ID3DXRenderToEnvMap::BeginSphere returned %#x, exected %#x\n", hr, D3DERR_INVALIDCALL);
+
+        check_release((IUnknown *)render, 0);
+    } else skip("Failed to create ID3DXRenderToEnvMap\n");
+}
+
 START_TEST(core)
 {
     HWND wnd;
@@ -1121,6 +1163,7 @@ START_TEST(core)
     test_D3DXCreateRenderToSurface(device);
     test_ID3DXRenderToSurface(device);
     test_D3DXCreateRenderToEnvMap(device);
+    test_ID3DXRenderToEnvMap(device);
 
     check_release((IUnknown*)device, 0);
     check_release((IUnknown*)d3d, 0);
