@@ -3285,9 +3285,6 @@ void SHAPE_ApplyOpenTypePositions(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *ps
     const TEXTRANGE_PROPERTIES *rpRangeProperties;
     int i;
     INT dirL;
-    LPOUTLINETEXTMETRICW lpotm;
-    LOGFONTW lf;
-    HFONT hfont;
 
     rpRangeProperties = &ShapingData[psa->eScript].defaultGPOSTextRange;
 
@@ -3296,14 +3293,8 @@ void SHAPE_ApplyOpenTypePositions(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *ps
 
     load_ot_tables(hdc, psc);
 
-    if (!psc->GPOS_Table)
+    if (!psc->GPOS_Table || !psc->otm)
         return;
-
-    i = GetOutlineTextMetricsW( hdc, 0, NULL);
-    lpotm = HeapAlloc(GetProcessHeap(),0,i);
-    GetOutlineTextMetricsW( hdc, i, lpotm);
-    hfont = GetCurrentObject(hdc, OBJ_FONT);
-    GetObjectW(hfont, sizeof(lf), &lf);
 
     if (!psa->fLogicalOrder && psa->fRTL)
         dirL = -1;
@@ -3320,7 +3311,7 @@ void SHAPE_ApplyOpenTypePositions(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *ps
             if (!feature)
                 continue;
 
-            GPOS_apply_feature(lpotm, &lf, piAdvance, psc->GPOS_Table, feature, pwGlyphs, dirL, cGlyphs, pGoffset);
+            GPOS_apply_feature(psc->otm, &psc->lf, piAdvance, psc->GPOS_Table, feature, pwGlyphs, dirL, cGlyphs, pGoffset);
         }
     }
 }
