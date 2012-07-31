@@ -1,0 +1,7 @@
+TESTDLL = dwrite.dll
+IMPORTS = dwrite
+
+C_SRCS = \
+	font.c
+
+@MAKE_TEST_RULES@

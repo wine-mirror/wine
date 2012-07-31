@@ -1392,3 +1392,5 @@ interface IDWriteFactory : IUnknown
         FLOAT baseline_y,
         IDWriteGlyphRunAnalysis **analysis);
 }
+
+cpp_quote("HRESULT WINAPI DWriteCreateFactory(DWRITE_FACTORY_TYPE,REFIID,IUnknown**);")

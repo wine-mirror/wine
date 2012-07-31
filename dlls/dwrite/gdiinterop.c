@@ -57,6 +57,9 @@ static HRESULT WINAPI gdiinterop_CreateFontFromLOGFONT(IDWriteGdiInterop *iface,
     LOGFONTW const *logfont, IDWriteFont **font)
 {
     FIXME("(%p %p): stub\n", logfont, font);
+
+    if (!logfont) return E_INVALIDARG;
+
     return E_NOTIMPL;
 }
 
