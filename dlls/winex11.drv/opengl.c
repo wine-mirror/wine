@@ -1132,7 +1132,7 @@ static GLXContext create_glxcontext(Display *display, struct wgl_context *contex
     GLXContext ctx;
 
     /* We use indirect rendering for rendering to bitmaps. See get_formats for a comment about this. */
-    BOOL indirect = (context->fmt->dwFlags & PFD_DRAW_TO_BITMAP) ? FALSE : TRUE;
+    BOOL indirect = !(context->fmt->dwFlags & PFD_DRAW_TO_BITMAP);
 
     if(context->gl3_context)
     {
@@ -2424,12 +2424,12 @@ static BOOL X11DRV_wglGetPixelFormatAttribivARB( HDC hdc, int iPixelFormat, int 
 
             case WGL_SUPPORT_GDI_ARB:
                 if (!fmt) goto pix_error;
-                piValues[i] = (fmt->dwFlags & PFD_SUPPORT_GDI) ? TRUE : FALSE;
+                piValues[i] = (fmt->dwFlags & PFD_SUPPORT_GDI) != 0;
                 continue;
 
             case WGL_DRAW_TO_BITMAP_ARB:
                 if (!fmt) goto pix_error;
-                piValues[i] = (fmt->dwFlags & PFD_DRAW_TO_BITMAP) ? TRUE : FALSE;
+                piValues[i] = (fmt->dwFlags & PFD_DRAW_TO_BITMAP) != 0;
                 continue;
 
             case WGL_DRAW_TO_WINDOW_ARB:
