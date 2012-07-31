@@ -476,7 +476,11 @@ static HRESULT WINAPI PaletteImpl_InitializeFromPalette(IWICPalette *iface,
         colors = HeapAlloc(GetProcessHeap(), 0, sizeof(WICColor) * count);
         if (!colors) return E_OUTOFMEMORY;
         hr = IWICPalette_GetColors(source, count, colors, &count);
-        if (hr != S_OK) return hr;
+        if (hr != S_OK)
+        {
+            HeapFree(GetProcessHeap(), 0, colors);
+            return hr;
+        }
     }
 
     EnterCriticalSection(&This->lock);
