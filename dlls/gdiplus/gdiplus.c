@@ -36,7 +36,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
 
 static const REAL mm_per_inch = 25.4;
-static const REAL inch_per_point = 1.0/72.0;
+static const REAL point_per_inch = 72.0;
 
 static Status WINAPI NotificationHook(ULONG_PTR *token)
 {
@@ -353,7 +353,7 @@ REAL units_to_pixels(REAL units, GpUnit unit, REAL dpi)
     case UnitDisplay:
         return units;
     case UnitPoint:
-        return units * dpi * inch_per_point;
+        return units * dpi / point_per_inch;
     case UnitInch:
         return units * dpi;
     case UnitDocument:
@@ -376,7 +376,7 @@ REAL pixels_to_units(REAL pixels, GpUnit unit, REAL dpi)
     case UnitDisplay:
         return pixels;
     case UnitPoint:
-        return pixels / dpi / inch_per_point;
+        return pixels * point_per_inch / dpi;
     case UnitInch:
         return pixels / dpi;
         break;
