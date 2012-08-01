@@ -657,9 +657,7 @@ static INT_PTR CALLBACK ff_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
 
                     joy->cur_effect = 0;
                     IDirectInputDevice8_EnumEffects(joy->device, ff_effects_callback, (void*) joy, 0);
-                    FIXME("%d --- %d\n", joy->num_effects, joy->cur_effect);
                     joy->num_effects = joy->cur_effect;
-
                 }
             }
 
