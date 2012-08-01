@@ -324,19 +324,19 @@ static pascal ComponentResult myDataHGetFileTypeOrdering ( DataHandler dh,
 }
 
 typedef struct {
-    const CFStringRef fname;
+    const char *const fname;
     const int sig_length;
     const BYTE sig[10];
 } signature;
 
 static const signature stream_sigs[] = {
-    {CFSTR("video.asf"),4,{0x30,0x26,0xb2,0x75}},
-    {CFSTR("video.mov"),8,{0x00,0x00,0x00,0x14,0x66,0x74,0x79,0x70}},
-    {CFSTR("video.mp4"),8,{0x00,0x00,0x00,0x18,0x66,0x74,0x79,0x70}},
-    {CFSTR("video.m4v"),8,{0x00,0x00,0x00,0x1c,0x66,0x74,0x79,0x70}},
-    {CFSTR("video.flv"),4,{0x46,0x4C,0x56,0x01}},
-    {CFSTR("video.mpg"),3,{0x00,0x00,0x01}},
-    {CFSTR("avideo.rm"),4,{0x2E,0x52,0x4D,0x46}}
+    {"video.asf",4,{0x30,0x26,0xb2,0x75}},
+    {"video.mov",8,{0x00,0x00,0x00,0x14,0x66,0x74,0x79,0x70}},
+    {"video.mp4",8,{0x00,0x00,0x00,0x18,0x66,0x74,0x79,0x70}},
+    {"video.m4v",8,{0x00,0x00,0x00,0x1c,0x66,0x74,0x79,0x70}},
+    {"video.flv",4,{0x46,0x4C,0x56,0x01}},
+    {"video.mpg",3,{0x00,0x00,0x01}},
+    {"avideo.rm",4,{0x2E,0x52,0x4D,0x46}}
 };
 
 static pascal ComponentResult myDataHGetFileName ( DataHandler dh, Str255 str)
@@ -364,7 +364,8 @@ static pascal ComponentResult myDataHGetFileName ( DataHandler dh, Str255 str)
         for (i=0; i < sizeof(stream_sigs)/sizeof(signature); i++)
             if (memcmp(header, stream_sigs[i].sig, stream_sigs[i].sig_length)==0)
             {
-                CFStringGetPascalString(stream_sigs[i].fname,str,256,kCFStringEncodingMacRoman);
+                str[0] = strlen(stream_sigs[i].fname);
+                memcpy(str + 1, stream_sigs[i].fname, str[0]);
                 return noErr;
             }
 
