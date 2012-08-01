@@ -2154,7 +2154,7 @@ WCHAR *msi_build_directory_name( DWORD count, ... )
         const WCHAR *str = va_arg( va, const WCHAR * );
         if (!str) continue;
         strcatW( dir, str );
-        if ( i + 1 != count && dir[strlenW( dir ) - 1] != '\\') strcatW( dir, szBackSlash );
+        if ( i + 1 != count && dir[0] && dir[strlenW( dir ) - 1] != '\\') strcatW( dir, szBackSlash );
     }
     va_end( va );
     return dir;
