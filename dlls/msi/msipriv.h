@@ -1177,6 +1177,7 @@ static const WCHAR szRollbackDisabled[] = {'R','o','l','l','b','a','c','k','D','
 static const WCHAR szName[] = {'N','a','m','e',0};
 static const WCHAR szData[] = {'D','a','t','a',0};
 static const WCHAR szLangResource[] = {'\\','V','a','r','F','i','l','e','I','n','f','o','\\','T','r','a','n','s','l','a','t','i','o','n',0};
+static const WCHAR szInstallLocation[] = {'I','n','s','t','a','l','l','L','o','c','a','t','i','o','n',0};
 
 /* memory allocation macro functions */
 static void *msi_alloc( size_t len ) __WINE_ALLOC_SIZE(1);

@@ -2281,6 +2281,19 @@ WCHAR *msi_normalize_path( const WCHAR *in )
     return ret;
 }
 
+static WCHAR *get_install_location( MSIPACKAGE *package )
+{
+    HKEY hkey;
+    WCHAR *path;
+
+    if (!package->ProductCode) return NULL;
+    if (MSIREG_OpenInstallProps( package->ProductCode, package->Context, NULL, &hkey, FALSE ))
+        return NULL;
+    path = msi_reg_get_val_str( hkey, szInstallLocation );
+    RegCloseKey( hkey );
+    return path;
+}
+
 void msi_resolve_target_folder( MSIPACKAGE *package, const WCHAR *name, BOOL load_prop )
 {
     FolderList *fl;
@@ -2293,7 +2306,8 @@ void msi_resolve_target_folder( MSIPACKAGE *package, const WCHAR *name, BOOL loa
 
     if (!strcmpW( folder->Directory, szTargetDir )) /* special resolving for target root dir */
     {
-        if (!load_prop || !(path = msi_dup_property( package->db, szTargetDir )))
+        if (!(path = get_install_location( package )) &&
+            (!load_prop || !(path = msi_dup_property( package->db, szTargetDir ))))
         {
             path = msi_dup_property( package->db, szRootDrive );
         }
@@ -4837,8 +4851,6 @@ static UINT msi_publish_install_properties(MSIPACKAGE *package, HKEY hkey)
         {'H','e','l','p','T','e','l','e','p','h','o','n','e',0};
     static const WCHAR szARPINSTALLLOCATION[] =
         {'A','R','P','I','N','S','T','A','L','L','L','O','C','A','T','I','O','N',0};
-    static const WCHAR szInstallLocation[] =
-        {'I','n','s','t','a','l','l','L','o','c','a','t','i','o','n',0};
     static const WCHAR szManufacturer[] =
         {'M','a','n','u','f','a','c','t','u','r','e','r',0};
     static const WCHAR szPublisher[] =
