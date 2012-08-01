@@ -2793,8 +2793,8 @@ static void ME_DestroyEditor(ME_TextEditor *editor)
   if (editor->rgbBackColor != -1)
     DeleteObject(editor->hbrBackground);
   if(editor->lpOleCallback)
-    IUnknown_Release(editor->lpOleCallback);
-  IUnknown_Release(editor->texthost);
+    IRichEditOleCallback_Release(editor->lpOleCallback);
+  ITextHost_Release(editor->texthost);
   OleUninitialize();
 
   FREE_OBJ(editor->pBuffer);
@@ -4311,10 +4311,10 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   }
   case EM_SETOLECALLBACK:
     if(editor->lpOleCallback)
-      IUnknown_Release(editor->lpOleCallback);
-    editor->lpOleCallback = (LPRICHEDITOLECALLBACK)lParam;
+      IRichEditOleCallback_Release(editor->lpOleCallback);
+    editor->lpOleCallback = (IRichEditOleCallback*)lParam;
     if(editor->lpOleCallback)
-      IUnknown_AddRef(editor->lpOleCallback);
+      IRichEditOleCallback_AddRef(editor->lpOleCallback);
     return TRUE;
   case EM_GETWORDBREAKPROC:
     return (LRESULT)editor->pfnWordBreak;
