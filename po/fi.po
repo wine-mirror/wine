@@ -3450,16 +3450,16 @@ msgid "Test Force Feedback"
 msgstr "Testaa voimapalautetta"
 
 #: joy.rc:63
-#, fuzzy
-#| msgid "Available formats"
 msgid "Available Effects"
-msgstr "Mahdolliset muodot"
+msgstr "Mahdolliset efektit"
 
 #: joy.rc:65
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."
 msgstr ""
+"Aktivoi valittu efekti painamalla mitä tahansa ohjaimen painiketta. Efektin "
+"suuntaa voi muuttaa ohjaimen akselilla."
 
 #: joy.rc:28
 msgid "Game Controllers"
