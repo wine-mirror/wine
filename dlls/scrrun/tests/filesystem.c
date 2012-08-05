@@ -82,6 +82,20 @@ static void test_interfaces(void)
     ok(b == VARIANT_FALSE, "got %x\n", b);
     SysFreeString(path);
 
+    path = SysAllocString(file_path);
+    b = VARIANT_FALSE;
+    hr = IFileSystem3_FileExists(fs3, path, &b);
+    ok(hr == S_OK, "got 0x%08x, expected 0x%08x\n", hr, S_OK);
+    ok(b == VARIANT_TRUE, "got %x\n", b);
+    SysFreeString(path);
+
+    path = SysAllocString(windows_path);
+    b = VARIANT_TRUE;
+    hr = IFileSystem3_FileExists(fs3, path, &b);
+    ok(hr == S_OK, "got 0x%08x, expected 0x%08x\n", hr, S_OK);
+    ok(b == VARIANT_FALSE, "got %x\n", b);
+    SysFreeString(path);
+
     /* Folder Exists */
     hr = IFileSystem3_FolderExists(fs3, NULL, NULL);
     ok(hr == E_POINTER, "got 0x%08x, expected 0x%08x\n", hr, E_POINTER);
