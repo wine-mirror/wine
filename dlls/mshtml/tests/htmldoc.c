@@ -4985,7 +4985,7 @@ static void test_Load(IPersistMoniker *persist, IMoniker *mon)
     }else {
         todo_wine CHECK_CALLED(GetTravelLog);
     }
-    CHECK_CALLED(Exec_ShellDocView_84);
+    CHECK_CALLED_BROKEN(Exec_ShellDocView_84);
     todo_wine CHECK_CALLED(GetPendingUrl);
 
     set_clientsite = container_locked = TRUE;
@@ -5117,7 +5117,7 @@ static void test_download(DWORD flags)
     CHECK_CALLED(OnViewChange);
     CLEAR_CALLED(GetDropTarget);
     if((flags & DWL_TRYCSS) && !(flags & DWL_EMPTY))
-        todo_wine CHECK_CALLED(Exec_ShellDocView_84);
+        todo_wine CHECK_CALLED_BROKEN(Exec_ShellDocView_84);
     if(flags & DWL_CSS) {
         CHECK_CALLED(CreateInstance);
         CHECK_CALLED(Start);
@@ -5296,7 +5296,7 @@ static void test_put_href(IHTMLDocument2 *doc, BOOL use_replace, const char *hre
                 CHECK_CALLED(Invoke_AMBIENT_SILENT);
                 CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
                 CHECK_CALLED(Exec_ShellDocView_63);
-                CHECK_CALLED(Exec_ShellDocView_84);
+                CHECK_CALLED_BROKEN(Exec_ShellDocView_84);
             }else {
                 CHECK_CALLED(FireNavigateComplete2);
                 CHECK_CALLED(FireDocumentComplete);
@@ -5361,7 +5361,7 @@ static void test_put_href(IHTMLDocument2 *doc, BOOL use_replace, const char *hre
         CHECK_CALLED(Invoke_AMBIENT_SILENT);
         CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
         CHECK_CALLED(Exec_ShellDocView_63);
-        CHECK_CALLED(Exec_ShellDocView_84);
+        CHECK_CALLED_BROKEN(Exec_ShellDocView_84);
     }
 
     if(doc_mon) {
@@ -5732,7 +5732,7 @@ static void test_exec_editmode(IUnknown *unk, BOOL loaded)
     CHECK_CALLED(OnChanged_READYSTATE);
     CHECK_CALLED(Invoke_OnReadyStateChange_Loading);
     CLEAR_CALLED(IsSystemMoniker); /* IE7 */
-    CHECK_CALLED(Exec_ShellDocView_84);
+    CHECK_CALLED_BROKEN(Exec_ShellDocView_84);
     if(loaded)
         CHECK_CALLED(BindToStorage);
     CHECK_CALLED(InPlaceUIWindow_SetActiveObject);
@@ -5966,7 +5966,7 @@ static void test_ClientSite(IOleObject *oleobj, DWORD flags)
         CLEAR_CALLED(Invoke_AMBIENT_PALETTE); /* not called on IE9 */
         CLEAR_CALLED(GetOverrideKeyPath); /* Called by IE9 */
         todo_wine CHECK_CALLED(GetTravelLog);
-        CHECK_CALLED(Exec_ShellDocView_84);
+        CHECK_CALLED_BROKEN(Exec_ShellDocView_84);
 
         set_clientsite = TRUE;
     }
@@ -7226,7 +7226,7 @@ static void test_UIActivate(BOOL do_load, BOOL use_ipsex, BOOL use_ipsw)
     CHECK_CALLED(Exec_SETPROGRESSMAX);
     CHECK_CALLED(Exec_SETPROGRESSPOS);
     todo_wine CHECK_CALLED(GetTravelLog);
-    CHECK_CALLED(Exec_ShellDocView_84);
+    CHECK_CALLED_BROKEN(Exec_ShellDocView_84);
 
     hres = IOleDocumentView_GetInPlaceSite(view, &inplacesite);
     ok(hres == S_OK, "GetInPlaceSite failed: %08x\n", hres);
