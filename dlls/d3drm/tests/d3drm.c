@@ -602,6 +602,7 @@ static void test_Frame(void)
     LPDIRECT3DRMLIGHT pLight1;
     LPDIRECT3DRMLIGHT pLightTmp;
     LPDIRECT3DRMLIGHTARRAY pLightArray;
+    D3DCOLOR color;
     DWORD count;
     CHAR cname[64] = {0};
 
@@ -894,6 +895,20 @@ static void test_Frame(void)
     ok(hr == D3DRM_OK, "Cannot delete light (hr = %x)\n", hr);
     CHECK_REFCOUNT(pFrameP1, 3);
     IDirect3DRMLight_Release(pLight1);
+
+    /* Test SceneBackground on first parent */
+    color = IDirect3DRMFrame_GetSceneBackground(pFrameP1);
+    ok(color == 0xff000000, "wrong color (%x)\n", color);
+
+    hr = IDirect3DRMFrame_SetSceneBackground(pFrameP1, 0xff180587);
+    ok(hr == D3DRM_OK, "Cannot set color (hr = %x)\n", hr);
+    color = IDirect3DRMFrame_GetSceneBackground(pFrameP1);
+    ok(color == 0xff180587, "wrong color (%x)\n", color);
+
+    hr = IDirect3DRMFrame_SetSceneBackgroundRGB(pFrameP1, 0.5, 0.5, 0.5);
+    ok(hr == D3DRM_OK, "Cannot set color (hr = %x)\n", hr);
+    color = IDirect3DRMFrame_GetSceneBackground(pFrameP1);
+    ok(color == 0xff7f7f7f, "wrong color (%x)\n", color);
 
     /* Cleanup */
     IDirect3DRMFrame_Release(pFrameP2);

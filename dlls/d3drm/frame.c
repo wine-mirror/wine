@@ -55,6 +55,7 @@ struct IDirect3DRMFrameImpl {
     ULONG lights_capacity;
     IDirect3DRMLight** lights;
     D3DRMMATRIX4D transform;
+    D3DCOLOR scenebackground;
 };
 
 typedef struct {
@@ -981,9 +982,9 @@ static D3DCOLOR WINAPI IDirect3DRMFrame2Impl_GetSceneBackground(IDirect3DRMFrame
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
 
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    TRACE("(%p/%p)->()\n", iface, This);
 
-    return 0;
+    return IDirect3DRMFrame3_GetSceneBackground(&This->IDirect3DRMFrame3_iface);
 }
 
 static HRESULT WINAPI IDirect3DRMFrame2Impl_GetSceneBackgroundDepth(IDirect3DRMFrame2* iface,
@@ -1040,9 +1041,9 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_SetSceneBackground(IDirect3DRMFrame2
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
 
-    FIXME("(%p/%p)->(%u): stub\n", iface, This, color);
+    TRACE("(%p/%p)->(%u)\n", iface, This, color);
 
-    return E_NOTIMPL;
+    return IDirect3DRMFrame3_SetSceneBackground(&This->IDirect3DRMFrame3_iface, color);
 }
 
 static HRESULT WINAPI IDirect3DRMFrame2Impl_SetSceneBackgroundRGB(IDirect3DRMFrame2* iface,
@@ -1051,9 +1052,9 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_SetSceneBackgroundRGB(IDirect3DRMFra
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
 
-    FIXME("(%p/%p)->(%f,%f,%f): stub\n", iface, This, red, green, blue);
+    TRACE("(%p/%p)->(%f,%f,%f)\n", iface, This, red, green, blue);
 
-    return E_NOTIMPL;
+    return IDirect3DRMFrame3_SetSceneBackgroundRGB(&This->IDirect3DRMFrame3_iface, red, green, blue);
 }
 
 static HRESULT WINAPI IDirect3DRMFrame2Impl_SetSceneBackgroundDepth(IDirect3DRMFrame2* iface,
@@ -2078,9 +2079,9 @@ static D3DCOLOR WINAPI IDirect3DRMFrame3Impl_GetSceneBackground(IDirect3DRMFrame
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
 
-    FIXME("(%p/%p)->(): stub\n", iface, This);
+    TRACE("(%p/%p)->()\n", iface, This);
 
-    return 0;
+    return This->scenebackground;
 }
 
 static HRESULT WINAPI IDirect3DRMFrame3Impl_GetSceneBackgroundDepth(IDirect3DRMFrame3* iface,
@@ -2137,9 +2138,11 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_SetSceneBackground(IDirect3DRMFrame3
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
 
-    FIXME("(%p/%p)->(%u): stub\n", iface, This, color);
+    TRACE("(%p/%p)->(%u)\n", iface, This, color);
 
-    return E_NOTIMPL;
+    This->scenebackground = color;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMFrame3Impl_SetSceneBackgroundRGB(IDirect3DRMFrame3* iface,
@@ -2148,9 +2151,13 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_SetSceneBackgroundRGB(IDirect3DRMFra
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
 
-    FIXME("(%p/%p)->(%f,%f,%f): stub\n", iface, This, red, green, blue);
+    TRACE("(%p/%p)->(%f,%f,%f)\n", iface, This, red, green, blue);
 
-    return E_NOTIMPL;
+    This->scenebackground = D3DCOLOR_ARGB(0xff, (BYTE)(red   * 255.0f),
+                                                (BYTE)(green * 255.0f),
+                                                (BYTE)(blue  * 255.0f));
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMFrame3Impl_SetSceneBackgroundDepth(IDirect3DRMFrame3* iface,
@@ -2685,6 +2692,7 @@ HRESULT Direct3DRMFrame_create(REFIID riid, IUnknown* parent, IUnknown** ret_ifa
     object->IDirect3DRMFrame2_iface.lpVtbl = &Direct3DRMFrame2_Vtbl;
     object->IDirect3DRMFrame3_iface.lpVtbl = &Direct3DRMFrame3_Vtbl;
     object->ref = 1;
+    object->scenebackground = D3DCOLOR_ARGB(0xff, 0, 0, 0);
 
     memcpy(&object->transform[0][0], &identity[0][0], sizeof(D3DRMMATRIX4D));
 
