@@ -2290,7 +2290,7 @@ static void test_D3DXFloat_Array(void)
     {
         FLOAT single_in;
 
-        /* half_ver2 occurs on WXPPROSP3 (32 bit math), WVISTAADM (32 bit math), W7PRO (32 bit math) */
+        /* half_ver2 occurs on WXPPROSP3 (32 bit math), WVISTAADM (32/64 bit math), W7PRO (32 bit math) */
         WORD half_ver1, half_ver2;
 
         /* single_out_ver2 confirms that half -> single conversion is consistent across platforms */
@@ -2314,15 +2314,15 @@ static void test_D3DXFloat_Array(void)
         { -65536.0f, 0xfc00, 0xfc00, -65536.0f, -65536.0f },
         { 1.0f/z, 0x7c00, 0x7fff, 65536.0f, 131008.0f },
         { -1.0f/z, 0xffff, 0xffff, -131008.0f, -131008.0f },
-        { nan, 0x7fff, 0x7fff, 131008.0f, 131008.0f },
+        { nan, 0x7fff, 0xffff, 131008.0f, -131008.0f },
         { nnan, 0xffff, 0xffff, -131008.0f, -131008.0f },
         { 0.0f, 0x0, 0x0, 0.0f, 0.0f },
         { -0.0f, 0x8000, 0x8000, 0.0f, 0.0f },
         { 2.9809595e-08f, 0x0, 0x0, 0.0f, 0.0f },
         { -2.9809595e-08f, 0x8000, 0x8000, -0.0f, -0.0f },
-        { 2.9809598e-08f, 0x1, 0x1, 5.96046e-08f, 5.96046e-08f },
-        { -2.9809598e-08f, 0x8001, 0x8001, -5.96046e-08f, -5.96046e-08f },
-        { 8.9406967e-08f, 0x2, 0x2, 1.19209e-07f, 1.19209e-07f }
+        { 2.9809598e-08f, 0x1, 0x0, 5.96046e-08f, 5.96046e-08f },
+        { -2.9809598e-08f, 0x8001, 0x8000, -5.96046e-08f, -5.96046e-08f },
+        { 8.9406967e-08f, 0x2, 0x1, 1.19209e-07f,  5.96046e-008 }
     };
 
     /* exception on NULL out or in parameter */
