@@ -58,17 +58,17 @@ BEGIN
     PUSHBUTTON      "Show &Details", ID_DETAILS, 140, 151, 60, 16, WS_TABSTOP
 END
 
-IDD_DETAILS_DLG DIALOGEX 100, 100, 300, 240
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_VISIBLE
+IDD_DETAILS_DLG DIALOGEX 100, 100, 400, 340
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_VISIBLE
 CAPTION "Program Error Details"
 FONT 8, "MS Shell Dlg"
 BEGIN
-    EDITTEXT        IDC_CRASH_TXT, 4, 4, 292, 172, ES_MULTILINE | ES_READONLY | WS_HSCROLL | WS_VSCROLL, WS_TABSTOP
+    EDITTEXT        IDC_CRASH_TXT, 4, 4, 392, 272, ES_MULTILINE | ES_READONLY | WS_HSCROLL | WS_VSCROLL, WS_TABSTOP
     CONTROL         "If this problem is not present under Windows and has not been reported yet, \
                      you can save the detailed information to a file using the \"Save As\" button, \
                      then <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a> \
                      and attach that file to the report.",
-                    IDC_STATIC_TXT2,"SysLink",0,6,185,288,32
-    DEFPUSHBUTTON   "Close", IDOK, 226, 220, 70, 16, WS_TABSTOP
-    PUSHBUTTON      "&Save As...", ID_SAVEAS, 152, 220, 70, 16, WS_TABSTOP
+                    IDC_STATIC_TXT2,"SysLink",0,6,285,388,32
+    DEFPUSHBUTTON   "Close", IDOK, 326, 320, 70, 16, WS_TABSTOP
+    PUSHBUTTON      "&Save As...", ID_SAVEAS, 252, 320, 70, 16, WS_TABSTOP
 END
