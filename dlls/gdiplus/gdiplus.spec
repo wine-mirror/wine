@@ -474,7 +474,7 @@
 474 stdcall GdipSaveAdd(ptr ptr)
 475 stub GdipSaveAddImage
 476 stdcall GdipSaveGraphics(ptr ptr)
-477 stdcall GdipSaveImageToFile(ptr ptr ptr ptr)
+477 stdcall GdipSaveImageToFile(ptr wstr ptr ptr)
 478 stdcall GdipSaveImageToStream(ptr ptr ptr ptr)
 479 stdcall GdipScaleLineTransform(ptr float float long)
 480 stdcall GdipScaleMatrix(ptr float float long)
