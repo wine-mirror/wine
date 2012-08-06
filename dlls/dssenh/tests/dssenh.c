@@ -396,8 +396,92 @@ static void test_keylength(void)
     ok(result, "Expected release of CSP provider.\n");
 }
 
+struct hash_test {
+    ALG_ID algid;
+    BYTE* input;
+    DWORD dataLen;
+    BYTE hash[20];
+    DWORD hashLen;
+};
+
+static const char testHashVal1[] = "I love working with Wine";
+static const char testHashVal2[] = "Wine is not an emulater.";
+static const char testHashVal3[] = "";
+
+static const struct hash_test hash_data[] = {
+    {CALG_MD5, (BYTE *)testHashVal1, sizeof(testHashVal1),
+    {0x4f, 0xf4, 0xd0, 0xdf, 0xe8, 0xf6, 0x6b, 0x1b,
+        0x87, 0xea, 0xca, 0x3d, 0xe8, 0x3c, 0xdd, 0xae}, 16},
+    {CALG_MD5, (BYTE *)testHashVal2, sizeof(testHashVal2),
+    {0x80, 0x5c, 0x1c, 0x0e, 0x79, 0x70, 0xd9, 0x38,
+        0x04, 0x46, 0x19, 0xbe, 0x38, 0x1f, 0xef, 0xe1}, 16},
+    {CALG_MD5, (BYTE *)testHashVal3, sizeof(testHashVal3),
+    {0x93, 0xb8, 0x85, 0xad, 0xfe, 0x0d, 0xa0, 0x89,
+        0xcd, 0xf6, 0x34, 0x90, 0x4f, 0xd5, 0x9f, 0x71}, 16},
+    {CALG_SHA, (BYTE *)testHashVal1, sizeof(testHashVal1),
+    {0x2a, 0xd0, 0xc9, 0x42, 0xfb, 0x73, 0x02, 0x48, 0xbb, 0x5f,
+        0xc2, 0xa4, 0x78, 0xdd, 0xe4, 0x3b, 0xfc, 0x76, 0xe9, 0xe2}, 20},
+    {CALG_SHA, (BYTE *)testHashVal2, sizeof(testHashVal2),
+    {0xfd, 0xfc, 0xab, 0x3a, 0xde, 0x33, 0x01, 0x38, 0xfe, 0xbb,
+        0xc3, 0x13, 0x84, 0x20, 0x9e, 0x55, 0x94, 0x8d, 0xc6, 0x05}, 20},
+    {CALG_SHA, (BYTE *)testHashVal3, sizeof(testHashVal3),
+    {0x5b, 0xa9, 0x3c, 0x9d, 0xb0, 0xcf, 0xf9, 0x3f, 0x52, 0xb5,
+        0x21, 0xd7, 0x42, 0x0e, 0x43, 0xf6, 0xed, 0xa2, 0x78, 0x4f}, 20}
+};
+
+static void test_hash(const struct hash_test *tests, int testLen)
+{
+    HCRYPTPROV hProv = 0;
+    HCRYPTHASH hHash;
+    BYTE hashValue[36];
+    BOOL result;
+    int i;
+
+    result = CryptAcquireContextA(
+        &hProv, NULL, MS_ENH_DSS_DH_PROV, PROV_DSS_DH, CRYPT_VERIFYCONTEXT);
+    if(!result)
+    {
+        skip("DSSENH is currently not available, skipping hashing tests.\n");
+        return;
+    }
+    ok(result, "Expected no errors.\n");
+
+    for(i = 0; i < testLen; i++)
+    {
+        BYTE* data = tests[i].input;
+        DWORD dataLen = tests[i].dataLen;
+        DWORD hashLen;
+
+        /* test algid hash */
+        result = CryptCreateHash(hProv, tests[i].algid, 0, 0, &hHash);
+        ok(result, "Expected creation of a hash.\n");
+
+        result = CryptHashData(hHash, data, dataLen, 0);
+        ok(result, "Expected data to be added to hash.\n");
+
+        dataLen = sizeof(DWORD);
+        result = CryptGetHashParam(hHash, HP_HASHSIZE, (BYTE *)&hashLen, &dataLen, 0);
+        ok(result && (hashLen == tests[i].hashLen), "Expected %d hash len, got %d.Error: %x\n",
+            tests[i].hashLen, hashLen, GetLastError());
+
+        result = CryptGetHashParam(hHash, HP_HASHVAL, hashValue, &hashLen, 0);
+        ok(result, "Expected hash value return.\n");
+
+        ok(!memcmp(hashValue, tests[i].hash, tests[i].hashLen), "Incorrect hash output.\n");
+
+        result = CryptHashData(hHash, data, dataLen, 0);
+        ok(!result, "Should not be able to add to hash.\n");
+
+        result = CryptDestroyHash(hHash);
+        ok(result, "Expected destruction of hash.\n");
+    }
+    result = CryptReleaseContext(hProv, 0);
+    ok(result, "Expected release of the DSS Enhanced provider.\n");
+}
+
 START_TEST(dssenh)
 {
     test_acquire_context();
     test_keylength();
+    test_hash(hash_data, TESTLEN(hash_data));
 }
