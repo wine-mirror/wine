@@ -307,8 +307,7 @@ static HRESULT WINAPI IGetFrame_fnSetFormat(IGetFrame *iface,
   if (sInfo.fccType != streamtypeVIDEO)
     return AVIERR_UNSUPPORTED;
 
-  This->bFormatChanges =
-    (sInfo.dwFlags & AVISTREAMINFO_FORMATCHANGES ? TRUE : FALSE );
+  This->bFormatChanges = (sInfo.dwFlags & AVISTREAMINFO_FORMATCHANGES) != 0;
   This->dwFormatChangeCount = sInfo.dwFormatChangeCount;
   This->dwEditCount         = sInfo.dwEditCount;
   This->lCurrentFrame       = -1;
