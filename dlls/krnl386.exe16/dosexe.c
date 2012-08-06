@@ -61,7 +61,7 @@ static BOOL DOSVM_isdosexe;
  */
 BOOL DOSVM_IsWin16(void)
 {
-  return DOSVM_isdosexe ? FALSE : TRUE;
+  return !DOSVM_isdosexe;
 }
 
 /**********************************************************************

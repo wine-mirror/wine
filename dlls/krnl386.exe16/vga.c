@@ -716,7 +716,7 @@ static void VGA_InstallTimer(unsigned Rate)
 
 static BOOL VGA_IsTimerRunning(void)
 {
-    return VGA_timer_thread ? TRUE : FALSE;
+    return VGA_timer_thread != 0;
 }
 
 static HANDLE VGA_AlphaConsole(void)

@@ -93,7 +93,7 @@ typedef struct {
  */
 BOOL DOSVM_IsDos32(void)
 {
-  return (dpmi_flag & 1) ? TRUE : FALSE;
+  return (dpmi_flag & 1) != 0;
 }
 
 
