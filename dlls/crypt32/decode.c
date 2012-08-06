@@ -2977,7 +2977,7 @@ static BOOL CRYPT_AsnDecodeBool(const BYTE *pbEncoded, DWORD cbEncoded,
     else
     {
         *pcbStructInfo = sizeof(BOOL);
-        *(BOOL *)pvStructInfo = pbEncoded[2] ? TRUE : FALSE;
+        *(BOOL *)pvStructInfo = pbEncoded[2] != 0;
         ret = TRUE;
     }
     TRACE("returning %d (%08x)\n", ret, GetLastError());

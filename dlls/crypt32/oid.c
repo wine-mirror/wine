@@ -684,7 +684,7 @@ BOOL WINAPI CryptUnregisterOIDFunction(DWORD dwEncodingType, LPCSTR pszFuncName,
     CryptMemFree(szKey);
     if (rc)
         SetLastError(rc);
-    return rc ? FALSE : TRUE;
+    return !rc;
 }
 
 BOOL WINAPI CryptGetOIDFunctionValue(DWORD dwEncodingType, LPCSTR pszFuncName,
@@ -721,7 +721,7 @@ BOOL WINAPI CryptGetOIDFunctionValue(DWORD dwEncodingType, LPCSTR pszFuncName,
             SetLastError(rc);
         RegCloseKey(hKey);
     }
-    return rc ? FALSE : TRUE;
+    return !rc;
 }
 
 BOOL WINAPI CryptSetOIDFunctionValue(DWORD dwEncodingType, LPCSTR pszFuncName,
@@ -758,7 +758,7 @@ BOOL WINAPI CryptSetOIDFunctionValue(DWORD dwEncodingType, LPCSTR pszFuncName,
             SetLastError(rc);
         RegCloseKey(hKey);
     }
-    return rc ? FALSE : TRUE;
+    return !rc;
 }
 
 static LPCWSTR CRYPT_FindStringInMultiString(LPCWSTR multi, LPCWSTR toFind)
