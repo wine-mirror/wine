@@ -558,6 +558,11 @@ static void test_CryptCATAdminAddRemoveCatalog(void)
 
     /* Unique name will be created */
     hcatinfo = pCryptCATAdminAddCatalog(hcatadmin, tmpfileW, NULL, 0);
+    if (!hcatinfo && (GetLastError() == ERROR_ACCESS_DENIED))
+    {
+        win_skip("Not enough rights\n");
+        goto cleanup;
+    }
     todo_wine ok(hcatinfo != NULL, "CryptCATAdminAddCatalog failed %u\n", GetLastError());
 
     info.cbStruct = sizeof(info);
@@ -620,6 +625,7 @@ static void test_CryptCATAdminAddRemoveCatalog(void)
     attrs = GetFileAttributes(catfilepath);
     ok(attrs == INVALID_FILE_ATTRIBUTES, "Expected %s to be removed\n", catfilepath);
 
+cleanup:
     ret = pCryptCATAdminReleaseContext(hcatadmin, 0);
     ok(ret, "CryptCATAdminReleaseContext failed %u\n", GetLastError());
 
