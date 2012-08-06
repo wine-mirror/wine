@@ -526,6 +526,7 @@ library Scripting
         [id(0x00002713), propget]
         HRESULT AtEndOfLine([out, retval] VARIANT_BOOL* EOL);
 
+        [id(0x00002714)]
         HRESULT Read([in] long Characters, [out, retval] BSTR* Text);
 
         [id(0x00002715)]
