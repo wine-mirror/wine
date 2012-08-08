@@ -492,7 +492,7 @@ static LRESULT FD31_TestPath( const FD31_DATA *lfs, LPWSTR path )
         TRACE("path=%s, tmpstr2=%s\n", debugstr_w(path), debugstr_w(tmpstr2));
         SetDlgItemTextW( hWnd, edt1, tmpstr2 );
         FD31_ScanDir(lfs->ofnW, hWnd, path);
-        return (lfs->ofnW->Flags & OFN_NOVALIDATE) ? TRUE : FALSE;
+        return (lfs->ofnW->Flags & OFN_NOVALIDATE) != 0;
     }
 
     /* no wildcards, we might have a directory or a filename */

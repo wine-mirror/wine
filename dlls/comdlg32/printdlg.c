@@ -2190,7 +2190,7 @@ static BOOL PRINTDLG_CreateDCA(LPPRINTDLGA lppd)
     }
     GlobalUnlock(lppd->hDevNames);
     GlobalUnlock(lppd->hDevMode);
-    return lppd->hDC ? TRUE : FALSE;
+    return lppd->hDC != NULL;
 }
 
 static BOOL PRINTDLG_CreateDCW(LPPRINTDLGW lppd)
@@ -2211,7 +2211,7 @@ static BOOL PRINTDLG_CreateDCW(LPPRINTDLGW lppd)
     }
     GlobalUnlock(lppd->hDevNames);
     GlobalUnlock(lppd->hDevMode);
-    return lppd->hDC ? TRUE : FALSE;
+    return lppd->hDC != NULL;
 }
 
 /***********************************************************************
