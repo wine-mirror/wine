@@ -1218,42 +1218,45 @@ static void test_effect_parameter_value_GetVectorArray(const struct test_effect_
     HRESULT hr;
     DWORD cmp = 0xabababab;
     FLOAT fvalue[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
-    UINT l, k, err = 0;
+    UINT l, k, element, err = 0;
 
-    memset(fvalue, 0xab, sizeof(fvalue));
-    hr = effect->lpVtbl->GetVectorArray(effect, parameter, (D3DXVECTOR4 *)&fvalue, res_desc->Elements);
-    if (!res_desc->Elements)
+    for (element = 0; element <= res_desc->Elements + 1; ++element)
     {
-        ok(hr == D3D_OK, "%u - %s: GetVectorArray failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
-
-        for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (fvalue[l] != *(FLOAT *)&cmp) ++err;
-    }
-    else if (res_desc->Elements && res_desc->Class == D3DXPC_VECTOR)
-    {
-        ok(hr == D3D_OK, "%u - %s: GetVectorArray failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
-
-        for (k = 0; k < res_desc->Elements; ++k)
+        memset(fvalue, 0xab, sizeof(fvalue));
+        hr = effect->lpVtbl->GetVectorArray(effect, parameter, (D3DXVECTOR4 *)&fvalue, element);
+        if (!element)
         {
-            for (l = 0; l < res_desc->Columns; ++l)
+            ok(hr == D3D_OK, "%u - %s[%u]: GetVectorArray failed, got %#x, expected %#x\n", i, res_full_name, element, hr, D3D_OK);
+
+            for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (fvalue[l] != *(FLOAT *)&cmp) ++err;
+        }
+        else if (element <= res_desc->Elements && res_desc->Class == D3DXPC_VECTOR)
+        {
+            ok(hr == D3D_OK, "%u - %s[%u]: GetVectorArray failed, got %#x, expected %#x\n", i, res_full_name, element, hr, D3D_OK);
+
+            for (k = 0; k < element; ++k)
             {
-                if (!compare_float(fvalue[l + k * 4], get_float(res_desc->Type,
-                        &res_value[l + k * res_desc->Columns]), 512))
-                    ++err;
+                for (l = 0; l < res_desc->Columns; ++l)
+                {
+                    if (!compare_float(fvalue[l + k * 4], get_float(res_desc->Type,
+                            &res_value[l + k * res_desc->Columns]), 512))
+                        ++err;
+                }
+
+                for (l = res_desc->Columns; l < 4; ++l) if (fvalue[l + k * 4] != 0.0f) ++err;
             }
 
-            for (l = res_desc->Columns; l < 4; ++l) if (fvalue[l + k * 4] != 0.0f) ++err;
+            for (l = element * 4; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (fvalue[l] != *(FLOAT *)&cmp) ++err;
         }
+        else
+        {
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s[%u]: GetVectorArray failed, got %#x, expected %#x\n",
+                    i, res_full_name, element, hr, D3DERR_INVALIDCALL);
 
-        for (l = res_desc->Elements * 4; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (fvalue[l] != *(FLOAT *)&cmp) ++err;
+            for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (fvalue[l] != *(FLOAT *)&cmp) ++err;
+        }
+        ok(!err, "%u - %s[%u]: GetVectorArray failed with %u errors\n", i, res_full_name, element, err);
     }
-    else
-    {
-        ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetVectorArray failed, got %#x, expected %#x\n",
-                i, res_full_name, hr, D3DERR_INVALIDCALL);
-
-        for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (fvalue[l] != *(FLOAT *)&cmp) ++err;
-    }
-    ok(!err, "%u - %s: GetVectorArray failed with %u errors\n", i, res_full_name, err);
 }
 
 static void test_effect_parameter_value_GetMatrix(const struct test_effect_parameter_value_result *res,
@@ -1304,47 +1307,50 @@ static void test_effect_parameter_value_GetMatrixArray(const struct test_effect_
     HRESULT hr;
     DWORD cmp = 0xabababab;
     FLOAT fvalue[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
-    UINT l, k, m, err = 0;
+    UINT l, k, m, element, err = 0;
 
-    memset(fvalue, 0xab, sizeof(fvalue));
-    hr = effect->lpVtbl->GetMatrixArray(effect, parameter, (D3DXMATRIX *)&fvalue, res_desc->Elements);
-    if (!res_desc->Elements)
+    for (element = 0; element <= res_desc->Elements + 1; ++element)
     {
-        ok(hr == D3D_OK, "%u - %s: GetMatrixArray failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
-
-        for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (fvalue[l] != *(FLOAT *)&cmp) ++err;
-    }
-    else if (res_desc->Elements && res_desc->Class == D3DXPC_MATRIX_ROWS)
-    {
-        ok(hr == D3D_OK, "%u - %s: GetMatrixArray failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
-
-        for (m = 0; m < res_desc->Elements; ++m)
+        memset(fvalue, 0xab, sizeof(fvalue));
+        hr = effect->lpVtbl->GetMatrixArray(effect, parameter, (D3DXMATRIX *)&fvalue, element);
+        if (!element)
         {
-            for (k = 0; k < 4; ++k)
+            ok(hr == D3D_OK, "%u - %s[%u]: GetMatrixArray failed, got %#x, expected %#x\n", i, res_full_name, element, hr, D3D_OK);
+
+            for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (fvalue[l] != *(FLOAT *)&cmp) ++err;
+        }
+        else if (element <= res_desc->Elements && res_desc->Class == D3DXPC_MATRIX_ROWS)
+        {
+            ok(hr == D3D_OK, "%u - %s[%u]: GetMatrixArray failed, got %#x, expected %#x\n", i, res_full_name, element, hr, D3D_OK);
+
+            for (m = 0; m < element; ++m)
             {
-                for (l = 0; l < 4; ++l)
+                for (k = 0; k < 4; ++k)
                 {
-                    if (k < res_desc->Columns && l < res_desc->Rows)
+                    for (l = 0; l < 4; ++l)
                     {
-                        if (!compare_float(fvalue[m * 16 + l * 4 + k], get_float(res_desc->Type,
-                                &res_value[m * res_desc->Columns * res_desc->Rows + l * res_desc->Columns + k]), 512))
-                            ++err;
+                        if (k < res_desc->Columns && l < res_desc->Rows)
+                        {
+                            if (!compare_float(fvalue[m * 16 + l * 4 + k], get_float(res_desc->Type,
+                                    &res_value[m * res_desc->Columns * res_desc->Rows + l * res_desc->Columns + k]), 512))
+                                ++err;
+                        }
+                        else if (fvalue[m * 16 + l * 4 + k] != 0.0f) ++err;
                     }
-                    else if (fvalue[m * 16 + l * 4 + k] != 0.0f) ++err;
                 }
             }
+
+            for (l = element * 16; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (fvalue[l] != *(FLOAT *)&cmp) ++err;
         }
+        else
+        {
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s[%u]: GetMatrixArray failed, got %#x, expected %#x\n",
+                    i, res_full_name, element, hr, D3DERR_INVALIDCALL);
 
-        for (l = res_desc->Elements * 16; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (fvalue[l] != *(FLOAT *)&cmp) ++err;
+            for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (fvalue[l] != *(FLOAT *)&cmp) ++err;
+        }
+        ok(!err, "%u - %s[%u]: GetMatrixArray failed with %u errors\n", i, res_full_name, element, err);
     }
-    else
-    {
-        ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixArray failed, got %#x, expected %#x\n",
-                i, res_full_name, hr, D3DERR_INVALIDCALL);
-
-        for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (fvalue[l] != *(FLOAT *)&cmp) ++err;
-    }
-    ok(!err, "%u - %s: GetMatrixArray failed with %u errors\n", i, res_full_name, err);
 }
 
 static void test_effect_parameter_value_GetMatrixPointerArray(const struct test_effect_parameter_value_result *res,
@@ -1368,13 +1374,15 @@ static void test_effect_parameter_value_GetMatrixPointerArray(const struct test_
         hr = effect->lpVtbl->GetMatrixPointerArray(effect, parameter, matrix_pointer_array, element);
         if (!element)
         {
-            ok(hr == D3D_OK, "%u - %s: GetMatrixPointerArray failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+            ok(hr == D3D_OK, "%u - %s[%u]: GetMatrixPointerArray failed, got %#x, expected %#x\n",
+                    i, res_full_name, element, hr, D3D_OK);
 
             for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (fvalue[l] != *(FLOAT *)&cmp) ++err;
         }
         else if (element <= res_desc->Elements && res_desc->Class == D3DXPC_MATRIX_ROWS)
         {
-            ok(hr == D3D_OK, "%u - %s: GetMatrixPointerArray failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+            ok(hr == D3D_OK, "%u - %s[%u]: GetMatrixPointerArray failed, got %#x, expected %#x\n",
+                    i, res_full_name, element, hr, D3D_OK);
 
             for (m = 0; m < element; ++m)
             {
@@ -1399,10 +1407,10 @@ static void test_effect_parameter_value_GetMatrixPointerArray(const struct test_
         {
             for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (fvalue[l] != *(FLOAT *)&cmp) ++err;
 
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixPointerArray failed, got %#x, expected %#x\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s[%u]: GetMatrixPointerArray failed, got %#x, expected %#x\n",
+                    i, res_full_name, element, hr, D3DERR_INVALIDCALL);
         }
-        ok(!err, "%u - %s: GetMatrixPointerArray failed with %u errors\n", i, res_full_name, err);
+        ok(!err, "%u - %s[%u]: GetMatrixPointerArray failed with %u errors\n", i, res_full_name, element, err);
     }
 }
 
@@ -1472,47 +1480,52 @@ static void test_effect_parameter_value_GetMatrixTransposeArray(const struct tes
     HRESULT hr;
     DWORD cmp = 0xabababab;
     FLOAT fvalue[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
-    UINT l, k, m, err = 0;
+    UINT l, k, m, element, err = 0;
 
-    memset(fvalue, 0xab, sizeof(fvalue));
-    hr = effect->lpVtbl->GetMatrixTransposeArray(effect, parameter, (D3DXMATRIX *)&fvalue, res_desc->Elements);
-    if (!res_desc->Elements)
+    for (element = 0; element <= res_desc->Elements + 1; ++element)
     {
-        ok(hr == D3D_OK, "%u - %s: GetMatrixTransposeArray failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
-
-        for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (fvalue[l] != *(FLOAT *)&cmp) ++err;
-    }
-    else if (res_desc->Elements && res_desc->Class == D3DXPC_MATRIX_ROWS)
-    {
-        ok(hr == D3D_OK, "%u - %s: GetMatrixTransposeArray failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
-
-        for (m = 0; m < res_desc->Elements; ++m)
+        memset(fvalue, 0xab, sizeof(fvalue));
+        hr = effect->lpVtbl->GetMatrixTransposeArray(effect, parameter, (D3DXMATRIX *)&fvalue, element);
+        if (!element)
         {
-            for (k = 0; k < 4; ++k)
+            ok(hr == D3D_OK, "%u - %s[%u]: GetMatrixTransposeArray failed, got %#x, expected %#x\n",
+                    i, res_full_name, element, hr, D3D_OK);
+
+            for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (fvalue[l] != *(FLOAT *)&cmp) ++err;
+        }
+        else if (element <= res_desc->Elements && res_desc->Class == D3DXPC_MATRIX_ROWS)
+        {
+            ok(hr == D3D_OK, "%u - %s[%u]: GetMatrixTransposeArray failed, got %#x, expected %#x\n",
+                    i, res_full_name, element, hr, D3D_OK);
+
+            for (m = 0; m < element; ++m)
             {
-                for (l = 0; l < 4; ++l)
+                for (k = 0; k < 4; ++k)
                 {
-                    if (k < res_desc->Columns && l < res_desc->Rows)
+                    for (l = 0; l < 4; ++l)
                     {
-                        if (!compare_float(fvalue[m * 16 + l + k * 4], get_float(res_desc->Type,
-                                &res_value[m * res_desc->Columns * res_desc->Rows + l * res_desc->Columns + k]), 512))
-                            ++err;
+                        if (k < res_desc->Columns && l < res_desc->Rows)
+                        {
+                            if (!compare_float(fvalue[m * 16 + l + k * 4], get_float(res_desc->Type,
+                                    &res_value[m * res_desc->Columns * res_desc->Rows + l * res_desc->Columns + k]), 512))
+                                ++err;
+                        }
+                        else if (fvalue[m * 16 + l + k * 4] != 0.0f) ++err;
                     }
-                    else if (fvalue[m * 16 + l + k * 4] != 0.0f) ++err;
                 }
             }
+
+            for (l = element * 16; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (fvalue[l] != *(FLOAT *)&cmp) ++err;
         }
+        else
+        {
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s[%u]: GetMatrixTransposeArray failed, got %#x, expected %#x\n",
+                    i, res_full_name, element, hr, D3DERR_INVALIDCALL);
 
-        for (l = res_desc->Elements * 16; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (fvalue[l] != *(FLOAT *)&cmp) ++err;
+            for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (fvalue[l] != *(FLOAT *)&cmp) ++err;
+        }
+        ok(!err, "%u - %s[%u]: GetMatrixTransposeArray failed with %u errors\n", i, res_full_name, element, err);
     }
-    else
-    {
-        ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixTransposeArray failed, got %#x, expected %#x\n",
-                i, res_full_name, hr, D3DERR_INVALIDCALL);
-
-        for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (fvalue[l] != *(FLOAT *)&cmp) ++err;
-    }
-    ok(!err, "%u - %s: GetMatrixTransposeArray failed with %u errors\n", i, res_full_name, err);
 }
 
 static void test_effect_parameter_value_GetMatrixTransposePointerArray(const struct test_effect_parameter_value_result *res,
@@ -1536,13 +1549,15 @@ static void test_effect_parameter_value_GetMatrixTransposePointerArray(const str
         hr = effect->lpVtbl->GetMatrixTransposePointerArray(effect, parameter, matrix_pointer_array, element);
         if (!element)
         {
-            ok(hr == D3D_OK, "%u - %s: GetMatrixTransposePointerArray failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+            ok(hr == D3D_OK, "%u - %s[%u]: GetMatrixTransposePointerArray failed, got %#x, expected %#x\n",
+                    i, res_full_name, element, hr, D3D_OK);
 
             for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (fvalue[l] != *(FLOAT *)&cmp) ++err;
         }
         else if (element <= res_desc->Elements && res_desc->Class == D3DXPC_MATRIX_ROWS)
         {
-            ok(hr == D3D_OK, "%u - %s: GetMatrixTransposePointerArray failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+            ok(hr == D3D_OK, "%u - %s[%u]: GetMatrixTransposePointerArray failed, got %#x, expected %#x\n",
+                    i, res_full_name, element, hr, D3D_OK);
 
             for (m = 0; m < element; ++m)
             {
@@ -1565,12 +1580,12 @@ static void test_effect_parameter_value_GetMatrixTransposePointerArray(const str
         }
         else
         {
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixTransposePointerArray failed, got %#x, expected %#x\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s[%u]: GetMatrixTransposePointerArray failed, got %#x, expected %#x\n",
+                    i, res_full_name, element, hr, D3DERR_INVALIDCALL);
 
             for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (fvalue[l] != *(FLOAT *)&cmp) ++err;
         }
-        ok(!err, "%u - %s: GetMatrixTransposePointerArray failed with %u errors\n", i, res_full_name, err);
+        ok(!err, "%u - %s[%u]: GetMatrixTransposePointerArray failed with %u errors\n", i, res_full_name, element, err);
     }
 }
 
