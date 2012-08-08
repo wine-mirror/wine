@@ -583,10 +583,10 @@ static void dialog_choose_font(void)
 
     SendMessageW(hEditorWnd, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&fmt);
     lstrcpyW(cf.lpLogFont->lfFaceName, fmt.szFaceName);
-    cf.lpLogFont->lfItalic = (fmt.dwEffects & CFE_ITALIC) ? TRUE : FALSE;
+    cf.lpLogFont->lfItalic = (fmt.dwEffects & CFE_ITALIC) != 0;
     cf.lpLogFont->lfWeight = (fmt.dwEffects & CFE_BOLD) ? FW_BOLD : FW_NORMAL;
-    cf.lpLogFont->lfUnderline = (fmt.dwEffects & CFE_UNDERLINE) ? TRUE : FALSE;
-    cf.lpLogFont->lfStrikeOut = (fmt.dwEffects & CFE_STRIKEOUT) ? TRUE : FALSE;
+    cf.lpLogFont->lfUnderline = (fmt.dwEffects & CFE_UNDERLINE) != 0;
+    cf.lpLogFont->lfStrikeOut = (fmt.dwEffects & CFE_STRIKEOUT) != 0;
     cf.lpLogFont->lfHeight = -MulDiv(fmt.yHeight / 20, GetDeviceCaps(hDC, LOGPIXELSY), 72);
     cf.rgbColors = fmt.crTextColor;
 
