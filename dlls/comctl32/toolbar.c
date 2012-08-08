@@ -217,9 +217,6 @@ typedef enum
 
 #define TOOLBAR_NOWHERE (-1)
 
-#define TOOLBAR_HasText(x, y) (TOOLBAR_GetText(x, y) ? TRUE : FALSE)
-#define TOOLBAR_HasDropDownArrows(exStyle) ((exStyle & TBSTYLE_EX_DRAWDDARROWS) ? TRUE : FALSE)
-
 /* Used to find undocumented extended styles */
 #define TBSTYLE_EX_ALL (TBSTYLE_EX_DRAWDDARROWS | \
                         TBSTYLE_EX_UNDOC1 | \
@@ -256,6 +253,11 @@ static void TOOLBAR_TooltipSetRect(const TOOLBAR_INFO *infoPtr, const TBUTTON_IN
 static inline int default_top_margin(const TOOLBAR_INFO *infoPtr)
 {
     return (infoPtr->dwStyle & TBSTYLE_FLAT ? 0 : TOP_BORDER);
+}
+
+static inline BOOL TOOLBAR_HasDropDownArrows(DWORD exStyle)
+{
+    return (exStyle & TBSTYLE_EX_DRAWDDARROWS) != 0;
 }
 
 static LPWSTR
@@ -1247,7 +1249,7 @@ TOOLBAR_CalcStrings (const TOOLBAR_INFO *infoPtr, LPSIZE lpSize)
 
     btnPtr = infoPtr->buttons;
     for (i = 0; i < infoPtr->nNumButtons; i++, btnPtr++) {
-        if(TOOLBAR_HasText(infoPtr, btnPtr))
+        if(TOOLBAR_GetText(infoPtr, btnPtr))
         {
             TOOLBAR_MeasureString(infoPtr, btnPtr, hdc, &sz);
             if (sz.cx > lpSize->cx)
