@@ -290,7 +290,7 @@ static inline HANDLE get_droptarget_handle(HWND hwnd)
  */
 static inline BOOL is_droptarget(HWND hwnd)
 {
-    return get_droptarget_handle(hwnd) ? TRUE : FALSE;
+    return get_droptarget_handle(hwnd) != 0;
 }
 
 /*************************************************************
@@ -1660,7 +1660,7 @@ static BOOL OLEMenu_SetIsServerMenu( HMENU hmenu, OleMenuDescriptor *pOleMenuDes
     if ( nPos < nWidth )
     {
       /* Odd elements are server menu widths */
-      pOleMenuDescriptor->bIsServerItem = (i%2) ? TRUE : FALSE;
+      pOleMenuDescriptor->bIsServerItem = i%2;
       break;
     }
   }

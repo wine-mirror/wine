@@ -1899,7 +1899,7 @@ static DefaultHandler* DefaultHandler_Construct(
   This->IAdviseSink_iface.lpVtbl = &DefaultHandler_IAdviseSink_VTable;
   This->IPersistStorage_iface.lpVtbl = &DefaultHandler_IPersistStorage_VTable;
 
-  This->inproc_server = (flags & EMBDHLP_INPROC_SERVER) ? TRUE : FALSE;
+  This->inproc_server = (flags & EMBDHLP_INPROC_SERVER) != 0;
 
   /*
    * Start with one reference count. The caller of this function

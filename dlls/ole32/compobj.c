@@ -3769,10 +3769,9 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags, DWORD dwTimeout,
         {
             TRACE("waiting for rpc completion\n");
 
-            res = WaitForMultipleObjectsEx(cHandles, pHandles,
-                (dwFlags & COWAIT_WAITALL) ? TRUE : FALSE,
+            res = WaitForMultipleObjectsEx(cHandles, pHandles, (dwFlags & COWAIT_WAITALL) != 0,
                 (dwTimeout == INFINITE) ? INFINITE : start_time + dwTimeout - now,
-                (dwFlags & COWAIT_ALERTABLE) ? TRUE : FALSE);
+                (dwFlags & COWAIT_ALERTABLE) != 0);
         }
 
         switch (res)

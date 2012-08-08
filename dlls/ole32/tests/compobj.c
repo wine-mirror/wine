@@ -1110,7 +1110,7 @@ static DWORD CALLBACK free_libraries_thread(LPVOID p)
 
 static inline BOOL is_module_loaded(const char *module)
 {
-    return GetModuleHandle(module) ? TRUE : FALSE;
+    return GetModuleHandle(module) != 0;
 }
 
 static void test_CoFreeUnusedLibraries(void)
