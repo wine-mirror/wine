@@ -51,22 +51,22 @@ typedef INT PixelFormat;
 
 static inline BOOL IsIndexedPixelFormat(PixelFormat format)
 {
-    return (format & PixelFormatIndexed) ? TRUE : FALSE;
+    return (format & PixelFormatIndexed) != 0;
 }
 
 static inline BOOL IsAlphaPixelFormat(PixelFormat format)
 {
-    return (format & PixelFormatAlpha) ? TRUE : FALSE;
+    return (format & PixelFormatAlpha) != 0;
 }
 
 static inline BOOL IsCanonicalPixelFormat(PixelFormat format)
 {
-    return (format & PixelFormatCanonical) ? TRUE : FALSE;
+    return (format & PixelFormatCanonical) != 0;
 }
 
 static inline BOOL IsExtendedPixelFormat(PixelFormat format)
 {
-    return (format & PixelFormatExtended) ? TRUE : FALSE;
+    return (format & PixelFormatExtended) != 0;
 }
 
 static inline UINT GetPixelFormatSize(PixelFormat format)
