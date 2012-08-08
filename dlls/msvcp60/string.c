@@ -115,7 +115,7 @@ static const char* char_traits_char_find(const char *str,
 static MSVCP_bool basic_string_char_inside(
         basic_string_char *this, const char *ptr)
 {
-    return (ptr<this->ptr || ptr>=this->ptr+this->size) ? FALSE : TRUE;
+    return ptr>=this->ptr && ptr<this->ptr+this->size;
 }
 
 /* ?npos@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@2IB */
@@ -1811,7 +1811,7 @@ static const wchar_t* char_traits_wchar_find(const wchar_t *str,
 static MSVCP_bool basic_string_wchar_inside(
         basic_string_wchar *this, const wchar_t *ptr)
 {
-    return (ptr<this->ptr || ptr>=this->ptr+this->size) ? FALSE : TRUE;
+    return ptr>=this->ptr && ptr<this->ptr+this->size;
 }
 
 /* ?npos@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@2IB */
