@@ -1890,17 +1890,14 @@ DWORD WINAPI SHGetValueGoodBootW(HKEY hkey, LPCWSTR pSubKey, LPCWSTR pValue,
  */
 BOOL WINAPI RegisterMIMETypeForExtensionA(LPCSTR lpszSubKey, LPCSTR lpszValue)
 {
-  DWORD dwRet;
-
   if (!lpszValue)
   {
     WARN("Invalid lpszValue would crash under Win32!\n");
     return FALSE;
   }
 
-  dwRet = SHSetValueA(HKEY_CLASSES_ROOT, lpszSubKey, lpszContentTypeA,
+  return !SHSetValueA(HKEY_CLASSES_ROOT, lpszSubKey, lpszContentTypeA,
                       REG_SZ, lpszValue, strlen(lpszValue));
-  return dwRet ? FALSE : TRUE;
 }
 
 /*************************************************************************
@@ -1910,17 +1907,14 @@ BOOL WINAPI RegisterMIMETypeForExtensionA(LPCSTR lpszSubKey, LPCSTR lpszValue)
  */
 BOOL WINAPI RegisterMIMETypeForExtensionW(LPCWSTR lpszSubKey, LPCWSTR lpszValue)
 {
-  DWORD dwRet;
-
   if (!lpszValue)
   {
     WARN("Invalid lpszValue would crash under Win32!\n");
     return FALSE;
   }
 
-  dwRet = SHSetValueW(HKEY_CLASSES_ROOT, lpszSubKey, lpszContentTypeW,
+  return !SHSetValueW(HKEY_CLASSES_ROOT, lpszSubKey, lpszContentTypeW,
                       REG_SZ, lpszValue, strlenW(lpszValue));
-  return dwRet ? FALSE : TRUE;
 }
 
 /*************************************************************************
@@ -1937,8 +1931,7 @@ BOOL WINAPI RegisterMIMETypeForExtensionW(LPCWSTR lpszSubKey, LPCWSTR lpszValue)
  */
 BOOL WINAPI UnregisterMIMETypeForExtensionA(LPCSTR lpszSubKey)
 {
-  HRESULT ret = SHDeleteValueA(HKEY_CLASSES_ROOT, lpszSubKey, lpszContentTypeA);
-  return ret ? FALSE : TRUE;
+  return !SHDeleteValueA(HKEY_CLASSES_ROOT, lpszSubKey, lpszContentTypeA);
 }
 
 /*************************************************************************
@@ -1948,8 +1941,7 @@ BOOL WINAPI UnregisterMIMETypeForExtensionA(LPCSTR lpszSubKey)
  */
 BOOL WINAPI UnregisterMIMETypeForExtensionW(LPCWSTR lpszSubKey)
 {
-  HRESULT ret = SHDeleteValueW(HKEY_CLASSES_ROOT, lpszSubKey, lpszContentTypeW);
-  return ret ? FALSE : TRUE;
+  return !SHDeleteValueW(HKEY_CLASSES_ROOT, lpszSubKey, lpszContentTypeW);
 }
 
 /*************************************************************************

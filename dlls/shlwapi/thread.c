@@ -365,7 +365,7 @@ BOOL WINAPI SHCreateThread(LPTHREAD_START_ROUTINE pfnThreadProc, VOID *pData,
   ti.pfnThreadProc = pfnThreadProc;
   ti.pfnCallback = pfnCallback;
   ti.pData = pData;
-  ti.bInitCom = dwFlags & CTF_COINIT ? TRUE : FALSE;
+  ti.bInitCom = (dwFlags & CTF_COINIT) != 0;
   ti.hEvent = CreateEventW(NULL,FALSE,FALSE,NULL);
 
   /* Hold references to the current thread and IE process, if desired */

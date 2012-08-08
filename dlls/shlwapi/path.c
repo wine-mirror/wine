@@ -1714,7 +1714,7 @@ BOOL WINAPI PathFileExistsA(LPCSTR lpszPath)
   iPrevErrMode = SetErrorMode(SEM_FAILCRITICALERRORS);
   dwAttr = GetFileAttributesA(lpszPath);
   SetErrorMode(iPrevErrMode);
-  return dwAttr == INVALID_FILE_ATTRIBUTES ? FALSE : TRUE;
+  return dwAttr != INVALID_FILE_ATTRIBUTES;
 }
 
 /*************************************************************************
@@ -1735,7 +1735,7 @@ BOOL WINAPI PathFileExistsW(LPCWSTR lpszPath)
   iPrevErrMode = SetErrorMode(SEM_FAILCRITICALERRORS);
   dwAttr = GetFileAttributesW(lpszPath);
   SetErrorMode(iPrevErrMode);
-  return dwAttr == INVALID_FILE_ATTRIBUTES ? FALSE : TRUE;
+  return dwAttr != INVALID_FILE_ATTRIBUTES;
 }
 
 /*************************************************************************
