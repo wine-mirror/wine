@@ -337,7 +337,7 @@ static void CredDialogHideBalloonTip(HWND hwndDlg, struct cred_dialog_params *pa
 
 static inline BOOL CredDialogCapsLockOn(void)
 {
-    return GetKeyState(VK_CAPITAL) & 0x1 ? TRUE : FALSE;
+    return (GetKeyState(VK_CAPITAL) & 0x1) != 0;
 }
 
 static LRESULT CALLBACK CredDialogPasswordSubclassProc(HWND hwnd, UINT uMsg,
@@ -649,13 +649,13 @@ DWORD WINAPI CredUIPromptForCredentialsW(PCREDUI_INFOW pUIInfo,
             len = strlenW(params.pszPassword);
             entry->pszPassword = HeapAlloc(GetProcessHeap(), 0, (len + 1)*sizeof(WCHAR));
             memcpy(entry->pszPassword, params.pszPassword, (len + 1)*sizeof(WCHAR));
-            entry->generic = dwFlags & CREDUI_FLAGS_GENERIC_CREDENTIALS ? TRUE : FALSE;
+            entry->generic = (dwFlags & CREDUI_FLAGS_GENERIC_CREDENTIALS) != 0;
 
             LeaveCriticalSection(&csPendingCredentials);
         }
         else
             result = save_credentials(pszTargetName, pszUsername, pszPassword,
-                                      dwFlags & CREDUI_FLAGS_GENERIC_CREDENTIALS ? TRUE : FALSE);
+                                      (dwFlags & CREDUI_FLAGS_GENERIC_CREDENTIALS) != 0);
     }
 
     return result;
