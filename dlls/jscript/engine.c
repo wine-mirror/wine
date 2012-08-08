@@ -461,9 +461,9 @@ static HRESULT equal2_values(VARIANT *lval, VARIANT *rval, BOOL *ret)
         break;
     case VT_BSTR:
         if(!V_BSTR(lval))
-            *ret = SysStringLen(V_BSTR(rval))?FALSE:TRUE;
+            *ret = !SysStringLen(V_BSTR(rval));
         else if(!V_BSTR(rval))
-            *ret = SysStringLen(V_BSTR(lval))?FALSE:TRUE;
+            *ret = !SysStringLen(V_BSTR(lval));
         else
             *ret = !strcmpW(V_BSTR(lval), V_BSTR(rval));
         break;
