@@ -2111,7 +2111,7 @@ LRESULT ComboWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
 		if( lParam ) CBGetDroppedControlRect(lphc, (LPRECT)lParam );
 		return  CB_OKAY;
 	case CB_GETDROPPEDSTATE:
-		return  (lphc->wState & CBF_DROPPED) ? TRUE : FALSE;
+		return (lphc->wState & CBF_DROPPED) != 0;
 	case CB_DIR:
 		return unicode ? SendMessageW(lphc->hWndLBox, LB_DIR, wParam, lParam) :
 				 SendMessageA(lphc->hWndLBox, LB_DIR, wParam, lParam);
@@ -2173,7 +2173,7 @@ LRESULT ComboWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
 		else lphc->wState &= ~CBF_EUI;
 		return  CB_OKAY;
 	case CB_GETEXTENDEDUI:
-		return  (lphc->wState & CBF_EUI) ? TRUE : FALSE;
+		return (lphc->wState & CBF_EUI) != 0;
 	case CB_GETCOMBOBOXINFO:
 		return COMBO_GetComboBoxInfo(lphc, (COMBOBOXINFO *)lParam);
 	case CB_LIMITTEXT:

@@ -695,7 +695,7 @@ static void LISTBOX_DrawFocusRect( LB_DESCR *descr, BOOL on )
     if (!IsWindowEnabled(descr->self))
         SetTextColor( hdc, GetSysColor( COLOR_GRAYTEXT ) );
     SetWindowOrgEx( hdc, descr->horz_pos, 0, NULL );
-    LISTBOX_PaintItem( descr, hdc, &rect, descr->focus_item, ODA_FOCUS, on ? FALSE : TRUE );
+    LISTBOX_PaintItem( descr, hdc, &rect, descr->focus_item, ODA_FOCUS, !on );
     if (oldFont) SelectObject( hdc, oldFont );
     ReleaseDC( descr->self, hdc );
 }
@@ -2493,7 +2493,7 @@ static BOOL LISTBOX_Create( HWND hwnd, LPHEADCOMBO lphc )
     descr->horz_pos      = 0;
     descr->nb_tabs       = 0;
     descr->tabs          = NULL;
-    descr->caret_on      = lphc ? FALSE : TRUE;
+    descr->caret_on      = !lphc;
     if (descr->style & LBS_NOSEL) descr->caret_on = FALSE;
     descr->in_focus 	 = FALSE;
     descr->captured      = FALSE;

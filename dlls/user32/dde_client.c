@@ -321,8 +321,8 @@ static WDML_XACT*	WDML_ClientQueueAdvise(WDML_CONV* pConv, UINT wType, UINT wFmt
 
     /* pack DdeAdvise	*/
     pDdeAdvise = GlobalLock(pXAct->hMem);
-    pDdeAdvise->fAckReq   = (wType & XTYPF_ACKREQ) ? TRUE : FALSE;
-    pDdeAdvise->fDeferUpd = (wType & XTYPF_NODATA) ? TRUE : FALSE;
+    pDdeAdvise->fAckReq   = (wType & XTYPF_ACKREQ) != 0;
+    pDdeAdvise->fDeferUpd = (wType & XTYPF_NODATA) != 0;
     pDdeAdvise->cfFormat  = wFmt;
     GlobalUnlock(pXAct->hMem);
 
@@ -857,7 +857,7 @@ static WDML_QUEUE_STATE WDML_HandleIncomingData(WDML_CONV* pConv, MSG* msg, HDDE
      * XTYP_ADVDATA and callback should return the proper status.
      */
     pLink = WDML_FindLink(pConv->instance, (HCONV)pConv, WDML_CLIENT_SIDE, hsz,
-                          uiLo ? TRUE : FALSE, wdh.cfFormat);
+                          uiLo != 0, wdh.cfFormat);
     if (!pLink)
     {
 	WDML_DecHSZ(pConv->instance, hsz);

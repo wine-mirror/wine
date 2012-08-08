@@ -3387,7 +3387,7 @@ static BOOL EDIT_CheckCombo(EDITSTATE *es, UINT msg, INT key)
 
       case WM_SYSKEYDOWN: /* Handle Alt+up/down arrows */
          if (nEUI)
-            SendMessageW(hCombo, CB_SHOWDROPDOWN, bDropped ? FALSE : TRUE, 0);
+            SendMessageW(hCombo, CB_SHOWDROPDOWN, !bDropped, 0);
          else
             SendMessageW(hLBox, WM_KEYDOWN, VK_F4, 0);
          break;

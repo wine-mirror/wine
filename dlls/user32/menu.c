@@ -3125,7 +3125,7 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
                     /* if the function was called by TrackPopupMenu, continue
                        with the menu tracking. If not, stop it */
                     else
-                        fEndMenu = ((wFlags & TPM_POPUPMENU) ? FALSE : TRUE);
+                        fEndMenu = !(wFlags & TPM_POPUPMENU);
 
 		    break;
 

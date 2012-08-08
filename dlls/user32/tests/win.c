@@ -1172,7 +1172,7 @@ static void test_shell_window(void)
     ok(!ret, "third call to SetShellWindow(hwnd1)\n"); */
 
     SetWindowLong(hwnd1, GWL_EXSTYLE, GetWindowLong(hwnd1,GWL_EXSTYLE)|WS_EX_TOPMOST);
-    ret = GetWindowLong(hwnd1,GWL_EXSTYLE)&WS_EX_TOPMOST? TRUE: FALSE;
+    ret = (GetWindowLong(hwnd1,GWL_EXSTYLE) & WS_EX_TOPMOST) != 0;
     ok(!ret, "SetWindowExStyle(hwnd1, WS_EX_TOPMOST)\n");
 
     ret = DestroyWindow(hwnd1);

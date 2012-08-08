@@ -2147,7 +2147,7 @@ static BOOL WDML_EnableCallback(WDML_CONV *pConv, UINT wCmd)
     }
 
     if (wCmd == EC_QUERYWAITING)
-        return pConv->transactions ? TRUE : FALSE;
+        return pConv->transactions != NULL;
 
     if (wCmd != EC_ENABLEALL && wCmd != EC_ENABLEONE)
     {
