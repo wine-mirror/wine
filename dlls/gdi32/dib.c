@@ -1390,7 +1390,7 @@ INT WINAPI GetDIBits(
         ret = lines;
     }
     else
-        ret = empty_rect ? FALSE : TRUE;
+        ret = !empty_rect;
 
     if (coloruse == DIB_PAL_COLORS)
     {

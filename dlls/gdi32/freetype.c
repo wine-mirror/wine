@@ -1754,7 +1754,7 @@ static Face *create_face( FT_Face ft_face, FT_Long face_index, const char *file,
     }
 
     face->vertical = vertical;
-    face->external = (flags & ADDFONT_EXTERNAL_FONT) ? TRUE : FALSE;
+    face->external = (flags & ADDFONT_EXTERNAL_FONT) != 0;
     face->family = NULL;
     face->cached_enum_data = NULL;
 
