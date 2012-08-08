@@ -90,7 +90,7 @@ extern int sd_is_valid( const struct security_descriptor *sd, data_size_t size )
 /* gets the discretionary access control list from a security descriptor */
 static inline const ACL *sd_get_dacl( const struct security_descriptor *sd, int *present )
 {
-    *present = (sd->control & SE_DACL_PRESENT ? TRUE : FALSE);
+    *present = (sd->control & SE_DACL_PRESENT) != 0;
 
     if (sd->dacl_len)
         return (const ACL *)((const char *)(sd + 1) +
@@ -102,7 +102,7 @@ static inline const ACL *sd_get_dacl( const struct security_descriptor *sd, int 
 /* gets the system access control list from a security descriptor */
 static inline const ACL *sd_get_sacl( const struct security_descriptor *sd, int *present )
 {
-    *present = (sd->control & SE_SACL_PRESENT ? TRUE : FALSE);
+    *present = (sd->control & SE_SACL_PRESENT) != 0;
 
     if (sd->sacl_len)
         return (const ACL *)((const char *)(sd + 1) +

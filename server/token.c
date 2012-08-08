@@ -475,9 +475,9 @@ static struct token *create_token( unsigned primary, const SID *user,
             memcpy( &group->sid, groups[i].Sid, FIELD_OFFSET( SID, SubAuthority[((const SID *)groups[i].Sid)->SubAuthorityCount] ) );
             group->enabled = TRUE;
             group->def = TRUE;
-            group->logon = (groups[i].Attributes & SE_GROUP_LOGON_ID) ? TRUE : FALSE;
-            group->mandatory = (groups[i].Attributes & SE_GROUP_MANDATORY) ? TRUE : FALSE;
-            group->owner = groups[i].Attributes & SE_GROUP_OWNER ? TRUE : FALSE;
+            group->logon = (groups[i].Attributes & SE_GROUP_LOGON_ID) != 0;
+            group->mandatory = (groups[i].Attributes & SE_GROUP_MANDATORY) != 0;
+            group->owner = (groups[i].Attributes & SE_GROUP_OWNER) != 0;
             group->resource = FALSE;
             group->deny_only = FALSE;
             list_add_tail( &token->groups, &group->entry );
