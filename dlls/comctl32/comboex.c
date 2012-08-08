@@ -720,7 +720,7 @@ COMBOEX_SetExtendedStyle (COMBOEX_INFO *infoPtr, DWORD mask, DWORD style)
     /* see if we need to change the word break proc on the edit */
     if ((infoPtr->dwExtStyle ^ dwTemp) & CBES_EX_PATHWORDBREAKPROC)
         SetPathWordBreakProc(infoPtr->hwndEdit, 
-            (infoPtr->dwExtStyle & CBES_EX_PATHWORDBREAKPROC) ? TRUE : FALSE);
+            (infoPtr->dwExtStyle & CBES_EX_PATHWORDBREAKPROC) != 0);
 
     /* test if the control's appearance has changed */
     mask = CBES_EX_NOEDITIMAGE | CBES_EX_NOEDITIMAGEINDENT;

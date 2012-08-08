@@ -1612,7 +1612,7 @@ TREEVIEW_DeleteItem(TREEVIEW_INFO *infoPtr, HTREEITEM item)
 static LRESULT
 TREEVIEW_SetRedraw(TREEVIEW_INFO* infoPtr, WPARAM wParam)
 {
-    infoPtr->bRedraw = wParam ? TRUE : FALSE;
+    infoPtr->bRedraw = wParam != 0;
 
     if (infoPtr->bRedraw)
     {

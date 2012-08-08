@@ -619,7 +619,7 @@ static BOOL allocate_storage(struct my_IStream *my_is, ULONG add)
     else
         my_is->iml_data = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, my_is->iml_data, my_is->iml_data_size);
 
-    return my_is->iml_data ? TRUE : FALSE;
+    return my_is->iml_data != NULL;
 }
 
 static HRESULT STDMETHODCALLTYPE Test_Stream_Write(IStream *iface, const void *pv, ULONG cb,

@@ -3140,7 +3140,7 @@ TOOLBAR_CheckButton (TOOLBAR_INFO *infoPtr, INT Id, LPARAM lParam)
 
     btnPtr = &infoPtr->buttons[nIndex];
 
-    bChecked = (btnPtr->fsState & TBSTATE_CHECKED) ? TRUE : FALSE;
+    bChecked = (btnPtr->fsState & TBSTATE_CHECKED) != 0;
 
     if (LOWORD(lParam) == FALSE)
 	btnPtr->fsState &= ~TBSTATE_CHECKED;

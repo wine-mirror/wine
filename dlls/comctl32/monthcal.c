@@ -372,7 +372,7 @@ static BOOL MONTHCAL_IsDateInValidRange(const MONTHCAL_INFO *infoPtr,
     date->wMonth = fix_st->wMonth;
   }
 
-  return fix_st ? FALSE : TRUE;
+  return !fix_st;
 }
 
 /* Checks passed range width with configured maximum selection count
@@ -1276,7 +1276,7 @@ MONTHCAL_SetColor(MONTHCAL_INFO *infoPtr, UINT index, COLORREF color)
     infoPtr->pens[PenText] = CreatePen(PS_SOLID, 1, infoPtr->colors[index]);
   }
 
-  InvalidateRect(infoPtr->hwndSelf, NULL, index == MCSC_BACKGROUND ? TRUE : FALSE);
+  InvalidateRect(infoPtr->hwndSelf, NULL, index == MCSC_BACKGROUND);
   return prev;
 }
 
