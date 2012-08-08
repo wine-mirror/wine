@@ -549,7 +549,7 @@ void break_enable_xpoint(int num, BOOL enable)
         dbg_printf("Invalid breakpoint number %d\n", num);
         return;
     }
-    dbg_curr_process->bp[num].enabled = (enable) ? TRUE : FALSE;
+    dbg_curr_process->bp[num].enabled = enable != 0;
     dbg_curr_process->bp[num].skipcount = 0;
 }
 

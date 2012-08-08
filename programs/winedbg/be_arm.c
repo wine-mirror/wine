@@ -869,7 +869,7 @@ void be_arm_disasm_one_insn(ADDRESS64 *addr, int display)
     if (!memory_get_register(CV_ARM_CPSR, &pval, tmp, sizeof(tmp)))
         dbg_printf("\n\tmemory_get_register failed: %s", tmp);
     else
-        db_disasm_thumb=(*pval & 0x20)?TRUE:FALSE;
+        db_disasm_thumb = (*pval & 0x20) != 0;
 
     db_display = display;
 
