@@ -1771,7 +1771,7 @@ int CDECL MSVCRT__sopen_s( int *fd, const char *path, int oflags, int shflags, i
 
   sa.nLength              = sizeof( SECURITY_ATTRIBUTES );
   sa.lpSecurityDescriptor = NULL;
-  sa.bInheritHandle       = (oflags & MSVCRT__O_NOINHERIT) ? FALSE : TRUE;
+  sa.bInheritHandle       = !(oflags & MSVCRT__O_NOINHERIT);
 
   hand = CreateFileA(path, access, sharing, &sa, creation, attrib, 0);
   if (hand == INVALID_HANDLE_VALUE)  {
@@ -1885,7 +1885,7 @@ int CDECL MSVCRT__wsopen_s( int *fd, const MSVCRT_wchar_t* path, int oflags, int
 
   sa.nLength              = sizeof( SECURITY_ATTRIBUTES );
   sa.lpSecurityDescriptor = NULL;
-  sa.bInheritHandle       = (oflags & MSVCRT__O_NOINHERIT) ? FALSE : TRUE;
+  sa.bInheritHandle       = !(oflags & MSVCRT__O_NOINHERIT);
 
   hand = CreateFileW(path, access, sharing, &sa, creation, attrib, 0);
 
