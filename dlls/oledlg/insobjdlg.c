@@ -233,8 +233,8 @@ static void UIINSERTOBJECTDLG_InitDialog(InsertObjectDlgInfo* pdlgInfo)
     IOF_SHOWINSERTCONTROL) ? SW_SHOW : SW_HIDE);
   ShowWindow(pdlgInfo->hwndDisplayIconCB, (pdlgInfo->lpOleUIInsertObject->dwFlags &
     IOF_CHECKDISPLAYASICON) ? SW_SHOW : SW_HIDE);
-  EnableWindow(pdlgInfo->hwndDisplayIconCB, (pdlgInfo->lpOleUIInsertObject->dwFlags &
-    IOF_DISABLEDISPLAYASICON) ? FALSE : TRUE);
+  EnableWindow(pdlgInfo->hwndDisplayIconCB, !(pdlgInfo->lpOleUIInsertObject->dwFlags &
+    IOF_DISABLEDISPLAYASICON));
 
   if (pdlgInfo->lpOleUIInsertObject->dwFlags & IOF_SELECTCREATECONTROL)
     UIINSERTOBJECTDLG_SelectCreateCtrl(pdlgInfo);
