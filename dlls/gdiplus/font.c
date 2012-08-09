@@ -449,8 +449,23 @@ GpStatus WINGDIPAPI GdipGetLogFontA(GpFont *font, GpGraphics *graphics,
 
 void get_log_fontW(const GpFont *font, GpGraphics *graphics, LOGFONTW *lf)
 {
-    /* FIXME: use graphics */
-    lf->lfHeight = -units_to_pixels(font->emSize, font->unit, font->family->dpi);
+    REAL height;
+
+    if (font->unit == UnitPixel)
+    {
+        height = units_to_pixels(font->emSize, graphics->unit, graphics->yres);
+        if (graphics->unit != UnitDisplay)
+            height *= graphics->scale;
+    }
+    else
+    {
+        if (graphics->unit == UnitDisplay || graphics->unit == UnitPixel)
+            height = units_to_pixels(font->emSize, font->unit, graphics->xres);
+        else
+            height = units_to_pixels(font->emSize, font->unit, graphics->yres);
+    }
+
+    lf->lfHeight = -(height + 0.5);
     lf->lfWidth = 0;
     lf->lfEscapement = 0;
     lf->lfOrientation = 0;

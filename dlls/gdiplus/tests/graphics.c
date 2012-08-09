@@ -3479,19 +3479,8 @@ static void test_GdipMeasureString(void)
         height = units_to_pixels(font_size, td[i].unit, td[i].res_y);
         if (td[i].unit != UnitDisplay)
             height *= td[i].page_scale;
-        /* FIXME: remove once Wine is fixed */
-        if (td[i].unit == UnitDisplay || (td[i].unit == UnitPixel && td[i].page_scale == 1.0))
         ok(-lf.lfHeight == (LONG)(height + 0.5), "%u: expected %d (%f), got %d\n",
            i, (LONG)(height + 0.5), height, lf.lfHeight);
-        else
-        {
-        todo_wine
-        ok(-lf.lfHeight == (LONG)(height + 0.5), "%u: expected %d (%f), got %d\n",
-           i, (LONG)(height + 0.5), height, lf.lfHeight);
-            /* further testing is useless */
-            GdipDeleteGraphics(graphics);
-            continue;
-        }
 
         height = font_size * font_to_pixel_scale;
 
@@ -3572,7 +3561,6 @@ static void test_GdipMeasureString(void)
             else
                 height = units_to_pixels(font_size, font_unit, td[i].res_y);
             /*trace("%.1f font units = %f pixels with %.1f dpi, page_scale %.1f\n", font_size, height, td[i].res_y, td[i].page_scale);*/
-todo_wine
             ok(-lf.lfHeight == (LONG)(height + 0.5), "%u: expected %d (%f), got %d\n",
                i, (LONG)(height + 0.5), height, lf.lfHeight);
 
