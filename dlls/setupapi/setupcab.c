@@ -194,7 +194,7 @@ static INT_PTR CDECL sc_cb_open(char *pszFile, int oflag, int pmode)
 
   sa.nLength              = sizeof( SECURITY_ATTRIBUTES );
   sa.lpSecurityDescriptor = NULL;
-  sa.bInheritHandle       = (ioflag & _O_NOINHERIT) ? FALSE : TRUE;
+  sa.bInheritHandle       = !(ioflag & _O_NOINHERIT);
 
   ret = (INT_PTR) CreateFileA(pszFile, ioflag, sharing, &sa, creation, FILE_ATTRIBUTE_NORMAL, NULL);
 
@@ -604,8 +604,7 @@ BOOL WINAPI SetupIterateCabinetA(PCSTR CabinetFile, DWORD Reserved,
 
   if (!my_hsc.hfdi) return FALSE;
 
-  ret = ( sc_FDICopy(my_hsc.hfdi, pszCabinet, pszCabPath,
-                     0, sc_FNNOTIFY_A, NULL, &my_hsc)     ) ? TRUE : FALSE;
+  ret = sc_FDICopy(my_hsc.hfdi, pszCabinet, pszCabPath, 0, sc_FNNOTIFY_A, NULL, &my_hsc);
 
   sc_FDIDestroy(my_hsc.hfdi);
   return ret;
@@ -670,8 +669,7 @@ BOOL WINAPI SetupIterateCabinetW(PCWSTR CabinetFile, DWORD Reserved,
 
   if (!my_hsc.hfdi) return FALSE;
 
-  ret = ( sc_FDICopy(my_hsc.hfdi, pszCabinet, pszCabPath,
-                     0, sc_FNNOTIFY_W, NULL, &my_hsc)     ) ? TRUE : FALSE;
+  ret = sc_FDICopy(my_hsc.hfdi, pszCabinet, pszCabPath, 0, sc_FNNOTIFY_W, NULL, &my_hsc);
 
   sc_FDIDestroy(my_hsc.hfdi);
   return ret;
