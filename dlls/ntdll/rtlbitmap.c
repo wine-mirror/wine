@@ -956,7 +956,7 @@ static ULONG NTDLL_FindRuns(PCRTL_BITMAP lpBits, PRTL_BITMAP_RUN lpSeries,
                             ULONG ulCount, BOOLEAN bLongest,
                             ULONG (*fn)(PCRTL_BITMAP,ULONG,PULONG))
 {
-  BOOL bNeedSort = ulCount > 1 ? TRUE : FALSE;
+  BOOL bNeedSort = ulCount > 1;
   ULONG ulPos = 0, ulRuns = 0;
 
   TRACE("(%p,%p,%d,%d)\n", lpBits, lpSeries, ulCount, bLongest);

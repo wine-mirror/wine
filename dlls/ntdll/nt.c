@@ -610,7 +610,7 @@ NTSTATUS WINAPI NtPrivilegeCheck(
     SERVER_START_REQ( check_token_privileges )
     {
         req->handle = wine_server_obj_handle( ClientToken );
-        req->all_required = ((RequiredPrivileges->Control & PRIVILEGE_SET_ALL_NECESSARY) ? TRUE : FALSE);
+        req->all_required = (RequiredPrivileges->Control & PRIVILEGE_SET_ALL_NECESSARY) != 0;
         wine_server_add_data( req, RequiredPrivileges->Privilege,
             RequiredPrivileges->PrivilegeCount * sizeof(RequiredPrivileges->Privilege[0]) );
         wine_server_set_reply( req, RequiredPrivileges->Privilege,
@@ -619,7 +619,7 @@ NTSTATUS WINAPI NtPrivilegeCheck(
         status = wine_server_call( req );
 
         if (status == STATUS_SUCCESS)
-            *Result = (reply->has_privileges ? TRUE : FALSE);
+            *Result = reply->has_privileges != 0;
     }
     SERVER_END_REQ;
     return status;

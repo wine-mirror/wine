@@ -344,7 +344,7 @@ static DWORD CALLBACK wait_thread_proc(LPVOID Arg)
 {
     struct wait_work_item *wait_work_item = Arg;
     NTSTATUS status;
-    BOOLEAN alertable = (wait_work_item->Flags & WT_EXECUTEINIOTHREAD) ? TRUE : FALSE;
+    BOOLEAN alertable = (wait_work_item->Flags & WT_EXECUTEINIOTHREAD) != 0;
     HANDLE handles[2] = { wait_work_item->Object, wait_work_item->CancelEvent };
     LARGE_INTEGER timeout;
     HANDLE completion_event;

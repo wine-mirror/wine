@@ -244,7 +244,7 @@ static inline BOOL pf_is_integer_format( char fmt )
     static const char float_fmts[] = "diouxX";
     if (!fmt)
         return FALSE;
-    return strchr( float_fmts, fmt ) ? TRUE : FALSE;
+    return strchr( float_fmts, fmt ) != 0;
 }
 
 static inline BOOL pf_is_double_format( char fmt )
@@ -252,7 +252,7 @@ static inline BOOL pf_is_double_format( char fmt )
     static const char float_fmts[] = "aeEfgG";
     if (!fmt)
         return FALSE;
-    return strchr( float_fmts, fmt ) ? TRUE : FALSE;
+    return strchr( float_fmts, fmt ) != 0;
 }
 
 static inline BOOL pf_is_valid_format( char fmt )
@@ -260,7 +260,7 @@ static inline BOOL pf_is_valid_format( char fmt )
     static const char float_fmts[] = "acCdeEfgGinouxX";
     if (!fmt)
         return FALSE;
-    return strchr( float_fmts, fmt ) ? TRUE : FALSE;
+    return strchr( float_fmts, fmt ) != 0;
 }
 
 static void pf_rebuild_format_string( char *p, pf_flags *flags )
