@@ -2,6 +2,7 @@
  * Unit test suite for graphics objects
  *
  * Copyright (C) 2007 Google (Evan Stade)
+ * Copyright (C) 2012 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,18 +19,118 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <math.h>
+#include <assert.h>
+
 #include "windows.h"
 #include "gdiplus.h"
 #include "wingdi.h"
 #include "wine/test.h"
-#include <math.h>
 
 #define expect(expected, got) ok((got) == (expected), "Expected %d, got %d\n", (INT)(expected), (INT)(got))
-#define expectf_(expected, got, precision) ok(fabs((expected) - (got)) < (precision), "Expected %f, got %f\n", (expected), (got))
+#define expectf_(expected, got, precision) ok(fabs((expected) - (got)) <= (precision), "Expected %f, got %f\n", (expected), (got))
 #define expectf(expected, got) expectf_((expected), (got), 0.001)
 #define TABLE_LEN (23)
 
+static const REAL mm_per_inch = 25.4;
+static const REAL point_per_inch = 72.0;
 static HWND hwnd;
+
+/* converts a given unit to its value in pixels */
+static REAL units_to_pixels(REAL units, GpUnit unit, REAL dpi)
+{
+    switch (unit)
+    {
+    case UnitPixel:
+    case UnitDisplay:
+        return units;
+    case UnitPoint:
+        return units * dpi / point_per_inch;
+    case UnitInch:
+        return units * dpi;
+    case UnitDocument:
+        return units * dpi / 300.0; /* Per MSDN */
+    case UnitMillimeter:
+        return units * dpi / mm_per_inch;
+    default:
+        assert(0);
+        return 0;
+    }
+}
+
+/* converts value in pixels to a given unit */
+REAL pixels_to_units(REAL pixels, GpUnit unit, REAL dpi)
+{
+    switch (unit)
+    {
+    case UnitPixel:
+    case UnitDisplay:
+        return pixels;
+    case UnitPoint:
+        return pixels * point_per_inch / dpi;
+    case UnitInch:
+        return pixels / dpi;
+    case UnitDocument:
+        return pixels * 300.0 / dpi;
+    case UnitMillimeter:
+        return pixels * mm_per_inch / dpi;
+    default:
+        assert(0);
+        return 0;
+    }
+}
+
+static REAL units_scale(GpUnit from, GpUnit to, REAL dpi)
+{
+    REAL pixels = units_to_pixels(1.0, from, dpi);
+    return pixels_to_units(pixels, to, dpi);
+}
+
+static GpGraphics *create_graphics(REAL res_x, REAL res_y, GpUnit unit, REAL scale)
+{
+    GpStatus status;
+    union
+    {
+        GpBitmap *bitmap;
+        GpImage *image;
+    } u;
+    GpGraphics *graphics = NULL;
+    REAL res;
+
+    status = GdipCreateBitmapFromScan0(1, 1, 4, PixelFormat24bppRGB, NULL, &u.bitmap);
+    expect(Ok, status);
+
+    status = GdipBitmapSetResolution(u.bitmap, res_x, res_y);
+    expect(Ok, status);
+    status = GdipGetImageHorizontalResolution(u.image, &res);
+    expect(Ok, status);
+    expectf(res_x, res);
+    status = GdipGetImageVerticalResolution(u.image, &res);
+    expect(Ok, status);
+    expectf(res_y, res);
+
+    status = GdipGetImageGraphicsContext(u.image, &graphics);
+    expect(Ok, status);
+    /* image is intentionally leaked to make sure that there is no
+       side effects after its destruction.
+    status = GdipDisposeImage(u.image);
+    expect(Ok, status);
+    */
+
+    status = GdipGetDpiX(graphics, &res);
+    expect(Ok, status);
+    expectf(res_x, res);
+    status = GdipGetDpiY(graphics, &res);
+    expect(Ok, status);
+    expectf(res_y, res);
+
+    status = GdipSetPageUnit(graphics, unit);
+    expect(Ok, status);
+    status = GdipSetPageScale(graphics, scale);
+    expect(Ok, status);
+
+    return graphics;
+}
 
 static void test_constructor_destructor(void)
 {
@@ -3306,139 +3407,244 @@ static void test_getdc_scaled(void)
 
 static void test_GdipMeasureString(void)
 {
-    static const WCHAR fontname[] = { 'T','a','h','o','m','a',0 };
+    static const struct test_data
+    {
+        REAL res_x, res_y, page_scale;
+        GpUnit unit;
+    } td[] =
+    {
+        { 200.0, 200.0, 1.0, UnitPixel }, /* base */
+        { 200.0, 200.0, 2.0, UnitPixel },
+        { 200.0, 200.0, 1.0, UnitDisplay },
+        { 200.0, 200.0, 2.0, UnitDisplay },
+        { 200.0, 200.0, 1.0, UnitInch },
+        { 200.0, 200.0, 2.0, UnitInch },
+        { 200.0, 600.0, 1.0, UnitPoint },
+        { 200.0, 600.0, 2.0, UnitPoint },
+        { 200.0, 600.0, 1.0, UnitDocument },
+        { 200.0, 600.0, 2.0, UnitDocument },
+        { 200.0, 600.0, 1.0, UnitMillimeter },
+        { 200.0, 600.0, 2.0, UnitMillimeter },
+        { 200.0, 600.0, 1.0, UnitDisplay },
+        { 200.0, 600.0, 2.0, UnitDisplay },
+        { 200.0, 600.0, 1.0, UnitPixel },
+        { 200.0, 600.0, 2.0, UnitPixel },
+    };
+    static const WCHAR tahomaW[] = { 'T','a','h','o','m','a',0 };
     static const WCHAR string[] = { '1','2','3','4','5','6','7',0 };
     GpStatus status;
     GpGraphics *graphics;
     GpFontFamily *family;
     GpFont *font;
-    HDC hdc;
     GpStringFormat *format;
-    RectF bounds, rc = { 0.0, 0.0, 0.0, 0.0 };
-    REAL rval, dpi;
+    RectF bounds, rc, empty_rc = { 0.0, 0.0, 0.0, 0.0 };
+    REAL base_cx = 0, base_cy = 0, height;
+    INT chars, lines;
+    LOGFONTW lf;
+    HDC display;
+    UINT i, font_dpi;
+    REAL font_to_pixel_scale, font_size;
+    GpUnit font_unit, unit;
 
-    hdc = CreateCompatibleDC(0);
-    ok(hdc != 0, "CreateCompatibleDC failed\n");
-    status = GdipCreateFromHDC(hdc, &graphics);
-    expect(Ok, status);
-    status = GdipGetDpiY(graphics, &dpi);
-    expect(Ok, status);
-    status = GdipCreateFontFamilyFromName(fontname, NULL, &family);
-    expect(Ok, status);
-    status = GdipCreateFont(family, 18.0, FontStyleRegular, UnitPoint, &font);
-    expect(Ok, status);
+    display = CreateCompatibleDC(0);
+    ok(display != 0, "CreateCompatibleDC failed\n");
+    font_dpi = GetDeviceCaps(display, LOGPIXELSY);
+    DeleteDC(display);
+
     status = GdipCreateStringFormat(0, LANG_NEUTRAL, &format);
     expect(Ok, status);
+    status = GdipCreateFontFamilyFromName(tahomaW, NULL, &family);
+    expect(Ok, status);
 
-    if (dpi == 96.0)
+    font_to_pixel_scale = units_scale(UnitPoint, UnitPixel, font_dpi);
+    trace("font to pixel, %u dpi => unit_scale %f\n", font_dpi, font_to_pixel_scale);
+
+    /* font size in pixels */
+    status = GdipCreateFont(family, 100.0, FontStyleRegular, UnitPixel, &font);
+    expect(Ok, status);
+    status = GdipGetFontSize(font, &font_size);
+    expect(Ok, status);
+    expectf(100.0, font_size);
+    status = GdipGetFontUnit(font, &font_unit);
+    expect(Ok, status);
+    expect(UnitPixel, font_unit);
+
+    for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
     {
-        status = GdipSetPageUnit(graphics, UnitDisplay);
+        graphics = create_graphics(td[i].res_x, td[i].res_y, td[i].unit, td[i].page_scale);
+
+        lf.lfHeight = 0xdeadbeef;
+        status = GdipGetLogFontW(font, graphics, &lf);
+        expect(Ok, status);
+        height = units_to_pixels(font_size, td[i].unit, td[i].res_y);
+        if (td[i].unit != UnitDisplay)
+            height *= td[i].page_scale;
+        /* FIXME: remove once Wine is fixed */
+        if (td[i].unit == UnitDisplay || (td[i].unit == UnitPixel && td[i].page_scale == 1.0))
+        ok(-lf.lfHeight == (LONG)(height + 0.5), "%u: expected %d (%f), got %d\n",
+           i, (LONG)(height + 0.5), height, lf.lfHeight);
+        else
+        {
+        todo_wine
+        ok(-lf.lfHeight == (LONG)(height + 0.5), "%u: expected %d (%f), got %d\n",
+           i, (LONG)(height + 0.5), height, lf.lfHeight);
+            /* further testing is useless */
+            GdipDeleteGraphics(graphics);
+            continue;
+        }
+
+        height = font_size * font_to_pixel_scale;
+
+        rc = empty_rc;
+        bounds = empty_rc;
+        status = GdipMeasureString(graphics, string, -1, font, &rc, format, &bounds, &chars, &lines);
         expect(Ok, status);
 
-        status = GdipGetFontHeightGivenDPI(font, dpi, &rval);
-        expect(Ok, status);
-        expectf(28.968750, rval);
+        if (i == 0)
+        {
+            base_cx = bounds.Width;
+            base_cy = bounds.Height;
+        }
 
-        status = GdipGetFontHeight(font, graphics, &rval);
-        expect(Ok, status);
-        expectf(28.968750, rval);
-        status = GdipGetFontSize(font, &rval);
-        expect(Ok, status);
-        expectf(18.0, rval);
+        /* FIXME: remove once Wine is fixed */
+        if (fabs(height - bounds.Height) > height / 100.0)
+        {
+            /* further testing is useless */
+            GdipDeleteGraphics(graphics);
+            continue;
+        }
 
-        status = GdipMeasureString(graphics, string, -1, font, &rc, format, &bounds, NULL, NULL);
-        expect(Ok, status);
         expectf(0.0, bounds.X);
         expectf(0.0, bounds.Y);
-        expectf_(102.499985, bounds.Width, 11.5);
-        expectf_(31.968744, bounds.Height, 3.1);
+        expectf_(height, bounds.Height, height / 100.0);
+        expectf_(bounds.Height / base_cy, bounds.Width / base_cx, 0.05);
+        expect(7, chars);
+        expect(1, lines);
+
+        /* make sure it really fits */
+        bounds.Width += 1.0;
+        bounds.Height += 1.0;
+        rc = bounds;
+        rc.X = 50.0;
+        rc.Y = 50.0;
+        bounds = empty_rc;
+        status = GdipMeasureString(graphics, string, -1, font, &rc, format, &bounds, &chars, &lines);
+        expect(Ok, status);
+        expectf(50.0, bounds.X);
+        expectf(50.0, bounds.Y);
+        expectf_(height, bounds.Height, height / 100.0);
+        expectf_(bounds.Height / base_cy, bounds.Width / base_cx, 0.05);
+        expect(7, chars);
+        expect(1, lines);
+
+        status = GdipDeleteGraphics(graphics);
+        expect(Ok, status);
     }
-    else
-        skip("screen resolution %f dpi, test runs at 96 dpi\n", dpi);
 
-    status = GdipSetPageUnit(graphics, UnitPoint);
-    expect(Ok, status);
-
-    status = GdipGetFontHeight(font, graphics, &rval);
-    expect(Ok, status);
-    expectf(21.726563, rval);
-    status = GdipGetFontSize(font, &rval);
-    expect(Ok, status);
-    expectf(18.0, rval);
-
-    status = GdipMeasureString(graphics, string, -1, font, &rc, format, &bounds, NULL, NULL);
-    expect(Ok, status);
-    expectf(0.0, bounds.X);
-    expectf(0.0, bounds.Y);
-    expectf_(76.875000, bounds.Width, 10.0);
-    expectf_(23.976563, bounds.Height, 2.1);
-
-    status = GdipSetPageUnit(graphics, UnitMillimeter);
-    expect(Ok, status);
-
-    status = GdipGetFontHeight(font, graphics, &rval);
-    expect(Ok, status);
-    expectf(7.664648, rval);
-    status = GdipGetFontSize(font, &rval);
-    expect(Ok, status);
-    expectf(18.0, rval);
-
-    status = GdipMeasureString(graphics, string, -1, font, &rc, format, &bounds, NULL, NULL);
-    expect(Ok, status);
-    expectf(0.0, bounds.X);
-    expectf(0.0, bounds.Y);
-    expectf_(27.119789, bounds.Width, 2.7);
-    expectf_(8.458398, bounds.Height, 0.8);
-
-    GdipDeleteStringFormat(format);
     GdipDeleteFont(font);
-    GdipDeleteFontFamily(family);
-    GdipDeleteGraphics(graphics);
 
-    DeleteDC(hdc);
-}
-
-static GpGraphics *create_graphics(REAL res_x, REAL res_y, GpUnit unit, REAL scale)
-{
-    GpStatus status;
-    union
+    /* font size in logical units */
+    /* UnitPoint = 3, UnitInch = 4, UnitDocument = 5, UnitMillimeter = 6 */
+    for (unit = 3; unit <= 6; unit++)
     {
-        GpBitmap *bitmap;
-        GpImage *image;
-    } u;
-    GpGraphics *graphics = NULL;
-    REAL res;
+        /* create a font which final height is 100.0 pixels with 200 dpi device */
+        height = pixels_to_units(100.0 / font_to_pixel_scale, unit, 200.0);
+        status = GdipCreateFont(family, height, FontStyleRegular, unit, &font);
+        expect(Ok, status);
+        status = GdipGetFontSize(font, &font_size);
+        expect(Ok, status);
+        expectf(height, font_size);
+        status = GdipGetFontUnit(font, &font_unit);
+        expect(Ok, status);
+        expect(unit, font_unit);
 
-    status = GdipCreateBitmapFromScan0(1, 1, 4, PixelFormat24bppRGB, NULL, &u.bitmap);
-    expect(Ok, status);
+        for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
+        {
+            REAL unit_scale;
 
-    status = GdipBitmapSetResolution(u.bitmap, res_x, res_y);
-    expect(Ok, status);
-    status = GdipGetImageHorizontalResolution(u.image, &res);
-    expect(Ok, status);
-    expectf(res_x, res);
-    status = GdipGetImageVerticalResolution(u.image, &res);
-    expect(Ok, status);
-    expectf(res_y, res);
+            graphics = create_graphics(td[i].res_x, td[i].res_y, td[i].unit, td[i].page_scale);
 
-    status = GdipGetImageGraphicsContext(u.image, &graphics);
-    expect(Ok, status);
-    status = GdipDisposeImage(u.image);
-    expect(Ok, status);
+            lf.lfHeight = 0xdeadbeef;
+            status = GdipGetLogFontW(font, graphics, &lf);
+            expect(Ok, status);
+            if (td[i].unit == UnitDisplay || td[i].unit == UnitPixel)
+                height = units_to_pixels(font_size, font_unit, td[i].res_x);
+            else
+                height = units_to_pixels(font_size, font_unit, td[i].res_y);
+            /*trace("%.1f font units = %f pixels with %.1f dpi, page_scale %.1f\n", font_size, height, td[i].res_y, td[i].page_scale);*/
+todo_wine
+            ok(-lf.lfHeight == (LONG)(height + 0.5), "%u: expected %d (%f), got %d\n",
+               i, (LONG)(height + 0.5), height, lf.lfHeight);
 
-    status = GdipGetDpiX(graphics, &res);
-    expect(Ok, status);
-    expectf(res_x, res);
-    status = GdipGetDpiY(graphics, &res);
-    expect(Ok, status);
-    expectf(res_y, res);
+            if (td[i].unit == UnitDisplay || td[i].unit == UnitPixel)
+                unit_scale = units_scale(font_unit, td[i].unit, td[i].res_x);
+            else
+                unit_scale = units_scale(font_unit, td[i].unit, td[i].res_y);
+            /*trace("%u: %d to %d, %.1f dpi => unit_scale %f\n", i, font_unit, td[i].unit, td[i].res_y, unit_scale);*/
+            height = font_size * font_to_pixel_scale * unit_scale;
+            if (td[i].unit != UnitDisplay)
+                height /= td[i].page_scale;
+            /*trace("%u: %.1f font units = %f units with %.1f dpi, page_scale %.1f\n", i, font_size, height, td[i].res_y, td[i].page_scale);*/
 
-    status = GdipSetPageUnit(graphics, unit);
-    expect(Ok, status);
-    status = GdipSetPageScale(graphics, scale);
-    expect(Ok, status);
+            rc = empty_rc;
+            bounds = empty_rc;
+            status = GdipMeasureString(graphics, string, -1, font, &rc, format, &bounds, &chars, &lines);
+            expect(Ok, status);
 
-    return graphics;
+            if (i == 0)
+            {
+                base_cx = bounds.Width;
+                base_cy = bounds.Height;
+            }
+
+            /* FIXME: remove once Wine is fixed */
+            if (fabs(height - bounds.Height) > height / 85.0)
+            {
+                /* further testing is useless */
+                GdipDeleteGraphics(graphics);
+                continue;
+            }
+
+            expectf(0.0, bounds.X);
+            expectf(0.0, bounds.Y);
+            expectf_(height, bounds.Height, height / 85.0);
+            expectf_(bounds.Height / base_cy, bounds.Width / base_cx, 0.05);
+            expect(7, chars);
+            expect(1, lines);
+
+            /* make sure it really fits */
+            bounds.Width += 1.0;
+            bounds.Height += 1.0;
+            rc = bounds;
+            rc.X = 50.0;
+            rc.Y = 50.0;
+            bounds = empty_rc;
+            status = GdipMeasureString(graphics, string, -1, font, &rc, format, &bounds, &chars, &lines);
+            expect(Ok, status);
+            expectf(50.0, bounds.X);
+            expectf(50.0, bounds.Y);
+            expectf_(height, bounds.Height, height / 85.0);
+            expectf_(bounds.Height / base_cy, bounds.Width / base_cx, 0.05);
+            expect(7, chars);
+            expect(1, lines);
+
+            /* verify the result */
+            height = units_to_pixels(bounds.Height, td[i].unit, td[i].res_x);
+            if (td[i].unit != UnitDisplay)
+                height *= td[i].page_scale;
+            /*trace("%u: unit %u, %.1fx%.1f dpi, scale %.1f, height %f, pixels %f\n",
+                  i, td[i].unit, td[i].res_x, td[i].res_y, td[i].page_scale, bounds.Height, height);*/
+            expectf_(100.0, height, 1.0);
+
+            status = GdipDeleteGraphics(graphics);
+            expect(Ok, status);
+        }
+
+        GdipDeleteFont(font);
+    }
+
+    GdipDeleteFontFamily(family);
+    GdipDeleteStringFormat(format);
 }
 
 static void test_transform(void)
