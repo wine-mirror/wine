@@ -389,6 +389,12 @@ REAL pixels_to_units(REAL pixels, GpUnit unit, REAL dpi)
     }
 }
 
+REAL units_scale(GpUnit from, GpUnit to, REAL dpi)
+{
+    REAL pixels = units_to_pixels(1.0, from, dpi);
+    return pixels_to_units(pixels, to, dpi);
+}
+
 /* Calculates Bezier points from cardinal spline points. */
 void calc_curve_bezier(CONST GpPointF *pts, REAL tension, REAL *x1,
     REAL *y1, REAL *x2, REAL *y2)

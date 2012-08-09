@@ -2115,10 +2115,26 @@ static void get_font_hfont(GpGraphics *graphics, GDIPCONST GpFont *font, HFONT *
 {
     HDC hdc = CreateCompatibleDC(0);
     GpPointF pt[3];
-    REAL angle, rel_width, rel_height;
+    REAL angle, rel_width, rel_height, font_height, font_to_pixel_scale;
     LOGFONTW lfw;
     HFONT unscaled_font;
     TEXTMETRICW textmet;
+
+    font_to_pixel_scale = units_scale(UnitPoint, UnitPixel, font->family->dpi);
+
+    if (font->unit == UnitPixel)
+        font_height = font->emSize * font_to_pixel_scale;
+    else
+    {
+        REAL unit_scale, res;
+
+        res = (graphics->unit == UnitDisplay || graphics->unit == UnitPixel) ? graphics->xres : graphics->yres;
+        unit_scale = units_scale(font->unit, graphics->unit, res);
+
+        font_height = font->emSize * font_to_pixel_scale * unit_scale;
+        if (graphics->unit != UnitDisplay)
+            font_height /= graphics->scale;
+    }
 
     pt[0].X = 0.0;
     pt[0].Y = 0.0;
@@ -2135,7 +2151,7 @@ static void get_font_hfont(GpGraphics *graphics, GDIPCONST GpFont *font, HFONT *
                       (pt[2].X-pt[0].X)*(pt[2].X-pt[0].X));
 
     get_log_fontW(font, graphics, &lfw);
-    lfw.lfHeight = roundr(lfw.lfHeight * rel_height);
+    lfw.lfHeight = roundr(font_height * rel_height);
     unscaled_font = CreateFontIndirectW(&lfw);
 
     SelectObject(hdc, unscaled_font);

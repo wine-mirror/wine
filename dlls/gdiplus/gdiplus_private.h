@@ -51,6 +51,7 @@ extern GpStatus hresult_to_status(HRESULT res) DECLSPEC_HIDDEN;
 extern REAL convert_unit(REAL logpixels, GpUnit unit) DECLSPEC_HIDDEN;
 extern REAL units_to_pixels(REAL units, GpUnit unit, REAL dpi) DECLSPEC_HIDDEN;
 extern REAL pixels_to_units(REAL pixels, GpUnit unit, REAL dpi) DECLSPEC_HIDDEN;
+extern REAL units_scale(GpUnit from, GpUnit to, REAL dpi) DECLSPEC_HIDDEN;
 
 extern GpStatus graphics_from_image(GpImage *image, GpGraphics **graphics) DECLSPEC_HIDDEN;
 
