@@ -645,7 +645,7 @@ static UINT thumb2_disasm_misc(UINT inst, ADDRESS64 *addr)
 
     if (op1 == 3 && op2 == 0)
     {
-        dbg_printf("\n\tclz\t%s, %s\t", tbl_regs[get_nibble(inst, 2)], tbl_regs[get_nibble(inst, 0)]);
+        dbg_printf("\n\tclz\t%s, %s", tbl_regs[get_nibble(inst, 2)], tbl_regs[get_nibble(inst, 0)]);
         return 0;
     }
 
@@ -666,7 +666,7 @@ static UINT thumb2_disasm_misc(UINT inst, ADDRESS64 *addr)
             dbg_printf("\n\trevsh\t");
             break;
         }
-        dbg_printf("%s, %s\t", tbl_regs[get_nibble(inst, 2)], tbl_regs[get_nibble(inst, 0)]);
+        dbg_printf("%s, %s", tbl_regs[get_nibble(inst, 2)], tbl_regs[get_nibble(inst, 0)]);
         return 0;
     }
 
@@ -683,7 +683,7 @@ static UINT thumb2_disasm_mul(UINT inst, ADDRESS64 *addr)
 
     if (op2 == 0 && get_nibble(inst, 3) != 0xf)
     {
-        dbg_printf("\n\tmla\t%s, %s, %s, %s\t", tbl_regs[get_nibble(inst, 2)],
+        dbg_printf("\n\tmla\t%s, %s, %s, %s", tbl_regs[get_nibble(inst, 2)],
                                                 tbl_regs[get_nibble(inst, 4)],
                                                 tbl_regs[get_nibble(inst, 0)],
                                                 tbl_regs[get_nibble(inst, 3)]);
@@ -692,7 +692,7 @@ static UINT thumb2_disasm_mul(UINT inst, ADDRESS64 *addr)
 
     if (op2 == 0 && get_nibble(inst, 3) == 0xf)
     {
-        dbg_printf("\n\tmul\t%s, %s, %s\t", tbl_regs[get_nibble(inst, 2)],
+        dbg_printf("\n\tmul\t%s, %s, %s", tbl_regs[get_nibble(inst, 2)],
                                             tbl_regs[get_nibble(inst, 4)],
                                             tbl_regs[get_nibble(inst, 0)]);
         return 0;
@@ -700,7 +700,7 @@ static UINT thumb2_disasm_mul(UINT inst, ADDRESS64 *addr)
 
     if (op2 == 1)
     {
-        dbg_printf("\n\tmls\t%s, %s, %s, %s\t", tbl_regs[get_nibble(inst, 2)],
+        dbg_printf("\n\tmls\t%s, %s, %s, %s", tbl_regs[get_nibble(inst, 2)],
                                                 tbl_regs[get_nibble(inst, 4)],
                                                 tbl_regs[get_nibble(inst, 0)],
                                                 tbl_regs[get_nibble(inst, 3)]);
@@ -734,7 +734,7 @@ static UINT thumb2_disasm_longmuldiv(UINT inst, ADDRESS64 *addr)
         default:
             return inst;
         }
-        dbg_printf("%s, %s, %s, %s\t", tbl_regs[get_nibble(inst, 3)], tbl_regs[get_nibble(inst, 2)],
+        dbg_printf("%s, %s, %s, %s", tbl_regs[get_nibble(inst, 3)], tbl_regs[get_nibble(inst, 2)],
                                        tbl_regs[get_nibble(inst, 4)], tbl_regs[get_nibble(inst, 0)]);
         return 0;
     }
@@ -752,12 +752,29 @@ static UINT thumb2_disasm_longmuldiv(UINT inst, ADDRESS64 *addr)
         default:
             return inst;
         }
-        dbg_printf("%s, %s, %s\t", tbl_regs[get_nibble(inst, 2)], tbl_regs[get_nibble(inst, 4)],
+        dbg_printf("%s, %s, %s", tbl_regs[get_nibble(inst, 2)], tbl_regs[get_nibble(inst, 4)],
                                    tbl_regs[get_nibble(inst, 0)]);
         return 0;
     }
 
     return inst;
+}
+
+static UINT thumb2_disasm_coprocmov1(UINT inst, ADDRESS64 *addr)
+{
+    WORD opc1 = (inst >> 21) & 0x07;
+    WORD opc2 = (inst >> 5) & 0x07;
+
+    if (opc2)
+        dbg_printf("\n\t%s%s\tp%u, #%u, %s, cr%u, cr%u, #%u", (inst & 0x00100000)?"mrc":"mcr",
+                   (inst & 0x10000000)?"2":"", get_nibble(inst, 2), opc1,
+                   tbl_regs[get_nibble(inst, 3)], get_nibble(inst, 4), get_nibble(inst, 0), opc2);
+    else
+        dbg_printf("\n\t%s%s\tp%u, #%u, %s, cr%u, cr%u", (inst & 0x00100000)?"mrc":"mcr",
+                   (inst & 0x10000000)?"2":"", get_nibble(inst, 2), opc1,
+                   tbl_regs[get_nibble(inst, 3)], get_nibble(inst, 4), get_nibble(inst, 0));
+
+    return 0;
 }
 
 struct inst_arm
@@ -825,6 +842,8 @@ static const struct inst_arm tbl_thumb32[] = {
     { 0xff8000c0, 0xfb000000, thumb2_disasm_mul },
     { 0xff8000f0, 0xfb800000, thumb2_disasm_longmuldiv },
     { 0xff8000f0, 0xfb8000f0, thumb2_disasm_longmuldiv },
+    { 0xef100010, 0xee100010, thumb2_disasm_coprocmov1 },
+    { 0xef100010, 0xee000010, thumb2_disasm_coprocmov1 },
     { 0x00000000, 0x00000000, NULL }
 };
 
