@@ -238,12 +238,12 @@ START_TEST(duplex)
         if (pDirectSoundFullDuplexCreate)
             IDirectSoundFullDuplex_tests();
         else
-            skip("duplex test skipped\n");
+            skip("DirectSoundFullDuplexCreate missing - skipping all tests\n");
 
         FreeLibrary(hDsound);
     }
     else
-        skip("dsound.dll not found!\n");
+        skip("dsound.dll not found - skipping all tests\n");
 
     CoUninitialize();
 }

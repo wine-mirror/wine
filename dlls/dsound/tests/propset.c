@@ -743,7 +743,7 @@ START_TEST(propset)
         FreeLibrary(hDsound);
     }
     else
-        skip("dsound.dll not found!\n");
+        skip("dsound.dll not found - skipping all tests\n");
 
     CoUninitialize();
 }

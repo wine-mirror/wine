@@ -1189,12 +1189,12 @@ START_TEST(dsound8)
             test_first_device();
         }
         else
-            skip("dsound8 test skipped\n");
+            skip("DirectSoundCreate8 missing - skipping all tests\n");
 
         FreeLibrary(hDsound);
     }
     else
-        skip("dsound.dll not found!\n");
+        skip("dsound.dll not found - skipping all tests\n");
 
     CoUninitialize();
 }

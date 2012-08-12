@@ -1151,12 +1151,12 @@ START_TEST(ds3d8)
         if (pDirectSoundCreate8)
             ds3d8_tests();
         else
-            skip("ds3d8 test skipped\n");
+            skip("DirectSoundCreate8 missing - skipping all tests\n");
 
         FreeLibrary(hDsound);
     }
     else
-        skip("dsound.dll not found!\n");
+        skip("dsound.dll not found - skipping all tests\n");
 
     CoUninitialize();
 }

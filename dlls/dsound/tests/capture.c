@@ -742,14 +742,14 @@ START_TEST(capture)
 
     hDsound = LoadLibrary("dsound.dll");
     if (!hDsound) {
-        skip("dsound.dll not found!\n");
+        skip("dsound.dll not found - skipping all tests\n");
         return;
     }
 
     pDirectSoundCaptureCreate = (void*)GetProcAddress(hDsound, "DirectSoundCaptureCreate");
     pDirectSoundCaptureEnumerateA = (void*)GetProcAddress(hDsound, "DirectSoundCaptureEnumerateA");
     if (!pDirectSoundCaptureCreate || !pDirectSoundCaptureEnumerateA) {
-        skip("capture test skipped\n");
+        skip("DirectSoundCapture{Create,Enumerate} missing - skipping all tests\n");
         return;
     }
 

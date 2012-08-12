@@ -1605,7 +1605,7 @@ START_TEST(dsound)
         FreeLibrary(hDsound);
     }
     else
-        win_skip("dsound.dll not found!\n");
+        win_skip("dsound.dll not found - skipping all tests\n");
 
     CoUninitialize();
 }
