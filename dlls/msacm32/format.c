@@ -39,8 +39,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msacm);
 
-static	PACMFORMATCHOOSEA	afc;
-
 struct MSACM_FillFormatData {
     HWND		hWnd;
 #define WINE_ACMFF_TAG		0
@@ -195,20 +193,24 @@ static MMRESULT MSACM_GetWFX(HWND hWnd, PACMFORMATCHOOSEA afc)
     return affd.ret;
 }
 
-static INT_PTR CALLBACK FormatChooseDlgProc(HWND hWnd, UINT msg,
-				       WPARAM wParam, LPARAM lParam)
-{
+static const char* fmt_prop = "acmprop";
 
-    TRACE("hwnd=%p msg=%i 0x%08lx 0x%08lx\n", hWnd,  msg, wParam, lParam );
+static INT_PTR CALLBACK FormatChooseDlgProc(HWND hWnd, UINT msg,
+                                            WPARAM wParam, LPARAM lParam)
+{
+    PACMFORMATCHOOSEA   afc = (PACMFORMATCHOOSEA)GetPropA(hWnd, fmt_prop);
+
+    TRACE("hwnd=%p msg=%i 0x%08lx 0x%08lx\n", hWnd,  msg, wParam, lParam);
 
     switch (msg) {
     case WM_INITDIALOG:
 	afc = (PACMFORMATCHOOSEA)lParam;
+        SetPropA(hWnd, fmt_prop, (HANDLE)afc);
 	MSACM_FillFormatTags(hWnd);
 	MSACM_FillFormat(hWnd);
 	if ((afc->fdwStyle & ~(ACMFORMATCHOOSE_STYLEF_CONTEXTHELP|
 			       ACMFORMATCHOOSE_STYLEF_SHOWHELP)) != 0)
-            FIXME("Unsupported style %08x\n", ((PACMFORMATCHOOSEA)lParam)->fdwStyle);
+            FIXME("Unsupported style %08x\n", afc->fdwStyle);
 	if (!(afc->fdwStyle & ACMFORMATCHOOSE_STYLEF_SHOWHELP))
 	    ShowWindow(GetDlgItem(hWnd, IDD_ACMFORMATCHOOSE_BTN_HELP), SW_HIDE);
 	return TRUE;
