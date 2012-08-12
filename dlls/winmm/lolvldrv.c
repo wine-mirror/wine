@@ -282,24 +282,6 @@ LPWINE_MLD	MMDRV_Get(HANDLE _hndl, UINT type, BOOL bCanBeID)
 }
 
 /**************************************************************************
- * 				MMDRV_GetRelated		[internal]
- */
-LPWINE_MLD	MMDRV_GetRelated(HANDLE hndl, UINT srcType,
-				 BOOL bSrcCanBeID, UINT dstType)
-{
-    LPWINE_MLD		mld;
-    TRACE("(%p, %04x, %c, %04x)\n",
-          hndl, srcType, bSrcCanBeID ? 'Y' : 'N', dstType);
-
-    if ((mld = MMDRV_Get(hndl, srcType, bSrcCanBeID)) != NULL) {
-	WINE_MM_DRIVER_PART*	part = &MMDrvs[mld->mmdIndex].parts[dstType];
-	if (part->nIDMin < part->nIDMax)
-	    return MMDRV_GetByID(part->nIDMin, dstType);
-    }
-    return NULL;
-}
-
-/**************************************************************************
  * 				MMDRV_PhysicalFeatures		[internal]
  */
 UINT	MMDRV_PhysicalFeatures(LPWINE_MLD mld, UINT uMsg,
