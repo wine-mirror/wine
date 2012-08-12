@@ -210,7 +210,9 @@ static INT_PTR CALLBACK FormatChooseDlgProc(HWND hWnd, UINT msg,
 	MSACM_FillFormatTags(hWnd);
 	MSACM_FillFormat(hWnd);
 	if ((afc->fdwStyle & ~(ACMFORMATCHOOSE_STYLEF_CONTEXTHELP|
-			       ACMFORMATCHOOSE_STYLEF_SHOWHELP)) != 0)
+			       ACMFORMATCHOOSE_STYLEF_SHOWHELP|
+                               ACMFORMATCHOOSE_STYLEF_ENABLETEMPLATEHANDLE|
+                               ACMFORMATCHOOSE_STYLEF_ENABLETEMPLATE)) != 0)
             FIXME("Unsupported style %08x\n", afc->fdwStyle);
 	if (!(afc->fdwStyle & ACMFORMATCHOOSE_STYLEF_SHOWHELP))
 	    ShowWindow(GetDlgItem(hWnd, IDD_ACMFORMATCHOOSE_BTN_HELP), SW_HIDE);
@@ -352,6 +354,14 @@ done:
  */
 MMRESULT WINAPI acmFormatChooseW(PACMFORMATCHOOSEW pafmtc)
 {
+    if (pafmtc->fdwStyle & ACMFORMATCHOOSE_STYLEF_ENABLETEMPLATEHANDLE)
+        return DialogBoxIndirectParamW(MSACM_hInstance32, (LPCDLGTEMPLATEW)pafmtc->hInstance,
+                                       pafmtc->hwndOwner, FormatChooseDlgProc, (LPARAM)pafmtc);
+
+    if (pafmtc->fdwStyle & ACMFORMATCHOOSE_STYLEF_ENABLETEMPLATE)
+        return DialogBoxParamW(pafmtc->hInstance, pafmtc->pszTemplateName,
+                               pafmtc->hwndOwner, FormatChooseDlgProc, (LPARAM)pafmtc);
+
     return DialogBoxParamW(MSACM_hInstance32, MAKEINTRESOURCEW(DLG_ACMFORMATCHOOSE_ID),
                            pafmtc->hwndOwner, FormatChooseDlgProc, (LPARAM)pafmtc);
 }
