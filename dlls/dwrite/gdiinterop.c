@@ -36,6 +36,7 @@ struct rendertarget {
     IDWriteBitmapRenderTarget IDWriteBitmapRenderTarget_iface;
     LONG ref;
 
+    SIZE size;
     HDC hdc;
 };
 
@@ -135,8 +136,10 @@ static HRESULT WINAPI rendertarget_SetCurrentTransform(IDWriteBitmapRenderTarget
 static HRESULT WINAPI rendertarget_GetSize(IDWriteBitmapRenderTarget *iface, SIZE *size)
 {
     struct rendertarget *This = impl_from_IDWriteBitmapRenderTarget(iface);
-    FIXME("(%p)->(%p): stub\n", This, size);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, size);
+    *size = This->size;
+    return S_OK;
 }
 
 static HRESULT WINAPI rendertarget_Resize(IDWriteBitmapRenderTarget *iface, UINT32 width, UINT32 height)
@@ -174,6 +177,9 @@ static HRESULT create_rendertarget(HDC hdc, UINT32 width, UINT32 height, IDWrite
 
     This->IDWriteBitmapRenderTarget_iface.lpVtbl = &rendertargetvtbl;
     This->ref = 1;
+
+    This->size.cx = width;
+    This->size.cy = height;
 
     This->hdc = CreateCompatibleDC(hdc);
 

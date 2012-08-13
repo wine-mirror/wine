@@ -158,6 +158,7 @@ static void test_CreateBitmapRenderTarget(void)
     DIBSECTION ds;
     HBITMAP hbm;
     HRESULT hr;
+    SIZE size;
     HDC hdc;
     int ret;
 
@@ -167,6 +168,15 @@ static void test_CreateBitmapRenderTarget(void)
     target = NULL;
     hr = IDWriteGdiInterop_CreateBitmapRenderTarget(interop, NULL, 0, 0, &target);
     EXPECT_HR(hr, S_OK);
+
+if (0) /* crashes on native */
+    hr = IDWriteBitmapRenderTarget_GetSize(target, NULL);
+
+    size.cx = size.cy = -1;
+    hr = IDWriteBitmapRenderTarget_GetSize(target, &size);
+    EXPECT_HR(hr, S_OK);
+    ok(size.cx == 0, "got %d\n", size.cx);
+    ok(size.cy == 0, "got %d\n", size.cy);
 
     target2 = NULL;
     hr = IDWriteGdiInterop_CreateBitmapRenderTarget(interop, NULL, 0, 0, &target2);
@@ -212,6 +222,12 @@ static void test_CreateBitmapRenderTarget(void)
     ok(ds.dsBm.bmPlanes == 1, "got %d\n", ds.dsBm.bmPlanes);
     ok(ds.dsBm.bmBitsPixel == 32, "got %d\n", ds.dsBm.bmBitsPixel);
     ok(ds.dsBm.bmBits != NULL, "got %p\n", ds.dsBm.bmBits);
+
+    size.cx = size.cy = -1;
+    hr = IDWriteBitmapRenderTarget_GetSize(target, &size);
+    EXPECT_HR(hr, S_OK);
+    ok(size.cx == 10, "got %d\n", size.cx);
+    ok(size.cy == 5, "got %d\n", size.cy);
 
     IDWriteBitmapRenderTarget_Release(target);
 
