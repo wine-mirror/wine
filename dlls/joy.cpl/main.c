@@ -166,6 +166,9 @@ static INT_PTR CALLBACK list_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
                 SendDlgItemMessageW(hwnd, IDC_JOYSTICKLIST, LB_ADDSTRING, 0, (LPARAM) joy->instance.tszInstanceName);
             }
 
+            /* Store the hwnd to be used with MapDialogRect for unit conversions */
+            data->graphics.hwnd = hwnd;
+
             return TRUE;
         }
 
@@ -260,7 +263,7 @@ static DWORD WINAPI input_thread(void *param)
         /* Indicate pressed buttons */
         for (i = 0; i < data->joysticks[data->chosen_joystick].num_buttons; i++)
             if (state.rgbButtons[i])
-                SendMessageW(data->buttons[i], BM_SETSTATE, TRUE, 0);
+                SendMessageW(data->graphics.buttons[i], BM_SETSTATE, TRUE, 0);
 
         /* Indicate axis positions, axes showing are hardcoded for now */
         axes_pos[0][0] = state.lX;
@@ -281,16 +284,21 @@ static DWORD WINAPI input_thread(void *param)
         }
 
         for (i = 0; i < TEST_MAX_AXES; i++)
-            SetWindowPos(data->axes[i], 0,
-                        TEST_AXIS_X + TEST_NEXT_AXIS_X*i + axes_pos[i][0],
-                        TEST_AXIS_Y + axes_pos[i][1],
-                        0, 0, SWP_NOZORDER | SWP_NOSIZE);
+        {
+            RECT r;
+
+            r.left = (TEST_AXIS_X + TEST_NEXT_AXIS_X*i + axes_pos[i][0]);
+            r.top = (TEST_AXIS_Y + axes_pos[i][1]);
+            MapDialogRect(data->graphics.hwnd, &r);
+
+            SetWindowPos(data->graphics.axes[i], 0, r.left, r.top, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
+        }
 
         Sleep(TEST_POLL_TIME);
 
         /* Reset button state */
         for (i = 0; i < data->joysticks[data->chosen_joystick].num_buttons; i++)
-            SendMessageW(data->buttons[i], BM_SETSTATE, FALSE, 0);
+            SendMessageW(data->graphics.buttons[i], BM_SETSTATE, FALSE, 0);
     }
 
     return 0;
@@ -306,7 +314,7 @@ static void test_handle_joychange(HWND hwnd, struct JoystickData *data)
 
     /* Enable only  buttons present in the device */
     for (i = 0; i < TEST_MAX_BUTTONS; i++)
-        ShowWindow(data->buttons[i], i <= data->joysticks[data->chosen_joystick].num_buttons);
+        ShowWindow(data->graphics.buttons[i], i <= data->joysticks[data->chosen_joystick].num_buttons);
 }
 
 /*********************************************************************
@@ -331,17 +339,24 @@ static void draw_joystick_buttons(HWND hwnd, struct JoystickData* data)
 
     for (i = 0; i < TEST_MAX_BUTTONS; i++)
     {
+        RECT r;
+
         if ((i % TEST_BUTTON_COL_MAX) == 0 && i != 0)
         {
             row += 1;
             col = 0;
         }
 
+        r.left = (TEST_BUTTON_X + TEST_NEXT_BUTTON_X*col);
+        r.top = (TEST_BUTTON_Y + TEST_NEXT_BUTTON_Y*row);
+        r.right = r.left + TEST_BUTTON_SIZE_X;
+        r.bottom = r.top + TEST_BUTTON_SIZE_Y;
+        MapDialogRect(hwnd, &r);
+
         button_number_to_wchar(i + 1, button_label);
 
-        data->buttons[i] = CreateWindowW(button_class, button_label, WS_CHILD,
-            TEST_BUTTON_X + TEST_NEXT_BUTTON_X*col, TEST_BUTTON_Y + TEST_NEXT_BUTTON_Y*row,
-            TEST_BUTTON_SIZE_X, TEST_BUTTON_SIZE_Y,
+        data->graphics.buttons[i] = CreateWindowW(button_class, button_label, WS_CHILD,
+            r.left, r.top, r.right - r.left, r.bottom - r.top,
             hwnd, NULL, NULL, hinst);
 
         col += 1;
@@ -360,13 +375,19 @@ static void draw_joystick_axes(HWND hwnd, struct JoystickData* data)
 
     for (i = 0; i < TEST_MAX_AXES; i++)
     {
+        RECT r;
         /* Set axis box name */
         SetWindowTextW(GetDlgItem(hwnd, axes_idc[i]), axes_names[i]);
 
-        data->axes[i] = CreateWindowW( button_class, NULL, WS_CHILD | WS_VISIBLE,
-            TEST_AXIS_X + TEST_NEXT_AXIS_X*i, TEST_AXIS_Y,
-            TEST_AXIS_SIZE_X, TEST_AXIS_SIZE_Y,
-            hwnd, (HMENU) IDC_JOYSTICKAXES + i, NULL, hinst);
+        r.left = (TEST_AXIS_X + TEST_NEXT_AXIS_X*i);
+        r.top = TEST_AXIS_Y;
+        r.right = r.left + TEST_AXIS_SIZE_X;
+        r.bottom = r.top + TEST_AXIS_SIZE_Y;
+        MapDialogRect(hwnd, &r);
+
+        data->graphics.axes[i] = CreateWindowW( button_class, NULL, WS_CHILD | WS_VISIBLE,
+            r.left, r.top, r.right - r.left, r.bottom - r.top,
+            hwnd, NULL, NULL, hinst);
     }
 }
 
@@ -452,12 +473,18 @@ static void draw_ff_axis(HWND hwnd, struct JoystickData *data)
 {
     HINSTANCE hinst = (HINSTANCE) GetWindowLongPtrW(hwnd, GWLP_HINSTANCE);
     static WCHAR button_class[] = {'B','u','t','t','o','n','\0'};
+    RECT r;
+
+    r.left = FF_AXIS_X;
+    r.top = FF_AXIS_Y;
+    r.right = r.left + FF_AXIS_SIZE_X;
+    r.bottom = r.top + FF_AXIS_SIZE_Y;
+    MapDialogRect(hwnd, &r);
 
     /* Draw direction axis */
-    data->ff_axis = CreateWindowW( button_class, NULL, WS_CHILD | WS_VISIBLE,
-        FF_AXIS_X, FF_AXIS_Y,
-        FF_AXIS_SIZE_X, FF_AXIS_SIZE_Y,
-        hwnd, (HMENU) IDC_FFAXIS, NULL, hinst);
+    data->graphics.ff_axis = CreateWindowW( button_class, NULL, WS_CHILD | WS_VISIBLE,
+        r.left, r.top, r.right - r.left, r.bottom - r.top,
+        hwnd, NULL, NULL, hinst);
 }
 
 static void initialize_effects_list(HWND hwnd, struct Joystick* joy)
@@ -508,6 +535,7 @@ static DWORD WINAPI ff_input_thread(void *param)
         int chosen_effect = joy->chosen_effect;
         DIEFFECT *dieffect;
         DWORD flags = DIEP_AXES | DIEP_DIRECTION | DIEP_NORESTART;
+        RECT r;
 
         /* Skip this if we have no effects */
         if (joy->num_effects == 0 || chosen_effect < 0) continue;
@@ -519,8 +547,11 @@ static DWORD WINAPI ff_input_thread(void *param)
         dieffect->rgdwAxes[0] = state.lX;
         dieffect->rgdwAxes[1] = state.lY;
 
-        SetWindowPos(data->ff_axis, 0, FF_AXIS_X + state.lX, FF_AXIS_Y + state.lY,
-                     0, 0, SWP_NOZORDER | SWP_NOSIZE);
+        r.left = FF_AXIS_X + state.lX;
+        r.top = FF_AXIS_Y + state.lY;
+        MapDialogRect(data->graphics.hwnd, &r);
+
+        SetWindowPos(data->graphics.ff_axis, 0, r.left, r.top, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
 
         for (i=0; i < joy->num_buttons; i++)
             if (state.rgbButtons[i])

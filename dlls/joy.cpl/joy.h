@@ -50,6 +50,13 @@ struct Joystick {
 #define TEST_MAX_BUTTONS    32
 #define TEST_MAX_AXES       4
 
+struct Graphics {
+    HWND hwnd;
+    HWND buttons[TEST_MAX_BUTTONS];
+    HWND axes[TEST_MAX_AXES];
+    HWND ff_axis;
+};
+
 struct JoystickData {
     IDirectInput8W *di;
     struct Joystick *joysticks;
@@ -57,9 +64,7 @@ struct JoystickData {
     int num_ff;
     int cur_joystick;
     int chosen_joystick;
-    HWND buttons[TEST_MAX_BUTTONS];
-    HWND axes[TEST_MAX_AXES];
-    HWND ff_axis;
+    struct Graphics graphics;
     BOOL stop;
 };
 
@@ -86,36 +91,32 @@ struct JoystickData {
 #define IDC_TESTGROUPZRZ    2007
 #define IDC_TESTGROUPPOV    2008
 
-#define IDC_JOYSTICKBUTTON  3000
-#define IDC_JOYSTICKAXES    4000
-
 #define IDC_FFSELECTCOMBO   2009
 #define IDC_FFEFFECTLIST    2010
-#define IDC_FFAXIS          2011
 
 /* constants */
 #define TEST_POLL_TIME      100
 
 #define TEST_BUTTON_COL_MAX 8
-#define TEST_BUTTON_X       15
-#define TEST_BUTTON_Y       200
-#define TEST_NEXT_BUTTON_X  45
-#define TEST_NEXT_BUTTON_Y  40
-#define TEST_BUTTON_SIZE_X  30
-#define TEST_BUTTON_SIZE_Y  25
+#define TEST_BUTTON_X       8
+#define TEST_BUTTON_Y       122
+#define TEST_NEXT_BUTTON_X  30
+#define TEST_NEXT_BUTTON_Y  25
+#define TEST_BUTTON_SIZE_X  20
+#define TEST_BUTTON_SIZE_Y  18
 
-#define TEST_AXIS_X         65
-#define TEST_AXIS_Y         98
-#define TEST_NEXT_AXIS_X    115
-#define TEST_AXIS_SIZE_X    5
-#define TEST_AXIS_SIZE_Y    5
-#define TEST_AXIS_MIN       -40
-#define TEST_AXIS_MAX       40
+#define TEST_AXIS_X         43
+#define TEST_AXIS_Y         60
+#define TEST_NEXT_AXIS_X    77
+#define TEST_AXIS_SIZE_X    3
+#define TEST_AXIS_SIZE_Y    3
+#define TEST_AXIS_MIN       -25
+#define TEST_AXIS_MAX       25
 
-#define FF_AXIS_X           373
-#define FF_AXIS_Y           98
-#define FF_AXIS_SIZE_X      5
-#define FF_AXIS_SIZE_Y      5
+#define FF_AXIS_X           248
+#define FF_AXIS_Y           60
+#define FF_AXIS_SIZE_X      3
+#define FF_AXIS_SIZE_Y      3
 
 #define FF_PLAY_TIME        2*DI_SECONDS
 #define FF_PERIOD_TIME      FF_PLAY_TIME/4
