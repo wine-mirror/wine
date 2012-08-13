@@ -1448,7 +1448,7 @@ static HRESULT WINAPI MimeMessage_QueryInterface(IMimeMessage *iface, REFIID rii
         IsEqualIID(riid, &IID_IMimeMessage))
     {
         *ppv = iface;
-        IUnknown_AddRef(iface);
+        IMimeMessage_AddRef(iface);
         return S_OK;
     }
 
@@ -2619,7 +2619,7 @@ static HRESULT WINAPI MimeSecurity_QueryInterface(
         IsEqualIID(riid, &IID_IMimeSecurity))
     {
         *obj = iface;
-        IUnknown_AddRef(iface);
+        IMimeSecurity_AddRef(iface);
         return S_OK;
     }
 
@@ -2807,7 +2807,7 @@ static HRESULT WINAPI MimeAlloc_QueryInterface(
         IsEqualIID(riid, &IID_IMimeAllocator))
     {
         *obj = iface;
-        IUnknown_AddRef(iface);
+        IMimeAllocator_AddRef(iface);
         return S_OK;
     }
 

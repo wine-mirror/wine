@@ -729,7 +729,7 @@ static HRESULT WINAPI POP3Transport_QueryInterface(IPOP3Transport *iface, REFIID
         IsEqualIID(riid, &IID_IPOP3Transport))
     {
         *ppv = iface;
-        IUnknown_AddRef(iface);
+        IPOP3Transport_AddRef(iface);
         return S_OK;
     }
     *ppv = NULL;
@@ -1139,7 +1139,7 @@ static HRESULT WINAPI POP3TransportCF_QueryInterface(LPCLASSFACTORY iface,
     if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IClassFactory))
     {
         *ppv = iface;
-        IUnknown_AddRef(iface);
+        IClassFactory_AddRef(iface);
         return S_OK;
     }
     return E_NOINTERFACE;
