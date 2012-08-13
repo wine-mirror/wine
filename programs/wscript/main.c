@@ -33,6 +33,20 @@
 #include <wine/debug.h>
 #include <wine/unicode.h>
 
+#ifdef _WIN64
+
+#define IActiveScriptParse_Release IActiveScriptParse64_Release
+#define IActiveScriptParse_InitNew IActiveScriptParse64_InitNew
+#define IActiveScriptParse_ParseScriptText IActiveScriptParse64_ParseScriptText
+
+#else
+
+#define IActiveScriptParse_Release IActiveScriptParse32_Release
+#define IActiveScriptParse_InitNew IActiveScriptParse32_InitNew
+#define IActiveScriptParse_ParseScriptText IActiveScriptParse32_ParseScriptText
+
+#endif
+
 WINE_DEFAULT_DEBUG_CHANNEL(wscript);
 
 static const WCHAR wscriptW[] = {'W','S','c','r','i','p','t',0};
@@ -253,7 +267,7 @@ static HRESULT init_engine(IActiveScript *script, IActiveScriptParse *parser)
     if(FAILED(hres))
         return FALSE;
 
-    hres = IActiveScriptParse64_InitNew(parser);
+    hres = IActiveScriptParse_InitNew(parser);
     if(FAILED(hres))
         return FALSE;
 
@@ -310,7 +324,7 @@ static void run_script(const WCHAR *filename, IActiveScript *script, IActiveScri
         return;
     }
 
-    hres = IActiveScriptParse64_ParseScriptText(parser, text, NULL, NULL, NULL, 1, 1,
+    hres = IActiveScriptParse_ParseScriptText(parser, text, NULL, NULL, NULL, 1, 1,
             SCRIPTTEXT_HOSTMANAGESSOURCE|SCRIPTITEM_ISVISIBLE, NULL, NULL);
     SysFreeString(text);
     if(FAILED(hres)) {
@@ -406,7 +420,7 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPWSTR cmdline, int cm
     }
 
     IActiveScript_Release(script);
-    IUnknown_Release(parser);
+    IActiveScriptParse_Release(parser);
 
     CoUninitialize();
 
