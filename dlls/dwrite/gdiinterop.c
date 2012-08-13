@@ -23,6 +23,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "dwrite.h"
+#include "dwrite_private.h"
 
 #include "wine/debug.h"
 
@@ -60,7 +61,7 @@ static HRESULT WINAPI gdiinterop_CreateFontFromLOGFONT(IDWriteGdiInterop *iface,
 
     if (!logfont) return E_INVALIDARG;
 
-    return E_NOTIMPL;
+    return create_font(font);
 }
 
 static HRESULT WINAPI gdiinterop_ConvertFontToLOGFONT(IDWriteGdiInterop *iface,

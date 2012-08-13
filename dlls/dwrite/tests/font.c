@@ -61,23 +61,20 @@ if (0)
     lstrcpyW(logfont.lfFaceName, arialW);
 
     hr = IDWriteGdiInterop_CreateFontFromLOGFONT(interop, &logfont, &font);
-todo_wine
     EXPECT_HR(hr, S_OK);
 
-if (hr == S_OK)
-{
     /* now check properties */
     weight = IDWriteFont_GetWeight(font);
     ok(weight == DWRITE_FONT_WEIGHT_NORMAL, "got %d\n", weight);
 
     style = IDWriteFont_GetStyle(font);
+todo_wine
     ok(style == DWRITE_FONT_STYLE_ITALIC, "got %d\n", style);
 
     ret = IDWriteFont_IsSymbolFont(font);
     ok(!ret, "got %d\n", ret);
 
     IDWriteFont_Release(font);
-}
 
     IDWriteGdiInterop_Release(interop);
 }

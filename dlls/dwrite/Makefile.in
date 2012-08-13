@@ -2,6 +2,7 @@ MODULE    = dwrite.dll
 IMPORTLIB = dwrite
 
 C_SRCS = \
+	font.c \
 	gdiinterop.c \
 	main.c
 
