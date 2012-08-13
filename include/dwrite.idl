@@ -1394,3 +1394,17 @@ interface IDWriteFactory : IUnknown
 }
 
 cpp_quote("HRESULT WINAPI DWriteCreateFactory(DWRITE_FACTORY_TYPE,REFIID,IUnknown**);")
+
+/* error codes */
+cpp_quote("#define FACILITY_DWRITE 0x898")
+cpp_quote("#define DWRITE_ERR_BASE 0x5000")
+cpp_quote("#define MAKE_DWRITE_HR(severity, code) MAKE_HRESULT(severity, FACILITY_DWRITE, (DWRITE_ERR_BASE + code))")
+cpp_quote("#define MAKE_DWRITE_HR_ERR(code) MAKE_DWRITE_HR(SEVERITY_ERROR, code)")
+
+cpp_quote("#define DWRITE_E_FILEFORMAT              MAKE_DWRITE_HR_ERR(0x0)")
+cpp_quote("#define DWRITE_E_UNEXPECTED              MAKE_DWRITE_HR_ERR(0x1)")
+cpp_quote("#define DWRITE_E_NOFONT                  MAKE_DWRITE_HR_ERR(0x2)")
+cpp_quote("#define DWRITE_E_FILENOTFOUND            MAKE_DWRITE_HR_ERR(0x3)")
+cpp_quote("#define DWRITE_E_FILEACCESS              MAKE_DWRITE_HR_ERR(0x4)")
+cpp_quote("#define DWRITE_E_FONTCOLLECTIONOBSOLETE  MAKE_DWRITE_HR_ERR(0x5)")
+cpp_quote("#define DWRITE_E_ALREADYREGISTERED       MAKE_DWRITE_HR_ERR(0x6)")

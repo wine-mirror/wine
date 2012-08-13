@@ -57,11 +57,11 @@ static ULONG WINAPI gdiinterop_Release(IDWriteGdiInterop *iface)
 static HRESULT WINAPI gdiinterop_CreateFontFromLOGFONT(IDWriteGdiInterop *iface,
     LOGFONTW const *logfont, IDWriteFont **font)
 {
-    FIXME("(%p %p): stub\n", logfont, font);
+    TRACE("(%p %p)\n", logfont, font);
 
     if (!logfont) return E_INVALIDARG;
 
-    return create_font(font);
+    return create_font_from_logfont(logfont, font);
 }
 
 static HRESULT WINAPI gdiinterop_ConvertFontToLOGFONT(IDWriteGdiInterop *iface,

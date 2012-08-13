@@ -27,4 +27,4 @@ static inline BOOL heap_free(void *mem)
 }
 
 extern HRESULT create_gdiinterop(IDWriteGdiInterop**) DECLSPEC_HIDDEN;
-extern HRESULT create_font(IDWriteFont**) DECLSPEC_HIDDEN;
+extern HRESULT create_font_from_logfont(const LOGFONTW*, IDWriteFont**) DECLSPEC_HIDDEN;

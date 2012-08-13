@@ -30,18 +30,35 @@
 #define EXPECT_HR(hr,hr_exp) \
     ok(hr == hr_exp, "got 0x%08x, expected 0x%08x\n", hr, hr_exp)
 
-IDWriteFactory *factory;
+static IDWriteFactory *factory;
 
 static void test_CreateFontFromLOGFONT(void)
 {
     static const WCHAR arialW[] = {'A','r','i','a','l',0};
+    static const WCHAR blahW[]  = {'B','l','a','h','!',0};
     IDWriteGdiInterop *interop;
     DWRITE_FONT_WEIGHT weight;
     DWRITE_FONT_STYLE style;
     IDWriteFont *font;
     LOGFONTW logfont;
+    LONG weights[][2] = {
+        {FW_NORMAL, DWRITE_FONT_WEIGHT_NORMAL},
+        {FW_BOLD, DWRITE_FONT_WEIGHT_BOLD},
+        {  0, DWRITE_FONT_WEIGHT_NORMAL},
+        { 50, DWRITE_FONT_WEIGHT_NORMAL},
+        {150, DWRITE_FONT_WEIGHT_NORMAL},
+        {250, DWRITE_FONT_WEIGHT_NORMAL},
+        {350, DWRITE_FONT_WEIGHT_NORMAL},
+        {450, DWRITE_FONT_WEIGHT_NORMAL},
+        {650, DWRITE_FONT_WEIGHT_BOLD},
+        {750, DWRITE_FONT_WEIGHT_BOLD},
+        {850, DWRITE_FONT_WEIGHT_BOLD},
+        {950, DWRITE_FONT_WEIGHT_BOLD},
+        {960, DWRITE_FONT_WEIGHT_BOLD},
+    };
     HRESULT hr;
     BOOL ret;
+    int i;
 
     hr = IDWriteFactory_GetGdiInterop(factory, &interop);
     EXPECT_HR(hr, S_OK);
@@ -65,16 +82,71 @@ if (0)
 
     /* now check properties */
     weight = IDWriteFont_GetWeight(font);
+todo_wine
     ok(weight == DWRITE_FONT_WEIGHT_NORMAL, "got %d\n", weight);
 
     style = IDWriteFont_GetStyle(font);
-todo_wine
     ok(style == DWRITE_FONT_STYLE_ITALIC, "got %d\n", style);
 
     ret = IDWriteFont_IsSymbolFont(font);
     ok(!ret, "got %d\n", ret);
 
     IDWriteFont_Release(font);
+
+    /* weight values */
+    for (i = 0; i < sizeof(weights)/(2*sizeof(LONG)); i++)
+    {
+        memset(&logfont, 0, sizeof(logfont));
+        logfont.lfHeight = 12;
+        logfont.lfWidth  = 12;
+        logfont.lfWeight = weights[i][0];
+        lstrcpyW(logfont.lfFaceName, arialW);
+
+        hr = IDWriteGdiInterop_CreateFontFromLOGFONT(interop, &logfont, &font);
+        EXPECT_HR(hr, S_OK);
+
+        weight = IDWriteFont_GetWeight(font);
+    todo_wine
+        ok(weight == weights[i][1],
+            "%d: got %d, expected %d\n", i, weight, weights[i][1]);
+        IDWriteFont_Release(font);
+    }
+
+    /* weight not from enum */
+    memset(&logfont, 0, sizeof(logfont));
+    logfont.lfHeight = 12;
+    logfont.lfWidth  = 12;
+    logfont.lfWeight = 550;
+    lstrcpyW(logfont.lfFaceName, arialW);
+
+    hr = IDWriteGdiInterop_CreateFontFromLOGFONT(interop, &logfont, &font);
+    EXPECT_HR(hr, S_OK);
+
+    weight = IDWriteFont_GetWeight(font);
+todo_wine
+    ok(weight == DWRITE_FONT_WEIGHT_NORMAL || broken(weight == DWRITE_FONT_WEIGHT_BOLD) /* win7 w/o SP */,
+        "got %d\n", weight);
+    IDWriteFont_Release(font);
+
+    /* empty or nonexistent face name */
+    memset(&logfont, 0, sizeof(logfont));
+    logfont.lfHeight = 12;
+    logfont.lfWidth  = 12;
+    logfont.lfWeight = FW_NORMAL;
+    lstrcpyW(logfont.lfFaceName, blahW);
+
+    hr = IDWriteGdiInterop_CreateFontFromLOGFONT(interop, &logfont, &font);
+todo_wine
+    EXPECT_HR(hr, DWRITE_E_NOFONT);
+
+    memset(&logfont, 0, sizeof(logfont));
+    logfont.lfHeight = 12;
+    logfont.lfWidth  = 12;
+    logfont.lfWeight = FW_NORMAL;
+
+    hr = IDWriteGdiInterop_CreateFontFromLOGFONT(interop, &logfont, &font);
+todo_wine
+    EXPECT_HR(hr, DWRITE_E_NOFONT);
 
     IDWriteGdiInterop_Release(interop);
 }

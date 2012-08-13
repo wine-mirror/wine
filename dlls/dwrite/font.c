@@ -30,6 +30,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 struct dwrite_font {
     IDWriteFont IDWriteFont_iface;
     LONG ref;
+
+    DWRITE_FONT_STYLE style;
 };
 
 static inline struct dwrite_font *impl_from_IDWriteFont(IDWriteFont *iface)
@@ -86,7 +88,7 @@ static DWRITE_FONT_WEIGHT WINAPI dwritefont_GetWeight(IDWriteFont *iface)
 {
     struct dwrite_font *This = impl_from_IDWriteFont(iface);
     FIXME("(%p): stub\n", This);
-    return DWRITE_FONT_WEIGHT_NORMAL;
+    return 0;
 }
 
 static DWRITE_FONT_STRETCH WINAPI dwritefont_GetStretch(IDWriteFont *iface)
@@ -99,8 +101,8 @@ static DWRITE_FONT_STRETCH WINAPI dwritefont_GetStretch(IDWriteFont *iface)
 static DWRITE_FONT_STYLE WINAPI dwritefont_GetStyle(IDWriteFont *iface)
 {
     struct dwrite_font *This = impl_from_IDWriteFont(iface);
-    FIXME("(%p): stub\n", This);
-    return DWRITE_FONT_STYLE_NORMAL;
+    TRACE("(%p)\n", This);
+    return This->style;
 }
 
 static BOOL WINAPI dwritefont_IsSymbolFont(IDWriteFont *iface)
@@ -169,15 +171,20 @@ static const IDWriteFontVtbl dwritefontvtbl = {
     dwritefont_CreateFontFace
 };
 
-HRESULT create_font(IDWriteFont **font)
+HRESULT create_font_from_logfont(const LOGFONTW *logfont, IDWriteFont **font)
 {
     struct dwrite_font *This;
+
+    *font = NULL;
 
     This = heap_alloc(sizeof(struct dwrite_font));
     if (!This) return E_OUTOFMEMORY;
 
     This->IDWriteFont_iface.lpVtbl = &dwritefontvtbl;
     This->ref = 1;
+
+    This->style = logfont->lfItalic ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL;
+
     *font = &This->IDWriteFont_iface;
 
     return S_OK;
