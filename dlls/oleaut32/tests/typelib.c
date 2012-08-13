@@ -1404,7 +1404,7 @@ static void test_CreateTypeLib(void) {
     hres = CreateTypeLib2(SYS_WIN32, filenameW, &createtl);
     ok(hres == S_OK, "got %08x\n", hres);
 
-    hres = ICreateTypeLib_QueryInterface(createtl, &IID_ITypeLib, (void**)&tl);
+    hres = ICreateTypeLib2_QueryInterface(createtl, &IID_ITypeLib, (void**)&tl);
     ok(hres == S_OK, "got %08x\n", hres);
 
     hres = ITypeLib_GetTypeInfo(tl, 0, NULL);
@@ -1443,10 +1443,10 @@ static void test_CreateTypeLib(void) {
     hres = ITypeLib_GetDocumentation(tl, 0, &name, NULL, NULL, NULL);
     ok(hres == TYPE_E_ELEMENTNOTFOUND, "got %08x\n", hres);
 
-    hres = ICreateTypeLib_SetName(createtl, typelibW);
+    hres = ICreateTypeLib2_SetName(createtl, typelibW);
     ok(hres == S_OK, "got %08x\n", hres);
 
-    hres = ICreateTypeLib_SetHelpFileName(createtl, helpfileW);
+    hres = ICreateTypeLib2_SetHelpFileName(createtl, helpfileW);
     ok(hres == S_OK, "got %08x\n", hres);
 
     hres = ITypeLib_GetDocumentation(tl, -1, NULL, NULL, NULL, NULL);
@@ -1461,16 +1461,16 @@ static void test_CreateTypeLib(void) {
     SysFreeString(helpfile);
 
     /* invalid parameters */
-    hres = ICreateTypeLib_CreateTypeInfo(createtl, NULL, TKIND_INTERFACE, &createti);
+    hres = ICreateTypeLib2_CreateTypeInfo(createtl, NULL, TKIND_INTERFACE, &createti);
     ok(hres == E_INVALIDARG, "got %08x\n", hres);
 
-    hres = ICreateTypeLib_CreateTypeInfo(createtl, interface1W, TKIND_INTERFACE, NULL);
+    hres = ICreateTypeLib2_CreateTypeInfo(createtl, interface1W, TKIND_INTERFACE, NULL);
     ok(hres == E_INVALIDARG, "got %08x\n", hres);
 
-    hres = ICreateTypeLib_CreateTypeInfo(createtl, NULL, TKIND_INTERFACE, NULL);
+    hres = ICreateTypeLib2_CreateTypeInfo(createtl, NULL, TKIND_INTERFACE, NULL);
     ok(hres == E_INVALIDARG, "got %08x\n", hres);
 
-    hres = ICreateTypeLib_CreateTypeInfo(createtl, interface1W, TKIND_INTERFACE, &createti);
+    hres = ICreateTypeLib2_CreateTypeInfo(createtl, interface1W, TKIND_INTERFACE, &createti);
     ok(hres == S_OK, "got %08x\n", hres);
 
     hres = ICreateTypeInfo_QueryInterface(createti, &IID_ITypeInfo, (void**)&interface1);
@@ -1977,10 +1977,10 @@ static void test_CreateTypeLib(void) {
     ITypeInfo2_Release(ti2);
     ICreateTypeInfo_Release(createti);
 
-    hres = ICreateTypeLib_CreateTypeInfo(createtl, interface1W, TKIND_INTERFACE, &createti);
+    hres = ICreateTypeLib2_CreateTypeInfo(createtl, interface1W, TKIND_INTERFACE, &createti);
     ok(hres == TYPE_E_NAMECONFLICT, "got %08x\n", hres);
 
-    hres = ICreateTypeLib_CreateTypeInfo(createtl, interface2W, TKIND_INTERFACE, &createti);
+    hres = ICreateTypeLib2_CreateTypeInfo(createtl, interface2W, TKIND_INTERFACE, &createti);
     ok(hres == S_OK, "got %08x\n", hres);
 
     hres = ICreateTypeInfo_QueryInterface(createti, &IID_ITypeInfo, (void**)&interface2);
@@ -2030,7 +2030,7 @@ static void test_CreateTypeLib(void) {
 
     VariantInit(&cust_data);
 
-    hres = ICreateTypeLib_CreateTypeInfo(createtl, interface3W, TKIND_INTERFACE, &createti);
+    hres = ICreateTypeLib2_CreateTypeInfo(createtl, interface3W, TKIND_INTERFACE, &createti);
     ok(hres == S_OK, "got %08x\n", hres);
 
     hres = ICreateTypeInfo_QueryInterface(createti, &IID_ICreateTypeInfo2, (void**)&createti2);
@@ -2116,7 +2116,7 @@ static void test_CreateTypeLib(void) {
     ICreateTypeInfo2_Release(createti2);
     ICreateTypeInfo_Release(createti);
 
-    hres = ICreateTypeLib_CreateTypeInfo(createtl, coclassW, TKIND_COCLASS, &createti);
+    hres = ICreateTypeLib2_CreateTypeInfo(createtl, coclassW, TKIND_COCLASS, &createti);
     ok(hres == S_OK, "got %08x\n", hres);
 
     hres = ICreateTypeInfo_AddRefTypeInfo(createti, interface1, &hreftype);
@@ -2183,7 +2183,7 @@ static void test_CreateTypeLib(void) {
 
     ICreateTypeInfo_Release(createti);
 
-    hres = ICreateTypeLib_CreateTypeInfo(createtl, dualW, TKIND_INTERFACE, &createti);
+    hres = ICreateTypeLib2_CreateTypeInfo(createtl, dualW, TKIND_INTERFACE, &createti);
     ok(hres == S_OK, "got %08x\n", hres);
 
     hres = ICreateTypeInfo_SetTypeFlags(createti, TYPEFLAG_FDUAL);
@@ -2967,18 +2967,18 @@ static void test_SetVarHelpContext(void)
     V_VT(&v) = VT_INT;
     V_INT(&v) = 1;
     U(desc).lpvarValue = &v;
-    hr = ICreateTypeInfo2_AddVarDesc(cti, 0, &desc);
+    hr = ICreateTypeInfo_AddVarDesc(cti, 0, &desc);
     ok(hr == S_OK, "got %08x\n", hr);
 
-    hr = ICreateTypeInfo2_SetVarHelpContext(cti, 0, 0);
+    hr = ICreateTypeInfo_SetVarHelpContext(cti, 0, 0);
     ok(hr == S_OK, "got %08x\n", hr);
 
     /* another time */
-    hr = ICreateTypeInfo2_SetVarHelpContext(cti, 0, 1);
+    hr = ICreateTypeInfo_SetVarHelpContext(cti, 0, 1);
     ok(hr == S_OK, "got %08x\n", hr);
 
     /* wrong index now */
-    hr = ICreateTypeInfo2_SetVarHelpContext(cti, 1, 0);
+    hr = ICreateTypeInfo_SetVarHelpContext(cti, 1, 0);
     ok(hr == TYPE_E_ELEMENTNOTFOUND, "got %08x\n", hr);
 
     ICreateTypeInfo_Release(cti);
@@ -3090,7 +3090,7 @@ static void test_SetVarDocString(void)
     V_VT(&v) = VT_INT;
     V_INT(&v) = 1;
     U(desc).lpvarValue = &v;
-    hr = ICreateTypeInfo2_AddVarDesc(cti, 0, &desc);
+    hr = ICreateTypeInfo_AddVarDesc(cti, 0, &desc);
     ok(hr == S_OK, "got %08x\n", hr);
 
     hr = ICreateTypeInfo_SetVarDocString(cti, 0, NULL);
@@ -3104,7 +3104,7 @@ static void test_SetVarDocString(void)
     ok(hr == S_OK, "got %08x\n", hr);
 
     /* wrong index now */
-    hr = ICreateTypeInfo2_SetVarDocString(cti, 1, doc1W);
+    hr = ICreateTypeInfo_SetVarDocString(cti, 1, doc1W);
     ok(hr == TYPE_E_ELEMENTNOTFOUND, "got %08x\n", hr);
 
     ICreateTypeInfo_Release(cti);

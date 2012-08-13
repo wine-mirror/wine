@@ -236,7 +236,7 @@ static HRESULT WINAPI FontEventsDisp_QueryInterface(
 {
     if (IsEqualIID(riid, &IID_IFontEventsDisp) || IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IDispatch))
     {
-        IUnknown_AddRef(iface);
+        IFontEventsDisp_AddRef(iface);
         *ppvObject = iface;
         return S_OK;
     }
