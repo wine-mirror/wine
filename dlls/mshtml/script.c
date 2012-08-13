@@ -63,11 +63,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 static const WCHAR windowW[] = {'w','i','n','d','o','w',0};
 static const WCHAR emptyW[] = {0};
 
-static const CLSID CLSID_JScript =
-    {0xf414c260,0x6ac0,0x11cf,{0xb6,0xd1,0x00,0xaa,0x00,0xbb,0xbb,0x58}};
-static const CLSID CLSID_VBScript =
-    {0xb54f3741,0x5b07,0x11cf,{0xa4,0xb0,0x00,0xaa,0x00,0x4a,0x55,0xe8}};
-
 struct ScriptHost {
     IActiveScriptSite              IActiveScriptSite_iface;
     IActiveScriptSiteInterruptPoll IActiveScriptSiteInterruptPoll_iface;
@@ -646,6 +641,8 @@ static void parse_text(ScriptHost *script_host, LPCWSTR text)
 
     TRACE("%s\n", debugstr_w(text));
 
+    script_host->window->current_script_guid = script_host->guid;
+
     VariantInit(&var);
     memset(&excepinfo, 0, sizeof(excepinfo));
     TRACE(">>>\n");
@@ -758,7 +755,7 @@ static BOOL get_guid_from_language(LPCWSTR type, GUID *guid)
     return TRUE;
 }
 
-static BOOL get_script_guid(nsIDOMHTMLScriptElement *nsscript, GUID *guid)
+static BOOL get_script_guid(HTMLInnerWindow *window, nsIDOMHTMLScriptElement *nsscript, GUID *guid)
 {
     nsAString attr_str, val_str;
     BOOL ret = FALSE;
@@ -793,7 +790,7 @@ static BOOL get_script_guid(nsIDOMHTMLScriptElement *nsscript, GUID *guid)
         if(*language) {
             ret = get_guid_from_language(language, guid);
         }else {
-            *guid = CLSID_JScript;
+            *guid = window->current_script_guid;
             ret = TRUE;
         }
     }else {
@@ -822,7 +819,7 @@ void doc_insert_script(HTMLInnerWindow *window, nsIDOMHTMLScriptElement *nsscrip
     ScriptHost *script_host;
     GUID guid;
 
-    if(!get_script_guid(nsscript, &guid)) {
+    if(!get_script_guid(window, nsscript, &guid)) {
         WARN("Could not find script GUID\n");
         return;
     }
@@ -844,12 +841,14 @@ void doc_insert_script(HTMLInnerWindow *window, nsIDOMHTMLScriptElement *nsscrip
 IDispatch *script_parse_event(HTMLInnerWindow *window, LPCWSTR text)
 {
     ScriptHost *script_host;
-    GUID guid = CLSID_JScript;
+    GUID guid;
     const WCHAR *ptr;
     IDispatch *disp;
     HRESULT hres;
 
     static const WCHAR delimiterW[] = {'\"',0};
+
+    TRACE("%s\n", debugstr_w(text));
 
     for(ptr = text; isalnumW(*ptr); ptr++);
     if(*ptr == ':') {
@@ -872,6 +871,7 @@ IDispatch *script_parse_event(HTMLInnerWindow *window, LPCWSTR text)
         ptr++;
     }else {
         ptr = text;
+        guid = window->current_script_guid;
     }
 
     if(IsEqualGUID(&CLSID_JScript, &guid)
@@ -879,6 +879,8 @@ IDispatch *script_parse_event(HTMLInnerWindow *window, LPCWSTR text)
         TRACE("Ignoring JScript\n");
         return NULL;
     }
+
+    window->current_script_guid = guid;
 
     script_host = get_script_host(window, &guid);
     if(!script_host || !script_host->parse_proc)
@@ -920,6 +922,8 @@ HRESULT exec_script(HTMLInnerWindow *window, const WCHAR *code, const WCHAR *lan
         FIXME("script_host->parse == NULL\n");
         return E_FAIL;
     }
+
+    window->current_script_guid = guid;
 
     memset(&ei, 0, sizeof(ei));
     TRACE(">>>\n");

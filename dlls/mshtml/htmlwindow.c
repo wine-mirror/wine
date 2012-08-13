@@ -2626,6 +2626,7 @@ static HRESULT create_inner_window(HTMLOuterWindow *outer_window, HTMLInnerWindo
     init_dispex(&window->dispex, (IUnknown*)&window->base.IHTMLWindow2_iface, &HTMLWindow_dispex);
 
     window->task_magic = get_task_target_magic();
+    window->current_script_guid = CLSID_JScript;
 
     *ret = window;
     return S_OK;
