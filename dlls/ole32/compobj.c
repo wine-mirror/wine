@@ -464,7 +464,8 @@ static void COM_RevokeAllClasses(const struct apartment *apt)
  */
 
 typedef struct ManualResetEvent {
-    ISynchronize   ISynchronize_iface;
+    ISynchronize        ISynchronize_iface;
+    ISynchronizeHandle  ISynchronizeHandle_iface;
     LONG ref;
     HANDLE event;
 } MREImpl;
@@ -477,22 +478,21 @@ static inline MREImpl *impl_from_ISynchronize(ISynchronize *iface)
 static HRESULT WINAPI ISynchronize_fnQueryInterface(ISynchronize *iface, REFIID riid, void **ppv)
 {
     MREImpl *This = impl_from_ISynchronize(iface);
+
     TRACE("%p (%s, %p)\n", This, debugstr_guid(riid), ppv);
 
-    *ppv = NULL;
-    if(IsEqualGUID(riid, &IID_IUnknown) ||
-       IsEqualGUID(riid, &IID_ISynchronize))
-        *ppv = This;
-    else
+    if(IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_ISynchronize)) {
+        *ppv = &This->ISynchronize_iface;
+    }else if(IsEqualGUID(riid, &IID_ISynchronizeHandle)) {
+        *ppv = &This->ISynchronizeHandle_iface;
+    }else {
         ERR("Unknown interface %s requested.\n", debugstr_guid(riid));
-
-    if(*ppv)
-    {
-        IUnknown_AddRef((IUnknown*)*ppv);
-        return S_OK;
+        *ppv = NULL;
+        return E_NOINTERFACE;
     }
 
-    return E_NOINTERFACE;
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
 }
 
 static ULONG WINAPI ISynchronize_fnAddRef(ISynchronize *iface)
@@ -552,6 +552,44 @@ static ISynchronizeVtbl vt_ISynchronize = {
     ISynchronize_fnReset
 };
 
+static inline MREImpl *impl_from_ISynchronizeHandle(ISynchronizeHandle *iface)
+{
+    return CONTAINING_RECORD(iface, MREImpl, ISynchronizeHandle_iface);
+}
+
+static HRESULT WINAPI SynchronizeHandle_QueryInterface(ISynchronizeHandle *iface, REFIID riid, void **ppv)
+{
+    MREImpl *This = impl_from_ISynchronizeHandle(iface);
+    return ISynchronize_QueryInterface(&This->ISynchronize_iface, riid, ppv);
+}
+
+static ULONG WINAPI SynchronizeHandle_AddRef(ISynchronizeHandle *iface)
+{
+    MREImpl *This = impl_from_ISynchronizeHandle(iface);
+    return ISynchronize_AddRef(&This->ISynchronize_iface);
+}
+
+static ULONG WINAPI SynchronizeHandle_Release(ISynchronizeHandle *iface)
+{
+    MREImpl *This = impl_from_ISynchronizeHandle(iface);
+    return ISynchronize_Release(&This->ISynchronize_iface);
+}
+
+static HRESULT WINAPI SynchronizeHandle_GetHandle(ISynchronizeHandle *iface, HANDLE *ph)
+{
+    MREImpl *This = impl_from_ISynchronizeHandle(iface);
+
+    *ph = This->event;
+    return S_OK;
+}
+
+static const ISynchronizeHandleVtbl SynchronizeHandleVtbl = {
+    SynchronizeHandle_QueryInterface,
+    SynchronizeHandle_AddRef,
+    SynchronizeHandle_Release,
+    SynchronizeHandle_GetHandle
+};
+
 static HRESULT ManualResetEvent_Construct(IUnknown *punkouter, REFIID iid, void **ppv)
 {
     MREImpl *This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MREImpl));
@@ -562,6 +600,7 @@ static HRESULT ManualResetEvent_Construct(IUnknown *punkouter, REFIID iid, void 
 
     This->ref = 1;
     This->ISynchronize_iface.lpVtbl = &vt_ISynchronize;
+    This->ISynchronizeHandle_iface.lpVtbl = &SynchronizeHandleVtbl;
     This->event = CreateEventW(NULL, TRUE, FALSE, NULL);
 
     hr = ISynchronize_QueryInterface(&This->ISynchronize_iface, iid, ppv);
