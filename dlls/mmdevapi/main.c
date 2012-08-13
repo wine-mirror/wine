@@ -163,7 +163,7 @@ static BOOL init_driver(void)
             *next = ',';
     }
 
-    return drvs.module ? TRUE : FALSE;
+    return drvs.module != 0;
 }
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
