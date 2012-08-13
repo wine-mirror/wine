@@ -797,7 +797,7 @@ static HRESULT WINAPI IPersistStream_fnLoad(IPersistStream* iface,
         r = OleLoadFromStream(pStm, &IID_IMoniker, (LPVOID*)&(This->Moniker));
         if (FAILED(r))
             goto end;
-        This->absolute = hdr[1] & HLINK_SAVE_MONIKER_IS_ABSOLUTE ? TRUE : FALSE;
+        This->absolute = (hdr[1] & HLINK_SAVE_MONIKER_IS_ABSOLUTE) != 0;
     }
 
     if (hdr[1] & HLINK_SAVE_LOCATION_PRESENT)
