@@ -4975,6 +4975,7 @@ static void test_frame_doc(IUnknown *frame_elem, BOOL iframe)
     HRESULT hres;
 
     content_window = get_frame_content_window(frame_elem);
+    test_ifaces((IUnknown*)content_window, window_iids);
     window_doc = get_window_doc(content_window);
     IHTMLWindow2_Release(content_window);
 
@@ -5025,6 +5026,7 @@ static void test_iframe_elem(IHTMLElement *elem)
     test_framebase((IUnknown*)elem);
 
     content_window = get_frame_content_window((IUnknown*)elem);
+    test_ifaces((IUnknown*)content_window, window_iids);
     test_window_length(content_window, 0);
 
     content_doc = get_window_doc(content_window);
