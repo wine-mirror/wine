@@ -732,7 +732,7 @@ DWORD apartment_release(struct apartment *apt)
          * apartment, which it must do. */
         assert(list_empty(&apt->stubmgrs));
 
-        if (apt->filter) IUnknown_Release(apt->filter);
+        if (apt->filter) IMessageFilter_Release(apt->filter);
 
         /* free as many unused libraries as possible... */
         apartment_freeunusedlibraries(apt, 0);
@@ -1254,7 +1254,7 @@ static void COM_TlsDestroy(void)
         if (info->apt) apartment_release(info->apt);
         if (info->errorinfo) IErrorInfo_Release(info->errorinfo);
         if (info->state) IUnknown_Release(info->state);
-        if (info->spy) IUnknown_Release(info->spy);
+        if (info->spy) IInitializeSpy_Release(info->spy);
         if (info->context_token) IObjContext_Release(info->context_token);
         HeapFree(GetProcessHeap(), 0, info);
         NtCurrentTeb()->ReservedForOle = NULL;
@@ -1313,7 +1313,7 @@ HRESULT WINAPI CoRegisterInitializeSpy(IInitializeSpy *spy, ULARGE_INTEGER *cook
         return E_UNEXPECTED;
     }
 
-    hr = IUnknown_QueryInterface(spy, &IID_IInitializeSpy, (void **) &info->spy);
+    hr = IInitializeSpy_QueryInterface(spy, &IID_IInitializeSpy, (void **) &info->spy);
     if (SUCCEEDED(hr))
     {
         cookie->QuadPart = (DWORD_PTR)spy;
@@ -1345,7 +1345,7 @@ HRESULT WINAPI CoRevokeInitializeSpy(ULARGE_INTEGER cookie)
     if (!info || !info->spy || cookie.QuadPart != (DWORD_PTR)info->spy)
         return E_INVALIDARG;
 
-    IUnknown_Release(info->spy);
+    IInitializeSpy_Release(info->spy);
     info->spy = NULL;
     return S_OK;
 }

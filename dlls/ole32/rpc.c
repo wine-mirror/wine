@@ -459,13 +459,13 @@ void RPC_UnregisterAllChannelHooks(void)
 
 /* RPC Channel Buffer Functions */
 
-static HRESULT WINAPI RpcChannelBuffer_QueryInterface(LPRPCCHANNELBUFFER iface, REFIID riid, LPVOID *ppv)
+static HRESULT WINAPI RpcChannelBuffer_QueryInterface(IRpcChannelBuffer *iface, REFIID riid, LPVOID *ppv)
 {
     *ppv = NULL;
     if (IsEqualIID(riid,&IID_IRpcChannelBuffer) || IsEqualIID(riid,&IID_IUnknown))
     {
         *ppv = iface;
-        IUnknown_AddRef(iface);
+        IRpcChannelBuffer_AddRef(iface);
         return S_OK;
     }
     return E_NOINTERFACE;

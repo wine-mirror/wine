@@ -720,7 +720,7 @@ static HRESULT WINAPI COMCAT_IClassFactory_QueryInterface(
 	IsEqualGUID(riid, &IID_IClassFactory))
     {
         *ppvObj = iface;
-        IUnknown_AddRef(iface);
+        IClassFactory_AddRef(iface);
 	return S_OK;
     }
 

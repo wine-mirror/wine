@@ -119,7 +119,7 @@ static void stub_manager_delete_ifstub(struct stub_manager *m, struct ifstub *if
 
     RPC_UnregisterInterface(&ifstub->iid);
 
-    if (ifstub->stubbuffer) IUnknown_Release(ifstub->stubbuffer);
+    if (ifstub->stubbuffer) IRpcStubBuffer_Release(ifstub->stubbuffer);
     IUnknown_Release(ifstub->iface);
     IRpcChannelBuffer_Release(ifstub->chan);
 

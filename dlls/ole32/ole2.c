@@ -975,7 +975,7 @@ static HRESULT WINAPI EnumOLEVERB_QueryInterface(
     if (IsEqualIID(riid, &IID_IUnknown) ||
         IsEqualIID(riid, &IID_IEnumOLEVERB))
     {
-        IUnknown_AddRef(iface);
+        IEnumOLEVERB_AddRef(iface);
         *ppv = iface;
         return S_OK;
     }
@@ -1333,10 +1333,7 @@ HRESULT WINAPI OleLoad(
   /*
    * Initialize the object with its IPersistStorage interface.
    */
-  hres = IOleObject_QueryInterface(pUnk,
-                                   &IID_IPersistStorage,
-                                   (void**)&persistStorage);
-
+  hres = IUnknown_QueryInterface(pUnk, &IID_IPersistStorage, (void**)&persistStorage);
   if (SUCCEEDED(hres))
   {
     hres = IPersistStorage_Load(persistStorage, pStg);
@@ -2939,7 +2936,7 @@ HRESULT WINAPI PropVariantClear(PROPVARIANT * pvar) /* [in/out] */
     case VT_STORAGE:
     case VT_STORED_OBJECT:
         if (pvar->u.pStream)
-            IUnknown_Release(pvar->u.pStream);
+            IStream_Release(pvar->u.pStream);
         break;
     case VT_CLSID:
     case VT_LPSTR:

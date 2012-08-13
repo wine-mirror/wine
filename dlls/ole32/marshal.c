@@ -1175,13 +1175,13 @@ typedef struct _StdMarshalImpl
 } StdMarshalImpl;
 
 static HRESULT WINAPI 
-StdMarshalImpl_QueryInterface(LPMARSHAL iface, REFIID riid, LPVOID *ppv)
+StdMarshalImpl_QueryInterface(IMarshal *iface, REFIID riid, void **ppv)
 {
     *ppv = NULL;
     if (IsEqualIID(&IID_IUnknown, riid) || IsEqualIID(&IID_IMarshal, riid))
     {
         *ppv = iface;
-        IUnknown_AddRef(iface);
+        IMarshal_AddRef(iface);
         return S_OK;
     }
     FIXME("No interface for %s.\n", debugstr_guid(riid));
