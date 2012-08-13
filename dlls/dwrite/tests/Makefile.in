@@ -1,5 +1,5 @@
 TESTDLL = dwrite.dll
-IMPORTS = dwrite
+IMPORTS = dwrite gdi32
 
 C_SRCS = \
 	font.c

@@ -151,6 +151,73 @@ todo_wine
     IDWriteGdiInterop_Release(interop);
 }
 
+static void test_CreateBitmapRenderTarget(void)
+{
+    IDWriteBitmapRenderTarget *target, *target2;
+    IDWriteGdiInterop *interop;
+    DIBSECTION ds;
+    HBITMAP hbm;
+    HRESULT hr;
+    HDC hdc;
+    int ret;
+
+    hr = IDWriteFactory_GetGdiInterop(factory, &interop);
+    EXPECT_HR(hr, S_OK);
+
+    target = NULL;
+    hr = IDWriteGdiInterop_CreateBitmapRenderTarget(interop, NULL, 0, 0, &target);
+    EXPECT_HR(hr, S_OK);
+
+    target2 = NULL;
+    hr = IDWriteGdiInterop_CreateBitmapRenderTarget(interop, NULL, 0, 0, &target2);
+    EXPECT_HR(hr, S_OK);
+    ok(target != target2, "got %p, %p\n", target2, target);
+    IDWriteBitmapRenderTarget_Release(target2);
+
+    hdc = IDWriteBitmapRenderTarget_GetMemoryDC(target);
+    ok(hdc != NULL, "got %p\n", hdc);
+
+    hbm = GetCurrentObject(hdc, OBJ_BITMAP);
+    ok(hbm != NULL, "got %p\n", hbm);
+
+    /* check DIB properties */
+    ret = GetObjectW(hbm, sizeof(ds), &ds);
+    ok(ret == sizeof(BITMAP), "got %d\n", ret);
+    ok(ds.dsBm.bmWidth == 1, "got %d\n", ds.dsBm.bmWidth);
+    ok(ds.dsBm.bmHeight == 1, "got %d\n", ds.dsBm.bmHeight);
+    ok(ds.dsBm.bmPlanes == 1, "got %d\n", ds.dsBm.bmPlanes);
+    ok(ds.dsBm.bmBitsPixel == 1, "got %d\n", ds.dsBm.bmBitsPixel);
+    ok(!ds.dsBm.bmBits, "got %p\n", ds.dsBm.bmBits);
+
+    IDWriteBitmapRenderTarget_Release(target);
+
+    hbm = GetCurrentObject(hdc, OBJ_BITMAP);
+    ok(!hbm, "got %p\n", hbm);
+
+    target = NULL;
+    hr = IDWriteGdiInterop_CreateBitmapRenderTarget(interop, NULL, 10, 5, &target);
+    EXPECT_HR(hr, S_OK);
+
+    hdc = IDWriteBitmapRenderTarget_GetMemoryDC(target);
+    ok(hdc != NULL, "got %p\n", hdc);
+
+    hbm = GetCurrentObject(hdc, OBJ_BITMAP);
+    ok(hbm != NULL, "got %p\n", hbm);
+
+    /* check DIB properties */
+    ret = GetObjectW(hbm, sizeof(ds), &ds);
+    ok(ret == sizeof(ds), "got %d\n", ret);
+    ok(ds.dsBm.bmWidth == 10, "got %d\n", ds.dsBm.bmWidth);
+    ok(ds.dsBm.bmHeight == 5, "got %d\n", ds.dsBm.bmHeight);
+    ok(ds.dsBm.bmPlanes == 1, "got %d\n", ds.dsBm.bmPlanes);
+    ok(ds.dsBm.bmBitsPixel == 32, "got %d\n", ds.dsBm.bmBitsPixel);
+    ok(ds.dsBm.bmBits != NULL, "got %p\n", ds.dsBm.bmBits);
+
+    IDWriteBitmapRenderTarget_Release(target);
+
+    IDWriteGdiInterop_Release(interop);
+}
+
 START_TEST(font)
 {
     HRESULT hr;
@@ -164,6 +231,7 @@ START_TEST(font)
     }
 
     test_CreateFontFromLOGFONT();
+    test_CreateBitmapRenderTarget();
 
     IDWriteFactory_Release(factory);
 }

@@ -18,16 +18,180 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define COBJMACROS
+
 #include <stdarg.h>
 
 #include "windef.h"
 #include "winbase.h"
+#include "wingdi.h"
 #include "dwrite.h"
 #include "dwrite_private.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
+
+struct rendertarget {
+    IDWriteBitmapRenderTarget IDWriteBitmapRenderTarget_iface;
+    LONG ref;
+
+    HDC hdc;
+};
+
+static inline struct rendertarget *impl_from_IDWriteBitmapRenderTarget(IDWriteBitmapRenderTarget *iface)
+{
+    return CONTAINING_RECORD(iface, struct rendertarget, IDWriteBitmapRenderTarget_iface);
+}
+
+static HRESULT WINAPI rendertarget_QueryInterface(IDWriteBitmapRenderTarget *iface, REFIID riid, void **obj)
+{
+    struct rendertarget *This = impl_from_IDWriteBitmapRenderTarget(iface);
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IDWriteBitmapRenderTarget))
+    {
+        *obj = iface;
+        IDWriteBitmapRenderTarget_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI rendertarget_AddRef(IDWriteBitmapRenderTarget *iface)
+{
+    struct rendertarget *This = impl_from_IDWriteBitmapRenderTarget(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+    TRACE("(%p)->(%d)\n", This, ref);
+    return ref;
+}
+
+static ULONG WINAPI rendertarget_Release(IDWriteBitmapRenderTarget *iface)
+{
+    struct rendertarget *This = impl_from_IDWriteBitmapRenderTarget(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p)->(%d)\n", This, ref);
+
+    if (!ref)
+    {
+        DeleteDC(This->hdc);
+        heap_free(This);
+    }
+
+    return S_OK;
+}
+
+static HRESULT WINAPI rendertarget_DrawGlyphRun(IDWriteBitmapRenderTarget *iface,
+    FLOAT baselineOriginX, FLOAT baselineOriginY, DWRITE_MEASURING_MODE measuring_mode,
+    DWRITE_GLYPH_RUN const* glyph_run, IDWriteRenderingParams* params, COLORREF textColor,
+    RECT *blackbox_rect)
+{
+    struct rendertarget *This = impl_from_IDWriteBitmapRenderTarget(iface);
+    FIXME("(%p)->(%f %f %d %p %p 0x%08x %p): stub\n", This, baselineOriginX, baselineOriginY,
+        measuring_mode, glyph_run, params, textColor, blackbox_rect);
+    return E_NOTIMPL;
+}
+
+static HDC WINAPI rendertarget_GetMemoryDC(IDWriteBitmapRenderTarget *iface)
+{
+    struct rendertarget *This = impl_from_IDWriteBitmapRenderTarget(iface);
+    TRACE("(%p)\n", This);
+    return This->hdc;
+}
+
+static FLOAT WINAPI rendertarget_GetPixelsPerDip(IDWriteBitmapRenderTarget *iface)
+{
+    struct rendertarget *This = impl_from_IDWriteBitmapRenderTarget(iface);
+    FIXME("(%p): stub\n", This);
+    return 1.0;
+}
+
+static HRESULT WINAPI rendertarget_SetPixelsPerDip(IDWriteBitmapRenderTarget *iface, FLOAT pixels_per_dip)
+{
+    struct rendertarget *This = impl_from_IDWriteBitmapRenderTarget(iface);
+    FIXME("(%p)->(%f): stub\n", This, pixels_per_dip);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI rendertarget_GetCurrentTransform(IDWriteBitmapRenderTarget *iface, DWRITE_MATRIX *transform)
+{
+    struct rendertarget *This = impl_from_IDWriteBitmapRenderTarget(iface);
+    FIXME("(%p)->(%p): stub\n", This, transform);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI rendertarget_SetCurrentTransform(IDWriteBitmapRenderTarget *iface, DWRITE_MATRIX const *transform)
+{
+    struct rendertarget *This = impl_from_IDWriteBitmapRenderTarget(iface);
+    FIXME("(%p)->(%p): stub\n", This, transform);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI rendertarget_GetSize(IDWriteBitmapRenderTarget *iface, SIZE *size)
+{
+    struct rendertarget *This = impl_from_IDWriteBitmapRenderTarget(iface);
+    FIXME("(%p)->(%p): stub\n", This, size);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI rendertarget_Resize(IDWriteBitmapRenderTarget *iface, UINT32 width, UINT32 height)
+{
+    struct rendertarget *This = impl_from_IDWriteBitmapRenderTarget(iface);
+    FIXME("(%p)->(%u %u): stub\n", This, width, height);
+    return E_NOTIMPL;
+}
+
+static const IDWriteBitmapRenderTargetVtbl rendertargetvtbl = {
+    rendertarget_QueryInterface,
+    rendertarget_AddRef,
+    rendertarget_Release,
+    rendertarget_DrawGlyphRun,
+    rendertarget_GetMemoryDC,
+    rendertarget_GetPixelsPerDip,
+    rendertarget_SetPixelsPerDip,
+    rendertarget_GetCurrentTransform,
+    rendertarget_SetCurrentTransform,
+    rendertarget_GetSize,
+    rendertarget_Resize
+};
+
+static HRESULT create_rendertarget(HDC hdc, UINT32 width, UINT32 height, IDWriteBitmapRenderTarget **target)
+{
+    char bmibuf[sizeof(BITMAPINFO) + 256 * sizeof(RGBQUAD)];
+    BITMAPINFO *bmi = (BITMAPINFO*)bmibuf;
+    struct rendertarget *This;
+    HBITMAP dib;
+
+    *target = NULL;
+
+    This = heap_alloc(sizeof(struct rendertarget));
+    if (!This) return E_OUTOFMEMORY;
+
+    This->IDWriteBitmapRenderTarget_iface.lpVtbl = &rendertargetvtbl;
+    This->ref = 1;
+
+    This->hdc = CreateCompatibleDC(hdc);
+
+    memset(bmi, 0, sizeof(bmibuf));
+    bmi->bmiHeader.biSize = sizeof(bmi->bmiHeader);
+    bmi->bmiHeader.biHeight = height;
+    bmi->bmiHeader.biWidth = width;
+    bmi->bmiHeader.biBitCount = 32;
+    bmi->bmiHeader.biPlanes = 1;
+    bmi->bmiHeader.biCompression = BI_RGB;
+
+    dib = CreateDIBSection(This->hdc, bmi, DIB_RGB_COLORS, NULL, NULL, 0);
+    SelectObject(This->hdc, dib);
+
+    *target = &This->IDWriteBitmapRenderTarget_iface;
+
+    return S_OK;
+}
 
 static HRESULT WINAPI gdiinterop_QueryInterface(IDWriteGdiInterop *iface, REFIID riid, void **obj)
 {
@@ -88,8 +252,8 @@ static HRESULT WINAPI gdiinterop_CreateFontFaceFromHdc(IDWriteGdiInterop *iface,
 static HRESULT WINAPI gdiinterop_CreateBitmapRenderTarget(IDWriteGdiInterop *iface,
     HDC hdc, UINT32 width, UINT32 height, IDWriteBitmapRenderTarget **target)
 {
-    FIXME("(%p %u %u %p): stub\n", hdc, width, height, target);
-    return E_NOTIMPL;
+    TRACE("(%p %u %u %p)\n", hdc, width, height, target);
+    return create_rendertarget(hdc, width, height, target);
 }
 
 static const struct IDWriteGdiInteropVtbl gdiinteropvtbl = {
