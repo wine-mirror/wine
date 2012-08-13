@@ -30,17 +30,20 @@ WINE_DEFAULT_DEBUG_CHANNEL(vbscript);
 
 #define CTXARG_T DWORDLONG
 #define IActiveScriptParseVtbl IActiveScriptParse64Vtbl
+#define IActiveScriptParseProcedure2Vtbl IActiveScriptParseProcedure2_64Vtbl
 
 #else
 
 #define CTXARG_T DWORD
 #define IActiveScriptParseVtbl IActiveScriptParse32Vtbl
+#define IActiveScriptParseProcedure2Vtbl IActiveScriptParseProcedure2_32Vtbl
 
 #endif
 
 struct VBScript {
     IActiveScript IActiveScript_iface;
     IActiveScriptParse IActiveScriptParse_iface;
+    IActiveScriptParseProcedure2 IActiveScriptParseProcedure2_iface;
     IObjectSafety IObjectSafety_iface;
 
     LONG ref;
@@ -224,6 +227,9 @@ static HRESULT WINAPI VBScript_QueryInterface(IActiveScript *iface, REFIID riid,
     }else if(IsEqualGUID(riid, &IID_IActiveScriptParse)) {
         TRACE("(%p)->(IID_IActiveScriptParse %p)\n", This, ppv);
         *ppv = &This->IActiveScriptParse_iface;
+    }else if(IsEqualGUID(riid, &IID_IActiveScriptParseProcedure2)) {
+        TRACE("(%p)->(IID_IActiveScriptParseProcedure2 %p)\n", This, ppv);
+        *ppv = &This->IActiveScriptParseProcedure2_iface;
     }else if(IsEqualGUID(riid, &IID_IObjectSafety)) {
         TRACE("(%p)->(IID_IObjectSafety %p)\n", This, ppv);
         *ppv = &This->IObjectSafety_iface;
@@ -610,6 +616,48 @@ static const IActiveScriptParseVtbl VBScriptParseVtbl = {
     VBScriptParse_ParseScriptText
 };
 
+static inline VBScript *impl_from_IActiveScriptParseProcedure2(IActiveScriptParseProcedure2 *iface)
+{
+    return CONTAINING_RECORD(iface, VBScript, IActiveScriptParseProcedure2_iface);
+}
+
+static HRESULT WINAPI VBScriptParseProcedure_QueryInterface(IActiveScriptParseProcedure2 *iface, REFIID riid, void **ppv)
+{
+    VBScript *This = impl_from_IActiveScriptParseProcedure2(iface);
+    return IActiveScript_QueryInterface(&This->IActiveScript_iface, riid, ppv);
+}
+
+static ULONG WINAPI VBScriptParseProcedure_AddRef(IActiveScriptParseProcedure2 *iface)
+{
+    VBScript *This = impl_from_IActiveScriptParseProcedure2(iface);
+    return IActiveScript_AddRef(&This->IActiveScript_iface);
+}
+
+static ULONG WINAPI VBScriptParseProcedure_Release(IActiveScriptParseProcedure2 *iface)
+{
+    VBScript *This = impl_from_IActiveScriptParseProcedure2(iface);
+    return IActiveScript_Release(&This->IActiveScript_iface);
+}
+
+static HRESULT WINAPI VBScriptParseProcedure_ParseProcedureText(IActiveScriptParseProcedure2 *iface,
+        LPCOLESTR pstrCode, LPCOLESTR pstrFormalParams, LPCOLESTR pstrProcedureName,
+        LPCOLESTR pstrItemName, IUnknown *punkContext, LPCOLESTR pstrDelimiter,
+        CTXARG_T dwSourceContextCookie, ULONG ulStartingLineNumber, DWORD dwFlags, IDispatch **ppdisp)
+{
+    VBScript *This = impl_from_IActiveScriptParseProcedure2(iface);
+    FIXME("(%p)->(%s %s %s %s %p %s %s %u %x %p)\n", This, debugstr_w(pstrCode), debugstr_w(pstrFormalParams),
+          debugstr_w(pstrProcedureName), debugstr_w(pstrItemName), punkContext, debugstr_w(pstrDelimiter),
+          wine_dbgstr_longlong(dwSourceContextCookie), ulStartingLineNumber, dwFlags, ppdisp);
+    return E_NOTIMPL;
+}
+
+static const IActiveScriptParseProcedure2Vtbl VBScriptParseProcedureVtbl = {
+    VBScriptParseProcedure_QueryInterface,
+    VBScriptParseProcedure_AddRef,
+    VBScriptParseProcedure_Release,
+    VBScriptParseProcedure_ParseProcedureText,
+};
+
 static inline VBScript *impl_from_IObjectSafety(IObjectSafety *iface)
 {
     return CONTAINING_RECORD(iface, VBScript, IObjectSafety_iface);
@@ -685,6 +733,7 @@ HRESULT WINAPI VBScriptFactory_CreateInstance(IClassFactory *iface, IUnknown *pU
 
     ret->IActiveScript_iface.lpVtbl = &VBScriptVtbl;
     ret->IActiveScriptParse_iface.lpVtbl = &VBScriptParseVtbl;
+    ret->IActiveScriptParseProcedure2_iface.lpVtbl = &VBScriptParseProcedureVtbl;
     ret->IObjectSafety_iface.lpVtbl = &VBScriptSafetyVtbl;
 
     ret->ref = 1;

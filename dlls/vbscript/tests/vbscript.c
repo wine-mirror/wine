@@ -33,6 +33,8 @@
 #define IActiveScriptParse_Release IActiveScriptParse64_Release
 #define IActiveScriptParse_InitNew IActiveScriptParse64_InitNew
 #define IActiveScriptParse_ParseScriptText IActiveScriptParse64_ParseScriptText
+#define IActiveScriptParseProcedure2_Release \
+    IActiveScriptParseProcedure2_64_Release
 
 #else
 
@@ -40,6 +42,8 @@
 #define IActiveScriptParse_Release IActiveScriptParse32_Release
 #define IActiveScriptParse_InitNew IActiveScriptParse32_InitNew
 #define IActiveScriptParse_ParseScriptText IActiveScriptParse32_ParseScriptText
+#define IActiveScriptParseProcedure2_Release \
+    IActiveScriptParseProcedure2_32_Release
 
 #endif
 
@@ -339,6 +343,7 @@ static IActiveScript *create_vbscript(void)
 
 static void test_vbscript(void)
 {
+    IActiveScriptParseProcedure2 *parse_proc;
     IActiveScriptParse *parser;
     IActiveScript *vbscript;
     ULONG ref;
@@ -389,6 +394,13 @@ static void test_vbscript(void)
     test_no_script_dispatch(vbscript);
 
     IActiveScriptParse_Release(parser);
+
+    hres = IActiveScript_QueryInterface(vbscript, &IID_IActiveScriptParseProcedure, (void**)&parse_proc);
+    ok(hres == E_NOINTERFACE, "Got IActiveScriptParseProcedure interface, expected E_NOTIMPL\n");
+
+    hres = IActiveScript_QueryInterface(vbscript, &IID_IActiveScriptParseProcedure2, (void**)&parse_proc);
+    ok(hres == S_OK, "Could not get IActiveScriptParseProcedure2 interface\n");
+    IActiveScriptParseProcedure2_Release(parse_proc);
 
     ref = IActiveScript_Release(vbscript);
     ok(!ref, "ref = %d\n", ref);
