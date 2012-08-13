@@ -985,9 +985,14 @@ static HRESULT invoke_builtin_prop(DispatchEx *This, DISPID id, LCID lcid, WORD 
                 return E_FAIL;
             }
 
-            hres = invoke_disp_value(This, V_DISPATCH(&v), lcid, flags, dp, res, ei, caller);
-
-            IDispatch_Release(V_DISPATCH(&v));
+            if(flags != (DISPATCH_PROPERTYGET|DISPATCH_METHOD)) {
+                hres = invoke_disp_value(This, V_DISPATCH(&v), lcid, flags, dp, res, ei, caller);
+                IDispatch_Release(V_DISPATCH(&v));
+            }else if(res) {
+                *res = v;
+            }else {
+                IDispatch_Release(V_DISPATCH(&v));
+            }
         }
     }
 
