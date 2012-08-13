@@ -1063,8 +1063,9 @@ static void set_mwm_hints( Display *display, struct x11drv_win_data *data, DWORD
 
     if (data->hwnd == GetDesktopWindow())
     {
-        mwm_hints.decorations = MWM_DECOR_TITLE | MWM_DECOR_BORDER | MWM_DECOR_MENU | MWM_DECOR_MINIMIZE;
-        mwm_hints.functions   = MWM_FUNC_MOVE | MWM_FUNC_MINIMIZE | MWM_FUNC_CLOSE;
+        if (is_desktop_fullscreen()) mwm_hints.decorations = 0;
+        else mwm_hints.decorations = MWM_DECOR_TITLE | MWM_DECOR_BORDER | MWM_DECOR_MENU | MWM_DECOR_MINIMIZE;
+        mwm_hints.functions        = MWM_FUNC_MOVE | MWM_FUNC_MINIMIZE | MWM_FUNC_CLOSE;
     }
     else
     {

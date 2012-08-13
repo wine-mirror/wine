@@ -203,6 +203,11 @@ static BOOL CALLBACK update_windows_on_desktop_resize( HWND hwnd, LPARAM lparam 
     return TRUE;
 }
 
+BOOL is_desktop_fullscreen(void)
+{
+    return screen_width == max_width && screen_height == max_height;
+}
+
 static void update_desktop_fullscreen( unsigned int width, unsigned int height)
 {
     Display *display = thread_display();
