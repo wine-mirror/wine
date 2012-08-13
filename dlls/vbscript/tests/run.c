@@ -355,6 +355,20 @@ static void test_disp(IDispatch *disp)
     SysFreeString(str);
     ok(hres == S_OK, "GetDispID(publicProp) failed: %08x\n", hres);
 
+    id = 0xdeadbeef;
+    str = a2bstr("publicProp");
+    hres = IDispatchEx_GetDispID(dispex, str, fdexNameCaseSensitive, &id);
+    SysFreeString(str);
+    ok(hres == S_OK, "GetDispID(publicProp) failed: %08x\n", hres);
+    ok(id == public_prop_id, "id = %d, expected %d\n", id, public_prop_id);
+
+    id = 0xdeadbeef;
+    str = a2bstr("publicprop");
+    hres = IDispatchEx_GetDispID(dispex, str, fdexNameCaseSensitive, &id);
+    SysFreeString(str);
+    ok(hres == S_OK, "GetDispID(publicProp) failed: %08x\n", hres);
+    ok(id == public_prop_id, "id = %d, expected %d\n", id, public_prop_id);
+
     IDispatchEx_Release(dispex);
 }
 

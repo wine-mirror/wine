@@ -333,7 +333,9 @@ static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DW
     if(!This->desc)
         return E_UNEXPECTED;
 
-    if(grfdex & ~(fdexNameEnsure|fdexNameCaseInsensitive)) {
+    /* Tests show that fdexNameCaseSensitive is ignored */
+
+    if(grfdex & ~(fdexNameEnsure|fdexNameCaseInsensitive|fdexNameCaseSensitive)) {
         FIXME("unsupported flags %x\n", grfdex);
         return E_NOTIMPL;
     }
