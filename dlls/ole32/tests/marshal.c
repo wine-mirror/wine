@@ -2853,8 +2853,10 @@ static void test_globalinterfacetable(void)
 
 static void test_manualresetevent(void)
 {
+    ISynchronizeHandle *sync_handle;
     ISynchronize *psync1, *psync2;
     IUnknown *punk;
+    HANDLE handle;
     LONG ref;
     HRESULT hr;
 
@@ -2887,6 +2889,17 @@ static void test_manualresetevent(void)
     ok(hr == S_OK, "Got 0x%08x\n", hr);
     ok(!!psync2, "Got NULL.\n");
     ok(psync1 != psync2, "psync1 == psync2.\n");
+
+    hr = ISynchronize_QueryInterface(psync2, &IID_ISynchronizeHandle, (void**)&sync_handle);
+    ok(hr == S_OK, "QueryInterface(IID_ISynchronizeHandle) failed: %08x\n", hr);
+
+    handle = NULL;
+    hr = ISynchronizeHandle_GetHandle(sync_handle, &handle);
+    ok(hr == S_OK, "GetHandle failed: %08x\n", hr);
+    ok(handle != NULL && handle != INVALID_HANDLE_VALUE, "handle = %p\n", handle);
+
+    ISynchronizeHandle_Release(sync_handle);
+
     hr = ISynchronize_Wait(psync2, 0, 5);
     ok(hr == RPC_S_CALLPENDING, "Got 0x%08x\n", hr);
 
