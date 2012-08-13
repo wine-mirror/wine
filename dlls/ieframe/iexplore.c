@@ -363,7 +363,7 @@ static INT_PTR CALLBACK ie_dialog_open_proc(HWND hwnd, UINT msg, WPARAM wparam, 
                     HWND hwndurl = GetDlgItem(hwnd, IDC_BROWSE_OPEN_URL);
                     int len = GetWindowTextLengthW(hwndurl);
 
-                    EnableWindow(GetDlgItem(hwnd, IDOK), len ? TRUE : FALSE);
+                    EnableWindow(GetDlgItem(hwnd, IDOK), len != 0);
                     break;
                 }
                 case IDOK:
