@@ -141,7 +141,7 @@ static inline IDirectSoundBufferImpl *impl_from_IDirectSoundBuffer8(IDirectSound
 
 static inline BOOL is_primary_buffer(IDirectSoundBufferImpl *This)
 {
-    return This->dsbd.dwFlags & DSBCAPS_PRIMARYBUFFER ? TRUE : FALSE;
+    return (This->dsbd.dwFlags & DSBCAPS_PRIMARYBUFFER) != 0;
 }
 
 static HRESULT WINAPI IDirectSoundBufferImpl_SetFormat(IDirectSoundBuffer8 *iface,
