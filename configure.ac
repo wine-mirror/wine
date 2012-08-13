@@ -1746,6 +1746,8 @@ then
   WINE_TRY_CFLAGS([-Wtype-limits])
   WINE_TRY_CFLAGS([-Wunused-but-set-parameter])
   WINE_TRY_CFLAGS([-Wwrite-strings])
+  WINE_TRY_CFLAGS([-gdwarf-2])
+  WINE_TRY_CFLAGS([-gstrict-dwarf])
 
   dnl gcc-4.6+ omits frame pointers by default, breaking some copy protections
   case $host_cpu in
