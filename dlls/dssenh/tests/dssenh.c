@@ -479,9 +479,171 @@ static void test_hash(const struct hash_test *tests, int testLen)
     ok(result, "Expected release of the DSS Enhanced provider.\n");
 }
 
+struct encrypt_test {
+    ALG_ID algid;
+    DWORD keyLength;
+    const char *plain;
+    DWORD plainLen;
+    const BYTE *decrypted;
+    const BYTE *encrypted;
+};
+
+static const char dataToEncrypt1[] = "Great performance with Wine.";
+static const char dataToEncrypt2[] = "Wine implements Windows API";
+static const char dataToEncrypt3[] = "";
+
+static const BYTE encrypted3DES_1[] = {
+0x6c,0x60,0x19,0x41,0x27,0xc1,0x16,0x69, 0x6f,0x96,0x0c,0x2e,0xa4,0x5f,0xf5,0x6a,
+0xed,0x4b,0xec,0xd4,0x92,0x0c,0xe2,0x34, 0xe1,0x4a,0xb5,0xe2,0x05,0x43,0xfe,0x17
+};
+static const BYTE encrypted3DES_2[] = {
+0x17,0xeb,0x80,0xde,0xac,0x4d,0x9e,0xd0, 0xa9,0xae,0x74,0xb5,0x86,0x1a,0xea,0xb4,
+0x96,0x27,0x5d,0x75,0x4f,0xdd,0x87,0x60, 0xfc,0xaf,0xa1,0x82,0x83,0x09,0xf1,0xca
+};
+static const BYTE encrypted3DES_3[] = {0xaf, 0x36, 0xc0, 0x3d, 0x78, 0x64, 0xc4, 0x4a};
+
+static const BYTE encrypted3DES112_1[] = {
+0xb3,0xf8,0x4b,0x08,0xd6,0x23,0xcb,0xca, 0x43,0x26,0xd9,0x9f,0x6b,0x99,0x09,0xe9,
+0x8c,0x4c,0x7d,0xef,0x49,0xda,0x0b,0x44, 0xcc,0x8d,0x06,0x6b,0xed,0xb7,0xf1,0x67
+};
+static const BYTE encrypted3DES112_2[] = {
+0xdc,0xcf,0x93,0x11,0x7a,0xe4,0xcd,0x3f, 0x11,0xd8,0xe0,0x1e,0xe0,0x8d,0x9c,0xba,
+0x97,0x5d,0x74,0x4d,0x83,0x03,0x5c,0xf2, 0x01,0xaf,0xed,0x7a,0x87,0x8f,0x88,0x8b
+};
+static const BYTE encrypted3DES112_3[] = {0x04, 0xb3, 0x9c, 0x59, 0x48, 0xc7, 0x2f, 0xd1};
+
+static const BYTE encryptedDES_1[] = {
+0x3d,0xdc,0x54,0xaf,0x66,0x72,0x4e,0xef, 0x9d,0x35,0x02,0xc2,0x1a,0xf4,0x1f,0x01,
+0xb1,0xaf,0x13,0xd9,0xbe,0x7b,0xd4,0xf3, 0xf5,0x9d,0x2a,0xd8,0x32,0x90,0xe9,0x0b
+};
+static const BYTE encryptedDES_2[] = {
+0xa8,0x05,0xd7,0xe9,0x61,0xf4,0x6c,0xce, 0x95,0x2b,0x52,0x08,0x25,0x03,0x30,0xac,
+0xd7,0xe7,0xd3,0x07,0xb2,0x68,0x63,0x7b, 0xe3,0xab,0x26,0x1e,0x5c,0xec,0x42,0x4f
+};
+static const BYTE encryptedDES_3[] = {0x35, 0x02, 0xbb, 0x7c, 0x43, 0x5b, 0xf5, 0x59};
+
+static const BYTE encryptedRC2_1[] = {
+0x9e,0xcb,0xa2,0x27,0xc2,0xec,0x10,0xe0, 0x94,0xb3,0xc3,0x9d,0x7d,0xe2,0x12,0xe4,
+0xb0,0xde,0xd9,0x46,0xca,0x1f,0xa6,0xfa, 0xa4,0x79,0x08,0x59,0xa6,0x00,0x62,0x16
+};
+static const BYTE encryptedRC2_2[] = {
+0x29,0x06,0xfd,0xa1,0xe0,0x88,0x89,0xb0, 0x4d,0x7f,0x96,0x9d,0x2c,0x44,0xa1,0xd2,
+0xbe,0xc6,0xaf,0x10,0xb8,0x86,0x68,0x1b, 0x1d,0x9f,0x3c,0xc4,0x12,0x02,0xbc,0x73
+};
+static const BYTE encryptedRC2_3[] = {0x26,0x40,0x73,0xfe,0x13,0xbb,0x32,0xa8};
+
+static const BYTE encryptedRC4_1[] = {
+0x5a,0x48,0xeb,0x16,0x96,0x23,0x16,0xb7, 0xbb,0x36,0xe8,0x43,0x88,0x74,0xb1,0x9d,
+0x96,0xf0,0x84,0x0f,0x5a,0x56,0xf9,0x62, 0xae,0xb5,0x4a,0xce,0x52
+};
+static const BYTE encryptedRC4_2[] = {
+0x4a,0x53,0xe0,0x12,0xc2,0x6a,0x0b,0xa2, 0xa5,0x35,0xea,0x54,0x8b,0x61,0xac,0xde,
+0xa4,0xb9,0x9d,0x02,0x41,0x49,0xaa,0x15, 0x86,0x8b,0x66,0xe0
+};
+static const BYTE encryptedRC4_3[] = {0x1d};
+
+static const struct encrypt_test encrypt_data[] = {
+    {CALG_3DES, 168 << 16, dataToEncrypt1, sizeof(dataToEncrypt1), (BYTE *)dataToEncrypt1,
+        encrypted3DES_1},
+    {CALG_3DES, 168 << 16, dataToEncrypt2, sizeof(dataToEncrypt2), (BYTE *)dataToEncrypt2,
+        encrypted3DES_2},
+    {CALG_3DES, 168 << 16, dataToEncrypt3, sizeof(dataToEncrypt3), (BYTE *)dataToEncrypt3,
+        encrypted3DES_3},
+    {CALG_3DES_112, 112 << 16, dataToEncrypt1, sizeof(dataToEncrypt1), (BYTE *)dataToEncrypt1,
+        encrypted3DES112_1},
+    {CALG_3DES_112, 112 << 16, dataToEncrypt2, sizeof(dataToEncrypt2), (BYTE *)dataToEncrypt2,
+        encrypted3DES112_2},
+    {CALG_3DES_112, 112 << 16, dataToEncrypt3, sizeof(dataToEncrypt3), (BYTE *)dataToEncrypt3,
+        encrypted3DES112_3},
+    {CALG_DES, 56 << 16, dataToEncrypt1, sizeof(dataToEncrypt1), (BYTE *)dataToEncrypt1,
+        encryptedDES_1},
+    {CALG_DES, 56 << 16, dataToEncrypt2, sizeof(dataToEncrypt2), (BYTE *)dataToEncrypt2,
+        encryptedDES_2},
+    {CALG_DES, 56 << 16, dataToEncrypt3, sizeof(dataToEncrypt3), (BYTE *)dataToEncrypt3,
+        encryptedDES_3},
+    /* CALG_RC2 key unexpected results under Win2K when default key length is used, here we use
+       minimum length because Win2K's DSSENH provider has a differnt default key length compared
+       to the younger operating systems, though there is no default key len issue with CALG_RC4 */
+    {CALG_RC2, 40 << 16, dataToEncrypt1, sizeof(dataToEncrypt1), (BYTE *)dataToEncrypt1,
+        encryptedRC2_1},
+    {CALG_RC2, 40 << 16, dataToEncrypt2, sizeof(dataToEncrypt2), (BYTE *)dataToEncrypt2,
+        encryptedRC2_2},
+    {CALG_RC2, 40 << 16, dataToEncrypt3, sizeof(dataToEncrypt3), (BYTE *)dataToEncrypt3,
+        encryptedRC2_3},
+    {CALG_RC4, 40 << 16, dataToEncrypt1, sizeof(dataToEncrypt1), (BYTE *)dataToEncrypt1,
+        encryptedRC4_1},
+    {CALG_RC4, 40 << 16, dataToEncrypt2, sizeof(dataToEncrypt2), (BYTE *)dataToEncrypt2,
+        encryptedRC4_2},
+    {CALG_RC4, 40 << 16, dataToEncrypt3, sizeof(dataToEncrypt3), (BYTE *)dataToEncrypt3,
+        encryptedRC4_3}
+};
+
+static void test_data_encryption(const struct encrypt_test *tests, int testLen)
+{   /* Here we test the same encryption ciphers as the RSAENH cryptographic service provider */
+    HCRYPTPROV hProv = 0;
+    HCRYPTKEY pKey = 0;
+    HCRYPTHASH hHash;
+    const char dataToHash[] = "I love working with Wine";
+    unsigned char pbData[36];
+    DWORD dataLen;
+    BOOL result;
+    int i;
+
+    /* acquire dss enhanced provider */
+    SetLastError(0xdeadbeef);
+    result = CryptAcquireContextA(
+        &hProv, NULL, MS_ENH_DSS_DH_PROV, PROV_DSS_DH, CRYPT_VERIFYCONTEXT);
+    if(!result && GetLastError() == NTE_KEYSET_NOT_DEF)
+    {
+        skip("DSSENH is currently not available, skipping encryption tests.\n");
+        return;
+    }
+    ok(result, "Expected no errors.\n");
+
+    /* testing various encryption algorithms */
+    for(i = 0; i < testLen; i++)
+    {
+        memcpy(pbData, tests[i].plain, tests[i].plainLen);
+        dataLen = tests[i].plainLen;
+
+        SetLastError(0xdeadbeef);
+        result = CryptCreateHash(hProv, CALG_MD5, 0, 0, &hHash);
+        ok(result, "Expected creation of a MD5 hash for key derivation.\n");
+
+        result = CryptHashData(hHash, (BYTE *)dataToHash, sizeof(dataToHash), 0);
+        ok(result, "Expected data to be added to hash for key derivation.\n");
+
+        /* Derive key */
+        result = CryptDeriveKey(hProv, tests[i].algid, hHash, tests[i].keyLength, &pKey);
+        ok(result, "Expected a derived key.\n");
+
+        result = CryptDestroyHash(hHash);
+        ok(result, "Expected destruction of hash after deriving key.\n");
+
+        /* testing CryptEncrypt with ALGID from array */
+        result = CryptEncrypt(pKey, 0, TRUE, 0, pbData, &dataLen, 36);
+        ok(result, "Expected data encryption.\n");
+
+        /* Verify we have received expected encrypted data */
+        ok(!memcmp(pbData, tests[i].encrypted, dataLen), "Incorrect encrypted data.\n");
+
+        result = CryptDecrypt(pKey, 0, TRUE, 0, pbData, &dataLen);
+        ok(result, "Expected data decryption.\n");
+
+        /* Verify we have received expected decrypted data */
+        ok(!memcmp(pbData, tests[i].decrypted, dataLen), "Incorrect decrypted data.\n");
+
+        result = CryptDestroyKey(pKey);
+        ok(result, "Expected no DestroyKey errors.\n");
+    }
+    result = CryptReleaseContext(hProv, 0);
+    ok(result, "Expected release of the provider\n");
+}
+
 START_TEST(dssenh)
 {
     test_acquire_context();
     test_keylength();
     test_hash(hash_data, TESTLEN(hash_data));
+    test_data_encryption(encrypt_data, TESTLEN(encrypt_data));
 }
