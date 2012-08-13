@@ -875,6 +875,42 @@ RPC_STATUS RPC_ENTRY RpcErrorStartEnumeration(RPC_ERROR_ENUM_HANDLE* EnumHandle)
 }
 
 /******************************************************************************
+ * RpcErrorEndEnumeration   (rpcrt4.@)
+ */
+RPC_STATUS RPC_ENTRY RpcErrorEndEnumeration(RPC_ERROR_ENUM_HANDLE* EnumHandle)
+{
+    FIXME("(%p): stub\n", EnumHandle);
+    return RPC_S_OK;
+}
+
+/******************************************************************************
+ * RpcErrorSaveErrorInfo   (rpcrt4.@)
+ */
+RPC_STATUS RPC_ENTRY RpcErrorSaveErrorInfo(RPC_ERROR_ENUM_HANDLE *EnumHandle, void **ErrorBlob, SIZE_T *BlobSize)
+{
+    FIXME("(%p %p %p): stub\n", EnumHandle, ErrorBlob, BlobSize);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ * RpcErrorLoadErrorInfo   (rpcrt4.@)
+ */
+RPC_STATUS RPC_ENTRY RpcErrorLoadErrorInfo(void *ErrorBlob, SIZE_T BlobSize, RPC_ERROR_ENUM_HANDLE *EnumHandle)
+{
+    FIXME("(%p %lu %p): stub\n", ErrorBlob, BlobSize, EnumHandle);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ * RpcErrorGetNextRecord   (rpcrt4.@)
+ */
+RPC_STATUS RPC_ENTRY RpcErrorGetNextRecord(RPC_ERROR_ENUM_HANDLE *EnumHandle, BOOL CopyStrings, RPC_EXTENDED_ERROR_INFO *ErrorInfo)
+{
+    FIXME("(%p %x %p): stub\n", EnumHandle, CopyStrings, ErrorInfo);
+    return RPC_S_ENTRY_NOT_FOUND;
+}
+
+/******************************************************************************
  * RpcMgmtSetCancelTimeout   (rpcrt4.@)
  */
 RPC_STATUS RPC_ENTRY RpcMgmtSetCancelTimeout(LONG Timeout)

@@ -53,7 +53,7 @@
 @ stub I_RpcIfInqTransferSyntaxes
 @ stub I_RpcLogEvent
 @ stdcall I_RpcMapWin32Status(long)
-@ stub I_RpcNegotiateTransferSyntax # wxp
+@ stdcall I_RpcNegotiateTransferSyntax(ptr)
 @ stub I_RpcNsBindingSetEntryName
 @ stub I_RpcNsBindingSetEntryNameA
 @ stub I_RpcNsBindingSetEntryNameW
@@ -376,12 +376,12 @@
 @ stdcall RpcEpUnregister(ptr ptr ptr)
 @ stub RpcErrorAddRecord # wxp
 @ stub RpcErrorClearInformation # wxp
-@ stub RpcErrorEndEnumeration # wxp
-@ stub RpcErrorGetNextRecord # wxp
-@ stub RpcErrorLoadErrorInfo # wxp
+@ stdcall RpcErrorEndEnumeration(ptr)
+@ stdcall RpcErrorGetNextRecord(ptr long ptr)
+@ stdcall RpcErrorLoadErrorInfo(ptr long ptr)
 @ stub RpcErrorNumberOfRecords # wxp
 @ stub RpcErrorResetEnumeration # wxp
-@ stub RpcErrorSaveErrorInfo # wxp
+@ stdcall RpcErrorSaveErrorInfo(ptr ptr ptr)
 @ stdcall RpcErrorStartEnumeration(ptr)
 @ stub RpcFreeAuthorizationContext # wxp
 @ stdcall RpcGetAsyncCallStatus(ptr) RpcAsyncGetCallStatus
