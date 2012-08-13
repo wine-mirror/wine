@@ -235,6 +235,11 @@ static void update_desktop_fullscreen( unsigned int width, unsigned int height)
     wine_tsx11_lock();
     XSendEvent( display, DefaultRootWindow(display), False,
                 SubstructureRedirectMask | SubstructureNotifyMask, &xev );
+
+    xev.xclient.data.l[1] = x11drv_atom(_NET_WM_STATE_MAXIMIZED_VERT);
+    xev.xclient.data.l[2] = x11drv_atom(_NET_WM_STATE_MAXIMIZED_HORZ);
+    XSendEvent( display, DefaultRootWindow(display), False,
+                SubstructureRedirectMask | SubstructureNotifyMask, &xev );
     wine_tsx11_unlock();
 }
 
