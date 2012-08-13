@@ -1332,7 +1332,7 @@ static void test_substorage_share(void)
         ok(r==STG_E_REVERTED, "IStorage->CreateStream failed, hr=%08x\n", r);
 
         if (r == S_OK)
-            IStorage_Release(stm);
+            IStream_Release(stm);
 
         IStorage_Release(stg2);
     }
@@ -1347,13 +1347,13 @@ static void test_substorage_share(void)
         ok(r==STG_E_ACCESSDENIED, "IStorage->OpenStream should fail %08x\n", r);
 
         if (r == S_OK)
-            IStorage_Release(stm2);
+            IStream_Release(stm2);
 
         r = IStorage_OpenStream(stg, stmname, NULL, STGM_READ | STGM_SHARE_EXCLUSIVE, 0, &stm2);
         ok(r==STG_E_ACCESSDENIED, "IStorage->OpenStream should fail %08x\n", r);
 
         if (r == S_OK)
-            IStorage_Release(stm2);
+            IStream_Release(stm2);
 
         /* cannot rename the stream while it's open */
         r = IStorage_RenameElement(stg, stmname, othername);
@@ -1367,7 +1367,7 @@ static void test_substorage_share(void)
         r = IStream_Write(stm, "this shouldn't work\n", 20, NULL);
         ok(r==STG_E_REVERTED, "IStream_Write should fail %08x\n", r);
 
-        IStorage_Release(stm);
+        IStream_Release(stm);
     }
 
     IStorage_Release(stg);
@@ -1521,7 +1521,7 @@ static void test_revert(void)
     ok(r==S_OK, "IStream_Write should succeed %08x\n", r);
 
     IStream_Release(stm);
-    IStream_Release(stg);
+    IStorage_Release(stg);
 
     r = DeleteFileA(filenameA);
     ok( r == TRUE, "deleted file\n");
@@ -1651,7 +1651,7 @@ static void test_nonroot_transacted(void)
         r = IStorage_CreateStorage(stg2, stgname, STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &stg3);
         ok(r==S_OK, "IStorage->CreateStorage failed, hr=%08x\n", r);
         if (r == S_OK)
-            IStream_Release(stg3);
+            IStorage_Release(stg3);
 
         /* But changes cannot be committed. */
         r = IStorage_Commit(stg2, 0);
@@ -1703,7 +1703,7 @@ static void test_nonroot_transacted(void)
         IStorage_Release(stg2);
     }
 
-    IStream_Release(stg);
+    IStorage_Release(stg);
 
     r = DeleteFileA(filenameA);
     ok( r == TRUE, "deleted file\n");
@@ -2009,13 +2009,13 @@ static void test_readonly(void)
             hr = IStorage_CreateStorage( stg2, streamW, STGM_CREATE | STGM_SHARE_EXCLUSIVE | STGM_READ, 0, 0, &stg3 );
             ok(hr == STG_E_FILEALREADYEXISTS, "should fail, res=%x\n", hr);
             if (SUCCEEDED(hr))
-                IStream_Release(stg3);
+                IStorage_Release(stg3);
 
             /* CreateStorage on read-only storage, name does not exist */
             hr = IStorage_CreateStorage( stg2, storageW, STGM_CREATE | STGM_SHARE_EXCLUSIVE | STGM_READ, 0, 0, &stg3 );
             ok(hr == STG_E_ACCESSDENIED, "should fail, res=%x\n", hr);
             if (SUCCEEDED(hr))
-                IStream_Release(stg3);
+                IStorage_Release(stg3);
 
             /* DestroyElement on read-only storage, name exists */
             hr = IStorage_DestroyElement( stg2, streamW );
