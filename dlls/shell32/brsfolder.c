@@ -1024,7 +1024,7 @@ static INT_PTR CALLBACK BrsFolderDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
 
     case BFFM_ENABLEOK:
         TRACE("Enable %ld\n", lParam);
-        EnableWindow(GetDlgItem(hWnd, 1), (lParam)?TRUE:FALSE);
+        EnableWindow(GetDlgItem(hWnd, 1), lParam != 0);
         break;
 
     case BFFM_SETOKTEXT: /* unicode only */

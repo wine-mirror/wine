@@ -1814,7 +1814,7 @@ BOOL _ILIsDesktop(LPCITEMIDLIST pidl)
 {
     TRACE("(%p)\n",pidl);
 
-    return pidl && pidl->mkid.cb  ? FALSE : TRUE;
+    return !pidl || !pidl->mkid.cb;
 }
 
 BOOL _ILIsMyComputer(LPCITEMIDLIST pidl)

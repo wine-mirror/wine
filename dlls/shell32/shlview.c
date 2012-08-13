@@ -290,9 +290,9 @@ static void CheckToolbar(IShellViewImpl * This)
 	if (IsInCommDlg(This))
 	{
 	  IShellBrowser_SendControlMsg(This->pShellBrowser, FCW_TOOLBAR, TB_CHECKBUTTON,
-		FCIDM_TB_SMALLICON, (This->FolderSettings.ViewMode==FVM_LIST)? TRUE : FALSE, &result);
+                FCIDM_TB_SMALLICON, This->FolderSettings.ViewMode == FVM_LIST, &result);
 	  IShellBrowser_SendControlMsg(This->pShellBrowser, FCW_TOOLBAR, TB_CHECKBUTTON,
-		FCIDM_TB_REPORTVIEW, (This->FolderSettings.ViewMode==FVM_DETAILS)? TRUE : FALSE, &result);
+                FCIDM_TB_REPORTVIEW, This->FolderSettings.ViewMode == FVM_DETAILS, &result);
 	  IShellBrowser_SendControlMsg(This->pShellBrowser, FCW_TOOLBAR, TB_ENABLEBUTTON,
 		FCIDM_TB_SMALLICON, TRUE, &result);
 	  IShellBrowser_SendControlMsg(This->pShellBrowser, FCW_TOOLBAR, TB_ENABLEBUTTON,
@@ -606,7 +606,7 @@ static BOOLEAN LV_AddItem(IShellViewImpl * This, LPCITEMIDLIST pidl)
 	lvItem.lParam = (LPARAM) ILClone(ILFindLastID(pidl));				/*set the item's data*/
 	lvItem.pszText = LPSTR_TEXTCALLBACKW;			/*get text on a callback basis*/
 	lvItem.iImage = I_IMAGECALLBACK;			/*get the image on a callback basis*/
-	return (-1==ListView_InsertItemW(This->hWndList, &lvItem))? FALSE: TRUE;
+        return ListView_InsertItemW(This->hWndList, &lvItem) != -1;
 }
 
 /**********************************************************

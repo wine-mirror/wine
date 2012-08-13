@@ -2855,12 +2855,8 @@ BOOL WINAPI SHGetSpecialFolderPathA (
 	int nFolder,
 	BOOL bCreate)
 {
-	return (SHGetFolderPathA(
-		hwndOwner,
-		nFolder + (bCreate ? CSIDL_FLAG_CREATE : 0),
-		NULL,
-		0,
-		szPath)) == S_OK ? TRUE : FALSE;
+    return SHGetFolderPathA(hwndOwner, nFolder + (bCreate ? CSIDL_FLAG_CREATE : 0), NULL, 0,
+                            szPath) == S_OK;
 }
 
 /*************************************************************************
@@ -2872,12 +2868,8 @@ BOOL WINAPI SHGetSpecialFolderPathW (
 	int nFolder,
 	BOOL bCreate)
 {
-	return (SHGetFolderPathW(
-		hwndOwner,
-		nFolder + (bCreate ? CSIDL_FLAG_CREATE : 0),
-		NULL,
-		0,
-		szPath)) == S_OK ? TRUE : FALSE;
+    return SHGetFolderPathW(hwndOwner, nFolder + (bCreate ? CSIDL_FLAG_CREATE : 0), NULL, 0,
+                            szPath) == S_OK;
 }
 
 /*************************************************************************

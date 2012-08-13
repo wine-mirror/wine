@@ -1705,10 +1705,7 @@ ISFDropTarget_DragEnter (IDropTarget * iface, IDataObject * pDataObject,
     TRACE ("(%p)->(DataObject=%p)\n", This, pDataObject);
 
     InitFormatEtc (fmt, This->cfShellIDList, TYMED_HGLOBAL);
-
-    This->fAcceptFmt = (S_OK == IDataObject_QueryGetData (pDataObject, &fmt)) ?
-     TRUE : FALSE;
-
+    This->fAcceptFmt = IDataObject_QueryGetData (pDataObject, &fmt) == S_OK;
     ISFDropTarget_QueryDrop (iface, dwKeyState, pdwEffect);
 
     return S_OK;
