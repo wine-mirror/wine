@@ -595,11 +595,11 @@ static void test_DirectInputJoyConfig8(void)
     {
         hr = IDirectInputJoyConfig8_GetConfig(pDIJC, i, &info, DIJC_GUIDINSTANCE);
 
-        todo_wine ok (hr == DI_OK || hr == DIERR_NOMOREITEMS,
+        ok (hr == DI_OK || hr == DIERR_NOMOREITEMS,
            "IDirectInputJoyConfig8_GetConfig returned 0x%08x\n", hr);
 
         if (SUCCEEDED(hr))
-            todo_wine ok (SUCCEEDED(IDirectInput_CreateDevice(pDI, &info.guidInstance, &pDID, NULL)),
+            ok (SUCCEEDED(IDirectInput_CreateDevice(pDI, &info.guidInstance, &pDID, NULL)),
                "IDirectInput_CreateDevice failed with guid from GetConfig hr = 0x%08x\n", hr);
     }
 

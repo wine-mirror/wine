@@ -1142,8 +1142,44 @@ static HRESULT WINAPI JoyConfig8Impl_DeleteType(IDirectInputJoyConfig8 *iface, L
 
 static HRESULT WINAPI JoyConfig8Impl_GetConfig(IDirectInputJoyConfig8 *iface, UINT id, LPDIJOYCONFIG info, DWORD flags)
 {
-    FIXME( "(%p)->(%d, %p, 0x%08x): stub!\n", iface, id, info, flags );
-    return E_NOTIMPL;
+    IDirectInputImpl *di = impl_from_IDirectInputJoyConfig8(iface);
+    UINT found = 0;
+    int i, j, r;
+
+    FIXME("(%p)->(%d, %p, 0x%08x): semi-stub!\n", iface, id, info, flags);
+
+#define X(x) if (flags & x) FIXME("\tflags |= "#x"\n");
+    X(DIJC_GUIDINSTANCE)
+    X(DIJC_REGHWCONFIGTYPE)
+    X(DIJC_GAIN)
+    X(DIJC_CALLOUT)
+#undef X
+
+    /* Enumerate all joysticks in order */
+    for (i = 0; i < NB_DINPUT_DEVICES; i++)
+    {
+        if (!dinput_devices[i]->enum_deviceA) continue;
+
+        for (j = 0, r = -1; r != 0; j++)
+        {
+            DIDEVICEINSTANCEA dev;
+            dev.dwSize = sizeof(dev);
+            if ((r = dinput_devices[i]->enum_deviceA(DI8DEVCLASS_GAMECTRL, 0, &dev, di->dwVersion, j)))
+            {
+                /* Only take into account the chosen id */
+                if (found == id)
+                {
+                    if (flags & DIJC_GUIDINSTANCE)
+                        info->guidInstance = dev.guidInstance;
+
+                    return DI_OK;
+                }
+                found += 1;
+            }
+        }
+    }
+
+    return DIERR_NOMOREITEMS;
 }
 
 static HRESULT WINAPI JoyConfig8Impl_SetConfig(IDirectInputJoyConfig8 *iface, UINT id, LPCDIJOYCONFIG info, DWORD flags)
