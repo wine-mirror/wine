@@ -21,3 +21,6 @@ exectest.html HTML "exectest.html"
 
 /* @makedep: jstest.html */
 jstest.html HTML "jstest.html"
+
+/* @makedep: vbtest.html */
+vbtest.html HTML "vbtest.html"

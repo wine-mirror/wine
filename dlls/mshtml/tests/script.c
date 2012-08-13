@@ -594,7 +594,9 @@ static HRESULT WINAPI externalDisp_InvokeEx(IDispatchEx *iface, DISPID id, LCID 
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
     switch(id) {
-    case DISPID_EXTERNAL_OK:
+    case DISPID_EXTERNAL_OK: {
+        VARIANT *b, *m;
+
         ok(wFlags == INVOKE_FUNC || wFlags == (INVOKE_FUNC|INVOKE_PROPERTYGET), "wFlags = %x\n", wFlags);
         ok(pdp != NULL, "pdp == NULL\n");
         ok(pdp->rgvarg != NULL, "rgvarg == NULL\n");
@@ -603,11 +605,19 @@ static HRESULT WINAPI externalDisp_InvokeEx(IDispatchEx *iface, DISPID id, LCID 
         ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
         ok(pei != NULL, "pei == NULL\n");
 
-        ok(V_VT(pdp->rgvarg) == VT_BSTR, "V_VT(psp->rgvargs) = %d\n", V_VT(pdp->rgvarg));
-        ok(V_VT(pdp->rgvarg+1) == VT_BOOL, "V_VT(psp->rgvargs+1) = %d\n", V_VT(pdp->rgvarg));
-        ok(V_BOOL(pdp->rgvarg+1), "%s\n", wine_dbgstr_w(V_BSTR(pdp->rgvarg)));
+        m = pdp->rgvarg;
+        if(V_VT(m) == (VT_BYREF|VT_VARIANT))
+            m = V_BYREF(m);
+        ok(V_VT(m) == VT_BSTR, "V_VT(psp->rgvargs) = %d\n", V_VT(pdp->rgvarg));
 
+        b = pdp->rgvarg+1;
+        if(V_VT(b) == (VT_BYREF|VT_VARIANT))
+            b = V_BYREF(b);
+        ok(V_VT(b) == VT_BOOL, "V_VT(b) = %d\n", V_VT(b));
+
+        ok(V_BOOL(b), "%s\n", wine_dbgstr_w(V_BSTR(m)));
         return S_OK;
+    }
 
      case DISPID_EXTERNAL_TRACE:
         ok(wFlags == INVOKE_FUNC, "wFlags = %x\n", wFlags);
@@ -2732,6 +2742,7 @@ static void run_js_tests(void)
 {
     run_js_script("jstest.html");
     run_js_script("exectest.html");
+    run_js_script("vbtest.html");
 }
 
 static BOOL init_registry(BOOL init)

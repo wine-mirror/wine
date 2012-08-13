@@ -1,0 +1,34 @@
+<html>
+<head>
+<script type="text/vbscript">
+Dim counter
+
+counter = 1
+
+Sub ok(b,m)
+    Call external.ok(b,m)
+End Sub
+</script>
+<script>
+' Verifies that we're in VBScript although there is no type specified
+If true then counter = counter+1
+</script>
+<script type="text/javascript">
+// We're in javascript
+</script>
+<script type="text/vbscript">
+' And back to VBScript
+If true then counter = counter+1
+
+Sub runTest()
+    Call ok(counter = 3, "counter = " & counter)
+    Call external.reportSuccess()
+End Sub
+</script>
+</script>
+<body>
+<script>
+runTest()
+</script>
+</body>
+</html>
