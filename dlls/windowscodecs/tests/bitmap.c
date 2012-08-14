@@ -62,23 +62,23 @@ static void test_createbitmap(void)
 
     /* Palette is unavailable until explicitly set */
     hr = IWICBitmap_CopyPalette(bitmap, palette);
-    todo_wine ok(hr == WINCODEC_ERR_PALETTEUNAVAILABLE, "IWICBitmap_CopyPalette failed hr=%x\n", hr);
+    ok(hr == WINCODEC_ERR_PALETTEUNAVAILABLE, "IWICBitmap_CopyPalette failed hr=%x\n", hr);
 
     hr = IWICPalette_InitializePredefined(palette, WICBitmapPaletteTypeFixedGray256, FALSE);
     ok(hr == S_OK, "IWICPalette_InitializePredefined failed hr=%x\n", hr);
 
     hr = IWICBitmap_SetPalette(bitmap, palette);
-    todo_wine ok(hr == S_OK, "IWICBitmap_SetPalette failed hr=%x\n", hr);
+    ok(hr == S_OK, "IWICBitmap_SetPalette failed hr=%x\n", hr);
 
     hr = IWICPalette_InitializePredefined(palette, WICBitmapPaletteTypeFixedGray4, FALSE);
     ok(hr == S_OK, "IWICPalette_InitializePredefined failed hr=%x\n", hr);
 
     hr = IWICBitmap_CopyPalette(bitmap, palette);
-    todo_wine ok(hr == S_OK, "IWICBitmap_CopyPalette failed hr=%x\n", hr);
+    ok(hr == S_OK, "IWICBitmap_CopyPalette failed hr=%x\n", hr);
 
     hr = IWICPalette_GetType(palette, &palettetype);
     ok(hr == S_OK, "IWICPalette_GetType failed hr=%x\n", hr);
-    todo_wine ok(palettetype == WICBitmapPaletteTypeFixedGray256,
+    ok(palettetype == WICBitmapPaletteTypeFixedGray256,
         "expected WICBitmapPaletteTypeFixedGray256, got %x\n", palettetype);
 
     IWICPalette_Release(palette);

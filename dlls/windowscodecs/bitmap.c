@@ -36,6 +36,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 typedef struct BitmapImpl {
     IWICBitmap IWICBitmap_iface;
     LONG ref;
+    IWICPalette *palette;
+    int palette_set;
 } BitmapImpl;
 
 static inline BitmapImpl *impl_from_IWICBitmap(IWICBitmap *iface)
@@ -86,6 +88,7 @@ static ULONG WINAPI BitmapImpl_Release(IWICBitmap *iface)
 
     if (ref == 0)
     {
+        if (This->palette) IWICPalette_Release(This->palette);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -119,9 +122,13 @@ static HRESULT WINAPI BitmapImpl_GetResolution(IWICBitmap *iface,
 static HRESULT WINAPI BitmapImpl_CopyPalette(IWICBitmap *iface,
     IWICPalette *pIPalette)
 {
-    FIXME("(%p,%p)\n", iface, pIPalette);
+    BitmapImpl *This = impl_from_IWICBitmap(iface);
+    TRACE("(%p,%p)\n", iface, pIPalette);
 
-    return E_NOTIMPL;
+    if (!This->palette_set)
+        return WINCODEC_ERR_PALETTEUNAVAILABLE;
+
+    return IWICPalette_InitializeFromPalette(pIPalette, This->palette);
 }
 
 static HRESULT WINAPI BitmapImpl_CopyPixels(IWICBitmap *iface,
@@ -142,9 +149,31 @@ static HRESULT WINAPI BitmapImpl_Lock(IWICBitmap *iface, const WICRect *prcLock,
 
 static HRESULT WINAPI BitmapImpl_SetPalette(IWICBitmap *iface, IWICPalette *pIPalette)
 {
-    FIXME("(%p,%p)\n", iface, pIPalette);
+    BitmapImpl *This = impl_from_IWICBitmap(iface);
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("(%p,%p)\n", iface, pIPalette);
+
+    if (!This->palette)
+    {
+        IWICPalette *new_palette;
+        hr = PaletteImpl_Create(&new_palette);
+
+        if (FAILED(hr)) return hr;
+
+        if (InterlockedCompareExchangePointer((void**)&This->palette, new_palette, NULL))
+        {
+            /* someone beat us to it */
+            IWICPalette_Release(new_palette);
+        }
+    }
+
+    hr = IWICPalette_InitializeFromPalette(This->palette, pIPalette);
+
+    if (SUCCEEDED(hr))
+        This->palette_set = 1;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI BitmapImpl_SetResolution(IWICBitmap *iface,
@@ -180,6 +209,8 @@ HRESULT BitmapImpl_Create(UINT uiWidth, UINT uiHeight,
 
     This->IWICBitmap_iface.lpVtbl = &BitmapImpl_Vtbl;
     This->ref = 1;
+    This->palette = NULL;
+    This->palette_set = 0;
 
     *ppIBitmap = &This->IWICBitmap_iface;
 
