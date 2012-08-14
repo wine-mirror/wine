@@ -38,12 +38,150 @@ typedef struct BitmapImpl {
     LONG ref;
     IWICPalette *palette;
     int palette_set;
+    LONG lock; /* 0 if not locked, -1 if locked for writing, count if locked for reading */
 } BitmapImpl;
+
+typedef struct BitmapLockImpl {
+    IWICBitmapLock IWICBitmapLock_iface;
+    LONG ref;
+    BitmapImpl *parent;
+} BitmapLockImpl;
 
 static inline BitmapImpl *impl_from_IWICBitmap(IWICBitmap *iface)
 {
     return CONTAINING_RECORD(iface, BitmapImpl, IWICBitmap_iface);
 }
+
+static inline BitmapLockImpl *impl_from_IWICBitmapLock(IWICBitmapLock *iface)
+{
+    return CONTAINING_RECORD(iface, BitmapLockImpl, IWICBitmapLock_iface);
+}
+
+static BOOL BitmapImpl_AcquireLock(BitmapImpl *This, int write)
+{
+    if (write)
+    {
+        return 0 == InterlockedCompareExchange(&This->lock, -1, 0);
+    }
+    else
+    {
+        while (1)
+        {
+            LONG prev_val = This->lock;
+            if (prev_val == -1)
+                return FALSE;
+            if (prev_val == InterlockedCompareExchange(&This->lock, prev_val+1, prev_val))
+                return TRUE;
+        }
+    }
+}
+
+static void BitmapImpl_ReleaseLock(BitmapImpl *This)
+{
+    while (1)
+    {
+        LONG prev_val = This->lock, new_val;
+        if (prev_val == -1)
+            new_val = 0;
+        else
+            new_val = prev_val - 1;
+        if (prev_val == InterlockedCompareExchange(&This->lock, new_val, prev_val))
+            break;
+    }
+}
+
+
+static HRESULT WINAPI BitmapLockImpl_QueryInterface(IWICBitmapLock *iface, REFIID iid,
+    void **ppv)
+{
+    BitmapLockImpl *This = impl_from_IWICBitmapLock(iface);
+    TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), ppv);
+
+    if (!ppv) return E_INVALIDARG;
+
+    if (IsEqualIID(&IID_IUnknown, iid) ||
+        IsEqualIID(&IID_IWICBitmapLock, iid))
+    {
+        *ppv = &This->IWICBitmapLock_iface;
+    }
+    else
+    {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI BitmapLockImpl_AddRef(IWICBitmapLock *iface)
+{
+    BitmapLockImpl *This = impl_from_IWICBitmapLock(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) refcount=%u\n", iface, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI BitmapLockImpl_Release(IWICBitmapLock *iface)
+{
+    BitmapLockImpl *This = impl_from_IWICBitmapLock(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) refcount=%u\n", iface, ref);
+
+    if (ref == 0)
+    {
+        BitmapImpl_ReleaseLock(This->parent);
+        IWICBitmap_Release(&This->parent->IWICBitmap_iface);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI BitmapLockImpl_GetSize(IWICBitmapLock *iface,
+    UINT *puiWidth, UINT *puiHeight)
+{
+    FIXME("(%p,%p,%p)\n", iface, puiWidth, puiHeight);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BitmapLockImpl_GetStride(IWICBitmapLock *iface,
+    UINT *pcbStride)
+{
+    FIXME("(%p,%p)\n", iface, pcbStride);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BitmapLockImpl_GetDataPointer(IWICBitmapLock *iface,
+    UINT *pcbBufferSize, BYTE **ppbData)
+{
+    FIXME("(%p,%p,%p)\n", iface, pcbBufferSize, ppbData);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BitmapLockImpl_GetPixelFormat(IWICBitmapLock *iface,
+    WICPixelFormatGUID *pPixelFormat)
+{
+    FIXME("(%p,%p)\n", iface, pPixelFormat);
+
+    return E_NOTIMPL;
+}
+
+static const IWICBitmapLockVtbl BitmapLockImpl_Vtbl = {
+    BitmapLockImpl_QueryInterface,
+    BitmapLockImpl_AddRef,
+    BitmapLockImpl_Release,
+    BitmapLockImpl_GetSize,
+    BitmapLockImpl_GetStride,
+    BitmapLockImpl_GetDataPointer,
+    BitmapLockImpl_GetPixelFormat
+};
 
 static HRESULT WINAPI BitmapImpl_QueryInterface(IWICBitmap *iface, REFIID iid,
     void **ppv)
@@ -142,9 +280,32 @@ static HRESULT WINAPI BitmapImpl_CopyPixels(IWICBitmap *iface,
 static HRESULT WINAPI BitmapImpl_Lock(IWICBitmap *iface, const WICRect *prcLock,
     DWORD flags, IWICBitmapLock **ppILock)
 {
-    FIXME("(%p,%p,%x,%p)\n", iface, prcLock, flags, ppILock);
+    BitmapImpl *This = impl_from_IWICBitmap(iface);
+    BitmapLockImpl *result;
 
-    return E_NOTIMPL;
+    TRACE("(%p,%p,%x,%p)\n", iface, prcLock, flags, ppILock);
+
+    if (!(flags & (WICBitmapLockRead|WICBitmapLockWrite)) || !ppILock)
+        return E_INVALIDARG;
+
+    result = HeapAlloc(GetProcessHeap(), 0, sizeof(BitmapLockImpl));
+    if (!result)
+        return E_OUTOFMEMORY;
+
+    if (!BitmapImpl_AcquireLock(This, flags & WICBitmapLockWrite))
+    {
+        HeapFree(GetProcessHeap(), 0, result);
+        return WINCODEC_ERR_ALREADYLOCKED;
+    }
+
+    result->IWICBitmapLock_iface.lpVtbl = &BitmapLockImpl_Vtbl;
+    result->ref = 1;
+    result->parent = This;
+
+    IWICBitmap_AddRef(&This->IWICBitmap_iface);
+    *ppILock = &result->IWICBitmapLock_iface;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI BitmapImpl_SetPalette(IWICBitmap *iface, IWICPalette *pIPalette)
@@ -211,6 +372,7 @@ HRESULT BitmapImpl_Create(UINT uiWidth, UINT uiHeight,
     This->ref = 1;
     This->palette = NULL;
     This->palette_set = 0;
+    This->lock = 0;
 
     *ppIBitmap = &This->IWICBitmap_iface;
 
