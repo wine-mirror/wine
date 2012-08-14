@@ -6,6 +6,7 @@ EXTRADEFS = -DENTRY_PREFIX=WIC_ -DPROXY_DELEGATION -DWINE_REGISTER_DLL -DWIDL_C_
 EXTRALIBS = @APPLICATIONSERVICESLIB@
 
 C_SRCS = \
+	bitmap.c \
 	bmpdecode.c \
 	bmpencode.c \
 	clsfactory.c \

@@ -457,9 +457,9 @@ static HRESULT WINAPI ComponentFactory_CreateBitmap(IWICComponentFactory *iface,
     UINT uiWidth, UINT uiHeight, REFWICPixelFormatGUID pixelFormat,
     WICBitmapCreateCacheOption option, IWICBitmap **ppIBitmap)
 {
-    FIXME("(%p,%u,%u,%s,%u,%p): stub\n", iface, uiWidth, uiHeight,
+    TRACE("(%p,%u,%u,%s,%u,%p)\n", iface, uiWidth, uiHeight,
         debugstr_guid(pixelFormat), option, ppIBitmap);
-    return E_NOTIMPL;
+    return BitmapImpl_Create(uiWidth, uiHeight, pixelFormat, option, ppIBitmap);
 }
 
 static HRESULT WINAPI ComponentFactory_CreateBitmapFromSource(IWICComponentFactory *iface,

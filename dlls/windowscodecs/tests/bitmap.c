@@ -52,7 +52,7 @@ static void test_createbitmap(void)
 
     hr = IWICImagingFactory_CreateBitmap(factory, 3, 3, &GUID_WICPixelFormat24bppBGR,
         WICBitmapCacheOnLoad, &bitmap);
-    todo_wine ok(hr == S_OK, "IWICImagingFactory_CreateBitmap failed hr=%x\n", hr);
+    ok(hr == S_OK, "IWICImagingFactory_CreateBitmap failed hr=%x\n", hr);
 
     if (FAILED(hr))
         return;
@@ -62,34 +62,35 @@ static void test_createbitmap(void)
 
     /* Palette is unavailable until explicitly set */
     hr = IWICBitmap_CopyPalette(bitmap, palette);
-    ok(hr == WINCODEC_ERR_PALETTEUNAVAILABLE, "IWICBitmap_CopyPalette failed hr=%x\n", hr);
+    todo_wine ok(hr == WINCODEC_ERR_PALETTEUNAVAILABLE, "IWICBitmap_CopyPalette failed hr=%x\n", hr);
 
     hr = IWICPalette_InitializePredefined(palette, WICBitmapPaletteTypeFixedGray256, FALSE);
     ok(hr == S_OK, "IWICPalette_InitializePredefined failed hr=%x\n", hr);
 
     hr = IWICBitmap_SetPalette(bitmap, palette);
-    ok(hr == S_OK, "IWICBitmap_SetPalette failed hr=%x\n", hr);
+    todo_wine ok(hr == S_OK, "IWICBitmap_SetPalette failed hr=%x\n", hr);
 
     hr = IWICPalette_InitializePredefined(palette, WICBitmapPaletteTypeFixedGray4, FALSE);
     ok(hr == S_OK, "IWICPalette_InitializePredefined failed hr=%x\n", hr);
 
     hr = IWICBitmap_CopyPalette(bitmap, palette);
-    ok(hr == S_OK, "IWICBitmap_CopyPalette failed hr=%x\n", hr);
+    todo_wine ok(hr == S_OK, "IWICBitmap_CopyPalette failed hr=%x\n", hr);
 
     hr = IWICPalette_GetType(palette, &palettetype);
     ok(hr == S_OK, "IWICPalette_GetType failed hr=%x\n", hr);
-    ok(palettetype == WICBitmapPaletteTypeFixedGray256,
+    todo_wine ok(palettetype == WICBitmapPaletteTypeFixedGray256,
         "expected WICBitmapPaletteTypeFixedGray256, got %x\n", palettetype);
 
     IWICPalette_Release(palette);
 
     /* pixel data is initially zeroed */
     hr = IWICBitmap_CopyPixels(bitmap, NULL, 9, 27, returned_data);
-    ok(hr == S_OK, "IWICBitmap_CopyPixels failed hr=%x\n", hr);
+    todo_wine ok(hr == S_OK, "IWICBitmap_CopyPixels failed hr=%x\n", hr);
 
     for (i=0; i<27; i++)
         ok(returned_data[i] == 0, "returned_data[%i] == %i\n", i, returned_data[i]);
 
+todo_wine {
     /* Invalid lock rects */
     rc.X = rc.Y = 0;
     rc.Width = 4;
@@ -257,6 +258,7 @@ static void test_createbitmap(void)
     ok(hr == S_OK, "IWICBitmap_GetSize failed hr=%x\n", hr);
     ok(width == 3, "got %d, expected 3\n", width);
     ok(height == 3, "got %d, expected 3\n", height);
+}
 
     IWICBitmap_Release(bitmap);
 }
