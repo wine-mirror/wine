@@ -400,6 +400,7 @@ struct HTMLInnerWindow {
 
     LONG task_magic;
 
+    IMoniker *mon;
     nsChannelBSC *bscallback;
     struct list bindings;
 };

@@ -1784,6 +1784,11 @@ void abort_window_bindings(HTMLInnerWindow *window)
         IBindStatusCallback_Release(&window->bscallback->bsc.IBindStatusCallback_iface);
         window->bscallback = NULL;
     }
+
+    if(window->mon) {
+        IMoniker_Release(window->mon);
+        window->mon = NULL;
+    }
 }
 
 HRESULT channelbsc_load_stream(HTMLInnerWindow *pending_window, IStream *stream)

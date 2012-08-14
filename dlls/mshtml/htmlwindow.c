@@ -264,6 +264,8 @@ static void release_inner_window(HTMLInnerWindow *This)
         IHTMLScreen_Release(This->screen);
     if(This->history)
         IOmHistory_Release(This->history);
+    if(This->mon)
+        IMoniker_Release(This->mon);
 
     heap_free(This);
 }
@@ -2609,7 +2611,7 @@ static void *alloc_window(size_t size)
     return window;
 }
 
-static HRESULT create_inner_window(HTMLOuterWindow *outer_window, HTMLInnerWindow **ret)
+static HRESULT create_inner_window(HTMLOuterWindow *outer_window, IMoniker *mon, HTMLInnerWindow **ret)
 {
     HTMLInnerWindow *window;
 
@@ -2627,6 +2629,11 @@ static HRESULT create_inner_window(HTMLOuterWindow *outer_window, HTMLInnerWindo
 
     window->task_magic = get_task_target_magic();
     window->current_script_guid = CLSID_JScript;
+
+    if(mon) {
+        IMoniker_AddRef(mon);
+        window->mon = mon;
+    }
 
     *ret = window;
     return S_OK;
@@ -2701,7 +2708,7 @@ HRESULT create_pending_window(HTMLOuterWindow *outer_window, nsChannelBSC *chann
     HTMLInnerWindow *pending_window;
     HRESULT hres;
 
-    hres = create_inner_window(outer_window, &pending_window);
+    hres = create_inner_window(outer_window, outer_window->mon /* FIXME */, &pending_window);
     if(FAILED(hres))
         return hres;
 
