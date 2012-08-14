@@ -43,6 +43,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(uniscribe);
 #define GET_BE_DWORD(x) RtlUlongByteSwap(x)
 #endif
 
+#define round(x) (((x) < 0) ? (int)((x) - 0.5) : (int)((x) + 0.5))
+
 /* These are all structures needed for the cmap format 12 table */
 #define CMAP_TAG MS_MAKE_TAG('c', 'm', 'a', 'p')
 
@@ -1403,13 +1405,13 @@ static INT GPOS_apply_lookup(LPOUTLINETEXTMETRICW lpotm, LPLOGFONTW lplogfont, I
             if (adjust.x || adjust.y)
             {
                 GPOS_convert_design_units_to_device(lpotm, lplogfont, adjust.x, adjust.y, &devX, &devY);
-                pGoffset[glyph_index].du += (int)(devX+0.5);
-                pGoffset[glyph_index].dv += (int)(devY+0.5);
+                pGoffset[glyph_index].du += round(devX);
+                pGoffset[glyph_index].dv += round(devY);
             }
             if (advance.x || advance.y)
             {
                 GPOS_convert_design_units_to_device(lpotm, lplogfont, advance.x, advance.y, &devX, &devY);
-                piAdvance[glyph_index] += (int)(devX+0.5);
+                piAdvance[glyph_index] += round(devX);
                 if (advance.y)
                     FIXME("Unhandled adjustment to Y advancement\n");
             }
@@ -1424,24 +1426,24 @@ static INT GPOS_apply_lookup(LPOUTLINETEXTMETRICW lpotm, LPLOGFONTW lplogfont, I
             if (adjust[0].x || adjust[0].y)
             {
                 GPOS_convert_design_units_to_device(lpotm, lplogfont, adjust[0].x, adjust[0].y, &devX, &devY);
-                pGoffset[glyph_index].du += (int)(devX+0.5);
-                pGoffset[glyph_index].dv += (int)(devY+0.5);
+                pGoffset[glyph_index].du += round(devX);
+                pGoffset[glyph_index].dv += round(devY);
             }
             if (advance[0].x || advance[0].y)
             {
                 GPOS_convert_design_units_to_device(lpotm, lplogfont, advance[0].x, advance[0].y, &devX, &devY);
-                piAdvance[glyph_index] += (int)(devX+0.5);
+                piAdvance[glyph_index] += round(devX);
             }
             if (adjust[1].x || adjust[1].y)
             {
                 GPOS_convert_design_units_to_device(lpotm, lplogfont, adjust[1].x, adjust[1].y, &devX, &devY);
-                pGoffset[glyph_index + write_dir].du += (int)(devX+0.5);
-                pGoffset[glyph_index + write_dir].dv += (int)(devY+0.5);
+                pGoffset[glyph_index + write_dir].du += round(devX);
+                pGoffset[glyph_index + write_dir].dv += round(devY);
             }
             if (advance[1].x || advance[1].y)
             {
                 GPOS_convert_design_units_to_device(lpotm, lplogfont, advance[1].x, advance[1].y, &devX, &devY);
-                piAdvance[glyph_index + write_dir] += (int)(devX+0.5);
+                piAdvance[glyph_index + write_dir] += round(devX);
             }
             return index;
         }
@@ -1453,8 +1455,8 @@ static INT GPOS_apply_lookup(LPOUTLINETEXTMETRICW lpotm, LPLOGFONTW lplogfont, I
             if (desU.x || desU.y)
             {
                 GPOS_convert_design_units_to_device(lpotm, lplogfont, desU.x, desU.y, &devX, &devY);
-                pGoffset[glyph_index].du += ((int)(devX+0.5) - piAdvance[glyph_index-1]);
-                pGoffset[glyph_index].dv += (int)(devY+0.5);
+                pGoffset[glyph_index].du += (round(devX) - piAdvance[glyph_index-1]);
+                pGoffset[glyph_index].dv += round(devY);
             }
             break;
         }
