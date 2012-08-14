@@ -379,9 +379,9 @@ static GLenum gl_blend_factor(enum wined3d_blend factor, const struct wined3d_fo
          * returns 1.0, so WINED3D_BLEND_DESTALPHA becomes GL_ONE, and
          * WINED3D_BLEND_INVDESTALPHA becomes GL_ZERO. */
         case WINED3D_BLEND_DESTALPHA:
-            return dst_format->alpha_mask ? GL_DST_ALPHA : GL_ONE;
+            return dst_format->alpha_size ? GL_DST_ALPHA : GL_ONE;
         case WINED3D_BLEND_INVDESTALPHA:
-            return dst_format->alpha_mask ? GL_ONE_MINUS_DST_ALPHA : GL_ZERO;
+            return dst_format->alpha_size ? GL_ONE_MINUS_DST_ALPHA : GL_ZERO;
         case WINED3D_BLEND_SRCALPHASAT:
             return GL_SRC_ALPHA_SATURATE;
         case WINED3D_BLEND_BLENDFACTOR:
@@ -3253,7 +3253,7 @@ void tex_alphaop(struct wined3d_context *context, const struct wined3d_state *st
         {
             struct wined3d_surface *surf = surface_from_resource(texture->sub_resources[0]);
 
-            if (surf->CKeyFlags & WINEDDSD_CKSRCBLT && !surf->resource.format->alpha_mask)
+            if (surf->CKeyFlags & WINEDDSD_CKSRCBLT && !surf->resource.format->alpha_size)
             {
                 /* Color keying needs to pass alpha values from the texture through to have the alpha test work
                  * properly. On the other hand applications can still use texture combiners apparently. This code

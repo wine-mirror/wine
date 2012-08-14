@@ -2398,7 +2398,7 @@ static void context_setup_target(struct wined3d_context *context, struct wined3d
         if (old->id != new->id)
         {
             /* Disable blending when the alpha mask has changed and when a format doesn't support blending. */
-            if ((old->alpha_mask && !new->alpha_mask) || (!old->alpha_mask && new->alpha_mask)
+            if ((old->alpha_size && !new->alpha_size) || (!old->alpha_size && new->alpha_size)
                     || !(new->flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING))
                 context_invalidate_state(context, STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE));
 

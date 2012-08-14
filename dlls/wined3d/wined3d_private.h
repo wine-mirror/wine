@@ -2796,10 +2796,14 @@ struct wined3d_format
 {
     enum wined3d_format_id id;
 
-    DWORD red_mask;
-    DWORD green_mask;
-    DWORD blue_mask;
-    DWORD alpha_mask;
+    DWORD red_size;
+    DWORD green_size;
+    DWORD blue_size;
+    DWORD alpha_size;
+    DWORD red_offset;
+    DWORD green_offset;
+    DWORD blue_offset;
+    DWORD alpha_offset;
     UINT byte_count;
     BYTE depth_size;
     BYTE stencil_size;

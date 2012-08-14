@@ -371,6 +371,14 @@ void draw_textured_quad(const struct wined3d_surface *src_surface, struct wined3
     }
 }
 
+/* Works correctly only for <= 4 bpp formats. */
+static void get_color_masks(const struct wined3d_format *format, DWORD *masks)
+{
+    masks[0] = ((1 << format->red_size) - 1) << format->red_offset;
+    masks[1] = ((1 << format->green_size) - 1) << format->green_offset;
+    masks[2] = ((1 << format->blue_size) - 1) << format->blue_offset;
+}
+
 static HRESULT surface_create_dib_section(struct wined3d_surface *surface)
 {
     const struct wined3d_format *format = surface->resource.format;
@@ -456,9 +464,7 @@ static HRESULT surface_create_dib_section(struct wined3d_surface *surface)
         case WINED3DFMT_B5G6R5_UNORM:
         case WINED3DFMT_R16G16B16A16_UNORM:
             b_info->bmiHeader.biCompression = BI_BITFIELDS;
-            masks[0] = format->red_mask;
-            masks[1] = format->green_mask;
-            masks[2] = format->blue_mask;
+            get_color_masks(format, masks);
             break;
 
         default:
@@ -6971,9 +6977,11 @@ do { \
                 }
                 else
                 {
-                    keymask = src_format->red_mask
-                            | src_format->green_mask
-                            | src_format->blue_mask;
+                    DWORD masks[3];
+                    get_color_masks(src_format, masks);
+                    keymask = masks[0]
+                            | masks[1]
+                            | masks[2];
                 }
                 flags &= ~(WINEDDBLT_KEYSRC | WINEDDBLT_KEYDEST | WINEDDBLT_KEYSRCOVERRIDE | WINEDDBLT_KEYDESTOVERRIDE);
             }
