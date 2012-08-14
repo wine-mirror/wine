@@ -61,7 +61,7 @@ static void release_children(HTMLOuterWindow *This)
     }
 }
 
-static HRESULT get_location(HTMLOuterWindow *This, HTMLLocation **ret)
+static HRESULT get_location(HTMLInnerWindow *This, HTMLLocation **ret)
 {
     if(This->location) {
         IHTMLLocation_AddRef(&This->location->IHTMLLocation_iface);
@@ -214,11 +214,6 @@ static void release_outer_window(HTMLOuterWindow *This)
     if(This->frame_element)
         This->frame_element->content_window = NULL;
 
-    if(This->location) {
-        This->location->window = NULL;
-        IHTMLLocation_Release(&This->location->IHTMLLocation_iface);
-    }
-
     This->window_ref->window = NULL;
     windowref_release(This->window_ref);
 
@@ -249,6 +244,11 @@ static void release_inner_window(HTMLInnerWindow *This)
     for(i=0; i < This->global_prop_cnt; i++)
         heap_free(This->global_props[i].name);
     heap_free(This->global_props);
+
+    if(This->location) {
+        This->location->window = NULL;
+        IHTMLLocation_Release(&This->location->IHTMLLocation_iface);
+    }
 
     if(This->image_factory) {
         This->image_factory->window = NULL;
@@ -707,7 +707,7 @@ static HRESULT WINAPI HTMLWindow2_get_location(IHTMLWindow2 *iface, IHTMLLocatio
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    hres = get_location(This->outer_window, &location);
+    hres = get_location(This->inner_window, &location);
     if(FAILED(hres))
         return hres;
 
@@ -2335,7 +2335,7 @@ static HRESULT WINAPI WindowDispEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID 
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
     HTMLWindow *This = impl_from_IDispatchEx(iface);
-    HTMLOuterWindow *window = This->outer_window;
+    HTMLInnerWindow *window = This->inner_window;
 
     TRACE("(%p)->(%x %x %x %p %p %p %p)\n", This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
 
@@ -2355,8 +2355,7 @@ static HRESULT WINAPI WindowDispEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID 
         return hres;
     }
 
-    return IDispatchEx_InvokeEx(&window->base.inner_window->dispex.IDispatchEx_iface, id, lcid, wFlags, pdp, pvarRes,
-            pei, pspCaller);
+    return IDispatchEx_InvokeEx(&window->dispex.IDispatchEx_iface, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
 }
 
 static HRESULT WINAPI WindowDispEx_DeleteMemberByName(IDispatchEx *iface, BSTR bstrName, DWORD grfdex)

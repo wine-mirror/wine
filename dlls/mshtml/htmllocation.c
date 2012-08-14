@@ -37,20 +37,20 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 static HRESULT get_url(HTMLLocation *This, const WCHAR **ret)
 {
-    if(!This->window || !This->window->url) {
+    if(!This->window || !This->window->base.outer_window || !This->window->base.outer_window->url) {
         FIXME("No current URL\n");
         return E_NOTIMPL;
     }
 
-    *ret = This->window->url;
+    *ret = This->window->base.outer_window->url;
     return S_OK;
 }
 
 static IUri *get_uri(HTMLLocation *This)
 {
-    if(!This->window)
+    if(!This->window || !This->window->base.outer_window)
         return NULL;
-    return This->window->uri;
+    return This->window->base.outer_window->uri;
 }
 
 static HRESULT get_url_components(HTMLLocation *This, URL_COMPONENTSW *url)
@@ -165,12 +165,12 @@ static HRESULT WINAPI HTMLLocation_put_href(IHTMLLocation *iface, BSTR v)
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    if(!This->window) {
+    if(!This->window || !This->window->base.outer_window) {
         FIXME("No window available\n");
         return E_FAIL;
     }
 
-    return navigate_url(This->window, v, This->window->url);
+    return navigate_url(This->window->base.outer_window, v, This->window->base.outer_window->url);
 }
 
 static HRESULT WINAPI HTMLLocation_get_href(IHTMLLocation *iface, BSTR *p)
@@ -565,12 +565,12 @@ static HRESULT WINAPI HTMLLocation_replace(IHTMLLocation *iface, BSTR bstr)
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(bstr));
 
-    if(!This->window) {
+    if(!This->window || !This->window->base.outer_window) {
         FIXME("No window available\n");
         return E_FAIL;
     }
 
-    return navigate_url(This->window, bstr, This->window->url);
+    return navigate_url(This->window->base.outer_window, bstr, This->window->base.outer_window->url);
 }
 
 static HRESULT WINAPI HTMLLocation_assign(IHTMLLocation *iface, BSTR bstr)
@@ -629,7 +629,7 @@ static dispex_static_data_t HTMLLocation_dispex = {
 };
 
 
-HRESULT HTMLLocation_Create(HTMLOuterWindow *window, HTMLLocation **ret)
+HRESULT HTMLLocation_Create(HTMLInnerWindow *window, HTMLLocation **ret)
 {
     HTMLLocation *location;
 
