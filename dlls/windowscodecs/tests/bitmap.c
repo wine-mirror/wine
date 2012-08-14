@@ -264,6 +264,108 @@ static void test_createbitmap(void)
     IWICBitmap_Release(bitmap);
 }
 
+static void test_createbitmapfromsource(void)
+{
+    HRESULT hr;
+    IWICBitmap *bitmap, *bitmap2;
+    IWICPalette *palette;
+    IWICBitmapLock *lock;
+    int i;
+    WICRect rc;
+    const BYTE bitmap_data[27] = {
+        128,128,255, 128,128,128, 128,255,128,
+        128,128,128, 128,128,128, 255,255,255,
+        255,128,128, 255,255,255, 255,255,255};
+    BYTE returned_data[27] = {0};
+    BYTE *lock_buffer=NULL;
+    UINT lock_buffer_stride=0;
+    UINT lock_buffer_size=0;
+    WICPixelFormatGUID pixelformat = {0};
+    UINT width=0, height=0;
+    double dpix=10.0, dpiy=10.0;
+
+    hr = IWICImagingFactory_CreateBitmap(factory, 3, 3, &GUID_WICPixelFormat24bppBGR,
+        WICBitmapCacheOnLoad, &bitmap);
+    ok(hr == S_OK, "IWICImagingFactory_CreateBitmap failed hr=%x\n", hr);
+
+    if (FAILED(hr))
+        return;
+
+    hr = IWICImagingFactory_CreatePalette(factory, &palette);
+    ok(hr == S_OK, "IWICImagingFactory_CreatePalette failed hr=%x\n", hr);
+
+    hr = IWICPalette_InitializePredefined(palette, WICBitmapPaletteTypeFixedGray256, FALSE);
+    ok(hr == S_OK, "IWICPalette_InitializePredefined failed hr=%x\n", hr);
+
+    hr = IWICBitmap_SetPalette(bitmap, palette);
+    ok(hr == S_OK, "IWICBitmap_SetPalette failed hr=%x\n", hr);
+
+    IWICPalette_Release(palette);
+
+    rc.X = rc.Y = 0;
+    rc.Width = 3;
+    rc.Height = 3;
+    hr = IWICBitmap_Lock(bitmap, &rc, WICBitmapLockWrite, &lock);
+    ok(hr == S_OK, "IWICBitmap_Lock failed hr=%x\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        hr = IWICBitmapLock_GetStride(lock, &lock_buffer_stride);
+        ok(hr == S_OK, "IWICBitmapLock_GetStride failed hr=%x\n", hr);
+        ok(lock_buffer_stride == 12, "got %i, expected 12\n", lock_buffer_stride);
+
+        hr = IWICBitmapLock_GetDataPointer(lock, &lock_buffer_size, &lock_buffer);
+        ok(hr == S_OK, "IWICBitmapLock_GetDataPointer failed hr=%x\n", hr);
+        ok(lock_buffer_size == 33, "got %i, expected 33\n", lock_buffer_size);
+        ok(lock_buffer != NULL, "got NULL data pointer\n");
+
+        for (i=0; i<3; i++)
+            memcpy(lock_buffer + lock_buffer_stride*i, bitmap_data + i*9, 9);
+
+        IWICBitmapLock_Release(lock);
+    }
+
+    hr = IWICBitmap_SetResolution(bitmap, 12.0, 34.0);
+    ok(hr == S_OK, "IWICBitmap_SetResolution failed hr=%x\n", hr);
+
+    hr = IWICImagingFactory_CreateBitmapFromSource(factory, (IWICBitmapSource*)bitmap,
+        WICBitmapCacheOnLoad, &bitmap2);
+    todo_wine ok(hr == S_OK, "IWICImagingFactory_CreateBitmapFromSource failed hr=%x\n", hr);
+
+    IWICBitmap_Release(bitmap);
+
+    if (FAILED(hr)) return;
+
+    hr = IWICImagingFactory_CreatePalette(factory, &palette);
+    ok(hr == S_OK, "IWICImagingFactory_CreatePalette failed hr=%x\n", hr);
+
+    hr = IWICBitmap_CopyPalette(bitmap2, palette);
+    ok(hr == WINCODEC_ERR_PALETTEUNAVAILABLE, "IWICBitmap_CopyPalette failed hr=%x\n", hr);
+
+    IWICPalette_Release(palette);
+
+    hr = IWICBitmap_CopyPixels(bitmap2, NULL, 9, 27, returned_data);
+    ok(hr == S_OK, "IWICBitmap_CopyPixels failed hr=%x\n", hr);
+
+    for (i=0; i<27; i++)
+        ok(returned_data[i] == bitmap_data[i], "returned_data[%i] == %i\n", i, returned_data[i]);
+
+    hr = IWICBitmap_GetPixelFormat(bitmap2, &pixelformat);
+    ok(hr == S_OK, "IWICBitmap_GetPixelFormat failed hr=%x\n", hr);
+    ok(IsEqualGUID(&pixelformat, &GUID_WICPixelFormat24bppBGR), "unexpected pixel format\n");
+
+    hr = IWICBitmap_GetResolution(bitmap2, &dpix, &dpiy);
+    ok(hr == S_OK, "IWICBitmap_GetResolution failed hr=%x\n", hr);
+    ok(dpix == 12.0, "got %f, expected 12.0\n", dpix);
+    ok(dpiy == 34.0, "got %f, expected 34.0\n", dpiy);
+
+    hr = IWICBitmap_GetSize(bitmap2, &width, &height);
+    ok(hr == S_OK, "IWICBitmap_GetSize failed hr=%x\n", hr);
+    ok(width == 3, "got %d, expected 3\n", width);
+    ok(height == 3, "got %d, expected 3\n", height);
+
+    IWICBitmap_Release(bitmap2);
+}
+
 START_TEST(bitmap)
 {
     HRESULT hr;
@@ -275,6 +377,7 @@ START_TEST(bitmap)
     ok(SUCCEEDED(hr), "CoCreateInstance failed, hr=%x\n", hr);
 
     test_createbitmap();
+    test_createbitmapfromsource();
 
     IWICImagingFactory_Release(factory);
 
