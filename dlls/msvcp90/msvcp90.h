@@ -133,6 +133,12 @@ typedef struct {
     _Cvtvec cvt;
 } codecvt_wchar;
 
+int __thiscall codecvt_wchar_unshift(const codecvt_wchar*, int*, char*, char*, char**);
+int __thiscall codecvt_wchar_out(const codecvt_wchar*, int*, const wchar_t*,
+        const wchar_t*, const wchar_t**, char*, char*, char**);
+int __thiscall codecvt_wchar_in(const codecvt_wchar*, int*, const char*,
+        const char*, const char**, wchar_t*, wchar_t*, wchar_t**);
+
 /* class ctype_base */
 typedef struct {
     locale_facet facet;
@@ -171,7 +177,8 @@ locale* __thiscall locale_operator_assign(locale*, const locale*);
 void __thiscall locale_dtor(locale*);
 void free_locale(void);
 codecvt_char* codecvt_char_use_facet(const locale*);
-codecvt_char* codecvt_char_use_facet(const locale*);
+codecvt_wchar* codecvt_wchar_use_facet(const locale*);
+codecvt_wchar* codecvt_short_use_facet(const locale*);
 ctype_char* ctype_char_use_facet(const locale*);
 ctype_wchar* ctype_wchar_use_facet(const locale*);
 

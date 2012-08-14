@@ -3086,7 +3086,7 @@ unsigned int __cdecl codecvt_wchar__Getcat(const locale_facet **facet, const loc
     return LC_CTYPE;
 }
 
-static codecvt_wchar* codecvt_wchar_use_facet(const locale *loc)
+codecvt_wchar* codecvt_wchar_use_facet(const locale *loc)
 {
     static codecvt_wchar *obj = NULL;
 
@@ -3138,7 +3138,7 @@ unsigned int __cdecl codecvt_short__Getcat(const locale_facet **facet, const loc
     return LC_CTYPE;
 }
 
-static codecvt_wchar* codecvt_short_use_facet(const locale *loc)
+codecvt_wchar* codecvt_short_use_facet(const locale *loc)
 {
     static codecvt_wchar *obj = NULL;
 
