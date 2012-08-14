@@ -157,6 +157,57 @@ static const D3DXCONSTANT_DESC ctab_arrays_expected[] = {
     {"bvecarray", D3DXRS_FLOAT4, 16, 2, D3DXPC_VECTOR,      D3DXPT_BOOL,  1, 3, 3, 0,  36, NULL},
     {"ivecarray", D3DXRS_FLOAT4, 18, 1, D3DXPC_VECTOR,      D3DXPT_INT,   1, 4, 1, 0,  16, NULL}};
 
+static const DWORD ctab_with_default_values[] = {
+    0xfffe0200,                                                 /* vs_2_0 */
+    0x007bfffe, FCC_CTAB,                                       /* CTAB comment */
+    0x0000001c, 0x000001b7, 0xfffe0200, 0x00000005, 0x0000001c, /* header */
+    0x00000100, 0x000001b0,
+    0x00000080, 0x00080002, 0x00000003, 0x00000084, 0x00000094, /* constant 1 desc (arr) */
+    0x000000c4, 0x000c0002, 0x00000001, 0x000000c8, 0x000000d8, /* constant 2 desc (flt) */
+    0x000000e8, 0x00040002, 0x00000004, 0x000000f0, 0x00000100, /* constant 3 desc (mat3) */
+    0x00000140, 0x00000002, 0x00000004, 0x000000f0, 0x00000148, /* constant 4 desc (mat4) */
+    0x00000188, 0x000b0002, 0x00000001, 0x00000190, 0x000001a0, /* constant 5 desc (vec4) */
+    0x00727261,                                                 /* constant 1 name */
+    0x00030000, 0x00010001, 0x00000003, 0x00000000,             /* constant 1 type desc */
+    0x42c80000, 0x00000000, 0x00000000, 0x00000000,             /* constant 1 default value */
+    0x43480000, 0x00000000, 0x00000000, 0x00000000,
+    0x43960000, 0x00000000, 0x00000000, 0x00000000,
+    0x00746c66,                                                 /* constant 2 name */
+    0x00030000, 0x00010001, 0x00000001, 0x00000000,             /* constant 2 type desc */
+    0x411fd70a, 0x00000000, 0x00000000, 0x00000000,             /* constant 2 default value */
+    0x3374616d,                                                 /* constant 3 name */
+    0xababab00,
+    0x00030003, 0x00040004, 0x00000001, 0x00000000,             /* constant 3 & 4 type desc */
+    0x41300000, 0x425c0000, 0x42c60000, 0x44a42000,             /* constat 3 default value */
+    0x41b00000, 0x42840000, 0x447c8000, 0x44b0c000,
+    0x42040000, 0x429a0000, 0x448ae000, 0x44bd6000,
+    0x42300000, 0x42b00000, 0x44978000, 0x44ca0000,
+    0x3474616d,                                                 /* constant 4 name */
+    0xababab00,
+    0x3f800000, 0x40a00000, 0x41100000, 0x41500000,             /* constant 4 default value */
+    0x40000000, 0x40c00000, 0x41200000, 0x41600000,
+    0x40400000, 0x40e00000, 0x41300000, 0x41700000,
+    0x40800000, 0x41000000, 0x41400000, 0x41800000,
+    0x34636576,                                                 /* constant 5 name */
+    0xababab00,
+    0x00030001, 0x00040001, 0x00000001, 0x00000000,             /* constant 5 type desc */
+    0x41200000, 0x41a00000, 0x41f00000, 0x42200000,             /* constant 5 default value */
+    0x325f7376, 0x4d004141, 0x41414141, 0x00000000,             /* target & creator string */
+    0x0000ffff};                                                /* END */
+
+static const float mat4_default_value[] = {1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15, 4, 8, 12, 16};
+static const float mat3_default_value[] = {11, 55, 99, 1313, 22, 66, 1010, 1414, 33, 77, 1111, 1515, 44, 88, 1212, 1616};
+static const float arr_default_value[] = {100, 0, 0};
+static const float vec4_default_value[] = {10, 20, 30, 40};
+static const float flt_default_value = 9.99;
+
+static const D3DXCONSTANT_DESC ctab_with_default_values_expected[] = {
+    {"mat4", D3DXRS_FLOAT4,  0, 4, D3DXPC_MATRIX_COLUMNS, D3DXPT_FLOAT, 4, 4, 1, 0, 64, mat4_default_value},
+    {"mat3", D3DXRS_FLOAT4,  4, 4, D3DXPC_MATRIX_COLUMNS, D3DXPT_FLOAT, 4, 4, 1, 0, 64, mat3_default_value},
+    {"arr",  D3DXRS_FLOAT4,  8, 3, D3DXPC_SCALAR,         D3DXPT_FLOAT, 1, 1, 3, 0, 12, arr_default_value},
+    {"vec4", D3DXRS_FLOAT4, 11, 1, D3DXPC_VECTOR,         D3DXPT_FLOAT, 1, 4, 1, 0, 16, vec4_default_value},
+    {"flt",  D3DXRS_FLOAT4, 12, 1, D3DXPC_SCALAR,         D3DXPT_FLOAT, 1, 1, 1, 0,  4, &flt_default_value}};
+
 static const DWORD ctab_samplers[] = {
     0xfffe0300,                                                             /* vs_3_0                        */
     0x0032fffe, FCC_CTAB,                                                   /* CTAB comment                  */
@@ -437,9 +488,21 @@ static void test_constant_table(const char *test_name, const DWORD *ctable_fn,
         ok(actual.Bytes == expected->Bytes,
            "%s in %s: Got different byte count: Got %d, expected %d\n",
            expected->Name, test_name, actual.Bytes, expected->Bytes);
-        ok(actual.DefaultValue == expected->DefaultValue,
-            "%s in %s: Got different default value: Got %p, expected %p\n",
-            expected->Name, test_name, actual.DefaultValue, expected->DefaultValue);
+
+        if (!expected->DefaultValue)
+        {
+            ok(actual.DefaultValue == NULL,
+                "%s in %s: Got different default value: expected NULL\n",
+                expected->Name, test_name);
+        }
+        else
+        {
+            ok(actual.DefaultValue != NULL,
+                "%s in %s: Got different default value: expected non-NULL\n",
+                expected->Name, test_name);
+            ok(memcmp(actual.DefaultValue, expected->DefaultValue, expected->Bytes) == 0,
+                "%s in %s: Got different default value\n", expected->Name, test_name);
+        }
     }
 
     /* Finally, release the constant table */
@@ -454,6 +517,8 @@ static void test_constant_tables(void)
             sizeof(ctab_matrices_expected)/sizeof(*ctab_matrices_expected));
     test_constant_table("test_arrays", ctab_arrays, ctab_arrays_expected,
             sizeof(ctab_arrays_expected)/sizeof(*ctab_arrays_expected));
+    test_constant_table("test_default_values", ctab_with_default_values, ctab_with_default_values_expected,
+            sizeof(ctab_with_default_values_expected)/sizeof(*ctab_with_default_values_expected));
     test_constant_table("test_samplers", ctab_samplers, ctab_samplers_expected,
             sizeof(ctab_samplers_expected)/sizeof(*ctab_samplers_expected));
 }
