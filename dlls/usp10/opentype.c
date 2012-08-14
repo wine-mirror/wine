@@ -1174,44 +1174,47 @@ static INT GPOS_apply_PairAdjustment(const OT_LookupTable *look, const WORD *gly
         ppf1 = (const GPOS_PairPosFormat1*)((const BYTE*)look+offset);
         if (GET_BE_WORD(ppf1->PosFormat) == 1)
         {
+            int index;
             offset = GET_BE_WORD(ppf1->Coverage);
-            if (GSUB_is_glyph_covered((const BYTE*)ppf1+offset, glyphs[glyph_index]) != -1)
+            index = GSUB_is_glyph_covered((const BYTE*)ppf1+offset, glyphs[glyph_index]);
+            if (index != -1 && index < GET_BE_WORD(ppf1->PairSetCount))
             {
-                int i;
-                int count = GET_BE_WORD(ppf1->PairSetCount);
-                for (i = 0; i < count; i++)
+                int k;
+                int pair_count;
+                const GPOS_PairSet *ps;
+                offset = GET_BE_WORD(ppf1->PairSetOffset[index]);
+                ps = (const GPOS_PairSet*)((const BYTE*)ppf1+offset);
+                pair_count = GET_BE_WORD(ps->PairValueCount);
+                for (k = 0; k < pair_count; k++)
                 {
-                    int k;
-                    int pair_count;
-                    const GPOS_PairSet *ps;
-                    offset = GET_BE_WORD(ppf1->PairSetOffset[i]);
-                    ps = (const GPOS_PairSet*)((const BYTE*)ppf1+offset);
-                    pair_count = GET_BE_WORD(ps->PairValueCount);
-                    for (k = 0; k < pair_count; k++)
+                    WORD second_glyph = GET_BE_WORD(ps->PairValueRecord[k].SecondGlyph);
+                    if (glyphs[glyph_index+write_dir] == second_glyph)
                     {
-                        if (glyphs[glyph_index+write_dir] == GET_BE_WORD(ps->PairValueRecord[k].SecondGlyph))
+                        int next = 1;
+                        GPOS_ValueRecord ValueRecord1 = {0,0,0,0,0,0,0,0};
+                        GPOS_ValueRecord ValueRecord2 = {0,0,0,0,0,0,0,0};
+                        WORD ValueFormat1 = GET_BE_WORD(ppf1->ValueFormat1);
+                        WORD ValueFormat2 = GET_BE_WORD(ppf1->ValueFormat2);
+
+                        TRACE("Format 1: Found Pair %x,%x\n",glyphs[glyph_index],glyphs[glyph_index+write_dir]);
+
+                        offset = GPOS_get_value_record(ValueFormat1, ps->PairValueRecord[k].Value1, &ValueRecord1);
+                        GPOS_get_value_record(ValueFormat2, (WORD*)((const BYTE*)(ps->PairValueRecord[k].Value2)+offset), &ValueRecord2);
+                        if (ValueFormat1)
                         {
-                            GPOS_ValueRecord ValueRecord1 = {0,0,0,0,0,0,0,0};
-                            GPOS_ValueRecord ValueRecord2 = {0,0,0,0,0,0,0,0};
-                            WORD ValueFormat1 = GET_BE_WORD(ppf1->ValueFormat1);
-                            WORD ValueFormat2 = GET_BE_WORD(ppf1->ValueFormat2);
-
-                            TRACE("Format 1: Found Pair %x,%x\n",glyphs[glyph_index],glyphs[glyph_index+write_dir]);
-
-                            offset = GPOS_get_value_record(ValueFormat1, ps->PairValueRecord[k].Value1, &ValueRecord1);
-                            GPOS_get_value_record(ValueFormat2, (WORD*)((const BYTE*)(ps->PairValueRecord[k].Value2)+offset), &ValueRecord2);
-                            if (ValueFormat1)
-                            {
-                                GPOS_get_value_record_offsets((const BYTE*)ppf1, &ValueRecord1,  ValueFormat1, ppem, &ptAdjust[0], &ptAdvance[0]);
-                                TRACE("Glyph 1 resulting cumulative offset is %i,%i design units\n",ptAdjust[0].x,ptAdjust[0].y);
-                            }
-                            if (ValueFormat2)
-                            {
-                                GPOS_get_value_record_offsets((const BYTE*)ppf1, &ValueRecord2,  ValueFormat2, ppem, &ptAdjust[1], &ptAdvance[1]);
-                                TRACE("Glyph 2 resulting cumulative offset is %i,%i design units\n",ptAdjust[1].x,ptAdjust[1].y);
-                                return glyph_index+2;
-                            }
+                            GPOS_get_value_record_offsets((const BYTE*)ppf1, &ValueRecord1,  ValueFormat1, ppem, &ptAdjust[0], &ptAdvance[0]);
+                            TRACE("Glyph 1 resulting cumulative offset is %i,%i design units\n",ptAdjust[0].x,ptAdjust[0].y);
+                            TRACE("Glyph 1 resulting cumulative advance is %i,%i design units\n",ptAdvance[0].x,ptAdvance[0].y);
                         }
+                        if (ValueFormat2)
+                        {
+                            GPOS_get_value_record_offsets((const BYTE*)ppf1, &ValueRecord2,  ValueFormat2, ppem, &ptAdjust[1], &ptAdvance[1]);
+                            TRACE("Glyph 2 resulting cumulative offset is %i,%i design units\n",ptAdjust[1].x,ptAdjust[1].y);
+                            TRACE("Glyph 2 resulting cumulative advance is %i,%i design units\n",ptAdvance[1].x,ptAdvance[1].y);
+                            next++;
+                        }
+                        if (next)
+                            return glyph_index + next;
                     }
                 }
             }
