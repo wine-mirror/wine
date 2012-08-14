@@ -197,16 +197,16 @@ static const DWORD ctab_with_default_values[] = {
 
 static const float mat4_default_value[] = {1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15, 4, 8, 12, 16};
 static const float mat3_default_value[] = {11, 55, 99, 1313, 22, 66, 1010, 1414, 33, 77, 1111, 1515, 44, 88, 1212, 1616};
-static const float arr_default_value[] = {100, 0, 0};
+static const float arr_default_value[] = {100, 0, 0, 0, 200, 0, 0, 0, 300, 0, 0, 0};
 static const float vec4_default_value[] = {10, 20, 30, 40};
-static const float flt_default_value = 9.99;
+static const float flt_default_value[] = {9.99, 0, 0, 0};
 
 static const D3DXCONSTANT_DESC ctab_with_default_values_expected[] = {
     {"mat4", D3DXRS_FLOAT4,  0, 4, D3DXPC_MATRIX_COLUMNS, D3DXPT_FLOAT, 4, 4, 1, 0, 64, mat4_default_value},
     {"mat3", D3DXRS_FLOAT4,  4, 4, D3DXPC_MATRIX_COLUMNS, D3DXPT_FLOAT, 4, 4, 1, 0, 64, mat3_default_value},
     {"arr",  D3DXRS_FLOAT4,  8, 3, D3DXPC_SCALAR,         D3DXPT_FLOAT, 1, 1, 3, 0, 12, arr_default_value},
     {"vec4", D3DXRS_FLOAT4, 11, 1, D3DXPC_VECTOR,         D3DXPT_FLOAT, 1, 4, 1, 0, 16, vec4_default_value},
-    {"flt",  D3DXRS_FLOAT4, 12, 1, D3DXPC_SCALAR,         D3DXPT_FLOAT, 1, 1, 1, 0,  4, &flt_default_value}};
+    {"flt",  D3DXRS_FLOAT4, 12, 1, D3DXPC_SCALAR,         D3DXPT_FLOAT, 1, 1, 1, 0,  4, flt_default_value}};
 
 static const DWORD ctab_samplers[] = {
     0xfffe0300,                                                             /* vs_3_0                        */
@@ -699,6 +699,83 @@ static void test_setting_arrays_table(IDirect3DDevice9 *device)
     ok(refcnt == 0, "The constant table reference count was %u, should be 0\n", refcnt);
 }
 
+static void test_SetDefaults(IDirect3DDevice9 *device)
+{
+    static const D3DXMATRIX mvp = {{{
+        0.51f, 0.62f, 0.80f, 0.78f,
+        0.23f, 0.95f, 0.37f, 0.48f,
+        0.10f, 0.58f, 0.90f, 0.25f,
+        0.89f, 0.41f, 0.93f, 0.27f}}};
+    static const D3DXVECTOR4 f4 = {0.2f, 0.4f, 0.8f, 1.2f};
+
+    float out[16];
+
+    HRESULT res;
+    ID3DXConstantTable *ctable;
+
+    res = D3DXGetShaderConstantTable(ctab_basic, &ctable);
+    ok(res == D3D_OK, "D3DXGetShaderConstantTable failed: got %08x\n", res);
+
+    res = ID3DXConstantTable_SetVector(ctable, device, "f4", &f4);
+    ok(res == D3D_OK, "ID3DXConstantTable_SetVector failed: got %08x\n", res);
+
+    res = ID3DXConstantTable_SetMatrix(ctable, device, "mvp", &mvp);
+    ok(res == D3D_OK, "ID3DXConstantTable_SetMatrix failed: got %08x\n", res);
+
+    res = ID3DXConstantTable_SetDefaults(ctable, device);
+    ok(res == D3D_OK, "ID3dXConstantTable_SetDefaults failed: got %08x\n", res);
+
+    /* SetDefaults doesn't change constants without default values */
+    IDirect3DDevice9_GetVertexShaderConstantF(device, 0, out, 4);
+    ok(out[0] == S(U(mvp))._11 && out[4] == S(U(mvp))._12 && out[8] == S(U(mvp))._13 && out[12] == S(U(mvp))._14,
+            "The first row of mvp was not set correctly, got {%f, %f, %f, %f}, should be {%f, %f, %f, %f}\n",
+            out[0], out[4], out[8], out[12], S(U(mvp))._11, S(U(mvp))._12, S(U(mvp))._13, S(U(mvp))._14);
+    ok(out[1] == S(U(mvp))._21 && out[5] == S(U(mvp))._22 && out[9] == S(U(mvp))._23 && out[13] == S(U(mvp))._24,
+            "The second row of mvp was not set correctly, got {%f, %f, %f, %f}, should be {%f, %f, %f, %f}\n",
+            out[1], out[5], out[9], out[13], S(U(mvp))._21, S(U(mvp))._22, S(U(mvp))._23, S(U(mvp))._24);
+    ok(out[2] == S(U(mvp))._31 && out[6] == S(U(mvp))._32 && out[10] == S(U(mvp))._33 && out[14] == S(U(mvp))._34,
+            "The third row of mvp was not set correctly, got {%f, %f, %f, %f}, should be {%f, %f, %f, %f}\n",
+            out[2], out[6], out[10], out[14], S(U(mvp))._31, S(U(mvp))._32, S(U(mvp))._33, S(U(mvp))._34);
+    ok(out[3] == S(U(mvp))._41 && out[7] == S(U(mvp))._42 && out[11] == S(U(mvp))._43 && out[15] == S(U(mvp))._44,
+            "The fourth row of mvp was not set correctly, got {%f, %f, %f, %f}, should be {%f, %f, %f, %f}\n",
+            out[3], out[7], out[11], out[15], S(U(mvp))._41, S(U(mvp))._42, S(U(mvp))._43, S(U(mvp))._44);
+
+    IDirect3DDevice9_GetVertexShaderConstantF(device, 7, out, 1);
+    ok(memcmp(out, &f4, sizeof(f4)) == 0,
+            "The variable f4 was not set correctly, out={%f, %f, %f, %f}, should be {%f, %f, %f, %f}\n",
+            out[0], out[1], out[2], out[3], f4.x, f4.y, f4.z, f4.w);
+
+    ID3DXConstantTable_Release(ctable);
+
+    res = D3DXGetShaderConstantTable(ctab_with_default_values, &ctable);
+    ok(res == D3D_OK, "D3DXGetShaderConstantTable failed: got %08x\n", res);
+
+    res = ID3DXConstantTable_SetDefaults(ctable, device);
+    ok(res == D3D_OK, "ID3DXConstantTable_SetDefaults failed: got %08x\n", res);
+
+    IDirect3DDevice9_GetVertexShaderConstantF(device, 0, out, 4);
+    ok(memcmp(out, mat4_default_value, sizeof(mat4_default_value)) == 0,
+            "The variable mat4 was not set correctly to default value\n");
+
+    IDirect3DDevice9_GetVertexShaderConstantF(device, 4, out, 4);
+    ok(memcmp(out, mat3_default_value, sizeof(mat3_default_value)) == 0,
+            "The variable mat3 was not set correctly to default value\n");
+
+    IDirect3DDevice9_GetVertexShaderConstantF(device, 8, out, 3);
+    ok(memcmp(out, arr_default_value, sizeof(arr_default_value)) == 0,
+        "The variable array was not set correctly to default value\n");
+
+    IDirect3DDevice9_GetVertexShaderConstantF(device, 11, out, 1);
+    ok(memcmp(out, vec4_default_value, sizeof(vec4_default_value)) == 0,
+        "The variable vec4 was not set correctly to default value\n");
+
+    IDirect3DDevice9_GetVertexShaderConstantF(device, 12, out, 1);
+    ok(memcmp(out, flt_default_value, sizeof(flt_default_value)) == 0,
+        "The variable flt was not set correctly to default value\n");
+
+    ID3DXConstantTable_Release(ctable);
+}
+
 static void test_setting_constants(void)
 {
     HWND wnd;
@@ -737,6 +814,7 @@ static void test_setting_constants(void)
 
     test_setting_basic_table(device);
     test_setting_arrays_table(device);
+    test_SetDefaults(device);
 
     /* Release resources */
     refcnt = IDirect3DDevice9_Release(device);
