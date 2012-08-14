@@ -966,7 +966,6 @@ static Cursor create_xlib_monochrome_cursor( HDC hdc, const ICONINFOEXW *icon, i
     bits.is_copy = TRUE;
     if (!(src_pixmap = create_pixmap_from_image( hdc, &vis, info, &bits, DIB_RGB_COLORS ))) goto done;
 
-    wine_tsx11_lock();
     bits_pixmap = XCreatePixmap( gdi_display, root_window, width, height, 1 );
     mask_pixmap = XCreatePixmap( gdi_display, root_window, width, height, 1 );
     gc = XCreateGC( gdi_display, src_pixmap, 0, NULL );
@@ -1012,7 +1011,6 @@ static Cursor create_xlib_monochrome_cursor( HDC hdc, const ICONINFOEXW *icon, i
     XFreePixmap( gdi_display, src_pixmap );
     XFreePixmap( gdi_display, bits_pixmap );
     XFreePixmap( gdi_display, mask_pixmap );
-    wine_tsx11_unlock();
 
 done:
     HeapFree( GetProcessHeap(), 0, mask_bits );
@@ -1134,7 +1132,6 @@ static Cursor create_xlib_color_cursor( HDC hdc, const ICONINFOEXW *icon, int wi
     bits.ptr = mask_bits;
     mask_pixmap = create_pixmap_from_image( hdc, &vis, info, &bits, DIB_RGB_COLORS );
 
-    wine_tsx11_lock();
     if (mask_pixmap)
     {
         cursor = XCreatePixmapCursor( gdi_display, xor_pixmap, mask_pixmap,
@@ -1142,7 +1139,6 @@ static Cursor create_xlib_color_cursor( HDC hdc, const ICONINFOEXW *icon, int wi
         XFreePixmap( gdi_display, mask_pixmap );
     }
     XFreePixmap( gdi_display, xor_pixmap );
-    wine_tsx11_unlock();
 
 done:
     HeapFree( GetProcessHeap(), 0, color_bits );

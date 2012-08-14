@@ -600,8 +600,6 @@ static int BITBLT_GetDstArea(X11DRV_PDEVICE *physDev, Pixmap pixmap, GC gc, cons
     INT width  = visRectDst->right - visRectDst->left;
     INT height = visRectDst->bottom - visRectDst->top;
 
-    wine_tsx11_lock();
-
     if (!X11DRV_PALETTE_XPixelToPalette || (physDev->depth == 1) ||
 	(X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_VIRTUAL) )
     {
@@ -633,8 +631,6 @@ static int BITBLT_GetDstArea(X11DRV_PDEVICE *physDev, Pixmap pixmap, GC gc, cons
             XDestroyImage( image );
         }
     }
-
-    wine_tsx11_unlock();
     return exposures;
 }
 
@@ -707,7 +703,6 @@ void execute_rop( X11DRV_PDEVICE *physdev, Pixmap src_pixmap, GC gc, const RECT 
     if (use_dst) BITBLT_GetDstArea( physdev, pixmaps[DST], gc, visrect );
     null_brush = use_pat && !X11DRV_SetupGCForPatBlt( physdev, gc, TRUE );
 
-    wine_tsx11_lock();
     for ( ; *opcode; opcode++)
     {
         if (OP_DST(*opcode) == DST) result = pixmaps[DST];
@@ -737,7 +732,6 @@ void execute_rop( X11DRV_PDEVICE *physdev, Pixmap src_pixmap, GC gc, const RECT 
     physdev->exposures += BITBLT_PutDstArea( physdev, result, visrect );
     XFreePixmap( gdi_display, pixmaps[DST] );
     if (pixmaps[TMP]) XFreePixmap( gdi_display, pixmaps[TMP] );
-    wine_tsx11_unlock();
     add_device_bounds( physdev, visrect );
 }
 
@@ -752,7 +746,6 @@ BOOL X11DRV_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
 
     if (usePat && !X11DRV_SetupGCForBrush( physDev )) return TRUE;
 
-    wine_tsx11_lock();
     XSetFunction( gdi_display, physDev->gc, OP_ROP(*opcode) );
 
     switch(rop)  /* a few special cases */
@@ -789,7 +782,6 @@ BOOL X11DRV_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
                     physDev->dc_rect.top + dst->visrect.top,
                     dst->visrect.right - dst->visrect.left,
                     dst->visrect.bottom - dst->visrect.top );
-    wine_tsx11_unlock();
     add_device_bounds( physDev, &dst->visrect );
     return TRUE;
 }
@@ -828,7 +820,6 @@ BOOL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
     {
         if (same_format(physDevSrc, physDevDst))
         {
-            wine_tsx11_lock();
             XSetFunction( gdi_display, physDevDst->gc, OP_ROP(*opcode) );
             XCopyArea( gdi_display, physDevSrc->drawable,
                        physDevDst->drawable, physDevDst->gc,
@@ -838,7 +829,6 @@ BOOL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
                        physDevDst->dc_rect.left + dst->visrect.left,
                        physDevDst->dc_rect.top + dst->visrect.top );
             physDevDst->exposures++;
-            wine_tsx11_unlock();
             return TRUE;
         }
         if (physDevSrc->depth == 1)
@@ -846,7 +836,6 @@ BOOL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
             int text_pixel = X11DRV_PALETTE_ToPhysical( physDevDst, GetTextColor(physDevDst->dev.hdc) );
             int bkgnd_pixel = X11DRV_PALETTE_ToPhysical( physDevDst, GetBkColor(physDevDst->dev.hdc) );
 
-            wine_tsx11_lock();
             XSetBackground( gdi_display, physDevDst->gc, text_pixel );
             XSetForeground( gdi_display, physDevDst->gc, bkgnd_pixel );
             XSetFunction( gdi_display, physDevDst->gc, OP_ROP(*opcode) );
@@ -858,12 +847,10 @@ BOOL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
                         physDevDst->dc_rect.left + dst->visrect.left,
                         physDevDst->dc_rect.top + dst->visrect.top, 1 );
             physDevDst->exposures++;
-            wine_tsx11_unlock();
             return TRUE;
         }
     }
 
-    wine_tsx11_lock();
     gc = XCreateGC( gdi_display, physDevDst->drawable, 0, NULL );
     XSetSubwindowMode( gdi_display, gc, IncludeInferiors );
     XSetGraphicsExposures( gdi_display, gc, False );
@@ -902,7 +889,6 @@ BOOL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
                    physDevSrc->dc_rect.top + src->visrect.top,
                    width, height, 0, 0 );
     }
-    wine_tsx11_unlock();
 
     execute_rop( physDevDst, src_pixmap, gc, &dst->visrect, rop );
 

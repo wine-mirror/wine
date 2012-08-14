@@ -335,7 +335,6 @@ static int GLXErrorHandler(Display *dpy, XErrorEvent *event, void *arg)
     return 1;
 }
 
-static BOOL infoInitialized = FALSE;
 static BOOL X11DRV_WineGL_InitOpenglInfo(void)
 {
     int screen = DefaultScreen(gdi_display);
@@ -348,15 +347,9 @@ static BOOL X11DRV_WineGL_InitOpenglInfo(void)
     BOOL ret = FALSE;
     int attribList[] = {GLX_RGBA, GLX_DOUBLEBUFFER, None};
 
-    if (infoInitialized)
-        return TRUE;
-    infoInitialized = TRUE;
-
     attr.override_redirect = True;
     attr.colormap = None;
     attr.border_pixel = 0;
-
-    wine_tsx11_lock();
 
     vis = pglXChooseVisual(gdi_display, screen, attribList);
     if (vis) {
@@ -460,7 +453,6 @@ done:
     }
     if (win != root) XDestroyWindow( gdi_display, win );
     if (attr.colormap) XFreeColormap( gdi_display, attr.colormap );
-    wine_tsx11_unlock();
     if (!ret) ERR(" couldn't initialize OpenGL, expect problems\n");
     return ret;
 }
@@ -560,11 +552,9 @@ static BOOL has_opengl(void)
 
     if(!X11DRV_WineGL_InitOpenglInfo()) goto failed;
 
-    wine_tsx11_lock();
     if (pglXQueryExtension(gdi_display, &error_base, &event_base)) {
         TRACE("GLX is up and running error_base = %d\n", error_base);
     } else {
-        wine_tsx11_unlock();
         ERR( "GLX extension is missing, disabling OpenGL.\n" );
         goto failed;
     }
@@ -629,8 +619,6 @@ static BOOL has_opengl(void)
     }
 
     X11DRV_WineGL_LoadExtensions();
-
-    wine_tsx11_unlock();
     return TRUE;
 
 failed:
@@ -1201,8 +1189,6 @@ static int glxdrv_wglDescribePixelFormat( HDC hdc, int iPixelFormat,
   ppfd->dwFlags = PFD_SUPPORT_OPENGL;
   /* Now the flags extracted from the Visual */
 
-  wine_tsx11_lock();
-
   pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_DRAWABLE_TYPE, &value);
   if(value & GLX_WINDOW_BIT)
       ppfd->dwFlags |= PFD_DRAW_TO_WINDOW;
@@ -1287,8 +1273,6 @@ static int glxdrv_wglDescribePixelFormat( HDC hdc, int iPixelFormat,
   /* stencil bits */
   pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_STENCIL_SIZE, &value);
   ppfd->cStencilBits = value;
-
-  wine_tsx11_unlock();
 
   ppfd->iLayerType = PFD_MAIN_PLANE;
 
@@ -1388,7 +1372,6 @@ static BOOL glxdrv_wglSetPixelFormat( HDC hdc, int iPixelFormat, const PIXELFORM
     if (TRACE_ON(wgl)) {
         int gl_test = 0;
 
-        wine_tsx11_lock();
         gl_test = pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_FBCONFIG_ID, &value);
         if (gl_test) {
            ERR("Failed to retrieve FBCONFIG_ID from GLXFBConfig, expect problems.\n");
@@ -1400,7 +1383,6 @@ static BOOL glxdrv_wglSetPixelFormat( HDC hdc, int iPixelFormat, const PIXELFORM
             pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_DRAWABLE_TYPE, &value);
             TRACE(" - DRAWABLE_TYPE 0x%x\n", value);
         }
-        wine_tsx11_unlock();
     }
     return TRUE;
 }
@@ -2300,7 +2282,6 @@ static BOOL X11DRV_wglGetPixelFormatAttribivARB( HDC hdc, int iPixelFormat, int 
         WARN("Unable to convert iPixelFormat %d to a GLX one!\n", iPixelFormat);
     }
 
-    wine_tsx11_lock();
     for (i = 0; i < nAttributes; ++i) {
         const int curWGLAttr = piAttributes[i];
         TRACE("pAttr[%d] = %x\n", i, curWGLAttr);
@@ -2506,16 +2487,13 @@ static BOOL X11DRV_wglGetPixelFormatAttribivARB( HDC hdc, int iPixelFormat, int 
             piValues[i] = GL_FALSE; 
         }
     }
-    wine_tsx11_unlock();
     return GL_TRUE;
 
 get_error:
-    wine_tsx11_unlock();
     ERR("(%p): unexpected failure on GetFBConfigAttrib(%x) returns FALSE\n", hdc, curGLXAttr);
     return GL_FALSE;
 
 pix_error:
-    wine_tsx11_unlock();
     ERR("(%p): unexpected iPixelFormat(%d) vs nFormats(%d), returns FALSE\n", hdc, iPixelFormat, nWGLFormats);
     return GL_FALSE;
 }
@@ -2578,7 +2556,6 @@ static BOOL X11DRV_wglBindTexImageARB( struct wgl_pbuffer *object, int iBuffer )
         Drawable prev_drawable;
         GLXContext tmp_context;
 
-        wine_tsx11_lock();
         prev_context = pglXGetCurrentContext();
         prev_drawable = pglXGetCurrentDrawable();
 
@@ -2607,7 +2584,6 @@ static BOOL X11DRV_wglBindTexImageARB( struct wgl_pbuffer *object, int iBuffer )
         /* Switch back to the original drawable and upload the pbuffer-texture */
         pglXMakeCurrent(gdi_display, prev_drawable, prev_context);
         pglXDestroyContext(gdi_display, tmp_context);
-        wine_tsx11_unlock();
         return GL_TRUE;
     }
 

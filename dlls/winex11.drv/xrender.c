@@ -315,7 +315,6 @@ static int load_xrender_formats(void)
 
         if(is_wxrformat_compatible_with_default_visual(&wxr_formats_template[i]))
         {
-            wine_tsx11_lock();
             pict_formats[i] = pXRenderFindVisualFormat(gdi_display, visual);
             if (!pict_formats[i])
             {
@@ -331,7 +330,6 @@ static int load_xrender_formats(void)
                     }
                 }
             }
-            wine_tsx11_unlock();
             if (pict_formats[i]) default_format = i;
         }
         else
@@ -603,7 +601,6 @@ static void free_xrender_picture( struct xrender_physdev *dev )
 {
     if (dev->pict || dev->pict_src)
     {
-        wine_tsx11_lock();
         XFlush( gdi_display );
         if (dev->pict)
         {
@@ -617,7 +614,6 @@ static void free_xrender_picture( struct xrender_physdev *dev )
             pXRenderFreePicture(gdi_display, dev->pict_src);
             dev->pict_src = 0;
         }
-        wine_tsx11_unlock();
     }
 }
 
@@ -627,7 +623,7 @@ static Picture get_no_alpha_mask(void)
     static Pixmap pixmap;
     static Picture pict;
 
-    wine_tsx11_lock();
+    EnterCriticalSection( &xrender_cs );
     if (!pict)
     {
         XRenderPictureAttributes pa;
@@ -642,7 +638,7 @@ static Picture get_no_alpha_mask(void)
         col.alpha = 0;
         pXRenderFillRectangle( gdi_display, PictOpSrc, pict, &col, 0, 0, 1, 1 );
     }
-    wine_tsx11_unlock();
+    LeaveCriticalSection( &xrender_cs );
     return pict;
 }
 
@@ -983,7 +979,6 @@ static int GetCacheEntry( HDC hdc, LFANDSIZE *plfsz )
             char *value;
             BOOL antialias = TRUE;
 
-            wine_tsx11_lock();
             if ((value = XGetDefault( gdi_display, "Xft", "antialias" )))
             {
                 if (tolower(value[0]) == 'f' || tolower(value[0]) == 'n' ||
@@ -999,7 +994,6 @@ static int GetCacheEntry( HDC hdc, LFANDSIZE *plfsz )
                 else if (!strcmp( value, "vbgr" )) entry->aa_default = AA_VBGR;
                 else if (!strcmp( value, "none" )) entry->aa_default = AA_Grey;
             }
-            wine_tsx11_unlock();
             if (!antialias) font_smoothing = FALSE;
         }
 
@@ -1644,7 +1638,6 @@ static BOOL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
         }
     }
 
-    wine_tsx11_lock();
     /* Make sure we don't have any transforms set from a previous call */
     set_xrender_transformation(pict, 1, 1, 0, 0);
     pXRenderCompositeText16(gdi_display, render_op,
@@ -1652,7 +1645,6 @@ static BOOL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
                             pict,
                             formatEntry->font_format,
                             0, 0, 0, 0, elts, count);
-    wine_tsx11_unlock();
     HeapFree(GetProcessHeap(), 0, elts);
 
     LeaveCriticalSection(&xrender_cs);
@@ -1669,7 +1661,6 @@ static void multiply_alpha( Picture pict, XRenderPictFormat *format, int alpha,
     Picture src_pict, mask_pict;
     XRenderColor color;
 
-    wine_tsx11_lock();
     src_pixmap = XCreatePixmap( gdi_display, root_window, 1, 1, format->depth );
     mask_pixmap = XCreatePixmap( gdi_display, root_window, 1, 1, format->depth );
     pa.repeat = RepeatNormal;
@@ -1686,7 +1677,6 @@ static void multiply_alpha( Picture pict, XRenderPictFormat *format, int alpha,
     pXRenderFreePicture( gdi_display, mask_pict );
     XFreePixmap( gdi_display, src_pixmap );
     XFreePixmap( gdi_display, mask_pixmap );
-    wine_tsx11_unlock();
 }
 
 /* Helper function for (stretched) blitting using xrender */
@@ -1721,7 +1711,6 @@ static void xrender_blit( int op, Picture src_pict, Picture mask_pict, Picture d
     /* When we need to scale we perform scaling and source_x / source_y translation using a transformation matrix.
      * This is needed because XRender is inaccurate in combination with scaled source coordinates passed to XRenderComposite.
      * In all other cases we do use XRenderComposite for translation as it is faster than using a transformation matrix. */
-    wine_tsx11_lock();
     if(xscale != 1.0 || yscale != 1.0)
     {
         /* In case of mirroring we need a source x- and y-offset because without the pixels will be
@@ -1739,7 +1728,6 @@ static void xrender_blit( int op, Picture src_pict, Picture mask_pict, Picture d
     }
     pXRenderComposite( gdi_display, op, src_pict, mask_pict, dst_pict,
                        x_offset, y_offset, 0, 0, x_dst, y_dst, width_dst, height_dst );
-    wine_tsx11_unlock();
 }
 
 /* Helper function for (stretched) mono->color blitting using xrender */
@@ -1783,7 +1771,6 @@ static void xrender_mono_blit( Picture src_pict, Picture dst_pict,
     color.alpha = 0xffff;  /* tile pict needs 100% alpha */
     tile_pict = get_tile_pict( dst_format, &color );
 
-    wine_tsx11_lock();
     pXRenderFillRectangle( gdi_display, PictOpSrc, dst_pict, fg, x_dst, y_dst, width_dst, height_dst );
 
     if (xscale != 1.0 || yscale != 1.0)
@@ -1803,7 +1790,6 @@ static void xrender_mono_blit( Picture src_pict, Picture dst_pict,
     }
     pXRenderComposite(gdi_display, PictOpOver, tile_pict, src_pict, dst_pict,
                       0, 0, x_offset, y_offset, x_dst, y_dst, width_dst, height_dst );
-    wine_tsx11_unlock();
     LeaveCriticalSection( &xrender_cs );
 
     /* force the alpha channel for background pixels, it has been set to 100% by the tile */
@@ -2056,7 +2042,6 @@ static DWORD xrenderdrv_PutImage( PHYSDEV dev, HRGN clip, BITMAPINFO *info,
             tmp.y -= tmp.visrect.top;
             OffsetRect( &tmp.visrect, -tmp.visrect.left, -tmp.visrect.top );
 
-            wine_tsx11_lock();
             gc = XCreateGC( gdi_display, physdev->x11dev->drawable, 0, NULL );
             XSetSubwindowMode( gdi_display, gc, IncludeInferiors );
             XSetGraphicsExposures( gdi_display, gc, False );
@@ -2064,7 +2049,6 @@ static DWORD xrenderdrv_PutImage( PHYSDEV dev, HRGN clip, BITMAPINFO *info,
                                         tmp.visrect.right - tmp.visrect.left,
                                         tmp.visrect.bottom - tmp.visrect.top,
                                         physdev->pict_format->depth );
-            wine_tsx11_unlock();
 
             xrender_put_image( src_pixmap, src_pict, mask_pict, NULL, physdev->pict_format,
                                NULL, tmp_pixmap, src, &tmp, use_repeat );
@@ -2335,7 +2319,6 @@ static BOOL xrenderdrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG n
 
             dst_pict = get_xrender_picture( physdev, 0, NULL );
 
-            wine_tsx11_lock();
             src_pict = pXRenderCreateLinearGradient( gdi_display, &gradient, stops, colors, 2 );
             xrender_blit( PictOpSrc, src_pict, 0, dst_pict,
                           0, 0, rc.right - rc.left, rc.bottom - rc.top,
@@ -2343,7 +2326,6 @@ static BOOL xrenderdrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG n
                           physdev->x11dev->dc_rect.top + rc.top,
                           rc.right - rc.left, rc.bottom - rc.top, 1, 1 );
             pXRenderFreePicture( gdi_display, src_pict );
-            wine_tsx11_unlock();
             add_device_bounds( physdev->x11dev, &rc );
         }
         return TRUE;

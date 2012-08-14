@@ -157,7 +157,6 @@ int X11DRV_PALETTE_Init(void)
 	X11DRV_PALETTE_PaletteFlags |= X11DRV_PALETTE_VIRTUAL;
     case GrayScale:
     case PseudoColor:
-        wine_tsx11_lock();
 	if (private_color_map)
 	{
 	    XSetWindowAttributes win_attr;
@@ -182,7 +181,6 @@ int X11DRV_PALETTE_Init(void)
 	  X11DRV_PALETTE_PaletteXColormap = XCreateColormap(gdi_display, root_window,
 							    visual, AllocNone);
 	}
-        wine_tsx11_unlock();
         break;
 
     case StaticGray:
@@ -199,7 +197,6 @@ int X11DRV_PALETTE_Init(void)
 	/* FIXME: hack to detect XFree32 XF_VGA16 ... We just have
 	 * depths 1 and 4
 	 */
-        wine_tsx11_lock();
         depths = XListDepths(gdi_display,DefaultScreen(gdi_display),&nrofdepths);
 	if ((nrofdepths==2) && ((depths[0]==4) || depths[1]==4)) {
 	    monoPlane = 1;
@@ -217,7 +214,6 @@ int X11DRV_PALETTE_Init(void)
             X11DRV_PALETTE_ComputeColorShifts(&X11DRV_PALETTE_default_shifts, visual->red_mask, visual->green_mask, visual->blue_mask);
         }
         XFree(depths);
-        wine_tsx11_unlock();
         break;
       }
     }
@@ -347,7 +343,6 @@ static BOOL X11DRV_PALETTE_BuildPrivateMap( const PALETTEENTRY *sys_pal_template
 
       /* Allocate system palette colors */
 
-    wine_tsx11_lock();
     for( i=0; i < palette_size; i++ )
     {
        if( i < NB_RESERVED_COLORS/2 )
@@ -379,7 +374,6 @@ static BOOL X11DRV_PALETTE_BuildPrivateMap( const PALETTEENTRY *sys_pal_template
        else if (i >= palette_size - 8 )
            X11DRV_PALETTE_mapEGAPixel[i - (palette_size - 16)] = color.pixel;
     }
-    wine_tsx11_unlock();
 
     X11DRV_PALETTE_XPixelToPalette = X11DRV_PALETTE_PaletteToXPixel = NULL;
 
@@ -416,7 +410,6 @@ static BOOL X11DRV_PALETTE_BuildSharedMap( const PALETTEENTRY *sys_pal_template 
    if (copy_default_colors > 256) copy_default_colors = 256;
    for (i = 0; i < copy_default_colors; i++)
        defaultColors[i].pixel = (long) i;
-   wine_tsx11_lock();
    XQueryColors(gdi_display, defaultCM, &defaultColors[0], copy_default_colors);
    for (i = 0; i < copy_default_colors; i++)
        XAllocColor( gdi_display, X11DRV_PALETTE_PaletteXColormap, &defaultColors[i] );
@@ -490,7 +483,6 @@ static BOOL X11DRV_PALETTE_BuildSharedMap( const PALETTEENTRY *sys_pal_template 
         else if (i >= NB_RESERVED_COLORS - 8 )
             X11DRV_PALETTE_mapEGAPixel[i - (NB_RESERVED_COLORS-16)] = color.pixel;
      }
-   wine_tsx11_unlock();
 
    /* now allocate changeable set */
 
@@ -509,7 +501,6 @@ static BOOL X11DRV_PALETTE_BuildSharedMap( const PALETTEENTRY *sys_pal_template 
 	    return FALSE;
         }
 
-        wine_tsx11_lock();
 	/* comment this out if you want to debug palette init */
 	XGrabServer(gdi_display);
 
@@ -543,7 +534,6 @@ static BOOL X11DRV_PALETTE_BuildSharedMap( const PALETTEENTRY *sys_pal_template 
         palette_size = c_min + NB_RESERVED_COLORS;
 
 	XUngrabServer(gdi_display);
-        wine_tsx11_unlock();
 
 	TRACE("adjusted size %i colorcells\n", palette_size);
      }
@@ -666,8 +656,6 @@ static void X11DRV_PALETTE_FillDefaultColors( const PALETTEENTRY *sys_pal_templa
   inc_g = (255 - NB_COLORCUBE_START_INDEX)/no_g;
   inc_b = (255 - NB_COLORCUBE_START_INDEX)/no_b;
 
-  wine_tsx11_lock();
-
   idx = X11DRV_PALETTE_firstFree;
 
   if( idx != -1 )
@@ -737,7 +725,6 @@ static void X11DRV_PALETTE_FillDefaultColors( const PALETTEENTRY *sys_pal_templa
 	}
     COLOR_gapFilled = idx - COLOR_gapStart;
   }
-  wine_tsx11_unlock();
 }
 
 

@@ -364,7 +364,6 @@ BOOL X11DRV_SetupGCForPatBlt( X11DRV_PDEVICE *physDev, GC gc, BOOL fMapColors )
         {
             register int x, y;
             XImage *image;
-            wine_tsx11_lock();
             pixmap = XCreatePixmap( gdi_display, root_window, 8, 8, physDev->depth );
             image = XGetImage( gdi_display, physDev->brush.pixmap, 0, 0, 8, 8,
                                AllPlanes, ZPixmap );
@@ -374,7 +373,6 @@ BOOL X11DRV_SetupGCForPatBlt( X11DRV_PDEVICE *physDev, GC gc, BOOL fMapColors )
                                X11DRV_PALETTE_XPixelToPalette[XGetPixel( image, x, y)] );
             XPutImage( gdi_display, pixmap, gc, image, 0, 0, 0, 0, 8, 8 );
             XDestroyImage( image );
-            wine_tsx11_unlock();
             val.tile = pixmap;
         }
         else val.tile = physDev->brush.pixmap;
@@ -631,7 +629,6 @@ static BOOL X11DRV_DrawArc( PHYSDEV dev, INT left, INT top, INT right, INT botto
 
     if (X11DRV_SetupGCForPen( physDev ))
     {
-        wine_tsx11_lock();
         XDrawArc( gdi_display, physDev->drawable, physDev->gc,
                   physDev->dc_rect.left + rc.left, physDev->dc_rect.top + rc.top,
                   rc.right-rc.left-1, rc.bottom-rc.top-1, istart_angle, idiff_angle );
@@ -691,7 +688,6 @@ static BOOL X11DRV_DrawArc( PHYSDEV dev, INT left, INT top, INT right, INT botto
             XDrawLines( gdi_display, physDev->drawable, physDev->gc,
                         points, lines+1, CoordModeOrigin );
         }
-        wine_tsx11_unlock();
     }
 
     physDev->pen.width = oldwidth;
@@ -871,7 +867,6 @@ BOOL X11DRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 
     if (X11DRV_SetupGCForBrush( physDev ))
     {
-        wine_tsx11_lock();
         if (ell_width > (rc.right-rc.left) )
             if (ell_height > (rc.bottom-rc.top) )
                 XFillArc( gdi_display, physDev->drawable, physDev->gc,
@@ -933,7 +928,6 @@ BOOL X11DRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
                             rc.right - rc.left - 2,
                             rc.bottom - rc.top - ell_height - 1);
         }
-        wine_tsx11_unlock();
     }
     /* FIXME: this could be done with on X call
      * more efficient and probably more correct
@@ -946,7 +940,6 @@ BOOL X11DRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
      */
     if (X11DRV_SetupGCForPen( physDev ))
     {
-        wine_tsx11_lock();
         if (ell_width > (rc.right-rc.left) )
             if (ell_height > (rc.bottom-rc.top) )
                 XDrawArc( gdi_display, physDev->drawable, physDev->gc,
@@ -1010,7 +1003,6 @@ BOOL X11DRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
                        physDev->dc_rect.left + rc.left,
                        physDev->dc_rect.top + rc.bottom - (ell_height+1) / 2);
 	}
-        wine_tsx11_unlock();
     }
 
     physDev->pen.width = oldwidth;
@@ -1509,7 +1501,6 @@ static unsigned char *get_icm_profile( unsigned long *size )
     unsigned long count, remaining;
     unsigned char *profile, *ret = NULL;
 
-    wine_tsx11_lock();
     XGetWindowProperty( gdi_display, DefaultRootWindow(gdi_display),
                         x11drv_atom(_ICC_PROFILE), 0, ~0UL, False, AnyPropertyType,
                         &type, &format, &count, &remaining, &profile );
@@ -1519,7 +1510,6 @@ static unsigned char *get_icm_profile( unsigned long *size )
         if ((ret = HeapAlloc( GetProcessHeap(), 0, *size ))) memcpy( ret, profile, *size );
         XFree( profile );
     }
-    wine_tsx11_unlock();
     return ret;
 }
 

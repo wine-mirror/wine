@@ -226,7 +226,6 @@ static BOOL select_pattern_brush( X11DRV_PDEVICE *physdev, const struct brush_pa
     pixmap = create_pixmap_from_image( physdev->dev.hdc, &vis, info, &pattern->bits, pattern->usage );
     if (!pixmap) return FALSE;
 
-    wine_tsx11_lock();
     if (physdev->brush.pixmap) XFreePixmap( gdi_display, physdev->brush.pixmap );
     physdev->brush.pixmap = pixmap;
 
@@ -240,7 +239,6 @@ static BOOL select_pattern_brush( X11DRV_PDEVICE *physdev, const struct brush_pa
 	physdev->brush.fillStyle = FillTiled;
 	physdev->brush.pixel = 0;  /* Ignored */
     }
-    wine_tsx11_unlock();
     return TRUE;
 }
 
