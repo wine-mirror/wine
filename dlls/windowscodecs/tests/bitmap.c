@@ -329,7 +329,7 @@ static void test_createbitmapfromsource(void)
 
     hr = IWICImagingFactory_CreateBitmapFromSource(factory, (IWICBitmapSource*)bitmap,
         WICBitmapCacheOnLoad, &bitmap2);
-    todo_wine ok(hr == S_OK, "IWICImagingFactory_CreateBitmapFromSource failed hr=%x\n", hr);
+    ok(hr == S_OK, "IWICImagingFactory_CreateBitmapFromSource failed hr=%x\n", hr);
 
     IWICBitmap_Release(bitmap);
 
@@ -338,8 +338,9 @@ static void test_createbitmapfromsource(void)
     hr = IWICImagingFactory_CreatePalette(factory, &palette);
     ok(hr == S_OK, "IWICImagingFactory_CreatePalette failed hr=%x\n", hr);
 
+    /* palette isn't copied for non-indexed formats? */
     hr = IWICBitmap_CopyPalette(bitmap2, palette);
-    ok(hr == WINCODEC_ERR_PALETTEUNAVAILABLE, "IWICBitmap_CopyPalette failed hr=%x\n", hr);
+    todo_wine ok(hr == WINCODEC_ERR_PALETTEUNAVAILABLE, "IWICBitmap_CopyPalette failed hr=%x\n", hr);
 
     IWICPalette_Release(palette);
 

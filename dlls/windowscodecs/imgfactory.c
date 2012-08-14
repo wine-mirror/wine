@@ -466,8 +466,83 @@ static HRESULT WINAPI ComponentFactory_CreateBitmapFromSource(IWICComponentFacto
     IWICBitmapSource *piBitmapSource, WICBitmapCreateCacheOption option,
     IWICBitmap **ppIBitmap)
 {
-    FIXME("(%p,%p,%u,%p): stub\n", iface, piBitmapSource, option, ppIBitmap);
-    return E_NOTIMPL;
+    IWICBitmap *result;
+    IWICBitmapLock *lock;
+    IWICPalette *palette;
+    UINT width, height;
+    WICPixelFormatGUID pixelformat = {0};
+    HRESULT hr;
+    WICRect rc;
+    double dpix, dpiy;
+
+    TRACE("(%p,%p,%u,%p)\n", iface, piBitmapSource, option, ppIBitmap);
+
+    if (!piBitmapSource || !ppIBitmap)
+        return E_INVALIDARG;
+
+    hr = IWICBitmapSource_GetSize(piBitmapSource, &width, &height);
+
+    if (SUCCEEDED(hr))
+        hr = IWICBitmapSource_GetPixelFormat(piBitmapSource, &pixelformat);
+
+    if (SUCCEEDED(hr))
+        hr = BitmapImpl_Create(width, height, &pixelformat, option, &result);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = IWICBitmap_Lock(result, NULL, WICBitmapLockWrite, &lock);
+        if (SUCCEEDED(hr))
+        {
+            UINT stride, buffersize;
+            BYTE *buffer;
+            rc.X = rc.Y = 0;
+            rc.Width = width;
+            rc.Height = height;
+
+            hr = IWICBitmapLock_GetStride(lock, &stride);
+
+            if (SUCCEEDED(hr))
+                hr = IWICBitmapLock_GetDataPointer(lock, &buffersize, &buffer);
+
+            if (SUCCEEDED(hr))
+                hr = IWICBitmapSource_CopyPixels(piBitmapSource, &rc, stride,
+                    buffersize, buffer);
+
+            IWICBitmapLock_Release(lock);
+        }
+
+        if (SUCCEEDED(hr))
+            hr = PaletteImpl_Create(&palette);
+
+        if (SUCCEEDED(hr))
+        {
+            hr = IWICBitmapSource_CopyPalette(piBitmapSource, palette);
+
+            if (SUCCEEDED(hr))
+                hr = IWICBitmap_SetPalette(result, palette);
+            else
+                hr = S_OK;
+
+            IWICPalette_Release(palette);
+        }
+
+        if (SUCCEEDED(hr))
+        {
+            hr = IWICBitmapSource_GetResolution(piBitmapSource, &dpix, &dpiy);
+
+            if (SUCCEEDED(hr))
+                hr = IWICBitmap_SetResolution(result, dpix, dpiy);
+            else
+                hr = S_OK;
+        }
+
+        if (SUCCEEDED(hr))
+            *ppIBitmap = result;
+        else
+            IWICBitmap_Release(result);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI ComponentFactory_CreateBitmapFromSourceRect(IWICComponentFactory *iface,
