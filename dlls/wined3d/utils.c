@@ -1067,10 +1067,11 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct wined
     if (status == GL_FRAMEBUFFER_COMPLETE && ((format->flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING)
             || !(gl_info->quirks & WINED3D_QUIRK_LIMITED_TEX_FILTERING))
             && format->id != WINED3DFMT_NULL && format->id != WINED3DFMT_P8_UINT
-            && format->glFormat != GL_LUMINANCE && format->glFormat != GL_LUMINANCE_ALPHA)
+            && format->glFormat != GL_LUMINANCE && format->glFormat != GL_LUMINANCE_ALPHA
+            && (format->red_size || format->alpha_size))
     {
         GLuint rb, tex2;
-        DWORD readback[16 * 16], color;
+        DWORD readback[16 * 16], color, r_range, a_range;
         BYTE r, a;
         BOOL match = TRUE;
 
@@ -1096,6 +1097,7 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct wined
         }
         else
         {
+            gl_info->gl_ops.gl.p_glDisable(GL_BLEND);
             gl_info->gl_ops.gl.p_glViewport(0, 0, 16, 16);
             gl_info->gl_ops.gl.p_glDisable(GL_LIGHTING);
             gl_info->gl_ops.gl.p_glMatrixMode(GL_MODELVIEW);
@@ -1107,28 +1109,24 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct wined
 
             /* Draw a full-black quad */
             gl_info->gl_ops.gl.p_glBegin(GL_TRIANGLE_STRIP);
-            gl_info->gl_ops.gl.p_glColor4ub(0x00, 0x00, 0x00, 0xff);
+            gl_info->gl_ops.gl.p_glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
             gl_info->gl_ops.gl.p_glVertex3f(-1.0f, -1.0f, 0.0f);
-            gl_info->gl_ops.gl.p_glColor4ub(0x00, 0x00, 0x00, 0xff);
             gl_info->gl_ops.gl.p_glVertex3f(1.0f, -1.0f, 0.0f);
-            gl_info->gl_ops.gl.p_glColor4ub(0x00, 0x00, 0x00, 0xff);
             gl_info->gl_ops.gl.p_glVertex3f(-1.0f, 1.0f, 0.0f);
-            gl_info->gl_ops.gl.p_glColor4ub(0x00, 0x00, 0x00, 0xff);
             gl_info->gl_ops.gl.p_glVertex3f(1.0f, 1.0f, 0.0f);
             gl_info->gl_ops.gl.p_glEnd();
 
+            gl_info->gl_ops.gl.p_glEnable(GL_BLEND);
             /* Draw a half-transparent red quad */
             gl_info->gl_ops.gl.p_glBegin(GL_TRIANGLE_STRIP);
-            gl_info->gl_ops.gl.p_glColor4ub(0xff, 0x00, 0x00, 0x80);
+            gl_info->gl_ops.gl.p_glColor4f(1.0f, 0.0f, 0.0f, 0.5f);
             gl_info->gl_ops.gl.p_glVertex3f(-1.0f, -1.0f, 0.0f);
-            gl_info->gl_ops.gl.p_glColor4ub(0xff, 0x00, 0x00, 0x80);
             gl_info->gl_ops.gl.p_glVertex3f(1.0f, -1.0f, 0.0f);
-            gl_info->gl_ops.gl.p_glColor4ub(0xff, 0x00, 0x00, 0x80);
             gl_info->gl_ops.gl.p_glVertex3f(-1.0f, 1.0f, 0.0f);
-            gl_info->gl_ops.gl.p_glColor4ub(0xff, 0x00, 0x00, 0x80);
             gl_info->gl_ops.gl.p_glVertex3f(1.0f, 1.0f, 0.0f);
             gl_info->gl_ops.gl.p_glEnd();
 
+            gl_info->gl_ops.gl.p_glDisable(GL_BLEND);
             gl_info->gl_ops.gl.p_glGenTextures(1, &tex2);
             gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D, tex2);
 
@@ -1140,9 +1138,11 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct wined
             a = color >> 24;
             r = (color & 0x00ff0000) >> 16;
 
-            if (format->red_size && (r < 0x7b || r > 0x84))
+            r_range = format->red_size < 8 ? 1 << (8 - format->red_size - 1) : 1;
+            a_range = format->alpha_size < 8 ? 1 << (8 - format->alpha_size - 1) : 1;
+            if (format->red_size && (r < 0x80 - r_range || r > 0x80 + r_range))
                 match = FALSE;
-            else if (format->alpha_size > 1 && (a < 0x9f || a > 0xdf))
+            else if (format->alpha_size > 1 && (a < 0xbf - a_range || a > 0xbf + a_range))
                 match = FALSE;
             if (!match)
             {
