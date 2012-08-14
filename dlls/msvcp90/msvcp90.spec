@@ -676,26 +676,26 @@
 @ cdecl -arch=win64 ??0?$basic_ofstream@DU?$char_traits@D@std@@@std@@QEAA@PEB_WHH@Z(ptr wstr long long long) basic_ofstream_char_ctor_name_wchar
 @ thiscall -arch=win32 ??0?$basic_ofstream@DU?$char_traits@D@std@@@std@@QAE@XZ(ptr long) basic_ofstream_char_ctor
 @ cdecl -arch=win64 ??0?$basic_ofstream@DU?$char_traits@D@std@@@std@@QEAA@XZ(ptr long) basic_ofstream_char_ctor
-@ stub -arch=win32 ??0?$basic_ofstream@GU?$char_traits@G@std@@@std@@QAE@PAU_iobuf@@@Z
-@ stub -arch=win64 ??0?$basic_ofstream@GU?$char_traits@G@std@@@std@@QEAA@PEAU_iobuf@@@Z
-@ stub -arch=win32 ??0?$basic_ofstream@GU?$char_traits@G@std@@@std@@QAE@PBDHH@Z
-@ stub -arch=win64 ??0?$basic_ofstream@GU?$char_traits@G@std@@@std@@QEAA@PEBDHH@Z
-@ stub -arch=win32 ??0?$basic_ofstream@GU?$char_traits@G@std@@@std@@QAE@PBGHH@Z
-@ stub -arch=win64 ??0?$basic_ofstream@GU?$char_traits@G@std@@@std@@QEAA@PEBGHH@Z
-@ stub -arch=win32 ??0?$basic_ofstream@GU?$char_traits@G@std@@@std@@QAE@PB_WHH@Z
-@ stub -arch=win64 ??0?$basic_ofstream@GU?$char_traits@G@std@@@std@@QEAA@PEB_WHH@Z
-@ stub -arch=win32 ??0?$basic_ofstream@GU?$char_traits@G@std@@@std@@QAE@XZ
-@ stub -arch=win64 ??0?$basic_ofstream@GU?$char_traits@G@std@@@std@@QEAA@XZ
-@ stub -arch=win32 ??0?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QAE@PAU_iobuf@@@Z
-@ stub -arch=win64 ??0?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QEAA@PEAU_iobuf@@@Z
-@ stub -arch=win32 ??0?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QAE@PBDHH@Z
-@ stub -arch=win64 ??0?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QEAA@PEBDHH@Z
-@ stub -arch=win32 ??0?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QAE@PBGHH@Z
-@ stub -arch=win64 ??0?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QEAA@PEBGHH@Z
-@ stub -arch=win32 ??0?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QAE@PB_WHH@Z
-@ stub -arch=win64 ??0?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QEAA@PEB_WHH@Z
-@ stub -arch=win32 ??0?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QAE@XZ
-@ stub -arch=win64 ??0?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QEAA@XZ
+@ thiscall -arch=win32 ??0?$basic_ofstream@GU?$char_traits@G@std@@@std@@QAE@PAU_iobuf@@@Z(ptr ptr long) basic_ofstream_short_ctor_file
+@ cdecl -arch=win64 ??0?$basic_ofstream@GU?$char_traits@G@std@@@std@@QEAA@PEAU_iobuf@@@Z(ptr ptr long) basic_ofstream_short_ctor_file
+@ thiscall -arch=win32 ??0?$basic_ofstream@GU?$char_traits@G@std@@@std@@QAE@PBDHH@Z(ptr str long long long) basic_ofstream_short_ctor_name
+@ cdecl -arch=win64 ??0?$basic_ofstream@GU?$char_traits@G@std@@@std@@QEAA@PEBDHH@Z(ptr str long long long) basic_ofstream_short_ctor_name
+@ thiscall -arch=win32 ??0?$basic_ofstream@GU?$char_traits@G@std@@@std@@QAE@PBGHH@Z(ptr wstr long long long) basic_ofstream_short_ctor_name_wchar
+@ cdecl -arch=win64 ??0?$basic_ofstream@GU?$char_traits@G@std@@@std@@QEAA@PEBGHH@Z(ptr wstr long long long) basic_ofstream_short_ctor_name_wchar
+@ thiscall -arch=win32 ??0?$basic_ofstream@GU?$char_traits@G@std@@@std@@QAE@PB_WHH@Z(ptr wstr long long long) basic_ofstream_short_ctor_name_wchar
+@ cdecl -arch=win64 ??0?$basic_ofstream@GU?$char_traits@G@std@@@std@@QEAA@PEB_WHH@Z(ptr wstr long long long) basic_ofstream_short_ctor_name_wchar
+@ thiscall -arch=win32 ??0?$basic_ofstream@GU?$char_traits@G@std@@@std@@QAE@XZ(ptr long) basic_ofstream_short_ctor
+@ cdecl -arch=win64 ??0?$basic_ofstream@GU?$char_traits@G@std@@@std@@QEAA@XZ(ptr long) basic_ofstream_short_ctor
+@ thiscall -arch=win32 ??0?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QAE@PAU_iobuf@@@Z(ptr ptr long) basic_ofstream_wchar_ctor_file
+@ cdecl -arch=win64 ??0?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QEAA@PEAU_iobuf@@@Z(ptr ptr long) basic_ofstream_wchar_ctor_file
+@ thiscall -arch=win32 ??0?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QAE@PBDHH@Z(ptr str long long long) basic_ofstream_wchar_ctor_name
+@ cdecl -arch=win64 ??0?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QEAA@PEBDHH@Z(ptr str long long long) basic_ofstream_wchar_ctor_name
+@ thiscall -arch=win32 ??0?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QAE@PBGHH@Z(ptr wstr long long long) basic_ofstream_wchar_ctor_name_wchar
+@ cdecl -arch=win64 ??0?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QEAA@PEBGHH@Z(ptr wstr long long long) basic_ofstream_wchar_ctor_name_wchar
+@ thiscall -arch=win32 ??0?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QAE@PB_WHH@Z(ptr wstr long long long) basic_ofstream_wchar_ctor_name_wchar
+@ cdecl -arch=win64 ??0?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QEAA@PEB_WHH@Z(ptr wstr long long long) basic_ofstream_wchar_ctor_name_wchar
+@ thiscall -arch=win32 ??0?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QAE@XZ(ptr long) basic_ofstream_wchar_ctor
+@ cdecl -arch=win64 ??0?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QEAA@XZ(ptr long) basic_ofstream_wchar_ctor
 @ thiscall -arch=win32 ??0?$basic_ostream@DU?$char_traits@D@std@@@std@@QAE@PAV?$basic_streambuf@DU?$char_traits@D@std@@@1@_N@Z(ptr ptr long long) basic_ostream_char_ctor
 @ cdecl -arch=win64 ??0?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAA@PEAV?$basic_streambuf@DU?$char_traits@D@std@@@1@_N@Z(ptr ptr long long) basic_ostream_char_ctor
 @ thiscall -arch=win32 ??0?$basic_ostream@DU?$char_traits@D@std@@@std@@QAE@W4_Uninitialized@1@_N@Z(ptr long long long) basic_ostream_char_ctor_uninitialized
@@ -1190,10 +1190,10 @@
 @ cdecl -arch=win64 ??1?$basic_istringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@UEAA@XZ(ptr) basic_istringstream_wchar_dtor
 @ thiscall -arch=win32 ??1?$basic_ofstream@DU?$char_traits@D@std@@@std@@UAE@XZ(ptr) basic_ofstream_char_dtor
 @ cdecl -arch=win64 ??1?$basic_ofstream@DU?$char_traits@D@std@@@std@@UEAA@XZ(ptr) basic_ofstream_char_dtor
-@ stub -arch=win32 ??1?$basic_ofstream@GU?$char_traits@G@std@@@std@@UAE@XZ
-@ stub -arch=win64 ??1?$basic_ofstream@GU?$char_traits@G@std@@@std@@UEAA@XZ
-@ stub -arch=win32 ??1?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@UAE@XZ
-@ stub -arch=win64 ??1?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@UEAA@XZ
+@ thiscall -arch=win32 ??1?$basic_ofstream@GU?$char_traits@G@std@@@std@@UAE@XZ(ptr) basic_ofstream_wchar_dtor
+@ cdecl -arch=win64 ??1?$basic_ofstream@GU?$char_traits@G@std@@@std@@UEAA@XZ(ptr) basic_ofstream_wchar_dtor
+@ thiscall -arch=win32 ??1?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@UAE@XZ(ptr) basic_ofstream_wchar_dtor
+@ cdecl -arch=win64 ??1?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@UEAA@XZ(ptr) basic_ofstream_wchar_dtor
 @ thiscall -arch=win32 ??1?$basic_ostream@DU?$char_traits@D@std@@@std@@UAE@XZ(ptr) basic_ostream_char_dtor
 @ cdecl -arch=win64 ??1?$basic_ostream@DU?$char_traits@D@std@@@std@@UEAA@XZ(ptr) basic_ostream_char_dtor
 @ thiscall -arch=win32 ??1?$basic_ostream@GU?$char_traits@G@std@@@std@@UAE@XZ(ptr) basic_ostream_wchar_dtor
@@ -1801,8 +1801,8 @@
 # extern ??_7?$basic_istringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@6B@
 @ extern ??_7?$basic_istringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@6B@ MSVCP_basic_istringstream_wchar_vtable
 @ extern ??_7?$basic_ofstream@DU?$char_traits@D@std@@@std@@6B@ MSVCP_basic_ofstream_char_vtable
-# extern ??_7?$basic_ofstream@GU?$char_traits@G@std@@@std@@6B@
-# extern ??_7?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@6B@
+@ extern ??_7?$basic_ofstream@GU?$char_traits@G@std@@@std@@6B@ MSVCP_basic_ofstream_short_vtable
+@ extern ??_7?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@6B@ MSVCP_basic_ofstream_wchar_vtable
 @ extern ??_7?$basic_ostream@DU?$char_traits@D@std@@@std@@6B@ MSVCP_basic_ostream_char_vtable
 @ extern ??_7?$basic_ostream@GU?$char_traits@G@std@@@std@@6B@ MSVCP_basic_ostream_short_vtable
 @ extern ??_7?$basic_ostream@_WU?$char_traits@_W@std@@@std@@6B@ MSVCP_basic_ostream_wchar_vtable
@@ -1887,8 +1887,8 @@
 # extern ??_8?$basic_istringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@7B@
 @ extern ??_8?$basic_istringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@7B@ basic_istringstream_wchar_vbtable
 @ extern ??_8?$basic_ofstream@DU?$char_traits@D@std@@@std@@7B@ basic_ofstream_char_vbtable
-# extern ??_8?$basic_ofstream@GU?$char_traits@G@std@@@std@@7B@
-# extern ??_8?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@7B@
+@ extern ??_8?$basic_ofstream@GU?$char_traits@G@std@@@std@@7B@ basic_ofstream_short_vbtable
+@ extern ??_8?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@7B@ basic_ofstream_wchar_vbtable
 @ extern ??_8?$basic_ostream@DU?$char_traits@D@std@@@std@@7B@ basic_ostream_char_vbtable
 @ extern ??_8?$basic_ostream@GU?$char_traits@G@std@@@std@@7B@ basic_ostream_short_vbtable
 @ extern ??_8?$basic_ostream@_WU?$char_traits@_W@std@@@std@@7B@ basic_ostream_wchar_vbtable
@@ -1933,10 +1933,10 @@
 @ cdecl -arch=win64 ??_D?$basic_istringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAXXZ(ptr) basic_istringstream_wchar_vbase_dtor
 @ thiscall -arch=win32 ??_D?$basic_ofstream@DU?$char_traits@D@std@@@std@@QAEXXZ(ptr) basic_ofstream_char_vbase_dtor
 @ cdecl -arch=win64 ??_D?$basic_ofstream@DU?$char_traits@D@std@@@std@@QEAAXXZ(ptr) basic_ofstream_char_vbase_dtor
-@ stub -arch=win32 ??_D?$basic_ofstream@GU?$char_traits@G@std@@@std@@QAEXXZ
-@ stub -arch=win64 ??_D?$basic_ofstream@GU?$char_traits@G@std@@@std@@QEAAXXZ
-@ stub -arch=win32 ??_D?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QAEXXZ
-@ stub -arch=win64 ??_D?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QEAAXXZ
+@ thiscall -arch=win32 ??_D?$basic_ofstream@GU?$char_traits@G@std@@@std@@QAEXXZ(ptr) basic_ofstream_wchar_vbase_dtor
+@ cdecl -arch=win64 ??_D?$basic_ofstream@GU?$char_traits@G@std@@@std@@QEAAXXZ(ptr) basic_ofstream_wchar_vbase_dtor
+@ thiscall -arch=win32 ??_D?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QAEXXZ(ptr) basic_ofstream_wchar_vbase_dtor
+@ cdecl -arch=win64 ??_D?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QEAAXXZ(ptr) basic_ofstream_wchar_vbase_dtor
 @ thiscall -arch=win32 ??_D?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEXXZ(ptr) basic_ostream_char_vbase_dtor
 @ cdecl -arch=win64 ??_D?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAXXZ(ptr) basic_ostream_char_vbase_dtor
 @ thiscall -arch=win32 ??_D?$basic_ostream@GU?$char_traits@G@std@@@std@@QAEXXZ(ptr) basic_ostream_wchar_vbase_dtor
@@ -3104,10 +3104,10 @@
 @ stub -arch=win64 ?close@?$basic_ifstream@_WU?$char_traits@_W@std@@@std@@QEAAXXZ
 @ thiscall -arch=win32 ?close@?$basic_ofstream@DU?$char_traits@D@std@@@std@@QAEXXZ(ptr) basic_ofstream_char_close
 @ cdecl -arch=win64 ?close@?$basic_ofstream@DU?$char_traits@D@std@@@std@@QEAAXXZ(ptr) basic_ofstream_char_close
-@ stub -arch=win32 ?close@?$basic_ofstream@GU?$char_traits@G@std@@@std@@QAEXXZ
-@ stub -arch=win64 ?close@?$basic_ofstream@GU?$char_traits@G@std@@@std@@QEAAXXZ
-@ stub -arch=win32 ?close@?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QAEXXZ
-@ stub -arch=win64 ?close@?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QEAAXXZ
+@ thiscall -arch=win32 ?close@?$basic_ofstream@GU?$char_traits@G@std@@@std@@QAEXXZ(ptr) basic_ofstream_wchar_close
+@ cdecl -arch=win64 ?close@?$basic_ofstream@GU?$char_traits@G@std@@@std@@QEAAXXZ(ptr) basic_ofstream_wchar_close
+@ thiscall -arch=win32 ?close@?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QAEXXZ(ptr) basic_ofstream_wchar_close
+@ cdecl -arch=win64 ?close@?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QEAAXXZ(ptr) basic_ofstream_wchar_close
 @ stub -arch=win32 ?close@?$messages@D@std@@QBEXH@Z
 @ stub -arch=win64 ?close@?$messages@D@std@@QEBAXH@Z
 @ stub -arch=win32 ?close@?$messages@G@std@@QBEXH@Z
@@ -4423,10 +4423,10 @@
 @ stub -arch=win64 ?is_open@?$basic_ifstream@_WU?$char_traits@_W@std@@@std@@QEBA_NXZ
 @ thiscall -arch=win32 ?is_open@?$basic_ofstream@DU?$char_traits@D@std@@@std@@QBE_NXZ(ptr) basic_ofstream_char_is_open
 @ cdecl -arch=win64 ?is_open@?$basic_ofstream@DU?$char_traits@D@std@@@std@@QEBA_NXZ(ptr) basic_ofstream_char_is_open
-@ stub -arch=win32 ?is_open@?$basic_ofstream@GU?$char_traits@G@std@@@std@@QBE_NXZ
-@ stub -arch=win64 ?is_open@?$basic_ofstream@GU?$char_traits@G@std@@@std@@QEBA_NXZ
-@ stub -arch=win32 ?is_open@?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QBE_NXZ
-@ stub -arch=win64 ?is_open@?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QEBA_NXZ
+@ thiscall -arch=win32 ?is_open@?$basic_ofstream@GU?$char_traits@G@std@@@std@@QBE_NXZ(ptr) basic_ofstream_wchar_is_open
+@ cdecl -arch=win64 ?is_open@?$basic_ofstream@GU?$char_traits@G@std@@@std@@QEBA_NXZ(ptr) basic_ofstream_wchar_is_open
+@ thiscall -arch=win32 ?is_open@?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QBE_NXZ(ptr) basic_ofstream_wchar_is_open
+@ cdecl -arch=win64 ?is_open@?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QEBA_NXZ(ptr) basic_ofstream_wchar_is_open
 @ extern ?is_signed@?$numeric_limits@C@std@@2_NB std_numeric_limits_signed_char_is_signed
 @ extern ?is_signed@?$numeric_limits@D@std@@2_NB std_numeric_limits_char_is_signed
 @ extern ?is_signed@?$numeric_limits@E@std@@2_NB std_numeric_limits_unsigned_char_is_signed
@@ -4715,30 +4715,30 @@
 @ cdecl -arch=win64 ?open@?$basic_ofstream@DU?$char_traits@D@std@@@std@@QEAAXPEB_WHH@Z(ptr wstr long long) basic_ofstream_char_open_wchar
 @ thiscall -arch=win32 ?open@?$basic_ofstream@DU?$char_traits@D@std@@@std@@QAEXPB_WI@Z(ptr wstr long) basic_ofstream_char_open_wchar_old
 @ cdecl -arch=win64 ?open@?$basic_ofstream@DU?$char_traits@D@std@@@std@@QEAAXPEB_WI@Z(ptr wstr long) basic_ofstream_char_open_wchar_old
-@ stub -arch=win32 ?open@?$basic_ofstream@GU?$char_traits@G@std@@@std@@QAEXPBDHH@Z
-@ stub -arch=win64 ?open@?$basic_ofstream@GU?$char_traits@G@std@@@std@@QEAAXPEBDHH@Z
-@ stub -arch=win32 ?open@?$basic_ofstream@GU?$char_traits@G@std@@@std@@QAEXPBDI@Z
-@ stub -arch=win64 ?open@?$basic_ofstream@GU?$char_traits@G@std@@@std@@QEAAXPEBDI@Z
-@ stub -arch=win32 ?open@?$basic_ofstream@GU?$char_traits@G@std@@@std@@QAEXPBGHH@Z
-@ stub -arch=win64 ?open@?$basic_ofstream@GU?$char_traits@G@std@@@std@@QEAAXPEBGHH@Z
-@ stub -arch=win32 ?open@?$basic_ofstream@GU?$char_traits@G@std@@@std@@QAEXPBGI@Z
-@ stub -arch=win64 ?open@?$basic_ofstream@GU?$char_traits@G@std@@@std@@QEAAXPEBGI@Z
-@ stub -arch=win32 ?open@?$basic_ofstream@GU?$char_traits@G@std@@@std@@QAEXPB_WHH@Z
-@ stub -arch=win64 ?open@?$basic_ofstream@GU?$char_traits@G@std@@@std@@QEAAXPEB_WHH@Z
-@ stub -arch=win32 ?open@?$basic_ofstream@GU?$char_traits@G@std@@@std@@QAEXPB_WI@Z
-@ stub -arch=win64 ?open@?$basic_ofstream@GU?$char_traits@G@std@@@std@@QEAAXPEB_WI@Z
-@ stub -arch=win32 ?open@?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QAEXPBDHH@Z
-@ stub -arch=win64 ?open@?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QEAAXPEBDHH@Z
-@ stub -arch=win32 ?open@?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QAEXPBDI@Z
-@ stub -arch=win64 ?open@?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QEAAXPEBDI@Z
-@ stub -arch=win32 ?open@?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QAEXPBGHH@Z
-@ stub -arch=win64 ?open@?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QEAAXPEBGHH@Z
-@ stub -arch=win32 ?open@?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QAEXPBGI@Z
-@ stub -arch=win64 ?open@?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QEAAXPEBGI@Z
-@ stub -arch=win32 ?open@?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QAEXPB_WHH@Z
-@ stub -arch=win64 ?open@?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QEAAXPEB_WHH@Z
-@ stub -arch=win32 ?open@?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QAEXPB_WI@Z
-@ stub -arch=win64 ?open@?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QEAAXPEB_WI@Z
+@ thiscall -arch=win32 ?open@?$basic_ofstream@GU?$char_traits@G@std@@@std@@QAEXPBDHH@Z(ptr str long long) basic_ofstream_wchar_open
+@ cdecl -arch=win64 ?open@?$basic_ofstream@GU?$char_traits@G@std@@@std@@QEAAXPEBDHH@Z(ptr str long long) basic_ofstream_wchar_open
+@ thiscall -arch=win32 ?open@?$basic_ofstream@GU?$char_traits@G@std@@@std@@QAEXPBDI@Z(ptr str long) basic_ofstream_wchar_open_old
+@ cdecl -arch=win64 ?open@?$basic_ofstream@GU?$char_traits@G@std@@@std@@QEAAXPEBDI@Z(ptr str long) basic_ofstream_wchar_open_old
+@ thiscall -arch=win32 ?open@?$basic_ofstream@GU?$char_traits@G@std@@@std@@QAEXPBGHH@Z(ptr wstr long long) basic_ofstream_wchar_open_wchar
+@ cdecl -arch=win64 ?open@?$basic_ofstream@GU?$char_traits@G@std@@@std@@QEAAXPEBGHH@Z(ptr wstr long long) basic_ofstream_wchar_open_wchar
+@ thiscall -arch=win32 ?open@?$basic_ofstream@GU?$char_traits@G@std@@@std@@QAEXPBGI@Z(ptr wstr long) basic_ofstream_wchar_open_wchar_old
+@ cdecl -arch=win64 ?open@?$basic_ofstream@GU?$char_traits@G@std@@@std@@QEAAXPEBGI@Z(ptr wstr long) basic_ofstream_wchar_open_wchar_old
+@ thiscall -arch=win32 ?open@?$basic_ofstream@GU?$char_traits@G@std@@@std@@QAEXPB_WHH@Z(ptr wstr long long) basic_ofstream_wchar_open_wchar
+@ cdecl -arch=win64 ?open@?$basic_ofstream@GU?$char_traits@G@std@@@std@@QEAAXPEB_WHH@Z(ptr wstr long long) basic_ofstream_wchar_open_wchar
+@ thiscall -arch=win32 ?open@?$basic_ofstream@GU?$char_traits@G@std@@@std@@QAEXPB_WI@Z(ptr wstr long) basic_ofstream_wchar_open_wchar_old
+@ cdecl -arch=win64 ?open@?$basic_ofstream@GU?$char_traits@G@std@@@std@@QEAAXPEB_WI@Z(ptr wstr long) basic_ofstream_wchar_open_wchar_old
+@ thiscall -arch=win32 ?open@?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QAEXPBDHH@Z(ptr str long long) basic_ofstream_wchar_open
+@ cdecl -arch=win64 ?open@?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QEAAXPEBDHH@Z(ptr str long long) basic_ofstream_wchar_open
+@ thiscall -arch=win32 ?open@?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QAEXPBDI@Z(ptr str long) basic_ofstream_wchar_open_old
+@ cdecl -arch=win64 ?open@?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QEAAXPEBDI@Z(ptr str long) basic_ofstream_wchar_open_old
+@ thiscall -arch=win32 ?open@?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QAEXPBGHH@Z(ptr wstr long long) basic_ofstream_wchar_open_wchar
+@ cdecl -arch=win64 ?open@?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QEAAXPEBGHH@Z(ptr wstr long long) basic_ofstream_wchar_open_wchar
+@ thiscall -arch=win32 ?open@?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QAEXPBGI@Z(ptr wstr long) basic_ofstream_wchar_open_wchar_old
+@ cdecl -arch=win64 ?open@?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QEAAXPEBGI@Z(ptr wstr long) basic_ofstream_wchar_open_wchar_old
+@ thiscall -arch=win32 ?open@?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QAEXPB_WHH@Z(ptr wstr long long) basic_ofstream_wchar_open_wchar
+@ cdecl -arch=win64 ?open@?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QEAAXPEB_WHH@Z(ptr wstr long long) basic_ofstream_wchar_open_wchar
+@ thiscall -arch=win32 ?open@?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QAEXPB_WI@Z(ptr wstr long) basic_ofstream_wchar_open_wchar_old
+@ cdecl -arch=win64 ?open@?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QEAAXPEB_WI@Z(ptr wstr long) basic_ofstream_wchar_open_wchar_old
 @ stub -arch=win32 ?open@?$messages@D@std@@QBEHABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@ABVlocale@2@@Z
 @ stub -arch=win64 ?open@?$messages@D@std@@QEBAHAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@AEBVlocale@2@@Z
 @ stub -arch=win32 ?open@?$messages@G@std@@QBEHABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@ABVlocale@2@@Z
@@ -5045,10 +5045,10 @@
 @ cdecl -arch=win64 ?rdbuf@?$basic_istringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBAPEAV?$basic_stringbuf@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@XZ(ptr) basic_istringstream_wchar_rdbuf
 @ thiscall -arch=win32 ?rdbuf@?$basic_ofstream@DU?$char_traits@D@std@@@std@@QBEPAV?$basic_filebuf@DU?$char_traits@D@std@@@2@XZ(ptr) basic_ofstream_char_rdbuf
 @ cdecl -arch=win64 ?rdbuf@?$basic_ofstream@DU?$char_traits@D@std@@@std@@QEBAPEAV?$basic_filebuf@DU?$char_traits@D@std@@@2@XZ(ptr) basic_ofstream_char_rdbuf
-@ stub -arch=win32 ?rdbuf@?$basic_ofstream@GU?$char_traits@G@std@@@std@@QBEPAV?$basic_filebuf@GU?$char_traits@G@std@@@2@XZ
-@ stub -arch=win64 ?rdbuf@?$basic_ofstream@GU?$char_traits@G@std@@@std@@QEBAPEAV?$basic_filebuf@GU?$char_traits@G@std@@@2@XZ
-@ stub -arch=win32 ?rdbuf@?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QBEPAV?$basic_filebuf@_WU?$char_traits@_W@std@@@2@XZ
-@ stub -arch=win64 ?rdbuf@?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QEBAPEAV?$basic_filebuf@_WU?$char_traits@_W@std@@@2@XZ
+@ thiscall -arch=win32 ?rdbuf@?$basic_ofstream@GU?$char_traits@G@std@@@std@@QBEPAV?$basic_filebuf@GU?$char_traits@G@std@@@2@XZ(ptr) basic_ofstream_wchar_rdbuf
+@ cdecl -arch=win64 ?rdbuf@?$basic_ofstream@GU?$char_traits@G@std@@@std@@QEBAPEAV?$basic_filebuf@GU?$char_traits@G@std@@@2@XZ(ptr) basic_ofstream_wchar_rdbuf
+@ thiscall -arch=win32 ?rdbuf@?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QBEPAV?$basic_filebuf@_WU?$char_traits@_W@std@@@2@XZ(ptr) basic_ofstream_wchar_rdbuf
+@ cdecl -arch=win64 ?rdbuf@?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QEBAPEAV?$basic_filebuf@_WU?$char_traits@_W@std@@@2@XZ(ptr) basic_ofstream_wchar_rdbuf
 @ thiscall -arch=win32 ?rdbuf@?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEPAV?$basic_stringbuf@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ(ptr) basic_ostringstream_char_rdbuf
 @ cdecl -arch=win64 ?rdbuf@?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBAPEAV?$basic_stringbuf@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ(ptr) basic_ostringstream_char_rdbuf
 @ stub -arch=win32 ?rdbuf@?$basic_ostringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBEPAV?$basic_stringbuf@GU?$char_traits@G@std@@V?$allocator@G@2@@2@XZ
