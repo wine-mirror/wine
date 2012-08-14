@@ -256,12 +256,12 @@ todo_wine {
     ok(hr == S_OK, "IWICBitmap_GetResolution failed hr=%x\n", hr);
     ok(dpix == 12.0, "got %f, expected 12.0\n", dpix);
     ok(dpiy == 34.0, "got %f, expected 34.0\n", dpiy);
+}
 
     hr = IWICBitmap_GetSize(bitmap, &width, &height);
     ok(hr == S_OK, "IWICBitmap_GetSize failed hr=%x\n", hr);
     ok(width == 3, "got %d, expected 3\n", width);
     ok(height == 3, "got %d, expected 3\n", height);
-}
 
     IWICBitmap_Release(bitmap);
 }

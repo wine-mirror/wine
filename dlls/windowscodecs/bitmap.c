@@ -266,9 +266,16 @@ static ULONG WINAPI BitmapImpl_Release(IWICBitmap *iface)
 static HRESULT WINAPI BitmapImpl_GetSize(IWICBitmap *iface,
     UINT *puiWidth, UINT *puiHeight)
 {
-    FIXME("(%p,%p,%p)\n", iface, puiWidth, puiHeight);
+    BitmapImpl *This = impl_from_IWICBitmap(iface);
+    TRACE("(%p,%p,%p)\n", iface, puiWidth, puiHeight);
 
-    return E_NOTIMPL;
+    if (!puiWidth || !puiHeight)
+        return E_INVALIDARG;
+
+    *puiWidth = This->width;
+    *puiHeight = This->height;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI BitmapImpl_GetPixelFormat(IWICBitmap *iface,
