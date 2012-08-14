@@ -300,9 +300,11 @@ static HRESULT WINAPI BitmapImpl_CopyPalette(IWICBitmap *iface,
 static HRESULT WINAPI BitmapImpl_CopyPixels(IWICBitmap *iface,
     const WICRect *prc, UINT cbStride, UINT cbBufferSize, BYTE *pbBuffer)
 {
-    FIXME("(%p,%p,%u,%u,%p)\n", iface, prc, cbStride, cbBufferSize, pbBuffer);
+    BitmapImpl *This = impl_from_IWICBitmap(iface);
+    TRACE("(%p,%p,%u,%u,%p)\n", iface, prc, cbStride, cbBufferSize, pbBuffer);
 
-    return E_NOTIMPL;
+    return copy_pixels(This->bpp, This->data, This->width, This->height,
+        This->stride, prc, cbStride, cbBufferSize, pbBuffer);
 }
 
 static HRESULT WINAPI BitmapImpl_Lock(IWICBitmap *iface, const WICRect *prcLock,
@@ -426,7 +428,7 @@ HRESULT BitmapImpl_Create(UINT uiWidth, UINT uiHeight,
     datasize = stride * uiHeight;
 
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(BitmapImpl));
-    data = HeapAlloc(GetProcessHeap(), 0, datasize);
+    data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, datasize);
     if (!This || !data)
     {
         HeapFree(GetProcessHeap(), 0, This);

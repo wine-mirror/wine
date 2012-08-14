@@ -85,7 +85,7 @@ static void test_createbitmap(void)
 
     /* pixel data is initially zeroed */
     hr = IWICBitmap_CopyPixels(bitmap, NULL, 9, 27, returned_data);
-    todo_wine ok(hr == S_OK, "IWICBitmap_CopyPixels failed hr=%x\n", hr);
+    ok(hr == S_OK, "IWICBitmap_CopyPixels failed hr=%x\n", hr);
 
     for (i=0; i<27; i++)
         ok(returned_data[i] == 0, "returned_data[%i] == %i\n", i, returned_data[i]);
@@ -193,10 +193,10 @@ static void test_createbitmap(void)
 
     /* test that the data we wrote is returned by CopyPixels */
     hr = IWICBitmap_CopyPixels(bitmap, NULL, 9, 27, returned_data);
-    todo_wine ok(hr == S_OK, "IWICBitmap_CopyPixels failed hr=%x\n", hr);
+    ok(hr == S_OK, "IWICBitmap_CopyPixels failed hr=%x\n", hr);
 
     for (i=0; i<27; i++)
-        todo_wine ok(returned_data[i] == bitmap_data[i], "returned_data[%i] == %i\n", i, returned_data[i]);
+        ok(returned_data[i] == bitmap_data[i], "returned_data[%i] == %i\n", i, returned_data[i]);
 
     /* try a valid partial rect, and write mode */
     rc.X = 2;
