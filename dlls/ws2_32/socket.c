@@ -2544,7 +2544,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             }
             else
             {
-                *(BOOL *)optval = (lingval.l_onoff) ? FALSE : TRUE;
+                *(BOOL *)optval = !lingval.l_onoff;
                 *optlen = sizeof(BOOL);
             }
 
