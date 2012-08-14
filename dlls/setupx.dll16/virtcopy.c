@@ -454,8 +454,7 @@ static RETERR16 VCP_CopyFiles(void)
 	/* FIXME: need to do the file copy in small chunks for notifications */
 	TRACE("copying '%s' to '%s'\n", fn_src, fn_dst);
         /* perform the file copy */
-        if (!(CopyFileA(fn_src, fn_dst,
-	       (lpvn->fl & VNLP_COPYIFEXISTS) ? FALSE : TRUE )))
+        if (!CopyFileA(fn_src, fn_dst, !(lpvn->fl & VNLP_COPYIFEXISTS)))
         {
             ERR("error copying, src: %s -> dst: %s\n", fn_src, fn_dst);
 	    res = ERR_VCP_IOFAIL;
