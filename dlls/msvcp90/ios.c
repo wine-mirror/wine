@@ -309,11 +309,15 @@ const int basic_iostream_char_vbtable2[] = {0, sizeof(basic_iostream_char)-FIELD
 extern const vtable_ptr MSVCP_basic_iostream_char_vtable;
 
 /* ??_8?$basic_iostream@_WU?$char_traits@_W@std@@@std@@7B?$basic_istream@_WU?$char_traits@_W@std@@@1@@ */
+/* ??_8?$basic_iostream@GU?$char_traits@G@std@@@std@@7B?$basic_istream@GU?$char_traits@G@std@@@1@@ */
 const int basic_iostream_wchar_vbtable1[] = {0, sizeof(basic_iostream_wchar)};
 /* ??_8?$basic_iostream@_WU?$char_traits@_W@std@@@std@@7B?$basic_ostream@_WU?$char_traits@_W@std@@@1@@ */
+/* ??_8?$basic_iostream@GU?$char_traits@G@std@@@std@@7B?$basic_ostream@GU?$char_traits@G@std@@@1@@ */
 const int basic_iostream_wchar_vbtable2[] = {0, sizeof(basic_iostream_wchar)-FIELD_OFFSET(basic_iostream_wchar, base2)};
 /* ??_7?$basic_iostream@_WU?$char_traits@_W@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_iostream_wchar_vtable;
+/* ??_7?$basic_iostream@GU?$char_traits@G@std@@@std@@6B@ */
+extern const vtable_ptr MSVCP_basic_iostream_short_vtable;
 
 /* ??_8?$basic_ofstream@DU?$char_traits@D@std@@@std@@7B@ */
 const int basic_ofstream_char_vbtable[] = {0, sizeof(basic_ofstream_char)};
@@ -422,6 +426,12 @@ DEFINE_RTTI_DATA8(basic_iostream_wchar, sizeof(basic_iostream_wchar),
         &basic_ostream_wchar_rtti_base_descriptor, &basic_ios_wchar_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
         ".?AV?$basic_iostream@_WU?$char_traits@_W@std@@@std@@");
+DEFINE_RTTI_DATA8(basic_iostream_short, sizeof(basic_iostream_wchar),
+        &basic_istream_short_rtti_base_descriptor, &basic_ios_short_rtti_base_descriptor,
+        &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
+        &basic_ostream_short_rtti_base_descriptor, &basic_ios_short_rtti_base_descriptor,
+        &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
+        ".?AV?$basic_iostream@GU?$char_traits@G@std@@@std@@");
 DEFINE_RTTI_DATA4(basic_ofstream_char, sizeof(basic_ofstream_char),
         &basic_ostream_char_rtti_base_descriptor, &basic_ios_char_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
@@ -607,6 +617,7 @@ void __asm_dummy_vtables(void) {
     __ASM_VTABLE(basic_istream_short, "");
     __ASM_VTABLE(basic_iostream_char, "");
     __ASM_VTABLE(basic_iostream_wchar, "");
+    __ASM_VTABLE(basic_iostream_short, "");
     __ASM_VTABLE(basic_ofstream_char, "");
     __ASM_VTABLE(basic_ifstream_char, "");
     __ASM_VTABLE(basic_fstream_char, "");
@@ -9636,7 +9647,8 @@ static inline basic_iostream_wchar* basic_iostream_wchar_from_basic_ios(basic_io
 /* ??0?$basic_iostream@_WU?$char_traits@_W@std@@@std@@QAE@PAV?$basic_streambuf@_WU?$char_traits@_W@std@@@1@@Z */
 /* ??0?$basic_iostream@_WU?$char_traits@_W@std@@@std@@QEAA@PEAV?$basic_streambuf@_WU?$char_traits@_W@std@@@1@@Z */
 DEFINE_THISCALL_WRAPPER(basic_iostream_wchar_ctor, 12)
-basic_iostream_wchar* __thiscall basic_iostream_wchar_ctor(basic_iostream_wchar *this, basic_streambuf_wchar *strbuf, MSVCP_bool virt_init)
+basic_iostream_wchar* __thiscall basic_iostream_wchar_ctor(basic_iostream_wchar *this,
+        basic_streambuf_wchar *strbuf, MSVCP_bool virt_init)
 {
     basic_ios_wchar *basic_ios;
 
@@ -9651,15 +9663,28 @@ basic_iostream_wchar* __thiscall basic_iostream_wchar_ctor(basic_iostream_wchar 
         basic_ios = basic_istream_wchar_get_basic_ios(&this->base1);
     }
 
-    basic_ios->base.vtable = &MSVCP_basic_iostream_wchar_vtable;
-
     basic_istream_wchar_ctor(&this->base1, strbuf, FALSE, FALSE);
     basic_ostream_wchar_ctor_uninitialized(&this->base2, 0, FALSE, FALSE);
+
+    basic_ios->base.vtable = &MSVCP_basic_iostream_wchar_vtable;
+    return this;
+}
+
+/* ??0?$basic_iostream@GU?$char_traits@G@std@@@std@@QAE@PAV?$basic_streambuf@GU?$char_traits@G@std@@@1@@Z */
+/* ??0?$basic_iostream@GU?$char_traits@G@std@@@std@@QEAA@PEAV?$basic_streambuf@GU?$char_traits@G@std@@@1@@Z */
+DEFINE_THISCALL_WRAPPER(basic_iostream_short_ctor, 12)
+basic_iostream_wchar* __thiscall basic_iostream_short_ctor(basic_iostream_wchar *this,
+        basic_streambuf_wchar *strbuf, MSVCP_bool virt_init)
+{
+    basic_iostream_wchar_ctor(this, strbuf, virt_init);
+    basic_istream_wchar_get_basic_ios(&this->base1)->base.vtable = &MSVCP_basic_iostream_short_vtable;
     return this;
 }
 
 /* ??1?$basic_iostream@_WU?$char_traits@_W@std@@@std@@UAE@XZ */
 /* ??1?$basic_iostream@_WU?$char_traits@_W@std@@@std@@UEAA@XZ */
+/* ??1?$basic_iostream@GU?$char_traits@G@std@@@std@@UAE@XZ */
+/* ??1?$basic_iostream@GU?$char_traits@G@std@@@std@@UEAA@XZ */
 DEFINE_THISCALL_WRAPPER(basic_iostream_wchar_dtor, 4)
 void __thiscall basic_iostream_wchar_dtor(basic_ios_wchar *base)
 {
@@ -9672,6 +9697,8 @@ void __thiscall basic_iostream_wchar_dtor(basic_ios_wchar *base)
 
 /* ??_D?$basic_iostream@_WU?$char_traits@_W@std@@@std@@QAEXXZ */
 /* ??_D?$basic_iostream@_WU?$char_traits@_W@std@@@std@@QEAAXXZ */
+/* ??_D?$basic_iostream@GU?$char_traits@G@std@@@std@@QAEXXZ */
+/* ??_D?$basic_iostream@GU?$char_traits@G@std@@@std@@QEAAXXZ */
 DEFINE_THISCALL_WRAPPER(basic_iostream_wchar_vbase_dtor, 4)
 void __thiscall basic_iostream_wchar_vbase_dtor(basic_iostream_wchar *this)
 {
@@ -9701,6 +9728,12 @@ basic_iostream_wchar* __thiscall MSVCP_basic_iostream_wchar_vector_dtor(basic_io
     }
 
     return this;
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_iostream_short_vector_dtor, 8)
+basic_iostream_wchar* __thiscall MSVCP_basic_iostream_short_vector_dtor(basic_ios_wchar *base, unsigned int flags)
+{
+    return MSVCP_basic_iostream_wchar_vector_dtor(base, flags);
 }
 
 static inline basic_ios_char* basic_ofstream_char_to_basic_ios(basic_ofstream_char *ptr)
