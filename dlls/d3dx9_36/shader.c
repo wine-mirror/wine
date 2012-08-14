@@ -905,10 +905,24 @@ static HRESULT set_float_array(ID3DXConstantTable *iface, LPDIRECT3DDEVICE9 devi
 static HRESULT WINAPI ID3DXConstantTableImpl_SetDefaults(ID3DXConstantTable *iface, LPDIRECT3DDEVICE9 device)
 {
     struct ID3DXConstantTableImpl *This = impl_from_ID3DXConstantTable(iface);
+    UINT i;
 
-    FIXME("(%p)->(%p): stub\n", This, device);
+    TRACE("(%p)->(%p)\n", This, device);
 
-    return E_NOTIMPL;
+    if (!device)
+        return D3DERR_INVALIDCALL;
+
+    for (i = 0; i < This->desc.Constants; i++)
+    {
+        D3DXCONSTANT_DESC *desc = &This->constants[i].desc;
+
+        if (!desc->DefaultValue)
+            continue;
+
+        set_float_shader_constant(This, device, desc->RegisterIndex, desc->DefaultValue, desc->RegisterCount);
+    }
+
+    return D3D_OK;
 }
 
 static HRESULT WINAPI ID3DXConstantTableImpl_SetValue(ID3DXConstantTable *iface, LPDIRECT3DDEVICE9 device,
