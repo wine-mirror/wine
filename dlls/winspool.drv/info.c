@@ -5258,7 +5258,7 @@ BOOL WINAPI GetPrinterDriverDirectoryA(LPSTR pName, LPSTR pEnvironment,
                                    (LPSTR)pDriverDirectory, cbBuf, NULL, NULL);
         if(pcbNeeded)
             *pcbNeeded = needed;
-        ret = (needed <= cbBuf) ? TRUE : FALSE;
+        ret = needed <= cbBuf;
     } else 
         if(pcbNeeded) *pcbNeeded = pcbNeededW * sizeof(CHAR)/sizeof(WCHAR);
 
