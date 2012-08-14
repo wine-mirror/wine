@@ -3675,7 +3675,7 @@ static BOOL is_directory(LPCWSTR target)
 	if (target_attr == INVALID_FILE_ATTRIBUTES)
 		return FALSE;
 
-	return target_attr&FILE_ATTRIBUTE_DIRECTORY? TRUE: FALSE;
+	return (target_attr & FILE_ATTRIBUTE_DIRECTORY) != 0;
 }
 
 static BOOL prompt_target(Pane* pane, LPWSTR source, LPWSTR target)
