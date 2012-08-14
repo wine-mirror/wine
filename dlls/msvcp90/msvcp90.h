@@ -443,6 +443,7 @@ ostreambuf_iterator_char* __thiscall num_put_char_put_bool(const num_put*, ostre
         ostreambuf_iterator_char, ios_base*, char, MSVCP_bool);
 
 num_put* num_put_wchar_use_facet(const locale*);
+num_put* num_put_short_use_facet(const locale*);
 ostreambuf_iterator_wchar* __thiscall num_put_wchar_put_long(const num_put*, ostreambuf_iterator_wchar*,
         ostreambuf_iterator_wchar, ios_base*, wchar_t, LONG);
 ostreambuf_iterator_wchar* __thiscall num_put_wchar_put_ulong(const num_put*, ostreambuf_iterator_wchar*,

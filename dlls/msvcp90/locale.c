@@ -7072,7 +7072,7 @@ num_put* num_put_wchar_use_facet(const locale *loc)
     return obj;
 }
 
-static num_put* num_put_short_use_facet(const locale *loc)
+num_put* num_put_short_use_facet(const locale *loc)
 {
     static num_put *obj = NULL;
 

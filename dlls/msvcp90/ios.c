@@ -281,6 +281,11 @@ const int basic_ostream_wchar_vbtable[] = {0, sizeof(basic_ostream_wchar)};
 /* ??_7?$basic_ostream@_WU?$char_traits@_W@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_ostream_wchar_vtable;
 
+/* ??_8?$basic_ostream@GU?$char_traits@G@std@@@std@@7B@ */
+const int basic_ostream_short_vbtable[] = {0, sizeof(basic_ostream_wchar)};
+/* ??_7?$basic_ostream@GU?$char_traits@G@std@@@std@@6B@ */
+extern const vtable_ptr MSVCP_basic_ostream_short_vtable;
+
 /* ??_8?$basic_istream@DU?$char_traits@D@std@@@std@@7B@ */
 const int basic_istream_char_vbtable[] = {0, sizeof(basic_istream_char)};
 /* ??_7?$basic_istream@DU?$char_traits@D@std@@@std@@6B@ */
@@ -388,6 +393,9 @@ DEFINE_RTTI_DATA3(basic_ostream_char, sizeof(basic_ostream_char), &basic_ios_cha
 DEFINE_RTTI_DATA3(basic_ostream_wchar, sizeof(basic_ostream_wchar), &basic_ios_wchar_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
         ".?AV?$basic_ostream@_WU?$char_traits@_W@std@@@std@@");
+DEFINE_RTTI_DATA3(basic_ostream_short, sizeof(basic_ostream_wchar), &basic_ios_short_rtti_base_descriptor,
+        &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
+        ".?AV?$basic_ostream@GU?$char_traits@G@std@@@std@@");
 DEFINE_RTTI_DATA3(basic_istream_char, sizeof(basic_istream_char), &basic_ios_char_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
         ".?AV?$basic_istream@DU?$char_traits@D@std@@@std@@");
@@ -585,6 +593,7 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(basic_streambuf_wchar_imbue));
     __ASM_VTABLE(basic_ostream_char, "");
     __ASM_VTABLE(basic_ostream_wchar, "");
+    __ASM_VTABLE(basic_ostream_short, "");
     __ASM_VTABLE(basic_istream_char, "");
     __ASM_VTABLE(basic_istream_wchar, "");
     __ASM_VTABLE(basic_iostream_char, "");
@@ -5974,6 +5983,17 @@ basic_ostream_wchar* __thiscall basic_ostream_wchar_ctor(basic_ostream_wchar *th
     return this;
 }
 
+/* ??0?$basic_ostream@GU?$char_traits@G@std@@@std@@QAE@PAV?$basic_streambuf@GU?$char_traits@G@std@@@1@_N@Z */
+/* ??0?$basic_ostream@GU?$char_traits@G@std@@@std@@QEAA@PEAV?$basic_streambuf@GU?$char_traits@G@std@@@1@_N@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostream_short_ctor, 16)
+basic_ostream_wchar* __thiscall basic_ostream_short_ctor(basic_ostream_wchar *this,
+        basic_streambuf_wchar *strbuf, MSVCP_bool isstd, MSVCP_bool virt_init)
+{
+    basic_ostream_wchar_ctor(this, strbuf, isstd, virt_init);
+    basic_ostream_wchar_get_basic_ios(this)->base.vtable = &MSVCP_basic_ostream_short_vtable;
+    return this;
+}
+
 /* ??0?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QAE@W4_Uninitialized@1@_N@Z */
 /* ??0?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QEAA@W4_Uninitialized@1@_N@Z */
 DEFINE_THISCALL_WRAPPER(basic_ostream_wchar_ctor_uninitialized, 16)
@@ -5998,8 +6018,21 @@ basic_ostream_wchar* __thiscall basic_ostream_wchar_ctor_uninitialized(basic_ost
     return this;
 }
 
+/* ??0?$basic_ostream@GU?$char_traits@G@std@@@std@@QAE@W4_Uninitialized@1@_N@Z */
+/* ??0?$basic_ostream@GU?$char_traits@G@std@@@std@@QEAA@W4_Uninitialized@1@_N@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostream_short_ctor_uninitialized, 16)
+basic_ostream_wchar* __thiscall basic_ostream_short_ctor_uninitialized(basic_ostream_wchar *this,
+        int uninitialized, MSVCP_bool addstd, MSVCP_bool virt_init)
+{
+    basic_ostream_wchar_ctor_uninitialized(this, uninitialized, addstd, virt_init);
+    basic_ostream_wchar_get_basic_ios(this)->base.vtable = &MSVCP_basic_ostream_short_vtable;
+    return this;
+}
+
 /* ??1?$basic_ostream@_WU?$char_traits@_W@std@@@std@@UAE@XZ */
 /* ??1?$basic_ostream@_WU?$char_traits@_W@std@@@std@@UEAA@XZ */
+/* ??1?$basic_ostream@GU?$char_traits@G@std@@@std@@UAE@XZ */
+/* ??1?$basic_ostream@GU?$char_traits@G@std@@@std@@UEAA@XZ */
 DEFINE_THISCALL_WRAPPER(basic_ostream_wchar_dtor, 4)
 void __thiscall basic_ostream_wchar_dtor(basic_ios_wchar *base)
 {
@@ -6011,6 +6044,8 @@ void __thiscall basic_ostream_wchar_dtor(basic_ios_wchar *base)
 
 /* ??_D?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QAEXXZ */
 /* ??_D?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QEAAXXZ */
+/* ??_D?$basic_ostream@GU?$char_traits@G@std@@@std@@QAEXXZ */
+/* ??_D?$basic_ostream@GU?$char_traits@G@std@@@std@@QEAAXXZ */
 DEFINE_THISCALL_WRAPPER(basic_ostream_wchar_vbase_dtor, 4)
 void __thiscall basic_ostream_wchar_vbase_dtor(basic_ostream_wchar *this)
 {
@@ -6042,8 +6077,16 @@ basic_ostream_wchar* __thiscall MSVCP_basic_ostream_wchar_vector_dtor(basic_ios_
     return this;
 }
 
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_ostream_short_vector_dtor, 8)
+basic_ostream_wchar* __thiscall MSVCP_basic_ostream_short_vector_dtor(basic_ios_wchar *base, unsigned int flags)
+{
+    return MSVCP_basic_ostream_wchar_vector_dtor(base, flags);
+}
+
 /* ?flush@?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QAEAAV12@XZ */
 /* ?flush@?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QEAAAEAV12@XZ */
+/* ?flush@?$basic_ostream@GU?$char_traits@G@std@@@std@@QAEAAV12@XZ */
+/* ?flush@?$basic_ostream@GU?$char_traits@G@std@@@std@@QEAAAEAV12@XZ */
 DEFINE_THISCALL_WRAPPER(basic_ostream_wchar_flush, 4)
 basic_ostream_wchar* __thiscall basic_ostream_wchar_flush(basic_ostream_wchar *this)
 {
@@ -6060,6 +6103,8 @@ basic_ostream_wchar* __thiscall basic_ostream_wchar_flush(basic_ostream_wchar *t
 
 /* ?_Osfx@?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QAEXXZ */
 /* ?_Osfx@?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QEAAXXZ */
+/* ?_Osfx@?$basic_ostream@GU?$char_traits@G@std@@@std@@QAEXXZ */
+/* ?_Osfx@?$basic_ostream@GU?$char_traits@G@std@@@std@@QEAAXXZ */
 DEFINE_THISCALL_WRAPPER(basic_ostream_wchar__Osfx, 4)
 void __thiscall basic_ostream_wchar__Osfx(basic_ostream_wchar *this)
 {
@@ -6073,6 +6118,8 @@ void __thiscall basic_ostream_wchar__Osfx(basic_ostream_wchar *this)
 
 /* ?osfx@?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QAEXXZ */
 /* ?osfx@?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QEAAXXZ */
+/* ?osfx@?$basic_ostream@GU?$char_traits@G@std@@@std@@QAEXXZ */
+/* ?osfx@?$basic_ostream@GU?$char_traits@G@std@@@std@@QEAAXXZ */
 DEFINE_THISCALL_WRAPPER(basic_ostream_wchar_osfx, 4)
 void __thiscall basic_ostream_wchar_osfx(basic_ostream_wchar *this)
 {
@@ -6106,6 +6153,8 @@ static void basic_ostream_wchar_sentry_destroy(basic_ostream_wchar *ostr)
 
 /* ?opfx@?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QAE_NXZ */
 /* ?opfx@?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QEAA_NXZ */
+/* ?opfx@?$basic_ostream@GU?$char_traits@G@std@@@std@@QAE_NXZ */
+/* ?opfx@?$basic_ostream@GU?$char_traits@G@std@@@std@@QEAA_NXZ */
 DEFINE_THISCALL_WRAPPER(basic_ostream_wchar_opfx, 4)
 MSVCP_bool __thiscall basic_ostream_wchar_opfx(basic_ostream_wchar *this)
 {
@@ -6120,6 +6169,8 @@ MSVCP_bool __thiscall basic_ostream_wchar_opfx(basic_ostream_wchar *this)
 
 /* ?put@?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QAEAAV12@_W@Z */
 /* ?put@?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QEAAAEAV12@_W@Z */
+/* ?put@?$basic_ostream@GU?$char_traits@G@std@@@std@@QAEAAV12@G@Z */
+/* ?put@?$basic_ostream@GU?$char_traits@G@std@@@std@@QEAAAEAV12@G@Z */
 DEFINE_THISCALL_WRAPPER(basic_ostream_wchar_put, 8)
 basic_ostream_wchar* __thiscall basic_ostream_wchar_put(basic_ostream_wchar *this, wchar_t ch)
 {
@@ -6140,6 +6191,8 @@ basic_ostream_wchar* __thiscall basic_ostream_wchar_put(basic_ostream_wchar *thi
 
 /* ?seekp@?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QAEAAV12@JH@Z */
 /* ?seekp@?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QEAAAEAV12@_JH@Z */
+/* ?seekp@?$basic_ostream@GU?$char_traits@G@std@@@std@@QAEAAV12@JH@Z */
+/* ?seekp@?$basic_ostream@GU?$char_traits@G@std@@@std@@QEAAAEAV12@_JH@Z */
 DEFINE_THISCALL_WRAPPER(basic_ostream_wchar_seekp, 12)
 basic_ostream_wchar* __thiscall basic_ostream_wchar_seekp(basic_ostream_wchar *this, streamoff off, int way)
 {
@@ -6160,6 +6213,8 @@ basic_ostream_wchar* __thiscall basic_ostream_wchar_seekp(basic_ostream_wchar *t
 
 /* ?seekp@?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QAEAAV12@V?$fpos@H@2@@Z */
 /* ?seekp@?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QEAAAEAV12@V?$fpos@H@2@@Z */
+/* ?seekp@?$basic_ostream@GU?$char_traits@G@std@@@std@@QAEAAV12@V?$fpos@H@2@@Z */
+/* ?seekp@?$basic_ostream@GU?$char_traits@G@std@@@std@@QEAAAEAV12@V?$fpos@H@2@@Z */
 DEFINE_THISCALL_WRAPPER(basic_ostream_wchar_seekp_fpos, 28)
 basic_ostream_wchar* __thiscall basic_ostream_wchar_seekp_fpos(basic_ostream_wchar *this, fpos_int pos)
 {
@@ -6180,6 +6235,8 @@ basic_ostream_wchar* __thiscall basic_ostream_wchar_seekp_fpos(basic_ostream_wch
 
 /* ?tellp@?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QAE?AV?$fpos@H@2@XZ */
 /* ?tellp@?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QEAA?AV?$fpos@H@2@XZ */
+/* ?tellp@?$basic_ostream@GU?$char_traits@G@std@@@std@@QAE?AV?$fpos@H@2@XZ */
+/* ?tellp@?$basic_ostream@GU?$char_traits@G@std@@@std@@QEAA?AV?$fpos@H@2@XZ */
 DEFINE_THISCALL_WRAPPER(basic_ostream_wchar_tellp, 8)
 fpos_int* __thiscall basic_ostream_wchar_tellp(basic_ostream_wchar *this, fpos_int *ret)
 {
@@ -6200,6 +6257,8 @@ fpos_int* __thiscall basic_ostream_wchar_tellp(basic_ostream_wchar *this, fpos_i
 
 /* ?write@?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QAEAAV12@PB_WH@Z */
 /* ?write@?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QEAAAEAV12@PEB_W_J@Z */
+/* ?write@?$basic_ostream@GU?$char_traits@G@std@@@std@@QAEAAV12@PBGH@Z */
+/* ?write@?$basic_ostream@GU?$char_traits@G@std@@@std@@QEAAAEAV12@PEBG_J@Z */
 DEFINE_THISCALL_WRAPPER(basic_ostream_wchar_write, 12)
 basic_ostream_wchar* __thiscall basic_ostream_wchar_write(basic_ostream_wchar *this, const wchar_t *str, streamsize count)
 {
@@ -6218,10 +6277,7 @@ basic_ostream_wchar* __thiscall basic_ostream_wchar_write(basic_ostream_wchar *t
     return this;
 }
 
-/* ??6?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QAEAAV01@F@Z */
-/* ??6?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QEAAAEAV01@F@Z */
-DEFINE_THISCALL_WRAPPER(basic_ostream_wchar_print_short, 8)
-basic_ostream_wchar* __thiscall basic_ostream_wchar_print_short(basic_ostream_wchar *this, short val)
+static basic_ostream_wchar* basic_ostream_print_short(basic_ostream_wchar *this, short val, const num_put *numput)
 {
     basic_ios_wchar *base = basic_ostream_wchar_get_basic_ios(this);
     int state = IOSTATE_goodbit;
@@ -6230,7 +6286,6 @@ basic_ostream_wchar* __thiscall basic_ostream_wchar_print_short(basic_ostream_wc
 
     if(basic_ostream_wchar_sentry_create(this)) {
         basic_streambuf_wchar *strbuf = basic_ios_wchar_rdbuf_get(base);
-        const num_put *numput = num_put_wchar_use_facet(strbuf->loc);
         ostreambuf_iterator_wchar dest = {0, strbuf};
 
         num_put_wchar_put_long(numput, &dest, dest, &base->base, basic_ios_wchar_fill_get(base),
@@ -6241,6 +6296,24 @@ basic_ostream_wchar* __thiscall basic_ostream_wchar_print_short(basic_ostream_wc
 
     basic_ios_wchar_setstate(base, state);
     return this;
+}
+
+/* ??6?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QAEAAV01@F@Z */
+/* ??6?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QEAAAEAV01@F@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostream_wchar_print_short, 8)
+basic_ostream_wchar* __thiscall basic_ostream_wchar_print_short(basic_ostream_wchar *this, short val)
+{
+    return basic_ostream_print_short(this, val, num_put_wchar_use_facet(
+                basic_ios_wchar_rdbuf_get(basic_ostream_wchar_get_basic_ios(this))->loc));
+}
+
+/* ??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QAEAAV01@F@Z */
+/* ??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QEAAAEAV01@F@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostream_short_print_short, 8)
+basic_ostream_wchar* __thiscall basic_ostream_short_print_short(basic_ostream_wchar *this, short val)
+{
+    return basic_ostream_print_short(this, val, num_put_short_use_facet(
+                basic_ios_wchar_rdbuf_get(basic_ostream_wchar_get_basic_ios(this))->loc));
 }
 
 /* ??6?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QAEAAV01@G@Z */
@@ -6266,12 +6339,7 @@ basic_ostream_wchar* __thiscall basic_ostream_wchar_print_ushort(basic_ostream_w
     return this;
 }
 
-/* ??6?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QAEAAV01@H@Z */
-/* ??6?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QEAAAEAV01@H@Z */
-/* ??6?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QAEAAV01@J@Z */
-/* ??6?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QEAAAEAV01@J@Z */
-DEFINE_THISCALL_WRAPPER(basic_ostream_wchar_print_int, 8)
-basic_ostream_wchar* __thiscall basic_ostream_wchar_print_int(basic_ostream_wchar *this, int val)
+static basic_ostream_wchar* basic_ostream_print_int(basic_ostream_wchar *this, int val, const num_put *numput)
 {
     basic_ios_wchar *base = basic_ostream_wchar_get_basic_ios(this);
     int state = IOSTATE_goodbit;
@@ -6280,10 +6348,50 @@ basic_ostream_wchar* __thiscall basic_ostream_wchar_print_int(basic_ostream_wcha
 
     if(basic_ostream_wchar_sentry_create(this)) {
         basic_streambuf_wchar *strbuf = basic_ios_wchar_rdbuf_get(base);
-        const num_put *numput = num_put_wchar_use_facet(strbuf->loc);
         ostreambuf_iterator_wchar dest = {0, strbuf};
 
         num_put_wchar_put_long(numput, &dest, dest, &base->base, basic_ios_wchar_fill_get(base), val);
+    }
+    basic_ostream_wchar_sentry_destroy(this);
+
+    basic_ios_wchar_setstate(base, state);
+    return this;
+}
+
+/* ??6?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QAEAAV01@H@Z */
+/* ??6?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QEAAAEAV01@H@Z */
+/* ??6?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QAEAAV01@J@Z */
+/* ??6?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QEAAAEAV01@J@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostream_wchar_print_int, 8)
+basic_ostream_wchar* __thiscall basic_ostream_wchar_print_int(basic_ostream_wchar *this, int val)
+{
+    return basic_ostream_print_int(this, val, num_put_wchar_use_facet(
+                basic_ios_wchar_rdbuf_get(basic_ostream_wchar_get_basic_ios(this))->loc));
+}
+
+/* ??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QAEAAV01@H@Z */
+/* ??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QEAAAEAV01@H@Z */
+/* ??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QAEAAV01@J@Z */
+/* ??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QEAAAEAV01@J@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostream_short_print_int, 8)
+basic_ostream_wchar* __thiscall basic_ostream_short_print_int(basic_ostream_wchar *this, int val)
+{
+    return basic_ostream_print_int(this, val, num_put_short_use_facet(
+                basic_ios_wchar_rdbuf_get(basic_ostream_wchar_get_basic_ios(this))->loc));
+}
+
+static basic_ostream_wchar* basic_ostream_print_uint(basic_ostream_wchar *this, unsigned int val, const num_put *numput)
+{
+    basic_ios_wchar *base = basic_ostream_wchar_get_basic_ios(this);
+    int state = IOSTATE_goodbit;
+
+    TRACE("(%p %u)\n", this, val);
+
+    if(basic_ostream_wchar_sentry_create(this)) {
+        basic_streambuf_wchar *strbuf = basic_ios_wchar_rdbuf_get(base);
+        ostreambuf_iterator_wchar dest = {0, strbuf};
+
+        num_put_wchar_put_ulong(numput, &dest, dest, &base->base, basic_ios_wchar_fill_get(base), val);
     }
     basic_ostream_wchar_sentry_destroy(this);
 
@@ -6298,17 +6406,33 @@ basic_ostream_wchar* __thiscall basic_ostream_wchar_print_int(basic_ostream_wcha
 DEFINE_THISCALL_WRAPPER(basic_ostream_wchar_print_uint, 8)
 basic_ostream_wchar* __thiscall basic_ostream_wchar_print_uint(basic_ostream_wchar *this, unsigned int val)
 {
+    return basic_ostream_print_uint(this, val, num_put_wchar_use_facet(
+                basic_ios_wchar_rdbuf_get(basic_ostream_wchar_get_basic_ios(this))->loc));
+}
+
+/* ??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QAEAAV01@I@Z */
+/* ??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QEAAAEAV01@I@Z */
+/* ??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QAEAAV01@K@Z */
+/* ??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QEAAAEAV01@K@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostream_short_print_uint, 8)
+basic_ostream_wchar* __thiscall basic_ostream_short_print_uint(basic_ostream_wchar *this, unsigned int val)
+{
+    return basic_ostream_print_uint(this, val, num_put_short_use_facet(
+                basic_ios_wchar_rdbuf_get(basic_ostream_wchar_get_basic_ios(this))->loc));
+}
+
+static basic_ostream_wchar* basic_ostream_print_float(basic_ostream_wchar *this, float val, const num_put *numput)
+{
     basic_ios_wchar *base = basic_ostream_wchar_get_basic_ios(this);
     int state = IOSTATE_goodbit;
 
-    TRACE("(%p %u)\n", this, val);
+    TRACE("(%p %f)\n", this, val);
 
     if(basic_ostream_wchar_sentry_create(this)) {
         basic_streambuf_wchar *strbuf = basic_ios_wchar_rdbuf_get(base);
-        const num_put *numput = num_put_wchar_use_facet(strbuf->loc);
         ostreambuf_iterator_wchar dest = {0, strbuf};
 
-        num_put_wchar_put_ulong(numput, &dest, dest, &base->base, basic_ios_wchar_fill_get(base), val);
+        num_put_wchar_put_double(numput, &dest, dest, &base->base, basic_ios_wchar_fill_get(base), val);
     }
     basic_ostream_wchar_sentry_destroy(this);
 
@@ -6321,14 +6445,28 @@ basic_ostream_wchar* __thiscall basic_ostream_wchar_print_uint(basic_ostream_wch
 DEFINE_THISCALL_WRAPPER(basic_ostream_wchar_print_float, 8)
 basic_ostream_wchar* __thiscall basic_ostream_wchar_print_float(basic_ostream_wchar *this, float val)
 {
+    return basic_ostream_print_float(this, val, num_put_wchar_use_facet(
+                basic_ios_wchar_rdbuf_get(basic_ostream_wchar_get_basic_ios(this))->loc));
+}
+
+/* ??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QAEAAV01@M@Z */
+/* ??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QEAAAEAV01@M@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostream_short_print_float, 8)
+basic_ostream_wchar* __thiscall basic_ostream_short_print_float(basic_ostream_wchar *this, float val)
+{
+    return basic_ostream_print_float(this, val, num_put_short_use_facet(
+                basic_ios_wchar_rdbuf_get(basic_ostream_wchar_get_basic_ios(this))->loc));
+}
+
+static basic_ostream_wchar* basic_ostream_print_double(basic_ostream_wchar *this, double val, const num_put *numput)
+{
     basic_ios_wchar *base = basic_ostream_wchar_get_basic_ios(this);
     int state = IOSTATE_goodbit;
 
-    TRACE("(%p %f)\n", this, val);
+    TRACE("(%p %lf)\n", this, val);
 
     if(basic_ostream_wchar_sentry_create(this)) {
         basic_streambuf_wchar *strbuf = basic_ios_wchar_rdbuf_get(base);
-        const num_put *numput = num_put_wchar_use_facet(strbuf->loc);
         ostreambuf_iterator_wchar dest = {0, strbuf};
 
         num_put_wchar_put_double(numput, &dest, dest, &base->base, basic_ios_wchar_fill_get(base), val);
@@ -6344,6 +6482,21 @@ basic_ostream_wchar* __thiscall basic_ostream_wchar_print_float(basic_ostream_wc
 DEFINE_THISCALL_WRAPPER(basic_ostream_wchar_print_double, 12)
 basic_ostream_wchar* __thiscall basic_ostream_wchar_print_double(basic_ostream_wchar *this, double val)
 {
+    return basic_ostream_print_double(this, val, num_put_wchar_use_facet(
+                basic_ios_wchar_rdbuf_get(basic_ostream_wchar_get_basic_ios(this))->loc));
+}
+
+/* ??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QAEAAV01@N@Z */
+/* ??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QEAAAEAV01@N@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostream_short_print_double, 12)
+basic_ostream_wchar* __thiscall basic_ostream_short_print_double(basic_ostream_wchar *this, double val)
+{
+    return basic_ostream_print_double(this, val, num_put_short_use_facet(
+                basic_ios_wchar_rdbuf_get(basic_ostream_wchar_get_basic_ios(this))->loc));
+}
+
+static basic_ostream_wchar* basic_ostream_print_ldouble(basic_ostream_wchar *this, double val, const num_put *numput)
+{
     basic_ios_wchar *base = basic_ostream_wchar_get_basic_ios(this);
     int state = IOSTATE_goodbit;
 
@@ -6351,10 +6504,9 @@ basic_ostream_wchar* __thiscall basic_ostream_wchar_print_double(basic_ostream_w
 
     if(basic_ostream_wchar_sentry_create(this)) {
         basic_streambuf_wchar *strbuf = basic_ios_wchar_rdbuf_get(base);
-        const num_put *numput = num_put_wchar_use_facet(strbuf->loc);
         ostreambuf_iterator_wchar dest = {0, strbuf};
 
-        num_put_wchar_put_double(numput, &dest, dest, &base->base, basic_ios_wchar_fill_get(base), val);
+        num_put_wchar_put_ldouble(numput, &dest, dest, &base->base, basic_ios_wchar_fill_get(base), val);
     }
     basic_ostream_wchar_sentry_destroy(this);
 
@@ -6367,26 +6519,23 @@ basic_ostream_wchar* __thiscall basic_ostream_wchar_print_double(basic_ostream_w
 DEFINE_THISCALL_WRAPPER(basic_ostream_wchar_print_ldouble, 12)
 basic_ostream_wchar* __thiscall basic_ostream_wchar_print_ldouble(basic_ostream_wchar *this, double val)
 {
-    basic_ios_wchar *base = basic_ostream_wchar_get_basic_ios(this);
-    int state = IOSTATE_goodbit;
+    return basic_ostream_print_ldouble(this, val, num_put_wchar_use_facet(
+                basic_ios_wchar_rdbuf_get(basic_ostream_wchar_get_basic_ios(this))->loc));
+}
 
-    TRACE("(%p %lf)\n", this, val);
-
-    if(basic_ostream_wchar_sentry_create(this)) {
-        basic_streambuf_wchar *strbuf = basic_ios_wchar_rdbuf_get(base);
-        const num_put *numput = num_put_wchar_use_facet(strbuf->loc);
-        ostreambuf_iterator_wchar dest = {0, strbuf};
-
-        num_put_wchar_put_ldouble(numput, &dest, dest, &base->base, basic_ios_wchar_fill_get(base), val);
-    }
-    basic_ostream_wchar_sentry_destroy(this);
-
-    basic_ios_wchar_setstate(base, state);
-    return this;
+/* ??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QAEAAV01@O@Z */
+/* ??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QEAAAEAV01@O@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostream_short_print_ldouble, 12)
+basic_ostream_wchar* __thiscall basic_ostream_short_print_ldouble(basic_ostream_wchar *this, double val)
+{
+    return basic_ostream_print_ldouble(this, val, num_put_short_use_facet(
+                basic_ios_wchar_rdbuf_get(basic_ostream_wchar_get_basic_ios(this))->loc));
 }
 
 /* ??6?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QAEAAV01@PAV?$basic_streambuf@_WU?$char_traits@_W@std@@@1@@Z */
 /* ??6?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QEAAAEAV01@PEAV?$basic_streambuf@_WU?$char_traits@_W@std@@@1@@Z */
+/* ??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QAEAAV01@PAV?$basic_streambuf@GU?$char_traits@G@std@@@1@@Z */
+/* ??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QEAAAEAV01@PEAV?$basic_streambuf@GU?$char_traits@G@std@@@1@@Z */
 DEFINE_THISCALL_WRAPPER(basic_ostream_wchar_print_streambuf, 8)
 basic_ostream_wchar* __thiscall basic_ostream_wchar_print_streambuf(basic_ostream_wchar *this, basic_streambuf_wchar *val)
 {
@@ -6416,10 +6565,7 @@ basic_ostream_wchar* __thiscall basic_ostream_wchar_print_streambuf(basic_ostrea
     return this;
 }
 
-/* ??6?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QAEAAV01@PBX@Z */
-/* ??6?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QEAAAEAV01@PEBX@Z */
-DEFINE_THISCALL_WRAPPER(basic_ostream_wchar_print_ptr, 8)
-basic_ostream_wchar* __thiscall basic_ostream_wchar_print_ptr(basic_ostream_wchar *this, const void *val)
+static basic_ostream_wchar* basic_ostream_print_ptr(basic_ostream_wchar *this, const void *val, const num_put *numput)
 {
     basic_ios_wchar *base = basic_ostream_wchar_get_basic_ios(this);
     int state = IOSTATE_goodbit;
@@ -6428,10 +6574,46 @@ basic_ostream_wchar* __thiscall basic_ostream_wchar_print_ptr(basic_ostream_wcha
 
     if(basic_ostream_wchar_sentry_create(this)) {
         basic_streambuf_wchar *strbuf = basic_ios_wchar_rdbuf_get(base);
-        const num_put *numput = num_put_wchar_use_facet(strbuf->loc);
         ostreambuf_iterator_wchar dest = {0, strbuf};
 
         num_put_wchar_put_ptr(numput, &dest, dest, &base->base, basic_ios_wchar_fill_get(base), val);
+    }
+    basic_ostream_wchar_sentry_destroy(this);
+
+    basic_ios_wchar_setstate(base, state);
+    return this;
+}
+
+/* ??6?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QAEAAV01@PBX@Z */
+/* ??6?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QEAAAEAV01@PEBX@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostream_wchar_print_ptr, 8)
+basic_ostream_wchar* __thiscall basic_ostream_wchar_print_ptr(basic_ostream_wchar *this, const void *val)
+{
+    return basic_ostream_print_ptr(this, val, num_put_wchar_use_facet(
+                basic_ios_wchar_rdbuf_get(basic_ostream_wchar_get_basic_ios(this))->loc));
+}
+
+/* ??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QAEAAV01@PBX@Z */
+/* ??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QEAAAEAV01@PEBX@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostream_short_print_ptr, 8)
+basic_ostream_wchar* __thiscall basic_ostream_short_print_ptr(basic_ostream_wchar *this, const void *val)
+{
+    return basic_ostream_print_ptr(this, val, num_put_short_use_facet(
+                basic_ios_wchar_rdbuf_get(basic_ostream_wchar_get_basic_ios(this))->loc));
+}
+
+static basic_ostream_wchar* basic_ostream_print_int64(basic_ostream_wchar *this, __int64 val, const num_put *numput)
+{
+    basic_ios_wchar *base = basic_ostream_wchar_get_basic_ios(this);
+    int state = IOSTATE_goodbit;
+
+    TRACE("(%p)\n", this);
+
+    if(basic_ostream_wchar_sentry_create(this)) {
+        basic_streambuf_wchar *strbuf = basic_ios_wchar_rdbuf_get(base);
+        ostreambuf_iterator_wchar dest = {0, strbuf};
+
+        num_put_wchar_put_int64(numput, &dest, dest, &base->base, basic_ios_wchar_fill_get(base), val);
     }
     basic_ostream_wchar_sentry_destroy(this);
 
@@ -6444,6 +6626,21 @@ basic_ostream_wchar* __thiscall basic_ostream_wchar_print_ptr(basic_ostream_wcha
 DEFINE_THISCALL_WRAPPER(basic_ostream_wchar_print_int64, 12)
 basic_ostream_wchar* __thiscall basic_ostream_wchar_print_int64(basic_ostream_wchar *this, __int64 val)
 {
+    return basic_ostream_print_int64(this, val, num_put_wchar_use_facet(
+                basic_ios_wchar_rdbuf_get(basic_ostream_wchar_get_basic_ios(this))->loc));
+}
+
+/* ??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QAEAAV01@_J@Z */
+/* ??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QEAAAEAV01@_J@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostream_short_print_int64, 12)
+basic_ostream_wchar* __thiscall basic_ostream_short_print_int64(basic_ostream_wchar *this, __int64 val)
+{
+    return basic_ostream_print_int64(this, val, num_put_short_use_facet(
+                basic_ios_wchar_rdbuf_get(basic_ostream_wchar_get_basic_ios(this))->loc));
+}
+
+static basic_ostream_wchar* basic_ostream_print_uint64(basic_ostream_wchar *this, unsigned __int64 val, const num_put *numput)
+{
     basic_ios_wchar *base = basic_ostream_wchar_get_basic_ios(this);
     int state = IOSTATE_goodbit;
 
@@ -6451,10 +6648,9 @@ basic_ostream_wchar* __thiscall basic_ostream_wchar_print_int64(basic_ostream_wc
 
     if(basic_ostream_wchar_sentry_create(this)) {
         basic_streambuf_wchar *strbuf = basic_ios_wchar_rdbuf_get(base);
-        const num_put *numput = num_put_wchar_use_facet(strbuf->loc);
         ostreambuf_iterator_wchar dest = {0, strbuf};
 
-        num_put_wchar_put_int64(numput, &dest, dest, &base->base, basic_ios_wchar_fill_get(base), val);
+        num_put_wchar_put_uint64(numput, &dest, dest, &base->base, basic_ios_wchar_fill_get(base), val);
     }
     basic_ostream_wchar_sentry_destroy(this);
 
@@ -6467,17 +6663,31 @@ basic_ostream_wchar* __thiscall basic_ostream_wchar_print_int64(basic_ostream_wc
 DEFINE_THISCALL_WRAPPER(basic_ostream_wchar_print_uint64, 12)
 basic_ostream_wchar* __thiscall basic_ostream_wchar_print_uint64(basic_ostream_wchar *this, unsigned __int64 val)
 {
+    return basic_ostream_print_uint64(this, val, num_put_wchar_use_facet(
+                basic_ios_wchar_rdbuf_get(basic_ostream_wchar_get_basic_ios(this))->loc));
+}
+
+/* ??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QAEAAV01@_K@Z */
+/* ??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QEAAAEAV01@_K@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostream_short_print_uint64, 12)
+basic_ostream_wchar* __thiscall basic_ostream_short_print_uint64(basic_ostream_wchar *this, unsigned __int64 val)
+{
+    return basic_ostream_print_uint64(this, val, num_put_short_use_facet(
+                basic_ios_wchar_rdbuf_get(basic_ostream_wchar_get_basic_ios(this))->loc));
+}
+
+static basic_ostream_wchar* basic_ostream_print_bool(basic_ostream_wchar *this, MSVCP_bool val, const num_put *numput)
+{
     basic_ios_wchar *base = basic_ostream_wchar_get_basic_ios(this);
     int state = IOSTATE_goodbit;
 
-    TRACE("(%p)\n", this);
+    TRACE("(%p %x)\n", this, val);
 
     if(basic_ostream_wchar_sentry_create(this)) {
         basic_streambuf_wchar *strbuf = basic_ios_wchar_rdbuf_get(base);
-        const num_put *numput = num_put_wchar_use_facet(strbuf->loc);
         ostreambuf_iterator_wchar dest = {0, strbuf};
 
-        num_put_wchar_put_uint64(numput, &dest, dest, &base->base, basic_ios_wchar_fill_get(base), val);
+        num_put_wchar_put_bool(numput, &dest, dest, &base->base, basic_ios_wchar_fill_get(base), val);
     }
     basic_ostream_wchar_sentry_destroy(this);
 
@@ -6490,26 +6700,23 @@ basic_ostream_wchar* __thiscall basic_ostream_wchar_print_uint64(basic_ostream_w
 DEFINE_THISCALL_WRAPPER(basic_ostream_wchar_print_bool, 8)
 basic_ostream_wchar* __thiscall basic_ostream_wchar_print_bool(basic_ostream_wchar *this, MSVCP_bool val)
 {
-    basic_ios_wchar *base = basic_ostream_wchar_get_basic_ios(this);
-    int state = IOSTATE_goodbit;
+    return basic_ostream_print_bool(this, val, num_put_wchar_use_facet(
+                basic_ios_wchar_rdbuf_get(basic_ostream_wchar_get_basic_ios(this))->loc));
+}
 
-    TRACE("(%p %x)\n", this, val);
-
-    if(basic_ostream_wchar_sentry_create(this)) {
-        basic_streambuf_wchar *strbuf = basic_ios_wchar_rdbuf_get(base);
-        const num_put *numput = num_put_wchar_use_facet(strbuf->loc);
-        ostreambuf_iterator_wchar dest = {0, strbuf};
-
-        num_put_wchar_put_bool(numput, &dest, dest, &base->base, basic_ios_wchar_fill_get(base), val);
-    }
-    basic_ostream_wchar_sentry_destroy(this);
-
-    basic_ios_wchar_setstate(base, state);
-    return this;
+/* ??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QAEAAV01@_N@Z */
+/* ??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QEAAAEAV01@_N@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostream_short_print_bool, 8)
+basic_ostream_wchar* __thiscall basic_ostream_short_print_bool(basic_ostream_wchar *this, MSVCP_bool val)
+{
+    return basic_ostream_print_bool(this, val, num_put_short_use_facet(
+                basic_ios_wchar_rdbuf_get(basic_ostream_wchar_get_basic_ios(this))->loc));
 }
 
 /* ?endl@std@@YAAAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@AAV21@@Z */
 /* ?endl@std@@YAAEAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@AEAV21@@Z */
+/* ?endl@std@@YAAAV?$basic_ostream@GU?$char_traits@G@std@@@1@AAV21@@Z */
+/* ?endl@std@@YAAEAV?$basic_ostream@GU?$char_traits@G@std@@@1@AEAV21@@Z */
 basic_ostream_wchar* __cdecl basic_ostream_wchar_endl(basic_ostream_wchar *ostr)
 {
     TRACE("(%p)\n", ostr);
@@ -6521,6 +6728,8 @@ basic_ostream_wchar* __cdecl basic_ostream_wchar_endl(basic_ostream_wchar *ostr)
 
 /* ??$?6_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YAAAV?$basic_ostream@_WU?$char_traits@_W@std@@@0@AAV10@ABV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@@Z */
 /* ??$?6_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YAAEAV?$basic_ostream@_WU?$char_traits@_W@std@@@0@AEAV10@AEBV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@@Z */
+/* ??$?6GU?$char_traits@G@std@@V?$allocator@G@1@@std@@YAAAV?$basic_ostream@GU?$char_traits@G@std@@@0@AAV10@ABV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@@Z */
+/* ??$?6GU?$char_traits@G@std@@V?$allocator@G@1@@std@@YAAEAV?$basic_ostream@GU?$char_traits@G@std@@@0@AEAV10@AEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@@Z */
 basic_ostream_wchar* __cdecl basic_ostream_wchar_print_bstr(basic_ostream_wchar *ostr, const basic_string_wchar *str)
 {
     basic_ios_wchar *base = basic_ostream_wchar_get_basic_ios(ostr);
@@ -6567,6 +6776,8 @@ basic_ostream_wchar* __cdecl basic_ostream_wchar_print_bstr(basic_ostream_wchar 
 
 /* ??$?6_WU?$char_traits@_W@std@@@std@@YAAAV?$basic_ostream@_WU?$char_traits@_W@std@@@0@AAV10@_W@Z */
 /* ??$?6_WU?$char_traits@_W@std@@@std@@YAAEAV?$basic_ostream@_WU?$char_traits@_W@std@@@0@AEAV10@_W@Z */
+/* ??$?6GU?$char_traits@G@std@@@std@@YAAAV?$basic_ostream@GU?$char_traits@G@std@@@0@AAV10@G@Z */
+/* ??$?6GU?$char_traits@G@std@@@std@@YAAEAV?$basic_ostream@GU?$char_traits@G@std@@@0@AEAV10@G@Z */
 basic_ostream_wchar* __cdecl basic_ostream_wchar_print_ch(basic_ostream_wchar *ostr, wchar_t ch)
 {
     basic_ios_wchar *base = basic_ostream_wchar_get_basic_ios(ostr);
@@ -6612,6 +6823,8 @@ basic_ostream_wchar* __cdecl basic_ostream_wchar_print_ch(basic_ostream_wchar *o
 
 /* ??$?6_WU?$char_traits@_W@std@@@std@@YAAAV?$basic_ostream@_WU?$char_traits@_W@std@@@0@AAV10@PB_W@Z */
 /* ??$?6_WU?$char_traits@_W@std@@@std@@YAAEAV?$basic_ostream@_WU?$char_traits@_W@std@@@0@AEAV10@PEB_W@Z */
+/* ??$?6GU?$char_traits@G@std@@@std@@YAAAV?$basic_ostream@GU?$char_traits@G@std@@@0@AAV10@PBG@Z */
+/* ??$?6GU?$char_traits@G@std@@@std@@YAAEAV?$basic_ostream@GU?$char_traits@G@std@@@0@AEAV10@PEBG@Z */
 basic_ostream_wchar* __cdecl basic_ostream_wchar_print_str(basic_ostream_wchar *ostr, const wchar_t *str)
 {
     basic_ios_wchar *base = basic_ostream_wchar_get_basic_ios(ostr);
@@ -6658,6 +6871,8 @@ basic_ostream_wchar* __cdecl basic_ostream_wchar_print_str(basic_ostream_wchar *
 
 /* ??6?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QAEAAV01@P6AAAV01@AAV01@@Z@Z */
 /* ??6?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QEAAAEAV01@P6AAEAV01@AEAV01@@Z@Z */
+/* ??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QAEAAV01@P6AAAV01@AAV01@@Z@Z */
+/* ??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QEAAAEAV01@P6AAEAV01@AEAV01@@Z@Z */
 DEFINE_THISCALL_WRAPPER(basic_ostream_wchar_print_func, 8)
 basic_ostream_wchar* __thiscall basic_ostream_wchar_print_func(basic_ostream_wchar *this,
         basic_ostream_wchar* (__cdecl *pfunc)(basic_ostream_wchar*))
@@ -6669,6 +6884,8 @@ basic_ostream_wchar* __thiscall basic_ostream_wchar_print_func(basic_ostream_wch
 
 /* ??6?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QAEAAV01@P6AAAV?$basic_ios@_WU?$char_traits@_W@std@@@1@AAV21@@Z@Z */
 /* ??6?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QEAAAEAV01@P6AAEAV?$basic_ios@_WU?$char_traits@_W@std@@@1@AEAV21@@Z@Z */
+/* ??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QAEAAV01@P6AAAV?$basic_ios@GU?$char_traits@G@std@@@1@AAV21@@Z@Z */
+/* ??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QEAAAEAV01@P6AAEAV?$basic_ios@GU?$char_traits@G@std@@@1@AEAV21@@Z@Z */
 DEFINE_THISCALL_WRAPPER(basic_ostream_wchar_print_func_basic_ios, 8)
 basic_ostream_wchar* __thiscall basic_ostream_wchar_print_func_basic_ios(basic_ostream_wchar *this,
         basic_ios_wchar* (__cdecl *pfunc)(basic_ios_wchar*))
@@ -6680,6 +6897,8 @@ basic_ostream_wchar* __thiscall basic_ostream_wchar_print_func_basic_ios(basic_o
 
 /* ??6?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QAEAAV01@P6AAAVios_base@1@AAV21@@Z@Z */
 /* ??6?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QEAAAEAV01@P6AAEAVios_base@1@AEAV21@@Z@Z */
+/* ??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QAEAAV01@P6AAAVios_base@1@AAV21@@Z@Z */
+/* ??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QEAAAEAV01@P6AAEAVios_base@1@AEAV21@@Z@Z */
 DEFINE_THISCALL_WRAPPER(basic_ostream_wchar_print_func_ios_base, 8)
 basic_ostream_wchar* __thiscall basic_ostream_wchar_print_func_ios_base(
         basic_ostream_wchar *this, ios_base* (__cdecl *pfunc)(ios_base*))
