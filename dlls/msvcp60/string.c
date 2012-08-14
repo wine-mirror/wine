@@ -27,7 +27,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wine/debug.h"
-WINE_DEFAULT_DEBUG_CHANNEL(msvcp90);
+WINE_DEFAULT_DEBUG_CHANNEL(msvcp);
 
 #define FROZEN 255
 

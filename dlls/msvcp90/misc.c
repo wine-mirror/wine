@@ -26,7 +26,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wine/debug.h"
-WINE_DEFAULT_DEBUG_CHANNEL(msvcp90);
+WINE_DEFAULT_DEBUG_CHANNEL(msvcp);
 
 /* ??0_Mutex@std@@QAE@XZ */
 /* ??0_Mutex@std@@QEAA@XZ */

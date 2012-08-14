@@ -34,7 +34,7 @@
 #include "winnls.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
-WINE_DEFAULT_DEBUG_CHANNEL(msvcp90);
+WINE_DEFAULT_DEBUG_CHANNEL(msvcp);
 
 char* __cdecl _Getdays(void);
 char* __cdecl _Getmonths(void);

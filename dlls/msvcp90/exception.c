@@ -25,7 +25,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wine/debug.h"
-WINE_DEFAULT_DEBUG_CHANNEL(msvcp90);
+WINE_DEFAULT_DEBUG_CHANNEL(msvcp);
 
 /* dlls/msvcrt/cppexcept.h */
 typedef void (*cxx_copy_ctor)(void);

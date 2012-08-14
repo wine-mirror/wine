@@ -27,7 +27,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wine/debug.h"
-WINE_DEFAULT_DEBUG_CHANNEL(msvcp90);
+WINE_DEFAULT_DEBUG_CHANNEL(msvcp);
 
 /* _String_iterator<char> and _String_const_iterator<char> class */
 typedef struct {

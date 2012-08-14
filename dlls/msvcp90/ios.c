@@ -27,7 +27,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wine/debug.h"
-WINE_DEFAULT_DEBUG_CHANNEL(msvcp90);
+WINE_DEFAULT_DEBUG_CHANNEL(msvcp);
 
 /* ?_Index@ios_base@std@@0HA */
 int ios_base_Index = 0;
