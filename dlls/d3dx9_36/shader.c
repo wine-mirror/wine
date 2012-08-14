@@ -1261,7 +1261,8 @@ HRESULT WINAPI D3DXGetShaderConstantTableEx(CONST DWORD *byte_code,
         object->constants[i].desc.RegisterSet = constant_info[i].RegisterSet;
         object->constants[i].desc.RegisterIndex = constant_info[i].RegisterIndex;
         object->constants[i].desc.RegisterCount = constant_info[i].RegisterCount;
-        object->constants[i].desc.DefaultValue = object->ctab + constant_info[i].DefaultValue;
+        object->constants[i].desc.DefaultValue = constant_info[i].DefaultValue
+                ? object->ctab + constant_info[i].DefaultValue : NULL;
 
         hr = parse_ctab_constant_type((LPD3DXSHADER_TYPEINFO)(object->ctab + constant_info[i].TypeInfo),
              &object->constants[i]);
