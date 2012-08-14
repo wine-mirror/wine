@@ -672,6 +672,15 @@ static inline D3DXHANDLE handle_from_constant_index(UINT index)
     return (D3DXHANDLE)(DWORD_PTR)(index + 1);
 }
 
+static inline void set_float_shader_constant(struct ID3DXConstantTableImpl *table, IDirect3DDevice9 *device,
+                                             UINT register_index, const FLOAT *data, UINT count)
+{
+    if (is_vertex_shader(table->desc.Version))
+        IDirect3DDevice9_SetVertexShaderConstantF(device, register_index, data, count);
+    else
+        IDirect3DDevice9_SetPixelShaderConstantF(device, register_index, data, count);
+}
+
 /*** IUnknown methods ***/
 static HRESULT WINAPI ID3DXConstantTableImpl_QueryInterface(ID3DXConstantTable *iface, REFIID riid, void **out)
 {
@@ -882,10 +891,7 @@ static HRESULT set_float_array(ID3DXConstantTable *iface, LPDIRECT3DDEVICE9 devi
                         FIXME("Unhandled type passed to set_float_array\n");
                         return D3DERR_INVALIDCALL;
                 }
-                if (is_vertex_shader(This->desc.Version))
-                    IDirect3DDevice9_SetVertexShaderConstantF(device, desc.RegisterIndex + i, row, 1);
-                else
-                    IDirect3DDevice9_SetPixelShaderConstantF(device, desc.RegisterIndex + i, row, 1);
+                set_float_shader_constant(This, device, desc.RegisterIndex + i, row, 1);
             }
             break;
         default:
@@ -1004,12 +1010,8 @@ static HRESULT WINAPI ID3DXConstantTableImpl_SetVectorArray(ID3DXConstantTable *
     switch (desc.RegisterSet)
     {
         case D3DXRS_FLOAT4:
-            if (is_vertex_shader(This->desc.Version))
-                IDirect3DDevice9_SetVertexShaderConstantF(device, desc.RegisterIndex, (float *)vector,
-                        min(desc.RegisterCount, count));
-            else
-                IDirect3DDevice9_SetPixelShaderConstantF(device, desc.RegisterIndex, (float *)vector,
-                        min(desc.RegisterCount, count));
+            set_float_shader_constant(This, device, desc.RegisterIndex, (float *)vector,
+                    min(desc.RegisterCount, count));
             break;
         default:
             FIXME("Handle other register sets\n");
@@ -1060,10 +1062,7 @@ static HRESULT WINAPI ID3DXConstantTableImpl_SetMatrixArray(ID3DXConstantTable *
                 else
                     D3DXMatrixTranspose(&temp, &matrix[i]);
 
-                if (is_vertex_shader(This->desc.Version))
-                    IDirect3DDevice9_SetVertexShaderConstantF(device, desc.RegisterIndex + i * 4, &temp.u.s._11, 4);
-                else
-                    IDirect3DDevice9_SetPixelShaderConstantF(device, desc.RegisterIndex + i * 4, &temp.u.s._11, 4);
+                set_float_shader_constant(This, device, desc.RegisterIndex + i * 4, &temp.u.s._11, 4);
             }
             break;
         default:
