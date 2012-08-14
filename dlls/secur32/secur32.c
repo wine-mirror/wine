@@ -430,7 +430,7 @@ SecureProvider *SECUR32_addProvider(const SecurityFunctionTableA *fnTableA,
         ret->moduleName = moduleName ? SECUR32_strdupW(moduleName) : NULL;
         _makeFnTableA(&ret->fnTableA, fnTableA, fnTableW);
         _makeFnTableW(&ret->fnTableW, fnTableA, fnTableW);
-        ret->loaded = moduleName ? FALSE : TRUE;
+        ret->loaded = !moduleName;
     }
     else
     {
