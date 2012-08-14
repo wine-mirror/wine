@@ -44,6 +44,8 @@ typedef struct BitmapImpl {
     UINT stride;
     UINT bpp;
     WICPixelFormatGUID pixelformat;
+    double dpix, dpiy;
+    CRITICAL_SECTION cs;
 } BitmapImpl;
 
 typedef struct BitmapLockImpl {
@@ -256,6 +258,8 @@ static ULONG WINAPI BitmapImpl_Release(IWICBitmap *iface)
     if (ref == 0)
     {
         if (This->palette) IWICPalette_Release(This->palette);
+        This->cs.DebugInfo->Spare[0] = 0;
+        DeleteCriticalSection(&This->cs);
         HeapFree(GetProcessHeap(), 0, This->data);
         HeapFree(GetProcessHeap(), 0, This);
     }
@@ -295,9 +299,18 @@ static HRESULT WINAPI BitmapImpl_GetPixelFormat(IWICBitmap *iface,
 static HRESULT WINAPI BitmapImpl_GetResolution(IWICBitmap *iface,
     double *pDpiX, double *pDpiY)
 {
-    FIXME("(%p,%p,%p)\n", iface, pDpiX, pDpiY);
+    BitmapImpl *This = impl_from_IWICBitmap(iface);
+    TRACE("(%p,%p,%p)\n", iface, pDpiX, pDpiY);
 
-    return E_NOTIMPL;
+    if (!pDpiX || !pDpiY)
+        return E_INVALIDARG;
+
+    EnterCriticalSection(&This->cs);
+    *pDpiX = This->dpix;
+    *pDpiY = This->dpiy;
+    LeaveCriticalSection(&This->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI BitmapImpl_CopyPalette(IWICBitmap *iface,
@@ -408,9 +421,15 @@ static HRESULT WINAPI BitmapImpl_SetPalette(IWICBitmap *iface, IWICPalette *pIPa
 static HRESULT WINAPI BitmapImpl_SetResolution(IWICBitmap *iface,
     double dpiX, double dpiY)
 {
-    FIXME("(%p,%f,%f)\n", iface, dpiX, dpiY);
+    BitmapImpl *This = impl_from_IWICBitmap(iface);
+    TRACE("(%p,%f,%f)\n", iface, dpiX, dpiY);
 
-    return E_NOTIMPL;
+    EnterCriticalSection(&This->cs);
+    This->dpix = dpiX;
+    This->dpiy = dpiY;
+    LeaveCriticalSection(&This->cs);
+
+    return S_OK;
 }
 
 static const IWICBitmapVtbl BitmapImpl_Vtbl = {
@@ -462,6 +481,9 @@ HRESULT BitmapImpl_Create(UINT uiWidth, UINT uiHeight,
     This->stride = stride;
     This->bpp = bpp;
     memcpy(&This->pixelformat, pixelFormat, sizeof(GUID));
+    This->dpix = This->dpiy = 0.0;
+    InitializeCriticalSection(&This->cs);
+    This->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": BitmapImpl.lock");
 
     *ppIBitmap = &This->IWICBitmap_iface;
 

@@ -243,7 +243,6 @@ static void test_createbitmap(void)
     ok(hr == S_OK, "IWICBitmap_GetPixelFormat failed hr=%x\n", hr);
     ok(IsEqualGUID(&pixelformat, &GUID_WICPixelFormat24bppBGR), "unexpected pixel format\n");
 
-todo_wine {
     hr = IWICBitmap_GetResolution(bitmap, &dpix, &dpiy);
     ok(hr == S_OK, "IWICBitmap_GetResolution failed hr=%x\n", hr);
     ok(dpix == 0.0, "got %f, expected 0.0\n", dpix);
@@ -256,7 +255,6 @@ todo_wine {
     ok(hr == S_OK, "IWICBitmap_GetResolution failed hr=%x\n", hr);
     ok(dpix == 12.0, "got %f, expected 12.0\n", dpix);
     ok(dpiy == 34.0, "got %f, expected 34.0\n", dpiy);
-}
 
     hr = IWICBitmap_GetSize(bitmap, &width, &height);
     ok(hr == S_OK, "IWICBitmap_GetSize failed hr=%x\n", hr);
