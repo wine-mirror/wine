@@ -43,6 +43,7 @@ typedef struct BitmapImpl {
     UINT width, height;
     UINT stride;
     UINT bpp;
+    WICPixelFormatGUID pixelformat;
 } BitmapImpl;
 
 typedef struct BitmapLockImpl {
@@ -195,9 +196,10 @@ static HRESULT WINAPI BitmapLockImpl_GetDataPointer(IWICBitmapLock *iface,
 static HRESULT WINAPI BitmapLockImpl_GetPixelFormat(IWICBitmapLock *iface,
     WICPixelFormatGUID *pPixelFormat)
 {
-    FIXME("(%p,%p)\n", iface, pPixelFormat);
+    BitmapLockImpl *This = impl_from_IWICBitmapLock(iface);
+    TRACE("(%p,%p)\n", iface, pPixelFormat);
 
-    return E_NOTIMPL;
+    return IWICBitmap_GetPixelFormat(&This->parent->IWICBitmap_iface, pPixelFormat);
 }
 
 static const IWICBitmapLockVtbl BitmapLockImpl_Vtbl = {
@@ -272,9 +274,15 @@ static HRESULT WINAPI BitmapImpl_GetSize(IWICBitmap *iface,
 static HRESULT WINAPI BitmapImpl_GetPixelFormat(IWICBitmap *iface,
     WICPixelFormatGUID *pPixelFormat)
 {
-    FIXME("(%p,%p)\n", iface, pPixelFormat);
+    BitmapImpl *This = impl_from_IWICBitmap(iface);
+    TRACE("(%p,%p)\n", iface, pPixelFormat);
 
-    return E_NOTIMPL;
+    if (!pPixelFormat)
+        return E_INVALIDARG;
+
+    memcpy(pPixelFormat, &This->pixelformat, sizeof(GUID));
+
+    return S_OK;
 }
 
 static HRESULT WINAPI BitmapImpl_GetResolution(IWICBitmap *iface,
@@ -446,6 +454,7 @@ HRESULT BitmapImpl_Create(UINT uiWidth, UINT uiHeight,
     This->height = uiHeight;
     This->stride = stride;
     This->bpp = bpp;
+    memcpy(&This->pixelformat, pixelFormat, sizeof(GUID));
 
     *ppIBitmap = &This->IWICBitmap_iface;
 

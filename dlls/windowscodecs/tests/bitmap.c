@@ -152,8 +152,8 @@ static void test_createbitmap(void)
         base_lock_buffer = lock_buffer;
 
         hr = IWICBitmapLock_GetPixelFormat(lock, &pixelformat);
-        todo_wine ok(hr == S_OK, "IWICBitmapLock_GetPixelFormat failed hr=%x\n", hr);
-        todo_wine ok(IsEqualGUID(&pixelformat, &GUID_WICPixelFormat24bppBGR), "unexpected pixel format\n");
+        ok(hr == S_OK, "IWICBitmapLock_GetPixelFormat failed hr=%x\n", hr);
+        ok(IsEqualGUID(&pixelformat, &GUID_WICPixelFormat24bppBGR), "unexpected pixel format\n");
 
         hr = IWICBitmapLock_GetSize(lock, &width, &height);
         ok(hr == S_OK, "IWICBitmapLock_GetSize failed hr=%x\n", hr);
@@ -228,8 +228,8 @@ static void test_createbitmap(void)
         ok(lock_buffer == base_lock_buffer+6, "got %p, expected %p+6\n", lock_buffer, base_lock_buffer);
 
         hr = IWICBitmapLock_GetPixelFormat(lock, &pixelformat);
-        todo_wine ok(hr == S_OK, "IWICBitmapLock_GetPixelFormat failed hr=%x\n", hr);
-        todo_wine ok(IsEqualGUID(&pixelformat, &GUID_WICPixelFormat24bppBGR), "unexpected pixel format\n");
+        ok(hr == S_OK, "IWICBitmapLock_GetPixelFormat failed hr=%x\n", hr);
+        ok(IsEqualGUID(&pixelformat, &GUID_WICPixelFormat24bppBGR), "unexpected pixel format\n");
 
         hr = IWICBitmapLock_GetSize(lock, &width, &height);
         ok(hr == S_OK, "IWICBitmapLock_GetSize failed hr=%x\n", hr);
@@ -239,11 +239,11 @@ static void test_createbitmap(void)
         IWICBitmapLock_Release(lock);
     }
 
-todo_wine {
     hr = IWICBitmap_GetPixelFormat(bitmap, &pixelformat);
     ok(hr == S_OK, "IWICBitmap_GetPixelFormat failed hr=%x\n", hr);
     ok(IsEqualGUID(&pixelformat, &GUID_WICPixelFormat24bppBGR), "unexpected pixel format\n");
 
+todo_wine {
     hr = IWICBitmap_GetResolution(bitmap, &dpix, &dpiy);
     ok(hr == S_OK, "IWICBitmap_GetResolution failed hr=%x\n", hr);
     ok(dpix == 0.0, "got %f, expected 0.0\n", dpix);
