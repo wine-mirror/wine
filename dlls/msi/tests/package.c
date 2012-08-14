@@ -4115,7 +4115,7 @@ static void test_appsearch_reglocator(void)
                          (const BYTE *)path, lstrlenA(path) + 1);
     ok( res == ERROR_SUCCESS, "Expected ERROR_SUCCESS got %d\n", res);
 
-    space = (strchr(CURR_DIR, ' ')) ? TRUE : FALSE;
+    space = strchr(CURR_DIR, ' ') != NULL;
     sprintf(path, "%s\\FileName1 -option", CURR_DIR);
     res = RegSetValueExA(hklm, "value17", 0, REG_SZ,
                          (const BYTE *)path, lstrlenA(path) + 1);
