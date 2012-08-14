@@ -82,7 +82,7 @@ HRESULT copy_pixels(UINT bpp, const BYTE *srcbuffer,
     if (dststride < bytesperrow)
         return E_INVALIDARG;
 
-    if ((dststride * rc->Height) > dstbuffersize)
+    if ((dststride * (rc->Height-1)) + ((rc->Width * bpp) + 7)/8 > dstbuffersize)
         return E_INVALIDARG;
 
     /* if the whole bitmap is copied and the buffer format matches then it's a matter of a single memcpy */
