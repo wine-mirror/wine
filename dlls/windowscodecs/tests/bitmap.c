@@ -95,25 +95,25 @@ static void test_createbitmap(void)
     rc.Width = 4;
     rc.Height = 3;
     hr = IWICBitmap_Lock(bitmap, &rc, WICBitmapLockRead, &lock);
-    todo_wine ok(hr == E_INVALIDARG, "IWICBitmap_Lock failed hr=%x\n", hr);
+    ok(hr == E_INVALIDARG, "IWICBitmap_Lock failed hr=%x\n", hr);
     if (SUCCEEDED(hr)) IWICBitmapLock_Release(lock);
 
     rc.Width = 3;
     rc.Height = 4;
     hr = IWICBitmap_Lock(bitmap, &rc, WICBitmapLockRead, &lock);
-    todo_wine ok(hr == E_INVALIDARG, "IWICBitmap_Lock failed hr=%x\n", hr);
+    ok(hr == E_INVALIDARG, "IWICBitmap_Lock failed hr=%x\n", hr);
     if (SUCCEEDED(hr)) IWICBitmapLock_Release(lock);
 
     rc.Height = 3;
     rc.X = 4;
     hr = IWICBitmap_Lock(bitmap, &rc, WICBitmapLockRead, &lock);
-    todo_wine ok(hr == E_INVALIDARG, "IWICBitmap_Lock failed hr=%x\n", hr);
+    ok(hr == E_INVALIDARG, "IWICBitmap_Lock failed hr=%x\n", hr);
     if (SUCCEEDED(hr)) IWICBitmapLock_Release(lock);
 
     rc.X = 0;
     rc.Y = 4;
     hr = IWICBitmap_Lock(bitmap, &rc, WICBitmapLockRead, &lock);
-    todo_wine ok(hr == E_INVALIDARG, "IWICBitmap_Lock failed hr=%x\n", hr);
+    ok(hr == E_INVALIDARG, "IWICBitmap_Lock failed hr=%x\n", hr);
     if (SUCCEEDED(hr)) IWICBitmapLock_Release(lock);
 
     /* NULL lock rect */
@@ -124,9 +124,9 @@ static void test_createbitmap(void)
     {
         /* entire bitmap is locked */
         hr = IWICBitmapLock_GetSize(lock, &width, &height);
-        todo_wine ok(hr == S_OK, "IWICBitmapLock_GetSize failed hr=%x\n", hr);
-        todo_wine ok(width == 3, "got %d, expected 3\n", width);
-        todo_wine ok(height == 3, "got %d, expected 3\n", height);
+        ok(hr == S_OK, "IWICBitmapLock_GetSize failed hr=%x\n", hr);
+        ok(width == 3, "got %d, expected 3\n", width);
+        ok(height == 3, "got %d, expected 3\n", height);
 
         IWICBitmapLock_Release(lock);
     }
@@ -140,15 +140,15 @@ static void test_createbitmap(void)
     if (SUCCEEDED(hr))
     {
         hr = IWICBitmapLock_GetStride(lock, &lock_buffer_stride);
-        todo_wine ok(hr == S_OK, "IWICBitmapLock_GetStride failed hr=%x\n", hr);
+        ok(hr == S_OK, "IWICBitmapLock_GetStride failed hr=%x\n", hr);
         /* stride is divisible by 4 */
-        todo_wine ok(lock_buffer_stride == 12, "got %i, expected 12\n", lock_buffer_stride);
+        ok(lock_buffer_stride == 12, "got %i, expected 12\n", lock_buffer_stride);
 
         hr = IWICBitmapLock_GetDataPointer(lock, &lock_buffer_size, &lock_buffer);
-        todo_wine ok(hr == S_OK, "IWICBitmapLock_GetDataPointer failed hr=%x\n", hr);
+        ok(hr == S_OK, "IWICBitmapLock_GetDataPointer failed hr=%x\n", hr);
         /* buffer size does not include padding from the last row */
-        todo_wine ok(lock_buffer_size == 33, "got %i, expected 33\n", lock_buffer_size);
-        todo_wine ok(lock_buffer != NULL, "got NULL data pointer\n");
+        ok(lock_buffer_size == 33, "got %i, expected 33\n", lock_buffer_size);
+        ok(lock_buffer != NULL, "got NULL data pointer\n");
         base_lock_buffer = lock_buffer;
 
         hr = IWICBitmapLock_GetPixelFormat(lock, &pixelformat);
@@ -156,9 +156,9 @@ static void test_createbitmap(void)
         todo_wine ok(IsEqualGUID(&pixelformat, &GUID_WICPixelFormat24bppBGR), "unexpected pixel format\n");
 
         hr = IWICBitmapLock_GetSize(lock, &width, &height);
-        todo_wine ok(hr == S_OK, "IWICBitmapLock_GetSize failed hr=%x\n", hr);
-        todo_wine ok(width == 3, "got %d, expected 3\n", width);
-        todo_wine ok(height == 3, "got %d, expected 3\n", height);
+        ok(hr == S_OK, "IWICBitmapLock_GetSize failed hr=%x\n", hr);
+        ok(width == 3, "got %d, expected 3\n", width);
+        ok(height == 3, "got %d, expected 3\n", height);
 
         /* We can have multiple simultaneous read locks */
         hr = IWICBitmap_Lock(bitmap, &rc, WICBitmapLockRead, &lock2);
@@ -167,8 +167,8 @@ static void test_createbitmap(void)
         if (SUCCEEDED(hr))
         {
             hr = IWICBitmapLock_GetDataPointer(lock2, &lock_buffer_size, &lock_buffer);
-            todo_wine ok(hr == S_OK, "IWICBitmapLock_GetDataPointer failed hr=%x\n", hr);
-            todo_wine ok(lock_buffer_size == 33, "got %i, expected 33\n", lock_buffer_size);
+            ok(hr == S_OK, "IWICBitmapLock_GetDataPointer failed hr=%x\n", hr);
+            ok(lock_buffer_size == 33, "got %i, expected 33\n", lock_buffer_size);
             ok(lock_buffer == base_lock_buffer, "got %p, expected %p\n", lock_buffer, base_lock_buffer);
 
             IWICBitmapLock_Release(lock2);
@@ -219,22 +219,22 @@ static void test_createbitmap(void)
         }
 
         hr = IWICBitmapLock_GetStride(lock, &lock_buffer_stride);
-        todo_wine ok(hr == S_OK, "IWICBitmapLock_GetStride failed hr=%x\n", hr);
-        todo_wine ok(lock_buffer_stride == 12, "got %i, expected 12\n", lock_buffer_stride);
+        ok(hr == S_OK, "IWICBitmapLock_GetStride failed hr=%x\n", hr);
+        ok(lock_buffer_stride == 12, "got %i, expected 12\n", lock_buffer_stride);
 
         hr = IWICBitmapLock_GetDataPointer(lock, &lock_buffer_size, &lock_buffer);
-        todo_wine ok(hr == S_OK, "IWICBitmapLock_GetDataPointer failed hr=%x\n", hr);
-        todo_wine ok(lock_buffer_size == 15, "got %i, expected 15\n", lock_buffer_size);
-        todo_wine ok(lock_buffer == base_lock_buffer+6, "got %p, expected %p+6\n", lock_buffer, base_lock_buffer);
+        ok(hr == S_OK, "IWICBitmapLock_GetDataPointer failed hr=%x\n", hr);
+        ok(lock_buffer_size == 15, "got %i, expected 15\n", lock_buffer_size);
+        ok(lock_buffer == base_lock_buffer+6, "got %p, expected %p+6\n", lock_buffer, base_lock_buffer);
 
         hr = IWICBitmapLock_GetPixelFormat(lock, &pixelformat);
         todo_wine ok(hr == S_OK, "IWICBitmapLock_GetPixelFormat failed hr=%x\n", hr);
         todo_wine ok(IsEqualGUID(&pixelformat, &GUID_WICPixelFormat24bppBGR), "unexpected pixel format\n");
 
         hr = IWICBitmapLock_GetSize(lock, &width, &height);
-        todo_wine ok(hr == S_OK, "IWICBitmapLock_GetSize failed hr=%x\n", hr);
-        todo_wine ok(width == 1, "got %d, expected 1\n", width);
-        todo_wine ok(height == 2, "got %d, expected 2\n", height);
+        ok(hr == S_OK, "IWICBitmapLock_GetSize failed hr=%x\n", hr);
+        ok(width == 1, "got %d, expected 1\n", width);
+        ok(height == 2, "got %d, expected 2\n", height);
 
         IWICBitmapLock_Release(lock);
     }

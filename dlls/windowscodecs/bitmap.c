@@ -39,12 +39,18 @@ typedef struct BitmapImpl {
     IWICPalette *palette;
     int palette_set;
     LONG lock; /* 0 if not locked, -1 if locked for writing, count if locked for reading */
+    BYTE *data;
+    UINT width, height;
+    UINT stride;
+    UINT bpp;
 } BitmapImpl;
 
 typedef struct BitmapLockImpl {
     IWICBitmapLock IWICBitmapLock_iface;
     LONG ref;
     BitmapImpl *parent;
+    UINT width, height;
+    BYTE *data;
 } BitmapLockImpl;
 
 static inline BitmapImpl *impl_from_IWICBitmap(IWICBitmap *iface)
@@ -144,25 +150,46 @@ static ULONG WINAPI BitmapLockImpl_Release(IWICBitmapLock *iface)
 static HRESULT WINAPI BitmapLockImpl_GetSize(IWICBitmapLock *iface,
     UINT *puiWidth, UINT *puiHeight)
 {
-    FIXME("(%p,%p,%p)\n", iface, puiWidth, puiHeight);
+    BitmapLockImpl *This = impl_from_IWICBitmapLock(iface);
+    TRACE("(%p,%p,%p)\n", iface, puiWidth, puiHeight);
 
-    return E_NOTIMPL;
+    if (!puiWidth || !puiHeight)
+        return E_INVALIDARG;
+
+    *puiWidth = This->width;
+    *puiHeight = This->height;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI BitmapLockImpl_GetStride(IWICBitmapLock *iface,
     UINT *pcbStride)
 {
-    FIXME("(%p,%p)\n", iface, pcbStride);
+    BitmapLockImpl *This = impl_from_IWICBitmapLock(iface);
+    TRACE("(%p,%p)\n", iface, pcbStride);
 
-    return E_NOTIMPL;
+    if (!pcbStride)
+        return E_INVALIDARG;
+
+    *pcbStride = This->parent->stride;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI BitmapLockImpl_GetDataPointer(IWICBitmapLock *iface,
     UINT *pcbBufferSize, BYTE **ppbData)
 {
-    FIXME("(%p,%p,%p)\n", iface, pcbBufferSize, ppbData);
+    BitmapLockImpl *This = impl_from_IWICBitmapLock(iface);
+    TRACE("(%p,%p,%p)\n", iface, pcbBufferSize, ppbData);
 
-    return E_NOTIMPL;
+    if (!pcbBufferSize || !ppbData)
+        return E_INVALIDARG;
+
+    *pcbBufferSize = This->parent->stride * (This->height - 1) +
+        ((This->parent->bpp * This->width) + 7)/8;
+    *ppbData = This->data;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI BitmapLockImpl_GetPixelFormat(IWICBitmapLock *iface,
@@ -227,6 +254,7 @@ static ULONG WINAPI BitmapImpl_Release(IWICBitmap *iface)
     if (ref == 0)
     {
         if (This->palette) IWICPalette_Release(This->palette);
+        HeapFree(GetProcessHeap(), 0, This->data);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -282,11 +310,30 @@ static HRESULT WINAPI BitmapImpl_Lock(IWICBitmap *iface, const WICRect *prcLock,
 {
     BitmapImpl *This = impl_from_IWICBitmap(iface);
     BitmapLockImpl *result;
+    WICRect rc;
 
     TRACE("(%p,%p,%x,%p)\n", iface, prcLock, flags, ppILock);
 
     if (!(flags & (WICBitmapLockRead|WICBitmapLockWrite)) || !ppILock)
         return E_INVALIDARG;
+
+    if (!prcLock)
+    {
+        rc.X = rc.Y = 0;
+        rc.Width = This->width;
+        rc.Height = This->height;
+        prcLock = &rc;
+    }
+    else if (prcLock->X >= This->width || prcLock->Y >= This->height ||
+             prcLock->X + prcLock->Width > This->width ||
+             prcLock->Y + prcLock->Height > This->height ||
+             prcLock->Width <= 0 || prcLock->Height <= 0)
+        return E_INVALIDARG;
+    else if (((prcLock->X * This->bpp) % 8) != 0)
+    {
+        FIXME("Cannot lock at an X coordinate not at a full byte\n");
+        return E_FAIL;
+    }
 
     result = HeapAlloc(GetProcessHeap(), 0, sizeof(BitmapLockImpl));
     if (!result)
@@ -301,6 +348,10 @@ static HRESULT WINAPI BitmapImpl_Lock(IWICBitmap *iface, const WICRect *prcLock,
     result->IWICBitmapLock_iface.lpVtbl = &BitmapLockImpl_Vtbl;
     result->ref = 1;
     result->parent = This;
+    result->width = prcLock->Width;
+    result->height = prcLock->Height;
+    result->data = This->data + This->stride * prcLock->Y +
+        (This->bpp * prcLock->X)/8;
 
     IWICBitmap_AddRef(&This->IWICBitmap_iface);
     *ppILock = &result->IWICBitmapLock_iface;
@@ -363,16 +414,36 @@ HRESULT BitmapImpl_Create(UINT uiWidth, UINT uiHeight,
     REFWICPixelFormatGUID pixelFormat, WICBitmapCreateCacheOption option,
     IWICBitmap **ppIBitmap)
 {
+    HRESULT hr;
     BitmapImpl *This;
+    UINT bpp, stride, datasize;
+    BYTE *data;
+
+    hr = get_pixelformat_bpp(pixelFormat, &bpp);
+    if (FAILED(hr)) return hr;
+
+    stride = (((bpp*uiWidth)+31)/32)*4;
+    datasize = stride * uiHeight;
 
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(BitmapImpl));
-    if (!This) return E_OUTOFMEMORY;
+    data = HeapAlloc(GetProcessHeap(), 0, datasize);
+    if (!This || !data)
+    {
+        HeapFree(GetProcessHeap(), 0, This);
+        HeapFree(GetProcessHeap(), 0, data);
+        return E_OUTOFMEMORY;
+    }
 
     This->IWICBitmap_iface.lpVtbl = &BitmapImpl_Vtbl;
     This->ref = 1;
     This->palette = NULL;
     This->palette_set = 0;
     This->lock = 0;
+    This->data = data;
+    This->width = uiWidth;
+    This->height = uiHeight;
+    This->stride = stride;
+    This->bpp = bpp;
 
     *ppIBitmap = &This->IWICBitmap_iface;
 
