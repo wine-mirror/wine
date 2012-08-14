@@ -248,11 +248,6 @@ sym_not_found:
     usexvidmode = 0;
 }
 
-void X11DRV_XF86VM_Cleanup(void)
-{
-  if (real_xf86vm_modes) XFree(real_xf86vm_modes);
-}
-
 /***** GAMMA CONTROL *****/
 /* (only available in XF86VidMode 2.x) */
 
@@ -389,10 +384,6 @@ static BOOL X11DRV_XF86VM_SetGammaRamp(LPDDGAMMARAMP ramp)
 void X11DRV_XF86VM_Init(void)
 {
     TRACE("XVidMode support not compiled in.\n");
-}
-
-void X11DRV_XF86VM_Cleanup(void)
-{
 }
 
 #endif /* SONAME_LIBXXF86VM */

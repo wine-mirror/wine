@@ -611,25 +611,6 @@ static void thread_detach(void)
 }
 
 
-/***********************************************************************
- *           X11DRV process termination routine
- */
-static void process_detach(void)
-{
-    X11DRV_Clipboard_Cleanup();
-    /* cleanup XVidMode */
-    X11DRV_XF86VM_Cleanup();
-    X11DRV_XRender_Finalize();
-
-    /* cleanup GDI */
-    X11DRV_GDI_Finalize();
-
-    IME_UnregisterClasses();
-    DeleteCriticalSection( &X11DRV_CritSection );
-    TlsFree( thread_data_tls_index );
-}
-
-
 /* store the display fd into the message queue */
 static void set_queue_display_fd( Display *display )
 {
@@ -712,9 +693,6 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
         break;
     case DLL_THREAD_DETACH:
         thread_detach();
-        break;
-    case DLL_PROCESS_DETACH:
-        process_detach();
         break;
     }
     return ret;

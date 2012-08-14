@@ -153,11 +153,6 @@ static void IME_RegisterClasses(void)
     WM_MSIME_DOCUMENTFEED = RegisterWindowMessageA("MSIMEDocumentFeed");
 }
 
-void IME_UnregisterClasses(void)
-{
-    UnregisterClassW(UI_CLASS_NAME, x11drv_module);
-}
-
 static HIMCC ImeCreateBlankCompStr(void)
 {
     HIMCC rc;

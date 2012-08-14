@@ -100,16 +100,6 @@ static void device_init(void)
     vert_size = MulDiv( screen_height, 254, log_pixels_y * 10 );
 }
 
-/**********************************************************************
- *	     X11DRV_GDI_Finalize
- */
-void X11DRV_GDI_Finalize(void)
-{
-    X11DRV_PALETTE_Cleanup();
-    /* don't bother to close the display, it often triggers X bugs */
-    /* XCloseDisplay( gdi_display ); */
-}
-
 
 static X11DRV_PDEVICE *create_x11_physdev( Drawable drawable )
 {

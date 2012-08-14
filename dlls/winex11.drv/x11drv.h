@@ -221,13 +221,11 @@ extern int client_side_with_render DECLSPEC_HIDDEN;
 extern int client_side_antialias_with_core DECLSPEC_HIDDEN;
 extern int client_side_antialias_with_render DECLSPEC_HIDDEN;
 extern const struct gdi_dc_funcs *X11DRV_XRender_Init(void) DECLSPEC_HIDDEN;
-extern void X11DRV_XRender_Finalize(void) DECLSPEC_HIDDEN;
 
 extern const struct gdi_dc_funcs *get_glx_driver(void) DECLSPEC_HIDDEN;
 extern BOOL destroy_glxpixmap(Display *display, XID glxpixmap) DECLSPEC_HIDDEN;
 
 /* IME support */
-extern void IME_UnregisterClasses(void) DECLSPEC_HIDDEN;
 extern void IME_SetOpenStatus(BOOL fOpen) DECLSPEC_HIDDEN;
 extern void IME_SetCompositionStatus(BOOL fOpen) DECLSPEC_HIDDEN;
 extern INT IME_GetCursorPos(void) DECLSPEC_HIDDEN;
@@ -246,8 +244,6 @@ extern void X11DRV_XDND_LeaveEvent( HWND hWnd, XClientMessageEvent *event ) DECL
 /**************************************************************************
  * X11 GDI driver
  */
-
-extern void X11DRV_GDI_Finalize(void) DECLSPEC_HIDDEN;
 
 extern Display *gdi_display DECLSPEC_HIDDEN;  /* display to use for all GDI functions */
 
@@ -269,7 +265,6 @@ extern ColorShifts X11DRV_PALETTE_default_shifts DECLSPEC_HIDDEN;
 extern int X11DRV_PALETTE_mapEGAPixel[16] DECLSPEC_HIDDEN;
 
 extern int X11DRV_PALETTE_Init(void) DECLSPEC_HIDDEN;
-extern void X11DRV_PALETTE_Cleanup(void) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_IsSolidColor(COLORREF color) DECLSPEC_HIDDEN;
 
 extern COLORREF X11DRV_PALETTE_ToLogical(X11DRV_PDEVICE *physDev, int pixel) DECLSPEC_HIDDEN;
@@ -618,7 +613,6 @@ extern XContext winContext DECLSPEC_HIDDEN;
 
 extern void X11DRV_InitClipboard(void) DECLSPEC_HIDDEN;
 extern int CDECL X11DRV_AcquireClipboard(HWND hWndClipWindow) DECLSPEC_HIDDEN;
-extern void X11DRV_Clipboard_Cleanup(void) DECLSPEC_HIDDEN;
 extern void X11DRV_ResetSelectionOwner(void) DECLSPEC_HIDDEN;
 extern void CDECL X11DRV_SetFocus( HWND hwnd ) DECLSPEC_HIDDEN;
 extern void set_window_cursor( Window window, HCURSOR handle ) DECLSPEC_HIDDEN;
@@ -661,7 +655,6 @@ struct x11drv_mode_info *X11DRV_Settings_SetHandlers(const char *name,
                                                      int reserve_depths) DECLSPEC_HIDDEN;
 
 void X11DRV_XF86VM_Init(void) DECLSPEC_HIDDEN;
-void X11DRV_XF86VM_Cleanup(void) DECLSPEC_HIDDEN;
 void X11DRV_XRandR_Init(void) DECLSPEC_HIDDEN;
 
 /* XIM support */

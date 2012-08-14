@@ -249,22 +249,6 @@ int X11DRV_PALETTE_Init(void)
 }
 
 /***********************************************************************
- *           X11DRV_PALETTE_Cleanup
- *
- * Free external colors we grabbed in the FillDefaultPalette()
- */
-void X11DRV_PALETTE_Cleanup(void)
-{
-  if( COLOR_gapFilled )
-  {
-      XFreeColors(gdi_display, X11DRV_PALETTE_PaletteXColormap,
-		  (unsigned long*)(X11DRV_PALETTE_PaletteToXPixel + COLOR_gapStart),
-		  COLOR_gapFilled, 0);
-  }
-  DeleteCriticalSection(&palette_cs);
-}
-
-/***********************************************************************
  *		X11DRV_PALETTE_ComputeChannelShift
  *
  * Calculate conversion parameters for a given color mask

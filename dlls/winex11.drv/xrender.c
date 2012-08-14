@@ -1039,20 +1039,6 @@ static void lfsz_calc_hash(LFANDSIZE *plfsz)
   return;
 }
 
-/***********************************************************************
- *   X11DRV_XRender_Finalize
- */
-void X11DRV_XRender_Finalize(void)
-{
-    int i;
-
-    EnterCriticalSection(&xrender_cs);
-    for(i = mru; i >= 0; i = glyphsetCache[i].next)
-	FreeEntry(i);
-    LeaveCriticalSection(&xrender_cs);
-    DeleteCriticalSection(&xrender_cs);
-}
-
 /**********************************************************************
  *	     xrenderdrv_SelectFont
  */
@@ -2513,10 +2499,6 @@ const struct gdi_dc_funcs *X11DRV_XRender_Init(void)
 {
     TRACE("XRender support not compiled in.\n");
     return NULL;
-}
-
-void X11DRV_XRender_Finalize(void)
-{
 }
 
 #endif /* SONAME_LIBXRENDER */
