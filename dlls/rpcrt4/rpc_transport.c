@@ -1870,6 +1870,12 @@ static ULONG RpcHttpAsyncData_Release(RpcHttpAsyncData *data)
     return refs;
 }
 
+static void prepare_async_request(RpcHttpAsyncData *async_data)
+{
+    ResetEvent(async_data->completion_event);
+    RpcHttpAsyncData_AddRef(async_data);
+}
+
 typedef struct _RpcConnection_http
 {
     RpcConnection common;
@@ -2165,8 +2171,7 @@ static RPC_STATUS rpcrt4_http_prepare_in_pipe(HINTERNET in_request, RpcHttpAsync
     DWORD bytes_read, bytes_written;
 
     /* prepare in pipe */
-    ResetEvent(async_data->completion_event);
-    RpcHttpAsyncData_AddRef(async_data);
+    prepare_async_request(async_data);
     ret = HttpSendRequestW(in_request, NULL, 0, NULL, 0);
     if (!ret)
     {
@@ -2189,8 +2194,7 @@ static RPC_STATUS rpcrt4_http_prepare_in_pipe(HINTERNET in_request, RpcHttpAsync
     buffers_in.dwStructSize = sizeof(buffers_in);
     /* FIXME: get this from the registry */
     buffers_in.dwBufferTotal = 1024 * 1024 * 1024; /* 1Gb */
-    ResetEvent(async_data->completion_event);
-    RpcHttpAsyncData_AddRef(async_data);
+    prepare_async_request(async_data);
     ret = HttpSendRequestExW(in_request, &buffers_in, NULL, 0, 0);
     if (!ret)
     {
@@ -2279,8 +2283,7 @@ static RPC_STATUS rpcrt4_http_prepare_out_pipe(HINTERNET out_request,
     RpcPktHdr pkt_from_server;
     ULONG field1, field3;
 
-    ResetEvent(async_data->completion_event);
-    RpcHttpAsyncData_AddRef(async_data);
+    prepare_async_request(async_data);
     ret = HttpSendRequestW(out_request, NULL, 0, NULL, 0);
     if (!ret)
     {
@@ -2301,8 +2304,8 @@ static RPC_STATUS rpcrt4_http_prepare_out_pipe(HINTERNET out_request,
 
     hdr = RPCRT4_BuildHttpConnectHeader(0, TRUE, connection_uuid, out_pipe_uuid, NULL);
     if (!hdr) return RPC_S_OUT_OF_RESOURCES;
-    ResetEvent(async_data->completion_event);
-    RpcHttpAsyncData_AddRef(async_data);
+
+    prepare_async_request(async_data);
     ret = HttpSendRequestW(out_request, NULL, 0, hdr, hdr->common.frag_len);
     if (!ret)
     {
