@@ -181,6 +181,7 @@ codecvt_wchar* codecvt_wchar_use_facet(const locale*);
 codecvt_wchar* codecvt_short_use_facet(const locale*);
 ctype_char* ctype_char_use_facet(const locale*);
 ctype_wchar* ctype_wchar_use_facet(const locale*);
+ctype_wchar* ctype_short_use_facet(const locale*);
 
 /* class _Lockit */
 typedef struct {
@@ -394,6 +395,7 @@ istreambuf_iterator_char *__thiscall num_get_char_get_bool(const num_get*, istre
         istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, MSVCP_bool*);
 
 num_get* num_get_wchar_use_facet(const locale*);
+num_get* num_get_short_use_facet(const locale*);
 istreambuf_iterator_wchar* __thiscall num_get_wchar_get_long(const num_get*, istreambuf_iterator_wchar*,
         istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, LONG*);
 istreambuf_iterator_wchar* __thiscall num_get_wchar_get_ushort(const num_get*, istreambuf_iterator_wchar*,

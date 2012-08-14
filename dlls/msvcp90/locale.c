@@ -2314,7 +2314,7 @@ ctype_wchar* ctype_wchar_use_facet(const locale *loc)
     return obj;
 }
 
-static ctype_wchar* ctype_short_use_facet(const locale *loc)
+ctype_wchar* ctype_short_use_facet(const locale *loc)
 {
     static ctype_wchar *obj = NULL;
 
@@ -4397,7 +4397,7 @@ MSVCP_size_t __cdecl num_get_short__Getcat(const locale_facet **facet, const loc
     return LC_NUMERIC;
 }
 
-static num_get* num_get_short_use_facet(const locale *loc)
+num_get* num_get_short_use_facet(const locale *loc)
 {
     static num_get *obj = NULL;
 
