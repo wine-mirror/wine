@@ -196,6 +196,15 @@ static int use_render_texture_emulation = 1;
 static BOOL has_swap_control;
 static int swap_interval = 1;
 
+static CRITICAL_SECTION context_section;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &context_section,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": context_section") }
+};
+static CRITICAL_SECTION context_section = { &critsect_debug, -1, 0, 0, 0, 0 };
+
 static struct opengl_funcs opengl_funcs;
 
 #define USE_GL_FUNC(name) #name,
@@ -1088,6 +1097,8 @@ static int pixelformat_from_fbconfig_id(XID fbconfig_id)
 void mark_drawable_dirty(Drawable old, Drawable new)
 {
     struct wgl_context *ctx;
+
+    EnterCriticalSection( &context_section );
     LIST_FOR_EACH_ENTRY( ctx, &context_list, struct wgl_context, entry )
     {
         if (old == ctx->drawables[0]) {
@@ -1099,12 +1110,14 @@ void mark_drawable_dirty(Drawable old, Drawable new)
             ctx->refresh_drawables = TRUE;
         }
     }
+    LeaveCriticalSection( &context_section );
 }
 
 /* Given the current context, make sure its drawable is sync'd */
 static inline void sync_context(struct wgl_context *context)
 {
-    if(context && context->refresh_drawables) {
+    EnterCriticalSection( &context_section );
+    if (context->refresh_drawables) {
         if (glxRequireVersion(3))
             pglXMakeContextCurrent(gdi_display, context->drawables[0],
                                    context->drawables[1], context->ctx);
@@ -1112,6 +1125,7 @@ static inline void sync_context(struct wgl_context *context)
             pglXMakeCurrent(gdi_display, context->drawables[0], context->ctx);
         context->refresh_drawables = FALSE;
     }
+    LeaveCriticalSection( &context_section );
 }
 
 
@@ -1435,11 +1449,12 @@ static struct wgl_context *glxdrv_wglCreateContext( HDC hdc )
     ret->has_been_current = FALSE;
     ret->sharing = FALSE;
 
-    wine_tsx11_lock();
     ret->vis = pglXGetVisualFromFBConfig(gdi_display, fmt->fbconfig);
     ret->ctx = create_glxcontext(gdi_display, ret, NULL);
+
+    EnterCriticalSection( &context_section );
     list_add_head( &context_list, &ret->entry );
-    wine_tsx11_unlock();
+    LeaveCriticalSection( &context_section );
 
     TRACE(" creating context %p (GL context creation delayed)\n", ret);
     return ret;
@@ -1452,12 +1467,12 @@ static void glxdrv_wglDeleteContext(struct wgl_context *ctx)
 {
     TRACE("(%p)\n", ctx);
 
-    wine_tsx11_lock();
+    EnterCriticalSection( &context_section );
     list_remove( &ctx->entry );
+    LeaveCriticalSection( &context_section );
+
     if (ctx->ctx) pglXDestroyContext( gdi_display, ctx->ctx );
     if (ctx->vis) XFree( ctx->vis );
-    wine_tsx11_unlock();
-
     HeapFree( GetProcessHeap(), 0, ctx );
 }
 
@@ -1507,8 +1522,6 @@ static BOOL glxdrv_wglMakeCurrent(HDC hdc, struct wgl_context *ctx)
     }
     else
     {
-        wine_tsx11_lock();
-
         if (TRACE_ON(wgl)) {
             int vis_id;
             pglXGetFBConfigAttrib(gdi_display, ctx->fmt->fbconfig, GLX_VISUAL_ID, &vis_id);
@@ -1523,15 +1536,16 @@ static BOOL glxdrv_wglMakeCurrent(HDC hdc, struct wgl_context *ctx)
         {
             NtCurrentTeb()->glContext = ctx;
 
+            EnterCriticalSection( &context_section );
             ctx->has_been_current = TRUE;
             ctx->hdc = hdc;
             ctx->drawables[0] = escape.gl_drawable;
             ctx->drawables[1] = escape.gl_drawable;
             ctx->refresh_drawables = FALSE;
+            LeaveCriticalSection( &context_section );
         }
         else
             SetLastError(ERROR_INVALID_HANDLE);
-        wine_tsx11_unlock();
     }
     TRACE(" returning %s\n", (ret ? "True" : "False"));
     return ret;
@@ -1574,20 +1588,20 @@ static BOOL X11DRV_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct 
     {
         if (!pglXMakeContextCurrent) return FALSE;
 
-        wine_tsx11_lock();
         ret = pglXMakeContextCurrent(gdi_display, escape_draw.gl_drawable, escape_read.gl_drawable, ctx->ctx);
         if (ret)
         {
+            EnterCriticalSection( &context_section );
             ctx->has_been_current = TRUE;
             ctx->hdc = draw_hdc;
             ctx->drawables[0] = escape_draw.gl_drawable;
             ctx->drawables[1] = escape_read.gl_drawable;
             ctx->refresh_drawables = FALSE;
+            LeaveCriticalSection( &context_section );
             NtCurrentTeb()->glContext = ctx;
         }
         else
             SetLastError(ERROR_INVALID_HANDLE);
-        wine_tsx11_unlock();
     }
 
     TRACE(" returning %s\n", (ret ? "True" : "False"));
@@ -1674,10 +1688,8 @@ static void wglFinish(void)
     struct wgl_context *ctx = NtCurrentTeb()->glContext;
     enum x11drv_escape_codes code = X11DRV_FLUSH_GL_DRAWABLE;
 
-    wine_tsx11_lock();
     sync_context(ctx);
     pglFinish();
-    wine_tsx11_unlock();
     ExtEscape( ctx->hdc, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code, 0, NULL );
 }
 
@@ -1686,10 +1698,8 @@ static void wglFlush(void)
     struct wgl_context *ctx = NtCurrentTeb()->glContext;
     enum x11drv_escape_codes code = X11DRV_FLUSH_GL_DRAWABLE;
 
-    wine_tsx11_lock();
     sync_context(ctx);
     pglFlush();
-    wine_tsx11_unlock();
     ExtEscape( ctx->hdc, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code, 0, NULL );
 }
 
@@ -1767,7 +1777,6 @@ static struct wgl_context *X11DRV_wglCreateContextAttribsARB( HDC hdc, struct wg
         }
     }
 
-    wine_tsx11_lock();
     X11DRV_expect_error(gdi_display, GLXErrorHandler, NULL);
     ret->ctx = create_glxcontext(gdi_display, ret, NULL);
 
@@ -1777,12 +1786,13 @@ static struct wgl_context *X11DRV_wglCreateContextAttribsARB( HDC hdc, struct wg
         /* In the future we should convert the GLX error to a win32 one here if needed */
         ERR("Context creation failed\n");
         HeapFree( GetProcessHeap(), 0, ret );
-        wine_tsx11_unlock();
         return NULL;
     }
 
+    EnterCriticalSection( &context_section );
     list_add_head( &context_list, &ret->entry );
-    wine_tsx11_unlock();
+    LeaveCriticalSection( &context_section );
+
     TRACE(" creating context %p\n", ret);
     return ret;
 }
@@ -2210,10 +2220,8 @@ static BOOL X11DRV_wglChoosePixelFormatARB( HDC hdc, const int *piAttribIList, c
     }
 
     /* Search for FB configurations matching the requirements in attribs */
-    wine_tsx11_lock();
     cfgs = pglXChooseFBConfig(gdi_display, DefaultScreen(gdi_display), attribs, &nCfgs);
     if (NULL == cfgs) {
-        wine_tsx11_unlock();
         WARN("Compatible Pixel Format not found\n");
         return GL_FALSE;
     }
@@ -2248,7 +2256,6 @@ static BOOL X11DRV_wglChoosePixelFormatARB( HDC hdc, const int *piAttribIList, c
     *nNumFormats = pfmt_it;
     /** free list */
     XFree(cfgs);
-    wine_tsx11_unlock();
     return GL_TRUE;
 }
 
@@ -2879,7 +2886,6 @@ static BOOL glxdrv_SwapBuffers(PHYSDEV dev)
       return FALSE;
   }
 
-  wine_tsx11_lock();
   sync_context(ctx);
   switch (physdev->type)
   {
@@ -2903,7 +2909,6 @@ static BOOL glxdrv_SwapBuffers(PHYSDEV dev)
   }
 
   flush_gl_drawable( physdev );
-  wine_tsx11_unlock();
 
   /* FPS support */
   if (TRACE_ON(fps))
