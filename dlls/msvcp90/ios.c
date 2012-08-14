@@ -2361,8 +2361,6 @@ basic_filebuf_char* __thiscall basic_filebuf_char_open_mode(basic_filebuf_char *
 
 /* ?overflow@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAEHH@Z */
 /* ?overflow@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAAHH@Z */
-#define call_basic_filebuf_char_overflow(this, c) CALL_VTBL_FUNC(this, 4, \
-        int, (basic_filebuf_char*, int), (this, c))
 DEFINE_THISCALL_WRAPPER(basic_filebuf_char_overflow, 8)
 int __thiscall basic_filebuf_char_overflow(basic_filebuf_char *this, int c)
 {
@@ -2429,8 +2427,6 @@ int __thiscall basic_filebuf_char_overflow(basic_filebuf_char *this, int c)
 
 /* ?pbackfail@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAEHH@Z */
 /* ?pbackfail@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAAHH@Z */
-#define call_basic_filebuf_char_pbackfail(this, c) CALL_VTBL_FUNC(this, 8, \
-        int, (basic_filebuf_char*, int), (this, c))
 DEFINE_THISCALL_WRAPPER(basic_filebuf_char_pbackfail, 8)
 int __thiscall basic_filebuf_char_pbackfail(basic_filebuf_char *this, int c)
 {
@@ -2452,8 +2448,6 @@ int __thiscall basic_filebuf_char_pbackfail(basic_filebuf_char *this, int c)
 
 /* ?uflow@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAEHXZ */
 /* ?uflow@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAAHXZ */
-#define call_basic_filebuf_char_uflow(this) CALL_VTBL_FUNC(this, 20, \
-        int, (basic_filebuf_char*), (this))
 DEFINE_THISCALL_WRAPPER(basic_filebuf_char_uflow, 4)
 int __thiscall basic_filebuf_char_uflow(basic_filebuf_char *this)
 {
@@ -2504,8 +2498,6 @@ int __thiscall basic_filebuf_char_uflow(basic_filebuf_char *this)
 
 /* ?underflow@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAEHXZ */
 /* ?underflow@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAAHXZ */
-#define call_basic_filebuf_char_underflow(this) CALL_VTBL_FUNC(this, 16, \
-        int, (basic_filebuf_char*), (this))
 DEFINE_THISCALL_WRAPPER(basic_filebuf_char_underflow, 4)
 int __thiscall basic_filebuf_char_underflow(basic_filebuf_char *this)
 {
@@ -2516,16 +2508,14 @@ int __thiscall basic_filebuf_char_underflow(basic_filebuf_char *this)
     if(basic_streambuf_char_gptr(&this->base) < basic_streambuf_char_egptr(&this->base))
         return *basic_streambuf_char_gptr(&this->base);
 
-    ret = call_basic_filebuf_char_uflow(this);
+    ret = call_basic_streambuf_char_uflow(&this->base);
     if(ret != EOF)
-        ret = call_basic_filebuf_char_pbackfail(this, ret);
+        ret = call_basic_streambuf_char_pbackfail(&this->base, ret);
     return ret;
 }
 
 /* ?seekoff@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAE?AV?$fpos@H@2@JHH@Z */
 /* ?seekoff@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAA?AV?$fpos@H@2@_JHH@Z */
-#define call_basic_filebuf_char_seekoff(this, ret, off, way, mode) CALL_VTBL_FUNC(this, 36, \
-        fpos_int*, (basic_filebuf_char*, fpos_int*, streamoff, int, int), (this, ret, off, way, mode))
 DEFINE_THISCALL_WRAPPER(basic_filebuf_char_seekoff, 20)
 fpos_int* __thiscall basic_filebuf_char_seekoff(basic_filebuf_char *this,
         fpos_int *ret, streamoff off, int way, int mode)
@@ -2551,8 +2541,6 @@ fpos_int* __thiscall basic_filebuf_char_seekoff(basic_filebuf_char *this,
 
 /* ?seekpos@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAE?AV?$fpos@H@2@V32@H@Z */
 /* ?seekpos@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAA?AV?$fpos@H@2@V32@H@Z */
-#define call_basic_filebuf_char_seekpos(this, ret, pos, mode) CALL_VTBL_FUNC(this, 40, \
-        fpos_int*, (basic_filebuf_char*, fpos_int*, fpos_int, mode), (this, ret, pos, mode))
 DEFINE_THISCALL_WRAPPER(basic_filebuf_char_seekpos, 36)
 fpos_int* __thiscall basic_filebuf_char_seekpos(basic_filebuf_char *this,
         fpos_int *ret, fpos_int pos, int mode)
@@ -2579,8 +2567,6 @@ fpos_int* __thiscall basic_filebuf_char_seekpos(basic_filebuf_char *this,
 
 /* ?setbuf@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAEPAV?$basic_streambuf@DU?$char_traits@D@std@@@2@PADH@Z */
 /* ?setbuf@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAAPEAV?$basic_streambuf@DU?$char_traits@D@std@@@2@PEAD_J@Z */
-#define call_basic_filebuf_char_setbuf(this, buf, count) CALL_VTBL_FUNC(this, 44, \
-        basic_streambuf_char*, (basic_filebuf_char*, char*, streamsize), (this, buf, count))
 DEFINE_THISCALL_WRAPPER(basic_filebuf_char_setbuf, 12)
 basic_streambuf_char* __thiscall basic_filebuf_char_setbuf(basic_filebuf_char *this, char *buf, streamsize count)
 {
@@ -2598,8 +2584,6 @@ basic_streambuf_char* __thiscall basic_filebuf_char_setbuf(basic_filebuf_char *t
 
 /* ?sync@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAEHXZ */
 /* ?sync@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAAHXZ */
-#define call_basic_filebuf_char_sync(this) CALL_VTBL_FUNC(this, 48, \
-        int, (basic_filebuf_char*), (this))
 DEFINE_THISCALL_WRAPPER(basic_filebuf_char_sync, 4)
 int __thiscall basic_filebuf_char_sync(basic_filebuf_char *this)
 {
@@ -2608,15 +2592,13 @@ int __thiscall basic_filebuf_char_sync(basic_filebuf_char *this)
     if(!basic_filebuf_char_is_open(this))
         return 0;
 
-    if(call_basic_filebuf_char_overflow(this, EOF) == EOF)
+    if(call_basic_streambuf_char_overflow(&this->base, EOF) == EOF)
         return 0;
     return fflush(this->file);
 }
 
 /* ?imbue@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAEXABVlocale@2@@Z */
 /* ?imbue@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAAXAEBVlocale@2@@Z */
-#define call_basic_filebuf_char_imbue(this, loc) CALL_VTBL_FUNC(this, 52, \
-        void, (basic_filebuf_char*, const locale*), (this, loc))
 DEFINE_THISCALL_WRAPPER(basic_filebuf_char_imbue, 8)
 void __thiscall basic_filebuf_char_imbue(basic_filebuf_char *this, const locale *loc)
 {
