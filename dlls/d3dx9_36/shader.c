@@ -657,6 +657,21 @@ static DWORD calc_bytes(D3DXCONSTANT_DESC *desc)
     return 4 * desc->Elements * desc->Rows * desc->Columns;
 }
 
+static inline int is_constant_handle(D3DXHANDLE handle)
+{
+    return !((UINT_PTR)handle >> 16);
+}
+
+static inline ctab_constant *constant_from_handle(struct ID3DXConstantTableImpl *table, D3DXHANDLE handle)
+{
+    return &table->constants[(UINT_PTR)handle - 1];
+}
+
+static inline D3DXHANDLE handle_from_constant_index(UINT index)
+{
+    return (D3DXHANDLE)(DWORD_PTR)(index + 1);
+}
+
 /*** IUnknown methods ***/
 static HRESULT WINAPI ID3DXConstantTableImpl_QueryInterface(ID3DXConstantTable *iface, REFIID riid, void **out)
 {
@@ -747,16 +762,14 @@ static HRESULT WINAPI ID3DXConstantTableImpl_GetConstantDesc(ID3DXConstantTable 
         return D3DERR_INVALIDCALL;
 
     /* Applications can pass the name of the constant in place of the handle */
-    if (!((UINT_PTR)constant >> 16))
-        constant_info = &This->constants[(UINT_PTR)constant - 1];
-    else
+    if (!is_constant_handle(constant))
     {
-        D3DXHANDLE c = ID3DXConstantTable_GetConstantByName(iface, NULL, constant);
-        if (!c)
+        constant = ID3DXConstantTable_GetConstantByName(iface, NULL, constant);
+        if (!constant)
             return D3DERR_INVALIDCALL;
-
-        constant_info = &This->constants[(UINT_PTR)c - 1];
     }
+
+    constant_info = constant_from_handle(This, constant);
 
     if (desc)
         *desc = constant_info->desc;
@@ -800,7 +813,7 @@ static D3DXHANDLE WINAPI ID3DXConstantTableImpl_GetConstant(ID3DXConstantTable *
     if (index >= This->desc.Constants)
         return NULL;
 
-    return (D3DXHANDLE)(DWORD_PTR)(index + 1);
+    return handle_from_constant_index(index);
 }
 
 static D3DXHANDLE WINAPI ID3DXConstantTableImpl_GetConstantByName(ID3DXConstantTable *iface, D3DXHANDLE constant, LPCSTR name)
@@ -821,7 +834,7 @@ static D3DXHANDLE WINAPI ID3DXConstantTableImpl_GetConstantByName(ID3DXConstantT
 
     for (i = 0; i < This->desc.Constants; i++)
         if (!strcmp(This->constants[i].desc.Name, name))
-            return (D3DXHANDLE)(DWORD_PTR)(i + 1);
+            return handle_from_constant_index(i);
 
     return NULL;
 }
