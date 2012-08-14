@@ -534,12 +534,12 @@ static HRESULT WINAPI PHClientSite_GetMoniker(IOleClientSite *iface, DWORD dwAss
 
     switch(dwWhichMoniker) {
     case OLEWHICHMK_CONTAINER:
-        if(!This->doc || !This->doc->basedoc.window || !This->doc->basedoc.window->mon) {
+        if(!This->doc || !This->doc->window || !This->doc->window->mon) {
             FIXME("no moniker\n");
             return E_UNEXPECTED;
         }
 
-        *ppmk = This->doc->basedoc.window->mon;
+        *ppmk = This->doc->window->mon;
         IMoniker_AddRef(*ppmk);
         break;
     default:
@@ -1144,12 +1144,12 @@ static HRESULT WINAPI PHBindHost_CreateMoniker(IBindHost *iface, LPOLESTR szName
 
     TRACE("(%p)->(%s %p %p %x)\n", This, debugstr_w(szName), pBC, ppmk, dwReserved);
 
-    if(!This->doc || !This->doc->basedoc.window || !This->doc->basedoc.window->mon) {
+    if(!This->doc || !This->doc->window || !This->doc->window->mon) {
         FIXME("no moniker\n");
         return E_UNEXPECTED;
     }
 
-    return CreateURLMoniker(This->doc->basedoc.window->mon, szName, ppmk);
+    return CreateURLMoniker(This->doc->window->mon, szName, ppmk);
 }
 
 static HRESULT WINAPI PHBindHost_MonikerBindToStorage(IBindHost *iface, IMoniker *pMk, IBindCtx *pBC,
