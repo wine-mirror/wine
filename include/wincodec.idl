@@ -81,6 +81,12 @@ typedef enum WICBitmapInterpolationMode {
     WICBITMAPINTERPOLATIONMODE_FORCE_DWORD = CODEC_FORCE_DWORD
 } WICBitmapInterpolationMode;
 
+typedef enum WICBitmapLockFlags {
+    WICBitmapLockRead = 0x00000001,
+    WICBitmapLockWrite = 0x00000002,
+    WICBITMAPLOCKFLAGS_FORCE_DWORD = CODEC_FORCE_DWORD
+} WICBitmapLockFlags;
+
 typedef enum WICBitmapPaletteType {
     WICBitmapPaletteTypeCustom = 0x00000000,
     WICBitmapPaletteTypeMedianCut = 0x00000001,
@@ -201,6 +207,7 @@ typedef UINT32 WICColor;
 cpp_quote("#define WINCODEC_ERR_WRONGSTATE 0x88982f04")
 cpp_quote("#define WINCODEC_ERR_VALUEOUTOFRANGE 0x88982f05")
 cpp_quote("#define WINCODEC_ERR_NOTINITIALIZED 0x88982f0c")
+cpp_quote("#define WINCODEC_ERR_ALREADYLOCKED 0x88982f0d")
 cpp_quote("#define WINCODEC_ERR_PROPERTYNOTFOUND 0x88982f40")
 cpp_quote("#define WINCODEC_ERR_CODECNOTHUMBNAIL 0x88982f44")
 cpp_quote("#define WINCODEC_ERR_PALETTEUNAVAILABLE 0x88982f45")

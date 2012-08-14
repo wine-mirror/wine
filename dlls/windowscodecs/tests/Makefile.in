@@ -2,6 +2,7 @@ TESTDLL   = windowscodecs.dll
 IMPORTS   = ole32 windowscodecs
 
 C_SRCS = \
+	bitmap.c \
 	bmpformat.c \
 	converter.c \
 	icoformat.c \
