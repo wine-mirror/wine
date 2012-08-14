@@ -1158,6 +1158,7 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct wined
             else
             {
                 TRACE("Format supports post-pixelshader blending.\n");
+                TRACE("Color output: %#x\n", color);
                 format->flags |= WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING;
             }
 
