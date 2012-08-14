@@ -3138,7 +3138,8 @@ void gen_ffp_frag_op(const struct wined3d_device *device, const struct wined3d_s
                 break;
         }
     }
-    if (state->render_states[WINED3D_RS_SRGBWRITEENABLE]
+    if (!gl_info->supported[ARB_FRAMEBUFFER_SRGB]
+            && state->render_states[WINED3D_RS_SRGBWRITEENABLE]
             && rt->resource.format->flags & WINED3DFMT_FLAG_SRGB_WRITE)
     {
         settings->sRGB_write = 1;

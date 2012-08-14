@@ -933,6 +933,7 @@ enum wined3d_gl_extension
     ARB_FRAGMENT_PROGRAM,
     ARB_FRAGMENT_SHADER,
     ARB_FRAMEBUFFER_OBJECT,
+    ARB_FRAMEBUFFER_SRGB,
     ARB_GEOMETRY_SHADER4,
     ARB_HALF_FLOAT_PIXEL,
     ARB_HALF_FLOAT_VERTEX,
@@ -1253,6 +1254,12 @@ enum wined3d_gl_extension
 #define GL_UNSIGNED_INT_24_8                                0x84fa
 #define GL_DEPTH24_STENCIL8                                 0x88f0
 #define GL_TEXTURE_STENCIL_SIZE                             0x88f1
+#endif
+
+/* GL_ARB_framebuffer_sRGB */
+#ifndef GL_ARB_framebuffer_sRGB
+#define GL_ARB_framebuffer_sRGB 1
+#define GL_FRAMEBUFFER_SRGB                                 0x8db9
 #endif
 
 /* GL_ARB_geometry_shader4 */

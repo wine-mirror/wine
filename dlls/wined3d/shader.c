@@ -1901,14 +1901,23 @@ void find_ps_compile_args(const struct wined3d_state *state,
         const struct wined3d_shader *shader, struct ps_compile_args *args)
 {
     struct wined3d_device *device = shader->device;
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     const struct wined3d_texture *texture;
     UINT i;
 
     memset(args, 0, sizeof(*args)); /* FIXME: Make sure all bits are set. */
-    if (state->render_states[WINED3D_RS_SRGBWRITEENABLE])
+    if (!gl_info->supported[ARB_FRAMEBUFFER_SRGB] && state->render_states[WINED3D_RS_SRGBWRITEENABLE])
     {
         const struct wined3d_surface *rt = state->fb->render_targets[0];
-        if (rt->resource.format->flags & WINED3DFMT_FLAG_SRGB_WRITE) args->srgb_correction = 1;
+        if (rt->resource.format->flags & WINED3DFMT_FLAG_SRGB_WRITE)
+        {
+            static unsigned int warned = 0;
+
+            args->srgb_correction = 1;
+            if (state->render_states[WINED3D_RS_ALPHABLENDENABLE] && !warned++)
+                WARN("Blending into a sRGB render target with no GL_ARB_framebuffer_sRGB "
+                        "support, expect rendering artifacts.\n");
+        }
     }
 
     if (shader->reg_maps.shader_version.major == 1
