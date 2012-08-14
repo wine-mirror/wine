@@ -171,16 +171,9 @@ static Pixmap BRUSH_DitherMono( COLORREF color )
     };                                      
     int gray = (30 * GetRValue(color) + 59 * GetGValue(color) + 11 * GetBValue(color)) / 100;
     int idx = gray * (sizeof gray_dither/sizeof gray_dither[0] + 1)/256 - 1;
-    Pixmap pixmap;
 
     TRACE("color=%06x -> gray=%x\n", color, gray);
-
-    wine_tsx11_lock();
-    pixmap = XCreateBitmapFromData( gdi_display, root_window, 
-                                    gray_dither[idx],
-                                    2, 2 );
-    wine_tsx11_unlock();
-    return pixmap;
+    return XCreateBitmapFromData( gdi_display, root_window, gray_dither[idx], 2, 2 );
 }
 
 /***********************************************************************
@@ -273,9 +266,7 @@ HBRUSH X11DRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct brush_patter
 
     if (physDev->brush.pixmap)
     {
-        wine_tsx11_lock();
         XFreePixmap( gdi_display, physDev->brush.pixmap );
-        wine_tsx11_unlock();
         physDev->brush.pixmap = 0;
     }
     physDev->brush.style = logbrush.lbStyle;
@@ -296,10 +287,8 @@ HBRUSH X11DRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct brush_patter
       case BS_HATCHED:
 	TRACE("BS_HATCHED\n" );
 	physDev->brush.pixel = X11DRV_PALETTE_ToPhysical( physDev, logbrush.lbColor );
-        wine_tsx11_lock();
         physDev->brush.pixmap = XCreateBitmapFromData( gdi_display, root_window,
                                                        HatchBrushes[logbrush.lbHatch], 8, 8 );
-        wine_tsx11_unlock();
 	physDev->brush.fillStyle = FillStippled;
 	break;
     }

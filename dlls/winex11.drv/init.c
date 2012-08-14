@@ -92,9 +92,7 @@ static void device_init(void)
 
     palette_size = X11DRV_PALETTE_Init();
 
-    wine_tsx11_lock();
     stock_bitmap_pixmap = XCreatePixmap( gdi_display, root_window, 1, 1, 1 );
-    wine_tsx11_unlock();
 
     /* Initialize device caps */
     log_pixels_x = log_pixels_y = get_dpi();
@@ -121,13 +119,11 @@ static X11DRV_PDEVICE *create_x11_physdev( Drawable drawable )
 
     if (!(physDev = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*physDev) ))) return NULL;
 
-    wine_tsx11_lock();
     physDev->drawable = drawable;
     physDev->gc = XCreateGC( gdi_display, drawable, 0, NULL );
     XSetGraphicsExposures( gdi_display, physDev->gc, False );
     XSetSubwindowMode( gdi_display, physDev->gc, IncludeInferiors );
     XFlush( gdi_display );
-    wine_tsx11_unlock();
     return physDev;
 }
 
@@ -180,9 +176,7 @@ static BOOL X11DRV_DeleteDC( PHYSDEV dev )
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
 
-    wine_tsx11_lock();
     XFreeGC( gdi_display, physDev->gc );
-    wine_tsx11_unlock();
     HeapFree( GetProcessHeap(), 0, physDev );
     return TRUE;
 }
@@ -350,9 +344,7 @@ static INT X11DRV_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_d
                     const struct x11drv_escape_set_drawable *data = in_data;
                     physDev->dc_rect = data->dc_rect;
                     physDev->drawable = data->drawable;
-                    wine_tsx11_lock();
                     XSetSubwindowMode( gdi_display, physDev->gc, data->mode );
-                    wine_tsx11_unlock();
                     TRACE( "SET_DRAWABLE hdc %p drawable %lx dc_rect %s\n",
                            dev->hdc, physDev->drawable, wine_dbgstr_rect(&physDev->dc_rect) );
                     return TRUE;
@@ -367,9 +359,7 @@ static INT X11DRV_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_d
                 }
                 break;
             case X11DRV_START_EXPOSURES:
-                wine_tsx11_lock();
                 XSetGraphicsExposures( gdi_display, physDev->gc, True );
-                wine_tsx11_unlock();
                 physDev->exposures = 0;
                 return TRUE;
             case X11DRV_END_EXPOSURES:
@@ -377,18 +367,14 @@ static INT X11DRV_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_d
                 {
                     HRGN hrgn = 0, tmp = 0;
 
-                    wine_tsx11_lock();
                     XSetGraphicsExposures( gdi_display, physDev->gc, False );
-                    wine_tsx11_unlock();
                     if (physDev->exposures)
                     {
                         for (;;)
                         {
                             XEvent event;
 
-                            wine_tsx11_lock();
                             XWindowEvent( gdi_display, physDev->drawable, ~0, &event );
-                            wine_tsx11_unlock();
                             if (event.type == NoExpose) break;
                             if (event.type == GraphicsExpose)
                             {

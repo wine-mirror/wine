@@ -116,9 +116,7 @@ static int X11DRV_XF86VM_GetCurrentMode(void)
   DWORD dwBpp = screen_bpp;
 
   TRACE("Querying XVidMode current mode\n");
-  wine_tsx11_lock();
   pXF86VidModeGetModeLine(gdi_display, DefaultScreen(gdi_display), &dotclock, &line);
-  wine_tsx11_unlock();
   convert_modeline(dotclock, &line, &cmode, dwBpp);
   for (i=0; i<dd_mode_count; i++)
     if (memcmp(&dd_modes[i], &cmode, sizeof(cmode)) == 0) {
@@ -194,10 +192,7 @@ void X11DRV_XF86VM_Init(void)
 #undef LOAD_FUNCPTR
 
   /* see if XVidMode is available */
-  wine_tsx11_lock();
-  ok = pXF86VidModeQueryExtension(gdi_display, &xf86vm_event, &xf86vm_error);
-  wine_tsx11_unlock();
-  if (!ok) return;
+  if (!pXF86VidModeQueryExtension(gdi_display, &xf86vm_event, &xf86vm_error)) return;
 
   X11DRV_expect_error(gdi_display, XVidModeErrorHandler, NULL);
   ok = pXF86VidModeQueryVersion(gdi_display, &xf86vm_major, &xf86vm_minor);
@@ -255,9 +250,7 @@ sym_not_found:
 
 void X11DRV_XF86VM_Cleanup(void)
 {
-  wine_tsx11_lock();
   if (real_xf86vm_modes) XFree(real_xf86vm_modes);
-  wine_tsx11_unlock();
 }
 
 /***** GAMMA CONTROL *****/
@@ -353,31 +346,19 @@ static BOOL X11DRV_XF86VM_GetGammaRamp(LPDDGAMMARAMP ramp)
 {
 #ifdef X_XF86VidModeSetGamma
   XF86VidModeGamma gamma;
-  Bool ret;
 
   if (xf86vm_major < 2) return FALSE; /* no gamma control */
 #ifdef X_XF86VidModeSetGammaRamp
-  else if (xf86vm_use_gammaramp)
-  {
-      Bool ret;
-      wine_tsx11_lock();
-      ret = pXF86VidModeGetGammaRamp(gdi_display, DefaultScreen(gdi_display), 256,
-				    ramp->red, ramp->green, ramp->blue);
-      wine_tsx11_unlock();
-      return ret;
-  }
+  if (xf86vm_use_gammaramp)
+      return pXF86VidModeGetGammaRamp(gdi_display, DefaultScreen(gdi_display), 256,
+                                      ramp->red, ramp->green, ramp->blue);
 #endif
-  else
+  if (pXF86VidModeGetGamma(gdi_display, DefaultScreen(gdi_display), &gamma))
   {
-      wine_tsx11_lock();
-      ret = pXF86VidModeGetGamma(gdi_display, DefaultScreen(gdi_display), &gamma);
-      wine_tsx11_unlock();
-      if (ret) {
-	  GenerateRampFromGamma(ramp->red,   gamma.red);
-	  GenerateRampFromGamma(ramp->green, gamma.green);
-	  GenerateRampFromGamma(ramp->blue,  gamma.blue);
-	  return TRUE;
-      }
+      GenerateRampFromGamma(ramp->red,   gamma.red);
+      GenerateRampFromGamma(ramp->green, gamma.green);
+      GenerateRampFromGamma(ramp->blue,  gamma.blue);
+      return TRUE;
   }
 #endif /* X_XF86VidModeSetGamma */
   return FALSE;
@@ -385,7 +366,6 @@ static BOOL X11DRV_XF86VM_GetGammaRamp(LPDDGAMMARAMP ramp)
 
 static BOOL X11DRV_XF86VM_SetGammaRamp(LPDDGAMMARAMP ramp)
 {
-  Bool ret = FALSE;
 #ifdef X_XF86VidModeSetGamma
   XF86VidModeGamma gamma;
 
@@ -393,17 +373,15 @@ static BOOL X11DRV_XF86VM_SetGammaRamp(LPDDGAMMARAMP ramp)
   if (!ComputeGammaFromRamp(ramp->red,   &gamma.red) || /* ramp validation */
       !ComputeGammaFromRamp(ramp->green, &gamma.green) ||
       !ComputeGammaFromRamp(ramp->blue,  &gamma.blue)) return FALSE;
-  wine_tsx11_lock();
 #ifdef X_XF86VidModeSetGammaRamp
   if (xf86vm_use_gammaramp)
-      ret = pXF86VidModeSetGammaRamp(gdi_display, DefaultScreen(gdi_display), 256,
-				    ramp->red, ramp->green, ramp->blue);
-  else
+      return pXF86VidModeSetGammaRamp(gdi_display, DefaultScreen(gdi_display), 256,
+                                      ramp->red, ramp->green, ramp->blue);
 #endif
-      ret = pXF86VidModeSetGamma(gdi_display, DefaultScreen(gdi_display), &gamma);
-  wine_tsx11_unlock();
+  return pXF86VidModeSetGamma(gdi_display, DefaultScreen(gdi_display), &gamma);
+#else
+  return FALSE;
 #endif /* X_XF86VidModeSetGamma */
-  return ret;
 }
 
 #else /* SONAME_LIBXXF86VM */

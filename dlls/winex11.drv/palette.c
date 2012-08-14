@@ -114,9 +114,7 @@ static int *palette_get_mapping( HPALETTE hpal )
 {
     int *mapping;
 
-    wine_tsx11_lock();
     if (XFindContext( gdi_display, (XID)hpal, palette_context, (char **)&mapping )) mapping = NULL;
-    wine_tsx11_unlock();
     return mapping;
 }
 
@@ -126,9 +124,7 @@ static int *palette_get_mapping( HPALETTE hpal )
  */
 static void palette_set_mapping( HPALETTE hpal, int *mapping )
 {
-    wine_tsx11_lock();
     XSaveContext( gdi_display, (XID)hpal, palette_context, (char *)mapping );
-    wine_tsx11_unlock();
 }
 
 
@@ -146,9 +142,7 @@ int X11DRV_PALETTE_Init(void)
 
     TRACE("initializing palette manager...\n");
 
-    wine_tsx11_lock();
     palette_context = XUniqueContext();
-    wine_tsx11_unlock();
     white = WhitePixel( gdi_display, DefaultScreen(gdi_display) );
     black = BlackPixel( gdi_display, DefaultScreen(gdi_display) );
     monoPlane = 1;
@@ -192,12 +186,10 @@ int X11DRV_PALETTE_Init(void)
         break;
 
     case StaticGray:
-        wine_tsx11_lock();
         X11DRV_PALETTE_PaletteXColormap = XCreateColormap(gdi_display, root_window,
                                                           visual, AllocNone);
 	X11DRV_PALETTE_PaletteFlags |= X11DRV_PALETTE_FIXED;
         X11DRV_PALETTE_Graymax = (1 << screen_depth)-1;
-        wine_tsx11_unlock();
         break;
 
     case TrueColor:
@@ -269,11 +261,9 @@ void X11DRV_PALETTE_Cleanup(void)
 {
   if( COLOR_gapFilled )
   {
-      wine_tsx11_lock();
       XFreeColors(gdi_display, X11DRV_PALETTE_PaletteXColormap,
 		  (unsigned long*)(X11DRV_PALETTE_PaletteToXPixel + COLOR_gapStart),
 		  COLOR_gapFilled, 0);
-      wine_tsx11_unlock();
   }
   DeleteCriticalSection(&palette_cs);
 }
@@ -834,10 +824,8 @@ COLORREF X11DRV_PALETTE_ToLogical(X11DRV_PDEVICE *physDev, int pixel)
         return ret;
     }
 
-    wine_tsx11_lock();
     color.pixel = pixel;
     XQueryColor(gdi_display, X11DRV_PALETTE_PaletteXColormap, &color);
-    wine_tsx11_unlock();
     return RGB(color.red >> 8, color.green >> 8, color.blue >> 8);
 }
 
@@ -1251,9 +1239,7 @@ UINT X11DRV_RealizePalette( PHYSDEV dev, HPALETTE hpal, BOOL primary )
                     color.green = entries[i].peGreen << 8;
                     color.blue = entries[i].peBlue << 8;
                     color.flags = DoRed | DoGreen | DoBlue;
-                    wine_tsx11_lock();
                     XStoreColor(gdi_display, X11DRV_PALETTE_PaletteXColormap, &color);
-                    wine_tsx11_unlock();
 
                     COLOR_sysPal[index] = entries[i];
                     COLOR_sysPal[index].peFlags = flag;
@@ -1295,9 +1281,7 @@ BOOL X11DRV_UnrealizePalette( HPALETTE hpal )
 
     if (mapping)
     {
-        wine_tsx11_lock();
         XDeleteContext( gdi_display, (XID)hpal, palette_context );
-        wine_tsx11_unlock();
         HeapFree( GetProcessHeap(), 0, mapping );
     }
     return TRUE;

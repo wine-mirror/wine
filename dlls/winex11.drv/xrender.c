@@ -338,10 +338,7 @@ static int load_xrender_formats(void)
         {
             unsigned long mask = 0;
             get_xrender_template(&wxr_formats_template[i], &templ, &mask);
-
-            wine_tsx11_lock();
             pict_formats[i] = pXRenderFindFormat(gdi_display, mask, &templ, 0);
-            wine_tsx11_unlock();
         }
         if (pict_formats[i])
         {
@@ -361,7 +358,6 @@ static int load_xrender_formats(void)
 const struct gdi_dc_funcs *X11DRV_XRender_Init(void)
 {
     int event_base, i;
-    BOOL ok;
 
     if (!client_side_with_render) return NULL;
     if (!(xrender_handle = wine_dlopen(SONAME_LIBXRENDER, RTLD_NOW, NULL, 0))) return NULL;
@@ -390,10 +386,7 @@ const struct gdi_dc_funcs *X11DRV_XRender_Init(void)
 #undef LOAD_OPTIONAL_FUNCPTR
 #undef LOAD_FUNCPTR
 
-    wine_tsx11_lock();
-    ok = pXRenderQueryExtension(gdi_display, &event_base, &xrender_error_base);
-    wine_tsx11_unlock();
-    if (!ok) return NULL;
+    if (!pXRenderQueryExtension(gdi_display, &event_base, &xrender_error_base)) return NULL;
 
     TRACE("Xrender is up and running error_base = %d\n", xrender_error_base);
     if(!load_xrender_formats()) /* This fails in buggy versions of libXrender.so */
@@ -536,18 +529,14 @@ static void update_xrender_clipping( struct xrender_physdev *dev, HRGN rgn )
 
     if (!rgn)
     {
-        wine_tsx11_lock();
         pa.clip_mask = None;
         pXRenderChangePicture( gdi_display, dev->pict, CPClipMask, &pa );
-        wine_tsx11_unlock();
     }
     else if ((data = X11DRV_GetRegionData( rgn, 0 )))
     {
-        wine_tsx11_lock();
         pXRenderSetPictureClipRectangles( gdi_display, dev->pict,
                                           dev->x11dev->dc_rect.left, dev->x11dev->dc_rect.top,
                                           (XRectangle *)data->Buffer, data->rdh.nCount );
-        wine_tsx11_unlock();
         HeapFree( GetProcessHeap(), 0, data );
     }
 }
@@ -559,11 +548,9 @@ static Picture get_xrender_picture( struct xrender_physdev *dev, HRGN clip_rgn, 
     {
         XRenderPictureAttributes pa;
 
-        wine_tsx11_lock();
         pa.subwindow_mode = IncludeInferiors;
         dev->pict = pXRenderCreatePicture( gdi_display, dev->x11dev->drawable,
                                            dev->pict_format, CPSubwindowMode, &pa );
-        wine_tsx11_unlock();
         TRACE( "Allocing pict=%lx dc=%p drawable=%08lx\n",
                dev->pict, dev->dev.hdc, dev->x11dev->drawable );
         dev->update_clip = (dev->region != 0);
@@ -600,12 +587,10 @@ static Picture get_xrender_picture_source( struct xrender_physdev *dev, BOOL rep
     {
         XRenderPictureAttributes pa;
 
-        wine_tsx11_lock();
         pa.subwindow_mode = IncludeInferiors;
         pa.repeat = repeat ? RepeatNormal : RepeatNone;
         dev->pict_src = pXRenderCreatePicture( gdi_display, dev->x11dev->drawable,
                                                dev->pict_format, CPSubwindowMode|CPRepeat, &pa );
-        wine_tsx11_unlock();
 
         TRACE("Allocing pict_src=%lx dc=%p drawable=%08lx repeat=%u\n",
               dev->pict_src, dev->dev.hdc, dev->x11dev->drawable, pa.repeat);
@@ -719,9 +704,7 @@ static void FreeEntry(int entry)
         formatEntry = glyphsetCache[entry].format[format];
 
         if(formatEntry->glyphset) {
-            wine_tsx11_lock();
             pXRenderFreeGlyphSet(gdi_display, formatEntry->glyphset);
-            wine_tsx11_unlock();
             formatEntry->glyphset = 0;
         }
         if(formatEntry->nrealized) {
@@ -1357,10 +1340,8 @@ static void UploadGlyph(struct xrender_physdev *physDev, int glyph, AA_Type form
                 break;
         }
 
-        wine_tsx11_lock();
         formatEntry->font_format = pict_formats[wxr_format];
         formatEntry->glyphset = pXRenderCreateGlyphSet(gdi_display, formatEntry->font_format);
-        wine_tsx11_unlock();
     }
 
 
@@ -1448,10 +1429,8 @@ static void UploadGlyph(struct xrender_physdev *physDev, int glyph, AA_Type form
         if(buflen == 0)
             gi.width = gi.height = 1;
 
-        wine_tsx11_lock();
 	pXRenderAddGlyphs(gdi_display, formatEntry->glyphset, &gid, &gi, 1,
                           buflen ? buf : zero, buflen ? buflen : sizeof(zero));
-	wine_tsx11_unlock();
 	HeapFree(GetProcessHeap(), 0, buf);
     }
 
@@ -1480,12 +1459,10 @@ static Picture get_tile_pict( enum wxr_format wxr_format, const XRenderColor *co
         XRenderPictureAttributes pa;
         XRenderPictFormat *pict_format = pict_formats[wxr_format];
 
-        wine_tsx11_lock();
         tile->xpm = XCreatePixmap(gdi_display, root_window, 1, 1, pict_format->depth);
 
         pa.repeat = RepeatNormal;
         tile->pict = pXRenderCreatePicture(gdi_display, tile->xpm, pict_format, CPRepeat, &pa);
-        wine_tsx11_unlock();
 
         /* init current_color to something different from text_pixel */
         tile->current_color = *color;
@@ -1497,17 +1474,13 @@ static Picture get_tile_pict( enum wxr_format wxr_format, const XRenderColor *co
             XRenderColor col;
             col.red = col.green = col.blue = 0;
             col.alpha = 0xffff;
-            wine_tsx11_lock();
             pXRenderFillRectangle(gdi_display, PictOpSrc, tile->pict, &col, 0, 0, 1, 1);
-            wine_tsx11_unlock();
         }
     }
 
     if (memcmp( color, &tile->current_color, sizeof(*color) ) && wxr_format != WXR_FORMAT_MONO)
     {
-        wine_tsx11_lock();
         pXRenderFillRectangle(gdi_display, PictOpSrc, tile->pict, color, 0, 0, 1, 1);
-        wine_tsx11_unlock();
         tile->current_color = *color;
     }
     return tile->pict;
@@ -1531,12 +1504,10 @@ static Picture get_mask_pict( int alpha )
     {
         XRenderPictureAttributes pa;
 
-        wine_tsx11_lock();
         pixmap = XCreatePixmap( gdi_display, root_window, 1, 1, 32 );
         pa.repeat = RepeatNormal;
         pict = pXRenderCreatePicture( gdi_display, pixmap,
                                       pict_formats[WXR_FORMAT_A8R8G8B8], CPRepeat, &pa );
-        wine_tsx11_unlock();
         current_alpha = -1;
     }
 
@@ -1545,9 +1516,7 @@ static Picture get_mask_pict( int alpha )
         XRenderColor col;
         col.red = col.green = col.blue = 0;
         col.alpha = current_alpha = alpha;
-        wine_tsx11_lock();
         pXRenderFillRectangle( gdi_display, PictOpSrc, pict, &col, 0, 0, 1, 1 );
-        wine_tsx11_unlock();
     }
     return pict;
 }
@@ -1583,14 +1552,12 @@ static BOOL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
         else
             get_xrender_color( physdev, GetBkColor( physdev->dev.hdc ), &bg );
 
-        wine_tsx11_lock();
         set_xrender_transformation( pict, 1, 1, 0, 0 );
         pXRenderFillRectangle( gdi_display, PictOpSrc, pict, &bg,
                                physdev->x11dev->dc_rect.left + lprect->left,
                                physdev->x11dev->dc_rect.top + lprect->top,
                                lprect->right - lprect->left,
                                lprect->bottom - lprect->top );
-        wine_tsx11_unlock();
         add_device_bounds( physdev->x11dev, lprect );
     }
 
@@ -1859,10 +1826,8 @@ static DWORD create_image_pixmap( BITMAPINFO *info, const struct gdi_image_bits 
     GC gc;
     XImage *image;
 
-    wine_tsx11_lock();
     image = XCreateImage( gdi_display, visual, depth, ZPixmap, 0, NULL,
                           info->bmiHeader.biWidth, height, 32, 0 );
-    wine_tsx11_unlock();
     if (!image) return ERROR_OUTOFMEMORY;
 
     ret = copy_image_bits( info, (format == WXR_FORMAT_R8G8B8), image, bits, &dst_bits, src, NULL, ~0u );
@@ -1873,13 +1838,11 @@ static DWORD create_image_pixmap( BITMAPINFO *info, const struct gdi_image_bits 
     *use_repeat = (width == 1 && height == 1);
     pa.repeat = *use_repeat ? RepeatNormal : RepeatNone;
 
-    wine_tsx11_lock();
     *pixmap = XCreatePixmap( gdi_display, root_window, width, height, depth );
     gc = XCreateGC( gdi_display, *pixmap, 0, NULL );
     XPutImage( gdi_display, *pixmap, gc, image, src->visrect.left, 0, 0, 0, width, height );
     *pict = pXRenderCreatePicture( gdi_display, *pixmap, pict_formats[format], CPRepeat, &pa );
     XFreeGC( gdi_display, gc );
-    wine_tsx11_unlock();
 
     /* make coordinates relative to the pixmap */
     src->x -= src->visrect.left;
@@ -1887,9 +1850,7 @@ static DWORD create_image_pixmap( BITMAPINFO *info, const struct gdi_image_bits 
     OffsetRect( &src->visrect, -src->visrect.left, -src->visrect.top );
 
     image->data = NULL;
-    wine_tsx11_lock();
     XDestroyImage( image );
-    wine_tsx11_unlock();
     if (dst_bits.free) dst_bits.free( &dst_bits );
     return ret;
 }
@@ -1907,9 +1868,7 @@ static void xrender_stretch_blit( struct xrender_physdev *physdev_src, struct xr
     {
         x_dst = dst->x;
         y_dst = dst->y;
-        wine_tsx11_lock();
         dst_pict = pXRenderCreatePicture( gdi_display, drawable, physdev_dst->pict_format, 0, NULL );
-        wine_tsx11_unlock();
     }
     else
     {
@@ -1945,12 +1904,7 @@ static void xrender_stretch_blit( struct xrender_physdev *physdev_src, struct xr
                       src->width, src->height, x_dst, y_dst, dst->width, dst->height, xscale, yscale );
     }
 
-    if (drawable)
-    {
-        wine_tsx11_lock();
-        pXRenderFreePicture( gdi_display, dst_pict );
-        wine_tsx11_unlock();
-    }
+    if (drawable) pXRenderFreePicture( gdi_display, dst_pict );
 }
 
 
@@ -1970,12 +1924,10 @@ static void xrender_put_image( Pixmap src_pixmap, Picture src_pict, Picture mask
         if (clip) clip_data = X11DRV_GetRegionData( clip, 0 );
         x_dst = dst->x;
         y_dst = dst->y;
-        wine_tsx11_lock();
         dst_pict = pXRenderCreatePicture( gdi_display, drawable, dst_format, 0, NULL );
         if (clip_data)
             pXRenderSetPictureClipRectangles( gdi_display, dst_pict, 0, 0,
                                               (XRectangle *)clip_data->Buffer, clip_data->rdh.nCount );
-        wine_tsx11_unlock();
         HeapFree( GetProcessHeap(), 0, clip_data );
     }
     else
@@ -1995,12 +1947,7 @@ static void xrender_put_image( Pixmap src_pixmap, Picture src_pict, Picture mask
     xrender_blit( PictOpSrc, src_pict, mask_pict, dst_pict, src->x, src->y, src->width, src->height,
                   x_dst, y_dst, dst->width, dst->height, xscale, yscale );
 
-    if (drawable)
-    {
-        wine_tsx11_lock();
-        pXRenderFreePicture( gdi_display, dst_pict );
-        wine_tsx11_unlock();
-    }
+    if (drawable) pXRenderFreePicture( gdi_display, dst_pict );
 }
 
 
@@ -2039,21 +1986,17 @@ static BOOL xrenderdrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
         tmp.y -= tmp.visrect.top;
         OffsetRect( &tmp.visrect, -tmp.visrect.left, -tmp.visrect.top );
 
-        wine_tsx11_lock();
         tmpGC = XCreateGC( gdi_display, physdev_dst->x11dev->drawable, 0, NULL );
         XSetSubwindowMode( gdi_display, tmpGC, IncludeInferiors );
         XSetGraphicsExposures( gdi_display, tmpGC, False );
         tmp_pixmap = XCreatePixmap( gdi_display, root_window, tmp.visrect.right - tmp.visrect.left,
                                     tmp.visrect.bottom - tmp.visrect.top, physdev_dst->pict_format->depth );
-        wine_tsx11_unlock();
 
         xrender_stretch_blit( physdev_src, physdev_dst, tmp_pixmap, src, &tmp );
         execute_rop( physdev_dst->x11dev, tmp_pixmap, tmpGC, &dst->visrect, rop );
 
-        wine_tsx11_lock();
         XFreePixmap( gdi_display, tmp_pixmap );
         XFreeGC( gdi_display, tmpGC );
-        wine_tsx11_unlock();
     }
     else xrender_stretch_blit( physdev_src, physdev_dst, 0, src, dst );
 
@@ -2127,11 +2070,8 @@ static DWORD xrenderdrv_PutImage( PHYSDEV dev, HRGN clip, BITMAPINFO *info,
                                NULL, tmp_pixmap, src, &tmp, use_repeat );
             execute_rop( physdev->x11dev, tmp_pixmap, gc, &dst->visrect, rop );
 
-            wine_tsx11_lock();
             XFreePixmap( gdi_display, tmp_pixmap );
             XFreeGC( gdi_display, gc );
-            wine_tsx11_unlock();
-
             if (restore_region) restore_clipping_region( physdev->x11dev );
         }
         else xrender_put_image( src_pixmap, src_pict, mask_pict, clip,
@@ -2139,10 +2079,8 @@ static DWORD xrenderdrv_PutImage( PHYSDEV dev, HRGN clip, BITMAPINFO *info,
 
         add_device_bounds( physdev->x11dev, &dst->visrect );
 
-        wine_tsx11_lock();
         pXRenderFreePicture( gdi_display, src_pict );
         XFreePixmap( gdi_display, src_pixmap );
-        wine_tsx11_unlock();
     }
     return ret;
 
@@ -2212,10 +2150,8 @@ static DWORD xrenderdrv_BlendImage( PHYSDEV dev, BITMAPINFO *info, const struct 
                       physdev->x11dev->dc_rect.top + dst->y,
                       dst->width, dst->height, xscale, yscale );
 
-        wine_tsx11_lock();
         pXRenderFreePicture( gdi_display, src_pict );
         XFreePixmap( gdi_display, src_pixmap );
-        wine_tsx11_unlock();
 
         LeaveCriticalSection( &xrender_cs );
         add_device_bounds( physdev->x11dev, &dst->visrect );
@@ -2273,11 +2209,9 @@ static BOOL xrenderdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
         bg.red = bg.green = bg.blue = 0xffff;
         fg.alpha = bg.alpha = 0xffff;
 
-        wine_tsx11_lock();
         tmp_pixmap = XCreatePixmap( gdi_display, root_window, width, height,
                                     physdev_dst->pict_format->depth );
         tmp_pict = pXRenderCreatePicture( gdi_display, tmp_pixmap, physdev_dst->pict_format, 0, NULL );
-        wine_tsx11_unlock();
 
         xrender_mono_blit( src_pict, tmp_pict, physdev_dst->format, &fg, &bg,
                            src->visrect.left, src->visrect.top, width, height, 0, 0, width, height, 1, 1 );
@@ -2288,11 +2222,9 @@ static BOOL xrenderdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
         enum wxr_format format = get_format_without_alpha( physdev_src->format );
         if (format != physdev_src->format)
         {
-            wine_tsx11_lock();
             pa.subwindow_mode = IncludeInferiors;
             tmp_pict = pXRenderCreatePicture( gdi_display, physdev_src->x11dev->drawable,
                                               pict_formats[format], CPSubwindowMode, &pa );
-            wine_tsx11_unlock();
         }
     }
 
@@ -2309,10 +2241,8 @@ static BOOL xrenderdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
                   physdev_dst->x11dev->dc_rect.top + dst->y,
                   dst->width, dst->height, xscale, yscale );
 
-    wine_tsx11_lock();
     if (tmp_pict) pXRenderFreePicture( gdi_display, tmp_pict );
     if (tmp_pixmap) XFreePixmap( gdi_display, tmp_pixmap );
-    wine_tsx11_unlock();
 
     LeaveCriticalSection( &xrender_cs );
     add_device_bounds( physdev_dst->x11dev, &dst->visrect );
@@ -2449,13 +2379,11 @@ static HBRUSH xrenderdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct b
                                        &pattern->bits, pattern->usage );
     if (!pixmap) return 0;
 
-    wine_tsx11_lock();
     if (physdev->x11dev->brush.pixmap) XFreePixmap( gdi_display, physdev->x11dev->brush.pixmap );
     physdev->x11dev->brush.pixmap = pixmap;
     physdev->x11dev->brush.fillStyle = FillTiled;
     physdev->x11dev->brush.pixel = 0;  /* ignored */
     physdev->x11dev->brush.style = BS_PATTERN;
-    wine_tsx11_unlock();
     return hbrush;
 
 x11drv_fallback:

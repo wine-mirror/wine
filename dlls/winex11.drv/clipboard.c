@@ -264,11 +264,8 @@ static Window thread_selection_wnd(void)
         attr.event_mask = (ExposureMask | KeyPressMask | KeyReleaseMask | PointerMotionMask |
                        ButtonPressMask | ButtonReleaseMask | EnterWindowMask | PropertyChangeMask);
 
-        wine_tsx11_lock();
         w = XCreateWindow(thread_data->display, root_window, 0, 0, 1, 1, 0, screen_depth,
                           InputOutput, CopyFromParent, CWEventMask, &attr);
-        wine_tsx11_unlock();
-
         if (w)
             thread_data->selection_wnd = w;
         else
@@ -379,9 +376,7 @@ static void intern_atoms(void)
             WideCharToMultiByte(CP_UNIXCP, 0, buffer, -1, names[i++], len, NULL, NULL);
         }
 
-    wine_tsx11_lock();
     XInternAtoms( display, names, count, False, atoms );
-    wine_tsx11_unlock();
 
     i = 0;
     LIST_FOR_EACH_ENTRY( format, &format_list, WINE_CLIPFORMAT, entry )
@@ -1267,9 +1262,7 @@ static HANDLE X11DRV_CLIPBOARD_ImportCompoundText(Display *display, Window w, At
 
     txtprop.encoding = x11drv_atom(COMPOUND_TEXT);
     txtprop.format = 8;
-    wine_tsx11_lock();
     ret = XmbTextPropertyToTextList(display, &txtprop, &srcstr, &count);
-    wine_tsx11_unlock();
     HeapFree(GetProcessHeap(), 0, txtprop.value);
     if (ret != Success || !count) return 0;
 
@@ -1306,9 +1299,7 @@ static HANDLE X11DRV_CLIPBOARD_ImportCompoundText(Display *display, Window w, At
         GlobalUnlock(hUnicodeText);
     }
 
-    wine_tsx11_lock();
     XFreeStringList(srcstr);
-    wine_tsx11_unlock();
 
     return hUnicodeText;
 }
@@ -1340,10 +1331,8 @@ static HANDLE X11DRV_CLIPBOARD_ImportXAPIXMAP(Display *display, Window w, Atom p
         pPixmap = (Pixmap *) lpdata;
 
         /* Get the Pixmap dimensions and bit depth */
-        wine_tsx11_lock();
         if (!XGetGeometry(gdi_display, *pPixmap, &root, &x, &y, &width, &height,
                           &border_width, &depth)) depth = 0;
-        wine_tsx11_unlock();
         if (!pixmap_formats[depth]) return 0;
 
         TRACE("\tPixmap properties: width=%d, height=%d, depth=%d\n",
@@ -1709,13 +1698,11 @@ static HANDLE X11DRV_CLIPBOARD_ExportCompoundText(Display *display, Window reque
         style = XStdICCTextStyle;
 
     /* Update the X property */
-    wine_tsx11_lock();
     if (XmbTextListToTextProperty(display, &lpstr, 1, style, &prop) == Success)
     {
         XSetTextProperty(display, requestor, &prop, rprop);
         XFree(prop.value);
     }
-    wine_tsx11_unlock();
 
     HeapFree(GetProcessHeap(), 0, lpstr);
 
@@ -2020,21 +2007,15 @@ static BOOL X11DRV_CLIPBOARD_QueryTargets(Display *display, Window w, Atom selec
     Atom target, XEvent *xe)
 {
     INT i;
-    Bool res;
 
-    wine_tsx11_lock();
-    XConvertSelection(display, selection, target,
-        x11drv_atom(SELECTION_DATA), w, CurrentTime);
-    wine_tsx11_unlock();
+    XConvertSelection(display, selection, target, x11drv_atom(SELECTION_DATA), w, CurrentTime);
 
     /*
      * Wait until SelectionNotify is received
      */
     for (i = 0; i < SELECTION_RETRIES; i++)
     {
-        wine_tsx11_lock();
-        res = XCheckTypedWindowEvent(display, w, SelectionNotify, xe);
-        wine_tsx11_unlock();
+        Bool res = XCheckTypedWindowEvent(display, w, SelectionNotify, xe);
         if (res && xe->xselection.selection == selection) break;
 
         usleep(SELECTION_WAIT);
@@ -2134,9 +2115,7 @@ static VOID X11DRV_CLIPBOARD_InsertSelectionProperties(Display *display, Atom* p
                        i, lpFormat->drvData, debugstr_format(lpFormat->wFormatID));
                  X11DRV_CLIPBOARD_InsertClipboardData(lpFormat->wFormatID, 0, 0, lpFormat, FALSE);
              }
-             wine_tsx11_lock();
              for (i = 0; i < nb_atoms; i++) XFree( names[i] );
-             wine_tsx11_unlock();
              HeapFree( GetProcessHeap(), 0, names );
          }
          HeapFree( GetProcessHeap(), 0, atoms );
@@ -2253,9 +2232,7 @@ static int X11DRV_CLIPBOARD_QueryAvailableData(Display *display, LPCLIPBOARDINFO
        }
 
        /* Free the list of targets */
-       wine_tsx11_lock();
        XFree(targetList);
-       wine_tsx11_unlock();
     }
 
     return cSelectionTargets;
@@ -2299,17 +2276,13 @@ static BOOL X11DRV_CLIPBOARD_ReadSelectionData(Display *display, LPWINE_CLIPDATA
               debugstr_format(lpData->lpFormat->wFormatID), lpData->lpFormat->drvData,
               (UINT)selectionCacheSrc);
 
-        wine_tsx11_lock();
         XConvertSelection(display, selectionCacheSrc, lpData->lpFormat->drvData,
-            x11drv_atom(SELECTION_DATA), w, CurrentTime);
-        wine_tsx11_unlock();
+                          x11drv_atom(SELECTION_DATA), w, CurrentTime);
 
         /* wait until SelectionNotify is received */
         for (i = 0; i < SELECTION_RETRIES; i++)
         {
-            wine_tsx11_lock();
             res = XCheckTypedWindowEvent(display, w, SelectionNotify, &xe);
-            wine_tsx11_unlock();
             if (res && xe.xselection.selection == selectionCacheSrc) break;
 
             usleep(SELECTION_WAIT);
@@ -2402,9 +2375,7 @@ static BOOL X11DRV_CLIPBOARD_GetProperty(Display *display, Window w, Atom prop,
 
     /* Delete the property on the window now that we are done
      * This will send a PropertyNotify event to the selection owner. */
-    wine_tsx11_lock();
     XDeleteProperty(display, w, prop);
-    wine_tsx11_unlock();
     return TRUE;
 }
 
@@ -2425,10 +2396,8 @@ static BOOL X11DRV_CLIPBOARD_ReadProperty(Display *display, Window w, Atom prop,
     if (!X11DRV_CLIPBOARD_GetProperty(display, w, prop, &atype, data, datasize))
         return FALSE;
 
-    wine_tsx11_lock();
     while (XCheckTypedWindowEvent(display, w, PropertyNotify, &xe))
         ;
-    wine_tsx11_unlock();
 
     if (atype == x11drv_atom(INCR))
     {
@@ -2446,9 +2415,7 @@ static BOOL X11DRV_CLIPBOARD_ReadProperty(Display *display, Window w, Atom prop,
             {
                 Bool res;
 
-                wine_tsx11_lock();
                 res = XCheckTypedWindowEvent(display, w, PropertyNotify, &xe);
-                wine_tsx11_unlock();
                 if (res && xe.xproperty.atom == prop &&
                     xe.xproperty.state == PropertyNewValue)
                     break;
@@ -3177,14 +3144,12 @@ static Atom X11DRV_SelectionRequest_MULTIPLE( HWND hWnd, XSelectionRequestEvent 
                 if (TRACE_ON(clipboard))
                 {
                     char *targetName, *propName;
-                    wine_tsx11_lock();
                     targetName = XGetAtomName(display, targetPropList[i]);
                     propName = XGetAtomName(display, targetPropList[i+1]);
                     TRACE("MULTIPLE(%d): Target='%s' Prop='%s'\n",
                           i/2, targetName, propName);
                     XFree(targetName);
                     XFree(propName);
-                    wine_tsx11_unlock();
                 }
 
                 /* We must have a non "None" property to service a MULTIPLE target atom */
@@ -3207,9 +3172,7 @@ static Atom X11DRV_SelectionRequest_MULTIPLE( HWND hWnd, XSelectionRequestEvent 
         }
 
         /* Free the list of targets/properties */
-        wine_tsx11_lock();
         XFree(targetPropList);
-        wine_tsx11_unlock();
     }
 
     return rprop;
@@ -3316,9 +3279,7 @@ END:
         result.target = event->target;
         result.time = event->time;
         TRACE("Sending SelectionNotify event...\n");
-        wine_tsx11_lock();
         XSendEvent(display,event->requestor,False,NoEventMask,(XEvent*)&result);
-        wine_tsx11_unlock();
     }
 }
 

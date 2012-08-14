@@ -452,12 +452,7 @@ static LRESULT WINAPI tray_icon_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPAR
 /* find the X11 window owner the system tray selection */
 static Window get_systray_selection_owner( Display *display )
 {
-    Window ret;
-
-    wine_tsx11_lock();
-    ret = XGetSelectionOwner( display, systray_atom );
-    wine_tsx11_unlock();
-    return ret;
+    return XGetSelectionOwner( display, systray_atom );
 }
 
 static BOOL init_systray(void)
@@ -545,13 +540,11 @@ static void dock_systray_icon( Display *display, struct tray_icon *icon, Window 
     ev.xclient.data.l[2] = data->whole_window;
     ev.xclient.data.l[3] = 0;
     ev.xclient.data.l[4] = 0;
-    wine_tsx11_lock();
     XSendEvent( display, systray_window, False, NoEventMask, &ev );
     attr.background_pixmap = ParentRelative;
     attr.bit_gravity = ForgetGravity;
     XChangeWindowAttributes( display, data->whole_window, CWBackPixmap | CWBitGravity, &attr );
     XChangeWindowAttributes( display, data->client_window, CWBackPixmap | CWBitGravity, &attr );
-    wine_tsx11_unlock();
 }
 
 /* dock systray windows again with the new owner */

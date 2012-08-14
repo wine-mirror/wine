@@ -1388,9 +1388,7 @@ void X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
     if (TRACE_ON(key)){
 	const char *ksname;
 
-        wine_tsx11_lock();
         ksname = XKeysymToString(keysym);
-        wine_tsx11_unlock();
 	if (!ksname)
 	  ksname = "No Name";
 	TRACE_(key)("%s : keysym=%lx (%s), # of chars=%d / %s\n",
@@ -1994,9 +1992,7 @@ void X11DRV_MappingNotify( HWND dummy, XEvent *event )
 {
     HWND hwnd;
 
-    wine_tsx11_lock();
     XRefreshKeyboardMapping(&event->xmapping);
-    wine_tsx11_unlock();
     X11DRV_InitKeyboard( event->xmapping.display );
 
     hwnd = GetFocus();
@@ -2606,9 +2602,7 @@ INT CDECL X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState
     {
         const char *ksname;
 
-        wine_tsx11_lock();
         ksname = XKeysymToString(keysym);
-        wine_tsx11_unlock();
         if (!ksname) ksname = "No Name";
         TRACE_(key)("%s : keysym=%lx (%s), # of chars=%d / %s\n",
                     (e.type == KeyPress) ? "KeyPress" : "KeyRelease",
@@ -2662,9 +2656,7 @@ INT CDECL X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState
 	    {
 	    const char *ksname;
 
-            wine_tsx11_lock();
 	    ksname = XKeysymToString(keysym);
-            wine_tsx11_unlock();
 	    if (!ksname)
 		ksname = "No Name";
 	    if ((keysym >> 8) != 0xff)
@@ -2753,7 +2745,5 @@ found:
  */
 void CDECL X11DRV_Beep(void)
 {
-    wine_tsx11_lock();
     XBell(gdi_display, 0);
-    wine_tsx11_unlock();
 }

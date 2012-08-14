@@ -192,12 +192,10 @@ static BOOL CALLBACK update_windows_on_desktop_resize( HWND hwnd, LPARAM lparam 
     {
         XWindowChanges changes;
 
-        wine_tsx11_lock();
         changes.x = data->whole_rect.left - virtual_screen_rect.left;
         changes.y = data->whole_rect.top - virtual_screen_rect.top;
         XReconfigureWMWindow( display, data->whole_window,
                               DefaultScreen(display), mask, &changes );
-        wine_tsx11_unlock();
     }
     if (hwnd == GetForegroundWindow()) clip_fullscreen_window( hwnd, TRUE );
     return TRUE;

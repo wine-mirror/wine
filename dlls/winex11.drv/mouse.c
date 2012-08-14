@@ -266,14 +266,12 @@ static void enable_xinput2(void)
     if (data->xi2_state == xi_unknown)
     {
         int major = 2, minor = 0;
-        wine_tsx11_lock();
         if (!pXIQueryVersion( data->display, &major, &minor )) data->xi2_state = xi_disabled;
         else
         {
             data->xi2_state = xi_unavailable;
             WARN( "X Input 2 not available\n" );
         }
-        wine_tsx11_unlock();
     }
     if (data->xi2_state == xi_unavailable) return;
 
@@ -441,9 +439,7 @@ void ungrab_clipping_window(void)
     if (!clip_window) return;
 
     TRACE( "no longer clipping\n" );
-    wine_tsx11_lock();
     XUnmapWindow( display, clip_window );
-    wine_tsx11_unlock();
     clipping_cursor = 0;
     SendMessageW( GetDesktopWindow(), WM_X11DRV_CLIP_CURSOR, 0, 0 );
 }
@@ -637,13 +633,11 @@ static XcursorImage *create_xcursor_frame( HDC hdc, const ICONINFOEXW *iinfo, HA
     int x, y, i, has_alpha = FALSE;
     XcursorPixel *ptr;
 
-    wine_tsx11_lock();
     image = pXcursorImageCreate( width, height );
-    wine_tsx11_unlock();
     if (!image)
     {
         ERR("X11 failed to produce a cursor frame!\n");
-        goto cleanup;
+        return NULL;
     }
 
     image->xhot = iinfo->xHotspot;
@@ -768,9 +762,7 @@ static Cursor create_xcursor_cursor( HDC hdc, const ICONINFOEXW *iinfo, HANDLE i
     if (!(images = pXcursorImagesCreate( nFrames ))) goto cleanup;
     for (images->nimage = 0; images->nimage < nFrames; images->nimage++)
         images->images[images->nimage] = imgs[images->nimage];
-    wine_tsx11_lock();
     cursor = pXcursorImagesLoadCursor( gdi_display, images );
-    wine_tsx11_unlock();
     pXcursorImagesDestroy( images ); /* Note: this frees each individual frame (calls XcursorImageDestroy) */
     HeapFree( GetProcessHeap(), 0, imgs );
     imgs = NULL;
@@ -922,9 +914,7 @@ static Cursor create_xcursor_system_cursor( const ICONINFOEXW *info )
 done:
     if (valueA[0])
     {
-        wine_tsx11_lock();
         cursor = pXcursorLibraryLoadCursor( gdi_display, valueA );
-        wine_tsx11_unlock();
         if (!cursor) WARN( "no system cursor found for %s mapped to %s\n",
                            debugstr_w(name), debugstr_a(valueA) );
     }
@@ -1255,13 +1245,11 @@ BOOL CDECL X11DRV_SetCursorPos( INT x, INT y )
 {
     struct x11drv_thread_data *data = x11drv_init_thread_data();
 
-    wine_tsx11_lock();
     XWarpPointer( data->display, root_window, root_window, 0, 0, 0, 0,
                   x - virtual_screen_rect.left, y - virtual_screen_rect.top );
     data->warp_serial = NextRequest( data->display );
     XNoOp( data->display );
     XFlush( data->display ); /* avoids bad mouse lag in games that do their own mouse warping */
-    wine_tsx11_unlock();
     TRACE( "warped to %d,%d serial %lu\n", x, y, data->warp_serial );
     return TRUE;
 }
@@ -1344,7 +1332,7 @@ BOOL CDECL X11DRV_ClipCursor( LPCRECT clip )
 void move_resize_window( Display *display, struct x11drv_win_data *data, int dir )
 {
     DWORD pt;
-    int x, y, rootX, rootY, ret, button = 0;
+    int x, y, rootX, rootY, button = 0;
     XEvent xev;
     Window root, child;
     unsigned int xstate;
@@ -1375,10 +1363,8 @@ void move_resize_window( Display *display, struct x11drv_win_data *data, int dir
 
     /* need to ungrab the pointer that may have been automatically grabbed
      * with a ButtonPress event */
-    wine_tsx11_lock();
     XUngrabPointer( display, CurrentTime );
     XSendEvent(display, root_window, False, SubstructureNotifyMask | SubstructureRedirectMask, &xev);
-    wine_tsx11_unlock();
 
     /* try to detect the end of the size/move by polling for the mouse button to be released */
     /* (some apps don't like it if we return before the size/move is done) */
@@ -1389,10 +1375,7 @@ void move_resize_window( Display *display, struct x11drv_win_data *data, int dir
         MSG msg;
         INPUT input;
 
-        wine_tsx11_lock();
-        ret = XQueryPointer( display, root_window, &root, &child, &rootX, &rootY, &x, &y, &xstate );
-        wine_tsx11_unlock();
-        if (!ret) break;
+        if (!XQueryPointer( display, root_window, &root, &child, &rootX, &rootY, &x, &y, &xstate )) break;
 
         if (!(xstate & (Button1Mask << (button - 1))))
         {
@@ -1620,9 +1603,7 @@ void X11DRV_XInput2_Init(void)
     LOAD_FUNCPTR(XISelectEvents);
 #undef LOAD_FUNCPTR
 
-    wine_tsx11_lock();
     xinput2_available = XQueryExtension( gdi_display, "XInputExtension", &xinput2_opcode, &event, &error );
-    wine_tsx11_unlock();
 #else
     TRACE( "X Input 2 support not compiled in.\n" );
 #endif

@@ -1368,9 +1368,7 @@ static BOOL glxdrv_wglSetPixelFormat( HDC hdc, int iPixelFormat, const PIXELFORM
         return FALSE;
     }
 
-    wine_tsx11_lock();
     pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_DRAWABLE_TYPE, &value);
-    wine_tsx11_unlock();
 
     hwnd = WindowFromDC( hdc );
     if(hwnd) {
@@ -1414,9 +1412,7 @@ static BOOL glxdrv_wglCopyContext(struct wgl_context *src, struct wgl_context *d
 {
     TRACE("%p -> %p mask %#x\n", src, dst, mask);
 
-    wine_tsx11_lock();
     pglXCopyContext(gdi_display, src->ctx, dst->ctx, mask);
-    wine_tsx11_unlock();
 
     /* As opposed to wglCopyContext, glXCopyContext doesn't return anything, so hopefully we passed */
     return TRUE;
@@ -1504,9 +1500,7 @@ static BOOL glxdrv_wglMakeCurrent(HDC hdc, struct wgl_context *ctx)
 
     if (!ctx)
     {
-        wine_tsx11_lock();
-        ret = pglXMakeCurrent(gdi_display, None, NULL);
-        wine_tsx11_unlock();
+        pglXMakeCurrent(gdi_display, None, NULL);
         NtCurrentTeb()->glContext = NULL;
         return TRUE;
     }
@@ -1573,9 +1567,7 @@ static BOOL X11DRV_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct 
 
     if (!ctx)
     {
-        wine_tsx11_lock();
-        ret = pglXMakeCurrent(gdi_display, None, NULL);
-        wine_tsx11_unlock();
+        pglXMakeCurrent(gdi_display, None, NULL);
         NtCurrentTeb()->glContext = NULL;
         return TRUE;
     }
@@ -1651,14 +1643,12 @@ static BOOL glxdrv_wglShareLists(struct wgl_context *org, struct wgl_context *de
     }
     else
     {
-        wine_tsx11_lock();
         describeContext(org);
         describeContext(dest);
 
         /* Re-create the GLX context and share display lists */
         pglXDestroyContext(gdi_display, dest->ctx);
         dest->ctx = create_glxcontext(gdi_display, dest, org->ctx);
-        wine_tsx11_unlock();
         TRACE(" re-created an OpenGL context (%p) for Wine context %p sharing lists with OpenGL ctx %p\n", dest->ctx, dest, org->ctx);
 
         org->sharing = TRUE;
@@ -1685,12 +1675,10 @@ static void flush_gl_drawable( struct glx_physdev *physdev )
     case DC_GL_CHILD_WIN:
         /* The GL drawable may be lagged behind if we don't flush first, so
          * flush the display make sure we copy up-to-date data */
-        wine_tsx11_lock();
         XFlush(gdi_display);
         XSetFunction(gdi_display, physdev->x11dev->gc, GXcopy);
         XCopyArea(gdi_display, src, physdev->x11dev->drawable, physdev->x11dev->gc, 0, 0, w, h,
                   physdev->x11dev->dc_rect.left, physdev->x11dev->dc_rect.top);
-        wine_tsx11_unlock();
         SetRect( &rect, 0, 0, w, h );
         add_device_bounds( physdev->x11dev, &rect );
     default:
@@ -1997,9 +1985,7 @@ static struct wgl_pbuffer *X11DRV_wglCreatePbufferARB( HDC hdc, int iPixelFormat
     }
 
     PUSH1(attribs, None);
-    wine_tsx11_lock();
     object->drawable = pglXCreatePbuffer(gdi_display, fmt->fbconfig, attribs);
-    wine_tsx11_unlock();
     TRACE("new Pbuffer drawable as %lx\n", object->drawable);
     if (!object->drawable) {
         SetLastError(ERROR_NO_SYSTEM_RESOURCES);
@@ -2023,9 +2009,7 @@ static BOOL X11DRV_wglDestroyPbufferARB( struct wgl_pbuffer *object )
 {
     TRACE("(%p)\n", object);
 
-    wine_tsx11_lock();
     pglXDestroyPbuffer(gdi_display, object->drawable);
-    wine_tsx11_unlock();
     HeapFree(GetProcessHeap(), 0, object);
     return GL_TRUE;
 }
@@ -2068,14 +2052,10 @@ static BOOL X11DRV_wglQueryPbufferARB( struct wgl_pbuffer *object, int iAttribut
 
     switch (iAttribute) {
         case WGL_PBUFFER_WIDTH_ARB:
-            wine_tsx11_lock();
             pglXQueryDrawable(gdi_display, object->drawable, GLX_WIDTH, (unsigned int*) piValue);
-            wine_tsx11_unlock();
             break;
         case WGL_PBUFFER_HEIGHT_ARB:
-            wine_tsx11_lock();
             pglXQueryDrawable(gdi_display, object->drawable, GLX_HEIGHT, (unsigned int*) piValue);
-            wine_tsx11_unlock();
             break;
 
         case WGL_PBUFFER_LOST_ARB:
@@ -2706,11 +2686,7 @@ static BOOL X11DRV_wglSwapIntervalEXT(int interval)
     else
     {
         if (pglXSwapIntervalSGI)
-        {
-            wine_tsx11_lock();
             ret = !pglXSwapIntervalSGI(interval);
-            wine_tsx11_unlock();
-        }
         else
             WARN("GLX_SGI_swap_control extension is not available\n");
 
@@ -2751,10 +2727,7 @@ static BOOL X11DRV_wglSetPixelFormatWINE(HDC hdc, int format)
         return FALSE;
     }
 
-    wine_tsx11_lock();
     pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_DRAWABLE_TYPE, &value);
-    wine_tsx11_unlock();
-
     if (!(value & GLX_WINDOW_BIT))
     {
         WARN( "Pixel format %d is not compatible for window rendering\n", format );
@@ -2900,9 +2873,7 @@ static void X11DRV_WineGL_LoadExtensions(void)
 
 BOOL destroy_glxpixmap(Display *display, XID glxpixmap)
 {
-    wine_tsx11_lock(); 
     pglXDestroyGLXPixmap(display, glxpixmap);
-    wine_tsx11_unlock(); 
     return TRUE;
 }
 
@@ -2983,16 +2954,12 @@ static BOOL glxdrv_SwapBuffers(PHYSDEV dev)
 XVisualInfo *visual_from_fbconfig_id( XID fbconfig_id )
 {
     WineGLPixelFormat *fmt;
-    XVisualInfo *ret;
 
     fmt = ConvertPixelFormatGLXtoWGL(gdi_display, fbconfig_id, 0 /* no flags */);
     if(fmt == NULL)
         return NULL;
 
-    wine_tsx11_lock();
-    ret = pglXGetVisualFromFBConfig(gdi_display, fmt->fbconfig);
-    wine_tsx11_unlock();
-    return ret;
+    return pglXGetVisualFromFBConfig(gdi_display, fmt->fbconfig);
 }
 
 static BOOL create_glx_dc( PHYSDEV *pdev )
