@@ -1844,6 +1844,7 @@ typedef struct _RpcHttpAsyncData
 {
     LONG refs;
     HANDLE completion_event;
+    WORD async_result;
     INTERNET_BUFFERSA inet_buffers;
     CRITICAL_SECTION cs;
 } RpcHttpAsyncData;
@@ -1897,6 +1898,11 @@ static RPC_STATUS wait_async_request(RpcHttpAsyncData *async_data, BOOL call_ret
     }else {
         WaitForSingleObject(async_data->completion_event, INFINITE);
     }
+    if(async_data->async_result) {
+        ERR("Async request failed with error %d\n", async_data->async_result);
+        return RPC_S_SERVER_UNAVAILABLE;
+    }
+
     return RPC_S_OK;
 }
 
@@ -2007,6 +2013,9 @@ static VOID WINAPI rpcrt4_http_internet_callback(
         TRACE("INTERNET_STATUS_REQUEST_COMPLETED\n");
         if (async_data)
         {
+            INTERNET_ASYNC_RESULT *async_result = lpvStatusInformation;
+
+            async_data->async_result = async_result->dwResult ? ERROR_SUCCESS : async_result->dwError;
             SetEvent(async_data->completion_event);
             RpcHttpAsyncData_Release(async_data);
         }
