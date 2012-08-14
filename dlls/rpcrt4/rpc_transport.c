@@ -2440,31 +2440,32 @@ static int rpcrt4_ncacn_http_read(RpcConnection *Connection,
   unsigned int bytes_left = count;
   RPC_STATUS status = RPC_S_OK;
 
+  httpc->async_data->inet_buffers.lpvBuffer = HeapAlloc(GetProcessHeap(), 0, count);
+
   while (bytes_left)
   {
     httpc->async_data->inet_buffers.dwBufferLength = bytes_left;
-    httpc->async_data->inet_buffers.lpvBuffer = HeapAlloc(GetProcessHeap(), 0, bytes_left);
     prepare_async_request(httpc->async_data);
     ret = InternetReadFileExA(httpc->out_request, &httpc->async_data->inet_buffers, IRF_ASYNC, 0);
     status = wait_async_request(httpc->async_data, ret, httpc->cancel_event);
     if(status != RPC_S_OK) {
         if(status == RPC_S_CALL_CANCELLED)
             TRACE("call cancelled\n");
-        HeapFree(GetProcessHeap(), 0, httpc->async_data->inet_buffers.lpvBuffer);
-        httpc->async_data->inet_buffers.lpvBuffer = NULL;
         break;
     }
 
-    memcpy(buf, httpc->async_data->inet_buffers.lpvBuffer,
-           httpc->async_data->inet_buffers.dwBufferLength);
-    HeapFree(GetProcessHeap(), 0, httpc->async_data->inet_buffers.lpvBuffer);
-    httpc->async_data->inet_buffers.lpvBuffer = NULL;
     if(!httpc->async_data->inet_buffers.dwBufferLength)
         break;
+    memcpy(buf, httpc->async_data->inet_buffers.lpvBuffer,
+           httpc->async_data->inet_buffers.dwBufferLength);
 
     bytes_left -= httpc->async_data->inet_buffers.dwBufferLength;
     buf += httpc->async_data->inet_buffers.dwBufferLength;
   }
+
+  HeapFree(GetProcessHeap(), 0, httpc->async_data->inet_buffers.lpvBuffer);
+  httpc->async_data->inet_buffers.lpvBuffer = NULL;
+
   TRACE("%p %p %u -> %u\n", httpc->out_request, buffer, count, status);
   return status == RPC_S_OK ? count : -1;
 }
