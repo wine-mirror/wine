@@ -1992,7 +1992,7 @@ basic_string_char* __thiscall basic_string_char_replace_cstr_len(basic_string_ch
 }
 
 /* Not exported from msvcp90 */
-basic_string_char* basic_string_char_replace_helper(basic_string_char *this,
+basic_string_char* __stdcall basic_string_char_replace_helper(basic_string_char *this,
         MSVCP_size_t off, MSVCP_size_t len, const char *str, MSVCP_size_t str_len)
 {
     return basic_string_char_replace_cstr_len(this, off, len, str, str_len);
@@ -3951,7 +3951,7 @@ basic_string_wchar* __thiscall basic_string_wchar_replace_cstr_len(basic_string_
 }
 
 /* Not exported from msvcp90 */
-basic_string_wchar* basic_string_wchar_replace_helper(basic_string_wchar *this,
+basic_string_wchar* __stdcall basic_string_wchar_replace_helper(basic_string_wchar *this,
         MSVCP_size_t off, MSVCP_size_t len, const wchar_t *str, MSVCP_size_t str_len)
 {
     return basic_string_wchar_replace_cstr_len(this, off, len ,str, str_len);
