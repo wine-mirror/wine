@@ -558,7 +558,7 @@ static BOOL subclass_treeview(INameSpaceTreeControl *pnstc)
         ok(oldproc != NULL, "Failed to subclass.\n");
     }
 
-    return oldproc?TRUE:FALSE;
+    return oldproc != 0;
 }
 
 static UINT get_msg_count(struct msg_sequence **seq, int sequence_index, UINT message)
