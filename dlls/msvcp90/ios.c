@@ -1031,7 +1031,7 @@ streamsize __thiscall basic_streambuf_char__Xsgetn_s(basic_streambuf_char *this,
         if(chunk > count-copied)
             chunk = count-copied;
 
-        if(chunk) {
+        if(chunk > 0) {
             memcpy_s(ptr+copied, size, *this->prpos, chunk);
             *this->prpos += chunk;
             *this->prsize -= chunk;
@@ -1450,7 +1450,7 @@ streamsize __thiscall basic_streambuf_char_xsputn(basic_streambuf_char *this, co
         if(chunk > count-copied)
             chunk = count-copied;
 
-        if(chunk) {
+        if(chunk > 0) {
             memcpy(*this->pwpos, ptr+copied, chunk);
             *this->pwpos += chunk;
             *this->pwsize -= chunk;
@@ -1776,7 +1776,7 @@ streamsize __thiscall basic_streambuf_wchar__Xsgetn_s(basic_streambuf_wchar *thi
         if(chunk > count-copied)
             chunk = count-copied;
 
-        if(chunk) {
+        if(chunk > 0) {
             memcpy_s(ptr+copied, size, *this->prpos, chunk);
             *this->prpos += chunk;
             *this->prsize -= chunk;
@@ -2269,7 +2269,7 @@ streamsize __thiscall basic_streambuf_wchar_xsputn(basic_streambuf_wchar *this, 
         if(chunk > count-copied)
             chunk = count-copied;
 
-        if(chunk) {
+        if(chunk > 0) {
             memcpy(*this->pwpos, ptr+copied, chunk);
             *this->pwpos += chunk;
             *this->pwsize -= chunk;
