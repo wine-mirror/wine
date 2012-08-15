@@ -42,8 +42,9 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 
 typedef struct IDirectSoundImpl {
-    IUnknown            IUnknown_iface;  /* Separate refcount, not for COM aggregation */
+    IUnknown            IUnknown_inner;
     IDirectSound8       IDirectSound8_iface;
+    IUnknown           *outer_unk;      /* internal */
     LONG                ref, refds, numIfaces;
     DirectSoundDevice  *device;
     BOOL                has_ds8;
@@ -129,7 +130,7 @@ static void directsound_destroy(IDirectSoundImpl *This)
  */
 static inline IDirectSoundImpl *impl_from_IUnknown(IUnknown *iface)
 {
-    return CONTAINING_RECORD(iface, IDirectSoundImpl, IUnknown_iface);
+    return CONTAINING_RECORD(iface, IDirectSoundImpl, IUnknown_inner);
 }
 
 static HRESULT WINAPI IUnknownImpl_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
@@ -145,7 +146,7 @@ static HRESULT WINAPI IUnknownImpl_QueryInterface(IUnknown *iface, REFIID riid, 
     *ppv = NULL;
 
     if (IsEqualIID(riid, &IID_IUnknown))
-        *ppv = &This->IUnknown_iface;
+        *ppv = &This->IUnknown_inner;
     else if (IsEqualIID(riid, &IID_IDirectSound) ||
             (IsEqualIID(riid, &IID_IDirectSound8) && This->has_ds8))
         *ppv = &This->IDirectSound8_iface;
@@ -204,7 +205,7 @@ static HRESULT WINAPI IDirectSound8Impl_QueryInterface(IDirectSound8 *iface, REF
 {
     IDirectSoundImpl *This = impl_from_IDirectSound8(iface);
     TRACE("(%p,%s,%p)\n", This, debugstr_guid(riid), ppv);
-    return IUnknown_QueryInterface(&This->IUnknown_iface, riid, ppv);
+    return IUnknown_QueryInterface(This->outer_unk, riid, ppv);
 }
 
 static ULONG WINAPI IDirectSound8Impl_AddRef(IDirectSound8 *iface)
@@ -317,7 +318,7 @@ static const IDirectSound8Vtbl ds8_vtbl =
     IDirectSound8Impl_VerifyCertification
 };
 
-static HRESULT IDirectSoundImpl_Create(REFIID riid, void **ppv, BOOL has_ds8)
+HRESULT IDirectSoundImpl_Create(IUnknown *outer_unk, REFIID riid, void **ppv, BOOL has_ds8)
 {
     IDirectSoundImpl *obj;
     HRESULT hr;
@@ -333,7 +334,7 @@ static HRESULT IDirectSoundImpl_Create(REFIID riid, void **ppv, BOOL has_ds8)
 
     setup_dsound_options();
 
-    obj->IUnknown_iface.lpVtbl = &unk_vtbl;
+    obj->IUnknown_inner.lpVtbl = &unk_vtbl;
     obj->IDirectSound8_iface.lpVtbl = &ds8_vtbl;
     obj->ref = 1;
     obj->refds = 0;
@@ -341,20 +342,26 @@ static HRESULT IDirectSoundImpl_Create(REFIID riid, void **ppv, BOOL has_ds8)
     obj->device = NULL;
     obj->has_ds8 = has_ds8;
 
-    hr = IUnknown_QueryInterface(&obj->IUnknown_iface, riid, ppv);
-    IUnknown_Release(&obj->IUnknown_iface);
+    /* COM aggregation supported only internally */
+    if (outer_unk)
+        obj->outer_unk = outer_unk;
+    else
+        obj->outer_unk = &obj->IUnknown_inner;
+
+    hr = IUnknown_QueryInterface(&obj->IUnknown_inner, riid, ppv);
+    IUnknown_Release(&obj->IUnknown_inner);
 
     return hr;
 }
 
 HRESULT DSOUND_Create(REFIID riid, void **ppv)
 {
-    return IDirectSoundImpl_Create(riid, ppv, FALSE);
+    return IDirectSoundImpl_Create(NULL, riid, ppv, FALSE);
 }
 
 HRESULT DSOUND_Create8(REFIID riid, void **ppv)
 {
-    return IDirectSoundImpl_Create(riid, ppv, TRUE);
+    return IDirectSoundImpl_Create(NULL, riid, ppv, TRUE);
 }
 
 /*******************************************************************************
