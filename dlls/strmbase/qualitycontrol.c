@@ -56,17 +56,17 @@ HRESULT QualityControlImpl_Destroy(QualityControlImpl *This)
 
 HRESULT WINAPI QualityControlImpl_QueryInterface(IQualityControl *iface, REFIID riid, void **ppv) {
     QualityControlImpl *This = (QualityControlImpl*)iface;
-    return IUnknown_QueryInterface(This->self, riid, ppv);
+    return IBaseFilter_QueryInterface(This->self, riid, ppv);
 }
 
 ULONG WINAPI QualityControlImpl_AddRef(IQualityControl *iface) {
     QualityControlImpl *This = (QualityControlImpl*)iface;
-    return IUnknown_AddRef(This->self);
+    return IBaseFilter_AddRef(This->self);
 }
 
 ULONG WINAPI QualityControlImpl_Release(IQualityControl *iface) {
     QualityControlImpl *This = (QualityControlImpl*)iface;
-    return IUnknown_Release(This->self);
+    return IBaseFilter_Release(This->self);
 }
 
 HRESULT WINAPI QualityControlImpl_Notify(IQualityControl *iface, IBaseFilter *sender, Quality qm) {
@@ -79,7 +79,7 @@ HRESULT WINAPI QualityControlImpl_Notify(IQualityControl *iface, IBaseFilter *se
         IPin_ConnectedTo(This->input, &to);
         if (to) {
             IQualityControl *qc = NULL;
-            IUnknown_QueryInterface(to, &IID_IQualityControl, (void**)&qc);
+            IPin_QueryInterface(to, &IID_IQualityControl, (void**)&qc);
             if (qc) {
                 hr = IQualityControl_Notify(qc, This->self, qm);
                 IQualityControl_Release(qc);

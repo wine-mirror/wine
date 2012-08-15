@@ -275,7 +275,7 @@ DWORD WINAPI OutputQueueImpl_ThreadProc(OutputQueue *pOutputQueue)
                     IMemInputPin_Release(pOutputQueue->pInputPin->pMemInputPin);
                 }
                 for (i = 0; i < nSamples; i++)
-                    IUnknown_Release(ppSamples[i]);
+                    IMediaSample_Release(ppSamples[i]);
                 HeapFree(GetProcessHeap(),0,ppSamples);
 
                 /* Process Non-Samples */
