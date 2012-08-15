@@ -3240,8 +3240,8 @@
 @ cdecl ?denorm_min@?$numeric_limits@M@std@@SAMXZ() std_numeric_limits_float_denorm_min
 @ cdecl ?denorm_min@?$numeric_limits@N@std@@SANXZ() std_numeric_limits_double_denorm_min
 @ cdecl ?denorm_min@?$numeric_limits@O@std@@SAOXZ() std_numeric_limits_long_double_denorm_min
-@ cdecl ?denorm_min@?$numeric_limits@_J@std@@SA_JXZ() std_numeric_limits_int64_denorm_min
-@ cdecl ?denorm_min@?$numeric_limits@_K@std@@SA_KXZ() std_numeric_limits_unsigned_int64_denorm_min
+@ cdecl -ret64 ?denorm_min@?$numeric_limits@_J@std@@SA_JXZ() std_numeric_limits_int64_denorm_min
+@ cdecl -ret64 ?denorm_min@?$numeric_limits@_K@std@@SA_KXZ() std_numeric_limits_unsigned_int64_denorm_min
 @ cdecl ?denorm_min@?$numeric_limits@_N@std@@SA_NXZ() std_numeric_limits_bool_denorm_min
 @ cdecl ?denorm_min@?$numeric_limits@_W@std@@SA_WXZ() std_numeric_limits_wchar_t_denorm_min
 @ thiscall -arch=win32 ?destroy@?$allocator@D@std@@QAEXPAD@Z(ptr ptr) MSVCP_allocator_char_destroy
@@ -3754,8 +3754,8 @@
 @ cdecl ?epsilon@?$numeric_limits@M@std@@SAMXZ() std_numeric_limits_float_epsilon
 @ cdecl ?epsilon@?$numeric_limits@N@std@@SANXZ() std_numeric_limits_double_epsilon
 @ cdecl ?epsilon@?$numeric_limits@O@std@@SAOXZ() std_numeric_limits_long_double_epsilon
-@ cdecl ?epsilon@?$numeric_limits@_J@std@@SA_JXZ() std_numeric_limits_int64_epsilon
-@ cdecl ?epsilon@?$numeric_limits@_K@std@@SA_KXZ() std_numeric_limits_unsigned_int64_epsilon
+@ cdecl -ret64 ?epsilon@?$numeric_limits@_J@std@@SA_JXZ() std_numeric_limits_int64_epsilon
+@ cdecl -ret64 ?epsilon@?$numeric_limits@_K@std@@SA_KXZ() std_numeric_limits_unsigned_int64_epsilon
 @ cdecl ?epsilon@?$numeric_limits@_N@std@@SA_NXZ() std_numeric_limits_bool_epsilon
 @ cdecl ?epsilon@?$numeric_limits@_W@std@@SA_WXZ() std_numeric_limits_wchar_t_epsilon
 @ cdecl -arch=win32 ?eq@?$char_traits@D@std@@SA_NABD0@Z(ptr ptr) MSVCP_char_traits_char_eq
@@ -4294,8 +4294,8 @@
 @ cdecl ?infinity@?$numeric_limits@M@std@@SAMXZ() std_numeric_limits_float_infinity
 @ cdecl ?infinity@?$numeric_limits@N@std@@SANXZ() std_numeric_limits_double_infinity
 @ cdecl ?infinity@?$numeric_limits@O@std@@SAOXZ() std_numeric_limits_long_double_infinity
-@ cdecl ?infinity@?$numeric_limits@_J@std@@SA_JXZ() std_numeric_limits_int64_infinity
-@ cdecl ?infinity@?$numeric_limits@_K@std@@SA_KXZ() std_numeric_limits_unsigned_int64_infinity
+@ cdecl -ret64 ?infinity@?$numeric_limits@_J@std@@SA_JXZ() std_numeric_limits_int64_infinity
+@ cdecl -ret64 ?infinity@?$numeric_limits@_K@std@@SA_KXZ() std_numeric_limits_unsigned_int64_infinity
 @ cdecl ?infinity@?$numeric_limits@_N@std@@SA_NXZ() std_numeric_limits_bool_infinity
 @ cdecl ?infinity@?$numeric_limits@_W@std@@SA_WXZ() std_numeric_limits_wchar_t_infinity
 @ thiscall -arch=win32 ?init@?$basic_ios@DU?$char_traits@D@std@@@std@@IAEXPAV?$basic_streambuf@DU?$char_traits@D@std@@@2@_N@Z(ptr ptr long) basic_ios_char_init
@@ -4495,8 +4495,8 @@
 @ cdecl ?max@?$numeric_limits@M@std@@SAMXZ() std_numeric_limits_float_max
 @ cdecl ?max@?$numeric_limits@N@std@@SANXZ() std_numeric_limits_double_max
 @ cdecl ?max@?$numeric_limits@O@std@@SAOXZ() std_numeric_limits_long_double_max
-@ cdecl ?max@?$numeric_limits@_J@std@@SA_JXZ() std_numeric_limits_int64_max
-@ cdecl ?max@?$numeric_limits@_K@std@@SA_KXZ() std_numeric_limits_unsigned_int64_max
+@ cdecl -ret64 ?max@?$numeric_limits@_J@std@@SA_JXZ() std_numeric_limits_int64_max
+@ cdecl -ret64 ?max@?$numeric_limits@_K@std@@SA_KXZ() std_numeric_limits_unsigned_int64_max
 @ cdecl ?max@?$numeric_limits@_N@std@@SA_NXZ() std_numeric_limits_bool_max
 @ cdecl ?max@?$numeric_limits@_W@std@@SA_WXZ() std_numeric_limits_wchar_t_max
 @ extern ?max_exponent10@?$numeric_limits@M@std@@2HB std_numeric_limits_float_max_exponent10
@@ -4533,8 +4533,8 @@
 @ cdecl ?min@?$numeric_limits@M@std@@SAMXZ() std_numeric_limits_float_min
 @ cdecl ?min@?$numeric_limits@N@std@@SANXZ() std_numeric_limits_double_min
 @ cdecl ?min@?$numeric_limits@O@std@@SAOXZ() std_numeric_limits_long_double_min
-@ cdecl ?min@?$numeric_limits@_J@std@@SA_JXZ() std_numeric_limits_int64_min
-@ cdecl ?min@?$numeric_limits@_K@std@@SA_KXZ() std_numeric_limits_unsigned_int64_min
+@ cdecl -ret64 ?min@?$numeric_limits@_J@std@@SA_JXZ() std_numeric_limits_int64_min
+@ cdecl -ret64 ?min@?$numeric_limits@_K@std@@SA_KXZ() std_numeric_limits_unsigned_int64_min
 @ cdecl ?min@?$numeric_limits@_N@std@@SA_NXZ() std_numeric_limits_bool_min
 @ cdecl ?min@?$numeric_limits@_W@std@@SA_WXZ() std_numeric_limits_wchar_t_min
 @ extern ?min_exponent10@?$numeric_limits@M@std@@2HB std_numeric_limits_float_min_exponent10
@@ -4994,8 +4994,8 @@
 @ cdecl ?quiet_NaN@?$numeric_limits@M@std@@SAMXZ() std_numeric_limits_float_quiet_NaN
 @ cdecl ?quiet_NaN@?$numeric_limits@N@std@@SANXZ() std_numeric_limits_double_quiet_NaN
 @ cdecl ?quiet_NaN@?$numeric_limits@O@std@@SAOXZ() std_numeric_limits_long_double_quiet_NaN
-@ cdecl ?quiet_NaN@?$numeric_limits@_J@std@@SA_JXZ() std_numeric_limits_int64_quiet_NaN
-@ cdecl ?quiet_NaN@?$numeric_limits@_K@std@@SA_KXZ() std_numeric_limits_unsigned_int64_quiet_NaN
+@ cdecl -ret64 ?quiet_NaN@?$numeric_limits@_J@std@@SA_JXZ() std_numeric_limits_int64_quiet_NaN
+@ cdecl -ret64 ?quiet_NaN@?$numeric_limits@_K@std@@SA_KXZ() std_numeric_limits_unsigned_int64_quiet_NaN
 @ cdecl ?quiet_NaN@?$numeric_limits@_N@std@@SA_NXZ() std_numeric_limits_bool_quiet_NaN
 @ cdecl ?quiet_NaN@?$numeric_limits@_W@std@@SA_WXZ() std_numeric_limits_wchar_t_quiet_NaN
 @ extern ?radix@_Num_base@std@@2HB std_Num_base_radix
@@ -5222,8 +5222,8 @@
 @ cdecl ?round_error@?$numeric_limits@M@std@@SAMXZ() std_numeric_limits_float_round_error
 @ cdecl ?round_error@?$numeric_limits@N@std@@SANXZ() std_numeric_limits_double_round_error
 @ cdecl ?round_error@?$numeric_limits@O@std@@SAOXZ() std_numeric_limits_long_double_round_error
-@ cdecl ?round_error@?$numeric_limits@_J@std@@SA_JXZ() std_numeric_limits_int64_round_error
-@ cdecl ?round_error@?$numeric_limits@_K@std@@SA_KXZ() std_numeric_limits_unsigned_int64_round_error
+@ cdecl -ret64 ?round_error@?$numeric_limits@_J@std@@SA_JXZ() std_numeric_limits_int64_round_error
+@ cdecl -ret64 ?round_error@?$numeric_limits@_K@std@@SA_KXZ() std_numeric_limits_unsigned_int64_round_error
 @ cdecl ?round_error@?$numeric_limits@_N@std@@SA_NXZ() std_numeric_limits_bool_round_error
 @ cdecl ?round_error@?$numeric_limits@_W@std@@SA_WXZ() std_numeric_limits_wchar_t_round_error
 @ extern ?round_style@_Num_base@std@@2W4float_round_style@2@B std_Num_base_round_style
@@ -5400,8 +5400,8 @@
 @ cdecl ?signaling_NaN@?$numeric_limits@M@std@@SAMXZ() std_numeric_limits_float_signaling_NaN
 @ cdecl ?signaling_NaN@?$numeric_limits@N@std@@SANXZ() std_numeric_limits_double_signaling_NaN
 @ cdecl ?signaling_NaN@?$numeric_limits@O@std@@SAOXZ() std_numeric_limits_long_double_signaling_NaN
-@ cdecl ?signaling_NaN@?$numeric_limits@_J@std@@SA_JXZ() std_numeric_limits_int64_signaling_NaN
-@ cdecl ?signaling_NaN@?$numeric_limits@_K@std@@SA_KXZ() std_numeric_limits_unsigned_int64_signaling_NaN
+@ cdecl -ret64 ?signaling_NaN@?$numeric_limits@_J@std@@SA_JXZ() std_numeric_limits_int64_signaling_NaN
+@ cdecl -ret64 ?signaling_NaN@?$numeric_limits@_K@std@@SA_KXZ() std_numeric_limits_unsigned_int64_signaling_NaN
 @ cdecl ?signaling_NaN@?$numeric_limits@_N@std@@SA_NXZ() std_numeric_limits_bool_signaling_NaN
 @ cdecl ?signaling_NaN@?$numeric_limits@_W@std@@SA_WXZ() std_numeric_limits_wchar_t_signaling_NaN
 @ cdecl ?sin@?$_Ctraits@M@std@@SAMM@Z(float) std_Ctraits_float_sin
