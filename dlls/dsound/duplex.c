@@ -42,8 +42,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dsound);
  */
 typedef struct IDirectSoundFullDuplexImpl
 {
-    /* IUnknown fields */
-    const IDirectSoundFullDuplexVtbl *lpVtbl;
+    IDirectSoundFullDuplex IDirectSoundFullDuplex_iface;
     LONG                              ref;
 
     /* IDirectSoundFullDuplexImpl fields */
@@ -159,7 +158,7 @@ static HRESULT WINAPI IDirectSoundFullDuplex_IDirectSound8_QueryInterface(
 {
     IDirectSoundFullDuplex_IDirectSound8 *This = (IDirectSoundFullDuplex_IDirectSound8 *)iface;
     TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
-    return IDirectSoundFullDuplex_QueryInterface((LPDIRECTSOUNDFULLDUPLEX)This->pdsfd, riid, ppobj);
+    return IDirectSoundFullDuplex_QueryInterface(&This->pdsfd->IDirectSoundFullDuplex_iface, riid, ppobj);
 }
 
 static ULONG WINAPI IDirectSoundFullDuplex_IDirectSound8_AddRef(
@@ -334,7 +333,7 @@ static HRESULT WINAPI IDirectSoundFullDuplex_IDirectSoundCapture_QueryInterface(
 {
     IDirectSoundFullDuplex_IDirectSoundCapture *This = (IDirectSoundFullDuplex_IDirectSoundCapture *)iface;
     TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
-    return IDirectSoundFullDuplex_QueryInterface((LPDIRECTSOUNDFULLDUPLEX)This->pdsfd, riid, ppobj);
+    return IDirectSoundFullDuplex_QueryInterface(&This->pdsfd->IDirectSoundFullDuplex_iface, riid, ppobj);
 }
 
 static ULONG WINAPI IDirectSoundFullDuplex_IDirectSoundCapture_AddRef(
@@ -439,48 +438,49 @@ static HRESULT IDirectSoundFullDuplex_IDirectSoundCapture_Create(
 }
 
 /***************************************************************************
- * IDirectSoundFullDuplexImpl
+ * IDirectSoundFullDuplex implementation
  */
-static ULONG WINAPI
-IDirectSoundFullDuplexImpl_AddRef( LPDIRECTSOUNDFULLDUPLEX iface )
+static inline IDirectSoundFullDuplexImpl *impl_from_IDirectSoundFullDuplex(IDirectSoundFullDuplex *iface)
 {
-    IDirectSoundFullDuplexImpl *This = (IDirectSoundFullDuplexImpl *)iface;
+    return CONTAINING_RECORD(iface, IDirectSoundFullDuplexImpl, IDirectSoundFullDuplex_iface);
+}
+
+static ULONG WINAPI IDirectSoundFullDuplexImpl_AddRef(IDirectSoundFullDuplex *iface)
+{
+    IDirectSoundFullDuplexImpl *This = impl_from_IDirectSoundFullDuplex(iface);
     ULONG ref = InterlockedIncrement(&(This->ref));
     TRACE("(%p) ref was %d\n", This, ref - 1);
     return ref;
 }
 
-static HRESULT WINAPI
-IDirectSoundFullDuplexImpl_QueryInterface(
-    LPDIRECTSOUNDFULLDUPLEX iface,
-    REFIID riid,
-    LPVOID* ppobj )
+static HRESULT WINAPI IDirectSoundFullDuplexImpl_QueryInterface(IDirectSoundFullDuplex *iface,
+        REFIID riid, void **ppv)
 {
-    IDirectSoundFullDuplexImpl *This = (IDirectSoundFullDuplexImpl *)iface;
-    TRACE( "(%p,%s,%p)\n", This, debugstr_guid(riid), ppobj );
+    IDirectSoundFullDuplexImpl *This = impl_from_IDirectSoundFullDuplex(iface);
+    TRACE("(%p,%s,%p)\n", This, debugstr_guid(riid), ppv);
 
-    if (ppobj == NULL) {
+    if (ppv == NULL) {
 	WARN("invalid parameter\n");
 	return E_INVALIDARG;
     }
 
-    *ppobj = NULL;
+    *ppv = NULL;
 
     if (IsEqualIID(riid, &IID_IUnknown)) {
         if (!This->pUnknown) {
             IDirectSoundFullDuplex_IUnknown_Create(iface, &This->pUnknown);
             if (!This->pUnknown) {
                 WARN("IDirectSoundFullDuplex_IUnknown_Create() failed\n");
-                *ppobj = NULL;
+                *ppv = NULL;
                 return E_NOINTERFACE;
             }
         }
         IDirectSoundFullDuplex_IUnknown_AddRef(This->pUnknown);
-        *ppobj = This->pUnknown;
+        *ppv = This->pUnknown;
         return S_OK;
     } else if (IsEqualIID(riid, &IID_IDirectSoundFullDuplex)) {
         IDirectSoundFullDuplexImpl_AddRef(iface);
-        *ppobj = This;
+        *ppv = &This->IDirectSoundFullDuplex_iface;
         return S_OK;
     } else if (IsEqualIID(riid, &IID_IDirectSound)
                || IsEqualIID(riid, &IID_IDirectSound8)) {
@@ -488,34 +488,33 @@ IDirectSoundFullDuplexImpl_QueryInterface(
             IDirectSoundFullDuplex_IDirectSound8_Create(iface, &This->pDS8);
             if (!This->pDS8) {
                 WARN("IDirectSoundFullDuplex_IDirectSound8_Create() failed\n");
-                *ppobj = NULL;
+                *ppv = NULL;
                 return E_NOINTERFACE;
             }
         }
         IDirectSoundFullDuplex_IDirectSound8_AddRef(This->pDS8);
-        *ppobj = This->pDS8;
+        *ppv = This->pDS8;
         return S_OK;
     } else if (IsEqualIID(riid, &IID_IDirectSoundCapture)) {
         if (!This->pDSC) {
             IDirectSoundFullDuplex_IDirectSoundCapture_Create(iface, &This->pDSC);
             if (!This->pDSC) {
                 WARN("IDirectSoundFullDuplex_IDirectSoundCapture_Create() failed\n");
-                *ppobj = NULL;
+                *ppv = NULL;
                 return E_NOINTERFACE;
             }
         }
         IDirectSoundFullDuplex_IDirectSoundCapture_AddRef(This->pDSC);
-        *ppobj = This->pDSC;
+        *ppv = This->pDSC;
         return S_OK;
     }
 
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI
-IDirectSoundFullDuplexImpl_Release( LPDIRECTSOUNDFULLDUPLEX iface )
+static ULONG WINAPI IDirectSoundFullDuplexImpl_Release(IDirectSoundFullDuplex *iface)
 {
-    IDirectSoundFullDuplexImpl *This = (IDirectSoundFullDuplexImpl *)iface;
+    IDirectSoundFullDuplexImpl *This = impl_from_IDirectSoundFullDuplex(iface);
     ULONG ref = InterlockedDecrement(&(This->ref));
     TRACE("(%p) ref was %d\n", This, ref - 1);
 
@@ -535,8 +534,8 @@ static HRESULT WINAPI IDirectSoundFullDuplexImpl_Initialize(IDirectSoundFullDupl
         const DSBUFFERDESC *bufdesc, HWND hwnd, DWORD level, IDirectSoundCaptureBuffer8 **dscb8,
         IDirectSoundBuffer8 **dsb8)
 {
+    IDirectSoundFullDuplexImpl *This = impl_from_IDirectSoundFullDuplex(iface);
     HRESULT hr;
-    IDirectSoundFullDuplexImpl *This = (IDirectSoundFullDuplexImpl *)iface;
 
     TRACE("(%p,%s,%s,%p,%p,%p,%x,%p,%p)\n", This, debugstr_guid(capture_dev),
             debugstr_guid(render_dev), cbufdesc, bufdesc, hwnd, level, dscb8, dsb8);
@@ -606,7 +605,7 @@ error:
     return hr;
 }
 
-static const IDirectSoundFullDuplexVtbl dsfdvt =
+static const IDirectSoundFullDuplexVtbl dsfd_vtbl =
 {
     /* IUnknown methods */
     IDirectSoundFullDuplexImpl_QueryInterface,
@@ -633,7 +632,7 @@ HRESULT DSOUND_FullDuplexCreate(REFIID riid, void **ppv)
 
     setup_dsound_options();
 
-    obj->lpVtbl = &dsfdvt;
+    obj->IDirectSoundFullDuplex_iface.lpVtbl = &dsfd_vtbl;
     obj->ref = 1;
 
     hr = IUnknown_QueryInterface((IUnknown*)obj, riid, ppv);
