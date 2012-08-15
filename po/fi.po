@@ -12420,7 +12420,7 @@ msgstr "Sovellusten asetukset"
 #: winecfg.rc:146
 msgid ""
 "Wine can mimic different Windows versions for each application. This tab is "
-"linked to the Libraries and Graphics tabs to allow you to change systemwide "
+"linked to the Libraries and Graphics tabs to allow you to change system-wide "
 "or per-application settings in those tabs as well."
 msgstr ""
 "Wine voi jäljitellä Windowsin eri versioita eri sovelluksille. Tämä "

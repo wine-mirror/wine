@@ -11942,7 +11942,7 @@ msgstr "应用程序设置"
 #: winecfg.rc:146
 msgid ""
 "Wine can mimic different Windows versions for each application. This tab is "
-"linked to the Libraries and Graphics tabs to allow you to change systemwide "
+"linked to the Libraries and Graphics tabs to allow you to change system-wide "
 "or per-application settings in those tabs as well."
 msgstr ""
 "对不同的程序，可以让 Wine 假装成不同版本的 Windows，也可以在“函数库”与“显"

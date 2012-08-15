@@ -12394,7 +12394,7 @@ msgstr "응용프로그램 설정"
 #: winecfg.rc:146
 msgid ""
 "Wine can mimic different Windows versions for each application. This tab is "
-"linked to the Libraries and Graphics tabs to allow you to change systemwide "
+"linked to the Libraries and Graphics tabs to allow you to change system-wide "
 "or per-application settings in those tabs as well."
 msgstr ""
 "Wine은 각 응용 프로그램에 대한 서로 다른 Windows 버전을 모방할 수 있습니다."
