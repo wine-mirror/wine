@@ -79,8 +79,30 @@ static inline IDirectSoundFullDuplexImpl *impl_from_IUnknown(IUnknown *iface)
 static HRESULT WINAPI IUnknownImpl_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
 {
     IDirectSoundFullDuplexImpl *This = impl_from_IUnknown(iface);
+
     TRACE("(%p,%s,%p)\n", This, debugstr_guid(riid), ppv);
-    return IDirectSoundFullDuplex_QueryInterface(&This->IDirectSoundFullDuplex_iface, riid, ppv);
+
+    if (!ppv) {
+        WARN("invalid parameter\n");
+        return E_INVALIDARG;
+    }
+
+    if (IsEqualIID(riid, &IID_IUnknown)) {
+        IUnknown_AddRef(&This->IUnknown_iface);
+        *ppv = &This->IUnknown_iface;
+        return S_OK;
+    } else if (IsEqualIID(riid, &IID_IDirectSoundFullDuplex)) {
+        IDirectSoundFullDuplex_AddRef(&This->IDirectSoundFullDuplex_iface);
+        *ppv = &This->IDirectSoundFullDuplex_iface;
+        return S_OK;
+    } else if (This->ds8_unk && (IsEqualIID(riid, &IID_IDirectSound) ||
+                                 IsEqualIID(riid, &IID_IDirectSound8)))
+        return IUnknown_QueryInterface(This->ds8_unk, riid, ppv);
+    else if (This->dsc8_unk && IsEqualIID(riid, &IID_IDirectSoundCapture))
+        return IUnknown_QueryInterface(This->dsc8_unk, riid, ppv);
+
+    *ppv = NULL;
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI IUnknownImpl_AddRef(IUnknown *iface)
@@ -122,6 +144,14 @@ static inline IDirectSoundFullDuplexImpl *impl_from_IDirectSoundFullDuplex(IDire
     return CONTAINING_RECORD(iface, IDirectSoundFullDuplexImpl, IDirectSoundFullDuplex_iface);
 }
 
+static HRESULT WINAPI IDirectSoundFullDuplexImpl_QueryInterface(IDirectSoundFullDuplex *iface,
+        REFIID riid, void **ppv)
+{
+    IDirectSoundFullDuplexImpl *This = impl_from_IDirectSoundFullDuplex(iface);
+    TRACE("(%p,%s,%p)\n", This, debugstr_guid(riid), ppv);
+    return IUnknown_QueryInterface(&This->IUnknown_iface, riid, ppv);
+}
+
 static ULONG WINAPI IDirectSoundFullDuplexImpl_AddRef(IDirectSoundFullDuplex *iface)
 {
     IDirectSoundFullDuplexImpl *This = impl_from_IDirectSoundFullDuplex(iface);
@@ -132,37 +162,6 @@ static ULONG WINAPI IDirectSoundFullDuplexImpl_AddRef(IDirectSoundFullDuplex *if
     if(ref == 1)
         InterlockedIncrement(&This->numIfaces);
     return ref;
-}
-
-static HRESULT WINAPI IDirectSoundFullDuplexImpl_QueryInterface(IDirectSoundFullDuplex *iface,
-        REFIID riid, void **ppv)
-{
-    IDirectSoundFullDuplexImpl *This = impl_from_IDirectSoundFullDuplex(iface);
-    TRACE("(%p,%s,%p)\n", This, debugstr_guid(riid), ppv);
-
-    if (ppv == NULL) {
-	WARN("invalid parameter\n");
-	return E_INVALIDARG;
-    }
-
-    *ppv = NULL;
-
-    if (IsEqualIID(riid, &IID_IUnknown)) {
-        IUnknown_AddRef(&This->IUnknown_iface);
-        *ppv = &This->IUnknown_iface;
-        return S_OK;
-    } else if (IsEqualIID(riid, &IID_IDirectSoundFullDuplex)) {
-        IDirectSoundFullDuplexImpl_AddRef(iface);
-        *ppv = &This->IDirectSoundFullDuplex_iface;
-        return S_OK;
-    } else if (This->ds8_unk && (IsEqualIID(riid, &IID_IDirectSound) ||
-                                 IsEqualIID(riid, &IID_IDirectSound8))) {
-        return IUnknown_QueryInterface(This->ds8_unk, riid, ppv);
-    } else if (This->dsc8_unk && IsEqualIID(riid, &IID_IDirectSoundCapture)) {
-        return IUnknown_QueryInterface(This->dsc8_unk, riid, ppv);
-    }
-
-    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI IDirectSoundFullDuplexImpl_Release(IDirectSoundFullDuplex *iface)
