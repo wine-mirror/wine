@@ -2256,18 +2256,9 @@ GpStatus WINGDIPAPI GdipGetImageDimension(GpImage *image, REAL *width,
         return InvalidParameter;
 
     if(image->type == ImageTypeMetafile){
-        HDC hdc = GetDC(0);
-        REAL res = (REAL)GetDeviceCaps(hdc, LOGPIXELSX);
-
-        ReleaseDC(0, hdc);
-
-        *height = convert_unit(res, ((GpMetafile*)image)->unit) *
-                        ((GpMetafile*)image)->bounds.Height;
-
-        *width = convert_unit(res, ((GpMetafile*)image)->unit) *
-                        ((GpMetafile*)image)->bounds.Width;
+        *height = units_to_pixels(((GpMetafile*)image)->bounds.Height, ((GpMetafile*)image)->unit, image->yres);
+        *width = units_to_pixels(((GpMetafile*)image)->bounds.Width, ((GpMetafile*)image)->unit, image->xres);
     }
-
     else if(image->type == ImageTypeBitmap){
         *height = ((GpBitmap*)image)->height;
         *width = ((GpBitmap*)image)->width;
@@ -2326,15 +2317,8 @@ GpStatus WINGDIPAPI GdipGetImageHeight(GpImage *image, UINT *height)
     if(!image || !height)
         return InvalidParameter;
 
-    if(image->type == ImageTypeMetafile){
-        HDC hdc = GetDC(0);
-        REAL res = (REAL)GetDeviceCaps(hdc, LOGPIXELSX);
-
-        ReleaseDC(0, hdc);
-
-        *height = roundr(convert_unit(res, ((GpMetafile*)image)->unit) *
-                        ((GpMetafile*)image)->bounds.Height);
-    }
+    if(image->type == ImageTypeMetafile)
+        *height = units_to_pixels(((GpMetafile*)image)->bounds.Height, ((GpMetafile*)image)->unit, image->yres);
     else if(image->type == ImageTypeBitmap)
         *height = ((GpBitmap*)image)->height;
     else
@@ -2433,15 +2417,8 @@ GpStatus WINGDIPAPI GdipGetImageWidth(GpImage *image, UINT *width)
     if(!image || !width)
         return InvalidParameter;
 
-    if(image->type == ImageTypeMetafile){
-        HDC hdc = GetDC(0);
-        REAL res = (REAL)GetDeviceCaps(hdc, LOGPIXELSX);
-
-        ReleaseDC(0, hdc);
-
-        *width = roundr(convert_unit(res, ((GpMetafile*)image)->unit) *
-                        ((GpMetafile*)image)->bounds.Width);
-    }
+    if(image->type == ImageTypeMetafile)
+        *width = units_to_pixels(((GpMetafile*)image)->bounds.Width, ((GpMetafile*)image)->unit, image->xres);
     else if(image->type == ImageTypeBitmap)
         *width = ((GpBitmap*)image)->width;
     else

@@ -254,8 +254,7 @@ static INT prepare_dc(GpGraphics *graphics, GpPen *pen)
         width = sqrt((pt[1].X - pt[0].X) * (pt[1].X - pt[0].X) +
                      (pt[1].Y - pt[0].Y) * (pt[1].Y - pt[0].Y)) / sqrt(2.0);
 
-        width *= pen->width * convert_unit(graphics->xres,
-                              pen->unit == UnitWorld ? graphics->unit : pen->unit);
+        width *= units_to_pixels(pen->width, pen->unit == UnitWorld ? graphics->unit : pen->unit, graphics->xres);
     }
 
     if(pen->dash == DashStyleCustom){
@@ -311,8 +310,8 @@ static void transform_and_round_points(GpGraphics *graphics, POINT *pti,
     GpMatrix *matrix;
     int i;
 
-    scale_x = convert_unit(graphics->xres, graphics->unit);
-    scale_y = convert_unit(graphics->yres, graphics->unit);
+    scale_x = units_to_pixels(1.0, graphics->unit, graphics->xres);
+    scale_y = units_to_pixels(1.0, graphics->unit, graphics->yres);
 
     /* apply page scale */
     if(graphics->unit != UnitDisplay)
@@ -5990,8 +5989,8 @@ static GpStatus get_graphics_transform(GpGraphics *graphics, GpCoordinateSpace d
 
     if (dst_space != src_space && stat == Ok)
     {
-        scale_x = convert_unit(graphics->xres, graphics->unit);
-        scale_y = convert_unit(graphics->yres, graphics->unit);
+        scale_x = units_to_pixels(1.0, graphics->unit, graphics->xres);
+        scale_y = units_to_pixels(1.0, graphics->unit, graphics->yres);
 
         if(graphics->unit != UnitDisplay)
         {
