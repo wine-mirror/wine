@@ -11688,7 +11688,7 @@ msgid "CPU usage"
 msgstr "Suorittimenkäyttö"
 
 #: taskmgr.rc:373
-msgid "MEM usage"
+msgid "Mem usage"
 msgstr "Muistinkäyttö"
 
 #: taskmgr.rc:374

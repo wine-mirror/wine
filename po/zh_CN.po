@@ -11226,7 +11226,7 @@ msgid "CPU usage"
 msgstr "CPU 用量"
 
 #: taskmgr.rc:373
-msgid "MEM usage"
+msgid "Mem usage"
 msgstr "内存用量"
 
 #: taskmgr.rc:374

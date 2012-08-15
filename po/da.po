@@ -11733,7 +11733,7 @@ msgid "CPU usage"
 msgstr "Processorforbrug"
 
 #: taskmgr.rc:373
-msgid "MEM usage"
+msgid "Mem usage"
 msgstr "Hukommelsesforbrug"
 
 #: taskmgr.rc:374

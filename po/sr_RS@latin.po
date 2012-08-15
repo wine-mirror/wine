@@ -11890,7 +11890,7 @@ msgstr ""
 
 #: taskmgr.rc:373
 #, fuzzy
-msgid "MEM usage"
+msgid "Mem usage"
 msgstr "Poruka"
 
 #: taskmgr.rc:374

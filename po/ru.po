@@ -11698,7 +11698,7 @@ msgid "CPU usage"
 msgstr "Загрузка ЦП"
 
 #: taskmgr.rc:373
-msgid "MEM usage"
+msgid "Mem usage"
 msgstr "использование памяти"
 
 #: taskmgr.rc:374

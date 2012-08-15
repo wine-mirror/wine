@@ -11444,7 +11444,7 @@ msgid "CPU usage"
 msgstr "CPU Kullanımı"
 
 #: taskmgr.rc:373
-msgid "MEM usage"
+msgid "Mem usage"
 msgstr "BELLEK Kullanımı"
 
 #: taskmgr.rc:374

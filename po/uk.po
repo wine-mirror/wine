@@ -11746,7 +11746,7 @@ msgid "CPU usage"
 msgstr "Викорис. ЦП"
 
 #: taskmgr.rc:373
-msgid "MEM usage"
+msgid "Mem usage"
 msgstr "Викорис. пам'яті"
 
 #: taskmgr.rc:374

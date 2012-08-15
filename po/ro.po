@@ -11933,7 +11933,7 @@ msgid "CPU usage"
 msgstr "Utilizare procesor"
 
 #: taskmgr.rc:373
-msgid "MEM usage"
+msgid "Mem usage"
 msgstr "Utilizare memorie"
 
 #: taskmgr.rc:374

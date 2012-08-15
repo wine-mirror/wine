@@ -11700,8 +11700,8 @@ msgid "CPU usage"
 msgstr "CPU usage"
 
 #: taskmgr.rc:373
-msgid "MEM usage"
-msgstr "MEM usage"
+msgid "Mem usage"
+msgstr "Mem usage"
 
 #: taskmgr.rc:374
 msgid "Totals"

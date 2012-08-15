@@ -12008,7 +12008,7 @@ msgstr "Prosessorbruk"
 
 #: taskmgr.rc:373
 #, fuzzy
-msgid "MEM usage"
+msgid "Mem usage"
 msgstr "Minnebruk"
 
 #: taskmgr.rc:374

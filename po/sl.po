@@ -11764,7 +11764,7 @@ msgid "CPU usage"
 msgstr "Uporaba CPE"
 
 #: taskmgr.rc:373
-msgid "MEM usage"
+msgid "Mem usage"
 msgstr "Uporaba pomnilnika"
 
 #: taskmgr.rc:374

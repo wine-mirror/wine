@@ -11727,7 +11727,7 @@ msgid "CPU usage"
 msgstr "CP naudojimas"
 
 #: taskmgr.rc:373
-msgid "MEM usage"
+msgid "Mem usage"
 msgstr "ATM naudojimas"
 
 #: taskmgr.rc:374

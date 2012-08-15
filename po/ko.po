@@ -11662,7 +11662,7 @@ msgid "CPU usage"
 msgstr "CPU 사용량"
 
 #: taskmgr.rc:373
-msgid "MEM usage"
+msgid "Mem usage"
 msgstr "메모리 사용량"
 
 #: taskmgr.rc:374
