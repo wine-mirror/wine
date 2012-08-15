@@ -42,22 +42,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(dsound);
  */
 typedef struct IDirectSoundFullDuplexImpl
 {
+    IUnknown               IUnknown_iface;
     IDirectSoundFullDuplex IDirectSoundFullDuplex_iface;
-    LONG                   ref, numIfaces;
+    LONG                   ref, refdsfd, numIfaces;
     /* IDirectSoundFullDuplexImpl fields */
     IDirectSound8                    *renderer_device;
     IDirectSoundCapture              *capture_device;
-
-    LPUNKNOWN                         pUnknown;
     LPDIRECTSOUND8                    pDS8;
     LPDIRECTSOUNDCAPTURE              pDSC;
 } IDirectSoundFullDuplexImpl;
-
-typedef struct IDirectSoundFullDuplex_IUnknown {
-    const IUnknownVtbl         *lpVtbl;
-    LONG                        ref;
-    IDirectSoundFullDuplexImpl *pdsfd;
-} IDirectSoundFullDuplex_IUnknown;
 
 typedef struct IDirectSoundFullDuplex_IDirectSound8 {
     const IDirectSound8Vtbl    *lpVtbl;
@@ -82,80 +75,50 @@ static void fullduplex_destroy(IDirectSoundFullDuplexImpl *This)
 }
 
 /*******************************************************************************
- * IUnknown
+ * IUnknown implemetation for DirectSoundFullDuplex
  */
-static HRESULT WINAPI IDirectSoundFullDuplex_IUnknown_QueryInterface(
-    LPUNKNOWN iface,
-    REFIID riid,
-    LPVOID * ppobj)
+static inline IDirectSoundFullDuplexImpl *impl_from_IUnknown(IUnknown *iface)
 {
-    IDirectSoundFullDuplex_IUnknown *This = (IDirectSoundFullDuplex_IUnknown *)iface;
-    TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
-    return IDirectSoundFullDuplex_QueryInterface((LPDIRECTSOUNDFULLDUPLEX)This->pdsfd, riid, ppobj);
+    return CONTAINING_RECORD(iface, IDirectSoundFullDuplexImpl, IUnknown_iface);
 }
 
-static ULONG WINAPI IDirectSoundFullDuplex_IUnknown_AddRef(
-    LPUNKNOWN iface)
+static HRESULT WINAPI IUnknownImpl_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
 {
-    IDirectSoundFullDuplex_IUnknown *This = (IDirectSoundFullDuplex_IUnknown *)iface;
-    ULONG ref = InterlockedIncrement(&(This->ref));
-    TRACE("(%p) ref was %d\n", This, ref - 1);
+    IDirectSoundFullDuplexImpl *This = impl_from_IUnknown(iface);
+    TRACE("(%p,%s,%p)\n", This, debugstr_guid(riid), ppv);
+    return IDirectSoundFullDuplex_QueryInterface(&This->IDirectSoundFullDuplex_iface, riid, ppv);
+}
+
+static ULONG WINAPI IUnknownImpl_AddRef(IUnknown *iface)
+{
+    IDirectSoundFullDuplexImpl *This = impl_from_IUnknown(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(ref == 1)
+        InterlockedIncrement(&This->numIfaces);
     return ref;
 }
 
-static ULONG WINAPI IDirectSoundFullDuplex_IUnknown_Release(
-    LPUNKNOWN iface)
+static ULONG WINAPI IUnknownImpl_Release(IUnknown *iface)
 {
-    IDirectSoundFullDuplex_IUnknown *This = (IDirectSoundFullDuplex_IUnknown *)iface;
-    ULONG ref = InterlockedDecrement(&(This->ref));
-    TRACE("(%p) ref was %d\n", This, ref + 1);
-    if (!ref) {
-        This->pdsfd->pUnknown = NULL;
-        HeapFree(GetProcessHeap(), 0, This);
-        TRACE("(%p) released\n", This);
-    }
+    IDirectSoundFullDuplexImpl *This = impl_from_IUnknown(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if (!ref && !InterlockedDecrement(&This->numIfaces))
+        fullduplex_destroy(This);
     return ref;
 }
 
-static const IUnknownVtbl DirectSoundFullDuplex_Unknown_Vtbl =
+static const IUnknownVtbl unk_vtbl =
 {
-    IDirectSoundFullDuplex_IUnknown_QueryInterface,
-    IDirectSoundFullDuplex_IUnknown_AddRef,
-    IDirectSoundFullDuplex_IUnknown_Release
+    IUnknownImpl_QueryInterface,
+    IUnknownImpl_AddRef,
+    IUnknownImpl_Release
 };
-
-static HRESULT IDirectSoundFullDuplex_IUnknown_Create(
-    LPDIRECTSOUNDFULLDUPLEX pdsfd,
-    LPUNKNOWN * ppunk)
-{
-    IDirectSoundFullDuplex_IUnknown * pdsfdunk;
-    TRACE("(%p,%p)\n",pdsfd,ppunk);
-
-    if (pdsfd == NULL) {
-        ERR("invalid parameter: pdsfd == NULL\n");
-        return DSERR_INVALIDPARAM;
-    }
-
-    if (ppunk == NULL) {
-        ERR("invalid parameter: ppunk == NULL\n");
-        return DSERR_INVALIDPARAM;
-    }
-
-    pdsfdunk = HeapAlloc(GetProcessHeap(),0,sizeof(*pdsfdunk));
-    if (pdsfdunk == NULL) {
-        WARN("out of memory\n");
-        *ppunk = NULL;
-        return DSERR_OUTOFMEMORY;
-    }
-
-    pdsfdunk->lpVtbl = &DirectSoundFullDuplex_Unknown_Vtbl;
-    pdsfdunk->ref = 0;
-    pdsfdunk->pdsfd = (IDirectSoundFullDuplexImpl *)pdsfd;
-
-    *ppunk = (LPUNKNOWN)pdsfdunk;
-
-    return DS_OK;
-}
 
 /*******************************************************************************
  * IDirectSoundFullDuplex_IDirectSound8
@@ -457,7 +420,7 @@ static inline IDirectSoundFullDuplexImpl *impl_from_IDirectSoundFullDuplex(IDire
 static ULONG WINAPI IDirectSoundFullDuplexImpl_AddRef(IDirectSoundFullDuplex *iface)
 {
     IDirectSoundFullDuplexImpl *This = impl_from_IDirectSoundFullDuplex(iface);
-    ULONG ref = InterlockedIncrement(&(This->ref));
+    ULONG ref = InterlockedIncrement(&This->refdsfd);
 
     TRACE("(%p) ref=%d\n", This, ref);
 
@@ -480,16 +443,8 @@ static HRESULT WINAPI IDirectSoundFullDuplexImpl_QueryInterface(IDirectSoundFull
     *ppv = NULL;
 
     if (IsEqualIID(riid, &IID_IUnknown)) {
-        if (!This->pUnknown) {
-            IDirectSoundFullDuplex_IUnknown_Create(iface, &This->pUnknown);
-            if (!This->pUnknown) {
-                WARN("IDirectSoundFullDuplex_IUnknown_Create() failed\n");
-                *ppv = NULL;
-                return E_NOINTERFACE;
-            }
-        }
-        IDirectSoundFullDuplex_IUnknown_AddRef(This->pUnknown);
-        *ppv = This->pUnknown;
+        IUnknown_AddRef(&This->IUnknown_iface);
+        *ppv = &This->IUnknown_iface;
         return S_OK;
     } else if (IsEqualIID(riid, &IID_IDirectSoundFullDuplex)) {
         IDirectSoundFullDuplexImpl_AddRef(iface);
@@ -528,7 +483,7 @@ static HRESULT WINAPI IDirectSoundFullDuplexImpl_QueryInterface(IDirectSoundFull
 static ULONG WINAPI IDirectSoundFullDuplexImpl_Release(IDirectSoundFullDuplex *iface)
 {
     IDirectSoundFullDuplexImpl *This = impl_from_IDirectSoundFullDuplex(iface);
-    ULONG ref = InterlockedDecrement(&(This->ref));
+    ULONG ref = InterlockedDecrement(&This->refdsfd);
 
     TRACE("(%p) ref=%d\n", This, ref);
 
@@ -641,11 +596,13 @@ HRESULT DSOUND_FullDuplexCreate(REFIID riid, void **ppv)
     setup_dsound_options();
 
     obj->IDirectSoundFullDuplex_iface.lpVtbl = &dsfd_vtbl;
+    obj->IUnknown_iface.lpVtbl = &unk_vtbl;
     obj->ref = 1;
+    obj->refdsfd = 0;
     obj->numIfaces = 1;
 
-    hr = IUnknown_QueryInterface((IUnknown*)obj, riid, ppv);
-    IUnknown_Release((IUnknown*)obj);
+    hr = IUnknown_QueryInterface(&obj->IUnknown_iface, riid, ppv);
+    IUnknown_Release(&obj->IUnknown_iface);
 
     return hr;
 }
