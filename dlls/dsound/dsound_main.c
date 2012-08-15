@@ -723,7 +723,7 @@ static IClassFactoryImpl DSOUND_CF[] = {
     { { &DSCF_Vtbl }, &CLSID_DirectSound8, DSOUND_Create8 },
     { { &DSCF_Vtbl }, &CLSID_DirectSoundCapture, DSOUND_CaptureCreate },
     { { &DSCF_Vtbl }, &CLSID_DirectSoundCapture8, DSOUND_CaptureCreate8 },
-    { { &DSCF_Vtbl }, &CLSID_DirectSoundFullDuplex, (FnCreateInstance)DSOUND_FullDuplexCreate },
+    { { &DSCF_Vtbl }, &CLSID_DirectSoundFullDuplex, DSOUND_FullDuplexCreate },
     { { &DSCF_Vtbl }, &CLSID_DirectSoundPrivate, (FnCreateInstance)IKsPrivatePropertySetImpl_Create },
     { { NULL }, NULL, NULL }
 };

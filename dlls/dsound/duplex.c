@@ -613,44 +613,29 @@ static const IDirectSoundFullDuplexVtbl dsfdvt =
     IDirectSoundFullDuplexImpl_Initialize
 };
 
-HRESULT DSOUND_FullDuplexCreate(
-    REFIID riid,
-    LPDIRECTSOUNDFULLDUPLEX* ppDSFD)
+HRESULT DSOUND_FullDuplexCreate(REFIID riid, void **ppv)
 {
-    IDirectSoundFullDuplexImpl *This = NULL;
-    TRACE("(%s, %p)\n", debugstr_guid(riid), ppDSFD);
+    IDirectSoundFullDuplexImpl *obj;
+    HRESULT hr;
 
-    if (ppDSFD == NULL) {
-        WARN("invalid parameter: ppDSFD == NULL\n");
-        return DSERR_INVALIDPARAM;
-    }
+    TRACE("(%s, %p)\n", debugstr_guid(riid), ppv);
 
-    if (!IsEqualIID(riid, &IID_IUnknown) &&
-        !IsEqualIID(riid, &IID_IDirectSoundFullDuplex)) {
-        *ppDSFD = 0;
-        return E_NOINTERFACE;
-    }
-
-    /* Get dsound configuration */
-    setup_dsound_options();
-
-    This = HeapAlloc(GetProcessHeap(),
-        HEAP_ZERO_MEMORY, sizeof(IDirectSoundFullDuplexImpl));
-
-    if (This == NULL) {
+    *ppv = NULL;
+    obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*obj));
+    if (!obj) {
         WARN("out of memory\n");
-        *ppDSFD = NULL;
         return DSERR_OUTOFMEMORY;
     }
 
-    This->lpVtbl = &dsfdvt;
-    This->ref = 1;
-    This->capture_device = NULL;
-    This->renderer_device = NULL;
+    setup_dsound_options();
 
-    *ppDSFD = (LPDIRECTSOUNDFULLDUPLEX)This;
+    obj->lpVtbl = &dsfdvt;
+    obj->ref = 1;
 
-    return DS_OK;
+    hr = IUnknown_QueryInterface((IUnknown*)obj, riid, ppv);
+    IUnknown_Release((IUnknown*)obj);
+
+    return hr;
 }
 
 /***************************************************************************
@@ -659,93 +644,50 @@ HRESULT DSOUND_FullDuplexCreate(
  * Create and initialize a DirectSoundFullDuplex interface.
  *
  * PARAMS
- *    pcGuidCaptureDevice [I] Address of sound capture device GUID.
- *    pcGuidRenderDevice  [I] Address of sound render device GUID.
- *    pcDSCBufferDesc     [I] Address of capture buffer description.
- *    pcDSBufferDesc      [I] Address of  render buffer description.
- *    hWnd                [I] Handle to application window.
- *    dwLevel             [I] Cooperative level.
- *    ppDSFD              [O] Address where full duplex interface returned.
- *    ppDSCBuffer8        [0] Address where capture buffer interface returned.
- *    ppDSBuffer8         [0] Address where render buffer interface returned.
- *    pUnkOuter           [I] Must be NULL.
+ *    capture_dev         [I] Address of sound capture device GUID.
+ *    render_dev          [I] Address of sound render device GUID.
+ *    cbufdesc            [I] Address of capture buffer description.
+ *    bufdesc             [I] Address of  render buffer description.
+ *    hwnd                [I] Handle to application window.
+ *    level               [I] Cooperative level.
+ *    dsfd                [O] Address where full duplex interface returned.
+ *    dscb8               [0] Address where capture buffer interface returned.
+ *    dsb8                [0] Address where render buffer interface returned.
+ *    outer_unk           [I] Must be NULL.
  *
  * RETURNS
  *    Success: DS_OK
  *    Failure: DSERR_NOAGGREGATION, DSERR_ALLOCATED, DSERR_INVALIDPARAM,
  *             DSERR_OUTOFMEMORY DSERR_INVALIDCALL DSERR_NODRIVER
  */
-HRESULT WINAPI
-DirectSoundFullDuplexCreate(
-    LPCGUID pcGuidCaptureDevice,
-    LPCGUID pcGuidRenderDevice,
-    LPCDSCBUFFERDESC pcDSCBufferDesc,
-    LPCDSBUFFERDESC pcDSBufferDesc,
-    HWND hWnd,
-    DWORD dwLevel,
-    LPDIRECTSOUNDFULLDUPLEX *ppDSFD,
-    LPDIRECTSOUNDCAPTUREBUFFER8 *ppDSCBuffer8,
-    LPDIRECTSOUNDBUFFER8 *ppDSBuffer8,
-    LPUNKNOWN pUnkOuter)
+HRESULT WINAPI DirectSoundFullDuplexCreate(const GUID *capture_dev, const GUID *render_dev,
+        const DSCBUFFERDESC *cbufdesc, const DSBUFFERDESC *bufdesc, HWND hwnd, DWORD level,
+        IDirectSoundFullDuplex **dsfd, IDirectSoundCaptureBuffer8 **dscb8,
+        IDirectSoundBuffer8 **dsb8, IUnknown *outer_unk)
 {
-    HRESULT hres;
-    IDirectSoundFullDuplexImpl *This = NULL;
-    TRACE("(%s,%s,%p,%p,%p,%x,%p,%p,%p,%p)\n",
-        debugstr_guid(pcGuidCaptureDevice), debugstr_guid(pcGuidRenderDevice),
-        pcDSCBufferDesc, pcDSBufferDesc, hWnd, dwLevel, ppDSFD, ppDSCBuffer8,
-        ppDSBuffer8, pUnkOuter);
+    HRESULT hr;
 
-    if (pUnkOuter) {
-        WARN("pUnkOuter != 0\n");
-        *ppDSFD = NULL;
+    TRACE("(%s,%s,%p,%p,%p,%x,%p,%p,%p,%p)\n", debugstr_guid(capture_dev),
+            debugstr_guid(render_dev), cbufdesc, bufdesc, hwnd, level, dsfd, dscb8, dsb8,
+            outer_unk);
+
+    if (!dsfd)
+        return DSERR_INVALIDPARAM;
+    if (outer_unk) {
+        *dsfd = NULL;
         return DSERR_NOAGGREGATION;
     }
 
-    if (pcDSCBufferDesc == NULL) {
-        WARN("invalid parameter: pcDSCBufferDesc == NULL\n");
-        *ppDSFD = NULL;
-        return DSERR_INVALIDPARAM;
+    hr = DSOUND_FullDuplexCreate(&IID_IDirectSoundFullDuplex, (void**)dsfd);
+    if (hr == DS_OK) {
+        hr = IDirectSoundFullDuplex_Initialize(*dsfd, capture_dev, render_dev, cbufdesc, bufdesc,
+                hwnd, level, dscb8, dsb8);
+        if (hr != DS_OK) {
+            IDirectSoundFullDuplex_Release(*dsfd);
+            *dsfd = NULL;
+            WARN("IDirectSoundFullDuplexImpl_Initialize failed\n");
+        }
     }
 
-    if (pcDSBufferDesc == NULL) {
-        WARN("invalid parameter: pcDSBufferDesc == NULL\n");
-        *ppDSFD = NULL;
-        return DSERR_INVALIDPARAM;
-    }
-
-    if (ppDSFD == NULL) {
-        WARN("invalid parameter: ppDSFD == NULL\n");
-        return DSERR_INVALIDPARAM;
-    }
-
-    if (ppDSCBuffer8 == NULL) {
-        WARN("invalid parameter: ppDSCBuffer8 == NULL\n");
-        *ppDSFD = NULL;
-        return DSERR_INVALIDPARAM;
-    }
-
-    if (ppDSBuffer8 == NULL) {
-        WARN("invalid parameter: ppDSBuffer8 == NULL\n");
-        *ppDSFD = NULL;
-        return DSERR_INVALIDPARAM;
-    }
-
-    hres = DSOUND_FullDuplexCreate(&IID_IDirectSoundFullDuplex, (LPDIRECTSOUNDFULLDUPLEX*)&This);
-    if (FAILED(hres)) return hres;
-
-    hres = IDirectSoundFullDuplexImpl_Initialize((LPDIRECTSOUNDFULLDUPLEX)This,
-                                                 pcGuidCaptureDevice,
-                                                 pcGuidRenderDevice,
-                                                 pcDSCBufferDesc,
-                                                 pcDSBufferDesc,
-                                                 hWnd, dwLevel, ppDSCBuffer8,
-                                                 ppDSBuffer8);
-    if (hres != DS_OK) {
-        IUnknown_Release((LPDIRECTSOUNDFULLDUPLEX)This);
-        WARN("IDirectSoundFullDuplexImpl_Initialize failed\n");
-        *ppDSFD = NULL;
-    } else
-        *ppDSFD = (LPDIRECTSOUNDFULLDUPLEX)This;
-
-    return hres;
+    return hr;
 }
