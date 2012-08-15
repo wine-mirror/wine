@@ -1789,7 +1789,7 @@ static INT LCMapStringEx_wrapper(DWORD flags, LPCWSTR src, INT srclen, LPWSTR ds
 static void test_LCMapStringEx(void)
 {
     int ret;
-    WCHAR buf[256], badname[] = {'w', 'i', 'n', 'e', 't', 'e', 's', 't', 0};
+    WCHAR buf[256];
 
     if (!pLCMapStringEx)
     {
@@ -1800,7 +1800,7 @@ static void test_LCMapStringEx(void)
     trace("testing LCMapStringEx\n");
 
     SetLastError(0xdeadbeef);
-    ret = pLCMapStringEx(badname, LCMAP_LOWERCASE,
+    ret = pLCMapStringEx(fooW, LCMAP_LOWERCASE,
                          upper_case, -1, buf, sizeof(buf)/sizeof(WCHAR), NULL, NULL, 0);
     todo_wine {
     ok(!ret, "LCMapStringEx should fail with bad locale name\n");
@@ -1888,6 +1888,10 @@ static void test_LocaleNameToLCID(void)
     ret = pLCIDToLocaleName(lcid, buffer, LOCALE_NAME_MAX_LENGTH, 0);
     ok(ret > 0, "Expected ret > 0, got %d, error %d\n", ret, GetLastError());
     trace("%08x, %s\n", lcid, wine_dbgstr_w(buffer));
+
+    /* bad name */
+    lcid = pLocaleNameToLCID(fooW, 0);
+    todo_wine ok(lcid == 0, "got 0x%04x\n", lcid);
 
     /* english neutral name */
     lcid = pLocaleNameToLCID(enW, 0);
