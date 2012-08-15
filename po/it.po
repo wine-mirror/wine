@@ -3366,7 +3366,7 @@ msgstr "Elimina la cronologia"
 #: inetcpl.rc:68
 msgid ""
 "Temporary internet files\n"
-"Cached copies of webpages, images and certificates."
+"Cached copies of web pages, images and certificates."
 msgstr ""
 "File temporanei di internet\n"
 "Copie in cache di pagine web, immagini e certificati."

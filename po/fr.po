@@ -3346,7 +3346,7 @@ msgstr "Effacer l'historique de navigation"
 #: inetcpl.rc:68
 msgid ""
 "Temporary internet files\n"
-"Cached copies of webpages, images and certificates."
+"Cached copies of web pages, images and certificates."
 msgstr ""
 "Fichiers internet temporaires\n"
 "Copies en cache de pages web, d'images et de certificats."

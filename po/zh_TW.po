@@ -3280,7 +3280,7 @@ msgstr "刪除瀏覽紀錄"
 #: inetcpl.rc:68
 msgid ""
 "Temporary internet files\n"
-"Cached copies of webpages, images and certificates."
+"Cached copies of web pages, images and certificates."
 msgstr ""
 "暫時的網際網路檔案\n"
 "已快取的網頁、影像和憑證。"

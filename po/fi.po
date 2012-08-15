@@ -3318,7 +3318,7 @@ msgstr "Poista selaushistoria"
 #: inetcpl.rc:68
 msgid ""
 "Temporary internet files\n"
-"Cached copies of webpages, images and certificates."
+"Cached copies of web pages, images and certificates."
 msgstr ""
 "Väliaikaiset Internet-tiedostot\n"
 "Välimuistissa olevat kopiot sivuista, kuvista ja varmenteista."

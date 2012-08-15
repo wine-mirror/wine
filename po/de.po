@@ -3329,7 +3329,7 @@ msgstr "Gespeicherte Browserdaten löschen"
 #: inetcpl.rc:68
 msgid ""
 "Temporary internet files\n"
-"Cached copies of webpages, images and certificates."
+"Cached copies of web pages, images and certificates."
 msgstr ""
 "&Temporäre Internetdateien\n"
 "Zwischengespeicherte Kopien von Webseiten, Bildern und Zertifikaten."

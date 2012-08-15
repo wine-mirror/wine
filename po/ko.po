@@ -3315,7 +3315,7 @@ msgstr "방문 기록 지우기"
 #: inetcpl.rc:68
 msgid ""
 "Temporary internet files\n"
-"Cached copies of webpages, images and certificates."
+"Cached copies of web pages, images and certificates."
 msgstr ""
 "임시 인터넷 파일\n"
 "웹페이지의 캐시된 복사본,그림 그리고 인증서."

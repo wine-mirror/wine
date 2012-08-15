@@ -3355,7 +3355,7 @@ msgstr "Počisti zgodovino brskanja"
 #: inetcpl.rc:68
 msgid ""
 "Temporary internet files\n"
-"Cached copies of webpages, images and certificates."
+"Cached copies of web pages, images and certificates."
 msgstr ""
 "Začasne internetne datoteke\n"
 "Predpomnjene kopije spletnih strani, slik in potrdil."

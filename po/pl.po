@@ -3340,7 +3340,7 @@ msgstr "Usuwanie historii przeglądania"
 #: inetcpl.rc:68
 msgid ""
 "Temporary internet files\n"
-"Cached copies of webpages, images and certificates."
+"Cached copies of web pages, images and certificates."
 msgstr ""
 "Tymczasowe pliki internetowe\n"
 "Kopie stron sieci Web, obrazów i certyfikatów."

@@ -3275,7 +3275,7 @@ msgstr "Zmazať históriu prehliadača"
 #: inetcpl.rc:68
 msgid ""
 "Temporary internet files\n"
-"Cached copies of webpages, images and certificates."
+"Cached copies of web pages, images and certificates."
 msgstr ""
 "Dočasné internetové súbory\n"
 "Uložené kópie webových stránok, obrázkov a certifikátov."

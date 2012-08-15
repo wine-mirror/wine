@@ -65,7 +65,7 @@ FONT 8, "MS Shell Dlg"
 CAPTION "Delete browsing history"
 BEGIN
 
-    AUTOCHECKBOX   "Temporary internet files\nCached copies of webpages, images and certificates.",
+    AUTOCHECKBOX   "Temporary internet files\nCached copies of web pages, images and certificates.",
                     IDC_DELETE_TEMP_FILES, 10, 8, 230, 40, BS_TOP | BS_MULTILINE
     AUTOCHECKBOX   "Cookies\nFiles saved on your computer by websites, which store things like user preferences and login information.",
                     IDC_DELETE_COOKIES, 10, 48, 230, 40, BS_TOP | BS_MULTILINE

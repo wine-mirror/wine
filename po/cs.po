@@ -3365,7 +3365,7 @@ msgstr "Vymazat historii prohlížení"
 #: inetcpl.rc:68
 msgid ""
 "Temporary internet files\n"
-"Cached copies of webpages, images and certificates."
+"Cached copies of web pages, images and certificates."
 msgstr ""
 "Dočasné soubory internetu\n"
 "Mezipaměť kopií webových stránek, obrázků a certifikátů."

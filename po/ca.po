@@ -3366,7 +3366,7 @@ msgstr "Elimina historial de navegació"
 #: inetcpl.rc:68
 msgid ""
 "Temporary internet files\n"
-"Cached copies of webpages, images and certificates."
+"Cached copies of web pages, images and certificates."
 msgstr ""
 "Fitxers temporals d'Internet\n"
 "Les còpies en memòria cau de pàgines web, imatges i certificats."
