@@ -280,6 +280,10 @@ static void test_COM(void)
     cbufdesc.dwBufferBytes = wfx.nAvgBytesPerSec;
     cbufdesc.lpwfxFormat = &wfx;
     hr = IDirectSoundFullDuplex_Initialize(dsfd, NULL, NULL, &cbufdesc, &bufdesc, get_hwnd(),
+            DSSCL_EXCLUSIVE, NULL, NULL);
+    ok(hr == E_INVALIDARG,
+            "IDirectSoundFullDuplex_Initialize failed: %08x, expected E_INVALIDARG\n", hr);
+    hr = IDirectSoundFullDuplex_Initialize(dsfd, NULL, NULL, &cbufdesc, &bufdesc, get_hwnd(),
             DSSCL_EXCLUSIVE, &dscb8, &dsb8);
     if (hr == DSERR_NODRIVER) {
         skip("No driver\n");

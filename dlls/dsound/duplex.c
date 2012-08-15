@@ -530,75 +530,79 @@ IDirectSoundFullDuplexImpl_Release( LPDIRECTSOUNDFULLDUPLEX iface )
     return ref;
 }
 
-static HRESULT WINAPI
-IDirectSoundFullDuplexImpl_Initialize(
-    LPDIRECTSOUNDFULLDUPLEX iface,
-    LPCGUID pCaptureGuid,
-    LPCGUID pRendererGuid,
-    LPCDSCBUFFERDESC lpDscBufferDesc,
-    LPCDSBUFFERDESC lpDsBufferDesc,
-    HWND hWnd,
-    DWORD dwLevel,
-    LPLPDIRECTSOUNDCAPTUREBUFFER8 lplpDirectSoundCaptureBuffer8,
-    LPLPDIRECTSOUNDBUFFER8 lplpDirectSoundBuffer8 )
+static HRESULT WINAPI IDirectSoundFullDuplexImpl_Initialize(IDirectSoundFullDuplex *iface,
+        const GUID *capture_dev, const GUID *render_dev, const DSCBUFFERDESC *cbufdesc,
+        const DSBUFFERDESC *bufdesc, HWND hwnd, DWORD level, IDirectSoundCaptureBuffer8 **dscb8,
+        IDirectSoundBuffer8 **dsb8)
 {
     HRESULT hr;
     IDirectSoundFullDuplexImpl *This = (IDirectSoundFullDuplexImpl *)iface;
 
-    TRACE("(%p,%s,%s,%p,%p,%p,%x,%p,%p)\n", This,
-        debugstr_guid(pCaptureGuid), debugstr_guid(pRendererGuid),
-        lpDscBufferDesc, lpDsBufferDesc, hWnd, dwLevel,
-        lplpDirectSoundCaptureBuffer8, lplpDirectSoundBuffer8);
+    TRACE("(%p,%s,%s,%p,%p,%p,%x,%p,%p)\n", This, debugstr_guid(capture_dev),
+            debugstr_guid(render_dev), cbufdesc, bufdesc, hwnd, level, dscb8, dsb8);
+
+    if (!dscb8 || !dsb8)
+        return E_INVALIDARG;
+
+    *dscb8 = NULL;
+    *dsb8 = NULL;
 
     if (This->renderer_device != NULL || This->capture_device != NULL) {
         WARN("already initialized\n");
-        *lplpDirectSoundCaptureBuffer8 = NULL;
-        *lplpDirectSoundBuffer8 = NULL;
         return DSERR_ALREADYINITIALIZED;
     }
 
     hr = DSOUND_Create8(&IID_IDirectSound8, (void **)&This->renderer_device);
     if (SUCCEEDED(hr))
-        hr = IDirectSound_Initialize(This->renderer_device, pRendererGuid);
+        hr = IDirectSound_Initialize(This->renderer_device, render_dev);
     if (hr != DS_OK) {
         WARN("DirectSoundDevice_Initialize() failed\n");
-        *lplpDirectSoundCaptureBuffer8 = NULL;
-        *lplpDirectSoundBuffer8 = NULL;
-        return hr;
+        goto error;
     }
 
-    IDirectSound8_SetCooperativeLevel(This->renderer_device, hWnd, dwLevel);
+    IDirectSound8_SetCooperativeLevel(This->renderer_device, hwnd, level);
 
-    hr = IDirectSound8_CreateSoundBuffer(This->renderer_device, lpDsBufferDesc,
-        (IDirectSoundBuffer**)lplpDirectSoundBuffer8, NULL);
+    hr = IDirectSound8_CreateSoundBuffer(This->renderer_device, bufdesc,
+        (IDirectSoundBuffer**)dsb8, NULL);
     if (hr != DS_OK) {
         WARN("IDirectSoundBufferImpl_Create() failed\n");
-        *lplpDirectSoundCaptureBuffer8 = NULL;
-        *lplpDirectSoundBuffer8 = NULL;
-        return hr;
+        goto error;
     }
 
     hr = DSOUND_CaptureCreate8(&IID_IDirectSoundCapture8, (void**)&This->capture_device);
     if (SUCCEEDED(hr))
-        hr = IDirectSoundCapture_Initialize(This->capture_device, pCaptureGuid);
+        hr = IDirectSoundCapture_Initialize(This->capture_device, capture_dev);
     if (hr != DS_OK) {
         WARN("DirectSoundCaptureDevice_Initialize() failed\n");
-        *lplpDirectSoundCaptureBuffer8 = NULL;
-        *lplpDirectSoundBuffer8 = NULL;
-        return hr;
+        goto error;
     }
 
-    hr = IDirectSoundCapture_CreateCaptureBuffer(This->capture_device,
-        lpDscBufferDesc,
-        (IDirectSoundCaptureBuffer**)lplpDirectSoundCaptureBuffer8,
-        NULL);
+    hr = IDirectSoundCapture_CreateCaptureBuffer(This->capture_device, cbufdesc,
+            (IDirectSoundCaptureBuffer**)dscb8, NULL);
     if (hr != DS_OK) {
         WARN("IDirectSoundCaptureBufferImpl_Create() failed\n");
-        *lplpDirectSoundCaptureBuffer8 = NULL;
-        *lplpDirectSoundBuffer8 = NULL;
-        return hr;
+        goto error;
     }
 
+    return DS_OK;
+
+error:
+    if (*dsb8) {
+        IDirectSoundBuffer8_Release(*dsb8);
+        *dsb8 = NULL;
+    }
+    if (This->renderer_device) {
+        IDirectSound8_Release(This->renderer_device);
+        This->renderer_device = NULL;
+    }
+    if (*dscb8) {
+        IDirectSoundCaptureBuffer8_Release(*dscb8);
+        *dscb8 = NULL;
+    }
+    if (This->capture_device) {
+        IDirectSoundCapture_Release(This->capture_device);
+        This->capture_device = NULL;
+    }
     return hr;
 }
 
