@@ -75,7 +75,7 @@ int clipping_cursor = 0;
 XContext winContext = 0;
 
 /* X context to associate a struct x11drv_win_data to an hwnd */
-static XContext win_data_context;
+XContext win_data_context = 0;
 
 /* time of last user event and window where it's stored */
 static Time last_user_time;
@@ -1914,11 +1914,7 @@ static struct x11drv_win_data *alloc_win_data( Display *display, HWND hwnd )
     if ((data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*data))))
     {
         data->hwnd = hwnd;
-        wine_tsx11_lock();
-        if (!winContext) winContext = XUniqueContext();
-        if (!win_data_context) win_data_context = XUniqueContext();
         XSaveContext( display, (XID)hwnd, win_data_context, (char *)data );
-        wine_tsx11_unlock();
     }
     return data;
 }

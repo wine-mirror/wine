@@ -570,6 +570,10 @@ static BOOL process_attach(void)
 
     XInternAtoms( display, (char **)atom_names, NB_XATOMS - FIRST_XATOM, False, X11DRV_Atoms );
 
+    winContext = XUniqueContext();
+    win_data_context = XUniqueContext();
+    cursor_context = XUniqueContext();
+
     if (TRACE_ON(synchronous)) XSynchronize( display, True );
 
     xinerama_init( WidthOfScreen(screen), HeightOfScreen(screen) );

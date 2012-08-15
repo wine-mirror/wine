@@ -615,6 +615,10 @@ static inline BOOL is_window_rect_fullscreen( const RECT *rect )
 
 /* X context to associate a hwnd to an X window */
 extern XContext winContext DECLSPEC_HIDDEN;
+/* X context to associate a struct x11drv_win_data to an hwnd */
+extern XContext win_data_context DECLSPEC_HIDDEN;
+/* X context to associate an X cursor to a Win32 cursor handle */
+extern XContext cursor_context DECLSPEC_HIDDEN;
 
 extern void X11DRV_InitClipboard(void) DECLSPEC_HIDDEN;
 extern int CDECL X11DRV_AcquireClipboard(HWND hWndClipWindow) DECLSPEC_HIDDEN;

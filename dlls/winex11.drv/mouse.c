@@ -121,10 +121,11 @@ static const UINT button_up_data[NB_BUTTONS] =
     XBUTTON2
 };
 
+XContext cursor_context = 0;
+
 static HWND cursor_window;
 static HCURSOR last_cursor;
 static DWORD last_cursor_change;
-static XContext cursor_context;
 static RECT clip_rect;
 static Cursor create_cursor( HANDLE handle );
 
@@ -200,16 +201,13 @@ void set_window_cursor( Window window, HCURSOR handle )
 {
     Cursor cursor, prev;
 
-    wine_tsx11_lock();
     if (!handle) cursor = get_empty_cursor();
-    else if (!cursor_context || XFindContext( gdi_display, (XID)handle, cursor_context, (char **)&cursor ))
+    else if (XFindContext( gdi_display, (XID)handle, cursor_context, (char **)&cursor ))
     {
         /* try to create it */
-        wine_tsx11_unlock();
         if (!(cursor = create_cursor( handle ))) return;
 
         wine_tsx11_lock();
-        if (!cursor_context) cursor_context = XUniqueContext();
         if (!XFindContext( gdi_display, (XID)handle, cursor_context, (char **)&prev ))
         {
             /* someone else was here first */
@@ -221,12 +219,12 @@ void set_window_cursor( Window window, HCURSOR handle )
             XSaveContext( gdi_display, (XID)handle, cursor_context, (char *)cursor );
             TRACE( "cursor %p created %lx\n", handle, cursor );
         }
+        wine_tsx11_unlock();
     }
 
     XDefineCursor( gdi_display, window, cursor );
     /* make the change take effect immediately */
     XFlush( gdi_display );
-    wine_tsx11_unlock();
 }
 
 /***********************************************************************
@@ -1205,7 +1203,7 @@ void CDECL X11DRV_DestroyCursorIcon( HCURSOR handle )
     Cursor cursor;
 
     wine_tsx11_lock();
-    if (cursor_context && !XFindContext( gdi_display, (XID)handle, cursor_context, (char **)&cursor ))
+    if (!XFindContext( gdi_display, (XID)handle, cursor_context, (char **)&cursor ))
     {
         TRACE( "%p xid %lx\n", handle, cursor );
         XFreeCursor( gdi_display, cursor );
