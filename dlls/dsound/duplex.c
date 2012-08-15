@@ -285,7 +285,7 @@ static const IDirectSound8Vtbl DirectSoundFullDuplex_DirectSound8_Vtbl =
 };
 
 static HRESULT IDirectSoundFullDuplex_IDirectSound8_Create(
-    LPDIRECTSOUNDFULLDUPLEX pdsfd,
+    IDirectSoundFullDuplexImpl *pdsfd,
     LPDIRECTSOUND8 * ppds8)
 {
     IDirectSoundFullDuplex_IDirectSound8 * pdsfdds8;
@@ -301,7 +301,7 @@ static HRESULT IDirectSoundFullDuplex_IDirectSound8_Create(
         return DSERR_INVALIDPARAM;
     }
 
-    if (((IDirectSoundFullDuplexImpl*)pdsfd)->renderer_device == NULL) {
+    if (pdsfd->renderer_device == NULL) {
         WARN("not initialized\n");
         *ppds8 = NULL;
         return DSERR_UNINITIALIZED;
@@ -316,7 +316,7 @@ static HRESULT IDirectSoundFullDuplex_IDirectSound8_Create(
 
     pdsfdds8->lpVtbl = &DirectSoundFullDuplex_DirectSound8_Vtbl;
     pdsfdds8->ref = 0;
-    pdsfdds8->pdsfd = (IDirectSoundFullDuplexImpl *)pdsfd;
+    pdsfdds8->pdsfd = pdsfd;
 
     *ppds8 = (LPDIRECTSOUND8)pdsfdds8;
 
@@ -399,7 +399,7 @@ static const IDirectSoundCaptureVtbl DirectSoundFullDuplex_DirectSoundCapture_Vt
 };
 
 static HRESULT IDirectSoundFullDuplex_IDirectSoundCapture_Create(
-    LPDIRECTSOUNDFULLDUPLEX pdsfd,
+    IDirectSoundFullDuplexImpl *pdsfd,
     LPDIRECTSOUNDCAPTURE8 * ppdsc8)
 {
     IDirectSoundFullDuplex_IDirectSoundCapture * pdsfddsc;
@@ -415,7 +415,7 @@ static HRESULT IDirectSoundFullDuplex_IDirectSoundCapture_Create(
         return DSERR_INVALIDPARAM;
     }
 
-    if (((IDirectSoundFullDuplexImpl*)pdsfd)->capture_device == NULL) {
+    if (pdsfd->capture_device == NULL) {
         WARN("not initialized\n");
         *ppdsc8 = NULL;
         return DSERR_UNINITIALIZED;
@@ -430,7 +430,7 @@ static HRESULT IDirectSoundFullDuplex_IDirectSoundCapture_Create(
 
     pdsfddsc->lpVtbl = &DirectSoundFullDuplex_DirectSoundCapture_Vtbl;
     pdsfddsc->ref = 0;
-    pdsfddsc->pdsfd = (IDirectSoundFullDuplexImpl *)pdsfd;
+    pdsfddsc->pdsfd = pdsfd;
 
     *ppdsc8 = (LPDIRECTSOUNDCAPTURE)pdsfddsc;
 
@@ -485,7 +485,7 @@ static HRESULT WINAPI IDirectSoundFullDuplexImpl_QueryInterface(IDirectSoundFull
     } else if (IsEqualIID(riid, &IID_IDirectSound)
                || IsEqualIID(riid, &IID_IDirectSound8)) {
         if (!This->pDS8) {
-            IDirectSoundFullDuplex_IDirectSound8_Create(iface, &This->pDS8);
+            IDirectSoundFullDuplex_IDirectSound8_Create(This, &This->pDS8);
             if (!This->pDS8) {
                 WARN("IDirectSoundFullDuplex_IDirectSound8_Create() failed\n");
                 *ppv = NULL;
@@ -497,7 +497,7 @@ static HRESULT WINAPI IDirectSoundFullDuplexImpl_QueryInterface(IDirectSoundFull
         return S_OK;
     } else if (IsEqualIID(riid, &IID_IDirectSoundCapture)) {
         if (!This->pDSC) {
-            IDirectSoundFullDuplex_IDirectSoundCapture_Create(iface, &This->pDSC);
+            IDirectSoundFullDuplex_IDirectSoundCapture_Create(This, &This->pDSC);
             if (!This->pDSC) {
                 WARN("IDirectSoundFullDuplex_IDirectSoundCapture_Create() failed\n");
                 *ppv = NULL;
