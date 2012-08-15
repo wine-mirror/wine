@@ -401,6 +401,11 @@ const int basic_ostringstream_wchar_vbtable[] = {0, sizeof(basic_ostringstream_w
 /* ??_7?$basic_ostringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_ostringstream_wchar_vtable;
 
+/* ??_8?$basic_ostringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@7B@ */
+const int basic_ostringstream_short_vbtable[] = {0, sizeof(basic_ostringstream_wchar)};
+/* ??_7?$basic_ostringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@6B@ */
+extern const vtable_ptr MSVCP_basic_ostringstream_short_vtable;
+
 /* ??_8?$basic_istringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@7B@ */
 const int basic_istringstream_char_vbtable[] = {0, sizeof(basic_istringstream_char)};
 /* ??_7?$basic_istringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@6B@ */
@@ -537,6 +542,10 @@ DEFINE_RTTI_DATA4(basic_ostringstream_wchar, sizeof(basic_ostringstream_wchar),
         &basic_ostream_wchar_rtti_base_descriptor, &basic_ios_wchar_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
         ".?AV?$basic_ostringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@");
+DEFINE_RTTI_DATA4(basic_ostringstream_short, sizeof(basic_ostringstream_wchar),
+        &basic_ostream_short_rtti_base_descriptor, &basic_ios_short_rtti_base_descriptor,
+        &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
+        ".?AV?$basic_ostringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@");
 DEFINE_RTTI_DATA4(basic_istringstream_char, sizeof(basic_istringstream_char),
         &basic_ostream_char_rtti_base_descriptor, &basic_ios_char_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
@@ -712,6 +721,7 @@ void __asm_dummy_vtables(void) {
     __ASM_VTABLE(basic_fstream_short, "");
     __ASM_VTABLE(basic_ostringstream_char, "");
     __ASM_VTABLE(basic_ostringstream_wchar, "");
+    __ASM_VTABLE(basic_ostringstream_short, "");
     __ASM_VTABLE(basic_istringstream_char, "");
     __ASM_VTABLE(basic_istringstream_wchar, "");
     __ASM_VTABLE(basic_stringstream_char, "");
@@ -11549,6 +11559,17 @@ basic_ostringstream_wchar* __thiscall basic_ostringstream_wchar_ctor_str(basic_o
     return this;
 }
 
+/* ??0?$basic_ostringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAE@ABV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@1@H@Z */
+/* ??0?$basic_ostringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEAA@AEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@1@H@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostringstream_short_ctor_str, 16)
+basic_ostringstream_wchar* __thiscall basic_ostringstream_short_ctor_str(basic_ostringstream_wchar *this,
+        const basic_string_wchar *str, int mode, MSVCP_bool virt_init)
+{
+    basic_ostringstream_wchar_ctor_str(this, str, mode, virt_init);
+    basic_ostream_wchar_get_basic_ios(&this->base)->base.vtable = &MSVCP_basic_ostringstream_short_vtable;
+    return this;
+}
+
 /* ??0?$basic_ostringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE@H@Z */
 /* ??0?$basic_ostringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAA@H@Z */
 DEFINE_THISCALL_WRAPPER(basic_ostringstream_wchar_ctor_mode, 12)
@@ -11573,6 +11594,17 @@ basic_ostringstream_wchar* __thiscall basic_ostringstream_wchar_ctor_mode(
     return this;
 }
 
+/* ??0?$basic_ostringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAE@H@Z */
+/* ??0?$basic_ostringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEAA@H@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostringstream_short_ctor_mode, 12)
+basic_ostringstream_wchar* __thiscall basic_ostringstream_short_ctor_mode(
+        basic_ostringstream_wchar *this, int mode, MSVCP_bool virt_init)
+{
+    basic_ostringstream_wchar_ctor_mode(this, mode, virt_init);
+    basic_ostream_wchar_get_basic_ios(&this->base)->base.vtable = &MSVCP_basic_ostringstream_short_vtable;
+    return this;
+}
+
 /* ??_F?$basic_ostringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEXXZ */
 /* ??_F?$basic_ostringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAXXZ */
 DEFINE_THISCALL_WRAPPER(basic_ostringstream_wchar_ctor, 8)
@@ -11582,8 +11614,19 @@ basic_ostringstream_wchar* __thiscall basic_ostringstream_wchar_ctor(
     return basic_ostringstream_wchar_ctor_mode(this, 0, virt_init);
 }
 
+/* ??_F?$basic_ostringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAEXXZ */
+/* ??_F?$basic_ostringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(basic_ostringstream_short_ctor, 8)
+basic_ostringstream_wchar* __thiscall basic_ostringstream_short_ctor(
+        basic_ostringstream_wchar *this, MSVCP_bool virt_init)
+{
+    return basic_ostringstream_short_ctor_mode(this, 0, virt_init);
+}
+
 /* ??1?$basic_ostringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@UAE@XZ */
 /* ??1?$basic_ostringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@UEAA@XZ */
+/* ??1?$basic_ostringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@UAE@XZ */
+/* ??1?$basic_ostringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@UEAA@XZ */
 DEFINE_THISCALL_WRAPPER(basic_ostringstream_wchar_dtor, 4)
 void __thiscall basic_ostringstream_wchar_dtor(basic_ios_wchar *base)
 {
@@ -11597,6 +11640,8 @@ void __thiscall basic_ostringstream_wchar_dtor(basic_ios_wchar *base)
 
 /* ??_D?$basic_ostringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEXXZ */
 /* ??_D?$basic_ostringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAXXZ */
+/* ??_D?$basic_ostringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAEXXZ */
+/* ??_D?$basic_ostringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEAAXXZ */
 DEFINE_THISCALL_WRAPPER(basic_ostringstream_wchar_vbase_dtor, 4)
 void __thiscall basic_ostringstream_wchar_vbase_dtor(basic_ostringstream_wchar *this)
 {
@@ -11629,8 +11674,16 @@ basic_ostringstream_wchar* __thiscall MSVCP_basic_ostringstream_wchar_vector_dto
     return this;
 }
 
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_ostringstream_short_vector_dtor, 8)
+basic_ostringstream_wchar* __thiscall MSVCP_basic_ostringstream_short_vector_dtor(basic_ios_wchar *base, unsigned int flags)
+{
+    return MSVCP_basic_ostringstream_wchar_vector_dtor(base, flags);
+}
+
 /* ?rdbuf@?$basic_ostringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEPAV?$basic_stringbuf@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@XZ */
 /* ?rdbuf@?$basic_ostringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBAPEAV?$basic_stringbuf@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@XZ */
+/* ?rdbuf@?$basic_ostringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBEPAV?$basic_stringbuf@GU?$char_traits@G@std@@V?$allocator@G@2@@2@XZ */
+/* ?rdbuf@?$basic_ostringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEBAPEAV?$basic_stringbuf@GU?$char_traits@G@std@@V?$allocator@G@2@@2@XZ */
 DEFINE_THISCALL_WRAPPER(basic_ostringstream_wchar_rdbuf, 4)
 basic_stringbuf_wchar* __thiscall basic_ostringstream_wchar_rdbuf(const basic_ostringstream_wchar *this)
 {
@@ -11640,6 +11693,8 @@ basic_stringbuf_wchar* __thiscall basic_ostringstream_wchar_rdbuf(const basic_os
 
 /* ?str@?$basic_ostringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEXABV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@@Z */
 /* ?str@?$basic_ostringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAXAEBV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@@Z */
+/* ?str@?$basic_ostringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAEXABV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@@Z */
+/* ?str@?$basic_ostringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEAAXAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@@Z */
 DEFINE_THISCALL_WRAPPER(basic_ostringstream_wchar_str_set, 8)
 void __thiscall basic_ostringstream_wchar_str_set(basic_ostringstream_wchar *this, const basic_string_wchar *str)
 {
@@ -11649,6 +11704,8 @@ void __thiscall basic_ostringstream_wchar_str_set(basic_ostringstream_wchar *thi
 
 /* ?str@?$basic_ostringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBE?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@XZ */
 /* ?str@?$basic_ostringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@XZ */
+/* ?str@?$basic_ostringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBE?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@XZ */
+/* ?str@?$basic_ostringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEBA?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@XZ */
 DEFINE_THISCALL_WRAPPER(basic_ostringstream_wchar_str_get, 8)
 basic_string_wchar* __thiscall basic_ostringstream_wchar_str_get(const basic_ostringstream_wchar *this, basic_string_wchar *ret)
 {
