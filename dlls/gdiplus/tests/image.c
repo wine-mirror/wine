@@ -3642,7 +3642,6 @@ static void test_DrawImage(void)
     expect(Ok, status);
 
     match = memcmp(white_2x2, black_2x2, sizeof(black_2x2)) == 0;
-todo_wine
     ok(match, "data should match\n");
     if (!match)
     {
@@ -3695,7 +3694,6 @@ static void test_GdipDrawImagePointRect(void)
     expect(Ok, status);
 
     match = memcmp(white_2x2, black_2x2, sizeof(black_2x2)) == 0;
-todo_wine
     ok(match, "data should match\n");
     if (!match)
     {

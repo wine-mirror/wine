@@ -2974,7 +2974,9 @@ GpStatus WINGDIPAPI GdipDrawImagePointRect(GpGraphics *graphics, GpImage *image,
     TRACE("(%p, %p, %f, %f, %f, %f, %f, %f, %d)\n", graphics, image, x, y, srcx, srcy, srcwidth, srcheight, srcUnit);
 
     scale_x = units_scale(srcUnit, graphics->unit, graphics->xres);
+    scale_x *= graphics->xres / image->xres;
     scale_y = units_scale(srcUnit, graphics->unit, graphics->yres);
+    scale_y *= graphics->yres / image->yres;
     width = srcwidth * scale_x;
     height = srcheight * scale_y;
 
