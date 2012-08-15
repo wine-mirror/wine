@@ -1877,6 +1877,9 @@ static void prepare_async_request(RpcHttpAsyncData *async_data)
 
 static RPC_STATUS wait_async_request(RpcHttpAsyncData *async_data, BOOL call_ret, HANDLE cancel_event)
 {
+    HANDLE handles[2] = { async_data->completion_event, cancel_event };
+    DWORD res;
+
     if(call_ret) {
         RpcHttpAsyncData_Release(async_data);
         return RPC_S_OK;
@@ -1888,16 +1891,12 @@ static RPC_STATUS wait_async_request(RpcHttpAsyncData *async_data, BOOL call_ret
         return RPC_S_SERVER_UNAVAILABLE;
     }
 
-    if(cancel_event) {
-        HANDLE handles[2] = { async_data->completion_event, cancel_event };
-        DWORD res;
-
-        res = WaitForMultipleObjects(2, handles, FALSE, DEFAULT_NCACN_HTTP_TIMEOUT);
-        if(res != WAIT_OBJECT_0)
-            return RPC_S_CALL_CANCELLED;
-    }else {
-        WaitForSingleObject(async_data->completion_event, INFINITE);
+    res = WaitForMultipleObjects(2, handles, FALSE, DEFAULT_NCACN_HTTP_TIMEOUT);
+    if(res != WAIT_OBJECT_0) {
+        TRACE("Cancelled\n");
+        return RPC_S_CALL_CANCELLED;
     }
+
     if(async_data->async_result) {
         ERR("Async request failed with error %d\n", async_data->async_result);
         return RPC_S_SERVER_UNAVAILABLE;
@@ -2176,7 +2175,7 @@ static RPC_STATUS rpcrt4_http_internet_connect(RpcConnection_http *httpc)
 }
 
 /* prepare the in pipe for use by RPC packets */
-static RPC_STATUS rpcrt4_http_prepare_in_pipe(HINTERNET in_request, RpcHttpAsyncData *async_data,
+static RPC_STATUS rpcrt4_http_prepare_in_pipe(HINTERNET in_request, RpcHttpAsyncData *async_data, HANDLE cancel_event,
                                               const UUID *connection_uuid,
                                               const UUID *in_pipe_uuid,
                                               const UUID *association_uuid)
@@ -2191,7 +2190,7 @@ static RPC_STATUS rpcrt4_http_prepare_in_pipe(HINTERNET in_request, RpcHttpAsync
     /* prepare in pipe */
     prepare_async_request(async_data);
     ret = HttpSendRequestW(in_request, NULL, 0, NULL, 0);
-    status = wait_async_request(async_data, ret, NULL);
+    status = wait_async_request(async_data, ret, cancel_event);
     if(status != RPC_S_OK) return status;
 
     status = rpcrt4_http_check_response(in_request);
@@ -2206,7 +2205,7 @@ static RPC_STATUS rpcrt4_http_prepare_in_pipe(HINTERNET in_request, RpcHttpAsync
     buffers_in.dwBufferTotal = 1024 * 1024 * 1024; /* 1Gb */
     prepare_async_request(async_data);
     ret = HttpSendRequestExW(in_request, &buffers_in, NULL, 0, 0);
-    status = wait_async_request(async_data, ret, NULL);
+    status = wait_async_request(async_data, ret, cancel_event);
     if (status != RPC_S_OK) return status;
 
     TRACE("sending HTTP connect header to server\n");
@@ -2271,6 +2270,7 @@ static RPC_STATUS rpcrt4_http_read_http_packet(HINTERNET request, RpcPktHdr *hdr
 /* prepare the out pipe for use by RPC packets */
 static RPC_STATUS rpcrt4_http_prepare_out_pipe(HINTERNET out_request,
                                                RpcHttpAsyncData *async_data,
+                                               HANDLE cancel_event,
                                                const UUID *connection_uuid,
                                                const UUID *out_pipe_uuid,
                                                ULONG *flow_control_increment)
@@ -2286,7 +2286,7 @@ static RPC_STATUS rpcrt4_http_prepare_out_pipe(HINTERNET out_request,
 
     prepare_async_request(async_data);
     ret = HttpSendRequestW(out_request, NULL, 0, NULL, 0);
-    status = wait_async_request(async_data, ret, NULL);
+    status = wait_async_request(async_data, ret, cancel_event);
     if (status != RPC_S_OK) return status;
 
     status = rpcrt4_http_check_response(out_request);
@@ -2300,7 +2300,7 @@ static RPC_STATUS rpcrt4_http_prepare_out_pipe(HINTERNET out_request,
 
     prepare_async_request(async_data);
     ret = HttpSendRequestW(out_request, NULL, 0, hdr, hdr->common.frag_len);
-    status = wait_async_request(async_data, ret, NULL);
+    status = wait_async_request(async_data, ret, cancel_event);
     RPCRT4_FreeHeader(hdr);
     if (status != RPC_S_OK) return status;
 
@@ -2398,6 +2398,7 @@ static RPC_STATUS rpcrt4_ncacn_http_open(RpcConnection* Connection)
 
     status = rpcrt4_http_prepare_in_pipe(httpc->in_request,
                                          httpc->async_data,
+                                         httpc->cancel_event,
                                          &httpc->connection_uuid,
                                          &httpc->in_pipe_uuid,
                                          &Connection->assoc->http_uuid);
@@ -2406,6 +2407,7 @@ static RPC_STATUS rpcrt4_ncacn_http_open(RpcConnection* Connection)
 
     status = rpcrt4_http_prepare_out_pipe(httpc->out_request,
                                           httpc->async_data,
+                                          httpc->cancel_event,
                                           &httpc->connection_uuid,
                                           &httpc->out_pipe_uuid,
                                           &httpc->flow_control_increment);
