@@ -2174,30 +2174,42 @@ static RPC_STATUS rpcrt4_http_internet_connect(RpcConnection_http *httpc)
     return RPC_S_OK;
 }
 
+static RPC_STATUS send_echo_request(HINTERNET req, RpcHttpAsyncData *async_data, HANDLE cancel_event)
+{
+    DWORD bytes_read;
+    BYTE buf[20];
+    BOOL ret;
+    RPC_STATUS status;
+
+    prepare_async_request(async_data);
+    ret = HttpSendRequestW(req, NULL, 0, NULL, 0);
+    status = wait_async_request(async_data, ret, cancel_event);
+    if (status != RPC_S_OK) return status;
+
+    status = rpcrt4_http_check_response(req);
+    if (status != RPC_S_OK) return status;
+
+    InternetReadFile(req, buf, sizeof(buf), &bytes_read);
+    /* FIXME: do something with retrieved data */
+
+    return RPC_S_OK;
+}
+
 /* prepare the in pipe for use by RPC packets */
 static RPC_STATUS rpcrt4_http_prepare_in_pipe(HINTERNET in_request, RpcHttpAsyncData *async_data, HANDLE cancel_event,
                                               const UUID *connection_uuid,
                                               const UUID *in_pipe_uuid,
                                               const UUID *association_uuid)
 {
-    BYTE packet[44];
     BOOL ret;
     RPC_STATUS status;
     RpcPktHdr *hdr;
     INTERNET_BUFFERSW buffers_in;
-    DWORD bytes_read, bytes_written;
+    DWORD bytes_written;
 
     /* prepare in pipe */
-    prepare_async_request(async_data);
-    ret = HttpSendRequestW(in_request, NULL, 0, NULL, 0);
-    status = wait_async_request(async_data, ret, cancel_event);
-    if(status != RPC_S_OK) return status;
-
-    status = rpcrt4_http_check_response(in_request);
+    status = send_echo_request(in_request, async_data, cancel_event);
     if (status != RPC_S_OK) return status;
-
-    InternetReadFile(in_request, packet, 20, &bytes_read);
-    /* FIXME: do something with retrieved data */
 
     memset(&buffers_in, 0, sizeof(buffers_in));
     buffers_in.dwStructSize = sizeof(buffers_in);
@@ -2275,25 +2287,15 @@ static RPC_STATUS rpcrt4_http_prepare_out_pipe(HINTERNET out_request,
                                                const UUID *out_pipe_uuid,
                                                ULONG *flow_control_increment)
 {
-    BYTE packet[20];
     BOOL ret;
     RPC_STATUS status;
     RpcPktHdr *hdr;
-    DWORD bytes_read;
     BYTE *data_from_server;
     RpcPktHdr pkt_from_server;
     ULONG field1, field3;
 
-    prepare_async_request(async_data);
-    ret = HttpSendRequestW(out_request, NULL, 0, NULL, 0);
-    status = wait_async_request(async_data, ret, cancel_event);
+    status = send_echo_request(out_request, async_data, cancel_event);
     if (status != RPC_S_OK) return status;
-
-    status = rpcrt4_http_check_response(out_request);
-    if (status != RPC_S_OK) return status;
-
-    InternetReadFile(out_request, packet, 20, &bytes_read);
-    /* FIXME: do something with retrieved data */
 
     hdr = RPCRT4_BuildHttpConnectHeader(0, TRUE, connection_uuid, out_pipe_uuid, NULL);
     if (!hdr) return RPC_S_OUT_OF_RESOURCES;
