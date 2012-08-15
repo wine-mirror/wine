@@ -257,7 +257,7 @@ static void enable_xinput2(void)
     XIEventMask mask;
     XIDeviceInfo *devices;
     unsigned char mask_bits[XIMaskLen(XI_LASTEVENT)];
-    int i, j;
+    int i, j, count;
 
     if (!xinput2_available) return;
 
@@ -279,21 +279,18 @@ static void enable_xinput2(void)
     for (i = 0; i < data->xi2_device_count; ++i)
     {
         if (devices[i].use != XIMasterPointer) continue;
-        for (j = 0; j < devices[i].num_classes; j++)
+        for (j = count = 0; j < devices[i].num_classes; j++)
         {
             XIValuatorClassInfo *class = (XIValuatorClassInfo *)devices[i].classes[j];
 
             if (devices[i].classes[j]->type != XIValuatorClass) continue;
-            if (class->number != 0 && class->number != 1) continue;
-            TRACE( "Device %u (%s) class %u num %u %f,%f res %u mode %u\n",
+            TRACE( "Device %u (%s) num %u %f,%f res %u mode %u label %s\n",
                    devices[i].deviceid, debugstr_a(devices[i].name),
-                   j, class->number, class->min, class->max, class->resolution, class->mode );
-            if (class->mode == XIModeAbsolute)
-            {
-                TRACE( "Device is absolute, not enabling XInput2\n" );
-                goto done;
-            }
+                   class->number, class->min, class->max, class->resolution, class->mode,
+                   XGetAtomName( data->display, class->label ));
+            if (class->label == x11drv_atom( Rel_X ) || class->label == x11drv_atom( Rel_Y )) count++;
         }
+        if (count < 2) continue;
         TRACE( "Using %u (%s) as core pointer\n",
                devices[i].deviceid, debugstr_a(devices[i].name) );
         data->xi2_core_pointer = devices[i].deviceid;
@@ -318,7 +315,6 @@ static void enable_xinput2(void)
         }
     }
 
-done:
     wine_tsx11_unlock();
 #endif
 }
@@ -1523,11 +1519,8 @@ static void X11DRV_RawMotion( XGenericEventCookie *xev )
     input.u.mi.dwFlags     = MOUSEEVENTF_MOVE;
     input.u.mi.time        = EVENT_x11_time_to_win32_time( event->time );
     input.u.mi.dwExtraInfo = 0;
-
-    if (XIMaskIsSet( event->valuators.mask, 0 )) dx = *values++;
-    if (XIMaskIsSet( event->valuators.mask, 1 )) dy = *values++;
-    input.u.mi.dx = dx;
-    input.u.mi.dy = dy;
+    input.u.mi.dx          = 0;
+    input.u.mi.dy          = 0;
 
     wine_tsx11_lock();
     for (i = 0; i < thread_data->xi2_device_count; ++i)
@@ -1538,13 +1531,24 @@ static void X11DRV_RawMotion( XGenericEventCookie *xev )
             XIValuatorClassInfo *class = (XIValuatorClassInfo *)devices[i].classes[j];
 
             if (devices[i].classes[j]->type != XIValuatorClass) continue;
-            if (class->min >= class->max) continue;
-            if (class->number == 0)
-                input.u.mi.dx = dx * (virtual_screen_rect.right - virtual_screen_rect.left)
-                                   / (class->max - class->min);
-            else if (class->number == 1)
-                input.u.mi.dy = dy * (virtual_screen_rect.bottom - virtual_screen_rect.top)
-                                   / (class->max - class->min);
+            if (XIMaskIsSet( event->valuators.mask, class->number ))
+            {
+                double val = *values++;
+                if (class->label == x11drv_atom( Rel_X ))
+                {
+                    input.u.mi.dx = dx = val;
+                    if (class->min < class->max)
+                        input.u.mi.dx = val * (virtual_screen_rect.right - virtual_screen_rect.left)
+                                            / (class->max - class->min);
+                }
+                else if (class->label == x11drv_atom( Rel_Y ))
+                {
+                    input.u.mi.dy = dy = val;
+                    if (class->min < class->max)
+                        input.u.mi.dy = val * (virtual_screen_rect.bottom - virtual_screen_rect.top)
+                                            / (class->max - class->min);
+                }
+            }
         }
         break;
     }
