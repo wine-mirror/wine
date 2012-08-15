@@ -246,9 +246,9 @@ typedef enum {
 } IOSB_openmode;
 
 typedef enum {
-    SEEKDIR_beg  = 0x1,
-    SEEKDIR_cur  = 0x2,
-    SEEKDIR_end  = 0x3,
+    SEEKDIR_beg  = 0x0,
+    SEEKDIR_cur  = 0x1,
+    SEEKDIR_end  = 0x2,
     SEEKDIR_mask = 0x3
 } IOSB_seekdir;
 

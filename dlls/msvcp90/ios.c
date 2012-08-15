@@ -12714,8 +12714,53 @@ int __thiscall strstreambuf_pbackfail(strstreambuf *this, int c)
 DEFINE_THISCALL_WRAPPER(strstreambuf_seekoff, 20)
 fpos_int* __thiscall strstreambuf_seekoff(strstreambuf *this, fpos_int *ret, streamoff off, int way, int mode)
 {
-    FIXME("(%p %p %ld %d %d) stub\n", this, ret, off, way, mode);
-    return NULL;
+    char *eback = basic_streambuf_char_eback(&this->base);
+    char *pptr = basic_streambuf_char_pptr(&this->base);
+    char *gptr = basic_streambuf_char_gptr(&this->base);
+
+    TRACE("(%p %p %ld %d %d)\n", this, ret, off, way, mode);
+
+    ret->off = 0;
+    ret->state = 0;
+
+    if(pptr > this->seekhigh)
+        this->seekhigh = pptr;
+
+    if((mode & OPENMODE_in) && gptr) {
+        if(way==SEEKDIR_cur && !(mode & OPENMODE_out))
+            off += gptr-eback;
+        else if(way == SEEKDIR_end)
+            off += this->seekhigh-eback;
+        else if(way != SEEKDIR_beg)
+            off = -1;
+
+        if(off<0 || off>this->seekhigh-eback) {
+            off = -1;
+        }else {
+            basic_streambuf_char_gbump(&this->base, eback-gptr+off);
+            if((mode & OPENMODE_out) && pptr) {
+                basic_streambuf_char_setp_next(&this->base, eback,
+                        gptr, basic_streambuf_char_epptr(&this->base));
+            }
+        }
+    }else if((mode & OPENMODE_out) && pptr) {
+        if(way == SEEKDIR_cur)
+            off += pptr-eback;
+        else if(way == SEEKDIR_end)
+            off += this->seekhigh-eback;
+        else if(way != SEEKDIR_beg)
+            off = -1;
+
+         if(off<0 || off>this->seekhigh-eback)
+             off = -1;
+         else
+             basic_streambuf_char_pbump(&this->base, eback-pptr+off);
+    }else {
+        off = -1;
+    }
+
+    ret->pos = off;
+    return ret;
 }
 
 /* ?seekpos@strstreambuf@std@@MAE?AV?$fpos@H@2@V32@H@Z */
@@ -12723,8 +12768,14 @@ fpos_int* __thiscall strstreambuf_seekoff(strstreambuf *this, fpos_int *ret, str
 DEFINE_THISCALL_WRAPPER(strstreambuf_seekpos, 36)
 fpos_int* __thiscall strstreambuf_seekpos(strstreambuf *this, fpos_int *ret, fpos_int pos, int mode)
 {
-    FIXME("(%p %p %s %d) stub\n", this, ret, debugstr_fpos_int(&pos), mode);
-    return NULL;
+    TRACE("(%p %p %s %d)\n", this, ret, debugstr_fpos_int(&pos), mode);
+
+    if(pos.off==0 && pos.pos==-1 && pos.state==0) {
+        *ret = pos;
+        return ret;
+    }
+
+    return strstreambuf_seekoff(this, ret, pos.off, SEEKDIR_beg, mode);
 }
 
 /* ?underflow@strstreambuf@std@@MAEHXZ */
