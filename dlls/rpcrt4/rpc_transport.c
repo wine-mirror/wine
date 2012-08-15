@@ -2384,12 +2384,14 @@ static RPC_STATUS rpcrt4_ncacn_http_open(RpcConnection* Connection)
     if (!httpc->in_request)
     {
         ERR("HttpOpenRequestW failed with error %d\n", GetLastError());
+        HeapFree(GetProcessHeap(), 0, url);
         return RPC_S_SERVER_UNAVAILABLE;
     }
     httpc->out_request = HttpOpenRequestW(httpc->session, wszVerbOut, url, NULL, NULL,
                                           wszAcceptTypes,
                                           (secure ? INTERNET_FLAG_SECURE : 0)|INTERNET_FLAG_KEEP_CONNECTION|INTERNET_FLAG_PRAGMA_NOCACHE,
                                           (DWORD_PTR)httpc->async_data);
+    HeapFree(GetProcessHeap(), 0, url);
     if (!httpc->out_request)
     {
         ERR("HttpOpenRequestW failed with error %d\n", GetLastError());
