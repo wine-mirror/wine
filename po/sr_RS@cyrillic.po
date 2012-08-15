@@ -12941,11 +12941,11 @@ msgstr "Изабери &све"
 
 #: winecfg.rc:98
 #, fuzzy
-msgid "ToolTip Background"
+msgid "Tooltip Background"
 msgstr "&Умножи позадину"
 
 #: winecfg.rc:99
-msgid "ToolTip Text"
+msgid "Tooltip Text"
 msgstr ""
 
 #: winecfg.rc:100

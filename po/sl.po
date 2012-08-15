@@ -12933,11 +12933,11 @@ msgid "Selection Text"
 msgstr "Besedilo izbire"
 
 #: winecfg.rc:98
-msgid "ToolTip Background"
+msgid "Tooltip Background"
 msgstr "Ozadje orodnega namiga"
 
 #: winecfg.rc:99
-msgid "ToolTip Text"
+msgid "Tooltip Text"
 msgstr "Besedilo orodnega namiga"
 
 #: winecfg.rc:100

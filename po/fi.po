@@ -12849,11 +12849,11 @@ msgid "Selection Text"
 msgstr "Valintojen teksti"
 
 #: winecfg.rc:98
-msgid "ToolTip Background"
+msgid "Tooltip Background"
 msgstr "Työkaluvihjeen tausta"
 
 #: winecfg.rc:99
-msgid "ToolTip Text"
+msgid "Tooltip Text"
 msgstr "Työkaluvihjeen teksti"
 
 #: winecfg.rc:100

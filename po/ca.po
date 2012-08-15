@@ -13007,11 +13007,11 @@ msgid "Selection Text"
 msgstr "Selecció--Text"
 
 #: winecfg.rc:98
-msgid "ToolTip Background"
+msgid "Tooltip Background"
 msgstr "Indicador de Funció--Fons"
 
 #: winecfg.rc:99
-msgid "ToolTip Text"
+msgid "Tooltip Text"
 msgstr "Indicador de Funció--Text"
 
 #: winecfg.rc:100

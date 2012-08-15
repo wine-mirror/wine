@@ -13022,12 +13022,12 @@ msgstr "טקסט הבחירה"
 
 #: winecfg.rc:98
 #, fuzzy
-msgid "ToolTip Background"
+msgid "Tooltip Background"
 msgstr "רקע חלונית העצה"
 
 #: winecfg.rc:99
 #, fuzzy
-msgid "ToolTip Text"
+msgid "Tooltip Text"
 msgstr "טקסט חלונית עצה"
 
 #: winecfg.rc:100

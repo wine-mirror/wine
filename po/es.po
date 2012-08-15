@@ -13000,11 +13000,11 @@ msgid "Selection Text"
 msgstr "Texto de la selección"
 
 #: winecfg.rc:98
-msgid "ToolTip Background"
+msgid "Tooltip Background"
 msgstr "Fondo del consejo"
 
 #: winecfg.rc:99
-msgid "ToolTip Text"
+msgid "Tooltip Text"
 msgstr "Texto del consejo"
 
 #: winecfg.rc:100

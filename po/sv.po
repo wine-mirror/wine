@@ -12772,11 +12772,11 @@ msgid "Selection Text"
 msgstr "Text för markering"
 
 #: winecfg.rc:98
-msgid "ToolTip Background"
+msgid "Tooltip Background"
 msgstr "Bakgrund för verktygstips"
 
 #: winecfg.rc:99
-msgid "ToolTip Text"
+msgid "Tooltip Text"
 msgstr "Text för verktygstips"
 
 #: winecfg.rc:100

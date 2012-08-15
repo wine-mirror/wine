@@ -12486,11 +12486,11 @@ msgstr "اختر ال&كل\tCtrl+A"
 
 #: winecfg.rc:98
 #, fuzzy
-msgid "ToolTip Background"
+msgid "Tooltip Background"
 msgstr "احفظ &ك‍..."
 
 #: winecfg.rc:99
-msgid "ToolTip Text"
+msgid "Tooltip Text"
 msgstr ""
 
 #: winecfg.rc:100

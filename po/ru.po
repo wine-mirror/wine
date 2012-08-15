@@ -12865,11 +12865,11 @@ msgid "Selection Text"
 msgstr "Выделение - текст"
 
 #: winecfg.rc:98
-msgid "ToolTip Background"
+msgid "Tooltip Background"
 msgstr "Подсказка - фон"
 
 #: winecfg.rc:99
-msgid "ToolTip Text"
+msgid "Tooltip Text"
 msgstr "Подсказка - текст"
 
 #: winecfg.rc:100

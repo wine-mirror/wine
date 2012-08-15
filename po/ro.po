@@ -13105,11 +13105,11 @@ msgid "Selection Text"
 msgstr "Text selecție"
 
 #: winecfg.rc:98
-msgid "ToolTip Background"
+msgid "Tooltip Background"
 msgstr "Fundal baloane de ajutor"
 
 #: winecfg.rc:99
-msgid "ToolTip Text"
+msgid "Tooltip Text"
 msgstr "Text baloane de ajutor"
 
 #: winecfg.rc:100

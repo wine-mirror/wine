@@ -13024,11 +13024,11 @@ msgid "Selection Text"
 msgstr "Písmo výběru"
 
 #: winecfg.rc:98
-msgid "ToolTip Background"
+msgid "Tooltip Background"
 msgstr "Pozadí tipu"
 
 #: winecfg.rc:99
-msgid "ToolTip Text"
+msgid "Tooltip Text"
 msgstr "Písmo tipu"
 
 #: winecfg.rc:100

@@ -13081,12 +13081,12 @@ msgid "Selection Text"
 msgstr "Selectie Tekst"
 
 #: winecfg.rc:98
-msgid "ToolTip Background"
-msgstr "ToolTip Achtergrond"
+msgid "Tooltip Background"
+msgstr "Tooltip Achtergrond"
 
 #: winecfg.rc:99
-msgid "ToolTip Text"
-msgstr "ToolTip Tekst"
+msgid "Tooltip Text"
+msgstr "Tooltip Tekst"
 
 #: winecfg.rc:100
 msgid "Window Background"

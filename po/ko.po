@@ -12824,11 +12824,11 @@ msgid "Selection Text"
 msgstr "선택된 문자"
 
 #: winecfg.rc:98
-msgid "ToolTip Background"
+msgid "Tooltip Background"
 msgstr "도구팁 배경"
 
 #: winecfg.rc:99
-msgid "ToolTip Text"
+msgid "Tooltip Text"
 msgstr "도구팁 문자"
 
 #: winecfg.rc:100

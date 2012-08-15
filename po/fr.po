@@ -13025,11 +13025,11 @@ msgid "Selection Text"
 msgstr "Texte de la sélection"
 
 #: winecfg.rc:98
-msgid "ToolTip Background"
+msgid "Tooltip Background"
 msgstr "Arrière-plan de l'infobulle"
 
 #: winecfg.rc:99
-msgid "ToolTip Text"
+msgid "Tooltip Text"
 msgstr "Texte de l'infobulle"
 
 #: winecfg.rc:100

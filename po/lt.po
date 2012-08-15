@@ -12897,11 +12897,11 @@ msgid "Selection Text"
 msgstr "Žymėjimo tekstas"
 
 #: winecfg.rc:98
-msgid "ToolTip Background"
+msgid "Tooltip Background"
 msgstr "Patarimo fonas"
 
 #: winecfg.rc:99
-msgid "ToolTip Text"
+msgid "Tooltip Text"
 msgstr "Patarimo tekstas"
 
 #: winecfg.rc:100

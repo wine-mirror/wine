@@ -12912,11 +12912,11 @@ msgid "Selection Text"
 msgstr "Виділення - текст"
 
 #: winecfg.rc:98
-msgid "ToolTip Background"
+msgid "Tooltip Background"
 msgstr "Підказка - фон"
 
 #: winecfg.rc:99
-msgid "ToolTip Text"
+msgid "Tooltip Text"
 msgstr "Підказка - текст"
 
 #: winecfg.rc:100

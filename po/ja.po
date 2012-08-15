@@ -12838,11 +12838,11 @@ msgid "Selection Text"
 msgstr "選択項目のテキスト"
 
 #: winecfg.rc:98
-msgid "ToolTip Background"
+msgid "Tooltip Background"
 msgstr "ヒントの背景"
 
 #: winecfg.rc:99
-msgid "ToolTip Text"
+msgid "Tooltip Text"
 msgstr "ヒントのテキスト"
 
 #: winecfg.rc:100

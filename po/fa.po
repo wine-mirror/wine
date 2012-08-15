@@ -12487,11 +12487,11 @@ msgstr "انتخاب &همه\tCtrl+A"
 
 #: winecfg.rc:98
 #, fuzzy
-msgid "ToolTip Background"
+msgid "Tooltip Background"
 msgstr "ذخیره &به نام..."
 
 #: winecfg.rc:99
-msgid "ToolTip Text"
+msgid "Tooltip Text"
 msgstr ""
 
 #: winecfg.rc:100
