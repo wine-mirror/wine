@@ -997,9 +997,10 @@ static HRESULT DirectSoundCaptureDevice_Initialize(
  */
 typedef struct IDirectSoundCaptureImpl
 {
-    IUnknown                 IUnknown_iface;  /* Separate refcount */
+    IUnknown                 IUnknown_inner;
     IDirectSoundCapture      IDirectSoundCapture_iface;
     LONG                     ref, refdsc, numIfaces;
+    IUnknown                 *outer_unk;        /* internal */
     DirectSoundCaptureDevice *device;
     BOOL                     has_dsc8;
 } IDirectSoundCaptureImpl;
@@ -1017,7 +1018,7 @@ static void capture_destroy(IDirectSoundCaptureImpl *This)
  */
 static inline IDirectSoundCaptureImpl *impl_from_IUnknown(IUnknown *iface)
 {
-    return CONTAINING_RECORD(iface, IDirectSoundCaptureImpl, IUnknown_iface);
+    return CONTAINING_RECORD(iface, IDirectSoundCaptureImpl, IUnknown_inner);
 }
 
 static HRESULT WINAPI IUnknownImpl_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
@@ -1033,7 +1034,7 @@ static HRESULT WINAPI IUnknownImpl_QueryInterface(IUnknown *iface, REFIID riid, 
     *ppv = NULL;
 
     if (IsEqualIID(riid, &IID_IUnknown))
-        *ppv = &This->IUnknown_iface;
+        *ppv = &This->IUnknown_inner;
     else if (IsEqualIID(riid, &IID_IDirectSoundCapture))
         *ppv = &This->IDirectSoundCapture_iface;
     else {
@@ -1089,7 +1090,7 @@ static HRESULT WINAPI IDirectSoundCaptureImpl_QueryInterface(IDirectSoundCapture
 {
     IDirectSoundCaptureImpl *This = impl_from_IDirectSoundCapture(iface);
     TRACE("(%p,%s,%p)\n", iface, debugstr_guid(riid), ppv);
-    return IUnknown_QueryInterface(&This->IUnknown_iface, riid, ppv);
+    return IUnknown_QueryInterface(This->outer_unk, riid, ppv);
 }
 
 static ULONG WINAPI IDirectSoundCaptureImpl_AddRef(IDirectSoundCapture *iface)
@@ -1219,7 +1220,7 @@ static const IDirectSoundCaptureVtbl dscvt =
     IDirectSoundCaptureImpl_Initialize
 };
 
-static HRESULT IDirectSoundCaptureImpl_Create(REFIID riid, void **ppv, BOOL has_dsc8)
+HRESULT IDirectSoundCaptureImpl_Create(IUnknown *outer_unk, REFIID riid, void **ppv, BOOL has_dsc8)
 {
     IDirectSoundCaptureImpl *obj;
     HRESULT hr;
@@ -1235,7 +1236,7 @@ static HRESULT IDirectSoundCaptureImpl_Create(REFIID riid, void **ppv, BOOL has_
 
     setup_dsound_options();
 
-    obj->IUnknown_iface.lpVtbl = &unk_vtbl;
+    obj->IUnknown_inner.lpVtbl = &unk_vtbl;
     obj->IDirectSoundCapture_iface.lpVtbl = &dscvt;
     obj->ref = 1;
     obj->refdsc = 0;
@@ -1243,20 +1244,26 @@ static HRESULT IDirectSoundCaptureImpl_Create(REFIID riid, void **ppv, BOOL has_
     obj->device = NULL;
     obj->has_dsc8 = has_dsc8;
 
-    hr = IUnknown_QueryInterface(&obj->IUnknown_iface, riid, ppv);
-    IUnknown_Release(&obj->IUnknown_iface);
+    /* COM aggregation supported only internally */
+    if (outer_unk)
+        obj->outer_unk = outer_unk;
+    else
+        obj->outer_unk = &obj->IUnknown_inner;
+
+    hr = IUnknown_QueryInterface(&obj->IUnknown_inner, riid, ppv);
+    IUnknown_Release(&obj->IUnknown_inner);
 
     return hr;
 }
 
 HRESULT DSOUND_CaptureCreate(REFIID riid, void **ppv)
 {
-    return IDirectSoundCaptureImpl_Create(riid, ppv, FALSE);
+    return IDirectSoundCaptureImpl_Create(NULL, riid, ppv, FALSE);
 }
 
 HRESULT DSOUND_CaptureCreate8(REFIID riid, void **ppv)
 {
-    return IDirectSoundCaptureImpl_Create(riid, ppv, TRUE);
+    return IDirectSoundCaptureImpl_Create(NULL, riid, ppv, TRUE);
 }
 
 /***************************************************************************

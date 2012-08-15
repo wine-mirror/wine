@@ -301,6 +301,7 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb) DECLSPEC_HIDDEN;
  
 HRESULT DSOUND_CaptureCreate(REFIID riid, void **ppv) DECLSPEC_HIDDEN;
 HRESULT DSOUND_CaptureCreate8(REFIID riid, void **ppv) DECLSPEC_HIDDEN;
+HRESULT IDirectSoundCaptureImpl_Create(IUnknown *outer_unk, REFIID riid, void **ppv, BOOL has_dsc8) DECLSPEC_HIDDEN;
 
 #define STATE_STOPPED   0
 #define STATE_STARTING  1
