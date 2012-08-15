@@ -3674,6 +3674,103 @@ static void test_transform(void)
     }
 }
 
+/* Many people on the net ask why there is so much difference in rendered
+ * text height between gdiplus and gdi32, this test suggests an answer to
+ * that question. Important: this test assumes that font dpi == device dpi.
+ */
+static void test_font_height_scaling(void)
+{
+    static const WCHAR tahomaW[] = { 'T','a','h','o','m','a',0 };
+    static const WCHAR string[] = { '1','2','3','4','5','6','7',0 };
+    HDC hdc;
+    GpStringFormat *format;
+    GpGraphics *graphics;
+    GpFontFamily *family;
+    GpFont *font;
+    GpStatus status;
+    RectF bounds, rect;
+    REAL height, dpi;
+    PointF ptf;
+    GpUnit gfx_unit, font_unit;
+
+    status = GdipCreateStringFormat(0, LANG_NEUTRAL, &format);
+    expect(Ok, status);
+    status = GdipCreateFontFamilyFromName(tahomaW, NULL, &family);
+    expect(Ok, status);
+
+    hdc = CreateCompatibleDC(0);
+    status = GdipCreateFromHDC(hdc, &graphics);
+
+    status = GdipGetDpiY(graphics, &dpi);
+    expect(Ok, status);
+
+    /* UnitPixel = 2, UnitPoint = 3, UnitInch = 4, UnitDocument = 5, UnitMillimeter = 6 */
+    /* UnitPixel as a font base unit is not tested because it drastically
+       differs in behaviour */
+    for (font_unit = 3; font_unit <= 6; font_unit++)
+    {
+        /* There is a bug somewhere in native gdiplus that leads
+         * to extra conversion from points to pixels, so in order
+         * to get a 100 pixel text height it's needed to convert
+         * 100 pixels to points, and only then convert the result
+         * to desired units. The scale factor is 1.333333 at 96 dpi!
+         * Perhaps an implementor took name of GdipTransformPoints
+         * directly and assumed that it takes value in *points*?
+         */
+        status = GdipSetPageUnit(graphics, UnitPoint);
+        expect(Ok, status);
+        ptf.X = 0;
+        ptf.Y = 100.0;
+        status = GdipTransformPoints(graphics, CoordinateSpaceWorld, CoordinateSpaceDevice, &ptf, 1);
+        expect(Ok, status);
+        trace("100.0 pixels, %.1f dpi => %f points\n", dpi, ptf.Y);
+        status = GdipSetPageUnit(graphics, font_unit);
+        expect(Ok, status);
+        status = GdipTransformPoints(graphics, CoordinateSpaceWorld, CoordinateSpaceDevice, &ptf, 1);
+        expect(Ok, status);
+        height = ptf.Y;
+        trace("height %f units\n", height);
+        status = GdipCreateFont(family, height, FontStyleRegular, font_unit, &font);
+        expect(Ok, status);
+
+        /* UnitPixel = 2, UnitPoint = 3, UnitInch = 4, UnitDocument = 5, UnitMillimeter = 6 */
+        for (gfx_unit = 2; gfx_unit <= 6; gfx_unit++)
+        {
+            int match;
+
+            status = GdipSetPageUnit(graphics, gfx_unit);
+            expect(Ok, status);
+
+            rect.X = 0.0;
+            rect.Y = 0.0;
+            rect.Width = 0;
+            rect.Height = 0;
+            bounds.X = 0.0;
+            bounds.Y = 0.0;
+            bounds.Width = 0;
+            bounds.Height = 0;
+            status = GdipMeasureString(graphics, string, -1, font, &rect, format, &bounds, NULL, NULL);
+            expect(Ok, status);
+
+            ptf.X = 0;
+            ptf.Y = bounds.Height;
+            status = GdipTransformPoints(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, &ptf, 1);
+            expect(Ok, status);
+            match = fabs(100.0 - ptf.Y) <= 1.0;
+            ok(match || broken(!match) /* before win7 */, "Expected 100.0, got %f\n", ptf.Y);
+
+            /* verify the result */
+            ptf.Y = units_to_pixels(bounds.Height, gfx_unit, dpi);
+            match = fabs(100.0 - ptf.Y) <= 1.1;
+            ok(match || broken(!match) /* before win7 */, "Expected 100.0, got %f\n", ptf.Y);
+        }
+    }
+
+    status = GdipDeleteGraphics(graphics);
+    expect(Ok, status);
+    DeleteDC(hdc);
+}
+
 START_TEST(graphics)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -3700,6 +3797,7 @@ START_TEST(graphics)
 
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
+    test_font_height_scaling();
     test_transform();
     test_GdipMeasureString();
     test_constructor_destructor();
