@@ -13544,7 +13544,7 @@ msgid "Filter by&..."
 msgstr "Filtrare după&..."
 
 #: winefile.rc:63
-msgid "&Drivebar"
+msgid "&Drive Bar"
 msgstr "Bara &de unitate"
 
 #: winefile.rc:65

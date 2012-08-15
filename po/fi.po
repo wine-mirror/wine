@@ -13289,7 +13289,7 @@ msgid "Filter by&..."
 msgstr "Suodata..."
 
 #: winefile.rc:63
-msgid "&Drivebar"
+msgid "&Drive Bar"
 msgstr "&Asemapalkki"
 
 #: winefile.rc:65

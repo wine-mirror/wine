@@ -13447,7 +13447,7 @@ msgid "Filter by&..."
 msgstr "Ordina per &..."
 
 #: winefile.rc:63
-msgid "&Drivebar"
+msgid "&Drive Bar"
 msgstr "Barra delle &unità"
 
 #: winefile.rc:65

@@ -13351,7 +13351,7 @@ msgid "Filter by&..."
 msgstr "Egyedi rendezés &..."
 
 #: winefile.rc:63
-msgid "&Drivebar"
+msgid "&Drive Bar"
 msgstr "&Lemeztár"
 
 #: winefile.rc:65

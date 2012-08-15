@@ -13473,7 +13473,7 @@ msgid "Filter by&..."
 msgstr "Filtrer &par..."
 
 #: winefile.rc:63
-msgid "&Drivebar"
+msgid "&Drive Bar"
 msgstr "Barre de &lecteur"
 
 #: winefile.rc:65

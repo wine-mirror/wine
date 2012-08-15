@@ -13279,7 +13279,7 @@ msgid "Filter by&..."
 msgstr "フィルタ(&.)..."
 
 #: winefile.rc:63
-msgid "&Drivebar"
+msgid "&Drive Bar"
 msgstr "ドライブ バー(&D)"
 
 #: winefile.rc:65

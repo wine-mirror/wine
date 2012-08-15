@@ -12859,7 +12859,7 @@ msgid "Filter by&..."
 msgstr "&Apontiaedje del scrirece..."
 
 #: winefile.rc:63
-msgid "&Drivebar"
+msgid "&Drive Bar"
 msgstr ""
 
 #: winefile.rc:65

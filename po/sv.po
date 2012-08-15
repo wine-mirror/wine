@@ -13214,7 +13214,7 @@ msgid "Filter by&..."
 msgstr "&Filtrera efter..."
 
 #: winefile.rc:63
-msgid "&Drivebar"
+msgid "&Drive Bar"
 msgstr "&Enhetsfält"
 
 #: winefile.rc:65

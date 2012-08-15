@@ -13137,7 +13137,7 @@ msgid "Filter by&..."
 msgstr "篩選依照…(&.)"
 
 #: winefile.rc:63
-msgid "&Drivebar"
+msgid "&Drive Bar"
 msgstr "儲存裝置列表(&D)"
 
 #: winefile.rc:65

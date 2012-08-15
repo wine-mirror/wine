@@ -13376,7 +13376,7 @@ msgid "Filter by&..."
 msgstr "Filtriraj &po ..."
 
 #: winefile.rc:63
-msgid "&Drivebar"
+msgid "&Drive Bar"
 msgstr "Vrstica po&gonov"
 
 #: winefile.rc:65

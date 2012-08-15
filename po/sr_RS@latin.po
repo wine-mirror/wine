@@ -13540,7 +13540,7 @@ msgid "Filter by&..."
 msgstr "Štampač &podešavanje..."
 
 #: winefile.rc:63
-msgid "&Drivebar"
+msgid "&Drive Bar"
 msgstr ""
 
 #: winefile.rc:65

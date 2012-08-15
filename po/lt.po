@@ -13339,7 +13339,7 @@ msgid "Filter by&..."
 msgstr "Filtruoti pagal&..."
 
 #: winefile.rc:63
-msgid "&Drivebar"
+msgid "&Drive Bar"
 msgstr "&Diskų juosta"
 
 #: winefile.rc:65

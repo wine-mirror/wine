@@ -13465,7 +13465,7 @@ msgid "Filter by&..."
 msgstr "Třídit podle &..."
 
 #: winefile.rc:63
-msgid "&Drivebar"
+msgid "&Drive Bar"
 msgstr "&Panel zařízení"
 
 #: winefile.rc:65

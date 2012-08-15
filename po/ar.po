@@ -12917,7 +12917,7 @@ msgid "Filter by&..."
 msgstr "إعداد الطاب&عة..."
 
 #: winefile.rc:63
-msgid "&Drivebar"
+msgid "&Drive Bar"
 msgstr ""
 
 #: winefile.rc:65

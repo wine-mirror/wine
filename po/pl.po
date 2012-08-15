@@ -13343,7 +13343,7 @@ msgid "Filter by&..."
 msgstr "Filtruj widok &..."
 
 #: winefile.rc:63
-msgid "&Drivebar"
+msgid "&Drive Bar"
 msgstr "Pasek &dysków"
 
 #: winefile.rc:65

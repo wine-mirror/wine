@@ -13403,7 +13403,7 @@ msgid "Filter by&..."
 msgstr "Angaben auswählen&..."
 
 #: winefile.rc:63
-msgid "&Drivebar"
+msgid "&Drive Bar"
 msgstr "Lauf&werkleiste"
 
 #: winefile.rc:65

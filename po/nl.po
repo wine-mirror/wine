@@ -13535,7 +13535,7 @@ msgid "Filter by&..."
 msgstr "Sorteer op &..."
 
 #: winefile.rc:63
-msgid "&Drivebar"
+msgid "&Drive Bar"
 msgstr "&Schijfbalk"
 
 #: winefile.rc:65

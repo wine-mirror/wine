@@ -13495,7 +13495,7 @@ msgid "Filter by&..."
 msgstr "סינון לפי&..."
 
 #: winefile.rc:63
-msgid "&Drivebar"
+msgid "&Drive Bar"
 msgstr "סרגל הכוננים"
 
 #: winefile.rc:65

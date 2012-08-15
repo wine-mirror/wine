@@ -12800,7 +12800,7 @@ msgid "Filter by&..."
 msgstr "过滤标准&..."
 
 #: winefile.rc:63
-msgid "&Drivebar"
+msgid "&Drive Bar"
 msgstr "驱动器列表(&D)"
 
 #: winefile.rc:65

@@ -13007,7 +13007,7 @@ msgid "Filter by&..."
 msgstr "Süzgeç &..."
 
 #: winefile.rc:63
-msgid "&Drivebar"
+msgid "&Drive Bar"
 msgstr "&Sürücü Çubuğu"
 
 #: winefile.rc:65

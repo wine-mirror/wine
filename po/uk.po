@@ -13349,7 +13349,7 @@ msgid "Filter by&..."
 msgstr "Фільтрувати за&..."
 
 #: winefile.rc:63
-msgid "&Drivebar"
+msgid "&Drive Bar"
 msgstr "Панель &дисків"
 
 #: winefile.rc:65

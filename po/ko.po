@@ -13265,7 +13265,7 @@ msgid "Filter by&..."
 msgstr "로 걸려내기&..."
 
 #: winefile.rc:63
-msgid "&Drivebar"
+msgid "&Drive Bar"
 msgstr "드라이브 바(&D)"
 
 #: winefile.rc:65
