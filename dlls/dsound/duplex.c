@@ -578,7 +578,7 @@ IDirectSoundFullDuplexImpl_Initialize(
         return hr;
     }
 
-    hr = DSOUND_CaptureCreate8(&IID_IDirectSoundCapture8, &This->capture_device);
+    hr = DSOUND_CaptureCreate8(&IID_IDirectSoundCapture8, (void**)&This->capture_device);
     if (SUCCEEDED(hr))
         hr = IDirectSoundCapture_Initialize(This->capture_device, pCaptureGuid);
     if (hr != DS_OK) {

@@ -721,8 +721,8 @@ static const IClassFactoryVtbl DSCF_Vtbl = {
 static IClassFactoryImpl DSOUND_CF[] = {
     { { &DSCF_Vtbl }, &CLSID_DirectSound, DSOUND_Create },
     { { &DSCF_Vtbl }, &CLSID_DirectSound8, DSOUND_Create8 },
-    { { &DSCF_Vtbl }, &CLSID_DirectSoundCapture, (FnCreateInstance)DSOUND_CaptureCreate },
-    { { &DSCF_Vtbl }, &CLSID_DirectSoundCapture8, (FnCreateInstance)DSOUND_CaptureCreate8 },
+    { { &DSCF_Vtbl }, &CLSID_DirectSoundCapture, DSOUND_CaptureCreate },
+    { { &DSCF_Vtbl }, &CLSID_DirectSoundCapture8, DSOUND_CaptureCreate8 },
     { { &DSCF_Vtbl }, &CLSID_DirectSoundFullDuplex, (FnCreateInstance)DSOUND_FullDuplexCreate },
     { { &DSCF_Vtbl }, &CLSID_DirectSoundPrivate, (FnCreateInstance)IKsPrivatePropertySetImpl_Create },
     { { NULL }, NULL, NULL }
