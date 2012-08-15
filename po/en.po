@@ -4053,8 +4053,8 @@ msgid "Same drive.\n"
 msgstr "Same drive.\n"
 
 #: winerror.mc:586
-msgid "Not toplevel directory.\n"
-msgstr "Not toplevel directory.\n"
+msgid "Not top-level directory.\n"
+msgstr "Not top-level directory.\n"
 
 #: winerror.mc:591
 msgid "Directory is not empty.\n"
@@ -5581,12 +5581,12 @@ msgid "Control ID not found.\n"
 msgstr "Control ID not found.\n"
 
 #: winerror.mc:2506
-msgid "Invalid combobox message.\n"
-msgstr "Invalid combobox message.\n"
+msgid "Invalid combo box message.\n"
+msgstr "Invalid combo box message.\n"
 
 #: winerror.mc:2511
-msgid "Not a combobox window.\n"
-msgstr "Not a combobox window.\n"
+msgid "Not a combo box window.\n"
+msgstr "Not a combo box window.\n"
 
 #: winerror.mc:2516
 msgid "Invalid edit height.\n"

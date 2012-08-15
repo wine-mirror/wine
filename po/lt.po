@@ -4063,7 +4063,7 @@ msgid "Same drive.\n"
 msgstr "Tas pats kaupiklis.\n"
 
 #: winerror.mc:586
-msgid "Not toplevel directory.\n"
+msgid "Not top-level directory.\n"
 msgstr "Ne aukščiausio lygio katalogas.\n"
 
 #: winerror.mc:591
@@ -5593,11 +5593,11 @@ msgid "Control ID not found.\n"
 msgstr "Valdiklio identifikatorius nerastas.\n"
 
 #: winerror.mc:2506
-msgid "Invalid combobox message.\n"
+msgid "Invalid combo box message.\n"
 msgstr "Neteisingas išskleidžiamojo sąrašo pranešimas.\n"
 
 #: winerror.mc:2511
-msgid "Not a combobox window.\n"
+msgid "Not a combo box window.\n"
 msgstr "Ne išskleidžiamojo sąrašo langas.\n"
 
 #: winerror.mc:2516

@@ -4079,7 +4079,7 @@ msgid "Same drive.\n"
 msgstr "Même lecteur.\n"
 
 #: winerror.mc:586
-msgid "Not toplevel directory.\n"
+msgid "Not top-level directory.\n"
 msgstr "Pas un répertoire racine.\n"
 
 #: winerror.mc:591
@@ -5612,11 +5612,11 @@ msgid "Control ID not found.\n"
 msgstr "ID de contrôle non trouvable.\n"
 
 #: winerror.mc:2506
-msgid "Invalid combobox message.\n"
+msgid "Invalid combo box message.\n"
 msgstr "Message de boîte combinée invalide.\n"
 
 #: winerror.mc:2511
-msgid "Not a combobox window.\n"
+msgid "Not a combo box window.\n"
 msgstr "Cette fenêtre n'est pas une boîte combinée.\n"
 
 #: winerror.mc:2516

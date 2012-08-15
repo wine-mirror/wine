@@ -4081,7 +4081,7 @@ msgid "Same drive.\n"
 msgstr "Samme drev.\n"
 
 #: winerror.mc:586
-msgid "Not toplevel directory.\n"
+msgid "Not top-level directory.\n"
 msgstr "Ikke top niveau mappe.\n"
 
 #: winerror.mc:591
@@ -5610,11 +5610,11 @@ msgid "Control ID not found.\n"
 msgstr "Kontrol ID ikke fundet.\n"
 
 #: winerror.mc:2506
-msgid "Invalid combobox message.\n"
+msgid "Invalid combo box message.\n"
 msgstr "Ugyldig kombinationsboks besked.\n"
 
 #: winerror.mc:2511
-msgid "Not a combobox window.\n"
+msgid "Not a combo box window.\n"
 msgstr "Ikke et kombinationsboks vindue.\n"
 
 #: winerror.mc:2516

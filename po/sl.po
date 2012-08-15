@@ -4101,7 +4101,7 @@ msgid "Same drive.\n"
 msgstr "Enak pogon.\n"
 
 #: winerror.mc:586
-msgid "Not toplevel directory.\n"
+msgid "Not top-level directory.\n"
 msgstr "Ni mapa vrhnje ravni.\n"
 
 #: winerror.mc:591
@@ -5629,11 +5629,11 @@ msgid "Control ID not found.\n"
 msgstr "Nadzornega ID-ja ni mogoče najti.\n"
 
 #: winerror.mc:2506
-msgid "Invalid combobox message.\n"
+msgid "Invalid combo box message.\n"
 msgstr "Neveljavno sporočilo izbirnega polja.\n"
 
 #: winerror.mc:2511
-msgid "Not a combobox window.\n"
+msgid "Not a combo box window.\n"
 msgstr "Ni okno izbirnega polja.\n"
 
 #: winerror.mc:2516

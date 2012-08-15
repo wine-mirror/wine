@@ -4050,7 +4050,7 @@ msgid "Same drive.\n"
 msgstr "Sama asema.\n"
 
 #: winerror.mc:586
-msgid "Not toplevel directory.\n"
+msgid "Not top-level directory.\n"
 msgstr "Ei ylätason hakemisto.\n"
 
 #: winerror.mc:591
@@ -5578,11 +5578,11 @@ msgid "Control ID not found.\n"
 msgstr "Kontrollin ID:tä ei löydy.\n"
 
 #: winerror.mc:2506
-msgid "Invalid combobox message.\n"
+msgid "Invalid combo box message.\n"
 msgstr "Virheellinen viesti yhdistelmälaatikolle.\n"
 
 #: winerror.mc:2511
-msgid "Not a combobox window.\n"
+msgid "Not a combo box window.\n"
 msgstr "Ikkuna ei ole yhdistelmälaatikko.\n"
 
 #: winerror.mc:2516

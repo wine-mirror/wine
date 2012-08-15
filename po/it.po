@@ -4112,8 +4112,8 @@ msgid "Same drive.\n"
 msgstr "Stessa unità.\n"
 
 #: winerror.mc:586
-msgid "Not toplevel directory.\n"
-msgstr "Cartella non toplevel.\n"
+msgid "Not top-level directory.\n"
+msgstr "Cartella non top-level.\n"
 
 #: winerror.mc:591
 msgid "Directory is not empty.\n"
@@ -5641,12 +5641,12 @@ msgid "Control ID not found.\n"
 msgstr "ID del controllo non trovato.\n"
 
 #: winerror.mc:2506
-msgid "Invalid combobox message.\n"
-msgstr "Messaggio della combobox non valido.\n"
+msgid "Invalid combo box message.\n"
+msgstr "Messaggio della combo box non valido.\n"
 
 #: winerror.mc:2511
-msgid "Not a combobox window.\n"
-msgstr "Non una finestra combobox.\n"
+msgid "Not a combo box window.\n"
+msgstr "Non una finestra combo box.\n"
 
 #: winerror.mc:2516
 msgid "Invalid edit height.\n"

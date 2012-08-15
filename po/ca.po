@@ -4112,7 +4112,7 @@ msgid "Same drive.\n"
 msgstr "És la mateixa unitat.\n"
 
 #: winerror.mc:586
-msgid "Not toplevel directory.\n"
+msgid "Not top-level directory.\n"
 msgstr "No és un directori superior.\n"
 
 #: winerror.mc:591
@@ -5640,11 +5640,11 @@ msgid "Control ID not found.\n"
 msgstr "ID de control no trobat.\n"
 
 #: winerror.mc:2506
-msgid "Invalid combobox message.\n"
+msgid "Invalid combo box message.\n"
 msgstr "Missatge de quadre combinat invàlid.\n"
 
 #: winerror.mc:2511
-msgid "Not a combobox window.\n"
+msgid "Not a combo box window.\n"
 msgstr "No és finestra de quadre combinat.\n"
 
 #: winerror.mc:2516

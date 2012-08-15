@@ -581,7 +581,7 @@ Same drive.
 MessageId=144
 SymbolicName=ERROR_DIR_NOT_ROOT
 Language=ENU
-Not toplevel directory.
+Not top-level directory.
 .
 MessageId=145
 SymbolicName=ERROR_DIR_NOT_EMPTY
@@ -2501,12 +2501,12 @@ Control ID not found.
 MessageId=1422
 SymbolicName=ERROR_INVALID_COMBOBOX_MESSAGE
 Language=ENU
-Invalid combobox message.
+Invalid combo box message.
 .
 MessageId=1423
 SymbolicName=ERROR_WINDOW_NOT_COMBOBOX
 Language=ENU
-Not a combobox window.
+Not a combo box window.
 .
 MessageId=1424
 SymbolicName=ERROR_INVALID_EDIT_HEIGHT

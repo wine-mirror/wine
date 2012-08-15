@@ -4099,7 +4099,7 @@ msgid "Same drive.\n"
 msgstr "Ugyanaz a meghajtó.\n"
 
 #: winerror.mc:586
-msgid "Not toplevel directory.\n"
+msgid "Not top-level directory.\n"
 msgstr "Nem a legfelsőbbszintű mappa.\n"
 
 #: winerror.mc:591
@@ -5627,11 +5627,11 @@ msgid "Control ID not found.\n"
 msgstr "Vezérlő ID nem található.\n"
 
 #: winerror.mc:2506
-msgid "Invalid combobox message.\n"
+msgid "Invalid combo box message.\n"
 msgstr "Érvénytelen legördőlő menü üzenet.\n"
 
 #: winerror.mc:2511
-msgid "Not a combobox window.\n"
+msgid "Not a combo box window.\n"
 msgstr "Nem egy legördülő menü ablak.\n"
 
 #: winerror.mc:2516

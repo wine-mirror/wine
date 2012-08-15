@@ -4075,7 +4075,7 @@ msgid "Same drive.\n"
 msgstr "Ten sam napęd.\n"
 
 #: winerror.mc:586
-msgid "Not toplevel directory.\n"
+msgid "Not top-level directory.\n"
 msgstr "Folder nienadrzędny.\n"
 
 #: winerror.mc:591
@@ -5603,12 +5603,12 @@ msgid "Control ID not found.\n"
 msgstr "Nie znaleziono identyfikatora control'a.\n"
 
 #: winerror.mc:2506
-msgid "Invalid combobox message.\n"
-msgstr "Niepoprawna wiadomość combobox'a.\n"
+msgid "Invalid combo box message.\n"
+msgstr "Niepoprawna wiadomość combo box'a.\n"
 
 #: winerror.mc:2511
-msgid "Not a combobox window.\n"
-msgstr "To nie jest okno combobox.\n"
+msgid "Not a combo box window.\n"
+msgstr "To nie jest okno combo box.\n"
 
 #: winerror.mc:2516
 msgid "Invalid edit height.\n"

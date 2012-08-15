@@ -4047,7 +4047,7 @@ msgid "Same drive.\n"
 msgstr "同じドライブです。\n"
 
 #: winerror.mc:586
-msgid "Not toplevel directory.\n"
+msgid "Not top-level directory.\n"
 msgstr "最上位のディレクトリではありません。\n"
 
 #: winerror.mc:591
@@ -5576,11 +5576,11 @@ msgid "Control ID not found.\n"
 msgstr "コントロール識別子が見つかりません。\n"
 
 #: winerror.mc:2506
-msgid "Invalid combobox message.\n"
+msgid "Invalid combo box message.\n"
 msgstr "コンボボックス メッセージが正しくありません。\n"
 
 #: winerror.mc:2511
-msgid "Not a combobox window.\n"
+msgid "Not a combo box window.\n"
 msgstr "コンボボックス ウィンドウではありません。\n"
 
 #: winerror.mc:2516

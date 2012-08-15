@@ -4070,7 +4070,7 @@ msgid "Same drive.\n"
 msgstr "То же самое устройство.\n"
 
 #: winerror.mc:586
-msgid "Not toplevel directory.\n"
+msgid "Not top-level directory.\n"
 msgstr "Каталог не является корневым.\n"
 
 #: winerror.mc:591
@@ -5598,11 +5598,11 @@ msgid "Control ID not found.\n"
 msgstr "Код элемента управления не найден.\n"
 
 #: winerror.mc:2506
-msgid "Invalid combobox message.\n"
+msgid "Invalid combo box message.\n"
 msgstr "Неверное сообщение для поля со списком.\n"
 
 #: winerror.mc:2511
-msgid "Not a combobox window.\n"
+msgid "Not a combo box window.\n"
 msgstr "Тип окна не \"поле со списком\".\n"
 
 #: winerror.mc:2516

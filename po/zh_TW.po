@@ -4009,7 +4009,9 @@ msgid "Same drive.\n"
 msgstr "相同儲存裝置。\n"
 
 #: winerror.mc:586
-msgid "Not toplevel directory.\n"
+#, fuzzy
+#| msgid "Not toplevel directory.\n"
+msgid "Not top-level directory.\n"
 msgstr "並非最上層目錄。\n"
 
 #: winerror.mc:591
@@ -5537,11 +5539,11 @@ msgid "Control ID not found.\n"
 msgstr "找不到控制識別號。\n"
 
 #: winerror.mc:2506
-msgid "Invalid combobox message.\n"
+msgid "Invalid combo box message.\n"
 msgstr "無效的複合方塊訊息。\n"
 
 #: winerror.mc:2511
-msgid "Not a combobox window.\n"
+msgid "Not a combo box window.\n"
 msgstr "不是複合方塊視窗。\n"
 
 #: winerror.mc:2516

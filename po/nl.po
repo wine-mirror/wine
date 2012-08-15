@@ -4129,8 +4129,8 @@ msgid "Same drive.\n"
 msgstr "Zelfde schijf.\n"
 
 #: winerror.mc:586
-msgid "Not toplevel directory.\n"
-msgstr "Geen toplevel directory.\n"
+msgid "Not top-level directory.\n"
+msgstr "Geen top-level directory.\n"
 
 #: winerror.mc:591
 msgid "Directory is not empty.\n"
@@ -5657,12 +5657,12 @@ msgid "Control ID not found.\n"
 msgstr "Control ID niet gevonden.\n"
 
 #: winerror.mc:2506
-msgid "Invalid combobox message.\n"
-msgstr "Ongeldig comboboxbericht.\n"
+msgid "Invalid combo box message.\n"
+msgstr "Ongeldig combo boxbericht.\n"
 
 #: winerror.mc:2511
-msgid "Not a combobox window.\n"
-msgstr "Geen comboboxvenster.\n"
+msgid "Not a combo box window.\n"
+msgstr "Geen combo boxvenster.\n"
 
 #: winerror.mc:2516
 msgid "Invalid edit height.\n"

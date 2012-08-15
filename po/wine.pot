@@ -3927,7 +3927,7 @@ msgid "Same drive.\n"
 msgstr ""
 
 #: winerror.mc:586
-msgid "Not toplevel directory.\n"
+msgid "Not top-level directory.\n"
 msgstr ""
 
 #: winerror.mc:591
@@ -5455,11 +5455,11 @@ msgid "Control ID not found.\n"
 msgstr ""
 
 #: winerror.mc:2506
-msgid "Invalid combobox message.\n"
+msgid "Invalid combo box message.\n"
 msgstr ""
 
 #: winerror.mc:2511
-msgid "Not a combobox window.\n"
+msgid "Not a combo box window.\n"
 msgstr ""
 
 #: winerror.mc:2516
