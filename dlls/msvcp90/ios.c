@@ -8123,11 +8123,10 @@ basic_istream_char* __cdecl basic_istream_char_read_bstr(
             state = IOSTATE_goodbit;
             MSVCP_basic_string_char_append_ch(str, c);
         }
-
-        ios_base_width_set(&base->base, 0);
     }
     basic_istream_char_sentry_destroy(istream);
 
+    ios_base_width_set(&base->base, 0);
     basic_ios_char_setstate(base, state | (c==EOF ? IOSTATE_eofbit : IOSTATE_goodbit));
     return istream;
 }
@@ -8156,12 +8155,11 @@ basic_istream_char* __cdecl basic_istream_char_read_str(basic_istream_char *istr
             state = IOSTATE_goodbit;
             *str++ = c;
         }
-
-        *str = 0;
-        ios_base_width_set(&base->base, 0);
     }
     basic_istream_char_sentry_destroy(istream);
 
+    *str = 0;
+    ios_base_width_set(&base->base, 0);
     basic_ios_char_setstate(base, state | (c==EOF ? IOSTATE_eofbit : IOSTATE_goodbit));
     return istream;
 }
@@ -9550,11 +9548,10 @@ static basic_istream_wchar* basic_istream_read_bstr(basic_istream_wchar *istream
             state = IOSTATE_goodbit;
             MSVCP_basic_string_wchar_append_ch(str, c);
         }
-
-        ios_base_width_set(&base->base, 0);
     }
     basic_istream_wchar_sentry_destroy(istream);
 
+    ios_base_width_set(&base->base, 0);
     basic_ios_wchar_setstate(base, state | (c==WEOF ? IOSTATE_eofbit : IOSTATE_goodbit));
     return istream;
 }
@@ -9594,12 +9591,11 @@ basic_istream_wchar* basic_istream_read_str(basic_istream_wchar *istream, wchar_
             state = IOSTATE_goodbit;
             *str++ = c;
         }
-
-        *str = 0;
-        ios_base_width_set(&base->base, 0);
     }
     basic_istream_wchar_sentry_destroy(istream);
 
+    *str = 0;
+    ios_base_width_set(&base->base, 0);
     basic_ios_wchar_setstate(base, state | (c==WEOF ? IOSTATE_eofbit : IOSTATE_goodbit));
     return istream;
 }
