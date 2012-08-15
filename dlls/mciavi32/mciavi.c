@@ -391,19 +391,27 @@ static DWORD MCIAVI_mciPlay_async(WINE_MCIAVI *wma, DWORD dwFlags, LPMCI_PLAY_PA
     return 0;
 }
 
+static double currenttime_us(void)
+{
+    LARGE_INTEGER lc, lf;
+    QueryPerformanceCounter(&lc);
+    QueryPerformanceFrequency(&lf);
+    return (lc.QuadPart * 1000000) / lf.QuadPart;
+}
+
 /***************************************************************************
  * 				MCIAVI_mciPlay			[internal]
  */
 static	DWORD	MCIAVI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 {
     WINE_MCIAVI *wma;
-    DWORD		frameTime;
     DWORD		dwRet;
     LPWAVEHDR		waveHdr = NULL;
     unsigned		i, nHdr = 0;
     DWORD		dwFromFrame, dwToFrame;
     DWORD		numEvents = 1;
     HANDLE		events[2];
+    double next_frame_us;
 
     TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
 
@@ -476,9 +484,6 @@ static	DWORD	MCIAVI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
     if (dwFlags & (MCI_DGV_PLAY_REPEAT|MCI_MCIAVI_PLAY_WINDOW|MCI_MCIAVI_PLAY_FULLSCREEN))
 	FIXME("Unsupported flag %08x\n", dwFlags);
 
-    /* time is in microseconds, we should convert it to milliseconds */
-    frameTime = (wma->mah.dwMicroSecPerFrame + 500) / 1000;
-
     events[0] = wma->hStopEvent;
     if (wma->lpWaveFormat) {
        if (MCIAVI_OpenAudio(wma, &nHdr, &waveHdr) != 0)
@@ -496,39 +501,45 @@ static	DWORD	MCIAVI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
        }
     }
 
+    next_frame_us = currenttime_us();
     while (wma->dwStatus == MCI_MODE_PLAY)
     {
         HDC hDC;
-        DWORD tc, delta;
+        double tc, delta;
         DWORD ret;
 
-	tc = GetTickCount();
+        tc = currenttime_us();
 
         hDC = wma->hWndPaint ? GetDC(wma->hWndPaint) : 0;
         if (hDC)
         {
-            MCIAVI_PaintFrame(wma, hDC);
+            while(next_frame_us <= tc && wma->dwCurrVideoFrame < dwToFrame){
+                double dur;
+                ++wma->dwCurrVideoFrame;
+                dur = MCIAVI_PaintFrame(wma, hDC);
+                if(!dur)
+                    break;
+                next_frame_us += dur;
+                TRACE("next_frame: %f\n", next_frame_us);
+            }
             ReleaseDC(wma->hWndPaint, hDC);
         }
+        if(wma->dwCurrVideoFrame >= dwToFrame)
+            break;
 
         if (wma->lpWaveFormat)
-	    MCIAVI_PlayAudioBlocks(wma, nHdr, waveHdr);
+            MCIAVI_PlayAudioBlocks(wma, nHdr, waveHdr);
 
-	delta = GetTickCount() - tc;
-	if (delta < frameTime)
-            delta = frameTime - delta;
+        tc = currenttime_us();
+        if(tc < next_frame_us)
+            delta = next_frame_us - tc;
         else
             delta = 0;
 
         LeaveCriticalSection(&wma->cs);
-        ret = WaitForMultipleObjects(numEvents, events, FALSE, delta);
+        ret = WaitForMultipleObjects(numEvents, events, FALSE, delta / 1000);
         EnterCriticalSection(&wma->cs);
         if (ret == WAIT_OBJECT_0 || wma->dwStatus != MCI_MODE_PLAY) break;
-
-       if (wma->dwCurrVideoFrame < dwToFrame)
-           wma->dwCurrVideoFrame++;
-        else
-            break;
     }
 
     if (wma->lpWaveFormat) {
