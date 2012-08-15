@@ -2969,14 +2969,19 @@ GpStatus WINGDIPAPI GdipDrawImagePointRect(GpGraphics *graphics, GpImage *image,
     GpUnit srcUnit)
 {
     GpPointF points[3];
+    REAL scale_x, scale_y, width, height;
+
     TRACE("(%p, %p, %f, %f, %f, %f, %f, %f, %d)\n", graphics, image, x, y, srcx, srcy, srcwidth, srcheight, srcUnit);
+
+    scale_x = units_scale(srcUnit, graphics->unit, graphics->xres);
+    scale_y = units_scale(srcUnit, graphics->unit, graphics->yres);
+    width = srcwidth * scale_x;
+    height = srcheight * scale_y;
 
     points[0].X = points[2].X = x;
     points[0].Y = points[1].Y = y;
-
-    /* FIXME: convert image coordinates to Graphics coordinates? */
-    points[1].X = x + srcwidth;
-    points[2].Y = y + srcheight;
+    points[1].X = x + width;
+    points[2].Y = y + height;
 
     return GdipDrawImagePointsRect(graphics, image, points, 3, srcx, srcy,
         srcwidth, srcheight, srcUnit, NULL, NULL, NULL);
