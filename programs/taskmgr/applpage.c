@@ -244,7 +244,7 @@ static BOOL CALLBACK EnumWindowsProc(HWND hWnd, LPARAM lParam)
 {
     HICON hIcon;
     WCHAR wszText[256];
-    BOOL  bLargeIcon;
+    BOOL  bLargeIcon = TaskManagerSettings.View_LargeIcons;
     BOOL  bHung = FALSE;
     typedef int (__stdcall *IsHungAppWindowProc)(HWND);
     IsHungAppWindowProc IsHungAppWindow;
@@ -253,8 +253,6 @@ static BOOL CALLBACK EnumWindowsProc(HWND hWnd, LPARAM lParam)
     /* Skip our window */
     if (hWnd == hMainWnd)
         return TRUE;
-
-    bLargeIcon = TaskManagerSettings.View_LargeIcons ? TRUE : FALSE;
 
     /* Check and see if this is a top-level app window */
     if (!GetWindowTextW(hWnd, wszText, sizeof(wszText)/sizeof(WCHAR)) ||
