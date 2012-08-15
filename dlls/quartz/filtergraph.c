@@ -772,13 +772,13 @@ static HRESULT WINAPI FilterGraph2_SetDefaultSyncSource(IFilterGraph2 *iface)
     {
         DWORD miscflags;
         IAMFilterMiscFlags *flags = NULL;
-        IUnknown_QueryInterface(This->ppFiltersInGraph[i], &IID_IAMFilterMiscFlags, (void**)&flags);
+        IBaseFilter_QueryInterface(This->ppFiltersInGraph[i], &IID_IAMFilterMiscFlags, (void**)&flags);
         if (!flags)
             continue;
         miscflags = IAMFilterMiscFlags_GetMiscFlags(flags);
-        IUnknown_Release(flags);
+        IAMFilterMiscFlags_Release(flags);
         if (miscflags == AM_FILTER_MISC_FLAGS_IS_RENDERER)
-            IUnknown_QueryInterface(This->ppFiltersInGraph[i], &IID_IReferenceClock, (void**)&pClock);
+            IBaseFilter_QueryInterface(This->ppFiltersInGraph[i], &IID_IReferenceClock, (void**)&pClock);
         if (pClock)
             break;
     }
@@ -1039,7 +1039,7 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *ppinOut, 
                 if (FAILED(rc))
                 {
                     TRACE("Filter rejected by IAMGraphBuilderCallback_SelectedFilter\n");
-                    IUnknown_Release(callback);
+                    IAMGraphBuilderCallback_Release(callback);
                     goto error;
                 }
             }
@@ -1055,7 +1055,7 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *ppinOut, 
         {
             HRESULT rc;
             rc = IAMGraphBuilderCallback_CreatedFilter(callback, pfilter);
-            IUnknown_Release(callback);
+            IAMGraphBuilderCallback_Release(callback);
             if (FAILED(rc))
             {
                 IBaseFilter_Release(pfilter);
@@ -2200,11 +2200,11 @@ static HRESULT all_renderers_seek(IFilterGraphImpl *This, fnFoundSeek FoundSeek,
         IBaseFilter* pfilter = This->ppFiltersInGraph[i];
         IAMFilterMiscFlags *flags = NULL;
         ULONG filterflags;
-        IUnknown_QueryInterface(pfilter, &IID_IAMFilterMiscFlags, (void**)&flags);
+        IBaseFilter_QueryInterface(pfilter, &IID_IAMFilterMiscFlags, (void**)&flags);
         if (!flags)
             continue;
         filterflags = IAMFilterMiscFlags_GetMiscFlags(flags);
-        IUnknown_Release(flags);
+        IAMFilterMiscFlags_Release(flags);
         if (filterflags != AM_FILTER_MISC_FLAGS_IS_RENDERER)
             continue;
 

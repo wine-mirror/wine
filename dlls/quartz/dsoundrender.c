@@ -656,7 +656,7 @@ HRESULT DSoundRender_create(IUnknown * pUnkOuter, LPVOID * ppv)
             hr = IDirectSound_CreateSoundBuffer(pDSoundRender->dsound, &buf_desc, &buf, NULL);
             if (SUCCEEDED(hr)) {
                 IDirectSoundBuffer_Play(buf, 0, 0, DSBPLAY_LOOPING);
-                IUnknown_Release(buf);
+                IDirectSoundBuffer_Release(buf);
             }
             hr = S_OK;
         }

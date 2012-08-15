@@ -293,7 +293,7 @@ static HRESULT WINAPI VMR9_DoRenderSample(BaseRenderer *iface, IMediaSample * pS
     info.szAspectRatio.cx = This->bmiheader.biWidth;
     info.szAspectRatio.cy = This->bmiheader.biHeight;
 
-    hr = IVMRSurfaceAllocator9_GetSurface(This->allocator, This->cookie, (++This->cur_surface)%This->num_surfaces, 0, &info.lpSurf);
+    hr = IVMRSurfaceAllocatorEx9_GetSurface(This->allocator, This->cookie, (++This->cur_surface)%This->num_surfaces, 0, &info.lpSurf);
 
     if (FAILED(hr))
         return hr;
@@ -794,14 +794,14 @@ static ULONG WINAPI VMR9Inner_Release(IUnknown * iface)
         CloseHandle(This->hD3d9);
 
         if (This->allocator)
-            IVMRSurfaceAllocator9_Release(This->allocator);
+            IVMRSurfaceAllocatorEx9_Release(This->allocator);
         if (This->presenter)
             IVMRImagePresenter9_Release(This->presenter);
 
         This->num_surfaces = 0;
         if (This->allocator_d3d9_dev)
         {
-            IUnknown_Release(This->allocator_d3d9_dev);
+            IDirect3DDevice9_Release(This->allocator_d3d9_dev);
             This->allocator_d3d9_dev = NULL;
         }
 
@@ -1146,7 +1146,7 @@ static HRESULT WINAPI VMR9FilterConfig_SetRenderingMode(IVMRFilterConfig9 *iface
     }
 
     if (This->allocator)
-        IVMRSurfaceAllocator9_Release(This->allocator);
+        IVMRSurfaceAllocatorEx9_Release(This->allocator);
     if (This->presenter)
         IVMRImagePresenter9_Release(This->presenter);
 
@@ -1166,12 +1166,12 @@ static HRESULT WINAPI VMR9FilterConfig_SetRenderingMode(IVMRFilterConfig9 *iface
         if (FAILED(hr))
         {
             ERR("Unable to find Presenter interface\n");
-            IVMRSurfaceAllocatorEx9_Release(This->presenter);
+            IVMRImagePresenter9_Release(This->presenter);
             This->allocator = NULL;
             This->presenter = NULL;
         }
         else
-            hr = IVMRSurfaceAllocator9_AdviseNotify(This->allocator, &This->IVMRSurfaceAllocatorNotify9_iface);
+            hr = IVMRSurfaceAllocatorEx9_AdviseNotify(This->allocator, &This->IVMRSurfaceAllocatorNotify9_iface);
         break;
     case VMR9Mode_Renderless:
         break;
@@ -1449,15 +1449,15 @@ static HRESULT WINAPI VMR9SurfaceAllocatorNotify_AdviseSurfaceAllocator(IVMRSurf
     if (This->presenter)
         return VFW_E_WRONG_STATE;
 
-    if (FAILED(IUnknown_QueryInterface(alloc, &IID_IVMRImagePresenter9, (void **)&This->presenter)))
+    if (FAILED(IVMRSurfaceAllocator9_QueryInterface(alloc, &IID_IVMRImagePresenter9, (void **)&This->presenter)))
         return E_NOINTERFACE;
 
-    if (SUCCEEDED(IUnknown_QueryInterface(alloc, &IID_IVMRSurfaceAllocatorEx9, (void **)&This->allocator)))
+    if (SUCCEEDED(IVMRSurfaceAllocator9_QueryInterface(alloc, &IID_IVMRSurfaceAllocatorEx9, (void **)&This->allocator)))
         This->allocator_is_ex = 1;
     else
     {
         This->allocator = (IVMRSurfaceAllocatorEx9 *)alloc;
-        IUnknown_AddRef(alloc);
+        IVMRSurfaceAllocator9_AddRef(alloc);
         This->allocator_is_ex = 0;
     }
 
@@ -1694,7 +1694,7 @@ static ULONG WINAPI VMR9_ImagePresenter_Release(IVMRImagePresenter9 *iface)
         int i;
         TRACE("Destroying\n");
         CloseHandle(This->ack);
-        IUnknown_Release(This->d3d9_ptr);
+        IDirect3D9_Release(This->d3d9_ptr);
 
         TRACE("Number of surfaces: %u\n", This->num_surfaces);
         for (i = 0; i < This->num_surfaces; ++i)
@@ -1702,7 +1702,7 @@ static ULONG WINAPI VMR9_ImagePresenter_Release(IVMRImagePresenter9 *iface)
             IDirect3DSurface9 *surface = This->d3d9_surfaces[i];
             TRACE("Releasing surface %p\n", surface);
             if (surface)
-                IUnknown_Release(surface);
+                IDirect3DSurface9_Release(surface);
         }
 
         CoTaskMemFree(This->d3d9_surfaces);
@@ -1710,7 +1710,7 @@ static ULONG WINAPI VMR9_ImagePresenter_Release(IVMRImagePresenter9 *iface)
         This->num_surfaces = 0;
         if (This->d3d9_vertex)
         {
-            IUnknown_Release(This->d3d9_vertex);
+            IDirect3DVertexBuffer9_Release(This->d3d9_vertex);
             This->d3d9_vertex = NULL;
         }
         CoTaskMemFree(This);
@@ -2118,7 +2118,7 @@ static HRESULT VMR9_SurfaceAllocator_UpdateDeviceReset(VMR9DefaultAllocatorPrese
         IDirect3DSurface9 *surface = This->d3d9_surfaces[i];
         TRACE("Releasing surface %p\n", surface);
         if (surface)
-            IUnknown_Release(surface);
+            IDirect3DSurface9_Release(surface);
     }
     ZeroMemory(This->d3d9_surfaces, sizeof(IDirect3DSurface9 *) * This->num_surfaces);
 
@@ -2215,7 +2215,7 @@ static HRESULT WINAPI VMR9_SurfaceAllocator_GetSurface(IVMRSurfaceAllocatorEx9 *
         return E_FAIL;
     }
     *surface = This->d3d9_surfaces[surfaceindex];
-    IUnknown_AddRef(*surface);
+    IDirect3DSurface9_AddRef(*surface);
 
     return S_OK;
 }
@@ -2283,7 +2283,7 @@ static HRESULT VMR9DefaultAllocatorPresenterImpl_create(VMR9Impl *parent, LPVOID
     if (hr == D3DERR_NOTAVAILABLE)
     {
         ERR("Format not supported\n");
-        IUnknown_Release(This->d3d9_ptr);
+        IDirect3D9_Release(This->d3d9_ptr);
         CoTaskMemFree(This);
         return VFW_E_DDRAW_CAPS_NOT_SUITABLE;
     }

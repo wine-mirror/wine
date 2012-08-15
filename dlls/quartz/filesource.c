@@ -517,7 +517,7 @@ static HRESULT WINAPI AsyncReader_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin 
     }
 
     *ppPin = This->pOutputPin;
-    IUnknown_AddRef(*ppPin);
+    IPin_AddRef(*ppPin);
     return S_OK;
 }
 
