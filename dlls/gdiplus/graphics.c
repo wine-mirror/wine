@@ -3040,7 +3040,6 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
 {
     GpPointF ptf[4];
     POINT pti[4];
-    REAL dx, dy;
     GpStatus stat;
 
     TRACE("(%p, %p, %p, %d, %f, %f, %f, %f, %d, %p, %p, %p)\n", graphics, image, points,
@@ -3063,6 +3062,15 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
         return Ok;
     transform_and_round_points(graphics, pti, ptf, 4);
 
+    TRACE("%s %s %s %s\n", wine_dbgstr_point(&pti[0]), wine_dbgstr_point(&pti[1]),
+        wine_dbgstr_point(&pti[2]), wine_dbgstr_point(&pti[3]));
+
+    srcx = units_to_pixels(srcx, srcUnit, image->xres);
+    srcy = units_to_pixels(srcy, srcUnit, image->yres);
+    srcwidth = units_to_pixels(srcwidth, srcUnit, image->xres);
+    srcheight = units_to_pixels(srcheight, srcUnit, image->yres);
+    TRACE("src pixels: %f,%f %fx%f\n", srcx, srcy, srcwidth, srcheight);
+
     if (image->picture)
     {
         if (!graphics->hdc)
@@ -3070,23 +3078,10 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
             FIXME("graphics object has no HDC\n");
         }
 
-        /* FIXME: partially implemented (only works for rectangular parallelograms) */
-        if(srcUnit == UnitInch)
-            dx = dy = (REAL) INCH_HIMETRIC;
-        else if(srcUnit == UnitPixel){
-            dx = ((REAL) INCH_HIMETRIC) /
-                 ((REAL) GetDeviceCaps(graphics->hdc, LOGPIXELSX));
-            dy = ((REAL) INCH_HIMETRIC) /
-                 ((REAL) GetDeviceCaps(graphics->hdc, LOGPIXELSY));
-        }
-        else
-            return NotImplemented;
-
         if(IPicture_Render(image->picture, graphics->hdc,
             pti[0].x, pti[0].y, pti[1].x - pti[0].x, pti[2].y - pti[0].y,
-            srcx * dx, srcy * dy,
-            srcwidth * dx, srcheight * dy,
-            NULL) != S_OK){
+            srcx, srcy, srcwidth, srcheight, NULL) != S_OK)
+        {
             if(callback)
                 callback(callbackData);
             return GenericError;
@@ -3096,18 +3091,6 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
     {
         GpBitmap* bitmap = (GpBitmap*)image;
         int use_software=0;
-
-        if (srcUnit == UnitInch)
-            dx = dy = 96.0; /* FIXME: use the image resolution */
-        else if (srcUnit == UnitPixel)
-            dx = dy = 1.0;
-        else
-            return NotImplemented;
-
-        srcx = srcx * dx;
-        srcy = srcy * dy;
-        srcwidth = srcwidth * dx;
-        srcheight = srcheight * dy;
 
         if (imageAttributes ||
             (graphics->image && graphics->image->type == ImageTypeBitmap) ||
@@ -3145,6 +3128,8 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
                 if (dst_area.bottom < pti[i].y) dst_area.bottom = pti[i].y;
             }
 
+            TRACE("dst_area: %s\n", wine_dbgstr_rect(&dst_area));
+
             m11 = (ptf[1].X - ptf[0].X) / srcwidth;
             m21 = (ptf[2].X - ptf[0].X) / srcheight;
             mdx = ptf[0].X - m11 * srcx - m21 * srcy;
@@ -3173,6 +3158,8 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
 
             get_bitmap_sample_size(interpolation, imageAttributes->wrap,
                 bitmap, srcx, srcy, srcwidth, srcheight, &src_area);
+
+            TRACE("src_area: %d x %d\n", src_area.Width, src_area.Height);
 
             src_data = GdipAlloc(sizeof(ARGB) * src_area.Width * src_area.Height);
             if (!src_data)
