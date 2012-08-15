@@ -1122,22 +1122,22 @@
 @ stub -arch=win64 ??0messages_base@std@@QEAA@_K@Z
 @ stub -arch=win32 ??0money_base@std@@QAE@I@Z
 @ stub -arch=win64 ??0money_base@std@@QEAA@_K@Z
-@ stub -arch=win32 ??0strstreambuf@std@@QAE@H@Z
-@ stub -arch=win64 ??0strstreambuf@std@@QEAA@P6APEAX_K@ZP6AXPEAX@Z@Z
-@ stub -arch=win32 ??0strstreambuf@std@@QAE@P6APAXI@ZP6AXPAX@Z@Z
-@ stub -arch=win64 ??0strstreambuf@std@@QEAA@PEAC_J0@Z
-@ stub -arch=win32 ??0strstreambuf@std@@QAE@PACH0@Z
-@ stub -arch=win64 ??0strstreambuf@std@@QEAA@PEAD_J0@Z
-@ stub -arch=win32 ??0strstreambuf@std@@QAE@PADH0@Z
-@ stub -arch=win64 ??0strstreambuf@std@@QEAA@PEAE_J0@Z
-@ stub -arch=win32 ??0strstreambuf@std@@QAE@PAEH0@Z
-@ stub -arch=win64 ??0strstreambuf@std@@QEAA@PEBC_J@Z
-@ stub -arch=win32 ??0strstreambuf@std@@QAE@PBCH@Z
-@ stub -arch=win64 ??0strstreambuf@std@@QEAA@PEBD_J@Z
-@ stub -arch=win32 ??0strstreambuf@std@@QAE@PBDH@Z
-@ stub -arch=win64 ??0strstreambuf@std@@QEAA@PEBE_J@Z
-@ stub -arch=win32 ??0strstreambuf@std@@QAE@PBEH@Z
-@ stub -arch=win64 ??0strstreambuf@std@@QEAA@_J@Z
+@ thiscall -arch=win32 ??0strstreambuf@std@@QAE@H@Z(ptr long) strstreambuf_ctor_len
+@ cdecl -arch=win64 ??0strstreambuf@std@@QEAA@P6APEAX_K@ZP6AXPEAX@Z@Z(ptr ptr ptr) strstreambuf_ctor_alloc
+@ thiscall -arch=win32 ??0strstreambuf@std@@QAE@P6APAXI@ZP6AXPAX@Z@Z(ptr ptr ptr) strstreambuf_ctor_alloc
+@ cdecl -arch=win64 ??0strstreambuf@std@@QEAA@PEAC_J0@Z(ptr ptr long ptr) strstreambuf_ctor_get_put
+@ thiscall -arch=win32 ??0strstreambuf@std@@QAE@PACH0@Z(ptr ptr long ptr) strstreambuf_ctor_get_put
+@ cdecl -arch=win64 ??0strstreambuf@std@@QEAA@PEAD_J0@Z(ptr ptr long ptr) strstreambuf_ctor_get_put
+@ thiscall -arch=win32 ??0strstreambuf@std@@QAE@PADH0@Z(ptr ptr long ptr) strstreambuf_ctor_get_put
+@ cdecl -arch=win64 ??0strstreambuf@std@@QEAA@PEAE_J0@Z(ptr ptr long ptr) strstreambuf_ctor_get_put
+@ thiscall -arch=win32 ??0strstreambuf@std@@QAE@PAEH0@Z(ptr ptr long ptr) strstreambuf_ctor_get_put
+@ cdecl -arch=win64 ??0strstreambuf@std@@QEAA@PEBC_J@Z(ptr ptr long) strstreambuf_ctor_get
+@ thiscall -arch=win32 ??0strstreambuf@std@@QAE@PBCH@Z(ptr ptr long) strstreambuf_ctor_get
+@ cdecl -arch=win64 ??0strstreambuf@std@@QEAA@PEBD_J@Z(ptr str long) strstreambuf_ctor_get
+@ thiscall -arch=win32 ??0strstreambuf@std@@QAE@PBDH@Z(ptr str long) strstreambuf_ctor_get
+@ cdecl -arch=win64 ??0strstreambuf@std@@QEAA@PEBE_J@Z(ptr ptr long) strstreambuf_ctor_get
+@ thiscall -arch=win32 ??0strstreambuf@std@@QAE@PBEH@Z(ptr ptr long) strstreambuf_ctor_get
+@ cdecl -arch=win64 ??0strstreambuf@std@@QEAA@_J@Z(ptr long) strstreambuf_ctor_len
 @ stub -arch=win32 ??0time_base@std@@QAE@I@Z
 @ stub -arch=win64 ??0time_base@std@@QEAA@_K@Z
 @ stub -arch=win32 ??1?$_Mpunct@D@std@@MAE@XZ
@@ -1340,8 +1340,8 @@
 @ stub -arch=win64 ??1messages_base@std@@UEAA@XZ
 @ stub -arch=win32 ??1money_base@std@@UAE@XZ
 @ stub -arch=win64 ??1money_base@std@@UEAA@XZ
-@ stub -arch=win32 ??1strstreambuf@std@@UAE@XZ
-@ stub -arch=win64 ??1strstreambuf@std@@UEAA@XZ
+@ thiscall -arch=win32 ??1strstreambuf@std@@UAE@XZ(ptr) strstreambuf_dtor
+@ cdecl -arch=win64 ??1strstreambuf@std@@UEAA@XZ(ptr) strstreambuf_dtor
 @ stub -arch=win32 ??1time_base@std@@UAE@XZ
 @ stub -arch=win64 ??1time_base@std@@UEAA@XZ
 @ stub -arch=win32 ??4?$_Allocator_base@D@std@@QAEAAU01@ABU01@@Z
@@ -1863,7 +1863,7 @@
 @ extern ??_7ios_base@std@@6B@ MSVCP_ios_base_vtable
 # extern ??_7messages_base@std@@6B@
 # extern ??_7money_base@std@@6B@
-# extern ??_7strstreambuf@std@@6B@
+@ extern ??_7strstreambuf@std@@6B@ MSVCP_strstreambuf_vtable
 # extern ??_7time_base@std@@6B@
 @ extern ??_8?$basic_fstream@DU?$char_traits@D@std@@@std@@7B?$basic_istream@DU?$char_traits@D@std@@@1@@ basic_fstream_char_vbtable1
 @ extern ??_8?$basic_fstream@DU?$char_traits@D@std@@@std@@7B?$basic_ostream@DU?$char_traits@D@std@@@1@@ basic_fstream_char_vbtable2
@@ -2093,8 +2093,8 @@
 @ stub -arch=win64 ??_Fmessages_base@std@@QEAAXXZ
 @ stub -arch=win32 ??_Fmoney_base@std@@QAEXXZ
 @ stub -arch=win64 ??_Fmoney_base@std@@QEAAXXZ
-@ stub -arch=win32 ??_Fstrstreambuf@std@@QAEXXZ
-@ stub -arch=win64 ??_Fstrstreambuf@std@@QEAAXXZ
+@ thiscall -arch=win32 ??_Fstrstreambuf@std@@QAEXXZ(ptr) strstreambuf_ctor
+@ cdecl -arch=win64 ??_Fstrstreambuf@std@@QEAAXXZ(ptr) strstreambuf_ctor
 @ stub -arch=win32 ??_Ftime_base@std@@QAEXXZ
 @ stub -arch=win64 ??_Ftime_base@std@@QEAAXXZ
 @ thiscall -arch=win32 ?_Addcats@_Locinfo@std@@QAEAAV12@HPBD@Z(ptr long str) _Locinfo__Addcats
@@ -2528,8 +2528,8 @@
 @ cdecl -arch=win64 ?_Init@ios_base@std@@IEAAXXZ(ptr) ios_base_Init
 @ cdecl -arch=win32 ?_Init@locale@std@@CAPAV_Locimp@12@XZ() locale__Init
 @ cdecl -arch=win64 ?_Init@locale@std@@CAPEAV_Locimp@12@XZ() locale__Init
-@ stub -arch=win32 ?_Init@strstreambuf@std@@IAEXHPAD0H@Z
-@ stub -arch=win64 ?_Init@strstreambuf@std@@IEAAX_JPEAD1H@Z
+@ thiscall -arch=win32 ?_Init@strstreambuf@std@@IAEXHPAD0H@Z(ptr long ptr ptr long) strstreambuf__Init
+@ cdecl -arch=win64 ?_Init@strstreambuf@std@@IEAAX_JPEAD1H@Z(ptr long ptr ptr long) strstreambuf__Init
 # extern ?_Init_cnt@Init@ios_base@std@@0HA
 # extern ?_Init_cnt@_UShinit@std@@0HA
 # extern ?_Init_cnt@_Winit@std@@0HA
@@ -2836,8 +2836,8 @@
 @ stub -arch=win64 ?_Tidy@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEAAXXZ
 @ cdecl -arch=win32 ?_Tidy@ios_base@std@@AAAXXZ(ptr) ios_base_Tidy
 @ cdecl -arch=win64 ?_Tidy@ios_base@std@@AEAAXXZ(ptr) ios_base_Tidy
-@ stub -arch=win32 ?_Tidy@strstreambuf@std@@IAEXXZ
-@ stub -arch=win64 ?_Tidy@strstreambuf@std@@IEAAXXZ
+@ thiscall -arch=win32 ?_Tidy@strstreambuf@std@@IAEXXZ(ptr) strstreambuf__Tidy
+@ cdecl -arch=win64 ?_Tidy@strstreambuf@std@@IEAAXXZ(ptr) strstreambuf__Tidy
 @ thiscall -arch=win32 ?_Unlock@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAEXXZ(ptr) basic_streambuf_char__Unlock
 @ cdecl -arch=win64 ?_Unlock@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEAAXXZ(ptr) basic_streambuf_char__Unlock
 @ thiscall -arch=win32 ?_Unlock@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QAEXXZ(ptr) basic_streambuf_wchar__Unlock
@@ -3965,8 +3965,8 @@
 @ stub -arch=win64 ?frac_digits@?$_Mpunct@G@std@@QEBAHXZ
 @ stub -arch=win32 ?frac_digits@?$_Mpunct@_W@std@@QBEHXZ
 @ stub -arch=win64 ?frac_digits@?$_Mpunct@_W@std@@QEBAHXZ
-@ stub -arch=win32 ?freeze@strstreambuf@std@@QAEX_N@Z
-@ stub -arch=win64 ?freeze@strstreambuf@std@@QEAAX_N@Z
+@ thiscall -arch=win32 ?freeze@strstreambuf@std@@QAEX_N@Z(ptr long) strstreambuf_freeze
+@ cdecl -arch=win64 ?freeze@strstreambuf@std@@QEAAX_N@Z(ptr long) strstreambuf_freeze
 @ thiscall -arch=win32 ?gbump@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAEXH@Z(ptr long) basic_streambuf_char_gbump
 @ cdecl -arch=win64 ?gbump@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IEAAXH@Z(ptr long) basic_streambuf_char_gbump
 @ thiscall -arch=win32 ?gbump@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IAEXH@Z(ptr long) basic_streambuf_wchar_gbump
@@ -4781,8 +4781,8 @@
 @ cdecl -arch=win64 ?overflow@?$basic_stringbuf@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@MEAAGG@Z(ptr long) basic_stringbuf_wchar_overflow
 @ thiscall -arch=win32 ?overflow@?$basic_stringbuf@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@MAEGG@Z(ptr long) basic_stringbuf_wchar_overflow
 @ cdecl -arch=win64 ?overflow@?$basic_stringbuf@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@MEAAGG@Z(ptr long) basic_stringbuf_wchar_overflow
-@ stub -arch=win32 ?overflow@strstreambuf@std@@MAEHH@Z
-@ stub -arch=win64 ?overflow@strstreambuf@std@@MEAAHH@Z
+@ thiscall -arch=win32 ?overflow@strstreambuf@std@@MAEHH@Z(ptr long) strstreambuf_overflow
+@ cdecl -arch=win64 ?overflow@strstreambuf@std@@MEAAHH@Z(ptr long) strstreambuf_overflow
 @ thiscall -arch=win32 ?pbackfail@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAEHH@Z(ptr long) basic_filebuf_char_pbackfail
 @ cdecl -arch=win64 ?pbackfail@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAAHH@Z(ptr long) basic_filebuf_char_pbackfail
 @ thiscall -arch=win32 ?pbackfail@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MAEGG@Z(ptr long) basic_filebuf_wchar_pbackfail
@@ -4801,8 +4801,8 @@
 @ cdecl -arch=win64 ?pbackfail@?$basic_stringbuf@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@MEAAGG@Z(ptr long) basic_stringbuf_wchar_pbackfail
 @ thiscall -arch=win32 ?pbackfail@?$basic_stringbuf@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@MAEGG@Z(ptr long) basic_stringbuf_wchar_pbackfail
 @ cdecl -arch=win64 ?pbackfail@?$basic_stringbuf@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@MEAAGG@Z(ptr long) basic_stringbuf_wchar_pbackfail
-@ stub -arch=win32 ?pbackfail@strstreambuf@std@@MAEHH@Z
-@ stub -arch=win64 ?pbackfail@strstreambuf@std@@MEAAHH@Z
+@ thiscall -arch=win32 ?pbackfail@strstreambuf@std@@MAEHH@Z(ptr long) strstreambuf_pbackfail
+@ cdecl -arch=win64 ?pbackfail@strstreambuf@std@@MEAAHH@Z(ptr long) strstreambuf_pbackfail
 @ thiscall -arch=win32 ?pbase@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IBEPADXZ(ptr) basic_streambuf_char_pbase
 @ cdecl -arch=win64 ?pbase@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IEBAPEADXZ(ptr) basic_streambuf_char_pbase
 @ thiscall -arch=win32 ?pbase@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IBEPAGXZ(ptr) basic_streambuf_wchar_pbase
@@ -4815,8 +4815,8 @@
 @ cdecl -arch=win64 ?pbump@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IEAAXH@Z(ptr long) basic_streambuf_wchar_pbump
 @ thiscall -arch=win32 ?pbump@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IAEXH@Z(ptr long) basic_streambuf_wchar_pbump
 @ cdecl -arch=win64 ?pbump@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IEAAXH@Z(ptr long) basic_streambuf_wchar_pbump
-@ stub -arch=win32 ?pcount@strstreambuf@std@@QBEHXZ
-@ stub -arch=win64 ?pcount@strstreambuf@std@@QEBA_JXZ
+@ thiscall -arch=win32 ?pcount@strstreambuf@std@@QBEHXZ(ptr) strstreambuf_pcount
+@ cdecl -arch=win64 ?pcount@strstreambuf@std@@QEBA_JXZ(ptr) strstreambuf_pcount
 @ thiscall -arch=win32 ?peek@?$basic_istream@DU?$char_traits@D@std@@@std@@QAEHXZ(ptr) basic_istream_char_peek
 @ cdecl -arch=win64 ?peek@?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAHXZ(ptr) basic_istream_char_peek
 @ thiscall -arch=win32 ?peek@?$basic_istream@GU?$char_traits@G@std@@@std@@QAEGXZ(ptr) basic_istream_wchar_peek
@@ -5276,8 +5276,8 @@
 @ cdecl -arch=win64 ?seekoff@?$basic_stringbuf@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@MEAA?AV?$fpos@H@2@_JHH@Z(ptr ptr long long long) basic_stringbuf_wchar_seekoff
 @ thiscall -arch=win32 ?seekoff@?$basic_stringbuf@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@MAE?AV?$fpos@H@2@JHH@Z(ptr ptr long long long) basic_stringbuf_wchar_seekoff
 @ cdecl -arch=win64 ?seekoff@?$basic_stringbuf@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@MEAA?AV?$fpos@H@2@_JHH@Z(ptr ptr long long long) basic_stringbuf_wchar_seekoff
-@ stub -arch=win32 ?seekoff@strstreambuf@std@@MAE?AV?$fpos@H@2@JHH@Z
-@ stub -arch=win64 ?seekoff@strstreambuf@std@@MEAA?AV?$fpos@H@2@_JHH@Z
+@ thiscall -arch=win32 ?seekoff@strstreambuf@std@@MAE?AV?$fpos@H@2@JHH@Z(ptr ptr long long long) strstreambuf_seekoff
+@ cdecl -arch=win64 ?seekoff@strstreambuf@std@@MEAA?AV?$fpos@H@2@_JHH@Z(ptr ptr long long long) strstreambuf_seekoff
 @ thiscall -arch=win32 ?seekp@?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV12@JH@Z(ptr long long) basic_ostream_char_seekp
 @ cdecl -arch=win64 ?seekp@?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV12@V?$fpos@H@2@@Z(ptr ptr) basic_ostream_char_seekp_fpos
 @ thiscall -arch=win32 ?seekp@?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV12@V?$fpos@H@2@@Z(ptr long long int64 long long) basic_ostream_char_seekp_fpos
@@ -5308,8 +5308,8 @@
 @ cdecl -arch=win64 ?seekpos@?$basic_stringbuf@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@MEAA?AV?$fpos@H@2@V32@H@Z(ptr ptr ptr long) basic_stringbuf_wchar_seekpos
 @ thiscall -arch=win32 ?seekpos@?$basic_stringbuf@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@MAE?AV?$fpos@H@2@V32@H@Z(ptr ptr long long int64 long long long) basic_stringbuf_wchar_seekpos
 @ cdecl -arch=win64 ?seekpos@?$basic_stringbuf@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@MEAA?AV?$fpos@H@2@V32@H@Z(ptr ptr ptr long) basic_stringbuf_wchar_seekpos
-@ stub -arch=win32 ?seekpos@strstreambuf@std@@MAE?AV?$fpos@H@2@V32@H@Z
-@ stub -arch=win64 ?seekpos@strstreambuf@std@@MEAA?AV?$fpos@H@2@V32@H@Z
+@ thiscall -arch=win32 ?seekpos@strstreambuf@std@@MAE?AV?$fpos@H@2@V32@H@Z(ptr ptr long long int64 long long long) strstreambuf_seekpos
+@ cdecl -arch=win64 ?seekpos@strstreambuf@std@@MEAA?AV?$fpos@H@2@V32@H@Z(ptr ptr ptr long) strstreambuf_seekpos
 @ cdecl ?set_new_handler@std@@YAP6AXXZH@Z(long) set_new_handler_reset
 @ cdecl ?set_new_handler@std@@YAP6AXXZP6AXXZ@Z(ptr) set_new_handler
 @ stub ?setbase@std@@YA?AU?$_Smanip@H@1@H@Z
@@ -5494,8 +5494,8 @@
 @ cdecl -arch=win64 ?str@?$basic_stringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAXAEBV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@@Z(ptr ptr) basic_stringstream_wchar_str_set
 @ thiscall -arch=win32 ?str@?$basic_stringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBE?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@XZ(ptr ptr) basic_stringstream_wchar_str_get
 @ cdecl -arch=win64 ?str@?$basic_stringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@XZ(ptr ptr) basic_stringstream_wchar_str_get
-@ stub -arch=win32 ?str@strstreambuf@std@@QAEPADXZ
-@ stub -arch=win64 ?str@strstreambuf@std@@QEAAPEADXZ
+@ thiscall -arch=win32 ?str@strstreambuf@std@@QAEPADXZ(ptr) strstreambuf_str
+@ cdecl -arch=win64 ?str@strstreambuf@std@@QEAAPEADXZ(ptr) strstreambuf_str
 @ thiscall -arch=win32 ?substr@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBE?AV12@II@Z(ptr ptr long long) MSVCP_basic_string_char_substr
 @ cdecl -arch=win64 ?substr@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA?AV12@_K0@Z(ptr ptr long long) MSVCP_basic_string_char_substr
 @ thiscall -arch=win32 ?substr@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBE?AV12@II@Z(ptr ptr long long) MSVCP_basic_string_wchar_substr
@@ -5659,8 +5659,8 @@
 @ cdecl -arch=win64 ?underflow@?$basic_stringbuf@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@MEAAGXZ(ptr) basic_stringbuf_wchar_underflow
 @ thiscall -arch=win32 ?underflow@?$basic_stringbuf@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@MAEGXZ(ptr) basic_stringbuf_wchar_underflow
 @ cdecl -arch=win64 ?underflow@?$basic_stringbuf@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@MEAAGXZ(ptr) basic_stringbuf_wchar_underflow
-@ stub -arch=win32 ?underflow@strstreambuf@std@@MAEHXZ
-@ stub -arch=win64 ?underflow@strstreambuf@std@@MEAAHXZ
+@ thiscall -arch=win32 ?underflow@strstreambuf@std@@MAEHXZ(ptr) strstreambuf_underflow
+@ cdecl -arch=win64 ?underflow@strstreambuf@std@@MEAAHXZ(ptr) strstreambuf_underflow
 @ thiscall -arch=win32 ?unget@?$basic_istream@DU?$char_traits@D@std@@@std@@QAEAAV12@XZ(ptr) basic_istream_char_unget
 @ cdecl -arch=win64 ?unget@?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAAEAV12@XZ(ptr) basic_istream_char_unget
 @ thiscall -arch=win32 ?unget@?$basic_istream@GU?$char_traits@G@std@@@std@@QAEAAV12@XZ(ptr) basic_istream_wchar_unget

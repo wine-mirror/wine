@@ -254,6 +254,23 @@ typedef struct {
      */
 } basic_stringstream_wchar;
 
+typedef enum {
+    STRSTATE_Allocated = 1,
+    STRSTATE_Constant = 2,
+    STRSTATE_Dynamic = 4,
+    STRSTATE_Frozen = 8
+} strstreambuf__Strstate;
+
+typedef struct {
+    basic_streambuf_char base;
+    streamsize minsize;
+    char *endsave;
+    char *seekhigh;
+    int strmode;
+    void* (__cdecl *palloc)(MSVCP_size_t);
+    void (__cdecl *pfree)(void*);
+} strstreambuf;
+
 extern const vtable_ptr MSVCP_iosb_vtable;
 
 /* ??_7ios_base@std@@6B@ */
@@ -442,6 +459,9 @@ const int basic_stringstream_short_vbtable2[] = {0, sizeof(basic_stringstream_wc
 /* ??_7?$basic_stringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_stringstream_short_vtable;
 
+/* ??_7strstreambuf@std@@6B */
+extern const vtable_ptr MSVCP_strstreambuf_vtable;
+
 DEFINE_RTTI_DATA0(iosb, 0, ".?AV?$_Iosb@H@std@@");
 DEFINE_RTTI_DATA1(ios_base, 0, &iosb_rtti_base_descriptor, ".?AV?$_Iosb@H@std@@");
 DEFINE_RTTI_DATA2(basic_ios_char, 0, &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
@@ -588,6 +608,8 @@ DEFINE_RTTI_DATA8(basic_stringstream_short, sizeof(basic_stringstream_wchar),
         &basic_ostream_short_rtti_base_descriptor, &basic_ios_short_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
         ".?AV?$basic_stringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@");
+DEFINE_RTTI_DATA1(strstreambuf, sizeof(strstreambuf),
+        &basic_streambuf_char_rtti_base_descriptor, ".?AVstrstreambuf@std@@");
 
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
@@ -750,6 +772,20 @@ void __asm_dummy_vtables(void) {
     __ASM_VTABLE(basic_stringstream_char, "");
     __ASM_VTABLE(basic_stringstream_wchar, "");
     __ASM_VTABLE(basic_stringstream_short, "");
+    __ASM_VTABLE(strstreambuf,
+            VTABLE_ADD_FUNC(strstreambuf_overflow)
+            VTABLE_ADD_FUNC(strstreambuf_pbackfail)
+            VTABLE_ADD_FUNC(basic_streambuf_char_showmanyc)
+            VTABLE_ADD_FUNC(strstreambuf_underflow)
+            VTABLE_ADD_FUNC(basic_streambuf_char_uflow)
+            VTABLE_ADD_FUNC(basic_streambuf_char_xsgetn)
+            VTABLE_ADD_FUNC(basic_streambuf_char__Xsgetn_s)
+            VTABLE_ADD_FUNC(basic_streambuf_char_xsputn)
+            VTABLE_ADD_FUNC(strstreambuf_seekoff)
+            VTABLE_ADD_FUNC(strstreambuf_seekpos)
+            VTABLE_ADD_FUNC(basic_streambuf_char_setbuf)
+            VTABLE_ADD_FUNC(basic_streambuf_char_sync)
+            VTABLE_ADD_FUNC(basic_streambuf_char_imbue));
 #ifndef __GNUC__
 }
 #endif
@@ -12400,6 +12436,327 @@ basic_string_wchar* __thiscall basic_stringstream_wchar_str_get(const basic_stri
 {
     TRACE("(%p %p)\n", this, ret);
     return basic_stringbuf_wchar_str_get(&this->strbuf, ret);
+}
+
+/* ?_Init@strstreambuf@std@@IAEXHPAD0H@Z */
+/* ?_Init@strstreambuf@std@@IEAAX_JPEAD1H@Z */
+DEFINE_THISCALL_WRAPPER(strstreambuf__Init, 20)
+void __thiscall strstreambuf__Init(strstreambuf *this, streamsize len, char *g, char *p, int mode)
+{
+    TRACE("(%p %ld %p %p %d)\n", this, len, g, p, mode);
+
+    this->minsize = 32;
+    this->endsave = NULL;
+    this->strmode = mode;
+    this->palloc = NULL;
+    this->pfree = NULL;
+
+    if(!g) {
+        this->strmode |= STRSTATE_Dynamic;
+        if(len > this->minsize)
+            this->minsize = len;
+        this->seekhigh = NULL;
+        return;
+    }
+
+    if(len < 0)
+        len = INT_MAX;
+    else if(!len)
+        len = strlen(g);
+
+    this->seekhigh = g+len;
+    basic_streambuf_char_setg(&this->base, g, g, p ? p : this->seekhigh);
+    if(p)
+        basic_streambuf_char_setp(&this->base, p, this->seekhigh);
+}
+
+/* ??0strstreambuf@std@@QAE@PACH0@Z */
+/* ??0strstreambuf@std@@QEAA@PEAC_J0@Z */
+/* ??0strstreambuf@std@@QAE@PADH0@Z */
+/* ??0strstreambuf@std@@QEAA@PEAD_J0@Z */
+/* ??0strstreambuf@std@@QAE@PAEH0@Z */
+/* ??0strstreambuf@std@@QEAA@PEAE_J0@Z */
+DEFINE_THISCALL_WRAPPER(strstreambuf_ctor_get_put, 16)
+strstreambuf* __thiscall strstreambuf_ctor_get_put(strstreambuf *this, char *g, streamsize len, char *p)
+{
+    TRACE("(%p %p %ld %p)\n", this, g, len, p);
+
+    basic_streambuf_char_ctor(&this->base);
+    this->base.vtable = &MSVCP_strstreambuf_vtable;
+
+    strstreambuf__Init(this, len, g, p, 0);
+    return this;
+}
+
+/* ??0strstreambuf@std@@QAE@H@Z */
+/* ??0strstreambuf@std@@QEAA@_J@Z */
+DEFINE_THISCALL_WRAPPER(strstreambuf_ctor_len, 8)
+strstreambuf* __thiscall strstreambuf_ctor_len(strstreambuf *this, streamsize len)
+{
+    return strstreambuf_ctor_get_put(this, NULL, len, NULL);
+}
+
+/* ??0strstreambuf@std@@QAE@P6APAXI@ZP6AXPAX@Z@Z */
+/* ??0strstreambuf@std@@QEAA@P6APEAX_K@ZP6AXPEAX@Z@Z */
+DEFINE_THISCALL_WRAPPER(strstreambuf_ctor_alloc, 12)
+strstreambuf* __thiscall strstreambuf_ctor_alloc(strstreambuf *this, void* (__cdecl *palloc)(MSVCP_size_t), void (__cdecl *pfree)(void*))
+{
+    TRACE("(%p %p %p)\n", this, palloc, pfree);
+
+    strstreambuf_ctor_get_put(this, NULL, 0, NULL);
+    this->palloc = palloc;
+    this->pfree = pfree;
+    return this;
+}
+
+/* ??0strstreambuf@std@@QAE@PBCH@Z */
+/* ??0strstreambuf@std@@QEAA@PEBC_J@Z */
+/* ??0strstreambuf@std@@QAE@PBDH@Z */
+/* ??0strstreambuf@std@@QEAA@PEBD_J@Z */
+/* ??0strstreambuf@std@@QAE@PBEH@Z */
+/* ??0strstreambuf@std@@QEAA@PEBE_J@Z */
+DEFINE_THISCALL_WRAPPER(strstreambuf_ctor_get, 12)
+strstreambuf* __thiscall strstreambuf_ctor_get(strstreambuf *this, const char *g, streamsize len)
+{
+    TRACE("(%p %p %ld)\n", this, g, len);
+
+    strstreambuf_ctor_get_put(this, NULL, 0, NULL);
+    this->strmode |= STRSTATE_Constant;
+    return this;
+}
+
+/* ??_Fstrstreambuf@std@@QAEXXZ */
+/* ??_Fstrstreambuf@std@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(strstreambuf_ctor, 4)
+strstreambuf* __thiscall strstreambuf_ctor(strstreambuf *this)
+{
+    return strstreambuf_ctor_get_put(this, NULL, 0, NULL);
+}
+
+/* ?_Tidy@strstreambuf@std@@IAEXXZ */
+/* ?_Tidy@strstreambuf@std@@IEAAXXZ */
+DEFINE_THISCALL_WRAPPER(strstreambuf__Tidy, 4)
+void __thiscall strstreambuf__Tidy(strstreambuf *this)
+{
+    TRACE("(%p)\n", this);
+
+    if((this->strmode & STRSTATE_Allocated) && !(this->strmode & STRSTATE_Frozen)) {
+        if(this->pfree)
+            this->pfree(basic_streambuf_char_eback(&this->base));
+        else
+            MSVCRT_operator_delete(basic_streambuf_char_eback(&this->base));
+    }
+
+    this->endsave = NULL;
+    this->seekhigh = NULL;
+    this->strmode &= ~(STRSTATE_Allocated | STRSTATE_Frozen);
+    basic_streambuf_char_setg(&this->base, NULL, NULL, NULL);
+    basic_streambuf_char_setp(&this->base, NULL, NULL);
+}
+
+/* ??1strstreambuf@std@@UAE@XZ */
+/* ??1strstreambuf@std@@UEAA@XZ */
+DEFINE_THISCALL_WRAPPER(strstreambuf_dtor, 4)
+void __thiscall strstreambuf_dtor(strstreambuf *this)
+{
+    TRACE("(%p)\n", this);
+
+    strstreambuf__Tidy(this);
+    basic_streambuf_char_dtor(&this->base);
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCP_strstreambuf_vector_dtor, 8)
+strstreambuf* __thiscall MSVCP_strstreambuf_vector_dtor(strstreambuf *this, unsigned int flags)
+{
+    TRACE("(%p %x)\n", this, flags);
+    if(flags & 2) {
+        /* we have an array, with the number of elements stored before the first object */
+        int i, *ptr = (int *)this-1;
+
+        for(i=*ptr-1; i>=0; i--)
+            strstreambuf_dtor(this+i);
+        MSVCRT_operator_delete(ptr);
+    } else {
+        strstreambuf_dtor(this);
+        if(flags & 1)
+            MSVCRT_operator_delete(this);
+    }
+
+    return this;
+}
+
+/* ?freeze@strstreambuf@std@@QAEX_N@Z */
+/* ?freeze@strstreambuf@std@@QEAAX_N@Z */
+DEFINE_THISCALL_WRAPPER(strstreambuf_freeze, 8)
+void __thiscall strstreambuf_freeze(strstreambuf *this, MSVCP_bool freeze)
+{
+    TRACE("(%p %d)\n", this, freeze);
+
+    if(!freeze == !(this->strmode *STRSTATE_Frozen))
+        return;
+
+    if(freeze) {
+        this->strmode |= STRSTATE_Frozen;
+        this->endsave = basic_streambuf_char_epptr(&this->base);
+        basic_streambuf_char_setp_next(&this->base, basic_streambuf_char_pbase(&this->base),
+                basic_streambuf_char_pptr(&this->base), basic_streambuf_char_eback(&this->base));
+    }else {
+        this->strmode &= ~STRSTATE_Frozen;
+        basic_streambuf_char_setp_next(&this->base, basic_streambuf_char_pbase(&this->base),
+                basic_streambuf_char_pptr(&this->base), this->endsave);
+    }
+}
+
+/* ?str@strstreambuf@std@@QAEPADXZ */
+/* ?str@strstreambuf@std@@QEAAPEADXZ */
+DEFINE_THISCALL_WRAPPER(strstreambuf_str, 4)
+char* __thiscall strstreambuf_str(strstreambuf *this)
+{
+    TRACE("(%p)\n", this);
+
+    strstreambuf_freeze(this, TRUE);
+    return basic_streambuf_char_gptr(&this->base);
+}
+
+/* ?pcount@strstreambuf@std@@QBEHXZ */
+/* ?pcount@strstreambuf@std@@QEBA_JXZ */
+DEFINE_THISCALL_WRAPPER(strstreambuf_pcount, 4)
+streamsize __thiscall strstreambuf_pcount(const strstreambuf *this)
+{
+    char *ppos = basic_streambuf_char_pptr(&this->base);
+
+    TRACE("(%p)\n", this);
+
+    return ppos ? ppos-basic_streambuf_char_pbase(&this->base) : 0;
+}
+
+/* ?overflow@strstreambuf@std@@MAEHH@Z */
+/* ?overflow@strstreambuf@std@@MEAAHH@Z */
+DEFINE_THISCALL_WRAPPER(strstreambuf_overflow, 8)
+int __thiscall strstreambuf_overflow(strstreambuf *this, int c)
+{
+    MSVCP_size_t old_size, size;
+    char *ptr, *buf;
+
+    TRACE("(%p %d)\n", this, c);
+
+    if(c == EOF)
+        return !EOF;
+
+    if(this->strmode & STRSTATE_Frozen)
+        return EOF;
+
+    ptr = basic_streambuf_char_pptr(&this->base);
+    if(ptr && ptr<basic_streambuf_char_epptr(&this->base))
+        return (unsigned char)(*basic_streambuf_char__Pninc(&this->base) = c);
+
+    if(!(this->strmode & STRSTATE_Dynamic) || (this->strmode & STRSTATE_Constant))
+        return EOF;
+
+    ptr = basic_streambuf_char_eback(&this->base);
+    old_size = ptr ? basic_streambuf_char_epptr(&this->base) - ptr : 0;
+
+    size = old_size + old_size/2;
+    if(size < this->minsize)
+        size = this->minsize;
+
+    if(this->palloc)
+        buf = this->palloc(size);
+    else
+        buf = MSVCRT_operator_new(size);
+    if(!buf)
+        return EOF;
+
+    memcpy(buf, ptr, old_size);
+    if(this->strmode & STRSTATE_Allocated) {
+        if(this->pfree)
+            this->pfree(ptr);
+        else
+            MSVCRT_operator_delete(ptr);
+    }
+
+    this->strmode |= STRSTATE_Allocated;
+    if(!old_size) {
+        this->seekhigh = buf;
+        basic_streambuf_char_setp(&this->base, buf, buf+size);
+        basic_streambuf_char_setg(&this->base, buf, buf, buf);
+    }else {
+        this->seekhigh = this->seekhigh-ptr+buf;
+        basic_streambuf_char_setp_next(&this->base, basic_streambuf_char_pbase(&this->base)-ptr+buf,
+                basic_streambuf_char_pptr(&this->base)-ptr+buf, buf+size);
+        basic_streambuf_char_setg(&this->base, buf, basic_streambuf_char_gptr(&this->base)-ptr+buf,
+                basic_streambuf_char_pptr(&this->base));
+    }
+
+    return (unsigned char)(*basic_streambuf_char__Pninc(&this->base) = c);
+}
+
+/* ?pbackfail@strstreambuf@std@@MAEHH@Z */
+/* ?pbackfail@strstreambuf@std@@MEAAHH@Z */
+DEFINE_THISCALL_WRAPPER(strstreambuf_pbackfail, 8)
+int __thiscall strstreambuf_pbackfail(strstreambuf *this, int c)
+{
+    char *ptr = basic_streambuf_char_gptr(&this->base);
+
+    TRACE("(%p %d)\n", this, c);
+
+    if(ptr<=basic_streambuf_char_eback(&this->base)
+            || ((this->strmode & STRSTATE_Constant) && c!=ptr[-1]))
+        return EOF;
+
+    basic_streambuf_char_gbump(&this->base, -1);
+    if(c == EOF)
+        return !EOF;
+    if(this->strmode & STRSTATE_Constant)
+        return (unsigned char)c;
+
+    return (unsigned char)(ptr[0] = c);
+}
+
+/* ?seekoff@strstreambuf@std@@MAE?AV?$fpos@H@2@JHH@Z */
+/* ?seekoff@strstreambuf@std@@MEAA?AV?$fpos@H@2@_JHH@Z */
+DEFINE_THISCALL_WRAPPER(strstreambuf_seekoff, 20)
+fpos_int* __thiscall strstreambuf_seekoff(strstreambuf *this, fpos_int *ret, streamoff off, int way, int mode)
+{
+    FIXME("(%p %p %ld %d %d) stub\n", this, ret, off, way, mode);
+    return NULL;
+}
+
+/* ?seekpos@strstreambuf@std@@MAE?AV?$fpos@H@2@V32@H@Z */
+/* ?seekpos@strstreambuf@std@@MEAA?AV?$fpos@H@2@V32@H@Z */
+DEFINE_THISCALL_WRAPPER(strstreambuf_seekpos, 36)
+fpos_int* __thiscall strstreambuf_seekpos(strstreambuf *this, fpos_int *ret, fpos_int pos, int mode)
+{
+    FIXME("(%p %p %s %d) stub\n", this, ret, debugstr_fpos_int(&pos), mode);
+    return NULL;
+}
+
+/* ?underflow@strstreambuf@std@@MAEHXZ */
+/* ?underflow@strstreambuf@std@@MEAAHXZ */
+DEFINE_THISCALL_WRAPPER(strstreambuf_underflow, 4)
+int __thiscall strstreambuf_underflow(strstreambuf *this)
+{
+    char *gptr = basic_streambuf_char_gptr(&this->base);
+    char *pptr;
+
+    TRACE("(%p)\n", this);
+
+    if(!gptr)
+        return EOF;
+
+    if(gptr < basic_streambuf_char_egptr(&this->base))
+        return (unsigned char)(*gptr);
+
+    pptr = basic_streambuf_char_gptr(&this->base);
+    if(pptr > this->seekhigh)
+        this->seekhigh = pptr;
+
+    if(this->seekhigh <= gptr)
+        return EOF;
+
+    basic_streambuf_char_setg(&this->base, basic_streambuf_char_eback(&this->base),
+            gptr, this->seekhigh);
+    return (unsigned char)(*gptr);
 }
 
 static void __cdecl setprecision_func(ios_base *base, streamsize prec)
