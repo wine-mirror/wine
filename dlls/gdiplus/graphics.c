@@ -5587,6 +5587,10 @@ GpStatus WINGDIPAPI GdipSetWorldTransform(GpGraphics *graphics, GpMatrix *matrix
     if(graphics->busy)
         return ObjectBusy;
 
+    TRACE("%f,%f,%f,%f,%f,%f\n",
+          matrix->matrix[0], matrix->matrix[1], matrix->matrix[2],
+          matrix->matrix[3], matrix->matrix[4], matrix->matrix[5]);
+
     GdipDeleteMatrix(graphics->worldtrans);
     return GdipCloneMatrix(matrix, &graphics->worldtrans);
 }
