@@ -130,9 +130,6 @@ static Cursor create_cursor( HANDLE handle );
 
 #ifdef HAVE_X11_EXTENSIONS_XINPUT2_H
 static BOOL xinput2_available;
-static int xinput2_core_pointer;
-static int xinput2_device_count;
-static XIDeviceInfo *xinput2_devices;
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
 MAKE_FUNCPTR(XIFreeDeviceInfo);
 MAKE_FUNCPTR(XIQueryDevice);
@@ -258,6 +255,7 @@ static void enable_xinput2(void)
 #ifdef HAVE_X11_EXTENSIONS_XINPUT2_H
     struct x11drv_thread_data *data = x11drv_thread_data();
     XIEventMask mask;
+    XIDeviceInfo *devices;
     unsigned char mask_bits[XIMaskLen(XI_LASTEVENT)];
     int i, j;
 
@@ -276,19 +274,19 @@ static void enable_xinput2(void)
     if (data->xi2_state == xi_unavailable) return;
 
     wine_tsx11_lock();
-    if (xinput2_devices) pXIFreeDeviceInfo( xinput2_devices );
-    xinput2_devices = pXIQueryDevice( data->display, XIAllDevices, &xinput2_device_count );
-    for (i = 0; i < xinput2_device_count; ++i)
+    if (data->xi2_devices) pXIFreeDeviceInfo( data->xi2_devices );
+    data->xi2_devices = devices = pXIQueryDevice( data->display, XIAllDevices, &data->xi2_device_count );
+    for (i = 0; i < data->xi2_device_count; ++i)
     {
-        if (xinput2_devices[i].use != XIMasterPointer) continue;
-        for (j = 0; j < xinput2_devices[i].num_classes; j++)
+        if (devices[i].use != XIMasterPointer) continue;
+        for (j = 0; j < devices[i].num_classes; j++)
         {
-            XIValuatorClassInfo *class = (XIValuatorClassInfo *)xinput2_devices[i].classes[j];
+            XIValuatorClassInfo *class = (XIValuatorClassInfo *)devices[i].classes[j];
 
-            if (xinput2_devices[i].classes[j]->type != XIValuatorClass) continue;
+            if (devices[i].classes[j]->type != XIValuatorClass) continue;
             if (class->number != 0 && class->number != 1) continue;
             TRACE( "Device %u (%s) class %u num %u %f,%f res %u mode %u\n",
-                   xinput2_devices[i].deviceid, debugstr_a(xinput2_devices[i].name),
+                   devices[i].deviceid, debugstr_a(devices[i].name),
                    j, class->number, class->min, class->max, class->resolution, class->mode );
             if (class->mode == XIModeAbsolute)
             {
@@ -297,8 +295,8 @@ static void enable_xinput2(void)
             }
         }
         TRACE( "Using %u (%s) as core pointer\n",
-               xinput2_devices[i].deviceid, debugstr_a(xinput2_devices[i].name) );
-        xinput2_core_pointer = xinput2_devices[i].deviceid;
+               devices[i].deviceid, debugstr_a(devices[i].name) );
+        data->xi2_core_pointer = devices[i].deviceid;
         break;
     }
 
@@ -308,14 +306,13 @@ static void enable_xinput2(void)
     XISetMask( mask_bits, XI_RawMotion );
     XISetMask( mask_bits, XI_ButtonPress );
 
-    for (i = 0; i < xinput2_device_count; ++i)
+    for (i = 0; i < data->xi2_device_count; ++i)
     {
-        if (xinput2_devices[i].use == XISlavePointer &&
-            xinput2_devices[i].attachment == xinput2_core_pointer)
+        if (devices[i].use == XISlavePointer && devices[i].attachment == data->xi2_core_pointer)
         {
             TRACE( "Device %u (%s) is attached to the core pointer\n",
-                   xinput2_devices[i].deviceid, debugstr_a(xinput2_devices[i].name) );
-            mask.deviceid = xinput2_devices[i].deviceid;
+                   devices[i].deviceid, debugstr_a(devices[i].name) );
+            mask.deviceid = devices[i].deviceid;
             pXISelectEvents( data->display, DefaultRootWindow( data->display ), &mask, 1 );
             data->xi2_state = xi_enabled;
         }
@@ -333,6 +330,7 @@ static void disable_xinput2(void)
 {
 #ifdef HAVE_X11_EXTENSIONS_XINPUT2_H
     struct x11drv_thread_data *data = x11drv_thread_data();
+    XIDeviceInfo *devices = data->xi2_devices;
     XIEventMask mask;
     int i;
 
@@ -345,18 +343,17 @@ static void disable_xinput2(void)
     mask.mask_len = 0;
 
     wine_tsx11_lock();
-    for (i = 0; i < xinput2_device_count; ++i)
+    for (i = 0; i < data->xi2_device_count; ++i)
     {
-        if (xinput2_devices[i].use == XISlavePointer &&
-            xinput2_devices[i].attachment == xinput2_core_pointer)
+        if (devices[i].use == XISlavePointer && devices[i].attachment == data->xi2_core_pointer)
         {
-            mask.deviceid = xinput2_devices[i].deviceid;
+            mask.deviceid = devices[i].deviceid;
             pXISelectEvents( data->display, DefaultRootWindow( data->display ), &mask, 1 );
         }
     }
-    pXIFreeDeviceInfo( xinput2_devices );
-    xinput2_devices = NULL;
-    xinput2_device_count = 0;
+    pXIFreeDeviceInfo( devices );
+    data->xi2_devices = NULL;
+    data->xi2_device_count = 0;
     wine_tsx11_unlock();
 #endif
 }
@@ -1517,6 +1514,7 @@ static void X11DRV_RawMotion( XGenericEventCookie *xev )
     int i, j;
     double dx = 0, dy = 0;
     struct x11drv_thread_data *thread_data = x11drv_thread_data();
+    XIDeviceInfo *devices = thread_data->xi2_devices;
 
     if (!event->valuators.mask_len) return;
     if (thread_data->xi2_state != xi_enabled) return;
@@ -1532,14 +1530,14 @@ static void X11DRV_RawMotion( XGenericEventCookie *xev )
     input.u.mi.dy = dy;
 
     wine_tsx11_lock();
-    for (i = 0; i < xinput2_device_count; ++i)
+    for (i = 0; i < thread_data->xi2_device_count; ++i)
     {
-        if (xinput2_devices[i].deviceid != event->deviceid) continue;
-        for (j = 0; j < xinput2_devices[i].num_classes; j++)
+        if (devices[i].deviceid != event->deviceid) continue;
+        for (j = 0; j < devices[i].num_classes; j++)
         {
-            XIValuatorClassInfo *class = (XIValuatorClassInfo *)xinput2_devices[i].classes[j];
+            XIValuatorClassInfo *class = (XIValuatorClassInfo *)devices[i].classes[j];
 
-            if (xinput2_devices[i].classes[j]->type != XIValuatorClass) continue;
+            if (devices[i].classes[j]->type != XIValuatorClass) continue;
             if (class->min >= class->max) continue;
             if (class->number == 0)
                 input.u.mi.dx = dx * (virtual_screen_rect.right - virtual_screen_rect.left)
