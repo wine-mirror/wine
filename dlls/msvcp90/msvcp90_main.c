@@ -104,11 +104,11 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 /* ?_BADOFF@std@@3JB -> long const std::_BADOFF */
 /* ?_BADOFF@std@@3_JB -> __int64 const std::_BADOFF */
-const INT_PTR std_BADOFF = -1;
+const streamoff std_BADOFF = -1;
 
 /* ?_BADOFF_func@std@@YAABJXZ -> long const & __cdecl std::_BADOFF_func(void) */
 /* ?_BADOFF_func@std@@YAAEB_JXZ -> __int64 const & __ptr64 __cdecl std::_BADOFF_func(void) */
-const INT_PTR * __cdecl std_BADOFF_func(void)
+const streamoff * __cdecl std_BADOFF_func(void)
 {
     return &std_BADOFF;
 }
