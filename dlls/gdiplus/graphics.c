@@ -2943,7 +2943,6 @@ GpStatus WINGDIPAPI GdipDrawEllipseI(GpGraphics *graphics, GpPen *pen, INT x,
 GpStatus WINGDIPAPI GdipDrawImage(GpGraphics *graphics, GpImage *image, REAL x, REAL y)
 {
     UINT width, height;
-    GpPointF points[3];
 
     TRACE("(%p, %p, %.2f, %.2f)\n", graphics, image, x, y);
 
@@ -2953,15 +2952,8 @@ GpStatus WINGDIPAPI GdipDrawImage(GpGraphics *graphics, GpImage *image, REAL x, 
     GdipGetImageWidth(image, &width);
     GdipGetImageHeight(image, &height);
 
-    /* FIXME: we should use the graphics and image dpi, somehow */
-
-    points[0].X = points[2].X = x;
-    points[0].Y = points[1].Y = y;
-    points[1].X = x + width;
-    points[2].Y = y + height;
-
-    return GdipDrawImagePointsRect(graphics, image, points, 3, 0, 0, width, height,
-        UnitPixel, NULL, NULL, NULL);
+    return GdipDrawImagePointRect(graphics, image, x, y,
+                                  0.0, 0.0, (REAL)width, (REAL)height, UnitPixel);
 }
 
 GpStatus WINGDIPAPI GdipDrawImageI(GpGraphics *graphics, GpImage *image, INT x,
