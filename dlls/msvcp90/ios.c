@@ -12258,7 +12258,7 @@ manip_streamsize* __cdecl setw(manip_streamsize *ret, streamsize width)
     return ret;
 }
 
-static basic_filebuf_char filebuf_stdin;
+static basic_filebuf_char filebuf_char_stdin;
 /* ?cin@std@@3V?$basic_istream@DU?$char_traits@D@std@@@1@A */
 struct {
     basic_istream_char obj;
@@ -12268,7 +12268,27 @@ struct {
 /* ?_Ptr_cin@std@@3PEAV?$basic_istream@DU?$char_traits@D@std@@@1@EA */
 basic_istream_char *_Ptr_cin = &cin.obj;
 
-static basic_filebuf_char filebuf_stdout;
+static basic_filebuf_wchar filebuf_short_stdin;
+/* ?wcin@std@@3V?$basic_istream@GU?$char_traits@G@std@@@1@A */
+struct {
+    basic_istream_wchar obj;
+    basic_ios_wchar vbase;
+} ucin = { { 0 } };
+/* ?_Ptr_wcin@std@@3PAV?$basic_istream@GU?$char_traits@G@std@@@1@A */
+/* ?_Ptr_wcin@std@@3PEAV?$basic_istream@GU?$char_traits@G@std@@@1@EA */
+basic_istream_wchar *_Ptr_ucin = &ucin.obj;
+
+static basic_filebuf_wchar filebuf_wchar_stdin;
+/* ?wcin@std@@3V?$basic_istream@_WU?$char_traits@_W@std@@@1@A */
+struct {
+    basic_istream_wchar obj;
+    basic_ios_wchar vbase;
+} wcin = { { 0 } };
+/* ?_Ptr_wcin@std@@3PAV?$basic_istream@_WU?$char_traits@_W@std@@@1@A */
+/* ?_Ptr_wcin@std@@3PEAV?$basic_istream@_WU?$char_traits@_W@std@@@1@EA */
+basic_istream_wchar *_Ptr_wcin = &wcin.obj;
+
+static basic_filebuf_char filebuf_char_stdout;
 /* ?cout@std@@3V?$basic_ostream@DU?$char_traits@D@std@@@1@A */
 struct {
     basic_ostream_char obj;
@@ -12278,7 +12298,27 @@ struct {
 /* ?_Ptr_cout@std@@3PEAV?$basic_ostream@DU?$char_traits@D@std@@@1@EA */
 basic_ostream_char *_Ptr_cout = &cout.obj;
 
-static basic_filebuf_char filebuf_stderr;
+static basic_filebuf_wchar filebuf_short_stdout;
+/* ?wcout@std@@3V?$basic_ostream@GU?$char_traits@G@std@@@1@A */
+struct {
+    basic_ostream_wchar obj;
+    basic_ios_wchar vbase;
+} ucout = { { 0 } };
+/* ?_Ptr_wcout@std@@3PAV?$basic_ostream@GU?$char_traits@G@std@@@1@A */
+/* ?_Ptr_wcout@std@@3PEAV?$basic_ostream@GU?$char_traits@G@std@@@1@EA */
+basic_ostream_wchar *_Ptr_ucout = &ucout.obj;
+
+static basic_filebuf_wchar filebuf_wchar_stdout;
+/* ?wcout@std@@3V?$basic_ostream@_WU?$char_traits@_W@std@@@1@A */
+struct {
+    basic_ostream_wchar obj;
+    basic_ios_wchar vbase;
+} wcout = { { 0 } };
+/* ?_Ptr_wcout@std@@3PAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@A */
+/* ?_Ptr_wcout@std@@3PEAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@EA */
+basic_ostream_wchar *_Ptr_wcout = &wcout.obj;
+
+static basic_filebuf_char filebuf_char_stderr;
 /* ?cerr@std@@3V?$basic_ostream@DU?$char_traits@D@std@@@1@A */
 struct {
     basic_ostream_char obj;
@@ -12288,7 +12328,27 @@ struct {
 /* ?_Ptr_cerr@std@@3PEAV?$basic_ostream@DU?$char_traits@D@std@@@1@EA */
 basic_ostream_char *_Ptr_cerr = &cerr.obj;
 
-static basic_filebuf_char filebuf_log;
+static basic_filebuf_wchar filebuf_short_stderr;
+/* ?wcerr@std@@3V?$basic_ostream@GU?$char_traits@G@std@@@1@A */
+struct {
+    basic_ostream_wchar obj;
+    basic_ios_wchar vbase;
+} ucerr = { { 0 } };
+/* ?_Ptr_wcerr@std@@3PAV?$basic_ostream@GU?$char_traits@G@std@@@1@A */
+/* ?_Ptr_wcerr@std@@3PEAV?$basic_ostream@GU?$char_traits@G@std@@@1@EA */
+basic_ostream_wchar *_Ptr_ucerr = &ucerr.obj;
+
+static basic_filebuf_wchar filebuf_wchar_stderr;
+/* ?wcerr@std@@3V?$basic_ostream@_WU?$char_traits@_W@std@@@1@A */
+struct {
+    basic_ostream_wchar obj;
+    basic_ios_wchar vbase;
+} wcerr = { { 0 } };
+/* ?_Ptr_wcerr@std@@3PAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@A */
+/* ?_Ptr_wcerr@std@@3PEAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@EA */
+basic_ostream_wchar *_Ptr_wcerr = &wcerr.obj;
+
+static basic_filebuf_char filebuf_char_log;
 /* ?clog@std@@3V?$basic_ostream@DU?$char_traits@D@std@@@1@A */
 struct {
     basic_ostream_char obj;
@@ -12298,32 +12358,100 @@ struct {
 /* ?_Ptr_clog@std@@3PEAV?$basic_ostream@DU?$char_traits@D@std@@@1@EA */
 basic_ostream_char *_Ptr_clog = &clog.obj;
 
+static basic_filebuf_wchar filebuf_short_log;
+/* ?wclog@std@@3V?$basic_ostream@GU?$char_traits@G@std@@@1@A */
+struct {
+    basic_ostream_wchar obj;
+    basic_ios_wchar vbase;
+} uclog = { { 0 } };
+/* ?_Ptr_wclog@std@@3PAV?$basic_ostream@GU?$char_traits@G@std@@@1@A */
+/* ?_Ptr_wclog@std@@3PEAV?$basic_ostream@GU?$char_traits@G@std@@@1@EA */
+basic_ostream_wchar *_Ptr_uclog = &uclog.obj;
+
+static basic_filebuf_wchar filebuf_wchar_log;
+/* ?wclog@std@@3V?$basic_ostream@_WU?$char_traits@_W@std@@@1@A */
+struct {
+    basic_ostream_wchar obj;
+    basic_ios_wchar vbase;
+} wclog = { { 0 } };
+/* ?_Ptr_wclog@std@@3PAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@A */
+/* ?_Ptr_wclog@std@@3PEAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@EA */
+basic_ostream_wchar *_Ptr_wclog = &wclog.obj;
+
 void init_io(void)
 {
-    basic_filebuf_char_ctor_file(&filebuf_stdin, stdin);
-    basic_istream_char_ctor(&cin.obj, &filebuf_stdin.base, FALSE/*FIXME*/, TRUE);
+    basic_filebuf_char_ctor_file(&filebuf_char_stdin, stdin);
+    basic_istream_char_ctor(&cin.obj, &filebuf_char_stdin.base, FALSE/*FIXME*/, TRUE);
 
-    basic_filebuf_char_ctor_file(&filebuf_stdout, stdout);
-    basic_ostream_char_ctor(&cout.obj, &filebuf_stdout.base, FALSE/*FIXME*/, TRUE);
+    basic_filebuf_short_ctor_file(&filebuf_short_stdin, stdin);
+    basic_istream_short_ctor(&ucin.obj, &filebuf_short_stdin.base, FALSE/*FIXME*/, TRUE);
 
-    basic_filebuf_char_ctor_file(&filebuf_stderr, stderr);
-    basic_ostream_char_ctor(&cerr.obj, &filebuf_stderr.base, FALSE/*FIXME*/, TRUE);
+    basic_filebuf_wchar_ctor_file(&filebuf_wchar_stdin, stdin);
+    basic_istream_wchar_ctor(&wcin.obj, &filebuf_wchar_stdin.base, FALSE/*FIXME*/, TRUE);
 
-    basic_filebuf_char_ctor_file(&filebuf_log, stderr);
-    basic_ostream_char_ctor(&clog.obj, &filebuf_log.base, FALSE/*FIXME*/, TRUE);
+    basic_filebuf_char_ctor_file(&filebuf_char_stdout, stdout);
+    basic_ostream_char_ctor(&cout.obj, &filebuf_char_stdout.base, FALSE/*FIXME*/, TRUE);
+
+    basic_filebuf_short_ctor_file(&filebuf_short_stdout, stdout);
+    basic_ostream_short_ctor(&ucout.obj, &filebuf_short_stdout.base, FALSE/*FIXME*/, TRUE);
+
+    basic_filebuf_wchar_ctor_file(&filebuf_wchar_stdout, stdout);
+    basic_ostream_wchar_ctor(&wcout.obj, &filebuf_wchar_stdout.base, FALSE/*FIXME*/, TRUE);
+
+    basic_filebuf_char_ctor_file(&filebuf_char_stderr, stderr);
+    basic_ostream_char_ctor(&cerr.obj, &filebuf_char_stderr.base, FALSE/*FIXME*/, TRUE);
+
+    basic_filebuf_short_ctor_file(&filebuf_short_stderr, stderr);
+    basic_ostream_short_ctor(&ucerr.obj, &filebuf_short_stderr.base, FALSE/*FIXME*/, TRUE);
+
+    basic_filebuf_wchar_ctor_file(&filebuf_wchar_stderr, stderr);
+    basic_ostream_wchar_ctor(&wcerr.obj, &filebuf_wchar_stderr.base, FALSE/*FIXME*/, TRUE);
+
+    basic_filebuf_char_ctor_file(&filebuf_char_log, stderr);
+    basic_ostream_char_ctor(&clog.obj, &filebuf_char_log.base, FALSE/*FIXME*/, TRUE);
+
+    basic_filebuf_short_ctor_file(&filebuf_short_log, stderr);
+    basic_ostream_short_ctor(&uclog.obj, &filebuf_short_log.base, FALSE/*FIXME*/, TRUE);
+
+    basic_filebuf_wchar_ctor_file(&filebuf_wchar_log, stderr);
+    basic_ostream_wchar_ctor(&wclog.obj, &filebuf_wchar_log.base, FALSE/*FIXME*/, TRUE);
 }
 
 void free_io(void)
 {
     basic_istream_char_dtor(basic_istream_char_to_basic_ios(&cin.obj));
-    basic_filebuf_char_dtor(&filebuf_stdin);
+    basic_filebuf_char_dtor(&filebuf_char_stdin);
+
+    basic_istream_wchar_dtor(basic_istream_wchar_to_basic_ios(&ucin.obj));
+    basic_filebuf_wchar_dtor(&filebuf_short_stdin);
+
+    basic_istream_wchar_dtor(basic_istream_wchar_to_basic_ios(&wcin.obj));
+    basic_filebuf_wchar_dtor(&filebuf_wchar_stdin);
 
     basic_ostream_char_dtor(basic_ostream_char_to_basic_ios(&cout.obj));
-    basic_filebuf_char_dtor(&filebuf_stdout);
+    basic_filebuf_char_dtor(&filebuf_char_stdout);
+
+    basic_ostream_wchar_dtor(basic_ostream_wchar_to_basic_ios(&ucout.obj));
+    basic_filebuf_wchar_dtor(&filebuf_short_stdout);
+
+    basic_ostream_wchar_dtor(basic_ostream_wchar_to_basic_ios(&wcout.obj));
+    basic_filebuf_wchar_dtor(&filebuf_wchar_stdout);
 
     basic_ostream_char_dtor(basic_ostream_char_to_basic_ios(&cerr.obj));
-    basic_filebuf_char_dtor(&filebuf_stderr);
+    basic_filebuf_char_dtor(&filebuf_char_stderr);
+
+    basic_ostream_wchar_dtor(basic_ostream_wchar_to_basic_ios(&ucerr.obj));
+    basic_filebuf_wchar_dtor(&filebuf_short_stderr);
+
+    basic_ostream_wchar_dtor(basic_ostream_wchar_to_basic_ios(&wcerr.obj));
+    basic_filebuf_wchar_dtor(&filebuf_wchar_stderr);
 
     basic_ostream_char_dtor(basic_ostream_char_to_basic_ios(&clog.obj));
-    basic_filebuf_char_dtor(&filebuf_log);
+    basic_filebuf_char_dtor(&filebuf_char_log);
+
+    basic_ostream_wchar_dtor(basic_ostream_wchar_to_basic_ios(&uclog.obj));
+    basic_filebuf_wchar_dtor(&filebuf_short_log);
+
+    basic_ostream_wchar_dtor(basic_ostream_wchar_to_basic_ios(&wclog.obj));
+    basic_filebuf_wchar_dtor(&filebuf_wchar_log);
 }

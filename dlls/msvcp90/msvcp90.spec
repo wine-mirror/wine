@@ -2702,22 +2702,22 @@
 @ extern -arch=win64 ?_Ptr_clog@std@@3PEAV?$basic_ostream@DU?$char_traits@D@std@@@1@EA _Ptr_clog
 @ extern -arch=win32 ?_Ptr_cout@std@@3PAV?$basic_ostream@DU?$char_traits@D@std@@@1@A _Ptr_cout
 @ extern -arch=win64 ?_Ptr_cout@std@@3PEAV?$basic_ostream@DU?$char_traits@D@std@@@1@EA _Ptr_cout
-# extern -arch=win32 ?_Ptr_wcerr@std@@3PAV?$basic_ostream@GU?$char_traits@G@std@@@1@A
-# extern -arch=win64 ?_Ptr_wcerr@std@@3PEAV?$basic_ostream@GU?$char_traits@G@std@@@1@EA
-# extern -arch=win32 ?_Ptr_wcerr@std@@3PAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@A
-# extern -arch=win64 ?_Ptr_wcerr@std@@3PEAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@EA
-# extern -arch=win32 ?_Ptr_wcin@std@@3PAV?$basic_istream@GU?$char_traits@G@std@@@1@A
-# extern -arch=win64 ?_Ptr_wcin@std@@3PEAV?$basic_istream@GU?$char_traits@G@std@@@1@EA
-# extern -arch=win32 ?_Ptr_wcin@std@@3PAV?$basic_istream@_WU?$char_traits@_W@std@@@1@A
-# extern -arch=win64 ?_Ptr_wcin@std@@3PEAV?$basic_istream@_WU?$char_traits@_W@std@@@1@EA
-# extern -arch=win32 ?_Ptr_wclog@std@@3PAV?$basic_ostream@GU?$char_traits@G@std@@@1@A
-# extern -arch=win64 ?_Ptr_wclog@std@@3PEAV?$basic_ostream@GU?$char_traits@G@std@@@1@EA
-# extern -arch=win32 ?_Ptr_wclog@std@@3PAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@A
-# extern -arch=win64 ?_Ptr_wclog@std@@3PEAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@EA
-# extern -arch=win32 ?_Ptr_wcout@std@@3PAV?$basic_ostream@GU?$char_traits@G@std@@@1@A
-# extern -arch=win64 ?_Ptr_wcout@std@@3PEAV?$basic_ostream@GU?$char_traits@G@std@@@1@EA
-# extern -arch=win32 ?_Ptr_wcout@std@@3PAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@A
-@ stub -arch=win64 ?_Ptr_wcout@std@@3PEAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@EA
+@ extern -arch=win32 ?_Ptr_wcerr@std@@3PAV?$basic_ostream@GU?$char_traits@G@std@@@1@A _Ptr_ucerr
+@ extern -arch=win64 ?_Ptr_wcerr@std@@3PEAV?$basic_ostream@GU?$char_traits@G@std@@@1@EA _Ptr_ucerr
+@ extern -arch=win32 ?_Ptr_wcerr@std@@3PAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@A _Ptr_wcerr
+@ extern -arch=win64 ?_Ptr_wcerr@std@@3PEAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@EA _Ptr_wcerr
+@ extern -arch=win32 ?_Ptr_wcin@std@@3PAV?$basic_istream@GU?$char_traits@G@std@@@1@A _Ptr_ucin
+@ extern -arch=win64 ?_Ptr_wcin@std@@3PEAV?$basic_istream@GU?$char_traits@G@std@@@1@EA _Ptr_ucin
+@ extern -arch=win32 ?_Ptr_wcin@std@@3PAV?$basic_istream@_WU?$char_traits@_W@std@@@1@A _Ptr_wcin
+@ extern -arch=win64 ?_Ptr_wcin@std@@3PEAV?$basic_istream@_WU?$char_traits@_W@std@@@1@EA _Ptr_wcin
+@ extern -arch=win32 ?_Ptr_wclog@std@@3PAV?$basic_ostream@GU?$char_traits@G@std@@@1@A _Ptr_uclog
+@ extern -arch=win64 ?_Ptr_wclog@std@@3PEAV?$basic_ostream@GU?$char_traits@G@std@@@1@EA _Ptr_uclog
+@ extern -arch=win32 ?_Ptr_wclog@std@@3PAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@A _Ptr_wclog
+@ extern -arch=win64 ?_Ptr_wclog@std@@3PEAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@EA _Ptr_wclog
+@ extern -arch=win32 ?_Ptr_wcout@std@@3PAV?$basic_ostream@GU?$char_traits@G@std@@@1@A _Ptr_ucout
+@ extern -arch=win64 ?_Ptr_wcout@std@@3PEAV?$basic_ostream@GU?$char_traits@G@std@@@1@EA _Ptr_ucout
+@ extern -arch=win32 ?_Ptr_wcout@std@@3PAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@A _Ptr_wcout
+@ extern -arch=win64 ?_Ptr_wcout@std@@3PEAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@EA _Ptr_wcout
 @ stub -arch=win32 ?_Put@?$money_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@CA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@V?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@I@Z
 @ stub -arch=win64 ?_Put@?$money_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@CA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@V?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@_K@Z
 @ stub -arch=win32 ?_Put@?$money_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@CA?AV?$ostreambuf_iterator@GU?$char_traits@G@std@@@2@V32@V?$_String_const_iterator@GU?$char_traits@G@std@@V?$allocator@G@2@@2@I@Z
@@ -5675,14 +5675,14 @@
 @ cdecl -arch=win64 ?unshift@?$codecvt@GDH@std@@QEBAHAEAHPEAD1AEAPEAD@Z(ptr ptr ptr ptr ptr) codecvt_wchar_unshift
 @ thiscall -arch=win32 ?unshift@?$codecvt@_WDH@std@@QBEHAAHPAD1AAPAD@Z(ptr ptr ptr ptr ptr) codecvt_wchar_unshift
 @ cdecl -arch=win64 ?unshift@?$codecvt@_WDH@std@@QEBAHAEAHPEAD1AEAPEAD@Z(ptr ptr ptr ptr ptr) codecvt_wchar_unshift
-# extern ?wcerr@std@@3V?$basic_ostream@GU?$char_traits@G@std@@@1@A
-# extern ?wcerr@std@@3V?$basic_ostream@_WU?$char_traits@_W@std@@@1@A
-# extern ?wcin@std@@3V?$basic_istream@GU?$char_traits@G@std@@@1@A
-# extern ?wcin@std@@3V?$basic_istream@_WU?$char_traits@_W@std@@@1@A
-# extern ?wclog@std@@3V?$basic_ostream@GU?$char_traits@G@std@@@1@A
-# extern ?wclog@std@@3V?$basic_ostream@_WU?$char_traits@_W@std@@@1@A
-# extern ?wcout@std@@3V?$basic_ostream@GU?$char_traits@G@std@@@1@A
-# extern ?wcout@std@@3V?$basic_ostream@_WU?$char_traits@_W@std@@@1@A
+@ extern ?wcerr@std@@3V?$basic_ostream@GU?$char_traits@G@std@@@1@A ucerr
+@ extern ?wcerr@std@@3V?$basic_ostream@_WU?$char_traits@_W@std@@@1@A wcerr
+@ extern ?wcin@std@@3V?$basic_istream@GU?$char_traits@G@std@@@1@A ucin
+@ extern ?wcin@std@@3V?$basic_istream@_WU?$char_traits@_W@std@@@1@A wcin
+@ extern ?wclog@std@@3V?$basic_ostream@GU?$char_traits@G@std@@@1@A uclog
+@ extern ?wclog@std@@3V?$basic_ostream@_WU?$char_traits@_W@std@@@1@A wclog
+@ extern ?wcout@std@@3V?$basic_ostream@GU?$char_traits@G@std@@@1@A ucout
+@ extern ?wcout@std@@3V?$basic_ostream@_WU?$char_traits@_W@std@@@1@A wcout
 @ thiscall -arch=win32 ?widen@?$basic_ios@DU?$char_traits@D@std@@@std@@QBEDD@Z(ptr long) basic_ios_char_widen
 @ cdecl -arch=win64 ?widen@?$basic_ios@DU?$char_traits@D@std@@@std@@QEBADD@Z(ptr long) basic_ios_char_widen
 @ thiscall -arch=win32 ?widen@?$basic_ios@GU?$char_traits@G@std@@@std@@QBEGD@Z(ptr long) basic_ios_wchar_widen
