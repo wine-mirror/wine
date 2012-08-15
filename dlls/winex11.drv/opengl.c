@@ -133,7 +133,6 @@ struct WineGLInfo {
 
 struct wgl_pixel_format
 {
-    int         iPixelFormat;
     GLXFBConfig fbconfig;
     int         fmt_id;
     int         render_type;
@@ -964,7 +963,6 @@ static void init_pixel_formats( Display *display )
                 }
 
                 TRACE("Found onscreen format FBCONFIG_ID 0x%x corresponding to iPixelFormat %d at GLX index %d\n", fmt_id, size+1, i);
-                list[size].iPixelFormat = size+1; /* The index starts at 1 */
                 list[size].fbconfig = cfgs[i];
                 list[size].fmt_id = fmt_id;
                 list[size].render_type = get_render_type_from_fbconfig(display, cfgs[i]);
@@ -976,7 +974,6 @@ static void init_pixel_formats( Display *display )
                 if(check_fbconfig_bitmap_capability(display, cfgs[i]))
                 {
                     TRACE("Found bitmap capable format FBCONFIG_ID 0x%x corresponding to iPixelFormat %d at GLX index %d\n", fmt_id, size+1, i);
-                    list[size].iPixelFormat = size+1; /* The index starts at 1 */
                     list[size].fbconfig = cfgs[i];
                     list[size].fmt_id = fmt_id;
                     list[size].render_type = get_render_type_from_fbconfig(display, cfgs[i]);
@@ -1001,7 +998,6 @@ static void init_pixel_formats( Display *display )
                 }
 
                 TRACE("Found offscreen format FBCONFIG_ID 0x%x corresponding to iPixelFormat %d at GLX index %d\n", fmt_id, size+1, i);
-                list[size].iPixelFormat = size+1; /* The index starts at 1 */
                 list[size].fbconfig = cfgs[i];
                 list[size].fmt_id = fmt_id;
                 list[size].render_type = get_render_type_from_fbconfig(display, cfgs[i]);
@@ -1469,10 +1465,9 @@ static BOOL glxdrv_wglMakeCurrent(HDC hdc, struct wgl_context *ctx)
         SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
     }
-    if (ctx->fmt->iPixelFormat != escape.pixel_format)
+    if (ctx->fmt - pixel_formats != escape.pixel_format - 1)
     {
-        WARN( "mismatched pixel format hdc %p %u ctx %p %u\n",
-              hdc, escape.pixel_format, ctx, ctx->fmt->iPixelFormat );
+        WARN( "mismatched pixel format hdc %p %u ctx %p\n", hdc, escape.pixel_format, ctx );
         SetLastError( ERROR_INVALID_PIXEL_FORMAT );
         return FALSE;
     }
