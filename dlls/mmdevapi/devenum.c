@@ -1024,7 +1024,7 @@ static HRESULT WINAPI MMDevEnum_GetDevice(IMMDeviceEnumerator *iface, const WCHA
         if (str && !lstrcmpW(str, name))
         {
             CoTaskMemFree(str);
-            IUnknown_AddRef(dev);
+            IMMDevice_AddRef(dev);
             *device = dev;
             return S_OK;
         }

@@ -44,34 +44,34 @@ static void test_collection(IMMDeviceEnumerator *mme, IMMDeviceCollection *col)
     IMMDevice *dev;
 
     /* collection doesn't keep a ref on parent */
-    IUnknown_AddRef(mme);
-    ref = IUnknown_Release(mme);
+    IMMDeviceEnumerator_AddRef(mme);
+    ref = IMMDeviceEnumerator_Release(mme);
     ok(ref == 2, "Reference count on parent is %u\n", ref);
 
-    ref = IUnknown_AddRef(col);
-    IUnknown_Release(col);
+    ref = IMMDeviceCollection_AddRef(col);
+    IMMDeviceCollection_Release(col);
     ok(ref == 2, "Invalid reference count %u on collection\n", ref);
 
-    hr = IUnknown_QueryInterface(col, &IID_IUnknown, NULL);
+    hr = IMMDeviceCollection_QueryInterface(col, &IID_IUnknown, NULL);
     ok(hr == E_POINTER, "Null ppv returns %08x\n", hr);
 
-    hr = IUnknown_QueryInterface(col, &IID_IUnknown, (void**)&unk);
+    hr = IMMDeviceCollection_QueryInterface(col, &IID_IUnknown, (void**)&unk);
     ok(hr == S_OK, "Cannot query for IID_IUnknown: 0x%08x\n", hr);
     if (hr == S_OK)
     {
-        ok((LONG_PTR)col == (LONG_PTR)unk, "Pointers are not identical %p/%p/%p\n", col, unk, mme);
+        ok((IUnknown*)col == unk, "Pointers are not identical %p/%p/%p\n", col, unk, mme);
         IUnknown_Release(unk);
     }
 
-    hr = IUnknown_QueryInterface(col, &IID_IMMDeviceCollection, (void**)&col2);
+    hr = IMMDeviceCollection_QueryInterface(col, &IID_IMMDeviceCollection, (void**)&col2);
     ok(hr == S_OK, "Cannot query for IID_IMMDeviceCollection: 0x%08x\n", hr);
     if (hr == S_OK)
-        IUnknown_Release(col2);
+        IMMDeviceCollection_Release(col2);
 
-    hr = IUnknown_QueryInterface(col, &IID_IMMDeviceEnumerator, (void**)&mme2);
+    hr = IMMDeviceCollection_QueryInterface(col, &IID_IMMDeviceEnumerator, (void**)&mme2);
     ok(hr == E_NOINTERFACE, "Query for IID_IMMDeviceEnumerator returned: 0x%08x\n", hr);
     if (hr == S_OK)
-        IUnknown_Release(mme2);
+        IMMDeviceEnumerator_Release(mme2);
 
     hr = IMMDeviceCollection_GetCount(col, NULL);
     ok(hr == E_POINTER, "GetCount returned 0x%08x\n", hr);
@@ -113,9 +113,9 @@ static void test_collection(IMMDeviceEnumerator *mme, IMMDeviceCollection *col)
             }
         }
         if (dev)
-            IUnknown_Release(dev);
+            IMMDevice_Release(dev);
     }
-    IUnknown_Release(col);
+    IMMDeviceCollection_Release(col);
 }
 
 /* Only do parameter tests here, the actual MMDevice testing should be a separate test */
@@ -139,11 +139,11 @@ START_TEST(mmdevenum)
     }
 
     /* Odd behavior.. bug? */
-    ref = IUnknown_AddRef(mme);
+    ref = IMMDeviceEnumerator_AddRef(mme);
     ok(ref == 3, "Invalid reference count after incrementing: %u\n", ref);
-    IUnknown_Release(mme);
+    IMMDeviceEnumerator_Release(mme);
 
-    hr = IUnknown_QueryInterface(mme, &IID_IUnknown, (void**)&unk);
+    hr = IMMDeviceEnumerator_QueryInterface(mme, &IID_IUnknown, (void**)&unk);
     ok(hr == S_OK, "returned 0x%08x\n", hr);
     if (hr != S_OK) return;
 
@@ -153,13 +153,13 @@ START_TEST(mmdevenum)
     /* Proving that it is static.. */
     hr = CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL, CLSCTX_INPROC_SERVER, &IID_IMMDeviceEnumerator, (void**)&mme2);
     ok(hr == S_OK, "CoCreateInstance failed: 0x%08x\n", hr);
-    IUnknown_Release(mme2);
+    IMMDeviceEnumerator_Release(mme2);
     ok(mme == mme2, "Pointers are not equal!\n");
 
-    hr = IUnknown_QueryInterface(mme, &IID_IUnknown, NULL);
+    hr = IMMDeviceEnumerator_QueryInterface(mme, &IID_IUnknown, NULL);
     ok(hr == E_POINTER, "Null pointer on QueryInterface returned %08x\n", hr);
 
-    hr = IUnknown_QueryInterface(mme, &GUID_NULL, (void**)&unk);
+    hr = IMMDeviceEnumerator_QueryInterface(mme, &GUID_NULL, (void**)&unk);
     ok(!unk, "Unk not reset to null after invalid QI\n");
     ok(hr == E_NOINTERFACE, "Invalid hr %08x returned on IID_NULL\n", hr);
 
@@ -192,5 +192,5 @@ START_TEST(mmdevenum)
             test_collection(mme, col);
     }
 
-    IUnknown_Release(mme);
+    IMMDeviceEnumerator_Release(mme);
 }

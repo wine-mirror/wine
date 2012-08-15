@@ -203,7 +203,7 @@ static inline IClassFactoryImpl *impl_from_IClassFactory(IClassFactory *iface)
 }
 
 static HRESULT WINAPI
-MMCF_QueryInterface(LPCLASSFACTORY iface, REFIID riid, LPVOID *ppobj)
+MMCF_QueryInterface(IClassFactory *iface, REFIID riid, void **ppobj)
 {
     IClassFactoryImpl *This = impl_from_IClassFactory(iface);
     TRACE("(%p, %s, %p)\n", This, debugstr_guid(riid), ppobj);
@@ -213,7 +213,7 @@ MMCF_QueryInterface(LPCLASSFACTORY iface, REFIID riid, LPVOID *ppobj)
         IsEqualIID(riid, &IID_IClassFactory))
     {
         *ppobj = iface;
-        IUnknown_AddRef(iface);
+        IClassFactory_AddRef(iface);
         return S_OK;
     }
     *ppobj = NULL;
@@ -296,7 +296,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
     for (i = 0; i < sizeof(MMDEVAPI_CF)/sizeof(MMDEVAPI_CF[0]); ++i)
     {
         if (IsEqualGUID(rclsid, MMDEVAPI_CF[i].rclsid)) {
-            IUnknown_AddRef(&MMDEVAPI_CF[i].IClassFactory_iface);
+            IClassFactory_AddRef(&MMDEVAPI_CF[i].IClassFactory_iface);
             *ppv = &MMDEVAPI_CF[i];
             return S_OK;
         }

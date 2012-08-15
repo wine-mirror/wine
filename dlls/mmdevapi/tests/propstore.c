@@ -132,6 +132,6 @@ START_TEST(propstore)
     IMMDevice_Release(dev);
 cleanup:
     if (mme)
-        IUnknown_Release(mme);
+        IMMDeviceEnumerator_Release(mme);
     CoUninitialize();
 }

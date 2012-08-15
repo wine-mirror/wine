@@ -78,7 +78,7 @@ START_TEST(dependency)
         ok(ds8 != NULL, "ds8 pointer is null\n");
     }
     if (ds8)
-        IUnknown_Release(ds8);
+        IDirectSound8_Release(ds8);
 
     ok(!GetModuleHandle("quartz.dll"), "quartz.dll was already loaded!\n");
     hr = IMMDevice_Activate(dev, &IID_IBaseFilter, CLSCTX_INPROC_SERVER, NULL, (void**)&bf);
@@ -99,11 +99,11 @@ START_TEST(dependency)
 
 cleanup:
     if (bf)
-        IUnknown_Release(bf);
+        IBaseFilter_Release(bf);
     if (dev)
-        IUnknown_Release(dev);
+        IMMDevice_Release(dev);
     if (mme)
-        IUnknown_Release(mme);
+        IMMDeviceEnumerator_Release(mme);
 
     CoUninitialize();
 }

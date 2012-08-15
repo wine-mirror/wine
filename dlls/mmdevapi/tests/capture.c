@@ -442,7 +442,7 @@ static void test_capture(IAudioClient *ac, HANDLE handle, WAVEFORMATEX *wfx)
     hr = IAudioClient_Start(ac);
     ok(hr == S_OK, "Start failed: %08x\n", hr);
 
-    IUnknown_Release(acc);
+    IAudioCaptureClient_Release(acc);
 }
 
 static void test_audioclient(void)

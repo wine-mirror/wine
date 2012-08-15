@@ -1378,25 +1378,25 @@ static void test_session(void)
     hr = IAudioClient_GetService(ses1_ac1, &IID_IAudioSessionControl, (void**)&ses1_ctl2);
     ok(hr == S_OK, "GetService failed: %08x\n", hr);
     ok(ses1_ctl == ses1_ctl2, "Got different controls: %p %p\n", ses1_ctl, ses1_ctl2);
-    ref = IAudioSessionControl_Release(ses1_ctl2);
+    ref = IAudioSessionControl2_Release(ses1_ctl2);
     ok(ref != 0, "AudioSessionControl was destroyed\n");
 
     hr = IAudioClient_GetService(ses1_ac2, &IID_IAudioSessionControl, (void**)&ses1_ctl2);
     ok(hr == S_OK, "GetService failed: %08x\n", hr);
 
-    hr = IAudioSessionControl_GetState(ses1_ctl, NULL);
+    hr = IAudioSessionControl2_GetState(ses1_ctl, NULL);
     ok(hr == NULL_PTR_ERR, "GetState gave wrong error: %08x\n", hr);
 
-    hr = IAudioSessionControl_GetState(ses1_ctl, &state);
+    hr = IAudioSessionControl2_GetState(ses1_ctl, &state);
     ok(hr == S_OK, "GetState failed: %08x\n", hr);
     ok(state == AudioSessionStateInactive, "Got wrong state: %d\n", state);
 
-    hr = IAudioSessionControl_GetState(ses1_ctl2, &state);
+    hr = IAudioSessionControl2_GetState(ses1_ctl2, &state);
     ok(hr == S_OK, "GetState failed: %08x\n", hr);
     ok(state == AudioSessionStateInactive, "Got wrong state: %d\n", state);
 
     if(cap_ctl){
-        hr = IAudioSessionControl_GetState(cap_ctl, &state);
+        hr = IAudioSessionControl2_GetState(cap_ctl, &state);
         ok(hr == S_OK, "GetState failed: %08x\n", hr);
         ok(state == AudioSessionStateInactive, "Got wrong state: %d\n", state);
     }
@@ -1404,16 +1404,16 @@ static void test_session(void)
     hr = IAudioClient_Start(ses1_ac1);
     ok(hr == S_OK, "Start failed: %08x\n", hr);
 
-    hr = IAudioSessionControl_GetState(ses1_ctl, &state);
+    hr = IAudioSessionControl2_GetState(ses1_ctl, &state);
     ok(hr == S_OK, "GetState failed: %08x\n", hr);
     ok(state == AudioSessionStateActive, "Got wrong state: %d\n", state);
 
-    hr = IAudioSessionControl_GetState(ses1_ctl2, &state);
+    hr = IAudioSessionControl2_GetState(ses1_ctl2, &state);
     ok(hr == S_OK, "GetState failed: %08x\n", hr);
     ok(state == AudioSessionStateActive, "Got wrong state: %d\n", state);
 
     if(cap_ctl){
-        hr = IAudioSessionControl_GetState(cap_ctl, &state);
+        hr = IAudioSessionControl2_GetState(cap_ctl, &state);
         ok(hr == S_OK, "GetState failed: %08x\n", hr);
         ok(state == AudioSessionStateInactive, "Got wrong state: %d\n", state);
     }
@@ -1421,57 +1421,57 @@ static void test_session(void)
     hr = IAudioClient_Stop(ses1_ac1);
     ok(hr == S_OK, "Start failed: %08x\n", hr);
 
-    hr = IAudioSessionControl_GetState(ses1_ctl, &state);
+    hr = IAudioSessionControl2_GetState(ses1_ctl, &state);
     ok(hr == S_OK, "GetState failed: %08x\n", hr);
     ok(state == AudioSessionStateInactive, "Got wrong state: %d\n", state);
 
-    hr = IAudioSessionControl_GetState(ses1_ctl2, &state);
+    hr = IAudioSessionControl2_GetState(ses1_ctl2, &state);
     ok(hr == S_OK, "GetState failed: %08x\n", hr);
     ok(state == AudioSessionStateInactive, "Got wrong state: %d\n", state);
 
     if(cap_ctl){
-        hr = IAudioSessionControl_GetState(cap_ctl, &state);
+        hr = IAudioSessionControl2_GetState(cap_ctl, &state);
         ok(hr == S_OK, "GetState failed: %08x\n", hr);
         ok(state == AudioSessionStateInactive, "Got wrong state: %d\n", state);
 
         hr = IAudioClient_Start(cap_ac);
         ok(hr == S_OK, "Start failed: %08x\n", hr);
 
-        hr = IAudioSessionControl_GetState(ses1_ctl, &state);
+        hr = IAudioSessionControl2_GetState(ses1_ctl, &state);
         ok(hr == S_OK, "GetState failed: %08x\n", hr);
         ok(state == AudioSessionStateInactive, "Got wrong state: %d\n", state);
 
-        hr = IAudioSessionControl_GetState(ses1_ctl2, &state);
+        hr = IAudioSessionControl2_GetState(ses1_ctl2, &state);
         ok(hr == S_OK, "GetState failed: %08x\n", hr);
         ok(state == AudioSessionStateInactive, "Got wrong state: %d\n", state);
 
-        hr = IAudioSessionControl_GetState(cap_ctl, &state);
+        hr = IAudioSessionControl2_GetState(cap_ctl, &state);
         ok(hr == S_OK, "GetState failed: %08x\n", hr);
         ok(state == AudioSessionStateActive, "Got wrong state: %d\n", state);
 
         hr = IAudioClient_Stop(cap_ac);
         ok(hr == S_OK, "Stop failed: %08x\n", hr);
 
-        hr = IAudioSessionControl_GetState(ses1_ctl, &state);
+        hr = IAudioSessionControl2_GetState(ses1_ctl, &state);
         ok(hr == S_OK, "GetState failed: %08x\n", hr);
         ok(state == AudioSessionStateInactive, "Got wrong state: %d\n", state);
 
-        hr = IAudioSessionControl_GetState(ses1_ctl2, &state);
+        hr = IAudioSessionControl2_GetState(ses1_ctl2, &state);
         ok(hr == S_OK, "GetState failed: %08x\n", hr);
         ok(state == AudioSessionStateInactive, "Got wrong state: %d\n", state);
 
-        hr = IAudioSessionControl_GetState(cap_ctl, &state);
+        hr = IAudioSessionControl2_GetState(cap_ctl, &state);
         ok(hr == S_OK, "GetState failed: %08x\n", hr);
         ok(state == AudioSessionStateInactive, "Got wrong state: %d\n", state);
 
-        ref = IAudioSessionControl_Release(cap_ctl);
+        ref = IAudioSessionControl2_Release(cap_ctl);
         ok(ref == 0, "AudioSessionControl wasn't released: %u\n", ref);
 
         ref = IAudioClient_Release(cap_ac);
         ok(ref == 0, "AudioClient wasn't released: %u\n", ref);
     }
 
-    ref = IAudioSessionControl_Release(ses1_ctl);
+    ref = IAudioSessionControl2_Release(ses1_ctl);
     ok(ref == 0, "AudioSessionControl wasn't released: %u\n", ref);
 
     ref = IAudioClient_Release(ses1_ac1);
@@ -1481,11 +1481,11 @@ static void test_session(void)
     ok(ref == 1, "AudioClient had wrong refcount: %u\n", ref);
 
     /* we've released all of our IAudioClient references, so check GetState */
-    hr = IAudioSessionControl_GetState(ses1_ctl2, &state);
+    hr = IAudioSessionControl2_GetState(ses1_ctl2, &state);
     ok(hr == S_OK, "GetState failed: %08x\n", hr);
     ok(state == AudioSessionStateInactive, "Got wrong state: %d\n", state);
 
-    ref = IAudioSessionControl_Release(ses1_ctl2);
+    ref = IAudioSessionControl2_Release(ses1_ctl2);
     ok(ref == 0, "AudioSessionControl wasn't released: %u\n", ref);
 
     CoTaskMemFree(pwfx);
