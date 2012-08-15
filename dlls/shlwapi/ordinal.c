@@ -446,7 +446,7 @@ HRESULT WINAPI RegisterDefaultAcceptHeaders(LPBC lpBC, IUnknown *lpUnknown)
         IEnumFORMATETC_Release(pClone);
       }
 
-      IEnumFORMATETC_Release(pIUnknown);
+      IUnknown_Release(pIUnknown);
     }
     IUnknown_Release(V_UNKNOWN(&var));
   }
@@ -1202,7 +1202,7 @@ HRESULT WINAPI ConnectToConnectionPoint(IUnknown* lpUnkSink, REFIID riid, BOOL f
         IConnectionPoint_Release(lpCP); /* Release it */
     }
 
-    IUnknown_Release(lpContainer);
+    IConnectionPointContainer_Release(lpContainer);
   }
   return hRet;
 }
@@ -1400,7 +1400,7 @@ HRESULT WINAPI IUnknown_SetSite(
     {
 	hr = IObjectWithSite_SetSite(iobjwithsite, site);
 	TRACE("done IObjectWithSite_SetSite ret=%08x\n", hr);
-	IUnknown_Release(iobjwithsite);
+	IObjectWithSite_Release(iobjwithsite);
     }
     else
     {
@@ -1410,7 +1410,7 @@ HRESULT WINAPI IUnknown_SetSite(
 
 	hr = IInternetSecurityManager_SetSecuritySite(isecmgr, (IInternetSecurityMgrSite *)site);
 	TRACE("done IInternetSecurityManager_SetSecuritySite ret=%08x\n", hr);
-	IUnknown_Release(isecmgr);
+	IInternetSecurityManager_Release(isecmgr);
     }
     return hr;
 }
@@ -1493,7 +1493,7 @@ HRESULT WINAPI IUnknown_QueryService(IUnknown* lpUnknown, REFGUID sid, REFIID ri
 
     TRACE("(IServiceProvider*)%p returned (IUnknown*)%p\n", pService, *lppOut);
 
-    IUnknown_Release(pService);
+    IServiceProvider_Release(pService);
   }
   return hRet;
 }
@@ -1613,7 +1613,7 @@ HRESULT WINAPI IUnknown_UIActivateIO(IUnknown *unknown, BOOL activate, LPMSG msg
     if (ret == S_OK)
     {
         ret = IInputObject_UIActivateIO(object, activate, msg);
-        IUnknown_Release(object);
+        IInputObject_Release(object);
     }
 
     return ret;

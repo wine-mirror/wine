@@ -833,7 +833,7 @@ static HRESULT WINAPI Disp_QueryInterface(
 
     if (*ppvObject)
     {
-        IUnknown_AddRef(This);
+        IDispatch_AddRef(This);
         return S_OK;
     }
 
@@ -948,7 +948,7 @@ static HRESULT WINAPI Enum_QueryInterface(
 
     if (*ppvObject)
     {
-        IUnknown_AddRef(This);
+        IEnumConnections_AddRef(This);
         return S_OK;
     }
 
@@ -1040,7 +1040,7 @@ static HRESULT WINAPI ConPt_QueryInterface(
 
     if (*ppvObject)
     {
-        IUnknown_AddRef(This);
+        IConnectionPoint_AddRef(This);
         return S_OK;
     }
 
@@ -1181,7 +1181,7 @@ static HRESULT WINAPI EnumPt_QueryInterface(
 
     if (*ppvObject)
     {
-        IUnknown_AddRef(This);
+        IEnumConnectionPoints_AddRef(This);
         return S_OK;
     }
 
@@ -1217,7 +1217,7 @@ static HRESULT WINAPI EnumPt_Next(
     if (cConnections > 0 && iface->idx < iface->container->ptCount)
     {
         *rgcd = iface->container->pt[iface->idx];
-        IUnknown_AddRef(iface->container->pt[iface->idx]);
+        IConnectionPoint_AddRef(iface->container->pt[iface->idx]);
         if (pcFetched)
             *pcFetched = 1;
         iface->idx++;
@@ -1272,7 +1272,7 @@ static HRESULT WINAPI Contain_QueryInterface(
 
     if (*ppvObject)
     {
-        IUnknown_AddRef(This);
+        IConnectionPointContainer_AddRef(This);
         return S_OK;
     }
 
@@ -1300,7 +1300,7 @@ static ULONG WINAPI Contain_Release(
         {
             int i;
             for (i = 0; i < iface->ptCount; i++)
-                IUnknown_Release(iface->pt[i]);
+                IConnectionPoint_Release(iface->pt[i]);
             HeapFree(GetProcessHeap(),0,iface->pt);
         }
         HeapFree(GetProcessHeap(),0,This);
@@ -1456,7 +1456,7 @@ static HRESULT WINAPI Prop_QueryInterface(
 
     if (*ppvObject)
     {
-        IUnknown_AddRef(This);
+        IPropertyBag_AddRef(This);
         return S_OK;
     }
 
@@ -2104,7 +2104,7 @@ static HRESULT WINAPI IOleCommandTargetImpl_QueryInterface(IOleCommandTarget *if
 
     if(*ppvObj)
     {
-        IUnknown_AddRef(iface);
+        IOleCommandTarget_AddRef(iface);
         return S_OK;
     }
 
@@ -2215,7 +2215,7 @@ static HRESULT WINAPI IServiceProviderImpl_QueryInterface(IServiceProvider *ifac
 
     if(*ppvObj)
     {
-        IUnknown_AddRef(iface);
+        IServiceProvider_AddRef(iface);
         /* native uses redefined IID_IServiceProvider symbol, so we can't compare pointers */
         if (IsEqualIID(riid, &IID_IServiceProvider))
             add_call(&trace_got, 1, iface, &IID_IServiceProvider, 0, 0, 0);
@@ -2333,7 +2333,7 @@ static HRESULT WINAPI IProfferServiceImpl_QueryInterface(IProfferService *iface,
 
     if(*ppvObj)
     {
-        IUnknown_AddRef(iface);
+        IProfferService_AddRef(iface);
         return S_OK;
     }
 
