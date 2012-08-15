@@ -2,6 +2,7 @@
  * Unit test suite for images
  *
  * Copyright (C) 2007 Google (Evan Stade)
+ * Copyright (C) 2012 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -3607,6 +3608,112 @@ static void test_bitmapbits(void)
     }
 }
 
+static void test_DrawImage(void)
+{
+    BYTE black_1x1[4] = { 0,0,0,0 };
+    BYTE white_2x2[16] = { 0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+                           0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff };
+    BYTE black_2x2[16] = { 0,0,0,0,0,0,0xff,0xff,
+                           0,0,0,0,0,0,0xff,0xff };
+    GpStatus status;
+    union
+    {
+        GpBitmap *bitmap;
+        GpImage *image;
+    } u1, u2;
+    GpGraphics *graphics;
+    int match;
+
+    status = GdipCreateBitmapFromScan0(1, 1, 4, PixelFormat24bppRGB, black_1x1, &u1.bitmap);
+    expect(Ok, status);
+    status = GdipBitmapSetResolution(u1.bitmap, 100.0, 100.0);
+    expect(Ok, status);
+
+    status = GdipCreateBitmapFromScan0(2, 2, 8, PixelFormat24bppRGB, white_2x2, &u2.bitmap);
+    expect(Ok, status);
+    status = GdipBitmapSetResolution(u2.bitmap, 300.0, 300.0);
+    expect(Ok, status);
+    status = GdipGetImageGraphicsContext(u2.image, &graphics);
+    expect(Ok, status);
+    status = GdipSetInterpolationMode(graphics, InterpolationModeNearestNeighbor);
+    expect(Ok, status);
+
+    status = GdipDrawImageI(graphics, u1.image, 0, 0);
+    expect(Ok, status);
+
+    match = memcmp(white_2x2, black_2x2, sizeof(black_2x2)) == 0;
+todo_wine
+    ok(match, "data should match\n");
+    if (!match)
+    {
+        UINT i, size = sizeof(white_2x2);
+        BYTE *bits = white_2x2;
+        for (i = 0; i < size; i++)
+            printf(" %02x", bits[i]);
+        printf("\n");
+    }
+
+    status = GdipDeleteGraphics(graphics);
+    expect(Ok, status);
+    status = GdipDisposeImage(u1.image);
+    expect(Ok, status);
+    status = GdipDisposeImage(u2.image);
+    expect(Ok, status);
+}
+
+static void test_GdipDrawImagePointRect(void)
+{
+    BYTE black_1x1[4] = { 0,0,0,0 };
+    BYTE white_2x2[16] = { 0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+                           0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff };
+    BYTE black_2x2[16] = { 0,0,0,0,0,0,0xff,0xff,
+                           0,0,0,0,0,0,0xff,0xff };
+    GpStatus status;
+    union
+    {
+        GpBitmap *bitmap;
+        GpImage *image;
+    } u1, u2;
+    GpGraphics *graphics;
+    int match;
+
+    status = GdipCreateBitmapFromScan0(1, 1, 4, PixelFormat24bppRGB, black_1x1, &u1.bitmap);
+    expect(Ok, status);
+    status = GdipBitmapSetResolution(u1.bitmap, 100.0, 100.0);
+    expect(Ok, status);
+
+    status = GdipCreateBitmapFromScan0(2, 2, 8, PixelFormat24bppRGB, white_2x2, &u2.bitmap);
+    expect(Ok, status);
+    status = GdipBitmapSetResolution(u2.bitmap, 300.0, 300.0);
+    expect(Ok, status);
+    status = GdipGetImageGraphicsContext(u2.image, &graphics);
+    expect(Ok, status);
+    status = GdipSetInterpolationMode(graphics, InterpolationModeNearestNeighbor);
+    expect(Ok, status);
+
+    status = GdipDrawImagePointRectI(graphics, u1.image, 0, 0, 0, 0, 1, 1, UnitPixel);
+    expect(Ok, status);
+
+    match = memcmp(white_2x2, black_2x2, sizeof(black_2x2)) == 0;
+todo_wine
+    ok(match, "data should match\n");
+    if (!match)
+    {
+        UINT i, size = sizeof(white_2x2);
+        BYTE *bits = white_2x2;
+        for (i = 0; i < size; i++)
+            printf(" %02x", bits[i]);
+        printf("\n");
+    }
+
+    status = GdipDeleteGraphics(graphics);
+    expect(Ok, status);
+    status = GdipDisposeImage(u1.image);
+    expect(Ok, status);
+    status = GdipDisposeImage(u2.image);
+    expect(Ok, status);
+}
+
 START_TEST(image)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -3619,6 +3726,8 @@ START_TEST(image)
 
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
+    test_DrawImage();
+    test_GdipDrawImagePointRect();
     test_bitmapbits();
     test_tiff_palette();
     test_GdipGetAllPropertyItems();
