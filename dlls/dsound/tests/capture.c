@@ -19,6 +19,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define COBJMACROS
 #include <stdio.h>
 #include "initguid.h"
 #include "windows.h"
@@ -671,6 +672,7 @@ static void test_COM(void)
     IDirectSoundCapture *dsc = (IDirectSoundCapture*)0xdeadbeef;
     IDirectSoundCaptureBuffer *buffer = (IDirectSoundCaptureBuffer*)0xdeadbeef;
     IDirectSoundNotify *notify;
+    IUnknown *unk;
     DSCBUFFERDESC bufdesc;
     WAVEFORMATEX wfx;
     HRESULT hr;
@@ -687,6 +689,17 @@ static void test_COM(void)
         return;
     }
     ok(hr == DS_OK, "DirectSoundCaptureCreate failed: %08x, expected DS_OK\n", hr);
+
+    /* Different refcount for IDirectSoundCapture and for IUnknown */
+    refcount = IDirectSoundCapture_AddRef(dsc);
+    ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
+    hr = IDirectSoundCapture_QueryInterface(dsc, &IID_IUnknown, (void**)&unk);
+    ok(hr == S_OK, "QueryInterface for IID_IUnknown failed: %08x\n", hr);
+    refcount = IUnknown_AddRef(unk);
+    ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
+    IUnknown_Release(unk);
+    IUnknown_Release(unk);
+    IDirectSoundCapture_Release(dsc);
 
     init_format(&wfx, WAVE_FORMAT_PCM, 44100, 16, 1);
     ZeroMemory(&bufdesc, sizeof(bufdesc));
