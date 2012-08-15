@@ -3513,13 +3513,6 @@ static void test_GdipMeasureString(void)
         expect(Ok, status);
         expectf(50.0, bounds.X);
         expectf(50.0, bounds.Y);
-        /* FIXME: remove once Wine is fixed */
-        if (fabs(height - bounds.Height) > height / 100.0)
-        {
-            /* further testing is useless */
-            GdipDeleteGraphics(graphics);
-            continue;
-        }
         expectf_(height, bounds.Height, height / 100.0);
         expectf_(bounds.Height / base_cy, bounds.Width / base_cx, 0.05);
         expect(7, chars);
@@ -3584,23 +3577,8 @@ static void test_GdipMeasureString(void)
                 base_cy = bounds.Height;
             }
 
-            /* FIXME: remove once Wine is fixed */
-            if (fabs(height - bounds.Height) > height / 85.0)
-            {
-                /* further testing is useless */
-                GdipDeleteGraphics(graphics);
-                continue;
-            }
-
             expectf(0.0, bounds.X);
             expectf(0.0, bounds.Y);
-            /* FIXME: remove once Wine is fixed */
-            if (fabs(height - bounds.Height) > height / 85.0)
-            {
-                /* further testing is useless */
-                GdipDeleteGraphics(graphics);
-                continue;
-            }
             expectf_(height, bounds.Height, height / 85.0);
             expectf_(bounds.Height / base_cy, bounds.Width / base_cx, 0.05);
             expect(7, chars);
@@ -3617,13 +3595,6 @@ static void test_GdipMeasureString(void)
             expect(Ok, status);
             expectf(50.0, bounds.X);
             expectf(50.0, bounds.Y);
-            /* FIXME: remove once Wine is fixed */
-            if (fabs(height - bounds.Height) > height / 85.0)
-            {
-                /* further testing is useless */
-                GdipDeleteGraphics(graphics);
-                continue;
-            }
             expectf_(height, bounds.Height, height / 85.0);
             expectf_(bounds.Height / base_cy, bounds.Width / base_cx, 0.05);
             expect(7, chars);
@@ -3635,7 +3606,7 @@ static void test_GdipMeasureString(void)
                 height *= td[i].page_scale;
             /*trace("%u: unit %u, %.1fx%.1f dpi, scale %.1f, height %f, pixels %f\n",
                   i, td[i].unit, td[i].res_x, td[i].res_y, td[i].page_scale, bounds.Height, height);*/
-            expectf_(100.0, height, 1.0);
+            expectf_(100.0, height, 1.1);
 
             status = GdipDeleteGraphics(graphics);
             expect(Ok, status);

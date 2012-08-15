@@ -4999,7 +4999,7 @@ static GpStatus measure_string_callback(HDC hdc,
     REAL new_width, new_height;
 
     new_width = bounds->Width / args->rel_width;
-    new_height = (bounds->Height + bounds->Y - args->bounds->Y) / args->rel_height;
+    new_height = (bounds->Height + bounds->Y) / args->rel_height - args->bounds->Y;
 
     if (new_width > args->bounds->Width)
         args->bounds->Width = new_width;
@@ -5029,6 +5029,7 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
     struct measure_string_args args;
     HDC temp_hdc=NULL, hdc;
     GpPointF pt[3];
+    RectF scaled_rect;
 
     TRACE("(%p, %s, %i, %p, %s, %p, %p, %p, %p)\n", graphics,
         debugstr_wn(string, length), length, font, debugstr_rectf(rect), format,
@@ -5066,6 +5067,11 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
     get_font_hfont(graphics, font, &gdifont);
     oldfont = SelectObject(hdc, gdifont);
 
+    scaled_rect.X = rect->X * args.rel_width;
+    scaled_rect.Y = rect->Y * args.rel_height;
+    scaled_rect.Width = rect->Width * args.rel_width;
+    scaled_rect.Height = rect->Height * args.rel_height;
+
     bounds->X = rect->X;
     bounds->Y = rect->Y;
     bounds->Width = 0.0;
@@ -5075,7 +5081,7 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
     args.codepointsfitted = codepointsfitted;
     args.linesfilled = linesfilled;
 
-    gdip_format_string(hdc, string, length, font, rect, format,
+    gdip_format_string(hdc, string, length, font, &scaled_rect, format,
         measure_string_callback, &args);
 
     SelectObject(hdc, oldfont);
