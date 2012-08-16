@@ -640,10 +640,114 @@ static void test_data_encryption(const struct encrypt_test *tests, int testLen)
     ok(result, "Expected release of the provider\n");
 }
 
+struct ciphermode_test {
+    DWORD cipherMode;
+    BOOL expectedResult;
+    DWORD expectedError;
+    const BYTE *encrypted;
+};
+
+static const BYTE encryptedCFB[] = {
+0x51,0x15,0x77,0xab,0x62,0x1f,0x7d,0xcb, 0x35,0x1e,0xd8,0xd3,0x2a,0x00,0xf0,0x94,
+0x7c,0xa5,0x28,0xda,0xb8,0x81,0x15,0x99, 0xd1,0xd5,0x06,0x18,0xb8,0x85,0xfc,0xc9
+};
+static const BYTE encryptedCBC[] = {
+0x8f,0x7b,0x56,0xeb,0xad,0x4d,0x76,0xc2, 0xd5,0x1d,0xf0,0x60,0x9d,0xde,0x96,0xe8,
+0xb7,0x7b,0xeb,0x4b,0xee,0x3f,0xae,0x05, 0xdd,0x3b,0x62,0x47,0x7f,0x6f,0x79,0x6c
+};
+static const BYTE encryptedECB[] = {
+0x8f,0x7b,0x56,0xeb,0xad,0x4d,0x76,0xc2, 0x8b,0xe0,0x4e,0xe4,0x98,0x4f,0xb8,0x3b,
+0xf3,0xeb,0x6f,0x0a,0x57,0x91,0xdd,0xc7, 0x64,0x8b,0xb9,0x50,0xe6,0x5e,0x76,0x72
+};
+
+static const struct ciphermode_test ciphermode_data[] = {
+    {CRYPT_MODE_CFB, TRUE, 0xdeadbeef, encryptedCFB}, /* Testing cipher block chaining */
+    {CRYPT_MODE_CBC, TRUE, 0xdeadbeef, encryptedCBC}, /* Testing cipher feedback */
+    {CRYPT_MODE_ECB, TRUE, 0xdeadbeef, encryptedECB}, /* Testing electronic codebook */
+    {CRYPT_MODE_OFB, FALSE, NTE_BAD_DATA}/* DSSENH does not support Output Feedback cipher mode */
+};
+
+static void test_cipher_modes(const struct ciphermode_test *tests, int testLen)
+{
+    HCRYPTPROV hProv = 0;
+    HCRYPTKEY pKey = 0;
+    HCRYPTHASH hHash;
+    const char plainText[] = "Testing block cipher modes.";
+    const char dataToHash[] = "GSOC is awesome!";
+    unsigned char pbData[36];
+    int plainLen = sizeof(plainText), i;
+    DWORD mode, dataLen;
+    BOOL result;
+
+    /* acquire dss enhanced provider */
+    SetLastError(0xdeadbeef);
+    result = CryptAcquireContextA(
+        &hProv, NULL, MS_ENH_DSS_DH_PROV, PROV_DSS_DH, CRYPT_VERIFYCONTEXT);
+    if(!result && GetLastError() == NTE_KEYSET_NOT_DEF)
+    {
+        skip("DSSENH is currently not available, skipping block cipher mode tests.\n");
+        return;
+    }
+    ok(result, "Expected no errors.\n");
+
+    SetLastError(0xdeadbeef);
+    result = CryptCreateHash(hProv, CALG_MD5, 0, 0, &hHash);
+    ok(result, "Expected creation of a MD5 hash for key derivation.\n");
+
+    result = CryptHashData(hHash, (BYTE *)dataToHash, sizeof(dataToHash), 0);
+    ok(result, "Expected data to be added to hash for key derivation.\n");
+
+    /* Derive a CALG_RC2 key, but could be any other encryption cipher */
+    result = CryptDeriveKey(hProv, CALG_RC2, hHash, 40 << 16, &pKey);
+    ok(result, "Expected a derived key.\n");
+
+    result = CryptDestroyHash(hHash);
+    ok(result, "Expected destruction of hash after deriving key.\n");
+
+    /* test block cipher modes */
+    for(i = 0; i < testLen; i++)
+    {
+        SetLastError(0xdeadbeef);
+        dataLen = plainLen;
+        mode = tests[i].cipherMode;
+        memcpy(pbData, plainText, plainLen);
+
+        result = CryptSetKeyParam(pKey, KP_MODE, (BYTE*)&mode, 0);
+        if(tests[i].expectedResult)
+        {
+            ok(result, "Expected setting of KP_MODE, got %x.\n", GetLastError());
+
+            result = CryptEncrypt(pKey, 0, TRUE, 0, pbData, &dataLen, 36);
+            ok(result, "Expected data encryption, got %x.\n", GetLastError());
+
+            /* Verify we have the correct encrypted data */
+            ok(!memcmp(pbData, tests[i].encrypted, dataLen), "Incorrect encrypted data.\n");
+
+            result = CryptDecrypt(pKey, 0, TRUE, 0, pbData, &dataLen);
+            ok(result, "Expected data decryption, got %x.\n", GetLastError());
+
+            /* Verify we have the correct decrypted data */
+            ok(!memcmp(pbData, (BYTE *)plainText, dataLen), "Incorrect decrypted data.\n");
+        }
+        else
+        {   /* Expected error */
+            ok(!result && GetLastError() == tests[i].expectedError, "Expected %d, got %x.\n",
+                tests[i].expectedError, GetLastError());
+        }
+    }
+    result = CryptDestroyKey(pKey);
+    ok(result, "Expected no DestroyKey errors.\n");
+
+    result = CryptReleaseContext(hProv, 0);
+    ok(result, "Expected release of the provider.\n");
+}
+
+
 START_TEST(dssenh)
 {
     test_acquire_context();
     test_keylength();
     test_hash(hash_data, TESTLEN(hash_data));
     test_data_encryption(encrypt_data, TESTLEN(encrypt_data));
+    test_cipher_modes(ciphermode_data, TESTLEN(ciphermode_data));
 }
