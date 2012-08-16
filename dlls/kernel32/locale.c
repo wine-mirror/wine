@@ -998,8 +998,12 @@ LCID WINAPI LocaleNameToLCID( LPCWSTR name, DWORD flags )
            locale_name.lcid, debugstr_w(name), locale_name.matches );
 
     if (!locale_name.matches)
-        WARN( "locale %s not recognized, defaulting to English\n", debugstr_w(name) );
-    else if (locale_name.matches == 1)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
+
+    if (locale_name.matches == 1)
         WARN( "locale %s not recognized, defaulting to %s\n",
               debugstr_w(name), debugstr_w(locale_name.lang) );
 

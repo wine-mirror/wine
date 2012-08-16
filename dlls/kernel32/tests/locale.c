@@ -1869,22 +1869,25 @@ static void test_LocaleNameToLCID(void)
 
     /* special cases */
     buffer[0] = 0;
+    SetLastError(0xdeadbeef);
     lcid = pLocaleNameToLCID(LOCALE_NAME_USER_DEFAULT, 0);
     ok(lcid == GetUserDefaultLCID() || broken(GetLastError() == ERROR_INVALID_PARAMETER /* Vista */),
-       "Expected lcid == %08x, got %08x, error %d\n", lcid, GetUserDefaultLCID(), GetLastError());
+       "Expected lcid == %08x, got %08x, error %d\n", GetUserDefaultLCID(), lcid, GetLastError());
     ret = pLCIDToLocaleName(lcid, buffer, LOCALE_NAME_MAX_LENGTH, 0);
     ok(ret > 0, "Expected ret > 0, got %d, error %d\n", ret, GetLastError());
     trace("%08x, %s\n", lcid, wine_dbgstr_w(buffer));
 
     buffer[0] = 0;
+    SetLastError(0xdeadbeef);
     lcid = pLocaleNameToLCID(LOCALE_NAME_SYSTEM_DEFAULT, 0);
-    todo_wine ok(!lcid && GetLastError() == ERROR_INVALID_PARAMETER,
-                 "Expected lcid != 0, got %08x, error %d\n", lcid, GetLastError());
+    ok(!lcid && GetLastError() == ERROR_INVALID_PARAMETER,
+       "Expected lcid == 0, got %08x, error %d\n", lcid, GetLastError());
     ret = pLCIDToLocaleName(lcid, buffer, LOCALE_NAME_MAX_LENGTH, 0);
     ok(ret > 0, "Expected ret > 0, got %d, error %d\n", ret, GetLastError());
     trace("%08x, %s\n", lcid, wine_dbgstr_w(buffer));
 
     buffer[0] = 0;
+    SetLastError(0xdeadbeef);
     lcid = pLocaleNameToLCID(LOCALE_NAME_INVARIANT, 0);
     todo_wine ok(lcid == 0x7F, "Expected lcid = 0x7F, got %08x, error %d\n", lcid, GetLastError());
     ret = pLCIDToLocaleName(lcid, buffer, LOCALE_NAME_MAX_LENGTH, 0);
@@ -1892,8 +1895,10 @@ static void test_LocaleNameToLCID(void)
     trace("%08x, %s\n", lcid, wine_dbgstr_w(buffer));
 
     /* bad name */
+    SetLastError(0xdeadbeef);
     lcid = pLocaleNameToLCID(fooW, 0);
-    todo_wine ok(lcid == 0, "got 0x%04x\n", lcid);
+    ok(!lcid && GetLastError() == ERROR_INVALID_PARAMETER,
+       "Expected lcid == 0, got got %08x, error %d\n", lcid, GetLastError());
 
     /* english neutral name */
     lcid = pLocaleNameToLCID(enW, 0);
