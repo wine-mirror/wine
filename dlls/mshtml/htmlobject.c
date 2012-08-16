@@ -305,8 +305,33 @@ static HRESULT WINAPI HTMLObjectElement_get_width(IHTMLObjectElement *iface, VAR
 static HRESULT WINAPI HTMLObjectElement_put_height(IHTMLObjectElement *iface, VARIANT v)
 {
     HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+    nsAString height_str;
+    PRUnichar buf[12];
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
+
+    switch(V_VT(&v)) {
+    case VT_I4: {
+        static const WCHAR formatW[] = {'%','d',0};
+        sprintfW(buf, formatW, V_I4(&v));
+        break;
+    }
+    default:
+        FIXME("unimplemented for arg %s\n", debugstr_variant(&v));
+        return E_NOTIMPL;
+    }
+
+    nsAString_InitDepend(&height_str, buf);
+    nsres = nsIDOMHTMLObjectElement_SetHeight(This->nsobject, &height_str);
+    nsAString_Finish(&height_str);
+    if(NS_FAILED(nsres)) {
+        FIXME("SetHeight failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    notif_container_change(&This->plugin_container, DISPID_UNKNOWN);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLObjectElement_get_height(IHTMLObjectElement *iface, VARIANT *p)
