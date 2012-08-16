@@ -325,7 +325,7 @@
 @ cdecl _chdir(str) MSVCRT__chdir
 @ cdecl _chdrive(long) MSVCRT__chdrive
 @ cdecl _chgsign(double) MSVCRT__chgsign
-# stub -arch=win64 _chgsignf(float)
+@ cdecl -arch=x86_64 _chgsignf(float) MSVCRT__chgsignf
 @ cdecl -i386 -norelay _chkesp()
 @ cdecl _chmod(str long) MSVCRT__chmod
 @ cdecl _chsize(long long) MSVCRT__chsize
@@ -340,7 +340,7 @@
 @ cdecl _controlfp(long long)
 @ cdecl _controlfp_s(ptr long long)
 @ cdecl _copysign(double double) MSVCRT__copysign
-# stub -arch=win64 _copysignf(float float)
+@ cdecl -arch=x86_64 _copysignf(float float) MSVCRT__copysignf
 @ varargs _cprintf(str)
 # stub _cprintf_l(str ptr)
 # stub _cprintf_p(str)
@@ -423,7 +423,7 @@
 @ cdecl _findnext64i32(long ptr) MSVCRT__findnext64i32
 @ cdecl _findnexti64(long ptr) MSVCRT__findnexti64
 @ cdecl _finite(double) MSVCRT__finite
-# stub -arch=win64 _finitef(float)
+@ cdecl -arch=x86_64 _finitef(float) MSVCRT__finitef
 @ cdecl _flsbuf(long ptr) MSVCRT__flsbuf
 @ cdecl _flushall() MSVCRT__flushall
 @ extern _fmode MSVCRT__fmode
@@ -599,7 +599,7 @@
 @ cdecl _ismbstrail(ptr ptr)
 # stub _ismbstrail_l(long ptr)
 @ cdecl _isnan(double) MSVCRT__isnan
-# stub -arch=win64 _isnanf(float)
+@ cdecl -arch=x86_64 _isnanf(float) MSVCRT__isnanf
 @ cdecl _isprint_l(long ptr) MSVCRT__isprint_l
 @ cdecl _isspace_l(long ptr) MSVCRT__isspace_l
 @ cdecl _isupper_l(long ptr) MSVCRT__isupper_l
@@ -638,7 +638,7 @@
 @ cdecl _lock_file(ptr) MSVCRT__lock_file
 @ cdecl _locking(long long long) MSVCRT__locking
 @ cdecl _logb(double) MSVCRT__logb
-# stub _logbf(float)
+@ cdecl -arch=x86_64 _logbf(float) MSVCRT__logbf
 @ cdecl -i386 _longjmpex(ptr long) MSVCRT_longjmp
 @ cdecl _lrotl(long long) MSVCRT__lrotl
 @ cdecl _lrotr(long long) MSVCRT__lrotr
@@ -808,7 +808,7 @@
 # stub -arch=win32 _msize_debug(ptr long)
 # stub -arch=win64 _msize_dbg(ptr long)
 @ cdecl _nextafter(double double) MSVCRT__nextafter
-# stub -arch=win64 _nextafterf(float float)
+@ cdecl -arch=x86_64 _nextafterf(float float) MSVCRT__nextafterf
 @ cdecl _onexit(ptr) MSVCRT__onexit
 @ varargs _open(str long) MSVCRT__open
 @ cdecl _open_osfhandle(long long) MSVCRT__open_osfhandle

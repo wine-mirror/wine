@@ -71,6 +71,63 @@ int CDECL MSVCRT__set_SSE2_enable(int flag)
 #ifdef __x86_64__
 
 /*********************************************************************
+ *      _chgsignf (MSVCRT.@)
+ */
+float CDECL MSVCRT__chgsignf( float num )
+{
+    /* FIXME: +-infinity,Nan not tested */
+    return -num;
+}
+
+/*********************************************************************
+ *      _copysignf (MSVCRT.@)
+ */
+float CDECL MSVCRT__copysignf( float num, float sign )
+{
+    /* FIXME: Behaviour for Nan/Inf? */
+    if (sign < 0.0)
+        return num < 0.0 ? num : -num;
+    return num < 0.0 ? -num : num;
+}
+
+/*********************************************************************
+ *      _finitef (MSVCRT.@)
+ */
+int CDECL MSVCRT__finitef( float num )
+{
+    return finitef(num) != 0; /* See comment for _isnan() */
+}
+
+/*********************************************************************
+ *      _isnanf (MSVCRT.@)
+ */
+INT CDECL MSVCRT__isnanf( float num )
+{
+    /* Some implementations return -1 for true(glibc), msvcrt/crtdll return 1.
+     * Do the same, as the result may be used in calculations
+     */
+    return isnanf(num) != 0;
+}
+
+/*********************************************************************
+ *      _logbf (MSVCRT.@)
+ */
+float CDECL MSVCRT__logbf( float num )
+{
+    if (!finitef(num)) *MSVCRT__errno() = MSVCRT_EDOM;
+    return logbf(num);
+}
+
+/*********************************************************************
+ *      _nextafterf (MSVCRT.@)
+ */
+float CDECL MSVCRT__nextafterf( float num, float next )
+{
+    if (!finitef(num) || !finitef(next)) *MSVCRT__errno() = MSVCRT_EDOM;
+    return nextafterf( num, next );
+}
+
+/*********************************************************************
  *      MSVCRT_acosf (MSVCRT.@)
  */
 float CDECL MSVCRT_acosf( float x )

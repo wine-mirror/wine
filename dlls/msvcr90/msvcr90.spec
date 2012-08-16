@@ -376,7 +376,7 @@
 @ cdecl _controlfp(long long) msvcrt._controlfp
 @ cdecl _controlfp_s(ptr long long) msvcrt._controlfp_s
 @ cdecl _copysign(double double) msvcrt._copysign
-# stub -arch=win64 _copysignf(float float)
+@ cdecl -arch=x86_64 _copysignf(float float) msvcrt._copysignf
 @ varargs _cprintf(str) msvcrt._cprintf
 @ stub _cprintf_l
 @ stub _cprintf_p
@@ -461,7 +461,7 @@
 @ cdecl _findnext64(long ptr) msvcrt._findnext64
 @ cdecl _findnext64i32(long ptr) msvcrt._findnext64i32
 @ cdecl _finite(double) msvcrt._finite
-# stub -arch=win64 _finitef(float)
+@ cdecl -arch=x86_64 _finitef(float) msvcrt._finitef
 @ cdecl _flsbuf(long ptr) msvcrt._flsbuf
 @ cdecl _flushall() msvcrt._flushall
 @ extern _fmode msvcrt._fmode
@@ -652,7 +652,7 @@
 @ cdecl _ismbstrail(ptr ptr) msvcrt._ismbstrail
 @ stub _ismbstrail_l
 @ cdecl _isnan(double) msvcrt._isnan
-# stub -arch=win64 _isnanf(float)
+@ cdecl -arch=x86_64 _isnanf(float) msvcrt._isnanf
 @ cdecl _isprint_l(long ptr) msvcrt._isprint_l
 @ stub _ispunct_l
 @ cdecl _isspace_l(long ptr) msvcrt._isspace_l
@@ -694,7 +694,7 @@
 @ cdecl _lock_file(ptr) msvcrt._lock_file
 @ cdecl _locking(long long long) msvcrt._locking
 @ cdecl _logb(double) msvcrt._logb
-# stub _logbf(float)
+@ cdecl -arch=x86_64 _logbf(float) msvcrt._logbf
 @ cdecl -i386 _longjmpex(ptr long) msvcrt._longjmpex
 @ cdecl _lrotl(long long) msvcrt._lrotl
 @ cdecl _lrotr(long long) msvcrt._lrotr
@@ -857,7 +857,7 @@
 @ cdecl _mktime64(ptr) msvcrt._mktime64
 @ cdecl _msize(ptr) msvcrt._msize
 @ cdecl _nextafter(double double) msvcrt._nextafter
-# stub -arch=win64 _nextafterf(float float)
+@ cdecl -arch=x86_64 _nextafterf(float float) msvcrt._nextafterf
 @ cdecl _onexit(ptr) msvcrt._onexit
 @ varargs _open(str long) msvcrt._open
 @ cdecl _open_osfhandle(long long) msvcrt._open_osfhandle
