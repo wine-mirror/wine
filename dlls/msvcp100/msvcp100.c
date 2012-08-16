@@ -22,33 +22,64 @@
 
 #include <stdarg.h>
 
+#include "msvcp.h"
+
 #include "windef.h"
 #include "winbase.h"
+#include "wine/debug.h"
 
-/* Copied from dlls/msvcrt/cpp.c */
-#ifdef __i386__  /* thiscall functions are i386-specific */
+WINE_DEFAULT_DEBUG_CHANNEL(msvcp);
 
-#define THISCALL(func) __thiscall_ ## func
-#define THISCALL_NAME(func) __ASM_NAME("__thiscall_" #func)
-#define __thiscall __stdcall
-#define DEFINE_THISCALL_WRAPPER(func,args) \
-    extern void THISCALL(func)(void); \
-    __ASM_GLOBAL_FUNC(__thiscall_ ## func, \
-                      "popl %eax\n\t" \
-                      "pushl %ecx\n\t" \
-                      "pushl %eax\n\t" \
-                      "jmp " __ASM_NAME(#func) __ASM_STDCALL(args) )
-#else /* __i386__ */
+#ifdef __i386__
 
-#define THISCALL(func) func
-#define THISCALL_NAME(func) __ASM_NAME(#func)
-#define __thiscall __cdecl
-#define DEFINE_THISCALL_WRAPPER(func,args) /* nothing */
+#define DEFINE_VTBL_WRAPPER(off)            \
+    __ASM_GLOBAL_FUNC(vtbl_wrapper_ ## off, \
+        "popl %eax\n\t"                     \
+        "popl %ecx\n\t"                     \
+        "pushl %eax\n\t"                    \
+        "movl 0(%ecx), %eax\n\t"            \
+        "jmp *" #off "(%eax)\n\t")
 
-#endif /* __i386__ */
+DEFINE_VTBL_WRAPPER(0);
+DEFINE_VTBL_WRAPPER(4);
+DEFINE_VTBL_WRAPPER(8);
+DEFINE_VTBL_WRAPPER(12);
+DEFINE_VTBL_WRAPPER(16);
+DEFINE_VTBL_WRAPPER(20);
+DEFINE_VTBL_WRAPPER(24);
+DEFINE_VTBL_WRAPPER(28);
+DEFINE_VTBL_WRAPPER(32);
+DEFINE_VTBL_WRAPPER(36);
+DEFINE_VTBL_WRAPPER(40);
+DEFINE_VTBL_WRAPPER(44);
+DEFINE_VTBL_WRAPPER(48);
+DEFINE_VTBL_WRAPPER(52);
+DEFINE_VTBL_WRAPPER(56);
+DEFINE_VTBL_WRAPPER(60);
 
-/* ?_BADOFF@std@@3_JB -> __int64 const std::_BADOFF */
-const __int64 std_BADOFF = -1;
+#endif
+
+void* (__cdecl *MSVCRT_operator_new)(MSVCP_size_t);
+void (__cdecl *MSVCRT_operator_delete)(void*);
+void* (__cdecl *MSVCRT_set_new_handler)(void*);
+
+static void init_cxx_funcs(void)
+{
+    HMODULE hmod = GetModuleHandleA("msvcrt.dll");
+
+    if (sizeof(void *) > sizeof(int))  /* 64-bit has different names */
+    {
+        MSVCRT_operator_new = (void*)GetProcAddress(hmod, "??2@YAPEAX_K@Z");
+        MSVCRT_operator_delete = (void*)GetProcAddress(hmod, "??3@YAXPEAX@Z");
+        MSVCRT_set_new_handler = (void*)GetProcAddress(hmod, "?_set_new_handler@@YAP6AH_K@ZP6AH0@Z@Z");
+    }
+    else
+    {
+        MSVCRT_operator_new = (void*)GetProcAddress(hmod, "??2@YAPAXI@Z");
+        MSVCRT_operator_delete = (void*)GetProcAddress(hmod, "??3@YAXPAX@Z");
+        MSVCRT_set_new_handler = (void*)GetProcAddress(hmod, "?_set_new_handler@@YAP6AHI@ZP6AHI@Z@Z");
+    }
+}
 
 /* _Container_base0 is used by apps compiled without iterator checking
  * (i.e. with _ITERATOR_DEBUG_LEVEL=0 ).
@@ -72,15 +103,29 @@ void __thiscall Container_base0_Swap_all(void *this, void *that)
 {
 }
 
-BOOL WINAPI DllMain(HINSTANCE hdll, DWORD reason, LPVOID reserved)
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-    switch (reason)
+    TRACE("(0x%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
+
+    switch (fdwReason)
     {
         case DLL_WINE_PREATTACH:
             return FALSE;  /* prefer native version */
-
         case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls(hdll);
+            init_cxx_funcs();
+            init_lockit();
+            init_io();
+            break;
+        case DLL_PROCESS_DETACH:
+            free_io();
+            free_locale();
+            free_lockit();
+            break;
     }
+
     return TRUE;
 }
+
+/* ?_BADOFF@std@@3JB -> long const std::_BADOFF */
+/* ?_BADOFF@std@@3_JB -> __int64 const std::_BADOFF */
+const streamoff std_BADOFF = -1;
