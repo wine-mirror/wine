@@ -59,7 +59,7 @@ static REAL units_to_pixels(REAL units, GpUnit unit, REAL dpi)
 }
 
 /* converts value in pixels to a given unit */
-REAL pixels_to_units(REAL pixels, GpUnit unit, REAL dpi)
+static REAL pixels_to_units(REAL pixels, GpUnit unit, REAL dpi)
 {
     switch (unit)
     {
