@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-07-23 22:30-0300\n"
+"PO-Revision-Date: 2012-08-16 00:01-0300\n"
 "Last-Translator: Gustavo Henrique Milaré <gugamilare@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Portuguese (Brazil)\n"
@@ -12643,23 +12643,23 @@ msgstr "Diagnósticos de driver"
 
 #: winecfg.rc:258
 msgid "Defaults"
-msgstr "Padrões"
+msgstr "Dispositivos Padrões"
 
 #: winecfg.rc:259
 msgid "Output device:"
-msgstr "Dispositivo de saída:"
+msgstr "Saída:"
 
 #: winecfg.rc:260
 msgid "Voice output device:"
-msgstr "Dispositivo de saída de voz:"
+msgstr "Saída de voz:"
 
 #: winecfg.rc:261
 msgid "Input device:"
-msgstr "Dispositivo de entrada:"
+msgstr "Entrada:"
 
 #: winecfg.rc:262
 msgid "Voice input device:"
-msgstr "Dispositivo de entrada de voz:"
+msgstr "Entrada de voz:"
 
 #: winecfg.rc:267
 msgid "&Test Sound"
