@@ -28,6 +28,9 @@
 #endif
 #include <errno.h>
 #include <fcntl.h>
+#ifdef HAVE_LWP_H
+#include <lwp.h>
+#endif
 #ifdef HAVE_PTHREAD_NP_H
 # include <pthread_np.h>
 #endif
@@ -956,6 +959,8 @@ static int get_unix_tid(void)
 #elif defined(__APPLE__)
     ret = mach_thread_self();
     mach_port_deallocate(mach_task_self(), ret);
+#elif defined(__NetBSD__)
+    ret = _lwp_self();
 #elif defined(__FreeBSD__)
     long lwpid;
     thr_self( &lwpid );
