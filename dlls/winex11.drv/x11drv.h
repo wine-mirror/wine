@@ -63,9 +63,6 @@ typedef int Status;
 
 #define WINE_XDND_VERSION 4
 
-extern void CDECL wine_tsx11_lock(void);
-extern void CDECL wine_tsx11_unlock(void);
-
   /* X physical pen */
 typedef struct
 {

@@ -56,15 +56,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 WINE_DECLARE_DEBUG_CHANNEL(synchronous);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
-static CRITICAL_SECTION X11DRV_CritSection;
-static CRITICAL_SECTION_DEBUG critsect_debug =
-{
-    0, 0, &X11DRV_CritSection,
-    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": X11DRV_CritSection") }
-};
-static CRITICAL_SECTION X11DRV_CritSection = { &critsect_debug, -1, 0, 0, 0, 0 };
-
 static Screen *screen;
 Visual *visual;
 XPixmapFormatValues **pixmap_formats;
@@ -298,23 +289,6 @@ static int error_handler( Display *display, XErrorEvent *error_evt )
     old_error_handler( display, error_evt );
     return 0;
 }
-
-/***********************************************************************
- *		wine_tsx11_lock   (X11DRV.@)
- */
-void CDECL wine_tsx11_lock(void)
-{
-    EnterCriticalSection( &X11DRV_CritSection );
-}
-
-/***********************************************************************
- *		wine_tsx11_unlock   (X11DRV.@)
- */
-void CDECL wine_tsx11_unlock(void)
-{
-    LeaveCriticalSection( &X11DRV_CritSection );
-}
-
 
 /***********************************************************************
  *		init_pixmap_formats
