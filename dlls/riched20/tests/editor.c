@@ -5120,10 +5120,10 @@ static void test_EM_STREAMIN(void)
   ok(result == 18, "got %ld, expected %d\n", result, 18);
 
   result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
-  todo_wine ok(result  == 15,
+  ok(result  == 15,
       "EM_STREAMIN: Test UTF8WithBOM returned %ld, expected 15\n", result);
   result = strcmp (buffer,"TestUTF8WithBOM");
-  todo_wine ok(result  == 0,
+  ok(result  == 0,
       "EM_STREAMIN: Test UTF8WithBOM set wrong text: Result: %s\n",buffer);
   ok(es.dwError == 0, "EM_STREAMIN: Test UTF8WithBOM set error %d, expected %d\n", es.dwError, 0);
 
