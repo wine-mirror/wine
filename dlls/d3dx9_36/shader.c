@@ -953,9 +953,9 @@ static HRESULT WINAPI ID3DXConstantTableImpl_SetBoolArray(ID3DXConstantTable *if
 {
     struct ID3DXConstantTableImpl *This = impl_from_ID3DXConstantTable(iface);
 
-    FIXME("(%p)->(%p, %p, %p, %d): stub\n", This, device, constant, b, count);
+    TRACE("(%p)->(%p, %p, %p, %d)\n", This, device, constant, b, count);
 
-    return E_NOTIMPL;
+    return set_scalar_array(iface, device, constant, b, count, D3DXPT_BOOL);
 }
 
 static HRESULT WINAPI ID3DXConstantTableImpl_SetInt(ID3DXConstantTable *iface, LPDIRECT3DDEVICE9 device, D3DXHANDLE constant, INT n)

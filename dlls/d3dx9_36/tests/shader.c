@@ -621,6 +621,7 @@ static void test_setting_arrays_table(IDirect3DDevice9 *device)
     static const D3DXVECTOR4 fvecarray[2] = {
         {0.745f, 0.997f, 0.353f, 0.237f},
         {0.060f, 0.455f, 0.333f, 0.983f}};
+    static BOOL barray[4] = {FALSE, 100, TRUE, TRUE};
 
     ID3DXConstantTable *ctable;
 
@@ -672,6 +673,9 @@ static void test_setting_arrays_table(IDirect3DDevice9 *device)
     res = ID3DXConstantTable_SetMatrixArray(ctable, device, "fmtxarray", fmtxarray, 2);
     ok(res == D3D_OK, "ID3DXConstantTable_SetMatrixArray failed: got 0x%08x\n", res);
 
+    res = ID3DXConstantTable_SetBoolArray(ctable, device, "barray", barray, 2);
+    ok(res == D3D_OK, "ID3DXConstantTable_SetBoolArray failed: got 0x%08x\n", res);
+
     /* Read back constants */
     IDirect3DDevice9_GetVertexShaderConstantF(device, 8, out, 4);
     ok(out[0] == farray[0] && out[4] == farray[1] && out[8] == farray[2] && out[12] == farray[3],
@@ -685,6 +689,13 @@ static void test_setting_arrays_table(IDirect3DDevice9 *device)
             "{{%f, %f, %f, %f}, {%f, %f, %f, %f}}\n", out[0], out[1], out[2], out[3], out[4], out[5], out[6], out[7],
             fvecarray[0].x, fvecarray[0].y, fvecarray[0].z, fvecarray[0].w, fvecarray[1].x, fvecarray[1].y,
             fvecarray[1].z, fvecarray[1].w);
+
+    IDirect3DDevice9_GetVertexShaderConstantF(device, 14, out, 2);
+    ok(out[0] == 0.0f && out[1] == 0.0f && out[2] == 0.0f && out[3] == 0.0f
+            && out[4] == 1.0f && out[5] == 0.0f && out[6] == 0.0f && out[7] == 0.0f,
+            "The variable barray was not set correctly, out={%f, %f %f, %f; %f, %f, %f, %f}, should be {%f, %f, %f, %f; %f, %f, %f, %f}\n",
+            out[0], out[1], out[2], out[3], out[4], out[5], out[6], out[7],
+            0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f);
 
     IDirect3DDevice9_GetVertexShaderConstantF(device, 0, out, 8);
     /* Just check a few elements in each matrix to make sure fmtxarray was set row-major */
