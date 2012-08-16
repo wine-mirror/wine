@@ -550,13 +550,10 @@ BOOL CDECL X11DRV_LoadTabletInfo(HWND hwnddefault)
         PK_BUTTONS |  PK_X | PK_Y | PK_NORMAL_PRESSURE | PK_ORIENTATION;
     strcpyW(gSysDevice.PNPID, SZ_NON_PLUGINPLAY);
 
-    wine_tsx11_lock();
-
     devices = pXListInputDevices(data->display, &num_devices);
     if (!devices)
     {
         WARN("XInput Extensions reported as not available\n");
-        wine_tsx11_unlock();
         return FALSE;
     }
     TRACE("XListInputDevices reports %d devices\n", num_devices);
@@ -777,7 +774,6 @@ BOOL CDECL X11DRV_LoadTabletInfo(HWND hwnddefault)
         WARN("Did not find a valid stylus, unable to determine system context parameters. Wintab is disabled.\n");
     }
 
-    wine_tsx11_unlock();
     return TRUE;
 }
 
@@ -807,7 +803,6 @@ static void set_button_state(int curnum, XID deviceid)
     int loop;
     int rc = 0;
 
-    wine_tsx11_lock();
     device = pXOpenDevice(data->display,deviceid);
     state = pXQueryDeviceState(data->display,device);
 
@@ -832,7 +827,6 @@ static void set_button_state(int curnum, XID deviceid)
         }
     }
     pXFreeDeviceState(state);
-    wine_tsx11_unlock();
     button_state[curnum] = rc;
 }
 
@@ -976,7 +970,6 @@ int CDECL X11DRV_AttachEventQueueToTablet(HWND hOwner)
 
     TRACE("Creating context for window %p (%lx)  %i cursors\n", hOwner, win, gNumCursors);
 
-    wine_tsx11_lock();
     devices = pXListInputDevices(data->display, &num_devices);
 
     X11DRV_expect_error(data->display,Tablet_ErrorHandler,NULL);
@@ -1046,7 +1039,6 @@ int CDECL X11DRV_AttachEventQueueToTablet(HWND hOwner)
     X11DRV_check_error();
 
     if (NULL != devices) pXFreeDeviceList(devices);
-    wine_tsx11_unlock();
     return 0;
 }
 

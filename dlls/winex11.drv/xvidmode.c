@@ -137,7 +137,6 @@ static LONG X11DRV_XF86VM_SetCurrentMode(int mode)
   }
   mode = mode % real_xf86vm_mode_count;
 
-  wine_tsx11_lock();
   TRACE("Resizing X display to %dx%d\n", 
         real_xf86vm_modes[mode]->hdisplay, real_xf86vm_modes[mode]->vdisplay);
   pXF86VidModeSwitchToMode(gdi_display, DefaultScreen(gdi_display), real_xf86vm_modes[mode]);
@@ -147,7 +146,6 @@ static LONG X11DRV_XF86VM_SetCurrentMode(int mode)
   XWarpPointer(gdi_display, None, DefaultRootWindow(gdi_display), 0, 0, 0, 0, 0, 0);
 #endif
   XSync(gdi_display, False);
-  wine_tsx11_unlock();
   X11DRV_resize_desktop( real_xf86vm_modes[mode]->hdisplay, real_xf86vm_modes[mode]->vdisplay );
   return DISP_CHANGE_SUCCESSFUL;
 }

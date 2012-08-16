@@ -116,19 +116,16 @@ static int xrandr10_get_current_mode(void)
 {
     SizeID size;
     Rotation rot;
-    Window root;
     XRRScreenConfiguration *sc;
     short rate;
     unsigned int i;
     int res = -1;
-    
-    wine_tsx11_lock();
-    root = RootWindow (gdi_display, DefaultScreen(gdi_display));
-    sc = pXRRGetScreenInfo (gdi_display, root);
+
+    sc = pXRRGetScreenInfo (gdi_display, DefaultRootWindow( gdi_display ));
     size = pXRRConfigCurrentConfiguration (sc, &rot);
     rate = pXRRConfigCurrentRate (sc);
     pXRRFreeScreenConfigInfo(sc);
-    wine_tsx11_unlock();
+
     for (i = 0; i < xrandr_mode_count; ++i)
     {
         if (xrandr10_modes[i] == size && dd_modes[i].refresh_rate == rate)
@@ -154,8 +151,7 @@ static LONG xrandr10_set_current_mode( int mode )
     Status stat;
     short rate;
 
-    wine_tsx11_lock();
-    root = RootWindow (gdi_display, DefaultScreen(gdi_display));
+    root = DefaultRootWindow( gdi_display );
     sc = pXRRGetScreenInfo (gdi_display, root);
     size = pXRRConfigCurrentConfiguration (sc, &rot);
     mode = mode % xrandr_mode_count;
@@ -174,7 +170,7 @@ static LONG xrandr10_set_current_mode( int mode )
         stat = pXRRSetScreenConfig( gdi_display, sc, root, size, rot, CurrentTime );
 
     pXRRFreeScreenConfigInfo(sc);
-    wine_tsx11_unlock();
+
     if (stat == RRSetConfigSuccess)
     {
         X11DRV_resize_desktop( dd_modes[mode].width, dd_modes[mode].height );
@@ -271,10 +267,8 @@ static int xrandr12_get_current_mode(void)
     XRRCrtcInfo *crtc_info;
     int i, ret = -1;
 
-    wine_tsx11_lock();
     if (!(resources = xrandr_get_screen_resources( gdi_display, root_window )))
     {
-        wine_tsx11_unlock();
         ERR("Failed to get screen resources.\n");
         return 0;
     }
@@ -282,7 +276,6 @@ static int xrandr12_get_current_mode(void)
     if (!resources->ncrtc || !(crtc_info = pXRRGetCrtcInfo( gdi_display, resources, resources->crtcs[0] )))
     {
         pXRRFreeScreenResources( resources );
-        wine_tsx11_unlock();
         ERR("Failed to get CRTC info.\n");
         return 0;
     }
@@ -301,7 +294,6 @@ static int xrandr12_get_current_mode(void)
 
     pXRRFreeCrtcInfo( crtc_info );
     pXRRFreeScreenResources( resources );
-    wine_tsx11_unlock();
 
     if (ret == -1)
     {
@@ -320,10 +312,8 @@ static LONG xrandr12_set_current_mode( int mode )
 
     mode = mode % xrandr_mode_count;
 
-    wine_tsx11_lock();
     if (!(resources = xrandr_get_screen_resources( gdi_display, root_window )))
     {
-        wine_tsx11_unlock();
         ERR("Failed to get screen resources.\n");
         return DISP_CHANGE_FAILED;
     }
@@ -331,7 +321,6 @@ static LONG xrandr12_set_current_mode( int mode )
     if (!resources->ncrtc || !(crtc_info = pXRRGetCrtcInfo( gdi_display, resources, resources->crtcs[0] )))
     {
         pXRRFreeScreenResources( resources );
-        wine_tsx11_unlock();
         ERR("Failed to get CRTC info.\n");
         return DISP_CHANGE_FAILED;
     }
@@ -344,7 +333,6 @@ static LONG xrandr12_set_current_mode( int mode )
 
     pXRRFreeCrtcInfo( crtc_info );
     pXRRFreeScreenResources( resources );
-    wine_tsx11_unlock();
 
     if (status != RRSetConfigSuccess)
     {
@@ -448,11 +436,10 @@ void X11DRV_XRandR_Init(void)
     if (!(ret = load_xrandr())) return;  /* can't load the Xrandr library */
 
     /* see if Xrandr is available */
-    wine_tsx11_lock();
-    if (!pXRRQueryExtension( gdi_display, &event_base, &error_base )) goto done;
+    if (!pXRRQueryExtension( gdi_display, &event_base, &error_base )) return;
     X11DRV_expect_error( gdi_display, XRandRErrorHandler, NULL );
     ok = pXRRQueryVersion( gdi_display, &major, &minor );
-    if (X11DRV_check_error() || !ok) goto done;
+    if (X11DRV_check_error() || !ok) return;
 
     TRACE("Found XRandR %d.%d.\n", major, minor);
 
@@ -470,9 +457,6 @@ void X11DRV_XRandR_Init(void)
     else
 #endif
         xrandr10_init_modes();
-
-done:
-    wine_tsx11_unlock();
 }
 
 #else /* SONAME_LIBXRANDR */

@@ -257,10 +257,8 @@ void X11DRV_ForceXIMReset(HWND hwnd)
     {
         char* leftover;
         TRACE("Forcing Reset %p\n",ic);
-        wine_tsx11_lock();
         leftover = XmbResetIC(ic);
         XFree(leftover);
-        wine_tsx11_unlock();
     }
 }
 
@@ -279,16 +277,12 @@ void X11DRV_SetPreeditState(HWND hwnd, BOOL fOpen)
     else
         state = XIMPreeditDisable;
 
-    wine_tsx11_lock();
-
     attr = XVaCreateNestedList(0, XNPreeditState, state, NULL);
     if (attr != NULL)
     {
         XSetICValues(ic, XNPreeditAttributes, attr, NULL);
         XFree(attr);
     }
-
-    wine_tsx11_unlock();
 }
 
 
@@ -299,8 +293,6 @@ void X11DRV_SetPreeditState(HWND hwnd, BOOL fOpen)
  */
 BOOL X11DRV_InitXIM( const char *input_style )
 {
-    BOOL ret;
-
     if (!strcasecmp(input_style, "offthespot"))
         ximStyleRequest = STYLE_OFFTHESPOT;
     else if (!strcasecmp(input_style, "overthespot"))
@@ -308,18 +300,17 @@ BOOL X11DRV_InitXIM( const char *input_style )
     else if (!strcasecmp(input_style, "root"))
         ximStyleRequest = STYLE_ROOT;
 
-    wine_tsx11_lock();
-    if (!(ret = XSupportsLocale()))
+    if (!XSupportsLocale())
     {
         WARN("X does not support locale.\n");
+        return FALSE;
     }
-    else if (XSetLocaleModifiers("") == NULL)
+    if (XSetLocaleModifiers("") == NULL)
     {
         WARN("Could not set locale modifiers.\n");
-        ret = FALSE;
+        return FALSE;
     }
-    wine_tsx11_unlock();
-    return ret;
+    return TRUE;
 }
 
 
@@ -332,9 +323,7 @@ static void X11DRV_DestroyIM(XIM xim, XPointer p, XPointer data)
     TRACE("xim = %p, p = %p\n", xim, p);
     thread_data->xim = NULL;
     ximStyle = 0;
-    wine_tsx11_lock();
     XRegisterIMInstantiateCallback( thread_data->display, NULL, NULL, NULL, open_xim_callback, NULL );
-    wine_tsx11_unlock();
 }
 
 /***********************************************************************
@@ -456,9 +445,7 @@ static BOOL open_xim( Display *display )
     else
         thread_data->font_set = NULL;
 
-    wine_tsx11_unlock();
     IME_UpdateAssociation(NULL);
-    wine_tsx11_lock();
     return TRUE;
 }
 
@@ -472,10 +459,8 @@ void X11DRV_SetupXIM(void)
 {
     Display *display = thread_display();
 
-    wine_tsx11_lock();
     if (!open_xim( display ))
         XRegisterIMInstantiateCallback( display, NULL, NULL, NULL, open_xim_callback, NULL );
-    wine_tsx11_unlock();
 }
 
 static BOOL X11DRV_DestroyIC(XIC xic, XPointer p, XPointer data)
@@ -501,8 +486,6 @@ XIC X11DRV_CreateIC(XIM xim, struct x11drv_win_data *data)
 
     TRACE("xim = %p\n", xim);
 
-    wine_tsx11_lock();
-
     /* use complex and slow XIC initialization method only for CJK */
     if (langid != LANG_CHINESE &&
         langid != LANG_JAPANESE &&
@@ -514,7 +497,6 @@ XIC X11DRV_CreateIC(XIM xim, struct x11drv_win_data *data)
                         XNFocusWindow, win,
                         XNDestroyCallback, &destroy,
                         NULL);
-        wine_tsx11_unlock();
         data->xic = xic;
         return xic;
     }
@@ -613,8 +595,6 @@ XIC X11DRV_CreateIC(XIM xim, struct x11drv_win_data *data)
         XFree(preedit);
     if (status != NULL)
         XFree(status);
-
-    wine_tsx11_unlock();
 
     return xic;
 }

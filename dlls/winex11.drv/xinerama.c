@@ -163,8 +163,6 @@ void xinerama_init( unsigned int width, unsigned int height )
     int i;
     RECT rect;
 
-    wine_tsx11_lock();
-
     SetRect( &rect, 0, 0, width, height );
 
     if (root_window != DefaultRootWindow( gdi_display ) || !query_screens())
@@ -196,8 +194,6 @@ void xinerama_init( unsigned int width, unsigned int height )
     screen_height = primary->rcMonitor.bottom - primary->rcMonitor.top;
     TRACE( "virtual size: %s primary size: %dx%d\n",
            wine_dbgstr_rect(&virtual_screen_rect), screen_width, screen_height );
-
-    wine_tsx11_unlock();
 }
 
 

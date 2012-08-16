@@ -366,13 +366,11 @@ static inline void call_event_handler( Display *display, XEvent *event )
 
     TRACE( "%lu %s for hwnd/window %p/%lx\n",
            event->xany.serial, dbgstr_event( event->type ), hwnd, event->xany.window );
-    wine_tsx11_unlock();
     thread_data = x11drv_thread_data();
     prev = thread_data->current_event;
     thread_data->current_event = event;
     handlers[event->type]( hwnd, event );
     thread_data->current_event = prev;
-    wine_tsx11_lock();
 }
 
 
@@ -386,7 +384,6 @@ static int process_events( Display *display, Bool (*filter)(Display*, XEvent*,XP
     enum event_merge_action action = MERGE_DISCARD;
 
     prev_event.type = 0;
-    wine_tsx11_lock();
     while (XCheckIfEvent( display, &event, filter, (char *)arg ))
     {
         count++;
@@ -442,7 +439,6 @@ static int process_events( Display *display, Bool (*filter)(Display*, XEvent*,XP
     if (prev_event.type) call_event_handler( display, &prev_event );
     free_event_data( &prev_event );
     XFlush( gdi_display );
-    wine_tsx11_unlock();
     if (count) TRACE( "processed %d events\n", count );
     return count;
 }
@@ -880,7 +876,6 @@ static BOOL is_net_wm_state_maximized( Display *display, struct x11drv_win_data 
 
     if (!data->whole_window) return FALSE;
 
-    wine_tsx11_lock();
     if (!XGetWindowProperty( display, data->whole_window, x11drv_atom(_NET_WM_STATE), 0,
                              65536/sizeof(CARD32), False, XA_ATOM, &type, &format, &count,
                              &remaining, (unsigned char **)&state ))
@@ -896,7 +891,6 @@ static BOOL is_net_wm_state_maximized( Display *display, struct x11drv_win_data 
         }
         XFree( state );
     }
-    wine_tsx11_unlock();
     return (ret == 2);
 }
 
@@ -1099,7 +1093,6 @@ static int get_window_wm_state( Display *display, struct x11drv_win_data *data )
     int format, ret = -1;
     unsigned long count, remaining;
 
-    wine_tsx11_lock();
     if (!XGetWindowProperty( display, data->whole_window, x11drv_atom(WM_STATE), 0,
                              sizeof(*state)/sizeof(CARD32), False, x11drv_atom(WM_STATE),
                              &type, &format, &count, &remaining, (unsigned char **)&state ))
@@ -1108,7 +1101,6 @@ static int get_window_wm_state( Display *display, struct x11drv_win_data *data )
             ret = state->state;
         XFree( state );
     }
-    wine_tsx11_unlock();
     return ret;
 }
 
@@ -1223,20 +1215,13 @@ void wait_for_withdrawn_state( Display *display, struct x11drv_win_data *data, B
         XEvent event;
         int count = 0;
 
-        wine_tsx11_lock();
         while (XCheckIfEvent( display, &event, is_wm_state_notify, (char *)data->whole_window ))
         {
             count++;
             if (XFilterEvent( &event, None )) continue;  /* filtered, ignore it */
             if (event.type == DestroyNotify) call_event_handler( display, &event );
-            else
-            {
-                wine_tsx11_unlock();
-                handle_wm_state_notify( data, &event.xproperty, FALSE );
-                wine_tsx11_lock();
-            }
+            else handle_wm_state_notify( data, &event.xproperty, FALSE );
         }
-        wine_tsx11_unlock();
 
         if (!count)
         {

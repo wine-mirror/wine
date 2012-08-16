@@ -493,7 +493,6 @@ static BOOL init_systray(void)
     }
 
     display = thread_init_display();
-    wine_tsx11_lock();
     if (DefaultScreen( display ) == 0)
         systray_atom = x11drv_atom(_NET_SYSTEM_TRAY_S0);
     else
@@ -503,7 +502,6 @@ static BOOL init_systray(void)
         systray_atom = XInternAtom( display, systray_buffer, False );
     }
     XSelectInput( display, root_window, StructureNotifyMask );
-    wine_tsx11_unlock();
 
     init_done = TRUE;
     return TRUE;

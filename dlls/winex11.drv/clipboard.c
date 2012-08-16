@@ -2157,11 +2157,9 @@ static int X11DRV_CLIPBOARD_QueryAvailableData(Display *display, LPCLIPBOARDINFO
     /*
      * Query the selection owner for the TARGETS property
      */
-    wine_tsx11_lock();
     if ((use_primary_selection && XGetSelectionOwner(display,XA_PRIMARY)) ||
         XGetSelectionOwner(display,x11drv_atom(CLIPBOARD)))
     {
-        wine_tsx11_unlock();
         if (use_primary_selection && (X11DRV_CLIPBOARD_QueryTargets(display, w, XA_PRIMARY, x11drv_atom(TARGETS), &xe)))
             selectionCacheSrc = XA_PRIMARY;
         else if (X11DRV_CLIPBOARD_QueryTargets(display, w, x11drv_atom(CLIPBOARD), x11drv_atom(TARGETS), &xe))
@@ -2190,24 +2188,13 @@ static int X11DRV_CLIPBOARD_QueryAvailableData(Display *display, LPCLIPBOARDINFO
             }
         }
     }
-    else /* No selection owner so report 0 targets available */
-    {
-        wine_tsx11_unlock();
-        return 0;
-    }
+    else return 0; /* No selection owner so report 0 targets available */
 
     /* Read the TARGETS property contents */
-    wine_tsx11_lock();
-    if(XGetWindowProperty(display, xe.xselection.requestor, xe.xselection.property,
+    if (!XGetWindowProperty(display, xe.xselection.requestor, xe.xselection.property,
         0, 0x3FFF, True, AnyPropertyType/*XA_ATOM*/, &atype, &aformat, &cSelectionTargets, 
         &remain, (unsigned char**)&targetList) != Success)
     {
-        wine_tsx11_unlock();
-        WARN("Failed to read TARGETS property\n");
-    }
-    else
-    {
-        wine_tsx11_unlock();
        TRACE("Type %lx,Format %d,nItems %ld, Remain %ld\n",
              atype, aformat, cSelectionTargets, remain);
        /*
@@ -2234,6 +2221,7 @@ static int X11DRV_CLIPBOARD_QueryAvailableData(Display *display, LPCLIPBOARDINFO
        /* Free the list of targets */
        XFree(targetList);
     }
+    else WARN("Failed to read TARGETS property\n");
 
     return cSelectionTargets;
 }
@@ -2339,11 +2327,9 @@ static BOOL X11DRV_CLIPBOARD_GetProperty(Display *display, Window w, Atom prop,
 
     for (;;)
     {
-        wine_tsx11_lock();
         if (XGetWindowProperty(display, w, prop, pos, INT_MAX / 4, False,
                                AnyPropertyType, atype, &aformat, &nitems, &remain, &buffer) != Success)
         {
-            wine_tsx11_unlock();
             WARN("Failed to read property\n");
             HeapFree( GetProcessHeap(), 0, val );
             return FALSE;
@@ -2356,14 +2342,12 @@ static BOOL X11DRV_CLIPBOARD_GetProperty(Display *display, Window w, Atom prop,
         if (!*data)
         {
             XFree( buffer );
-            wine_tsx11_unlock();
             HeapFree( GetProcessHeap(), 0, val );
             return FALSE;
         }
         val = *data;
         memcpy( (int *)val + pos, buffer, count );
         XFree( buffer );
-        wine_tsx11_unlock();
         if (!remain)
         {
             *datasize = pos * sizeof(int) + count;
@@ -2572,7 +2556,6 @@ static void X11DRV_CLIPBOARD_ReleaseSelection(Display *display, Atom selType, Wi
         {
             TRACE("Lost clipboard. Check if we need to release PRIMARY\n");
 
-            wine_tsx11_lock();
             if (selectionWindow == XGetSelectionOwner(display, XA_PRIMARY))
             {
                 TRACE("We still own PRIMARY. Releasing PRIMARY.\n");
@@ -2580,13 +2563,11 @@ static void X11DRV_CLIPBOARD_ReleaseSelection(Display *display, Atom selType, Wi
             }
             else
                 TRACE("We no longer own PRIMARY\n");
-            wine_tsx11_unlock();
         }
         else if ((selType == XA_PRIMARY) && (selectionAcquired & S_CLIPBOARD))
         {
             TRACE("Lost PRIMARY. Check if we need to release CLIPBOARD\n");
 
-            wine_tsx11_lock();
             if (selectionWindow == XGetSelectionOwner(display,x11drv_atom(CLIPBOARD)))
             {
                 TRACE("We still own CLIPBOARD. Releasing CLIPBOARD.\n");
@@ -2594,7 +2575,6 @@ static void X11DRV_CLIPBOARD_ReleaseSelection(Display *display, Atom selType, Wi
             }
             else
                 TRACE("We no longer own CLIPBOARD\n");
-            wine_tsx11_unlock();
         }
 
         selectionWindow = None;
@@ -2631,8 +2611,6 @@ static void selection_acquire(void)
     owner = thread_selection_wnd();
     display = thread_display();
 
-    wine_tsx11_lock();
-
     selectionAcquired = 0;
     selectionWindow = 0;
 
@@ -2648,8 +2626,6 @@ static void selection_acquire(void)
 
     if (XGetSelectionOwner(display,x11drv_atom(CLIPBOARD)) == owner)
         selectionAcquired |= S_CLIPBOARD;
-
-    wine_tsx11_unlock();
 
     if (selectionAcquired)
     {
@@ -3043,8 +3019,6 @@ static Atom X11DRV_SelectionRequest_TARGETS( Display *display, Window requestor,
                 format->lpDrvExportFunc && format->drvData)
                 targets[i++] = format->drvData;
 
-    wine_tsx11_lock();
-
     if (TRACE_ON(clipboard))
     {
         unsigned int i;
@@ -3060,7 +3034,6 @@ static Atom X11DRV_SelectionRequest_TARGETS( Display *display, Window requestor,
      * in case some apps expect this instead of XA_ATOM */
     XChangeProperty(display, requestor, rprop, XA_ATOM, 32,
                     PropModeReplace, (unsigned char *)targets, cTargets);
-    wine_tsx11_unlock();
 
     HeapFree(GetProcessHeap(), 0, targets);
 
@@ -3102,16 +3075,10 @@ static Atom X11DRV_SelectionRequest_MULTIPLE( HWND hWnd, XSelectionRequestEvent 
     /* Read the MULTIPLE property contents. This should contain a list of
      * (target,property) atom pairs.
      */
-    wine_tsx11_lock();
-    if(XGetWindowProperty(display, pevent->requestor, rprop,
-                          0, 0x3FFF, False, AnyPropertyType, &atype,&aformat,
-                          &cTargetPropList, &remain,
-                          (unsigned char**)&targetPropList) != Success)
-    {
-        wine_tsx11_unlock();
-        TRACE("\tCouldn't read MULTIPLE property\n");
-    }
-    else
+    if (!XGetWindowProperty(display, pevent->requestor, rprop,
+                            0, 0x3FFF, False, AnyPropertyType, &atype,&aformat,
+                            &cTargetPropList, &remain,
+                            (unsigned char**)&targetPropList) != Success)
     {
         if (TRACE_ON(clipboard))
         {
@@ -3120,7 +3087,6 @@ static Atom X11DRV_SelectionRequest_MULTIPLE( HWND hWnd, XSelectionRequestEvent 
                   typeName, aformat, cTargetPropList, remain);
             XFree(typeName);
         }
-        wine_tsx11_unlock();
 
         /*
          * Make sure we got what we expect.
@@ -3174,6 +3140,7 @@ static Atom X11DRV_SelectionRequest_MULTIPLE( HWND hWnd, XSelectionRequestEvent 
         /* Free the list of targets/properties */
         XFree(targetPropList);
     }
+    else TRACE("Couldn't read MULTIPLE property\n");
 
     return rprop;
 }
@@ -3246,7 +3213,6 @@ static void X11DRV_HandleSelectionRequest( HWND hWnd, XSelectionRequestEvent *ev
 
                     TRACE("\tUpdating property %s, %d bytes\n",
                           debugstr_format(lpFormat->wFormatID), cBytes);
-                    wine_tsx11_lock();
                     do
                     {
                         int nelements = min(cBytes, 65536);
@@ -3256,7 +3222,6 @@ static void X11DRV_HandleSelectionRequest( HWND hWnd, XSelectionRequestEvent *ev
                         cBytes -= nelements;
                         lpClipData += nelements;
                     } while (cBytes > 0);
-                    wine_tsx11_unlock();
 
                     GlobalUnlock(hClipData);
                     GlobalFree(hClipData);

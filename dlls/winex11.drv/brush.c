@@ -112,15 +112,15 @@ static Pixmap BRUSH_DitherColor( COLORREF color, int depth)
     Pixmap pixmap;
     GC gc;
 
-    wine_tsx11_lock();
+    XLockDisplay( gdi_display );
     if (!ditherImage)
     {
         ditherImage = XCreateImage( gdi_display, visual, depth, ZPixmap, 0,
                                     NULL, MATRIX_SIZE, MATRIX_SIZE, 32, 0 );
         if (!ditherImage)
         {
-            wine_tsx11_unlock();
             ERR("Could not create dither image\n");
+            XUnlockDisplay( gdi_display );
             return 0;
         }
         ditherImage->data = HeapAlloc( GetProcessHeap(), 0,
@@ -152,7 +152,7 @@ static Pixmap BRUSH_DitherColor( COLORREF color, int depth)
     gc = XCreateGC( gdi_display, pixmap, 0, NULL );
     XPutImage( gdi_display, pixmap, gc, ditherImage, 0, 0, 0, 0, MATRIX_SIZE, MATRIX_SIZE );
     XFreeGC( gdi_display, gc );
-    wine_tsx11_unlock();
+    XUnlockDisplay( gdi_display );
 
     return pixmap;
 }
