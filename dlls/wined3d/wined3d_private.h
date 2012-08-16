@@ -784,21 +784,8 @@ extern const struct wined3d_shader_backend_ops glsl_shader_backend DECLSPEC_HIDD
 extern const struct wined3d_shader_backend_ops arb_program_shader_backend DECLSPEC_HIDDEN;
 extern const struct wined3d_shader_backend_ops none_shader_backend DECLSPEC_HIDDEN;
 
-/* X11 locking */
-
-extern void (CDECL *wine_tsx11_lock_ptr)(void) DECLSPEC_HIDDEN;
-extern void (CDECL *wine_tsx11_unlock_ptr)(void) DECLSPEC_HIDDEN;
-
-/* As GLX relies on X, this is needed */
-extern int num_lock DECLSPEC_HIDDEN;
-
-#if 0
-#define ENTER_GL() wine_tsx11_lock_ptr()
-#define LEAVE_GL() wine_tsx11_unlock_ptr()
-#else
 #define ENTER_GL() do {} while(0)
 #define LEAVE_GL() do {} while(0)
-#endif
 
 /*****************************************************************************
  * Defines

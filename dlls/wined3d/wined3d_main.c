@@ -48,10 +48,6 @@ struct wined3d_wndproc_table
 
 static struct wined3d_wndproc_table wndproc_table;
 
-int num_lock = 0;
-void (CDECL *wine_tsx11_lock_ptr)(void) = NULL;
-void (CDECL *wine_tsx11_unlock_ptr)(void) = NULL;
-
 static CRITICAL_SECTION wined3d_cs;
 static CRITICAL_SECTION_DEBUG wined3d_cs_debug =
 {
@@ -132,14 +128,9 @@ static DWORD get_config_key_dword(HKEY defkey, HKEY appkey, const char *name, DW
     return ERROR_FILE_NOT_FOUND;
 }
 
-static void CDECL wined3d_do_nothing(void)
-{
-}
-
 static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
 {
     DWORD wined3d_context_tls_idx;
-    HMODULE mod;
     char buffer[MAX_PATH+10];
     DWORD size = sizeof(buffer);
     HKEY hkey = 0;
@@ -183,17 +174,6 @@ static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
 
     DisableThreadLibraryCalls(hInstDLL);
 
-    mod = GetModuleHandleA( "winex11.drv" );
-    if (mod)
-    {
-        wine_tsx11_lock_ptr   = (void *)GetProcAddress( mod, "wine_tsx11_lock" );
-        wine_tsx11_unlock_ptr = (void *)GetProcAddress( mod, "wine_tsx11_unlock" );
-    }
-    else /* We are most likely on Windows */
-    {
-        wine_tsx11_lock_ptr   = wined3d_do_nothing;
-        wine_tsx11_unlock_ptr = wined3d_do_nothing;
-    }
     /* @@ Wine registry key: HKCU\Software\Wine\Direct3D */
     if ( RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\Direct3D", &hkey ) ) hkey = 0;
 
