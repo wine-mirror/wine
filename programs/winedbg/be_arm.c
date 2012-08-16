@@ -1189,7 +1189,7 @@ static int be_arm_store_integer(const struct dbg_lvalue* lvalue, unsigned size,
 
 struct backend_cpu be_arm =
 {
-    IMAGE_FILE_MACHINE_ARMV7,
+    IMAGE_FILE_MACHINE_ARMNT,
     4,
     be_cpu_linearize,
     be_cpu_build_addr,
