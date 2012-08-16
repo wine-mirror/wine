@@ -278,8 +278,28 @@ static HRESULT WINAPI HTMLObjectElement_put_width(IHTMLObjectElement *iface, VAR
 static HRESULT WINAPI HTMLObjectElement_get_width(IHTMLObjectElement *iface, VARIANT *p)
 {
     HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString width_str;
+    nsresult nsres;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&width_str, NULL);
+    nsres = nsIDOMHTMLObjectElement_GetWidth(This->nsobject, &width_str);
+    if(NS_SUCCEEDED(nsres)) {
+        const PRUnichar *width;
+
+        nsAString_GetData(&width_str, &width);
+        V_VT(p) = VT_BSTR;
+        V_BSTR(p) = SysAllocString(width);
+        hres = V_BSTR(p) ? S_OK : E_OUTOFMEMORY;
+    }else {
+        ERR("GetWidth failed: %08x\n", nsres);
+        hres = E_FAIL;
+    }
+
+    nsAString_Finish(&width_str);
+    return hres;
 }
 
 static HRESULT WINAPI HTMLObjectElement_put_height(IHTMLObjectElement *iface, VARIANT v)
