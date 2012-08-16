@@ -5011,6 +5011,8 @@ static void test_EM_STREAMIN(void)
 
   const char * streamText3 = "RichEdit1";
 
+  const char * streamTextUTF8BOM = "\xef\xbb\xbfTestUTF8WithBOM";
+
   const char * streamText4 =
       "This text just needs to be long enough to cause run to be split onto "
       "two separate lines and make sure the null terminating character is "
@@ -5110,6 +5112,20 @@ static void test_EM_STREAMIN(void)
   ok (strlen(buffer)  == 0,
       "EM_STREAMIN: Test 3 set wrong text: Result: %s\n",buffer);
   ok(es.dwError == -16, "EM_STREAMIN: Test 3 set error %d, expected %d\n", es.dwError, -16);
+
+  es.dwCookie = (DWORD_PTR)&streamTextUTF8BOM;
+  es.dwError = 0;
+  es.pfnCallback = test_EM_STREAMIN_esCallback;
+  result = SendMessage(hwndRichEdit, EM_STREAMIN, SF_TEXT, (LPARAM)&es);
+  ok(result == 18, "got %ld, expected %d\n", result, 18);
+
+  result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
+  todo_wine ok(result  == 15,
+      "EM_STREAMIN: Test UTF8WithBOM returned %ld, expected 15\n", result);
+  result = strcmp (buffer,"TestUTF8WithBOM");
+  todo_wine ok(result  == 0,
+      "EM_STREAMIN: Test UTF8WithBOM set wrong text: Result: %s\n",buffer);
+  ok(es.dwError == 0, "EM_STREAMIN: Test UTF8WithBOM set error %d, expected %d\n", es.dwError, 0);
 
   es.dwCookie = (DWORD_PTR)&cookieForStream4;
   es.dwError = 0;
