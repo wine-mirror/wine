@@ -10611,6 +10611,7 @@ LIBS="$LIBS $LIBPTHREAD"
 for ac_func in \
         pthread_attr_get_np \
         pthread_getattr_np \
+        pthread_getthreadid_np \
         pthread_get_stackaddr_np \
         pthread_get_stacksize_np
 do :
