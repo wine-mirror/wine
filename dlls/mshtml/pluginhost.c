@@ -352,6 +352,23 @@ static void notif_enabled(PluginHost *plugin_host)
     }
 }
 
+void notif_container_change(HTMLPluginContainer *plugin_container, DISPID dispid)
+{
+    IOleControl *ole_control;
+    HRESULT hres;
+
+    if(!plugin_container->plugin_host || !plugin_container->plugin_host->plugin_unk)
+        return;
+
+    notif_enabled(plugin_container->plugin_host);
+
+    hres = IUnknown_QueryInterface(plugin_container->plugin_host->plugin_unk, &IID_IOleControl, (void**)&ole_control);
+    if(SUCCEEDED(hres)) {
+        IOleControl_OnAmbientPropertyChange(ole_control, dispid);
+        IOleControl_Release(ole_control);
+    }
+}
+
 HRESULT get_plugin_disp(HTMLPluginContainer *plugin_container, IDispatch **ret)
 {
     PluginHost *host;

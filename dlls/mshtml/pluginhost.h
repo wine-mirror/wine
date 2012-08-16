@@ -70,3 +70,4 @@ HRESULT create_ip_frame(IOleInPlaceFrame**) DECLSPEC_HIDDEN;
 HRESULT get_plugin_disp(HTMLPluginContainer*,IDispatch**) DECLSPEC_HIDDEN;
 HRESULT get_plugin_dispid(HTMLPluginContainer*,WCHAR*,DISPID*) DECLSPEC_HIDDEN;
 HRESULT invoke_plugin_prop(HTMLPluginContainer*,DISPID,LCID,WORD,DISPPARAMS*,VARIANT*,EXCEPINFO*) DECLSPEC_HIDDEN;
+void notif_container_change(HTMLPluginContainer*,DISPID);
