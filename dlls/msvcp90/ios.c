@@ -3895,7 +3895,7 @@ int __thiscall basic_stringbuf_wchar__Getstate(basic_stringbuf_wchar *this, IOSB
 DEFINE_THISCALL_WRAPPER(basic_stringbuf_wchar__Init, 16)
 void __thiscall basic_stringbuf_wchar__Init(basic_stringbuf_wchar *this, const wchar_t *str, MSVCP_size_t count, int state)
 {
-    TRACE("(%p, %p, %ld, %d)\n", this, str, count, state);
+    TRACE("(%p, %p, %lu, %d)\n", this, str, count, state);
 
     basic_streambuf_wchar__Init_empty(&this->base);
 
