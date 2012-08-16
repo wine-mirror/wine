@@ -1158,38 +1158,17 @@ static HRESULT WINAPI ID3DXConstantTableImpl_SetVector(ID3DXConstantTable *iface
 
     TRACE("(%p)->(%p, %p, %p)\n", This, device, constant, vector);
 
-    return ID3DXConstantTable_SetVectorArray(iface, device, constant, vector, 1);
+    return set_vector_array(iface, device, constant, vector, 1, D3DXPT_FLOAT);
 }
 
 static HRESULT WINAPI ID3DXConstantTableImpl_SetVectorArray(ID3DXConstantTable *iface, LPDIRECT3DDEVICE9 device,
                                                             D3DXHANDLE constant, CONST D3DXVECTOR4 *vector, UINT count)
 {
     struct ID3DXConstantTableImpl *This = impl_from_ID3DXConstantTable(iface);
-    D3DXCONSTANT_DESC desc;
-    HRESULT hr;
-    UINT desc_count = 1;
 
     TRACE("(%p)->(%p, %p, %p, %d)\n", This, device, constant, vector, count);
 
-    hr = ID3DXConstantTable_GetConstantDesc(iface, constant, &desc, &desc_count);
-    if (FAILED(hr))
-    {
-        TRACE("ID3DXConstantTable_GetConstantDesc failed: %08x\n", hr);
-        return D3DERR_INVALIDCALL;
-    }
-
-    switch (desc.RegisterSet)
-    {
-        case D3DXRS_FLOAT4:
-            set_float_shader_constant(This, device, desc.RegisterIndex, (float *)vector,
-                    min(desc.RegisterCount, count));
-            break;
-        default:
-            FIXME("Handle other register sets\n");
-            return E_NOTIMPL;
-    }
-
-    return D3D_OK;
+    return set_vector_array(iface, device, constant, vector, count, D3DXPT_FLOAT);
 }
 
 static HRESULT WINAPI ID3DXConstantTableImpl_SetMatrix(ID3DXConstantTable *iface, LPDIRECT3DDEVICE9 device,
