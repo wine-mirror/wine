@@ -506,7 +506,7 @@ static HRESULT on_default_action(FileDialogImpl *This)
         pidla[i] = COMDLG32_SHSimpleIDListFromPathAW(canon_filename);
 
         if(psf_parent && !(open_action == ONOPEN_BROWSE))
-            IShellItem_Release(psf_parent);
+            IShellFolder_Release(psf_parent);
 
         fn_iter += (WCHAR)lstrlenW(fn_iter) + 1;
     }
@@ -528,7 +528,7 @@ static HRESULT on_default_action(FileDialogImpl *This)
         if(FAILED(hr))
             ERR("Failed to browse to directory: %08x\n", hr);
 
-        IShellItem_Release(psf_parent);
+        IShellFolder_Release(psf_parent);
         break;
 
     case ONOPEN_OPEN:

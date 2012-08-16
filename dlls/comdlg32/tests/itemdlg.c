@@ -369,7 +369,7 @@ static BOOL test_instantiation(void)
 
     hr = IFileSaveDialog_QueryInterface(pfsd, &IID_IFileDialogEvents, (void**)&punk);
     ok(hr == E_NOINTERFACE, "got 0x%08x.\n", hr);
-    if(SUCCEEDED(hr)) IUnknown_Release(pfd);
+    if(SUCCEEDED(hr)) IFileDialog_Release(pfd);
 
     hr = IFileSaveDialog_QueryInterface(pfsd, &IID_IExplorerBrowser, (void**)&punk);
     ok(hr == E_NOINTERFACE, "got 0x%08x.\n", hr);
@@ -379,7 +379,7 @@ static BOOL test_instantiation(void)
     ok(hr == S_OK, "got 0x%08x.\n", hr);
     if(SUCCEEDED(hr)) IUnknown_Release(punk);
 
-    hr = IFileOpenDialog_QueryInterface(pfsd, &IID_ICommDlgBrowser3, (void**)&punk);
+    hr = IFileSaveDialog_QueryInterface(pfsd, &IID_ICommDlgBrowser3, (void**)&punk);
     ok(hr == S_OK, "got 0x%08x.\n", hr);
     if(SUCCEEDED(hr)) IUnknown_Release(punk);
 
@@ -1378,7 +1378,7 @@ static void test_customize(void)
                           &IID_IFileDialog, (void**)&pfod);
     ok(hr == S_OK, "got 0x%08x.\n", hr);
 
-    hr = IFileOpenDialog_QueryInterface(pfod, &IID_IFileDialogCustomize, (void**)&pfdc);
+    hr = IFileDialog_QueryInterface(pfod, &IID_IFileDialogCustomize, (void**)&pfdc);
     ok(hr == S_OK, "got 0x%08x.\n", hr);
     if(FAILED(hr))
     {
@@ -1666,7 +1666,7 @@ static void test_customize(void)
 
     IFileDialogEvents_Release(pfde);
     IFileDialogCustomize_Release(pfdc);
-    ref = IFileOpenDialog_Release(pfod);
+    ref = IFileDialog_Release(pfod);
     ok(!ref, "Refcount not zero (%d).\n", ref);
 
 
@@ -1674,7 +1674,7 @@ static void test_customize(void)
                           &IID_IFileDialog, (void**)&pfod);
     ok(hr == S_OK, "got 0x%08x.\n", hr);
 
-    hr = IFileDialogCustomize_QueryInterface(pfod, &IID_IFileDialogCustomize, (void**)&pfdc);
+    hr = IFileDialog_QueryInterface(pfod, &IID_IFileDialogCustomize, (void**)&pfdc);
     ok(hr == S_OK, "got 0x%08x.\n", hr);
 
     i = 0;
@@ -1884,7 +1884,7 @@ static void test_customize(void)
     }
 
     IFileDialogCustomize_Release(pfdc);
-    ref = IFileOpenDialog_Release(pfod);
+    ref = IFileDialog_Release(pfod);
     ok(!ref, "Refcount not zero (%d).\n", ref);
 }
 

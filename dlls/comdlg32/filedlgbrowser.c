@@ -226,26 +226,22 @@ static HRESULT WINAPI IShellBrowserImpl_QueryInterface(IShellBrowser *iface,
 
     *ppvObj = NULL;
 
-    if(IsEqualIID(riid, &IID_IUnknown))          /*IUnknown*/
-    { *ppvObj = This;
-    }
-    else if(IsEqualIID(riid, &IID_IOleWindow))  /*IOleWindow*/
-    { *ppvObj = This;
-    }
-
-    else if(IsEqualIID(riid, &IID_IShellBrowser))  /*IShellBrowser*/
-    { *ppvObj = This;
-    }
-
-    else if(IsEqualIID(riid, &IID_ICommDlgBrowser))  /*ICommDlgBrowser*/
+    if(IsEqualIID(riid, &IID_IUnknown))
+        *ppvObj = &This->IShellBrowser_iface;
+    else if(IsEqualIID(riid, &IID_IOleWindow))
+        *ppvObj = &This->IShellBrowser_iface;
+    else if(IsEqualIID(riid, &IID_IShellBrowser))
+        *ppvObj = &This->IShellBrowser_iface;
+    else if(IsEqualIID(riid, &IID_ICommDlgBrowser))
         *ppvObj = &This->ICommDlgBrowser_iface;
-    else if(IsEqualIID(riid, &IID_IServiceProvider))  /* IServiceProvider */
+    else if(IsEqualIID(riid, &IID_IServiceProvider))
         *ppvObj = &This->IServiceProvider_iface;
 
-    if(*ppvObj)
-    { IUnknown_AddRef( (IShellBrowser*) *ppvObj);
-      return S_OK;
+    if(*ppvObj) {
+        IUnknown_AddRef((IUnknown*)*ppvObj);
+        return S_OK;
     }
+
     FIXME("Unknown interface requested\n");
     return E_NOINTERFACE;
 }
