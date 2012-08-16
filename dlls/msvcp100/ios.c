@@ -313,149 +313,149 @@ extern const vtable_ptr MSVCP_basic_stringbuf_wchar_vtable;
 extern const vtable_ptr MSVCP_basic_stringbuf_short_vtable;
 
 /* ??_8?$basic_ostream@DU?$char_traits@D@std@@@std@@7B@ */
-const int basic_ostream_char_vbtable[] = {0, sizeof(basic_ostream_char)};
+const int basic_ostream_char_vbtable[] = {0, ALIGNED_SIZE(sizeof(basic_ostream_char), 8)};
 /* ??_7?$basic_ostream@DU?$char_traits@D@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_ostream_char_vtable;
 
 /* ??_8?$basic_ostream@_WU?$char_traits@_W@std@@@std@@7B@ */
-const int basic_ostream_wchar_vbtable[] = {0, sizeof(basic_ostream_wchar)};
+const int basic_ostream_wchar_vbtable[] = {0, ALIGNED_SIZE(sizeof(basic_ostream_wchar), 8)};
 /* ??_7?$basic_ostream@_WU?$char_traits@_W@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_ostream_wchar_vtable;
 
 /* ??_8?$basic_ostream@GU?$char_traits@G@std@@@std@@7B@ */
-const int basic_ostream_short_vbtable[] = {0, sizeof(basic_ostream_wchar)};
+const int basic_ostream_short_vbtable[] = {0, ALIGNED_SIZE(sizeof(basic_ostream_wchar), 8)};
 /* ??_7?$basic_ostream@GU?$char_traits@G@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_ostream_short_vtable;
 
 /* ??_8?$basic_istream@DU?$char_traits@D@std@@@std@@7B@ */
-const int basic_istream_char_vbtable[] = {0, sizeof(basic_istream_char)};
+const int basic_istream_char_vbtable[] = {0, ALIGNED_SIZE(sizeof(basic_istream_char), 8)};
 /* ??_7?$basic_istream@DU?$char_traits@D@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_istream_char_vtable;
 
 /* ??_8?$basic_istream@_WU?$char_traits@_W@std@@@std@@7B@ */
-const int basic_istream_wchar_vbtable[] = {0, sizeof(basic_istream_wchar)};
+const int basic_istream_wchar_vbtable[] = {0, ALIGNED_SIZE(sizeof(basic_istream_wchar), 8)};
 /* ??_7?$basic_istream@_WU?$char_traits@_W@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_istream_wchar_vtable;
 
 /* ??_8?$basic_istream@GU?$char_traits@G@std@@@std@@7B@ */
-const int basic_istream_short_vbtable[] = {0, sizeof(basic_istream_wchar)};
+const int basic_istream_short_vbtable[] = {0, ALIGNED_SIZE(sizeof(basic_istream_wchar), 8)};
 /* ??_7?$basic_istream@GU?$char_traits@G@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_istream_short_vtable;
 
 /* ??_8?$basic_iostream@DU?$char_traits@D@std@@@std@@7B?$basic_istream@DU?$char_traits@D@std@@@1@@ */
-const int basic_iostream_char_vbtable1[] = {0, sizeof(basic_iostream_char)};
+const int basic_iostream_char_vbtable1[] = {0, ALIGNED_SIZE(sizeof(basic_iostream_char), 8)};
 /* ??_8?$basic_iostream@DU?$char_traits@D@std@@@std@@7B?$basic_ostream@DU?$char_traits@D@std@@@1@@ */
-const int basic_iostream_char_vbtable2[] = {0, sizeof(basic_iostream_char)-FIELD_OFFSET(basic_iostream_char, base2)};
+const int basic_iostream_char_vbtable2[] = {0, ALIGNED_SIZE(sizeof(basic_iostream_char), 8)-FIELD_OFFSET(basic_iostream_char, base2)};
 /* ??_7?$basic_iostream@DU?$char_traits@D@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_iostream_char_vtable;
 
 /* ??_8?$basic_iostream@_WU?$char_traits@_W@std@@@std@@7B?$basic_istream@_WU?$char_traits@_W@std@@@1@@ */
 /* ??_8?$basic_iostream@GU?$char_traits@G@std@@@std@@7B?$basic_istream@GU?$char_traits@G@std@@@1@@ */
-const int basic_iostream_wchar_vbtable1[] = {0, sizeof(basic_iostream_wchar)};
+const int basic_iostream_wchar_vbtable1[] = {0, ALIGNED_SIZE(sizeof(basic_iostream_wchar), 8)};
 /* ??_8?$basic_iostream@_WU?$char_traits@_W@std@@@std@@7B?$basic_ostream@_WU?$char_traits@_W@std@@@1@@ */
 /* ??_8?$basic_iostream@GU?$char_traits@G@std@@@std@@7B?$basic_ostream@GU?$char_traits@G@std@@@1@@ */
-const int basic_iostream_wchar_vbtable2[] = {0, sizeof(basic_iostream_wchar)-FIELD_OFFSET(basic_iostream_wchar, base2)};
+const int basic_iostream_wchar_vbtable2[] = {0, ALIGNED_SIZE(sizeof(basic_iostream_wchar), 8)-FIELD_OFFSET(basic_iostream_wchar, base2)};
 /* ??_7?$basic_iostream@_WU?$char_traits@_W@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_iostream_wchar_vtable;
 /* ??_7?$basic_iostream@GU?$char_traits@G@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_iostream_short_vtable;
 
 /* ??_8?$basic_ofstream@DU?$char_traits@D@std@@@std@@7B@ */
-const int basic_ofstream_char_vbtable[] = {0, sizeof(basic_ofstream_char)};
+const int basic_ofstream_char_vbtable[] = {0, ALIGNED_SIZE(sizeof(basic_ofstream_char), 8)};
 /* ??_7?$basic_ofstream@DU?$char_traits@D@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_ofstream_char_vtable;
 
 /* ??_8?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@7B@ */
-const int basic_ofstream_wchar_vbtable[] = {0, sizeof(basic_ofstream_wchar)};
+const int basic_ofstream_wchar_vbtable[] = {0, ALIGNED_SIZE(sizeof(basic_ofstream_wchar), 8)};
 /* ??_7?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_ofstream_wchar_vtable;
 
 /* ??_8?$basic_ofstream@GU?$char_traits@G@std@@@std@@7B@ */
-const int basic_ofstream_short_vbtable[] = {0, sizeof(basic_ofstream_wchar)};
+const int basic_ofstream_short_vbtable[] = {0, ALIGNED_SIZE(sizeof(basic_ofstream_wchar), 8)};
 /* ??_7?$basic_ofstream@GU?$char_traits@G@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_ofstream_short_vtable;
 
 /* ??_8?$basic_ifstream@DU?$char_traits@D@std@@@std@@7B@ */
-const int basic_ifstream_char_vbtable[] = {0, sizeof(basic_ifstream_char)};
+const int basic_ifstream_char_vbtable[] = {0, ALIGNED_SIZE(sizeof(basic_ifstream_char), 8)};
 /* ??_7?$basic_ifstream@DU?$char_traits@D@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_ifstream_char_vtable;
 
 /* ??_8?$basic_ifstream@_WU?$char_traits@_W@std@@@std@@7B@ */
-const int basic_ifstream_wchar_vbtable[] = {0, sizeof(basic_ifstream_wchar)};
+const int basic_ifstream_wchar_vbtable[] = {0, ALIGNED_SIZE(sizeof(basic_ifstream_wchar), 8)};
 /* ??_7?$basic_ifstream@_WU?$char_traits@_W@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_ifstream_wchar_vtable;
 
 /* ??_8?$basic_ifstream@GU?$char_traits@G@std@@@std@@7B@ */
-const int basic_ifstream_short_vbtable[] = {0, sizeof(basic_ifstream_wchar)};
+const int basic_ifstream_short_vbtable[] = {0, ALIGNED_SIZE(sizeof(basic_ifstream_wchar), 8)};
 /* ??_7?$basic_ifstream@GU?$char_traits@G@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_ifstream_short_vtable;
 
 /* ??_8?$basic_fstream@DU?$char_traits@D@std@@@std@@7B?$basic_istream@DU?$char_traits@D@std@@@1@@ */
-const int basic_fstream_char_vbtable1[] = {0, sizeof(basic_fstream_char)};
+const int basic_fstream_char_vbtable1[] = {0, ALIGNED_SIZE(sizeof(basic_fstream_char), 8)};
 /* ??_8?$basic_fstream@DU?$char_traits@D@std@@@std@@7B?$basic_ostream@DU?$char_traits@D@std@@@1@@ */
-const int basic_fstream_char_vbtable2[] = {0, sizeof(basic_fstream_char)-FIELD_OFFSET(basic_fstream_char, base.base2)};
+const int basic_fstream_char_vbtable2[] = {0, ALIGNED_SIZE(sizeof(basic_fstream_char), 8)-FIELD_OFFSET(basic_fstream_char, base.base2)};
 /* ??_7?$basic_fstream@DU?$char_traits@D@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_fstream_char_vtable;
 
 /* ??_8?$basic_fstream@_WU?$char_traits@_W@std@@@std@@7B?$basic_istream@_WU?$char_traits@_W@std@@@1@@ */
 /* ??_8?$basic_fstream@GU?$char_traits@G@std@@@std@@7B?$basic_istream@GU?$char_traits@G@std@@@1@@ */
-const int basic_fstream_wchar_vbtable1[] = {0, sizeof(basic_fstream_wchar)};
+const int basic_fstream_wchar_vbtable1[] = {0, ALIGNED_SIZE(sizeof(basic_fstream_wchar), 8)};
 /* ??_8?$basic_fstream@_WU?$char_traits@_W@std@@@std@@7B?$basic_ostream@_WU?$char_traits@_W@std@@@1@@ */
 /* ??_8?$basic_fstream@GU?$char_traits@G@std@@@std@@7B?$basic_ostream@GU?$char_traits@G@std@@@1@@ */
-const int basic_fstream_wchar_vbtable2[] = {0, sizeof(basic_fstream_wchar)-FIELD_OFFSET(basic_fstream_wchar, base.base2)};
+const int basic_fstream_wchar_vbtable2[] = {0, ALIGNED_SIZE(sizeof(basic_fstream_wchar), 8)-FIELD_OFFSET(basic_fstream_wchar, base.base2)};
 /* ??_7?$basic_fstream@_WU?$char_traits@_W@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_fstream_wchar_vtable;
 /* ??_7?$basic_fstream@GU?$char_traits@G@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_fstream_short_vtable;
 
 /* ??_8?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@7B@ */
-const int basic_ostringstream_char_vbtable[] = {0, sizeof(basic_ostringstream_char)};
+const int basic_ostringstream_char_vbtable[] = {0, ALIGNED_SIZE(sizeof(basic_ostringstream_char), 8)};
 /* ??_7?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_ostringstream_char_vtable;
 
 /* ??_8?$basic_ostringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@7B@ */
-const int basic_ostringstream_wchar_vbtable[] = {0, sizeof(basic_ostringstream_wchar)};
+const int basic_ostringstream_wchar_vbtable[] = {0, ALIGNED_SIZE(sizeof(basic_ostringstream_wchar), 8)};
 /* ??_7?$basic_ostringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_ostringstream_wchar_vtable;
 
 /* ??_8?$basic_ostringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@7B@ */
-const int basic_ostringstream_short_vbtable[] = {0, sizeof(basic_ostringstream_wchar)};
+const int basic_ostringstream_short_vbtable[] = {0, ALIGNED_SIZE(sizeof(basic_ostringstream_wchar), 8)};
 /* ??_7?$basic_ostringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_ostringstream_short_vtable;
 
 /* ??_8?$basic_istringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@7B@ */
-const int basic_istringstream_char_vbtable[] = {0, sizeof(basic_istringstream_char)};
+const int basic_istringstream_char_vbtable[] = {0, ALIGNED_SIZE(sizeof(basic_istringstream_char), 8)};
 /* ??_7?$basic_istringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_istringstream_char_vtable;
 
 /* ??_8?$basic_istringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@7B@ */
-const int basic_istringstream_wchar_vbtable[] = {0, sizeof(basic_istringstream_wchar)};
+const int basic_istringstream_wchar_vbtable[] = {0, ALIGNED_SIZE(sizeof(basic_istringstream_wchar), 8)};
 /* ??_7?$basic_istringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_istringstream_wchar_vtable;
 
 /* ??_8?$basic_istringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@7B@ */
-const int basic_istringstream_short_vbtable[] = {0, sizeof(basic_istringstream_wchar)};
+const int basic_istringstream_short_vbtable[] = {0, ALIGNED_SIZE(sizeof(basic_istringstream_wchar), 8)};
 /* ??_7?$basic_istringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_istringstream_short_vtable;
 
 /* ??_8?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@7B?$basic_istream@DU?$char_traits@D@std@@@1@@ */
-const int basic_stringstream_char_vbtable1[] = {0, sizeof(basic_stringstream_char)};
+const int basic_stringstream_char_vbtable1[] = {0, ALIGNED_SIZE(sizeof(basic_stringstream_char), 8)};
 /* ??_8?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@7B?$basic_ostream@DU?$char_traits@D@std@@@1@@ */
-const int basic_stringstream_char_vbtable2[] = {0, sizeof(basic_stringstream_char)-FIELD_OFFSET(basic_stringstream_char, base.base2)};
+const int basic_stringstream_char_vbtable2[] = {0, ALIGNED_SIZE(sizeof(basic_stringstream_char), 8)-FIELD_OFFSET(basic_stringstream_char, base.base2)};
 /* ??_7?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_stringstream_char_vtable;
 
 /* ??_8?$basic_stringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@7B?$basic_istream@_WU?$char_traits@_W@std@@@1@@ */
-const int basic_stringstream_wchar_vbtable1[] = {0, sizeof(basic_stringstream_wchar)};
+const int basic_stringstream_wchar_vbtable1[] = {0, ALIGNED_SIZE(sizeof(basic_stringstream_wchar), 8)};
 /* ??_8?$basic_stringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@7B?$basic_ostream@_WU?$char_traits@_W@std@@@1@@ */
-const int basic_stringstream_wchar_vbtable2[] = {0, sizeof(basic_stringstream_wchar)-FIELD_OFFSET(basic_stringstream_wchar, base.base2)};
+const int basic_stringstream_wchar_vbtable2[] = {0, ALIGNED_SIZE(sizeof(basic_stringstream_wchar), 8)-FIELD_OFFSET(basic_stringstream_wchar, base.base2)};
 /* ??_7?$basic_stringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_stringstream_wchar_vtable;
 
 /* ??_8?$basic_stringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@7B?$basic_istream@GU?$char_traits@G@std@@@1@@ */
-const int basic_stringstream_short_vbtable1[] = {0, sizeof(basic_stringstream_wchar)};
+const int basic_stringstream_short_vbtable1[] = {0, ALIGNED_SIZE(sizeof(basic_stringstream_wchar), 8)};
 /* ??_8?$basic_stringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@7B?$basic_ostream@GU?$char_traits@G@std@@@1@@ */
-const int basic_stringstream_short_vbtable2[] = {0, sizeof(basic_stringstream_wchar)-FIELD_OFFSET(basic_stringstream_wchar, base.base2)};
+const int basic_stringstream_short_vbtable2[] = {0, ALIGNED_SIZE(sizeof(basic_stringstream_wchar), 8)-FIELD_OFFSET(basic_stringstream_wchar, base.base2)};
 /* ??_7?$basic_stringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_stringstream_short_vtable;
 

@@ -20,10 +20,12 @@
 #include "windef.h"
 #include "cxx.h"
 
+#define ALIGNED_SIZE(size, alignment) (((size)+((alignment)-1))/(alignment)*(alignment))
+
 typedef unsigned char MSVCP_bool;
 typedef SIZE_T MSVCP_size_t;
-typedef __int64 streamoff;
-typedef __int64 streamsize;
+typedef __int64 DECLSPEC_ALIGN(8) streamoff;
+typedef __int64 DECLSPEC_ALIGN(8) streamsize;
 
 void __cdecl _invalid_parameter(const wchar_t*, const wchar_t*,
         const wchar_t*, unsigned int, uintptr_t);
