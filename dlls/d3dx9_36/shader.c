@@ -857,7 +857,7 @@ static D3DXHANDLE WINAPI ID3DXConstantTableImpl_GetConstantElement(ID3DXConstant
     return NULL;
 }
 
-static HRESULT set_float_array(ID3DXConstantTable *iface, LPDIRECT3DDEVICE9 device, D3DXHANDLE constant, const void *data,
+static HRESULT set_scalar_array(ID3DXConstantTable *iface, IDirect3DDevice9 *device, D3DXHANDLE constant, const void *data,
                                UINT count, D3DXPARAMETER_TYPE type)
 {
     struct ID3DXConstantTableImpl *This = impl_from_ID3DXConstantTable(iface);
@@ -876,7 +876,7 @@ static HRESULT set_float_array(ID3DXConstantTable *iface, LPDIRECT3DDEVICE9 devi
     switch (desc.RegisterSet)
     {
         case D3DXRS_FLOAT4:
-            for (i = 0; i < count && i < desc.RegisterCount; i++)
+            for (i = 0; i < min(count, desc.RegisterCount); i++)
             {
                 /* We need the for loop since each IDirect3DDevice9_Set*ShaderConstantF expects a float4 */
                 switch(type)
@@ -887,8 +887,11 @@ static HRESULT set_float_array(ID3DXConstantTable *iface, LPDIRECT3DDEVICE9 devi
                     case D3DXPT_INT:
                         row[0] = (float)((int *)data)[i];
                         break;
+                    case D3DXPT_BOOL:
+                        row[0] = ((BOOL *)data)[i] ? 1.0f : 0.0f;
+                        break;
                     default:
-                        FIXME("Unhandled type passed to set_float_array\n");
+                        FIXME("Unhandled type %#x\n", type);
                         return D3DERR_INVALIDCALL;
                 }
                 set_float_shader_constant(This, device, desc.RegisterIndex + i, row, 1);
@@ -940,9 +943,9 @@ static HRESULT WINAPI ID3DXConstantTableImpl_SetBool(ID3DXConstantTable *iface, 
 {
     struct ID3DXConstantTableImpl *This = impl_from_ID3DXConstantTable(iface);
 
-    FIXME("(%p)->(%p, %p, %d): stub\n", This, device, constant, b);
+    TRACE("(%p)->(%p, %p, %d)\n", This, device, constant, b);
 
-    return E_NOTIMPL;
+    return set_scalar_array(iface, device, constant, &b, 1, D3DXPT_BOOL);
 }
 
 static HRESULT WINAPI ID3DXConstantTableImpl_SetBoolArray(ID3DXConstantTable *iface, LPDIRECT3DDEVICE9 device,
@@ -961,7 +964,7 @@ static HRESULT WINAPI ID3DXConstantTableImpl_SetInt(ID3DXConstantTable *iface, L
 
     TRACE("(%p)->(%p, %p, %d)\n", This, device, constant, n);
 
-    return ID3DXConstantTable_SetIntArray(iface, device, constant, &n, 1);
+    return set_scalar_array(iface, device, constant, &n, 1, D3DXPT_INT);
 }
 
 static HRESULT WINAPI ID3DXConstantTableImpl_SetIntArray(ID3DXConstantTable *iface, LPDIRECT3DDEVICE9 device,
@@ -971,7 +974,7 @@ static HRESULT WINAPI ID3DXConstantTableImpl_SetIntArray(ID3DXConstantTable *ifa
 
     TRACE("(%p)->(%p, %p, %p, %d)\n", This, device, constant, n, count);
 
-    return set_float_array(iface, device, constant, n, count, D3DXPT_INT);
+    return set_scalar_array(iface, device, constant, n, count, D3DXPT_INT);
 }
 
 static HRESULT WINAPI ID3DXConstantTableImpl_SetFloat(ID3DXConstantTable *iface, LPDIRECT3DDEVICE9 device,
@@ -981,7 +984,7 @@ static HRESULT WINAPI ID3DXConstantTableImpl_SetFloat(ID3DXConstantTable *iface,
 
     TRACE("(%p)->(%p, %p, %f)\n", This, device, constant, f);
 
-    return ID3DXConstantTable_SetFloatArray(iface, device, constant, &f, 1);
+    return set_scalar_array(iface, device, constant, &f, 1, D3DXPT_FLOAT);
 }
 
 static HRESULT WINAPI ID3DXConstantTableImpl_SetFloatArray(ID3DXConstantTable *iface, LPDIRECT3DDEVICE9 device,
@@ -991,7 +994,7 @@ static HRESULT WINAPI ID3DXConstantTableImpl_SetFloatArray(ID3DXConstantTable *i
 
     TRACE("(%p)->(%p, %p, %p, %d)\n", This, device, constant, f, count);
 
-    return set_float_array(iface, device, constant, f, count, D3DXPT_FLOAT);
+    return set_scalar_array(iface, device, constant, f, count, D3DXPT_FLOAT);
 }
 
 static HRESULT WINAPI ID3DXConstantTableImpl_SetVector(ID3DXConstantTable *iface, LPDIRECT3DDEVICE9 device,
