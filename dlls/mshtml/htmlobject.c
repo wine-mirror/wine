@@ -337,8 +337,28 @@ static HRESULT WINAPI HTMLObjectElement_put_height(IHTMLObjectElement *iface, VA
 static HRESULT WINAPI HTMLObjectElement_get_height(IHTMLObjectElement *iface, VARIANT *p)
 {
     HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString height_str;
+    nsresult nsres;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&height_str, NULL);
+    nsres = nsIDOMHTMLObjectElement_GetHeight(This->nsobject, &height_str);
+    if(NS_SUCCEEDED(nsres)) {
+        const PRUnichar *height;
+
+        nsAString_GetData(&height_str, &height);
+        V_VT(p) = VT_BSTR;
+        V_BSTR(p) = SysAllocString(height);
+        hres = V_BSTR(p) ? S_OK : E_OUTOFMEMORY;
+    }else {
+        ERR("GetHeight failed: %08x\n", nsres);
+        hres = E_FAIL;
+    }
+
+    nsAString_Finish(&height_str);
+    return hres;
 }
 
 static HRESULT WINAPI HTMLObjectElement_get_readyState(IHTMLObjectElement *iface, LONG *p)
