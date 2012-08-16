@@ -3710,13 +3710,13 @@ static void convert_yuy2_r5g6b5(const BYTE *src, BYTE *dst,
     }
 }
 
-struct d3dfmt_convertor_desc
+struct d3dfmt_converter_desc
 {
     enum wined3d_format_id from, to;
     void (*convert)(const BYTE *src, BYTE *dst, DWORD pitch_in, DWORD pitch_out, unsigned int w, unsigned int h);
 };
 
-static const struct d3dfmt_convertor_desc convertors[] =
+static const struct d3dfmt_converter_desc converters[] =
 {
     {WINED3DFMT_R32_FLOAT,      WINED3DFMT_R16_FLOAT,       convert_r32_float_r16_float},
     {WINED3DFMT_B5G6R5_UNORM,   WINED3DFMT_B8G8R8X8_UNORM,  convert_r5g6b5_x8r8g8b8},
@@ -3726,15 +3726,15 @@ static const struct d3dfmt_convertor_desc convertors[] =
     {WINED3DFMT_YUY2,           WINED3DFMT_B5G6R5_UNORM,    convert_yuy2_r5g6b5},
 };
 
-static inline const struct d3dfmt_convertor_desc *find_convertor(enum wined3d_format_id from,
+static inline const struct d3dfmt_converter_desc *find_converter(enum wined3d_format_id from,
         enum wined3d_format_id to)
 {
     unsigned int i;
 
-    for (i = 0; i < (sizeof(convertors) / sizeof(*convertors)); ++i)
+    for (i = 0; i < (sizeof(converters) / sizeof(*converters)); ++i)
     {
-        if (convertors[i].from == from && convertors[i].to == to)
-            return &convertors[i];
+        if (converters[i].from == from && converters[i].to == to)
+            return &converters[i];
     }
 
     return NULL;
@@ -3754,11 +3754,11 @@ static inline const struct d3dfmt_convertor_desc *find_convertor(enum wined3d_fo
 static struct wined3d_surface *surface_convert_format(struct wined3d_surface *source, enum wined3d_format_id to_fmt)
 {
     struct wined3d_map_desc src_map, dst_map;
-    const struct d3dfmt_convertor_desc *conv;
+    const struct d3dfmt_converter_desc *conv;
     struct wined3d_surface *ret = NULL;
     HRESULT hr;
 
-    conv = find_convertor(source->resource.format->id, to_fmt);
+    conv = find_converter(source->resource.format->id, to_fmt);
     if (!conv)
     {
         FIXME("Cannot find a conversion function from format %s to %s.\n",
