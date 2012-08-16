@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-07-03 01:38+0200\n"
+"PO-Revision-Date: 2012-08-15 20:07+0200\n"
 "Last-Translator: Julian Rüger\n"
 "Language-Team: none\n"
 "Language: German\n"
@@ -2913,7 +2913,7 @@ msgstr "Der private Schlüssel sollte Passwortgeschützt sein."
 
 #: cryptui.rc:171
 msgid "The passwords do not match."
-msgstr "Die Passwörter sind unterschiedlich."
+msgstr "Die Passwörter stimmen nicht überein."
 
 #: cryptui.rc:172
 msgid "Note: The private key for this certificate could not be opened."
@@ -2935,11 +2935,11 @@ msgstr "DirectSound: %s"
 
 #: devenum.rc:34
 msgid "Default WaveOut Device"
-msgstr "Standard WaveOut - Gerät"
+msgstr "Standard WaveOut-Gerät"
 
 #: devenum.rc:35
 msgid "Default MidiOut Device"
-msgstr "Standard MidiOut - Gerät"
+msgstr "Standard MidiOut-Gerät"
 
 #: dinput.rc:40
 msgid "Configure Devices"
@@ -2947,7 +2947,7 @@ msgstr "Geräte konfigurieren"
 
 #: dinput.rc:45
 msgid "Reset"
-msgstr "Rücksetzen"
+msgstr "Reset"
 
 #: dinput.rc:48
 msgid "Player"
@@ -2967,7 +2967,7 @@ msgstr "Zuordnung"
 
 #: dinput.rc:53
 msgid "Show Assigned First"
-msgstr "Zeige Zugewiesene zuerst"
+msgstr "Zugewiesene zuerst anzeigen"
 
 #: dinput.rc:34
 msgid "Action"
@@ -3462,16 +3462,17 @@ msgid "Test Force Feedback"
 msgstr "Force Feedback testen"
 
 #: joy.rc:63
-#, fuzzy
-#| msgid "Available formats"
 msgid "Available Effects"
-msgstr "Verfügbare Formate"
+msgstr "Verfügbare Effekte"
 
 #: joy.rc:65
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."
 msgstr ""
+"Drücken Sie eine beliebige Taste am Controller, um den gewählten Effekt zu "
+"aktivieren. Die Richtung des Effekts kann mit der Controller-Achse geändert "
+"werden."
 
 #: joy.rc:28
 msgid "Game Controllers"
