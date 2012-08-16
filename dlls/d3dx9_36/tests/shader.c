@@ -674,7 +674,7 @@ static void test_setting_matrices_table(IDirect3DDevice9 *device)
             (int)S(U(fmatrix))._21, (int)S(U(fmatrix))._22, (int)S(U(fmatrix))._23, 0);
 
     IDirect3DDevice9_GetVertexShaderConstantF(device, 7, out, 1);
-    todo_wine ok(out[0] == S(U(fmatrix))._11 && out[1] == S(U(fmatrix))._21 && out[2] == S(U(fmatrix))._31 && out[3] == 0.0f,
+    ok(out[0] == S(U(fmatrix))._11 && out[1] == S(U(fmatrix))._21 && out[2] == S(U(fmatrix))._31 && out[3] == 0.0f,
             "The variable fmatrix3x1 was not set correctly, out={%f, %f, %f, %f}, should be {%f, %f, %f, %f}\n",
             out[0], out[1], out[2], out[3],
             S(U(fmatrix))._11, S(U(fmatrix))._21, S(U(fmatrix))._31, 0.0f);
@@ -700,7 +700,7 @@ static void test_setting_matrices_table(IDirect3DDevice9 *device)
     ok(res == D3D_OK, "ID3DXConstantTable_SetMatrix failed on variable c3x3: got %#x\n", res);
 
     IDirect3DDevice9_GetVertexShaderConstantF(device, 7, out, 3);
-    todo_wine ok(out[0] == S(U(fmatrix))._11 && out[1] == S(U(fmatrix))._21 && out[2] == 0.0f && out[3] == 0.0f
+    ok(out[0] == S(U(fmatrix))._11 && out[1] == S(U(fmatrix))._21 && out[2] == 0.0f && out[3] == 0.0f
             && out[4] == S(U(fmatrix))._12 && out[5] == S(U(fmatrix))._22 && out[6] == 0.0f && out[7] == 0.0f
             && out[8] == S(U(fmatrix))._13 && out[9] == S(U(fmatrix))._23 && out[10] == 0.0f && out[11] == 0.0f,
             "The variable c2x3 was not set correctly, out={%f, %f, %f, %f; %f, %f, %f, %f; %f, %f, %f, %f}, "
@@ -716,7 +716,7 @@ static void test_setting_matrices_table(IDirect3DDevice9 *device)
     ok(res == D3D_OK, "ID3DXConstantTable_SetMatrix failed on variable r4x4: got %#x\n", res);
 
     IDirect3DDevice9_GetVertexShaderConstantF(device, 15, out, 2);
-    todo_wine ok(out[0] == S(U(fmatrix))._11 && out[1] == S(U(fmatrix))._12 && out[2] == S(U(fmatrix))._13 && out[3] == 0.0f
+    ok(out[0] == S(U(fmatrix))._11 && out[1] == S(U(fmatrix))._12 && out[2] == S(U(fmatrix))._13 && out[3] == 0.0f
             && out[4] == S(U(fmatrix))._21 && out[5] == S(U(fmatrix))._22 && out[6] == S(U(fmatrix))._23 && out[7] == 0.0f,
             "The variable r2x3 was not set correctly, out={%f, %f, %f, %f; %f, %f, %f, %f}, "
             "should be {%f, %f, %f, %f; %f, %f, %f, %f}\n",
@@ -725,7 +725,7 @@ static void test_setting_matrices_table(IDirect3DDevice9 *device)
             S(U(fmatrix))._21, S(U(fmatrix))._22, S(U(fmatrix))._23, 0.0f);
 
     IDirect3DDevice9_GetVertexShaderConstantF(device, 13, out, 2);
-    todo_wine ok(out[0] == S(U(fmatrix))._11 && out[1] == S(U(fmatrix))._21 && out[2] == S(U(fmatrix))._31 && out[3] == 0.0f
+    ok(out[0] == S(U(fmatrix))._11 && out[1] == S(U(fmatrix))._21 && out[2] == S(U(fmatrix))._31 && out[3] == 0.0f
             && out[4] == S(U(fmatrix))._12 && out[5] == S(U(fmatrix))._22 && out[6] == S(U(fmatrix))._32 && out[7] == 0.0f,
             "The variable c3x2 was not set correctly, out={%f, %f, %f, %f; %f, %f, %f, %f}, "
             "should be {%f, %f, %f, %f; %f, %f, %f, %f}\n",
@@ -734,7 +734,7 @@ static void test_setting_matrices_table(IDirect3DDevice9 *device)
             S(U(fmatrix))._12, S(U(fmatrix))._22, S(U(fmatrix))._32, 0.0f);
 
     IDirect3DDevice9_GetVertexShaderConstantF(device, 4, out, 3);
-    todo_wine ok(out[0] == S(U(fmatrix))._11 && out[1] == S(U(fmatrix))._12 && out[2] == 0.0f && out[3] == 0.0f
+    ok(out[0] == S(U(fmatrix))._11 && out[1] == S(U(fmatrix))._12 && out[2] == 0.0f && out[3] == 0.0f
             && out[4] == S(U(fmatrix))._21 && out[5] == S(U(fmatrix))._22 && out[6] == 0.0f && out[7] == 0.0f
             && out[8] == S(U(fmatrix))._31 && out[9] == S(U(fmatrix))._32 && out[10] == 0.0f && out[11] == 0.0f,
             "The variable r3x2 was not set correctly, out={%f, %f, %f, %f; %f, %f, %f, %f; %f, %f, %f, %f}, "
@@ -745,7 +745,7 @@ static void test_setting_matrices_table(IDirect3DDevice9 *device)
             S(U(fmatrix))._31, S(U(fmatrix))._32, 0.0f, 0.0f);
 
     IDirect3DDevice9_GetVertexShaderConstantF(device, 10, out, 3);
-    todo_wine ok(out[0] == S(U(fmatrix))._11 && out[1] == S(U(fmatrix))._21 && out[2] == S(U(fmatrix))._31 && out[3] == 0.0f
+    ok(out[0] == S(U(fmatrix))._11 && out[1] == S(U(fmatrix))._21 && out[2] == S(U(fmatrix))._31 && out[3] == 0.0f
             && out[4] == S(U(fmatrix))._12 && out[5] == S(U(fmatrix))._22 && out[6] == S(U(fmatrix))._32 && out[7] == 0.0f
             && out[8] == S(U(fmatrix))._13 && out[9] == S(U(fmatrix))._23 && out[10] == S(U(fmatrix))._33 && out[11] == 0.0f,
             "The variable c3x3 was not set correctly, out={%f, %f, %f, %f; %f, %f, %f, %f; %f, %f, %f, %f}, "

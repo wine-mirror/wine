@@ -1178,7 +1178,7 @@ static HRESULT WINAPI ID3DXConstantTableImpl_SetMatrix(ID3DXConstantTable *iface
 
     TRACE("(%p)->(%p, %p, %p)\n", This, device, constant, matrix);
 
-    return ID3DXConstantTable_SetMatrixArray(iface, device, constant, matrix, 1);
+    return set_matrix_array(iface, device, constant, matrix, 1, D3DXPT_FLOAT, 4, 4);
 }
 
 static HRESULT WINAPI ID3DXConstantTableImpl_SetMatrixArray(ID3DXConstantTable *iface, LPDIRECT3DDEVICE9 device,
@@ -1186,41 +1186,9 @@ static HRESULT WINAPI ID3DXConstantTableImpl_SetMatrixArray(ID3DXConstantTable *
 {
     struct ID3DXConstantTableImpl *This = impl_from_ID3DXConstantTable(iface);
 
-    D3DXCONSTANT_DESC desc;
-    HRESULT hr;
-    UINT i, desc_count = 1;
-    D3DXMATRIX temp;
-
     TRACE("(%p)->(%p, %p, %p, %d)\n", This, device, constant, matrix, count);
 
-    hr = ID3DXConstantTable_GetConstantDesc(iface, constant, &desc, &desc_count);
-    if (FAILED(hr))
-    {
-        TRACE("ID3DXConstantTable_GetConstantDesc failed: %08x\n", hr);
-        return D3DERR_INVALIDCALL;
-    }
-
-    switch (desc.RegisterSet)
-    {
-        case D3DXRS_FLOAT4:
-            /* i * 4 + 3 is the last register we set. The conditional makes sure that we don't access
-               registers we're not supposed to */
-            for (i = 0; i < count && i * 4 + 3 < desc.RegisterCount; i++)
-            {
-                if (desc.Class == D3DXPC_MATRIX_ROWS)
-                    temp = matrix[i];
-                else
-                    D3DXMatrixTranspose(&temp, &matrix[i]);
-
-                set_float_shader_constant(This, device, desc.RegisterIndex + i * 4, &temp.u.s._11, 4);
-            }
-            break;
-        default:
-            FIXME("Handle other register sets\n");
-            return E_NOTIMPL;
-    }
-
-    return D3D_OK;
+    return set_matrix_array(iface, device, constant, matrix, count, D3DXPT_FLOAT, 4, 4);
 }
 
 static HRESULT WINAPI ID3DXConstantTableImpl_SetMatrixPointerArray(ID3DXConstantTable *iface, LPDIRECT3DDEVICE9 device,
