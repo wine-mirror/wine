@@ -5146,7 +5146,7 @@ static void test_EM_STREAMIN(void)
 
   result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
   ok (result  == length5,
-      "EM_STREAMIN: Test 4 returned %ld, expected %d\n", result, length5);
+      "EM_STREAMIN: Test 5 returned %ld, expected %d\n", result, length5);
   ok(es.dwError == 0, "EM_STREAMIN: Test 5 set error %d, expected %d\n", es.dwError, 0);
 
   DestroyWindow(hwndRichEdit);
