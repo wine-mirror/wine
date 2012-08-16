@@ -108,15 +108,20 @@ struct ACImpl {
     HANDLE event;
     float *vols;
 
+    BOOL need_remapping;
+    int alsa_channels;
+    int alsa_channel_map[32];
+
     BOOL initted, started;
     REFERENCE_TIME mmdev_period_rt;
     UINT64 written_frames, last_pos_frames;
     UINT32 bufsize_frames, held_frames, tmp_buffer_frames, mmdev_period_frames;
+    snd_pcm_uframes_t remapping_buf_frames;
     UINT32 lcl_offs_frames; /* offs into local_buffer where valid data starts */
     UINT32 hidden_frames;   /* ALSA reserve to ensure continuous rendering */
 
     HANDLE timer;
-    BYTE *local_buffer, *tmp_buffer;
+    BYTE *local_buffer, *tmp_buffer, *remapping_buf;
     LONG32 getbuf_last; /* <0 when using tmp_buffer */
 
     CRITICAL_SECTION lock;
@@ -885,6 +890,7 @@ static ULONG WINAPI AudioClient_Release(IAudioClient *iface)
         }
         HeapFree(GetProcessHeap(), 0, This->vols);
         HeapFree(GetProcessHeap(), 0, This->local_buffer);
+        HeapFree(GetProcessHeap(), 0, This->remapping_buf);
         HeapFree(GetProcessHeap(), 0, This->tmp_buffer);
         HeapFree(GetProcessHeap(), 0, This->hw_params);
         CoTaskMemFree(This->fmt);
@@ -1071,6 +1077,121 @@ static HRESULT get_audio_session(const GUID *sessionguid,
     return S_OK;
 }
 
+static int alsa_channel_index(DWORD flag)
+{
+    switch(flag){
+    case SPEAKER_FRONT_LEFT:
+        return 0;
+    case SPEAKER_FRONT_RIGHT:
+        return 1;
+    case SPEAKER_BACK_LEFT:
+        return 2;
+    case SPEAKER_BACK_RIGHT:
+        return 3;
+    case SPEAKER_FRONT_CENTER:
+        return 4;
+    case SPEAKER_LOW_FREQUENCY:
+        return 5;
+    case SPEAKER_SIDE_LEFT:
+        return 6;
+    case SPEAKER_SIDE_RIGHT:
+        return 7;
+    }
+    return -1;
+}
+
+static BOOL need_remapping(ACImpl *This, const WAVEFORMATEX *fmt)
+{
+    unsigned int i;
+    for(i = 0; i < fmt->nChannels; ++i){
+        if(This->alsa_channel_map[i] != i)
+            return TRUE;
+    }
+    return FALSE;
+}
+
+static DWORD get_channel_mask(unsigned int channels)
+{
+    switch(channels){
+    case 0:
+        return 0;
+    case 1:
+        return KSAUDIO_SPEAKER_MONO;
+    case 2:
+        return KSAUDIO_SPEAKER_STEREO;
+    case 3:
+        return KSAUDIO_SPEAKER_STEREO | SPEAKER_LOW_FREQUENCY;
+    case 4:
+        return KSAUDIO_SPEAKER_QUAD;    /* not _SURROUND */
+    case 5:
+        return KSAUDIO_SPEAKER_QUAD | SPEAKER_LOW_FREQUENCY;
+    case 6:
+        return KSAUDIO_SPEAKER_5POINT1; /* not 5POINT1_SURROUND */
+    case 7:
+        return KSAUDIO_SPEAKER_5POINT1 | SPEAKER_BACK_CENTER;
+    case 8:
+        return KSAUDIO_SPEAKER_7POINT1_SURROUND; /* Vista deprecates 7POINT1 */
+    }
+    FIXME("Unknown speaker configuration: %u\n", channels);
+    return 0;
+}
+
+static HRESULT map_channels(ACImpl *This, const WAVEFORMATEX *fmt)
+{
+    if(fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE || fmt->nChannels > 2){
+        WAVEFORMATEXTENSIBLE *fmtex = (void*)fmt;
+        DWORD mask, flag = SPEAKER_FRONT_LEFT;
+        UINT i = 0;
+
+        if(fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+                fmtex->dwChannelMask != 0)
+            mask = fmtex->dwChannelMask;
+        else
+            mask = get_channel_mask(fmt->nChannels);
+
+        This->alsa_channels = 0;
+
+        while(i < fmt->nChannels && !(flag & SPEAKER_RESERVED)){
+            if(mask & flag){
+                This->alsa_channel_map[i] = alsa_channel_index(flag);
+                TRACE("Mapping mmdevapi channel %u (0x%x) to ALSA channel %d\n",
+                        i, flag, This->alsa_channel_map[i]);
+                if(This->alsa_channel_map[i] >= This->alsa_channels)
+                    This->alsa_channels = This->alsa_channel_map[i] + 1;
+                ++i;
+            }
+            flag <<= 1;
+        }
+
+        while(i < fmt->nChannels){
+            This->alsa_channel_map[i] = This->alsa_channels;
+            TRACE("Mapping mmdevapi channel %u to ALSA channel %d\n",
+                    i, This->alsa_channel_map[i]);
+            ++This->alsa_channels;
+            ++i;
+        }
+
+        for(i = 0; i < fmt->nChannels; ++i){
+            if(This->alsa_channel_map[i] == -1){
+                This->alsa_channel_map[i] = This->alsa_channels;
+                ++This->alsa_channels;
+                TRACE("Remapping mmdevapi channel %u to ALSA channel %d\n",
+                        i, This->alsa_channel_map[i]);
+            }
+        }
+
+        This->need_remapping = need_remapping(This, fmt);
+
+        TRACE("need_remapping: %u, alsa_channels: %d\n", This->need_remapping, This->alsa_channels);
+    }else{
+        This->need_remapping = FALSE;
+        This->alsa_channels = fmt->nChannels;
+        TRACE("need_remapping: %u, alsa_channels: %d\n", This->need_remapping, This->alsa_channels);
+    }
+
+    return S_OK;
+}
+
 static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
         AUDCLNT_SHAREMODE mode, DWORD flags, REFERENCE_TIME duration,
         REFERENCE_TIME period, const WAVEFORMATEX *fmt,
@@ -1135,6 +1256,12 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
 
     dump_fmt(fmt);
 
+    if(FAILED(map_channels(This, fmt))){
+        WARN("map_channels failed\n");
+        hr = AUDCLNT_E_ENDPOINT_CREATE_FAILED;
+        goto exit;
+    }
+
     if((err = snd_pcm_hw_params_any(This->pcm_handle, This->hw_params)) < 0){
         WARN("Unable to get hw_params: %d (%s)\n", err, snd_strerror(err));
         hr = AUDCLNT_E_ENDPOINT_CREATE_FAILED;
@@ -1174,7 +1301,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
     }
 
     if((err = snd_pcm_hw_params_set_channels(This->pcm_handle, This->hw_params,
-                fmt->nChannels)) < 0){
+                This->alsa_channels)) < 0){
         WARN("Unable to set channels to %u: %d (%s)\n", fmt->nChannels, err,
                 snd_strerror(err));
         hr = AUDCLNT_E_UNSUPPORTED_FORMAT;
@@ -1428,32 +1555,6 @@ static HRESULT WINAPI AudioClient_GetCurrentPadding(IAudioClient *iface,
     return S_OK;
 }
 
-static DWORD get_channel_mask(unsigned int channels)
-{
-    switch(channels){
-    case 0:
-        return 0;
-    case 1:
-        return KSAUDIO_SPEAKER_MONO;
-    case 2:
-        return KSAUDIO_SPEAKER_STEREO;
-    case 3:
-        return KSAUDIO_SPEAKER_STEREO | SPEAKER_LOW_FREQUENCY;
-    case 4:
-        return KSAUDIO_SPEAKER_QUAD;    /* not _SURROUND */
-    case 5:
-        return KSAUDIO_SPEAKER_QUAD | SPEAKER_LOW_FREQUENCY;
-    case 6:
-        return KSAUDIO_SPEAKER_5POINT1; /* not 5POINT1_SURROUND */
-    case 7:
-        return KSAUDIO_SPEAKER_5POINT1 | SPEAKER_BACK_CENTER;
-    case 8:
-        return KSAUDIO_SPEAKER_7POINT1_SURROUND; /* Vista deprecates 7POINT1 */
-    }
-    FIXME("Unknown speaker configuration: %u\n", channels);
-    return 0;
-}
-
 static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient *iface,
         AUDCLNT_SHAREMODE mode, const WAVEFORMATEX *fmt,
         WAVEFORMATEX **out)
@@ -1548,6 +1649,16 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient *iface,
     }else if(fmt->nChannels < min){
         hr = S_FALSE;
         closest->nChannels = min;
+    }
+
+    if(FAILED(map_channels(This, fmt))){
+        hr = AUDCLNT_E_DEVICE_INVALIDATED;
+        WARN("map_channels failed\n");
+        goto exit;
+    }
+    if(This->alsa_channels > max){
+        hr = S_FALSE;
+        closest->nChannels = max;
     }
 
     if(closest->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
@@ -1706,6 +1817,38 @@ static HRESULT WINAPI AudioClient_GetDevicePeriod(IAudioClient *iface,
     return S_OK;
 }
 
+static BYTE *remap_channels(ACImpl *This, BYTE *buf, snd_pcm_uframes_t frames)
+{
+    snd_pcm_uframes_t i;
+    UINT c;
+    UINT bytes_per_sample = This->fmt->wBitsPerSample / 8;
+
+    if(!This->need_remapping)
+        return buf;
+
+    if(!This->remapping_buf){
+        This->remapping_buf = HeapAlloc(GetProcessHeap(), 0,
+                (This->fmt->wBitsPerSample / 8) * This->alsa_channels * frames);
+        This->remapping_buf_frames = frames;
+    }else if(This->remapping_buf_frames < frames){
+        This->remapping_buf = HeapReAlloc(GetProcessHeap(), 0, This->remapping_buf,
+                (This->fmt->wBitsPerSample / 8) * This->alsa_channels * frames);
+        This->remapping_buf_frames = frames;
+    }
+
+    snd_pcm_format_set_silence(This->alsa_format, This->remapping_buf,
+            frames * This->alsa_channels);
+
+    for(i = 0; i < frames; ++i){
+        for(c = 0; c < This->fmt->nChannels; ++c){
+            memcpy(&This->remapping_buf[(i * This->alsa_channels + This->alsa_channel_map[c]) * bytes_per_sample],
+                    &buf[(i * This->fmt->nChannels + c) * bytes_per_sample], bytes_per_sample);
+        }
+    }
+
+    return This->remapping_buf;
+}
+
 static snd_pcm_sframes_t alsa_write_best_effort(snd_pcm_t *handle, BYTE *buf,
         snd_pcm_uframes_t frames, ACImpl *This, BOOL mute)
 {
@@ -1718,6 +1861,8 @@ static snd_pcm_sframes_t alsa_write_best_effort(snd_pcm_t *handle, BYTE *buf,
             WARN("Setting buffer to silence failed: %d (%s)\n", err,
                     snd_strerror(err));
     }
+
+    buf = remap_channels(This, buf, frames);
 
     written = snd_pcm_writei(handle, buf, frames);
     if(written < 0){
