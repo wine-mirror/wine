@@ -36,7 +36,7 @@
 #define IMAGE_FILE_MACHINE_I386    0x014c
 #define IMAGE_FILE_MACHINE_POWERPC 0x01f0
 #define IMAGE_FILE_MACHINE_AMD64   0x8664
-#define IMAGE_FILE_MACHINE_ARMV7   0x01C4
+#define IMAGE_FILE_MACHINE_ARMNT   0x01C4
 /* Wine extension */
 #define IMAGE_FILE_MACHINE_SPARC   0x2000
 
@@ -517,7 +517,7 @@ void output_module( DLLSPEC *spec )
     {
     case CPU_x86:     machine = IMAGE_FILE_MACHINE_I386; break;
     case CPU_x86_64:  machine = IMAGE_FILE_MACHINE_AMD64; break;
-    case CPU_ARM:     machine = IMAGE_FILE_MACHINE_ARMV7; break;
+    case CPU_ARM:     machine = IMAGE_FILE_MACHINE_ARMNT; break;
     case CPU_POWERPC: machine = IMAGE_FILE_MACHINE_POWERPC; break;
     case CPU_SPARC:   machine = IMAGE_FILE_MACHINE_SPARC; break;
     }
@@ -706,7 +706,7 @@ void output_fake_module( DLLSPEC *spec )
     case CPU_x86_64:  put_word( IMAGE_FILE_MACHINE_AMD64 ); break;
     case CPU_POWERPC: put_word( IMAGE_FILE_MACHINE_POWERPC ); break;
     case CPU_SPARC:   put_word( IMAGE_FILE_MACHINE_SPARC ); break;
-    case CPU_ARM:     put_word( IMAGE_FILE_MACHINE_ARMV7 ); break;
+    case CPU_ARM:     put_word( IMAGE_FILE_MACHINE_ARMNT ); break;
     }
     put_word( nb_sections );                         /* NumberOfSections */
     put_dword( 0 );                                  /* TimeDateStamp */
