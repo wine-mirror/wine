@@ -9574,7 +9574,7 @@ basic_istream_wchar* __cdecl basic_istream_short_read_bstr(
                 basic_istream_wchar_get_basic_ios(istream)->strbuf->loc));
 }
 
-basic_istream_wchar* basic_istream_read_str(basic_istream_wchar *istream, wchar_t *str, const ctype_wchar *ctype)
+static basic_istream_wchar* basic_istream_read_str(basic_istream_wchar *istream, wchar_t *str, const ctype_wchar *ctype)
 {
     basic_ios_wchar *base = basic_istream_wchar_get_basic_ios(istream);
     IOSB_iostate state = IOSTATE_failbit;
