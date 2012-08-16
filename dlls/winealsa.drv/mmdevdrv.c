@@ -1463,7 +1463,6 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient *iface,
     snd_pcm_format_t format;
     HRESULT hr = S_OK;
     WAVEFORMATEX *closest = NULL;
-    const WAVEFORMATEXTENSIBLE *fmtex = (const WAVEFORMATEXTENSIBLE *)fmt;
     unsigned int max = 0, min = 0;
     int err;
 
@@ -1543,8 +1542,6 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient *iface,
         WARN("Unable to get max channels: %d (%s)\n", err, snd_strerror(err));
         goto exit;
     }
-    if(max > 8)
-        max = 2;
     if(fmt->nChannels > max){
         hr = S_FALSE;
         closest->nChannels = max;
@@ -1553,16 +1550,8 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient *iface,
         closest->nChannels = min;
     }
 
-    if(closest->wFormatTag == WAVE_FORMAT_EXTENSIBLE){
-        DWORD mask = get_channel_mask(closest->nChannels);
-
-        ((WAVEFORMATEXTENSIBLE*)closest)->dwChannelMask = mask;
-
-        if(fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
-                fmtex->dwChannelMask != 0 &&
-                fmtex->dwChannelMask != mask)
-            hr = S_FALSE;
-    }
+    if(closest->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+        ((WAVEFORMATEXTENSIBLE*)closest)->dwChannelMask = get_channel_mask(closest->nChannels);
 
 exit:
     LeaveCriticalSection(&This->lock);
