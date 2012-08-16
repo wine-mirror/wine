@@ -90,6 +90,7 @@ DEFINE_EXPECT(QI_ITestActiveX);
 DEFINE_EXPECT(wrapped_AddRef);
 DEFINE_EXPECT(wrapped_Release);
 DEFINE_EXPECT(wrapped_func);
+DEFINE_EXPECT(OnAmbientPropertyChange_UNKNOWN);
 
 #define DISPID_SCRIPTPROP 1000
 
@@ -305,8 +306,15 @@ static HRESULT WINAPI OleControl_OnMnemonic(IOleControl *iface, MSG *mMsg)
 
 static HRESULT WINAPI OleControl_OnAmbientPropertyChange(IOleControl *iface, DISPID dispID)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    switch(dispID) {
+    case DISPID_UNKNOWN:
+        CHECK_EXPECT(OnAmbientPropertyChange_UNKNOWN);
+        break;
+    default:
+        ok(0, "unexpected call %d\n", dispID);
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI OleControl_FreezeEvents(IOleControl *iface, BOOL bFreeze)
@@ -1389,6 +1397,7 @@ static void test_object_elem(IHTMLDocument2 *doc)
     IDispatchEx *dispex;
     IHTMLElement *elem;
     IDispatch *disp;
+    VARIANT v;
     BSTR str;
     HRESULT hres;
 
@@ -1419,6 +1428,48 @@ static void test_object_elem(IHTMLDocument2 *doc)
     IDispatchEx_Release(dispex);
 
     test_iface_wrapping(objelem);
+
+    hres = IHTMLObjectElement_get_width(objelem, &v);
+    ok(hres == S_OK, "get_width failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(width) = %d\n", V_VT(&v));
+    ok(!strcmp_wa(V_BSTR(&v), "300"), "V_BSTR(width) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
+    hres = IHTMLObjectElement_get_height(objelem, &v);
+    ok(hres == S_OK, "get_height failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(height) = %d\n", V_VT(&v));
+    ok(!strcmp_wa(V_BSTR(&v), "200"), "V_BSTR(height) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = 400;
+    SET_EXPECT(OnAmbientPropertyChange_UNKNOWN);
+    SET_EXPECT(Invoke_ENABLED);
+    hres = IHTMLObjectElement_put_width(objelem, v);
+    ok(hres == S_OK, "put_width failed: %08x\n", hres);
+    CHECK_CALLED(OnAmbientPropertyChange_UNKNOWN);
+    CHECK_CALLED(Invoke_ENABLED);
+
+    hres = IHTMLObjectElement_get_width(objelem, &v);
+    ok(hres == S_OK, "get_width failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(width) = %d\n", V_VT(&v));
+    ok(!strcmp_wa(V_BSTR(&v), "400"), "V_BSTR(width) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = 250;
+    SET_EXPECT(OnAmbientPropertyChange_UNKNOWN);
+    SET_EXPECT(Invoke_ENABLED);
+    hres = IHTMLObjectElement_put_height(objelem, v);
+    ok(hres == S_OK, "put_height failed: %08x\n", hres);
+    CHECK_CALLED(OnAmbientPropertyChange_UNKNOWN);
+    CHECK_CALLED(Invoke_ENABLED);
+
+    hres = IHTMLObjectElement_get_height(objelem, &v);
+    ok(hres == S_OK, "get_height failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(height) = %d\n", V_VT(&v));
+    ok(!strcmp_wa(V_BSTR(&v), "250"), "V_BSTR(height) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
 
     IHTMLObjectElement_Release(objelem);
 }
