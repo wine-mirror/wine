@@ -66,6 +66,15 @@ static WORD keyc2vkey[256], keyc2scan[256];
 
 static int NumLockMask, ScrollLockMask, AltGrMask; /* mask in the XKeyEvent state */
 
+static CRITICAL_SECTION kbd_section;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &kbd_section,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": kbd_section") }
+};
+static CRITICAL_SECTION kbd_section = { &critsect_debug, -1, 0, 0, 0, 0 };
+
 static char KEYBOARD_MapDeadKeysym(KeySym keysym);
 
 /* Keyboard translation tables */
@@ -1111,7 +1120,7 @@ static inline KeySym keycode_to_keysym( Display *display, KeyCode keycode, int i
 }
 
 /* Returns the Windows virtual key code associated with the X event <e> */
-/* x11 lock must be held */
+/* kbd_section must be held */
 static WORD EVENT_event_to_vkey( XIC xic, XKeyEvent *e)
 {
     KeySym keysym = 0;
@@ -1229,6 +1238,8 @@ void X11DRV_KeymapNotify( HWND hwnd, XEvent *event )
 
     memset(modifiers, 0, sizeof(modifiers));
 
+    EnterCriticalSection( &kbd_section );
+
     /* the minimum keycode is always greater or equal to 8, so we can
      * skip the first 8 values, hence start at 1
      */
@@ -1270,6 +1281,7 @@ void X11DRV_KeymapNotify( HWND hwnd, XEvent *event )
         }
     }
 
+    LeaveCriticalSection( &kbd_section );
     if (!changed) return;
 
     update_key_state( keystate, VK_CONTROL, (keystate[VK_LCONTROL] | keystate[VK_RCONTROL]) & 0x80 );
@@ -1341,7 +1353,6 @@ void X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
 
     if (event->type == KeyPress) update_user_time( event->time );
 
-    wine_tsx11_lock();
     /* Clients should pass only KeyPress events to XmbLookupString */
     if (xic && event->type == KeyPress)
     {
@@ -1353,7 +1364,6 @@ void X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
             if (Str == NULL)
             {
                 ERR_(key)("Failed to allocate memory!\n");
-                wine_tsx11_unlock();
                 return;
             }
             ascii_chars = XmbLookupString(xic, event, Str, ascii_chars, &keysym, &status);
@@ -1361,7 +1371,6 @@ void X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
     }
     else
         ascii_chars = XLookupString(event, buf, sizeof(buf), &keysym, NULL);
-    wine_tsx11_unlock();
 
     TRACE_(key)("nbyte = %d, status %d\n", ascii_chars, status);
 
@@ -1372,6 +1381,8 @@ void X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
             HeapFree(GetProcessHeap(), 0, Str);
         return;
     }
+
+    EnterCriticalSection( &kbd_section );
 
     /* If XKB extensions are used, the state mask for AltGr will use the group
        index instead of the modifier mask. The group index is set in bits
@@ -1398,27 +1409,26 @@ void X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
     if (buf != Str)
         HeapFree(GetProcessHeap(), 0, Str);
 
-    wine_tsx11_lock();
     vkey = EVENT_event_to_vkey(xic,event);
     /* X returns keycode 0 for composed characters */
     if (!vkey && ascii_chars) vkey = VK_NONAME;
-    wine_tsx11_unlock();
-
-    TRACE_(key)("keycode %u converted to vkey 0x%X\n",
-                event->keycode, vkey);
-
-    if (!vkey) return;
-
-    dwFlags = 0;
-    if ( event->type == KeyRelease ) dwFlags |= KEYEVENTF_KEYUP;
-    if ( vkey & 0x100 )              dwFlags |= KEYEVENTF_EXTENDEDKEY;
-
-    update_lock_state( hwnd, vkey, event->state, event_time );
-
     bScan = keyc2scan[event->keycode] & 0xFF;
-    TRACE_(key)("bScan = 0x%02x.\n", bScan);
 
-    X11DRV_send_keyboard_input( hwnd, vkey & 0xff, bScan, dwFlags, event_time );
+    TRACE_(key)("keycode %u converted to vkey 0x%X scan %02x\n",
+                event->keycode, vkey, bScan);
+
+    if (vkey)
+    {
+        dwFlags = 0;
+        if ( event->type == KeyRelease ) dwFlags |= KEYEVENTF_KEYUP;
+        if ( vkey & 0x100 )              dwFlags |= KEYEVENTF_EXTENDEDKEY;
+
+        update_lock_state( hwnd, vkey, event->state, event_time );
+
+        X11DRV_send_keyboard_input( hwnd, vkey & 0xff, bScan, dwFlags, event_time );
+    }
+    LeaveCriticalSection( &kbd_section );
+
 }
 
 /**********************************************************************
@@ -1427,7 +1437,7 @@ void X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
  * Called from X11DRV_InitKeyboard
  *  This routine walks through the defined keyboard layouts and selects
  *  whichever matches most closely.
- * X11 lock must be held.
+ * kbd_section must be held.
  */
 static void
 X11DRV_KEYBOARD_DetectLayout( Display *display )
@@ -1641,7 +1651,7 @@ void X11DRV_InitKeyboard( Display *display )
 
     set_kbd_layout_preload_key();
 
-    wine_tsx11_lock();
+    EnterCriticalSection( &kbd_section );
     XDisplayKeycodes(display, &min_keycode, &max_keycode);
     if (key_mapping) XFree( key_mapping );
     key_mapping = XGetKeyboardMapping(display, min_keycode,
@@ -1878,7 +1888,7 @@ void X11DRV_InitKeyboard( Display *display )
 	keyc2scan[keyc]=scan++;
       }
 
-    wine_tsx11_unlock();
+    LeaveCriticalSection( &kbd_section );
 }
 
 static BOOL match_x11_keyboard_layout(HKL hkl)
@@ -2012,7 +2022,7 @@ SHORT CDECL X11DRV_VkKeyScanEx(WCHAR wChar, HKL hkl)
     Display *display = thread_init_display();
     KeyCode keycode;
     KeySym keysym;
-    int i, index;
+    int index;
     CHAR cChar;
     SHORT ret;
 
@@ -2031,7 +2041,6 @@ SHORT CDECL X11DRV_VkKeyScanEx(WCHAR wChar, HKL hkl)
     keysym = (unsigned char)cChar; /* (!) cChar is signed */
     if (keysym <= 27) keysym += 0xFF00; /* special chars : return, backspace... */
 
-    wine_tsx11_lock();
     keycode = XKeysymToKeycode(display, keysym);  /* keysym -> keycode */
     if (!keycode)
     {
@@ -2039,49 +2048,41 @@ SHORT CDECL X11DRV_VkKeyScanEx(WCHAR wChar, HKL hkl)
         {
             ret = 0x0240 + cChar; /* 0x0200 indicates a control character */
             TRACE(" ... returning ctrl char %#.2x\n", ret);
-            wine_tsx11_unlock();
             return ret;
         }
         /* It didn't work ... let's try with deadchar code. */
         TRACE("retrying with | 0xFE00\n");
         keycode = XKeysymToKeycode(display, keysym | 0xFE00);
     }
-    wine_tsx11_unlock();
 
     TRACE("'%c'(%lx): got keycode %u\n", cChar, keysym, keycode);
+    if (!keycode) return -1;
+
+    EnterCriticalSection( &kbd_section );
 
     /* keycode -> (keyc2vkey) vkey */
     ret = keyc2vkey[keycode];
-
-    if (!keycode || !ret)
+    if (!ret)
     {
+        LeaveCriticalSection( &kbd_section );
         TRACE("keycode for '%c' not found, returning -1\n", cChar);
         return -1;
     }
 
-    index = -1;
-    wine_tsx11_lock();
-    for (i = 0; i < 4; i++) /* find shift state */
-    {
-        if (keycode_to_keysym(display, keycode, i) == keysym)
-        {
-            index = i;
-            break;
-        }
-    }
-    wine_tsx11_unlock();
+    for (index = 0; index < 4; index++) /* find shift state */
+        if (keycode_to_keysym(display, keycode, index) == keysym) break;
+
+    LeaveCriticalSection( &kbd_section );
 
     switch (index)
     {
-        default:
-        case -1:
-            WARN("Keysym %lx not found while parsing the keycode table\n", keysym);
-            return -1;
-
         case 0: break;
         case 1: ret += 0x0100; break;
         case 2: ret += 0x0600; break;
         case 3: ret += 0x0700; break;
+        default:
+            WARN("Keysym %lx not found while parsing the keycode table\n", keysym);
+            return -1;
     }
     /*
       index : 0     adds 0x0000
@@ -2100,21 +2101,20 @@ SHORT CDECL X11DRV_VkKeyScanEx(WCHAR wChar, HKL hkl)
  */
 UINT CDECL X11DRV_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl)
 {
+    UINT ret = 0;
+    int keyc;
     Display *display = thread_init_display();
-
-#define returnMVK(value) do { TRACE("returning 0x%x.\n",value); return value; } while(0)
 
     TRACE("wCode=0x%x, wMapType=%d, hkl %p\n", wCode, wMapType, hkl);
     if (!match_x11_keyboard_layout(hkl))
         FIXME("keyboard layout %p is not supported\n", hkl);
 
+    EnterCriticalSection( &kbd_section );
+
     switch(wMapType)
     {
         case MAPVK_VK_TO_VSC: /* vkey-code to scan-code */
         case MAPVK_VK_TO_VSC_EX:
-        {
-            int keyc;
-
             switch (wCode)
             {
                 case VK_SHIFT: wCode = VK_LSHIFT; break;
@@ -2124,127 +2124,115 @@ UINT CDECL X11DRV_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl)
 
             /* let's do vkey -> keycode -> scan */
             for (keyc = min_keycode; keyc <= max_keycode; keyc++)
-                if ((keyc2vkey[keyc] & 0xFF) == wCode) break;
-
-            if (keyc > max_keycode)
             {
-                TRACE("returning no scan-code.\n");
-                return 0;
+                if ((keyc2vkey[keyc] & 0xFF) == wCode)
+                {
+                    ret = keyc2scan[keyc] & 0xFF;
+                    break;
+                }
             }
-            returnMVK (keyc2scan[keyc] & 0xFF);
-        }
+            break;
+
         case MAPVK_VSC_TO_VK: /* scan-code to vkey-code */
         case MAPVK_VSC_TO_VK_EX:
-        {
-            int keyc;
-            UINT vkey = 0;
 
             /* let's do scan -> keycode -> vkey */
             for (keyc = min_keycode; keyc <= max_keycode; keyc++)
                 if ((keyc2scan[keyc] & 0xFF) == (wCode & 0xFF))
                 {
-                    vkey = keyc2vkey[keyc] & 0xFF;
+                    ret = keyc2vkey[keyc] & 0xFF;
                     /* Only stop if it's not a numpad vkey; otherwise keep
                        looking for a potential better vkey. */
-                    if (vkey && (vkey < VK_NUMPAD0 || VK_DIVIDE < vkey))
+                    if (ret && (ret < VK_NUMPAD0 || VK_DIVIDE < ret))
                         break;
                 }
 
-            if (vkey == 0)
-            {
-                TRACE("returning no vkey-code.\n");
-                return 0;
-            }
-
             if (wMapType == MAPVK_VSC_TO_VK)
-                switch (vkey)
+                switch (ret)
                 {
                     case VK_LSHIFT:
                     case VK_RSHIFT:
-                        vkey = VK_SHIFT; break;
+                        ret = VK_SHIFT; break;
                     case VK_LCONTROL:
                     case VK_RCONTROL:
-                        vkey = VK_CONTROL; break;
+                        ret = VK_CONTROL; break;
                     case VK_LMENU:
                     case VK_RMENU:
-                        vkey = VK_MENU; break;
+                        ret = VK_MENU; break;
                 }
 
-            returnMVK (vkey);
+            break;
+
+        case MAPVK_VK_TO_CHAR: /* vkey-code to unshifted ANSI code */
+        {
+            /* we still don't know what "unshifted" means. in windows VK_W (0x57)
+             * returns 0x57, which is uppercase 'W'. So we have to return the uppercase
+             * key.. Looks like something is wrong with the MS docs?
+             * This is only true for letters, for example VK_0 returns '0' not ')'.
+             * - hence we use the lock mask to ensure this happens.
+             */
+            /* let's do vkey -> keycode -> (XLookupString) ansi char */
+            XKeyEvent e;
+            KeySym keysym;
+            int len;
+            char s[10];
+
+            e.display = display;
+            e.state = 0;
+            e.keycode = 0;
+            e.type = KeyPress;
+
+            /* We exit on the first keycode found, to speed up the thing. */
+            for (keyc=min_keycode; (keyc<=max_keycode) && (!e.keycode) ; keyc++)
+            { /* Find a keycode that could have generated this virtual key */
+                if  ((keyc2vkey[keyc] & 0xFF) == wCode)
+                { /* We filter the extended bit, we don't know it */
+                    e.keycode = keyc; /* Store it temporarily */
+                    if ((EVENT_event_to_vkey(0,&e) & 0xFF) != wCode) {
+                        e.keycode = 0; /* Wrong one (ex: because of the NumLock
+                                          state), so set it to 0, we'll find another one */
+                    }
+                }
+            }
+
+            if ((wCode>=VK_NUMPAD0) && (wCode<=VK_NUMPAD9))
+                e.keycode = XKeysymToKeycode(e.display, wCode-VK_NUMPAD0+XK_KP_0);
+
+            /* Windows always generates VK_DECIMAL for Del/. on keypad while some
+             * X11 keyboard layouts generate XK_KP_Separator instead of XK_KP_Decimal
+             * in order to produce a locale dependent numeric separator.
+             */
+            if (wCode == VK_DECIMAL || wCode == VK_SEPARATOR)
+            {
+                e.keycode = XKeysymToKeycode(e.display, XK_KP_Separator);
+                if (!e.keycode)
+                    e.keycode = XKeysymToKeycode(e.display, XK_KP_Decimal);
+            }
+
+            if (!e.keycode)
+            {
+                WARN("Unknown virtual key %X !!!\n", wCode);
+                break;
+            }
+            TRACE("Found keycode %u\n",e.keycode);
+
+            len = XLookupString(&e, s, sizeof(s), &keysym, NULL);
+            if (len)
+            {
+                WCHAR wch;
+                if (MultiByteToWideChar(CP_UNIXCP, 0, s, len, &wch, 1)) ret = toupperW(wch);
+            }
+            break;
         }
-		case MAPVK_VK_TO_CHAR: /* vkey-code to unshifted ANSI code */
-		{
-                        /* we still don't know what "unshifted" means. in windows VK_W (0x57)
-                         * returns 0x57, which is uppercase 'W'. So we have to return the uppercase
-                         * key.. Looks like something is wrong with the MS docs?
-                         * This is only true for letters, for example VK_0 returns '0' not ')'.
-                         * - hence we use the lock mask to ensure this happens.
-                         */
-			/* let's do vkey -> keycode -> (XLookupString) ansi char */
-			XKeyEvent e;
-			KeySym keysym;
-			int keyc, len;
-			char s[10];
 
-			e.display = display;
-			e.state = 0;
-			e.keycode = 0;
-			e.type = KeyPress;
+        default: /* reserved */
+            FIXME("Unknown wMapType %d !\n", wMapType);
+            break;
+    }
 
-                        wine_tsx11_lock();
-
-			/* We exit on the first keycode found, to speed up the thing. */
-			for (keyc=min_keycode; (keyc<=max_keycode) && (!e.keycode) ; keyc++)
-			{ /* Find a keycode that could have generated this virtual key */
-			    if  ((keyc2vkey[keyc] & 0xFF) == wCode)
-			    { /* We filter the extended bit, we don't know it */
-			        e.keycode = keyc; /* Store it temporarily */
-				if ((EVENT_event_to_vkey(0,&e) & 0xFF) != wCode) {
-				    e.keycode = 0; /* Wrong one (ex: because of the NumLock
-					 state), so set it to 0, we'll find another one */
-				}
-			    }
-			}
-
-			if ((wCode>=VK_NUMPAD0) && (wCode<=VK_NUMPAD9))
-			  e.keycode = XKeysymToKeycode(e.display, wCode-VK_NUMPAD0+XK_KP_0);
-
-                        /* Windows always generates VK_DECIMAL for Del/. on keypad while some
-                         * X11 keyboard layouts generate XK_KP_Separator instead of XK_KP_Decimal
-                         * in order to produce a locale dependent numeric separator.
-                         */
-			if (wCode == VK_DECIMAL || wCode == VK_SEPARATOR)
-                        {
-                            e.keycode = XKeysymToKeycode(e.display, XK_KP_Separator);
-                            if (!e.keycode)
-                                e.keycode = XKeysymToKeycode(e.display, XK_KP_Decimal);
-                        }
-
-			if (!e.keycode)
-			{
-			  WARN("Unknown virtual key %X !!!\n", wCode);
-                          wine_tsx11_unlock();
-			  return 0; /* whatever */
-			}
-			TRACE("Found keycode %u\n",e.keycode);
-
-                        len = XLookupString(&e, s, sizeof(s), &keysym, NULL);
-                        wine_tsx11_unlock();
-
-                        if (len)
-                        {
-                            WCHAR wch;
-                            if (MultiByteToWideChar(CP_UNIXCP, 0, s, len, &wch, 1))
-                                returnMVK(toupperW(wch));
-                        }
-			TRACE("returning no ANSI.\n");
-			return 0;
-		}
-		default: /* reserved */
-			FIXME("Unknown wMapType %d !\n", wMapType);
-			return 0;
-	}
-	return 0;
+    LeaveCriticalSection( &kbd_section );
+    TRACE( "returning 0x%x.\n", ret );
+    return ret;
 }
 
 /***********************************************************************
@@ -2319,6 +2307,8 @@ INT CDECL X11DRV_GetKeyNameText(LONG lParam, LPWSTR lpBuffer, INT nSize)
 
   /* let's do scancode -> keycode -> keysym -> String */
 
+  EnterCriticalSection( &kbd_section );
+
   for (keyi=min_keycode; keyi<=max_keycode; keyi++)
       if ((keyc2scan[keyi]) == scanCode)
          break;
@@ -2326,17 +2316,16 @@ INT CDECL X11DRV_GetKeyNameText(LONG lParam, LPWSTR lpBuffer, INT nSize)
   {
       INT rc;
 
-      wine_tsx11_lock();
       keyc = (KeyCode) keyi;
       keys = keycode_to_keysym(display, keyc, 0);
       name = XKeysymToString(keys);
-      wine_tsx11_unlock();
 
       if (name && (vkey == VK_SHIFT || vkey == VK_CONTROL || vkey == VK_MENU))
       {
           char* idx = strrchr(name, '_');
           if (idx && (strcasecmp(idx, "_r") == 0 || strcasecmp(idx, "_l") == 0))
           {
+              LeaveCriticalSection( &kbd_section );
               TRACE("found scan=%04x keyc=%u keysym=%lx modified_string=%s\n",
                     scanCode, keyc, keys, debugstr_an(name,idx-name));
               rc = MultiByteToWideChar(CP_UNIXCP, 0, name, idx-name+1, lpBuffer, nSize);
@@ -2348,6 +2337,7 @@ INT CDECL X11DRV_GetKeyNameText(LONG lParam, LPWSTR lpBuffer, INT nSize)
 
       if (name)
       {
+          LeaveCriticalSection( &kbd_section );
           TRACE("found scan=%04x keyc=%u keysym=%04x vkey=%04x string=%s\n",
                 scanCode, keyc, (int)keys, vkey, debugstr_a(name));
           rc = MultiByteToWideChar(CP_UNIXCP, 0, name, -1, lpBuffer, nSize);
@@ -2359,6 +2349,7 @@ INT CDECL X11DRV_GetKeyNameText(LONG lParam, LPWSTR lpBuffer, INT nSize)
 
   /* Finally issue WARN for unknown keys   */
 
+  LeaveCriticalSection( &kbd_section );
   WARN("(%08x,%p,%d): unsupported key, vkey=%04X, ansi=%04x\n",lParam,lpBuffer,nSize,vkey,ansi);
   *lpBuffer = 0;
   return 0;
@@ -2504,6 +2495,8 @@ INT CDECL X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState
     e.window = X11DRV_get_whole_window( focus );
     xic = X11DRV_get_ic( focus );
 
+    EnterCriticalSection( &kbd_section );
+
     if (lpKeyState[VK_SHIFT] & 0x80)
     {
 	TRACE_(key)("ShiftMask = %04x\n", ShiftMask);
@@ -2531,7 +2524,7 @@ INT CDECL X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState
 
     TRACE_(key)("(%04X, %04X) : faked state = 0x%04x\n",
 		virtKey, scanCode, e.state);
-    wine_tsx11_lock();
+
     /* We exit on the first keycode found, to speed up the thing. */
     for (keyc=min_keycode; (keyc<=max_keycode) && (!e.keycode) ; keyc++)
       { /* Find a keycode that could have generated this virtual key */
@@ -2565,7 +2558,7 @@ INT CDECL X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState
     if (!e.keycode && virtKey != VK_NONAME)
       {
 	WARN_(key)("Unknown virtual key %X !!!\n", virtKey);
-        wine_tsx11_unlock();
+        LeaveCriticalSection( &kbd_section );
 	return 0;
       }
     else TRACE_(key)("Found keycode %u\n",e.keycode);
@@ -2586,7 +2579,7 @@ INT CDECL X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState
             if (lpChar == NULL)
             {
                 ERR_(key)("Failed to allocate memory!\n");
-                wine_tsx11_unlock();
+                LeaveCriticalSection( &kbd_section );
                 return 0;
             }
             ret = XmbLookupString(xic, &e, lpChar, ret, &keysym, &status);
@@ -2594,7 +2587,6 @@ INT CDECL X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState
     }
     else
         ret = XLookupString(&e, buf, sizeof(buf), &keysym, NULL);
-    wine_tsx11_unlock();
 
     TRACE_(key)("nbyte = %d, status 0x%x\n", ret, status);
 
@@ -2730,6 +2722,8 @@ INT CDECL X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState
 found:
     if (buf != lpChar)
         HeapFree(GetProcessHeap(), 0, lpChar);
+
+    LeaveCriticalSection( &kbd_section );
 
     /* Null-terminate the buffer, if there's room.  MSDN clearly states that the
        caller must not assume this is done, but some programs (e.g. Audiosurf) do. */
