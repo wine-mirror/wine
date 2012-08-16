@@ -329,6 +329,29 @@ void update_plugin_window(PluginHost *host, HWND hwnd, const RECT *rect)
         IOleInPlaceObject_SetObjectRects(host->ip_object, &host->rect, &host->rect);
 }
 
+static void notif_enabled(PluginHost *plugin_host)
+{
+    DISPPARAMS args = {NULL, NULL, 0, 0};
+    IDispatch *disp;
+    ULONG err = 0;
+    VARIANT res;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(plugin_host->plugin_unk, &IID_IDispatch, (void**)&disp);
+    if(FAILED(hres)) {
+        FIXME("Could not get IDispatch iface: %08x\n", hres);
+        return;
+    }
+
+    V_VT(&res) = VT_EMPTY;
+    hres = IDispatch_Invoke(disp, DISPID_ENABLED, &IID_NULL, 0/*FIXME*/, DISPATCH_PROPERTYGET, &args, &res, NULL, &err);
+    IDispatch_Release(disp);
+    if(SUCCEEDED(hres)) {
+        FIXME("Got enabled %s\n", debugstr_variant(&res));
+        VariantClear(&res);
+    }
+}
+
 HRESULT get_plugin_disp(HTMLPluginContainer *plugin_container, IDispatch **ret)
 {
     PluginHost *host;
@@ -849,11 +872,6 @@ static HRESULT WINAPI PHInPlaceSite_OnInPlaceActivate(IOleInPlaceSiteEx *iface)
 static HRESULT WINAPI PHInPlaceSite_OnUIActivate(IOleInPlaceSiteEx *iface)
 {
     PluginHost *This = impl_from_IOleInPlaceSiteEx(iface);
-    DISPPARAMS args = {NULL, NULL, 0, 0};
-    IDispatch *disp;
-    ULONG err = 0;
-    VARIANT res;
-    HRESULT hres;
 
     TRACE("(%p)\n", This);
 
@@ -864,20 +882,7 @@ static HRESULT WINAPI PHInPlaceSite_OnUIActivate(IOleInPlaceSiteEx *iface)
 
     This->ui_active = TRUE;
 
-    hres = IUnknown_QueryInterface(This->plugin_unk, &IID_IDispatch, (void**)&disp);
-    if(FAILED(hres)) {
-        FIXME("Could not get IDispatch iface: %08x\n", hres);
-        return hres;
-    }
-
-    V_VT(&res) = VT_EMPTY;
-    hres = IDispatch_Invoke(disp, DISPID_ENABLED, &IID_NULL, 0/*FIXME*/, DISPATCH_PROPERTYGET, &args, &res, NULL, &err);
-    IDispatch_Release(disp);
-    if(SUCCEEDED(hres)) {
-        FIXME("Got enabled %s\n", debugstr_variant(&res));
-        VariantClear(&res);
-    }
-
+    notif_enabled(This);
     return S_OK;
 }
 
