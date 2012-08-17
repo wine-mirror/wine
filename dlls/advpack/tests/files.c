@@ -474,7 +474,6 @@ static void test_AdvInstallFile(void)
 {
     HRESULT hr;
     HMODULE hmod;
-    char CURR_DIR[MAX_PATH];
     char destFolder[MAX_PATH];
 
     hmod = LoadLibrary("setupapi.dll");
@@ -485,8 +484,6 @@ static void test_AdvInstallFile(void)
     }
 
     FreeLibrary(hmod);
-
-    GetCurrentDirectoryA(MAX_PATH, CURR_DIR);
 
     lstrcpyA(destFolder, CURR_DIR);
     lstrcatA(destFolder, "\\");
