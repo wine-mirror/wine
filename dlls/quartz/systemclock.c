@@ -116,12 +116,15 @@ static DWORD WINAPI SystemClockAdviseThread(LPVOID lpParam) {
     }
 
     /** First SingleShots Advice: sorted list */
-    for (it = This->pSingleShotAdvise; NULL != it && (it->rtBaseTime + it->rtIntervalTime) <= curTime; it = it->next) {
+    it = This->pSingleShotAdvise;
+    while ((NULL != it) && (it->rtBaseTime + it->rtIntervalTime) <= curTime) {
+      SystemClockAdviseEntry* nextit = it->next;
       /** send event ... */
       SetEvent(it->hEvent);
       /** ... and Release it */
       QUARTZ_RemoveAviseEntryFromQueue(This, it);
       CoTaskMemFree(it);
+      it = nextit;
     }
     if (NULL != it) timeOut = (DWORD) ((it->rtBaseTime + it->rtIntervalTime) - curTime) / (REFERENCE_TIME)10000;
 
