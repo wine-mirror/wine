@@ -108,21 +108,21 @@ static void test_query_support(IDirect3D9 *pD3d, HWND hwnd)
         ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE,
            "IDirect3DDevice9_CreateQuery returned unexpected return value %08x for query %s\n", hr, queryName(queries[i].type));
 
-        supported = (hr == D3D_OK ? TRUE : FALSE);
+        supported = hr == D3D_OK;
         trace("query %s is %s\n", queryName(queries[i].type), supported ? "supported" : "not supported");
 
-        ok(!(supported == TRUE && queries[i].foundSupported == FALSE),
+        ok(!supported || queries[i].foundSupported,
             "Query %s is supported on this system, but was not found supported before\n",
             queryName(queries[i].type));
-        ok(!(supported == FALSE && queries[i].foundUnsupported == FALSE),
+        ok(supported || queries[i].foundUnsupported,
             "Query %s is not supported on this system, but was found to be supported on all other systems tested before\n",
             queryName(queries[i].type));
 
         hr = IDirect3DDevice9_CreateQuery(pDevice, queries[i].type, &pQuery);
         ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE,
            "IDirect3DDevice9_CreateQuery returned unexpected return value %08x for query %s\n", hr, queryName(queries[i].type));
-        ok(!(supported && !pQuery), "Query %s was claimed to be supported, but can't be created\n", queryName(queries[i].type));
-        ok(!(!supported && pQuery), "Query %s was claimed not to be supported, but can be created\n", queryName(queries[i].type));
+        ok(!supported || pQuery, "Query %s was claimed to be supported, but can't be created\n", queryName(queries[i].type));
+        ok(supported || !pQuery, "Query %s was claimed not to be supported, but can be created\n", queryName(queries[i].type));
         if(pQuery)
         {
             IDirect3DQuery9_Release(pQuery);
