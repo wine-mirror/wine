@@ -59,7 +59,7 @@ static HRESULT WINAPI PaletteImpl_QueryInterface(IWICPalette *iface, REFIID iid,
 
     if (IsEqualIID(&IID_IUnknown, iid) || IsEqualIID(&IID_IWICPalette, iid))
     {
-        *ppv = This;
+        *ppv = &This->IWICPalette_iface;
     }
     else
     {
