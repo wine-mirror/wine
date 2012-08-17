@@ -48,7 +48,6 @@
             "\t.quad " __ASM_NAME(#name "_rtti") "\n" \
             "\t.globl " __ASM_NAME("MSVCP_" #name "_vtable") "\n" \
             __ASM_NAME("MSVCP_" #name "_vtable") ":\n" \
-            "\t.quad " THISCALL_NAME(MSVCP_ ## name ## _vector_dtor) "\n" \
             funcs "\n\t.text")
 
 #else
@@ -61,7 +60,6 @@
             "\t.long " __ASM_NAME(#name "_rtti") "\n" \
             "\t.globl " __ASM_NAME("MSVCP_" #name "_vtable") "\n" \
             __ASM_NAME("MSVCP_" #name "_vtable") ":\n" \
-            "\t.long " THISCALL_NAME(MSVCP_ ## name ## _vector_dtor) "\n" \
             funcs "\n\t.text")
 
 #endif /* _WIN64 */

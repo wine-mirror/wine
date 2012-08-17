@@ -614,12 +614,18 @@ DEFINE_RTTI_DATA1(strstreambuf, sizeof(strstreambuf),
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
 #endif
-    __ASM_VTABLE(iosb, "");
-    __ASM_VTABLE(ios_base, "");
-    __ASM_VTABLE(basic_ios_char, "");
-    __ASM_VTABLE(basic_ios_wchar, "");
-    __ASM_VTABLE(basic_ios_short, "");
+    __ASM_VTABLE(iosb,
+            VTABLE_ADD_FUNC(iosb_vector_dtor));
+    __ASM_VTABLE(ios_base,
+            VTABLE_ADD_FUNC(ios_base_vector_dtor));
+    __ASM_VTABLE(basic_ios_char,
+            VTABLE_ADD_FUNC(basic_ios_char_vector_dtor));
+    __ASM_VTABLE(basic_ios_wchar,
+            VTABLE_ADD_FUNC(basic_ios_wchar_vector_dtor));
+    __ASM_VTABLE(basic_ios_short,
+            VTABLE_ADD_FUNC(basic_ios_wchar_vector_dtor));
     __ASM_VTABLE(basic_streambuf_char,
+            VTABLE_ADD_FUNC(basic_streambuf_char_vector_dtor)
             VTABLE_ADD_FUNC(basic_streambuf_char__Lock)
             VTABLE_ADD_FUNC(basic_streambuf_char__Unlock)
             VTABLE_ADD_FUNC(basic_streambuf_char_overflow)
@@ -635,6 +641,7 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(basic_streambuf_char_sync)
             VTABLE_ADD_FUNC(basic_streambuf_char_imbue));
     __ASM_VTABLE(basic_streambuf_wchar,
+            VTABLE_ADD_FUNC(basic_streambuf_wchar_vector_dtor)
             VTABLE_ADD_FUNC(basic_streambuf_wchar__Lock)
             VTABLE_ADD_FUNC(basic_streambuf_wchar__Unlock)
             VTABLE_ADD_FUNC(basic_streambuf_wchar_overflow)
@@ -650,6 +657,7 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(basic_streambuf_wchar_sync)
             VTABLE_ADD_FUNC(basic_streambuf_wchar_imbue));
     __ASM_VTABLE(basic_streambuf_short,
+            VTABLE_ADD_FUNC(basic_streambuf_wchar_vector_dtor)
             VTABLE_ADD_FUNC(basic_streambuf_wchar__Lock)
             VTABLE_ADD_FUNC(basic_streambuf_wchar__Unlock)
             VTABLE_ADD_FUNC(basic_streambuf_wchar_overflow)
@@ -665,6 +673,7 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(basic_streambuf_wchar_sync)
             VTABLE_ADD_FUNC(basic_streambuf_wchar_imbue));
     __ASM_VTABLE(basic_filebuf_char,
+            VTABLE_ADD_FUNC(basic_filebuf_char_vector_dtor)
             VTABLE_ADD_FUNC(basic_streambuf_char__Lock)
             VTABLE_ADD_FUNC(basic_streambuf_char__Unlock)
             VTABLE_ADD_FUNC(basic_filebuf_char_overflow)
@@ -680,6 +689,7 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(basic_filebuf_char_sync)
             VTABLE_ADD_FUNC(basic_filebuf_char_imbue));
     __ASM_VTABLE(basic_filebuf_wchar,
+            VTABLE_ADD_FUNC(basic_filebuf_wchar_vector_dtor)
             VTABLE_ADD_FUNC(basic_streambuf_wchar__Lock)
             VTABLE_ADD_FUNC(basic_streambuf_wchar__Unlock)
             VTABLE_ADD_FUNC(basic_filebuf_wchar_overflow)
@@ -695,6 +705,7 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(basic_filebuf_wchar_sync)
             VTABLE_ADD_FUNC(basic_filebuf_wchar_imbue));
     __ASM_VTABLE(basic_filebuf_short,
+            VTABLE_ADD_FUNC(basic_filebuf_wchar_vector_dtor)
             VTABLE_ADD_FUNC(basic_streambuf_wchar__Lock)
             VTABLE_ADD_FUNC(basic_streambuf_wchar__Unlock)
             VTABLE_ADD_FUNC(basic_filebuf_wchar_overflow)
@@ -710,6 +721,7 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(basic_filebuf_wchar_sync)
             VTABLE_ADD_FUNC(basic_filebuf_short_imbue));
     __ASM_VTABLE(basic_stringbuf_char,
+            VTABLE_ADD_FUNC(basic_stringbuf_char_vector_dtor)
             VTABLE_ADD_FUNC(basic_streambuf_char__Lock)
             VTABLE_ADD_FUNC(basic_streambuf_char__Unlock)
             VTABLE_ADD_FUNC(basic_stringbuf_char_overflow)
@@ -725,6 +737,7 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(basic_streambuf_char_sync)
             VTABLE_ADD_FUNC(basic_streambuf_char_imbue));
     __ASM_VTABLE(basic_stringbuf_wchar,
+            VTABLE_ADD_FUNC(basic_stringbuf_wchar_vector_dtor)
             VTABLE_ADD_FUNC(basic_streambuf_wchar__Lock)
             VTABLE_ADD_FUNC(basic_streambuf_wchar__Unlock)
             VTABLE_ADD_FUNC(basic_stringbuf_wchar_overflow)
@@ -740,6 +753,7 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(basic_streambuf_wchar_sync)
             VTABLE_ADD_FUNC(basic_streambuf_wchar_imbue));
     __ASM_VTABLE(basic_stringbuf_short,
+            VTABLE_ADD_FUNC(basic_stringbuf_wchar_vector_dtor)
             VTABLE_ADD_FUNC(basic_streambuf_wchar__Lock)
             VTABLE_ADD_FUNC(basic_streambuf_wchar__Unlock)
             VTABLE_ADD_FUNC(basic_stringbuf_wchar_overflow)
@@ -754,34 +768,62 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(basic_streambuf_wchar_setbuf)
             VTABLE_ADD_FUNC(basic_streambuf_wchar_sync)
             VTABLE_ADD_FUNC(basic_streambuf_wchar_imbue));
-    __ASM_VTABLE(basic_ostream_char, "");
-    __ASM_VTABLE(basic_ostream_wchar, "");
-    __ASM_VTABLE(basic_ostream_short, "");
-    __ASM_VTABLE(basic_istream_char, "");
-    __ASM_VTABLE(basic_istream_wchar, "");
-    __ASM_VTABLE(basic_istream_short, "");
-    __ASM_VTABLE(basic_iostream_char, "");
-    __ASM_VTABLE(basic_iostream_wchar, "");
-    __ASM_VTABLE(basic_iostream_short, "");
-    __ASM_VTABLE(basic_ofstream_char, "");
-    __ASM_VTABLE(basic_ofstream_wchar, "");
-    __ASM_VTABLE(basic_ofstream_short, "");
-    __ASM_VTABLE(basic_ifstream_char, "");
-    __ASM_VTABLE(basic_ifstream_wchar, "");
-    __ASM_VTABLE(basic_ifstream_short, "");
-    __ASM_VTABLE(basic_fstream_char, "");
-    __ASM_VTABLE(basic_fstream_wchar, "");
-    __ASM_VTABLE(basic_fstream_short, "");
-    __ASM_VTABLE(basic_ostringstream_char, "");
-    __ASM_VTABLE(basic_ostringstream_wchar, "");
-    __ASM_VTABLE(basic_ostringstream_short, "");
-    __ASM_VTABLE(basic_istringstream_char, "");
-    __ASM_VTABLE(basic_istringstream_wchar, "");
-    __ASM_VTABLE(basic_istringstream_short, "");
-    __ASM_VTABLE(basic_stringstream_char, "");
-    __ASM_VTABLE(basic_stringstream_wchar, "");
-    __ASM_VTABLE(basic_stringstream_short, "");
+    __ASM_VTABLE(basic_ostream_char,
+            VTABLE_ADD_FUNC(basic_ostream_char_vector_dtor));
+    __ASM_VTABLE(basic_ostream_wchar,
+            VTABLE_ADD_FUNC(basic_ostream_wchar_vector_dtor));
+    __ASM_VTABLE(basic_ostream_short,
+            VTABLE_ADD_FUNC(basic_ostream_wchar_vector_dtor));
+    __ASM_VTABLE(basic_istream_char,
+            VTABLE_ADD_FUNC(basic_istream_char_vector_dtor));
+    __ASM_VTABLE(basic_istream_wchar,
+            VTABLE_ADD_FUNC(basic_istream_wchar_vector_dtor));
+    __ASM_VTABLE(basic_istream_short,
+            VTABLE_ADD_FUNC(basic_istream_wchar_vector_dtor));
+    __ASM_VTABLE(basic_iostream_char,
+            VTABLE_ADD_FUNC(basic_iostream_char_vector_dtor));
+    __ASM_VTABLE(basic_iostream_wchar,
+            VTABLE_ADD_FUNC(basic_iostream_wchar_vector_dtor));
+    __ASM_VTABLE(basic_iostream_short,
+            VTABLE_ADD_FUNC(basic_iostream_wchar_vector_dtor));
+    __ASM_VTABLE(basic_ofstream_char,
+            VTABLE_ADD_FUNC(basic_ofstream_char_vector_dtor));
+    __ASM_VTABLE(basic_ofstream_wchar,
+            VTABLE_ADD_FUNC(basic_ofstream_wchar_vector_dtor));
+    __ASM_VTABLE(basic_ofstream_short,
+            VTABLE_ADD_FUNC(basic_ofstream_wchar_vector_dtor));
+    __ASM_VTABLE(basic_ifstream_char,
+            VTABLE_ADD_FUNC(basic_ifstream_char_vector_dtor));
+    __ASM_VTABLE(basic_ifstream_wchar,
+            VTABLE_ADD_FUNC(basic_ifstream_wchar_vector_dtor));
+    __ASM_VTABLE(basic_ifstream_short,
+            VTABLE_ADD_FUNC(basic_ifstream_wchar_vector_dtor));
+    __ASM_VTABLE(basic_fstream_char,
+            VTABLE_ADD_FUNC(basic_fstream_char_vector_dtor));
+    __ASM_VTABLE(basic_fstream_wchar,
+            VTABLE_ADD_FUNC(basic_fstream_wchar_vector_dtor));
+    __ASM_VTABLE(basic_fstream_short,
+            VTABLE_ADD_FUNC(basic_fstream_wchar_vector_dtor));
+    __ASM_VTABLE(basic_ostringstream_char,
+            VTABLE_ADD_FUNC(basic_ostringstream_char_vector_dtor));
+    __ASM_VTABLE(basic_ostringstream_wchar,
+            VTABLE_ADD_FUNC(basic_ostringstream_wchar_vector_dtor));
+    __ASM_VTABLE(basic_ostringstream_short,
+            VTABLE_ADD_FUNC(basic_ostringstream_wchar_vector_dtor));
+    __ASM_VTABLE(basic_istringstream_char,
+            VTABLE_ADD_FUNC(basic_istringstream_char_vector_dtor));
+    __ASM_VTABLE(basic_istringstream_wchar,
+            VTABLE_ADD_FUNC(basic_istringstream_wchar_vector_dtor));
+    __ASM_VTABLE(basic_istringstream_short,
+            VTABLE_ADD_FUNC(basic_istringstream_wchar_vector_dtor));
+    __ASM_VTABLE(basic_stringstream_char,
+            VTABLE_ADD_FUNC(basic_stringstream_char_vector_dtor));
+    __ASM_VTABLE(basic_stringstream_wchar,
+            VTABLE_ADD_FUNC(basic_stringstream_wchar_vector_dtor));
+    __ASM_VTABLE(basic_stringstream_short,
+            VTABLE_ADD_FUNC(basic_stringstream_wchar_vector_dtor));
     __ASM_VTABLE(strstreambuf,
+            VTABLE_ADD_FUNC(strstreambuf_vector_dtor)
             VTABLE_ADD_FUNC(basic_streambuf_char__Lock)
             VTABLE_ADD_FUNC(basic_streambuf_char__Unlock)
             VTABLE_ADD_FUNC(strstreambuf_overflow)
@@ -889,8 +931,8 @@ void __thiscall basic_streambuf_char_dtor(basic_streambuf_char *this)
     MSVCRT_operator_delete(this->loc);
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_basic_streambuf_char_vector_dtor, 8)
-basic_streambuf_char* __thiscall MSVCP_basic_streambuf_char_vector_dtor(basic_streambuf_char *this, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_vector_dtor, 8)
+basic_streambuf_char* __thiscall basic_streambuf_char_vector_dtor(basic_streambuf_char *this, unsigned int flags)
 {
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
@@ -1609,8 +1651,8 @@ void __thiscall basic_streambuf_wchar_dtor(basic_streambuf_wchar *this)
     MSVCRT_operator_delete(this->loc);
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_basic_streambuf_wchar_vector_dtor, 8)
-basic_streambuf_wchar* __thiscall MSVCP_basic_streambuf_wchar_vector_dtor(basic_streambuf_wchar *this, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_vector_dtor, 8)
+basic_streambuf_wchar* __thiscall basic_streambuf_wchar_vector_dtor(basic_streambuf_wchar *this, unsigned int flags)
 {
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
@@ -1627,13 +1669,6 @@ basic_streambuf_wchar* __thiscall MSVCP_basic_streambuf_wchar_vector_dtor(basic_
     }
 
     return this;
-}
-
-DEFINE_THISCALL_WRAPPER(MSVCP_basic_streambuf_short_vector_dtor, 8)
-basic_streambuf_wchar* __thiscall MSVCP_basic_streambuf_short_vector_dtor(basic_streambuf_wchar *this, unsigned int flags)
-{
-    TRACE("(%p %x)\n", this, flags);
-    return MSVCP_basic_streambuf_wchar_vector_dtor(this, flags);
 }
 
 /* ?_Gnavail@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IBEHXZ */
@@ -2456,8 +2491,8 @@ void __thiscall basic_filebuf_char_dtor(basic_filebuf_char *this)
     basic_streambuf_char_dtor(&this->base);
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_basic_filebuf_char_vector_dtor, 8)
-basic_filebuf_char* __thiscall MSVCP_basic_filebuf_char_vector_dtor(basic_filebuf_char *this, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(basic_filebuf_char_vector_dtor, 8)
+basic_filebuf_char* __thiscall basic_filebuf_char_vector_dtor(basic_filebuf_char *this, unsigned int flags)
 {
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
@@ -3063,8 +3098,8 @@ void __thiscall basic_filebuf_wchar_dtor(basic_filebuf_wchar *this)
     basic_streambuf_wchar_dtor(&this->base);
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_basic_filebuf_wchar_vector_dtor, 8)
-basic_filebuf_wchar* __thiscall MSVCP_basic_filebuf_wchar_vector_dtor(basic_filebuf_wchar *this, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(basic_filebuf_wchar_vector_dtor, 8)
+basic_filebuf_wchar* __thiscall basic_filebuf_wchar_vector_dtor(basic_filebuf_wchar *this, unsigned int flags)
 {
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
@@ -3081,12 +3116,6 @@ basic_filebuf_wchar* __thiscall MSVCP_basic_filebuf_wchar_vector_dtor(basic_file
     }
 
     return this;
-}
-
-DEFINE_THISCALL_WRAPPER(MSVCP_basic_filebuf_short_vector_dtor, 8)
-basic_filebuf_wchar* __thiscall MSVCP_basic_filebuf_short_vector_dtor(basic_filebuf_wchar *this, unsigned int flags)
-{
-    return MSVCP_basic_filebuf_wchar_vector_dtor(this, flags);
 }
 
 /* ?is_open@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@QBE_NXZ */
@@ -3638,8 +3667,8 @@ void __thiscall basic_stringbuf_char_dtor(basic_stringbuf_char *this)
     basic_streambuf_char_dtor(&this->base);
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_basic_stringbuf_char_vector_dtor, 8)
-basic_stringbuf_char* __thiscall MSVCP_basic_stringbuf_char_vector_dtor(basic_stringbuf_char *this, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(basic_stringbuf_char_vector_dtor, 8)
+basic_stringbuf_char* __thiscall basic_stringbuf_char_vector_dtor(basic_stringbuf_char *this, unsigned int flags)
 {
     TRACE("(%p %x)\n", this, flags);
 
@@ -4040,8 +4069,8 @@ void __thiscall basic_stringbuf_wchar_dtor(basic_stringbuf_wchar *this)
     basic_streambuf_wchar_dtor(&this->base);
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_basic_stringbuf_wchar_vector_dtor, 8)
-basic_stringbuf_wchar* __thiscall MSVCP_basic_stringbuf_wchar_vector_dtor(basic_stringbuf_wchar *this, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(basic_stringbuf_wchar_vector_dtor, 8)
+basic_stringbuf_wchar* __thiscall basic_stringbuf_wchar_vector_dtor(basic_stringbuf_wchar *this, unsigned int flags)
 {
     TRACE("(%p %x)\n", this, flags);
 
@@ -4061,12 +4090,6 @@ basic_stringbuf_wchar* __thiscall MSVCP_basic_stringbuf_wchar_vector_dtor(basic_
     }
 
     return this;
-}
-
-DEFINE_THISCALL_WRAPPER(MSVCP_basic_stringbuf_short_vector_dtor, 8)
-basic_stringbuf_wchar* __thiscall MSVCP_basic_stringbuf_short_vector_dtor(basic_stringbuf_wchar *this, unsigned int flags)
-{
-    return MSVCP_basic_stringbuf_wchar_vector_dtor(this, flags);
 }
 
 /* ?overflow@?$basic_stringbuf@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@MAEGG@Z */
@@ -4378,8 +4401,8 @@ void __thiscall ios_base_dtor(ios_base *this)
     ios_base_Ios_base_dtor(this);
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_ios_base_vector_dtor, 8)
-ios_base* __thiscall MSVCP_ios_base_vector_dtor(ios_base *this, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(ios_base_vector_dtor, 8)
+ios_base* __thiscall ios_base_vector_dtor(ios_base *this, unsigned int flags)
 {
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
@@ -4398,8 +4421,8 @@ ios_base* __thiscall MSVCP_ios_base_vector_dtor(ios_base *this, unsigned int fla
     return this;
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_iosb_vector_dtor, 8)
-void* __thiscall MSVCP_iosb_vector_dtor(void *this, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(iosb_vector_dtor, 8)
+void* __thiscall iosb_vector_dtor(void *this, unsigned int flags)
 {
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
@@ -4921,8 +4944,8 @@ void __thiscall basic_ios_char_dtor(basic_ios_char *this)
     ios_base_dtor(&this->base);
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_basic_ios_char_vector_dtor, 8)
-basic_ios_char* __thiscall MSVCP_basic_ios_char_vector_dtor(basic_ios_char *this, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(basic_ios_char_vector_dtor, 8)
+basic_ios_char* __thiscall basic_ios_char_vector_dtor(basic_ios_char *this, unsigned int flags)
 {
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
@@ -5168,8 +5191,8 @@ void __thiscall basic_ios_wchar_dtor(basic_ios_wchar *this)
     ios_base_dtor(&this->base);
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_basic_ios_wchar_vector_dtor, 8)
-basic_ios_wchar* __thiscall MSVCP_basic_ios_wchar_vector_dtor(basic_ios_wchar *this, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(basic_ios_wchar_vector_dtor, 8)
+basic_ios_wchar* __thiscall basic_ios_wchar_vector_dtor(basic_ios_wchar *this, unsigned int flags)
 {
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
@@ -5186,12 +5209,6 @@ basic_ios_wchar* __thiscall MSVCP_basic_ios_wchar_vector_dtor(basic_ios_wchar *t
     }
 
     return this;
-}
-
-DEFINE_THISCALL_WRAPPER(MSVCP_basic_ios_short_vector_dtor, 8)
-basic_ios_wchar* __thiscall MSVCP_basic_ios_short_vector_dtor(basic_ios_wchar *this, unsigned int flags)
-{
-    return MSVCP_basic_ios_wchar_vector_dtor(this, flags);
 }
 
 /* ?clear@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QAEXH_N@Z */
@@ -5459,8 +5476,8 @@ void __thiscall basic_ostream_char_vbase_dtor(basic_ostream_char *this)
     basic_ios_char_dtor(basic_ostream_char_get_basic_ios(this));
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_basic_ostream_char_vector_dtor, 8)
-basic_ostream_char* __thiscall MSVCP_basic_ostream_char_vector_dtor(basic_ios_char *base, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(basic_ostream_char_vector_dtor, 8)
+basic_ostream_char* __thiscall basic_ostream_char_vector_dtor(basic_ios_char *base, unsigned int flags)
 {
     basic_ostream_char *this = basic_ostream_char_from_basic_ios(base);
 
@@ -6247,8 +6264,8 @@ void __thiscall basic_ostream_wchar_vbase_dtor(basic_ostream_wchar *this)
     basic_ios_wchar_dtor(basic_ostream_wchar_get_basic_ios(this));
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_basic_ostream_wchar_vector_dtor, 8)
-basic_ostream_wchar* __thiscall MSVCP_basic_ostream_wchar_vector_dtor(basic_ios_wchar *base, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(basic_ostream_wchar_vector_dtor, 8)
+basic_ostream_wchar* __thiscall basic_ostream_wchar_vector_dtor(basic_ios_wchar *base, unsigned int flags)
 {
     basic_ostream_wchar *this = basic_ostream_wchar_from_basic_ios(base);
 
@@ -6268,12 +6285,6 @@ basic_ostream_wchar* __thiscall MSVCP_basic_ostream_wchar_vector_dtor(basic_ios_
     }
 
     return this;
-}
-
-DEFINE_THISCALL_WRAPPER(MSVCP_basic_ostream_short_vector_dtor, 8)
-basic_ostream_wchar* __thiscall MSVCP_basic_ostream_short_vector_dtor(basic_ios_wchar *base, unsigned int flags)
-{
-    return MSVCP_basic_ostream_wchar_vector_dtor(base, flags);
 }
 
 /* ?flush@?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QAEAAV12@XZ */
@@ -7192,8 +7203,8 @@ void __thiscall basic_istream_char_vbase_dtor(basic_istream_char *this)
     basic_ios_char_dtor(basic_istream_char_get_basic_ios(this));
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_basic_istream_char_vector_dtor, 8)
-basic_istream_char* __thiscall MSVCP_basic_istream_char_vector_dtor(basic_ios_char *base, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(basic_istream_char_vector_dtor, 8)
+basic_istream_char* __thiscall basic_istream_char_vector_dtor(basic_ios_char *base, unsigned int flags)
 {
     basic_istream_char *this = basic_istream_char_from_basic_ios(base);
 
@@ -8394,8 +8405,8 @@ void __thiscall basic_istream_wchar_vbase_dtor(basic_istream_wchar *this)
     basic_ios_wchar_dtor(basic_istream_wchar_get_basic_ios(this));
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_basic_istream_wchar_vector_dtor, 8)
-basic_istream_wchar* __thiscall MSVCP_basic_istream_wchar_vector_dtor(basic_ios_wchar *base, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(basic_istream_wchar_vector_dtor, 8)
+basic_istream_wchar* __thiscall basic_istream_wchar_vector_dtor(basic_ios_wchar *base, unsigned int flags)
 {
     basic_istream_wchar *this = basic_istream_wchar_from_basic_ios(base);
 
@@ -8415,12 +8426,6 @@ basic_istream_wchar* __thiscall MSVCP_basic_istream_wchar_vector_dtor(basic_ios_
     }
 
     return this;
-}
-
-DEFINE_THISCALL_WRAPPER(MSVCP_basic_istream_short_vector_dtor, 8)
-basic_istream_wchar* __thiscall MSVCP_basic_istream_short_vector_dtor(basic_ios_wchar *base, unsigned int flags)
-{
-    return MSVCP_basic_istream_wchar_vector_dtor(base, flags);
 }
 
 /* ?_Ipfx@?$basic_istream@_WU?$char_traits@_W@std@@@std@@QAE_N_N@Z */
@@ -9780,8 +9785,8 @@ void __thiscall basic_iostream_char_vbase_dtor(basic_iostream_char *this)
     basic_ios_char_dtor(basic_istream_char_get_basic_ios(&this->base1));
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_basic_iostream_char_vector_dtor, 8)
-basic_iostream_char* __thiscall MSVCP_basic_iostream_char_vector_dtor(basic_ios_char *base, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(basic_iostream_char_vector_dtor, 8)
+basic_iostream_char* __thiscall basic_iostream_char_vector_dtor(basic_ios_char *base, unsigned int flags)
 {
     basic_iostream_char *this = basic_iostream_char_from_basic_ios(base);
 
@@ -9876,8 +9881,8 @@ void __thiscall basic_iostream_wchar_vbase_dtor(basic_iostream_wchar *this)
     basic_ios_wchar_dtor(basic_istream_wchar_get_basic_ios(&this->base1));
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_basic_iostream_wchar_vector_dtor, 8)
-basic_iostream_wchar* __thiscall MSVCP_basic_iostream_wchar_vector_dtor(basic_ios_wchar *base, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(basic_iostream_wchar_vector_dtor, 8)
+basic_iostream_wchar* __thiscall basic_iostream_wchar_vector_dtor(basic_ios_wchar *base, unsigned int flags)
 {
     basic_iostream_wchar *this = basic_iostream_wchar_from_basic_ios(base);
 
@@ -9897,12 +9902,6 @@ basic_iostream_wchar* __thiscall MSVCP_basic_iostream_wchar_vector_dtor(basic_io
     }
 
     return this;
-}
-
-DEFINE_THISCALL_WRAPPER(MSVCP_basic_iostream_short_vector_dtor, 8)
-basic_iostream_wchar* __thiscall MSVCP_basic_iostream_short_vector_dtor(basic_ios_wchar *base, unsigned int flags)
-{
-    return MSVCP_basic_iostream_wchar_vector_dtor(base, flags);
 }
 
 static inline basic_ios_char* basic_ofstream_char_to_basic_ios(basic_ofstream_char *ptr)
@@ -10022,8 +10021,8 @@ void __thiscall basic_ofstream_char_vbase_dtor(basic_ofstream_char *this)
     basic_ios_char_dtor(basic_ostream_char_get_basic_ios(&this->base));
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_basic_ofstream_char_vector_dtor, 8)
-basic_ofstream_char* __thiscall MSVCP_basic_ofstream_char_vector_dtor(basic_ios_char *base, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(basic_ofstream_char_vector_dtor, 8)
+basic_ofstream_char* __thiscall basic_ofstream_char_vector_dtor(basic_ios_char *base, unsigned int flags)
 {
     basic_ofstream_char *this = basic_ofstream_char_from_basic_ios(base);
 
@@ -10292,8 +10291,8 @@ void __thiscall basic_ofstream_wchar_vbase_dtor(basic_ofstream_wchar *this)
     basic_ios_wchar_dtor(basic_ostream_wchar_get_basic_ios(&this->base));
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_basic_ofstream_wchar_vector_dtor, 8)
-basic_ofstream_wchar* __thiscall MSVCP_basic_ofstream_wchar_vector_dtor(basic_ios_wchar *base, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(basic_ofstream_wchar_vector_dtor, 8)
+basic_ofstream_wchar* __thiscall basic_ofstream_wchar_vector_dtor(basic_ios_wchar *base, unsigned int flags)
 {
     basic_ofstream_wchar *this = basic_ofstream_wchar_from_basic_ios(base);
 
@@ -10313,12 +10312,6 @@ basic_ofstream_wchar* __thiscall MSVCP_basic_ofstream_wchar_vector_dtor(basic_io
     }
 
     return this;
-}
-
-DEFINE_THISCALL_WRAPPER(MSVCP_basic_ofstream_short_vector_dtor, 8)
-basic_ofstream_wchar* __thiscall MSVCP_basic_ofstream_short_vector_dtor(basic_ios_wchar *base, unsigned int flags)
-{
-    return MSVCP_basic_ofstream_wchar_vector_dtor(base, flags);
 }
 
 /* ?close@?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QAEXXZ */
@@ -10537,8 +10530,8 @@ void __thiscall basic_ifstream_char_vbase_dtor(basic_ifstream_char *this)
     basic_ios_char_dtor(basic_istream_char_get_basic_ios(&this->base));
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_basic_ifstream_char_vector_dtor, 8)
-basic_ifstream_char* __thiscall MSVCP_basic_ifstream_char_vector_dtor(basic_ios_char *base, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(basic_ifstream_char_vector_dtor, 8)
+basic_ifstream_char* __thiscall basic_ifstream_char_vector_dtor(basic_ios_char *base, unsigned int flags)
 {
     basic_ifstream_char *this = basic_ifstream_char_from_basic_ios(base);
 
@@ -10807,8 +10800,8 @@ void __thiscall basic_ifstream_wchar_vbase_dtor(basic_ifstream_wchar *this)
     basic_ios_wchar_dtor(basic_istream_wchar_get_basic_ios(&this->base));
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_basic_ifstream_wchar_vector_dtor, 8)
-basic_ifstream_wchar* __thiscall MSVCP_basic_ifstream_wchar_vector_dtor(basic_ios_wchar *base, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(basic_ifstream_wchar_vector_dtor, 8)
+basic_ifstream_wchar* __thiscall basic_ifstream_wchar_vector_dtor(basic_ios_wchar *base, unsigned int flags)
 {
     basic_ifstream_wchar *this = basic_ifstream_wchar_from_basic_ios(base);
 
@@ -10828,12 +10821,6 @@ basic_ifstream_wchar* __thiscall MSVCP_basic_ifstream_wchar_vector_dtor(basic_io
     }
 
     return this;
-}
-
-DEFINE_THISCALL_WRAPPER(MSVCP_basic_ifstream_short_vector_dtor, 8)
-basic_ifstream_wchar* __thiscall MSVCP_basic_ifstream_short_vector_dtor(basic_ios_wchar *base, unsigned int flags)
-{
-    return MSVCP_basic_ifstream_wchar_vector_dtor(base, flags);
 }
 
 /* ?close@?$basic_ifstream@_WU?$char_traits@_W@std@@@std@@QAEXXZ */
@@ -11054,8 +11041,8 @@ void __thiscall basic_fstream_char_vbase_dtor(basic_fstream_char *this)
     basic_ios_char_dtor(basic_istream_char_get_basic_ios(&this->base.base1));
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_basic_fstream_char_vector_dtor, 8)
-basic_fstream_char* __thiscall MSVCP_basic_fstream_char_vector_dtor(basic_ios_char *base, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(basic_fstream_char_vector_dtor, 8)
+basic_fstream_char* __thiscall basic_fstream_char_vector_dtor(basic_ios_char *base, unsigned int flags)
 {
     basic_fstream_char *this = basic_fstream_char_from_basic_ios(base);
 
@@ -11326,8 +11313,8 @@ void __thiscall basic_fstream_wchar_vbase_dtor(basic_fstream_wchar *this)
     basic_ios_wchar_dtor(basic_istream_wchar_get_basic_ios(&this->base.base1));
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_basic_fstream_wchar_vector_dtor, 8)
-basic_fstream_wchar* __thiscall MSVCP_basic_fstream_wchar_vector_dtor(basic_ios_wchar *base, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(basic_fstream_wchar_vector_dtor, 8)
+basic_fstream_wchar* __thiscall basic_fstream_wchar_vector_dtor(basic_ios_wchar *base, unsigned int flags)
 {
     basic_fstream_wchar *this = basic_fstream_wchar_from_basic_ios(base);
 
@@ -11347,12 +11334,6 @@ basic_fstream_wchar* __thiscall MSVCP_basic_fstream_wchar_vector_dtor(basic_ios_
     }
 
     return this;
-}
-
-DEFINE_THISCALL_WRAPPER(MSVCP_basic_fstream_short_vector_dtor, 8)
-basic_fstream_wchar* __thiscall MSVCP_basic_fstream_short_vector_dtor(basic_ios_wchar *base, unsigned int flags)
-{
-    return MSVCP_basic_fstream_wchar_vector_dtor(base, flags);
 }
 
 /* ?close@?$basic_fstream@_WU?$char_traits@_W@std@@@std@@QAEXXZ */
@@ -11545,8 +11526,8 @@ void __thiscall basic_ostringstream_char_vbase_dtor(basic_ostringstream_char *th
     basic_ios_char_dtor(basic_ostream_char_get_basic_ios(&this->base));
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_basic_ostringstream_char_vector_dtor, 8)
-basic_ostringstream_char* __thiscall MSVCP_basic_ostringstream_char_vector_dtor(basic_ios_char *base, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(basic_ostringstream_char_vector_dtor, 8)
+basic_ostringstream_char* __thiscall basic_ostringstream_char_vector_dtor(basic_ios_char *base, unsigned int flags)
 {
     basic_ostringstream_char *this = basic_ostringstream_char_from_basic_ios(base);
 
@@ -11721,8 +11702,8 @@ void __thiscall basic_ostringstream_wchar_vbase_dtor(basic_ostringstream_wchar *
     basic_ios_wchar_dtor(basic_ostream_wchar_get_basic_ios(&this->base));
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_basic_ostringstream_wchar_vector_dtor, 8)
-basic_ostringstream_wchar* __thiscall MSVCP_basic_ostringstream_wchar_vector_dtor(basic_ios_wchar *base, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(basic_ostringstream_wchar_vector_dtor, 8)
+basic_ostringstream_wchar* __thiscall basic_ostringstream_wchar_vector_dtor(basic_ios_wchar *base, unsigned int flags)
 {
     basic_ostringstream_wchar *this = basic_ostringstream_wchar_from_basic_ios(base);
 
@@ -11742,12 +11723,6 @@ basic_ostringstream_wchar* __thiscall MSVCP_basic_ostringstream_wchar_vector_dto
     }
 
     return this;
-}
-
-DEFINE_THISCALL_WRAPPER(MSVCP_basic_ostringstream_short_vector_dtor, 8)
-basic_ostringstream_wchar* __thiscall MSVCP_basic_ostringstream_short_vector_dtor(basic_ios_wchar *base, unsigned int flags)
-{
-    return MSVCP_basic_ostringstream_wchar_vector_dtor(base, flags);
 }
 
 /* ?rdbuf@?$basic_ostringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEPAV?$basic_stringbuf@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@XZ */
@@ -11874,8 +11849,8 @@ void __thiscall basic_istringstream_char_vbase_dtor(basic_istringstream_char *th
     basic_ios_char_dtor(basic_istream_char_get_basic_ios(&this->base));
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_basic_istringstream_char_vector_dtor, 8)
-basic_istringstream_char* __thiscall MSVCP_basic_istringstream_char_vector_dtor(basic_ios_char *base, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(basic_istringstream_char_vector_dtor, 8)
+basic_istringstream_char* __thiscall basic_istringstream_char_vector_dtor(basic_ios_char *base, unsigned int flags)
 {
     basic_istringstream_char *this = basic_istringstream_char_from_basic_ios(base);
 
@@ -12050,8 +12025,8 @@ void __thiscall basic_istringstream_wchar_vbase_dtor(basic_istringstream_wchar *
     basic_ios_wchar_dtor(basic_istream_wchar_get_basic_ios(&this->base));
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_basic_istringstream_wchar_vector_dtor, 8)
-basic_istringstream_wchar* __thiscall MSVCP_basic_istringstream_wchar_vector_dtor(basic_ios_wchar *base, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(basic_istringstream_wchar_vector_dtor, 8)
+basic_istringstream_wchar* __thiscall basic_istringstream_wchar_vector_dtor(basic_ios_wchar *base, unsigned int flags)
 {
     basic_istringstream_wchar *this = basic_istringstream_wchar_from_basic_ios(base);
 
@@ -12071,12 +12046,6 @@ basic_istringstream_wchar* __thiscall MSVCP_basic_istringstream_wchar_vector_dto
     }
 
     return this;
-}
-
-DEFINE_THISCALL_WRAPPER(MSVCP_basic_istringstream_short_vector_dtor, 8)
-basic_istringstream_wchar* __thiscall MSVCP_basic_istringstream_short_vector_dtor(basic_ios_wchar *base, unsigned int flags)
-{
-    return MSVCP_basic_istringstream_wchar_vector_dtor(base, flags);
 }
 
 /* ?rdbuf@?$basic_istringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEPAV?$basic_stringbuf@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@XZ */
@@ -12206,8 +12175,8 @@ void __thiscall basic_stringstream_char_vbase_dtor(basic_stringstream_char *this
     basic_ios_char_dtor(basic_istream_char_get_basic_ios(&this->base.base1));
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_basic_stringstream_char_vector_dtor, 8)
-basic_stringstream_char* __thiscall MSVCP_basic_stringstream_char_vector_dtor(basic_ios_char *base, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(basic_stringstream_char_vector_dtor, 8)
+basic_stringstream_char* __thiscall basic_stringstream_char_vector_dtor(basic_ios_char *base, unsigned int flags)
 {
     basic_stringstream_char *this = basic_stringstream_char_from_basic_ios(base);
 
@@ -12386,8 +12355,8 @@ void __thiscall basic_stringstream_wchar_vbase_dtor(basic_stringstream_wchar *th
     basic_ios_wchar_dtor(basic_istream_wchar_get_basic_ios(&this->base.base1));
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_basic_stringstream_wchar_vector_dtor, 8)
-basic_stringstream_wchar* __thiscall MSVCP_basic_stringstream_wchar_vector_dtor(basic_ios_wchar *base, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(basic_stringstream_wchar_vector_dtor, 8)
+basic_stringstream_wchar* __thiscall basic_stringstream_wchar_vector_dtor(basic_ios_wchar *base, unsigned int flags)
 {
     basic_stringstream_wchar *this = basic_stringstream_wchar_from_basic_ios(base);
 
@@ -12407,12 +12376,6 @@ basic_stringstream_wchar* __thiscall MSVCP_basic_stringstream_wchar_vector_dtor(
     }
 
     return this;
-}
-
-DEFINE_THISCALL_WRAPPER(MSVCP_basic_stringstream_short_vector_dtor, 8)
-basic_stringstream_wchar* __thiscall MSVCP_basic_stringstream_short_vector_dtor(basic_ios_wchar *base, unsigned int flags)
-{
-    return MSVCP_basic_stringstream_wchar_vector_dtor(base, flags);
 }
 
 /* ?rdbuf@?$basic_stringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEPAV?$basic_stringbuf@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@XZ */
@@ -12575,8 +12538,8 @@ void __thiscall strstreambuf_dtor(strstreambuf *this)
     basic_streambuf_char_dtor(&this->base);
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_strstreambuf_vector_dtor, 8)
-strstreambuf* __thiscall MSVCP_strstreambuf_vector_dtor(strstreambuf *this, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(strstreambuf_vector_dtor, 8)
+strstreambuf* __thiscall strstreambuf_vector_dtor(strstreambuf *this, unsigned int flags)
 {
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
