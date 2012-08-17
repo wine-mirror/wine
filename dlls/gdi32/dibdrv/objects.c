@@ -1897,9 +1897,6 @@ static BOOL select_pattern_brush( dibdrv_physdev *pdev, dib_brush *brush, BOOL *
     dib_info pattern;
     BOOL dither = (brush->dib.bit_count == 1);
 
-    if (pattern.bit_count == 1 && !pattern.color_table)
-        dither = FALSE;  /* monochrome DDB pattern brushes don't get dithered */
-
     if (brush->pattern.info->bmiHeader.biClrUsed && brush->pattern.usage == DIB_PAL_COLORS)
     {
         copy_bitmapinfo( info, brush->pattern.info );
@@ -1911,6 +1908,9 @@ static BOOL select_pattern_brush( dibdrv_physdev *pdev, dib_brush *brush, BOOL *
     {
         init_dib_info_from_bitmapinfo( &pattern, brush->pattern.info, brush->pattern.bits.ptr );
     }
+
+    if (pattern.bit_count == 1 && !pattern.color_table)
+        dither = FALSE;  /* monochrome DDB pattern brushes don't get dithered */
 
     if (pattern.bit_count == 1 && !pattern.color_table &&
         (pdev->dib.bit_count != 1 || pdev->dib.color_table))
