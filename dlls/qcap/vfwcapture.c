@@ -678,9 +678,10 @@ static HRESULT WINAPI VfwPin_GetMediaType(BasePin *iface, int iPosition, AM_MEDI
         return VFW_S_NO_MORE_ITEMS;
 
     hr = qcap_driver_get_format(This->driver_info, &vfw_pmt);
-    CopyMediaType(pmt, vfw_pmt);
-    DeleteMediaType(vfw_pmt);
-
+    if (SUCCEEDED(hr)) {
+        CopyMediaType(pmt, vfw_pmt);
+        DeleteMediaType(vfw_pmt);
+    }
     return hr;
 }
 

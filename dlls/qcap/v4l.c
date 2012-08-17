@@ -314,6 +314,7 @@ HRESULT qcap_driver_get_format(const Capture *capBox, AM_MEDIA_TYPE ** mT)
     if (!vi)
     {
         CoTaskMemFree(mT[0]);
+        mT[0] = NULL;
         return E_OUTOFMEMORY;
     }
     mT[0]->majortype = MEDIATYPE_Video;
