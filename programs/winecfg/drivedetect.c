@@ -287,7 +287,6 @@ static void ensure_drive_c_is_mapped(void)
     len = snprintf(NULL, 0, "%s/../drive_c", configdir);
     drive_c_dir = HeapAlloc(GetProcessHeap(), 0, len);
     snprintf(drive_c_dir, len, "%s/../drive_c", configdir);
-    HeapFree(GetProcessHeap(), 0, drive_c_dir);
 
     if (stat(drive_c_dir, &buf) == 0)
     {
@@ -300,6 +299,7 @@ static void ensure_drive_c_is_mapped(void)
     {
         report_error(NO_DRIVE_C);
     }
+    HeapFree(GetProcessHeap(), 0, drive_c_dir);
 }
 
 int autodetect_drives(void)
