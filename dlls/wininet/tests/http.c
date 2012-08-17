@@ -2614,6 +2614,14 @@ static void test_HttpQueryInfo(int port)
     ok(ret, "HttpQueryInfo failed %u\n", GetLastError());
     ok(index == 0, "expected 0 got %u\n", index);
 
+    index = 0xdeadbeef; /* invalid start index */
+    size = sizeof(buffer);
+    ret = HttpQueryInfo(hr, HTTP_QUERY_RAW_HEADERS, buffer, &size, &index);
+    todo_wine ok(!ret, "HttpQueryInfo should have failed\n");
+    todo_wine ok(GetLastError() == ERROR_HTTP_HEADER_NOT_FOUND,
+       "Expected ERROR_HTTP_HEADER_NOT_FOUND, got %u\n", GetLastError());
+
+    index = 0;
     size = sizeof(buffer);
     ret = HttpQueryInfo(hr, HTTP_QUERY_RAW_HEADERS_CRLF, buffer, &size, &index);
     ok(ret, "HttpQueryInfo failed %u\n", GetLastError());
