@@ -502,19 +502,18 @@ static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LP
 
             expect(st[0].wYear,  nmchg->stSelStart.wYear);
             expect(st[0].wMonth, nmchg->stSelStart.wMonth);
-            todo_wine expect(0,  nmchg->stSelStart.wDayOfWeek);
+            expect(0,            nmchg->stSelStart.wDayOfWeek);
             expect(st[0].wDay,   nmchg->stSelStart.wDay);
 
             if(is_multisel)
             {
               expect(st[1].wYear,  nmchg->stSelEnd.wYear);
               expect(st[1].wMonth, nmchg->stSelEnd.wMonth);
-              todo_wine expect(0,  nmchg->stSelEnd.wDayOfWeek);
+              expect(0,            nmchg->stSelEnd.wDayOfWeek);
               expect(st[1].wDay,   nmchg->stSelEnd.wDay);
             }
             else
-              todo_wine
-                ok(!(nmchg->stSelEnd.wYear | nmchg->stSelEnd.wMonth |
+              ok(!(nmchg->stSelEnd.wYear | nmchg->stSelEnd.wMonth |
                         nmchg->stSelEnd.wDayOfWeek | nmchg->stSelEnd.wDay |
                         nmchg->stSelEnd.wHour | nmchg->stSelEnd.wMinute |
                         nmchg->stSelEnd.wSecond | nmchg->stSelEnd.wMilliseconds),
