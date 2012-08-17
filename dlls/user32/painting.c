@@ -314,9 +314,11 @@ static struct dce *get_window_dce( HWND hwnd )
 
         if (dce_to_free)
         {
-            SetDCHook( dce->hdc, NULL, 0 );
-            DeleteDC( dce->hdc );
-            HeapFree( GetProcessHeap(), 0, dce );
+            SetDCHook( dce_to_free->hdc, NULL, 0 );
+            DeleteDC( dce_to_free->hdc );
+            HeapFree( GetProcessHeap(), 0, dce_to_free );
+            if (dce_to_free == dce)
+                dce = NULL;
         }
     }
     return dce;
