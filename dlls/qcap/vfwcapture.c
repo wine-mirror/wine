@@ -793,11 +793,11 @@ VfwPin_EnumMediaTypes(IPin * iface, IEnumMediaTypes ** ppEnum)
 
     VfwPinImpl *This = (VfwPinImpl *)iface;
     hr = qcap_driver_get_format(This->driver_info, &pmt);
-    if (SUCCEEDED(hr))
+    if (SUCCEEDED(hr)) {
         hr = BasePinImpl_EnumMediaTypes(iface, ppEnum);
+        DeleteMediaType(pmt);
+    }
     TRACE("%p -- %x\n", This, hr);
-    DeleteMediaType(pmt);
-
     return hr;
 }
 
