@@ -1417,18 +1417,17 @@ void X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
     TRACE_(key)("keycode %u converted to vkey 0x%X scan %02x\n",
                 event->keycode, vkey, bScan);
 
-    if (vkey)
-    {
-        dwFlags = 0;
-        if ( event->type == KeyRelease ) dwFlags |= KEYEVENTF_KEYUP;
-        if ( vkey & 0x100 )              dwFlags |= KEYEVENTF_EXTENDEDKEY;
-
-        update_lock_state( hwnd, vkey, event->state, event_time );
-
-        X11DRV_send_keyboard_input( hwnd, vkey & 0xff, bScan, dwFlags, event_time );
-    }
     LeaveCriticalSection( &kbd_section );
 
+    if (!vkey) return;
+
+    dwFlags = 0;
+    if ( event->type == KeyRelease ) dwFlags |= KEYEVENTF_KEYUP;
+    if ( vkey & 0x100 )              dwFlags |= KEYEVENTF_EXTENDEDKEY;
+
+    update_lock_state( hwnd, vkey, event->state, event_time );
+
+    X11DRV_send_keyboard_input( hwnd, vkey & 0xff, bScan, dwFlags, event_time );
 }
 
 /**********************************************************************
