@@ -1246,14 +1246,18 @@ BOOL WINAPI DdeAbandonTransaction(DWORD idInst, HCONV hConv, DWORD idTransaction
         {
             if ((pConv = WDML_GetConv(hConv, TRUE)) && pConv->instance == pInstance)
             {
-                for (pXAct = pConv->transactions; pXAct; pXAct = pXAct->next)
-                {
+
+                pXAct = pConv->transactions;
+                while (pXAct) {
+                    WDML_XACT *nextXAct = pXAct->next;
+
                     if (pXAct->dwTimeout == TIMEOUT_ASYNC &&
                         (idTransaction == 0 || pXAct->xActID == idTransaction))
                     {
                         WDML_UnQueueTransaction(pConv, pXAct);
                         WDML_FreeTransaction(pInstance, pXAct, TRUE);
                     }
+                    pXAct = nextXAct;
                 }
             }
         }
@@ -1262,13 +1266,16 @@ BOOL WINAPI DdeAbandonTransaction(DWORD idInst, HCONV hConv, DWORD idTransaction
             for (pConv = pInstance->convs[WDML_CLIENT_SIDE]; pConv; pConv = pConv->next)
             {
                 if (!(pConv->wStatus & ST_CONNECTED)) continue;
-                for (pXAct = pConv->transactions; pXAct; pXAct = pXAct->next)
-                {
+                pXAct = pConv->transactions;
+                while (pXAct) {
+                    WDML_XACT *nextXAct = pXAct->next;
+
                     if (pXAct->dwTimeout == TIMEOUT_ASYNC)
                     {
                         WDML_UnQueueTransaction(pConv, pXAct);
                         WDML_FreeTransaction(pInstance, pXAct, TRUE);
                     }
+                    pXAct = nextXAct;
                 }
             }
         }
