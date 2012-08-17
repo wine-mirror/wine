@@ -373,7 +373,7 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_GetAttachedSurface(IDirectDrawSurf
     HRESULT hr;
     TRACE("(%p)->(%p,%p)\n", This, Caps, Surface);
 
-    hr = IDirectDrawSurface4_GetAttachedSurface(dds4_from_impl(This), Caps, &inner);
+    hr = IDirectDrawSurface4_GetAttachedSurface(This->parent, Caps, &inner);
     if(SUCCEEDED(hr))
     {
         *Surface = dds_get_outer(inner);
