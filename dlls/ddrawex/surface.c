@@ -1220,13 +1220,6 @@ IDirectDrawSurface4 *dds_get_outer(IDirectDrawSurface4 *inner)
     return outer;
 }
 
-IDirectDrawSurface4 *dds_get_inner(IDirectDrawSurface4 *outer)
-{
-    IDirectDrawSurfaceImpl *This = impl_from_dds4(outer);
-    if(This == NULL) return NULL;
-    return This->parent;
-}
-
 HRESULT prepare_permanent_dc(IDirectDrawSurface4 *iface)
 {
     IDirectDrawSurfaceImpl *This = unsafe_impl_from_IDirectDrawSurface4(iface);

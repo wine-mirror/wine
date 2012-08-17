@@ -459,9 +459,11 @@ static HRESULT WINAPI IDirectDraw4Impl_DuplicateSurface(IDirectDraw4 *iface,
         IDirectDrawSurface4 *src, IDirectDrawSurface4 **dst)
 {
     IDirectDrawImpl *This = impl_from_IDirectDraw4(iface);
+    IDirectDrawSurfaceImpl *surf = unsafe_impl_from_IDirectDrawSurface4(src);
+
     FIXME("(%p)->(%p,%p). Create a wrapper surface\n", This, src, dst);
 
-    return IDirectDraw4_DuplicateSurface(This->parent, dds_get_inner(src), dst);
+    return IDirectDraw4_DuplicateSurface(This->parent, surf ? surf->parent : NULL, dst);
 }
 
 static HRESULT WINAPI IDirectDraw3Impl_DuplicateSurface(IDirectDraw3 *iface,

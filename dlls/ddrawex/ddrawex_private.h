@@ -91,7 +91,6 @@ typedef struct
 
 IDirectDrawSurfaceImpl *unsafe_impl_from_IDirectDrawSurface4(IDirectDrawSurface4 *iface) DECLSPEC_HIDDEN;
 IDirectDrawSurface4 *dds_get_outer(IDirectDrawSurface4 *inner) DECLSPEC_HIDDEN;
-IDirectDrawSurface4 *dds_get_inner(IDirectDrawSurface4 *outer) DECLSPEC_HIDDEN;
 HRESULT prepare_permanent_dc(IDirectDrawSurface4 *iface) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_DLLS_DDRAWEX_DDRAWEX_PRIVATE_H */
