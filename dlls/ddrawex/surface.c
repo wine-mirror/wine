@@ -161,7 +161,7 @@ IDirectDrawSurface4Impl_AddAttachedSurface(IDirectDrawSurface4 *iface,
                                            IDirectDrawSurface4 *Attach_iface)
 {
     IDirectDrawSurfaceImpl *This = impl_from_dds4(iface);
-    IDirectDrawSurfaceImpl *attach = impl_from_dds4(Attach_iface);
+    IDirectDrawSurfaceImpl *attach = unsafe_impl_from_IDirectDrawSurface4(Attach_iface);
     TRACE("(%p)->(%p)\n", This, attach);
     return IDirectDrawSurface4_AddAttachedSurface(This->parent, attach->parent);
 }
@@ -201,7 +201,7 @@ IDirectDrawSurface4Impl_Blt(IDirectDrawSurface4 *iface,
                             DDBLTFX *DDBltFx)
 {
     IDirectDrawSurfaceImpl *This = impl_from_dds4(iface);
-    IDirectDrawSurfaceImpl *Src = impl_from_dds4(SrcSurface);
+    IDirectDrawSurfaceImpl *Src = unsafe_impl_from_IDirectDrawSurface4(SrcSurface);
     TRACE("(%p)->(%p,%p,%p,0x%08x,%p)\n", This, DestRect, Src, SrcRect, Flags, DDBltFx);
     return IDirectDrawSurface4_Blt(This->parent, DestRect, Src ? Src->parent : NULL,
                                    SrcRect, Flags, DDBltFx);
@@ -245,7 +245,7 @@ IDirectDrawSurface4Impl_BltFast(IDirectDrawSurface4 *iface,
                                 DWORD trans)
 {
     IDirectDrawSurfaceImpl *This = impl_from_dds4(iface);
-    IDirectDrawSurfaceImpl *Src = impl_from_dds4(Source);
+    IDirectDrawSurfaceImpl *Src = unsafe_impl_from_IDirectDrawSurface4(Source);
     TRACE("(%p)->(%u,%u,%p,%p,0x%08x)\n", This, dstx, dsty, Src, rsrc, trans);
     return IDirectDrawSurface4_BltFast(This->parent, dstx, dsty, Src ? Src->parent : NULL,
                                        rsrc, trans);
@@ -267,7 +267,7 @@ IDirectDrawSurface4Impl_DeleteAttachedSurface(IDirectDrawSurface4 *iface,
                                               IDirectDrawSurface4 *Attach)
 {
     IDirectDrawSurfaceImpl *This = impl_from_dds4(iface);
-    IDirectDrawSurfaceImpl *Att = impl_from_dds4(Attach);
+    IDirectDrawSurfaceImpl *Att = unsafe_impl_from_IDirectDrawSurface4(Attach);
     TRACE("(%p)->(0x%08x,%p)\n", This, Flags, Att);
     return IDirectDrawSurface4_DeleteAttachedSurface(This->parent, Flags,
                                                      Att ? Att->parent : NULL);
@@ -321,10 +321,10 @@ struct enumsurfaces_thunk
     void *orig_ctx;
 };
 
-static HRESULT WINAPI
-enumsurfaces_thunk_cb(IDirectDrawSurface4 *surf, DDSURFACEDESC2 *desc2, void *vctx)
+static HRESULT WINAPI enumsurfaces_thunk_cb(IDirectDrawSurface4 *surf, DDSURFACEDESC2 *desc2,
+        void *vctx)
 {
-    IDirectDrawSurfaceImpl *This = impl_from_dds4(surf);
+    IDirectDrawSurfaceImpl *This = unsafe_impl_from_IDirectDrawSurface4(surf);
     struct enumsurfaces_thunk *ctx = vctx;
     DDSURFACEDESC desc;
 
@@ -381,7 +381,7 @@ IDirectDrawSurface4Impl_Flip(IDirectDrawSurface4 *iface,
                              DWORD Flags)
 {
     IDirectDrawSurfaceImpl *This = impl_from_dds4(iface);
-    IDirectDrawSurfaceImpl *Dest = impl_from_dds4(DestOverride);
+    IDirectDrawSurfaceImpl *Dest = unsafe_impl_from_IDirectDrawSurface4(DestOverride);
     TRACE("(%p)->(%p,0x%08x)\n", This, Dest, Flags);
     return IDirectDrawSurface4_Flip(This->parent, Dest ? Dest->parent : NULL, Flags);
 }
@@ -858,7 +858,7 @@ IDirectDrawSurface4Impl_UpdateOverlay(IDirectDrawSurface4 *iface,
                                       LPDDOVERLAYFX FX)
 {
     IDirectDrawSurfaceImpl *This = impl_from_dds4(iface);
-    IDirectDrawSurfaceImpl *Dst = impl_from_dds4(DstSurface);
+    IDirectDrawSurfaceImpl *Dst = unsafe_impl_from_IDirectDrawSurface4(DstSurface);
     TRACE("(%p)->(%p,%p,%p,0x%08x,%p)\n", This, SrcRect, Dst, DstRect, Flags, FX);
     return IDirectDrawSurface4_UpdateOverlay(This->parent, SrcRect, Dst ? Dst->parent : NULL,
                                              DstRect, Flags, FX);
@@ -898,7 +898,7 @@ IDirectDrawSurface4Impl_UpdateOverlayZOrder(IDirectDrawSurface4 *iface,
                                             IDirectDrawSurface4 *DDSRef)
 {
     IDirectDrawSurfaceImpl *This = impl_from_dds4(iface);
-    IDirectDrawSurfaceImpl *Ref = impl_from_dds4(DDSRef);
+    IDirectDrawSurfaceImpl *Ref = unsafe_impl_from_IDirectDrawSurface4(DDSRef);
     TRACE("(%p)->(0x%08x,%p)\n", This, Flags, Ref);
     return IDirectDrawSurface4_UpdateOverlayZOrder(This->parent, Flags, Ref ? Ref->parent : NULL);
 }
@@ -1164,6 +1164,13 @@ static IDirectDrawSurfaceImpl *unsafe_impl_from_IDirectDrawSurface3(IDirectDrawS
     return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirectDrawSurface3_iface);
 }
 
+IDirectDrawSurfaceImpl *unsafe_impl_from_IDirectDrawSurface4(IDirectDrawSurface4 *iface)
+{
+    if (!iface) return NULL;
+    if (iface->lpVtbl != &IDirectDrawSurface4_Vtbl) return NULL;
+    return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirectDrawSurface4_Vtbl);
+}
+
 /* dds_get_outer
  *
  * Given a surface from ddraw.dll it retrieves the pointer to the ddrawex.dll wrapper around it
@@ -1222,7 +1229,7 @@ IDirectDrawSurface4 *dds_get_inner(IDirectDrawSurface4 *outer)
 
 HRESULT prepare_permanent_dc(IDirectDrawSurface4 *iface)
 {
-    IDirectDrawSurfaceImpl *This = impl_from_dds4(iface);
+    IDirectDrawSurfaceImpl *This = unsafe_impl_from_IDirectDrawSurface4(iface);
     HRESULT hr;
     This->permanent_dc = TRUE;
 
