@@ -1,16 +1,16 @@
-The Wine development release 1.5.10 is now available.
+The Wine development release 1.5.11 is now available.
 
 What's new in this release (see below for details):
-  - New version of the Gecko engine based on Firefox 14.
-  - Support for OpenGL in the DIB engine using libOSMesa.
-  - Off-screen rendering is now the default in Direct3D.
-  - Some more WMI infrastructure.
+  - Multi-channel support in the ALSA driver.
+  - Removal of the big X11 lock.
+  - Support for pair positioning adjustments in Uniscribe.
+  - More I/O stream implementations in the C++ runtime.
   - Various bug fixes.
 
 The source is available from the following locations:
 
-  http://prdownloads.sourceforge.net/wine/wine-1.5.10.tar.bz2
-  http://mirrors.ibiblio.org/wine/source/1.5/wine-1.5.10.tar.bz2
+  http://prdownloads.sourceforge.net/wine/wine-1.5.11.tar.bz2
+  http://mirrors.ibiblio.org/wine/source/1.5/wine-1.5.11.tar.bz2
 
 Binary packages for various distributions will be available from:
 
@@ -26,442 +26,395 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 1.5.10 (total 53):
+Bugs fixed in 1.5.11 (total 36):
 
-  10016  age of wonders 2: the application does not get any mouse input
-  10028  rappelz updater is slow because of dlls/mshtml/htmlnode.c:get_node(...)
-  11793  Hulk demo crashes in DSOUND
-  12240  Scar fails to launch
-  14476  Display window placed in wrong location
-  15485  EVE Online hangs on focus restore after applying Empryan Age 1.1.1 patch
-  16151  Dragon 10 crashes with 'err:region:CombineRgn Invalid rgn=(nil)'
-  16200  Miranda IM can't connect on MSN and Gmail protocol
-  16274  Mortyr 2093-1944: Shots leave black squares
-  16408  Half Life 2 NPC characters appear stretched
-  18303  Adobe Acrobat Pro 7: Crashes when selecting the "edit" menu while having a file open.
-  19222  menus jump and scramble input for MS SQL Server Management Studio Express
-  20689  BloodRayne crashes after intro video
-  21538  SSL implementation is incomplete (affects yahoo and SSL'ed ICQ Miranda connections)
-  21907  Firefox 3.6 on FreeBSD - Rough, text and mangled graphics
-  22493  Baldur's Gate 2: poor rendering with ddr=opengl
-  22802  City of Heroes crashes on startup with Intel graphics
-  23034  Tools->Plugins menu in Stud_PE cannot be clicked
-  24002  Areena 5 crashes with runtime error when entering battle
-  24380  Final Fantasy XIV beta: crashes if launching in full screen mode
-  25234  Half Life 2: wrong colors
-  25711  Temple Of Elemental Evil end slideshow display black, except for fractions of a second
-  26285  Mass Effect 2 Demo ignores keyboard input until mouse clicked
-  27024  3DMark06: dies on msvcp71.dll.?begin@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBE?AVconst_iterator@12@XZ (purist)
-  27040  Intellicad Viewer needs msvcp71.dll.??0?$basic_ofstream@DU?$char_traits@D@std@@@std@@QAE@PBDHH@Z
-  27617  DLL function import error: MSVCP60.dll/??_7out_of_range@std@@6B@ in Quest Atlantis
-  27649  Silverlight 4 fails to show animations
-  27698  EA Origin wants  msvcp100.dll.?_Orphan_all@_Container_base0@std@@QAEXXZ (purist)
-  27748  Chenzo Cove requires unimplemented function d3dx9_36.dll.D3DXCreateRenderToEnvMap (purist)
-  28260  dsound/ds3d.ok crashes under WINEDEBUG=warn+heap
-  28283  text overlap in pdf-xchange
-  28345  dragon age:origins fails to load save game (??0?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@H@Z)
-  28641  Baldur's Gate II - Throne of Bhaal crashes
-  29155  Builtin IE with ICBC bank input control crash while closing
-  29225  WinMerge needs msvcp71.dll.?begin@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAE?AViterator@12@XZ (purist)
-  29357  ImgBurn's disc layout editor toolbar gets corrupted after switching to side by side view and back
-  29549  QQMusic crash at unimplemented msvcr80.dll.tmpfile_s
-  30669  Civilization 3 game display fully corruption
-  30701  Can't install Sony Sound Forge pro 10 , Installer crashed .
-  31064  built in IE will not login to U-Haul dealer network
-  31089  Civilization V demo has black screen, complains "Could not load width data" without native msvcp90 (purist)
-  31091  Kindle hangs (crashes) on second run with builtin msvcp90
-  31093  League of Legends / Pando downloader crashes with builtin msvcp90
-  31179  crash in Jack5 since upgrade to wine 1.5.8-0ubuntu1~pulse18
-  31180  DC Universe Online: installer fails with "generic error"
-  31211  Tanner S-Edit rubberbanding leaves screen garbage
-  31239  GTAIV lacks some lights
-  31276  Total Commander 8.0 64-bit installer crashes during cabinet extraction (wrong FCI/FDI structure packing for Win64)
-  31288  Visual Studio 2005 Trial "Server Explorer" needs IWbemClassObject::BeginMethodEnumeration when inspecting Management Classes
-  31305  AxisPro: Hangs when drawing stock chart
-  31317  Age of Empires 2: top of the screen turns white when creating a new player
-  31320  Steam fails to start, needs dwrite.dll.DWriteCreateFactory
-  31323  Microsoft SQL Server Management Studio Express 2005: cannot control server service (needs Win32_Service WMI class and improved parser for wbem_services_GetObject)
+   7260  Graphical corruptions in Sim City 4
+  10469  Radmin viewer 3.1: Mass selection of users does not work in the text chat mode
+  13436  Checkbox at finish screen is invisible unless checkbox is given focus
+  13868  Starlancer crashes with force feedback enabled
+  16226  Office XP keeps reinstalling at program startup
+  16580  S.T.A.L.K.E.R: sky not redrawn correctly with dynamic lighting
+  17570  Can't build/install DPK files in Delphi 7.
+  19936  Mother - crashes on start
+  20531  Steam version of Need for speed undercover crashes if you click on it.
+  21496  Xfire 1.120: Cannot login - page fault on write access
+  23012  Black sky in Gothic 3
+  23616  Fallout 3: childbirth scene halts after every (second) line of dialogue, preventing new game
+  24629  Prince of Persia: The Forgotten Sands won't start without native d3dx9_36
+  26371  Back to the Future Ep.1: It's About Time Crashes
+  27685  [F.E.A.R.3]Black Textures/Screen
+  27861  starcraft ii.exe has encountered a serious problem and needs to close
+  28489  Ghost Recon Advanced Warfighter: graphical glitches
+  29844  Mouse input issue on Macosx Snowleopard/Lion in games Like Mass Effect and others
+  30936  Star Wars: Knights of the Old Republic crashes after first location
+  31018  OpenGL OBJ Viewer Demo crashes when opening an object (msvcp100)
+  31042  Wine crash when browsing google
+  31049  Team Fortress 2 - Pyromania update locks up screen
+  31071  DotA 2: overbright/broken lighting effects
+  31100  Outlook 2010 crashes on calender alerts
+  31192  CodeWright 7.5 Will Not Even Start - Serious Error Message
+  31255  msvcp100 missing _J versions of several functions
+  31316  Game Controllers Panel looks weird when dpi is higher than 96 ppp.
+  31326  ScriptStringOut draw glyphs with wrong pitch with some fonts
+  31344  Anarchy online needs msvcp80.dll.?uncaught_exception@std@@YA_NXZ
+  31352  Driftmoon needs more WMI stuff?
+  31364  Truncated text (in Portuguese) in winecfg.exe
+  31370  Full screen functionality broken in full screen programs
+  31386  Installshield Wizard welcome screen displays inverted text
+  31455  OpenGeneral: cannot start the application
+  31463  GeForce GT 630M (with Bumblebee) is not properly recognized
+  31484  Operation Flashpoint hangs for a short period on each keypress
 
 ----------------------------------------------------------------
 
-Changes since 1.5.9:
+Changes since 1.5.10:
 
 Alex Henrie (1):
-      wininet: Support ICU_ENCODE_PERCENT, ICU_ENCODE_SPACES_ONLY, and ICU_NO_META.
+      user32: Correct dialog focus behavior.
 
-Alexandre Goujon (1):
-      kernel32: Reimplement GetLogicalDrives using Nt{Open, Query}DirectoryObject.
+Alexandre Julliard (18):
+      msvcp90: Fix the calling convention of the basic_string helpers.
+      winex11: Remove X11 locking around simple X calls.
+      winex11: Remove remaining X11 locking around graphics calls.
+      winex11: Remove unnecessary cleanups on process exit.
+      winex11: Add a critical section to protect the OpenGL context list.
+      winex11: Initialize the OpenGL format list at startup and simplify the conversion routines.
+      winex11: Make pixel format objects const and get rid of the WineGLPixelFormat typedef.
+      winex11: Remove the redundant pixel format index from the pixel format object.
+      winex11: Store XInput2 device info in the thread data.
+      winex11: Use the labels to find the mouse motion valuators for XInput2.
+      winex11: Create contexts at initialization time to avoid the need for locks.
+      winex11: Add a critical section to protect the keyboard mapping tables.
+      winex11: Remove the remaining X11 locking calls.
+      wined3d: Remove references to the (no longer used) X11 lock.
+      winex11: Get rid of the X11 locking functions.
+      msvcrt: Add a number of floating point functions for 64-bit.
+      msvcr100: Add the 64-bit variants of the C++ exported names.
+      winex11: Release the keyboard lock before sending input to the server.
 
-Alexandre Julliard (40):
-      user32/tests: Try to fix a test that frequently fails on Windows.
-      opengl32: Generate a header file containing function tables for all OpenGL functions.
-      opengl32: Generate a function table with null OpenGL entry points and store it in the TEB.
-      winex11: Fill a function table with the standard OpenGL functions and store it in the TEB.
-      opengl32: Call standard OpenGL functions through the TEB function table.
-      opengl32: Call OpenGL extension functions through the TEB function table.
-      opengl32: Redirect standard OpenGL functions through the TEB function table.
-      opengl32: Call all OpenGL functions through the current context table and don't link against libGL.
-      winex11: Use the function table pointer to call dynamically loaded OpenGL functions.
-      opengl32: Remove redundant fields in the functions hashes.
-      gdi32: PatBlt needs to bypass the brush for ROPs that don't make use of it.
-      wined3d: Load glPointParameter functions as extensions rather than standard OpenGL functions.
-      gdi32: Remove left-over debug trace.
-      opengl32: Declare input pointers as const in function prototypes.
-      opengl32: Move the wgl functions to the main OpenGL function table.
-      opengl32: Add supported wgl extension functions to the OpenGL function table.
-      opengl32: Add a mechanism for managing different types of OpenGL handles.
-      opengl32: Use proper handles for PBuffers instead of raw pointers.
-      winex11: Remove unused fields in the PBuffer object.
-      winex11: Get rid of the glGetIntegerv wrapper.
-      wined3d: Fetch GL functions from the WGL driver table, including glFinish and glFlush.
-      fusion: Simplify the parsing of clr tables.
-      include: Fix alignment of cabinet structures on 64-bit.
-      gdi32: Work around a gcc array out of bounds warning.
-      opengl32: Load GLU functions from glu32.dll instead of the Unix library.
-      winex11: Add a helper function to correctly check extension strings.
-      opengl32: Allocate a separate context structure to store generic information.
-      opengl32: Store the context current DCs on the opengl32 side.
-      opengl32: Store the modified extension string in the context.
-      wined3d: Retrieve OpenGL extension functions directly through the TEB table.
-      msvcrt: Make sure that errno is always set when calling the invalid parameter handler.
-      msvcr90/tests: Fix tests for errno values.
-      gdi32: Support OpenGL in bitmaps through libOSMesa.
-      msxml3: Fix an uninitialized variable.
-      winex11: Get rid of the OpenGL bitmap support.
-      gdi32: Add a helper function to initialize Bresenham parameters for line drawing.
-      gdi32: Limit line drawing coordinates to reasonable values to avoid overflows.
-      gdi32: Clip solid pen regions to the DIB rectangle to avoid overflows.
-      gdi32: Move DescribePixelFormat and SetPixelFormat to the WGL driver.
-      gdi32: Compute the line parameters using the cropped coordinates to avoid overflows.
+Alistair Leslie-Hughes (3):
+      scrrun: Implement IFileSystem3 FolderExists.
+      scrrun: Add missing id value.
+      scrrun: Correct FileExists for directories.
 
-André Hentschel (2):
-      msvcrt: Add tmpfile_s implementation.
-      winspool.drv: Update allowed driver version.
+Andrew Eikum (3):
+      mciavi32: Advance video frames based on frame duration, not audio sample rate.
+      winealsa.drv: Don't cap the allowed number of channels.
+      winealsa.drv: Remap mmdevapi channels to correct ALSA channels.
 
-Aurimas Fišeras (1):
-      po: Update Lithuanian translation.
+André Hentschel (6):
+      winedbg: Add Coprocessor move operators to Thumb2 disassembler.
+      d3drm: Add SceneBackground handling.
+      kernel32/tests: Test LocaleNameToLCID with bad name.
+      include: Rename IMAGE_FILE_MACHINE_ARMV7 to IMAGE_FILE_MACHINE_ARMNT.
+      winebuild: Rename IMAGE_FILE_MACHINE_ARMV7 to IMAGE_FILE_MACHINE_ARMNT.
+      kernel32: Fix LocaleNameToLCID on mismatch.
 
-Caron Jensen (1):
-      wined3d: Recognize AMD Tahiti cards.
+Aric Stewart (5):
+      usp10: Cache OUTLINETEXTMETRICW in addition to TEXTMETRICW.
+      usp10: Use cached values in GPOS functions.
+      usp10: Correct implementation of Pair Positioning Adjustment: Format 1.
+      usp10: Correct rounding of negative offsets in GPOS.
+      usp10: Implement MarkToMark Attachment Positioning Subtable.
+
+Austin English (2):
+      configure: Use -gdwarf-2 / -gstrict-dwarf when available.
+      kernel32: Implement IsValidLocaleName (with tests).
+
+Bruno Jesus (1):
+      wininet/tests: Add invalid index test for HttpQueryInfo.
 
 Dan Kegel (1):
-      msvcp100: Add _Container_base0::_Swap_all, _Container_base0::_Orphan_all.
+      msvcrt: memmove_s shouldn't zero its output buffer on error.
 
-Detlef Riekenberg (10):
-      include: Add appcompatapi.h.
-      apphelp: Implement ApphelpCheckShellObject.
-      apphelp/tests: Add tests for ApphelpCheckShellObject.
-      wer: Return S_OK from WerReportSetParameter.
-      wer: Add a stub for WerReportAddFile.
-      msi/tests: Use always static binding for GetTokenInformation.
-      wer: Return S_OK from the WerRepostSubmit stub.
-      include: Add TOKEN_MANDATORY_LEVEL definitions.
-      ntdll: Support TokenIntegrityLevel.
-      advapi32/tests: Simple tests for TokenIntegrityLevel.
+Detlef Riekenberg (6):
+      kernel32/tests: Fix test failures on win7.
+      mpr/tests: Handle result from the AppV virtual drive.
+      mshtml/tests: Mark IE6 behavior as broken.
+      d3dx9_36/tests: Fix failures on vista x64.
+      wintrust/tests: Handle ERROR_ACCESS_DENIED failures.
+      advpack/tests: Avoid test failures without high access rights.
 
-Dmitry Timoshkov (47):
-      gdiplus: Add a test for font and graphics using different base units.
-      gdiplus: Factor out units_to_pixels() helper.
-      gdiplus: GdipGetFontHeight should convert height from font to device units.
-      gdiplus: GdipMeasureString operates internally in pixels but in/out rectangles are in device units.
-      include: Add PixelFormat32bppCMYK definition.
-      include: Add some useful helpers to check various pixel format properties.
-      include: Move PaletteFlags definition to gdipluspixelformats.h.
-      gdiplus: Set actual resolution of an image being encoded.
-      windowscodecs: Add support for generating WICBitmapPaletteTypeFixedHalftone27 palette.
-      windowscodecs: Add support for generating WICBitmapPaletteTypeFixedHalftone125 palette.
-      windowscodecs: Add support for generating WICBitmapPaletteTypeFixedHalftone216 palette.
-      windowscodecs: Add support for generating WICBitmapPaletteTypeFixedHalftone252 palette.
-      windowscodecs: Add support for adding trasparent color to generated palettes.
-      windowscodecs: Add a test for invalid predefined palette type.
-      windowscodecs: Implement MetadataHandler_Load.
-      windowscodecs: Do not assume that vtable is the first element of the object.
-      windowscodecs: Do not assume that vtable is the first element of the object.
-      windowscodecs: Do not assume that vtable is the first element of the object, avoid not necessary casts.
-      windowscodecs: Make classinfo structure const.
-      windowscodecs: Do not assume that vtable is the first element of the object, avoid not necessary casts.
-      windowscodecs: Do not assume that vtable is the first element of the object.
-      windowscodecs: Do not assume that vtable is the first element of the object, avoid not necessary casts.
-      windowscodecs: Do not assume that vtable is the first element of the object, avoid not necessary casts.
-      windowscodecs: Do not assume that vtable is the first element of the object, avoid not necessary casts.
-      windowscodecs: Do not assume that vtable is the first element of the object, avoid not necessary casts.
-      windowscodecs: Do not assume that vtable is the first element of the object.
-      windowscodecs: Do not assume that vtable is the first element of the object, avoid not necessary casts.
-      windowscodecs: Do not assume that vtable is the first element of the object.
-      windowscodecs: Do not assume that vtable is the first element of the object.
-      windowscodecs: Do not assume that vtable is the first element of the object, avoid not necessary casts.
-      windowscodecs: Do not assume that vtable is the first element of the object, avoid not necessary casts.
-      windowscodecs: Do not assume that vtable is the first element of the object, avoid not necessary casts.
-      gdiplus: Retrieve image palette from WIC.
-      gdiplus: Add 8bppIndexed to the list of supported formats.
-      gdiplus: Use predefined palette if an image doesn't provide one.
-      gdiplus: Add 8bppGray to the list of supported formats.
-      gdiplus: Make get_palette() usable for generating predefined palettes.
-      gdiplus: Handle image loading failures under some XP versions.
-      gdiplus: Add missing 'break'.
-      gdiplus: Store device resolution in the graphics object.
-      gdiplus: Add some GdipTransformPoints tests for a device with different x/y resolutions.
-      windowscodecs: Fix warnings detected by compiling with inline wrappers.
-      windowscodecs: Implement IWICPalette_InitializeFromPalette.
-      include/winnt.h: MSC compiler doesn't support __asm keyword in x86_64 mode.
-      include/winbase.h: MSC compiler implements interlocked* APIs as intrinsics in x86_64 mode.
-      windowscodecs: Fix memory leak in error case.
-      gdiplus: Improve precision of calculated pixel to units transformation.
+Dmitry Timoshkov (18):
+      windowscodecs: Handle short reads in the metadata handler.
+      gdiplus: Correct GdipSaveImageToFile spec entry.
+      include/gdipluspixelformats.h: Avoid explicit TRUE/FALSE in conditional expressions.
+      gdiplus: Add more tests for GdipMeasureString using device with custom resolution.
+      Revert commit b20a1f56b0c915b24f70b8be83fbf76ea7378123.
+      gdiplus: GdipGetLogFontW should transform returned font height using font and device unit/resolution/scale.
+      gdiplus: get_font_hfont helper should transform returned font height using font and device unit/resolution/scale.
+      gdiplus: GdipMeasureString should apply its internal scaling factors to layout rectangle.
+      gdiplus: Replace convert_unit() by a clearer units_to_pixels() helper.
+      gdiplus: Add a test for font height scaling.
+      gdiplus: Add a test for GdipDrawImage scaling.
+      gdiplus: Forward GdipDrawImage to GdipDrawImagePointRect.
+      winedbg: Make the crash dialog slightly larger and minimize/maximize-able.
+      gdiplus: Destination points passed to GdipDrawImagePointsRect should be in device units.
+      gdiplus: When there is no target rectangle specified DrawImage should scale image to device dpi.
+      gdiplus: Properly convert source coordinates to device units in GdipDrawImagePointsRect.
+      gdiplus: Dump the matrix passed to GdipSetWorldTransform.
+      gdiplus: Make GdipSetPropertyItem return Ok.
 
-Francois Gouget (9):
-      winex11.drv: Don't include wgl_driver.h if OpenGL is not supported.
-      d3dcompiler_43: Add a trailing '\n' to a couple of Wine traces.
-      d3dcompiler_43: Make some functions static.
-      d3d10: Make get_property_info() static.
-      kernel32/tests: Use NULL instead of casting 0.
-      msvcp90: Make num_put__Iput() static.
-      d3dcompiler_43: Make debug_dump_ir_expr() static.
-      kernel32/tests: Make initonce_callback() static.
-      wbemprox: Make some signature table functions static.
+Eric Pouech (3):
+      msacm32: In format chosse dialog, get rid of static variables, and store information as a property of dialog.
+      msacm32: Convert acmFormatChoose internals to Unicode, implement acmFormatChoose[AW] on top of it.
+      msacm32: In acmFormatChoose, added support for template.
 
-Frédéric Delanoy (1):
-      po: Update French translation.
+Erich Hoover (1):
+      hhctrl.ocx: Centralize merging HH_WINTYPE data.
 
-Gustavo Henrique Milaré (2):
-      po: Update Brazilian Portuguese translation.
-      po: Update Brazilian Portuguese translation.
+Francois Gouget (12):
+      winmm: MMDRV_GetRelated() is not used anymore so remove it.
+      dsound/tests: Clarify some skip() traces.
+      dsound/tests: Trace the number of tested DirectSound drivers.
+      taskmgr: Tweak the spelling of a label.
+      winecfg: Tweak the spelling of a couple of labels.
+      winefile: Tweak the spelling of a menu.
+      inetcpl: Tweak the spelling of a label.
+      winecfg: An English spelling tweak.
+      kernel32: Fix the spelling of 'combo box' and 'top-level' in some error messages.
+      wined3d: Change some internal function and structure names to the more standard 'converter' spelling.
+      msvcp90: Make basic_istream_read_str() static.
+      gdiplus/tests: Make pixels_to_units() static.
 
-Hans Leidekker (18):
-      wbemprox: Implement IWbemClassObject::Put.
-      wbemprox: Add helpers for retrieving class instances.
-      wbemprox: Fix corner cases in IEnumWbemClassObject::Skip.
-      wbemprox: Reset the number of rows only when the table was filled dynamically.
-      wbemprox: Implement IWbemClassObject::GetMethod.
-      msi: Use the right interface to call 32-bit and 64-bit custom action scripts.
-      msi: Use inline wrappers for calling COM methods.
-      wbemprox: Add a partial Win32_Service class implementation.
-      wbemprox: Parse the object path passed to IWbemServices::GetObject.
-      winhttp: Use platform-specific versions of IActiveScriptParse methods.
-      wbemprox: Add support for boolean properties.
-      wbemprox: Implement Win32_Service.AcceptPause and Win32_Service.AcceptStop.
-      wbemprox: Store the class name in the class object.
-      wbemprox: Add support for enumerating class methods.
-      wbemprox: Add support for enumerating class properties.
-      sxs: Use inline wrappers for calling COM methods.
-      fusion: Use inline wrappers for calling COM methods.
-      msi: Implement the RemoveExistingProducts standard action.
+Gustavo Henrique Milaré (1):
+      po: Fix Brazilian Portuguese translation.
 
-Heiko Hund (1):
-      winhttp: Make strings in WINHTTP_PROXY_INFO non-const.
+Hans Leidekker (2):
+      msi: Avoid an out of bounds access in msi_build_directory_name.
+      msi: Try the registered install location first when resolving the target directory.
 
-Henri Verbeet (29):
-      include: Add some more SP_PROT_* flags.
-      secur32: Recognize some more TLS versions.
-      d3d10: Add support for parsing blend factors to parse_fx10_object().
-      d3d10: Add support for parsing sample masks to parse_fx10_object().
-      d3d10: Add support for parsing stencil reference values to parse_fx10_object().
-      ddraw: Implement ddraw7_GetScanLine() on top of wined3d_get_adapter_raster_status().
-      ddraw: Implement ddraw7_GetVerticalBlankStatus() on top of wined3d_get_adapter_raster_status().
-      wined3d: Fix the draw buffer limit calculation.
-      wined3d: Disable the X11 / GL lock.
-      wined3d: Enable "AlwaysOffscreen" by default.
-      wined3d: Get rid of some unused PCI IDs.
-      wined3d: Convert some uppercase hex constants to lowercase.
-      d3d10/tests: Add a test for default state values.
-      d3d10: Add support for parsing rasterizer states.
-      d3d10: Implement d3d10_effect_rasterizer_variable_GetBackingStore().
-      wined3d: Get rid of APPLE_flush_render, it doesn't exist.
-      wined3d: Fix some EXT_gpu_shader4 function names.
-      d3d10: Add support for parsing depth/stencil states.
-      d3d10: Implement d3d10_effect_depth_stencil_variable_GetBackingStore().
-      wined3d: Handle core fixups like any other kind of extension fixup.
-      wined3d: Use struct opengl_funcs for storing GL extension pointers.
-      ddraw: Implement ddraw7_GetMonitorFrequency() on top of wined3d_get_adapter_display_mode().
-      d3d10: Add support for parsing blend states.
-      d3d10: Implement d3d10_effect_blend_variable_GetBackingStore().
-      d3d10: Add support for parsing sampler states.
-      d3d10: Implement d3d10_effect_sampler_variable_GetBackingStore().
-      wined3d: Get rid of the GL extension function pointer typedefs.
-      wined3d: Pass a gl_info structure to fragment_pipeline.enable_extension().
-      wined3d: Call core GL functions through gl_info.gl_ops as well.
+Henri Verbeet (2):
+      winex11: Don't set MWM decorations either for fullscreen virtual desktops.
+      winex11: Explicitly clear virtual desktop maximized state.
 
-Hwang YunSong (1):
-      po: Update Korean translation.
+Jacek Caban (37):
+      mshtml: Test contentWindow interfaces of frame and iframe elements.
+      mshtml: Fixed DISPATCH_PROPERTYGET|DISPATCH_METHOD support in invoke_builtin_prop.
+      mshtml: Default to previous script type if not given.
+      vbscript: Ignore fdexNameCaseSensitive flag.
+      mshtml: Added VBScript in HTML tests.
+      vbscript: Added IActiveScriptParseProcedure2 stub implementation.
+      wscript: Use proper helpers for iface calls.
+      inetcomm: Use proper iface call helpers.
+      oleaut32/tests: Use proper helpers for iface calls.
+      ole32: Use proper helpers for iface calls.
+      ole32/tests: Use proper helpers for iface calls.
+      ole32: Added ISynchronizeHandle implementation.
+      ole32: Added ISynchronizeHandle tests.
+      rpcrt4: Added RpcError* stubs.
+      mshtml: Store moniker in HTMLInnerWindow.
+      mshtml: Use inner window's moniker in PluginHost implementation.
+      mshtml: Use helper to get IUri in HTMLLocation implementation.
+      mshtml: Moved HTMLLocation reference to inner window.
+      vbscript: Added shell registry for VBSFile.
+      rpcrt4: Use proper helper for IRpcStubBuffer call.
+      rpcrt4: Added prepare_async_request helper.
+      rpcrt4: Use helper for handling async call wait.
+      rpcrt4: Optimize buffer allocation in rpcrt4_ncacn_http_read.
+      rpcrt4: Properly handle async HTTP failures.
+      rpcrt4: Added cancelling support for all HTTP requests.
+      rpcrt4: Fixed memory leak.
+      rpcrt4: Moved sending echo request to separated function.
+      mmdevapi: Use proper helpers for iface calls.
+      strmbase: Use proper helpers for iface calls.
+      shlwapi: Use proper helpers for iface calls.
+      comdlg32: Use proper helpers for iface calls.
+      mshtml: Moved Invoke(DISPID_ENABLED) invocation to separated function.
+      mshtml: Added IHTMLObjectElement::put_width implementation.
+      mshtml: Added IHTMLObjectElement::get_width implementation.
+      mshtml: Added IHTMLObjectElement::put_height implementation.
+      mshtml: Added IHTMLObjectElement::get_height implementation.
+      mshtml: Added more IHTMLObjectElement tests.
 
-Jacek Caban (68):
-      vbscript: Fixed locale-related test failures.
-      vbscript: Use current locale in to_string.
-      mshtml: Wine Gecko 1.7 release.
-      ole32: Forward BSTR functions to oleaut32.
-      mshtml: Make node object cycle collector aware.
-      mshtml: Make node object's dynamic IDispatchEx-based properties cycle collectable.
-      mshtml: Make nsIDOMHTMLDocument reference cycle collectable.
-      mshtml: Store MSHTML node reference in Gecko node object and get rid of all node list in document object.
-      ole32: Use proper allocators for storing source in ErrorInfoImpl.
-      ole32: Use proper allocators for storing description in ErrorInfoImpl.
-      ole32: Use proper allocators for storing help file in ErrorInfoImpl.
-      mshtml: Moved creating nsIFile to separated function.
-      mshtml: Store scheme in nsWineURI instead of nsChannel.
-      mshtml: Added nsIFileURL stub implementation.
-      mshtml: Added nsIFileURL::GetFile implementation.
-      vbscript: Added parser support for select case statement.
-      vbscript: Added compiler support for select case statement.
-      vbscript: Added interp_case implementation.
-      vbscript: Added select case statement tests.
-      mshtml.idl: Added IXMLHttpRequest declaration.
-      mshtml.idl: Added more *XMLHttpRequest* declarations.
-      mshtml.idl: Added IDOMEvent and IDOMEventTarget declarations.
-      widl: Add IDL installation directory to include path.
-      mshtml: Fixed tests on Vista.
-      mshtml: Unescape script from javascript: URLs before executing them.
-      mshtml: Share IHTMLFrameBase tests between iframe and frame element tests.
-      mshtml: Added IHTMLFrameBase::frameBorder implementation.
-      jscript: Don't expose properties belonging to Object prototype from Object instance.
-      jscript: Don't expose properties that belong to function prototype from function instance.
-      jscript: Properly handle builtin properties in Object.prototype.hasOwnProperty implementation.
-      jscript: Added more tests.
-      jscript: Use prototype for builtin Array properties.
-      jscript: Use prototype for builtin Boolean properties.
-      jscript: Use prototype for builtin Date properties.
-      jscript: Use prototype for builtin Number properties.
-      jscript: Use prototype for builtin RegExp properties.
-      jscript: Use prototype for builtin String properties.
-      mshtml: Use proper document node for createElement called on document fragment.
-      mshtml: Added IHTMLDOMAttribute::get_specified implementation.
-      mshtml: Clean up InvokeEx implementation by using get_dispid_type.
-      mshtml: Moved more logic to HTMLStyle_Create.
-      mshtml: Added IHTMLElement2::get_runtimeStyle hackish implementation.
-      mshtml: Added runtimeStyle tests.
-      activdbg.idl: Undef GetCurrentThread macro to avoid collision with interface function declaration.
-      widl: Added an extension that uses inline functions instead of macros for C interface calls.
-      mshtml: Use inline wrappers and fixed found warnings.
-      mshtml: Properly handle NULL VT_DISPATCH refChild in IHTMLDOMNode::insertBefore.
-      mshtml: Moved IStream::Read calls to separated function.
-      mshtml: Moved conversion to unicode of buffers from binding to navigate.c.
-      mshtml: Added support for BOM in bind_mon_to_wstr.
-      mshtml: Grow the buffer faster in BufferBSC_read_data.
-      ieframe: Use proper helpers for iface calls.
-      urlmon: Use proper helpers for iface calls.
-      oleaut32: Use proper helpers for iface calls.
-      urlmon: SecManagerImpl_QueryInterface clean up.
-      ieframe/tests: Use proper helpers for iface calls.
-      urlmon/tests: Use proper helpers for iface calls.
-      mshtml/tests: Use proper helpers for iface calls.
-      jscript/tests: Use proper helpers for iface calls.
-      mshtml: Store inner window directly in HTMLDocumentNode.
-      mshtml: Use inner window directly from document node in htmlevent.c.
-      mshtml: Use inner window directly in HTMLImageElementFactory implementation.
-      mshtml: Use inner window directly in HTMLOptionElementFactory implementation.
-      mshtml: Use inner window directly in run_insert_script.
-      mshtml: Use inner window directly in handle_load.
-      guiddef.h: Use static const IID instance for __uuidof.
-      vbscript/tests: Use proper helpers for iface calls.
-      mshtml.idl: Added IHTMLDOMConstructorCollection declaration.
+Jan Beich (2):
+      ntdll: Prefer a portable function to get thread id.
+      ntdll: Fetch thread id on NetBSD.
 
-Józef Kucia (1):
-      d3dx9: Allow D3DX_DEFAULT to be passed as srclevel to D3DXFilterTexture.
+Julian Rüger (1):
+      po: Update German translation.
 
-Marcus Meissner (1):
-      mshtml: Remove superflous check (Coverity).
+Józef Kucia (18):
+      d3dx9/tests: Clean up device state after tests.
+      d3dx9: Introduce separate functions for restoring and capturing device state.
+      d3dx9: Implement rendering to cube textures in ID3DXRenderToEnvMap.
+      d3dx9/tests: Add basic tests for ID3DXRenderToEnvMap.
+      d3dx9/tests: Add cube texture tests for ID3DXRenderToEnvMap.
+      d3dx9: Introduce helper functions to operate on constant handles.
+      d3dx9: Introduce a helper function for setting float shader constants.
+      d3dx9: Correctly handle constants without default values in D3DXGetShaderConstantTableEx.
+      d3dx9: Implement ID3DXConstantTable::SetDefaults.
+      d3dx9/tests: Add tests for constant tables with default values.
+      d3dx9/tests: Add tests for ID3DXConstantTable::SetDefaults.
+      d3dx9: Implement ID3DXConstantTable::SetBool.
+      d3dx9: Implement ID3DXConstantTable::SetBoolArray.
+      d3dx9/tests: Add tests for setting matrix shader constants.
+      d3dx9: Implement ID3DXConstantTable::SetValue.
+      d3dx9/tests: Add tests for ID3DXConstantTable::SetValue.
+      d3dx9: Fix ID3DXConstantTable::SetVector.
+      d3dx9: Fix ID3DXConstantTable::SetMatrix.
 
-Matteo Bruni (10):
-      d3dcompiler: Check for invalid matrix majority modifiers.
-      d3dcompiler: Don't allow const variables without initializers.
-      d3dcompiler: Don't allow semantics on local variables.
-      d3dcompiler: Parse multiplicative expressions.
-      d3dcompiler: Parse relational operators, stub out more rules.
-      d3dcompiler: Parse some postfix operators.
-      d3dcompiler: Parse unary and prefix operators.
-      d3dcompiler: "void" is not a plain scalar data type.
-      d3dcompiler: Stub assignment parsing.
-      d3dcompiler: Parse assignments.
+Lauri Kenttä (1):
+      po: Update Finnish translation.
 
-Michael Stefaniuc (24):
-      dsound/tests: Add IDirectSound refcount and COM aggregation tests.
-      dsound: Merge the two IUnknown/IDirectSound implementations for DirectSound.
-      dsound: Rename the DirectSound object refcount to "numIfaces".
-      dsound: Cleanup IDirectSoundImpl_Create() and move it.
-      dsound: Merge IUnknown into the main DirectSound object.
-      dsound: Merge the DirectSound create functions.
-      dsound: Drop a redundant 'IDirectSound8' from the method names.
-      dsound: Merge IDirectSound8 into the main DirectSound object.
-      dsound: Handle IDirectSound by the IDirectSound8 implementation.
-      dsound: Get rid of the DSOUND_QueryInterface() helper.
-      winedump: Simplify the "pointer to start of array" idiom.
-      dnsapi: Remove a superfluous TRUE-FALSE conditional expression.
-      cabinet: Simplify the "pointer to start of array" idiom.
-      mlang/tests: Simplify the "pointer to start of array" idiom.
-      cabinet: Avoid TRUE-FALSE conditional expressions.
-      wined3d: Avoid TRUE-FALSE conditional expressions.
-      winaspi.dll16: Simplify the "pointer to start of array" idiom.
-      setupapi: Simplify the "pointer to start of array" idiom.
-      winedbg: Simplify the "pointer to start of array" idiom.
-      comdlg32: Use a helper to detect the need for win16 looks.
-      winmm: Avoid TRUE FALSE conditional expressions.
-      mapi32: Remove superfluous TRUE:FALSE conditional expressions.
-      winex11.drv: Avoid TRUE:FALSE conditional expressions.
-      kernel32: Avoid TRUE:FALSE conditional expressions.
+Lucas Zawacki (5):
+      joy.cpl: Remove uneeded FIXME message.
+      joy.cpl: Better arrangement of elements even with higher DPIs.
+      joy.cpl: Correct misplaced elements when using high DPIs.
+      dinput/tests: Tests for IDirectInputJoyConfig8_GetConfig.
+      dinput: Semi-stub for IDirectInputJoyConfig8_GetConfig.
 
-Nikolay Sivov (28):
-      ole32: Fix QueryInterface for file-based ILockBytes.
-      ole32: Remove unsupported interface REFIID from storage stream QueryInterface.
-      ole32: Give names to 1Ole stream header fields.
-      msxml3: Accept selection namespaces string with trailing spaces.
-      ole32: Use a single implementation for 1Ole stream initialization.
-      kernel32: Partial CompareStringEx implementation.
-      advapi32/tests: Add some more well known SIDs to tests.
-      kernel32: Added GetSystemDefaultLocaleName().
-      kernel32: Forward GetLocaleInfoEx() to GetLocaleInfoW().
-      kernel32: Added InitOnceInitialize() implementation.
-      kernel32: Single thread test for InitOnceExecuteOnce().
-      msxml3: Accept ISequentialStream as reader input.
-      kernel32: Some tests for blocking initialization with InitOnceBeginInitialize().
-      dwrite: Added initial stub.
-      kernel32: Some test for handling locales specified by language only.
-      kernel32: Fix base for value returned with LOCALE_RETURN_NUMBER.
-      kernel32: Some tests for LOCALE_SNAME and neutral locales.
-      widl: Emit default argument values for cpp methods.
-      msxml3: Enable inline wrappers and fix warnings.
-      shell32: Use proper macros when calling COM methods.
-      kernel32: Added WerRegisterMemoryBlock stub.
-      msxml3: Enable inline wrappers for tests.
-      widl: Protect from duplicated method names in C-style vtable struct.
-      widl: Don't output method macro if name duplicates another method name.
-      include: Added dwrite.idl file.
-      dwrite: Stub for IDWriteFactory.
-      dwrite: Added IDWriteGdiInterop stub.
-      dwrite: Added basic test for IDWriteFont created from LOGFONTW.
+Marek Chmiel (4):
+      dssenh/tests: Key length tests for the DSSENH cryptographic service provider.
+      dssenh/tests: Hash tests for the DSSENH cryptographic service provider.
+      dssenh/tests: Added encryption tests for the DSSENH cryptographic service provider.
+      dssenh/tests: Added block cipher mode tests for the DSSENH cryptographic service provider.
 
-Nozomi Kodama (3):
-      d3dx9_36: Implementation of D3DXSHRotateZ.
-      d3dx9_36: Add some traces.
-      d3dx9_36: Add more traces.
+Matteo Bruni (4):
+      wined3d: Use GL_FRAMEBUFFER_SRGB when possible.
+      wined3d: Dump postblend color.
+      wined3d: Fix pixel format masks.
+      wined3d: Improve post-pixelshader blending test.
 
-Piotr Caban (9):
-      msvcp90: Fixed EOF detection in basic_filebuf_char_uflow function.
-      msvcp90: Fixed EOF detection in basic_streambuf_char__Xsgetn_s function.
-      msvcp90: Added num_put<short> implementation.
-      msvcp90: Fixed num_get<short>::vftable.
+Michael Stefaniuc (65):
+      avifil32: Avoid TRUE:FALSE conditional expressions.
+      crypt32: Avoid TRUE:FALSE conditional expressions.
+      krnl386.exe16: Avoid TRUE:FALSE conditional expressions.
+      server: Avoid TRUE:FALSE conditional expressions.
+      ole32: Avoid TRUE:FALSE conditional expressions.
+      user32: Avoid TRUE:FALSE conditional expressions.
+      gdiplus: Remove unreachable break after return (Smatch).
+      ole32: Remove superfluous NULL pointer check before free (Smatch).
+      comctl32: Get rid of two macros.
+      comctl32: Avoid TRUE:FALSE conditional expressions.
+      comdlg32: Avoid TRUE:FALSE conditional expressions.
+      credui: Avoid TRUE:FALSE conditional expressions,.
+      gdi32: Avoid TRUE:FALSE conditional expressions.
+      jscript: Avoid FALSE:TRUE conditional expressions.
+      msvcp60: Avoid FALSE:TRUE conditional expressions.
+      msvcrt: Aoid TRUE:FALSE conditional expressions.
+      oledlg: Avoid TRUE:FALSE conditional expressions.
+      winedbg: Avoid TRUE:FALSE conditional expressions.
+      shlwapi: Avoid FALSE:TRUE conditional expressions.
+      wordpad: Avoid TRUE:FALSE conditional expressions.
+      include/wininet.h: Avoid TRUE:FALSE conditional expressions.
+      ntdll: Avoid TRUE:FALSE conditional expressions.
+      setupapi: Avoid TRUE:FALSE conditional expressions.
+      shell32: Avoid TRUE:FALSE conditional expressions.
+      dsound: Avoid a TRUE:FALSE conditional expression.
+      hlink: Avoid a TRUE:FALSE conditional expression.
+      iexplore: Avoid a TRUE:FALSE conditional expression.
+      mmdevapi: Avoid a TRUE:FALSE conditional expression.
+      wineps.drv: Drop a superfluous TRUE:FALSE conditional expression.
+      explorerframe/tests: Avoid a TRUE:FALSE conditional expression.
+      dbghelp: Remove a superfluous TRUE:FALSE conditional expression.
+      setupx.dll16: Avoid a FALSE:TRUE conditional expression.
+      msi/tests: Avoid a TRUE:FALSE conditional expression.
+      riched20: Avoid a TRUE:FALSE conditional expression.
+      ws2_32: Avoid a FALSE:TRUE conditional expression.
+      secur32: Avoid a FALSE:TRUE conditional expression.
+      wintrust: Avoid a TRUE:FALSE conditional expression.
+      winspool.drv: Drop a superfluous TRUE:FALSE conditional expression.
+      winhlp32: Avoid TRUE:FALSE conditional expressions.
+      winefile: Avoid a TRUE:FALSE conditional expression.
+      widl: Avoid FALSE:TRUE conditional expressions.
+      taskmgr: Drop a superfluous TRUE:FALSE conditional expression.
+      dsound: Merge the DirectSoundCapture create functions.
+      dsound: IDirectSoundCapture / IUnknown use separate refcounts.
+      dsound/tests: Refcount tests for IDirectSoundCapture / IUnknown.
+      dsound/tests: Add DirectSoundFullDuplex COM tests.
+      dsound: Cleanup the DirectSoundFullDuplex create functions.
+      dsound: Cleanup error handling in IDirectSoundFullDuplex::Initialize().
+      dsound: COM cleanup for the IDirectSoundFullDuplex iface.
+      dsound: Pass the object instead of ifaces to helpers.
+      dsound: Add an object refcount for DirectSoundFullDuplex.
+      dsound: Merge IUnknown into the main DirectSoundFullDuplex object.
+      dsound: Add COM aggregation to DirectSound for internal use.
+      dsound: Aggregate IDirectSound8 instead of wrapping it.
+      dsound: Add COM aggregation to DirectSoundCapture for internal use.
+      dsound: Aggregate IDirectSoundCapture8 instead of wrapping it.
+      dsound: Move the QI implementation from IDirectSoundFullDuplex to IUnknown.
+      ddrawex: Use unsafe_impl_from_IDirectDrawSurface4() for application provided ifaces.
+      ddrawex: Get rid of dds_get_inner().
+      ddrawex: Rename impl_from_dds4 to impl_from_IDirectDrawSurface4.
+      ddrawex: Forward to the wrapped surface instead of recursing forever.
+      ddrawex: COM cleanup for the IDirectDrawSurface4 iface.
+      advpack/tests: Use the global "current directory" variable.
+      d3d9/tests: Simplify some logic operations.
+      advapi32/tests: Don't shadow some local variables.
+
+Nikolay Bogoychev (1):
+      wined3d: Recognize GeForce GT 630M.
+
+Nikolay Sivov (6):
+      riched20: Use proper interface methods macros.
+      dwrite: Added IDWriteFont stub.
+      dwrite: Store font style provided in LOGFONT data.
+      dwrite: Implement IDWriteBitmapRenderTarget creation.
+      dwrite: Implement IDWriteBitmapRenderTarget_GetSize.
+      quartz: Use proper method macros.
+
+Per Johansson (1):
+      wineqtdecoder: Avoid CFSTR in global initializer.
+
+Piotr Caban (29):
+      msvcp: Rename msvcp90 debug channel.
+      msvcp90: Only define virtual function callers in base class.
+      msvcp90: Added basic_filebuf<wchar> and basic_filebuf<short> implementation.
+      msvcp90: Added basic_ostream<short> implementation.
+      msvcp90: Added basic_istream<short> implementation.
+      msvcp90: Added basic_iostream<short> implementation.
+      msvcp90: Added basic_ofstream<wchar> implementation.
+      msvcp90: Added basic_ifstream<wchar> implementation.
+      msvcp90: Added basic_fstream<wchar> implementation.
+      msvcp90: Export wcin, wcout, wcerr and wclog objects.
+      msvcp90: Added basic_ostringstream<short> implementation.
+      msvcp90: Added basic_istringstream<short> implementation.
+      msvcp90: Added basic_stringstream<short> implementation.
+      msvcp90: Use streamoff in std::_BADOFF definition.
+      msvcp90: Added partial strstreambuf implementation.
+      msvcp90: Fixed basic_streambuf::sputn functions behaviour when there's no place in buffer.
+      msvcp90: Reset width value in basic_istream class on error.
+      msvcp90: Added strstreambuf seekpos and seekoff implementation.
+      msvcp90: Added missing -ret64 option.
+      msvcp100: Copy source files from msvcp90.
+      msvcp100: Fixed streamoff and streamsize definition.
+      msvcp100: Fixed basic_streambuf virtual functions table.
+      msvcp100: Fixed ctype class virtual functions table.
+      msvcp100: Update spec file.
+      msvcp100: Fixed 64-bit variables alignment.
       msvcp: Sync spec files.
-      msvcp71: Added functions for creating basic_string iterators.
-      msvcp71: Added iterator based basic_string::replace implementation.
-      msvcp71: Added basic_string::append(iterator, iterator) implementation.
-      msvcp71: Added _String_base::_Xlen and _Xran implementation.
+      msvcp90: Manually define virtual destructors in vtables.
+      msvcp60: Manually define virtual destructors in vtables.
+      msvcp100: Manually define virtual destructors in vtables.
 
-Sergey Guralnik (1):
-      user32: Rearrange ComboBox repositioning code.
+Qian Hong (3):
+      riched20/tests: Added UTF8 BOM test.
+      riched20/tests: Fixed typo in test_EM_STREAMIN.
+      riched20: Added support for UTF8 BOM stream.
 
-Thomas Faber (1):
-      comdlg32: Do not modify dialog resource directly.
+Rico Schüller (2):
+      d3dx9/tests: Reduce effect parameter value test count.
+      d3dx9/tests: Check all elements in the effect parameter value test.
 
-Vincent Povirk (1):
-      msi: Stub Migrate10CachedPackagesW.
+Sergey Guralnik (2):
+      comctl32/tests: Add test for MCN_SELECT/MCN_SELCHANGE notifications.
+      comctl32: Correct values passed in MCN_SELECT/MCN_SELCHANGE notifications.
 
-Wei-Lun Chao (9):
-      po: Update Chinese (Taiwan) translation.
-      po: Update Chinese (Taiwan) translation.
-      po: Update Chinese (Taiwan) translation.
-      po: Update Chinese (Taiwan) translation.
-      po: Update Chinese (Taiwan) translation.
-      po: Update Chinese (Taiwan) translation.
-      po: Update Chinese (Taiwan) translation.
-      po: Update Chinese (Taiwan) translation.
-      po: Update Chinese (Taiwan) translation.
+Vijay Kiran Kamuju (1):
+      atl80: Implement AtlGetVersion.
+
+Vincent Povirk (10):
+      windowscodecs: Add tests for IWICBitmap.
+      windowscodecs: Add a stub IWICBitmap implementation.
+      windowscodecs: Implement BitmapImpl_SetPalette and CopyPalette.
+      windowscodecs: Implement IWICBitmap::Lock.
+      windowscodecs: Implement getters on IWICBitmapLock.
+      windowscodecs: Implement IWICBitmap::CopyPixels.
+      windowscodecs: Implement IWICBitmap::GetPixelFormat.
+      windowscodecs: Implement IWICBitmap::GetSize.
+      windowscodecs: Implement IWICBitmap::SetResolution and GetResolution.
+      windowscodecs: Add test for IWICImagingFactory::CreateBitmapFromSource.
 
 --
 Alexandre Julliard
