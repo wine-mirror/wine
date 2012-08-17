@@ -65,7 +65,7 @@ typedef struct _OBJECT_BASIC_INFORMATION {
     LARGE_INTEGER  CreateTime;
 } OBJECT_BASIC_INFORMATION, *POBJECT_BASIC_INFORMATION;
 
-#define expect_eq(expr, value, type, format) { type ret = expr; ok((value) == ret, #expr " expected " format "  got " format "\n", (value), (ret)); }
+#define expect_eq(expr, value, type, format) { type ret_ = expr; ok((value) == ret_, #expr " expected " format "  got " format "\n", (value), (ret_)); }
 
 static BOOL (WINAPI *pAddAccessAllowedAceEx)(PACL, DWORD, DWORD, DWORD, PSID);
 static BOOL (WINAPI *pAddAccessDeniedAceEx)(PACL, DWORD, DWORD, DWORD, PSID);
@@ -254,8 +254,6 @@ static void test_sid(void)
 
     for( i = 0; i < sizeof(refs) / sizeof(refs[0]); i++ )
     {
-        PISID pisid;
-
         r = AllocateAndInitializeSid( &refs[i].auth, 1,1,0,0,0,0,0,0,0,
          &psid );
         ok( r, "failed to allocate sid\n" );
@@ -2431,15 +2429,15 @@ static void test_granted_access(HANDLE handle, ACCESS_MASK access,
 
 #define CHECK_SET_SECURITY(o,i,e) \
     do{ \
-        BOOL res; \
+        BOOL res_; \
         DWORD err; \
         SetLastError( 0xdeadbeef ); \
-        res = SetKernelObjectSecurity( o, i, SecurityDescriptor ); \
+        res_ = SetKernelObjectSecurity( o, i, SecurityDescriptor ); \
         err = GetLastError(); \
         if (e == ERROR_SUCCESS) \
-            ok(res, "SetKernelObjectSecurity failed with %d\n", err); \
+            ok(res_, "SetKernelObjectSecurity failed with %d\n", err); \
         else \
-            ok(!res && err == e, "SetKernelObjectSecurity should have failed " \
+            ok(!res_ && err == e, "SetKernelObjectSecurity should have failed " \
                "with %s, instead of %d\n", #e, err); \
     }while(0)
 
