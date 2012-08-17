@@ -178,10 +178,10 @@ void __thiscall locale_facet_dtor(locale_facet *this)
     TRACE("(%p)\n", this);
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_locale_facet_vector_dtor, 8)
+DEFINE_THISCALL_WRAPPER(locale_facet_vector_dtor, 8)
 #define call_locale_facet_vector_dtor(this, flags) CALL_VTBL_FUNC(this, 0, \
         locale_facet*, (locale_facet*, unsigned int), (this, flags))
-locale_facet* __thiscall MSVCP_locale_facet_vector_dtor(locale_facet *this, unsigned int flags)
+locale_facet* __thiscall locale_facet_vector_dtor(locale_facet *this, unsigned int flags)
 {
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
@@ -784,8 +784,8 @@ void __thiscall collate_char_dtor(collate *this)
     TRACE("(%p)\n", this);
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_collate_char_vector_dtor, 8)
-collate* __thiscall MSVCP_collate_char_vector_dtor(collate *this, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(collate_char_vector_dtor, 8)
+collate* __thiscall collate_char_vector_dtor(collate *this, unsigned int flags)
 {
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
@@ -1017,8 +1017,8 @@ void __thiscall collate_wchar_dtor(collate *this)
     TRACE("(%p)\n", this);
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_collate_wchar_vector_dtor, 8)
-collate* __thiscall MSVCP_collate_wchar_vector_dtor(collate *this, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(collate_wchar_vector_dtor, 8)
+collate* __thiscall collate_wchar_vector_dtor(collate *this, unsigned int flags)
 {
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
@@ -1035,12 +1035,6 @@ collate* __thiscall MSVCP_collate_wchar_vector_dtor(collate *this, unsigned int 
     }
 
     return this;
-}
-
-DEFINE_THISCALL_WRAPPER(MSVCP_collate_short_vector_dtor, 8)
-collate* __thiscall MSVCP_collate_short_vector_dtor(collate *this, unsigned int flags)
-{
-    return MSVCP_collate_wchar_vector_dtor(this, flags);
 }
 
 /* ??_F?$collate@_W@std@@QAEXXZ */
@@ -1223,8 +1217,8 @@ void __thiscall ctype_base_dtor(ctype_base *this)
     TRACE("(%p)\n", this);
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_ctype_base_vector_dtor, 8)
-ctype_base* __thiscall MSVCP_ctype_base_vector_dtor(ctype_base *this, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(ctype_base_vector_dtor, 8)
+ctype_base* __thiscall ctype_base_vector_dtor(ctype_base *this, unsigned int flags)
 {
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
@@ -1349,8 +1343,8 @@ void __thiscall ctype_char_dtor(ctype_char *this)
     ctype_char__Tidy(this);
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_ctype_char_vector_dtor, 8)
-ctype_char* __thiscall MSVCP_ctype_char_vector_dtor(ctype_char *this, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(ctype_char_vector_dtor, 8)
+ctype_char* __thiscall ctype_char_vector_dtor(ctype_char *this, unsigned int flags)
 {
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
@@ -1923,8 +1917,8 @@ void __thiscall ctype_wchar_dtor(ctype_wchar *this)
         free((void*)this->ctype.table);
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_ctype_wchar_vector_dtor, 8)
-ctype_wchar* __thiscall MSVCP_ctype_wchar_vector_dtor(ctype_wchar *this, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(ctype_wchar_vector_dtor, 8)
+ctype_wchar* __thiscall ctype_wchar_vector_dtor(ctype_wchar *this, unsigned int flags)
 {
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
@@ -1941,12 +1935,6 @@ ctype_wchar* __thiscall MSVCP_ctype_wchar_vector_dtor(ctype_wchar *this, unsigne
     }
 
     return this;
-}
-
-DEFINE_THISCALL_WRAPPER(MSVCP_ctype_short_vector_dtor, 8)
-ctype_wchar* __thiscall MSVCP_ctype_short_vector_dtor(ctype_wchar *this, unsigned int flags)
-{
-    return MSVCP_ctype_wchar_vector_dtor(this, flags);
 }
 
 /* _Wcrtomb */
@@ -2612,8 +2600,8 @@ void __thiscall codecvt_base_dtor(codecvt_base *this)
     locale_facet_dtor(&this->facet);
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_codecvt_base_vector_dtor, 8)
-codecvt_base* __thiscall MSVCP_codecvt_base_vector_dtor(codecvt_base *this, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(codecvt_base_vector_dtor, 8)
+codecvt_base* __thiscall codecvt_base_vector_dtor(codecvt_base *this, unsigned int flags)
 {
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
@@ -2742,8 +2730,8 @@ void __thiscall codecvt_char_dtor(codecvt_char *this)
     codecvt_base_dtor(&this->base);
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_codecvt_char_vector_dtor, 8)
-codecvt_char* __thiscall MSVCP_codecvt_char_vector_dtor(codecvt_char *this, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(codecvt_char_vector_dtor, 8)
+codecvt_char* __thiscall codecvt_char_vector_dtor(codecvt_char *this, unsigned int flags)
 {
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
@@ -3036,8 +3024,8 @@ void __thiscall codecvt_wchar_dtor(codecvt_wchar *this)
     codecvt_base_dtor(&this->base);
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_codecvt_wchar_vector_dtor, 8)
-codecvt_wchar* __thiscall MSVCP_codecvt_wchar_vector_dtor(codecvt_wchar *this, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(codecvt_wchar_vector_dtor, 8)
+codecvt_wchar* __thiscall codecvt_wchar_vector_dtor(codecvt_wchar *this, unsigned int flags)
 {
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
@@ -3054,12 +3042,6 @@ codecvt_wchar* __thiscall MSVCP_codecvt_wchar_vector_dtor(codecvt_wchar *this, u
     }
 
     return this;
-}
-
-DEFINE_THISCALL_WRAPPER(MSVCP_codecvt_short_vector_dtor, 8)
-codecvt_wchar* __thiscall MSVCP_codecvt_short_vector_dtor(codecvt_wchar *this, unsigned int flags)
-{
-    return MSVCP_codecvt_wchar_vector_dtor(this, flags);
 }
 
 /* ?_Getcat@?$codecvt@_WDH@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
@@ -3511,8 +3493,8 @@ void __thiscall numpunct_char_dtor(numpunct_char *this)
     numpunct_char__Tidy(this);
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_numpunct_char_vector_dtor, 8)
-numpunct_char* __thiscall MSVCP_numpunct_char_vector_dtor(numpunct_char *this, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(numpunct_char_vector_dtor, 8)
+numpunct_char* __thiscall numpunct_char_vector_dtor(numpunct_char *this, unsigned int flags)
 {
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
@@ -3864,8 +3846,8 @@ void __thiscall numpunct_wchar_dtor(numpunct_wchar *this)
     numpunct_wchar__Tidy(this);
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_numpunct_wchar_vector_dtor, 8)
-numpunct_wchar* __thiscall MSVCP_numpunct_wchar_vector_dtor(numpunct_wchar *this, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(numpunct_wchar_vector_dtor, 8)
+numpunct_wchar* __thiscall numpunct_wchar_vector_dtor(numpunct_wchar *this, unsigned int flags)
 {
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
@@ -3882,12 +3864,6 @@ numpunct_wchar* __thiscall MSVCP_numpunct_wchar_vector_dtor(numpunct_wchar *this
     }
 
     return this;
-}
-
-DEFINE_THISCALL_WRAPPER(MSVCP_numpunct_short_vector_dtor, 8)
-numpunct_wchar* __thiscall MSVCP_numpunct_short_vector_dtor(numpunct_wchar *this, unsigned int flags)
-{
-    return MSVCP_numpunct_wchar_vector_dtor(this, flags);
 }
 
 /* ?_Getcat@?$numpunct@_W@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
@@ -4307,8 +4283,8 @@ void __thiscall num_get_wchar_dtor(num_get *this)
     locale_facet_dtor(&this->facet);
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_num_get_wchar_vector_dtor, 8)
-num_get* __thiscall MSVCP_num_get_wchar_vector_dtor(num_get *this, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(num_get_wchar_vector_dtor, 8)
+num_get* __thiscall num_get_wchar_vector_dtor(num_get *this, unsigned int flags)
 {
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
@@ -4325,12 +4301,6 @@ num_get* __thiscall MSVCP_num_get_wchar_vector_dtor(num_get *this, unsigned int 
     }
 
     return this;
-}
-
-DEFINE_THISCALL_WRAPPER(MSVCP_num_get_short_vector_dtor, 8)
-num_get* __thiscall MSVCP_num_get_short_vector_dtor(num_get *this, unsigned int flags)
-{
-    return MSVCP_num_get_wchar_vector_dtor(this, flags);
 }
 
 /* ?_Getcat@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
@@ -5462,8 +5432,8 @@ void __thiscall num_get_char_dtor(num_get *this)
     locale_facet_dtor(&this->facet);
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_num_get_char_vector_dtor, 8)
-num_get* __thiscall MSVCP_num_get_char_vector_dtor(num_get *this, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(num_get_char_vector_dtor, 8)
+num_get* __thiscall num_get_char_vector_dtor(num_get *this, unsigned int flags)
 {
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
@@ -6323,8 +6293,8 @@ void __thiscall num_put_char_dtor(num_put *this)
     locale_facet_dtor(&this->facet);
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_num_put_char_vector_dtor, 8)
-num_put* __thiscall MSVCP_num_put_char_vector_dtor(num_put *this, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(num_put_char_vector_dtor, 8)
+num_put* __thiscall num_put_char_vector_dtor(num_put *this, unsigned int flags)
 {
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
@@ -6970,8 +6940,8 @@ void __thiscall num_put_wchar_dtor(num_put *this)
     locale_facet_dtor(&this->facet);
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_num_put_wchar_vector_dtor, 8)
-num_put* __thiscall MSVCP_num_put_wchar_vector_dtor(num_put *this, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(num_put_wchar_vector_dtor, 8)
+num_put* __thiscall num_put_wchar_vector_dtor(num_put *this, unsigned int flags)
 {
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
@@ -6988,12 +6958,6 @@ num_put* __thiscall MSVCP_num_put_wchar_vector_dtor(num_put *this, unsigned int 
     }
 
     return this;
-}
-
-DEFINE_THISCALL_WRAPPER(MSVCP_num_put_short_vector_dtor, 8)
-num_put* __thiscall MSVCP_num_put_short_vector_dtor(num_put *this, unsigned int flags)
-{
-    return MSVCP_num_put_wchar_vector_dtor(this, flags);
 }
 
 /* ?_Getcat@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
@@ -7874,8 +7838,8 @@ void __cdecl locale__Locimp__Locimp_dtor(locale__Locimp *this)
     locale__Locimp_dtor(this);
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_locale__Locimp_vector_dtor, 8)
-locale__Locimp* __thiscall MSVCP_locale__Locimp_vector_dtor(locale__Locimp *this, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(locale__Locimp_vector_dtor, 8)
+locale__Locimp* __thiscall locale__Locimp_vector_dtor(locale__Locimp *this, unsigned int flags)
 {
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
@@ -8237,7 +8201,7 @@ locale__Locimp* __cdecl locale__Locimp__Makeloc(const _Locinfo *locinfo, categor
 
 /* ??_7_Locimp@locale@std@@6B@ */
 const vtable_ptr MSVCP_locale__Locimp_vtable[] = {
-    (vtable_ptr)THISCALL_NAME(MSVCP_locale__Locimp_vector_dtor)
+    (vtable_ptr)THISCALL_NAME(locale__Locimp_vector_dtor)
 };
 
 /* ??0locale@std@@AAE@PAV_Locimp@01@@Z */
@@ -8375,8 +8339,8 @@ void __thiscall locale_dtor(locale *this)
         locale__Locimp_dtor(this->ptr);
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_locale_vector_dtor, 8)
-locale* __thiscall MSVCP_locale_vector_dtor(locale *this, unsigned int flags)
+DEFINE_THISCALL_WRAPPER(locale_vector_dtor, 8)
+locale* __thiscall locale_vector_dtor(locale *this, unsigned int flags)
 {
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
@@ -8569,21 +8533,27 @@ DEFINE_RTTI_DATA1(num_put_short, 0, &locale_facet_rtti_base_descriptor, ".?AV?$n
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
 #endif
-    __ASM_VTABLE(locale_facet, "");
+    __ASM_VTABLE(locale_facet,
+            VTABLE_ADD_FUNC(locale_facet_vector_dtor));
     __ASM_VTABLE(collate_char,
+            VTABLE_ADD_FUNC(collate_char_vector_dtor)
             VTABLE_ADD_FUNC(collate_char_do_compare)
             VTABLE_ADD_FUNC(collate_char_do_transform)
             VTABLE_ADD_FUNC(collate_char_do_hash));
     __ASM_VTABLE(collate_wchar,
+            VTABLE_ADD_FUNC(collate_wchar_vector_dtor)
             VTABLE_ADD_FUNC(collate_wchar_do_compare)
             VTABLE_ADD_FUNC(collate_wchar_do_transform)
             VTABLE_ADD_FUNC(collate_wchar_do_hash));
     __ASM_VTABLE(collate_short,
+            VTABLE_ADD_FUNC(collate_wchar_vector_dtor)
             VTABLE_ADD_FUNC(collate_wchar_do_compare)
             VTABLE_ADD_FUNC(collate_wchar_do_transform)
             VTABLE_ADD_FUNC(collate_wchar_do_hash));
-    __ASM_VTABLE(ctype_base, "");
+    __ASM_VTABLE(ctype_base,
+            VTABLE_ADD_FUNC(ctype_base_vector_dtor));
     __ASM_VTABLE(ctype_char,
+            VTABLE_ADD_FUNC(ctype_char_vector_dtor)
             VTABLE_ADD_FUNC(ctype_char_do_tolower)
             VTABLE_ADD_FUNC(ctype_char_do_tolower_ch)
             VTABLE_ADD_FUNC(ctype_char_do_toupper)
@@ -8595,6 +8565,7 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(ctype_char_do_narrow_ch)
             VTABLE_ADD_FUNC(ctype_char__Do_narrow_s));
     __ASM_VTABLE(ctype_wchar,
+            VTABLE_ADD_FUNC(ctype_wchar_vector_dtor)
             VTABLE_ADD_FUNC(ctype_wchar_do_is)
             VTABLE_ADD_FUNC(ctype_wchar_do_is_ch)
             VTABLE_ADD_FUNC(ctype_wchar_do_scan_is)
@@ -8610,6 +8581,7 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(ctype_wchar_do_narrow_ch)
             VTABLE_ADD_FUNC(ctype_wchar__Do_narrow_s));
     __ASM_VTABLE(ctype_short,
+            VTABLE_ADD_FUNC(ctype_wchar_vector_dtor)
             VTABLE_ADD_FUNC(ctype_wchar_do_is)
             VTABLE_ADD_FUNC(ctype_wchar_do_is_ch)
             VTABLE_ADD_FUNC(ctype_wchar_do_scan_is)
@@ -8625,10 +8597,12 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(ctype_wchar_do_narrow_ch)
             VTABLE_ADD_FUNC(ctype_wchar__Do_narrow_s));
     __ASM_VTABLE(codecvt_base,
+            VTABLE_ADD_FUNC(codecvt_base_vector_dtor)
             VTABLE_ADD_FUNC(codecvt_base_do_always_noconv)
             VTABLE_ADD_FUNC(codecvt_base_do_max_length)
             VTABLE_ADD_FUNC(codecvt_base_do_encoding));
     __ASM_VTABLE(codecvt_char,
+            VTABLE_ADD_FUNC(codecvt_char_vector_dtor)
             VTABLE_ADD_FUNC(codecvt_base_do_always_noconv)
             VTABLE_ADD_FUNC(codecvt_base_do_max_length)
             VTABLE_ADD_FUNC(codecvt_base_do_encoding)
@@ -8637,6 +8611,7 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(codecvt_char_do_unshift)
             VTABLE_ADD_FUNC(codecvt_char_do_length));
     __ASM_VTABLE(codecvt_wchar,
+            VTABLE_ADD_FUNC(codecvt_wchar_vector_dtor)
             VTABLE_ADD_FUNC(codecvt_wchar_do_always_noconv)
             VTABLE_ADD_FUNC(codecvt_wchar_do_max_length)
             VTABLE_ADD_FUNC(codecvt_base_do_encoding)
@@ -8645,6 +8620,7 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(codecvt_wchar_do_unshift)
             VTABLE_ADD_FUNC(codecvt_wchar_do_length));
     __ASM_VTABLE(codecvt_short,
+            VTABLE_ADD_FUNC(codecvt_wchar_vector_dtor)
             VTABLE_ADD_FUNC(codecvt_wchar_do_always_noconv)
             VTABLE_ADD_FUNC(codecvt_wchar_do_max_length)
             VTABLE_ADD_FUNC(codecvt_base_do_encoding)
@@ -8653,24 +8629,28 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(codecvt_wchar_do_unshift)
             VTABLE_ADD_FUNC(codecvt_wchar_do_length));
     __ASM_VTABLE(numpunct_char,
+            VTABLE_ADD_FUNC(numpunct_char_vector_dtor)
             VTABLE_ADD_FUNC(numpunct_char_do_decimal_point)
             VTABLE_ADD_FUNC(numpunct_char_do_thousands_sep)
             VTABLE_ADD_FUNC(numpunct_char_do_grouping)
             VTABLE_ADD_FUNC(numpunct_char_do_falsename)
             VTABLE_ADD_FUNC(numpunct_char_do_truename));
     __ASM_VTABLE(numpunct_wchar,
+            VTABLE_ADD_FUNC(numpunct_wchar_vector_dtor)
             VTABLE_ADD_FUNC(numpunct_wchar_do_decimal_point)
             VTABLE_ADD_FUNC(numpunct_wchar_do_thousands_sep)
             VTABLE_ADD_FUNC(numpunct_wchar_do_grouping)
             VTABLE_ADD_FUNC(numpunct_wchar_do_falsename)
             VTABLE_ADD_FUNC(numpunct_wchar_do_truename));
     __ASM_VTABLE(numpunct_short,
+            VTABLE_ADD_FUNC(numpunct_wchar_vector_dtor)
             VTABLE_ADD_FUNC(numpunct_wchar_do_decimal_point)
             VTABLE_ADD_FUNC(numpunct_wchar_do_thousands_sep)
             VTABLE_ADD_FUNC(numpunct_wchar_do_grouping)
             VTABLE_ADD_FUNC(numpunct_wchar_do_falsename)
             VTABLE_ADD_FUNC(numpunct_wchar_do_truename));
     __ASM_VTABLE(num_get_char,
+            VTABLE_ADD_FUNC(num_get_char_vector_dtor)
             VTABLE_ADD_FUNC(num_get_char_do_get_void)
             VTABLE_ADD_FUNC(num_get_char_do_get_double)
             VTABLE_ADD_FUNC(num_get_char_do_get_double)
@@ -8683,6 +8663,7 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(num_get_char_do_get_ushort)
             VTABLE_ADD_FUNC(num_get_char_do_get_bool));
     __ASM_VTABLE(num_get_short,
+            VTABLE_ADD_FUNC(num_get_wchar_vector_dtor)
             VTABLE_ADD_FUNC(num_get_short_do_get_void)
             VTABLE_ADD_FUNC(num_get_short_do_get_double)
             VTABLE_ADD_FUNC(num_get_short_do_get_double)
@@ -8695,6 +8676,7 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(num_get_short_do_get_ushort)
             VTABLE_ADD_FUNC(num_get_short_do_get_bool));
     __ASM_VTABLE(num_get_wchar,
+            VTABLE_ADD_FUNC(num_get_wchar_vector_dtor)
             VTABLE_ADD_FUNC(num_get_wchar_do_get_void)
             VTABLE_ADD_FUNC(num_get_wchar_do_get_double)
             VTABLE_ADD_FUNC(num_get_wchar_do_get_double)
@@ -8707,6 +8689,7 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(num_get_wchar_do_get_ushort)
             VTABLE_ADD_FUNC(num_get_wchar_do_get_bool));
     __ASM_VTABLE(num_put_char,
+            VTABLE_ADD_FUNC(num_put_char_vector_dtor)
             VTABLE_ADD_FUNC(num_put_char_do_put_ptr)
             VTABLE_ADD_FUNC(num_put_char_do_put_double)
             VTABLE_ADD_FUNC(num_put_char_do_put_double)
@@ -8716,6 +8699,7 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(num_put_char_do_put_long)
             VTABLE_ADD_FUNC(num_put_char_do_put_bool));
     __ASM_VTABLE(num_put_wchar,
+            VTABLE_ADD_FUNC(num_put_wchar_vector_dtor)
             VTABLE_ADD_FUNC(num_put_wchar_do_put_ptr)
             VTABLE_ADD_FUNC(num_put_wchar_do_put_double)
             VTABLE_ADD_FUNC(num_put_wchar_do_put_double)
@@ -8725,6 +8709,7 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(num_put_wchar_do_put_long)
             VTABLE_ADD_FUNC(num_put_wchar_do_put_bool));
     __ASM_VTABLE(num_put_short,
+            VTABLE_ADD_FUNC(num_put_wchar_vector_dtor)
             VTABLE_ADD_FUNC(num_put_short_do_put_ptr)
             VTABLE_ADD_FUNC(num_put_short_do_put_double)
             VTABLE_ADD_FUNC(num_put_short_do_put_double)
