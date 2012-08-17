@@ -75,7 +75,7 @@ IDirectDraw4 *dd_get_inner(IDirectDraw4 *outer) DECLSPEC_HIDDEN;
 typedef struct
 {
     IDirectDrawSurface3 IDirectDrawSurface3_iface;
-    const IDirectDrawSurface4Vtbl *IDirectDrawSurface4_Vtbl;
+    IDirectDrawSurface4 IDirectDrawSurface4_iface;
     LONG ref;
 
     /* The interface we're forwarding to */
