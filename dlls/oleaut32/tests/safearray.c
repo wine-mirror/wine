@@ -294,7 +294,7 @@ static void test_safearray(void)
 	LONG		indices[2];
 	HRESULT 	hres;
 	SAFEARRAYBOUND	bound, bounds[2];
-	VARIANT		v;
+	VARIANT		v,d;
 	LPVOID		data;
 	IID		iid;
 	VARTYPE		vt;
@@ -556,6 +556,15 @@ static void test_safearray(void)
 	ok(V_VT(&v) == VT_BSTR,"CTE VT_ARRAY|VT_UI1 -> VT_BSTR did not return VT_BSTR, but %d.v\n",V_VT(&v));
 	ok(V_BSTR(&v)[0] == 0x6548,"First letter are not 'He', but %x\n", V_BSTR(&v)[0]);
 	VariantClear(&v);
+
+	VariantInit(&d);
+	V_VT(&v) = VT_BSTR;
+	V_BSTR(&v) = SysAllocStringLen(NULL, 0);
+	hres = VariantChangeTypeEx(&d, &v, 0, 0, VT_UI1|VT_ARRAY);
+	ok(hres==S_OK, "CTE VT_BSTR -> VT_UI1|VT_ARRAY failed with %x\n",hres);
+	ok(V_VT(&d) == (VT_UI1|VT_ARRAY),"CTE BSTR -> VT_UI1|VT_ARRAY did not return VT_UI1|VT_ARRAY, but %d.v\n",V_VT(&v));
+	VariantClear(&v);
+	VariantClear(&d);
 
 	/* check locking functions */
 	a = SafeArrayCreate(VT_I4, 1, &bound);
