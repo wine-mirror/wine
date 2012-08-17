@@ -465,14 +465,6 @@ length_error* __thiscall MSVCP_length_error_ctor_bstr(length_error *this, const 
         return MSVCP_length_error_ctor(this, MSVCP_basic_string_char_c_str(str));
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_length_error_vector_dtor, 8)
-void* __thiscall MSVCP_length_error_vector_dtor(
-        length_error *this, unsigned int flags)
-{
-    TRACE("%p %x\n", this, flags);
-    return MSVCP_logic_error_vector_dtor(this, flags);
-}
-
 /* ??4length_error@std@@QAEAAV01@ABV01@@Z */
 /* ??4length_error@std@@QEAAAEAV01@AEBV01@@Z */
 DEFINE_THISCALL_WRAPPER(MSVCP_length_error_assign, 8)
@@ -542,14 +534,6 @@ out_of_range* __thiscall MSVCP_out_of_range_ctor_bstr(out_of_range *this, const 
     return MSVCP_out_of_range_ctor(this, MSVCP_basic_string_char_c_str(str));
 }
 
-DEFINE_THISCALL_WRAPPER(MSVCP_out_of_range_vector_dtor, 8)
-void* __thiscall MSVCP_out_of_range_vector_dtor(
-        out_of_range *this, unsigned int flags)
-{
-    TRACE("%p %x\n", this, flags);
-    return MSVCP_logic_error_vector_dtor(this, flags);
-}
-
 /* ??4out_of_range@std@@QAEAAV01@ABV01@@Z */
 /* ??4out_of_range@std@@QEAAAEAV01@AEBV01@@Z */
 DEFINE_THISCALL_WRAPPER(MSVCP_out_of_range_assign, 8)
@@ -606,14 +590,6 @@ invalid_argument* __thiscall MSVCP_invalid_argument_copy_ctor(
     MSVCP_logic_error_copy_ctor(this, rhs);
     this->e.vtable = &MSVCP_invalid_argument_vtable;
     return this;
-}
-
-DEFINE_THISCALL_WRAPPER(MSVCP_invalid_argument_vector_dtor, 8)
-void* __thiscall MSVCP_invalid_argument_vector_dtor(
-        invalid_argument *this, unsigned int flags)
-{
-    TRACE("%p %x\n", this, flags);
-    return MSVCP_logic_error_vector_dtor(this, flags);
 }
 
 DEFINE_RTTI_DATA2(invalid_argument, 0, &logic_error_rtti_base_descriptor, &exception_rtti_base_descriptor, ".?AVinvalid_argument@std@@");
@@ -731,26 +707,34 @@ const char* __thiscall MSVCP_runtime_error_what(runtime_error *this)
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
 #endif
-    __ASM_VTABLE(type_info,"");
+    __ASM_VTABLE(type_info,
+            VTABLE_ADD_FUNC(MSVCP_type_info_vector_dtor));
     __ASM_VTABLE(exception,
+            VTABLE_ADD_FUNC(MSVCP_exception_vector_dtor)
             VTABLE_ADD_FUNC(MSVCP_exception_what)
             VTABLE_ADD_FUNC(MSVCP_exception__Doraise));
     __ASM_VTABLE(bad_alloc,
+            VTABLE_ADD_FUNC(MSVCP_bad_alloc_vector_dtor)
             VTABLE_ADD_FUNC(MSVCP_exception_what)
             VTABLE_ADD_FUNC(MSVCP_exception__Doraise));
     __ASM_VTABLE(logic_error,
+            VTABLE_ADD_FUNC(MSVCP_logic_error_vector_dtor)
             VTABLE_ADD_FUNC(MSVCP_logic_error_what)
             VTABLE_ADD_FUNC(MSVCP_exception__Doraise));
     __ASM_VTABLE(length_error,
+            VTABLE_ADD_FUNC(MSVCP_logic_error_vector_dtor)
             VTABLE_ADD_FUNC(MSVCP_logic_error_what)
             VTABLE_ADD_FUNC(MSVCP_exception__Doraise));
     __ASM_VTABLE(out_of_range,
+            VTABLE_ADD_FUNC(MSVCP_logic_error_vector_dtor)
             VTABLE_ADD_FUNC(MSVCP_logic_error_what)
             VTABLE_ADD_FUNC(MSVCP_exception__Doraise));
     __ASM_VTABLE(invalid_argument,
+            VTABLE_ADD_FUNC(MSVCP_logic_error_vector_dtor)
             VTABLE_ADD_FUNC(MSVCP_logic_error_what)
             VTABLE_ADD_FUNC(MSVCP_exception__Doraise));
     __ASM_VTABLE(runtime_error,
+            VTABLE_ADD_FUNC(MSVCP_runtime_error_vector_dtor)
             VTABLE_ADD_FUNC(MSVCP_runtime_error_what)
             VTABLE_ADD_FUNC(MSVCP_exception__Doraise));
 #ifndef __GNUC__
