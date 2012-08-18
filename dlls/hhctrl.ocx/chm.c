@@ -326,7 +326,7 @@ BOOL LoadWinTypeFromCHM(HHInfo *info)
     HH_WINTYPEW wintype;
     HRESULT hr;
     DWORD cbRead;
-    BOOL ret;
+    BOOL ret = FALSE;
 
     static const WCHAR null[] = {0};
     static const WCHAR toc_extW[] = {'h','h','c',0};
@@ -357,8 +357,6 @@ BOOL LoadWinTypeFromCHM(HHInfo *info)
         pszJump2    = ConvertChmString(info, &wintype.pszJump2);
         pszUrlJump1 = ConvertChmString(info, &wintype.pszUrlJump1);
         pszUrlJump2 = ConvertChmString(info, &wintype.pszUrlJump2);
-
-        ret = SUCCEEDED(hr);
     }
     else
     {
@@ -378,7 +376,6 @@ BOOL LoadWinTypeFromCHM(HHInfo *info)
         wintype.dwExStyles = 0;
         wintype.nShowState = SW_SHOW;
         wintype.curNavType = HHWIN_NAVTYPE_TOC;
-        ret = TRUE;
     }
 
     /* merge the new data with any pre-existing HH_WINTYPE structure */
@@ -400,6 +397,7 @@ BOOL LoadWinTypeFromCHM(HHInfo *info)
     heap_free(pszJump2);
     heap_free(pszUrlJump1);
     heap_free(pszUrlJump2);
+    ret = TRUE;
 
 done:
     if (pStream)
