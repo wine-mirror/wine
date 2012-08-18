@@ -2379,6 +2379,289 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
     }
 }
 
+/*
+ * fxc.exe /Tfx_2_0
+ */
+#if 0
+float a = 2.1;
+float b[1];
+float c <float d = 3;>;
+struct {float e;} f;
+float g <float h[1] = {3};>;
+struct s {float j;};
+float i <s k[1] = {4};>;
+technique t <s l[1] = {5};> { pass p <s m[1] = {6};> { } }
+#endif
+static const DWORD test_effect_variable_names_blob[] =
+{
+0xfeff0901, 0x0000024c, 0x00000000, 0x00000003, 0x00000000, 0x00000024, 0x00000000, 0x00000000,
+0x00000001, 0x00000001, 0x40066666, 0x00000002, 0x00000061, 0x00000003, 0x00000000, 0x0000004c,
+0x00000000, 0x00000001, 0x00000001, 0x00000001, 0x00000000, 0x00000002, 0x00000062, 0x00000003,
+0x00000000, 0x0000009c, 0x00000000, 0x00000000, 0x00000001, 0x00000001, 0x00000000, 0x40400000,
+0x00000003, 0x00000000, 0x00000094, 0x00000000, 0x00000000, 0x00000001, 0x00000001, 0x00000002,
+0x00000064, 0x00000002, 0x00000063, 0x00000000, 0x00000005, 0x000000dc, 0x00000000, 0x00000000,
+0x00000001, 0x00000003, 0x00000000, 0x000000e4, 0x00000000, 0x00000000, 0x00000001, 0x00000001,
+0x00000000, 0x00000002, 0x00000066, 0x00000002, 0x00000065, 0x00000003, 0x00000000, 0x00000134,
+0x00000000, 0x00000000, 0x00000001, 0x00000001, 0x00000000, 0x40400000, 0x00000003, 0x00000000,
+0x0000012c, 0x00000000, 0x00000001, 0x00000001, 0x00000001, 0x00000002, 0x00000068, 0x00000002,
+0x00000067, 0x00000003, 0x00000000, 0x000001a4, 0x00000000, 0x00000000, 0x00000001, 0x00000001,
+0x00000000, 0x40800000, 0x00000000, 0x00000005, 0x00000194, 0x00000000, 0x00000001, 0x00000001,
+0x00000003, 0x00000000, 0x0000019c, 0x00000000, 0x00000000, 0x00000001, 0x00000001, 0x00000002,
+0x0000006b, 0x00000002, 0x0000006a, 0x00000002, 0x00000069, 0x40a00000, 0x00000000, 0x00000005,
+0x000001e4, 0x00000000, 0x00000001, 0x00000001, 0x00000003, 0x00000000, 0x000001ec, 0x00000000,
+0x00000000, 0x00000001, 0x00000001, 0x00000002, 0x0000006c, 0x00000002, 0x0000006a, 0x40c00000,
+0x00000000, 0x00000005, 0x0000022c, 0x00000000, 0x00000001, 0x00000001, 0x00000003, 0x00000000,
+0x00000234, 0x00000000, 0x00000000, 0x00000001, 0x00000001, 0x00000002, 0x0000006d, 0x00000002,
+0x0000006a, 0x00000002, 0x00000070, 0x00000002, 0x00000074, 0x00000006, 0x00000001, 0x00000001,
+0x00000001, 0x00000004, 0x00000020, 0x00000000, 0x00000000, 0x0000002c, 0x00000048, 0x00000000,
+0x00000000, 0x00000054, 0x00000070, 0x00000000, 0x00000001, 0x00000078, 0x00000074, 0x000000a4,
+0x000000d8, 0x00000000, 0x00000000, 0x000000ec, 0x00000108, 0x00000000, 0x00000001, 0x00000110,
+0x0000010c, 0x0000013c, 0x00000158, 0x00000000, 0x00000001, 0x00000160, 0x0000015c, 0x00000244,
+0x00000001, 0x00000001, 0x000001b0, 0x000001ac, 0x0000023c, 0x00000001, 0x00000000, 0x000001f8,
+0x000001f4, 0x00000000, 0x00000000,
+};
+
+static void test_effect_variable_names(IDirect3DDevice9 *device)
+{
+    ID3DXEffect *effect;
+    ULONG count;
+    HRESULT hr;
+    D3DXHANDLE parameter, p;
+
+    hr = D3DXCreateEffect(device, test_effect_variable_names_blob,
+            sizeof(test_effect_variable_names_blob), NULL, NULL, 0, NULL, &effect, NULL);
+    ok(hr == D3D_OK, "D3DXCreateEffect failed, got %#x, expected %#x\n", hr, D3D_OK);
+
+    /*
+     * check invalid calls
+     * This will crash:
+     * effect->lpVtbl->GetAnnotationByName(effect, "invalid1", "invalid2");
+     */
+    p = effect->lpVtbl->GetParameterByName(effect, NULL, NULL);
+    ok(p == NULL, "GetParameterByName failed, got %p, expected %p\n", p, NULL);
+
+    p = effect->lpVtbl->GetParameterByName(effect, NULL, "invalid1");
+    ok(p == NULL, "GetParameterByName failed, got %p\n", p);
+
+    p = effect->lpVtbl->GetParameterByName(effect, "invalid1", NULL);
+    ok(p == NULL, "GetParameterByName failed, got %p\n", p);
+
+    p = effect->lpVtbl->GetParameterByName(effect, "invalid1", "invalid2");
+    ok(p == NULL, "GetParameterByName failed, got %p, expected %p\n", p, NULL);
+
+    /* float a; */
+    parameter = effect->lpVtbl->GetParameterByName(effect, NULL, "a");
+    ok(parameter != NULL, "GetParameterByName failed, got %p\n", parameter);
+
+    p = effect->lpVtbl->GetParameterByName(effect, "a", NULL);
+    ok(parameter == p, "GetParameterByName failed, got %p, expected %p\n", p, parameter);
+
+    /* members */
+    p = effect->lpVtbl->GetParameterByName(effect, NULL, "a.");
+    ok(p == NULL, "GetParameterByName failed, got %p\n", p);
+
+    p = effect->lpVtbl->GetParameterByName(effect, "a.", NULL);
+    ok(p == NULL, "GetParameterByName failed, got %p\n", p);
+
+    p = effect->lpVtbl->GetParameterByName(effect, "a", ".");
+    ok(p == NULL, "GetParameterByName failed, got %p\n", p);
+
+    p = effect->lpVtbl->GetParameterByName(effect, NULL, "a.invalid");
+    ok(p == NULL, "GetParameterByName failed, got %p\n", p);
+
+    p = effect->lpVtbl->GetParameterByName(effect, "a.invalid", NULL);
+    ok(p == NULL, "GetParameterByName failed, got %p\n", p);
+
+    p = effect->lpVtbl->GetParameterByName(effect, "a", ".invalid");
+    ok(p == NULL, "GetParameterByName failed, got %p\n", p);
+
+    p = effect->lpVtbl->GetParameterByName(effect, "a.", "invalid");
+    ok(p == NULL, "GetParameterByName failed, got %p\n", p);
+
+    p = effect->lpVtbl->GetParameterByName(effect, "a", "invalid");
+    ok(p == NULL, "GetParameterByName failed, got %p\n", p);
+
+    /* elements */
+    p = effect->lpVtbl->GetParameterByName(effect, NULL, "a[]");
+    ok(p == NULL, "GetParameterByName failed, got %p\n", p);
+
+    p = effect->lpVtbl->GetParameterByName(effect, "a[]", NULL);
+    ok(p == NULL, "GetParameterByName failed, got %p\n", p);
+
+    p = effect->lpVtbl->GetParameterByName(effect, NULL, "a[0]");
+    ok(p == NULL, "GetParameterByName failed, got %p\n", p);
+
+    p = effect->lpVtbl->GetParameterByName(effect, "a[0]", NULL);
+    ok(p == NULL, "GetParameterByName failed, got %p\n", p);
+
+    p = effect->lpVtbl->GetParameterByName(effect, "a", "[0]");
+    ok(p == NULL, "GetParameterByName failed, got %p\n", p);
+
+    p = effect->lpVtbl->GetParameterElement(effect, "a", 0);
+    ok(p == NULL, "GetParameterElement failed, got %p\n", p);
+
+    /* annotations */
+    p = effect->lpVtbl->GetParameterByName(effect, NULL, "a@");
+    ok(p == NULL, "GetParameterByName failed, got %p\n", p);
+
+    p = effect->lpVtbl->GetParameterByName(effect, "a@", NULL);
+    ok(p == NULL, "GetParameterByName failed, got %p\n", p);
+
+    p = effect->lpVtbl->GetParameterByName(effect, "a", "@invalid");
+    ok(p == NULL, "GetParameterByName failed, got %p\n", p);
+
+    p = effect->lpVtbl->GetParameterByName(effect, "a@", "invalid");
+    ok(p == NULL, "GetParameterByName failed, got %p\n", p);
+
+    p = effect->lpVtbl->GetParameterByName(effect, NULL, "a@invalid");
+    ok(p == NULL, "GetParameterByName failed, got %p\n", p);
+
+    p = effect->lpVtbl->GetParameterByName(effect, "a@invalid", NULL);
+    ok(p == NULL, "GetParameterByName failed, got %p\n", p);
+
+    p = effect->lpVtbl->GetAnnotationByName(effect, "a", NULL);
+    ok(p == NULL, "GetAnnotationByName failed, got %p\n", p);
+
+    p = effect->lpVtbl->GetAnnotationByName(effect, "a", "invalid");
+    ok(p == NULL, "GetAnnotationByName failed, got %p\n", p);
+
+    p = effect->lpVtbl->GetAnnotation(effect, "a", 0);
+    ok(p == NULL, "GetAnnotation failed, got %p\n", p);
+
+    /* float b[1]; */
+    parameter = effect->lpVtbl->GetParameterByName(effect, NULL, "b");
+    ok(parameter != NULL, "GetParameterByName failed, got %p\n", parameter);
+
+    p = effect->lpVtbl->GetParameterByName(effect, "b", NULL);
+    ok(parameter == p, "GetParameterByName failed, got %p, expected %p\n", p, parameter);
+
+    /* elements */
+    p = effect->lpVtbl->GetParameterByName(effect, NULL, "b[]");
+    ok(p == NULL, "GetParameterByName failed, got %p\n", p);
+
+    parameter = effect->lpVtbl->GetParameterByName(effect, NULL, "b[0]");
+    ok(parameter != NULL, "GetParameterByName failed, got %p\n", parameter);
+
+    p = effect->lpVtbl->GetParameterByName(effect, "b[0]", NULL);
+    ok(parameter == p, "GetParameterByName failed, got %p, expected %p\n", p, parameter);
+
+    p = effect->lpVtbl->GetParameterElement(effect, "b", 0);
+    ok(parameter == p, "GetParameterElement failed, got %p, expected %p\n", p, parameter);
+
+    p = effect->lpVtbl->GetParameterByName(effect, "b", "[0]");
+    ok(p == NULL, "GetParameterByName failed, got %p\n", p);
+
+    p = effect->lpVtbl->GetParameterByName(effect, NULL, "b[1]");
+    ok(p == NULL, "GetParameterByName failed, got %p\n", p);
+
+    p = effect->lpVtbl->GetParameterElement(effect, "b", 1);
+    ok(p == NULL, "GetParameterElement failed, got %p\n", p);
+
+    /* float c <float d = 3;>; */
+    parameter = effect->lpVtbl->GetParameterByName(effect, NULL, "c");
+    ok(parameter != NULL, "GetParameterByName failed, got %p\n", parameter);
+
+    p = effect->lpVtbl->GetParameterByName(effect, "c", NULL);
+    ok(parameter == p, "GetParameterByName failed, got %p, expected %p\n", p, parameter);
+
+    /* annotations */
+    p = effect->lpVtbl->GetParameterByName(effect, "c", "@d");
+    ok(p == NULL, "GetParameterByName failed, got %p\n", p);
+
+    p = effect->lpVtbl->GetParameterByName(effect, "c@", "d");
+    ok(p == NULL, "GetParameterByName failed, got %p\n", p);
+
+    p = effect->lpVtbl->GetParameterByName(effect, NULL, "c@invalid");
+    ok(p == NULL, "GetParameterByName failed, got %p\n", p);
+
+    p = effect->lpVtbl->GetParameterByName(effect, "c@invalid", NULL);
+    ok(p == NULL, "GetParameterByName failed, got %p\n", p);
+
+    p = effect->lpVtbl->GetAnnotationByName(effect, "c", NULL);
+    ok(p == NULL, "GetAnnotationByName failed, got %p\n", p);
+
+    p = effect->lpVtbl->GetAnnotationByName(effect, "c", "invalid");
+    ok(p == NULL, "GetAnnotationByName failed, got %p\n", p);
+
+    parameter = effect->lpVtbl->GetParameterByName(effect, NULL, "c@d");
+    ok(parameter != NULL, "GetParameterByName failed, got %p\n", parameter);
+
+    p = effect->lpVtbl->GetParameterByName(effect, "c@d", NULL);
+    ok(parameter == p, "GetParameterByName failed, got %p, expected %p\n", p, parameter);
+
+    p = effect->lpVtbl->GetAnnotationByName(effect, "c", "d");
+    ok(parameter == p, "GetAnnotationByName failed, got %p, expected %p\n", p, parameter);
+
+    p = effect->lpVtbl->GetAnnotation(effect, "c", 0);
+    ok(parameter == p, "GetAnnotation failed, got %p, expected %p\n", p, parameter);
+
+    p = effect->lpVtbl->GetAnnotation(effect, "c", 1);
+    ok(p == NULL, "GetAnnotation failed, got %p\n", p);
+
+    /* struct {float e;} f; */
+    parameter = effect->lpVtbl->GetParameterByName(effect, NULL, "f");
+    ok(parameter != NULL, "GetParameterByName failed, got %p\n", parameter);
+
+    p = effect->lpVtbl->GetParameterByName(effect, "f", NULL);
+    ok(parameter == p, "GetParameterByName failed, got %p, expected %p\n", p, parameter);
+
+    /* members */
+    parameter = effect->lpVtbl->GetParameterByName(effect, NULL, "f.e");
+    ok(parameter != NULL, "GetParameterByName failed, got %p\n", parameter);
+
+    p = effect->lpVtbl->GetParameterByName(effect, "f.e", NULL);
+    ok(parameter == p, "GetParameterByName failed, got %p, expected %p\n", p, parameter);
+
+    p = effect->lpVtbl->GetParameterByName(effect, "f", "e");
+    ok(parameter == p, "GetParameterByName failed, got %p, expected %p\n", p, parameter);
+
+    p = effect->lpVtbl->GetParameterByName(effect, "f", ".e");
+    ok(p == NULL, "GetParameterByName failed, got %p\n", p);
+
+    p = effect->lpVtbl->GetParameterByName(effect, "f.", "e");
+    ok(p == NULL, "GetParameterByName failed, got %p\n", p);
+
+    p = effect->lpVtbl->GetParameterByName(effect, "f.invalid", NULL);
+    ok(p == NULL, "GetParameterByName failed, got %p\n", p);
+
+    p = effect->lpVtbl->GetParameterByName(effect, NULL, "f.invalid");
+    ok(p == NULL, "GetParameterByName failed, got %p\n", p);
+
+    /* float g <float h[1] = {3};>; */
+    parameter = effect->lpVtbl->GetParameterByName(effect, NULL, "g@h[0]");
+    ok(parameter != NULL, "GetParameterByName failed, got %p\n", parameter);
+
+    p = effect->lpVtbl->GetAnnotationByName(effect, "g", "h[0]");
+    ok(parameter == p, "GetAnnotationByName failed, got %p, expected %p\n", p, parameter);
+
+    p = effect->lpVtbl->GetParameterElement(effect, "g@h", 0);
+    ok(parameter == p, "GetParameterElement failed, got %p, expected %p\n", p, parameter);
+
+    p = effect->lpVtbl->GetParameterElement(effect, effect->lpVtbl->GetAnnotation(effect, "g", 0), 0);
+    ok(parameter == p, "GetParameterElement failed, got %p, expected %p\n", p, parameter);
+
+    /* struct s {float j;}; float i <s k[1] = {4};>; */
+    parameter = effect->lpVtbl->GetParameterByName(effect, NULL, "i@k[0].j");
+    ok(parameter != NULL, "GetParameterByName failed, got %p\n", parameter);
+
+    p = effect->lpVtbl->GetAnnotationByName(effect, "i", "k[0].j");
+    ok(parameter == p, "GetAnnotationByName failed, got %p, expected %p\n", p, parameter);
+
+    p = effect->lpVtbl->GetParameterByName(effect, effect->lpVtbl->GetParameterElement(effect, "i@k", 0), "j");
+    ok(parameter == p, "GetParameterElement failed, got %p, expected %p\n", p, parameter);
+
+    /* technique t <s l[1] = {5};> */
+    parameter = effect->lpVtbl->GetAnnotationByName(effect, "t", "l[0].j");
+    ok(parameter != NULL, "GetParameterByName failed, got %p\n", parameter);
+
+    /* pass p <s m[1] = {6};> */
+    parameter = effect->lpVtbl->GetAnnotationByName(effect, effect->lpVtbl->GetPassByName(effect, "t", "p"), "m[0].j");
+    ok(parameter != NULL, "GetParameterByName failed, got %p\n", parameter);
+
+    count = effect->lpVtbl->Release(effect);
+    ok(!count, "Release failed %u\n", count);
+}
+
 START_TEST(effect)
 {
     HWND wnd;
@@ -2414,6 +2697,7 @@ START_TEST(effect)
     test_create_effect_and_pool(device);
     test_create_effect_compiler();
     test_effect_parameter_value(device);
+    test_effect_variable_names(device);
 
     count = IDirect3DDevice9_Release(device);
     ok(count == 0, "The device was not properly freed: refcount %u\n", count);
