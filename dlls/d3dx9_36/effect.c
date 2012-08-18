@@ -970,7 +970,7 @@ static struct d3dx_parameter *get_parameter_element_by_name(struct d3dx_paramete
 
     TRACE("parameter %p, name %s\n", parameter, debugstr_a(name));
 
-    if (!name || !*name) return parameter;
+    if (!name || !*name) return NULL;
 
     element = atoi(name);
     part = strchr(name, ']') + 1;
@@ -1009,7 +1009,7 @@ static struct d3dx_parameter *get_parameter_annotation_by_name(struct d3dx_param
 
     TRACE("parameter %p, name %s\n", parameter, debugstr_a(name));
 
-    if (!name || !*name) return parameter;
+    if (!name || !*name) return NULL;
 
     length = strcspn( name, "[.@" );
     part = name + length;
@@ -1054,7 +1054,7 @@ static struct d3dx_parameter *get_parameter_by_name(struct ID3DXBaseEffectImpl *
 
     TRACE("base %p, parameter %p, name %s\n", base, parameter, debugstr_a(name));
 
-    if (!name || !*name) return parameter;
+    if (!name || !*name) return NULL;
 
     if (!parameter)
     {
