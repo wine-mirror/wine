@@ -975,7 +975,8 @@ static struct d3dx_parameter *get_parameter_element_by_name(struct d3dx_paramete
     element = atoi(name);
     part = strchr(name, ']') + 1;
 
-    if (parameter->element_count > element)
+    /* check for empty [] && element range */
+    if ((part - name) > 1 && parameter->element_count > element)
     {
         temp_parameter = get_parameter_struct(parameter->member_handles[element]);
 
