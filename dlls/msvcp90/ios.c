@@ -3932,7 +3932,7 @@ void __thiscall basic_stringbuf_wchar__Init(basic_stringbuf_wchar *this, const w
     this->seekhigh = NULL;
 
     if(count && str) {
-        wchar_t *buf = MSVCRT_operator_new(count);
+        wchar_t *buf = MSVCRT_operator_new(count*sizeof(wchar_t));
         if(!buf) {
             ERR("Out of memory\n");
             throw_exception(EXCEPTION_BAD_ALLOC, NULL);
@@ -4106,7 +4106,7 @@ unsigned short __thiscall basic_stringbuf_wchar_overflow(basic_stringbuf_wchar *
     oldsize = (ptr ? basic_streambuf_wchar_epptr(&this->base)-basic_streambuf_wchar_eback(&this->base): 0);
     size = oldsize|0xf;
     size += size/2;
-    buf = MSVCRT_operator_new(size);
+    buf = MSVCRT_operator_new(size*sizeof(wchar_t));
     if(!buf) {
         ERR("Out of memory\n");
         throw_exception(EXCEPTION_BAD_ALLOC, NULL);
