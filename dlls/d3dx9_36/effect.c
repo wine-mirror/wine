@@ -469,17 +469,21 @@ static struct d3dx_technique *get_technique_by_name(struct ID3DXBaseEffectImpl *
 
 static struct d3dx_technique *is_valid_technique(struct ID3DXBaseEffectImpl *base, D3DXHANDLE technique)
 {
+    struct d3dx_technique *tech = NULL;
     unsigned int i;
 
     for (i = 0; i < base->technique_count; ++i)
     {
         if (base->technique_handles[i] == technique)
         {
-            return get_technique_struct(technique);
+            tech = get_technique_struct(technique);
+            break;
         }
     }
 
-    return NULL;
+    if (!tech) tech = get_technique_by_name(base, technique);
+
+    return tech;
 }
 
 static struct d3dx_pass *is_valid_pass(struct ID3DXBaseEffectImpl *base, D3DXHANDLE pass)
@@ -1462,8 +1466,6 @@ static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetPass(ID3DXBaseEffect *iface, D3D
 
     TRACE("iface %p, technique %p, index %u\n", This, technique, index);
 
-    if (!tech) tech = get_technique_struct(iface->lpVtbl->GetTechniqueByName(iface, technique));
-
     if (tech && index < tech->pass_count)
     {
         TRACE("Returning pass %p\n", tech->pass_handles[index]);
@@ -1481,8 +1483,6 @@ static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetPassByName(ID3DXBaseEffect *ifac
     struct d3dx_technique *tech = is_valid_technique(This, technique);
 
     TRACE("iface %p, technique %p, name %s\n", This, technique, debugstr_a(name));
-
-    if (!tech) tech = get_technique_struct(iface->lpVtbl->GetTechniqueByName(iface, technique));
 
     if (tech && name)
     {
@@ -3524,8 +3524,6 @@ static HRESULT WINAPI ID3DXEffectImpl_SetTechnique(ID3DXEffect *iface, D3DXHANDL
     struct d3dx_technique *tech = is_valid_technique(base, technique);
 
     TRACE("iface %p, technique %p\n", This, technique);
-
-    if (!tech) tech = get_technique_struct(iface->lpVtbl->GetTechniqueByName(iface, technique));
 
     if (tech)
     {
