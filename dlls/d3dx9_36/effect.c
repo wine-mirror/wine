@@ -1522,7 +1522,7 @@ static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetAnnotation(ID3DXBaseEffect *ifac
     UINT annotation_count = 0;
     D3DXHANDLE *annotation_handles = NULL;
 
-    FIXME("iface %p, object %p, index %u partial stub\n", This, object, index);
+    TRACE("iface %p, object %p, index %u\n", This, object, index);
 
     if (pass)
     {
@@ -1539,7 +1539,10 @@ static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetAnnotation(ID3DXBaseEffect *ifac
         annotation_count = param->annotation_count;
         annotation_handles = param->annotation_handles;
     }
-    /* Todo: add funcs */
+    else
+    {
+        FIXME("Functions are not handled, yet!\n");
+    }
 
     if (index < annotation_count)
     {
@@ -1562,7 +1565,7 @@ static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetAnnotationByName(ID3DXBaseEffect
     UINT annotation_count = 0;
     D3DXHANDLE *annotation_handles = NULL;
 
-    FIXME("iface %p, object %p, name %s partial stub\n", This, object, debugstr_a(name));
+    TRACE("iface %p, object %p, name %s\n", This, object, debugstr_a(name));
 
     if (!name)
     {
@@ -1585,7 +1588,10 @@ static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetAnnotationByName(ID3DXBaseEffect
         annotation_count = param->annotation_count;
         annotation_handles = param->annotation_handles;
     }
-    /* Todo: add funcs */
+    else
+    {
+        FIXME("Functions are not handled, yet!\n");
+    }
 
     anno = get_annotation_by_name(annotation_count, annotation_handles, name);
     if (anno)
