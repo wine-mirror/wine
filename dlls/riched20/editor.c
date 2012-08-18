@@ -292,6 +292,7 @@ static LRESULT ME_StreamInText(ME_TextEditor *editor, DWORD dwFormat, ME_InStrea
 
   do {
     LONG nWideChars = 0;
+    WCHAR wszText[STREAMIN_BUFFER_SIZE+1];
 
     if (!stream->dwSize)
     {
@@ -305,7 +306,6 @@ static LRESULT ME_StreamInText(ME_TextEditor *editor, DWORD dwFormat, ME_InStrea
 
     if (!(dwFormat & SF_UNICODE))
     {
-      WCHAR wszText[STREAMIN_BUFFER_SIZE+1];
       char * buf = stream->buffer;
       DWORD size = stream->dwSize;
       DWORD cp = CP_ACP;
