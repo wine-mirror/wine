@@ -447,6 +447,26 @@ static inline D3DXHANDLE get_pass_handle(struct d3dx_pass *pass)
     return (D3DXHANDLE) pass;
 }
 
+static struct d3dx_technique *get_technique_by_name(struct ID3DXBaseEffectImpl *base, LPCSTR name)
+{
+    UINT i;
+
+    if (!name) return NULL;
+
+    for (i = 0; i < base->technique_count; ++i)
+    {
+        struct d3dx_technique *tech = get_technique_struct(base->technique_handles[i]);
+
+        if (!strcmp(tech->name, name))
+        {
+            TRACE("Returning technique %p\n", tech);
+            return tech;
+        }
+    }
+
+    return NULL;
+}
+
 static struct d3dx_technique *is_valid_technique(struct ID3DXBaseEffectImpl *base, D3DXHANDLE technique)
 {
     unsigned int i;
@@ -1419,25 +1439,15 @@ static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetTechnique(ID3DXBaseEffect *iface
 static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetTechniqueByName(ID3DXBaseEffect *iface, LPCSTR name)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
-    unsigned int i;
+    struct d3dx_technique *tech = get_technique_by_name(This, name);
 
     TRACE("iface %p, name %s stub\n", This, debugstr_a(name));
 
-    if (!name)
+    if (tech)
     {
-        WARN("Invalid argument specified.\n");
-        return NULL;
-    }
-
-    for (i = 0; i < This->technique_count; ++i)
-    {
-        struct d3dx_technique *tech = get_technique_struct(This->technique_handles[i]);
-
-        if (!strcmp(tech->name, name))
-        {
-            TRACE("Returning technique %p\n", This->technique_handles[i]);
-            return This->technique_handles[i];
-        }
+        D3DXHANDLE t = get_technique_handle(tech);
+        TRACE("Returning technique %p\n", t);
+        return t;
     }
 
     WARN("Invalid argument specified.\n");
