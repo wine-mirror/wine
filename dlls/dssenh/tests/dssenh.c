@@ -992,6 +992,401 @@ static void test_verify_signature(void)
     ok(result, "Failed to release CSP provider.\n");
 }
 
+struct keyExchange_test {
+    ALG_ID algid;
+    const BYTE *primeNum;
+    int primeLen;
+    const BYTE *generatorNum;
+    int generatorLen;
+};
+
+/* AT_KEYEXCHANGE interprets to CALG_DH_SF by the DSSENH cryptographic service provider */
+static const BYTE primeAT_KEYEXCHANGE[] = {
+0x65,0x28,0x24,0xd8,0xbe,0x3f,0x95,0x93, 0x3c,0x4d,0x1b,0x51,0xe1,0x89,0x9a,0x90,
+0x5e,0xa0,0x6c,0x25,0xf0,0xb5,0x93,0x98, 0xba,0x76,0x9d,0x54,0x78,0xf6,0xdc,0x04,
+0xe1,0xd0,0x87,0x8f,0xa0,0xe4,0x2f,0xb4, 0x09,0x78,0x24,0xbf,0xc8,0x7f,0x59,0xf4,
+0x07,0xee,0x07,0x20,0x1b,0x2d,0x54,0x2a, 0xb5,0xb4,0x8f,0x8c,0x33,0x73,0xec,0xaf
+};
+
+static const BYTE generatorAT_KEYEXCHANGE[] = {
+0xdc,0x62,0x20,0xe7,0x36,0xa2,0xa6,0xef, 0x77,0x91,0xa8,0xa3,0x6d,0x60,0x70,0x0d,
+0x1d,0x79,0xb1,0xbe,0xa8,0x87,0x69,0x39, 0x29,0xaa,0x54,0x27,0x05,0xe6,0x6f,0xa5,
+0xde,0x82,0x00,0x5d,0x87,0x1f,0x84,0xf7, 0x40,0xec,0x6f,0x15,0x64,0x02,0x0d,0xb8,
+0x50,0x48,0x94,0x66,0xb2,0x7d,0xbd,0xf2, 0x66,0xf8,0x40,0x62,0x94,0xbf,0x24,0x3b
+};
+
+static const BYTE primeCALG_DH_EPHEM[] = {
+0x17,0x99,0xa9,0x79,0x31,0xb9,0x05,0xdd, 0x7f,0xf0,0x02,0x11,0x4d,0x0d,0xc3,0x81,
+0x8b,0x41,0x50,0x41,0x5f,0x07,0xe6,0x8d, 0x02,0xf9,0xaa,0x86,0x2a,0x07,0x07,0xea,
+0x0a,0x75,0xed,0x96,0xa7,0x85,0xee,0xac, 0xb1,0x71,0xbd,0x57,0x48,0xbd,0x41,0x0b,
+0xde,0x34,0xe2,0xba,0x5b,0x55,0x64,0x77, 0x84,0xfa,0x96,0xd1,0xaf,0x79,0x49,0x9d
+};
+
+static const BYTE generatorCALG_DH_EPHEM[] = {
+0xc7,0x64,0x56,0xde,0xf7,0xb4,0xd3,0xd8, 0xa2,0xd4,0x12,0x2d,0x54,0x5c,0x54,0xc8,
+0x04,0x11,0x88,0x14,0x6c,0x9f,0x88,0x41, 0x82,0x93,0x32,0xb1,0x82,0x84,0x5b,0x07,
+0x55,0x13,0x82,0x7a,0x64,0x7b,0x12,0x09, 0xe2,0xa0,0x28,0x51,0xf4,0x7a,0xd9,0x26,
+0x86,0x95,0x5f,0xc0,0x9a,0x25,0xc2,0x7e, 0x91,0x14,0xdd,0x3c,0x4e,0x86,0x4f,0x6f
+};
+
+static const BYTE primeCALG_DH_SF[] = {
+0x85,0xb8,0xa5,0x4a,0xcf,0x2b,0x7c,0x61, 0xb2,0x06,0x93,0x8a,0x87,0x37,0x58,0xb0,
+0x8d,0xc7,0x2a,0xa7,0x7f,0x0d,0x74,0xf9, 0x3a,0x7e,0xbc,0xab,0x3a,0x54,0xe4,0x11,
+0x69,0x6f,0xcd,0xea,0xad,0x32,0x44,0x4f, 0xee,0x54,0x69,0x8c,0x9c,0x3b,0x87,0x27,
+0x36,0x70,0x06,0xf3,0x4e,0xde,0x7f,0x9d, 0xa6,0xf2,0xad,0x43,0x90,0xdd,0xb5,0x9b
+};
+
+static const BYTE generatorCALG_DH_SF[] = {
+0xea,0xdc,0xe0,0xbb,0x60,0x26,0xc6,0xb3, 0x93,0x6f,0x61,0xe6,0x7e,0xe2,0xee,0xd6,
+0xdb,0x3d,0xca,0xa8,0x31,0x46,0x8f,0x5d, 0xb4,0xaa,0x83,0xd3,0x52,0x10,0xcd,0xfb,
+0xfd,0xfc,0x14,0x89,0x0c,0xde,0xcf,0x54, 0x1d,0x05,0x8c,0xbe,0x4a,0xe4,0x37,0xb4,
+0xc0,0x15,0x75,0xc5,0xa2,0xfc,0x99,0xfc, 0xad,0x63,0xcb,0x7c,0xb8,0x20,0xdc,0x2b
+};
+
+static const struct keyExchange_test baseDSSkey_data[] = {
+    /* Cannot exchange keys using the base DSS provider, except on WinNT4 */
+    {AT_KEYEXCHANGE, primeAT_KEYEXCHANGE, sizeof(primeAT_KEYEXCHANGE), generatorAT_KEYEXCHANGE,
+        sizeof(generatorAT_KEYEXCHANGE)},
+    {CALG_DH_EPHEM, primeCALG_DH_EPHEM, sizeof(primeCALG_DH_EPHEM), generatorCALG_DH_EPHEM,
+        sizeof(generatorCALG_DH_EPHEM)},
+    {CALG_DH_SF, primeCALG_DH_SF, sizeof(generatorCALG_DH_SF), generatorCALG_DH_SF,
+        sizeof(generatorCALG_DH_SF)}
+};
+
+static const struct keyExchange_test dssDHkey_data[] = {
+    {AT_KEYEXCHANGE, primeAT_KEYEXCHANGE, sizeof(primeAT_KEYEXCHANGE), generatorAT_KEYEXCHANGE,
+        sizeof(generatorAT_KEYEXCHANGE)},
+    {CALG_DH_EPHEM, primeCALG_DH_EPHEM, sizeof(primeCALG_DH_EPHEM), generatorCALG_DH_EPHEM,
+        sizeof(generatorCALG_DH_EPHEM)},
+    {CALG_DH_SF, primeCALG_DH_SF, sizeof(generatorCALG_DH_SF), generatorCALG_DH_SF,
+        sizeof(generatorCALG_DH_SF)}
+};
+
+static void test_keyExchange_baseDSS(HCRYPTPROV hProv, const struct keyExchange_test *tests, int testLen)
+{
+    HCRYPTKEY privKey1 = 0, privKey2 = 0;
+    HCRYPTKEY sessionKey1 = 0, sessionKey2 = 0;
+    const char plainText[] = "Testing shared key.";
+    unsigned char pbData1[36];
+    unsigned char pbData2[36];
+    BYTE pubKeyBuffer1[512], pubKeyBuffer2[512];
+    DWORD pubKeyLen1, pubKeyLen2, dataLen;
+    DATA_BLOB Prime, Generator;
+    int plainLen = sizeof(plainText), i;
+    ALG_ID algid;
+    BOOL result;
+
+    for(i = 0; i < testLen; i++)
+    {
+        SetLastError(0xdeadbeef);
+
+        /* Create the data blobs and the prime and generator */
+        Prime.cbData = tests[i].primeLen;
+        Prime.pbData = (BYTE *)tests[i].primeNum;
+        Generator.cbData = tests[i].generatorLen;
+        Generator.pbData = (BYTE *)tests[i].generatorNum;
+
+        /* Generate key exchange keys for user1 and user2 */
+        result = CryptGenKey(hProv, tests[i].algid, 512 << 16 | CRYPT_PREGEN, &privKey1);
+        ok((!result && GetLastError() ==  NTE_BAD_ALGID) || broken(result), /* WinNT4 */
+            "Expected NTE_BAD_ALGID, got %x\n", GetLastError());
+
+        result = CryptGenKey(hProv, tests[i].algid, 512 << 16 | CRYPT_PREGEN, &privKey2);
+        ok((!result && GetLastError() ==  NTE_BAD_ALGID) || broken(result), /* WinNT4 */
+            "Expected NTE_BAD_ALGID, got %x\n", GetLastError());
+
+        /* Set the prime and generator values, which are agreed upon */
+        result = CryptSetKeyParam(privKey1, KP_P, (BYTE *)&Prime, 0);
+        ok((!result && GetLastError() ==  ERROR_INVALID_PARAMETER) || broken(result),
+            "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError()); /* WinNT4 */
+
+        result = CryptSetKeyParam(privKey2, KP_P, (BYTE *)&Prime, 0);
+        ok((!result && GetLastError() ==  ERROR_INVALID_PARAMETER) || broken(result),
+            "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError()); /* WinNT4 */
+
+        result = CryptSetKeyParam(privKey1, KP_G, (BYTE *)&Generator, 0);
+        ok((!result && GetLastError() ==  ERROR_INVALID_PARAMETER) || broken(result),
+            "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError()); /* WinNT4 */
+
+        result = CryptSetKeyParam(privKey2, KP_G, (BYTE *)&Generator, 0);
+        ok((!result && GetLastError() ==  ERROR_INVALID_PARAMETER) || broken(result),
+            "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError()); /* WinNT4 */
+
+        /* Generate the secret value for user1 and user2 */
+        result = CryptSetKeyParam(privKey1, KP_X, NULL, 0);
+        ok((!result && GetLastError() ==  ERROR_INVALID_PARAMETER) || broken(result),
+            "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError()); /* WinNT4 */
+
+        result = CryptSetKeyParam(privKey2, KP_X, NULL, 0);
+        ok((!result && GetLastError() ==  ERROR_INVALID_PARAMETER) || broken(result),
+            "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError()); /* WinNT4 */
+
+        /* Acquire required size for the public keys */
+        result = CryptExportKey(privKey1, 0, PUBLICKEYBLOB, 0, NULL, &pubKeyLen1);
+        ok((!result && GetLastError() ==  ERROR_INVALID_PARAMETER) || broken(result),
+            "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError()); /* WinNT4 */
+
+        result = CryptExportKey(privKey2, 0, PUBLICKEYBLOB, 0, NULL, &pubKeyLen2);
+        ok((!result && GetLastError() ==  ERROR_INVALID_PARAMETER) || broken(result),
+            "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError()); /* WinNT4 */
+
+        /* Export public key which will be calculated into the shared key */
+        result = CryptExportKey(privKey1, 0, PUBLICKEYBLOB, 0, pubKeyBuffer1, &pubKeyLen1);
+        ok((!result && GetLastError() ==  ERROR_INVALID_PARAMETER) || broken(result),
+            "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError()); /* WinNT4 */
+
+        result = CryptExportKey(privKey2, 0, PUBLICKEYBLOB, 0, pubKeyBuffer2, &pubKeyLen2);
+        ok((!result && GetLastError() ==  ERROR_INVALID_PARAMETER) || broken(result),
+            "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError()); /* WinNT4 */
+
+        /* Import the public key and convert it into a shared key */
+        result = CryptImportKey(hProv, pubKeyBuffer2, pubKeyLen2, privKey1, 0, &sessionKey1);
+        ok((!result && GetLastError() ==  ERROR_INVALID_PARAMETER) ||
+            broken(!result && GetLastError() ==  NTE_BAD_TYPE) || /* Win2K-W2K8, Win7.64 */
+            broken(!result && GetLastError() ==  NTE_BAD_ALGID) || /* W7SP164 (32 bit dssenh) */
+            broken(result), /* WinNT4 */
+            "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError());
+
+        result = CryptImportKey(hProv, pubKeyBuffer1, pubKeyLen1, privKey2, 0, &sessionKey2);
+        ok((!result && GetLastError() ==  ERROR_INVALID_PARAMETER) ||
+            broken(!result && GetLastError() ==  NTE_BAD_TYPE) || /* Win2K-W2K8, Win7.64 */
+            broken(!result && GetLastError() ==  NTE_BAD_ALGID) || /* W7SP164 (32 bit dssenh) */
+            broken(result), /* WinNT4 */
+            "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError());
+
+        /* Set the shared key parameters to matching type */
+        algid = CALG_RC4;
+        result = CryptSetKeyParam(sessionKey1, KP_ALGID, (BYTE *)&algid, 0);
+        ok((!result && GetLastError() ==  ERROR_INVALID_PARAMETER) || broken(result),
+            "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError()); /* WinNT4 */
+
+        algid = CALG_RC4;
+        result = CryptSetKeyParam(sessionKey2, KP_ALGID, (BYTE *)&algid, 0);
+        ok((!result && GetLastError() ==  ERROR_INVALID_PARAMETER) || broken(result),
+            "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError()); /* WinNT4 */
+
+        /* Encrypt some data and verify we are getting the same output */
+        memcpy(pbData1, plainText, plainLen);
+        dataLen = plainLen;
+
+        result = CryptEncrypt(sessionKey1, 0, TRUE, 0, pbData1, &dataLen, 36);
+        ok((!result && GetLastError() ==  ERROR_INVALID_PARAMETER) || broken(result),
+            "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError()); /* WinNT4 */
+
+        result = CryptDecrypt(sessionKey2, 0, TRUE, 0, pbData1, &dataLen);
+        ok((!result && GetLastError() ==  ERROR_INVALID_PARAMETER) || broken(result),
+            "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError()); /* WinNT4 */
+
+        ok(!memcmp(pbData1, (BYTE *)plainText, sizeof(plainText)), "Incorrect decrypted data.\n");
+
+        memcpy(pbData2, plainText, plainLen);
+        dataLen = plainLen;
+
+        result = CryptEncrypt(sessionKey2, 0, TRUE, 0, pbData2, &dataLen, 36);
+       ok((!result && GetLastError() ==  ERROR_INVALID_PARAMETER) || broken(result),
+            "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError()); /* WinNT4 */
+
+        result = CryptDecrypt(sessionKey1, 0, TRUE, 0, pbData2, &dataLen);
+       ok((!result && GetLastError() ==  ERROR_INVALID_PARAMETER) || broken(result),
+            "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError()); /* WinNT4 */
+
+        ok(!memcmp(pbData1, pbData2, dataLen), "Decrypted data is not identical.\n");
+
+        /* Destory all user keys */
+        result = CryptDestroyKey(sessionKey1);
+        ok((!result && GetLastError() ==  ERROR_INVALID_PARAMETER) || broken(result),
+            "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError()); /* WinNT4 */
+
+        result = CryptDestroyKey(sessionKey2);
+        ok((!result && GetLastError() ==  ERROR_INVALID_PARAMETER) || broken(result),
+            "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError()); /* WinNT4 */
+
+        result = CryptDestroyKey(privKey1);
+        ok((!result && GetLastError() ==  ERROR_INVALID_PARAMETER) || broken(result),
+            "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError()); /* WinNT4 */
+
+        result = CryptDestroyKey(privKey2);
+        ok((!result && GetLastError() ==  ERROR_INVALID_PARAMETER) || broken(result),
+            "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError()); /* WinNT4 */
+    }
+}
+
+static void test_keyExchange_dssDH(HCRYPTPROV hProv, const struct keyExchange_test *tests, int testLen)
+{
+    HCRYPTKEY privKey1 = 0, privKey2 = 0;
+    HCRYPTKEY sessionKey1 = 0, sessionKey2 = 0;
+    const char plainText[] = "Testing shared key.";
+    unsigned char pbData1[36];
+    unsigned char pbData2[36];
+    BYTE pubKeyBuffer1[512], pubKeyBuffer2[512];
+    DWORD pubKeyLen1, pubKeyLen2, dataLen;
+    DATA_BLOB Prime, Generator;
+    int plainLen = sizeof(plainText), i;
+    ALG_ID algid;
+    BOOL result;
+
+    for(i = 0; i < testLen; i++)
+    {
+        SetLastError(0xdeadbeef);
+
+        /* Create the data blobs and the prime and generator */
+        Prime.cbData = tests[i].primeLen;
+        Prime.pbData = (BYTE *)tests[i].primeNum;
+        Generator.cbData = tests[i].generatorLen;
+        Generator.pbData = (BYTE *)tests[i].generatorNum;
+
+        /* Generate key exchange keys for user1 and user2 */
+        result = CryptGenKey(hProv, tests[i].algid, 512 << 16 | CRYPT_PREGEN, &privKey1);
+        ok(result, "Failed to generate a key for user1, got %x\n", GetLastError());
+
+        result = CryptGenKey(hProv, tests[i].algid, 512 << 16 | CRYPT_PREGEN, &privKey2);
+        ok(result, "Failed to generate a key for user2, got %x\n", GetLastError());
+
+        /* Set the prime and generator values, which are agreed upon */
+        result = CryptSetKeyParam(privKey1, KP_P, (BYTE *)&Prime, 0);
+        ok(result, "Failed to set prime for user 1's key, got %x\n", GetLastError());
+
+        result = CryptSetKeyParam(privKey2, KP_P, (BYTE *)&Prime, 0);
+        ok(result, "Failed to set prime for user 2's key, got %x\n", GetLastError());
+
+        result = CryptSetKeyParam(privKey1, KP_G, (BYTE *)&Generator, 0);
+        ok(result, "Failed to set generator for user 1's key, got %x\n", GetLastError());
+
+        result = CryptSetKeyParam(privKey2, KP_G, (BYTE *)&Generator, 0);
+        ok(result, "Failed to set generator for user 2's key, got %x\n", GetLastError());
+
+        /* Generate the secret value for user1 and user2 */
+        result = CryptSetKeyParam(privKey1, KP_X, NULL, 0);
+        ok(result || broken(!result && GetLastError() == ERROR_INVALID_PARAMETER),
+            "Failed to set secret value for user 1, got %x\n", GetLastError());/* Win2k & WinXP */
+
+        result = CryptSetKeyParam(privKey2, KP_X, NULL, 0);
+        ok(result || broken(!result && GetLastError() == ERROR_INVALID_PARAMETER),
+            "Failed to set secret value for user 2, got %x\n", GetLastError());/* Win2k & WinXP */
+
+        /* Acquire required size for the public keys */
+        result = CryptExportKey(privKey1, 0, PUBLICKEYBLOB, 0, NULL, &pubKeyLen1);
+        ok(result, "Failed to acquire public key length for user 1, got %x\n", GetLastError());
+
+        result = CryptExportKey(privKey2, 0, PUBLICKEYBLOB, 0, NULL, &pubKeyLen2);
+        ok(result, "Failed to acquire public key length for user 2, got %x\n", GetLastError());
+
+        /* Export public key which will be calculated into the shared key */
+        result = CryptExportKey(privKey1, 0, PUBLICKEYBLOB, 0, pubKeyBuffer1, &pubKeyLen1);
+        ok(result, "Failed to export public key for user 1, got %x\n", GetLastError());
+
+        result = CryptExportKey(privKey2, 0, PUBLICKEYBLOB, 0, pubKeyBuffer2, &pubKeyLen2);
+        ok(result, "Failed to export public key for user 2, got %x\n", GetLastError());
+
+        /* Import the public key and convert it into a shared key */
+        result = CryptImportKey(hProv, pubKeyBuffer2, pubKeyLen2, privKey1, 0, &sessionKey1);
+        ok(result, "Failed to import key for user 1, got %x\n", GetLastError());
+
+        result = CryptImportKey(hProv, pubKeyBuffer1, pubKeyLen1, privKey2, 0, &sessionKey2);
+        ok(result, "Failed to import key for user 2, got %x\n", GetLastError());
+
+        /* Set the shared key parameters to matching cipher type */
+        algid = CALG_RC4;
+        result = CryptSetKeyParam(sessionKey1, KP_ALGID, (BYTE *)&algid, 0);
+        ok(result, "Failed to set session key for user 1, got %x\n", GetLastError());
+
+        algid = CALG_RC4;
+        result = CryptSetKeyParam(sessionKey2, KP_ALGID, (BYTE *)&algid, 0);
+        ok(result, "Failed to set session key for user 2, got %x\n", GetLastError());
+
+        /* Encrypt some data and verify we are getting the correct output */
+        memcpy(pbData1, plainText, plainLen);
+        dataLen = plainLen;
+
+        result = CryptEncrypt(sessionKey1, 0, TRUE, 0, pbData1, &dataLen, 36);
+        ok(result, "Failed to encrypt data, got %x.\n", GetLastError());
+
+        result = CryptDecrypt(sessionKey2, 0, TRUE, 0, pbData1, &dataLen);
+        ok(result, "Failed to decrypt data, got %x.\n", GetLastError());
+
+        ok(!memcmp(pbData1, (BYTE *)plainText, sizeof(plainText)), "Incorrect decrypted data.\n");
+
+        memcpy(pbData2, plainText, plainLen);
+        dataLen = plainLen;
+
+        result = CryptEncrypt(sessionKey2, 0, TRUE, 0, pbData2, &dataLen, 36);
+        ok(result, "Failed to encrypt data, got %x.\n", GetLastError());
+
+        result = CryptDecrypt(sessionKey1, 0, TRUE, 0, pbData2, &dataLen);
+        ok(result, "Failed to decrypt data, got %x.\n", GetLastError());
+
+        ok(!memcmp(pbData1, pbData2, dataLen), "Decrypted data is not identical.\n");
+
+        /* Destory all user keys */
+        result = CryptDestroyKey(sessionKey1);
+        ok(result, "Failed to destroy session key 1, got %x\n", GetLastError());
+
+        result = CryptDestroyKey(sessionKey2);
+        ok(result, "Failed to destroy session key 2, got %x\n", GetLastError());
+
+        result = CryptDestroyKey(privKey1);
+        ok(result, "Failed to destroy key private key 1, got %x\n", GetLastError());
+
+        result = CryptDestroyKey(privKey2);
+        ok(result, "Failed to destroy key private key 2, got %x\n", GetLastError());
+    }
+}
+
+static void test_key_exchange(void)
+{
+    HCRYPTPROV hProv = 0;
+    BOOL result;
+
+    /* acquire base dss provider */
+    result = CryptAcquireContextA(&hProv, NULL, MS_DEF_DSS_PROV_A, PROV_DSS, CRYPT_VERIFYCONTEXT);
+    if(!result)
+    {
+        skip("DSSENH is currently not available, skipping shared key tests.\n");
+        return;
+    }
+    ok(result, "Failed to acquire CSP.\n");
+
+    test_keyExchange_baseDSS(hProv, baseDSSkey_data, TESTLEN(baseDSSkey_data));
+
+    result = CryptReleaseContext(hProv, 0);
+    ok(result, "Failed to release CSP provider.\n");
+
+    /* acquire diffie hellman dss provider */
+    result = CryptAcquireContextA(&hProv, NULL, MS_DEF_DSS_DH_PROV, PROV_DSS_DH,
+        CRYPT_VERIFYCONTEXT);
+    ok(result, "Failed to acquire CSP.\n");
+
+    test_keyExchange_dssDH(hProv,  dssDHkey_data, TESTLEN(dssDHkey_data));
+
+    result = CryptReleaseContext(hProv, 0);
+    ok(result, "Failed to release CSP provider.\n");
+
+    /* acquire enhanced dss provider */
+    result = CryptAcquireContextA(&hProv, NULL, MS_ENH_DSS_DH_PROV, PROV_DSS_DH,
+        CRYPT_VERIFYCONTEXT);
+    if(!result && GetLastError() == NTE_KEYSET_NOT_DEF)
+    {
+        win_skip("DSSENH and Schannel provider is broken on WinNT4, skipping shared key tests.\n");
+        return;
+    }
+    ok(result, "Failed to acquire CSP.\n");
+
+    test_keyExchange_dssDH(hProv, dssDHkey_data, TESTLEN(dssDHkey_data));
+
+    result = CryptReleaseContext(hProv, 0);
+    ok(result, "Failed to release CSP provider.\n");
+
+    /* acquire schannel dss provider */
+    result = CryptAcquireContextA(&hProv, NULL, MS_DEF_DH_SCHANNEL_PROV, PROV_DH_SCHANNEL,
+        CRYPT_VERIFYCONTEXT);
+    ok(result, "Failed to acquire CSP.\n");
+
+    test_keyExchange_dssDH(hProv, dssDHkey_data, TESTLEN(dssDHkey_data));
+
+    result = CryptReleaseContext(hProv, 0);
+    ok(result, "Failed to release CSP provider.\n");
+}
+
 START_TEST(dssenh)
 {
     test_acquire_context();
@@ -1000,4 +1395,5 @@ START_TEST(dssenh)
     test_data_encryption(encrypt_data, TESTLEN(encrypt_data));
     test_cipher_modes(ciphermode_data, TESTLEN(ciphermode_data));
     test_verify_signature();
+    test_key_exchange();
 }
