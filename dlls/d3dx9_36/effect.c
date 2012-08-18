@@ -190,7 +190,7 @@ struct ID3DXEffectCompilerImpl
 
 static struct d3dx_parameter *get_parameter_by_name(struct ID3DXBaseEffectImpl *base,
         struct d3dx_parameter *parameter, LPCSTR name);
-static struct d3dx_parameter *get_parameter_annotation_by_name(struct d3dx_parameter *parameter, LPCSTR name);
+static struct d3dx_parameter *get_annotation_by_name(UINT handlecount, D3DXHANDLE *handles, LPCSTR name);
 static HRESULT d3dx9_parse_state(struct d3dx_state *state, const char *data, const char **ptr, D3DXHANDLE *objects);
 static void free_parameter_state(D3DXHANDLE handle, BOOL element, BOOL child, enum STATE_TYPE st);
 
@@ -986,7 +986,7 @@ static struct d3dx_parameter *get_parameter_element_by_name(struct d3dx_paramete
                 return get_parameter_by_name(NULL, temp_parameter, part);
 
             case '@':
-                return get_parameter_annotation_by_name(temp_parameter, part);
+                return get_annotation_by_name(temp_parameter->annotation_count, temp_parameter->annotation_handles, part);
 
             case '\0':
                 TRACE("Returning parameter %p\n", temp_parameter);
@@ -1002,22 +1002,22 @@ static struct d3dx_parameter *get_parameter_element_by_name(struct d3dx_paramete
     return NULL;
 }
 
-static struct d3dx_parameter *get_parameter_annotation_by_name(struct d3dx_parameter *parameter, LPCSTR name)
+static struct d3dx_parameter *get_annotation_by_name(UINT handlecount, D3DXHANDLE *handles, LPCSTR name)
 {
     UINT i, length;
     struct d3dx_parameter *temp_parameter;
     LPCSTR part;
 
-    TRACE("parameter %p, name %s\n", parameter, debugstr_a(name));
+    TRACE("handlecount %u, handles %p, name %s\n", handlecount, handles, debugstr_a(name));
 
     if (!name || !*name) return NULL;
 
     length = strcspn( name, "[.@" );
     part = name + length;
 
-    for (i = 0; i < parameter->annotation_count; ++i)
+    for (i = 0; i < handlecount; ++i)
     {
-        temp_parameter = get_parameter_struct(parameter->annotation_handles[i]);
+        temp_parameter = get_parameter_struct(handles[i]);
 
         if (!strcmp(temp_parameter->name, name))
         {
@@ -1088,7 +1088,7 @@ static struct d3dx_parameter *get_parameter_by_name(struct ID3DXBaseEffectImpl *
                     return get_parameter_by_name(NULL, temp_parameter, part);
 
                 case '@':
-                    return get_parameter_annotation_by_name(temp_parameter, part);
+                    return get_annotation_by_name(temp_parameter->annotation_count, temp_parameter->annotation_handles, part);
 
                 case '[':
                     return get_parameter_element_by_name(temp_parameter, part);
@@ -1558,7 +1558,8 @@ static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetAnnotationByName(ID3DXBaseEffect
     struct d3dx_parameter *param = get_valid_parameter(This, object);
     struct d3dx_pass *pass = is_valid_pass(This, object);
     struct d3dx_technique *technique = is_valid_technique(This, object);
-    UINT annotation_count = 0, i;
+    struct d3dx_parameter *anno = NULL;
+    UINT annotation_count = 0;
     D3DXHANDLE *annotation_handles = NULL;
 
     FIXME("iface %p, object %p, name %s partial stub\n", This, object, debugstr_a(name));
@@ -1586,15 +1587,11 @@ static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetAnnotationByName(ID3DXBaseEffect
     }
     /* Todo: add funcs */
 
-    for (i = 0; i < annotation_count; i++)
+    anno = get_annotation_by_name(annotation_count, annotation_handles, name);
+    if (anno)
     {
-        struct d3dx_parameter *anno = get_parameter_struct(annotation_handles[i]);
-
-        if (!strcmp(anno->name, name))
-        {
-            TRACE("Returning parameter %p\n", anno);
-            return get_parameter_handle(anno);
-        }
+        TRACE("Returning parameter %p\n", anno);
+        return get_parameter_handle(anno);
     }
 
     WARN("Invalid argument specified\n");
