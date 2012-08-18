@@ -2945,7 +2945,7 @@ static void test_cert_struct(HINTERNET req)
         "test.winehq.org\r\n"
         "webmaster@winehq.org";
 
-    memset(&info, 0x5, sizeof(&info));
+    memset(&info, 0x5, sizeof(info));
 
     size = sizeof(info);
     res = InternetQueryOption(req, INTERNET_OPTION_SECURITY_CERTIFICATE_STRUCT, &info, &size);
