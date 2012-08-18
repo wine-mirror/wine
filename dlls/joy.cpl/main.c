@@ -289,6 +289,7 @@ static DWORD WINAPI input_thread(void *param)
 
             r.left = (TEST_AXIS_X + TEST_NEXT_AXIS_X*i + axes_pos[i][0]);
             r.top = (TEST_AXIS_Y + axes_pos[i][1]);
+            r.bottom = r.right = 0; /* unused */
             MapDialogRect(data->graphics.hwnd, &r);
 
             SetWindowPos(data->graphics.axes[i], 0, r.left, r.top, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
@@ -549,6 +550,7 @@ static DWORD WINAPI ff_input_thread(void *param)
 
         r.left = FF_AXIS_X + state.lX;
         r.top = FF_AXIS_Y + state.lY;
+        r.right = r.bottom = 0; /* unused */
         MapDialogRect(data->graphics.hwnd, &r);
 
         SetWindowPos(data->graphics.ff_axis, 0, r.left, r.top, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
