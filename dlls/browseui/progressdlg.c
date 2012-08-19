@@ -291,7 +291,7 @@ static HRESULT WINAPI ProgressDialog_QueryInterface(IProgressDialog *iface, REFI
 
     if (*ppvOut)
     {
-        IUnknown_AddRef(iface);
+        IProgressDialog_AddRef(iface);
         return S_OK;
     }
 

@@ -72,7 +72,7 @@ static HRESULT WINAPI ACLShellSource_QueryInterface(IACList2 *iface, REFIID iid,
 
     if (*ppvOut)
     {
-        IUnknown_AddRef(iface);
+        IACList2_AddRef(iface);
         return S_OK;
     }
 

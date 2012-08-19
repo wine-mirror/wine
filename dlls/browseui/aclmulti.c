@@ -113,7 +113,7 @@ static HRESULT WINAPI ACLMulti_QueryInterface(IEnumString *iface, REFIID iid, LP
 
     if (*ppvOut)
     {
-        IUnknown_AddRef(iface);
+        IEnumString_AddRef(iface);
         return S_OK;
     }
 
