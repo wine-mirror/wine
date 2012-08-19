@@ -261,7 +261,7 @@ static HRESULT GAMEUX_updateStatisticsFile(struct GAMEUX_STATS *stats)
                     SysFreeString(V_BSTR(&vValue));
 
                     if(SUCCEEDED(hr))
-                        hr = IXMLDOMElement_appendChild(categoryNode, statisticsNode, &statisticsNode);
+                        hr = IXMLDOMNode_appendChild(categoryNode, statisticsNode, &statisticsNode);
 
                     IXMLDOMElement_Release(statisticsElement);
                     IXMLDOMNode_Release(statisticsNode);

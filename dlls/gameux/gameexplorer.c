@@ -376,7 +376,7 @@ static HRESULT GAMEUX_ParseGameDefinition(
                     IXMLDOMElement_Release(nextElement);
                 }
 
-                IXMLDOMElement_Release(nextNode);
+                IXMLDOMNode_Release(nextNode);
             }
         }
         while(hr == S_OK);
