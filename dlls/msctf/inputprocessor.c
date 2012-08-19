@@ -172,7 +172,7 @@ static HRESULT WINAPI InputProcessorProfiles_QueryInterface(ITfInputProcessorPro
 
     if (*ppvOut)
     {
-        IUnknown_AddRef(iface);
+        ITfInputProcessorProfiles_AddRef(iface);
         return S_OK;
     }
 
@@ -803,7 +803,7 @@ static HRESULT WINAPI ProfilesEnumGuid_QueryInterface(IEnumGUID *iface, REFIID i
 
     if (*ppvOut)
     {
-        IUnknown_AddRef(iface);
+        IEnumGUID_AddRef(iface);
         return S_OK;
     }
 
@@ -959,7 +959,7 @@ static HRESULT WINAPI EnumTfLanguageProfiles_QueryInterface(IEnumTfLanguageProfi
 
     if (*ppvOut)
     {
-        IUnknown_AddRef(iface);
+        IEnumTfLanguageProfiles_AddRef(iface);
         return S_OK;
     }
 

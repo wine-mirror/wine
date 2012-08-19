@@ -113,7 +113,7 @@ static HRESULT WINAPI DocumentMgr_QueryInterface(ITfDocumentMgr *iface, REFIID i
 
     if (*ppvOut)
     {
-        IUnknown_AddRef(iface);
+        ITfDocumentMgr_AddRef(iface);
         return S_OK;
     }
 
@@ -161,7 +161,7 @@ static HRESULT WINAPI DocumentMgr_Push(ITfDocumentMgr *iface, ITfContext *pic)
     if (This->contextStack[1])  /* FUll */
         return TF_E_STACKFULL;
 
-    if (!pic || FAILED(IUnknown_QueryInterface(pic,&IID_ITfContext,(LPVOID*) &check)))
+    if (!pic || FAILED(ITfContext_QueryInterface(pic,&IID_ITfContext,(LPVOID*) &check)))
         return E_INVALIDARG;
 
     if (This->contextStack[0] == NULL)
@@ -364,7 +364,7 @@ static HRESULT WINAPI EnumTfContext_QueryInterface(IEnumTfContexts *iface, REFII
 
     if (*ppvOut)
     {
-        IUnknown_AddRef(iface);
+        IEnumTfContexts_AddRef(iface);
         return S_OK;
     }
 

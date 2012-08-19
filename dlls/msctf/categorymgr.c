@@ -68,7 +68,7 @@ static HRESULT WINAPI CategoryMgr_QueryInterface(ITfCategoryMgr *iface, REFIID i
 
     if (*ppvOut)
     {
-        IUnknown_AddRef(iface);
+        ITfCategoryMgr_AddRef(iface);
         return S_OK;
     }
 

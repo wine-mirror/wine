@@ -141,10 +141,10 @@ static void Context_Destructor(Context *This)
     }
 
     if (This->pITextStoreACP)
-        ITextStoreACPSink_Release(This->pITextStoreACP);
+        ITextStoreACP_Release(This->pITextStoreACP);
 
     if (This->pITfContextOwnerCompositionSink)
-        ITextStoreACPSink_Release(This->pITfContextOwnerCompositionSink);
+        ITfContextOwnerCompositionSink_Release(This->pITfContextOwnerCompositionSink);
 
     if (This->defaultCookie)
     {
@@ -216,7 +216,7 @@ static HRESULT WINAPI Context_QueryInterface(ITfContext *iface, REFIID iid, LPVO
 
     if (*ppvOut)
     {
-        IUnknown_AddRef(iface);
+        ITfContext_AddRef(iface);
         return S_OK;
     }
 
@@ -896,7 +896,7 @@ static HRESULT WINAPI TextStoreACPSink_QueryInterface(ITextStoreACPSink *iface, 
 
     if (*ppvOut)
     {
-        IUnknown_AddRef(iface);
+        ITextStoreACPSink_AddRef(iface);
         return S_OK;
     }
 

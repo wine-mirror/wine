@@ -131,7 +131,7 @@ static HRESULT WINAPI CompartmentMgr_QueryInterface(ITfCompartmentMgr *iface, RE
 
         if (*ppvOut)
         {
-            IUnknown_AddRef(iface);
+            ITfCompartmentMgr_AddRef(iface);
             return S_OK;
         }
 
@@ -304,7 +304,7 @@ static HRESULT WINAPI CompartmentEnumGuid_QueryInterface(IEnumGUID *iface, REFII
 
     if (*ppvOut)
     {
-        IUnknown_AddRef(iface);
+        IEnumGUID_AddRef(iface);
         return S_OK;
     }
 
@@ -464,7 +464,7 @@ static HRESULT WINAPI Compartment_QueryInterface(ITfCompartment *iface, REFIID i
 
     if (*ppvOut)
     {
-        IUnknown_AddRef(iface);
+        ITfCompartment_AddRef(iface);
         return S_OK;
     }
 
