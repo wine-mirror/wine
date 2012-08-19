@@ -196,8 +196,8 @@ static HRESULT WINAPI ITStorageImpl_QueryInterface(
     if (IsEqualGUID(riid, &IID_IUnknown)
 	|| IsEqualGUID(riid, &IID_IITStorage))
     {
-	IClassFactory_AddRef(iface);
-	*ppvObject = This;
+	IITStorage_AddRef(iface);
+	*ppvObject = iface;
 	return S_OK;
     }
 

@@ -65,8 +65,8 @@ static HRESULT WINAPI ITS_IMonikerImpl_QueryInterface(
     if (IsEqualGUID(riid, &IID_IUnknown)
 	|| IsEqualGUID(riid, &IID_IParseDisplayName))
     {
-	IClassFactory_AddRef(iface);
-	*ppvObject = This;
+	IMoniker_AddRef(iface);
+	*ppvObject = iface;
 	return S_OK;
     }
 
@@ -395,8 +395,8 @@ static HRESULT WINAPI ITS_IParseDisplayNameImpl_QueryInterface(
     if (IsEqualGUID(riid, &IID_IUnknown)
 	|| IsEqualGUID(riid, &IID_IParseDisplayName))
     {
-	IClassFactory_AddRef(iface);
-	*ppvObject = This;
+	IParseDisplayName_AddRef(iface);
+	*ppvObject = iface;
 	return S_OK;
     }
 
