@@ -155,7 +155,7 @@ static void test_renderfile(void)
 
 error:
     if (pddsample)
-        IDirectDrawMediaSample_Release(pddsample);
+        IDirectDrawStreamSample_Release(pddsample);
     if (pddstream)
         IDirectDrawMediaStream_Release(pddstream);
     if (pvidstream)
@@ -260,7 +260,7 @@ static void test_media_streams(void)
         }
 
         if (ddraw_sample)
-            IDirectDrawMediaSample_Release(ddraw_sample);
+            IDirectDrawStreamSample_Release(ddraw_sample);
         if (ddraw_stream)
             IDirectDrawMediaStream_Release(ddraw_stream);
     }

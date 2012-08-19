@@ -60,8 +60,8 @@ static HRESULT WINAPI IDirectDrawMediaStreamImpl_QueryInterface(IDirectDrawMedia
         IsEqualGUID(riid, &IID_IMediaStream) ||
         IsEqualGUID(riid, &IID_IDirectDrawMediaStream))
     {
-        IUnknown_AddRef(iface);
-        *ppv = This;
+        IDirectDrawMediaStream_AddRef(iface);
+        *ppv = iface;
         return S_OK;
     }
 

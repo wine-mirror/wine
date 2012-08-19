@@ -87,8 +87,8 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_QueryInterface(IAMMultiMediaStream
         IsEqualGUID(riid, &IID_IMultiMediaStream) ||
         IsEqualGUID(riid, &IID_IAMMultiMediaStream))
     {
-        IUnknown_AddRef(iface);
-        *ppvObject = This;
+        IAMMultiMediaStream_AddRef(iface);
+        *ppvObject = iface;
         return S_OK;
     }
 
@@ -306,7 +306,7 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_GetFilterGraph(IAMMultiMediaStream
         return E_POINTER;
 
     if (This->pFilterGraph)
-        return IFilterGraph_QueryInterface(This->pFilterGraph, &IID_IGraphBuilder, (void**)ppGraphBuilder);
+        return IGraphBuilder_QueryInterface(This->pFilterGraph, &IID_IGraphBuilder, (void**)ppGraphBuilder);
     else
         *ppGraphBuilder = NULL;
 
