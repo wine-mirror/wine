@@ -88,7 +88,7 @@ static HRESULT WINAPI cordebugprocess_QueryInterface(ICorDebugProcess *iface,
         return E_NOINTERFACE;
     }
 
-    ICorDebug_AddRef(iface);
+    ICorDebugProcess_AddRef(iface);
 
     return S_OK;
 }
@@ -458,7 +458,7 @@ static HRESULT WINAPI process_enum_QueryInterface(ICorDebugProcessEnum *iface, R
         return E_NOINTERFACE;
     }
 
-    ICorDebug_AddRef(iface);
+    ICorDebugProcessEnum_AddRef(iface);
 
     return S_OK;
 }
