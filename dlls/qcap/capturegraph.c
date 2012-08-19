@@ -184,7 +184,7 @@ fnCaptureGraphBuilder2_SetFilterGraph(ICaptureGraphBuilder2 * iface,
 
     This->mygraph = pfg;
     IGraphBuilder_AddRef(This->mygraph);
-    if (SUCCEEDED(IUnknown_QueryInterface(This->mygraph,
+    if (SUCCEEDED(IGraphBuilder_QueryInterface(This->mygraph,
                                           &IID_IMediaEvent, (LPVOID *)&pmev)))
     {
         IMediaEvent_CancelDefaultHandling(pmev, EC_REPAINT);
@@ -290,7 +290,7 @@ fnCaptureGraphBuilder2_RenderStream(ICaptureGraphBuilder2 * iface,
     }
 
     /* Uses 'Intelligent Connect', so Connect, not ConnectDirect here */
-    hr = IFilterGraph2_Connect(This->mygraph, pin_in, pin_out);
+    hr = IGraphBuilder_Connect(This->mygraph, pin_in, pin_out);
     IPin_Release(pin_in);
     IPin_Release(pin_out);
     return hr;
@@ -474,7 +474,7 @@ fnCaptureGraphBuilder_QueryInterface(ICaptureGraphBuilder * iface,
 {
     CaptureGraphImpl *This = impl_from_ICaptureGraphBuilder(iface);
     TRACE("%p --> Forwarding to v2 (%p)\n", iface, This);
-    return IUnknown_QueryInterface(&This->ICaptureGraphBuilder2_iface, riid, ppv);
+    return ICaptureGraphBuilder2_QueryInterface(&This->ICaptureGraphBuilder2_iface, riid, ppv);
 }
 
 static ULONG WINAPI
@@ -482,7 +482,7 @@ fnCaptureGraphBuilder_AddRef(ICaptureGraphBuilder * iface)
 {
     CaptureGraphImpl *This = impl_from_ICaptureGraphBuilder(iface);
     TRACE("%p --> Forwarding to v2 (%p)\n", iface, This);
-    return IUnknown_AddRef(&This->ICaptureGraphBuilder2_iface);
+    return ICaptureGraphBuilder2_AddRef(&This->ICaptureGraphBuilder2_iface);
 }
 
 static ULONG WINAPI
@@ -490,7 +490,7 @@ fnCaptureGraphBuilder_Release(ICaptureGraphBuilder * iface)
 {
     CaptureGraphImpl *This = impl_from_ICaptureGraphBuilder(iface);
     TRACE("%p --> Forwarding to v2 (%p)\n", iface, This);
-    return IUnknown_Release(&This->ICaptureGraphBuilder2_iface);
+    return ICaptureGraphBuilder2_Release(&This->ICaptureGraphBuilder2_iface);
 }
 
 static HRESULT WINAPI
