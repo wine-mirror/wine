@@ -1423,7 +1423,7 @@ static void test_iimagelist(void)
 
     /* test reference counting on destruction */
     imgl = (IImageList*)createImageList(32, 32);
-    ret = IUnknown_AddRef(imgl);
+    ret = IImageList_AddRef(imgl);
     ok(ret == 2, "Expected 2, got %d\n", ret);
     ret = ImageList_Destroy((HIMAGELIST)imgl);
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
@@ -1433,7 +1433,7 @@ static void test_iimagelist(void)
     ok(ret == FALSE, "Expected FALSE, got %d\n", ret);
 
     imgl = (IImageList*)createImageList(32, 32);
-    ret = IUnknown_AddRef(imgl);
+    ret = IImageList_AddRef(imgl);
     ok(ret == 2, "Expected 2, got %d\n", ret);
     ret = ImageList_Destroy((HIMAGELIST)imgl);
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
