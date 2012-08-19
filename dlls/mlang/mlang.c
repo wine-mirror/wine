@@ -2883,7 +2883,7 @@ static HRESULT WINAPI fnIMultiLanguage2_GetLcidFromRfc1766(
     if (!pLocale || !bstrRfc1766)
         return E_INVALIDARG;
 
-    hr = IMultiLanguage2_EnumRfc1766(iface, 0, &rfc1766);
+    hr = IMultiLanguage3_EnumRfc1766(iface, 0, &rfc1766);
     if (FAILED(hr))
         return hr;
 
@@ -3094,7 +3094,7 @@ static HRESULT WINAPI fnIMultiLanguage2_ValidateCodePage(
     UINT uiCodePage,
     HWND hwnd)
 {
-    return IMultiLanguage2_ValidateCodePageEx(iface,uiCodePage,hwnd,0);
+    return IMultiLanguage3_ValidateCodePageEx(iface,uiCodePage,hwnd,0);
 }
 
 static HRESULT WINAPI fnIMultiLanguage2_GetCodePageDescription(
@@ -3132,7 +3132,7 @@ static HRESULT WINAPI fnIMultiLanguage2_IsCodePageInstallable(
     TRACE("%u\n", uiCodePage);
 
     /* FIXME: the installable set is usually larger than the set of valid codepages */
-    return IMultiLanguage2_ValidateCodePageEx(iface, uiCodePage, NULL, CPIOD_PEEK);
+    return IMultiLanguage3_ValidateCodePageEx(iface, uiCodePage, NULL, CPIOD_PEEK);
 }
 
 static HRESULT WINAPI fnIMultiLanguage2_SetMimeDBSource(
