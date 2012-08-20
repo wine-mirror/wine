@@ -90,6 +90,7 @@ static BOOL CALLBACK enum_callback(const DIDEVICEINSTANCEW *instance, void *cont
     joystick->num_buttons = caps.dwButtons;
     joystick->num_axes = caps.dwAxes;
     joystick->forcefeedback = caps.dwFlags & DIDC_FORCEFEEDBACK;
+    joystick->num_effects = 0;
 
     if (joystick->forcefeedback) data->num_ff++;
 
@@ -130,10 +131,10 @@ static void destroy_joysticks(struct JoystickData *data)
     for (i = 0; i < data->num_joysticks; i++)
     {
 
-        if (data->joysticks[i].forcefeedback)
+        if (data->joysticks[i].forcefeedback && data->joysticks[i].num_effects > 0)
         {
             for (j = 0; j < data->joysticks[i].num_effects; j++)
-            IDirectInputEffect_Release(data->joysticks[i].effects[j].effect);
+                IDirectInputEffect_Release(data->joysticks[i].effects[j].effect);
 
             HeapFree(GetProcessHeap(), 0, data->joysticks[i].effects);
         }
