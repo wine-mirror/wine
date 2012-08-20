@@ -49,6 +49,7 @@ static const struct
     const char *szProductType;
 } win_versions[] =
 {
+    { "win8",        "Windows 8",         6,  2, 0x23F0,VER_PLATFORM_WIN32_NT, " ", 0, 0, "WinNT"},
     { "win2008r2",   "Windows 2008 R2",   6,  1, 0x1DB1,VER_PLATFORM_WIN32_NT, "Service Pack 1", 1, 0, "ServerNT"},
     { "win7",        "Windows 7",         6,  1, 0x1DB1,VER_PLATFORM_WIN32_NT, "Service Pack 1", 1, 0, "WinNT"},
     { "win2008",     "Windows 2008",      6,  0, 0x1772,VER_PLATFORM_WIN32_NT, "Service Pack 2", 2, 0, "ServerNT"},

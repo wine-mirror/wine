@@ -55,6 +55,7 @@ typedef enum
     WIN2K8,  /* Windows 2008 */
     WIN2K8R2,/* Windows 2008 R2 */
     WIN7,    /* Windows 7 */
+    WIN8,    /* Windows 8 */
     NB_WINDOWS_VERSIONS
 } WINDOWS_VERSION;
 
@@ -163,6 +164,12 @@ static const RTL_OSVERSIONINFOEXW VersionData[NB_WINDOWS_VERSIONS] =
         {'S','e','r','v','i','c','e',' ','P','a','c','k',' ','1',0},
         1, 0, VER_SUITE_SINGLEUSERTS, VER_NT_SERVER, 0
     },
+    /* WIN8 */
+    {
+        sizeof(RTL_OSVERSIONINFOEXW), 6, 2, 0x23F0, VER_PLATFORM_WIN32_NT,
+        {' ',0},
+        0, 0, VER_SUITE_SINGLEUSERTS, VER_NT_WORKSTATION, 0
+    },
 
 };
 
@@ -183,6 +190,7 @@ static const char * const WinVersionNames[NB_WINDOWS_VERSIONS] =
     "win2008,win2k8",             /* WIN2K8 */
     "win2008r2,win2k8r2",         /* WIN2K8R2 */
     "win7",                       /* WIN7 */
+    "win8",                       /* WIN8 */
 };
 
 
