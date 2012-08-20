@@ -344,24 +344,25 @@ static LONG xrandr12_set_current_mode( int mode )
     return DISP_CHANGE_SUCCESSFUL;
 }
 
-static void xrandr12_init_modes(void)
+static int xrandr12_init_modes(void)
 {
     XRRScreenResources *resources;
     XRROutputInfo *output_info;
     XRRCrtcInfo *crtc_info;
+    int ret = -1;
     int i, j;
 
     if (!(resources = xrandr_get_screen_resources( gdi_display, root_window )))
     {
         ERR("Failed to get screen resources.\n");
-        return;
+        return ret;
     }
 
     if (!resources->ncrtc || !(crtc_info = pXRRGetCrtcInfo( gdi_display, resources, resources->crtcs[0] )))
     {
         pXRRFreeScreenResources( resources );
         ERR("Failed to get CRTC info.\n");
-        return;
+        return ret;
     }
 
     TRACE("CRTC 0: mode %#lx, %ux%u+%d+%d.\n", crtc_info->mode,
@@ -372,7 +373,7 @@ static void xrandr12_init_modes(void)
         pXRRFreeCrtcInfo( crtc_info );
         pXRRFreeScreenResources( resources );
         ERR("Failed to get output info.\n");
-        return;
+        return ret;
     }
 
     TRACE("OUTPUT 0: name %s.\n", debugstr_a(output_info->name));
@@ -415,11 +416,13 @@ static void xrandr12_init_modes(void)
     }
 
     X11DRV_Settings_AddDepthModes();
+    ret = 0;
 
 done:
     pXRRFreeOutputInfo( output_info );
     pXRRFreeCrtcInfo( crtc_info );
     pXRRFreeScreenResources( resources );
+    return ret;
 }
 
 #endif /* HAVE_XRRGETSCREENRESOURCES */
@@ -452,9 +455,7 @@ void X11DRV_XRandR_Init(void)
             xrandr_get_screen_resources = wine_dlsym( xrandr_handle, "XRRGetScreenResources", NULL, 0 );
     }
 
-    if (xrandr_get_screen_resources)
-        xrandr12_init_modes();
-    else
+    if (!xrandr_get_screen_resources || xrandr12_init_modes() < 0)
 #endif
         xrandr10_init_modes();
 }
