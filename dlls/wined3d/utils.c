@@ -1138,9 +1138,9 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct wined
             a = color >> 24;
             r = (color & 0x00ff0000) >> 16;
 
-            r_range = format->red_size < 8 ? 1 << (8 - format->red_size - 1) : 1;
-            a_range = format->alpha_size < 8 ? 1 << (8 - format->alpha_size - 1) : 1;
-            if (format->red_size && (r < 0x80 - r_range || r > 0x80 + r_range))
+            r_range = format->red_size < 8 ? 1 << (8 - format->red_size) : 1;
+            a_range = format->alpha_size < 8 ? 1 << (8 - format->alpha_size) : 1;
+            if (format->red_size && (r < 0x7f - r_range || r > 0x7f + r_range))
                 match = FALSE;
             else if (format->alpha_size > 1 && (a < 0xbf - a_range || a > 0xbf + a_range))
                 match = FALSE;
