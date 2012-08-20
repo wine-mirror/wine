@@ -580,6 +580,7 @@ static void remove_vbos(const struct wined3d_gl_info *gl_info,
 void drawPrimitive(struct wined3d_device *device, UINT index_count, UINT StartIdx, BOOL indexed, const void *idxData)
 {
     const struct wined3d_state *state = &device->stateBlock->state;
+    struct wined3d_event_query *ib_query = NULL;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
     unsigned int i;
@@ -683,7 +684,10 @@ void drawPrimitive(struct wined3d_device *device, UINT index_count, UINT StartId
                 if (!index_buffer->buffer_object || !stream_info->all_vbo)
                     idxData = index_buffer->resource.allocatedMemory;
                 else
+                {
+                    ib_query = index_buffer->query;
                     idxData = NULL;
+                }
             }
 
             if (state->index_format == WINED3DFMT_R16_UINT)
@@ -764,7 +768,9 @@ void drawPrimitive(struct wined3d_device *device, UINT index_count, UINT StartId
     /* Finished updating the screen, restore lock */
     LEAVE_GL();
 
-    for(i = 0; i < device->num_buffer_queries; ++i)
+    if (ib_query)
+        wined3d_event_query_issue(ib_query, device);
+    for (i = 0; i < device->num_buffer_queries; ++i)
     {
         wined3d_event_query_issue(device->buffer_queries[i], device);
     }
