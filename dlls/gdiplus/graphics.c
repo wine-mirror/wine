@@ -4864,7 +4864,8 @@ GpStatus gdip_format_string(HDC hdc,
             break;
 
         /* Stop if this was a linewrap (but not if it was a linebreak). */
-        if((lret == fitcpy) && format && (format->attr & StringFormatFlagsNoWrap))
+        if ((lret == fitcpy) && format &&
+            (format->attr & (StringFormatFlagsNoWrap | StringFormatFlagsLineLimit)))
             break;
     }
 
