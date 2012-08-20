@@ -36,6 +36,14 @@ static const REAL mm_per_inch = 25.4;
 static const REAL point_per_inch = 72.0;
 static HWND hwnd;
 
+static void set_rect_empty(RectF *rc)
+{
+    rc->X = 0.0;
+    rc->Y = 0.0;
+    rc->Width = 0.0;
+    rc->Height = 0.0;
+}
+
 /* converts a given unit to its value in pixels */
 static REAL units_to_pixels(REAL units, GpUnit unit, REAL dpi)
 {
@@ -3769,6 +3777,123 @@ static void test_font_height_scaling(void)
     status = GdipDeleteGraphics(graphics);
     expect(Ok, status);
     DeleteDC(hdc);
+
+    GdipDeleteFontFamily(family);
+    GdipDeleteStringFormat(format);
+}
+
+static void test_measure_string(void)
+{
+    static const WCHAR tahomaW[] = { 'T','a','h','o','m','a',0 };
+    static const WCHAR string[] = { 'A','0','1',0 };
+    HDC hdc;
+    GpStringFormat *format;
+    GpGraphics *graphics;
+    GpFontFamily *family;
+    GpFont *font;
+    GpStatus status;
+    RectF bounds, rect;
+    REAL width, height, width_1, width_2;
+    int lines, glyphs;
+
+    status = GdipCreateStringFormat(StringFormatFlagsNoWrap, LANG_NEUTRAL, &format);
+    expect(Ok, status);
+
+    status = GdipCreateFontFamilyFromName(tahomaW, NULL, &family);
+    expect(Ok, status);
+
+    hdc = CreateCompatibleDC(0);
+    status = GdipCreateFromHDC(hdc, &graphics);
+
+    status = GdipCreateFont(family, 20, FontStyleRegular, UnitPixel, &font);
+    expect(Ok, status);
+
+    set_rect_empty(&rect);
+    set_rect_empty(&bounds);
+    status = GdipMeasureString(graphics, string, -1, font, &rect, format, &bounds, &glyphs, &lines);
+    expect(Ok, status);
+    expect(3, glyphs);
+    expect(1, lines);
+    width = bounds.Width;
+    height = bounds.Height;
+
+    set_rect_empty(&rect);
+    rect.Height = height / 2.0;
+    set_rect_empty(&bounds);
+    status = GdipMeasureString(graphics, string, -1, font, &rect, format, &bounds, &glyphs, &lines);
+    expect(Ok, status);
+    expect(3, glyphs);
+    expect(1, lines);
+    expectf(width, bounds.Width);
+todo_wine
+    expectf(height / 2.0, bounds.Height);
+
+    set_rect_empty(&rect);
+    set_rect_empty(&bounds);
+    status = GdipMeasureString(graphics, string, 1, font, &rect, format, &bounds, &glyphs, &lines);
+    expect(Ok, status);
+    expect(1, glyphs);
+    expect(1, lines);
+    ok(bounds.Width < width / 2.0, "width of 1 glyph is wrong\n");
+    expectf(height, bounds.Height);
+    width_1 = bounds.Width;
+
+    set_rect_empty(&rect);
+    set_rect_empty(&bounds);
+    status = GdipMeasureString(graphics, string, 2, font, &rect, format, &bounds, &glyphs, &lines);
+    expect(Ok, status);
+    expect(2, glyphs);
+    expect(1, lines);
+    ok(bounds.Width < width, "width of 2 glyphs is wrong\n");
+    ok(bounds.Width > width_1, "width of 2 glyphs is wrong\n");
+    expectf(height, bounds.Height);
+    width_2 = bounds.Width;
+
+    set_rect_empty(&rect);
+    rect.Width = width / 2.0;
+    set_rect_empty(&bounds);
+    status = GdipMeasureString(graphics, string, -1, font, &rect, format, &bounds, &glyphs, &lines);
+    expect(Ok, status);
+    expect(1, glyphs);
+    expect(1, lines);
+    expectf_(width_1, bounds.Width, 0.01);
+    expectf(height, bounds.Height);
+
+    set_rect_empty(&rect);
+    rect.Height = height;
+    rect.Width = width - 0.05;
+    set_rect_empty(&bounds);
+    status = GdipMeasureString(graphics, string, -1, font, &rect, format, &bounds, &glyphs, &lines);
+    expect(Ok, status);
+todo_wine
+    expect(2, glyphs);
+    expect(1, lines);
+todo_wine
+    expectf_(width_2, bounds.Width, 0.01);
+    expectf(height, bounds.Height);
+
+    set_rect_empty(&rect);
+    rect.Height = height;
+    rect.Width = width_2 - 0.05;
+    set_rect_empty(&bounds);
+    status = GdipMeasureString(graphics, string, -1, font, &rect, format, &bounds, &glyphs, &lines);
+    expect(Ok, status);
+todo_wine
+    expect(1, glyphs);
+    expect(1, lines);
+todo_wine
+    expectf_(width_1, bounds.Width, 0.01);
+    expectf(height, bounds.Height);
+
+    status = GdipDeleteFont(font);
+    expect(Ok, status);
+
+    status = GdipDeleteGraphics(graphics);
+    expect(Ok, status);
+    DeleteDC(hdc);
+
+    GdipDeleteFontFamily(family);
+    GdipDeleteStringFormat(format);
 }
 
 START_TEST(graphics)
@@ -3797,6 +3922,7 @@ START_TEST(graphics)
 
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
+    test_measure_string();
     test_font_height_scaling();
     test_transform();
     test_GdipMeasureString();
