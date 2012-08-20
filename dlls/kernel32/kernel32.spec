@@ -494,7 +494,7 @@
 @ stdcall GetCurrencyFormatA(long long str ptr str long)
 @ stdcall GetCurrencyFormatW(long long str ptr str long)
 @ stdcall GetCurrentActCtx(ptr)
-@ stub GetCurrentConsoleFont
+@ stdcall GetCurrentConsoleFont(long long ptr)
 @ stdcall GetCurrentDirectoryA(long ptr)
 @ stdcall GetCurrentDirectoryW(long ptr)
 @ stdcall GetCurrentProcess()

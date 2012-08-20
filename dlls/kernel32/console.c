@@ -3224,3 +3224,11 @@ BOOL WINAPI SetConsoleIcon(HICON icon)
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
+
+BOOL WINAPI GetCurrentConsoleFont(HANDLE hConsole, BOOL maxwindow, LPCONSOLE_FONT_INFO fontinfo)
+{
+    FIXME(": (%p, %d, %p) stub!\n", hConsole, maxwindow, fontinfo);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+
+}
