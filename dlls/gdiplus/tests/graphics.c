@@ -3865,10 +3865,8 @@ todo_wine
     set_rect_empty(&bounds);
     status = GdipMeasureString(graphics, string, -1, font, &rect, format, &bounds, &glyphs, &lines);
     expect(Ok, status);
-todo_wine
     expect(2, glyphs);
     expect(1, lines);
-todo_wine
     expectf_(width_2, bounds.Width, 0.01);
     expectf(height, bounds.Height);
 
@@ -3878,10 +3876,8 @@ todo_wine
     set_rect_empty(&bounds);
     status = GdipMeasureString(graphics, string, -1, font, &rect, format, &bounds, &glyphs, &lines);
     expect(Ok, status);
-todo_wine
     expect(1, glyphs);
     expect(1, lines);
-todo_wine
     expectf_(width_1, bounds.Width, 0.01);
     expectf(height, bounds.Height);
 

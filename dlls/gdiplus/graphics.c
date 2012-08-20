@@ -4728,8 +4728,8 @@ GpStatus gdip_format_string(HDC hdc,
     stringdup = GdipAlloc((length + 1) * sizeof(WCHAR));
     if(!stringdup) return OutOfMemory;
 
-    nwidth = roundr(rect->Width);
-    nheight = roundr(rect->Height);
+    nwidth = rect->Width;
+    nheight = rect->Height;
 
     if (rect->Width >= INT_MAX || rect->Width < 0.5) nwidth = INT_MAX;
     if (rect->Height >= INT_MAX || rect->Height < 0.5) nheight = INT_MAX;
