@@ -6357,6 +6357,7 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
             for (i = 0; i < func_desc->cParams; i++)
             {
                 USHORT wParamFlags = func_desc->lprgelemdescParam[i].u.paramdesc.wParamFlags;
+                TYPEDESC *tdesc = &func_desc->lprgelemdescParam[i].tdesc;
                 VARIANTARG *src_arg;
 
                 if (wParamFlags & PARAMFLAG_FLCID)
@@ -6508,6 +6509,38 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                     else
                     {
                         prgpvarg[i] = src_arg;
+                    }
+
+                    if((tdesc->vt == VT_USERDEFINED || (tdesc->vt == VT_PTR && tdesc->u.lptdesc->vt == VT_USERDEFINED))
+                       && (V_VT(prgpvarg[i]) == VT_DISPATCH || V_VT(prgpvarg[i]) == VT_UNKNOWN)) {
+                        const TYPEDESC *userdefined_tdesc = tdesc;
+                        IUnknown *userdefined_iface;
+                        ITypeInfo *tinfo2;
+                        TYPEATTR *tattr;
+
+                        if(tdesc->vt == VT_PTR)
+                            userdefined_tdesc = tdesc->u.lptdesc;
+
+                        hres = ITypeInfo2_GetRefTypeInfo(iface, userdefined_tdesc->u.hreftype, &tinfo2);
+                        if(FAILED(hres))
+                            break;
+
+                        hres = ITypeInfo_GetTypeAttr(tinfo2, &tattr);
+                        if(FAILED(hres)) {
+                            ITypeInfo_Release(tinfo2);
+                            return hres;
+                        }
+
+                        hres = IUnknown_QueryInterface(V_UNKNOWN(prgpvarg[i]), &tattr->guid, (void**)&userdefined_iface);
+                        ITypeInfo_ReleaseTypeAttr(tinfo2, tattr);
+                        ITypeInfo_Release(tinfo2);
+                        if(FAILED(hres)) {
+                            ERR("argument does not support %s interface\n", debugstr_guid(&tattr->guid));
+                            break;
+                        }
+
+                        IUnknown_Release(V_UNKNOWN(prgpvarg[i]));
+                        V_UNKNOWN(prgpvarg[i]) = userdefined_iface;
                     }
                 }
                 else if (wParamFlags & PARAMFLAG_FOPT)

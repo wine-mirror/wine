@@ -782,7 +782,6 @@ static HRESULT WINAPI StaticWidget_Invoke(IStaticWidget *iface, DISPID dispIdMem
 static HRESULT WINAPI StaticWidget_TestDual(IStaticWidget *iface, ItestDual *p)
 {
     trace("TestDual()\n");
-    todo_wine
     ok(p == &TestDual, "wrong ItestDual\n");
     return S_OK;
 }
