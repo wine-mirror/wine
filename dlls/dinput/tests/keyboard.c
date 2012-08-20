@@ -187,7 +187,7 @@ static void test_capabilities(LPDIRECTINPUT pDI, HWND hwnd)
     ok (caps.dwFlags & DIDC_ATTACHED, "GetCapabilites dwFlags: 0x%08x\n", caps.dwFlags);
     ok (LOWORD(LOBYTE(caps.dwDevType)) == DIDEVTYPE_KEYBOARD,
         "GetCapabilities invalid device type for dwDevType: 0x%08x\n", caps.dwDevType);
-    todo_wine ok (LOWORD(HIBYTE(caps.dwDevType)) != DIDEVTYPEKEYBOARD_UNKNOWN,
+    ok (LOWORD(HIBYTE(caps.dwDevType)) != DIDEVTYPEKEYBOARD_UNKNOWN,
         "GetCapabilities invalid device subtype for dwDevType: 0x%08x\n", caps.dwDevType);
 
     if (pKeyboard) IUnknown_Release(pKeyboard);
