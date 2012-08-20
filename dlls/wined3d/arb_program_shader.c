@@ -625,6 +625,8 @@ static void shader_arb_vs_local_constants(const struct arb_vs_compiled_shader *g
     checkGLcall("Load vs int consts");
 }
 
+static void shader_arb_select(const struct wined3d_context *context, BOOL usePS, BOOL useVS);
+
 /**
  * Loads the app-supplied constants into the currently set ARB_[vertex/fragment]_programs.
  *
@@ -632,12 +634,37 @@ static void shader_arb_vs_local_constants(const struct arb_vs_compiled_shader *g
  * worry about the Integers or Booleans
  */
 /* GL locking is done by the caller (state handler) */
-static void shader_arb_load_constants(const struct wined3d_context *context, char usePixelShader, char useVertexShader)
+static void shader_arb_load_constants_internal(const struct wined3d_context *context,
+        char usePixelShader, char useVertexShader, BOOL from_shader_select)
 {
     struct wined3d_device *device = context->swapchain->device;
-    const struct wined3d_state *state = &device->stateBlock->state;
+    const struct wined3d_stateblock *stateblock = device->stateBlock;
+    const struct wined3d_state *state = &stateblock->state;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct shader_arb_priv *priv = device->shader_priv;
+
+    if (!from_shader_select)
+    {
+        const struct wined3d_shader *vshader = state->vertex_shader, *pshader = state->pixel_shader;
+        if (vshader
+                && (stateblock->changed.vertexShaderConstantsB & vshader->reg_maps.boolean_constants
+                || (!gl_info->supported[NV_VERTEX_PROGRAM2_OPTION]
+                && (stateblock->changed.vertexShaderConstantsI
+                & vshader->reg_maps.integer_constants & ~vshader->reg_maps.local_int_consts))))
+        {
+            TRACE("bool/integer vertex shader constants potentially modified, forcing shader reselection.\n");
+            shader_arb_select(context, usePixelShader, useVertexShader);
+        }
+        else if (pshader
+                && (stateblock->changed.pixelShaderConstantsB & pshader->reg_maps.boolean_constants
+                || (!gl_info->supported[NV_FRAGMENT_PROGRAM_OPTION]
+                && (stateblock->changed.pixelShaderConstantsI
+                & pshader->reg_maps.integer_constants & ~pshader->reg_maps.local_int_consts))))
+        {
+            TRACE("bool/integer pixel shader constants potentially modified, forcing shader reselection.\n");
+            shader_arb_select(context, usePixelShader, useVertexShader);
+        }
+    }
 
     if (context != priv->last_context)
     {
@@ -674,6 +701,11 @@ static void shader_arb_load_constants(const struct wined3d_context *context, cha
                 priv->highest_dirty_ps_const, state->ps_consts_f, priv->pshader_const_dirty);
         shader_arb_ps_local_constants(gl_shader, context, state, rt_height);
     }
+}
+
+static void shader_arb_load_constants(const struct wined3d_context *context, char ps, char vs)
+{
+    shader_arb_load_constants_internal(context, ps, vs, FALSE);
 }
 
 static void shader_arb_update_float_vertex_constants(struct wined3d_device *device, UINT start, UINT count)
@@ -4662,7 +4694,7 @@ static void shader_arb_select(const struct wined3d_context *context, BOOL usePS,
                 priv->pshader_const_dirty[i] = 1;
             }
             /* Also takes care of loading local constants */
-            shader_arb_load_constants(context, TRUE, FALSE);
+            shader_arb_load_constants_internal(context, TRUE, FALSE, TRUE);
         }
         else
         {
