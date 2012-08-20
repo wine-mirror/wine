@@ -53,8 +53,9 @@ MAKE_FUNCPTR(XRRFreeOutputInfo)
 MAKE_FUNCPTR(XRRFreeScreenResources)
 MAKE_FUNCPTR(XRRGetCrtcInfo)
 MAKE_FUNCPTR(XRRGetOutputInfo)
+MAKE_FUNCPTR(XRRGetScreenResources)
 MAKE_FUNCPTR(XRRSetCrtcConfig)
-static typeof(XRRGetScreenResources) *xrandr_get_screen_resources;
+static typeof(XRRGetScreenResources) *pXRRGetScreenResourcesCurrent;
 static RRMode *xrandr12_modes;
 #endif
 
@@ -96,6 +97,7 @@ static int load_xrandr(void)
         LOAD_FUNCPTR(XRRFreeScreenResources)
         LOAD_FUNCPTR(XRRGetCrtcInfo)
         LOAD_FUNCPTR(XRRGetOutputInfo)
+        LOAD_FUNCPTR(XRRGetScreenResources)
         LOAD_FUNCPTR(XRRSetCrtcConfig)
         r = 2;
 #endif
@@ -267,7 +269,7 @@ static int xrandr12_get_current_mode(void)
     XRRCrtcInfo *crtc_info;
     int i, ret = -1;
 
-    if (!(resources = xrandr_get_screen_resources( gdi_display, root_window )))
+    if (!(resources = pXRRGetScreenResourcesCurrent( gdi_display, root_window )))
     {
         ERR("Failed to get screen resources.\n");
         return 0;
@@ -312,7 +314,7 @@ static LONG xrandr12_set_current_mode( int mode )
 
     mode = mode % xrandr_mode_count;
 
-    if (!(resources = xrandr_get_screen_resources( gdi_display, root_window )))
+    if (!(resources = pXRRGetScreenResourcesCurrent( gdi_display, root_window )))
     {
         ERR("Failed to get screen resources.\n");
         return DISP_CHANGE_FAILED;
@@ -352,10 +354,20 @@ static int xrandr12_init_modes(void)
     int ret = -1;
     int i, j;
 
-    if (!(resources = xrandr_get_screen_resources( gdi_display, root_window )))
+    if (!(resources = pXRRGetScreenResourcesCurrent( gdi_display, root_window )))
     {
         ERR("Failed to get screen resources.\n");
         return ret;
+    }
+
+    if (!resources->ncrtc)
+    {
+        pXRRFreeScreenResources( resources );
+        if (!(resources = pXRRGetScreenResources( gdi_display, root_window )))
+        {
+            ERR("Failed to get screen resources.\n");
+            return ret;
+        }
     }
 
     if (!resources->ncrtc || !(crtc_info = pXRRGetCrtcInfo( gdi_display, resources, resources->crtcs[0] )))
@@ -450,12 +462,12 @@ void X11DRV_XRandR_Init(void)
     if (ret >= 2 && (major > 1 || (major == 1 && minor >= 2)))
     {
         if (major > 1 || (major == 1 && minor >= 3))
-            xrandr_get_screen_resources = wine_dlsym( xrandr_handle, "XRRGetScreenResourcesCurrent", NULL, 0 );
-        if (!xrandr_get_screen_resources)
-            xrandr_get_screen_resources = wine_dlsym( xrandr_handle, "XRRGetScreenResources", NULL, 0 );
+            pXRRGetScreenResourcesCurrent = wine_dlsym( xrandr_handle, "XRRGetScreenResourcesCurrent", NULL, 0 );
+        if (!pXRRGetScreenResourcesCurrent)
+            pXRRGetScreenResourcesCurrent = pXRRGetScreenResources;
     }
 
-    if (!xrandr_get_screen_resources || xrandr12_init_modes() < 0)
+    if (!pXRRGetScreenResourcesCurrent || xrandr12_init_modes() < 0)
 #endif
         xrandr10_init_modes();
 }
