@@ -160,6 +160,7 @@ typedef struct event_target_t event_target_t;
     XIID(IHTMLScreen) \
     XIID(IHTMLScriptElement) \
     XIID(IHTMLSelectElement) \
+    XIID(IHTMLStorage) \
     XIID(IHTMLStyle) \
     XIID(IHTMLStyle2) \
     XIID(IHTMLStyle3) \
@@ -180,6 +181,7 @@ typedef struct event_target_t event_target_t;
     XIID(IHTMLWindow2) \
     XIID(IHTMLWindow3) \
     XIID(IHTMLWindow4) \
+    XIID(IHTMLWindow5) \
     XIID(IHTMLWindow6) \
     XIID(IOmHistory) \
     XIID(IOmNavigator)
@@ -391,6 +393,7 @@ struct HTMLInnerWindow {
     HTMLOptionElementFactory *option_factory;
     IHTMLScreen *screen;
     IOmHistory *history;
+    IHTMLStorage *session_storage;
 
     global_prop_t *global_props;
     DWORD global_prop_cnt;
@@ -717,6 +720,8 @@ HRESULT HTMLLocation_Create(HTMLInnerWindow*,HTMLLocation**) DECLSPEC_HIDDEN;
 IOmNavigator *OmNavigator_Create(void) DECLSPEC_HIDDEN;
 HRESULT HTMLScreen_Create(IHTMLScreen**) DECLSPEC_HIDDEN;
 HRESULT create_history(IOmHistory**) DECLSPEC_HIDDEN;
+
+HRESULT create_storage(IHTMLStorage**) DECLSPEC_HIDDEN;
 
 void HTMLDocument_HTMLDocument3_Init(HTMLDocument*) DECLSPEC_HIDDEN;
 void HTMLDocument_HTMLDocument5_Init(HTMLDocument*) DECLSPEC_HIDDEN;

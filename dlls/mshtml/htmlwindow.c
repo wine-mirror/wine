@@ -1876,8 +1876,20 @@ static HRESULT WINAPI HTMLWindow6_get_XDomainRequest(IHTMLWindow6 *iface, VARIAN
 static HRESULT WINAPI HTMLWindow6_get_sessionStorage(IHTMLWindow6 *iface, IHTMLStorage **p)
 {
     HTMLWindow *This = impl_from_IHTMLWindow6(iface);
+
     FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    if(!This->inner_window->session_storage) {
+        HRESULT hres;
+
+        hres = create_storage(&This->inner_window->session_storage);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    IHTMLStorage_AddRef(This->inner_window->session_storage);
+    *p = This->inner_window->session_storage;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLWindow6_get_localStorage(IHTMLWindow6 *iface, IHTMLStorage **p)
