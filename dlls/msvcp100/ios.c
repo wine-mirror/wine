@@ -937,7 +937,7 @@ basic_streambuf_char* __thiscall basic_streambuf_char_vector_dtor(basic_streambu
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             basic_streambuf_char_dtor(this+i);
@@ -1657,7 +1657,7 @@ basic_streambuf_wchar* __thiscall basic_streambuf_wchar_vector_dtor(basic_stream
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             basic_streambuf_wchar_dtor(this+i);
@@ -2497,7 +2497,7 @@ basic_filebuf_char* __thiscall basic_filebuf_char_vector_dtor(basic_filebuf_char
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             basic_filebuf_char_dtor(this+i);
@@ -3104,7 +3104,7 @@ basic_filebuf_wchar* __thiscall basic_filebuf_wchar_vector_dtor(basic_filebuf_wc
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             basic_filebuf_wchar_dtor(this+i);
@@ -3674,7 +3674,7 @@ basic_stringbuf_char* __thiscall basic_stringbuf_char_vector_dtor(basic_stringbu
 
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *) this - 1;
+        INT_PTR i, *ptr = (INT_PTR *) this - 1;
 
         for (i = *ptr - 1; i >= 0; i--)
             basic_stringbuf_char_dtor(this+i);
@@ -4076,7 +4076,7 @@ basic_stringbuf_wchar* __thiscall basic_stringbuf_wchar_vector_dtor(basic_string
 
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *) this - 1;
+        INT_PTR i, *ptr = (INT_PTR *) this - 1;
 
         for (i = *ptr - 1; i >= 0; i--)
             basic_stringbuf_wchar_dtor(this+i);
@@ -4407,7 +4407,7 @@ ios_base* __thiscall ios_base_vector_dtor(ios_base *this, unsigned int flags)
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             ios_base_dtor(this+i);
@@ -4426,7 +4426,7 @@ void* __thiscall iosb_vector_dtor(void *this, unsigned int flags)
 {
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
-        int *ptr = (int *)this-1;
+        INT_PTR *ptr = (INT_PTR *)this-1;
         MSVCRT_operator_delete(ptr);
     } else {
         if(flags & 1)
@@ -4950,7 +4950,7 @@ basic_ios_char* __thiscall basic_ios_char_vector_dtor(basic_ios_char *this, unsi
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             basic_ios_char_dtor(this+i);
@@ -5197,7 +5197,7 @@ basic_ios_wchar* __thiscall basic_ios_wchar_vector_dtor(basic_ios_wchar *this, u
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             basic_ios_wchar_dtor(this+i);
@@ -5485,7 +5485,7 @@ basic_ostream_char* __thiscall basic_ostream_char_vector_dtor(basic_ios_char *ba
 
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             basic_ostream_char_vbase_dtor(this+i);
@@ -6273,7 +6273,7 @@ basic_ostream_wchar* __thiscall basic_ostream_wchar_vector_dtor(basic_ios_wchar 
 
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             basic_ostream_wchar_vbase_dtor(this+i);
@@ -7212,7 +7212,7 @@ basic_istream_char* __thiscall basic_istream_char_vector_dtor(basic_ios_char *ba
 
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             basic_istream_char_vbase_dtor(this+i);
@@ -8414,7 +8414,7 @@ basic_istream_wchar* __thiscall basic_istream_wchar_vector_dtor(basic_ios_wchar 
 
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             basic_istream_wchar_vbase_dtor(this+i);
@@ -9794,7 +9794,7 @@ basic_iostream_char* __thiscall basic_iostream_char_vector_dtor(basic_ios_char *
 
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             basic_iostream_char_vbase_dtor(this+i);
@@ -9890,7 +9890,7 @@ basic_iostream_wchar* __thiscall basic_iostream_wchar_vector_dtor(basic_ios_wcha
 
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             basic_iostream_wchar_vbase_dtor(this+i);
@@ -10030,7 +10030,7 @@ basic_ofstream_char* __thiscall basic_ofstream_char_vector_dtor(basic_ios_char *
 
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             basic_ofstream_char_vbase_dtor(this+i);
@@ -10300,7 +10300,7 @@ basic_ofstream_wchar* __thiscall basic_ofstream_wchar_vector_dtor(basic_ios_wcha
 
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             basic_ofstream_wchar_vbase_dtor(this+i);
@@ -10539,7 +10539,7 @@ basic_ifstream_char* __thiscall basic_ifstream_char_vector_dtor(basic_ios_char *
 
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             basic_ifstream_char_vbase_dtor(this+i);
@@ -10809,7 +10809,7 @@ basic_ifstream_wchar* __thiscall basic_ifstream_wchar_vector_dtor(basic_ios_wcha
 
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             basic_ifstream_wchar_vbase_dtor(this+i);
@@ -11050,7 +11050,7 @@ basic_fstream_char* __thiscall basic_fstream_char_vector_dtor(basic_ios_char *ba
 
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             basic_fstream_char_vbase_dtor(this+i);
@@ -11322,7 +11322,7 @@ basic_fstream_wchar* __thiscall basic_fstream_wchar_vector_dtor(basic_ios_wchar 
 
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             basic_fstream_wchar_vbase_dtor(this+i);
@@ -11535,7 +11535,7 @@ basic_ostringstream_char* __thiscall basic_ostringstream_char_vector_dtor(basic_
 
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             basic_ostringstream_char_vbase_dtor(this+i);
@@ -11711,7 +11711,7 @@ basic_ostringstream_wchar* __thiscall basic_ostringstream_wchar_vector_dtor(basi
 
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             basic_ostringstream_wchar_vbase_dtor(this+i);
@@ -11858,7 +11858,7 @@ basic_istringstream_char* __thiscall basic_istringstream_char_vector_dtor(basic_
 
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             basic_istringstream_char_vbase_dtor(this+i);
@@ -12034,7 +12034,7 @@ basic_istringstream_wchar* __thiscall basic_istringstream_wchar_vector_dtor(basi
 
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             basic_istringstream_wchar_vbase_dtor(this+i);
@@ -12184,7 +12184,7 @@ basic_stringstream_char* __thiscall basic_stringstream_char_vector_dtor(basic_io
 
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             basic_stringstream_char_vbase_dtor(this+i);
@@ -12364,7 +12364,7 @@ basic_stringstream_wchar* __thiscall basic_stringstream_wchar_vector_dtor(basic_
 
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             basic_stringstream_wchar_vbase_dtor(this+i);
@@ -12544,7 +12544,7 @@ strstreambuf* __thiscall strstreambuf_vector_dtor(strstreambuf *this, unsigned i
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             strstreambuf_dtor(this+i);

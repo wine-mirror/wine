@@ -244,7 +244,7 @@ void * __thiscall MSVCRT_exception_vector_dtor(exception * _this, unsigned int f
     if (flags & 2)
     {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)_this - 1;
+        INT_PTR i, *ptr = (INT_PTR *)_this - 1;
 
         for (i = *ptr - 1; i >= 0; i--) MSVCRT_exception_dtor(_this + i);
         MSVCRT_operator_delete(ptr);
@@ -343,7 +343,7 @@ void * __thiscall MSVCRT_bad_typeid_vector_dtor(bad_typeid * _this, unsigned int
     if (flags & 2)
     {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)_this - 1;
+        INT_PTR i, *ptr = (INT_PTR *)_this - 1;
 
         for (i = *ptr - 1; i >= 0; i--) MSVCRT_bad_typeid_dtor(_this + i);
         MSVCRT_operator_delete(ptr);
@@ -426,7 +426,7 @@ void * __thiscall MSVCRT___non_rtti_object_vector_dtor(__non_rtti_object * _this
     if (flags & 2)
     {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)_this - 1;
+        INT_PTR i, *ptr = (INT_PTR *)_this - 1;
 
         for (i = *ptr - 1; i >= 0; i--) MSVCRT___non_rtti_object_dtor(_this + i);
         MSVCRT_operator_delete(ptr);
@@ -528,7 +528,7 @@ void * __thiscall MSVCRT_bad_cast_vector_dtor(bad_cast * _this, unsigned int fla
     if (flags & 2)
     {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)_this - 1;
+        INT_PTR i, *ptr = (INT_PTR *)_this - 1;
 
         for (i = *ptr - 1; i >= 0; i--) MSVCRT_bad_cast_dtor(_this + i);
         MSVCRT_operator_delete(ptr);
@@ -648,7 +648,7 @@ void * __thiscall MSVCRT_type_info_vector_dtor(type_info * _this, unsigned int f
     if (flags & 2)
     {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)_this - 1;
+        INT_PTR i, *ptr = (INT_PTR *)_this - 1;
 
         for (i = *ptr - 1; i >= 0; i--) MSVCRT_type_info_dtor(_this + i);
         MSVCRT_operator_delete(ptr);

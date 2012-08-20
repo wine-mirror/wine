@@ -186,7 +186,7 @@ locale_facet* __thiscall locale_facet_vector_dtor(locale_facet *this, unsigned i
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             locale_facet_dtor(this+i);
@@ -790,7 +790,7 @@ collate* __thiscall collate_char_vector_dtor(collate *this, unsigned int flags)
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             collate_char_dtor(this+i);
@@ -1023,7 +1023,7 @@ collate* __thiscall collate_wchar_vector_dtor(collate *this, unsigned int flags)
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             collate_wchar_dtor(this+i);
@@ -1223,7 +1223,7 @@ ctype_base* __thiscall ctype_base_vector_dtor(ctype_base *this, unsigned int fla
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             ctype_base_dtor(this+i);
@@ -1349,7 +1349,7 @@ ctype_char* __thiscall ctype_char_vector_dtor(ctype_char *this, unsigned int fla
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             ctype_char_dtor(this+i);
@@ -1923,7 +1923,7 @@ ctype_wchar* __thiscall ctype_wchar_vector_dtor(ctype_wchar *this, unsigned int 
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             ctype_wchar_dtor(this+i);
@@ -2606,7 +2606,7 @@ codecvt_base* __thiscall codecvt_base_vector_dtor(codecvt_base *this, unsigned i
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             codecvt_base_dtor(this+i);
@@ -2736,7 +2736,7 @@ codecvt_char* __thiscall codecvt_char_vector_dtor(codecvt_char *this, unsigned i
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             codecvt_char_dtor(this+i);
@@ -3030,7 +3030,7 @@ codecvt_wchar* __thiscall codecvt_wchar_vector_dtor(codecvt_wchar *this, unsigne
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             codecvt_wchar_dtor(this+i);
@@ -3499,7 +3499,7 @@ numpunct_char* __thiscall numpunct_char_vector_dtor(numpunct_char *this, unsigne
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             numpunct_char_dtor(this+i);
@@ -3852,7 +3852,7 @@ numpunct_wchar* __thiscall numpunct_wchar_vector_dtor(numpunct_wchar *this, unsi
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             numpunct_wchar_dtor(this+i);
@@ -4289,7 +4289,7 @@ num_get* __thiscall num_get_wchar_vector_dtor(num_get *this, unsigned int flags)
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             num_get_wchar_dtor(this+i);
@@ -5438,7 +5438,7 @@ num_get* __thiscall num_get_char_vector_dtor(num_get *this, unsigned int flags)
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             num_get_char_dtor(this+i);
@@ -6299,7 +6299,7 @@ num_put* __thiscall num_put_char_vector_dtor(num_put *this, unsigned int flags)
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             num_put_char_dtor(this+i);
@@ -6946,7 +6946,7 @@ num_put* __thiscall num_put_wchar_vector_dtor(num_put *this, unsigned int flags)
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             num_put_wchar_dtor(this+i);
@@ -7844,7 +7844,7 @@ locale__Locimp* __thiscall locale__Locimp_vector_dtor(locale__Locimp *this, unsi
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             locale__Locimp_dtor(this+i);
@@ -8345,7 +8345,7 @@ locale* __thiscall locale_vector_dtor(locale *this, unsigned int flags)
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             locale_dtor(this+i);

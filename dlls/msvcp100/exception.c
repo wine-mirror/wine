@@ -83,7 +83,7 @@ void * __thiscall MSVCP_type_info_vector_dtor(type_info * _this, unsigned int fl
     if (flags & 2)
     {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)_this - 1;
+        INT_PTR i, *ptr = (INT_PTR *)_this - 1;
 
         for (i = *ptr - 1; i >= 0; i--) MSVCP_type_info_dtor(_this + i);
         MSVCRT_operator_delete(ptr);
@@ -146,7 +146,7 @@ void * __thiscall MSVCP_exception_vector_dtor(exception *this, unsigned int flag
     TRACE("%p %x\n", this, flags);
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             MSVCP_exception_dtor(this+i);
@@ -220,7 +220,7 @@ void * __thiscall MSVCP_bad_alloc_vector_dtor(bad_alloc *this, unsigned int flag
     TRACE("%p %x\n", this, flags);
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             MSVCP_bad_alloc_dtor(this+i);
@@ -311,7 +311,7 @@ void* __thiscall MSVCP_logic_error_vector_dtor(
     TRACE("%p %x\n", this, flags);
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             MSVCP_logic_error_dtor(this+i);
@@ -549,7 +549,7 @@ void* __thiscall MSVCP_runtime_error_vector_dtor(
     TRACE("%p %x\n", this, flags);
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
             MSVCP_runtime_error_dtor(this+i);
