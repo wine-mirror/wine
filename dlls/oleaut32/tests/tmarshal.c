@@ -153,6 +153,35 @@ static void end_host_object(DWORD tid, HANDLE thread)
 
 static ItestDual TestDual, TestDualDisp;
 
+static HRESULT WINAPI TestSecondIface_QueryInterface(ITestSecondIface *iface, REFIID riid, void **ppv)
+{
+    return ItestDual_QueryInterface(&TestDual, riid, ppv);
+}
+
+static ULONG WINAPI TestSecondIface_AddRef(ITestSecondIface *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI TestSecondIface_Release(ITestSecondIface *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI TestSecondIface_test(ITestSecondIface *iface)
+{
+    return 1;
+}
+
+static const ITestSecondIfaceVtbl TestSecondIfaceVtbl = {
+    TestSecondIface_QueryInterface,
+    TestSecondIface_AddRef,
+    TestSecondIface_Release,
+    TestSecondIface_test
+};
+
+static ITestSecondIface TestSecondIface = { &TestSecondIfaceVtbl };
+
 static HRESULT WINAPI TestDual_QueryInterface(ItestDual *iface, REFIID riid, void **ppvObject)
 {
     if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IDispatch)) {
@@ -160,6 +189,9 @@ static HRESULT WINAPI TestDual_QueryInterface(ItestDual *iface, REFIID riid, voi
         return S_OK;
     }else if(IsEqualGUID(riid, &IID_ItestDual)) {
         *ppvObject = &TestDual;
+        return S_OK;
+    }else if(IsEqualGUID(riid, &IID_ITestSecondIface)) {
+        *ppvObject = &TestSecondIface;
         return S_OK;
     }
 
@@ -786,6 +818,13 @@ static HRESULT WINAPI StaticWidget_TestDual(IStaticWidget *iface, ItestDual *p)
     return S_OK;
 }
 
+static HRESULT WINAPI StaticWidget_TestSecondIface(IStaticWidget *iface, ITestSecondIface *p)
+{
+    trace("TestSecondIface()\n");
+    ok(p == &TestSecondIface, "wrong ItestSecondIface\n");
+    return S_OK;
+}
+
 static const IStaticWidgetVtbl StaticWidgetVtbl = {
     StaticWidget_QueryInterface,
     StaticWidget_AddRef,
@@ -794,7 +833,8 @@ static const IStaticWidgetVtbl StaticWidgetVtbl = {
     StaticWidget_GetTypeInfo,
     StaticWidget_GetIDsOfNames,
     StaticWidget_Invoke,
-    StaticWidget_TestDual
+    StaticWidget_TestDual,
+    StaticWidget_TestSecondIface
 };
 
 static IStaticWidget StaticWidget = { &StaticWidgetVtbl };
@@ -1619,6 +1659,20 @@ static void test_StaticWidget(void)
     V_DISPATCH(vararg) = (IDispatch*)&TestDualDisp;
     VariantInit(&varresult);
     hr = ITypeInfo_Invoke(type_info, &StaticWidget, DISPID_TM_TESTDUAL, DISPATCH_METHOD,
+            &dispparams, &varresult, &excepinfo, NULL);
+    ok_ole_success(hr, IDispatch_Invoke);
+    ok(V_VT(&varresult) == VT_EMPTY, "vt %x\n", V_VT(&varresult));
+    VariantClear(&varresult);
+
+    /* call TestSecondIface */
+    dispparams.cNamedArgs = 0;
+    dispparams.cArgs = 1;
+    dispparams.rgdispidNamedArgs = NULL;
+    dispparams.rgvarg = vararg;
+    V_VT(vararg) = VT_DISPATCH;
+    V_DISPATCH(vararg) = (IDispatch*)&TestDualDisp;
+    VariantInit(&varresult);
+    hr = ITypeInfo_Invoke(type_info, &StaticWidget, DISPID_TM_TESTSECONDIFACE, DISPATCH_METHOD,
             &dispparams, &varresult, &excepinfo, NULL);
     ok_ole_success(hr, IDispatch_Invoke);
     ok(V_VT(&varresult) == VT_EMPTY, "vt %x\n", V_VT(&varresult));
