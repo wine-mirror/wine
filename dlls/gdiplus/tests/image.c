@@ -3712,6 +3712,84 @@ static void test_GdipDrawImagePointRect(void)
     expect(Ok, status);
 }
 
+static void test_image_format(void)
+{
+    static const PixelFormat fmt[] =
+    {
+        PixelFormat1bppIndexed, PixelFormat4bppIndexed, PixelFormat8bppIndexed,
+        PixelFormat16bppGrayScale, PixelFormat16bppRGB555, PixelFormat16bppRGB565,
+        PixelFormat16bppARGB1555, PixelFormat24bppRGB, PixelFormat32bppRGB,
+        PixelFormat32bppARGB, PixelFormat32bppPARGB, PixelFormat48bppRGB,
+        PixelFormat64bppARGB, PixelFormat64bppPARGB, PixelFormat32bppCMYK
+    };
+    GpStatus status;
+    GpBitmap *bitmap;
+    GpImage *thumb;
+    HBITMAP hbitmap;
+    BITMAP bm;
+    PixelFormat format;
+    BitmapData data;
+    UINT i, ret;
+
+    for (i = 0; i < sizeof(fmt)/sizeof(fmt[0]); i++)
+    {
+        status = GdipCreateBitmapFromScan0(1, 1, 0, fmt[i], NULL, &bitmap);
+        ok(status == Ok || broken(status == InvalidParameter) /* before win7 */,
+           "GdipCreateBitmapFromScan0 error %d\n", status);
+        if (status != Ok) continue;
+
+        status = GdipGetImagePixelFormat((GpImage *)bitmap, &format);
+        expect(Ok, status);
+        expect(fmt[i], format);
+
+        status = GdipCreateHBITMAPFromBitmap(bitmap, &hbitmap, 0);
+        if (fmt[i] == PixelFormat16bppGrayScale || fmt[i] == PixelFormat32bppCMYK)
+            todo_wine expect(InvalidParameter, status);
+        else
+        {
+            expect(Ok, status);
+            ret = GetObject(hbitmap, sizeof(bm), &bm);
+            expect(sizeof(bm), ret);
+            expect(0, bm.bmType);
+            expect(1, bm.bmWidth);
+            expect(1, bm.bmHeight);
+            expect(4, bm.bmWidthBytes);
+            expect(1, bm.bmPlanes);
+            expect(32, bm.bmBitsPixel);
+            DeleteObject(hbitmap);
+        }
+
+        status = GdipGetImageThumbnail((GpImage *)bitmap, 0, 0, &thumb, NULL, NULL);
+        if (fmt[i] == PixelFormat16bppGrayScale || fmt[i] == PixelFormat32bppCMYK)
+            todo_wine
+            ok(status == OutOfMemory || broken(status == InvalidParameter) /* before win7 */,
+               "expected OutOfMemory, got %d\n", status);
+        else
+        {
+            expect(Ok, status);
+            status = GdipGetImagePixelFormat(thumb, &format);
+            expect(Ok, status);
+            ok(format == PixelFormat32bppPARGB || broken(format != PixelFormat32bppPARGB) /* before win7 */,
+               "expected PixelFormat32bppPARGB, got %#x\n", format);
+            status = GdipDisposeImage(thumb);
+            expect(Ok, status);
+        }
+
+        status = GdipBitmapLockBits(bitmap, NULL, ImageLockModeRead, PixelFormat32bppPARGB, &data);
+        if (fmt[i] == PixelFormat16bppGrayScale || fmt[i] == PixelFormat32bppCMYK)
+            todo_wine expect(InvalidParameter, status);
+        else
+        {
+            expect(Ok, status);
+            status = GdipBitmapUnlockBits(bitmap, &data);
+            expect(Ok, status);
+        }
+
+        status = GdipDisposeImage((GpImage *)bitmap);
+        expect(Ok, status);
+    }
+}
+
 START_TEST(image)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -3724,6 +3802,7 @@ START_TEST(image)
 
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
+    test_image_format();
     test_DrawImage();
     test_GdipDrawImagePointRect();
     test_bitmapbits();

@@ -4393,7 +4393,7 @@ GpStatus WINGDIPAPI GdipGetImageThumbnail(GpImage *image, UINT width, UINT heigh
     GdipGetImageWidth(image, &srcwidth);
     GdipGetImageHeight(image, &srcheight);
 
-    stat = GdipCreateBitmapFromScan0(width, height, 0, PixelFormat32bppARGB,
+    stat = GdipCreateBitmapFromScan0(width, height, 0, PixelFormat32bppPARGB,
         NULL, (GpBitmap**)ret_image);
 
     if (stat == Ok)
