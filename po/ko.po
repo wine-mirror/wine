@@ -3318,7 +3318,7 @@ msgid ""
 "Cached copies of web pages, images and certificates."
 msgstr ""
 "임시 인터넷 파일\n"
-"웹페이지의 캐시된 복사본,그림 그리고 인증서."
+"웹 페이지의 캐시된 복사본,그림 그리고 인증서."
 
 #: inetcpl.rc:70
 msgid ""
@@ -5574,11 +5574,11 @@ msgstr "컨트롤 아이디를 찾을 수 없음.\n"
 
 #: winerror.mc:2506
 msgid "Invalid combo box message.\n"
-msgstr "올바르지 않은  콤보박스 메세지.\n"
+msgstr "올바르지 않은  콤보 박스 메세지입니다.\n"
 
 #: winerror.mc:2511
 msgid "Not a combo box window.\n"
-msgstr "콤보박스 창이 아닙니다.\n"
+msgstr "콤보 박스 창이 아닙니다.\n"
 
 #: winerror.mc:2516
 msgid "Invalid edit height.\n"
