@@ -3094,7 +3094,6 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
 
         if (imageAttributes ||
             (graphics->image && graphics->image->type == ImageTypeBitmap) ||
-            !((GpBitmap*)image)->hbitmap ||
             ptf[1].Y != ptf[0].Y || ptf[2].X != ptf[0].X ||
             ptf[1].X - ptf[0].X != srcwidth || ptf[2].Y - ptf[0].Y != srcheight ||
             srcx < 0 || srcy < 0 ||
@@ -3281,7 +3280,14 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
             }
             else
             {
-                hbitmap = bitmap->hbitmap;
+                if (bitmap->hbitmap)
+                    hbitmap = bitmap->hbitmap;
+                else
+                {
+                    GdipCreateHBITMAPFromBitmap(bitmap, &hbitmap, 0);
+                    temp_bitmap = 1;
+                }
+
                 hdc = bitmap->hdc;
                 temp_hdc = (hdc == 0);
             }
