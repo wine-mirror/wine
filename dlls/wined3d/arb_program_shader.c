@@ -635,7 +635,7 @@ static void shader_arb_select(const struct wined3d_context *context, BOOL usePS,
  */
 /* GL locking is done by the caller (state handler) */
 static void shader_arb_load_constants_internal(const struct wined3d_context *context,
-        char usePixelShader, char useVertexShader, BOOL from_shader_select)
+        BOOL usePixelShader, BOOL useVertexShader, BOOL from_shader_select)
 {
     struct wined3d_device *device = context->swapchain->device;
     const struct wined3d_stateblock *stateblock = device->stateBlock;
@@ -703,7 +703,7 @@ static void shader_arb_load_constants_internal(const struct wined3d_context *con
     }
 }
 
-static void shader_arb_load_constants(const struct wined3d_context *context, char ps, char vs)
+static void shader_arb_load_constants(const struct wined3d_context *context, BOOL ps, BOOL vs)
 {
     shader_arb_load_constants_internal(context, ps, vs, FALSE);
 }

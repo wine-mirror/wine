@@ -712,7 +712,7 @@ static void shader_glsl_load_np2fixup_constants(void *shader_priv,
  */
 /* GL locking is done by the caller (state handler) */
 static void shader_glsl_load_constants(const struct wined3d_context *context,
-        char usePixelShader, char useVertexShader)
+        BOOL usePixelShader, BOOL useVertexShader)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct wined3d_device *device = context->swapchain->device;
