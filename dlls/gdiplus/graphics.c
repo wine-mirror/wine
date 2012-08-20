@@ -3188,7 +3188,7 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
                     GdipFree(src_data);
                 GdipFree(dst_data);
                 GdipDeleteMatrix(dst_to_src);
-                return OutOfMemory;
+                return stat;
             }
 
             apply_image_attributes(imageAttributes, src_data,
