@@ -235,39 +235,40 @@ BOOL WINAPI STRMBASE_DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
  * DLL ClassFactory
  */
 typedef struct {
-    IClassFactory ITF_IClassFactory;
-
+    IClassFactory IClassFactory_iface;
     LONG ref;
     LPFNNewCOMObject pfnCreateInstance;
 } IClassFactoryImpl;
 
-static HRESULT WINAPI
-DSCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
+static inline IClassFactoryImpl *impl_from_IClassFactory(IClassFactory *iface)
 {
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    return CONTAINING_RECORD(iface, IClassFactoryImpl, IClassFactory_iface);
+}
 
+static HRESULT WINAPI DSCF_QueryInterface(IClassFactory *iface, REFIID riid, void **ppobj)
+{
     if (IsEqualGUID(riid, &IID_IUnknown) ||
         IsEqualGUID(riid, &IID_IClassFactory))
     {
         IClassFactory_AddRef(iface);
-        *ppobj = This;
+        *ppobj = iface;
         return S_OK;
     }
 
-    WARN("(%p)->(%s,%p), not found\n", This, debugstr_guid(riid), ppobj);
+    *ppobj = NULL;
+    WARN("(%p)->(%s,%p), not found\n", iface, debugstr_guid(riid), ppobj);
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI DSCF_AddRef(LPCLASSFACTORY iface)
+static ULONG WINAPI DSCF_AddRef(IClassFactory *iface)
 {
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    IClassFactoryImpl *This = impl_from_IClassFactory(iface);
     return InterlockedIncrement(&This->ref);
 }
 
-static ULONG WINAPI DSCF_Release(LPCLASSFACTORY iface)
+static ULONG WINAPI DSCF_Release(IClassFactory *iface)
 {
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-
+    IClassFactoryImpl *This = impl_from_IClassFactory(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     if (ref == 0)
@@ -276,10 +277,10 @@ static ULONG WINAPI DSCF_Release(LPCLASSFACTORY iface)
     return ref;
 }
 
-static HRESULT WINAPI DSCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter,
-                                          REFIID riid, LPVOID *ppobj)
+static HRESULT WINAPI DSCF_CreateInstance(IClassFactory *iface, IUnknown *pOuter,
+                                          REFIID riid, void **ppobj)
 {
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    IClassFactoryImpl *This = impl_from_IClassFactory(iface);
     HRESULT hres = ERROR_SUCCESS;
     LPUNKNOWN punk;
 
@@ -313,9 +314,9 @@ static HRESULT WINAPI DSCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter
     return hres;
 }
 
-static HRESULT WINAPI DSCF_LockServer(LPCLASSFACTORY iface, BOOL dolock)
+static HRESULT WINAPI DSCF_LockServer(IClassFactory *iface, BOOL dolock)
 {
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    IClassFactoryImpl *This = impl_from_IClassFactory(iface);
     TRACE("(%p)->(%d)\n",This, dolock);
 
     if (dolock)
@@ -378,12 +379,12 @@ HRESULT WINAPI STRMBASE_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *
     if (!factory)
         return E_OUTOFMEMORY;
 
-    factory->ITF_IClassFactory.lpVtbl = &DSCF_Vtbl;
+    factory->IClassFactory_iface.lpVtbl = &DSCF_Vtbl;
     factory->ref = 1;
 
     factory->pfnCreateInstance = pList->m_lpfnNew;
 
-    *ppv = &(factory->ITF_IClassFactory);
+    *ppv = &factory->IClassFactory_iface;
     return S_OK;
 }
 
