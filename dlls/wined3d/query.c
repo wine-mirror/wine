@@ -141,7 +141,10 @@ enum wined3d_event_query_result wined3d_event_query_finish(const struct wined3d_
     ENTER_GL();
     if (gl_info->supported[ARB_SYNC])
     {
-        GLenum gl_ret = GL_EXTCALL(glClientWaitSync(query->object.sync, 0, ~(GLuint64)0));
+        /* Apple seems to be into arbitrary limits, and timeouts larger than
+         * 0xfffffffffffffbff immediately return GL_TIMEOUT_EXPIRED. We don't
+         * really care and can live with waiting a few μs less. (OS X 10.7.4). */
+        GLenum gl_ret = GL_EXTCALL(glClientWaitSync(query->object.sync, GL_SYNC_FLUSH_COMMANDS_BIT, ~(GLuint64)0xffff));
         checkGLcall("glClientWaitSync");
 
         switch (gl_ret)
