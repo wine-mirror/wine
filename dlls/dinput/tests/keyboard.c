@@ -170,6 +170,29 @@ static void test_get_prop(LPDIRECTINPUT pDI, HWND hwnd)
     if (pKeyboard) IUnknown_Release(pKeyboard);
 }
 
+static void test_capabilities(LPDIRECTINPUT pDI, HWND hwnd)
+{
+    HRESULT hr;
+    LPDIRECTINPUTDEVICE pKeyboard = NULL;
+    DIDEVCAPS caps;
+
+    hr = IDirectInput_CreateDevice(pDI, &GUID_SysKeyboard, &pKeyboard, NULL);
+    ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %08x\n", hr);
+    if (FAILED(hr)) return;
+
+    caps.dwSize = sizeof(caps);
+    hr = IDirectInputDevice_GetCapabilities(pKeyboard, &caps);
+
+    ok (SUCCEEDED(hr), "GetCapabilites failed: 0x%08x\n", hr);
+    ok (caps.dwFlags & DIDC_ATTACHED, "GetCapabilites dwFlags: 0x%08x\n", caps.dwFlags);
+    ok (LOWORD(LOBYTE(caps.dwDevType)) == DIDEVTYPE_KEYBOARD,
+        "GetCapabilities invalid device type for dwDevType: 0x%08x\n", caps.dwDevType);
+    todo_wine ok (LOWORD(HIBYTE(caps.dwDevType)) != DIDEVTYPEKEYBOARD_UNKNOWN,
+        "GetCapabilities invalid device subtype for dwDevType: 0x%08x\n", caps.dwDevType);
+
+    if (pKeyboard) IUnknown_Release(pKeyboard);
+}
+
 static void keyboard_tests(DWORD version)
 {
     HRESULT hr;
@@ -196,6 +219,7 @@ static void keyboard_tests(DWORD version)
         acquire_tests(pDI, hwnd);
         test_set_coop(pDI, hwnd);
         test_get_prop(pDI, hwnd);
+        test_capabilities(pDI, hwnd);
     }
 
     DestroyWindow(hwnd);
