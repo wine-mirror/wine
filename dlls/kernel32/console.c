@@ -3230,5 +3230,34 @@ BOOL WINAPI GetCurrentConsoleFont(HANDLE hConsole, BOOL maxwindow, LPCONSOLE_FON
     FIXME(": (%p, %d, %p) stub!\n", hConsole, maxwindow, fontinfo);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
-
 }
+
+#ifdef __i386__
+#undef GetConsoleFontSize
+DWORD WINAPI GetConsoleFontSize(HANDLE hConsole, DWORD font)
+{
+    union {
+        COORD c;
+        DWORD w;
+    } x;
+
+    FIXME(": (%p, %d) stub!\n", hConsole, font);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+
+    x.c.X = 0;
+    x.c.Y = 0;
+    return x.w;
+}
+#endif /* defined(__i386__) */
+
+
+#ifndef __i386__
+COORD WINAPI GetConsoleFontSize(HANDLE hConsole, DWORD font)
+{
+    COORD c;
+    c.X = 80;
+    c.Y = 24;
+     FIXME(": (%p, %d) stub!\n", hConsole, font);
+    return c;
+}
+#endif /* defined(__i386__) */

@@ -268,7 +268,20 @@ typedef struct tagINPUT_RECORD
 #ifdef __i386__
 /* Note: this should return a COORD, but calling convention for returning
  * structures is different between Windows and gcc on i386. */
+
+WINBASEAPI DWORD WINAPI GetConsoleFontSize(HANDLE, DWORD);
 WINBASEAPI DWORD WINAPI GetLargestConsoleWindowSize(HANDLE);
+
+static inline COORD __wine_GetConsoleFontSize_wrapper(HANDLE h, DWORD d)
+{
+    union {
+      COORD c;
+      DWORD dw;
+    } u;
+    u.dw = GetConsoleFontSize(h, d);
+    return u.c;
+}
+#define GetConsoleFontSize(h, d) __wine_GetConsoleFontSize_wrapper(h, d)
 
 static inline COORD __wine_GetLargestConsoleWindowSize_wrapper(HANDLE h)
 {
@@ -282,6 +295,7 @@ static inline COORD __wine_GetLargestConsoleWindowSize_wrapper(HANDLE h)
 #define GetLargestConsoleWindowSize(h) __wine_GetLargestConsoleWindowSize_wrapper(h)
 
 #else  /* __i386__ */
+WINBASEAPI COORD WINAPI GetConsoleFontSize(HANDLE, DWORD);
 WINBASEAPI COORD WINAPI GetLargestConsoleWindowSize(HANDLE);
 #endif  /* __i386__ */
 
@@ -316,7 +330,6 @@ WINBASEAPI DWORD WINAPI  GetConsoleAliasExesLengthW(VOID);
 WINBASEAPI UINT WINAPI   GetConsoleCP(VOID);
 WINBASEAPI BOOL WINAPI   GetConsoleCursorInfo( HANDLE,LPCONSOLE_CURSOR_INFO);
 WINBASEAPI BOOL WINAPI   GetConsoleDisplayMode(LPDWORD);
-WINBASEAPI COORD WINAPI  GetConsoleFontSize(HANDLE,DWORD);
 WINBASEAPI BOOL WINAPI   GetConsoleHistoryInfo(LPCONSOLE_HISTORY_INFO);
 WINBASEAPI BOOL WINAPI   GetConsoleInputExeNameA(DWORD,LPSTR);
 WINBASEAPI BOOL WINAPI   GetConsoleInputExeNameW(DWORD,LPWSTR);

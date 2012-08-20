@@ -475,7 +475,7 @@
 @ stub GetConsoleCursorMode
 @ stdcall GetConsoleDisplayMode(ptr)
 @ stub GetConsoleFontInfo
-@ stub GetConsoleFontSize
+@ stdcall GetConsoleFontSize(long long)
 @ stub GetConsoleHardwareState
 @ stdcall GetConsoleInputExeNameA(long ptr)
 @ stdcall GetConsoleInputExeNameW(long ptr)
