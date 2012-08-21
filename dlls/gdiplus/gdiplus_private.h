@@ -75,7 +75,7 @@ extern void delete_element(region_element *element) DECLSPEC_HIDDEN;
 
 extern GpStatus get_hatch_data(HatchStyle hatchstyle, const char **result) DECLSPEC_HIDDEN;
 
-static inline INT roundr(REAL x)
+static inline INT gdip_round(REAL x)
 {
     return (INT) floorf(x + 0.5);
 }

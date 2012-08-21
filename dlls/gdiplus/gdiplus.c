@@ -210,7 +210,7 @@ static void unstretch_angle(REAL * angle, REAL rad_x, REAL rad_y)
         return;
 
     stretched = gdiplus_atan2(sin(*angle) / fabs(rad_y), cos(*angle) / fabs(rad_x));
-    revs_off = roundr(*angle / (2.0 * M_PI)) - roundr(stretched / (2.0 * M_PI));
+    revs_off = gdip_round(*angle / (2.0 * M_PI)) - gdip_round(stretched / (2.0 * M_PI));
     stretched += ((REAL)revs_off) * M_PI * 2.0;
     *angle = stretched;
 }
@@ -394,8 +394,8 @@ void calc_curve_bezier_endp(REAL xend, REAL yend, REAL xadj, REAL yadj,
     REAL tension, REAL *x, REAL *y)
 {
     /* tangent at endpoints is the line from the endpoint to the adjacent point */
-    *x = roundr(tension * (xadj - xend) + xend);
-    *y = roundr(tension * (yadj - yend) + yend);
+    *x = gdip_round(tension * (xadj - xend) + xend);
+    *y = gdip_round(tension * (yadj - yend) + yend);
 }
 
 /* make sure path has enough space for len more points */

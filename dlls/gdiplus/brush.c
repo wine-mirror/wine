@@ -1032,8 +1032,8 @@ GpStatus WINGDIPAPI GdipGetPathGradientCenterPointI(GpPathGradient *grad,
     ret = GdipGetPathGradientCenterPoint(grad,&ptf);
 
     if(ret == Ok){
-        point->X = roundr(ptf.X);
-        point->Y = roundr(ptf.Y);
+        point->X = gdip_round(ptf.X);
+        point->Y = gdip_round(ptf.Y);
     }
 
     return ret;
@@ -1131,10 +1131,10 @@ GpStatus WINGDIPAPI GdipGetPathGradientRectI(GpPathGradient *brush, GpRect *rect
     stat = GdipGetPathGradientRect(brush, &rectf);
     if(stat != Ok)  return stat;
 
-    rect->X = roundr(rectf.X);
-    rect->Y = roundr(rectf.Y);
-    rect->Width  = roundr(rectf.Width);
-    rect->Height = roundr(rectf.Height);
+    rect->X = gdip_round(rectf.X);
+    rect->Y = gdip_round(rectf.Y);
+    rect->Width  = gdip_round(rectf.Width);
+    rect->Height = gdip_round(rectf.Height);
 
     return Ok;
 }
@@ -2126,10 +2126,10 @@ GpStatus WINGDIPAPI GdipGetLineRectI(GpLineGradient *brush, GpRect *rect)
     ret = GdipGetLineRect(brush, &rectF);
 
     if(ret == Ok){
-        rect->X      = roundr(rectF.X);
-        rect->Y      = roundr(rectF.Y);
-        rect->Width  = roundr(rectF.Width);
-        rect->Height = roundr(rectF.Height);
+        rect->X      = gdip_round(rectF.X);
+        rect->Y      = gdip_round(rectF.Y);
+        rect->Width  = gdip_round(rectF.Width);
+        rect->Height = gdip_round(rectF.Height);
     }
 
     return ret;

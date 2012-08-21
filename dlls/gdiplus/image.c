@@ -1248,10 +1248,10 @@ GpStatus WINGDIPAPI GdipCloneBitmapArea(REAL x, REAL y, REAL width, REAL height,
     if (format == PixelFormatDontCare)
         format = srcBitmap->format;
 
-    area.X = roundr(x);
-    area.Y = roundr(y);
-    area.Width = roundr(width);
-    area.Height = roundr(height);
+    area.X = gdip_round(x);
+    area.Y = gdip_round(y);
+    area.Width = gdip_round(width);
+    area.Height = gdip_round(height);
 
     stat = GdipBitmapLockBits(srcBitmap, &area, ImageLockModeRead, format,
         &lockeddata_src);

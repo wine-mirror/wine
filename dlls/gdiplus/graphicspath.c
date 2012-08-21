@@ -1357,8 +1357,8 @@ GpStatus WINGDIPAPI GdipGetPathPointsI(GpPath *path, GpPoint* points, INT count)
     ret = GdipGetPathPoints(path,ptf,count);
     if(ret == Ok)
         for(i = 0;i < count;i++){
-            points[i].X = roundr(ptf[i].X);
-            points[i].Y = roundr(ptf[i].Y);
+            points[i].X = gdip_round(ptf[i].X);
+            points[i].Y = gdip_round(ptf[i].Y);
         };
     GdipFree(ptf);
 
@@ -1478,10 +1478,10 @@ GpStatus WINGDIPAPI GdipGetPathWorldBoundsI(GpPath* path, GpRect* bounds,
     ret = GdipGetPathWorldBounds(path,&boundsF,matrix,pen);
 
     if(ret == Ok){
-        bounds->X      = roundr(boundsF.X);
-        bounds->Y      = roundr(boundsF.Y);
-        bounds->Width  = roundr(boundsF.Width);
-        bounds->Height = roundr(boundsF.Height);
+        bounds->X      = gdip_round(boundsF.X);
+        bounds->Y      = gdip_round(boundsF.Y);
+        bounds->Width  = gdip_round(boundsF.Width);
+        bounds->Height = gdip_round(boundsF.Height);
     }
 
     return ret;
@@ -1607,7 +1607,7 @@ GpStatus WINGDIPAPI GdipIsVisiblePathPoint(GpPath* path, REAL x, REAL y, GpGraph
         return status;
     }
 
-    *result = PtInRegion(hrgn, roundr(x), roundr(y));
+    *result = PtInRegion(hrgn, gdip_round(x), gdip_round(y));
 
     DeleteObject(hrgn);
     GdipDeleteRegion(region);

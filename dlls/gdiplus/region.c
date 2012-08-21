@@ -715,10 +715,10 @@ GpStatus WINGDIPAPI GdipGetRegionBoundsI(GpRegion *region, GpGraphics *graphics,
 
     status = GdipGetRegionBounds(region, graphics, &rectf);
     if(status == Ok){
-        rect->X = roundr(rectf.X);
-        rect->Y = roundr(rectf.X);
-        rect->Width  = roundr(rectf.Width);
-        rect->Height = roundr(rectf.Height);
+        rect->X = gdip_round(rectf.X);
+        rect->Y = gdip_round(rectf.X);
+        rect->Width  = gdip_round(rectf.Width);
+        rect->Height = gdip_round(rectf.Height);
     }
 
     return status;
@@ -1220,7 +1220,7 @@ GpStatus WINGDIPAPI GdipIsVisibleRegionPoint(GpRegion* region, REAL x, REAL y, G
         return Ok;
     }
 
-    *res = PtInRegion(hrgn, roundr(x), roundr(y));
+    *res = PtInRegion(hrgn, gdip_round(x), gdip_round(y));
 
     DeleteObject(hrgn);
 
