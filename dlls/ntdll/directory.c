@@ -3022,6 +3022,8 @@ NTSTATUS WINAPI RtlWow64EnableFsRedirection( BOOLEAN enable )
 NTSTATUS WINAPI RtlWow64EnableFsRedirectionEx( ULONG disable, ULONG *old_value )
 {
     if (!is_wow64) return STATUS_NOT_IMPLEMENTED;
+    if (((ULONG_PTR)old_value >> 16) == 0) return STATUS_ACCESS_VIOLATION;
+
     *old_value = !ntdll_get_thread_data()->wow64_redir;
     ntdll_get_thread_data()->wow64_redir = !disable;
     return STATUS_SUCCESS;
