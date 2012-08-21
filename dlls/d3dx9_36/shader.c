@@ -988,6 +988,12 @@ static HRESULT set_matrix_array(ID3DXConstantTable *iface, IDirect3DDevice9 *dev
         row_offset = 4;
         registers_per_matrix = desc.Rows;
     }
+    else if (desc.Class == D3DXPC_SCALAR)
+    {
+        column_offset = 1;
+        row_offset = 1;
+        registers_per_matrix = 1;
+    }
     else
     {
         FIXME("Unhandled variable class %#x\n", desc.Class);

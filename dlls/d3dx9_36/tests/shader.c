@@ -636,6 +636,16 @@ static void test_setting_basic_table(IDirect3DDevice9 *device)
             "The variable f was not set correctly by ID3DXConstantTable_SetVector, got %f, should be %f\n",
             out[0], f4.x);
 
+    memset(out, 0, sizeof(out));
+    IDirect3DDevice9_SetVertexShaderConstantF(device, 6, out, 1);
+    res = ID3DXConstantTable_SetMatrix(ctable, device, "f", &mvp);
+    ok(res == D3D_OK, "ID3DXConstantTable_SetMatrix failed on variable f: 0x%08x\n", res);
+
+    IDirect3DDevice9_GetVertexShaderConstantF(device, 6, out, 1);
+    ok(out[0] == U(S(mvp))._11 && out[1] == 0.0f && out[2] == 0.0f && out[3] == 0.0f,
+            "The variable f was not set correctly by ID3DXConstantTable_SetMatrix, got %f, should be %f\n",
+            out[0], U(S(mvp))._11);
+
     refcnt = ID3DXConstantTable_Release(ctable);
     ok(refcnt == 0, "The constant table reference count was %u, should be 0\n", refcnt);
 }
