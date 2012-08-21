@@ -168,7 +168,7 @@ static BOOL InitFunctionPtrs(void)
     ok(hMsvcrt != 0, "GetModuleHandleA failed\n");
     if (!hMsvcrt)
     {
-        win_skip("Could not load msvcrt.dll");
+        win_skip("Could not load msvcrt.dll\n");
         return FALSE;
     }
 
