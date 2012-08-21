@@ -456,11 +456,7 @@ static struct d3dx_technique *get_technique_by_name(struct ID3DXBaseEffectImpl *
     {
         struct d3dx_technique *tech = get_technique_struct(base->technique_handles[i]);
 
-        if (!strcmp(tech->name, name))
-        {
-            TRACE("Returning technique %p\n", tech);
-            return tech;
-        }
+        if (!strcmp(tech->name, name)) return tech;
     }
 
     return NULL;
