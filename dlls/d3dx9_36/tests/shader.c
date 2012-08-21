@@ -646,6 +646,27 @@ static void test_setting_basic_table(IDirect3DDevice9 *device)
             "The variable f was not set correctly by ID3DXConstantTable_SetMatrix, got %f, should be %f\n",
             out[0], U(S(mvp))._11);
 
+    /* Clear registers */
+    memset(out, 0, sizeof(out));
+    IDirect3DDevice9_SetVertexShaderConstantF(device, 0, out, 4);
+
+    /* SetVector shouldn't change the value of a matrix constant */
+    res = ID3DXConstantTable_SetVector(ctable, device, "mvp", &f4);
+    ok(res == D3D_OK, "ID3DXConstantTable_SetVector failed on variable f: 0x%08x\n", res);
+
+    IDirect3DDevice9_GetVertexShaderConstantF(device, 0, out, 4);
+    ok(out[0] == 0.0f && out[1] == 0.0f && out[2] == 0.0f && out[3] == 0.0f
+            && out[4] == 0.0f && out[5] == 0.0f && out[6] == 0.0f && out[7] == 0.0f
+            && out[8] == 0.0f && out[9] == 0.0f && out[10] == 0.0f && out[11] == 0.0f
+            && out[12] == 0.0f && out[13] == 0.0f && out[14] == 0.0f && out[15] == 0.0f,
+            "The variable mvp was not set correctly by ID3DXConstantTable_SetVector, "
+            "got {%f, %f, %f, %f; %f, %f, %f, %f; %f, %f, %f %f; %f, %f, %f, %f}, "
+            "should be all 0.0f\n",
+            out[0], out[1], out[2], out[3],
+            out[4], out[5], out[6], out[7],
+            out[8], out[9], out[10], out[11],
+            out[12], out[13], out[14], out[15]);
+
     refcnt = ID3DXConstantTable_Release(ctable);
     ok(refcnt == 0, "The constant table reference count was %u, should be 0\n", refcnt);
 }

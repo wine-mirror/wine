@@ -921,6 +921,9 @@ static HRESULT set_vector_array(ID3DXConstantTable *iface, IDirect3DDevice9 *dev
         return D3DERR_INVALIDCALL;
     }
 
+    if (desc.Class == D3DXPC_MATRIX_ROWS || desc.Class == D3DXPC_MATRIX_COLUMNS)
+        return D3D_OK;
+
     switch (desc.RegisterSet)
     {
         case D3DXRS_FLOAT4:
