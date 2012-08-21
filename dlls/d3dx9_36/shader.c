@@ -1252,9 +1252,9 @@ static HRESULT WINAPI ID3DXConstantTableImpl_SetMatrixTranspose(ID3DXConstantTab
 {
     struct ID3DXConstantTableImpl *This = impl_from_ID3DXConstantTable(iface);
 
-    FIXME("(%p)->(%p, %p, %p): stub\n", This, device, constant, matrix);
+    TRACE("(%p)->(%p, %p, %p)\n", This, device, constant, matrix);
 
-    return E_NOTIMPL;
+    return set_matrix_array(iface, device, constant, matrix, 1, D3DXPC_MATRIX_COLUMNS, D3DXPT_FLOAT, 4, 4);
 }
 
 static HRESULT WINAPI ID3DXConstantTableImpl_SetMatrixTransposeArray(ID3DXConstantTable *iface, LPDIRECT3DDEVICE9 device,
