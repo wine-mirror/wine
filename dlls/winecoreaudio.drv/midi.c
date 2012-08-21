@@ -225,10 +225,10 @@ LONG CoreAudio_MIDIRelease(void)
  */
 static void MIDI_NotifyClient(UINT wDevID, WORD wMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
-    DWORD 		dwCallBack;
+    DWORD_PTR 		dwCallBack;
     UINT 		uFlags;
     HANDLE		hDev;
-    DWORD 		dwInstance;
+    DWORD_PTR 		dwInstance;
 
     TRACE("wDevID=%d wMsg=%d dwParm1=%04lX dwParam2=%04lX\n", wDevID, wMsg, dwParam1, dwParam2);
 
