@@ -861,7 +861,7 @@ static void test_signhash_array(HCRYPTPROV hProv, const struct signature_test *t
         ok(result, "Failed to return hash value.\n");
 
         /* Compare hashes to ensure they are the same */
-        ok(hashLen1 ==  hashLen2, "Hash lengths were not the same.");
+        ok(hashLen1 ==  hashLen2, "Hash lengths were not the same.\n");
         ok(!memcmp(hashValue1, hashValue2, hashLen2), "Hashes were not identical.\n");
 
         /* Sign hash 1 */
@@ -883,7 +883,7 @@ static void test_signhash_array(HCRYPTPROV hProv, const struct signature_test *t
         /* Compare signatures to ensure they are both different, because every DSS signature
            should be different even if the input hash data is identical */
         ok(memcmp(signValue1, signValue2, signLen2), "Expected two different signatures from "
-            "the same hash input.");
+            "the same hash input.\n");
 
         result = CryptExportKey(privKey, 0, PUBLICKEYBLOB, 0, NULL, &pubKeyLen);
         ok(result, "Failed to acquire public key length, got %x\n", GetLastError());
