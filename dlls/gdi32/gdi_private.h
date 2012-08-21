@@ -170,11 +170,12 @@ static inline INT GDI_ROUND(double val)
 #define GET_DC_PHYSDEV(dc,func) \
     get_physdev_entry_point( (dc)->physDev, FIELD_OFFSET(struct gdi_dc_funcs,func))
 
-static inline PHYSDEV pop_dc_driver( DC *dc, PHYSDEV dev )
+static inline PHYSDEV pop_dc_driver( DC *dc, const struct gdi_dc_funcs *funcs )
 {
-    PHYSDEV *pdev = &dc->physDev;
-    while (*pdev && *pdev != dev) pdev = &(*pdev)->next;
+    PHYSDEV dev, *pdev = &dc->physDev;
+    while (*pdev && (*pdev)->funcs != funcs) pdev = &(*pdev)->next;
     if (!*pdev) return NULL;
+    dev = *pdev;
     *pdev = dev->next;
     return dev;
 }
