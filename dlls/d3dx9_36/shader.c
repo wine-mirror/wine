@@ -984,7 +984,7 @@ static HRESULT set_float_matrix(FLOAT *matrix, const D3DXCONSTANT_DESC *desc,
             }
             break;
         default:
-            FIXME("Unhandled type %#x", type);
+            FIXME("Unhandled type %#x\n", type);
             return D3DERR_INVALIDCALL;
     }
 
@@ -1238,7 +1238,7 @@ static HRESULT WINAPI ID3DXConstantTableImpl_SetValue(ID3DXConstantTable *iface,
             return set_matrix_array(iface, device, constant, data, elements,
                     D3DXPC_MATRIX_ROWS, desc.Type, desc.Rows, desc.Columns);
         default:
-            FIXME("Unhandled parameter class %#x", desc.Class);
+            FIXME("Unhandled parameter class %#x\n", desc.Class);
             return D3DERR_INVALIDCALL;
     }
 }
