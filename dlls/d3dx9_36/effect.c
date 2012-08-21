@@ -903,7 +903,7 @@ inline static FLOAT get_float(D3DXPARAMETER_TYPE type, LPCVOID data)
 
 static inline BOOL get_bool(LPCVOID data)
 {
-    return (*(DWORD *)data) ? TRUE : FALSE;
+    return (*(DWORD *)data) != 0;
 }
 
 static void set_number(LPVOID outdata, D3DXPARAMETER_TYPE outtype, LPCVOID indata, D3DXPARAMETER_TYPE intype)
@@ -1735,7 +1735,7 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_SetBool(ID3DXBaseEffect *iface, D3DXHA
     if (param && !param->element_count && param->rows == 1 && param->columns == 1)
     {
         /* crop input */
-        b = b ? TRUE : FALSE;
+        b = b != 0;
         set_number(param->data, param->type, &b, D3DXPT_BOOL);
         return D3D_OK;
     }
