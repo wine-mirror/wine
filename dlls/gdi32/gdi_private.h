@@ -179,6 +179,14 @@ static inline PHYSDEV pop_dc_driver( DC *dc, PHYSDEV dev )
     return dev;
 }
 
+static inline PHYSDEV find_dc_driver( DC *dc, const struct gdi_dc_funcs *funcs )
+{
+    PHYSDEV dev;
+
+    for (dev = dc->physDev; dev; dev = dev->next) if (dev->funcs == funcs) return dev;
+    return NULL;
+}
+
 /* bitmap object */
 
 typedef struct tagBITMAPOBJ

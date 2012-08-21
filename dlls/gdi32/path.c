@@ -856,14 +856,15 @@ static BOOL pathdrv_DeleteDC( PHYSDEV dev )
 
 BOOL PATH_SavePath( DC *dst, DC *src )
 {
-    struct path_physdev *physdev;
+    PHYSDEV dev;
 
     if (src->path)
     {
         if (!(dst->path = copy_gdi_path( src->path ))) return FALSE;
     }
-    else if ((physdev = find_path_physdev( src )))
+    else if ((dev = find_dc_driver( src, &path_driver )))
     {
+        struct path_physdev *physdev = get_path_physdev( dev );
         if (!(dst->path = copy_gdi_path( physdev->path ))) return FALSE;
         dst->path_open = TRUE;
     }
@@ -880,7 +881,7 @@ BOOL PATH_RestorePath( DC *dst, DC *src )
         if (!physdev)
         {
             if (!path_driver.pCreateDC( &dst->physDev, NULL, NULL, NULL, NULL )) return FALSE;
-            physdev = get_path_physdev( dst->physDev );
+            physdev = get_path_physdev( find_dc_driver( dst, &path_driver ));
         }
         else free_gdi_path( physdev->path );
 
@@ -2101,7 +2102,7 @@ BOOL nulldrv_BeginPath( PHYSDEV dev )
         free_gdi_path( path );
         return FALSE;
     }
-    physdev = get_path_physdev( dc->physDev );
+    physdev = get_path_physdev( find_dc_driver( dc, &path_driver ));
     physdev->path = path;
     if (dc->path) free_gdi_path( dc->path );
     dc->path = NULL;
