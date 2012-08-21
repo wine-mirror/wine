@@ -1828,22 +1828,67 @@ static BYTE *remap_channels(ACImpl *This, BYTE *buf, snd_pcm_uframes_t frames)
 
     if(!This->remapping_buf){
         This->remapping_buf = HeapAlloc(GetProcessHeap(), 0,
-                (This->fmt->wBitsPerSample / 8) * This->alsa_channels * frames);
+                bytes_per_sample * This->alsa_channels * frames);
         This->remapping_buf_frames = frames;
     }else if(This->remapping_buf_frames < frames){
         This->remapping_buf = HeapReAlloc(GetProcessHeap(), 0, This->remapping_buf,
-                (This->fmt->wBitsPerSample / 8) * This->alsa_channels * frames);
+                bytes_per_sample * This->alsa_channels * frames);
         This->remapping_buf_frames = frames;
     }
 
     snd_pcm_format_set_silence(This->alsa_format, This->remapping_buf,
             frames * This->alsa_channels);
 
-    for(i = 0; i < frames; ++i){
-        for(c = 0; c < This->fmt->nChannels; ++c){
-            memcpy(&This->remapping_buf[(i * This->alsa_channels + This->alsa_channel_map[c]) * bytes_per_sample],
-                    &buf[(i * This->fmt->nChannels + c) * bytes_per_sample], bytes_per_sample);
+    switch(This->fmt->wBitsPerSample){
+    case 8: {
+            UINT8 *tgt_buf, *src_buf;
+            tgt_buf = This->remapping_buf;
+            src_buf = buf;
+            for(i = 0; i < frames; ++i){
+                for(c = 0; c < This->fmt->nChannels; ++c)
+                    tgt_buf[This->alsa_channel_map[c]] = src_buf[c];
+                tgt_buf += This->alsa_channels;
+                src_buf += This->fmt->nChannels;
+            }
+            break;
         }
+    case 16: {
+            UINT16 *tgt_buf, *src_buf;
+            tgt_buf = (UINT16*)This->remapping_buf;
+            src_buf = (UINT16*)buf;
+            for(i = 0; i < frames; ++i){
+                for(c = 0; c < This->fmt->nChannels; ++c)
+                    tgt_buf[This->alsa_channel_map[c]] = src_buf[c];
+                tgt_buf += This->alsa_channels;
+                src_buf += This->fmt->nChannels;
+            }
+        }
+        break;
+    case 32: {
+            UINT32 *tgt_buf, *src_buf;
+            tgt_buf = (UINT32*)This->remapping_buf;
+            src_buf = (UINT32*)buf;
+            for(i = 0; i < frames; ++i){
+                for(c = 0; c < This->fmt->nChannels; ++c)
+                    tgt_buf[This->alsa_channel_map[c]] = src_buf[c];
+                tgt_buf += This->alsa_channels;
+                src_buf += This->fmt->nChannels;
+            }
+        }
+        break;
+    default: {
+            BYTE *tgt_buf, *src_buf;
+            tgt_buf = This->remapping_buf;
+            src_buf = buf;
+            for(i = 0; i < frames; ++i){
+                for(c = 0; c < This->fmt->nChannels; ++c)
+                    memcpy(&tgt_buf[This->alsa_channel_map[c] * bytes_per_sample],
+                            &src_buf[c * bytes_per_sample], bytes_per_sample);
+                tgt_buf += This->alsa_channels * bytes_per_sample;
+                src_buf += This->fmt->nChannels * bytes_per_sample;
+            }
+        }
+        break;
     }
 
     return This->remapping_buf;
