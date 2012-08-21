@@ -3445,7 +3445,7 @@ static void test_GdipMeasureString(void)
     GpFontFamily *family;
     GpFont *font;
     GpStringFormat *format;
-    RectF bounds, rc, empty_rc = { 0.0, 0.0, 0.0, 0.0 };
+    RectF bounds, rc;
     REAL base_cx = 0, base_cy = 0, height;
     INT chars, lines;
     LOGFONTW lf;
@@ -3492,8 +3492,8 @@ static void test_GdipMeasureString(void)
 
         height = font_size * font_to_pixel_scale;
 
-        rc = empty_rc;
-        bounds = empty_rc;
+        set_rect_empty(&rc);
+        set_rect_empty(&bounds);
         status = GdipMeasureString(graphics, string, -1, font, &rc, format, &bounds, &chars, &lines);
         expect(Ok, status);
 
@@ -3516,7 +3516,7 @@ static void test_GdipMeasureString(void)
         rc = bounds;
         rc.X = 50.0;
         rc.Y = 50.0;
-        bounds = empty_rc;
+        set_rect_empty(&bounds);
         status = GdipMeasureString(graphics, string, -1, font, &rc, format, &bounds, &chars, &lines);
         expect(Ok, status);
         expectf(50.0, bounds.X);
@@ -3574,8 +3574,8 @@ static void test_GdipMeasureString(void)
                 height /= td[i].page_scale;
             /*trace("%u: %.1f font units = %f units with %.1f dpi, page_scale %.1f\n", i, font_size, height, td[i].res_y, td[i].page_scale);*/
 
-            rc = empty_rc;
-            bounds = empty_rc;
+            set_rect_empty(&rc);
+            set_rect_empty(&bounds);
             status = GdipMeasureString(graphics, string, -1, font, &rc, format, &bounds, &chars, &lines);
             expect(Ok, status);
 
@@ -3598,7 +3598,7 @@ static void test_GdipMeasureString(void)
             rc = bounds;
             rc.X = 50.0;
             rc.Y = 50.0;
-            bounds = empty_rc;
+            set_rect_empty(&bounds);
             status = GdipMeasureString(graphics, string, -1, font, &rc, format, &bounds, &chars, &lines);
             expect(Ok, status);
             expectf(50.0, bounds.X);
@@ -3749,14 +3749,8 @@ static void test_font_height_scaling(void)
             status = GdipSetPageUnit(graphics, gfx_unit);
             expect(Ok, status);
 
-            rect.X = 0.0;
-            rect.Y = 0.0;
-            rect.Width = 0;
-            rect.Height = 0;
-            bounds.X = 0.0;
-            bounds.Y = 0.0;
-            bounds.Width = 0;
-            bounds.Height = 0;
+            set_rect_empty(&rect);
+            set_rect_empty(&bounds);
             status = GdipMeasureString(graphics, string, -1, font, &rect, format, &bounds, NULL, NULL);
             expect(Ok, status);
 
