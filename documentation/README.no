@@ -30,7 +30,7 @@ Følgende kreves for å bygge og kjøre Wine
   FreeBSD 6.3 eller nyere
   Solaris x86 9 eller nyere
   NetBSD-current
-  Mac OS X 10.4 eller nyere
+  Mac OS X 10.5 eller nyere
 
 Wine krever støtte for tråder på kjernenivå, og derfor er det bare
 operativsystemene ovenfor som støttes. Andre operativsystemer som
