@@ -320,7 +320,6 @@ extern GUID DSOUND_capture_guids[MAXWAVEDRIVERS] DECLSPEC_HIDDEN;
 extern WCHAR wine_vxd_drv[] DECLSPEC_HIDDEN;
 
 void setup_dsound_options(void) DECLSPEC_HIDDEN;
-const char * dumpCooperativeLevel(DWORD level) DECLSPEC_HIDDEN;
 
 HRESULT get_mmdevice(EDataFlow flow, const GUID *tgt, IMMDevice **device) DECLSPEC_HIDDEN;
 

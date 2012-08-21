@@ -50,7 +50,7 @@ typedef struct IDirectSoundImpl {
     BOOL                has_ds8;
 } IDirectSoundImpl;
 
-const char * dumpCooperativeLevel(DWORD level)
+static const char * dumpCooperativeLevel(DWORD level)
 {
 #define LE(x) case x: return #x
     switch (level) {
