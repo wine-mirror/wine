@@ -1138,10 +1138,21 @@ static HRESULT set_matrix_pointer_array(ID3DXConstantTable *iface, IDirect3DDevi
     else if (desc.Class == D3DXPC_VECTOR)
     {
         registers_per_matrix = 1;
-        column_offset = 1;
-        row_offset = 4;
-        num_rows = desc.Rows;
-        num_columns = desc.Columns;
+
+        if (class == D3DXPC_MATRIX_ROWS)
+        {
+            column_offset = 1;
+            row_offset = 4;
+            num_rows = desc.Rows;
+            num_columns = desc.Columns;
+        }
+        else
+        {
+            column_offset = 4;
+            row_offset = 1;
+            num_rows = desc.Columns;
+            num_columns = desc.Rows;
+        }
     }
     else
     {
@@ -1366,9 +1377,9 @@ static HRESULT WINAPI ID3DXConstantTableImpl_SetMatrixTransposePointerArray(ID3D
 {
     struct ID3DXConstantTableImpl *This = impl_from_ID3DXConstantTable(iface);
 
-    FIXME("(%p)->(%p, %p, %p, %d): stub\n", This, device, constant, matrix, count);
+    TRACE("(%p)->(%p, %p, %p, %d)\n", This, device, constant, matrix, count);
 
-    return E_NOTIMPL;
+    return set_matrix_pointer_array(iface, device, constant, matrix, count, D3DXPC_MATRIX_COLUMNS);
 }
 
 static const struct ID3DXConstantTableVtbl ID3DXConstantTable_Vtbl =
