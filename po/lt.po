@@ -13692,7 +13692,7 @@ msgstr "Klaida: Komandos eilutė nepalaikoma\n"
 
 #: wmic.rc:26
 msgid "Error: Alias not found\n"
-msgstr "Klaida: Alternatyvusis vardas nerastas.\n"
+msgstr "Klaida: Alternatyvusis vardas nerastas\n"
 
 #: wmic.rc:27
 msgid "Error: Invalid query\n"
