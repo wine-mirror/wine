@@ -3527,19 +3527,9 @@ static HRESULT WINAPI ID3DXEffectImpl_SetTechnique(ID3DXEffect *iface, D3DXHANDL
 
     if (tech)
     {
-        UINT i;
-
-        for (i = 0; i < base->technique_count; ++i)
-        {
-            struct d3dx_technique *t = get_technique_struct(base->technique_handles[i]);
-
-            if (tech == t)
-            {
-                This->active_technique = get_technique_handle(t);
-                TRACE("Technique %u (%p)\n", i, tech);
-                return D3D_OK;
-            }
-        }
+        This->active_technique = get_technique_handle(tech);
+        TRACE("Technique %p\n", tech);
+        return D3D_OK;
     }
 
     WARN("Invalid argument supplied.\n");
