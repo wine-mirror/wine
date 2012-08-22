@@ -3140,11 +3140,8 @@ static void test_string_functions(void)
         expect(Ok, status);
     }
 
-todo_wine
     ok(region_isempty[0], "region should be empty\n");
-todo_wine
     ok(region_isempty[1], "region should be empty\n");
-todo_wine
     ok(region_isempty[2], "region should be empty\n");
     ok(region_isempty[3], "region should be empty\n");
 

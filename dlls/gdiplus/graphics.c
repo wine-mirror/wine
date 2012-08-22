@@ -4731,9 +4731,6 @@ GpStatus gdip_format_string(HDC hdc,
     nwidth = rect->Width;
     nheight = rect->Height;
 
-    if (rect->Width >= INT_MAX || rect->Width < 0.5) nwidth = INT_MAX;
-    if (rect->Height >= INT_MAX || rect->Height < 0.5) nheight = INT_MAX;
-
     if (format)
         hkprefix = format->hkprefix;
     else
@@ -5064,6 +5061,9 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
     scaled_rect.Width = rect->Width * args.rel_width;
     scaled_rect.Height = rect->Height * args.rel_height;
 
+    if (scaled_rect.Width >= INT_MAX || scaled_rect.Width < 0.5) scaled_rect.Width = (REAL)(1 << 23);
+    if (scaled_rect.Height >= INT_MAX || scaled_rect.Height < 0.5) scaled_rect.Height = (REAL)(1 << 23);
+
     bounds->X = rect->X;
     bounds->Y = rect->Y;
     bounds->Width = 0.0;
@@ -5213,6 +5213,9 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     scaled_rect.Y = 0.0;
     scaled_rect.Width = rel_width * rect->Width;
     scaled_rect.Height = rel_height * rect->Height;
+
+    if (scaled_rect.Width >= INT_MAX || scaled_rect.Width < 0.5) scaled_rect.Width = (REAL)(1 << 23);
+    if (scaled_rect.Height >= INT_MAX || scaled_rect.Height < 0.5) scaled_rect.Height = (REAL)(1 << 23);
 
     if (gdip_round(scaled_rect.Width) != 0 && gdip_round(scaled_rect.Height) != 0)
     {
