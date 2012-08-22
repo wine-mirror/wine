@@ -13826,7 +13826,7 @@ msgstr "Erreur : ligne de commande invalide\n"
 
 #: wmic.rc:26
 msgid "Error: Alias not found\n"
-msgstr "Erreur : alias no trouvé\n"
+msgstr "Erreur : alias non trouvé\n"
 
 #: wmic.rc:27
 msgid "Error: Invalid query\n"
