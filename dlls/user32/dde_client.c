@@ -175,7 +175,7 @@ HCONV WINAPI DdeConnect(DWORD idInst, HSZ hszService, HSZ hszTopic,
 
     /* note: sent messages shall not use packing */
     SendMessageTimeoutW( HWND_BROADCAST, WM_DDE_INITIATE, (WPARAM)hwndClient, MAKELPARAM(aSrv, aTpc),
-                         SMTO_ABORTIFHUNG, 2000, NULL );
+                         SMTO_ABORTIFHUNG, 0, NULL );
 
     pInstance = WDML_GetInstance(idInst);
     if (!pInstance)
