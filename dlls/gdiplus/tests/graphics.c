@@ -3847,11 +3847,6 @@ static void test_font_height_scaling(void)
                 win_skip("GdipMeasureCharacterRanges ignores units before Win7\n");
                 continue;
             }
-            /* FIXME: remove once Wine is fixed */
-            if (gfx_unit == UnitPixel)
-                expectf_(height, rect.Height, height / 15.0);
-            else
-todo_wine
             expectf_(height, rect.Height, height / 15.0);
 todo_wine
             expectf_(bounds.Width, rect.Width + margin * 2.0, bounds.Width / 25.0);

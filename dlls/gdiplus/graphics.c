@@ -4874,6 +4874,7 @@ GpStatus gdip_format_string(HDC hdc,
 
 struct measure_ranges_args {
     GpRegion **regions;
+    REAL rel_width, rel_height;
 };
 
 static GpStatus measure_ranges_callback(HDC hdc,
@@ -4895,16 +4896,16 @@ static GpStatus measure_ranges_callback(HDC hdc,
             GpRectF range_rect;
             SIZE range_size;
 
-            range_rect.Y = bounds->Y;
-            range_rect.Height = bounds->Height;
+            range_rect.Y = bounds->Y / args->rel_height;
+            range_rect.Height = bounds->Height / args->rel_height;
 
             GetTextExtentExPointW(hdc, string + index, range_start - index,
                                   INT_MAX, NULL, NULL, &range_size);
-            range_rect.X = bounds->X + range_size.cx;
+            range_rect.X = (bounds->X + range_size.cx) / args->rel_width;
 
             GetTextExtentExPointW(hdc, string + index, range_end - index,
                                   INT_MAX, NULL, NULL, &range_size);
-            range_rect.Width = (bounds->X + range_size.cx) - range_rect.X;
+            range_rect.Width = (bounds->X + range_size.cx - range_rect.X) / args->rel_width;
 
             stat = GdipCombineRegionRect(args->regions[i], &range_rect, CombineModeUnion);
             if (stat != Ok)
@@ -4926,6 +4927,8 @@ GpStatus WINGDIPAPI GdipMeasureCharacterRanges(GpGraphics* graphics,
     HFONT oldfont;
     struct measure_ranges_args args;
     HDC hdc, temp_hdc=NULL;
+    GpPointF pt[3];
+    RectF scaled_rect;
 
     TRACE("(%p %s %d %p %s %p %d %p)\n", graphics, debugstr_w(string),
             length, font, debugstr_rectf(layoutRect), stringFormat, regionCount, regions);
@@ -4935,8 +4938,6 @@ GpStatus WINGDIPAPI GdipMeasureCharacterRanges(GpGraphics* graphics,
 
     if (regionCount < stringFormat->range_count)
         return InvalidParameter;
-
-    get_log_fontW(font, graphics, &lfw);
 
     if(!graphics->hdc)
     {
@@ -4949,6 +4950,24 @@ GpStatus WINGDIPAPI GdipMeasureCharacterRanges(GpGraphics* graphics,
     if (stringFormat->attr)
         TRACE("may be ignoring some format flags: attr %x\n", stringFormat->attr);
 
+    pt[0].X = 0.0;
+    pt[0].Y = 0.0;
+    pt[1].X = 1.0;
+    pt[1].Y = 0.0;
+    pt[2].X = 0.0;
+    pt[2].Y = 1.0;
+    GdipTransformPoints(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, pt, 3);
+    args.rel_width = sqrt((pt[1].Y-pt[0].Y)*(pt[1].Y-pt[0].Y)+
+                     (pt[1].X-pt[0].X)*(pt[1].X-pt[0].X));
+    args.rel_height = sqrt((pt[2].Y-pt[0].Y)*(pt[2].Y-pt[0].Y)+
+                      (pt[2].X-pt[0].X)*(pt[2].X-pt[0].X));
+
+    scaled_rect.X = layoutRect->X * args.rel_width;
+    scaled_rect.Y = layoutRect->Y * args.rel_height;
+    scaled_rect.Width = layoutRect->Width * args.rel_width;
+    scaled_rect.Height = layoutRect->Height * args.rel_height;
+
+    get_log_fontW(font, graphics, &lfw);
     oldfont = SelectObject(hdc, CreateFontIndirectW(&lfw));
 
     for (i=0; i<stringFormat->range_count; i++)
@@ -4960,7 +4979,7 @@ GpStatus WINGDIPAPI GdipMeasureCharacterRanges(GpGraphics* graphics,
 
     args.regions = regions;
 
-    stat = gdip_format_string(hdc, string, length, font, layoutRect, stringFormat,
+    stat = gdip_format_string(hdc, string, length, font, &scaled_rect, stringFormat,
         measure_ranges_callback, &args);
 
     DeleteObject(SelectObject(hdc, oldfont));
