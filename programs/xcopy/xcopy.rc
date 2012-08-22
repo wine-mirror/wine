@@ -56,7 +56,7 @@ Where:\n\
 \tmore files.\n\
 [/S]  Copy directories and subdirectories.\n\
 [/E]  Copy directories and subdirectories, including any empty ones.\n\
-[/Q]  Do not list names during copy, ie quiet.\n\
+[/Q]  Do not list names during copy, that is be quiet.\n\
 [/F]  Show full source and destination names during copy.\n\
 [/L]  Simulate operation, showing names which would be copied.\n\
 [/W]  Prompts before beginning the copy operation.\n\
