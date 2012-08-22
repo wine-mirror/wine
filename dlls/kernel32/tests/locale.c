@@ -3444,7 +3444,6 @@ todo_wine
 
 static void test_IsValidLocaleName(void)
 {
-    static const WCHAR enW[] = {'e','n',0};
     static const WCHAR enusW[] = {'e','n','-','U','S',0};
     static const WCHAR zzW[] = {'z','z',0};
     static const WCHAR zzzzW[] = {'z','z','-','Z','Z',0};
@@ -3456,8 +3455,6 @@ static void test_IsValidLocaleName(void)
         return;
     }
 
-    ret = pIsValidLocaleName(enW);
-    ok(ret, "IsValidLocaleName failed\n");
     ret = pIsValidLocaleName(enusW);
     ok(ret, "IsValidLocaleName failed\n");
     ret = pIsValidLocaleName(zzW);
