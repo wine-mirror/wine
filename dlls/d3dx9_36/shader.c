@@ -690,6 +690,28 @@ static inline D3DXHANDLE handle_from_constant(struct ctab_constant *constant)
     return (D3DXHANDLE)constant;
 }
 
+static struct ctab_constant *is_valid_sub_constant(struct ctab_constant *parent, struct ctab_constant *constant)
+{
+    UINT i, count;
+
+    /* all variable have at least elements = 1, but no elements */
+    if (!parent->constants) return NULL;
+
+    if (parent->desc.Elements > 1) count = parent->desc.Elements;
+    else count = parent->desc.StructMembers;
+
+    for (i = 0; i < count; ++i)
+    {
+        if (&parent->constants[i] == constant)
+            return constant;
+
+        if (is_valid_sub_constant(&parent->constants[i], constant))
+            return constant;
+    }
+
+    return NULL;
+}
+
 static inline struct ctab_constant *is_valid_constant(struct ID3DXConstantTableImpl *table, D3DXHANDLE handle)
 {
     struct ctab_constant *c = constant_from_handle(handle);
@@ -699,7 +721,11 @@ static inline struct ctab_constant *is_valid_constant(struct ID3DXConstantTableI
 
     for (i = 0; i < table->desc.Constants; ++i)
     {
-        if (&table->constants[i] == c) return c;
+        if (&table->constants[i] == c)
+            return c;
+
+        if (is_valid_sub_constant(&table->constants[i], c))
+            return c;
     }
 
     return NULL;
