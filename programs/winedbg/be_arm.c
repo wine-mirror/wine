@@ -760,6 +760,56 @@ static UINT thumb2_disasm_longmuldiv(UINT inst, ADDRESS64 *addr)
     return inst;
 }
 
+static UINT thumb2_disasm_ldrword(UINT inst, ADDRESS64 *addr)
+{
+    WORD op1 = (inst >> 23) & 0x01;
+    WORD op2 = (inst >> 6) & 0x3f;
+    int offset;
+
+    if (get_nibble(inst, 4) == 0x0f)
+    {
+        offset = inst & 0x0fff;
+
+        if (!op1) offset *= -1;
+        offset += 3;
+
+        dbg_printf("\n\tldr\t%s, ", tbl_regs[get_nibble(inst, 3)]);
+        db_printsym(addr->Offset + offset);
+        return 0;
+    }
+
+    if (!op1 && !op2)
+    {
+        dbg_printf("\n\tldr\t%s, [%s, %s, LSL #%u]", tbl_regs[get_nibble(inst, 3)],
+                   tbl_regs[get_nibble(inst, 4)], tbl_regs[get_nibble(inst, 0)], (inst >> 4) & 0x3);
+        return 0;
+    }
+
+    if (!op1 && (op2 & 0x3c) == 0x38)
+    {
+        dbg_printf("\n\tldrt\t%s, [%s, #%u]", tbl_regs[get_nibble(inst, 3)],
+                   tbl_regs[get_nibble(inst, 4)], inst & 0xff);
+        return 0;
+    }
+
+    dbg_printf("\n\tldr\t%s, [%s", tbl_regs[get_nibble(inst, 3)], tbl_regs[get_nibble(inst, 4)]);
+
+    if (op1)
+    {
+        dbg_printf(", #%u]", inst & 0x0fff);
+        return 0;
+    }
+
+    offset = inst & 0xff;
+    if (!(inst & 0x0200)) offset *= -1;
+
+    if (!(inst & 0x0400) && (inst & 0x0100)) dbg_printf("], #%i", offset);
+    else if (inst & 0x0400) dbg_printf(", #%i]%s", offset, (inst & 0x0100)?"!":"");
+    else return inst;
+
+    return 0;
+}
+
 static UINT thumb2_disasm_coprocmov1(UINT inst, ADDRESS64 *addr)
 {
     WORD opc1 = (inst >> 21) & 0x07;
@@ -842,8 +892,8 @@ static const struct inst_arm tbl_thumb32[] = {
     { 0xff8000c0, 0xfb000000, thumb2_disasm_mul },
     { 0xff8000f0, 0xfb800000, thumb2_disasm_longmuldiv },
     { 0xff8000f0, 0xfb8000f0, thumb2_disasm_longmuldiv },
-    { 0xef100010, 0xee100010, thumb2_disasm_coprocmov1 },
-    { 0xef100010, 0xee000010, thumb2_disasm_coprocmov1 },
+    { 0xff700000, 0xf8500000, thumb2_disasm_ldrword },
+    { 0xef000010, 0xee000010, thumb2_disasm_coprocmov1 },
     { 0x00000000, 0x00000000, NULL }
 };
 
