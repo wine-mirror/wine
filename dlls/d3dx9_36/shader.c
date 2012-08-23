@@ -1459,6 +1459,8 @@ HRESULT WINAPI D3DXGetShaderConstantTableEx(CONST DWORD *byte_code,
         return D3DERR_INVALIDCALL;
     }
 
+    if (flags) FIXME("Flags (%#x) are not handled, yet!\n", flags);
+
     hr = D3DXFindShaderComment(byte_code, MAKEFOURCC('C','T','A','B'), &data, &size);
     if (hr != D3D_OK)
     {
