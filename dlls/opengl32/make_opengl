@@ -899,14 +899,17 @@ foreach (sort keys %wgl_functions) {
 foreach (sort keys %norm_functions) {
     print NORM generate_null_func($_, $norm_functions{$_});
 }
+foreach (sort keys %ext_functions) {
+    print NORM generate_null_func($_, $ext_functions{$_});
+}
 
 print NORM "\nstruct opengl_funcs null_opengl_funcs =\n{\n    {\n";
 foreach (sort keys %wgl_functions) { print NORM "        null_$_,\n"; }
-print NORM "    },\n";
-print NORM "#define USE_GL_FUNC(name) null_##name,\n";
-print NORM "    { ALL_WGL_FUNCS }\n";
-print NORM "#undef USE_GL_FUNC\n";
-print NORM "};\n";
+print NORM "    },\n    {\n";
+foreach (sort keys %norm_functions) { print NORM "        null_$_,\n" unless $_ eq "glDebugEntry"; }
+print NORM "    },\n    {\n";
+foreach (sort keys %ext_functions) { print NORM "        null_$_,\n"; }
+print NORM "    }\n};\n";
 
 close(NORM);
 
