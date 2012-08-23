@@ -4755,6 +4755,10 @@ GpStatus gdip_format_string(HDC hdc,
         if(!isprintW(string[i]) && (string[i] != '\n'))
             continue;
 
+        /* FIXME: tabs should be handled using tabstops from stringformat */
+        if (string[i] == '\t')
+            continue;
+
         if (seen_prefix && hkprefix == HotkeyPrefixShow && string[i] != '&')
             hotkeyprefix_offsets[hotkeyprefix_count++] = j;
         else if (!seen_prefix && hkprefix != HotkeyPrefixNone && string[i] == '&')
