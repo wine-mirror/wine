@@ -526,7 +526,7 @@ static inline HRESULT VARIANT_CoerceArray(VARIANTARG* pd, VARIANTARG* ps, VARTYP
     return BstrFromVector(V_ARRAY(ps), &V_BSTR(pd));
 
   if (V_VT(ps) == VT_BSTR && vt == (VT_ARRAY|VT_UI1))
-    return VectorFromBstr(V_BSTR(ps), &V_ARRAY(ps));
+    return VectorFromBstr(V_BSTR(ps), &V_ARRAY(pd));
 
   if (V_VT(ps) == vt)
     return SafeArrayCopy(V_ARRAY(ps), &V_ARRAY(pd));
