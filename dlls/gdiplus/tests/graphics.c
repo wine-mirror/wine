@@ -3483,23 +3483,14 @@ static void test_GdipMeasureString(void)
     REAL base_cx = 0, base_cy = 0, height;
     INT chars, lines;
     LOGFONTW lf;
-    HDC display;
-    UINT i, font_dpi;
-    REAL font_to_pixel_scale, font_size;
+    UINT i;
+    REAL font_size;
     GpUnit font_unit, unit;
-
-    display = CreateCompatibleDC(0);
-    ok(display != 0, "CreateCompatibleDC failed\n");
-    font_dpi = GetDeviceCaps(display, LOGPIXELSY);
-    DeleteDC(display);
 
     status = GdipCreateStringFormat(0, LANG_NEUTRAL, &format);
     expect(Ok, status);
     status = GdipCreateFontFamilyFromName(tahomaW, NULL, &family);
     expect(Ok, status);
-
-    font_to_pixel_scale = units_scale(UnitPoint, UnitPixel, font_dpi);
-    trace("font to pixel, %u dpi => unit_scale %f\n", font_dpi, font_to_pixel_scale);
 
     /* font size in pixels */
     status = GdipCreateFont(family, 100.0, FontStyleRegular, UnitPixel, &font);
@@ -3524,7 +3515,7 @@ static void test_GdipMeasureString(void)
         ok(-lf.lfHeight == (LONG)(height + 0.5), "%u: expected %d (%f), got %d\n",
            i, (LONG)(height + 0.5), height, lf.lfHeight);
 
-        height = font_size * font_to_pixel_scale;
+        height = font_size + 2.0 * font_size / 6.0;
 
         set_rect_empty(&rc);
         set_rect_empty(&bounds);
@@ -3571,7 +3562,8 @@ static void test_GdipMeasureString(void)
     for (unit = 3; unit <= 6; unit++)
     {
         /* create a font which final height is 100.0 pixels with 200 dpi device */
-        height = pixels_to_units(100.0 / font_to_pixel_scale, unit, 200.0);
+        /* height + 2 * (height/6) = 100 => height = 100 * 3 / 4 => 75 */
+        height = pixels_to_units(75.0, unit, 200.0);
         status = GdipCreateFont(family, height, FontStyleRegular, unit, &font);
         expect(Ok, status);
         status = GdipGetFontSize(font, &font_size);
@@ -3603,7 +3595,7 @@ static void test_GdipMeasureString(void)
             else
                 unit_scale = units_scale(font_unit, td[i].unit, td[i].res_y);
             /*trace("%u: %d to %d, %.1f dpi => unit_scale %f\n", i, font_unit, td[i].unit, td[i].res_y, unit_scale);*/
-            height = font_size * font_to_pixel_scale * unit_scale;
+            height = (font_size + 2.0 * font_size / 6.0) * unit_scale;
             if (td[i].unit != UnitDisplay)
                 height /= td[i].page_scale;
             /*trace("%u: %.1f font units = %f units with %.1f dpi, page_scale %.1f\n", i, font_size, height, td[i].res_y, td[i].page_scale);*/
@@ -3758,23 +3750,12 @@ static void test_font_height_scaling(void)
        differs in behaviour */
     for (font_unit = 3; font_unit <= 6; font_unit++)
     {
-        /* There is a bug somewhere in native gdiplus that leads
-         * to extra conversion from points to pixels, so in order
-         * to get a 100 pixel text height it's needed to convert
-         * 100 pixels to points, and only then convert the result
-         * to desired units. The scale factor is 1.333333 at 96 dpi!
-         * Perhaps an implementor took name of GdipTransformPoints
-         * directly and assumed that it takes value in *points*?
-         */
-        status = GdipSetPageUnit(graphics, UnitPoint);
-        expect(Ok, status);
-        ptf.X = 0;
-        ptf.Y = 100.0;
-        status = GdipTransformPoints(graphics, CoordinateSpaceWorld, CoordinateSpaceDevice, &ptf, 1);
-        expect(Ok, status);
-        /*trace("100.0 pixels, %.1f dpi => %f points\n", dpi, ptf.Y);*/
+        /* create a font for the final text height of 100 pixels */
+        /* height + 2 * (height/6) = 100 => height = 100 * 3 / 4 => 75 */
         status = GdipSetPageUnit(graphics, font_unit);
         expect(Ok, status);
+        ptf.X = 0;
+        ptf.Y = 75.0;
         status = GdipTransformPoints(graphics, CoordinateSpaceWorld, CoordinateSpaceDevice, &ptf, 1);
         expect(Ok, status);
         height = ptf.Y;
