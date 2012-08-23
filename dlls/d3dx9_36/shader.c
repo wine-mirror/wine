@@ -616,10 +616,10 @@ HRESULT WINAPI D3DXPreprocessShaderFromResourceW(HMODULE module,
 
 }
 
-typedef struct ctab_constant {
+struct ctab_constant {
     D3DXCONSTANT_DESC desc;
     struct ctab_constant *members;
-} ctab_constant;
+};
 
 static const struct ID3DXConstantTableVtbl ID3DXConstantTable_Vtbl;
 
@@ -629,7 +629,7 @@ struct ID3DXConstantTableImpl {
     char *ctab;
     DWORD size;
     D3DXCONSTANTTABLE_DESC desc;
-    ctab_constant *constants;
+    struct ctab_constant *constants;
 };
 
 static void free_constant_table(struct ID3DXConstantTableImpl *table)
@@ -662,7 +662,7 @@ static inline int is_constant_handle(D3DXHANDLE handle)
     return !((UINT_PTR)handle >> 16);
 }
 
-static inline ctab_constant *constant_from_handle(struct ID3DXConstantTableImpl *table, D3DXHANDLE handle)
+static inline struct ctab_constant *constant_from_handle(struct ID3DXConstantTableImpl *table, D3DXHANDLE handle)
 {
     return &table->constants[(UINT_PTR)handle - 1];
 }
@@ -763,7 +763,7 @@ static HRESULT WINAPI ID3DXConstantTableImpl_GetConstantDesc(ID3DXConstantTable 
                                                              D3DXCONSTANT_DESC *desc, UINT *count)
 {
     struct ID3DXConstantTableImpl *This = impl_from_ID3DXConstantTable(iface);
-    ctab_constant *constant_info;
+    struct ctab_constant *constant_info;
 
     TRACE("(%p)->(%p, %p, %p)\n", This, constant, desc, count);
 
@@ -1416,7 +1416,7 @@ static const struct ID3DXConstantTableVtbl ID3DXConstantTable_Vtbl =
     ID3DXConstantTableImpl_SetMatrixTransposePointerArray
 };
 
-static HRESULT parse_ctab_constant_type(const D3DXSHADER_TYPEINFO *type, ctab_constant *constant)
+static HRESULT parse_ctab_constant_type(const D3DXSHADER_TYPEINFO *type, struct ctab_constant *constant)
 {
     constant->desc.Class = type->Class;
     constant->desc.Type = type->Type;
