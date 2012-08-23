@@ -618,7 +618,7 @@ HRESULT WINAPI D3DXPreprocessShaderFromResourceW(HMODULE module,
 
 struct ctab_constant {
     D3DXCONSTANT_DESC desc;
-    struct ctab_constant *members;
+    struct ctab_constant *constants;
 };
 
 static const struct ID3DXConstantTableVtbl ID3DXConstantTable_Vtbl;
@@ -632,9 +632,32 @@ struct ID3DXConstantTableImpl {
     struct ctab_constant *constants;
 };
 
+static void free_constant(struct ctab_constant *constant)
+{
+    if (constant->constants)
+    {
+        UINT i, count = constant->desc.Elements > 1 ? constant->desc.Elements : constant->desc.StructMembers;
+
+        for (i = 0; i < count; ++i)
+        {
+            free_constant(&constant->constants[i]);
+        }
+        HeapFree(GetProcessHeap(), 0, constant->constants);
+    }
+}
+
 static void free_constant_table(struct ID3DXConstantTableImpl *table)
 {
-    HeapFree(GetProcessHeap(), 0, table->constants);
+    if (table->constants)
+    {
+        UINT i;
+
+        for (i = 0; i < table->desc.Constants; ++i)
+        {
+            free_constant(&table->constants[i]);
+        }
+        HeapFree(GetProcessHeap(), 0, table->constants);
+    }
     HeapFree(GetProcessHeap(), 0, table->ctab);
 }
 
@@ -1426,27 +1449,117 @@ static const struct ID3DXConstantTableVtbl ID3DXConstantTable_Vtbl =
     ID3DXConstantTableImpl_SetMatrixTransposePointerArray
 };
 
-static HRESULT parse_ctab_constant_type(const D3DXSHADER_TYPEINFO *type, struct ctab_constant *constant)
+static HRESULT parse_ctab_constant_type(const char *ctab, DWORD typeoffset, struct ctab_constant *constant,
+        BOOL is_element, WORD index, WORD max, DWORD *offset, DWORD nameoffset, UINT regset)
 {
+    const D3DXSHADER_TYPEINFO *type = (LPD3DXSHADER_TYPEINFO)(ctab + typeoffset);
+    const D3DXSHADER_STRUCTMEMBERINFO *memberinfo = NULL;
+    HRESULT hr = D3D_OK;
+    UINT i, count = 0;
+    WORD size = 0;
+
+    constant->desc.DefaultValue = offset ? ctab + *offset : NULL;
     constant->desc.Class = type->Class;
     constant->desc.Type = type->Type;
     constant->desc.Rows = type->Rows;
     constant->desc.Columns = type->Columns;
-    constant->desc.Elements = type->Elements;
+    constant->desc.Elements = is_element ? 1 : type->Elements;
     constant->desc.StructMembers = type->StructMembers;
-    constant->desc.Bytes = calc_bytes(&constant->desc);
+    constant->desc.Name = ctab + nameoffset;
+    constant->desc.RegisterSet = regset;
+    constant->desc.RegisterIndex = index;
 
-    TRACE("class = %d, type = %d, rows = %d, columns = %d, elements = %d, struct_members = %d\n",
-          constant->desc.Class, constant->desc.Type, constant->desc.Rows,
-          constant->desc.Columns, constant->desc.Elements, constant->desc.StructMembers);
+    TRACE("name %s, elements %u, index %u, defaultvalue %p\n", constant->desc.Name,
+            constant->desc.Elements, index, constant->desc.DefaultValue);
+    TRACE("class %d, type %d, rows %d, columns %d, elements %d, struct_members %d\n",
+            type->Class, type->Type, type->Rows, type->Columns, type->Elements, type->StructMembers);
 
-    if ((constant->desc.Class == D3DXPC_STRUCT) && constant->desc.StructMembers)
+    if (type->Elements > 1 && !is_element)
     {
-        FIXME("Struct not supported yet\n");
-        return E_NOTIMPL;
+        count = type->Elements;
+    }
+    else if ((type->Class == D3DXPC_STRUCT) && type->StructMembers)
+    {
+        memberinfo = (D3DXSHADER_STRUCTMEMBERINFO*)(ctab + type->StructMemberInfo);
+        count = type->StructMembers;
     }
 
+    if (count)
+    {
+        WORD size_element = 0;
+
+        constant->constants = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*constant->constants) * count);
+        if (!constant->constants)
+        {
+             ERR("Out of memory\n");
+             hr = E_OUTOFMEMORY;
+             goto error;
+        }
+
+        for (i = 0; i < count; ++i)
+        {
+            hr = parse_ctab_constant_type(ctab, memberinfo ? memberinfo[i].TypeInfo : typeoffset,
+                    &constant->constants[i], memberinfo == NULL, index + size, max, offset,
+                    memberinfo ? memberinfo[i].Name : nameoffset, regset);
+            if (hr != D3D_OK)
+                goto error;
+
+            if (i == 0) size_element = constant->constants[i].desc.RegisterCount;
+            size += size_element;
+        }
+    }
+    else
+    {
+        WORD offsetdiff = 0;
+
+        switch (type->Class)
+        {
+            case D3DXPC_SCALAR:
+            case D3DXPC_VECTOR:
+                offsetdiff = 1;
+                size = 1;
+                break;
+
+            case D3DXPC_MATRIX_ROWS:
+                size = is_element ? type->Rows : max(type->Rows, type->Columns);
+                offsetdiff = type->Rows;
+                break;
+
+            case D3DXPC_MATRIX_COLUMNS:
+                size = type->Columns;
+                offsetdiff = type->Columns;
+                break;
+
+            case D3DXPC_OBJECT:
+                size = 1;
+                break;
+
+            default:
+                FIXME("Unhandled type class %u\n", type->Class);
+                break;
+        }
+
+        /* offset in bytes => offsetdiff * components(4) * sizeof(DWORD) */
+        if (offset) *offset += offsetdiff * 4 * 4;
+    }
+
+    constant->desc.RegisterCount = max(0, min(max - index, size));
+    constant->desc.Bytes = calc_bytes(&constant->desc);
+
     return D3D_OK;
+
+error:
+    if (constant->constants)
+    {
+        for (i = 0; i < count; ++i)
+        {
+            free_constant(&constant->constants[i]);
+        }
+        HeapFree(GetProcessHeap(), 0, constant->constants);
+        constant->constants = NULL;
+    }
+
+    return hr;
 }
 
 HRESULT WINAPI D3DXGetShaderConstantTableEx(CONST DWORD *byte_code,
@@ -1537,16 +1650,12 @@ HRESULT WINAPI D3DXGetShaderConstantTableEx(CONST DWORD *byte_code,
     constant_info = (LPD3DXSHADER_CONSTANTINFO)(object->ctab + ctab_header->ConstantInfo);
     for (i = 0; i < ctab_header->Constants; i++)
     {
-        TRACE("name = %s\n", object->ctab + constant_info[i].Name);
-        object->constants[i].desc.Name = object->ctab + constant_info[i].Name;
-        object->constants[i].desc.RegisterSet = constant_info[i].RegisterSet;
-        object->constants[i].desc.RegisterIndex = constant_info[i].RegisterIndex;
-        object->constants[i].desc.RegisterCount = constant_info[i].RegisterCount;
-        object->constants[i].desc.DefaultValue = constant_info[i].DefaultValue
-                ? object->ctab + constant_info[i].DefaultValue : NULL;
+        DWORD offset = constant_info[i].DefaultValue;
 
-        hr = parse_ctab_constant_type((LPD3DXSHADER_TYPEINFO)(object->ctab + constant_info[i].TypeInfo),
-             &object->constants[i]);
+        hr = parse_ctab_constant_type(object->ctab, constant_info[i].TypeInfo,
+                &object->constants[i], FALSE, constant_info[i].RegisterIndex,
+                constant_info[i].RegisterIndex + constant_info[i].RegisterCount,
+                offset ? &offset : NULL, constant_info[i].Name, constant_info[i].RegisterSet);
         if (hr != D3D_OK)
             goto error;
     }
@@ -1556,7 +1665,6 @@ HRESULT WINAPI D3DXGetShaderConstantTableEx(CONST DWORD *byte_code,
     return D3D_OK;
 
 error:
-
     free_constant_table(object);
     HeapFree(GetProcessHeap(), 0, object);
 
