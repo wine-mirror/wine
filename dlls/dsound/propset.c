@@ -619,23 +619,24 @@ static const IKsPropertySetVtbl ikspvt = {
     IKsPrivatePropertySetImpl_QuerySupport
 };
 
-HRESULT IKsPrivatePropertySetImpl_Create(
-    REFIID riid,
-    IKsPropertySet **piks)
+HRESULT IKsPrivatePropertySetImpl_Create(REFIID riid, void **ppv)
 {
     IKsPrivatePropertySetImpl *iks;
-    TRACE("(%s, %p)\n", debugstr_guid(riid), piks);
+    HRESULT hr;
 
-    if (!IsEqualIID(riid, &IID_IUnknown) &&
-        !IsEqualIID(riid, &IID_IKsPropertySet)) {
-        *piks = 0;
-        return E_NOINTERFACE;
+    TRACE("(%s, %p)\n", debugstr_guid(riid), ppv);
+
+    iks = HeapAlloc(GetProcessHeap(), 0, sizeof(*iks));
+    if (!iks) {
+        WARN("out of memory\n");
+        return DSERR_OUTOFMEMORY;
     }
 
-    iks = HeapAlloc(GetProcessHeap(),0,sizeof(*iks));
     iks->ref = 1;
     iks->IKsPropertySet_iface.lpVtbl = &ikspvt;
 
-    *piks = &iks->IKsPropertySet_iface;
-    return S_OK;
+    hr = IKsPropertySet_QueryInterface(&iks->IKsPropertySet_iface, riid, ppv);
+    IKsPropertySet_Release(&iks->IKsPropertySet_iface);
+
+    return hr;
 }

@@ -254,7 +254,7 @@ struct IDirectSoundCaptureBufferImpl
     int                                 nrofnotifies;
 };
 
-HRESULT IKsPrivatePropertySetImpl_Create(REFIID riid, IKsPropertySet **piks) DECLSPEC_HIDDEN;
+HRESULT IKsPrivatePropertySetImpl_Create(REFIID riid, void **ppv) DECLSPEC_HIDDEN;
 
 /*******************************************************************************
  */
