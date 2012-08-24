@@ -4909,7 +4909,7 @@ static GpStatus measure_ranges_callback(HDC hdc,
 
             GetTextExtentExPointW(hdc, string + index, range_end - index,
                                   INT_MAX, NULL, NULL, &range_size);
-            range_rect.Width = (bounds->X + range_size.cx - range_rect.X) / args->rel_width;
+            range_rect.Width = (bounds->X + range_size.cx) / args->rel_width - range_rect.X;
 
             stat = GdipCombineRegionRect(args->regions[i], &range_rect, CombineModeUnion);
             if (stat != Ok)
