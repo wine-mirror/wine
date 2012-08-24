@@ -3828,9 +3828,13 @@ static void test_font_height_scaling(void)
                 win_skip("GdipMeasureCharacterRanges ignores units before Win7\n");
                 continue;
             }
+            /* FIXME: Wine uses integer gdi32 regions and rounding breaks things */
+            if (height < 1.0)
             expectf_(height, rect.Height, height / 15.0);
+            else
 todo_wine
-            expectf_(bounds.Width, rect.Width + margin * 2.0, bounds.Width / 25.0);
+            expectf_(height, rect.Height, height / 15.0);
+            expectf_(bounds.Width, rect.Width + margin * 2.0, bounds.Width / 15.0);
         }
     }
 

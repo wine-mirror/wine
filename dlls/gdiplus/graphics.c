@@ -4927,8 +4927,7 @@ GpStatus WINGDIPAPI GdipMeasureCharacterRanges(GpGraphics* graphics,
 {
     GpStatus stat;
     int i;
-    LOGFONTW lfw;
-    HFONT oldfont;
+    HFONT gdifont, oldfont;
     struct measure_ranges_args args;
     HDC hdc, temp_hdc=NULL;
     GpPointF pt[3];
@@ -4971,8 +4970,8 @@ GpStatus WINGDIPAPI GdipMeasureCharacterRanges(GpGraphics* graphics,
     scaled_rect.Width = layoutRect->Width * args.rel_width;
     scaled_rect.Height = layoutRect->Height * args.rel_height;
 
-    get_log_fontW(font, graphics, &lfw);
-    oldfont = SelectObject(hdc, CreateFontIndirectW(&lfw));
+    get_font_hfont(graphics, font, &gdifont);
+    oldfont = SelectObject(hdc, gdifont);
 
     for (i=0; i<stringFormat->range_count; i++)
     {
@@ -4986,7 +4985,8 @@ GpStatus WINGDIPAPI GdipMeasureCharacterRanges(GpGraphics* graphics,
     stat = gdip_format_string(hdc, string, length, font, &scaled_rect, stringFormat,
         measure_ranges_callback, &args);
 
-    DeleteObject(SelectObject(hdc, oldfont));
+    SelectObject(hdc, oldfont);
+    DeleteObject(gdifont);
 
     if (temp_hdc)
         DeleteDC(temp_hdc);
