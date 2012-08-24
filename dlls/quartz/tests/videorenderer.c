@@ -28,7 +28,7 @@
     ok(ppv != NULL, "Pointer is NULL\n");
 
 #define RELEASE_EXPECT(iface, num) if (iface) { \
-    hr = IUnknown_Release(iface); \
+    hr = IUnknown_Release((IUnknown*)iface); \
     ok(hr == num, "IUnknown_Release should return %d, got %d\n", num, hr); \
 }
 

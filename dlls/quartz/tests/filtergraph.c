@@ -236,7 +236,7 @@ static void test_graph_builder_addfilter(void)
 
     hr = IGraphBuilder_AddFilter(pgraph, pF, NULL);
     ok(hr == S_OK, "IGraphBuilder_AddFilter returned: %x\n", hr);
-    IMediaFilter_Release(pF);
+    IBaseFilter_Release(pF);
 }
 
 static void test_mediacontrol(void)
@@ -247,26 +247,26 @@ static void test_mediacontrol(void)
     IMediaFilter *filter = NULL;
     IMediaControl *control = NULL;
 
-    IFilterGraph2_SetDefaultSyncSource(pgraph);
-    hr = IFilterGraph2_QueryInterface(pgraph, &IID_IMediaSeeking, (void**) &seeking);
+    IGraphBuilder_SetDefaultSyncSource(pgraph);
+    hr = IGraphBuilder_QueryInterface(pgraph, &IID_IMediaSeeking, (void**) &seeking);
     ok(hr == S_OK, "QueryInterface IMediaControl failed: %08x\n", hr);
     if (FAILED(hr))
         return;
 
-    hr = IFilterGraph2_QueryInterface(pgraph, &IID_IMediaFilter, (void**) &filter);
+    hr = IGraphBuilder_QueryInterface(pgraph, &IID_IMediaFilter, (void**) &filter);
     ok(hr == S_OK, "QueryInterface IMediaFilter failed: %08x\n", hr);
     if (FAILED(hr))
     {
-        IUnknown_Release(seeking);
+        IMediaSeeking_Release(seeking);
         return;
     }
 
-    hr = IFilterGraph2_QueryInterface(pgraph, &IID_IMediaControl, (void**) &control);
+    hr = IGraphBuilder_QueryInterface(pgraph, &IID_IMediaControl, (void**) &control);
     ok(hr == S_OK, "QueryInterface IMediaControl failed: %08x\n", hr);
     if (FAILED(hr))
     {
-        IUnknown_Release(seeking);
-        IUnknown_Release(filter);
+        IMediaSeeking_Release(seeking);
+        IMediaFilter_Release(filter);
         return;
     }
 
@@ -288,9 +288,9 @@ static void test_mediacontrol(void)
     hr = IMediaControl_GetState(control, 1000, NULL);
     ok(hr == E_POINTER, "GetState expected %08x, got %08x\n", E_POINTER, hr);
 
-    IUnknown_Release(control);
-    IUnknown_Release(seeking);
-    IUnknown_Release(filter);
+    IMediaControl_Release(control);
+    IMediaSeeking_Release(seeking);
+    IMediaFilter_Release(filter);
     releasefiltergraph();
 }
 

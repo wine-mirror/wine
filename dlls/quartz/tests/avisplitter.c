@@ -227,7 +227,7 @@ static void test_threads(void)
     ok(hr == E_NOINTERFACE,
         "Avi splitter returns unexpected error: %08x\n", hr);
     if (pfile)
-        IUnknown_Release(pfile);
+        IFileSourceFilter_Release(pfile);
     pfile = NULL;
 
     hr = CoCreateInstance(&CLSID_AsyncReader, NULL, CLSCTX_INPROC_SERVER,
@@ -236,7 +236,7 @@ static void test_threads(void)
     if (hr != S_OK)
         goto fail;
 
-    hr = IUnknown_QueryInterface(preader, &IID_IFileSourceFilter,
+    hr = IBaseFilter_QueryInterface(preader, &IID_IFileSourceFilter,
         (void**)&pfile);
     ok(hr == S_OK, "Could not get IFileSourceFilter: %08x\n", hr);
     if (hr != S_OK)
@@ -265,7 +265,7 @@ static void test_threads(void)
     if (hr != S_OK)
         goto fail;
 
-    IUnknown_Release(enumpins);
+    IEnumPins_Release(enumpins);
     enumpins = NULL;
 
     hr = IBaseFilter_EnumPins(pavi, &enumpins);
@@ -292,7 +292,7 @@ static void test_threads(void)
     ok(curlevel == expected,
         "The thread count should be %d not %d\n", expected, curlevel);
 
-    IUnknown_Release(avipin);
+    IPin_Release(avipin);
     avipin = NULL;
 
     IEnumPins_Reset(enumpins);
@@ -334,12 +334,12 @@ static void test_threads(void)
             ++expected;
         }
 
-        IUnknown_Release(avipin);
+        IPin_Release(avipin);
         avipin = NULL;
     }
 
     if (avipin)
-        IUnknown_Release(avipin);
+        IPin_Release(avipin);
     avipin = NULL;
 
     if (hr != S_OK)
@@ -414,10 +414,10 @@ fail:
     if (hr != S_OK)
         skip("Prerequisites not matched, skipping remainder of test\n");
     if (enumpins)
-        IUnknown_Release(enumpins);
+        IEnumPins_Release(enumpins);
 
     if (avipin)
-        IUnknown_Release(avipin);
+        IPin_Release(avipin);
     if (filepin)
     {
         IPin *to = NULL;
@@ -428,15 +428,15 @@ fail:
             IPin_Disconnect(filepin);
             IPin_Disconnect(to);
         }
-        IUnknown_Release(filepin);
+        IPin_Release(filepin);
     }
 
     if (preader)
-        IUnknown_Release(preader);
+        IBaseFilter_Release(preader);
     if (pavi)
-        IUnknown_Release(pavi);
+        IBaseFilter_Release(pavi);
     if (pfile)
-        IUnknown_Release(pfile);
+        IFileSourceFilter_Release(pfile);
 
     curlevel = count_threads();
     todo_wine
