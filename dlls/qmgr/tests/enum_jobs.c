@@ -218,7 +218,7 @@ static void test_Next_walkList_2(void)
     {
         ok(jobs[i] != NULL, "Next returned NULL\n");
         if (jobs[i])
-            IBackgroundCopyFile_Release(jobs[i]);
+            IBackgroundCopyJob_Release(jobs[i]);
     }
 
     HeapFree(GetProcessHeap(), 0, jobs);

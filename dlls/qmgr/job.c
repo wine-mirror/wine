@@ -82,7 +82,7 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_AddFileSet(
     ULONG i;
     for (i = 0; i < cFileCount; ++i)
     {
-        HRESULT hr = IBackgroundCopyJob_AddFile(iface, pFileSet[i].RemoteName,
+        HRESULT hr = IBackgroundCopyJob2_AddFile(iface, pFileSet[i].RemoteName,
                                                 pFileSet[i].LocalName);
         if (FAILED(hr))
             return hr;
