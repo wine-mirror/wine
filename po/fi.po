@@ -630,7 +630,7 @@ msgstr "&Koko sana"
 msgid "Match &Case"
 msgstr "Kirjaink&oko"
 
-#: comdlg32.rc:317 joy.rc:67
+#: comdlg32.rc:317 joy.rc:68
 msgid "Direction"
 msgstr "Suunta"
 
@@ -3437,23 +3437,29 @@ msgstr "Yhdistetty"
 msgid "Disabled"
 msgstr "Ei käytössä"
 
-#: joy.rc:46
+#: joy.rc:42
+msgid ""
+"After disabling or enabling a device, the connected joysticks won't be "
+"updated here until you restart this applet."
+msgstr ""
+
+#: joy.rc:47
 msgid "Test Joystick"
 msgstr "Testaa joystickia"
 
-#: joy.rc:50
+#: joy.rc:51
 msgid "Buttons"
 msgstr "Painikkeet"
 
-#: joy.rc:59
+#: joy.rc:60
 msgid "Test Force Feedback"
 msgstr "Testaa voimapalautetta"
 
-#: joy.rc:63
+#: joy.rc:64
 msgid "Available Effects"
 msgstr "Mahdolliset efektit"
 
-#: joy.rc:65
+#: joy.rc:66
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."

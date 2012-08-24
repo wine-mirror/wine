@@ -633,7 +633,7 @@ msgstr "&Bara hela ord"
 msgid "Match &Case"
 msgstr "&Skillnad på stora/små bokstäver"
 
-#: comdlg32.rc:317 joy.rc:67
+#: comdlg32.rc:317 joy.rc:68
 msgid "Direction"
 msgstr "Riktning"
 
@@ -3432,25 +3432,31 @@ msgstr "Ansluten"
 msgid "Disabled"
 msgstr "Inaktiverad"
 
-#: joy.rc:46
+#: joy.rc:42
+msgid ""
+"After disabling or enabling a device, the connected joysticks won't be "
+"updated here until you restart this applet."
+msgstr ""
+
+#: joy.rc:47
 msgid "Test Joystick"
 msgstr "Testa joysticken"
 
-#: joy.rc:50
+#: joy.rc:51
 msgid "Buttons"
 msgstr "Knappar"
 
-#: joy.rc:59
+#: joy.rc:60
 msgid "Test Force Feedback"
 msgstr "Testa kraftåterkoppling"
 
-#: joy.rc:63
+#: joy.rc:64
 #, fuzzy
 #| msgid "Available formats"
 msgid "Available Effects"
 msgstr "Tillgängliga format"
 
-#: joy.rc:65
+#: joy.rc:66
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."

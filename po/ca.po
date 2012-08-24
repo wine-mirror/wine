@@ -652,7 +652,7 @@ msgstr "Troba només paraules &completes"
 msgid "Match &Case"
 msgstr "&Distingir majúscules de minúscules"
 
-#: comdlg32.rc:317 joy.rc:67
+#: comdlg32.rc:317 joy.rc:68
 msgid "Direction"
 msgstr "Direcció"
 
@@ -3491,25 +3491,31 @@ msgstr "Desconnectat"
 msgid "Disabled"
 msgstr "&Deshabilitada"
 
-#: joy.rc:46
+#: joy.rc:42
+msgid ""
+"After disabling or enabling a device, the connected joysticks won't be "
+"updated here until you restart this applet."
+msgstr ""
+
+#: joy.rc:47
 msgid "Test Joystick"
 msgstr ""
 
-#: joy.rc:50
+#: joy.rc:51
 msgid "Buttons"
 msgstr ""
 
-#: joy.rc:59
+#: joy.rc:60
 msgid "Test Force Feedback"
 msgstr ""
 
-#: joy.rc:63
+#: joy.rc:64
 #, fuzzy
 #| msgid "Available formats"
 msgid "Available Effects"
 msgstr "Formats disponibles"
 
-#: joy.rc:65
+#: joy.rc:66
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."
