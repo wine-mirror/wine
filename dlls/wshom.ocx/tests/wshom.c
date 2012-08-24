@@ -64,7 +64,7 @@ static void test_wshshell(void)
     hr = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
     EXPECT_HR(hr, E_NOINTERFACE);
 
-    hr = IDispatch_QueryInterface(shell, &IID_IWshShell3, (void**)&sh3);
+    hr = IUnknown_QueryInterface(shell, &IID_IWshShell3, (void**)&sh3);
     EXPECT_HR(hr, S_OK);
 
     hr = IWshShell3_get_SpecialFolders(sh3, &coll);
