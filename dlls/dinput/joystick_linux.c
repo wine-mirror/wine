@@ -71,6 +71,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
 #define JOYDEV_NEW "/dev/input/js"
 #define JOYDEV_OLD "/dev/js"
+#define JOYDEVDRIVER " (js)"
 
 struct JoyDev
 {
@@ -150,9 +151,13 @@ static INT find_joystick_devices(void)
 
         strcpy(joydev.name, "Wine Joystick");
 #if defined(JSIOCGNAME)
-        if (ioctl(fd, JSIOCGNAME(sizeof(joydev.name)), joydev.name) < 0)
+        if (ioctl(fd, JSIOCGNAME(sizeof(joydev.name) - sizeof(JOYDEVDRIVER)), joydev.name) < 0)
             WARN("ioctl(%s,JSIOCGNAME) failed: %s\n", joydev.device, strerror(errno));
 #endif
+
+        /* Append driver name */
+        strcat(joydev.name, JOYDEVDRIVER);
+
 #ifdef JSIOCGAXES
         if (ioctl(fd, JSIOCGAXES, &joydev.axis_count) < 0)
         {

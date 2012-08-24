@@ -67,7 +67,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
 #ifdef HAVE_CORRECT_LINUXINPUT_H
 
-#define EVDEVPREFIX	"/dev/input/event"
+#define EVDEVPREFIX "/dev/input/event"
+#define EVDEVDRIVER " (event)"
 
 /* Wine joystick driver object instances */
 #define WINE_JOYSTICK_MAX_AXES    8
@@ -241,15 +242,19 @@ static void find_joydevs(void)
 
         buf[MAX_PATH - 1] = 0;
         if (ioctl(fd, EVIOCGNAME(MAX_PATH - 1), buf) != -1 &&
-            (joydev.name = HeapAlloc(GetProcessHeap(), 0, strlen(buf) + 1)))
+            (joydev.name = HeapAlloc(GetProcessHeap(), 0, strlen(buf) + strlen(EVDEVDRIVER) + 1)))
+        {
             strcpy(joydev.name, buf);
+            /* Append driver name */
+            strcat(joydev.name, EVDEVDRIVER);
+        }
         else
             joydev.name = joydev.device;
 
-	joydev.guid = DInput_Wine_Joystick_Base_GUID;
-	joydev.guid.Data3 += have_joydevs;
+        joydev.guid = DInput_Wine_Joystick_Base_GUID;
+        joydev.guid.Data3 += have_joydevs;
 
-        TRACE("Found a joystick on %s: %s (%s)\n", 
+        TRACE("Found a joystick on %s: %s (%s)\n",
             joydev.device, joydev.name, 
             debugstr_guid(&joydev.guid)
             );
