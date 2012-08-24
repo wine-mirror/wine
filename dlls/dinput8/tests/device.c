@@ -458,13 +458,13 @@ static void test_save_settings(void)
     hr = IDirectInputDevice8_BuildActionMap(pKey, &af, NULL, 0);
     ok (SUCCEEDED(hr), "BuildActionMap failed hr=%08x\n", hr);
 
-    todo_wine ok (other_results[0] == af.rgoAction[0].dwObjID,
+    ok (other_results[0] == af.rgoAction[0].dwObjID,
         "Mapped incorrectly expected: 0x%08x got: 0x%08x\n", other_results[0], af.rgoAction[0].dwObjID);
-    todo_wine ok (IsEqualGUID(&GUID_SysKeyboard, &af.rgoAction[0].guidInstance), "Action should be mapped to keyboard\n");
+    ok (IsEqualGUID(&GUID_SysKeyboard, &af.rgoAction[0].guidInstance), "Action should be mapped to keyboard\n");
 
-    todo_wine ok (other_results[1] == af.rgoAction[1].dwObjID,
+    ok (other_results[1] == af.rgoAction[1].dwObjID,
         "Mapped incorrectly expected: 0x%08x got: 0x%08x\n", other_results[1], af.rgoAction[1].dwObjID);
-    todo_wine ok (IsEqualGUID(&GUID_SysKeyboard, &af.rgoAction[1].guidInstance), "Action should be mapped to keyboard\n");
+    ok (IsEqualGUID(&GUID_SysKeyboard, &af.rgoAction[1].guidInstance), "Action should be mapped to keyboard\n");
 }
 
 START_TEST(device)
