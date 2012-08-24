@@ -417,7 +417,7 @@ void create_lnk_(int line, const WCHAR* path, lnk_desc_t* desc, int save_fails)
         lok(r == S_OK, "SetHotkey failed (0x%08x)\n", r);
     }
 
-    r = IShellLinkW_QueryInterface(sl, &IID_IPersistFile, (LPVOID*)&pf);
+    r = IShellLinkA_QueryInterface(sl, &IID_IPersistFile, (void**)&pf);
     lok(r == S_OK, "no IID_IPersistFile (0x%08x)\n", r);
     if (r == S_OK)
     {
@@ -902,7 +902,7 @@ if (0)
 
     LocalFree( dar );
 
-    IUnknown_Release( dl );
+    IShellLinkDataList_Release( dl );
     IShellLinkW_Release( sl );
 }
 

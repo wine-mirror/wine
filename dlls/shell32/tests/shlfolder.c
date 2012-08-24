@@ -796,7 +796,7 @@ static void test_GetDisplayName(void)
         broken(hr == S_OK), /* Win9x, W2K */
         "hr = %08x\n", hr);
     if (hr == S_OK) {
-        IShellFolder_Release(psfFile);
+        IUnknown_Release(psfFile);
     }
 
     if (!pSHBindToParent)

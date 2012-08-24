@@ -360,7 +360,7 @@ static void test_service(void)
     ok(V_BOOL(&v) == VARIANT_FALSE, "got %d\n", V_BOOL(&v));
     SysFreeString(name);
 
-    IShellDispatch_Release(sd);
+    IShellDispatch2_Release(sd);
 }
 
 START_TEST(shelldispatch)
