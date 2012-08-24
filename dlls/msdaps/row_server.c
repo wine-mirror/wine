@@ -895,7 +895,7 @@ static HRESULT WINAPI rowsetlocate_QueryInterface(IRowsetLocate *iface, REFIID i
         return E_NOINTERFACE;
     }
 
-    IRowset_AddRef(iface);
+    IRowsetLocate_AddRef(iface);
     return S_OK;
 }
 
