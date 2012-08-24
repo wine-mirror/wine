@@ -251,6 +251,8 @@ static void find_joydevs(void)
         else
             joydev.name = joydev.device;
 
+        if (device_disabled_registry(joydev.name)) continue;
+
         joydev.guid = DInput_Wine_Joystick_Base_GUID;
         joydev.guid.Data3 += have_joydevs;
 

@@ -49,6 +49,44 @@ static inline IDirectInputDevice8W *IDirectInputDevice8W_from_impl(JoystickGener
     return &This->base.IDirectInputDevice8W_iface;
 }
 
+BOOL device_disabled_registry(const char* name)
+{
+    static const char *disabled_str = "disabled";
+    static const char *joystick_key = "Joysticks";
+    char buffer[MAX_PATH];
+    HKEY hkey, appkey, temp;
+    BOOL do_disable = FALSE;
+
+    get_app_key(&hkey, &appkey);
+
+    /* Joystick settings are in the 'joysticks' subkey */
+    if (appkey)
+    {
+        if (RegOpenKeyA(appkey, joystick_key, &temp)) temp = 0;
+        RegCloseKey(appkey);
+        appkey = temp;
+    }
+    if (hkey)
+    {
+        if (RegOpenKeyA(hkey, joystick_key, &temp)) temp = 0;
+        RegCloseKey(hkey);
+        hkey = temp;
+    }
+
+    /* Look for the "controllername"="disabled" key */
+    if (!get_config_key(hkey, appkey, name, buffer, sizeof(buffer)))
+        if (!strncmp(disabled_str, buffer, sizeof(disabled_str)))
+        {
+            TRACE("Disabling joystick '%s' based on registry key.\n", name);
+            do_disable = TRUE;
+        }
+
+    if (appkey) RegCloseKey(appkey);
+    if (hkey)   RegCloseKey(hkey);
+
+    return do_disable;
+}
+
 /******************************************************************************
   *     SetProperty : change input device properties
   */
