@@ -690,6 +690,98 @@ static inline D3DXHANDLE handle_from_constant(struct ctab_constant *constant)
     return (D3DXHANDLE)constant;
 }
 
+static struct ctab_constant *get_constant_by_name(struct ID3DXConstantTableImpl *, struct ctab_constant *, LPCSTR);
+
+static struct ctab_constant *get_constant_element_by_name(struct ctab_constant *constant, LPCSTR name)
+{
+    UINT element;
+    LPCSTR part;
+
+    TRACE("constant %p, name %s\n", constant, debugstr_a(name));
+
+    if (!name || !*name) return NULL;
+
+    element = atoi(name);
+    part = strchr(name, ']') + 1;
+
+    if (constant->desc.Elements > element)
+    {
+        struct ctab_constant *c = constant->constants ? &constant->constants[element] : constant;
+
+        switch (*part++)
+        {
+            case '.':
+                return get_constant_by_name(NULL, c, part);
+
+            case '[':
+                return get_constant_element_by_name(c, part);
+
+            case '\0':
+                TRACE("Returning parameter %p\n", c);
+                return c;
+
+            default:
+                FIXME("Unhandled case \"%c\"\n", *--part);
+                break;
+        }
+    }
+
+    TRACE("Constant not found\n");
+    return NULL;
+}
+
+static struct ctab_constant *get_constant_by_name(struct ID3DXConstantTableImpl *table,
+        struct ctab_constant *constant, LPCSTR name)
+{
+    UINT i, count, length;
+    struct ctab_constant *handles;
+    LPCSTR part;
+
+    TRACE("table %p, constant %p, name %s\n", table, constant, debugstr_a(name));
+
+    if (!name || !*name) return NULL;
+
+    if (!constant)
+    {
+        count = table->desc.Constants;
+        handles = table->constants;
+    }
+    else
+    {
+        count = constant->desc.StructMembers;
+        handles = constant->constants;
+    }
+
+    length = strcspn( name, "[." );
+    part = name + length;
+
+    for (i = 0; i < count; i++)
+    {
+        if (strlen(handles[i].desc.Name) == length && !strncmp(handles[i].desc.Name, name, length))
+        {
+            switch (*part++)
+            {
+                case '.':
+                    return get_constant_by_name(NULL, &handles[i], part);
+
+                case '[':
+                    return get_constant_element_by_name(&handles[i], part);
+
+                case '\0':
+                    TRACE("Returning parameter %p\n", &handles[i]);
+                    return &handles[i];
+
+                default:
+                    FIXME("Unhandled case \"%c\"\n", *--part);
+                    break;
+            }
+        }
+    }
+
+    TRACE("Constant not found\n");
+    return NULL;
+}
+
 static struct ctab_constant *is_valid_sub_constant(struct ctab_constant *parent, struct ctab_constant *constant)
 {
     UINT i, count;
@@ -729,6 +821,15 @@ static inline struct ctab_constant *is_valid_constant(struct ID3DXConstantTableI
     }
 
     return NULL;
+}
+
+static inline struct ctab_constant *get_valid_constant(struct ID3DXConstantTableImpl *table, D3DXHANDLE handle)
+{
+    struct ctab_constant *constant = is_valid_constant(table, handle);
+
+    if (!constant) constant = get_constant_by_name(table, NULL, handle);
+
+    return constant;
 }
 
 static inline void set_float_shader_constant(struct ID3DXConstantTableImpl *table, IDirect3DDevice9 *device,
@@ -887,24 +988,14 @@ static D3DXHANDLE WINAPI ID3DXConstantTableImpl_GetConstant(ID3DXConstantTable *
 static D3DXHANDLE WINAPI ID3DXConstantTableImpl_GetConstantByName(ID3DXConstantTable *iface, D3DXHANDLE constant, LPCSTR name)
 {
     struct ID3DXConstantTableImpl *This = impl_from_ID3DXConstantTable(iface);
-    UINT i;
+    struct ctab_constant *c = get_valid_constant(This, constant);
 
     TRACE("(%p)->(%p, %s)\n", This, constant, name);
 
-    if (!name)
-        return NULL;
+    c = get_constant_by_name(This, c, name);
+    TRACE("Returning constant %p\n", c);
 
-    if (constant)
-    {
-        FIXME("Only top level constants supported\n");
-        return NULL;
-    }
-
-    for (i = 0; i < This->desc.Constants; i++)
-        if (!strcmp(This->constants[i].desc.Name, name))
-            return handle_from_constant(&This->constants[i]);
-
-    return NULL;
+    return handle_from_constant(c);
 }
 
 static D3DXHANDLE WINAPI ID3DXConstantTableImpl_GetConstantElement(ID3DXConstantTable *iface, D3DXHANDLE constant, UINT index)
