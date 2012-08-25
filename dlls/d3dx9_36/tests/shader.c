@@ -1731,7 +1731,7 @@ static void test_get_shader_constant_variables(void)
     ULONG count;
     UINT i;
     UINT nr = 1;
-    D3DXHANDLE constant;
+    D3DXHANDLE constant, element;
     D3DXCONSTANT_DESC desc;
     DWORD *ctab;
 
@@ -1778,6 +1778,75 @@ static void test_get_shader_constant_variables(void)
         ok(ctaboffset == (DWORD *)desc.DefaultValue - ctab, "GetConstantDesc \"%s\" failed, got %u, expected %u\n",
            fullname, (UINT)((DWORD *)desc.DefaultValue - ctab), ctaboffset);
     }
+
+    element = ID3DXConstantTable_GetConstantElement(ctable, NULL, 0);
+    ok(element == NULL, "GetConstantElement failed\n");
+
+    constant = ID3DXConstantTable_GetConstantByName(ctable, NULL, "i");
+    ok(constant != NULL, "GetConstantByName failed\n");
+
+    element = ID3DXConstantTable_GetConstantByName(ctable, NULL, "i[0]");
+    ok(constant == element, "GetConstantByName failed, got %p, expected %p\n", element, constant);
+
+    element = ID3DXConstantTable_GetConstantElement(ctable, "i", 0);
+    ok(element == constant, "GetConstantElement failed, got %p, expected %p\n", element, constant);
+
+    constant = ID3DXConstantTable_GetConstantByName(ctable, NULL, "f");
+    ok(constant != NULL, "GetConstantByName failed\n");
+
+    element = ID3DXConstantTable_GetConstant(ctable, NULL, 0);
+    ok(element == constant, "GetConstant failed, got %p, expected %p\n", element, constant);
+
+    element = ID3DXConstantTable_GetConstant(ctable, "invalid", 0);
+    ok(element == NULL, "GetConstant failed\n");
+
+    element = ID3DXConstantTable_GetConstant(ctable, "f", 0);
+    ok(element == NULL, "GetConstant failed\n");
+
+    element = ID3DXConstantTable_GetConstantByName(ctable, NULL, "f[0]");
+    ok(constant == element, "GetConstantByName failed, got %p, expected %p\n", element, constant);
+
+    element = ID3DXConstantTable_GetConstantByName(ctable, NULL, "f[1]");
+    ok(NULL == element, "GetConstantByName failed\n");
+
+    element = ID3DXConstantTable_GetConstantByName(ctable, NULL, "f[0][0]");
+    ok(constant == element, "GetConstantByName failed, got %p, expected %p\n", element, constant);
+
+    element = ID3DXConstantTable_GetConstantByName(ctable, NULL, "f.");
+    ok(element == NULL, "GetConstantByName failed\n");
+
+    element = ID3DXConstantTable_GetConstantElement(ctable, "f", 0);
+    ok(element == constant, "GetConstantElement failed, got %p, expected %p\n", element, constant);
+
+    element = ID3DXConstantTable_GetConstantElement(ctable, "f", 1);
+    ok(element == NULL, "GetConstantElement failed\n");
+
+    constant = ID3DXConstantTable_GetConstantByName(ctable, NULL, "f_2[0]");
+    ok(constant != NULL, "GetConstantByName failed\n");
+
+    element = ID3DXConstantTable_GetConstantByName(ctable, NULL, "f_2");
+    ok(element != constant, "GetConstantByName failed, got %p, expected %p\n", element, constant);
+
+    element = ID3DXConstantTable_GetConstantElement(ctable, "f_2", 0);
+    ok(element == constant, "GetConstantElement failed, got %p, expected %p\n", element, constant);
+
+    constant = ID3DXConstantTable_GetConstantByName(ctable, NULL, "f_2[1]");
+    ok(constant != NULL, "GetConstantByName failed\n");
+
+    element = ID3DXConstantTable_GetConstantElement(ctable, "f_2", 1);
+    ok(element == constant, "GetConstantElement failed, got %p, expected %p\n", element, constant);
+
+    constant = ID3DXConstantTable_GetConstantByName(ctable, NULL, "s_2[0].f");
+    ok(constant != NULL, "GetConstantByName failed\n");
+
+    element = ID3DXConstantTable_GetConstant(ctable, "s_2[0]", 0);
+    ok(element == constant, "GetConstant failed, got %p, expected %p\n", element, constant);
+
+    element = ID3DXConstantTable_GetConstantByName(ctable, "s_2[0]", "f");
+    ok(element == constant, "GetConstantByName failed, got %p, expected %p\n", element, constant);
+
+    element = ID3DXConstantTable_GetConstantByName(ctable, "s_2[0]", "invalid");
+    ok(element == NULL, "GetConstantByName failed\n");
 
     count = ID3DXConstantTable_Release(ctable);
     ok(count == 0, "Release failed, got %u, expected %u\n", count, 0);
