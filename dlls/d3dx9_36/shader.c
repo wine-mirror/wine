@@ -1616,8 +1616,6 @@ static HRESULT parse_ctab_constant_type(const char *ctab, DWORD typeoffset, stru
 
     if (count)
     {
-        WORD size_element = 0;
-
         constant->constants = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*constant->constants) * count);
         if (!constant->constants)
         {
@@ -1634,8 +1632,7 @@ static HRESULT parse_ctab_constant_type(const char *ctab, DWORD typeoffset, stru
             if (hr != D3D_OK)
                 goto error;
 
-            if (i == 0) size_element = constant->constants[i].desc.RegisterCount;
-            size += size_element;
+            size += constant->constants[i].desc.RegisterCount;
         }
     }
     else
