@@ -970,19 +970,32 @@ static UINT WINAPI ID3DXConstantTableImpl_GetSamplerIndex(ID3DXConstantTable *if
 static D3DXHANDLE WINAPI ID3DXConstantTableImpl_GetConstant(ID3DXConstantTable *iface, D3DXHANDLE constant, UINT index)
 {
     struct ID3DXConstantTableImpl *This = impl_from_ID3DXConstantTable(iface);
+    struct ctab_constant *c;
 
     TRACE("(%p)->(%p, %d)\n", This, constant, index);
 
     if (constant)
     {
-        FIXME("Only top level constants supported\n");
-        return NULL;
+        c = get_valid_constant(This, constant);
+        if (c && index < c->desc.StructMembers)
+        {
+            c = &c->constants[index];
+            TRACE("Returning constant %p\n", c);
+            return handle_from_constant(c);
+        }
+    }
+    else
+    {
+        if (index < This->desc.Constants)
+        {
+            c = &This->constants[index];
+            TRACE("Returning constant %p\n", c);
+            return handle_from_constant(c);
+        }
     }
 
-    if (index >= This->desc.Constants)
-        return NULL;
-
-    return handle_from_constant(&This->constants[index]);
+    WARN("Index out of range\n");
+    return NULL;
 }
 
 static D3DXHANDLE WINAPI ID3DXConstantTableImpl_GetConstantByName(ID3DXConstantTable *iface, D3DXHANDLE constant, LPCSTR name)
