@@ -1760,13 +1760,6 @@ HRESULT WINAPI D3DXGetShaderConstantTableEx(CONST DWORD *byte_code,
             debugstr_a(object->desc.Creator), object->desc.Version, object->desc.Constants,
             debugstr_a(ctab_header->Target ? object->ctab + ctab_header->Target : NULL));
 
-    if (object->desc.Constants > 65535)
-    {
-        FIXME("Too many constants (%u)\n", object->desc.Constants);
-        hr = E_NOTIMPL;
-        goto error;
-    }
-
     object->constants = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
                                   sizeof(*object->constants) * object->desc.Constants);
     if (!object->constants)
