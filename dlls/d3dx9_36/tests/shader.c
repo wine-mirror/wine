@@ -1568,6 +1568,221 @@ static void test_get_shader_samplers(void)
     ok(count == 0, "D3DXGetShaderSamplers failed, got %u, expected %u\n", count, 0);
 }
 
+/*
+ * fxc.exe /Tvs_3_0
+ */
+#if 0
+float f = {1.1f}, f_2[2] = {2.1f, 2.2f};
+struct {float f; int i;} s = {3.1f, 31},
+s_2[2] = {{4.1f, 41}, {4.2f, 42}},
+s_3[3] = {{5.1f, 51}, {5.2f, 52}, {5.3f, 53}};
+struct {int i1; int i2; float2 f_2; row_major float3x1 r[2];}
+p[2] = {{11, 12, {13.1, 14.1}, {{3.11, 3.21, 3.31}, {3.41, 3.51, 3.61}}},
+        {15, 16, {17.1, 18.1}, {{4.11, 4.21, 4.31}, {4.41, 4.51, 4.61}}}};
+int i[1] = {6};
+float2x3 f23[2] = {{0.11, 0.21, 0.31, 0.41, 0.51, 0.61}, {0.12, 0.22, 0.32, 0.42, 0.52, 0.62}};
+float3x2 f32[2] = {{1.11, 1.21, 1.31, 1.41, 1.51, 1.61}, {1.12, 1.22, 1.32, 1.42, 1.52, 1.62}};
+float3 v[2] = {{2.11, 2.21, 2.31}, {2.41, 2.51, 2.61}};
+row_major float3x1 r31[2] = {{3.11, 3.21, 3.31}, {3.41, 3.51, 3.61}};
+row_major float1x3 r13[2] = {{4.11, 4.21, 4.31}, {4.41, 4.51, 4.61}};
+float4 main(float4 pos : POSITION) : POSITION
+{
+    float4 tmp = 0.0f;
+    tmp.zyw = v[1] + r13[1] + r31[1] + p[1].r[1];
+    tmp.x += f * f_2[1] * pos.x * p[1].f_2.y;
+    tmp.y += s.f * pos.y * s_2[0].i;
+    tmp.z += s_3[0].f * pos.z * s_3[2].f * i[0] * f23[1]._11 * f32[1]._32;
+    return tmp;
+}
+#endif
+static const DWORD test_get_shader_constant_variables_blob[] =
+{
+0xfffe0300, 0x0185fffe, 0x42415443, 0x0000001c, 0x000005df, 0xfffe0300, 0x0000000c, 0x0000001c,
+0x00000100, 0x000005d8, 0x0000010c, 0x002d0002, 0x00000001, 0x00000110, 0x00000120, 0x00000130,
+0x001d0002, 0x00000004, 0x00000134, 0x00000144, 0x000001a4, 0x00210002, 0x00000004, 0x000001a8,
+0x000001b8, 0x000001f8, 0x00250002, 0x00000002, 0x000001fc, 0x0000020c, 0x0000022c, 0x002f0002,
+0x00000001, 0x00000230, 0x00000240, 0x00000250, 0x00000002, 0x00000012, 0x000002b0, 0x000002c0,
+0x000003e0, 0x002b0002, 0x00000002, 0x000003e4, 0x000003f4, 0x00000414, 0x00120002, 0x00000006,
+0x00000418, 0x00000428, 0x00000488, 0x002e0002, 0x00000001, 0x000004ac, 0x000004bc, 0x000004dc,
+0x00270002, 0x00000002, 0x000004e0, 0x000004f0, 0x00000530, 0x00180002, 0x00000005, 0x00000534,
+0x00000544, 0x000005a4, 0x00290002, 0x00000002, 0x000005a8, 0x000005b8, 0xabab0066, 0x00030000,
+0x00010001, 0x00000001, 0x00000000, 0x3f8ccccd, 0x00000000, 0x00000000, 0x00000000, 0x00333266,
+0x00030003, 0x00030002, 0x00000002, 0x00000000, 0x3de147ae, 0x3ed1eb85, 0x00000000, 0x00000000,
+0x3e570a3d, 0x3f028f5c, 0x00000000, 0x00000000, 0x3e9eb852, 0x3f1c28f6, 0x00000000, 0x00000000,
+0x3df5c28f, 0x3ed70a3d, 0x00000000, 0x00000000, 0x3e6147ae, 0x3f051eb8, 0x00000000, 0x00000000,
+0x3ea3d70a, 0x3f1eb852, 0x00000000, 0x00000000, 0x00323366, 0x00030003, 0x00020003, 0x00000002,
+0x00000000, 0x3f8e147b, 0x3fa7ae14, 0x3fc147ae, 0x00000000, 0x3f9ae148, 0x3fb47ae1, 0x3fce147b,
+0x00000000, 0x3f8f5c29, 0x3fa8f5c3, 0x3fc28f5c, 0x00000000, 0x3f9c28f6, 0x3fb5c28f, 0x3fcf5c29,
+0x00000000, 0x00325f66, 0x00030000, 0x00010001, 0x00000002, 0x00000000, 0x40066666, 0x00000000,
+0x00000000, 0x00000000, 0x400ccccd, 0x00000000, 0x00000000, 0x00000000, 0xabab0069, 0x00020000,
+0x00010001, 0x00000001, 0x00000000, 0x40c00000, 0x00000000, 0x00000000, 0x00000000, 0x31690070,
+0xababab00, 0x00020000, 0x00010001, 0x00000001, 0x00000000, 0xab003269, 0x00030001, 0x00020001,
+0x00000001, 0x00000000, 0xabab0072, 0x00030002, 0x00010003, 0x00000002, 0x00000000, 0x00000252,
+0x00000258, 0x00000268, 0x00000258, 0x000001f8, 0x0000026c, 0x0000027c, 0x00000280, 0x00000005,
+0x000a0001, 0x00040002, 0x00000290, 0x41300000, 0x00000000, 0x00000000, 0x00000000, 0x41400000,
+0x00000000, 0x00000000, 0x00000000, 0x4151999a, 0x4161999a, 0x00000000, 0x00000000, 0x40470a3d,
+0x00000000, 0x00000000, 0x00000000, 0x404d70a4, 0x00000000, 0x00000000, 0x00000000, 0x4053d70a,
+0x00000000, 0x00000000, 0x00000000, 0x405a3d71, 0x00000000, 0x00000000, 0x00000000, 0x4060a3d7,
+0x00000000, 0x00000000, 0x00000000, 0x40670a3d, 0x00000000, 0x00000000, 0x00000000, 0x41700000,
+0x00000000, 0x00000000, 0x00000000, 0x41800000, 0x00000000, 0x00000000, 0x00000000, 0x4188cccd,
+0x4190cccd, 0x00000000, 0x00000000, 0x4083851f, 0x00000000, 0x00000000, 0x00000000, 0x4086b852,
+0x00000000, 0x00000000, 0x00000000, 0x4089eb85, 0x00000000, 0x00000000, 0x00000000, 0x408d1eb8,
+0x00000000, 0x00000000, 0x00000000, 0x409051ec, 0x00000000, 0x00000000, 0x00000000, 0x4093851f,
+0x00000000, 0x00000000, 0x00000000, 0x00333172, 0x00030002, 0x00030001, 0x00000002, 0x00000000,
+0x4083851f, 0x4086b852, 0x4089eb85, 0x00000000, 0x408d1eb8, 0x409051ec, 0x4093851f, 0x00000000,
+0x00313372, 0x00030002, 0x00010003, 0x00000002, 0x00000000, 0x40470a3d, 0x00000000, 0x00000000,
+0x00000000, 0x404d70a4, 0x00000000, 0x00000000, 0x00000000, 0x4053d70a, 0x00000000, 0x00000000,
+0x00000000, 0x405a3d71, 0x00000000, 0x00000000, 0x00000000, 0x4060a3d7, 0x00000000, 0x00000000,
+0x00000000, 0x40670a3d, 0x00000000, 0x00000000, 0x00000000, 0xabab0073, 0x00030000, 0x00010001,
+0x00000001, 0x00000000, 0x0000010c, 0x0000048c, 0x0000022c, 0x00000258, 0x00000005, 0x00020001,
+0x00020001, 0x0000049c, 0x40466666, 0x00000000, 0x00000000, 0x00000000, 0x41f80000, 0x00000000,
+0x00000000, 0x00000000, 0x00325f73, 0x00000005, 0x00020001, 0x00020002, 0x0000049c, 0x40833333,
+0x00000000, 0x00000000, 0x00000000, 0x42240000, 0x00000000, 0x00000000, 0x00000000, 0x40866666,
+0x00000000, 0x00000000, 0x00000000, 0x42280000, 0x00000000, 0x00000000, 0x00000000, 0x00335f73,
+0x00000005, 0x00020001, 0x00020003, 0x0000049c, 0x40a33333, 0x00000000, 0x00000000, 0x00000000,
+0x424c0000, 0x00000000, 0x00000000, 0x00000000, 0x40a66666, 0x00000000, 0x00000000, 0x00000000,
+0x42500000, 0x00000000, 0x00000000, 0x00000000, 0x40a9999a, 0x00000000, 0x00000000, 0x00000000,
+0x42540000, 0x00000000, 0x00000000, 0x00000000, 0xabab0076, 0x00030001, 0x00030001, 0x00000002,
+0x00000000, 0x40070a3d, 0x400d70a4, 0x4013d70a, 0x00000000, 0x401a3d71, 0x4020a3d7, 0x40270a3d,
+0x00000000, 0x335f7376, 0x4d00305f, 0x6f726369, 0x74666f73, 0x29522820, 0x534c4820, 0x6853204c,
+0x72656461, 0x6d6f4320, 0x656c6970, 0x2e392072, 0x392e3932, 0x332e3235, 0x00313131, 0x0200001f,
+0x80000000, 0x900f0000, 0x0200001f, 0x80000000, 0xe00f0000, 0x02000001, 0x80070000, 0xa0e4002a,
+0x03000002, 0x80070000, 0x80e40000, 0xa0e4002c, 0x03000002, 0x80040000, 0x80aa0000, 0xa0000017,
+0x03000002, 0xe0080000, 0x80aa0000, 0xa0000011, 0x02000001, 0x80010001, 0xa000002d, 0x03000005,
+0x80040000, 0x80000001, 0xa0000026, 0x03000005, 0x80040000, 0x80aa0000, 0x90000000, 0x03000005,
+0xe0010000, 0x80aa0000, 0xa055000b, 0x03000002, 0x80020000, 0x80550000, 0xa0000016, 0x03000002,
+0x80010000, 0x80000000, 0xa0000015, 0x03000002, 0x80010000, 0x80000000, 0xa000000f, 0x03000002,
+0x80020000, 0x80550000, 0xa0000010, 0x03000005, 0x80040000, 0xa000002e, 0x90550000, 0x04000004,
+0xe0020000, 0x80aa0000, 0xa0000028, 0x80550000, 0x03000005, 0x80020000, 0xa0000018, 0x90aa0000,
+0x03000005, 0x80020000, 0x80550000, 0xa000001c, 0x03000005, 0x80020000, 0x80550000, 0xa000002f,
+0x03000005, 0x80020000, 0x80550000, 0xa0000020, 0x04000004, 0xe0040000, 0x80550000, 0xa0aa0024,
+0x80000000, 0x0000ffff,
+};
+
+const struct {
+    LPCSTR fullname;
+    D3DXCONSTANT_DESC desc;
+    UINT ctaboffset;
+}
+test_get_shader_constant_variables_data[] =
+{
+    {"f",         {"f",   D3DXRS_FLOAT4, 45,  1, D3DXPC_SCALAR,         D3DXPT_FLOAT, 1,  1, 1, 0,  4, NULL},  72},
+    {"f23",       {"f23", D3DXRS_FLOAT4, 29,  4, D3DXPC_MATRIX_COLUMNS, D3DXPT_FLOAT, 2,  3, 2, 0, 48, NULL},  81},
+    {"f23[0]",    {"f23", D3DXRS_FLOAT4, 29,  3, D3DXPC_MATRIX_COLUMNS, D3DXPT_FLOAT, 2,  3, 1, 0, 24, NULL},  81},
+    {"f23[1]",    {"f23", D3DXRS_FLOAT4, 32,  1, D3DXPC_MATRIX_COLUMNS, D3DXPT_FLOAT, 2,  3, 1, 0, 24, NULL},  93},
+    {"f32",       {"f32", D3DXRS_FLOAT4, 33,  4, D3DXPC_MATRIX_COLUMNS, D3DXPT_FLOAT, 3,  2, 2, 0, 48, NULL}, 110},
+    {"f32[0]",    {"f32", D3DXRS_FLOAT4, 33,  2, D3DXPC_MATRIX_COLUMNS, D3DXPT_FLOAT, 3,  2, 1, 0, 24, NULL}, 110},
+    {"f32[1]",    {"f32", D3DXRS_FLOAT4, 35,  2, D3DXPC_MATRIX_COLUMNS, D3DXPT_FLOAT, 3,  2, 1, 0, 24, NULL}, 118},
+    {"f_2",       {"f_2", D3DXRS_FLOAT4, 37,  2, D3DXPC_SCALAR,         D3DXPT_FLOAT, 1,  1, 2, 0,  8, NULL}, 131},
+    {"f_2[0]",    {"f_2", D3DXRS_FLOAT4, 37,  1, D3DXPC_SCALAR,         D3DXPT_FLOAT, 1,  1, 1, 0,  4, NULL}, 131},
+    {"f_2[1]",    {"f_2", D3DXRS_FLOAT4, 38,  1, D3DXPC_SCALAR,         D3DXPT_FLOAT, 1,  1, 1, 0,  4, NULL}, 135},
+    {"i",         {"i",   D3DXRS_FLOAT4, 47,  1, D3DXPC_SCALAR,         D3DXPT_INT,   1,  1, 1, 0,  4, NULL}, 144},
+    {"i[0]",      {"i",   D3DXRS_FLOAT4, 47,  1, D3DXPC_SCALAR,         D3DXPT_INT,   1,  1, 1, 0,  4, NULL}, 144},
+    {"p",         {"p",   D3DXRS_FLOAT4,  0, 18, D3DXPC_STRUCT,         D3DXPT_VOID,  1, 10, 2, 4, 80, NULL}, 176},
+    {"p[0]",      {"p",   D3DXRS_FLOAT4,  0,  9, D3DXPC_STRUCT,         D3DXPT_VOID,  1, 10, 1, 4, 40, NULL}, 176},
+    {"p[0].i1",   {"i1",  D3DXRS_FLOAT4,  0,  1, D3DXPC_SCALAR,         D3DXPT_INT,   1,  1, 1, 0,  4, NULL}, 176},
+    {"p[0].i2",   {"i2",  D3DXRS_FLOAT4,  1,  1, D3DXPC_SCALAR,         D3DXPT_INT,   1,  1, 1, 0,  4, NULL}, 180},
+    {"p[0].f_2",  {"f_2", D3DXRS_FLOAT4,  2,  1, D3DXPC_VECTOR,         D3DXPT_FLOAT, 1,  2, 1, 0,  8, NULL}, 184},
+    {"p[0].r",    {"r",   D3DXRS_FLOAT4,  3,  6, D3DXPC_MATRIX_ROWS,    D3DXPT_FLOAT, 3,  1, 2, 0, 24, NULL}, 188},
+    {"p[0].r[0]", {"r",   D3DXRS_FLOAT4,  3,  3, D3DXPC_MATRIX_ROWS,    D3DXPT_FLOAT, 3,  1, 1, 0, 12, NULL}, 188},
+    {"p[0].r[1]", {"r",   D3DXRS_FLOAT4,  6,  3, D3DXPC_MATRIX_ROWS,    D3DXPT_FLOAT, 3,  1, 1, 0, 12, NULL}, 200},
+    {"p[1]",      {"p",   D3DXRS_FLOAT4,  9,  9, D3DXPC_STRUCT,         D3DXPT_VOID,  1, 10, 1, 4, 40, NULL}, 212},
+    {"p[1].i1",   {"i1",  D3DXRS_FLOAT4,  9,  1, D3DXPC_SCALAR,         D3DXPT_INT,   1,  1, 1, 0,  4, NULL}, 212},
+    {"p[1].i2",   {"i2",  D3DXRS_FLOAT4, 10,  1, D3DXPC_SCALAR,         D3DXPT_INT,   1,  1, 1, 0,  4, NULL}, 216},
+    {"p[1].f_2",  {"f_2", D3DXRS_FLOAT4, 11,  1, D3DXPC_VECTOR,         D3DXPT_FLOAT, 1,  2, 1, 0,  8, NULL}, 220},
+    {"p[1].r",    {"r",   D3DXRS_FLOAT4, 12,  6, D3DXPC_MATRIX_ROWS,    D3DXPT_FLOAT, 3,  1, 2, 0, 24, NULL}, 224},
+    {"p[1].r[0]", {"r",   D3DXRS_FLOAT4, 12,  3, D3DXPC_MATRIX_ROWS,    D3DXPT_FLOAT, 3,  1, 1, 0, 12, NULL}, 224},
+    {"p[1].r[1]", {"r",   D3DXRS_FLOAT4, 15,  3, D3DXPC_MATRIX_ROWS,    D3DXPT_FLOAT, 3,  1, 1, 0, 12, NULL}, 236},
+    {"r13",       {"r13", D3DXRS_FLOAT4, 43,  2, D3DXPC_MATRIX_ROWS,    D3DXPT_FLOAT, 1,  3, 2, 0, 24, NULL}, 253},
+    {"r13[0]",    {"r13", D3DXRS_FLOAT4, 43,  1, D3DXPC_MATRIX_ROWS,    D3DXPT_FLOAT, 1,  3, 1, 0, 12, NULL}, 253},
+    {"r13[1]",    {"r13", D3DXRS_FLOAT4, 44,  1, D3DXPC_MATRIX_ROWS,    D3DXPT_FLOAT, 1,  3, 1, 0, 12, NULL}, 257},
+    {"r31",       {"r31", D3DXRS_FLOAT4, 18,  6, D3DXPC_MATRIX_ROWS,    D3DXPT_FLOAT, 3,  1, 2, 0, 24, NULL}, 266},
+    {"r31[0]",    {"r31", D3DXRS_FLOAT4, 18,  3, D3DXPC_MATRIX_ROWS,    D3DXPT_FLOAT, 3,  1, 1, 0, 12, NULL}, 266},
+    {"r31[1]",    {"r31", D3DXRS_FLOAT4, 21,  3, D3DXPC_MATRIX_ROWS,    D3DXPT_FLOAT, 3,  1, 1, 0, 12, NULL}, 278},
+    {"s",         {"s",   D3DXRS_FLOAT4, 46,  1, D3DXPC_STRUCT,         D3DXPT_VOID,  1,  2, 1, 2,  8, NULL}, 303},
+    {"s.f",       {"f",   D3DXRS_FLOAT4, 46,  1, D3DXPC_SCALAR,         D3DXPT_FLOAT, 1,  1, 1, 0,  4, NULL}, 303},
+    {"s.i",       {"i",   D3DXRS_FLOAT4, 47,  0, D3DXPC_SCALAR,         D3DXPT_INT,   1,  1, 1, 0,  4, NULL}, 307},
+    {"s_2",       {"s_2", D3DXRS_FLOAT4, 39,  2, D3DXPC_STRUCT,         D3DXPT_VOID,  1,  2, 2, 2, 16, NULL}, 316},
+    {"s_2[0]",    {"s_2", D3DXRS_FLOAT4, 39,  2, D3DXPC_STRUCT,         D3DXPT_VOID,  1,  2, 1, 2,  8, NULL}, 316},
+    {"s_2[0].f",  {"f",   D3DXRS_FLOAT4, 39,  1, D3DXPC_SCALAR,         D3DXPT_FLOAT, 1,  1, 1, 0,  4, NULL}, 316},
+    {"s_2[0].i",  {"i",   D3DXRS_FLOAT4, 40,  1, D3DXPC_SCALAR,         D3DXPT_INT,   1,  1, 1, 0,  4, NULL}, 320},
+    {"s_2[1]",    {"s_2", D3DXRS_FLOAT4, 41,  0, D3DXPC_STRUCT,         D3DXPT_VOID,  1,  2, 1, 2,  8, NULL}, 324},
+    {"s_2[1].f",  {"f",   D3DXRS_FLOAT4, 41,  0, D3DXPC_SCALAR,         D3DXPT_FLOAT, 1,  1, 1, 0,  4, NULL}, 324},
+    {"s_2[1].i",  {"i",   D3DXRS_FLOAT4, 41,  0, D3DXPC_SCALAR,         D3DXPT_INT,   1,  1, 1, 0,  4, NULL}, 328},
+    {"s_3",       {"s_3", D3DXRS_FLOAT4, 24,  5, D3DXPC_STRUCT,         D3DXPT_VOID,  1,  2, 3, 2, 24, NULL}, 337},
+    {"s_3[0]",    {"s_3", D3DXRS_FLOAT4, 24,  2, D3DXPC_STRUCT,         D3DXPT_VOID,  1,  2, 1, 2,  8, NULL}, 337},
+    {"s_3[0].f",  {"f",   D3DXRS_FLOAT4, 24,  1, D3DXPC_SCALAR,         D3DXPT_FLOAT, 1,  1, 1, 0,  4, NULL}, 337},
+    {"s_3[0].i",  {"i",   D3DXRS_FLOAT4, 25,  1, D3DXPC_SCALAR,         D3DXPT_INT,   1,  1, 1, 0,  4, NULL}, 341},
+    {"s_3[1]",    {"s_3", D3DXRS_FLOAT4, 26,  2, D3DXPC_STRUCT,         D3DXPT_VOID,  1,  2, 1, 2,  8, NULL}, 345},
+    {"s_3[1].f",  {"f",   D3DXRS_FLOAT4, 26,  1, D3DXPC_SCALAR,         D3DXPT_FLOAT, 1,  1, 1, 0,  4, NULL}, 345},
+    {"s_3[1].i",  {"i",   D3DXRS_FLOAT4, 27,  1, D3DXPC_SCALAR,         D3DXPT_INT,   1,  1, 1, 0,  4, NULL}, 349},
+    {"s_3[2]",    {"s_3", D3DXRS_FLOAT4, 28,  1, D3DXPC_STRUCT,         D3DXPT_VOID,  1,  2, 1, 2,  8, NULL}, 353},
+    {"s_3[2].f",  {"f",   D3DXRS_FLOAT4, 28,  1, D3DXPC_SCALAR,         D3DXPT_FLOAT, 1,  1, 1, 0,  4, NULL}, 353},
+    {"s_3[2].i",  {"i",   D3DXRS_FLOAT4, 29,  0, D3DXPC_SCALAR,         D3DXPT_INT,   1,  1, 1, 0,  4, NULL}, 357},
+    {"v",         {"v",   D3DXRS_FLOAT4, 41,  2, D3DXPC_VECTOR,         D3DXPT_FLOAT, 1,  3, 2, 0, 24, NULL}, 366},
+    {"v[0]",      {"v",   D3DXRS_FLOAT4, 41,  1, D3DXPC_VECTOR,         D3DXPT_FLOAT, 1,  3, 1, 0, 12, NULL}, 366},
+    {"v[1]",      {"v",   D3DXRS_FLOAT4, 42,  1, D3DXPC_VECTOR,         D3DXPT_FLOAT, 1,  3, 1, 0, 12, NULL}, 370},
+};
+
+static void test_get_shader_constant_variables(void)
+{
+    ID3DXConstantTable *ctable;
+    HRESULT hr;
+    ULONG count;
+    UINT i;
+    UINT nr = 1;
+    D3DXHANDLE constant;
+    D3DXCONSTANT_DESC desc;
+    DWORD *ctab;
+
+    hr = D3DXGetShaderConstantTable(test_get_shader_constant_variables_blob, &ctable);
+    ok(hr == D3D_OK, "D3DXGetShaderConstantTable failed, got %08x, expected %08x\n", hr, D3D_OK);
+
+    ctab = ID3DXConstantTable_GetBufferPointer(ctable);
+    ok(ctab[0] == test_get_shader_constant_variables_blob[3], "ID3DXConstantTable_GetBufferPointer failed\n");
+
+    for (i = 0; i < sizeof(test_get_shader_constant_variables_data) / sizeof(*test_get_shader_constant_variables_data); ++i)
+    {
+        LPCSTR fullname = test_get_shader_constant_variables_data[i].fullname;
+        const D3DXCONSTANT_DESC *expected_desc = &test_get_shader_constant_variables_data[i].desc;
+        UINT ctaboffset = test_get_shader_constant_variables_data[i].ctaboffset;
+
+        constant = ID3DXConstantTable_GetConstantByName(ctable, NULL, fullname);
+        ok(constant != NULL, "GetConstantByName \"%s\" failed\n", fullname);
+
+        hr = ID3DXConstantTable_GetConstantDesc(ctable, constant, &desc, &nr);
+        ok(hr == D3D_OK, "GetConstantDesc \"%s\" failed, got %08x, expected %08x\n", fullname, hr, D3D_OK);
+
+        ok(!strcmp(expected_desc->Name, desc.Name), "GetConstantDesc \"%s\" failed, got \"%s\", expected \"%s\"\n",
+                fullname, desc.Name, expected_desc->Name);
+        ok(expected_desc->RegisterSet == desc.RegisterSet, "GetConstantDesc \"%s\" failed, got %#x, expected %#x\n",
+                fullname, desc.RegisterSet, expected_desc->RegisterSet);
+        ok(expected_desc->RegisterIndex == desc.RegisterIndex, "GetConstantDesc \"%s\" failed, got %u, expected %u\n",
+                fullname, desc.RegisterIndex, expected_desc->RegisterIndex);
+        ok(expected_desc->RegisterCount == desc.RegisterCount, "GetConstantDesc \"%s\" failed, got %u, expected %u\n",
+                fullname, desc.RegisterCount, expected_desc->RegisterCount);
+        ok(expected_desc->Class == desc.Class, "GetConstantDesc \"%s\" failed, got %u, expected %u\n",
+                fullname, desc.Class, expected_desc->Class);
+        ok(expected_desc->Type == desc.Type, "GetConstantDesc \"%s\" failed, got %#x, expected %#x\n",
+                fullname, desc.Type, expected_desc->Type);
+        ok(expected_desc->Rows == desc.Rows, "GetConstantDesc \"%s\" failed, got %#x, expected %#x\n",
+                fullname, desc.Rows, expected_desc->Rows);
+        ok(expected_desc->Columns == desc.Columns, "GetConstantDesc \"%s\" failed, got %u, expected %u\n",
+                fullname, desc.Columns, expected_desc->Columns);
+        ok(expected_desc->Elements == desc.Elements, "GetConstantDesc \"%s\" failed, got %u, expected %u\n",
+                fullname, desc.Elements, expected_desc->Elements);
+        ok(expected_desc->StructMembers == desc.StructMembers, "GetConstantDesc \"%s\" failed, got %u, expected %u\n",
+                fullname, desc.StructMembers, expected_desc->StructMembers);
+        ok(expected_desc->Bytes == desc.Bytes, "GetConstantDesc \"%s\" failed, got %u, expected %u\n",
+                fullname, desc.Bytes, expected_desc->Bytes);
+        ok(ctaboffset == (DWORD *)desc.DefaultValue - ctab, "GetConstantDesc \"%s\" failed, got %u, expected %u\n",
+           fullname, (UINT)((DWORD *)desc.DefaultValue - ctab), ctaboffset);
+    }
+
+    count = ID3DXConstantTable_Release(ctable);
+    ok(count == 0, "Release failed, got %u, expected %u\n", count, 0);
+}
+
 START_TEST(shader)
 {
     test_get_shader_size();
@@ -1578,4 +1793,5 @@ START_TEST(shader)
     test_setting_constants();
     test_get_sampler_index();
     test_get_shader_samplers();
+    test_get_shader_constant_variables();
 }
