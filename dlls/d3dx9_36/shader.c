@@ -674,8 +674,8 @@ static inline int is_vertex_shader(DWORD version)
 static DWORD calc_bytes(D3DXCONSTANT_DESC *desc)
 {
     if (desc->RegisterSet != D3DXRS_FLOAT4 && desc->RegisterSet != D3DXRS_SAMPLER)
-        FIXME("Don't know how to calculate Bytes for constants of type %d\n",
-                desc->RegisterSet);
+        FIXME("Don't know how to calculate Bytes for constants of type %s\n",
+                debug_d3dxparameter_registerset(desc->RegisterSet));
 
     return 4 * desc->Elements * desc->Rows * desc->Columns;
 }
@@ -1064,7 +1064,7 @@ static HRESULT set_scalar_array(ID3DXConstantTable *iface, IDirect3DDevice9 *dev
             }
             break;
         default:
-            FIXME("Handle other register sets\n");
+            FIXME("Unhandled register set %s\n", debug_d3dxparameter_registerset(desc.RegisterSet));
             return E_NOTIMPL;
     }
 
@@ -1117,7 +1117,7 @@ static HRESULT set_vector_array(ID3DXConstantTable *iface, IDirect3DDevice9 *dev
             }
             break;
         default:
-            FIXME("Unhandled register set %#x\n", desc.RegisterSet);
+            FIXME("Unhandled register set %s\n", debug_d3dxparameter_registerset(desc.RegisterSet));
             return E_NOTIMPL;
     }
 
@@ -1235,7 +1235,7 @@ static HRESULT set_matrix_array(ID3DXConstantTable *iface, IDirect3DDevice9 *dev
             }
             break;
         default:
-            FIXME("Unhandled register set %#x\n", desc.RegisterSet);
+            FIXME("Unhandled register set %s\n", debug_d3dxparameter_registerset(desc.RegisterSet));
             return E_NOTIMPL;
     }
 
@@ -1340,7 +1340,7 @@ static HRESULT set_matrix_pointer_array(ID3DXConstantTable *iface, IDirect3DDevi
             }
             break;
         default:
-            FIXME("Unhandled register set %#x\n", desc.RegisterSet);
+            FIXME("Unhandled register set %s\n", debug_d3dxparameter_registerset(desc.RegisterSet));
             return E_NOTIMPL;
     }
 
@@ -1599,8 +1599,9 @@ static HRESULT parse_ctab_constant_type(const char *ctab, DWORD typeoffset, stru
     constant->desc.RegisterSet = regset;
     constant->desc.RegisterIndex = index;
 
-    TRACE("name %s, elements %u, index %u, defaultvalue %p\n", constant->desc.Name,
-            constant->desc.Elements, index, constant->desc.DefaultValue);
+    TRACE("name %s, elements %u, index %u, defaultvalue %p, regset %s\n", constant->desc.Name,
+            constant->desc.Elements, index, constant->desc.DefaultValue,
+            debug_d3dxparameter_registerset(regset));
     TRACE("class %s, type %s, rows %d, columns %d, elements %d, struct_members %d\n",
             debug_d3dxparameter_class(type->Class), debug_d3dxparameter_type(type->Type),
             type->Rows, type->Columns, type->Elements, type->StructMembers);

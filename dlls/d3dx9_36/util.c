@@ -250,7 +250,21 @@ const char *debug_d3dxparameter_type(D3DXPARAMETER_TYPE t)
         WINE_D3DX_TO_STR(D3DXPT_VERTEXFRAGMENT);
         WINE_D3DX_TO_STR(D3DXPT_UNSUPPORTED);
         default:
-           FIXME("Unrecognized D3DXPARAMETER_TYP %#x.\n", t);
+            FIXME("Unrecognized D3DXPARAMETER_TYP %#x.\n", t);
+            return "unrecognized";
+    }
+}
+
+const char *debug_d3dxparameter_registerset(D3DXREGISTER_SET r)
+{
+    switch (r)
+    {
+        WINE_D3DX_TO_STR(D3DXRS_BOOL);
+        WINE_D3DX_TO_STR(D3DXRS_INT4);
+        WINE_D3DX_TO_STR(D3DXRS_FLOAT4);
+        WINE_D3DX_TO_STR(D3DXRS_SAMPLER);
+        default:
+            FIXME("Unrecognized D3DXREGISTER_SET %#x.\n", r);
             return "unrecognized";
     }
 }
