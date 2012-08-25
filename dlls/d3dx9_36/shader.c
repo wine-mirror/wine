@@ -923,27 +923,18 @@ static HRESULT WINAPI ID3DXConstantTableImpl_GetConstantDesc(ID3DXConstantTable 
                                                              D3DXCONSTANT_DESC *desc, UINT *count)
 {
     struct ID3DXConstantTableImpl *This = impl_from_ID3DXConstantTable(iface);
-    struct ctab_constant *constant_info;
+    struct ctab_constant *c = get_valid_constant(This, constant);
 
     TRACE("(%p)->(%p, %p, %p)\n", This, constant, desc, count);
 
-    if (!constant)
-        return D3DERR_INVALIDCALL;
-
-    /* Applications can pass the name of the constant in place of the handle */
-    if (!is_valid_constant(This, constant))
+    if (!c)
     {
-        constant = ID3DXConstantTable_GetConstantByName(iface, NULL, constant);
-        if (!constant)
-            return D3DERR_INVALIDCALL;
+        WARN("Invalid argument specified\n");
+        return D3DERR_INVALIDCALL;
     }
 
-    constant_info = constant_from_handle(constant);
-
-    if (desc)
-        *desc = constant_info->desc;
-    if (count)
-        *count = 1;
+    if (desc) *desc = c->desc;
+    if (count) *count = 1;
 
     return D3D_OK;
 }
