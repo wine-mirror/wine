@@ -51,8 +51,8 @@ static inline IDirectInputDevice8W *IDirectInputDevice8W_from_impl(JoystickGener
 
 BOOL device_disabled_registry(const char* name)
 {
-    static const char *disabled_str = "disabled";
-    static const char *joystick_key = "Joysticks";
+    static const char disabled_str[] = "disabled";
+    static const char joystick_key[] = "Joysticks";
     char buffer[MAX_PATH];
     HKEY hkey, appkey, temp;
     BOOL do_disable = FALSE;
@@ -75,7 +75,7 @@ BOOL device_disabled_registry(const char* name)
 
     /* Look for the "controllername"="disabled" key */
     if (!get_config_key(hkey, appkey, name, buffer, sizeof(buffer)))
-        if (!strncmp(disabled_str, buffer, sizeof(disabled_str)))
+        if (!strcmp(disabled_str, buffer))
         {
             TRACE("Disabling joystick '%s' based on registry key.\n", name);
             do_disable = TRUE;
