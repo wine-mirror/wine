@@ -777,7 +777,7 @@ static void test_setting_matrices_table(IDirect3DDevice9 *device)
     ok(res == D3D_OK, "D3DXGetShaderConstantTable failed: got %#x\n", res);
 
     res = ID3DXConstantTable_SetMatrix(ctable, device, "imatrix2x3", &fmatrix);
-    ok(res == D3D_OK, "ID3DXConstantTable_SetMatrix failed on variable fmatrix2x3: got %#x\n", res);
+    ok(res == D3D_OK, "ID3DXConstantTable_SetMatrix failed on variable imatrix2x3: got %#x\n", res);
 
     res = ID3DXConstantTable_SetMatrix(ctable, device, "fmatrix3x1", &fmatrix);
     ok(res == D3D_OK, "ID3DXConstantTable_SetMatrix failed on variable fmatrix3x1: got %#x\n", res);
