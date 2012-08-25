@@ -3454,6 +3454,8 @@ msgid ""
 "After disabling or enabling a device, the connected joysticks won't be "
 "updated here until you restart this applet."
 msgstr ""
+"Nach dem deaktivieren oder aktivieren eines Gerätes, wird der verbundene "
+"Controller hier bis zum Neustart des Applets nicht mehr aktualisiert."
 
 #: joy.rc:47
 msgid "Test Joystick"
