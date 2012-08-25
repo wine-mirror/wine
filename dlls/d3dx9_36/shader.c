@@ -1005,9 +1005,18 @@ static D3DXHANDLE WINAPI ID3DXConstantTableImpl_GetConstantByName(ID3DXConstantT
 static D3DXHANDLE WINAPI ID3DXConstantTableImpl_GetConstantElement(ID3DXConstantTable *iface, D3DXHANDLE constant, UINT index)
 {
     struct ID3DXConstantTableImpl *This = impl_from_ID3DXConstantTable(iface);
+    struct ctab_constant *c = get_valid_constant(This, constant);
 
-    FIXME("(%p)->(%p, %d): stub\n", This, constant, index);
+    TRACE("(%p)->(%p, %d)\n", This, constant, index);
 
+    if (c && index < c->desc.Elements)
+    {
+        if (c->constants) c = &c->constants[index];
+        TRACE("Returning constant %p\n", c);
+        return handle_from_constant(c);
+    }
+
+    WARN("Invalid argument specified\n");
     return NULL;
 }
 
