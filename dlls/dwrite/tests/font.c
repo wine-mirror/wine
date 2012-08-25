@@ -30,6 +30,14 @@
 #define EXPECT_HR(hr,hr_exp) \
     ok(hr == hr_exp, "got 0x%08x, expected 0x%08x\n", hr, hr_exp)
 
+#define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
+static void _expect_ref(IUnknown* obj, ULONG ref, int line)
+{
+    ULONG rc = IUnknown_AddRef(obj);
+    IUnknown_Release(obj);
+    ok_(__FILE__,line)(rc-1 == ref, "expected refcount %d, got %d\n", ref, rc-1);
+}
+
 static IDWriteFactory *factory;
 
 static void test_CreateFontFromLOGFONT(void)
@@ -234,6 +242,53 @@ if (0) /* crashes on native */
     IDWriteGdiInterop_Release(interop);
 }
 
+static void test_GetFontFamily(void)
+{
+    static const WCHAR arialW[] = {'A','r','i','a','l',0};
+    IDWriteFontFamily *family, *family2;
+    IDWriteGdiInterop *interop;
+    IDWriteFont *font;
+    LOGFONTW logfont;
+    HRESULT hr;
+
+    hr = IDWriteFactory_GetGdiInterop(factory, &interop);
+    EXPECT_HR(hr, S_OK);
+
+    memset(&logfont, 0, sizeof(logfont));
+    logfont.lfHeight = 12;
+    logfont.lfWidth  = 12;
+    logfont.lfWeight = FW_NORMAL;
+    logfont.lfItalic = 1;
+    lstrcpyW(logfont.lfFaceName, arialW);
+
+    hr = IDWriteGdiInterop_CreateFontFromLOGFONT(interop, &logfont, &font);
+    EXPECT_HR(hr, S_OK);
+
+if (0) /* crashes on native */
+    hr = IDWriteFont_GetFontFamily(font, NULL);
+
+    EXPECT_REF(font, 1);
+    hr = IDWriteFont_GetFontFamily(font, &family);
+    EXPECT_HR(hr, S_OK);
+    EXPECT_REF(font, 1);
+    EXPECT_REF(family, 2);
+
+    hr = IDWriteFont_GetFontFamily(font, &family2);
+    EXPECT_HR(hr, S_OK);
+    ok(family2 == family, "got %p, previous %p\n", family2, family);
+    EXPECT_REF(font, 1);
+    EXPECT_REF(family, 3);
+    IDWriteFontFamily_Release(family2);
+
+    hr = IDWriteFont_QueryInterface(font, &IID_IDWriteFontFamily, (void**)&family2);
+    EXPECT_HR(hr, E_NOINTERFACE);
+    ok(family2 == NULL, "got %p\n", family2);
+
+    IDWriteFontFamily_Release(family);
+    IDWriteFont_Release(font);
+    IDWriteGdiInterop_Release(interop);
+}
+
 START_TEST(font)
 {
     HRESULT hr;
@@ -248,6 +303,7 @@ START_TEST(font)
 
     test_CreateFontFromLOGFONT();
     test_CreateBitmapRenderTarget();
+    test_GetFontFamily();
 
     IDWriteFactory_Release(factory);
 }
