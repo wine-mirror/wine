@@ -1057,7 +1057,7 @@ static HRESULT set_scalar_array(ID3DXConstantTable *iface, IDirect3DDevice9 *dev
                         row[0] = ((BOOL *)data)[i] ? 1.0f : 0.0f;
                         break;
                     default:
-                        FIXME("Unhandled type %#x\n", type);
+                        FIXME("Unhandled type %s\n", debug_d3dxparameter_type(type));
                         return D3DERR_INVALIDCALL;
                 }
                 set_float_shader_constant(This, device, desc.RegisterIndex + i, row, 1);
@@ -1109,7 +1109,7 @@ static HRESULT set_vector_array(ID3DXConstantTable *iface, IDirect3DDevice9 *dev
                             vec[j] = ((BOOL *)data)[i * desc.Columns + j] ? 1.0f : 0.0f;
                         break;
                     default:
-                        FIXME("Unhandled type %#x\n", type);
+                        FIXME("Unhandled type %s\n", debug_d3dxparameter_type(type));
                         return D3DERR_INVALIDCALL;
                 }
 
@@ -1147,7 +1147,7 @@ static HRESULT set_float_matrix(FLOAT *matrix, const D3DXCONSTANT_DESC *desc,
             }
             break;
         default:
-            FIXME("Unhandled type %#x\n", type);
+            FIXME("Unhandled type %s\n", debug_d3dxparameter_type(type));
             return D3DERR_INVALIDCALL;
     }
 
@@ -1213,7 +1213,7 @@ static HRESULT set_matrix_array(ID3DXConstantTable *iface, IDirect3DDevice9 *dev
     }
     else
     {
-        FIXME("Unhandled variable class %#x\n", desc.Class);
+        FIXME("Unhandled variable class %s\n", debug_d3dxparameter_class(desc.Class));
         return D3D_OK;
     }
 
@@ -1319,7 +1319,7 @@ static HRESULT set_matrix_pointer_array(ID3DXConstantTable *iface, IDirect3DDevi
     }
     else
     {
-        FIXME("Unhandled variable class %#x\n", desc.Class);
+        FIXME("Unhandled variable class %s\n", debug_d3dxparameter_class(desc.Class));
         return D3D_OK;
     }
 
@@ -1395,13 +1395,13 @@ static HRESULT WINAPI ID3DXConstantTableImpl_SetValue(ID3DXConstantTable *iface,
         case D3DXPC_SCALAR:
             return set_scalar_array(iface, device, constant, data, elements, desc.Type);
         case D3DXPC_VECTOR:
-            return set_vector_array(iface, device, constant, data,elements, desc.Type);
+            return set_vector_array(iface, device, constant, data, elements, desc.Type);
         case D3DXPC_MATRIX_ROWS:
         case D3DXPC_MATRIX_COLUMNS:
             return set_matrix_array(iface, device, constant, data, elements,
                     D3DXPC_MATRIX_ROWS, desc.Type, desc.Rows, desc.Columns);
         default:
-            FIXME("Unhandled parameter class %#x\n", desc.Class);
+            FIXME("Unhandled parameter class %s\n", debug_d3dxparameter_class(desc.Class));
             return D3DERR_INVALIDCALL;
     }
 }
@@ -1601,8 +1601,9 @@ static HRESULT parse_ctab_constant_type(const char *ctab, DWORD typeoffset, stru
 
     TRACE("name %s, elements %u, index %u, defaultvalue %p\n", constant->desc.Name,
             constant->desc.Elements, index, constant->desc.DefaultValue);
-    TRACE("class %d, type %d, rows %d, columns %d, elements %d, struct_members %d\n",
-            type->Class, type->Type, type->Rows, type->Columns, type->Elements, type->StructMembers);
+    TRACE("class %s, type %s, rows %d, columns %d, elements %d, struct_members %d\n",
+            debug_d3dxparameter_class(type->Class), debug_d3dxparameter_type(type->Type),
+            type->Rows, type->Columns, type->Elements, type->StructMembers);
 
     if (type->Elements > 1 && !is_element)
     {
@@ -1662,7 +1663,7 @@ static HRESULT parse_ctab_constant_type(const char *ctab, DWORD typeoffset, stru
                 break;
 
             default:
-                FIXME("Unhandled type class %u\n", type->Class);
+                FIXME("Unhandled type class %s\n", debug_d3dxparameter_class(type->Class));
                 break;
         }
 
