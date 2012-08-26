@@ -143,6 +143,8 @@ static const WCHAR prop_serialnumberW[] =
     {'S','e','r','i','a','l','N','u','m','b','e','r',0};
 static const WCHAR prop_servicetypeW[] =
     {'S','e','r','v','i','c','e','T','y','p','e',0};
+static const WCHAR prop_startmodeW[] =
+    {'S','t','a','r','t','M','o','d','e',0};
 static const WCHAR prop_sizeW[] =
     {'S','i','z','e',0};
 static const WCHAR prop_speedW[] =
@@ -259,6 +261,7 @@ static const struct column col_service[] =
     { prop_nameW,             CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
     { prop_processidW,        CIM_UINT32 },
     { prop_servicetypeW,      CIM_STRING },
+    { prop_startmodeW,        CIM_STRING },
     { prop_stateW,            CIM_STRING }
 };
 static const struct column col_stdregprov[] =
@@ -395,6 +398,7 @@ struct record_service
     const WCHAR *name;
     UINT32       process_id;
     const WCHAR *servicetype;
+    const WCHAR *startmode;
     const WCHAR *state;
 };
 struct record_stdregprov
@@ -836,6 +840,28 @@ static const WCHAR *get_service_state( DWORD state )
     }
 }
 
+static const WCHAR *get_service_startmode( DWORD mode )
+{
+    static const WCHAR bootW[] = {'B','o','o','t',0};
+    static const WCHAR systemW[] = {'S','y','s','t','e','m',0};
+    static const WCHAR autoW[] = {'A','u','t','o',0};
+    static const WCHAR manualW[] = {'M','a','n','u','a','l',0};
+    static const WCHAR disabledW[] = {'D','i','s','a','b','l','e','d',0};
+    static const WCHAR unknownW[] = {'U','n','k','n','o','w','n',0};
+
+    switch (mode)
+    {
+    case SERVICE_BOOT_START:   return bootW;
+    case SERVICE_SYSTEM_START: return systemW;
+    case SERVICE_AUTO_START:   return autoW;
+    case SERVICE_DEMAND_START: return manualW;
+    case SERVICE_DISABLED:     return disabledW;
+    default:
+        ERR("unknown mode 0x%x\n", mode);
+        return unknownW;
+    }
+}
+
 static void fill_service( struct table *table )
 {
     struct record_service *rec;
@@ -866,6 +892,24 @@ static void fill_service( struct table *table )
 
     for (i = 0; i < count; i++)
     {
+        QUERY_SERVICE_CONFIGW *config;
+        SC_HANDLE service;
+        DWORD startmode;
+        DWORD size;
+
+        service = OpenServiceW(manager, services[i].lpServiceName, GENERIC_READ);
+        QueryServiceConfigW(service, NULL, 0, &size);
+        config = heap_alloc(size);
+        if (QueryServiceConfigW(service, config, size, &size))
+            startmode = config->dwStartType;
+        else
+        {
+            ERR("failed to get %s service config data\n", debugstr_w(services[i].lpServiceName));
+            startmode = SERVICE_DISABLED;
+        }
+        CloseServiceHandle(service);
+        heap_free(config);
+
         status = &services[i].ServiceStatusProcess;
         rec = (struct record_service *)(table->data + offset);
         rec->accept_pause = (status->dwControlsAccepted & SERVICE_ACCEPT_PAUSE_CONTINUE) ? -1 : 0;
@@ -874,6 +918,7 @@ static void fill_service( struct table *table )
         rec->name         = heap_strdupW( services[i].lpServiceName );
         rec->process_id   = status->dwProcessId;
         rec->servicetype  = get_service_type( status->dwServiceType );
+        rec->startmode    = get_service_startmode( startmode );
         rec->state        = get_service_state( status->dwCurrentState );
         offset += sizeof(*rec);
         num_rows++;
