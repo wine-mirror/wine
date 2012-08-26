@@ -84,6 +84,10 @@ static char const tbl_sregops_t[][5] = {
     "strh", "ldsb", "ldrh", "ldsh"
 };
 
+static char const tbl_width_t2[][2] = {
+    "b", "h", "", "?"
+};
+
 static UINT db_get_inst(void* addr, int size)
 {
     UINT result = 0;
@@ -760,6 +764,46 @@ static UINT thumb2_disasm_longmuldiv(UINT inst, ADDRESS64 *addr)
     return inst;
 }
 
+static UINT thumb2_disasm_str(UINT inst, ADDRESS64 *addr)
+{
+    WORD op1 = (inst >> 21) & 0x07;
+    WORD op2 = (inst >> 6) & 0x3f;
+
+    if ((op1 & 0x03) == 3) return inst;
+
+    if (!(op1 & 0x04) && inst & 0x0800)
+    {
+        int offset;
+        dbg_printf("\n\tstr%s\t%s, [%s", tbl_width_t2[op1 & 0x03], tbl_regs[get_nibble(inst, 3)],
+                   tbl_regs[get_nibble(inst, 4)]);
+
+        offset = inst & 0xff;
+        if (!(inst & 0x0200)) offset *= -1;
+
+        if (!(inst & 0x0400) && (inst & 0x0100)) dbg_printf("], #%i", offset);
+        else if (inst & 0x0400) dbg_printf(", #%i]%s", offset, (inst & 0x0100)?"!":"");
+        else return inst;
+        return 0;
+    }
+
+    if (!(op1 & 0x04) && !op2)
+    {
+        dbg_printf("\n\tstr%s\t%s, [%s, %s, LSL #%u]", tbl_width_t2[op1 & 0x03],
+                   tbl_regs[get_nibble(inst, 3)], tbl_regs[get_nibble(inst, 4)],
+                   tbl_regs[get_nibble(inst, 0)], (inst >> 4) & 0x3);
+        return 0;
+    }
+
+    if (op1 & 0x04)
+    {
+        dbg_printf("\n\tstr%s\t%s, [%s, #%u]", tbl_width_t2[op1 & 0x03],
+                   tbl_regs[get_nibble(inst, 3)], tbl_regs[get_nibble(inst, 4)], inst & 0x0fff);
+        return 0;
+    }
+
+    return inst;
+}
+
 static UINT thumb2_disasm_ldrword(UINT inst, ADDRESS64 *addr)
 {
     WORD op1 = (inst >> 23) & 0x01;
@@ -892,6 +936,7 @@ static const struct inst_arm tbl_thumb32[] = {
     { 0xff8000c0, 0xfb000000, thumb2_disasm_mul },
     { 0xff8000f0, 0xfb800000, thumb2_disasm_longmuldiv },
     { 0xff8000f0, 0xfb8000f0, thumb2_disasm_longmuldiv },
+    { 0xff100000, 0xf8000000, thumb2_disasm_str },
     { 0xff700000, 0xf8500000, thumb2_disasm_ldrword },
     { 0xef000010, 0xee000010, thumb2_disasm_coprocmov1 },
     { 0x00000000, 0x00000000, NULL }
