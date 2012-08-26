@@ -1427,7 +1427,26 @@ INT WINAPI GetLocaleInfoW( LCID lcid, LCTYPE lctype, LPWSTR buffer, INT len )
  */
 INT WINAPI GetLocaleInfoEx(LPCWSTR locale, LCTYPE info, LPWSTR buffer, INT len)
 {
-    return GetLocaleInfoW(LocaleNameToLCID(locale, 0), info, buffer, len);
+    LCID lcid = LocaleNameToLCID(locale, 0);
+
+    TRACE("%s, lcid=0x%x, 0x%x\n", debugstr_w(locale), lcid, info);
+
+    if (!lcid) return 0;
+
+    /* special handling for neutral locale names */
+    if (info == LOCALE_SNAME && strlenW(locale) == 2)
+    {
+        if (len && len < 3)
+        {
+            SetLastError(ERROR_INSUFFICIENT_BUFFER);
+            return 0;
+        }
+
+        if (len) strcpyW(buffer, locale);
+        return 3;
+    }
+
+    return GetLocaleInfoW(lcid, info, buffer, len);
 }
 
 /******************************************************************************

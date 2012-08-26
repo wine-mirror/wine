@@ -1918,6 +1918,13 @@ static void test_LocaleNameToLCID(void)
             else
                 ok(lcid == ptr->lcid, "%s: got wrong lcid 0x%04x, expected 0x%04x\n",
                     wine_dbgstr_w(ptr->name), lcid, ptr->lcid);
+
+            *buffer = 0;
+            ret = pLCIDToLocaleName(lcid, buffer, sizeof(buffer)/sizeof(WCHAR), 0);
+            ok(ret > 0, "%s: got %d\n", wine_dbgstr_w(ptr->name), ret);
+            ok(lstrcmpW(ptr->name, buffer), "%s: got wrong locale name %s\n",
+                wine_dbgstr_w(ptr->name), wine_dbgstr_w(buffer));
+
             ptr++;
         }
     }
@@ -3400,29 +3407,37 @@ static void test_GetLocaleInfoEx(void)
         const struct neutralsublang_name_t *ptr = neutralsublang_names;
         DWORD val;
 
-todo_wine
+        ok(ret == lstrlenW(bufferW)+1, "got %d\n", ret);
         ok(!lstrcmpW(bufferW, enW), "got %s\n", wine_dbgstr_w(bufferW));
 
+        SetLastError(0xdeadbeef);
+        ret = pGetLocaleInfoEx(enW, LOCALE_SNAME, bufferW, 2);
+        ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %d, %d\n", ret, GetLastError());
+
+        SetLastError(0xdeadbeef);
+        ret = pGetLocaleInfoEx(enW, LOCALE_SNAME, NULL, 0);
+        ok(ret == 3 && GetLastError() == 0xdeadbeef, "got %d, %d\n", ret, GetLastError());
+
         ret = pGetLocaleInfoEx(enusW, LOCALE_SNAME, bufferW, sizeof(bufferW)/sizeof(WCHAR));
-        ok(ret, "got %d\n", ret);
+        ok(ret == lstrlenW(bufferW)+1, "got %d\n", ret);
         ok(!lstrcmpW(bufferW, enusW), "got %s\n", wine_dbgstr_w(bufferW));
 
         ret = pGetLocaleInfoEx(enW, LOCALE_SABBREVCTRYNAME, bufferW, sizeof(bufferW)/sizeof(WCHAR));
-        ok(ret, "got %d\n", ret);
+        ok(ret == lstrlenW(bufferW)+1, "got %d\n", ret);
         ok(!lstrcmpW(bufferW, usaW), "got %s\n", wine_dbgstr_w(bufferW));
 
         ret = pGetLocaleInfoEx(enW, LOCALE_SABBREVLANGNAME, bufferW, sizeof(bufferW)/sizeof(WCHAR));
-        ok(ret, "got %d\n", ret);
+        ok(ret == lstrlenW(bufferW)+1, "got %d\n", ret);
         ok(!lstrcmpW(bufferW, enuW), "got %s\n", wine_dbgstr_w(bufferW));
 
         ret = pGetLocaleInfoEx(enW, LOCALE_SCOUNTRY, bufferW, sizeof(bufferW)/sizeof(WCHAR));
-        ok(ret, "got %d\n", ret);
+        ok(ret == lstrlenW(bufferW)+1, "got %d\n", ret);
         ok(!lstrcmpW(bufferW, statesW), "got %s\n", wine_dbgstr_w(bufferW));
 
         bufferW[0] = 0;
+        SetLastError(0xdeadbeef);
         ret = pGetLocaleInfoEx(dummyW, LOCALE_SNAME, bufferW, sizeof(bufferW)/sizeof(WCHAR));
-todo_wine
-        ok(!ret, "got %d\n", ret);
+        ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "got %d, error %d\n", ret, GetLastError());
 
         while (*ptr->name)
         {
@@ -3434,8 +3449,8 @@ todo_wine
             else
                 ok(val == ptr->lcid, "%s: got wrong lcid 0x%04x, expected 0x%04x\n", wine_dbgstr_w(ptr->name), val, ptr->lcid);
             bufferW[0] = 0;
-            pGetLocaleInfoEx(ptr->name, LOCALE_SNAME, bufferW, sizeof(bufferW)/sizeof(WCHAR));
-        todo_wine
+            ret = pGetLocaleInfoEx(ptr->name, LOCALE_SNAME, bufferW, sizeof(bufferW)/sizeof(WCHAR));
+            ok(ret == lstrlenW(bufferW)+1, "%s: got ret value %d\n", wine_dbgstr_w(ptr->name), ret);
             ok(!lstrcmpW(bufferW, ptr->name), "%s: got wrong LOCALE_SNAME %s\n", wine_dbgstr_w(ptr->name), wine_dbgstr_w(bufferW));
             ptr++;
         }
