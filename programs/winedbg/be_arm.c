@@ -84,6 +84,10 @@ static char const tbl_sregops_t[][5] = {
     "strh", "ldsb", "ldrh", "ldsh"
 };
 
+static char const tbl_miscops_t2[][6] = {
+    "rev", "rev16", "rbit", "revsh"
+};
+
 static char const tbl_width_t2[][2] = {
     "b", "h", "", "?"
 };
@@ -655,22 +659,33 @@ static UINT thumb2_disasm_misc(UINT inst, ADDRESS64 *addr)
 
     if (op1 == 1)
     {
-        switch (op2)
-        {
-        case 0:
-            dbg_printf("\n\trev\t");
-            break;
-        case 1:
-            dbg_printf("\n\trev16\t");
-            break;
-        case 2:
-            dbg_printf("\n\trbit\t");
-            break;
-        case 3:
-            dbg_printf("\n\trevsh\t");
-            break;
-        }
-        dbg_printf("%s, %s", tbl_regs[get_nibble(inst, 2)], tbl_regs[get_nibble(inst, 0)]);
+        dbg_printf("\n\t%s\t%s, %s", tbl_miscops_t2[op2], tbl_regs[get_nibble(inst, 2)],
+                   tbl_regs[get_nibble(inst, 0)]);
+        return 0;
+    }
+
+    return inst;
+}
+
+static UINT thumb2_disasm_dataprocessingreg(UINT inst, ADDRESS64 *addr)
+{
+    WORD op1 = (inst >> 20) & 0x07;
+    WORD op2 = (inst >> 4) & 0x0f;
+
+    if (!op2)
+    {
+        dbg_printf("\n\t%s%s\t%s, %s, %s", tbl_shifts[op1 >> 1], (op1 & 1)?"s":"",
+                   tbl_regs[get_nibble(inst, 2)], tbl_regs[get_nibble(inst, 4)],
+                   tbl_regs[get_nibble(inst, 0)]);
+        return 0;
+    }
+
+    if ((op2 & 0x0C) == 0x08 && get_nibble(inst, 4) == 0x0f)
+    {
+        dbg_printf("\n\t%sxt%s\t%s, %s", (op1 & 1)?"u":"s", (op1 & 4)?"b":"h",
+                   tbl_regs[get_nibble(inst, 2)], tbl_regs[get_nibble(inst, 0)]);
+        if (op2 & 0x03)
+            dbg_printf(", ROR #%u", (op2 & 3) * 8);
         return 0;
     }
 
@@ -933,6 +948,7 @@ static const struct inst_thumb16 tbl_thumb16[] = {
 static const struct inst_arm tbl_thumb32[] = {
     { 0xf800f800, 0xf000f800, thumb2_disasm_branchlinked },
     { 0xffc0f0c0, 0xfa80f080, thumb2_disasm_misc },
+    { 0xff80f000, 0xfa00f000, thumb2_disasm_dataprocessingreg },
     { 0xff8000c0, 0xfb000000, thumb2_disasm_mul },
     { 0xff8000f0, 0xfb800000, thumb2_disasm_longmuldiv },
     { 0xff8000f0, 0xfb8000f0, thumb2_disasm_longmuldiv },
