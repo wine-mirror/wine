@@ -1391,9 +1391,6 @@ const char* __thiscall ctype_char_do_narrow(const ctype_char *this,
 /* ?_Do_narrow_s@?$ctype@D@std@@MBEPBDPBD0DPADI@Z */
 /* ?_Do_narrow_s@?$ctype@D@std@@MEBAPEBDPEBD0DPEAD_K@Z */
 DEFINE_THISCALL_WRAPPER(ctype_char__Do_narrow_s, 24)
-#define call_ctype_char__Do_narrow_s(this, first, last, unused, dest, size) CALL_VTBL_FUNC(this, 40, \
-        const char*, (const ctype_char*, const char*, const char*, char, char*, MSVCP_size_t), \
-        (this, first, last, unused, dest, size))
 const char* __thiscall ctype_char__Do_narrow_s(const ctype_char *this, const char *first,
         const char *last, char unused, char *dest, MSVCP_size_t size)
 {
@@ -1428,7 +1425,7 @@ const char* __thiscall ctype_char__Narrow_s(const ctype_char *this, const char *
         const char *last, char dflt, char *dest, MSVCP_size_t size)
 {
     TRACE("(%p %p %p %p %lu)\n", this, first, last, dest, size);
-    return call_ctype_char__Do_narrow_s(this, first, last, dflt, dest, size);
+    return ctype_char__Do_narrow_s(this, first, last, dflt, dest, size);
 }
 
 /* ?do_widen@?$ctype@D@std@@MBEDD@Z */
@@ -1459,9 +1456,6 @@ const char* __thiscall ctype_char_do_widen(const ctype_char *this,
 /* ?_Do_widen_s@?$ctype@D@std@@MBEPBDPBD0PADI@Z */
 /* ?_Do_widen_s@?$ctype@D@std@@MEBAPEBDPEBD0PEAD_K@Z */
 DEFINE_THISCALL_WRAPPER(ctype_char__Do_widen_s, 20)
-#define call_ctype_char__Do_widen_s(this, first, last, dest, size) CALL_VTBL_FUNC(this, 28, \
-        const char*, (const ctype_char*, const char*, const char*, char*, MSVCP_size_t), \
-        (this, first, last, dest, size))
 const char* __thiscall ctype_char__Do_widen_s(const ctype_char *this,
         const char *first, const char *last, char *dest, MSVCP_size_t size)
 {
@@ -1496,7 +1490,7 @@ const char* __thiscall ctype_char__Widen_s(const ctype_char *this,
         const char *first, const char *last, char *dest, MSVCP_size_t size)
 {
     TRACE("(%p %p %p %p %lu)\n", this, first, last, dest, size);
-    return call_ctype_char__Do_widen_s(this, first, last, dest, size);
+    return ctype_char__Do_widen_s(this, first, last, dest, size);
 }
 
 /* ?_Getcat@?$ctype@D@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
@@ -2017,9 +2011,6 @@ const wchar_t* __thiscall ctype_wchar_do_narrow(const ctype_wchar *this,
 /* ?_Do_narrow_s@?$ctype@G@std@@MBEPBGPBG0DPADI@Z */
 /* ?_Do_narrow_s@?$ctype@G@std@@MEBAPEBGPEBG0DPEAD_K@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar__Do_narrow_s, 24)
-#define call_ctype_wchar__Do_narrow_s(this, first, last, dflt, dest, size) CALL_VTBL_FUNC(this, 56, \
-        const wchar_t*, (const ctype_wchar*, const wchar_t*, const wchar_t*, char, char*, MSVCP_size_t), \
-        (this, first, last, dflt, dest, size))
 const wchar_t* __thiscall ctype_wchar__Do_narrow_s(const ctype_wchar *this,
         const wchar_t *first, const wchar_t *last, char dflt, char *dest, MSVCP_size_t size)
 {
@@ -2063,7 +2054,7 @@ const wchar_t* __thiscall ctype_wchar__Narrow_s(const ctype_wchar *this, const w
         const wchar_t *last, char dflt, char *dest, MSVCP_size_t size)
 {
     TRACE("(%p %p %p %d %p %lu)\n", this, first, last, dflt, dest, size);
-    return call_ctype_wchar__Do_narrow_s(this, first, last, dflt, dest, size);
+    return ctype_wchar__Do_narrow_s(this, first, last, dflt, dest, size);
 }
 
 /* _Mbrtowc */
@@ -2182,9 +2173,6 @@ const char* __thiscall ctype_wchar_do_widen(const ctype_wchar *this,
 /* ?_Do_widen_s@?$ctype@G@std@@MBEPBDPBD0PAGI@Z */
 /* ?_Do_widen_s@?$ctype@G@std@@MEBAPEBDPEBD0PEAG_K@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar__Do_widen_s, 20)
-#define call_ctype_wchar__Do_widen_s(this, first, last, dest, size) CALL_VTBL_FUNC(this, 44, \
-        const char*, (const ctype_wchar*, const char*, const char*, wchar_t*, MSVCP_size_t), \
-        (this, first, last, dest, size))
 const char* __thiscall ctype_wchar__Do_widen_s(const ctype_wchar *this,
         const char *first, const char *last, wchar_t *dest, MSVCP_size_t size)
 {
@@ -2228,7 +2216,7 @@ const char* __thiscall ctype_wchar__Widen_s(const ctype_wchar *this,
         const char *first, const char *last, wchar_t *dest, MSVCP_size_t size)
 {
     TRACE("(%p %p %p %p %lu)\n", this, first, last, dest, size);
-    return call_ctype_wchar__Do_widen_s(this, first, last, dest, size);
+    return ctype_wchar__Do_widen_s(this, first, last, dest, size);
 }
 
 /* ?_Getcat@?$ctype@_W@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */

@@ -1071,8 +1071,6 @@ int __thiscall basic_streambuf_char_uflow(basic_streambuf_char *this)
 /* ?_Xsgetn_s@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MAEHPADIH@Z */
 /* ?_Xsgetn_s@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MEAA_JPEAD_K_J@Z */
 DEFINE_THISCALL_WRAPPER(basic_streambuf_char__Xsgetn_s, 20)
-#define call_basic_streambuf_char__Xsgetn_s(this, ptr, size, count) CALL_VTBL_FUNC(this, 28, \
-        streamsize, (basic_streambuf_char*, char*, MSVCP_size_t, streamsize), (this, ptr, size, count))
 streamsize __thiscall basic_streambuf_char__Xsgetn_s(basic_streambuf_char *this, char *ptr, MSVCP_size_t size, streamsize count)
 {
     streamsize copied, chunk;
@@ -1109,7 +1107,7 @@ DEFINE_THISCALL_WRAPPER(basic_streambuf_char__Sgetn_s, 20)
 streamsize __thiscall basic_streambuf_char__Sgetn_s(basic_streambuf_char *this, char *ptr, MSVCP_size_t size, streamsize count)
 {
     TRACE("(%p %p %lu %s)\n", this, ptr, size, wine_dbgstr_longlong(count));
-    return call_basic_streambuf_char__Xsgetn_s(this, ptr, size, count);
+    return basic_streambuf_char__Xsgetn_s(this, ptr, size, count);
 }
 
 /* ?_Unlock@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAEXXZ */
@@ -1366,7 +1364,7 @@ DEFINE_THISCALL_WRAPPER(basic_streambuf_char_sgetn, 16)
 streamsize __thiscall basic_streambuf_char_sgetn(basic_streambuf_char *this, char *ptr, streamsize count)
 {
     TRACE("(%p %p %s)\n", this, ptr, wine_dbgstr_longlong(count));
-    return call_basic_streambuf_char__Xsgetn_s(this, ptr, -1, count);
+    return basic_streambuf_char__Xsgetn_s(this, ptr, -1, count);
 }
 
 /* ?showmanyc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MAEHXZ */
@@ -1487,7 +1485,7 @@ DEFINE_THISCALL_WRAPPER(basic_streambuf_char_xsgetn, 16)
 streamsize __thiscall basic_streambuf_char_xsgetn(basic_streambuf_char *this, char *ptr, streamsize count)
 {
     TRACE("(%p %p %s)\n", this, ptr, wine_dbgstr_longlong(count));
-    return call_basic_streambuf_char__Xsgetn_s(this, ptr, -1, count);
+    return basic_streambuf_char__Xsgetn_s(this, ptr, -1, count);
 }
 
 /* ?xsputn@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MAEHPBDH@Z */
@@ -1811,8 +1809,6 @@ unsigned short __thiscall basic_streambuf_wchar_uflow(basic_streambuf_wchar *thi
 /* ?_Xsgetn_s@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MAEHPAGIH@Z */
 /* ?_Xsgetn_s@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MEAA_JPEAG_K_J@Z */
 DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar__Xsgetn_s, 20)
-#define call_basic_streambuf_wchar__Xsgetn_s(this, ptr, size, count) CALL_VTBL_FUNC(this, 28, \
-        streamsize, (basic_streambuf_wchar*, wchar_t*, MSVCP_size_t, streamsize), (this, ptr, size, count))
 streamsize __thiscall basic_streambuf_wchar__Xsgetn_s(basic_streambuf_wchar *this, wchar_t *ptr, MSVCP_size_t size, streamsize count)
 {
     streamsize copied, chunk;
@@ -1851,7 +1847,7 @@ DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar__Sgetn_s, 20)
 streamsize __thiscall basic_streambuf_wchar__Sgetn_s(basic_streambuf_wchar *this, wchar_t *ptr, MSVCP_size_t size, streamsize count)
 {
     TRACE("(%p %p %lu %s)\n", this, ptr, size, wine_dbgstr_longlong(count));
-    return call_basic_streambuf_wchar__Xsgetn_s(this, ptr, size, count);
+    return basic_streambuf_wchar__Xsgetn_s(this, ptr, size, count);
 }
 
 /* ?_Unlock@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QAEXXZ */
@@ -2156,7 +2152,7 @@ DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_sgetn, 16)
 streamsize __thiscall basic_streambuf_wchar_sgetn(basic_streambuf_wchar *this, wchar_t *ptr, streamsize count)
 {
     TRACE("(%p %p %s)\n", this, ptr, wine_dbgstr_longlong(count));
-    return call_basic_streambuf_wchar__Xsgetn_s(this, ptr, -1, count);
+    return basic_streambuf_wchar__Xsgetn_s(this, ptr, -1, count);
 }
 
 /* ?showmanyc@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MAEHXZ */
@@ -2297,7 +2293,7 @@ DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_xsgetn, 16)
 streamsize __thiscall basic_streambuf_wchar_xsgetn(basic_streambuf_wchar *this, wchar_t *ptr, streamsize count)
 {
     TRACE("(%p %p %s)\n", this, ptr, wine_dbgstr_longlong(count));
-    return call_basic_streambuf_wchar__Xsgetn_s(this, ptr, -1, count);
+    return basic_streambuf_wchar__Xsgetn_s(this, ptr, -1, count);
 }
 
 /* ?xsputn@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MAEHPB_WH@Z */
