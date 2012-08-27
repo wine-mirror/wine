@@ -971,6 +971,7 @@ GpStatus WINGDIPAPI GdipAddPathString(GpPath* path, GDIPCONST WCHAR* string, INT
         return status;
 
     get_log_fontW(font, NULL, &lfw);
+    GdipDeleteFont(font);
     hfont = CreateFontIndirectW(&lfw);
     if (!hfont)
     {
