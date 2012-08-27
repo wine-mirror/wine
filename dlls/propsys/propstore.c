@@ -303,6 +303,7 @@ static HRESULT WINAPI PropertyStore_SetValue(IPropertyStoreCache *iface,
     PropertyStore *This = impl_from_IPropertyStoreCache(iface);
     propstore_value *value;
     HRESULT hr;
+    PROPVARIANT temp;
 
     TRACE("%p,%p,%p\n", iface, key, propvar);
 
@@ -311,7 +312,13 @@ static HRESULT WINAPI PropertyStore_SetValue(IPropertyStoreCache *iface,
     hr = PropertyStore_LookupValue(This, key, 1, &value);
 
     if (SUCCEEDED(hr))
-        hr = PropVariantCopy(&value->propvar, propvar);
+        hr = PropVariantCopy(&temp, propvar);
+
+    if (SUCCEEDED(hr))
+    {
+        PropVariantClear(&value->propvar);
+        value->propvar = temp;
+    }
 
     LeaveCriticalSection(&This->lock);
 
@@ -405,6 +412,7 @@ static HRESULT WINAPI PropertyStore_SetValueAndState(IPropertyStoreCache *iface,
     PropertyStore *This = impl_from_IPropertyStoreCache(iface);
     propstore_value *value;
     HRESULT hr;
+    PROPVARIANT temp;
 
     TRACE("%p,%p,%p,%d\n", iface, key, ppropvar, state);
 
@@ -413,10 +421,14 @@ static HRESULT WINAPI PropertyStore_SetValueAndState(IPropertyStoreCache *iface,
     hr = PropertyStore_LookupValue(This, key, 1, &value);
 
     if (SUCCEEDED(hr))
-        hr = PropVariantCopy(&value->propvar, ppropvar);
+        hr = PropVariantCopy(&temp, ppropvar);
 
     if (SUCCEEDED(hr))
+    {
+        PropVariantClear(&value->propvar);
+        value->propvar = temp;
         value->state = state;
+    }
 
     LeaveCriticalSection(&This->lock);
 
