@@ -153,6 +153,8 @@ static const WCHAR prop_stateW[] =
     {'S','t','a','t','e',0};
 static const WCHAR prop_systemdirectoryW[] =
     {'S','y','s','t','e','m','D','i','r','e','c','t','o','r','y',0};
+static const WCHAR prop_systemnameW[] =
+    {'S','y','s','t','e','m','N','a','m','e',0};
 static const WCHAR prop_tagW[] =
     {'T','a','g',0};
 static const WCHAR prop_threadcountW[] =
@@ -262,7 +264,8 @@ static const struct column col_service[] =
     { prop_processidW,        CIM_UINT32 },
     { prop_servicetypeW,      CIM_STRING },
     { prop_startmodeW,        CIM_STRING },
-    { prop_stateW,            CIM_STRING }
+    { prop_stateW,            CIM_STRING },
+    { prop_systemnameW,       CIM_STRING|COL_FLAG_DYNAMIC }
 };
 static const struct column col_stdregprov[] =
 {
@@ -400,6 +403,7 @@ struct record_service
     const WCHAR *servicetype;
     const WCHAR *startmode;
     const WCHAR *state;
+    const WCHAR *systemname;
 };
 struct record_stdregprov
 {
@@ -868,6 +872,8 @@ static void fill_service( struct table *table )
     SC_HANDLE manager;
     ENUM_SERVICE_STATUS_PROCESSW *tmp, *services = NULL;
     SERVICE_STATUS_PROCESS *status;
+    WCHAR sysnameW[MAX_COMPUTERNAME_LENGTH + 1];
+    DWORD len = sizeof(sysnameW) / sizeof(sysnameW[0]);
     UINT i, num_rows = 0, offset = 0, size = 256, needed, count;
     BOOL ret;
 
@@ -889,6 +895,8 @@ static void fill_service( struct table *table )
         if (!ret) goto done;
     }
     if (!(table->data = heap_alloc( sizeof(*rec) * count ))) goto done;
+
+    GetComputerNameW( sysnameW, &len );
 
     for (i = 0; i < count; i++)
     {
@@ -920,6 +928,7 @@ static void fill_service( struct table *table )
         rec->servicetype  = get_service_type( status->dwServiceType );
         rec->startmode    = get_service_startmode( startmode );
         rec->state        = get_service_state( status->dwCurrentState );
+        rec->systemname   = heap_strdupW( sysnameW );
         offset += sizeof(*rec);
         num_rows++;
     }
