@@ -208,7 +208,7 @@ HRESULT NS_SendSessionRequestBroadcast( LPCGUID lpcGuid,
   data.lpMessage = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
                               data.dwMessageSize );
   data.lpISP = lpSpData->lpISP;
-  data.bReturnStatus = (dwFlags & DPENUMSESSIONS_RETURNSTATUS) ? TRUE : FALSE;
+  data.bReturnStatus = (dwFlags & DPENUMSESSIONS_RETURNSTATUS) != 0;
 
 
   lpMsg = (LPDPMSG_ENUMSESSIONSREQUEST)(((BYTE*)data.lpMessage)+lpSpData->dwSPHeaderSize);

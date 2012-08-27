@@ -2853,11 +2853,11 @@ static HRESULT DP_SecureOpen
 
     FIXME( "Not all data fields are correct. Need new parameter\n" );
 
-    data.bCreate           = (dwFlags & DPOPEN_CREATE ) ? TRUE : FALSE;
+    data.bCreate           = (dwFlags & DPOPEN_CREATE ) != 0;
     data.lpSPMessageHeader = (dwFlags & DPOPEN_CREATE ) ? NULL
                                                         : NS_GetNSAddr( This->dp2->lpNameServerData );
     data.lpISP             = This->dp2->spData.lpISP;
-    data.bReturnStatus     = (dwFlags & DPOPEN_RETURNSTATUS) ? TRUE : FALSE;
+    data.bReturnStatus     = (dwFlags & DPOPEN_RETURNSTATUS) != 0;
     data.dwOpenFlags       = dwFlags;
     data.dwSessionFlags    = This->dp2->lpSessionDesc->dwFlags;
 

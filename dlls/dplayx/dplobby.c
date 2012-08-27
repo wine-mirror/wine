@@ -1704,7 +1704,7 @@ static HRESULT WINAPI IDirectPlayLobby3WImpl_WaitForConnectionSettings
 ( LPDIRECTPLAYLOBBY3 iface, DWORD dwFlags )
 {
   HRESULT hr         = DP_OK;
-  BOOL    bStartWait = (dwFlags & DPLWAIT_CANCEL) ? FALSE : TRUE;
+  BOOL    bStartWait = !(dwFlags & DPLWAIT_CANCEL);
 
   TRACE( "(%p)->(0x%08x)\n", iface, dwFlags );
 
@@ -1721,7 +1721,7 @@ static HRESULT WINAPI IDirectPlayLobby3AImpl_WaitForConnectionSettings
 ( LPDIRECTPLAYLOBBY3A iface, DWORD dwFlags )
 {
   HRESULT hr         = DP_OK;
-  BOOL    bStartWait = (dwFlags & DPLWAIT_CANCEL) ? FALSE : TRUE;
+  BOOL    bStartWait = !(dwFlags & DPLWAIT_CANCEL);
 
   TRACE( "(%p)->(0x%08x)\n", iface, dwFlags );
 
