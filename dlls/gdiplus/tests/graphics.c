@@ -3836,6 +3836,8 @@ todo_wine
             expectf_(height, rect.Height, height / 15.0);
             expectf_(bounds.Width, rect.Width + margin * 2.0, bounds.Width / 15.0);
         }
+
+        GdipDeleteFont(font);
     }
 
     status = GdipDeleteGraphics(graphics);
