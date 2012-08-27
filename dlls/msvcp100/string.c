@@ -60,20 +60,6 @@ static void CDECL MSVCP_char_traits_char_assign(char *ch, const char *assign)
     *ch = *assign;
 }
 
-/* ?eq@?$char_traits@D@std@@SA_NABD0@Z */
-/* ?eq@?$char_traits@D@std@@SA_NAEBD0@Z */
-MSVCP_bool CDECL MSVCP_char_traits_char_eq(const char *ch1, const char *ch2)
-{
-    return *ch1 == *ch2;
-}
-
-/* ?lt@?$char_traits@D@std@@SA_NABD0@Z */
-/* ?lt@?$char_traits@D@std@@SA_NAEBD0@Z */
-MSVCP_bool CDECL MSVCP_char_traits_lt(const char *ch1, const char *ch2)
-{
-    return *ch1 < *ch2;
-}
-
 /* ?compare@?$char_traits@D@std@@SAHPBD0I@Z */
 /* ?compare@?$char_traits@D@std@@SAHPEBD0_K@Z */
 static int CDECL MSVCP_char_traits_char_compare(
@@ -105,14 +91,6 @@ static char* CDECL MSVCP_char_traits_char__Copy_s(char *dest,
     return memcpy(dest, src, count);
 }
 
-/* ?copy@?$char_traits@D@std@@SAPADPADPBDI@Z */
-/* ?copy@?$char_traits@D@std@@SAPEADPEADPEBD_K@Z */
-char* CDECL MSVCP_char_traits_char_copy(
-        char *dest, const char *src, MSVCP_size_t count)
-{
-    return MSVCP_char_traits_char__Copy_s(dest, count, src, count);
-}
-
 /* ?find@?$char_traits@D@std@@SAPBDPBDIABD@Z */
 /* ?find@?$char_traits@D@std@@SAPEBDPEBD_KAEBD@Z */
 static const char * CDECL MSVCP_char_traits_char_find(
@@ -136,53 +114,11 @@ static char* CDECL MSVCP_char_traits_char__Move_s(char *dest,
     return memmove(dest, src, count);
 }
 
-/* ?move@?$char_traits@D@std@@SAPADPADPBDI@Z */
-/* ?move@?$char_traits@D@std@@SAPEADPEADPEBD_K@Z */
-char* CDECL MSVCP_char_traits_char_move(
-        char *dest, const char *src, MSVCP_size_t count)
-{
-    return MSVCP_char_traits_char__Move_s(dest, count, src, count);
-}
-
 /* ?assign@?$char_traits@D@std@@SAPADPADID@Z */
 /* ?assign@?$char_traits@D@std@@SAPEADPEAD_KD@Z */
 static char* CDECL MSVCP_char_traits_char_assignn(char *str, MSVCP_size_t num, char c)
 {
     return memset(str, c, num);
-}
-
-/* ?to_char_type@?$char_traits@D@std@@SADABH@Z */
-/* ?to_char_type@?$char_traits@D@std@@SADAEBH@Z */
-char CDECL MSVCP_char_traits_char_to_char_type(const int *i)
-{
-    return (char)*i;
-}
-
-/* ?to_int_type@?$char_traits@D@std@@SAHABD@Z */
-/* ?to_int_type@?$char_traits@D@std@@SAHAEBD@Z */
-int CDECL MSVCP_char_traits_char_to_int_type(const char *ch)
-{
-    return (int)*ch;
-}
-
-/* ?eq_int_type@?$char_traits@D@std@@SA_NABH0@Z */
-/* ?eq_int_type@?$char_traits@D@std@@SA_NAEBH0@Z */
-MSVCP_bool CDECL MSVCP_char_traits_char_eq_int_type(const int *i1, const int *i2)
-{
-    return *i1 == *i2;
-}
-
-/* ?eof@?$char_traits@D@std@@SAHXZ */
-int CDECL MSVCP_char_traits_char_eof(void)
-{
-    return EOF;
-}
-
-/* ?not_eof@?$char_traits@D@std@@SAHABH@Z */
-/* ?not_eof@?$char_traits@D@std@@SAHAEBH@Z */
-int CDECL MSVCP_char_traits_char_not_eof(int *in)
-{
-    return (*in==EOF ? !EOF : *in);
 }
 
 
@@ -193,21 +129,6 @@ static void CDECL MSVCP_char_traits_wchar_assign(wchar_t *ch,
         const wchar_t *assign)
 {
     *ch = *assign;
-}
-
-/* ?eq@?$char_traits@_W@std@@SA_NAB_W0@Z */
-/* ?eq@?$char_traits@_W@std@@SA_NAEB_W0@Z */
-MSVCP_bool CDECL MSVCP_char_traits_wchar_eq(wchar_t *ch1, wchar_t *ch2)
-{
-    return *ch1 == *ch2;
-}
-
-/* ?lt@?$char_traits@_W@std@@SA_NAB_W0@Z */
-/* ?lt@?$char_traits@_W@std@@SA_NAEB_W0@Z */
-MSVCP_bool CDECL MSVCP_char_traits_wchar_lt(const wchar_t *ch1,
-        const wchar_t *ch2)
-{
-    return *ch1 < *ch2;
 }
 
 /* ?compare@?$char_traits@_W@std@@SAHPB_W0I@Z */
@@ -241,14 +162,6 @@ static wchar_t* CDECL MSVCP_char_traits_wchar__Copy_s(wchar_t *dest,
     return memcpy(dest, src, count * sizeof(wchar_t));
 }
 
-/* ?copy@?$char_traits@_W@std@@SAPA_WPA_WPB_WI@Z */
-/* ?copy@?$char_traits@_W@std@@SAPEA_WPEA_WPEB_W_K@Z */
-wchar_t* CDECL MSVCP_char_traits_wchar_copy(wchar_t *dest,
-        const wchar_t *src, MSVCP_size_t count)
-{
-    return MSVCP_char_traits_wchar__Copy_s(dest, count, src, count);
-}
-
 /* ?find@?$char_traits@_W@std@@SAPB_WPB_WIAB_W@Z */
 /* ?find@?$char_traits@_W@std@@SAPEB_WPEB_W_KAEB_W@Z */
 static const wchar_t* CDECL MSVCP_char_traits_wchar_find(
@@ -278,14 +191,6 @@ static wchar_t* CDECL MSVCP_char_traits_wchar__Move_s(wchar_t *dest,
     return memmove(dest, src, count * sizeof(WCHAR));
 }
 
-/* ?move@?$char_traits@_W@std@@SAPA_WPA_WPB_WI@Z */
-/* ?move@?$char_traits@_W@std@@SAPEA_WPEA_WPEB_W_K@Z */
-wchar_t* CDECL MSVCP_char_traits_wchar_move(wchar_t *dest,
-        const wchar_t *src, MSVCP_size_t count)
-{
-    return MSVCP_char_traits_wchar__Move_s(dest, count, src, count);
-}
-
 /* ?assign@?$char_traits@_W@std@@SAPA_WPA_WI_W@Z */
 /* ?assign@?$char_traits@_W@std@@SAPEA_WPEA_W_K_W@Z */
 static wchar_t* CDECL MSVCP_char_traits_wchar_assignn(wchar_t *str,
@@ -297,196 +202,6 @@ static wchar_t* CDECL MSVCP_char_traits_wchar_assignn(wchar_t *str,
         str[i] = c;
 
     return str;
-}
-
-/* ?to_char_type@?$char_traits@_W@std@@SA_WABG@Z */
-/* ?to_char_type@?$char_traits@_W@std@@SA_WAEBG@Z */
-wchar_t CDECL MSVCP_char_traits_wchar_to_char_type(const unsigned short *i)
-{
-    return *i;
-}
-
-/* ?to_int_type@?$char_traits@_W@std@@SAGAB_W@Z */
-/* ?to_int_type@?$char_traits@_W@std@@SAGAEB_W@Z */
-unsigned short CDECL MSVCP_char_traits_wchar_to_int_type(const wchar_t *ch)
-{
-    return *ch;
-}
-
-/* ?eq_int_type@?$char_traits@_W@std@@SA_NABG0@Z */
-/* ?eq_int_type@?$char_traits@_W@std@@SA_NAEBG0@Z */
-MSVCP_bool CDECL MSVCP_char_traits_wchar_eq_int_tpe(const unsigned short *i1,
-        const unsigned short *i2)
-{
-    return *i1 == *i2;
-}
-
-/* ?eof@?$char_traits@_W@std@@SAGXZ */
-unsigned short CDECL MSVCP_char_traits_wchar_eof(void)
-{
-    return WEOF;
-}
-
-/* ?not_eof@?$char_traits@_W@std@@SAGABG@Z */
-/* ?not_eof@?$char_traits@_W@std@@SAGAEBG@Z */
-unsigned short CDECL MSVCP_char_traits_wchar_not_eof(const unsigned short *in)
-{
-    return (*in==WEOF ? !WEOF : *in);
-}
-
-
-/* char_traits<unsigned short> */
-/* ?assign@?$char_traits@G@std@@SAXAAGABG@Z */
-/* ?assign@?$char_traits@G@std@@SAXAEAGAEBG@Z */
-void CDECL MSVCP_char_traits_short_assign(unsigned short *ch,
-        const unsigned short *assign)
-{
-    *ch = *assign;
-}
-
-/* ?eq@?$char_traits@G@std@@SA_NABG0@Z */
-/* ?eq@?$char_traits@G@std@@SA_NAEBG0@Z */
-MSVCP_bool CDECL MSVCP_char_traits_short_eq(const unsigned short *ch1,
-        const unsigned short *ch2)
-{
-    return *ch1 == *ch2;
-}
-
-/* ?lt@?$char_traits@G@std@@SA_NABG0@Z */
-/* ?lt@?$char_traits@G@std@@SA_NAEBG0@Z */
-MSVCP_bool CDECL MSVCP_char_traits_short_lt(const unsigned short *ch1,
-        const unsigned short *ch2)
-{
-    return *ch1 < *ch2;
-}
-
-/* ?compare@?$char_traits@G@std@@SAHPBG0I@Z */
-/* ?compare@?$char_traits@G@std@@SAHPEBG0_K@Z */
-int CDECL MSVCP_char_traits_short_compare(const unsigned short *s1,
-        const unsigned short *s2, MSVCP_size_t count)
-{
-    MSVCP_size_t i;
-
-    for(i=0; i<count; i++)
-        if(s1[i] != s2[i])
-            return (s1[i] < s2[i] ? -1 : 1);
-
-    return 0;
-}
-
-/* ?length@?$char_traits@G@std@@SAIPBG@Z */
-/* ?length@?$char_traits@G@std@@SA_KPEBG@Z */
-MSVCP_size_t CDECL MSVCP_char_traits_short_length(const unsigned short *str)
-{
-    MSVCP_size_t len;
-
-    for(len=0; str[len]; len++);
-
-    return len;
-}
-
-/* ?_Copy_s@?$char_traits@G@std@@SAPAGPAGIPBGI@Z */
-/* ?_Copy_s@?$char_traits@G@std@@SAPEAGPEAG_KPEBG1@Z */
-unsigned short * CDECL MSVCP_char_traits_short__Copy_s(unsigned short *dest,
-        MSVCP_size_t size, const unsigned short *src, MSVCP_size_t count)
-{
-    if(size<count) {
-        _invalid_parameter(NULL, NULL, NULL, 0, 0);
-        return dest;
-    }
-
-    return memcpy(dest, src, count * sizeof(unsigned short));
-}
-
-/* ?copy@?$char_traits@G@std@@SAPAGPAGPBGI@Z */
-/* ?copy@?$char_traits@G@std@@SAPEAGPEAGPEBG_K@Z */
-unsigned short* CDECL MSVCP_char_traits_short_copy(unsigned short *dest,
-        const unsigned short *src, MSVCP_size_t count)
-{
-    return MSVCP_char_traits_short__Copy_s(dest, count, src, count);
-}
-
-/* ?find@?$char_traits@G@std@@SAPBGPBGIABG@Z */
-/* ?find@?$char_traits@G@std@@SAPEBGPEBG_KAEBG@Z */
-const unsigned short* CDECL MSVCP_char_traits_short_find(
-        const unsigned short *str, MSVCP_size_t range, const unsigned short *c)
-{
-    MSVCP_size_t i;
-
-    for(i=0; i<range; i++)
-        if(str[i] == *c)
-            return str+i;
-
-    return NULL;
-}
-
-/* ?_Move_s@?$char_traits@G@std@@SAPAGPAGIPBGI@Z */
-/* ?_Move_s@?$char_traits@G@std@@SAPEAGPEAG_KPEBG1@Z */
-unsigned short* CDECL MSVCP_char_traits_short__Move_s(unsigned short *dest,
-        MSVCP_size_t size, const unsigned short *src, MSVCP_size_t count)
-{
-    if(size<count) {
-        _invalid_parameter(NULL, NULL, NULL, 0, 0);
-        return dest;
-    }
-
-    return memmove(dest, src, count * sizeof(unsigned short));
-}
-
-/* ?move@?$char_traits@G@std@@SAPAGPAGPBGI@Z */
-/* ?move@?$char_traits@G@std@@SAPEAGPEAGPEBG_K@Z */
-unsigned short* CDECL MSVCP_char_traits_short_move(unsigned short *dest,
-        const unsigned short *src, MSVCP_size_t count)
-{
-    return MSVCP_char_traits_short__Move_s(dest, count, src, count);
-}
-
-/* ?assign@?$char_traits@G@std@@SAPAGPAGIG@Z */
-/* ?assign@?$char_traits@G@std@@SAPEAGPEAG_KG@Z */
-unsigned short* CDECL MSVCP_char_traits_short_assignn(unsigned short *str,
-        MSVCP_size_t num, unsigned short c)
-{
-    MSVCP_size_t i;
-
-    for(i=0; i<num; i++)
-        str[i] = c;
-
-    return str;
-}
-
-/* ?to_char_type@?$char_traits@G@std@@SAGABG@Z */
-/* ?to_char_type@?$char_traits@G@std@@SAGAEBG@Z */
-unsigned short CDECL MSVCP_char_traits_short_to_char_type(const unsigned short *i)
-{
-    return *i;
-}
-
-/* ?to_int_type@?$char_traits@G@std@@SAGABG@Z */
-/* ?to_int_type@?$char_traits@G@std@@SAGAEBG@Z */
-unsigned short CDECL MSVCP_char_traits_short_to_int_type(const unsigned short *ch)
-{
-    return *ch;
-}
-
-/* ?eq_int_type@?$char_traits@G@std@@SA_NABG0@Z */
-/* ?eq_int_type@?$char_traits@G@std@@SA_NAEBG0@Z */
-MSVCP_bool CDECL MSVCP_char_traits_short_eq_int_type(unsigned short *i1,
-        unsigned short *i2)
-{
-    return *i1 == *i2;
-}
-
-/* ?eof@?$char_traits@G@std@@SAGXZ */
-unsigned short CDECL MSVCP_char_traits_short_eof(void)
-{
-    return -1;
-}
-
-/* ?not_eof@?$char_traits@G@std@@SAGABG@Z */
-/* ?not_eof@?$char_traits@G@std@@SAGAEBG@Z */
-unsigned short CDECL MSVCP_char_traits_short_not_eof(const unsigned short *in)
-{
-    return (*in==(unsigned short)-1 ? 0 : *in);
 }
 
 
@@ -507,15 +222,6 @@ static void CDECL MSVCP__String_base_Xran(void)
 
     TRACE("\n");
     throw_exception(EXCEPTION_OUT_OF_RANGE, msg);
-}
-
-/* ?_Xinvarg@_String_base@std@@SAXXZ */
-void CDECL MSVCP__String_base_Xinvarg(void)
-{
-    static const char msg[] = "invalid string argument";
-
-    TRACE("\n");
-    throw_exception(EXCEPTION_INVALID_ARGUMENT, msg);
 }
 
 
@@ -1257,66 +963,6 @@ basic_string_char* __thiscall MSVCP_basic_string_char_append_ch(
     return MSVCP_basic_string_char_append_len_ch(this, 1, ch);
 }
 
-/* ??$?HDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@ABV10@PBD@Z */
-/* ??$?HDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@AEBV10@PEBD@Z */
-basic_string_char* __cdecl MSVCP_basic_string_char_concatenate_bstr_cstr(basic_string_char *ret,
-        const basic_string_char *left, const char *right)
-{
-    TRACE("%p %s\n", left, debugstr_a(right));
-
-    MSVCP_basic_string_char_copy_ctor(ret, left);
-    MSVCP_basic_string_char_append_cstr(ret, right);
-    return ret;
-}
-
-/* ??$?HDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@PBDABV10@@Z */
-/* ??$?HDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@PEBDAEBV10@@Z */
-basic_string_char* __cdecl MSVCP_basic_string_char_concatenate_cstr_bstr(basic_string_char *ret,
-        const char *left, const basic_string_char *right)
-{
-    TRACE("%s %p\n", debugstr_a(left), right);
-
-    MSVCP_basic_string_char_ctor_cstr(ret, left);
-    MSVCP_basic_string_char_append(ret, right);
-    return ret;
-}
-
-/* ??$?HDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@ABV10@0@Z */
-/* ??$?HDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@AEBV10@0@Z */
-basic_string_char* __cdecl MSVCP_basic_string_char_concatenate(basic_string_char *ret,
-        const basic_string_char *left, const basic_string_char *right)
-{
-    TRACE("%p %p\n", left, right);
-
-    MSVCP_basic_string_char_copy_ctor(ret, left);
-    MSVCP_basic_string_char_append(ret, right);
-    return ret;
-}
-
-/* ??$?HDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@ABV10@D@Z */
-/* ??$?HDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@AEBV10@D@Z */
-basic_string_char* __cdecl MSVCP_basic_string_char_concatenate_bstr_ch(basic_string_char *ret,
-        const basic_string_char *left, char right)
-{
-    TRACE("%p %c\n", left, right);
-
-    MSVCP_basic_string_char_copy_ctor(ret, left);
-    MSVCP_basic_string_char_append_ch(ret, right);
-    return ret;
-}
-
-/* ??$?HDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@DABV10@@Z */
-/* ??$?HDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@DAEBV10@@Z */
-basic_string_char* __cdecl MSVCP_basic_string_char_concatenate_ch_bstr(basic_string_char *ret,
-        char left, const basic_string_char *right)
-{
-    TRACE("%c %p\n", left, right);
-
-    MSVCP_basic_string_char_ctor_cstr_len(ret, &left, 1);
-    MSVCP_basic_string_char_append(ret, right);
-    return ret;
-}
-
 /* ?compare@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEHIIPBDI@Z */
 /* ?compare@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBAH_K0PEBD0@Z */
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_compare_substr_cstr_len, 20)
@@ -1404,150 +1050,6 @@ int __thiscall MSVCP_basic_string_char_compare(
 {
     return MSVCP_basic_string_char_compare_substr_cstr_len(this, 0, this->size,
             basic_string_char_const_ptr(compare), compare->size);
-}
-
-/* ??$?8DU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@0@Z */
-/* ??$?8DU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@0@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_char_equal(
-        const basic_string_char *left, const basic_string_char *right)
-{
-    return MSVCP_basic_string_char_compare(left, right) == 0;
-}
-
-/* ??$?8DU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@PBD@Z */
-/* ??$?8DU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@PEBD@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_char_equal_str_cstr(
-        const basic_string_char *left, const char *right)
-{
-    return MSVCP_basic_string_char_compare_cstr(left, right) == 0;
-}
-
-/* ??$?8DU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NPBDABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z */
-/* ??$?8DU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NPEBDAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_char_equal_cstr_str(
-        const char *left, const basic_string_char *right)
-{
-    return MSVCP_basic_string_char_compare_cstr(right, left) == 0;
-}
-
-/* ??$?9DU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@0@Z */
-/* ??$?9DU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@0@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_char_not_equal(
-        const basic_string_char *left, const basic_string_char *right)
-{
-    return MSVCP_basic_string_char_compare(left, right) != 0;
-}
-
-/* ??$?9DU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@PBD@Z */
-/* ??$?9DU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@PEBD@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_char_not_equal_str_cstr(
-        const basic_string_char *left, const char *right)
-{
-    return MSVCP_basic_string_char_compare_cstr(left, right) != 0;
-}
-
-/* ??$?9DU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NPBDABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z */
-/* ??$?9DU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NPEBDAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_char_not_equal_cstr_str(
-        const char *left, const basic_string_char *right)
-{
-    return MSVCP_basic_string_char_compare_cstr(right, left) != 0;
-}
-
-/* ??$?MDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@0@Z */
-/* ??$?MDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@0@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_char_lower(
-        const basic_string_char *left, const basic_string_char *right)
-{
-    return MSVCP_basic_string_char_compare(left, right) < 0;
-}
-
-/* ??$?MDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@PBD@Z */
-/* ??$?MDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@PEBD@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_char_lower_bstr_cstr(
-        const basic_string_char *left, const char *right)
-{
-    return MSVCP_basic_string_char_compare_cstr(left, right) < 0;
-}
-
-/* ??$?MDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NPBDABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z */
-/* ??$?MDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NPEBDAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_char_lower_cstr_bstr(
-        const char *left, const basic_string_char *right)
-{
-    return MSVCP_basic_string_char_compare_cstr(right, left) > 0;
-}
-
-/* ??$?NDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@0@Z */
-/* ??$?NDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@0@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_char_leq(
-        const basic_string_char *left, const basic_string_char *right)
-{
-    return MSVCP_basic_string_char_compare(left, right) <= 0;
-}
-
-/* ??$?NDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@PBD@Z */
-/* ??$?NDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@PEBD@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_char_leq_bstr_cstr(
-        const basic_string_char *left, const char *right)
-{
-    return MSVCP_basic_string_char_compare_cstr(left, right) <= 0;
-}
-
-/* ??$?NDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NPBDABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z */
-/* ??$?NDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NPEBDAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_char_leq_cstr_bstr(
-        const char *left, const basic_string_char *right)
-{
-    return MSVCP_basic_string_char_compare_cstr(right, left) >= 0;
-}
-
-/* ??$?ODU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@0@Z */
-/* ??$?ODU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@0@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_char_greater(
-        const basic_string_char *left, const basic_string_char *right)
-{
-    return MSVCP_basic_string_char_compare(left, right) > 0;
-}
-
-/* ??$?ODU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@PBD@Z */
-/* ??$?ODU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@PEBD@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_char_greater_bstr_cstr(
-        const basic_string_char *left, const char *right)
-{
-    return MSVCP_basic_string_char_compare_cstr(left, right) > 0;
-}
-
-/* ??$?ODU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NPBDABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z */
-/* ??$?ODU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NPEBDAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_char_greater_cstr_bstr(
-        const char *left, const basic_string_char *right)
-{
-    return MSVCP_basic_string_char_compare_cstr(right, left) < 0;
-}
-
-/* ??$?PDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@0@Z */
-/* ??$?PDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@0@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_char_geq(
-        const basic_string_char *left, const basic_string_char *right)
-{
-    return MSVCP_basic_string_char_compare(left, right) >= 0;
-}
-
-/* ??$?PDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@PBD@Z */
-/* ??$?PDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@PEBD@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_char_geq_bstr_cstr(
-        const basic_string_char *left, const char *right)
-{
-    return MSVCP_basic_string_char_compare_cstr(left, right) >= 0;
-}
-
-/* ??$?PDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NPBDABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z */
-/* ??$?PDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NPEBDAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_char_geq_cstr_bstr(
-        const char *left, const basic_string_char *right)
-{
-    return MSVCP_basic_string_char_compare_cstr(right, left) <= 0;
 }
 
 /* ?find@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIPBDII@Z */
@@ -1989,13 +1491,6 @@ basic_string_char* __thiscall basic_string_char_replace_cstr_len(basic_string_ch
 
     basic_string_char_eos(this, this->size-len+str_len);
     return this;
-}
-
-/* Not exported from msvcp90 */
-basic_string_char* basic_string_char_replace_helper(basic_string_char *this,
-        MSVCP_size_t off, MSVCP_size_t len, const char *str, MSVCP_size_t str_len)
-{
-    return basic_string_char_replace_cstr_len(this, off, len, str, str_len);
 }
 
 /* ?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@IIPBD@Z */
@@ -3179,76 +2674,6 @@ basic_string_wchar* __thiscall MSVCP_basic_string_wchar_append_ch(
     return MSVCP_basic_string_wchar_append_len_ch(this, 1, ch);
 }
 
-/* ??$?H_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@ABV10@PB_W@Z */
-/* ??$?H_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@AEBV10@PEB_W@Z */
-/* ??$?HGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@ABV10@PBG@Z */
-/* ??$?HGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@AEBV10@PEBG@Z */
-basic_string_wchar* __cdecl MSVCP_basic_string_wchar_concatenate_bstr_cstr(basic_string_wchar *ret,
-        const basic_string_wchar *left, const wchar_t *right)
-{
-    TRACE("%p %s\n", left, debugstr_w(right));
-
-    MSVCP_basic_string_wchar_copy_ctor(ret, left);
-    MSVCP_basic_string_wchar_append_cstr(ret, right);
-    return ret;
-}
-
-/* ??$?H_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@PB_WABV10@@Z */
-/* ??$?H_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@PEB_WAEBV10@@Z */
-/* ??$?HGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@PBGABV10@@Z */
-/* ??$?HGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@PEBGAEBV10@@Z */
-basic_string_wchar* __cdecl MSVCP_basic_string_wchar_concatenate_cstr_bstr(basic_string_wchar *ret,
-        const wchar_t *left, const basic_string_wchar *right)
-{
-    TRACE("%s %p\n", debugstr_w(left), right);
-
-    MSVCP_basic_string_wchar_ctor_cstr(ret, left);
-    MSVCP_basic_string_wchar_append(ret, right);
-    return ret;
-}
-
-/* ??$?H_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@ABV10@0@Z */
-/* ??$?H_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@AEBV10@0@Z */
-/* ??$?HGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@ABV10@0@Z */
-/* ??$?HGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@AEBV10@0@Z */
-basic_string_wchar* __cdecl MSVCP_basic_string_wchar_concatenate(basic_string_wchar *ret,
-        const basic_string_wchar *left, const basic_string_wchar *right)
-{
-    TRACE("%p %p\n", left, right);
-
-    MSVCP_basic_string_wchar_copy_ctor(ret, left);
-    MSVCP_basic_string_wchar_append(ret, right);
-    return ret;
-}
-
-/* ??$?H_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@ABV10@_W@Z */
-/* ??$?H_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@AEBV10@_W@Z */
-/* ??$?HGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@ABV10@G@Z */
-/* ??$?HGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@AEBV10@G@Z */
-basic_string_wchar* __cdecl MSVCP_basic_string_wchar_concatenate_bstr_ch(
-        basic_string_wchar *ret, const basic_string_wchar *left, wchar_t right)
-{
-    TRACE("%p %c\n", left, right);
-
-    MSVCP_basic_string_wchar_copy_ctor(ret, left);
-    MSVCP_basic_string_wchar_append_ch(ret, right);
-    return ret;
-}
-
-/* ??$?H_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@_WABV10@@Z */
-/* ??$?H_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@_WAEBV10@@Z */
-/* ??$?HGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@GABV10@@Z */
-/* ??$?HGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@GAEBV10@@Z */
-basic_string_wchar* __cdecl MSVCP_basic_string_wchar_concatenate_ch_bstr(
-        basic_string_wchar* ret, wchar_t left, const basic_string_wchar *right)
-{
-    TRACE("%c %p\n", left, right);
-
-    MSVCP_basic_string_wchar_ctor_cstr_len(ret, &left, 1);
-    MSVCP_basic_string_wchar_append(ret, right);
-    return ret;
-}
-
 /* ?compare@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEHIIPB_WI@Z */
 /* ?compare@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBAH_K0PEB_W0@Z */
 /* ?compare@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBEHIIPBGI@Z */
@@ -3348,186 +2773,6 @@ int __thiscall MSVCP_basic_string_wchar_compare(
 {
     return MSVCP_basic_string_wchar_compare_substr_cstr_len(this, 0, this->size,
             basic_string_wchar_const_ptr(compare), compare->size);
-}
-
-/* ??$?8_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NABV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@0@Z */
-/* ??$?8_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NAEBV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@0@Z */
-/* ??$?8GU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NABV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@0@Z */
-/* ??$?8GU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@0@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_wchar_equal(
-        const basic_string_wchar *left, const basic_string_wchar *right)
-{
-    return MSVCP_basic_string_wchar_compare(left, right) == 0;
-}
-
-/* ??$?8_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NABV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@PB_W@Z */
-/* ??$?8_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NAEBV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@PEB_W@Z */
-/* ??$?8GU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NABV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@PBG@Z */
-/* ??$?8GU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@PEBG@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_wchar_equal_str_cstr(
-        const basic_string_wchar *left, const wchar_t *right)
-{
-    return MSVCP_basic_string_wchar_compare_cstr(left, right) == 0;
-}
-
-/* ??$?8_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NPB_WABV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@@Z */
-/* ??$?8_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NPEB_WAEBV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@@Z */
-/* ??$?8GU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NPBGABV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@@Z */
-/* ??$?8GU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NPEBGAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_wchar_equal_cstr_str(
-        const wchar_t *left, const basic_string_wchar *right)
-{
-    return MSVCP_basic_string_wchar_compare_cstr(right, left) == 0;
-}
-
-/* ??$?9_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NABV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@0@Z */
-/* ??$?9_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NAEBV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@0@Z */
-/* ??$?9GU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NABV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@0@Z */
-/* ??$?9GU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@0@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_wchar_not_equal(
-        const basic_string_wchar *left, const basic_string_wchar *right)
-{
-    return MSVCP_basic_string_wchar_compare(left, right) != 0;
-}
-
-/* ??$?9_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NABV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@PB_W@Z */
-/* ??$?9_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NAEBV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@PEB_W@Z */
-/* ??$?9GU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NABV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@PBG@Z */
-/* ??$?9GU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@PEBG@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_wchar_not_equal_str_cstr(
-        const basic_string_wchar *left, const wchar_t *right)
-{
-    return MSVCP_basic_string_wchar_compare_cstr(left, right) != 0;
-}
-
-/* ??$?9_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NPB_WABV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@@Z */
-/* ??$?9_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NPEB_WAEBV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@@Z */
-/* ??$?9GU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NPBGABV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@@Z */
-/* ??$?9GU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NPEBGAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_wchar_not_equal_cstr_str(
-        const wchar_t *left, const basic_string_wchar *right)
-{
-    return MSVCP_basic_string_wchar_compare_cstr(right, left) != 0;
-}
-
-/* ??$?M_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NABV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@0@Z */
-/* ??$?M_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NAEBV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@0@Z */
-/* ??$?MGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NABV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@0@Z */
-/* ??$?MGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@0@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_wchar_lower(
-        const basic_string_wchar *left, const basic_string_wchar *right)
-{
-    return MSVCP_basic_string_wchar_compare(left, right) < 0;
-}
-
-/* ??$?M_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NABV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@PB_W@Z */
-/* ??$?M_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NAEBV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@PEB_W@Z */
-/* ??$?MGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NABV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@PBG@Z */
-/* ??$?MGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@PEBG@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_wchar_lower_bstr_cstr(
-        const basic_string_wchar *left, const wchar_t *right)
-{
-    return MSVCP_basic_string_wchar_compare_cstr(left, right) < 0;
-}
-
-/* ??$?M_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NPB_WABV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@@Z */
-/* ??$?M_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NPEB_WAEBV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@@Z */
-/* ??$?MGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NPBGABV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@@Z */
-/* ??$?MGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NPEBGAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_wchar_lower_cstr_bstr(
-        const wchar_t *left, const basic_string_wchar *right)
-{
-    return MSVCP_basic_string_wchar_compare_cstr(right, left) > 0;
-}
-
-/* ??$?N_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NABV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@0@Z */
-/* ??$?N_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NAEBV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@0@Z */
-/* ??$?NGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NABV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@0@Z */
-/* ??$?NGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@0@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_wchar_leq(
-        const basic_string_wchar *left, const basic_string_wchar *right)
-{
-    return MSVCP_basic_string_wchar_compare(left, right) <= 0;
-}
-
-/* ??$?N_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NABV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@PB_W@Z */
-/* ??$?N_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NAEBV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@PEB_W@Z */
-/* ??$?NGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NABV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@PBG@Z */
-/* ??$?NGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@PEBG@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_wchar_leq_bstr_cstr(
-        const basic_string_wchar *left, const wchar_t *right)
-{
-    return MSVCP_basic_string_wchar_compare_cstr(left, right) <= 0;
-}
-
-/* ??$?N_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NPB_WABV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@@Z */
-/* ??$?N_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NPEB_WAEBV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@@Z */
-/* ??$?NGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NPBGABV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@@Z */
-/* ??$?NGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NPEBGAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_wchar_leq_cstr_bstr(
-        const wchar_t *left, const basic_string_wchar *right)
-{
-    return MSVCP_basic_string_wchar_compare_cstr(right, left) >= 0;
-}
-
-/* ??$?O_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NABV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@0@Z */
-/* ??$?O_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NAEBV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@0@Z */
-/* ??$?OGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NABV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@0@Z */
-/* ??$?OGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@0@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_wchar_greater(
-        const basic_string_wchar *left, const basic_string_wchar *right)
-{
-    return MSVCP_basic_string_wchar_compare(left, right) > 0;
-}
-
-/* ??$?O_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NABV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@PB_W@Z */
-/* ??$?O_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NAEBV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@PEB_W@Z */
-/* ??$?OGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NABV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@PBG@Z */
-/* ??$?OGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@PEBG@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_wchar_greater_bstr_cstr(
-        const basic_string_wchar *left, const wchar_t *right)
-{
-    return MSVCP_basic_string_wchar_compare_cstr(left, right) > 0;
-}
-
-/* ??$?O_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NPB_WABV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@@Z */
-/* ??$?O_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NPEB_WAEBV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@@Z */
-/* ??$?OGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NPBGABV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@@Z */
-/* ??$?OGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NPEBGAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_wchar_greater_cstr_bstr(
-        const wchar_t *left, const basic_string_wchar *right)
-{
-    return MSVCP_basic_string_wchar_compare_cstr(right, left) < 0;
-}
-
-/* ??$?P_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NABV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@0@Z */
-/* ??$?P_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NAEBV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@0@Z */
-/* ??$?PGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NABV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@0@Z */
-/* ??$?PGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@0@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_wchar_geq(
-        const basic_string_wchar *left, const basic_string_wchar *right)
-{
-        return MSVCP_basic_string_wchar_compare(left, right) >= 0;
-}
-
-/* ??$?P_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NABV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@PB_W@Z */
-/* ??$?P_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NAEBV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@PEB_W@Z */
-/* ??$?PGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NABV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@PBG@Z */
-/* ??$?PGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@PEBG@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_wchar_geq_bstr_cstr(
-        const basic_string_wchar *left, const wchar_t *right)
-{
-        return MSVCP_basic_string_wchar_compare_cstr(left, right) >= 0;
-}
-
-/* ??$?P_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NPB_WABV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@@Z */
-/* ??$?P_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NPEB_WAEBV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@@Z */
-/* ??$?PGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NPBGABV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@@Z */
-/* ??$?PGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NPEBGAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_wchar_geq_cstr_bstr(
-        const wchar_t *left, const basic_string_wchar *right)
-{
-        return MSVCP_basic_string_wchar_compare_cstr(right, left) <= 0;
 }
 
 /* ?find@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIPB_WII@Z */
@@ -3948,13 +3193,6 @@ basic_string_wchar* __thiscall basic_string_wchar_replace_cstr_len(basic_string_
 
     basic_string_wchar_eos(this, this->size-len+str_len);
     return this;
-}
-
-/* Not exported from msvcp90 */
-basic_string_wchar* basic_string_wchar_replace_helper(basic_string_wchar *this,
-        MSVCP_size_t off, MSVCP_size_t len, const wchar_t *str, MSVCP_size_t str_len)
-{
-    return basic_string_wchar_replace_cstr_len(this, off, len ,str, str_len);
 }
 
 /* ?replace@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@IIPB_W@Z */

@@ -183,7 +183,6 @@ codecvt_wchar* codecvt_wchar_use_facet(const locale*);
 codecvt_wchar* codecvt_short_use_facet(const locale*);
 ctype_char* ctype_char_use_facet(const locale*);
 ctype_wchar* ctype_wchar_use_facet(const locale*);
-ctype_wchar* ctype_short_use_facet(const locale*);
 
 /* class _Lockit */
 typedef struct {
