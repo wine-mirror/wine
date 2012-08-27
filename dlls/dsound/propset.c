@@ -68,9 +68,7 @@ static IKsPrivatePropertySetImpl *impl_from_IKsPropertySet(IKsPropertySet *iface
 
 /* IUnknown methods */
 static HRESULT WINAPI IKsPrivatePropertySetImpl_QueryInterface(
-    LPKSPROPERTYSET iface,
-    REFIID riid,
-    LPVOID *ppobj )
+        IKsPropertySet *iface, REFIID riid, void **ppobj)
 {
     IKsPrivatePropertySetImpl *This = impl_from_IKsPropertySet(iface);
     TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
@@ -78,7 +76,7 @@ static HRESULT WINAPI IKsPrivatePropertySetImpl_QueryInterface(
     if (IsEqualIID(riid, &IID_IUnknown) ||
         IsEqualIID(riid, &IID_IKsPropertySet)) {
         *ppobj = iface;
-        IUnknown_AddRef(iface);
+        IKsPropertySet_AddRef(iface);
         return S_OK;
     }
     *ppobj = NULL;

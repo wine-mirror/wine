@@ -655,7 +655,7 @@ static inline IClassFactoryImpl *impl_from_IClassFactory(IClassFactory *iface)
 }
 
 static HRESULT WINAPI
-DSCF_QueryInterface(LPCLASSFACTORY iface, REFIID riid, LPVOID *ppobj)
+DSCF_QueryInterface(IClassFactory *iface, REFIID riid, LPVOID *ppobj)
 {
     IClassFactoryImpl *This = impl_from_IClassFactory(iface);
     TRACE("(%p, %s, %p)\n", This, debugstr_guid(riid), ppobj);
@@ -665,7 +665,7 @@ DSCF_QueryInterface(LPCLASSFACTORY iface, REFIID riid, LPVOID *ppobj)
         IsEqualIID(riid, &IID_IClassFactory))
     {
         *ppobj = iface;
-        IUnknown_AddRef(iface);
+        IClassFactory_AddRef(iface);
         return S_OK;
     }
     *ppobj = NULL;
