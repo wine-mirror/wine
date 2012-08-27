@@ -58,6 +58,7 @@
 #include "dictionary.h"
 #include "storage32.h"
 #include "enumx.h"
+#include "oleauto.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(storage);
 
@@ -1119,6 +1120,40 @@ static HRESULT PropertyStorage_ReadProperty(PROPVARIANT *prop, const BYTE *data,
                     prop->u.pszVal[count - 1] = '\0';
                     TRACE("Read string value %s\n", debugstr_a(prop->u.pszVal));
                 }
+            }
+            else
+                hr = STG_E_INSUFFICIENTMEMORY;
+        }
+        break;
+    }
+    case VT_BSTR:
+    {
+        DWORD count, wcount;
+
+        StorageUtl_ReadDWord(data, 0, &count);
+        if (codepage == CP_UNICODE && count % 2)
+        {
+            WARN("Unicode string has odd number of bytes\n");
+            hr = STG_E_INVALIDHEADER;
+        }
+        else
+        {
+            if (codepage == CP_UNICODE)
+                wcount = count / 2;
+            else
+                wcount = MultiByteToWideChar(codepage, 0, (LPCSTR)(data + sizeof(DWORD)), count, NULL, 0);
+
+            prop->u.bstrVal = SysAllocStringLen(NULL, wcount); /* FIXME: use allocator? */
+
+            if (prop->u.bstrVal)
+            {
+                if (codepage == CP_UNICODE)
+                    memcpy(prop->u.bstrVal, data + sizeof(DWORD), count);
+                else
+                    MultiByteToWideChar(codepage, 0, (LPCSTR)(data + sizeof(DWORD)), count, prop->u.bstrVal, wcount);
+
+                prop->u.bstrVal[wcount - 1] = '\0';
+                TRACE("Read string value %s\n", debugstr_w(prop->u.bstrVal));
             }
             else
                 hr = STG_E_INSUFFICIENTMEMORY;
