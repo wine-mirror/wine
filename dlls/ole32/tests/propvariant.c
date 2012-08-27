@@ -365,7 +365,7 @@ static void test_propertytovariant(void)
 
     if (!pStgConvertPropertyToVariant)
     {
-        todo_wine win_skip("StgConvertPropertyToVariant not available\n");
+        win_skip("StgConvertPropertyToVariant not available\n");
         return;
     }
 
@@ -395,16 +395,18 @@ static void test_propertytovariant(void)
         CP_WINUNICODE, &propvar, &allocator);
 
     ok(ret == 0, "StgConvertPropertyToVariant returned %i\n", ret);
-    ok(propvar.vt == VT_BSTR, "unexpected vt %x\n", propvar.vt);
-    ok(!lstrcmpW(U(propvar).bstrVal, test_string), "unexpected string value\n");
+    todo_wine ok(propvar.vt == VT_BSTR, "unexpected vt %x\n", propvar.vt);
+    if (propvar.vt == VT_BSTR)
+        ok(!lstrcmpW(U(propvar).bstrVal, test_string), "unexpected string value\n");
     PropVariantClear(&propvar);
 
     ret = pStgConvertPropertyToVariant((SERIALIZEDPROPERTYVALUE*)serialized_bstr_mb,
         CP_UTF8, &propvar, &allocator);
 
     ok(ret == 0, "StgConvertPropertyToVariant returned %i\n", ret);
-    ok(propvar.vt == VT_BSTR, "unexpected vt %x\n", propvar.vt);
-    ok(!lstrcmpW(U(propvar).bstrVal, test_string), "unexpected string value\n");
+    todo_wine ok(propvar.vt == VT_BSTR, "unexpected vt %x\n", propvar.vt);
+    if (propvar.vt == VT_BSTR)
+        ok(!lstrcmpW(U(propvar).bstrVal, test_string), "unexpected string value\n");
     PropVariantClear(&propvar);
 }
 

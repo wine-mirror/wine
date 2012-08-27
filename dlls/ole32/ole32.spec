@@ -253,6 +253,7 @@
 @ stdcall SetConvertStg(ptr long)
 @ stub SetDocumentBitStg
 @ stdcall SetErrorInfo(long ptr)
+@ stdcall StgConvertPropertyToVariant(ptr long ptr ptr)
 @ stdcall StgCreateDocfile(wstr long long ptr)
 @ stdcall StgCreateDocfileOnILockBytes(ptr long long ptr)
 @ stdcall StgCreatePropSetStg(ptr long ptr)
