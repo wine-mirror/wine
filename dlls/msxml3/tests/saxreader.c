@@ -557,7 +557,7 @@ static const CHAR szUtf8XML[] =
 static const char utf8xml2[] =
 "<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\"?>\r\n";
 
-static const CHAR testXML[] =
+static const char testXML[] =
 "<?xml version=\"1.0\" ?>\n"
 "<BankAccount>\n"
 "   <Number>1234</Number>\n"
@@ -2247,6 +2247,7 @@ static void test_saxreader_properties(void)
     const struct saxreader_props_test_t *ptr = props_test_data;
     ISAXXMLReader *reader;
     HRESULT hr;
+    VARIANT v;
 
     hr = CoCreateInstance(&CLSID_SAXXMLReader, NULL, CLSCTX_INPROC_SERVER,
             &IID_ISAXXMLReader, (void**)&reader);
@@ -2257,7 +2258,6 @@ static void test_saxreader_properties(void)
 
     while (ptr->prop_name)
     {
-        VARIANT v;
         LONG ref;
 
         init_saxlexicalhandler(&lexicalhandler, S_OK);
@@ -2356,7 +2356,52 @@ static void test_saxreader_properties(void)
         ok(V_UNKNOWN(&v) != NULL, "got %p\n", V_UNKNOWN(&v));
 
         ptr++;
+        free_bstrs();
     }
+
+    ISAXXMLReader_Release(reader);
+
+    if (!is_clsid_supported(&CLSID_SAXXMLReader40, reader_support_data))
+        return;
+
+    hr = CoCreateInstance(&CLSID_SAXXMLReader40, NULL, CLSCTX_INPROC_SERVER,
+            &IID_ISAXXMLReader, (void**)&reader);
+    EXPECT_HR(hr, S_OK);
+
+    /* xmldecl-version property */
+    V_VT(&v) = VT_EMPTY;
+    V_BSTR(&v) = (void*)0xdeadbeef;
+    hr = ISAXXMLReader_getProperty(reader, _bstr_("xmldecl-version"), &v);
+    EXPECT_HR(hr, S_OK);
+    ok(V_VT(&v) == VT_BSTR, "got %d\n", V_VT(&v));
+    ok(V_BSTR(&v) == NULL, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+
+    /* stream without declaration */
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = _bstr_("<element></element>");
+    hr = ISAXXMLReader_parse(reader, v);
+    EXPECT_HR(hr, S_OK);
+
+    V_VT(&v) = VT_EMPTY;
+    V_BSTR(&v) = (void*)0xdeadbeef;
+    hr = ISAXXMLReader_getProperty(reader, _bstr_("xmldecl-version"), &v);
+    EXPECT_HR(hr, S_OK);
+    ok(V_VT(&v) == VT_BSTR, "got %d\n", V_VT(&v));
+    ok(V_BSTR(&v) == NULL, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+
+    /* stream with declaration */
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = _bstr_("<?xml version=\"1.0\"?><element></element>");
+    hr = ISAXXMLReader_parse(reader, v);
+    EXPECT_HR(hr, S_OK);
+
+    V_VT(&v) = VT_EMPTY;
+    V_BSTR(&v) = (void*)0xdeadbeef;
+    hr = ISAXXMLReader_getProperty(reader, _bstr_("xmldecl-version"), &v);
+    EXPECT_HR(hr, S_OK);
+    ok(V_VT(&v) == VT_BSTR, "got %d\n", V_VT(&v));
+    ok(!lstrcmpW(V_BSTR(&v), _bstr_("1.0")), "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
 
     ISAXXMLReader_Release(reader);
     free_bstrs();

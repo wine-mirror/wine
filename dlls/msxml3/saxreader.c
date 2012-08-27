@@ -209,6 +209,7 @@ typedef struct
     BOOL isParsing;
     struct bstrpool pool;
     saxreader_feature features;
+    BSTR xmldecl_version;
     MSXML_VERSION version;
 } saxreader;
 
@@ -333,6 +334,9 @@ static inline int saxreader_has_handler(const saxlocator *locator, enum saxhandl
 /* property names */
 static const WCHAR PropertyCharsetW[] = {
     'c','h','a','r','s','e','t',0
+};
+static const WCHAR PropertyXmlDeclVersionW[] = {
+    'x','m','l','d','e','c','l','-','v','e','r','s','i','o','n',0
 };
 static const WCHAR PropertyDeclHandlerW[] = {
     'h','t','t','p',':','/','/','x','m','l','.','o','r','g','/',
@@ -1309,6 +1313,13 @@ static void libxmlStartDocument(void *ctx)
         This->column = 0;
         for(; p>=This->pParserCtxt->input->base && *p!='\n' && *p!='\r'; p--)
             This->column++;
+    }
+
+    /* store version value, declaration has to contain version attribute */
+    if (This->pParserCtxt->standalone != -1)
+    {
+        SysFreeString(This->saxreader->xmldecl_version);
+        This->saxreader->xmldecl_version = bstr_from_xmlChar(This->pParserCtxt->version);
     }
 
     if (saxreader_has_handler(This, SAXContentHandler))
@@ -2654,6 +2665,13 @@ static HRESULT internal_getProperty(const saxreader* This, const WCHAR *prop, VA
         return S_OK;
     }
 
+    if (!memcmp(PropertyXmlDeclVersionW, prop, sizeof(PropertyXmlDeclVersionW)))
+    {
+        V_VT(value) = VT_BSTR;
+        V_BSTR(value) = SysAllocString(This->xmldecl_version);
+        return S_OK;
+    }
+
     FIXME("(%p)->(%s) unsupported property\n", This, debugstr_w(prop));
 
     return E_NOTIMPL;
@@ -2725,6 +2743,7 @@ static ULONG WINAPI saxxmlreader_Release(
                 IUnknown_Release(iface->vbhandler);
         }
 
+        SysFreeString(This->xmldecl_version);
         free_bstr_pool(&This->pool);
 
         release_dispex(&This->dispex);
@@ -3214,6 +3233,7 @@ HRESULT SAXXMLReader_create(MSXML_VERSION version, IUnknown *outer, LPVOID *ppOb
     reader->ref = 1;
     memset(reader->saxhandlers, 0, sizeof(reader->saxhandlers));
     reader->isParsing = FALSE;
+    reader->xmldecl_version = NULL;
     reader->pool.pool = NULL;
     reader->pool.index = 0;
     reader->pool.len = 0;
