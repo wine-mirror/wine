@@ -3437,6 +3437,8 @@ msgid ""
 "After disabling or enabling a device, the connected joysticks won't be "
 "updated here until you restart this applet."
 msgstr ""
+"장치를 사용하거나 안사용하게 한 후에, 연결된 조이스틱은 애플랫을 다시 시작하"
+"기까지는 작동하지 않을 것입니다."
 
 #: joy.rc:47
 msgid "Test Joystick"
