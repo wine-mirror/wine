@@ -49,7 +49,7 @@ static HRESULT WINAPI d3d8_QueryInterface(IDirect3D8 *iface, REFIID riid, void *
     if (IsEqualGUID(riid, &IID_IDirect3D8)
             || IsEqualGUID(riid, &IID_IUnknown))
     {
-        IUnknown_AddRef(iface);
+        IDirect3D8_AddRef(iface);
         *out = iface;
         return S_OK;
     }

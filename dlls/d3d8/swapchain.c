@@ -35,7 +35,7 @@ static HRESULT WINAPI d3d8_swapchain_QueryInterface(IDirect3DSwapChain8 *iface, 
     if (IsEqualGUID(riid, &IID_IDirect3DSwapChain8)
             || IsEqualGUID(riid, &IID_IUnknown))
     {
-        IUnknown_AddRef(iface);
+        IDirect3DSwapChain8_AddRef(iface);
         *out = iface;
         return S_OK;
     }

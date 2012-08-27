@@ -307,7 +307,7 @@ static HRESULT WINAPI d3d8_device_QueryInterface(IDirect3DDevice8 *iface, REFIID
     if (IsEqualGUID(riid, &IID_IDirect3DDevice8)
             || IsEqualGUID(riid, &IID_IUnknown))
     {
-        IUnknown_AddRef(iface);
+        IDirect3DDevice8_AddRef(iface);
         *out = iface;
         return S_OK;
     }
@@ -2845,7 +2845,7 @@ static HRESULT CDECL device_parent_create_texture_surface(struct wined3d_device_
     wined3d_surface_incref(*surface);
 
     d3d_surface->container = container_parent;
-    IUnknown_Release(d3d_surface->parent_device);
+    IDirect3DDevice8_Release(d3d_surface->parent_device);
     d3d_surface->parent_device = NULL;
 
     IDirect3DSurface8_Release(&d3d_surface->IDirect3DSurface8_iface);

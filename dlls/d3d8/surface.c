@@ -36,7 +36,7 @@ static HRESULT WINAPI d3d8_surface_QueryInterface(IDirect3DSurface8 *iface, REFI
             || IsEqualGUID(riid, &IID_IDirect3DResource8)
             || IsEqualGUID(riid, &IID_IUnknown))
     {
-        IUnknown_AddRef(iface);
+        IDirect3DSurface8_AddRef(iface);
         *out = iface;
         return S_OK;
     }
@@ -69,7 +69,7 @@ static ULONG WINAPI d3d8_surface_AddRef(IDirect3DSurface8 *iface)
         if (ref == 1)
         {
             if (surface->parent_device)
-                IUnknown_AddRef(surface->parent_device);
+                IDirect3DDevice8_AddRef(surface->parent_device);
             wined3d_mutex_lock();
             wined3d_surface_incref(surface->wined3d_surface);
             wined3d_mutex_unlock();
@@ -359,7 +359,7 @@ HRESULT surface_init(struct d3d8_surface *surface, struct d3d8_device *device,
     }
 
     surface->parent_device = &device->IDirect3DDevice8_iface;
-    IUnknown_AddRef(surface->parent_device);
+    IDirect3DDevice8_AddRef(surface->parent_device);
 
     return D3D_OK;
 }
