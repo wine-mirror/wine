@@ -66,21 +66,21 @@ static HRESULT WINAPI d3d_vertex_buffer7_QueryInterface(IDirect3DVertexBuffer7 *
 
     if ( IsEqualGUID( &IID_IUnknown,  riid ) )
     {
-        IUnknown_AddRef(iface);
+        IDirect3DVertexBuffer7_AddRef(iface);
         *obj = iface;
         TRACE("  Creating IUnknown interface at %p.\n", *obj);
         return S_OK;
     }
     if ( IsEqualGUID( &IID_IDirect3DVertexBuffer, riid ) )
     {
-        IUnknown_AddRef(iface);
+        IDirect3DVertexBuffer7_AddRef(iface);
         *obj = &buffer->IDirect3DVertexBuffer_iface;
         TRACE("  Creating IDirect3DVertexBuffer interface %p\n", *obj);
         return S_OK;
     }
     if ( IsEqualGUID( &IID_IDirect3DVertexBuffer7, riid ) )
     {
-        IUnknown_AddRef(iface);
+        IDirect3DVertexBuffer7_AddRef(iface);
         *obj = iface;
         TRACE("  Creating IDirect3DVertexBuffer7 interface %p\n", *obj);
         return S_OK;

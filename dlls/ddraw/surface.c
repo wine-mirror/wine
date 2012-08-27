@@ -5440,13 +5440,13 @@ struct ddraw_surface *unsafe_impl_from_IDirectDrawSurface7(IDirectDrawSurface7 *
     if (!iface) return NULL;
     if (iface->lpVtbl != &ddraw_surface7_vtbl)
     {
-        HRESULT hr = IUnknown_QueryInterface(iface, &IID_IDirectDrawSurface7, (void **)&iface);
+        HRESULT hr = IDirectDrawSurface7_QueryInterface(iface, &IID_IDirectDrawSurface7, (void **)&iface);
         if (FAILED(hr))
         {
             WARN("Object %p doesn't expose interface IDirectDrawSurface7.\n", iface);
             return NULL;
         }
-        IUnknown_Release(iface);
+        IDirectDrawSurface7_Release(iface);
     }
     return CONTAINING_RECORD(iface, struct ddraw_surface, IDirectDrawSurface7_iface);
 }
@@ -5456,13 +5456,13 @@ struct ddraw_surface *unsafe_impl_from_IDirectDrawSurface4(IDirectDrawSurface4 *
     if (!iface) return NULL;
     if (iface->lpVtbl != &ddraw_surface4_vtbl)
     {
-        HRESULT hr = IUnknown_QueryInterface(iface, &IID_IDirectDrawSurface4, (void **)&iface);
+        HRESULT hr = IDirectDrawSurface4_QueryInterface(iface, &IID_IDirectDrawSurface4, (void **)&iface);
         if (FAILED(hr))
         {
             WARN("Object %p doesn't expose interface IDirectDrawSurface4.\n", iface);
             return NULL;
         }
-        IUnknown_Release(iface);
+        IDirectDrawSurface4_Release(iface);
     }
     return CONTAINING_RECORD(iface, struct ddraw_surface, IDirectDrawSurface4_iface);
 }
@@ -5472,13 +5472,13 @@ static struct ddraw_surface *unsafe_impl_from_IDirectDrawSurface3(IDirectDrawSur
     if (!iface) return NULL;
     if (iface->lpVtbl != &ddraw_surface3_vtbl)
     {
-        HRESULT hr = IUnknown_QueryInterface(iface, &IID_IDirectDrawSurface3, (void **)&iface);
+        HRESULT hr = IDirectDrawSurface3_QueryInterface(iface, &IID_IDirectDrawSurface3, (void **)&iface);
         if (FAILED(hr))
         {
             WARN("Object %p doesn't expose interface IDirectDrawSurface3.\n", iface);
             return NULL;
         }
-        IUnknown_Release(iface);
+        IDirectDrawSurface3_Release(iface);
     }
     return CONTAINING_RECORD(iface, struct ddraw_surface, IDirectDrawSurface3_iface);
 }
@@ -5488,13 +5488,13 @@ static struct ddraw_surface *unsafe_impl_from_IDirectDrawSurface2(IDirectDrawSur
     if (!iface) return NULL;
     if (iface->lpVtbl != &ddraw_surface2_vtbl)
     {
-        HRESULT hr = IUnknown_QueryInterface(iface, &IID_IDirectDrawSurface2, (void **)&iface);
+        HRESULT hr = IDirectDrawSurface2_QueryInterface(iface, &IID_IDirectDrawSurface2, (void **)&iface);
         if (FAILED(hr))
         {
             WARN("Object %p doesn't expose interface IDirectDrawSurface2.\n", iface);
             return NULL;
         }
-        IUnknown_Release(iface);
+        IDirectDrawSurface2_Release(iface);
     }
     return CONTAINING_RECORD(iface, struct ddraw_surface, IDirectDrawSurface2_iface);
 }
@@ -5504,13 +5504,13 @@ struct ddraw_surface *unsafe_impl_from_IDirectDrawSurface(IDirectDrawSurface *if
     if (!iface) return NULL;
     if (iface->lpVtbl != &ddraw_surface1_vtbl)
     {
-        HRESULT hr = IUnknown_QueryInterface(iface, &IID_IDirectDrawSurface, (void **)&iface);
+        HRESULT hr = IDirectDrawSurface_QueryInterface(iface, &IID_IDirectDrawSurface, (void **)&iface);
         if (FAILED(hr))
         {
             WARN("Object %p doesn't expose interface IDirectDrawSurface.\n", iface);
             return NULL;
         }
-        IUnknown_Release(iface);
+        IDirectDrawSurface_Release(iface);
     }
     return CONTAINING_RECORD(iface, struct ddraw_surface, IDirectDrawSurface_iface);
 }
