@@ -191,7 +191,7 @@ static void	WCUSER_ShapeCursor(struct inner_data* data, int size, int vis, BOOL 
 	data->curcfg.cursor_visible = -1;
     }
 
-    vis = (vis) ? TRUE : FALSE;
+    vis = vis != 0;
     if (force || vis != data->curcfg.cursor_visible)
     {
 	data->curcfg.cursor_visible = vis;

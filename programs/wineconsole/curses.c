@@ -300,7 +300,7 @@ static void	WCCURSES_ShapeCursor(struct inner_data* data, int size, int vis, BOO
 {
     /* we can't do much about the size... */
     data->curcfg.cursor_size = size;
-    data->curcfg.cursor_visible = vis ? TRUE : FALSE;
+    data->curcfg.cursor_visible = vis != 0;
     WCCURSES_PosCursor(data);
 }
 
