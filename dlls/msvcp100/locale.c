@@ -210,7 +210,7 @@ static struct list lazy_facets = LIST_INIT(lazy_facets);
 /* Not exported from msvcp90 */
 /* ?facet_Register@facet@locale@std@@CAXPAV123@@Z */
 /* ?facet_Register@facet@locale@std@@CAXPEAV123@@Z */
-void __cdecl locale_facet_register(locale_facet *add)
+static void __cdecl locale_facet_register(locale_facet *add)
 {
     facets_elem *head = MSVCRT_operator_new(sizeof(*head));
     if(!head) {
@@ -1238,7 +1238,7 @@ ctype_base* __thiscall ctype_base_vector_dtor(ctype_base *this, unsigned int fla
 }
 
 /* ?_Xran@ctype_base@std@@KAXXZ */
-void __cdecl ctype_base__Xran(void)
+static void __cdecl ctype_base__Xran(void)
 {
     throw_exception(EXCEPTION_OUT_OF_RANGE, "out of range in ctype<T>");
 }
@@ -2290,7 +2290,7 @@ ctype_wchar* ctype_wchar_use_facet(const locale *loc)
     return obj;
 }
 
-ctype_wchar* ctype_short_use_facet(const locale *loc)
+static ctype_wchar* ctype_short_use_facet(const locale *loc)
 {
     static ctype_wchar *obj = NULL;
 
@@ -3503,7 +3503,7 @@ numpunct_char* __thiscall numpunct_char_vector_dtor(numpunct_char *this, unsigne
 
 /* ?_Getcat@?$numpunct@D@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
 /* ?_Getcat@?$numpunct@D@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
-MSVCP_size_t __cdecl numpunct_char__Getcat(const locale_facet **facet, const locale *loc)
+static MSVCP_size_t __cdecl numpunct_char__Getcat(const locale_facet **facet, const locale *loc)
 {
     TRACE("(%p %p)\n", facet, loc);
 
@@ -3856,7 +3856,7 @@ numpunct_wchar* __thiscall numpunct_wchar_vector_dtor(numpunct_wchar *this, unsi
 
 /* ?_Getcat@?$numpunct@_W@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
 /* ?_Getcat@?$numpunct@_W@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
-MSVCP_size_t __cdecl numpunct_wchar__Getcat(const locale_facet **facet, const locale *loc)
+static MSVCP_size_t __cdecl numpunct_wchar__Getcat(const locale_facet **facet, const locale *loc)
 {
     TRACE("(%p %p)\n", facet, loc);
 
@@ -3904,7 +3904,7 @@ static numpunct_wchar* numpunct_wchar_use_facet(const locale *loc)
 
 /* ?_Getcat@?$numpunct@G@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
 /* ?_Getcat@?$numpunct@G@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
-MSVCP_size_t __cdecl numpunct_short__Getcat(const locale_facet **facet, const locale *loc)
+static MSVCP_size_t __cdecl numpunct_short__Getcat(const locale_facet **facet, const locale *loc)
 {
     TRACE("(%p %p)\n", facet, loc);
 
@@ -5500,7 +5500,7 @@ num_get* num_get_char_use_facet(const locale *loc)
  * Size of dest buffer is not specified, assuming it's not smaller than 32:
  * strlen(+0.e+) + 22(digits) + 4(expontent) + 1(nullbyte)
  */
-int __cdecl num_get_char__Getffld(const num_get *this, char *dest, istreambuf_iterator_char *first,
+static int __cdecl num_get_char__Getffld(const num_get *this, char *dest, istreambuf_iterator_char *first,
         istreambuf_iterator_char *last, const locale *loc)
 {
     numpunct_char *numpunct = numpunct_char_use_facet(loc);

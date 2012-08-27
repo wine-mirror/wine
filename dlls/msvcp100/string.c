@@ -55,7 +55,7 @@ typedef struct {
 /* char_traits<char> */
 /* ?assign@?$char_traits@D@std@@SAXAADABD@Z */
 /* ?assign@?$char_traits@D@std@@SAXAEADAEBD@Z */
-void CDECL MSVCP_char_traits_char_assign(char *ch, const char *assign)
+static void CDECL MSVCP_char_traits_char_assign(char *ch, const char *assign)
 {
     *ch = *assign;
 }
@@ -76,7 +76,7 @@ MSVCP_bool CDECL MSVCP_char_traits_lt(const char *ch1, const char *ch2)
 
 /* ?compare@?$char_traits@D@std@@SAHPBD0I@Z */
 /* ?compare@?$char_traits@D@std@@SAHPEBD0_K@Z */
-int CDECL MSVCP_char_traits_char_compare(
+static int CDECL MSVCP_char_traits_char_compare(
         const char *s1, const char *s2, MSVCP_size_t count)
 {
     int ret = memcmp(s1, s2, count);
@@ -85,14 +85,14 @@ int CDECL MSVCP_char_traits_char_compare(
 
 /* ?length@?$char_traits@D@std@@SAIPBD@Z */
 /* ?length@?$char_traits@D@std@@SA_KPEBD@Z */
-MSVCP_size_t CDECL MSVCP_char_traits_char_length(const char *str)
+static MSVCP_size_t CDECL MSVCP_char_traits_char_length(const char *str)
 {
     return strlen(str);
 }
 
 /* ?_Copy_s@?$char_traits@D@std@@SAPADPADIPBDI@Z */
 /* ?_Copy_s@?$char_traits@D@std@@SAPEADPEAD_KPEBD1@Z */
-char* CDECL MSVCP_char_traits_char__Copy_s(char *dest,
+static char* CDECL MSVCP_char_traits_char__Copy_s(char *dest,
         MSVCP_size_t size, const char *src, MSVCP_size_t count)
 {
     if(!dest || !src || size<count) {
@@ -115,7 +115,7 @@ char* CDECL MSVCP_char_traits_char_copy(
 
 /* ?find@?$char_traits@D@std@@SAPBDPBDIABD@Z */
 /* ?find@?$char_traits@D@std@@SAPEBDPEBD_KAEBD@Z */
-const char * CDECL MSVCP_char_traits_char_find(
+static const char * CDECL MSVCP_char_traits_char_find(
         const char *str, MSVCP_size_t range, const char *c)
 {
     return memchr(str, *c, range);
@@ -123,7 +123,7 @@ const char * CDECL MSVCP_char_traits_char_find(
 
 /* ?_Move_s@?$char_traits@D@std@@SAPADPADIPBDI@Z */
 /* ?_Move_s@?$char_traits@D@std@@SAPEADPEAD_KPEBD1@Z */
-char* CDECL MSVCP_char_traits_char__Move_s(char *dest,
+static char* CDECL MSVCP_char_traits_char__Move_s(char *dest,
         MSVCP_size_t size, const char *src, MSVCP_size_t count)
 {
     if(!dest || !src || size<count) {
@@ -146,7 +146,7 @@ char* CDECL MSVCP_char_traits_char_move(
 
 /* ?assign@?$char_traits@D@std@@SAPADPADID@Z */
 /* ?assign@?$char_traits@D@std@@SAPEADPEAD_KD@Z */
-char* CDECL MSVCP_char_traits_char_assignn(char *str, MSVCP_size_t num, char c)
+static char* CDECL MSVCP_char_traits_char_assignn(char *str, MSVCP_size_t num, char c)
 {
     return memset(str, c, num);
 }
@@ -189,7 +189,7 @@ int CDECL MSVCP_char_traits_char_not_eof(int *in)
 /* char_traits<wchar_t> */
 /* ?assign@?$char_traits@_W@std@@SAXAA_WAB_W@Z */
 /* ?assign@?$char_traits@_W@std@@SAXAEA_WAEB_W@Z */
-void CDECL MSVCP_char_traits_wchar_assign(wchar_t *ch,
+static void CDECL MSVCP_char_traits_wchar_assign(wchar_t *ch,
         const wchar_t *assign)
 {
     *ch = *assign;
@@ -212,7 +212,7 @@ MSVCP_bool CDECL MSVCP_char_traits_wchar_lt(const wchar_t *ch1,
 
 /* ?compare@?$char_traits@_W@std@@SAHPB_W0I@Z */
 /* ?compare@?$char_traits@_W@std@@SAHPEB_W0_K@Z */
-int CDECL MSVCP_char_traits_wchar_compare(const wchar_t *s1,
+static int CDECL MSVCP_char_traits_wchar_compare(const wchar_t *s1,
         const wchar_t *s2, MSVCP_size_t count)
 {
     int ret = memcmp(s1, s2, count * sizeof(wchar_t));
@@ -221,14 +221,14 @@ int CDECL MSVCP_char_traits_wchar_compare(const wchar_t *s1,
 
 /* ?length@?$char_traits@_W@std@@SAIPB_W@Z */
 /* ?length@?$char_traits@_W@std@@SA_KPEB_W@Z */
-MSVCP_size_t CDECL MSVCP_char_traits_wchar_length(const wchar_t *str)
+static MSVCP_size_t CDECL MSVCP_char_traits_wchar_length(const wchar_t *str)
 {
     return wcslen((WCHAR*)str);
 }
 
 /* ?_Copy_s@?$char_traits@_W@std@@SAPA_WPA_WIPB_WI@Z */
 /* ?_Copy_s@?$char_traits@_W@std@@SAPEA_WPEA_W_KPEB_W1@Z */
-wchar_t* CDECL MSVCP_char_traits_wchar__Copy_s(wchar_t *dest,
+static wchar_t* CDECL MSVCP_char_traits_wchar__Copy_s(wchar_t *dest,
         MSVCP_size_t size, const wchar_t *src, MSVCP_size_t count)
 {
     if(!dest || !src || size<count) {
@@ -251,7 +251,7 @@ wchar_t* CDECL MSVCP_char_traits_wchar_copy(wchar_t *dest,
 
 /* ?find@?$char_traits@_W@std@@SAPB_WPB_WIAB_W@Z */
 /* ?find@?$char_traits@_W@std@@SAPEB_WPEB_W_KAEB_W@Z */
-const wchar_t* CDECL MSVCP_char_traits_wchar_find(
+static const wchar_t* CDECL MSVCP_char_traits_wchar_find(
         const wchar_t *str, MSVCP_size_t range, const wchar_t *c)
 {
     MSVCP_size_t i=0;
@@ -265,7 +265,7 @@ const wchar_t* CDECL MSVCP_char_traits_wchar_find(
 
 /* ?_Move_s@?$char_traits@_W@std@@SAPA_WPA_WIPB_WI@Z */
 /* ?_Move_s@?$char_traits@_W@std@@SAPEA_WPEA_W_KPEB_W1@Z */
-wchar_t* CDECL MSVCP_char_traits_wchar__Move_s(wchar_t *dest,
+static wchar_t* CDECL MSVCP_char_traits_wchar__Move_s(wchar_t *dest,
         MSVCP_size_t size, const wchar_t *src, MSVCP_size_t count)
 {
     if(!dest || !src || size<count) {
@@ -288,7 +288,7 @@ wchar_t* CDECL MSVCP_char_traits_wchar_move(wchar_t *dest,
 
 /* ?assign@?$char_traits@_W@std@@SAPA_WPA_WI_W@Z */
 /* ?assign@?$char_traits@_W@std@@SAPEA_WPEA_W_K_W@Z */
-wchar_t* CDECL MSVCP_char_traits_wchar_assignn(wchar_t *str,
+static wchar_t* CDECL MSVCP_char_traits_wchar_assignn(wchar_t *str,
         MSVCP_size_t num, wchar_t c)
 {
     MSVCP_size_t i;
@@ -492,7 +492,7 @@ unsigned short CDECL MSVCP_char_traits_short_not_eof(const unsigned short *in)
 
 /* _String_base */
 /* ?_Xlen@_String_base@std@@SAXXZ */
-void  CDECL MSVCP__String_base_Xlen(void)
+static void  CDECL MSVCP__String_base_Xlen(void)
 {
     static const char msg[] = "string too long";
 
@@ -501,7 +501,7 @@ void  CDECL MSVCP__String_base_Xlen(void)
 }
 
 /* ?_Xran@_String_base@std@@SAXXZ */
-void CDECL MSVCP__String_base_Xran(void)
+static void CDECL MSVCP__String_base_Xran(void)
 {
     static const char msg[] = "invalid string position";
 
@@ -522,7 +522,7 @@ void CDECL MSVCP__String_base_Xinvarg(void)
 /* basic_string<char, char_traits<char>, allocator<char>> */
 /* ?npos@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@2IB */
 /* ?npos@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@2_KB */
-const MSVCP_size_t MSVCP_basic_string_char_npos = -1;
+static const MSVCP_size_t MSVCP_basic_string_char_npos = -1;
 
 /* ?_Myptr@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@IAEPADXZ */
 /* ?_Myptr@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@IEAAPEADXZ */
@@ -649,7 +649,7 @@ void __thiscall basic_string_char__Copy(basic_string_char *this,
 
 /* ?_Pdif@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@KAIV?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@0@Z */
 /* ?_Pdif@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@KA_KV?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@0@Z */
-MSVCP_size_t __cdecl MSVCP_basic_string_char_Pdif(String_iterator_char i1, String_iterator_char i2)
+static MSVCP_size_t __cdecl MSVCP_basic_string_char_Pdif(String_iterator_char i1, String_iterator_char i2)
 {
     TRACE("(%p %p) (%p %p)\n", i1.bstr, i1.pos, i2.bstr, i2.pos);
 
@@ -2467,7 +2467,7 @@ void __thiscall basic_string_wchar__Copy(basic_string_wchar *this,
 /* ?_Pdif@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@KA_KV?$_String_const_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@0@Z */
 /* ?_Pdif@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@KAIV?$_String_const_iterator@GU?$char_traits@G@std@@V?$allocator@G@2@@2@0@Z */
 /* ?_Pdif@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@KA_KV?$_String_const_iterator@GU?$char_traits@G@std@@V?$allocator@G@2@@2@0@Z */
-MSVCP_size_t __cdecl MSVCP_basic_string_wchar_Pdif(String_iterator_wchar i1, String_iterator_wchar i2)
+static MSVCP_size_t __cdecl MSVCP_basic_string_wchar_Pdif(String_iterator_wchar i1, String_iterator_wchar i2)
 {
     TRACE("(%p %p) (%p %p)\n", i1.bstr, i1.pos, i2.bstr, i2.pos);
 
