@@ -946,6 +946,7 @@ GpStatus WINGDIPAPI GdipAddPathString(GpPath* path, GDIPCONST WCHAR* string, INT
     LOGFONTW lfw;
     HANDLE hfont;
     HDC dc;
+    GpGraphics *graphics;
     GpPath *backup;
     struct format_string_args args;
     int i;
@@ -966,26 +967,40 @@ GpStatus WINGDIPAPI GdipAddPathString(GpPath* path, GDIPCONST WCHAR* string, INT
     scaled_layout_rect.Width = layoutRect->Width * native_height / emSize;
     scaled_layout_rect.Height = layoutRect->Height * native_height / emSize;
 
-    status = GdipCreateFont(family, native_height, style, UnitPixel, &font);
-    if (status != Ok)
+    if ((status = GdipClonePath(path, &backup)) != Ok)
         return status;
 
-    get_log_fontW(font, NULL, &lfw);
+    dc = CreateCompatibleDC(0);
+    status = GdipCreateFromHDC(dc, &graphics);
+    if (status != Ok)
+    {
+        DeleteDC(dc);
+        GdipDeletePath(backup);
+        return status;
+    }
+
+    status = GdipCreateFont(family, native_height, style, UnitPixel, &font);
+    if (status != Ok)
+    {
+        GdipDeleteGraphics(graphics);
+        DeleteDC(dc);
+        GdipDeletePath(backup);
+        return status;
+    }
+
+    get_log_fontW(font, graphics, &lfw);
     GdipDeleteFont(font);
+    GdipDeleteGraphics(graphics);
+
     hfont = CreateFontIndirectW(&lfw);
     if (!hfont)
     {
         WARN("Failed to create font\n");
+        DeleteDC(dc);
+        GdipDeletePath(backup);
         return GenericError;
     }
 
-    if ((status = GdipClonePath(path, &backup)) != Ok)
-    {
-        DeleteObject(hfont);
-        return status;
-    }
-
-    dc = CreateCompatibleDC(0);
     SelectObject(dc, hfont);
 
     GetTextMetricsW(dc, &textmetric);
