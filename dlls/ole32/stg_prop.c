@@ -1093,7 +1093,7 @@ static HRESULT PropertyStorage_ReadProperty(PROPVARIANT *prop, const BYTE *data,
         DWORD count;
        
         StorageUtl_ReadDWord(data, 0, &count);
-        if (codepage == CP_UNICODE && count / 2)
+        if (codepage == CP_UNICODE && count % 2)
         {
             WARN("Unicode string has odd number of bytes\n");
             hr = STG_E_INVALIDHEADER;
