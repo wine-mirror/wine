@@ -1187,13 +1187,13 @@ static HRESULT set_matrix_array(ID3DXConstantTable *iface, IDirect3DDevice9 *dev
         {
             if (desc->Class == D3DXPC_VECTOR) return D3D_OK;
 
-            num_rows = min(desc->Rows, rows);
-            num_columns = min(desc->Columns, columns);
+            num_rows = desc->Rows;
+            num_columns = desc->Columns;
         }
         else
         {
-            num_rows = min(desc->Columns, columns);
-            num_columns = min(desc->Rows, rows);
+            num_rows = desc->Columns;
+            num_columns = desc->Rows;
         }
 
         registers_per_matrix = (desc->Class == D3DXPC_MATRIX_COLUMNS) ? desc->Columns : desc->Rows;
