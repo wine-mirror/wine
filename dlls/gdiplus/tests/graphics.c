@@ -3531,7 +3531,7 @@ static void test_GdipMeasureString(void)
         expectf(0.0, bounds.X);
         expectf(0.0, bounds.Y);
         expectf_(height, bounds.Height, height / 100.0);
-        expectf_(bounds.Height / base_cy, bounds.Width / base_cx, 0.05);
+        expectf_(bounds.Height / base_cy, bounds.Width / base_cx, 0.1);
         expect(7, chars);
         expect(1, lines);
 
@@ -3547,7 +3547,7 @@ static void test_GdipMeasureString(void)
         expectf(50.0, bounds.X);
         expectf(50.0, bounds.Y);
         expectf_(height, bounds.Height, height / 100.0);
-        expectf_(bounds.Height / base_cy, bounds.Width / base_cx, 0.05);
+        expectf_(bounds.Height / base_cy, bounds.Width / base_cx, 0.1);
         expect(7, chars);
         expect(1, lines);
 
@@ -3614,7 +3614,7 @@ static void test_GdipMeasureString(void)
             expectf(0.0, bounds.X);
             expectf(0.0, bounds.Y);
             expectf_(height, bounds.Height, height / 85.0);
-            expectf_(bounds.Height / base_cy, bounds.Width / base_cx, 0.05);
+            expectf_(bounds.Height / base_cy, bounds.Width / base_cx, 0.1);
             expect(7, chars);
             expect(1, lines);
 
@@ -3630,7 +3630,7 @@ static void test_GdipMeasureString(void)
             expectf(50.0, bounds.X);
             expectf(50.0, bounds.Y);
             expectf_(height, bounds.Height, height / 85.0);
-            expectf_(bounds.Height / base_cy, bounds.Width / base_cx, 0.05);
+            expectf_(bounds.Height / base_cy, bounds.Width / base_cx, 0.1);
             expect(7, chars);
             expect(1, lines);
 
@@ -3806,6 +3806,7 @@ static void test_font_height_scaling(void)
             /* margin = [bounds.width of 1] - [bounds.width of 2] / 2*/
             margin = bounds_1.Width - bounds_2.Width / 2.0;
             /*trace("margin %f\n", margin);*/
+            ok(margin > 0.0, "wrong margin %f\n", margin);
 
             status = GdipGetFontHeight(font, graphics, &height);
             expect(Ok, status);
@@ -3819,10 +3820,24 @@ static void test_font_height_scaling(void)
             status = GdipGetRegionBounds(region, graphics, &rect);
             expect(Ok, status);
             /*trace("region: %f,%f,%f,%f\n", rect.X, rect.Y, rect.Width, rect.Height);*/
+            /* FIXME: Wine uses integer gdi32 regions and rounding breaks things */
+            if (margin < 1.0)
+            todo_wine ok(rect.X > 0.0, "wrong rect.X %f\n", rect.X);
+            else
+            ok(rect.X > 0.0, "wrong rect.X %f\n", rect.X);
             expectf(0.0, rect.Y);
             /* before Win7 GdipMeasureCharacterRanges behaviour is completely broken */
-            match = fabs(margin - rect.X) <= margin / 25.0;
+            /* FIXME: Wine uses integer gdi32 regions and rounding breaks things */
+            if (margin < 1.0)
+            {
+            match = fabs(margin - rect.X) < 0.25;
             ok(match || broken(!match) /* before win7 */, "Expected %f, got %f\n", margin, rect.X);
+            }
+            else
+            {
+            match = fabs(margin - rect.X) <= 0.5;
+            ok(match || broken(!match) /* before win7 */, "Expected %f, got %f\n", margin, rect.X);
+            }
             if (!match)
             {
                 win_skip("GdipMeasureCharacterRanges ignores units before Win7\n");
@@ -4017,7 +4032,6 @@ static void test_measured_extra_space(void)
             /* margin = [bounds.width of 1] - [bounds.width of 2] / 2*/
             margin = units_to_pixels(bounds_1.Width - bounds_2.Width / 2.0, gfx_unit, dpi);
             /*trace("margin %f pixels\n", margin);*/
-todo_wine
             expectf_(font_size / 6.0, margin, font_size / 100.0);
         }
 

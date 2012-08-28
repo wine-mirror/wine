@@ -4932,6 +4932,7 @@ GpStatus WINGDIPAPI GdipMeasureCharacterRanges(GpGraphics* graphics,
     HDC hdc, temp_hdc=NULL;
     GpPointF pt[3];
     RectF scaled_rect;
+    REAL margin_x;
 
     TRACE("(%p %s %d %p %s %p %d %p)\n", graphics, debugstr_w(string),
             length, font, debugstr_rectf(layoutRect), stringFormat, regionCount, regions);
@@ -4965,10 +4966,18 @@ GpStatus WINGDIPAPI GdipMeasureCharacterRanges(GpGraphics* graphics,
     args.rel_height = sqrt((pt[2].Y-pt[0].Y)*(pt[2].Y-pt[0].Y)+
                       (pt[2].X-pt[0].X)*(pt[2].X-pt[0].X));
 
-    scaled_rect.X = layoutRect->X * args.rel_width;
+    /* FIXME: GenericTypographic format prevents extra margins */
+    margin_x = units_scale(font->unit, graphics->unit, graphics->xres) * font->emSize / 6.0;
+
+    scaled_rect.X = (layoutRect->X + margin_x) * args.rel_width;
     scaled_rect.Y = layoutRect->Y * args.rel_height;
     scaled_rect.Width = layoutRect->Width * args.rel_width;
     scaled_rect.Height = layoutRect->Height * args.rel_height;
+    if (scaled_rect.Width >= 0.5)
+    {
+        scaled_rect.Width -= margin_x * 2.0 * args.rel_width;
+        if (scaled_rect.Width < 0.5) return Ok; /* doesn't fit */
+    }
 
     get_font_hfont(graphics, font, &gdifont);
     oldfont = SelectObject(hdc, gdifont);
@@ -5042,6 +5051,8 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
     HDC temp_hdc=NULL, hdc;
     GpPointF pt[3];
     RectF scaled_rect;
+    REAL margin_x;
+    INT lines, glyphs;
 
     TRACE("(%p, %s, %i, %p, %s, %p, %p, %p, %p)\n", graphics,
         debugstr_wn(string, length), length, font, debugstr_rectf(rect), format,
@@ -5076,16 +5087,24 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
     args.rel_height = sqrt((pt[2].Y-pt[0].Y)*(pt[2].Y-pt[0].Y)+
                       (pt[2].X-pt[0].X)*(pt[2].X-pt[0].X));
 
-    get_font_hfont(graphics, font, &gdifont);
-    oldfont = SelectObject(hdc, gdifont);
+    /* FIXME: GenericTypographic format prevents extra margins */
+    margin_x = units_scale(font->unit, graphics->unit, graphics->xres) * font->emSize / 6.0;
 
-    scaled_rect.X = rect->X * args.rel_width;
+    scaled_rect.X = (rect->X + margin_x) * args.rel_width;
     scaled_rect.Y = rect->Y * args.rel_height;
     scaled_rect.Width = rect->Width * args.rel_width;
     scaled_rect.Height = rect->Height * args.rel_height;
+    if (scaled_rect.Width >= 0.5)
+    {
+        scaled_rect.Width -= margin_x * 2.0 * args.rel_width;
+        if (scaled_rect.Width < 0.5) return Ok; /* doesn't fit */
+    }
 
     if (scaled_rect.Width >= INT_MAX || scaled_rect.Width < 0.5) scaled_rect.Width = (REAL)(1 << 23);
     if (scaled_rect.Height >= INT_MAX || scaled_rect.Height < 0.5) scaled_rect.Height = (REAL)(1 << 23);
+
+    get_font_hfont(graphics, font, &gdifont);
+    oldfont = SelectObject(hdc, gdifont);
 
     bounds->X = rect->X;
     bounds->Y = rect->Y;
@@ -5093,11 +5112,18 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
     bounds->Height = 0.0;
 
     args.bounds = bounds;
-    args.codepointsfitted = codepointsfitted;
-    args.linesfilled = linesfilled;
+    args.codepointsfitted = &glyphs;
+    args.linesfilled = &lines;
+    lines = glyphs = 0;
 
     gdip_format_string(hdc, string, length, font, &scaled_rect, format,
         measure_string_callback, &args);
+
+    if (linesfilled) *linesfilled = lines;
+    if (codepointsfitted) *codepointsfitted = glyphs;
+
+    if (lines)
+        bounds->Width += margin_x * 2.0;
 
     SelectObject(hdc, oldfont);
     DeleteObject(gdifont);
@@ -5169,7 +5195,7 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     HFONT gdifont;
     GpPointF pt[3], rectcpy[4];
     POINT corners[4];
-    REAL rel_width, rel_height;
+    REAL rel_width, rel_height, margin_x;
     INT save_state;
     REAL offsety = 0.0;
     struct draw_string_args args;
@@ -5232,10 +5258,18 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     rectcpy[3].Y = rectcpy[2].Y = rect->Y + rect->Height;
     transform_and_round_points(graphics, corners, rectcpy, 4);
 
-    scaled_rect.X = 0.0;
+    /* FIXME: GenericTypographic format prevents extra margins */
+    margin_x = units_scale(font->unit, graphics->unit, graphics->xres) * font->emSize / 6.0;
+
+    scaled_rect.X = margin_x * rel_width;
     scaled_rect.Y = 0.0;
     scaled_rect.Width = rel_width * rect->Width;
     scaled_rect.Height = rel_height * rect->Height;
+    if (scaled_rect.Width >= 0.5)
+    {
+        scaled_rect.Width -= margin_x * 2.0 * rel_width;
+        if (scaled_rect.Width < 0.5) return Ok; /* doesn't fit */
+    }
 
     if (scaled_rect.Width >= INT_MAX || scaled_rect.Width < 0.5) scaled_rect.Width = (REAL)(1 << 23);
     if (scaled_rect.Height >= INT_MAX || scaled_rect.Height < 0.5) scaled_rect.Height = (REAL)(1 << 23);
