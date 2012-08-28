@@ -1177,6 +1177,7 @@ static HRESULT set_matrix_array(ID3DXConstantTable *iface, IDirect3DDevice9 *dev
 
     if (desc->Class == D3DXPC_MATRIX_ROWS
         || desc->Class == D3DXPC_MATRIX_COLUMNS
+        || desc->Class == D3DXPC_VECTOR
         || desc->Class == D3DXPC_SCALAR)
     {
         if (desc->Class == class) row_offset = 4;
@@ -1184,6 +1185,8 @@ static HRESULT set_matrix_array(ID3DXConstantTable *iface, IDirect3DDevice9 *dev
 
         if (class == D3DXPC_MATRIX_ROWS)
         {
+            if (desc->Class == D3DXPC_VECTOR) return D3D_OK;
+
             num_rows = min(desc->Rows, rows);
             num_columns = min(desc->Columns, columns);
         }
@@ -1198,7 +1201,7 @@ static HRESULT set_matrix_array(ID3DXConstantTable *iface, IDirect3DDevice9 *dev
     else
     {
         FIXME("Unhandled variable class %s\n", debug_d3dxparameter_class(desc->Class));
-        return D3D_OK;
+        return E_NOTIMPL;
     }
 
     switch (desc->RegisterSet)

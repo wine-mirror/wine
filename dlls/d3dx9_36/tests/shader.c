@@ -707,7 +707,7 @@ static void test_setting_basic_table(IDirect3DDevice9 *device)
     ok(res == D3D_OK, "ID3DXConstantTable_SetMatrixTranspose failed on variable f4: 0x%08x\n", res);
 
     IDirect3DDevice9_GetVertexShaderConstantF(device, 7, out, 1);
-    todo_wine ok(out[0] == S(U(mvp))._11 && out[1] == S(U(mvp))._21 && out[2] == S(U(mvp))._31 && out[3] == S(U(mvp))._41,
+    ok(out[0] == S(U(mvp))._11 && out[1] == S(U(mvp))._21 && out[2] == S(U(mvp))._31 && out[3] == S(U(mvp))._41,
             "The variable f4 was not set correctly by ID3DXConstantTable_SetMatrixTranspose, "
             "got {%f, %f, %f, %f}, should be {%f, %f, %f, %f}\n",
             out[0], out[1], out[2], out[3],
