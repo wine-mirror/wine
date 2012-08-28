@@ -351,6 +351,8 @@ static void test_save_settings(void)
     IDirectInputDevice8A *pKey;
 
     static const GUID mapping_guid = { 0xcafecafe, 0x2, 0x3, { 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb } };
+    static const GUID other_guid = { 0xcafe, 0xcafe, 0x3, { 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb } };
+
     static DIACTION actions[] = {
         { 0, DIKEYBOARD_A , 0, { "Blam" } },
         { 1, DIKEYBOARD_B , 0, { "Kapow"} }
@@ -433,6 +435,27 @@ static void test_save_settings(void)
         "Mapped incorrectly expected: 0x%08x got: 0x%08x\n", results[1], af.rgoAction[1].dwObjID);
     ok (IsEqualGUID(&GUID_SysKeyboard, &af.rgoAction[1].guidInstance), "Action should be mapped to keyboard\n");
 
+    /* Test that a different action map with no pre-stored settings, in spite of the flags,
+       does not try to load mappings and instead applies the default mapping */
+    af.guidActionMap = other_guid;
+
+    af.rgoAction[0].dwObjID = 0;
+    af.rgoAction[1].dwObjID = 0;
+    memset(&af.rgoAction[0].guidInstance, 0, sizeof(GUID));
+    memset(&af.rgoAction[1].guidInstance, 0, sizeof(GUID));
+
+    hr = IDirectInputDevice8_BuildActionMap(pKey, &af, NULL, 0);
+    ok (SUCCEEDED(hr), "BuildActionMap failed hr=%08x\n", hr);
+
+    todo_wine ok (results[0] == af.rgoAction[0].dwObjID,
+        "Mapped incorrectly expected: 0x%08x got: 0x%08x\n", results[0], af.rgoAction[0].dwObjID);
+    todo_wine ok (IsEqualGUID(&GUID_SysKeyboard, &af.rgoAction[0].guidInstance), "Action should be mapped to keyboard\n");
+
+    todo_wine ok (results[1] == af.rgoAction[1].dwObjID,
+        "Mapped incorrectly expected: 0x%08x got: 0x%08x\n", results[1], af.rgoAction[1].dwObjID);
+    todo_wine ok (IsEqualGUID(&GUID_SysKeyboard, &af.rgoAction[1].guidInstance), "Action should be mapped to keyboard\n");
+
+    af.guidActionMap = mapping_guid;
     /* Hard case. Customized mapping, save, ask for previous map and read it back */
     af.rgoAction[0].dwObjID = other_results[0];
     af.rgoAction[0].dwHow = DIAH_USERCONFIG;
