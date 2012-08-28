@@ -20,7 +20,10 @@
 import "wtypes.idl";
 #endif
 
-/* Interfaces */
+cpp_quote("#ifdef WIDL_C_INLINE_WRAPPERS")
+cpp_quote("#define SAVE_WIDL_C_INLINE_WRAPPERS")
+cpp_quote("#undef WIDL_C_INLINE_WRAPPERS")
+cpp_quote("#endif")
 
 [
   local,
@@ -38,6 +41,10 @@ interface IUnknown
   ULONG AddRef();
   ULONG Release();
 }
+
+cpp_quote("#ifdef SAVE_WIDL_C_INLINE_WRAPPERS")
+cpp_quote("#define WIDL_C_INLINE_WRAPPERS")
+cpp_quote("#endif")
 
 [
   object,
