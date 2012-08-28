@@ -908,7 +908,7 @@ static inline BOOL get_bool(LPCVOID data)
 
 static void set_number(LPVOID outdata, D3DXPARAMETER_TYPE outtype, LPCVOID indata, D3DXPARAMETER_TYPE intype)
 {
-    TRACE("Changing from type %i to type %i\n", intype, outtype);
+    TRACE("Changing from type %s to type %s\n", debug_d3dxparameter_type(intype), debug_d3dxparameter_type(outtype));
 
     switch (outtype)
     {
@@ -925,7 +925,7 @@ static void set_number(LPVOID outdata, D3DXPARAMETER_TYPE outtype, LPCVOID indat
             break;
 
         default:
-            FIXME("Error converting to type %i\n", outtype);
+            FIXME("Unhandled type %s. This should not happen!\n", debug_d3dxparameter_type(outtype));
             *(INT *)outdata = 0;
             break;
     }
