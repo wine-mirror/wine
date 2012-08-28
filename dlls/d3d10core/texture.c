@@ -50,7 +50,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_texture2d_QueryInterface(ID3D10Texture2D 
     if (This->dxgi_surface)
     {
         TRACE("Forwarding to dxgi surface\n");
-        return IDXGISurface_QueryInterface(This->dxgi_surface, riid, object);
+        return IUnknown_QueryInterface(This->dxgi_surface, riid, object);
     }
 
     WARN("%s not implemented, returning E_NOINTERFACE\n", debugstr_guid(riid));
@@ -76,7 +76,7 @@ static void STDMETHODCALLTYPE d3d10_texture2d_wined3d_object_released(void *pare
 {
     struct d3d10_texture2d *This = parent;
 
-    if (This->dxgi_surface) IDXGISurface_Release(This->dxgi_surface);
+    if (This->dxgi_surface) IUnknown_Release(This->dxgi_surface);
     HeapFree(GetProcessHeap(), 0, This);
 }
 
@@ -270,7 +270,7 @@ HRESULT d3d10_texture2d_init(struct d3d10_texture2d *texture, struct d3d10_devic
     {
         WARN("Failed to create wined3d texture, hr %#x.\n", hr);
         if (texture->dxgi_surface)
-            IDXGISurface_Release(texture->dxgi_surface);
+            IUnknown_Release(texture->dxgi_surface);
         return hr;
     }
 

@@ -367,7 +367,7 @@ float4 main(const float4 color : COLOR) : SV_TARGET
     hr = ID3D10Device_CreatePixelShader(device, ps_4_0, sizeof(ps_4_0), &ps);
     ok(SUCCEEDED(hr), "Failed to create SM4 vertex shader, hr %#x\n", hr);
     if (ps)
-        ID3D10VertexShader_Release(ps);
+        ID3D10PixelShader_Release(ps);
 }
 
 START_TEST(device)
