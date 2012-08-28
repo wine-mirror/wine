@@ -267,11 +267,11 @@ static HRESULT test_fvf_to_decl(IDirect3DDevice9 *device, IDirect3DVertexDeclara
     else if (compare_elements(result_decl, expected_elements) != S_OK)
         goto fail;
 
-    if (result_decl) IUnknown_Release( result_decl );
+    if (result_decl) IDirect3DVertexDeclaration9_Release( result_decl );
     return S_OK;
 
     fail:
-    if (result_decl) IUnknown_Release( result_decl );
+    if (result_decl) IDirect3DVertexDeclaration9_Release( result_decl );
     return E_FAIL;
 }
 
@@ -308,12 +308,12 @@ static HRESULT test_decl_to_fvf(IDirect3DDevice9* device, DWORD default_fvf,
     if (test_fvf != result_fvf) goto fail;
 
     IDirect3DDevice9_SetVertexDeclaration ( device, NULL );
-    if (vdecl) IUnknown_Release( vdecl );
+    if (vdecl) IDirect3DVertexDeclaration9_Release( vdecl );
     return S_OK;
 
     fail:
     IDirect3DDevice9_SetVertexDeclaration ( device, NULL );
-    if (vdecl) IUnknown_Release( vdecl );
+    if (vdecl) IDirect3DVertexDeclaration9_Release( vdecl );
     return E_FAIL;
 }
 
@@ -644,7 +644,7 @@ static void test_fvf_decl_conversion(IDirect3DDevice9 *pDevice)
 
     cleanup:
     IDirect3DDevice9_SetVertexDeclaration ( pDevice, NULL );
-    if ( default_decl ) IUnknown_Release (default_decl);
+    if ( default_decl ) IDirect3DVertexDeclaration9_Release (default_decl);
 }
 
 /* Check whether a declaration converted from FVF is shared.

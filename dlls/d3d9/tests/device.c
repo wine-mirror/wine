@@ -107,7 +107,7 @@ static HRESULT reset_device(IDirect3DDevice9 *device, HWND device_window, BOOL w
 #define CHECK_RELEASE(obj,d,rc) \
     if (obj) { \
         int tmp1, rc_new = rc; \
-        IUnknown_Release( obj ); \
+        IUnknown_Release( (IUnknown*)obj ); \
         tmp1 = get_refcount( (IUnknown *)d ); \
         ok(tmp1 == rc_new, "Invalid refcount. Expected %d got %d\n", rc_new, tmp1); \
     }
@@ -154,7 +154,7 @@ static void check_mipmap_levels(IDirect3DDevice9 *device, UINT width, UINT heigh
     } else
         trace("CreateTexture failed: %08x\n", hr);
 
-    if (texture) IUnknown_Release( texture );
+    if (texture) IDirect3DBaseTexture9_Release( texture );
 }
 
 static void test_mipmap_levels(void)
@@ -196,10 +196,10 @@ static void test_mipmap_levels(void)
 cleanup:
     if (pDevice)
     {
-        UINT refcount = IUnknown_Release( pDevice );
+        UINT refcount = IDirect3DDevice9_Release( pDevice );
         ok(!refcount, "Device has %u references left.\n", refcount);
     }
-    if (pD3d) IUnknown_Release( pD3d );
+    if (pD3d) IDirect3D9_Release( pD3d );
     DestroyWindow( hwnd );
 }
 
@@ -255,10 +255,10 @@ static void test_checkdevicemultisampletype(void)
 cleanup:
     if (pDevice)
     {
-        UINT refcount = IUnknown_Release( pDevice );
+        UINT refcount = IDirect3DDevice9_Release( pDevice );
         ok(!refcount, "Device has %u references left.\n", refcount);
     }
-    if (pD3d) IUnknown_Release( pD3d );
+    if (pD3d) IDirect3D9_Release( pD3d );
     DestroyWindow( hwnd );
 }
 

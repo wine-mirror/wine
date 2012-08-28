@@ -181,7 +181,7 @@ static void test_surface_alignment(IDirect3DDevice9 *device_ptr)
             ok(rc.Pitch == pitch, "Wrong pitch for DXT%d lvl[%d (%dx%d)]: expected %d got %d\n",
                i + 1, j, descr.Width, descr.Height, pitch, rc.Pitch);
         }
-        IUnknown_Release( pTexture );
+        IDirect3DTexture9_Release( pTexture );
     }
 }
 

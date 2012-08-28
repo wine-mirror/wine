@@ -281,13 +281,13 @@ static int switch_render_target(IDirect3DDevice9 *device, struct event_data *eve
     ok (hret == D3D_OK, "SetRenderTarget returned %#x.\n", hret);
     if (hret != D3D_OK) goto error;
 
-    IUnknown_Release(backbuffer);
+    IDirect3DSurface9_Release(backbuffer);
     event_data->new_swap_chain = swapchain;
     return EVENT_OK;
 
     error:
-    if (backbuffer) IUnknown_Release(backbuffer);
-    if (swapchain) IUnknown_Release(swapchain);
+    if (backbuffer) IDirect3DSurface9_Release(backbuffer);
+    if (swapchain) IDirect3DSwapChain9_Release(swapchain);
     return EVENT_ERROR;
 }
 
@@ -299,12 +299,12 @@ static int revert_render_target(IDirect3DDevice9 *device, struct event_data *eve
     hret = IDirect3DDevice9_SetRenderTarget(device, 0, event_data->original_render_target);
     ok (hret == D3D_OK, "SetRenderTarget returned %#x.\n", hret);
     if (hret != D3D_OK) {
-        IUnknown_Release(event_data->original_render_target);
+        IDirect3DSurface9_Release(event_data->original_render_target);
         return EVENT_ERROR;
     }
 
-    IUnknown_Release(event_data->original_render_target);
-    IUnknown_Release(event_data->new_swap_chain);
+    IDirect3DSurface9_Release(event_data->original_render_target);
+    IDirect3DSwapChain9_Release(event_data->new_swap_chain);
 
     return EVENT_OK;
 }
@@ -361,7 +361,7 @@ static int end_stateblock(IDirect3DDevice9 *device, struct event_data *event_dat
 
 static int release_stateblock(IDirect3DDevice9 *device, struct event_data *event_data)
 {
-    IUnknown_Release(event_data->stateblock);
+    IDirect3DStateBlock9_Release(event_data->stateblock);
     return EVENT_OK;
 }
 
@@ -372,11 +372,11 @@ static int apply_stateblock(IDirect3DDevice9 *device, struct event_data *event_d
     hret = IDirect3DStateBlock9_Apply(event_data->stateblock);
     ok(hret == D3D_OK, "Apply returned %#x.\n", hret);
     if (hret != D3D_OK) {
-        IUnknown_Release(event_data->stateblock);
+        IDirect3DStateBlock9_Release(event_data->stateblock);
         return EVENT_ERROR;
     }
 
-    IUnknown_Release(event_data->stateblock);
+    IDirect3DStateBlock9_Release(event_data->stateblock);
 
     return EVENT_OK;
 }
