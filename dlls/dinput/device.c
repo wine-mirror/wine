@@ -674,7 +674,7 @@ static BOOL load_mapping_settings(IDirectInputDeviceImpl *This, LPDIACTIONFORMAT
     HKEY hkey;
     WCHAR *guid_str;
     DIDEVICEINSTANCEW didev;
-    int i;
+    int i, mapped = 0;
 
     didev.dwSize = sizeof(didev);
     IDirectInputDevice8_GetDeviceInfo(&This->IDirectInputDevice8W_iface, &didev);
@@ -703,14 +703,15 @@ static BOOL load_mapping_settings(IDirectInputDeviceImpl *This, LPDIACTIONFORMAT
         {
             lpdiaf->rgoAction[i].dwObjID = id;
             lpdiaf->rgoAction[i].guidInstance = didev.guidInstance;
-            lpdiaf->rgoAction[i].dwHow = DIAH_USERCONFIG;
+            lpdiaf->rgoAction[i].dwHow = DIAH_DEFAULT;
+            mapped += 1;
         }
     }
 
     RegCloseKey(hkey);
     CoTaskMemFree(guid_str);
 
-    return TRUE;
+    return mapped > 0;
 }
 
 HRESULT _build_action_map(LPDIRECTINPUTDEVICE8W iface, LPDIACTIONFORMATW lpdiaf, LPCWSTR lpszUserName, DWORD dwFlags, DWORD devMask, LPCDIDATAFORMAT df)
