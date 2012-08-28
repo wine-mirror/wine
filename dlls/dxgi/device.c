@@ -122,7 +122,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_GetParent(IWineDXGIDevice *iface, R
 
     TRACE("iface %p, riid %s, parent %p.\n", iface, debugstr_guid(riid), parent);
 
-    hr = IDXGIDevice_GetAdapter(iface, &adapter);
+    hr = IWineDXGIDevice_GetAdapter(iface, &adapter);
     if (FAILED(hr))
     {
         ERR("Failed to get adapter, hr %#x.\n", hr);

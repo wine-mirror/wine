@@ -754,7 +754,7 @@ static void verify_root_order_(INameSpaceTreeControl *pnstc, IShellItem **roots,
                 IShellItem_Release(psi);
             }
         }
-        IShellItem_Release(psia);
+        IShellItemArray_Release(psia);
     }
 }
 #define verify_root_order(pnstc, psi_a)         \

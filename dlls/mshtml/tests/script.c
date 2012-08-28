@@ -50,12 +50,14 @@ const GUID GUID_CUSTOM_CONFIRMOBJECTSAFETY =
 #define CTXARG_T DWORDLONG
 #define IActiveScriptParseVtbl IActiveScriptParse64Vtbl
 #define IActiveScriptParseProcedure2Vtbl IActiveScriptParseProcedure2_64Vtbl
+#define IActiveScriptSiteDebug_Release IActiveScriptSiteDebug64_Release
 
 #else
 
 #define CTXARG_T DWORD
 #define IActiveScriptParseVtbl IActiveScriptParse32Vtbl
 #define IActiveScriptParseProcedure2Vtbl IActiveScriptParseProcedure2_32Vtbl
+#define IActiveScriptSiteDebug_Release IActiveScriptSiteDebug32_Release
 
 #endif
 
@@ -2366,7 +2368,7 @@ static HRESULT WINAPI ActiveScript_SetScriptSite(IActiveScript *iface, IActiveSc
     hres = IActiveScriptSite_QueryInterface(pass, &IID_IActiveScriptSiteDebug, (void**)&debug);
     ok(hres == S_OK, "Could not get IActiveScriptSiteDebug interface: %08x\n", hres);
     if(SUCCEEDED(hres))
-        IActiveScriptSiteDebug32_Release(debug);
+        IActiveScriptSiteDebug_Release(debug);
 
     hres = IActiveScriptSite_QueryInterface(pass, &IID_ICanHandleException, (void**)&canexpection);
     ok(hres == E_NOINTERFACE, "Could not get IID_ICanHandleException interface: %08x\n", hres);

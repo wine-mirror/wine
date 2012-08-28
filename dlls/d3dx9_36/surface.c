@@ -622,7 +622,7 @@ HRESULT WINAPI D3DXGetImageInfoFromFileInMemory(LPCVOID data, UINT datasize, D3D
         IWICImagingFactory_CreateStream(factory, &stream);
         IWICStream_InitializeFromMemory(stream, (BYTE*)data, datasize);
         hr = IWICImagingFactory_CreateDecoderFromStream(factory, (IStream*)stream, NULL, 0, &decoder);
-        IStream_Release(stream);
+        IWICStream_Release(stream);
         IWICImagingFactory_Release(factory);
     }
 
@@ -912,7 +912,7 @@ HRESULT WINAPI D3DXLoadSurfaceFromFileInMemory(IDirect3DSurface9 *pDestSurface,
 
     hr = IWICImagingFactory_CreateDecoderFromStream(factory, (IStream*)stream, NULL, 0, &decoder);
 
-    IStream_Release(stream);
+    IWICStream_Release(stream);
     IWICImagingFactory_Release(factory);
 
     if (FAILED(hr))

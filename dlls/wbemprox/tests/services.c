@@ -77,7 +77,7 @@ static void test_IClientSecurity(void)
     refs = IWbemServices_Release( services );
     todo_wine ok( refs == 1, "unexpected refcount %u\n", refs );
 
-    refs = IWbemServices_Release( security );
+    refs = IClientSecurity_Release( security );
     todo_wine ok( refs == 0, "unexpected refcount %u\n", refs );
 
     IWbemLocator_Release( locator );
