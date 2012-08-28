@@ -218,6 +218,26 @@ PUSB_COMMON_DESCRIPTOR WINAPI USBD_ParseDescriptors(
     return NULL;
 }
 
+USBD_STATUS WINAPI USBD_ValidateConfigurationDescriptor(
+        PUSB_CONFIGURATION_DESCRIPTOR descr,
+        ULONG length,
+        USHORT level,
+        PUCHAR *offset,
+        ULONG tag )
+{
+    FIXME( "(%p, %u, %u, %p, %u) partial stub!", descr, length, level, offset, tag );
+
+    if (offset) *offset = 0;
+
+    if (!descr ||
+        length < sizeof(USB_CONFIGURATION_DESCRIPTOR) ||
+        descr->bLength < sizeof(USB_CONFIGURATION_DESCRIPTOR) ||
+        descr->wTotalLength < descr->bNumInterfaces * sizeof(USB_CONFIGURATION_DESCRIPTOR)
+       ) return USBD_STATUS_ERROR;
+
+    return USBD_STATUS_SUCCESS;
+}
+
 ULONG WINAPI USBD_GetInterfaceLength(
         PUSB_INTERFACE_DESCRIPTOR InterfaceDescriptor,
         PUCHAR BufferEnd )

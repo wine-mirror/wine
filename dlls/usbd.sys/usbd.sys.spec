@@ -16,6 +16,7 @@
 @ stub USBD_GetDeviceInformation
 @ stdcall USBD_GetInterfaceLength(ptr ptr)
 @ stub USBD_GetPdoRegistryParameter
+@ stub USBD_GetRegistryKeyValue
 @ stub USBD_GetSuspendPowerState
 @ stdcall USBD_GetUSBDIVersion(ptr)
 @ stub USBD_InitializeDevice
@@ -30,4 +31,5 @@
 @ stub USBD_RemoveDevice
 @ stub USBD_RestoreDevice
 @ stub USBD_SetSuspendPowerState
+@ stdcall USBD_ValidateConfigurationDescriptor(ptr long long ptr long)
 @ stub USBD_WaitDeviceMutex
