@@ -884,6 +884,8 @@ interfacehdr: attributes interface		{ $$.interface = $2;
 
 interfacedef: interfacehdr inherit
 	  '{' int_statements '}' semicolon_opt	{ $$ = $1.interface;
+						  if($$ == $2)
+						    error_loc("Interface can't inherit from itself\n");
 						  type_interface_define($$, $2, $4);
 						  pointer_default = $1.old_pointer_default;
 						}
