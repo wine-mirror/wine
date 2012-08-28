@@ -971,12 +971,11 @@ static void set_matrix(struct d3dx_parameter *param, CONST D3DXMATRIX *matrix)
 {
     UINT i, k;
 
-    for (i = 0; i < 4; ++i)
+    for (i = 0; i < param->rows; ++i)
     {
-        for (k = 0; k < 4; ++k)
+        for (k = 0; k < param->columns; ++k)
         {
-            if ((i < param->rows) && (k < param->columns))
-                set_number((FLOAT *)param->data + i * param->columns + k, param->type, &matrix->u.m[i][k], D3DXPT_FLOAT);
+            set_number((FLOAT *)param->data + i * param->columns + k, param->type, &matrix->u.m[i][k], D3DXPT_FLOAT);
         }
     }
 }
