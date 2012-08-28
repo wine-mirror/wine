@@ -1158,84 +1158,70 @@ static HRESULT set_matrix_array(ID3DXConstantTable *iface, IDirect3DDevice9 *dev
                                 UINT count, D3DXPARAMETER_CLASS class, D3DXPARAMETER_TYPE type, UINT rows, UINT columns)
 {
     struct ID3DXConstantTableImpl *This = impl_from_ID3DXConstantTable(iface);
-    D3DXCONSTANT_DESC desc;
-    HRESULT hr;
-    UINT registers_per_matrix;
-    UINT i, desc_count = 1;
-    UINT num_rows, num_columns;
-    UINT row_offset, column_offset;
+    struct ctab_constant *c = get_valid_constant(This, constant);
+    D3DXCONSTANT_DESC *desc;
+    UINT registers_per_matrix, num_rows, num_columns, i;
+    UINT row_offset = 1, column_offset = 1;
     const DWORD *data_ptr;
     FLOAT matrix[16] = {0.0f, 0.0f, 0.0f, 0.0f,
                         0.0f, 0.0f, 0.0f, 0.0f,
                         0.0f, 0.0f, 0.0f, 0.0f,
                         0.0f, 0.0f, 0.0f, 0.0f};
 
-    hr = ID3DXConstantTable_GetConstantDesc(iface, constant, &desc, &desc_count);
-    if (FAILED(hr))
+    if (!c)
     {
-        TRACE("ID3DXConstantTable_GetConstantDesc failed: %08x\n", hr);
+        WARN("Invalid argument specified\n");
         return D3DERR_INVALIDCALL;
     }
+    desc = &c->desc;
 
-    if (desc.Class == D3DXPC_MATRIX_ROWS || desc.Class == D3DXPC_MATRIX_COLUMNS)
+    if (desc->Class == D3DXPC_MATRIX_ROWS
+        || desc->Class == D3DXPC_MATRIX_COLUMNS
+        || desc->Class == D3DXPC_SCALAR)
     {
-        if (desc.Class == class)
-        {
-            column_offset = 1;
-            row_offset = 4;
-        }
-        else
-        {
-            column_offset = 4;
-            row_offset = 1;
-        }
+        if (desc->Class == class) row_offset = 4;
+        else column_offset = 4;
 
         if (class == D3DXPC_MATRIX_ROWS)
         {
-            num_rows = min(desc.Rows, rows);
-            num_columns = min(desc.Columns, columns);
+            num_rows = min(desc->Rows, rows);
+            num_columns = min(desc->Columns, columns);
         }
         else
         {
-            num_rows = min(desc.Columns, columns);
-            num_columns = min(desc.Rows, rows);
+            num_rows = min(desc->Columns, columns);
+            num_columns = min(desc->Rows, rows);
         }
 
-        registers_per_matrix = (desc.Class == D3DXPC_MATRIX_ROWS) ? desc.Rows : desc.Columns;
-    }
-    else if (desc.Class == D3DXPC_SCALAR)
-    {
-        column_offset = 1;
-        row_offset = 1;
-        num_rows = min(desc.Rows, rows);
-        num_columns = min(desc.Columns, columns);
-        registers_per_matrix = 1;
+        registers_per_matrix = (desc->Class == D3DXPC_MATRIX_COLUMNS) ? desc->Columns : desc->Rows;
     }
     else
     {
-        FIXME("Unhandled variable class %s\n", debug_d3dxparameter_class(desc.Class));
+        FIXME("Unhandled variable class %s\n", debug_d3dxparameter_class(desc->Class));
         return D3D_OK;
     }
 
-    switch (desc.RegisterSet)
+    switch (desc->RegisterSet)
     {
         case D3DXRS_FLOAT4:
             data_ptr = data;
             for (i = 0; i < count; i++)
             {
-                if (registers_per_matrix * (i + 1) > desc.RegisterCount)
+                HRESULT hr;
+
+                if (registers_per_matrix * (i + 1) > desc->RegisterCount)
                     break;
 
-                hr = set_float_matrix(matrix, &desc, row_offset, column_offset, num_rows, num_columns, data_ptr, type, columns);
+                hr = set_float_matrix(matrix, desc, row_offset, column_offset, num_rows, num_columns, data_ptr, type, columns);
                 if (FAILED(hr)) return hr;
 
-                set_float_shader_constant(This, device, desc.RegisterIndex + i * registers_per_matrix, matrix, registers_per_matrix);
+                set_float_shader_constant(This, device, desc->RegisterIndex + i * registers_per_matrix, matrix, registers_per_matrix);
 
                 data_ptr += rows * columns;
             }
             break;
         default:
-            FIXME("Unhandled register set %s\n", debug_d3dxparameter_registerset(desc.RegisterSet));
+            FIXME("Unhandled register set %s\n", debug_d3dxparameter_registerset(desc->RegisterSet));
             return E_NOTIMPL;
     }
 
