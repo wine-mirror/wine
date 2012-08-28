@@ -939,7 +939,7 @@ static void test_metadata_png(void)
 
     IWICBitmapDecoder_Release(decoder);
 
-    IWICStream_Release(stream);
+    IStream_Release(stream);
 }
 
 START_TEST(metadata)

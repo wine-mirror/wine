@@ -379,7 +379,7 @@ static void test_StreamOnMemory(void)
 
 
     IWICStream_Release(pStream);
-    IWICStream_Release(pFactory);
+    IWICImagingFactory_Release(pFactory);
     CoUninitialize();
 }
 
@@ -641,7 +641,7 @@ static void test_StreamOnStreamRange(void)
 
     hr = IWICStream_CopyTo(pSubStream, CopyStream, uNewPos, NULL, NULL);
     ok(hr == E_NOTIMPL, "CopyTo returned %#x, expected %#x\n", hr, E_NOTIMPL);
-    IWICStream_Release(CopyStream);
+    IStream_Release(CopyStream);
 
 
     /* Commit */
@@ -733,7 +733,7 @@ static void test_StreamOnStreamRange(void)
 
     IWICStream_Release(pSubStream);
     IWICStream_Release(pStream);
-    IWICStream_Release(pFactory);
+    IWICImagingFactory_Release(pFactory);
     CoUninitialize();
 }
 
