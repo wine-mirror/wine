@@ -1482,11 +1482,17 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(IDirect3DSurface9 *dst_surface,
             src_pitch, src_palette, wine_dbgstr_rect(src_rect), filter, color_key);
 
     if (!dst_surface || !src_memory || !src_rect)
+    {
+        WARN("Invalid argument specified.\n");
         return D3DERR_INVALIDCALL;
+    }
     if (src_format == D3DFMT_UNKNOWN
             || src_rect->left >= src_rect->right
             || src_rect->top >= src_rect->bottom)
+    {
+        WARN("Invalid src_format or src_rect.\n");
         return E_FAIL;
+    }
 
     if (filter == D3DX_DEFAULT)
         filter = D3DX_FILTER_TRIANGLE | D3DX_FILTER_DITHER;
@@ -1503,12 +1509,13 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(IDirect3DSurface9 *dst_surface,
     }
     else
     {
-        if (dst_rect->left > dst_rect->right || dst_rect->right > surfdesc.Width)
+        if (dst_rect->left > dst_rect->right || dst_rect->right > surfdesc.Width
+                || dst_rect->top > dst_rect->bottom || dst_rect->bottom > surfdesc.Height
+                || dst_rect->left < 0 || dst_rect->top < 0)
+        {
+            WARN("Invalid dst_rect specified.\n");
             return D3DERR_INVALIDCALL;
-        if (dst_rect->top > dst_rect->bottom || dst_rect->bottom > surfdesc.Height)
-            return D3DERR_INVALIDCALL;
-        if (dst_rect->left < 0 || dst_rect->top < 0)
-            return D3DERR_INVALIDCALL;
+        }
         dst_size.width = dst_rect->right - dst_rect->left;
         dst_size.height = dst_rect->bottom - dst_rect->top;
         if (!dst_size.width || !dst_size.height)
@@ -1517,12 +1524,12 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(IDirect3DSurface9 *dst_surface,
     dst_size.depth = 1;
 
     srcformatdesc = get_format_info(src_format);
-    if (srcformatdesc->type == FORMAT_UNKNOWN)
-        return E_NOTIMPL;
-
     destformatdesc = get_format_info(surfdesc.Format);
-    if (destformatdesc->type == FORMAT_UNKNOWN)
+    if (srcformatdesc->type == FORMAT_UNKNOWN || destformatdesc->type == FORMAT_UNKNOWN)
+    {
+        FIXME("Unsupported pixel format conversion %#x -> %#x\n", src_format, surfdesc.Format);
         return E_NOTIMPL;
+    }
 
     if (src_format == surfdesc.Format
             && dst_size.width == src_size.width
@@ -1564,14 +1571,13 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(IDirect3DSurface9 *dst_surface,
     }
     else /* Stretching or format conversion. */
     {
-        if (srcformatdesc->bytes_per_pixel > 4)
+        if (srcformatdesc->bytes_per_pixel > 4 || destformatdesc->bytes_per_pixel > 4
+                || srcformatdesc->block_height != 1 || srcformatdesc->block_width != 1
+                || destformatdesc->block_height != 1 || destformatdesc->block_width != 1)
+        {
+            FIXME("Format conversion missing %#x -> %#x\n", src_format, surfdesc.Format);
             return E_NOTIMPL;
-        if (destformatdesc->bytes_per_pixel > 4)
-            return E_NOTIMPL;
-        if (srcformatdesc->block_height != 1 || srcformatdesc->block_width != 1)
-            return E_NOTIMPL;
-        if (destformatdesc->block_height != 1 || destformatdesc->block_width != 1)
-            return E_NOTIMPL;
+        }
 
         if (FAILED(hr = IDirect3DSurface9_LockRect(dst_surface, &lockrect, dst_rect, 0)))
             return D3DXERR_INVALIDDATA;
@@ -1853,6 +1859,8 @@ HRESULT WINAPI D3DXSaveSurfaceToFileInMemory(ID3DXBuffer **dst_buffer, D3DXIMAGE
                 || src_format_desc->block_height != 1 || src_format_desc->block_width != 1
                 || dst_format_desc->block_height != 1 || dst_format_desc->block_width != 1)
             {
+                FIXME("Format conversion missing %#x -> %#x\n",
+                        src_surface_desc.Format, d3d_pixel_format);
                 hr = E_NOTIMPL;
                 goto cleanup;
             }
