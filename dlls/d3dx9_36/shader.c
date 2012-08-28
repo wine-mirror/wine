@@ -942,20 +942,18 @@ static HRESULT WINAPI ID3DXConstantTableImpl_GetConstantDesc(ID3DXConstantTable 
 static UINT WINAPI ID3DXConstantTableImpl_GetSamplerIndex(ID3DXConstantTable *iface, D3DXHANDLE constant)
 {
     struct ID3DXConstantTableImpl *This = impl_from_ID3DXConstantTable(iface);
-    D3DXCONSTANT_DESC desc;
-    UINT count = 1;
-    HRESULT res;
+    struct ctab_constant *c = get_valid_constant(This, constant);
 
     TRACE("(%p)->(%p)\n", This, constant);
 
-    res = ID3DXConstantTable_GetConstantDesc(iface, constant, &desc, &count);
-    if (FAILED(res))
+    if (!c || c->desc.RegisterSet != D3DXRS_SAMPLER)
+    {
+        WARN("Invalid argument specified\n");
         return (UINT)-1;
+    }
 
-    if (desc.RegisterSet != D3DXRS_SAMPLER)
-        return (UINT)-1;
-
-    return desc.RegisterIndex;
+    TRACE("Returning RegisterIndex %u\n", c->desc.RegisterIndex);
+    return c->desc.RegisterIndex;
 }
 
 static D3DXHANDLE WINAPI ID3DXConstantTableImpl_GetConstant(ID3DXConstantTable *iface, D3DXHANDLE constant, UINT index)
