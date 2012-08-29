@@ -71,7 +71,7 @@ static HINSTANCE xul_handle = NULL;
 static nsIServiceManager *pServMgr = NULL;
 static nsIComponentManager *pCompMgr = NULL;
 static nsIMemory *nsmem = NULL;
-static nsIFile *profile_directory;
+static nsIFile *profile_directory, *plugin_directory;
 
 static const WCHAR wszNsContainer[] = {'N','s','C','o','n','t','a','i','n','e','r',0};
 
@@ -91,6 +91,112 @@ nsresult create_nsfile(const PRUnichar *path, nsIFile **ret)
     if(NS_FAILED(nsres))
         WARN("NS_NewLocalFile failed: %08x\n", nsres);
     return nsres;
+}
+
+typedef struct {
+    nsISimpleEnumerator nsISimpleEnumerator_iface;
+    LONG ref;
+    nsISupports *value;
+} nsSingletonEnumerator;
+
+static inline nsSingletonEnumerator *impl_from_nsISimpleEnumerator(nsISimpleEnumerator *iface)
+{
+    return CONTAINING_RECORD(iface, nsSingletonEnumerator, nsISimpleEnumerator_iface);
+}
+
+static nsresult NSAPI nsSingletonEnumerator_QueryInterface(nsISimpleEnumerator *iface, nsIIDRef riid, void **ppv)
+{
+    nsSingletonEnumerator *This = impl_from_nsISimpleEnumerator(iface);
+
+    if(IsEqualGUID(&IID_nsISupports, riid)) {
+        TRACE("(%p)->(IID_nsISupports %p)\n", This, ppv);
+        *ppv = &This->nsISimpleEnumerator_iface;
+    }else if(IsEqualGUID(&IID_nsISimpleEnumerator, riid)) {
+        TRACE("(%p)->(IID_nsISimpleEnumerator %p)\n", This, ppv);
+        *ppv = &This->nsISimpleEnumerator_iface;
+    }else {
+        TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        *ppv = NULL;
+        return NS_NOINTERFACE;
+    }
+
+    nsISupports_AddRef((nsISupports*)*ppv);
+    return NS_OK;
+}
+
+static nsrefcnt NSAPI nsSingletonEnumerator_AddRef(nsISimpleEnumerator *iface)
+{
+    nsSingletonEnumerator *This = impl_from_nsISimpleEnumerator(iface);
+    nsrefcnt ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static nsrefcnt NSAPI nsSingletonEnumerator_Release(nsISimpleEnumerator *iface)
+{
+    nsSingletonEnumerator *This = impl_from_nsISimpleEnumerator(iface);
+    nsrefcnt ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref) {
+        if(This->value)
+            nsISupports_Release(This->value);
+        heap_free(This);
+    }
+
+    return ref;
+}
+
+static nsresult NSAPI nsSingletonEnumerator_HasMoreElements(nsISimpleEnumerator *iface, cpp_bool *_retval)
+{
+    nsSingletonEnumerator *This = impl_from_nsISimpleEnumerator(iface);
+
+    TRACE("(%p)->()\n", This);
+
+    *_retval = This->value != NULL;
+    return NS_OK;
+}
+
+static nsresult NSAPI nsSingletonEnumerator_GetNext(nsISimpleEnumerator *iface, nsISupports **_retval)
+{
+    nsSingletonEnumerator *This = impl_from_nsISimpleEnumerator(iface);
+
+    TRACE("(%p)->()\n", This);
+
+    if(!This->value)
+        return NS_ERROR_UNEXPECTED;
+
+    *_retval = This->value;
+    This->value = NULL;
+    return NS_OK;
+}
+
+static const nsISimpleEnumeratorVtbl nsSingletonEnumeratorVtbl = {
+    nsSingletonEnumerator_QueryInterface,
+    nsSingletonEnumerator_AddRef,
+    nsSingletonEnumerator_Release,
+    nsSingletonEnumerator_HasMoreElements,
+    nsSingletonEnumerator_GetNext
+};
+
+static nsISimpleEnumerator *create_singleton_enumerator(nsISupports *value)
+{
+    nsSingletonEnumerator *ret;
+
+    ret = heap_alloc(sizeof(*ret));
+    if(!ret)
+        return NULL;
+
+    ret->nsISimpleEnumerator_iface.lpVtbl = &nsSingletonEnumeratorVtbl;
+    ret->ref = 1;
+
+    if(value)
+        nsISupports_AddRef(value);
+    ret->value = value;
+    return &ret->nsISimpleEnumerator_iface;
 }
 
 static nsresult NSAPI nsDirectoryServiceProvider2_QueryInterface(nsIDirectoryServiceProvider2 *iface,
@@ -184,6 +290,38 @@ static nsresult NSAPI nsDirectoryServiceProvider2_GetFiles(nsIDirectoryServicePr
         const char *prop, nsISimpleEnumerator **_retval)
 {
     TRACE("(%s %p)\n", debugstr_a(prop), _retval);
+
+    if(!strcmp(prop, "APluginsDL")) {
+        WCHAR plugin_path[MAX_PATH];
+        nsIFile *file;
+        int len;
+        nsresult nsres;
+
+        if(!plugin_directory) {
+            static const WCHAR gecko_pluginW[] = {'\\','g','e','c','k','o','\\','p','l','u','g','i','n',0};
+
+            len = GetSystemDirectoryW(plugin_path, (sizeof(plugin_path)-sizeof(gecko_pluginW))/sizeof(WCHAR)+1);
+            if(!len)
+                return NS_ERROR_UNEXPECTED;
+
+            strcpyW(plugin_path+len, gecko_pluginW);
+            nsres = create_nsfile(plugin_path, &plugin_directory);
+            if(NS_FAILED(nsres))
+                return nsres;
+        }
+
+        nsres = nsIFile_Clone(plugin_directory, &file);
+        if(NS_FAILED(nsres))
+            return nsres;
+
+        *_retval = create_singleton_enumerator((nsISupports*)file);
+        nsIFile_Release(file);
+        if(!*_retval)
+            return NS_ERROR_OUT_OF_MEMORY;
+
+        return NS_OK;
+    }
+
     return NS_ERROR_FAILURE;
 }
 
@@ -300,8 +438,6 @@ static void set_environment(LPCWSTR gre_path)
     static const WCHAR nspr_log_modulesW[] =
         {'N','S','P','R','_','L','O','G','_','M','O','D','U','L','E','S',0};
     static const WCHAR debug_formatW[] = {'a','l','l',':','%','d',0};
-    static const WCHAR moz_plugin_pathW[] = {'M','O','Z','_','P','L','U','G','I','N','_','P','A','T','H',0};
-    static const WCHAR gecko_pluginW[] = {'\\','g','e','c','k','o','\\','p','l','u','g','i','n',0};
 
     /* We have to modify PATH as XPCOM loads other DLLs from this directory. */
     GetEnvironmentVariableW(pathW, path_env, sizeof(path_env)/sizeof(WCHAR));
@@ -321,12 +457,6 @@ static void set_environment(LPCWSTR gre_path)
 
     sprintfW(buf, debug_formatW, debug_level);
     SetEnvironmentVariableW(nspr_log_modulesW, buf);
-
-    len = GetSystemDirectoryW(path_env, (sizeof(path_env)-sizeof(gecko_pluginW))/sizeof(WCHAR)+1);
-    if(len) {
-        strcpyW(path_env+len, gecko_pluginW);
-        SetEnvironmentVariableW(moz_plugin_pathW, path_env);
-    }
 }
 
 static BOOL load_xul(const PRUnichar *gre_path)
@@ -942,6 +1072,11 @@ void close_gecko(void)
     if(profile_directory) {
         nsIFile_Release(profile_directory);
         profile_directory = NULL;
+    }
+
+    if(plugin_directory) {
+        nsIFile_Release(plugin_directory);
+        plugin_directory = NULL;
     }
 
     if(pCompMgr)
