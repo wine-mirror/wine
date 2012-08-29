@@ -1807,21 +1807,9 @@ void CDECL X11DRV_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style )
     DWORD changed;
 
     if (hwnd == GetDesktopWindow()) return;
-    changed = style->styleNew ^ style->styleOld;
-
-    /* if WS_VISIBLE was set through WM_SETREDRAW, map the window if it's the first time */
-    if (offset == GWL_STYLE && (changed & WS_VISIBLE) && (style->styleNew & WS_VISIBLE) && !data)
-    {
-        if (!(data = X11DRV_create_win_data( hwnd ))) return;
-
-        if (data->whole_window && is_window_rect_mapped( &data->window_rect ))
-        {
-            Display *display = thread_display();
-            set_wm_hints( display, data );
-            if (!data->mapped) map_window( display, data, style->styleNew );
-        }
-    }
     if (!data || !data->whole_window) return;
+
+    changed = style->styleNew ^ style->styleOld;
 
     if (offset == GWL_STYLE && (changed & WS_DISABLED))
         set_wm_hints( thread_display(), data );

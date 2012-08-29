@@ -641,8 +641,16 @@ ULONG WIN_SetStyle( HWND hwnd, ULONG set_bits, ULONG clear_bits )
     WIN_ReleasePtr( win );
     if (ok)
     {
+        if ((style.styleOld ^ style.styleNew) & WS_VISIBLE)
+        {
+            RECT window_rect, client_rect;
+            UINT flags = style.styleNew & WS_VISIBLE ? SWP_SHOWWINDOW : 0; /* we don't hide it */
+
+            WIN_GetRectangles( hwnd, COORDS_PARENT, &window_rect, &client_rect );
+            set_window_pos( hwnd, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE |
+                            SWP_NOZORDER | SWP_NOACTIVATE | flags, &window_rect, &client_rect, NULL );
+        }
         USER_Driver->pSetWindowStyle( hwnd, GWL_STYLE, &style );
-        if ((style.styleOld ^ style.styleNew) & WS_VISIBLE) invalidate_dce( hwnd, NULL );
     }
     return style.styleOld;
 }
@@ -2334,6 +2342,15 @@ LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, UINT size, LONG_PTR newval, B
     {
         style.styleOld = retval;
         style.styleNew = newval;
+        if (offset == GWL_STYLE && ((style.styleOld ^ style.styleNew) & WS_VISIBLE))
+        {
+            RECT window_rect, client_rect;
+            UINT flags = style.styleNew & WS_VISIBLE ? SWP_SHOWWINDOW : 0; /* we don't hide it */
+
+            WIN_GetRectangles( hwnd, COORDS_PARENT, &window_rect, &client_rect );
+            set_window_pos( hwnd, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE |
+                            SWP_NOZORDER | SWP_NOACTIVATE | flags, &window_rect, &client_rect, NULL );
+        }
         USER_Driver->pSetWindowStyle( hwnd, offset, &style );
         SendMessageW( hwnd, WM_STYLECHANGED, offset, (LPARAM)&style );
     }
