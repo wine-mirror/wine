@@ -1367,17 +1367,8 @@ INT WINAPI ExcludeUpdateRgn( HDC hdc, HWND hwnd )
 }
 
 
-/*************************************************************************
- *		ScrollWindowEx (USER32.@)
- *
- * Note: contrary to what the doc says, pixels that are scrolled from the
- *      outside of clipRect to the inside are NOT painted.
- *
- */
-INT WINAPI ScrollWindowEx( HWND hwnd, INT dx, INT dy,
-                           const RECT *rect, const RECT *clipRect,
-                           HRGN hrgnUpdate, LPRECT rcUpdate,
-                           UINT flags )
+static INT scroll_window( HWND hwnd, INT dx, INT dy, const RECT *rect, const RECT *clipRect,
+                          HRGN hrgnUpdate, LPRECT rcUpdate, UINT flags, BOOL is_ex )
 {
     INT   retVal = NULLREGION;
     BOOL  bOwnRgn = TRUE;
@@ -1416,11 +1407,12 @@ INT WINAPI ScrollWindowEx( HWND hwnd, INT dx, INT dy,
     newCaretPos.x = newCaretPos.y = 0;
 
     if( !IsRectEmpty(&cliprc) && (dx || dy)) {
-        DWORD dcxflags = DCX_CACHE;
+        DWORD dcxflags = 0;
         DWORD style = GetWindowLongW( hwnd, GWL_STYLE );
 
         hwndCaret = fix_caret(hwnd, &rc, dx, dy, flags, &moveCaret, &newCaretPos);
 
+        if (is_ex) dcxflags |= DCX_CACHE;
         if( style & WS_CLIPSIBLINGS) dcxflags |= DCX_CLIPSIBLINGS;
         if( GetClassLongW( hwnd, GCL_STYLE ) & CS_PARENTDC)
             dcxflags |= DCX_PARENTCLIP;
@@ -1523,15 +1515,29 @@ INT WINAPI ScrollWindowEx( HWND hwnd, INT dx, INT dy,
 
 
 /*************************************************************************
+ *		ScrollWindowEx (USER32.@)
+ *
+ * Note: contrary to what the doc says, pixels that are scrolled from the
+ *      outside of clipRect to the inside are NOT painted.
+ *
+ */
+INT WINAPI ScrollWindowEx( HWND hwnd, INT dx, INT dy,
+                           const RECT *rect, const RECT *clipRect,
+                           HRGN hrgnUpdate, LPRECT rcUpdate,
+                           UINT flags )
+{
+    return scroll_window( hwnd, dx, dy, rect, clipRect, hrgnUpdate, rcUpdate, flags, TRUE );
+}
+
+/*************************************************************************
  *		ScrollWindow (USER32.@)
  *
  */
 BOOL WINAPI ScrollWindow( HWND hwnd, INT dx, INT dy,
                           const RECT *rect, const RECT *clipRect )
 {
-    return (ERROR != ScrollWindowEx( hwnd, dx, dy, rect, clipRect, 0, NULL,
-                                     (rect ? 0 : SW_SCROLLCHILDREN) |
-                                     SW_INVALIDATE | SW_ERASE ));
+    return scroll_window( hwnd, dx, dy, rect, clipRect, 0, NULL,
+                          SW_INVALIDATE | SW_ERASE | (rect ? 0 : SW_SCROLLCHILDREN), FALSE ) != ERROR;
 }
 
 
