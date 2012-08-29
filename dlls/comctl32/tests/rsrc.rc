@@ -71,6 +71,13 @@ BEGIN
     LTEXT           "Some Text",-1,115,1,195,24
 END
 
+IDD_PROP_PAGE_ERROR DIALOG 0, 0, 100, 100
+STYLE WS_POPUP | WS_CAPTION | WS_CLIPSIBLINGS | WS_VISIBLE
+CLASS "Non-existing class"
+FONT 8, "MS Shell Dlg"
+{
+}
+
 STRINGTABLE 
 {
     IDS_TBADD1           "abc"
