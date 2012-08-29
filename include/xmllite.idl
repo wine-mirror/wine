@@ -88,6 +88,23 @@ cpp_quote("    XmlReadState_EndOfFile   = 3,")
 cpp_quote("    XmlReadState_Closed      = 4")
 cpp_quote("} XmlReadState;")
 
+/* conformance levels */
+cpp_quote("typedef enum XmlConformanceLevel")
+cpp_quote("{")
+cpp_quote("    XmlConformanceLevel_Auto     = 0,")
+cpp_quote("    XmlConformanceLevel_Fragment = 1,")
+cpp_quote("    XmlConformanceLevel_Document = 2,")
+cpp_quote("    _XmlConformanceLevel_Last    = 2")
+cpp_quote("} XmlConformanceLevel;")
+
+/* DTD processing mode */
+cpp_quote("typedef enum DtdProcessing")
+cpp_quote("{")
+cpp_quote("    DtdProcessing_Prohibit = 0,")
+cpp_quote("    DtdProcessing_Parse    = DtdProcessing_Prohibit + 1,")
+cpp_quote("    _DtdProcessing_Last    = DtdProcessing_Parse")
+cpp_quote("} DtdProcessing;")
+
 /* IXmlReader properties */
 cpp_quote("typedef enum XmlReaderProperty")
 cpp_quote("{")

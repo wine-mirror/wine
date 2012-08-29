@@ -350,18 +350,31 @@ static void test_reader_create(void)
     HRESULT hr;
     IXmlReader *reader;
     IUnknown *input;
+    DtdProcessing dtd;
 
     /* crashes native */
     if (0)
     {
         pCreateXmlReader(&IID_IXmlReader, NULL, NULL);
-        pCreateXmlReader(NULL, (LPVOID*)&reader, NULL);
+        pCreateXmlReader(NULL, (void**)&reader, NULL);
     }
 
-    hr = pCreateXmlReader(&IID_IXmlReader, (LPVOID*)&reader, NULL);
+    hr = pCreateXmlReader(&IID_IXmlReader, (void**)&reader, NULL);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
     test_read_state(reader, XmlReadState_Closed, -1, FALSE);
+
+    dtd = 2;
+    hr = IXmlReader_GetProperty(reader, XmlReaderProperty_DtdProcessing, (LONG_PTR*)&dtd);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(dtd == DtdProcessing_Prohibit, "got %d\n", dtd);
+
+    dtd = 2;
+    hr = IXmlReader_SetProperty(reader, XmlReaderProperty_DtdProcessing, dtd);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
+
+    hr = IXmlReader_SetProperty(reader, XmlReaderProperty_DtdProcessing, -1);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
 
     /* Null input pointer, releases previous input */
     hr = IXmlReader_SetInput(reader, NULL);

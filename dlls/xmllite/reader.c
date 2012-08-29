@@ -44,6 +44,7 @@ typedef struct _xmlreader
     ISequentialStream *stream;/* stored as sequential stream, cause currently
                                  optimizations possible with IStream aren't implemented */
     XmlReadState state;
+    DtdProcessing dtdmode;
     UINT line, pos;           /* reader position in XML stream */
 } xmlreader;
 
@@ -104,7 +105,7 @@ static ULONG WINAPI xmlreader_Release(IXmlReader *iface)
     if (ref == 0)
     {
         if (This->input)  IUnknown_Release(This->input);
-        if (This->stream) IUnknown_Release(This->stream);
+        if (This->stream) ISequentialStream_Release(This->stream);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -126,7 +127,7 @@ static HRESULT WINAPI xmlreader_SetInput(IXmlReader* iface, IUnknown *input)
 
     if (This->stream)
     {
-        IUnknown_Release(This->stream);
+        ISequentialStream_Release(This->stream);
         This->stream = NULL;
     }
 
@@ -167,6 +168,9 @@ static HRESULT WINAPI xmlreader_GetProperty(IXmlReader* iface, UINT property, LO
 
     switch (property)
     {
+        case XmlReaderProperty_DtdProcessing:
+            *value = This->dtdmode;
+            break;
         case XmlReaderProperty_ReadState:
             *value = This->state;
             break;
@@ -180,8 +184,22 @@ static HRESULT WINAPI xmlreader_GetProperty(IXmlReader* iface, UINT property, LO
 
 static HRESULT WINAPI xmlreader_SetProperty(IXmlReader* iface, UINT property, LONG_PTR value)
 {
-    FIXME("(%p %u %lu): stub\n", iface, property, value);
-    return E_NOTIMPL;
+    xmlreader *This = impl_from_IXmlReader(iface);
+
+    TRACE("(%p %u %lu)\n", iface, property, value);
+
+    switch (property)
+    {
+        case XmlReaderProperty_DtdProcessing:
+            if (value < 0 || value > _DtdProcessing_Last) return E_INVALIDARG;
+            This->dtdmode = value;
+            break;
+        default:
+            FIXME("Unimplemented property (%u)\n", property);
+            return E_NOTIMPL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlreader_Read(IXmlReader* iface, XmlNodeType *node_type)
@@ -455,6 +473,7 @@ HRESULT WINAPI CreateXmlReader(REFIID riid, void **pObject, IMalloc *pMalloc)
     reader->stream = NULL;
     reader->input = NULL;
     reader->state = XmlReadState_Closed;
+    reader->dtdmode = DtdProcessing_Prohibit;
     reader->line  = reader->pos = 0;
 
     *pObject = &reader->IXmlReader_iface;
