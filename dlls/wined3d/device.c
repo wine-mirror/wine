@@ -5161,13 +5161,16 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     }
 
     stateblock_unbind_resources(device->stateBlock);
-    if (swapchain->back_buffers && swapchain->back_buffers[0])
-        wined3d_device_set_render_target(device, 0, swapchain->back_buffers[0], FALSE);
-    else
-        wined3d_device_set_render_target(device, 0, swapchain->front_buffer, FALSE);
-    for (i = 1; i < device->adapter->gl_info.limits.buffers; ++i)
+    if (device->fb.render_targets)
     {
-        wined3d_device_set_render_target(device, i, NULL, FALSE);
+        if (swapchain->back_buffers && swapchain->back_buffers[0])
+            wined3d_device_set_render_target(device, 0, swapchain->back_buffers[0], FALSE);
+        else
+            wined3d_device_set_render_target(device, 0, swapchain->front_buffer, FALSE);
+        for (i = 1; i < device->adapter->gl_info.limits.buffers; ++i)
+        {
+            wined3d_device_set_render_target(device, i, NULL, FALSE);
+        }
     }
     wined3d_device_set_depth_stencil(device, NULL);
 
