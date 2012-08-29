@@ -205,12 +205,13 @@ extern HMODULE user32_module DECLSPEC_HIDDEN;
 extern HBRUSH SYSCOLOR_55AABrush DECLSPEC_HIDDEN;
 
 struct dce;
+struct tagWND;
 
 extern BOOL CLIPBOARD_ReleaseOwner(void) DECLSPEC_HIDDEN;
 extern BOOL FOCUS_MouseActivate( HWND hwnd ) DECLSPEC_HIDDEN;
 extern BOOL set_capture_window( HWND hwnd, UINT gui_flags, HWND *prev_ret ) DECLSPEC_HIDDEN;
 extern void free_dce( struct dce *dce, HWND hwnd ) DECLSPEC_HIDDEN;
-extern void invalidate_dce( HWND hwnd, const RECT *rect ) DECLSPEC_HIDDEN;
+extern void invalidate_dce( struct tagWND *win, const RECT *rect ) DECLSPEC_HIDDEN;
 extern void erase_now( HWND hwnd, UINT rdw_flags ) DECLSPEC_HIDDEN;
 extern void *get_hook_proc( void *proc, const WCHAR *module ) DECLSPEC_HIDDEN;
 extern LRESULT call_current_hook( HHOOK hhook, INT code, WPARAM wparam, LPARAM lparam ) DECLSPEC_HIDDEN;
