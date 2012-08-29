@@ -93,7 +93,7 @@ nsresult create_nsfile(const PRUnichar *path, nsIFile **ret)
     return nsres;
 }
 
-static nsresult NSAPI nsDirectoryServiceProvider_QueryInterface(nsIDirectoryServiceProvider *iface,
+static nsresult NSAPI nsDirectoryServiceProvider2_QueryInterface(nsIDirectoryServiceProvider2 *iface,
         nsIIDRef riid, void **result)
 {
     if(IsEqualGUID(&IID_nsISupports, riid)) {
@@ -101,6 +101,9 @@ static nsresult NSAPI nsDirectoryServiceProvider_QueryInterface(nsIDirectoryServ
         *result = iface;
     }else if(IsEqualGUID(&IID_nsIDirectoryServiceProvider, riid)) {
         TRACE("(IID_nsIDirectoryServiceProvider %p)\n", result);
+        *result = iface;
+    }else if(IsEqualGUID(&IID_nsIDirectoryServiceProvider2, riid)) {
+        TRACE("(IID_nsIDirectoryServiceProvider2 %p)\n", result);
         *result = iface;
     }else {
         WARN("(%s %p)\n", debugstr_guid(riid), result);
@@ -112,12 +115,12 @@ static nsresult NSAPI nsDirectoryServiceProvider_QueryInterface(nsIDirectoryServ
     return NS_OK;
 }
 
-static nsrefcnt NSAPI nsDirectoryServiceProvider_AddRef(nsIDirectoryServiceProvider *iface)
+static nsrefcnt NSAPI nsDirectoryServiceProvider2_AddRef(nsIDirectoryServiceProvider2 *iface)
 {
     return 2;
 }
 
-static nsrefcnt NSAPI nsDirectoryServiceProvider_Release(nsIDirectoryServiceProvider *iface)
+static nsrefcnt NSAPI nsDirectoryServiceProvider2_Release(nsIDirectoryServiceProvider2 *iface)
 {
     return 1;
 }
@@ -157,7 +160,7 @@ static nsresult create_profile_directory(void)
     return nsres;
 }
 
-static nsresult NSAPI nsDirectoryServiceProvider_GetFile(nsIDirectoryServiceProvider *iface,
+static nsresult NSAPI nsDirectoryServiceProvider2_GetFile(nsIDirectoryServiceProvider2 *iface,
         const char *prop, cpp_bool *persistent, nsIFile **_retval)
 {
     TRACE("(%s %p %p)\n", debugstr_a(prop), persistent, _retval);
@@ -177,15 +180,23 @@ static nsresult NSAPI nsDirectoryServiceProvider_GetFile(nsIDirectoryServiceProv
     return NS_ERROR_FAILURE;
 }
 
-static const nsIDirectoryServiceProviderVtbl nsDirectoryServiceProviderVtbl = {
-    nsDirectoryServiceProvider_QueryInterface,
-    nsDirectoryServiceProvider_AddRef,
-    nsDirectoryServiceProvider_Release,
-    nsDirectoryServiceProvider_GetFile
+static nsresult NSAPI nsDirectoryServiceProvider2_GetFiles(nsIDirectoryServiceProvider2 *iface,
+        const char *prop, nsISimpleEnumerator **_retval)
+{
+    TRACE("(%s %p)\n", debugstr_a(prop), _retval);
+    return NS_ERROR_FAILURE;
+}
+
+static const nsIDirectoryServiceProvider2Vtbl nsDirectoryServiceProvider2Vtbl = {
+    nsDirectoryServiceProvider2_QueryInterface,
+    nsDirectoryServiceProvider2_AddRef,
+    nsDirectoryServiceProvider2_Release,
+    nsDirectoryServiceProvider2_GetFile,
+    nsDirectoryServiceProvider2_GetFiles
 };
 
-static nsIDirectoryServiceProvider nsDirectoryServiceProvider =
-    { &nsDirectoryServiceProviderVtbl };
+static nsIDirectoryServiceProvider2 nsDirectoryServiceProvider2 =
+    { &nsDirectoryServiceProvider2Vtbl };
 
 static LRESULT WINAPI nsembed_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -544,7 +555,7 @@ static BOOL init_xpcom(const PRUnichar *gre_path)
         return FALSE;
     }
 
-    nsres = NS_InitXPCOM2(&pServMgr, gre_dir, &nsDirectoryServiceProvider);
+    nsres = NS_InitXPCOM2(&pServMgr, gre_dir, (nsIDirectoryServiceProvider*)&nsDirectoryServiceProvider2);
     if(NS_FAILED(nsres)) {
         ERR("NS_InitXPCOM2 failed: %08x\n", nsres);
         FreeLibrary(xul_handle);

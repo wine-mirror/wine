@@ -2517,6 +2517,16 @@ interface nsIDirectoryServiceProvider : nsISupports
 
 [
     object,
+    uuid(2f977d4b-5485-11d4-87e2-0010a4e75ef2),
+    local
+]
+interface nsIDirectoryServiceProvider2 : nsIDirectoryServiceProvider
+{
+    nsresult GetFiles(const char *prop, nsISimpleEnumerator **_retval);
+}
+
+[
+    object,
     uuid(15fd6940-8ea7-11d3-93ad-00104ba0fd40),
     local
 ]
