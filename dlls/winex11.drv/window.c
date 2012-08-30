@@ -1149,8 +1149,7 @@ static Window get_owner_whole_window( HWND owner, BOOL force_managed )
 
     if (!(data = X11DRV_get_win_data( owner )))
     {
-        if (GetWindowThreadProcessId( owner, NULL ) != GetCurrentThreadId() ||
-            !(data = X11DRV_create_win_data( owner )))
+        if (!(data = X11DRV_create_win_data( owner )))
             return (Window)GetPropA( owner, whole_window_prop );
     }
     else if (!data->managed && force_managed)  /* make it managed */
@@ -2000,6 +1999,8 @@ struct x11drv_win_data *X11DRV_create_win_data( HWND hwnd )
 
     /* don't create win data for HWND_MESSAGE windows */
     if (parent != GetDesktopWindow() && !GetAncestor( parent, GA_PARENT )) return NULL;
+
+    if (GetWindowThreadProcessId( hwnd, NULL ) != GetCurrentThreadId()) return NULL;
 
     display = thread_init_display();
     if (!(data = alloc_win_data( display, hwnd ))) return NULL;
