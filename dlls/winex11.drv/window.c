@@ -2218,10 +2218,7 @@ void CDECL X11DRV_GetDC( HDC hdc, HWND hwnd, HWND top, const RECT *win_rect,
         {
             escape.drawable = data->icon_window;
         }
-        else if (flags & DCX_WINDOW)
-            escape.drawable = data ? data->whole_window : X11DRV_get_whole_window( hwnd );
-        else
-            escape.drawable = escape.gl_drawable;
+        else escape.drawable = data ? data->whole_window : X11DRV_get_whole_window( hwnd );
 
         if (escape.gl_drawable) escape.gl_type = DC_GL_WINDOW;
         /* special case: when repainting the root window, clip out top-level windows */
@@ -2231,21 +2228,22 @@ void CDECL X11DRV_GetDC( HDC hdc, HWND hwnd, HWND top, const RECT *win_rect,
     {
         /* find the first ancestor that has a drawable */
         for (parent = hwnd; parent && parent != top; parent = GetAncestor( parent, GA_PARENT ))
-            if ((escape.drawable = X11DRV_get_client_window( parent ))) break;
+            if ((escape.drawable = X11DRV_get_whole_window( parent ))) break;
 
         if (escape.drawable)
         {
             POINT pt = { 0, 0 };
-            MapWindowPoints( top, parent, &pt, 1 );
+            MapWindowPoints( 0, parent, &pt, 1 );
+            escape.dc_rect = *win_rect;
             OffsetRect( &escape.dc_rect, pt.x, pt.y );
+            if (flags & DCX_CLIPCHILDREN) escape.mode = ClipByChildren;
         }
-        else escape.drawable = X11DRV_get_client_window( top );
+        else escape.drawable = X11DRV_get_whole_window( top );
 
         escape.fbconfig_id = data ? data->fbconfig_id : (XID)GetPropA( hwnd, fbconfig_id_prop );
         escape.gl_drawable = data ? data->gl_drawable : (Drawable)GetPropA( hwnd, gl_drawable_prop );
         escape.pixmap      = data ? data->pixmap : (Pixmap)GetPropA( hwnd, pixmap_prop );
         if (escape.gl_drawable) escape.gl_type = escape.pixmap ? DC_GL_PIXMAP_WIN : DC_GL_CHILD_WIN;
-        if (flags & DCX_CLIPCHILDREN) escape.mode = ClipByChildren;
     }
 
     ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
