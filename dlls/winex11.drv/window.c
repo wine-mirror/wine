@@ -77,19 +77,28 @@ XContext winContext = 0;
 /* X context to associate a struct x11drv_win_data to an hwnd */
 XContext win_data_context = 0;
 
+/* X context to associate a struct gl_drawable to an hwnd */
+XContext gl_drawable_context = 0;
+
 /* time of last user event and window where it's stored */
 static Time last_user_time;
 static Window user_time_window;
 
 static const char foreign_window_prop[] = "__wine_x11_foreign_window";
 static const char whole_window_prop[] = "__wine_x11_whole_window";
-static const char client_window_prop[]= "__wine_x11_client_window";
 static const char icon_window_prop[]  = "__wine_x11_icon_window";
 static const char clip_window_prop[]  = "__wine_x11_clip_window";
-static const char fbconfig_id_prop[]  = "__wine_x11_fbconfig_id";
-static const char gl_drawable_prop[]  = "__wine_x11_gl_drawable";
-static const char pixmap_prop[]       = "__wine_x11_pixmap";
 static const char managed_prop[]      = "__wine_x11_managed";
+
+struct gl_drawable
+{
+    enum dc_gl_type type;         /* type of GL surface */
+    Drawable        drawable;     /* drawable for rendering to the client area */
+    Pixmap          pixmap;       /* base pixmap if drawable is a GLXPixmap */
+    Colormap        colormap;     /* colormap used for the drawable */
+    XID             fbconfig_id;  /* fbconfig for the drawable */
+    XVisualInfo    *visual;       /* information about the GL visual */
+};
 
 
 /***********************************************************************
@@ -372,7 +381,6 @@ static Window create_client_window( Display *display, struct x11drv_win_data *da
 
     XMapWindow( display, data->client_window );
     XSaveContext( display, data->client_window, winContext, (char *)data->hwnd );
-    SetPropA( data->hwnd, client_window_prop, (HANDLE)data->client_window );
     return data->client_window;
 }
 
@@ -512,43 +520,67 @@ static void sync_window_text( Display *display, Window win, const WCHAR *text )
 
 
 /***********************************************************************
+ *              free_gl_drawable
+ */
+static void free_gl_drawable( struct gl_drawable *gl )
+{
+    switch (gl->type)
+    {
+    case DC_GL_CHILD_WIN:
+        XDestroyWindow( gdi_display, gl->drawable );
+        XFreeColormap( gdi_display, gl->colormap );
+        break;
+    case DC_GL_PIXMAP_WIN:
+        destroy_glxpixmap( gdi_display, gl->drawable );
+        XFreePixmap( gdi_display, gl->pixmap );
+        break;
+    default:
+        break;
+    }
+    XFree( gl->visual );
+    HeapFree( GetProcessHeap(), 0, gl );
+}
+
+
+/***********************************************************************
  *              set_win_format
  */
 static BOOL set_win_format( HWND hwnd, XID fbconfig_id )
 {
     struct x11drv_win_data *data;
-    XVisualInfo *vis;
+    struct gl_drawable *gl, *prev;
     int w, h;
 
     if (!(data = X11DRV_get_win_data(hwnd)) &&
         !(data = X11DRV_create_win_data(hwnd))) return FALSE;
 
-    if (!(vis = visual_from_fbconfig_id(fbconfig_id))) return FALSE;
+    gl = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*gl) );
+    gl->fbconfig_id = fbconfig_id;
+    if (!(gl->visual = visual_from_fbconfig_id( fbconfig_id )))
+    {
+        HeapFree( GetProcessHeap(), 0, gl );
+        return FALSE;
+    }
+
+    w = min( max( 1, data->client_rect.right - data->client_rect.left ), 65535 );
+    h = min( max( 1, data->client_rect.bottom - data->client_rect.top ), 65535 );
 
     if (data->whole_window)
     {
         Display *display = thread_display();
         Window client = data->client_window;
 
-        if (vis->visualid != data->visualid)
+        if (gl->visual->visualid != data->visualid)
         {
-            client = create_client_window( display, data, vis );
+            client = create_client_window( display, data, gl->visual );
             TRACE( "re-created client window %lx for %p fbconfig %lx\n", client, data->hwnd, fbconfig_id );
         }
-        XFree(vis);
         XFlush( display );
-        if (client) goto done;
-        return FALSE;
+        gl->type = DC_GL_WINDOW;
+        gl->drawable = client;
     }
-
-    w = data->client_rect.right - data->client_rect.left;
-    h = data->client_rect.bottom - data->client_rect.top;
-
-    if(w <= 0) w = 1;
-    if(h <= 0) h = 1;
-
 #ifdef SONAME_LIBXCOMPOSITE
-    if(usexcomposite)
+    else if(usexcomposite)
     {
         XSetWindowAttributes attrib;
         static Window dummy_parent;
@@ -560,62 +592,55 @@ static BOOL set_win_format( HWND hwnd, XID fbconfig_id )
                                          InputOutput, visual, CWOverrideRedirect, &attrib );
             XMapWindow( gdi_display, dummy_parent );
         }
-        data->colormap = XCreateColormap(gdi_display, dummy_parent, vis->visual,
-                                         (vis->class == PseudoColor ||
-                                          vis->class == GrayScale ||
-                                          vis->class == DirectColor) ?
-                                         AllocAll : AllocNone);
-        attrib.colormap = data->colormap;
+        gl->colormap = XCreateColormap(gdi_display, dummy_parent, gl->visual->visual,
+                                       (gl->visual->class == PseudoColor ||
+                                        gl->visual->class == GrayScale ||
+                                        gl->visual->class == DirectColor) ?
+                                       AllocAll : AllocNone);
+        attrib.colormap = gl->colormap;
         XInstallColormap(gdi_display, attrib.colormap);
 
-        if(data->gl_drawable) XDestroyWindow(gdi_display, data->gl_drawable);
-        data->gl_drawable = XCreateWindow(gdi_display, dummy_parent, 0, 0, w, h, 0,
-                                          vis->depth, InputOutput, vis->visual,
-                                          CWColormap | CWOverrideRedirect,
-                                          &attrib);
-        if(data->gl_drawable)
+        gl->type = DC_GL_CHILD_WIN;
+        gl->drawable = XCreateWindow( gdi_display, dummy_parent, 0, 0, w, h, 0,
+                                      gl->visual->depth, InputOutput, gl->visual->visual,
+                                      CWColormap | CWOverrideRedirect, &attrib );
+        if (gl->drawable)
         {
-            pXCompositeRedirectWindow(gdi_display, data->gl_drawable,
-                                      CompositeRedirectManual);
-            XMapWindow(gdi_display, data->gl_drawable);
+            pXCompositeRedirectWindow(gdi_display, gl->drawable, CompositeRedirectManual);
+            XMapWindow(gdi_display, gl->drawable);
         }
-        XFree(vis);
-        XFlush( gdi_display );
+        else XFreeColormap( gdi_display, gl->colormap );
     }
-    else
 #endif
+    else
     {
         WARN("XComposite is not available, using GLXPixmap hack\n");
 
-        if(data->pixmap) XFreePixmap(gdi_display, data->pixmap);
-        data->pixmap = XCreatePixmap(gdi_display, root_window, w, h, vis->depth);
-        if(!data->pixmap)
+        gl->type = DC_GL_PIXMAP_WIN;
+        gl->pixmap = XCreatePixmap(gdi_display, root_window, w, h, gl->visual->depth);
+        if (gl->pixmap)
         {
-            XFree(vis);
-            return FALSE;
+            gl->drawable = create_glxpixmap( gdi_display, gl->visual, gl->pixmap );
+            if (!gl->drawable) XFreePixmap( gdi_display, gl->pixmap );
+            XFlush( gdi_display );
         }
-
-        if(data->gl_drawable) destroy_glxpixmap(gdi_display, data->gl_drawable);
-        data->gl_drawable = create_glxpixmap(gdi_display, vis, data->pixmap);
-        if(!data->gl_drawable)
-        {
-            XFreePixmap(gdi_display, data->pixmap);
-            data->pixmap = 0;
-        }
-        XFree(vis);
-        XFlush( gdi_display );
-        if (data->pixmap) SetPropA(hwnd, pixmap_prop, (HANDLE)data->pixmap);
     }
 
-    if (!data->gl_drawable) return FALSE;
+    if (!gl->drawable)
+    {
+        XFree( gl->visual );
+        HeapFree( GetProcessHeap(), 0, gl );
+        return FALSE;
+    }
 
-    TRACE("Created GL drawable 0x%lx, using FBConfigID 0x%lx\n",
-          data->gl_drawable, fbconfig_id);
-    SetPropA(hwnd, gl_drawable_prop, (HANDLE)data->gl_drawable);
+    TRACE("Created GL drawable 0x%lx, using FBConfigID 0x%lx\n", gl->drawable, fbconfig_id);
 
-done:
-    data->fbconfig_id = fbconfig_id;
-    SetPropA(hwnd, fbconfig_id_prop, (HANDLE)data->fbconfig_id);
+    if (!XFindContext( gdi_display, (XID)hwnd, gl_drawable_context, (char **)&prev ))
+        free_gl_drawable( prev );
+
+    XSaveContext( gdi_display, (XID)hwnd, gl_drawable_context, (char *)gl );
+    XFlush( gdi_display );
+
     /* force DCE invalidation */
     SetWindowPos( hwnd, 0, 0, 0, 0, 0,
                   SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOSIZE | SWP_NOMOVE |
@@ -628,58 +653,57 @@ done:
  */
 static void sync_gl_drawable(struct x11drv_win_data *data)
 {
+    struct gl_drawable *gl;
     int w = data->client_rect.right - data->client_rect.left;
     int h = data->client_rect.bottom - data->client_rect.top;
-    XVisualInfo *vis;
     Drawable glxp;
     Pixmap pix;
+
+    if (XFindContext( gdi_display, (XID)data->hwnd, gl_drawable_context, (char **)&gl )) return;
+    if (gl->type == DC_GL_WINDOW) return;
 
     if (w <= 0) w = 1;
     if (h <= 0) h = 1;
 
-    TRACE("Resizing GL drawable 0x%lx to %dx%d\n", data->gl_drawable, w, h);
+    TRACE("Resizing GL drawable 0x%lx to %dx%d\n", gl->drawable, w, h);
 #ifdef SONAME_LIBXCOMPOSITE
     if(usexcomposite)
     {
-        XMoveResizeWindow(gdi_display, data->gl_drawable, 0, 0, w, h);
+        XMoveResizeWindow(gdi_display, gl->drawable, 0, 0, w, h);
         return;
     }
 #endif
 
-    if (!(vis = visual_from_fbconfig_id(data->fbconfig_id))) return;
-
-    pix = XCreatePixmap(gdi_display, root_window, w, h, vis->depth);
-    if(!pix)
-    {
-        ERR("Failed to create pixmap for offscreen rendering\n");
-        XFree(vis);
-        return;
-    }
-
-    glxp = create_glxpixmap(gdi_display, vis, pix);
+    pix = XCreatePixmap(gdi_display, root_window, w, h, gl->visual->depth);
+    if(!pix) return;
+    glxp = create_glxpixmap(gdi_display, gl->visual, pix);
     if(!glxp)
     {
-        ERR("Failed to create drawable for offscreen rendering\n");
         XFreePixmap(gdi_display, pix);
-        XFree(vis);
         return;
     }
+    mark_drawable_dirty(gl->drawable, glxp);
 
-    XFree(vis);
+    XFreePixmap(gdi_display, gl->pixmap);
+    destroy_glxpixmap(gdi_display, gl->drawable);
+    TRACE( "Recreated GL drawable %lx to replace %lx\n", glxp, gl->drawable );
 
-    mark_drawable_dirty(data->gl_drawable, glxp);
-
-    XFreePixmap(gdi_display, data->pixmap);
-    destroy_glxpixmap(gdi_display, data->gl_drawable);
-    TRACE( "Recreated GL drawable %lx to replace %lx\n", glxp, data->gl_drawable );
-
-    data->pixmap = pix;
-    data->gl_drawable = glxp;
+    gl->pixmap = pix;
+    gl->drawable = glxp;
 
     XFlush( gdi_display );
+}
 
-    SetPropA(data->hwnd, gl_drawable_prop, (HANDLE)data->gl_drawable);
-    SetPropA(data->hwnd, pixmap_prop, (HANDLE)data->pixmap);
+/***********************************************************************
+ *              destroy_gl_drawable
+ */
+static void destroy_gl_drawable( HWND hwnd )
+{
+    struct gl_drawable *gl;
+
+    if (XFindContext( gdi_display, (XID)hwnd, gl_drawable_context, (char **)&gl )) return;
+    XDeleteContext( gdi_display, (XID)hwnd, gl_drawable_context );
+    free_gl_drawable( gl );
 }
 
 
@@ -1578,7 +1602,7 @@ static void sync_client_position( Display *display, struct x11drv_win_data *data
         XConfigureWindow( display, data->client_window, mask, &changes );
     }
 
-    if (data->gl_drawable && (mask & (CWWidth|CWHeight))) sync_gl_drawable( data );
+    if (mask & (CWWidth|CWHeight)) sync_gl_drawable( data );
 }
 
 
@@ -1768,7 +1792,6 @@ static void destroy_whole_window( Display *display, struct x11drv_win_data *data
     XFree( data->wm_hints );
     data->wm_hints = NULL;
     RemovePropA( data->hwnd, whole_window_prop );
-    RemovePropA( data->hwnd, client_window_prop );
 }
 
 
@@ -1820,16 +1843,7 @@ void CDECL X11DRV_DestroyWindow( HWND hwnd )
 
     if (!(data = X11DRV_get_win_data( hwnd ))) return;
 
-    if (data->pixmap)
-    {
-        destroy_glxpixmap(gdi_display, data->gl_drawable);
-        XFreePixmap(gdi_display, data->pixmap);
-    }
-    else if (data->gl_drawable)
-    {
-        XDestroyWindow(gdi_display, data->gl_drawable);
-    }
-
+    destroy_gl_drawable( hwnd );
     destroy_whole_window( thread_data->display, data, FALSE );
     destroy_icon_window( thread_data->display, data );
 
@@ -2143,24 +2157,6 @@ Window X11DRV_get_whole_window( HWND hwnd )
 
 
 /***********************************************************************
- *		X11DRV_get_client_window
- *
- * Return the X window associated with the client area of a window
- */
-static Window X11DRV_get_client_window( HWND hwnd )
-{
-    struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
-
-    if (!data)
-    {
-        if (hwnd == GetDesktopWindow()) return root_window;
-        return (Window)GetPropA( hwnd, client_window_prop );
-    }
-    return data->client_window;
-}
-
-
-/***********************************************************************
  *		X11DRV_get_ic
  *
  * Return the X input context associated with a window
@@ -2187,6 +2183,8 @@ void CDECL X11DRV_GetDC( HDC hdc, HWND hwnd, HWND top, const RECT *win_rect,
 {
     struct x11drv_escape_set_drawable escape;
     struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
+    struct gl_drawable *gl;
+
     HWND parent;
 
     escape.code        = X11DRV_SET_DRAWABLE;
@@ -2203,16 +2201,12 @@ void CDECL X11DRV_GetDC( HDC hdc, HWND hwnd, HWND top, const RECT *win_rect,
 
     if (top == hwnd)
     {
-        escape.fbconfig_id = data ? data->fbconfig_id : (XID)GetPropA( hwnd, fbconfig_id_prop );
-        /* GL draws to the client area even for window DCs */
-        escape.gl_drawable = data ? data->client_window : X11DRV_get_client_window( hwnd );
         if (data && IsIconic( hwnd ) && data->icon_window)
         {
             escape.drawable = data->icon_window;
         }
         else escape.drawable = data ? data->whole_window : X11DRV_get_whole_window( hwnd );
 
-        if (escape.gl_drawable) escape.gl_type = DC_GL_WINDOW;
         /* special case: when repainting the root window, clip out top-level windows */
         if (data && data->whole_window == root_window) escape.mode = ClipByChildren;
     }
@@ -2231,11 +2225,14 @@ void CDECL X11DRV_GetDC( HDC hdc, HWND hwnd, HWND top, const RECT *win_rect,
             if (flags & DCX_CLIPCHILDREN) escape.mode = ClipByChildren;
         }
         else escape.drawable = X11DRV_get_whole_window( top );
+    }
 
-        escape.fbconfig_id = data ? data->fbconfig_id : (XID)GetPropA( hwnd, fbconfig_id_prop );
-        escape.gl_drawable = data ? data->gl_drawable : (Drawable)GetPropA( hwnd, gl_drawable_prop );
-        escape.pixmap      = data ? data->pixmap : (Pixmap)GetPropA( hwnd, pixmap_prop );
-        if (escape.gl_drawable) escape.gl_type = escape.pixmap ? DC_GL_PIXMAP_WIN : DC_GL_CHILD_WIN;
+    if (!XFindContext( gdi_display, (XID)hwnd, gl_drawable_context, (char **)&gl ))
+    {
+        escape.fbconfig_id = gl->fbconfig_id;
+        escape.gl_drawable = gl->drawable;
+        escape.pixmap      = gl->pixmap;
+        escape.gl_type     = gl->type;
     }
 
     ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );

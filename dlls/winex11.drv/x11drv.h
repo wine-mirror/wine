@@ -549,9 +549,6 @@ struct x11drv_win_data
     Window      icon_window;    /* X window for the icon */
     Colormap    colormap;       /* Colormap for this window */
     VisualID    visualid;       /* visual id of the client window */
-    XID         fbconfig_id;    /* fbconfig id for the GL drawable this hwnd uses */
-    Drawable    gl_drawable;    /* Optional GL drawable for rendering the client area */
-    Pixmap      pixmap;         /* Base pixmap for if gl_drawable is a GLXPixmap */
     RECT        window_rect;    /* USER window rectangle relative to parent */
     RECT        whole_rect;     /* X window rectangle for the whole window relative to parent */
     RECT        client_rect;    /* client area relative to parent */
@@ -614,6 +611,8 @@ static inline BOOL is_window_rect_fullscreen( const RECT *rect )
 extern XContext winContext DECLSPEC_HIDDEN;
 /* X context to associate a struct x11drv_win_data to an hwnd */
 extern XContext win_data_context DECLSPEC_HIDDEN;
+/* X context to associate a struct gl_drawable to an hwnd */
+extern XContext gl_drawable_context DECLSPEC_HIDDEN;
 /* X context to associate an X cursor to a Win32 cursor handle */
 extern XContext cursor_context DECLSPEC_HIDDEN;
 
