@@ -146,6 +146,18 @@ static BOOL resolve_filename(const WCHAR *filename, WCHAR *fullname, DWORD bufle
     return (GetFileAttributesW(fullname) != INVALID_FILE_ATTRIBUTES);
 }
 
+static inline HHInfo *find_window(const WCHAR *window)
+{
+    HHInfo *info;
+
+    LIST_FOR_EACH_ENTRY(info, &window_list, HHInfo, entry)
+    {
+        if (strcmpW(info->WinType.pszType, window) == 0)
+            return info;
+    }
+    return NULL;
+}
+
 /******************************************************************
  *		HtmlHelpW (HHCTRL.OCX.15)
  */
@@ -163,9 +175,9 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
     case HH_DISPLAY_TOC:
     case HH_DISPLAY_INDEX:
     case HH_DISPLAY_SEARCH:{
-        HHInfo *info;
         BOOL res;
         NMHDR nmhdr;
+        HHInfo *info = NULL;
         WCHAR *window = NULL;
         const WCHAR *index = NULL;
         WCHAR *default_index = NULL;
@@ -181,7 +193,10 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
         }
         index = default_index;
 
-        info = CreateHelpViewer(fullname, caller);
+        if (window)
+            info = find_window(window);
+
+        info = CreateHelpViewer(info, fullname, caller);
         if(!info)
         {
             heap_free(default_index);
@@ -253,7 +268,7 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
             return 0;
         }
 
-        info = CreateHelpViewer(fullname, caller);
+        info = CreateHelpViewer(NULL, fullname, caller);
         if(!info)
             return NULL;
 
@@ -288,6 +303,33 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
         }
         return 0;
     }
+    case HH_SET_WIN_TYPE: {
+        HH_WINTYPEW *wintype = (HH_WINTYPEW *)data;
+        WCHAR *window = NULL;
+        HHInfo *info = NULL;
+
+        if (!filename && wintype->pszType)
+            window = strdupW(wintype->pszType);
+        else if (!filename || !resolve_filename(filename, fullname, MAX_PATH, NULL, &window) || !window)
+        {
+            WARN("can't find window name: %s\n", debugstr_w(filename));
+            return 0;
+        }
+        info = find_window(window);
+        if (!info)
+        {
+            info = heap_alloc_zero(sizeof(HHInfo));
+            info->WinType.pszType = info->stringsW.pszType = window;
+            list_add_tail(&window_list, &info->entry);
+        }
+        else
+            heap_free(window);
+
+        TRACE("Changing WINTYPE, fsValidMembers=0x%x\n", wintype->fsValidMembers);
+
+        MergeChmProperties(wintype, info);
+        return 0;
+    }
     default:
         FIXME("HH case %s not handled.\n", command_to_string( command ));
     }
@@ -295,21 +337,35 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
     return 0;
 }
 
+static HH_WINTYPEW *wintypeAtoW(HH_WINTYPEA *data, struct wintype_stringsW *stringsW)
+{
+    HH_WINTYPEW *wdata;
+
+    wdata = heap_alloc(sizeof(*wdata));
+    memcpy(wdata, data, sizeof(*data));
+    /* convert all of the ANSI strings to Unicode */
+    wdata->pszType       = stringsW->pszType       = strdupAtoW(data->pszType);
+    wdata->pszCaption    = stringsW->pszCaption    = strdupAtoW(data->pszCaption);
+    wdata->pszToc        = stringsW->pszToc        = strdupAtoW(data->pszToc);
+    wdata->pszIndex      = stringsW->pszIndex      = strdupAtoW(data->pszIndex);
+    wdata->pszFile       = stringsW->pszFile       = strdupAtoW(data->pszFile);
+    wdata->pszHome       = stringsW->pszHome       = strdupAtoW(data->pszHome);
+    wdata->pszJump1      = stringsW->pszJump1      = strdupAtoW(data->pszJump1);
+    wdata->pszJump2      = stringsW->pszJump2      = strdupAtoW(data->pszJump2);
+    wdata->pszUrlJump1   = stringsW->pszUrlJump1   = strdupAtoW(data->pszUrlJump1);
+    wdata->pszUrlJump2   = stringsW->pszUrlJump2   = strdupAtoW(data->pszUrlJump2);
+    wdata->pszCustomTabs = stringsW->pszCustomTabs = strdupAtoW(data->pszCustomTabs);
+
+    return wdata;
+}
+
 /******************************************************************
  *		HtmlHelpA (HHCTRL.OCX.14)
  */
 HWND WINAPI HtmlHelpA(HWND caller, LPCSTR filename, UINT command, DWORD_PTR data)
 {
-    WCHAR *wfile = NULL, *wdata = NULL;
-    DWORD len;
-    HWND result;
-
-    if (filename)
-    {
-        len = MultiByteToWideChar( CP_ACP, 0, filename, -1, NULL, 0 );
-        wfile = heap_alloc(len*sizeof(WCHAR));
-        MultiByteToWideChar( CP_ACP, 0, filename, -1, wfile, len );
-    }
+    WCHAR *wfile = strdupAtoW( filename );
+    HWND result = 0;
 
     if (data)
     {
@@ -321,20 +377,31 @@ HWND WINAPI HtmlHelpA(HWND caller, LPCSTR filename, UINT command, DWORD_PTR data
         case HH_GET_LAST_ERROR:
         case HH_GET_WIN_TYPE:
         case HH_KEYWORD_LOOKUP:
-        case HH_SET_WIN_TYPE:
         case HH_SYNC:
             FIXME("structures not handled yet\n");
             break;
+
+        case HH_SET_WIN_TYPE:
+        {
+            struct wintype_stringsW stringsW;
+            HH_WINTYPEW *wdata = wintypeAtoW((HH_WINTYPEA *)data, &stringsW);
+            result = HtmlHelpW( caller, wfile, command, (DWORD_PTR)wdata );
+            wintype_stringsW_free(&stringsW);
+            heap_free( wdata );
+            goto done;
+        }
 
         case HH_DISPLAY_INDEX:
         case HH_DISPLAY_TOPIC:
         case HH_DISPLAY_TOC:
         case HH_GET_WIN_HANDLE:
         case HH_SAFE_DISPLAY_TOPIC:
-            len = MultiByteToWideChar( CP_ACP, 0, (const char*)data, -1, NULL, 0 );
-            wdata = heap_alloc(len*sizeof(WCHAR));
-            MultiByteToWideChar( CP_ACP, 0, (const char*)data, -1, wdata, len );
-            break;
+        {
+            WCHAR *wdata = strdupAtoW( (const char *)data );
+            result = HtmlHelpW( caller, wfile, command, (DWORD_PTR)wdata );
+            heap_free(wdata);
+            goto done;
+        }
 
         case HH_CLOSE_ALL:
         case HH_HELP_CONTEXT:
@@ -352,10 +419,9 @@ HWND WINAPI HtmlHelpA(HWND caller, LPCSTR filename, UINT command, DWORD_PTR data
         }
     }
 
-    result = HtmlHelpW( caller, wfile, command, wdata ? (DWORD_PTR)wdata : data );
-
+    result = HtmlHelpW( caller, wfile, command, data );
+done:
     heap_free(wfile);
-    heap_free(wdata);
     return result;
 }
 

@@ -1739,6 +1739,7 @@ static BOOL CreateViewer(HHInfo *pHHInfo)
     InitContent(pHHInfo);
     InitIndex(pHHInfo);
 
+    pHHInfo->viewer_initialized = TRUE;
     return TRUE;
 }
 
@@ -1784,10 +1785,16 @@ void ReleaseHelpViewer(HHInfo *info)
     OleUninitialize();
 }
 
-HHInfo *CreateHelpViewer(LPCWSTR filename, HWND caller)
+HHInfo *CreateHelpViewer(HHInfo *info, LPCWSTR filename, HWND caller)
 {
-    HHInfo *info = heap_alloc_zero(sizeof(HHInfo));
+    BOOL add_to_window_list = FALSE;
     int i;
+
+    if(!info)
+    {
+        info = heap_alloc_zero(sizeof(HHInfo));
+        add_to_window_list = TRUE;
+    }
 
     /* Set the invalid tab ID (-1) as the default value for all
      * of the tabs, this matches a failed TCM_INSERTITEM call.
@@ -1809,12 +1816,14 @@ HHInfo *CreateHelpViewer(LPCWSTR filename, HWND caller)
     }
     info->WinType.hwndCaller = caller;
 
-    if(!CreateViewer(info)) {
+    if(!info->viewer_initialized && !CreateViewer(info)) {
         ReleaseHelpViewer(info);
         return NULL;
     }
 
-    list_add_tail(&window_list, &info->entry);
+    if(add_to_window_list)
+        list_add_tail(&window_list, &info->entry);
+
     return info;
 }
 
