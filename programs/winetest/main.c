@@ -46,7 +46,6 @@
 struct wine_test
 {
     char *name;
-    int resource;
     int subtest_count;
     char **subtests;
     char *exename;
