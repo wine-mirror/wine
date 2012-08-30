@@ -225,7 +225,7 @@ USBD_STATUS WINAPI USBD_ValidateConfigurationDescriptor(
         PUCHAR *offset,
         ULONG tag )
 {
-    FIXME( "(%p, %u, %u, %p, %u) partial stub!", descr, length, level, offset, tag );
+    FIXME( "(%p, %u, %u, %p, %u) partial stub!\n", descr, length, level, offset, tag );
 
     if (offset) *offset = 0;
 
