@@ -278,7 +278,7 @@ static void DoSync(HHInfo *info)
     }
 
     /* If we're not currently viewing a page in the active .chm file, abort */
-    if ((!AppendFullPathURL(info->pszFile, buf, NULL)) || (len = lstrlenW(buf) > lstrlenW(url)))
+    if ((!AppendFullPathURL(info->WinType.pszFile, buf, NULL)) || (len = lstrlenW(buf) > lstrlenW(url)))
     {
         SysFreeString(url);
         return;
@@ -1742,6 +1742,20 @@ static BOOL CreateViewer(HHInfo *pHHInfo)
     return TRUE;
 }
 
+void wintype_stringsW_free(struct wintype_stringsW *stringsW)
+{
+    heap_free(stringsW->pszType);
+    heap_free(stringsW->pszCaption);
+    heap_free(stringsW->pszToc);
+    heap_free(stringsW->pszIndex);
+    heap_free(stringsW->pszFile);
+    heap_free(stringsW->pszHome);
+    heap_free(stringsW->pszJump1);
+    heap_free(stringsW->pszJump2);
+    heap_free(stringsW->pszUrlJump1);
+    heap_free(stringsW->pszUrlJump2);
+}
+
 void ReleaseHelpViewer(HHInfo *info)
 {
     TRACE("(%p)\n", info);
@@ -1751,17 +1765,7 @@ void ReleaseHelpViewer(HHInfo *info)
 
     list_remove(&info->entry);
 
-    /* Free allocated strings */
-    heap_free(info->pszType);
-    heap_free(info->pszCaption);
-    heap_free(info->pszToc);
-    heap_free(info->pszIndex);
-    heap_free(info->pszFile);
-    heap_free(info->pszHome);
-    heap_free(info->pszJump1);
-    heap_free(info->pszJump2);
-    heap_free(info->pszUrlJump1);
-    heap_free(info->pszUrlJump2);
+    wintype_stringsW_free(&info->stringsW);
 
     if (info->pCHMInfo)
         CloseCHM(info->pCHMInfo);

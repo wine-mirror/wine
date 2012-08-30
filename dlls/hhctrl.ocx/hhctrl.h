@@ -140,6 +140,20 @@ typedef struct {
     HIMAGELIST hImageList;
 } ContentsTab;
 
+struct wintype_stringsW {
+    WCHAR *pszType;
+    WCHAR *pszCaption;
+    WCHAR *pszToc;
+    WCHAR *pszIndex;
+    WCHAR *pszFile;
+    WCHAR *pszHome;
+    WCHAR *pszJump1;
+    WCHAR *pszJump2;
+    WCHAR *pszUrlJump1;
+    WCHAR *pszUrlJump2;
+    WCHAR *pszCustomTabs;
+};
+
 typedef struct {
     IOleClientSite *client_site;
     IWebBrowser2 *web_browser;
@@ -147,17 +161,7 @@ typedef struct {
 
     HH_WINTYPEW WinType;
 
-    LPWSTR pszType;
-    LPWSTR pszCaption;
-    LPWSTR pszToc;
-    LPWSTR pszIndex;
-    LPWSTR pszFile;
-    LPWSTR pszHome;
-    LPWSTR pszJump1;
-    LPWSTR pszJump2;
-    LPWSTR pszUrlJump1;
-    LPWSTR pszUrlJump2;
-    LPWSTR pszCustomTabs;
+    struct wintype_stringsW stringsW;
 
     struct list entry;
     CHMInfo *pCHMInfo;
@@ -204,7 +208,7 @@ void InitSearch(HHInfo *info, const char *needle) DECLSPEC_HIDDEN;
 void ReleaseSearch(HHInfo *info) DECLSPEC_HIDDEN;
 
 LPCWSTR skip_schema(LPCWSTR url) DECLSPEC_HIDDEN;
-
+void wintype_stringsW_free(struct wintype_stringsW *stringsW) DECLSPEC_HIDDEN;
 WCHAR *decode_html(const char *html_fragment, int html_fragment_len, UINT code_page);
 
 /* memory allocation functions */

@@ -283,16 +283,16 @@ void MergeChmProperties(HH_WINTYPEW *src, HHInfo *info)
      * modified by the user.  rcHTML and rcMinSize are not currently supported, so don't bother to copy them.
      */
 
-    dst->pszType       = MergeChmString(src->pszType, &info->pszType);
-    dst->pszFile       = MergeChmString(src->pszFile, &info->pszFile);
-    dst->pszToc        = MergeChmString(src->pszToc, &info->pszToc);
-    dst->pszIndex      = MergeChmString(src->pszIndex, &info->pszIndex);
-    dst->pszCaption    = MergeChmString(src->pszCaption, &info->pszCaption);
-    dst->pszHome       = MergeChmString(src->pszHome, &info->pszHome);
-    dst->pszJump1      = MergeChmString(src->pszJump1, &info->pszJump1);
-    dst->pszJump2      = MergeChmString(src->pszJump2, &info->pszJump2);
-    dst->pszUrlJump1   = MergeChmString(src->pszUrlJump1, &info->pszUrlJump1);
-    dst->pszUrlJump2   = MergeChmString(src->pszUrlJump2, &info->pszUrlJump2);
+    dst->pszType       = MergeChmString(src->pszType, &info->stringsW.pszType);
+    dst->pszFile       = MergeChmString(src->pszFile, &info->stringsW.pszFile);
+    dst->pszToc        = MergeChmString(src->pszToc, &info->stringsW.pszToc);
+    dst->pszIndex      = MergeChmString(src->pszIndex, &info->stringsW.pszIndex);
+    dst->pszCaption    = MergeChmString(src->pszCaption, &info->stringsW.pszCaption);
+    dst->pszHome       = MergeChmString(src->pszHome, &info->stringsW.pszHome);
+    dst->pszJump1      = MergeChmString(src->pszJump1, &info->stringsW.pszJump1);
+    dst->pszJump2      = MergeChmString(src->pszJump2, &info->stringsW.pszJump2);
+    dst->pszUrlJump1   = MergeChmString(src->pszUrlJump1, &info->stringsW.pszUrlJump1);
+    dst->pszUrlJump2   = MergeChmString(src->pszUrlJump2, &info->stringsW.pszUrlJump2);
 
     /* FIXME: pszCustomTabs is a list of multiple zero-terminated strings so ReadString won't
      * work in this case
@@ -381,11 +381,11 @@ BOOL LoadWinTypeFromCHM(HHInfo *info)
     /* merge the new data with any pre-existing HH_WINTYPE structure */
     MergeChmProperties(&wintype, info);
     if (!info->WinType.pszFile)
-        info->WinType.pszFile  = info->pszFile     = strdupW(info->pCHMInfo->defTopic ? info->pCHMInfo->defTopic : null);
+        info->WinType.pszFile  = info->stringsW.pszFile  = strdupW(info->pCHMInfo->defTopic ? info->pCHMInfo->defTopic : null);
     if (!info->WinType.pszToc)
-        info->WinType.pszToc   = info->pszToc      = FindHTMLHelpSetting(info, toc_extW);
+        info->WinType.pszToc   = info->stringsW.pszToc   = FindHTMLHelpSetting(info, toc_extW);
     if (!info->WinType.pszIndex)
-        info->WinType.pszIndex = info->pszIndex    = FindHTMLHelpSetting(info, index_extW);
+        info->WinType.pszIndex = info->stringsW.pszIndex = FindHTMLHelpSetting(info, index_extW);
 
     heap_free(pszType);
     heap_free(pszFile);

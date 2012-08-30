@@ -191,8 +191,8 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
 
         if(!index)
             index = info->WinType.pszFile;
-        if(!info->pszType)
-            info->WinType.pszType = info->pszType = window;
+        if(!info->WinType.pszType)
+            info->WinType.pszType = info->stringsW.pszType = window;
         else
             heap_free(window);
 
