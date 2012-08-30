@@ -329,63 +329,6 @@ static int get_window_attributes( Display *display, struct x11drv_win_data *data
 
 
 /***********************************************************************
- *              create_client_window
- */
-static Window create_client_window( Display *display, struct x11drv_win_data *data, XVisualInfo *vis )
-{
-    int cx, cy, mask;
-    XSetWindowAttributes attr;
-    Window client;
-    Visual *client_visual = vis ? vis->visual : visual;
-
-    attr.bit_gravity = NorthWestGravity;
-    attr.win_gravity = NorthWestGravity;
-    attr.backing_store = NotUseful;
-    attr.event_mask = ExposureMask;
-    mask = CWEventMask | CWBitGravity | CWWinGravity | CWBackingStore;
-
-    if ((cx = data->client_rect.right - data->client_rect.left) <= 0) cx = 1;
-    else if (cx > 65535) cx = 65535;
-    if ((cy = data->client_rect.bottom - data->client_rect.top) <= 0) cy = 1;
-    else if (cy > 65535) cy = 65535;
-
-    if (vis)
-    {
-        attr.colormap = XCreateColormap( display, root_window, vis->visual,
-                                         (vis->class == PseudoColor || vis->class == GrayScale ||
-                                          vis->class == DirectColor) ? AllocAll : AllocNone );
-        mask |= CWColormap;
-    }
-
-    client = XCreateWindow( display, data->whole_window,
-                            data->client_rect.left - data->whole_rect.left,
-                            data->client_rect.top - data->whole_rect.top,
-                            cx, cy, 0, screen_depth, InputOutput,
-                            client_visual, mask, &attr );
-    if (!client)
-    {
-        if (vis) XFreeColormap( display, attr.colormap );
-        return 0;
-    }
-
-    if (data->client_window)
-    {
-        XDeleteContext( display, data->client_window, winContext );
-        XDestroyWindow( display, data->client_window );
-    }
-    data->client_window = client;
-    data->visualid = XVisualIDFromVisual( client_visual );
-
-    if (data->colormap) XFreeColormap( display, data->colormap );
-    data->colormap = vis ? attr.colormap : 0;
-
-    XMapWindow( display, data->client_window );
-    XSaveContext( display, data->client_window, winContext, (char *)data->hwnd );
-    return data->client_window;
-}
-
-
-/***********************************************************************
  *              sync_window_style
  *
  * Change the X window attributes when the window style has changed.
@@ -526,6 +469,7 @@ static void free_gl_drawable( struct gl_drawable *gl )
 {
     switch (gl->type)
     {
+    case DC_GL_WINDOW:
     case DC_GL_CHILD_WIN:
         XDestroyWindow( gdi_display, gl->drawable );
         XFreeColormap( gdi_display, gl->colormap );
@@ -547,6 +491,7 @@ static void free_gl_drawable( struct gl_drawable *gl )
  */
 static BOOL set_win_format( HWND hwnd, XID fbconfig_id )
 {
+    XSetWindowAttributes attrib;
     struct x11drv_win_data *data;
     struct gl_drawable *gl, *prev;
     int w, h;
@@ -567,22 +512,30 @@ static BOOL set_win_format( HWND hwnd, XID fbconfig_id )
 
     if (data->whole_window)
     {
-        Display *display = thread_display();
-        Window client = data->client_window;
-
-        if (gl->visual->visualid != data->visualid)
-        {
-            client = create_client_window( display, data, gl->visual );
-            TRACE( "re-created client window %lx for %p fbconfig %lx\n", client, data->hwnd, fbconfig_id );
-        }
-        XFlush( display );
         gl->type = DC_GL_WINDOW;
-        gl->drawable = client;
+        gl->colormap = XCreateColormap( gdi_display, root_window, gl->visual->visual,
+                                        (gl->visual->class == PseudoColor ||
+                                         gl->visual->class == GrayScale ||
+                                         gl->visual->class == DirectColor) ? AllocAll : AllocNone );
+        attrib.colormap = gl->colormap;
+        attrib.bit_gravity = NorthWestGravity;
+        attrib.win_gravity = NorthWestGravity;
+        attrib.backing_store = NotUseful;
+
+        gl->drawable = XCreateWindow( gdi_display, data->whole_window,
+                                      data->client_rect.left - data->whole_rect.left,
+                                      data->client_rect.top - data->whole_rect.top,
+                                      w, h, 0, screen_depth, InputOutput, gl->visual->visual,
+                                      CWBitGravity | CWWinGravity | CWBackingStore | CWColormap,
+                                      &attrib );
+        if (gl->drawable)
+            XMapWindow( gdi_display, gl->drawable );
+        else
+            XFreeColormap( gdi_display, gl->colormap );
     }
 #ifdef SONAME_LIBXCOMPOSITE
     else if(usexcomposite)
     {
-        XSetWindowAttributes attrib;
         static Window dummy_parent;
 
         attrib.override_redirect = True;
@@ -651,46 +604,46 @@ static BOOL set_win_format( HWND hwnd, XID fbconfig_id )
 /***********************************************************************
  *              sync_gl_drawable
  */
-static void sync_gl_drawable(struct x11drv_win_data *data)
+static void sync_gl_drawable( HWND hwnd, int mask, XWindowChanges *changes )
 {
     struct gl_drawable *gl;
-    int w = data->client_rect.right - data->client_rect.left;
-    int h = data->client_rect.bottom - data->client_rect.top;
     Drawable glxp;
     Pixmap pix;
 
-    if (XFindContext( gdi_display, (XID)data->hwnd, gl_drawable_context, (char **)&gl )) return;
-    if (gl->type == DC_GL_WINDOW) return;
+    if (XFindContext( gdi_display, (XID)hwnd, gl_drawable_context, (char **)&gl )) return;
 
-    if (w <= 0) w = 1;
-    if (h <= 0) h = 1;
+    TRACE( "setting drawable %lx pos %d,%d,%dx%d changes=%x\n",
+           gl->drawable, changes->x, changes->y, changes->width, changes->height, mask );
 
-    TRACE("Resizing GL drawable 0x%lx to %dx%d\n", gl->drawable, w, h);
-#ifdef SONAME_LIBXCOMPOSITE
-    if(usexcomposite)
+    switch (gl->type)
     {
-        XMoveResizeWindow(gdi_display, gl->drawable, 0, 0, w, h);
+    case DC_GL_CHILD_WIN:
+        if (!(mask &= CWWidth | CWHeight)) break;
+        /* fall through */
+    case DC_GL_WINDOW:
+        XConfigureWindow( gdi_display, gl->drawable, mask, changes );
+        break;
+    case DC_GL_PIXMAP_WIN:
+        pix = XCreatePixmap(gdi_display, root_window, changes->width, changes->height, gl->visual->depth);
+        if(!pix) return;
+        glxp = create_glxpixmap(gdi_display, gl->visual, pix);
+        if(!glxp)
+        {
+            XFreePixmap(gdi_display, pix);
+            return;
+        }
+        mark_drawable_dirty(gl->drawable, glxp);
+
+        XFreePixmap(gdi_display, gl->pixmap);
+        destroy_glxpixmap(gdi_display, gl->drawable);
+        TRACE( "Recreated GL drawable %lx to replace %lx\n", glxp, gl->drawable );
+
+        gl->pixmap = pix;
+        gl->drawable = glxp;
+        break;
+    default:
         return;
     }
-#endif
-
-    pix = XCreatePixmap(gdi_display, root_window, w, h, gl->visual->depth);
-    if(!pix) return;
-    glxp = create_glxpixmap(gdi_display, gl->visual, pix);
-    if(!glxp)
-    {
-        XFreePixmap(gdi_display, pix);
-        return;
-    }
-    mark_drawable_dirty(gl->drawable, glxp);
-
-    XFreePixmap(gdi_display, gl->pixmap);
-    destroy_glxpixmap(gdi_display, gl->drawable);
-    TRACE( "Recreated GL drawable %lx to replace %lx\n", glxp, gl->drawable );
-
-    gl->pixmap = pix;
-    gl->drawable = glxp;
-
     XFlush( gdi_display );
 }
 
@@ -1593,16 +1546,7 @@ static void sync_client_position( Display *display, struct x11drv_win_data *data
     OffsetRect( &old, -old_whole_rect->left, -old_whole_rect->top );
     OffsetRect( &new, -data->whole_rect.left, -data->whole_rect.top );
     if (!(mask = get_window_changes( &changes, &old, &new ))) return;
-
-    if (data->client_window)
-    {
-        TRACE( "setting client win %lx pos %d,%d,%dx%d changes=%x\n",
-               data->client_window, new.left, new.top,
-               new.right - new.left, new.bottom - new.top, mask );
-        XConfigureWindow( display, data->client_window, mask, &changes );
-    }
-
-    if (mask & (CWWidth|CWHeight)) sync_gl_drawable( data );
+    sync_gl_drawable( data->hwnd, mask, &changes );
 }
 
 
@@ -1645,9 +1589,8 @@ static void move_window_bits( struct x11drv_win_data *data, const RECT *old_rect
     code = X11DRV_START_EXPOSURES;
     ExtEscape( hdc_dst, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code, 0, NULL );
 
-    TRACE( "copying bits for win %p/%lx/%lx %s -> %s\n",
-           data->hwnd, data->whole_window, data->client_window,
-           wine_dbgstr_rect(&src_rect), wine_dbgstr_rect(&dst_rect) );
+    TRACE( "copying bits for win %p/%lx %s -> %s\n",
+           data->hwnd, data->whole_window, wine_dbgstr_rect(&src_rect), wine_dbgstr_rect(&dst_rect) );
     BitBlt( hdc_dst, dst_rect.left, dst_rect.top,
             dst_rect.right - dst_rect.left, dst_rect.bottom - dst_rect.top,
             hdc_src, src_rect.left, src_rect.top, SRCCOPY );
@@ -1773,11 +1716,10 @@ static void destroy_whole_window( Display *display, struct x11drv_win_data *data
     }
 
 
-    TRACE( "win %p xwin %lx/%lx\n", data->hwnd, data->whole_window, data->client_window );
+    TRACE( "win %p xwin %lx\n", data->hwnd, data->whole_window );
     XDeleteContext( display, data->whole_window, winContext );
-    if (data->client_window) XDeleteContext( display, data->client_window, winContext );
     if (!already_destroyed) XDestroyWindow( display, data->whole_window );
-    data->whole_window = data->client_window = 0;
+    data->whole_window = 0;
     data->wm_state = WithdrawnState;
     data->net_wm_state = 0;
     data->mapped = FALSE;
@@ -1846,8 +1788,6 @@ void CDECL X11DRV_DestroyWindow( HWND hwnd )
     destroy_gl_drawable( hwnd );
     destroy_whole_window( thread_data->display, data, FALSE );
     destroy_icon_window( thread_data->display, data );
-
-    if (data->colormap) XFreeColormap( thread_data->display, data->colormap );
 
     if (thread_data->last_focus == hwnd) thread_data->last_focus = 0;
     if (thread_data->last_xic_hwnd == hwnd) thread_data->last_xic_hwnd = 0;
@@ -2023,8 +1963,8 @@ struct x11drv_win_data *X11DRV_create_win_data( HWND hwnd )
             HeapFree( GetProcessHeap(), 0, data );
             return NULL;
         }
-        TRACE( "win %p/%lx/%lx window %s whole %s client %s\n",
-               hwnd, data->whole_window, data->client_window, wine_dbgstr_rect( &data->window_rect ),
+        TRACE( "win %p/%lx window %s whole %s client %s\n",
+               hwnd, data->whole_window, wine_dbgstr_rect( &data->window_rect ),
                wine_dbgstr_rect( &data->whole_rect ), wine_dbgstr_rect( &data->client_rect ));
     }
     return data;
@@ -2122,7 +2062,7 @@ HWND create_foreign_window( Display *display, Window xwin )
     }
     SetRect( &data->window_rect, attr.x, attr.y, attr.x + attr.width, attr.y + attr.height );
     data->whole_rect = data->client_rect = data->window_rect;
-    data->whole_window = data->client_window = 0;
+    data->whole_window = 0;
     data->embedded = TRUE;
     data->mapped = TRUE;
 
