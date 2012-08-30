@@ -1470,7 +1470,7 @@ void X11DRV_EnterNotify( HWND hwnd, XEvent *xev )
 
     TRACE( "hwnd %p/%lx pos %d,%d detail %d\n", hwnd, event->window, event->x, event->y, event->detail );
 
-    if (event->detail == NotifyVirtual || event->detail == NotifyNonlinearVirtual) return;
+    if (event->detail == NotifyVirtual) return;
     if (event->window == x11drv_thread_data()->grab_window) return;
 
     /* simulate a mouse motion event */

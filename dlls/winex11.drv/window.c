@@ -332,8 +332,7 @@ static Window create_client_window( Display *display, struct x11drv_win_data *da
     attr.bit_gravity = NorthWestGravity;
     attr.win_gravity = NorthWestGravity;
     attr.backing_store = NotUseful;
-    attr.event_mask = (ExposureMask | PointerMotionMask |
-                       ButtonPressMask | ButtonReleaseMask | EnterWindowMask);
+    attr.event_mask = ExposureMask;
     mask = CWEventMask | CWBitGravity | CWWinGravity | CWBackingStore;
 
     if ((cx = data->client_rect.right - data->client_rect.left) <= 0) cx = 1;
@@ -2286,7 +2285,7 @@ void CDECL X11DRV_SetCapture( HWND hwnd, UINT flags )
 
     if (hwnd)
     {
-        Window grab_win = X11DRV_get_client_window( GetAncestor( hwnd, GA_ROOT ) );
+        Window grab_win = X11DRV_get_whole_window( GetAncestor( hwnd, GA_ROOT ) );
 
         if (!grab_win) return;
         XFlush( gdi_display );
