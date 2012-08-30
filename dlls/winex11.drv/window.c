@@ -1697,13 +1697,6 @@ static Window create_whole_window( Display *display, struct x11drv_win_data *dat
                                         visual, mask, &attr );
     if (!data->whole_window) goto done;
 
-    if (!create_client_window( display, data, NULL ))
-    {
-        XDestroyWindow( display, data->whole_window );
-        data->whole_window = 0;
-        goto done;
-    }
-
     set_initial_wm_hints( display, data );
     set_wm_hints( display, data );
 
@@ -1758,7 +1751,7 @@ static void destroy_whole_window( Display *display, struct x11drv_win_data *data
 
     TRACE( "win %p xwin %lx/%lx\n", data->hwnd, data->whole_window, data->client_window );
     XDeleteContext( display, data->whole_window, winContext );
-    XDeleteContext( display, data->client_window, winContext );
+    if (data->client_window) XDeleteContext( display, data->client_window, winContext );
     if (!already_destroyed) XDestroyWindow( display, data->whole_window );
     data->whole_window = data->client_window = 0;
     data->wm_state = WithdrawnState;
@@ -1886,11 +1879,10 @@ static struct x11drv_win_data *create_desktop_win_data( Display *display, HWND h
     struct x11drv_win_data *data;
 
     if (!(data = alloc_win_data( display, hwnd ))) return NULL;
-    data->whole_window = data->client_window = root_window;
+    data->whole_window = root_window;
     data->managed = TRUE;
     SetPropA( data->hwnd, managed_prop, (HANDLE)1 );
     SetPropA( data->hwnd, whole_window_prop, (HANDLE)root_window );
-    SetPropA( data->hwnd, client_window_prop, (HANDLE)root_window );
     set_initial_wm_hints( display, data );
     return data;
 }

@@ -542,7 +542,6 @@ static void dock_systray_icon( Display *display, struct tray_icon *icon, Window 
     attr.background_pixmap = ParentRelative;
     attr.bit_gravity = ForgetGravity;
     XChangeWindowAttributes( display, data->whole_window, CWBackPixmap | CWBitGravity, &attr );
-    XChangeWindowAttributes( display, data->client_window, CWBackPixmap | CWBitGravity, &attr );
 }
 
 /* dock systray windows again with the new owner */
@@ -619,7 +618,7 @@ static BOOL modify_icon( struct tray_icon *icon, NOTIFYICONDATAW *nid )
             else
             {
                 struct x11drv_win_data *data = X11DRV_get_win_data( icon->window );
-                if (data) XClearArea( gdi_display, data->client_window, 0, 0, 0, 0, True );
+                if (data) XClearArea( gdi_display, data->whole_window, 0, 0, 0, 0, True );
             }
         }
     }
