@@ -40,9 +40,7 @@ extern int ds_default_bits_per_sample DECLSPEC_HIDDEN;
  * Predeclare the interface implementation structures
  */
 typedef struct IDirectSoundBufferImpl        IDirectSoundBufferImpl;
-typedef struct IDirectSoundCaptureBufferImpl IDirectSoundCaptureBufferImpl;
 typedef struct DirectSoundDevice             DirectSoundDevice;
-typedef struct DirectSoundCaptureDevice      DirectSoundCaptureDevice;
 
 /* dsound_convert.h */
 typedef float (*bitsgetfunc)(const IDirectSoundBufferImpl *, DWORD, DWORD);
@@ -208,51 +206,6 @@ void secondarybuffer_destroy(IDirectSoundBufferImpl *This) DECLSPEC_HIDDEN;
 const IDirectSound3DListenerVtbl ds3dlvt DECLSPEC_HIDDEN;
 const IDirectSound3DBufferVtbl ds3dbvt DECLSPEC_HIDDEN;
 const IKsPropertySetVtbl iksbvt DECLSPEC_HIDDEN;
-
-/*****************************************************************************
- * DirectSoundCaptureDevice implementation structure
- */
-struct DirectSoundCaptureDevice
-{
-    GUID                               guid;
-    LONG                               ref;
-
-    DSCCAPS                            drvcaps;
-
-    LPBYTE                             buffer;
-    DWORD                              buflen, write_pos_bytes;
-
-    PWAVEFORMATEX                      pwfx;
-
-    IDirectSoundCaptureBufferImpl*     capture_buffer;
-    DWORD                              state;
-    UINT timerID;
-    CRITICAL_SECTION                   lock;
-
-    IMMDevice *mmdevice;
-    IAudioClient *client;
-    IAudioCaptureClient *capture;
-
-    struct list entry;
-};
-
-/*****************************************************************************
- * IDirectSoundCaptureBuffer implementation structure
- */
-struct IDirectSoundCaptureBufferImpl
-{
-    IDirectSoundCaptureBuffer8          IDirectSoundCaptureBuffer8_iface;
-    IDirectSoundNotify                  IDirectSoundNotify_iface;
-    LONG                                numIfaces; /* "in use interfaces" refcount */
-    LONG                                ref, refn;
-    /* IDirectSoundCaptureBuffer fields */
-    DirectSoundCaptureDevice*           device;
-    LPDSCBUFFERDESC                     pdscbd;
-    DWORD                               flags;
-    /* IDirectSoundNotify fields */
-    LPDSBPOSITIONNOTIFY                 notifies;
-    int                                 nrofnotifies;
-};
 
 HRESULT IKsPrivatePropertySetImpl_Create(REFIID riid, void **ppv) DECLSPEC_HIDDEN;
 

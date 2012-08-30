@@ -43,6 +43,43 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 
+typedef struct DirectSoundCaptureDevice      DirectSoundCaptureDevice;
+
+/* IDirectSoundCaptureBuffer implementation structure */
+typedef struct IDirectSoundCaptureBufferImpl
+{
+    IDirectSoundCaptureBuffer8          IDirectSoundCaptureBuffer8_iface;
+    IDirectSoundNotify                  IDirectSoundNotify_iface;
+    LONG                                numIfaces; /* "in use interfaces" refcount */
+    LONG                                ref, refn;
+    /* IDirectSoundCaptureBuffer fields */
+    DirectSoundCaptureDevice            *device;
+    DSCBUFFERDESC                       *pdscbd;
+    DWORD                               flags;
+    /* IDirectSoundNotify fields */
+    DSBPOSITIONNOTIFY                   *notifies;
+    int                                 nrofnotifies;
+} IDirectSoundCaptureBufferImpl;
+
+/* DirectSoundCaptureDevice implementation structure */
+struct DirectSoundCaptureDevice
+{
+    GUID                          guid;
+    LONG                          ref;
+    DSCCAPS                       drvcaps;
+    BYTE                          *buffer;
+    DWORD                         buflen, write_pos_bytes;
+    WAVEFORMATEX                  *pwfx;
+    IDirectSoundCaptureBufferImpl *capture_buffer;
+    DWORD                         state;
+    UINT                          timerID;
+    CRITICAL_SECTION              lock;
+    IMMDevice                     *mmdevice;
+    IAudioClient                  *client;
+    IAudioCaptureClient           *capture;
+    struct list                   entry;
+};
+
 
 static void capturebuffer_destroy(IDirectSoundCaptureBufferImpl *This)
 {
