@@ -3092,6 +3092,12 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
         GpBitmap* bitmap = (GpBitmap*)image;
         int use_software=0;
 
+        TRACE("graphics: %.2fx%.2f dpi, fmt %#x, scale %f, image: %.2fx%.2f dpi, fmt %#x, color %08x\n",
+            graphics->xres, graphics->yres,
+            graphics->image && graphics->image->type == ImageTypeBitmap ? ((GpBitmap *)graphics->image)->format : 0,
+            graphics->scale, image->xres, image->yres, bitmap->format,
+            imageAttributes ? imageAttributes->outside_color : 0);
+
         if (imageAttributes ||
             (graphics->image && graphics->image->type == ImageTypeBitmap) ||
             ptf[1].Y != ptf[0].Y || ptf[2].X != ptf[0].X ||
