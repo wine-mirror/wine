@@ -4943,10 +4943,7 @@ static void LISTVIEW_RefreshReportGrid(LISTVIEW_INFO *infoPtr, HDC hdc)
         itemheight =  LISTVIEW_CalculateItemHeight(infoPtr);
         rcItem.left   = infoPtr->rcList.left;
         rcItem.right  = infoPtr->rcList.right;
-        rcItem.bottom = rcItem.top = Origin.y - 1;
-        MoveToEx(hdc, rcItem.left, rcItem.top, NULL);
-        LineTo(hdc, rcItem.right, rcItem.top);
-        for(y=itemheight-1+Origin.y; y<=infoPtr->rcList.bottom; y+=itemheight)
+        for(y = Origin.y > 1 ? Origin.y - 1 : itemheight - 1 + Origin.y % itemheight; y<=infoPtr->rcList.bottom; y+=itemheight)
         {
             rcItem.bottom = rcItem.top = y;
             TRACE("horz rcItem=%s\n", wine_dbgstr_rect(&rcItem));
