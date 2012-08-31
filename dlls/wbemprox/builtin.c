@@ -163,6 +163,10 @@ static const WCHAR prop_totalphysicalmemoryW[] =
     {'T','o','t','a','l','P','h','y','s','i','c','a','l','M','e','m','o','r','y',0};
 static const WCHAR prop_typeW[] =
     {'T','y','p','e',0};
+static const WCHAR prop_maxclockspeedW[] =
+    {'M','a','x','C','l','o','c','k','S','p','e','e','d',0};
+static const WCHAR prop_numberoflogicalprocessorsW[] =
+    {'N','u','m','b','e','r','O','f','L','o','g','i','c','a','l','P','r','o','c','e','s','s','o','r','s',0};
 
 static const WCHAR method_enumkeyW[] =
     {'E','n','u','m','K','e','y',0};
@@ -249,11 +253,13 @@ static const struct column col_process[] =
 };
 static const struct column col_processor[] =
 {
-    { prop_cpustatusW,    CIM_UINT16 },
-    { prop_deviceidW,     CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
-    { prop_manufacturerW, CIM_STRING|COL_FLAG_DYNAMIC },
-    { prop_nameW,         CIM_STRING|COL_FLAG_DYNAMIC },
-    { prop_processoridW,  CIM_STRING|COL_FLAG_DYNAMIC }
+    { prop_cpustatusW,                 CIM_UINT16 },
+    { prop_deviceidW,                  CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
+    { prop_manufacturerW,              CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_maxclockspeedW,             CIM_UINT32 },
+    { prop_nameW,                      CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_numberoflogicalprocessorsW, CIM_UINT32 },
+    { prop_processoridW,               CIM_STRING|COL_FLAG_DYNAMIC }
 };
 static const struct column col_service[] =
 {
@@ -390,7 +396,9 @@ struct record_processor
     UINT16       cpu_status;
     const WCHAR *device_id;
     const WCHAR *manufacturer;
+    UINT32       maxclockspeed;
     const WCHAR *name;
+    UINT32       numberoflogicalprocessors;
     const WCHAR *processor_id;
 };
 struct record_service
@@ -747,13 +755,19 @@ static void fill_processor( struct table *table )
     static const WCHAR fmtW[] = {'C','P','U','%','u',0};
     WCHAR device_id[14], processor_id[17], manufacturer[13], name[49] = {0};
     struct record_processor *rec;
-    UINT i, offset = 0, count = get_processor_count();
+    UINT i, offset = 0, count = get_processor_count(), cpuMhz;
+    PROCESSOR_POWER_INFORMATION ppi;
 
     if (!(table->data = heap_alloc( sizeof(*rec) * count ))) return;
 
     get_processor_id( processor_id );
     get_processor_manufacturer( manufacturer );
     get_processor_name( name );
+
+    if(!NtPowerInformation(ProcessorInformation, NULL, 0, &ppi, sizeof(ppi)))
+        cpuMhz = ppi.MaxMhz;
+    else
+        cpuMhz = 1000000;
 
     for (i = 0; i < count; i++)
     {
@@ -762,7 +776,9 @@ static void fill_processor( struct table *table )
         sprintfW( device_id, fmtW, i );
         rec->device_id    = heap_strdupW( device_id );
         rec->manufacturer = heap_strdupW( manufacturer );
+        rec->maxclockspeed = cpuMhz;
         rec->name         = heap_strdupW( name );
+        rec->numberoflogicalprocessors = count;
         rec->processor_id = heap_strdupW( processor_id );
         offset += sizeof(*rec);
     }
