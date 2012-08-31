@@ -3790,6 +3790,96 @@ static void test_image_format(void)
     }
 }
 
+static void test_DrawImage_scale(void)
+{
+    static const BYTE back_8x1[24] = { 0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,
+                                       0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40 };
+    static const BYTE image_080[24] = { 0x40,0x40,0x40,0x80,0x80,0x80,0x40,0x40,0x40,0x40,0x40,0x40,
+                                        0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40 };
+    static const BYTE image_100[24] = { 0x40,0x40,0x40,0x80,0x80,0x80,0x80,0x80,0x80,0x40,0x40,0x40,
+                                        0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40 };
+    static const BYTE image_120[24] = { 0x40,0x40,0x40,0x40,0x40,0x40,0x80,0x80,0x80,0x40,0x40,0x40,
+                                        0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40 };
+    static const BYTE image_150[24] = { 0x40,0x40,0x40,0x40,0x40,0x40,0x80,0x80,0x80,0x80,0x80,0x80,
+                                        0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40 };
+    static const BYTE image_180[24] = { 0x40,0x40,0x40,0x40,0x40,0x40,0x80,0x80,0x80,0x80,0x80,0x80,
+                                        0x80,0x80,0x80,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40 };
+    static const BYTE image_200[24] = { 0x40,0x40,0x40,0x40,0x40,0x40,0x80,0x80,0x80,0x80,0x80,0x80,
+                                        0x80,0x80,0x80,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40 };
+    static const BYTE image_250[24] = { 0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x80,0x80,0x80,
+                                        0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x40,0x40,0x40 };
+    static const struct test_data
+    {
+        REAL scale_x;
+        const BYTE *image;
+    } td[] =
+    {
+        { 0.8, image_080 },
+        { 1.0, image_100 },
+        { 1.2, image_120 },
+        { 1.5, image_150 },
+        { 1.8, image_180 },
+        { 2.0, image_200 },
+        { 2.5, image_250 }
+    };
+    BYTE src_2x1[6] = { 0x80,0x80,0x80,0x80,0x80,0x80 };
+    BYTE dst_8x1[24];
+    GpStatus status;
+    union
+    {
+        GpBitmap *bitmap;
+        GpImage *image;
+    } u1, u2;
+    GpGraphics *graphics;
+    GpMatrix *matrix;
+    int i, match;
+
+    status = GdipCreateBitmapFromScan0(2, 1, 4, PixelFormat24bppRGB, src_2x1, &u1.bitmap);
+    expect(Ok, status);
+    status = GdipBitmapSetResolution(u1.bitmap, 100.0, 100.0);
+    expect(Ok, status);
+
+    status = GdipCreateBitmapFromScan0(8, 1, 24, PixelFormat24bppRGB, dst_8x1, &u2.bitmap);
+    expect(Ok, status);
+    status = GdipBitmapSetResolution(u2.bitmap, 100.0, 100.0);
+    expect(Ok, status);
+    status = GdipGetImageGraphicsContext(u2.image, &graphics);
+    expect(Ok, status);
+    status = GdipSetInterpolationMode(graphics, InterpolationModeNearestNeighbor);
+    expect(Ok, status);
+
+    for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
+    {
+        status = GdipCreateMatrix2(td[i].scale_x, 0.0, 0.0, 1.0, 0.0, 0.0, &matrix);
+        expect(Ok, status);
+        status = GdipSetWorldTransform(graphics, matrix);
+        expect(Ok, status);
+        GdipDeleteMatrix(matrix);
+
+        memcpy(dst_8x1, back_8x1, sizeof(dst_8x1));
+        status = GdipDrawImageI(graphics, u1.image, 1, 0);
+        expect(Ok, status);
+
+        match = memcmp(dst_8x1, td[i].image, sizeof(dst_8x1)) == 0;
+        ok(match, "%d: data should match\n", i);
+        if (!match)
+        {
+            UINT i, size = sizeof(dst_8x1);
+            const BYTE *bits = dst_8x1;
+            for (i = 0; i < size; i++)
+                printf(" %02x", bits[i]);
+            printf("\n");
+        }
+    }
+
+    status = GdipDeleteGraphics(graphics);
+    expect(Ok, status);
+    status = GdipDisposeImage(u1.image);
+    expect(Ok, status);
+    status = GdipDisposeImage(u2.image);
+    expect(Ok, status);
+}
+
 START_TEST(image)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -3802,6 +3892,7 @@ START_TEST(image)
 
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
+    test_DrawImage_scale();
     test_image_format();
     test_DrawImage();
     test_GdipDrawImagePointRect();
