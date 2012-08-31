@@ -1876,8 +1876,8 @@
 @ cdecl wctob(long) msvcrt.wctob
 @ cdecl wctomb(ptr long) msvcrt.wctomb
 @ stub wctomb_s
-@ stub wmemcpy_s
-@ stub wmemmove_s
+@ cdecl wmemcpy_s(ptr long ptr long)
+@ cdecl wmemmove_s(ptr long ptr long)
 @ varargs wprintf(wstr) msvcrt.wprintf
 @ varargs wprintf_s(wstr) msvcrt.wprintf_s
 @ varargs wscanf(wstr) msvcrt.wscanf

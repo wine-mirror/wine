@@ -15483,6 +15483,7 @@ wine_fn_config_dll msvcp80 enable_msvcp80
 wine_fn_config_dll msvcp90 enable_msvcp90
 wine_fn_config_test dlls/msvcp90/tests msvcp90_test
 wine_fn_config_dll msvcr100 enable_msvcr100
+wine_fn_config_test dlls/msvcr100/tests msvcr100_test
 wine_fn_config_dll msvcr70 enable_msvcr70 implib
 wine_fn_config_dll msvcr71 enable_msvcr71 implib
 wine_fn_config_dll msvcr80 enable_msvcr80
