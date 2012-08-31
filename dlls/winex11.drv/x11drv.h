@@ -98,15 +98,6 @@ typedef struct
     ChannelShift logicalRed, logicalGreen, logicalBlue;
 } ColorShifts;
 
-enum dc_gl_type
-{
-    DC_GL_NONE,       /* no GL support (pixel format not set yet) */
-    DC_GL_WINDOW,     /* normal top-level window */
-    DC_GL_CHILD_WIN,  /* child window using XComposite */
-    DC_GL_PIXMAP_WIN, /* child window using intermediate pixmap */
-    DC_GL_PBUFFER     /* pseudo memory DC using a PBuffer */
-};
-
   /* X physical device */
 typedef struct
 {
@@ -220,7 +211,6 @@ extern int client_side_antialias_with_render DECLSPEC_HIDDEN;
 extern const struct gdi_dc_funcs *X11DRV_XRender_Init(void) DECLSPEC_HIDDEN;
 
 extern const struct gdi_dc_funcs *get_glx_driver(void) DECLSPEC_HIDDEN;
-extern BOOL destroy_glxpixmap(Display *display, XID glxpixmap) DECLSPEC_HIDDEN;
 
 /* IME support */
 extern void IME_SetOpenStatus(BOOL fOpen) DECLSPEC_HIDDEN;
@@ -285,13 +275,11 @@ enum x11drv_escape_codes
 struct x11drv_escape_set_drawable
 {
     enum x11drv_escape_codes code;         /* escape code (X11DRV_SET_DRAWABLE) */
+    HWND                     hwnd;         /* window for this drawable */
     Drawable                 drawable;     /* X drawable */
     int                      mode;         /* ClipByChildren or IncludeInferiors */
     RECT                     dc_rect;      /* DC rectangle relative to drawable */
     XID                      fbconfig_id;  /* fbconfig id used by the GL drawable */
-    Drawable                 gl_drawable;  /* GL drawable */
-    Pixmap                   pixmap;       /* Pixmap for a GLXPixmap gl_drawable */
-    enum dc_gl_type          gl_type;      /* type of GL device context */
 };
 
 struct x11drv_escape_get_drawable
@@ -299,9 +287,7 @@ struct x11drv_escape_get_drawable
     enum x11drv_escape_codes code;         /* escape code (X11DRV_GET_DRAWABLE) */
     Drawable                 drawable;     /* X drawable */
     Drawable                 gl_drawable;  /* GL drawable */
-    Pixmap                   pixmap;       /* Pixmap for a GLXPixmap gl_drawable */
     int                      pixel_format; /* internal GL pixel format */
-    enum dc_gl_type          gl_type;      /* type of GL device context */
 };
 
 /**************************************************************************
@@ -569,9 +555,9 @@ extern struct x11drv_win_data *X11DRV_create_win_data( HWND hwnd ) DECLSPEC_HIDD
 extern Window X11DRV_get_whole_window( HWND hwnd ) DECLSPEC_HIDDEN;
 extern XIC X11DRV_get_ic( HWND hwnd ) DECLSPEC_HIDDEN;
 
-extern XVisualInfo *visual_from_fbconfig_id( XID fbconfig_id ) DECLSPEC_HIDDEN;
-extern void mark_drawable_dirty( Drawable old, Drawable new ) DECLSPEC_HIDDEN;
-extern Drawable create_glxpixmap( Display *display, XVisualInfo *vis, Pixmap parent ) DECLSPEC_HIDDEN;
+extern BOOL set_win_format( HWND hwnd, XID fbconfig_id ) DECLSPEC_HIDDEN;
+extern void sync_gl_drawable( HWND hwnd, int mask, XWindowChanges *changes ) DECLSPEC_HIDDEN;
+extern void destroy_gl_drawable( HWND hwnd ) DECLSPEC_HIDDEN;
 
 extern void wait_for_withdrawn_state( Display *display, struct x11drv_win_data *data, BOOL set ) DECLSPEC_HIDDEN;
 extern Window init_clip_window(void) DECLSPEC_HIDDEN;
@@ -608,8 +594,6 @@ static inline BOOL is_window_rect_fullscreen( const RECT *rect )
 extern XContext winContext DECLSPEC_HIDDEN;
 /* X context to associate a struct x11drv_win_data to an hwnd */
 extern XContext win_data_context DECLSPEC_HIDDEN;
-/* X context to associate a struct gl_drawable to an hwnd */
-extern XContext gl_drawable_context DECLSPEC_HIDDEN;
 /* X context to associate an X cursor to a Win32 cursor handle */
 extern XContext cursor_context DECLSPEC_HIDDEN;
 

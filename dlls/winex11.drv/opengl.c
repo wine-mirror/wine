@@ -47,6 +47,7 @@
 #undef WINGDIAPI
 
 #include "x11drv.h"
+#include "xcomposite.h"
 #include "winternl.h"
 #include "wine/library.h"
 #include "wine/debug.h"
@@ -172,6 +173,15 @@ struct wgl_pbuffer
     int        texture_level;
 };
 
+enum dc_gl_type
+{
+    DC_GL_NONE,       /* no GL support (pixel format not set yet) */
+    DC_GL_WINDOW,     /* normal top-level window */
+    DC_GL_CHILD_WIN,  /* child window using XComposite */
+    DC_GL_PIXMAP_WIN, /* child window using intermediate pixmap */
+    DC_GL_PBUFFER     /* pseudo memory DC using a PBuffer */
+};
+
 struct glx_physdev
 {
     struct gdi_physdev dev;
@@ -181,6 +191,19 @@ struct glx_physdev
     Drawable           drawable;
     Pixmap             pixmap;        /* pixmap for a DL_GL_PIXMAP_WIN drawable */
 };
+
+struct gl_drawable
+{
+    enum dc_gl_type type;         /* type of GL surface */
+    Drawable        drawable;     /* drawable for rendering to the client area */
+    Pixmap          pixmap;       /* base pixmap if drawable is a GLXPixmap */
+    Colormap        colormap;     /* colormap used for the drawable */
+    int             pixel_format; /* pixel format for the drawable */
+    XVisualInfo    *visual;       /* information about the GL visual */
+};
+
+/* X context to associate a struct gl_drawable to an hwnd */
+static XContext gl_drawable_context;
 
 static const struct gdi_dc_funcs glxdrv_funcs;
 
@@ -568,6 +591,7 @@ static BOOL has_opengl(void)
         ERR( "GLX extension is missing, disabling OpenGL.\n" );
         goto failed;
     }
+    gl_drawable_context = XUniqueContext();
 
     /* In case of GLX you have direct and indirect rendering. Most of the time direct rendering is used
      * as in general only that is hardware accelerated. In some cases like in case of remote X indirect
@@ -1060,11 +1084,10 @@ static int pixelformat_from_fbconfig_id(XID fbconfig_id)
 
 
 /* Mark any allocated context using the glx drawable 'old' to use 'new' */
-void mark_drawable_dirty(Drawable old, Drawable new)
+static void mark_drawable_dirty(Drawable old, Drawable new)
 {
     struct wgl_context *ctx;
 
-    EnterCriticalSection( &context_section );
     LIST_FOR_EACH_ENTRY( ctx, &context_list, struct wgl_context, entry )
     {
         if (old == ctx->drawables[0]) {
@@ -1076,7 +1099,6 @@ void mark_drawable_dirty(Drawable old, Drawable new)
             ctx->refresh_drawables = TRUE;
         }
     }
-    LeaveCriticalSection( &context_section );
 }
 
 /* Given the current context, make sure its drawable is sync'd */
@@ -1118,9 +1140,213 @@ static GLXContext create_glxcontext(Display *display, struct wgl_context *contex
 }
 
 
-Drawable create_glxpixmap(Display *display, XVisualInfo *vis, Pixmap parent)
+/***********************************************************************
+ *              free_gl_drawable
+ */
+static void free_gl_drawable( struct gl_drawable *gl )
 {
-    return pglXCreateGLXPixmap(display, vis, parent);
+    switch (gl->type)
+    {
+    case DC_GL_WINDOW:
+    case DC_GL_CHILD_WIN:
+        XDestroyWindow( gdi_display, gl->drawable );
+        XFreeColormap( gdi_display, gl->colormap );
+        break;
+    case DC_GL_PIXMAP_WIN:
+        pglXDestroyGLXPixmap( gdi_display, gl->drawable );
+        XFreePixmap( gdi_display, gl->pixmap );
+        break;
+    default:
+        break;
+    }
+    XFree( gl->visual );
+    HeapFree( GetProcessHeap(), 0, gl );
+}
+
+
+/***********************************************************************
+ *              set_win_format
+ */
+BOOL set_win_format( HWND hwnd, XID fbconfig_id )
+{
+    XSetWindowAttributes attrib;
+    struct x11drv_win_data *data;
+    struct gl_drawable *gl, *prev;
+    int format, w, h;
+
+    if (!(format = pixelformat_from_fbconfig_id( fbconfig_id ))) return FALSE;
+
+    if (!(data = X11DRV_get_win_data(hwnd)) &&
+        !(data = X11DRV_create_win_data(hwnd))) return FALSE;
+
+    gl = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*gl) );
+    gl->pixel_format = format;
+    gl->visual = pglXGetVisualFromFBConfig( gdi_display, pixel_formats[format - 1].fbconfig );
+    if (!gl->visual)
+    {
+        HeapFree( GetProcessHeap(), 0, gl );
+        return FALSE;
+    }
+
+    w = min( max( 1, data->client_rect.right - data->client_rect.left ), 65535 );
+    h = min( max( 1, data->client_rect.bottom - data->client_rect.top ), 65535 );
+
+    if (data->whole_window)
+    {
+        gl->type = DC_GL_WINDOW;
+        gl->colormap = XCreateColormap( gdi_display, root_window, gl->visual->visual,
+                                        (gl->visual->class == PseudoColor ||
+                                         gl->visual->class == GrayScale ||
+                                         gl->visual->class == DirectColor) ? AllocAll : AllocNone );
+        attrib.colormap = gl->colormap;
+        attrib.bit_gravity = NorthWestGravity;
+        attrib.win_gravity = NorthWestGravity;
+        attrib.backing_store = NotUseful;
+
+        gl->drawable = XCreateWindow( gdi_display, data->whole_window,
+                                      data->client_rect.left - data->whole_rect.left,
+                                      data->client_rect.top - data->whole_rect.top,
+                                      w, h, 0, screen_depth, InputOutput, gl->visual->visual,
+                                      CWBitGravity | CWWinGravity | CWBackingStore | CWColormap,
+                                      &attrib );
+        if (gl->drawable)
+            XMapWindow( gdi_display, gl->drawable );
+        else
+            XFreeColormap( gdi_display, gl->colormap );
+    }
+#ifdef SONAME_LIBXCOMPOSITE
+    else if(usexcomposite)
+    {
+        static Window dummy_parent;
+
+        attrib.override_redirect = True;
+        if (!dummy_parent)
+        {
+            dummy_parent = XCreateWindow( gdi_display, root_window, -1, -1, 1, 1, 0, screen_depth,
+                                         InputOutput, visual, CWOverrideRedirect, &attrib );
+            XMapWindow( gdi_display, dummy_parent );
+        }
+        gl->colormap = XCreateColormap(gdi_display, dummy_parent, gl->visual->visual,
+                                       (gl->visual->class == PseudoColor ||
+                                        gl->visual->class == GrayScale ||
+                                        gl->visual->class == DirectColor) ?
+                                       AllocAll : AllocNone);
+        attrib.colormap = gl->colormap;
+        XInstallColormap(gdi_display, attrib.colormap);
+
+        gl->type = DC_GL_CHILD_WIN;
+        gl->drawable = XCreateWindow( gdi_display, dummy_parent, 0, 0, w, h, 0,
+                                      gl->visual->depth, InputOutput, gl->visual->visual,
+                                      CWColormap | CWOverrideRedirect, &attrib );
+        if (gl->drawable)
+        {
+            pXCompositeRedirectWindow(gdi_display, gl->drawable, CompositeRedirectManual);
+            XMapWindow(gdi_display, gl->drawable);
+        }
+        else XFreeColormap( gdi_display, gl->colormap );
+    }
+#endif
+    else
+    {
+        WARN("XComposite is not available, using GLXPixmap hack\n");
+
+        gl->type = DC_GL_PIXMAP_WIN;
+        gl->pixmap = XCreatePixmap(gdi_display, root_window, w, h, gl->visual->depth);
+        if (gl->pixmap)
+        {
+            gl->drawable = pglXCreateGLXPixmap( gdi_display, gl->visual, gl->pixmap );
+            if (!gl->drawable) XFreePixmap( gdi_display, gl->pixmap );
+        }
+    }
+
+    if (!gl->drawable)
+    {
+        XFree( gl->visual );
+        HeapFree( GetProcessHeap(), 0, gl );
+        return FALSE;
+    }
+
+    TRACE("Created GL drawable 0x%lx, using FBConfigID 0x%lx\n", gl->drawable, fbconfig_id);
+
+    XFlush( gdi_display );
+
+    EnterCriticalSection( &context_section );
+    if (!XFindContext( gdi_display, (XID)hwnd, gl_drawable_context, (char **)&prev ))
+        free_gl_drawable( prev );
+    XSaveContext( gdi_display, (XID)hwnd, gl_drawable_context, (char *)gl );
+    LeaveCriticalSection( &context_section );
+
+    /* force DCE invalidation */
+    SetWindowPos( hwnd, 0, 0, 0, 0, 0,
+                  SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOSIZE | SWP_NOMOVE |
+                  SWP_NOREDRAW | SWP_DEFERERASE | SWP_NOSENDCHANGING | SWP_STATECHANGED);
+    return TRUE;
+}
+
+/***********************************************************************
+ *              sync_gl_drawable
+ */
+void sync_gl_drawable( HWND hwnd, int mask, XWindowChanges *changes )
+{
+    struct gl_drawable *gl;
+    Drawable glxp;
+    Pixmap pix;
+
+    EnterCriticalSection( &context_section );
+
+    if (XFindContext( gdi_display, (XID)hwnd, gl_drawable_context, (char **)&gl )) goto done;
+
+    TRACE( "setting drawable %lx pos %d,%d,%dx%d changes=%x\n",
+           gl->drawable, changes->x, changes->y, changes->width, changes->height, mask );
+
+    switch (gl->type)
+    {
+    case DC_GL_CHILD_WIN:
+        if (!(mask &= CWWidth | CWHeight)) break;
+        /* fall through */
+    case DC_GL_WINDOW:
+        XConfigureWindow( gdi_display, gl->drawable, mask, changes );
+        break;
+    case DC_GL_PIXMAP_WIN:
+        pix = XCreatePixmap(gdi_display, root_window, changes->width, changes->height, gl->visual->depth);
+        if (!pix) goto done;
+        glxp = pglXCreateGLXPixmap(gdi_display, gl->visual, pix);
+        if (!glxp)
+        {
+            XFreePixmap(gdi_display, pix);
+            goto done;
+        }
+        mark_drawable_dirty(gl->drawable, glxp);
+        XFlush( gdi_display );
+
+        XFreePixmap(gdi_display, gl->pixmap);
+        pglXDestroyGLXPixmap(gdi_display, gl->drawable);
+        TRACE( "Recreated GL drawable %lx to replace %lx\n", glxp, gl->drawable );
+
+        gl->pixmap = pix;
+        gl->drawable = glxp;
+        break;
+    default:
+        break;
+    }
+done:
+    LeaveCriticalSection( &context_section );
+}
+
+/***********************************************************************
+ *              destroy_gl_drawable
+ */
+void destroy_gl_drawable( HWND hwnd )
+{
+    struct gl_drawable *gl;
+
+    EnterCriticalSection( &context_section );
+    if (!XFindContext( gdi_display, (XID)hwnd, gl_drawable_context, (char **)&gl ))
+    {
+        XDeleteContext( gdi_display, (XID)hwnd, gl_drawable_context );
+        free_gl_drawable( gl );
+    }
+    LeaveCriticalSection( &context_section );
 }
 
 
@@ -1969,13 +2195,11 @@ static HDC X11DRV_wglGetPbufferDCARB( struct wgl_pbuffer *object )
     if (!hdc) return 0;
 
     escape.code = X11DRV_SET_DRAWABLE;
+    escape.hwnd = 0;
     escape.drawable = object->drawable;
     escape.mode = IncludeInferiors;
     SetRect( &escape.dc_rect, 0, 0, object->width, object->height );
     escape.fbconfig_id = object->fmt->fmt_id;
-    escape.gl_drawable = object->drawable;
-    escape.pixmap = 0;
-    escape.gl_type = DC_GL_PBUFFER;
     ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
 
     TRACE( "(%p)->(%p)\n", object, hdc );
@@ -2804,12 +3028,6 @@ static void X11DRV_WineGL_LoadExtensions(void)
 }
 
 
-BOOL destroy_glxpixmap(Display *display, XID glxpixmap)
-{
-    pglXDestroyGLXPixmap(display, glxpixmap);
-    return TRUE;
-}
-
 /**
  * glxdrv_SwapBuffers
  *
@@ -2882,14 +3100,6 @@ static BOOL glxdrv_SwapBuffers(PHYSDEV dev)
   return TRUE;
 }
 
-XVisualInfo *visual_from_fbconfig_id( XID fbconfig_id )
-{
-    int format = pixelformat_from_fbconfig_id( fbconfig_id );
-
-    if (!format) return NULL;
-    return pglXGetVisualFromFBConfig(gdi_display, pixel_formats[format - 1].fbconfig);
-}
-
 static BOOL create_glx_dc( PHYSDEV *pdev )
 {
     /* assume that only the main x11 device implements GetDeviceCaps */
@@ -2952,11 +3162,35 @@ static INT glxdrv_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_d
         case X11DRV_SET_DRAWABLE:
             if (in_count >= sizeof(struct x11drv_escape_set_drawable))
             {
+                struct gl_drawable *gl;
                 const struct x11drv_escape_set_drawable *data = in_data;
-                physdev->pixel_format = pixelformat_from_fbconfig_id( data->fbconfig_id );
-                physdev->type         = data->gl_type;
-                physdev->drawable     = data->gl_drawable;
-                physdev->pixmap       = data->pixmap;
+
+                if (!data->hwnd)  /* pbuffer */
+                {
+                    physdev->pixel_format = pixelformat_from_fbconfig_id( data->fbconfig_id );
+                    physdev->type         = DC_GL_PBUFFER;
+                    physdev->drawable     = data->drawable;
+                    physdev->pixmap       = 0;
+                }
+                else
+                {
+                    EnterCriticalSection( &context_section );
+                    if (!XFindContext( gdi_display, (XID)data->hwnd, gl_drawable_context, (char **)&gl ))
+                    {
+                        physdev->pixel_format = gl->pixel_format;
+                        physdev->type         = gl->type;
+                        physdev->drawable     = gl->drawable;
+                        physdev->pixmap       = gl->pixmap;
+                    }
+                    else
+                    {
+                        physdev->pixel_format = 0;
+                        physdev->type         = DC_GL_NONE;
+                        physdev->drawable     = 0;
+                        physdev->pixmap       = 0;
+                    }
+                    LeaveCriticalSection( &context_section );
+                }
                 TRACE( "SET_DRAWABLE hdc %p drawable %lx pf %u type %u\n",
                        dev->hdc, physdev->drawable, physdev->pixel_format, physdev->type );
             }
@@ -2966,9 +3200,7 @@ static INT glxdrv_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_d
             {
                 struct x11drv_escape_get_drawable *data = out_data;
                 data->pixel_format = physdev->pixel_format;
-                data->gl_type      = physdev->type;
                 data->gl_drawable  = physdev->drawable;
-                data->pixmap       = physdev->pixmap;
             }
             break;
         case X11DRV_FLUSH_GL_DRAWABLE:
@@ -3158,24 +3390,17 @@ const struct gdi_dc_funcs *get_glx_driver(void)
     return NULL;
 }
 
-void mark_drawable_dirty(Drawable old, Drawable new)
-{
-}
-
-Drawable create_glxpixmap(Display *display, XVisualInfo *vis, Pixmap parent)
-{
-    return 0;
-}
-
-
-BOOL destroy_glxpixmap(Display *display, XID glxpixmap)
+BOOL set_win_format( HWND hwnd, XID fbconfig_id )
 {
     return FALSE;
 }
 
-XVisualInfo *visual_from_fbconfig_id( XID fbconfig_id )
+void sync_gl_drawable( HWND hwnd, int mask, XWindowChanges *changes )
 {
-    return NULL;
+}
+
+void destroy_gl_drawable( HWND hwnd )
+{
 }
 
 #endif /* defined(SONAME_LIBGL) */
