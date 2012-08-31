@@ -856,6 +856,7 @@ static void test_DxDiag_SystemInfo(void)
     static const WCHAR szOSEnglish[] = {'s','z','O','S','E','n','g','l','i','s','h',0};
     static const WCHAR szOSExEnglish[] = {'s','z','O','S','E','x','E','n','g','l','i','s','h',0};
     static const WCHAR szOSExLongEnglish[] = {'s','z','O','S','E','x','L','o','n','g','E','n','g','l','i','s','h',0};
+    static const WCHAR szProcessorEnglish[] = {'s','z','P','r','o','c','e','s','s','o','r','E','n','g','l','i','s','h',0};
 
     static const struct property_test property_tests[] =
     {
@@ -891,6 +892,7 @@ static void test_DxDiag_SystemInfo(void)
         {szOSEnglish, VT_BSTR},
         {szOSExEnglish, VT_BSTR},
         {szOSExLongEnglish, VT_BSTR},
+        {szProcessorEnglish, VT_BSTR},
     };
 
     IDxDiagContainer *container;
