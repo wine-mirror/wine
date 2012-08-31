@@ -165,6 +165,11 @@ struct html_encoded_symbol html_encoded_symbols[] =
     {"yuml",   0xFF}
 };
 
+static inline BOOL navigation_visible(HHInfo *info)
+{
+    return ((info->WinType.fsWinProperties & HHWIN_PROP_TRI_PANE) && !info->WinType.fNotExpanded);
+}
+
 /* Loads a string from the resource file */
 static LPWSTR HH_LoadString(DWORD dwID)
 {
@@ -427,7 +432,7 @@ static BOOL HH_AddSizeBar(HHInfo *pHHInfo)
     DWORD dwExStyles = WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR;
     RECT rc;
 
-    if (!pHHInfo->WinType.fNotExpanded)
+    if (navigation_visible(pHHInfo))
         dwStyles |= WS_VISIBLE;
 
     SB_GetSizeBarRect(pHHInfo, &rc);
@@ -1010,8 +1015,7 @@ static BOOL HH_AddToolbar(HHInfo *pHHInfo)
     else
         toolbarFlags = HHWIN_DEF_BUTTONS;
 
-    dwStyles = WS_CHILDWINDOW | WS_VISIBLE | TBSTYLE_FLAT |
-               TBSTYLE_WRAPABLE | TBSTYLE_TOOLTIPS | CCS_NODIVIDER;
+    dwStyles = WS_CHILDWINDOW | TBSTYLE_FLAT | TBSTYLE_WRAPABLE | TBSTYLE_TOOLTIPS | CCS_NODIVIDER;
     dwExStyles = WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR;
 
     hToolbar = CreateWindowExW(dwExStyles, TOOLBARCLASSNAMEW, NULL, dwStyles,
@@ -1039,7 +1043,8 @@ static BOOL HH_AddToolbar(HHInfo *pHHInfo)
 
     SendMessageW(hToolbar, TB_ADDBUTTONSW, dwNumButtons, (LPARAM)buttons);
     SendMessageW(hToolbar, TB_AUTOSIZE, 0, 0);
-    ShowWindow(hToolbar, SW_SHOW);
+    if (pHHInfo->WinType.fsWinProperties & HHWIN_PROP_TRI_PANE)
+        ShowWindow(hToolbar, SW_SHOW);
 
     return TRUE;
 }
@@ -1091,7 +1096,7 @@ static BOOL HH_AddNavigationPane(HHInfo *info)
     DWORD dwExStyles = WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR;
     RECT rc;
 
-    if (!info->WinType.fNotExpanded)
+    if (navigation_visible(info))
         dwStyles |= WS_VISIBLE;
 
     NP_GetNavigationRect(info, &rc);
@@ -1138,20 +1143,22 @@ static void HP_GetHTMLRect(HHInfo *info, RECT *rc)
     RECT rectTB, rectWND, rectNP, rectSB;
 
     GetClientRect(info->WinType.hwndHelp, &rectWND);
-    GetClientRect(info->WinType.hwndToolBar, &rectTB);
     GetClientRect(info->hwndSizeBar, &rectSB);
 
-    if (info->WinType.fNotExpanded)
-        rc->left = 0;
-    else
+    rc->left = 0;
+    rc->top = 0;
+    if (navigation_visible(info))
     {
         GetClientRect(info->WinType.hwndNavigation, &rectNP);
-        rc->left = rectNP.right + rectSB.right;
+        rc->left += rectNP.right + rectSB.right;
     }
-
-    rc->top = rectTB.bottom;
+    if (info->WinType.fsWinProperties & HHWIN_PROP_TRI_PANE)
+    {
+        GetClientRect(info->WinType.hwndToolBar, &rectTB);
+        rc->top += rectTB.bottom;
+    }
     rc->right = rectWND.right - rc->left;
-    rc->bottom = rectWND.bottom - rectTB.bottom;
+    rc->bottom = rectWND.bottom - rc->top;
 }
 
 static BOOL HH_AddHTMLPane(HHInfo *pHHInfo)
@@ -1535,7 +1542,7 @@ static LRESULT Help_OnSize(HWND hWnd)
     if (!pHHInfo)
         return 0;
 
-    if (!pHHInfo->WinType.fNotExpanded)
+    if (navigation_visible(pHHInfo))
     {
         NP_GetNavigationRect(pHHInfo, &rc);
         SetWindowPos(pHHInfo->WinType.hwndNavigation, HWND_TOP, 0, 0,
@@ -1643,7 +1650,7 @@ static BOOL HH_CreateHelpWindow(HHInfo *info)
         height = WINTYPE_DEFAULT_HEIGHT;
     }
 
-    if (info->WinType.fNotExpanded)
+    if (!(info->WinType.fsWinProperties & HHWIN_PROP_TRI_PANE) && info->WinType.fNotExpanded)
     {
         if (!(info->WinType.fsValidMembers & HHWIN_PARAM_NAV_WIDTH) &&
               info->WinType.iNavWidth == 0)
