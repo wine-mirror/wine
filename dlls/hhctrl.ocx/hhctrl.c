@@ -330,6 +330,29 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
         MergeChmProperties(wintype, info);
         return 0;
     }
+    case HH_GET_WIN_TYPE: {
+        HH_WINTYPEW *wintype = (HH_WINTYPEW *)data;
+        WCHAR *window = NULL;
+        HHInfo *info = NULL;
+
+        if (!filename || !resolve_filename(filename, fullname, MAX_PATH, NULL, &window) || !window)
+        {
+            WARN("can't find window name: %s\n", debugstr_w(filename));
+            return 0;
+        }
+        info = find_window(window);
+        if (!info)
+        {
+            WARN("Could not find window named %s.\n", debugstr_w(window));
+            heap_free(window);
+            return (HWND)~0;
+        }
+
+        TRACE("Retrieving WINTYPE for %s.\n", debugstr_w(window));
+        *wintype = info->WinType;
+        heap_free(window);
+        return 0;
+    }
     default:
         FIXME("HH case %s not handled.\n", command_to_string( command ));
     }
@@ -337,11 +360,8 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
     return 0;
 }
 
-static HH_WINTYPEW *wintypeAtoW(HH_WINTYPEA *data, struct wintype_stringsW *stringsW)
+static void wintypeAtoW(const HH_WINTYPEA *data, HH_WINTYPEW *wdata, struct wintype_stringsW *stringsW)
 {
-    HH_WINTYPEW *wdata;
-
-    wdata = heap_alloc(sizeof(*wdata));
     memcpy(wdata, data, sizeof(*data));
     /* convert all of the ANSI strings to Unicode */
     wdata->pszType       = stringsW->pszType       = strdupAtoW(data->pszType);
@@ -355,8 +375,23 @@ static HH_WINTYPEW *wintypeAtoW(HH_WINTYPEA *data, struct wintype_stringsW *stri
     wdata->pszUrlJump1   = stringsW->pszUrlJump1   = strdupAtoW(data->pszUrlJump1);
     wdata->pszUrlJump2   = stringsW->pszUrlJump2   = strdupAtoW(data->pszUrlJump2);
     wdata->pszCustomTabs = stringsW->pszCustomTabs = strdupAtoW(data->pszCustomTabs);
+}
 
-    return wdata;
+static void wintypeWtoA(const HH_WINTYPEW *wdata, HH_WINTYPEA *data, struct wintype_stringsA *stringsA)
+{
+    memcpy(data, wdata, sizeof(*wdata));
+    /* convert all of the Unicode strings to ANSI */
+    data->pszType       = stringsA->pszType       = strdupWtoA(wdata->pszType);
+    data->pszCaption    = stringsA->pszCaption    = strdupWtoA(wdata->pszCaption);
+    data->pszToc        = stringsA->pszToc        = strdupWtoA(wdata->pszToc);
+    data->pszIndex      = stringsA->pszFile       = strdupWtoA(wdata->pszIndex);
+    data->pszFile       = stringsA->pszFile       = strdupWtoA(wdata->pszFile);
+    data->pszHome       = stringsA->pszHome       = strdupWtoA(wdata->pszHome);
+    data->pszJump1      = stringsA->pszJump1      = strdupWtoA(wdata->pszJump1);
+    data->pszJump2      = stringsA->pszJump2      = strdupWtoA(wdata->pszJump2);
+    data->pszUrlJump1   = stringsA->pszUrlJump1   = strdupWtoA(wdata->pszUrlJump1);
+    data->pszUrlJump2   = stringsA->pszUrlJump2   = strdupWtoA(wdata->pszUrlJump2);
+    data->pszCustomTabs = stringsA->pszCustomTabs = strdupWtoA(wdata->pszCustomTabs);
 }
 
 /******************************************************************
@@ -375,7 +410,6 @@ HWND WINAPI HtmlHelpA(HWND caller, LPCSTR filename, UINT command, DWORD_PTR data
         case HH_DISPLAY_SEARCH:
         case HH_DISPLAY_TEXT_POPUP:
         case HH_GET_LAST_ERROR:
-        case HH_GET_WIN_TYPE:
         case HH_KEYWORD_LOOKUP:
         case HH_SYNC:
             FIXME("structures not handled yet\n");
@@ -384,10 +418,24 @@ HWND WINAPI HtmlHelpA(HWND caller, LPCSTR filename, UINT command, DWORD_PTR data
         case HH_SET_WIN_TYPE:
         {
             struct wintype_stringsW stringsW;
-            HH_WINTYPEW *wdata = wintypeAtoW((HH_WINTYPEA *)data, &stringsW);
-            result = HtmlHelpW( caller, wfile, command, (DWORD_PTR)wdata );
+            HH_WINTYPEW wdata;
+
+            wintypeAtoW((HH_WINTYPEA *)data, &wdata, &stringsW);
+            result = HtmlHelpW( caller, wfile, command, (DWORD_PTR)&wdata );
             wintype_stringsW_free(&stringsW);
-            heap_free( wdata );
+            goto done;
+        }
+        case HH_GET_WIN_TYPE:
+        {
+            HH_WINTYPEW wdata;
+            HHInfo *info;
+
+            result = HtmlHelpW( caller, wfile, command, (DWORD_PTR)&wdata );
+            if (!wdata.pszType) break;
+            info = find_window(wdata.pszType);
+            if (!info) break;
+            wintype_stringsA_free(&info->stringsA);
+            wintypeWtoA(&wdata, (HH_WINTYPEA *)data, &info->stringsA);
             goto done;
         }
 

@@ -154,6 +154,20 @@ struct wintype_stringsW {
     WCHAR *pszCustomTabs;
 };
 
+struct wintype_stringsA {
+    char *pszType;
+    char *pszCaption;
+    char *pszToc;
+    char *pszIndex;
+    char *pszFile;
+    char *pszHome;
+    char *pszJump1;
+    char *pszJump2;
+    char *pszUrlJump1;
+    char *pszUrlJump2;
+    char *pszCustomTabs;
+};
+
 typedef struct {
     IOleClientSite *client_site;
     IWebBrowser2 *web_browser;
@@ -161,6 +175,7 @@ typedef struct {
 
     HH_WINTYPEW WinType;
 
+    struct wintype_stringsA stringsA;
     struct wintype_stringsW stringsW;
 
     struct list entry;
@@ -209,6 +224,7 @@ void InitSearch(HHInfo *info, const char *needle) DECLSPEC_HIDDEN;
 void ReleaseSearch(HHInfo *info) DECLSPEC_HIDDEN;
 
 LPCWSTR skip_schema(LPCWSTR url) DECLSPEC_HIDDEN;
+void wintype_stringsA_free(struct wintype_stringsA *stringsA) DECLSPEC_HIDDEN;
 void wintype_stringsW_free(struct wintype_stringsW *stringsW) DECLSPEC_HIDDEN;
 WCHAR *decode_html(const char *html_fragment, int html_fragment_len, UINT code_page);
 
@@ -282,6 +298,19 @@ static inline LPWSTR strdupAtoW(LPCSTR str)
     return strdupnAtoW(str, -1);
 }
 
+static inline LPSTR strdupWtoA(LPCWSTR str)
+{
+    LPSTR ret;
+    DWORD len;
+
+    if(!str)
+        return NULL;
+
+    len = WideCharToMultiByte(CP_ACP, 0, str, -1, NULL, 0, NULL, NULL);
+    ret = heap_alloc(len);
+    WideCharToMultiByte(CP_ACP, 0, str, -1, ret, len, NULL, NULL);
+    return ret;
+}
 
 
 extern HINSTANCE hhctrl_hinstance DECLSPEC_HIDDEN;

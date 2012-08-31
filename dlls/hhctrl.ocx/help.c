@@ -1757,6 +1757,21 @@ void wintype_stringsW_free(struct wintype_stringsW *stringsW)
     heap_free(stringsW->pszUrlJump2);
 }
 
+void wintype_stringsA_free(struct wintype_stringsA *stringsA)
+{
+    heap_free(stringsA->pszType);
+    heap_free(stringsA->pszCaption);
+    heap_free(stringsA->pszToc);
+    heap_free(stringsA->pszIndex);
+    heap_free(stringsA->pszFile);
+    heap_free(stringsA->pszHome);
+    heap_free(stringsA->pszJump1);
+    heap_free(stringsA->pszJump2);
+    heap_free(stringsA->pszUrlJump1);
+    heap_free(stringsA->pszUrlJump2);
+    heap_free(stringsA->pszCustomTabs);
+}
+
 void ReleaseHelpViewer(HHInfo *info)
 {
     TRACE("(%p)\n", info);
@@ -1766,6 +1781,7 @@ void ReleaseHelpViewer(HHInfo *info)
 
     list_remove(&info->entry);
 
+    wintype_stringsA_free(&info->stringsA);
     wintype_stringsW_free(&info->stringsW);
 
     if (info->pCHMInfo)
