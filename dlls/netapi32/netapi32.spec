@@ -166,7 +166,7 @@
 @ stub NetRplWkstaEnum
 @ stub NetRplWkstaGetInfo
 @ stub NetRplWkstaSetInfo
-@ stub NetScheduleJobAdd
+@ stdcall NetScheduleJobAdd(wstr ptr ptr)
 @ stub NetScheduleJobDel
 @ stdcall NetScheduleJobEnum(wstr ptr long ptr ptr ptr)
 @ stub NetScheduleJobGetInfo

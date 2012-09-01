@@ -25,6 +25,7 @@
 extern "C" {
 #endif
 
+NET_API_STATUS WINAPI NetScheduleJobAdd(LPCWSTR,LPBYTE,LPDWORD);
 NET_API_STATUS WINAPI NetScheduleJobEnum(LPCWSTR,LPBYTE*,DWORD,LPDWORD,LPDWORD,LPDWORD);
 
 #ifdef __cplusplus
