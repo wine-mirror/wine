@@ -240,9 +240,8 @@ static HRESULT GAMEUX_updateStatisticsFile(struct GAMEUX_STATS *stats)
                     {
                         TRACE("    storing statistic %d: name: %s\n", j, debugstr_w(V_BSTR(&vValue)));
                         hr = IXMLDOMElement_setAttribute(statisticsElement, bstrName, vValue);
+                        SysFreeString(V_BSTR(&vValue));
                     }
-
-                    SysFreeString(V_BSTR(&vValue));
 
                     if(SUCCEEDED(hr))
                     {
@@ -256,9 +255,8 @@ static HRESULT GAMEUX_updateStatisticsFile(struct GAMEUX_STATS *stats)
                     {
                         TRACE("    storing statistic %d: name: %s\n", j, debugstr_w(V_BSTR(&vValue)));
                         hr = IXMLDOMElement_setAttribute(statisticsElement, bstrValue, vValue);
+                        SysFreeString(V_BSTR(&vValue));
                     }
-
-                    SysFreeString(V_BSTR(&vValue));
 
                     if(SUCCEEDED(hr))
                         hr = IXMLDOMNode_appendChild(categoryNode, statisticsNode, &statisticsNode);
