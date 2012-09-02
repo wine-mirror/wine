@@ -906,12 +906,13 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *ppinOut, 
     IEnumPins* penumpins;
     IEnumMoniker* pEnumMoniker;
     GUID tab[2];
-    ULONG nb;
+    ULONG nb = 0;
     IMoniker* pMoniker;
     ULONG pin;
     PIN_INFO PinInfo;
     CLSID FilterCLSID;
     PIN_DIRECTION dir;
+    unsigned int i = 0;
 
     TRACE("(%p/%p)->(%p, %p)\n", This, iface, ppinOut, ppinIn);
 
@@ -1012,7 +1013,7 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *ppinOut, 
     {
         VARIANT var;
         GUID clsid;
-        IPin** ppins;
+        IPin** ppins = NULL;
         IPin* ppinfilter = NULL;
         IBaseFilter* pfilter = NULL;
         IAMGraphBuilderCallback *callback = NULL;
@@ -1104,7 +1105,6 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *ppinOut, 
         hr = GetInternalConnections(pfilter, ppinfilter, &ppins, &nb);
 
         if (SUCCEEDED(hr)) {
-            unsigned int i;
             if (nb == 0) {
                 IPin_Disconnect(ppinfilter);
                 IPin_Disconnect(ppinOut);
@@ -1157,6 +1157,8 @@ error:
             IFilterGraph2_RemoveFilter(iface, pfilter);
             IBaseFilter_Release(pfilter);
         }
+        while (++i < nb) IPin_Release(ppins[i]);
+        CoTaskMemFree(ppins);
     }
 
 out:
