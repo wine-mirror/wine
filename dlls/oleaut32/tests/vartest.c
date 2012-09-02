@@ -3240,6 +3240,32 @@ static void test_Round( int line, VARIANT *arg, int deci, VARIANT *expected )
     V_VT(&exp) = VT_##rvt; V_##rvt(&exp) = rval; \
     test_Round( __LINE__, &v, deci, &exp )
 
+struct decimal_t {
+    BYTE scale;
+    BYTE sign;
+    ULONG Hi32;
+    ULONG Mid32;
+    ULONG Lo32;
+};
+
+struct decimal_round_t {
+    struct decimal_t source;
+    struct decimal_t ret;
+    int dec;
+};
+
+static const struct decimal_round_t decimal_round_data[] = {
+    {{ 0, DECIMAL_NEG, 0, 0, 1 }, { 0, DECIMAL_NEG, 0, 0, 1 }, 0},
+    {{ 0, 0, 0, 0, 1 }, { 0, 0, 0, 0, 1 }, 0},
+    {{ 2, 0, 0, 0, 155 }, { 0, 0, 0, 0, 16 }, 1},
+    {{ 2, 0, 0, 0, 155 }, { 1, 0, 0, 0, 2 }, 0},
+    {{ 2, 0, 0, 0, 199 }, { 1, 0, 0, 0, 20 }, 1},
+    {{ 2, 0, 0, 0, 199 }, { 2, 0, 0, 0, 199 }, 2},
+    {{ 2, DECIMAL_NEG, 0, 0, 199 }, { 2, DECIMAL_NEG, 0, 0, 199 }, 2},
+    {{ 2, DECIMAL_NEG, 0, 0, 55 },  { 2, DECIMAL_NEG, 0, 0, 6 }, 1},
+    {{ 2, 0, 0, 0, 55 },  { 2, 0, 0, 0, 6 }, 1}
+};
+
 static void test_VarRound(void)
 {
     static WCHAR szNumMin[] = {'-','1','.','4','4','9','\0' };
@@ -3248,6 +3274,7 @@ static void test_VarRound(void)
     VARIANT v, exp, vDst;
     CY *pcy = &V_CY(&v);
     char buff[8];
+    int i;
 
     CHECKPTR(VarRound);
 
@@ -3324,30 +3351,38 @@ static void test_VarRound(void)
     ok(hres == S_OK && V_VT(&vDst) == VT_NULL,
         "VarRound: expected 0x0,%d got 0x%X,%d\n", VT_NULL, hres, V_VT(&vDst));
 
-    /* not yet implemented so no use testing yet
-    todo_wine {
-        DECIMAL *pdec = &V_DECIMAL(&v);
+    /* VT_DECIMAL */
+    for (i = 0; i < sizeof(decimal_round_data)/sizeof(struct decimal_round_t); i++)
+    {
+        const struct decimal_round_t *ptr = &decimal_round_data[i];
+        DECIMAL *pdec;
+
+        pdec = &V_DECIMAL(&v);
         V_VT(&v) = VT_DECIMAL;
-        S(U(*pdec)).sign = DECIMAL_NEG;
-        S(U(*pdec)).scale = 0;
-        pdec->Hi32 = 0;
-        S1(U1(*pdec)).Mid32 = 0;
-        S1(U1(*pdec)).Lo32 = 1;
-        hres = pVarRound(&v,0,&vDst);
-        ok(hres == S_OK && V_VT(&vDst) == VT_DECIMAL &&
-            S(U(V_DECIMAL(&vDst))).sign == 0,
-            "VarRound: expected 0x0,%d,0x00, got 0x%X,%d,%02x\n", VT_DECIMAL,
-            hres, V_VT(&vDst), S(U(V_DECIMAL(&vDst))).sign);
-
-        S(U(*pdec)).sign = 0;
-        hres = pVarRound(&v,0,&vDst);
-        ok(hres == S_OK && V_VT(&vDst) == VT_DECIMAL &&
-            S(U(V_DECIMAL(&vDst))).sign == DECIMAL_NEG,
-            "VarRound: expected 0x0,%d,0x7f, got 0x%X,%d,%02x\n", VT_DECIMAL,
-            hres, V_VT(&vDst), S(U(V_DECIMAL(&vDst))).sign);
+        S(U(*pdec)).sign = ptr->source.sign;
+        S(U(*pdec)).scale = ptr->source.scale;
+        pdec->Hi32 = ptr->source.Hi32;
+        S1(U1(*pdec)).Mid32 = ptr->source.Mid32;
+        S1(U1(*pdec)).Lo32 = ptr->source.Lo32;
+        VariantInit(&vDst);
+        hres = pVarRound(&v, ptr->dec, &vDst);
+    todo_wine
+        ok(hres == S_OK, "%d: got 0x%08x\n", i, hres);
+        if (hres == S_OK)
+        {
+            ok(V_VT(&vDst) == VT_DECIMAL, "%d: got VT %d, expected VT_DECIMAL\n", i, V_VT(&vDst));
+            ok(S(U(V_DECIMAL(&vDst))).sign == ptr->ret.sign, "%d: got sign 0x%02x, expected 0x%02x\n",
+                i, S(U(V_DECIMAL(&vDst))).sign, ptr->ret.sign);
+            ok(V_DECIMAL(&vDst).Hi32 == ptr->ret.Hi32, "%d: got Hi32 %d, expected %d\n",
+                i, V_DECIMAL(&vDst).Hi32, ptr->ret.Hi32);
+            ok(S(U(V_DECIMAL(&vDst))).Mid32 == ptr->ret.Mid32, "%d: got Mid32 %d, expected %d\n",
+                i, S(U(V_DECIMAL(&vDst))).Mid32, ptr->ret.Mid32);
+            ok(S(U(V_DECIMAL(&vDst))).Lo32 == ptr->ret.Lo32, "%d: got Lo32 %d, expected %d\n",
+                i, S(U(V_DECIMAL(&vDst))).Lo32, ptr->ret.Lo32);
+        }
     }
-    */
 
+    /* VT_CY */
     V_VT(&v) = VT_CY;
     pcy->int64 = 10000;
     hres = pVarRound(&v,0,&vDst);
