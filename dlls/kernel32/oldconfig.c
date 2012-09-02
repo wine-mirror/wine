@@ -374,6 +374,8 @@ static void create_hardware_branch(void)
         else if (strncmp(dev.type, "Sequential-Access", 17) == 0) nType = DRIVE_REMOVABLE;
         else if (strncmp(dev.type, "CD-ROM", 6) == 0) nType = DRIVE_CDROM;
         else if (strncmp(dev.type, "Processor", 9) == 0) nType = DRIVE_NO_ROOT_DIR;
+        else if (strncmp(dev.type, "Scanner", 7) == 0) nType = DRIVE_NO_ROOT_DIR;
+        else if (strncmp(dev.type, "Printer", 7) == 0) nType = DRIVE_NO_ROOT_DIR;
         else continue;
 
         strcpy(cDevModel, dev.vendor);
