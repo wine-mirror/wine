@@ -1430,7 +1430,7 @@ static BOOL SHELL_translate_idlist( LPSHELLEXECUTEINFOW sei, LPWSTR wszParameter
     BOOL appKnownSingular = FALSE;
 
     /* last chance to translate IDList: now also allow CLSID paths */
-    if (SUCCEEDED(SHELL_GetPathFromIDListForExecuteW(sei->lpIDList, buffer, sizeof(buffer)))) {
+    if (SUCCEEDED(SHELL_GetPathFromIDListForExecuteW(sei->lpIDList, buffer, sizeof(buffer)/sizeof(WCHAR)))) {
         if (buffer[0]==':' && buffer[1]==':') {
             /* open shell folder for the specified class GUID */
             if (strlenW(buffer) + 1 > parametersLen)
