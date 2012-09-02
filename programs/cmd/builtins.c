@@ -968,7 +968,7 @@ void WCMD_echo (const WCHAR *command)
  */
 static void WCMD_part_execute(CMD_LIST **cmdList, const WCHAR *firstcmd,
                               const WCHAR *variable, const WCHAR *value,
-                              BOOL isIF, BOOL conditionTRUE)
+                              BOOL isIF, BOOL executecmds)
 {
   CMD_LIST *curPosition = *cmdList;
   int myDepth = (*cmdList)->bracketDepth;
@@ -976,13 +976,13 @@ static void WCMD_part_execute(CMD_LIST **cmdList, const WCHAR *firstcmd,
   WINE_TRACE("cmdList(%p), firstCmd(%p), with variable '%s'='%s', doIt(%d)\n",
              cmdList, wine_dbgstr_w(firstcmd),
              wine_dbgstr_w(variable), wine_dbgstr_w(value),
-             conditionTRUE);
+             executecmds);
 
   /* Skip leading whitespace between condition and the command */
   while (firstcmd && *firstcmd && (*firstcmd==' ' || *firstcmd=='\t')) firstcmd++;
 
   /* Process the first command, if there is one */
-  if (conditionTRUE && firstcmd && *firstcmd) {
+  if (executecmds && firstcmd && *firstcmd) {
     WCHAR *command = WCMD_strdupW(firstcmd);
     WCMD_execute (firstcmd, (*cmdList)->redirects, variable, value, cmdList);
     HeapFree(GetProcessHeap(), 0, command);
@@ -994,9 +994,7 @@ static void WCMD_part_execute(CMD_LIST **cmdList, const WCHAR *firstcmd,
 
   /* Process any other parts of the command */
   if (*cmdList) {
-    BOOL processThese = TRUE;
-
-    if (isIF) processThese = conditionTRUE;
+    BOOL processThese = executecmds;
 
     while (*cmdList) {
       static const WCHAR ifElse[] = {'e','l','s','e'};
@@ -1372,8 +1370,14 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
 
           thisCmdStart = cmdStart;
           WCMD_part_execute(&thisCmdStart, firstCmd, variable, thisNum, FALSE, TRUE);
-          cmdEnd = thisCmdStart;
       }
+
+      /* Now skip over the subsequent commands if we did not perform the for loop */
+      if (thisCmdStart == cmdStart) {
+        WINE_TRACE("Skipping for loop commands due to no valid iterations\n");
+        WCMD_part_execute(&thisCmdStart, firstCmd, variable, thisNum, FALSE, FALSE);
+      }
+      cmdEnd = thisCmdStart;
   }
 
   /* When the loop ends, either something like a GOTO or EXIT /b has terminated

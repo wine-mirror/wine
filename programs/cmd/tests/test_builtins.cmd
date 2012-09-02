@@ -685,6 +685,11 @@ for /L %%i in (1,1,1) do echo %%i
 for /L %%i in (1,-2,-1) do echo %%i
 for /L %%i in (-1,-1,-1) do echo %%i
 for /L %%i in (1,2, 3) do echo %%i
+rem Test zero iteration skips the body of the for
+for /L %%i in (2,2,1) do (
+  echo %%i
+  echo FAILED
+)
 echo --- for /a
 rem No output when using "set expr" syntax, unless in interactive mode
 rem Need to use "set envvar=expr" to use in a batch script
