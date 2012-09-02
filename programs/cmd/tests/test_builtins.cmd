@@ -673,12 +673,18 @@ for /L %%i in (1,2,a) do echo %%i
 echo ErrorLevel %ErrorLevel%
 for /L %%i in (1,a,b) do echo %%i
 echo ErrorLevel %ErrorLevel%
-rem FIXME: following test cases cannot be currently tested due to an inconsistent/buggy 'for /L' parsing.
-rem for /L %%i in (a,2,b) do echo %%i
-rem for /L %%i in (1,1,1) do echo %%i
-rem for /L %%i in (1,-2,-1) do echo %%i
-rem for /L %%i in (-1,-1,-1) do echo %%i
-rem for /L %%i in (1,2, 3) do echo %%i
+rem Test boundaries
+for /l %%i in (1,1,4) do echo %%i
+for /l %%i in (1,2,4) do echo %%i
+for /l %%i in (4,-1,1) do echo %%i
+for /l %%i in (4,-2,1) do echo %%i
+for /l %%i in (1,-1,4) do echo %%i
+for /l %%i in (4,1,1) do echo %%i
+for /L %%i in (a,2,b) do echo %%i
+for /L %%i in (1,1,1) do echo %%i
+for /L %%i in (1,-2,-1) do echo %%i
+for /L %%i in (-1,-1,-1) do echo %%i
+for /L %%i in (1,2, 3) do echo %%i
 echo --- for /a
 rem No output when using "set expr" syntax, unless in interactive mode
 rem Need to use "set envvar=expr" to use in a batch script

@@ -1364,7 +1364,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
       WINE_TRACE("FOR /L provided range from %d to %d step %d\n",
                  numbers[0], numbers[2], numbers[1]);
       for (i=numbers[0];
-           (numbers[1]<0)? i>numbers[2] : i<numbers[2];
+           (numbers[1]<0)? i>=numbers[2] : i<=numbers[2];
            i=i + numbers[1]) {
 
           sprintfW(thisNum, fmt, i);
