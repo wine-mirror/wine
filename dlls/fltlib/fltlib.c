@@ -65,7 +65,7 @@ HRESULT WINAPI FilterConnectCommunicationPort(LPCWSTR lpPortName, DWORD dwOption
 HRESULT WINAPI FilterFindFirst(DWORD class, LPVOID buffer, DWORD size, LPDWORD bytes_returned,
                                LPHANDLE handle)
 {
-    FIXME("%u, %p, %u, %p, %p\n", class, buffer, size, bytes_returned, handle);
+    FIXME("(%u, %p, %u, %p, %p) stub\n", class, buffer, size, bytes_returned, handle);
     return HRESULT_FROM_WIN32(ERROR_NO_MORE_ITEMS);
 }
 
@@ -74,6 +74,19 @@ HRESULT WINAPI FilterFindFirst(DWORD class, LPVOID buffer, DWORD size, LPDWORD b
  */
 HRESULT WINAPI FilterFindClose(HANDLE handle)
 {
-    FIXME("%p\n", handle);
+    FIXME("(%p) stub\n", handle);
+    return S_OK;
+}
+
+/**********************************************************************
+ *      FilterUnload            (FLTLIB.@)
+ */
+HRESULT WINAPI FilterUnload(LPCWSTR lpFilterName)
+{
+    FIXME("(%s) stub\n", debugstr_w(lpFilterName));
+
+    if (!lpFilterName)
+        return HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER);
+
     return S_OK;
 }

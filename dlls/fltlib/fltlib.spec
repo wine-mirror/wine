@@ -19,7 +19,7 @@
 @ stub FilterLoad
 @ stub FilterReplyMessage
 @ stub FilterSendMessage
-@ stub FilterUnload
+@ stdcall FilterUnload(wstr)
 @ stub FilterVolumeClose
 @ stub FilterVolumeFindClose
 @ stub FilterVolumeFindFirst
