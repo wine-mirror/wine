@@ -906,6 +906,7 @@ void set_script_mode(HTMLOuterWindow*,SCRIPTMODE) DECLSPEC_HIDDEN;
 BOOL find_global_prop(HTMLInnerWindow*,BSTR,DWORD,ScriptHost**,DISPID*) DECLSPEC_HIDDEN;
 IDispatch *get_script_disp(ScriptHost*) DECLSPEC_HIDDEN;
 HRESULT search_window_props(HTMLInnerWindow*,BSTR,DWORD,DISPID*) DECLSPEC_HIDDEN;
+HRESULT get_frame_by_name(HTMLOuterWindow*,const WCHAR*,BOOL,HTMLOuterWindow**) DECLSPEC_HIDDEN;
 
 HRESULT wrap_iface(IUnknown*,IUnknown*,IUnknown**) DECLSPEC_HIDDEN;
 

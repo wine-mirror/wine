@@ -96,9 +96,18 @@ static HRESULT navigate_anchor(HTMLAnchorElement *This)
                 nsAString_Finish(&target_str);
                 return S_OK;
             }else {
-                hres = navigate_anchor_window(This, target);
+                HTMLOuterWindow *top_window;
+
+                get_top_window(This->element.node.doc->basedoc.window, &top_window);
+
+                hres = get_frame_by_name(top_window, target, TRUE, &window);
+                if(FAILED(hres) || !window) {
+                    hres = navigate_anchor_window(This, target);
+                    nsAString_Finish(&target_str);
+                    return hres;
+                }
+
                 nsAString_Finish(&target_str);
-                return hres;
             }
         }
     }

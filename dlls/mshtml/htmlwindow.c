@@ -356,7 +356,7 @@ static HRESULT get_frame_by_index(HTMLOuterWindow *This, PRUint32 index, HTMLOut
     return S_OK;
 }
 
-static HRESULT get_frame_by_name(HTMLOuterWindow *This, const WCHAR *name, HTMLOuterWindow **ret)
+HRESULT get_frame_by_name(HTMLOuterWindow *This, const WCHAR *name, BOOL deep, HTMLOuterWindow **ret)
 {
     nsIDOMWindowCollection *nsframes;
     HTMLOuterWindow *window = NULL;
@@ -399,6 +399,9 @@ static HRESULT get_frame_by_name(HTMLOuterWindow *This, const WCHAR *name, HTMLO
             window = window_iter;
 
         SysFreeString(id);
+
+        if(!window && deep)
+            get_frame_by_name(window_iter, name, TRUE, &window);
     }
 
     nsIDOMWindowCollection_Release(nsframes);
@@ -435,7 +438,7 @@ static HRESULT WINAPI HTMLWindow2_item(IHTMLWindow2 *iface, VARIANT *pvarIndex, 
     case VT_BSTR: {
         BSTR str = V_BSTR(pvarIndex);
         TRACE("Getting name %s\n", wine_dbgstr_w(str));
-        hres = get_frame_by_name(This->outer_window, str, &window);
+        hres = get_frame_by_name(This->outer_window, str, FALSE, &window);
         break;
     }
     default:
