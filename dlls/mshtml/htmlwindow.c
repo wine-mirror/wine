@@ -360,6 +360,8 @@ HRESULT get_frame_by_name(HTMLOuterWindow *This, const WCHAR *name, BOOL deep, H
 {
     nsIDOMWindowCollection *nsframes;
     HTMLOuterWindow *window = NULL;
+    nsIDOMWindow *nswindow;
+    nsAString name_str;
     PRUint32 length, i;
     nsresult nsres;
     HRESULT hres = S_OK;
@@ -370,12 +372,24 @@ HRESULT get_frame_by_name(HTMLOuterWindow *This, const WCHAR *name, BOOL deep, H
         return E_FAIL;
     }
 
+    nsAString_InitDepend(&name_str, name);
+    nsres = nsIDOMWindowCollection_NamedItem(nsframes, &name_str, &nswindow);
+    nsAString_Finish(&name_str);
+    if(NS_FAILED(nsres)) {
+        nsIDOMWindowCollection_Release(nsframes);
+        return E_FAIL;
+    }
+
+    if(nswindow) {
+        *ret = nswindow_to_window(nswindow);
+        return S_OK;
+    }
+
     nsres = nsIDOMWindowCollection_GetLength(nsframes, &length);
     assert(nsres == NS_OK);
 
     for(i = 0; i < length && !window; ++i) {
         HTMLOuterWindow *window_iter;
-        nsIDOMWindow *nswindow;
         BSTR id;
 
         nsres = nsIDOMWindowCollection_Item(nsframes, i, &nswindow);
