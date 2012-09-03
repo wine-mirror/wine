@@ -45,10 +45,10 @@ struct volume
 };
 
 /* for internal use */
-typedef enum _FormatType {
+enum format_type {
     FORMAT_ARGB,   /* unsigned */
     FORMAT_UNKNOWN
-} FormatType;
+};
 
 struct pixel_format_desc {
     D3DFORMAT format;
@@ -58,7 +58,7 @@ struct pixel_format_desc {
     UINT block_width;
     UINT block_height;
     UINT block_byte_count;
-    FormatType type;
+    enum format_type type;
     void (*from_rgba)(const struct vec4 *src, struct vec4 *dst);
     void (*to_rgba)(const struct vec4 *src, struct vec4 *dst);
 };
