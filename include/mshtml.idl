@@ -17159,6 +17159,63 @@ interface IHTMLIFrameElement : IDispatch
 }
 
 /*****************************************************************************
+ *    IHTMLIFrameElement2 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f4e6-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLIFrameElement2 : IDispatch
+{
+    [propput, id(DISPID_IHTMLIFRAMEELEMENT2_HEIGHT)]
+    HRESULT height([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLIFRAMEELEMENT2_HEIGHT)]
+    HRESULT height([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLIFRAMEELEMENT2_WIDTH)]
+    HRESULT width([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLIFRAMEELEMENT2_WIDTH)]
+    HRESULT width([out, retval] VARIANT *p);
+}
+
+/*****************************************************************************
+ *    IHTMLIFrameElement3 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(30510433-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLIFrameElement3 : IDispatch
+{
+    [propget, id(DISPID_IHTMLIFRAMEELEMENT3_CONTENTDOCUMENT)]
+    HRESULT contentDocument([out, retval] IDispatch **p);
+
+    [propput, id(DISPID_IHTMLIFRAMEELEMENT3_IE8_SRC)]
+    HRESULT src([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLIFRAMEELEMENT3_IE8_SRC)]
+    HRESULT src([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLIFRAMEELEMENT3_IE8_LONGDESC)]
+    HRESULT longDesc([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLIFRAMEELEMENT3_IE8_LONGDESC)]
+    HRESULT longDesc([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLIFRAMEELEMENT3_IE8_FRAMEBORDER)]
+    HRESULT frameBorder([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLIFRAMEELEMENT3_IE8_FRAMEBORDER)]
+    HRESULT frameBorder([out, retval] BSTR *p);
+}
+
+/*****************************************************************************
  *    DispHTMLIFrame dispinterface
  */
 [
@@ -17200,6 +17257,27 @@ methods:
 
     [propget, id(DISPID_IHTMLIFRAMEELEMENT2_WIDTH)]
     VARIANT width();
+
+    [propget, id(DISPID_IHTMLIFRAMEELEMENT3_CONTENTDOCUMENT)]
+    IDispatch *contentDocument();
+
+    [propput, id(DISPID_IHTMLIFRAMEELEMENT3_IE8_SRC)]
+    void ie8_src(BSTR v);
+
+    [propget, id(DISPID_IHTMLIFRAMEELEMENT3_IE8_SRC)]
+    BSTR ie8_src();
+
+    [propput, id(DISPID_IHTMLIFRAMEELEMENT3_IE8_LONGDESC)]
+    void ie8_longDesc(BSTR v);
+
+    [propget, id(DISPID_IHTMLIFRAMEELEMENT3_IE8_LONGDESC)]
+    BSTR ie8_longDesc();
+
+    [propput, id(DISPID_IHTMLIFRAMEELEMENT3_IE8_FRAMEBORDER)]
+    void ie8_frameBorder(BSTR v);
+
+    [propget, id(DISPID_IHTMLIFRAMEELEMENT3_IE8_FRAMEBORDER)]
+    BSTR ie8_frameBorder();
 }
 
 /*****************************************************************************
