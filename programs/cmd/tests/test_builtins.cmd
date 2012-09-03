@@ -1530,6 +1530,17 @@ if d==d goto dest4
 :dest4@space@
 echo goto with a following space worked
 
+echo ------------ Testing PATH ------------
+set backup_path=%path%
+set path=original
+path
+path try2
+path
+path=try3
+path
+set path=%backup_path%
+set backup_path=
+
 echo ------------ Testing combined CALLs/GOTOs ------------
 echo @echo off>foo.cmd
 echo goto :eof>>foot.cmd

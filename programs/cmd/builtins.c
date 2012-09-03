@@ -2371,7 +2371,7 @@ void WCMD_setshow_path (const WCHAR *command) {
   static const WCHAR pathW[] = {'P','A','T','H','\0'};
   static const WCHAR pathEqW[] = {'P','A','T','H','=','\0'};
 
-  if (strlenW(param1) == 0) {
+  if (strlenW(param1) == 0 && strlenW(param2) == 0) {
     status = GetEnvironmentVariableW(pathW, string, sizeof(string)/sizeof(WCHAR));
     if (status != 0) {
       WCMD_output_asis ( pathEqW);
