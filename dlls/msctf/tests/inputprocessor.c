@@ -1901,10 +1901,9 @@ static void test_TStoApplicationText(void)
     {
         hr = ITfSource_UnadviseSink(source, editSinkCookie);
         ok(SUCCEEDED(hr),"Failed to unadvise Sink\n");
-        ITfTextEditSink_Release(sink);
         ITfSource_Release(source);
     }
-
+    ITfTextEditSink_Release(sink);
     ITfContext_Release(cxt);
     ITfDocumentMgr_Release(dm);
     ITfEditSession_Release(es);
