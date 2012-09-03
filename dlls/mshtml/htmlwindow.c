@@ -322,108 +322,127 @@ static HRESULT WINAPI HTMLWindow2_Invoke(IHTMLWindow2 *iface, DISPID dispIdMembe
             pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
-static HRESULT get_frame_by_index(nsIDOMWindowCollection *nsFrames, PRUint32 index, HTMLOuterWindow **ret)
+static HRESULT get_frame_by_index(HTMLOuterWindow *This, PRUint32 index, HTMLOuterWindow **ret)
 {
+    nsIDOMWindowCollection *nsframes;
+    nsIDOMWindow *nswindow;
     PRUint32 length;
-    nsIDOMWindow *nsWindow;
     nsresult nsres;
 
-    nsres = nsIDOMWindowCollection_GetLength(nsFrames, &length);
+    nsres = nsIDOMWindow_GetFrames(This->nswindow, &nsframes);
     if(NS_FAILED(nsres)) {
-        FIXME("nsIDOMWindowCollection_GetLength failed: 0x%08x\n", nsres);
+        FIXME("nsIDOMWindow_GetFrames failed: 0x%08x\n", nsres);
         return E_FAIL;
     }
 
-    if(index >= length)
-        return DISP_E_MEMBERNOTFOUND;
+    nsres = nsIDOMWindowCollection_GetLength(nsframes, &length);
+    assert(nsres == NS_OK);
 
-    nsres = nsIDOMWindowCollection_Item(nsFrames, index, &nsWindow);
+    if(index >= length) {
+        nsIDOMWindowCollection_Release(nsframes);
+        return DISP_E_MEMBERNOTFOUND;
+    }
+
+    nsres = nsIDOMWindowCollection_Item(nsframes, index, &nswindow);
+    nsIDOMWindowCollection_Release(nsframes);
     if(NS_FAILED(nsres)) {
         FIXME("nsIDOMWindowCollection_Item failed: 0x%08x\n", nsres);
         return E_FAIL;
     }
 
-    *ret = nswindow_to_window(nsWindow);
+    *ret = nswindow_to_window(nswindow);
 
-    nsIDOMWindow_Release(nsWindow);
-
+    nsIDOMWindow_Release(nswindow);
     return S_OK;
+}
+
+static HRESULT get_frame_by_name(HTMLOuterWindow *This, const WCHAR *name, HTMLOuterWindow **ret)
+{
+    nsIDOMWindowCollection *nsframes;
+    HTMLOuterWindow *window = NULL;
+    PRUint32 length, i;
+    nsresult nsres;
+    HRESULT hres = S_OK;
+
+    nsres = nsIDOMWindow_GetFrames(This->nswindow, &nsframes);
+    if(NS_FAILED(nsres)) {
+        FIXME("nsIDOMWindow_GetFrames failed: 0x%08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsres = nsIDOMWindowCollection_GetLength(nsframes, &length);
+    assert(nsres == NS_OK);
+
+    for(i = 0; i < length && !window; ++i) {
+        HTMLOuterWindow *window_iter;
+        nsIDOMWindow *nswindow;
+        BSTR id;
+
+        nsres = nsIDOMWindowCollection_Item(nsframes, i, &nswindow);
+        if(NS_FAILED(nsres)) {
+            FIXME("nsIDOMWindowCollection_Item failed: 0x%08x\n", nsres);
+            hres = E_FAIL;
+            break;
+        }
+
+        window_iter = nswindow_to_window(nswindow);
+
+        nsIDOMWindow_Release(nswindow);
+
+        hres = IHTMLElement_get_id(&window_iter->frame_element->element.IHTMLElement_iface, &id);
+        if(FAILED(hres)) {
+            FIXME("IHTMLElement_get_id failed: 0x%08x\n", hres);
+            break;
+        }
+
+        if(id && !strcmpiW(id, name))
+            window = window_iter;
+
+        SysFreeString(id);
+    }
+
+    nsIDOMWindowCollection_Release(nsframes);
+    if(FAILED(hres))
+        return hres;
+
+    *ret = window;
+    return NS_OK;
 }
 
 static HRESULT WINAPI HTMLWindow2_item(IHTMLWindow2 *iface, VARIANT *pvarIndex, VARIANT *pvarResult)
 {
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
-    nsIDOMWindowCollection *nsFrames;
     HTMLOuterWindow *window = NULL;
-    HRESULT hres = S_OK;
-    nsresult nsres;
+    HRESULT hres;
 
     TRACE("(%p)->(%p %p)\n", This, pvarIndex, pvarResult);
-
-    nsres = nsIDOMWindow_GetFrames(This->outer_window->nswindow, &nsFrames);
-    if(NS_FAILED(nsres)) {
-        FIXME("nsIDOMWindow_GetFrames failed: 0x%08x\n", nsres);
-        return E_FAIL;
-    }
 
     switch(V_VT(pvarIndex)) {
     case VT_I4: {
         int index = V_I4(pvarIndex);
         TRACE("Getting index %d\n", index);
         if(index < 0)
-            break;
-        hres = get_frame_by_index(nsFrames, index, &window);
+            return DISP_E_MEMBERNOTFOUND;
+        hres = get_frame_by_index(This->outer_window, index, &window);
         break;
     }
     case VT_UINT: {
         unsigned int index = V_UINT(pvarIndex);
         TRACE("Getting index %u\n", index);
-        hres = get_frame_by_index(nsFrames, index, &window);
+        hres = get_frame_by_index(This->outer_window, index, &window);
         break;
     }
     case VT_BSTR: {
         BSTR str = V_BSTR(pvarIndex);
-        PRUint32 length, i;
-
         TRACE("Getting name %s\n", wine_dbgstr_w(str));
-
-        nsIDOMWindowCollection_GetLength(nsFrames, &length);
-
-        window = NULL;
-        for(i = 0; i < length && !window; ++i) {
-            HTMLOuterWindow *cur_window;
-            nsIDOMWindow *nsWindow;
-            BSTR id;
-
-            nsres = nsIDOMWindowCollection_Item(nsFrames, i, &nsWindow);
-            if(NS_FAILED(nsres)) {
-                FIXME("nsIDOMWindowCollection_Item failed: 0x%08x\n", nsres);
-                hres = E_FAIL;
-                break;
-            }
-
-            cur_window = nswindow_to_window(nsWindow);
-
-            nsIDOMWindow_Release(nsWindow);
-
-            hres = IHTMLElement_get_id(&cur_window->frame_element->element.IHTMLElement_iface, &id);
-            if(FAILED(hres)) {
-                FIXME("IHTMLElement_get_id failed: 0x%08x\n", hres);
-                break;
-            }
-
-            if(!strcmpW(id, str))
-                window = cur_window;
-
-            SysFreeString(id);
-        }
+        hres = get_frame_by_name(This->outer_window, str, &window);
         break;
     }
     default:
-        hres = E_INVALIDARG;
+        WARN("Invalid index %s\n", debugstr_variant(pvarIndex));
+        return E_INVALIDARG;
     }
 
-    nsIDOMWindowCollection_Release(nsFrames);
     if(FAILED(hres))
         return hres;
     if(!window)
