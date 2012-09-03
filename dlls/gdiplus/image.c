@@ -3124,17 +3124,19 @@ static GpStatus decode_image_wic(IStream* stream, REFCLSID clsid, UINT active_fr
             IWICBitmapSource_Release(source);
         }
 
-        bitmap->metadata_reader = NULL;
-        if (IWICBitmapFrameDecode_QueryInterface(frame, &IID_IWICMetadataBlockReader, (void **)&block_reader) == S_OK)
-        {
-            UINT block_count = 0;
-            if (IWICMetadataBlockReader_GetCount(block_reader, &block_count) == S_OK && block_count)
-                IWICMetadataBlockReader_GetReaderByIndex(block_reader, 0, &bitmap->metadata_reader);
-            IWICMetadataBlockReader_Release(block_reader);
-        }
+        if (SUCCEEDED(hr)) {
+            bitmap->metadata_reader = NULL;
+            if (IWICBitmapFrameDecode_QueryInterface(frame, &IID_IWICMetadataBlockReader, (void **)&block_reader) == S_OK)
+            {
+                UINT block_count = 0;
+                if (IWICMetadataBlockReader_GetCount(block_reader, &block_count) == S_OK && block_count)
+                    IWICMetadataBlockReader_GetReaderByIndex(block_reader, 0, &bitmap->metadata_reader);
+                IWICMetadataBlockReader_Release(block_reader);
+            }
 
-        palette = get_palette(frame, palette_type);
-        IWICBitmapFrameDecode_Release(frame);
+            palette = get_palette(frame, palette_type);
+            IWICBitmapFrameDecode_Release(frame);
+        }
     }
 
     IWICBitmapDecoder_Release(decoder);
