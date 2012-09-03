@@ -147,6 +147,7 @@ typedef struct event_target_t event_target_t;
     XIID(IHTMLHeadElement) \
     XIID(IHTMLIFrameElement) \
     XIID(IHTMLIFrameElement2) \
+    XIID(IHTMLIFrameElement3) \
     XIID(IHTMLImageElementFactory) \
     XIID(IHTMLImgElement) \
     XIID(IHTMLInputElement) \
