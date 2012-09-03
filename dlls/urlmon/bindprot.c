@@ -34,32 +34,38 @@ struct _task_header_t {
 #define WM_MK_CONTINUE   (WM_USER+101)
 #define WM_MK_RELEASE    (WM_USER+102)
 
+static void process_tasks(BindProtocol *This)
+{
+    task_header_t *task;
+
+    while(1) {
+        EnterCriticalSection(&This->section);
+
+        task = This->task_queue_head;
+        if(task) {
+            This->task_queue_head = task->next;
+            if(!This->task_queue_head)
+                This->task_queue_tail = NULL;
+        }
+
+        LeaveCriticalSection(&This->section);
+
+        if(!task)
+            break;
+
+        This->continue_call++;
+        task->proc(This, task);
+        This->continue_call--;
+    }
+}
+
 static LRESULT WINAPI notif_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch(msg) {
     case WM_MK_CONTINUE: {
         BindProtocol *This = (BindProtocol*)lParam;
-        task_header_t *task;
 
-        while(1) {
-            EnterCriticalSection(&This->section);
-
-            task = This->task_queue_head;
-            if(task) {
-                This->task_queue_head = task->next;
-                if(!This->task_queue_head)
-                    This->task_queue_tail = NULL;
-            }
-
-            LeaveCriticalSection(&This->section);
-
-            if(!task)
-                break;
-
-            This->continue_call++;
-            task->proc(This, task);
-            This->continue_call--;
-        }
+        process_tasks(This);
 
         IInternetProtocolEx_Release(&This->IInternetProtocolEx_iface);
         return 0;
@@ -543,6 +549,8 @@ static HRESULT WINAPI BindProtocol_StartEx(IInternetProtocolEx *iface, IUri *pUr
                 &This->IInternetBindInfo_iface, 0, 0);
     }
 
+    if(SUCCEEDED(hres))
+        process_tasks(This);
     return hres;
 }
 
