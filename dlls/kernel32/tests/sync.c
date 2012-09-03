@@ -42,6 +42,11 @@ static BOOL   (WINAPI *pInitOnceExecuteOnce)(PINIT_ONCE,PINIT_ONCE_FN,PVOID,LPVO
 static BOOL   (WINAPI *pInitOnceBeginInitialize)(PINIT_ONCE,DWORD,BOOL*,LPVOID*);
 static BOOL   (WINAPI *pInitOnceComplete)(PINIT_ONCE,DWORD,LPVOID);
 
+static VOID   (WINAPI *pInitializeConditionVariable)(PCONDITION_VARIABLE);
+static BOOL   (WINAPI *pSleepConditionVariableCS)(PCONDITION_VARIABLE,PCRITICAL_SECTION,DWORD);
+static VOID   (WINAPI *pWakeAllConditionVariable)(PCONDITION_VARIABLE);
+static VOID   (WINAPI *pWakeConditionVariable)(PCONDITION_VARIABLE);
+
 static void test_signalandwait(void)
 {
     DWORD (WINAPI *pSignalObjectAndWait)(HANDLE, HANDLE, DWORD, BOOL);
@@ -1238,6 +1243,112 @@ static void test_initonce(void)
     ok(initonce.Ptr == (void*)0xdeadbee2, "got %p\n", initonce.Ptr);
 }
 
+static CONDITION_VARIABLE buffernotempty,buffernotfull;
+static CRITICAL_SECTION   buffercrit;
+static BOOL condvar_stop = FALSE, condvar_sleeperr = FALSE;
+static LONG bufferlen,totalproduced,totalconsumed;
+static LONG condvar_producer_sleepcnt,condvar_consumer_sleepcnt;
+
+#define BUFFER_SIZE 10
+
+static DWORD WINAPI condvar_producer(LPVOID x) {
+    while (1) {
+        Sleep(rand() % 10);
+
+        EnterCriticalSection(&buffercrit);
+        while ((bufferlen == BUFFER_SIZE) && !condvar_stop) {
+            condvar_producer_sleepcnt++;
+            if (!pSleepConditionVariableCS(&buffernotfull, &buffercrit, 2000))
+                condvar_sleeperr = TRUE;
+        }
+        if (condvar_stop) {
+            LeaveCriticalSection(&buffercrit);
+            break;
+        }
+        bufferlen++;
+        totalproduced++;
+        LeaveCriticalSection(&buffercrit);
+        pWakeConditionVariable(&buffernotempty);
+    }
+    return 0;
+}
+
+static DWORD WINAPI condvar_consumer(LPVOID x) {
+    DWORD *cnt = (DWORD*)x;
+
+    while (1) {
+        EnterCriticalSection(&buffercrit);
+        while ((bufferlen == 0) && !condvar_stop) {
+            condvar_consumer_sleepcnt++;
+            if (!pSleepConditionVariableCS (&buffernotempty, &buffercrit, 2000))
+                condvar_sleeperr = TRUE;
+        }
+        if (condvar_stop && (bufferlen == 0)) {
+            LeaveCriticalSection(&buffercrit);
+            break;
+        }
+        bufferlen--;
+        totalconsumed++;
+        (*cnt)++;
+        LeaveCriticalSection(&buffercrit);
+        pWakeConditionVariable(&buffernotfull);
+        Sleep(rand() % 10);
+    }
+    return 0;
+}
+
+static void test_condvars(void)
+{
+    HANDLE hp1,hp2,hc1,hc2;
+    DWORD dummy;
+    DWORD cnt1,cnt2;
+
+    if (!pInitializeConditionVariable) {
+        /* function is not yet in XP, only in newer Windows */
+        /* and not yet implemented in Wine for some days/weeks */
+        todo_wine win_skip("no condition variable support.\n");
+        return;
+    }
+
+    /* Implement a producer / consumer scheme with non-full / non-empty triggers */
+    pInitializeConditionVariable(&buffernotfull);
+    pInitializeConditionVariable(&buffernotempty);
+    InitializeCriticalSection(&buffercrit);
+    bufferlen = totalproduced = totalconsumed = cnt1 = cnt2 = 0;
+
+    hp1 = CreateThread(NULL, 0, condvar_producer, NULL, 0, &dummy);
+    hp2 = CreateThread(NULL, 0, condvar_producer, NULL, 0, &dummy);
+    hc1 = CreateThread(NULL, 0, condvar_consumer, (PVOID)&cnt1, 0, &dummy);
+    hc2 = CreateThread(NULL, 0, condvar_consumer, (PVOID)&cnt2, 0, &dummy);
+
+    /* Limit run to 0.5 seconds. */
+    Sleep(500);
+
+    /* tear down start */
+    condvar_stop = TRUE;
+
+    /* final wake up call */
+    pWakeAllConditionVariable (&buffernotfull);
+    pWakeAllConditionVariable (&buffernotempty);
+
+    WaitForSingleObject(hp1, 1000);
+    WaitForSingleObject(hp2, 1000);
+    WaitForSingleObject(hc1, 1000);
+    WaitForSingleObject(hc2, 1000);
+
+    ok(totalconsumed == totalproduced,
+       "consumed %d != produced %d\n", totalconsumed, totalproduced);
+    ok (!condvar_sleeperr, "error occured during SleepConditionVariableCS\n");
+
+    /* Checking cnt1 - cnt2 for non-0 would be not good, the case where
+     * one consumer does not get anything to do is possible. */
+    trace("produced %d, c1 %d, c2 %d\n", totalproduced, cnt1, cnt2);
+    /* The sleeps of the producer or consumer should not go above 100* produced count,
+     * otherwise the implementation does not sleep correctly. But yet again, this is
+     * not hard defined. */
+    trace("producer sleep %d, consumer sleep %d\n", condvar_producer_sleepcnt, condvar_consumer_sleepcnt);
+}
+
 START_TEST(sync)
 {
     HMODULE hdll = GetModuleHandle("kernel32");
@@ -1254,6 +1365,10 @@ START_TEST(sync)
     pInitOnceExecuteOnce = (void *)GetProcAddress(hdll, "InitOnceExecuteOnce");
     pInitOnceBeginInitialize = (void *)GetProcAddress(hdll, "InitOnceBeginInitialize");
     pInitOnceComplete = (void *)GetProcAddress(hdll, "InitOnceComplete");
+    pInitializeConditionVariable = (void *)GetProcAddress(hdll, "InitializeConditionVariable");
+    pSleepConditionVariableCS = (void *)GetProcAddress(hdll, "SleepConditionVariableCS");
+    pWakeAllConditionVariable = (void *)GetProcAddress(hdll, "WakeAllConditionVariable");
+    pWakeConditionVariable = (void *)GetProcAddress(hdll, "WakeConditionVariable");
 
     test_signalandwait();
     test_mutex();
@@ -1266,4 +1381,5 @@ START_TEST(sync)
     test_WaitForSingleObject();
     test_WaitForMultipleObjects();
     test_initonce();
+    test_condvars();
 }
