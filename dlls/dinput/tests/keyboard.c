@@ -190,7 +190,7 @@ static void test_capabilities(LPDIRECTINPUT pDI, HWND hwnd)
     ok (LOWORD(HIBYTE(caps.dwDevType)) != DIDEVTYPEKEYBOARD_UNKNOWN,
         "GetCapabilities invalid device subtype for dwDevType: 0x%08x\n", caps.dwDevType);
 
-    if (pKeyboard) IUnknown_Release(pKeyboard);
+    IUnknown_Release(pKeyboard);
 }
 
 static void keyboard_tests(DWORD version)
