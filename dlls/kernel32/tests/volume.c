@@ -807,7 +807,7 @@ static void test_dvd_read_structure(HANDLE handle)
     SetLastError(0xdeadbeef);
 
     /* On newer version, an output buffer of sizeof(DVD_READ_STRUCTURE) size fails.
-        I think this is to force developpers to realize that there is a header before the actual content */
+        I think this is to force developers to realize that there is a header before the actual content */
     ret = DeviceIoControl(handle, IOCTL_DVD_READ_STRUCTURE, &dvdReadStructure, sizeof(DVD_READ_STRUCTURE),
         &dvdLayerDescriptor, sizeof(DVD_LAYER_DESCRIPTOR), &nbBytes, NULL);
     ok( (!ret && GetLastError() == ERROR_INVALID_PARAMETER) || broken(ret) /* < Win7 */,

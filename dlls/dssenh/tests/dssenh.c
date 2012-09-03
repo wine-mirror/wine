@@ -562,7 +562,7 @@ static const struct encrypt_test encrypt_data[] = {
     {CALG_DES, 56 << 16, dataToEncrypt3, sizeof(dataToEncrypt3), (BYTE *)dataToEncrypt3,
         encryptedDES_3},
     /* CALG_RC2 key unexpected results under Win2K when default key length is used, here we use
-       minimum length because Win2K's DSSENH provider has a differnt default key length compared
+       minimum length because Win2K's DSSENH provider has a different default key length compared
        to the younger operating systems, though there is no default key len issue with CALG_RC4 */
     {CALG_RC2, 40 << 16, dataToEncrypt1, sizeof(dataToEncrypt1), (BYTE *)dataToEncrypt1,
         encryptedRC2_1},
@@ -1192,7 +1192,7 @@ static void test_keyExchange_baseDSS(HCRYPTPROV hProv, const struct keyExchange_
 
         ok(!memcmp(pbData1, pbData2, dataLen), "Decrypted data is not identical.\n");
 
-        /* Destory all user keys */
+        /* Destroy all user keys */
         result = CryptDestroyKey(sessionKey1);
         ok((!result && GetLastError() ==  ERROR_INVALID_PARAMETER) || broken(result),
             "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError()); /* WinNT4 */
@@ -1317,7 +1317,7 @@ static void test_keyExchange_dssDH(HCRYPTPROV hProv, const struct keyExchange_te
 
         ok(!memcmp(pbData1, pbData2, dataLen), "Decrypted data is not identical.\n");
 
-        /* Destory all user keys */
+        /* Destroy all user keys */
         result = CryptDestroyKey(sessionKey1);
         ok(result, "Failed to destroy session key 1, got %x\n", GetLastError());
 

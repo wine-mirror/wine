@@ -401,9 +401,9 @@ static void test_set_value(void)
 
     /* test RegSetValueExW with data = 1 */
     ret = RegSetValueExW(hkey_main, name2W, 0, REG_SZ, (const BYTE *)1, 1);
-    ok(ret == ERROR_NOACCESS, "RegSetValueExW should have failed with with ERROR_NOACCESS: %d, GLE=%d\n", ret, GetLastError());
+    ok(ret == ERROR_NOACCESS, "RegSetValueExW should have failed with ERROR_NOACCESS: %d, GLE=%d\n", ret, GetLastError());
     ret = RegSetValueExW(hkey_main, name2W, 0, REG_DWORD, (const BYTE *)1, 1);
-    ok(ret == ERROR_NOACCESS, "RegSetValueExW should have failed with with ERROR_NOACCESS: %d, GLE=%d\n", ret, GetLastError());
+    ok(ret == ERROR_NOACCESS, "RegSetValueExW should have failed with ERROR_NOACCESS: %d, GLE=%d\n", ret, GetLastError());
 }
 
 static void create_test_entries(void)

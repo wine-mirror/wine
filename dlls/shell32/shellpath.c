@@ -2648,7 +2648,7 @@ static void _SHCreateSymbolicLinks(void)
 
     /* Create symbolic links for 'My Pictures', 'My Videos' and 'My Music'. */
     for (i=0; i < sizeof(aidsMyStuff)/sizeof(aidsMyStuff[0]); i++) {
-        /* Create the current 'My Whatever' folder and get it's unix path. */
+        /* Create the current 'My Whatever' folder and get its unix path. */
         hr = SHGetFolderPathW(NULL, acsidlMyStuff[i]|CSIDL_FLAG_CREATE, NULL,
                               SHGFP_TYPE_DEFAULT, wszTempPath);
         if (FAILED(hr)) continue;
