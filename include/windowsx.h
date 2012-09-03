@@ -232,7 +232,7 @@ extern "C" {
 	((UINT)SendMessage((hwndCtl), BM_SETSTATE, (WPARAM)(int)(state), 0L))
 
 #define Button_SetStyle(hwndCtl, style, fRedraw) \
-	((void)SendMessage((hwndCtl), BM_SETSTYLE, (WPARAM)LOWORD(style), MAKELPARAM(((fRedraw) ? TRUE : FALSE), 0)))
+	((void)SendMessage((hwndCtl), BM_SETSTYLE, (WPARAM)LOWORD(style), MAKELPARAM((fRedraw) != 0, 0)))
 
 #define Button_SetText(hwndCtl, lpsz) \
 	SetWindowText((hwndCtl), (lpsz))
