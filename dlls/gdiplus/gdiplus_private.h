@@ -368,6 +368,7 @@ struct GpStringFormat{
     REAL *tabs;
     CharacterRange *character_ranges;
     INT range_count;
+    BOOL generic_typographic;
 };
 
 struct GpFontCollection{
