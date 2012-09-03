@@ -310,6 +310,7 @@ static INT_PTR CALLBACK list_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
                         initialize_disabled_joysticks_list(hwnd);
                     }
                 }
+                break;
 
                 case IDC_JOYSTICKLIST:
                     EnableWindow(GetDlgItem(hwnd, IDC_BUTTONENABLE), FALSE);
