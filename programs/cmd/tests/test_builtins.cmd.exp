@@ -629,8 +629,8 @@ read-only file renamed
 dir renamed
 read-only dir renamed
 --- rename in other directory
-@todo_wine@rename impossible in other directory
-@todo_wine@original file still present
+rename impossible in other directory
+original file still present
 ------------ Testing move ------------
 --- file move
 file move succeeded

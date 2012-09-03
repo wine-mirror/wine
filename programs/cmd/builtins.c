@@ -1872,7 +1872,7 @@ void WCMD_rename (void)
   }
 
   /* Destination cannot contain a drive letter or directory separator */
-  if ((strchrW(param1,':') != NULL) || (strchrW(param1,'\\') != NULL)) {
+  if ((strchrW(param2,':') != NULL) || (strchrW(param2,'\\') != NULL)) {
       SetLastError(ERROR_INVALID_PARAMETER);
       WCMD_print_error();
       errorlevel = 1;
