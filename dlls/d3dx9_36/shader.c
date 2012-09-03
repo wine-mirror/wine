@@ -914,7 +914,7 @@ static HRESULT WINAPI ID3DXConstantTableImpl_GetDesc(ID3DXConstantTable *iface, 
     if (!desc)
         return D3DERR_INVALIDCALL;
 
-    memcpy(desc, &This->desc, sizeof(This->desc));
+    *desc = This->desc;
 
     return D3D_OK;
 }
