@@ -4977,8 +4977,16 @@ GpStatus WINGDIPAPI GdipMeasureCharacterRanges(GpGraphics* graphics,
 
     scaled_rect.X = (layoutRect->X + margin_x) * args.rel_width;
     scaled_rect.Y = layoutRect->Y * args.rel_height;
-    scaled_rect.Width = layoutRect->Width * args.rel_width;
-    scaled_rect.Height = layoutRect->Height * args.rel_height;
+    if (stringFormat->attr & StringFormatFlagsNoClip)
+    {
+        scaled_rect.Width = (REAL)(1 << 23);
+        scaled_rect.Height = (REAL)(1 << 23);
+    }
+    else
+    {
+        scaled_rect.Width = layoutRect->Width * args.rel_width;
+        scaled_rect.Height = layoutRect->Height * args.rel_height;
+    }
     if (scaled_rect.Width >= 0.5)
     {
         scaled_rect.Width -= margin_x * 2.0 * args.rel_width;
@@ -5058,7 +5066,7 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
     GpPointF pt[3];
     RectF scaled_rect;
     REAL margin_x;
-    INT lines, glyphs;
+    INT lines, glyphs, format_flags = format ? format->attr : 0;
 
     TRACE("(%p, %s, %i, %p, %s, %p, %p, %p, %p)\n", graphics,
         debugstr_wn(string, length), length, font, debugstr_rectf(rect), format,
@@ -5100,6 +5108,12 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
     scaled_rect.Y = rect->Y * args.rel_height;
     scaled_rect.Width = rect->Width * args.rel_width;
     scaled_rect.Height = rect->Height * args.rel_height;
+
+    if ((format_flags & StringFormatFlagsNoClip) ||
+        scaled_rect.Width >= INT_MAX || scaled_rect.Width < 0.5) scaled_rect.Width = (REAL)(1 << 23);
+    if ((format_flags & StringFormatFlagsNoClip) ||
+        scaled_rect.Height >= INT_MAX || scaled_rect.Height < 0.5) scaled_rect.Height = (REAL)(1 << 23);
+
     if (scaled_rect.Width >= 0.5)
     {
         scaled_rect.Width -= margin_x * 2.0 * args.rel_width;
@@ -5202,7 +5216,7 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     GpPointF pt[3], rectcpy[4];
     POINT corners[4];
     REAL rel_width, rel_height, margin_x;
-    INT save_state;
+    INT save_state, format_flags = 0;
     REAL offsety = 0.0;
     struct draw_string_args args;
     RectF scaled_rect;
@@ -5226,6 +5240,8 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
 
     if(format){
         TRACE("may be ignoring some format flags: attr %x\n", format->attr);
+
+        format_flags = format->attr;
 
         /* Should be no need to explicitly test for StringAlignmentNear as
          * that is default behavior if no alignment is passed. */
@@ -5271,6 +5287,12 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     scaled_rect.Y = 0.0;
     scaled_rect.Width = rel_width * rect->Width;
     scaled_rect.Height = rel_height * rect->Height;
+
+    if ((format_flags & StringFormatFlagsNoClip) ||
+        scaled_rect.Width >= INT_MAX || scaled_rect.Width < 0.5) scaled_rect.Width = (REAL)(1 << 23);
+    if ((format_flags & StringFormatFlagsNoClip) ||
+        scaled_rect.Height >= INT_MAX || scaled_rect.Height < 0.5) scaled_rect.Height = (REAL)(1 << 23);
+
     if (scaled_rect.Width >= 0.5)
     {
         scaled_rect.Width -= margin_x * 2.0 * rel_width;
@@ -5280,7 +5302,8 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     if (scaled_rect.Width >= INT_MAX || scaled_rect.Width < 0.5) scaled_rect.Width = (REAL)(1 << 23);
     if (scaled_rect.Height >= INT_MAX || scaled_rect.Height < 0.5) scaled_rect.Height = (REAL)(1 << 23);
 
-    if (gdip_round(scaled_rect.Width) != 0 && gdip_round(scaled_rect.Height) != 0)
+    if (!(format_flags & StringFormatFlagsNoClip) &&
+        gdip_round(scaled_rect.Width) != 0 && gdip_round(scaled_rect.Height) != 0)
     {
         /* FIXME: If only the width or only the height is 0, we should probably still clip */
         rgn = CreatePolygonRgn(corners, 4, ALTERNATE);
