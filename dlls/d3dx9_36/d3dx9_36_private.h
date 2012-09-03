@@ -50,7 +50,7 @@ typedef enum _FormatType {
     FORMAT_UNKNOWN
 } FormatType;
 
-typedef struct _PixelFormatDesc {
+struct pixel_format_desc {
     D3DFORMAT format;
     BYTE bits[4];
     BYTE shift[4];
@@ -61,21 +61,21 @@ typedef struct _PixelFormatDesc {
     FormatType type;
     void (*from_rgba)(const struct vec4 *src, struct vec4 *dst);
     void (*to_rgba)(const struct vec4 *src, struct vec4 *dst);
-} PixelFormatDesc;
+};
 
 HRESULT map_view_of_file(LPCWSTR filename, LPVOID *buffer, DWORD *length) DECLSPEC_HIDDEN;
 HRESULT load_resource_into_memory(HMODULE module, HRSRC resinfo, LPVOID *buffer, DWORD *length) DECLSPEC_HIDDEN;
 
 HRESULT write_buffer_to_file(const WCHAR *filename, ID3DXBuffer *buffer) DECLSPEC_HIDDEN;
 
-const PixelFormatDesc *get_format_info(D3DFORMAT format) DECLSPEC_HIDDEN;
-const PixelFormatDesc *get_format_info_idx(int idx) DECLSPEC_HIDDEN;
+const struct pixel_format_desc *get_format_info(D3DFORMAT format) DECLSPEC_HIDDEN;
+const struct pixel_format_desc *get_format_info_idx(int idx) DECLSPEC_HIDDEN;
 
-void copy_simple_data(const BYTE *src, UINT src_row_pitch, UINT src_slice_pitch, struct volume *src_size, const PixelFormatDesc *src_format,
-        BYTE *dst, UINT dst_row_pitch, UINT dst_slice_pitch, struct volume *dst_size, const PixelFormatDesc *dst_format,
+void copy_simple_data(const BYTE *src, UINT src_row_pitch, UINT src_slice_pitch, struct volume *src_size, const struct pixel_format_desc *src_format,
+        BYTE *dst, UINT dst_row_pitch, UINT dst_slice_pitch, struct volume *dst_size, const struct pixel_format_desc *dst_format,
         D3DCOLOR color_key) DECLSPEC_HIDDEN;
-void point_filter_simple_data(const BYTE *src, UINT src_row_pitch, UINT src_slice_pitch, struct volume *src_size, const PixelFormatDesc *src_format,
-        BYTE *dst, UINT dst_row_pitch, UINT dst_slice_pitch, struct volume *dst_size, const PixelFormatDesc *dst_format,
+void point_filter_simple_data(const BYTE *src, UINT src_row_pitch, UINT src_slice_pitch, struct volume *src_size, const struct pixel_format_desc *src_format,
+        BYTE *dst, UINT dst_row_pitch, UINT dst_slice_pitch, struct volume *dst_size, const struct pixel_format_desc *dst_format,
         D3DCOLOR color_key) DECLSPEC_HIDDEN;
 
 HRESULT load_texture_from_dds(IDirect3DTexture9 *texture, const void *src_data, const PALETTEENTRY *palette,

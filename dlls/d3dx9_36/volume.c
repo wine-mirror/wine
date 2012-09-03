@@ -96,7 +96,7 @@ HRESULT WINAPI D3DXLoadVolumeFromMemory(IDirect3DVolume9 *dst_volume,
     D3DVOLUME_DESC desc;
     D3DLOCKED_BOX locked_box;
     struct volume dst_size, src_size;
-    const PixelFormatDesc *src_format_desc, *dst_format_desc;
+    const struct pixel_format_desc *src_format_desc, *dst_format_desc;
 
     TRACE("(%p, %p, %p, %p, %#x, %u, %u, %p, %p, %x, %x)\n", dst_volume, dst_palette, dst_box,
             src_memory, src_format, src_row_pitch, src_slice_pitch, src_palette, src_box,

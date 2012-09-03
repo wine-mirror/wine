@@ -314,11 +314,11 @@ HRESULT WINAPI D3DXCheckTextureRequirements(LPDIRECT3DDEVICE9 device,
     if (FAILED(hr))
     {
         /* Heuristic to choose the fallback format */
-        const PixelFormatDesc *fmt = get_format_info(usedformat);
+        const struct pixel_format_desc *fmt = get_format_info(usedformat);
         BOOL allow_24bits;
         int bestscore = INT_MIN, i = 0, j;
         unsigned int channels;
-        const PixelFormatDesc *curfmt;
+        const struct pixel_format_desc *curfmt;
 
         if (!fmt)
         {
@@ -1328,7 +1328,7 @@ HRESULT WINAPI D3DXFillTexture(LPDIRECT3DTEXTURE9 texture,
     D3DLOCKED_RECT lock_rect;
     D3DXVECTOR4 value;
     D3DXVECTOR2 coord, size;
-    const PixelFormatDesc *format;
+    const struct pixel_format_desc *format;
     BYTE *data, *pos;
     BYTE byte, mask;
     float comp_value;
@@ -1721,7 +1721,7 @@ HRESULT WINAPI D3DXFillCubeTexture(LPDIRECT3DCUBETEXTURE9 texture,
     D3DLOCKED_RECT lock_rect;
     D3DXVECTOR4 value;
     D3DXVECTOR3 coord, size;
-    const PixelFormatDesc *format;
+    const struct pixel_format_desc *format;
     BYTE *data, *pos;
     BYTE byte, mask;
     float comp_value;
@@ -1824,7 +1824,7 @@ HRESULT WINAPI D3DXFillVolumeTexture(LPDIRECT3DVOLUMETEXTURE9 texture,
     D3DLOCKED_BOX lock_box;
     D3DXVECTOR4 value;
     D3DXVECTOR3 coord, size;
-    const PixelFormatDesc *format;
+    const struct pixel_format_desc *format;
     BYTE *data, *pos;
     BYTE byte, mask;
     float comp_value;

@@ -42,7 +42,7 @@ static void la_to_rgba(const struct vec4 *la, struct vec4 *rgba)
  *
  * Call get_format_info to request information about a specific format.
  */
-static const PixelFormatDesc formats[] =
+static const struct pixel_format_desc formats[] =
 {
     /* format            bpc              shifts            bpp blocks   type            from_rgba     to_rgba */
     {D3DFMT_R8G8B8,      {0,  8,  8,  8}, { 0, 16,  8,  0}, 3, 1, 1,  3, FORMAT_ARGB,    NULL,         NULL      },
@@ -186,10 +186,9 @@ HRESULT write_buffer_to_file(const WCHAR *dst_filename, ID3DXBuffer *buffer)
  *
  * PARAMS
  *   format [I] format whose description is queried
- *   desc   [O] pointer to a StaticPixelFormatDesc structure
  *
  */
-const PixelFormatDesc *get_format_info(D3DFORMAT format)
+const struct pixel_format_desc *get_format_info(D3DFORMAT format)
 {
     unsigned int i = 0;
     while(formats[i].format != format && formats[i].format != D3DFMT_UNKNOWN) i++;
@@ -198,7 +197,7 @@ const PixelFormatDesc *get_format_info(D3DFORMAT format)
     return &formats[i];
 }
 
-const PixelFormatDesc *get_format_info_idx(int idx)
+const struct pixel_format_desc *get_format_info_idx(int idx)
 {
     if(idx >= sizeof(formats) / sizeof(formats[0]))
         return NULL;

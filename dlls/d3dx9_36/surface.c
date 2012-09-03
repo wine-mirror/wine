@@ -278,7 +278,7 @@ static D3DFORMAT dds_pixel_format_to_d3dformat(const struct dds_pixel_format *pi
 static HRESULT calculate_dds_surface_size(const D3DXIMAGE_INFO *img_info,
     UINT width, UINT height, UINT *pitch, UINT *size)
 {
-    const PixelFormatDesc *format_desc = get_format_info(img_info->Format);
+    const struct pixel_format_desc *format_desc = get_format_info(img_info->Format);
     if (format_desc->format == D3DFMT_UNKNOWN)
         return E_NOTIMPL;
 
@@ -854,7 +854,7 @@ HRESULT WINAPI D3DXLoadSurfaceFromFileInMemory(IDirect3DSurface9 *pDestSurface,
     IWICBitmapFrameDecode *bitmapframe;
     IWICStream *stream;
 
-    const PixelFormatDesc *formatdesc;
+    const struct pixel_format_desc *formatdesc;
     WICRect wicrect;
     RECT rect;
 
@@ -1097,15 +1097,15 @@ HRESULT WINAPI D3DXLoadSurfaceFromResourceW(IDirect3DSurface9 *dst_surface,
  */
 struct argb_conversion_info
 {
-    CONST PixelFormatDesc *srcformat;
-    CONST PixelFormatDesc *destformat;
+    const struct pixel_format_desc *srcformat;
+    const struct pixel_format_desc *destformat;
     DWORD srcshift[4], destshift[4];
     DWORD srcmask[4], destmask[4];
     BOOL process_channel[4];
     DWORD channelmask;
 };
 
-static void init_argb_conversion_info(CONST PixelFormatDesc *srcformat, CONST PixelFormatDesc *destformat, struct argb_conversion_info *info)
+static void init_argb_conversion_info(const struct pixel_format_desc *srcformat, const struct pixel_format_desc *destformat, struct argb_conversion_info *info)
 {
     UINT i;
     ZeroMemory(info->process_channel, 4 * sizeof(BOOL));
@@ -1196,7 +1196,7 @@ static DWORD make_argb_color(CONST struct argb_conversion_info *info, CONST DWOR
     return val;
 }
 
-static void format_to_vec4(const PixelFormatDesc *format, const DWORD *src, struct vec4 *dst)
+static void format_to_vec4(const struct pixel_format_desc *format, const DWORD *src, struct vec4 *dst)
 {
     DWORD mask;
 
@@ -1233,7 +1233,7 @@ static void format_to_vec4(const PixelFormatDesc *format, const DWORD *src, stru
         dst->w = 1.0f;
 }
 
-static void format_from_vec4(const PixelFormatDesc *format, const struct vec4 *src, DWORD *dst)
+static void format_from_vec4(const struct pixel_format_desc *format, const struct vec4 *src, DWORD *dst)
 {
     *dst = 0;
 
@@ -1255,11 +1255,12 @@ static void format_from_vec4(const PixelFormatDesc *format, const struct vec4 *s
  * Pixels outsize the source rect are blacked out.
  * Works only for ARGB formats with 1 - 4 bytes per pixel.
  */
-void copy_simple_data(const BYTE *src, UINT src_row_pitch, UINT src_slice_pitch, struct volume *src_size, const PixelFormatDesc *src_format,
-        BYTE *dst, UINT dst_row_pitch, UINT dst_slice_pitch, struct volume *dst_size, const PixelFormatDesc *dst_format, D3DCOLOR color_key)
+void copy_simple_data(const BYTE *src, UINT src_row_pitch, UINT src_slice_pitch, struct volume *src_size,
+        const struct pixel_format_desc *src_format, BYTE *dst, UINT dst_row_pitch, UINT dst_slice_pitch,
+        struct volume *dst_size, const struct pixel_format_desc *dst_format, D3DCOLOR color_key)
 {
     struct argb_conversion_info conv_info, ck_conv_info;
-    const PixelFormatDesc *ck_format = NULL;
+    const struct pixel_format_desc *ck_format = NULL;
     DWORD channels[4], pixel;
     UINT min_width, min_height, min_depth;
     UINT x, y, z;
@@ -1353,11 +1354,12 @@ void copy_simple_data(const BYTE *src, UINT src_row_pitch, UINT src_slice_pitch,
  * using a point filter.
  * Works only for ARGB formats with 1 - 4 bytes per pixel.
  */
-void point_filter_simple_data(const BYTE *src, UINT src_row_pitch, UINT src_slice_pitch, struct volume *src_size, const PixelFormatDesc *src_format,
-        BYTE *dst, UINT dst_row_pitch, UINT dst_slice_pitch, struct volume *dst_size, const PixelFormatDesc *dst_format, D3DCOLOR color_key)
+void point_filter_simple_data(const BYTE *src, UINT src_row_pitch, UINT src_slice_pitch, struct volume *src_size,
+        const struct pixel_format_desc *src_format, BYTE *dst, UINT dst_row_pitch, UINT dst_slice_pitch,
+        struct volume *dst_size, const struct pixel_format_desc *dst_format, D3DCOLOR color_key)
 {
     struct argb_conversion_info conv_info, ck_conv_info;
-    const PixelFormatDesc *ck_format = NULL;
+    const struct pixel_format_desc *ck_format = NULL;
     DWORD channels[4], pixel;
     UINT x, y, z;
 
@@ -1471,7 +1473,7 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(IDirect3DSurface9 *dst_surface,
         D3DFORMAT src_format, UINT src_pitch, const PALETTEENTRY *src_palette, const RECT *src_rect,
         DWORD filter, D3DCOLOR color_key)
 {
-    CONST PixelFormatDesc *srcformatdesc, *destformatdesc;
+    const struct pixel_format_desc *srcformatdesc, *destformatdesc;
     D3DSURFACE_DESC surfdesc;
     D3DLOCKED_RECT lockrect;
     struct volume src_size, dst_size;
@@ -1839,7 +1841,7 @@ HRESULT WINAPI D3DXSaveSurfaceToFileInMemory(ID3DXBuffer **dst_buffer, D3DXIMAGE
         }
         else /* Pixel format conversion */
         {
-            const PixelFormatDesc *src_format_desc, *dst_format_desc;
+            const struct pixel_format_desc *src_format_desc, *dst_format_desc;
             struct volume size;
             DWORD dst_pitch;
             void *dst_data;
