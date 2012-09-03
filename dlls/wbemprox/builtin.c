@@ -924,6 +924,11 @@ static void fill_service( struct table *table )
         service = OpenServiceW(manager, services[i].lpServiceName, GENERIC_READ);
         QueryServiceConfigW(service, NULL, 0, &size);
         config = heap_alloc(size);
+        if (!config)
+        {
+            CloseServiceHandle(service);
+            break;
+        }
         if (QueryServiceConfigW(service, config, size, &size))
             startmode = config->dwStartType;
         else
