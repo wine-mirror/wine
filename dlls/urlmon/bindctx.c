@@ -158,7 +158,7 @@ static HRESULT WINAPI BindStatusCallback_OnProgress(IBindStatusCallbackEx *iface
 {
     BindStatusCallback *This = impl_from_IBindStatusCallbackEx(iface);
 
-    TRACE("%p)->(%u %u %u %s)\n", This, ulProgress, ulProgressMax, ulStatusCode,
+    TRACE("%p)->(%u %u %s %s)\n", This, ulProgress, ulProgressMax, debugstr_bindstatus(ulStatusCode),
             debugstr_w(szStatusText));
 
     return IBindStatusCallback_OnProgress(This->callback, ulProgress,

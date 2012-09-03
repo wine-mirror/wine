@@ -221,6 +221,8 @@ tls_data_t *get_tls_data(void) DECLSPEC_HIDDEN;
 HWND get_notif_hwnd(void) DECLSPEC_HIDDEN;
 void release_notif_hwnd(HWND) DECLSPEC_HIDDEN;
 
+const char *debugstr_bindstatus(ULONG) DECLSPEC_HIDDEN;
+
 static inline void *heap_alloc(size_t len)
 {
     return HeapAlloc(GetProcessHeap(), 0, len);

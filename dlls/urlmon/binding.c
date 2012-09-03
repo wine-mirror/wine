@@ -980,7 +980,7 @@ static HRESULT WINAPI InternetProtocolSink_ReportProgress(IInternetProtocolSink 
 {
     Binding *This = impl_from_IInternetProtocolSink(iface);
 
-    TRACE("(%p)->(%u %s)\n", This, ulStatusCode, debugstr_w(szStatusText));
+    TRACE("(%p)->(%s %s)\n", This, debugstr_bindstatus(ulStatusCode), debugstr_w(szStatusText));
 
     switch(ulStatusCode) {
     case BINDSTATUS_FINDINGRESOURCE:
@@ -1133,6 +1133,7 @@ static HRESULT WINAPI InternetProtocolSink_ReportResult(IInternetProtocolSink *i
     TRACE("(%p)->(%08x %d %s)\n", This, hrResult, dwError, debugstr_w(szResult));
 
     stop_binding(This, hrResult, szResult);
+
     IInternetProtocolEx_Terminate(&This->protocol->IInternetProtocolEx_iface, 0);
     return S_OK;
 }

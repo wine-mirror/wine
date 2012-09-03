@@ -822,7 +822,7 @@ static HRESULT WINAPI ProtocolSinkHandler_ReportProgress(IInternetProtocolSink *
 {
     BindProtocol *This = impl_from_IInternetProtocolSinkHandler(iface);
 
-    TRACE("(%p)->(%u %s)\n", This, status_code, debugstr_w(status_text));
+    TRACE("(%p)->(%s %s)\n", This, debugstr_bindstatus(status_code), debugstr_w(status_text));
 
     if(!This->protocol_sink)
         return S_OK;
