@@ -218,6 +218,7 @@ static LPCWSTR urls[] = {
     MK_URL,
     https_urlW,
     ftp_urlW,
+    winetest_urlW,
     winetest_urlW
 };
 
@@ -231,7 +232,8 @@ static enum {
     MK_TEST,
     HTTPS_TEST,
     FTP_TEST,
-    WINETEST_TEST
+    WINETEST_TEST,
+    WINETEST_SYNC_TEST
 } test_protocol;
 
 static enum {
@@ -705,6 +707,9 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
             CHECK_CALLED(Obj_OnProgress_SENDINGREQUEST);
         else
             CHECK_CALLED(OnProgress_SENDINGREQUEST);
+    case WINETEST_SYNC_TEST:
+        IInternetProtocolSink_AddRef(pOIProtSink);
+        protocol_sink = pOIProtSink;
     default:
         break;
     }
@@ -848,9 +853,14 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
             CHECK_CALLED(Obj_OnProgress_MIMETYPEAVAILABLE);
         else
             CHECK_CALLED(OnProgress_MIMETYPEAVAILABLE);
+    }else if(test_protocol == WINETEST_SYNC_TEST) {
+        SET_EXPECT(OnProgress_MIMETYPEAVAILABLE);
+        hres = IInternetProtocolSink_ReportProgress(pOIProtSink, BINDSTATUS_VERIFIEDMIMETYPEAVAILABLE, wszTextHtml);
+        ok(hres == S_OK,
+           "ReportProgress(BINDSTATUS_MIMETYPEAVAILABLE) failed: %08x\n", hres);
+        CHECK_CALLED(OnProgress_MIMETYPEAVAILABLE);
     }else {
-        hres = IInternetProtocolSink_ReportProgress(pOIProtSink,
-                BINDSTATUS_MIMETYPEAVAILABLE, wszTextHtml);
+        hres = IInternetProtocolSink_ReportProgress(pOIProtSink, BINDSTATUS_MIMETYPEAVAILABLE, wszTextHtml);
         ok(hres == S_OK,
            "ReportProgress(BINDSTATUS_MIMETYPEAVAILABLE) failed: %08x\n", hres);
     }
@@ -862,7 +872,7 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
 
     SET_EXPECT(Read);
     if(bind_to_object) {
-        if(test_protocol != FILE_TEST && test_protocol != MK_TEST)
+        if(test_protocol != FILE_TEST && test_protocol != MK_TEST && test_protocol != WINETEST_SYNC_TEST)
             SET_EXPECT(Obj_OnProgress_MIMETYPEAVAILABLE);
         SET_EXPECT(Obj_OnProgress_BEGINDOWNLOADDATA);
         if(test_protocol == FILE_TEST)
@@ -887,7 +897,8 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
         SET_EXPECT(LockRequest);
         if(!filedwl_api)
             SET_EXPECT(OnDataAvailable);
-        SET_EXPECT(OnStopBinding);
+        if(test_protocol != WINETEST_SYNC_TEST) /* Set in Read after ReportResult call */
+            SET_EXPECT(OnStopBinding);
     }
 
     hres = IInternetProtocolSink_ReportData(pOIProtSink, bscf, 13, 13);
@@ -911,7 +922,7 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
         CHECK_CALLED(OnObjectAvailable);
         CHECK_CALLED(Obj_OnStopBinding);
     }else {
-        if(test_protocol != FILE_TEST && test_protocol != MK_TEST)
+        if(test_protocol != FILE_TEST && test_protocol != MK_TEST && test_protocol != WINETEST_SYNC_TEST)
             CHECK_CALLED(OnProgress_MIMETYPEAVAILABLE);
         CHECK_CALLED(OnProgress_BEGINDOWNLOADDATA);
         if(test_protocol == FILE_TEST)
@@ -928,17 +939,19 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
         hres = IInternetProtocolSink_ReportProgress(pOIProtSink, BINDSTATUS_BEGINDOWNLOADDATA, NULL);
         ok(hres == S_OK, "ReportProgress(BINDSTATUS_BEGINDOWNLOADDATA) failed: %08x\n", hres);
         CHECK_CALLED(Read);
-    }else if(!bind_to_object && test_protocol == ABOUT_TEST) {
+    }else if(!bind_to_object && test_protocol == FILE_TEST) {
         SET_EXPECT(Read);
         hres = IInternetProtocolSink_ReportData(pOIProtSink, bscf, 13, 13);
         ok(hres == S_OK, "ReportData failed: %08x\n", hres);
         CHECK_CALLED(Read);
     }
 
-    SET_EXPECT(Terminate);
-    hres = IInternetProtocolSink_ReportResult(pOIProtSink, S_OK, 0, NULL);
-    ok(hres == S_OK, "ReportResult failed: %08x\n", hres);
-    CHECK_CALLED(Terminate);
+    if(test_protocol != WINETEST_SYNC_TEST) {
+        SET_EXPECT(Terminate);
+        hres = IInternetProtocolSink_ReportResult(pOIProtSink, S_OK, 0, NULL);
+        ok(hres == S_OK, "ReportResult failed: %08x\n", hres);
+        CHECK_CALLED(Terminate);
+    }
 
     return S_OK;
 }
@@ -1119,6 +1132,8 @@ static HRESULT WINAPI Protocol_Resume(IInternetProtocol *iface)
 static HRESULT WINAPI Protocol_Read(IInternetProtocol *iface, void *pv,
         ULONG cb, ULONG *pcbRead)
 {
+    HRESULT hres;
+
     static const char data[] = "<HTML></HTML>";
 
     CHECK_EXPECT2(Read);
@@ -1139,8 +1154,6 @@ static HRESULT WINAPI Protocol_Read(IInternetProtocol *iface, void *pv,
     }
 
     if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST || test_protocol == WINETEST_TEST) {
-        HRESULT hres;
-
         static int pending = TRUE;
 
         pending = !pending;
@@ -1182,6 +1195,13 @@ static HRESULT WINAPI Protocol_Read(IInternetProtocol *iface, void *pv,
     if(read) {
         *pcbRead = 0;
         return S_FALSE;
+    }
+
+    if(test_protocol == WINETEST_SYNC_TEST) {
+        hres = IInternetProtocolSink_ReportResult(protocol_sink, S_OK, 0, NULL);
+        ok(hres == S_OK, "ReportResult failed: %08x\n", hres);
+
+        SET_EXPECT(OnStopBinding);
     }
 
     ok(*pcbRead == 0, "*pcbRead=%d, expected 0\n", *pcbRead);
@@ -2917,7 +2937,8 @@ static void test_BindToStorage(int protocol, DWORD flags, DWORD t)
         if(is_urlmon_protocol(test_protocol))
             SET_EXPECT(SetPriority);
         SET_EXPECT(Start);
-        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST || test_protocol == WINETEST_TEST)
+        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST || test_protocol == WINETEST_TEST
+           || test_protocol == WINETEST_SYNC_TEST)
             SET_EXPECT(Terminate);
         if(tymed != TYMED_FILE || (test_protocol != ABOUT_TEST && test_protocol != ITS_TEST))
             SET_EXPECT(UnlockRequest);
@@ -3057,7 +3078,8 @@ static void test_BindToStorage(int protocol, DWORD flags, DWORD t)
         if(is_urlmon_protocol(test_protocol))
             CHECK_CALLED(SetPriority);
         CHECK_CALLED(Start);
-        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST || test_protocol == WINETEST_TEST) {
+        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST || test_protocol == WINETEST_TEST
+           || test_protocol == WINETEST_SYNC_TEST) {
             if(tymed == TYMED_FILE)
                 CLEAR_CALLED(Read);
             CHECK_CALLED(Terminate);
@@ -3958,6 +3980,9 @@ START_TEST(url)
 
         trace("emulated about test (to object)...\n");
         test_BindToObject(ABOUT_TEST, BINDTEST_EMULATE);
+
+        trace("emulalated test reporting result in read...\n");
+        test_BindToStorage(WINETEST_SYNC_TEST, BINDTEST_EMULATE, TYMED_ISTREAM);
 
         trace("file test...\n");
         test_BindToStorage(FILE_TEST, 0, TYMED_ISTREAM);
