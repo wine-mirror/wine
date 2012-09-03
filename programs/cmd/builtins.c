@@ -1827,6 +1827,10 @@ void WCMD_remove_dir (WCHAR *command) {
         lpDir.pFrom  = thisArg;
         lpDir.fFlags = FOF_SILENT | FOF_NOCONFIRMATION | FOF_NOERRORUI;
         lpDir.wFunc  = FO_DELETE;
+
+        /* SHFileOperationW needs file list with a double null termination */
+        thisArg[lstrlenW(thisArg) + 1] = 0x00;
+
         if (SHFileOperationW(&lpDir)) WCMD_print_error ();
       }
     }

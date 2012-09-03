@@ -1163,7 +1163,7 @@ if not exist foo (
 )
 mkdir foo\bar\baz
 echo foo > foo\bar\brol
-rmdir /s /Q foo
+rmdir /s /Q foo 2>&1
 if not exist foo (
     echo recursive rmdir succeeded
 ) else (
