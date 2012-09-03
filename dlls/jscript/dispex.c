@@ -1170,7 +1170,7 @@ HRESULT disp_call_value(script_ctx_t *ctx, IDispatch *disp, IDispatch *jsthis, W
     }
 
     for(i=0; i<argc; i++)
-        dp.rgvarg[argc-i-1] = argv[i];
+        dp.rgvarg[dp.cArgs-i-1] = argv[i];
     if(jsthis) {
         V_VT(dp.rgvarg) = VT_DISPATCH;
         V_DISPATCH(dp.rgvarg) = jsthis;
