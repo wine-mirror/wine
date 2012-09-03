@@ -171,9 +171,14 @@ static void push_task(BindProtocol *This, task_header_t *task, task_proc_t proc)
     }
 }
 
+static inline BOOL is_apartment_thread(BindProtocol *This)
+{
+    return This->apartment_thread == GetCurrentThreadId();
+}
+
 static inline BOOL do_direct_notif(BindProtocol *This)
 {
-    return !(This->pi & PI_APARTMENTTHREADED) || (This->apartment_thread == GetCurrentThreadId() && !This->continue_call);
+    return !(This->pi & PI_APARTMENTTHREADED) || (is_apartment_thread(This) && !This->continue_call);
 }
 
 static HRESULT handle_mime_filter(BindProtocol *This, IInternetProtocol *mime_filter)
@@ -735,7 +740,11 @@ static HRESULT WINAPI ProtocolHandler_Read(IInternetProtocol *iface, void *pv,
     if(read < cb) {
         ULONG cread = 0;
 
+        if(is_apartment_thread(This))
+            This->continue_call++;
         hres = IInternetProtocol_Read(This->protocol, (BYTE*)pv+read, cb-read, &cread);
+        if(is_apartment_thread(This))
+            This->continue_call--;
         read += cread;
     }
 
