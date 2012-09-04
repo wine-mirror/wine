@@ -911,12 +911,9 @@ static Window get_owner_whole_window( HWND owner, BOOL force_managed )
 
     if (!owner) return 0;
 
-    if (!(data = X11DRV_get_win_data( owner )))
-    {
-        if (!(data = X11DRV_create_win_data( owner )))
-            return (Window)GetPropA( owner, whole_window_prop );
-    }
-    else if (!data->managed && force_managed)  /* make it managed */
+    if (!(data = X11DRV_get_win_data( owner ))) return (Window)GetPropA( owner, whole_window_prop );
+
+    if (!data->managed && force_managed)  /* make it managed */
     {
         SetWindowPos( owner, 0, 0, 0, 0, 0,
                       SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOSIZE | SWP_NOMOVE |
@@ -1722,7 +1719,8 @@ struct x11drv_win_data *X11DRV_get_win_data( HWND hwnd )
  *
  * Create an X11 data window structure for an existing window.
  */
-struct x11drv_win_data *X11DRV_create_win_data( HWND hwnd )
+static struct x11drv_win_data *X11DRV_create_win_data( HWND hwnd, const RECT *window_rect,
+                                                       const RECT *client_rect )
 {
     Display *display;
     struct x11drv_win_data *data;
@@ -1733,16 +1731,11 @@ struct x11drv_win_data *X11DRV_create_win_data( HWND hwnd )
     /* don't create win data for HWND_MESSAGE windows */
     if (parent != GetDesktopWindow() && !GetAncestor( parent, GA_PARENT )) return NULL;
 
-    if (GetWindowThreadProcessId( hwnd, NULL ) != GetCurrentThreadId()) return NULL;
-
     display = thread_init_display();
     if (!(data = alloc_win_data( display, hwnd ))) return NULL;
 
-    GetWindowRect( hwnd, &data->window_rect );
-    MapWindowPoints( 0, parent, (POINT *)&data->window_rect, 2 );
-    data->whole_rect = data->window_rect;
-    GetClientRect( hwnd, &data->client_rect );
-    MapWindowPoints( hwnd, parent, (POINT *)&data->client_rect, 2 );
+    data->whole_rect = data->window_rect = *window_rect;
+    data->client_rect = *client_rect;
 
     if (parent == GetDesktopWindow())
     {
@@ -2076,14 +2069,8 @@ void CDECL X11DRV_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flag
                                      const RECT *window_rect, const RECT *client_rect, RECT *visible_rect )
 {
     struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
-    DWORD style = GetWindowLongW( hwnd, GWL_STYLE );
 
-    if (!data)
-    {
-        /* create the win data if the window is being made visible */
-        if (!(style & WS_VISIBLE) && !(swp_flags & SWP_SHOWWINDOW)) return;
-        if (!(data = X11DRV_create_win_data( hwnd ))) return;
-    }
+    if (!data && !(data = X11DRV_create_win_data( hwnd, window_rect, client_rect ))) return;
 
     /* check if we need to switch the window to managed */
     if (!data->managed && data->whole_window && is_window_managed( hwnd, swp_flags, window_rect ))

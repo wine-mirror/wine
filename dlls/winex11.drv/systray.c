@@ -517,10 +517,7 @@ static void dock_systray_icon( Display *display, struct tray_icon *icon, Window 
     icon->window = CreateWindowW( icon_classname, NULL, WS_CLIPSIBLINGS | WS_POPUP,
                                   CW_USEDEFAULT, CW_USEDEFAULT, icon_cx, icon_cy,
                                   NULL, NULL, NULL, icon );
-    if (!icon->window) return;
-
-    if (!(data = X11DRV_get_win_data( icon->window )) &&
-        !(data = X11DRV_create_win_data( icon->window ))) return;
+    if (!(data = X11DRV_get_win_data( icon->window ))) return;
 
     TRACE( "icon window %p/%lx managed %u\n", data->hwnd, data->whole_window, data->managed );
 

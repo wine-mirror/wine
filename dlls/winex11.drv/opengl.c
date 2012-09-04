@@ -1176,8 +1176,7 @@ BOOL set_win_format( HWND hwnd, XID fbconfig_id )
 
     if (!(format = pixelformat_from_fbconfig_id( fbconfig_id ))) return FALSE;
 
-    if (!(data = X11DRV_get_win_data(hwnd)) &&
-        !(data = X11DRV_create_win_data(hwnd))) return FALSE;
+    if (!(data = X11DRV_get_win_data(hwnd))) return FALSE;
 
     gl = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*gl) );
     gl->pixel_format = format;
