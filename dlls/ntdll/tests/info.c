@@ -576,6 +576,51 @@ static void test_query_regquota(void)
     ok( sizeof(srqi) == ReturnLength, "Inconsistent length %d\n", ReturnLength);
 }
 
+static void test_query_logicalproc(void)
+{
+    NTSTATUS status;
+    ULONG len, i, proc_no;
+    SYSTEM_LOGICAL_PROCESSOR_INFORMATION *slpi;
+    SYSTEM_INFO si;
+
+    GetSystemInfo(&si);
+
+    status = pNtQuerySystemInformation(SystemLogicalProcessorInformation, NULL, 0, &len);
+    if(status == STATUS_INVALID_INFO_CLASS)
+    {
+        win_skip("SystemLogicalProcessorInformation is not supported\n");
+        return;
+    }
+    if(status == STATUS_NOT_IMPLEMENTED)
+    {
+        todo_wine ok(0, "SystemLogicalProcessorInformation is not implemented\n");
+        return;
+    }
+    ok(status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
+    ok(len%sizeof(*slpi) == 0, "Incorrect length %d\n", len);
+
+    slpi = HeapAlloc(GetProcessHeap(), 0, len);
+    status = pNtQuerySystemInformation(SystemLogicalProcessorInformation, slpi, len, &len);
+    ok(status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+
+    proc_no = 0;
+    for(i=0; i<len/sizeof(*slpi); i++) {
+        switch(slpi[i].Relationship) {
+        case RelationProcessorCore:
+            /* Get number of logical processors */
+            for(; slpi[i].ProcessorMask; slpi[i].ProcessorMask /= 2)
+                proc_no += slpi[i].ProcessorMask%2;
+            break;
+        default:
+            break;
+        }
+    }
+    ok(proc_no > 0, "No processors were found\n");
+    if(si.dwNumberOfProcessors <= 32)
+        ok(proc_no == si.dwNumberOfProcessors, "Incorrect number of logical processors: %d, expected %d\n",
+                proc_no, si.dwNumberOfProcessors);
+}
+
 static void test_query_process_basic(void)
 {
     NTSTATUS status;
@@ -1512,6 +1557,10 @@ START_TEST(info)
     /* 0x25 SystemRegistryQuotaInformation */
     trace("Starting test_query_regquota()\n");
     test_query_regquota();
+
+    /* 0x49 SystemLogicalProcessorInformation */
+    trace("Starting test_query_logicalproc()\n");
+    test_query_logicalproc();
 
     /* NtQueryInformationProcess */
 
