@@ -1073,6 +1073,8 @@ __int32 WINAPI _CorExeMain(void)
 
             if (assembly)
             {
+                host->mono->mono_trace_set_assembly(assembly);
+
                 exit_code = host->mono->mono_jit_exec(domain, assembly, argc, argv);
             }
             else

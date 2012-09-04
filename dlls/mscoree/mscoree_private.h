@@ -175,6 +175,7 @@ struct loaded_mono
     void (CDECL *mono_thread_pool_cleanup)(void);
     void (CDECL *mono_thread_suspend_all_other_threads)(void);
     void (CDECL *mono_threads_set_shutting_down)(void);
+    void (CDECL *mono_trace_set_assembly)(MonoAssembly *assembly);
     MonoString* (CDECL *mono_string_new)(MonoDomain *domain, const char *str);
     MonoThread* (CDECL *mono_thread_attach)(MonoDomain *domain);
 };
