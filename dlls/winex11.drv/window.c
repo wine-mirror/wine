@@ -449,41 +449,6 @@ static void sync_window_text( Display *display, Window win, const WCHAR *text )
 
 
 /***********************************************************************
- *              get_window_changes
- *
- * fill the window changes structure
- */
-static int get_window_changes( XWindowChanges *changes, const RECT *old, const RECT *new )
-{
-    int mask = 0;
-
-    if (old->right - old->left != new->right - new->left )
-    {
-        if ((changes->width = new->right - new->left) <= 0) changes->width = 1;
-        else if (changes->width > 65535) changes->width = 65535;
-        mask |= CWWidth;
-    }
-    if (old->bottom - old->top != new->bottom - new->top)
-    {
-        if ((changes->height = new->bottom - new->top) <= 0) changes->height = 1;
-        else if (changes->height > 65535) changes->height = 65535;
-        mask |= CWHeight;
-    }
-    if (old->left != new->left)
-    {
-        changes->x = new->left;
-        mask |= CWX;
-    }
-    if (old->top != new->top)
-    {
-        changes->y = new->top;
-        mask |= CWY;
-    }
-    return mask;
-}
-
-
-/***********************************************************************
  *              create_icon_window
  */
 static Window create_icon_window( Display *display, struct x11drv_win_data *data )
@@ -1315,27 +1280,6 @@ static void sync_window_position( Display *display, struct x11drv_win_data *data
 
 
 /***********************************************************************
- *		sync_client_position
- *
- * Synchronize the X client window position with the Windows one
- */
-static void sync_client_position( Display *display, struct x11drv_win_data *data,
-                                  UINT swp_flags, const RECT *old_client_rect,
-                                  const RECT *old_whole_rect )
-{
-    int mask;
-    XWindowChanges changes;
-    RECT old = *old_client_rect;
-    RECT new = data->client_rect;
-
-    OffsetRect( &old, -old_whole_rect->left, -old_whole_rect->top );
-    OffsetRect( &new, -data->whole_rect.left, -data->whole_rect.top );
-    if (!(mask = get_window_changes( &changes, &old, &new ))) return;
-    sync_gl_drawable( data->hwnd, mask, &changes );
-}
-
-
-/***********************************************************************
  *		move_window_bits
  *
  * Move the window bits when a window is moved.
@@ -2140,7 +2084,7 @@ void CDECL X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags
 
     XFlush( gdi_display );  /* make sure painting is done before we move the window */
 
-    sync_client_position( display, data, swp_flags, &old_client_rect, &old_whole_rect );
+    sync_gl_drawable( data->hwnd, visible_rect, rectClient );
 
     if (!data->whole_window) return;
 

@@ -200,6 +200,7 @@ struct gl_drawable
     Colormap        colormap;     /* colormap used for the drawable */
     int             pixel_format; /* pixel format for the drawable */
     XVisualInfo    *visual;       /* information about the GL visual */
+    RECT            rect;         /* drawable rect, relative to whole window drawable */
 };
 
 /* X context to associate a struct gl_drawable to an hwnd */
@@ -1170,13 +1171,10 @@ static void free_gl_drawable( struct gl_drawable *gl )
 BOOL set_win_format( HWND hwnd, XID fbconfig_id )
 {
     XSetWindowAttributes attrib;
-    struct x11drv_win_data *data;
     struct gl_drawable *gl, *prev;
-    int format, w, h;
+    int format;
 
     if (!(format = pixelformat_from_fbconfig_id( fbconfig_id ))) return FALSE;
-
-    if (!(data = X11DRV_get_win_data(hwnd))) return FALSE;
 
     gl = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*gl) );
     gl->pixel_format = format;
@@ -1187,11 +1185,14 @@ BOOL set_win_format( HWND hwnd, XID fbconfig_id )
         return FALSE;
     }
 
-    w = min( max( 1, data->client_rect.right - data->client_rect.left ), 65535 );
-    h = min( max( 1, data->client_rect.bottom - data->client_rect.top ), 65535 );
+    GetClientRect( hwnd, &gl->rect );
+    gl->rect.right  = min( max( 1, gl->rect.right ), 65535 );
+    gl->rect.bottom = min( max( 1, gl->rect.bottom ), 65535 );
 
-    if (data->whole_window)
+    if (GetAncestor( hwnd, GA_PARENT ) == GetDesktopWindow())  /* top-level window */
     {
+        Window parent = X11DRV_get_whole_window( hwnd );
+
         gl->type = DC_GL_WINDOW;
         gl->colormap = XCreateColormap( gdi_display, root_window, gl->visual->visual,
                                         (gl->visual->class == PseudoColor ||
@@ -1201,13 +1202,14 @@ BOOL set_win_format( HWND hwnd, XID fbconfig_id )
         attrib.bit_gravity = NorthWestGravity;
         attrib.win_gravity = NorthWestGravity;
         attrib.backing_store = NotUseful;
-
-        gl->drawable = XCreateWindow( gdi_display, data->whole_window,
-                                      data->client_rect.left - data->whole_rect.left,
-                                      data->client_rect.top - data->whole_rect.top,
-                                      w, h, 0, screen_depth, InputOutput, gl->visual->visual,
-                                      CWBitGravity | CWWinGravity | CWBackingStore | CWColormap,
-                                      &attrib );
+        /* put the initial rect outside of the window, it will be moved into place by SetWindowPos */
+        OffsetRect( &gl->rect, gl->rect.right, gl->rect.bottom );
+        if (parent)
+            gl->drawable = XCreateWindow( gdi_display, parent, gl->rect.left, gl->rect.top,
+                                          gl->rect.right - gl->rect.left, gl->rect.bottom - gl->rect.top,
+                                          0, screen_depth, InputOutput, gl->visual->visual,
+                                          CWBitGravity | CWWinGravity | CWBackingStore | CWColormap,
+                                          &attrib );
         if (gl->drawable)
             XMapWindow( gdi_display, gl->drawable );
         else
@@ -1234,8 +1236,9 @@ BOOL set_win_format( HWND hwnd, XID fbconfig_id )
         XInstallColormap(gdi_display, attrib.colormap);
 
         gl->type = DC_GL_CHILD_WIN;
-        gl->drawable = XCreateWindow( gdi_display, dummy_parent, 0, 0, w, h, 0,
-                                      gl->visual->depth, InputOutput, gl->visual->visual,
+        gl->drawable = XCreateWindow( gdi_display, dummy_parent, 0, 0,
+                                      gl->rect.right - gl->rect.left, gl->rect.bottom - gl->rect.top,
+                                      0, gl->visual->depth, InputOutput, gl->visual->visual,
                                       CWColormap | CWOverrideRedirect, &attrib );
         if (gl->drawable)
         {
@@ -1250,7 +1253,9 @@ BOOL set_win_format( HWND hwnd, XID fbconfig_id )
         WARN("XComposite is not available, using GLXPixmap hack\n");
 
         gl->type = DC_GL_PIXMAP_WIN;
-        gl->pixmap = XCreatePixmap(gdi_display, root_window, w, h, gl->visual->depth);
+        gl->pixmap = XCreatePixmap( gdi_display, root_window,
+                                    gl->rect.right - gl->rect.left, gl->rect.bottom - gl->rect.top,
+                                    gl->visual->depth );
         if (gl->pixmap)
         {
             gl->drawable = pglXCreateGLXPixmap( gdi_display, gl->visual, gl->pixmap );
@@ -1285,29 +1290,41 @@ BOOL set_win_format( HWND hwnd, XID fbconfig_id )
 /***********************************************************************
  *              sync_gl_drawable
  */
-void sync_gl_drawable( HWND hwnd, int mask, XWindowChanges *changes )
+void sync_gl_drawable( HWND hwnd, const RECT *visible_rect, const RECT *client_rect )
 {
     struct gl_drawable *gl;
     Drawable glxp;
     Pixmap pix;
+    int mask = 0;
+    XWindowChanges changes;
+
+    changes.x      = client_rect->left - visible_rect->left;
+    changes.y      = client_rect->top - visible_rect->top;
+    changes.width  = min( max( 1, client_rect->right - client_rect->left ), 65535 );
+    changes.height = min( max( 1, client_rect->bottom - client_rect->top ), 65535 );
 
     EnterCriticalSection( &context_section );
 
     if (XFindContext( gdi_display, (XID)hwnd, gl_drawable_context, (char **)&gl )) goto done;
 
-    TRACE( "setting drawable %lx pos %d,%d,%dx%d changes=%x\n",
-           gl->drawable, changes->x, changes->y, changes->width, changes->height, mask );
+    if (changes.width  != gl->rect.right - gl->rect.left) mask |= CWWidth;
+    if (changes.height != gl->rect.bottom - gl->rect.top) mask |= CWHeight;
+
+    TRACE( "setting drawable %lx pos %d,%d,%dx%d\n",
+           gl->drawable, changes.x, changes.y, changes.width, changes.height );
 
     switch (gl->type)
     {
-    case DC_GL_CHILD_WIN:
-        if (!(mask &= CWWidth | CWHeight)) break;
-        /* fall through */
     case DC_GL_WINDOW:
-        XConfigureWindow( gdi_display, gl->drawable, mask, changes );
+        if (changes.x != gl->rect.left) mask |= CWX;
+        if (changes.y != gl->rect.top)  mask |= CWY;
+        /* fallthrough */
+    case DC_GL_CHILD_WIN:
+        if (mask) XConfigureWindow( gdi_display, gl->drawable, mask, &changes );
         break;
     case DC_GL_PIXMAP_WIN:
-        pix = XCreatePixmap(gdi_display, root_window, changes->width, changes->height, gl->visual->depth);
+        if (!mask) break;
+        pix = XCreatePixmap(gdi_display, root_window, changes.width, changes.height, gl->visual->depth);
         if (!pix) goto done;
         glxp = pglXCreateGLXPixmap(gdi_display, gl->visual, pix);
         if (!glxp)
@@ -1328,6 +1345,7 @@ void sync_gl_drawable( HWND hwnd, int mask, XWindowChanges *changes )
     default:
         break;
     }
+    SetRect( &gl->rect, changes.x, changes.y, changes.x + changes.width, changes.y + changes.height );
 done:
     LeaveCriticalSection( &context_section );
 }
@@ -3394,7 +3412,7 @@ BOOL set_win_format( HWND hwnd, XID fbconfig_id )
     return FALSE;
 }
 
-void sync_gl_drawable( HWND hwnd, int mask, XWindowChanges *changes )
+void sync_gl_drawable( HWND hwnd, const RECT *visible_rect, const RECT *client_rect )
 {
 }
 
