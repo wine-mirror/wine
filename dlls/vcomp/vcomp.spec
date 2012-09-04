@@ -93,7 +93,7 @@
 @ stub omp_get_dynamic
 @ stub omp_get_max_threads
 @ stub omp_get_nested
-@ stub omp_get_num_procs
+@ cdecl omp_get_num_procs()
 @ stub omp_get_num_threads
 @ stub omp_get_thread_num
 @ stub omp_get_wtick

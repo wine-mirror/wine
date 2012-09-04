@@ -29,6 +29,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(vcomp);
 
+int CDECL omp_get_num_procs(void)
+{
+    TRACE("stub\n");
+    return 1;
+}
+
 /* Time in seconds since "some time in the past" */
 double CDECL omp_get_wtime(void)
 {
