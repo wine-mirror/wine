@@ -144,6 +144,8 @@ BSTR get_value_bstr( const struct table *table, UINT row, UINT column )
     static const WCHAR fmt_signed64W[] = {'%','I','6','4','d',0};
     static const WCHAR fmt_unsigned64W[] = {'%','I','6','4','u',0};
     static const WCHAR fmt_strW[] = {'\"','%','s','\"',0};
+    static const WCHAR trueW[] = {'T','R','U','E',0};
+    static const WCHAR falseW[] = {'F','A','L','S','E',0};
     LONGLONG val;
     BSTR ret;
     WCHAR number[22];
@@ -158,6 +160,10 @@ BSTR get_value_bstr( const struct table *table, UINT row, UINT column )
 
     switch (table->columns[column].type & COL_TYPE_MASK)
     {
+    case CIM_BOOLEAN:
+        if (val) return SysAllocString( trueW );
+        else return SysAllocString( falseW );
+
     case CIM_DATETIME:
     case CIM_STRING:
         len = strlenW( (const WCHAR *)(INT_PTR)val ) + 2;
