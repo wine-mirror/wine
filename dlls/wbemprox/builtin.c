@@ -880,6 +880,25 @@ static const WCHAR *get_service_startmode( DWORD mode )
     }
 }
 
+static QUERY_SERVICE_CONFIGW *query_service_config( SC_HANDLE manager, const WCHAR *name )
+{
+    QUERY_SERVICE_CONFIGW *config = NULL;
+    SC_HANDLE service;
+    DWORD size;
+
+    if (!(service = OpenServiceW( manager, name, SERVICE_QUERY_CONFIG ))) return NULL;
+    QueryServiceConfigW( service, NULL, 0, &size );
+    if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) goto done;
+    if (!(config = heap_alloc( size ))) goto done;
+    if (QueryServiceConfigW( service, config, size, &size )) goto done;
+    heap_free( config );
+    config = NULL;
+
+done:
+    CloseServiceHandle( service );
+    return config;
+}
+
 static void fill_service( struct table *table )
 {
     struct record_service *rec;
@@ -915,27 +934,8 @@ static void fill_service( struct table *table )
     for (i = 0; i < count; i++)
     {
         QUERY_SERVICE_CONFIGW *config;
-        SC_HANDLE service;
-        DWORD startmode;
-        DWORD size;
 
-        service = OpenServiceW(manager, services[i].lpServiceName, GENERIC_READ);
-        QueryServiceConfigW(service, NULL, 0, &size);
-        config = heap_alloc(size);
-        if (!config)
-        {
-            CloseServiceHandle(service);
-            break;
-        }
-        if (QueryServiceConfigW(service, config, size, &size))
-            startmode = config->dwStartType;
-        else
-        {
-            ERR("failed to get %s service config data\n", debugstr_w(services[i].lpServiceName));
-            startmode = SERVICE_DISABLED;
-        }
-        CloseServiceHandle(service);
-        heap_free(config);
+        if (!(config = query_service_config( manager, services[i].lpServiceName ))) continue;
 
         status = &services[i].ServiceStatusProcess;
         rec = (struct record_service *)(table->data + offset);
@@ -945,9 +945,10 @@ static void fill_service( struct table *table )
         rec->name         = heap_strdupW( services[i].lpServiceName );
         rec->process_id   = status->dwProcessId;
         rec->servicetype  = get_service_type( status->dwServiceType );
-        rec->startmode    = get_service_startmode( startmode );
+        rec->startmode    = get_service_startmode( config->dwStartType );
         rec->state        = get_service_state( status->dwCurrentState );
         rec->systemname   = heap_strdupW( sysnameW );
+        heap_free( config );
         offset += sizeof(*rec);
         num_rows++;
     }
