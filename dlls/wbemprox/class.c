@@ -417,13 +417,68 @@ static HRESULT WINAPI class_object_Clone(
     return E_NOTIMPL;
 }
 
+static BSTR get_body_text( const struct table *table, UINT row, UINT *len )
+{
+    static const WCHAR fmtW[] = {'\n','\t','%','s',' ','=',' ','%','s',';',0};
+    BSTR value, ret;
+    WCHAR *p;
+    UINT i;
+
+    *len = 0;
+    for (i = 0; i < table->num_cols; i++)
+    {
+        *len += sizeof(fmtW) / sizeof(fmtW[0]);
+        *len += strlenW( table->columns[i].name );
+        value = get_value_bstr( table, row, i );
+        *len += SysStringLen( value );
+        SysFreeString( value );
+    }
+    if (!(ret = SysAllocStringLen( NULL, *len ))) return NULL;
+    p = ret;
+    for (i = 0; i < table->num_cols; i++)
+    {
+        value = get_value_bstr( table, row, i );
+        p += sprintfW( p, fmtW, table->columns[i].name, value );
+        SysFreeString( value );
+    }
+    return ret;
+}
+
+static BSTR get_object_text( const struct view *view, UINT index )
+{
+    static const WCHAR fmtW[] =
+        {'\n','i','n','s','t','a','n','c','e',' ','o','f',' ','%','s','\n','{','%','s','\n','}',';',0};
+    UINT len, len_body, row = view->result[index];
+    BSTR ret, body;
+
+    len = sizeof(fmtW) / sizeof(fmtW[0]);
+    len += strlenW( view->table->name );
+    if (!(body = get_body_text( view->table, row, &len_body ))) return NULL;
+    len += len_body;
+
+    if (!(ret = SysAllocStringLen( NULL, len ))) return NULL;
+    sprintfW( ret, fmtW, view->table->name, body );
+    SysFreeString( body );
+    return ret;
+}
+
 static HRESULT WINAPI class_object_GetObjectText(
     IWbemClassObject *iface,
     LONG lFlags,
     BSTR *pstrObjectText )
 {
-    FIXME("%p, %08x, %p\n", iface, lFlags, pstrObjectText);
-    return E_NOTIMPL;
+    struct class_object *co = impl_from_IWbemClassObject( iface );
+    struct enum_class_object *ec = impl_from_IEnumWbemClassObject( co->iter );
+    struct view *view = ec->query->view;
+    BSTR text;
+
+    TRACE("%p, %08x, %p\n", iface, lFlags, pstrObjectText);
+
+    if (lFlags) FIXME("flags %08x not implemented\n", lFlags);
+
+    if (!(text = get_object_text( view, co->index ))) return E_OUTOFMEMORY;
+    *pstrObjectText = text;
+    return S_OK;
 }
 
 static HRESULT WINAPI class_object_SpawnDerivedClass(
