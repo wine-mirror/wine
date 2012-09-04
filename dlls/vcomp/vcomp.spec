@@ -97,7 +97,7 @@
 @ stub omp_get_num_threads
 @ stub omp_get_thread_num
 @ stub omp_get_wtick
-@ stub omp_get_wtime
+@ cdecl omp_get_wtime()
 @ stub omp_in_parallel
 @ stub omp_init_lock
 @ stub omp_init_nest_lock

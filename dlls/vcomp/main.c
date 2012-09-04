@@ -29,6 +29,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(vcomp);
 
+/* Time in seconds since "some time in the past" */
+double CDECL omp_get_wtime(void)
+{
+    return GetTickCount() / 1000.0;
+}
+
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     TRACE("(0x%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
