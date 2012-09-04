@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-06-07 00:10+0900\n"
+"PO-Revision-Date: 2012-09-04 23:19+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Japanese\n"
@@ -637,7 +637,7 @@ msgstr "大文字と小文字を区別する(&C)"
 
 #: comdlg32.rc:317 joy.rc:68
 msgid "Direction"
-msgstr "検索する方向"
+msgstr "方向"
 
 #: comdlg32.rc:318 view.rc:39
 msgid "&Up"
@@ -3439,6 +3439,8 @@ msgid ""
 "After disabling or enabling a device, the connected joysticks won't be "
 "updated here until you restart this applet."
 msgstr ""
+"このアプレットを再起動するまでは、デバイスを無効化または有効化したあとでも、"
+"ここにある接続済みジョイスティックの一覧は更新されません。"
 
 #: joy.rc:47
 msgid "Test Joystick"
@@ -3446,23 +3448,23 @@ msgstr "ジョイスティックのテスト"
 
 #: joy.rc:51
 msgid "Buttons"
-msgstr ""
+msgstr "ボタン"
 
 #: joy.rc:60
 msgid "Test Force Feedback"
 msgstr "フォース フィードバックのテスト"
 
 #: joy.rc:64
-#, fuzzy
-#| msgid "Available formats"
 msgid "Available Effects"
-msgstr "利用できる形式"
+msgstr "利用可能な効果"
 
 #: joy.rc:66
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."
 msgstr ""
+"選択した効果を有効化するにはコントローラのボタンを押してください。効果の方向"
+"はコントローラの軸で変更できます。"
 
 #: joy.rc:28
 msgid "Game Controllers"
@@ -9661,6 +9663,33 @@ msgid ""
 "/ProgIDOpen  Open a document using the specified progID.\n"
 "/?           Display this help and exit.\n"
 msgstr ""
+"プログラムを開始したり、拡張子に基づき通常使われるプログラムで文書を開きま"
+"す。\n"
+"使い方:\n"
+"start [オプション] プログラムファイル名 [...]\n"
+"start [オプション] 文書ファイル名\n"
+"\n"
+"オプション:\n"
+"\"タイトル\"   子ウィンドウのタイトルを指定します。\n"
+"/d directory プログラムを指定したディレクトリで開始します。 \n"
+"/b           プログラムで新しいコンソールを作成しません。\n"
+"/i           初期の環境変数でプログラムを開始します。\n"
+"/min         最小化状態でプログラムを開始します。\n"
+"/max         最大化状態でプログラムを開始します。\n"
+"/low         優先度クラス'低'でプログラムを開始します。\n"
+"/normal      優先度クラス'通常'でプログラムを開始します。\n"
+"/high        優先度クラス'高'でプログラムを開始します。\n"
+"/realtime    優先度クラス'リアルタイム'でプログラムを開始します。\n"
+"/abovenormal 優先度クラス'通常以上'でプログラムを開始します。\n"
+"/belownormal 優先度クラス'通常以下'でプログラムを開始します。\n"
+"/node n      指定した NUMA ノードでプログラムを開始します。\n"
+"/affinity mask 指定した関連マスクでプログラムを開始します。\n"
+"/wait        開始プログラムの完了を待ち、そのプログラムの終了コードで終了しま"
+"す。\n"
+"/unix        Unix ファイル名を使い、windows エクスプローラのようにファイルを"
+"開始します。\n"
+"/ProgIDOpen  文書を指定した progID を用いて開きます。\n"
+"/?           このヘルプを表示し、終了します。\n"
 
 #: cmd.rc:211
 msgid "TIME sets or shows the current system time.\n"
@@ -12138,27 +12167,27 @@ msgstr "プロセスを実行するプロセッサを制御します"
 
 #: taskmgr.rc:237
 msgid "Sets process to the REALTIME priority class"
-msgstr "プロセスの優先クラスを リアルタイム に設定します"
+msgstr "プロセスの優先度クラスを リアルタイム に設定します"
 
 #: taskmgr.rc:238
 msgid "Sets process to the HIGH priority class"
-msgstr "プロセスの優先クラスを 高 に設定します"
+msgstr "プロセスの優先度クラスを 高 に設定します"
 
 #: taskmgr.rc:240
 msgid "Sets process to the ABOVE NORMAL priority class"
-msgstr "プロセスの優先クラスを 通常以上 に設定します"
+msgstr "プロセスの優先度クラスを 通常以上 に設定します"
 
 #: taskmgr.rc:242
 msgid "Sets process to the NORMAL priority class"
-msgstr "プロセスの優先クラスを 通常 に設定します"
+msgstr "プロセスの優先度クラスを 通常 に設定します"
 
 #: taskmgr.rc:244
 msgid "Sets process to the BELOW NORMAL priority class"
-msgstr "プロセスの優先クラスを 通常以下 に設定します"
+msgstr "プロセスの優先度クラスを 通常以下 に設定します"
 
 #: taskmgr.rc:245
 msgid "Sets process to the LOW priority class"
-msgstr "プロセスの優先クラスを 低 に設定します"
+msgstr "プロセスの優先度クラスを 低 に設定します"
 
 #: taskmgr.rc:247
 msgid "Controls Debug Channels"
@@ -13633,22 +13662,16 @@ msgid "Help topics: "
 msgstr "ヘルプ トピック: "
 
 #: wmic.rc:25
-#, fuzzy
-#| msgid "Error: Invalid command line parameters\n"
 msgid "Error: Command line not supported\n"
-msgstr "エラー: コマンド ライン引数が無効です\n"
+msgstr "エラー: コマンド ラインはサポートされていません\n"
 
 #: wmic.rc:26
-#, fuzzy
-#| msgid "Property set not found.\n"
 msgid "Error: Alias not found\n"
-msgstr "プロパティ セットが見つかりません。\n"
+msgstr "別名が見つかりません。\n"
 
 #: wmic.rc:27
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "Error: Invalid query\n"
-msgstr "エラー: キー名が無効です\n"
+msgstr "エラー: クエリが無効です\n"
 
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
