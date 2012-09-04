@@ -1540,18 +1540,26 @@ static HRESULT compile_switch_statement(compiler_ctx_t *ctx, switch_statement_t 
 
         set_arg_uint(ctx, iter->expr ? case_jmps[i++] : default_jmp, ctx->code_off);
 
-        for(stat_iter = iter->stat; stat_iter && (!iter->next || iter->next->stat != stat_iter); stat_iter = stat_iter->next) {
-            hres = compile_statement(ctx, &stat_ctx, stat_iter);
+        if(iter->stat) {
+            for(stat_iter = iter->stat; stat_iter && (!iter->next || iter->next->stat != stat_iter);
+                stat_iter = stat_iter->next) {
+                hres = compile_statement(ctx, &stat_ctx, stat_iter);
+                if(FAILED(hres))
+                    break;
+
+                if(stat_iter->next && !push_instr(ctx, OP_pop)) {
+                    hres = E_OUTOFMEMORY;
+                    break;
+                }
+            }
             if(FAILED(hres))
                 break;
-
-            if(stat_iter->next && !push_instr(ctx, OP_pop)) {
+        }else {
+            if(!push_instr(ctx, OP_undefined)) {
                 hres = E_OUTOFMEMORY;
                 break;
             }
         }
-        if(FAILED(hres))
-            break;
     }
 
     heap_free(case_jmps);

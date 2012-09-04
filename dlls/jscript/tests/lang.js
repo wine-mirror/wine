@@ -757,6 +757,32 @@ case 3:
     ok(false, "unexpected case 3");
 }
 
+switch(1) {
+case 2:
+    ok(false, "unexpected case 2");
+    break;
+default:
+    /* empty default */
+}
+
+switch(2) {
+default:
+    ok(false, "unexpected default");
+    break;
+case 2:
+    /* empty case */
+};
+
+switch(2) {
+default:
+    ok(false, "unexpected default");
+    break;
+case 1:
+case 2:
+case 3:
+    /* empty case */
+};
+
 (function() {
     var i=0;
 
