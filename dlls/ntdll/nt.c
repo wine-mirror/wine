@@ -1369,12 +1369,26 @@ static inline BOOL logical_proc_info_add_cache(SYSTEM_LOGICAL_PROCESSOR_INFORMAT
     return TRUE;
 }
 
+static inline BOOL logical_proc_info_add_numa_node(SYSTEM_LOGICAL_PROCESSOR_INFORMATION *data,
+        DWORD *len, DWORD max_len, ULONG_PTR mask, DWORD node_id)
+{
+    if(*len == max_len)
+        return FALSE;
+
+    data[*len].Relationship = RelationNumaNode;
+    data[*len].ProcessorMask = mask;
+    data[*len].u.NumaNode.NodeNumber = node_id;
+    (*len)++;
+    return TRUE;
+}
+
 static NTSTATUS create_logical_proc_info(SYSTEM_LOGICAL_PROCESSOR_INFORMATION **data, DWORD *max_len)
 {
     static const char core_info[] = "/sys/devices/system/cpu/cpu%d/%s";
     static const char cache_info[] = "/sys/devices/system/cpu/cpu%d/cache/index%d/%s";
+    static const char numa_info[] = "/sys/devices/system/node/node%d/cpumap";
 
-    FILE *fcpu_list, *f;
+    FILE *fcpu_list, *fnuma_list, *f;
     DWORD len = 0, beg, end, i, j, r;
     char op, name[MAX_PATH];
 
@@ -1522,6 +1536,72 @@ static NTSTATUS create_logical_proc_info(SYSTEM_LOGICAL_PROCESSOR_INFORMATION **
         }
     }
     fclose(fcpu_list);
+
+    fnuma_list = fopen("/sys/devices/system/node/online", "r");
+    if(!fnuma_list)
+    {
+        ULONG_PTR mask = 0;
+
+        for(i=0; i<len; i++)
+            if((*data)[i].Relationship == RelationProcessorCore)
+                mask |= (*data)[i].ProcessorMask;
+
+        if(len == *max_len)
+        {
+            SYSTEM_LOGICAL_PROCESSOR_INFORMATION *new_data;
+
+            *max_len *= 2;
+            new_data = RtlReAllocateHeap(GetProcessHeap(), 0, *data, *max_len*sizeof(*new_data));
+            if(!new_data)
+                return STATUS_NO_MEMORY;
+
+            *data = new_data;
+        }
+        logical_proc_info_add_numa_node(*data, &len, *max_len, mask, 0);
+    }
+    else
+    {
+        while(!feof(fnuma_list))
+        {
+            if(!fscanf(fnuma_list, "%u%c ", &beg, &op))
+                break;
+            if(op == '-') fscanf(fnuma_list, "%u%c ", &end, &op);
+            else end = beg;
+
+            for(i=beg; i<=end; i++)
+            {
+                ULONG_PTR mask = 0;
+
+                sprintf(name, numa_info, i);
+                f = fopen(name, "r");
+                if(!f) continue;
+                while(!feof(f))
+                {
+                    if(!fscanf(f, "%x%c ", &r, &op))
+                        break;
+                    mask = (sizeof(ULONG_PTR)>sizeof(int) ? mask<<(8*sizeof(DWORD)) : 0) + r;
+                }
+                fclose(f);
+
+                if(len == *max_len)
+                {
+                    SYSTEM_LOGICAL_PROCESSOR_INFORMATION *new_data;
+
+                    *max_len *= 2;
+                    new_data = RtlReAllocateHeap(GetProcessHeap(), 0, *data, *max_len*sizeof(*new_data));
+                    if(!new_data)
+                    {
+                        fclose(fnuma_list);
+                        return STATUS_NO_MEMORY;
+                    }
+
+                    *data = new_data;
+                }
+                logical_proc_info_add_numa_node(*data, &len, *max_len, mask, i);
+            }
+        }
+        fclose(fnuma_list);
+    }
 
     *max_len = len * sizeof(**data);
     return STATUS_SUCCESS;
