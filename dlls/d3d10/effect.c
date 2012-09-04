@@ -1084,6 +1084,7 @@ static BOOL read_int32_value(DWORD value, D3D_SHADER_VARIABLE_TYPE in_type, INT 
             return TRUE;
 
         case D3D10_SVT_INT:
+        case D3D10_SVT_UINT:
         case D3D10_SVT_BOOL:
             out_data[idx] = value;
             return TRUE;
@@ -1099,6 +1100,7 @@ static BOOL read_int8_value(DWORD value, D3D_SHADER_VARIABLE_TYPE in_type, INT8 
     switch (in_type)
     {
         case D3D10_SVT_INT:
+        case D3D10_SVT_UINT:
             out_data[idx] = value;
             return TRUE;
 
