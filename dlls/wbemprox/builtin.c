@@ -97,6 +97,8 @@ static const WCHAR prop_directionW[] =
     {'D','i','r','e','c','t','i','o','n',0};
 static const WCHAR prop_displaynameW[] =
     {'D','i','s','p','l','a','y','N','a','m','e',0};
+static const WCHAR prop_domainroleW[] =
+    {'D','o','m','a','i','n','R','o','l','e',0};
 static const WCHAR prop_drivetypeW[] =
     {'D','r','i','v','e','T','y','p','e',0};
 static const WCHAR prop_filesystemW[] =
@@ -199,6 +201,7 @@ static const struct column col_bios[] =
 static const struct column col_compsys[] =
 {
     { prop_descriptionW,          CIM_STRING },
+    { prop_domainroleW,           CIM_UINT16 },
     { prop_manufacturerW,         CIM_STRING },
     { prop_modelW,                CIM_STRING },
     { prop_numlogicalprocessorsW, CIM_UINT32, VT_I4 },
@@ -339,6 +342,7 @@ struct record_bios
 struct record_computersystem
 {
     const WCHAR *description;
+    UINT16       domainrole;
     const WCHAR *manufacturer;
     const WCHAR *model;
     UINT32       num_logical_processors;
@@ -488,6 +492,7 @@ static void fill_compsys( struct table *table )
 
     rec = (struct record_computersystem *)table->data;
     rec->description            = compsys_descriptionW;
+    rec->domainrole             = 0; /* standalone workstation */
     rec->manufacturer           = compsys_manufacturerW;
     rec->model                  = compsys_modelW;
     rec->num_logical_processors = get_processor_count();
