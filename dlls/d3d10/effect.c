@@ -1191,20 +1191,20 @@ static BOOL parse_fx10_state_group(const char **ptr, const char *data,
 
         if (property_info->container_type != container_type)
         {
-            ERR("FAIL1\n");
+            ERR("Invalid container type %#x for property %#x.\n", container_type, id);
             return FALSE;
         }
 
         if (idx >= property_info->count)
         {
-            ERR("FAIL2\n");
+            ERR("Invalid index %#x for property %#x.\n", idx, id);
             return FALSE;
         }
 
         if (!read_value_list(data + value_offset, property_info->type, idx,
                 property_info->size, (char *)container + property_info->offset))
         {
-            ERR("FAIL3\n");
+            ERR("Failed to read values for property %#x.\n", id);
             return FALSE;
         }
     }
