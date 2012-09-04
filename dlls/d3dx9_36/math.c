@@ -37,7 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
 static const ID3DXMatrixStackVtbl ID3DXMatrixStack_Vtbl;
 
-typedef struct ID3DXMatrixStackImpl
+struct ID3DXMatrixStackImpl
 {
   ID3DXMatrixStack ID3DXMatrixStack_iface;
   LONG ref;
@@ -45,7 +45,7 @@ typedef struct ID3DXMatrixStackImpl
   unsigned int current;
   unsigned int stack_size;
   D3DXMATRIX *stack;
-} ID3DXMatrixStackImpl;
+};
 
 
 /*_________________D3DXColor____________________*/
@@ -835,9 +835,9 @@ D3DXMATRIX* WINAPI D3DXMatrixTranspose(D3DXMATRIX *pout, CONST D3DXMATRIX *pm)
 
 static const unsigned int INITIAL_STACK_SIZE = 32;
 
-HRESULT WINAPI D3DXCreateMatrixStack(DWORD flags, LPD3DXMATRIXSTACK* ppstack)
+HRESULT WINAPI D3DXCreateMatrixStack(DWORD flags, LPD3DXMATRIXSTACK *ppstack)
 {
-    ID3DXMatrixStackImpl* object;
+    struct ID3DXMatrixStackImpl *object;
 
     TRACE("flags %#x, ppstack %p\n", flags, ppstack);
 
@@ -868,9 +868,9 @@ HRESULT WINAPI D3DXCreateMatrixStack(DWORD flags, LPD3DXMATRIXSTACK* ppstack)
     return D3D_OK;
 }
 
-static inline ID3DXMatrixStackImpl *impl_from_ID3DXMatrixStack(ID3DXMatrixStack *iface)
+static inline struct ID3DXMatrixStackImpl *impl_from_ID3DXMatrixStack(ID3DXMatrixStack *iface)
 {
-  return CONTAINING_RECORD(iface, ID3DXMatrixStackImpl, ID3DXMatrixStack_iface);
+  return CONTAINING_RECORD(iface, struct ID3DXMatrixStackImpl, ID3DXMatrixStack_iface);
 }
 
 static HRESULT WINAPI ID3DXMatrixStackImpl_QueryInterface(ID3DXMatrixStack *iface, REFIID riid, void **out)
@@ -893,15 +893,15 @@ static HRESULT WINAPI ID3DXMatrixStackImpl_QueryInterface(ID3DXMatrixStack *ifac
 
 static ULONG WINAPI ID3DXMatrixStackImpl_AddRef(ID3DXMatrixStack *iface)
 {
-    ID3DXMatrixStackImpl *This = impl_from_ID3DXMatrixStack(iface);
+    struct ID3DXMatrixStackImpl *This = impl_from_ID3DXMatrixStack(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
     TRACE("(%p) : AddRef from %d\n", This, ref - 1);
     return ref;
 }
 
-static ULONG WINAPI ID3DXMatrixStackImpl_Release(ID3DXMatrixStack* iface)
+static ULONG WINAPI ID3DXMatrixStackImpl_Release(ID3DXMatrixStack *iface)
 {
-    ID3DXMatrixStackImpl *This = impl_from_ID3DXMatrixStack(iface);
+    struct ID3DXMatrixStackImpl *This = impl_from_ID3DXMatrixStack(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
     if (!ref)
     {
@@ -914,7 +914,7 @@ static ULONG WINAPI ID3DXMatrixStackImpl_Release(ID3DXMatrixStack* iface)
 
 static D3DXMATRIX* WINAPI ID3DXMatrixStackImpl_GetTop(ID3DXMatrixStack *iface)
 {
-    ID3DXMatrixStackImpl *This = impl_from_ID3DXMatrixStack(iface);
+    struct ID3DXMatrixStackImpl *This = impl_from_ID3DXMatrixStack(iface);
 
     TRACE("iface %p\n", iface);
 
@@ -923,7 +923,7 @@ static D3DXMATRIX* WINAPI ID3DXMatrixStackImpl_GetTop(ID3DXMatrixStack *iface)
 
 static HRESULT WINAPI ID3DXMatrixStackImpl_LoadIdentity(ID3DXMatrixStack *iface)
 {
-    ID3DXMatrixStackImpl *This = impl_from_ID3DXMatrixStack(iface);
+    struct ID3DXMatrixStackImpl *This = impl_from_ID3DXMatrixStack(iface);
 
     TRACE("iface %p\n", iface);
 
@@ -934,7 +934,7 @@ static HRESULT WINAPI ID3DXMatrixStackImpl_LoadIdentity(ID3DXMatrixStack *iface)
 
 static HRESULT WINAPI ID3DXMatrixStackImpl_LoadMatrix(ID3DXMatrixStack *iface, CONST D3DXMATRIX *pm)
 {
-    ID3DXMatrixStackImpl *This = impl_from_ID3DXMatrixStack(iface);
+    struct ID3DXMatrixStackImpl *This = impl_from_ID3DXMatrixStack(iface);
 
     TRACE("iface %p\n", iface);
 
@@ -945,7 +945,7 @@ static HRESULT WINAPI ID3DXMatrixStackImpl_LoadMatrix(ID3DXMatrixStack *iface, C
 
 static HRESULT WINAPI ID3DXMatrixStackImpl_MultMatrix(ID3DXMatrixStack *iface, CONST D3DXMATRIX *pm)
 {
-    ID3DXMatrixStackImpl *This = impl_from_ID3DXMatrixStack(iface);
+    struct ID3DXMatrixStackImpl *This = impl_from_ID3DXMatrixStack(iface);
 
     TRACE("iface %p\n", iface);
 
@@ -956,7 +956,7 @@ static HRESULT WINAPI ID3DXMatrixStackImpl_MultMatrix(ID3DXMatrixStack *iface, C
 
 static HRESULT WINAPI ID3DXMatrixStackImpl_MultMatrixLocal(ID3DXMatrixStack *iface, CONST D3DXMATRIX *pm)
 {
-    ID3DXMatrixStackImpl *This = impl_from_ID3DXMatrixStack(iface);
+    struct ID3DXMatrixStackImpl *This = impl_from_ID3DXMatrixStack(iface);
 
     TRACE("iface %p\n", iface);
 
@@ -967,7 +967,7 @@ static HRESULT WINAPI ID3DXMatrixStackImpl_MultMatrixLocal(ID3DXMatrixStack *ifa
 
 static HRESULT WINAPI ID3DXMatrixStackImpl_Pop(ID3DXMatrixStack *iface)
 {
-    ID3DXMatrixStackImpl *This = impl_from_ID3DXMatrixStack(iface);
+    struct ID3DXMatrixStackImpl *This = impl_from_ID3DXMatrixStack(iface);
 
     TRACE("iface %p\n", iface);
 
@@ -995,7 +995,7 @@ static HRESULT WINAPI ID3DXMatrixStackImpl_Pop(ID3DXMatrixStack *iface)
 
 static HRESULT WINAPI ID3DXMatrixStackImpl_Push(ID3DXMatrixStack *iface)
 {
-    ID3DXMatrixStackImpl *This = impl_from_ID3DXMatrixStack(iface);
+    struct ID3DXMatrixStackImpl *This = impl_from_ID3DXMatrixStack(iface);
 
     TRACE("iface %p\n", iface);
 
@@ -1023,7 +1023,7 @@ static HRESULT WINAPI ID3DXMatrixStackImpl_Push(ID3DXMatrixStack *iface)
 static HRESULT WINAPI ID3DXMatrixStackImpl_RotateAxis(ID3DXMatrixStack *iface, CONST D3DXVECTOR3 *pv, FLOAT angle)
 {
     D3DXMATRIX temp;
-    ID3DXMatrixStackImpl *This = impl_from_ID3DXMatrixStack(iface);
+    struct ID3DXMatrixStackImpl *This = impl_from_ID3DXMatrixStack(iface);
 
     TRACE("iface %p\n", iface);
 
@@ -1036,7 +1036,7 @@ static HRESULT WINAPI ID3DXMatrixStackImpl_RotateAxis(ID3DXMatrixStack *iface, C
 static HRESULT WINAPI ID3DXMatrixStackImpl_RotateAxisLocal(ID3DXMatrixStack *iface, CONST D3DXVECTOR3 *pv, FLOAT angle)
 {
     D3DXMATRIX temp;
-    ID3DXMatrixStackImpl *This = impl_from_ID3DXMatrixStack(iface);
+    struct ID3DXMatrixStackImpl *This = impl_from_ID3DXMatrixStack(iface);
 
     TRACE("iface %p\n", iface);
 
@@ -1049,7 +1049,7 @@ static HRESULT WINAPI ID3DXMatrixStackImpl_RotateAxisLocal(ID3DXMatrixStack *ifa
 static HRESULT WINAPI ID3DXMatrixStackImpl_RotateYawPitchRoll(ID3DXMatrixStack *iface, FLOAT x, FLOAT y, FLOAT z)
 {
     D3DXMATRIX temp;
-    ID3DXMatrixStackImpl *This = impl_from_ID3DXMatrixStack(iface);
+    struct ID3DXMatrixStackImpl *This = impl_from_ID3DXMatrixStack(iface);
 
     TRACE("iface %p\n", iface);
 
@@ -1062,7 +1062,7 @@ static HRESULT WINAPI ID3DXMatrixStackImpl_RotateYawPitchRoll(ID3DXMatrixStack *
 static HRESULT WINAPI ID3DXMatrixStackImpl_RotateYawPitchRollLocal(ID3DXMatrixStack *iface, FLOAT x, FLOAT y, FLOAT z)
 {
     D3DXMATRIX temp;
-    ID3DXMatrixStackImpl *This = impl_from_ID3DXMatrixStack(iface);
+    struct ID3DXMatrixStackImpl *This = impl_from_ID3DXMatrixStack(iface);
 
     TRACE("iface %p\n", iface);
 
@@ -1075,7 +1075,7 @@ static HRESULT WINAPI ID3DXMatrixStackImpl_RotateYawPitchRollLocal(ID3DXMatrixSt
 static HRESULT WINAPI ID3DXMatrixStackImpl_Scale(ID3DXMatrixStack *iface, FLOAT x, FLOAT y, FLOAT z)
 {
     D3DXMATRIX temp;
-    ID3DXMatrixStackImpl *This = impl_from_ID3DXMatrixStack(iface);
+    struct ID3DXMatrixStackImpl *This = impl_from_ID3DXMatrixStack(iface);
 
     TRACE("iface %p\n", iface);
 
@@ -1088,7 +1088,7 @@ static HRESULT WINAPI ID3DXMatrixStackImpl_Scale(ID3DXMatrixStack *iface, FLOAT 
 static HRESULT WINAPI ID3DXMatrixStackImpl_ScaleLocal(ID3DXMatrixStack *iface, FLOAT x, FLOAT y, FLOAT z)
 {
     D3DXMATRIX temp;
-    ID3DXMatrixStackImpl *This = impl_from_ID3DXMatrixStack(iface);
+    struct ID3DXMatrixStackImpl *This = impl_from_ID3DXMatrixStack(iface);
 
     TRACE("iface %p\n", iface);
 
@@ -1101,7 +1101,7 @@ static HRESULT WINAPI ID3DXMatrixStackImpl_ScaleLocal(ID3DXMatrixStack *iface, F
 static HRESULT WINAPI ID3DXMatrixStackImpl_Translate(ID3DXMatrixStack *iface, FLOAT x, FLOAT y, FLOAT z)
 {
     D3DXMATRIX temp;
-    ID3DXMatrixStackImpl *This = impl_from_ID3DXMatrixStack(iface);
+    struct ID3DXMatrixStackImpl *This = impl_from_ID3DXMatrixStack(iface);
 
     TRACE("iface %p\n", iface);
 
@@ -1114,7 +1114,7 @@ static HRESULT WINAPI ID3DXMatrixStackImpl_Translate(ID3DXMatrixStack *iface, FL
 static HRESULT WINAPI ID3DXMatrixStackImpl_TranslateLocal(ID3DXMatrixStack *iface, FLOAT x, FLOAT y, FLOAT z)
 {
     D3DXMATRIX temp;
-    ID3DXMatrixStackImpl *This = impl_from_ID3DXMatrixStack(iface);
+    struct ID3DXMatrixStackImpl *This = impl_from_ID3DXMatrixStack(iface);
 
     TRACE("iface %p\n", iface);
 
