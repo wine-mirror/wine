@@ -1347,12 +1347,35 @@ static inline BOOL logical_proc_info_add_by_id(SYSTEM_LOGICAL_PROCESSOR_INFORMAT
     return TRUE;
 }
 
+static inline BOOL logical_proc_info_add_cache(SYSTEM_LOGICAL_PROCESSOR_INFORMATION *data,
+        DWORD *len, DWORD max_len, ULONG_PTR mask, CACHE_DESCRIPTOR *cache)
+{
+    int i;
+
+    for(i=0; i<*len; i++)
+    {
+        if(data[i].Relationship==RelationCache && data[i].ProcessorMask==mask
+                && data[i].u.Cache.Level==cache->Level && data[i].u.Cache.Type==cache->Type)
+            return TRUE;
+    }
+
+    if(*len == max_len)
+        return FALSE;
+
+    data[i].Relationship = RelationCache;
+    data[i].ProcessorMask = mask;
+    data[i].u.Cache = *cache;
+    *len = i+1;
+    return TRUE;
+}
+
 static NTSTATUS create_logical_proc_info(SYSTEM_LOGICAL_PROCESSOR_INFORMATION **data, DWORD *max_len)
 {
     static const char core_info[] = "/sys/devices/system/cpu/cpu%d/%s";
+    static const char cache_info[] = "/sys/devices/system/cpu/cpu%d/cache/index%d/%s";
 
     FILE *fcpu_list, *f;
-    DWORD len = 0, beg, end, i, r;
+    DWORD len = 0, beg, end, i, j, r;
     char op, name[MAX_PATH];
 
     fcpu_list = fopen("/sys/devices/system/cpu/online", "r");
@@ -1420,6 +1443,81 @@ static NTSTATUS create_logical_proc_info(SYSTEM_LOGICAL_PROCESSOR_INFORMATION **
 
                 *data = new_data;
                 logical_proc_info_add_by_id(*data, &len, *max_len, RelationProcessorPackage, r, i);
+            }
+
+            for(j=0; j<4; j++)
+            {
+                CACHE_DESCRIPTOR cache;
+                ULONG_PTR mask = 0;
+
+                sprintf(name, cache_info, i, j, "shared_cpu_map");
+                f = fopen(name, "r");
+                if(!f) continue;
+                while(!feof(f))
+                {
+                    if(!fscanf(f, "%x%c ", &r, &op))
+                        break;
+                    mask = (sizeof(ULONG_PTR)>sizeof(int) ? mask<<(8*sizeof(DWORD)) : 0) + r;
+                }
+                fclose(f);
+
+                sprintf(name, cache_info, i, j, "level");
+                f = fopen(name, "r");
+                if(!f) continue;
+                fscanf(f, "%u", &r);
+                fclose(f);
+                cache.Level = r;
+
+                sprintf(name, cache_info, i, j, "ways_of_associativity");
+                f = fopen(name, "r");
+                if(!f) continue;
+                fscanf(f, "%u", &r);
+                fclose(f);
+                cache.Associativity = r;
+
+                sprintf(name, cache_info, i, j, "coherency_line_size");
+                f = fopen(name, "r");
+                if(!f) continue;
+                fscanf(f, "%u", &r);
+                fclose(f);
+                cache.LineSize = r;
+
+                sprintf(name, cache_info, i, j, "size");
+                f = fopen(name, "r");
+                if(!f) continue;
+                fscanf(f, "%u%c", &r, &op);
+                fclose(f);
+                if(op != 'K')
+                    WARN("unknown cache size %u%c\n", r, op);
+                cache.Size = (op=='K' ? r*1024 : r);
+
+                sprintf(name, cache_info, i, j, "type");
+                f = fopen(name, "r");
+                if(!f) continue;
+                fscanf(f, "%s", name);
+                fclose(f);
+                if(!memcmp(name, "Data", 5))
+                    cache.Type = CacheData;
+                else if(!memcmp(name, "Instruction", 11))
+                    cache.Type = CacheInstruction;
+                else
+                    cache.Type = CacheUnified;
+
+                if(!logical_proc_info_add_cache(*data, &len, *max_len, mask, &cache))
+                {
+                    SYSTEM_LOGICAL_PROCESSOR_INFORMATION *new_data;
+
+                    *max_len *= 2;
+                    new_data = RtlReAllocateHeap(GetProcessHeap(), 0, *data, *max_len*sizeof(*new_data));
+                    if(!new_data)
+                    {
+                        fclose(fcpu_list);
+                        return STATUS_NO_MEMORY;
+                    }
+
+                    *data = new_data;
+                    logical_proc_info_add_cache(*data, &len, *max_len, mask, &cache);
+                }
             }
         }
     }
