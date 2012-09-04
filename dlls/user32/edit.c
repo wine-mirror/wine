@@ -4601,6 +4601,7 @@ static LRESULT EDIT_WM_NCDestroy(EDITSTATE *es)
 		pc = pp;
 	}
 
+	EDIT_InvalidateUniscribeData(es);
 	SetWindowLongPtrW( es->hwndSelf, 0, 0 );
 	HeapFree(GetProcessHeap(), 0, es->undo_text);
 	HeapFree(GetProcessHeap(), 0, es);
