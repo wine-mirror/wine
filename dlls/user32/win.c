@@ -606,7 +606,7 @@ HWND WIN_SetOwner( HWND hwnd, HWND owner )
  */
 ULONG WIN_SetStyle( HWND hwnd, ULONG set_bits, ULONG clear_bits )
 {
-    BOOL ok;
+    BOOL ok, needs_show = FALSE;
     STYLESTRUCT style;
     WND *win = WIN_GetPtr( hwnd );
 
@@ -638,20 +638,29 @@ ULONG WIN_SetStyle( HWND hwnd, ULONG set_bits, ULONG clear_bits )
         }
     }
     SERVER_END_REQ;
-    WIN_ReleasePtr( win );
-    if (ok)
-    {
-        if ((style.styleOld ^ style.styleNew) & WS_VISIBLE)
-        {
-            RECT window_rect, client_rect;
-            UINT flags = style.styleNew & WS_VISIBLE ? SWP_SHOWWINDOW : 0; /* we don't hide it */
 
-            WIN_GetRectangles( hwnd, COORDS_PARENT, &window_rect, &client_rect );
-            set_window_pos( hwnd, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE |
-                            SWP_NOZORDER | SWP_NOACTIVATE | flags, &window_rect, &client_rect, NULL );
-        }
-        USER_Driver->pSetWindowStyle( hwnd, GWL_STYLE, &style );
+    if (ok && ((style.styleOld ^ style.styleNew) & WS_VISIBLE))
+    {
+        /* Some apps try to make their window visible through WM_SETREDRAW.
+         * Only do that if the window was never explicitly hidden,
+         * because Steam messes with WM_SETREDRAW after hiding its windows. */
+        needs_show = !(win->flags & WIN_HIDDEN) && (style.styleNew & WS_VISIBLE);
+        invalidate_dce( win, NULL );
     }
+    WIN_ReleasePtr( win );
+
+    if (!ok) return 0;
+
+    if (needs_show)
+    {
+        RECT window_rect, client_rect;
+        WIN_GetRectangles( hwnd, COORDS_PARENT, &window_rect, &client_rect );
+        set_window_pos( hwnd, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE |
+                        SWP_NOZORDER | SWP_NOACTIVATE | SWP_SHOWWINDOW,
+                        &window_rect, &client_rect, NULL );
+    }
+
+    USER_Driver->pSetWindowStyle( hwnd, GWL_STYLE, &style );
     return style.styleOld;
 }
 
@@ -2135,7 +2144,7 @@ static LONG_PTR WIN_GetWindowLong( HWND hwnd, INT offset, UINT size, BOOL unicod
 LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, UINT size, LONG_PTR newval, BOOL unicode )
 {
     STYLESTRUCT style;
-    BOOL ok;
+    BOOL ok, needs_show = FALSE;
     LONG_PTR retval = 0;
     WND *wndPtr;
 
@@ -2334,23 +2343,28 @@ LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, UINT size, LONG_PTR newval, B
         }
     }
     SERVER_END_REQ;
+
+    if (offset == GWL_STYLE && ((style.styleOld ^ style.styleNew) & WS_VISIBLE))
+    {
+        needs_show = !(wndPtr->flags & WIN_HIDDEN) && (style.styleNew & WS_VISIBLE);
+        invalidate_dce( wndPtr, NULL );
+    }
     WIN_ReleasePtr( wndPtr );
 
     if (!ok) return 0;
 
+    if (needs_show)
+    {
+        RECT window_rect, client_rect;
+        WIN_GetRectangles( hwnd, COORDS_PARENT, &window_rect, &client_rect );
+        set_window_pos( hwnd, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE |
+                        SWP_NOZORDER | SWP_NOACTIVATE | SWP_SHOWWINDOW,
+                        &window_rect, &client_rect, NULL );
+    }
     if (offset == GWL_STYLE || offset == GWL_EXSTYLE)
     {
         style.styleOld = retval;
         style.styleNew = newval;
-        if (offset == GWL_STYLE && ((style.styleOld ^ style.styleNew) & WS_VISIBLE))
-        {
-            RECT window_rect, client_rect;
-            UINT flags = style.styleNew & WS_VISIBLE ? SWP_SHOWWINDOW : 0; /* we don't hide it */
-
-            WIN_GetRectangles( hwnd, COORDS_PARENT, &window_rect, &client_rect );
-            set_window_pos( hwnd, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE |
-                            SWP_NOZORDER | SWP_NOACTIVATE | flags, &window_rect, &client_rect, NULL );
-        }
         USER_Driver->pSetWindowStyle( hwnd, offset, &style );
         SendMessageW( hwnd, WM_STYLECHANGED, offset, (LPARAM)&style );
     }
