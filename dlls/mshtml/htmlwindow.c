@@ -2358,7 +2358,25 @@ static HRESULT WINAPI WindowDispEx_GetDispID(IDispatchEx *iface, BSTR bstrName, 
     if(hres != DISP_E_UNKNOWNNAME)
         return hres;
 
-    if(window->base.inner_window->doc) {
+    if(This->outer_window) {
+        HTMLOuterWindow *frame;
+
+        hres = get_frame_by_name(This->outer_window, bstrName, FALSE, &frame);
+        if(SUCCEEDED(hres) && frame) {
+            global_prop_t *prop;
+
+            IHTMLWindow2_Release(&frame->base.IHTMLWindow2_iface);
+
+            prop = alloc_global_prop(window, GLOBAL_FRAMEVAR, bstrName);
+            if(!prop)
+                return E_OUTOFMEMORY;
+
+            *pid = prop_to_dispid(window, prop);
+            return S_OK;
+        }
+    }
+
+    if(window->doc) {
         global_prop_t *prop;
         IHTMLElement *elem;
 
@@ -2598,6 +2616,30 @@ static HRESULT HTMLWindow_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD 
             prop->type = GLOBAL_DISPEXVAR;
             prop->id = dispex_id;
             return IDispatchEx_InvokeEx(&This->dispex.IDispatchEx_iface, dispex_id, 0, flags, params, res, ei, caller);
+        }
+        default:
+            FIXME("Not supported flags: %x\n", flags);
+            return E_NOTIMPL;
+        }
+    case GLOBAL_FRAMEVAR:
+        if(!This->base.outer_window)
+            return E_UNEXPECTED;
+
+        switch(flags) {
+        case DISPATCH_PROPERTYGET: {
+            HTMLOuterWindow *frame;
+
+            hres = get_frame_by_name(This->base.outer_window, prop->name, FALSE, &frame);
+            if(FAILED(hres))
+                return hres;
+
+            if(!frame)
+                return DISP_E_MEMBERNOTFOUND;
+
+            V_VT(res) = VT_DISPATCH;
+            V_DISPATCH(res) = (IDispatch*)&frame->base.inner_window->base.IHTMLWindow2_iface;
+            IDispatch_AddRef(V_DISPATCH(res));
+            return S_OK;
         }
         default:
             FIXME("Not supported flags: %x\n", flags);

@@ -68,6 +68,13 @@ function test_document_name_as_index() {
     ok(window.formname === 1, "window.formname = " + window.formname);
     formname = 2;
     ok(window.formname === 2, "window.formname = " + window.formname);
+
+    document.body.innerHTML = '<iframe id="iframeid"></iframe>';
+    ok("iframeid" in window, "iframeid is not in window");
+    e = document.getElementById("iframeid");
+    ok(!!e, "e is null");
+    ok(iframeid != e, "iframeid == e");
+    ok(iframeid.frameElement === e, "frameid != e.contentWindow");
 }
 
 function test_remove_style_attribute() {

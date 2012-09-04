@@ -294,7 +294,8 @@ typedef struct ScriptHost ScriptHost;
 typedef enum {
     GLOBAL_SCRIPTVAR,
     GLOBAL_ELEMENTVAR,
-    GLOBAL_DISPEXVAR
+    GLOBAL_DISPEXVAR,
+    GLOBAL_FRAMEVAR
 } global_prop_type_t;
 
 typedef struct {
