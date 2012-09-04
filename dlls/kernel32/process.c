@@ -3717,9 +3717,29 @@ HANDLE WINAPI GetCurrentProcess(void)
  */
 BOOL WINAPI GetLogicalProcessorInformation(PSYSTEM_LOGICAL_PROCESSOR_INFORMATION buffer, PDWORD pBufLen)
 {
-    FIXME("(%p,%p): stub\n", buffer, pBufLen);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    NTSTATUS status;
+
+    TRACE("(%p,%p)\n", buffer, pBufLen);
+
+    if(!pBufLen)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    status = NtQuerySystemInformation( SystemLogicalProcessorInformation, buffer, *pBufLen, pBufLen);
+
+    if (status == STATUS_INFO_LENGTH_MISMATCH)
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return FALSE;
+    }
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError( status ) );
+        return FALSE;
+    }
+    return TRUE;
 }
 
 /***********************************************************************
