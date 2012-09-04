@@ -82,7 +82,6 @@ static Window user_time_window;
 
 static const char foreign_window_prop[] = "__wine_x11_foreign_window";
 static const char whole_window_prop[] = "__wine_x11_whole_window";
-static const char icon_window_prop[]  = "__wine_x11_icon_window";
 static const char clip_window_prop[]  = "__wine_x11_clip_window";
 static const char managed_prop[]      = "__wine_x11_managed";
 
@@ -449,48 +448,6 @@ static void sync_window_text( Display *display, Window win, const WCHAR *text )
 
 
 /***********************************************************************
- *              create_icon_window
- */
-static Window create_icon_window( Display *display, struct x11drv_win_data *data )
-{
-    XSetWindowAttributes attr;
-
-    attr.event_mask = (ExposureMask | KeyPressMask | KeyReleaseMask | PointerMotionMask |
-                       ButtonPressMask | ButtonReleaseMask | EnterWindowMask);
-    attr.bit_gravity = NorthWestGravity;
-    attr.backing_store = NotUseful/*WhenMapped*/;
-    attr.colormap      = X11DRV_PALETTE_PaletteXColormap; /* Needed due to our visual */
-
-    data->icon_window = XCreateWindow( display, root_window, 0, 0,
-                                       GetSystemMetrics( SM_CXICON ),
-                                       GetSystemMetrics( SM_CYICON ),
-                                       0, screen_depth,
-                                       InputOutput, visual,
-                                       CWEventMask | CWBitGravity | CWBackingStore | CWColormap, &attr );
-    XSaveContext( display, data->icon_window, winContext, (char *)data->hwnd );
-    XFlush( display );  /* make sure the window exists before we start painting to it */
-
-    TRACE( "created %lx\n", data->icon_window );
-    SetPropA( data->hwnd, icon_window_prop, (HANDLE)data->icon_window );
-    return data->icon_window;
-}
-
-
-
-/***********************************************************************
- *              destroy_icon_window
- */
-static void destroy_icon_window( Display *display, struct x11drv_win_data *data )
-{
-    if (!data->icon_window) return;
-    XDeleteContext( display, data->icon_window, winContext );
-    XDestroyWindow( display, data->icon_window );
-    data->icon_window = 0;
-    RemovePropA( data->hwnd, icon_window_prop );
-}
-
-
-/***********************************************************************
  *              get_bitmap_argb
  *
  * Return the bitmap bits in ARGB format. Helper for setting icon hints.
@@ -624,11 +581,16 @@ static void set_icon_hints( Display *display, struct x11drv_win_data *data,
                             HICON icon_big, HICON icon_small )
 {
     XWMHints *hints = data->wm_hints;
+    ICONINFO ii, ii_small;
+    HDC hDC;
+    unsigned int size;
+    unsigned long *bits;
 
     if (!icon_big)
     {
         icon_big = (HICON)SendMessageW( data->hwnd, WM_GETICON, ICON_BIG, 0 );
         if (!icon_big) icon_big = (HICON)GetClassLongPtrW( data->hwnd, GCLP_HICON );
+        if (!icon_big) icon_big = LoadIconW( 0, (LPWSTR)IDI_WINLOGO );
     }
     if (!icon_small)
     {
@@ -640,63 +602,46 @@ static void set_icon_hints( Display *display, struct x11drv_win_data *data,
     if (data->icon_mask) XFreePixmap( gdi_display, data->icon_mask );
     data->icon_pixmap = data->icon_mask = 0;
 
-    if (!icon_big)
-    {
-        if (!data->icon_window) create_icon_window( display, data );
-        hints->icon_window = data->icon_window;
-        hints->flags = (hints->flags & ~(IconPixmapHint | IconMaskHint)) | IconWindowHint;
-    }
-    else
-    {
-        ICONINFO ii, ii_small;
-        HDC hDC;
-        unsigned int size;
-        unsigned long *bits;
+    if (!GetIconInfo(icon_big, &ii)) return;
 
-        if (!GetIconInfo(icon_big, &ii)) return;
+    hDC = CreateCompatibleDC(0);
+    bits = get_bitmap_argb( hDC, ii.hbmColor, ii.hbmMask, &size );
+    if (bits && GetIconInfo( icon_small, &ii_small ))
+    {
+        unsigned int size_small;
+        unsigned long *bits_small, *new;
 
-        hDC = CreateCompatibleDC(0);
-        bits = get_bitmap_argb( hDC, ii.hbmColor, ii.hbmMask, &size );
-        if (bits && GetIconInfo( icon_small, &ii_small ))
+        if ((bits_small = get_bitmap_argb( hDC, ii_small.hbmColor, ii_small.hbmMask, &size_small )) &&
+            (bits_small[0] != bits[0] || bits_small[1] != bits[1]))  /* size must be different */
         {
-            unsigned int size_small;
-            unsigned long *bits_small, *new;
-
-            if ((bits_small = get_bitmap_argb( hDC, ii_small.hbmColor, ii_small.hbmMask, &size_small )) &&
-                (bits_small[0] != bits[0] || bits_small[1] != bits[1]))  /* size must be different */
+            if ((new = HeapReAlloc( GetProcessHeap(), 0, bits,
+                                    (size + size_small) * sizeof(unsigned long) )))
             {
-                if ((new = HeapReAlloc( GetProcessHeap(), 0, bits,
-                                        (size + size_small) * sizeof(unsigned long) )))
-                {
-                    bits = new;
-                    memcpy( bits + size, bits_small, size_small * sizeof(unsigned long) );
-                    size += size_small;
-                }
+                bits = new;
+                memcpy( bits + size, bits_small, size_small * sizeof(unsigned long) );
+                size += size_small;
             }
-            HeapFree( GetProcessHeap(), 0, bits_small );
-            DeleteObject( ii_small.hbmColor );
-            DeleteObject( ii_small.hbmMask );
         }
-        if (bits)
-            XChangeProperty( display, data->whole_window, x11drv_atom(_NET_WM_ICON),
-                             XA_CARDINAL, 32, PropModeReplace, (unsigned char *)bits, size );
-        else
-            XDeleteProperty( display, data->whole_window, x11drv_atom(_NET_WM_ICON) );
-        HeapFree( GetProcessHeap(), 0, bits );
-
-        if (create_icon_pixmaps( hDC, &ii, data ))
-        {
-            hints->icon_pixmap = data->icon_pixmap;
-            hints->icon_mask = data->icon_mask;
-            hints->flags |= IconPixmapHint | IconMaskHint;
-        }
-        destroy_icon_window( display, data );
-        hints->flags &= ~IconWindowHint;
-
-        DeleteObject( ii.hbmColor );
-        DeleteObject( ii.hbmMask );
-        DeleteDC(hDC);
+        HeapFree( GetProcessHeap(), 0, bits_small );
+        DeleteObject( ii_small.hbmColor );
+        DeleteObject( ii_small.hbmMask );
     }
+    if (bits)
+        XChangeProperty( display, data->whole_window, x11drv_atom(_NET_WM_ICON),
+                         XA_CARDINAL, 32, PropModeReplace, (unsigned char *)bits, size );
+    else
+        XDeleteProperty( display, data->whole_window, x11drv_atom(_NET_WM_ICON) );
+    HeapFree( GetProcessHeap(), 0, bits );
+
+    if (create_icon_pixmaps( hDC, &ii, data ))
+    {
+        hints->icon_pixmap = data->icon_pixmap;
+        hints->icon_mask = data->icon_mask;
+        hints->flags |= IconPixmapHint | IconMaskHint;
+    }
+    DeleteObject( ii.hbmColor );
+    DeleteObject( ii.hbmMask );
+    DeleteDC(hDC);
 }
 
 
@@ -1518,7 +1463,6 @@ void CDECL X11DRV_DestroyWindow( HWND hwnd )
 
     destroy_gl_drawable( hwnd );
     destroy_whole_window( thread_data->display, data, FALSE );
-    destroy_icon_window( thread_data->display, data );
 
     if (thread_data->last_focus == hwnd) thread_data->last_focus = 0;
     if (thread_data->last_xic_hwnd == hwnd) thread_data->last_xic_hwnd = 0;
@@ -1864,11 +1808,7 @@ void CDECL X11DRV_GetDC( HDC hdc, HWND hwnd, HWND top, const RECT *win_rect,
 
     if (top == hwnd)
     {
-        if (data && IsIconic( hwnd ) && data->icon_window)
-        {
-            escape.drawable = data->icon_window;
-        }
-        else escape.drawable = data ? data->whole_window : X11DRV_get_whole_window( hwnd );
+        escape.drawable = data ? data->whole_window : X11DRV_get_whole_window( hwnd );
 
         /* special case: when repainting the root window, clip out top-level windows */
         if (data && data->whole_window == root_window) escape.mode = ClipByChildren;
@@ -1962,7 +1902,6 @@ void CDECL X11DRV_SetParent( HWND hwnd, HWND parent, HWND old_parent )
         {
             /* destroy the old X windows */
             destroy_whole_window( display, data, FALSE );
-            destroy_icon_window( display, data );
             if (data->managed)
             {
                 data->managed = FALSE;

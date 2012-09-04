@@ -533,7 +533,6 @@ struct x11drv_win_data
 {
     HWND        hwnd;           /* hwnd that this private data belongs to */
     Window      whole_window;   /* X window for the complete window */
-    Window      icon_window;    /* X window for the icon */
     RECT        window_rect;    /* USER window rectangle relative to parent */
     RECT        whole_rect;     /* X window rectangle for the whole window relative to parent */
     RECT        client_rect;    /* client area relative to parent */
