@@ -455,9 +455,12 @@ C
 --- basic wildcards
 bazbaz
 --- for /d
-baz
-foo
-bar
+baz@space@
+foo@space@
+bar@space@
+PASSED
+xxx - Should be xxx
+Expected second line
 --- for /L
 1
 3

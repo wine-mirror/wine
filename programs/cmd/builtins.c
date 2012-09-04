@@ -1084,6 +1084,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
   BOOL   expandDirs  = FALSE;
   BOOL   useNumbers  = FALSE;
   BOOL   doFileset   = FALSE;
+  BOOL   doExecuted  = FALSE;  /* Has the 'do' part been executed */
   LONG   numbers[3] = {0,0,0}; /* Defaults to 0 in native */
   int    itemNum;
   CMD_LIST *thisCmdStart;
@@ -1233,6 +1234,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
                 {
                   thisCmdStart = cmdStart;
                   WINE_TRACE("Processing FOR filename %s\n", wine_dbgstr_w(fd.cFileName));
+                  doExecuted = TRUE;
                   WCMD_part_execute (&thisCmdStart, firstCmd, variable,
                                                fd.cFileName, FALSE, TRUE);
                 }
@@ -1241,6 +1243,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
               FindClose (hff);
             }
           } else {
+            doExecuted = TRUE;
             WCMD_part_execute(&thisCmdStart, firstCmd, variable, item, FALSE, TRUE);
           }
 
@@ -1310,6 +1313,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
                   /* FIXME: The following should be moved into its own routine and
                      reused for the string literal parsing below                  */
                   thisCmdStart = cmdStart;
+                  doExecuted = TRUE;
                   WCMD_part_execute(&thisCmdStart, firstCmd, variable, parm, FALSE, TRUE);
                   cmdEnd = thisCmdStart;
               }
@@ -1340,6 +1344,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
               /* FIXME: The following should be moved into its own routine and
                  reused for the string literal parsing below                  */
               thisCmdStart = cmdStart;
+              doExecuted = TRUE;
               WCMD_part_execute(&thisCmdStart, firstCmd, variable, parm, FALSE, TRUE);
               cmdEnd = thisCmdStart;
           }
@@ -1369,15 +1374,21 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
           WINE_TRACE("Processing FOR number %s\n", wine_dbgstr_w(thisNum));
 
           thisCmdStart = cmdStart;
+          doExecuted = TRUE;
           WCMD_part_execute(&thisCmdStart, firstCmd, variable, thisNum, FALSE, TRUE);
       }
-
-      /* Now skip over the subsequent commands if we did not perform the for loop */
-      if (thisCmdStart == cmdStart) {
-        WINE_TRACE("Skipping for loop commands due to no valid iterations\n");
-        WCMD_part_execute(&thisCmdStart, firstCmd, variable, thisNum, FALSE, FALSE);
-      }
       cmdEnd = thisCmdStart;
+  }
+
+  /* Now skip over the do part if we did not perform the for loop so far.
+     We store in cmdEnd the next command after the do block, but we only
+     know this if something was run. If it has not been, we need to calculate
+     it.                                                                      */
+  if (!doExecuted) {
+    thisCmdStart = cmdStart;
+    WINE_TRACE("Skipping for loop commands due to no valid iterations\n");
+    WCMD_part_execute(&thisCmdStart, firstCmd, NULL, NULL, FALSE, FALSE);
+    cmdEnd = thisCmdStart;
   }
 
   /* When the loop ends, either something like a GOTO or EXIT /b has terminated

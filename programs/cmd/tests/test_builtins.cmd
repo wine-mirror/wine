@@ -643,9 +643,27 @@ echo > bazbaz
 echo --- basic wildcards
 for %%i in (ba*) do echo %%i
 echo --- for /d
-for /d %%i in (baz foo bar) do echo %%i
-rem FIXME for /d incorrectly parses when wildcards are used
-rem for /d %%i in (bazb*) do echo %%i
+for /d %%i in (baz foo bar) do echo %%i 2>&1
+rem Confirm we dont match files:
+for /d %%i in (bazb*) do echo %%i 2>&1
+for /d %%i in (bazb2*) do echo %%i 2>&1
+rem Show we pass through non wildcards
+for /d %%i in (PASSED) do echo %%i
+for /d %%i in (xxx) do (
+  echo %%i - Should be xxx
+  echo Expected second line
+)
+rem Show we issue no messages on failures
+for /d %%i in (FAILED?) do echo %%i 2>&1
+for /d %%i in (FAILED?) do (
+  echo %%i - Unexpected!
+  echo FAILED Unexpected second line
+)
+for /d %%i in (FAILED*) do echo %%i 2>&1
+for /d %%i in (FAILED*) do (
+  echo %%i - Unexpected!
+  echo FAILED Unexpected second line
+)
 rem FIXME can't test wildcard expansion here since it's listed in directory
 rem order, and not in alphabetic order.
 rem Proper testing would need a currently missing "sort" program implementation.
