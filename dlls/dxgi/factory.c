@@ -229,16 +229,15 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChain(IWineDXGIFactory *
         return hr;
     }
 
-    hr = wined3d_device_get_swapchain(wined3d_device, 0, &wined3d_swapchain);
+    wined3d_swapchain = wined3d_device_get_swapchain(wined3d_device, 0);
     wined3d_device_decref(wined3d_device);
-    if (FAILED(hr))
+    if (!wined3d_swapchain)
     {
-        WARN("Failed to get swapchain, returning %#x\n", hr);
-        return hr;
+        WARN("Failed to get swapchain.\n");
+        return E_FAIL;
     }
 
     *swapchain = wined3d_swapchain_get_parent(wined3d_swapchain);
-    wined3d_swapchain_decref(wined3d_swapchain);
 
     /* FIXME? The swapchain is created with refcount 1 by the wined3d device,
      * but the wined3d device can't hold a real reference. */

@@ -1296,8 +1296,7 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
     }
 
     /* check the return values, because the GetBackBuffer call isn't valid for ddraw */
-    hr = wined3d_device_get_swapchain(device, 0, &swapchain);
-    if (SUCCEEDED(hr) && swapchain)
+    if ((swapchain = wined3d_device_get_swapchain(device, 0)))
     {
         hr = wined3d_swapchain_get_back_buffer(swapchain, 0, WINED3D_BACKBUFFER_TYPE_MONO, &backbuffer);
         if (SUCCEEDED(hr) && backbuffer)
@@ -1321,8 +1320,6 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
         state->viewport.height = swapchain->desc.backbuffer_height;
         state->viewport.min_z = 0.0f;
         state->viewport.max_z = 1.0f;
-
-        wined3d_swapchain_decref(swapchain);
     }
 
     TRACE("Done.\n");

@@ -695,13 +695,13 @@ static HRESULT ddraw_create_swapchain(struct ddraw *ddraw, HWND window, BOOL win
         return hr;
     }
 
-    if (FAILED(hr = wined3d_device_get_swapchain(ddraw->wined3d_device, 0, &ddraw->wined3d_swapchain)))
+    if (!(ddraw->wined3d_swapchain = wined3d_device_get_swapchain(ddraw->wined3d_device, 0)))
     {
-        ERR("Failed to get swapchain, hr %#x.\n", hr);
-        ddraw->wined3d_swapchain = NULL;
-        return hr;
+        ERR("Failed to get swapchain.\n");
+        return DDERR_INVALIDPARAMS;
     }
 
+    wined3d_swapchain_incref(ddraw->wined3d_swapchain);
     ddraw_set_swapchain_window(ddraw, window);
 
     return DD_OK;

@@ -506,24 +506,24 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH d3d9_device_GetSwapChain(IDirect3DDevice
         UINT swapchain_idx, IDirect3DSwapChain9 **swapchain)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
-    struct wined3d_swapchain *wined3d_swapchain = NULL;
+    struct wined3d_swapchain *wined3d_swapchain;
     struct d3d9_swapchain *swapchain_impl;
     HRESULT hr;
 
     TRACE("iface %p, swapchain_idx %u, swapchain %p.\n", iface, swapchain_idx, swapchain);
 
     wined3d_mutex_lock();
-    hr = wined3d_device_get_swapchain(device->wined3d_device, swapchain_idx, &wined3d_swapchain);
-    if (SUCCEEDED(hr) && wined3d_swapchain)
+    if ((wined3d_swapchain = wined3d_device_get_swapchain(device->wined3d_device, swapchain_idx)))
     {
        swapchain_impl = wined3d_swapchain_get_parent(wined3d_swapchain);
        *swapchain = &swapchain_impl->IDirect3DSwapChain9_iface;
        IDirect3DSwapChain9_AddRef(*swapchain);
-       wined3d_swapchain_decref(wined3d_swapchain);
+       hr = D3D_OK;
     }
     else
     {
         *swapchain = NULL;
+        hr = D3DERR_INVALIDCALL;
     }
     wined3d_mutex_unlock();
 
