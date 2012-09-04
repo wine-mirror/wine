@@ -752,7 +752,7 @@ static struct ctab_constant *get_constant_by_name(struct ID3DXConstantTableImpl 
         handles = constant->constants;
     }
 
-    length = strcspn( name, "[." );
+    length = strcspn(name, "[.");
     part = name + length;
 
     for (i = 0; i < count; i++)
@@ -767,13 +767,9 @@ static struct ctab_constant *get_constant_by_name(struct ID3DXConstantTableImpl 
                 case '[':
                     return get_constant_element_by_name(&handles[i], part);
 
-                case '\0':
+                default:
                     TRACE("Returning parameter %p\n", &handles[i]);
                     return &handles[i];
-
-                default:
-                    FIXME("Unhandled case \"%c\"\n", *--part);
-                    break;
             }
         }
     }
