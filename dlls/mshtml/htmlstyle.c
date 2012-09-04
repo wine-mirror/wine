@@ -594,6 +594,15 @@ static inline HRESULT set_style_pos(HTMLStyle *This, styleid_t sid, float value)
     return set_style_attr(This, sid, szValue, 0);
 }
 
+static HRESULT set_style_pxattr(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, LONG value)
+{
+    WCHAR value_str[16];
+
+    sprintfW(value_str, px_formatW, value);
+
+    return set_nsstyle_attr(nsstyle, sid, value_str, 0);
+}
+
 static HRESULT get_nsstyle_pos(HTMLStyle *This, styleid_t sid, float *p)
 {
     nsAString str_value;
@@ -2376,8 +2385,10 @@ static HRESULT WINAPI HTMLStyle_get_pixelLeft(IHTMLStyle *iface, LONG *p)
 static HRESULT WINAPI HTMLStyle_put_pixelWidth(IHTMLStyle *iface, LONG v)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    FIXME("(%p)->()\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->()\n", This);
+
+    return set_style_pxattr(This->nsstyle, STYLEID_WIDTH, v);
 }
 
 static HRESULT WINAPI HTMLStyle_get_pixelWidth(IHTMLStyle *iface, LONG *p)

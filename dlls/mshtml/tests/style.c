@@ -826,6 +826,16 @@ static void test_body_style(IHTMLStyle *style)
     ok(!strcmp_wa(V_BSTR(&v), "100px"), "V_BSTR(v)=%s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
+    hres = IHTMLStyle_put_pixelWidth(style, 50);
+    ok(hres == S_OK, "put_pixelWidth failed: %08x\n", hres);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLStyle_get_width(style, &v);
+    ok(hres == S_OK, "get_width failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(v)=%d\n", V_VT(&v));
+    ok(!strcmp_wa(V_BSTR(&v), "50px"), "V_BSTR(v)=%s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
     /* margin tests */
     str = (void*)0xdeadbeef;
     hres = IHTMLStyle_get_margin(style, &str);
