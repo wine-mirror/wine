@@ -1848,6 +1848,12 @@ static void test_get_shader_constant_variables(void)
     element = ID3DXConstantTable_GetConstantByName(ctable, "s_2[0]", "invalid");
     ok(element == NULL, "GetConstantByName failed\n");
 
+    constant = ID3DXConstantTable_GetConstantByName(ctable, NULL, "s_2[0]");
+    ok(constant != NULL, "GetConstantByName failed\n");
+
+    element = ID3DXConstantTable_GetConstantElement(ctable, "s_2[0]", 0);
+    ok(constant == element, "GetConstantByName failed, got %p, expected %p\n", element, constant);
+
     count = ID3DXConstantTable_Release(ctable);
     ok(count == 0, "Release failed, got %u, expected %u\n", count, 0);
 }

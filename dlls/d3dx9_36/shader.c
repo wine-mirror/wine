@@ -1009,7 +1009,7 @@ static D3DXHANDLE WINAPI ID3DXConstantTableImpl_GetConstantElement(ID3DXConstant
 
     if (c && index < c->desc.Elements)
     {
-        if (c->constants) c = &c->constants[index];
+        if (c->desc.Elements > 1) c = &c->constants[index];
         TRACE("Returning constant %p\n", c);
         return handle_from_constant(c);
     }
