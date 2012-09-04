@@ -40,6 +40,8 @@ static BOOL (WINAPI *pInternetTimeToSystemTimeW)(LPCWSTR ,SYSTEMTIME *,DWORD);
 static BOOL (WINAPI *pIsDomainLegalCookieDomainW)(LPCWSTR, LPCWSTR);
 static DWORD (WINAPI *pPrivacyGetZonePreferenceW)(DWORD, DWORD, LPDWORD, LPWSTR, LPDWORD);
 static DWORD (WINAPI *pPrivacySetZonePreferenceW)(DWORD, DWORD, DWORD, LPCWSTR);
+static BOOL (WINAPI *pInternetGetCookieExA)(LPCSTR,LPCSTR,LPSTR,LPDWORD,DWORD,LPVOID);
+static BOOL (WINAPI *pInternetGetCookieExW)(LPCWSTR,LPCWSTR,LPWSTR,LPDWORD,DWORD,LPVOID);
 
 /* ############################### */
 
@@ -469,6 +471,36 @@ static void test_complicated_cookie(void)
   ok(strstr(buffer,"K=L")!=NULL,"K=L missing\n");
   ok(strstr(buffer,"M=N")==NULL,"M=N present\n");
   ok(strstr(buffer,"O=P")==NULL,"O=P present\n");
+}
+
+static void test_cookie_url(void)
+{
+    WCHAR bufw[512];
+    char buf[512];
+    DWORD len;
+    BOOL res;
+
+    static const WCHAR about_blankW[] = {'a','b','o','u','t',':','b','l','a','n','k',0};
+
+    len = sizeof(buf);
+    res = InternetGetCookieA("about:blank", NULL, buf, &len);
+    ok(!res && GetLastError() == ERROR_INVALID_PARAMETER,
+       "InternetGetCookeA failed: %u, expected ERROR_INVALID_PARAMETER\n", GetLastError());
+
+    len = sizeof(bufw)/sizeof(*bufw);
+    res = InternetGetCookieW(about_blankW, NULL, bufw, &len);
+    ok(!res && GetLastError() == ERROR_INVALID_PARAMETER,
+       "InternetGetCookeW failed: %u, expected ERROR_INVALID_PARAMETER\n", GetLastError());
+
+    len = sizeof(buf);
+    res = pInternetGetCookieExA("about:blank", NULL, buf, &len, 0, NULL);
+    ok(!res && GetLastError() == ERROR_INVALID_PARAMETER,
+       "InternetGetCookeExA failed: %u, expected ERROR_INVALID_PARAMETER\n", GetLastError());
+
+    len = sizeof(bufw)/sizeof(*bufw);
+    res = pInternetGetCookieExW(about_blankW, NULL, bufw, &len, 0, NULL);
+    ok(!res && GetLastError() == ERROR_INVALID_PARAMETER,
+       "InternetGetCookeExW failed: %u, expected ERROR_INVALID_PARAMETER\n", GetLastError());
 }
 
 static void test_null(void)
@@ -1381,11 +1413,6 @@ START_TEST(internet)
     HMODULE hdll;
     hdll = GetModuleHandleA("wininet.dll");
 
-    if(!GetProcAddress(hdll, "InternetGetCookieExW")) {
-        win_skip("Too old IE (older than 6.0)\n");
-        return;
-    }
-
     pCreateUrlCacheContainerA = (void*)GetProcAddress(hdll, "CreateUrlCacheContainerA");
     pCreateUrlCacheContainerW = (void*)GetProcAddress(hdll, "CreateUrlCacheContainerW");
     pInternetTimeFromSystemTimeA = (void*)GetProcAddress(hdll, "InternetTimeFromSystemTimeA");
@@ -1395,11 +1422,19 @@ START_TEST(internet)
     pIsDomainLegalCookieDomainW = (void*)GetProcAddress(hdll, (LPCSTR)117);
     pPrivacyGetZonePreferenceW = (void*)GetProcAddress(hdll, "PrivacyGetZonePreferenceW");
     pPrivacySetZonePreferenceW = (void*)GetProcAddress(hdll, "PrivacySetZonePreferenceW");
+    pInternetGetCookieExA = (void*)GetProcAddress(hdll, "InternetGetCookieExA");
+    pInternetGetCookieExW = (void*)GetProcAddress(hdll, "InternetGetCookieExW");
+
+    if(!pInternetGetCookieExW) {
+        win_skip("Too old IE (older than 6.0)\n");
+        return;
+    }
 
     test_InternetCanonicalizeUrlA();
     test_InternetQueryOptionA();
     test_get_cookie();
     test_complicated_cookie();
+    test_cookie_url();
     test_version();
     test_null();
     test_Option_PerConnectionOption();

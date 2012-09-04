@@ -360,7 +360,10 @@ BOOL WINAPI InternetGetCookieW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
 
     host[0] = 0;
     ret = COOKIE_crackUrlSimple(lpszUrl, host, sizeof(host)/sizeof(host[0]), path, sizeof(path)/sizeof(path[0]));
-    if (!ret || !host[0]) return FALSE;
+    if (!ret || !host[0]) {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
 
     return get_cookie(host, path, lpCookieData, lpdwSize);
 }
