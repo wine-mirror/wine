@@ -673,17 +673,15 @@ static HRESULT HTMLAnchorElement_handle_event(HTMLDOMNode *iface, eventid_t eid,
         }
     }
 
-    return S_OK;
+    return HTMLElement_handle_event(&This->element.node, eid, event, prevent_default);
 }
 
 static const NodeImplVtbl HTMLAnchorElementImplVtbl = {
     HTMLAnchorElement_QI,
     HTMLElement_destructor,
     HTMLElement_clone,
-    HTMLElement_get_attr_col,
-    NULL,
-    NULL,
-    HTMLAnchorElement_handle_event
+    HTMLAnchorElement_handle_event,
+    HTMLElement_get_attr_col
 };
 
 static const tid_t HTMLAnchorElement_iface_tids[] = {

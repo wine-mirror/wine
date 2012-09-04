@@ -1604,10 +1604,41 @@ HRESULT HTMLElement_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, HTMLDOMNode **
     return S_OK;
 }
 
+HRESULT HTMLElement_handle_event(HTMLDOMNode *iface, DWORD eid, nsIDOMEvent *event, BOOL *prevent_default)
+{
+    HTMLElement *This = impl_from_HTMLDOMNode(iface);
+
+    switch(eid) {
+    case EVENTID_KEYDOWN: {
+        nsIDOMKeyEvent *key_event;
+        nsresult nsres;
+
+        nsres = nsIDOMEvent_QueryInterface(event, &IID_nsIDOMKeyEvent, (void**)&key_event);
+        if(NS_SUCCEEDED(nsres)) {
+            PRUint32 code = 0;
+
+            nsIDOMKeyEvent_GetKeyCode(key_event, &code);
+
+            switch(code) {
+            case VK_F1: /* DOM_VK_F1 */
+                TRACE("F1 pressed\n");
+                fire_event(This->node.doc, EVENTID_HELP, TRUE, This->node.nsnode, NULL);
+                *prevent_default = TRUE;
+            }
+
+            nsIDOMKeyEvent_Release(key_event);
+        }
+    }
+    }
+
+    return S_OK;
+}
+
 static const NodeImplVtbl HTMLElementImplVtbl = {
     HTMLElement_QI,
     HTMLElement_destructor,
     HTMLElement_clone,
+    HTMLElement_handle_event,
     HTMLElement_get_attr_col
 };
 

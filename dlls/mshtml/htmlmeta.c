@@ -254,6 +254,7 @@ static const NodeImplVtbl HTMLMetaElementImplVtbl = {
     HTMLMetaElement_QI,
     HTMLMetaElement_destructor,
     HTMLElement_clone,
+    HTMLElement_handle_event,
     HTMLElement_get_attr_col
 };
 

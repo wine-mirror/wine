@@ -255,6 +255,7 @@ static const NodeImplVtbl HTMLEmbedElementImplVtbl = {
     HTMLEmbedElement_QI,
     HTMLEmbedElement_destructor,
     HTMLElement_clone,
+    HTMLElement_handle_event,
     HTMLElement_get_attr_col
 };
 
