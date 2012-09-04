@@ -111,6 +111,8 @@ static const WCHAR prop_macaddressW[] =
     {'M','A','C','A','d','d','r','e','s','s',0};
 static const WCHAR prop_manufacturerW[] =
     {'M','a','n','u','f','a','c','t','u','r','e','r',0};
+static const WCHAR prop_maxclockspeedW[] =
+    {'M','a','x','C','l','o','c','k','S','p','e','e','d',0};
 static const WCHAR prop_methodW[] =
     {'M','e','t','h','o','d',0};
 static const WCHAR prop_modelW[] =
@@ -163,10 +165,6 @@ static const WCHAR prop_totalphysicalmemoryW[] =
     {'T','o','t','a','l','P','h','y','s','i','c','a','l','M','e','m','o','r','y',0};
 static const WCHAR prop_typeW[] =
     {'T','y','p','e',0};
-static const WCHAR prop_maxclockspeedW[] =
-    {'M','a','x','C','l','o','c','k','S','p','e','e','d',0};
-static const WCHAR prop_numberoflogicalprocessorsW[] =
-    {'N','u','m','b','e','r','O','f','L','o','g','i','c','a','l','P','r','o','c','e','s','s','o','r','s',0};
 
 static const WCHAR method_enumkeyW[] =
     {'E','n','u','m','K','e','y',0};
@@ -253,13 +251,13 @@ static const struct column col_process[] =
 };
 static const struct column col_processor[] =
 {
-    { prop_cpustatusW,                 CIM_UINT16 },
-    { prop_deviceidW,                  CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
-    { prop_manufacturerW,              CIM_STRING|COL_FLAG_DYNAMIC },
-    { prop_maxclockspeedW,             CIM_UINT32 },
-    { prop_nameW,                      CIM_STRING|COL_FLAG_DYNAMIC },
-    { prop_numberoflogicalprocessorsW, CIM_UINT32 },
-    { prop_processoridW,               CIM_STRING|COL_FLAG_DYNAMIC }
+    { prop_cpustatusW,            CIM_UINT16 },
+    { prop_deviceidW,             CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
+    { prop_manufacturerW,         CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_maxclockspeedW,        CIM_UINT32 },
+    { prop_nameW,                 CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_numlogicalprocessorsW, CIM_UINT32 },
+    { prop_processoridW,          CIM_STRING|COL_FLAG_DYNAMIC }
 };
 static const struct column col_service[] =
 {
