@@ -324,6 +324,15 @@ enum wined3d_shader_register_type
     WINED3DSPR_RESOURCE,
 };
 
+enum wined3d_data_type
+{
+    WINED3D_DATA_FLOAT,
+    WINED3D_DATA_INT,
+    WINED3D_DATA_RESOURCE,
+    WINED3D_DATA_SAMPLER,
+    WINED3D_DATA_UINT,
+};
+
 enum wined3d_immconst_type
 {
     WINED3D_IMMCONST_SCALAR,
@@ -612,6 +621,7 @@ struct wined3d_shader_context
 struct wined3d_shader_register
 {
     enum wined3d_shader_register_type type;
+    enum wined3d_data_type data_type;
     UINT idx;
     UINT array_idx;
     const struct wined3d_shader_src_param *rel_addr;

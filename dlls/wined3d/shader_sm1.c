@@ -447,6 +447,7 @@ static void shader_parse_src_param(DWORD param, const struct wined3d_shader_src_
 {
     src->reg.type = ((param & WINED3DSP_REGTYPE_MASK) >> WINED3DSP_REGTYPE_SHIFT)
             | ((param & WINED3DSP_REGTYPE_MASK2) >> WINED3DSP_REGTYPE_SHIFT2);
+    src->reg.data_type = WINED3D_DATA_FLOAT;
     src->reg.idx = param & WINED3DSP_REGNUM_MASK;
     src->reg.array_idx = ~0U;
     src->swizzle = (param & WINED3DSP_SWIZZLE_MASK) >> WINED3DSP_SWIZZLE_SHIFT;
@@ -459,6 +460,7 @@ static void shader_parse_dst_param(DWORD param, const struct wined3d_shader_src_
 {
     dst->reg.type = ((param & WINED3DSP_REGTYPE_MASK) >> WINED3DSP_REGTYPE_SHIFT)
             | ((param & WINED3DSP_REGTYPE_MASK2) >> WINED3DSP_REGTYPE_SHIFT2);
+    dst->reg.data_type = WINED3D_DATA_FLOAT;
     dst->reg.idx = param & WINED3DSP_REGNUM_MASK;
     dst->reg.array_idx = ~0U;
     dst->write_mask = (param & WINED3D_SM1_WRITEMASK_MASK) >> WINED3D_SM1_WRITEMASK_SHIFT;
@@ -621,10 +623,11 @@ static void shader_sm1_read_semantic(const DWORD **ptr, struct wined3d_shader_se
 }
 
 static void shader_sm1_read_immconst(const DWORD **ptr, struct wined3d_shader_src_param *src_param,
-        enum wined3d_immconst_type type)
+        enum wined3d_immconst_type type, enum wined3d_data_type data_type)
 {
     UINT count = type == WINED3D_IMMCONST_VEC4 ? 4 : 1;
     src_param->reg.type = WINED3DSPR_IMMCONST;
+    src_param->reg.data_type = data_type;
     src_param->reg.idx = ~0U;
     src_param->reg.array_idx = ~0U;
     src_param->reg.rel_addr = NULL;
@@ -669,16 +672,20 @@ static void shader_sm1_read_instruction(void *data, const DWORD **ptr, struct wi
     {
         shader_sm1_read_semantic(&p, &ins->semantic);
     }
-    else if (ins->handler_idx == WINED3DSIH_DEF
-            || ins->handler_idx == WINED3DSIH_DEFI)
+    else if (ins->handler_idx == WINED3DSIH_DEF)
     {
         shader_sm1_read_dst_param(priv, &p, &priv->dst_param, &priv->dst_rel_addr);
-        shader_sm1_read_immconst(&p, &priv->src_param[0], WINED3D_IMMCONST_VEC4);
+        shader_sm1_read_immconst(&p, &priv->src_param[0], WINED3D_IMMCONST_VEC4, WINED3D_DATA_FLOAT);
+    }
+    else if (ins->handler_idx == WINED3DSIH_DEFI)
+    {
+        shader_sm1_read_dst_param(priv, &p, &priv->dst_param, &priv->dst_rel_addr);
+        shader_sm1_read_immconst(&p, &priv->src_param[0], WINED3D_IMMCONST_VEC4, WINED3D_DATA_INT);
     }
     else if (ins->handler_idx == WINED3DSIH_DEFB)
     {
         shader_sm1_read_dst_param(priv, &p, &priv->dst_param, &priv->dst_rel_addr);
-        shader_sm1_read_immconst(&p, &priv->src_param[0], WINED3D_IMMCONST_SCALAR);
+        shader_sm1_read_immconst(&p, &priv->src_param[0], WINED3D_IMMCONST_SCALAR, WINED3D_DATA_UINT);
     }
     else
     {
