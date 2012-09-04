@@ -1320,6 +1320,122 @@ void fill_cpu_info(void)
           cached_sci.Architecture, cached_sci.Level, cached_sci.Revision, cached_sci.FeatureSet);
 }
 
+#ifdef linux
+static inline BOOL logical_proc_info_add_by_id(SYSTEM_LOGICAL_PROCESSOR_INFORMATION *data,
+        DWORD *len, DWORD max_len, LOGICAL_PROCESSOR_RELATIONSHIP rel, DWORD id, DWORD proc)
+{
+    int i;
+
+    for(i=0; i<*len; i++)
+    {
+        if(data[i].Relationship!=rel || data[i].u.Reserved[1]!=id)
+            continue;
+
+        data[i].ProcessorMask |= (ULONG_PTR)1<<proc;
+        return TRUE;
+    }
+
+    if(*len == max_len)
+        return FALSE;
+
+    data[i].Relationship = rel;
+    data[i].ProcessorMask = (ULONG_PTR)1<<proc;
+    /* TODO: set processor core flags */
+    data[i].u.Reserved[0] = 0;
+    data[i].u.Reserved[1] = id;
+    *len = i+1;
+    return TRUE;
+}
+
+static NTSTATUS create_logical_proc_info(SYSTEM_LOGICAL_PROCESSOR_INFORMATION **data, DWORD *max_len)
+{
+    static const char core_info[] = "/sys/devices/system/cpu/cpu%d/%s";
+
+    FILE *fcpu_list, *f;
+    DWORD len = 0, beg, end, i, r;
+    char op, name[MAX_PATH];
+
+    fcpu_list = fopen("/sys/devices/system/cpu/online", "r");
+    if(!fcpu_list)
+        return STATUS_NOT_IMPLEMENTED;
+
+    while(!feof(fcpu_list))
+    {
+        if(!fscanf(fcpu_list, "%u%c ", &beg, &op))
+            break;
+        if(op == '-') fscanf(fcpu_list, "%u%c ", &end, &op);
+        else end = beg;
+
+        for(i=beg; i<=end; i++)
+        {
+            if(i > 8*sizeof(ULONG_PTR))
+            {
+                FIXME("skipping logical processor %d\n", i);
+                continue;
+            }
+
+            sprintf(name, core_info, i, "core_id");
+            f = fopen(name, "r");
+            if(f)
+            {
+                fscanf(f, "%u", &r);
+                fclose(f);
+            }
+            else r = i;
+            if(!logical_proc_info_add_by_id(*data, &len, *max_len, RelationProcessorCore, r, i))
+            {
+                SYSTEM_LOGICAL_PROCESSOR_INFORMATION *new_data;
+
+                *max_len *= 2;
+                new_data = RtlReAllocateHeap(GetProcessHeap(), 0, *data, *max_len*sizeof(*new_data));
+                if(!new_data)
+                {
+                    fclose(fcpu_list);
+                    return STATUS_NO_MEMORY;
+                }
+
+                *data = new_data;
+                logical_proc_info_add_by_id(*data, &len, *max_len, RelationProcessorCore, r, i);
+            }
+
+            sprintf(name, core_info, i, "physical_package_id");
+            f = fopen(name, "r");
+            if(f)
+            {
+                fscanf(f, "%u", &r);
+                fclose(f);
+            }
+            else r = 0;
+            if(!logical_proc_info_add_by_id(*data, &len, *max_len, RelationProcessorPackage, r, i))
+            {
+                SYSTEM_LOGICAL_PROCESSOR_INFORMATION *new_data;
+
+                *max_len *= 2;
+                new_data = RtlReAllocateHeap(GetProcessHeap(), 0, *data, *max_len*sizeof(*new_data));
+                if(!new_data)
+                {
+                    fclose(fcpu_list);
+                    return STATUS_NO_MEMORY;
+                }
+
+                *data = new_data;
+                logical_proc_info_add_by_id(*data, &len, *max_len, RelationProcessorPackage, r, i);
+            }
+        }
+    }
+    fclose(fcpu_list);
+
+    *max_len = len * sizeof(**data);
+    return STATUS_SUCCESS;
+}
+#else
+static NTSTATUS create_logical_proc_info(SYSTEM_LOGICAL_PROCESSOR_INFORMATION **data, DWORD *max_len)
+{
+    FIXME("stub\n");
+    return STATUS_NOT_IMPLEMENTED;
+}
+#endif
+
 /******************************************************************************
  * NtQuerySystemInformation [NTDLL.@]
  * ZwQuerySystemInformation [NTDLL.@]
@@ -1754,6 +1870,36 @@ NTSTATUS WINAPI NtQuerySystemInformation(
             else ret = STATUS_INFO_LENGTH_MISMATCH;
         }
 	break;
+    case SystemLogicalProcessorInformation:
+        {
+            SYSTEM_LOGICAL_PROCESSOR_INFORMATION *buf;
+
+            /* Each logical processor may use up to 7 entries in returned table:
+             * core, numa node, package, L1i, L1d, L2, L3 */
+            len = 7 * NtCurrentTeb()->Peb->NumberOfProcessors;
+            buf = RtlAllocateHeap(GetProcessHeap(), 0, len * sizeof(*buf));
+            if(!buf)
+            {
+                ret = STATUS_NO_MEMORY;
+                break;
+            }
+
+            ret = create_logical_proc_info(&buf, &len);
+            if( ret != STATUS_SUCCESS )
+            {
+                RtlFreeHeap(GetProcessHeap(), 0, buf);
+                break;
+            }
+
+            if( Length >= len)
+            {
+                if (!SystemInformation) ret = STATUS_ACCESS_VIOLATION;
+                else memcpy( SystemInformation, buf, len);
+            }
+            else ret = STATUS_INFO_LENGTH_MISMATCH;
+            RtlFreeHeap(GetProcessHeap(), 0, buf);
+        }
+        break;
     default:
 	FIXME("(0x%08x,%p,0x%08x,%p) stub\n",
 	      SystemInformationClass,SystemInformation,Length,ResultLength);
