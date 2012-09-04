@@ -2117,6 +2117,18 @@ static void _test_elem_outerhtml(unsigned line, IUnknown *unk, const char *outer
     SysFreeString(html);
 }
 
+#define test_elem_contains(a,b,c) _test_elem_contains(__LINE__,a,b,c)
+static void _test_elem_contains(unsigned line, IHTMLElement *elem, IHTMLElement *elem2, VARIANT_BOOL exval)
+{
+    VARIANT_BOOL b;
+    HRESULT hres;
+
+    b = 100;
+    hres = IHTMLElement_contains(elem, elem2, &b);
+    ok_(__FILE__,line)(hres == S_OK, "contains failed: %08x\n", hres);
+    ok_(__FILE__,line)(b == exval, "contains returned %x, expected %x\n", b, exval);
+}
+
 #define get_first_child(n) _get_first_child(__LINE__,n)
 static IHTMLDOMNode *_get_first_child(unsigned line, IUnknown *unk)
 {
@@ -5301,13 +5313,23 @@ static void test_elems(IHTMLDocument2 *doc)
         elem2 = test_elem_get_parent((IUnknown*)elem);
         ok(elem2 != NULL, "elem2 == NULL\n");
         test_node_name((IUnknown*)elem2, "BODY");
+
         elem3 = test_elem_get_parent((IUnknown*)elem2);
-        IHTMLElement_Release(elem2);
         ok(elem3 != NULL, "elem3 == NULL\n");
         test_node_name((IUnknown*)elem3, "HTML");
+
+        test_elem_contains(elem3, elem2, VARIANT_TRUE);
+        test_elem_contains(elem3, elem, VARIANT_TRUE);
+        test_elem_contains(elem2, elem, VARIANT_TRUE);
+        test_elem_contains(elem2, elem3, VARIANT_FALSE);
+        test_elem_contains(elem, elem3, VARIANT_FALSE);
+        test_elem_contains(elem, elem2, VARIANT_FALSE);
+        test_elem_contains(elem, elem, VARIANT_TRUE);
+        IHTMLElement_Release(elem2);
+
         elem2 = test_elem_get_parent((IUnknown*)elem3);
-        IHTMLElement_Release(elem3);
         ok(elem2 == NULL, "elem2 != NULL\n");
+        IHTMLElement_Release(elem3);
 
         test_elem_getelembytag((IUnknown*)elem, ET_OPTION, 2);
         test_elem_getelembytag((IUnknown*)elem, ET_SELECT, 0);

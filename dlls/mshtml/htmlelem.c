@@ -773,8 +773,26 @@ static HRESULT WINAPI HTMLElement_contains(IHTMLElement *iface, IHTMLElement *pC
                                            VARIANT_BOOL *pfResult)
 {
     HTMLElement *This = impl_from_IHTMLElement(iface);
-    FIXME("(%p)->(%p %p)\n", This, pChild, pfResult);
-    return E_NOTIMPL;
+    HTMLElement *child;
+    cpp_bool result;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p %p)\n", This, pChild, pfResult);
+
+    child = unsafe_impl_from_IHTMLElement(pChild);
+    if(!child) {
+        ERR("not our element\n");
+        return E_FAIL;
+    }
+
+    nsres = nsIDOMNode_Contains(This->node.nsnode, child->node.nsnode, &result);
+    if(NS_FAILED(nsres)) {
+        ERR("failed\n");
+        return E_FAIL;
+    }
+
+    *pfResult = result ? VARIANT_TRUE : VARIANT_FALSE;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement_get_sourceIndex(IHTMLElement *iface, LONG *p)
