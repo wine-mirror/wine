@@ -634,25 +634,26 @@ struct wined3d_shader_src_param
     enum wined3d_shader_src_modifier modifiers;
 };
 
-struct wined3d_shader_instruction
-{
-    const struct wined3d_shader_context *ctx;
-    enum WINED3D_SHADER_INSTRUCTION_HANDLER handler_idx;
-    DWORD flags;
-    BOOL coissue;
-    DWORD predicate;
-    UINT dst_count;
-    const struct wined3d_shader_dst_param *dst;
-    UINT src_count;
-    const struct wined3d_shader_src_param *src;
-};
-
 struct wined3d_shader_semantic
 {
     enum wined3d_decl_usage usage;
     UINT usage_idx;
     enum wined3d_sampler_texture_type sampler_type;
     struct wined3d_shader_dst_param reg;
+};
+
+struct wined3d_shader_instruction
+{
+    const struct wined3d_shader_context *ctx;
+    enum WINED3D_SHADER_INSTRUCTION_HANDLER handler_idx;
+    DWORD flags;
+    BOOL coissue;
+    const struct wined3d_shader_src_param *predicate;
+    UINT dst_count;
+    const struct wined3d_shader_dst_param *dst;
+    UINT src_count;
+    const struct wined3d_shader_src_param *src;
+    struct wined3d_shader_semantic semantic;
 };
 
 struct wined3d_shader_attribute
@@ -673,12 +674,7 @@ struct wined3d_shader_frontend
     void *(*shader_init)(const DWORD *ptr, const struct wined3d_shader_signature *output_signature);
     void (*shader_free)(void *data);
     void (*shader_read_header)(void *data, const DWORD **ptr, struct wined3d_shader_version *shader_version);
-    void (*shader_read_opcode)(void *data, const DWORD **ptr, struct wined3d_shader_instruction *ins, UINT *param_size);
-    void (*shader_read_src_param)(void *data, const DWORD **ptr, struct wined3d_shader_src_param *src_param,
-            struct wined3d_shader_src_param *src_rel_addr);
-    void (*shader_read_dst_param)(void *data, const DWORD **ptr, struct wined3d_shader_dst_param *dst_param,
-            struct wined3d_shader_src_param *dst_rel_addr);
-    void (*shader_read_semantic)(const DWORD **ptr, struct wined3d_shader_semantic *semantic);
+    void (*shader_read_instruction)(void *data, const DWORD **ptr, struct wined3d_shader_instruction *ins);
     void (*shader_read_comment)(const DWORD **ptr, const char **comment, UINT *comment_size);
     BOOL (*shader_is_end)(void *data, const DWORD **ptr);
 };

@@ -483,69 +483,57 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
         struct wined3d_shader_instruction ins;
         const char *comment;
         UINT comment_size;
-        UINT param_size;
 
         /* Skip comments. */
         fe->shader_read_comment(&ptr, &comment, &comment_size);
         if (comment) continue;
 
         /* Fetch opcode. */
-        fe->shader_read_opcode(fe_data, &ptr, &ins, &param_size);
+        fe->shader_read_instruction(fe_data, &ptr, &ins);
 
         /* Unhandled opcode, and its parameters. */
         if (ins.handler_idx == WINED3DSIH_TABLE_SIZE)
         {
             TRACE("Skipping unrecognized instruction.\n");
-            ptr += param_size;
             continue;
         }
 
         /* Handle declarations. */
         if (ins.handler_idx == WINED3DSIH_DCL)
         {
-            struct wined3d_shader_semantic semantic;
-
-            fe->shader_read_semantic(&ptr, &semantic);
-
-            switch (semantic.reg.reg.type)
+            switch (ins.semantic.reg.reg.type)
             {
                 /* Mark input registers used. */
                 case WINED3DSPR_INPUT:
-                    reg_maps->input_registers |= 1 << semantic.reg.reg.idx;
-                    shader_signature_from_semantic(&input_signature[semantic.reg.reg.idx], &semantic);
+                    reg_maps->input_registers |= 1 << ins.semantic.reg.reg.idx;
+                    shader_signature_from_semantic(&input_signature[ins.semantic.reg.reg.idx], &ins.semantic);
                     break;
 
                 /* Vertex shader: mark 3.0 output registers used, save token. */
                 case WINED3DSPR_OUTPUT:
-                    reg_maps->output_registers |= 1 << semantic.reg.reg.idx;
-                    shader_signature_from_semantic(&output_signature[semantic.reg.reg.idx], &semantic);
-                    if (semantic.usage == WINED3D_DECL_USAGE_FOG)
+                    reg_maps->output_registers |= 1 << ins.semantic.reg.reg.idx;
+                    shader_signature_from_semantic(&output_signature[ins.semantic.reg.reg.idx], &ins.semantic);
+                    if (ins.semantic.usage == WINED3D_DECL_USAGE_FOG)
                         reg_maps->fog = 1;
                     break;
 
                 /* Save sampler usage token. */
                 case WINED3DSPR_SAMPLER:
-                    reg_maps->sampler_type[semantic.reg.reg.idx] = semantic.sampler_type;
+                    reg_maps->sampler_type[ins.semantic.reg.reg.idx] = ins.semantic.sampler_type;
                     break;
 
                 default:
-                    TRACE("Not recording DCL register type %#x.\n", semantic.reg.reg.type);
+                    TRACE("Not recording DCL register type %#x.\n", ins.semantic.reg.reg.type);
                     break;
             }
         }
         else if (ins.handler_idx == WINED3DSIH_DEF)
         {
-            struct wined3d_shader_src_param rel_addr;
-            struct wined3d_shader_dst_param dst;
-
             struct wined3d_shader_lconst *lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(*lconst));
             if (!lconst) return E_OUTOFMEMORY;
 
-            fe->shader_read_dst_param(fe_data, &ptr, &dst, &rel_addr);
-            lconst->idx = dst.reg.idx;
-
-            memcpy(lconst->value, ptr, 4 * sizeof(DWORD));
-            ptr += 4;
+            lconst->idx = ins.dst[0].reg.idx;
+            memcpy(lconst->value, ins.src[0].reg.immconst_data, 4 * sizeof(DWORD));
 
             /* In pixel shader 1.X shaders, the constants are clamped between [-1;1] */
             if (shader_version.major == 1 && shader_version.type == WINED3D_SHADER_TYPE_PIXEL)
@@ -565,51 +553,36 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
         }
         else if (ins.handler_idx == WINED3DSIH_DEFI)
         {
-            struct wined3d_shader_src_param rel_addr;
-            struct wined3d_shader_dst_param dst;
-
             struct wined3d_shader_lconst *lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(*lconst));
             if (!lconst) return E_OUTOFMEMORY;
 
-            fe->shader_read_dst_param(fe_data, &ptr, &dst, &rel_addr);
-            lconst->idx = dst.reg.idx;
-
-            memcpy(lconst->value, ptr, 4 * sizeof(DWORD));
-            ptr += 4;
+            lconst->idx = ins.dst[0].reg.idx;
+            memcpy(lconst->value, ins.src[0].reg.immconst_data, 4 * sizeof(DWORD));
 
             list_add_head(&shader->constantsI, &lconst->entry);
-            reg_maps->local_int_consts |= (1 << dst.reg.idx);
+            reg_maps->local_int_consts |= (1 << lconst->idx);
         }
         else if (ins.handler_idx == WINED3DSIH_DEFB)
         {
-            struct wined3d_shader_src_param rel_addr;
-            struct wined3d_shader_dst_param dst;
-
             struct wined3d_shader_lconst *lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(*lconst));
             if (!lconst) return E_OUTOFMEMORY;
 
-            fe->shader_read_dst_param(fe_data, &ptr, &dst, &rel_addr);
-            lconst->idx = dst.reg.idx;
-
-            memcpy(lconst->value, ptr, sizeof(DWORD));
-            ++ptr;
+            lconst->idx = ins.dst[0].reg.idx;
+            memcpy(lconst->value, ins.src[0].reg.immconst_data, sizeof(DWORD));
 
             list_add_head(&shader->constantsB, &lconst->entry);
-            reg_maps->local_bool_consts |= (1 << dst.reg.idx);
+            reg_maps->local_bool_consts |= (1 << lconst->idx);
         }
         /* For subroutine prototypes. */
         else if (ins.handler_idx == WINED3DSIH_LABEL)
         {
-            struct wined3d_shader_src_param src, rel_addr;
-
-            fe->shader_read_src_param(fe_data, &ptr, &src, &rel_addr);
-            reg_maps->labels |= 1 << src.reg.idx;
+            reg_maps->labels |= 1 << ins.src[0].reg.idx;
         }
         /* Set texture, address, temporary registers. */
         else
         {
             BOOL color0_mov = FALSE;
-            unsigned int i, limit;
+            unsigned int i;
 
             /* This will loop over all the registers and try to
              * make a bitmask of the ones we're interested in.
@@ -619,21 +592,16 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
              * they are initialized (required by spec). */
             for (i = 0; i < ins.dst_count; ++i)
             {
-                struct wined3d_shader_src_param dst_rel_addr;
-                struct wined3d_shader_dst_param dst_param;
-
-                fe->shader_read_dst_param(fe_data, &ptr, &dst_param, &dst_rel_addr);
-
-                shader_record_register_usage(shader, reg_maps, &dst_param.reg, shader_version.type);
+                shader_record_register_usage(shader, reg_maps, &ins.dst[i].reg, shader_version.type);
 
                 /* WINED3DSPR_TEXCRDOUT is the same as WINED3DSPR_OUTPUT. _OUTPUT can be > MAX_REG_TEXCRD and
                  * is used in >= 3.0 shaders. Filter 3.0 shaders to prevent overflows, and also filter pixel
                  * shaders because TECRDOUT isn't used in them, but future register types might cause issues */
                 if (shader_version.type == WINED3D_SHADER_TYPE_VERTEX && shader_version.major < 3)
                 {
-                    UINT idx = dst_param.reg.idx;
+                    UINT idx = ins.dst[i].reg.idx;
 
-                    switch (dst_param.reg.type)
+                    switch (ins.dst[i].reg.type)
                     {
                         case WINED3DSPR_RASTOUT:
                             switch (idx)
@@ -664,29 +632,29 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                                 idx += 8;
                                 if (reg_maps->output_registers & (1 << idx))
                                 {
-                                    output_signature[idx].mask |= dst_param.write_mask;
+                                    output_signature[idx].mask |= ins.dst[i].write_mask;
                                 }
                                 else
                                 {
                                     reg_maps->output_registers |= 1 << idx;
                                     shader_signature_from_usage(&output_signature[idx],
-                                            WINED3D_DECL_USAGE_COLOR, idx - 8, idx, dst_param.write_mask);
+                                            WINED3D_DECL_USAGE_COLOR, idx - 8, idx, ins.dst[i].write_mask);
                                 }
                             }
                             break;
 
                         case WINED3DSPR_TEXCRDOUT:
 
-                            reg_maps->texcoord_mask[idx] |= dst_param.write_mask;
+                            reg_maps->texcoord_mask[idx] |= ins.dst[i].write_mask;
                             if (reg_maps->output_registers & (1 << idx))
                             {
-                                output_signature[idx].mask |= dst_param.write_mask;
+                                output_signature[idx].mask |= ins.dst[i].write_mask;
                             }
                             else
                             {
                                 reg_maps->output_registers |= 1 << idx;
                                 shader_signature_from_usage(&output_signature[idx],
-                                        WINED3D_DECL_USAGE_TEXCOORD, idx, idx, dst_param.write_mask);
+                                        WINED3D_DECL_USAGE_TEXCOORD, idx, idx, ins.dst[i].write_mask);
                             }
                             break;
 
@@ -697,7 +665,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
 
                 if (shader_version.type == WINED3D_SHADER_TYPE_PIXEL)
                 {
-                    if (dst_param.reg.type == WINED3DSPR_COLOROUT && !dst_param.reg.idx)
+                    if (ins.dst[i].reg.type == WINED3DSPR_COLOROUT && !ins.dst[i].reg.idx)
                     {
                         /* Many 2.0 and 3.0 pixel shaders end with a MOV from a temp register to
                          * COLOROUT 0. If we know this in advance, the ARB shader backend can skip
@@ -708,7 +676,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                          * COLOROUT 0 is overwritten partially later, the marker is dropped again. */
                         shader->u.ps.color0_mov = FALSE;
                         if (ins.handler_idx == WINED3DSIH_MOV
-                                && dst_param.write_mask == WINED3DSP_WRITEMASK_ALL)
+                                && ins.dst[i].write_mask == WINED3DSP_WRITEMASK_ALL)
                         {
                             /* Used later when the source register is read. */
                             color0_mov = TRUE;
@@ -717,8 +685,8 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                     /* Also drop the MOV marker if the source register is overwritten prior to the shader
                      * end
                      */
-                    else if (dst_param.reg.type == WINED3DSPR_TEMP
-                            && dst_param.reg.idx == shader->u.ps.color0_reg)
+                    else if (ins.dst[i].reg.type == WINED3DSPR_TEMP
+                            && ins.dst[i].reg.idx == shader->u.ps.color0_reg)
                     {
                         shader->u.ps.color0_mov = FALSE;
                     }
@@ -739,7 +707,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                             || ins.handler_idx == WINED3DSIH_TEXREG2RGB))
                 {
                     /* Fake sampler usage, only set reserved bit and type. */
-                    DWORD sampler_code = dst_param.reg.idx;
+                    DWORD sampler_code = ins.dst[i].reg.idx;
 
                     TRACE("Setting fake 2D sampler for 1.x pixelshader.\n");
                     reg_maps->sampler_type[sampler_code] = WINED3DSTT_2D;
@@ -748,16 +716,16 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                     if (ins.handler_idx == WINED3DSIH_TEXBEM
                             || ins.handler_idx == WINED3DSIH_TEXBEML)
                     {
-                        reg_maps->bumpmat |= 1 << dst_param.reg.idx;
+                        reg_maps->bumpmat |= 1 << ins.dst[i].reg.idx;
                         if (ins.handler_idx == WINED3DSIH_TEXBEML)
                         {
-                            reg_maps->luminanceparams |= 1 << dst_param.reg.idx;
+                            reg_maps->luminanceparams |= 1 << ins.dst[i].reg.idx;
                         }
                     }
                 }
                 else if (ins.handler_idx == WINED3DSIH_BEM)
                 {
-                    reg_maps->bumpmat |= 1 << dst_param.reg.idx;
+                    reg_maps->bumpmat |= 1 << ins.dst[i].reg.idx;
                 }
             }
 
@@ -781,30 +749,29 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                     || ins.handler_idx == WINED3DSIH_ENDREP)
                 --cur_loop_depth;
 
-            limit = ins.src_count + (ins.predicate ? 1 : 0);
-            for (i = 0; i < limit; ++i)
+            if (ins.predicate)
+                shader_record_register_usage(shader, reg_maps, &ins.predicate->reg, shader_version.type);
+
+            for (i = 0; i < ins.src_count; ++i)
             {
-                struct wined3d_shader_src_param src_param, src_rel_addr;
-                unsigned int count;
+                unsigned int count = get_instr_extra_regcount(ins.handler_idx, i);
+                struct wined3d_shader_register reg = ins.src[i].reg;
 
-                fe->shader_read_src_param(fe_data, &ptr, &src_param, &src_rel_addr);
-                count = get_instr_extra_regcount(ins.handler_idx, i);
-
-                shader_record_register_usage(shader, reg_maps, &src_param.reg, shader_version.type);
+                shader_record_register_usage(shader, reg_maps, &ins.src[i].reg, shader_version.type);
                 while (count)
                 {
-                    ++src_param.reg.idx;
-                    shader_record_register_usage(shader, reg_maps, &src_param.reg, shader_version.type);
+                    ++reg.idx;
+                    shader_record_register_usage(shader, reg_maps, &reg, shader_version.type);
                     --count;
                 }
 
                 if (color0_mov)
                 {
-                    if (src_param.reg.type == WINED3DSPR_TEMP
-                            && src_param.swizzle == WINED3DSP_NOSWIZZLE)
+                    if (ins.src[i].reg.type == WINED3DSPR_TEMP
+                            && ins.src[i].swizzle == WINED3DSP_NOSWIZZLE)
                     {
                         shader->u.ps.color0_mov = TRUE;
-                        shader->u.ps.color0_reg = src_param.reg.idx;
+                        shader->u.ps.color0_reg = ins.src[i].reg.idx;
                     }
                 }
             }
@@ -1161,17 +1128,12 @@ void shader_generate_main(const struct wined3d_shader *shader, struct wined3d_sh
     struct wined3d_device *device = shader->device;
     const struct wined3d_shader_frontend *fe = shader->frontend;
     void *fe_data = shader->frontend_data;
-    struct wined3d_shader_src_param dst_rel_addr[2];
-    struct wined3d_shader_src_param src_rel_addr[4];
-    struct wined3d_shader_dst_param dst_param[2];
-    struct wined3d_shader_src_param src_param[4];
     struct wined3d_shader_version shader_version;
     struct wined3d_shader_loop_state loop_state;
     struct wined3d_shader_instruction ins;
     struct wined3d_shader_tex_mx tex_mx;
     struct wined3d_shader_context ctx;
     const DWORD *ptr = byte_code;
-    DWORD i;
 
     /* Initialize current parsing state. */
     tex_mx.current_row = 0;
@@ -1185,10 +1147,7 @@ void shader_generate_main(const struct wined3d_shader *shader, struct wined3d_sh
     ctx.tex_mx = &tex_mx;
     ctx.loop_state = &loop_state;
     ctx.backend_data = backend_ctx;
-
     ins.ctx = &ctx;
-    ins.dst = dst_param;
-    ins.src = src_param;
 
     fe->shader_read_header(fe_data, &ptr, &shader_version);
 
@@ -1196,20 +1155,18 @@ void shader_generate_main(const struct wined3d_shader *shader, struct wined3d_sh
     {
         const char *comment;
         UINT comment_size;
-        UINT param_size;
 
         /* Skip comment tokens. */
         fe->shader_read_comment(&ptr, &comment, &comment_size);
         if (comment) continue;
 
         /* Read opcode. */
-        fe->shader_read_opcode(fe_data, &ptr, &ins, &param_size);
+        fe->shader_read_instruction(fe_data, &ptr, &ins);
 
         /* Unknown opcode and its parameters. */
         if (ins.handler_idx == WINED3DSIH_TABLE_SIZE)
         {
             TRACE("Skipping unrecognized instruction.\n");
-            ptr += param_size;
             continue;
         }
 
@@ -1220,29 +1177,10 @@ void shader_generate_main(const struct wined3d_shader *shader, struct wined3d_sh
                 || ins.handler_idx == WINED3DSIH_DEFI
                 || ins.handler_idx == WINED3DSIH_DEFB
                 || ins.handler_idx == WINED3DSIH_PHASE)
-        {
-            ptr += param_size;
             continue;
-        }
 
-        /* Destination tokens */
-        for (i = 0; i < ins.dst_count; ++i)
-        {
-            fe->shader_read_dst_param(fe_data, &ptr, &dst_param[i], &dst_rel_addr[i]);
-        }
-
-        /* Predication token */
         if (ins.predicate)
-        {
             FIXME("Predicates not implemented.\n");
-            ins.predicate = *ptr++;
-        }
-
-        /* Other source tokens */
-        for (i = 0; i < ins.src_count; ++i)
-        {
-            fe->shader_read_src_param(fe_data, &ptr, &src_param[i], &src_rel_addr[i]);
-        }
 
         /* Call appropriate function for output target */
         device->shader_backend->shader_handle_instruction(&ins);
@@ -1311,7 +1249,6 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
         struct wined3d_shader_instruction ins;
         const char *comment;
         UINT comment_size;
-        UINT param_size;
 
         /* comment */
         fe->shader_read_comment(&ptr, &comment, &comment_size);
@@ -1341,82 +1278,46 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
             continue;
         }
 
-        fe->shader_read_opcode(fe_data, &ptr, &ins, &param_size);
+        fe->shader_read_instruction(fe_data, &ptr, &ins);
         if (ins.handler_idx == WINED3DSIH_TABLE_SIZE)
         {
             TRACE("Skipping unrecognized instruction.\n");
-            ptr += param_size;
             continue;
         }
 
         if (ins.handler_idx == WINED3DSIH_DCL)
         {
-            struct wined3d_shader_semantic semantic;
-
-            fe->shader_read_semantic(&ptr, &semantic);
-
-            shader_dump_decl_usage(&semantic, &shader_version);
-            shader_dump_ins_modifiers(&semantic.reg);
+            shader_dump_decl_usage(&ins.semantic, &shader_version);
+            shader_dump_ins_modifiers(&ins.semantic.reg);
             TRACE(" ");
-            shader_dump_dst_param(&semantic.reg, &shader_version);
+            shader_dump_dst_param(&ins.semantic.reg, &shader_version);
         }
         else if (ins.handler_idx == WINED3DSIH_DEF)
         {
-            struct wined3d_shader_src_param rel_addr;
-            struct wined3d_shader_dst_param dst;
-
-            fe->shader_read_dst_param(fe_data, &ptr, &dst, &rel_addr);
-
-            TRACE("def c%u = %f, %f, %f, %f", shader_get_float_offset(dst.reg.type, dst.reg.idx),
-                    *(const float *)(ptr),
-                    *(const float *)(ptr + 1),
-                    *(const float *)(ptr + 2),
-                    *(const float *)(ptr + 3));
-            ptr += 4;
+            TRACE("def c%u = %f, %f, %f, %f", shader_get_float_offset(ins.dst[0].reg.type, ins.dst[0].reg.idx),
+                    *(const float *)&ins.src[0].reg.immconst_data[0],
+                    *(const float *)&ins.src[0].reg.immconst_data[1],
+                    *(const float *)&ins.src[0].reg.immconst_data[2],
+                    *(const float *)&ins.src[0].reg.immconst_data[3]);
         }
         else if (ins.handler_idx == WINED3DSIH_DEFI)
         {
-            struct wined3d_shader_src_param rel_addr;
-            struct wined3d_shader_dst_param dst;
-
-            fe->shader_read_dst_param(fe_data, &ptr, &dst, &rel_addr);
-
-            TRACE("defi i%u = %d, %d, %d, %d", dst.reg.idx,
-                    *(ptr),
-                    *(ptr + 1),
-                    *(ptr + 2),
-                    *(ptr + 3));
-            ptr += 4;
+            TRACE("defi i%u = %d, %d, %d, %d", ins.dst[0].reg.idx,
+                    ins.src[0].reg.immconst_data[0],
+                    ins.src[0].reg.immconst_data[1],
+                    ins.src[0].reg.immconst_data[2],
+                    ins.src[0].reg.immconst_data[3]);
         }
         else if (ins.handler_idx == WINED3DSIH_DEFB)
         {
-            struct wined3d_shader_src_param rel_addr;
-            struct wined3d_shader_dst_param dst;
-
-            fe->shader_read_dst_param(fe_data, &ptr, &dst, &rel_addr);
-
-            TRACE("defb b%u = %s", dst.reg.idx, *ptr ? "true" : "false");
-            ++ptr;
+            TRACE("defb b%u = %s", ins.dst[0].reg.idx, ins.src[0].reg.immconst_data[0] ? "true" : "false");
         }
         else
         {
-            struct wined3d_shader_src_param dst_rel_addr[2];
-            struct wined3d_shader_src_param src_rel_addr;
-            struct wined3d_shader_dst_param dst_param[2];
-            struct wined3d_shader_src_param src_param;
-
-            for (i = 0; i < ins.dst_count; ++i)
-            {
-                fe->shader_read_dst_param(fe_data, &ptr, &dst_param[i], &dst_rel_addr[i]);
-            }
-
-            /* Print out predication source token first - it follows
-             * the destination token. */
             if (ins.predicate)
             {
-                fe->shader_read_src_param(fe_data, &ptr, &src_param, &src_rel_addr);
                 TRACE("(");
-                shader_dump_src_param(&src_param, &shader_version);
+                shader_dump_src_param(ins.predicate, &shader_version);
                 TRACE(") ");
             }
 
@@ -1446,20 +1347,18 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
                 TRACE("p");
             }
 
-            /* We already read the destination tokens, print them. */
             for (i = 0; i < ins.dst_count; ++i)
             {
-                shader_dump_ins_modifiers(&dst_param[i]);
+                shader_dump_ins_modifiers(&ins.dst[i]);
                 TRACE(!i ? " " : ", ");
-                shader_dump_dst_param(&dst_param[i], &shader_version);
+                shader_dump_dst_param(&ins.dst[i], &shader_version);
             }
 
             /* Other source tokens */
             for (i = ins.dst_count; i < (ins.dst_count + ins.src_count); ++i)
             {
-                fe->shader_read_src_param(fe_data, &ptr, &src_param, &src_rel_addr);
                 TRACE(!i ? " " : ", ");
-                shader_dump_src_param(&src_param, &shader_version);
+                shader_dump_src_param(&ins.src[i - ins.dst_count], &shader_version);
             }
         }
         TRACE("\n");

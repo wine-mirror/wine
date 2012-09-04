@@ -122,6 +122,11 @@ struct wined3d_sm4_data
     struct wined3d_shader_version shader_version;
     const DWORD *end;
     const struct wined3d_shader_signature *output_signature;
+
+    struct wined3d_shader_src_param src_rel_addr[5];
+    struct wined3d_shader_src_param dst_rel_addr[2];
+    struct wined3d_shader_src_param src_param[5];
+    struct wined3d_shader_dst_param dst_param[2];
 };
 
 struct wined3d_sm4_opcode_info
@@ -333,41 +338,9 @@ static void shader_sm4_read_header(void *data, const DWORD **ptr, struct wined3d
     *shader_version = priv->shader_version;
 }
 
-static void shader_sm4_read_opcode(void *data, const DWORD **ptr, struct wined3d_shader_instruction *ins,
-        UINT *param_size)
+static void shader_sm4_read_src_param(struct wined3d_sm4_data *priv, const DWORD **ptr,
+        struct wined3d_shader_src_param *src_param, struct wined3d_shader_src_param *src_rel_addr)
 {
-    const struct wined3d_sm4_opcode_info *opcode_info;
-    DWORD token = *(*ptr)++;
-    DWORD opcode = token & WINED3D_SM4_OPCODE_MASK;
-
-    *param_size = ((token & WINED3D_SM4_INSTRUCTION_LENGTH_MASK) >> WINED3D_SM4_INSTRUCTION_LENGTH_SHIFT) - 1;
-
-    opcode_info = get_opcode_info(opcode);
-    if (!opcode_info)
-    {
-        FIXME("Unrecognized opcode %#x, token 0x%08x\n", opcode, token);
-        ins->handler_idx = WINED3DSIH_TABLE_SIZE;
-        return;
-    }
-
-    ins->handler_idx = opcode_info->handler_idx;
-    ins->flags = 0;
-    ins->coissue = 0;
-    ins->predicate = 0;
-    ins->dst_count = opcode_info->dst_count;
-    ins->src_count = opcode_info->src_count;
-
-    if (token & WINED3D_SM4_INSTRUCTION_MODIFIER)
-    {
-        DWORD modifier = *(*ptr)++;
-        FIXME("Skipping modifier 0x%08x.\n", modifier);
-    }
-}
-
-static void shader_sm4_read_src_param(void *data, const DWORD **ptr, struct wined3d_shader_src_param *src_param,
-        struct wined3d_shader_src_param *src_rel_addr)
-{
-    struct wined3d_sm4_data *priv = data;
     DWORD token = *(*ptr)++;
     enum wined3d_sm4_register_type register_type;
     DWORD order;
@@ -456,10 +429,9 @@ static void shader_sm4_read_src_param(void *data, const DWORD **ptr, struct wine
     map_register(priv, &src_param->reg);
 }
 
-static void shader_sm4_read_dst_param(void *data, const DWORD **ptr, struct wined3d_shader_dst_param *dst_param,
-        struct wined3d_shader_src_param *dst_rel_addr)
+static void shader_sm4_read_dst_param(struct wined3d_sm4_data *priv, const DWORD **ptr,
+        struct wined3d_shader_dst_param *dst_param, struct wined3d_shader_src_param *dst_rel_addr)
 {
-    struct wined3d_sm4_data *priv = data;
     DWORD token = *(*ptr)++;
     enum wined3d_sm4_register_type register_type;
     DWORD order;
@@ -493,9 +465,53 @@ static void shader_sm4_read_dst_param(void *data, const DWORD **ptr, struct wine
     map_register(priv, &dst_param->reg);
 }
 
-static void shader_sm4_read_semantic(const DWORD **ptr, struct wined3d_shader_semantic *semantic)
+static void shader_sm4_read_instruction(void *data, const DWORD **ptr, struct wined3d_shader_instruction *ins)
 {
-    FIXME("ptr %p, semantic %p stub!\n", ptr, semantic);
+    const struct wined3d_sm4_opcode_info *opcode_info;
+    struct wined3d_sm4_data *priv = data;
+    DWORD opcode_token, opcode;
+    const DWORD *p;
+    UINT i, len;
+
+    opcode_token = *(*ptr)++;
+    opcode = opcode_token & WINED3D_SM4_OPCODE_MASK;
+    len = ((opcode_token & WINED3D_SM4_INSTRUCTION_LENGTH_MASK) >> WINED3D_SM4_INSTRUCTION_LENGTH_SHIFT) - 1;
+
+    if (!(opcode_info = get_opcode_info(opcode)))
+    {
+        FIXME("Unrecognized opcode %#x, opcode_token 0x%08x.\n", opcode, opcode_token);
+        ins->handler_idx = WINED3DSIH_TABLE_SIZE;
+        *ptr += len;
+        return;
+    }
+
+    ins->handler_idx = opcode_info->handler_idx;
+    ins->flags = 0;
+    ins->coissue = 0;
+    ins->predicate = NULL;
+    ins->dst_count = opcode_info->dst_count;
+    ins->dst = priv->dst_param;
+    ins->src_count = opcode_info->src_count;
+    ins->src = priv->src_param;
+
+    p = *ptr;
+    *ptr += len;
+
+    if (opcode_token & WINED3D_SM4_INSTRUCTION_MODIFIER)
+    {
+        DWORD modifier = *p++;
+        FIXME("Skipping modifier 0x%08x.\n", modifier);
+    }
+
+    for (i = 0; i < ins->dst_count; ++i)
+    {
+        shader_sm4_read_dst_param(priv, &p, &priv->dst_param[i], &priv->dst_rel_addr[i]);
+    }
+
+    for (i = 0; i < ins->src_count; ++i)
+    {
+        shader_sm4_read_src_param(priv, &p, &priv->src_param[i], &priv->src_rel_addr[i]);
+    }
 }
 
 static void shader_sm4_read_comment(const DWORD **ptr, const char **comment, UINT *comment_size)
@@ -515,10 +531,7 @@ const struct wined3d_shader_frontend sm4_shader_frontend =
     shader_sm4_init,
     shader_sm4_free,
     shader_sm4_read_header,
-    shader_sm4_read_opcode,
-    shader_sm4_read_src_param,
-    shader_sm4_read_dst_param,
-    shader_sm4_read_semantic,
+    shader_sm4_read_instruction,
     shader_sm4_read_comment,
     shader_sm4_is_end,
 };
