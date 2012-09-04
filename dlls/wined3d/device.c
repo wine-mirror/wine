@@ -1567,18 +1567,6 @@ void CDECL wined3d_device_set_multithreaded(struct wined3d_device *device)
     device->create_parms.flags |= WINED3DCREATE_MULTITHREADED;
 }
 
-HRESULT CDECL wined3d_device_get_wined3d(const struct wined3d_device *device, struct wined3d **wined3d)
-{
-    TRACE("device %p, wined3d %p.\n", device, wined3d);
-
-    *wined3d = device->wined3d;
-    wined3d_incref(*wined3d);
-
-    TRACE("Returning %p.\n", *wined3d);
-
-    return WINED3D_OK;
-}
-
 UINT CDECL wined3d_device_get_available_texture_mem(const struct wined3d_device *device)
 {
     TRACE("device %p.\n", device);
