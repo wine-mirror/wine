@@ -841,16 +841,16 @@ HRESULT WINAPI D3DXCreateMatrixStack(DWORD flags, LPD3DXMATRIXSTACK* ppstack)
 
     TRACE("flags %#x, ppstack %p\n", flags, ppstack);
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ID3DXMatrixStackImpl));
-    if ( object == NULL )
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (object == NULL)
     {
-     *ppstack = NULL;
-     return E_OUTOFMEMORY;
+        *ppstack = NULL;
+        return E_OUTOFMEMORY;
     }
     object->ID3DXMatrixStack_iface.lpVtbl = &ID3DXMatrixStack_Vtbl;
     object->ref = 1;
 
-    object->stack = HeapAlloc(GetProcessHeap(), 0, INITIAL_STACK_SIZE * sizeof(D3DXMATRIX));
+    object->stack = HeapAlloc(GetProcessHeap(), 0, INITIAL_STACK_SIZE * sizeof(*object->stack));
     if (!object->stack)
     {
         HeapFree(GetProcessHeap(), 0, object);
@@ -980,7 +980,7 @@ static HRESULT WINAPI ID3DXMatrixStackImpl_Pop(ID3DXMatrixStack *iface)
         D3DXMATRIX *new_stack;
 
         new_size = This->stack_size / 2;
-        new_stack = HeapReAlloc(GetProcessHeap(), 0, This->stack, new_size * sizeof(D3DXMATRIX));
+        new_stack = HeapReAlloc(GetProcessHeap(), 0, This->stack, new_size * sizeof(*new_stack));
         if (new_stack)
         {
             This->stack_size = new_size;
@@ -1007,7 +1007,7 @@ static HRESULT WINAPI ID3DXMatrixStackImpl_Push(ID3DXMatrixStack *iface)
         if (This->stack_size > UINT_MAX / 2) return E_OUTOFMEMORY;
 
         new_size = This->stack_size * 2;
-        new_stack = HeapReAlloc(GetProcessHeap(), 0, This->stack, new_size * sizeof(D3DXMATRIX));
+        new_stack = HeapReAlloc(GetProcessHeap(), 0, This->stack, new_size * sizeof(*new_stack));
         if (!new_stack) return E_OUTOFMEMORY;
 
         This->stack_size = new_size;
