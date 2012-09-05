@@ -557,7 +557,7 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start,
     static const WCHAR Time[]      = {'T','I','M','E','\0'};
     static const WCHAR Cd[]        = {'C','D','\0'};
     static const WCHAR Random[]    = {'R','A','N','D','O','M','\0'};
-    static const WCHAR Delims[]    = {'%',' ',':','\0'};
+    static const WCHAR Delims[]    = {'%',':','\0'};
 
     WINE_TRACE("Expanding: %s (%s,%s)\n", wine_dbgstr_w(start),
                wine_dbgstr_w(forVal), wine_dbgstr_w(forVar));

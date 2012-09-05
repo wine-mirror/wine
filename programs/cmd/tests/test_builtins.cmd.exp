@@ -203,10 +203,10 @@ baz@space@
 1
 0
 FOOBAR not defined
-@todo_wine@  baz
+  baz
 FOOBAR =  baz
 0
-@todo_wine@  baz2
+  baz2
 0
  bar
 @todo_wine@FOOBAR= bar

@@ -2361,6 +2361,8 @@ void WCMD_setshow_env (WCHAR *s) {
     *p++ = '\0';
 
     if (strlenW(p) == 0) p = NULL;
+    WINE_TRACE("set: Setting var '%s' to '%s'\n", wine_dbgstr_w(s),
+               wine_dbgstr_w(p));
     status = SetEnvironmentVariableW(s, p);
     gle = GetLastError();
     if ((!status) & (gle == ERROR_ENVVAR_NOT_FOUND)) {
