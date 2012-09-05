@@ -1648,6 +1648,14 @@ static NTSTATUS create_logical_proc_info(SYSTEM_LOGICAL_PROCESSOR_INFORMATION **
         len++;
     }
 
+    mask = 0;
+    for(i=0; i<lcpu_no; i++)
+        mask |= (ULONG_PTR)1<<i;
+    (*data)[len].Relationship = RelationNumaNode;
+    (*data)[len].ProcessorMask = mask;
+    (*data)[len].u.NumaNode.NodeNumber = 0;
+    len++;
+
     *max_len = len * sizeof(**data);
     return STATUS_SUCCESS;
 }
