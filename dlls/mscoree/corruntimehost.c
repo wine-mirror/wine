@@ -827,6 +827,8 @@ static void get_utf8_args(int *argc, char ***argv)
 
 struct vtable_fixup_thunk
 {
+    /* push %ecx */
+    BYTE i7;
     /* sub $0x4,%esp */
     BYTE i1[3];
     /* mov fixup,(%esp) */
@@ -839,12 +841,15 @@ struct vtable_fixup_thunk
     BYTE i4[2];
     /* pop %eax */
     BYTE i5;
+    /* pop %ecx */
+    BYTE i8;
     /* jmp *vtable_entry */
     BYTE i6[2];
     void *vtable_entry;
 };
 
 static const struct vtable_fixup_thunk thunk_template = {
+    0x51,
     {0x83,0xec,0x04},
     {0xc7,0x04,0x24},
     NULL,
@@ -852,6 +857,7 @@ static const struct vtable_fixup_thunk thunk_template = {
     NULL,
     {0xff,0xd0},
     0x58,
+    0x59,
     {0xff,0x25},
     NULL
 };
