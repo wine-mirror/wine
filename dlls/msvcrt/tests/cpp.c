@@ -881,9 +881,17 @@ static void test_rtti(void)
     { {RTTI_REF(simple_class_rtti, base_descriptor[0])} },
     {0, 0, 1, RTTI_REF(simple_class_rtti, base_array)},
     {RTTI_SIGNATURE, 0, 0, RTTI_REF(simple_class_rtti, type_info[0]), RTTI_REF(simple_class_rtti, object_hierarchy), RTTI_REF(simple_class_rtti, object_locator)}
+  }, child_class_rtti = {
+    { {NULL, NULL, "simple_class"}, {NULL, NULL, "child_class"} },
+    { {RTTI_REF(child_class_rtti, type_info[1]), 0, {4, -1, 0}, 0}, {RTTI_REF(child_class_rtti, type_info[0]), 0, {8, -1, 0}, 0} },
+    { {RTTI_REF(child_class_rtti, base_descriptor[0]), RTTI_REF(child_class_rtti, base_descriptor[1])} },
+    {0, 0, 2, RTTI_REF(child_class_rtti, base_array)},
+    {RTTI_SIGNATURE, 0, 0, RTTI_REF(child_class_rtti, type_info[1]), RTTI_REF(child_class_rtti, object_hierarchy), RTTI_REF(child_class_rtti, object_locator)}
   };
   void *simple_class_vtbl[2] = {&simple_class_rtti.object_locator};
   void *simple_class = &simple_class_vtbl[1];
+  void *child_class_vtbl[2] = {&child_class_rtti.object_locator};
+  void *child_class = &child_class_vtbl[1];
 
   static const char* e_name = "name";
   type_info *ti,*bti;
@@ -923,6 +931,25 @@ static void test_rtti(void)
   ti = p__RTtypeid(&simple_class);
   ok (ti && ti->mangled && !strcmp(ti->mangled, "simple_class"),
           "incorrect rtti data\n");
+
+  casted = p__RTCastToVoid(&simple_class);
+  ok (casted == (void*)&simple_class, "failed cast to void\n");
+
+  ti = p__RTtypeid(&child_class);
+  ok (ti && ti->mangled && !strcmp(ti->mangled, "child_class"),
+        "incorrect rtti data\n");
+
+  casted = p__RTCastToVoid(&child_class);
+  ok (casted == (void*)&child_class, "failed cast to void\n");
+
+  casted = p__RTDynamicCast(&child_class, 0, NULL, simple_class_rtti.type_info, 0);
+  if(casted)
+  {
+    ok (casted == (char*)&child_class+8, "failed cast to simple_class (%p %p)\n", casted, &child_class);
+  }
+
+  casted = p__RTDynamicCast(&child_class, 0, &child_class_rtti.type_info[0], &child_class_rtti.type_info[1], 0);
+  ok(casted == (char*)&child_class+4, "failed cast to child class (%p %p)\n", casted, &child_class);
 }
 
 struct _demangle {
