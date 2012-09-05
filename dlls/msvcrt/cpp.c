@@ -31,64 +31,13 @@
 #include "msvcrt.h"
 #include "cppexcept.h"
 #include "mtdll.h"
+#include "cxx.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 typedef exception bad_cast;
 typedef exception bad_typeid;
 typedef exception __non_rtti_object;
-
-typedef struct _rtti_base_descriptor
-{
-  const type_info *type_descriptor;
-  int num_base_classes;
-  this_ptr_offsets offsets;    /* offsets for computing the this pointer */
-  unsigned int attributes;
-} rtti_base_descriptor;
-
-typedef struct _rtti_base_array
-{
-  const rtti_base_descriptor *bases[3]; /* First element is the class itself */
-} rtti_base_array;
-
-typedef struct _rtti_object_hierarchy
-{
-  unsigned int signature;
-  unsigned int attributes;
-  int array_len; /* Size of the array pointed to by 'base_classes' */
-  const rtti_base_array *base_classes;
-} rtti_object_hierarchy;
-
-typedef struct _rtti_object_locator
-{
-  unsigned int signature;
-  int base_class_offset;
-  unsigned int flags;
-  const type_info *type_descriptor;
-  const rtti_object_hierarchy *type_hierarchy;
-} rtti_object_locator;
-
-
-#ifdef __i386__  /* thiscall functions are i386-specific */
-
-#define THISCALL(func) __thiscall_ ## func
-#define THISCALL_NAME(func) __ASM_NAME("__thiscall_" #func)
-#define __thiscall __stdcall
-#define DEFINE_THISCALL_WRAPPER(func,args) \
-    extern void THISCALL(func)(void); \
-    __ASM_GLOBAL_FUNC(__thiscall_ ## func, \
-                      "popl %eax\n\t" \
-                      "pushl %ecx\n\t" \
-                      "pushl %eax\n\t" \
-                      "jmp " __ASM_NAME(#func) __ASM_STDCALL(args) )
-#else /* __i386__ */
-
-#define THISCALL(func) func
-#define THISCALL_NAME(func) __ASM_NAME(#func)
-#define __thiscall __cdecl
-#define DEFINE_THISCALL_WRAPPER(func,args) /* nothing */
-
-#endif /* __i386__ */
 
 extern const vtable_ptr MSVCRT_exception_vtable;
 extern const vtable_ptr MSVCRT_bad_typeid_vtable;
@@ -661,90 +610,28 @@ void * __thiscall MSVCRT_type_info_vector_dtor(type_info * _this, unsigned int f
     return _this;
 }
 
-/* vtables */
-
-#ifdef _WIN64
-
-#define __ASM_VTABLE(name,funcs) \
-    __asm__(".data\n" \
-            "\t.align 8\n" \
-            "\t.quad " __ASM_NAME(#name "_rtti") "\n" \
-            "\t.globl " __ASM_NAME("MSVCRT_" #name "_vtable") "\n" \
-            __ASM_NAME("MSVCRT_" #name "_vtable") ":\n" \
-            "\t.quad " THISCALL_NAME(MSVCRT_ ## name ## _vector_dtor) "\n" \
-            funcs "\n\t.text");
-
-#define __ASM_EXCEPTION_VTABLE(name) \
-    __ASM_VTABLE(name, "\t.quad " THISCALL_NAME(MSVCRT_what_exception) )
-
-#else
-
-#define __ASM_VTABLE(name,funcs) \
-    __asm__(".data\n" \
-            "\t.align 4\n" \
-            "\t.long " __ASM_NAME(#name "_rtti") "\n" \
-            "\t.globl " __ASM_NAME("MSVCRT_" #name "_vtable") "\n" \
-            __ASM_NAME("MSVCRT_" #name "_vtable") ":\n" \
-            "\t.long " THISCALL_NAME(MSVCRT_ ## name ## _vector_dtor) "\n" \
-            funcs "\n\t.text");
-
-#define __ASM_EXCEPTION_VTABLE(name) \
-    __ASM_VTABLE(name, "\t.long " THISCALL_NAME(MSVCRT_what_exception) )
-
-#endif /* _WIN64 */
-
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
 #endif
 
-__ASM_VTABLE(type_info,"")
-__ASM_EXCEPTION_VTABLE(exception)
-__ASM_EXCEPTION_VTABLE(bad_typeid)
-__ASM_EXCEPTION_VTABLE(bad_cast)
-__ASM_EXCEPTION_VTABLE(__non_rtti_object)
+__ASM_VTABLE(type_info,
+        VTABLE_ADD_FUNC(MSVCRT_type_info_vector_dtor));
+__ASM_VTABLE(exception,
+        VTABLE_ADD_FUNC(MSVCRT_exception_vector_dtor)
+        VTABLE_ADD_FUNC(MSVCRT_what_exception));
+__ASM_VTABLE(bad_typeid,
+        VTABLE_ADD_FUNC(MSVCRT_bad_typeid_vector_dtor)
+        VTABLE_ADD_FUNC(MSVCRT_what_exception));
+__ASM_VTABLE(bad_cast,
+        VTABLE_ADD_FUNC(MSVCRT_bad_cast_vector_dtor)
+        VTABLE_ADD_FUNC(MSVCRT_what_exception));
+__ASM_VTABLE(__non_rtti_object,
+        VTABLE_ADD_FUNC(MSVCRT___non_rtti_object_vector_dtor)
+        VTABLE_ADD_FUNC(MSVCRT_what_exception));
 
 #ifndef __GNUC__
 }
 #endif
-
-/* Static RTTI for exported objects */
-
-#define DEFINE_RTTI_DATA(name, base_classes, cl1, cl2, mangled_name) \
-static const type_info name ## _type_info = { \
-    &MSVCRT_type_info_vtable, \
-    NULL, \
-    mangled_name \
-}; \
-\
-static const rtti_base_descriptor name ## _rtti_base_descriptor = { \
-    &name ##_type_info, \
-    base_classes, \
-    { 0, -1, 0}, \
-    0 \
-}; \
-\
-static const rtti_base_array name ## _rtti_base_array = { \
-    { \
-        &name ## _rtti_base_descriptor, \
-        cl1, \
-        cl2  \
-    } \
-}; \
-\
-static const rtti_object_hierarchy name ## _hierarchy = { \
-    0, \
-    0, \
-    base_classes+1, \
-    &name ## _rtti_base_array \
-}; \
-\
-const rtti_object_locator name ## _rtti = { \
-    0, \
-    0, \
-    0, \
-    &name ## _type_info, \
-    &name ## _hierarchy \
-}
 
 #define DEFINE_EXCEPTION_TYPE_INFO(name, base_classes, cl1, cl2) \
 static const cxx_type_info name ## _cxx_type_info = \
@@ -774,11 +661,11 @@ const cxx_exception_type name ## _exception_type = \
     &name ## _type_info_table \
 }
 
-DEFINE_RTTI_DATA( type_info, 0, NULL, NULL, ".?AVtype_info@@" );
-DEFINE_RTTI_DATA( exception, 0, NULL, NULL, ".?AVexception@@" );
-DEFINE_RTTI_DATA( bad_typeid, 1, &exception_rtti_base_descriptor, NULL, ".?AVbad_typeid@@" );
-DEFINE_RTTI_DATA( bad_cast, 1, &exception_rtti_base_descriptor, NULL, ".?AVbad_cast@@" );
-DEFINE_RTTI_DATA( __non_rtti_object, 2, &bad_typeid_rtti_base_descriptor, &exception_rtti_base_descriptor, ".?AV__non_rtti_object@@" );
+DEFINE_RTTI_DATA0( type_info, 0, ".?AVtype_info@@" );
+DEFINE_RTTI_DATA0( exception, 0, ".?AVexception@@" );
+DEFINE_RTTI_DATA1( bad_typeid, 0, &exception_rtti_base_descriptor, ".?AVbad_typeid@@" );
+DEFINE_RTTI_DATA1( bad_cast, 0, &exception_rtti_base_descriptor, ".?AVbad_cast@@" );
+DEFINE_RTTI_DATA2( __non_rtti_object, 0, &bad_typeid_rtti_base_descriptor, &exception_rtti_base_descriptor, ".?AV__non_rtti_object@@" );
 
 DEFINE_EXCEPTION_TYPE_INFO( exception, 0, NULL, NULL );
 DEFINE_EXCEPTION_TYPE_INFO( bad_typeid, 1, &exception_cxx_type_info, NULL );
