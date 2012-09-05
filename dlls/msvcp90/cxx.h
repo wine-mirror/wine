@@ -64,7 +64,9 @@
 
 #endif /* _WIN64 */
 
-#define DEFINE_RTTI_DATA(name, off, base_classes, cl1, cl2, cl3, cl4, cl5, cl6, cl7, cl8, cl9, mangled_name) \
+#ifndef __x86_64__
+
+#define DEFINE_RTTI_DATA(name, off, base_classes_no, cl1, cl2, cl3, cl4, cl5, cl6, cl7, cl8, cl9, mangled_name) \
     static const type_info name ## _type_info = { \
         &MSVCP_type_info_vtable, \
         NULL, \
@@ -73,7 +75,7 @@
 \
 static const rtti_base_descriptor name ## _rtti_base_descriptor = { \
     &name ##_type_info, \
-    base_classes, \
+    base_classes_no, \
     { 0, -1, 0}, \
     64 \
 }; \
@@ -96,7 +98,7 @@ static const rtti_base_array name ## _rtti_base_array = { \
 static const rtti_object_hierarchy name ## _hierarchy = { \
     0, \
     0, \
-    base_classes+1, \
+    base_classes_no+1, \
     &name ## _rtti_base_array \
 }; \
 \
@@ -107,6 +109,74 @@ const rtti_object_locator name ## _rtti = { \
     &name ## _type_info, \
     &name ## _hierarchy \
 }
+
+#else
+
+#define DEFINE_RTTI_DATA(name, off, base_classes_no, cl1, cl2, cl3, cl4, cl5, cl6, cl7, cl8, cl9, mangled_name) \
+    static const type_info name ## _type_info = { \
+        &MSVCP_type_info_vtable, \
+        NULL, \
+        mangled_name \
+    }; \
+\
+static rtti_base_descriptor name ## _rtti_base_descriptor = { \
+    0xdeadbeef, \
+    base_classes_no, \
+    { 0, -1, 0}, \
+    64 \
+}; \
+\
+static rtti_base_array name ## _rtti_base_array = { \
+    { \
+        0xdeadbeef, \
+        0xdeadbeef, \
+        0xdeadbeef, \
+        0xdeadbeef, \
+        0xdeadbeef, \
+        0xdeadbeef, \
+        0xdeadbeef, \
+        0xdeadbeef, \
+        0xdeadbeef, \
+        0xdeadbeef, \
+    } \
+}; \
+\
+static rtti_object_hierarchy name ## _hierarchy = { \
+    0, \
+    0, \
+    base_classes_no+1, \
+    0xdeadbeef \
+}; \
+\
+rtti_object_locator name ## _rtti = { \
+    1, \
+    off, \
+    0, \
+    0xdeadbeef, \
+    0xdeadbeef, \
+    0xdeadbeef \
+};\
+\
+static void init_ ## name ## _rtti(char *base) \
+{ \
+    name ## _rtti_base_descriptor.type_descriptor = (char*)&name ## _type_info - base; \
+    name ## _rtti_base_array.bases[0] = (char*)&name ## _rtti_base_descriptor - base; \
+    name ## _rtti_base_array.bases[1] = (char*)cl1 - base; \
+    name ## _rtti_base_array.bases[2] = (char*)cl2 - base; \
+    name ## _rtti_base_array.bases[3] = (char*)cl3 - base; \
+    name ## _rtti_base_array.bases[4] = (char*)cl4 - base; \
+    name ## _rtti_base_array.bases[5] = (char*)cl5 - base; \
+    name ## _rtti_base_array.bases[6] = (char*)cl6 - base; \
+    name ## _rtti_base_array.bases[7] = (char*)cl7 - base; \
+    name ## _rtti_base_array.bases[8] = (char*)cl8 - base; \
+    name ## _rtti_base_array.bases[9] = (char*)cl9 - base; \
+    name ## _hierarchy.base_classes = (char*)&name ## _rtti_base_array - base; \
+    name ## _rtti.type_descriptor = (char*)&name ## _type_info - base; \
+    name ## _rtti.type_hierarchy = (char*)&name ## _hierarchy - base; \
+    name ## _rtti.object_locator = (char*)&name ## _rtti - base; \
+}
+
+#endif
 
 #define DEFINE_RTTI_DATA0(name, off, mangled_name) \
     DEFINE_RTTI_DATA(name, off, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, mangled_name)
@@ -191,6 +261,8 @@ typedef struct
     int         vbase_offset;  /* offset of this pointer offset in virtual base class descriptor */
 } this_ptr_offsets;
 
+#ifndef __x86_64__
+
 typedef struct _rtti_base_descriptor
 {
     const type_info *type_descriptor;
@@ -220,3 +292,38 @@ typedef struct _rtti_object_locator
     const type_info *type_descriptor;
     const rtti_object_hierarchy *type_hierarchy;
 } rtti_object_locator;
+
+#else
+
+typedef struct
+{
+    unsigned int type_descriptor;
+    int num_base_classes;
+    this_ptr_offsets offsets;    /* offsets for computing the this pointer */
+    unsigned int attributes;
+} rtti_base_descriptor;
+
+typedef struct
+{
+    unsigned int bases[10]; /* First element is the class itself */
+} rtti_base_array;
+
+typedef struct
+{
+    unsigned int signature;
+    unsigned int attributes;
+    int array_len; /* Size of the array pointed to by 'base_classes' */
+    unsigned int base_classes;
+} rtti_object_hierarchy;
+
+typedef struct
+{
+    unsigned int signature;
+    int base_class_offset;
+    unsigned int flags;
+    unsigned int type_descriptor;
+    unsigned int type_hierarchy;
+    unsigned int object_locator;
+} rtti_object_locator;
+
+#endif

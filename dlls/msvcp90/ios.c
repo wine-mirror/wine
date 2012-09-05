@@ -12923,6 +12923,52 @@ basic_ostream_wchar *_Ptr_wclog = &wclog.obj;
 
 void init_io(void)
 {
+#ifdef __x86_64__
+    void *base = GetModuleHandleA("msvcp90.dll");
+    init_iosb_rtti(base);
+    init_ios_base_rtti(base);
+    init_basic_ios_char_rtti(base);
+    init_basic_ios_wchar_rtti(base);
+    init_basic_ios_short_rtti(base);
+    init_basic_streambuf_char_rtti(base);
+    init_basic_streambuf_wchar_rtti(base);
+    init_basic_streambuf_short_rtti(base);
+    init_basic_filebuf_char_rtti(base);
+    init_basic_filebuf_wchar_rtti(base);
+    init_basic_filebuf_short_rtti(base);
+    init_basic_stringbuf_char_rtti(base);
+    init_basic_stringbuf_wchar_rtti(base);
+    init_basic_stringbuf_short_rtti(base);
+    init_basic_ostream_char_rtti(base);
+    init_basic_ostream_wchar_rtti(base);
+    init_basic_ostream_short_rtti(base);
+    init_basic_istream_char_rtti(base);
+    init_basic_istream_wchar_rtti(base);
+    init_basic_istream_short_rtti(base);
+    init_basic_iostream_char_rtti(base);
+    init_basic_iostream_wchar_rtti(base);
+    init_basic_iostream_short_rtti(base);
+    init_basic_ofstream_char_rtti(base);
+    init_basic_ofstream_wchar_rtti(base);
+    init_basic_ofstream_short_rtti(base);
+    init_basic_ifstream_char_rtti(base);
+    init_basic_ifstream_wchar_rtti(base);
+    init_basic_ifstream_short_rtti(base);
+    init_basic_fstream_char_rtti(base);
+    init_basic_fstream_wchar_rtti(base);
+    init_basic_fstream_short_rtti(base);
+    init_basic_ostringstream_char_rtti(base);
+    init_basic_ostringstream_wchar_rtti(base);
+    init_basic_ostringstream_short_rtti(base);
+    init_basic_istringstream_char_rtti(base);
+    init_basic_istringstream_wchar_rtti(base);
+    init_basic_istringstream_short_rtti(base);
+    init_basic_stringstream_char_rtti(base);
+    init_basic_stringstream_wchar_rtti(base);
+    init_basic_stringstream_short_rtti(base);
+    init_strstreambuf_rtti(base);
+#endif
+
     basic_filebuf_char_ctor_file(&filebuf_char_stdin, stdin);
     basic_istream_char_ctor(&cin.obj, &filebuf_char_stdin.base, FALSE/*FIXME*/, TRUE);
 

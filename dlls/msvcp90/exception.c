@@ -750,3 +750,19 @@ void throw_exception(exception_type et, const char *str)
     }
     }
 }
+
+void init_exception(void)
+{
+#ifdef __x86_64__
+    void *base = GetModuleHandleA("msvcp90.dll");
+    init_type_info_rtti(base);
+    init_exception_rtti(base);
+    init_bad_alloc_rtti(base);
+    init_logic_error_rtti(base);
+    init_length_error_rtti(base);
+    init_out_of_range_rtti(base);
+    init_invalid_argument_rtti(base);
+    init_runtime_error_rtti(base);
+    init_failure_rtti(base);
+#endif
+}
