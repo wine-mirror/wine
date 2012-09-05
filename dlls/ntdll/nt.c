@@ -1606,6 +1606,51 @@ static NTSTATUS create_logical_proc_info(SYSTEM_LOGICAL_PROCESSOR_INFORMATION **
     *max_len = len * sizeof(**data);
     return STATUS_SUCCESS;
 }
+#elif defined(__APPLE__)
+static NTSTATUS create_logical_proc_info(SYSTEM_LOGICAL_PROCESSOR_INFORMATION **data, DWORD *max_len)
+{
+    DWORD len = 0, i, j;
+    DWORD cores_no, lcpu_no, lcpu_per_core, cores_per_package;
+    size_t size;
+    ULONG_PTR mask;
+
+    lcpu_no = NtCurrentTeb()->Peb->NumberOfProcessors;
+
+    size = sizeof(cores_no);
+    if(sysctlbyname("machdep.cpu.core_count", &cores_no, &size, NULL, 0))
+        cores_no = lcpu_no;
+
+    lcpu_per_core = lcpu_no/cores_no;
+    for(i=0; i<cores_no; i++)
+    {
+        mask = 0;
+        for(j=lcpu_per_core*i; j<lcpu_per_core*(i+1); j++)
+            mask |= (ULONG_PTR)1<<j;
+
+        (*data)[len].Relationship = RelationProcessorCore;
+        (*data)[len].ProcessorMask = mask;
+        (*data)[len].u.ProcessorCore.Flags = 0; /* TODO */
+        len++;
+    }
+
+    size = sizeof(cores_per_package);
+    if(sysctlbyname("machdep.cpu.cores_per_package", &cores_per_package, &size, NULL, 0))
+        cores_per_package = lcpu_no;
+
+    for(i=0; i<(lcpu_no+cores_per_package-1)/cores_per_package; i++)
+    {
+        mask = 0;
+        for(j=cores_per_package*i; j<cores_per_package*(i+1) && j<lcpu_no; j++)
+            mask |= (ULONG_PTR)1<<j;
+
+        (*data)[len].Relationship = RelationProcessorPackage;
+        (*data)[len].ProcessorMask = mask;
+        len++;
+    }
+
+    *max_len = len * sizeof(**data);
+    return STATUS_SUCCESS;
+}
 #else
 static NTSTATUS create_logical_proc_info(SYSTEM_LOGICAL_PROCESSOR_INFORMATION **data, DWORD *max_len)
 {
