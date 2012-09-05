@@ -1609,10 +1609,12 @@ static NTSTATUS create_logical_proc_info(SYSTEM_LOGICAL_PROCESSOR_INFORMATION **
 #elif defined(__APPLE__)
 static NTSTATUS create_logical_proc_info(SYSTEM_LOGICAL_PROCESSOR_INFORMATION **data, DWORD *max_len)
 {
-    DWORD len = 0, i, j;
-    DWORD cores_no, lcpu_no, lcpu_per_core, cores_per_package;
+    DWORD len = 0, i, j, k;
+    DWORD cores_no, lcpu_no, lcpu_per_core, cores_per_package, assoc;
     size_t size;
     ULONG_PTR mask;
+    LONGLONG cache_size, cache_line_size, cache_sharing[10];
+    CACHE_DESCRIPTOR cache[4];
 
     lcpu_no = NtCurrentTeb()->Peb->NumberOfProcessors;
 
@@ -1646,6 +1648,71 @@ static NTSTATUS create_logical_proc_info(SYSTEM_LOGICAL_PROCESSOR_INFORMATION **
         (*data)[len].Relationship = RelationProcessorPackage;
         (*data)[len].ProcessorMask = mask;
         len++;
+    }
+
+    memset(cache, 0, sizeof(cache));
+    cache[0].Level = 1;
+    cache[0].Type = CacheInstruction;
+    cache[1].Level = 1;
+    cache[1].Type = CacheData;
+    cache[2].Level = 2;
+    cache[2].Type = CacheUnified;
+    cache[3].Level = 3;
+    cache[3].Type = CacheUnified;
+
+    size = sizeof(cache_line_size);
+    if(!sysctlbyname("hw.cachelinesize", &cache_line_size, &size, NULL, 0))
+    {
+        for(i=0; i<4; i++)
+            cache[i].LineSize = cache_line_size;
+    }
+
+    /* TODO: set associativity for all caches */
+    size = sizeof(assoc);
+    if(!sysctlbyname("machdep.cpu.cache.L2_associativity", &assoc, &size, NULL, 0))
+        cache[2].Associativity = assoc;
+
+    size = sizeof(cache_size);
+    if(!sysctlbyname("hw.l1icachesize", &cache_size, &size, NULL, 0))
+        cache[0].Size = cache_size;
+    size = sizeof(cache_size);
+    if(!sysctlbyname("hw.l1dcachesize", &cache_size, &size, NULL, 0))
+        cache[1].Size = cache_size;
+    size = sizeof(cache_size);
+    if(!sysctlbyname("hw.l2cachesize", &cache_size, &size, NULL, 0))
+        cache[2].Size = cache_size;
+    size = sizeof(cache_size);
+    if(!sysctlbyname("hw.l3cachesize", &cache_size, &size, NULL, 0))
+        cache[3].Size = cache_size;
+
+    size = sizeof(cache_sharing);
+    if(!sysctlbyname("hw.cacheconfig", cache_sharing, &size, NULL, 0))
+    {
+        for(i=1; i<4 && i<size/sizeof(*cache_sharing); i++)
+        {
+            if(!cache_sharing[i] || !cache[i].Size)
+                continue;
+
+            for(j=0; j<lcpu_no/cache_sharing[i]; j++)
+            {
+                mask = 0;
+                for(k=j*cache_sharing[i]; k<lcpu_no && k<(j+1)*cache_sharing[i]; k++)
+                    mask |= (ULONG_PTR)1<<k;
+
+                if(i==1 && cache[0].Size)
+                {
+                    (*data)[len].Relationship = RelationCache;
+                    (*data)[len].ProcessorMask = mask;
+                    (*data)[len].u.Cache = cache[0];
+                    len++;
+                }
+
+                (*data)[len].Relationship = RelationCache;
+                (*data)[len].ProcessorMask = mask;
+                (*data)[len].u.Cache = cache[i];
+                len++;
+            }
+        }
     }
 
     mask = 0;
