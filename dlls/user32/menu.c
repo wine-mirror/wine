@@ -773,15 +773,18 @@ static UINT MENU_FindItemByKey( HWND hwndOwner, HMENU hmenu,
 	if( !forceMenuChar )
 	{
 	     UINT i;
+	     BOOL cjk = GetSystemMetrics( SM_DBCSENABLED );
 
 	     for (i = 0; i < menu->nItems; i++, item++)
 	     {
 		if( item->text)
 		{
-		    WCHAR *p = item->text - 2;
+		    const WCHAR *p = item->text - 2;
 		    do
 		    {
-		    	p = strchrW (p + 2, '&');
+			const WCHAR *q = p + 2;
+			p = strchrW (q, '&');
+			if (!p && cjk) p = strchrW (q, '\036'); /* Japanese Win16 */
 		    }
 		    while (p != NULL && p [1] == '&');
 		    if (p && (toupperW(p[1]) == toupperW(key))) return i;
