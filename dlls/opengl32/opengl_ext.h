@@ -19,17 +19,15 @@
 #ifndef __DLLS_OPENGL32_OPENGL_EXT_H
 #define __DLLS_OPENGL32_OPENGL_EXT_H
 
-#undef APIENTRY
-#undef CALLBACK
-#undef WINAPI
-
 #define XMD_H /* This is to prevent the Xmd.h inclusion bug :-/ */
 #include <GL/gl.h>
 #undef  XMD_H
 
 #undef APIENTRY
 #undef CALLBACK
+#undef GLAPI
 #undef WINAPI
+#undef WINGDIAPI
 
 /* Redefines the constants */
 #define CALLBACK    __stdcall
