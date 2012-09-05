@@ -201,13 +201,13 @@ baz@space@
 @todo_wine@0
 ------------ Testing 'set' ------------
 1
-@todo_wine@0
+0
 FOOBAR not defined
 @todo_wine@  baz
 FOOBAR =  baz
-@todo_wine@0
+0
 @todo_wine@  baz2
-@todo_wine@0
+0
  bar
 @todo_wine@FOOBAR= bar
 @todo_wine@FOOBAR =  baz2
