@@ -250,7 +250,7 @@ static inline WCHAR *MergeChmString(LPCWSTR src, WCHAR **dst)
     return *dst;
 }
 
-void MergeChmProperties(HH_WINTYPEW *src, HHInfo *info)
+void MergeChmProperties(HH_WINTYPEW *src, HHInfo *info, BOOL override)
 {
     DWORD unhandled_params = src->fsValidMembers & ~(HHWIN_PARAM_PROPERTIES|HHWIN_PARAM_STYLES
                              |HHWIN_PARAM_EXSTYLES|HHWIN_PARAM_RECT|HHWIN_PARAM_NAV_WIDTH
@@ -258,7 +258,7 @@ void MergeChmProperties(HH_WINTYPEW *src, HHInfo *info)
                              |HHWIN_PARAM_EXPANSION|HHWIN_PARAM_TABPOS|HHWIN_PARAM_TABORDER
                              |HHWIN_PARAM_HISTORY_COUNT|HHWIN_PARAM_CUR_TAB);
     HH_WINTYPEW *dst = &info->WinType;
-    DWORD merge = src->fsValidMembers & ~dst->fsValidMembers;
+    DWORD merge = override ? src->fsValidMembers : src->fsValidMembers & ~dst->fsValidMembers;
 
     if (unhandled_params)
         FIXME("Unsupported fsValidMembers fields: 0x%x\n", unhandled_params);
@@ -379,7 +379,7 @@ BOOL LoadWinTypeFromCHM(HHInfo *info)
     }
 
     /* merge the new data with any pre-existing HH_WINTYPE structure */
-    MergeChmProperties(&wintype, info);
+    MergeChmProperties(&wintype, info, FALSE);
     if (!info->WinType.pszFile)
         info->WinType.pszFile  = info->stringsW.pszFile  = strdupW(info->pCHMInfo->defTopic ? info->pCHMInfo->defTopic : null);
     if (!info->WinType.pszToc)

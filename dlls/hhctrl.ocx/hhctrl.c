@@ -327,7 +327,8 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
 
         TRACE("Changing WINTYPE, fsValidMembers=0x%x\n", wintype->fsValidMembers);
 
-        MergeChmProperties(wintype, info);
+        MergeChmProperties(wintype, info, TRUE);
+        UpdateHelpWindow(info);
         return 0;
     }
     case HH_GET_WIN_TYPE: {

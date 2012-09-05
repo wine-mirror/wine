@@ -1565,6 +1565,26 @@ static LRESULT Help_OnSize(HWND hWnd)
     return 0;
 }
 
+void UpdateHelpWindow(HHInfo *info)
+{
+    if (!info->WinType.hwndHelp)
+        return;
+
+    WARN("Only the size of the window is currently updated.\n");
+    if (info->WinType.fsValidMembers & HHWIN_PARAM_RECT)
+    {
+        RECT *rect = &info->WinType.rcWindowPos;
+        INT x, y, width, height;
+
+        x = rect->left;
+        y = rect->top;
+        width = rect->right - x;
+        height = rect->bottom - y;
+        SetWindowPos(info->WinType.hwndHelp, NULL, rect->left, rect->top, width, height,
+                     SWP_NOZORDER | SWP_NOACTIVATE);
+    }
+}
+
 static LRESULT CALLBACK Help_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
