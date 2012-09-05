@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "opengl_ext.h"
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
@@ -33,7 +34,6 @@
 #include "winternl.h"
 #include "winnt.h"
 
-#include "opengl_ext.h"
 #define WGL_WGLEXT_PROTOTYPES
 #include "wine/wglext.h"
 #include "wine/gdi_driver.h"
