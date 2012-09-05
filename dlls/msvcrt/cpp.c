@@ -39,6 +39,42 @@ typedef exception bad_cast;
 typedef exception bad_typeid;
 typedef exception __non_rtti_object;
 
+#ifdef __x86_64__
+
+/* x86_64 RTTI structures */
+typedef struct
+{
+    unsigned int type_descriptor;
+    int num_base_classes;
+    this_ptr_offsets offsets;
+    unsigned int attributes;
+} rtti_base_descriptor_x64;
+
+typedef struct
+{
+    unsigned bases[3];
+} rtti_base_array_x64;
+
+typedef struct
+{
+    unsigned int signature;
+    unsigned int attributes;
+    int array_len;
+    unsigned int base_classes;
+} rtti_object_hierarchy_x64;
+
+typedef struct
+{
+    unsigned int signature;
+    int base_class_offset;
+    unsigned int flags;
+    unsigned int type_descriptor;
+    unsigned int type_hierarchy;
+    unsigned int object_locator; /* not present if signature == 0 */
+} rtti_object_locator_x64;
+
+#endif
+
 extern const vtable_ptr MSVCRT_exception_vtable;
 extern const vtable_ptr MSVCRT_bad_typeid_vtable;
 extern const vtable_ptr MSVCRT_bad_cast_vtable;
@@ -794,6 +830,7 @@ void CDECL MSVCRT_unexpected(void)
  *  This function is usually called by compiler generated code as a result
  *  of using one of the C++ dynamic cast statements.
  */
+#ifndef __x86_64__
 const type_info* CDECL MSVCRT___RTtypeid(void *cppobj)
 {
     const type_info *ret;
@@ -821,6 +858,44 @@ const type_info* CDECL MSVCRT___RTtypeid(void *cppobj)
     __ENDTRY
     return ret;
 }
+
+#else
+
+const type_info* CDECL MSVCRT___RTtypeid(void *cppobj)
+{
+    const type_info *ret;
+
+    if (!cppobj)
+    {
+        bad_typeid e;
+        MSVCRT_bad_typeid_ctor( &e, "Attempted a typeid of NULL pointer!" );
+        _CxxThrowException( &e, &bad_typeid_exception_type );
+        return NULL;
+    }
+
+    __TRY
+    {
+        const rtti_object_locator *obj_locator = (rtti_object_locator*)get_obj_locator( cppobj );
+        /* FIXME: Change signature==0 handling when wine generates correct RTTI data on 64-bit systems */
+        if(obj_locator->signature == 0)
+            ret = obj_locator->type_descriptor;
+        else
+        {
+            const rtti_object_locator_x64 *obj_locator_x64 = (const rtti_object_locator_x64*)obj_locator;
+            ret = (type_info*)((char*)obj_locator_x64 - obj_locator_x64->object_locator + obj_locator_x64->type_descriptor);
+        }
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        __non_rtti_object e;
+        MSVCRT___non_rtti_object_ctor( &e, "Bad read pointer - no RTTI data!" );
+        _CxxThrowException( &e, &bad_typeid_exception_type );
+        return NULL;
+    }
+    __ENDTRY
+    return ret;
+}
+#endif
 
 /******************************************************************
  *		__RTDynamicCast (MSVCRT.@)
