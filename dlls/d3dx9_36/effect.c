@@ -1649,8 +1649,6 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_SetBool(ID3DXBaseEffect *iface, D3DXHA
 
     if (param && !param->element_count && param->rows == 1 && param->columns == 1)
     {
-        /* crop input */
-        b = b != 0;
         set_number(param->data, param->type, &b, D3DXPT_BOOL);
         return D3D_OK;
     }
@@ -1699,7 +1697,8 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_SetBoolArray(ID3DXBaseEffect *iface, D
             case D3DXPC_MATRIX_ROWS:
                 for (i = 0; i < size; ++i)
                 {
-                    set_number((DWORD *)param->data + i, param->type, &b[i], D3DXPT_BOOL);
+                    /* don't crop the input, use D3DXPT_INT instead of D3DXPT_BOOL */
+                    set_number((DWORD *)param->data + i, param->type, &b[i], D3DXPT_INT);
                 }
                 return D3D_OK;
 

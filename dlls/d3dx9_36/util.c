@@ -271,6 +271,11 @@ const char *debug_d3dxparameter_registerset(D3DXREGISTER_SET r)
 #undef WINE_D3DX_TO_STR
 
 /* parameter type conversion helpers */
+BOOL get_bool(LPCVOID data)
+{
+    return (*(DWORD *)data) != 0;
+}
+
 INT get_int(D3DXPARAMETER_TYPE type, LPCVOID data)
 {
     INT i;
@@ -286,7 +291,7 @@ INT get_int(D3DXPARAMETER_TYPE type, LPCVOID data)
             break;
 
         case D3DXPT_BOOL:
-            i = *(BOOL *)data;
+            i = get_bool(data);
             break;
 
         default:
@@ -313,7 +318,7 @@ FLOAT get_float(D3DXPARAMETER_TYPE type, LPCVOID data)
             break;
 
         case D3DXPT_BOOL:
-            f = *(BOOL *)data;
+            f = get_bool(data);
             break;
 
         default:
@@ -325,14 +330,15 @@ FLOAT get_float(D3DXPARAMETER_TYPE type, LPCVOID data)
     return f;
 }
 
-BOOL get_bool(LPCVOID data)
-{
-    return (*(DWORD *)data) != 0;
-}
-
 void set_number(LPVOID outdata, D3DXPARAMETER_TYPE outtype, LPCVOID indata, D3DXPARAMETER_TYPE intype)
 {
     TRACE("Changing from type %s to type %s\n", debug_d3dxparameter_type(intype), debug_d3dxparameter_type(outtype));
+
+    if (outtype == intype)
+    {
+        *(DWORD *)outdata = *(DWORD *)indata;
+        return;
+    }
 
     switch (outtype)
     {
