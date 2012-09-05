@@ -121,7 +121,6 @@ HRESULT DirectSoundDevice_AddBuffer(
 HRESULT DirectSoundDevice_RemoveBuffer(
     DirectSoundDevice * device,
     IDirectSoundBufferImpl * pDSB) DECLSPEC_HIDDEN;
-HRESULT DirectSoundDevice_GetCaps(DirectSoundDevice * device, LPDSCAPS lpDSCaps) DECLSPEC_HIDDEN;
 HRESULT DirectSoundDevice_CreateSoundBuffer(
     DirectSoundDevice * device,
     LPCDSBUFFERDESC dsbd,
@@ -132,19 +131,6 @@ HRESULT DirectSoundDevice_DuplicateSoundBuffer(
     DirectSoundDevice * device,
     LPDIRECTSOUNDBUFFER psb,
     LPLPDIRECTSOUNDBUFFER ppdsb) DECLSPEC_HIDDEN;
-HRESULT DirectSoundDevice_SetCooperativeLevel(
-    DirectSoundDevice * devcie,
-    HWND hwnd,
-    DWORD level) DECLSPEC_HIDDEN;
-HRESULT DirectSoundDevice_Compact(DirectSoundDevice * device) DECLSPEC_HIDDEN;
-HRESULT DirectSoundDevice_GetSpeakerConfig(
-    DirectSoundDevice * device,
-    LPDWORD lpdwSpeakerConfig) DECLSPEC_HIDDEN;
-HRESULT DirectSoundDevice_SetSpeakerConfig(
-    DirectSoundDevice * device,
-    DWORD config) DECLSPEC_HIDDEN;
-HRESULT DirectSoundDevice_VerifyCertification(DirectSoundDevice * device,
-    LPDWORD pdwCertified) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * IDirectSoundBuffer implementation structure

@@ -242,11 +242,54 @@ static HRESULT WINAPI IDirectSound8Impl_CreateSoundBuffer(IDirectSound8 *iface,
     return DirectSoundDevice_CreateSoundBuffer(This->device, dsbd, ppdsb, lpunk, This->has_ds8);
 }
 
-static HRESULT WINAPI IDirectSound8Impl_GetCaps(IDirectSound8 *iface, DSCAPS *lpDSCaps)
+static HRESULT WINAPI IDirectSound8Impl_GetCaps(IDirectSound8 *iface, DSCAPS *dscaps)
 {
     IDirectSoundImpl *This = impl_from_IDirectSound8(iface);
-    TRACE("(%p,%p)\n", This, lpDSCaps);
-    return DirectSoundDevice_GetCaps(This->device, lpDSCaps);
+
+    TRACE("(%p, %p)\n", This, dscaps);
+
+    if (!This->device) {
+        WARN("not initialized\n");
+        return DSERR_UNINITIALIZED;
+    }
+    if (!dscaps) {
+        WARN("invalid parameter: dscaps = NULL\n");
+        return DSERR_INVALIDPARAM;
+    }
+    if (dscaps->dwSize < sizeof(*dscaps)) {
+        WARN("invalid parameter: dscaps->dwSize = %d\n", dscaps->dwSize);
+        return DSERR_INVALIDPARAM;
+    }
+
+    dscaps->dwFlags                        = This->device->drvcaps.dwFlags;
+    dscaps->dwMinSecondarySampleRate       = This->device->drvcaps.dwMinSecondarySampleRate;
+    dscaps->dwMaxSecondarySampleRate       = This->device->drvcaps.dwMaxSecondarySampleRate;
+    dscaps->dwPrimaryBuffers               = This->device->drvcaps.dwPrimaryBuffers;
+    dscaps->dwMaxHwMixingAllBuffers        = This->device->drvcaps.dwMaxHwMixingAllBuffers;
+    dscaps->dwMaxHwMixingStaticBuffers     = This->device->drvcaps.dwMaxHwMixingStaticBuffers;
+    dscaps->dwMaxHwMixingStreamingBuffers  = This->device->drvcaps.dwMaxHwMixingStreamingBuffers;
+    dscaps->dwFreeHwMixingAllBuffers       = This->device->drvcaps.dwFreeHwMixingAllBuffers;
+    dscaps->dwFreeHwMixingStaticBuffers    = This->device->drvcaps.dwFreeHwMixingStaticBuffers;
+    dscaps->dwFreeHwMixingStreamingBuffers = This->device->drvcaps.dwFreeHwMixingStreamingBuffers;
+    dscaps->dwMaxHw3DAllBuffers            = This->device->drvcaps.dwMaxHw3DAllBuffers;
+    dscaps->dwMaxHw3DStaticBuffers         = This->device->drvcaps.dwMaxHw3DStaticBuffers;
+    dscaps->dwMaxHw3DStreamingBuffers      = This->device->drvcaps.dwMaxHw3DStreamingBuffers;
+    dscaps->dwFreeHw3DAllBuffers           = This->device->drvcaps.dwFreeHw3DAllBuffers;
+    dscaps->dwFreeHw3DStaticBuffers        = This->device->drvcaps.dwFreeHw3DStaticBuffers;
+    dscaps->dwFreeHw3DStreamingBuffers     = This->device->drvcaps.dwFreeHw3DStreamingBuffers;
+    dscaps->dwTotalHwMemBytes              = This->device->drvcaps.dwTotalHwMemBytes;
+    dscaps->dwFreeHwMemBytes               = This->device->drvcaps.dwFreeHwMemBytes;
+    dscaps->dwMaxContigFreeHwMemBytes      = This->device->drvcaps.dwMaxContigFreeHwMemBytes;
+    dscaps->dwUnlockTransferRateHwBuffers  = This->device->drvcaps.dwUnlockTransferRateHwBuffers;
+    dscaps->dwPlayCpuOverheadSwBuffers     = This->device->drvcaps.dwPlayCpuOverheadSwBuffers;
+
+    if (TRACE_ON(dsound)) {
+        TRACE("(flags=0x%08x:\n", dscaps->dwFlags);
+        _dump_DSCAPS(dscaps->dwFlags);
+        TRACE(")\n");
+    }
+
+    return DS_OK;
 }
 
 static HRESULT WINAPI IDirectSound8Impl_DuplicateSoundBuffer(IDirectSound8 *iface,
@@ -261,30 +304,75 @@ static HRESULT WINAPI IDirectSound8Impl_SetCooperativeLevel(IDirectSound8 *iface
         DWORD level)
 {
     IDirectSoundImpl *This = impl_from_IDirectSound8(iface);
+
     TRACE("(%p,%p,%s)\n", This, hwnd, dumpCooperativeLevel(level));
-    return DirectSoundDevice_SetCooperativeLevel(This->device, hwnd, level);
+
+    if (!This->device) {
+        WARN("not initialized\n");
+        return DSERR_UNINITIALIZED;
+    }
+
+    if (level == DSSCL_PRIORITY || level == DSSCL_EXCLUSIVE) {
+        WARN("level=%s not fully supported\n",
+                level == DSSCL_PRIORITY ? "DSSCL_PRIORITY" : "DSSCL_EXCLUSIVE");
+    }
+
+    This->device->priolevel = level;
+    return DS_OK;
 }
 
 static HRESULT WINAPI IDirectSound8Impl_Compact(IDirectSound8 *iface)
 {
     IDirectSoundImpl *This = impl_from_IDirectSound8(iface);
+
     TRACE("(%p)\n", This);
-    return DirectSoundDevice_Compact(This->device);
+
+    if (!This->device) {
+        WARN("not initialized\n");
+        return DSERR_UNINITIALIZED;
+    }
+
+    if (This->device->priolevel < DSSCL_PRIORITY) {
+        WARN("incorrect priority level\n");
+        return DSERR_PRIOLEVELNEEDED;
+    }
+    return DS_OK;
 }
 
-static HRESULT WINAPI IDirectSound8Impl_GetSpeakerConfig(IDirectSound8 *iface,
-        DWORD *lpdwSpeakerConfig)
+static HRESULT WINAPI IDirectSound8Impl_GetSpeakerConfig(IDirectSound8 *iface, DWORD *config)
 {
     IDirectSoundImpl *This = impl_from_IDirectSound8(iface);
-    TRACE("(%p, %p)\n", This, lpdwSpeakerConfig);
-    return DirectSoundDevice_GetSpeakerConfig(This->device, lpdwSpeakerConfig);
+
+    TRACE("(%p, %p)\n", This, config);
+
+    if (!This->device) {
+        WARN("not initialized\n");
+        return DSERR_UNINITIALIZED;
+    }
+    if (!config) {
+        WARN("invalid parameter: config == NULL\n");
+        return DSERR_INVALIDPARAM;
+    }
+
+    WARN("not fully functional\n");
+    *config = This->device->speaker_config;
+    return DS_OK;
 }
 
 static HRESULT WINAPI IDirectSound8Impl_SetSpeakerConfig(IDirectSound8 *iface, DWORD config)
 {
     IDirectSoundImpl *This = impl_from_IDirectSound8(iface);
+
     TRACE("(%p,0x%08x)\n", This, config);
-    return DirectSoundDevice_SetSpeakerConfig(This->device, config);
+
+    if (!This->device) {
+        WARN("not initialized\n");
+        return DSERR_UNINITIALIZED;
+    }
+
+    This->device->speaker_config = config;
+    WARN("not fully functional\n");
+    return DS_OK;
 }
 
 static HRESULT WINAPI IDirectSound8Impl_Initialize(IDirectSound8 *iface, const GUID *lpcGuid)
@@ -294,12 +382,23 @@ static HRESULT WINAPI IDirectSound8Impl_Initialize(IDirectSound8 *iface, const G
     return DirectSoundDevice_Initialize(&This->device, lpcGuid);
 }
 
-static HRESULT WINAPI IDirectSound8Impl_VerifyCertification(IDirectSound8 *iface,
-        DWORD *pdwCertified)
+static HRESULT WINAPI IDirectSound8Impl_VerifyCertification(IDirectSound8 *iface, DWORD *certified)
 {
     IDirectSoundImpl *This = impl_from_IDirectSound8(iface);
-    TRACE("(%p, %p)\n", This, pdwCertified);
-    return DirectSoundDevice_VerifyCertification(This->device, pdwCertified);
+
+    TRACE("(%p, %p)\n", This, certified);
+
+    if (!This->device) {
+        WARN("not initialized\n");
+        return DSERR_UNINITIALIZED;
+    }
+
+    if (This->device->drvcaps.dwFlags & DSCAPS_CERTIFIED)
+        *certified = DS_CERTIFIED;
+    else
+        *certified = DS_UNCERTIFIED;
+
+    return DS_OK;
 }
 
 static const IDirectSound8Vtbl ds8_vtbl =
@@ -594,58 +693,6 @@ ULONG DirectSoundDevice_Release(DirectSoundDevice * device)
         TRACE("(%p) released\n", device);
     }
     return ref;
-}
-
-HRESULT DirectSoundDevice_GetCaps(
-    DirectSoundDevice * device,
-    LPDSCAPS lpDSCaps)
-{
-    TRACE("(%p,%p)\n",device,lpDSCaps);
-
-    if (device == NULL) {
-        WARN("not initialized\n");
-        return DSERR_UNINITIALIZED;
-    }
-
-    if (lpDSCaps == NULL) {
-        WARN("invalid parameter: lpDSCaps = NULL\n");
-        return DSERR_INVALIDPARAM;
-    }
-
-    /* check if there is enough room */
-    if (lpDSCaps->dwSize < sizeof(*lpDSCaps)) {
-        WARN("invalid parameter: lpDSCaps->dwSize = %d\n", lpDSCaps->dwSize);
-        return DSERR_INVALIDPARAM;
-    }
-
-    lpDSCaps->dwFlags                           = device->drvcaps.dwFlags;
-    if (TRACE_ON(dsound)) {
-        TRACE("(flags=0x%08x:\n",lpDSCaps->dwFlags);
-        _dump_DSCAPS(lpDSCaps->dwFlags);
-        TRACE(")\n");
-    }
-    lpDSCaps->dwMinSecondarySampleRate          = device->drvcaps.dwMinSecondarySampleRate;
-    lpDSCaps->dwMaxSecondarySampleRate          = device->drvcaps.dwMaxSecondarySampleRate;
-    lpDSCaps->dwPrimaryBuffers                  = device->drvcaps.dwPrimaryBuffers;
-    lpDSCaps->dwMaxHwMixingAllBuffers           = device->drvcaps.dwMaxHwMixingAllBuffers;
-    lpDSCaps->dwMaxHwMixingStaticBuffers        = device->drvcaps.dwMaxHwMixingStaticBuffers;
-    lpDSCaps->dwMaxHwMixingStreamingBuffers     = device->drvcaps.dwMaxHwMixingStreamingBuffers;
-    lpDSCaps->dwFreeHwMixingAllBuffers          = device->drvcaps.dwFreeHwMixingAllBuffers;
-    lpDSCaps->dwFreeHwMixingStaticBuffers       = device->drvcaps.dwFreeHwMixingStaticBuffers;
-    lpDSCaps->dwFreeHwMixingStreamingBuffers    = device->drvcaps.dwFreeHwMixingStreamingBuffers;
-    lpDSCaps->dwMaxHw3DAllBuffers               = device->drvcaps.dwMaxHw3DAllBuffers;
-    lpDSCaps->dwMaxHw3DStaticBuffers            = device->drvcaps.dwMaxHw3DStaticBuffers;
-    lpDSCaps->dwMaxHw3DStreamingBuffers         = device->drvcaps.dwMaxHw3DStreamingBuffers;
-    lpDSCaps->dwFreeHw3DAllBuffers              = device->drvcaps.dwFreeHw3DAllBuffers;
-    lpDSCaps->dwFreeHw3DStaticBuffers           = device->drvcaps.dwFreeHw3DStaticBuffers;
-    lpDSCaps->dwFreeHw3DStreamingBuffers        = device->drvcaps.dwFreeHw3DStreamingBuffers;
-    lpDSCaps->dwTotalHwMemBytes                 = device->drvcaps.dwTotalHwMemBytes;
-    lpDSCaps->dwFreeHwMemBytes                  = device->drvcaps.dwFreeHwMemBytes;
-    lpDSCaps->dwMaxContigFreeHwMemBytes         = device->drvcaps.dwMaxContigFreeHwMemBytes;
-    lpDSCaps->dwUnlockTransferRateHwBuffers     = device->drvcaps.dwUnlockTransferRateHwBuffers;
-    lpDSCaps->dwPlayCpuOverheadSwBuffers        = device->drvcaps.dwPlayCpuOverheadSwBuffers;
-
-    return DS_OK;
 }
 
 BOOL DSOUND_check_supported(IAudioClient *client, DWORD rate,
@@ -996,101 +1043,6 @@ HRESULT DirectSoundDevice_DuplicateSoundBuffer(
         WARN("IDirectSoundBufferImpl_Duplicate failed\n");
 
     return hres;
-}
-
-HRESULT DirectSoundDevice_SetCooperativeLevel(
-    DirectSoundDevice * device,
-    HWND hwnd,
-    DWORD level)
-{
-    TRACE("(%p,%p,%s)\n",device,hwnd,dumpCooperativeLevel(level));
-
-    if (device == NULL) {
-        WARN("not initialized\n");
-        return DSERR_UNINITIALIZED;
-    }
-
-    if (level==DSSCL_PRIORITY || level==DSSCL_EXCLUSIVE) {
-        WARN("level=%s not fully supported\n",
-             level==DSSCL_PRIORITY ? "DSSCL_PRIORITY" : "DSSCL_EXCLUSIVE");
-    }
-
-    device->priolevel = level;
-    return DS_OK;
-}
-
-HRESULT DirectSoundDevice_Compact(
-    DirectSoundDevice * device)
-{
-    TRACE("(%p)\n", device);
-
-    if (device == NULL) {
-        WARN("not initialized\n");
-        return DSERR_UNINITIALIZED;
-    }
-
-    if (device->priolevel < DSSCL_PRIORITY) {
-        WARN("incorrect priority level\n");
-        return DSERR_PRIOLEVELNEEDED;
-    }
-
-    return DS_OK;
-}
-
-HRESULT DirectSoundDevice_GetSpeakerConfig(
-    DirectSoundDevice * device,
-    LPDWORD lpdwSpeakerConfig)
-{
-    TRACE("(%p, %p)\n", device, lpdwSpeakerConfig);
-
-    if (device == NULL) {
-        WARN("not initialized\n");
-        return DSERR_UNINITIALIZED;
-    }
-
-    if (lpdwSpeakerConfig == NULL) {
-        WARN("invalid parameter: lpdwSpeakerConfig == NULL\n");
-        return DSERR_INVALIDPARAM;
-    }
-
-    WARN("not fully functional\n");
-    *lpdwSpeakerConfig = device->speaker_config;
-    return DS_OK;
-}
-
-HRESULT DirectSoundDevice_SetSpeakerConfig(
-    DirectSoundDevice * device,
-    DWORD config)
-{
-    TRACE("(%p,0x%08x)\n",device,config);
-
-    if (device == NULL) {
-        WARN("not initialized\n");
-        return DSERR_UNINITIALIZED;
-    }
-
-    device->speaker_config = config;
-    WARN("not fully functional\n");
-    return DS_OK;
-}
-
-HRESULT DirectSoundDevice_VerifyCertification(
-    DirectSoundDevice * device,
-    LPDWORD pdwCertified)
-{
-    TRACE("(%p, %p)\n",device,pdwCertified);
-
-    if (device == NULL) {
-        WARN("not initialized\n");
-        return DSERR_UNINITIALIZED;
-    }
-
-    if (device->drvcaps.dwFlags & DSCAPS_CERTIFIED)
-        *pdwCertified = DS_CERTIFIED;
-    else
-        *pdwCertified = DS_UNCERTIFIED;
-
-    return DS_OK;
 }
 
 /*
