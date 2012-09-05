@@ -2544,11 +2544,7 @@ void WINPOS_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
     else
     {
         parent = 0;
-        GetClientRect( GetDesktopWindow(), &mouseRect );
-        mouseRect.left = GetSystemMetrics( SM_XVIRTUALSCREEN );
-        mouseRect.top = GetSystemMetrics( SM_YVIRTUALSCREEN );
-        mouseRect.right = mouseRect.left + GetSystemMetrics( SM_CXVIRTUALSCREEN );
-        mouseRect.bottom = mouseRect.top + GetSystemMetrics( SM_CYVIRTUALSCREEN );
+        mouseRect = get_virtual_screen_rect();
     }
 
     if (ON_LEFT_BORDER(hittest))

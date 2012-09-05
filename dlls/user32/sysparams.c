@@ -523,6 +523,12 @@ static void get_monitors_info( struct monitor_info *info )
     EnumDisplayMonitors( 0, NULL, monitor_info_proc, (LPARAM)info );
 }
 
+RECT get_virtual_screen_rect(void)
+{
+    struct monitor_info info;
+    get_monitors_info( &info );
+    return info.virtual_rect;
+}
 
 /* get text metrics and/or "average" char width of the specified logfont 
  * for the specified dc */
@@ -2856,27 +2862,23 @@ INT WINAPI GetSystemMetrics( INT index )
         return 1;
     case SM_XVIRTUALSCREEN:
     {
-        struct monitor_info info;
-        get_monitors_info( &info );
-        return info.virtual_rect.left;
+        RECT rect = get_virtual_screen_rect();
+        return rect.left;
     }
     case SM_YVIRTUALSCREEN:
     {
-        struct monitor_info info;
-        get_monitors_info( &info );
-        return info.virtual_rect.top;
+        RECT rect = get_virtual_screen_rect();
+        return rect.top;
     }
     case SM_CXVIRTUALSCREEN:
     {
-        struct monitor_info info;
-        get_monitors_info( &info );
-        return info.virtual_rect.right - info.virtual_rect.left;
+        RECT rect = get_virtual_screen_rect();
+        return rect.right - rect.left;
     }
     case SM_CYVIRTUALSCREEN:
     {
-        struct monitor_info info;
-        get_monitors_info( &info );
-        return info.virtual_rect.bottom - info.virtual_rect.top;
+        RECT rect = get_virtual_screen_rect();
+        return rect.bottom - rect.top;
     }
     case SM_CMONITORS:
     {
