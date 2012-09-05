@@ -161,7 +161,8 @@ static void update_visible_region( struct dce *dce )
     if (dce->clip_rgn) CombineRgn( vis_rgn, vis_rgn, dce->clip_rgn,
                                    (flags & DCX_INTERSECTRGN) ? RGN_AND : RGN_DIFF );
 
-    __wine_set_visible_region( dce->hdc, vis_rgn, &win_rect );
+    top_rect = get_virtual_screen_rect();
+    __wine_set_visible_region( dce->hdc, vis_rgn, &win_rect, &top_rect );
 }
 
 
