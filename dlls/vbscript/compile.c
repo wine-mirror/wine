@@ -973,7 +973,7 @@ static HRESULT compile_const_statement(compile_ctx_t *ctx, const_statement_t *st
 
 static HRESULT compile_function_statement(compile_ctx_t *ctx, function_statement_t *stat)
 {
-    if(ctx->func != &ctx->code->global_code) {
+    if(ctx->func != &ctx->code->main_code) {
         FIXME("Function is not in the global code\n");
         return E_FAIL;
     }
@@ -1615,15 +1615,15 @@ static vbscode_t *alloc_vbscode(compile_ctx_t *ctx, const WCHAR *source)
     ret->bstr_pool = NULL;
     ret->bstr_pool_size = 0;
     ret->bstr_cnt = 0;
-    ret->global_executed = FALSE;
+    ret->pending_exec = FALSE;
 
-    ret->global_code.type = FUNC_GLOBAL;
-    ret->global_code.name = NULL;
-    ret->global_code.code_ctx = ret;
-    ret->global_code.vars = NULL;
-    ret->global_code.var_cnt = 0;
-    ret->global_code.arg_cnt = 0;
-    ret->global_code.args = NULL;
+    ret->main_code.type = FUNC_GLOBAL;
+    ret->main_code.name = NULL;
+    ret->main_code.code_ctx = ret;
+    ret->main_code.vars = NULL;
+    ret->main_code.var_cnt = 0;
+    ret->main_code.arg_cnt = 0;
+    ret->main_code.args = NULL;
 
     list_init(&ret->entry);
     return ret;
@@ -1664,7 +1664,7 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, vbscode_t **ret)
     ctx.stat_ctx = NULL;
     ctx.labels_cnt = ctx.labels_size = 0;
 
-    hres = compile_func(&ctx, ctx.parser.stats, &ctx.code->global_code);
+    hres = compile_func(&ctx, ctx.parser.stats, &ctx.code->main_code);
     if(FAILED(hres)) {
         release_compiler(&ctx);
         return hres;

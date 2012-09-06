@@ -77,10 +77,10 @@ static HRESULT exec_global_code(script_ctx_t *ctx, vbscode_t *code)
 {
     HRESULT hres;
 
-    code->global_executed = TRUE;
+    code->pending_exec = FALSE;
 
     IActiveScriptSite_OnEnterScript(ctx->site);
-    hres = exec_script(ctx, &code->global_code, NULL, NULL, NULL);
+    hres = exec_script(ctx, &code->main_code, NULL, NULL, NULL);
     IActiveScriptSite_OnLeaveScript(ctx->site);
 
     return hres;
@@ -91,7 +91,7 @@ static void exec_queued_code(script_ctx_t *ctx)
     vbscode_t *iter;
 
     LIST_FOR_EACH_ENTRY(iter, &ctx->code_list, vbscode_t, entry) {
-        if(!iter->global_executed)
+        if(iter->pending_exec)
             exec_global_code(ctx, iter);
     }
 }
@@ -604,7 +604,12 @@ static HRESULT WINAPI VBScriptParse_ParseScriptText(IActiveScriptParse *iface,
     if(FAILED(hres))
         return hres;
 
-    return is_started(This) ? exec_global_code(This->ctx, code) : S_OK;
+    if(!is_started(This)) {
+        code->pending_exec = TRUE;
+        return S_OK;
+    }
+
+    return exec_global_code(This->ctx, code);
 }
 
 static const IActiveScriptParseVtbl VBScriptParseVtbl = {

@@ -298,8 +298,8 @@ struct _vbscode_t {
 
     BOOL option_explicit;
 
-    BOOL global_executed;
-    function_t global_code;
+    BOOL pending_exec;
+    function_t main_code;
 
     BSTR *bstr_pool;
     unsigned bstr_pool_size;
