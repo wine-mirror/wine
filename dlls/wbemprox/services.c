@@ -334,7 +334,7 @@ HRESULT get_object( const WCHAR *object_path, IWbemClassObject **obj )
         free_path( path );
         return hr;
     }
-    hr = create_class_object( path->class, iter, 0, obj );
+    hr = create_class_object( path->class, iter, 0, NULL, obj );
     IEnumWbemClassObject_Release( iter );
     free_path( path );
     return hr;

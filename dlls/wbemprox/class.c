@@ -125,7 +125,7 @@ static HRESULT WINAPI enum_class_object_Next(
     *puReturned = 0;
     if (ec->index + uCount > view->count) return WBEM_S_FALSE;
 
-    hr = create_class_object( view->table->name, iface, ec->index, apObjects );
+    hr = create_class_object( view->table->name, iface, ec->index, NULL, apObjects );
     if (hr != S_OK) return hr;
 
     ec->index++;
@@ -212,6 +212,40 @@ HRESULT EnumWbemClassObject_create(
     return S_OK;
 }
 
+static struct record *create_record( const struct column *columns, UINT num_cols )
+{
+    UINT i;
+    struct record *record;
+
+    if (!(record = heap_alloc( sizeof(struct record) ))) return NULL;
+    if (!(record->fields = heap_alloc( num_cols * sizeof(struct field) )))
+    {
+        heap_free( record );
+        return NULL;
+    }
+    for (i = 0; i < num_cols; i++)
+    {
+        record->fields[i].type   = columns[i].type;
+        record->fields[i].u.ival = 0;
+    }
+    record->count = num_cols;
+    return record;
+}
+
+static void destroy_record( struct record *record )
+{
+    UINT i;
+
+    if (!record) return;
+    for (i = 0; i < record->count; i++)
+    {
+        if (record->fields[i].type == CIM_STRING || record->fields[i].type == CIM_DATETIME)
+            heap_free( record->fields[i].u.sval );
+    }
+    heap_free( record->fields );
+    heap_free( record );
+}
+
 struct class_object
 {
     IWbemClassObject IWbemClassObject_iface;
@@ -221,6 +255,7 @@ struct class_object
     UINT index;
     UINT index_method;
     UINT index_property;
+    struct record *record; /* uncommitted instance */
 };
 
 static inline struct class_object *impl_from_IWbemClassObject(
@@ -245,6 +280,7 @@ static ULONG WINAPI class_object_Release(
     {
         TRACE("destroying %p\n", co);
         if (co->iter) IEnumWbemClassObject_Release( co->iter );
+        destroy_record( co->record );
         heap_free( co->name );
         heap_free( co );
     }
@@ -495,8 +531,17 @@ static HRESULT WINAPI class_object_SpawnInstance(
     LONG lFlags,
     IWbemClassObject **ppNewInstance )
 {
-    FIXME("%p, %08x, %p\n", iface, lFlags, ppNewInstance);
-    return E_NOTIMPL;
+    struct class_object *co = impl_from_IWbemClassObject( iface );
+    struct enum_class_object *ec = impl_from_IEnumWbemClassObject( co->iter );
+    struct view *view = ec->query->view;
+    struct record *record;
+
+    TRACE("%p, %08x, %p\n", iface, lFlags, ppNewInstance);
+
+    if (!(record = create_record( view->table->columns, view->table->num_cols )))
+        return E_OUTOFMEMORY;
+
+    return create_class_object( co->name, NULL, 0, record, ppNewInstance );
 }
 
 static HRESULT WINAPI class_object_CompareTo(
@@ -833,8 +878,8 @@ static const IWbemClassObjectVtbl class_object_vtbl =
     class_object_GetMethodOrigin
 };
 
-HRESULT create_class_object(
-    const WCHAR *name, IEnumWbemClassObject *iter, UINT index, IWbemClassObject **obj )
+HRESULT create_class_object( const WCHAR *name, IEnumWbemClassObject *iter, UINT index,
+                             struct record *record, IWbemClassObject **obj )
 {
     struct class_object *co;
 
@@ -855,6 +900,7 @@ HRESULT create_class_object(
     co->index          = index;
     co->index_method   = 0;
     co->index_property = 0;
+    co->record         = record;
     if (iter) IEnumWbemClassObject_AddRef( iter );
 
     *obj = &co->IWbemClassObject_iface;

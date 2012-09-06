@@ -66,6 +66,22 @@ struct property
     const struct property *next;
 };
 
+struct field
+{
+    UINT type;
+    union
+    {
+        LONGLONG ival;
+        WCHAR *sval;
+    } u;
+};
+
+struct record
+{
+    UINT count;
+    struct field *fields;
+};
+
 enum operator
 {
     OP_EQ      = 1,
@@ -157,7 +173,7 @@ const WCHAR *get_property_name( const WCHAR *, UINT ) DECLSPEC_HIDDEN;
 HRESULT WbemLocator_create(IUnknown *, LPVOID *) DECLSPEC_HIDDEN;
 HRESULT WbemServices_create(IUnknown *, const WCHAR *, LPVOID *) DECLSPEC_HIDDEN;
 HRESULT create_class_object(const WCHAR *, IEnumWbemClassObject *, UINT,
-                            IWbemClassObject **) DECLSPEC_HIDDEN;
+                            struct record *, IWbemClassObject **) DECLSPEC_HIDDEN;
 HRESULT EnumWbemClassObject_create(IUnknown *, struct query *, LPVOID *) DECLSPEC_HIDDEN;
 
 static void *heap_alloc( size_t len ) __WINE_ALLOC_SIZE(1);
