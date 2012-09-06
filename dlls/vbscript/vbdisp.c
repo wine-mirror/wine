@@ -501,6 +501,8 @@ HRESULT create_vbdisp(const class_desc_t *desc, vbdisp_t **ret)
     vbdisp->ref = 1;
     vbdisp->desc = desc;
 
+    list_add_tail(&desc->ctx->objects, &vbdisp->entry);
+
     if(desc->class_initialize_id) {
         DISPPARAMS dp = {0};
         HRESULT hres;
@@ -513,8 +515,53 @@ HRESULT create_vbdisp(const class_desc_t *desc, vbdisp_t **ret)
         }
     }
 
-    list_add_tail(&desc->ctx->objects, &vbdisp->entry);
     *ret = vbdisp;
+    return S_OK;
+}
+
+static HRESULT Procedure_invoke(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
+{
+    script_ctx_t *ctx = This->desc->ctx;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    IActiveScriptSite_OnEnterScript(ctx->site);
+    hres = exec_script(ctx, This->desc->value_func, NULL, NULL, NULL);
+    IActiveScriptSite_OnLeaveScript(ctx->site);
+
+    return hres;
+}
+
+static const builtin_prop_t procedure_props[] = {
+    {DISPID_VALUE,  Procedure_invoke, 0}
+};
+
+HRESULT create_procedure_disp(script_ctx_t *ctx, vbscode_t *code, IDispatch **ret)
+{
+    class_desc_t *desc;
+    vbdisp_t *vbdisp;
+    HRESULT hres;
+
+    desc = heap_alloc_zero(sizeof(*desc));
+    if(!desc)
+        return E_OUTOFMEMORY;
+
+    desc->ctx = ctx;
+    desc->builtin_prop_cnt = sizeof(procedure_props)/sizeof(*procedure_props);
+    desc->builtin_props = procedure_props;
+    desc->value_func = &code->main_code;
+
+    hres = create_vbdisp(desc, &vbdisp);
+    if(FAILED(hres)) {
+        heap_free(desc);
+        return hres;
+    }
+
+    desc->next = ctx->procs;
+    ctx->procs = desc;
+
+    *ret = (IDispatch*)&vbdisp->IDispatchEx_iface;
     return S_OK;
 }
 

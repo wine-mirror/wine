@@ -650,10 +650,21 @@ static HRESULT WINAPI VBScriptParseProcedure_ParseProcedureText(IActiveScriptPar
         CTXARG_T dwSourceContextCookie, ULONG ulStartingLineNumber, DWORD dwFlags, IDispatch **ppdisp)
 {
     VBScript *This = impl_from_IActiveScriptParseProcedure2(iface);
-    FIXME("(%p)->(%s %s %s %s %p %s %s %u %x %p)\n", This, debugstr_w(pstrCode), debugstr_w(pstrFormalParams),
+    vbscode_t *code;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s %s %s %s %p %s %s %u %x %p)\n", This, debugstr_w(pstrCode), debugstr_w(pstrFormalParams),
           debugstr_w(pstrProcedureName), debugstr_w(pstrItemName), punkContext, debugstr_w(pstrDelimiter),
           wine_dbgstr_longlong(dwSourceContextCookie), ulStartingLineNumber, dwFlags, ppdisp);
-    return E_NOTIMPL;
+
+    if(This->thread_id != GetCurrentThreadId() || This->state == SCRIPTSTATE_CLOSED)
+        return E_UNEXPECTED;
+
+    hres = compile_script(This->ctx, pstrCode, &code);
+    if(FAILED(hres))
+        return hres;
+
+    return create_procedure_disp(This->ctx, code, ppdisp);
 }
 
 static const IActiveScriptParseProcedure2Vtbl VBScriptParseProcedureVtbl = {
