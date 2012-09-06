@@ -85,7 +85,7 @@
 @ stub _vcomp_reduction_u8
 @ stub _vcomp_sections_init
 @ stub _vcomp_sections_next
-@ stub _vcomp_set_num_threads
+@ cdecl _vcomp_set_num_threads(long)
 @ stub _vcomp_single_begin
 @ stub _vcomp_single_end
 @ stub omp_destroy_lock
