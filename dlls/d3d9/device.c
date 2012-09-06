@@ -2539,9 +2539,8 @@ static HRESULT WINAPI d3d9_device_SetIndices(IDirect3DDevice9Ex *iface, IDirect3
 static HRESULT WINAPI d3d9_device_GetIndices(IDirect3DDevice9Ex *iface, IDirect3DIndexBuffer9 **buffer)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
-    struct wined3d_buffer *retIndexData = NULL;
+    struct wined3d_buffer *wined3d_buffer;
     struct d3d9_indexbuffer *buffer_impl;
-    HRESULT hr;
 
     TRACE("iface %p, buffer %p.\n", iface, buffer);
 
@@ -2549,23 +2548,19 @@ static HRESULT WINAPI d3d9_device_GetIndices(IDirect3DDevice9Ex *iface, IDirect3
         return D3DERR_INVALIDCALL;
 
     wined3d_mutex_lock();
-    hr = wined3d_device_get_index_buffer(device->wined3d_device, &retIndexData);
-    if (SUCCEEDED(hr) && retIndexData)
+    if ((wined3d_buffer = wined3d_device_get_index_buffer(device->wined3d_device)))
     {
-        buffer_impl = wined3d_buffer_get_parent(retIndexData);
+        buffer_impl = wined3d_buffer_get_parent(wined3d_buffer);
         *buffer = &buffer_impl->IDirect3DIndexBuffer9_iface;
         IDirect3DIndexBuffer9_AddRef(*buffer);
-        wined3d_buffer_decref(retIndexData);
     }
     else
     {
-        if (FAILED(hr))
-            FIXME("Call to GetIndices failed\n");
         *buffer = NULL;
     }
     wined3d_mutex_unlock();
 
-    return hr;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI d3d9_device_CreatePixelShader(IDirect3DDevice9Ex *iface,

@@ -2367,9 +2367,8 @@ static HRESULT WINAPI d3d8_device_GetIndices(IDirect3DDevice8 *iface,
         IDirect3DIndexBuffer8 **buffer, UINT *base_vertex_index)
 {
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
-    struct wined3d_buffer *wined3d_buffer = NULL;
+    struct wined3d_buffer *wined3d_buffer;
     struct d3d8_indexbuffer *buffer_impl;
-    HRESULT hr;
 
     TRACE("iface %p, buffer %p, base_vertex_index %p.\n", iface, buffer, base_vertex_index);
 
@@ -2379,23 +2378,19 @@ static HRESULT WINAPI d3d8_device_GetIndices(IDirect3DDevice8 *iface,
     /* The case from UINT to INT is safe because d3d8 will never set negative values */
     wined3d_mutex_lock();
     *base_vertex_index = wined3d_device_get_base_vertex_index(device->wined3d_device);
-    hr = wined3d_device_get_index_buffer(device->wined3d_device, &wined3d_buffer);
-    if (SUCCEEDED(hr) && wined3d_buffer)
+    if ((wined3d_buffer = wined3d_device_get_index_buffer(device->wined3d_device)))
     {
         buffer_impl = wined3d_buffer_get_parent(wined3d_buffer);
         *buffer = &buffer_impl->IDirect3DIndexBuffer8_iface;
         IDirect3DIndexBuffer8_AddRef(*buffer);
-        wined3d_buffer_decref(wined3d_buffer);
     }
     else
     {
-        if (FAILED(hr))
-            ERR("Failed to get wined3d index buffer, hr %#x.\n", hr);
         *buffer = NULL;
     }
     wined3d_mutex_unlock();
 
-    return hr;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI d3d8_device_CreatePixelShader(IDirect3DDevice8 *iface,
