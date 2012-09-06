@@ -268,13 +268,15 @@ INT WINAPI ExtSelectClipRgn( HDC hdc, HRGN hrgn, INT fnMode )
 /***********************************************************************
  *           __wine_set_visible_region   (GDI32.@)
  */
-void CDECL __wine_set_visible_region( HDC hdc, HRGN hrgn, const RECT *vis_rect, const RECT *device_rect )
+void CDECL __wine_set_visible_region( HDC hdc, HRGN hrgn, const RECT *vis_rect, const RECT *device_rect,
+                                      struct window_surface *surface )
 {
     DC * dc;
 
     if (!(dc = get_dc_ptr( hdc ))) return;
 
-    TRACE( "%p %p %s %s\n", hdc, hrgn, wine_dbgstr_rect(vis_rect), wine_dbgstr_rect(device_rect) );
+    TRACE( "%p %p %s %s %p\n", hdc, hrgn,
+           wine_dbgstr_rect(vis_rect), wine_dbgstr_rect(device_rect), surface );
 
     /* map region to DC coordinates */
     OffsetRgn( hrgn, -vis_rect->left, -vis_rect->top );
@@ -284,6 +286,7 @@ void CDECL __wine_set_visible_region( HDC hdc, HRGN hrgn, const RECT *vis_rect, 
     dc->vis_rect = *vis_rect;
     dc->device_rect = *device_rect;
     dc->hVisRgn = hrgn;
+    dibdrv_set_window_surface( dc, surface );
     DC_UpdateXforms( dc );
     update_dc_clipping( dc );
     release_dc_ptr( dc );

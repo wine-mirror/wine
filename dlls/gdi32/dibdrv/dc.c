@@ -537,3 +537,611 @@ const struct gdi_dc_funcs dib_driver =
     dibdrv_wine_get_wgl_driver,         /* wine_get_wgl_driver */
     GDI_PRIORITY_DIB_DRV                /* priority */
 };
+
+
+/***********************************************************************
+ * Driver for window surfaces.
+ *
+ * It uses the DIB engine but needs extra locking since multiple DCs
+ * can paint to the same window.
+ */
+
+struct windrv_physdev
+{
+    struct gdi_physdev     dev;
+    struct dibdrv_physdev *dibdrv;
+    struct window_surface *surface;
+};
+
+static const struct gdi_dc_funcs window_driver;
+
+static inline struct windrv_physdev *get_windrv_physdev( PHYSDEV dev )
+{
+    return (struct windrv_physdev *)dev;
+}
+
+static inline void lock_surface( struct window_surface *surface )
+{
+    GDI_CheckNotLock();
+    surface->funcs->lock( surface );
+}
+
+static inline void unlock_surface( struct window_surface *surface )
+{
+    surface->funcs->unlock( surface );
+}
+
+static void unlock_bits_surface( struct gdi_image_bits *bits )
+{
+    unlock_surface( bits->param );
+}
+
+void dibdrv_set_window_surface( DC *dc, struct window_surface *surface )
+{
+    char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+    BITMAPINFO *info = (BITMAPINFO *)buffer;
+    RECT rect;
+    void *bits;
+    PHYSDEV windev;
+    struct windrv_physdev *physdev;
+    struct dibdrv_physdev *dibdrv;
+
+    TRACE( "%p %p\n", dc->hSelf, surface );
+
+    windev = pop_dc_driver( dc, &window_driver );
+
+    if (surface)
+    {
+        if (windev) push_dc_driver( &dc->physDev, windev, windev->funcs );
+        else
+        {
+            if (!window_driver.pCreateDC( &dc->physDev, NULL, NULL, NULL, NULL )) return;
+            windev = find_dc_driver( dc, &window_driver );
+        }
+
+        physdev = get_windrv_physdev( windev );
+        window_surface_add_ref( surface );
+        if (physdev->surface) window_surface_release( physdev->surface );
+        physdev->surface = surface;
+
+        dibdrv = physdev->dibdrv;
+        bits = surface->funcs->get_info( surface, info );
+        init_dib_info_from_bitmapinfo( &dibdrv->dib, info, bits );
+        /* clip the device rect to the surface */
+        rect = surface->rect;
+        offset_rect( &rect, dc->device_rect.left, dc->device_rect.top );
+        intersect_rect( &dc->device_rect, &dc->device_rect, &rect );
+        dibdrv->dib.rect = dc->vis_rect;
+        offset_rect( &dibdrv->dib.rect, -rect.left, -rect.top );
+        dibdrv->bounds = surface->funcs->get_bounds( surface );
+        DC_InitDC( dc );
+    }
+    else if (windev)
+    {
+        dib_driver.pDeleteDC( pop_dc_driver( dc, &dib_driver ));
+        windev->funcs->pDeleteDC( windev );
+        DC_InitDC( dc );
+    }
+}
+
+static BOOL windrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
+                               PHYSDEV src_dev, struct bitblt_coords *src, BLENDFUNCTION func )
+{
+    struct windrv_physdev *physdev = get_windrv_physdev( dst_dev );
+    BOOL ret;
+
+    lock_surface( physdev->surface );
+    dst_dev = GET_NEXT_PHYSDEV( dst_dev, pAlphaBlend );
+    ret = dst_dev->funcs->pAlphaBlend( dst_dev, dst, src_dev, src, func );
+    unlock_surface( physdev->surface );
+    return ret;
+}
+
+static BOOL windrv_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                        INT xstart, INT ystart, INT xend, INT yend )
+{
+    struct windrv_physdev *physdev = get_windrv_physdev( dev );
+    BOOL ret;
+
+    lock_surface( physdev->surface );
+    dev = GET_NEXT_PHYSDEV( dev, pArc );
+    ret = dev->funcs->pArc( dev, left, top, right, bottom, xstart, ystart, xend, yend );
+    unlock_surface( physdev->surface );
+    return ret;
+}
+
+static BOOL windrv_ArcTo( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                          INT xstart, INT ystart, INT xend, INT yend )
+{
+    struct windrv_physdev *physdev = get_windrv_physdev( dev );
+    BOOL ret;
+
+    lock_surface( physdev->surface );
+    dev = GET_NEXT_PHYSDEV( dev, pArc );
+    ret = dev->funcs->pArcTo( dev, left, top, right, bottom, xstart, ystart, xend, yend );
+    unlock_surface( physdev->surface );
+    return ret;
+}
+
+static DWORD windrv_BlendImage( PHYSDEV dev, BITMAPINFO *info, const struct gdi_image_bits *bits,
+                                struct bitblt_coords *src, struct bitblt_coords *dst, BLENDFUNCTION blend )
+{
+    struct windrv_physdev *physdev = get_windrv_physdev( dev );
+    DWORD ret;
+
+    lock_surface( physdev->surface );
+    dev = GET_NEXT_PHYSDEV( dev, pBlendImage );
+    ret = dev->funcs->pBlendImage( dev, info, bits, src, dst, blend );
+    unlock_surface( physdev->surface );
+    return ret;
+}
+
+static BOOL windrv_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                          INT xstart, INT ystart, INT xend, INT yend )
+{
+    struct windrv_physdev *physdev = get_windrv_physdev( dev );
+    BOOL ret;
+
+    lock_surface( physdev->surface );
+    dev = GET_NEXT_PHYSDEV( dev, pChord );
+    ret = dev->funcs->pChord( dev, left, top, right, bottom, xstart, ystart, xend, yend );
+    unlock_surface( physdev->surface );
+    return ret;
+}
+
+static BOOL windrv_CreateDC( PHYSDEV *dev, LPCWSTR driver, LPCWSTR device,
+                             LPCWSTR output, const DEVMODEW *devmode )
+{
+    struct windrv_physdev *physdev = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*physdev) );
+
+    if (!physdev) return FALSE;
+
+    if (!dib_driver.pCreateDC( dev, NULL, NULL, NULL, NULL ))
+    {
+        HeapFree( GetProcessHeap(), 0, physdev );
+        return FALSE;
+    }
+    physdev->dibdrv = get_dibdrv_pdev( *dev );
+    push_dc_driver( dev, &physdev->dev, &window_driver );
+    return TRUE;
+}
+
+static BOOL windrv_DeleteDC( PHYSDEV dev )
+{
+    struct windrv_physdev *physdev = get_windrv_physdev( dev );
+
+    window_surface_release( physdev->surface );
+    HeapFree( GetProcessHeap(), 0, physdev );
+    return TRUE;
+}
+
+static BOOL windrv_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
+{
+    struct windrv_physdev *physdev = get_windrv_physdev( dev );
+    BOOL ret;
+
+    lock_surface( physdev->surface );
+    dev = GET_NEXT_PHYSDEV( dev, pEllipse );
+    ret = dev->funcs->pEllipse( dev, left, top, right, bottom );
+    unlock_surface( physdev->surface );
+    return ret;
+}
+
+static BOOL windrv_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT type )
+{
+    struct windrv_physdev *physdev = get_windrv_physdev( dev );
+    BOOL ret;
+
+    lock_surface( physdev->surface );
+    dev = GET_NEXT_PHYSDEV( dev, pExtFloodFill );
+    ret = dev->funcs->pExtFloodFill( dev, x, y, color, type );
+    unlock_surface( physdev->surface );
+    return ret;
+}
+
+static BOOL windrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *rect,
+                               LPCWSTR str, UINT count, const INT *dx )
+{
+    struct windrv_physdev *physdev = get_windrv_physdev( dev );
+    BOOL ret;
+
+    lock_surface( physdev->surface );
+    dev = GET_NEXT_PHYSDEV( dev, pExtTextOut );
+    ret = dev->funcs->pExtTextOut( dev, x, y, flags, rect, str, count, dx );
+    unlock_surface( physdev->surface );
+    return ret;
+}
+
+static DWORD windrv_GetImage( PHYSDEV dev, BITMAPINFO *info,
+                              struct gdi_image_bits *bits, struct bitblt_coords *src )
+{
+    struct windrv_physdev *physdev = get_windrv_physdev( dev );
+    DWORD ret;
+
+    lock_surface( physdev->surface );
+    dev = GET_NEXT_PHYSDEV( dev, pGetImage );
+    ret = dev->funcs->pGetImage( dev, info, bits, src );
+    if (!bits->is_copy)
+    {
+        /* use the freeing callback to unlock the surface */
+        assert( !bits->free );
+        bits->free = unlock_bits_surface;
+        bits->param = physdev->surface;
+    }
+    else unlock_surface( physdev->surface );
+    return ret;
+}
+
+static COLORREF windrv_GetPixel( PHYSDEV dev, INT x, INT y )
+{
+    struct windrv_physdev *physdev = get_windrv_physdev( dev );
+    COLORREF ret;
+
+    lock_surface( physdev->surface );
+    dev = GET_NEXT_PHYSDEV( dev, pGetPixel );
+    ret = dev->funcs->pGetPixel( dev, x, y );
+    unlock_surface( physdev->surface );
+    return ret;
+}
+
+static BOOL windrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
+                                 void * grad_array, ULONG ngrad, ULONG mode )
+{
+    struct windrv_physdev *physdev = get_windrv_physdev( dev );
+    BOOL ret;
+
+    lock_surface( physdev->surface );
+    dev = GET_NEXT_PHYSDEV( dev, pGradientFill );
+    ret = dev->funcs->pGradientFill( dev, vert_array, nvert, grad_array, ngrad, mode );
+    unlock_surface( physdev->surface );
+    return ret;
+}
+
+static BOOL windrv_LineTo( PHYSDEV dev, INT x, INT y )
+{
+    struct windrv_physdev *physdev = get_windrv_physdev( dev );
+    BOOL ret;
+
+    lock_surface( physdev->surface );
+    dev = GET_NEXT_PHYSDEV( dev, pLineTo );
+    ret = dev->funcs->pLineTo( dev, x, y );
+    unlock_surface( physdev->surface );
+    return ret;
+}
+
+static BOOL windrv_PaintRgn( PHYSDEV dev, HRGN rgn )
+{
+    struct windrv_physdev *physdev = get_windrv_physdev( dev );
+    BOOL ret;
+
+    lock_surface( physdev->surface );
+    dev = GET_NEXT_PHYSDEV( dev, pPaintRgn );
+    ret = dev->funcs->pPaintRgn( dev, rgn );
+    unlock_surface( physdev->surface );
+    return ret;
+}
+
+static BOOL windrv_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
+{
+    struct windrv_physdev *physdev = get_windrv_physdev( dev );
+    BOOL ret;
+
+    lock_surface( physdev->surface );
+    dev = GET_NEXT_PHYSDEV( dev, pPatBlt );
+    ret = dev->funcs->pPatBlt( dev, dst, rop );
+    unlock_surface( physdev->surface );
+    return ret;
+}
+
+static BOOL windrv_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                        INT xstart, INT ystart, INT xend, INT yend )
+{
+    struct windrv_physdev *physdev = get_windrv_physdev( dev );
+    BOOL ret;
+
+    lock_surface( physdev->surface );
+    dev = GET_NEXT_PHYSDEV( dev, pPie );
+    ret = dev->funcs->pPie( dev, left, top, right, bottom, xstart, ystart, xend, yend );
+    unlock_surface( physdev->surface );
+    return ret;
+}
+
+static BOOL windrv_PolyPolygon( PHYSDEV dev, const POINT *points, const INT *counts, UINT polygons )
+{
+    struct windrv_physdev *physdev = get_windrv_physdev( dev );
+    BOOL ret;
+
+    lock_surface( physdev->surface );
+    dev = GET_NEXT_PHYSDEV( dev, pPolyPolygon );
+    ret = dev->funcs->pPolyPolygon( dev, points, counts, polygons );
+    unlock_surface( physdev->surface );
+    return ret;
+}
+
+static BOOL windrv_PolyPolyline( PHYSDEV dev, const POINT *points, const DWORD *counts, DWORD lines )
+{
+    struct windrv_physdev *physdev = get_windrv_physdev( dev );
+    BOOL ret;
+
+    lock_surface( physdev->surface );
+    dev = GET_NEXT_PHYSDEV( dev, pPolyPolyline );
+    ret = dev->funcs->pPolyPolyline( dev, points, counts, lines );
+    unlock_surface( physdev->surface );
+    return ret;
+}
+
+static BOOL windrv_Polygon( PHYSDEV dev, const POINT *points, INT count )
+{
+    struct windrv_physdev *physdev = get_windrv_physdev( dev );
+    BOOL ret;
+
+    lock_surface( physdev->surface );
+    dev = GET_NEXT_PHYSDEV( dev, pPolygon );
+    ret = dev->funcs->pPolygon( dev, points, count );
+    unlock_surface( physdev->surface );
+    return ret;
+}
+
+static BOOL windrv_Polyline( PHYSDEV dev, const POINT *points, INT count )
+{
+    struct windrv_physdev *physdev = get_windrv_physdev( dev );
+    BOOL ret;
+
+    lock_surface( physdev->surface );
+    dev = GET_NEXT_PHYSDEV( dev, pPolyline );
+    ret = dev->funcs->pPolyline( dev, points, count );
+    unlock_surface( physdev->surface );
+    return ret;
+}
+
+static DWORD windrv_PutImage( PHYSDEV dev, HRGN clip, BITMAPINFO *info,
+                              const struct gdi_image_bits *bits, struct bitblt_coords *src,
+                              struct bitblt_coords *dst, DWORD rop )
+{
+    struct windrv_physdev *physdev = get_windrv_physdev( dev );
+    DWORD ret;
+
+    lock_surface( physdev->surface );
+    dev = GET_NEXT_PHYSDEV( dev, pPutImage );
+    ret = dev->funcs->pPutImage( dev, clip, info, bits, src, dst, rop );
+    unlock_surface( physdev->surface );
+    return ret;
+}
+
+static BOOL windrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
+{
+    struct windrv_physdev *physdev = get_windrv_physdev( dev );
+    BOOL ret;
+
+    lock_surface( physdev->surface );
+    dev = GET_NEXT_PHYSDEV( dev, pRectangle );
+    ret = dev->funcs->pRectangle( dev, left, top, right, bottom );
+    unlock_surface( physdev->surface );
+    return ret;
+}
+
+static BOOL windrv_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                               INT ell_width, INT ell_height )
+{
+    struct windrv_physdev *physdev = get_windrv_physdev( dev );
+    BOOL ret;
+
+    lock_surface( physdev->surface );
+    dev = GET_NEXT_PHYSDEV( dev, pRoundRect );
+    ret = dev->funcs->pRoundRect( dev, left, top, right, bottom, ell_width, ell_height );
+    unlock_surface( physdev->surface );
+    return ret;
+}
+
+static UINT windrv_SetBoundsRect( PHYSDEV dev, RECT *rect, UINT flags )
+{
+    /* do nothing, we use the dibdrv bounds tracking for our own purpose */
+    return DCB_RESET;
+}
+
+static INT windrv_SetDIBitsToDevice( PHYSDEV dev, INT x_dst, INT y_dst, DWORD cx, DWORD cy,
+                                     INT x_src, INT y_src, UINT startscan, UINT lines,
+                                     const void *bits, BITMAPINFO *src_info, UINT coloruse )
+{
+    struct windrv_physdev *physdev = get_windrv_physdev( dev );
+    INT ret;
+
+    lock_surface( physdev->surface );
+    dev = GET_NEXT_PHYSDEV( dev, pSetDIBitsToDevice );
+    ret = dev->funcs->pSetDIBitsToDevice( dev, x_dst, y_dst, cx, cy,
+                                          x_src, y_src, startscan, lines, bits, src_info, coloruse );
+    unlock_surface( physdev->surface );
+    return ret;
+}
+
+static void windrv_SetDeviceClipping( PHYSDEV dev, HRGN rgn )
+{
+    dev = GET_NEXT_PHYSDEV( dev, pSetDeviceClipping );
+    dev->funcs->pSetDeviceClipping( dev, rgn );
+    /* also forward to the graphics driver for the OpenGL case */
+    if (dev->funcs == &dib_driver)
+    {
+        dev = GET_NEXT_PHYSDEV( dev, pSetDeviceClipping );
+        dev->funcs->pSetDeviceClipping( dev, rgn );
+    }
+}
+
+static COLORREF windrv_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
+{
+    struct windrv_physdev *physdev = get_windrv_physdev( dev );
+    COLORREF ret;
+
+    lock_surface( physdev->surface );
+    dev = GET_NEXT_PHYSDEV( dev, pSetPixel );
+    ret = dev->funcs->pSetPixel( dev, x, y, color );
+    unlock_surface( physdev->surface );
+    return ret;
+}
+
+static BOOL windrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
+                               PHYSDEV src_dev, struct bitblt_coords *src, DWORD rop )
+{
+    struct windrv_physdev *physdev = get_windrv_physdev( dst_dev );
+    BOOL ret;
+
+    lock_surface( physdev->surface );
+    dst_dev = GET_NEXT_PHYSDEV( dst_dev, pStretchBlt );
+    ret = dst_dev->funcs->pStretchBlt( dst_dev, dst, src_dev, src, rop );
+    unlock_surface( physdev->surface );
+    return ret;
+}
+
+static INT windrv_StretchDIBits( PHYSDEV dev, INT x_dst, INT y_dst, INT width_dst, INT height_dst,
+                                 INT x_src, INT y_src, INT width_src, INT height_src, const void *bits,
+                                 BITMAPINFO *src_info, UINT coloruse, DWORD rop )
+{
+    struct windrv_physdev *physdev = get_windrv_physdev( dev );
+    INT ret;
+
+    lock_surface( physdev->surface );
+    dev = GET_NEXT_PHYSDEV( dev, pStretchDIBits );
+    ret = dev->funcs->pStretchDIBits( dev, x_dst, y_dst, width_dst, height_dst,
+                                      x_src, y_src, width_src, height_src, bits, src_info, coloruse, rop );
+    unlock_surface( physdev->surface );
+    return ret;
+}
+
+static struct opengl_funcs *windrv_wine_get_wgl_driver( PHYSDEV dev, UINT version )
+{
+    dev = GET_NEXT_PHYSDEV( dev, wine_get_wgl_driver );
+    if (dev->funcs == &dib_driver) dev = GET_NEXT_PHYSDEV( dev, wine_get_wgl_driver );
+    return dev->funcs->wine_get_wgl_driver( dev, version );
+}
+
+static const struct gdi_dc_funcs window_driver =
+{
+    NULL,                               /* pAbortDoc */
+    NULL,                               /* pAbortPath */
+    windrv_AlphaBlend,                  /* pAlphaBlend */
+    NULL,                               /* pAngleArc */
+    windrv_Arc,                         /* pArc */
+    windrv_ArcTo,                       /* pArcTo */
+    NULL,                               /* pBeginPath */
+    windrv_BlendImage,                  /* pBlendImage */
+    windrv_Chord,                       /* pChord */
+    NULL,                               /* pCloseFigure */
+    NULL,                               /* pCreateCompatibleDC */
+    windrv_CreateDC,                    /* pCreateDC */
+    windrv_DeleteDC,                    /* pDeleteDC */
+    NULL,                               /* pDeleteObject */
+    NULL,                               /* pDeviceCapabilities */
+    windrv_Ellipse,                     /* pEllipse */
+    NULL,                               /* pEndDoc */
+    NULL,                               /* pEndPage */
+    NULL,                               /* pEndPath */
+    NULL,                               /* pEnumFonts */
+    NULL,                               /* pEnumICMProfiles */
+    NULL,                               /* pExcludeClipRect */
+    NULL,                               /* pExtDeviceMode */
+    NULL,                               /* pExtEscape */
+    windrv_ExtFloodFill,                /* pExtFloodFill */
+    NULL,                               /* pExtSelectClipRgn */
+    windrv_ExtTextOut,                  /* pExtTextOut */
+    NULL,                               /* pFillPath */
+    NULL,                               /* pFillRgn */
+    NULL,                               /* pFlattenPath */
+    NULL,                               /* pFontIsLinked */
+    NULL,                               /* pFrameRgn */
+    NULL,                               /* pGdiComment */
+    NULL,                               /* pGdiRealizationInfo */
+    NULL,                               /* pGetBoundsRect */
+    NULL,                               /* pGetCharABCWidths */
+    NULL,                               /* pGetCharABCWidthsI */
+    NULL,                               /* pGetCharWidth */
+    NULL,                               /* pGetDeviceCaps */
+    NULL,                               /* pGetDeviceGammaRamp */
+    NULL,                               /* pGetFontData */
+    NULL,                               /* pGetFontUnicodeRanges */
+    NULL,                               /* pGetGlyphIndices */
+    NULL,                               /* pGetGlyphOutline */
+    NULL,                               /* pGetICMProfile */
+    windrv_GetImage,                    /* pGetImage */
+    NULL,                               /* pGetKerningPairs */
+    NULL,                               /* pGetNearestColor */
+    NULL,                               /* pGetOutlineTextMetrics */
+    windrv_GetPixel,                    /* pGetPixel */
+    NULL,                               /* pGetSystemPaletteEntries */
+    NULL,                               /* pGetTextCharsetInfo */
+    NULL,                               /* pGetTextExtentExPoint */
+    NULL,                               /* pGetTextExtentExPointI */
+    NULL,                               /* pGetTextFace */
+    NULL,                               /* pGetTextMetrics */
+    windrv_GradientFill,                /* pGradientFill */
+    NULL,                               /* pIntersectClipRect */
+    NULL,                               /* pInvertRgn */
+    windrv_LineTo,                      /* pLineTo */
+    NULL,                               /* pModifyWorldTransform */
+    NULL,                               /* pMoveTo */
+    NULL,                               /* pOffsetClipRgn */
+    NULL,                               /* pOffsetViewportOrg */
+    NULL,                               /* pOffsetWindowOrg */
+    windrv_PaintRgn,                    /* pPaintRgn */
+    windrv_PatBlt,                      /* pPatBlt */
+    windrv_Pie,                         /* pPie */
+    NULL,                               /* pPolyBezier */
+    NULL,                               /* pPolyBezierTo */
+    NULL,                               /* pPolyDraw */
+    windrv_PolyPolygon,                 /* pPolyPolygon */
+    windrv_PolyPolyline,                /* pPolyPolyline */
+    windrv_Polygon,                     /* pPolygon */
+    windrv_Polyline,                    /* pPolyline */
+    NULL,                               /* pPolylineTo */
+    windrv_PutImage,                    /* pPutImage */
+    NULL,                               /* pRealizeDefaultPalette */
+    NULL,                               /* pRealizePalette */
+    windrv_Rectangle,                   /* pRectangle */
+    NULL,                               /* pResetDC */
+    NULL,                               /* pRestoreDC */
+    windrv_RoundRect,                   /* pRoundRect */
+    NULL,                               /* pSaveDC */
+    NULL,                               /* pScaleViewportExt */
+    NULL,                               /* pScaleWindowExt */
+    NULL,                               /* pSelectBitmap */
+    NULL,                               /* pSelectBrush */
+    NULL,                               /* pSelectClipPath */
+    NULL,                               /* pSelectFont */
+    NULL,                               /* pSelectPalette */
+    NULL,                               /* pSelectPen */
+    NULL,                               /* pSetArcDirection */
+    NULL,                               /* pSetBkColor */
+    NULL,                               /* pSetBkMode */
+    windrv_SetBoundsRect,               /* pSetBoundsRect */
+    NULL,                               /* pSetDCBrushColor */
+    NULL,                               /* pSetDCPenColor */
+    windrv_SetDIBitsToDevice,           /* pSetDIBitsToDevice */
+    windrv_SetDeviceClipping,           /* pSetDeviceClipping */
+    NULL,                               /* pSetDeviceGammaRamp */
+    NULL,                               /* pSetLayout */
+    NULL,                               /* pSetMapMode */
+    NULL,                               /* pSetMapperFlags */
+    windrv_SetPixel,                    /* pSetPixel */
+    NULL,                               /* pSetPolyFillMode */
+    NULL,                               /* pSetROP2 */
+    NULL,                               /* pSetRelAbs */
+    NULL,                               /* pSetStretchBltMode */
+    NULL,                               /* pSetTextAlign */
+    NULL,                               /* pSetTextCharacterExtra */
+    NULL,                               /* pSetTextColor */
+    NULL,                               /* pSetTextJustification */
+    NULL,                               /* pSetViewportExt */
+    NULL,                               /* pSetViewportOrg */
+    NULL,                               /* pSetWindowExt */
+    NULL,                               /* pSetWindowOrg */
+    NULL,                               /* pSetWorldTransform */
+    NULL,                               /* pStartDoc */
+    NULL,                               /* pStartPage */
+    windrv_StretchBlt,                  /* pStretchBlt */
+    windrv_StretchDIBits,               /* pStretchDIBits */
+    NULL,                               /* pStrokeAndFillPath */
+    NULL,                               /* pStrokePath */
+    NULL,                               /* pSwapBuffers */
+    NULL,                               /* pUnrealizePalette */
+    NULL,                               /* pWidenPath */
+    windrv_wine_get_wgl_driver,         /* wine_get_wgl_driver */
+    GDI_PRIORITY_DIB_DRV + 10           /* priority */
+};

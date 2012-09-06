@@ -21,6 +21,8 @@
 #ifndef __WINE_WINE_GDI_DRIVER_H
 #define __WINE_WINE_GDI_DRIVER_H
 
+#include "wine/list.h"
+
 struct gdi_dc_funcs;
 struct opengl_funcs;
 
@@ -222,6 +224,41 @@ static inline void push_dc_driver( PHYSDEV *dev, PHYSDEV physdev, const struct g
     *dev = physdev;
 }
 
+/* support for window surfaces */
+
+struct window_surface;
+
+struct window_surface_funcs
+{
+    void  (*lock)( struct window_surface *surface );
+    void  (*unlock)( struct window_surface *surface );
+    void* (*get_info)( struct window_surface *surface, BITMAPINFO *info );
+    RECT* (*get_bounds)( struct window_surface *surface );
+    void  (*flush)( struct window_surface *surface );
+    void  (*destroy)( struct window_surface *surface );
+};
+
+struct window_surface
+{
+    const struct window_surface_funcs *funcs; /* driver-specific implementations  */
+    struct list                        entry; /* entry in global list managed by user32 */
+    LONG                               ref;   /* reference count */
+    RECT                               rect;  /* constant, no locking needed */
+    /* driver-specific fields here */
+};
+
+static inline ULONG window_surface_add_ref( struct window_surface *surface )
+{
+    return InterlockedIncrement( &surface->ref );
+}
+
+static inline ULONG window_surface_release( struct window_surface *surface )
+{
+    ULONG ret = InterlockedDecrement( &surface->ref );
+    if (!ret) surface->funcs->destroy( surface );
+    return ret;
+}
+
 /* the DC hook support is only exported on Win16, the 32-bit version is a Wine extension */
 
 #define DCHC_INVALIDVISRGN      0x0001
@@ -237,7 +274,7 @@ WINGDIAPI WORD      WINAPI SetHookFlags(HDC,WORD);
 
 extern void CDECL __wine_make_gdi_object_system( HGDIOBJ handle, BOOL set );
 extern void CDECL __wine_set_visible_region( HDC hdc, HRGN hrgn, const RECT *vis_rect,
-                                             const RECT *device_rect );
+                                             const RECT *device_rect, struct window_surface *surface );
 extern struct opengl_funcs * CDECL __wine_get_wgl_driver( HDC hdc, UINT version );
 
 #endif /* __WINE_WINE_GDI_DRIVER_H */
