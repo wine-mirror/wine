@@ -301,6 +301,11 @@ static HRESULT WINAPI class_object_QueryInterface(
     {
         *ppvObject = co;
     }
+    else if (IsEqualGUID( riid, &IID_IClientSecurity ))
+    {
+        *ppvObject = &client_security;
+        return S_OK;
+    }
     else
     {
         FIXME("interface %s not implemented\n", debugstr_guid(riid));
