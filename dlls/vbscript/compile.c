@@ -700,6 +700,7 @@ static HRESULT compile_forto_statement(compile_ctx_t *ctx, forto_statement_t *st
     if(!instr)
         return E_OUTOFMEMORY;
     instr_ptr(ctx, instr)->arg1.bstr = identifier;
+    instr_ptr(ctx, instr)->arg2.uint = 0;
 
     hres = compile_expression(ctx, stat->to_expr);
     if(FAILED(hres))
