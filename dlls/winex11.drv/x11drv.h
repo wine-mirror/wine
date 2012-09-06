@@ -190,6 +190,7 @@ extern Pixmap create_pixmap_from_image( HDC hdc, const XVisualInfo *vis, const B
                                         const struct gdi_image_bits *bits, UINT coloruse ) DECLSPEC_HIDDEN;
 extern DWORD get_pixmap_image( Pixmap pixmap, int width, int height, const XVisualInfo *vis,
                                BITMAPINFO *info, struct gdi_image_bits *bits ) DECLSPEC_HIDDEN;
+extern struct window_surface *create_surface( Window window, const XVisualInfo *vis, const RECT *rect ) DECLSPEC_HIDDEN;
 
 extern RGNDATA *X11DRV_GetRegionData( HRGN hrgn, HDC hdc_lptodp ) DECLSPEC_HIDDEN;
 extern BOOL add_extra_clipping_region( X11DRV_PDEVICE *dev, HRGN rgn ) DECLSPEC_HIDDEN;
@@ -205,6 +206,7 @@ extern INT X11DRV_YWStoDS( HDC hdc, INT height ) DECLSPEC_HIDDEN;
 
 extern const int X11DRV_XROPfunction[];
 
+extern int client_side_graphics DECLSPEC_HIDDEN;
 extern int client_side_with_render DECLSPEC_HIDDEN;
 extern int client_side_antialias_with_core DECLSPEC_HIDDEN;
 extern int client_side_antialias_with_render DECLSPEC_HIDDEN;
@@ -546,6 +548,7 @@ struct x11drv_win_data
     DWORD       net_wm_state;   /* bit mask of active x11drv_net_wm_state values */
     Window      embedder;       /* window id of embedder */
     unsigned long configure_serial; /* serial number of last configure request */
+    struct window_surface *surface;
     Pixmap      icon_pixmap;
     Pixmap      icon_mask;
 };

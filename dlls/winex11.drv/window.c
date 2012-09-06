@@ -1462,6 +1462,8 @@ static void destroy_whole_window( Display *display, struct x11drv_win_data *data
     XFlush( display );
     XFree( data->wm_hints );
     data->wm_hints = NULL;
+    if (data->surface) window_surface_release( data->surface );
+    data->surface = NULL;
     RemovePropA( data->hwnd, whole_window_prop );
 }
 
@@ -2006,6 +2008,20 @@ void CDECL X11DRV_SetFocus( HWND hwnd )
 }
 
 
+static inline RECT get_surface_rect( const RECT *visible_rect )
+{
+    RECT rect;
+
+    IntersectRect( &rect, visible_rect, &virtual_screen_rect );
+    OffsetRect( &rect, -visible_rect->left, -visible_rect->top );
+    rect.left &= ~31;
+    rect.top  &= ~31;
+    rect.right  = max( rect.left + 32, (rect.right + 31) & ~31 );
+    rect.bottom = max( rect.top + 32, (rect.bottom + 31) & ~31 );
+    return rect;
+}
+
+
 /***********************************************************************
  *		WindowPosChanging   (X11DRV.@)
  */
@@ -2014,6 +2030,8 @@ void CDECL X11DRV_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flag
                                      struct window_surface **surface )
 {
     struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
+    RECT surface_rect;
+    XVisualInfo vis;
 
     if (!data && !(data = X11DRV_create_win_data( hwnd, window_rect, client_rect ))) return;
 
@@ -2028,6 +2046,34 @@ void CDECL X11DRV_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flag
 
     *visible_rect = *window_rect;
     X11DRV_window_to_X_rect( data, visible_rect );
+
+    /* create the window surface if necessary */
+    if (!data->whole_window) return;
+    if (swp_flags & SWP_HIDEWINDOW) return;
+    if (data->whole_window == root_window) return;
+    if (!client_side_graphics) return;
+
+    surface_rect = get_surface_rect( visible_rect );
+    if (data->surface)
+    {
+        if (!memcmp( &data->surface->rect, &surface_rect, sizeof(surface_rect) ))
+        {
+            /* existing surface is good enough */
+            window_surface_add_ref( data->surface );
+            *surface = data->surface;
+            return;
+        }
+    }
+    else if (!(swp_flags & SWP_SHOWWINDOW) && !(GetWindowLongW( hwnd, GWL_STYLE ) & WS_VISIBLE)) return;
+
+    memset( &vis, 0, sizeof(vis) );
+    vis.visual     = visual;
+    vis.visualid   = visual->visualid;
+    vis.depth      = screen_depth;
+    vis.red_mask   = visual->red_mask;
+    vis.green_mask = visual->green_mask;
+    vis.blue_mask  = visual->blue_mask;
+    *surface = create_surface( data->whole_window, &vis, &surface_rect );
 }
 
 
@@ -2057,6 +2103,9 @@ void CDECL X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags
     data->window_rect = *rectWindow;
     data->whole_rect  = *visible_rect;
     data->client_rect = *rectClient;
+    if (surface) window_surface_add_ref( surface );
+    if (data->surface) window_surface_release( data->surface );
+    data->surface = surface;
 
     TRACE( "win %p window %s client %s style %08x flags %08x\n",
            hwnd, wine_dbgstr_rect(rectWindow), wine_dbgstr_rect(rectClient), new_style, swp_flags );

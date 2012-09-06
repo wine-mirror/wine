@@ -79,6 +79,7 @@ int managed_mode = 1;
 int decorated_mode = 1;
 int private_color_map = 0;
 int primary_monitor = 0;
+int client_side_graphics = 1;
 int client_side_with_render = 1;
 int client_side_antialias_with_core = 1;
 int client_side_antialias_with_render = 1;
@@ -388,6 +389,9 @@ static void setup_options(void)
     screen_depth = 0;
     if (!get_config_key( hkey, appkey, "ScreenDepth", buffer, sizeof(buffer) ))
         screen_depth = atoi(buffer);
+
+    if (!get_config_key( hkey, appkey, "ClientSideGraphics", buffer, sizeof(buffer) ))
+        client_side_graphics = IS_OPTION_TRUE( buffer[0] );
 
     if (!get_config_key( hkey, appkey, "ClientSideWithRender", buffer, sizeof(buffer) ))
         client_side_with_render = IS_OPTION_TRUE( buffer[0] );

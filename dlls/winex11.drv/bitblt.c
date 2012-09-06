@@ -918,6 +918,17 @@ static inline int get_dib_info_size( const BITMAPINFO *info, UINT coloruse )
     return FIELD_OFFSET( BITMAPINFO, bmiColors[info->bmiHeader.biClrUsed] );
 }
 
+static inline int get_dib_stride( int width, int bpp )
+{
+    return ((width * bpp + 31) >> 3) & ~3;
+}
+
+static inline int get_dib_image_size( const BITMAPINFO *info )
+{
+    return get_dib_stride( info->bmiHeader.biWidth, info->bmiHeader.biBitCount )
+        * abs( info->bmiHeader.biHeight );
+}
+
 /* store the palette or color mask data in the bitmap info structure */
 static void set_color_info( const XVisualInfo *vis, BITMAPINFO *info )
 {
@@ -1516,4 +1527,185 @@ DWORD get_pixmap_image( Pixmap pixmap, int width, int height, const XVisualInfo 
     }
     XDestroyImage( image );
     return ret;
+}
+
+
+struct x11drv_window_surface
+{
+    struct window_surface header;
+    Window                window;
+    GC                    gc;
+    XImage               *image;
+    RECT                  bounds;
+    BOOL                  is_r8g8b8;
+    struct gdi_image_bits bits;
+    CRITICAL_SECTION      crit;
+    BITMAPINFO            info;   /* variable size, must be last */
+};
+
+static struct x11drv_window_surface *get_x11_surface( struct window_surface *surface )
+{
+    return (struct x11drv_window_surface *)surface;
+}
+
+/***********************************************************************
+ *           x11drv_surface_lock
+ */
+static void x11drv_surface_lock( struct window_surface *window_surface )
+{
+    struct x11drv_window_surface *surface = get_x11_surface( window_surface );
+
+    EnterCriticalSection( &surface->crit );
+}
+
+/***********************************************************************
+ *           x11drv_surface_unlock
+ */
+static void x11drv_surface_unlock( struct window_surface *window_surface )
+{
+    struct x11drv_window_surface *surface = get_x11_surface( window_surface );
+
+    LeaveCriticalSection( &surface->crit );
+}
+
+/***********************************************************************
+ *           x11drv_surface_get_bitmap_info
+ */
+static void *x11drv_surface_get_bitmap_info( struct window_surface *window_surface, BITMAPINFO *info )
+{
+    struct x11drv_window_surface *surface = get_x11_surface( window_surface );
+
+    memcpy( info, &surface->info, get_dib_info_size( &surface->info, DIB_RGB_COLORS ));
+    return surface->bits.ptr;
+}
+
+/***********************************************************************
+ *           x11drv_surface_get_bounds
+ */
+static RECT *x11drv_surface_get_bounds( struct window_surface *window_surface )
+{
+    struct x11drv_window_surface *surface = get_x11_surface( window_surface );
+
+    return &surface->bounds;
+}
+
+/***********************************************************************
+ *           x11drv_surface_flush
+ */
+static void x11drv_surface_flush( struct window_surface *window_surface )
+{
+    struct x11drv_window_surface *surface = get_x11_surface( window_surface );
+    struct bitblt_coords coords;
+    struct gdi_image_bits dst_bits;
+    const int *mapping = NULL;
+
+    window_surface->funcs->lock( window_surface );
+    coords.x = 0;
+    coords.y = 0;
+    coords.width  = surface->header.rect.right - surface->header.rect.left;
+    coords.height = surface->header.rect.bottom - surface->header.rect.top;
+    SetRect( &coords.visrect, 0, 0, coords.width, coords.height );
+    if (IntersectRect( &coords.visrect, &coords.visrect, &surface->bounds ))
+    {
+        TRACE( "flushing %p %dx%d bounds %s bits %p\n",
+               surface, coords.width, coords.height,
+               wine_dbgstr_rect( &surface->bounds ), surface->bits.ptr );
+
+        if (surface->image->bits_per_pixel == 4 || surface->image->bits_per_pixel == 8)
+            mapping = X11DRV_PALETTE_PaletteToXPixel;
+
+        if (!copy_image_bits( &surface->info, surface->is_r8g8b8, surface->image,
+                              &surface->bits, &dst_bits, &coords, mapping, ~0u ))
+        {
+            surface->image->data = dst_bits.ptr;
+            XPutImage( gdi_display, surface->window, surface->gc, surface->image,
+                       coords.visrect.left, 0,
+                       surface->header.rect.left + coords.visrect.left,
+                       surface->header.rect.top + coords.visrect.top,
+                       coords.visrect.right - coords.visrect.left,
+                       coords.visrect.bottom - coords.visrect.top );
+            surface->image->data = NULL;
+        }
+
+        if (dst_bits.free) dst_bits.free( &dst_bits );
+    }
+    reset_bounds( &surface->bounds );
+    window_surface->funcs->unlock( window_surface );
+}
+
+/***********************************************************************
+ *           x11drv_surface_destroy
+ */
+static void x11drv_surface_destroy( struct window_surface *window_surface )
+{
+    struct x11drv_window_surface *surface = get_x11_surface( window_surface );
+
+    TRACE( "freeing %p bits %p\n", surface, surface->bits.ptr );
+    if (surface->gc) XFreeGC( gdi_display, surface->gc );
+    if (surface->image) XDestroyImage( surface->image );
+    if (surface->bits.free) surface->bits.free( &surface->bits );
+    surface->crit.DebugInfo->Spare[0] = 0;
+    DeleteCriticalSection( &surface->crit );
+    HeapFree( GetProcessHeap(), 0, surface );
+}
+
+static const struct window_surface_funcs x11drv_surface_funcs =
+{
+    x11drv_surface_lock,
+    x11drv_surface_unlock,
+    x11drv_surface_get_bitmap_info,
+    x11drv_surface_get_bounds,
+    x11drv_surface_flush,
+    x11drv_surface_destroy
+};
+
+/***********************************************************************
+ *           create_surface
+ */
+struct window_surface *create_surface( Window window, const XVisualInfo *vis, const RECT *rect )
+{
+    const XPixmapFormatValues *format = pixmap_formats[vis->depth];
+    struct x11drv_window_surface *surface;
+    int width = rect->right - rect->left, height = rect->bottom - rect->top;
+    int colors = format->bits_per_pixel <= 8 ? 1 << format->bits_per_pixel : 3;
+
+    surface = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                         FIELD_OFFSET( struct x11drv_window_surface, info.bmiColors[colors] ));
+    if (!surface) return NULL;
+    surface->info.bmiHeader.biSize        = sizeof(surface->info.bmiHeader);
+    surface->info.bmiHeader.biWidth       = width;
+    surface->info.bmiHeader.biHeight      = -height; /* top-down */
+    surface->info.bmiHeader.biPlanes      = 1;
+    surface->info.bmiHeader.biBitCount    = format->bits_per_pixel;
+    surface->info.bmiHeader.biSizeImage   = get_dib_image_size( &surface->info );
+    set_color_info( vis, &surface->info );
+
+    InitializeCriticalSection( &surface->crit );
+    surface->crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": surface");
+
+    surface->header.funcs = &x11drv_surface_funcs;
+    surface->header.rect  = *rect;
+    surface->header.ref   = 1;
+    surface->window = window;
+    surface->is_r8g8b8 = is_r8g8b8( vis );
+    reset_bounds( &surface->bounds );
+    if (!(surface->bits.ptr  = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                          surface->info.bmiHeader.biSizeImage )))
+        goto failed;
+
+    surface->bits.free = free_heap_bits;
+
+    surface->image = XCreateImage( gdi_display, visual, vis->depth, ZPixmap, 0, NULL,
+                                   width, height, 32, 0 );
+    if (!surface->image) goto failed;
+    surface->gc = XCreateGC( gdi_display, window, 0, NULL );
+
+    TRACE( "created %p for %lx %s bits %p-%p\n", surface, window, wine_dbgstr_rect(rect),
+           surface->bits.ptr, (char *)surface->bits.ptr + surface->info.bmiHeader.biSizeImage );
+
+    return &surface->header;
+
+failed:
+    x11drv_surface_destroy( &surface->header );
+    return NULL;
 }
