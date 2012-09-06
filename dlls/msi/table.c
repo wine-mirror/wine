@@ -2328,12 +2328,15 @@ static MSIRECORD *msi_get_transform_record( const MSITABLEVIEW *tv, const string
 
             r = IStorage_OpenStream( stg, encname, NULL,
                      STGM_READ | STGM_SHARE_EXCLUSIVE, 0, &stm );
-            msi_free( encname );
             if ( r != ERROR_SUCCESS )
+            {
+                msi_free( encname );
                 return NULL;
+            }
 
             MSI_RecordSetStream( rec, i+1, stm );
             TRACE(" field %d [%s]\n", i+1, debugstr_w(encname));
+            msi_free( encname );
         }
         else if( columns[i].type & MSITYPE_STRING )
         {
