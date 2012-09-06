@@ -2020,6 +2020,7 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
     if (ret)
     {
         TRACE( "win %p surface %p -> %p\n", hwnd, old_surface, new_surface );
+        register_window_surface( old_surface, new_surface );
         if (old_surface)
         {
             if (!IsRectEmpty( valid_rects ))

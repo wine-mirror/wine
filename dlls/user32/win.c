@@ -44,6 +44,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(win);
 
 static DWORD process_layout = ~0u;
 
+static struct list window_surfaces = LIST_INIT( window_surfaces );
+
+static CRITICAL_SECTION surfaces_section;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &surfaces_section,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": surfaces_section") }
+};
+static CRITICAL_SECTION surfaces_section = { &critsect_debug, -1, 0, 0, 0, 0 };
+
 /**********************************************************************/
 
 /* helper for Get/SetWindowLong */
@@ -475,6 +486,45 @@ BOOL is_desktop_window( HWND hwnd )
 }
 
 
+/*******************************************************************
+ *           register_window_surface
+ *
+ * Register a window surface in the global list, possibly replacing another one.
+ */
+void register_window_surface( struct window_surface *old, struct window_surface *new )
+{
+    if (old == new) return;
+    EnterCriticalSection( &surfaces_section );
+    if (old) list_remove( &old->entry );
+    if (new) list_add_tail( &window_surfaces, &new->entry );
+    LeaveCriticalSection( &surfaces_section );
+}
+
+
+/*******************************************************************
+ *           flush_window_surfaces
+ *
+ * Flush pending output from all window surfaces.
+ */
+void flush_window_surfaces( BOOL idle )
+{
+    static DWORD last_idle;
+    DWORD now;
+    struct window_surface *surface;
+
+    EnterCriticalSection( &surfaces_section );
+    now = GetTickCount();
+    if (idle) last_idle = now;
+    /* if not idle, we only flush if there's evidence that the app never goes idle */
+    else if ((int)(now - last_idle) < 1000) goto done;
+
+    LIST_FOR_EACH_ENTRY( surface, &window_surfaces, struct window_surface, entry )
+        surface->funcs->flush( surface );
+done:
+    LeaveCriticalSection( &surfaces_section );
+}
+
+
 /***********************************************************************
  *           WIN_GetPtr
  *
@@ -863,7 +913,11 @@ LRESULT WIN_DestroyWindow( HWND hwnd )
     if (icon_title) DestroyWindow( icon_title );
     if (menu) DestroyMenu( menu );
     if (sys_menu) DestroyMenu( sys_menu );
-    if (surface) window_surface_release( surface );
+    if (surface)
+    {
+        register_window_surface( surface, NULL );
+        window_surface_release( surface );
+    }
 
     USER_Driver->pDestroyWindow( hwnd );
 
@@ -917,7 +971,11 @@ static void destroy_thread_window( HWND hwnd )
     HeapFree( GetProcessHeap(), 0, wndPtr );
     if (menu) DestroyMenu( menu );
     if (sys_menu) DestroyMenu( sys_menu );
-    if (surface) window_surface_release( surface );
+    if (surface)
+    {
+        register_window_surface( surface, NULL );
+        window_surface_release( surface );
+    }
 }
 
 

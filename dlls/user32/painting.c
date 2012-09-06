@@ -801,23 +801,11 @@ void move_window_bits( HWND hwnd, struct window_surface *old_surface,
  *           update_now
  *
  * Implementation of RDW_UPDATENOW behavior.
- *
- * FIXME: Windows uses WM_SYNCPAINT to cut down the number of intertask
- * SendMessage() calls. This is a comment inside DefWindowProc() source
- * from 16-bit SDK:
- *
- *   This message avoids lots of inter-app message traffic
- *   by switching to the other task and continuing the
- *   recursion there.
- *
- * wParam         = flags
- * LOWORD(lParam) = hrgnClip
- * HIWORD(lParam) = hwndSkip  (not used; always NULL)
- *
  */
 static void update_now( HWND hwnd, UINT rdw_flags )
 {
     HWND child = 0;
+    int count = 0;
 
     /* desktop window never gets WM_PAINT, only WM_ERASEBKGND */
     if (hwnd == GetDesktopWindow()) erase_now( hwnd, rdw_flags | RDW_NOCHILDREN );
@@ -834,8 +822,10 @@ static void update_now( HWND hwnd, UINT rdw_flags )
         if (!flags) break;  /* nothing more to do */
 
         SendMessageW( child, WM_PAINT, 0, 0 );
+        count++;
         if (rdw_flags & RDW_NOCHILDREN) break;
     }
+    if (count) flush_window_surfaces( FALSE );
 }
 
 
