@@ -273,6 +273,7 @@ HRESULT d3d10_texture2d_init(struct d3d10_texture2d *texture, struct d3d10_devic
             IUnknown_Release(texture->dxgi_surface);
         return hr;
     }
+    texture->desc.MipLevels = wined3d_texture_get_level_count(texture->wined3d_texture);
 
     return S_OK;
 }
@@ -480,6 +481,7 @@ HRESULT d3d10_texture3d_init(struct d3d10_texture3d *texture, struct d3d10_devic
         WARN("Failed to create wined3d texture, hr %#x.\n", hr);
         return hr;
     }
+    texture->desc.MipLevels = wined3d_texture_get_level_count(texture->wined3d_texture);
 
     return S_OK;
 }
