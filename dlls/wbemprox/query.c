@@ -648,7 +648,7 @@ HRESULT get_propval( const struct view *view, UINT index, const WCHAR *name, VAR
     return S_OK;
 }
 
-static HRESULT variant_to_longlong( VARIANT *var, LONGLONG *val, CIMTYPE *type )
+HRESULT variant_to_longlong( VARIANT *var, LONGLONG *val, CIMTYPE *type )
 {
     if (!var)
     {

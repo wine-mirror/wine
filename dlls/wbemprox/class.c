@@ -335,6 +335,34 @@ static HRESULT WINAPI class_object_Get(
     return get_propval( view, co->index, wszName, pVal, pType, plFlavor );
 }
 
+static HRESULT record_set_value( struct record *record, UINT index, VARIANT *var )
+{
+    LONGLONG val;
+    CIMTYPE type;
+    HRESULT hr;
+
+    if ((hr = variant_to_longlong( var, &val, &type )) != S_OK) return hr;
+    if (type != record->fields[index].type) return WBEM_E_TYPE_MISMATCH;
+
+    switch (type)
+    {
+    case CIM_STRING:
+    case CIM_DATETIME:
+        record->fields[index].u.sval = (WCHAR *)(INT_PTR)val;
+        return S_OK;
+    case CIM_SINT16:
+    case CIM_UINT16:
+    case CIM_SINT32:
+    case CIM_UINT32:
+        record->fields[index].u.ival = val;
+        return S_OK;
+    default:
+        FIXME("unhandled type %u\n", type);
+        break;
+    }
+    return WBEM_E_INVALID_PARAMETER;
+}
+
 static HRESULT WINAPI class_object_Put(
     IWbemClassObject *iface,
     LPCWSTR wszName,
@@ -344,11 +372,19 @@ static HRESULT WINAPI class_object_Put(
 {
     struct class_object *co = impl_from_IWbemClassObject( iface );
     struct enum_class_object *ec = impl_from_IEnumWbemClassObject( co->iter );
-    struct view *view = ec->query->view;
 
     TRACE("%p, %s, %08x, %p, %u\n", iface, debugstr_w(wszName), lFlags, pVal, Type);
 
-    return put_propval( view, co->index, wszName, pVal, Type );
+    if (co->record)
+    {
+        struct table *table = get_table( co->name );
+        UINT index;
+        HRESULT hr;
+
+        if ((hr = get_column_index( table, wszName, &index )) != S_OK) return hr;
+        return record_set_value( co->record, index, pVal );
+    }
+    return put_propval( ec->query->view, co->index, wszName, pVal, Type );
 }
 
 static HRESULT WINAPI class_object_Delete(
