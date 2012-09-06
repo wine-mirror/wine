@@ -8142,7 +8142,9 @@ locale* __thiscall locale_ctor_cstr(locale *this, const char *locname, category 
         ERR("Out of memory\n");
         throw_exception(EXCEPTION_BAD_ALLOC, NULL);
     }
-    this->ptr = locale__Init();
+    locale__Locimp_ctor(this->ptr);
+
+    locale__Init();
 
     _Locinfo_ctor_cat_cstr(&locinfo, cat, locname);
     if(!memcmp(MSVCP_basic_string_char_c_str(&locinfo.newlocname), "*", 2)) {
