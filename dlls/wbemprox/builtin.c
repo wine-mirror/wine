@@ -780,14 +780,19 @@ static void get_processor_name( WCHAR *name )
         regs_to_str( regs, 16, name + 32 );
     }
 }
+static UINT get_processor_maxclockspeed( void )
+{
+    PROCESSOR_POWER_INFORMATION info;
+    if (!NtPowerInformation( ProcessorInformation, NULL, 0, &info, sizeof(info) )) return info.MaxMhz;
+    return 1000000;
+}
 
 static void fill_processor( struct table *table )
 {
     static const WCHAR fmtW[] = {'C','P','U','%','u',0};
     WCHAR device_id[14], processor_id[17], manufacturer[13], name[49] = {0};
     struct record_processor *rec;
-    UINT i, offset = 0, num_logical_processors, count = get_processor_count(), cpuMhz;
-    PROCESSOR_POWER_INFORMATION ppi;
+    UINT i, offset = 0, maxclockspeed, num_logical_processors, count = get_processor_count();
 
     if (!(table->data = heap_alloc( sizeof(*rec) * count ))) return;
 
@@ -795,11 +800,7 @@ static void fill_processor( struct table *table )
     get_processor_manufacturer( manufacturer );
     get_processor_name( name );
 
-    if(!NtPowerInformation(ProcessorInformation, NULL, 0, &ppi, sizeof(ppi)))
-        cpuMhz = ppi.MaxMhz;
-    else
-        cpuMhz = 1000000;
-
+    maxclockspeed = get_processor_maxclockspeed();
     num_logical_processors = get_logical_processor_count() / count;
 
     for (i = 0; i < count; i++)
@@ -809,7 +810,7 @@ static void fill_processor( struct table *table )
         sprintfW( device_id, fmtW, i );
         rec->device_id              = heap_strdupW( device_id );
         rec->manufacturer           = heap_strdupW( manufacturer );
-        rec->maxclockspeed          = cpuMhz;
+        rec->maxclockspeed          = maxclockspeed;
         rec->name                   = heap_strdupW( name );
         rec->num_logical_processors = num_logical_processors;
         rec->processor_id           = heap_strdupW( processor_id );
