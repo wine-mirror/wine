@@ -2524,17 +2524,16 @@ static HRESULT WINAPI d3d9_device_SetIndices(IDirect3DDevice9Ex *iface, IDirect3
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
     struct d3d9_indexbuffer *ib = unsafe_impl_from_IDirect3DIndexBuffer9(buffer);
-    HRESULT hr;
 
     TRACE("iface %p, buffer %p.\n", iface, buffer);
 
     wined3d_mutex_lock();
-    hr = wined3d_device_set_index_buffer(device->wined3d_device,
+    wined3d_device_set_index_buffer(device->wined3d_device,
             ib ? ib->wined3d_buffer : NULL,
             ib ? ib->format : WINED3DFMT_UNKNOWN);
     wined3d_mutex_unlock();
 
-    return hr;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI d3d9_device_GetIndices(IDirect3DDevice9Ex *iface, IDirect3DIndexBuffer9 **buffer)

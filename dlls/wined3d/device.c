@@ -2215,7 +2215,7 @@ HRESULT CDECL wined3d_device_get_material(const struct wined3d_device *device, s
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_set_index_buffer(struct wined3d_device *device,
+void CDECL wined3d_device_set_index_buffer(struct wined3d_device *device,
         struct wined3d_buffer *buffer, enum wined3d_format_id format_id)
 {
     struct wined3d_buffer *prev_buffer;
@@ -2237,7 +2237,7 @@ HRESULT CDECL wined3d_device_set_index_buffer(struct wined3d_device *device,
             wined3d_buffer_incref(buffer);
         if (prev_buffer)
             wined3d_buffer_decref(prev_buffer);
-        return WINED3D_OK;
+        return;
     }
 
     if (prev_buffer != buffer)
@@ -2254,8 +2254,6 @@ HRESULT CDECL wined3d_device_set_index_buffer(struct wined3d_device *device,
             wined3d_buffer_decref(prev_buffer);
         }
     }
-
-    return WINED3D_OK;
 }
 
 HRESULT CDECL wined3d_device_get_index_buffer(const struct wined3d_device *device, struct wined3d_buffer **buffer)

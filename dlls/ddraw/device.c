@@ -4158,7 +4158,7 @@ static HRESULT d3d_device7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
 
     /* Set the index stream */
     wined3d_device_set_base_vertex_index(This->wined3d_device, StartVertex);
-    hr = wined3d_device_set_index_buffer(This->wined3d_device, This->indexbuffer, WINED3DFMT_R16_UINT);
+    wined3d_device_set_index_buffer(This->wined3d_device, This->indexbuffer, WINED3DFMT_R16_UINT);
 
     /* Set the vertex stream source */
     hr = wined3d_device_set_stream_source(This->wined3d_device, 0, vb->wineD3DVertexBuffer, 0, stride);
