@@ -99,12 +99,6 @@ BOOL WINAPI QueryPerformanceFrequency(PLARGE_INTEGER frequency)
  *
  * RETURNS
  *  Nothing.
- *
- * NOTES
- * On the first call it creates cached values, so it doesn't have to determine
- * them repeatedly. On Linux, the "/proc/cpuinfo" special file is used.
- *
- * It also creates a cached flag array for IsProcessorFeaturePresent().
  */
 VOID WINAPI GetSystemInfo(
 	LPSYSTEM_INFO si	/* [out] Destination for system information, may not be NULL */)
