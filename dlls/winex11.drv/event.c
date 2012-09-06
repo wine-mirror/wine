@@ -1019,14 +1019,7 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
     if ((data->window_rect.right - data->window_rect.left == cx &&
          data->window_rect.bottom - data->window_rect.top == cy) ||
         (IsRectEmpty( &data->window_rect ) && event->width == 1 && event->height == 1))
-    {
-        if (flags & SWP_NOMOVE)  /* if nothing changed, don't do anything */
-        {
-            TRACE( "Nothing has changed, ignoring event\n" );
-            return;
-        }
         flags |= SWP_NOSIZE;
-    }
     else
         TRACE( "%p resizing from (%dx%d) to (%dx%d)\n",
                hwnd, data->window_rect.right - data->window_rect.left,
@@ -1051,7 +1044,8 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
         }
     }
 
-    SetWindowPos( hwnd, 0, x, y, cx, cy, flags );
+    if ((flags & (SWP_NOSIZE | SWP_NOMOVE)) != (SWP_NOSIZE | SWP_NOMOVE))
+        SetWindowPos( hwnd, 0, x, y, cx, cy, flags );
 }
 
 
