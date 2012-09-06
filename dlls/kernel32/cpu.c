@@ -212,7 +212,7 @@ VOID WINAPI GetNativeSystemInfo(
 BOOL WINAPI IsProcessorFeaturePresent (
 	DWORD feature	/* [in] Feature number, (PF_ constants from "winnt.h") */) 
 {
-  if (feature < 64)
+  if (feature < PROCESSOR_FEATURE_MAX)
     return SHARED_DATA->ProcessorFeatures[feature];
   else
     return FALSE;
