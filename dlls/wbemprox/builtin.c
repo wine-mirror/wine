@@ -23,6 +23,8 @@
 #include "config.h"
 #include <stdarg.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "wbemcli.h"
@@ -259,7 +261,7 @@ static const struct column col_processor[] =
     { prop_manufacturerW,         CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_maxclockspeedW,        CIM_UINT32 },
     { prop_nameW,                 CIM_STRING|COL_FLAG_DYNAMIC },
-    { prop_numlogicalprocessorsW, CIM_UINT32 },
+    { prop_numlogicalprocessorsW, CIM_UINT32, VT_I4 },
     { prop_processoridW,          CIM_STRING|COL_FLAG_DYNAMIC }
 };
 static const struct column col_service[] =
@@ -400,7 +402,7 @@ struct record_processor
     const WCHAR *manufacturer;
     UINT32       maxclockspeed;
     const WCHAR *name;
-    UINT32       numberoflogicalprocessors;
+    UINT32       num_logical_processors;
     const WCHAR *processor_id;
 };
 struct record_service
@@ -475,6 +477,32 @@ static UINT get_processor_count(void)
     return info.NumberOfProcessors;
 }
 
+static UINT get_logical_processor_count(void)
+{
+    SYSTEM_LOGICAL_PROCESSOR_INFORMATION *info;
+    UINT i, j, count = 0;
+    NTSTATUS status;
+    ULONG len;
+
+    status = NtQuerySystemInformation( SystemLogicalProcessorInformation, NULL, 0, &len );
+    if (status != STATUS_INFO_LENGTH_MISMATCH) return get_processor_count();
+
+    if (!(info = heap_alloc( len ))) return get_processor_count();
+    status = NtQuerySystemInformation( SystemLogicalProcessorInformation, info, len, &len );
+    if (status != STATUS_SUCCESS)
+    {
+        heap_free( info );
+        return get_processor_count();
+    }
+    for (i = 0; i < len / sizeof(*info); i++)
+    {
+        if (info[i].Relationship != RelationProcessorCore) continue;
+        for (j = 0; j < sizeof(ULONG_PTR); j++) if (info[i].ProcessorMask & (1 << j)) count++;
+    }
+    heap_free( info );
+    return count;
+}
+
 static UINT64 get_total_physical_memory(void)
 {
     MEMORYSTATUSEX status;
@@ -495,8 +523,8 @@ static void fill_compsys( struct table *table )
     rec->domainrole             = 0; /* standalone workstation */
     rec->manufacturer           = compsys_manufacturerW;
     rec->model                  = compsys_modelW;
-    rec->num_logical_processors = get_processor_count();
-    rec->num_processors         = rec->num_logical_processors;
+    rec->num_logical_processors = get_logical_processor_count();
+    rec->num_processors         = get_processor_count();
     rec->total_physical_memory  = get_total_physical_memory();
 
     TRACE("created 1 row\n");
@@ -758,7 +786,7 @@ static void fill_processor( struct table *table )
     static const WCHAR fmtW[] = {'C','P','U','%','u',0};
     WCHAR device_id[14], processor_id[17], manufacturer[13], name[49] = {0};
     struct record_processor *rec;
-    UINT i, offset = 0, count = get_processor_count(), cpuMhz;
+    UINT i, offset = 0, num_logical_processors, count = get_processor_count(), cpuMhz;
     PROCESSOR_POWER_INFORMATION ppi;
 
     if (!(table->data = heap_alloc( sizeof(*rec) * count ))) return;
@@ -772,17 +800,19 @@ static void fill_processor( struct table *table )
     else
         cpuMhz = 1000000;
 
+    num_logical_processors = get_logical_processor_count() / count;
+
     for (i = 0; i < count; i++)
     {
         rec = (struct record_processor *)(table->data + offset);
-        rec->cpu_status   = 1; /* CPU Enabled */
+        rec->cpu_status             = 1; /* CPU Enabled */
         sprintfW( device_id, fmtW, i );
-        rec->device_id    = heap_strdupW( device_id );
-        rec->manufacturer = heap_strdupW( manufacturer );
-        rec->maxclockspeed = cpuMhz;
-        rec->name         = heap_strdupW( name );
-        rec->numberoflogicalprocessors = count;
-        rec->processor_id = heap_strdupW( processor_id );
+        rec->device_id              = heap_strdupW( device_id );
+        rec->manufacturer           = heap_strdupW( manufacturer );
+        rec->maxclockspeed          = cpuMhz;
+        rec->name                   = heap_strdupW( name );
+        rec->num_logical_processors = num_logical_processors;
+        rec->processor_id           = heap_strdupW( processor_id );
         offset += sizeof(*rec);
     }
 
