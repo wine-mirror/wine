@@ -4133,7 +4133,7 @@ unsigned short __thiscall basic_stringbuf_wchar_overflow(basic_stringbuf_wchar *
         this->state |= STRINGBUF_allocated;
     }else {
         ptr = basic_streambuf_wchar_eback(&this->base);
-        memcpy(buf, ptr, oldsize);
+        memcpy(buf, ptr, oldsize*sizeof(wchar_t));
 
         this->seekhigh = buf+(this->seekhigh-ptr);
         basic_streambuf_wchar_setp_next(&this->base, buf,
