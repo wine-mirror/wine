@@ -1141,6 +1141,8 @@ static const struct gpu_description gpu_description_table[] =
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD6700,         "AMD Radeon HD 6700 Series",        DRIVER_AMD_R600,         1024},
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD6800,         "AMD Radeon HD 6800 Series",        DRIVER_AMD_R600,         1024},
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD6900,         "AMD Radeon HD 6900 Series",        DRIVER_AMD_R600,         2048},
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD7700,         "AMD Radeon HD 7700 Series",        DRIVER_AMD_R600,         1024},
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD7800,         "AMD Radeon HD 7800 Series",        DRIVER_AMD_R600,         2048},
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD7900,         "AMD Radeon HD 7900 Series",        DRIVER_AMD_R600,         2048},
     /* Intel cards */
     {HW_VENDOR_INTEL,      CARD_INTEL_830M,                "Intel(R) 82830M Graphics Controller",                       DRIVER_INTEL_GMA800,  32 },
@@ -1699,6 +1701,8 @@ static enum wined3d_pci_device select_card_amd_binary(const struct wined3d_gl_in
         {
             /* Southern Islands */
             {"HD 7900", CARD_AMD_RADEON_HD7900},
+            {"HD 7800", CARD_AMD_RADEON_HD7800},
+            {"HD 7700", CARD_AMD_RADEON_HD7700},
             /* Northern Islands */
             {"HD 6900", CARD_AMD_RADEON_HD6900},
             {"HD 6800", CARD_AMD_RADEON_HD6800},
@@ -1908,6 +1912,8 @@ static enum wined3d_pci_device select_card_amd_mesa(const struct wined3d_gl_info
         {
             /* Southern Islands */
             {"TAHITI",     CARD_AMD_RADEON_HD7900},
+            {"PITCAIRN",   CARD_AMD_RADEON_HD7800},
+            {"CAPE VERDE", CARD_AMD_RADEON_HD7700},
             /* Northern Islands */
             {"CAYMAN",  CARD_AMD_RADEON_HD6900},
             {"BARTS",   CARD_AMD_RADEON_HD6800},

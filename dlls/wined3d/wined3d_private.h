@@ -1333,6 +1333,8 @@ enum wined3d_pci_device
     CARD_AMD_RADEON_HD6700          = 0x68ba,
     CARD_AMD_RADEON_HD6800          = 0x6739,
     CARD_AMD_RADEON_HD6900          = 0x6719,
+    CARD_AMD_RADEON_HD7700          = 0x683d,
+    CARD_AMD_RADEON_HD7800          = 0x6819,
     CARD_AMD_RADEON_HD7900          = 0x679a,
 
     CARD_NVIDIA_RIVA_128            = 0x0018,
