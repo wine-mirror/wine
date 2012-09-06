@@ -33,6 +33,8 @@
 #define IActiveScriptParse_Release IActiveScriptParse64_Release
 #define IActiveScriptParse_InitNew IActiveScriptParse64_InitNew
 #define IActiveScriptParse_ParseScriptText IActiveScriptParse64_ParseScriptText
+#define IActiveScriptParseProcedure2_Release IActiveScriptParseProcedure2_64_Release
+#define IActiveScriptParseProcedure2_ParseProcedureText IActiveScriptParseProcedure2_64_ParseProcedureText
 
 #else
 
@@ -40,6 +42,8 @@
 #define IActiveScriptParse_Release IActiveScriptParse32_Release
 #define IActiveScriptParse_InitNew IActiveScriptParse32_InitNew
 #define IActiveScriptParse_ParseScriptText IActiveScriptParse32_ParseScriptText
+#define IActiveScriptParseProcedure2_Release IActiveScriptParseProcedure2_32_Release
+#define IActiveScriptParseProcedure2_ParseProcedureText IActiveScriptParseProcedure2_32_ParseProcedureText
 
 #endif
 
@@ -106,6 +110,7 @@ DEFINE_EXPECT(Next);
 #define DISPID_COLLOBJ_RESET        3000
 
 static const WCHAR testW[] = {'t','e','s','t',0};
+static const WCHAR emptyW[] = {0};
 
 static BOOL strict_dispid_check, is_english;
 static const char *test_name = "(null)";
@@ -128,6 +133,18 @@ static int strcmp_wa(LPCWSTR strw, const char *stra)
     CHAR buf[512];
     WideCharToMultiByte(CP_ACP, 0, strw, -1, buf, sizeof(buf), 0, 0);
     return lstrcmpA(buf, stra);
+}
+
+static const char *debugstr_guid(REFIID riid)
+{
+    static char buf[50];
+
+    sprintf(buf, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+            riid->Data1, riid->Data2, riid->Data3, riid->Data4[0],
+            riid->Data4[1], riid->Data4[2], riid->Data4[3], riid->Data4[4],
+            riid->Data4[5], riid->Data4[6], riid->Data4[7]);
+
+    return buf;
 }
 
 static const char *vt2a(VARIANT *v)
@@ -185,6 +202,38 @@ static BOOL is_lang_english(void)
 
     return PRIMARYLANGID(GetUserDefaultLangID()) == LANG_ENGLISH;
 }
+
+static HRESULT WINAPI ServiceProvider_QueryInterface(IServiceProvider *iface, REFIID riid, void **ppv)
+{
+    ok(0, "unexpected call\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ServiceProvider_AddRef(IServiceProvider *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI ServiceProvider_Release(IServiceProvider *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface, REFGUID guidService,
+        REFIID riid, void **ppv)
+{
+    ok(0, "unexpected service %s\n", debugstr_guid(guidService));
+    return E_NOINTERFACE;
+}
+
+static const IServiceProviderVtbl ServiceProviderVtbl = {
+    ServiceProvider_QueryInterface,
+    ServiceProvider_AddRef,
+    ServiceProvider_Release,
+    ServiceProvider_QueryService
+};
+
+static IServiceProvider caller_sp = { &ServiceProviderVtbl };
 
 static void test_disp(IDispatch *disp)
 {
@@ -376,18 +425,6 @@ static void test_disp(IDispatch *disp)
 static void _test_grfdex(unsigned line, DWORD grfdex, DWORD expect)
 {
     ok_(__FILE__,line)(grfdex == expect, "grfdex = %x, expected %x\n", grfdex, expect);
-}
-
-static const char *debugstr_guid(REFIID riid)
-{
-    static char buf[50];
-
-    sprintf(buf, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
-            riid->Data1, riid->Data2, riid->Data3, riid->Data4[0],
-            riid->Data4[1], riid->Data4[2], riid->Data4[3], riid->Data4[4],
-            riid->Data4[5], riid->Data4[6], riid->Data4[7]);
-
-    return buf;
 }
 
 static IDispatchEx enumDisp;
@@ -1240,28 +1277,23 @@ static IActiveScript *create_script(void)
     return script;
 }
 
-static HRESULT parse_script(DWORD flags, BSTR script_str)
+static IActiveScript *create_and_init_script(DWORD flags)
 {
     IActiveScriptParse *parser;
     IActiveScript *engine;
-    IDispatch *script_disp;
-    LONG ref;
     HRESULT hres;
 
     engine = create_script();
     if(!engine)
-        return S_OK;
+        return NULL;
 
     hres = IActiveScript_QueryInterface(engine, &IID_IActiveScriptParse, (void**)&parser);
     ok(hres == S_OK, "Could not get IActiveScriptParse: %08x\n", hres);
-    if (FAILED(hres))
-    {
-        IActiveScript_Release(engine);
-        return hres;
-    }
 
     hres = IActiveScriptParse_InitNew(parser);
     ok(hres == S_OK, "InitNew failed: %08x\n", hres);
+
+    IActiveScriptParse_Release(parser);
 
     hres = IActiveScript_SetScriptSite(engine, &ActiveScriptSite);
     ok(hres == S_OK, "SetScriptSite failed: %08x\n", hres);
@@ -1272,6 +1304,41 @@ static HRESULT parse_script(DWORD flags, BSTR script_str)
 
     hres = IActiveScript_SetScriptState(engine, SCRIPTSTATE_STARTED);
     ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_STARTED) failed: %08x\n", hres);
+
+    return engine;
+}
+
+static void close_script(IActiveScript *script)
+{
+    ULONG ref;
+    HRESULT hres;
+
+    hres = IActiveScript_Close(script);
+    ok(hres == S_OK, "Close failed: %08x\n", hres);
+
+    ref = IActiveScript_Release(script);
+    ok(!ref, "ref=%u\n", ref);
+}
+
+static HRESULT parse_script(DWORD flags, BSTR script_str)
+{
+    IActiveScriptParse *parser;
+    IActiveScript *engine;
+    IDispatch *script_disp;
+    LONG ref;
+    HRESULT hres;
+
+    engine = create_and_init_script(flags);
+    if(!engine)
+        return S_OK;
+
+    hres = IActiveScript_QueryInterface(engine, &IID_IActiveScriptParse, (void**)&parser);
+    ok(hres == S_OK, "Could not get IActiveScriptParse: %08x\n", hres);
+    if (FAILED(hres))
+    {
+        IActiveScript_Release(engine);
+        return hres;
+    }
 
     hres = IActiveScript_GetScriptDispatch(engine, NULL, &script_disp);
     ok(hres == S_OK, "GetScriptDispatch failed: %08x\n", hres);
@@ -1306,6 +1373,58 @@ static void parse_script_af(DWORD flags, const char *src)
 static void parse_script_a(const char *src)
 {
     parse_script_af(SCRIPTITEM_GLOBALMEMBERS, src);
+}
+
+static IDispatchEx *parse_procedure(IActiveScriptParseProcedure2 *parse_proc, const char *src)
+{
+    IDispatchEx *dispex;
+    IDispatch *disp;
+    BSTR str;
+    HRESULT hres;
+
+    static const WCHAR delimiterW[] = {'\"',0};
+
+    str = a2bstr(src);
+    hres = IActiveScriptParseProcedure2_ParseProcedureText(parse_proc, str, NULL, emptyW, NULL, NULL, delimiterW, 0, 0,
+            SCRIPTPROC_HOSTMANAGESSOURCE|SCRIPTPROC_IMPLICIT_THIS|SCRIPTPROC_IMPLICIT_PARENTS, &disp);
+    SysFreeString(str);
+    ok(hres == S_OK, "ParseProcedureText failed: %08x\n", hres);
+    ok(disp != NULL, "disp = NULL\n");
+
+    hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
+    IDispatch_Release(disp);
+    ok(hres == S_OK, "Could not get IDispatchEx iface: %08x\n", hres);
+
+    return dispex;
+}
+
+
+static void test_procedures(void)
+{
+    IActiveScriptParseProcedure2 *parse_proc;
+    DISPPARAMS dp = {NULL};
+    IActiveScript *script;
+    IDispatchEx *proc;
+    EXCEPINFO ei = {0};
+    VARIANT v;
+    HRESULT hres;
+
+    script = create_and_init_script(0);
+
+    hres = IActiveScript_QueryInterface(script, &IID_IActiveScriptParseProcedure2, (void**)&parse_proc);
+    ok(hres == S_OK, "Could not get IActiveScriptParseProcedure2 iface: %08x\n", hres);
+
+    proc = parse_procedure(parse_proc, "dim x\nif true then x=false");
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IDispatchEx_InvokeEx(proc, DISPID_VALUE, 0, DISPATCH_METHOD, &dp, &v, &ei, &caller_sp);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+
+    IDispatchEx_Release(proc);
+
+    IActiveScriptParseProcedure2_Release(parse_proc);
+
+    close_script(script);
 }
 
 static void test_gc(void)
@@ -1609,6 +1728,7 @@ static void run_tests(void)
     run_from_res("lang.vbs");
     run_from_res("api.vbs");
 
+    test_procedures();
     test_gc();
 }
 
