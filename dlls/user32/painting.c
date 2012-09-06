@@ -108,12 +108,14 @@ static void dump_rdw_flags(UINT flags)
  */
 static void update_visible_region( struct dce *dce )
 {
+    struct window_surface *surface = NULL;
     NTSTATUS status;
     HRGN vis_rgn = 0;
     HWND top_win = 0;
     DWORD flags = dce->flags;
     size_t size = 256;
     RECT win_rect, top_rect;
+    WND *win;
 
     /* don't clip siblings if using parent clip region */
     if (flags & DCX_PARENTCLIP) flags &= ~DCX_CLIPSIBLINGS;
@@ -161,8 +163,16 @@ static void update_visible_region( struct dce *dce )
     if (dce->clip_rgn) CombineRgn( vis_rgn, vis_rgn, dce->clip_rgn,
                                    (flags & DCX_INTERSECTRGN) ? RGN_AND : RGN_DIFF );
 
-    top_rect = get_virtual_screen_rect();
-    __wine_set_visible_region( dce->hdc, vis_rgn, &win_rect, &top_rect, NULL );
+    if ((win = WIN_GetPtr( top_win )) && win != WND_DESKTOP && win != WND_OTHER_PROCESS)
+    {
+        surface = win->surface;
+        if (surface) window_surface_add_ref( surface );
+        WIN_ReleasePtr( win );
+    }
+
+    if (!surface) top_rect = get_virtual_screen_rect();
+    __wine_set_visible_region( dce->hdc, vis_rgn, &win_rect, &top_rect, surface );
+    if (surface) window_surface_release( surface );
 }
 
 
@@ -181,8 +191,12 @@ static void reset_dce_attrs( struct dce *dce )
  */
 static void release_dce( struct dce *dce )
 {
+    RECT vis_rect;
+
     if (!dce->hwnd) return;  /* already released */
 
+    vis_rect = get_virtual_screen_rect();
+    __wine_set_visible_region( dce->hdc, 0, &vis_rect, &vis_rect, NULL );
     USER_Driver->pReleaseDC( dce->hwnd, dce->hdc );
 
     if (dce->clip_rgn) DeleteObject( dce->clip_rgn );
@@ -739,6 +753,46 @@ void erase_now( HWND hwnd, UINT rdw_flags )
 
         if (!flags) break;  /* nothing more to do */
         if ((rdw_flags & RDW_NOCHILDREN) && !need_erase) break;
+    }
+}
+
+
+/***********************************************************************
+ *           move_window_bits
+ *
+ * Move the window bits when a window is resized or its surface recreated.
+ */
+void move_window_bits( HWND hwnd, struct window_surface *old_surface,
+                       struct window_surface *new_surface,
+                       const RECT *visible_rect, const RECT *old_visible_rect,
+                       const RECT *client_rect, const RECT *valid_rects )
+{
+    RECT dst = valid_rects[0];
+    RECT src = valid_rects[1];
+
+    if (new_surface != old_surface ||
+        src.left - old_visible_rect->left != dst.left - visible_rect->left ||
+        src.top - old_visible_rect->top != dst.top - visible_rect->top)
+    {
+        char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+        BITMAPINFO *info = (BITMAPINFO *)buffer;
+        void *bits;
+        UINT flags = UPDATE_NOCHILDREN;
+        HRGN rgn = get_update_region( hwnd, &flags, NULL );
+        HDC hdc = GetDCEx( hwnd, rgn, DCX_CACHE | DCX_EXCLUDERGN );
+
+        OffsetRect( &dst, -client_rect->left, -client_rect->top );
+        TRACE( "copying  %s -> %s\n", wine_dbgstr_rect(&src), wine_dbgstr_rect(&dst) );
+        bits = old_surface->funcs->get_info( old_surface, info );
+        old_surface->funcs->lock( old_surface );
+        SetDIBitsToDevice( hdc, dst.left, dst.top, dst.right - dst.left, dst.bottom - dst.top,
+                           src.left - old_visible_rect->left - old_surface->rect.left,
+                           old_surface->rect.bottom - (src.bottom - old_visible_rect->top),
+                           0, old_surface->rect.bottom - old_surface->rect.top,
+                           bits, info, DIB_RGB_COLORS );
+        old_surface->funcs->unlock( old_surface );
+        ReleaseDC( hwnd, hdc );
+        DeleteObject( rgn );
     }
 }
 

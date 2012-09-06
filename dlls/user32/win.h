@@ -45,6 +45,7 @@ typedef struct tagWND
     HINSTANCE      hInstance;     /* Window hInstance (from CreateWindow) */
     RECT           rectClient;    /* Client area rel. to parent client area */
     RECT           rectWindow;    /* Whole window rel. to parent client area */
+    RECT           visible_rect;  /* Visible part of the whole rect, rel. to parent client area */
     RECT           normal_rect;   /* Normal window rect saved when maximized/minimized */
     POINT          min_pos;       /* Position for minimized window */
     POINT          max_pos;       /* Position for maximized window */
@@ -59,6 +60,7 @@ typedef struct tagWND
     HMENU          hSysMenu;      /* window's copy of System Menu */
     HICON          hIcon;         /* window's icon */
     HICON          hIconSmall;    /* window's small icon */
+    struct window_surface *surface; /* Window surface if any */
     struct tagDIALOGINFO *dlgInfo;/* Dialog additional info (dialogs only) */
     int            cbWndExtra;    /* class cbWndExtra at window creation */
     DWORD_PTR      userdata;      /* User private data */

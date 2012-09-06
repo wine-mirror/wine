@@ -420,13 +420,14 @@ static LRESULT CDECL nulldrv_WindowMessage( HWND hwnd, UINT msg, WPARAM wparam, 
 
 static void CDECL nulldrv_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flags,
                                              const RECT *window_rect, const RECT *client_rect,
-                                             RECT *visible_rect )
+                                             RECT *visible_rect, struct window_surface **surface )
 {
 }
 
 static void CDECL nulldrv_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags,
                                             const RECT *window_rect, const RECT *client_rect,
-                                            const RECT *visible_rect, const RECT *valid_rects )
+                                            const RECT *visible_rect, const RECT *valid_rects,
+                                            struct window_surface *surface )
 {
 }
 
@@ -763,18 +764,19 @@ static LRESULT CDECL loaderdrv_WindowMessage( HWND hwnd, UINT msg, WPARAM wparam
 
 static void CDECL loaderdrv_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flags,
                                                const RECT *window_rect, const RECT *client_rect,
-                                               RECT *visible_rect )
+                                               RECT *visible_rect, struct window_surface **surface )
 {
     load_driver()->pWindowPosChanging( hwnd, insert_after, swp_flags,
-                                       window_rect, client_rect, visible_rect );
+                                       window_rect, client_rect, visible_rect, surface );
 }
 
 static void CDECL loaderdrv_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags,
                                               const RECT *window_rect, const RECT *client_rect,
-                                              const RECT *visible_rect, const RECT *valid_rects )
+                                              const RECT *visible_rect, const RECT *valid_rects,
+                                              struct window_surface *surface )
 {
     load_driver()->pWindowPosChanged( hwnd, insert_after, swp_flags, window_rect,
-                                      client_rect, visible_rect, valid_rects );
+                                      client_rect, visible_rect, valid_rects, surface );
 }
 
 static USER_DRIVER lazy_load_driver =

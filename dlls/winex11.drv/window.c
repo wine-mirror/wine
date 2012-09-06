@@ -2010,7 +2010,8 @@ void CDECL X11DRV_SetFocus( HWND hwnd )
  *		WindowPosChanging   (X11DRV.@)
  */
 void CDECL X11DRV_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flags,
-                                     const RECT *window_rect, const RECT *client_rect, RECT *visible_rect )
+                                     const RECT *window_rect, const RECT *client_rect, RECT *visible_rect,
+                                     struct window_surface **surface )
 {
     struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
 
@@ -2035,7 +2036,8 @@ void CDECL X11DRV_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flag
  */
 void CDECL X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags,
                                     const RECT *rectWindow, const RECT *rectClient,
-                                    const RECT *visible_rect, const RECT *valid_rects )
+                                    const RECT *visible_rect, const RECT *valid_rects,
+                                    struct window_surface *surface )
 {
     struct x11drv_thread_data *thread_data;
     Display *display;

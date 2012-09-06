@@ -34,6 +34,7 @@
 #include "user_private.h"
 #include "controls.h"
 #include "winerror.h"
+#include "wine/gdi_driver.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(win);
@@ -810,6 +811,7 @@ LRESULT WIN_DestroyWindow( HWND hwnd )
     HWND *list;
     HMENU menu = 0, sys_menu;
     HWND icon_title;
+    struct window_surface *surface;
 
     TRACE("%p\n", hwnd );
 
@@ -854,11 +856,14 @@ LRESULT WIN_DestroyWindow( HWND hwnd )
     wndPtr->text = NULL;
     HeapFree( GetProcessHeap(), 0, wndPtr->pScroll );
     wndPtr->pScroll = NULL;
+    surface = wndPtr->surface;
+    wndPtr->surface = NULL;
     WIN_ReleasePtr( wndPtr );
 
     if (icon_title) DestroyWindow( icon_title );
     if (menu) DestroyMenu( menu );
     if (sys_menu) DestroyMenu( sys_menu );
+    if (surface) window_surface_release( surface );
 
     USER_Driver->pDestroyWindow( hwnd );
 
@@ -877,6 +882,7 @@ static void destroy_thread_window( HWND hwnd )
     WND *wndPtr;
     HWND *list;
     HMENU menu = 0, sys_menu = 0;
+    struct window_surface *surface = NULL;
     WORD index;
 
     /* free child windows */
@@ -902,6 +908,8 @@ static void destroy_thread_window( HWND hwnd )
         if ((wndPtr->dwStyle & (WS_CHILD | WS_POPUP)) != WS_CHILD) menu = (HMENU)wndPtr->wIDmenu;
         sys_menu = wndPtr->hSysMenu;
         free_dce( wndPtr->dce, hwnd );
+        surface = wndPtr->surface;
+        wndPtr->surface = NULL;
         InterlockedCompareExchangePointer( &user_handles[index], NULL, wndPtr );
     }
     USER_Unlock();
@@ -909,6 +917,7 @@ static void destroy_thread_window( HWND hwnd )
     HeapFree( GetProcessHeap(), 0, wndPtr );
     if (menu) DestroyMenu( menu );
     if (sys_menu) DestroyMenu( sys_menu );
+    if (surface) window_surface_release( surface );
 }
 
 

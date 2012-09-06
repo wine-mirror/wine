@@ -52,8 +52,8 @@
 @ cdecl ShowWindow(long long ptr long) X11DRV_ShowWindow
 @ cdecl SysCommand(long long long) X11DRV_SysCommand
 @ cdecl WindowMessage(long long long long) X11DRV_WindowMessage
-@ cdecl WindowPosChanging(long long long ptr ptr ptr) X11DRV_WindowPosChanging
-@ cdecl WindowPosChanged(long long long ptr ptr ptr ptr) X11DRV_WindowPosChanged
+@ cdecl WindowPosChanging(long long long ptr ptr ptr ptr) X11DRV_WindowPosChanging
+@ cdecl WindowPosChanged(long long long ptr ptr ptr ptr ptr) X11DRV_WindowPosChanged
 
 # WinTab32
 @ cdecl AttachEventQueueToTablet(long) X11DRV_AttachEventQueueToTablet

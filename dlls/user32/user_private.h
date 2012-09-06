@@ -35,6 +35,8 @@
 #define WM_SYSTIMER	    0x0118
 #define WM_POPUPSYSTEMMENU  0x0313
 
+struct window_surface;
+
 /* internal messages codes */
 enum wine_internal_message
 {
@@ -110,8 +112,8 @@ typedef struct tagUSER_DRIVER {
     UINT   (CDECL *pShowWindow)(HWND,INT,RECT*,UINT);
     LRESULT (CDECL *pSysCommand)(HWND,WPARAM,LPARAM);
     LRESULT (CDECL *pWindowMessage)(HWND,UINT,WPARAM,LPARAM);
-    void   (CDECL *pWindowPosChanging)(HWND,HWND,UINT,const RECT *,const RECT *,RECT *);
-    void   (CDECL *pWindowPosChanged)(HWND,HWND,UINT,const RECT *,const RECT *,const RECT *,const RECT *);
+    void   (CDECL *pWindowPosChanging)(HWND,HWND,UINT,const RECT *,const RECT *,RECT *,struct window_surface**);
+    void   (CDECL *pWindowPosChanged)(HWND,HWND,UINT,const RECT *,const RECT *,const RECT *,const RECT *,struct window_surface*);
 } USER_DRIVER;
 
 extern const USER_DRIVER *USER_Driver DECLSPEC_HIDDEN;
@@ -213,6 +215,10 @@ extern BOOL set_capture_window( HWND hwnd, UINT gui_flags, HWND *prev_ret ) DECL
 extern void free_dce( struct dce *dce, HWND hwnd ) DECLSPEC_HIDDEN;
 extern void invalidate_dce( struct tagWND *win, const RECT *rect ) DECLSPEC_HIDDEN;
 extern void erase_now( HWND hwnd, UINT rdw_flags ) DECLSPEC_HIDDEN;
+extern void move_window_bits( HWND hwnd, struct window_surface *old_surface,
+                              struct window_surface *new_surface,
+                              const RECT *visible_rect, const RECT *old_visible_rect,
+                              const RECT *client_rect, const RECT *valid_rects ) DECLSPEC_HIDDEN;
 extern void *get_hook_proc( void *proc, const WCHAR *module ) DECLSPEC_HIDDEN;
 extern RECT get_virtual_screen_rect(void) DECLSPEC_HIDDEN;
 extern LRESULT call_current_hook( HHOOK hhook, INT code, WPARAM wparam, LPARAM lparam ) DECLSPEC_HIDDEN;
