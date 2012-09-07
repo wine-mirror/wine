@@ -204,7 +204,9 @@ struct gl_drawable
 };
 
 /* X context to associate a struct gl_drawable to an hwnd */
-static XContext gl_drawable_context;
+static XContext gl_hwnd_context;
+/* X context to associate a struct gl_drawable to a pbuffer hdc */
+static XContext gl_pbuffer_context;
 
 static const struct gdi_dc_funcs glxdrv_funcs;
 
@@ -592,7 +594,8 @@ static BOOL has_opengl(void)
         ERR( "GLX extension is missing, disabling OpenGL.\n" );
         goto failed;
     }
-    gl_drawable_context = XUniqueContext();
+    gl_hwnd_context = XUniqueContext();
+    gl_pbuffer_context = XUniqueContext();
 
     /* In case of GLX you have direct and indirect rendering. Most of the time direct rendering is used
      * as in general only that is hardware accelerated. In some cases like in case of remote X indirect
@@ -1160,7 +1163,7 @@ static void free_gl_drawable( struct gl_drawable *gl )
     default:
         break;
     }
-    XFree( gl->visual );
+    if (gl->visual) XFree( gl->visual );
     HeapFree( GetProcessHeap(), 0, gl );
 }
 
@@ -1275,9 +1278,9 @@ BOOL set_win_format( HWND hwnd, XID fbconfig_id )
     XFlush( gdi_display );
 
     EnterCriticalSection( &context_section );
-    if (!XFindContext( gdi_display, (XID)hwnd, gl_drawable_context, (char **)&prev ))
+    if (!XFindContext( gdi_display, (XID)hwnd, gl_hwnd_context, (char **)&prev ))
         free_gl_drawable( prev );
-    XSaveContext( gdi_display, (XID)hwnd, gl_drawable_context, (char *)gl );
+    XSaveContext( gdi_display, (XID)hwnd, gl_hwnd_context, (char *)gl );
     LeaveCriticalSection( &context_section );
 
     /* force DCE invalidation */
@@ -1305,7 +1308,7 @@ void sync_gl_drawable( HWND hwnd, const RECT *visible_rect, const RECT *client_r
 
     EnterCriticalSection( &context_section );
 
-    if (XFindContext( gdi_display, (XID)hwnd, gl_drawable_context, (char **)&gl )) goto done;
+    if (XFindContext( gdi_display, (XID)hwnd, gl_hwnd_context, (char **)&gl )) goto done;
 
     if (changes.width  != gl->rect.right - gl->rect.left) mask |= CWWidth;
     if (changes.height != gl->rect.bottom - gl->rect.top) mask |= CWHeight;
@@ -1358,9 +1361,9 @@ void destroy_gl_drawable( HWND hwnd )
     struct gl_drawable *gl;
 
     EnterCriticalSection( &context_section );
-    if (!XFindContext( gdi_display, (XID)hwnd, gl_drawable_context, (char **)&gl ))
+    if (!XFindContext( gdi_display, (XID)hwnd, gl_hwnd_context, (char **)&gl ))
     {
-        XDeleteContext( gdi_display, (XID)hwnd, gl_drawable_context );
+        XDeleteContext( gdi_display, (XID)hwnd, gl_hwnd_context );
         free_gl_drawable( gl );
     }
     LeaveCriticalSection( &context_section );
@@ -1561,7 +1564,7 @@ static BOOL glxdrv_wglSetPixelFormat( HDC hdc, int iPixelFormat, const PIXELFORM
     }
 
     EnterCriticalSection( &context_section );
-    if (!XFindContext( gdi_display, (XID)hwnd, gl_drawable_context, (char **)&gl ))
+    if (!XFindContext( gdi_display, (XID)hwnd, gl_hwnd_context, (char **)&gl ))
         prev = gl->pixel_format;
     LeaveCriticalSection( &context_section );
 
@@ -2200,10 +2203,26 @@ static BOOL X11DRV_wglDestroyPbufferARB( struct wgl_pbuffer *object )
 static HDC X11DRV_wglGetPbufferDCARB( struct wgl_pbuffer *object )
 {
     struct x11drv_escape_set_drawable escape;
+    struct gl_drawable *gl, *prev;
     HDC hdc;
 
     hdc = CreateDCA( "DISPLAY", NULL, NULL, NULL );
     if (!hdc) return 0;
+
+    if (!(gl = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*gl) )))
+    {
+        DeleteDC( hdc );
+        return 0;
+    }
+    gl->type = DC_GL_PBUFFER;
+    gl->drawable = object->drawable;
+    gl->pixel_format = object->fmt - pixel_formats + 1;
+
+    EnterCriticalSection( &context_section );
+    if (!XFindContext( gdi_display, (XID)hdc, gl_pbuffer_context, (char **)&prev ))
+        free_gl_drawable( prev );
+    XSaveContext( gdi_display, (XID)hdc, gl_pbuffer_context, (char *)gl );
+    LeaveCriticalSection( &context_section );
 
     escape.code = X11DRV_SET_DRAWABLE;
     escape.hwnd = 0;
@@ -2313,7 +2332,18 @@ static BOOL X11DRV_wglQueryPbufferARB( struct wgl_pbuffer *object, int iAttribut
  */
 static int X11DRV_wglReleasePbufferDCARB( struct wgl_pbuffer *object, HDC hdc )
 {
+    struct gl_drawable *gl;
+
     TRACE("(%p, %p)\n", object, hdc);
+
+    EnterCriticalSection( &context_section );
+    if (!XFindContext( gdi_display, (XID)hdc, gl_pbuffer_context, (char **)&gl ))
+    {
+        XDeleteContext( gdi_display, (XID)hdc, gl_pbuffer_context );
+        free_gl_drawable( gl );
+    }
+    LeaveCriticalSection( &context_section );
+
     return DeleteDC(hdc);
 }
 
@@ -3176,32 +3206,23 @@ static INT glxdrv_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_d
                 struct gl_drawable *gl;
                 const struct x11drv_escape_set_drawable *data = in_data;
 
-                if (!data->hwnd)  /* pbuffer */
+                EnterCriticalSection( &context_section );
+                if (!XFindContext( gdi_display, (XID)data->hwnd, gl_hwnd_context, (char **)&gl ) ||
+                    !XFindContext( gdi_display, (XID)dev->hdc, gl_pbuffer_context, (char **)&gl ))
                 {
-                    physdev->pixel_format = pixelformat_from_fbconfig_id( data->fbconfig_id );
-                    physdev->type         = DC_GL_PBUFFER;
-                    physdev->drawable     = data->drawable;
-                    physdev->pixmap       = 0;
+                    physdev->pixel_format = gl->pixel_format;
+                    physdev->type         = gl->type;
+                    physdev->drawable     = gl->drawable;
+                    physdev->pixmap       = gl->pixmap;
                 }
                 else
                 {
-                    EnterCriticalSection( &context_section );
-                    if (!XFindContext( gdi_display, (XID)data->hwnd, gl_drawable_context, (char **)&gl ))
-                    {
-                        physdev->pixel_format = gl->pixel_format;
-                        physdev->type         = gl->type;
-                        physdev->drawable     = gl->drawable;
-                        physdev->pixmap       = gl->pixmap;
-                    }
-                    else
-                    {
-                        physdev->pixel_format = 0;
-                        physdev->type         = DC_GL_NONE;
-                        physdev->drawable     = 0;
-                        physdev->pixmap       = 0;
-                    }
-                    LeaveCriticalSection( &context_section );
+                    physdev->pixel_format = 0;
+                    physdev->type         = DC_GL_NONE;
+                    physdev->drawable     = 0;
+                    physdev->pixmap       = 0;
                 }
+                LeaveCriticalSection( &context_section );
                 TRACE( "SET_DRAWABLE hdc %p drawable %lx pf %u type %u\n",
                        dev->hdc, physdev->drawable, physdev->pixel_format, physdev->type );
             }
