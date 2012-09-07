@@ -2056,6 +2056,12 @@ struct enum_font_data
     LOGFONT lf[MAX_ENUM_FONTS];
 };
 
+struct enum_fullname_data
+{
+    int total;
+    ENUMLOGFONT elf[MAX_ENUM_FONTS];
+};
+
 struct enum_font_dataW
 {
     int total;
@@ -2380,6 +2386,20 @@ static INT CALLBACK enum_font_data_proc(const LOGFONT *lf, const TEXTMETRIC *ntm
 
     if (efd->total < MAX_ENUM_FONTS)
         efd->lf[efd->total++] = *lf;
+    else
+        trace("enum tests invalid; you have more than %d fonts\n", MAX_ENUM_FONTS);
+
+    return 1;
+}
+
+static INT CALLBACK enum_fullname_data_proc(const LOGFONT *lf, const TEXTMETRIC *ntm, DWORD type, LPARAM lParam)
+{
+    struct enum_fullname_data *efnd = (struct enum_fullname_data *)lParam;
+
+    if (type != TRUETYPE_FONTTYPE) return 1;
+
+    if (efnd->total < MAX_ENUM_FONTS)
+        efnd->elf[efnd->total++] = *(ENUMLOGFONT*)lf;
     else
         trace("enum tests invalid; you have more than %d fonts\n", MAX_ENUM_FONTS);
 
@@ -2759,9 +2779,12 @@ end:
 #define TT_PLATFORM_MICROSOFT 3
 #define TT_MS_ID_UNICODE_CS 1
 #define TT_MS_LANGID_ENGLISH_UNITED_STATES 0x0409
+#define TT_NAME_ID_FONT_FAMILY 1
+#define TT_NAME_ID_FONT_SUBFAMILY 2
+#define TT_NAME_ID_UNIQUE_ID 3
 #define TT_NAME_ID_FULL_NAME 4
 
-static BOOL get_ttf_nametable_entry(HDC hdc, WORD name_id, char *out_buf, SIZE_T out_size)
+static BOOL get_ttf_nametable_entry(HDC hdc, WORD name_id, WCHAR *out_buf, SIZE_T out_size)
 {
     struct sfnt_name_header
     {
@@ -3977,11 +4000,13 @@ static BOOL is_font_installed_fullname(const char *family, const char *fullname)
 static void test_fullname(void)
 {
     static const char *TestName[] = {"Lucida Sans Demibold Roman", "Lucida Sans Italic", "Lucida Sans Regular"};
-    char buf[LF_FULLFACESIZE];
+    WCHAR bufW[LF_FULLFACESIZE];
+    char bufA[LF_FULLFACESIZE];
     HFONT hfont, of;
     LOGFONTA lf;
     HDC hdc;
     int i;
+    DWORD ret;
 
     hdc = CreateCompatibleDC(0);
     ok(hdc != NULL, "CreateCompatibleDC failed\n");
@@ -4008,14 +4033,133 @@ static void test_fullname(void)
         ok(hfont != 0, "CreateFontIndirectA failed\n");
 
         of = SelectObject(hdc, hfont);
-        buf[0] = 0;
-        ok(get_ttf_nametable_entry(hdc, TT_NAME_ID_FULL_NAME, buf, sizeof(buf)),
-           "face full name could not be read\n");
-        ok(!lstrcmpA(buf, TestName[i]), "font full names don't match: %s != %s\n", TestName[i], buf);
+        bufW[0] = 0;
+        bufA[0] = 0;
+        ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_FULL_NAME, bufW, sizeof(bufW));
+        ok(ret, "face full name could not be read\n");
+        WideCharToMultiByte(CP_ACP, 0, bufW, -1, bufA, sizeof(bufW), NULL, FALSE);
+        ok(!lstrcmpA(bufA, TestName[i]), "font full names don't match: %s != %s\n", TestName[i], bufA);
         SelectObject(hdc, of);
         DeleteObject(hfont);
     }
     DeleteDC(hdc);
+}
+
+static void test_fullname2_helper(const char *Family)
+{
+    char *FamilyName, *FaceName, *StyleName, *otmStr;
+    struct enum_fullname_data efnd;
+    WCHAR *bufW;
+    char *bufA;
+    HFONT hfont, of;
+    LOGFONTA lf;
+    HDC hdc;
+    int i;
+    DWORD otm_size, ret, buf_size;
+    OUTLINETEXTMETRICA *otm;
+    LCID lcid = GetSystemDefaultLangID();
+
+    if (lcid != TT_MS_LANGID_ENGLISH_UNITED_STATES)
+    {
+        skip("Skip test: LCID = %d\n", lcid);
+        return;
+    }
+
+    hdc = CreateCompatibleDC(0);
+    ok(hdc != NULL, "CreateCompatibleDC failed\n");
+
+    memset(&lf, 0, sizeof(lf));
+    lf.lfCharSet = DEFAULT_CHARSET;
+    lf.lfClipPrecision = CLIP_DEFAULT_PRECIS;
+    lf.lfHeight = 16;
+    lf.lfWidth = 16;
+    lf.lfQuality = DEFAULT_QUALITY;
+    lf.lfItalic = FALSE;
+    lf.lfWeight = FW_DONTCARE;
+    lstrcpy(lf.lfFaceName, Family);
+    efnd.total = 0;
+    EnumFontFamiliesExA(hdc, &lf, enum_fullname_data_proc, (LPARAM)&efnd, 0);
+    if (efnd.total == 0)
+        skip("%s is not installed\n", lf.lfFaceName);
+
+    for (i = 0; i < efnd.total; i++)
+    {
+        FamilyName = (char *)efnd.elf[i].elfLogFont.lfFaceName;
+        FaceName = (char *)efnd.elf[i].elfFullName;
+        StyleName = (char *)efnd.elf[i].elfStyle;
+
+        trace("Checking font %s:\nFamilyName: %s; FaceName: %s; StyleName: %s\n", Family, FamilyName, FaceName, StyleName);
+
+        lstrcpyA(lf.lfFaceName, FaceName);
+        hfont = CreateFontIndirectA(&lf);
+        ok(hfont != 0, "CreateFontIndirectA failed\n");
+
+        of = SelectObject(hdc, hfont);
+        buf_size = GetFontData(hdc, MS_NAME_TAG, 0, NULL, 0);
+        ok(buf_size != GDI_ERROR, "no name table found\n");
+        if (buf_size == GDI_ERROR) continue;
+
+        bufW = HeapAlloc(GetProcessHeap(), 0, buf_size);
+        bufA = HeapAlloc(GetProcessHeap(), 0, buf_size);
+
+        otm_size = GetOutlineTextMetricsA(hdc, 0, NULL);
+        otm = HeapAlloc(GetProcessHeap(), 0, otm_size);
+        memset(otm, 0, otm_size);
+        ret = GetOutlineTextMetrics(hdc, otm_size, otm);
+        ok(ret != 0, "GetOutlineTextMetrics fails!\n");
+        if (ret == 0) continue;
+
+        bufW[0] = 0;
+        bufA[0] = 0;
+        ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_FONT_FAMILY, bufW, buf_size);
+        ok(ret, "FAMILY (family name) could not be read\n");
+        WideCharToMultiByte(CP_ACP, 0, bufW, -1, bufA, buf_size, NULL, FALSE);
+        ok(!lstrcmpA(FamilyName, bufA), "font family names don't match: returned %s, expect %s\n", FamilyName, bufA);
+        otmStr = (LPSTR)otm + (UINT_PTR)otm->otmpFamilyName;
+        ok(!lstrcmpA(FamilyName, otmStr), "FamilyName %s doesn't match otmpFamilyName %s\n", FamilyName, otmStr);
+
+        bufW[0] = 0;
+        bufA[0] = 0;
+        ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_FULL_NAME, bufW, buf_size);
+        ok(ret, "FULL_NAME (face name) could not be read\n");
+        WideCharToMultiByte(CP_ACP, 0, bufW, -1, bufA, buf_size, NULL, FALSE);
+        ok(!lstrcmpA(FaceName, bufA), "font face names don't match: returned %s, expect %s\n", FaceName, bufA);
+        otmStr = (LPSTR)otm + (UINT_PTR)otm->otmpFaceName;
+        if(!lstrcmpA(FaceName, "Lucida Sans Regular"))
+            todo_wine ok(!lstrcmpA(FaceName, otmStr), "FaceName %s doesn't match otmpFaceName %s\n", FaceName, otmStr);
+        else
+            ok(!lstrcmpA(FaceName, otmStr), "FaceName %s doesn't match otmpFaceName %s\n", FaceName, otmStr);
+
+        bufW[0] = 0;
+        bufA[0] = 0;
+        ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_FONT_SUBFAMILY, bufW, buf_size);
+        ok(ret, "SUBFAMILY (style name) could not be read\n");
+        WideCharToMultiByte(CP_ACP, 0, bufW, -1, bufA, buf_size, NULL, FALSE);
+        ok(!lstrcmpA(StyleName, bufA), "style names don't match: returned %s, expect %s\n", FaceName, bufA);
+        otmStr = (LPSTR)otm + (UINT_PTR)otm->otmpStyleName;
+        ok(!lstrcmpA(StyleName, otmStr), "StyleName %s doesn't match otmpStyleName %s\n", StyleName, otmStr);
+
+        bufW[0] = 0;
+        bufA[0] = 0;
+        ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_UNIQUE_ID, bufW, buf_size);
+        ok(ret, "UNIQUE_ID (full name) could not be read\n");
+        WideCharToMultiByte(CP_ACP, 0, bufW, -1, bufA, buf_size, NULL, FALSE);
+        otmStr = (LPSTR)otm + (UINT_PTR)otm->otmpFullName;
+        todo_wine ok(!lstrcmpA(otmStr, bufA), "UNIQUE ID (full name) doesn't match: returned %s, expect %s\n", otmStr, bufA);
+
+        SelectObject(hdc, of);
+        DeleteObject(hfont);
+
+        HeapFree(GetProcessHeap(), 0, otm);
+        HeapFree(GetProcessHeap(), 0, bufW);
+        HeapFree(GetProcessHeap(), 0, bufA);
+    }
+    DeleteDC(hdc);
+}
+
+static void test_fullname2(void)
+{
+    test_fullname2_helper("Lucida Sans");
 }
 
 static BOOL write_ttf_file(const char *fontname, char *tmp_name)
@@ -4531,6 +4675,7 @@ START_TEST(font)
     test_CreateFontIndirectEx();
     test_oemcharset();
     test_fullname();
+    test_fullname2();
     test_east_asian_font_selection();
 
     /* These tests should be last test until RemoveFontResource
