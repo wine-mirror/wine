@@ -21,6 +21,10 @@
 #include "jscript.h"
 #include "engine.h"
 
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(jscript);
+
 #define YYLEX_PARAM ctx
 #define YYPARSE_PARAM ctx
 
@@ -1516,6 +1520,8 @@ HRESULT script_parse(script_ctx_t *ctx, const WCHAR *code, const WCHAR *delimite
     jsheap_clear(mark);
     hres = parser_ctx->hres;
     if(FAILED(hres)) {
+        WARN("parser failed around %s\n",
+            debugstr_w(parser_ctx->begin+20 > parser_ctx->ptr ? parser_ctx->begin : parser_ctx->ptr-20));
         parser_release(parser_ctx);
         return hres;
     }
