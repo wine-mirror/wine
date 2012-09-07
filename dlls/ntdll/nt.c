@@ -904,15 +904,6 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
  * - cached_sci & cpuHZ in this file
  * - Peb->NumberOfProcessors
  * - SharedUserData->ProcessFeatures[] array
- *
- * It creates a registry subhierarchy, looking like:
- * "\HARDWARE\DESCRIPTION\System\CentralProcessor\<processornumber>\Identifier (CPU x86)".
- * Note that there is a hierarchy for every processor installed, so this
- * supports multiprocessor systems. This is done like Win95 does it, I think.
- *
- * It creates some registry entries in the environment part:
- * "\HKLM\System\CurrentControlSet\Control\Session Manager\Environment". These are
- * always present. When deleted, Windows will add them again.
  */
 void fill_cpu_info(void)
 {
