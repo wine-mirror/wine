@@ -1718,8 +1718,9 @@ done:
  */
 static BOOL X11DRV_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct wgl_context *ctx )
 {
-    struct x11drv_escape_get_drawable escape_draw, escape_read;
-    BOOL ret;
+    BOOL ret = FALSE;
+    HWND draw_hwnd, read_hwnd;
+    struct gl_drawable *draw_gl, *read_gl;
 
     TRACE("(%p,%p,%p)\n", draw_hdc, read_hdc, ctx);
 
@@ -1730,43 +1731,36 @@ static BOOL X11DRV_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct 
         return TRUE;
     }
 
-    escape_draw.code = X11DRV_GET_DRAWABLE;
-    if (!ExtEscape( draw_hdc, X11DRV_ESCAPE, sizeof(escape_draw.code), (LPCSTR)&escape_draw.code,
-                    sizeof(escape_draw), (LPSTR)&escape_draw ))
-        return FALSE;
+    if (!pglXMakeContextCurrent) return FALSE;
 
-    escape_read.code = X11DRV_GET_DRAWABLE;
-    if (!ExtEscape( read_hdc, X11DRV_ESCAPE, sizeof(escape_read.code), (LPCSTR)&escape_read.code,
-                    sizeof(escape_read), (LPSTR)&escape_read ))
-        return FALSE;
+    draw_hwnd = WindowFromDC( draw_hdc );
+    read_hwnd = WindowFromDC( read_hdc );
+    EnterCriticalSection( &context_section );
 
-    if (!escape_draw.pixel_format)
+    if (!XFindContext( gdi_display, (XID)draw_hwnd, gl_hwnd_context, (char **)&draw_gl ) ||
+        !XFindContext( gdi_display, (XID)draw_hdc, gl_pbuffer_context, (char **)&draw_gl ))
     {
-        WARN("Trying to use an invalid drawable\n");
-        SetLastError(ERROR_INVALID_HANDLE);
-        return FALSE;
-    }
-    else
-    {
-        if (!pglXMakeContextCurrent) return FALSE;
+        if (XFindContext( gdi_display, (XID)read_hwnd, gl_hwnd_context, (char **)&read_gl ) &&
+            XFindContext( gdi_display, (XID)read_hdc, gl_pbuffer_context, (char **)&read_gl ))
+            read_gl = NULL;
 
-        ret = pglXMakeContextCurrent(gdi_display, escape_draw.gl_drawable, escape_read.gl_drawable, ctx->ctx);
+        ret = pglXMakeContextCurrent(gdi_display, draw_gl->drawable,
+                                     read_gl ? read_gl->drawable : 0, ctx->ctx);
         if (ret)
         {
-            EnterCriticalSection( &context_section );
             ctx->has_been_current = TRUE;
             ctx->hdc = draw_hdc;
-            ctx->drawables[0] = escape_draw.gl_drawable;
-            ctx->drawables[1] = escape_read.gl_drawable;
+            ctx->drawables[0] = draw_gl->drawable;
+            ctx->drawables[1] = read_gl ? read_gl->drawable : 0;
             ctx->refresh_drawables = FALSE;
-            LeaveCriticalSection( &context_section );
             NtCurrentTeb()->glContext = ctx;
+            goto done;
         }
-        else
-            SetLastError(ERROR_INVALID_HANDLE);
     }
-
-    TRACE(" returning %s\n", (ret ? "True" : "False"));
+    SetLastError( ERROR_INVALID_HANDLE );
+done:
+    LeaveCriticalSection( &context_section );
+    TRACE( "%p,%p,%p returning %d\n", draw_hdc, read_hdc, ctx, ret );
     return ret;
 }
 
