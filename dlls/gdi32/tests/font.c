@@ -4125,10 +4125,7 @@ static void test_fullname2_helper(const char *Family)
         WideCharToMultiByte(CP_ACP, 0, bufW, -1, bufA, buf_size, NULL, FALSE);
         ok(!lstrcmpA(FaceName, bufA), "font face names don't match: returned %s, expect %s\n", FaceName, bufA);
         otmStr = (LPSTR)otm + (UINT_PTR)otm->otmpFaceName;
-        if(!lstrcmpA(FaceName, "Lucida Sans Regular"))
-            todo_wine ok(!lstrcmpA(FaceName, otmStr), "FaceName %s doesn't match otmpFaceName %s\n", FaceName, otmStr);
-        else
-            ok(!lstrcmpA(FaceName, otmStr), "FaceName %s doesn't match otmpFaceName %s\n", FaceName, otmStr);
+        ok(!lstrcmpA(FaceName, otmStr), "FaceName %s doesn't match otmpFaceName %s\n", FaceName, otmStr);
 
         bufW[0] = 0;
         bufA[0] = 0;
