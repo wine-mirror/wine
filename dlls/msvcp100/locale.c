@@ -8582,6 +8582,33 @@ void __asm_dummy_vtables(void) {
 }
 #endif
 
+void init_locale(void *base)
+{
+#ifdef __x86_64__
+    init_locale_facet_rtti(base);
+    init_collate_char_rtti(base);
+    init_collate_wchar_rtti(base);
+    init_collate_short_rtti(base);
+    init_ctype_base_rtti(base);
+    init_ctype_char_rtti(base);
+    init_ctype_wchar_rtti(base);
+    init_ctype_short_rtti(base);
+    init_codecvt_base_rtti(base);
+    init_codecvt_char_rtti(base);
+    init_codecvt_wchar_rtti(base);
+    init_codecvt_short_rtti(base);
+    init_numpunct_char_rtti(base);
+    init_numpunct_wchar_rtti(base);
+    init_numpunct_short_rtti(base);
+    init_num_get_char_rtti(base);
+    init_num_get_wchar_rtti(base);
+    init_num_get_short_rtti(base);
+    init_num_put_char_rtti(base);
+    init_num_put_wchar_rtti(base);
+    init_num_put_short_rtti(base);
+#endif
+}
+
 void free_locale(void)
 {
     facets_elem *iter, *safe;
