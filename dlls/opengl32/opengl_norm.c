@@ -3437,6 +3437,7 @@ static void null_glBindTransformFeedback( GLenum target, GLuint id ) { }
 static void null_glBindTransformFeedbackNV( GLenum target, GLuint id ) { }
 static void null_glBindVertexArray( GLuint array ) { }
 static void null_glBindVertexArrayAPPLE( GLuint array ) { }
+static void null_glBindVertexBuffer( GLuint bindingindex, GLuint buffer, INT_PTR offset, GLsizei stride ) { }
 static void null_glBindVertexShaderEXT( GLuint id ) { }
 static void null_glBindVideoCaptureStreamBufferNV( GLuint video_capture_slot, GLuint stream, GLenum frame_region, INT_PTR offset ) { }
 static void null_glBindVideoCaptureStreamTextureNV( GLuint video_capture_slot, GLuint stream, GLenum frame_region, GLenum target, GLuint texture ) { }
@@ -3486,6 +3487,8 @@ static GLenum null_glCheckFramebufferStatusEXT( GLenum target ) { return 0; }
 static GLenum null_glCheckNamedFramebufferStatusEXT( GLuint framebuffer, GLenum target ) { return 0; }
 static void null_glClampColor( GLenum target, GLenum clamp ) { }
 static void null_glClampColorARB( GLenum target, GLenum clamp ) { }
+static void null_glClearBufferData( GLenum target, GLenum internalformat, GLenum format, GLenum type, const void* data ) { }
+static void null_glClearBufferSubData( GLenum target, GLenum internalformat, INT_PTR offset, INT_PTR size, GLenum format, GLenum type, const void* data ) { }
 static void null_glClearBufferfi( GLenum buffer, GLint drawbuffer, GLfloat depth, GLint stencil ) { }
 static void null_glClearBufferfv( GLenum buffer, GLint drawbuffer, const GLfloat* value ) { }
 static void null_glClearBufferiv( GLenum buffer, GLint drawbuffer, const GLint* value ) { }
@@ -3494,6 +3497,8 @@ static void null_glClearColorIiEXT( GLint red, GLint green, GLint blue, GLint al
 static void null_glClearColorIuiEXT( GLuint red, GLuint green, GLuint blue, GLuint alpha ) { }
 static void null_glClearDepthdNV( GLdouble depth ) { }
 static void null_glClearDepthf( GLfloat d ) { }
+static void null_glClearNamedBufferDataEXT( GLuint buffer, GLenum internalformat, GLenum format, GLenum type, const void* data ) { }
+static void null_glClearNamedBufferSubDataEXT( GLuint buffer, GLenum internalformat, GLenum format, GLenum type, INT_PTR offset, INT_PTR size, const void* data ) { }
 static void null_glClientActiveTexture( GLenum texture ) { }
 static void null_glClientActiveTextureARB( GLenum texture ) { }
 static void null_glClientActiveVertexStreamATI( GLenum stream ) { }
@@ -3588,6 +3593,7 @@ static void null_glCopyConvolutionFilter1D( GLenum target, GLenum internalformat
 static void null_glCopyConvolutionFilter1DEXT( GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width ) { }
 static void null_glCopyConvolutionFilter2D( GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height ) { }
 static void null_glCopyConvolutionFilter2DEXT( GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height ) { }
+static void null_glCopyImageSubData( GLuint srcName, GLenum srcTarget, GLint srcLevel, GLint srcX, GLint srcY, GLint srcZ, GLuint dstName, GLenum dstTarget, GLint dstLevel, GLint dstX, GLint dstY, GLint dstZ, GLsizei srcWidth, GLsizei srcHeight, GLsizei srcDepth ) { }
 static void null_glCopyImageSubDataNV( GLuint srcName, GLenum srcTarget, GLint srcLevel, GLint srcX, GLint srcY, GLint srcZ, GLuint dstName, GLenum dstTarget, GLint dstLevel, GLint dstX, GLint dstY, GLint dstZ, GLsizei width, GLsizei height, GLsizei depth ) { }
 static void null_glCopyMultiTexImage1DEXT( GLenum texunit, GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLint border ) { }
 static void null_glCopyMultiTexImage2DEXT( GLenum texunit, GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border ) { }
@@ -3620,10 +3626,13 @@ static GLvoid* null_glCreateSyncFromCLeventARB( void * context, void * event, GL
 static void null_glCullParameterdvEXT( GLenum pname, GLdouble* params ) { }
 static void null_glCullParameterfvEXT( GLenum pname, GLfloat* params ) { }
 static void null_glCurrentPaletteMatrixARB( GLint index ) { }
+static void null_glDebugMessageCallback( void * callback, const void* userParam ) { }
 static void null_glDebugMessageCallbackAMD( void * callback, GLvoid* userParam ) { }
 static void null_glDebugMessageCallbackARB( void * callback, const GLvoid* userParam ) { }
+static void null_glDebugMessageControl( GLenum source, GLenum type, GLenum severity, GLsizei count, const GLuint* ids, GLboolean enabled ) { }
 static void null_glDebugMessageControlARB( GLenum source, GLenum type, GLenum severity, GLsizei count, const GLuint* ids, GLboolean enabled ) { }
 static void null_glDebugMessageEnableAMD( GLenum category, GLenum severity, GLsizei count, const GLuint* ids, GLboolean enabled ) { }
+static void null_glDebugMessageInsert( GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const char* buf ) { }
 static void null_glDebugMessageInsertAMD( GLenum category, GLenum severity, GLuint id, GLsizei length, const char* buf ) { }
 static void null_glDebugMessageInsertARB( GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const char* buf ) { }
 static void null_glDeformSGIX( GLbitfield mask ) { }
@@ -3678,11 +3687,13 @@ static void null_glDisableVertexAttribAPPLE( GLuint index, GLenum pname ) { }
 static void null_glDisableVertexAttribArray( GLuint index ) { }
 static void null_glDisableVertexAttribArrayARB( GLuint index ) { }
 static void null_glDisablei( GLenum target, GLuint index ) { }
+static void null_glDispatchCompute( GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z ) { }
+static void null_glDispatchComputeIndirect( INT_PTR indirect ) { }
 static void null_glDrawArraysEXT( GLenum mode, GLint first, GLsizei count ) { }
 static void null_glDrawArraysIndirect( GLenum mode, const GLvoid* indirect ) { }
-static void null_glDrawArraysInstanced( GLenum mode, GLint first, GLsizei count, GLsizei primcount ) { }
+static void null_glDrawArraysInstanced( GLenum mode, GLint first, GLsizei count, GLsizei instancecount ) { }
 static void null_glDrawArraysInstancedARB( GLenum mode, GLint first, GLsizei count, GLsizei primcount ) { }
-static void null_glDrawArraysInstancedBaseInstance( GLenum mode, GLint first, GLsizei count, GLsizei primcount, GLuint baseinstance ) { }
+static void null_glDrawArraysInstancedBaseInstance( GLenum mode, GLint first, GLsizei count, GLsizei instancecount, GLuint baseinstance ) { }
 static void null_glDrawArraysInstancedEXT( GLenum mode, GLint start, GLsizei count, GLsizei primcount ) { }
 static void null_glDrawBufferRegion( GLenum region, GLint x, GLint y, GLsizei width, GLsizei height, GLint xDest, GLint yDest ) { }
 static void null_glDrawBuffers( GLsizei n, const GLenum* bufs ) { }
@@ -3692,11 +3703,11 @@ static void null_glDrawElementArrayAPPLE( GLenum mode, GLint first, GLsizei coun
 static void null_glDrawElementArrayATI( GLenum mode, GLsizei count ) { }
 static void null_glDrawElementsBaseVertex( GLenum mode, GLsizei count, GLenum type, const GLvoid* indices, GLint basevertex ) { }
 static void null_glDrawElementsIndirect( GLenum mode, GLenum type, const GLvoid* indirect ) { }
-static void null_glDrawElementsInstanced( GLenum mode, GLsizei count, GLenum type, const GLvoid* indices, GLsizei primcount ) { }
+static void null_glDrawElementsInstanced( GLenum mode, GLsizei count, GLenum type, const GLvoid* indices, GLsizei instancecount ) { }
 static void null_glDrawElementsInstancedARB( GLenum mode, GLsizei count, GLenum type, const GLvoid* indices, GLsizei primcount ) { }
-static void null_glDrawElementsInstancedBaseInstance( GLenum mode, GLsizei count, GLenum type, const void* indices, GLsizei primcount, GLuint baseinstance ) { }
-static void null_glDrawElementsInstancedBaseVertex( GLenum mode, GLsizei count, GLenum type, const GLvoid* indices, GLsizei primcount, GLint basevertex ) { }
-static void null_glDrawElementsInstancedBaseVertexBaseInstance( GLenum mode, GLsizei count, GLenum type, const void* indices, GLsizei primcount, GLint basevertex, GLuint baseinstance ) { }
+static void null_glDrawElementsInstancedBaseInstance( GLenum mode, GLsizei count, GLenum type, const void* indices, GLsizei instancecount, GLuint baseinstance ) { }
+static void null_glDrawElementsInstancedBaseVertex( GLenum mode, GLsizei count, GLenum type, const GLvoid* indices, GLsizei instancecount, GLint basevertex ) { }
+static void null_glDrawElementsInstancedBaseVertexBaseInstance( GLenum mode, GLsizei count, GLenum type, const void* indices, GLsizei instancecount, GLint basevertex, GLuint baseinstance ) { }
 static void null_glDrawElementsInstancedEXT( GLenum mode, GLsizei count, GLenum type, const GLvoid* indices, GLsizei primcount ) { }
 static void null_glDrawMeshArraysSUN( GLenum mode, GLint first, GLsizei count, GLsizei width ) { }
 static void null_glDrawRangeElementArrayAPPLE( GLenum mode, GLuint start, GLuint end, GLint first, GLsizei count ) { }
@@ -3705,10 +3716,10 @@ static void null_glDrawRangeElements( GLenum mode, GLuint start, GLuint end, GLs
 static void null_glDrawRangeElementsBaseVertex( GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid* indices, GLint basevertex ) { }
 static void null_glDrawRangeElementsEXT( GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid* indices ) { }
 static void null_glDrawTransformFeedback( GLenum mode, GLuint id ) { }
-static void null_glDrawTransformFeedbackInstanced( GLenum mode, GLuint id, GLsizei primcount ) { }
+static void null_glDrawTransformFeedbackInstanced( GLenum mode, GLuint id, GLsizei instancecount ) { }
 static void null_glDrawTransformFeedbackNV( GLenum mode, GLuint id ) { }
 static void null_glDrawTransformFeedbackStream( GLenum mode, GLuint id, GLuint stream ) { }
-static void null_glDrawTransformFeedbackStreamInstanced( GLenum mode, GLuint id, GLuint stream, GLsizei primcount ) { }
+static void null_glDrawTransformFeedbackStreamInstanced( GLenum mode, GLuint id, GLuint stream, GLsizei instancecount ) { }
 static void null_glEdgeFlagFormatNV( GLsizei stride ) { }
 static void null_glEdgeFlagPointerEXT( GLsizei stride, GLsizei count, const GLboolean* pointer ) { }
 static void null_glEdgeFlagPointerListIBM( GLint stride, const GLboolean** pointer, GLint ptrstride ) { }
@@ -3783,6 +3794,7 @@ static void null_glFrameTerminatorGREMEDY( void ) { }
 static void null_glFrameZoomSGIX( GLint factor ) { }
 static void null_glFramebufferDrawBufferEXT( GLuint framebuffer, GLenum mode ) { }
 static void null_glFramebufferDrawBuffersEXT( GLuint framebuffer, GLsizei n, const GLenum* bufs ) { }
+static void null_glFramebufferParameteri( GLenum target, GLenum pname, GLint param ) { }
 static void null_glFramebufferReadBufferEXT( GLuint framebuffer, GLenum mode ) { }
 static void null_glFramebufferRenderbuffer( GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer ) { }
 static void null_glFramebufferRenderbufferEXT( GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer ) { }
@@ -3885,6 +3897,7 @@ static void null_glGetConvolutionParameterfv( GLenum target, GLenum pname, GLflo
 static void null_glGetConvolutionParameterfvEXT( GLenum target, GLenum pname, GLfloat* params ) { }
 static void null_glGetConvolutionParameteriv( GLenum target, GLenum pname, GLint* params ) { }
 static void null_glGetConvolutionParameterivEXT( GLenum target, GLenum pname, GLint* params ) { }
+static GLuint null_glGetDebugMessageLog( GLuint count, GLsizei bufsize, GLenum* sources, GLenum* types, GLuint* ids, GLenum* severities, GLsizei* lengths, char* messageLog ) { return 0; }
 static GLuint null_glGetDebugMessageLogAMD( GLuint count, GLsizei bufsize, GLenum* categories, GLuint* severities, GLuint* ids, GLsizei* lengths, char* message ) { return 0; }
 static GLuint null_glGetDebugMessageLogARB( GLuint count, GLsizei bufsize, GLenum* sources, GLenum* types, GLuint* ids, GLenum* severities, GLsizei* lengths, char* messageLog ) { return 0; }
 static void null_glGetDetailTexFuncSGIS( GLenum target, GLfloat* points ) { }
@@ -3905,6 +3918,7 @@ static void null_glGetFragmentMaterialfvSGIX( GLenum face, GLenum pname, GLfloat
 static void null_glGetFragmentMaterialivSGIX( GLenum face, GLenum pname, GLint* params ) { }
 static void null_glGetFramebufferAttachmentParameteriv( GLenum target, GLenum attachment, GLenum pname, GLint* params ) { }
 static void null_glGetFramebufferAttachmentParameterivEXT( GLenum target, GLenum attachment, GLenum pname, GLint* params ) { }
+static void null_glGetFramebufferParameteriv( GLenum target, GLenum pname, GLint* params ) { }
 static void null_glGetFramebufferParameterivEXT( GLuint framebuffer, GLenum pname, GLint* params ) { }
 static GLenum null_glGetGraphicsResetStatusARB( void ) { return 0; }
 static unsigned int null_glGetHandleARB( GLenum pname ) { return 0; }
@@ -3925,6 +3939,7 @@ static void null_glGetIntegerIndexedvEXT( GLenum target, GLuint index, GLint* da
 static void null_glGetIntegeri_v( GLenum target, GLuint index, GLint* data ) { }
 static void null_glGetIntegerui64i_vNV( GLenum value, GLuint index, UINT64* result ) { }
 static void null_glGetIntegerui64vNV( GLenum value, UINT64* result ) { }
+static void null_glGetInternalformati64v( GLenum target, GLenum internalformat, GLenum pname, GLsizei bufSize, INT64* params ) { }
 static void null_glGetInternalformativ( GLenum target, GLenum internalformat, GLenum pname, GLsizei bufSize, GLint* params ) { }
 static void null_glGetInvariantBooleanvEXT( GLuint id, GLenum value, GLboolean* data ) { }
 static void null_glGetInvariantFloatvEXT( GLuint id, GLenum value, GLfloat* data ) { }
@@ -3964,6 +3979,7 @@ static void null_glGetNamedBufferParameterui64vNV( GLuint buffer, GLenum pname, 
 static void null_glGetNamedBufferPointervEXT( GLuint buffer, GLenum pname, GLvoid** params ) { }
 static void null_glGetNamedBufferSubDataEXT( GLuint buffer, INT_PTR offset, INT_PTR size, GLvoid* data ) { }
 static void null_glGetNamedFramebufferAttachmentParameterivEXT( GLuint framebuffer, GLenum attachment, GLenum pname, GLint* params ) { }
+static void null_glGetNamedFramebufferParameterivEXT( GLuint framebuffer, GLenum pname, GLint* params ) { }
 static void null_glGetNamedProgramLocalParameterIivEXT( GLuint program, GLenum target, GLuint index, GLint* params ) { }
 static void null_glGetNamedProgramLocalParameterIuivEXT( GLuint program, GLenum target, GLuint index, GLuint* params ) { }
 static void null_glGetNamedProgramLocalParameterdvEXT( GLuint program, GLenum target, GLuint index, GLdouble* params ) { }
@@ -3975,9 +3991,11 @@ static void null_glGetNamedStringARB( GLint namelen, const char* name, GLsizei b
 static void null_glGetNamedStringivARB( GLint namelen, const char* name, GLenum pname, GLint* params ) { }
 static void null_glGetObjectBufferfvATI( GLuint buffer, GLenum pname, GLfloat* params ) { }
 static void null_glGetObjectBufferivATI( GLuint buffer, GLenum pname, GLint* params ) { }
+static void null_glGetObjectLabel( GLenum identifier, GLuint name, GLsizei bufSize, GLsizei* length, char* label ) { }
 static void null_glGetObjectParameterfvARB( unsigned int obj, GLenum pname, GLfloat* params ) { }
 static void null_glGetObjectParameterivAPPLE( GLenum objectType, GLuint name, GLenum pname, GLint* params ) { }
 static void null_glGetObjectParameterivARB( unsigned int obj, GLenum pname, GLint* params ) { }
+static void null_glGetObjectPtrLabel( const void* ptr, GLsizei bufSize, GLsizei* length, char* label ) { }
 static void null_glGetOcclusionQueryivNV( GLuint id, GLenum pname, GLint* params ) { }
 static void null_glGetOcclusionQueryuivNV( GLuint id, GLenum pname, GLuint* params ) { }
 static void null_glGetPathColorGenfvNV( GLenum color, GLenum pname, GLfloat* value ) { }
@@ -4009,6 +4027,7 @@ static void null_glGetProgramEnvParameterIuivNV( GLenum target, GLuint index, GL
 static void null_glGetProgramEnvParameterdvARB( GLenum target, GLuint index, GLdouble* params ) { }
 static void null_glGetProgramEnvParameterfvARB( GLenum target, GLuint index, GLfloat* params ) { }
 static void null_glGetProgramInfoLog( GLuint program, GLsizei bufSize, GLsizei* length, char* infoLog ) { }
+static void null_glGetProgramInterfaceiv( GLuint program, GLenum programInterface, GLenum pname, GLint* params ) { }
 static void null_glGetProgramLocalParameterIivNV( GLenum target, GLuint index, GLint* params ) { }
 static void null_glGetProgramLocalParameterIuivNV( GLenum target, GLuint index, GLuint* params ) { }
 static void null_glGetProgramLocalParameterdvARB( GLenum target, GLuint index, GLdouble* params ) { }
@@ -4019,6 +4038,11 @@ static void null_glGetProgramParameterdvNV( GLenum target, GLuint index, GLenum 
 static void null_glGetProgramParameterfvNV( GLenum target, GLuint index, GLenum pname, GLfloat* params ) { }
 static void null_glGetProgramPipelineInfoLog( GLuint pipeline, GLsizei bufSize, GLsizei* length, char* infoLog ) { }
 static void null_glGetProgramPipelineiv( GLuint pipeline, GLenum pname, GLint* params ) { }
+static GLuint null_glGetProgramResourceIndex( GLuint program, GLenum programInterface, const char* name ) { return 0; }
+static GLint null_glGetProgramResourceLocation( GLuint program, GLenum programInterface, const char* name ) { return 0; }
+static GLint null_glGetProgramResourceLocationIndex( GLuint program, GLenum programInterface, const char* name ) { return 0; }
+static void null_glGetProgramResourceName( GLuint program, GLenum programInterface, GLuint index, GLsizei bufSize, GLsizei* length, char* name ) { }
+static void null_glGetProgramResourceiv( GLuint program, GLenum programInterface, GLuint index, GLsizei propCount, const GLenum* props, GLsizei bufSize, GLsizei* length, GLint* params ) { }
 static void null_glGetProgramStageiv( GLuint program, GLenum shadertype, GLenum pname, GLint* values ) { }
 static void null_glGetProgramStringARB( GLenum target, GLenum pname, GLvoid* string ) { }
 static void null_glGetProgramStringNV( GLuint id, GLenum pname, GLubyte* program ) { }
@@ -4172,6 +4196,12 @@ static void null_glIndexPointerListIBM( GLenum type, GLint stride, const GLvoid*
 static void null_glInsertComponentEXT( GLuint res, GLuint src, GLuint num ) { }
 static void null_glInstrumentsBufferSGIX( GLsizei size, GLint* buffer ) { }
 static void null_glInterpolatePathsNV( GLuint resultPath, GLuint pathA, GLuint pathB, GLfloat weight ) { }
+static void null_glInvalidateBufferData( GLuint buffer ) { }
+static void null_glInvalidateBufferSubData( GLuint buffer, INT_PTR offset, INT_PTR length ) { }
+static void null_glInvalidateFramebuffer( GLenum target, GLsizei numAttachments, const GLenum* attachments ) { }
+static void null_glInvalidateSubFramebuffer( GLenum target, GLsizei numAttachments, const GLenum* attachments, GLint x, GLint y, GLsizei width, GLsizei height ) { }
+static void null_glInvalidateTexImage( GLuint texture, GLint level ) { }
+static void null_glInvalidateTexSubImage( GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth ) { }
 static GLboolean null_glIsAsyncMarkerSGIX( GLuint marker ) { return 0; }
 static GLboolean null_glIsBuffer( GLuint buffer ) { return 0; }
 static GLboolean null_glIsBufferARB( GLuint buffer ) { return 0; }
@@ -4280,13 +4310,15 @@ static void null_glMultTransposeMatrixd( const GLdouble* m ) { }
 static void null_glMultTransposeMatrixdARB( const GLdouble* m ) { }
 static void null_glMultTransposeMatrixf( const GLfloat* m ) { }
 static void null_glMultTransposeMatrixfARB( const GLfloat* m ) { }
-static void null_glMultiDrawArrays( GLenum mode, const GLint* first, const GLsizei* count, GLsizei primcount ) { }
+static void null_glMultiDrawArrays( GLenum mode, const GLint* first, const GLsizei* count, GLsizei drawcount ) { }
 static void null_glMultiDrawArraysEXT( GLenum mode, const GLint* first, const GLsizei* count, GLsizei primcount ) { }
+static void null_glMultiDrawArraysIndirect( GLenum mode, const void* indirect, GLsizei drawcount, GLsizei stride ) { }
 static void null_glMultiDrawArraysIndirectAMD( GLenum mode, const GLvoid* indirect, GLsizei primcount, GLsizei stride ) { }
 static void null_glMultiDrawElementArrayAPPLE( GLenum mode, const GLint* first, const GLsizei* count, GLsizei primcount ) { }
-static void null_glMultiDrawElements( GLenum mode, const GLsizei* count, GLenum type, const GLvoid* const* indices, GLsizei primcount ) { }
-static void null_glMultiDrawElementsBaseVertex( GLenum mode, const GLsizei* count, GLenum type, const GLvoid* const* indices, GLsizei primcount, const GLint* basevertex ) { }
+static void null_glMultiDrawElements( GLenum mode, const GLsizei* count, GLenum type, const GLvoid* const* indices, GLsizei drawcount ) { }
+static void null_glMultiDrawElementsBaseVertex( GLenum mode, const GLsizei* count, GLenum type, const GLvoid* const* indices, GLsizei drawcount, const GLint* basevertex ) { }
 static void null_glMultiDrawElementsEXT( GLenum mode, const GLsizei* count, GLenum type, const GLvoid** indices, GLsizei primcount ) { }
+static void null_glMultiDrawElementsIndirect( GLenum mode, GLenum type, const void* indirect, GLsizei drawcount, GLsizei stride ) { }
 static void null_glMultiDrawElementsIndirectAMD( GLenum mode, GLenum type, const GLvoid* indirect, GLsizei primcount, GLsizei stride ) { }
 static void null_glMultiDrawRangeElementArrayAPPLE( GLenum mode, GLuint start, GLuint end, const GLint* first, const GLsizei* count, GLsizei primcount ) { }
 static void null_glMultiModeDrawArraysIBM( const GLenum* mode, const GLint* first, const GLsizei* count, GLsizei primcount, GLint modestride ) { }
@@ -4432,6 +4464,7 @@ static void null_glMultiTexSubImage3DEXT( GLenum texunit, GLenum target, GLint l
 static void null_glNamedBufferDataEXT( GLuint buffer, INT_PTR size, const GLvoid* data, GLenum usage ) { }
 static void null_glNamedBufferSubDataEXT( GLuint buffer, INT_PTR offset, INT_PTR size, const GLvoid* data ) { }
 static void null_glNamedCopyBufferSubDataEXT( GLuint readBuffer, GLuint writeBuffer, INT_PTR readOffset, INT_PTR writeOffset, INT_PTR size ) { }
+static void null_glNamedFramebufferParameteriEXT( GLuint framebuffer, GLenum pname, GLint param ) { }
 static void null_glNamedFramebufferRenderbufferEXT( GLuint framebuffer, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer ) { }
 static void null_glNamedFramebufferTexture1DEXT( GLuint framebuffer, GLenum attachment, GLenum textarget, GLuint texture, GLint level ) { }
 static void null_glNamedFramebufferTexture2DEXT( GLuint framebuffer, GLenum attachment, GLenum textarget, GLuint texture, GLint level ) { }
@@ -4477,6 +4510,8 @@ static void null_glNormalStream3iATI( GLenum stream, GLint nx, GLint ny, GLint n
 static void null_glNormalStream3ivATI( GLenum stream, const GLint* coords ) { }
 static void null_glNormalStream3sATI( GLenum stream, GLshort nx, GLshort ny, GLshort nz ) { }
 static void null_glNormalStream3svATI( GLenum stream, const GLshort* coords ) { }
+static void null_glObjectLabel( GLenum identifier, GLuint name, GLsizei length, const char* label ) { }
+static void null_glObjectPtrLabel( const void* ptr, GLsizei length, const char* label ) { }
 static GLenum null_glObjectPurgeableAPPLE( GLenum objectType, GLuint name, GLenum option ) { return 0; }
 static GLenum null_glObjectUnpurgeableAPPLE( GLenum objectType, GLuint name, GLenum option ) { return 0; }
 static void null_glPNTrianglesfATI( GLenum pname, GLfloat param ) { }
@@ -4504,7 +4539,7 @@ static void null_glPathSubCoordsNV( GLuint path, GLsizei coordStart, GLsizei num
 static void null_glPathTexGenNV( GLenum texCoordSet, GLenum genMode, GLint components, const GLfloat* coeffs ) { }
 static void null_glPauseTransformFeedback( void ) { }
 static void null_glPauseTransformFeedbackNV( void ) { }
-static void null_glPixelDataRangeNV( GLenum target, GLsizei length, GLvoid* pointer ) { }
+static void null_glPixelDataRangeNV( GLenum target, GLsizei length, const GLvoid* pointer ) { }
 static void null_glPixelTexGenParameterfSGIS( GLenum pname, GLfloat param ) { }
 static void null_glPixelTexGenParameterfvSGIS( GLenum pname, const GLfloat* params ) { }
 static void null_glPixelTexGenParameteriSGIS( GLenum pname, GLint param ) { }
@@ -4530,6 +4565,7 @@ static void null_glPointParameterivNV( GLenum pname, const GLint* params ) { }
 static GLint null_glPollAsyncSGIX( GLuint* markerp ) { return 0; }
 static GLint null_glPollInstrumentsSGIX( GLint* marker_p ) { return 0; }
 static void null_glPolygonOffsetEXT( GLfloat factor, GLfloat bias ) { }
+static void null_glPopDebugGroup( void ) { }
 static void null_glPresentFrameDualFillNV( GLuint video_slot, UINT64 minPresentTime, GLuint beginPresentTimeId, GLuint presentDurationId, GLenum type, GLenum target0, GLuint fill0, GLenum target1, GLuint fill1, GLenum target2, GLuint fill2, GLenum target3, GLuint fill3 ) { }
 static void null_glPresentFrameKeyedNV( GLuint video_slot, UINT64 minPresentTime, GLuint beginPresentTimeId, GLuint presentDurationId, GLenum type, GLenum target0, GLuint fill0, GLuint key0, GLenum target1, GLuint fill1, GLuint key1 ) { }
 static void null_glPrimitiveRestartIndex( GLuint index ) { }
@@ -4701,6 +4737,7 @@ static void null_glProgramVertexLimitNV( GLenum target, GLint limit ) { }
 static void null_glProvokingVertex( GLenum mode ) { }
 static void null_glProvokingVertexEXT( GLenum mode ) { }
 static void null_glPushClientAttribDefaultEXT( GLbitfield mask ) { }
+static void null_glPushDebugGroup( GLenum source, GLuint id, GLsizei length, const char* message ) { }
 static void null_glQueryCounter( GLuint id, GLenum target ) { }
 static void null_glReadBufferRegion( GLenum region, GLint x, GLint y, GLsizei width, GLsizei height ) { }
 static void null_glReadInstrumentsSGIX( GLint marker ) { }
@@ -4818,6 +4855,7 @@ static void null_glShaderOp2EXT( GLenum op, GLuint res, GLuint arg1, GLuint arg2
 static void null_glShaderOp3EXT( GLenum op, GLuint res, GLuint arg1, GLuint arg2, GLuint arg3 ) { }
 static void null_glShaderSource( GLuint shader, GLsizei count, const char* const* string, const GLint* length ) { }
 static void null_glShaderSourceARB( unsigned int shaderObj, GLsizei count, const char** string, const GLint* length ) { }
+static void null_glShaderStorageBlockBinding( GLuint program, GLuint storageBlockIndex, GLuint storageBlockBinding ) { }
 static void null_glSharpenTexFuncSGIS( GLenum target, GLsizei n, const GLfloat* points ) { }
 static void null_glSpriteParameterfSGIX( GLenum pname, GLfloat param ) { }
 static void null_glSpriteParameterfvSGIX( GLenum pname, const GLfloat* params ) { }
@@ -4859,6 +4897,7 @@ static GLboolean null_glTestObjectAPPLE( GLenum object, GLuint name ) { return 0
 static void null_glTexBuffer( GLenum target, GLenum internalformat, GLuint buffer ) { }
 static void null_glTexBufferARB( GLenum target, GLenum internalformat, GLuint buffer ) { }
 static void null_glTexBufferEXT( GLenum target, GLenum internalformat, GLuint buffer ) { }
+static void null_glTexBufferRange( GLenum target, GLenum internalformat, GLuint buffer, INT_PTR offset, INT_PTR size ) { }
 static void null_glTexBumpParameterfvATI( GLenum pname, const GLfloat* param ) { }
 static void null_glTexBumpParameterivATI( GLenum pname, const GLint* param ) { }
 static void null_glTexCoord1hNV( unsigned short s ) { }
@@ -4910,7 +4949,9 @@ static void null_glTexParameterIuivEXT( GLenum target, GLenum pname, const GLuin
 static void null_glTexRenderbufferNV( GLenum target, GLuint renderbuffer ) { }
 static void null_glTexStorage1D( GLenum target, GLsizei levels, GLenum internalformat, GLsizei width ) { }
 static void null_glTexStorage2D( GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height ) { }
+static void null_glTexStorage2DMultisample( GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLboolean fixedsamplelocations ) { }
 static void null_glTexStorage3D( GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth ) { }
+static void null_glTexStorage3DMultisample( GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedsamplelocations ) { }
 static void null_glTexSubImage1DEXT( GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const GLvoid* pixels ) { }
 static void null_glTexSubImage2DEXT( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid* pixels ) { }
 static void null_glTexSubImage3D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid* pixels ) { }
@@ -4918,6 +4959,7 @@ static void null_glTexSubImage3DEXT( GLenum target, GLint level, GLint xoffset, 
 static void null_glTexSubImage4DSGIS( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint woffset, GLsizei width, GLsizei height, GLsizei depth, GLsizei size4d, GLenum format, GLenum type, const GLvoid* pixels ) { }
 static void null_glTextureBarrierNV( void ) { }
 static void null_glTextureBufferEXT( GLuint texture, GLenum target, GLenum internalformat, GLuint buffer ) { }
+static void null_glTextureBufferRangeEXT( GLuint texture, GLenum target, GLenum internalformat, GLuint buffer, INT_PTR offset, INT_PTR size ) { }
 static void null_glTextureColorMaskSGIS( GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha ) { }
 static void null_glTextureImage1DEXT( GLuint texture, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLint border, GLenum format, GLenum type, const GLvoid* pixels ) { }
 static void null_glTextureImage2DEXT( GLuint texture, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid* pixels ) { }
@@ -4939,10 +4981,13 @@ static void null_glTextureRangeAPPLE( GLenum target, GLsizei length, const GLvoi
 static void null_glTextureRenderbufferEXT( GLuint texture, GLenum target, GLuint renderbuffer ) { }
 static void null_glTextureStorage1DEXT( GLuint texture, GLenum target, GLsizei levels, GLenum internalformat, GLsizei width ) { }
 static void null_glTextureStorage2DEXT( GLuint texture, GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height ) { }
+static void null_glTextureStorage2DMultisampleEXT( GLuint texture, GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLboolean fixedsamplelocations ) { }
 static void null_glTextureStorage3DEXT( GLuint texture, GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth ) { }
+static void null_glTextureStorage3DMultisampleEXT( GLuint texture, GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedsamplelocations ) { }
 static void null_glTextureSubImage1DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const GLvoid* pixels ) { }
 static void null_glTextureSubImage2DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid* pixels ) { }
 static void null_glTextureSubImage3DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid* pixels ) { }
+static void null_glTextureView( GLuint texture, GLenum target, GLuint origtexture, GLenum internalformat, GLuint minlevel, GLuint numlevels, GLuint minlayer, GLuint numlayers ) { }
 static void null_glTrackMatrixNV( GLenum target, GLuint address, GLenum matrix, GLenum transform ) { }
 static void null_glTransformFeedbackAttribsNV( GLuint count, const GLint* attribs, GLenum bufferMode ) { }
 static void null_glTransformFeedbackStreamAttribsNV( GLsizei count, const GLint* attribs, GLsizei nbuffers, const GLint* bufstreams, GLenum bufferMode ) { }
@@ -5089,10 +5134,16 @@ static void null_glVertex3hNV( unsigned short x, unsigned short y, unsigned shor
 static void null_glVertex3hvNV( const unsigned short* v ) { }
 static void null_glVertex4hNV( unsigned short x, unsigned short y, unsigned short z, unsigned short w ) { }
 static void null_glVertex4hvNV( const unsigned short* v ) { }
+static void null_glVertexArrayBindVertexBufferEXT( GLuint vaobj, GLuint bindingindex, GLuint buffer, INT_PTR offset, GLsizei stride ) { }
 static void null_glVertexArrayParameteriAPPLE( GLenum pname, GLint param ) { }
 static void null_glVertexArrayRangeAPPLE( GLsizei length, GLvoid* pointer ) { }
 static void null_glVertexArrayRangeNV( GLsizei length, const GLvoid* pointer ) { }
+static void null_glVertexArrayVertexAttribBindingEXT( GLuint vaobj, GLuint attribindex, GLuint bindingindex ) { }
+static void null_glVertexArrayVertexAttribFormatEXT( GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLboolean normalized, GLuint relativeoffset ) { }
+static void null_glVertexArrayVertexAttribIFormatEXT( GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLuint relativeoffset ) { }
+static void null_glVertexArrayVertexAttribLFormatEXT( GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLuint relativeoffset ) { }
 static void null_glVertexArrayVertexAttribLOffsetEXT( GLuint vaobj, GLuint buffer, GLuint index, GLint size, GLenum type, GLsizei stride, INT_PTR offset ) { }
+static void null_glVertexArrayVertexBindingDivisorEXT( GLuint vaobj, GLuint bindingindex, GLuint divisor ) { }
 static void null_glVertexAttrib1d( GLuint index, GLdouble x ) { }
 static void null_glVertexAttrib1dARB( GLuint index, GLdouble x ) { }
 static void null_glVertexAttrib1dNV( GLuint index, GLdouble x ) { }
@@ -5200,8 +5251,10 @@ static void null_glVertexAttrib4uivARB( GLuint index, const GLuint* v ) { }
 static void null_glVertexAttrib4usv( GLuint index, const GLushort* v ) { }
 static void null_glVertexAttrib4usvARB( GLuint index, const GLushort* v ) { }
 static void null_glVertexAttribArrayObjectATI( GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, GLuint buffer, GLuint offset ) { }
+static void null_glVertexAttribBinding( GLuint attribindex, GLuint bindingindex ) { }
 static void null_glVertexAttribDivisor( GLuint index, GLuint divisor ) { }
 static void null_glVertexAttribDivisorARB( GLuint index, GLuint divisor ) { }
+static void null_glVertexAttribFormat( GLuint attribindex, GLint size, GLenum type, GLboolean normalized, GLuint relativeoffset ) { }
 static void null_glVertexAttribFormatNV( GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride ) { }
 static void null_glVertexAttribI1i( GLuint index, GLint x ) { }
 static void null_glVertexAttribI1iEXT( GLuint index, GLint x ) { }
@@ -5243,6 +5296,7 @@ static void null_glVertexAttribI4uiv( GLuint index, const GLuint* v ) { }
 static void null_glVertexAttribI4uivEXT( GLuint index, const GLuint* v ) { }
 static void null_glVertexAttribI4usv( GLuint index, const GLushort* v ) { }
 static void null_glVertexAttribI4usvEXT( GLuint index, const GLushort* v ) { }
+static void null_glVertexAttribIFormat( GLuint attribindex, GLint size, GLenum type, GLuint relativeoffset ) { }
 static void null_glVertexAttribIFormatNV( GLuint index, GLint size, GLenum type, GLsizei stride ) { }
 static void null_glVertexAttribIPointer( GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer ) { }
 static void null_glVertexAttribIPointerEXT( GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer ) { }
@@ -5278,6 +5332,7 @@ static void null_glVertexAttribL4i64NV( GLuint index, INT64 x, INT64 y, INT64 z,
 static void null_glVertexAttribL4i64vNV( GLuint index, const INT64* v ) { }
 static void null_glVertexAttribL4ui64NV( GLuint index, UINT64 x, UINT64 y, UINT64 z, UINT64 w ) { }
 static void null_glVertexAttribL4ui64vNV( GLuint index, const UINT64* v ) { }
+static void null_glVertexAttribLFormat( GLuint attribindex, GLint size, GLenum type, GLuint relativeoffset ) { }
 static void null_glVertexAttribLFormatNV( GLuint index, GLint size, GLenum type, GLsizei stride ) { }
 static void null_glVertexAttribLPointer( GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer ) { }
 static void null_glVertexAttribLPointerEXT( GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer ) { }
@@ -5309,6 +5364,7 @@ static void null_glVertexAttribs4fvNV( GLuint index, GLsizei count, const GLfloa
 static void null_glVertexAttribs4hvNV( GLuint index, GLsizei n, const unsigned short* v ) { }
 static void null_glVertexAttribs4svNV( GLuint index, GLsizei count, const GLshort* v ) { }
 static void null_glVertexAttribs4ubvNV( GLuint index, GLsizei count, const GLubyte* v ) { }
+static void null_glVertexBindingDivisor( GLuint bindingindex, GLuint divisor ) { }
 static void null_glVertexBlendARB( GLint count ) { }
 static void null_glVertexBlendEnvfATI( GLenum pname, GLfloat param ) { }
 static void null_glVertexBlendEnviATI( GLenum pname, GLint param ) { }
@@ -5875,6 +5931,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glBindTransformFeedbackNV,
         null_glBindVertexArray,
         null_glBindVertexArrayAPPLE,
+        null_glBindVertexBuffer,
         null_glBindVertexShaderEXT,
         null_glBindVideoCaptureStreamBufferNV,
         null_glBindVideoCaptureStreamTextureNV,
@@ -5924,6 +5981,8 @@ struct opengl_funcs null_opengl_funcs =
         null_glCheckNamedFramebufferStatusEXT,
         null_glClampColor,
         null_glClampColorARB,
+        null_glClearBufferData,
+        null_glClearBufferSubData,
         null_glClearBufferfi,
         null_glClearBufferfv,
         null_glClearBufferiv,
@@ -5932,6 +5991,8 @@ struct opengl_funcs null_opengl_funcs =
         null_glClearColorIuiEXT,
         null_glClearDepthdNV,
         null_glClearDepthf,
+        null_glClearNamedBufferDataEXT,
+        null_glClearNamedBufferSubDataEXT,
         null_glClientActiveTexture,
         null_glClientActiveTextureARB,
         null_glClientActiveVertexStreamATI,
@@ -6026,6 +6087,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glCopyConvolutionFilter1DEXT,
         null_glCopyConvolutionFilter2D,
         null_glCopyConvolutionFilter2DEXT,
+        null_glCopyImageSubData,
         null_glCopyImageSubDataNV,
         null_glCopyMultiTexImage1DEXT,
         null_glCopyMultiTexImage2DEXT,
@@ -6058,10 +6120,13 @@ struct opengl_funcs null_opengl_funcs =
         null_glCullParameterdvEXT,
         null_glCullParameterfvEXT,
         null_glCurrentPaletteMatrixARB,
+        null_glDebugMessageCallback,
         null_glDebugMessageCallbackAMD,
         null_glDebugMessageCallbackARB,
+        null_glDebugMessageControl,
         null_glDebugMessageControlARB,
         null_glDebugMessageEnableAMD,
+        null_glDebugMessageInsert,
         null_glDebugMessageInsertAMD,
         null_glDebugMessageInsertARB,
         null_glDeformSGIX,
@@ -6116,6 +6181,8 @@ struct opengl_funcs null_opengl_funcs =
         null_glDisableVertexAttribArray,
         null_glDisableVertexAttribArrayARB,
         null_glDisablei,
+        null_glDispatchCompute,
+        null_glDispatchComputeIndirect,
         null_glDrawArraysEXT,
         null_glDrawArraysIndirect,
         null_glDrawArraysInstanced,
@@ -6221,6 +6288,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glFrameZoomSGIX,
         null_glFramebufferDrawBufferEXT,
         null_glFramebufferDrawBuffersEXT,
+        null_glFramebufferParameteri,
         null_glFramebufferReadBufferEXT,
         null_glFramebufferRenderbuffer,
         null_glFramebufferRenderbufferEXT,
@@ -6323,6 +6391,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glGetConvolutionParameterfvEXT,
         null_glGetConvolutionParameteriv,
         null_glGetConvolutionParameterivEXT,
+        null_glGetDebugMessageLog,
         null_glGetDebugMessageLogAMD,
         null_glGetDebugMessageLogARB,
         null_glGetDetailTexFuncSGIS,
@@ -6343,6 +6412,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glGetFragmentMaterialivSGIX,
         null_glGetFramebufferAttachmentParameteriv,
         null_glGetFramebufferAttachmentParameterivEXT,
+        null_glGetFramebufferParameteriv,
         null_glGetFramebufferParameterivEXT,
         null_glGetGraphicsResetStatusARB,
         null_glGetHandleARB,
@@ -6363,6 +6433,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glGetIntegeri_v,
         null_glGetIntegerui64i_vNV,
         null_glGetIntegerui64vNV,
+        null_glGetInternalformati64v,
         null_glGetInternalformativ,
         null_glGetInvariantBooleanvEXT,
         null_glGetInvariantFloatvEXT,
@@ -6402,6 +6473,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glGetNamedBufferPointervEXT,
         null_glGetNamedBufferSubDataEXT,
         null_glGetNamedFramebufferAttachmentParameterivEXT,
+        null_glGetNamedFramebufferParameterivEXT,
         null_glGetNamedProgramLocalParameterIivEXT,
         null_glGetNamedProgramLocalParameterIuivEXT,
         null_glGetNamedProgramLocalParameterdvEXT,
@@ -6413,9 +6485,11 @@ struct opengl_funcs null_opengl_funcs =
         null_glGetNamedStringivARB,
         null_glGetObjectBufferfvATI,
         null_glGetObjectBufferivATI,
+        null_glGetObjectLabel,
         null_glGetObjectParameterfvARB,
         null_glGetObjectParameterivAPPLE,
         null_glGetObjectParameterivARB,
+        null_glGetObjectPtrLabel,
         null_glGetOcclusionQueryivNV,
         null_glGetOcclusionQueryuivNV,
         null_glGetPathColorGenfvNV,
@@ -6447,6 +6521,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glGetProgramEnvParameterdvARB,
         null_glGetProgramEnvParameterfvARB,
         null_glGetProgramInfoLog,
+        null_glGetProgramInterfaceiv,
         null_glGetProgramLocalParameterIivNV,
         null_glGetProgramLocalParameterIuivNV,
         null_glGetProgramLocalParameterdvARB,
@@ -6457,6 +6532,11 @@ struct opengl_funcs null_opengl_funcs =
         null_glGetProgramParameterfvNV,
         null_glGetProgramPipelineInfoLog,
         null_glGetProgramPipelineiv,
+        null_glGetProgramResourceIndex,
+        null_glGetProgramResourceLocation,
+        null_glGetProgramResourceLocationIndex,
+        null_glGetProgramResourceName,
+        null_glGetProgramResourceiv,
         null_glGetProgramStageiv,
         null_glGetProgramStringARB,
         null_glGetProgramStringNV,
@@ -6610,6 +6690,12 @@ struct opengl_funcs null_opengl_funcs =
         null_glInsertComponentEXT,
         null_glInstrumentsBufferSGIX,
         null_glInterpolatePathsNV,
+        null_glInvalidateBufferData,
+        null_glInvalidateBufferSubData,
+        null_glInvalidateFramebuffer,
+        null_glInvalidateSubFramebuffer,
+        null_glInvalidateTexImage,
+        null_glInvalidateTexSubImage,
         null_glIsAsyncMarkerSGIX,
         null_glIsBuffer,
         null_glIsBufferARB,
@@ -6720,11 +6806,13 @@ struct opengl_funcs null_opengl_funcs =
         null_glMultTransposeMatrixfARB,
         null_glMultiDrawArrays,
         null_glMultiDrawArraysEXT,
+        null_glMultiDrawArraysIndirect,
         null_glMultiDrawArraysIndirectAMD,
         null_glMultiDrawElementArrayAPPLE,
         null_glMultiDrawElements,
         null_glMultiDrawElementsBaseVertex,
         null_glMultiDrawElementsEXT,
+        null_glMultiDrawElementsIndirect,
         null_glMultiDrawElementsIndirectAMD,
         null_glMultiDrawRangeElementArrayAPPLE,
         null_glMultiModeDrawArraysIBM,
@@ -6870,6 +6958,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glNamedBufferDataEXT,
         null_glNamedBufferSubDataEXT,
         null_glNamedCopyBufferSubDataEXT,
+        null_glNamedFramebufferParameteriEXT,
         null_glNamedFramebufferRenderbufferEXT,
         null_glNamedFramebufferTexture1DEXT,
         null_glNamedFramebufferTexture2DEXT,
@@ -6915,6 +7004,8 @@ struct opengl_funcs null_opengl_funcs =
         null_glNormalStream3ivATI,
         null_glNormalStream3sATI,
         null_glNormalStream3svATI,
+        null_glObjectLabel,
+        null_glObjectPtrLabel,
         null_glObjectPurgeableAPPLE,
         null_glObjectUnpurgeableAPPLE,
         null_glPNTrianglesfATI,
@@ -6968,6 +7059,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glPollAsyncSGIX,
         null_glPollInstrumentsSGIX,
         null_glPolygonOffsetEXT,
+        null_glPopDebugGroup,
         null_glPresentFrameDualFillNV,
         null_glPresentFrameKeyedNV,
         null_glPrimitiveRestartIndex,
@@ -7139,6 +7231,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glProvokingVertex,
         null_glProvokingVertexEXT,
         null_glPushClientAttribDefaultEXT,
+        null_glPushDebugGroup,
         null_glQueryCounter,
         null_glReadBufferRegion,
         null_glReadInstrumentsSGIX,
@@ -7256,6 +7349,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glShaderOp3EXT,
         null_glShaderSource,
         null_glShaderSourceARB,
+        null_glShaderStorageBlockBinding,
         null_glSharpenTexFuncSGIS,
         null_glSpriteParameterfSGIX,
         null_glSpriteParameterfvSGIX,
@@ -7297,6 +7391,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glTexBuffer,
         null_glTexBufferARB,
         null_glTexBufferEXT,
+        null_glTexBufferRange,
         null_glTexBumpParameterfvATI,
         null_glTexBumpParameterivATI,
         null_glTexCoord1hNV,
@@ -7348,7 +7443,9 @@ struct opengl_funcs null_opengl_funcs =
         null_glTexRenderbufferNV,
         null_glTexStorage1D,
         null_glTexStorage2D,
+        null_glTexStorage2DMultisample,
         null_glTexStorage3D,
+        null_glTexStorage3DMultisample,
         null_glTexSubImage1DEXT,
         null_glTexSubImage2DEXT,
         null_glTexSubImage3D,
@@ -7356,6 +7453,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glTexSubImage4DSGIS,
         null_glTextureBarrierNV,
         null_glTextureBufferEXT,
+        null_glTextureBufferRangeEXT,
         null_glTextureColorMaskSGIS,
         null_glTextureImage1DEXT,
         null_glTextureImage2DEXT,
@@ -7377,10 +7475,13 @@ struct opengl_funcs null_opengl_funcs =
         null_glTextureRenderbufferEXT,
         null_glTextureStorage1DEXT,
         null_glTextureStorage2DEXT,
+        null_glTextureStorage2DMultisampleEXT,
         null_glTextureStorage3DEXT,
+        null_glTextureStorage3DMultisampleEXT,
         null_glTextureSubImage1DEXT,
         null_glTextureSubImage2DEXT,
         null_glTextureSubImage3DEXT,
+        null_glTextureView,
         null_glTrackMatrixNV,
         null_glTransformFeedbackAttribsNV,
         null_glTransformFeedbackStreamAttribsNV,
@@ -7527,10 +7628,16 @@ struct opengl_funcs null_opengl_funcs =
         null_glVertex3hvNV,
         null_glVertex4hNV,
         null_glVertex4hvNV,
+        null_glVertexArrayBindVertexBufferEXT,
         null_glVertexArrayParameteriAPPLE,
         null_glVertexArrayRangeAPPLE,
         null_glVertexArrayRangeNV,
+        null_glVertexArrayVertexAttribBindingEXT,
+        null_glVertexArrayVertexAttribFormatEXT,
+        null_glVertexArrayVertexAttribIFormatEXT,
+        null_glVertexArrayVertexAttribLFormatEXT,
         null_glVertexArrayVertexAttribLOffsetEXT,
+        null_glVertexArrayVertexBindingDivisorEXT,
         null_glVertexAttrib1d,
         null_glVertexAttrib1dARB,
         null_glVertexAttrib1dNV,
@@ -7638,8 +7745,10 @@ struct opengl_funcs null_opengl_funcs =
         null_glVertexAttrib4usv,
         null_glVertexAttrib4usvARB,
         null_glVertexAttribArrayObjectATI,
+        null_glVertexAttribBinding,
         null_glVertexAttribDivisor,
         null_glVertexAttribDivisorARB,
+        null_glVertexAttribFormat,
         null_glVertexAttribFormatNV,
         null_glVertexAttribI1i,
         null_glVertexAttribI1iEXT,
@@ -7681,6 +7790,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glVertexAttribI4uivEXT,
         null_glVertexAttribI4usv,
         null_glVertexAttribI4usvEXT,
+        null_glVertexAttribIFormat,
         null_glVertexAttribIFormatNV,
         null_glVertexAttribIPointer,
         null_glVertexAttribIPointerEXT,
@@ -7716,6 +7826,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glVertexAttribL4i64vNV,
         null_glVertexAttribL4ui64NV,
         null_glVertexAttribL4ui64vNV,
+        null_glVertexAttribLFormat,
         null_glVertexAttribLFormatNV,
         null_glVertexAttribLPointer,
         null_glVertexAttribLPointerEXT,
@@ -7747,6 +7858,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glVertexAttribs4hvNV,
         null_glVertexAttribs4svNV,
         null_glVertexAttribs4ubvNV,
+        null_glVertexBindingDivisor,
         null_glVertexBlendARB,
         null_glVertexBlendEnvfATI,
         null_glVertexBlendEnviATI,
