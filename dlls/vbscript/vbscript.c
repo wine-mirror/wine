@@ -165,8 +165,11 @@ static void release_script(script_ctx_t *ctx)
     }
 
     if(ctx->script_obj) {
-        IDispatchEx_Release(&ctx->script_obj->IDispatchEx_iface);
+        ScriptDisp *script_obj = ctx->script_obj;
+
         ctx->script_obj = NULL;
+        script_obj->ctx = NULL;
+        IDispatchEx_Release(&script_obj->IDispatchEx_iface);
     }
 
     vbsheap_free(&ctx->heap);

@@ -565,6 +565,188 @@ HRESULT create_procedure_disp(script_ctx_t *ctx, vbscode_t *code, IDispatch **re
     return S_OK;
 }
 
+static inline ScriptDisp *ScriptDisp_from_IDispatchEx(IDispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, ScriptDisp, IDispatchEx_iface);
+}
+
+static HRESULT WINAPI ScriptDisp_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)
+{
+    ScriptDisp *This = ScriptDisp_from_IDispatchEx(iface);
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = &This->IDispatchEx_iface;
+    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
+        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
+        *ppv = &This->IDispatchEx_iface;
+    }else if(IsEqualGUID(&IID_IDispatchEx, riid)) {
+        TRACE("(%p)->(IID_IDispatchEx %p)\n", This, ppv);
+        *ppv = &This->IDispatchEx_iface;
+    }else {
+        WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI ScriptDisp_AddRef(IDispatchEx *iface)
+{
+    ScriptDisp *This = ScriptDisp_from_IDispatchEx(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI ScriptDisp_Release(IDispatchEx *iface)
+{
+    ScriptDisp *This = ScriptDisp_from_IDispatchEx(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref) {
+        assert(!This->ctx);
+        heap_free(This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI ScriptDisp_GetTypeInfoCount(IDispatchEx *iface, UINT *pctinfo)
+{
+    ScriptDisp *This = ScriptDisp_from_IDispatchEx(iface);
+
+    TRACE("(%p)->(%p)\n", This, pctinfo);
+
+    *pctinfo = 1;
+    return S_OK;
+}
+
+static HRESULT WINAPI ScriptDisp_GetTypeInfo(IDispatchEx *iface, UINT iTInfo, LCID lcid,
+                                              ITypeInfo **ppTInfo)
+{
+    ScriptDisp *This = ScriptDisp_from_IDispatchEx(iface);
+    FIXME("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ScriptDisp_GetIDsOfNames(IDispatchEx *iface, REFIID riid,
+                                                LPOLESTR *rgszNames, UINT cNames, LCID lcid,
+                                                DISPID *rgDispId)
+{
+    ScriptDisp *This = ScriptDisp_from_IDispatchEx(iface);
+    FIXME("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
+          lcid, rgDispId);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ScriptDisp_Invoke(IDispatchEx *iface, DISPID dispIdMember,
+                                        REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
+                            VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    ScriptDisp *This = ScriptDisp_from_IDispatchEx(iface);
+    FIXME("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+          lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ScriptDisp_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
+{
+    ScriptDisp *This = ScriptDisp_from_IDispatchEx(iface);
+    FIXME("(%p)->(%s %x %p)\n", This, debugstr_w(bstrName), grfdex, pid);
+    return DISP_E_UNKNOWNNAME;
+}
+
+static HRESULT WINAPI ScriptDisp_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    ScriptDisp *This = ScriptDisp_from_IDispatchEx(iface);
+    TRACE("(%p)->(%x %x %x %p %p %p %p)\n", This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
+    return DISP_E_MEMBERNOTFOUND;
+}
+
+static HRESULT WINAPI ScriptDisp_DeleteMemberByName(IDispatchEx *iface, BSTR bstrName, DWORD grfdex)
+{
+    ScriptDisp *This = ScriptDisp_from_IDispatchEx(iface);
+    FIXME("(%p)->(%s %x)\n", This, debugstr_w(bstrName), grfdex);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ScriptDisp_DeleteMemberByDispID(IDispatchEx *iface, DISPID id)
+{
+    ScriptDisp *This = ScriptDisp_from_IDispatchEx(iface);
+    FIXME("(%p)->(%x)\n", This, id);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ScriptDisp_GetMemberProperties(IDispatchEx *iface, DISPID id, DWORD grfdexFetch, DWORD *pgrfdex)
+{
+    ScriptDisp *This = ScriptDisp_from_IDispatchEx(iface);
+    FIXME("(%p)->(%x %x %p)\n", This, id, grfdexFetch, pgrfdex);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ScriptDisp_GetMemberName(IDispatchEx *iface, DISPID id, BSTR *pbstrName)
+{
+    ScriptDisp *This = ScriptDisp_from_IDispatchEx(iface);
+    FIXME("(%p)->(%x %p)\n", This, id, pbstrName);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ScriptDisp_GetNextDispID(IDispatchEx *iface, DWORD grfdex, DISPID id, DISPID *pid)
+{
+    ScriptDisp *This = ScriptDisp_from_IDispatchEx(iface);
+    FIXME("(%p)->(%x %x %p)\n", This, grfdex, id, pid);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ScriptDisp_GetNameSpaceParent(IDispatchEx *iface, IUnknown **ppunk)
+{
+    ScriptDisp *This = ScriptDisp_from_IDispatchEx(iface);
+    FIXME("(%p)->(%p)\n", This, ppunk);
+    return E_NOTIMPL;
+}
+
+static IDispatchExVtbl ScriptDispVtbl = {
+    ScriptDisp_QueryInterface,
+    ScriptDisp_AddRef,
+    ScriptDisp_Release,
+    ScriptDisp_GetTypeInfoCount,
+    ScriptDisp_GetTypeInfo,
+    ScriptDisp_GetIDsOfNames,
+    ScriptDisp_Invoke,
+    ScriptDisp_GetDispID,
+    ScriptDisp_InvokeEx,
+    ScriptDisp_DeleteMemberByName,
+    ScriptDisp_DeleteMemberByDispID,
+    ScriptDisp_GetMemberProperties,
+    ScriptDisp_GetMemberName,
+    ScriptDisp_GetNextDispID,
+    ScriptDisp_GetNameSpaceParent
+};
+
+HRESULT create_script_disp(script_ctx_t *ctx, ScriptDisp **ret)
+{
+    ScriptDisp *script_disp;
+
+    script_disp = heap_alloc(sizeof(*script_disp));
+    if(!script_disp)
+        return E_OUTOFMEMORY;
+
+    script_disp->IDispatchEx_iface.lpVtbl = &ScriptDispVtbl;
+    script_disp->ref = 1;
+    script_disp->ctx = ctx;
+
+    *ret = script_disp;
+    return S_OK;
+}
+
 void collect_objects(script_ctx_t *ctx)
 {
     vbdisp_t *iter, *iter2;

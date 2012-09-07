@@ -1825,8 +1825,7 @@ HRESULT init_global(script_ctx_t *ctx)
     if(FAILED(hres))
         return hres;
 
-    ctx->script_desc.ctx = ctx;
-    hres = create_vbdisp(&ctx->script_desc, &ctx->script_obj);
+    hres = create_script_disp(ctx, &ctx->script_obj);
     if(FAILED(hres))
         return hres;
 
