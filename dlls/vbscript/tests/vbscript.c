@@ -85,6 +85,18 @@ DEFINE_EXPECT(OnLeaveScript);
 
 DEFINE_GUID(CLSID_VBScript, 0xb54f3741, 0x5b07, 0x11cf, 0xa4,0xb0, 0x00,0xaa,0x00,0x4a,0x55,0xe8);
 
+static BSTR a2bstr(const char *str)
+{
+    BSTR ret;
+    int len;
+
+    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+    ret = SysAllocStringLen(NULL, len-1);
+    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
+
+    return ret;
+}
+
 #define test_state(s,ss) _test_state(__LINE__,s,ss)
 static void _test_state(unsigned line, IActiveScript *script, SCRIPTSTATE exstate)
 {
@@ -318,6 +330,35 @@ static IDispatchEx *get_script_dispatch(IActiveScript *script)
     return dispex;
 }
 
+static void parse_script(IActiveScriptParse *parse, const char *src)
+{
+    BSTR str;
+    HRESULT hres;
+
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
+
+    str = a2bstr(src);
+    hres = IActiveScriptParse_ParseScriptText(parse, str, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    SysFreeString(str);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnLeaveScript);
+}
+
+#define get_disp_id(a,b,c,d) _get_disp_id(__LINE__,a,b,c,d)
+static void _get_disp_id(unsigned line, IDispatchEx *dispex, const char *name, HRESULT exhres, DISPID *id)
+{
+    BSTR str;
+    HRESULT hres;
+
+    str = a2bstr(name);
+    hres = IDispatchEx_GetDispID(dispex, str, 0, id);
+    SysFreeString(str);
+    ok_(__FILE__,line)(hres == exhres, "GetDispID(%s) returned %08x, expected %08x\n", name, hres, exhres);
+}
+
 static void test_no_script_dispatch(IActiveScript *script)
 {
     IDispatch *disp;
@@ -339,6 +380,116 @@ static IActiveScript *create_vbscript(void)
     ok(hres == S_OK, "CoCreateInstance failed: %08x\n", hres);
 
     return ret;
+}
+
+static void test_scriptdisp(void)
+{
+    IActiveScriptParse *parser;
+    IDispatchEx *script_disp;
+    IActiveScript *vbscript;
+    DISPID id, id2;
+    DISPPARAMS dp;
+    EXCEPINFO ei;
+    VARIANT v;
+    ULONG ref;
+    HRESULT hres;
+
+    vbscript = create_vbscript();
+
+    hres = IActiveScript_QueryInterface(vbscript, &IID_IActiveScriptParse, (void**)&parser);
+    ok(hres == S_OK, "Could not get IActiveScriptParse iface: %08x\n", hres);
+
+    test_state(vbscript, SCRIPTSTATE_UNINITIALIZED);
+    test_safety(vbscript);
+
+    SET_EXPECT(GetLCID);
+    hres = IActiveScript_SetScriptSite(vbscript, &ActiveScriptSite);
+    ok(hres == S_OK, "SetScriptSite failed: %08x\n", hres);
+    CHECK_CALLED(GetLCID);
+
+    test_state(vbscript, SCRIPTSTATE_UNINITIALIZED);
+
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    hres = IActiveScriptParse_InitNew(parser);
+    ok(hres == S_OK, "InitNew failed: %08x\n", hres);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+
+    test_state(vbscript, SCRIPTSTATE_INITIALIZED);
+
+    SET_EXPECT(OnStateChange_CONNECTED);
+    hres = IActiveScript_SetScriptState(vbscript, SCRIPTSTATE_CONNECTED);
+    ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_CONNECTED) failed: %08x\n", hres);
+    CHECK_CALLED(OnStateChange_CONNECTED);
+
+    test_state(vbscript, SCRIPTSTATE_CONNECTED);
+
+    script_disp = get_script_dispatch(vbscript);
+
+    id = 100;
+    get_disp_id(script_disp, "LCase", DISP_E_UNKNOWNNAME, &id);
+    ok(id == -1, "id = %d, expected -1\n", id);
+
+    get_disp_id(script_disp, "globalVariable", DISP_E_UNKNOWNNAME, &id);
+    parse_script(parser, "dim globalVariable\nglobalVariable = 3");
+    get_disp_id(script_disp, "globalVariable", S_OK, &id);
+
+    memset(&dp, 0, sizeof(dp));
+    memset(&ei, 0, sizeof(ei));
+    V_VT(&v) = VT_EMPTY;
+    hres = IDispatchEx_InvokeEx(script_disp, id, 0, DISPATCH_PROPERTYGET|DISPATCH_METHOD, &dp, &v, &ei, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_I2, "V_VT(v) = %d\n", V_VT(&v));
+    ok(V_I2(&v) == 3, "V_I2(v) = %d\n", V_I2(&v));
+
+    get_disp_id(script_disp, "globalVariable2", DISP_E_UNKNOWNNAME, &id);
+    parse_script(parser, "globalVariable2 = 4");
+    get_disp_id(script_disp, "globalVariable2", S_OK, &id);
+
+    get_disp_id(script_disp, "globalFunction", DISP_E_UNKNOWNNAME, &id);
+    parse_script(parser, "function globalFunction()\nglobalFunction=5\nend function");
+    get_disp_id(script_disp, "globalFunction", S_OK, &id);
+
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
+
+    memset(&dp, 0, sizeof(dp));
+    memset(&ei, 0, sizeof(ei));
+    V_VT(&v) = VT_EMPTY;
+    hres = IDispatchEx_InvokeEx(script_disp, id, 0, DISPATCH_PROPERTYGET|DISPATCH_METHOD, &dp, &v, &ei, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_I2, "V_VT(v) = %d\n", V_VT(&v));
+    ok(V_I2(&v) == 5, "V_I2(v) = %d\n", V_I2(&v));
+
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnLeaveScript);
+
+    get_disp_id(script_disp, "globalSub", DISP_E_UNKNOWNNAME, &id);
+    parse_script(parser, "sub globalSub()\nend sub");
+    get_disp_id(script_disp, "globalSub", S_OK, &id);
+    get_disp_id(script_disp, "globalSub", S_OK, &id2);
+    ok(id == id2, "id != id2\n");
+
+    get_disp_id(script_disp, "constVariable", DISP_E_UNKNOWNNAME, &id);
+    parse_script(parser, "const constVariable = 6");
+    get_disp_id(script_disp, "ConstVariable", S_OK, &id);
+    get_disp_id(script_disp, "Constvariable", S_OK, &id2);
+    ok(id == id2, "id != id2\n");
+
+    IDispatchEx_Release(script_disp);
+
+    IActiveScriptParse_Release(parser);
+
+    SET_EXPECT(OnStateChange_DISCONNECTED);
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    SET_EXPECT(OnStateChange_CLOSED);
+    hres = IActiveScript_Close(vbscript);
+    ok(hres == S_OK, "Close failed: %08x\n", hres);
+    CHECK_CALLED(OnStateChange_DISCONNECTED);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+    CHECK_CALLED(OnStateChange_CLOSED);
+
+    ref = IActiveScript_Release(vbscript);
+    ok(!ref, "ref = %d\n", ref);
 }
 
 static void test_vbscript(void)
@@ -644,6 +795,7 @@ START_TEST(vbscript)
         test_vbscript_release();
         test_vbscript_simplecreate();
         test_vbscript_initializing();
+        test_scriptdisp();
     }else {
         win_skip("VBScript engine not available\n");
     }
