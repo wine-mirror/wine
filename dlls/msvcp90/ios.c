@@ -5501,6 +5501,13 @@ basic_ostream_char* __thiscall basic_ostream_char_flush(basic_ostream_char *this
     return this;
 }
 
+/* ?flush@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@1@AAV21@@Z */
+/* ?flush@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@1@AEAV21@@Z */
+basic_ostream_char* __cdecl flush_ostream_char(basic_ostream_char *ostream)
+{
+    return basic_ostream_char_flush(ostream);
+}
+
 /* ?_Osfx@?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEXXZ */
 /* ?_Osfx@?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAXXZ */
 DEFINE_THISCALL_WRAPPER(basic_ostream_char__Osfx, 4)
@@ -6289,6 +6296,15 @@ basic_ostream_wchar* __thiscall basic_ostream_wchar_flush(basic_ostream_wchar *t
             && basic_streambuf_wchar_pubsync(basic_ios_wchar_rdbuf_get(base))==-1)
         basic_ios_wchar_setstate(base, IOSTATE_badbit);
     return this;
+}
+
+/* ?flush@std@@YAAAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@AAV21@@Z */
+/* ?flush@std@@YAAEAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@AEAV21@@Z */
+/* ?flush@std@@YAAAV?$basic_ostream@GU?$char_traits@G@std@@@1@AAV21@@Z */
+/* ?flush@std@@YAAEAV?$basic_ostream@GU?$char_traits@G@std@@@1@AEAV21@@Z */
+basic_ostream_wchar* __cdecl flush_ostream_wchar(basic_ostream_wchar *ostream)
+{
+    return basic_ostream_wchar_flush(ostream);
 }
 
 /* ?_Osfx@?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QAEXXZ */
