@@ -97,7 +97,7 @@ static VARIANT *get_propput_arg(const DISPPARAMS *dp)
     return NULL;
 }
 
-static HRESULT invoke_variant_prop(vbdisp_t *This, VARIANT *v, WORD flags, DISPPARAMS *dp, VARIANT *res)
+static HRESULT invoke_variant_prop(VARIANT *v, WORD flags, DISPPARAMS *dp, VARIANT *res)
 {
     HRESULT hres;
 
@@ -403,7 +403,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
     }
 
     if(id < This->desc->prop_cnt + This->desc->func_cnt)
-        return invoke_variant_prop(This, This->props+(id-This->desc->func_cnt), wFlags, pdp, pvarRes);
+        return invoke_variant_prop(This->props+(id-This->desc->func_cnt), wFlags, pdp, pvarRes);
 
     if(This->desc->builtin_prop_cnt) {
         unsigned min = 0, max = This->desc->builtin_prop_cnt-1, i;
@@ -579,6 +579,11 @@ static inline DISPID ident_to_id(ScriptDisp *This, ident_map_t *ident)
     return (ident-This->ident_map)+1;
 }
 
+static inline ident_map_t *id_to_ident(ScriptDisp *This, DISPID id)
+{
+    return 0 < id && id <= This->ident_map_cnt ? This->ident_map+id-1 : NULL;
+}
+
 static ident_map_t *add_ident(ScriptDisp *This, const WCHAR *name)
 {
     ident_map_t *ret;
@@ -748,8 +753,30 @@ static HRESULT WINAPI ScriptDisp_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
     ScriptDisp *This = ScriptDisp_from_IDispatchEx(iface);
+    ident_map_t *ident;
+    HRESULT hres;
+
     TRACE("(%p)->(%x %x %x %p %p %p %p)\n", This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
-    return DISP_E_MEMBERNOTFOUND;
+
+    ident = id_to_ident(This, id);
+    if(!ident)
+        return DISP_E_MEMBERNOTFOUND;
+
+    if(ident->is_var) {
+        if(ident->u.var->is_const) {
+            FIXME("const not supported\n");
+            return E_NOTIMPL;
+        }
+
+        return invoke_variant_prop(&ident->u.var->v, wFlags, pdp, pvarRes);
+    }
+
+
+    IActiveScriptSite_OnEnterScript(This->ctx->site);
+    hres = exec_script(This->ctx, ident->u.func, NULL, pdp, pvarRes);
+    IActiveScriptSite_OnLeaveScript(This->ctx->site);
+
+    return hres;
 }
 
 static HRESULT WINAPI ScriptDisp_DeleteMemberByName(IDispatchEx *iface, BSTR bstrName, DWORD grfdex)
