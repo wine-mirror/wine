@@ -116,9 +116,16 @@ struct _vbdisp_t {
     VARIANT props[1];
 };
 
+typedef struct _ident_map_t ident_map_t;
+
 typedef struct {
     IDispatchEx IDispatchEx_iface;
     LONG ref;
+
+    ident_map_t *ident_map;
+    unsigned ident_map_cnt;
+    unsigned ident_map_size;
+
     script_ctx_t *ctx;
 } ScriptDisp;
 

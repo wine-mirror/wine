@@ -565,6 +565,44 @@ HRESULT create_procedure_disp(script_ctx_t *ctx, vbscode_t *code, IDispatch **re
     return S_OK;
 }
 
+struct _ident_map_t {
+    const WCHAR *name;
+    BOOL is_var;
+    union {
+        dynamic_var_t *var;
+        function_t *func;
+    } u;
+};
+
+static inline DISPID ident_to_id(ScriptDisp *This, ident_map_t *ident)
+{
+    return (ident-This->ident_map)+1;
+}
+
+static ident_map_t *add_ident(ScriptDisp *This, const WCHAR *name)
+{
+    ident_map_t *ret;
+
+    if(!This->ident_map_size) {
+        This->ident_map = heap_alloc(4 * sizeof(*This->ident_map));
+        if(!This->ident_map)
+            return NULL;
+        This->ident_map_size = 4;
+    }else if(This->ident_map_cnt == This->ident_map_size) {
+        ident_map_t *new_map;
+
+        new_map = heap_realloc(This->ident_map, 2*This->ident_map_size*sizeof(*new_map));
+        if(!new_map)
+            return NULL;
+        This->ident_map = new_map;
+        This->ident_map_size *= 2;
+    }
+
+    ret = This->ident_map + This->ident_map_cnt++;
+    ret->name = name;
+    return ret;
+}
+
 static inline ScriptDisp *ScriptDisp_from_IDispatchEx(IDispatchEx *iface)
 {
     return CONTAINING_RECORD(iface, ScriptDisp, IDispatchEx_iface);
@@ -612,6 +650,7 @@ static ULONG WINAPI ScriptDisp_Release(IDispatchEx *iface)
 
     if(!ref) {
         assert(!This->ctx);
+        heap_free(This->ident_map);
         heap_free(This);
     }
 
@@ -659,7 +698,49 @@ static HRESULT WINAPI ScriptDisp_Invoke(IDispatchEx *iface, DISPID dispIdMember,
 static HRESULT WINAPI ScriptDisp_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
     ScriptDisp *This = ScriptDisp_from_IDispatchEx(iface);
-    FIXME("(%p)->(%s %x %p)\n", This, debugstr_w(bstrName), grfdex, pid);
+    dynamic_var_t *var;
+    ident_map_t *ident;
+    function_t *func;
+
+    TRACE("(%p)->(%s %x %p)\n", This, debugstr_w(bstrName), grfdex, pid);
+
+    if(!This->ctx)
+        return E_UNEXPECTED;
+
+    for(ident = This->ident_map; ident < This->ident_map+This->ident_map_cnt; ident++) {
+        if(!strcmpiW(ident->name, bstrName)) {
+            *pid = ident_to_id(This, ident);
+            return S_OK;
+        }
+    }
+
+    for(var = This->ctx->global_vars; var; var = var->next) {
+        if(!strcmpiW(var->name, bstrName)) {
+            ident = add_ident(This, var->name);
+            if(!ident)
+                return E_OUTOFMEMORY;
+
+            ident->is_var = TRUE;
+            ident->u.var = var;
+            *pid = ident_to_id(This, ident);
+            return S_OK;
+        }
+    }
+
+    for(func = This->ctx->global_funcs; func; func = func->next) {
+        if(!strcmpiW(func->name, bstrName)) {
+            ident = add_ident(This, func->name);
+            if(!ident)
+                return E_OUTOFMEMORY;
+
+            ident->is_var = FALSE;
+            ident->u.func = func;
+            *pid =  ident_to_id(This, ident);
+            return S_OK;
+        }
+    }
+
+    *pid = -1;
     return DISP_E_UNKNOWNNAME;
 }
 
@@ -735,7 +816,7 @@ HRESULT create_script_disp(script_ctx_t *ctx, ScriptDisp **ret)
 {
     ScriptDisp *script_disp;
 
-    script_disp = heap_alloc(sizeof(*script_disp));
+    script_disp = heap_alloc_zero(sizeof(*script_disp));
     if(!script_disp)
         return E_OUTOFMEMORY;
 
