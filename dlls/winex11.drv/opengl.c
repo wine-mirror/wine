@@ -1533,25 +1533,16 @@ static int glxdrv_wglGetPixelFormat( HDC hdc )
  */
 static BOOL glxdrv_wglSetPixelFormat( HDC hdc, int iPixelFormat, const PIXELFORMATDESCRIPTOR *ppfd )
 {
-    struct x11drv_escape_get_drawable escape;
     const struct wgl_pixel_format *fmt;
-    int value;
-    HWND hwnd;
+    int value, prev = 0;
+    struct gl_drawable *gl;
+    HWND hwnd = WindowFromDC( hdc );
 
     TRACE("(%p,%d,%p)\n", hdc, iPixelFormat, ppfd);
 
-    escape.code = X11DRV_GET_DRAWABLE;
-    if (!ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape.code), (LPCSTR)&escape.code,
-                    sizeof(escape), (LPSTR)&escape ))
-        return 0;
-
-    if (escape.pixel_format)  /* cannot change it if already set */
-        return (escape.pixel_format == iPixelFormat);
-
-    /* SetPixelFormat is not allowed on the X root_window e.g. GetDC(0) */
-    if (escape.drawable == root_window)
+    if (!hwnd || hwnd == GetDesktopWindow())
     {
-        ERR("Invalid operation on root_window\n");
+        WARN( "not a proper window DC %p/%p\n", hdc, hwnd );
         return FALSE;
     }
 
@@ -1563,21 +1554,24 @@ static BOOL glxdrv_wglSetPixelFormat( HDC hdc, int iPixelFormat, const PIXELFORM
     }
 
     pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_DRAWABLE_TYPE, &value);
-
-    hwnd = WindowFromDC( hdc );
-    if(hwnd) {
-        if(!(value&GLX_WINDOW_BIT)) {
-            WARN("Pixel format %d is not compatible for window rendering\n", iPixelFormat);
-            return FALSE;
-        }
-
-        if(!SendMessageW(hwnd, WM_X11DRV_SET_WIN_FORMAT, fmt->fmt_id, 0)) {
-            ERR("Couldn't set format of the window, returning failure\n");
-            return FALSE;
-        }
-        /* physDev->current_pf will be set by the DCE update */
+    if (!(value & GLX_WINDOW_BIT))
+    {
+        WARN("Pixel format %d is not compatible for window rendering\n", iPixelFormat);
+        return FALSE;
     }
-    else FIXME("called on a non-window object?\n");
+
+    EnterCriticalSection( &context_section );
+    if (!XFindContext( gdi_display, (XID)hwnd, gl_drawable_context, (char **)&gl ))
+        prev = gl->pixel_format;
+    LeaveCriticalSection( &context_section );
+
+    if (prev) return prev == iPixelFormat;  /* cannot change it if already set */
+
+    if(!SendMessageW(hwnd, WM_X11DRV_SET_WIN_FORMAT, fmt->fmt_id, 0)) {
+        ERR("Couldn't set format of the window, returning failure\n");
+        return FALSE;
+    }
+    /* physDev->current_pf will be set by the DCE update */
 
     if (TRACE_ON(wgl)) {
         int gl_test = 0;
