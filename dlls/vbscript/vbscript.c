@@ -115,6 +115,8 @@ static HRESULT set_ctx_site(VBScript *This)
 
 static void release_script(script_ctx_t *ctx)
 {
+    class_desc_t *class_desc;
+
     collect_objects(ctx);
 
     release_dynamic_vars(ctx->global_vars);
@@ -128,6 +130,13 @@ static void release_script(script_ctx_t *ctx)
             IDispatch_Release(iter->disp);
         heap_free(iter->name);
         heap_free(iter);
+    }
+
+    while(ctx->procs) {
+        class_desc = ctx->procs;
+        ctx->procs = class_desc->next;
+
+        heap_free(class_desc);
     }
 
     if(ctx->host_global) {
