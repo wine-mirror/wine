@@ -4037,7 +4037,7 @@ static void test_fullname(void)
         bufA[0] = 0;
         ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_FULL_NAME, bufW, sizeof(bufW), TT_MS_LANGID_ENGLISH_UNITED_STATES);
         ok(ret, "face full name could not be read\n");
-        WideCharToMultiByte(CP_ACP, 0, bufW, -1, bufA, sizeof(bufW), NULL, FALSE);
+        WideCharToMultiByte(CP_ACP, 0, bufW, -1, bufA, sizeof(bufA), NULL, FALSE);
         ok(!lstrcmpA(bufA, TestName[i]), "font full names don't match: %s != %s\n", TestName[i], bufA);
         SelectObject(hdc, of);
         DeleteObject(hfont);
