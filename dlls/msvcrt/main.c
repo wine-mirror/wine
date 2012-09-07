@@ -97,6 +97,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
   switch (fdwReason)
   {
   case DLL_PROCESS_ATTACH:
+    msvcrt_init_exception(hinstDLL);
     if (!msvcrt_init_tls())
       return FALSE;
     msvcrt_init_mt_locks();

@@ -39,42 +39,6 @@ typedef exception bad_cast;
 typedef exception bad_typeid;
 typedef exception __non_rtti_object;
 
-#ifdef __x86_64__
-
-/* x86_64 RTTI structures */
-typedef struct
-{
-    unsigned int type_descriptor;
-    int num_base_classes;
-    this_ptr_offsets offsets;
-    unsigned int attributes;
-} rtti_base_descriptor_x64;
-
-typedef struct
-{
-    unsigned bases[3];
-} rtti_base_array_x64;
-
-typedef struct
-{
-    unsigned int signature;
-    unsigned int attributes;
-    int array_len;
-    unsigned int base_classes;
-} rtti_object_hierarchy_x64;
-
-typedef struct
-{
-    unsigned int signature;
-    int base_class_offset;
-    unsigned int flags;
-    unsigned int type_descriptor;
-    unsigned int type_hierarchy;
-    unsigned int object_locator; /* not present if signature == 0 */
-} rtti_object_locator_x64;
-
-#endif
-
 extern const vtable_ptr MSVCRT_exception_vtable;
 extern const vtable_ptr MSVCRT_bad_typeid_vtable;
 extern const vtable_ptr MSVCRT_bad_cast_vtable;
@@ -93,6 +57,7 @@ static inline const rtti_object_locator *get_obj_locator( void *cppobj )
     return (const rtti_object_locator *)vtable[-1];
 }
 
+#ifndef __x86_64__
 static void dump_obj_locator( const rtti_object_locator *ptr )
 {
     int i;
@@ -117,12 +82,13 @@ static void dump_obj_locator( const rtti_object_locator *ptr )
     }
 }
 
-#ifdef __x86_64__
-static void dump_obj_locator_x64( const rtti_object_locator_x64 *ptr )
+#else
+
+static void dump_obj_locator( const rtti_object_locator *ptr )
 {
     int i;
-    char *base = (char*)ptr - ptr->object_locator;
-    const rtti_object_hierarchy_x64 *h = (const rtti_object_hierarchy_x64*)(base + ptr->type_hierarchy);
+    char *base = ptr->signature == 0 ? (char*)GetModuleHandleW(NULL) : (char*)ptr - ptr->object_locator;
+    const rtti_object_hierarchy *h = (const rtti_object_hierarchy*)(base + ptr->type_hierarchy);
     const type_info *type_descriptor = (const type_info*)(base + ptr->type_descriptor);
 
     TRACE( "%p: sig=%08x base_offset=%08x flags=%08x type=%p %s hierarchy=%p\n",
@@ -132,8 +98,8 @@ static void dump_obj_locator_x64( const rtti_object_locator_x64 *ptr )
             h->signature, h->attributes, h->array_len, base + h->base_classes );
     for (i = 0; i < h->array_len; i++)
     {
-        const rtti_base_descriptor_x64 *bases = (rtti_base_descriptor_x64*)(base +
-                ((const rtti_base_array_x64*)(base + h->base_classes))->bases[i]);
+        const rtti_base_descriptor *bases = (rtti_base_descriptor*)(base +
+                ((const rtti_base_array*)(base + h->base_classes))->bases[i]);
 
         TRACE( "    base class %p: num %d off %d,%d,%d attr %08x type %p %s\n",
                 bases,
@@ -739,6 +705,17 @@ DEFINE_EXCEPTION_TYPE_INFO( bad_typeid, 1, &exception_cxx_type_info, NULL );
 DEFINE_EXCEPTION_TYPE_INFO( bad_cast, 1, &exception_cxx_type_info, NULL );
 DEFINE_EXCEPTION_TYPE_INFO( __non_rtti_object, 2, &bad_typeid_cxx_type_info, &exception_cxx_type_info );
 
+void msvcrt_init_exception(void *base)
+{
+#ifdef __x86_64__
+    init_type_info_rtti(base);
+    init_exception_rtti(base);
+    init_bad_typeid_rtti(base);
+    init_bad_cast_rtti(base);
+    init___non_rtti_object_rtti(base);
+#endif
+}
+
 
 /******************************************************************
  *		?set_terminate@@YAP6AXXZP6AXXZ@Z (MSVCRT.@)
@@ -906,15 +883,15 @@ const type_info* CDECL MSVCRT___RTtypeid(void *cppobj)
 
     __TRY
     {
-        const rtti_object_locator *obj_locator = (rtti_object_locator*)get_obj_locator( cppobj );
-        /* FIXME: Change signature==0 handling when wine generates correct RTTI data on 64-bit systems */
+        const rtti_object_locator *obj_locator = get_obj_locator( cppobj );
+        char *base;
+
         if(obj_locator->signature == 0)
-            ret = obj_locator->type_descriptor;
+            base = (char*)GetModuleHandleW(NULL);
         else
-        {
-            const rtti_object_locator_x64 *obj_locator_x64 = (const rtti_object_locator_x64*)obj_locator;
-            ret = (type_info*)((char*)obj_locator_x64 - obj_locator_x64->object_locator + obj_locator_x64->type_descriptor);
-        }
+            base = (char*)obj_locator - obj_locator->object_locator;
+
+        ret = (type_info*)(base + obj_locator->type_descriptor);
     }
     __EXCEPT_PAGE_FAULT
     {
@@ -1031,48 +1008,31 @@ void* CDECL MSVCRT___RTDynamicCast(void *cppobj, int unknown,
     {
         int i;
         const rtti_object_locator *obj_locator = get_obj_locator( cppobj );
+        const rtti_object_hierarchy *obj_bases;
+        const rtti_base_array *base_array;
+        char *base;
+
+        if (TRACE_ON(msvcrt)) dump_obj_locator(obj_locator);
 
         if(obj_locator->signature == 0)
-        {
-            const rtti_object_hierarchy *obj_bases = obj_locator->type_hierarchy;
-            const rtti_base_descriptor * const* base_desc = obj_bases->base_classes->bases;
-
-            if (TRACE_ON(msvcrt)) dump_obj_locator(obj_locator);
-
-            ret = NULL;
-            for (i = 0; i < obj_bases->array_len; i++)
-            {
-                const type_info *typ = base_desc[i]->type_descriptor;
-
-                if (!strcmp(typ->mangled, dst->mangled))
-                {
-                    void *this_ptr = (char *)cppobj - obj_locator->base_class_offset;
-                    ret = get_this_pointer( &base_desc[i]->offsets, this_ptr );
-                    break;
-                }
-            }
-        }
+            base = (char*)GetModuleHandleW(NULL);
         else
+            base = (char*)obj_locator - obj_locator->object_locator;
+
+        obj_bases = (const rtti_object_hierarchy*)(base + obj_locator->type_hierarchy);
+        base_array = (const rtti_base_array*)(base + obj_bases->base_classes);
+
+        ret = NULL;
+        for (i = 0; i < obj_bases->array_len; i++)
         {
-            const rtti_object_locator_x64 *obj_locator_x64 = (const rtti_object_locator_x64*)obj_locator;
-            const char *base = (const char*)obj_locator_x64 - obj_locator_x64->object_locator;
-            const rtti_object_hierarchy_x64 *obj_bases = (const rtti_object_hierarchy_x64*)(base + obj_locator_x64->type_hierarchy);
-            const rtti_base_array_x64 *base_array = (const rtti_base_array_x64*)(base + obj_bases->base_classes);
+            const rtti_base_descriptor *base_desc = (const rtti_base_descriptor*)(base + base_array->bases[i]);
+            const type_info *typ = (const type_info*)(base + base_desc->type_descriptor);
 
-            if (TRACE_ON(msvcrt)) dump_obj_locator_x64(obj_locator_x64);
-
-            ret = NULL;
-            for (i = 0; i < obj_bases->array_len; i++)
+            if (!strcmp(typ->mangled, dst->mangled))
             {
-                const rtti_base_descriptor_x64 *base_desc = (const rtti_base_descriptor_x64*)(base + base_array->bases[i]);
-                const type_info *typ = (const type_info*)(base + base_desc->type_descriptor);
-
-                if (!strcmp(typ->mangled, dst->mangled))
-                {
-                    void *this_ptr = (char *)cppobj - obj_locator_x64->base_class_offset;
-                    ret = get_this_pointer( &base_desc->offsets, this_ptr );
-                    break;
-                }
+                void *this_ptr = (char *)cppobj - obj_locator->base_class_offset;
+                ret = get_this_pointer( &base_desc->offsets, this_ptr );
+                break;
             }
         }
         if (!ret && do_throw)
