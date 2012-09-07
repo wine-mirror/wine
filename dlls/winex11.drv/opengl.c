@@ -1880,90 +1880,77 @@ static void wglFlush(void)
 static struct wgl_context *X11DRV_wglCreateContextAttribsARB( HDC hdc, struct wgl_context *hShareContext,
                                                               const int* attribList )
 {
-    struct x11drv_escape_get_drawable escape;
-    struct wgl_context *ret;
-    const struct wgl_pixel_format *fmt;
+    struct wgl_context *ret = NULL;
+    struct gl_drawable *gl;
+    HWND hwnd = WindowFromDC( hdc );
 
     TRACE("(%p %p %p)\n", hdc, hShareContext, attribList);
 
-    escape.code = X11DRV_GET_DRAWABLE;
-    if (!ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape.code), (LPCSTR)&escape.code,
-                    sizeof(escape), (LPSTR)&escape ))
-        return 0;
+    EnterCriticalSection( &context_section );
 
-    fmt = get_pixel_format(gdi_display, escape.pixel_format, TRUE /* Offscreen */);
-    /* wglCreateContextAttribsARB supports ALL pixel formats, so also offscreen ones.
-     * If this fails something is very wrong on the system. */
-    if(!fmt)
+    if (!XFindContext( gdi_display, (XID)hwnd, gl_hwnd_context, (char **)&gl ) ||
+        !XFindContext( gdi_display, (XID)hdc, gl_pbuffer_context, (char **)&gl ))
     {
-        ERR("Cannot get FB Config for iPixelFormat %d, expect problems!\n", escape.pixel_format);
-        SetLastError(ERROR_INVALID_PIXEL_FORMAT);
-        return NULL;
-    }
-
-    if (!(ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ret)))) return 0;
-
-    ret->hdc = hdc;
-    ret->fmt = fmt;
-    ret->vis = NULL; /* glXCreateContextAttribsARB requires a fbconfig instead of a visual */
-    ret->gl3_context = TRUE;
-
-    ret->numAttribs = 0;
-    if(attribList)
-    {
-        int *pAttribList = (int*)attribList;
-        int *pContextAttribList = &ret->attribList[0];
-        /* attribList consists of pairs {token, value] terminated with 0 */
-        while(pAttribList[0] != 0)
+        if (!(ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ret)))) goto done;
+        ret->hdc = hdc;
+        ret->fmt = gl->format;
+        ret->vis = NULL; /* glXCreateContextAttribsARB requires a fbconfig instead of a visual */
+        ret->gl3_context = TRUE;
+        ret->numAttribs = 0;
+        if (attribList)
         {
-            TRACE("%#x %#x\n", pAttribList[0], pAttribList[1]);
-            switch(pAttribList[0])
+            int *pContextAttribList = &ret->attribList[0];
+            /* attribList consists of pairs {token, value] terminated with 0 */
+            while(attribList[0] != 0)
             {
+                TRACE("%#x %#x\n", attribList[0], attribList[1]);
+                switch(attribList[0])
+                {
                 case WGL_CONTEXT_MAJOR_VERSION_ARB:
                     pContextAttribList[0] = GLX_CONTEXT_MAJOR_VERSION_ARB;
-                    pContextAttribList[1] = pAttribList[1];
+                    pContextAttribList[1] = attribList[1];
                     break;
                 case WGL_CONTEXT_MINOR_VERSION_ARB:
                     pContextAttribList[0] = GLX_CONTEXT_MINOR_VERSION_ARB;
-                    pContextAttribList[1] = pAttribList[1];
+                    pContextAttribList[1] = attribList[1];
                     break;
                 case WGL_CONTEXT_LAYER_PLANE_ARB:
                     break;
                 case WGL_CONTEXT_FLAGS_ARB:
                     pContextAttribList[0] = GLX_CONTEXT_FLAGS_ARB;
-                    pContextAttribList[1] = pAttribList[1];
+                    pContextAttribList[1] = attribList[1];
                     break;
                 case WGL_CONTEXT_PROFILE_MASK_ARB:
                     pContextAttribList[0] = GLX_CONTEXT_PROFILE_MASK_ARB;
-                    pContextAttribList[1] = pAttribList[1];
+                    pContextAttribList[1] = attribList[1];
                     break;
                 default:
-                    ERR("Unhandled attribList pair: %#x %#x\n", pAttribList[0], pAttribList[1]);
+                    ERR("Unhandled attribList pair: %#x %#x\n", attribList[0], attribList[1]);
+                }
+                ret->numAttribs++;
+                attribList += 2;
+                pContextAttribList += 2;
             }
-
-            ret->numAttribs++;
-            pAttribList += 2;
-            pContextAttribList += 2;
         }
-    }
 
-    X11DRV_expect_error(gdi_display, GLXErrorHandler, NULL);
-    ret->ctx = create_glxcontext(gdi_display, ret, NULL);
-
-    XSync(gdi_display, False);
-    if(X11DRV_check_error() || !ret->ctx)
-    {
+        X11DRV_expect_error(gdi_display, GLXErrorHandler, NULL);
+        ret->ctx = create_glxcontext(gdi_display, ret, NULL);
+        XSync(gdi_display, False);
+        if (!X11DRV_check_error() && ret->ctx)
+        {
+            list_add_head( &context_list, &ret->entry );
+            goto done;
+        }
         /* In the future we should convert the GLX error to a win32 one here if needed */
         ERR("Context creation failed\n");
         HeapFree( GetProcessHeap(), 0, ret );
-        return NULL;
+        ret = NULL;
     }
+    else SetLastError( ERROR_INVALID_PIXEL_FORMAT );
 
-    EnterCriticalSection( &context_section );
-    list_add_head( &context_list, &ret->entry );
+done:
     LeaveCriticalSection( &context_section );
-
-    TRACE(" creating context %p\n", ret);
+    TRACE( "%p -> %p\n", hdc, ret );
     return ret;
 }
 
