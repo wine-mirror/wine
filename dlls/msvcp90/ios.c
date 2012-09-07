@@ -12921,10 +12921,9 @@ struct {
 /* ?_Ptr_wclog@std@@3PEAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@EA */
 basic_ostream_wchar *_Ptr_wclog = &wclog.obj;
 
-void init_io(void)
+void init_io(void *base)
 {
 #ifdef __x86_64__
-    void *base = GetModuleHandleA("msvcp90.dll");
     init_iosb_rtti(base);
     init_ios_base_rtti(base);
     init_basic_ios_char_rtti(base);

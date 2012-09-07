@@ -463,7 +463,7 @@ ostreambuf_iterator_wchar* __thiscall num_put_wchar_put_uint64(const num_put*, o
 ostreambuf_iterator_wchar* __thiscall num_put_wchar_put_bool(const num_put*, ostreambuf_iterator_wchar*,
         ostreambuf_iterator_wchar, ios_base*, wchar_t, MSVCP_bool);
 
-void init_exception(void);
-void init_locale(void);
-void init_io(void);
+void init_exception(void*);
+void init_locale(void*);
+void init_io(void*);
 void free_io(void);

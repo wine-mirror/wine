@@ -8739,10 +8739,9 @@ void __asm_dummy_vtables(void) {
 }
 #endif
 
-void init_locale(void)
+void init_locale(void *base)
 {
 #ifdef __x86_64__
-    void *base = GetModuleHandleA("msvcp90.dll");
     init_locale_facet_rtti(base);
     init_collate_char_rtti(base);
     init_collate_wchar_rtti(base);
