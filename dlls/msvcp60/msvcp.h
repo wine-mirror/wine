@@ -94,3 +94,5 @@ mutex* __thiscall mutex_ctor(mutex*);
 void __thiscall mutex_dtor(mutex*);
 void __thiscall mutex_lock(mutex*);
 void __thiscall mutex_unlock(mutex*);
+
+void init_exception(void*);

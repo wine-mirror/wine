@@ -784,3 +784,17 @@ void throw_exception(exception_type et, const char *str)
         ERR("exception type not handled: %d\n", et);
     }
 }
+
+void init_exception(void *base)
+{
+#ifdef __x86_64__
+    init_type_info_rtti(base);
+    init_exception_rtti(base);
+    init_bad_alloc_rtti(base);
+    init_logic_error_rtti(base);
+    init_length_error_rtti(base);
+    init_out_of_range_rtti(base);
+    init_invalid_argument_rtti(base);
+    init_runtime_error_rtti(base);
+#endif
+}
