@@ -81,7 +81,7 @@
 @ stub GetBestRouteFromStack
 #@ stub GetCurrentThreadCompartmentId
 @ stdcall GetExtendedTcpTable( ptr ptr long long long long )
-#@ stub GetExtendedUdpTable
+@ stdcall GetExtendedUdpTable( ptr ptr long long long long )
 @ stdcall GetFriendlyIfIndex( long )
 #@ stub GetIcmpStatisticsEx
 @ stdcall GetIcmpStatistics( ptr )

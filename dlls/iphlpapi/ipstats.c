@@ -1433,203 +1433,6 @@ done:
     return ret;
 }
 
-
-static MIB_UDPTABLE *append_udp_row( HANDLE heap, DWORD flags, MIB_UDPTABLE *table,
-                                     DWORD *count, const MIB_UDPROW *row )
-{
-    if (table->dwNumEntries >= *count)
-    {
-        MIB_UDPTABLE *new_table;
-        DWORD new_count = table->dwNumEntries * 2;
-
-        if (!(new_table = HeapReAlloc( heap, flags, table, FIELD_OFFSET(MIB_UDPTABLE, table[new_count] ))))
-        {
-            HeapFree( heap, 0, table );
-            return NULL;
-        }
-        *count = new_count;
-        table = new_table;
-    }
-    memcpy( &table->table[table->dwNumEntries++], row, sizeof(*row) );
-    return table;
-}
-
-static int compare_udp_rows(const void *a, const void *b)
-{
-    const MIB_UDPROW *rowA = a;
-    const MIB_UDPROW *rowB = b;
-    int ret;
-
-    if ((ret = rowA->dwLocalAddr - rowB->dwLocalAddr) != 0) return ret;
-    return rowA->dwLocalPort - rowB->dwLocalPort;
-}
-
-
-/******************************************************************
- *    AllocateAndGetUdpTableFromStack (IPHLPAPI.@)
- *
- * Get the UDP listener table.
- * Like GetUdpTable(), but allocate the returned table from heap.
- *
- * PARAMS
- *  ppUdpTable [Out] pointer into which the MIB_UDPTABLE is
- *                   allocated and returned.
- *  bOrder     [In]  whether to sort the table
- *  heap       [In]  heap from which the table is allocated
- *  flags      [In]  flags to HeapAlloc
- *
- * RETURNS
- *  ERROR_INVALID_PARAMETER if ppUdpTable is NULL, whatever GetUdpTable()
- *  returns otherwise.
- */
-DWORD WINAPI AllocateAndGetUdpTableFromStack(PMIB_UDPTABLE *ppUdpTable, BOOL bOrder,
-                                             HANDLE heap, DWORD flags)
-{
-    MIB_UDPTABLE *table;
-    MIB_UDPROW row;
-    DWORD ret = NO_ERROR, count = 16;
-
-    TRACE("table %p, bOrder %d, heap %p, flags 0x%08x\n", ppUdpTable, bOrder, heap, flags);
-
-    if (!ppUdpTable) return ERROR_INVALID_PARAMETER;
-
-    if (!(table = HeapAlloc( heap, flags, FIELD_OFFSET(MIB_UDPTABLE, table[count] ))))
-        return ERROR_OUTOFMEMORY;
-
-    table->dwNumEntries = 0;
-
-#ifdef __linux__
-    {
-        FILE *fp;
-
-        if ((fp = fopen("/proc/net/udp", "r")))
-        {
-            char buf[512], *ptr;
-            DWORD dummy;
-
-            /* skip header line */
-            ptr = fgets(buf, sizeof(buf), fp);
-            while ((ptr = fgets(buf, sizeof(buf), fp)))
-            {
-                if (sscanf( ptr, "%u: %x:%x", &dummy, &row.dwLocalAddr, &row.dwLocalPort ) != 3)
-                    continue;
-                row.dwLocalPort = htons( row.dwLocalPort );
-                if (!(table = append_udp_row( heap, flags, table, &count, &row )))
-                    break;
-            }
-            fclose(fp);
-        }
-        else ret = ERROR_NOT_SUPPORTED;
-    }
-#elif defined(HAVE_SYS_TIHDR_H) && defined(T_OPTMGMT_ACK)
-    {
-        void *data;
-        int fd, len;
-        mib2_udpEntry_t *entry;
-
-        if ((fd = open_streams_mib( "udp" )) != -1)
-        {
-            if ((data = read_mib_entry( fd, MIB2_UDP, MIB2_UDP_ENTRY, &len )))
-            {
-                for (entry = data; (char *)(entry + 1) <= (char *)data + len; entry++)
-                {
-                    row.dwLocalAddr = entry->udpLocalAddress;
-                    row.dwLocalPort = htons( entry->udpLocalPort );
-                    if (!(table = append_udp_row( heap, flags, table, &count, &row ))) break;
-                }
-                HeapFree( GetProcessHeap(), 0, data );
-            }
-            close( fd );
-        }
-        else ret = ERROR_NOT_SUPPORTED;
-    }
-#elif defined(HAVE_SYS_SYSCTL_H) && defined(HAVE_STRUCT_XINPGEN)
-    {
-        size_t Len = 0;
-        char *Buf = NULL;
-        struct xinpgen *pXIG, *pOrigXIG;
-
-        if (sysctlbyname ("net.inet.udp.pcblist", NULL, &Len, NULL, 0) < 0)
-        {
-            ERR ("Failure to read net.inet.udp.pcblist via sysctlbyname!\n");
-            ret = ERROR_NOT_SUPPORTED;
-            goto done;
-        }
-
-        Buf = HeapAlloc (GetProcessHeap (), 0, Len);
-        if (!Buf)
-        {
-            ret = ERROR_OUTOFMEMORY;
-            goto done;
-        }
-
-        if (sysctlbyname ("net.inet.udp.pcblist", Buf, &Len, NULL, 0) < 0)
-        {
-            ERR ("Failure to read net.inet.udp.pcblist via sysctlbyname!\n");
-            ret = ERROR_NOT_SUPPORTED;
-            goto done;
-        }
-
-        /* Might be nothing here; first entry is just a header it seems */
-        if (Len <= sizeof (struct xinpgen)) goto done;
-
-        pOrigXIG = (struct xinpgen *)Buf;
-        pXIG = pOrigXIG;
-
-        for (pXIG = (struct xinpgen *)((char *)pXIG + pXIG->xig_len);
-             pXIG->xig_len > sizeof (struct xinpgen);
-             pXIG = (struct xinpgen *)((char *)pXIG + pXIG->xig_len))
-        {
-            struct inpcb *pINData;
-            struct xsocket *pSockData;
-
-            pINData = &((struct xinpcb *)pXIG)->xi_inp;
-            pSockData = &((struct xinpcb *)pXIG)->xi_socket;
-
-            /* Ignore sockets for other protocols */
-            if (pSockData->xso_protocol != IPPROTO_UDP)
-                continue;
-
-            /* Ignore PCBs that were freed while generating the data */
-            if (pINData->inp_gencnt > pOrigXIG->xig_gen)
-                continue;
-
-            /* we're only interested in IPv4 addresses */
-            if (!(pINData->inp_vflag & INP_IPV4) ||
-                (pINData->inp_vflag & INP_IPV6))
-                continue;
-
-            /* If all 0's, skip it */
-            if (!pINData->inp_laddr.s_addr &&
-                !pINData->inp_lport)
-                continue;
-
-            /* Fill in structure details */
-            row.dwLocalAddr = pINData->inp_laddr.s_addr;
-            row.dwLocalPort = pINData->inp_lport;
-            if (!(table = append_udp_row( heap, flags, table, &count, &row ))) break;
-        }
-
-    done:
-        HeapFree (GetProcessHeap (), 0, Buf);
-    }
-#else
-    FIXME( "not implemented\n" );
-    ret = ERROR_NOT_SUPPORTED;
-#endif
-
-    if (!table) return ERROR_OUTOFMEMORY;
-    if (!ret)
-    {
-        if (bOrder && table->dwNumEntries)
-            qsort( table->table, table->dwNumEntries, sizeof(row), compare_udp_rows );
-        *ppUdpTable = table;
-    }
-    else HeapFree( heap, flags, table );
-    TRACE( "returning ret %u table %p\n", ret, table );
-    return ret;
-}
-
 static DWORD get_tcp_table_sizes( TCP_TABLE_CLASS class, DWORD row_count, DWORD *row_size )
 {
     DWORD table_size;
@@ -2014,4 +1817,245 @@ DWORD WINAPI AllocateAndGetTcpTableFromStack( PMIB_TCPTABLE *ppTcpTable, BOOL bO
 
     if (!ppTcpTable) return ERROR_INVALID_PARAMETER;
     return build_tcp_table( TCP_TABLE_BASIC_ALL, (void **)ppTcpTable, bOrder, heap, flags, NULL );
+}
+
+static DWORD get_udp_table_sizes( UDP_TABLE_CLASS class, DWORD row_count, DWORD *row_size )
+{
+    DWORD table_size;
+
+    switch (class)
+    {
+    case UDP_TABLE_BASIC:
+    {
+        table_size = FIELD_OFFSET(MIB_UDPTABLE, table[row_count]);
+        if (row_size) *row_size = sizeof(MIB_UDPROW);
+        break;
+    }
+    case UDP_TABLE_OWNER_PID:
+    {
+        table_size = FIELD_OFFSET(MIB_UDPTABLE_OWNER_PID, table[row_count]);
+        if (row_size) *row_size = sizeof(MIB_UDPROW_OWNER_PID);
+        break;
+    }
+    default:
+        ERR("unhandled class %u\n", class);
+        return 0;
+    }
+    return table_size;
+}
+
+static MIB_UDPTABLE *append_udp_row( UDP_TABLE_CLASS class, HANDLE heap, DWORD flags,
+                                     MIB_UDPTABLE *table, DWORD *count,
+                                     const MIB_UDPROW_OWNER_PID *row, DWORD row_size )
+{
+    if (table->dwNumEntries >= *count)
+    {
+        MIB_UDPTABLE *new_table;
+        DWORD new_count = table->dwNumEntries * 2, new_table_size;
+
+        new_table_size = get_udp_table_sizes( class, new_count, NULL );
+        if (!(new_table = HeapReAlloc( heap, flags, table, new_table_size )))
+        {
+            HeapFree( heap, 0, table );
+            return NULL;
+        }
+        *count = new_count;
+        table = new_table;
+    }
+    memcpy( (char *)table->table + (table->dwNumEntries * row_size), row, row_size );
+    table->dwNumEntries++;
+    return table;
+}
+
+static int compare_udp_rows(const void *a, const void *b)
+{
+    const MIB_UDPROW *rowA = a;
+    const MIB_UDPROW *rowB = b;
+    int ret;
+
+    if ((ret = rowA->dwLocalAddr - rowB->dwLocalAddr) != 0) return ret;
+    return rowA->dwLocalPort - rowB->dwLocalPort;
+}
+
+DWORD build_udp_table( UDP_TABLE_CLASS class, void **tablep, BOOL order, HANDLE heap, DWORD flags,
+                       DWORD *size )
+{
+    MIB_UDPTABLE *table;
+    MIB_UDPROW_OWNER_PID row;
+    DWORD ret = NO_ERROR, count = 16, table_size, row_size;
+
+    if (!(table_size = get_udp_table_sizes( class, count, &row_size )))
+        return ERROR_INVALID_PARAMETER;
+
+    if (!(table = HeapAlloc( heap, flags, table_size )))
+         return ERROR_OUTOFMEMORY;
+
+    table->dwNumEntries = 0;
+    memset( &row, 0, sizeof(row) );
+
+#ifdef __linux__
+    {
+        FILE *fp;
+
+        if ((fp = fopen( "/proc/net/udp", "r" )))
+        {
+            char buf[512], *ptr;
+            struct pid_map *map = NULL;
+            unsigned int dummy, num_entries = 0;
+            int inode;
+
+            if (class == UDP_TABLE_OWNER_PID) map = get_pid_map( &num_entries );
+
+            /* skip header line */
+            ptr = fgets( buf, sizeof(buf), fp );
+            while ((ptr = fgets( buf, sizeof(buf), fp )))
+            {
+                if (sscanf( ptr, "%u: %x:%x %*s %*s %*s %*s %*s %*s %*s %d", &dummy,
+                    &row.dwLocalAddr, &row.dwLocalPort, &inode ) != 4)
+                    continue;
+                row.dwLocalPort = htons( row.dwLocalPort );
+                if (class == UDP_TABLE_OWNER_PID)
+                    row.dwOwningPid = find_owning_pid( map, num_entries, inode );
+                if (!(table = append_udp_row( class, heap, flags, table, &count, &row, row_size )))
+                    break;
+            }
+            HeapFree( GetProcessHeap(), 0, map );
+            fclose( fp );
+        }
+        else ret = ERROR_NOT_SUPPORTED;
+    }
+#elif defined(HAVE_SYS_TIHDR_H) && defined(T_OPTMGMT_ACK)
+    {
+        void *data;
+        int fd, len;
+        mib2_udpEntry_t *entry;
+
+        if ((fd = open_streams_mib( "udp" )) != -1)
+        {
+            if ((data = read_mib_entry( fd, MIB2_UDP, MIB2_UDP_ENTRY, &len )))
+            {
+                for (entry = data; (char *)(entry + 1) <= (char *)data + len; entry++)
+                {
+                    row.dwLocalAddr = entry->udpLocalAddress;
+                    row.dwLocalPort = htons( entry->udpLocalPort );
+                    if (!(table = append_udp_row( class, heap, flags, table, &count, &row, row_size ))) break;
+                }
+                HeapFree( GetProcessHeap(), 0, data );
+            }
+            close( fd );
+        }
+        else ret = ERROR_NOT_SUPPORTED;
+    }
+#elif defined(HAVE_SYS_SYSCTL_H) && defined(HAVE_STRUCT_XINPGEN)
+    {
+        size_t Len = 0;
+        char *Buf = NULL;
+        struct xinpgen *pXIG, *pOrigXIG;
+
+        if (sysctlbyname ("net.inet.udp.pcblist", NULL, &Len, NULL, 0) < 0)
+        {
+            ERR ("Failure to read net.inet.udp.pcblist via sysctlbyname!\n");
+            ret = ERROR_NOT_SUPPORTED;
+            goto done;
+        }
+
+        Buf = HeapAlloc (GetProcessHeap (), 0, Len);
+        if (!Buf)
+        {
+            ret = ERROR_OUTOFMEMORY;
+            goto done;
+        }
+
+        if (sysctlbyname ("net.inet.udp.pcblist", Buf, &Len, NULL, 0) < 0)
+        {
+            ERR ("Failure to read net.inet.udp.pcblist via sysctlbyname!\n");
+            ret = ERROR_NOT_SUPPORTED;
+            goto done;
+        }
+
+        /* Might be nothing here; first entry is just a header it seems */
+        if (Len <= sizeof (struct xinpgen)) goto done;
+
+        pOrigXIG = (struct xinpgen *)Buf;
+        pXIG = pOrigXIG;
+
+        for (pXIG = (struct xinpgen *)((char *)pXIG + pXIG->xig_len);
+             pXIG->xig_len > sizeof (struct xinpgen);
+             pXIG = (struct xinpgen *)((char *)pXIG + pXIG->xig_len))
+        {
+            struct inpcb *pINData;
+            struct xsocket *pSockData;
+
+            pINData = &((struct xinpcb *)pXIG)->xi_inp;
+            pSockData = &((struct xinpcb *)pXIG)->xi_socket;
+
+            /* Ignore sockets for other protocols */
+            if (pSockData->xso_protocol != IPPROTO_UDP)
+                continue;
+
+            /* Ignore PCBs that were freed while generating the data */
+            if (pINData->inp_gencnt > pOrigXIG->xig_gen)
+                continue;
+
+            /* we're only interested in IPv4 addresses */
+            if (!(pINData->inp_vflag & INP_IPV4) ||
+                (pINData->inp_vflag & INP_IPV6))
+                continue;
+
+            /* If all 0's, skip it */
+            if (!pINData->inp_laddr.s_addr &&
+                !pINData->inp_lport)
+                continue;
+
+            /* Fill in structure details */
+            row.dwLocalAddr = pINData->inp_laddr.s_addr;
+            row.dwLocalPort = pINData->inp_lport;
+            if (!(table = append_udp_row( class, heap, flags, table, &count, &row, row_size ))) break;
+        }
+
+    done:
+        HeapFree (GetProcessHeap (), 0, Buf);
+    }
+#else
+    FIXME( "not implemented\n" );
+    ret = ERROR_NOT_SUPPORTED;
+#endif
+
+    if (!table) return ERROR_OUTOFMEMORY;
+    if (!ret)
+    {
+        if (order && table->dwNumEntries)
+            qsort( table->table, table->dwNumEntries, row_size, compare_udp_rows );
+        *tablep = table;
+    }
+    else HeapFree( heap, flags, table );
+    if (size) *size = get_udp_table_sizes( class, count, NULL );
+    TRACE( "returning ret %u table %p\n", ret, table );
+    return ret;
+}
+
+/******************************************************************
+ *    AllocateAndGetUdpTableFromStack (IPHLPAPI.@)
+ *
+ * Get the UDP listener table.
+ * Like GetUdpTable(), but allocate the returned table from heap.
+ *
+ * PARAMS
+ *  ppUdpTable [Out] pointer into which the MIB_UDPTABLE is
+ *                   allocated and returned.
+ *  bOrder     [In]  whether to sort the table
+ *  heap       [In]  heap from which the table is allocated
+ *  flags      [In]  flags to HeapAlloc
+ *
+ * RETURNS
+ *  ERROR_INVALID_PARAMETER if ppUdpTable is NULL, whatever GetUdpTable()
+ *  returns otherwise.
+ */
+DWORD WINAPI AllocateAndGetUdpTableFromStack(PMIB_UDPTABLE *ppUdpTable, BOOL bOrder,
+                                             HANDLE heap, DWORD flags)
+{
+    TRACE("table %p, bOrder %d, heap %p, flags 0x%08x\n", ppUdpTable, bOrder, heap, flags);
+
+    if (!ppUdpTable) return ERROR_INVALID_PARAMETER;
+    return build_udp_table( UDP_TABLE_BASIC, (void **)ppUdpTable, bOrder, heap, flags, NULL );
 }

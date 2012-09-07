@@ -38,5 +38,6 @@ DWORD WINAPI AllocateAndGetIpNetTableFromStack(PMIB_IPNETTABLE *ppIpNetTable, BO
 DWORD WINAPI AllocateAndGetIpForwardTableFromStack(PMIB_IPFORWARDTABLE *ppIpForwardTable, BOOL bOrder, HANDLE heap, DWORD flags) DECLSPEC_HIDDEN;
 
 DWORD build_tcp_table(TCP_TABLE_CLASS, void **, BOOL, HANDLE, DWORD, DWORD *) DECLSPEC_HIDDEN;
+DWORD build_udp_table(UDP_TABLE_CLASS, void **, BOOL, HANDLE, DWORD, DWORD *) DECLSPEC_HIDDEN;
 
 #endif /* ndef WINE_IPSTATS_H_ */

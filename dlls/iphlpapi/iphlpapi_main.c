@@ -1917,30 +1917,45 @@ DWORD WINAPI GetExtendedTcpTable(PVOID pTcpTable, PDWORD pdwSize, BOOL bOrder,
  */
 DWORD WINAPI GetUdpTable(PMIB_UDPTABLE pUdpTable, PDWORD pdwSize, BOOL bOrder)
 {
-    DWORD ret;
-    PMIB_UDPTABLE table;
+    return GetExtendedUdpTable(pUdpTable, pdwSize, bOrder, AF_INET, UDP_TABLE_BASIC, 0);
+}
 
-    TRACE("pUdpTable %p, pdwSize %p, bOrder %d\n", pUdpTable, pdwSize, bOrder);
+/******************************************************************
+ *    GetExtendedUdpTable (IPHLPAPI.@)
+ */
+DWORD WINAPI GetExtendedUdpTable(PVOID pUdpTable, PDWORD pdwSize, BOOL bOrder,
+                                 ULONG ulAf, UDP_TABLE_CLASS TableClass, ULONG Reserved)
+{
+    DWORD ret, size;
+    void *table;
+
+    TRACE("pUdpTable %p, pdwSize %p, bOrder %d, ulAf %u, TableClass %u, Reserved %u\n",
+           pUdpTable, pdwSize, bOrder, ulAf, TableClass, Reserved);
 
     if (!pdwSize) return ERROR_INVALID_PARAMETER;
 
-    ret = AllocateAndGetUdpTableFromStack( &table, bOrder, GetProcessHeap(), 0 );
-    if (!ret) {
-        DWORD size = FIELD_OFFSET( MIB_UDPTABLE, table[table->dwNumEntries] );
-        if (!pUdpTable || *pdwSize < size) {
-          *pdwSize = size;
-          ret = ERROR_INSUFFICIENT_BUFFER;
-        }
-        else {
-          *pdwSize = size;
-          memcpy(pUdpTable, table, size);
-        }
-        HeapFree(GetProcessHeap(), 0, table);
+    if (ulAf != AF_INET ||
+        (TableClass != UDP_TABLE_BASIC && TableClass != UDP_TABLE_OWNER_PID))
+    {
+        FIXME("ulAf = %u, TableClass = %u not supported\n", ulAf, TableClass);
+        return ERROR_NOT_SUPPORTED;
     }
-    TRACE("returning %d\n", ret);
+    if ((ret = build_udp_table(TableClass, &table, bOrder, GetProcessHeap(), 0, &size)))
+        return ret;
+
+    if (!pUdpTable || *pdwSize < size)
+    {
+        *pdwSize = size;
+        ret = ERROR_INSUFFICIENT_BUFFER;
+    }
+    else
+    {
+        *pdwSize = size;
+        memcpy(pUdpTable, table, size);
+    }
+    HeapFree(GetProcessHeap(), 0, table);
     return ret;
 }
-
 
 /******************************************************************
  *    GetUniDirectionalAdapterInfo (IPHLPAPI.@)

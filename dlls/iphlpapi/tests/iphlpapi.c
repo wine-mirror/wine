@@ -71,6 +71,7 @@ static DWORD (WINAPI *pGetAdaptersAddresses)(ULONG,ULONG,PVOID,PIP_ADAPTER_ADDRE
 static DWORD (WINAPI *pNotifyAddrChange)(PHANDLE,LPOVERLAPPED);
 static BOOL  (WINAPI *pCancelIPChangeNotify)(LPOVERLAPPED);
 static DWORD (WINAPI *pGetExtendedTcpTable)(PVOID,PDWORD,BOOL,ULONG,TCP_TABLE_CLASS,ULONG);
+static DWORD (WINAPI *pGetExtendedUdpTable)(PVOID,PDWORD,BOOL,ULONG,UDP_TABLE_CLASS,ULONG);
 static DWORD (WINAPI *pSetTcpEntry)(PMIB_TCPROW);
 
 static void loadIPHlpApi(void)
@@ -102,6 +103,7 @@ static void loadIPHlpApi(void)
     pNotifyAddrChange = (void *)GetProcAddress(hLibrary, "NotifyAddrChange");
     pCancelIPChangeNotify = (void *)GetProcAddress(hLibrary, "CancelIPChangeNotify");
     pGetExtendedTcpTable = (void *)GetProcAddress(hLibrary, "GetExtendedTcpTable");
+    pGetExtendedUdpTable = (void *)GetProcAddress(hLibrary, "GetExtendedUdpTable");
     pSetTcpEntry = (void *)GetProcAddress(hLibrary, "SetTcpEntry");
   }
 }
@@ -1203,6 +1205,39 @@ static void test_GetExtendedTcpTable(void)
     HeapFree( GetProcessHeap(), 0, table_pid );
 }
 
+static void test_GetExtendedUdpTable(void)
+{
+    DWORD ret, size;
+    MIB_UDPTABLE *table;
+    MIB_UDPTABLE_OWNER_PID *table_pid;
+
+    if (!pGetExtendedUdpTable)
+    {
+        win_skip("GetExtendedUdpTable not available\n");
+        return;
+    }
+    ret = pGetExtendedUdpTable( NULL, NULL, TRUE, AF_INET, UDP_TABLE_BASIC, 0 );
+    ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
+
+    size = 0;
+    ret = pGetExtendedUdpTable( NULL, &size, TRUE, AF_INET, UDP_TABLE_BASIC, 0 );
+    ok( ret == ERROR_INSUFFICIENT_BUFFER, "got %u\n", ret );
+
+    table = HeapAlloc( GetProcessHeap(), 0, size );
+    ret = pGetExtendedUdpTable( table, &size, TRUE, AF_INET, UDP_TABLE_BASIC, 0 );
+    ok( ret == ERROR_SUCCESS, "got %u\n", ret );
+    HeapFree( GetProcessHeap(), 0, table );
+
+    size = 0;
+    ret = pGetExtendedUdpTable( NULL, &size, TRUE, AF_INET, UDP_TABLE_OWNER_PID, 0 );
+    ok( ret == ERROR_INSUFFICIENT_BUFFER, "got %u\n", ret );
+
+    table_pid = HeapAlloc( GetProcessHeap(), 0, size );
+    ret = pGetExtendedUdpTable( table_pid, &size, TRUE, AF_INET, UDP_TABLE_OWNER_PID, 0 );
+    ok( ret == ERROR_SUCCESS, "got %u\n", ret );
+    HeapFree( GetProcessHeap(), 0, table_pid );
+}
+
 START_TEST(iphlpapi)
 {
 
@@ -1221,6 +1256,7 @@ START_TEST(iphlpapi)
     testWin2KFunctions();
     test_GetAdaptersAddresses();
     test_GetExtendedTcpTable();
+    test_GetExtendedUdpTable();
     freeIPHlpApi();
   }
 }

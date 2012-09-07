@@ -39,6 +39,7 @@ typedef struct _MIB_UDPROW_OWNER_PID
 {
     DWORD dwLocalAddr;
     DWORD dwLocalPort;
+    DWORD dwOwningPid;
 } MIB_UDPROW_OWNER_PID, *PMIB_UDPROW_OWNER_PID;
 
 typedef struct _MIB_UDPTABLE_OWNER_PID
@@ -46,7 +47,6 @@ typedef struct _MIB_UDPTABLE_OWNER_PID
     DWORD                dwNumEntries;
     MIB_UDPROW_OWNER_PID table[1];
 } MIB_UDPTABLE_OWNER_PID, *PMIB_UDPTABLE_OWNER_PID;
-
 
 /* UDP statistics */
 
