@@ -86,6 +86,8 @@ static HRESULT navigate_anchor(HTMLAnchorElement *This)
     if(NS_SUCCEEDED(nsres)) {
         const PRUnichar *target;
 
+        TRACE("target %s\n", debugstr_w(target));
+
         nsAString_GetData(&target_str, &target);
         if(*target && strcmpiW(target, _selfW)) {
             if(!strcmpiW(target, _topW)) {
@@ -106,8 +108,6 @@ static HRESULT navigate_anchor(HTMLAnchorElement *This)
                     nsAString_Finish(&target_str);
                     return hres;
                 }
-
-                nsAString_Finish(&target_str);
             }
         }
     }
