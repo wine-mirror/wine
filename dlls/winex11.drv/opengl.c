@@ -3028,7 +3028,9 @@ static void X11DRV_WineGL_LoadExtensions(void)
  */
 static BOOL glxdrv_SwapBuffers(PHYSDEV dev)
 {
-  struct glx_physdev *physdev = get_glxdrv_dev( dev );
+    enum x11drv_escape_codes code = X11DRV_FLUSH_GL_DRAWABLE;
+    struct gl_drawable *gl;
+    HWND hwnd;
   struct wgl_context *ctx = NtCurrentTeb()->glContext;
 
   TRACE("(%p)\n", dev->hdc);
@@ -3040,36 +3042,35 @@ static BOOL glxdrv_SwapBuffers(PHYSDEV dev)
       return FALSE;
   }
 
-  if (!physdev->drawable)
-  {
-      WARN("Using an invalid drawable, skipping\n");
-      SetLastError(ERROR_INVALID_HANDLE);
-      return FALSE;
-  }
-
   sync_context(ctx);
-  switch (physdev->type)
-  {
-  case DC_GL_PIXMAP_WIN:
-      if(pglXCopySubBufferMESA) {
-          int w = physdev->x11dev->dc_rect.right - physdev->x11dev->dc_rect.left;
-          int h = physdev->x11dev->dc_rect.bottom - physdev->x11dev->dc_rect.top;
 
-          /* (glX)SwapBuffers has an implicit glFlush effect, however
-           * GLX_MESA_copy_sub_buffer doesn't. Make sure GL is flushed before
-           * copying */
-          pglFlush();
-          if(w > 0 && h > 0)
-              pglXCopySubBufferMESA(gdi_display, physdev->drawable, 0, 0, w, h);
-          break;
-      }
-      /* fall through */
-  default:
-      pglXSwapBuffers(gdi_display, physdev->drawable);
-      break;
-  }
+    hwnd = WindowFromDC( dev->hdc );
+    EnterCriticalSection( &context_section );
 
-  flush_gl_drawable( physdev );
+    if (!XFindContext( gdi_display, (XID)hwnd, gl_hwnd_context, (char **)&gl ) ||
+        !XFindContext( gdi_display, (XID)dev->hdc, gl_pbuffer_context, (char **)&gl ))
+    {
+        switch (gl->type)
+        {
+        case DC_GL_PIXMAP_WIN:
+            if (pglXCopySubBufferMESA) {
+                /* (glX)SwapBuffers has an implicit glFlush effect, however
+                 * GLX_MESA_copy_sub_buffer doesn't. Make sure GL is flushed before
+                 * copying */
+                pglFlush();
+                pglXCopySubBufferMESA( gdi_display, gl->drawable, 0, 0,
+                                       gl->rect.right - gl->rect.left, gl->rect.bottom - gl->rect.top );
+                break;
+            }
+            /* fall through */
+        default:
+            pglXSwapBuffers(gdi_display, gl->drawable);
+            break;
+        }
+    }
+    LeaveCriticalSection( &context_section );
+
+    ExtEscape( dev->hdc, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code, 0, NULL );
 
   /* FPS support */
   if (TRACE_ON(fps))
