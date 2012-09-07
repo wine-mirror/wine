@@ -1509,26 +1509,22 @@ static int glxdrv_wglDescribePixelFormat( HDC hdc, int iPixelFormat,
  */
 static int glxdrv_wglGetPixelFormat( HDC hdc )
 {
-    struct x11drv_escape_get_drawable escape;
+    HWND hwnd = WindowFromDC( hdc );
+    struct gl_drawable *gl;
+    int ret = 0;
 
-    TRACE( "(%p)\n", hdc );
+    EnterCriticalSection( &context_section );
+    if (!XFindContext( gdi_display, (XID)hwnd, gl_hwnd_context, (char **)&gl ) ||
+        !XFindContext( gdi_display, (XID)hdc, gl_pbuffer_context, (char **)&gl ))
+        ret = gl->pixel_format;
+    LeaveCriticalSection( &context_section );
 
-    escape.code = X11DRV_GET_DRAWABLE;
-    if (!ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape.code), (LPCSTR)&escape.code,
-                    sizeof(escape), (LPSTR)&escape ))
-        return 0;
+    /* Offscreen formats can't be used with traditional WGL calls.
+     * As has been verified on Windows GetPixelFormat doesn't fail but returns iPixelFormat=1. */
+    if (ret && !is_onscreen_pixel_format( ret )) ret = 1;
 
-    if (!is_valid_pixel_format( escape.pixel_format )) return 0;  /* not set yet */
-
-    if (!is_onscreen_pixel_format( escape.pixel_format ))
-    {
-        /* Offscreen formats can't be used with traditional WGL calls.
-         * As has been verified on Windows GetPixelFormat doesn't fail but returns iPixelFormat=1. */
-        TRACE("Returning iPixelFormat=1 for offscreen format: %d\n", escape.pixel_format);
-        return 1;
-    }
-    TRACE("(%p): returns %d\n", hdc, escape.pixel_format);
-    return escape.pixel_format;
+    TRACE( "%p -> %d\n", hdc, ret );
+    return ret;
 }
 
 /***********************************************************************
