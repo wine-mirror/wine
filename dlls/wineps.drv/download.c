@@ -118,9 +118,9 @@ static void get_download_name(PHYSDEV dev, LPOUTLINETEXTMETRICA potm, char **str
         }
     }
 
-    len = strlen((char*)potm + (ptrdiff_t)potm->otmpFullName) + 1;
+    len = strlen((char*)potm + (ptrdiff_t)potm->otmpFaceName) + 1;
     *str = HeapAlloc(GetProcessHeap(),0,len);
-    strcpy(*str, (char*)potm + (ptrdiff_t)potm->otmpFullName);
+    strcpy(*str, (char*)potm + (ptrdiff_t)potm->otmpFaceName);
 
     p = *str;
     while((p = strchr(p, ' ')))

@@ -6528,13 +6528,12 @@ static BOOL get_outline_text_metrics(GdiFont *font)
 {
     BOOL ret = FALSE;
     FT_Face ft_face = font->ft_face;
-    UINT needed, lenfam, lensty, lenface;
+    UINT needed, lenfam, lensty, lenface, lenfull;
     TT_OS2 *pOS2;
     TT_HoriHeader *pHori;
     TT_Postscript *pPost;
     FT_Fixed x_scale, y_scale;
-    WCHAR *family_nameW, *style_nameW, *face_nameW;
-    static const WCHAR spaceW[] = {' ', '\0'};
+    WCHAR *family_nameW, *style_nameW, *face_nameW, *full_nameW;
     char *cp;
     INT ascent, descent;
 
@@ -6556,8 +6555,20 @@ static BOOL get_outline_text_metrics(GdiFont *font)
 
     face_nameW = get_face_name( ft_face, TT_NAME_ID_FULL_NAME, TT_MS_LANGID_ENGLISH_UNITED_STATES );
     if (!face_nameW)
+    {
+        FIXME("failed to read face_nameW for font %s!\n", wine_dbgstr_w(font->name));
         face_nameW = strdupW(font->name);
+    }
     lenface = (strlenW(face_nameW) + 1) * sizeof(WCHAR);
+
+    full_nameW = get_face_name( ft_face, TT_NAME_ID_UNIQUE_ID, TT_MS_LANGID_ENGLISH_UNITED_STATES );
+    if (!full_nameW)
+    {
+        WCHAR fake_nameW[] = {'f','a','k','e',' ','n','a','m','e', 0};
+        FIXME("failed to read full_nameW for font %s!\n", wine_dbgstr_w(font->name));
+        full_nameW = strdupW(fake_nameW);
+    }
+    lenfull = (strlenW(full_nameW) + 1) * sizeof(WCHAR);
 
     /* These names should be read from the TT name table */
 
@@ -6571,7 +6582,7 @@ static BOOL get_outline_text_metrics(GdiFont *font)
     needed += lensty;
 
     /* length of otmpFullName */
-    needed += lenfam + lensty;
+    needed += lenfull;
 
 
     x_scale = ft_face->size->metrics.x_scale;
@@ -6817,15 +6828,14 @@ static BOOL get_outline_text_metrics(GdiFont *font)
     strcpyW((WCHAR*)cp, face_nameW);
 	cp += lenface;
     font->potm->otmpFullName = (LPSTR)(cp - (char*)font->potm);
-    strcpyW((WCHAR*)cp, family_nameW);
-    strcatW((WCHAR*)cp, spaceW);
-    strcatW((WCHAR*)cp, style_nameW);
+    strcpyW((WCHAR*)cp, full_nameW);
     ret = TRUE;
 
 end:
     HeapFree(GetProcessHeap(), 0, style_nameW);
     HeapFree(GetProcessHeap(), 0, family_nameW);
     HeapFree(GetProcessHeap(), 0, face_nameW);
+    HeapFree(GetProcessHeap(), 0, full_nameW);
     return ret;
 }
 

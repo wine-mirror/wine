@@ -4142,7 +4142,7 @@ static void test_fullname2_helper(const char *Family)
         ok(ret, "UNIQUE_ID (full name) could not be read\n");
         WideCharToMultiByte(CP_ACP, 0, bufW, -1, bufA, buf_size, NULL, FALSE);
         otmStr = (LPSTR)otm + (UINT_PTR)otm->otmpFullName;
-        todo_wine ok(!lstrcmpA(otmStr, bufA), "UNIQUE ID (full name) doesn't match: returned %s, expect %s\n", otmStr, bufA);
+        ok(!lstrcmpA(otmStr, bufA), "UNIQUE ID (full name) doesn't match: returned %s, expect %s\n", otmStr, bufA);
 
         SelectObject(hdc, of);
         DeleteObject(hfont);
