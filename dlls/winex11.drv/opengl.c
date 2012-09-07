@@ -1662,8 +1662,9 @@ static PROC glxdrv_wglGetProcAddress(LPCSTR lpszProc)
  */
 static BOOL glxdrv_wglMakeCurrent(HDC hdc, struct wgl_context *ctx)
 {
-    BOOL ret;
-    struct x11drv_escape_get_drawable escape;
+    BOOL ret = FALSE;
+    HWND hwnd;
+    struct gl_drawable *gl;
 
     TRACE("(%p,%p)\n", hdc, ctx);
 
@@ -1674,51 +1675,41 @@ static BOOL glxdrv_wglMakeCurrent(HDC hdc, struct wgl_context *ctx)
         return TRUE;
     }
 
-    escape.code = X11DRV_GET_DRAWABLE;
-    if (!ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape.code), (LPCSTR)&escape.code,
-                    sizeof(escape), (LPSTR)&escape ))
-        return FALSE;
+    hwnd = WindowFromDC( hdc );
+    EnterCriticalSection( &context_section );
 
-    if (!escape.pixel_format)
+    if (!XFindContext( gdi_display, (XID)hwnd, gl_hwnd_context, (char **)&gl ) ||
+        !XFindContext( gdi_display, (XID)hdc, gl_pbuffer_context, (char **)&gl ))
     {
-        WARN("Trying to use an invalid drawable\n");
-        SetLastError(ERROR_INVALID_HANDLE);
-        return FALSE;
-    }
-    if (ctx->fmt - pixel_formats != escape.pixel_format - 1)
-    {
-        WARN( "mismatched pixel format hdc %p %u ctx %p\n", hdc, escape.pixel_format, ctx );
-        SetLastError( ERROR_INVALID_PIXEL_FORMAT );
-        return FALSE;
-    }
-    else
-    {
-        if (TRACE_ON(wgl)) {
-            int vis_id;
-            pglXGetFBConfigAttrib(gdi_display, ctx->fmt->fbconfig, GLX_VISUAL_ID, &vis_id);
-            describeContext(ctx);
-            TRACE("hdc %p drawable %lx fmt %u vis %x ctx %p\n", hdc,
-                  escape.gl_drawable, escape.pixel_format, vis_id, ctx->ctx);
+        if (ctx->fmt != gl->format)
+        {
+            WARN( "mismatched pixel format hdc %p %p ctx %p %p\n", hdc, gl->format, ctx, ctx->fmt );
+            SetLastError( ERROR_INVALID_PIXEL_FORMAT );
+            goto done;
         }
 
-        ret = pglXMakeCurrent(gdi_display, escape.gl_drawable, ctx->ctx);
+        if (TRACE_ON(wgl)) {
+            describeContext(ctx);
+            TRACE("hdc %p drawable %lx fmt %p ctx %p\n", hdc, gl->drawable, gl->format, ctx->ctx );
+        }
 
+        ret = pglXMakeCurrent(gdi_display, gl->drawable, ctx->ctx);
         if (ret)
         {
             NtCurrentTeb()->glContext = ctx;
-
-            EnterCriticalSection( &context_section );
             ctx->has_been_current = TRUE;
             ctx->hdc = hdc;
-            ctx->drawables[0] = escape.gl_drawable;
-            ctx->drawables[1] = escape.gl_drawable;
+            ctx->drawables[0] = gl->drawable;
+            ctx->drawables[1] = gl->drawable;
             ctx->refresh_drawables = FALSE;
-            LeaveCriticalSection( &context_section );
+            goto done;
         }
-        else
-            SetLastError(ERROR_INVALID_HANDLE);
     }
-    TRACE(" returning %s\n", (ret ? "True" : "False"));
+    SetLastError( ERROR_INVALID_HANDLE );
+
+done:
+    LeaveCriticalSection( &context_section );
+    TRACE( "%p,%p returning %d\n", hdc, ctx, ret );
     return ret;
 }
 
