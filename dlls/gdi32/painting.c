@@ -525,19 +525,8 @@ INT WINAPI GdiDescribePixelFormat( HDC hdc, INT format, UINT size, PIXELFORMATDE
  */
 BOOL WINAPI GdiSwapBuffers( HDC hdc )
 {
-    INT bRet = FALSE;
-    DC * dc = get_dc_ptr( hdc );
-
-    TRACE("(%p)\n",hdc);
-
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSwapBuffers );
-        update_dc( dc );
-        bRet = physdev->funcs->pSwapBuffers( physdev );
-        release_dc_ptr( dc );
-    }
-    return bRet;
+    FIXME( "(%p): stub\n", hdc );
+    return FALSE;
 }
 
 

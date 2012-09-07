@@ -3026,33 +3026,25 @@ static void X11DRV_WineGL_LoadExtensions(void)
  *
  * Swap the buffers of this DC
  */
-static BOOL glxdrv_SwapBuffers(PHYSDEV dev)
+static BOOL glxdrv_wglSwapBuffers( HDC hdc )
 {
     enum x11drv_escape_codes code = X11DRV_FLUSH_GL_DRAWABLE;
     struct gl_drawable *gl;
-    HWND hwnd;
-  struct wgl_context *ctx = NtCurrentTeb()->glContext;
+    struct wgl_context *ctx = NtCurrentTeb()->glContext;
+    HWND hwnd = WindowFromDC( hdc );
+    BOOL ret = FALSE;
 
-  TRACE("(%p)\n", dev->hdc);
+    TRACE("(%p)\n", hdc);
 
-  if (!ctx)
-  {
-      WARN("Using a NULL context, skipping\n");
-      SetLastError(ERROR_INVALID_HANDLE);
-      return FALSE;
-  }
-
-  sync_context(ctx);
-
-    hwnd = WindowFromDC( dev->hdc );
     EnterCriticalSection( &context_section );
 
     if (!XFindContext( gdi_display, (XID)hwnd, gl_hwnd_context, (char **)&gl ) ||
-        !XFindContext( gdi_display, (XID)dev->hdc, gl_pbuffer_context, (char **)&gl ))
+        !XFindContext( gdi_display, (XID)hdc, gl_pbuffer_context, (char **)&gl ))
     {
         switch (gl->type)
         {
         case DC_GL_PIXMAP_WIN:
+            if (ctx) sync_context( ctx );
             if (pglXCopySubBufferMESA) {
                 /* (glX)SwapBuffers has an implicit glFlush effect, however
                  * GLX_MESA_copy_sub_buffer doesn't. Make sure GL is flushed before
@@ -3067,10 +3059,13 @@ static BOOL glxdrv_SwapBuffers(PHYSDEV dev)
             pglXSwapBuffers(gdi_display, gl->drawable);
             break;
         }
+        ret = TRUE;
     }
+    else SetLastError( ERROR_INVALID_HANDLE );
+
     LeaveCriticalSection( &context_section );
 
-    ExtEscape( dev->hdc, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code, 0, NULL );
+    ExtEscape( hdc, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code, 0, NULL );
 
   /* FPS support */
   if (TRACE_ON(fps))
@@ -3091,7 +3086,7 @@ static BOOL glxdrv_SwapBuffers(PHYSDEV dev)
       }
   }
 
-  return TRUE;
+    return ret;
 }
 
 static BOOL create_glx_dc( PHYSDEV *pdev )
@@ -3341,7 +3336,6 @@ static const struct gdi_dc_funcs glxdrv_funcs =
     NULL,                               /* pStretchDIBits */
     NULL,                               /* pStrokeAndFillPath */
     NULL,                               /* pStrokePath */
-    glxdrv_SwapBuffers,                 /* pSwapBuffers */
     NULL,                               /* pUnrealizePalette */
     NULL,                               /* pWidenPath */
     glxdrv_wine_get_wgl_driver,         /* wine_get_wgl_driver */
@@ -3360,6 +3354,7 @@ static struct opengl_funcs opengl_funcs =
         glxdrv_wglMakeCurrent,              /* p_wglMakeCurrent */
         glxdrv_wglSetPixelFormat,           /* p_wglSetPixelFormat */
         glxdrv_wglShareLists,               /* p_wglShareLists */
+        glxdrv_wglSwapBuffers,              /* p_wglSwapBuffers */
     }
 };
 

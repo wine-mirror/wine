@@ -2344,7 +2344,6 @@ const struct gdi_dc_funcs path_driver =
     NULL,                               /* pStretchDIBits */
     NULL,                               /* pStrokeAndFillPath */
     NULL,                               /* pStrokePath */
-    NULL,                               /* pSwapBuffers */
     NULL,                               /* pUnrealizePalette */
     NULL,                               /* pWidenPath */
     NULL,                               /* wine_get_wgl_driver */

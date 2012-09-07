@@ -637,6 +637,7 @@ my %wgl_functions =
                                        [ "const PIXELFORMATDESCRIPTOR *", "descr" ] ] ],
     "wglShareLists" => [ "BOOL", [ [ "struct wgl_context *", "org" ],
                                    [ "struct wgl_context *", "dst" ] ] ],
+    "wglSwapBuffers" => [ "BOOL", [ [ "HDC", "hdc" ] ] ],
    );
 
 my %supported_wgl_extensions =

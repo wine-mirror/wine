@@ -3034,6 +3034,7 @@ static PROC null_wglGetProcAddress( LPCSTR name ) { return 0; }
 static BOOL null_wglMakeCurrent( HDC hdc, struct wgl_context * context ) { return 0; }
 static BOOL null_wglSetPixelFormat( HDC hdc, INT format, const PIXELFORMATDESCRIPTOR * descr ) { return 0; }
 static BOOL null_wglShareLists( struct wgl_context * org, struct wgl_context * dst ) { return 0; }
+static BOOL null_wglSwapBuffers( HDC hdc ) { return 0; }
 static void null_glAccum( GLenum op, GLfloat value ) { }
 static void null_glAlphaFunc( GLenum func, GLfloat ref ) { }
 static GLboolean null_glAreTexturesResident( GLsizei n, const GLuint* textures, GLboolean* residences ) { return 0; }
@@ -5524,6 +5525,7 @@ struct opengl_funcs null_opengl_funcs =
         null_wglMakeCurrent,
         null_wglSetPixelFormat,
         null_wglShareLists,
+        null_wglSwapBuffers,
     },
     {
         null_glAccum,

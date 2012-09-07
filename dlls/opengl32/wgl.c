@@ -41,16 +41,12 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wgl);
-WINE_DECLARE_DEBUG_CHANNEL(opengl);
 
 static HMODULE opengl32_handle;
 
 extern struct opengl_funcs null_opengl_funcs;
 
 const GLubyte * WINAPI wine_glGetString( GLenum name );
-
-/* internal GDI functions */
-extern BOOL WINAPI GdiSwapBuffers( HDC hdc );
 
 /* handle management */
 
@@ -600,6 +596,17 @@ BOOL WINAPI wglSetPixelFormat( HDC hdc, INT format, const PIXELFORMATDESCRIPTOR 
 }
 
 /***********************************************************************
+ *              wglSwapBuffers (OPENGL32.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH wglSwapBuffers( HDC hdc )
+{
+    const struct opengl_funcs *funcs = get_dc_funcs( hdc );
+
+    if (!funcs || !funcs->wgl.p_wglSwapBuffers) return FALSE;
+    return funcs->wgl.p_wglSwapBuffers( hdc );
+}
+
+/***********************************************************************
  *		wglCreateLayerContext (OPENGL32.@)
  */
 HGLRC WINAPI wglCreateLayerContext(HDC hdc,
@@ -814,10 +821,10 @@ int WINAPI wglSetLayerPaletteEntries(HDC hdc,
  */
 BOOL WINAPI wglSwapLayerBuffers(HDC hdc,
 				UINT fuPlanes) {
-  TRACE_(opengl)("(%p, %08x)\n", hdc, fuPlanes);
+  TRACE("(%p, %08x)\n", hdc, fuPlanes);
 
   if (fuPlanes & WGL_SWAP_MAIN_PLANE) {
-    if (!GdiSwapBuffers(hdc)) return FALSE;
+    if (!wglSwapBuffers( hdc )) return FALSE;
     fuPlanes &= ~WGL_SWAP_MAIN_PLANE;
   }
 
@@ -1557,14 +1564,6 @@ const GLubyte * WINAPI wine_glGetString( GLenum name )
             ret = ptr->u.context->extensions;
     }
     return ret;
-}
-
-/***********************************************************************
- *              wglSwapBuffers (OPENGL32.@)
- */
-BOOL WINAPI DECLSPEC_HOTPATCH wglSwapBuffers( HDC hdc )
-{
-    return GdiSwapBuffers(hdc);
 }
 
 /***********************************************************************

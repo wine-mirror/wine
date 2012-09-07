@@ -640,11 +640,6 @@ static INT nulldrv_StartPage( PHYSDEV dev )
     return 1;
 }
 
-static BOOL nulldrv_SwapBuffers( PHYSDEV dev )
-{
-    return TRUE;
-}
-
 static BOOL nulldrv_UnrealizePalette( HPALETTE palette )
 {
     return FALSE;
@@ -781,7 +776,6 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_StretchDIBits,              /* pStretchDIBits */
     nulldrv_StrokeAndFillPath,          /* pStrokeAndFillPath */
     nulldrv_StrokePath,                 /* pStrokePath */
-    nulldrv_SwapBuffers,                /* pSwapBuffers */
     nulldrv_UnrealizePalette,           /* pUnrealizePalette */
     nulldrv_WidenPath,                  /* pWidenPath */
     nulldrv_wine_get_wgl_driver,        /* wine_get_wgl_driver */

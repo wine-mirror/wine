@@ -834,7 +834,6 @@ static const struct gdi_dc_funcs psdrv_funcs =
     NULL,                               /* pStretchDIBits */
     PSDRV_StrokeAndFillPath,            /* pStrokeAndFillPath */
     PSDRV_StrokePath,                   /* pStrokePath */
-    NULL,                               /* pSwapBuffers */
     NULL,                               /* pUnrealizePalette */
     NULL,                               /* pWidenPath */
     NULL,                               /* wine_get_wgl_driver */

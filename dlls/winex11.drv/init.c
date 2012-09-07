@@ -538,7 +538,6 @@ static const struct gdi_dc_funcs x11drv_funcs =
     NULL,                               /* pStretchDIBits */
     NULL,                               /* pStrokeAndFillPath */
     NULL,                               /* pStrokePath */
-    NULL,                               /* pSwapBuffers */
     X11DRV_UnrealizePalette,            /* pUnrealizePalette */
     NULL,                               /* pWidenPath */
     NULL,                               /* wine_get_wgl_driver */

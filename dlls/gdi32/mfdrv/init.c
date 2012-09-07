@@ -223,7 +223,6 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     MFDRV_StretchDIBits,             /* pStretchDIBits */
     MFDRV_StrokeAndFillPath,         /* pStrokeAndFillPath */
     MFDRV_StrokePath,                /* pStrokePath */
-    NULL,                            /* pSwapBuffers */
     NULL,                            /* pUnrealizePalette */
     MFDRV_WidenPath,                 /* pWidenPath */
     NULL,                            /* wine_get_wgl_driver */

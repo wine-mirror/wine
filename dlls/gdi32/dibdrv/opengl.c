@@ -304,6 +304,14 @@ static BOOL dibdrv_wglShareLists( struct wgl_context *org, struct wgl_context *d
     return FALSE;
 }
 
+/***********************************************************************
+ *		dibdrv_wglSwapBuffers
+ */
+static BOOL dibdrv_wglSwapBuffers( HDC hdc )
+{
+    return TRUE;
+}
+
 static struct opengl_funcs opengl_funcs =
 {
     {
@@ -316,6 +324,7 @@ static struct opengl_funcs opengl_funcs =
         dibdrv_wglMakeCurrent,        /* p_wglMakeCurrent */
         dibdrv_wglSetPixelFormat,     /* p_wglSetPixelFormat */
         dibdrv_wglShareLists,         /* p_wglShareLists */
+        dibdrv_wglSwapBuffers,        /* p_wglSwapBuffers */
     }
 };
 

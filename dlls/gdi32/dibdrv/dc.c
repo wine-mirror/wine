@@ -531,7 +531,6 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pStretchDIBits */
     NULL,                               /* pStrokeAndFillPath */
     NULL,                               /* pStrokePath */
-    NULL,                               /* pSwapBuffers */
     NULL,                               /* pUnrealizePalette */
     NULL,                               /* pWidenPath */
     dibdrv_wine_get_wgl_driver,         /* wine_get_wgl_driver */
@@ -1139,7 +1138,6 @@ static const struct gdi_dc_funcs window_driver =
     windrv_StretchDIBits,               /* pStretchDIBits */
     NULL,                               /* pStrokeAndFillPath */
     NULL,                               /* pStrokePath */
-    NULL,                               /* pSwapBuffers */
     NULL,                               /* pUnrealizePalette */
     NULL,                               /* pWidenPath */
     windrv_wine_get_wgl_driver,         /* wine_get_wgl_driver */
