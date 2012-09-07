@@ -48,6 +48,29 @@ typedef struct _MIB_UDPTABLE_OWNER_PID
     MIB_UDPROW_OWNER_PID table[1];
 } MIB_UDPTABLE_OWNER_PID, *PMIB_UDPTABLE_OWNER_PID;
 
+typedef struct _MIB_UDPROW_OWNER_MODULE
+{
+    DWORD         dwLocalAddr;
+    DWORD         dwLocalPort;
+    DWORD         dwOwningPid;
+    LARGE_INTEGER liCreateTimestamp;
+    __C89_NAMELESS union
+    {
+        __C89_NAMELESS struct
+        {
+            int SpecificPortBind:1;
+        } __C89_NAMELESSSTRUCTNAME;
+        int dwFlags;
+    } __C89_NAMELESSUNIONNAME;
+    ULONGLONG OwningModuleInfo[TCPIP_OWNING_MODULE_SIZE];
+} MIB_UDPROW_OWNER_MODULE, *PMIB_UDPROW_OWNER_MODULE;
+
+typedef struct _MIB_UDPTABLE_OWNER_MODULE
+{
+    DWORD                   dwNumEntries;
+    MIB_UDPROW_OWNER_MODULE table[1];
+} MIB_UDPTABLE_OWNER_MODULE, *PMIB_UDPTABLE_OWNER_MODULE;
+
 /* UDP statistics */
 
 typedef struct _MIB_UDPSTATS

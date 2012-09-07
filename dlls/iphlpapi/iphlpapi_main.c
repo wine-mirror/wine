@@ -1935,11 +1935,15 @@ DWORD WINAPI GetExtendedUdpTable(PVOID pUdpTable, PDWORD pdwSize, BOOL bOrder,
     if (!pdwSize) return ERROR_INVALID_PARAMETER;
 
     if (ulAf != AF_INET ||
-        (TableClass != UDP_TABLE_BASIC && TableClass != UDP_TABLE_OWNER_PID))
+        (TableClass != UDP_TABLE_BASIC && TableClass != UDP_TABLE_OWNER_PID &&
+         TableClass != UDP_TABLE_OWNER_MODULE))
     {
         FIXME("ulAf = %u, TableClass = %u not supported\n", ulAf, TableClass);
         return ERROR_NOT_SUPPORTED;
     }
+    if (TableClass == UDP_TABLE_OWNER_MODULE)
+        FIXME("UDP_TABLE_OWNER_MODULE not fully supported\n");
+
     if ((ret = build_udp_table(TableClass, &table, bOrder, GetProcessHeap(), 0, &size)))
         return ret;
 

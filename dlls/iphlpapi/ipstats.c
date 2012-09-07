@@ -1837,6 +1837,12 @@ static DWORD get_udp_table_sizes( UDP_TABLE_CLASS class, DWORD row_count, DWORD 
         if (row_size) *row_size = sizeof(MIB_UDPROW_OWNER_PID);
         break;
     }
+    case UDP_TABLE_OWNER_MODULE:
+    {
+        table_size = FIELD_OFFSET(MIB_UDPTABLE_OWNER_MODULE, table[row_count]);
+        if (row_size) *row_size = sizeof(MIB_UDPROW_OWNER_MODULE);
+        break;
+    }
     default:
         ERR("unhandled class %u\n", class);
         return 0;
@@ -1846,7 +1852,7 @@ static DWORD get_udp_table_sizes( UDP_TABLE_CLASS class, DWORD row_count, DWORD 
 
 static MIB_UDPTABLE *append_udp_row( UDP_TABLE_CLASS class, HANDLE heap, DWORD flags,
                                      MIB_UDPTABLE *table, DWORD *count,
-                                     const MIB_UDPROW_OWNER_PID *row, DWORD row_size )
+                                     const MIB_UDPROW_OWNER_MODULE *row, DWORD row_size )
 {
     if (table->dwNumEntries >= *count)
     {
@@ -1881,7 +1887,7 @@ DWORD build_udp_table( UDP_TABLE_CLASS class, void **tablep, BOOL order, HANDLE 
                        DWORD *size )
 {
     MIB_UDPTABLE *table;
-    MIB_UDPROW_OWNER_PID row;
+    MIB_UDPROW_OWNER_MODULE row;
     DWORD ret = NO_ERROR, count = 16, table_size, row_size;
 
     if (!(table_size = get_udp_table_sizes( class, count, &row_size )))
@@ -1904,7 +1910,8 @@ DWORD build_udp_table( UDP_TABLE_CLASS class, void **tablep, BOOL order, HANDLE 
             unsigned int dummy, num_entries = 0;
             int inode;
 
-            if (class == UDP_TABLE_OWNER_PID) map = get_pid_map( &num_entries );
+            if (class == UDP_TABLE_OWNER_PID || class == UDP_TABLE_OWNER_MODULE)
+                map = get_pid_map( &num_entries );
 
             /* skip header line */
             ptr = fgets( buf, sizeof(buf), fp );
@@ -1914,7 +1921,7 @@ DWORD build_udp_table( UDP_TABLE_CLASS class, void **tablep, BOOL order, HANDLE 
                     &row.dwLocalAddr, &row.dwLocalPort, &inode ) != 4)
                     continue;
                 row.dwLocalPort = htons( row.dwLocalPort );
-                if (class == UDP_TABLE_OWNER_PID)
+                if (class == UDP_TABLE_OWNER_PID || class == UDP_TABLE_OWNER_MODULE)
                     row.dwOwningPid = find_owning_pid( map, num_entries, inode );
                 if (!(table = append_udp_row( class, heap, flags, table, &count, &row, row_size )))
                     break;
