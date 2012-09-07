@@ -2784,7 +2784,7 @@ end:
 #define TT_NAME_ID_UNIQUE_ID 3
 #define TT_NAME_ID_FULL_NAME 4
 
-static BOOL get_ttf_nametable_entry(HDC hdc, WORD name_id, WCHAR *out_buf, SIZE_T out_size)
+static BOOL get_ttf_nametable_entry(HDC hdc, WORD name_id, WCHAR *out_buf, SIZE_T out_size, LCID language_id)
 {
     struct sfnt_name_header
     {
@@ -2841,7 +2841,7 @@ static BOOL get_ttf_nametable_entry(HDC hdc, WORD name_id, WCHAR *out_buf, SIZE_
     {
         if (GET_BE_WORD(entry[i].platform_id) != TT_PLATFORM_MICROSOFT ||
             GET_BE_WORD(entry[i].encoding_id) != TT_MS_ID_UNICODE_CS ||
-            GET_BE_WORD(entry[i].language_id) != TT_MS_LANGID_ENGLISH_UNITED_STATES ||
+            GET_BE_WORD(entry[i].language_id) != language_id ||
             GET_BE_WORD(entry[i].name_id) != name_id)
         {
             continue;
@@ -4035,7 +4035,7 @@ static void test_fullname(void)
         of = SelectObject(hdc, hfont);
         bufW[0] = 0;
         bufA[0] = 0;
-        ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_FULL_NAME, bufW, sizeof(bufW));
+        ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_FULL_NAME, bufW, sizeof(bufW), TT_MS_LANGID_ENGLISH_UNITED_STATES);
         ok(ret, "face full name could not be read\n");
         WideCharToMultiByte(CP_ACP, 0, bufW, -1, bufA, sizeof(bufW), NULL, FALSE);
         ok(!lstrcmpA(bufA, TestName[i]), "font full names don't match: %s != %s\n", TestName[i], bufA);
@@ -4057,13 +4057,6 @@ static void test_fullname2_helper(const char *Family)
     int i;
     DWORD otm_size, ret, buf_size;
     OUTLINETEXTMETRICA *otm;
-    LCID lcid = GetSystemDefaultLangID();
-
-    if (lcid != TT_MS_LANGID_ENGLISH_UNITED_STATES)
-    {
-        skip("Skip test: LCID = %d\n", lcid);
-        return;
-    }
 
     hdc = CreateCompatibleDC(0);
     ok(hdc != NULL, "CreateCompatibleDC failed\n");
@@ -4111,7 +4104,12 @@ static void test_fullname2_helper(const char *Family)
 
         bufW[0] = 0;
         bufA[0] = 0;
-        ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_FONT_FAMILY, bufW, buf_size);
+        ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_FONT_FAMILY, bufW, buf_size, GetSystemDefaultLangID());
+        if (!ret)
+        {
+            trace("no localized name found.\n");
+            ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_FONT_FAMILY, bufW, buf_size, TT_MS_LANGID_ENGLISH_UNITED_STATES);
+        }
         ok(ret, "FAMILY (family name) could not be read\n");
         WideCharToMultiByte(CP_ACP, 0, bufW, -1, bufA, buf_size, NULL, FALSE);
         ok(!lstrcmpA(FamilyName, bufA), "font family names don't match: returned %s, expect %s\n", FamilyName, bufA);
@@ -4120,7 +4118,12 @@ static void test_fullname2_helper(const char *Family)
 
         bufW[0] = 0;
         bufA[0] = 0;
-        ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_FULL_NAME, bufW, buf_size);
+        ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_FULL_NAME, bufW, buf_size, GetSystemDefaultLangID());
+        if (!ret)
+        {
+            trace("no localized name found.\n");
+            ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_FULL_NAME, bufW, buf_size, TT_MS_LANGID_ENGLISH_UNITED_STATES);
+        }
         ok(ret, "FULL_NAME (face name) could not be read\n");
         WideCharToMultiByte(CP_ACP, 0, bufW, -1, bufA, buf_size, NULL, FALSE);
         ok(!lstrcmpA(FaceName, bufA), "font face names don't match: returned %s, expect %s\n", FaceName, bufA);
@@ -4129,7 +4132,7 @@ static void test_fullname2_helper(const char *Family)
 
         bufW[0] = 0;
         bufA[0] = 0;
-        ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_FONT_SUBFAMILY, bufW, buf_size);
+        ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_FONT_SUBFAMILY, bufW, buf_size, TT_MS_LANGID_ENGLISH_UNITED_STATES);
         ok(ret, "SUBFAMILY (style name) could not be read\n");
         WideCharToMultiByte(CP_ACP, 0, bufW, -1, bufA, buf_size, NULL, FALSE);
         ok(!lstrcmpA(StyleName, bufA), "style names don't match: returned %s, expect %s\n", FaceName, bufA);
@@ -4138,7 +4141,7 @@ static void test_fullname2_helper(const char *Family)
 
         bufW[0] = 0;
         bufA[0] = 0;
-        ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_UNIQUE_ID, bufW, buf_size);
+        ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_UNIQUE_ID, bufW, buf_size, TT_MS_LANGID_ENGLISH_UNITED_STATES);
         ok(ret, "UNIQUE_ID (full name) could not be read\n");
         WideCharToMultiByte(CP_ACP, 0, bufW, -1, bufA, buf_size, NULL, FALSE);
         otmStr = (LPSTR)otm + (UINT_PTR)otm->otmpFullName;
