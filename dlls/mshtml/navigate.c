@@ -1310,10 +1310,12 @@ static nsresult NSAPI nsAsyncVerifyRedirectCallback_AsyncOnChannelRedirect(nsIAs
     }
 
     if(old_nschannel) {
-        nsres = nsILoadGroup_RemoveRequest(old_nschannel->load_group,
-                (nsIRequest*)&old_nschannel->nsIHttpChannel_iface, NULL, NS_OK);
-        if(NS_FAILED(nsres))
-            ERR("RemoveRequest failed: %08x\n", nsres);
+        if(old_nschannel->load_group) {
+            nsres = nsILoadGroup_RemoveRequest(old_nschannel->load_group,
+                    (nsIRequest*)&old_nschannel->nsIHttpChannel_iface, NULL, NS_OK);
+            if(NS_FAILED(nsres))
+                ERR("RemoveRequest failed: %08x\n", nsres);
+        }
         nsIHttpChannel_Release(&old_nschannel->nsIHttpChannel_iface);
     }
 
