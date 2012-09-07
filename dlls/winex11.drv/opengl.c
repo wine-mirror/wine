@@ -184,23 +184,23 @@ enum dc_gl_type
 
 struct glx_physdev
 {
-    struct gdi_physdev dev;
-    X11DRV_PDEVICE    *x11dev;
-    enum dc_gl_type    type;          /* type of GL device context */
-    int                pixel_format;
-    Drawable           drawable;
-    Pixmap             pixmap;        /* pixmap for a DL_GL_PIXMAP_WIN drawable */
+    struct gdi_physdev             dev;
+    X11DRV_PDEVICE                *x11dev;
+    enum dc_gl_type                type;          /* type of GL device context */
+    const struct wgl_pixel_format *format;
+    Drawable                       drawable;
+    Pixmap                         pixmap;        /* pixmap for a DL_GL_PIXMAP_WIN drawable */
 };
 
 struct gl_drawable
 {
-    enum dc_gl_type type;         /* type of GL surface */
-    Drawable        drawable;     /* drawable for rendering to the client area */
-    Pixmap          pixmap;       /* base pixmap if drawable is a GLXPixmap */
-    Colormap        colormap;     /* colormap used for the drawable */
-    int             pixel_format; /* pixel format for the drawable */
-    XVisualInfo    *visual;       /* information about the GL visual */
-    RECT            rect;         /* drawable rect, relative to whole window drawable */
+    enum dc_gl_type                type;         /* type of GL surface */
+    Drawable                       drawable;     /* drawable for rendering to the client area */
+    Pixmap                         pixmap;       /* base pixmap if drawable is a GLXPixmap */
+    Colormap                       colormap;     /* colormap used for the drawable */
+    const struct wgl_pixel_format *format;       /* pixel format for the drawable */
+    XVisualInfo                   *visual;       /* information about the GL visual */
+    RECT                           rect;         /* drawable rect, relative to whole window drawable */
 };
 
 /* X context to associate a struct gl_drawable to an hwnd */
@@ -1180,8 +1180,8 @@ BOOL set_win_format( HWND hwnd, XID fbconfig_id )
     if (!(format = pixelformat_from_fbconfig_id( fbconfig_id ))) return FALSE;
 
     gl = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*gl) );
-    gl->pixel_format = format;
-    gl->visual = pglXGetVisualFromFBConfig( gdi_display, pixel_formats[format - 1].fbconfig );
+    gl->format = &pixel_formats[format - 1];
+    gl->visual = pglXGetVisualFromFBConfig( gdi_display, gl->format->fbconfig );
     if (!gl->visual)
     {
         HeapFree( GetProcessHeap(), 0, gl );
@@ -1516,7 +1516,7 @@ static int glxdrv_wglGetPixelFormat( HDC hdc )
     EnterCriticalSection( &context_section );
     if (!XFindContext( gdi_display, (XID)hwnd, gl_hwnd_context, (char **)&gl ) ||
         !XFindContext( gdi_display, (XID)hdc, gl_pbuffer_context, (char **)&gl ))
-        ret = gl->pixel_format;
+        ret = gl->format - pixel_formats + 1;
     LeaveCriticalSection( &context_section );
 
     /* Offscreen formats can't be used with traditional WGL calls.
@@ -1561,7 +1561,7 @@ static BOOL glxdrv_wglSetPixelFormat( HDC hdc, int iPixelFormat, const PIXELFORM
 
     EnterCriticalSection( &context_section );
     if (!XFindContext( gdi_display, (XID)hwnd, gl_hwnd_context, (char **)&gl ))
-        prev = gl->pixel_format;
+        prev = gl->format - pixel_formats + 1;
     LeaveCriticalSection( &context_section );
 
     if (prev) return prev == iPixelFormat;  /* cannot change it if already set */
@@ -2212,7 +2212,7 @@ static HDC X11DRV_wglGetPbufferDCARB( struct wgl_pbuffer *object )
     }
     gl->type = DC_GL_PBUFFER;
     gl->drawable = object->drawable;
-    gl->pixel_format = object->fmt - pixel_formats + 1;
+    gl->format = object->fmt;
 
     EnterCriticalSection( &context_section );
     if (!XFindContext( gdi_display, (XID)hdc, gl_pbuffer_context, (char **)&prev ))
@@ -3206,28 +3206,28 @@ static INT glxdrv_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_d
                 if (!XFindContext( gdi_display, (XID)data->hwnd, gl_hwnd_context, (char **)&gl ) ||
                     !XFindContext( gdi_display, (XID)dev->hdc, gl_pbuffer_context, (char **)&gl ))
                 {
-                    physdev->pixel_format = gl->pixel_format;
+                    physdev->format       = gl->format;
                     physdev->type         = gl->type;
                     physdev->drawable     = gl->drawable;
                     physdev->pixmap       = gl->pixmap;
                 }
                 else
                 {
-                    physdev->pixel_format = 0;
+                    physdev->format       = NULL;
                     physdev->type         = DC_GL_NONE;
                     physdev->drawable     = 0;
                     physdev->pixmap       = 0;
                 }
                 LeaveCriticalSection( &context_section );
-                TRACE( "SET_DRAWABLE hdc %p drawable %lx pf %u type %u\n",
-                       dev->hdc, physdev->drawable, physdev->pixel_format, physdev->type );
+                TRACE( "SET_DRAWABLE hdc %p drawable %lx pf %p type %u\n",
+                       dev->hdc, physdev->drawable, physdev->format, physdev->type );
             }
             break;
         case X11DRV_GET_DRAWABLE:
             if (out_count >= sizeof(struct x11drv_escape_get_drawable))
             {
                 struct x11drv_escape_get_drawable *data = out_data;
-                data->pixel_format = physdev->pixel_format;
+                data->pixel_format = physdev->format ? physdev->format - pixel_formats + 1 : 0;
                 data->gl_drawable  = physdev->drawable;
             }
             break;
