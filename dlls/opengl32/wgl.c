@@ -41,6 +41,7 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wgl);
+WINE_DECLARE_DEBUG_CHANNEL(fps);
 
 static HMODULE opengl32_handle;
 
@@ -603,7 +604,27 @@ BOOL WINAPI DECLSPEC_HOTPATCH wglSwapBuffers( HDC hdc )
     const struct opengl_funcs *funcs = get_dc_funcs( hdc );
 
     if (!funcs || !funcs->wgl.p_wglSwapBuffers) return FALSE;
-    return funcs->wgl.p_wglSwapBuffers( hdc );
+    if (!funcs->wgl.p_wglSwapBuffers( hdc )) return FALSE;
+
+    if (TRACE_ON(fps))
+    {
+        static long prev_time, start_time;
+        static unsigned long frames, frames_total;
+
+        DWORD time = GetTickCount();
+        frames++;
+        frames_total++;
+        /* every 1.5 seconds */
+        if (time - prev_time > 1500)
+        {
+            TRACE_(fps)("@ approx %.2ffps, total %.2ffps\n",
+                        1000.0*frames/(time - prev_time), 1000.0*frames_total/(time - start_time));
+            prev_time = time;
+            frames = 0;
+            if (start_time == 0) start_time = time;
+        }
+    }
+    return TRUE;
 }
 
 /***********************************************************************
