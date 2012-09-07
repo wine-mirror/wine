@@ -1608,43 +1608,27 @@ static BOOL glxdrv_wglCopyContext(struct wgl_context *src, struct wgl_context *d
  */
 static struct wgl_context *glxdrv_wglCreateContext( HDC hdc )
 {
-    struct x11drv_escape_get_drawable escape;
-    struct wgl_context *ret;
-    const struct wgl_pixel_format *fmt;
-
-    TRACE( "(%p)\n", hdc );
-
-    escape.code = X11DRV_GET_DRAWABLE;
-    if (!ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape.code), (LPCSTR)&escape.code,
-                    sizeof(escape), (LPSTR)&escape ))
-        return 0;
-
-    fmt = get_pixel_format(gdi_display, escape.pixel_format, TRUE /* Offscreen */);
-    /* We can render using the iPixelFormat (1) of Wine's Main visual AND using some offscreen formats.
-     * Note that standard WGL-calls don't recognize offscreen-only formats. For that reason pbuffers
-     * use a sort of 'proxy' HDC (wglGetPbufferDCARB).
-     * If this fails something is very wrong on the system. */
-    if(!fmt) {
-        ERR("Cannot get FB Config for iPixelFormat %d, expect problems!\n", escape.pixel_format);
-        SetLastError(ERROR_INVALID_PIXEL_FORMAT);
-        return NULL;
-    }
-
-    if (!(ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ret)))) return 0;
-
-    ret->hdc = hdc;
-    ret->fmt = fmt;
-    ret->has_been_current = FALSE;
-    ret->sharing = FALSE;
-
-    ret->vis = pglXGetVisualFromFBConfig(gdi_display, fmt->fbconfig);
-    ret->ctx = create_glxcontext(gdi_display, ret, NULL);
+    struct wgl_context *ret = NULL;
+    struct gl_drawable *gl;
+    HWND hwnd = WindowFromDC( hdc );
 
     EnterCriticalSection( &context_section );
-    list_add_head( &context_list, &ret->entry );
-    LeaveCriticalSection( &context_section );
 
-    TRACE(" creating context %p (GL context creation delayed)\n", ret);
+    if (!XFindContext( gdi_display, (XID)hwnd, gl_hwnd_context, (char **)&gl ) ||
+        !XFindContext( gdi_display, (XID)hdc, gl_pbuffer_context, (char **)&gl ))
+    {
+        if (!(ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ret)))) goto done;
+        ret->hdc = hdc;
+        ret->fmt = gl->format;
+        ret->vis = pglXGetVisualFromFBConfig(gdi_display, gl->format->fbconfig);
+        ret->ctx = create_glxcontext(gdi_display, ret, NULL);
+        list_add_head( &context_list, &ret->entry );
+    }
+    else SetLastError( ERROR_INVALID_PIXEL_FORMAT );
+
+done:
+    LeaveCriticalSection( &context_section );
+    TRACE( "%p -> %p\n", hdc, ret );
     return ret;
 }
 
