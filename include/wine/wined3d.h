@@ -2239,7 +2239,7 @@ HRESULT __cdecl wined3d_device_set_transform(struct wined3d_device *device,
 HRESULT __cdecl wined3d_device_set_vertex_declaration(struct wined3d_device *device,
         struct wined3d_vertex_declaration *declaration);
 HRESULT __cdecl wined3d_device_set_vertex_shader(struct wined3d_device *device, struct wined3d_shader *shader);
-HRESULT __cdecl wined3d_device_set_viewport(struct wined3d_device *device, const struct wined3d_viewport *viewport);
+void __cdecl wined3d_device_set_viewport(struct wined3d_device *device, const struct wined3d_viewport *viewport);
 HRESULT __cdecl wined3d_device_set_vs_consts_b(struct wined3d_device *device,
         UINT start_register, const BOOL *constants, UINT bool_count);
 HRESULT __cdecl wined3d_device_set_vs_consts_f(struct wined3d_device *device,

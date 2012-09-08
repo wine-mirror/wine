@@ -2291,7 +2291,7 @@ INT CDECL wined3d_device_get_base_vertex_index(const struct wined3d_device *devi
     return device->stateBlock->state.base_vertex_index;
 }
 
-HRESULT CDECL wined3d_device_set_viewport(struct wined3d_device *device, const struct wined3d_viewport *viewport)
+void CDECL wined3d_device_set_viewport(struct wined3d_device *device, const struct wined3d_viewport *viewport)
 {
     TRACE("device %p, viewport %p.\n", device, viewport);
     TRACE("x %u, y %u, w %u, h %u, min_z %.8e, max_z %.8e.\n",
@@ -2304,12 +2304,10 @@ HRESULT CDECL wined3d_device_set_viewport(struct wined3d_device *device, const s
     if (device->isRecordingState)
     {
         TRACE("Recording... not performing anything\n");
-        return WINED3D_OK;
+        return;
     }
 
     device_invalidate_state(device, STATE_VIEWPORT);
-
-    return WINED3D_OK;
 }
 
 HRESULT CDECL wined3d_device_get_viewport(const struct wined3d_device *device, struct wined3d_viewport *viewport)
