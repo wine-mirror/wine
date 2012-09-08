@@ -140,6 +140,7 @@ struct d3d10_rendertarget_view
 
     struct wined3d_rendertarget_view *wined3d_view;
     D3D10_RENDER_TARGET_VIEW_DESC desc;
+    ID3D10Resource *resource;
 };
 
 HRESULT d3d10_rendertarget_view_init(struct d3d10_rendertarget_view *view,
