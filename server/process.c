@@ -337,6 +337,7 @@ struct thread *create_process( int fd, struct thread *parent_thread, int inherit
     list_init( &process->locks );
     list_init( &process->classes );
     list_init( &process->dlls );
+    list_init( &process->rawinput_devices );
 
     process->start_time = current_time;
     process->end_time = 0;
@@ -634,6 +635,12 @@ static void process_killed( struct process *process )
     /* close the console attached to this process, if any */
     free_console( process );
 
+    while ((ptr = list_head( &process->rawinput_devices )))
+    {
+        struct rawinput_device_entry *entry = LIST_ENTRY( ptr, struct rawinput_device_entry, entry );
+        list_remove( &entry->entry );
+        free( entry );
+    }
     while ((ptr = list_head( &process->dlls )))
     {
         struct process_dll *dll = LIST_ENTRY( ptr, struct process_dll, entry );

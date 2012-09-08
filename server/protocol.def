@@ -610,6 +610,14 @@ typedef union
     } create_thread;
 } apc_result_t;
 
+struct rawinput_device
+{
+    unsigned short usage_page;
+    unsigned short usage;
+    unsigned int   flags;
+    user_handle_t  target;
+};
+
 /****************************************************************/
 /* Request declarations */
 
@@ -3363,6 +3371,12 @@ enum coords_relative
 #define SET_CURSOR_POS    0x04
 #define SET_CURSOR_CLIP   0x08
 #define SET_CURSOR_NOCLIP 0x10
+
+
+/* Modify the list of registered rawinput devices */
+@REQ(update_rawinput_devices)
+    VARARG(devices,rawinput_devices);
+@END
 
 
 /* Retrieve the suspended context of a thread */

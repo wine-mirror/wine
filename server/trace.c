@@ -1004,6 +1004,23 @@ static void dump_varargs_filesystem_event( const char *prefix, data_size_t size 
     fputc( '}', stderr );
 }
 
+static void dump_varargs_rawinput_devices(const char *prefix, data_size_t size )
+{
+    const struct rawinput_device *device;
+
+    fprintf( stderr, "%s{", prefix );
+    while (size >= sizeof(*device))
+    {
+        device = cur_data;
+        fprintf( stderr, "{usage_page=%04x,usage=%04x,flags=%08x,target=%08x}",
+                 device->usage_page, device->usage, device->flags, device->target );
+        size -= sizeof(*device);
+        remove_data( sizeof(*device) );
+        if (size) fputc( ',', stderr );
+    }
+    fputc( '}', stderr );
+}
+
 typedef void (*dump_func)( const void *req );
 
 /* Everything below this line is generated automatically by tools/make_requests */
@@ -3900,6 +3917,11 @@ static void dump_set_cursor_reply( const struct set_cursor_reply *req )
     fprintf( stderr, ", last_change=%08x", req->last_change );
 }
 
+static void dump_update_rawinput_devices_request( const struct update_rawinput_devices_request *req )
+{
+    dump_varargs_rawinput_devices( " devices=", cur_size );
+}
+
 static void dump_get_suspend_context_request( const struct get_suspend_context_request *req )
 {
 }
@@ -4160,6 +4182,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_alloc_user_handle_request,
     (dump_func)dump_free_user_handle_request,
     (dump_func)dump_set_cursor_request,
+    (dump_func)dump_update_rawinput_devices_request,
     (dump_func)dump_get_suspend_context_request,
     (dump_func)dump_set_suspend_context_request,
 };
@@ -4410,6 +4433,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_alloc_user_handle_reply,
     NULL,
     (dump_func)dump_set_cursor_reply,
+    NULL,
     (dump_func)dump_get_suspend_context_reply,
     NULL,
 };
@@ -4660,6 +4684,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "alloc_user_handle",
     "free_user_handle",
     "set_cursor",
+    "update_rawinput_devices",
     "get_suspend_context",
     "set_suspend_context",
 };
@@ -4724,6 +4749,7 @@ static const struct
     { "IO_TIMEOUT",                  STATUS_IO_TIMEOUT },
     { "KEY_DELETED",                 STATUS_KEY_DELETED },
     { "MAPPED_FILE_SIZE_ZERO",       STATUS_MAPPED_FILE_SIZE_ZERO },
+    { "MORE_PROCESSING_REQUIRED",    STATUS_MORE_PROCESSING_REQUIRED },
     { "MUTANT_NOT_OWNED",            STATUS_MUTANT_NOT_OWNED },
     { "NAME_TOO_LONG",               STATUS_NAME_TOO_LONG },
     { "NETWORK_BUSY",                STATUS_NETWORK_BUSY },

@@ -45,6 +45,12 @@ struct process_dll
     WCHAR               *filename;        /* dll file name */
 };
 
+struct rawinput_device_entry
+{
+    struct list            entry;
+    struct rawinput_device device;
+};
+
 struct process
 {
     struct object        obj;             /* object header */
@@ -81,6 +87,7 @@ struct process
     client_ptr_t         peb;             /* PEB address in client address space */
     client_ptr_t         ldt_copy;        /* pointer to LDT copy in client addr space */
     unsigned int         trace_data;      /* opaque data used by the process tracing mechanism */
+    struct list          rawinput_devices;/* list of registered rawinput devices */
 };
 
 struct process_snapshot

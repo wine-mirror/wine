@@ -1391,6 +1391,40 @@ static user_handle_t find_hardware_message_window( struct desktop *desktop, stru
     return win;
 }
 
+static struct rawinput_device_entry *find_rawinput_device( unsigned short usage_page, unsigned short usage )
+{
+    struct rawinput_device_entry *e;
+
+    LIST_FOR_EACH_ENTRY( e, &current->process->rawinput_devices, struct rawinput_device_entry, entry )
+    {
+        if (e->device.usage_page != usage_page || e->device.usage != usage) continue;
+        return e;
+    }
+
+    return NULL;
+}
+
+static void update_rawinput_device(const struct rawinput_device *device)
+{
+    struct rawinput_device_entry *e;
+
+    if (!(e = find_rawinput_device( device->usage_page, device->usage )))
+    {
+        if (!(e = mem_alloc( sizeof(*e) ))) return;
+        list_add_tail( &current->process->rawinput_devices, &e->entry );
+    }
+
+    if (device->flags & RIDEV_REMOVE)
+    {
+        list_remove( &e->entry );
+        free( e );
+        return;
+    }
+
+    e->device = *device;
+    e->device.target = get_user_full_handle( e->device.target );
+}
+
 /* queue a hardware message into a given thread input */
 static void queue_hardware_message( struct desktop *desktop, struct message *msg, int always_queue )
 {
@@ -2930,4 +2964,16 @@ DECL_HANDLER(set_cursor)
     reply->new_y       = input->desktop->cursor.y;
     reply->new_clip    = input->desktop->cursor.clip;
     reply->last_change = input->desktop->cursor.last_change;
+}
+
+DECL_HANDLER(update_rawinput_devices)
+{
+    const struct rawinput_device *devices = get_req_data();
+    unsigned int device_count = get_req_data_size() / sizeof (*devices);
+    unsigned int i;
+
+    for (i = 0; i < device_count; ++i)
+    {
+        update_rawinput_device(&devices[i]);
+    }
 }
