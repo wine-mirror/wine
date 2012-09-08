@@ -17,6 +17,7 @@
  */
 
 #include <stdio.h>
+#include <limits.h>
 
 #include <windef.h>
 #include <winbase.h>
@@ -450,11 +451,12 @@ static void test_basic_string_char_append(void) {
 }
 
 static void test_basic_string_char_compare(void) {
-    basic_string_char str1, str2;
+    basic_string_char str1, str2, str3;
     int ret;
 
     call_func2(p_basic_string_char_ctor_cstr, &str1, "str1str");
     call_func2(p_basic_string_char_ctor_cstr, &str2, "str9str");
+    call_func2(p_basic_string_char_ctor_cstr, &str3, "splash.png");
 
     ret = (int)call_func6(p_basic_string_char_compare_substr_substr,
             &str1, 0, 3, &str2, 0, 3);
@@ -470,6 +472,9 @@ static void test_basic_string_char_compare(void) {
             &str1, 0, 1000, "str1str", 7);
     ok(ret == 0, "ret = %d\n", ret);
     ret = (int)call_func5(p_basic_string_char_compare_substr_cstr_len,
+            &str3, 6, UINT_MAX, ".png", 4);
+    ok(ret == 0, "ret = %d\n", ret);
+    ret = (int)call_func5(p_basic_string_char_compare_substr_cstr_len,
             &str1, 1, 2, "tr", 2);
     ok(ret == 0, "ret = %d\n", ret);
     ret = (int)call_func5(p_basic_string_char_compare_substr_cstr_len,
@@ -481,6 +486,7 @@ static void test_basic_string_char_compare(void) {
 
     call_func1(p_basic_string_char_dtor, &str1);
     call_func1(p_basic_string_char_dtor, &str2);
+    call_func1(p_basic_string_char_dtor, &str3);
 }
 
 static void test_basic_string_char_concatenate(void) {

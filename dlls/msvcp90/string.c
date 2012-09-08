@@ -1331,7 +1331,7 @@ int __thiscall MSVCP_basic_string_char_compare_substr_cstr_len(
     if(this->size < pos)
         MSVCP__String_base_Xran();
 
-    if(pos+num > this->size)
+    if(num > this->size-pos)
         num = this->size-pos;
 
     ans = MSVCP_char_traits_char_compare(basic_string_char_const_ptr(this)+pos,
@@ -1378,7 +1378,7 @@ int __thiscall MSVCP_basic_string_char_compare_substr_substr(
     if(compare->size < off)
         MSVCP__String_base_Xran();
 
-    if(off+count > compare->size)
+    if(count > compare->size-off)
         count = compare->size-off;
 
     return MSVCP_basic_string_char_compare_substr_cstr_len(this, pos, num,
@@ -2017,7 +2017,7 @@ basic_string_char* __thiscall basic_string_char_replace_substr(basic_string_char
     if(str->size < str_off)
         MSVCP__String_base_Xran();
 
-    if(str_off+str_len > str->size)
+    if(str_len > str->size-str_off)
         str_len = str->size-str_off;
 
     return basic_string_char_replace_cstr_len(this, off, len,
@@ -3265,7 +3265,7 @@ int __thiscall MSVCP_basic_string_wchar_compare_substr_cstr_len(
     if(this->size < pos)
         MSVCP__String_base_Xran();
 
-    if(pos+num > this->size)
+    if(num > this->size-pos)
         num = this->size-pos;
 
     ans = MSVCP_char_traits_wchar_compare(basic_string_wchar_const_ptr(this)+pos,
@@ -3318,7 +3318,7 @@ int __thiscall MSVCP_basic_string_wchar_compare_substr_substr(
     if(compare->size < off)
         MSVCP__String_base_Xran();
 
-    if(off+count > compare->size)
+    if(count > compare->size-off)
         count = compare->size-off;
 
     return MSVCP_basic_string_wchar_compare_substr_cstr_len(this, pos, num,
@@ -3980,7 +3980,7 @@ basic_string_wchar* __thiscall basic_string_wchar_replace_substr(basic_string_wc
     if(str->size < str_off)
         MSVCP__String_base_Xran();
 
-    if(str_off+str_len > str->size)
+    if(str_len > str->size-str_off)
         str_len = str->size-str_off;
 
     return basic_string_wchar_replace_cstr_len(this, off, len,
