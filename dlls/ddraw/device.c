@@ -5042,7 +5042,6 @@ static HRESULT WINAPI d3d_device7_SetViewport_FPUPreserve(IDirect3DDevice7 *ifac
 static HRESULT d3d_device7_GetViewport(IDirect3DDevice7 *iface, D3DVIEWPORT7 *viewport)
 {
     struct d3d_device *device = impl_from_IDirect3DDevice7(iface);
-    HRESULT hr;
 
     TRACE("iface %p, viewport %p.\n", iface, viewport);
 
@@ -5051,10 +5050,10 @@ static HRESULT d3d_device7_GetViewport(IDirect3DDevice7 *iface, D3DVIEWPORT7 *vi
 
     /* Note: D3DVIEWPORT7 is compatible with struct wined3d_viewport. */
     wined3d_mutex_lock();
-    hr = wined3d_device_get_viewport(device->wined3d_device, (struct wined3d_viewport *)viewport);
+    wined3d_device_get_viewport(device->wined3d_device, (struct wined3d_viewport *)viewport);
     wined3d_mutex_unlock();
 
-    return hr_ddraw_from_wined3d(hr);
+    return D3D_OK;
 }
 
 static HRESULT WINAPI d3d_device7_GetViewport_FPUSetup(IDirect3DDevice7 *iface, D3DVIEWPORT7 *viewport)

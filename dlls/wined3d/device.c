@@ -2310,13 +2310,11 @@ void CDECL wined3d_device_set_viewport(struct wined3d_device *device, const stru
     device_invalidate_state(device, STATE_VIEWPORT);
 }
 
-HRESULT CDECL wined3d_device_get_viewport(const struct wined3d_device *device, struct wined3d_viewport *viewport)
+void CDECL wined3d_device_get_viewport(const struct wined3d_device *device, struct wined3d_viewport *viewport)
 {
     TRACE("device %p, viewport %p.\n", device, viewport);
 
     *viewport = device->stateBlock->state.viewport;
-
-    return WINED3D_OK;
 }
 
 HRESULT CDECL wined3d_device_set_render_state(struct wined3d_device *device,

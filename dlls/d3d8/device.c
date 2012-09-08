@@ -1322,16 +1322,15 @@ static HRESULT WINAPI d3d8_device_SetViewport(IDirect3DDevice8 *iface, const D3D
 static HRESULT WINAPI d3d8_device_GetViewport(IDirect3DDevice8 *iface, D3DVIEWPORT8 *viewport)
 {
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
-    HRESULT hr;
 
     TRACE("iface %p, viewport %p.\n", iface, viewport);
 
     /* Note: D3DVIEWPORT8 is compatible with struct wined3d_viewport. */
     wined3d_mutex_lock();
-    hr = wined3d_device_get_viewport(device->wined3d_device, (struct wined3d_viewport *)viewport);
+    wined3d_device_get_viewport(device->wined3d_device, (struct wined3d_viewport *)viewport);
     wined3d_mutex_unlock();
 
-    return hr;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI d3d8_device_SetMaterial(IDirect3DDevice8 *iface, const D3DMATERIAL8 *material)
