@@ -61,8 +61,6 @@ static RRMode *xrandr12_modes;
 
 #undef MAKE_FUNCPTR
 
-extern int usexrandr;
-
 static struct x11drv_mode_info *dd_modes;
 static SizeID *xrandr10_modes;
 static unsigned int xrandr_mode_count;
