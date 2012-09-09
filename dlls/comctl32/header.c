@@ -727,17 +727,9 @@ static void
 HEADER_DrawTrackLine (const HEADER_INFO *infoPtr, HDC hdc, INT x)
 {
     RECT rect;
-    HPEN hOldPen;
-    INT  oldRop;
 
     GetClientRect (infoPtr->hwndSelf, &rect);
-
-    hOldPen = SelectObject (hdc, GetStockObject (BLACK_PEN));
-    oldRop = SetROP2 (hdc, R2_XORPEN);
-    MoveToEx (hdc, x, rect.top, NULL);
-    LineTo (hdc, x, rect.bottom);
-    SetROP2 (hdc, oldRop);
-    SelectObject (hdc, hOldPen);
+    PatBlt( hdc, x, rect.top, 1, rect.bottom - rect.top, DSTINVERT );
 }
 
 /***

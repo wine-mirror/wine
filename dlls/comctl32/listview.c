@@ -9264,21 +9264,15 @@ static BOOL LISTVIEW_Update(LISTVIEW_INFO *infoPtr, INT nItem)
  */
 static BOOL LISTVIEW_DrawTrackLine(const LISTVIEW_INFO *infoPtr)
 {
-    HPEN hOldPen;
     HDC hdc;
-    INT oldROP;
 
     if (infoPtr->xTrackLine == -1)
         return FALSE;
 
     if (!(hdc = GetDC(infoPtr->hwndSelf)))
         return FALSE;
-    hOldPen = SelectObject(hdc, GetStockObject(BLACK_PEN));
-    oldROP = SetROP2(hdc, R2_XORPEN);
-    MoveToEx(hdc, infoPtr->xTrackLine, infoPtr->rcList.top, NULL);
-    LineTo(hdc, infoPtr->xTrackLine, infoPtr->rcList.bottom);
-    SetROP2(hdc, oldROP);
-    SelectObject(hdc, hOldPen);
+    PatBlt( hdc, infoPtr->xTrackLine, infoPtr->rcList.top,
+            1, infoPtr->rcList.bottom - infoPtr->rcList.top, DSTINVERT );
     ReleaseDC(infoPtr->hwndSelf, hdc);
     return TRUE;
 }
