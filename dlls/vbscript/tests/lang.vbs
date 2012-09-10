@@ -434,6 +434,12 @@ do while true
     next
 loop
 
+if null then call ok(false, "if null evaluated")
+
+while null
+    call ok(false, "while null evaluated")
+wend
+
 Call collectionObj.reset()
 y = 0
 x = 10
