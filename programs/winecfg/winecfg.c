@@ -503,7 +503,6 @@ static WCHAR **enumerate_valuesW(HKEY root, WCHAR *path)
 
             if (removed)            /* this value was deleted by the user, so don't include it */
             {
-                HeapFree(GetProcessHeap(), 0, name);
                 i++;
                 continue;
             }
