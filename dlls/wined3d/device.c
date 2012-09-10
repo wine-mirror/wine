@@ -2317,7 +2317,7 @@ void CDECL wined3d_device_get_viewport(const struct wined3d_device *device, stru
     *viewport = device->stateBlock->state.viewport;
 }
 
-HRESULT CDECL wined3d_device_set_render_state(struct wined3d_device *device,
+void CDECL wined3d_device_set_render_state(struct wined3d_device *device,
         enum wined3d_render_state state, DWORD value)
 {
     DWORD old_value = device->stateBlock->state.render_states[state];
@@ -2331,7 +2331,7 @@ HRESULT CDECL wined3d_device_set_render_state(struct wined3d_device *device,
     if (device->isRecordingState)
     {
         TRACE("Recording... not performing anything.\n");
-        return WINED3D_OK;
+        return;
     }
 
     /* Compared here and not before the assignment to allow proper stateblock recording. */
@@ -2339,8 +2339,6 @@ HRESULT CDECL wined3d_device_set_render_state(struct wined3d_device *device,
         TRACE("Application is setting the old value over, nothing to do.\n");
     else
         device_invalidate_state(device, STATE_RENDER(state));
-
-    return WINED3D_OK;
 }
 
 HRESULT CDECL wined3d_device_get_render_state(const struct wined3d_device *device,
