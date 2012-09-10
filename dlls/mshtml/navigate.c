@@ -19,6 +19,7 @@
 #include "config.h"
 
 #include <stdarg.h>
+#include <assert.h>
 
 #define COBJMACROS
 #define NONAMELESSUNION
@@ -1925,9 +1926,12 @@ static HRESULT navigate_fragment(HTMLOuterWindow *window, IUri *uri)
 {
     nsIDOMLocation *nslocation;
     nsAString nsfrag_str;
+    WCHAR *selector;
     BSTR frag;
     nsresult nsres;
     HRESULT hres;
+
+    const WCHAR selector_formatW[] = {'a','[','i','d','=','"','%','s','"',']',0};
 
     set_current_uri(window, uri);
 
@@ -1945,11 +1949,44 @@ static HRESULT navigate_fragment(HTMLOuterWindow *window, IUri *uri)
     nsres = nsIDOMLocation_SetHash(nslocation, &nsfrag_str);
     nsAString_Finish(&nsfrag_str);
     nsIDOMLocation_Release(nslocation);
-    SysFreeString(frag);
-    if(NS_FAILED(nsres)) {
+    if(NS_FAILED(nsres))
         ERR("SetHash failed: %08x\n", nsres);
-        return E_FAIL;
+
+    /*
+     * IE supports scrolling to anchor elements with "#hash" ids (note that '#' is part of the id),
+     * while Gecko scrolls only to elements with "hash" ids. We scroll the page ourselves if
+     * a[id="#hash"] element can be found.
+     */
+    selector = heap_alloc(sizeof(selector_formatW)+SysStringLen(frag)*sizeof(WCHAR));
+    if(selector) {
+        nsIDOMNodeSelector *node_selector;
+        nsIDOMElement *nselem = NULL;
+        nsAString selector_str;
+
+        nsres = nsIDOMHTMLDocument_QueryInterface(window->base.inner_window->doc->nsdoc, &IID_nsIDOMNodeSelector,
+                (void**)&node_selector);
+        assert(nsres == NS_OK);
+
+        sprintfW(selector, selector_formatW, frag);
+        nsAString_InitDepend(&selector_str, selector);
+        /* NOTE: Gecko doesn't set result to NULL if there is no match, so nselem must be initialized */
+        nsres = nsIDOMNodeSelector_QuerySelector(node_selector, &selector_str, &nselem);
+        nsIDOMNodeSelector_Release(node_selector);
+        nsAString_Finish(&selector_str);
+        heap_free(selector);
+        if(NS_SUCCEEDED(nsres) && nselem) {
+            nsIDOMHTMLElement *html_elem;
+
+            nsres = nsIDOMElement_QueryInterface(nselem, &IID_nsIDOMHTMLElement, (void**)&html_elem);
+            nsIDOMElement_Release(nselem);
+            if(NS_SUCCEEDED(nsres)) {
+                nsIDOMHTMLElement_ScrollIntoView(html_elem, TRUE, 1);
+                nsIDOMHTMLElement_Release(html_elem);
+            }
+        }
     }
+
+    SysFreeString(frag);
 
     if(window->doc_obj->doc_object_service) {
         IDocObjectService_FireNavigateComplete2(window->doc_obj->doc_object_service, &window->base.IHTMLWindow2_iface, 0x10);

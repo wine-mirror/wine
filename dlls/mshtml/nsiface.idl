@@ -2073,6 +2073,17 @@ interface nsIDOMHTMLStyleElement : nsIDOMHTMLElement
 
 [
     object,
+    uuid(7cebc153-168a-416c-ba5a-56a8c2ddb2ec),
+    local
+]
+interface nsIDOMNodeSelector : nsISupports
+{
+    nsresult QuerySelector(const nsAString *selectors, nsIDOMElement **_retval);
+    nsresult QuerySelectorAll(const nsAString *selectors, nsIDOMNodeList **_retval);
+}
+
+[
+    object,
     uuid(94928ab3-8b63-11d3-989d-001083010e9b),
     local
 ]
