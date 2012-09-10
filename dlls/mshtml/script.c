@@ -641,8 +641,6 @@ static void parse_text(ScriptHost *script_host, LPCWSTR text)
 
     TRACE("%s\n", debugstr_w(text));
 
-    script_host->window->current_script_guid = script_host->guid;
-
     VariantInit(&var);
     memset(&excepinfo, 0, sizeof(excepinfo));
     TRACE(">>>\n");
@@ -722,6 +720,14 @@ static void parse_script_elem(ScriptHost *script_host, nsIDOMHTMLScriptElement *
     nsAString_Finish(&src_str);
 }
 
+static GUID get_default_script_guid(HTMLInnerWindow *window)
+{
+    /* If not specified, we should use very first script host that was created for the page (or JScript if none) */
+    return list_empty(&window->script_hosts)
+        ? CLSID_JScript
+        : LIST_ENTRY(list_head(&window->script_hosts), ScriptHost, entry)->guid;
+}
+
 static BOOL get_guid_from_type(LPCWSTR type, GUID *guid)
 {
     const WCHAR text_javascriptW[] =
@@ -790,7 +796,7 @@ static BOOL get_script_guid(HTMLInnerWindow *window, nsIDOMHTMLScriptElement *ns
         if(*language) {
             ret = get_guid_from_language(language, guid);
         }else {
-            *guid = window->current_script_guid;
+            *guid = get_default_script_guid(window);
             ret = TRUE;
         }
     }else {
@@ -871,7 +877,7 @@ IDispatch *script_parse_event(HTMLInnerWindow *window, LPCWSTR text)
         ptr++;
     }else {
         ptr = text;
-        guid = window->current_script_guid;
+        guid = get_default_script_guid(window);
     }
 
     if(IsEqualGUID(&CLSID_JScript, &guid)
@@ -879,8 +885,6 @@ IDispatch *script_parse_event(HTMLInnerWindow *window, LPCWSTR text)
         TRACE("Ignoring JScript\n");
         return NULL;
     }
-
-    window->current_script_guid = guid;
 
     script_host = get_script_host(window, &guid);
     if(!script_host || !script_host->parse_proc)
@@ -922,8 +926,6 @@ HRESULT exec_script(HTMLInnerWindow *window, const WCHAR *code, const WCHAR *lan
         FIXME("script_host->parse == NULL\n");
         return E_FAIL;
     }
-
-    window->current_script_guid = guid;
 
     memset(&ei, 0, sizeof(ei));
     TRACE(">>>\n");

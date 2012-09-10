@@ -388,7 +388,6 @@ struct HTMLInnerWindow {
     HTMLDocumentNode *doc;
 
     struct list script_hosts;
-    GUID current_script_guid;
 
     IHTMLEventObj *event;
 

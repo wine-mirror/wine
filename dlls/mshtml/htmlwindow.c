@@ -2721,7 +2721,6 @@ static HRESULT create_inner_window(HTMLOuterWindow *outer_window, IMoniker *mon,
     init_dispex(&window->dispex, (IUnknown*)&window->base.IHTMLWindow2_iface, &HTMLWindow_dispex);
 
     window->task_magic = get_task_target_magic();
-    window->current_script_guid = CLSID_JScript;
 
     if(mon) {
         IMoniker_AddRef(mon);

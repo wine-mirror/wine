@@ -12,19 +12,30 @@ End Sub
 <script>
 ' Verifies that we're in VBScript although there is no type specified
 If true then counter = counter+1
+function inccounter(x)
+    counter = counter+x
+end function
 </script>
 <script type="text/javascript">
 // We're in javascript
+try {
+    counter++;
+    incCounter(2);
+}catch(e) {
+    ok(false, "got an exception");
+}
 </script>
-<script type="text/vbscript">
+<script>
 ' And back to VBScript
 If true then counter = counter+1
 
 Sub runTest()
-    Call ok(counter = 3, "counter = " & counter)
+    Call ok(counter = 6, "counter = " & counter)
     Call external.reportSuccess()
 End Sub
 </script>
+<script type="text/javascript">
+// We're in javascript
 </script>
 <body onload="If true then runTest()">
 </body>
