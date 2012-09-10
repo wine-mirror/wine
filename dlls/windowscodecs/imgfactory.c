@@ -474,6 +474,9 @@ static HRESULT WINAPI ComponentFactory_CreateBitmapFromSource(IWICComponentFacto
     HRESULT hr;
     WICRect rc;
     double dpix, dpiy;
+    IWICComponentInfo *info;
+    IWICPixelFormatInfo2 *formatinfo;
+    WICPixelFormatNumericRepresentation format_type;
 
     TRACE("(%p,%p,%u,%p)\n", iface, piBitmapSource, option, ppIBitmap);
 
@@ -484,6 +487,23 @@ static HRESULT WINAPI ComponentFactory_CreateBitmapFromSource(IWICComponentFacto
 
     if (SUCCEEDED(hr))
         hr = IWICBitmapSource_GetPixelFormat(piBitmapSource, &pixelformat);
+
+    if (SUCCEEDED(hr))
+        hr = CreateComponentInfo(&pixelformat, &info);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = IWICComponentInfo_QueryInterface(info, &IID_IWICPixelFormatInfo2, (void**)&formatinfo);
+
+        if (SUCCEEDED(hr))
+        {
+            hr = IWICPixelFormatInfo2_GetNumericRepresentation(formatinfo, &format_type);
+
+            IWICPixelFormatInfo2_Release(formatinfo);
+        }
+
+        IWICComponentInfo_Release(info);
+    }
 
     if (SUCCEEDED(hr))
         hr = BitmapImpl_Create(width, height, &pixelformat, option, &result);
@@ -514,7 +534,8 @@ static HRESULT WINAPI ComponentFactory_CreateBitmapFromSource(IWICComponentFacto
         if (SUCCEEDED(hr))
             hr = PaletteImpl_Create(&palette);
 
-        if (SUCCEEDED(hr))
+        if (SUCCEEDED(hr) && (format_type == WICPixelFormatNumericRepresentationUnspecified ||
+                              format_type == WICPixelFormatNumericRepresentationIndexed))
         {
             hr = IWICBitmapSource_CopyPalette(piBitmapSource, palette);
 

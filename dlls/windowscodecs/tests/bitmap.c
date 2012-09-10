@@ -283,6 +283,8 @@ static void test_createbitmapfromsource(void)
     WICPixelFormatGUID pixelformat = {0};
     UINT width=0, height=0;
     double dpix=10.0, dpiy=10.0;
+    UINT count;
+    WICBitmapPaletteType palette_type;
 
     hr = IWICImagingFactory_CreateBitmap(factory, 3, 3, &GUID_WICPixelFormat24bppBGR,
         WICBitmapCacheOnLoad, &bitmap);
@@ -340,7 +342,7 @@ static void test_createbitmapfromsource(void)
 
     /* palette isn't copied for non-indexed formats? */
     hr = IWICBitmap_CopyPalette(bitmap2, palette);
-    todo_wine ok(hr == WINCODEC_ERR_PALETTEUNAVAILABLE, "IWICBitmap_CopyPalette failed hr=%x\n", hr);
+    ok(hr == WINCODEC_ERR_PALETTEUNAVAILABLE, "IWICBitmap_CopyPalette failed hr=%x\n", hr);
 
     IWICPalette_Release(palette);
 
@@ -358,6 +360,55 @@ static void test_createbitmapfromsource(void)
     ok(hr == S_OK, "IWICBitmap_GetResolution failed hr=%x\n", hr);
     ok(dpix == 12.0, "got %f, expected 12.0\n", dpix);
     ok(dpiy == 34.0, "got %f, expected 34.0\n", dpiy);
+
+    hr = IWICBitmap_GetSize(bitmap2, &width, &height);
+    ok(hr == S_OK, "IWICBitmap_GetSize failed hr=%x\n", hr);
+    ok(width == 3, "got %d, expected 3\n", width);
+    ok(height == 3, "got %d, expected 3\n", height);
+
+    IWICBitmap_Release(bitmap2);
+
+    /* Ensure palette is copied for indexed formats */
+    hr = IWICImagingFactory_CreateBitmap(factory, 3, 3, &GUID_WICPixelFormat4bppIndexed,
+        WICBitmapCacheOnLoad, &bitmap);
+    ok(hr == S_OK, "IWICImagingFactory_CreateBitmap failed hr=%x\n", hr);
+
+    hr = IWICImagingFactory_CreatePalette(factory, &palette);
+    ok(hr == S_OK, "IWICImagingFactory_CreatePalette failed hr=%x\n", hr);
+
+    hr = IWICPalette_InitializePredefined(palette, WICBitmapPaletteTypeFixedGray256, FALSE);
+    ok(hr == S_OK, "IWICPalette_InitializePredefined failed hr=%x\n", hr);
+
+    hr = IWICBitmap_SetPalette(bitmap, palette);
+    ok(hr == S_OK, "IWICBitmap_SetPalette failed hr=%x\n", hr);
+
+    IWICPalette_Release(palette);
+
+    hr = IWICImagingFactory_CreateBitmapFromSource(factory, (IWICBitmapSource*)bitmap,
+        WICBitmapCacheOnLoad, &bitmap2);
+    ok(hr == S_OK, "IWICImagingFactory_CreateBitmapFromSource failed hr=%x\n", hr);
+
+    IWICBitmap_Release(bitmap);
+
+    hr = IWICImagingFactory_CreatePalette(factory, &palette);
+    ok(hr == S_OK, "IWICImagingFactory_CreatePalette failed hr=%x\n", hr);
+
+    hr = IWICBitmap_CopyPalette(bitmap2, palette);
+    ok(hr == S_OK, "IWICBitmap_CopyPalette failed hr=%x\n", hr);
+
+    hr = IWICPalette_GetColorCount(palette, &count);
+    ok(hr == S_OK, "IWICPalette_GetColorCount failed hr=%x\n", hr);
+    ok(count == 256, "unexpected count %d\n", count);
+
+    hr = IWICPalette_GetType(palette, &palette_type);
+    ok(hr == S_OK, "IWICPalette_GetType failed hr=%x\n", hr);
+    ok(palette_type == WICBitmapPaletteTypeFixedGray256, "unexpected palette type %d\n", palette_type);
+
+    IWICPalette_Release(palette);
+
+    hr = IWICBitmap_GetPixelFormat(bitmap2, &pixelformat);
+    ok(hr == S_OK, "IWICBitmap_GetPixelFormat failed hr=%x\n", hr);
+    ok(IsEqualGUID(&pixelformat, &GUID_WICPixelFormat4bppIndexed), "unexpected pixel format\n");
 
     hr = IWICBitmap_GetSize(bitmap2, &width, &height);
     ok(hr == S_OK, "IWICBitmap_GetSize failed hr=%x\n", hr);
