@@ -1417,6 +1417,82 @@ todo_wine
     IStream_Release(stream);
 }
 
+static void test_metadata_GCE(void)
+{
+    static const WCHAR GCE_name[] = {'G','r','a','p','h','i','c',' ','C','o','n','t','r','o','l',' ','E','x','t','e','n','s','i','o','n',' ','R','e','a','d','e','r',0};
+    static const char GCE_data[] = "hello world!\xa\x2\x3\x4\x5\x6\x7\x8\xed\xa\xb\xc\xd\xe\xf";
+    static const struct test_data td[5] =
+    {
+        { VT_UI1, 0, 0, { 2 }, NULL, { 'D','i','s','p','o','s','a','l',0 } },
+        { VT_BOOL, 0, 0, { 1 }, NULL, { 'U','s','e','r','I','n','p','u','t','F','l','a','g',0 } },
+        { VT_BOOL, 0, 0, { 0 }, NULL, { 'T','r','a','n','s','p','a','r','e','n','c','y','F','l','a','g',0 } },
+        { VT_UI2, 0, 0, { 0x302 }, NULL, { 'D','e','l','a','y',0 } },
+        { VT_UI1, 0, 0, { 4 }, NULL, { 'T','r','a','n','s','p','a','r','e','n','t','C','o','l','o','r','I','n','d','e','x',0 } }
+    };
+    LARGE_INTEGER pos;
+    HRESULT hr;
+    IStream *stream;
+    IWICPersistStream *persist;
+    IWICMetadataReader *reader;
+    IWICMetadataHandlerInfo *info;
+    WCHAR name[64];
+    UINT count, dummy;
+    GUID format;
+    CLSID id;
+
+    hr = CoCreateInstance(&CLSID_WICGCEMetadataReader, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IWICMetadataReader, (void **)&reader);
+todo_wine
+    ok(hr == S_OK || broken(hr == E_NOINTERFACE || hr == REGDB_E_CLASSNOTREG) /* before Win7 */,
+       "CoCreateInstance error %#x\n", hr);
+
+    stream = create_stream(GCE_data, sizeof(GCE_data));
+
+    if (SUCCEEDED(hr))
+    {
+        pos.QuadPart = 12;
+        hr = IStream_Seek(stream, pos, SEEK_SET, NULL);
+        ok(hr == S_OK, "IStream_Seek error %#x\n", hr);
+
+        hr = IUnknown_QueryInterface(reader, &IID_IWICPersistStream, (void **)&persist);
+        ok(hr == S_OK, "QueryInterface error %#x\n", hr);
+
+        hr = IWICPersistStream_Load(persist, stream);
+        ok(hr == S_OK, "Load error %#x\n", hr);
+
+        IWICPersistStream_Release(persist);
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        hr = IWICMetadataReader_GetCount(reader, &count);
+        ok(hr == S_OK, "GetCount error %#x\n", hr);
+        ok(count == sizeof(td)/sizeof(td[0]), "unexpected count %u\n", count);
+
+        compare_metadata(reader, td, count);
+
+        hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
+        ok(hr == S_OK, "GetMetadataFormat error %#x\n", hr);
+        ok(IsEqualGUID(&format, &GUID_MetadataFormatGCE), "wrong format %s\n", debugstr_guid(&format));
+
+        hr = IWICMetadataReader_GetMetadataHandlerInfo(reader, &info);
+        ok(hr == S_OK, "GetMetadataHandlerInfo error %#x\n", hr);
+
+        hr = IWICMetadataHandlerInfo_GetCLSID(info, &id);
+        ok(hr == S_OK, "GetCLSID error %#x\n", hr);
+        ok(IsEqualGUID(&id, &CLSID_WICGCEMetadataReader), "wrong CLSID %s\n", debugstr_guid(&id));
+
+        hr = IWICMetadataHandlerInfo_GetFriendlyName(info, 64, name, &dummy);
+        ok(hr == S_OK, "GetFriendlyName error %#x\n", hr);
+        ok(lstrcmpW(name, GCE_name) == 0, "wrong GCE reader name %s\n", wine_dbgstr_w(name));
+
+        IWICMetadataHandlerInfo_Release(info);
+        IWICMetadataReader_Release(reader);
+    }
+
+    IStream_Release(stream);
+}
+
 START_TEST(metadata)
 {
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
@@ -1430,6 +1506,7 @@ START_TEST(metadata)
     test_metadata_gif();
     test_metadata_LSD();
     test_metadata_IMD();
+    test_metadata_GCE();
 
     CoUninitialize();
 }
