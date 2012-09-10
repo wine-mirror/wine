@@ -504,9 +504,10 @@ struct test_data
     int count; /* if VT_VECTOR */
     LONGLONG value[13];
     const char *string;
+    const WCHAR id_string[32];
 };
 
-static void compare_ifd_metadata(IWICMetadataReader *reader, const struct test_data *td, ULONG count)
+static void compare_metadata(IWICMetadataReader *reader, const struct test_data *td, ULONG count)
 {
     HRESULT hr;
     IWICEnumMetadataItem *enumerator;
@@ -530,8 +531,13 @@ static void compare_ifd_metadata(IWICMetadataReader *reader, const struct test_d
         ok(items_returned == 1, "unexpected item count %u\n", items_returned);
 
         ok(schema.vt == VT_EMPTY, "%u: unexpected vt: %u\n", i, schema.vt);
-        ok(id.vt == VT_UI2, "%u: unexpected vt: %u\n", i, id.vt);
-        ok(U(id).uiVal == td[i].id, "%u: expected id %#x, got %#x\n", i, td[i].id, U(id).uiVal);
+        ok(id.vt == VT_UI2 || id.vt == VT_LPWSTR, "%u: unexpected vt: %u\n", i, id.vt);
+        if (id.vt == VT_UI2)
+            ok(U(id).uiVal == td[i].id, "%u: expected id %#x, got %#x\n", i, td[i].id, U(id).uiVal);
+        else if (id.vt == VT_LPWSTR)
+            ok(!lstrcmpW(td[i].id_string, U(id).pwszVal),
+               "%u: expected %s, got %s\n", i, wine_dbgstr_w(td[i].id_string), wine_dbgstr_w(U(id).pwszVal));
+
         ok(value.vt == td[i].type, "%u: expected vt %#x, got %#x\n", i, td[i].type, value.vt);
         if (value.vt & VT_VECTOR)
         {
@@ -670,7 +676,7 @@ static void test_metadata_IFD(void)
     ok(hr == S_OK, "GetCount error %#x\n", hr);
     ok(count == sizeof(td)/sizeof(td[0]), "unexpected count %u\n", count);
 
-    compare_ifd_metadata(reader, td, count);
+    compare_metadata(reader, td, count);
 
     /* test IFD data with different endianness */
     if (persist_options == WICPersistOptionsLittleEndian)
@@ -685,7 +691,7 @@ static void test_metadata_IFD(void)
     hr = IWICMetadataReader_GetCount(reader, &count);
     ok(hr == S_OK, "GetCount error %#x\n", hr);
     ok(count == sizeof(td)/sizeof(td[0]), "unexpected count %u\n", count);
-    compare_ifd_metadata(reader, td, count);
+    compare_metadata(reader, td, count);
     HeapFree(GetProcessHeap(), 0, IFD_data_swapped);
 
     hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
@@ -864,6 +870,15 @@ todo_wine
 
 static void test_metadata_png(void)
 {
+    static const struct test_data td[6] =
+    {
+        { VT_UI2, 0, 0, { 2005 }, NULL, { 'Y','e','a','r',0 } },
+        { VT_UI1, 0, 0, { 6 }, NULL, { 'M','o','n','t','h',0 } },
+        { VT_UI1, 0, 0, { 3 }, NULL, { 'D','a','y',0 } },
+        { VT_UI1, 0, 0, { 15 }, NULL, { 'H','o','u','r',0 } },
+        { VT_UI1, 0, 0, { 7 }, NULL, { 'M','i','n','u','t','e',0 } },
+        { VT_UI1, 0, 0, { 45 }, NULL, { 'S','e','c','o','n','d',0 } }
+    };
     IStream *stream;
     IWICBitmapDecoder *decoder;
     IWICBitmapFrameDecode *frame;
@@ -925,6 +940,12 @@ static void test_metadata_png(void)
             ok(IsEqualGUID(&containerformat, &GUID_MetadataFormatChunktIME) ||
                broken(IsEqualGUID(&containerformat, &GUID_MetadataFormatUnknown)) /* Windows XP */,
                "unexpected container format\n");
+
+            hr = IWICMetadataReader_GetCount(reader, &count);
+            ok(hr == S_OK, "GetCount error %#x\n", hr);
+            ok(count == 6 || broken(count == 1) /* XP */, "expected 6, got %u\n", count);
+            if (count == 6)
+                compare_metadata(reader, td, count);
 
             IWICMetadataReader_Release(reader);
         }
