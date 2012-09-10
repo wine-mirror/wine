@@ -40,6 +40,118 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
+static HRESULT read_png_chunk(IStream *stream, BYTE *type, BYTE **data, ULONG *data_size)
+{
+    BYTE header[8];
+    HRESULT hr;
+    ULONG bytesread;
+
+    hr = IStream_Read(stream, header, 8, &bytesread);
+    if (FAILED(hr) || bytesread < 8)
+    {
+        if (SUCCEEDED(hr))
+            hr = E_FAIL;
+        return hr;
+    }
+
+    *data_size = header[0] << 24 | header[1] << 16 | header[2] << 8 | header[3];
+
+    memcpy(type, &header[4], 4);
+
+    if (data)
+    {
+        *data = HeapAlloc(GetProcessHeap(), 0, *data_size);
+        if (!*data)
+            return E_OUTOFMEMORY;
+
+        hr = IStream_Read(stream, *data, *data_size, &bytesread);
+
+        if (FAILED(hr) || bytesread < *data_size)
+        {
+            if (SUCCEEDED(hr))
+                hr = E_FAIL;
+            HeapFree(GetProcessHeap(), 0, *data);
+            *data = NULL;
+            return hr;
+        }
+
+        /* FIXME: Verify the CRC? */
+    }
+
+    return S_OK;
+}
+
+static HRESULT LoadTextMetadata(IStream *stream, const GUID *preferred_vendor,
+    DWORD persist_options, MetadataItem **items, DWORD *item_count)
+{
+    HRESULT hr;
+    BYTE type[4];
+    BYTE *data;
+    ULONG data_size;
+    ULONG name_len, value_len;
+    BYTE *name_end_ptr;
+    LPSTR name, value;
+    MetadataItem *result;
+
+    hr = read_png_chunk(stream, type, &data, &data_size);
+    if (FAILED(hr)) return hr;
+
+    name_end_ptr = memchr(data, 0, data_size);
+
+    name_len = name_end_ptr - data;
+
+    if (!name_end_ptr || name_len > 79)
+    {
+        HeapFree(GetProcessHeap(), 0, data);
+        return E_FAIL;
+    }
+
+    value_len = data_size - name_len - 1;
+
+    result = HeapAlloc(GetProcessHeap(), 0, sizeof(MetadataItem));
+    name = HeapAlloc(GetProcessHeap(), 0, name_len + 1);
+    value = HeapAlloc(GetProcessHeap(), 0, value_len + 1);
+    if (!result || !name || !value)
+    {
+        HeapFree(GetProcessHeap(), 0, data);
+        HeapFree(GetProcessHeap(), 0, result);
+        HeapFree(GetProcessHeap(), 0, name);
+        HeapFree(GetProcessHeap(), 0, value);
+        return E_OUTOFMEMORY;
+    }
+
+    PropVariantInit(&result[0].schema);
+    PropVariantInit(&result[0].id);
+    PropVariantInit(&result[0].value);
+
+    memcpy(name, data, name_len + 1);
+    memcpy(value, name_end_ptr + 1, value_len);
+    value[value_len] = 0;
+
+    result[0].id.vt = VT_LPSTR;
+    result[0].id.pszVal = name;
+    result[0].value.vt = VT_LPSTR;
+    result[0].value.pszVal = value;
+
+    *items = result;
+    *item_count = 1;
+
+    HeapFree(GetProcessHeap(), 0, data);
+
+    return S_OK;
+}
+
+static const MetadataHandlerVtbl TextReader_Vtbl = {
+    0,
+    &CLSID_WICPngTextMetadataReader,
+    LoadTextMetadata
+};
+
+HRESULT PngTextReader_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
+{
+    return MetadataReader_Create(&TextReader_Vtbl, pUnkOuter, iid, ppv);
+}
+
 #ifdef SONAME_LIBPNG
 
 static void *libpng_handle;

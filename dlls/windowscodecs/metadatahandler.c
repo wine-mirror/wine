@@ -255,6 +255,11 @@ static int propvar_cmp(const PROPVARIANT *v1, const PROPVARIANT *v2)
 {
     LONGLONG value1, value2;
 
+    if (v1->vt == VT_LPSTR && v2->vt == VT_LPSTR)
+    {
+        return lstrcmpA(v1->u.pszVal, v2->u.pszVal);
+    }
+
     if (!get_int_value(v1, &value1)) return -1;
     if (!get_int_value(v2, &value2)) return -1;
 
@@ -446,7 +451,7 @@ static const IWICPersistStreamVtbl MetadataHandler_PersistStream_Vtbl = {
     MetadataHandler_SaveEx
 };
 
-static HRESULT MetadataReader_Create(const MetadataHandlerVtbl *vtable, IUnknown *pUnkOuter, REFIID iid, void** ppv)
+HRESULT MetadataReader_Create(const MetadataHandlerVtbl *vtable, IUnknown *pUnkOuter, REFIID iid, void** ppv)
 {
     MetadataHandler *This;
     HRESULT hr;

@@ -1503,6 +1503,21 @@ static const struct reader_containers ifd_containers[] = {
     { NULL } /* list terminator */
 };
 
+static const BYTE tEXt[] = "tEXt";
+
+static const struct metadata_pattern pngtext_metadata_pattern[] = {
+    { 4, 4, tEXt, mask_all, 4 },
+    { 0 }
+};
+
+static const struct reader_containers pngtext_containers[] = {
+    {
+        &GUID_ContainerFormatPng,
+        pngtext_metadata_pattern
+    },
+    { NULL } /* list terminator */
+};
+
 static struct regsvr_metadatareader const metadatareader_list[] = {
     {   &CLSID_WICUnknownMetadataReader,
         "The Wine Project",
@@ -1524,6 +1539,16 @@ static struct regsvr_metadatareader const metadatareader_list[] = {
         &GUID_MetadataFormatIfd,
         1, 1, 0,
         ifd_containers
+    },
+    {   &CLSID_WICPngTextMetadataReader,
+        "The Wine Project",
+        "Unknown Metadata Reader",
+        "1.0.0.0",
+        "1.0.0.0",
+        &GUID_VendorMicrosoft,
+        &GUID_MetadataFormatChunktEXt,
+        0, 0, 0,
+        pngtext_containers
     },
     { NULL }			/* list terminator */
 };

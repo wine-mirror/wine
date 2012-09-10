@@ -303,7 +303,7 @@ static void test_metadata_tEXt(void)
 
     hr = CoCreateInstance(&CLSID_WICPngTextMetadataReader, NULL, CLSCTX_INPROC_SERVER,
         &IID_IWICMetadataReader, (void**)&reader);
-    todo_wine ok(hr == S_OK, "CoCreateInstance failed, hr=%x\n", hr);
+    ok(hr == S_OK, "CoCreateInstance failed, hr=%x\n", hr);
     if (FAILED(hr)) return;
 
     hr = IWICMetadataReader_GetCount(reader, NULL);
