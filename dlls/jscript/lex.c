@@ -87,7 +87,7 @@ static const struct {
     {instanceofW,  kINSTANCEOF},
     {newW,         kNEW},
     {nullW,        kNULL},
-    {returnW,      kRETURN},
+    {returnW,      kRETURN, TRUE},
     {switchW,      kSWITCH},
     {thisW,        kTHIS},
     {throwW,       kTHROW},

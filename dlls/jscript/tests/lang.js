@@ -1378,6 +1378,13 @@ while(true) {
     tmp = false
 }
 
+function returnTest() {
+    return
+    true;
+}
+
+ok(returnTest() === undefined, "returnTest = " + returnTest());
+
 /* Keep this test in the end of file */
 undefined = 6;
 ok(undefined === 6, "undefined = " + undefined);
