@@ -828,6 +828,17 @@ static void test_type_info(void)
   ok(res == 1, "expected 1, got %d\n", res);
 }
 
+static inline vtable_ptr *get_vtable( void *obj )
+{
+    return *(vtable_ptr **)obj;
+}
+
+static inline void/*rtti_object_locator*/ *get_obj_locator( void *cppobj )
+{
+    const vtable_ptr *vtable = get_vtable( cppobj );
+    return (void *)vtable[-1];
+}
+
 #ifndef __x86_64__
 #define RTTI_SIGNATURE 0
 #define DEFINE_RTTI_REF(type, name) type *name
@@ -840,6 +851,16 @@ static void test_type_info(void)
 /* Test RTTI functions */
 static void test_rtti(void)
 {
+  struct _object_locator
+  {
+      unsigned int signature;
+      int base_class_offset;
+      unsigned int flags;
+      DEFINE_RTTI_REF(type_info, type_descriptor);
+      DEFINE_RTTI_REF(struct _rtti_object_hierarchy, type_hierarchy);
+      DEFINE_RTTI_REF(void, object_locator);
+  } *obj_locator;
+
   struct rtti_data
   {
     type_info type_info[4];
@@ -867,14 +888,7 @@ static void test_rtti(void)
       DEFINE_RTTI_REF(struct _rtti_base_array, base_classes);
     } object_hierarchy;
 
-    struct {
-      unsigned int signature;
-      int base_class_offset;
-      unsigned int flags;
-      DEFINE_RTTI_REF(type_info, type_descriptor);
-      DEFINE_RTTI_REF(struct _rtti_object_hierarchy, type_hierarchy);
-      DEFINE_RTTI_REF(void, object_locator);
-    } object_locator;
+    struct _object_locator object_locator;
   } simple_class_rtti = {
     { {NULL, NULL, "simple_class"} },
     { {RTTI_REF(simple_class_rtti, type_info[0]), 0, {0, 0, 0}, 0} },
@@ -897,6 +911,7 @@ static void test_rtti(void)
   type_info *ti,*bti;
   exception e,b;
   void *casted;
+  BOOL old_signature;
 
   if (bAncientVersion ||
       !p__RTCastToVoid || !p__RTtypeid || !pexception_ctor || !pbad_typeid_ctor
@@ -905,6 +920,12 @@ static void test_rtti(void)
 
   call_func2(pexception_ctor, &e, &e_name);
   call_func2(pbad_typeid_ctor, &b, e_name);
+
+  obj_locator = get_obj_locator(&e);
+  if(obj_locator->signature!=RTTI_SIGNATURE && sizeof(void*)>sizeof(int))
+    old_signature = TRUE;
+  else
+    old_signature = FALSE;
 
   /* dynamic_cast to void* */
   casted = p__RTCastToVoid(&e);
@@ -927,6 +948,11 @@ static void test_rtti(void)
 
   call_func1(pexception_dtor, &e);
   call_func1(pbad_typeid_dtor, &b);
+
+  if(old_signature) {
+      skip("signature==1 is not supported\n");
+      return;
+  }
 
   ti = p__RTtypeid(&simple_class);
   ok (ti && ti->mangled && !strcmp(ti->mangled, "simple_class"),
