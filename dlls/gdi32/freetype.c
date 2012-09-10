@@ -1146,7 +1146,7 @@ static BOOL get_name_table_entry(FT_Face ft_face, FT_SfntName *req)
             if(!pFT_Get_Sfnt_Name(ft_face, name_index, &name))
             {
                 if((name.platform_id == req->platform_id) &&
-                   (name.encoding_id == req->encoding_id) &&
+                   ((name.encoding_id == TT_MS_ID_UNICODE_CS) || (name.encoding_id == TT_MS_ID_SYMBOL_CS)) &&
                    (name.language_id == req->language_id) &&
                    (name.name_id     == req->name_id))
                 {
@@ -1168,7 +1168,6 @@ static WCHAR *get_face_name(FT_Face ft_face, FT_UShort name_id, FT_UShort langua
     FT_SfntName name;
 
     name.platform_id = TT_PLATFORM_MICROSOFT;
-    name.encoding_id = TT_MS_ID_UNICODE_CS;
     name.language_id = language_id;
     name.name_id     = name_id;
 
