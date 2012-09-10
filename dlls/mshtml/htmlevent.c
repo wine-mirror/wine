@@ -113,6 +113,9 @@ static const WCHAR onreadystatechangeW[] = {'o','n','r','e','a','d','y','s','t',
 static const WCHAR resizeW[] = {'r','e','s','i','z','e',0};
 static const WCHAR onresizeW[] = {'o','n','r','e','s','i','z','e',0};
 
+static const WCHAR scrollW[] = {'s','c','r','o','l','l',0};
+static const WCHAR onscrollW[] = {'o','n','s','c','r','o','l','l',0};
+
 static const WCHAR selectstartW[] = {'s','e','l','e','c','t','s','t','a','r','t',0};
 static const WCHAR onselectstartW[] = {'o','n','s','e','l','e','c','t','s','t','a','r','t',0};
 
@@ -198,6 +201,8 @@ static const event_info_t event_info[] = {
     {readystatechangeW,  onreadystatechangeW,  EVENTT_NONE,   DISPID_EVMETH_ONREADYSTATECHANGE,
         0},
     {resizeW,            onresizeW,            EVENTT_NONE,   DISPID_EVMETH_ONRESIZE,
+        EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
+    {scrollW,            onscrollW,            EVENTT_HTML,   DISPID_EVMETH_ONSCROLL,
         EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
     {selectstartW,       onselectstartW,       EVENTT_MOUSE,  DISPID_EVMETH_ONSELECTSTART,
         EVENT_CANCELABLE},
