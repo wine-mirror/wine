@@ -1355,6 +1355,23 @@ ok(name_override_func === 3, "name_override_func = " + name_override_func);
 function name_override_func() {};
 ok(name_override_func === 3, "name_override_func = " + name_override_func);
 
+/* NoNewline rule parser tests */
+while(true) {
+    if(true) break
+    tmp = false
+}
+
+while(true) {
+    if(true) break /*
+                    * no semicolon, but comment present */
+    tmp = false
+}
+
+while(true) {
+    if(true) break // no semicolon, but comment present
+    tmp = false
+}
+
 /* Keep this test in the end of file */
 undefined = 6;
 ok(undefined === 6, "undefined = " + undefined);

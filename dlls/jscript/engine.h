@@ -28,6 +28,7 @@ typedef struct {
     script_ctx_t *script;
     source_elements_t *source;
     BOOL nl;
+    BOOL implicit_nl_semicolon;
     BOOL is_html;
     BOOL lexer_error;
     HRESULT hres;

@@ -68,8 +68,9 @@ static const WCHAR withW[] = {'w','i','t','h',0};
 static const struct {
     const WCHAR *word;
     int token;
+    BOOL no_nl;
 } keywords[] = {
-    {breakW,       kBREAK},
+    {breakW,       kBREAK, TRUE},
     {caseW,        kCASE},
     {catchW,       kCATCH},
     {continueW,    kCONTINUE},
@@ -161,8 +162,10 @@ static int check_keywords(parser_ctx_t *ctx, const WCHAR **lval)
         i = (min+max)/2;
 
         r = check_keyword(ctx, keywords[i].word, lval);
-        if(!r)
+        if(!r) {
+            ctx->implicit_nl_semicolon = keywords[i].no_nl;
             return keywords[i].token;
+        }
 
         if(r > 0)
             min = i+1;
@@ -171,14 +174,6 @@ static int check_keywords(parser_ctx_t *ctx, const WCHAR **lval)
     }
 
     return 0;
-}
-
-static void skip_spaces(parser_ctx_t *ctx)
-{
-    while(ctx->ptr < ctx->end && isspaceW(*ctx->ptr)) {
-        if(is_endline(*ctx->ptr++))
-            ctx->nl = TRUE;
-    }
 }
 
 static BOOL skip_html_comment(parser_ctx_t *ctx)
@@ -509,10 +504,19 @@ static int parse_numeric_literal(parser_ctx_t *ctx, literal_t **literal)
 static int next_token(parser_ctx_t *ctx, void *lval)
 {
     do {
-        skip_spaces(ctx);
+        while(ctx->ptr < ctx->end && isspaceW(*ctx->ptr)) {
+            if(is_endline(*ctx->ptr++))
+                ctx->nl = TRUE;
+        }
         if(ctx->ptr == ctx->end)
             return tEOF;
     }while(skip_comment(ctx) || skip_html_comment(ctx));
+
+    if(ctx->implicit_nl_semicolon) {
+        if(ctx->nl)
+            return ';';
+        ctx->implicit_nl_semicolon = FALSE;
+    }
 
     if(isalphaW(*ctx->ptr)) {
         int ret = check_keywords(ctx, lval);
