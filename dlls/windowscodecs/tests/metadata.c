@@ -147,6 +147,22 @@ static const char pngimage[285] = {
 0xe7,0x00,0x00,0x00,0x00,0x49,0x45,0x4e,0x44,0xae,0x42,0x60,0x82
 };
 
+/* 1x1 pixel gif */
+static const char gifimage[35] = {
+0x47,0x49,0x46,0x38,0x37,0x61,0x01,0x00,0x01,0x00,0x80,0x00,0x00,0xff,0xff,0xff,
+0xff,0xff,0xff,0x2c,0x00,0x00,0x00,0x00,0x01,0x00,0x01,0x00,0x00,0x02,0x02,0x44,
+0x01,0x00,0x3b
+};
+
+/* 1x1 pixel gif, 2 frames; first frame is white, second is black */
+static const char gifanimation[72] = {
+0x47,0x49,0x46,0x38,0x39,0x61,0x01,0x00,0x01,0x00,0xa1,0x00,0x00,0x00,0x00,0x00,
+0xff,0xff,0xff,0x00,0x00,0x00,0x00,0x00,0x00,0x21,0xf9,0x04,0x00,0x0a,0x00,0xff,
+0x00,0x2c,0x00,0x00,0x00,0x00,0x01,0x00,0x01,0x00,0x00,0x02,0x02,0x4c,0x01,0x00,
+0x21,0xf9,0x04,0x01,0x0a,0x00,0x01,0x00,0x2c,0x00,0x00,0x00,0x00,0x01,0x00,0x01,
+0x00,0x00,0x02,0x02,0x44,0x01,0x00,0x3b
+};
+
 static const char *debugstr_guid(REFIID riid)
 {
     static char buf[50];
@@ -963,6 +979,285 @@ static void test_metadata_png(void)
     IStream_Release(stream);
 }
 
+static void test_metadata_gif(void)
+{
+    static const struct test_data gif_LSD[9] =
+    {
+        { VT_UI1|VT_VECTOR, 0, 6, {'G','I','F','8','7','a'}, NULL, { 'S','i','g','n','a','t','u','r','e',0 } },
+        { VT_UI2, 0, 0, { 1 }, NULL, { 'W','i','d','t','h',0 } },
+        { VT_UI2, 0, 0, { 1 }, NULL, { 'H','e','i','g','h','t',0 } },
+        { VT_BOOL, 0, 0, { 1 }, NULL, { 'G','l','o','b','a','l','C','o','l','o','r','T','a','b','l','e','F','l','a','g',0 } },
+        { VT_UI1, 0, 0, { 0 }, NULL, { 'C','o','l','o','r','R','e','s','o','l','u','t','i','o','n',0 } },
+        { VT_BOOL, 0, 0, { 0 }, NULL, { 'S','o','r','t','F','l','a','g',0 } },
+        { VT_UI1, 0, 0, { 0 }, NULL, { 'G','l','o','b','a','l','C','o','l','o','r','T','a','b','l','e','S','i','z','e',0 } },
+        { VT_UI1, 0, 0, { 0 }, NULL, { 'B','a','c','k','g','r','o','u','n','d','C','o','l','o','r','I','n','d','e','x',0 } },
+        { VT_UI1, 0, 0, { 0 }, NULL, { 'P','i','x','e','l','A','s','p','e','c','t','R','a','t','i','o',0 } }
+    };
+    static const struct test_data gif_IMD[8] =
+    {
+        { VT_UI2, 0, 0, { 0 }, NULL, { 'L','e','f','t',0 } },
+        { VT_UI2, 0, 0, { 0 }, NULL, { 'T','o','p',0 } },
+        { VT_UI2, 0, 0, { 1 }, NULL, { 'W','i','d','t','h',0 } },
+        { VT_UI2, 0, 0, { 1 }, NULL, { 'H','e','i','g','h','t',0 } },
+        { VT_BOOL, 0, 0, { 0 }, NULL, { 'L','o','c','a','l','C','o','l','o','r','T','a','b','l','e','F','l','a','g',0 } },
+        { VT_BOOL, 0, 0, { 0 }, NULL, { 'I','n','t','e','r','l','a','c','e','F','l','a','g',0 } },
+        { VT_BOOL, 0, 0, { 0 }, NULL, { 'S','o','r','t','F','l','a','g',0 } },
+        { VT_UI1, 0, 0, { 0 }, NULL, { 'L','o','c','a','l','C','o','l','o','r','T','a','b','l','e','S','i','z','e',0 } }
+    };
+    static const struct test_data animated_gif_LSD[9] =
+    {
+        { VT_UI1|VT_VECTOR, 0, 6, {'G','I','F','8','9','a'}, NULL, { 'S','i','g','n','a','t','u','r','e',0 } },
+        { VT_UI2, 0, 0, { 1 }, NULL, { 'W','i','d','t','h',0 } },
+        { VT_UI2, 0, 0, { 1 }, NULL, { 'H','e','i','g','h','t',0 } },
+        { VT_BOOL, 0, 0, { 1 }, NULL, { 'G','l','o','b','a','l','C','o','l','o','r','T','a','b','l','e','F','l','a','g',0 } },
+        { VT_UI1, 0, 0, { 2 }, NULL, { 'C','o','l','o','r','R','e','s','o','l','u','t','i','o','n',0 } },
+        { VT_BOOL, 0, 0, { 0 }, NULL, { 'S','o','r','t','F','l','a','g',0 } },
+        { VT_UI1, 0, 0, { 1 }, NULL, { 'G','l','o','b','a','l','C','o','l','o','r','T','a','b','l','e','S','i','z','e',0 } },
+        { VT_UI1, 0, 0, { 0 }, NULL, { 'B','a','c','k','g','r','o','u','n','d','C','o','l','o','r','I','n','d','e','x',0 } },
+        { VT_UI1, 0, 0, { 0 }, NULL, { 'P','i','x','e','l','A','s','p','e','c','t','R','a','t','i','o',0 } }
+    };
+    static const struct test_data animated_gif_GCE[5] =
+    {
+        { VT_UI1, 0, 0, { 0 }, NULL, { 'D','i','s','p','o','s','a','l',0 } },
+        { VT_BOOL, 0, 0, { 0 }, NULL, { 'U','s','e','r','I','n','p','u','t','F','l','a','g',0 } },
+        { VT_BOOL, 0, 0, { 0 }, NULL, { 'T','r','a','n','s','p','a','r','e','n','c','y','F','l','a','g',0 } },
+        { VT_UI2, 0, 0, { 10 }, NULL, { 'D','e','l','a','y',0 } },
+        { VT_UI1, 0, 0, { 255 }, NULL, { 'T','r','a','n','s','p','a','r','e','n','t','C','o','l','o','r','I','n','d','e','x',0 } }
+    };
+    IStream *stream;
+    IWICBitmapDecoder *decoder;
+    IWICBitmapFrameDecode *frame;
+    IWICMetadataBlockReader *blockreader;
+    IWICMetadataReader *reader;
+    GUID format;
+    HRESULT hr;
+    UINT count;
+
+    /* 1x1 pixel gif */
+    stream = create_stream(gifimage, sizeof(gifimage));
+
+    hr = CoCreateInstance(&CLSID_WICGifDecoder, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IWICBitmapDecoder, (void **)&decoder);
+    ok(hr == S_OK, "CoCreateInstance error %#x\n", hr);
+    hr = IWICBitmapDecoder_Initialize(decoder, stream, WICDecodeMetadataCacheOnLoad);
+    ok(hr == S_OK, "Initialize error %#x\n", hr);
+
+    IStream_Release(stream);
+
+    /* global metadata block */
+    hr = IWICBitmapDecoder_QueryInterface(decoder, &IID_IWICMetadataBlockReader, (void **)&blockreader);
+todo_wine
+    ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* before Win7 */, "QueryInterface error %#x\n", hr);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = IWICMetadataBlockReader_GetContainerFormat(blockreader, &format);
+        ok(hr == S_OK, "GetContainerFormat error %#x\n", hr);
+        ok(IsEqualGUID(&format, &GUID_ContainerFormatGif),
+           "wrong container format %s\n", debugstr_guid(&format));
+
+        hr = IWICMetadataBlockReader_GetCount(blockreader, &count);
+        ok(hr == S_OK, "GetCount error %#x\n", hr);
+        ok(count == 1, "expected 1, got %u\n", count);
+
+        hr = IWICMetadataBlockReader_GetReaderByIndex(blockreader, 0, &reader);
+        ok(hr == S_OK, "GetReaderByIndex error %#x\n", hr);
+
+        if (SUCCEEDED(hr))
+        {
+            hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
+            ok(IsEqualGUID(&format, &GUID_MetadataFormatLSD), /* Logical Screen Descriptor */
+               "wrong container format %s\n", debugstr_guid(&format));
+
+            hr = IWICMetadataReader_GetCount(reader, &count);
+            ok(hr == S_OK, "GetCount error %#x\n", hr);
+            ok(count == sizeof(gif_LSD)/sizeof(gif_LSD[0]), "unexpected count %u\n", count);
+
+            compare_metadata(reader, gif_LSD, count);
+
+            IWICMetadataReader_Release(reader);
+        }
+
+        hr = IWICMetadataBlockReader_GetReaderByIndex(blockreader, 1, &reader);
+        ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
+
+        IWICMetadataBlockReader_Release(blockreader);
+    }
+
+    /* frame metadata block */
+    hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame);
+    ok(hr == S_OK, "GetFrame error %#x\n", hr);
+
+    hr = IWICBitmapFrameDecode_QueryInterface(frame, &IID_IWICMetadataBlockReader, (void **)&blockreader);
+todo_wine
+    ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* before Win7 */, "QueryInterface error %#x\n", hr);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = IWICMetadataBlockReader_GetContainerFormat(blockreader, NULL);
+        ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
+
+        hr = IWICMetadataBlockReader_GetContainerFormat(blockreader, &format);
+        ok(hr == S_OK, "GetContainerFormat error %#x\n", hr);
+        ok(IsEqualGUID(&format, &GUID_ContainerFormatGif),
+           "wrong container format %s\n", debugstr_guid(&format));
+
+        hr = IWICMetadataBlockReader_GetCount(blockreader, NULL);
+        ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
+
+        hr = IWICMetadataBlockReader_GetCount(blockreader, &count);
+        ok(hr == S_OK, "GetCount error %#x\n", hr);
+        ok(count == 1, "expected 1, got %u\n", count);
+
+        hr = IWICMetadataBlockReader_GetReaderByIndex(blockreader, 0, &reader);
+        ok(hr == S_OK, "GetReaderByIndex error %#x\n", hr);
+
+        if (SUCCEEDED(hr))
+        {
+            hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
+            ok(IsEqualGUID(&format, &GUID_MetadataFormatIMD), /* Image Descriptor */
+               "wrong container format %s\n", debugstr_guid(&format));
+
+            hr = IWICMetadataReader_GetCount(reader, &count);
+            ok(hr == S_OK, "GetCount error %#x\n", hr);
+            ok(count == sizeof(gif_IMD)/sizeof(gif_IMD[0]), "unexpected count %u\n", count);
+
+            compare_metadata(reader, gif_IMD, count);
+
+            IWICMetadataReader_Release(reader);
+        }
+
+        hr = IWICMetadataBlockReader_GetReaderByIndex(blockreader, 1, &reader);
+        ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
+
+        IWICMetadataBlockReader_Release(blockreader);
+    }
+
+    IWICBitmapFrameDecode_Release(frame);
+    IWICBitmapDecoder_Release(decoder);
+
+    /* 1x1 pixel gif, 2 frames */
+    stream = create_stream(gifanimation, sizeof(gifanimation));
+
+    hr = CoCreateInstance(&CLSID_WICGifDecoder, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IWICBitmapDecoder, (void **)&decoder);
+    ok(hr == S_OK, "CoCreateInstance error %#x\n", hr);
+    hr = IWICBitmapDecoder_Initialize(decoder, stream, WICDecodeMetadataCacheOnLoad);
+    ok(hr == S_OK, "Initialize error %#x\n", hr);
+
+    IStream_Release(stream);
+
+    /* global metadata block */
+    hr = IWICBitmapDecoder_QueryInterface(decoder, &IID_IWICMetadataBlockReader, (void **)&blockreader);
+todo_wine
+    ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* before Win7 */, "QueryInterface error %#x\n", hr);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = IWICMetadataBlockReader_GetContainerFormat(blockreader, &format);
+        ok(hr == S_OK, "GetContainerFormat error %#x\n", hr);
+        ok(IsEqualGUID(&format, &GUID_ContainerFormatGif),
+           "wrong container format %s\n", debugstr_guid(&format));
+
+        hr = IWICMetadataBlockReader_GetCount(blockreader, &count);
+        ok(hr == S_OK, "GetCount error %#x\n", hr);
+        ok(count == 1, "expected 1, got %u\n", count);
+
+        hr = IWICMetadataBlockReader_GetReaderByIndex(blockreader, 0, &reader);
+        ok(hr == S_OK, "GetReaderByIndex error %#x\n", hr);
+
+        if (SUCCEEDED(hr))
+        {
+            hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
+            ok(IsEqualGUID(&format, &GUID_MetadataFormatLSD), /* Logical Screen Descriptor */
+               "wrong container format %s\n", debugstr_guid(&format));
+
+            hr = IWICMetadataReader_GetCount(reader, &count);
+            ok(hr == S_OK, "GetCount error %#x\n", hr);
+            ok(count == sizeof(animated_gif_LSD)/sizeof(animated_gif_LSD[0]), "unexpected count %u\n", count);
+
+            compare_metadata(reader, animated_gif_LSD, count);
+
+            IWICMetadataReader_Release(reader);
+        }
+
+        hr = IWICMetadataBlockReader_GetReaderByIndex(blockreader, 1, &reader);
+        ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
+
+        IWICMetadataBlockReader_Release(blockreader);
+    }
+
+    /* frame metadata block */
+    hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame);
+    ok(hr == S_OK, "GetFrame error %#x\n", hr);
+
+    hr = IWICBitmapFrameDecode_QueryInterface(frame, &IID_IWICMetadataBlockReader, (void **)&blockreader);
+todo_wine
+    ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* before Win7 */, "QueryInterface error %#x\n", hr);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = IWICMetadataBlockReader_GetContainerFormat(blockreader, NULL);
+        ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
+
+        hr = IWICMetadataBlockReader_GetContainerFormat(blockreader, &format);
+        ok(hr == S_OK, "GetContainerFormat error %#x\n", hr);
+        ok(IsEqualGUID(&format, &GUID_ContainerFormatGif),
+           "wrong container format %s\n", debugstr_guid(&format));
+
+        hr = IWICMetadataBlockReader_GetCount(blockreader, NULL);
+        ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
+
+        hr = IWICMetadataBlockReader_GetCount(blockreader, &count);
+        ok(hr == S_OK, "GetCount error %#x\n", hr);
+        ok(count == 2, "expected 2, got %u\n", count);
+
+        hr = IWICMetadataBlockReader_GetReaderByIndex(blockreader, 0, &reader);
+        ok(hr == S_OK, "GetReaderByIndex error %#x\n", hr);
+
+        if (SUCCEEDED(hr))
+        {
+            hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
+            ok(IsEqualGUID(&format, &GUID_MetadataFormatIMD), /* Image Descriptor */
+               "wrong container format %s\n", debugstr_guid(&format));
+
+            hr = IWICMetadataReader_GetCount(reader, &count);
+            ok(hr == S_OK, "GetCount error %#x\n", hr);
+            ok(count == sizeof(gif_IMD)/sizeof(gif_IMD[0]), "unexpected count %u\n", count);
+
+            compare_metadata(reader, gif_IMD, count);
+
+            IWICMetadataReader_Release(reader);
+        }
+
+        hr = IWICMetadataBlockReader_GetReaderByIndex(blockreader, 1, &reader);
+        ok(hr == S_OK, "GetReaderByIndex error %#x\n", hr);
+
+        if (SUCCEEDED(hr))
+        {
+            hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
+            ok(IsEqualGUID(&format, &GUID_MetadataFormatGCE), /* Graphic Control Extension */
+               "wrong container format %s\n", debugstr_guid(&format));
+
+            hr = IWICMetadataReader_GetCount(reader, &count);
+            ok(hr == S_OK, "GetCount error %#x\n", hr);
+            ok(count == sizeof(animated_gif_GCE)/sizeof(animated_gif_GCE[0]), "unexpected count %u\n", count);
+
+            compare_metadata(reader, animated_gif_GCE, count);
+
+            IWICMetadataReader_Release(reader);
+        }
+
+        hr = IWICMetadataBlockReader_GetReaderByIndex(blockreader, 2, &reader);
+        ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
+
+        IWICMetadataBlockReader_Release(blockreader);
+    }
+
+    IWICBitmapFrameDecode_Release(frame);
+    IWICBitmapDecoder_Release(decoder);
+}
+
 START_TEST(metadata)
 {
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
@@ -973,6 +1268,7 @@ START_TEST(metadata)
     test_metadata_Exif();
     test_create_reader();
     test_metadata_png();
+    test_metadata_gif();
 
     CoUninitialize();
 }
