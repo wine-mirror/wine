@@ -2142,8 +2142,7 @@ HRESULT __cdecl wined3d_device_get_ps_consts_i(const struct wined3d_device *devi
         UINT start_register, int *constants, UINT vector4i_count);
 HRESULT __cdecl wined3d_device_get_raster_status(const struct wined3d_device *device,
         UINT swapchain_idx, struct wined3d_raster_status *raster_status);
-HRESULT __cdecl wined3d_device_get_render_state(const struct wined3d_device *device,
-        enum wined3d_render_state state, DWORD *value);
+DWORD __cdecl wined3d_device_get_render_state(const struct wined3d_device *device, enum wined3d_render_state state);
 HRESULT __cdecl wined3d_device_get_render_target(const struct wined3d_device *device,
         UINT render_target_idx, struct wined3d_surface **render_target);
 HRESULT __cdecl wined3d_device_get_sampler_state(const struct wined3d_device *device,

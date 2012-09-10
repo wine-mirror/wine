@@ -2331,7 +2331,8 @@ static HRESULT d3d_device7_GetRenderState(IDirect3DDevice7 *iface,
             break;
 
         case D3DRENDERSTATE_ZBIAS:
-            hr = wined3d_device_get_render_state(device->wined3d_device, WINED3D_RS_DEPTHBIAS, value);
+            *value = wined3d_device_get_render_state(device->wined3d_device, WINED3D_RS_DEPTHBIAS);
+            hr = D3D_OK;
             break;
 
         default:
@@ -2342,7 +2343,8 @@ static HRESULT d3d_device7_GetRenderState(IDirect3DDevice7 *iface,
                 hr = E_NOTIMPL;
                 break;
             }
-            hr = wined3d_device_get_render_state(device->wined3d_device, state, value);
+            *value = wined3d_device_get_render_state(device->wined3d_device, state);
+            hr = D3D_OK;
     }
     wined3d_mutex_unlock();
 

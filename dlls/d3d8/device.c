@@ -1475,7 +1475,6 @@ static HRESULT WINAPI d3d8_device_GetRenderState(IDirect3DDevice8 *iface,
         D3DRENDERSTATETYPE state, DWORD *value)
 {
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
-    HRESULT hr;
 
     TRACE("iface %p, state %#x, value %p.\n", iface, state, value);
 
@@ -1483,15 +1482,15 @@ static HRESULT WINAPI d3d8_device_GetRenderState(IDirect3DDevice8 *iface,
     switch (state)
     {
         case D3DRS_ZBIAS:
-            hr = wined3d_device_get_render_state(device->wined3d_device, WINED3D_RS_DEPTHBIAS, value);
+            *value = wined3d_device_get_render_state(device->wined3d_device, WINED3D_RS_DEPTHBIAS);
             break;
 
         default:
-            hr = wined3d_device_get_render_state(device->wined3d_device, state, value);
+            *value = wined3d_device_get_render_state(device->wined3d_device, state);
     }
     wined3d_mutex_unlock();
 
-    return hr;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI d3d8_device_BeginStateBlock(IDirect3DDevice8 *iface)

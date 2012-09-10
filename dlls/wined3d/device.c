@@ -2341,14 +2341,11 @@ void CDECL wined3d_device_set_render_state(struct wined3d_device *device,
         device_invalidate_state(device, STATE_RENDER(state));
 }
 
-HRESULT CDECL wined3d_device_get_render_state(const struct wined3d_device *device,
-        enum wined3d_render_state state, DWORD *value)
+DWORD CDECL wined3d_device_get_render_state(const struct wined3d_device *device, enum wined3d_render_state state)
 {
-    TRACE("device %p, state %s (%#x), value %p.\n", device, debug_d3drenderstate(state), state, value);
+    TRACE("device %p, state %s (%#x).\n", device, debug_d3drenderstate(state), state);
 
-    *value = device->stateBlock->state.render_states[state];
-
-    return WINED3D_OK;
+    return device->stateBlock->state.render_states[state];
 }
 
 HRESULT CDECL wined3d_device_set_sampler_state(struct wined3d_device *device,

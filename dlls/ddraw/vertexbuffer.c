@@ -339,7 +339,7 @@ static HRESULT WINAPI d3d_vertex_buffer7_ProcessVertices(IDirect3DVertexBuffer7 
      * the vertex ops
      */
     doClip = !!(vertex_op & D3DVOP_CLIP);
-    wined3d_device_get_render_state(device_impl->wined3d_device, WINED3D_RS_CLIPPING, (DWORD *)&oldClip);
+    oldClip = wined3d_device_get_render_state(device_impl->wined3d_device, WINED3D_RS_CLIPPING);
     if (doClip != oldClip)
         wined3d_device_set_render_state(device_impl->wined3d_device, WINED3D_RS_CLIPPING, doClip);
 
