@@ -422,7 +422,7 @@ todo_wine
 
     IWICComponentInfo_Release(info);
 
-    hr = IWICImagingFactory_CreateComponentInfo(factory, &CLSID_WICXMBStructMetadataReader, &info);
+    hr = IWICImagingFactory_CreateComponentInfo(factory, &CLSID_WICXMPStructMetadataReader, &info);
 todo_wine
     ok(hr == S_OK, "CreateComponentInfo failed, hr=%x\n", hr);
 
@@ -440,7 +440,7 @@ todo_wine
 
     hr = IWICMetadataReaderInfo_GetCLSID(reader_info, &clsid);
     ok(hr == S_OK, "GetCLSID failed, hr=%x\n", hr);
-    ok(IsEqualGUID(&CLSID_WICXMBStructMetadataReader, &clsid), "GetCLSID returned wrong result\n");
+    ok(IsEqualGUID(&CLSID_WICXMPStructMetadataReader, &clsid), "GetCLSID returned wrong result\n");
 
     hr = IWICMetadataReaderInfo_GetMetadataFormat(reader_info, &clsid);
     ok(hr == S_OK, "GetMetadataFormat failed, hr=%x\n", hr);
