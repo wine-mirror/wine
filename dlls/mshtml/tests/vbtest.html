@@ -32,6 +32,7 @@ If true then counter = counter+1
 Sub runTest()
     Call ok(counter = 6, "counter = " & counter)
     Call ok(isNull(document.onkeyup), "document.onkeyup is not null")
+    Call ok(document.formname.tagName = "FORM", "document.form.tagName = " & document.formname.tagName)
     Call external.reportSuccess()
 End Sub
 </script>
@@ -39,5 +40,6 @@ End Sub
 // We're in javascript
 </script>
 <body onload="If true then runTest()">
+<form name="formname"></form>
 </body>
 </html>

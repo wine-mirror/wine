@@ -2183,7 +2183,7 @@ static HRESULT HTMLDocumentNode_invoke(DispatchEx *dispex, DISPID id, LCID lcid,
     nsresult nsres;
     HRESULT hres;
 
-    if(flags != DISPATCH_PROPERTYGET) {
+    if(flags != DISPATCH_PROPERTYGET && flags != (DISPATCH_METHOD|DISPATCH_PROPERTYGET)) {
         FIXME("unsupported flags %x\n", flags);
         return E_NOTIMPL;
     }
