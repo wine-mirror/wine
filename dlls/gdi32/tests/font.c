@@ -4107,7 +4107,7 @@ static void test_fullname2_helper(const char *Family)
         ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_FONT_FAMILY, bufW, buf_size, GetSystemDefaultLangID());
         if (!ret)
         {
-            trace("no localized name found.\n");
+            trace("no localized FONT_FAMILY found.\n");
             ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_FONT_FAMILY, bufW, buf_size, TT_MS_LANGID_ENGLISH_UNITED_STATES);
         }
         ok(ret, "FAMILY (family name) could not be read\n");
@@ -4121,7 +4121,7 @@ static void test_fullname2_helper(const char *Family)
         ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_FULL_NAME, bufW, buf_size, GetSystemDefaultLangID());
         if (!ret)
         {
-            trace("no localized name found.\n");
+            trace("no localized FULL_NAME found.\n");
             ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_FULL_NAME, bufW, buf_size, TT_MS_LANGID_ENGLISH_UNITED_STATES);
         }
         ok(ret, "FULL_NAME (face name) could not be read\n");
