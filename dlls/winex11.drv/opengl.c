@@ -1135,6 +1135,15 @@ static void release_gl_drawable( struct gl_drawable *gl )
     if (gl) LeaveCriticalSection( &context_section );
 }
 
+BOOL has_gl_drawable( HWND hwnd )
+{
+    struct gl_drawable *gl;
+
+    gl = get_gl_drawable( hwnd, 0 );
+    release_gl_drawable( gl );
+    return gl != NULL;
+}
+
 static GLXContext create_glxcontext(Display *display, struct wgl_context *context, GLXContext shareList)
 {
     GLXContext ctx;
@@ -3338,6 +3347,11 @@ const struct gdi_dc_funcs *get_glx_driver(void)
 }
 
 BOOL set_win_format( HWND hwnd, XID fbconfig_id )
+{
+    return FALSE;
+}
+
+BOOL has_gl_drawable( HWND hwnd )
 {
     return FALSE;
 }

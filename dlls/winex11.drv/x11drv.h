@@ -558,6 +558,7 @@ extern Window X11DRV_get_whole_window( HWND hwnd ) DECLSPEC_HIDDEN;
 extern XIC X11DRV_get_ic( HWND hwnd ) DECLSPEC_HIDDEN;
 
 extern BOOL set_win_format( HWND hwnd, XID fbconfig_id ) DECLSPEC_HIDDEN;
+extern BOOL has_gl_drawable( HWND hwnd ) DECLSPEC_HIDDEN;
 extern void sync_gl_drawable( HWND hwnd, const RECT *visible_rect, const RECT *client_rect ) DECLSPEC_HIDDEN;
 extern void destroy_gl_drawable( HWND hwnd ) DECLSPEC_HIDDEN;
 

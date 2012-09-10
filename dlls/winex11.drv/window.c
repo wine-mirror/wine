@@ -2051,6 +2051,7 @@ void CDECL X11DRV_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flag
     if (!data->whole_window) return;
     if (swp_flags & SWP_HIDEWINDOW) return;
     if (data->whole_window == root_window) return;
+    if (has_gl_drawable( hwnd )) return;
     if (!client_side_graphics) return;
 
     surface_rect = get_surface_rect( visible_rect );
