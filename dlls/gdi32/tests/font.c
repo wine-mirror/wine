@@ -4135,7 +4135,7 @@ static void test_fullname2_helper(const char *Family)
         ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_FONT_SUBFAMILY, bufW, buf_size, TT_MS_LANGID_ENGLISH_UNITED_STATES);
         ok(ret, "SUBFAMILY (style name) could not be read\n");
         WideCharToMultiByte(CP_ACP, 0, bufW, -1, bufA, buf_size, NULL, FALSE);
-        ok(!lstrcmpA(StyleName, bufA), "style names don't match: returned %s, expect %s\n", FaceName, bufA);
+        ok(!lstrcmpA(StyleName, bufA), "style names don't match: returned %s, expect %s\n", StyleName, bufA);
         otmStr = (LPSTR)otm + (UINT_PTR)otm->otmpStyleName;
         ok(!lstrcmpA(StyleName, otmStr), "StyleName %s doesn't match otmpStyleName %s\n", StyleName, otmStr);
 
