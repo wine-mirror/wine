@@ -4132,7 +4132,12 @@ static void test_fullname2_helper(const char *Family)
 
         bufW[0] = 0;
         bufA[0] = 0;
-        ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_FONT_SUBFAMILY, bufW, buf_size, TT_MS_LANGID_ENGLISH_UNITED_STATES);
+        ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_FONT_SUBFAMILY, bufW, buf_size, GetSystemDefaultLangID());
+        if (!ret)
+        {
+            trace("no localized FONT_SUBFAMILY font.\n");
+            ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_FONT_SUBFAMILY, bufW, buf_size, TT_MS_LANGID_ENGLISH_UNITED_STATES);
+        }
         ok(ret, "SUBFAMILY (style name) could not be read\n");
         WideCharToMultiByte(CP_ACP, 0, bufW, -1, bufA, buf_size, NULL, FALSE);
         ok(!lstrcmpA(StyleName, bufA), "style names don't match: returned %s, expect %s\n", StyleName, bufA);

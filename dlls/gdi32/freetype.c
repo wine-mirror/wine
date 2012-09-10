@@ -1714,7 +1714,14 @@ static Face *create_face( FT_Face ft_face, FT_Long face_index, const char *file,
     Face *face = HeapAlloc( GetProcessHeap(), 0, sizeof(*face) );
     My_FT_Bitmap_Size *size = (My_FT_Bitmap_Size *)ft_face->available_sizes;
 
-    face->StyleName = towstr( CP_ACP, ft_face->style_name );
+    face->StyleName = get_face_name( ft_face, TT_NAME_ID_FONT_SUBFAMILY, GetSystemDefaultLangID() );
+    if (!face->StyleName)
+        face->StyleName = get_face_name( ft_face, TT_NAME_ID_FONT_SUBFAMILY, TT_MS_LANGID_ENGLISH_UNITED_STATES );
+    if (!face->StyleName)
+    {
+        face->StyleName = towstr( CP_ACP, ft_face->style_name );
+    }
+
     face->FullName = get_face_name( ft_face, TT_NAME_ID_FULL_NAME, GetSystemDefaultLangID() );
     if (!face->FullName)
         face->FullName = get_face_name( ft_face, TT_NAME_ID_FULL_NAME, TT_MS_LANGID_ENGLISH_UNITED_STATES );
@@ -6549,11 +6556,18 @@ static BOOL get_outline_text_metrics(GdiFont *font)
     lenfam = (strlenW(font->name) + 1) * sizeof(WCHAR);
     family_nameW = strdupW(font->name);
 
-    lensty = MultiByteToWideChar(CP_ACP, 0, ft_face->style_name, -1, NULL, 0)
-      * sizeof(WCHAR);
-    style_nameW = HeapAlloc(GetProcessHeap(), 0, lensty);
-    MultiByteToWideChar(CP_ACP, 0, ft_face->style_name, -1,
-			style_nameW, lensty/sizeof(WCHAR));
+    style_nameW = get_face_name( ft_face, TT_NAME_ID_FONT_SUBFAMILY, GetSystemDefaultLangID() );
+    if (!style_nameW)
+        style_nameW = get_face_name( ft_face, TT_NAME_ID_FONT_SUBFAMILY, TT_MS_LANGID_ENGLISH_UNITED_STATES );
+    if (!style_nameW)
+    {
+        FIXME("failed to read sytle_nameW for font %s!\n", wine_dbgstr_w(font->name));
+        lensty = MultiByteToWideChar(CP_ACP, 0, ft_face->style_name, -1, NULL, 0) * sizeof(WCHAR);
+        style_nameW = HeapAlloc(GetProcessHeap(), 0, lensty);
+        MultiByteToWideChar(CP_ACP, 0, ft_face->style_name, -1, style_nameW, lensty/sizeof(WCHAR));
+    }
+    else
+        lensty = (strlenW(style_nameW) + 1) * sizeof(WCHAR);
 
     face_nameW = get_face_name( ft_face, TT_NAME_ID_FULL_NAME, GetSystemDefaultLangID() );
     if (!face_nameW)
