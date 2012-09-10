@@ -279,6 +279,17 @@ struct hardware_msg_data
     int             y;
     unsigned int    hw_id;
     unsigned int    flags;
+    union
+    {
+        int type;
+        struct
+        {
+            int            type;
+            int            x;
+            int            y;
+            unsigned int   data;
+        } mouse;
+    } rawinput;
 };
 
 struct callback_msg_data
@@ -5672,6 +5683,6 @@ union generic_reply
     struct set_suspend_context_reply set_suspend_context_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 433
+#define SERVER_PROTOCOL_VERSION 434
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

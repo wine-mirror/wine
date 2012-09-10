@@ -182,8 +182,9 @@ struct user_thread_info
     BYTE                         *key_state;              /* Cache of global key state */
     HWND                          top_window;             /* Desktop window */
     HWND                          msg_window;             /* HWND_MESSAGE parent window */
+    RAWINPUT                     *rawinput;
 
-    ULONG                         pad[9];                 /* Available for more data */
+    ULONG                         pad[8];                 /* Available for more data */
 };
 
 struct hook_extra_info

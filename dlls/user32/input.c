@@ -532,12 +532,41 @@ BOOL WINAPI DECLSPEC_HOTPATCH RegisterRawInputDevices(RAWINPUTDEVICE *devices, U
 /******************************************************************
 *		GetRawInputData (USER32.@)
 */
-UINT WINAPI GetRawInputData(HRAWINPUT hRawInput, UINT uiCommand, LPVOID pData, PUINT pcbSize, UINT cbSizeHeader)
+UINT WINAPI GetRawInputData(HRAWINPUT rawinput, UINT command, void *data, UINT *data_size, UINT header_size)
 {
-    FIXME("(hRawInput=%p, uiCommand=%d, pData=%p, pcbSize=%p, cbSizeHeader=%d) stub!\n",
-            hRawInput, uiCommand, pData, pcbSize, cbSizeHeader);
+    RAWINPUT *ri = (RAWINPUT *)rawinput;
+    UINT s;
 
-    return 0;
+    TRACE("rawinput %p, command %#x, data %p, data_size %p, header_size %u.\n",
+            rawinput, command, data, data_size, header_size);
+
+    if (header_size != sizeof(RAWINPUTHEADER))
+    {
+        WARN("Invalid structure size %u.\n", header_size);
+        return ~0U;
+    }
+
+    switch (command)
+    {
+    case RID_INPUT:
+        s = ri->header.dwSize;
+        break;
+    case RID_HEADER:
+        s = sizeof(RAWINPUTHEADER);
+        break;
+    default:
+        return ~0U;
+    }
+
+    if (!data)
+    {
+        *data_size = s;
+        return 0;
+    }
+
+    if (*data_size < s) return ~0U;
+    memcpy(data, ri, s);
+    return s;
 }
 
 

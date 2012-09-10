@@ -51,6 +51,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(msg);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 WINE_DECLARE_DEBUG_CHANNEL(key);
 
+#define WINE_MOUSE_HANDLE       ((HANDLE)1)
+
 #define WM_NCMOUSEFIRST WM_NCMOUSEMOVE
 #define WM_NCMOUSELAST  (WM_NCMOUSEFIRST+(WM_MOUSELAST-WM_MOUSEFIRST))
 
@@ -2268,6 +2270,84 @@ static void accept_hardware_message( UINT hw_id, BOOL remove, HWND new_hwnd )
 }
 
 
+static BOOL process_rawinput_message( MSG *msg, const struct hardware_msg_data *msg_data )
+{
+    struct user_thread_info *thread_info = get_user_thread_info();
+    RAWINPUT *rawinput = thread_info->rawinput;
+
+    if (!rawinput)
+    {
+        thread_info->rawinput = HeapAlloc( GetProcessHeap(), 0, sizeof(*rawinput) );
+        if (!(rawinput = thread_info->rawinput)) return FALSE;
+    }
+
+    rawinput->header.dwType = msg_data->rawinput.type;
+    if (msg_data->rawinput.type == RIM_TYPEMOUSE)
+    {
+        static const unsigned int button_flags[] =
+        {
+            0,                              /* MOUSEEVENTF_MOVE */
+            RI_MOUSE_LEFT_BUTTON_DOWN,      /* MOUSEEVENTF_LEFTDOWN */
+            RI_MOUSE_LEFT_BUTTON_UP,        /* MOUSEEVENTF_LEFTUP */
+            RI_MOUSE_RIGHT_BUTTON_DOWN,     /* MOUSEEVENTF_RIGHTDOWN */
+            RI_MOUSE_RIGHT_BUTTON_UP,       /* MOUSEEVENTF_RIGHTUP */
+            RI_MOUSE_MIDDLE_BUTTON_DOWN,    /* MOUSEEVENTF_MIDDLEDOWN */
+            RI_MOUSE_MIDDLE_BUTTON_UP,      /* MOUSEEVENTF_MIDDLEUP */
+        };
+        unsigned int i;
+
+        rawinput->header.dwSize  = FIELD_OFFSET(RAWINPUT, data) + sizeof(RAWMOUSE);
+        rawinput->header.hDevice = WINE_MOUSE_HANDLE;
+        rawinput->header.wParam  = 0;
+
+        rawinput->data.mouse.usFlags           = MOUSE_MOVE_RELATIVE;
+        rawinput->data.mouse.u.s.usButtonFlags = 0;
+        rawinput->data.mouse.u.s.usButtonData  = 0;
+        for (i = 1; i < sizeof(button_flags) / sizeof(*button_flags); ++i)
+        {
+            if (msg_data->flags & (1 << i))
+                rawinput->data.mouse.u.s.usButtonFlags |= button_flags[i];
+        }
+        if (msg_data->flags & MOUSEEVENTF_WHEEL)
+        {
+            rawinput->data.mouse.u.s.usButtonFlags |= RI_MOUSE_WHEEL;
+            rawinput->data.mouse.u.s.usButtonData   = msg_data->rawinput.mouse.data;
+        }
+        if (msg_data->flags & MOUSEEVENTF_HWHEEL)
+        {
+            rawinput->data.mouse.u.s.usButtonFlags |= RI_MOUSE_HORIZONTAL_WHEEL;
+            rawinput->data.mouse.u.s.usButtonData   = msg_data->rawinput.mouse.data;
+        }
+        if (msg_data->flags & MOUSEEVENTF_XDOWN)
+        {
+            if (msg_data->rawinput.mouse.data == XBUTTON1)
+                rawinput->data.mouse.u.s.usButtonFlags |= RI_MOUSE_BUTTON_4_DOWN;
+            else if (msg_data->rawinput.mouse.data == XBUTTON2)
+                rawinput->data.mouse.u.s.usButtonFlags |= RI_MOUSE_BUTTON_5_DOWN;
+        }
+        if (msg_data->flags & MOUSEEVENTF_XUP)
+        {
+            if (msg_data->rawinput.mouse.data == XBUTTON1)
+                rawinput->data.mouse.u.s.usButtonFlags |= RI_MOUSE_BUTTON_4_UP;
+            else if (msg_data->rawinput.mouse.data == XBUTTON2)
+                rawinput->data.mouse.u.s.usButtonFlags |= RI_MOUSE_BUTTON_5_UP;
+        }
+
+        rawinput->data.mouse.ulRawButtons       = 0;
+        rawinput->data.mouse.lLastX             = msg_data->rawinput.mouse.x;
+        rawinput->data.mouse.lLastY             = msg_data->rawinput.mouse.y;
+        rawinput->data.mouse.ulExtraInformation = msg_data->info;
+    }
+    else
+    {
+        FIXME("Unhandled rawinput type %#x.\n", msg_data->rawinput.type);
+        return FALSE;
+    }
+
+    msg->lParam = (LPARAM)rawinput;
+    return TRUE;
+}
+
 /***********************************************************************
  *          process_keyboard_message
  *
@@ -2558,14 +2638,17 @@ static BOOL process_mouse_message( MSG *msg, UINT hw_id, ULONG_PTR extra_info, H
  *
  * Process a hardware message; return TRUE if message should be passed on to the app
  */
-static BOOL process_hardware_message( MSG *msg, UINT hw_id, ULONG_PTR extra_info, HWND hwnd_filter,
-                                      UINT first, UINT last, BOOL remove )
+static BOOL process_hardware_message( MSG *msg, UINT hw_id, const struct hardware_msg_data *msg_data,
+                                      HWND hwnd_filter, UINT first, UINT last, BOOL remove )
 {
+    if (msg->message == WM_INPUT)
+        return process_rawinput_message( msg, msg_data );
+
     if (is_keyboard_message( msg->message ))
         return process_keyboard_message( msg, hw_id, hwnd_filter, first, last, remove );
 
     if (is_mouse_message( msg->message ))
-        return process_mouse_message( msg, hw_id, extra_info, hwnd_filter, first, last, remove );
+        return process_mouse_message( msg, hw_id, msg_data->info, hwnd_filter, first, last, remove );
 
     ERR( "unknown message type %x\n", msg->message );
     return FALSE;
@@ -2765,7 +2848,7 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
                 info.msg.pt.x = msg_data->hardware.x;
                 info.msg.pt.y = msg_data->hardware.y;
                 hw_id         = msg_data->hardware.hw_id;
-                if (!process_hardware_message( &info.msg, hw_id, msg_data->hardware.info,
+                if (!process_hardware_message( &info.msg, hw_id, &msg_data->hardware,
                                                hwnd, first, last, flags & PM_REMOVE ))
                 {
                     TRACE("dropping msg %x\n", info.msg.message );

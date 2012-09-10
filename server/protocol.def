@@ -295,6 +295,17 @@ struct hardware_msg_data
     int             y;         /* y position */
     unsigned int    hw_id;     /* unique id */
     unsigned int    flags;     /* hook flags */
+    union
+    {
+        int type;
+        struct
+        {
+            int            type;    /* RIM_TYPEMOUSE */
+            int            x;       /* x coordinate */
+            int            y;       /* y coordinate */
+            unsigned int   data;    /* mouse data */
+        } mouse;
+    } rawinput;
 };
 
 struct callback_msg_data

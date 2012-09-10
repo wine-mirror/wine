@@ -88,6 +88,7 @@ struct process
     client_ptr_t         ldt_copy;        /* pointer to LDT copy in client addr space */
     unsigned int         trace_data;      /* opaque data used by the process tracing mechanism */
     struct list          rawinput_devices;/* list of registered rawinput devices */
+    const struct rawinput_device *rawinput_mouse; /* rawinput mouse device, if any */
 };
 
 struct process_snapshot
