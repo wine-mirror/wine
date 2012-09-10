@@ -211,6 +211,7 @@ static ULONG STDMETHODCALLTYPE d3d10_depthstencil_view_Release(ID3D10DepthStenci
 
     if (!refcount)
     {
+        ID3D10Resource_Release(This->resource);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -255,7 +256,12 @@ static HRESULT STDMETHODCALLTYPE d3d10_depthstencil_view_SetPrivateDataInterface
 static void STDMETHODCALLTYPE d3d10_depthstencil_view_GetResource(ID3D10DepthStencilView *iface,
         ID3D10Resource **resource)
 {
-    FIXME("iface %p, resource %p stub!\n", iface, resource);
+    struct d3d10_depthstencil_view *view = impl_from_ID3D10DepthStencilView(iface);
+
+    TRACE("iface %p, resource %p.\n", iface, resource);
+
+    *resource = view->resource;
+    ID3D10Resource_AddRef(*resource);
 }
 
 /* ID3D10DepthStencilView methods */
@@ -283,10 +289,14 @@ static const struct ID3D10DepthStencilViewVtbl d3d10_depthstencil_view_vtbl =
     d3d10_depthstencil_view_GetDesc,
 };
 
-HRESULT d3d10_depthstencil_view_init(struct d3d10_depthstencil_view *view)
+HRESULT d3d10_depthstencil_view_init(struct d3d10_depthstencil_view *view,
+        ID3D10Resource *resource)
 {
     view->ID3D10DepthStencilView_iface.lpVtbl = &d3d10_depthstencil_view_vtbl;
     view->refcount = 1;
+
+    view->resource = resource;
+    ID3D10Resource_AddRef(resource);
 
     return S_OK;
 }

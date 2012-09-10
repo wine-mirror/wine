@@ -128,9 +128,12 @@ struct d3d10_depthstencil_view
 {
     ID3D10DepthStencilView ID3D10DepthStencilView_iface;
     LONG refcount;
+
+    ID3D10Resource *resource;
 };
 
-HRESULT d3d10_depthstencil_view_init(struct d3d10_depthstencil_view *view) DECLSPEC_HIDDEN;
+HRESULT d3d10_depthstencil_view_init(struct d3d10_depthstencil_view *view,
+        ID3D10Resource *resource) DECLSPEC_HIDDEN;
 
 /* ID3D10RenderTargetView */
 struct d3d10_rendertarget_view
