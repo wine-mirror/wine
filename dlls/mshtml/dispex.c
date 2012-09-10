@@ -979,13 +979,13 @@ static HRESULT invoke_builtin_prop(DispatchEx *This, DISPID id, LCID lcid, WORD 
             if(FAILED(hres))
                 return hres;
 
-            if(V_VT(&v) != VT_DISPATCH) {
-                FIXME("Not a function %s\n", debugstr_variant(&v));
-                VariantClear(&v);
-                return E_FAIL;
-            }
-
             if(flags != (DISPATCH_PROPERTYGET|DISPATCH_METHOD)) {
+                if(V_VT(&v) != VT_DISPATCH) {
+                    FIXME("Not a function %s\n", debugstr_variant(&v));
+                    VariantClear(&v);
+                    return E_FAIL;
+                }
+
                 hres = invoke_disp_value(This, V_DISPATCH(&v), lcid, flags, dp, res, ei, caller);
                 IDispatch_Release(V_DISPATCH(&v));
             }else if(res) {

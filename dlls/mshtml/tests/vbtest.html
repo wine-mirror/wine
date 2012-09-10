@@ -31,6 +31,7 @@ If true then counter = counter+1
 
 Sub runTest()
     Call ok(counter = 6, "counter = " & counter)
+    Call ok(isNull(document.onkeyup), "document.onkeyup is not null")
     Call external.reportSuccess()
 End Sub
 </script>
