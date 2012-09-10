@@ -1258,6 +1258,86 @@ todo_wine
     IWICBitmapDecoder_Release(decoder);
 }
 
+static void test_metadata_LSD(void)
+{
+    static const WCHAR LSD_name[] = {'L','o','g','i','c','a','l',' ','S','c','r','e','e','n',' ','D','e','s','c','r','i','p','t','o','r',' ','R','e','a','d','e','r',0};
+    static const char LSD_data[] = "hello world!\x1\x2\x3\x4\xab\x6\x7\x8\x9\xa\xb\xc\xd\xe\xf";
+    static const struct test_data td[9] =
+    {
+        { VT_UI1|VT_VECTOR, 0, 6, {'w','o','r','l','d','!'}, NULL, { 'S','i','g','n','a','t','u','r','e',0 } },
+        { VT_UI2, 0, 0, { 0x201 }, NULL, { 'W','i','d','t','h',0 } },
+        { VT_UI2, 0, 0, { 0x403 }, NULL, { 'H','e','i','g','h','t',0 } },
+        { VT_BOOL, 0, 0, { 1 }, NULL, { 'G','l','o','b','a','l','C','o','l','o','r','T','a','b','l','e','F','l','a','g',0 } },
+        { VT_UI1, 0, 0, { 2 }, NULL, { 'C','o','l','o','r','R','e','s','o','l','u','t','i','o','n',0 } },
+        { VT_BOOL, 0, 0, { 1 }, NULL, { 'S','o','r','t','F','l','a','g',0 } },
+        { VT_UI1, 0, 0, { 3 }, NULL, { 'G','l','o','b','a','l','C','o','l','o','r','T','a','b','l','e','S','i','z','e',0 } },
+        { VT_UI1, 0, 0, { 6 }, NULL, { 'B','a','c','k','g','r','o','u','n','d','C','o','l','o','r','I','n','d','e','x',0 } },
+        { VT_UI1, 0, 0, { 7 }, NULL, { 'P','i','x','e','l','A','s','p','e','c','t','R','a','t','i','o',0 } }
+    };
+    LARGE_INTEGER pos;
+    HRESULT hr;
+    IStream *stream;
+    IWICPersistStream *persist;
+    IWICMetadataReader *reader;
+    IWICMetadataHandlerInfo *info;
+    WCHAR name[64];
+    UINT count, dummy;
+    GUID format;
+    CLSID id;
+
+    hr = CoCreateInstance(&CLSID_WICLSDMetadataReader, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IWICMetadataReader, (void **)&reader);
+todo_wine
+    ok(hr == S_OK || broken(hr == E_NOINTERFACE || hr == REGDB_E_CLASSNOTREG) /* before Win7 */,
+       "CoCreateInstance error %#x\n", hr);
+
+    stream = create_stream(LSD_data, sizeof(LSD_data));
+
+    if (SUCCEEDED(hr))
+    {
+        pos.QuadPart = 6;
+        hr = IStream_Seek(stream, pos, SEEK_SET, NULL);
+        ok(hr == S_OK, "IStream_Seek error %#x\n", hr);
+
+        hr = IUnknown_QueryInterface(reader, &IID_IWICPersistStream, (void **)&persist);
+        ok(hr == S_OK, "QueryInterface error %#x\n", hr);
+
+        hr = IWICPersistStream_Load(persist, stream);
+        ok(hr == S_OK, "Load error %#x\n", hr);
+
+        IWICPersistStream_Release(persist);
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        hr = IWICMetadataReader_GetCount(reader, &count);
+        ok(hr == S_OK, "GetCount error %#x\n", hr);
+        ok(count == sizeof(td)/sizeof(td[0]), "unexpected count %u\n", count);
+
+        compare_metadata(reader, td, count);
+
+        hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
+        ok(hr == S_OK, "GetMetadataFormat error %#x\n", hr);
+        ok(IsEqualGUID(&format, &GUID_MetadataFormatLSD), "wrong format %s\n", debugstr_guid(&format));
+
+        hr = IWICMetadataReader_GetMetadataHandlerInfo(reader, &info);
+        ok(hr == S_OK, "GetMetadataHandlerInfo error %#x\n", hr);
+
+        hr = IWICMetadataHandlerInfo_GetCLSID(info, &id);
+        ok(hr == S_OK, "GetCLSID error %#x\n", hr);
+        ok(IsEqualGUID(&id, &CLSID_WICLSDMetadataReader), "wrong CLSID %s\n", debugstr_guid(&id));
+
+        hr = IWICMetadataHandlerInfo_GetFriendlyName(info, 64, name, &dummy);
+        ok(hr == S_OK, "GetFriendlyName error %#x\n", hr);
+        ok(lstrcmpW(name, LSD_name) == 0, "wrong LSD reader name %s\n", wine_dbgstr_w(name));
+
+        IWICMetadataHandlerInfo_Release(info);
+        IWICMetadataReader_Release(reader);
+    }
+
+    IStream_Release(stream);
+}
+
 START_TEST(metadata)
 {
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
@@ -1269,6 +1349,7 @@ START_TEST(metadata)
     test_create_reader();
     test_metadata_png();
     test_metadata_gif();
+    test_metadata_LSD();
 
     CoUninitialize();
 }
