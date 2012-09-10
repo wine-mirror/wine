@@ -103,6 +103,7 @@ static HRESULT invoke_variant_prop(VARIANT *v, WORD flags, DISPPARAMS *dp, VARIA
 
     switch(flags) {
     case DISPATCH_PROPERTYGET|DISPATCH_METHOD:
+    case DISPATCH_PROPERTYGET:
         if(dp->cArgs) {
             WARN("called with arguments\n");
             return DISP_E_MEMBERNOTFOUND; /* That's what tests show */
