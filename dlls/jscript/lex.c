@@ -73,7 +73,7 @@ static const struct {
     {breakW,       kBREAK, TRUE},
     {caseW,        kCASE},
     {catchW,       kCATCH},
-    {continueW,    kCONTINUE},
+    {continueW,    kCONTINUE, TRUE},
     {defaultW,     kDEFAULT},
     {deleteW,      kDELETE},
     {doW,          kDO},

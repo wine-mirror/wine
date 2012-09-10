@@ -1372,6 +1372,12 @@ while(true) {
     tmp = false
 }
 
+while(true) {
+    break
+    continue
+    tmp = false
+}
+
 /* Keep this test in the end of file */
 undefined = 6;
 ok(undefined === 6, "undefined = " + undefined);
