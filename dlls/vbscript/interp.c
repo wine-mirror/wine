@@ -279,6 +279,13 @@ static HRESULT stack_push(exec_ctx_t *ctx, VARIANT *v)
     return S_OK;
 }
 
+static inline HRESULT stack_push_null(exec_ctx_t *ctx)
+{
+    VARIANT v;
+    V_VT(&v) = VT_NULL;
+    return stack_push(ctx, &v);
+}
+
 static void stack_popn(exec_ctx_t *ctx, unsigned n)
 {
     while(n--)
@@ -1143,12 +1150,8 @@ static HRESULT interp_empty(exec_ctx_t *ctx)
 
 static HRESULT interp_null(exec_ctx_t *ctx)
 {
-    VARIANT v;
-
     TRACE("\n");
-
-    V_VT(&v) = VT_NULL;
-    return stack_push(ctx, &v);
+    return stack_push_null(ctx);
 }
 
 static HRESULT interp_nothing(exec_ctx_t *ctx)
@@ -1306,11 +1309,6 @@ static HRESULT var_cmp(exec_ctx_t *ctx, VARIANT *l, VARIANT *r)
 {
     TRACE("%s %s\n", debugstr_variant(l), debugstr_variant(r));
 
-    if(V_VT(l) == VT_NULL || V_VT(r) == VT_NULL) {
-        FIXME("comparing nulls is not implemented\n");
-        return E_NOTIMPL;
-    }
-
     /* FIXME: Fix comparing string to number */
 
     return VarCmp(l, r, ctx->script->lcid, 0);
@@ -1345,6 +1343,8 @@ static HRESULT interp_equal(exec_ctx_t *ctx)
     hres = cmp_oper(ctx);
     if(FAILED(hres))
         return hres;
+    if(hres == VARCMP_NULL)
+        return stack_push_null(ctx);
 
     V_VT(&v) = VT_BOOL;
     V_BOOL(&v) = hres == VARCMP_EQ ? VARIANT_TRUE : VARIANT_FALSE;
@@ -1361,6 +1361,8 @@ static HRESULT interp_nequal(exec_ctx_t *ctx)
     hres = cmp_oper(ctx);
     if(FAILED(hres))
         return hres;
+    if(hres == VARCMP_NULL)
+        return stack_push_null(ctx);
 
     V_VT(&v) = VT_BOOL;
     V_BOOL(&v) = hres != VARCMP_EQ ? VARIANT_TRUE : VARIANT_FALSE;
@@ -1377,6 +1379,8 @@ static HRESULT interp_gt(exec_ctx_t *ctx)
     hres = cmp_oper(ctx);
     if(FAILED(hres))
         return hres;
+    if(hres == VARCMP_NULL)
+        return stack_push_null(ctx);
 
     V_VT(&v) = VT_BOOL;
     V_BOOL(&v) = hres == VARCMP_GT ? VARIANT_TRUE : VARIANT_FALSE;
@@ -1393,6 +1397,8 @@ static HRESULT interp_gteq(exec_ctx_t *ctx)
     hres = cmp_oper(ctx);
     if(FAILED(hres))
         return hres;
+    if(hres == VARCMP_NULL)
+        return stack_push_null(ctx);
 
     V_VT(&v) = VT_BOOL;
     V_BOOL(&v) = hres == VARCMP_GT || hres == VARCMP_EQ ? VARIANT_TRUE : VARIANT_FALSE;
@@ -1409,6 +1415,8 @@ static HRESULT interp_lt(exec_ctx_t *ctx)
     hres = cmp_oper(ctx);
     if(FAILED(hres))
         return hres;
+    if(hres == VARCMP_NULL)
+        return stack_push_null(ctx);
 
     V_VT(&v) = VT_BOOL;
     V_BOOL(&v) = hres == VARCMP_LT ? VARIANT_TRUE : VARIANT_FALSE;
@@ -1425,6 +1433,8 @@ static HRESULT interp_lteq(exec_ctx_t *ctx)
     hres = cmp_oper(ctx);
     if(FAILED(hres))
         return hres;
+    if(hres == VARCMP_NULL)
+        return stack_push_null(ctx);
 
     V_VT(&v) = VT_BOOL;
     V_BOOL(&v) = hres == VARCMP_LT || hres == VARCMP_EQ ? VARIANT_TRUE : VARIANT_FALSE;
