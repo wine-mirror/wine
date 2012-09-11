@@ -125,7 +125,7 @@ static BOOL init_funcs(void)
         pcollate_short__Getcat = (void*)GetProcAddress(hmod, "?_Getcat@?$collate@G@std@@SAIPAPBVfacet@locale@2@PBV42@@Z");
         pctype_char__Getcat = (void*)GetProcAddress(hmod, "?_Getcat@?$ctype@D@std@@SAIPAPBVfacet@locale@2@PBV42@@Z");
         pctype_wchar__Getcat = (void*)GetProcAddress(hmod, "?_Getcat@?$ctype@_W@std@@SAIPAPBVfacet@locale@2@PBV42@@Z");
-        pctype_short__Getcat = (void*)GetProcAddress(hmod, "?_Getcat@?$ctype@G@std@@SAIPAPBVfacet@locale@2@PBV42@@Z(ptr");
+        pctype_short__Getcat = (void*)GetProcAddress(hmod, "?_Getcat@?$ctype@G@std@@SAIPAPBVfacet@locale@2@PBV42@@Z");
         pcodecvt_char__Getcat = (void*)GetProcAddress(hmod, "?_Getcat@?$codecvt@DDH@std@@SAIPAPBVfacet@locale@2@PBV42@@Z");
         pnumpunct_char__Getcat = (void*)GetProcAddress(hmod, "?_Getcat@?$numpunct@D@std@@SAIPAPBVfacet@locale@2@PBV42@@Z");
         pnumpunct_wchar__Getcat = (void*)GetProcAddress(hmod, "?_Getcat@?$numpunct@_W@std@@SAIPAPBVfacet@locale@2@PBV42@@Z");
