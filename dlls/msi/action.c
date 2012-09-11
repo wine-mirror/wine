@@ -809,6 +809,11 @@ INSTALLSTATE msi_get_component_action( MSIPACKAGE *package, MSICOMPONENT *comp )
         return INSTALLSTATE_UNKNOWN;
     }
     if (package->need_rollback) return comp->Installed;
+    if (comp->num_clients > 0 && comp->ActionRequest == INSTALLSTATE_ABSENT)
+    {
+        TRACE("%s has %u clients left\n", debugstr_w(comp->Component), comp->num_clients);
+        return comp->Installed;
+    }
     return comp->ActionRequest;
 }
 
@@ -1620,6 +1625,27 @@ static UINT ACTION_FileCost(MSIPACKAGE *package)
     return ERROR_SUCCESS;
 }
 
+static void get_client_counts( MSIPACKAGE *package )
+{
+    MSICOMPONENT *comp;
+    HKEY hkey;
+
+    LIST_FOR_EACH_ENTRY( comp, &package->components, MSICOMPONENT, entry )
+    {
+        if (!comp->ComponentId) continue;
+
+        if (MSIREG_OpenUserDataComponentKey( comp->ComponentId, szLocalSid, &hkey, FALSE ) &&
+            MSIREG_OpenUserDataComponentKey( comp->ComponentId, NULL, &hkey, FALSE ))
+        {
+            comp->num_clients = 0;
+            continue;
+        }
+        RegQueryInfoKeyW( hkey, NULL, NULL, NULL, NULL, NULL, NULL, (DWORD *)&comp->num_clients,
+                          NULL, NULL, NULL, NULL );
+        RegCloseKey( hkey );
+    }
+}
+
 static void ACTION_GetComponentInstallStates(MSIPACKAGE *package)
 {
     MSICOMPONENT *comp;
@@ -1983,6 +2009,11 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
 
         TRACE("component %s (installed %d request %d action %d)\n",
               debugstr_w(component->Component), component->Installed, component->ActionRequest, component->Action);
+
+        if (component->Action == INSTALLSTATE_LOCAL || component->Action == INSTALLSTATE_SOURCE)
+            component->num_clients++;
+        else if (component->Action == INSTALLSTATE_ABSENT)
+            component->num_clients--;
     }
 
     return ERROR_SUCCESS;
@@ -2368,6 +2399,7 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
         else
             comp->Enabled = TRUE;
     }
+    get_client_counts( package );
 
     /* read components states from the registry */
     ACTION_GetComponentInstallStates(package);
@@ -3307,9 +3339,9 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
         if (package->need_rollback) action = comp->Installed;
         else action = comp->ActionRequest;
 
-        TRACE("Component %s (%s), Keypath=%s, RefCount=%u Action=%u\n",
+        TRACE("Component %s (%s) Keypath=%s RefCount=%u Clients=%u Action=%u\n",
                             debugstr_w(comp->Component), debugstr_w(squished_cc),
-                            debugstr_w(comp->FullKeypath), comp->RefCount, action);
+                            debugstr_w(comp->FullKeypath), comp->RefCount, comp->num_clients, action);
 
         if (action == INSTALLSTATE_LOCAL || action == INSTALLSTATE_SOURCE)
         {
@@ -3372,10 +3404,13 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
         }
         else if (action == INSTALLSTATE_ABSENT)
         {
-            if (package->Context == MSIINSTALLCONTEXT_MACHINE)
-                MSIREG_DeleteUserDataComponentKey(comp->ComponentId, szLocalSid);
-            else
-                MSIREG_DeleteUserDataComponentKey(comp->ComponentId, NULL);
+            if (comp->num_clients <= 0)
+            {
+                if (package->Context == MSIINSTALLCONTEXT_MACHINE)
+                    MSIREG_DeleteUserDataComponentKey( comp->ComponentId, szLocalSid );
+                else
+                    MSIREG_DeleteUserDataComponentKey( comp->ComponentId, NULL );
+            }
         }
 
         /* UI stuff */

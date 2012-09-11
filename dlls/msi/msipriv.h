@@ -481,6 +481,7 @@ typedef struct tagMSICOMPONENT
     LPWSTR FullKeypath;
     LPWSTR AdvertiseString;
     MSIASSEMBLY *assembly;
+    int num_clients;
 
     unsigned int anyAbsent:1;
     unsigned int hasAdvertiseFeature:1;
