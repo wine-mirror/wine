@@ -8103,8 +8103,11 @@ basic_istream_char* __cdecl basic_istream_char_getline_bstr_delim(
     if(basic_istream_char_sentry_create(istream, TRUE)) {
         MSVCP_basic_string_char_clear(str);
 
-        for(c = basic_istream_char_get(istream); c!=delim && c!=EOF;
-                c = basic_istream_char_get(istream)) {
+        c = basic_istream_char_get(istream);
+        if(c != EOF)
+            state = IOSTATE_goodbit;
+
+        for(; c!=delim && c!=EOF; c = basic_istream_char_get(istream)) {
             state = IOSTATE_goodbit;
             MSVCP_basic_string_char_append_ch(str, c);
         }
@@ -9523,8 +9526,11 @@ basic_istream_wchar* __cdecl basic_istream_wchar_getline_bstr_delim(
     if(basic_istream_wchar_sentry_create(istream, TRUE)) {
         MSVCP_basic_string_wchar_clear(str);
 
-        for(c = basic_istream_wchar_get(istream); c!=delim && c!=WEOF;
-                c = basic_istream_wchar_get(istream)) {
+        c = basic_istream_wchar_get(istream);
+        if(c != WEOF)
+            state = IOSTATE_goodbit;
+
+        for(; c!=delim && c!=WEOF; c = basic_istream_wchar_get(istream)) {
             state = IOSTATE_goodbit;
             MSVCP_basic_string_wchar_append_ch(str, c);
         }
