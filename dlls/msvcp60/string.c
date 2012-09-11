@@ -549,7 +549,7 @@ int __thiscall basic_string_char_compare_substr_cstr_len(
     if(this->size < pos)
         _Xran();
 
-    if(pos+num > this->size)
+    if(num > this->size-pos)
         num = this->size-pos;
 
     ans = char_traits_char_compare(this->ptr+pos,
@@ -586,7 +586,7 @@ int __thiscall basic_string_char_compare_substr_substr(
     if(compare->size < off)
         _Xran();
 
-    if(off+count > compare->size)
+    if(count > compare->size-off)
         count = compare->size-off;
 
     return basic_string_char_compare_substr_cstr_len(this, pos, num,
@@ -1338,7 +1338,7 @@ basic_string_char* __thiscall basic_string_char_replace_cstr_len(basic_string_ch
     if(this->size < off)
         _Xran();
 
-    if(off+len > this->size)
+    if(len > this->size-off)
         len = this->size-off;
 
     if(basic_string_char_npos-str_len <= this->size-len)
@@ -1388,7 +1388,7 @@ basic_string_char* __thiscall basic_string_char_replace_substr(basic_string_char
     if(str->size < str_off)
         _Xran();
 
-    if(str_off+str_len > str->size)
+    if(str_len > str->size-str_off)
         str_len = str->size-str_off;
 
     return basic_string_char_replace_cstr_len(this, off, len,
@@ -1418,7 +1418,7 @@ basic_string_char* __thiscall basic_string_char_replace_ch(basic_string_char *th
     if(this->size < off)
         _Xran();
 
-    if(off+len > this->size)
+    if(len > this->size-off)
         len = this->size-off;
 
     if(basic_string_char_npos-count <= this->size-len)
@@ -2239,7 +2239,7 @@ int __thiscall basic_string_wchar_compare_substr_cstr_len(
     if(this->size < pos)
         _Xran();
 
-    if(pos+num > this->size)
+    if(num > this->size-pos)
         num = this->size-pos;
 
     ans = char_traits_wchar_compare(this->ptr+pos,
@@ -2276,7 +2276,7 @@ int __thiscall basic_string_wchar_compare_substr_substr(
     if(compare->size < off)
         _Xran();
 
-    if(off+count > compare->size)
+    if(count > compare->size-off)
         count = compare->size-off;
 
     return basic_string_wchar_compare_substr_cstr_len(this, pos, num,
@@ -3028,7 +3028,7 @@ basic_string_wchar* __thiscall basic_string_wchar_replace_cstr_len(basic_string_
     if(this->size < off)
         _Xran();
 
-    if(off+len > this->size)
+    if(len > this->size-off)
         len = this->size-off;
 
     if(basic_string_wchar_npos-str_len <= this->size-len)
@@ -3078,7 +3078,7 @@ basic_string_wchar* __thiscall basic_string_wchar_replace_substr(basic_string_wc
     if(str->size < str_off)
         _Xran();
 
-    if(str_off+str_len > str->size)
+    if(str_len > str->size-str_off)
         str_len = str->size-str_off;
 
     return basic_string_wchar_replace_cstr_len(this, off, len,
@@ -3108,7 +3108,7 @@ basic_string_wchar* __thiscall basic_string_wchar_replace_ch(basic_string_wchar 
     if(this->size < off)
         _Xran();
 
-    if(off+len > this->size)
+    if(len > this->size-off)
         len = this->size-off;
 
     if(basic_string_wchar_npos-count <= this->size-len)
