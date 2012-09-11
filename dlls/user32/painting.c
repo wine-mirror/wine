@@ -805,7 +805,6 @@ void move_window_bits( HWND hwnd, struct window_surface *old_surface,
 static void update_now( HWND hwnd, UINT rdw_flags )
 {
     HWND child = 0;
-    int count = 0;
 
     /* desktop window never gets WM_PAINT, only WM_ERASEBKGND */
     if (hwnd == GetDesktopWindow()) erase_now( hwnd, rdw_flags | RDW_NOCHILDREN );
@@ -822,10 +821,8 @@ static void update_now( HWND hwnd, UINT rdw_flags )
         if (!flags) break;  /* nothing more to do */
 
         SendMessageW( child, WM_PAINT, 0, 0 );
-        count++;
         if (rdw_flags & RDW_NOCHILDREN) break;
     }
-    if (count) flush_window_surfaces( FALSE );
 }
 
 
@@ -936,6 +933,7 @@ BOOL WINAPI EndPaint( HWND hwnd, const PAINTSTRUCT *lps )
     if (!lps) return FALSE;
     release_dc( hwnd, lps->hdc, TRUE );
     ShowCaret( hwnd );
+    flush_window_surfaces( FALSE );
     return TRUE;
 }
 
