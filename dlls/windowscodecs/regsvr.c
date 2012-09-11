@@ -1542,7 +1542,7 @@ static struct regsvr_metadatareader const metadatareader_list[] = {
     },
     {   &CLSID_WICPngTextMetadataReader,
         "The Wine Project",
-        "Unknown Metadata Reader",
+        "Chunk tEXt Reader",
         "1.0.0.0",
         "1.0.0.0",
         &GUID_VendorMicrosoft,
