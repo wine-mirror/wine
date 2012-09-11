@@ -1,0 +1,6 @@
+MODULE    = msls31.dll
+
+C_SRCS = \
+	msls31_main.c
+
+@MAKE_DLL_RULES@
