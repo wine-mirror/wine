@@ -2471,6 +2471,7 @@ DECL_HANDLER(update_window_zorder)
         if (ptr == win) break;
         if (!(ptr->style & WS_VISIBLE)) continue;
         if (ptr->ex_style & WS_EX_TRANSPARENT) continue;
+        if (ptr->is_layered && (ptr->layered_flags & LWA_COLORKEY)) continue;
         if (!intersect_rect( &tmp, &ptr->visible_rect, &rect )) continue;
         if (ptr->win_region)
         {
