@@ -1822,11 +1822,11 @@ streamsize __thiscall basic_streambuf_wchar__Xsgetn_s(basic_streambuf_wchar *thi
             chunk = count-copied;
 
         if(chunk > 0) {
-            memcpy_s(ptr+copied, size, *this->prpos, chunk);
+            memcpy_s(ptr+copied, size, *this->prpos, chunk*sizeof(wchar_t));
             *this->prpos += chunk;
             *this->prsize -= chunk;
             copied += chunk;
-            size -= chunk;
+            size -= chunk*sizeof(wchar_t);
         }else if((c = call_basic_streambuf_wchar_uflow(this)) != WEOF) {
             ptr[copied] = c;
             copied++;
@@ -2315,7 +2315,7 @@ streamsize __thiscall basic_streambuf_wchar_xsputn(basic_streambuf_wchar *this, 
             chunk = count-copied;
 
         if(chunk > 0) {
-            memcpy(*this->pwpos, ptr+copied, chunk);
+            memcpy(*this->pwpos, ptr+copied, chunk*sizeof(wchar_t));
             *this->pwpos += chunk;
             *this->pwsize -= chunk;
             copied += chunk;
@@ -3948,7 +3948,7 @@ void __thiscall basic_stringbuf_wchar__Init(basic_stringbuf_wchar *this, const w
             throw_exception(EXCEPTION_BAD_ALLOC, NULL);
         }
 
-        memcpy(buf, str, count);
+        memcpy(buf, str, count*sizeof(wchar_t));
         this->seekhigh = buf + count;
 
         this->state |= STRINGBUF_allocated;
