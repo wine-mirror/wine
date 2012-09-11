@@ -3886,7 +3886,7 @@ static void LISTVIEW_MarqueeHighlight(LISTVIEW_INFO *infoPtr, const POINT *coord
     }
     iterator_destroy(&new_elems);
 
-    LISTVIEW_InvalidateRect(infoPtr, &rect);
+    LISTVIEW_InvalidateRect(infoPtr, &infoPtr->marqueeDrawRect);
 }
 
 /***
