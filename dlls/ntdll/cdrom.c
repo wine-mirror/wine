@@ -924,7 +924,7 @@ static NTSTATUS CDROM_ReadQChannel(int dev, int fd, const CDROM_SUB_Q_DATA_FORMA
         break;
     default:
 	TRACE("status=%02X !\n", sc.cdsc_audiostatus);
-        break;
+        hdr->AudioStatus = AUDIO_STATUS_NO_STATUS;
     }
     switch (fmt->Format)
     {
@@ -1035,6 +1035,7 @@ static NTSTATUS CDROM_ReadQChannel(int dev, int fd, const CDROM_SUB_Q_DATA_FORMA
         break;
     default:
 	TRACE("status=%02X !\n", sc.header.audio_status);
+        hdr->AudioStatus = AUDIO_STATUS_NO_STATUS;
     }
     switch (fmt->Format)
     {
