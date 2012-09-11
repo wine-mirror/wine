@@ -96,5 +96,6 @@ extern HRESULT UnknownMetadataReader_CreateInstance(IUnknown *pUnkOuter, REFIID 
 extern HRESULT IfdMetadataReader_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void **ppv) DECLSPEC_HIDDEN;
 extern HRESULT PngTextReader_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv) DECLSPEC_HIDDEN;
 extern HRESULT LSDReader_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void **ppv) DECLSPEC_HIDDEN;
+extern HRESULT IMDReader_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void **ppv) DECLSPEC_HIDDEN;
 
 #endif /* WINCODECS_PRIVATE_H */

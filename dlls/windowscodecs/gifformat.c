@@ -146,6 +146,100 @@ HRESULT LSDReader_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void **ppv)
     return MetadataReader_Create(&LSDReader_Vtbl, pUnkOuter, iid, ppv);
 }
 
+static HRESULT load_IMD_metadata(IStream *stream, const GUID *vendor, DWORD options,
+                                 MetadataItem **items, DWORD *count)
+{
+    struct image_descriptor
+    {
+        USHORT left;
+        USHORT top;
+        USHORT width;
+        USHORT height;
+        BYTE packed;
+        /* local_color_table_flag : 1;
+         * interlace_flag : 1;
+         * sort_flag : 1;
+         * reserved : 2;
+         * local_color_table_size : 3;
+         */
+    } imd_data;
+    HRESULT hr;
+    ULONG bytesread, i;
+    MetadataItem *result;
+
+    *items = NULL;
+    *count = 0;
+
+    hr = IStream_Read(stream, &imd_data, sizeof(imd_data), &bytesread);
+    if (FAILED(hr) || bytesread != sizeof(imd_data)) return S_OK;
+
+    result = HeapAlloc(GetProcessHeap(), 0, sizeof(MetadataItem) * 8);
+    if (!result) return E_OUTOFMEMORY;
+
+    for (i = 0; i < 8; i++)
+    {
+        PropVariantInit(&result[i].schema);
+        PropVariantInit(&result[i].id);
+        PropVariantInit(&result[i].value);
+    }
+
+    result[0].id.vt = VT_LPWSTR;
+    result[0].id.u.pwszVal = strdupAtoW("Left");
+    result[0].value.vt = VT_UI2;
+    result[0].value.u.uiVal = imd_data.left;
+
+    result[1].id.vt = VT_LPWSTR;
+    result[1].id.u.pwszVal = strdupAtoW("Top");
+    result[1].value.vt = VT_UI2;
+    result[1].value.u.uiVal = imd_data.top;
+
+    result[2].id.vt = VT_LPWSTR;
+    result[2].id.u.pwszVal = strdupAtoW("Width");
+    result[2].value.vt = VT_UI2;
+    result[2].value.u.uiVal = imd_data.width;
+
+    result[3].id.vt = VT_LPWSTR;
+    result[3].id.u.pwszVal = strdupAtoW("Height");
+    result[3].value.vt = VT_UI2;
+    result[3].value.u.uiVal = imd_data.height;
+
+    result[4].id.vt = VT_LPWSTR;
+    result[4].id.u.pwszVal = strdupAtoW("LocalColorTableFlag");
+    result[4].value.vt = VT_BOOL;
+    result[4].value.u.boolVal = (imd_data.packed >> 7) & 1;
+
+    result[5].id.vt = VT_LPWSTR;
+    result[5].id.u.pwszVal = strdupAtoW("InterlaceFlag");
+    result[5].value.vt = VT_BOOL;
+    result[5].value.u.boolVal = (imd_data.packed >> 6) & 1;
+
+    result[6].id.vt = VT_LPWSTR;
+    result[6].id.u.pwszVal = strdupAtoW("SortFlag");
+    result[6].value.vt = VT_BOOL;
+    result[6].value.u.boolVal = (imd_data.packed >> 5) & 1;
+
+    result[7].id.vt = VT_LPWSTR;
+    result[7].id.u.pwszVal = strdupAtoW("LocalColorTableSize");
+    result[7].value.vt = VT_UI1;
+    result[7].value.u.bVal = imd_data.packed & 7;
+
+    *items = result;
+    *count = 8;
+
+    return S_OK;
+}
+
+static const MetadataHandlerVtbl IMDReader_Vtbl = {
+    0,
+    &CLSID_WICIMDMetadataReader,
+    load_IMD_metadata
+};
+
+HRESULT IMDReader_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void **ppv)
+{
+    return MetadataReader_Create(&IMDReader_Vtbl, pUnkOuter, iid, ppv);
+}
+
 typedef struct {
     IWICBitmapDecoder IWICBitmapDecoder_iface;
     LONG ref;

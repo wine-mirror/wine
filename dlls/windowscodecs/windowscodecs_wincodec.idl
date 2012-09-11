@@ -149,3 +149,10 @@ coclass WICPngTextMetadataReader { interface IWICMetadataReader; }
     uuid(41070793-59e4-479a-a1f7-954adc2ef5fc)
 ]
 coclass WICLSDMetadataReader { interface IWICMetadataReader; }
+
+[
+    helpstring("WIC IMD Metadata Reader"),
+    threading(both),
+    uuid(7447a267-0015-42c8-a8f1-fb3b94c68361)
+]
+coclass WICIMDMetadataReader { interface IWICMetadataReader; }
