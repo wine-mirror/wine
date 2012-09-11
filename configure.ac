@@ -1749,11 +1749,14 @@ then
   WINE_TRY_CFLAGS([-Wunused-but-set-parameter])
   WINE_TRY_CFLAGS([-Wwrite-strings])
 
-  dnl Default to dwarf-2 debug info
+  dnl On Darwin, prefer stabs; everywhere else, default to dwarf-2 debug info
   for ac_flag in $CFLAGS; do
     case $ac_flag in
-      -g) WINE_TRY_CFLAGS([-gdwarf-2])
-          WINE_TRY_CFLAGS([-gstrict-dwarf]) ;;
+      -g) case $host_os in
+            darwin*) WINE_TRY_CFLAGS([-gstabs+]) ;;
+            *) WINE_TRY_CFLAGS([-gdwarf-2])
+               WINE_TRY_CFLAGS([-gstrict-dwarf]) ;;
+          esac ;;
     esac
   done
 
