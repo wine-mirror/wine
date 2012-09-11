@@ -156,3 +156,10 @@ coclass WICLSDMetadataReader { interface IWICMetadataReader; }
     uuid(7447a267-0015-42c8-a8f1-fb3b94c68361)
 ]
 coclass WICIMDMetadataReader { interface IWICMetadataReader; }
+
+[
+    helpstring("WIC GCE Metadata Reader"),
+    threading(both),
+    uuid(b92e345d-f52d-41f3-b562-081bc772e3b9)
+]
+coclass WICGCEMetadataReader { interface IWICMetadataReader; }

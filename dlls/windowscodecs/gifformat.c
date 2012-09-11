@@ -240,6 +240,84 @@ HRESULT IMDReader_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void **ppv)
     return MetadataReader_Create(&IMDReader_Vtbl, pUnkOuter, iid, ppv);
 }
 
+static HRESULT load_GCE_metadata(IStream *stream, const GUID *vendor, DWORD options,
+                                 MetadataItem **items, DWORD *count)
+{
+#include "pshpack1.h"
+    struct graphic_control_extenstion
+    {
+        BYTE packed;
+        /* reservred: 3;
+         * disposal : 3;
+         * user_input_flag : 1;
+         * transparency_flag : 1;
+         */
+         USHORT delay;
+         BYTE transparent_color_index;
+    } gce_data;
+#include "poppack.h"
+    HRESULT hr;
+    ULONG bytesread, i;
+    MetadataItem *result;
+
+    *items = NULL;
+    *count = 0;
+
+    hr = IStream_Read(stream, &gce_data, sizeof(gce_data), &bytesread);
+    if (FAILED(hr) || bytesread != sizeof(gce_data)) return S_OK;
+
+    result = HeapAlloc(GetProcessHeap(), 0, sizeof(MetadataItem) * 5);
+    if (!result) return E_OUTOFMEMORY;
+
+    for (i = 0; i < 5; i++)
+    {
+        PropVariantInit(&result[i].schema);
+        PropVariantInit(&result[i].id);
+        PropVariantInit(&result[i].value);
+    }
+
+    result[0].id.vt = VT_LPWSTR;
+    result[0].id.u.pwszVal = strdupAtoW("Disposal");
+    result[0].value.vt = VT_UI1;
+    result[0].value.u.bVal = (gce_data.packed >> 2) & 7;
+
+    result[1].id.vt = VT_LPWSTR;
+    result[1].id.u.pwszVal = strdupAtoW("UserInputFlag");
+    result[1].value.vt = VT_BOOL;
+    result[1].value.u.boolVal = (gce_data.packed >> 1) & 1;
+
+    result[2].id.vt = VT_LPWSTR;
+    result[2].id.u.pwszVal = strdupAtoW("TransparencyFlag");
+    result[2].value.vt = VT_BOOL;
+    result[2].value.u.boolVal = gce_data.packed & 1;
+
+    result[3].id.vt = VT_LPWSTR;
+    result[3].id.u.pwszVal = strdupAtoW("Delay");
+    result[3].value.vt = VT_UI2;
+    result[3].value.u.uiVal = gce_data.delay;
+
+    result[4].id.vt = VT_LPWSTR;
+    result[4].id.u.pwszVal = strdupAtoW("TransparentColorIndex");
+    result[4].value.vt = VT_UI1;
+    result[4].value.u.bVal = gce_data.transparent_color_index;
+
+    *items = result;
+    *count = 5;
+
+    return S_OK;
+}
+
+static const MetadataHandlerVtbl GCEReader_Vtbl = {
+    0,
+    &CLSID_WICGCEMetadataReader,
+    load_GCE_metadata
+};
+
+HRESULT GCEReader_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void **ppv)
+{
+    return MetadataReader_Create(&GCEReader_Vtbl, pUnkOuter, iid, ppv);
+}
+
 typedef struct {
     IWICBitmapDecoder IWICBitmapDecoder_iface;
     LONG ref;

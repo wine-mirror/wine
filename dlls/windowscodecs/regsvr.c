@@ -1547,6 +1547,21 @@ static const struct reader_containers imd_containers[] = {
     { NULL } /* list terminator */
 };
 
+static const BYTE gce_magic[] = { 0x21, 0xf9, 0x04 };
+
+static const struct metadata_pattern gce_metadata_pattern[] = {
+    { 0, 3, gce_magic, mask_all, 3 },
+    { 0 }
+};
+
+static const struct reader_containers gce_containers[] = {
+    {
+        &GUID_ContainerFormatGif,
+        gce_metadata_pattern
+    },
+    { NULL } /* list terminator */
+};
+
 static struct regsvr_metadatareader const metadatareader_list[] = {
     {   &CLSID_WICUnknownMetadataReader,
         "The Wine Project",
@@ -1597,6 +1612,16 @@ static struct regsvr_metadatareader const metadatareader_list[] = {
         &GUID_MetadataFormatIMD,
         0, 0, 0,
         imd_containers
+    },
+    {   &CLSID_WICGCEMetadataReader,
+        "The Wine Project",
+        "Graphic Control Extension Reader",
+        "1.0.0.0",
+        "1.0.0.0",
+        &GUID_VendorMicrosoft,
+        &GUID_MetadataFormatGCE,
+        0, 0, 0,
+        gce_containers
     },
     { NULL }			/* list terminator */
 };
