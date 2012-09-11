@@ -1287,7 +1287,6 @@ static void test_metadata_LSD(void)
 
     hr = CoCreateInstance(&CLSID_WICLSDMetadataReader, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IWICMetadataReader, (void **)&reader);
-todo_wine
     ok(hr == S_OK || broken(hr == E_NOINTERFACE || hr == REGDB_E_CLASSNOTREG) /* before Win7 */,
        "CoCreateInstance error %#x\n", hr);
 

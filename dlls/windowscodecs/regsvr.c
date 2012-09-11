@@ -1518,6 +1518,20 @@ static const struct reader_containers pngtext_containers[] = {
     { NULL } /* list terminator */
 };
 
+static const struct metadata_pattern lsd_metadata_patterns[] = {
+    { 0, 6, gif87a_magic, mask_all, 0 },
+    { 0, 6, gif89a_magic, mask_all, 0 },
+    { 0 }
+};
+
+static const struct reader_containers lsd_containers[] = {
+    {
+        &GUID_ContainerFormatGif,
+        lsd_metadata_patterns
+    },
+    { NULL } /* list terminator */
+};
+
 static struct regsvr_metadatareader const metadatareader_list[] = {
     {   &CLSID_WICUnknownMetadataReader,
         "The Wine Project",
@@ -1529,8 +1543,7 @@ static struct regsvr_metadatareader const metadatareader_list[] = {
         0, 0, 0,
         NULL
     },
-    {
-        &CLSID_WICIfdMetadataReader,
+    {   &CLSID_WICIfdMetadataReader,
         "The Wine Project",
         "Ifd Reader",
         "1.0.0.0",
@@ -1549,6 +1562,16 @@ static struct regsvr_metadatareader const metadatareader_list[] = {
         &GUID_MetadataFormatChunktEXt,
         0, 0, 0,
         pngtext_containers
+    },
+    {   &CLSID_WICLSDMetadataReader,
+        "The Wine Project",
+        "Logical Screen Descriptor Reader",
+        "1.0.0.0",
+        "1.0.0.0",
+        &GUID_VendorMicrosoft,
+        &GUID_MetadataFormatLSD,
+        0, 0, 0,
+        lsd_containers
     },
     { NULL }			/* list terminator */
 };

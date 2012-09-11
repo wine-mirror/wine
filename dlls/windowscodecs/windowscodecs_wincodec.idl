@@ -142,3 +142,10 @@ coclass WICIfdMetadataReader { interface IWICIfdMetadataReader; }
     uuid(4b59afcc-b8c3-408a-b670-89e5fab6fda7)
 ]
 coclass WICPngTextMetadataReader { interface IWICMetadataReader; }
+
+[
+    helpstring("WIC LSD Metadata Reader"),
+    threading(both),
+    uuid(41070793-59e4-479a-a1f7-954adc2ef5fc)
+]
+coclass WICLSDMetadataReader { interface IWICMetadataReader; }

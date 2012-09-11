@@ -21,11 +21,13 @@
 #include <stdarg.h>
 
 #define COBJMACROS
+#define NONAMELESSUNION
 
 #include "windef.h"
 #include "winbase.h"
 #include "objbase.h"
 #include "wincodec.h"
+#include "wincodecsdk.h"
 
 #include "ungif.h"
 
@@ -34,6 +36,115 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
+
+static LPWSTR strdupAtoW(const char *src)
+{
+    int len = MultiByteToWideChar(CP_ACP, 0, src, -1, NULL, 0);
+    LPWSTR dst = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    if (dst) MultiByteToWideChar(CP_ACP, 0, src, -1, dst, len);
+    return dst;
+}
+
+static HRESULT load_LSD_metadata(IStream *stream, const GUID *vendor, DWORD options,
+                                 MetadataItem **items, DWORD *count)
+{
+    struct logical_screen_descriptor
+    {
+        char signature[6];
+        USHORT width;
+        USHORT height;
+        BYTE packed;
+        /* global_color_table_flag : 1;
+         * color_resolution : 3;
+         * sort_flag : 1;
+         * global_color_table_size : 3;
+         */
+        BYTE background_color_index;
+        BYTE pixel_aspect_ratio;
+    } lsd_data;
+    HRESULT hr;
+    ULONG bytesread, i;
+    MetadataItem *result;
+
+    *items = NULL;
+    *count = 0;
+
+    hr = IStream_Read(stream, &lsd_data, sizeof(lsd_data), &bytesread);
+    if (FAILED(hr) || bytesread != sizeof(lsd_data)) return S_OK;
+
+    result = HeapAlloc(GetProcessHeap(), 0, sizeof(MetadataItem) * 9);
+    if (!result) return E_OUTOFMEMORY;
+
+    for (i = 0; i < 9; i++)
+    {
+        PropVariantInit(&result[i].schema);
+        PropVariantInit(&result[i].id);
+        PropVariantInit(&result[i].value);
+    }
+
+    result[0].id.vt = VT_LPWSTR;
+    result[0].id.u.pwszVal = strdupAtoW("Signature");
+    result[0].value.vt = VT_UI1|VT_VECTOR;
+    result[0].value.u.caub.cElems = 6;
+    result[0].value.u.caub.pElems = HeapAlloc(GetProcessHeap(), 0, sizeof(lsd_data.signature));
+    memcpy(result[0].value.u.caub.pElems, lsd_data.signature, sizeof(lsd_data.signature));
+
+    result[1].id.vt = VT_LPWSTR;
+    result[1].id.u.pwszVal = strdupAtoW("Width");
+    result[1].value.vt = VT_UI2;
+    result[1].value.u.uiVal = lsd_data.width;
+
+    result[2].id.vt = VT_LPWSTR;
+    result[2].id.u.pwszVal = strdupAtoW("Height");
+    result[2].value.vt = VT_UI2;
+    result[2].value.u.uiVal = lsd_data.height;
+
+    result[3].id.vt = VT_LPWSTR;
+    result[3].id.u.pwszVal = strdupAtoW("GlobalColorTableFlag");
+    result[3].value.vt = VT_BOOL;
+    result[3].value.u.boolVal = (lsd_data.packed >> 7) & 1;
+
+    result[4].id.vt = VT_LPWSTR;
+    result[4].id.u.pwszVal = strdupAtoW("ColorResolution");
+    result[4].value.vt = VT_UI1;
+    result[4].value.u.bVal = (lsd_data.packed >> 6) & 7;
+
+    result[5].id.vt = VT_LPWSTR;
+    result[5].id.u.pwszVal = strdupAtoW("SortFlag");
+    result[5].value.vt = VT_BOOL;
+    result[5].value.u.boolVal = (lsd_data.packed >> 3) & 1;
+
+    result[6].id.vt = VT_LPWSTR;
+    result[6].id.u.pwszVal = strdupAtoW("GlobalColorTableSize");
+    result[6].value.vt = VT_UI1;
+    result[6].value.u.bVal = lsd_data.packed & 7;
+
+    result[7].id.vt = VT_LPWSTR;
+    result[7].id.u.pwszVal = strdupAtoW("BackgroundColorIndex");
+    result[7].value.vt = VT_UI1;
+    result[7].value.u.bVal = lsd_data.background_color_index;
+
+    result[8].id.vt = VT_LPWSTR;
+    result[8].id.u.pwszVal = strdupAtoW("PixelAspectRatio");
+    result[8].value.vt = VT_UI1;
+    result[8].value.u.bVal = lsd_data.pixel_aspect_ratio;
+
+    *items = result;
+    *count = 9;
+
+    return S_OK;
+}
+
+static const MetadataHandlerVtbl LSDReader_Vtbl = {
+    0,
+    &CLSID_WICLSDMetadataReader,
+    load_LSD_metadata
+};
+
+HRESULT LSDReader_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void **ppv)
+{
+    return MetadataReader_Create(&LSDReader_Vtbl, pUnkOuter, iid, ppv);
+}
 
 typedef struct {
     IWICBitmapDecoder IWICBitmapDecoder_iface;
