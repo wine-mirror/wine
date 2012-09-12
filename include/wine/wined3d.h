@@ -2162,7 +2162,7 @@ HRESULT __cdecl wined3d_device_get_texture(const struct wined3d_device *device,
         UINT stage, struct wined3d_texture **texture);
 HRESULT __cdecl wined3d_device_get_texture_stage_state(const struct wined3d_device *device,
         UINT stage, enum wined3d_texture_stage_state state, DWORD *value);
-HRESULT __cdecl wined3d_device_get_transform(const struct wined3d_device *device,
+void __cdecl wined3d_device_get_transform(const struct wined3d_device *device,
         enum wined3d_transform_state state, struct wined3d_matrix *matrix);
 HRESULT __cdecl wined3d_device_get_vertex_declaration(const struct wined3d_device *device,
         struct wined3d_vertex_declaration **declaration);

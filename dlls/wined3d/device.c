@@ -1755,14 +1755,12 @@ void CDECL wined3d_device_set_transform(struct wined3d_device *device,
         device_invalidate_state(device, STATE_TRANSFORM(d3dts));
 }
 
-HRESULT CDECL wined3d_device_get_transform(const struct wined3d_device *device,
+void CDECL wined3d_device_get_transform(const struct wined3d_device *device,
         enum wined3d_transform_state state, struct wined3d_matrix *matrix)
 {
     TRACE("device %p, state %s, matrix %p.\n", device, debug_d3dtstype(state), matrix);
 
     *matrix = device->stateBlock->state.transforms[state];
-
-    return WINED3D_OK;
 }
 
 HRESULT CDECL wined3d_device_multiply_transform(struct wined3d_device *device,
