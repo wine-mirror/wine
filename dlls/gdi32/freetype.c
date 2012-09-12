@@ -1724,6 +1724,9 @@ static Face *create_face( FT_Face ft_face, FT_Long face_index, const char *file,
     face->FullName = get_face_name( ft_face, TT_NAME_ID_FULL_NAME, GetSystemDefaultLangID() );
     if (!face->FullName)
         face->FullName = get_face_name( ft_face, TT_NAME_ID_FULL_NAME, TT_MS_LANGID_ENGLISH_UNITED_STATES );
+    if (vertical)
+        face->FullName = prepend_at( face->FullName );
+
     if (file)
     {
         face->file = strdupA( file );

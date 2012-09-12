@@ -4087,11 +4087,7 @@ static void test_fullname2_helper(const char *Family)
         trace("Checking font %s:\nFamilyName: %s; FaceName: %s; StyleName: %s\n", Family, FamilyName, FaceName, StyleName);
 
         get_vertical = ( FamilyName[0] == '@' );
-        if (get_vertical)
-        {
-            todo_wine ok(get_vertical == want_vertical, "Vertical flags don't match: %s %s\n", Family, FamilyName);
-            continue;
-        }
+        ok(get_vertical == want_vertical, "Vertical flags don't match: %s %s\n", Family, FamilyName);
 
         lstrcpyA(lf.lfFaceName, FaceName);
         hfont = CreateFontIndirectA(&lf);
