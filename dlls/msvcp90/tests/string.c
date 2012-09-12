@@ -78,6 +78,7 @@ static int (__thiscall *p_basic_string_char_compare_substr_cstr_len)(basic_strin
 static size_t (__thiscall *p_basic_string_char_find_cstr_substr)(basic_string_char*, const char*, size_t, size_t);
 static size_t (__thiscall *p_basic_string_char_rfind_cstr_substr)(basic_string_char*, const char*, size_t, size_t);
 static basic_string_char* (__thiscall *p_basic_string_char_replace_cstr)(basic_string_char*, size_t, size_t, const char*);
+static size_t (__thiscall *p_basic_string_char_find_last_not_of_cstr_substr)(const basic_string_char*, const char*, size_t, size_t);
 
 static size_t *p_basic_string_char_npos;
 
@@ -229,6 +230,8 @@ static BOOL init(void)
                 "?rfind@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KPEBD_K1@Z");
         SET(p_basic_string_char_replace_cstr,
                 "?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@_K0PEBD@Z");
+        SET(p_basic_string_char_find_last_not_of_cstr_substr,
+                "?find_last_not_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KPEBD_K1@Z");
         SET(p_basic_string_char_npos,
                 "?npos@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@2_KB");
 
@@ -295,6 +298,8 @@ static BOOL init(void)
                 "?rfind@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIPBDII@Z");
         SET(p_basic_string_char_replace_cstr,
                 "?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@IIPBD@Z");
+        SET(p_basic_string_char_find_last_not_of_cstr_substr,
+                "?find_last_not_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIPBDII@Z");
         SET(p_basic_string_char_npos,
                 "?npos@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@2IB");
 
@@ -708,6 +713,59 @@ static void test_basic_string_wchar_swap(void) {
     call_func1(p_basic_string_wchar_dtor, &str2);
 }
 
+static void test_basic_string_char_find_last_not_of(void) {
+    struct find_last_not_of_test {
+        const char *str;
+        const char *find;
+        size_t off;
+        size_t len;
+        size_t ret;
+    };
+
+    int i;
+    size_t ret;
+    basic_string_char str;
+    struct find_last_not_of_test tests[] = {
+        /* simple cases where find is not in string */
+        { "AAAAA", "B",    0, 1, 0 },
+        { "AAAAA", "B",    5, 1, 4 },
+        { "AAAAA", "BCDE", 0, 4, 0 },
+        { "AAAAA", "BCDE", 5, 4, 4 },
+
+        /* simple cases where find is in string */
+        { "AAAAA", "A",     5, 1, -1 },
+        { "AAAAB", "A",     5, 1,  4 },
+        { "AAAAB", "A",     4, 1,  4 },
+        { "AAAAB", "A",     3, 1, -1 },
+        { "ABCDE", "ABCDE", 0, 5, -1 },
+        { "ABCDE", "ABCDE", 5, 5, -1 },
+        { "ABCDE", "AB DE", 5, 5,  2 },
+
+        /* cases where find appears in multiple spots */
+        { "ABABA", "A", 0, 1, -1 },
+        { "ABABA", "A", 1, 1,  1 },
+        { "ABABA", "A", 2, 1,  1 },
+        { "ABABA", "A", 3, 1,  3 },
+
+        /* using empty strings */
+        { "",      "",  0, 0, -1 },
+        { "",      "A", 0, 1, -1 },
+        { "ABCDE", "",  0, 0, 0 },
+        { "ABCDE", "",  3, 0, 3 },
+        { "ABCDE", "",  5, 0, 4 },
+    };
+
+    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+        call_func2(p_basic_string_char_ctor_cstr, &str, tests[i].str);
+
+        ret = (size_t)call_func4(p_basic_string_char_find_last_not_of_cstr_substr,
+                                 &str, tests[i].find, tests[i].off, tests[i].len);
+        ok(ret == tests[i].ret, "ret = %li tests[%i].ret = %li\n", (long)ret, i, (long)tests[i].ret);
+
+        call_func1(p_basic_string_char_dtor, &str);
+    }
+}
+
 START_TEST(string)
 {
     if(!init())
@@ -723,6 +781,7 @@ START_TEST(string)
     test_basic_string_char_replace();
     test_basic_string_wchar();
     test_basic_string_wchar_swap();
+    test_basic_string_char_find_last_not_of();
 
     ok(!invalid_parameter, "invalid_parameter_handler was invoked too many times\n");
 }

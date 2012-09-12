@@ -1837,7 +1837,7 @@ MSVCP_size_t __thiscall MSVCP_basic_string_char_find_last_not_of_cstr_substr(
 
     TRACE("%p %p %lu %lu\n", this, find, off, len);
 
-    if(len>0 && this->size>0) {
+    if(this->size>0) {
         if(off >= this->size)
             off = this->size-1;
 
@@ -3861,7 +3861,7 @@ MSVCP_size_t __thiscall MSVCP_basic_string_wchar_find_last_not_of_cstr_substr(
 
     TRACE("%p %p %lu %lu\n", this, find, off, len);
 
-    if(len>0 && this->size>0) {
+    if(this->size>0) {
         if(off >= this->size)
             off = this->size-1;
 
