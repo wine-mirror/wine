@@ -6579,6 +6579,7 @@ static BOOL get_outline_text_metrics(GdiFont *font)
         FIXME("failed to read face_nameW for font %s!\n", wine_dbgstr_w(font->name));
         face_nameW = strdupW(font->name);
     }
+    if (font->name[0] == '@') face_nameW = prepend_at( face_nameW );
     lenface = (strlenW(face_nameW) + 1) * sizeof(WCHAR);
 
     full_nameW = get_face_name( ft_face, TT_NAME_ID_UNIQUE_ID, GetSystemDefaultLangID() );
