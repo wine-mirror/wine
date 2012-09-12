@@ -801,9 +801,9 @@ HRESULT WINAPI DMOGetTypes(REFCLSID clsidDMO,
   HRESULT ret = S_OK;
   WCHAR szguid[64];
 
-  TRACE ("(%s,%u,%p,%p,%u,%p,%p),stub!\n", debugstr_guid(clsidDMO),
-        ulInputTypesRequested, pulInputTypesSupplied, pInputTypes,
-        ulOutputTypesRequested, pulOutputTypesSupplied, pOutputTypes);
+  TRACE ("(%s,%u,%p,%p,%u,%p,%p)\n", debugstr_guid(clsidDMO), ulInputTypesRequested,
+        pulInputTypesSupplied, pInputTypes, ulOutputTypesRequested, pulOutputTypesSupplied,
+        pOutputTypes);
 
   if (ERROR_SUCCESS != RegOpenKeyExW(HKEY_CLASSES_ROOT, szDMORootKey, 0,
                                      KEY_READ, &root))
