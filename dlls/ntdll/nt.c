@@ -2325,20 +2325,27 @@ NTSTATUS WINAPI NtPowerInformation(
 			*ExecutionState = ES_USER_PRESENT;
 			return STATUS_SUCCESS;
 		}
-                case ProcessorInformation: {
-			PPROCESSOR_POWER_INFORMATION cpu_power = lpOutputBuffer;
+		case ProcessorInformation: {
+			PROCESSOR_POWER_INFORMATION* cpu_power = lpOutputBuffer;
+			int i;
 
 			WARN("semi-stub: ProcessorInformation\n");
-			if (nOutputBufferSize < sizeof(PROCESSOR_POWER_INFORMATION))
+
+			if ((lpOutputBuffer == NULL) || (nOutputBufferSize == 0))
+				return STATUS_INVALID_PARAMETER;
+			if ((nOutputBufferSize / sizeof(PROCESSOR_POWER_INFORMATION)) < NtCurrentTeb()->Peb->NumberOfProcessors)
 				return STATUS_BUFFER_TOO_SMALL;
-                        cpu_power->Number = NtCurrentTeb()->Peb->NumberOfProcessors;
-                        cpu_power->MaxMhz = cpuHz / 1000000;
-                        cpu_power->CurrentMhz = cpuHz / 1000000;
-                        cpu_power->MhzLimit = cpuHz / 1000000;
-                        cpu_power->MaxIdleState = 0; /* FIXME */
-                        cpu_power->CurrentIdleState = 0; /* FIXME */
-                        return STATUS_SUCCESS;
-                }
+
+			for(i = 0; i < NtCurrentTeb()->Peb->NumberOfProcessors; i++) {
+				cpu_power[i].Number = i;
+				cpu_power[i].MaxMhz = cpuHz / 1000000;
+				cpu_power[i].CurrentMhz = cpuHz / 1000000;
+				cpu_power[i].MhzLimit = cpuHz / 1000000;
+				cpu_power[i].MaxIdleState = 0; /* FIXME */
+				cpu_power[i].CurrentIdleState = 0; /* FIXME */
+			}
+			return STATUS_SUCCESS;
+		}
 		default:
 			/* FIXME: Needed by .NET Framework */
 			WARN("Unimplemented NtPowerInformation action: %d\n", InformationLevel);
