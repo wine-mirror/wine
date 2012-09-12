@@ -48,6 +48,7 @@ static LPWSTR strdupAtoW(const char *src)
 static HRESULT load_LSD_metadata(IStream *stream, const GUID *vendor, DWORD options,
                                  MetadataItem **items, DWORD *count)
 {
+#include "pshpack1.h"
     struct logical_screen_descriptor
     {
         char signature[6];
@@ -62,6 +63,7 @@ static HRESULT load_LSD_metadata(IStream *stream, const GUID *vendor, DWORD opti
         BYTE background_color_index;
         BYTE pixel_aspect_ratio;
     } lsd_data;
+#include "poppack.h"
     HRESULT hr;
     ULONG bytesread, i;
     MetadataItem *result;
@@ -85,7 +87,7 @@ static HRESULT load_LSD_metadata(IStream *stream, const GUID *vendor, DWORD opti
     result[0].id.vt = VT_LPWSTR;
     result[0].id.u.pwszVal = strdupAtoW("Signature");
     result[0].value.vt = VT_UI1|VT_VECTOR;
-    result[0].value.u.caub.cElems = 6;
+    result[0].value.u.caub.cElems = sizeof(lsd_data.signature);
     result[0].value.u.caub.pElems = HeapAlloc(GetProcessHeap(), 0, sizeof(lsd_data.signature));
     memcpy(result[0].value.u.caub.pElems, lsd_data.signature, sizeof(lsd_data.signature));
 
@@ -107,7 +109,7 @@ static HRESULT load_LSD_metadata(IStream *stream, const GUID *vendor, DWORD opti
     result[4].id.vt = VT_LPWSTR;
     result[4].id.u.pwszVal = strdupAtoW("ColorResolution");
     result[4].value.vt = VT_UI1;
-    result[4].value.u.bVal = (lsd_data.packed >> 6) & 7;
+    result[4].value.u.bVal = (lsd_data.packed >> 4) & 7;
 
     result[5].id.vt = VT_LPWSTR;
     result[5].id.u.pwszVal = strdupAtoW("SortFlag");
@@ -149,6 +151,7 @@ HRESULT LSDReader_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void **ppv)
 static HRESULT load_IMD_metadata(IStream *stream, const GUID *vendor, DWORD options,
                                  MetadataItem **items, DWORD *count)
 {
+#include "pshpack1.h"
     struct image_descriptor
     {
         USHORT left;
@@ -163,6 +166,7 @@ static HRESULT load_IMD_metadata(IStream *stream, const GUID *vendor, DWORD opti
          * local_color_table_size : 3;
          */
     } imd_data;
+#include "poppack.h"
     HRESULT hr;
     ULONG bytesread, i;
     MetadataItem *result;
