@@ -1046,7 +1046,6 @@ static void test_metadata_gif(void)
 
     /* global metadata block */
     hr = IWICBitmapDecoder_QueryInterface(decoder, &IID_IWICMetadataBlockReader, (void **)&blockreader);
-todo_wine
     ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* before Win7 */, "QueryInterface error %#x\n", hr);
 
     if (SUCCEEDED(hr))
@@ -1149,7 +1148,6 @@ todo_wine
 
     /* global metadata block */
     hr = IWICBitmapDecoder_QueryInterface(decoder, &IID_IWICMetadataBlockReader, (void **)&blockreader);
-todo_wine
     ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* before Win7 */, "QueryInterface error %#x\n", hr);
 
     if (SUCCEEDED(hr))
