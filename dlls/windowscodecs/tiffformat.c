@@ -1147,8 +1147,12 @@ static ULONG WINAPI TiffFrameDecode_Block_Release(IWICMetadataBlockReader *iface
 static HRESULT WINAPI TiffFrameDecode_Block_GetContainerFormat(IWICMetadataBlockReader *iface,
     GUID *guid)
 {
-    FIXME("(%p,%p): stub\n", iface, guid);
-    return E_NOTIMPL;
+    TRACE("(%p,%p)\n", iface, guid);
+
+    if (!guid) return E_INVALIDARG;
+
+    *guid = GUID_ContainerFormatTiff;
+    return S_OK;
 }
 
 static HRESULT WINAPI TiffFrameDecode_Block_GetCount(IWICMetadataBlockReader *iface,
