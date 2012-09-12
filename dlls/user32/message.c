@@ -52,6 +52,7 @@ WINE_DECLARE_DEBUG_CHANNEL(relay);
 WINE_DECLARE_DEBUG_CHANNEL(key);
 
 #define WINE_MOUSE_HANDLE       ((HANDLE)1)
+#define WINE_KEYBOARD_HANDLE    ((HANDLE)2)
 
 #define WM_NCMOUSEFIRST WM_NCMOUSEMOVE
 #define WM_NCMOUSELAST  (WM_NCMOUSEFIRST+(WM_MOUSELAST-WM_MOUSEFIRST))
@@ -2337,6 +2338,40 @@ static BOOL process_rawinput_message( MSG *msg, const struct hardware_msg_data *
         rawinput->data.mouse.lLastX             = msg_data->rawinput.mouse.x;
         rawinput->data.mouse.lLastY             = msg_data->rawinput.mouse.y;
         rawinput->data.mouse.ulExtraInformation = msg_data->info;
+    }
+    else if (msg_data->rawinput.type == RIM_TYPEKEYBOARD)
+    {
+        rawinput->header.dwSize  = FIELD_OFFSET(RAWINPUT, data) + sizeof(RAWKEYBOARD);
+        rawinput->header.hDevice = WINE_KEYBOARD_HANDLE;
+        rawinput->header.wParam  = 0;
+
+        rawinput->data.keyboard.MakeCode = msg_data->rawinput.kbd.scan;
+        rawinput->data.keyboard.Flags    = msg_data->flags & KEYEVENTF_KEYUP ? RI_KEY_BREAK : RI_KEY_MAKE;
+        if (msg_data->flags & KEYEVENTF_EXTENDEDKEY) rawinput->data.keyboard.Flags |= RI_KEY_E0;
+        rawinput->data.keyboard.Reserved = 0;
+
+        switch (msg_data->rawinput.kbd.vkey)
+        {
+        case VK_LSHIFT:
+        case VK_RSHIFT:
+            rawinput->data.keyboard.VKey   = VK_SHIFT;
+            rawinput->data.keyboard.Flags &= ~RI_KEY_E0;
+            break;
+        case VK_LCONTROL:
+        case VK_RCONTROL:
+            rawinput->data.keyboard.VKey = VK_CONTROL;
+            break;
+        case VK_LMENU:
+        case VK_RMENU:
+            rawinput->data.keyboard.VKey = VK_MENU;
+            break;
+        default:
+            rawinput->data.keyboard.VKey = msg_data->rawinput.kbd.vkey;
+            break;
+        }
+
+        rawinput->data.keyboard.Message          = msg_data->rawinput.kbd.message;
+        rawinput->data.keyboard.ExtraInformation = msg_data->info;
     }
     else
     {

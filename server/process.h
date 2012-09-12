@@ -89,6 +89,7 @@ struct process
     unsigned int         trace_data;      /* opaque data used by the process tracing mechanism */
     struct list          rawinput_devices;/* list of registered rawinput devices */
     const struct rawinput_device *rawinput_mouse; /* rawinput mouse device, if any */
+    const struct rawinput_device *rawinput_kbd;   /* rawinput keyboard device, if any */
 };
 
 struct process_snapshot

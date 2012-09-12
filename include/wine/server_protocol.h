@@ -285,6 +285,13 @@ struct hardware_msg_data
         struct
         {
             int            type;
+            unsigned int   message;
+            unsigned short vkey;
+            unsigned short scan;
+        } kbd;
+        struct
+        {
+            int            type;
             int            x;
             int            y;
             unsigned int   data;
@@ -5683,6 +5690,6 @@ union generic_reply
     struct set_suspend_context_reply set_suspend_context_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 434
+#define SERVER_PROTOCOL_VERSION 435
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

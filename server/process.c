@@ -334,6 +334,7 @@ struct thread *create_process( int fd, struct thread *parent_thread, int inherit
     process->token           = NULL;
     process->trace_data      = 0;
     process->rawinput_mouse  = NULL;
+    process->rawinput_kbd    = NULL;
     list_init( &process->thread_list );
     list_init( &process->locks );
     list_init( &process->classes );

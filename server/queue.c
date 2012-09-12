@@ -1679,37 +1679,17 @@ static int queue_mouse_message( struct desktop *desktop, user_handle_t win, cons
 static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, const hw_input_t *input,
                                    unsigned int hook_flags, struct msg_queue *sender )
 {
+    const struct rawinput_device *device;
     struct hardware_msg_data *msg_data;
     struct message *msg;
     unsigned char vkey = input->kbd.vkey;
+    unsigned int message_code, time;
     int wait;
 
-    if (!(msg = mem_alloc( sizeof(*msg) ))) return 0;
-    if (!(msg_data = mem_alloc( sizeof(*msg_data) )))
-    {
-        free( msg );
-        return 0;
-    }
-    memset( msg_data, 0, sizeof(*msg_data) );
+    if (!(time = input->kbd.time)) time = get_tick_count();
 
-    msg->type      = MSG_HARDWARE;
-    msg->win       = get_user_full_handle( win );
-    msg->lparam    = (input->kbd.scan << 16) | 1u; /* repeat count */
-    msg->time      = input->kbd.time;
-    msg->result    = NULL;
-    msg->data      = msg_data;
-    msg->data_size = sizeof(*msg_data);
-    msg_data->info = input->kbd.info;
-    if (!msg->time) msg->time = get_tick_count();
-    if (hook_flags & SEND_HWMSG_INJECTED) msg_data->flags = LLKHF_INJECTED;
-
-    if (input->kbd.flags & KEYEVENTF_UNICODE)
+    if (!(input->kbd.flags & KEYEVENTF_UNICODE))
     {
-        msg->wparam = VK_PACKET;
-    }
-    else
-    {
-        unsigned int flags = 0;
         switch (vkey)
         {
         case VK_MENU:
@@ -1728,6 +1708,105 @@ static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, c
             vkey = (input->kbd.flags & KEYEVENTF_EXTENDEDKEY) ? VK_RSHIFT : VK_LSHIFT;
             break;
         }
+    }
+
+    message_code = (input->kbd.flags & KEYEVENTF_KEYUP) ? WM_KEYUP : WM_KEYDOWN;
+    switch (vkey)
+    {
+    case VK_LMENU:
+    case VK_RMENU:
+        if (input->kbd.flags & KEYEVENTF_KEYUP)
+        {
+            /* send WM_SYSKEYUP if Alt still pressed and no other key in between */
+            /* we use 0x02 as a flag to track if some other SYSKEYUP was sent already */
+            if ((desktop->keystate[VK_MENU] & 0x82) != 0x82) break;
+            message_code = WM_SYSKEYUP;
+            desktop->keystate[VK_MENU] &= ~0x02;
+        }
+        else
+        {
+            /* send WM_SYSKEYDOWN for Alt except with Ctrl */
+            if (desktop->keystate[VK_CONTROL] & 0x80) break;
+            message_code = WM_SYSKEYDOWN;
+            desktop->keystate[VK_MENU] |= 0x02;
+        }
+        break;
+
+    case VK_LCONTROL:
+    case VK_RCONTROL:
+        /* send WM_SYSKEYUP on release if Alt still pressed */
+        if (!(input->kbd.flags & KEYEVENTF_KEYUP)) break;
+        if (!(desktop->keystate[VK_MENU] & 0x80)) break;
+        message_code = WM_SYSKEYUP;
+        desktop->keystate[VK_MENU] &= ~0x02;
+        break;
+
+    default:
+        /* send WM_SYSKEY for Alt-anykey and for F10 */
+        if (desktop->keystate[VK_CONTROL] & 0x80) break;
+        if (!(desktop->keystate[VK_MENU] & 0x80)) break;
+        /* fall through */
+    case VK_F10:
+        message_code = (input->kbd.flags & KEYEVENTF_KEYUP) ? WM_SYSKEYUP : WM_SYSKEYDOWN;
+        desktop->keystate[VK_MENU] &= ~0x02;
+        break;
+    }
+
+    if ((device = current->process->rawinput_kbd))
+    {
+        if (!(msg = mem_alloc( sizeof(*msg) ))) return 0;
+        if (!(msg_data = mem_alloc( sizeof(*msg_data) )))
+        {
+            free( msg );
+            return 0;
+        }
+
+        msg->type      = MSG_HARDWARE;
+        msg->win       = device->target;
+        msg->msg       = WM_INPUT;
+        msg->wparam    = RIM_INPUT;
+        msg->lparam    = 0;
+        msg->time      = time;
+        msg->data      = msg_data;
+        msg->data_size = sizeof(*msg_data);
+        msg->result    = NULL;
+
+        msg_data->info                 = input->kbd.info;
+        msg_data->flags                = input->kbd.flags;
+        msg_data->rawinput.type        = RIM_TYPEKEYBOARD;
+        msg_data->rawinput.kbd.message = message_code;
+        msg_data->rawinput.kbd.vkey    = vkey;
+        msg_data->rawinput.kbd.scan    = input->kbd.scan;
+
+        queue_hardware_message( desktop, msg, 0 );
+    }
+
+    if (!(msg = mem_alloc( sizeof(*msg) ))) return 0;
+    if (!(msg_data = mem_alloc( sizeof(*msg_data) )))
+    {
+        free( msg );
+        return 0;
+    }
+    memset( msg_data, 0, sizeof(*msg_data) );
+
+    msg->type      = MSG_HARDWARE;
+    msg->win       = get_user_full_handle( win );
+    msg->msg       = message_code;
+    msg->lparam    = (input->kbd.scan << 16) | 1u; /* repeat count */
+    msg->time      = time;
+    msg->result    = NULL;
+    msg->data      = msg_data;
+    msg->data_size = sizeof(*msg_data);
+    msg_data->info = input->kbd.info;
+    if (hook_flags & SEND_HWMSG_INJECTED) msg_data->flags = LLKHF_INJECTED;
+
+    if (input->kbd.flags & KEYEVENTF_UNICODE)
+    {
+        msg->wparam = VK_PACKET;
+    }
+    else
+    {
+        unsigned int flags = 0;
         if (input->kbd.flags & KEYEVENTF_EXTENDEDKEY) flags |= KF_EXTENDED;
         /* FIXME: set KF_DLGMODE and KF_MENUMODE when needed */
         if (input->kbd.flags & KEYEVENTF_KEYUP) flags |= KF_REPEAT | KF_UP;
@@ -1738,48 +1817,6 @@ static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, c
         msg_data->flags |= (flags & (KF_EXTENDED | KF_ALTDOWN | KF_UP)) >> 8;
     }
 
-    msg->msg = (input->kbd.flags & KEYEVENTF_KEYUP) ? WM_KEYUP : WM_KEYDOWN;
-
-    switch (vkey)
-    {
-    case VK_LMENU:
-    case VK_RMENU:
-        if (input->kbd.flags & KEYEVENTF_KEYUP)
-        {
-            /* send WM_SYSKEYUP if Alt still pressed and no other key in between */
-            /* we use 0x02 as a flag to track if some other SYSKEYUP was sent already */
-            if ((desktop->keystate[VK_MENU] & 0x82) != 0x82) break;
-            msg->msg = WM_SYSKEYUP;
-            desktop->keystate[VK_MENU] &= ~0x02;
-        }
-        else
-        {
-            /* send WM_SYSKEYDOWN for Alt except with Ctrl */
-            if (desktop->keystate[VK_CONTROL] & 0x80) break;
-            msg->msg = WM_SYSKEYDOWN;
-            desktop->keystate[VK_MENU] |= 0x02;
-        }
-        break;
-
-    case VK_LCONTROL:
-    case VK_RCONTROL:
-        /* send WM_SYSKEYUP on release if Alt still pressed */
-        if (!(input->kbd.flags & KEYEVENTF_KEYUP)) break;
-        if (!(desktop->keystate[VK_MENU] & 0x80)) break;
-        msg->msg = WM_SYSKEYUP;
-        desktop->keystate[VK_MENU] &= ~0x02;
-        break;
-
-    default:
-        /* send WM_SYSKEY for Alt-anykey and for F10 */
-        if (desktop->keystate[VK_CONTROL] & 0x80) break;
-        if (!(desktop->keystate[VK_MENU] & 0x80)) break;
-        /* fall through */
-    case VK_F10:
-        msg->msg = (input->kbd.flags & KEYEVENTF_KEYUP) ? WM_SYSKEYUP : WM_SYSKEYDOWN;
-        desktop->keystate[VK_MENU] &= ~0x02;
-        break;
-    }
     if (!(wait = send_hook_ll_message( desktop, msg, input, sender )))
         queue_hardware_message( desktop, msg, 1 );
 
@@ -3022,4 +3059,6 @@ DECL_HANDLER(update_rawinput_devices)
 
     e = find_rawinput_device( 1, 2 );
     current->process->rawinput_mouse = e ? &e->device : NULL;
+    e = find_rawinput_device( 1, 6 );
+    current->process->rawinput_kbd   = e ? &e->device : NULL;
 }
