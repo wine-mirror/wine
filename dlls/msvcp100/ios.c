@@ -7225,6 +7225,32 @@ basic_istream_char* __thiscall basic_istream_char_ignore(basic_istream_char *thi
     return this;
 }
 
+/* ?ws@std@@YAAAV?$basic_istream@DU?$char_traits@D@std@@@1@AAV21@@Z */
+/* ?ws@std@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@1@AEAV21@@Z */
+basic_istream_char* __cdecl ws_basic_istream_char(basic_istream_char *istream)
+{
+    basic_ios_char *base = basic_istream_char_get_basic_ios(istream);
+    int ch = '\n';
+
+    TRACE("(%p)\n", istream);
+
+    if(basic_istream_char_sentry_create(istream, TRUE)) {
+        basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
+        const ctype_char *ctype = ctype_char_use_facet(strbuf->loc);
+
+        for(ch = basic_streambuf_char_sgetc(strbuf); ctype_char_is_ch(ctype, _SPACE, ch);
+                ch = basic_streambuf_char_snextc(strbuf)) {
+            if(ch == EOF)
+                break;
+        }
+    }
+    basic_istream_char_sentry_destroy(istream);
+
+    if(ch == EOF)
+        basic_ios_char_setstate(base, IOSTATE_eofbit);
+    return istream;
+}
+
 /* ?peek@?$basic_istream@DU?$char_traits@D@std@@@std@@QAEHXZ */
 /* ?peek@?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAHXZ */
 DEFINE_THISCALL_WRAPPER(basic_istream_char_peek, 4)
@@ -8322,6 +8348,34 @@ basic_istream_wchar* __thiscall basic_istream_wchar_ignore(basic_istream_wchar *
     if(ch == WEOF)
         basic_ios_wchar_setstate(base, IOSTATE_eofbit);
     return this;
+}
+
+/* ?ws@std@@YAAAV?$basic_istream@_WU?$char_traits@_W@std@@@1@AAV21@@Z */
+/* ?ws@std@@YAAEAV?$basic_istream@_WU?$char_traits@_W@std@@@1@AEAV21@@Z */
+/* ?ws@std@@YAAAV?$basic_istream@GU?$char_traits@G@std@@@1@AAV21@@Z */
+/* ?ws@std@@YAAEAV?$basic_istream@GU?$char_traits@G@std@@@1@AEAV21@@Z */
+basic_istream_wchar* __cdecl ws_basic_istream_wchar(basic_istream_wchar *istream)
+{
+    basic_ios_wchar *base = basic_istream_wchar_get_basic_ios(istream);
+    unsigned short ch = '\n';
+
+    TRACE("(%p)\n", istream);
+
+    if(basic_istream_wchar_sentry_create(istream, TRUE)) {
+        basic_streambuf_wchar *strbuf = basic_ios_wchar_rdbuf_get(base);
+        const ctype_wchar *ctype = ctype_wchar_use_facet(strbuf->loc);
+
+        for(ch = basic_streambuf_wchar_sgetc(strbuf); ctype_wchar_is_ch(ctype, _SPACE, ch);
+                ch = basic_streambuf_wchar_snextc(strbuf)) {
+            if(ch == WEOF)
+                break;
+        }
+    }
+    basic_istream_wchar_sentry_destroy(istream);
+
+    if(ch == WEOF)
+        basic_ios_wchar_setstate(base, IOSTATE_eofbit);
+    return istream;
 }
 
 /* ?peek@?$basic_istream@_WU?$char_traits@_W@std@@@std@@QAEGXZ */
