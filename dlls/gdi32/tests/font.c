@@ -4046,6 +4046,16 @@ static void test_fullname(void)
     DeleteDC(hdc);
 }
 
+static WCHAR *prepend_at(WCHAR *family)
+{
+    if (!family)
+        return NULL;
+
+    memmove(family + 1, family, (lstrlenW(family) + 1) * sizeof(WCHAR));
+    family[0] = '@';
+    return family;
+}
+
 static void test_fullname2_helper(const char *Family)
 {
     char *FamilyName, *FaceName, *StyleName, *otmStr;
@@ -4117,10 +4127,13 @@ static void test_fullname2_helper(const char *Family)
             ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_FONT_FAMILY, bufW, buf_size, TT_MS_LANGID_ENGLISH_UNITED_STATES);
         }
         ok(ret, "FAMILY (family name) could not be read\n");
+        if (want_vertical) bufW = prepend_at(bufW);
         WideCharToMultiByte(CP_ACP, 0, bufW, -1, bufA, buf_size, NULL, FALSE);
         ok(!lstrcmpA(FamilyName, bufA), "font family names don't match: returned %s, expect %s\n", FamilyName, bufA);
         otmStr = (LPSTR)otm + (UINT_PTR)otm->otmpFamilyName;
-        ok(!lstrcmpA(FamilyName, otmStr), "FamilyName %s doesn't match otmpFamilyName %s\n", FamilyName, otmStr);
+        if (want_vertical)
+            todo_wine ok(!lstrcmpA(FamilyName, otmStr), "FamilyName %s doesn't match otmpFamilyName %s\n", FamilyName, otmStr);
+        else ok(!lstrcmpA(FamilyName, otmStr), "FamilyName %s doesn't match otmpFamilyName %s\n", FamilyName, otmStr);
 
         bufW[0] = 0;
         bufA[0] = 0;
@@ -4131,8 +4144,11 @@ static void test_fullname2_helper(const char *Family)
             ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_FULL_NAME, bufW, buf_size, TT_MS_LANGID_ENGLISH_UNITED_STATES);
         }
         ok(ret, "FULL_NAME (face name) could not be read\n");
+        if (want_vertical) bufW = prepend_at(bufW);
         WideCharToMultiByte(CP_ACP, 0, bufW, -1, bufA, buf_size, NULL, FALSE);
-        ok(!lstrcmpA(FaceName, bufA), "font face names don't match: returned %s, expect %s\n", FaceName, bufA);
+        if (want_vertical)
+            todo_wine ok(!lstrcmpA(FaceName, bufA), "font face names don't match: returned %s, expect %s\n", FaceName, bufA);
+        else ok(!lstrcmpA(FaceName, bufA), "font face names don't match: returned %s, expect %s\n", FaceName, bufA);
         otmStr = (LPSTR)otm + (UINT_PTR)otm->otmpFaceName;
         ok(!lstrcmpA(FaceName, otmStr), "FaceName %s doesn't match otmpFaceName %s\n", FaceName, otmStr);
 
@@ -4196,6 +4212,21 @@ static void test_fullname2(void)
     test_fullname2_helper("Batang");
     test_fullname2_helper("UnBatang");
     test_fullname2_helper("UnDotum");
+    test_fullname2_helper("@SimSun");
+    test_fullname2_helper("@NSimSun");
+    test_fullname2_helper("@MingLiu");
+    test_fullname2_helper("@PMingLiu");
+    test_fullname2_helper("@WenQuanYi Micro Hei");
+    test_fullname2_helper("@MS UI Gothic");
+    test_fullname2_helper("@Ume UI Gothic");
+    test_fullname2_helper("@MS Gothic");
+    test_fullname2_helper("@Ume Gothic");
+    test_fullname2_helper("@MS PGothic");
+    test_fullname2_helper("@Ume P Gothic");
+    test_fullname2_helper("@Gulim");
+    test_fullname2_helper("@Batang");
+    test_fullname2_helper("@UnBatang");
+    test_fullname2_helper("@UnDotum");
 
 }
 
