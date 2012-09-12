@@ -396,8 +396,6 @@ static void sync_window_opacity( Display *display, Window win,
 
     if (flags & LWA_ALPHA) opacity = (0xffffffff / 0xff) * alpha;
 
-    if (flags & LWA_COLORKEY) FIXME("LWA_COLORKEY not supported\n");
-
     if (opacity == 0xffffffff)
         XDeleteProperty( display, win, x11drv_atom(_NET_WM_WINDOW_OPACITY) );
     else
@@ -1447,7 +1445,10 @@ void CDECL X11DRV_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style )
         set_wm_hints( thread_display(), data );
 
     if (offset == GWL_EXSTYLE && (changed & WS_EX_LAYERED)) /* changing WS_EX_LAYERED resets attributes */
+    {
         sync_window_opacity( thread_display(), data->whole_window, 0, 0, 0 );
+        if (data->surface) set_surface_color_key( data->surface, CLR_INVALID );
+    }
 }
 
 
@@ -1971,6 +1972,9 @@ void CDECL X11DRV_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flag
     struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
     RECT surface_rect;
     XVisualInfo vis;
+    DWORD flags;
+    COLORREF key;
+    BOOL layered = GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYERED;
 
     if (!data && !(data = X11DRV_create_win_data( hwnd, window_rect, client_rect ))) return;
 
@@ -1991,7 +1995,7 @@ void CDECL X11DRV_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flag
     if (swp_flags & SWP_HIDEWINDOW) return;
     if (data->whole_window == root_window) return;
     if (has_gl_drawable( hwnd )) return;
-    if (!client_side_graphics) return;
+    if (!client_side_graphics && !layered) return;
 
     surface_rect = get_surface_rect( visible_rect );
     if (data->surface)
@@ -2013,7 +2017,10 @@ void CDECL X11DRV_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flag
     vis.red_mask   = visual->red_mask;
     vis.green_mask = visual->green_mask;
     vis.blue_mask  = visual->blue_mask;
-    *surface = create_surface( data->whole_window, &vis, &surface_rect );
+    if (!layered || !GetLayeredWindowAttributes( hwnd, &key, NULL, &flags ) || !(flags & LWA_COLORKEY))
+        key = CLR_INVALID;
+
+    *surface = create_surface( data->whole_window, &vis, &surface_rect, key );
 }
 
 
@@ -2239,11 +2246,18 @@ void CDECL X11DRV_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alph
     {
         if (data->whole_window)
             sync_window_opacity( thread_display(), data->whole_window, key, alpha, flags );
+        if (data->surface)
+            set_surface_color_key( data->surface, (flags & LWA_COLORKEY) ? key : CLR_INVALID );
     }
     else
     {
         Window win = X11DRV_get_whole_window( hwnd );
-        if (win) sync_window_opacity( gdi_display, win, key, alpha, flags );
+        if (win)
+        {
+            sync_window_opacity( gdi_display, win, key, alpha, flags );
+            if (flags & LWA_COLORKEY)
+                FIXME( "LWA_COLORKEY not supported on foreign thread window %p\n", hwnd );
+        }
     }
 }
 
