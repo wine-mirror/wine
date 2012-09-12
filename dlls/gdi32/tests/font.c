@@ -4058,6 +4058,8 @@ static void test_fullname2_helper(const char *Family)
     int i;
     DWORD otm_size, ret, buf_size;
     OUTLINETEXTMETRICA *otm;
+    BOOL want_vertical, get_vertical;
+    want_vertical = ( Family[0] == '@' );
 
     hdc = CreateCompatibleDC(0);
     ok(hdc != NULL, "CreateCompatibleDC failed\n");
@@ -4083,6 +4085,13 @@ static void test_fullname2_helper(const char *Family)
         StyleName = (char *)efnd.elf[i].elfStyle;
 
         trace("Checking font %s:\nFamilyName: %s; FaceName: %s; StyleName: %s\n", Family, FamilyName, FaceName, StyleName);
+
+        get_vertical = ( FamilyName[0] == '@' );
+        if (get_vertical)
+        {
+            todo_wine ok(get_vertical == want_vertical, "Vertical flags don't match: %s %s\n", Family, FamilyName);
+            continue;
+        }
 
         lstrcpyA(lf.lfFaceName, FaceName);
         hfont = CreateFontIndirectA(&lf);
@@ -4170,9 +4179,28 @@ static void test_fullname2_helper(const char *Family)
 
 static void test_fullname2(void)
 {
+    test_fullname2_helper("Arial");
+    test_fullname2_helper("DejaVu Sans");
     test_fullname2_helper("Lucida Sans");
+    test_fullname2_helper("Tahoma");
     test_fullname2_helper("Webdings");
     test_fullname2_helper("Wingdings");
+    test_fullname2_helper("SimSun");
+    test_fullname2_helper("NSimSun");
+    test_fullname2_helper("MingLiu");
+    test_fullname2_helper("PMingLiu");
+    test_fullname2_helper("WenQuanYi Micro Hei");
+    test_fullname2_helper("MS UI Gothic");
+    test_fullname2_helper("Ume UI Gothic");
+    test_fullname2_helper("MS Gothic");
+    test_fullname2_helper("Ume Gothic");
+    test_fullname2_helper("MS PGothic");
+    test_fullname2_helper("Ume P Gothic");
+    test_fullname2_helper("Gulim");
+    test_fullname2_helper("Batang");
+    test_fullname2_helper("UnBatang");
+    test_fullname2_helper("UnDotum");
+
 }
 
 static BOOL write_ttf_file(const char *fontname, char *tmp_name)
