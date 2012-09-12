@@ -774,13 +774,13 @@ static void test_vbscript_initializing(void)
 
 static BOOL check_vbscript(void)
 {
-    IActiveScript *vbscript;
+    IActiveScriptParseProcedure2 *vbscript;
     HRESULT hres;
 
     hres = CoCreateInstance(&CLSID_VBScript, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
-            &IID_IActiveScript, (void**)&vbscript);
+            &IID_IActiveScriptParseProcedure2, (void**)&vbscript);
     if(SUCCEEDED(hres))
-        IActiveScript_Release(vbscript);
+        IActiveScriptParseProcedure2_Release(vbscript);
 
     return hres == S_OK;
 }
@@ -797,7 +797,7 @@ START_TEST(vbscript)
         test_vbscript_initializing();
         test_scriptdisp();
     }else {
-        win_skip("VBScript engine not available\n");
+        win_skip("VBScript engine not available or too old\n");
     }
 
     CoUninitialize();

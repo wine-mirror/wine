@@ -1740,13 +1740,13 @@ static void run_tests(void)
 
 static BOOL check_vbscript(void)
 {
-    IActiveScript *vbscript;
+    IActiveScriptParseProcedure2 *vbscript;
     HRESULT hres;
 
     hres = CoCreateInstance(&CLSID_VBScript, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
-            &IID_IActiveScript, (void**)&vbscript);
+            &IID_IActiveScriptParseProcedure2, (void**)&vbscript);
     if(SUCCEEDED(hres))
-        IActiveScript_Release(vbscript);
+        IActiveScriptParseProcedure2_Release(vbscript);
 
     return hres == S_OK;
 }
