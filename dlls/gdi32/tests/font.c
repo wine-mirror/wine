@@ -4147,7 +4147,12 @@ static void test_fullname2_helper(const char *Family)
 
         bufW[0] = 0;
         bufA[0] = 0;
-        ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_UNIQUE_ID, bufW, buf_size, TT_MS_LANGID_ENGLISH_UNITED_STATES);
+        ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_UNIQUE_ID, bufW, buf_size, GetSystemDefaultLangID());
+        if (!ret)
+        {
+            trace("no localized UNIQUE_ID found.\n");
+            ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_UNIQUE_ID, bufW, buf_size, TT_MS_LANGID_ENGLISH_UNITED_STATES);
+        }
         ok(ret, "UNIQUE_ID (full name) could not be read\n");
         WideCharToMultiByte(CP_ACP, 0, bufW, -1, bufA, buf_size, NULL, FALSE);
         otmStr = (LPSTR)otm + (UINT_PTR)otm->otmpFullName;

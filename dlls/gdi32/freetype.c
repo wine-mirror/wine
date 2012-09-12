@@ -6578,7 +6578,9 @@ static BOOL get_outline_text_metrics(GdiFont *font)
     }
     lenface = (strlenW(face_nameW) + 1) * sizeof(WCHAR);
 
-    full_nameW = get_face_name( ft_face, TT_NAME_ID_UNIQUE_ID, TT_MS_LANGID_ENGLISH_UNITED_STATES );
+    full_nameW = get_face_name( ft_face, TT_NAME_ID_UNIQUE_ID, GetSystemDefaultLangID() );
+    if (!full_nameW)
+        full_nameW = get_face_name( ft_face, TT_NAME_ID_UNIQUE_ID, TT_MS_LANGID_ENGLISH_UNITED_STATES );
     if (!full_nameW)
     {
         WCHAR fake_nameW[] = {'f','a','k','e',' ','n','a','m','e', 0};
