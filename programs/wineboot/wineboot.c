@@ -189,19 +189,27 @@ static void create_hardware_registry_keys(void)
     unsigned int i;
     HKEY hkey, system_key, cpu_key, fpu_key;
     SYSTEM_CPU_INFORMATION sci;
-    PROCESSOR_POWER_INFORMATION power_info;
+    PROCESSOR_POWER_INFORMATION* power_info;
+    ULONG sizeof_power_info = sizeof(PROCESSOR_POWER_INFORMATION) * NtCurrentTeb()->Peb->NumberOfProcessors;
     WCHAR idW[60];
 
     NtQuerySystemInformation( SystemCpuInformation, &sci, sizeof(sci), NULL );
-    if (NtPowerInformation(ProcessorInformation, NULL, 0, &power_info, sizeof(power_info)))
-        power_info.MaxMhz = 0;
+
+    power_info = HeapAlloc( GetProcessHeap(), 0, sizeof_power_info );
+    if (power_info == NULL)
+        return;
+    if (NtPowerInformation( ProcessorInformation, NULL, 0, power_info, sizeof_power_info ))
+        memset( power_info, 0, sizeof_power_info );
 
     /*TODO: report 64bit processors properly*/
     sprintfW( idW, IntelCpuDescrW, sci.Level, HIBYTE(sci.Revision), LOBYTE(sci.Revision) );
 
     if (RegCreateKeyExW( HKEY_LOCAL_MACHINE, SystemW, 0, NULL, REG_OPTION_VOLATILE,
                          KEY_ALL_ACCESS, NULL, &system_key, NULL ))
+    {
+        HeapFree( GetProcessHeap(), 0, power_info );
         return;
+    }
 
     set_reg_value( system_key, IdentifierW, SysidW );
 
@@ -225,7 +233,7 @@ static void create_hardware_registry_keys(void)
             /*TODO; report amd's properly*/
             set_reg_value( hkey, ProcessorNameStringW, IntelCpuStringW );
             set_reg_value( hkey, VendorIdentifierW, VenidIntelW );
-            RegSetValueExW( hkey, mhzKeyW, 0, REG_DWORD, (BYTE *)&power_info.MaxMhz, sizeof(DWORD) );
+            RegSetValueExW( hkey, mhzKeyW, 0, REG_DWORD, (BYTE *)&power_info[i].MaxMhz, sizeof(DWORD) );
             RegCloseKey( hkey );
         }
         if (!RegCreateKeyExW( fpu_key, numW, 0, NULL, REG_OPTION_VOLATILE,
@@ -238,6 +246,7 @@ static void create_hardware_registry_keys(void)
     RegCloseKey( fpu_key );
     RegCloseKey( cpu_key );
     RegCloseKey( system_key );
+    HeapFree( GetProcessHeap(), 0, power_info );
 }
 
 
