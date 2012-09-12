@@ -595,6 +595,8 @@ exit:
 static HRESULT WINAPI TiffDecoder_GetContainerFormat(IWICBitmapDecoder *iface,
     GUID *pguidContainerFormat)
 {
+    if (!pguidContainerFormat) return E_INVALIDARG;
+
     memcpy(pguidContainerFormat, &GUID_ContainerFormatTiff, sizeof(GUID));
     return S_OK;
 }
