@@ -1716,7 +1716,7 @@ HRESULT CDECL wined3d_device_get_stream_source_freq(const struct wined3d_device 
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_set_transform(struct wined3d_device *device,
+void CDECL wined3d_device_set_transform(struct wined3d_device *device,
         enum wined3d_transform_state d3dts, const struct wined3d_matrix *matrix)
 {
     TRACE("device %p, state %s, matrix %p.\n",
@@ -1732,7 +1732,7 @@ HRESULT CDECL wined3d_device_set_transform(struct wined3d_device *device,
         TRACE("Recording... not performing anything.\n");
         device->updateStateBlock->changed.transform[d3dts >> 5] |= 1 << (d3dts & 0x1f);
         device->updateStateBlock->state.transforms[d3dts] = *matrix;
-        return WINED3D_OK;
+        return;
     }
 
     /* If the new matrix is the same as the current one,
@@ -1744,7 +1744,7 @@ HRESULT CDECL wined3d_device_set_transform(struct wined3d_device *device,
     if (!memcmp(&device->stateBlock->state.transforms[d3dts].u.m[0][0], matrix, sizeof(*matrix)))
     {
         TRACE("The application is setting the same matrix over again.\n");
-        return WINED3D_OK;
+        return;
     }
 
     device->stateBlock->state.transforms[d3dts] = *matrix;
@@ -1753,9 +1753,6 @@ HRESULT CDECL wined3d_device_set_transform(struct wined3d_device *device,
 
     if (d3dts < WINED3D_TS_WORLD_MATRIX(device->adapter->gl_info.limits.blends))
         device_invalidate_state(device, STATE_TRANSFORM(d3dts));
-
-    return WINED3D_OK;
-
 }
 
 HRESULT CDECL wined3d_device_get_transform(const struct wined3d_device *device,
@@ -1790,7 +1787,9 @@ HRESULT CDECL wined3d_device_multiply_transform(struct wined3d_device *device,
     multiply_matrix(&temp, mat, matrix);
 
     /* Apply change via set transform - will reapply to eg. lights this way. */
-    return wined3d_device_set_transform(device, state, &temp);
+    wined3d_device_set_transform(device, state, &temp);
+
+    return WINED3D_OK;
 }
 
 /* Note lights are real special cases. Although the device caps state only

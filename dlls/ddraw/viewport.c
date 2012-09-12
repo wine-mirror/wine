@@ -41,13 +41,11 @@ static void update_clip_space(struct d3d_device *device,
         offset->x, offset->y, offset->z, 1.0f,
     };
     D3DMATRIX projection;
-    HRESULT hr;
 
     multiply_matrix(&projection, &clip_space, &device->legacy_projection);
-    hr = wined3d_device_set_transform(device->wined3d_device,
+    wined3d_device_set_transform(device->wined3d_device,
             WINED3D_TS_PROJECTION, (struct wined3d_matrix *)&projection);
-    if (SUCCEEDED(hr))
-        device->legacy_clipspace = clip_space;
+    device->legacy_clipspace = clip_space;
 }
 
 /*****************************************************************************
