@@ -155,9 +155,12 @@ struct d3d10_shader_resource_view
 {
     ID3D10ShaderResourceView ID3D10ShaderResourceView_iface;
     LONG refcount;
+
+    ID3D10Resource *resource;
 };
 
-HRESULT d3d10_shader_resource_view_init(struct d3d10_shader_resource_view *view) DECLSPEC_HIDDEN;
+HRESULT d3d10_shader_resource_view_init(struct d3d10_shader_resource_view *view,
+        ID3D10Resource *resource) DECLSPEC_HIDDEN;
 
 /* ID3D10InputLayout */
 struct d3d10_input_layout

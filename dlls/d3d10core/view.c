@@ -526,6 +526,7 @@ static ULONG STDMETHODCALLTYPE d3d10_shader_resource_view_Release(ID3D10ShaderRe
 
     if (!refcount)
     {
+        ID3D10Resource_Release(This->resource);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -571,7 +572,12 @@ static HRESULT STDMETHODCALLTYPE d3d10_shader_resource_view_SetPrivateDataInterf
 static void STDMETHODCALLTYPE d3d10_shader_resource_view_GetResource(ID3D10ShaderResourceView *iface,
         ID3D10Resource **resource)
 {
-    FIXME("iface %p, resource %p stub!\n", iface, resource);
+    struct d3d10_shader_resource_view *view = impl_from_ID3D10ShaderResourceView(iface);
+
+    TRACE("iface %p, resource %p.\n", iface, resource);
+
+    *resource = view->resource;
+    ID3D10Resource_AddRef(*resource);
 }
 
 /* ID3D10ShaderResourceView methods */
@@ -599,10 +605,14 @@ static const struct ID3D10ShaderResourceViewVtbl d3d10_shader_resource_view_vtbl
     d3d10_shader_resource_view_GetDesc,
 };
 
-HRESULT d3d10_shader_resource_view_init(struct d3d10_shader_resource_view *view)
+HRESULT d3d10_shader_resource_view_init(struct d3d10_shader_resource_view *view,
+        ID3D10Resource *resource)
 {
     view->ID3D10ShaderResourceView_iface.lpVtbl = &d3d10_shader_resource_view_vtbl;
     view->refcount = 1;
+
+    view->resource = resource;
+    ID3D10Resource_AddRef(resource);
 
     return S_OK;
 }
