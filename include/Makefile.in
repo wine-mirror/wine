@@ -59,6 +59,7 @@ PUBLIC_IDL_H_SRCS = \
 	mscoree.idl \
 	msctf.idl \
 	msdadc.idl \
+	msdasc.idl \
 	mshtmhst.idl \
 	mshtml.idl \
 	msident.idl \

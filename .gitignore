@@ -199,6 +199,7 @@ include/mmstream.h
 include/mscoree.h
 include/msctf.h
 include/msdadc.h
+include/msdasc.h
 include/mshtmhst.h
 include/mshtml.h
 include/msident.h
