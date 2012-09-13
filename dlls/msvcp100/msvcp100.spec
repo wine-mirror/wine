@@ -2389,7 +2389,7 @@
 @ cdecl -arch=win64 ?readsome@?$basic_istream@_WU?$char_traits@_W@std@@@std@@QEAA_JPEA_W_J@Z(ptr ptr int64) basic_istream_wchar_readsome
 @ thiscall -arch=win32 ?register_callback@ios_base@std@@QAEXP6AXW4event@12@AAV12@H@ZH@Z(ptr ptr long) ios_base_register_callback
 @ cdecl -arch=win64 ?register_callback@ios_base@std@@QEAAXP6AXW4event@12@AEAV12@H@ZH@Z(ptr ptr long) ios_base_register_callback
-@ stub ?resetiosflags@std@@YA?AU?$_Smanip@H@1@H@Z
+@ cdecl ?resetiosflags@std@@YA?AU?$_Smanip@H@1@H@Z(ptr long) resetiosflags
 @ cdecl ?round_error@?$numeric_limits@C@std@@SACXZ() std_numeric_limits_signed_char_round_error
 @ cdecl ?round_error@?$numeric_limits@D@std@@SADXZ() std_numeric_limits_char_round_error
 @ cdecl ?round_error@?$numeric_limits@E@std@@SAEXZ() std_numeric_limits_unsigned_char_round_error
@@ -2470,7 +2470,7 @@
 @ stub -arch=win64 ?set_rdbuf@?$basic_ios@GU?$char_traits@G@std@@@std@@QEAAXPEAV?$basic_streambuf@GU?$char_traits@G@std@@@2@@Z
 @ stub -arch=win32 ?set_rdbuf@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QAEXPAV?$basic_streambuf@_WU?$char_traits@_W@std@@@2@@Z
 @ stub -arch=win64 ?set_rdbuf@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QEAAXPEAV?$basic_streambuf@_WU?$char_traits@_W@std@@@2@@Z
-@ stub ?setbase@std@@YA?AU?$_Smanip@H@1@H@Z
+@ cdecl ?setbase@std@@YA?AU?$_Smanip@H@1@H@Z(ptr long) setbase
 @ thiscall -arch=win32 ?setbuf@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MAEPAV12@PAD_J@Z(ptr ptr int64) basic_streambuf_char_setbuf
 @ cdecl -arch=win64 ?setbuf@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MEAAPEAV12@PEAD_J@Z(ptr ptr int64) basic_streambuf_char_setbuf
 @ thiscall -arch=win32 ?setbuf@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MAEPAV12@PAG_J@Z(ptr ptr int64) basic_streambuf_wchar_setbuf
@@ -2487,7 +2487,7 @@
 @ cdecl -arch=win64 ?setg@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IEAAXPEAG00@Z(ptr ptr ptr ptr) basic_streambuf_wchar_setg
 @ thiscall -arch=win32 ?setg@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IAEXPA_W00@Z(ptr ptr ptr ptr) basic_streambuf_wchar_setg
 @ cdecl -arch=win64 ?setg@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IEAAXPEA_W00@Z(ptr ptr ptr ptr) basic_streambuf_wchar_setg
-@ stub ?setiosflags@std@@YA?AU?$_Smanip@H@1@H@Z
+@ cdecl ?setiosflags@std@@YA?AU?$_Smanip@H@1@H@Z(ptr long) setiosflags
 @ thiscall -arch=win32 ?setp@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAEXPAD00@Z(ptr ptr ptr ptr) basic_streambuf_char_setp_next
 @ cdecl -arch=win64 ?setp@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IEAAXPEAD00@Z(ptr ptr ptr ptr) basic_streambuf_char_setp_next
 @ thiscall -arch=win32 ?setp@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAEXPAD0@Z(ptr ptr ptr) basic_streambuf_char_setp
