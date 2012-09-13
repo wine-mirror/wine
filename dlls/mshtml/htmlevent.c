@@ -364,6 +364,11 @@ static HRESULT WINAPI HTMLEventObj_get_srcElement(IHTMLEventObj *iface, IHTMLEle
 
     TRACE("(%p)->(%p)\n", This, p);
 
+    if(!This->target) {
+        *p = NULL;
+        return S_OK;
+    }
+
     return IHTMLDOMNode_QueryInterface(&This->target->IHTMLDOMNode_iface, &IID_IHTMLElement,
             (void**)p);
 }
@@ -580,6 +585,11 @@ static HRESULT WINAPI HTMLEventObj_get_type(IHTMLEventObj *iface, BSTR *p)
     HTMLEventObj *This = impl_from_IHTMLEventObj(iface);
 
     TRACE("(%p)->(%p)\n", This, p);
+
+    if(!This->type) {
+        *p = NULL;
+        return S_OK;
+    }
 
     *p = SysAllocString(This->type->name);
     return *p ? S_OK : E_OUTOFMEMORY;
@@ -800,12 +810,12 @@ static HTMLEventObj *create_event(HTMLDOMNode *target, eventid_t eid, nsIDOMEven
 
     ret->IHTMLEventObj_iface.lpVtbl = &HTMLEventObjVtbl;
     ret->ref = 1;
-    ret->type = event_info+eid;
+    ret->type = eid != EVENTID_LAST ? event_info+eid : NULL;
 
     ret->nsevent = nsevent;
     if(nsevent) {
         nsIDOMEvent_AddRef(nsevent);
-    }else if(event_types[event_info[eid].type]) {
+    }else if(eid != EVENTID_LAST && event_types[event_info[eid].type]) {
         nsAString type_str;
         nsresult nsres;
 
@@ -820,11 +830,24 @@ static HTMLEventObj *create_event(HTMLDOMNode *target, eventid_t eid, nsIDOMEven
     }
 
     ret->target = target;
-    IHTMLDOMNode_AddRef(&target->IHTMLDOMNode_iface);
+    if(target)
+        IHTMLDOMNode_AddRef(&target->IHTMLDOMNode_iface);
 
     init_dispex(&ret->dispex, (IUnknown*)&ret->IHTMLEventObj_iface, &HTMLEventObj_dispex);
 
     return ret;
+}
+
+HRESULT create_event_obj(IHTMLEventObj **ret)
+{
+    HTMLEventObj *event;
+
+    event = create_event(NULL, EVENTID_LAST, NULL);
+    if(!event)
+        return E_OUTOFMEMORY;
+
+    *ret = &event->IHTMLEventObj_iface;
+    return S_OK;
 }
 
 static HRESULT call_disp_func(IDispatch *disp, DISPPARAMS *dp, VARIANT *retv)

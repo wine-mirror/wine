@@ -762,8 +762,15 @@ static HRESULT WINAPI HTMLDocument4_createEventObject(IHTMLDocument4 *iface,
         VARIANT *pvarEventObject, IHTMLEventObj **ppEventObj)
 {
     HTMLDocument *This = impl_from_IHTMLDocument4(iface);
-    FIXME("(%p)->(%p %p)\n", This, pvarEventObject, ppEventObj);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_variant(pvarEventObject), ppEventObj);
+
+    if(pvarEventObject && V_VT(pvarEventObject) != VT_ERROR && V_VT(pvarEventObject) != VT_EMPTY) {
+        FIXME("unsupported pvarEventObject %s\n", debugstr_variant(pvarEventObject));
+        return E_NOTIMPL;
+    }
+
+    return create_event_obj(ppEventObj);
 }
 
 static HRESULT WINAPI HTMLDocument4_fireEvent(IHTMLDocument4 *iface, BSTR bstrEventName,
