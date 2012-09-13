@@ -753,6 +753,131 @@ static void test_PropVariantCompare(void)
     SysFreeString(str_b.u.bstrVal);
 }
 
+static inline const char* debugstr_longlong(ULONGLONG ll)
+{
+    static char string[17];
+    if (sizeof(ll) > sizeof(unsigned long) && ll >> 32)
+        sprintf(string, "%lx%08lx", (unsigned long)(ll >> 32), (unsigned long)ll);
+    else
+        sprintf(string, "%lx", (unsigned long)ll);
+    return string;
+}
+
+static void test_intconversions(void)
+{
+    PROPVARIANT propvar;
+    SHORT sval;
+    USHORT usval;
+    LONG lval;
+    ULONG ulval;
+    LONGLONG llval;
+    ULONGLONG ullval;
+    HRESULT hr;
+
+    PropVariantClear(&propvar);
+
+    propvar.vt = VT_I8;
+    propvar.u.hVal.QuadPart = (LONGLONG)1 << 63;
+
+    hr = PropVariantToInt64(&propvar, &llval);
+    ok(hr == S_OK, "hr=%x\n", hr);
+    ok(llval == (LONGLONG)1 << 63, "got wrong value %s\n", debugstr_longlong(llval));
+
+    hr = PropVariantToUInt64(&propvar, &ullval);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW), "hr=%x\n", hr);
+
+    hr = PropVariantToInt32(&propvar, &lval);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW), "hr=%x\n", hr);
+
+    hr = PropVariantToUInt32(&propvar, &ulval);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW), "hr=%x\n", hr);
+
+    hr = PropVariantToInt16(&propvar, &sval);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW), "hr=%x\n", hr);
+
+    hr = PropVariantToUInt16(&propvar, &usval);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW), "hr=%x\n", hr);
+
+    propvar.vt = VT_UI8;
+    propvar.u.uhVal.QuadPart = 5;
+
+    hr = PropVariantToInt64(&propvar, &llval);
+    ok(hr == S_OK, "hr=%x\n", hr);
+    ok(llval == 5, "got wrong value %s\n", debugstr_longlong(llval));
+
+    hr = PropVariantToUInt64(&propvar, &ullval);
+    ok(hr == S_OK, "hr=%x\n", hr);
+    ok(ullval == 5, "got wrong value %s\n", debugstr_longlong(ullval));
+
+    hr = PropVariantToInt32(&propvar, &lval);
+    ok(hr == S_OK, "hr=%x\n", hr);
+    ok(lval == 5, "got wrong value %d\n", lval);
+
+    hr = PropVariantToUInt32(&propvar, &ulval);
+    ok(hr == S_OK, "hr=%x\n", hr);
+    ok(ulval == 5, "got wrong value %d\n", ulval);
+
+    hr = PropVariantToInt16(&propvar, &sval);
+    ok(hr == S_OK, "hr=%x\n", hr);
+    ok(sval == 5, "got wrong value %d\n", sval);
+
+    hr = PropVariantToUInt16(&propvar, &usval);
+    ok(hr == S_OK, "hr=%x\n", hr);
+    ok(usval == 5, "got wrong value %d\n", usval);
+
+    propvar.vt = VT_I8;
+    propvar.u.hVal.QuadPart = -5;
+
+    hr = PropVariantToInt64(&propvar, &llval);
+    ok(hr == S_OK, "hr=%x\n", hr);
+    ok(llval == -5, "got wrong value %s\n", debugstr_longlong(llval));
+
+    hr = PropVariantToUInt64(&propvar, &ullval);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW), "hr=%x\n", hr);
+
+    hr = PropVariantToInt32(&propvar, &lval);
+    ok(hr == S_OK, "hr=%x\n", hr);
+    ok(lval == -5, "got wrong value %d\n", lval);
+
+    hr = PropVariantToUInt32(&propvar, &ulval);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW), "hr=%x\n", hr);
+
+    hr = PropVariantToInt16(&propvar, &sval);
+    ok(hr == S_OK, "hr=%x\n", hr);
+    ok(sval == -5, "got wrong value %d\n", sval);
+
+    hr = PropVariantToUInt16(&propvar, &usval);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW), "hr=%x\n", hr);
+
+    propvar.vt = VT_UI4;
+    propvar.u.ulVal = 6;
+
+    hr = PropVariantToInt64(&propvar, &llval);
+    ok(hr == S_OK, "hr=%x\n", hr);
+    ok(llval == 6, "got wrong value %s\n", debugstr_longlong(llval));
+
+    propvar.vt = VT_I4;
+    propvar.u.lVal = -6;
+
+    hr = PropVariantToInt64(&propvar, &llval);
+    ok(hr == S_OK, "hr=%x\n", hr);
+    ok(llval == -6, "got wrong value %s\n", debugstr_longlong(llval));
+
+    propvar.vt = VT_UI2;
+    propvar.u.uiVal = 7;
+
+    hr = PropVariantToInt64(&propvar, &llval);
+    ok(hr == S_OK, "hr=%x\n", hr);
+    ok(llval == 7, "got wrong value %s\n", debugstr_longlong(llval));
+
+    propvar.vt = VT_I2;
+    propvar.u.iVal = -7;
+
+    hr = PropVariantToInt64(&propvar, &llval);
+    ok(hr == S_OK, "hr=%x\n", hr);
+    ok(llval == -7, "got wrong value %s\n", debugstr_longlong(llval));
+}
+
 START_TEST(propsys)
 {
     test_PSStringFromPropertyKey();
@@ -762,4 +887,5 @@ START_TEST(propsys)
     test_InitPropVariantFromBuffer();
     test_PropVariantToGUID();
     test_PropVariantCompare();
+    test_intconversions();
 }

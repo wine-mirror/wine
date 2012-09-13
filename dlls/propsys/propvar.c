@@ -68,6 +68,147 @@ static HRESULT PROPVAR_ConvertFILETIME(PROPVARIANT *ppropvarDest,
     return E_FAIL;
 }
 
+static HRESULT PROPVAR_ConvertNumber(REFPROPVARIANT pv, int dest_bits,
+    int dest_signed, LONGLONG *res)
+{
+    int src_signed;
+
+    switch (pv->vt)
+    {
+    case VT_I1:
+        src_signed = 1;
+        *res = pv->u.cVal;
+        break;
+    case VT_UI1:
+        src_signed = 0;
+        *res = pv->u.bVal;
+        break;
+    case VT_I2:
+        src_signed = 1;
+        *res = pv->u.iVal;
+        break;
+    case VT_UI2:
+        src_signed = 0;
+        *res = pv->u.uiVal;
+        break;
+    case VT_I4:
+        src_signed = 1;
+        *res = pv->u.lVal;
+        break;
+    case VT_UI4:
+        src_signed = 0;
+        *res = pv->u.ulVal;
+        break;
+    case VT_I8:
+        src_signed = 1;
+        *res = pv->u.hVal.QuadPart;
+        break;
+    case VT_UI8:
+        src_signed = 0;
+        *res = pv->u.uhVal.QuadPart;
+        break;
+    case VT_EMPTY:
+        src_signed = 0;
+        *res = 0;
+        break;
+    default:
+        FIXME("unhandled vt %d\n", pv->vt);
+        return E_NOTIMPL;
+    }
+
+    if (*res < 0 && src_signed != dest_signed)
+        return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+
+    if (dest_bits < 64)
+    {
+        if (dest_signed)
+        {
+            if (*res >= ((LONGLONG)1 << (dest_bits-1)) ||
+                *res < ((LONGLONG)-1 << (dest_bits-1)))
+                return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+        }
+        else
+        {
+            if ((ULONGLONG)(*res) >= ((ULONGLONG)1 << dest_bits))
+                return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+        }
+    }
+
+    return S_OK;
+}
+
+HRESULT WINAPI PropVariantToInt16(REFPROPVARIANT propvarIn, SHORT *ret)
+{
+    LONGLONG res;
+    HRESULT hr;
+
+    TRACE("%p,%p\n", propvarIn, ret);
+
+    hr = PROPVAR_ConvertNumber(propvarIn, 16, 1, &res);
+    if (SUCCEEDED(hr)) *ret = (SHORT)res;
+    return hr;
+}
+
+HRESULT WINAPI PropVariantToInt32(REFPROPVARIANT propvarIn, LONG *ret)
+{
+    LONGLONG res;
+    HRESULT hr;
+
+    TRACE("%p,%p\n", propvarIn, ret);
+
+    hr = PROPVAR_ConvertNumber(propvarIn, 32, 1, &res);
+    if (SUCCEEDED(hr)) *ret = (LONG)res;
+    return hr;
+}
+
+HRESULT WINAPI PropVariantToInt64(REFPROPVARIANT propvarIn, LONGLONG *ret)
+{
+    LONGLONG res;
+    HRESULT hr;
+
+    TRACE("%p,%p\n", propvarIn, ret);
+
+    hr = PROPVAR_ConvertNumber(propvarIn, 64, 1, &res);
+    if (SUCCEEDED(hr)) *ret = (LONGLONG)res;
+    return hr;
+}
+
+HRESULT WINAPI PropVariantToUInt16(REFPROPVARIANT propvarIn, USHORT *ret)
+{
+    LONGLONG res;
+    HRESULT hr;
+
+    TRACE("%p,%p\n", propvarIn, ret);
+
+    hr = PROPVAR_ConvertNumber(propvarIn, 16, 0, &res);
+    if (SUCCEEDED(hr)) *ret = (USHORT)res;
+    return hr;
+}
+
+HRESULT WINAPI PropVariantToUInt32(REFPROPVARIANT propvarIn, ULONG *ret)
+{
+    LONGLONG res;
+    HRESULT hr;
+
+    TRACE("%p,%p\n", propvarIn, ret);
+
+    hr = PROPVAR_ConvertNumber(propvarIn, 32, 0, &res);
+    if (SUCCEEDED(hr)) *ret = (ULONG)res;
+    return hr;
+}
+
+HRESULT WINAPI PropVariantToUInt64(REFPROPVARIANT propvarIn, ULONGLONG *ret)
+{
+    LONGLONG res;
+    HRESULT hr;
+
+    TRACE("%p,%p\n", propvarIn, ret);
+
+    hr = PROPVAR_ConvertNumber(propvarIn, 64, 0, &res);
+    if (SUCCEEDED(hr)) *ret = (ULONGLONG)res;
+    return hr;
+}
+
 /******************************************************************
  *  PropVariantChangeType   (PROPSYS.@)
  */
