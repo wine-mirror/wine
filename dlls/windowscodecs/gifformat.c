@@ -646,14 +646,30 @@ static HRESULT WINAPI GifFrameDecode_Block_GetContainerFormat(IWICMetadataBlockR
     return S_OK;
 }
 
+static const void *get_GCE_data(GifFrameDecode *This)
+{
+    int i;
+
+    for (i = 0; i < This->frame->ExtensionBlockCount; i++)
+    {
+        if (This->frame->ExtensionBlocks[i].Function == GRAPHICS_EXT_FUNC_CODE &&
+            This->frame->ExtensionBlocks[i].ByteCount == 4)
+            return This->frame->ExtensionBlocks[i].Bytes;
+    }
+    return NULL;
+}
+
 static HRESULT WINAPI GifFrameDecode_Block_GetCount(IWICMetadataBlockReader *iface,
     UINT *count)
 {
+    GifFrameDecode *This = frame_from_IWICMetadataBlockReader(iface);
+
     TRACE("%p,%p\n", iface, count);
 
     if (!count) return E_INVALIDARG;
 
     *count = 1;
+    if (get_GCE_data(This)) *count += 1;
     return S_OK;
 }
 
@@ -705,16 +721,64 @@ static HRESULT create_IMD_metadata_reader(GifFrameDecode *This, IWICMetadataRead
     return S_OK;
 }
 
+static HRESULT create_GCE_metadata_reader(const void *GCE_data, IWICMetadataReader **reader)
+{
+    HRESULT hr;
+    IWICMetadataReader *metadata_reader;
+    IWICPersistStream *persist;
+    IStream *stream;
+
+    /* FIXME: Use IWICComponentFactory_CreateMetadataReader once it's implemented */
+
+    hr = CoCreateInstance(&CLSID_WICGCEMetadataReader, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IWICMetadataReader, (void **)&metadata_reader);
+    if (FAILED(hr)) return hr;
+
+    hr = IWICMetadataReader_QueryInterface(metadata_reader, &IID_IWICPersistStream, (void **)&persist);
+    if (FAILED(hr))
+    {
+        IWICMetadataReader_Release(metadata_reader);
+        return hr;
+    }
+
+    stream = create_stream(GCE_data, 4);
+    IWICPersistStream_LoadEx(persist, stream, NULL, WICPersistOptionsDefault);
+    IStream_Release(stream);
+
+    IWICPersistStream_Release(persist);
+
+    *reader = metadata_reader;
+    return S_OK;
+}
+
 static HRESULT WINAPI GifFrameDecode_Block_GetReaderByIndex(IWICMetadataBlockReader *iface,
     UINT index, IWICMetadataReader **reader)
 {
     GifFrameDecode *This = frame_from_IWICMetadataBlockReader(iface);
+    UINT block_count = 1;
+    const void *GCE_data;
 
     TRACE("(%p,%u,%p)\n", iface, index, reader);
 
-    if (!reader || index != 0) return E_INVALIDARG;
+    GCE_data = get_GCE_data(This);
+    if (GCE_data) block_count++;
+    /* FIXME: add support for Application Extension metadata block
+    APE_data = get_APE_data(This);
+    if (APE_data) block_count++;
+    */
+    if (!reader || index >= block_count) return E_INVALIDARG;
 
-    return create_IMD_metadata_reader(This, reader);
+    if (index == 0)
+        return create_IMD_metadata_reader(This, reader);
+
+    if (index == 1 && GCE_data)
+        return create_GCE_metadata_reader(GCE_data, reader);
+
+    /* FIXME: add support for Application Extension metadata block
+    if (APE_data)
+        return create_APE_metadata_reader(APE_data, reader);
+    */
+    return E_INVALIDARG;
 }
 
 static HRESULT WINAPI GifFrameDecode_Block_GetEnumerator(IWICMetadataBlockReader *iface,
