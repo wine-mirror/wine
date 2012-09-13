@@ -5091,11 +5091,46 @@ BOOL WINAPI CreateProcessAsUserA(
         LPSTARTUPINFOA lpStartupInfo,
         LPPROCESS_INFORMATION lpProcessInformation )
 {
-    FIXME("%p %s %s %p %p %d 0x%08x %p %s %p %p - stub\n", hToken, debugstr_a(lpApplicationName),
+    BOOL ret;
+    WCHAR *appW, *cmdlnW, *cwdW;
+    STARTUPINFOW sinfo;
+
+    TRACE("%p %s %s %p %p %d 0x%08x %p %s %p %p\n", hToken, debugstr_a(lpApplicationName),
           debugstr_a(lpCommandLine), lpProcessAttributes, lpThreadAttributes, bInheritHandles,
           dwCreationFlags, lpEnvironment, debugstr_a(lpCurrentDirectory), lpStartupInfo, lpProcessInformation);
 
-    return FALSE;
+    appW = SERV_dup(lpApplicationName);
+    cmdlnW = SERV_dup(lpCommandLine);
+    cwdW = SERV_dup(lpCurrentDirectory);
+    sinfo.cb = sizeof(sinfo);
+    sinfo.lpReserved = SERV_dup(lpStartupInfo->lpReserved);
+    sinfo.lpDesktop = SERV_dup(lpStartupInfo->lpDesktop);
+    sinfo.lpTitle = SERV_dup(lpStartupInfo->lpTitle);
+    sinfo.dwX = lpStartupInfo->dwX;
+    sinfo.dwY = lpStartupInfo->dwY;
+    sinfo.dwXSize = lpStartupInfo->dwXSize;
+    sinfo.dwYSize = lpStartupInfo->dwYSize;
+    sinfo.dwXCountChars = lpStartupInfo->dwXCountChars;
+    sinfo.dwYCountChars = lpStartupInfo->dwYCountChars;
+    sinfo.dwFillAttribute = lpStartupInfo->dwFillAttribute;
+    sinfo.dwFlags = lpStartupInfo->dwFlags;
+    sinfo.wShowWindow = lpStartupInfo->wShowWindow;
+    sinfo.cbReserved2 = lpStartupInfo->cbReserved2;
+    sinfo.lpReserved2 = lpStartupInfo->lpReserved2;
+    sinfo.hStdInput = lpStartupInfo->hStdInput;
+    sinfo.hStdOutput = lpStartupInfo->hStdOutput;
+    sinfo.hStdError = lpStartupInfo->hStdError;
+    ret = CreateProcessAsUserW(hToken, appW, cmdlnW, lpProcessAttributes,
+            lpThreadAttributes, bInheritHandles, dwCreationFlags,
+            lpEnvironment, cwdW, &sinfo, lpProcessInformation);
+    HeapFree(GetProcessHeap(), 0, appW);
+    HeapFree(GetProcessHeap(), 0, cmdlnW);
+    HeapFree(GetProcessHeap(), 0, cwdW);
+    HeapFree(GetProcessHeap(), 0, sinfo.lpReserved);
+    HeapFree(GetProcessHeap(), 0, sinfo.lpDesktop);
+    HeapFree(GetProcessHeap(), 0, sinfo.lpTitle);
+
+    return ret;
 }
 
 BOOL WINAPI CreateProcessAsUserW(
