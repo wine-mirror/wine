@@ -446,8 +446,11 @@ static void udisks2_add_device( const char *udi, DBusMessageIter *dict, DBusMess
                 }
                 else if (!strcmp( name, "IdUUID" ))
                 {
-                    char *uuid_str;
-                    p_dbus_message_iter_get_basic( &variant, &uuid_str );
+                    const char *uuid_str;
+                    if (p_dbus_message_iter_get_arg_type( &variant ) == DBUS_TYPE_ARRAY)
+                        uuid_str = udisks2_string_from_array( &variant );
+                    else
+                        p_dbus_message_iter_get_basic( &variant, &uuid_str );
                     guid_ptr = parse_uuid( &guid, uuid_str );
                 }
             }
