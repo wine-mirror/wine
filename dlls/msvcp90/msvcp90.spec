@@ -5173,7 +5173,7 @@
 @ cdecl -arch=win64 ?reserve@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEAAX_K@Z(ptr long) MSVCP_basic_string_wchar_reserve
 @ thiscall -arch=win32 ?reserve@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEXI@Z(ptr long) MSVCP_basic_string_wchar_reserve
 @ cdecl -arch=win64 ?reserve@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAX_K@Z(ptr long) MSVCP_basic_string_wchar_reserve
-@ stub ?resetiosflags@std@@YA?AU?$_Smanip@H@1@H@Z
+@ cdecl ?resetiosflags@std@@YA?AU?$_Smanip@H@1@H@Z(ptr long) resetiosflags
 @ thiscall -arch=win32 ?resize@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEXI@Z(ptr long) MSVCP_basic_string_char_resize
 @ cdecl -arch=win64 ?resize@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAX_K@Z(ptr long) MSVCP_basic_string_char_resize
 @ thiscall -arch=win32 ?resize@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEXID@Z(ptr long long) MSVCP_basic_string_char_resize_ch
@@ -5312,7 +5312,7 @@
 @ cdecl -arch=win64 ?seekpos@strstreambuf@std@@MEAA?AV?$fpos@H@2@V32@H@Z(ptr ptr ptr long) strstreambuf_seekpos
 @ cdecl ?set_new_handler@std@@YAP6AXXZH@Z(long) set_new_handler_reset
 @ cdecl ?set_new_handler@std@@YAP6AXXZP6AXXZ@Z(ptr) set_new_handler
-@ stub ?setbase@std@@YA?AU?$_Smanip@H@1@H@Z
+@ cdecl ?setbase@std@@YA?AU?$_Smanip@H@1@H@Z(ptr long) setbase
 @ thiscall -arch=win32 ?setbuf@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAEPAV?$basic_streambuf@DU?$char_traits@D@std@@@2@PADH@Z(ptr ptr long) basic_filebuf_char_setbuf
 @ cdecl -arch=win64 ?setbuf@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAAPEAV?$basic_streambuf@DU?$char_traits@D@std@@@2@PEAD_J@Z(ptr ptr long) basic_filebuf_char_setbuf
 @ thiscall -arch=win32 ?setbuf@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MAEPAV?$basic_streambuf@GU?$char_traits@G@std@@@2@PAGH@Z(ptr ptr long) basic_filebuf_char_setbuf
@@ -5335,7 +5335,7 @@
 @ cdecl -arch=win64 ?setg@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IEAAXPEAG00@Z(ptr ptr ptr ptr) basic_streambuf_wchar_setg
 @ thiscall -arch=win32 ?setg@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IAEXPA_W00@Z(ptr ptr ptr ptr) basic_streambuf_wchar_setg
 @ cdecl -arch=win64 ?setg@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IEAAXPEA_W00@Z(ptr ptr ptr ptr) basic_streambuf_wchar_setg
-@ stub ?setiosflags@std@@YA?AU?$_Smanip@H@1@H@Z
+@ cdecl ?setiosflags@std@@YA?AU?$_Smanip@H@1@H@Z(ptr long) setiosflags
 @ thiscall -arch=win32 ?setp@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAEXPAD00@Z(ptr ptr ptr ptr) basic_streambuf_char_setp_next
 @ cdecl -arch=win64 ?setp@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IEAAXPEAD00@Z(ptr ptr ptr ptr) basic_streambuf_char_setp_next
 @ thiscall -arch=win32 ?setp@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAEXPAD0@Z(ptr ptr ptr) basic_streambuf_char_setp

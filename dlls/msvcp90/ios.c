@@ -50,6 +50,11 @@ typedef struct {
     streamsize arg;
 } manip_streamsize;
 
+typedef struct {
+    void (__cdecl *pfunc)(ios_base*, int);
+    int arg;
+} manip_int;
+
 typedef enum {
     INITFL_new   = 0,
     INITFL_open  = 1,
@@ -12874,6 +12879,60 @@ manip_streamsize* __cdecl setw(manip_streamsize *ret, streamsize width)
 
     ret->pfunc = setw_func;
     ret->arg = width;
+    return ret;
+}
+
+static void __cdecl resetioflags_func(ios_base *base, int mask)
+{
+    ios_base_setf_mask(base, 0, mask);
+}
+
+/* ?resetiosflags@std@@YA?AU?$_Smanip@H@1@H@Z */
+manip_int* __cdecl resetiosflags(manip_int *ret, int mask)
+{
+    TRACE("(%p %d)\n", ret, mask);
+
+    ret->pfunc = resetioflags_func;
+    ret->arg = mask;
+    return ret;
+}
+
+static void __cdecl setiosflags_func(ios_base *base, int mask)
+{
+    ios_base_setf_mask(base, FMTFLAG_mask, mask);
+}
+
+/* ?setiosflags@std@@YA?AU?$_Smanip@H@1@H@Z */
+manip_int* __cdecl setiosflags(manip_int *ret, int mask)
+{
+    TRACE("(%p %d)\n", ret, mask);
+
+    ret->pfunc = setiosflags_func;
+    ret->arg = mask;
+    return ret;
+}
+
+static void __cdecl setbase_func(ios_base *base, int set_base)
+{
+    if(set_base == 10)
+        set_base = FMTFLAG_dec;
+    else if(set_base == 8)
+        set_base = FMTFLAG_oct;
+    else if(set_base == 16)
+        set_base = FMTFLAG_hex;
+    else
+        set_base = 0;
+
+    ios_base_setf_mask(base, set_base, FMTFLAG_basefield);
+}
+
+/* ?setbase@std@@YA?AU?$_Smanip@H@1@H@Z */
+manip_int* __cdecl setbase(manip_int *ret, int base)
+{
+    TRACE("(%p %d)\n", ret, base);
+
+    ret->pfunc = setbase_func;
+    ret->arg = base;
     return ret;
 }
 
