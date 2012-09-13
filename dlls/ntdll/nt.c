@@ -810,7 +810,6 @@ NTSTATUS WINAPI NtSetIntervalProfile(
 }
 
 static  SYSTEM_CPU_INFORMATION cached_sci;
-static  ULONGLONG cpuHz = 1000000000; /* default to a 1GHz */
 
 #define AUTH	0x68747541	/* "Auth" */
 #define ENTI	0x69746e65	/* "enti" */
@@ -901,7 +900,7 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
  *		fill_cpu_info
  *
  * inits a couple of places with CPU related information:
- * - cached_sci & cpuHZ in this file
+ * - cached_sci in this file
  * - Peb->NumberOfProcessors
  * - SharedUserData->ProcessFeatures[] array
  */
@@ -1017,16 +1016,6 @@ void fill_cpu_info(void)
 
                 if (sscanf(value, "%d",&x))
                     cached_sci.Revision = cached_sci.Revision | x;
-                continue;
-            }
-            if (!strcasecmp(line, "cpu MHz"))
-            {
-                double cmz;
-                if (sscanf( value, "%lf", &cmz ) == 1)
-                {
-                    /* SYSTEMINFO doesn't have a slot for cpu speed, so store in a global */
-                    cpuHz = cmz * 1000 * 1000;
-                }
                 continue;
             }
             if (!strcasecmp(line, "fdiv_bug"))
@@ -1190,10 +1179,6 @@ void fill_cpu_info(void)
         ret = sysctlbyname("hw.ncpu", &num, &len, NULL, 0);
         if (!ret)
             NtCurrentTeb()->Peb->NumberOfProcessors = num;
-
-        len = sizeof(num);
-        if (!sysctlbyname("hw.clockrate", &num, &len, NULL, 0))
-            cpuHz = num * 1000 * 1000;
     }
 #elif defined(__sun)
     {
@@ -1219,7 +1204,6 @@ void fill_cpu_info(void)
 #elif defined (__APPLE__)
     {
         size_t valSize;
-        unsigned long long longVal;
         int value;
         int cputype;
         char buffer[1024];
@@ -1300,9 +1284,6 @@ void fill_cpu_info(void)
             default: break;
             } /* switch (cputype) */
         }
-        valSize = sizeof(longVal);
-        if (!sysctlbyname("hw.cpufrequency", &longVal, &valSize, NULL, 0))
-            cpuHz = longVal;
     }
 #else
     FIXME("not yet supported on this system\n");
@@ -2261,7 +2242,35 @@ NTSTATUS WINAPI NtInitiatePowerAction(
 		SystemAction,MinSystemState,Flags,Asynchronous);
         return STATUS_NOT_IMPLEMENTED;
 }
-	
+
+#ifdef linux
+/* Fallback using /proc/cpuinfo for Linux systems without cpufreq. For
+ * most distributions on recent enough hardware, this is only likely to
+ * happen while running in virtualized environments such as QEMU. */
+static ULONG mhz_from_cpuinfo(void)
+{
+    char line[512];
+    char *s, *value;
+    double cmz = 0;
+    FILE* f = fopen("/proc/cpuinfo", "r");
+    if(f) {
+        while (fgets(line, sizeof(line), f) != NULL) {
+            if (!(value = strchr(line,':')))
+                continue;
+            s = value - 1;
+            while ((s >= line) && isspace(*s)) s--;
+            *(s + 1) = '\0';
+            value++;
+            if (!strcasecmp(line, "cpu MHz")) {
+                sscanf(value, " %lf", &cmz);
+                break;
+            }
+        }
+        fclose(f);
+    }
+    return cmz;
+}
+#endif
 
 /******************************************************************************
  *  NtPowerInformation				[NTDLL.@]
@@ -2326,23 +2335,123 @@ NTSTATUS WINAPI NtPowerInformation(
 			return STATUS_SUCCESS;
 		}
 		case ProcessorInformation: {
+			const int cannedMHz = 1000; /* We fake a 1GHz processor if we can't conjure up real values */
 			PROCESSOR_POWER_INFORMATION* cpu_power = lpOutputBuffer;
-			int i;
-
-			WARN("semi-stub: ProcessorInformation\n");
+			int i, out_cpus;
 
 			if ((lpOutputBuffer == NULL) || (nOutputBufferSize == 0))
 				return STATUS_INVALID_PARAMETER;
-			if ((nOutputBufferSize / sizeof(PROCESSOR_POWER_INFORMATION)) < NtCurrentTeb()->Peb->NumberOfProcessors)
+			out_cpus = NtCurrentTeb()->Peb->NumberOfProcessors;
+			if ((nOutputBufferSize / sizeof(PROCESSOR_POWER_INFORMATION)) < out_cpus)
 				return STATUS_BUFFER_TOO_SMALL;
+#if defined(linux)
+			{
+				char filename[128];
+				FILE* f;
 
-			for(i = 0; i < NtCurrentTeb()->Peb->NumberOfProcessors; i++) {
+				for(i = 0; i < out_cpus; i++) {
+					sprintf(filename, "/sys/devices/system/cpu/cpu%d/cpufreq/scaling_cur_freq", i);
+					f = fopen(filename, "r");
+					if (f && (fscanf(f, "%d", &cpu_power[i].CurrentMhz) == 1)) {
+						cpu_power[i].CurrentMhz /= 1000;
+						fclose(f);
+					}
+					else {
+						if(i == 0) {
+							cpu_power[0].CurrentMhz = mhz_from_cpuinfo();
+							if(cpu_power[0].CurrentMhz == 0)
+								cpu_power[0].CurrentMhz = cannedMHz;
+						}
+						else
+							cpu_power[i].CurrentMhz = cpu_power[0].CurrentMhz;
+						if(f) fclose(f);
+					}
+
+					sprintf(filename, "/sys/devices/system/cpu/cpu%d/cpufreq/cpuinfo_max_freq", i);
+					f = fopen(filename, "r");
+					if (f && (fscanf(f, "%d", &cpu_power[i].MaxMhz) == 1)) {
+						cpu_power[i].MaxMhz /= 1000;
+						fclose(f);
+					}
+					else {
+						cpu_power[i].MaxMhz = cpu_power[i].CurrentMhz;
+						if(f) fclose(f);
+					}
+
+					sprintf(filename, "/sys/devices/system/cpu/cpu%d/cpufreq/scaling_max_freq", i);
+					f = fopen(filename, "r");
+					if(f && (fscanf(f, "%d", &cpu_power[i].MhzLimit) == 1)) {
+						cpu_power[i].MhzLimit /= 1000;
+						fclose(f);
+					}
+					else
+					{
+						cpu_power[i].MhzLimit = cpu_power[i].MaxMhz;
+						if(f) fclose(f);
+					}
+
+					cpu_power[i].Number = i;
+					cpu_power[i].MaxIdleState = 0;     /* FIXME */
+					cpu_power[i].CurrentIdleState = 0; /* FIXME */
+				}
+			}
+#elif defined(__FreeBSD__) || defined (__FreeBSD_kernel__) || defined(__DragonFly__)
+			{
+				int num;
+				size_t valSize = sizeof(num);
+				if (sysctlbyname("hw.clockrate", &num, &valSize, NULL, 0))
+					num = cannedMHz;
+				for(i = 0; i < out_cpus; i++) {
+					cpu_power[i].CurrentMhz = num;
+					cpu_power[i].MaxMhz = num;
+					cpu_power[i].MhzLimit = num;
+					cpu_power[i].Number = i;
+					cpu_power[i].MaxIdleState = 0;     /* FIXME */
+					cpu_power[i].CurrentIdleState = 0; /* FIXME */
+				}
+			}
+#elif defined (__APPLE__)
+			{
+				size_t valSize;
+				unsigned long long currentMhz;
+				unsigned long long maxMhz;
+
+				valSize = sizeof(currentMhz);
+				if (!sysctlbyname("hw.cpufrequency", &currentMhz, &valSize, NULL, 0))
+					currentMhz /= 1000000;
+				else
+					currentMhz = cannedMHz;
+
+				valSize = sizeof(maxMhz);
+				if (!sysctlbyname("hw.cpufrequency_max", &maxMhz, &valSize, NULL, 0))
+					maxMhz /= 1000000;
+				else
+					maxMhz = currentMhz;
+
+				for(i = 0; i < out_cpus; i++) {
+					cpu_power[i].CurrentMhz = currentMhz;
+					cpu_power[i].MaxMhz = maxMhz;
+					cpu_power[i].MhzLimit = maxMhz;
+					cpu_power[i].Number = i;
+					cpu_power[i].MaxIdleState = 0;     /* FIXME */
+					cpu_power[i].CurrentIdleState = 0; /* FIXME */
+				}
+			}
+#else
+			for(i = 0; i < out_cpus; i++) {
+				cpu_power[i].CurrentMhz = cannedMHz;
+				cpu_power[i].MaxMhz = cannedMHz;
+				cpu_power[i].MhzLimit = cannedMHz;
 				cpu_power[i].Number = i;
-				cpu_power[i].MaxMhz = cpuHz / 1000000;
-				cpu_power[i].CurrentMhz = cpuHz / 1000000;
-				cpu_power[i].MhzLimit = cpuHz / 1000000;
 				cpu_power[i].MaxIdleState = 0; /* FIXME */
 				cpu_power[i].CurrentIdleState = 0; /* FIXME */
+			}
+			WARN("Unable to detect CPU MHz for this platform. Reporting %d MHz.\n", cannedMHz);
+#endif
+			for(i = 0; i < out_cpus; i++) {
+				TRACE("cpu_power[%d] = %u %u %u %u %u %u\n", i, cpu_power[i].Number,
+					  cpu_power[i].MaxMhz, cpu_power[i].CurrentMhz, cpu_power[i].MhzLimit,
+					  cpu_power[i].MaxIdleState, cpu_power[i].CurrentIdleState);
 			}
 			return STATUS_SUCCESS;
 		}
