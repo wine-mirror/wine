@@ -20,6 +20,16 @@ function ondataavailable_test() {
         ok(evobj.type === "dataavailable", "evobj.type = " + evobj.type);
     }
 
+    function ondataavailableDocHandler() {
+        b = true;
+        ok(window.event === evobj, "window.event != evobj");
+
+        ok(evobj.srcElement === null, "evobj.srcElement = " + evobj.srcElement);
+        ok(evobj.fromElement === null, "evobj.srcElement = " + evobj.fromElement);
+        ok(evobj.toElement === null, "evobj.srcElement = " + evobj.toElement);
+        ok(evobj.type === "dataavailable", "evobj.type = " + evobj.type);
+    }
+
     div.attachEvent("ondataavailable", ondataavailableHandler);
 
     evobj = document.createEventObject();
@@ -32,6 +42,25 @@ function ondataavailable_test() {
     ok(b, "ondataavailable handler not called?");
 
     ok(evobj.srcElement === div, "evobj.srcElement = " + evobj.srcElement);
+    ok(evobj.type === "dataavailable", "evobj.type = " + evobj.type);
+
+    div.detachEvent("ondataavailable", ondataavailableHandler);
+
+    b = false;
+    div.fireEvent("ondataavailable", evobj);
+    ok(!b, "ondataavailable handler called?");
+
+    ok(evobj.srcElement === div, "evobj.srcElement = " + evobj.srcElement);
+    ok(evobj.type === "dataavailable", "evobj.type = " + evobj.type);
+
+    document.attachEvent("ondataavailable", ondataavailableDocHandler);
+
+    evobj = document.createEventObject();
+
+    document.fireEvent("ondataavailable", evobj);
+    ok(b, "ondataavailable handler not called?");
+
+    ok(evobj.srcElement === null, "evobj.srcElement = " + evobj.srcElement);
     ok(evobj.type === "dataavailable", "evobj.type = " + evobj.type);
 }
 

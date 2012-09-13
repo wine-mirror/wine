@@ -364,13 +364,10 @@ static HRESULT WINAPI HTMLEventObj_get_srcElement(IHTMLEventObj *iface, IHTMLEle
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(!This->target) {
-        *p = NULL;
-        return S_OK;
-    }
-
-    return IHTMLDOMNode_QueryInterface(&This->target->IHTMLDOMNode_iface, &IID_IHTMLElement,
-            (void**)p);
+    *p = NULL;
+    if(This->target)
+        IHTMLDOMNode_QueryInterface(&This->target->IHTMLDOMNode_iface, &IID_IHTMLElement, (void**)p);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLEventObj_get_altKey(IHTMLEventObj *iface, VARIANT_BOOL *p)
