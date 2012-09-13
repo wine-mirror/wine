@@ -94,7 +94,7 @@
 @ stdcall PSStringFromPropertyKey(ptr ptr long)
 @ stdcall PSUnregisterPropertySchema(wstr)
 @ stdcall PropVariantChangeType(ptr ptr long long)
-@ stub PropVariantCompareEx
+@ stdcall PropVariantCompareEx(ptr ptr long long)
 @ stub PropVariantGetBooleanElem
 @ stub PropVariantGetDoubleElem
 @ stub PropVariantGetElementCount

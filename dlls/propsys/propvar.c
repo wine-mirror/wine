@@ -283,3 +283,11 @@ HRESULT WINAPI VariantToGUID(const VARIANT *pvar, GUID *guid)
         return E_NOTIMPL;
     }
 }
+
+INT WINAPI PropVariantCompareEx(REFPROPVARIANT propvar1, REFPROPVARIANT propvar2,
+    PROPVAR_COMPARE_UNIT unit, PROPVAR_COMPARE_FLAGS flags)
+{
+    FIXME("%p,%p,%x,%x\n", propvar1, propvar2, unit, flags);
+
+    return -1;
+}

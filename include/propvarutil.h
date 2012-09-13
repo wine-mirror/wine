@@ -34,6 +34,31 @@ enum tagPROPVAR_CHANGE_FLAGS
 
 typedef int PROPVAR_CHANGE_FLAGS;
 
+enum tagPROPVAR_COMPARE_UNIT
+{
+    PVCU_DEFAULT           = 0x00000000,
+    PVCU_SECOND            = 0x00000001,
+    PVCU_MINUTE            = 0x00000002,
+    PVCU_HOUR              = 0x00000003,
+    PVCU_DAY               = 0x00000004,
+    PVCU_MONTH             = 0x00000005,
+    PVCU_YEAR              = 0x00000006,
+};
+
+typedef int PROPVAR_COMPARE_UNIT;
+
+enum tagPROPVAR_COMPARE_FLAGS
+{
+    PVCF_DEFAULT           = 0x00000000,
+    PVCF_TREATEMPTYASGREATERTHAN = 0x00000001,
+    PVCF_USESTRCMP         = 0x00000002,
+    PVCF_USESTRCMPC        = 0x00000004,
+    PVCF_USESTRCMPI        = 0x00000008,
+    PVCF_USESTRCMPIC       = 0x00000010,
+};
+
+typedef int PROPVAR_COMPARE_FLAGS;
+
 HRESULT WINAPI PropVariantChangeType(PROPVARIANT *ppropvarDest, REFPROPVARIANT propvarSrc,
                                      PROPVAR_CHANGE_FLAGS flags, VARTYPE vt);
 HRESULT WINAPI InitPropVariantFromGUIDAsString(REFGUID guid, PROPVARIANT *ppropvar);
@@ -42,6 +67,8 @@ HRESULT WINAPI InitPropVariantFromBuffer(const VOID *pv, UINT cb, PROPVARIANT *p
 HRESULT WINAPI InitVariantFromBuffer(const VOID *pv, UINT cb, VARIANT *pvar);
 HRESULT WINAPI PropVariantToGUID(const PROPVARIANT *ppropvar, GUID *guid);
 HRESULT WINAPI VariantToGUID(const VARIANT *pvar, GUID *guid);
+INT WINAPI PropVariantCompareEx(REFPROPVARIANT propvar1, REFPROPVARIANT propvar2,
+                                PROPVAR_COMPARE_UNIT uint, PROPVAR_COMPARE_FLAGS flags);
 
 
 #ifdef __cplusplus
