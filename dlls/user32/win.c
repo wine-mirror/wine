@@ -3594,23 +3594,38 @@ BOOL WINAPI UpdateLayeredWindowIndirect( HWND hwnd, const UPDATELAYEREDWINDOWINF
 
     if (!(info->dwFlags & ULW_EX_NORESIZE) && (info->pptDst || info->psize))
     {
-        int x = 0, y = 0, cx = 0, cy = 0;
-        DWORD flags = SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW | SWP_NOSENDCHANGING;
+        DWORD flags = SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE;
+        RECT window_rect, client_rect;
+        SIZE offset;
+
+        WIN_GetRectangles( hwnd, COORDS_PARENT, &window_rect, &client_rect );
 
         if (info->pptDst)
         {
-            x = info->pptDst->x;
-            y = info->pptDst->y;
+            offset.cx = info->pptDst->x - window_rect.left;
+            offset.cy = info->pptDst->y - window_rect.top;
+            OffsetRect( &client_rect, offset.cx, offset.cy );
+            OffsetRect( &window_rect, offset.cx, offset.cy );
             flags &= ~SWP_NOMOVE;
         }
         if (info->psize)
         {
-            cx = info->psize->cx;
-            cy = info->psize->cy;
+            if (info->psize->cx <= 0 || info->psize->cy <= 0)
+            {
+                SetLastError( ERROR_INVALID_PARAMETER );
+                return FALSE;
+            }
+            offset.cx = info->psize->cx - (window_rect.right - window_rect.left);
+            offset.cy = info->psize->cy - (window_rect.bottom - window_rect.top);
+            client_rect.right  += offset.cx;
+            client_rect.bottom += offset.cy;
+            window_rect.right  += offset.cx;
+            window_rect.bottom += offset.cy;
             flags &= ~SWP_NOSIZE;
         }
-        TRACE( "moving window %p pos %d,%d %dx%d\n", hwnd, x, y, cx, cy );
-        SetWindowPos( hwnd, 0, x, y, cx, cy, flags );
+        TRACE( "moving window %p win %s client %s\n", hwnd,
+               wine_dbgstr_rect(&window_rect), wine_dbgstr_rect(&client_rect) );
+        set_window_pos( hwnd, 0, flags, &window_rect, &client_rect, NULL );
     }
 
     if (info->hdcSrc)
