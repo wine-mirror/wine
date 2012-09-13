@@ -1355,6 +1355,13 @@ ok(name_override_func === 3, "name_override_func = " + name_override_func);
 function name_override_func() {};
 ok(name_override_func === 3, "name_override_func = " + name_override_func);
 
+tmp = (function() {
+    var ret = false;
+    with({ret: true})
+        return ret;
+})();
+ok(tmp, "tmp = " + tmp);
+
 /* NoNewline rule parser tests */
 while(true) {
     if(true) break
