@@ -716,13 +716,13 @@ static void test_PropVariantCompare(void)
     ok(res == -1, "res=%i\n", res);
 
     res = PropVariantCompareEx(&i4_large, &i2_0, 0, 0);
-    todo_wine ok(res == 1, "res=%i\n", res);
+    ok(res == 1, "res=%i\n", res);
 
     res = PropVariantCompareEx(&i4_largeneg, &i2_0, 0, 0);
     ok(res == -1, "res=%i\n", res);
 
     res = PropVariantCompareEx(&i2_2, &i4_2, 0, 0);
-    todo_wine ok(res == 0, "res=%i\n", res);
+    ok(res == 0, "res=%i\n", res);
 
     res = PropVariantCompareEx(&i2_2, &str_2, 0, 0);
     todo_wine ok(res == 0, "res=%i\n", res);

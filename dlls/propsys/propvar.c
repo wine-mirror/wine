@@ -215,8 +215,80 @@ HRESULT WINAPI PropVariantToUInt64(REFPROPVARIANT propvarIn, ULONGLONG *ret)
 HRESULT WINAPI PropVariantChangeType(PROPVARIANT *ppropvarDest, REFPROPVARIANT propvarSrc,
                                      PROPVAR_CHANGE_FLAGS flags, VARTYPE vt)
 {
+    HRESULT hr;
+
     FIXME("(%p, %p, %d, %d, %d): semi-stub!\n", ppropvarDest, propvarSrc,
           propvarSrc->vt, flags, vt);
+
+    switch (vt)
+    {
+    case VT_I2:
+    {
+        SHORT res;
+        hr = PropVariantToInt16(propvarSrc, &res);
+        if (SUCCEEDED(hr))
+        {
+            ppropvarDest->vt = VT_I2;
+            ppropvarDest->u.iVal = res;
+        }
+        return hr;
+    }
+    case VT_UI2:
+    {
+        USHORT res;
+        hr = PropVariantToUInt16(propvarSrc, &res);
+        if (SUCCEEDED(hr))
+        {
+            ppropvarDest->vt = VT_UI2;
+            ppropvarDest->u.uiVal = res;
+        }
+        return hr;
+    }
+    case VT_I4:
+    {
+        LONG res;
+        hr = PropVariantToInt32(propvarSrc, &res);
+        if (SUCCEEDED(hr))
+        {
+            ppropvarDest->vt = VT_I4;
+            ppropvarDest->u.lVal = res;
+        }
+        return hr;
+    }
+    case VT_UI4:
+    {
+        ULONG res;
+        hr = PropVariantToUInt32(propvarSrc, &res);
+        if (SUCCEEDED(hr))
+        {
+            ppropvarDest->vt = VT_UI4;
+            ppropvarDest->u.ulVal = res;
+        }
+        return hr;
+    }
+    case VT_I8:
+    {
+        LONGLONG res;
+        hr = PropVariantToInt64(propvarSrc, &res);
+        if (SUCCEEDED(hr))
+        {
+            ppropvarDest->vt = VT_I8;
+            ppropvarDest->u.hVal.QuadPart = res;
+        }
+        return hr;
+    }
+    case VT_UI8:
+    {
+        ULONGLONG res;
+        hr = PropVariantToUInt64(propvarSrc, &res);
+        if (SUCCEEDED(hr))
+        {
+            ppropvarDest->vt = VT_UI8;
+            ppropvarDest->u.uhVal.QuadPart = res;
+        }
+        return hr;
+    }
+    }
 
     switch (propvarSrc->vt)
     {
