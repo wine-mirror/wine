@@ -447,17 +447,7 @@ static void test_MRUListA(void)
 
     /* FreeMRUList(NULL) crashes on Win98 OSR0 */
 }
-/*
-typedef struct tagMRUINFOA
-{
-    DWORD   cbSize;
-    UINT    uMax;
-    UINT    fFlags;
-    HKEY    hKey;
-    LPCSTR  lpszSubKey;
-    PROC    lpfnCompare;
-} MRUINFOA;
-*/
+
 typedef struct {
     MRUINFOA mruA;
     BOOL ret;
