@@ -3920,6 +3920,99 @@ static void test_DrawImage_scale(void)
     expect(Ok, status);
 }
 
+static void test_gif_properties(void)
+{
+    static const struct test_data
+    {
+        ULONG type, id, length;
+        const BYTE value[12];
+    } td[] =
+    {
+        { PropertyTagTypeLong, PropertyTagFrameDelay, 8, { 10,0,0,0,10,0,0,0 } },
+        { PropertyTagTypeShort, PropertyTagLoopCount, 2, { 1 } },
+        { PropertyTagTypeByte, PropertyTagGlobalPalette, 12, { 0,0,0,0xff,0xff,0xff,0,0,0,0,0 } },
+        { PropertyTagTypeByte, PropertyTagIndexBackground, 1, { 0 } }
+    };
+    GpStatus status;
+    GpImage *image;
+    GUID guid;
+    UINT dim_count, frame_count, prop_count, prop_size, i;
+    PROPID *prop_id;
+    PropertyItem *prop_item;
+
+    image = load_image(gifanimation, sizeof(gifanimation));
+    ok(image != 0, "Failed to load GIF image data\n");
+    if (!image) return;
+
+    status = GdipImageGetFrameDimensionsCount(image, &dim_count);
+    expect(Ok, status);
+    expect(1, dim_count);
+
+    status = GdipImageGetFrameDimensionsList(image, &guid, 1);
+    expect(Ok, status);
+    expect_guid(&FrameDimensionTime, &guid, __LINE__, FALSE);
+
+    status = GdipImageGetFrameCount(image, &guid, &frame_count);
+    expect(Ok, status);
+    expect(2, frame_count);
+
+    status = GdipGetPropertyCount(image, &prop_count);
+    expect(Ok, status);
+todo_wine
+    ok(prop_count == sizeof(td)/sizeof(td[0]) || broken(prop_count == 1) /* before win7 */,
+       "expected property count %u, got %u\n", (UINT)(sizeof(td)/sizeof(td[0])), prop_count);
+
+    if (prop_count != sizeof(td)/sizeof(td[0]))
+    {
+        GdipDisposeImage(image);
+        return;
+    }
+
+    prop_id = HeapAlloc(GetProcessHeap(), 0, prop_count * sizeof(*prop_id));
+
+    status = GdipGetPropertyIdList(image, prop_count, prop_id);
+    expect(Ok, status);
+
+    for (i = 0; i < prop_count; i++)
+    {
+        status = GdipGetPropertyItemSize(image, prop_id[i], &prop_size);
+        expect(Ok, status);
+        if (status != Ok) break;
+        ok(prop_size > sizeof(*prop_item), "%u: too small item length %u\n", i, prop_size);
+
+        prop_item = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, prop_size);
+        status = GdipGetPropertyItem(image, prop_id[i], prop_size, prop_item);
+        expect(Ok, status);
+        ok(prop_item->value == prop_item + 1, "expected item->value %p, got %p\n", prop_item + 1, prop_item->value);
+        ok(td[i].type == prop_item->type,
+            "%u: expected type %u, got %u\n", i, td[i].type, prop_item->type);
+        ok(td[i].id == prop_item->id, "%u: expected id %#x, got %#x\n", i, td[i].id, prop_item->id);
+        prop_size -= sizeof(*prop_item);
+        ok(prop_item->length == prop_size, "%u: expected length %u, got %u\n", i, prop_size, prop_item->length);
+        ok(td[i].length == prop_item->length, "%u: expected length %u, got %u\n", i, td[i].length, prop_item->length);
+        ok(td[i].length == prop_size, "%u: expected length %u, got %u\n", i, td[i].length, prop_size);
+        if (td[i].length == prop_item->length)
+        {
+            int match = memcmp(td[i].value, prop_item->value, td[i].length) == 0;
+            ok(match || broken(td[i].length <= 4 && !match), "%u: data mismatch\n", i);
+            if (!match)
+            {
+                UINT j;
+                BYTE *data = prop_item->value;
+                printf("id %#x:", prop_item->id);
+                for (j = 0; j < prop_item->length; j++)
+                    printf(" %02x", data[j]);
+                printf("\n");
+            }
+        }
+        HeapFree(GetProcessHeap(), 0, prop_item);
+    }
+
+    HeapFree(GetProcessHeap(), 0, prop_id);
+
+    GdipDisposeImage(image);
+}
+
 START_TEST(image)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -3940,6 +4033,7 @@ START_TEST(image)
     test_tiff_palette();
     test_GdipGetAllPropertyItems();
     test_tiff_properties();
+    test_gif_properties();
     test_image_properties();
     test_Scan0();
     test_FromGdiDib();
