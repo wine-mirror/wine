@@ -633,6 +633,123 @@ static void test_PropVariantToGUID(void)
     PropVariantClear(&propvar);
 }
 
+static void test_PropVariantCompare(void)
+{
+    PROPVARIANT empty, null, emptyarray, i2_0, i2_2, i4_large, i4_largeneg, i4_2, str_2, str_02, str_b;
+    INT res;
+    static const WCHAR str_2W[] = {'2', 0};
+    static const WCHAR str_02W[] = {'0', '2', 0};
+    static const WCHAR str_bW[] = {'b', 0};
+    SAFEARRAY emptysafearray;
+
+    PropVariantInit(&empty);
+    PropVariantInit(&null);
+    PropVariantInit(&emptyarray);
+    PropVariantInit(&i2_0);
+    PropVariantInit(&i2_2);
+    PropVariantInit(&i4_large);
+    PropVariantInit(&i4_largeneg);
+    PropVariantInit(&i4_2);
+    PropVariantInit(&str_2);
+    PropVariantInit(&str_b);
+
+    empty.vt = VT_EMPTY;
+    null.vt = VT_NULL;
+    emptyarray.vt = VT_ARRAY | VT_I4;
+    emptyarray.u.parray = &emptysafearray;
+    emptysafearray.cDims = 1;
+    emptysafearray.fFeatures = FADF_FIXEDSIZE;
+    emptysafearray.cbElements = 4;
+    emptysafearray.cLocks = 0;
+    emptysafearray.pvData = NULL;
+    emptysafearray.rgsabound[0].cElements = 0;
+    emptysafearray.rgsabound[0].lLbound = 0;
+    i2_0.vt = VT_I2;
+    i2_0.u.iVal = 0;
+    i2_2.vt = VT_I2;
+    i2_2.u.iVal = 2;
+    i4_large.vt = VT_I4;
+    i4_large.u.lVal = 65536;
+    i4_largeneg.vt = VT_I4;
+    i4_largeneg.u.lVal = -65536;
+    i4_2.vt = VT_I4;
+    i4_2.u.lVal = 2;
+    str_2.vt = VT_BSTR;
+    str_2.u.bstrVal = SysAllocString(str_2W);
+    str_02.vt = VT_BSTR;
+    str_02.u.bstrVal = SysAllocString(str_02W);
+    str_b.vt = VT_BSTR;
+    str_b.u.bstrVal = SysAllocString(str_bW);
+
+    res = PropVariantCompareEx(&empty, &empty, 0, 0);
+    todo_wine ok(res == 0, "res=%i\n", res);
+
+    res = PropVariantCompareEx(&empty, &null, 0, 0);
+    todo_wine ok(res == 0, "res=%i\n", res);
+
+    res = PropVariantCompareEx(&null, &emptyarray, 0, 0);
+    todo_wine ok(res == 0, "res=%i\n", res);
+
+    res = PropVariantCompareEx(&null, &i2_0, 0, 0);
+    ok(res == -1, "res=%i\n", res);
+
+    res = PropVariantCompareEx(&i2_0, &null, 0, 0);
+    todo_wine ok(res == 1, "res=%i\n", res);
+
+    res = PropVariantCompareEx(&null, &i2_0, 0, PVCF_TREATEMPTYASGREATERTHAN);
+    todo_wine ok(res == 1, "res=%i\n", res);
+
+    res = PropVariantCompareEx(&i2_0, &null, 0, PVCF_TREATEMPTYASGREATERTHAN);
+    ok(res == -1, "res=%i\n", res);
+
+    res = PropVariantCompareEx(&i2_2, &i2_0, 0, 0);
+    todo_wine ok(res == 1, "res=%i\n", res);
+
+    res = PropVariantCompareEx(&i2_0, &i2_2, 0, 0);
+    ok(res == -1, "res=%i\n", res);
+
+    /* Always return -1 if second value cannot be converted to first type */
+    res = PropVariantCompareEx(&i2_0, &i4_large, 0, 0);
+    ok(res == -1, "res=%i\n", res);
+
+    res = PropVariantCompareEx(&i2_0, &i4_largeneg, 0, 0);
+    ok(res == -1, "res=%i\n", res);
+
+    res = PropVariantCompareEx(&i4_large, &i2_0, 0, 0);
+    todo_wine ok(res == 1, "res=%i\n", res);
+
+    res = PropVariantCompareEx(&i4_largeneg, &i2_0, 0, 0);
+    ok(res == -1, "res=%i\n", res);
+
+    res = PropVariantCompareEx(&i2_2, &i4_2, 0, 0);
+    todo_wine ok(res == 0, "res=%i\n", res);
+
+    res = PropVariantCompareEx(&i2_2, &str_2, 0, 0);
+    todo_wine ok(res == 0, "res=%i\n", res);
+
+    res = PropVariantCompareEx(&i2_2, &str_02, 0, 0);
+    todo_wine ok(res == 0, "res=%i\n", res);
+
+    res = PropVariantCompareEx(&str_2, &i2_2, 0, 0);
+    todo_wine ok(res == 0, "res=%i\n", res);
+
+    res = PropVariantCompareEx(&str_02, &i2_2, 0, 0);
+    ok(res == -1, "res=%i\n", res);
+
+    res = PropVariantCompareEx(&str_02, &str_2, 0, 0);
+    ok(res == -1, "res=%i\n", res);
+
+    res = PropVariantCompareEx(&str_02, &str_b, 0, 0);
+    ok(res == -1, "res=%i\n", res);
+
+    res = PropVariantCompareEx(&i4_large, &str_b, 0, 0);
+    todo_wine ok(res == -5 /* ??? */, "res=%i\n", res);
+
+    SysFreeString(str_2.u.bstrVal);
+    SysFreeString(str_02.u.bstrVal);
+    SysFreeString(str_b.u.bstrVal);
+}
+
 START_TEST(propsys)
 {
     test_PSStringFromPropertyKey();
@@ -641,4 +758,5 @@ START_TEST(propsys)
     test_InitPropVariantFromGUIDAsString();
     test_InitPropVariantFromBuffer();
     test_PropVariantToGUID();
+    test_PropVariantCompare();
 }
