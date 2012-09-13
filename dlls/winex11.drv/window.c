@@ -1992,6 +1992,7 @@ void CDECL X11DRV_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flag
 
     /* create the window surface if necessary */
     if (!data->whole_window) return;
+    if (data->embedded) return;
     if (swp_flags & SWP_HIDEWINDOW) return;
     if (data->whole_window == root_window) return;
     if (has_gl_drawable( hwnd )) return;
