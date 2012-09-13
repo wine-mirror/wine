@@ -510,20 +510,19 @@ static BOOL init_systray(void)
 /* dock the given icon with the NETWM system tray */
 static void dock_systray_icon( Display *display, struct tray_icon *icon, Window systray_window )
 {
-    struct x11drv_win_data *data;
+    Window window;
     XEvent ev;
     XSetWindowAttributes attr;
 
     icon->window = CreateWindowW( icon_classname, NULL, WS_CLIPSIBLINGS | WS_POPUP,
                                   CW_USEDEFAULT, CW_USEDEFAULT, icon_cx, icon_cy,
                                   NULL, NULL, NULL, icon );
-    if (!(data = X11DRV_get_win_data( icon->window ))) return;
-
-    TRACE( "icon window %p/%lx managed %u\n", data->hwnd, data->whole_window, data->managed );
-
-    make_window_embedded( display, data );
+    make_window_embedded( icon->window );
     create_tooltip( icon );
     ShowWindow( icon->window, SW_SHOWNA );
+
+    if (!(window = X11DRV_get_whole_window( icon->window ))) return;
+    TRACE( "icon window %p/%lx\n", icon->window, window );
 
     /* send the docking request message */
     ev.xclient.type = ClientMessage;
@@ -532,13 +531,13 @@ static void dock_systray_icon( Display *display, struct tray_icon *icon, Window 
     ev.xclient.format = 32;
     ev.xclient.data.l[0] = CurrentTime;
     ev.xclient.data.l[1] = SYSTEM_TRAY_REQUEST_DOCK;
-    ev.xclient.data.l[2] = data->whole_window;
+    ev.xclient.data.l[2] = window;
     ev.xclient.data.l[3] = 0;
     ev.xclient.data.l[4] = 0;
     XSendEvent( display, systray_window, False, NoEventMask, &ev );
     attr.background_pixmap = ParentRelative;
     attr.bit_gravity = ForgetGravity;
-    XChangeWindowAttributes( display, data->whole_window, CWBackPixmap | CWBitGravity, &attr );
+    XChangeWindowAttributes( display, window, CWBackPixmap | CWBitGravity, &attr );
 }
 
 /* dock systray windows again with the new owner */

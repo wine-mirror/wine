@@ -1080,7 +1080,7 @@ static void X11DRV_GravityNotify( HWND hwnd, XEvent *xev )
 /***********************************************************************
  *           get_window_wm_state
  */
-static int get_window_wm_state( Display *display, struct x11drv_win_data *data )
+static int get_window_wm_state( Display *display, Window window )
 {
     struct
     {
@@ -1091,7 +1091,7 @@ static int get_window_wm_state( Display *display, struct x11drv_win_data *data )
     int format, ret = -1;
     unsigned long count, remaining;
 
-    if (!XGetWindowProperty( display, data->whole_window, x11drv_atom(WM_STATE), 0,
+    if (!XGetWindowProperty( display, window, x11drv_atom(WM_STATE), 0,
                              sizeof(*state)/sizeof(CARD32), False, x11drv_atom(WM_STATE),
                              &type, &format, &count, &remaining, (unsigned char **)&state ))
     {
@@ -1108,10 +1108,12 @@ static int get_window_wm_state( Display *display, struct x11drv_win_data *data )
  *
  * Handle a PropertyNotify for WM_STATE.
  */
-static void handle_wm_state_notify( struct x11drv_win_data *data, XPropertyEvent *event,
-                                    BOOL update_window )
+static void handle_wm_state_notify( HWND hwnd, XPropertyEvent *event, BOOL update_window )
 {
+    struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
     DWORD style;
+
+    if (!data) return;
 
     switch(event->state)
     {
@@ -1122,7 +1124,7 @@ static void handle_wm_state_notify( struct x11drv_win_data *data, XPropertyEvent
     case PropertyNewValue:
         {
             int old_state = data->wm_state;
-            int new_state = get_window_wm_state( event->display, data );
+            int new_state = get_window_wm_state( event->display, data->whole_window );
             if (new_state != -1 && new_state != data->wm_state)
             {
                 TRACE( "%p/%lx: new WM_STATE %d from %d\n",
@@ -1179,12 +1181,9 @@ static void handle_wm_state_notify( struct x11drv_win_data *data, XPropertyEvent
 static void X11DRV_PropertyNotify( HWND hwnd, XEvent *xev )
 {
     XPropertyEvent *event = &xev->xproperty;
-    struct x11drv_win_data *data;
 
     if (!hwnd) return;
-    if (!(data = X11DRV_get_win_data( hwnd ))) return;
-
-    if (event->atom == x11drv_atom(WM_STATE)) handle_wm_state_notify( data, event, TRUE );
+    if (event->atom == x11drv_atom(WM_STATE)) handle_wm_state_notify( hwnd, event, TRUE );
 }
 
 
@@ -1199,11 +1198,13 @@ static Bool is_wm_state_notify( Display *display, XEvent *event, XPointer arg )
 /***********************************************************************
  *           wait_for_withdrawn_state
  */
-void wait_for_withdrawn_state( Display *display, struct x11drv_win_data *data, BOOL set )
+void wait_for_withdrawn_state( HWND hwnd, BOOL set )
 {
+    Display *display = thread_display();
+    struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
     DWORD end = GetTickCount() + 2000;
 
-    if (!data->managed) return;
+    if (!data || !data->managed) return;
 
     TRACE( "waiting for window %p/%lx to become %swithdrawn\n",
            data->hwnd, data->whole_window, set ? "" : "not " );
@@ -1218,7 +1219,7 @@ void wait_for_withdrawn_state( Display *display, struct x11drv_win_data *data, B
             count++;
             if (XFilterEvent( &event, None )) continue;  /* filtered, ignore it */
             if (event.type == DestroyNotify) call_event_handler( display, &event );
-            else handle_wm_state_notify( data, &event.xproperty, FALSE );
+            else handle_wm_state_notify( hwnd, &event.xproperty, FALSE );
         }
 
         if (!count)

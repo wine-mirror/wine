@@ -562,11 +562,11 @@ extern BOOL has_gl_drawable( HWND hwnd ) DECLSPEC_HIDDEN;
 extern void sync_gl_drawable( HWND hwnd, const RECT *visible_rect, const RECT *client_rect ) DECLSPEC_HIDDEN;
 extern void destroy_gl_drawable( HWND hwnd ) DECLSPEC_HIDDEN;
 
-extern void wait_for_withdrawn_state( Display *display, struct x11drv_win_data *data, BOOL set ) DECLSPEC_HIDDEN;
+extern void wait_for_withdrawn_state( HWND hwnd, BOOL set ) DECLSPEC_HIDDEN;
 extern Window init_clip_window(void) DECLSPEC_HIDDEN;
 extern void update_user_time( Time time ) DECLSPEC_HIDDEN;
 extern void update_net_wm_states( Display *display, struct x11drv_win_data *data ) DECLSPEC_HIDDEN;
-extern void make_window_embedded( Display *display, struct x11drv_win_data *data ) DECLSPEC_HIDDEN;
+extern void make_window_embedded( HWND hwnd ) DECLSPEC_HIDDEN;
 extern void change_systray_owner( Display *display, Window systray_window ) DECLSPEC_HIDDEN;
 extern void update_systray_balloon_position(void) DECLSPEC_HIDDEN;
 extern HWND create_foreign_window( Display *display, Window window ) DECLSPEC_HIDDEN;
@@ -610,7 +610,7 @@ extern LRESULT clip_cursor_notify( HWND hwnd, HWND new_clip_hwnd ) DECLSPEC_HIDD
 extern void ungrab_clipping_window(void) DECLSPEC_HIDDEN;
 extern void reset_clipping_window(void) DECLSPEC_HIDDEN;
 extern BOOL clip_fullscreen_window( HWND hwnd, BOOL reset ) DECLSPEC_HIDDEN;
-extern void move_resize_window( Display *display, struct x11drv_win_data *data, int dir ) DECLSPEC_HIDDEN;
+extern void move_resize_window( HWND hwnd, int dir ) DECLSPEC_HIDDEN;
 extern void X11DRV_InitKeyboard( Display *display ) DECLSPEC_HIDDEN;
 extern DWORD CDECL X11DRV_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles, DWORD timeout,
                                                        DWORD mask, DWORD flags ) DECLSPEC_HIDDEN;

@@ -1305,13 +1305,16 @@ BOOL CDECL X11DRV_ClipCursor( LPCRECT clip )
 /***********************************************************************
  *           move_resize_window
  */
-void move_resize_window( Display *display, struct x11drv_win_data *data, int dir )
+void move_resize_window( HWND hwnd, int dir )
 {
+    Display *display = thread_display();
     DWORD pt;
     int x, y, rootX, rootY, button = 0;
     XEvent xev;
-    Window root, child;
+    Window win, root, child;
     unsigned int xstate;
+
+    if (!(win = X11DRV_get_whole_window( hwnd ))) return;
 
     pt = GetMessagePos();
     x = (short)LOWORD( pt );
@@ -1321,11 +1324,10 @@ void move_resize_window( Display *display, struct x11drv_win_data *data, int dir
     else if (GetKeyState( VK_MBUTTON ) & 0x8000) button = 2;
     else if (GetKeyState( VK_RBUTTON ) & 0x8000) button = 3;
 
-    TRACE( "hwnd %p/%lx, x %d, y %d, dir %d, button %d\n",
-           data->hwnd, data->whole_window, x, y, dir, button );
+    TRACE( "hwnd %p/%lx, x %d, y %d, dir %d, button %d\n", hwnd, win, x, y, dir, button );
 
     xev.xclient.type = ClientMessage;
-    xev.xclient.window = data->whole_window;
+    xev.xclient.window = win;
     xev.xclient.message_type = x11drv_atom(_NET_WM_MOVERESIZE);
     xev.xclient.serial = 0;
     xev.xclient.display = display;
@@ -1363,7 +1365,7 @@ void move_resize_window( Display *display, struct x11drv_win_data *data, int dir
             input.u.mi.dwFlags     = button_up_flags[button - 1] | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE;
             input.u.mi.time        = GetTickCount();
             input.u.mi.dwExtraInfo = 0;
-            __wine_send_input( data->hwnd, &input );
+            __wine_send_input( hwnd, &input );
         }
 
         while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE ))
@@ -1379,7 +1381,7 @@ void move_resize_window( Display *display, struct x11drv_win_data *data, int dir
         MsgWaitForMultipleObjects( 0, NULL, FALSE, 100, QS_ALLINPUT );
     }
 
-    TRACE( "hwnd %p/%lx done\n", data->hwnd, data->whole_window );
+    TRACE( "hwnd %p/%lx done\n", hwnd, win );
 }
 
 
