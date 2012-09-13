@@ -87,6 +87,7 @@ struct nsChannelBSC {
     nsISupports *nscontext;
     BOOL is_js;
     BOOL is_doc_channel;
+    BOOL response_processed;
 
     nsProtocolStream *nsstream;
 };

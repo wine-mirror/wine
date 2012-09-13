@@ -754,6 +754,33 @@ static HRESULT process_response_headers(nsChannelBSC *This, const WCHAR *headers
     return S_OK;
 }
 
+static void query_http_info(nsChannelBSC *This, IWinInetHttpInfo *wininet_info)
+{
+    const WCHAR *ptr;
+    DWORD len = 0;
+    WCHAR *buf;
+
+    IWinInetHttpInfo_QueryInfo(wininet_info, HTTP_QUERY_RAW_HEADERS_CRLF, NULL, &len, NULL, NULL);
+    if(!len)
+        return;
+
+    buf = heap_alloc(len);
+    if(!buf)
+        return;
+
+    IWinInetHttpInfo_QueryInfo(wininet_info, HTTP_QUERY_RAW_HEADERS_CRLF, buf, &len, NULL, NULL);
+    if(!len)
+        return;
+
+    ptr = strchrW(buf, '\r');
+    if(ptr && ptr[1] == '\n') {
+        ptr += 2;
+        process_response_headers(This, ptr);
+    }
+
+    heap_free(buf);
+}
+
 HRESULT start_binding(HTMLInnerWindow *inner_window, BSCallback *bscallback, IBindCtx *bctx)
 {
     IStream *str = NULL;
@@ -1110,6 +1137,19 @@ static HRESULT read_stream_data(nsChannelBSC *This, IStream *stream)
     DWORD read;
     nsresult nsres;
     HRESULT hres;
+
+    if(!This->response_processed) {
+        IWinInetHttpInfo *wininet_info;
+
+        This->response_processed = TRUE;
+        if(This->bsc.binding) {
+            hres = IBinding_QueryInterface(This->bsc.binding, &IID_IWinInetHttpInfo, (void**)&wininet_info);
+            if(SUCCEEDED(hres)) {
+                query_http_info(This, wininet_info);
+                IWinInetHttpInfo_Release(wininet_info);
+            }
+        }
+    }
 
     if(!This->nslistener) {
         BYTE buf[1024];
@@ -1601,6 +1641,7 @@ static HRESULT nsChannelBSC_on_response(BSCallback *bsc, DWORD response_code,
     nsChannelBSC *This = nsChannelBSC_from_BSCallback(bsc);
     HRESULT hres;
 
+    This->response_processed = TRUE;
     This->nschannel->response_status = response_code;
 
     if(response_headers) {
