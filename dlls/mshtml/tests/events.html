@@ -1,0 +1,52 @@
+<html>
+<head>
+<script>
+function ok(b,m) {
+    return external.ok(b, m);
+}
+
+function ondataavailable_test() {
+    var evobj, div, b = false;
+
+    div = document.getElementById("divid");
+
+    function ondataavailableHandler() {
+        b = true;
+        ok(window.event === evobj, "window.event != evobj");
+
+        ok(evobj.srcElement === div, "evobj.srcElement = " + evobj.srcElement);
+        ok(evobj.fromElement === null, "evobj.srcElement = " + evobj.fromElement);
+        ok(evobj.toElement === null, "evobj.srcElement = " + evobj.toElement);
+        ok(evobj.type === "dataavailable", "evobj.type = " + evobj.type);
+    }
+
+    div.attachEvent("ondataavailable", ondataavailableHandler);
+
+    evobj = document.createEventObject();
+    ok(evobj.srcElement === null, "evobj.srcElement = " + evobj.srcElement);
+    ok(evobj.fromElement === null, "evobj.srcElement = " + evobj.fromElement);
+    ok(evobj.toElement === null, "evobj.srcElement = " + evobj.toElement);
+    ok(evobj.type === "", "evobj.type = " + evobj.type);
+
+    div.fireEvent("ondataavailable", evobj);
+    ok(b, "ondataavailable handler not called?");
+
+    ok(evobj.srcElement === div, "evobj.srcElement = " + evobj.srcElement);
+    ok(evobj.type === "dataavailable", "evobj.type = " + evobj.type);
+}
+
+function runTests() {
+    try {
+        ondataavailable_test();
+    }catch(e) {
+        ok(false, "Got an exception: " + e.message);
+    }
+
+    external.reportSuccess();
+}
+</script>
+</head>
+<body onload="runTests()">
+<div id="divid"></div>
+</body>
+</html>

@@ -2745,6 +2745,7 @@ static void run_js_tests(void)
     run_js_script("jstest.html");
     run_js_script("exectest.html");
     run_js_script("vbtest.html");
+    run_js_script("events.html");
 }
 
 static BOOL init_registry(BOOL init)

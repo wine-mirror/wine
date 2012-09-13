@@ -24,3 +24,6 @@ jstest.html HTML "jstest.html"
 
 /* @makedep: vbtest.html */
 vbtest.html HTML "vbtest.html"
+
+/* @makedep: events.html */
+events.html HTML "events.html"
