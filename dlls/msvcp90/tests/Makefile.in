@@ -4,6 +4,7 @@ MODCFLAGS = @BUILTINFLAG@
 EXTRAINCL = -I$(top_srcdir)/include/msvcrt
 
 C_SRCS = \
+	ios.c \
 	misc.c \
 	string.c
 
