@@ -1888,7 +1888,8 @@ static int check_hw_message_filter( user_handle_t win, unsigned int msg_code,
 
 /* find a hardware message for the given queue */
 static int get_hardware_message( struct thread *thread, unsigned int hw_id, user_handle_t filter_win,
-                                 unsigned int first, unsigned int last, struct get_message_reply *reply )
+                                 unsigned int first, unsigned int last, unsigned int flags,
+                                 struct get_message_reply *reply )
 {
     struct thread_input *input = thread->queue->input;
     struct thread *win_thread;
@@ -1968,7 +1969,8 @@ static int get_hardware_message( struct thread *thread, unsigned int hw_id, user
 
         data->hw_id = msg->unique_id;
         set_reply_data( msg->data, msg->data_size );
-        if (msg->msg == WM_INPUT) release_hardware_message( current->queue, data->hw_id, 1, 0 );
+        if (msg->msg == WM_INPUT && (flags & PM_REMOVE))
+            release_hardware_message( current->queue, data->hw_id, 1, 0 );
         return 1;
     }
     /* nothing found, clear the hardware queue bits */
@@ -2405,7 +2407,7 @@ DECL_HANDLER(get_message)
     /* then check for any raw hardware message */
     if ((filter & QS_INPUT) &&
         filter_contains_hw_range( req->get_first, req->get_last ) &&
-        get_hardware_message( current, req->hw_id, get_win, req->get_first, req->get_last, reply ))
+        get_hardware_message( current, req->hw_id, get_win, req->get_first, req->get_last, req->flags, reply ))
         return;
 
     /* now check for WM_PAINT */
