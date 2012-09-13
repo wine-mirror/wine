@@ -2136,6 +2136,9 @@ DECL_HANDLER(set_window_pos)
         if (previous == win) flags |= SWP_NOZORDER;  /* nothing to do */
     }
 
+    /* windows that use UpdateLayeredWindow don't trigger repaints */
+    if ((win->ex_style & WS_EX_LAYERED) && !win->is_layered) flags |= SWP_NOREDRAW;
+
     /* window rectangle must be ordered properly */
     if (req->window.right < req->window.left || req->window.bottom < req->window.top)
     {
