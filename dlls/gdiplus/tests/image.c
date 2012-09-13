@@ -3808,19 +3808,53 @@ static void test_DrawImage_scale(void)
                                         0x80,0x80,0x80,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40 };
     static const BYTE image_250[24] = { 0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x80,0x80,0x80,
                                         0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x40,0x40,0x40 };
+    static const BYTE image_120_half[24] = { 0x40,0x40,0x40,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,
+                                        0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40 };
+    static const BYTE image_150_half[24] = { 0x40,0x40,0x40,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,
+                                        0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40 };
+    static const BYTE image_200_half[24] = { 0x40,0x40,0x40,0x40,0x40,0x40,0x80,0x80,0x80,0x80,0x80,0x80,
+                                        0x80,0x80,0x80,0x80,0x80,0x80,0x40,0x40,0x40,0x40,0x40,0x40 };
+    static const BYTE image_250_half[24] = { 0x40,0x40,0x40,0x40,0x40,0x40,0x80,0x80,0x80,0x80,0x80,0x80,
+                                        0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x40,0x40,0x40 };
     static const struct test_data
     {
         REAL scale_x;
+        PixelOffsetMode pixel_offset_mode;
         const BYTE *image;
+        BOOL todo;
     } td[] =
     {
-        { 0.8, image_080 },
-        { 1.0, image_100 },
-        { 1.2, image_120 },
-        { 1.5, image_150 },
-        { 1.8, image_180 },
-        { 2.0, image_200 },
-        { 2.5, image_250 }
+        { 0.8, PixelOffsetModeNone, image_080 }, /* 0 */
+        { 1.0, PixelOffsetModeNone, image_100 },
+        { 1.2, PixelOffsetModeNone, image_120 },
+        { 1.5, PixelOffsetModeNone, image_150 },
+        { 1.8, PixelOffsetModeNone, image_180 },
+        { 2.0, PixelOffsetModeNone, image_200 },
+        { 2.5, PixelOffsetModeNone, image_250 },
+
+        { 0.8, PixelOffsetModeHighSpeed, image_080 }, /* 7 */
+        { 1.0, PixelOffsetModeHighSpeed, image_100 },
+        { 1.2, PixelOffsetModeHighSpeed, image_120 },
+        { 1.5, PixelOffsetModeHighSpeed, image_150 },
+        { 1.8, PixelOffsetModeHighSpeed, image_180 },
+        { 2.0, PixelOffsetModeHighSpeed, image_200 },
+        { 2.5, PixelOffsetModeHighSpeed, image_250 },
+
+        { 0.8, PixelOffsetModeHalf, image_080 }, /* 14 */
+        { 1.0, PixelOffsetModeHalf, image_100 },
+        { 1.2, PixelOffsetModeHalf, image_120_half, TRUE },
+        { 1.5, PixelOffsetModeHalf, image_150_half, TRUE },
+        { 1.8, PixelOffsetModeHalf, image_180 },
+        { 2.0, PixelOffsetModeHalf, image_200_half, TRUE },
+        { 2.5, PixelOffsetModeHalf, image_250_half, TRUE },
+
+        { 0.8, PixelOffsetModeHighQuality, image_080 }, /* 21 */
+        { 1.0, PixelOffsetModeHighQuality, image_100 },
+        { 1.2, PixelOffsetModeHighQuality, image_120_half, TRUE },
+        { 1.5, PixelOffsetModeHighQuality, image_150_half, TRUE },
+        { 1.8, PixelOffsetModeHighQuality, image_180 },
+        { 2.0, PixelOffsetModeHighQuality, image_200_half, TRUE },
+        { 2.5, PixelOffsetModeHighQuality, image_250_half, TRUE },
     };
     BYTE src_2x1[6] = { 0x80,0x80,0x80,0x80,0x80,0x80 };
     BYTE dst_8x1[24];
@@ -3850,6 +3884,9 @@ static void test_DrawImage_scale(void)
 
     for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
     {
+        status = GdipSetPixelOffsetMode(graphics, td[i].pixel_offset_mode);
+        expect(Ok, status);
+
         status = GdipCreateMatrix2(td[i].scale_x, 0.0, 0.0, 1.0, 0.0, 0.0, &matrix);
         expect(Ok, status);
         status = GdipSetWorldTransform(graphics, matrix);
@@ -3861,6 +3898,9 @@ static void test_DrawImage_scale(void)
         expect(Ok, status);
 
         match = memcmp(dst_8x1, td[i].image, sizeof(dst_8x1)) == 0;
+        if (!match && td[i].todo)
+        todo_wine ok(match, "%d: data should match\n", i);
+        else
         ok(match, "%d: data should match\n", i);
         if (!match)
         {
