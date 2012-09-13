@@ -682,28 +682,28 @@ static void test_PropVariantCompare(void)
     str_b.u.bstrVal = SysAllocString(str_bW);
 
     res = PropVariantCompareEx(&empty, &empty, 0, 0);
-    todo_wine ok(res == 0, "res=%i\n", res);
+    ok(res == 0, "res=%i\n", res);
 
     res = PropVariantCompareEx(&empty, &null, 0, 0);
-    todo_wine ok(res == 0, "res=%i\n", res);
+    ok(res == 0, "res=%i\n", res);
 
     res = PropVariantCompareEx(&null, &emptyarray, 0, 0);
-    todo_wine ok(res == 0, "res=%i\n", res);
+    ok(res == 0, "res=%i\n", res);
 
     res = PropVariantCompareEx(&null, &i2_0, 0, 0);
     ok(res == -1, "res=%i\n", res);
 
     res = PropVariantCompareEx(&i2_0, &null, 0, 0);
-    todo_wine ok(res == 1, "res=%i\n", res);
+    ok(res == 1, "res=%i\n", res);
 
     res = PropVariantCompareEx(&null, &i2_0, 0, PVCF_TREATEMPTYASGREATERTHAN);
-    todo_wine ok(res == 1, "res=%i\n", res);
+    ok(res == 1, "res=%i\n", res);
 
     res = PropVariantCompareEx(&i2_0, &null, 0, PVCF_TREATEMPTYASGREATERTHAN);
     ok(res == -1, "res=%i\n", res);
 
     res = PropVariantCompareEx(&i2_2, &i2_0, 0, 0);
-    todo_wine ok(res == 1, "res=%i\n", res);
+    ok(res == 1, "res=%i\n", res);
 
     res = PropVariantCompareEx(&i2_0, &i2_2, 0, 0);
     ok(res == -1, "res=%i\n", res);
@@ -741,6 +741,9 @@ static void test_PropVariantCompare(void)
 
     res = PropVariantCompareEx(&str_02, &str_b, 0, 0);
     ok(res == -1, "res=%i\n", res);
+
+    res = PropVariantCompareEx(&str_2, &str_02, 0, 0);
+    ok(res == 1, "res=%i\n", res);
 
     res = PropVariantCompareEx(&i4_large, &str_b, 0, 0);
     todo_wine ok(res == -5 /* ??? */, "res=%i\n", res);
