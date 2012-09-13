@@ -41,6 +41,8 @@
 
 #include "svcctl.h"
 
+#include "advapi32_misc.h"
+
 #include "wine/exception.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(service);
@@ -92,7 +94,7 @@ extern HANDLE CDECL __wine_make_process_system(void);
  * NOTE: the caller of those functions is responsible for calling HeapFree
  * in order to release the memory allocated by those functions.
  */
-static inline LPWSTR SERV_dup( LPCSTR str )
+LPWSTR SERV_dup( LPCSTR str )
 {
     UINT len;
     LPWSTR wstr;

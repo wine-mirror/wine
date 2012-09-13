@@ -29,7 +29,6 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "winternl.h"
-#include "ntsecapi.h"
 #include "advapi32_misc.h"
 
 #include "wine/debug.h"

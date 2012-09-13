@@ -33,21 +33,10 @@
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
+#include "advapi32_misc.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(advapi);
 WINE_DECLARE_DEBUG_CHANNEL(eventlog);
-
-static inline LPWSTR SERV_dup( LPCSTR str )
-{
-    UINT len;
-    LPWSTR wstr;
-
-    if( !str )
-        return NULL;
-    len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
-    wstr = HeapAlloc( GetProcessHeap(), 0, len*sizeof (WCHAR) );
-    MultiByteToWideChar( CP_ACP, 0, str, -1, wstr, len );
-    return wstr;
-}
 
 /******************************************************************************
  * BackupEventLogA [ADVAPI32.@]

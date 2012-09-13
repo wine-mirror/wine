@@ -31,7 +31,6 @@
 #include "winsafer.h"
 #include "winternl.h"
 #include "winioctl.h"
-#include "ntsecapi.h"
 #include "accctrl.h"
 #include "sddl.h"
 #include "winsvc.h"
@@ -1935,17 +1934,10 @@ GetFileSecurityA( LPCSTR lpFileName,
                     PSECURITY_DESCRIPTOR pSecurityDescriptor,
                     DWORD nLength, LPDWORD lpnLengthNeeded )
 {
-    DWORD len;
     BOOL r;
-    LPWSTR name = NULL;
+    LPWSTR name;
 
-    if( lpFileName )
-    {
-        len = MultiByteToWideChar( CP_ACP, 0, lpFileName, -1, NULL, 0 );
-        name = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
-        MultiByteToWideChar( CP_ACP, 0, lpFileName, -1, name, len );
-    }
-
+    name = SERV_dup(lpFileName);
     r = GetFileSecurityW( name, RequestedInformation, pSecurityDescriptor,
                           nLength, lpnLengthNeeded );
     HeapFree( GetProcessHeap(), 0, name );
@@ -2005,17 +1997,13 @@ LookupAccountSidA(
 {
     DWORD len;
     BOOL r;
-    LPWSTR systemW = NULL;
+    LPWSTR systemW;
     LPWSTR accountW = NULL;
     LPWSTR domainW = NULL;
     DWORD accountSizeW = *accountSize;
     DWORD domainSizeW = *domainSize;
 
-    if (system) {
-        len = MultiByteToWideChar( CP_ACP, 0, system, -1, NULL, 0 );
-        systemW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
-        MultiByteToWideChar( CP_ACP, 0, system, -1, systemW, len );
-    }
+    systemW = SERV_dup(system);
     if (account)
         accountW = HeapAlloc( GetProcessHeap(), 0, accountSizeW * sizeof(WCHAR) );
     if (domain)
@@ -2237,17 +2225,10 @@ BOOL WINAPI SetFileSecurityA( LPCSTR lpFileName,
                                 SECURITY_INFORMATION RequestedInformation,
                                 PSECURITY_DESCRIPTOR pSecurityDescriptor)
 {
-    DWORD len;
     BOOL r;
-    LPWSTR name = NULL;
+    LPWSTR name;
 
-    if( lpFileName )
-    {
-        len = MultiByteToWideChar( CP_ACP, 0, lpFileName, -1, NULL, 0 );
-        name = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
-        MultiByteToWideChar( CP_ACP, 0, lpFileName, -1, name, len );
-    }
-
+    name = SERV_dup(lpFileName);
     r = SetFileSecurityW( name, RequestedInformation, pSecurityDescriptor );
     HeapFree( GetProcessHeap(), 0, name );
 
@@ -3486,24 +3467,11 @@ BOOL WINAPI SetAclInformation( PACL pAcl, LPVOID pAclInformation,
 
 static DWORD trustee_name_A_to_W(TRUSTEE_FORM form, char *trustee_nameA, WCHAR **ptrustee_nameW)
 {
-    DWORD len;
-
     switch (form)
     {
     case TRUSTEE_IS_NAME:
     {
-        WCHAR *wstr = NULL;
-
-        if (trustee_nameA)
-        {
-            len = MultiByteToWideChar( CP_ACP, 0, trustee_nameA, -1, NULL, 0 );
-            if (!(wstr = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
-                return ERROR_NOT_ENOUGH_MEMORY;
-
-            MultiByteToWideChar( CP_ACP, 0, trustee_nameA, -1, wstr, len );
-        }
-
-        *ptrustee_nameW = wstr;
+        *ptrustee_nameW = SERV_dup(trustee_nameA);
         return ERROR_SUCCESS;
     }
     case TRUSTEE_IS_OBJECTS_AND_NAME:
@@ -3518,42 +3486,13 @@ static DWORD trustee_name_A_to_W(TRUSTEE_FORM form, char *trustee_nameA, WCHAR *
 
             objW->ObjectsPresent = objA->ObjectsPresent;
             objW->ObjectType = objA->ObjectType;
-            objW->ObjectTypeName = NULL;
-            objW->InheritedObjectTypeName = NULL;
-            objW->ptstrName = NULL;
-
-            if (objA->ObjectTypeName)
-            {
-                len = MultiByteToWideChar( CP_ACP, 0, objA->ObjectTypeName, -1, NULL, 0 );
-                if (!(objW->ObjectTypeName = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
-                    goto error;
-                MultiByteToWideChar( CP_ACP, 0, objA->ObjectTypeName, -1, objW->ObjectTypeName, len );
-            }
-
-            if (objA->InheritedObjectTypeName)
-            {
-                len = MultiByteToWideChar( CP_ACP, 0, objA->InheritedObjectTypeName, -1, NULL, 0 );
-                if (!(objW->InheritedObjectTypeName = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
-                    goto error;
-                MultiByteToWideChar( CP_ACP, 0, objA->InheritedObjectTypeName, -1, objW->InheritedObjectTypeName, len );
-            }
-
-            if (objA->ptstrName)
-            {
-                len = MultiByteToWideChar( CP_ACP, 0, objA->ptstrName, -1, NULL, 0 );
-                if (!(objW->ptstrName = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
-                    goto error;
-                MultiByteToWideChar( CP_ACP, 0, objA->ptstrName, -1, objW->ptstrName, len );
-            }
+            objW->ObjectTypeName = SERV_dup(objA->ObjectTypeName);
+            objW->InheritedObjectTypeName = SERV_dup(objA->InheritedObjectTypeName);
+            objW->ptstrName = SERV_dup(objA->ptstrName);
         }
 
         *ptrustee_nameW = (WCHAR *)objW;
         return ERROR_SUCCESS;
-error:
-        HeapFree( GetProcessHeap(), 0, objW->InheritedObjectTypeName );
-        HeapFree( GetProcessHeap(), 0, objW->ObjectTypeName );
-        HeapFree( GetProcessHeap(), 0, objW );
-        return ERROR_NOT_ENOUGH_MEMORY;
     }
     /* These forms do not require conversion. */
     case TRUSTEE_IS_SID:
@@ -3920,20 +3859,13 @@ DWORD WINAPI SetNamedSecurityInfoA(LPSTR pObjectName,
         SE_OBJECT_TYPE ObjectType, SECURITY_INFORMATION SecurityInfo,
         PSID psidOwner, PSID psidGroup, PACL pDacl, PACL pSacl)
 {
-    DWORD len;
-    LPWSTR wstr = NULL;
+    LPWSTR wstr;
     DWORD r;
 
     TRACE("%s %d %d %p %p %p %p\n", debugstr_a(pObjectName), ObjectType,
            SecurityInfo, psidOwner, psidGroup, pDacl, pSacl);
 
-    if( pObjectName )
-    {
-        len = MultiByteToWideChar( CP_ACP, 0, pObjectName, -1, NULL, 0 );
-        wstr = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR));
-        MultiByteToWideChar( CP_ACP, 0, pObjectName, -1, wstr, len );
-    }
-
+    wstr = SERV_dup(pObjectName);
     r = SetNamedSecurityInfoW( wstr, ObjectType, SecurityInfo, psidOwner,
                            psidGroup, pDacl, pSacl );
 
@@ -4509,22 +4441,17 @@ BOOL WINAPI ConvertStringSecurityDescriptorToSecurityDescriptorA(
         PSECURITY_DESCRIPTOR* SecurityDescriptor,
         PULONG SecurityDescriptorSize)
 {
-    UINT len;
-    BOOL ret = FALSE;
+    BOOL ret;
     LPWSTR StringSecurityDescriptorW;
 
-    len = MultiByteToWideChar(CP_ACP, 0, StringSecurityDescriptor, -1, NULL, 0);
-    StringSecurityDescriptorW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    if(!StringSecurityDescriptor)
+        return FALSE;
 
-    if (StringSecurityDescriptorW)
-    {
-        MultiByteToWideChar(CP_ACP, 0, StringSecurityDescriptor, -1, StringSecurityDescriptorW, len);
-
-        ret = ConvertStringSecurityDescriptorToSecurityDescriptorW(StringSecurityDescriptorW,
-                                                                   StringSDRevision, SecurityDescriptor,
-                                                                   SecurityDescriptorSize);
-        HeapFree(GetProcessHeap(), 0, StringSecurityDescriptorW);
-    }
+    StringSecurityDescriptorW = SERV_dup(StringSecurityDescriptor);
+    ret = ConvertStringSecurityDescriptorToSecurityDescriptorW(StringSecurityDescriptorW,
+                                                               StringSDRevision, SecurityDescriptor,
+                                                               SecurityDescriptorSize);
+    HeapFree(GetProcessHeap(), 0, StringSecurityDescriptorW);
 
     return ret;
 }
@@ -5021,11 +4948,7 @@ BOOL WINAPI ConvertStringSidToSidA(LPCSTR StringSid, PSID* Sid)
         SetLastError(ERROR_INVALID_PARAMETER);
     else
     {
-        UINT len = MultiByteToWideChar(CP_ACP, 0, StringSid, -1, NULL, 0);
-        LPWSTR wStringSid = HeapAlloc(GetProcessHeap(), 0,
-         len * sizeof(WCHAR));
-
-        MultiByteToWideChar(CP_ACP, 0, StringSid, -1, wStringSid, len);
+        WCHAR *wStringSid = SERV_dup(StringSid);
         bret = ConvertStringSidToSidW(wStringSid, Sid);
         HeapFree(GetProcessHeap(), 0, wStringSid);
     }
@@ -5417,20 +5340,13 @@ DWORD WINAPI GetNamedSecurityInfoA(LPSTR pObjectName,
         PSID* ppsidOwner, PSID* ppsidGroup, PACL* ppDacl, PACL* ppSacl,
         PSECURITY_DESCRIPTOR* ppSecurityDescriptor)
 {
-    DWORD len;
-    LPWSTR wstr = NULL;
+    LPWSTR wstr;
     DWORD r;
 
     TRACE("%s %d %d %p %p %p %p %p\n", pObjectName, ObjectType, SecurityInfo,
         ppsidOwner, ppsidGroup, ppDacl, ppSacl, ppSecurityDescriptor);
 
-    if( pObjectName )
-    {
-        len = MultiByteToWideChar( CP_ACP, 0, pObjectName, -1, NULL, 0 );
-        wstr = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR));
-        MultiByteToWideChar( CP_ACP, 0, pObjectName, -1, wstr, len );
-    }
-
+    wstr = SERV_dup(pObjectName);
     r = GetNamedSecurityInfoW( wstr, ObjectType, SecurityInfo, ppsidOwner,
                            ppsidGroup, ppDacl, ppSacl, ppSecurityDescriptor );
 

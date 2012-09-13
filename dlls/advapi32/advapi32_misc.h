@@ -20,11 +20,14 @@
 #ifndef __WINE_ADVAPI32MISC_H
 #define __WINE_ADVAPI32MISC_H
 
+#include "ntsecapi.h"
+
 const char * debugstr_sid(PSID sid) DECLSPEC_HIDDEN;
 BOOL ADVAPI_IsLocalComputer(LPCWSTR ServerName) DECLSPEC_HIDDEN;
 BOOL ADVAPI_GetComputerSid(PSID sid) DECLSPEC_HIDDEN;
 
 BOOL lookup_local_wellknown_name(const LSA_UNICODE_STRING*, PSID, LPDWORD, LPWSTR, LPDWORD, PSID_NAME_USE, BOOL*) DECLSPEC_HIDDEN;
 BOOL lookup_local_user_name(const LSA_UNICODE_STRING*, PSID, LPDWORD, LPWSTR, LPDWORD, PSID_NAME_USE, BOOL*) DECLSPEC_HIDDEN;
+WCHAR *SERV_dup(const char *str);
 
 #endif /* __WINE_ADVAPI32MISC_H */
