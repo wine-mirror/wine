@@ -803,7 +803,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateDepthStencilView(ID3D10Devic
         return E_OUTOFMEMORY;
     }
 
-    if (FAILED(hr = d3d10_depthstencil_view_init(object, resource)))
+    if (FAILED(hr = d3d10_depthstencil_view_init(object, resource, desc)))
     {
         WARN("Failed to initialize depthstencil view, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
