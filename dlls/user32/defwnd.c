@@ -719,6 +719,16 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
         SendMessageW( GetParent(hwnd), msg, wParam, lParam );
         break;
 
+    case WM_STYLECHANGED:
+        if (wParam == GWL_STYLE && (GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYERED))
+        {
+            STYLESTRUCT *style = (STYLESTRUCT *)lParam;
+            if ((style->styleOld ^ style->styleNew) & (WS_CAPTION|WS_THICKFRAME|WS_VSCROLL|WS_HSCROLL))
+                SetWindowPos( hwnd, 0, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOACTIVATE | SWP_NOZORDER |
+                              SWP_NOSIZE | SWP_NOMOVE | SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE );
+        }
+        break;
+
     case WM_APPCOMMAND:
         {
             HWND parent = GetParent(hwnd);
