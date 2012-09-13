@@ -2260,25 +2260,11 @@ struct wined3d_buffer * CDECL wined3d_device_get_index_buffer(const struct wined
     return device->stateBlock->state.index_buffer;
 }
 
-/* Method to offer d3d9 a simple way to set the base vertex index without messing with the index buffer */
-HRESULT CDECL wined3d_device_set_base_vertex_index(struct wined3d_device *device, INT base_index)
+void CDECL wined3d_device_set_base_vertex_index(struct wined3d_device *device, INT base_index)
 {
     TRACE("device %p, base_index %d.\n", device, base_index);
 
-    if (device->updateStateBlock->state.base_vertex_index == base_index)
-    {
-        TRACE("Application is setting the old value over, nothing to do\n");
-        return WINED3D_OK;
-    }
-
     device->updateStateBlock->state.base_vertex_index = base_index;
-
-    if (device->isRecordingState)
-    {
-        TRACE("Recording... not performing anything\n");
-        return WINED3D_OK;
-    }
-    return WINED3D_OK;
 }
 
 INT CDECL wined3d_device_get_base_vertex_index(const struct wined3d_device *device)
