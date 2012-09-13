@@ -88,6 +88,8 @@ DEFINE_EXPECT(puredisp_noprop_d);
 DEFINE_EXPECT(testobj_delete);
 DEFINE_EXPECT(testobj_value);
 DEFINE_EXPECT(testobj_prop_d);
+DEFINE_EXPECT(testobj_withprop_d);
+DEFINE_EXPECT(testobj_withprop_i);
 DEFINE_EXPECT(testobj_noprop_d);
 DEFINE_EXPECT(testobj_onlydispid_d);
 DEFINE_EXPECT(testobj_onlydispid_i);
@@ -124,6 +126,7 @@ DEFINE_EXPECT(DeleteMemberByDispID);
 
 #define DISPID_TESTOBJ_PROP         0x2000
 #define DISPID_TESTOBJ_ONLYDISPID   0x2001
+#define DISPID_TESTOBJ_WITHPROP     0x2002
 
 #define JS_E_INVALID_CHAR 0x800a03f6
 
@@ -297,6 +300,12 @@ static HRESULT WINAPI testObj_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD
         *pid = DISPID_TESTOBJ_PROP;
         return S_OK;
     }
+    if(!strcmp_wa(bstrName, "withProp")) {
+        CHECK_EXPECT(testobj_withprop_d);
+        test_grfdex(grfdex, fdexNameCaseSensitive|fdexNameImplicit);
+        *pid = DISPID_TESTOBJ_WITHPROP;
+        return S_OK;
+    }
     if(!strcmp_wa(bstrName, "noprop")) {
         CHECK_EXPECT(testobj_noprop_d);
         test_grfdex(grfdex, fdexNameCaseSensitive);
@@ -360,6 +369,23 @@ static HRESULT WINAPI testObj_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid,
         ok(V_VT(pvarRes) ==  VT_EMPTY, "V_VT(pvarRes) = %d\n", V_VT(pvarRes));
         ok(pei != NULL, "pei == NULL\n");
         return DISP_E_MEMBERNOTFOUND;
+     case DISPID_TESTOBJ_WITHPROP:
+        CHECK_EXPECT(testobj_withprop_i);
+
+        ok(wFlags == INVOKE_PROPERTYGET, "wFlags = %x\n", wFlags);
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(!pdp->rgvarg, "rgvarg != NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(!pdp->cArgs, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pvarRes != NULL, "pvarRes == NULL\n");
+        ok(V_VT(pvarRes) ==  VT_EMPTY, "V_VT(pvarRes) = %d\n", V_VT(pvarRes));
+        ok(pei != NULL, "pei == NULL\n");
+
+        V_VT(pvarRes) = VT_I4;
+        V_I4(pvarRes) = 1;
+
+        return S_OK;
     }
 
     ok(0, "unexpected call %x\n", id);
@@ -1753,6 +1779,12 @@ static BOOL run_tests(void)
                    "    ok(getVT(s) === 'VT_I4', 'getVT(s) = ' + getVT(s));"
                    "});");
     CHECK_CALLED(global_testargtypes_i);
+
+    SET_EXPECT(testobj_withprop_d);
+    SET_EXPECT(testobj_withprop_i);
+    parse_script_a("var t = (function () { with(testObj) { return withProp; }})(); ok(t === 1, 't = ' + t);");
+    CHECK_CALLED(testobj_withprop_d);
+    CHECK_CALLED(testobj_withprop_i);
 
     run_from_res("lang.js");
     run_from_res("api.js");

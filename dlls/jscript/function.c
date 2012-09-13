@@ -182,7 +182,7 @@ static HRESULT invoke_source(script_ctx_t *ctx, FunctionInstance *function, IDis
         return hres;
     }
 
-    hres = scope_push(function->scope_chain, var_disp, &scope);
+    hres = scope_push(function->scope_chain, var_disp, to_disp(var_disp), &scope);
     if(SUCCEEDED(hres)) {
         hres = create_exec_ctx(ctx, this_obj, var_disp, scope, FALSE, &exec_ctx);
         scope_release(scope);

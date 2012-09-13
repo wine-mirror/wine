@@ -203,11 +203,12 @@ static inline void *parser_alloc_tmp(parser_ctx_t *ctx, DWORD size)
 
 typedef struct _scope_chain_t {
     LONG ref;
-    jsdisp_t *obj;
+    jsdisp_t *jsobj;
+    IDispatch *obj;
     struct _scope_chain_t *next;
 } scope_chain_t;
 
-HRESULT scope_push(scope_chain_t*,jsdisp_t*,scope_chain_t**) DECLSPEC_HIDDEN;
+HRESULT scope_push(scope_chain_t*,jsdisp_t*,IDispatch*,scope_chain_t**) DECLSPEC_HIDDEN;
 void scope_release(scope_chain_t*) DECLSPEC_HIDDEN;
 
 static inline void scope_addref(scope_chain_t *scope)

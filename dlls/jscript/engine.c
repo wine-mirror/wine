@@ -268,7 +268,7 @@ static void exprval_set_idref(exprval_t *val, IDispatch *disp, DISPID id)
         IDispatch_AddRef(disp);
 }
 
-HRESULT scope_push(scope_chain_t *scope, jsdisp_t *obj, scope_chain_t **ret)
+HRESULT scope_push(scope_chain_t *scope, jsdisp_t *jsobj, IDispatch *obj, scope_chain_t **ret)
 {
     scope_chain_t *new_scope;
 
@@ -278,7 +278,8 @@ HRESULT scope_push(scope_chain_t *scope, jsdisp_t *obj, scope_chain_t **ret)
 
     new_scope->ref = 1;
 
-    jsdisp_addref(obj);
+    IDispatch_AddRef(obj);
+    new_scope->jsobj = jsobj;
     new_scope->obj = obj;
 
     if(scope) {
@@ -309,7 +310,7 @@ void scope_release(scope_chain_t *scope)
     if(scope->next)
         scope_release(scope->next);
 
-    jsdisp_release(scope->obj);
+    IDispatch_Release(scope->obj);
     heap_free(scope);
 }
 
@@ -511,9 +512,12 @@ static HRESULT identifier_eval(script_ctx_t *ctx, BSTR identifier, exprval_t *re
     TRACE("%s\n", debugstr_w(identifier));
 
     for(scope = ctx->exec_ctx->scope_chain; scope; scope = scope->next) {
-        hres = jsdisp_get_id(scope->obj, identifier, 0, &id);
+        if(scope->jsobj)
+            hres = jsdisp_get_id(scope->jsobj, identifier, fdexNameImplicit, &id);
+        else
+            hres = disp_get_id(ctx, scope->obj, identifier, fdexNameImplicit, &id);
         if(SUCCEEDED(hres)) {
-            exprval_set_idref(ret, to_disp(scope->obj), id);
+            exprval_set_idref(ret, scope->obj, id);
             return S_OK;
         }
     }
@@ -668,7 +672,6 @@ static HRESULT interp_forin(exec_ctx_t *ctx)
 static HRESULT interp_push_scope(exec_ctx_t *ctx)
 {
     IDispatch *disp;
-    jsdisp_t *obj;
     VARIANT *v;
     HRESULT hres;
 
@@ -680,15 +683,8 @@ static HRESULT interp_push_scope(exec_ctx_t *ctx)
     if(FAILED(hres))
         return hres;
 
-    obj = to_jsdisp(disp);
-    if(!obj) {
-        IDispatch_Release(disp);
-        FIXME("disp is not jsdisp\n");
-        return E_NOTIMPL;
-    }
-
-    hres = scope_push(ctx->scope_chain, obj, &ctx->scope_chain);
-    jsdisp_release(obj);
+    hres = scope_push(ctx->scope_chain, to_jsdisp(disp), disp, &ctx->scope_chain);
+    IDispatch_Release(disp);
     return hres;
 }
 
@@ -2509,7 +2505,7 @@ static HRESULT unwind_exception(exec_ctx_t *ctx)
         if(FAILED(hres))
             return hres;
 
-        hres = scope_push(ctx->scope_chain, scope_obj, &ctx->scope_chain);
+        hres = scope_push(ctx->scope_chain, scope_obj, to_disp(scope_obj), &ctx->scope_chain);
         jsdisp_release(scope_obj);
     }else {
         VARIANT v;
