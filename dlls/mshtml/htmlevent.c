@@ -59,6 +59,9 @@ static const WCHAR onclickW[] = {'o','n','c','l','i','c','k',0};
 static const WCHAR contextmenuW[] = {'c','o','n','t','e','x','t','m','e','n','u',0};
 static const WCHAR oncontextmenuW[] = {'o','n','c','o','n','t','e','x','t','m','e','n','u',0};
 
+static const WCHAR dataavailableW[] = {'d','a','t','a','a','v','a','i','l','a','b','l','e',0};
+static const WCHAR ondataavailableW[] = {'o','n','d','a','t','a','a','v','a','i','l','a','b','l','e',0};
+
 static const WCHAR dblclickW[] = {'d','b','l','c','l','i','c','k',0};
 static const WCHAR ondblclickW[] = {'o','n','d','b','l','c','l','i','c','k',0};
 
@@ -166,6 +169,8 @@ static const event_info_t event_info[] = {
         EVENT_DEFAULTLISTENER|EVENT_BUBBLE|EVENT_CANCELABLE|EVENT_HASDEFAULTHANDLERS},
     {contextmenuW,       oncontextmenuW,       EVENTT_MOUSE,  DISPID_EVMETH_ONCONTEXTMENU,
         EVENT_BUBBLE|EVENT_CANCELABLE},
+    {dataavailableW,     ondataavailableW,     EVENTT_NONE,   DISPID_EVMETH_ONDATAAVAILABLE,
+        EVENT_BUBBLE},
     {dblclickW,          ondblclickW,          EVENTT_MOUSE,  DISPID_EVMETH_ONDBLCLICK,
         EVENT_DEFAULTLISTENER|EVENT_BUBBLE|EVENT_CANCELABLE},
     {dragW,              ondragW,              EVENTT_MOUSE,  DISPID_EVMETH_ONDRAG,

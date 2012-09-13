@@ -1358,15 +1358,19 @@ static HRESULT WINAPI HTMLElement_get_ondatasetchanged(IHTMLElement *iface, VARI
 static HRESULT WINAPI HTMLElement_put_ondataavailable(IHTMLElement *iface, VARIANT v)
 {
     HTMLElement *This = impl_from_IHTMLElement(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+
+    FIXME("(%p)->(%s) semi-stub\n", This, debugstr_variant(&v));
+
+    return set_node_event(&This->node, EVENTID_DATAAVAILABLE, &v);
 }
 
 static HRESULT WINAPI HTMLElement_get_ondataavailable(IHTMLElement *iface, VARIANT *p)
 {
     HTMLElement *This = impl_from_IHTMLElement(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return get_node_event(&This->node, EVENTID_DATAAVAILABLE, p);
 }
 
 static HRESULT WINAPI HTMLElement_put_ondatasetcomplete(IHTMLElement *iface, VARIANT v)
