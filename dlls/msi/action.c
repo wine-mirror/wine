@@ -812,7 +812,7 @@ INSTALLSTATE msi_get_component_action( MSIPACKAGE *package, MSICOMPONENT *comp )
     if (comp->num_clients > 0 && comp->ActionRequest == INSTALLSTATE_ABSENT)
     {
         TRACE("%s has %u clients left\n", debugstr_w(comp->Component), comp->num_clients);
-        return comp->Installed;
+        return INSTALLSTATE_UNKNOWN;
     }
     return comp->ActionRequest;
 }
