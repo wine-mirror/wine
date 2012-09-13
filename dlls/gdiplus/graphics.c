@@ -836,7 +836,7 @@ static ARGB sample_bitmap_pixel(GDIPCONST GpRect *src_rect, LPBYTE bits, UINT wi
 
 static ARGB resample_bitmap_pixel(GDIPCONST GpRect *src_rect, LPBYTE bits, UINT width,
     UINT height, GpPointF *point, GDIPCONST GpImageAttributes *attributes,
-    InterpolationMode interpolation)
+    InterpolationMode interpolation, PixelOffsetMode offset_mode)
 {
     static int fixme;
 
@@ -881,8 +881,25 @@ static ARGB resample_bitmap_pixel(GDIPCONST GpRect *src_rect, LPBYTE bits, UINT 
         return blend_colors(top, bottom, point->Y - topyf);
     }
     case InterpolationModeNearestNeighbor:
+    {
+        FLOAT pixel_offset;
+        switch (offset_mode)
+        {
+        default:
+        case PixelOffsetModeNone:
+        case PixelOffsetModeHighSpeed:
+            pixel_offset = 0.5;
+            break;
+
+        case PixelOffsetModeHalf:
+        case PixelOffsetModeHighQuality:
+            pixel_offset = 0.0;
+            break;
+        }
         return sample_bitmap_pixel(src_rect, bits, width, height,
-            gdip_round(point->X), gdip_round(point->Y), attributes);
+            floorf(point->X + pixel_offset), floorf(point->Y + pixel_offset), attributes);
+    }
+
     }
 }
 
@@ -1176,7 +1193,8 @@ static GpStatus brush_fill_pixels(GpGraphics *graphics, GpBrush *brush,
 
                     argb_pixels[x + y*cdwStride] = resample_bitmap_pixel(
                         &src_area, fill->bitmap_bits, bitmap->width, bitmap->height,
-                        &point, fill->imageattributes, graphics->interpolation);
+                        &point, fill->imageattributes, graphics->interpolation,
+                        graphics->pixeloffset);
                 }
             }
         }
@@ -3122,6 +3140,7 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
             LPBYTE src_data, dst_data;
             BitmapData lockeddata;
             InterpolationMode interpolation = graphics->interpolation;
+            PixelOffsetMode offset_mode = graphics->pixeloffset;
             GpPointF dst_to_src_points[3] = {{0.0, 0.0}, {1.0, 0.0}, {0.0, 1.0}};
             REAL x_dx, x_dy, y_dx, y_dy;
             static const GpImageAttributes defaultImageAttributes = {WrapModeClamp, 0, FALSE};
@@ -3228,7 +3247,8 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
                     dst_color = (ARGB*)(dst_data + dst_stride * (y - dst_area.top) + sizeof(ARGB) * (x - dst_area.left));
 
                     if (src_pointf.X >= srcx && src_pointf.X < srcx + srcwidth && src_pointf.Y >= srcy && src_pointf.Y < srcy+srcheight)
-                        *dst_color = resample_bitmap_pixel(&src_area, src_data, bitmap->width, bitmap->height, &src_pointf, imageAttributes, interpolation);
+                        *dst_color = resample_bitmap_pixel(&src_area, src_data, bitmap->width, bitmap->height, &src_pointf,
+                                                           imageAttributes, interpolation, offset_mode);
                     else
                         *dst_color = 0;
                 }
