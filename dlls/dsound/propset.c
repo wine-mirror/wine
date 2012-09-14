@@ -41,12 +41,6 @@
 #include "propkey.h"
 #include "devpkey.h"
 
-#ifdef NONAMELESSSTRUCT
-# define S(x) (x).s
-#else
-# define S(x) (x)
-#endif
-
 WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 
 static WCHAR wInterface[] = { 'I','n','t','e','r','f','a','c','e',0 };
