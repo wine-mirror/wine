@@ -1763,10 +1763,10 @@ void CDECL wined3d_device_get_transform(const struct wined3d_device *device,
     *matrix = device->stateBlock->state.transforms[state];
 }
 
-HRESULT CDECL wined3d_device_multiply_transform(struct wined3d_device *device,
+void CDECL wined3d_device_multiply_transform(struct wined3d_device *device,
         enum wined3d_transform_state state, const struct wined3d_matrix *matrix)
 {
-    const struct wined3d_matrix *mat = NULL;
+    const struct wined3d_matrix *mat;
     struct wined3d_matrix temp;
 
     TRACE("device %p, state %s, matrix %p.\n", device, debug_d3dtstype(state), matrix);
@@ -1778,7 +1778,7 @@ HRESULT CDECL wined3d_device_multiply_transform(struct wined3d_device *device,
     if (state > HIGHEST_TRANSFORMSTATE)
     {
         WARN("Unhandled transform state %#x.\n", state);
-        return WINED3D_OK;
+        return;
     }
 
     mat = &device->updateStateBlock->state.transforms[state];
@@ -1786,8 +1786,6 @@ HRESULT CDECL wined3d_device_multiply_transform(struct wined3d_device *device,
 
     /* Apply change via set transform - will reapply to eg. lights this way. */
     wined3d_device_set_transform(device, state, &temp);
-
-    return WINED3D_OK;
 }
 
 /* Note lights are real special cases. Although the device caps state only

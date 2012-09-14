@@ -3299,7 +3299,6 @@ static HRESULT d3d_device7_MultiplyTransform(IDirect3DDevice7 *iface,
 {
     struct d3d_device *device = impl_from_IDirect3DDevice7(iface);
     enum wined3d_transform_state wined3d_state;
-    HRESULT hr;
 
     TRACE("iface %p, state %#x, matrix %p.\n", iface, state, matrix);
 
@@ -3323,11 +3322,11 @@ static HRESULT d3d_device7_MultiplyTransform(IDirect3DDevice7 *iface,
 
     /* Note: D3DMATRIX is compatible with struct wined3d_matrix. */
     wined3d_mutex_lock();
-    hr = wined3d_device_multiply_transform(device->wined3d_device,
+    wined3d_device_multiply_transform(device->wined3d_device,
             wined3d_state, (struct wined3d_matrix *)matrix);
     wined3d_mutex_unlock();
 
-    return hr;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI d3d_device7_MultiplyTransform_FPUSetup(IDirect3DDevice7 *iface,
