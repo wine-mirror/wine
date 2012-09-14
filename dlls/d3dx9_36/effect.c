@@ -853,7 +853,10 @@ static void get_vector(struct d3dx_parameter *param, D3DXVECTOR4 *vector)
 
     for (i = 0; i < 4; ++i)
     {
-        ((FLOAT *)vector)[i] = i < param->columns ? get_float(param->type, (DWORD *)param->data + i) : 0.0f;
+        if (i < param->columns)
+            set_number((FLOAT *)vector + i, D3DXPT_FLOAT, (DWORD *)param->data + i, param->type);
+        else
+            ((FLOAT *)vector)[i] = 0.0f;
     }
 }
 
@@ -876,7 +879,7 @@ static void get_matrix(struct d3dx_parameter *param, D3DXMATRIX *matrix)
         for (k = 0; k < 4; ++k)
         {
             if ((i < param->rows) && (k < param->columns))
-                matrix->u.m[i][k] = get_float(param->type, (FLOAT *)param->data + i * param->columns + k);
+                set_number((FLOAT *)&matrix->u.m[i][k], D3DXPT_FLOAT, (DWORD *)param->data + i * param->columns + k, param->type);
             else
                 matrix->u.m[i][k] = 0.0f;
         }
@@ -1667,7 +1670,7 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_GetBool(ID3DXBaseEffect *iface, D3DXHA
 
     if (b && param && !param->element_count && param->rows == 1 && param->columns == 1)
     {
-        *b = get_bool(param->data);
+        set_number(b, D3DXPT_BOOL, param->data, param->type);
         TRACE("Returning %s\n", *b ? "TRUE" : "FALSE");
         return D3D_OK;
     }
@@ -1733,7 +1736,7 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_GetBoolArray(ID3DXBaseEffect *iface, D
 
         for (i = 0; i < size; ++i)
         {
-            b[i] = get_bool((DWORD *)param->data + i);
+            set_number(&b[i], D3DXPT_BOOL, (DWORD *)param->data + i, param->type);
         }
         return D3D_OK;
     }
@@ -1794,7 +1797,7 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_GetInt(ID3DXBaseEffect *iface, D3DXHAN
     {
         if (param->columns == 1 && param->rows == 1)
         {
-            *n = get_int(param->type, param->data);
+            set_number(n, D3DXPT_INT, param->data, param->type);
             TRACE("Returning %i\n", *n);
             return D3D_OK;
         }
@@ -1879,7 +1882,7 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_GetIntArray(ID3DXBaseEffect *iface, D3
 
         for (i = 0; i < size; ++i)
         {
-            n[i] = get_int(param->type, (DWORD *)param->data + i);
+            set_number(&n[i], D3DXPT_INT, (DWORD *)param->data + i, param->type);
         }
         return D3D_OK;
     }
@@ -1916,7 +1919,7 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_GetFloat(ID3DXBaseEffect *iface, D3DXH
 
     if (f && param && !param->element_count && param->columns == 1 && param->rows == 1)
     {
-        *f = get_float(param->type, (DWORD *)param->data);
+        set_number(f, D3DXPT_FLOAT, (DWORD *)param->data, param->type);
         TRACE("Returning %f\n", *f);
         return D3D_OK;
     }
@@ -1981,7 +1984,7 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_GetFloatArray(ID3DXBaseEffect *iface, 
 
         for (i = 0; i < size; ++i)
         {
-            f[i] = get_float(param->type, (DWORD *)param->data + i);
+            set_number(&f[i], D3DXPT_FLOAT, (DWORD *)param->data + i, param->type);
         }
         return D3D_OK;
     }

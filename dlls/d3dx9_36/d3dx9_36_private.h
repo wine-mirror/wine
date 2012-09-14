@@ -94,9 +94,6 @@ const char *debug_d3dxparameter_type(D3DXPARAMETER_TYPE t) DECLSPEC_HIDDEN;
 const char *debug_d3dxparameter_registerset(D3DXREGISTER_SET r) DECLSPEC_HIDDEN;
 
 /* parameter type conversion helpers */
-INT get_int(D3DXPARAMETER_TYPE type, LPCVOID data) DECLSPEC_HIDDEN;
-FLOAT get_float(D3DXPARAMETER_TYPE type, LPCVOID data) DECLSPEC_HIDDEN;
-BOOL get_bool(LPCVOID data) DECLSPEC_HIDDEN;
 void set_number(LPVOID outdata, D3DXPARAMETER_TYPE outtype, LPCVOID indata, D3DXPARAMETER_TYPE intype) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_D3DX9_36_PRIVATE_H */

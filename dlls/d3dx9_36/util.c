@@ -271,12 +271,12 @@ const char *debug_d3dxparameter_registerset(D3DXREGISTER_SET r)
 #undef WINE_D3DX_TO_STR
 
 /* parameter type conversion helpers */
-BOOL get_bool(LPCVOID data)
+static BOOL get_bool(LPCVOID data)
 {
     return (*(DWORD *)data) != 0;
 }
 
-INT get_int(D3DXPARAMETER_TYPE type, LPCVOID data)
+static INT get_int(D3DXPARAMETER_TYPE type, LPCVOID data)
 {
     INT i;
 
@@ -303,7 +303,7 @@ INT get_int(D3DXPARAMETER_TYPE type, LPCVOID data)
     return i;
 }
 
-FLOAT get_float(D3DXPARAMETER_TYPE type, LPCVOID data)
+static FLOAT get_float(D3DXPARAMETER_TYPE type, LPCVOID data)
 {
     FLOAT f;
 
