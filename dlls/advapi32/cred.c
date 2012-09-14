@@ -273,6 +273,7 @@ static DWORD mac_read_credential_from_item(SecKeychainItemRef item, BOOL require
     if (!user_name_present)
     {
         WARN("no kSecAccountItemAttr for item\n");
+        SecKeychainItemFreeAttributesAndData(attr_list, cred_blob);
         return ERROR_NOT_FOUND;
     }
 
