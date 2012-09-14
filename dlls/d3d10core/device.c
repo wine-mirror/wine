@@ -746,7 +746,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateShaderResourceView(ID3D10Dev
         return E_OUTOFMEMORY;
     }
 
-    if (FAILED(hr = d3d10_shader_resource_view_init(object, resource)))
+    if (FAILED(hr = d3d10_shader_resource_view_init(object, resource, desc)))
     {
         WARN("Failed to initialize shader resource view, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
