@@ -1662,7 +1662,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
     /* process text if present */
     if (lpitem->text)
     {
-	register int i;
+	int i;
 	HFONT hfontOld = 0;
 
 	UINT uFormat = (menuBar) ?
