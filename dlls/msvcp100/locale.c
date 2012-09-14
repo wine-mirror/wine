@@ -2935,7 +2935,7 @@ codecvt_wchar* __thiscall codecvt_wchar_vector_dtor(codecvt_wchar *this, unsigne
 
 /* ?_Getcat@?$codecvt@_WDH@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
 /* ?_Getcat@?$codecvt@_WDH@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
-unsigned int __cdecl codecvt_wchar__Getcat(const locale_facet **facet, const locale *loc)
+MSVCP_size_t __cdecl codecvt_wchar__Getcat(const locale_facet **facet, const locale *loc)
 {
     TRACE("(%p %p)\n", facet, loc);
 
@@ -2987,7 +2987,7 @@ codecvt_wchar* codecvt_wchar_use_facet(const locale *loc)
 
 /* ?_Getcat@?$codecvt@GDH@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
 /* ?_Getcat@?$codecvt@GDH@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
-unsigned int __cdecl codecvt_short__Getcat(const locale_facet **facet, const locale *loc)
+MSVCP_size_t __cdecl codecvt_short__Getcat(const locale_facet **facet, const locale *loc)
 {
     TRACE("(%p %p)\n", facet, loc);
 
@@ -6172,7 +6172,7 @@ num_put* __thiscall num_put_char_vector_dtor(num_put *this, unsigned int flags)
 
 /* ?_Getcat@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
 /* ?_Getcat@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
-unsigned int __cdecl num_put_char__Getcat(const locale_facet **facet, const locale *loc)
+MSVCP_size_t __cdecl num_put_char__Getcat(const locale_facet **facet, const locale *loc)
 {
     TRACE("(%p %p)\n", facet, loc);
 
@@ -6819,7 +6819,7 @@ num_put* __thiscall num_put_wchar_vector_dtor(num_put *this, unsigned int flags)
 
 /* ?_Getcat@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
 /* ?_Getcat@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
-unsigned int __cdecl num_put_wchar__Getcat(const locale_facet **facet, const locale *loc)
+MSVCP_size_t __cdecl num_put_wchar__Getcat(const locale_facet **facet, const locale *loc)
 {
     TRACE("(%p %p)\n", facet, loc);
 
@@ -6843,7 +6843,7 @@ unsigned int __cdecl num_put_wchar__Getcat(const locale_facet **facet, const loc
 
 /* ?_Getcat@?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
 /* ?_Getcat@?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
-unsigned int __cdecl num_put_short__Getcat(const locale_facet **facet, const locale *loc)
+MSVCP_size_t __cdecl num_put_short__Getcat(const locale_facet **facet, const locale *loc)
 {
     TRACE("(%p %p)\n", facet, loc);
 
