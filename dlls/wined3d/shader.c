@@ -1206,15 +1206,6 @@ void shader_generate_main(const struct wined3d_shader *shader, struct wined3d_sh
             continue;
         }
 
-        /* Nothing to do. */
-        if (ins.handler_idx == WINED3DSIH_DCL
-                || ins.handler_idx == WINED3DSIH_NOP
-                || ins.handler_idx == WINED3DSIH_DEF
-                || ins.handler_idx == WINED3DSIH_DEFI
-                || ins.handler_idx == WINED3DSIH_DEFB
-                || ins.handler_idx == WINED3DSIH_PHASE)
-            continue;
-
         if (ins.predicate)
             FIXME("Predicates not implemented.\n");
 

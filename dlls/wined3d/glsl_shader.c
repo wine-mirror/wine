@@ -2301,6 +2301,8 @@ static void shader_glsl_map2gl(const struct wined3d_shader_instruction *ins)
     shader_addline(buffer, "));\n");
 }
 
+static void shader_glsl_nop(const struct wined3d_shader_instruction *ins) {}
+
 static void shader_glsl_nrm(const struct wined3d_shader_instruction *ins)
 {
     struct wined3d_shader_buffer *buffer = ins->ctx->buffer;
@@ -5028,10 +5030,10 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_CND           */ shader_glsl_cnd,
     /* WINED3DSIH_CRS           */ shader_glsl_cross,
     /* WINED3DSIH_CUT           */ NULL,
-    /* WINED3DSIH_DCL           */ NULL,
-    /* WINED3DSIH_DEF           */ NULL,
-    /* WINED3DSIH_DEFB          */ NULL,
-    /* WINED3DSIH_DEFI          */ NULL,
+    /* WINED3DSIH_DCL           */ shader_glsl_nop,
+    /* WINED3DSIH_DEF           */ shader_glsl_nop,
+    /* WINED3DSIH_DEFB          */ shader_glsl_nop,
+    /* WINED3DSIH_DEFI          */ shader_glsl_nop,
     /* WINED3DSIH_DIV           */ NULL,
     /* WINED3DSIH_DP2ADD        */ shader_glsl_dp2add,
     /* WINED3DSIH_DP3           */ shader_glsl_dot,
@@ -5077,9 +5079,9 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_MOVA          */ shader_glsl_mov,
     /* WINED3DSIH_MOVC          */ NULL,
     /* WINED3DSIH_MUL           */ shader_glsl_arith,
-    /* WINED3DSIH_NOP           */ NULL,
+    /* WINED3DSIH_NOP           */ shader_glsl_nop,
     /* WINED3DSIH_NRM           */ shader_glsl_nrm,
-    /* WINED3DSIH_PHASE         */ NULL,
+    /* WINED3DSIH_PHASE         */ shader_glsl_nop,
     /* WINED3DSIH_POW           */ shader_glsl_pow,
     /* WINED3DSIH_RCP           */ shader_glsl_rcp,
     /* WINED3DSIH_REP           */ shader_glsl_rep,
