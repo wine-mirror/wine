@@ -297,6 +297,69 @@ static void test_create_rendertarget_view(ID3D10Device *device)
     ID3D10Texture2D_Release(texture);
 }
 
+static void test_create_shader_resource_view(ID3D10Device *device)
+{
+    D3D10_SHADER_RESOURCE_VIEW_DESC srv_desc;
+    D3D10_TEXTURE2D_DESC texture_desc;
+    ID3D10ShaderResourceView *srview;
+    D3D10_BUFFER_DESC buffer_desc;
+    ID3D10Texture2D *texture;
+    ID3D10Buffer *buffer;
+    HRESULT hr;
+
+    buffer_desc.ByteWidth = 1024;
+    buffer_desc.Usage = D3D10_USAGE_DEFAULT;
+    buffer_desc.BindFlags = D3D10_BIND_SHADER_RESOURCE;
+    buffer_desc.CPUAccessFlags = 0;
+    buffer_desc.MiscFlags = 0;
+
+    hr = ID3D10Device_CreateBuffer(device, &buffer_desc, NULL, &buffer);
+    ok(SUCCEEDED(hr), "Failed to create a buffer, hr %#x\n", hr);
+
+    hr = ID3D10Device_CreateShaderResourceView(device, (ID3D10Resource *)buffer, NULL, &srview);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
+    srv_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+    srv_desc.ViewDimension = D3D10_RTV_DIMENSION_BUFFER;
+    U(srv_desc).Buffer.ElementOffset = 0;
+    U(srv_desc).Buffer.ElementWidth = 64;
+
+    hr = ID3D10Device_CreateShaderResourceView(device, (ID3D10Resource *)buffer, &srv_desc, &srview);
+    ok(SUCCEEDED(hr), "Failed to create a shader resource view, hr %#x\n", hr);
+
+    ID3D10ShaderResourceView_Release(srview);
+    ID3D10Buffer_Release(buffer);
+
+    texture_desc.Width = 512;
+    texture_desc.Height = 512;
+    texture_desc.MipLevels = 0;
+    texture_desc.ArraySize = 1;
+    texture_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    texture_desc.SampleDesc.Count = 1;
+    texture_desc.SampleDesc.Quality = 0;
+    texture_desc.Usage = D3D10_USAGE_DEFAULT;
+    texture_desc.BindFlags = D3D10_BIND_SHADER_RESOURCE;
+    texture_desc.CPUAccessFlags = 0;
+    texture_desc.MiscFlags = 0;
+
+    hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create a 2d texture, hr %#x\n", hr);
+
+    hr = ID3D10Device_CreateShaderResourceView(device, (ID3D10Resource *)texture, NULL, &srview);
+    ok(SUCCEEDED(hr), "Failed to create a shader resource view, hr %#x\n", hr);
+
+    ID3D10ShaderResourceView_GetDesc(srview, &srv_desc);
+    ok(srv_desc.Format == texture_desc.Format, "Got unexpected format %#x.\n", srv_desc.Format);
+    ok(srv_desc.ViewDimension == D3D10_SRV_DIMENSION_TEXTURE2D,
+            "Got unexpected view dimension %#x.\n", srv_desc.ViewDimension);
+    ok(U(srv_desc).Texture2D.MostDetailedMip == 0, "Got unexpected MostDetailedMip %u.\n",
+            U(srv_desc).Texture2D.MostDetailedMip);
+    ok(U(srv_desc).Texture2D.MipLevels == 10, "Got unexpected MipLevels %u.\n", U(srv_desc).Texture2D.MipLevels);
+
+    ID3D10ShaderResourceView_Release(srview);
+    ID3D10Texture2D_Release(texture);
+}
+
 static void test_create_shader(ID3D10Device *device)
 {
 #if 0
@@ -447,6 +510,7 @@ START_TEST(device)
     test_create_texture3d(device);
     test_create_depthstencil_view(device);
     test_create_rendertarget_view(device);
+    test_create_shader_resource_view(device);
     test_create_shader(device);
 
     refcount = ID3D10Device_Release(device);
