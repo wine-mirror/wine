@@ -98,8 +98,7 @@ void * __thiscall MSVCP_type_info_vector_dtor(type_info * _this, unsigned int fl
 
 DEFINE_RTTI_DATA0( type_info, 0, ".?AVtype_info@@" );
 
-DEFINE_THISCALL_WRAPPER(MSVCP_exception_ctor, 8)
-exception* __thiscall MSVCP_exception_ctor(exception *this, const char **name)
+static exception* MSVCP_exception_ctor(exception *this, const char **name)
 {
     TRACE("(%p %s)\n", this, *name);
 
@@ -189,8 +188,7 @@ static const cxx_exception_type exception_cxx_type = {
 /* bad_alloc class data */
 typedef exception bad_alloc;
 
-DEFINE_THISCALL_WRAPPER(MSVCP_bad_alloc_ctor, 8)
-bad_alloc* __thiscall MSVCP_bad_alloc_ctor(bad_alloc *this, const char **name)
+bad_alloc* MSVCP_bad_alloc_ctor(bad_alloc *this, const char **name)
 {
     TRACE("%p %s\n", this, *name);
     MSVCP_exception_ctor(this, name);
@@ -273,8 +271,7 @@ typedef struct _logic_error {
     basic_string_char str;
 } logic_error;
 
-DEFINE_THISCALL_WRAPPER(MSVCP_logic_error_ctor, 8)
-logic_error* __thiscall MSVCP_logic_error_ctor(
+static logic_error* MSVCP_logic_error_ctor(
         logic_error *this, const char **name)
 {
     TRACE("%p %s\n", this, *name);
@@ -361,8 +358,7 @@ static const cxx_exception_type logic_error_cxx_type = {
 /* length_error class data */
 typedef logic_error length_error;
 
-DEFINE_THISCALL_WRAPPER(MSVCP_length_error_ctor, 8)
-length_error* __thiscall MSVCP_length_error_ctor(
+static length_error* MSVCP_length_error_ctor(
         length_error *this, const char **name)
 {
     TRACE("%p %s\n", this, *name);
@@ -410,8 +406,7 @@ static const cxx_exception_type length_error_cxx_type = {
 /* out_of_range class data */
 typedef logic_error out_of_range;
 
-DEFINE_THISCALL_WRAPPER(MSVCP_out_of_range_ctor, 8)
-out_of_range* __thiscall MSVCP_out_of_range_ctor(
+static out_of_range* MSVCP_out_of_range_ctor(
         out_of_range *this, const char **name)
 {
     TRACE("%p %s\n", this, *name);
@@ -459,8 +454,7 @@ static const cxx_exception_type out_of_range_cxx_type = {
 /* invalid_argument class data */
 typedef logic_error invalid_argument;
 
-DEFINE_THISCALL_WRAPPER(MSVCP_invalid_argument_ctor, 8)
-invalid_argument* __thiscall MSVCP_invalid_argument_ctor(
+static invalid_argument* MSVCP_invalid_argument_ctor(
         invalid_argument *this, const char **name)
 {
     TRACE("%p %s\n", this, *name);
@@ -511,8 +505,7 @@ typedef struct {
     basic_string_char str;
 } runtime_error;
 
-DEFINE_THISCALL_WRAPPER(MSVCP_runtime_error_ctor, 8)
-runtime_error* __thiscall MSVCP_runtime_error_ctor(
+static runtime_error* MSVCP_runtime_error_ctor(
         runtime_error *this, const char **name)
 {
     TRACE("%p %s\n", this, *name);
@@ -599,8 +592,7 @@ static const cxx_exception_type runtime_error_cxx_type = {
 /* failure class data */
 typedef runtime_error failure;
 
-DEFINE_THISCALL_WRAPPER(MSVCP_failure_ctor, 8)
-failure* __thiscall MSVCP_failure_ctor(
+static failure* MSVCP_failure_ctor(
         failure *this, const char **name)
 {
     TRACE("%p %s\n", this, *name);

@@ -801,15 +801,3 @@ BOOLEAN __cdecl std_numeric_limits_bool_signaling_NaN(void) { return 0; }
 
 /* ?signaling_NaN@?$numeric_limits@_W@std@@SA_WXZ -> public: static wchar_t __cdecl std::numeric_limits<wchar_t>::signaling_NaN(void) */
 WCHAR __cdecl std_numeric_limits_wchar_t_signaling_NaN(void) { return 0; }
-
-/* ??4?$_Ctraits@M@std@@QAEAAV01@ABV01@@Z -> public: class std::_Ctraits<float> & __thiscall std::_Ctraits<float>::operator=(class std::_Ctraits<float> const &) */
-/* ??4?$_Ctraits@M@std@@QEAAAEAV01@AEBV01@@Z -> public: class std::_Ctraits<float> & __ptr64 __cdecl std::_Ctraits<float>::operator=(class std::_Ctraits<float> const & __ptr64) __ptr64 */
-/* ??4?$_Ctraits@N@std@@QAEAAV01@ABV01@@Z -> public: class std::_Ctraits<double> & __thiscall std::_Ctraits<double>::operator=(class std::_Ctraits<double> const &) */
-/* ??4?$_Ctraits@N@std@@QEAAAEAV01@AEBV01@@Z -> public: class std::_Ctraits<double> & __ptr64 __cdecl std::_Ctraits<double>::operator=(class std::_Ctraits<double> const & __ptr64) __ptr64 */
-/* ??4?$_Ctraits@O@std@@QAEAAV01@ABV01@@Z -> public: class std::_Ctraits<long double> & __thiscall std::_Ctraits<long double>::operator=(class std::_Ctraits<long double> const &) */
-/* ??4?$_Ctraits@O@std@@QEAAAEAV01@AEBV01@@Z -> public: class std::_Ctraits<long double> & __ptr64 __cdecl std::_Ctraits<long double>::operator=(class std::_Ctraits<long double> const & __ptr64) __ptr64 */
-DEFINE_THISCALL_WRAPPER( std_Ctraits_op_assign, 8 )
-std_Ctraits * __thiscall std_Ctraits_op_assign( std_Ctraits *this, std_Ctraits *right )
-{
-    return this;
-}

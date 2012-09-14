@@ -48,15 +48,13 @@ typedef struct
     MSVCP_size_t res;
 } basic_string_char;
 
-basic_string_char* __thiscall MSVCP_basic_string_char_ctor(basic_string_char*);
-basic_string_char* __stdcall MSVCP_basic_string_char_ctor_cstr(basic_string_char*, const char*);
-basic_string_char* __thiscall MSVCP_basic_string_char_ctor_cstr_len(basic_string_char*, const char*, MSVCP_size_t);
-basic_string_char* __stdcall MSVCP_basic_string_char_copy_ctor(basic_string_char*, const basic_string_char*);
-void __stdcall MSVCP_basic_string_char_dtor(basic_string_char*);
-const char* __stdcall MSVCP_basic_string_char_c_str(const basic_string_char*);
-void __thiscall MSVCP_basic_string_char_clear(basic_string_char*);
-basic_string_char* __thiscall MSVCP_basic_string_char_append_ch(basic_string_char*, char);
-MSVCP_size_t __thiscall MSVCP_basic_string_char_length(const basic_string_char*);
+basic_string_char* MSVCP_basic_string_char_ctor(basic_string_char*);
+basic_string_char* MSVCP_basic_string_char_ctor_cstr(basic_string_char*, const char*);
+basic_string_char* MSVCP_basic_string_char_ctor_cstr_len(basic_string_char*, const char*, MSVCP_size_t);
+basic_string_char* MSVCP_basic_string_char_copy_ctor(basic_string_char*, const basic_string_char*);
+void MSVCP_basic_string_char_dtor(basic_string_char*);
+const char* MSVCP_basic_string_char_c_str(const basic_string_char*);
+MSVCP_size_t MSVCP_basic_string_char_length(const basic_string_char*);
 
 #define BUF_SIZE_WCHAR 8
 typedef struct
@@ -70,21 +68,19 @@ typedef struct
     MSVCP_size_t res;
 } basic_string_wchar;
 
-basic_string_wchar* __thiscall MSVCP_basic_string_wchar_ctor(basic_string_wchar*);
-basic_string_wchar* __stdcall MSVCP_basic_string_wchar_ctor_cstr(basic_string_wchar*, const wchar_t*);
-basic_string_wchar* __thiscall MSVCP_basic_string_wchar_ctor_cstr_len(basic_string_wchar*, const wchar_t*, MSVCP_size_t);
-void __thiscall MSVCP_basic_string_wchar_dtor(basic_string_wchar*);
-const wchar_t* __thiscall MSVCP_basic_string_wchar_c_str(const basic_string_wchar*);
-void __thiscall MSVCP_basic_string_wchar_clear(basic_string_wchar*);
-basic_string_wchar* __thiscall MSVCP_basic_string_wchar_append_ch(basic_string_wchar*, wchar_t);
-MSVCP_size_t __thiscall MSVCP_basic_string_wchar_length(const basic_string_wchar*);
+basic_string_wchar* MSVCP_basic_string_wchar_ctor(basic_string_wchar*);
+basic_string_wchar* MSVCP_basic_string_wchar_ctor_cstr(basic_string_wchar*, const wchar_t*);
+basic_string_wchar* MSVCP_basic_string_wchar_ctor_cstr_len(basic_string_wchar*, const wchar_t*, MSVCP_size_t);
+void MSVCP_basic_string_wchar_dtor(basic_string_wchar*);
+const wchar_t* MSVCP_basic_string_wchar_c_str(const basic_string_wchar*);
+MSVCP_size_t MSVCP_basic_string_wchar_length(const basic_string_wchar*);
 
-char* __stdcall MSVCP_allocator_char_allocate(void*, MSVCP_size_t);
-void __stdcall MSVCP_allocator_char_deallocate(void*, char*, MSVCP_size_t);
-MSVCP_size_t __stdcall MSVCP_allocator_char_max_size(void*);
-wchar_t* __stdcall MSVCP_allocator_wchar_allocate(void*, MSVCP_size_t);
-void __stdcall MSVCP_allocator_wchar_deallocate(void*, wchar_t*, MSVCP_size_t);
-MSVCP_size_t __stdcall MSVCP_allocator_wchar_max_size(void*);
+char* MSVCP_allocator_char_allocate(void*, MSVCP_size_t);
+void MSVCP_allocator_char_deallocate(void*, char*, MSVCP_size_t);
+MSVCP_size_t MSVCP_allocator_char_max_size(void*);
+wchar_t* MSVCP_allocator_wchar_allocate(void*, MSVCP_size_t);
+void MSVCP_allocator_wchar_deallocate(void*, wchar_t*, MSVCP_size_t);
+MSVCP_size_t MSVCP_allocator_wchar_max_size(void*);
 
 /* class locale::facet */
 typedef struct {
@@ -173,10 +169,10 @@ typedef struct
     struct _locale__Locimp *ptr;
 } locale;
 
-locale* __thiscall locale_ctor(locale*);
-locale* __thiscall locale_copy_ctor(locale*, const locale*);
-locale* __thiscall locale_operator_assign(locale*, const locale*);
-void __thiscall locale_dtor(locale*);
+locale* locale_ctor(locale*);
+locale* locale_copy_ctor(locale*, const locale*);
+locale* locale_operator_assign(locale*, const locale*);
+void locale_dtor(locale*);
 void free_locale(void);
 codecvt_char* codecvt_char_use_facet(const locale*);
 codecvt_wchar* codecvt_wchar_use_facet(const locale*);
