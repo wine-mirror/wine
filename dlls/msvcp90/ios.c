@@ -7762,24 +7762,20 @@ basic_istream_char* __thiscall basic_istream_char_seekg(basic_istream_char *this
 
     TRACE("(%p %ld %d)\n", this, off, dir);
 
-    if(basic_istream_char_sentry_create(this, TRUE)) {
-        if(!ios_base_fail(&base->base)) {
-            basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
-            fpos_int ret;
+    if(!ios_base_fail(&base->base)) {
+        basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
+        fpos_int ret;
 
-            basic_streambuf_char_pubseekoff(strbuf, &ret, off, dir, OPENMODE_in);
-            basic_istream_char_sentry_destroy(this);
+        basic_streambuf_char_pubseekoff(strbuf, &ret, off, dir, OPENMODE_in);
 
-            if(ret.off==0 && ret.pos==-1 && ret.state==0)
-                basic_ios_char_setstate(base, IOSTATE_failbit);
-            else
-                basic_ios_char_clear(base, IOSTATE_goodbit);
-            return this;
-        }
-    }
-    basic_istream_char_sentry_destroy(this);
+        if(ret.off==0 && ret.pos==-1 && ret.state==0)
+            basic_ios_char_setstate(base, IOSTATE_failbit);
+        else
+            basic_ios_char_clear(base, IOSTATE_goodbit);
+        return this;
+    }else
+        basic_ios_char_clear(base, IOSTATE_goodbit);
 
-    basic_ios_char_setstate(base, IOSTATE_failbit);
     return this;
 }
 
@@ -7792,24 +7788,21 @@ basic_istream_char* __thiscall basic_istream_char_seekg_fpos(basic_istream_char 
 
     TRACE("(%p %s)\n", this, debugstr_fpos_int(&pos));
 
-    if(basic_istream_char_sentry_create(this, TRUE)) {
-        if(!ios_base_fail(&base->base)) {
-            basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
-            fpos_int ret;
+    if(!ios_base_fail(&base->base)) {
+        basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
+        fpos_int ret;
 
-            basic_streambuf_char_pubseekpos(strbuf, &ret, pos, OPENMODE_in);
-            basic_istream_char_sentry_destroy(this);
+        basic_streambuf_char_pubseekpos(strbuf, &ret, pos, OPENMODE_in);
+        basic_istream_char_sentry_destroy(this);
 
-            if(ret.off==0 && ret.pos==-1 && ret.state==0)
-                basic_ios_char_setstate(base, IOSTATE_failbit);
-            else
-                basic_ios_char_clear(base, IOSTATE_goodbit);
-            return this;
-        }
-    }
-    basic_istream_char_sentry_destroy(this);
+        if(ret.off==0 && ret.pos==-1 && ret.state==0)
+            basic_ios_char_setstate(base, IOSTATE_failbit);
+        else
+            basic_ios_char_clear(base, IOSTATE_goodbit);
+        return this;
+    }else
+        basic_ios_char_clear(base, IOSTATE_goodbit);
 
-    basic_ios_char_setstate(base, IOSTATE_failbit);
     return this;
 }
 
@@ -9049,24 +9042,21 @@ basic_istream_wchar* __thiscall basic_istream_wchar_seekg(basic_istream_wchar *t
 
     TRACE("(%p %ld %d)\n", this, off, dir);
 
-    if(basic_istream_wchar_sentry_create(this, TRUE)) {
-        if(!ios_base_fail(&base->base)) {
-            basic_streambuf_wchar *strbuf = basic_ios_wchar_rdbuf_get(base);
-            fpos_int ret;
+    if(!ios_base_fail(&base->base)) {
+        basic_streambuf_wchar *strbuf = basic_ios_wchar_rdbuf_get(base);
+        fpos_int ret;
 
-            basic_streambuf_wchar_pubseekoff(strbuf, &ret, off, dir, OPENMODE_in);
-            basic_istream_wchar_sentry_destroy(this);
+        basic_streambuf_wchar_pubseekoff(strbuf, &ret, off, dir, OPENMODE_in);
+        basic_istream_wchar_sentry_destroy(this);
 
-            if(ret.off==0 && ret.pos==-1 && ret.state==0)
-                basic_ios_wchar_setstate(base, IOSTATE_failbit);
-            else
-                basic_ios_wchar_clear(base, IOSTATE_goodbit);
-            return this;
-        }
-    }
-    basic_istream_wchar_sentry_destroy(this);
+        if(ret.off==0 && ret.pos==-1 && ret.state==0)
+            basic_ios_wchar_setstate(base, IOSTATE_failbit);
+        else
+            basic_ios_wchar_clear(base, IOSTATE_goodbit);
+        return this;
+    }else
+        basic_ios_wchar_clear(base, IOSTATE_goodbit);
 
-    basic_ios_wchar_setstate(base, IOSTATE_failbit);
     return this;
 }
 
@@ -9081,24 +9071,21 @@ basic_istream_wchar* __thiscall basic_istream_wchar_seekg_fpos(basic_istream_wch
 
     TRACE("(%p %s)\n", this, debugstr_fpos_int(&pos));
 
-    if(basic_istream_wchar_sentry_create(this, TRUE)) {
-        if(!ios_base_fail(&base->base)) {
-            basic_streambuf_wchar *strbuf = basic_ios_wchar_rdbuf_get(base);
-            fpos_int ret;
+    if(!ios_base_fail(&base->base)) {
+        basic_streambuf_wchar *strbuf = basic_ios_wchar_rdbuf_get(base);
+        fpos_int ret;
 
-            basic_streambuf_wchar_pubseekpos(strbuf, &ret, pos, OPENMODE_in);
-            basic_istream_wchar_sentry_destroy(this);
+        basic_streambuf_wchar_pubseekpos(strbuf, &ret, pos, OPENMODE_in);
+        basic_istream_wchar_sentry_destroy(this);
 
-            if(ret.off==0 && ret.pos==-1 && ret.state==0)
-                basic_ios_wchar_setstate(base, IOSTATE_failbit);
-            else
-                basic_ios_wchar_clear(base, IOSTATE_goodbit);
-            return this;
-        }
-    }
-    basic_istream_wchar_sentry_destroy(this);
+        if(ret.off==0 && ret.pos==-1 && ret.state==0)
+            basic_ios_wchar_setstate(base, IOSTATE_failbit);
+        else
+            basic_ios_wchar_clear(base, IOSTATE_goodbit);
+        return this;
+    }else
+        basic_ios_wchar_clear(base, IOSTATE_goodbit);
 
-    basic_ios_wchar_setstate(base, IOSTATE_failbit);
     return this;
 }
 
