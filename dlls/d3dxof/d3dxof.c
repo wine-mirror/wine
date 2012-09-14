@@ -999,8 +999,8 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
   /* Check if there are templates defined before the object */
   if (!parse_templates(&This->buf))
   {
-    hr = DXFILEERR_BADVALUE;
-    goto error;
+    *ppDataObj = NULL;
+    return DXFILEERR_BADVALUE;
   }
 
   if (!This->buf.rem_bytes)
