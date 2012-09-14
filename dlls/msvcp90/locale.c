@@ -8356,26 +8356,6 @@ void __thiscall locale_dtor(locale *this)
         locale__Locimp_dtor(this->ptr);
 }
 
-DEFINE_THISCALL_WRAPPER(locale_vector_dtor, 8)
-locale* __thiscall locale_vector_dtor(locale *this, unsigned int flags)
-{
-    TRACE("(%p %x)\n", this, flags);
-    if(flags & 2) {
-        /* we have an array, with the number of elements stored before the first object */
-        INT_PTR i, *ptr = (INT_PTR *)this-1;
-
-        for(i=*ptr-1; i>=0; i--)
-            locale_dtor(this+i);
-        MSVCRT_operator_delete(ptr);
-    } else {
-        locale_dtor(this);
-        if(flags & 1)
-            MSVCRT_operator_delete(this);
-    }
-
-    return this;
-}
-
 /* ??4locale@std@@QAEAAV01@ABV01@@Z */
 /* ??4locale@std@@QEAAAEAV01@AEBV01@@Z */
 DEFINE_THISCALL_WRAPPER(locale_operator_assign, 8)
