@@ -86,6 +86,22 @@ typedef struct tagWINE_MCIMIDI {
  *                  	    MCI MIDI implementation			*
  *======================================================================*/
 
+static DWORD mmr2mci(DWORD ret)
+{
+    switch (ret) {
+    case MMSYSERR_ALLOCATED:
+	return			MCIERR_SEQ_PORT_INUSE;
+    case MMSYSERR_NOMEM:
+	return			MCIERR_OUT_OF_MEMORY;
+    case MMSYSERR_BADDEVICEID:	/* wine*.drv disabled */
+      return			MCIERR_SEQ_PORT_NONEXISTENT;
+    case MIDIERR_INVALIDSETUP:	/* from midimap.dll without snd-seq module  */
+	return			MCIERR_SEQ_PORT_MAPNODEVICE;
+    default:
+	return ret;
+    }
+}
+
 static DWORD MIDI_mciResume(WINE_MCIMIDI* wmm, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms);
 
 /**************************************************************************
@@ -862,7 +878,7 @@ static DWORD MIDI_player(WINE_MCIMIDI* wmm, DWORD dwFlags)
 
     dwRet = midiOutOpen((LPHMIDIOUT)&wmm->hMidi, wmm->wPort, 0L, 0L, CALLBACK_NULL);
     if (dwRet != MMSYSERR_NOERROR) {
-	return dwRet;
+	return mmr2mci(dwRet);
     }
 
     wmm->dwPulse = 0;
@@ -1071,7 +1087,7 @@ static DWORD MIDI_player(WINE_MCIMIDI* wmm, DWORD dwFlags)
     /* Let the potentially asynchronous commands support FAILURE notification. */
     if (oldcb) mciDriverNotify(oldcb, wmm->wDevID,
 	dwRet ? MCI_NOTIFY_FAILURE : MCI_NOTIFY_SUCCESSFUL);
-    return dwRet;
+    return mmr2mci(dwRet);
 }
 
 static DWORD CALLBACK MIDI_Starter(void *ptr)
