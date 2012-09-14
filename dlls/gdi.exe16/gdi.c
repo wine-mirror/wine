@@ -788,7 +788,7 @@ BOOL16 WINAPI StretchBlt16( HDC16 hdcDst, INT16 xDst, INT16 yDst,
  */
 BOOL16 WINAPI Polygon16( HDC16 hdc, const POINT16* pt, INT16 count )
 {
-    register int i;
+    int i;
     BOOL ret;
     LPPOINT pt32 = HeapAlloc( GetProcessHeap(), 0, count*sizeof(POINT) );
 
@@ -809,7 +809,7 @@ BOOL16 WINAPI Polygon16( HDC16 hdc, const POINT16* pt, INT16 count )
  */
 BOOL16 WINAPI Polyline16( HDC16 hdc, const POINT16* pt, INT16 count )
 {
-    register int i;
+    int i;
     BOOL16 ret;
     LPPOINT pt32 = HeapAlloc( GetProcessHeap(), 0, count*sizeof(POINT) );
 
