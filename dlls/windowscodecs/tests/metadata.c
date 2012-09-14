@@ -1558,6 +1558,77 @@ todo_wine
     IStream_Release(stream);
 }
 
+static void test_metadata_GIF_comment(void)
+{
+    static const WCHAR GIF_comment_name[] = {'C','o','m','m','e','n','t',' ','E','x','t','e','n','s','i','o','n',' ','R','e','a','d','e','r',0};
+    static const char GIF_comment_data[] = { 0x21,0xfe,
+                                             /*sub-block*/5,'H','e','l','l','o',
+                                             /*sub-block*/1,' ',
+                                             /*sub-block*/6,'W','o','r','l','d','!',
+                                             /*terminator*/0 };
+    static const struct test_data td[1] =
+    {
+        { VT_LPSTR, 0, 12, { 0 }, "Hello World!", { 'T','e','x','t','E','n','t','r','y',0 } }
+    };
+    HRESULT hr;
+    IStream *stream;
+    IWICPersistStream *persist;
+    IWICMetadataReader *reader;
+    IWICMetadataHandlerInfo *info;
+    WCHAR name[64];
+    UINT count, dummy;
+    GUID format;
+    CLSID id;
+
+    hr = CoCreateInstance(&CLSID_WICGifCommentMetadataReader, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IWICMetadataReader, (void **)&reader);
+todo_wine
+    ok(hr == S_OK || broken(hr == E_NOINTERFACE || hr == REGDB_E_CLASSNOTREG) /* before Win7 */,
+       "CoCreateInstance error %#x\n", hr);
+
+    stream = create_stream(GIF_comment_data, sizeof(GIF_comment_data));
+
+    if (SUCCEEDED(hr))
+    {
+        hr = IUnknown_QueryInterface(reader, &IID_IWICPersistStream, (void **)&persist);
+        ok(hr == S_OK, "QueryInterface error %#x\n", hr);
+
+        hr = IWICPersistStream_Load(persist, stream);
+        ok(hr == S_OK, "Load error %#x\n", hr);
+
+        IWICPersistStream_Release(persist);
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        hr = IWICMetadataReader_GetCount(reader, &count);
+        ok(hr == S_OK, "GetCount error %#x\n", hr);
+        ok(count == sizeof(td)/sizeof(td[0]), "unexpected count %u\n", count);
+
+        compare_metadata(reader, td, count);
+
+        hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
+        ok(hr == S_OK, "GetMetadataFormat error %#x\n", hr);
+        ok(IsEqualGUID(&format, &GUID_MetadataFormatGifComment), "wrong format %s\n", debugstr_guid(&format));
+
+        hr = IWICMetadataReader_GetMetadataHandlerInfo(reader, &info);
+        ok(hr == S_OK, "GetMetadataHandlerInfo error %#x\n", hr);
+
+        hr = IWICMetadataHandlerInfo_GetCLSID(info, &id);
+        ok(hr == S_OK, "GetCLSID error %#x\n", hr);
+        ok(IsEqualGUID(&id, &CLSID_WICGifCommentMetadataReader), "wrong CLSID %s\n", debugstr_guid(&id));
+
+        hr = IWICMetadataHandlerInfo_GetFriendlyName(info, 64, name, &dummy);
+        ok(hr == S_OK, "GetFriendlyName error %#x\n", hr);
+        ok(lstrcmpW(name, GIF_comment_name) == 0, "wrong APE reader name %s\n", wine_dbgstr_w(name));
+
+        IWICMetadataHandlerInfo_Release(info);
+        IWICMetadataReader_Release(reader);
+    }
+
+    IStream_Release(stream);
+}
+
 START_TEST(metadata)
 {
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
@@ -1573,6 +1644,7 @@ START_TEST(metadata)
     test_metadata_IMD();
     test_metadata_GCE();
     test_metadata_APE();
+    test_metadata_GIF_comment();
 
     CoUninitialize();
 }
