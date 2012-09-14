@@ -96,6 +96,8 @@ MSVCP_size_t (CDECL *pctype_char__Getcat)(const struct locale_facet**,const stru
 MSVCP_size_t (CDECL *pctype_wchar__Getcat)(const struct locale_facet**,const struct locale*);
 MSVCP_size_t (CDECL *pctype_short__Getcat)(const struct locale_facet**,const struct locale*);
 MSVCP_size_t (CDECL *pcodecvt_char__Getcat)(const struct locale_facet**,const struct locale*);
+MSVCP_size_t (CDECL *pcodecvt_wchar__Getcat)(const struct locale_facet**,const struct locale*);
+MSVCP_size_t (CDECL *pcodecvt_short__Getcat)(const struct locale_facet**,const struct locale*);
 MSVCP_size_t (CDECL *pnumpunct_char__Getcat)(const struct locale_facet**,const struct locale*);
 MSVCP_size_t (CDECL *pnumpunct_wchar__Getcat)(const struct locale_facet**,const struct locale*);
 MSVCP_size_t (CDECL *pnumpunct_short__Getcat)(const struct locale_facet**,const struct locale*);
@@ -115,6 +117,8 @@ static BOOL init_funcs(void)
         pctype_wchar__Getcat = (void*)GetProcAddress(hmod, "?_Getcat@?$ctype@_W@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z");
         pctype_short__Getcat = (void*)GetProcAddress(hmod, "?_Getcat@?$ctype@G@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z");
         pcodecvt_char__Getcat = (void*)GetProcAddress(hmod, "?_Getcat@?$codecvt@DDH@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z");
+        pcodecvt_wchar__Getcat = (void*)GetProcAddress(hmod, "?_Getcat@?$codecvt@_WDH@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z");
+        pcodecvt_short__Getcat = (void*)GetProcAddress(hmod, "?_Getcat@?$codecvt@GDH@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z");
         pnumpunct_char__Getcat = (void*)GetProcAddress(hmod, "?_Getcat@?$numpunct@D@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z");
         pnumpunct_wchar__Getcat = (void*)GetProcAddress(hmod, "?_Getcat@?$numpunct@_W@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z");
         pnumpunct_short__Getcat = (void*)GetProcAddress(hmod, "?_Getcat@?$numpunct@G@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z");
@@ -127,6 +131,8 @@ static BOOL init_funcs(void)
         pctype_wchar__Getcat = (void*)GetProcAddress(hmod, "?_Getcat@?$ctype@_W@std@@SAIPAPBVfacet@locale@2@PBV42@@Z");
         pctype_short__Getcat = (void*)GetProcAddress(hmod, "?_Getcat@?$ctype@G@std@@SAIPAPBVfacet@locale@2@PBV42@@Z");
         pcodecvt_char__Getcat = (void*)GetProcAddress(hmod, "?_Getcat@?$codecvt@DDH@std@@SAIPAPBVfacet@locale@2@PBV42@@Z");
+        pcodecvt_wchar__Getcat = (void*)GetProcAddress(hmod, "?_Getcat@?$codecvt@_WDH@std@@SAIPAPBVfacet@locale@2@PBV42@@Z");
+        pcodecvt_short__Getcat = (void*)GetProcAddress(hmod, "?_Getcat@?$codecvt@GDH@std@@SAIPAPBVfacet@locale@2@PBV42@@Z");
         pnumpunct_char__Getcat = (void*)GetProcAddress(hmod, "?_Getcat@?$numpunct@D@std@@SAIPAPBVfacet@locale@2@PBV42@@Z");
         pnumpunct_wchar__Getcat = (void*)GetProcAddress(hmod, "?_Getcat@?$numpunct@_W@std@@SAIPAPBVfacet@locale@2@PBV42@@Z");
         pnumpunct_short__Getcat = (void*)GetProcAddress(hmod, "?_Getcat@?$numpunct@G@std@@SAIPAPBVfacet@locale@2@PBV42@@Z");
@@ -197,6 +203,20 @@ MSVCP_size_t __cdecl ctype_short__Getcat(const struct locale_facet **facet)
 MSVCP_size_t __cdecl codecvt_char__Getcat(const struct locale_facet **facet)
 {
     return pcodecvt_char__Getcat(facet, plocale_classic());
+}
+
+/* ?_Getcat@?$codecvt@_WDH@std@@SAIPAPBVfacet@locale@2@@Z */
+/* ?_Getcat@?$codecvt@_WDH@std@@SA_KPEAPEBVfacet@locale@2@@Z */
+MSVCP_size_t __cdecl codecvt_wchar__Getcat(const struct locale_facet **facet)
+{
+    return pcodecvt_wchar__Getcat(facet, plocale_classic());
+}
+
+/* ?_Getcat@?$codecvt@GDH@std@@SAIPAPBVfacet@locale@2@@Z */
+/* ?_Getcat@?$codecvt@GDH@std@@SA_KPEAPEBVfacet@locale@2@@Z */
+MSVCP_size_t __cdecl codecvt_short__Getcat(const struct locale_facet **facet)
+{
+    return pcodecvt_short__Getcat(facet, plocale_classic());
 }
 
 /* ?_Getcat@?$numpunct@D@std@@SAIPAPBVfacet@locale@2@@Z */

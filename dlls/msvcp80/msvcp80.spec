@@ -2220,10 +2220,10 @@
 @ cdecl -arch=win64 ?_Fpz_func@std@@YAAEA_JXZ() msvcp90.?_Fpz_func@std@@YAAEA_JXZ
 @ cdecl -arch=win32 ?_Getcat@?$codecvt@DDH@std@@SAIPAPBVfacet@locale@2@@Z(ptr) codecvt_char__Getcat
 @ cdecl -arch=win64 ?_Getcat@?$codecvt@DDH@std@@SA_KPEAPEBVfacet@locale@2@@Z(ptr) codecvt_char__Getcat
-@ stub -arch=win32 ?_Getcat@?$codecvt@GDH@std@@SAIPAPBVfacet@locale@2@@Z
-@ stub -arch=win64 ?_Getcat@?$codecvt@GDH@std@@SA_KPEAPEBVfacet@locale@2@@Z
-@ stub -arch=win32 ?_Getcat@?$codecvt@_WDH@std@@SAIPAPBVfacet@locale@2@@Z
-@ stub -arch=win64 ?_Getcat@?$codecvt@_WDH@std@@SA_KPEAPEBVfacet@locale@2@@Z
+@ cdecl -arch=win32 ?_Getcat@?$codecvt@GDH@std@@SAIPAPBVfacet@locale@2@@Z(ptr) codecvt_short__Getcat
+@ cdecl -arch=win64 ?_Getcat@?$codecvt@GDH@std@@SA_KPEAPEBVfacet@locale@2@@Z(ptr) codecvt_short__Getcat
+@ cdecl -arch=win32 ?_Getcat@?$codecvt@_WDH@std@@SAIPAPBVfacet@locale@2@@Z(ptr) codecvt_wchar__Getcat
+@ cdecl -arch=win64 ?_Getcat@?$codecvt@_WDH@std@@SA_KPEAPEBVfacet@locale@2@@Z(ptr) codecvt_wchar__Getcat
 @ cdecl -arch=win32 ?_Getcat@?$collate@D@std@@SAIPAPBVfacet@locale@2@@Z(ptr) collate_char__Getcat
 @ cdecl -arch=win64 ?_Getcat@?$collate@D@std@@SA_KPEAPEBVfacet@locale@2@@Z(ptr) collate_char__Getcat
 @ cdecl -arch=win32 ?_Getcat@?$collate@G@std@@SAIPAPBVfacet@locale@2@@Z(ptr) collate_short__Getcat
