@@ -857,6 +857,20 @@ static WCHAR *get_cups_option( const char *name, int num_options, cups_option_t 
     return ret;
 }
 
+static cups_ptype_t get_cups_printer_type( const cups_dest_t *dest )
+{
+    WCHAR *type = get_cups_option( "printer-type", dest->num_options, dest->options ), *end;
+    cups_ptype_t ret = 0;
+
+    if (type && *type)
+    {
+        ret = (cups_ptype_t)strtoulW( type, &end, 10 );
+        if (*end) ret = 0;
+    }
+    HeapFree( GetProcessHeap(), 0, type );
+    return ret;
+}
+
 static BOOL CUPS_LoadPrinters(void)
 {
     int	                  i, nrofdests;
@@ -868,6 +882,7 @@ static BOOL CUPS_LoadPrinters(void)
     char    loaderror[256];
     WCHAR   nameW[MAX_PATH];
     HANDLE  added_printer;
+    cups_ptype_t printer_type;
 
     cupshandle = wine_dlopen(SONAME_LIBCUPS, RTLD_NOW, loaderror, sizeof(loaderror));
     if (!cupshandle) {
@@ -893,12 +908,20 @@ static BOOL CUPS_LoadPrinters(void)
     TRACE("Found %d CUPS %s:\n", nrofdests, (nrofdests == 1) ? "printer" : "printers");
     for (i=0;i<nrofdests;i++) {
         MultiByteToWideChar(CP_UNIXCP, 0, dests[i].name, -1, nameW, sizeof(nameW) / sizeof(WCHAR));
+        printer_type = get_cups_printer_type( dests + i );
+
+        TRACE( "Printer %d: %s. printer_type %x\n", i, debugstr_w(nameW), printer_type );
+
+        if (printer_type & 0x2000000 /* CUPS_PRINTER_SCANNER */)
+        {
+            TRACE( "skipping scanner-only device\n" );
+            continue;
+        }
 
         port = HeapAlloc(GetProcessHeap(), 0, sizeof(CUPS_Port) + lstrlenW(nameW) * sizeof(WCHAR));
         lstrcpyW(port, CUPS_Port);
         lstrcatW(port, nameW);
 
-        TRACE("Printer %d: %s\n", i, debugstr_w(nameW));
         if(RegOpenKeyW(hkeyPrinters, nameW, &hkeyPrinter) == ERROR_SUCCESS) {
             DWORD status = get_dword_from_reg( hkeyPrinter, StatusW );
             /* Printer already in registry, delete the tag added in WINSPOOL_LoadSystemPrinters
