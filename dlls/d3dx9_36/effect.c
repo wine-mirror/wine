@@ -886,7 +886,7 @@ static void get_matrix(struct d3dx_parameter *param, D3DXMATRIX *matrix)
     }
 }
 
-static void set_matrix(struct d3dx_parameter *param, CONST D3DXMATRIX *matrix)
+static void set_matrix(struct d3dx_parameter *param, const D3DXMATRIX *matrix, BOOL transpose)
 {
     UINT i, k;
 
@@ -894,7 +894,8 @@ static void set_matrix(struct d3dx_parameter *param, CONST D3DXMATRIX *matrix)
     {
         for (k = 0; k < param->columns; ++k)
         {
-            set_number((FLOAT *)param->data + i * param->columns + k, param->type, &matrix->u.m[i][k], D3DXPT_FLOAT);
+            set_number((FLOAT *)param->data + i * param->columns + k, param->type,
+                    transpose ? &matrix->u.m[k][i] : &matrix->u.m[i][k], D3DXPT_FLOAT);
         }
     }
 }
@@ -2178,7 +2179,7 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_SetMatrix(ID3DXBaseEffect *iface, D3DX
         switch (param->class)
         {
             case D3DXPC_MATRIX_ROWS:
-                set_matrix(param, matrix);
+                set_matrix(param, matrix, FALSE);
                 return D3D_OK;
 
             case D3DXPC_SCALAR:
@@ -2250,7 +2251,7 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_SetMatrixArray(ID3DXBaseEffect *iface,
             case D3DXPC_MATRIX_ROWS:
                 for (i = 0; i < count; ++i)
                 {
-                    set_matrix(get_parameter_struct(param->member_handles[i]), &matrix[i]);
+                    set_matrix(get_parameter_struct(param->member_handles[i]), &matrix[i], FALSE);
                 }
                 return D3D_OK;
 
@@ -2328,7 +2329,7 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_SetMatrixPointerArray(ID3DXBaseEffect 
             case D3DXPC_MATRIX_ROWS:
                 for (i = 0; i < count; ++i)
                 {
-                    set_matrix(get_parameter_struct(param->member_handles[i]), matrix[i]);
+                    set_matrix(get_parameter_struct(param->member_handles[i]), matrix[i], FALSE);
                 }
                 return D3D_OK;
 
@@ -2392,7 +2393,6 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_SetMatrixTranspose(ID3DXBaseEffect *if
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
     struct d3dx_parameter *param = get_valid_parameter(This, parameter);
-    D3DXMATRIX m;
 
     TRACE("iface %p, parameter %p, matrix %p\n", This, parameter, matrix);
 
@@ -2403,7 +2403,7 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_SetMatrixTranspose(ID3DXBaseEffect *if
         switch (param->class)
         {
             case D3DXPC_MATRIX_ROWS:
-                set_matrix(param, D3DXMatrixTranspose(&m, matrix));
+                set_matrix(param, matrix, TRUE);
                 return D3D_OK;
 
             case D3DXPC_SCALAR:
@@ -2466,7 +2466,6 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_SetMatrixTransposeArray(ID3DXBaseEffec
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
     struct d3dx_parameter *param = get_valid_parameter(This, parameter);
-    D3DXMATRIX m;
 
     TRACE("iface %p, parameter %p, matrix %p, count %u\n", This, parameter, matrix, count);
 
@@ -2481,7 +2480,7 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_SetMatrixTransposeArray(ID3DXBaseEffec
             case D3DXPC_MATRIX_ROWS:
                 for (i = 0; i < count; ++i)
                 {
-                    set_matrix(get_parameter_struct(param->member_handles[i]), D3DXMatrixTranspose(&m, &matrix[i]));
+                    set_matrix(get_parameter_struct(param->member_handles[i]), &matrix[i], TRUE);
                 }
                 return D3D_OK;
 
@@ -2550,7 +2549,6 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_SetMatrixTransposePointerArray(ID3DXBa
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
     struct d3dx_parameter *param = get_valid_parameter(This, parameter);
-    D3DXMATRIX m;
 
     TRACE("iface %p, parameter %p, matrix %p, count %u\n", This, parameter, matrix, count);
 
@@ -2563,7 +2561,7 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_SetMatrixTransposePointerArray(ID3DXBa
             case D3DXPC_MATRIX_ROWS:
                 for (i = 0; i < count; ++i)
                 {
-                    set_matrix(get_parameter_struct(param->member_handles[i]), D3DXMatrixTranspose(&m, matrix[i]));
+                    set_matrix(get_parameter_struct(param->member_handles[i]), matrix[i], TRUE);
                 }
                 return D3D_OK;
 
