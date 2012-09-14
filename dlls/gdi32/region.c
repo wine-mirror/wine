@@ -2616,9 +2616,9 @@ static void REGION_loadAET(EdgeTableEntry *AET, EdgeTableEntry *ETEs)
  */
 static void REGION_computeWAET(EdgeTableEntry *AET)
 {
-    register EdgeTableEntry *pWETE;
-    register int inside = 1;
-    register int isInside = 0;
+    EdgeTableEntry *pWETE;
+    int inside = 1;
+    int isInside = 0;
 
     AET->nextWETE = NULL;
     pWETE = AET;
