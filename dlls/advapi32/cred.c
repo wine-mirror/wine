@@ -190,7 +190,6 @@ static DWORD registry_read_credential(HKEY hkey, PCREDENTIALW credential,
         else if (ret != ERROR_SUCCESS)
             return ret;
         credential->CredentialBlobSize = count;
-        buffer += count;
     }
 
     /* FIXME: Attributes */
@@ -425,7 +424,6 @@ static DWORD mac_read_credential_from_item(SecKeychainItemRef item, BOOL require
             str_len = MultiByteToWideChar(CP_UTF8, 0, cred_blob, cred_blob_len,
                                           (LPWSTR)buffer, 0xffff);
             credential->CredentialBlobSize = str_len * sizeof(WCHAR);
-            buffer += str_len * sizeof(WCHAR);
             *len += str_len * sizeof(WCHAR);
         }
         else
@@ -771,17 +769,11 @@ static DWORD registry_enumerate_credentials(HKEY hkeyMgr, LPCWSTR filter,
             break;
         }
         else if (ret != ERROR_SUCCESS)
-        {
-            ret = ERROR_SUCCESS;
             continue;
-        }
         TRACE("target_name = %s\n", debugstr_w(target_name));
         ret = RegOpenKeyExW(hkeyMgr, target_name, 0, KEY_QUERY_VALUE, &hkeyCred);
         if (ret != ERROR_SUCCESS)
-        {
-            ret = ERROR_SUCCESS;
             continue;
-        }
         if (!credential_matches_filter(hkeyCred, filter))
         {
             RegCloseKey(hkeyCred);
@@ -1677,8 +1669,8 @@ BOOL WINAPI CredReadDomainCredentialsA(PCREDENTIAL_TARGET_INFORMATIONA TargetInf
     if (TargetInformation->PackageName)
     {
         TargetInformationW->PackageName = buffer;
-        buffer += MultiByteToWideChar(CP_ACP, 0, TargetInformation->PackageName, -1,
-                                      TargetInformationW->PackageName, end - buffer);
+        MultiByteToWideChar(CP_ACP, 0, TargetInformation->PackageName, -1,
+                            TargetInformationW->PackageName, end - buffer);
     } else
         TargetInformationW->PackageName = NULL;
 
