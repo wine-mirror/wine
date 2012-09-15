@@ -1331,13 +1331,14 @@ static DWORD MIDI_mciStatus(WINE_MCIMIDI* wmm, DWORD dwFlags, LPMCI_STATUS_PARMS
 	case MCI_STATUS_LENGTH:
 	    if ((dwFlags & MCI_TRACK) && wmm->wFormat == 2) {
 		if (lpParms->dwTrack >= wmm->nTracks)
-		    return MCIERR_BAD_INTEGER;
+		    return MCIERR_OUTOFRANGE;
 		/* FIXME: this is wrong if there is a tempo change inside the file */
 		lpParms->dwReturn = MIDI_ConvertPulseToMS(wmm, wmm->tracks[lpParms->dwTrack].dwLength);
 	    } else {
 		lpParms->dwReturn = MIDI_GetMThdLengthMS(wmm);
 	    }
 	    lpParms->dwReturn = MIDI_ConvertMSToTimeFormat(wmm, lpParms->dwReturn);
+	    /* FIXME: ret = MCI_COLONIZED4_RETURN if SMPTE */
 	    TRACE("MCI_STATUS_LENGTH => %lu\n", lpParms->dwReturn);
 	    break;
 	case MCI_STATUS_MODE:
@@ -1355,9 +1356,10 @@ static DWORD MIDI_mciStatus(WINE_MCIMIDI* wmm, DWORD dwFlags, LPMCI_STATUS_PARMS
 	    TRACE("MCI_STATUS_NUMBER_OF_TRACKS => %lu\n", lpParms->dwReturn);
 	    break;
 	case MCI_STATUS_POSITION:
-	    /* FIXME: do I need to use MCI_TRACK ? */
+	    /* FIXME: check MCI_TRACK == 1 if set */
 	    lpParms->dwReturn = MIDI_ConvertMSToTimeFormat(wmm,
 							   (dwFlags & MCI_STATUS_START) ? 0 : wmm->dwPositionMS);
+	    /* FIXME: ret = MCI_COLONIZED4_RETURN if SMPTE */
 	    TRACE("MCI_STATUS_POSITION %s => %lu\n",
 		  (dwFlags & MCI_STATUS_START) ? "start" : "current", lpParms->dwReturn);
 	    break;
@@ -1375,7 +1377,7 @@ static DWORD MIDI_mciStatus(WINE_MCIMIDI* wmm, DWORD dwFlags, LPMCI_STATUS_PARMS
 	case MCI_SEQ_STATUS_DIVTYPE:
 	    TRACE("MCI_SEQ_STATUS_DIVTYPE !\n");
 	    if (wmm->nDivision > 0x8000) {
-		switch (wmm->nDivision) {
+		switch (HIBYTE(wmm->nDivision)) {
 		case 0xE8:	lpParms->dwReturn = MCI_SEQ_DIV_SMPTE_24;	break;	/* -24 */
 		case 0xE7:	lpParms->dwReturn = MCI_SEQ_DIV_SMPTE_25;	break;	/* -25 */
 		case 0xE3:	lpParms->dwReturn = MCI_SEQ_DIV_SMPTE_30DROP;	break;	/* -29 */ /* is the MCI constant correct ? */
@@ -1390,11 +1392,13 @@ static DWORD MIDI_mciStatus(WINE_MCIMIDI* wmm, DWORD dwFlags, LPMCI_STATUS_PARMS
 	    break;
 	case MCI_SEQ_STATUS_MASTER:
 	    TRACE("MCI_SEQ_STATUS_MASTER !\n");
-	    lpParms->dwReturn = 0;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(MCI_SEQ_NONE, MCI_SEQ_NONE_S);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_SEQ_STATUS_SLAVE:
 	    TRACE("MCI_SEQ_STATUS_SLAVE !\n");
-	    lpParms->dwReturn = 0;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(MCI_SEQ_FILE, MCI_SEQ_FILE_S);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_SEQ_STATUS_OFFSET:
 	    TRACE("MCI_SEQ_STATUS_OFFSET !\n");
@@ -1415,11 +1419,10 @@ static DWORD MIDI_mciStatus(WINE_MCIMIDI* wmm, DWORD dwFlags, LPMCI_STATUS_PARMS
 	    break;
 	default:
 	    FIXME("Unknown command %08X !\n", lpParms->dwItem);
-	    return MCIERR_UNRECOGNIZED_COMMAND;
+	    return MCIERR_UNSUPPORTED_FUNCTION;
 	}
     } else {
-	WARN("No Status-Item!\n");
-	return MCIERR_UNRECOGNIZED_COMMAND;
+	return MCIERR_MISSING_PARAMETER;
     }
     if ((dwFlags & MCI_NOTIFY) && HRESULT_CODE(ret)==0)
 	MIDI_mciNotify(lpParms->dwCallback, wmm, MCI_NOTIFY_SUCCESSFUL);
