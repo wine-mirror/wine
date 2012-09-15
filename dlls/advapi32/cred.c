@@ -622,6 +622,8 @@ static DWORD mac_write_credential(const CREDENTIALW *credential, BOOL preserve_b
     HeapFree(GetProcessHeap(), 0, password);
     /* FIXME: set TargetAlias attribute */
     CFRelease(keychain_item);
+    if (status != noErr)
+        return ERROR_GEN_FAILURE;
     return ERROR_SUCCESS;
 }
 #endif
