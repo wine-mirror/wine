@@ -1541,32 +1541,32 @@ static DWORD MIDI_mciInfo(WINE_MCIMIDI* wmm, DWORD dwFlags, LPMCI_INFO_PARMSW lp
  */
 static DWORD MIDI_mciSeek(WINE_MCIMIDI* wmm, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms)
 {
-    DWORD		ret = 0;
+    DWORD		position;
 
     TRACE("(%d, %08X, %p);\n", wmm->wDevID, dwFlags, lpParms);
 
-    if (lpParms == NULL) {
-	ret = MCIERR_NULL_PARAMETER_BLOCK;
+    if (lpParms == NULL) 	return MCIERR_NULL_PARAMETER_BLOCK;
+
+    position = dwFlags & (MCI_SEEK_TO_START|MCI_SEEK_TO_END|MCI_TO);
+    if (!position)		return MCIERR_MISSING_PARAMETER;
+    if (position&(position-1))	return MCIERR_FLAGS_NOT_COMPATIBLE;
+
+    MIDI_mciStop(wmm, MCI_WAIT, 0);
+
+    if (dwFlags & MCI_TO) { /* FIXME: compare with length */
+        wmm->dwPositionMS = MIDI_ConvertTimeFormatToMS(wmm, lpParms->dwTo);
+    } else if (dwFlags & MCI_SEEK_TO_START) {
+        wmm->dwPositionMS = 0;
     } else {
-	MIDI_mciStop(wmm, MCI_WAIT, 0);
-
-	if (dwFlags & MCI_SEEK_TO_START) {
-	    wmm->dwPositionMS = 0;
-	} else if (dwFlags & MCI_SEEK_TO_END) {
-	    wmm->dwPositionMS = 0xFFFFFFFF; /* FIXME */
-	} else if (dwFlags & MCI_TO) {
-	    wmm->dwPositionMS = MIDI_ConvertTimeFormatToMS(wmm, lpParms->dwTo);
-	} else {
-	    WARN("dwFlag doesn't tell where to seek to...\n");
-	    return MCIERR_MISSING_PARAMETER;
-	}
-
-	TRACE("Seeking to position=%u ms\n", wmm->dwPositionMS);
-
-	if (dwFlags & MCI_NOTIFY)
-	    MIDI_mciNotify(lpParms->dwCallback, wmm, MCI_NOTIFY_SUCCESSFUL);
+        wmm->dwPositionMS = 0xFFFFFFFF; /* FIXME */
     }
-    return ret;
+
+    TRACE("Seeking to position=%u ms\n", wmm->dwPositionMS);
+
+    if (dwFlags & MCI_NOTIFY)
+        MIDI_mciNotify(lpParms->dwCallback, wmm, MCI_NOTIFY_SUCCESSFUL);
+
+    return 0;
 }
 
 /*======================================================================*
