@@ -774,6 +774,11 @@ static void test_intconversions(void)
     ULONGLONG ullval;
     HRESULT hr;
 
+    propvar.vt = 0xdead;
+    hr = PropVariantClear(&propvar);
+    ok (FAILED(hr), "PropVariantClear fails on invalid vt.\n");
+
+    propvar.vt = VT_I8;
     PropVariantClear(&propvar);
 
     propvar.vt = VT_I8;
