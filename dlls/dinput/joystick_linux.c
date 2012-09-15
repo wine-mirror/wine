@@ -158,7 +158,10 @@ static INT find_joystick_devices(void)
         /* Append driver name */
         strcat(joydev.name, JOYDEVDRIVER);
 
-        if (device_disabled_registry(joydev.name)) continue;
+        if (device_disabled_registry(joydev.name)) {
+            close(fd);
+            continue;
+        }
 
 #ifdef JSIOCGAXES
         if (ioctl(fd, JSIOCGAXES, &joydev.axis_count) < 0)
