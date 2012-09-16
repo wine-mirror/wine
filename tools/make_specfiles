@@ -109,6 +109,7 @@ my @dll_groups =
  [
   "vcomp",
   "vcomp100",
+  "vcomp90",
  ],
  [
   "atl",
