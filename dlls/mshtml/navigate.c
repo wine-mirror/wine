@@ -769,8 +769,10 @@ static void query_http_info(nsChannelBSC *This, IWinInetHttpInfo *wininet_info)
         return;
 
     IWinInetHttpInfo_QueryInfo(wininet_info, HTTP_QUERY_RAW_HEADERS_CRLF, buf, &len, NULL, NULL);
-    if(!len)
+    if(!len) {
+        heap_free(buf);
         return;
+    }
 
     ptr = strchrW(buf, '\r');
     if(ptr && ptr[1] == '\n') {
