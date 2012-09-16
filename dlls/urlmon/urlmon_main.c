@@ -169,7 +169,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 const char *debugstr_bindstatus(ULONG status)
 {
     switch(status) {
-#define X(x) case x: return #x; break
+#define X(x) case x: return #x
     X(BINDSTATUS_FINDINGRESOURCE);
     X(BINDSTATUS_CONNECTING);
     X(BINDSTATUS_REDIRECTING);
