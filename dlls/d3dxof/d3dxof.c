@@ -987,27 +987,25 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
   IDirectXFileDataImpl* object;
   HRESULT hr;
 
+  if (!ppDataObj)
+    return E_POINTER;
+
+  *ppDataObj = NULL;
+
   TRACE("(%p/%p)->(%p)\n", This, iface, ppDataObj);
 
   if (This->nb_xobjects >= MAX_OBJECTS)
   {
     ERR("Too many objects\n");
-    *ppDataObj = NULL;
     return DXFILEERR_NOMOREOBJECTS;
   }
 
   /* Check if there are templates defined before the object */
   if (!parse_templates(&This->buf))
-  {
-    *ppDataObj = NULL;
     return DXFILEERR_BADVALUE;
-  }
 
   if (!This->buf.rem_bytes)
-  {
-    *ppDataObj = NULL;
     return DXFILEERR_NOMOREOBJECTS;
-  }
 
   hr = IDirectXFileDataImpl_Create(&object);
   if (FAILED(hr))
@@ -1064,7 +1062,6 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
 error:
 
   IDirectXFileData_Release(&object->IDirectXFileData_iface);
-  *ppDataObj = NULL;
 
   return hr;
 }
