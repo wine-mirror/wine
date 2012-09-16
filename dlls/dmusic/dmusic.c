@@ -270,17 +270,18 @@ static HRESULT WINAPI IDirectMusic8Impl_EnumMasterClock(LPDIRECTMUSIC8 iface, DW
     return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusic8Impl_GetMasterClock(LPDIRECTMUSIC8 iface, LPGUID pguidClock, IReferenceClock** ppReferenceClock)
+static HRESULT WINAPI IDirectMusic8Impl_GetMasterClock(LPDIRECTMUSIC8 iface, LPGUID guid_clock, IReferenceClock** reference_clock)
 {
-	IDirectMusic8Impl *This = impl_from_IDirectMusic8(iface);
+    IDirectMusic8Impl *This = impl_from_IDirectMusic8(iface);
 
-	TRACE("(%p, %p, %p)\n", This, pguidClock, ppReferenceClock);
-	if (pguidClock)
-		*pguidClock = This->pMasterClock->pClockInfo.guidClock;
-	if(ppReferenceClock)
-		*ppReferenceClock = (IReferenceClock *)This->pMasterClock;
+    TRACE("(%p)->(%p, %p)\n", This, guid_clock, reference_clock);
 
-	return S_OK;
+    if (guid_clock)
+        *guid_clock = This->pMasterClock->pClockInfo.guidClock;
+    if (reference_clock)
+        *reference_clock = (IReferenceClock*)This->pMasterClock;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusic8Impl_SetMasterClock(LPDIRECTMUSIC8 iface, REFGUID rguidClock)
@@ -354,19 +355,19 @@ static HRESULT WINAPI IDirectMusic8Impl_SetExternalMasterClock(LPDIRECTMUSIC8 if
 }
 
 static const IDirectMusic8Vtbl DirectMusic8_Vtbl = {
-	IDirectMusic8Impl_QueryInterface,
-	IDirectMusic8Impl_AddRef,
-	IDirectMusic8Impl_Release,
-	IDirectMusic8Impl_EnumPort,
-	IDirectMusic8Impl_CreateMusicBuffer,
-	IDirectMusic8Impl_CreatePort,
-	IDirectMusic8Impl_EnumMasterClock,
-	IDirectMusic8Impl_GetMasterClock,
-	IDirectMusic8Impl_SetMasterClock,
-	IDirectMusic8Impl_Activate,
-	IDirectMusic8Impl_GetDefaultPort,
-	IDirectMusic8Impl_SetDirectSound,
-	IDirectMusic8Impl_SetExternalMasterClock
+    IDirectMusic8Impl_QueryInterface,
+    IDirectMusic8Impl_AddRef,
+    IDirectMusic8Impl_Release,
+    IDirectMusic8Impl_EnumPort,
+    IDirectMusic8Impl_CreateMusicBuffer,
+    IDirectMusic8Impl_CreatePort,
+    IDirectMusic8Impl_EnumMasterClock,
+    IDirectMusic8Impl_GetMasterClock,
+    IDirectMusic8Impl_SetMasterClock,
+    IDirectMusic8Impl_Activate,
+    IDirectMusic8Impl_GetDefaultPort,
+    IDirectMusic8Impl_SetDirectSound,
+    IDirectMusic8Impl_SetExternalMasterClock
 };
 
 /* For ClassFactory */
