@@ -72,6 +72,12 @@ typedef struct DMUSIC_PRIVATE_CHANNEL_GROUP_ {
 	DMUSIC_PRIVATE_MCHANNEL channel[16]; /* 16 channels in a group */
 } DMUSIC_PRIVATE_CHANNEL_GROUP, *LPDMUSIC_PRIVATE_CHANNEL_GROUP;
 
+typedef struct port_info {
+    DMUS_PORTCAPS caps;
+    HRESULT (*create)(LPCGUID guid, LPVOID *object, LPUNKNOWN unkouter, LPDMUS_PORTPARAMS port_params, LPDMUS_PORTCAPS port_caps, DWORD device);
+    ULONG device;
+} port_info;
+
 
 /*****************************************************************************
  * ClassFactory
@@ -100,6 +106,8 @@ struct IDirectMusic8Impl {
     IReferenceClockImpl* pMasterClock;
     IDirectMusicPort** ppPorts;
     int nrofports;
+    port_info* system_ports;
+    int nb_system_ports;
 };
 
 /*****************************************************************************
@@ -161,7 +169,7 @@ struct IDirectMusicPortImpl {
 };
 
 /** Internal factory */
-extern HRESULT DMUSIC_CreateDirectMusicPortImpl (LPCGUID lpcGUID, LPVOID *ppobj, LPUNKNOWN pUnkOuter, LPDMUS_PORTPARAMS pPortParams, LPDMUS_PORTCAPS pPortCaps) DECLSPEC_HIDDEN;
+extern HRESULT DMUSIC_CreateDirectMusicPortImpl(LPCGUID lpcGUID, LPVOID *ppobj, LPUNKNOWN pUnkOuter, LPDMUS_PORTPARAMS pPortParams, LPDMUS_PORTCAPS pPortCaps, DWORD device) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * IReferenceClockImpl implementation structure

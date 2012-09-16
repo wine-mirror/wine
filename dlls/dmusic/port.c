@@ -473,12 +473,13 @@ static const IDirectMusicThruVtbl DirectMusicThru_Vtbl = {
 	IDirectMusicThruImpl_ThruChannel
 };
 
-HRESULT DMUSIC_CreateDirectMusicPortImpl (LPCGUID lpcGUID, LPVOID *ppobj, LPUNKNOWN pUnkOuter, LPDMUS_PORTPARAMS pPortParams, LPDMUS_PORTCAPS pPortCaps) {
+HRESULT DMUSIC_CreateDirectMusicPortImpl(LPCGUID lpcGUID, LPVOID *ppobj, LPUNKNOWN pUnkOuter, LPDMUS_PORTPARAMS pPortParams, LPDMUS_PORTCAPS pPortCaps, DWORD device)
+{
 	IDirectMusicPortImpl *obj;
 	HRESULT hr = E_FAIL;
 	UINT j;
 
-	TRACE("(%p,%p,%p)\n", lpcGUID, ppobj, pUnkOuter);
+	TRACE("(%p,%p,%p,%d)\n", lpcGUID, ppobj, pUnkOuter, device);
 
 	obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicPortImpl));
 	if (NULL == obj) {
