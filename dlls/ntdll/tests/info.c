@@ -621,6 +621,8 @@ static void test_query_logicalproc(void)
     if(si.dwNumberOfProcessors <= 32)
         ok(proc_no == si.dwNumberOfProcessors, "Incorrect number of logical processors: %d, expected %d\n",
                 proc_no, si.dwNumberOfProcessors);
+
+    HeapFree(GetProcessHeap(), 0, slpi);
 }
 
 static void test_query_processor_power_info(void)
