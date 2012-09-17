@@ -348,7 +348,25 @@ static void STDMETHODCALLTYPE d3d10_device_RSSetState(ID3D10Device *iface, ID3D1
 static void STDMETHODCALLTYPE d3d10_device_RSSetViewports(ID3D10Device *iface,
         UINT viewport_count, const D3D10_VIEWPORT *viewports)
 {
-    FIXME("iface %p, viewport_count %u, viewports %p stub!\n", iface, viewport_count, viewports);
+    struct d3d10_device *device = impl_from_ID3D10Device(iface);
+    struct wined3d_viewport wined3d_vp;
+
+    TRACE("iface %p, viewport_count %u, viewports %p.\n", iface, viewport_count, viewports);
+
+    if (viewport_count > 1)
+        FIXME("Multiple viewports not implemented.\n");
+
+    if (!viewport_count)
+        return;
+
+    wined3d_vp.x = viewports[0].TopLeftX;
+    wined3d_vp.y = viewports[0].TopLeftY;
+    wined3d_vp.width = viewports[0].Width;
+    wined3d_vp.height = viewports[0].Height;
+    wined3d_vp.min_z = viewports[0].MinDepth;
+    wined3d_vp.max_z = viewports[0].MaxDepth;
+
+    wined3d_device_set_viewport(device->wined3d_device, &wined3d_vp);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_RSSetScissorRects(ID3D10Device *iface,
