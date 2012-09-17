@@ -285,7 +285,7 @@ static void test_COM(void)
             "IDirectSoundFullDuplex_Initialize failed: %08x, expected E_INVALIDARG\n", hr);
     hr = IDirectSoundFullDuplex_Initialize(dsfd, NULL, NULL, &cbufdesc, &bufdesc, get_hwnd(),
             DSSCL_EXCLUSIVE, &dscb8, &dsb8);
-    if (hr == DSERR_NODRIVER) {
+    if (hr == DSERR_NODRIVER || hr == DSERR_INVALIDCALL) {
         skip("No driver\n");
         return;
     }
