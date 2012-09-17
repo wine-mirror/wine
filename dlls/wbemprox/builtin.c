@@ -287,6 +287,7 @@ static const struct column col_videocontroller[] =
     { prop_currentbitsperpixelW,  CIM_UINT32 },
     { prop_currenthorizontalresW, CIM_UINT32 },
     { prop_currentverticalresW,   CIM_UINT32 },
+    { prop_descriptionW,          CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_deviceidW,             CIM_STRING|COL_FLAG_KEY },
     { prop_nameW,                 CIM_STRING|COL_FLAG_DYNAMIC }
 };
@@ -428,6 +429,7 @@ struct record_videocontroller
     UINT32       current_bitsperpixel;
     UINT32       current_horizontalres;
     UINT32       current_verticalres;
+    const WCHAR *description;
     const WCHAR *device_id;
     const WCHAR *name;
 };
@@ -1050,6 +1052,7 @@ done:
     rec->current_bitsperpixel  = get_bits_per_pixel( &hres, &vres );
     rec->current_horizontalres = hres;
     rec->current_verticalres   = vres;
+    rec->description           = heap_strdupW( name );
     rec->device_id             = videocontroller_deviceidW;
     rec->name                  = heap_strdupW( name );
 
