@@ -101,6 +101,7 @@ enum wined3d_sm4_opcode
     WINED3D_SM4_OP_USHR                 = 0x55,
     WINED3D_SM4_OP_UTOF                 = 0x56,
     WINED3D_SM4_OP_XOR                  = 0x57,
+    WINED3D_SM4_OP_DCL_OUTPUT_TOPOLOGY  = 0x5c,
     WINED3D_SM4_OP_DCL_INPUT_PRIMITIVE  = 0x5d,
     WINED3D_SM4_OP_DCL_VERTICES_OUT     = 0x5e,
 };
@@ -114,6 +115,13 @@ enum wined3d_sm4_register_type
     WINED3D_SM4_RT_SAMPLER      = 0x6,
     WINED3D_SM4_RT_CONSTBUFFER  = 0x8,
     WINED3D_SM4_RT_NULL         = 0xd,
+};
+
+enum wined3d_sm4_output_primitive_type
+{
+    WINED3D_SM4_OUTPUT_PT_POINTLIST     = 0x1,
+    WINED3D_SM4_OUTPUT_PT_LINELIST      = 0x3,
+    WINED3D_SM4_OUTPUT_PT_TRIANGLESTRIP = 0x5,
 };
 
 enum wined3d_sm4_input_primitive_type
@@ -213,6 +221,7 @@ static const struct wined3d_sm4_opcode_info opcode_table[] =
     {WINED3D_SM4_OP_USHR,                   WINED3DSIH_USHR,                "U",    "UU"},
     {WINED3D_SM4_OP_UTOF,                   WINED3DSIH_UTOF,                "F",    "U"},
     {WINED3D_SM4_OP_XOR,                    WINED3DSIH_XOR,                 "U",    "UU"},
+    {WINED3D_SM4_OP_DCL_OUTPUT_TOPOLOGY,    WINED3DSIH_DCL_OUTPUT_TOPOLOGY, "",     ""},
     {WINED3D_SM4_OP_DCL_INPUT_PRIMITIVE,    WINED3DSIH_DCL_INPUT_PRIMITIVE, "",     ""},
     {WINED3D_SM4_OP_DCL_VERTICES_OUT,       WINED3DSIH_DCL_VERTICES_OUT,    "",     ""},
 };
@@ -233,6 +242,16 @@ static const enum wined3d_shader_register_type register_type_table[] =
     /* UNKNOWN */                       0,
     /* UNKNOWN */                       0,
     /* WINED3D_SM4_RT_NULL */           WINED3DSPR_NULL,
+};
+
+static const enum wined3d_primitive_type output_primitive_type_table[] =
+{
+    /* UNKNOWN */                               WINED3D_PT_UNDEFINED,
+    /* WINED3D_SM4_OUTPUT_PT_POINTLIST */       WINED3D_PT_POINTLIST,
+    /* UNKNOWN */                               WINED3D_PT_UNDEFINED,
+    /* WINED3D_SM4_OUTPUT_PT_LINELIST */        WINED3D_PT_LINELIST,
+    /* UNKNOWN */                               WINED3D_PT_UNDEFINED,
+    /* WINED3D_SM4_OUTPUT_PT_TRIANGLESTRIP */   WINED3D_PT_TRIANGLESTRIP,
 };
 
 static const enum wined3d_primitive_type input_primitive_type_table[] =
@@ -562,7 +581,22 @@ static void shader_sm4_read_instruction(void *data, const DWORD **ptr, struct wi
         FIXME("Skipping modifier 0x%08x.\n", modifier);
     }
 
-    if (opcode == WINED3D_SM4_OP_DCL_INPUT_PRIMITIVE)
+    if (opcode == WINED3D_SM4_OP_DCL_OUTPUT_TOPOLOGY)
+    {
+        enum wined3d_sm4_output_primitive_type primitive_type;
+
+        primitive_type = (opcode_token & WINED3D_SM4_PRIMITIVE_TYPE_MASK) >> WINED3D_SM4_PRIMITIVE_TYPE_SHIFT;
+        if (primitive_type >= sizeof(output_primitive_type_table) / sizeof(*output_primitive_type_table))
+        {
+            FIXME("Unhandled output primitive type %#x.\n", primitive_type);
+            ins->declaration.primitive_type = WINED3D_PT_UNDEFINED;
+        }
+        else
+        {
+            ins->declaration.primitive_type = output_primitive_type_table[primitive_type];
+        }
+    }
+    else if (opcode == WINED3D_SM4_OP_DCL_INPUT_PRIMITIVE)
     {
         enum wined3d_sm4_input_primitive_type primitive_type;
 

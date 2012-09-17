@@ -51,6 +51,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_CUT                   */ "cut",
     /* WINED3DSIH_DCL                   */ "dcl",
     /* WINED3DSIH_DCL_INPUT_PRIMITIVE   */ "dcl_inputPrimitive",
+    /* WINED3DSIH_DCL_OUTPUT_TOPOLOGY   */ "dcl_outputTopology",
     /* WINED3DSIH_DCL_VERTICES_OUT      */ "dcl_maxOutputVertexCount",
     /* WINED3DSIH_DEF                   */ "def",
     /* WINED3DSIH_DEFB                  */ "defb",
@@ -1366,7 +1367,8 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
             TRACE(" ");
             shader_dump_dst_param(&ins.declaration.semantic.reg, &shader_version);
         }
-        else if (ins.handler_idx == WINED3DSIH_DCL_INPUT_PRIMITIVE)
+        else if (ins.handler_idx == WINED3DSIH_DCL_INPUT_PRIMITIVE
+                || ins.handler_idx == WINED3DSIH_DCL_OUTPUT_TOPOLOGY)
         {
             TRACE("%s ", shader_opcode_names[ins.handler_idx]);
             shader_dump_primitive_type(ins.declaration.primitive_type);
