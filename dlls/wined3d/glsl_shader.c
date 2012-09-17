@@ -2202,6 +2202,11 @@ static void shader_glsl_cross(const struct wined3d_shader_instruction *ins)
     shader_addline(ins->ctx->buffer, "cross(%s, %s)%s);\n", src0_param.param_str, src1_param.param_str, dst_mask);
 }
 
+static void shader_glsl_cut(const struct wined3d_shader_instruction *ins)
+{
+    shader_addline(ins->ctx->buffer, "EndPrimitive();\n");
+}
+
 /* Process the WINED3DSIO_POW instruction in GLSL (dst = |src0|^src1)
  * Src0 and src1 are scalars. Note that D3D uses the absolute of src0, while
  * GLSL uses the value as-is. */
@@ -5029,7 +5034,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_CMP                   */ shader_glsl_cmp,
     /* WINED3DSIH_CND                   */ shader_glsl_cnd,
     /* WINED3DSIH_CRS                   */ shader_glsl_cross,
-    /* WINED3DSIH_CUT                   */ NULL,
+    /* WINED3DSIH_CUT                   */ shader_glsl_cut,
     /* WINED3DSIH_DCL                   */ shader_glsl_nop,
     /* WINED3DSIH_DCL_INPUT_PRIMITIVE   */ shader_glsl_nop,
     /* WINED3DSIH_DCL_OUTPUT_TOPOLOGY   */ shader_glsl_nop,
