@@ -532,7 +532,6 @@ HRESULT create_math(script_ctx_t *ctx, jsdisp_t **ret)
 {
     jsdisp_t *math;
     unsigned i;
-    VARIANT v;
     HRESULT hres;
 
     struct {
@@ -559,10 +558,8 @@ HRESULT create_math(script_ctx_t *ctx, jsdisp_t **ret)
         return hres;
     }
 
-    V_VT(&v) = VT_R8;
     for(i=0; i < sizeof(constants)/sizeof(*constants); i++) {
-        V_R8(&v) = constants[i].val;
-        hres = jsdisp_propput_const(math, constants[i].name, &v);
+        hres = jsdisp_propput_const(math, constants[i].name, jsval_number(constants[i].val));
         if(FAILED(hres)) {
             jsdisp_release(math);
             return hres;

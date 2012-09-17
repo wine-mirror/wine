@@ -36,7 +36,7 @@ static const IID IID_IDispatchJS =
 #define GOLDEN_RATIO 0x9E3779B9U
 
 typedef enum {
-    PROP_VARIANT,
+    PROP_JSVAL,
     PROP_BUILTIN,
     PROP_PROTREF,
     PROP_DELETED
@@ -49,7 +49,7 @@ struct _dispex_prop_t {
     DWORD flags;
 
     union {
-        VARIANT var;
+        jsval_t val;
         const builtin_prop_t *p;
         DWORD ref;
     } u;
@@ -276,15 +276,15 @@ static HRESULT ensure_prop_name(jsdisp_t *This, const WCHAR *name, BOOL search_p
         TRACE("creating prop %s\n", debugstr_w(name));
 
         if(prop) {
-            prop->type = PROP_VARIANT;
+            prop->type = PROP_JSVAL;
             prop->flags = create_flags;
         }else {
-            prop = alloc_prop(This, name, PROP_VARIANT, create_flags);
+            prop = alloc_prop(This, name, PROP_JSVAL, create_flags);
             if(!prop)
                 return E_OUTOFMEMORY;
         }
 
-        VariantInit(&prop->u.var);
+        prop->u.val = jsval_undefined();
     }
 
     *ret = prop;
@@ -372,15 +372,15 @@ static HRESULT invoke_prop_func(jsdisp_t *This, IDispatch *jsthis, dispex_prop_t
     case PROP_PROTREF:
         return invoke_prop_func(This->prototype, jsthis, This->prototype->props+prop->u.ref,
                 flags, argc, argv, r, ei, caller);
-    case PROP_VARIANT: {
-        if(V_VT(&prop->u.var) != VT_DISPATCH) {
-            FIXME("invoke vt %d\n", V_VT(&prop->u.var));
+    case PROP_JSVAL: {
+        if(!is_object_instance(prop->u.val)) {
+            FIXME("invoke %s\n", debugstr_jsval(prop->u.val));
             return E_FAIL;
         }
 
-        TRACE("call %s %p\n", debugstr_w(prop->name), V_DISPATCH(&prop->u.var));
+        TRACE("call %s %p\n", debugstr_w(prop->name), get_object(prop->u.val));
 
-        return disp_call_value(This->ctx, V_DISPATCH(&prop->u.var), jsthis, flags, argc, argv, r, ei);
+        return disp_call_value(This->ctx, get_object(prop->u.val), jsthis, flags, argc, argv, r, ei);
     }
     default:
         ERR("type %d\n", prop->type);
@@ -403,9 +403,11 @@ static HRESULT prop_get(jsdisp_t *This, dispex_prop_t *prop, DISPPARAMS *dp,
             if(FAILED(hres))
                 break;
 
-            prop->type = PROP_VARIANT;
-            var_set_jsdisp(&prop->u.var, obj);
-            hres = variant_to_jsval(&prop->u.var, r);
+            prop->type = PROP_JSVAL;
+            prop->u.val = jsval_obj(obj);
+
+            jsdisp_addref(obj);
+            *r = jsval_obj(obj);
         }else {
             vdisp_t vthis;
 
@@ -417,8 +419,8 @@ static HRESULT prop_get(jsdisp_t *This, dispex_prop_t *prop, DISPPARAMS *dp,
     case PROP_PROTREF:
         hres = prop_get(This->prototype, This->prototype->props+prop->u.ref, dp, r, ei, caller);
         break;
-    case PROP_VARIANT:
-        hres = variant_to_jsval(&prop->u.var, r);
+    case PROP_JSVAL:
+        hres = jsval_copy(prop->u.val, r);
         break;
     default:
         ERR("type %d\n", prop->type);
@@ -453,21 +455,23 @@ static HRESULT prop_put(jsdisp_t *This, dispex_prop_t *prop, jsval_t val,
             return hres;
         }
     case PROP_PROTREF:
-        prop->type = PROP_VARIANT;
+        prop->type = PROP_JSVAL;
         prop->flags = PROPF_ENUM;
-        V_VT(&prop->u.var) = VT_EMPTY;
+        prop->u.val = jsval_undefined();
         break;
-    case PROP_VARIANT:
-        VariantClear(&prop->u.var);
+    case PROP_JSVAL:
+        jsval_release(prop->u.val);
         break;
     default:
         ERR("type %d\n", prop->type);
         return E_FAIL;
     }
 
-    hres = jsval_to_variant(val, &prop->u.var);
-    if(FAILED(hres))
+    hres = jsval_copy(val, &prop->u.val);
+    if(FAILED(hres)) {
+        prop->u.val = jsval_undefined();
         return hres;
+    }
 
     if(This->builtin_info->on_put)
         This->builtin_info->on_put(This, prop->name);
@@ -562,8 +566,8 @@ static ULONG WINAPI DispatchEx_Release(IDispatchEx *iface)
         dispex_prop_t *prop;
 
         for(prop = This->props; prop < This->props+This->prop_cnt; prop++) {
-            if(prop->type == PROP_VARIANT)
-                VariantClear(&prop->u.var);
+            if(prop->type == PROP_JSVAL)
+                jsval_release(prop->u.val);
             heap_free(prop->name);
         }
         heap_free(This->props);
@@ -733,8 +737,8 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
 
 static HRESULT delete_prop(dispex_prop_t *prop)
 {
-    if(prop->type == PROP_VARIANT) {
-        VariantClear(&prop->u.var);
+    if(prop->type == PROP_JSVAL) {
+        jsval_release(prop->u.val);
         prop->type = PROP_DELETED;
     }
     return S_OK;
@@ -1252,7 +1256,7 @@ HRESULT jsdisp_propput_name(jsdisp_t *obj, const WCHAR *name, jsval_t val, jsexc
     return prop_put(obj, prop, val, ei, NULL);
 }
 
-HRESULT jsdisp_propput_const(jsdisp_t *obj, const WCHAR *name, VARIANT *val)
+HRESULT jsdisp_propput_const(jsdisp_t *obj, const WCHAR *name, jsval_t val)
 {
     dispex_prop_t *prop;
     HRESULT hres;
@@ -1261,10 +1265,10 @@ HRESULT jsdisp_propput_const(jsdisp_t *obj, const WCHAR *name, VARIANT *val)
     if(FAILED(hres))
         return hres;
 
-    return VariantCopy(&prop->u.var, val);
+    return jsval_copy(val, &prop->u.val);
 }
 
-HRESULT jsdisp_propput_dontenum(jsdisp_t *obj, const WCHAR *name, VARIANT *val)
+HRESULT jsdisp_propput_dontenum(jsdisp_t *obj, const WCHAR *name, jsval_t val)
 {
     dispex_prop_t *prop;
     HRESULT hres;
@@ -1273,7 +1277,7 @@ HRESULT jsdisp_propput_dontenum(jsdisp_t *obj, const WCHAR *name, VARIANT *val)
     if(FAILED(hres))
         return hres;
 
-    return VariantCopy(&prop->u.var, val);
+    return jsval_copy(val, &prop->u.val);
 }
 
 HRESULT jsdisp_propput_idx(jsdisp_t *obj, DWORD idx, jsval_t val, jsexcept_t *ei)
@@ -1441,6 +1445,6 @@ HRESULT jsdisp_is_own_prop(jsdisp_t *obj, BSTR name, VARIANT_BOOL *ret)
     if(FAILED(hres))
         return hres;
 
-    *ret = prop && (prop->type == PROP_VARIANT || prop->type == PROP_BUILTIN) ? VARIANT_TRUE : VARIANT_FALSE;
+    *ret = prop && (prop->type == PROP_JSVAL || prop->type == PROP_BUILTIN) ? VARIANT_TRUE : VARIANT_FALSE;
     return S_OK;
 }

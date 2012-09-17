@@ -260,7 +260,8 @@ HRESULT jsval_copy(jsval_t v, jsval_t *r)
         *r = v;
         return S_OK;
     case JSV_OBJECT:
-        IDispatch_AddRef(get_object(v));
+        if(get_object(v))
+            IDispatch_AddRef(get_object(v));
         *r = v;
         return S_OK;
     case JSV_STRING: {

@@ -609,13 +609,8 @@ HRESULT create_builtin_function(script_ctx_t *ctx, builtin_invoke_t value_proc, 
     if(FAILED(hres))
         return hres;
 
-    if(builtin_info) {
-        VARIANT var;
-
-        num_set_int(&var, function->length);
-        hres = jsdisp_propput_const(&function->dispex, lengthW, &var);
-    }
-
+    if(builtin_info)
+        hres = jsdisp_propput_const(&function->dispex, lengthW, jsval_number(function->length));
     if(SUCCEEDED(hres))
         hres = set_prototype(ctx, &function->dispex, prototype);
     if(FAILED(hres)) {
@@ -632,13 +627,9 @@ HRESULT create_builtin_function(script_ctx_t *ctx, builtin_invoke_t value_proc, 
 
 static HRESULT set_constructor_prop(script_ctx_t *ctx, jsdisp_t *constr, jsdisp_t *prot)
 {
-    VARIANT v;
-
     static const WCHAR constructorW[] = {'c','o','n','s','t','r','u','c','t','o','r',0};
 
-    V_VT(&v) = VT_DISPATCH;
-    V_DISPATCH(&v) = to_disp(constr);
-    return jsdisp_propput_dontenum(prot, constructorW, &v);
+    return jsdisp_propput_dontenum(prot, constructorW, jsval_obj(constr));
 }
 
 HRESULT create_builtin_constructor(script_ctx_t *ctx, builtin_invoke_t value_proc, const WCHAR *name,
