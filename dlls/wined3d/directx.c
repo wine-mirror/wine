@@ -1075,6 +1075,7 @@ static const struct gpu_description gpu_description_table[] =
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8800GTS,    "NVIDIA GeForce 8800 GTS",          DRIVER_NVIDIA_GEFORCE6,  320 },
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8800GTX,    "NVIDIA GeForce 8800 GTX",          DRIVER_NVIDIA_GEFORCE6,  768 },
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9200,       "NVIDIA GeForce 9200",              DRIVER_NVIDIA_GEFORCE6,  256 },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9300,       "NVIDIA GeForce 9300",              DRIVER_NVIDIA_GEFORCE6,  256 },
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9400M,      "NVIDIA GeForce 9400M",             DRIVER_NVIDIA_GEFORCE6,  256 },
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9400GT,     "NVIDIA GeForce 9400 GT",           DRIVER_NVIDIA_GEFORCE6,  256 },
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9500GT,     "NVIDIA GeForce 9500 GT",           DRIVER_NVIDIA_GEFORCE6,  256 },
@@ -1553,7 +1554,7 @@ static enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl
             {"9500",        CARD_NVIDIA_GEFORCE_9500GT},    /* Geforce 9 - midend low / Geforce 200 - low */
             {"9400M",       CARD_NVIDIA_GEFORCE_9400M},     /* Geforce 9 - lowend */
             {"9400",        CARD_NVIDIA_GEFORCE_9400GT},    /* Geforce 9 - lowend */
-            {"9300",        CARD_NVIDIA_GEFORCE_9200},      /* Geforce 9 - lowend low */
+            {"9300",        CARD_NVIDIA_GEFORCE_9300},      /* Geforce 9 - lowend low */
             {"9200",        CARD_NVIDIA_GEFORCE_9200},      /* Geforce 9 - lowend low */
             {"9100",        CARD_NVIDIA_GEFORCE_9200},      /* Geforce 9 - lowend low */
             {"G 100",       CARD_NVIDIA_GEFORCE_9200},      /* Geforce 9 - lowend low */
