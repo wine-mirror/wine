@@ -77,12 +77,12 @@ void __thiscall MSVCP_basic_string_wchar_clear(basic_string_wchar*);
 basic_string_wchar* __thiscall MSVCP_basic_string_wchar_append_ch(basic_string_wchar*, wchar_t);
 MSVCP_size_t __thiscall MSVCP_basic_string_wchar_length(const basic_string_wchar*);
 
-char* __stdcall MSVCP_allocator_char_allocate(void*, MSVCP_size_t);
-void __stdcall MSVCP_allocator_char_deallocate(void*, char*, MSVCP_size_t);
-MSVCP_size_t __stdcall MSVCP_allocator_char_max_size(void*);
-wchar_t* __stdcall MSVCP_allocator_wchar_allocate(void*, MSVCP_size_t);
-void __stdcall MSVCP_allocator_wchar_deallocate(void*, wchar_t*, MSVCP_size_t);
-MSVCP_size_t __stdcall MSVCP_allocator_wchar_max_size(void*);
+char* MSVCP_allocator_char_allocate(void*, MSVCP_size_t);
+void MSVCP_allocator_char_deallocate(void*, char*, MSVCP_size_t);
+MSVCP_size_t MSVCP_allocator_char_max_size(void*);
+wchar_t* MSVCP_allocator_wchar_allocate(void*, MSVCP_size_t);
+void MSVCP_allocator_wchar_deallocate(void*, wchar_t*, MSVCP_size_t);
+MSVCP_size_t MSVCP_allocator_wchar_max_size(void*);
 
 /* class locale::facet */
 typedef struct {

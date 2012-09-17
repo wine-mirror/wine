@@ -61,44 +61,16 @@ void __thiscall mutex_unlock(mutex *this)
     ReleaseMutex(this->mutex);
 }
 
-/* ?_Mutex_Lock@_Mutex@std@@CAXPAV12@@Z */
-/* ?_Mutex_Lock@_Mutex@std@@CAXPEAV12@@Z */
-void CDECL mutex_mutex_lock(mutex *m)
-{
-    mutex_lock(m);
-}
-
-/* ?_Mutex_Unlock@_Mutex@std@@CAXPAV12@@Z */
-/* ?_Mutex_Unlock@_Mutex@std@@CAXPEAV12@@Z */
-void CDECL mutex_mutex_unlock(mutex *m)
-{
-    mutex_unlock(m);
-}
-
-/* ?_Mutex_ctor@_Mutex@std@@CAXPAV12@@Z */
-/* ?_Mutex_ctor@_Mutex@std@@CAXPEAV12@@Z */
-void CDECL mutex_mutex_ctor(mutex *m)
-{
-    mutex_ctor(m);
-}
-
-/* ?_Mutex_dtor@_Mutex@std@@CAXPAV12@@Z */
-/* ?_Mutex_dtor@_Mutex@std@@CAXPEAV12@@Z */
-void CDECL mutex_mutex_dtor(mutex *m)
-{
-    mutex_dtor(m);
-}
-
 static CRITICAL_SECTION lockit_cs[_MAX_LOCK];
 
 /* ?_Lockit_ctor@_Lockit@std@@SAXH@Z */
-void __cdecl _Lockit_init(int locktype) {
+static void _Lockit_init(int locktype) {
     InitializeCriticalSection(&lockit_cs[locktype]);
     lockit_cs[locktype].DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": _Lockit critical section");
 }
 
 /* ?_Lockit_dtor@_Lockit@std@@SAXH@Z */
-void __cdecl _Lockit_free(int locktype)
+static void _Lockit_free(int locktype)
 {
     lockit_cs[locktype].DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&lockit_cs[locktype]);
@@ -120,17 +92,10 @@ void free_lockit(void) {
 
 /* ?_Lockit_ctor@_Lockit@std@@CAXPAV12@H@Z */
 /* ?_Lockit_ctor@_Lockit@std@@CAXPEAV12@H@Z */
-void __cdecl _Lockit__Lockit_ctor_locktype(_Lockit *lockit, int locktype)
+static void _Lockit__Lockit_ctor_locktype(_Lockit *lockit, int locktype)
 {
     lockit->locktype = locktype;
     EnterCriticalSection(&lockit_cs[locktype]);
-}
-
-/* ?_Lockit_ctor@_Lockit@std@@CAXPAV12@@Z */
-/* ?_Lockit_ctor@_Lockit@std@@CAXPEAV12@@Z */
-void __cdecl _Lockit__Lockit_ctor(_Lockit *lockit)
-{
-    _Lockit__Lockit_ctor_locktype(lockit, 0);
 }
 
 /* ??0_Lockit@std@@QAE@H@Z */
@@ -153,7 +118,7 @@ _Lockit* __thiscall _Lockit_ctor(_Lockit *this)
 
 /* ?_Lockit_dtor@_Lockit@std@@CAXPAV12@@Z */
 /* ?_Lockit_dtor@_Lockit@std@@CAXPEAV12@@Z */
-void __cdecl _Lockit__Lockit_dtor(_Lockit *lockit)
+static void _Lockit__Lockit_dtor(_Lockit *lockit)
 {
     LeaveCriticalSection(&lockit_cs[lockit->locktype]);
 }
@@ -212,10 +177,4 @@ MSVCP_new_handler_func __cdecl set_new_handler(MSVCP_new_handler_func new_handle
     MSVCP_new_handler = new_handler;
     MSVCRT_set_new_handler(new_handler ? new_handler_wrapper : NULL);
     return old_handler;
-}
-
-/* ?set_new_handler@std@@YAP6AXXZH@Z */
-MSVCP_new_handler_func __cdecl set_new_handler_reset(int unused)
-{
-    return set_new_handler(NULL);
 }

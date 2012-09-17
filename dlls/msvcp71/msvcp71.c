@@ -52,8 +52,6 @@ DEFINE_VTBL_WRAPPER(40);
 DEFINE_VTBL_WRAPPER(44);
 DEFINE_VTBL_WRAPPER(48);
 DEFINE_VTBL_WRAPPER(52);
-DEFINE_VTBL_WRAPPER(56);
-DEFINE_VTBL_WRAPPER(60);
 
 #endif
 
@@ -105,19 +103,5 @@ BOOL WINAPI DllMain(HINSTANCE hdll, DWORD reason, LPVOID reserved)
 /* ?_BADOFF@std@@3_JB -> __int64 const std::_BADOFF */
 const streamoff std_BADOFF = -1;
 
-/* ?_BADOFF_func@std@@YAABJXZ -> long const & __cdecl std::_BADOFF_func(void) */
-/* ?_BADOFF_func@std@@YAAEB_JXZ -> __int64 const & __ptr64 __cdecl std::_BADOFF_func(void) */
-const streamoff * __cdecl std_BADOFF_func(void)
-{
-    return &std_BADOFF;
-}
-
 /* ?_Fpz@std@@3_JA  __int64 std::_Fpz */
 __int64 std_Fpz = 0;
-
-/* ?_Fpz_func@std@@YAAA_JXZ -> __int64 & __cdecl std::_Fpz_func(void) */
-/* ?_Fpz_func@std@@YAAEA_JXZ -> __int64 & __ptr64 __cdecl std::_Fpz_func(void) */
-__int64 * __cdecl std_Fpz_func(void)
-{
-    return &std_Fpz;
-}
