@@ -553,6 +553,8 @@ struct x11drv_win_data
     Pixmap      icon_mask;
 };
 
+extern struct x11drv_win_data *get_win_data( HWND hwnd ) DECLSPEC_HIDDEN;
+extern void release_win_data( struct x11drv_win_data *data ) DECLSPEC_HIDDEN;
 extern struct x11drv_win_data *X11DRV_get_win_data( HWND hwnd ) DECLSPEC_HIDDEN;
 extern Window X11DRV_get_whole_window( HWND hwnd ) DECLSPEC_HIDDEN;
 extern XIC X11DRV_get_ic( HWND hwnd ) DECLSPEC_HIDDEN;
