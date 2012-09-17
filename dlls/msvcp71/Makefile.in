@@ -1,5 +1,16 @@
 MODULE = msvcp71.dll
+IMPORTS   = msvcrt
+MODCFLAGS = @BUILTINFLAG@
+EXTRAINCL = -I$(top_srcdir)/include/msvcrt
 
-C_SRCS = msvcp71.c
+C_SRCS = \
+	exception.c \
+	ios.c \
+	locale.c \
+	math.c \
+	memory.c \
+	misc.c \
+	msvcp71.c \
+	string.c
 
 @MAKE_DLL_RULES@
