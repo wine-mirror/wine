@@ -230,7 +230,7 @@ struct _exec_ctx_t {
     function_code_t *func_code;
     BOOL is_global;
 
-    VARIANT *stack;
+    jsval_t *stack;
     unsigned stack_size;
     unsigned top;
     except_frame_t *except_frame;
@@ -246,7 +246,7 @@ static inline void exec_addref(exec_ctx_t *ctx)
 
 void exec_release(exec_ctx_t*) DECLSPEC_HIDDEN;
 HRESULT create_exec_ctx(script_ctx_t*,IDispatch*,jsdisp_t*,scope_chain_t*,BOOL,exec_ctx_t**) DECLSPEC_HIDDEN;
-HRESULT exec_source(exec_ctx_t*,bytecode_t*,function_code_t*,BOOL,jsexcept_t*,VARIANT*) DECLSPEC_HIDDEN;
+HRESULT exec_source(exec_ctx_t*,bytecode_t*,function_code_t*,BOOL,jsexcept_t*,jsval_t*) DECLSPEC_HIDDEN;
 HRESULT create_source_function(script_ctx_t*,bytecode_t*,function_code_t*,scope_chain_t*,jsdisp_t**) DECLSPEC_HIDDEN;
 
 typedef enum {
@@ -396,12 +396,12 @@ typedef struct {
 
 typedef struct {
     enum {
-        EXPRVAL_VARIANT,
+        EXPRVAL_JSVAL,
         EXPRVAL_IDREF,
         EXPRVAL_INVALID
     } type;
     union {
-        VARIANT var;
+        jsval_t val;
         struct {
             IDispatch *disp;
             DISPID id;

@@ -349,7 +349,6 @@ static HRESULT JSGlobal_eval(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
         jsval_t *r, jsexcept_t *ei)
 {
     bytecode_t *code;
-    VARIANT retv;
     HRESULT hres;
 
     TRACE("\n");
@@ -378,15 +377,8 @@ static HRESULT JSGlobal_eval(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
         return throw_syntax_error(ctx, ei, hres, NULL);
     }
 
-    hres = exec_source(ctx->exec_ctx, code, &code->global_code, TRUE, ei, r ? &retv : NULL);
+    hres = exec_source(ctx->exec_ctx, code, &code->global_code, TRUE, ei, r);
     release_bytecode(code);
-    if(FAILED(hres))
-        return hres;
-
-    if(r) {
-        hres = variant_to_jsval(&retv, r);
-        VariantClear(&retv);
-    }
     return hres;
 }
 

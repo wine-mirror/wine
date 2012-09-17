@@ -52,6 +52,8 @@ const char *debugstr_variant(const VARIANT *v)
         return wine_dbg_sprintf("{VT_DISPATCH: %p}", V_DISPATCH(v));
     case VT_BOOL:
         return wine_dbg_sprintf("{VT_BOOL: %x}", V_BOOL(v));
+    case VT_ARRAY|VT_VARIANT:
+        return "{VT_ARRAY|VT_VARIANT: ...}";
     default:
         return wine_dbg_sprintf("{vt %d}", V_VT(v));
     }
@@ -241,7 +243,7 @@ HRESULT jsval_variant(jsval_t *val, VARIANT *var)
     if(!val->u.v)
         return E_OUTOFMEMORY;
 
-    V_VT(val->u.v) =  VT_EMPTY;
+    V_VT(val->u.v) = VT_EMPTY;
     hres = VariantCopy(val->u.v, var);
     if(FAILED(hres))
         heap_free(val->u.v);
@@ -357,6 +359,7 @@ HRESULT jsval_to_variant(jsval_t val, VARIANT *retv)
         V_BOOL(retv) = val.u.b ? VARIANT_TRUE : VARIANT_FALSE;
         return S_OK;
     case JSV_VARIANT:
+        V_VT(retv) = VT_EMPTY;
         return VariantCopy(retv, val.u.v);
     }
 
@@ -394,8 +397,16 @@ HRESULT to_primitive(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, VARIANT *ret
 
         jsdisp = iface_to_jsdisp((IUnknown*)V_DISPATCH(v));
         if(!jsdisp) {
-            V_VT(ret) = VT_EMPTY;
-            return disp_propget(ctx, V_DISPATCH(v), DISPID_VALUE, ret, ei);
+            jsval_t val;
+            HRESULT hres;
+
+            hres = disp_propget(ctx, V_DISPATCH(v), DISPID_VALUE, &val, ei);
+            if(FAILED(hres))
+                return hres;
+
+            hres = jsval_to_variant(val, ret);
+            jsval_release(val);
+            return hres;
         }
 
         if(hint == NO_HINT)
@@ -449,6 +460,28 @@ HRESULT to_primitive(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, VARIANT *ret
     }
 
     return S_OK;
+}
+
+/* ECMA-262 3rd Edition    9.1 */
+HRESULT to_primitive_jsval(script_ctx_t *ctx, jsval_t val, jsexcept_t *ei, jsval_t *ret, hint_t hint)
+{
+    if(is_object_instance(val)) {
+        VARIANT var, retv;
+        HRESULT hres;
+
+        V_VT(&var) = VT_DISPATCH;
+        V_DISPATCH(&var) = get_object(val);
+        hres = to_primitive(ctx, &var, ei, &retv, hint);
+        if(FAILED(hres))
+            return hres;
+
+        hres = variant_to_jsval(&retv, ret);
+        VariantClear(&retv);
+        return hres;
+    }
+
+    return jsval_copy(val, ret);
+
 }
 
 /* ECMA-262 3rd Edition    9.2 */
@@ -961,9 +994,7 @@ HRESULT to_object_jsval(script_ctx_t *ctx, jsval_t v, IDispatch **disp)
     if(FAILED(hres))
         return hres;
 
-    hres = to_object(ctx, &var, disp);
-    VariantClear(&var);
-    return hres;
+    return to_object(ctx, &var, disp);
 }
 
 HRESULT variant_change_type(script_ctx_t *ctx, VARIANT *dst, VARIANT *src, VARTYPE vt)
