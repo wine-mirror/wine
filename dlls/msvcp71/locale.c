@@ -42,6 +42,7 @@ void* __cdecl _Gettnames(void);
 unsigned int __cdecl ___lc_codepage_func(void);
 LCID* __cdecl ___lc_handle_func(void);
 const locale_facet* __thiscall locale__Getfacet(const locale*, MSVCP_size_t);
+const locale* __cdecl locale_classic(void);
 
 typedef int category;
 
@@ -832,6 +833,13 @@ MSVCP_size_t __cdecl collate_char__Getcat(const locale_facet **facet, const loca
     return LC_COLLATE;
 }
 
+/* ?_Getcat@?$collate@D@std@@SAIPAPBVfacet@locale@2@@Z */
+/* ?_Getcat@?$collate@D@std@@SA_KPEAPEBVfacet@locale@2@@Z */
+MSVCP_size_t __cdecl collate_char__Getcat_old(const locale_facet **facet)
+{
+    return collate_char__Getcat(facet, locale_classic());
+}
+
 /* _Strcoll */
 int __cdecl _Strcoll(const char *first1, const char *last1, const char *first2,
         const char *last2, const _Collvec *coll)
@@ -1075,6 +1083,13 @@ MSVCP_size_t __cdecl collate_wchar__Getcat(const locale_facet **facet, const loc
     return LC_COLLATE;
 }
 
+/* ?_Getcat@?$collate@_W@std@@SAIPAPBVfacet@locale@2@@Z */
+/* ?_Getcat@?$collate@_W@std@@SA_KPEAPEBVfacet@locale@2@@Z */
+MSVCP_size_t __cdecl collate_wchar__Getcat_old(const locale_facet **facet)
+{
+    return collate_wchar__Getcat(facet, locale_classic());
+}
+
 /* ?_Getcat@?$collate@G@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
 /* ?_Getcat@?$collate@G@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
 MSVCP_size_t __cdecl collate_short__Getcat(const locale_facet **facet, const locale *loc)
@@ -1085,6 +1100,13 @@ MSVCP_size_t __cdecl collate_short__Getcat(const locale_facet **facet, const loc
     }
 
     return LC_COLLATE;
+}
+
+/* ?_Getcat@?$collate@G@std@@SAIPAPBVfacet@locale@2@@Z */
+/* ?_Getcat@?$collate@G@std@@SA_KPEAPEBVfacet@locale@2@@Z */
+MSVCP_size_t __cdecl collate_short__Getcat_old(const locale_facet **facet)
+{
+    return collate_short__Getcat(facet, locale_classic());
 }
 
 /* _Wcscoll */
@@ -1515,6 +1537,13 @@ MSVCP_size_t __cdecl ctype_char__Getcat(const locale_facet **facet, const locale
     }
 
     return LC_CTYPE;
+}
+
+/* ?_Getcat@?$ctype@D@std@@SAIPAPBVfacet@locale@2@@Z */
+/* ?_Getcat@?$ctype@D@std@@SA_KPEAPEBVfacet@locale@2@@Z */
+MSVCP_size_t __cdecl ctype_char__Getcat_old(const locale_facet **facet)
+{
+    return ctype_char__Getcat(facet, locale_classic());
 }
 
 ctype_char* ctype_char_use_facet(const locale *loc)
@@ -2243,6 +2272,13 @@ MSVCP_size_t __cdecl ctype_wchar__Getcat(const locale_facet **facet, const local
     return LC_CTYPE;
 }
 
+/* ?_Getcat@?$ctype@_W@std@@SAIPAPBVfacet@locale@2@@Z */
+/* ?_Getcat@?$ctype@_W@std@@SA_KPEAPEBVfacet@locale@2@@Z */
+MSVCP_size_t __cdecl ctype_wchar__Getcat_old(const locale_facet **facet)
+{
+    return ctype_wchar__Getcat(facet, locale_classic());
+}
+
 /* ?_Getcat@?$ctype@G@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
 /* ?_Getcat@?$ctype@G@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
 MSVCP_size_t __cdecl ctype_short__Getcat(const locale_facet **facet, const locale *loc)
@@ -2253,6 +2289,13 @@ MSVCP_size_t __cdecl ctype_short__Getcat(const locale_facet **facet, const local
     }
 
     return LC_CTYPE;
+}
+
+/* ?_Getcat@?$ctype@G@std@@SAIPAPBVfacet@locale@2@@Z */
+/* ?_Getcat@?$ctype@G@std@@SA_KPEAPEBVfacet@locale@2@@Z */
+MSVCP_size_t __cdecl ctype_short__Getcat_old(const locale_facet **facet)
+{
+    return ctype_short__Getcat(facet, locale_classic());
 }
 
 /* _Towlower */
@@ -2757,6 +2800,13 @@ MSVCP_size_t __cdecl codecvt_char__Getcat(const locale_facet **facet, const loca
     return LC_CTYPE;
 }
 
+/* ?_Getcat@?$codecvt@DDH@std@@SAIPAPBVfacet@locale@2@@Z */
+/* ?_Getcat@?$codecvt@DDH@std@@SA_KPEAPEBVfacet@locale@2@@Z */
+MSVCP_size_t __cdecl codecvt_char__Getcat_old(const locale_facet **facet)
+{
+    return codecvt_char__Getcat(facet, locale_classic());
+}
+
 codecvt_char* codecvt_char_use_facet(const locale *loc)
 {
     static codecvt_char *obj = NULL;
@@ -3056,6 +3106,13 @@ MSVCP_size_t __cdecl codecvt_wchar__Getcat(const locale_facet **facet, const loc
     return LC_CTYPE;
 }
 
+/* ?_Getcat@?$codecvt@_WDH@std@@SAIPAPBVfacet@locale@2@@Z */
+/* ?_Getcat@?$codecvt@_WDH@std@@SA_KPEAPEBVfacet@locale@2@@Z */
+MSVCP_size_t __cdecl codecvt_wchar__Getcat_old(const locale_facet **facet)
+{
+    return codecvt_wchar__Getcat(facet, locale_classic());
+}
+
 codecvt_wchar* codecvt_wchar_use_facet(const locale *loc)
 {
     static codecvt_wchar *obj = NULL;
@@ -3106,6 +3163,13 @@ MSVCP_size_t __cdecl codecvt_short__Getcat(const locale_facet **facet, const loc
     }
 
     return LC_CTYPE;
+}
+
+/* ?_Getcat@?$codecvt@GDH@std@@SAIPAPBVfacet@locale@2@@Z */
+/* ?_Getcat@?$codecvt@GDH@std@@SA_KPEAPEBVfacet@locale@2@@Z */
+MSVCP_size_t __cdecl codecvt_short__Getcat_old(const locale_facet **facet)
+{
+    return codecvt_short__Getcat(facet, locale_classic());
 }
 
 codecvt_wchar* codecvt_short_use_facet(const locale *loc)
@@ -3521,6 +3585,13 @@ MSVCP_size_t __cdecl numpunct_char__Getcat(const locale_facet **facet, const loc
     return LC_NUMERIC;
 }
 
+/* ?_Getcat@?$numpunct@D@std@@SAIPAPBVfacet@locale@2@@Z */
+/* ?_Getcat@?$numpunct@D@std@@SA_KPEAPEBVfacet@locale@2@@Z */
+MSVCP_size_t __cdecl numpunct_char__Getcat_old(const locale_facet **facet)
+{
+    return numpunct_char__Getcat(facet, locale_classic());
+}
+
 static numpunct_char* numpunct_char_use_facet(const locale *loc)
 {
     static numpunct_char *obj = NULL;
@@ -3874,6 +3945,13 @@ MSVCP_size_t __cdecl numpunct_wchar__Getcat(const locale_facet **facet, const lo
     return LC_NUMERIC;
 }
 
+/* ?_Getcat@?$numpunct@_W@std@@SAIPAPBVfacet@locale@2@@Z */
+/* ?_Getcat@?$numpunct@_W@std@@SA_KPEAPEBVfacet@locale@2@@Z */
+MSVCP_size_t __cdecl numpunct_wchar__Getcat_old(const locale_facet **facet)
+{
+    return numpunct_wchar__Getcat(facet, locale_classic());
+}
+
 static numpunct_wchar* numpunct_wchar_use_facet(const locale *loc)
 {
     static numpunct_wchar *obj = NULL;
@@ -3920,6 +3998,13 @@ MSVCP_size_t __cdecl numpunct_short__Getcat(const locale_facet **facet, const lo
     }
 
     return LC_NUMERIC;
+}
+
+/* ?_Getcat@?$numpunct@G@std@@SAIPAPBVfacet@locale@2@@Z */
+/* ?_Getcat@?$numpunct@G@std@@SA_KPEAPEBVfacet@locale@2@@Z */
+MSVCP_size_t __cdecl numpunct_short__Getcat_old(const locale_facet **facet)
+{
+    return numpunct_short__Getcat(facet, locale_classic());
 }
 
 static numpunct_wchar* numpunct_short_use_facet(const locale *loc)
