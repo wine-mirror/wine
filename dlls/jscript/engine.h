@@ -262,7 +262,7 @@ typedef struct {
     union {
         double dval;
         const WCHAR *wstr;
-        VARIANT_BOOL bval;
+        BOOL bval;
         struct {
             const WCHAR *str;
             DWORD str_len;
@@ -272,7 +272,7 @@ typedef struct {
 } literal_t;
 
 literal_t *parse_regexp(parser_ctx_t*) DECLSPEC_HIDDEN;
-literal_t *new_boolean_literal(parser_ctx_t*,VARIANT_BOOL) DECLSPEC_HIDDEN;
+literal_t *new_boolean_literal(parser_ctx_t*,BOOL) DECLSPEC_HIDDEN;
 
 typedef struct _variable_declaration_t {
     const WCHAR *identifier;

@@ -380,7 +380,7 @@ static literal_t *new_double_literal(parser_ctx_t *ctx, DOUBLE d)
     return ret;
 }
 
-literal_t *new_boolean_literal(parser_ctx_t *ctx, VARIANT_BOOL bval)
+literal_t *new_boolean_literal(parser_ctx_t *ctx, BOOL bval)
 {
     literal_t *ret = parser_alloc(ctx, sizeof(literal_t));
 
@@ -749,7 +749,7 @@ static int next_token(parser_ctx_t *ctx, void *lval)
 struct _cc_var_t {
     BOOL is_num;
     union {
-        VARIANT_BOOL b;
+        BOOL b;
         DOUBLE n;
     } u;
     struct _cc_var_t *next;
@@ -822,7 +822,7 @@ static int init_cc(parser_ctx_t *ctx)
 
     cc->vars = NULL;
     v.is_num = FALSE;
-    v.u.b = VARIANT_TRUE;
+    v.u.b = TRUE;
     if(!add_cc_var(cc, _jscriptW, &v)
        || !add_cc_var(cc, sizeof(void*) == 8 ? _win64W : _win32W, &v)
        || !add_cc_var(cc, sizeof(void*) == 8 ? _amd64W : _x86W, &v)) {
