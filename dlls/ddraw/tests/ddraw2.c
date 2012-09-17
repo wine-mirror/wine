@@ -478,7 +478,7 @@ static void test_coop_level_create_device_window(void)
 static void test_clipper_blt(void)
 {
     IDirectDrawSurface *src_surface, *dst_surface;
-    RECT client_rect, src_rect, *rect;
+    RECT client_rect, src_rect;
     IDirectDrawClipper *clipper;
     DDSURFACEDESC surface_desc;
     unsigned int i, j, x, y;
@@ -544,18 +544,11 @@ static void test_clipper_blt(void)
     ok(SUCCEEDED(hr), "Failed to get clip list, hr %#x.\n", hr);
     ok(rgn_data->rdh.dwSize == sizeof(rgn_data->rdh), "Got unexpected structure size %#x.\n", rgn_data->rdh.dwSize);
     ok(rgn_data->rdh.iType == RDH_RECTANGLES, "Got unexpected type %#x.\n", rgn_data->rdh.iType);
-    ok(rgn_data->rdh.nCount == 1, "Got unexpected count %u.\n", rgn_data->rdh.nCount);
-    ok(rgn_data->rdh.nRgnSize == 16 || broken(rgn_data->rdh.nRgnSize == 168 /* NT4 */),
-            "Got unexpected region size %u.\n", rgn_data->rdh.nRgnSize);
+    ok(rgn_data->rdh.nCount >= 1, "Got unexpected count %u.\n", rgn_data->rdh.nCount);
     ok(EqualRect(&rgn_data->rdh.rcBound, &client_rect),
             "Got unexpected bounding rect {%d, %d, %d, %d}, expected {%d, %d, %d, %d}.\n",
             rgn_data->rdh.rcBound.left, rgn_data->rdh.rcBound.top,
             rgn_data->rdh.rcBound.right, rgn_data->rdh.rcBound.bottom,
-            client_rect.left, client_rect.top, client_rect.right, client_rect.bottom);
-    rect = (RECT *)&rgn_data->Buffer[0];
-    ok(EqualRect(rect, &client_rect),
-            "Got unexpected clip rect {%d, %d, %d, %d}, expected {%d, %d, %d, %d}.\n",
-            rect->left, rect->top, rect->right, rect->bottom,
             client_rect.left, client_rect.top, client_rect.right, client_rect.bottom);
     HeapFree(GetProcessHeap(), 0, rgn_data);
 
