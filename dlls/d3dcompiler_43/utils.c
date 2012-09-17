@@ -947,6 +947,79 @@ static BOOL compare_hlsl_types(const struct hlsl_type *t1, const struct hlsl_typ
     return TRUE;
 }
 
+struct hlsl_type *clone_hlsl_type(struct hlsl_type *old)
+{
+    struct hlsl_type *type;
+    struct hlsl_struct_field *old_field, *field;
+
+    type = d3dcompiler_alloc(sizeof(*type));
+    if (!type)
+    {
+        ERR("Out of memory\n");
+        return NULL;
+    }
+    if (old->name)
+    {
+        type->name = d3dcompiler_strdup(old->name);
+        if (!type->name)
+        {
+            d3dcompiler_free(type);
+            return NULL;
+        }
+    }
+    type->type = old->type;
+    type->base_type = old->base_type;
+    type->dimx = old->dimx;
+    type->dimy = old->dimy;
+    type->modifiers = old->modifiers;
+    type->sampler_dim = old->sampler_dim;
+    switch (old->type)
+    {
+        case HLSL_CLASS_ARRAY:
+            type->e.array.type = old->e.array.type;
+            type->e.array.elements_count = old->e.array.elements_count;
+            break;
+        case HLSL_CLASS_STRUCT:
+            type->e.elements = d3dcompiler_alloc(sizeof(*type->e.elements));
+            if (!type->e.elements)
+            {
+                d3dcompiler_free((void *)type->name);
+                d3dcompiler_free(type);
+                return NULL;
+            }
+            list_init(type->e.elements);
+            LIST_FOR_EACH_ENTRY(old_field, old->e.elements, struct hlsl_struct_field, entry)
+            {
+                field = d3dcompiler_alloc(sizeof(*field));
+                if (!field)
+                {
+                    LIST_FOR_EACH_ENTRY_SAFE(field, old_field, type->e.elements, struct hlsl_struct_field, entry)
+                    {
+                        d3dcompiler_free((void *)field->semantic);
+                        d3dcompiler_free((void *)field->name);
+                        d3dcompiler_free(field);
+                    }
+                    d3dcompiler_free(type->e.elements);
+                    d3dcompiler_free((void *)type->name);
+                    d3dcompiler_free(type);
+                    return NULL;
+                }
+                field->type = clone_hlsl_type(old_field->type);
+                field->name = d3dcompiler_strdup(old_field->name);
+                if (old_field->semantic)
+                    field->semantic = d3dcompiler_strdup(old_field->semantic);
+                field->modifiers = old_field->modifiers;
+                list_add_tail(type->e.elements, &field->entry);
+            }
+            break;
+        default:
+            break;
+    }
+
+    list_add_tail(&hlsl_ctx.types, &type->entry);
+    return type;
+}
+
 static BOOL convertible_data_type(struct hlsl_type *type)
 {
     return type->type != HLSL_CLASS_OBJECT;

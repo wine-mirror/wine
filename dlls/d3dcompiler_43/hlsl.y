@@ -1026,20 +1026,38 @@ postfix_expr:             primary_expr
                                 struct hlsl_ir_node *operands[3];
                                 struct source_location loc;
 
+                                set_location(&loc, &@2);
+                                if ($1->data_type->modifiers & HLSL_MODIFIER_CONST)
+                                {
+                                    hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_ERROR,
+                                            "modifying a const expression");
+                                    return 1;
+                                }
                                 operands[0] = $1;
                                 operands[1] = operands[2] = NULL;
-                                set_location(&loc, &@2);
                                 $$ = &new_expr(HLSL_IR_BINOP_POSTINC, operands, &loc)->node;
+                                /* Post increment/decrement expressions are considered const */
+                                $$->data_type = clone_hlsl_type($$->data_type);
+                                $$->data_type->modifiers |= HLSL_MODIFIER_CONST;
                             }
                         | postfix_expr OP_DEC
                             {
                                 struct hlsl_ir_node *operands[3];
                                 struct source_location loc;
 
+                                set_location(&loc, &@2);
+                                if ($1->data_type->modifiers & HLSL_MODIFIER_CONST)
+                                {
+                                    hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_ERROR,
+                                            "modifying a const expression");
+                                    return 1;
+                                }
                                 operands[0] = $1;
                                 operands[1] = operands[2] = NULL;
-                                set_location(&loc, &@2);
                                 $$ = &new_expr(HLSL_IR_BINOP_POSTDEC, operands, &loc)->node;
+                                /* Post increment/decrement expressions are considered const */
+                                $$->data_type = clone_hlsl_type($$->data_type);
+                                $$->data_type->modifiers |= HLSL_MODIFIER_CONST;
                             }
                         | postfix_expr '.' any_identifier
                             {
@@ -1113,9 +1131,15 @@ unary_expr:               postfix_expr
                                 struct hlsl_ir_node *operands[3];
                                 struct source_location loc;
 
+                                set_location(&loc, &@1);
+                                if ($2->data_type->modifiers & HLSL_MODIFIER_CONST)
+                                {
+                                    hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_ERROR,
+                                            "modifying a const expression");
+                                    return 1;
+                                }
                                 operands[0] = $2;
                                 operands[1] = operands[2] = NULL;
-                                set_location(&loc, &@1);
                                 $$ = &new_expr(HLSL_IR_BINOP_PREINC, operands, &loc)->node;
                             }
                         | OP_DEC unary_expr
@@ -1123,9 +1147,15 @@ unary_expr:               postfix_expr
                                 struct hlsl_ir_node *operands[3];
                                 struct source_location loc;
 
+                                set_location(&loc, &@1);
+                                if ($2->data_type->modifiers & HLSL_MODIFIER_CONST)
+                                {
+                                    hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_ERROR,
+                                            "modifying a const expression");
+                                    return 1;
+                                }
                                 operands[0] = $2;
                                 operands[1] = operands[2] = NULL;
-                                set_location(&loc, &@1);
                                 $$ = &new_expr(HLSL_IR_BINOP_PREDEC, operands, &loc)->node;
                             }
                         | unary_op unary_expr
@@ -1335,10 +1365,19 @@ assignment_expr:          conditional_expr
                             }
                         | unary_expr assign_op assignment_expr
                             {
+                                struct source_location loc;
+
+                                set_location(&loc, &@2);
+                                if ($1->data_type->modifiers & HLSL_MODIFIER_CONST)
+                                {
+                                    hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_ERROR,
+                                            "l-value is const");
+                                    return 1;
+                                }
                                 $$ = make_assignment($1, $2, BWRITERSP_WRITEMASK_ALL, $3);
                                 if (!$$)
                                     return 1;
-                                set_location(&$$->loc, &@2);
+                                $$->loc = loc;
                             }
 
 assign_op:                '='
