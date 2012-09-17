@@ -374,6 +374,8 @@ HRESULT WINAPI DirectDrawEnumerateA(LPDDENUMCALLBACKA callback, void *context)
  ***********************************************************************/
 HRESULT WINAPI DirectDrawEnumerateExA(LPDDENUMCALLBACKEXA callback, void *context, DWORD flags)
 {
+    struct wined3d *wined3d;
+
     TRACE("callback %p, context %p, flags %#x.\n", callback, context, flags);
 
     if (flags & ~(DDENUM_ATTACHEDSECONDARYDEVICES |
@@ -384,23 +386,50 @@ HRESULT WINAPI DirectDrawEnumerateExA(LPDDENUMCALLBACKEXA callback, void *contex
     if (flags)
         FIXME("flags 0x%08x not handled\n", flags);
 
-    TRACE("Enumerating default DirectDraw HAL interface\n");
+    TRACE("Enumerating ddraw interfaces\n");
+    wined3d = wined3d_create(7, WINED3D_LEGACY_DEPTH_BIAS);
 
-    /* We only have one driver by now */
     __TRY
     {
+        /* QuickTime expects the description "DirectDraw HAL" */
         static CHAR driver_desc[] = "DirectDraw HAL",
         driver_name[] = "display";
+        struct wined3d_adapter_identifier adapter_id;
+        HRESULT hr = S_OK;
+        UINT adapter = 0;
+        BOOL cont_enum;
 
-        /* QuickTime expects the description "DirectDraw HAL" */
-        callback(NULL, driver_desc, driver_name, context, 0);
+        /* The Battle.net System Checker expects both a NULL device and a GUID-based device */
+        TRACE("Default interface: DirectDraw HAL\n");
+        cont_enum = callback(NULL, driver_desc, driver_name, context, 0);
+        for (adapter = 0; SUCCEEDED(hr) && cont_enum; adapter++)
+        {
+            char DriverName[512] = "";
+
+            /* The Battle.net System Checker expects the GetAdapterIdentifier DeviceName to match the
+             * Driver Name, so obtain the DeviceName and GUID from D3D. */
+            memset(&adapter_id, 0x0, sizeof(adapter_id));
+            adapter_id.device_name = DriverName;
+            adapter_id.device_name_size = sizeof(DriverName);
+            wined3d_mutex_lock();
+            hr = wined3d_get_adapter_identifier(wined3d, adapter, 0x0, &adapter_id);
+            wined3d_mutex_unlock();
+            if (SUCCEEDED(hr))
+            {
+                TRACE("Interface %d: %s\n", adapter, wine_dbgstr_guid(&adapter_id.device_identifier));
+                cont_enum = callback(&adapter_id.device_identifier, driver_desc,
+                                     adapter_id.device_name, context, 0);
+            }
+        }
     }
     __EXCEPT_PAGE_FAULT
     {
+        wined3d_decref(wined3d);
         return DDERR_INVALIDPARAMS;
     }
     __ENDTRY;
 
+    wined3d_decref(wined3d);
     TRACE("End of enumeration\n");
     return DD_OK;
 }
