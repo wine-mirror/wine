@@ -1347,16 +1347,15 @@ static HRESULT WINAPI d3d8_device_SetMaterial(IDirect3DDevice8 *iface, const D3D
 static HRESULT WINAPI d3d8_device_GetMaterial(IDirect3DDevice8 *iface, D3DMATERIAL8 *material)
 {
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
-    HRESULT hr;
 
     TRACE("iface %p, material %p.\n", iface, material);
 
     /* Note: D3DMATERIAL8 is compatible with struct wined3d_material. */
     wined3d_mutex_lock();
-    hr = wined3d_device_get_material(device->wined3d_device, (struct wined3d_material *)material);
+    wined3d_device_get_material(device->wined3d_device, (struct wined3d_material *)material);
     wined3d_mutex_unlock();
 
-    return hr;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI d3d8_device_SetLight(IDirect3DDevice8 *iface, DWORD index, const D3DLIGHT8 *light)

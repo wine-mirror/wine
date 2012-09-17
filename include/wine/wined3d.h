@@ -2129,7 +2129,7 @@ struct wined3d_buffer * __cdecl wined3d_device_get_index_buffer(const struct win
 HRESULT __cdecl wined3d_device_get_light(const struct wined3d_device *device,
         UINT light_idx, struct wined3d_light *light);
 HRESULT __cdecl wined3d_device_get_light_enable(const struct wined3d_device *device, UINT light_idx, BOOL *enable);
-HRESULT __cdecl wined3d_device_get_material(const struct wined3d_device *device, struct wined3d_material *material);
+void __cdecl wined3d_device_get_material(const struct wined3d_device *device, struct wined3d_material *material);
 float __cdecl wined3d_device_get_npatch_mode(const struct wined3d_device *device);
 struct wined3d_shader * __cdecl wined3d_device_get_pixel_shader(const struct wined3d_device *device);
 void __cdecl wined3d_device_get_primitive_type(const struct wined3d_device *device,

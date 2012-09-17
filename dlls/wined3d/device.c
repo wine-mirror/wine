@@ -2185,7 +2185,7 @@ void CDECL wined3d_device_set_material(struct wined3d_device *device, const stru
     device_invalidate_state(device, STATE_MATERIAL);
 }
 
-HRESULT CDECL wined3d_device_get_material(const struct wined3d_device *device, struct wined3d_material *material)
+void CDECL wined3d_device_get_material(const struct wined3d_device *device, struct wined3d_material *material)
 {
     TRACE("device %p, material %p.\n", device, material);
 
@@ -2204,8 +2204,6 @@ HRESULT CDECL wined3d_device_get_material(const struct wined3d_device *device, s
             material->emissive.r, material->emissive.g,
             material->emissive.b, material->emissive.a);
     TRACE("power %.8e.\n", material->power);
-
-    return WINED3D_OK;
 }
 
 void CDECL wined3d_device_set_index_buffer(struct wined3d_device *device,

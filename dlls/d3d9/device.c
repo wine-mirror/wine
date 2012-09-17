@@ -1413,16 +1413,15 @@ static HRESULT WINAPI d3d9_device_SetMaterial(IDirect3DDevice9Ex *iface, const D
 static HRESULT WINAPI d3d9_device_GetMaterial(IDirect3DDevice9Ex *iface, D3DMATERIAL9 *material)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
-    HRESULT hr;
 
     TRACE("iface %p, material %p.\n", iface, material);
 
     /* Note: D3DMATERIAL9 is compatible with struct wined3d_material. */
     wined3d_mutex_lock();
-    hr = wined3d_device_get_material(device->wined3d_device, (struct wined3d_material *)material);
+    wined3d_device_get_material(device->wined3d_device, (struct wined3d_material *)material);
     wined3d_mutex_unlock();
 
-    return hr;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI d3d9_device_SetLight(IDirect3DDevice9Ex *iface, DWORD index, const D3DLIGHT9 *light)
