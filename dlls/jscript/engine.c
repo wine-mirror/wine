@@ -674,19 +674,9 @@ static HRESULT interp_case(exec_ctx_t *ctx)
 /* ECMA-262 3rd Edition    12.13 */
 static HRESULT interp_throw(exec_ctx_t *ctx)
 {
-    VARIANT v;
-    jsval_t val;
-    HRESULT hres;
-
     TRACE("\n");
 
-    val = stack_pop(ctx);
-    hres = jsval_to_variant(val, &v);
-    jsval_release(val);
-    if(FAILED(hres))
-        return hres;
-
-    ctx->ei->var = v;
+    ctx->ei->val = stack_pop(ctx);
     return DISP_E_EXCEPTION;
 }
 
@@ -778,9 +768,7 @@ static HRESULT interp_end_finally(exec_ctx_t *ctx)
         jsval_release(v);
         stack_popn(ctx, 1);
 
-        v = stack_pop(ctx);
-        hres = jsval_to_variant(v, &ctx->ei->var);
-        jsval_release(v);
+        ctx->ei->val = stack_pop(ctx);
         return SUCCEEDED(hres) ? DISP_E_EXCEPTION : hres;
     }
 
@@ -2382,7 +2370,7 @@ OP_LIST
 static HRESULT unwind_exception(exec_ctx_t *ctx)
 {
     except_frame_t *except_frame;
-    VARIANT except_val;
+    jsval_t except_val;
     BSTR ident;
     HRESULT hres;
 
@@ -2397,7 +2385,7 @@ static HRESULT unwind_exception(exec_ctx_t *ctx)
 
     ctx->ip = except_frame->catch_off;
 
-    except_val = ctx->ei->var;
+    except_val = ctx->ei->val;
     memset(ctx->ei, 0, sizeof(*ctx->ei));
 
     ident = except_frame->ident;
@@ -2408,30 +2396,18 @@ static HRESULT unwind_exception(exec_ctx_t *ctx)
 
         hres = create_dispex(ctx->script, NULL, NULL, &scope_obj);
         if(SUCCEEDED(hres)) {
-            jsval_t val;
-
-            hres = variant_to_jsval(&except_val, &val);
-            if(SUCCEEDED(hres)) {
-                hres = jsdisp_propput_name(scope_obj, ident, val, ctx->ei);
-                jsval_release(val);
-            }
+            hres = jsdisp_propput_name(scope_obj, ident, except_val, ctx->ei);
             if(FAILED(hres))
                 jsdisp_release(scope_obj);
         }
-        VariantClear(&except_val);
+        jsval_release(except_val);
         if(FAILED(hres))
             return hres;
 
         hres = scope_push(ctx->scope_chain, scope_obj, to_disp(scope_obj), &ctx->scope_chain);
         jsdisp_release(scope_obj);
     }else {
-        jsval_t exceptv;
-
-        hres = variant_to_jsval(&except_val, &exceptv);
-        if(FAILED(hres))
-            return hres;
-
-        hres = stack_push(ctx, exceptv);
+        hres = stack_push(ctx, except_val);
         if(FAILED(hres))
             return hres;
 

@@ -400,7 +400,7 @@ static HRESULT throw_error(script_ctx_t *ctx, jsexcept_t *ei, HRESULT error, con
         return hres;
 
     if(ei)
-        var_set_jsdisp(&ei->var, err);
+        ei->val = jsval_obj(err);
     return error;
 }
 

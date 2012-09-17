@@ -1062,7 +1062,7 @@ HRESULT variant_change_type(script_ctx_t *ctx, VARIANT *dst, VARIANT *src, VARTY
     }
 
     if(FAILED(hres)) {
-        VariantClear(&ei.var);
+        jsval_release(ei.val);
         return hres;
     }
 

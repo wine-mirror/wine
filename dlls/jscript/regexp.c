@@ -3525,7 +3525,7 @@ static INT index_from_val(script_ctx_t *ctx, jsval_t v)
     memset(&ei, 0, sizeof(ei));
     hres = to_number_jsval(ctx, v, &ei, &n);
     if(FAILED(hres)) { /* FIXME: Move ignoring exceptions to to_primitive */
-        VariantClear(&ei.var);
+        jsval_release(ei.val);
         return 0;
     }
 

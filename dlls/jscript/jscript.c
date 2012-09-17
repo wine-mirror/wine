@@ -110,7 +110,7 @@ static HRESULT exec_global_code(JScript *This, bytecode_t *code)
 
     memset(&jsexcept, 0, sizeof(jsexcept));
     hres = exec_source(exec_ctx, code, &code->global_code, FALSE, &jsexcept, NULL);
-    VariantClear(&jsexcept.var);
+    jsval_release(jsexcept.val);
     exec_release(exec_ctx);
 
     IActiveScriptSite_OnLeaveScript(This->site);

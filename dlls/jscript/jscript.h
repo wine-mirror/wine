@@ -37,11 +37,7 @@ typedef struct _jsval_t jsval_t;
 typedef struct _script_ctx_t script_ctx_t;
 typedef struct _exec_ctx_t exec_ctx_t;
 typedef struct _dispex_prop_t dispex_prop_t;
-
-typedef struct {
-    EXCEPINFO ei;
-    VARIANT var;
-} jsexcept_t;
+typedef struct _jsexcept_t jsexcept_t;
 
 typedef struct {
     void **blocks;
@@ -548,3 +544,8 @@ static inline LPWSTR heap_strdupW(LPCWSTR str)
 }
 
 #include "jsval.h"
+
+struct _jsexcept_t {
+    EXCEPINFO ei;
+    jsval_t val;
+};
