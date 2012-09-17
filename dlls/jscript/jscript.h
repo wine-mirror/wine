@@ -387,16 +387,6 @@ static inline BOOL is_vclass(vdisp_t *vdisp, jsclass_t class)
     return is_jsdisp(vdisp) && is_class(vdisp->u.jsdisp, class);
 }
 
-static inline BOOL is_num_vt(enum VARENUM vt)
-{
-    return vt == VT_I4 || vt == VT_R8;
-}
-
-static inline DOUBLE num_val(const VARIANT *v)
-{
-    return V_VT(v) == VT_I4 ? V_I4(v) : V_R8(v);
-}
-
 #ifndef INT32_MIN
 #define INT32_MIN (-2147483647-1)
 #endif
@@ -408,29 +398,6 @@ static inline DOUBLE num_val(const VARIANT *v)
 static inline BOOL is_int32(double d)
 {
     return INT32_MIN <= d && d <= INT32_MAX && (double)(int)d == d;
-}
-
-static inline void num_set_int(VARIANT *v, INT i)
-{
-    V_VT(v) = VT_I4;
-    V_I4(v) = i;
-}
-
-static inline void num_set_val(VARIANT *v, DOUBLE d)
-{
-    if(is_int32(d)) {
-        V_VT(v) = VT_I4;
-        V_I4(v) = d;
-    }else {
-        V_VT(v) = VT_R8;
-        V_R8(v) = d;
-    }
-}
-
-static inline void var_set_jsdisp(VARIANT *v, jsdisp_t *jsdisp)
-{
-    V_VT(v) = VT_DISPATCH;
-    V_DISPATCH(v) = to_disp(jsdisp);
 }
 
 static inline DWORD make_grfdex(script_ctx_t *ctx, DWORD flags)

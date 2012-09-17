@@ -352,9 +352,19 @@ HRESULT jsval_to_variant(jsval_t val, VARIANT *retv)
             V_BSTR(retv) = NULL;
         }
         return S_OK;
-    case JSV_NUMBER:
-        num_set_val(retv, val.u.n);
+    case JSV_NUMBER: {
+        double n = get_number(val);
+
+        if(is_int32(n)) {
+            V_VT(retv) = VT_I4;
+            V_I4(retv) = n;
+        }else {
+            V_VT(retv) = VT_R8;
+            V_R8(retv) = n;
+        }
+
         return S_OK;
+    }
     case JSV_BOOL:
         V_VT(retv) = VT_BOOL;
         V_BOOL(retv) = val.u.b ? VARIANT_TRUE : VARIANT_FALSE;
