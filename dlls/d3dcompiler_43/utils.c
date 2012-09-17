@@ -1457,6 +1457,7 @@ struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *left, enum parse_assig
         struct hlsl_ir_deref *lhs_deref = new_var_deref(var_from_node(lhs));
         lhs = &lhs_deref->node;
     }
+    /* FIXME: check for invalid writemasks on the lhs. */
 
     if (!compare_hlsl_types(type, rhs->data_type))
     {
@@ -1870,6 +1871,26 @@ static void debug_dump_ir_assignment(const struct hlsl_ir_assignment *assign)
     TRACE(")");
 }
 
+static void debug_dump_ir_swizzle(const struct hlsl_ir_swizzle *swizzle)
+{
+    unsigned int i;
+
+    debug_dump_instr(swizzle->val);
+    TRACE(".");
+    if (swizzle->val->data_type->dimy > 1)
+    {
+        for (i = 0; i < swizzle->node.data_type->dimx; ++i)
+            TRACE("_m%u%u", (swizzle->swizzle >> i * 8) & 0xf, (swizzle->swizzle >> (i * 8 + 4)) & 0xf);
+    }
+    else
+    {
+        char c[] = {'x', 'y', 'z', 'w'};
+
+        for (i = 0; i < swizzle->node.data_type->dimx; ++i)
+            TRACE("%c", c[(swizzle->swizzle >> i * 2) & 0x3]);
+    }
+}
+
 static void debug_dump_instr(const struct hlsl_ir_node *instr)
 {
     switch (instr->type)
@@ -1885,6 +1906,9 @@ static void debug_dump_instr(const struct hlsl_ir_node *instr)
             break;
         case HLSL_IR_ASSIGNMENT:
             debug_dump_ir_assignment(assignment_from_node(instr));
+            break;
+        case HLSL_IR_SWIZZLE:
+            debug_dump_ir_swizzle(swizzle_from_node(instr));
             break;
         case HLSL_IR_CONSTRUCTOR:
             debug_dump_ir_constructor(constructor_from_node(instr));
@@ -1993,6 +2017,12 @@ static void free_ir_deref(struct hlsl_ir_deref *deref)
     d3dcompiler_free(deref);
 }
 
+static void free_ir_swizzle(struct hlsl_ir_swizzle *swizzle)
+{
+    free_instr(swizzle->val);
+    d3dcompiler_free(swizzle);
+}
+
 static void free_ir_constructor(struct hlsl_ir_constructor *constructor)
 {
     free_instr_list(constructor->arguments);
@@ -2032,6 +2062,9 @@ void free_instr(struct hlsl_ir_node *node)
             break;
         case HLSL_IR_DEREF:
             free_ir_deref(deref_from_node(node));
+            break;
+        case HLSL_IR_SWIZZLE:
+            free_ir_swizzle(swizzle_from_node(node));
             break;
         case HLSL_IR_CONSTRUCTOR:
             free_ir_constructor(constructor_from_node(node));

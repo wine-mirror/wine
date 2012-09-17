@@ -187,6 +187,103 @@ static unsigned int components_count_expr_list(struct list *list)
     return count;
 }
 
+static struct hlsl_ir_swizzle *new_swizzle(DWORD s, unsigned int components,
+        struct hlsl_ir_node *val, struct source_location *loc)
+{
+    struct hlsl_ir_swizzle *swizzle = d3dcompiler_alloc(sizeof(*swizzle));
+
+    if (!swizzle)
+        return NULL;
+    swizzle->node.type = HLSL_IR_SWIZZLE;
+    swizzle->node.loc = *loc;
+    swizzle->node.data_type = new_hlsl_type(NULL, HLSL_CLASS_VECTOR, val->data_type->base_type, components, 1);
+    swizzle->val = val;
+    swizzle->swizzle = s;
+    return swizzle;
+}
+
+static struct hlsl_ir_swizzle *get_swizzle(struct hlsl_ir_node *value, const char *swizzle,
+        struct source_location *loc)
+{
+    unsigned int len = strlen(swizzle), component = 0;
+    unsigned int i, set, swiz = 0;
+    BOOL valid;
+
+    if (value->data_type->type == HLSL_CLASS_MATRIX)
+    {
+        /* Matrix swizzle */
+        BOOL m_swizzle;
+        unsigned int inc, x, y;
+
+        if (len < 3 || swizzle[0] != '_')
+            return NULL;
+        m_swizzle = swizzle[1] == 'm';
+        inc = m_swizzle ? 4 : 3;
+
+        if (len % inc || len > inc * 4)
+            return NULL;
+
+        for (i = 0; i < len; i += inc)
+        {
+            if (swizzle[i] != '_')
+                return NULL;
+            if (m_swizzle)
+            {
+                if (swizzle[i + 1] != 'm')
+                    return NULL;
+                x = swizzle[i + 2] - '0';
+                y = swizzle[i + 3] - '0';
+            }
+            else
+            {
+                x = swizzle[i + 1] - '1';
+                y = swizzle[i + 2] - '1';
+            }
+
+            if (x >= value->data_type->dimx || y >= value->data_type->dimy)
+                return NULL;
+            swiz |= (y << 4 | x) << component * 8;
+            component++;
+        }
+        return new_swizzle(swiz, component, value, loc);
+    }
+
+    /* Vector swizzle */
+    if (len > 4)
+        return NULL;
+
+    for (set = 0; set < 2; ++set)
+    {
+        valid = TRUE;
+        component = 0;
+        for (i = 0; i < len; ++i)
+        {
+            char c[2][4] = {{'x', 'y', 'z', 'w'}, {'r', 'g', 'b', 'a'}};
+            unsigned int s = 0;
+
+            for (s = 0; s < 4; ++s)
+            {
+                if (swizzle[i] == c[set][s])
+                    break;
+            }
+            if (s == 4)
+            {
+                valid = FALSE;
+                break;
+            }
+
+            if (s >= value->data_type->dimx)
+                return NULL;
+            swiz |= s << component * 2;
+            component++;
+        }
+        if (valid)
+            return new_swizzle(swiz, component, value, loc);
+    }
+
+    return NULL;
+}
+
 %}
 
 %locations
@@ -943,6 +1040,31 @@ postfix_expr:             primary_expr
                                 operands[1] = operands[2] = NULL;
                                 set_location(&loc, &@2);
                                 $$ = &new_expr(HLSL_IR_BINOP_POSTDEC, operands, &loc)->node;
+                            }
+                        | postfix_expr '.' any_identifier
+                            {
+                                struct source_location loc;
+
+                                set_location(&loc, &@2);
+                                if ($1->data_type->type <= HLSL_CLASS_LAST_NUMERIC)
+                                {
+                                    struct hlsl_ir_swizzle *swizzle;
+
+                                    swizzle = get_swizzle($1, $3, &loc);
+                                    if (!swizzle)
+                                    {
+                                        hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_ERROR,
+                                                "invalid swizzle %s", debugstr_a($3));
+                                        return 1;
+                                    }
+                                    $$ = &swizzle->node;
+                                }
+                                else
+                                {
+                                    hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_ERROR,
+                                            "invalid subscript %s", debugstr_a($3));
+                                    return 1;
+                                }
                             }
                           /* "var_modifiers" doesn't make sense in this case, but it's needed
                              in the grammar to avoid shift/reduce conflicts. */

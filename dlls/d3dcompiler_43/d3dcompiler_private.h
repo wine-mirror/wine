@@ -706,6 +706,7 @@ enum hlsl_ir_node_type
     HLSL_IR_DEREF,
     HLSL_IR_EXPR,
     HLSL_IR_FUNCTION_DECL,
+    HLSL_IR_SWIZZLE,
 };
 
 struct hlsl_ir_node
@@ -832,6 +833,13 @@ struct hlsl_ir_expr
     enum hlsl_ir_expr_op op;
     struct hlsl_ir_node *operands[3];
     struct list *subexpressions;
+};
+
+struct hlsl_ir_swizzle
+{
+    struct hlsl_ir_node node;
+    struct hlsl_ir_node *val;
+    DWORD swizzle;
 };
 
 enum hlsl_ir_deref_type
@@ -997,6 +1005,12 @@ static inline struct hlsl_ir_assignment *assignment_from_node(const struct hlsl_
 {
     assert(node->type == HLSL_IR_ASSIGNMENT);
     return CONTAINING_RECORD(node, struct hlsl_ir_assignment, node);
+}
+
+static inline struct hlsl_ir_swizzle *swizzle_from_node(const struct hlsl_ir_node *node)
+{
+    assert(node->type == HLSL_IR_SWIZZLE);
+    return CONTAINING_RECORD(node, struct hlsl_ir_swizzle, node);
 }
 
 static inline struct hlsl_ir_constructor *constructor_from_node(const struct hlsl_ir_node *node)
