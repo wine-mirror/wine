@@ -69,6 +69,7 @@
 @ stdcall lineHold(long)
 @ stdcall lineInitialize(ptr long ptr str ptr)
 @ stdcall lineInitializeExA(ptr long ptr str ptr ptr ptr)
+@ stdcall lineInitializeExW(ptr long ptr wstr ptr ptr ptr)
 @ stdcall lineMakeCall(long ptr str long ptr) lineMakeCallA
 @ stdcall lineMakeCallA(long ptr str long ptr)
 @ stdcall lineMakeCallW(long ptr wstr long ptr)
