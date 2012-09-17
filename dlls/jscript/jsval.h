@@ -89,6 +89,11 @@ static inline jsval_t jsval_number(double n)
     return ret;
 }
 
+static inline jsval_type_t jsval_type(jsval_t v)
+{
+    return v.type;
+}
+
 static inline BOOL is_object_instance(jsval_t v)
 {
     return v.type == JSV_OBJECT;

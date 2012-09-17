@@ -61,7 +61,7 @@ const char *debugstr_variant(const VARIANT *v)
 
 const char *debugstr_jsval(const jsval_t v)
 {
-    switch(v.type) {
+    switch(jsval_type(v)) {
     case JSV_UNDEFINED:
         return "undefined";
     case JSV_NULL:
@@ -217,7 +217,7 @@ static BSTR clone_bstr(BSTR str)
 
 void jsval_release(jsval_t val)
 {
-    switch(val.type) {
+    switch(jsval_type(val)) {
     case JSV_OBJECT:
         if(val.u.obj)
             IDispatch_Release(val.u.obj);
@@ -252,7 +252,7 @@ HRESULT jsval_variant(jsval_t *val, VARIANT *var)
 
 HRESULT jsval_copy(jsval_t v, jsval_t *r)
 {
-    switch(v.type) {
+    switch(jsval_type(v)) {
     case JSV_UNDEFINED:
     case JSV_NULL:
     case JSV_NUMBER:
@@ -329,7 +329,7 @@ HRESULT variant_to_jsval(VARIANT *var, jsval_t *r)
 
 HRESULT jsval_to_variant(jsval_t val, VARIANT *retv)
 {
-    switch(val.type) {
+    switch(jsval_type(val)) {
     case JSV_UNDEFINED:
         V_VT(retv) = VT_EMPTY;
         return S_OK;
@@ -449,7 +449,7 @@ HRESULT to_primitive(script_ctx_t *ctx, jsval_t val, jsexcept_t *ei, jsval_t *re
 /* ECMA-262 3rd Edition    9.2 */
 HRESULT to_boolean(jsval_t val, BOOL *ret)
 {
-    switch(val.type) {
+    switch(jsval_type(val)) {
     case JSV_UNDEFINED:
     case JSV_NULL:
         *ret = FALSE;
@@ -587,7 +587,7 @@ static HRESULT str_to_number(BSTR str, double *ret)
 /* ECMA-262 3rd Edition    9.3 */
 HRESULT to_number(script_ctx_t *ctx, jsval_t val, jsexcept_t *ei, double *ret)
 {
-    switch(val.type) {
+    switch(jsval_type(val)) {
     case JSV_UNDEFINED:
         *ret = NAN;
         return S_OK;
@@ -734,7 +734,7 @@ HRESULT to_string(script_ctx_t *ctx, jsval_t val, jsexcept_t *ei, BSTR *str)
     const WCHAR trueW[] = {'t','r','u','e',0};
     const WCHAR falseW[] = {'f','a','l','s','e',0};
 
-    switch(val.type) {
+    switch(jsval_type(val)) {
     case JSV_UNDEFINED:
         *str = SysAllocString(undefinedW);
         break;
@@ -775,7 +775,7 @@ HRESULT to_object(script_ctx_t *ctx, jsval_t val, IDispatch **disp)
     jsdisp_t *dispex;
     HRESULT hres;
 
-    switch(val.type) {
+    switch(jsval_type(val)) {
     case JSV_STRING:
         hres = create_string(ctx, get_string(val), SysStringLen(get_string(val)), &dispex);
         if(FAILED(hres))

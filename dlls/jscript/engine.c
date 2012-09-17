@@ -396,9 +396,11 @@ static HRESULT disp_cmp(IDispatch *disp1, IDispatch *disp2, BOOL *ret)
 /* ECMA-262 3rd Edition    11.9.6 */
 static HRESULT equal2_values(jsval_t lval, jsval_t rval, BOOL *ret)
 {
+    jsval_type_t type = jsval_type(lval);
+
     TRACE("\n");
 
-    if(lval.type != rval.type) {
+    if(type != jsval_type(rval)) {
         if(is_null_instance(lval))
             *ret = is_null_instance(rval);
         else
@@ -406,7 +408,7 @@ static HRESULT equal2_values(jsval_t lval, jsval_t rval, BOOL *ret)
         return S_OK;
     }
 
-    switch(lval.type) {
+    switch(type) {
     case JSV_UNDEFINED:
     case JSV_NULL:
         *ret = TRUE;
@@ -1657,7 +1659,7 @@ static HRESULT interp_void(exec_ctx_t *ctx)
 /* ECMA-262 3rd Edition    11.4.3 */
 static HRESULT typeof_string(jsval_t v, const WCHAR **ret)
 {
-    switch(v.type) {
+    switch(jsval_type(v)) {
     case JSV_UNDEFINED:
         *ret = undefinedW;
         break;
@@ -1876,7 +1878,7 @@ static HRESULT interp_preinc(exec_ctx_t *ctx)
 /* ECMA-262 3rd Edition    11.9.3 */
 static HRESULT equal_values(script_ctx_t *ctx, jsval_t lval, jsval_t rval, jsexcept_t *ei, BOOL *ret)
 {
-    if(lval.type == rval.type || (is_number(lval) && is_number(rval)))
+    if(jsval_type(lval) == jsval_type(rval) || (is_number(lval) && is_number(rval)))
        return equal2_values(lval, rval, ret);
 
     /* FIXME: NULL disps should be handled in more general way */
