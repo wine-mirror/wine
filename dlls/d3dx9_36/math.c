@@ -2227,6 +2227,35 @@ FLOAT* WINAPI D3DXSHEvalDirection(FLOAT *out, UINT order, CONST D3DXVECTOR3 *dir
     return out;
 }
 
+HRESULT WINAPI D3DXSHEvalDirectionalLight(UINT order, CONST D3DXVECTOR3 *dir, FLOAT Rintensity, FLOAT Gintensity, FLOAT Bintensity, FLOAT *Rout, FLOAT *Gout, FLOAT *Bout)
+{
+    FLOAT s, temp;
+    UINT j;
+
+    TRACE("Order %u, Vector %p, Red %f, Green %f, Blue %f, Rout %p, Gout %p, Bout %p\n", order, dir, Rintensity, Gintensity, Bintensity, Rout, Gout, Bout);
+
+    s = 0.75f;
+    if ( order > 2 )
+        s += 5.0f / 16.0f;
+    if ( order > 4 )
+        s -= 3.0f / 32.0f;
+    s /= D3DX_PI;
+
+    D3DXSHEvalDirection(Rout, order, dir);
+    for (j = 0; j < order * order; j++)
+    {
+        temp = Rout[j] / s;
+
+        Rout[j] = Rintensity * temp;
+        if ( Gout )
+            Gout[j] = Gintensity * temp;
+        if ( Bout )
+            Bout[j] = Bintensity * temp;
+    }
+
+    return D3D_OK;
+}
+
 FLOAT* WINAPI D3DXSHMultiply2(FLOAT *out, CONST FLOAT *a, CONST FLOAT *b)
 {
     FLOAT ta, tb;

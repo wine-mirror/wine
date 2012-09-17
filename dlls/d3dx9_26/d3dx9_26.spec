@@ -8,7 +8,7 @@
 @ stdcall D3DXCheckTextureRequirements(ptr ptr ptr ptr long ptr ptr) d3dx9_36.D3DXCheckTextureRequirements
 @ stdcall D3DXCheckVersion(long long)
 @ stdcall D3DXCheckVolumeTextureRequirements(ptr ptr ptr ptr ptr long ptr ptr) d3dx9_36.D3DXCheckVolumeTextureRequirements
-@ stdcall D3DXCleanMesh(ptr ptr ptr ptr ptr) d3dx9_36.D3DXCleanMesh
+@ stdcall D3DXCleanMesh(long ptr ptr ptr ptr ptr) d3dx9_36.D3DXCleanMesh
 @ stdcall D3DXColorAdjustContrast(ptr ptr float) d3dx9_36.D3DXColorAdjustContrast
 @ stdcall D3DXColorAdjustSaturation(ptr ptr float) d3dx9_36.D3DXColorAdjustSaturation
 @ stdcall D3DXCompileShader(ptr long ptr ptr str str long ptr ptr ptr) d3dx9_36.D3DXCompileShader
@@ -272,7 +272,7 @@
 @ stdcall D3DXSHDot(long ptr ptr) d3dx9_36.D3DXSHDot
 @ stdcall D3DXSHEvalConeLight(long ptr long long long long ptr ptr ptr) d3dx9_36.D3DXSHEvalConeLight
 @ stdcall D3DXSHEvalDirection(ptr long ptr) d3dx9_36.D3DXSHEvalDirection
-@ stdcall D3DXSHEvalDirectionalLight(long ptr long long long long ptr ptr ptr) d3dx9_36.D3DXSHEvalDirectionalLight
+@ stdcall D3DXSHEvalDirectionalLight(long ptr float float float ptr ptr ptr) d3dx9_36.D3DXSHEvalDirectionalLight
 @ stdcall D3DXSHEvalHemisphereLight(long ptr long long ptr ptr ptr) d3dx9_36.D3DXSHEvalHemisphereLight
 @ stdcall D3DXSHEvalSphericalLight(long ptr long long long long ptr ptr ptr) d3dx9_36.D3DXSHEvalSphericalLight
 @ stdcall D3DXSHProjectCubeMap(long ptr ptr ptr ptr) d3dx9_36.D3DXSHProjectCubeMap
