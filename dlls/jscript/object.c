@@ -32,7 +32,7 @@ static const WCHAR isPrototypeOfW[] = {'i','s','P','r','o','t','o','t','y','p','
 
 static const WCHAR default_valueW[] = {'[','o','b','j','e','c','t',' ','O','b','j','e','c','t',']',0};
 
-static HRESULT Object_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT Object_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     jsdisp_t *jsdisp;
@@ -78,7 +78,7 @@ static HRESULT Object_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
     return S_OK;
 }
 
-static HRESULT Object_toLocaleString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT Object_toLocaleString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     TRACE("\n");
@@ -91,7 +91,7 @@ static HRESULT Object_toLocaleString(script_ctx_t *ctx, vdisp_t *jsthis, WORD fl
     return jsdisp_call_name(jsthis->u.jsdisp, toStringW, DISPATCH_METHOD, 0, NULL, r, ei);
 }
 
-static HRESULT Object_valueOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT Object_valueOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     TRACE("\n");
@@ -103,7 +103,7 @@ static HRESULT Object_valueOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
     return S_OK;
 }
 
-static HRESULT Object_hasOwnProperty(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT Object_hasOwnProperty(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     BSTR name;
@@ -118,7 +118,7 @@ static HRESULT Object_hasOwnProperty(script_ctx_t *ctx, vdisp_t *jsthis, WORD fl
         return S_OK;
     }
 
-    hres = to_string(ctx, argv, ei, &name);
+    hres = to_string_jsval(ctx, argv[0], ei, &name);
     if(FAILED(hres))
         return hres;
 
@@ -147,21 +147,21 @@ static HRESULT Object_hasOwnProperty(script_ctx_t *ctx, vdisp_t *jsthis, WORD fl
     return S_OK;
 }
 
-static HRESULT Object_propertyIsEnumerable(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT Object_propertyIsEnumerable(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Object_isPrototypeOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT Object_isPrototypeOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Object_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT Object_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     TRACE("\n");
@@ -215,7 +215,7 @@ static const builtin_info_t ObjectInst_info = {
     NULL
 };
 
-static HRESULT ObjectConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT ObjectConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     HRESULT hres;
@@ -225,10 +225,10 @@ static HRESULT ObjectConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
     switch(flags) {
     case DISPATCH_METHOD:
         if(argc) {
-            if(V_VT(argv) != VT_EMPTY && V_VT(argv) != VT_NULL && (V_VT(argv) != VT_DISPATCH || V_DISPATCH(argv))) {
+            if(!is_undefined(argv[0]) && !is_null(argv[0]) && (!is_object_instance(argv[0]) || get_object(argv[0]))) {
                 IDispatch *disp;
 
-                hres = to_object(ctx, argv, &disp);
+                hres = to_object_jsval(ctx, argv[0], &disp);
                 if(FAILED(hres))
                     return hres;
 

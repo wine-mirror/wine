@@ -138,7 +138,7 @@ static IUnknown *create_activex_object(script_ctx_t *ctx, const WCHAR *progid)
     return obj;
 }
 
-static HRESULT ActiveXObject_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT ActiveXObject_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     IDispatch *disp;
@@ -164,7 +164,7 @@ static HRESULT ActiveXObject_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
         return E_NOTIMPL;
     }
 
-    hres = to_string(ctx, argv, ei, &progid);
+    hres = to_string_jsval(ctx, argv[0], ei, &progid);
     if(FAILED(hres))
         return hres;
 

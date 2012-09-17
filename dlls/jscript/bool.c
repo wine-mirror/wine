@@ -38,7 +38,7 @@ static inline BoolInstance *bool_this(vdisp_t *jsthis)
 }
 
 /* ECMA-262 3rd Edition    15.6.4.2 */
-static HRESULT Bool_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT Bool_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     BoolInstance *bool;
@@ -67,7 +67,7 @@ static HRESULT Bool_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
 }
 
 /* ECMA-262 3rd Edition    15.6.4.3 */
-static HRESULT Bool_valueOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT Bool_valueOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     BoolInstance *bool;
@@ -82,7 +82,7 @@ static HRESULT Bool_valueOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
     return S_OK;
 }
 
-static HRESULT Bool_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT Bool_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     TRACE("\n");
@@ -121,14 +121,14 @@ static const builtin_info_t BoolInst_info = {
     NULL
 };
 
-static HRESULT BoolConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT BoolConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
+    BOOL value = FALSE;
     HRESULT hres;
-    VARIANT_BOOL value = VARIANT_FALSE;
 
     if(argc) {
-        hres = to_boolean(argv, &value);
+        hres = to_boolean_jsval(argv[0], &value);
         if(FAILED(hres))
             return hres;
     }

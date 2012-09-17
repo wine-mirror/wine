@@ -58,7 +58,7 @@ static const WCHAR sqrtW[] = {'s','q','r','t',0};
 static const WCHAR tanW[] = {'t','a','n',0};
 
 /* ECMA-262 3rd Edition    15.8.2.12 */
-static HRESULT Math_abs(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT Math_abs(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     double d;
@@ -72,7 +72,7 @@ static HRESULT Math_abs(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned
         return S_OK;
     }
 
-    hres = to_number(ctx, argv, ei, &d);
+    hres = to_number_jsval(ctx, argv[0], ei, &d);
     if(FAILED(hres))
         return hres;
 
@@ -81,7 +81,7 @@ static HRESULT Math_abs(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned
     return S_OK;
 }
 
-static HRESULT Math_acos(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT Math_acos(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     double x;
@@ -95,7 +95,7 @@ static HRESULT Math_acos(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigne
         return S_OK;
     }
 
-    hres = to_number(ctx, argv, ei, &x);
+    hres = to_number_jsval(ctx, argv[0], ei, &x);
     if(FAILED(hres))
         return hres;
 
@@ -104,7 +104,7 @@ static HRESULT Math_acos(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigne
     return S_OK;
 }
 
-static HRESULT Math_asin(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT Math_asin(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     double x;
@@ -118,7 +118,7 @@ static HRESULT Math_asin(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigne
         return S_OK;
     }
 
-    hres = to_number(ctx, argv, ei, &x);
+    hres = to_number_jsval(ctx, argv[0], ei, &x);
     if(FAILED(hres))
         return hres;
 
@@ -127,7 +127,7 @@ static HRESULT Math_asin(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigne
     return S_OK;
 }
 
-static HRESULT Math_atan(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT Math_atan(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     double x;
@@ -141,7 +141,7 @@ static HRESULT Math_atan(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigne
         return S_OK;
     }
 
-    hres = to_number(ctx, argv, ei, &x);
+    hres = to_number_jsval(ctx, argv[0], ei, &x);
     if(FAILED(hres))
         return hres;
 
@@ -150,7 +150,7 @@ static HRESULT Math_atan(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigne
     return S_OK;
 }
 
-static HRESULT Math_atan2(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT Math_atan2(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     double x, y;
@@ -164,11 +164,11 @@ static HRESULT Math_atan2(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsign
         return S_OK;
     }
 
-    hres = to_number(ctx, argv, ei, &y);
+    hres = to_number_jsval(ctx, argv[0], ei, &y);
     if(FAILED(hres))
         return hres;
 
-    hres = to_number(ctx, argv+1, ei, &x);
+    hres = to_number_jsval(ctx, argv[1], ei, &x);
     if(FAILED(hres))
         return hres;
 
@@ -178,7 +178,7 @@ static HRESULT Math_atan2(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsign
 }
 
 /* ECMA-262 3rd Edition    15.8.2.6 */
-static HRESULT Math_ceil(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT Math_ceil(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     double x;
@@ -192,7 +192,7 @@ static HRESULT Math_ceil(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigne
         return S_OK;
     }
 
-    hres = to_number(ctx, argv, ei, &x);
+    hres = to_number_jsval(ctx, argv[0], ei, &x);
     if(FAILED(hres))
         return hres;
 
@@ -201,7 +201,7 @@ static HRESULT Math_ceil(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigne
     return S_OK;
 }
 
-static HRESULT Math_cos(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT Math_cos(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     double x;
@@ -215,7 +215,7 @@ static HRESULT Math_cos(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned
         return S_OK;
     }
 
-    hres = to_number(ctx, argv, ei, &x);
+    hres = to_number_jsval(ctx, argv[0], ei, &x);
     if(FAILED(hres))
         return hres;
 
@@ -224,7 +224,7 @@ static HRESULT Math_cos(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned
     return S_OK;
 }
 
-static HRESULT Math_exp(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT Math_exp(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     double x;
@@ -238,7 +238,7 @@ static HRESULT Math_exp(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned
         return S_OK;
     }
 
-    hres = to_number(ctx, argv, ei, &x);
+    hres = to_number_jsval(ctx, argv[0], ei, &x);
     if(FAILED(hres))
         return hres;
 
@@ -247,7 +247,7 @@ static HRESULT Math_exp(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned
     return S_OK;
 }
 
-static HRESULT Math_floor(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT Math_floor(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     double x;
@@ -261,7 +261,7 @@ static HRESULT Math_floor(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsign
         return S_OK;
     }
 
-    hres = to_number(ctx, argv, ei, &x);
+    hres = to_number_jsval(ctx, argv[0], ei, &x);
     if(FAILED(hres))
         return hres;
 
@@ -270,7 +270,7 @@ static HRESULT Math_floor(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsign
     return S_OK;
 }
 
-static HRESULT Math_log(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT Math_log(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     double x;
@@ -284,7 +284,7 @@ static HRESULT Math_log(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned
         return S_OK;
     }
 
-    hres = to_number(ctx, argv, ei, &x);
+    hres = to_number_jsval(ctx, argv[0], ei, &x);
     if(FAILED(hres))
         return hres;
 
@@ -294,7 +294,7 @@ static HRESULT Math_log(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned
 }
 
 /* ECMA-262 3rd Edition    15.8.2.11 */
-static HRESULT Math_max(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT Math_max(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     DOUBLE max, d;
@@ -309,12 +309,12 @@ static HRESULT Math_max(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned
         return S_OK;
     }
 
-    hres = to_number(ctx, argv, ei, &max);
+    hres = to_number_jsval(ctx, argv[0], ei, &max);
     if(FAILED(hres))
         return hres;
 
     for(i=1; i < argc; i++) {
-        hres = to_number(ctx, argv+i, ei, &d);
+        hres = to_number_jsval(ctx, argv[i], ei, &d);
         if(FAILED(hres))
             return hres;
 
@@ -328,7 +328,7 @@ static HRESULT Math_max(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned
 }
 
 /* ECMA-262 3rd Edition    15.8.2.12 */
-static HRESULT Math_min(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT Math_min(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     DOUBLE min, d;
@@ -343,12 +343,12 @@ static HRESULT Math_min(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned
         return S_OK;
     }
 
-    hres = to_number(ctx, argv, ei, &min);
+    hres = to_number_jsval(ctx, argv[0], ei, &min);
     if(FAILED(hres))
         return hres;
 
     for(i=1; i < argc; i++) {
-        hres = to_number(ctx, argv+i, ei, &d);
+        hres = to_number_jsval(ctx, argv[i], ei, &d);
         if(FAILED(hres))
             return hres;
 
@@ -362,7 +362,7 @@ static HRESULT Math_min(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned
 }
 
 /* ECMA-262 3rd Edition    15.8.2.13 */
-static HRESULT Math_pow(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT Math_pow(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     double x, y;
@@ -376,11 +376,11 @@ static HRESULT Math_pow(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned
         return S_OK;
     }
 
-    hres = to_number(ctx, argv, ei, &x);
+    hres = to_number_jsval(ctx, argv[0], ei, &x);
     if(FAILED(hres))
         return hres;
 
-    hres = to_number(ctx, argv+1, ei, &y);
+    hres = to_number_jsval(ctx, argv[1], ei, &y);
     if(FAILED(hres))
         return hres;
 
@@ -390,7 +390,7 @@ static HRESULT Math_pow(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned
 }
 
 /* ECMA-262 3rd Edition    15.8.2.14 */
-static HRESULT Math_random(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT Math_random(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     UINT x;
@@ -406,7 +406,7 @@ static HRESULT Math_random(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsig
 }
 
 /* ECMA-262 3rd Edition    15.8.2.15 */
-static HRESULT Math_round(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT Math_round(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     double x;
@@ -420,7 +420,7 @@ static HRESULT Math_round(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsign
         return S_OK;
     }
 
-    hres = to_number(ctx, argv, ei, &x);
+    hres = to_number_jsval(ctx, argv[0], ei, &x);
     if(FAILED(hres))
         return hres;
 
@@ -429,7 +429,7 @@ static HRESULT Math_round(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsign
     return S_OK;
 }
 
-static HRESULT Math_sin(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT Math_sin(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     double x;
@@ -443,7 +443,7 @@ static HRESULT Math_sin(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned
         return S_OK;
     }
 
-    hres = to_number(ctx, argv, ei, &x);
+    hres = to_number_jsval(ctx, argv[0], ei, &x);
     if(FAILED(hres))
         return hres;
 
@@ -452,7 +452,7 @@ static HRESULT Math_sin(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned
     return S_OK;
 }
 
-static HRESULT Math_sqrt(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT Math_sqrt(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     double x;
@@ -466,7 +466,7 @@ static HRESULT Math_sqrt(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigne
         return S_OK;
     }
 
-    hres = to_number(ctx, argv, ei, &x);
+    hres = to_number_jsval(ctx, argv[0], ei, &x);
     if(FAILED(hres))
         return hres;
 
@@ -475,7 +475,7 @@ static HRESULT Math_sqrt(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigne
     return S_OK;
 }
 
-static HRESULT Math_tan(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT Math_tan(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     double x;
@@ -489,7 +489,7 @@ static HRESULT Math_tan(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned
         return S_OK;
     }
 
-    hres = to_number(ctx, argv, ei, &x);
+    hres = to_number_jsval(ctx, argv[0], ei, &x);
     if(FAILED(hres))
         return hres;
 

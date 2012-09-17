@@ -62,7 +62,7 @@ static inline ArrayInstance *array_this(vdisp_t *jsthis)
 static HRESULT get_length(script_ctx_t *ctx, vdisp_t *vdisp, jsexcept_t *ei, jsdisp_t **jsthis, DWORD *ret)
 {
     ArrayInstance *array;
-    VARIANT var;
+    jsval_t val;
     HRESULT hres;
 
     array = array_this(vdisp);
@@ -75,12 +75,12 @@ static HRESULT get_length(script_ctx_t *ctx, vdisp_t *vdisp, jsexcept_t *ei, jsd
     if(!is_jsdisp(vdisp))
         return throw_type_error(ctx, ei, JS_E_JSCRIPT_EXPECTED, NULL);
 
-    hres = jsdisp_propget_name(vdisp->u.jsdisp, lengthW, &var, ei);
+    hres = jsdisp_propget_name(vdisp->u.jsdisp, lengthW, &val, ei);
     if(FAILED(hres))
         return hres;
 
-    hres = to_uint32(ctx, &var, ei, ret);
-    VariantClear(&var);
+    hres = to_uint32_jsval(ctx, val, ei, ret);
+    jsval_release(val);
     if(FAILED(hres))
         return hres;
 
@@ -90,15 +90,12 @@ static HRESULT get_length(script_ctx_t *ctx, vdisp_t *vdisp, jsexcept_t *ei, jsd
 
 static HRESULT set_length(jsdisp_t *obj, jsexcept_t *ei, DWORD length)
 {
-    VARIANT var;
-
     if(is_class(obj, JSCLASS_ARRAY)) {
         ((ArrayInstance*)obj)->length = length;
         return S_OK;
     }
 
-    num_set_int(&var, length);
-    return jsdisp_propput_name(obj, lengthW, &var, ei);
+    return jsdisp_propput_name(obj, lengthW, jsval_number(length), ei);
 }
 
 static WCHAR *idx_to_str(DWORD idx, WCHAR *ptr)
@@ -116,7 +113,7 @@ static WCHAR *idx_to_str(DWORD idx, WCHAR *ptr)
     return ptr+1;
 }
 
-static HRESULT Array_length(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT Array_length(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     ArrayInstance *This = array_from_vdisp(jsthis);
@@ -132,7 +129,7 @@ static HRESULT Array_length(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
         DWORD i;
         HRESULT hres;
 
-        hres = to_number(ctx, argv, ei, &len);
+        hres = to_number_jsval(ctx, argv[0], ei, &len);
         if(FAILED(hres))
             return hres;
 
@@ -159,19 +156,19 @@ static HRESULT Array_length(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
 
 static HRESULT concat_array(jsdisp_t *array, ArrayInstance *obj, DWORD *len, jsexcept_t *ei)
 {
-    VARIANT var;
+    jsval_t val;
     DWORD i;
     HRESULT hres;
 
     for(i=0; i < obj->length; i++) {
-        hres = jsdisp_get_idx(&obj->dispex, i, &var, ei);
+        hres = jsdisp_get_idx(&obj->dispex, i, &val, ei);
         if(hres == DISP_E_UNKNOWNNAME)
             continue;
         if(FAILED(hres))
             return hres;
 
-        hres = jsdisp_propput_idx(array, *len+i, &var, ei);
-        VariantClear(&var);
+        hres = jsdisp_propput_idx(array, *len+i, val, ei);
+        jsval_release(val);
         if(FAILED(hres))
             return hres;
     }
@@ -183,7 +180,6 @@ static HRESULT concat_array(jsdisp_t *array, ArrayInstance *obj, DWORD *len, jse
 static HRESULT concat_obj(jsdisp_t *array, IDispatch *obj, DWORD *len, jsexcept_t *ei)
 {
     jsdisp_t *jsobj;
-    VARIANT var;
     HRESULT hres;
 
     jsobj = iface_to_jsdisp((IUnknown*)obj);
@@ -196,12 +192,10 @@ static HRESULT concat_obj(jsdisp_t *array, IDispatch *obj, DWORD *len, jsexcept_
         jsdisp_release(jsobj);
     }
 
-    V_VT(&var) = VT_DISPATCH;
-    V_DISPATCH(&var) = obj;
-    return jsdisp_propput_idx(array, (*len)++, &var, ei);
+    return jsdisp_propput_idx(array, (*len)++, jsval_disp(obj), ei);
 }
 
-static HRESULT Array_concat(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT Array_concat(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     jsdisp_t *ret;
@@ -216,15 +210,13 @@ static HRESULT Array_concat(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
 
     hres = concat_obj(ret, jsthis->u.disp, &len, ei);
     if(SUCCEEDED(hres)) {
-        VARIANT *arg;
         DWORD i;
 
         for(i=0; i < argc; i++) {
-            arg = argv+i;
-            if(V_VT(arg) == VT_DISPATCH)
-                hres = concat_obj(ret, V_DISPATCH(arg), &len, ei);
+            if(is_object_instance(argv[i]))
+                hres = concat_obj(ret, get_object(argv[i]), &len, ei);
             else
-                hres = jsdisp_propput_idx(ret, len++, arg, ei);
+                hres = jsdisp_propput_idx(ret, len++, argv[i], ei);
             if(FAILED(hres))
                 break;
         }
@@ -243,7 +235,7 @@ static HRESULT Array_concat(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
 static HRESULT array_join(script_ctx_t *ctx, jsdisp_t *array, DWORD length, const WCHAR *sep, jsval_t *r, jsexcept_t *ei)
 {
     BSTR *str_tab, ret = NULL;
-    VARIANT var;
+    jsval_t val;
     DWORD i;
     HRESULT hres = E_FAIL;
 
@@ -262,18 +254,19 @@ static HRESULT array_join(script_ctx_t *ctx, jsdisp_t *array, DWORD length, cons
         return E_OUTOFMEMORY;
 
     for(i=0; i < length; i++) {
-        hres = jsdisp_get_idx(array, i, &var, ei);
+        hres = jsdisp_get_idx(array, i, &val, ei);
         if(hres == DISP_E_UNKNOWNNAME) {
             hres = S_OK;
             continue;
         } else if(FAILED(hres))
             break;
 
-        if(V_VT(&var) != VT_EMPTY && V_VT(&var) != VT_NULL)
-            hres = to_string(ctx, &var, ei, str_tab+i);
-        VariantClear(&var);
-        if(FAILED(hres))
-            break;
+        if(!is_undefined(val) && !is_null(val)) {
+            hres = to_string_jsval(ctx, val, ei, str_tab+i);
+            jsval_release(val);
+            if(FAILED(hres))
+                break;
+        }
     }
 
     if(SUCCEEDED(hres)) {
@@ -339,7 +332,7 @@ static HRESULT array_join(script_ctx_t *ctx, jsdisp_t *array, DWORD length, cons
 }
 
 /* ECMA-262 3rd Edition    15.4.4.5 */
-static HRESULT Array_join(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT Array_join(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     jsdisp_t *jsthis;
@@ -355,7 +348,7 @@ static HRESULT Array_join(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigne
     if(argc) {
         BSTR sep;
 
-        hres = to_string(ctx, argv, ei, &sep);
+        hres = to_string_jsval(ctx, argv[0], ei, &sep);
         if(FAILED(hres))
             return hres;
 
@@ -369,11 +362,11 @@ static HRESULT Array_join(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigne
     return hres;
 }
 
-static HRESULT Array_pop(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT Array_pop(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     jsdisp_t *jsthis;
-    VARIANT val;
+    jsval_t val;
     DWORD length;
     HRESULT hres;
 
@@ -395,30 +388,30 @@ static HRESULT Array_pop(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned
 
     length--;
     hres = jsdisp_get_idx(jsthis, length, &val, ei);
-    if(SUCCEEDED(hres)) {
+    if(SUCCEEDED(hres))
         hres = jsdisp_delete_idx(jsthis, length);
-    } else if(hres == DISP_E_UNKNOWNNAME) {
-        V_VT(&val) = VT_EMPTY;
-        hres = S_OK;
-    } else
+    else if(hres == DISP_E_UNKNOWNNAME)
+        val = jsval_undefined();
+    else
         return hres;
 
     if(SUCCEEDED(hres))
         hres = set_length(jsthis, ei, length);
 
     if(FAILED(hres)) {
-        VariantClear(&val);
+        jsval_release(val);
         return hres;
     }
 
     if(r)
-        hres = variant_to_jsval(&val, r);
-    VariantClear(&val);
+        *r = val;
+    else
+        jsval_release(val);
     return hres;
 }
 
 /* ECMA-262 3rd Edition    15.4.4.7 */
-static HRESULT Array_push(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT Array_push(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     jsdisp_t *jsthis;
@@ -433,7 +426,7 @@ static HRESULT Array_push(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigne
         return hres;
 
     for(i=0; i < argc; i++) {
-        hres = jsdisp_propput_idx(jsthis, length+i, argv+i, ei);
+        hres = jsdisp_propput_idx(jsthis, length+i, argv[i], ei);
         if(FAILED(hres))
             return hres;
     }
@@ -447,12 +440,12 @@ static HRESULT Array_push(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigne
     return S_OK;
 }
 
-static HRESULT Array_reverse(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT Array_reverse(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     jsdisp_t *jsthis;
     DWORD length, k, l;
-    VARIANT v1, v2;
+    jsval_t v1, v2;
     HRESULT hres1, hres2;
 
     TRACE("\n");
@@ -470,28 +463,28 @@ static HRESULT Array_reverse(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsi
 
         hres2 = jsdisp_get_idx(jsthis, l, &v2, ei);
         if(FAILED(hres2) && hres2!=DISP_E_UNKNOWNNAME) {
-            VariantClear(&v1);
+            jsval_release(v1);
             return hres2;
         }
 
         if(hres1 == DISP_E_UNKNOWNNAME)
             hres1 = jsdisp_delete_idx(jsthis, l);
         else
-            hres1 = jsdisp_propput_idx(jsthis, l, &v1, ei);
+            hres1 = jsdisp_propput_idx(jsthis, l, v1, ei);
 
         if(FAILED(hres1)) {
-            VariantClear(&v1);
-            VariantClear(&v2);
+            jsval_release(v1);
+            jsval_release(v2);
             return hres1;
         }
 
         if(hres2 == DISP_E_UNKNOWNNAME)
             hres2 = jsdisp_delete_idx(jsthis, k);
         else
-            hres2 = jsdisp_propput_idx(jsthis, k, &v2, ei);
+            hres2 = jsdisp_propput_idx(jsthis, k, v2, ei);
 
         if(FAILED(hres2)) {
-            VariantClear(&v2);
+            jsval_release(v2);
             return hres2;
         }
     }
@@ -502,12 +495,12 @@ static HRESULT Array_reverse(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsi
 }
 
 /* ECMA-262 3rd Edition    15.4.4.9 */
-static HRESULT Array_shift(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT Array_shift(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     jsdisp_t *jsthis;
     DWORD length = 0, i;
-    VARIANT v, ret;
+    jsval_t v, ret;
     HRESULT hres;
 
     TRACE("\n");
@@ -530,7 +523,7 @@ static HRESULT Array_shift(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsign
 
     hres = jsdisp_get_idx(jsthis, 0, &ret, ei);
     if(hres == DISP_E_UNKNOWNNAME) {
-        V_VT(&ret) = VT_EMPTY;
+        ret = jsval_undefined();
         hres = S_OK;
     }
 
@@ -539,7 +532,7 @@ static HRESULT Array_shift(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsign
         if(hres == DISP_E_UNKNOWNNAME)
             hres = jsdisp_delete_idx(jsthis, i-1);
         else if(SUCCEEDED(hres))
-            hres = jsdisp_propput_idx(jsthis, i-1, &v, ei);
+            hres = jsdisp_propput_idx(jsthis, i-1, v, ei);
     }
 
     if(SUCCEEDED(hres)) {
@@ -548,14 +541,18 @@ static HRESULT Array_shift(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsign
             hres = set_length(jsthis, ei, length-1);
     }
 
-    if(SUCCEEDED(hres) && r)
-        hres = variant_to_jsval(&ret, r);
-    VariantClear(&ret);
+    if(FAILED(hres))
+        return hres;
+
+    if(r)
+        *r = ret;
+    else
+        jsval_release(ret);
     return hres;
 }
 
 /* ECMA-262 3rd Edition    15.4.4.10 */
-static HRESULT Array_slice(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT Array_slice(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     jsdisp_t *arr, *jsthis;
@@ -570,7 +567,7 @@ static HRESULT Array_slice(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsign
         return hres;
 
     if(argc) {
-        hres = to_number(ctx, argv, ei, &range);
+        hres = to_number_jsval(ctx, argv[0], ei, &range);
         if(FAILED(hres))
             return hres;
 
@@ -583,7 +580,7 @@ static HRESULT Array_slice(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsign
     else start = 0;
 
     if(argc > 1) {
-        hres = to_number(ctx, argv+1, ei, &range);
+        hres = to_number_jsval(ctx, argv[1], ei, &range);
         if(FAILED(hres))
             return hres;
 
@@ -600,15 +597,15 @@ static HRESULT Array_slice(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsign
         return hres;
 
     for(idx=start; idx<end; idx++) {
-        VARIANT v;
+        jsval_t v;
 
         hres = jsdisp_get_idx(jsthis, idx, &v, ei);
         if(hres == DISP_E_UNKNOWNNAME)
             continue;
 
         if(SUCCEEDED(hres)) {
-            hres = jsdisp_propput_idx(arr, idx-start, &v, ei);
-            VariantClear(&v);
+            hres = jsdisp_propput_idx(arr, idx-start, v, ei);
+            jsval_release(v);
         }
 
         if(FAILED(hres)) {
@@ -625,17 +622,14 @@ static HRESULT Array_slice(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsign
     return S_OK;
 }
 
-static HRESULT sort_cmp(script_ctx_t *ctx, jsdisp_t *cmp_func, VARIANT *v1, VARIANT *v2, jsexcept_t *ei, INT *cmp)
+static HRESULT sort_cmp(script_ctx_t *ctx, jsdisp_t *cmp_func, jsval_t v1, jsval_t v2, jsexcept_t *ei, INT *cmp)
 {
     HRESULT hres;
 
     if(cmp_func) {
-        VARIANTARG args[2];
-        double n;
+        jsval_t args[2] = {v1, v2};
         jsval_t res;
-
-        args[0] = *v1;
-        args[1] = *v2;
+        double n;
 
         hres = jsdisp_call_value(cmp_func, NULL, DISPATCH_METHOD, 2, args, &res, ei);
         if(FAILED(hres))
@@ -649,12 +643,12 @@ static HRESULT sort_cmp(script_ctx_t *ctx, jsdisp_t *cmp_func, VARIANT *v1, VARI
         if(n == 0)
             *cmp = 0;
         *cmp = n > 0.0 ? 1 : -1;
-    }else if(V_VT(v1) == VT_EMPTY) {
-        *cmp = V_VT(v2) == VT_EMPTY ? 0 : 1;
-    }else if(V_VT(v2) == VT_EMPTY) {
+    }else if(is_undefined(v1)) {
+        *cmp = is_undefined(v2) ? 0 : 1;
+    }else if(is_undefined(v2)) {
         *cmp = -1;
-    }else if(is_num_vt(V_VT(v1)) && is_num_vt(V_VT(v2))) {
-        DOUBLE d = num_val(v1)-num_val(v2);
+    }else if(is_number(v1) && is_number(v2)) {
+        double d = get_number(v1)-get_number(v2);
         if(d > 0.0)
             *cmp = 1;
         else
@@ -662,11 +656,11 @@ static HRESULT sort_cmp(script_ctx_t *ctx, jsdisp_t *cmp_func, VARIANT *v1, VARI
     }else {
         BSTR x, y;
 
-        hres = to_string(ctx, v1, ei, &x);
+        hres = to_string_jsval(ctx, v1, ei, &x);
         if(FAILED(hres))
             return hres;
 
-        hres = to_string(ctx, v2, ei, &y);
+        hres = to_string_jsval(ctx, v2, ei, &y);
         if(SUCCEEDED(hres)) {
             *cmp = strcmpW(x, y);
             SysFreeString(y);
@@ -680,11 +674,11 @@ static HRESULT sort_cmp(script_ctx_t *ctx, jsdisp_t *cmp_func, VARIANT *v1, VARI
 }
 
 /* ECMA-262 3rd Edition    15.4.4.11 */
-static HRESULT Array_sort(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT Array_sort(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     jsdisp_t *jsthis, *cmp_func = NULL;
-    VARIANT *vtab, **sorttab = NULL;
+    jsval_t *vtab, **sorttab = NULL;
     DWORD length;
     DWORD i;
     HRESULT hres = S_OK;
@@ -701,13 +695,12 @@ static HRESULT Array_sort(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigne
     }
 
     if(argc == 1) {
-        if(V_VT(argv) != VT_DISPATCH) {
+        if(!is_object_instance(argv[0])) {
             WARN("arg is not dispatch\n");
             return E_FAIL;
         }
 
-
-        cmp_func = iface_to_jsdisp((IUnknown*)V_DISPATCH(argv));
+        cmp_func = iface_to_jsdisp((IUnknown*)get_object(argv[0]));
         if(!cmp_func || !is_class(cmp_func, JSCLASS_FUNCTION)) {
             WARN("cmp_func is not a function\n");
             if(cmp_func)
@@ -724,12 +717,12 @@ static HRESULT Array_sort(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigne
         return S_OK;
     }
 
-    vtab = heap_alloc_zero(length * sizeof(VARIANT));
+    vtab = heap_alloc_zero(length * sizeof(*vtab));
     if(vtab) {
         for(i=0; i<length; i++) {
             hres = jsdisp_get_idx(jsthis, i, vtab+i, ei);
             if(hres == DISP_E_UNKNOWNNAME) {
-                V_VT(vtab+i) = VT_EMPTY;
+                vtab[i] = jsval_undefined();
                 hres = S_OK;
             } else if(FAILED(hres)) {
                 WARN("Could not get elem %d: %08x\n", i, hres);
@@ -741,14 +734,14 @@ static HRESULT Array_sort(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigne
     }
 
     if(SUCCEEDED(hres)) {
-        sorttab = heap_alloc(length*2*sizeof(VARIANT*));
+        sorttab = heap_alloc(length*2*sizeof(*sorttab));
         if(!sorttab)
             hres = E_OUTOFMEMORY;
     }
 
     /* merge-sort */
     if(SUCCEEDED(hres)) {
-        VARIANT *tmpv, **tmpbuf;
+        jsval_t *tmpv, **tmpbuf;
         INT cmp;
 
         tmpbuf = sorttab + length;
@@ -756,7 +749,7 @@ static HRESULT Array_sort(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigne
             sorttab[i] = vtab+i;
 
         for(i=0; i < length/2; i++) {
-            hres = sort_cmp(ctx, cmp_func, sorttab[2*i+1], sorttab[2*i], ei, &cmp);
+            hres = sort_cmp(ctx, cmp_func, *sorttab[2*i+1], *sorttab[2*i], ei, &cmp);
             if(FAILED(hres))
                 break;
 
@@ -778,10 +771,10 @@ static HRESULT Array_sort(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigne
                     else
                         bend = length - (i+k);
 
-                    memcpy(tmpbuf, sorttab+i, k*sizeof(VARIANT*));
+                    memcpy(tmpbuf, sorttab+i, k*sizeof(jsval_t*));
 
                     while(a < k && b < bend) {
-                        hres = sort_cmp(ctx, cmp_func, tmpbuf[a], sorttab[i+k+b], ei, &cmp);
+                        hres = sort_cmp(ctx, cmp_func, *tmpbuf[a], *sorttab[i+k+b], ei, &cmp);
                         if(FAILED(hres))
                             break;
 
@@ -798,7 +791,7 @@ static HRESULT Array_sort(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigne
                         break;
 
                     if(a < k)
-                        memcpy(sorttab+i+a+b, tmpbuf+a, (k-a)*sizeof(VARIANT*));
+                        memcpy(sorttab+i+a+b, tmpbuf+a, (k-a)*sizeof(jsval_t*));
                 }
 
                 if(FAILED(hres))
@@ -807,12 +800,12 @@ static HRESULT Array_sort(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigne
         }
 
         for(i=0; SUCCEEDED(hres) && i < length; i++)
-            hres = jsdisp_propput_idx(jsthis, i, sorttab[i], ei);
+            hres = jsdisp_propput_idx(jsthis, i, *sorttab[i], ei);
     }
 
     if(vtab) {
         for(i=0; i < length; i++)
-            VariantClear(vtab+i);
+            jsval_release(vtab[i]);
         heap_free(vtab);
     }
     heap_free(sorttab);
@@ -828,12 +821,12 @@ static HRESULT Array_sort(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigne
 }
 
 /* ECMA-262 3rd Edition    15.4.4.12 */
-static HRESULT Array_splice(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT Array_splice(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     DWORD length, start=0, delete_cnt=0, i, add_args = 0;
     jsdisp_t *ret_array = NULL, *jsthis;
-    VARIANT v;
+    jsval_t val;
     double d;
     int n;
     HRESULT hres = S_OK;
@@ -845,7 +838,7 @@ static HRESULT Array_splice(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsig
         return hres;
 
     if(argc) {
-        hres = to_integer(ctx, argv, ei, &d);
+        hres = to_integer(ctx, argv[0], ei, &d);
         if(FAILED(hres))
             return hres;
 
@@ -860,7 +853,7 @@ static HRESULT Array_splice(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsig
     }
 
     if(argc >= 2) {
-        hres = to_integer(ctx, argv+1, ei, &d);
+        hres = to_integer(ctx, argv[1], ei, &d);
         if(FAILED(hres))
             return hres;
 
@@ -880,47 +873,49 @@ static HRESULT Array_splice(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsig
             return hres;
 
         for(i=0; SUCCEEDED(hres) && i < delete_cnt; i++) {
-            hres = jsdisp_get_idx(jsthis, start+i, &v, ei);
-            if(hres == DISP_E_UNKNOWNNAME)
+            hres = jsdisp_get_idx(jsthis, start+i, &val, ei);
+            if(hres == DISP_E_UNKNOWNNAME) {
                 hres = S_OK;
-            else if(SUCCEEDED(hres))
-                hres = jsdisp_propput_idx(ret_array, i, &v, ei);
+            }else if(SUCCEEDED(hres)) {
+                hres = jsdisp_propput_idx(ret_array, i, val, ei);
+                jsval_release(val);
+            }
         }
 
-        if(SUCCEEDED(hres)) {
-            num_set_int(&v, delete_cnt);
-            hres = jsdisp_propput_name(ret_array, lengthW, &v, ei);
-        }
+        if(SUCCEEDED(hres))
+            hres = jsdisp_propput_name(ret_array, lengthW, jsval_number(delete_cnt), ei);
     }
 
     if(add_args < delete_cnt) {
         for(i = start; SUCCEEDED(hres) && i < length-delete_cnt; i++) {
-            hres = jsdisp_get_idx(jsthis, i+delete_cnt, &v, ei);
-            if(hres == DISP_E_UNKNOWNNAME)
+            hres = jsdisp_get_idx(jsthis, i+delete_cnt, &val, ei);
+            if(hres == DISP_E_UNKNOWNNAME) {
                 hres = jsdisp_delete_idx(jsthis, i+add_args);
-            else if(SUCCEEDED(hres))
-                hres = jsdisp_propput_idx(jsthis, i+add_args, &v, ei);
+            }else if(SUCCEEDED(hres)) {
+                hres = jsdisp_propput_idx(jsthis, i+add_args, val, ei);
+                jsval_release(val);
+            }
         }
 
         for(i=length; SUCCEEDED(hres) && i != length-delete_cnt+add_args; i--)
             hres = jsdisp_delete_idx(jsthis, i-1);
     }else if(add_args > delete_cnt) {
         for(i=length-delete_cnt; SUCCEEDED(hres) && i != start; i--) {
-            hres = jsdisp_get_idx(jsthis, i+delete_cnt-1, &v, ei);
-            if(hres == DISP_E_UNKNOWNNAME)
+            hres = jsdisp_get_idx(jsthis, i+delete_cnt-1, &val, ei);
+            if(hres == DISP_E_UNKNOWNNAME) {
                 hres = jsdisp_delete_idx(jsthis, i+add_args-1);
-            else if(SUCCEEDED(hres))
-                hres = jsdisp_propput_idx(jsthis, i+add_args-1, &v, ei);
+            }else if(SUCCEEDED(hres)) {
+                hres = jsdisp_propput_idx(jsthis, i+add_args-1, val, ei);
+                jsval_release(val);
+            }
         }
     }
 
     for(i=0; SUCCEEDED(hres) && i < add_args; i++)
-        hres = jsdisp_propput_idx(jsthis, start+i, argv+i+2, ei);
+        hres = jsdisp_propput_idx(jsthis, start+i, argv[i+2], ei);
 
-    if(SUCCEEDED(hres)) {
-        num_set_int(&v, length-delete_cnt+add_args);
-        hres = jsdisp_propput_name(jsthis, lengthW, &v, ei);
-    }
+    if(SUCCEEDED(hres))
+        hres = jsdisp_propput_name(jsthis, lengthW, jsval_number(length-delete_cnt+add_args), ei);
 
     if(FAILED(hres)) {
         if(ret_array)
@@ -934,7 +929,7 @@ static HRESULT Array_splice(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsig
 }
 
 /* ECMA-262 3rd Edition    15.4.4.2 */
-static HRESULT Array_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT Array_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     ArrayInstance *array;
@@ -948,7 +943,7 @@ static HRESULT Array_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
     return array_join(ctx, &array->dispex, array->length, default_separatorW, r, ei);
 }
 
-static HRESULT Array_toLocaleString(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT Array_toLocaleString(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     FIXME("\n");
@@ -956,13 +951,13 @@ static HRESULT Array_toLocaleString(script_ctx_t *ctx, vdisp_t *vthis, WORD flag
 }
 
 /* ECMA-262 3rd Edition    15.4.4.13 */
-static HRESULT Array_unshift(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT Array_unshift(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     jsdisp_t *jsthis;
     WCHAR buf[14], *buf_end, *str;
     DWORD i, length;
-    VARIANT var;
+    jsval_t val;
     DISPID id;
     HRESULT hres;
 
@@ -982,12 +977,12 @@ static HRESULT Array_unshift(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsi
 
             hres = jsdisp_get_id(jsthis, str, 0, &id);
             if(SUCCEEDED(hres)) {
-                hres = jsdisp_propget(jsthis, id, &var, ei);
+                hres = jsdisp_propget(jsthis, id, &val, ei);
                 if(FAILED(hres))
                     return hres;
 
-                hres = jsdisp_propput_idx(jsthis, i+argc, &var, ei);
-                VariantClear(&var);
+                hres = jsdisp_propput_idx(jsthis, i+argc, val, ei);
+                jsval_release(val);
             }else if(hres == DISP_E_UNKNOWNNAME) {
                 hres = IDispatchEx_DeleteMemberByDispID(vthis->u.dispex, id);
             }
@@ -998,7 +993,7 @@ static HRESULT Array_unshift(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsi
     }
 
     for(i=0; i<argc; i++) {
-        hres = jsdisp_propput_idx(jsthis, i, argv+i, ei);
+        hres = jsdisp_propput_idx(jsthis, i, argv[i], ei);
         if(FAILED(hres))
             return hres;
     }
@@ -1015,7 +1010,7 @@ static HRESULT Array_unshift(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsi
     return S_OK;
 }
 
-static HRESULT Array_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT Array_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     TRACE("\n");
@@ -1097,7 +1092,7 @@ static const builtin_info_t ArrayInst_info = {
     Array_on_put
 };
 
-static HRESULT ArrayConstr_value(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned argc, VARIANT *argv,
+static HRESULT ArrayConstr_value(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r, jsexcept_t *ei)
 {
     jsdisp_t *obj;
@@ -1109,11 +1104,13 @@ static HRESULT ArrayConstr_value(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, 
     switch(flags) {
     case DISPATCH_METHOD:
     case DISPATCH_CONSTRUCT: {
-        if(argc == 1 && V_VT(argv) == VT_I4) {
-            if(V_I4(argv) < 0)
+        if(argc == 1 && is_number(argv[0])) {
+            double n = get_number(argv[0]);
+
+            if(n < 0 || !is_int32(n))
                 return throw_range_error(ctx, ei, JS_E_INVALID_LENGTH, NULL);
 
-            hres = create_array(ctx, V_I4(argv), &obj);
+            hres = create_array(ctx, n, &obj);
             if(FAILED(hres))
                 return hres;
 
@@ -1126,7 +1123,7 @@ static HRESULT ArrayConstr_value(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, 
             return hres;
 
         for(i=0; i < argc; i++) {
-            hres = jsdisp_propput_idx(obj, i, argv+i, ei);
+            hres = jsdisp_propput_idx(obj, i, argv[i], ei);
             if(FAILED(hres))
                 break;
         }

@@ -57,6 +57,29 @@ const char *debugstr_variant(const VARIANT *v)
     }
 }
 
+const char *debugstr_jsval(const jsval_t v)
+{
+    switch(v.type) {
+    case JSV_UNDEFINED:
+        return "undefined";
+    case JSV_NULL:
+        return "null";
+    case JSV_OBJECT:
+        return wine_dbg_sprintf("obj(%p)", get_object(v));
+    case JSV_STRING:
+        return debugstr_w(get_string(v));
+    case JSV_NUMBER:
+        return wine_dbg_sprintf("%lf", get_number(v));
+    case JSV_BOOL:
+        return get_bool(v) ? "true" : "false";
+    case JSV_VARIANT:
+        return debugstr_variant(get_variant(v));
+    }
+
+    assert(0);
+    return NULL;
+}
+
 #define MIN_BLOCK_SIZE  128
 #define ARENA_FREE_FILLER  0xaa
 
@@ -194,7 +217,8 @@ void jsval_release(jsval_t val)
 {
     switch(val.type) {
     case JSV_OBJECT:
-        IDispatch_Release(val.u.obj);
+        if(val.u.obj)
+            IDispatch_Release(val.u.obj);
         break;
     case JSV_STRING:
         SysFreeString(val.u.str);
@@ -224,6 +248,34 @@ HRESULT jsval_variant(jsval_t *val, VARIANT *var)
     return hres;
 }
 
+HRESULT jsval_copy(jsval_t v, jsval_t *r)
+{
+    switch(v.type) {
+    case JSV_UNDEFINED:
+    case JSV_NULL:
+    case JSV_NUMBER:
+    case JSV_BOOL:
+        *r = v;
+        return S_OK;
+    case JSV_OBJECT:
+        IDispatch_AddRef(get_object(v));
+        *r = v;
+        return S_OK;
+    case JSV_STRING: {
+        BSTR str = clone_bstr(get_string(v));
+        if(!str)
+            return E_OUTOFMEMORY;
+        *r = jsval_string(str);
+        return S_OK;
+    }
+    case JSV_VARIANT:
+        return jsval_variant(r, get_variant(v));
+    }
+
+    assert(0);
+    return E_FAIL;
+}
+
 HRESULT variant_to_jsval(VARIANT *var, jsval_t *r)
 {
     switch(V_VT(var)) {
@@ -243,20 +295,30 @@ HRESULT variant_to_jsval(VARIANT *var, jsval_t *r)
         *r = jsval_number(V_R8(var));
         return S_OK;
     case VT_BSTR: {
-        BSTR str = clone_bstr(V_BSTR(var));
-        if(!str)
-            return E_OUTOFMEMORY;
+        BSTR str;
+
+        if(V_BSTR(var)) {
+            str = clone_bstr(V_BSTR(var));
+            if(!str)
+                return E_OUTOFMEMORY;
+        }else {
+            str = NULL;
+        }
         *r = jsval_string(str);
         return S_OK;
     }
     case VT_DISPATCH: {
-        IDispatch_AddRef(V_DISPATCH(var));
+        if(V_DISPATCH(var))
+            IDispatch_AddRef(V_DISPATCH(var));
         *r = jsval_disp(V_DISPATCH(var));
         return S_OK;
     }
     case VT_I2:
+        *r = jsval_number(V_I2(var));
+        return S_OK;
     case VT_INT:
-        assert(0);
+        *r = jsval_number(V_INT(var));
+        return S_OK;
     default:
         return jsval_variant(r, var);
     }
@@ -273,14 +335,19 @@ HRESULT jsval_to_variant(jsval_t val, VARIANT *retv)
         return S_OK;
     case JSV_OBJECT:
         V_VT(retv) = VT_DISPATCH;
-        IDispatch_AddRef(val.u.obj);
+        if(val.u.obj)
+            IDispatch_AddRef(val.u.obj);
         V_DISPATCH(retv) = val.u.obj;
         return S_OK;
     case JSV_STRING:
         V_VT(retv) = VT_BSTR;
-        V_BSTR(retv) = clone_bstr(val.u.str);
-        if(!V_BSTR(retv))
-            return E_OUTOFMEMORY;
+        if(val.u.str) {
+            V_BSTR(retv) = clone_bstr(val.u.str);
+            if(!V_BSTR(retv))
+                return E_OUTOFMEMORY;
+        }else {
+            V_BSTR(retv) = NULL;
+        }
         return S_OK;
     case JSV_NUMBER:
         num_set_val(retv, val.u.n);
@@ -413,6 +480,31 @@ HRESULT to_boolean(VARIANT *v, VARIANT_BOOL *b)
         return E_NOTIMPL;
     }
 
+    return S_OK;
+}
+
+/* ECMA-262 3rd Edition    9.2 */
+HRESULT to_boolean_jsval(jsval_t v, BOOL *ret)
+{
+    VARIANT_BOOL b;
+    VARIANT var;
+    HRESULT hres;
+
+    if(v.type == JSV_BOOL) {
+        *ret = v.u.b;
+        return S_OK;
+    }
+
+    hres = jsval_to_variant(v, &var);
+    if(FAILED(hres))
+        return hres;
+
+    hres = to_boolean(&var, &b);
+    VariantClear(&var);
+    if(FAILED(hres))
+        return hres;
+
+    *ret = !!b;
     return S_OK;
 }
 
@@ -590,7 +682,24 @@ HRESULT to_number_jsval(script_ctx_t *ctx, jsval_t v, jsexcept_t *ei, double *re
 }
 
 /* ECMA-262 3rd Edition    9.4 */
-HRESULT to_integer(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, double *ret)
+HRESULT to_integer(script_ctx_t *ctx, jsval_t v, jsexcept_t *ei, double *ret)
+{
+    double n;
+    HRESULT hres;
+
+    hres = to_number_jsval(ctx, v, ei, &n);
+    if(FAILED(hres))
+        return hres;
+
+    if(isnan(n))
+        *ret = 0;
+    else
+        *ret = n >= 0.0 ? floor(n) : -floor(-n);
+    return S_OK;
+}
+
+/* ECMA-262 3rd Edition    9.5 */
+HRESULT to_int32_var(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, INT *ret)
 {
     double n;
     HRESULT hres;
@@ -604,25 +713,17 @@ HRESULT to_integer(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, double *ret)
     if(FAILED(hres))
         return hres;
 
-    if(isnan(n))
-        *ret = 0;
-    else
-        *ret = n >= 0.0 ? floor(n) : -floor(-n);
+    *ret = isnan(n) || isinf(n) ? 0 : n;
     return S_OK;
 }
 
 /* ECMA-262 3rd Edition    9.5 */
-HRESULT to_int32(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, INT *ret)
+HRESULT to_int32(script_ctx_t *ctx, jsval_t v, jsexcept_t *ei, INT *ret)
 {
     double n;
     HRESULT hres;
 
-    if(V_VT(v) == VT_I4) {
-        *ret = V_I4(v);
-        return S_OK;
-    }
-
-    hres = to_number(ctx, v, ei, &n);
+    hres = to_number_jsval(ctx, v, ei, &n);
     if(FAILED(hres))
         return hres;
 
@@ -647,6 +748,21 @@ HRESULT to_uint32(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, DWORD *ret)
 
     *ret = isnan(n) || isinf(n) ? 0 : n;
     return S_OK;
+}
+
+/* ECMA-262 3rd Edition    9.6 */
+HRESULT to_uint32_jsval(script_ctx_t *ctx, jsval_t v, jsexcept_t *ei, DWORD *ret)
+{
+    VARIANT var;
+    HRESULT hres;
+
+    hres = jsval_to_variant(v, &var);
+    if(FAILED(hres))
+        return hres;
+
+    hres = to_uint32(ctx, &var, ei, ret);
+    VariantClear(&var);
+    return hres;
 }
 
 static BSTR int_to_bstr(int i)
@@ -829,6 +945,27 @@ HRESULT to_object(script_ctx_t *ctx, VARIANT *v, IDispatch **disp)
     return S_OK;
 }
 
+/* ECMA-262 3rd Edition    9.9 */
+HRESULT to_object_jsval(script_ctx_t *ctx, jsval_t v, IDispatch **disp)
+{
+    VARIANT var;
+    HRESULT hres;
+
+    if(is_object_instance(v)) {
+        *disp = get_object(v);
+        IDispatch_AddRef(*disp);
+        return S_OK;
+    }
+
+    hres = jsval_to_variant(v, &var);
+    if(FAILED(hres))
+        return hres;
+
+    hres = to_object(ctx, &var, disp);
+    VariantClear(&var);
+    return hres;
+}
+
 HRESULT variant_change_type(script_ctx_t *ctx, VARIANT *dst, VARIANT *src, VARTYPE vt)
 {
     jsexcept_t ei;
@@ -841,7 +978,7 @@ HRESULT variant_change_type(script_ctx_t *ctx, VARIANT *dst, VARIANT *src, VARTY
     case VT_I4: {
         INT i;
 
-        hres = to_int32(ctx, src, &ei, &i);
+        hres = to_int32_var(ctx, src, &ei, &i);
         if(SUCCEEDED(hres)) {
             if(vt == VT_I4)
                 V_I4(dst) = i;
