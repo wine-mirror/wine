@@ -2989,6 +2989,11 @@ static void shader_glsl_else(const struct wined3d_shader_instruction *ins)
     shader_addline(ins->ctx->buffer, "} else {\n");
 }
 
+static void shader_glsl_emit(const struct wined3d_shader_instruction *ins)
+{
+    shader_addline(ins->ctx->buffer, "EmitVertex();\n");
+}
+
 static void shader_glsl_break(const struct wined3d_shader_instruction *ins)
 {
     shader_addline(ins->ctx->buffer, "break;\n");
@@ -5050,7 +5055,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_DSX                   */ shader_glsl_map2gl,
     /* WINED3DSIH_DSY                   */ shader_glsl_map2gl,
     /* WINED3DSIH_ELSE                  */ shader_glsl_else,
-    /* WINED3DSIH_EMIT                  */ NULL,
+    /* WINED3DSIH_EMIT                  */ shader_glsl_emit,
     /* WINED3DSIH_ENDIF                 */ shader_glsl_end,
     /* WINED3DSIH_ENDLOOP               */ shader_glsl_end,
     /* WINED3DSIH_ENDREP                */ shader_glsl_end,
