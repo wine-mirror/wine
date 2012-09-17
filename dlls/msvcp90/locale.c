@@ -7284,7 +7284,7 @@ char* __cdecl num_put_wchar__Ifmt(const num_put *this, char *fmt, const char *sp
     return fmt;
 }
 
-static ostreambuf_iterator_wchar* __cdecl num_put__Iput(const num_put *this, ostreambuf_iterator_wchar *ret,
+static ostreambuf_iterator_wchar* num_put__Iput(const num_put *this, ostreambuf_iterator_wchar *ret,
         ostreambuf_iterator_wchar dest, ios_base *base, wchar_t fill, char *buf,
         MSVCP_size_t count, numpunct_wchar *numpunct)
 {
