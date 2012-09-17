@@ -439,6 +439,7 @@ enum WINED3D_SHADER_INSTRUCTION_HANDLER
     WINED3DSIH_CRS,
     WINED3DSIH_CUT,
     WINED3DSIH_DCL,
+    WINED3DSIH_DCL_VERTICES_OUT,
     WINED3DSIH_DEF,
     WINED3DSIH_DEFB,
     WINED3DSIH_DEFI,
@@ -666,6 +667,7 @@ struct wined3d_shader_instruction
     union
     {
         struct wined3d_shader_semantic semantic;
+        UINT count;
     } declaration;
 };
 
