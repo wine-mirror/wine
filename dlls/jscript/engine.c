@@ -1406,11 +1406,11 @@ static HRESULT add_eval(script_ctx_t *ctx, jsval_t lval, jsval_t rval, jsexcept_
     jsval_t r, l;
     HRESULT hres;
 
-    hres = to_primitive_jsval(ctx, lval, ei, &l, NO_HINT);
+    hres = to_primitive(ctx, lval, ei, &l, NO_HINT);
     if(FAILED(hres))
         return hres;
 
-    hres = to_primitive_jsval(ctx, rval, ei, &r, NO_HINT);
+    hres = to_primitive(ctx, rval, ei, &r, NO_HINT);
     if(FAILED(hres)) {
         jsval_release(l);
         return hres;
@@ -1925,7 +1925,7 @@ static HRESULT equal_values(script_ctx_t *ctx, jsval_t lval, jsval_t rval, jsexc
         jsval_t prim;
         HRESULT hres;
 
-        hres = to_primitive_jsval(ctx, rval, ei, &prim, NO_HINT);
+        hres = to_primitive(ctx, rval, ei, &prim, NO_HINT);
         if(FAILED(hres))
             return hres;
 
@@ -1939,7 +1939,7 @@ static HRESULT equal_values(script_ctx_t *ctx, jsval_t lval, jsval_t rval, jsexc
         jsval_t prim;
         HRESULT hres;
 
-        hres = to_primitive_jsval(ctx, lval, ei, &prim, NO_HINT);
+        hres = to_primitive(ctx, lval, ei, &prim, NO_HINT);
         if(FAILED(hres))
             return hres;
 
@@ -2044,11 +2044,11 @@ static HRESULT less_eval(script_ctx_t *ctx, jsval_t lval, jsval_t rval, BOOL gre
     jsval_t l, r;
     HRESULT hres;
 
-    hres = to_primitive_jsval(ctx, lval, ei, &l, NO_HINT);
+    hres = to_primitive(ctx, lval, ei, &l, NO_HINT);
     if(FAILED(hres))
         return hres;
 
-    hres = to_primitive_jsval(ctx, rval, ei, &r, NO_HINT);
+    hres = to_primitive(ctx, rval, ei, &r, NO_HINT);
     if(FAILED(hres)) {
         jsval_release(l);
         return hres;

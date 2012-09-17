@@ -369,46 +369,25 @@ HRESULT jsval_to_variant(jsval_t val, VARIANT *retv)
 }
 
 /* ECMA-262 3rd Edition    9.1 */
-HRESULT to_primitive(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, VARIANT *ret, hint_t hint)
+HRESULT to_primitive(script_ctx_t *ctx, jsval_t val, jsexcept_t *ei, jsval_t *ret, hint_t hint)
 {
-    switch(V_VT(v)) {
-    case VT_EMPTY:
-    case VT_NULL:
-    case VT_BOOL:
-    case VT_I4:
-    case VT_R8:
-        *ret = *v;
-        break;
-    case VT_BSTR:
-        V_VT(ret) = VT_BSTR;
-        V_BSTR(ret) = SysAllocString(V_BSTR(v));
-        break;
-    case VT_DISPATCH: {
+    if(is_object_instance(val)) {
         jsdisp_t *jsdisp;
+        jsval_t prim;
         DISPID id;
         HRESULT hres;
 
         static const WCHAR toStringW[] = {'t','o','S','t','r','i','n','g',0};
         static const WCHAR valueOfW[] = {'v','a','l','u','e','O','f',0};
 
-        if(!V_DISPATCH(v)) {
-            V_VT(ret) = VT_NULL;
-            break;
+        if(!get_object(val)) {
+            *ret = jsval_null();
+            return S_OK;
         }
 
-        jsdisp = iface_to_jsdisp((IUnknown*)V_DISPATCH(v));
-        if(!jsdisp) {
-            jsval_t val;
-            HRESULT hres;
-
-            hres = disp_propget(ctx, V_DISPATCH(v), DISPID_VALUE, &val, ei);
-            if(FAILED(hres))
-                return hres;
-
-            hres = jsval_to_variant(val, ret);
-            jsval_release(val);
-            return hres;
-        }
+        jsdisp = iface_to_jsdisp((IUnknown*)get_object(val));
+        if(!jsdisp)
+            return disp_propget(ctx, get_object(val), DISPID_VALUE, ret, ei);
 
         if(hint == NO_HINT)
             hint = is_class(jsdisp, JSCLASS_DATE) ? HINT_STRING : HINT_NUMBER;
@@ -417,68 +396,40 @@ HRESULT to_primitive(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, VARIANT *ret
 
         hres = jsdisp_get_id(jsdisp, hint == HINT_STRING ? toStringW : valueOfW, 0, &id);
         if(SUCCEEDED(hres)) {
-            hres = jsdisp_call(jsdisp, id, DISPATCH_METHOD, 0, NULL, ret, ei);
+            hres = jsdisp_call(jsdisp, id, DISPATCH_METHOD, 0, NULL, &prim, ei);
             if(FAILED(hres)) {
                 WARN("call error - forwarding exception\n");
                 jsdisp_release(jsdisp);
                 return hres;
-            }
-            else if(V_VT(ret) != VT_DISPATCH) {
+            }else if(!is_object_instance(prim)) {
                 jsdisp_release(jsdisp);
+                *ret = prim;
                 return S_OK;
+            }else {
+                IDispatch_Release(get_object(prim));
             }
-            else
-                IDispatch_Release(V_DISPATCH(ret));
         }
 
         hres = jsdisp_get_id(jsdisp, hint == HINT_STRING ? valueOfW : toStringW, 0, &id);
         if(SUCCEEDED(hres)) {
-            hres = jsdisp_call(jsdisp, id, DISPATCH_METHOD, 0, NULL, ret, ei);
+            hres = jsdisp_call(jsdisp, id, DISPATCH_METHOD, 0, NULL, &prim, ei);
             if(FAILED(hres)) {
                 WARN("call error - forwarding exception\n");
                 jsdisp_release(jsdisp);
                 return hres;
-            }
-            else if(V_VT(ret) != VT_DISPATCH) {
+            }else if(!is_object_instance(prim)) {
                 jsdisp_release(jsdisp);
+                *ret = prim;
                 return S_OK;
+            }else {
+                IDispatch_Release(get_object(prim));
             }
-            else
-                IDispatch_Release(V_DISPATCH(ret));
         }
 
         jsdisp_release(jsdisp);
 
         WARN("failed\n");
         return throw_type_error(ctx, ei, JS_E_TO_PRIMITIVE, NULL);
-    }
-    case VT_I2:
-    case VT_INT:
-        assert(0);
-    default:
-        FIXME("Unimplemented for vt %d\n", V_VT(v));
-        return E_NOTIMPL;
-    }
-
-    return S_OK;
-}
-
-/* ECMA-262 3rd Edition    9.1 */
-HRESULT to_primitive_jsval(script_ctx_t *ctx, jsval_t val, jsexcept_t *ei, jsval_t *ret, hint_t hint)
-{
-    if(is_object_instance(val)) {
-        VARIANT var, retv;
-        HRESULT hres;
-
-        V_VT(&var) = VT_DISPATCH;
-        V_DISPATCH(&var) = get_object(val);
-        hres = to_primitive(ctx, &var, ei, &retv, hint);
-        if(FAILED(hres))
-            return hres;
-
-        hres = variant_to_jsval(&retv, ret);
-        VariantClear(&retv);
-        return hres;
     }
 
     return jsval_copy(val, ret);
@@ -670,15 +621,15 @@ HRESULT to_number(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, double *ret)
     case VT_BSTR:
         return str_to_number(V_BSTR(v), ret);
     case VT_DISPATCH: {
-        VARIANT prim;
+        jsval_t prim;
         HRESULT hres;
 
-        hres = to_primitive(ctx, v, ei, &prim, HINT_NUMBER);
+        hres = to_primitive(ctx, jsval_disp(V_DISPATCH(v)), ei, &prim, HINT_NUMBER);
         if(FAILED(hres))
             return hres;
 
-        hres = to_number(ctx, &prim, ei, ret);
-        VariantClear(&prim);
+        hres = to_number_jsval(ctx, prim, ei, ret);
+        jsval_release(prim);
         return hres;
     }
     case VT_BOOL:
@@ -879,15 +830,15 @@ HRESULT to_string(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, BSTR *str)
         *str = SysAllocString(V_BSTR(v));
         break;
     case VT_DISPATCH: {
-        VARIANT prim;
+        jsval_t prim;
         HRESULT hres;
 
-        hres = to_primitive(ctx, v, ei, &prim, HINT_STRING);
+        hres = to_primitive(ctx, jsval_disp(V_DISPATCH(v)), ei, &prim, HINT_STRING);
         if(FAILED(hres))
             return hres;
 
-        hres = to_string(ctx, &prim, ei, str);
-        VariantClear(&prim);
+        hres = to_string_jsval(ctx, prim, ei, str);
+        jsval_release(prim);
         return hres;
     }
     case VT_BOOL:

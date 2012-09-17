@@ -1013,29 +1013,16 @@ HRESULT jsdisp_call_value(jsdisp_t *jsfunc, IDispatch *jsthis, WORD flags, unsig
     return hres;
 }
 
-HRESULT jsdisp_call(jsdisp_t *disp, DISPID id, WORD flags, unsigned argc, jsval_t *argv, VARIANT *retv, jsexcept_t *ei)
+HRESULT jsdisp_call(jsdisp_t *disp, DISPID id, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r, jsexcept_t *ei)
 {
     dispex_prop_t *prop;
-    jsval_t r;
-    HRESULT hres;
-
-    memset(ei, 0, sizeof(*ei));
-    if(retv)
-        V_VT(retv) = VT_EMPTY;
 
     prop = get_prop(disp, id);
     if(!prop)
         return DISP_E_MEMBERNOTFOUND;
 
-    hres = invoke_prop_func(disp, to_disp(disp), prop, flags, argc, argv, retv ? &r : NULL, ei, NULL);
-    if(FAILED(hres))
-        return hres;
-
-    if(retv) {
-        hres = jsval_to_variant(r, retv);
-        jsval_release(r);
-    }
-    return hres;
+    memset(ei, 0, sizeof(*ei));
+    return invoke_prop_func(disp, to_disp(disp), prop, flags, argc, argv, r, ei, NULL);
 }
 
 HRESULT jsdisp_call_name(jsdisp_t *disp, const WCHAR *name, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r,
@@ -1069,16 +1056,8 @@ HRESULT disp_call(script_ctx_t *ctx, IDispatch *disp, DISPID id, WORD flags, uns
             return E_FAIL;
         }
 
-        V_VT(&retv) = VT_EMPTY;
-        hres = jsdisp_call(jsdisp, id, flags, argc, argv, ret ? &retv : NULL, ei);
+        hres = jsdisp_call(jsdisp, id, flags, argc, argv, ret, ei);
         jsdisp_release(jsdisp);
-        if(FAILED(hres))
-            return hres;
-
-        if(ret) {
-            hres = variant_to_jsval(&retv, ret);
-            VariantClear(&retv);
-        }
         return hres;
     }
 

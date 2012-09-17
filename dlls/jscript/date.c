@@ -2505,23 +2505,19 @@ static HRESULT DateConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
 
         /* ECMA-262 3rd Edition    15.9.3.2 */
         case 1: {
-            VARIANT prim,var;
+            jsval_t prim;
             double n;
 
-            hres = jsval_to_variant(argv[0], &var);
-            if(SUCCEEDED(hres)) {
-                hres = to_primitive(ctx, &var, ei, &prim, NO_HINT);
-                VariantClear(&var);
-            }
+            hres = to_primitive(ctx, argv[0], ei, &prim, NO_HINT);
             if(FAILED(hres))
                 return hres;
 
-            if(V_VT(&prim) == VT_BSTR)
-                hres = date_parse(V_BSTR(&prim), &n);
+            if(is_string(prim))
+                hres = date_parse(get_string(prim), &n);
             else
-                hres = to_number(ctx, &prim, ei, &n);
+                hres = to_number_jsval(ctx, prim, ei, &n);
 
-            VariantClear(&prim);
+            jsval_release(prim);
             if(FAILED(hres))
                 return hres;
 
