@@ -219,15 +219,15 @@ void jsval_release(jsval_t val)
 {
     switch(jsval_type(val)) {
     case JSV_OBJECT:
-        if(val.u.obj)
-            IDispatch_Release(val.u.obj);
+        if(get_object(val))
+            IDispatch_Release(get_object(val));
         break;
     case JSV_STRING:
-        SysFreeString(val.u.str);
+        SysFreeString(get_string(val));
         break;
     case JSV_VARIANT:
-        VariantClear(val.u.v);
-        heap_free(val.u.v);
+        VariantClear(get_variant(val));
+        heap_free(get_variant(val));
         break;
     default:
         break;
@@ -236,17 +236,18 @@ void jsval_release(jsval_t val)
 
 HRESULT jsval_variant(jsval_t *val, VARIANT *var)
 {
+    VARIANT *v;
     HRESULT hres;
 
     val->type = JSV_VARIANT;
-    val->u.v = heap_alloc(sizeof(VARIANT));
-    if(!val->u.v)
+    val->u.v = v = heap_alloc(sizeof(VARIANT));
+    if(!v)
         return E_OUTOFMEMORY;
 
-    V_VT(val->u.v) = VT_EMPTY;
-    hres = VariantCopy(val->u.v, var);
+    V_VT(v) = VT_EMPTY;
+    hres = VariantCopy(v, var);
     if(FAILED(hres))
-        heap_free(val->u.v);
+        heap_free(v);
     return hres;
 }
 
@@ -338,14 +339,14 @@ HRESULT jsval_to_variant(jsval_t val, VARIANT *retv)
         return S_OK;
     case JSV_OBJECT:
         V_VT(retv) = VT_DISPATCH;
-        if(val.u.obj)
-            IDispatch_AddRef(val.u.obj);
-        V_DISPATCH(retv) = val.u.obj;
+        if(get_object(val))
+            IDispatch_AddRef(get_object(val));
+        V_DISPATCH(retv) = get_object(val);
         return S_OK;
     case JSV_STRING:
         V_VT(retv) = VT_BSTR;
-        if(val.u.str) {
-            V_BSTR(retv) = clone_bstr(val.u.str);
+        if(get_string(val)) {
+            V_BSTR(retv) = clone_bstr(get_string(val));
             if(!V_BSTR(retv))
                 return E_OUTOFMEMORY;
         }else {
@@ -367,11 +368,11 @@ HRESULT jsval_to_variant(jsval_t val, VARIANT *retv)
     }
     case JSV_BOOL:
         V_VT(retv) = VT_BOOL;
-        V_BOOL(retv) = val.u.b ? VARIANT_TRUE : VARIANT_FALSE;
+        V_BOOL(retv) = get_bool(val) ? VARIANT_TRUE : VARIANT_FALSE;
         return S_OK;
     case JSV_VARIANT:
         V_VT(retv) = VT_EMPTY;
-        return VariantCopy(retv, val.u.v);
+        return VariantCopy(retv, get_variant(val));
     }
 
     assert(0);
