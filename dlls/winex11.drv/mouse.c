@@ -488,15 +488,18 @@ BOOL clip_fullscreen_window( HWND hwnd, BOOL reset )
     struct x11drv_thread_data *thread_data;
     RECT rect;
     DWORD style;
+    BOOL fullscreen;
 
     if (hwnd == GetDesktopWindow()) return FALSE;
-    if (!(data = X11DRV_get_win_data( hwnd ))) return FALSE;
     style = GetWindowLongW( hwnd, GWL_STYLE );
     if (!(style & WS_VISIBLE)) return FALSE;
     if ((style & (WS_POPUP | WS_CHILD)) == WS_CHILD) return FALSE;
     /* maximized windows don't count as full screen */
     if ((style & WS_MAXIMIZE) && (style & WS_CAPTION) == WS_CAPTION) return FALSE;
-    if (!is_window_rect_fullscreen( &data->whole_rect )) return FALSE;
+    if (!(data = get_win_data( hwnd ))) return FALSE;
+    fullscreen = is_window_rect_fullscreen( &data->whole_rect );
+    release_win_data( data );
+    if (!fullscreen) return FALSE;
     if (!(thread_data = x11drv_thread_data())) return FALSE;
     if (GetTickCount() - thread_data->clip_reset < 1000) return FALSE;
     if (!reset && clipping_cursor && thread_data->clip_hwnd) return FALSE;  /* already clipping */
@@ -541,7 +544,7 @@ static void send_mouse_input( HWND hwnd, Window window, unsigned int state, INPU
         return;
     }
 
-    if (!(data = X11DRV_get_win_data( hwnd ))) return;
+    if (!(data = get_win_data( hwnd ))) return;
 
     if (window == data->whole_window)
     {
@@ -565,6 +568,7 @@ static void send_mouse_input( HWND hwnd, Window window, unsigned int state, INPU
         sync_window_cursor( data->whole_window );
         last_cursor_change = input->u.mi.time;
     }
+    release_win_data( data );
 
     if (hwnd != GetDesktopWindow())
     {
