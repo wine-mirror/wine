@@ -3633,7 +3633,7 @@ static HRESULT create_match_array(script_ctx_t *ctx, BSTR input, const match_res
 }
 
 static HRESULT run_exec(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t arg, jsexcept_t *ei, BSTR *input,
-        match_result_t *match, match_result_t **parens, DWORD *parens_cnt, VARIANT_BOOL *ret)
+        match_result_t *match, match_result_t **parens, DWORD *parens_cnt, BOOL *ret)
 {
     RegExpInstance *regexp;
     DWORD parens_size = 0, last_index = 0, length;
@@ -3657,7 +3657,7 @@ static HRESULT run_exec(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t arg, jsexcep
         if(regexp->last_index < 0) {
             SysFreeString(string);
             set_last_index(regexp, 0);
-            *ret = VARIANT_FALSE;
+            *ret = FALSE;
             if(input) {
                 *input = NULL;
             }
@@ -3675,7 +3675,7 @@ static HRESULT run_exec(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t arg, jsexcep
         return hres;
     }
 
-    *ret = hres == S_OK ? VARIANT_TRUE : VARIANT_FALSE;
+    *ret = hres == S_OK;
     if(input) {
         *input = string;
     }else {
@@ -3689,7 +3689,7 @@ static HRESULT RegExp_exec(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsig
 {
     match_result_t *parens = NULL, match;
     DWORD parens_cnt = 0;
-    VARIANT_BOOL b;
+    BOOL b;
     BSTR string;
     HRESULT hres;
 
@@ -3721,7 +3721,7 @@ static HRESULT RegExp_test(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsig
 {
     match_result_t match;
     BSTR undef_str;
-    VARIANT_BOOL b;
+    BOOL b;
     HRESULT hres;
 
     TRACE("\n");
