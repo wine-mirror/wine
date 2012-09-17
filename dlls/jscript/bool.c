@@ -26,7 +26,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 typedef struct {
     jsdisp_t dispex;
 
-    VARIANT_BOOL val;
+    BOOL val;
 } BoolInstance;
 
 static const WCHAR toStringW[] = {'t','o','S','t','r','i','n','g',0};
@@ -199,7 +199,7 @@ HRESULT create_bool_constr(script_ctx_t *ctx, jsdisp_t *object_prototype, jsdisp
     return hres;
 }
 
-HRESULT create_bool(script_ctx_t *ctx, VARIANT_BOOL b, jsdisp_t **ret)
+HRESULT create_bool(script_ctx_t *ctx, BOOL b, jsdisp_t **ret)
 {
     BoolInstance *bool;
     HRESULT hres;
