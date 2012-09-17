@@ -272,12 +272,13 @@ static HRESULT ensure_prop_name(jsdisp_t *This, const WCHAR *name, BOOL search_p
         hres = find_prop_name_prot(This, string_hash(name), name, &prop);
     else
         hres = find_prop_name(This, string_hash(name), name, &prop);
-    if(SUCCEEDED(hres) && (!prop || prop->type==PROP_DELETED)) {
+    if(SUCCEEDED(hres) && (!prop || prop->type == PROP_DELETED)) {
         TRACE("creating prop %s\n", debugstr_w(name));
 
         if(prop) {
             prop->type = PROP_JSVAL;
             prop->flags = create_flags;
+            prop->u.val = jsval_undefined();
         }else {
             prop = alloc_prop(This, name, PROP_JSVAL, create_flags);
             if(!prop)
