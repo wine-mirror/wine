@@ -662,3 +662,10 @@ cleanup:
     LeaveCriticalSection(&wpp_mutex);
     return hr;
 }
+
+HRESULT WINAPI D3DDisassemble(const void *data, SIZE_T size, UINT flags, const char *comments, ID3DBlob **disassembly)
+{
+    FIXME("data %p, size %lu, flags %#x, comments %p, disassembly %p stub!\n",
+            data, size, flags, comments, disassembly);
+    return E_NOTIMPL;
+}
