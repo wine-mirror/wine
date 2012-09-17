@@ -128,7 +128,7 @@ static HRESULT BoolConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
     HRESULT hres;
 
     if(argc) {
-        hres = to_boolean_jsval(argv[0], &value);
+        hres = to_boolean(argv[0], &value);
         if(FAILED(hres))
             return hres;
     }

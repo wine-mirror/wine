@@ -437,60 +437,32 @@ HRESULT to_primitive(script_ctx_t *ctx, jsval_t val, jsexcept_t *ei, jsval_t *re
 }
 
 /* ECMA-262 3rd Edition    9.2 */
-HRESULT to_boolean(VARIANT *v, VARIANT_BOOL *b)
+HRESULT to_boolean(jsval_t val, BOOL *ret)
 {
-    switch(V_VT(v)) {
-    case VT_EMPTY:
-    case VT_NULL:
-        *b = VARIANT_FALSE;
-        break;
-    case VT_I4:
-        *b = V_I4(v) ? VARIANT_TRUE : VARIANT_FALSE;
-        break;
-    case VT_R8:
-        if(isnan(V_R8(v))) *b = VARIANT_FALSE;
-        else *b = V_R8(v) ? VARIANT_TRUE : VARIANT_FALSE;
-        break;
-    case VT_BSTR:
-        *b = V_BSTR(v) && *V_BSTR(v) ? VARIANT_TRUE : VARIANT_FALSE;
-        break;
-    case VT_DISPATCH:
-        *b = V_DISPATCH(v) ? VARIANT_TRUE : VARIANT_FALSE;
-        break;
-    case VT_BOOL:
-        *b = V_BOOL(v);
-        break;
-    default:
-        FIXME("unimplemented for vt %d\n", V_VT(v));
+    switch(val.type) {
+    case JSV_UNDEFINED:
+    case JSV_NULL:
+        *ret = VARIANT_FALSE;
+        return S_OK;
+    case JSV_OBJECT:
+        *ret = get_object(val) != NULL;
+        return S_OK;
+    case JSV_STRING:
+        *ret = get_string(val) && *get_string(val);
+        return S_OK;
+    case JSV_NUMBER:
+        *ret = !isnan(get_number(val)) && get_number(val);
+        return S_OK;
+    case JSV_BOOL:
+        *ret = get_bool(val);
+        return S_OK;
+    case JSV_VARIANT:
+        FIXME("unimplemented for variant %s\n", debugstr_variant(get_variant(val)));
         return E_NOTIMPL;
     }
 
-    return S_OK;
-}
-
-/* ECMA-262 3rd Edition    9.2 */
-HRESULT to_boolean_jsval(jsval_t v, BOOL *ret)
-{
-    VARIANT_BOOL b;
-    VARIANT var;
-    HRESULT hres;
-
-    if(v.type == JSV_BOOL) {
-        *ret = v.u.b;
-        return S_OK;
-    }
-
-    hres = jsval_to_variant(v, &var);
-    if(FAILED(hres))
-        return hres;
-
-    hres = to_boolean(&var, &b);
-    VariantClear(&var);
-    if(FAILED(hres))
-        return hres;
-
-    *ret = !!b;
-    return S_OK;
+    assert(0);
+    return E_FAIL;
 }
 
 static int hex_to_int(WCHAR c)
@@ -986,11 +958,17 @@ HRESULT variant_change_type(script_ctx_t *ctx, VARIANT *dst, VARIANT *src, VARTY
         break;
     }
     case VT_BOOL: {
-        VARIANT_BOOL b;
+        jsval_t val;
+        BOOL b;
 
-        hres = to_boolean(src, &b);
+        hres = variant_to_jsval(src, &val);
+        if(FAILED(hres))
+            return hres;
+
+        hres = to_boolean(val, &b);
+        jsval_release(val);
         if(SUCCEEDED(hres))
-            V_BOOL(dst) = b;
+            V_BOOL(dst) = b ? VARIANT_TRUE : VARIANT_FALSE;
         break;
     }
     case VT_BSTR: {

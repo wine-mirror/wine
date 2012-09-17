@@ -1212,7 +1212,7 @@ static HRESULT interp_cnd_nz(exec_ctx_t *ctx)
 
     TRACE("\n");
 
-    hres = to_boolean_jsval(stack_top(ctx), &b);
+    hres = to_boolean(stack_top(ctx), &b);
     if(FAILED(hres))
         return hres;
 
@@ -1234,7 +1234,7 @@ static HRESULT interp_cnd_z(exec_ctx_t *ctx)
 
     TRACE("\n");
 
-    hres = to_boolean_jsval(stack_top(ctx), &b);
+    hres = to_boolean(stack_top(ctx), &b);
     if(FAILED(hres))
         return hres;
 
@@ -2185,7 +2185,7 @@ static HRESULT interp_neg(exec_ctx_t *ctx)
     TRACE("\n");
 
     v = stack_pop(ctx);
-    hres = to_boolean_jsval(v, &b);
+    hres = to_boolean(v, &b);
     jsval_release(v);
     if(FAILED(hres))
         return hres;
@@ -2325,7 +2325,7 @@ static HRESULT interp_jmp_z(exec_ctx_t *ctx)
     TRACE("\n");
 
     v = stack_pop(ctx);
-    hres = to_boolean_jsval(v, &b);
+    hres = to_boolean(v, &b);
     jsval_release(v);
     if(FAILED(hres))
         return hres;
