@@ -783,7 +783,7 @@ static void get_processor_name( WCHAR *name )
 static UINT get_processor_maxclockspeed( void )
 {
     PROCESSOR_POWER_INFORMATION *info;
-    UINT ret = 1000000, size = get_processor_count() * sizeof(PROCESSOR_POWER_INFORMATION);
+    UINT ret = 1000, size = get_processor_count() * sizeof(PROCESSOR_POWER_INFORMATION);
     NTSTATUS status;
 
     if ((info = heap_alloc( size )))
