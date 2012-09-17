@@ -2640,6 +2640,72 @@ static void test_D3DXSHMultiply3(void)
         ok(relative_error(c[i], expected[i]) < admitted_error, "Expected[%d] = %f, received = %f\n", i, expected[i], c[i]);
 }
 
+static void test_D3DXSHRotate(void)
+{
+    D3DXMATRIX m[4];
+    FLOAT expected, in[49], out[49], *received_ptr;
+    static const FLOAT table[]=
+    { /* Rotation around X-axis Pi/2 */
+        1.01f, -3.01f, 2.01f, 4.01f, -8.01f, -6.01f,
+        -11.307890f, 5.01f, -1.565839f, 1.093598f, -11.01f, 19.833414f,
+        -15.268191f, -19.004118f, -3.364889f, -9.562627f, 12.099654f, -0.272131f,
+        30.241013f, 26.919991f, 39.236877f, -22.632446f, 6.707388f, -11.768282f,
+        3.443672f, -6.07445f, 11.61839f, 1.527561f, 37.89633f, -56.9012f,
+        47.42289f, 50.39153f, 10.61819f, 25.50101f, 0.049241f, 16.98330f,
+      /* Rotation around X-axis -Pi/2 */
+        1.01f, 3.01f, -2.01f, 4.01f, 8.01f, -6.01f,
+        -11.307890f, -5.01f, -1.565839f, -1.093598f, -11.01f, -19.833414f,
+        15.268191f, -19.004118f, 3.364889f, -9.562627f, -12.099654f, -0.272131f,
+        -30.241013f, 26.919991f, 39.236877f, 22.632446f, 6.707388f, 11.768282f,
+        3.443672f, 6.07445f, 11.61839f, -1.527561f, 37.89633f, 56.9012f,
+        -47.42289f, 50.39153f, -10.61819f, 25.50101f, -0.049248f, 16.98330f,
+      /* Yaw Pi/3, Pitch Pi/4, Roll Pi/5 */
+        1.01f, 4.944899f, 1.442301f, 1.627281f, 0.219220f, 10.540824f,
+        -9.136903f, 2.763750f, -7.30904f,  -5.875721f, 5.303124f,  -8.682154f,
+        -25.683384f, 1.680279f, -18.808388f, 7.653656f, 16.939133f, -17.328018f,
+        14.629795f, -54.467102f, -12.231035f, -4.089857f, -9.444222f, 3.056035f,
+        0.179257f, -10.041875f, 23.090092f, -23.188709f, 11.727098f, -65.183090f,
+        48.671577f, -15.073209f, 38.793171f, -26.039536f, 6.192769f, -17.672247f,
+      /* Rotation around Z-axis Pi/6 */
+        1.01f, 3.745711f, 3.01f, 2.467762f, 10.307889f, 9.209813f,
+        7.01f, 3.931864f, 0.166212f, 16.01f, 18.504042f, 17.405966f,
+        13.01f, 6.128016f, -2.029941f, -10.01f, 13.154292f, 24.01f,
+        29.432245f, 28.334167f, 21.01f, 9.056221f, -4.958143f, -18.01f,
+        -27.236094f, -4.520332f, 16.814543f, 34.01f, 43.092495f, 41.994423f,
+        31.01f, 12.716471f, -8.618400f, -28.01f, -40.896347f, -44.190571,};
+    unsigned int i, j, order;
+
+    D3DXMatrixRotationX(&m[0], -D3DX_PI / 2.0f);
+    D3DXMatrixRotationX(&m[1], D3DX_PI / 2.0f);
+    D3DXMatrixRotationYawPitchRoll(&m[2], D3DX_PI / 3.0f, D3DX_PI / 4.0f, D3DX_PI / 5.0f);
+    D3DXMatrixRotationZ(&m[3], D3DX_PI / 6.0f);
+
+    for (i = 0; i < 49; i++)
+        in[i] = i + 1.01f;
+
+    for (j = 0; j < 4; j++)
+    {
+        for (order = 0; order <= D3DXSH_MAXORDER; order++)
+        {
+            for (i = 0; i < 49; i++)
+                out[i] = ( i + 1.0f ) * ( i + 1.0f );
+
+            received_ptr = D3DXSHRotate(out, order, &m[j], in);
+            ok(received_ptr == out, "Order %u, expected %p, received %p\n", order, out, received_ptr);
+
+            for (i = 0; i < 49; i++)
+            {
+                if ( ( i > 0 ) && ( ( i >= order * order ) || ( order > D3DXSH_MAXORDER ) ) )
+                    expected = ( i + 1.0f ) * ( i + 1.0f );
+                else
+                    expected = table[36 * j + i];
+
+                ok(relative_error(out[i], expected) < admitted_error, "Order %u index %u, expected %f, received %f\n", order, i, expected, out[i]);
+            }
+        }
+    }
+}
+
 static void test_D3DXSHRotateZ(void)
 {
     unsigned int i, j, order, square;
@@ -2740,6 +2806,7 @@ START_TEST(math)
     test_D3DXSHEvalDirectionalLight();
     test_D3DXSHMultiply2();
     test_D3DXSHMultiply3();
+    test_D3DXSHRotate();
     test_D3DXSHRotateZ();
     test_D3DXSHScale();
 }
