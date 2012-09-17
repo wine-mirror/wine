@@ -645,43 +645,17 @@ HRESULT to_int32(script_ctx_t *ctx, jsval_t v, jsexcept_t *ei, INT *ret)
 }
 
 /* ECMA-262 3rd Edition    9.6 */
-HRESULT to_uint32(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, DWORD *ret)
+HRESULT to_uint32(script_ctx_t *ctx, jsval_t val, jsexcept_t *ei, DWORD *ret)
 {
-    jsval_t val;
     double n;
     HRESULT hres;
 
-    if(V_VT(v) == VT_I4) {
-        *ret = V_I4(v);
-        return S_OK;
-    }
-
-    hres = variant_to_jsval(v, &val);
-    if(FAILED(hres))
-        return hres;
-
     hres = to_number(ctx, val, ei, &n);
-    jsval_release(val);
     if(FAILED(hres))
         return hres;
 
     *ret = isnan(n) || isinf(n) ? 0 : n;
     return S_OK;
-}
-
-/* ECMA-262 3rd Edition    9.6 */
-HRESULT to_uint32_jsval(script_ctx_t *ctx, jsval_t v, jsexcept_t *ei, DWORD *ret)
-{
-    VARIANT var;
-    HRESULT hres;
-
-    hres = jsval_to_variant(v, &var);
-    if(FAILED(hres))
-        return hres;
-
-    hres = to_uint32(ctx, &var, ei, ret);
-    VariantClear(&var);
-    return hres;
 }
 
 static BSTR int_to_bstr(int i)

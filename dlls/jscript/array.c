@@ -79,7 +79,7 @@ static HRESULT get_length(script_ctx_t *ctx, vdisp_t *vdisp, jsexcept_t *ei, jsd
     if(FAILED(hres))
         return hres;
 
-    hres = to_uint32_jsval(ctx, val, ei, ret);
+    hres = to_uint32(ctx, val, ei, ret);
     jsval_release(val);
     if(FAILED(hres))
         return hres;

@@ -347,7 +347,7 @@ static HRESULT array_to_args(script_ctx_t *ctx, jsdisp_t *arg_array, jsexcept_t 
     if(FAILED(hres))
         return hres;
 
-    hres = to_uint32_jsval(ctx, val, ei, &length);
+    hres = to_uint32(ctx, val, ei, &length);
     jsval_release(val);
     if(FAILED(hres))
         return hres;

@@ -160,7 +160,7 @@ static inline HRESULT stack_pop_int(exec_ctx_t *ctx, INT *r)
 
 static inline HRESULT stack_pop_uint(exec_ctx_t *ctx, DWORD *r)
 {
-    return to_uint32_jsval(ctx->script, stack_pop(ctx), ctx->ei, r);
+    return to_uint32(ctx->script, stack_pop(ctx), ctx->ei, r);
 }
 
 static inline IDispatch *stack_pop_objid(exec_ctx_t *ctx, DISPID *id)

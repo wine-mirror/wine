@@ -1531,7 +1531,7 @@ static HRESULT StringConstr_fromCharCode(script_ctx_t *ctx, vdisp_t *jsthis, WOR
         return E_OUTOFMEMORY;
 
     for(i=0; i<argc; i++) {
-        hres = to_uint32_jsval(ctx, argv[i], ei, &code);
+        hres = to_uint32(ctx, argv[i], ei, &code);
         if(FAILED(hres)) {
             SysFreeString(ret);
             return hres;
