@@ -753,7 +753,7 @@ static HRESULT test_secondary(LPGUID lpGuid)
             if (gotdx8 || wfx.wBitsPerSample <= 16 || wfx.wFormatTag == WAVE_FORMAT_IEEE_FLOAT)
             {
                 if (wfx.wBitsPerSample > 16)
-                    ok(((rc == DSERR_CONTROLUNAVAIL || rc == DSERR_INVALIDCALL || rc == DSERR_INVALIDPARAM /* 2003 */) && !secondary)
+                    ok(broken((rc == DSERR_CONTROLUNAVAIL || rc == DSERR_INVALIDCALL || rc == DSERR_INVALIDPARAM /* 2003 */) && !secondary)
                         || rc == DS_OK, /* driver dependent? */
                         "IDirectSound_CreateSoundBuffer() "
                         "should have returned (DSERR_CONTROLUNAVAIL or DSERR_INVALIDCALL) "

@@ -940,11 +940,6 @@ HRESULT DirectSoundDevice_CreateSoundBuffer(
         }
         pwfxe = (WAVEFORMATEXTENSIBLE*)dsbd->lpwfxFormat;
 
-        if (pwfxe->Format.wBitsPerSample != 16 && pwfxe->Format.wBitsPerSample != 8 && pwfxe->Format.wFormatTag != WAVE_FORMAT_EXTENSIBLE)
-        {
-            WARN("wBitsPerSample=%d needs a WAVEFORMATEXTENSIBLE\n", dsbd->lpwfxFormat->wBitsPerSample);
-            return DSERR_CONTROLUNAVAIL;
-        }
         if (pwfxe->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE)
         {
             /* check if cbSize is at least 22 bytes */
