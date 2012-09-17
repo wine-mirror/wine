@@ -583,7 +583,11 @@ static HRESULT WINAPI IDirectSoundCaptureBufferImpl_GetObjectInPath(IDirectSound
     FIXME( "(%p,%s,%u,%s,%p): stub\n", This, debugstr_guid(rguidObject),
         dwIndex, debugstr_guid(rguidInterface), ppObject );
 
-    return DS_OK;
+    if (!ppObject)
+        return DSERR_INVALIDPARAM;
+
+    *ppObject = NULL;
+    return DSERR_CONTROLUNAVAIL;
 }
 
 static HRESULT WINAPI IDirectSoundCaptureBufferImpl_GetFXStatus(IDirectSoundCaptureBuffer8 *iface,
