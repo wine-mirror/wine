@@ -3648,7 +3648,7 @@ static HRESULT run_exec(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t arg, jsexcep
 
     regexp = regexp_from_vdisp(jsthis);
 
-    hres = to_string_jsval(ctx, arg, ei, &string);
+    hres = to_string(ctx, arg, ei, &string);
     if(FAILED(hres))
         return hres;
     length = SysStringLen(string);

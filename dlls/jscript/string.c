@@ -81,7 +81,6 @@ static HRESULT get_string_val(script_ctx_t *ctx, vdisp_t *jsthis, jsexcept_t *ei
         const WCHAR **str, DWORD *len, BSTR *val_str)
 {
     StringInstance *string;
-    VARIANT this_var;
     HRESULT hres;
 
     if((string = string_this(jsthis))) {
@@ -91,9 +90,7 @@ static HRESULT get_string_val(script_ctx_t *ctx, vdisp_t *jsthis, jsexcept_t *ei
         return S_OK;
     }
 
-    V_VT(&this_var) = VT_DISPATCH;
-    V_DISPATCH(&this_var) = jsthis->u.disp;
-    hres = to_string(ctx, &this_var, ei, val_str);
+    hres = to_string(ctx, jsval_disp(jsthis->u.disp), ei, val_str);
     if(FAILED(hres))
         return hres;
 
@@ -202,12 +199,7 @@ static HRESULT do_attribute_tag_format(script_ctx_t *ctx, vdisp_t *jsthis, unsig
     HRESULT hres;
 
     if(!(string = string_this(jsthis))) {
-        VARIANT this;
-
-        V_VT(&this) = VT_DISPATCH;
-        V_DISPATCH(&this) = jsthis->u.disp;
-
-        hres = to_string(ctx, &this, ei, &val_str);
+        hres = to_string(ctx, jsval_disp(jsthis->u.disp), ei, &val_str);
         if(FAILED(hres))
             return hres;
 
@@ -220,7 +212,7 @@ static HRESULT do_attribute_tag_format(script_ctx_t *ctx, vdisp_t *jsthis, unsig
     }
 
     if(argc) {
-        hres = to_string_jsval(ctx, argv[0], ei, &attr_value);
+        hres = to_string(ctx, argv[0], ei, &attr_value);
         if(FAILED(hres)) {
             SysFreeString(val_str);
             return hres;
@@ -374,7 +366,6 @@ static HRESULT String_concat(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
 {
     BSTR *strs = NULL, ret = NULL;
     DWORD len = 0, i, l, str_cnt;
-    VARIANT var;
     WCHAR *ptr;
     HRESULT hres;
 
@@ -385,13 +376,10 @@ static HRESULT String_concat(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
     if(!strs)
         return E_OUTOFMEMORY;
 
-    V_VT(&var) = VT_DISPATCH;
-    V_DISPATCH(&var) = jsthis->u.disp;
-
-    hres = to_string(ctx, &var, ei, strs);
+    hres = to_string(ctx, jsval_disp(jsthis->u.disp), ei, strs);
     if(SUCCEEDED(hres)) {
         for(i=0; i < argc; i++) {
-            hres = to_string_jsval(ctx, argv[i], ei, strs+i+1);
+            hres = to_string(ctx, argv[i], ei, strs+i+1);
             if(FAILED(hres))
                 break;
         }
@@ -471,7 +459,7 @@ static HRESULT String_indexOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
         return S_OK;
     }
 
-    hres = to_string_jsval(ctx, argv[0], ei, &search_str);
+    hres = to_string(ctx, argv[0], ei, &search_str);
     if(FAILED(hres)) {
         SysFreeString(val_str);
         return hres;
@@ -535,7 +523,7 @@ static HRESULT String_lastIndexOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
         return S_OK;
     }
 
-    hres = to_string_jsval(ctx, argv[0], ei, &search_str);
+    hres = to_string(ctx, argv[0], ei, &search_str);
     if(FAILED(hres)) {
         SysFreeString(val_str);
         return hres;
@@ -612,7 +600,7 @@ static HRESULT String_match(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
     if(!regexp) {
         BSTR match_str;
 
-        hres = to_string_jsval(ctx, argv[0], ei, &match_str);
+        hres = to_string(ctx, argv[0], ei, &match_str);
         if(FAILED(hres))
             return hres;
 
@@ -723,7 +711,7 @@ static HRESULT rep_call(script_ctx_t *ctx, jsdisp_t *func, const WCHAR *str, mat
     if(FAILED(hres))
         return hres;
 
-    hres = to_string_jsval(ctx, val, ei, ret);
+    hres = to_string(ctx, val, ei, ret);
     jsval_release(val);
     return hres;
 }
@@ -769,7 +757,7 @@ static HRESULT String_replace(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
     }
 
     if(!regexp) {
-        hres = to_string_jsval(ctx, argv[0], ei, &match_str);
+        hres = to_string(ctx, argv[0], ei, &match_str);
         if(FAILED(hres)) {
             SysFreeString(val_str);
             return hres;
@@ -786,7 +774,7 @@ static HRESULT String_replace(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
         }
 
         if(!rep_func) {
-            hres = to_string_jsval(ctx, argv[1], ei, &rep_str);
+            hres = to_string(ctx, argv[1], ei, &rep_str);
             if(SUCCEEDED(hres)) {
                 rep_len = SysStringLen(rep_str);
                 if(!strchrW(rep_str, '$'))
@@ -1130,7 +1118,7 @@ static HRESULT String_split(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
     }
 
     if(!use_regexp) {
-        hres = to_string_jsval(ctx, argv[0], ei, &match_str);
+        hres = to_string(ctx, argv[0], ei, &match_str);
         if(FAILED(hres)) {
             SysFreeString(val_str);
             return hres;
@@ -1559,7 +1547,7 @@ static HRESULT StringConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
         BSTR str;
 
         if(argc) {
-            hres = to_string_jsval(ctx, argv[0], ei, &str);
+            hres = to_string(ctx, argv[0], ei, &str);
             if(FAILED(hres))
                 return hres;
         }else {
@@ -1577,7 +1565,7 @@ static HRESULT StringConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
         if(argc) {
             BSTR str;
 
-            hres = to_string_jsval(ctx, argv[0], ei, &str);
+            hres = to_string(ctx, argv[0], ei, &str);
             if(FAILED(hres))
                 return hres;
 

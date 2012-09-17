@@ -62,7 +62,7 @@ static HRESULT Error_toString(script_ctx_t *ctx, vdisp_t *vthis, WORD flags,
         return hres;
 
     if(!is_undefined(v)) {
-        hres = to_string_jsval(ctx, v, ei, &name);
+        hres = to_string(ctx, v, ei, &name);
         jsval_release(v);
         if(FAILED(hres))
             return hres;
@@ -75,7 +75,7 @@ static HRESULT Error_toString(script_ctx_t *ctx, vdisp_t *vthis, WORD flags,
     hres = jsdisp_propget_name(jsthis, messageW, &v, ei);
     if(SUCCEEDED(hres)) {
         if(!is_undefined(v)) {
-            hres = to_string_jsval(ctx, v, ei, &msg);
+            hres = to_string(ctx, v, ei, &msg);
             jsval_release(v);
             if(SUCCEEDED(hres) && !*msg) {
                 SysFreeString(msg);
@@ -235,14 +235,14 @@ static HRESULT error_constr(script_ctx_t *ctx, WORD flags, unsigned argc, jsval_
         if(FAILED(hres)) /* FIXME: really? */
             n = NAN;
         if(isnan(n))
-            hres = to_string_jsval(ctx, argv[0], ei, &msg);
+            hres = to_string(ctx, argv[0], ei, &msg);
         if(FAILED(hres))
             return hres;
         num = n;
     }
 
     if(argc>1 && !msg) {
-        hres = to_string_jsval(ctx, argv[1], ei, &msg);
+        hres = to_string(ctx, argv[1], ei, &msg);
         if(FAILED(hres))
             return hres;
     }

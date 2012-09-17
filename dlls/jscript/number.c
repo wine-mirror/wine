@@ -244,10 +244,7 @@ static HRESULT Number_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
     val = number->value;
 
     if(radix==10 || isnan(val) || isinf(val)) {
-        VARIANT v;
-
-        num_set_val(&v, val);
-        hres = to_string(ctx, &v, ei, &str);
+        hres = to_string(ctx, jsval_number(val), ei, &str);
         if(FAILED(hres))
             return hres;
     }else {
@@ -373,10 +370,7 @@ static HRESULT Number_toFixed(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
 
     val = number->value;
     if(isinf(val) || isnan(val)) {
-        VARIANT v;
-
-        num_set_val(&v, val);
-        hres = to_string(ctx, &v, ei, &str);
+        hres = to_string(ctx, jsval_number(val), ei, &str);
         if(FAILED(hres))
             return hres;
     }else {
@@ -415,10 +409,7 @@ static HRESULT Number_toExponential(script_ctx_t *ctx, vdisp_t *jsthis, WORD fla
 
     val = number->value;
     if(isinf(val) || isnan(val)) {
-        VARIANT v;
-
-        num_set_val(&v, val);
-        hres = to_string(ctx, &v, ei, &str);
+        hres = to_string(ctx, jsval_number(val), ei, &str);
         if(FAILED(hres))
             return hres;
     }else {
@@ -457,10 +448,7 @@ static HRESULT Number_toPrecision(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
 
     val = number->value;
     if(isinf(val) || isnan(val) || !prec) {
-        VARIANT v;
-
-        num_set_val(&v, val);
-        hres = to_string(ctx, &v, ei, &str);
+        hres = to_string(ctx, jsval_number(val), ei, &str);
         if(FAILED(hres))
             return hres;
     }else {

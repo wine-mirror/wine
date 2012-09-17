@@ -697,6 +697,8 @@ HRESULT double_to_bstr(double n, BSTR *str)
        *str = SysAllocString(NaNW);
     }else if(isinf(n)) {
         *str = SysAllocString(n<0 ? InfinityW : InfinityW+1);
+    }else if(is_int32(n)) {
+        *str = int_to_bstr(n);
     }else {
         VARIANT strv, v;
         HRESULT hres;
@@ -715,69 +717,46 @@ HRESULT double_to_bstr(double n, BSTR *str)
 }
 
 /* ECMA-262 3rd Edition    9.8 */
-HRESULT to_string(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, BSTR *str)
+HRESULT to_string(script_ctx_t *ctx, jsval_t val, jsexcept_t *ei, BSTR *str)
 {
     const WCHAR undefinedW[] = {'u','n','d','e','f','i','n','e','d',0};
     const WCHAR nullW[] = {'n','u','l','l',0};
     const WCHAR trueW[] = {'t','r','u','e',0};
     const WCHAR falseW[] = {'f','a','l','s','e',0};
 
-    switch(V_VT(v)) {
-    case VT_EMPTY:
+    switch(val.type) {
+    case JSV_UNDEFINED:
         *str = SysAllocString(undefinedW);
         break;
-    case VT_NULL:
+    case JSV_NULL:
         *str = SysAllocString(nullW);
         break;
-    case VT_I4:
-        *str = int_to_bstr(V_I4(v));
+    case JSV_NUMBER:
+        return double_to_bstr(get_number(val), str);
+    case JSV_STRING:
+        *str = clone_bstr(get_string(val));
         break;
-    case VT_R8:
-        return double_to_bstr(V_R8(v), str);
-    case VT_BSTR:
-        *str = SysAllocString(V_BSTR(v));
-        break;
-    case VT_DISPATCH: {
+    case JSV_OBJECT: {
         jsval_t prim;
         HRESULT hres;
 
-        hres = to_primitive(ctx, jsval_disp(V_DISPATCH(v)), ei, &prim, HINT_STRING);
+        hres = to_primitive(ctx, val, ei, &prim, HINT_STRING);
         if(FAILED(hres))
             return hres;
 
-        hres = to_string_jsval(ctx, prim, ei, str);
+        hres = to_string(ctx, prim, ei, str);
         jsval_release(prim);
         return hres;
     }
-    case VT_BOOL:
-        *str = SysAllocString(V_BOOL(v) ? trueW : falseW);
+    case JSV_BOOL:
+        *str = SysAllocString(get_bool(val) ? trueW : falseW);
         break;
     default:
-        FIXME("unsupported vt %d\n", V_VT(v));
+        FIXME("unsupported %s\n", debugstr_jsval(val));
         return E_NOTIMPL;
     }
 
     return *str ? S_OK : E_OUTOFMEMORY;
-}
-
-/* ECMA-262 3rd Edition    9.8 */
-HRESULT to_string_jsval(script_ctx_t *ctx, jsval_t v, jsexcept_t *ei, BSTR *str)
-{
-    VARIANT var;
-    HRESULT hres;
-
-    if(v.type == JSV_STRING) {
-        *str = clone_bstr(v.u.str);
-        return *str ? S_OK : E_OUTOFMEMORY;
-    }
-
-    hres = jsval_to_variant(v, &var);
-    if(FAILED(hres))
-        return hres;
-
-    hres = to_string(ctx, &var, ei, str);
-    VariantClear(&var);
-    return hres;
 }
 
 /* ECMA-262 3rd Edition    9.9 */
@@ -909,7 +888,7 @@ HRESULT variant_change_type(script_ctx_t *ctx, VARIANT *dst, VARIANT *src, VARTY
     case VT_BSTR: {
         BSTR str;
 
-        hres = to_string(ctx, src, &ei, &str);
+        hres = to_string(ctx, val, &ei, &str);
         if(SUCCEEDED(hres))
             V_BSTR(dst) = str;
         break;

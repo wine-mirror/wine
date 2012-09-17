@@ -711,7 +711,7 @@ static HRESULT construct_function(script_ctx_t *ctx, unsigned argc, jsval_t *arg
         if(argc > 2)
             len = (argc-2)*2; /* separating commas */
         for(i=0; i < argc; i++) {
-            hres = to_string_jsval(ctx, argv[i], ei, params+i);
+            hres = to_string(ctx, argv[i], ei, params+i);
             if(FAILED(hres))
                 break;
             len += SysStringLen(params[i]);

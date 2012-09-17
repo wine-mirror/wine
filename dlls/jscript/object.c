@@ -118,7 +118,7 @@ static HRESULT Object_hasOwnProperty(script_ctx_t *ctx, vdisp_t *jsthis, WORD fl
         return S_OK;
     }
 
-    hres = to_string_jsval(ctx, argv[0], ei, &name);
+    hres = to_string(ctx, argv[0], ei, &name);
     if(FAILED(hres))
         return hres;
 

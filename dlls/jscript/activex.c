@@ -164,7 +164,7 @@ static HRESULT ActiveXObject_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
         return E_NOTIMPL;
     }
 
-    hres = to_string_jsval(ctx, argv[0], ei, &progid);
+    hres = to_string(ctx, argv[0], ei, &progid);
     if(FAILED(hres))
         return hres;
 

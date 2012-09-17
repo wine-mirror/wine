@@ -262,7 +262,7 @@ static HRESULT array_join(script_ctx_t *ctx, jsdisp_t *array, DWORD length, cons
             break;
 
         if(!is_undefined(val) && !is_null(val)) {
-            hres = to_string_jsval(ctx, val, ei, str_tab+i);
+            hres = to_string(ctx, val, ei, str_tab+i);
             jsval_release(val);
             if(FAILED(hres))
                 break;
@@ -348,7 +348,7 @@ static HRESULT Array_join(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigne
     if(argc) {
         BSTR sep;
 
-        hres = to_string_jsval(ctx, argv[0], ei, &sep);
+        hres = to_string(ctx, argv[0], ei, &sep);
         if(FAILED(hres))
             return hres;
 
@@ -656,11 +656,11 @@ static HRESULT sort_cmp(script_ctx_t *ctx, jsdisp_t *cmp_func, jsval_t v1, jsval
     }else {
         BSTR x, y;
 
-        hres = to_string_jsval(ctx, v1, ei, &x);
+        hres = to_string(ctx, v1, ei, &x);
         if(FAILED(hres))
             return hres;
 
-        hres = to_string_jsval(ctx, v2, ei, &y);
+        hres = to_string(ctx, v2, ei, &y);
         if(SUCCEEDED(hres)) {
             *cmp = strcmpW(x, y);
             SysFreeString(y);

@@ -2380,7 +2380,7 @@ static HRESULT DateConstr_parse(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
         return S_OK;
     }
 
-    hres = to_string_jsval(ctx, argv[0], ei, &parse_str);
+    hres = to_string(ctx, argv[0], ei, &parse_str);
     if(FAILED(hres))
         return hres;
 

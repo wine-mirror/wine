@@ -297,7 +297,7 @@ static HRESULT JSGlobal_escape(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
         return S_OK;
     }
 
-    hres = to_string_jsval(ctx, argv[0], ei, &str);
+    hres = to_string(ctx, argv[0], ei, &str);
     if(FAILED(hres))
         return hres;
 
@@ -469,7 +469,7 @@ static HRESULT JSGlobal_parseInt(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
         }
     }
 
-    hres = to_string_jsval(ctx, argv[0], ei, &str);
+    hres = to_string(ctx, argv[0], ei, &str);
     if(FAILED(hres))
         return hres;
 
@@ -536,7 +536,7 @@ static HRESULT JSGlobal_parseFloat(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
         return S_OK;
     }
 
-    hres = to_string_jsval(ctx, argv[0], ei, &val_str);
+    hres = to_string(ctx, argv[0], ei, &val_str);
     if(FAILED(hres))
         return hres;
 
@@ -648,7 +648,7 @@ static HRESULT JSGlobal_unescape(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
         return S_OK;
     }
 
-    hres = to_string_jsval(ctx, argv[0], ei, &str);
+    hres = to_string(ctx, argv[0], ei, &str);
     if(FAILED(hres))
         return hres;
 
@@ -789,7 +789,7 @@ static HRESULT JSGlobal_encodeURI(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
         return S_OK;
     }
 
-    hres = to_string_jsval(ctx, argv[0], ei, &str);
+    hres = to_string(ctx, argv[0], ei, &str);
     if(FAILED(hres))
         return hres;
 
@@ -860,7 +860,7 @@ static HRESULT JSGlobal_decodeURI(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
         return S_OK;
     }
 
-    hres = to_string_jsval(ctx, argv[0], ei, &str);
+    hres = to_string(ctx, argv[0], ei, &str);
     if(FAILED(hres))
         return hres;
 
@@ -951,7 +951,7 @@ static HRESULT JSGlobal_encodeURIComponent(script_ctx_t *ctx, vdisp_t *jsthis, W
         return S_OK;
     }
 
-    hres = to_string_jsval(ctx, argv[0], ei, &str);
+    hres = to_string(ctx, argv[0], ei, &str);
     if(FAILED(hres))
         return hres;
 
@@ -1021,7 +1021,7 @@ static HRESULT JSGlobal_decodeURIComponent(script_ctx_t *ctx, vdisp_t *jsthis, W
         return S_OK;
     }
 
-    hres = to_string_jsval(ctx, argv[0], ei, &str);
+    hres = to_string(ctx, argv[0], ei, &str);
     if(FAILED(hres))
         return hres;
 

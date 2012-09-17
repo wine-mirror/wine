@@ -812,7 +812,7 @@ static HRESULT interp_array(exec_ctx_t *ctx)
         return hres;
     }
 
-    hres = to_string_jsval(ctx->script, namev, ctx->ei, &name);
+    hres = to_string(ctx->script, namev, ctx->ei, &name);
     jsval_release(namev);
     if(FAILED(hres)) {
         IDispatch_Release(obj);
@@ -881,7 +881,7 @@ static HRESULT interp_memberid(exec_ctx_t *ctx)
     hres = to_object_jsval(ctx->script, objv, &obj);
     jsval_release(objv);
     if(SUCCEEDED(hres)) {
-        hres = to_string_jsval(ctx->script, namev, ctx->ei, &name);
+        hres = to_string(ctx->script, namev, ctx->ei, &name);
         if(FAILED(hres))
             IDispatch_Release(obj);
     }
@@ -1380,7 +1380,7 @@ static HRESULT interp_in(exec_ctx_t *ctx)
     }
 
     v = stack_pop(ctx);
-    hres = to_string_jsval(ctx->script, v, ctx->ei, &str);
+    hres = to_string(ctx->script, v, ctx->ei, &str);
     jsval_release(v);
     if(FAILED(hres)) {
         IDispatch_Release(get_object(obj));
@@ -1422,13 +1422,13 @@ static HRESULT add_eval(script_ctx_t *ctx, jsval_t lval, jsval_t rval, jsexcept_
         if(is_string(l))
             lstr = get_string(l);
         else
-            hres = to_string_jsval(ctx, l, ei, &lstr);
+            hres = to_string(ctx, l, ei, &lstr);
 
         if(SUCCEEDED(hres)) {
             if(is_string(r))
                 rstr = get_string(r);
             else
-                hres = to_string_jsval(ctx, r, ei, &rstr);
+                hres = to_string(ctx, r, ei, &rstr);
         }
 
         if(SUCCEEDED(hres)) {
@@ -1585,7 +1585,7 @@ static HRESULT interp_delete(exec_ctx_t *ctx)
         return hres;
     }
 
-    hres = to_string_jsval(ctx->script, namev, ctx->ei, &name);
+    hres = to_string(ctx->script, namev, ctx->ei, &name);
     jsval_release(namev);
     if(FAILED(hres)) {
         IDispatch_Release(obj);
