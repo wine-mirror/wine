@@ -129,7 +129,7 @@ static HRESULT Array_length(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
         DWORD i;
         HRESULT hres;
 
-        hres = to_number_jsval(ctx, argv[0], ei, &len);
+        hres = to_number(ctx, argv[0], ei, &len);
         if(FAILED(hres))
             return hres;
 
@@ -567,7 +567,7 @@ static HRESULT Array_slice(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsign
         return hres;
 
     if(argc) {
-        hres = to_number_jsval(ctx, argv[0], ei, &range);
+        hres = to_number(ctx, argv[0], ei, &range);
         if(FAILED(hres))
             return hres;
 
@@ -580,7 +580,7 @@ static HRESULT Array_slice(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsign
     else start = 0;
 
     if(argc > 1) {
-        hres = to_number_jsval(ctx, argv[1], ei, &range);
+        hres = to_number(ctx, argv[1], ei, &range);
         if(FAILED(hres))
             return hres;
 
@@ -635,7 +635,7 @@ static HRESULT sort_cmp(script_ctx_t *ctx, jsdisp_t *cmp_func, jsval_t v1, jsval
         if(FAILED(hres))
             return hres;
 
-        hres = to_number_jsval(ctx, res, ei, &n);
+        hres = to_number(ctx, res, ei, &n);
         jsval_release(res);
         if(FAILED(hres))
             return hres;

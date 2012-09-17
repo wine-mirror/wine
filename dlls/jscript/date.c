@@ -1348,7 +1348,7 @@ static HRESULT Date_setTime(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
     if(!argc)
         return throw_type_error(ctx, ei, JS_E_MISSING_ARG, NULL);
 
-    hres = to_number_jsval(ctx, argv[0], ei, &n);
+    hres = to_number(ctx, argv[0], ei, &n);
     if(FAILED(hres))
         return hres;
 
@@ -1375,7 +1375,7 @@ static HRESULT Date_setMilliseconds(script_ctx_t *ctx, vdisp_t *jsthis, WORD fla
     if(!argc)
         return throw_type_error(ctx, ei, JS_E_MISSING_ARG, NULL);
 
-    hres = to_number_jsval(ctx, argv[0], ei, &n);
+    hres = to_number(ctx, argv[0], ei, &n);
     if(FAILED(hres))
         return hres;
 
@@ -1405,7 +1405,7 @@ static HRESULT Date_setUTCMilliseconds(script_ctx_t *ctx, vdisp_t *jsthis, WORD 
     if(!argc)
         return throw_type_error(ctx, ei, JS_E_MISSING_ARG, NULL);
 
-    hres = to_number_jsval(ctx, argv[0], ei, &n);
+    hres = to_number(ctx, argv[0], ei, &n);
     if(FAILED(hres))
         return hres;
 
@@ -1437,12 +1437,12 @@ static HRESULT Date_setSeconds(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
 
     t = local_time(date->time, date);
 
-    hres = to_number_jsval(ctx, argv[0], ei, &sec);
+    hres = to_number(ctx, argv[0], ei, &sec);
     if(FAILED(hres))
         return hres;
 
     if(argc > 1) {
-        hres = to_number_jsval(ctx, argv[1], ei, &ms);
+        hres = to_number(ctx, argv[1], ei, &ms);
         if(FAILED(hres))
             return hres;
     }else {
@@ -1476,12 +1476,12 @@ static HRESULT Date_setUTCSeconds(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
 
     t = date->time;
 
-    hres = to_number_jsval(ctx, argv[0], ei, &sec);
+    hres = to_number(ctx, argv[0], ei, &sec);
     if(FAILED(hres))
         return hres;
 
     if(argc > 1) {
-        hres = to_number_jsval(ctx, argv[1], ei, &ms);
+        hres = to_number(ctx, argv[1], ei, &ms);
         if(FAILED(hres))
             return hres;
     }else {
@@ -1515,12 +1515,12 @@ static HRESULT Date_setMinutes(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
 
     t = local_time(date->time, date);
 
-    hres = to_number_jsval(ctx, argv[0], ei, &min);
+    hres = to_number(ctx, argv[0], ei, &min);
     if(FAILED(hres))
         return hres;
 
     if(argc > 1) {
-        hres = to_number_jsval(ctx, argv[1], ei, &sec);
+        hres = to_number(ctx, argv[1], ei, &sec);
         if(FAILED(hres))
             return hres;
     }else {
@@ -1528,7 +1528,7 @@ static HRESULT Date_setMinutes(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
     }
 
     if(argc > 2) {
-        hres = to_number_jsval(ctx, argv[2], ei, &ms);
+        hres = to_number(ctx, argv[2], ei, &ms);
         if(FAILED(hres))
             return hres;
     }else {
@@ -1562,12 +1562,12 @@ static HRESULT Date_setUTCMinutes(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
 
     t = date->time;
 
-    hres = to_number_jsval(ctx, argv[0], ei, &min);
+    hres = to_number(ctx, argv[0], ei, &min);
     if(FAILED(hres))
         return hres;
 
     if(argc > 1) {
-        hres = to_number_jsval(ctx, argv[1], ei, &sec);
+        hres = to_number(ctx, argv[1], ei, &sec);
         if(FAILED(hres))
             return hres;
     }else {
@@ -1575,7 +1575,7 @@ static HRESULT Date_setUTCMinutes(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
     }
 
     if(argc > 2) {
-        hres = to_number_jsval(ctx, argv[2], ei, &ms);
+        hres = to_number(ctx, argv[2], ei, &ms);
         if(FAILED(hres))
             return hres;
     }else {
@@ -1609,12 +1609,12 @@ static HRESULT Date_setHours(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
 
     t = local_time(date->time, date);
 
-    hres = to_number_jsval(ctx, argv[0], ei, &hour);
+    hres = to_number(ctx, argv[0], ei, &hour);
     if(FAILED(hres))
         return hres;
 
     if(argc > 1) {
-        hres = to_number_jsval(ctx, argv[1], ei, &min);
+        hres = to_number(ctx, argv[1], ei, &min);
         if(FAILED(hres))
             return hres;
     }else {
@@ -1622,7 +1622,7 @@ static HRESULT Date_setHours(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
     }
 
     if(argc > 2) {
-        hres = to_number_jsval(ctx, argv[2], ei, &sec);
+        hres = to_number(ctx, argv[2], ei, &sec);
         if(FAILED(hres))
             return hres;
     }else {
@@ -1630,7 +1630,7 @@ static HRESULT Date_setHours(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
     }
 
     if(argc > 3) {
-        hres = to_number_jsval(ctx, argv[3], ei, &ms);
+        hres = to_number(ctx, argv[3], ei, &ms);
         if(FAILED(hres))
             return hres;
     }else {
@@ -1663,12 +1663,12 @@ static HRESULT Date_setUTCHours(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
 
     t = date->time;
 
-    hres = to_number_jsval(ctx, argv[0], ei, &hour);
+    hres = to_number(ctx, argv[0], ei, &hour);
     if(FAILED(hres))
         return hres;
 
     if(argc > 1) {
-        hres = to_number_jsval(ctx, argv[1], ei, &min);
+        hres = to_number(ctx, argv[1], ei, &min);
         if(FAILED(hres))
             return hres;
     }else {
@@ -1676,7 +1676,7 @@ static HRESULT Date_setUTCHours(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
     }
 
     if(argc > 2) {
-        hres = to_number_jsval(ctx, argv[2], ei, &sec);
+        hres = to_number(ctx, argv[2], ei, &sec);
         if(FAILED(hres))
             return hres;
     }else {
@@ -1684,7 +1684,7 @@ static HRESULT Date_setUTCHours(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
     }
 
     if(argc > 3) {
-        hres = to_number_jsval(ctx, argv[3], ei, &ms);
+        hres = to_number(ctx, argv[3], ei, &ms);
         if(FAILED(hres))
             return hres;
     }else {
@@ -1715,7 +1715,7 @@ static HRESULT Date_setDate(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
     if(!argc)
         return throw_type_error(ctx, ei, JS_E_MISSING_ARG, NULL);
 
-    hres = to_number_jsval(ctx, argv[0], ei, &n);
+    hres = to_number(ctx, argv[0], ei, &n);
     if(FAILED(hres))
         return hres;
 
@@ -1744,7 +1744,7 @@ static HRESULT Date_setUTCDate(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
     if(!argc)
         return throw_type_error(ctx, ei, JS_E_MISSING_ARG, NULL);
 
-    hres = to_number_jsval(ctx, argv[0], ei, &n);
+    hres = to_number(ctx, argv[0], ei, &n);
     if(FAILED(hres))
         return hres;
 
@@ -1775,12 +1775,12 @@ static HRESULT Date_setMonth(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
 
     t = local_time(date->time, date);
 
-    hres = to_number_jsval(ctx, argv[0], ei, &month);
+    hres = to_number(ctx, argv[0], ei, &month);
     if(FAILED(hres))
         return hres;
 
     if(argc > 1) {
-        hres = to_number_jsval(ctx, argv[1], ei, &ddate);
+        hres = to_number(ctx, argv[1], ei, &ddate);
         if(FAILED(hres))
             return hres;
     }else {
@@ -1814,12 +1814,12 @@ static HRESULT Date_setUTCMonth(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
 
     t = date->time;
 
-    hres = to_number_jsval(ctx, argv[0], ei, &month);
+    hres = to_number(ctx, argv[0], ei, &month);
     if(FAILED(hres))
         return hres;
 
     if(argc > 1) {
-        hres = to_number_jsval(ctx, argv[1], ei, &ddate);
+        hres = to_number(ctx, argv[1], ei, &ddate);
         if(FAILED(hres))
             return hres;
     }else {
@@ -1853,12 +1853,12 @@ static HRESULT Date_setFullYear(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
 
     t = local_time(date->time, date);
 
-    hres = to_number_jsval(ctx, argv[0], ei, &year);
+    hres = to_number(ctx, argv[0], ei, &year);
     if(FAILED(hres))
         return hres;
 
     if(argc > 1) {
-        hres = to_number_jsval(ctx, argv[1], ei, &month);
+        hres = to_number(ctx, argv[1], ei, &month);
         if(FAILED(hres))
             return hres;
     }else {
@@ -1866,7 +1866,7 @@ static HRESULT Date_setFullYear(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
     }
 
     if(argc > 2) {
-        hres = to_number_jsval(ctx, argv[2], ei, &ddate);
+        hres = to_number(ctx, argv[2], ei, &ddate);
         if(FAILED(hres))
             return hres;
     }else {
@@ -1899,12 +1899,12 @@ static HRESULT Date_setUTCFullYear(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
 
     t = date->time;
 
-    hres = to_number_jsval(ctx, argv[0], ei, &year);
+    hres = to_number(ctx, argv[0], ei, &year);
     if(FAILED(hres))
         return hres;
 
     if(argc > 1) {
-        hres = to_number_jsval(ctx, argv[1], ei, &month);
+        hres = to_number(ctx, argv[1], ei, &month);
         if(FAILED(hres))
             return hres;
     }else {
@@ -1912,7 +1912,7 @@ static HRESULT Date_setUTCFullYear(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
     }
 
     if(argc > 2) {
-        hres = to_number_jsval(ctx, argv[2], ei, &ddate);
+        hres = to_number(ctx, argv[2], ei, &ddate);
         if(FAILED(hres))
             return hres;
     }else {
@@ -1970,7 +1970,7 @@ static HRESULT Date_setYear(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
 
     t = local_time(date->time, date);
 
-    hres = to_number_jsval(ctx, argv[0], ei, &year);
+    hres = to_number(ctx, argv[0], ei, &year);
     if(FAILED(hres))
         return hres;
 
@@ -2401,7 +2401,7 @@ static HRESULT date_utc(script_ctx_t *ctx, unsigned argc, jsval_t *argv, double 
     TRACE("\n");
 
     if(argc) {
-        hres = to_number_jsval(ctx, argv[0], ei, &year);
+        hres = to_number(ctx, argv[0], ei, &year);
         if(FAILED(hres))
             return hres;
         if(0 <= year && year <= 99)
@@ -2411,7 +2411,7 @@ static HRESULT date_utc(script_ctx_t *ctx, unsigned argc, jsval_t *argv, double 
     }
 
     if(argc>1) {
-        hres = to_number_jsval(ctx, argv[1], ei, &month);
+        hres = to_number(ctx, argv[1], ei, &month);
         if(FAILED(hres))
             return hres;
     }else {
@@ -2419,7 +2419,7 @@ static HRESULT date_utc(script_ctx_t *ctx, unsigned argc, jsval_t *argv, double 
     }
 
     if(argc>2) {
-        hres = to_number_jsval(ctx, argv[2], ei, &vdate);
+        hres = to_number(ctx, argv[2], ei, &vdate);
         if(FAILED(hres))
             return hres;
     }else {
@@ -2427,7 +2427,7 @@ static HRESULT date_utc(script_ctx_t *ctx, unsigned argc, jsval_t *argv, double 
     }
 
     if(argc>3) {
-        hres = to_number_jsval(ctx, argv[3], ei, &hours);
+        hres = to_number(ctx, argv[3], ei, &hours);
         if(FAILED(hres))
             return hres;
     }else {
@@ -2435,7 +2435,7 @@ static HRESULT date_utc(script_ctx_t *ctx, unsigned argc, jsval_t *argv, double 
     }
 
     if(argc>4) {
-        hres = to_number_jsval(ctx, argv[4], ei, &minutes);
+        hres = to_number(ctx, argv[4], ei, &minutes);
         if(FAILED(hres))
             return hres;
     }else {
@@ -2443,7 +2443,7 @@ static HRESULT date_utc(script_ctx_t *ctx, unsigned argc, jsval_t *argv, double 
     }
 
     if(argc>5) {
-        hres = to_number_jsval(ctx, argv[5], ei, &seconds);
+        hres = to_number(ctx, argv[5], ei, &seconds);
         if(FAILED(hres))
             return hres;
     }else {
@@ -2451,7 +2451,7 @@ static HRESULT date_utc(script_ctx_t *ctx, unsigned argc, jsval_t *argv, double 
     }
 
     if(argc>6) {
-        hres = to_number_jsval(ctx, argv[6], ei, &ms);
+        hres = to_number(ctx, argv[6], ei, &ms);
         if(FAILED(hres))
             return hres;
     } else {
@@ -2515,7 +2515,7 @@ static HRESULT DateConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
             if(is_string(prim))
                 hres = date_parse(get_string(prim), &n);
             else
-                hres = to_number_jsval(ctx, prim, ei, &n);
+                hres = to_number(ctx, prim, ei, &n);
 
             jsval_release(prim);
             if(FAILED(hres))

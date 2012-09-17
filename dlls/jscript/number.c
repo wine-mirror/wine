@@ -559,7 +559,7 @@ static HRESULT NumberConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
             return S_OK;
         }
 
-        hres = to_number_jsval(ctx, argv[0], ei, &n);
+        hres = to_number(ctx, argv[0], ei, &n);
         if(FAILED(hres))
             return hres;
 
@@ -571,7 +571,7 @@ static HRESULT NumberConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
         jsdisp_t *obj;
 
         if(argc) {
-            hres = to_number_jsval(ctx, argv[0], ei, &n);
+            hres = to_number(ctx, argv[0], ei, &n);
             if(FAILED(hres))
                 return hres;
         }else {

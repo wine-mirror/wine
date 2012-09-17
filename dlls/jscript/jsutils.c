@@ -575,67 +575,42 @@ static HRESULT str_to_number(BSTR str, double *ret)
 }
 
 /* ECMA-262 3rd Edition    9.3 */
-HRESULT to_number(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, double *ret)
+HRESULT to_number(script_ctx_t *ctx, jsval_t val, jsexcept_t *ei, double *ret)
 {
-    switch(V_VT(v)) {
-    case VT_EMPTY:
+    switch(val.type) {
+    case JSV_UNDEFINED:
         *ret = NAN;
-        break;
-    case VT_NULL:
+        return S_OK;
+    case JSV_NULL:
         *ret = 0;
-        break;
-    case VT_I4:
-        *ret = V_I4(v);
-        break;
-    case VT_R8:
-        *ret = V_R8(v);
-        break;
-    case VT_BSTR:
-        return str_to_number(V_BSTR(v), ret);
-    case VT_DISPATCH: {
+        return S_OK;
+    case JSV_NUMBER:
+        *ret = get_number(val);
+        return S_OK;
+    case JSV_STRING:
+        return str_to_number(get_string(val), ret);
+    case JSV_OBJECT: {
         jsval_t prim;
         HRESULT hres;
 
-        hres = to_primitive(ctx, jsval_disp(V_DISPATCH(v)), ei, &prim, HINT_NUMBER);
+        hres = to_primitive(ctx, val, ei, &prim, HINT_NUMBER);
         if(FAILED(hres))
             return hres;
 
-        hres = to_number_jsval(ctx, prim, ei, ret);
+        hres = to_number(ctx, prim, ei, ret);
         jsval_release(prim);
         return hres;
     }
-    case VT_BOOL:
-        *ret = V_BOOL(v) ? 1 : 0;
-        break;
-    case VT_I2:
-    case VT_INT:
-        assert(0);
-    default:
-        FIXME("unimplemented for vt %d\n", V_VT(v));
-        return E_NOTIMPL;
-    }
-
-    return S_OK;
-}
-
-/* ECMA-262 3rd Edition    9.3 */
-HRESULT to_number_jsval(script_ctx_t *ctx, jsval_t v, jsexcept_t *ei, double *ret)
-{
-    VARIANT var;
-    HRESULT hres;
-
-    if(v.type == JSV_NUMBER) {
-        *ret = v.u.n;
+    case JSV_BOOL:
+        *ret = get_bool(val) ? 1 : 0;
         return S_OK;
-    }
+    case JSV_VARIANT:
+        FIXME("unimplemented for variant %s\n", debugstr_variant(get_variant(val)));
+        return E_NOTIMPL;
+    };
 
-    hres = jsval_to_variant(v, &var);
-    if(FAILED(hres))
-        return hres;
-
-    hres = to_number(ctx, &var, ei, ret);
-    VariantClear(&var);
-    return hres;
+    assert(0);
+    return E_FAIL;
 }
 
 /* ECMA-262 3rd Edition    9.4 */
@@ -644,7 +619,7 @@ HRESULT to_integer(script_ctx_t *ctx, jsval_t v, jsexcept_t *ei, double *ret)
     double n;
     HRESULT hres;
 
-    hres = to_number_jsval(ctx, v, ei, &n);
+    hres = to_number(ctx, v, ei, &n);
     if(FAILED(hres))
         return hres;
 
@@ -656,31 +631,12 @@ HRESULT to_integer(script_ctx_t *ctx, jsval_t v, jsexcept_t *ei, double *ret)
 }
 
 /* ECMA-262 3rd Edition    9.5 */
-HRESULT to_int32_var(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, INT *ret)
-{
-    double n;
-    HRESULT hres;
-
-    if(V_VT(v) == VT_I4) {
-        *ret = V_I4(v);
-        return S_OK;
-    }
-
-    hres = to_number(ctx, v, ei, &n);
-    if(FAILED(hres))
-        return hres;
-
-    *ret = isnan(n) || isinf(n) ? 0 : n;
-    return S_OK;
-}
-
-/* ECMA-262 3rd Edition    9.5 */
 HRESULT to_int32(script_ctx_t *ctx, jsval_t v, jsexcept_t *ei, INT *ret)
 {
     double n;
     HRESULT hres;
 
-    hres = to_number_jsval(ctx, v, ei, &n);
+    hres = to_number(ctx, v, ei, &n);
     if(FAILED(hres))
         return hres;
 
@@ -691,6 +647,7 @@ HRESULT to_int32(script_ctx_t *ctx, jsval_t v, jsexcept_t *ei, INT *ret)
 /* ECMA-262 3rd Edition    9.6 */
 HRESULT to_uint32(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, DWORD *ret)
 {
+    jsval_t val;
     double n;
     HRESULT hres;
 
@@ -699,7 +656,12 @@ HRESULT to_uint32(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, DWORD *ret)
         return S_OK;
     }
 
-    hres = to_number(ctx, v, ei, &n);
+    hres = variant_to_jsval(v, &val);
+    if(FAILED(hres))
+        return hres;
+
+    hres = to_number(ctx, val, ei, &n);
+    jsval_release(val);
     if(FAILED(hres))
         return hres;
 
@@ -924,7 +886,12 @@ HRESULT to_object_jsval(script_ctx_t *ctx, jsval_t v, IDispatch **disp)
 HRESULT variant_change_type(script_ctx_t *ctx, VARIANT *dst, VARIANT *src, VARTYPE vt)
 {
     jsexcept_t ei;
+    jsval_t val;
     HRESULT hres;
+
+    hres = variant_to_jsval(src, &val);
+    if(FAILED(hres))
+        return hres;
 
     memset(&ei, 0, sizeof(ei));
 
@@ -933,7 +900,7 @@ HRESULT variant_change_type(script_ctx_t *ctx, VARIANT *dst, VARIANT *src, VARTY
     case VT_I4: {
         INT i;
 
-        hres = to_int32_var(ctx, src, &ei, &i);
+        hres = to_int32(ctx, val, &ei, &i);
         if(SUCCEEDED(hres)) {
             if(vt == VT_I4)
                 V_I4(dst) = i;
@@ -944,7 +911,7 @@ HRESULT variant_change_type(script_ctx_t *ctx, VARIANT *dst, VARIANT *src, VARTY
     }
     case VT_R8: {
         double n;
-        hres = to_number(ctx, src, &ei, &n);
+        hres = to_number(ctx, val, &ei, &n);
         if(SUCCEEDED(hres))
             V_R8(dst) = n;
         break;
@@ -952,21 +919,15 @@ HRESULT variant_change_type(script_ctx_t *ctx, VARIANT *dst, VARIANT *src, VARTY
     case VT_R4: {
         double n;
 
-        hres = to_number(ctx, src, &ei, &n);
+        hres = to_number(ctx, val, &ei, &n);
         if(SUCCEEDED(hres))
             V_R4(dst) = n;
         break;
     }
     case VT_BOOL: {
-        jsval_t val;
         BOOL b;
 
-        hres = variant_to_jsval(src, &val);
-        if(FAILED(hres))
-            return hres;
-
         hres = to_boolean(val, &b);
-        jsval_release(val);
         if(SUCCEEDED(hres))
             V_BOOL(dst) = b ? VARIANT_TRUE : VARIANT_FALSE;
         break;
@@ -990,6 +951,7 @@ HRESULT variant_change_type(script_ctx_t *ctx, VARIANT *dst, VARIANT *src, VARTY
         hres = E_NOTIMPL;
     }
 
+    jsval_release(val);
     if(FAILED(hres)) {
         jsval_release(ei.val);
         return hres;

@@ -231,7 +231,7 @@ static HRESULT error_constr(script_ctx_t *ctx, WORD flags, unsigned argc, jsval_
     if(argc) {
         double n;
 
-        hres = to_number_jsval(ctx, argv[0], ei, &n);
+        hres = to_number(ctx, argv[0], ei, &n);
         if(FAILED(hres)) /* FIXME: really? */
             n = NAN;
         if(isnan(n))

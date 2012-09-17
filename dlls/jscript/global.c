@@ -392,7 +392,7 @@ static HRESULT JSGlobal_isNaN(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
     TRACE("\n");
 
     if(argc) {
-        hres = to_number_jsval(ctx, argv[0], ei, &n);
+        hres = to_number(ctx, argv[0], ei, &n);
         if(FAILED(hres))
             return hres;
 
@@ -416,7 +416,7 @@ static HRESULT JSGlobal_isFinite(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
     if(argc) {
         double n;
 
-        hres = to_number_jsval(ctx, argv[0], ei, &n);
+        hres = to_number(ctx, argv[0], ei, &n);
         if(FAILED(hres))
             return hres;
 

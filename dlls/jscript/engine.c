@@ -130,7 +130,7 @@ static HRESULT stack_pop_number(exec_ctx_t *ctx, double *r)
     HRESULT hres;
 
     v = stack_pop(ctx);
-    hres = to_number_jsval(ctx->script, v, ctx->ei, r);
+    hres = to_number(ctx->script, v, ctx->ei, r);
     jsval_release(v);
     return hres;
 }
@@ -1454,9 +1454,9 @@ static HRESULT add_eval(script_ctx_t *ctx, jsval_t lval, jsval_t rval, jsexcept_
     }else {
         double nl, nr;
 
-        hres = to_number_jsval(ctx, l, ei, &nl);
+        hres = to_number(ctx, l, ei, &nl);
         if(SUCCEEDED(hres)) {
-            hres = to_number_jsval(ctx, r, ei, &nr);
+            hres = to_number(ctx, r, ei, &nr);
             if(SUCCEEDED(hres))
                 *ret = jsval_number(nl+nr);
         }
@@ -1799,7 +1799,7 @@ static HRESULT interp_tonum(exec_ctx_t *ctx)
     TRACE("\n");
 
     v = stack_pop(ctx);
-    hres = to_number_jsval(ctx->script, v, ctx->ei, &n);
+    hres = to_number(ctx->script, v, ctx->ei, &n);
     jsval_release(v);
     if(FAILED(hres))
         return hres;
@@ -1826,7 +1826,7 @@ static HRESULT interp_postinc(exec_ctx_t *ctx)
     if(SUCCEEDED(hres)) {
         double n;
 
-        hres = to_number_jsval(ctx->script, v, ctx->ei, &n);
+        hres = to_number(ctx->script, v, ctx->ei, &n);
         if(SUCCEEDED(hres))
             hres = disp_propput(ctx->script, obj, id, jsval_number(n+(double)arg), ctx->ei);
         if(FAILED(hres))
@@ -1859,7 +1859,7 @@ static HRESULT interp_preinc(exec_ctx_t *ctx)
     if(SUCCEEDED(hres)) {
         double n;
 
-        hres = to_number_jsval(ctx->script, v, ctx->ei, &n);
+        hres = to_number(ctx->script, v, ctx->ei, &n);
         jsval_release(v);
         if(SUCCEEDED(hres)) {
             ret = n+(double)arg;
@@ -1894,7 +1894,7 @@ static HRESULT equal_values(script_ctx_t *ctx, jsval_t lval, jsval_t rval, jsexc
         double n;
         HRESULT hres;
 
-        hres = to_number_jsval(ctx, lval, ei, &n);
+        hres = to_number(ctx, lval, ei, &n);
         if(FAILED(hres))
             return hres;
 
@@ -1906,7 +1906,7 @@ static HRESULT equal_values(script_ctx_t *ctx, jsval_t lval, jsval_t rval, jsexc
         double n;
         HRESULT hres;
 
-        hres = to_number_jsval(ctx, rval, ei, &n);
+        hres = to_number(ctx, rval, ei, &n);
         if(FAILED(hres))
             return hres;
 
@@ -2061,10 +2061,10 @@ static HRESULT less_eval(script_ctx_t *ctx, jsval_t lval, jsval_t rval, BOOL gre
         return S_OK;
     }
 
-    hres = to_number_jsval(ctx, l, ei, &ln);
+    hres = to_number(ctx, l, ei, &ln);
     jsval_release(l);
     if(SUCCEEDED(hres))
-        hres = to_number_jsval(ctx, r, ei, &rn);
+        hres = to_number(ctx, r, ei, &rn);
     jsval_release(r);
     if(FAILED(hres))
         return hres;
