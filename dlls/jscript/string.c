@@ -103,7 +103,7 @@ static HRESULT get_string_val(script_ctx_t *ctx, vdisp_t *jsthis, jsexcept_t *ei
 }
 
 static HRESULT String_length(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     TRACE("%p\n", jsthis);
 
@@ -111,7 +111,7 @@ static HRESULT String_length(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
     case DISPATCH_PROPERTYGET: {
         StringInstance *string = string_from_vdisp(jsthis);
 
-        num_set_int(retv, string->length);
+        *r = jsval_number(string->length);
         break;
     }
     default:
@@ -122,7 +122,7 @@ static HRESULT String_length(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
     return S_OK;
 }
 
-static HRESULT stringobj_to_string(vdisp_t *jsthis, VARIANT *retv)
+static HRESULT stringobj_to_string(vdisp_t *jsthis, jsval_t *r)
 {
     StringInstance *string;
 
@@ -131,36 +131,35 @@ static HRESULT stringobj_to_string(vdisp_t *jsthis, VARIANT *retv)
         return E_FAIL;
     }
 
-    if(retv) {
+    if(r) {
         BSTR str = SysAllocString(string->str);
         if(!str)
             return E_OUTOFMEMORY;
 
-        V_VT(retv) = VT_BSTR;
-        V_BSTR(retv) = str;
+        *r = jsval_string(str);
     }
     return S_OK;
 }
 
 /* ECMA-262 3rd Edition    15.5.4.2 */
 static HRESULT String_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     TRACE("\n");
 
-    return stringobj_to_string(jsthis, retv);
+    return stringobj_to_string(jsthis, r);
 }
 
 /* ECMA-262 3rd Edition    15.5.4.2 */
 static HRESULT String_valueOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     TRACE("\n");
 
-    return stringobj_to_string(jsthis, retv);
+    return stringobj_to_string(jsthis, r);
 }
 
-static HRESULT do_attributeless_tag_format(script_ctx_t *ctx, vdisp_t *jsthis, VARIANT *retv,
+static HRESULT do_attributeless_tag_format(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t *r,
         jsexcept_t *ei, const WCHAR *tagname)
 {
     const WCHAR *str;
@@ -174,7 +173,7 @@ static HRESULT do_attributeless_tag_format(script_ctx_t *ctx, vdisp_t *jsthis, V
     if(FAILED(hres))
         return hres;
 
-    if(retv) {
+    if(r) {
         BSTR ret = SysAllocStringLen(NULL, length + 2*strlenW(tagname) + 5);
         if(!ret) {
             SysFreeString(val_str);
@@ -182,16 +181,14 @@ static HRESULT do_attributeless_tag_format(script_ctx_t *ctx, vdisp_t *jsthis, V
         }
 
         sprintfW(ret, tagfmt, tagname, str, tagname);
-
-        V_VT(retv) = VT_BSTR;
-        V_BSTR(retv) = ret;
+        *r = jsval_string(ret);
     }
 
     SysFreeString(val_str);
     return S_OK;
 }
 
-static HRESULT do_attribute_tag_format(script_ctx_t *ctx, vdisp_t *jsthis, unsigned argc, VARIANT *argv, VARIANT *retv,
+static HRESULT do_attribute_tag_format(script_ctx_t *ctx, vdisp_t *jsthis, unsigned argc, VARIANT *argv, jsval_t *r,
         jsexcept_t *ei, const WCHAR *tagname, const WCHAR *attr)
 {
     static const WCHAR tagfmtW[]
@@ -237,7 +234,7 @@ static HRESULT do_attribute_tag_format(script_ctx_t *ctx, vdisp_t *jsthis, unsig
         }
     }
 
-    if(retv) {
+    if(r) {
         BSTR ret = SysAllocStringLen(NULL, length + 2*strlenW(tagname)
                 + strlenW(attr) + SysStringLen(attr_value) + 9);
         if(!ret) {
@@ -247,9 +244,7 @@ static HRESULT do_attribute_tag_format(script_ctx_t *ctx, vdisp_t *jsthis, unsig
         }
 
         sprintfW(ret, tagfmtW, tagname, attr, attr_value, str, tagname);
-
-        V_VT(retv) = VT_BSTR;
-        V_BSTR(retv) = ret;
+        *r = jsval_string(ret);
     }
 
     SysFreeString(attr_value);
@@ -258,38 +253,38 @@ static HRESULT do_attribute_tag_format(script_ctx_t *ctx, vdisp_t *jsthis, unsig
 }
 
 static HRESULT String_anchor(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     static const WCHAR fontW[] = {'A',0};
     static const WCHAR colorW[] = {'N','A','M','E',0};
 
-    return do_attribute_tag_format(ctx, jsthis, argc, argv, retv, ei, fontW, colorW);
+    return do_attribute_tag_format(ctx, jsthis, argc, argv, r, ei, fontW, colorW);
 }
 
 static HRESULT String_big(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     static const WCHAR bigtagW[] = {'B','I','G',0};
-    return do_attributeless_tag_format(ctx, jsthis, retv, ei, bigtagW);
+    return do_attributeless_tag_format(ctx, jsthis, r, ei, bigtagW);
 }
 
 static HRESULT String_blink(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     static const WCHAR blinktagW[] = {'B','L','I','N','K',0};
-    return do_attributeless_tag_format(ctx, jsthis, retv, ei, blinktagW);
+    return do_attributeless_tag_format(ctx, jsthis, r, ei, blinktagW);
 }
 
 static HRESULT String_bold(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     static const WCHAR boldtagW[] = {'B',0};
-    return do_attributeless_tag_format(ctx, jsthis, retv, ei, boldtagW);
+    return do_attributeless_tag_format(ctx, jsthis, r, ei, boldtagW);
 }
 
 /* ECMA-262 3rd Edition    15.5.4.5 */
 static HRESULT String_charAt(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     const WCHAR *str;
     DWORD length;
@@ -314,7 +309,7 @@ static HRESULT String_charAt(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
         pos = is_int32(d) ? d : -1;
     }
 
-    if(!retv) {
+    if(!r) {
         SysFreeString(val_str);
         return S_OK;
     }
@@ -328,14 +323,13 @@ static HRESULT String_charAt(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
         return E_OUTOFMEMORY;
     }
 
-    V_VT(retv) = VT_BSTR;
-    V_BSTR(retv) = ret;
+    *r = jsval_string(ret);
     return S_OK;
 }
 
 /* ECMA-262 3rd Edition    15.5.4.5 */
 static HRESULT String_charCodeAt(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     const WCHAR *str;
     BSTR val_str;
@@ -359,16 +353,16 @@ static HRESULT String_charCodeAt(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
 
         if(!is_int32(d) || d < 0 || d >= length) {
             SysFreeString(val_str);
-            if(retv)
-                num_set_val(retv, NAN);
+            if(r)
+                *r = jsval_number(NAN);
             return S_OK;
         }
 
         idx = d;
     }
 
-    if(retv)
-        num_set_int(retv, str[idx]);
+    if(r)
+        *r = jsval_number(str[idx]);
 
     SysFreeString(val_str);
     return S_OK;
@@ -376,7 +370,7 @@ static HRESULT String_charCodeAt(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
 
 /* ECMA-262 3rd Edition    15.5.4.6 */
 static HRESULT String_concat(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     BSTR *strs = NULL, ret = NULL;
     DWORD len = 0, i, l, str_cnt;
@@ -423,42 +417,40 @@ static HRESULT String_concat(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
     if(FAILED(hres))
         return hres;
 
-    if(retv) {
-        V_VT(retv) = VT_BSTR;
-        V_BSTR(retv) = ret;
-    }else {
+    if(r)
+        *r = jsval_string(ret);
+    else
         SysFreeString(ret);
-    }
     return S_OK;
 }
 
 static HRESULT String_fixed(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     static const WCHAR fixedtagW[] = {'T','T',0};
-    return do_attributeless_tag_format(ctx, jsthis, retv, ei, fixedtagW);
+    return do_attributeless_tag_format(ctx, jsthis, r, ei, fixedtagW);
 }
 
 static HRESULT String_fontcolor(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     static const WCHAR fontW[] = {'F','O','N','T',0};
     static const WCHAR colorW[] = {'C','O','L','O','R',0};
 
-    return do_attribute_tag_format(ctx, jsthis, argc, argv, retv, ei, fontW, colorW);
+    return do_attribute_tag_format(ctx, jsthis, argc, argv, r, ei, fontW, colorW);
 }
 
 static HRESULT String_fontsize(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     static const WCHAR fontW[] = {'F','O','N','T',0};
     static const WCHAR colorW[] = {'S','I','Z','E',0};
 
-    return do_attribute_tag_format(ctx, jsthis, argc, argv, retv, ei, fontW, colorW);
+    return do_attribute_tag_format(ctx, jsthis, argc, argv, r, ei, fontW, colorW);
 }
 
 static HRESULT String_indexOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     DWORD length, pos = 0;
     const WCHAR *str;
@@ -473,8 +465,8 @@ static HRESULT String_indexOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
         return hres;
 
     if(!argc) {
-        if(retv)
-            num_set_int(retv, -1);
+        if(r)
+            *r = jsval_number(-1);
         SysFreeString(val_str);
         return S_OK;
     }
@@ -508,21 +500,21 @@ static HRESULT String_indexOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
     if(FAILED(hres))
         return hres;
 
-    if(retv)
-        num_set_int(retv, ret);
+    if(r)
+        *r = jsval_number(ret);
     return S_OK;
 }
 
 static HRESULT String_italics(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     static const WCHAR italicstagW[] = {'I',0};
-    return do_attributeless_tag_format(ctx, jsthis, retv, ei, italicstagW);
+    return do_attributeless_tag_format(ctx, jsthis, r, ei, italicstagW);
 }
 
 /* ECMA-262 3rd Edition    15.5.4.8 */
 static HRESULT String_lastIndexOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     BSTR search_str, val_str;
     DWORD length, pos = 0, search_len;
@@ -537,8 +529,8 @@ static HRESULT String_lastIndexOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
         return hres;
 
     if(!argc) {
-        if(retv)
-            num_set_int(retv, -1);
+        if(r)
+            *r = jsval_number(-1);
         SysFreeString(val_str);
         return S_OK;
     }
@@ -577,23 +569,23 @@ static HRESULT String_lastIndexOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
     if(FAILED(hres))
         return hres;
 
-    if(retv)
-        num_set_int(retv, ret);
+    if(r)
+        *r = jsval_number(ret);
     return S_OK;
 }
 
 static HRESULT String_link(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     static const WCHAR fontW[] = {'A',0};
     static const WCHAR colorW[] = {'H','R','E','F',0};
 
-    return do_attribute_tag_format(ctx, jsthis, argc, argv, retv, ei, fontW, colorW);
+    return do_attribute_tag_format(ctx, jsthis, argc, argv, r, ei, fontW, colorW);
 }
 
 /* ECMA-262 3rd Edition    15.5.4.10 */
 static HRESULT String_match(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     const WCHAR *str;
     jsdisp_t *regexp;
@@ -604,10 +596,8 @@ static HRESULT String_match(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
     TRACE("\n");
 
     if(!argc) {
-        if(retv) {
-            V_VT(retv) = VT_NULL;
-        }
-
+        if(r)
+            *r = jsval_null();
         return S_OK;
     }
 
@@ -638,7 +628,7 @@ static HRESULT String_match(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
         if(!val_str)
             val_str = SysAllocStringLen(str, length);
         if(val_str)
-            hres = regexp_string_match(ctx, regexp, val_str, retv, ei);
+            hres = regexp_string_match(ctx, regexp, val_str, r, ei);
         else
             hres = E_OUTOFMEMORY;
     }
@@ -687,7 +677,7 @@ static HRESULT rep_call(script_ctx_t *ctx, jsdisp_t *func, const WCHAR *str, mat
 {
     VARIANT *argv;
     unsigned argc;
-    VARIANT var;
+    jsval_t val;
     DWORD i;
     HRESULT hres = S_OK;
 
@@ -722,7 +712,7 @@ static HRESULT rep_call(script_ctx_t *ctx, jsdisp_t *func, const WCHAR *str, mat
     }
 
     if(SUCCEEDED(hres))
-        hres = jsdisp_call_value(func, NULL, DISPATCH_METHOD, argc, argv, &var, ei);
+        hres = jsdisp_call_value(func, NULL, DISPATCH_METHOD, argc, argv, &val, ei);
 
     for(i=0; i < parens_cnt+3; i++) {
         if(i != parens_cnt+1)
@@ -733,14 +723,14 @@ static HRESULT rep_call(script_ctx_t *ctx, jsdisp_t *func, const WCHAR *str, mat
     if(FAILED(hres))
         return hres;
 
-    hres = to_string(ctx, &var, ei, ret);
-    VariantClear(&var);
+    hres = to_string_jsval(ctx, val, ei, ret);
+    jsval_release(val);
     return hres;
 }
 
 /* ECMA-262 3rd Edition    15.5.4.11 */
 static HRESULT String_replace(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     const WCHAR *str;
     DWORD parens_cnt = 0, parens_size=0, rep_len=0, length;
@@ -758,15 +748,14 @@ static HRESULT String_replace(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
         return hres;
 
     if(!argc) {
-        if(retv) {
+        if(r) {
             if(!val_str) {
                 val_str = SysAllocStringLen(str, length);
                 if(!val_str)
                     return E_OUTOFMEMORY;
             }
 
-            V_VT(retv) = VT_BSTR;
-            V_BSTR(retv) = val_str;
+            *r = jsval_string(val_str);
         }
         return S_OK;
     }
@@ -961,14 +950,13 @@ static HRESULT String_replace(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
         jsdisp_release(regexp);
     SysFreeString(val_str);
 
-    if(SUCCEEDED(hres) && retv) {
+    if(SUCCEEDED(hres) && r) {
         ret_str = SysAllocStringLen(ret.buf, ret.len);
         if(!ret_str)
             return E_OUTOFMEMORY;
 
-        V_VT(retv) = VT_BSTR;
-        V_BSTR(retv) = ret_str;
         TRACE("= %s\n", debugstr_w(ret_str));
+        *r = jsval_string(ret_str);
     }
 
     heap_free(ret.buf);
@@ -976,7 +964,7 @@ static HRESULT String_replace(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
 }
 
 static HRESULT String_search(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     jsdisp_t *regexp = NULL;
     const WCHAR *str, *cp;
@@ -992,8 +980,8 @@ static HRESULT String_search(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
         return hres;
 
     if(!argc) {
-        if(retv)
-            V_VT(retv) = VT_NULL;
+        if(r)
+            *r = jsval_null();
         SysFreeString(val_str);
         return S_OK;
     }
@@ -1023,14 +1011,14 @@ static HRESULT String_search(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
     if(FAILED(hres))
         return hres;
 
-    if(retv)
-        num_set_int(retv, hres == S_OK ? match.str-str : -1);
+    if(r)
+        *r = jsval_number(hres == S_OK ? match.str-str : -1);
     return S_OK;
 }
 
 /* ECMA-262 3rd Edition    15.5.4.13 */
 static HRESULT String_slice(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     const WCHAR *str;
     BSTR val_str;
@@ -1092,15 +1080,14 @@ static HRESULT String_slice(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
     if(end < start)
         end = start;
 
-    if(retv) {
+    if(r) {
         BSTR retstr = SysAllocStringLen(str+start, end-start);
         if(!retstr) {
             SysFreeString(val_str);
             return E_OUTOFMEMORY;
         }
 
-        V_VT(retv) = VT_BSTR;
-        V_BSTR(retv) = retstr;
+        *r = jsval_string(retstr);
     }
 
     SysFreeString(val_str);
@@ -1108,14 +1095,14 @@ static HRESULT String_slice(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
 }
 
 static HRESULT String_small(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     static const WCHAR smalltagW[] = {'S','M','A','L','L',0};
-    return do_attributeless_tag_format(ctx, jsthis, retv, ei, smalltagW);
+    return do_attributeless_tag_format(ctx, jsthis, r, ei, smalltagW);
 }
 
 static HRESULT String_split(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     match_result_t *match_result = NULL;
     DWORD length, match_cnt, i, match_len = 0;
@@ -1230,8 +1217,8 @@ static HRESULT String_split(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
     SysFreeString(val_str);
     heap_free(match_result);
 
-    if(SUCCEEDED(hres) && retv)
-        var_set_jsdisp(retv, array);
+    if(SUCCEEDED(hres) && r)
+        *r = jsval_obj(array);
     else
         jsdisp_release(array);
 
@@ -1239,22 +1226,22 @@ static HRESULT String_split(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
 }
 
 static HRESULT String_strike(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     static const WCHAR striketagW[] = {'S','T','R','I','K','E',0};
-    return do_attributeless_tag_format(ctx, jsthis, retv, ei, striketagW);
+    return do_attributeless_tag_format(ctx, jsthis, r, ei, striketagW);
 }
 
 static HRESULT String_sub(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     static const WCHAR subtagW[] = {'S','U','B',0};
-    return do_attributeless_tag_format(ctx, jsthis, retv, ei, subtagW);
+    return do_attributeless_tag_format(ctx, jsthis, r, ei, subtagW);
 }
 
 /* ECMA-262 3rd Edition    15.5.4.15 */
 static HRESULT String_substring(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     const WCHAR *str;
     BSTR val_str;
@@ -1301,13 +1288,13 @@ static HRESULT String_substring(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
         end = tmp;
     }
 
-    if(retv) {
-        V_VT(retv) = VT_BSTR;
-        V_BSTR(retv) = SysAllocStringLen(str+start, end-start);
-        if(!V_BSTR(retv)) {
+    if(r) {
+        BSTR ret = SysAllocStringLen(str+start, end-start);
+        if(!ret) {
             SysFreeString(val_str);
             return E_OUTOFMEMORY;
         }
+        *r = jsval_string(ret);
     }
     SysFreeString(val_str);
     return S_OK;
@@ -1315,7 +1302,7 @@ static HRESULT String_substring(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
 
 /* ECMA-262 3rd Edition    B.2.3 */
 static HRESULT String_substr(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     BSTR val_str;
     const WCHAR *str;
@@ -1357,10 +1344,11 @@ static HRESULT String_substr(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
     }
 
     hres = S_OK;
-    if(retv) {
-        V_VT(retv) = VT_BSTR;
-        V_BSTR(retv) = SysAllocStringLen(str+start, len);
-        if(!V_BSTR(retv))
+    if(r) {
+        BSTR ret = SysAllocStringLen(str+start, len);
+        if(ret)
+            *r = jsval_string(ret);
+        else
             hres = E_OUTOFMEMORY;
     }
 
@@ -1369,14 +1357,14 @@ static HRESULT String_substr(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
 }
 
 static HRESULT String_sup(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     static const WCHAR suptagW[] = {'S','U','P',0};
-    return do_attributeless_tag_format(ctx, jsthis, retv, ei, suptagW);
+    return do_attributeless_tag_format(ctx, jsthis, r, ei, suptagW);
 }
 
 static HRESULT String_toLowerCase(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     const WCHAR* str;
     DWORD length;
@@ -1389,7 +1377,7 @@ static HRESULT String_toLowerCase(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
     if(FAILED(hres))
         return hres;
 
-    if(retv) {
+    if(r) {
         if(!val_str) {
             val_str = SysAllocStringLen(str, length);
             if(!val_str)
@@ -1397,16 +1385,14 @@ static HRESULT String_toLowerCase(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
         }
 
         strlwrW(val_str);
-
-        V_VT(retv) = VT_BSTR;
-        V_BSTR(retv) = val_str;
+        *r = jsval_string(val_str);
     }
     else SysFreeString(val_str);
     return S_OK;
 }
 
 static HRESULT String_toUpperCase(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     const WCHAR* str;
     DWORD length;
@@ -1419,7 +1405,7 @@ static HRESULT String_toUpperCase(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
     if(FAILED(hres))
         return hres;
 
-    if(retv) {
+    if(r) {
         if(!val_str) {
             val_str = SysAllocStringLen(str, length);
             if(!val_str)
@@ -1427,37 +1413,35 @@ static HRESULT String_toUpperCase(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
         }
 
         struprW(val_str);
-
-        V_VT(retv) = VT_BSTR;
-        V_BSTR(retv) = val_str;
+        *r = jsval_string(val_str);
     }
     else SysFreeString(val_str);
     return S_OK;
 }
 
 static HRESULT String_toLocaleLowerCase(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
 static HRESULT String_toLocaleUpperCase(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
 static HRESULT String_localeCompare(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
 static HRESULT String_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     StringInstance *This = string_from_vdisp(jsthis);
 
@@ -1471,8 +1455,7 @@ static HRESULT String_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
         if(!str)
             return E_OUTOFMEMORY;
 
-        V_VT(retv) = VT_BSTR;
-        V_BSTR(retv) = str;
+        *r = jsval_string(str);
         break;
     }
     default:
@@ -1551,11 +1534,13 @@ static const builtin_info_t StringInst_info = {
 
 /* ECMA-262 3rd Edition    15.5.3.2 */
 static HRESULT StringConstr_fromCharCode(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
-        unsigned argc, VARIANT *argv, VARIANT *retv, jsexcept_t *ei)
+        unsigned argc, VARIANT *argv, jsval_t *r, jsexcept_t *ei)
 {
     DWORD i, code;
     BSTR ret;
     HRESULT hres;
+
+    TRACE("\n");
 
     ret = SysAllocStringLen(NULL, argc);
     if(!ret)
@@ -1571,17 +1556,15 @@ static HRESULT StringConstr_fromCharCode(script_ctx_t *ctx, vdisp_t *jsthis, WOR
         ret[i] = code;
     }
 
-    if(retv) {
-        V_VT(retv) = VT_BSTR;
-        V_BSTR(retv) = ret;
-    }
-    else SysFreeString(ret);
-
+    if(r)
+        *r = jsval_string(ret);
+    else
+        SysFreeString(ret);
     return S_OK;
 }
 
 static HRESULT StringConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     HRESULT hres;
 
@@ -1601,8 +1584,7 @@ static HRESULT StringConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
                 return E_OUTOFMEMORY;
         }
 
-        V_VT(retv) = VT_BSTR;
-        V_BSTR(retv) = str;
+        *r = jsval_string(str);
         break;
     }
     case DISPATCH_CONSTRUCT: {
@@ -1624,7 +1606,7 @@ static HRESULT StringConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
         if(FAILED(hres))
             return hres;
 
-        var_set_jsdisp(retv, ret);
+        *r = jsval_obj(ret);
         break;
     }
 

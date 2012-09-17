@@ -385,7 +385,7 @@ static HRESULT disp_get_id(script_ctx_t *ctx, IDispatch *disp, BSTR name, DWORD 
     return hres;
 }
 
-static inline BOOL is_null(const VARIANT *v)
+static inline BOOL is_null_var(const VARIANT *v)
 {
     return V_VT(v) == VT_NULL || (V_VT(v) == VT_DISPATCH && !V_DISPATCH(v));
 }
@@ -442,8 +442,8 @@ static HRESULT equal2_values(VARIANT *lval, VARIANT *rval, BOOL *ret)
     if(V_VT(lval) != V_VT(rval)) {
         if(is_num_vt(V_VT(lval)) && is_num_vt(V_VT(rval)))
             *ret = num_val(lval) == num_val(rval);
-        else if(is_null(lval))
-            *ret = is_null(rval);
+        else if(is_null_var(lval))
+            *ret = is_null_var(rval);
         else
             *ret = FALSE;
         return S_OK;
@@ -981,6 +981,7 @@ static HRESULT interp_new(exec_ctx_t *ctx)
 {
     const unsigned arg = get_op_uint(ctx, 0);
     VARIANT *constr, v;
+    jsval_t r;
     HRESULT hres;
 
     TRACE("%d\n", arg);
@@ -996,7 +997,12 @@ static HRESULT interp_new(exec_ctx_t *ctx)
     else if(!V_DISPATCH(constr))
         return throw_type_error(ctx->script, ctx->ei, JS_E_INVALID_PROPERTY, NULL);
 
-    hres = disp_call_value(ctx->script, V_DISPATCH(constr), NULL, DISPATCH_CONSTRUCT, arg, stack_args(ctx, arg), &v, ctx->ei);
+    hres = disp_call_value(ctx->script, V_DISPATCH(constr), NULL, DISPATCH_CONSTRUCT, arg, stack_args(ctx, arg), &r, ctx->ei);
+    if(FAILED(hres))
+        return hres;
+
+    hres = jsval_to_variant(r, &v);
+    jsval_release(r);
     if(FAILED(hres))
         return hres;
 
@@ -1010,6 +1016,7 @@ static HRESULT interp_call(exec_ctx_t *ctx)
     const unsigned argn = get_op_uint(ctx, 0);
     const int do_ret = get_op_int(ctx, 1);
     VARIANT v, *objv;
+    jsval_t r;
     HRESULT hres;
 
     TRACE("%d %d\n", argn, do_ret);
@@ -1019,12 +1026,21 @@ static HRESULT interp_call(exec_ctx_t *ctx)
         return throw_type_error(ctx->script, ctx->ei, JS_E_INVALID_PROPERTY, NULL);
 
     hres = disp_call_value(ctx->script, V_DISPATCH(objv), NULL, DISPATCH_METHOD, argn, stack_args(ctx, argn),
-            do_ret ? &v : NULL, ctx->ei);
+            do_ret ? &r : NULL, ctx->ei);
     if(FAILED(hres))
         return hres;
 
     stack_popn(ctx, argn+1);
-    return do_ret ? stack_push(ctx, &v) : S_OK;
+
+    if(!do_ret)
+        return S_OK;
+
+    hres = jsval_to_variant(r, &v);
+    jsval_release(r);
+    if(FAILED(hres))
+        return hres;
+
+    return stack_push(ctx, &v);
 
 }
 

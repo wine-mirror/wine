@@ -139,7 +139,7 @@ static IUnknown *create_activex_object(script_ctx_t *ctx, const WCHAR *progid)
 }
 
 static HRESULT ActiveXObject_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     IDispatch *disp;
     IUnknown *obj;
@@ -180,8 +180,7 @@ static HRESULT ActiveXObject_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
         return E_NOTIMPL;
     }
 
-    V_VT(retv) = VT_DISPATCH;
-    V_DISPATCH(retv) = disp;
+    *r = jsval_disp(disp);
     return S_OK;
 }
 

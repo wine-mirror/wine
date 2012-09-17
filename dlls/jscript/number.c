@@ -219,7 +219,7 @@ static inline void number_to_exponential(double val, int prec, BSTR *out)
 
 /* ECMA-262 3rd Edition    15.7.4.2 */
 static HRESULT Number_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     NumberInstance *number;
     INT radix = 10;
@@ -334,24 +334,22 @@ static HRESULT Number_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
             return E_OUTOFMEMORY;
     }
 
-    if(retv) {
-        V_VT(retv) = VT_BSTR;
-        V_BSTR(retv) = str;
-    }else {
+    if(r)
+        *r = jsval_string(str);
+    else
         SysFreeString(str);
-    }
     return S_OK;
 }
 
 static HRESULT Number_toLocaleString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
 static HRESULT Number_toFixed(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     NumberInstance *number;
     DOUBLE val;
@@ -385,17 +383,15 @@ static HRESULT Number_toFixed(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
         number_to_fixed(val, prec, &str);
     }
 
-    if(retv) {
-        V_VT(retv) = VT_BSTR;
-        V_BSTR(retv) = str;
-    }else {
+    if(r)
+        *r = jsval_string(str);
+    else
         SysFreeString(str);
-    }
     return S_OK;
 }
 
 static HRESULT Number_toExponential(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     NumberInstance *number;
     DOUBLE val;
@@ -431,17 +427,15 @@ static HRESULT Number_toExponential(script_ctx_t *ctx, vdisp_t *jsthis, WORD fla
         number_to_exponential(val, prec, &str);
     }
 
-    if(retv) {
-        V_VT(retv) = VT_BSTR;
-        V_BSTR(retv) = str;
-    }else {
+    if(r)
+        *r = jsval_string(str);
+    else
         SysFreeString(str);
-    }
     return S_OK;
 }
 
 static HRESULT Number_toPrecision(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     NumberInstance *number;
     INT prec = 0, size;
@@ -481,17 +475,15 @@ static HRESULT Number_toPrecision(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
             number_to_fixed(val, prec-size, &str);
     }
 
-    if(retv) {
-        V_VT(retv) = VT_BSTR;
-        V_BSTR(retv) = str;
-    }else {
+    if(r)
+        *r = jsval_string(str);
+    else
         SysFreeString(str);
-    }
     return S_OK;
 }
 
 static HRESULT Number_valueOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     NumberInstance *number;
 
@@ -500,13 +492,13 @@ static HRESULT Number_valueOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
     if(!(number = number_this(jsthis)))
         return throw_type_error(ctx, ei, JS_E_NUMBER_EXPECTED, NULL);
 
-    if(retv)
-        num_set_val(retv, number->value);
+    if(r)
+        *r = jsval_number(number->value);
     return S_OK;
 }
 
 static HRESULT Number_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     NumberInstance *number = number_from_vdisp(jsthis);
 
@@ -514,7 +506,7 @@ static HRESULT Number_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
     case INVOKE_FUNC:
         return throw_type_error(ctx, ei, JS_E_FUNCTION_EXPECTED, NULL);
     case DISPATCH_PROPERTYGET:
-        num_set_val(retv, number->value);
+        *r = jsval_number(number->value);
         break;
 
     default:
@@ -552,7 +544,7 @@ static const builtin_info_t NumberInst_info = {
 };
 
 static HRESULT NumberConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, VARIANT *argv,
-        VARIANT *retv, jsexcept_t *ei)
+        jsval_t *r, jsexcept_t *ei)
 {
     double n;
     HRESULT hres;
@@ -562,8 +554,8 @@ static HRESULT NumberConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
     switch(flags) {
     case INVOKE_FUNC:
         if(!argc) {
-            if(retv)
-                num_set_int(retv, 0);
+            if(r)
+                *r = jsval_number(0);
             return S_OK;
         }
 
@@ -571,8 +563,8 @@ static HRESULT NumberConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
         if(FAILED(hres))
             return hres;
 
-        if(retv)
-            num_set_val(retv, n);
+        if(r)
+            *r = jsval_number(n);
         break;
 
     case DISPATCH_CONSTRUCT: {
@@ -590,7 +582,7 @@ static HRESULT NumberConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
         if(FAILED(hres))
             return hres;
 
-        var_set_jsdisp(retv, obj);
+        *r = jsval_obj(obj);
         break;
     }
     default:

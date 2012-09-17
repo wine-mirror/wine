@@ -185,6 +185,118 @@ jsheap_t *jsheap_mark(jsheap_t *heap)
     return heap;
 }
 
+static BSTR clone_bstr(BSTR str)
+{
+    return SysAllocStringLen(str, str ? SysStringLen(str) : 0);
+}
+
+void jsval_release(jsval_t val)
+{
+    switch(val.type) {
+    case JSV_OBJECT:
+        IDispatch_Release(val.u.obj);
+        break;
+    case JSV_STRING:
+        SysFreeString(val.u.str);
+        break;
+    case JSV_VARIANT:
+        VariantClear(val.u.v);
+        heap_free(val.u.v);
+        break;
+    default:
+        break;
+    }
+}
+
+HRESULT jsval_variant(jsval_t *val, VARIANT *var)
+{
+    HRESULT hres;
+
+    val->type = JSV_VARIANT;
+    val->u.v = heap_alloc(sizeof(VARIANT));
+    if(!val->u.v)
+        return E_OUTOFMEMORY;
+
+    V_VT(val->u.v) =  VT_EMPTY;
+    hres = VariantCopy(val->u.v, var);
+    if(FAILED(hres))
+        heap_free(val->u.v);
+    return hres;
+}
+
+HRESULT variant_to_jsval(VARIANT *var, jsval_t *r)
+{
+    switch(V_VT(var)) {
+    case VT_EMPTY:
+        *r = jsval_undefined();
+        return S_OK;
+    case VT_NULL:
+        *r = jsval_null();
+        return S_OK;
+    case VT_BOOL:
+        *r = jsval_bool(V_BOOL(var));
+        return S_OK;
+    case VT_I4:
+        *r = jsval_number(V_I4(var));
+        return S_OK;
+    case VT_R8:
+        *r = jsval_number(V_R8(var));
+        return S_OK;
+    case VT_BSTR: {
+        BSTR str = clone_bstr(V_BSTR(var));
+        if(!str)
+            return E_OUTOFMEMORY;
+        *r = jsval_string(str);
+        return S_OK;
+    }
+    case VT_DISPATCH: {
+        IDispatch_AddRef(V_DISPATCH(var));
+        *r = jsval_disp(V_DISPATCH(var));
+        return S_OK;
+    }
+    case VT_I2:
+    case VT_INT:
+        assert(0);
+    default:
+        return jsval_variant(r, var);
+    }
+}
+
+HRESULT jsval_to_variant(jsval_t val, VARIANT *retv)
+{
+    switch(val.type) {
+    case JSV_UNDEFINED:
+        V_VT(retv) = VT_EMPTY;
+        return S_OK;
+    case JSV_NULL:
+        V_VT(retv) = VT_NULL;
+        return S_OK;
+    case JSV_OBJECT:
+        V_VT(retv) = VT_DISPATCH;
+        IDispatch_AddRef(val.u.obj);
+        V_DISPATCH(retv) = val.u.obj;
+        return S_OK;
+    case JSV_STRING:
+        V_VT(retv) = VT_BSTR;
+        V_BSTR(retv) = clone_bstr(val.u.str);
+        if(!V_BSTR(retv))
+            return E_OUTOFMEMORY;
+        return S_OK;
+    case JSV_NUMBER:
+        num_set_val(retv, val.u.n);
+        return S_OK;
+    case JSV_BOOL:
+        V_VT(retv) = VT_BOOL;
+        V_BOOL(retv) = val.u.b ? VARIANT_TRUE : VARIANT_FALSE;
+        return S_OK;
+    case JSV_VARIANT:
+        return VariantCopy(retv, val.u.v);
+    }
+
+    assert(0);
+    return E_FAIL;
+}
+
 /* ECMA-262 3rd Edition    9.1 */
 HRESULT to_primitive(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, VARIANT *ret, hint_t hint)
 {
@@ -457,6 +569,26 @@ HRESULT to_number(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, double *ret)
     return S_OK;
 }
 
+/* ECMA-262 3rd Edition    9.3 */
+HRESULT to_number_jsval(script_ctx_t *ctx, jsval_t v, jsexcept_t *ei, double *ret)
+{
+    VARIANT var;
+    HRESULT hres;
+
+    if(v.type == JSV_NUMBER) {
+        *ret = v.u.n;
+        return S_OK;
+    }
+
+    hres = jsval_to_variant(v, &var);
+    if(FAILED(hres))
+        return hres;
+
+    hres = to_number(ctx, &var, ei, ret);
+    VariantClear(&var);
+    return hres;
+}
+
 /* ECMA-262 3rd Edition    9.4 */
 HRESULT to_integer(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, double *ret)
 {
@@ -617,6 +749,26 @@ HRESULT to_string(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, BSTR *str)
     }
 
     return *str ? S_OK : E_OUTOFMEMORY;
+}
+
+/* ECMA-262 3rd Edition    9.8 */
+HRESULT to_string_jsval(script_ctx_t *ctx, jsval_t v, jsexcept_t *ei, BSTR *str)
+{
+    VARIANT var;
+    HRESULT hres;
+
+    if(v.type == JSV_STRING) {
+        *str = clone_bstr(v.u.str);
+        return *str ? S_OK : E_OUTOFMEMORY;
+    }
+
+    hres = jsval_to_variant(v, &var);
+    if(FAILED(hres))
+        return hres;
+
+    hres = to_string(ctx, &var, ei, str);
+    VariantClear(&var);
+    return hres;
 }
 
 /* ECMA-262 3rd Edition    9.9 */
