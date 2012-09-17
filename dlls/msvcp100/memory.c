@@ -41,11 +41,6 @@ char* MSVCP_allocator_char_allocate(void *this, MSVCP_size_t count)
     return MSVCRT_operator_new(count);
 }
 
-MSVCP_size_t MSVCP_allocator_char_max_size(void *this)
-{
-    return UINT_MAX/sizeof(char);
-}
-
 /* allocator<wchar_t> */
 /* ?deallocate@?$allocator@_W@std@@QAEXPA_WI@Z */
 /* ?deallocate@?$allocator@_W@std@@QEAAXPEA_W_K@Z */
@@ -65,11 +60,4 @@ wchar_t* MSVCP_allocator_wchar_allocate(void *this, MSVCP_size_t count)
     }
 
     return MSVCRT_operator_new(count * sizeof(wchar_t));
-}
-
-/* ?max_size@?$allocator@_W@std@@QBEIXZ */
-/* ?max_size@?$allocator@_W@std@@QEBA_KXZ */
-MSVCP_size_t MSVCP_allocator_wchar_max_size(void *this)
-{
-    return UINT_MAX/sizeof(wchar_t);
 }

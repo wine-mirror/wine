@@ -33,21 +33,21 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcp);
 /* char_traits<char> */
 /* ?assign@?$char_traits@D@std@@SAXAADABD@Z */
 /* ?assign@?$char_traits@D@std@@SAXAEADAEBD@Z */
-static void CDECL MSVCP_char_traits_char_assign(char *ch, const char *assign)
+static void MSVCP_char_traits_char_assign(char *ch, const char *assign)
 {
     *ch = *assign;
 }
 
 /* ?length@?$char_traits@D@std@@SAIPBD@Z */
 /* ?length@?$char_traits@D@std@@SA_KPEBD@Z */
-static MSVCP_size_t CDECL MSVCP_char_traits_char_length(const char *str)
+static MSVCP_size_t MSVCP_char_traits_char_length(const char *str)
 {
     return strlen(str);
 }
 
 /* ?_Copy_s@?$char_traits@D@std@@SAPADPADIPBDI@Z */
 /* ?_Copy_s@?$char_traits@D@std@@SAPEADPEAD_KPEBD1@Z */
-static char* CDECL MSVCP_char_traits_char__Copy_s(char *dest,
+static char* MSVCP_char_traits_char__Copy_s(char *dest,
         MSVCP_size_t size, const char *src, MSVCP_size_t count)
 {
     if(!dest || !src || size<count) {
@@ -62,7 +62,7 @@ static char* CDECL MSVCP_char_traits_char__Copy_s(char *dest,
 
 /* ?_Move_s@?$char_traits@D@std@@SAPADPADIPBDI@Z */
 /* ?_Move_s@?$char_traits@D@std@@SAPEADPEAD_KPEBD1@Z */
-static char* CDECL MSVCP_char_traits_char__Move_s(char *dest,
+static char* MSVCP_char_traits_char__Move_s(char *dest,
         MSVCP_size_t size, const char *src, MSVCP_size_t count)
 {
     if(!dest || !src || size<count) {
@@ -78,7 +78,7 @@ static char* CDECL MSVCP_char_traits_char__Move_s(char *dest,
 /* char_traits<wchar_t> */
 /* ?assign@?$char_traits@_W@std@@SAXAA_WAB_W@Z */
 /* ?assign@?$char_traits@_W@std@@SAXAEA_WAEB_W@Z */
-static void CDECL MSVCP_char_traits_wchar_assign(wchar_t *ch,
+static void MSVCP_char_traits_wchar_assign(wchar_t *ch,
         const wchar_t *assign)
 {
     *ch = *assign;
@@ -86,14 +86,14 @@ static void CDECL MSVCP_char_traits_wchar_assign(wchar_t *ch,
 
 /* ?length@?$char_traits@_W@std@@SAIPB_W@Z */
 /* ?length@?$char_traits@_W@std@@SA_KPEB_W@Z */
-static MSVCP_size_t CDECL MSVCP_char_traits_wchar_length(const wchar_t *str)
+static MSVCP_size_t MSVCP_char_traits_wchar_length(const wchar_t *str)
 {
     return wcslen((WCHAR*)str);
 }
 
 /* ?_Copy_s@?$char_traits@_W@std@@SAPA_WPA_WIPB_WI@Z */
 /* ?_Copy_s@?$char_traits@_W@std@@SAPEA_WPEA_W_KPEB_W1@Z */
-static wchar_t* CDECL MSVCP_char_traits_wchar__Copy_s(wchar_t *dest,
+static wchar_t* MSVCP_char_traits_wchar__Copy_s(wchar_t *dest,
         MSVCP_size_t size, const wchar_t *src, MSVCP_size_t count)
 {
     if(!dest || !src || size<count) {
@@ -108,7 +108,7 @@ static wchar_t* CDECL MSVCP_char_traits_wchar__Copy_s(wchar_t *dest,
 
 /* ?_Move_s@?$char_traits@_W@std@@SAPA_WPA_WIPB_WI@Z */
 /* ?_Move_s@?$char_traits@_W@std@@SAPEA_WPEA_W_KPEB_W1@Z */
-static wchar_t* CDECL MSVCP_char_traits_wchar__Move_s(wchar_t *dest,
+static wchar_t* MSVCP_char_traits_wchar__Move_s(wchar_t *dest,
         MSVCP_size_t size, const wchar_t *src, MSVCP_size_t count)
 {
     if(!dest || !src || size<count) {
@@ -123,7 +123,7 @@ static wchar_t* CDECL MSVCP_char_traits_wchar__Move_s(wchar_t *dest,
 
 /* _String_base */
 /* ?_Xran@_String_base@std@@SAXXZ */
-static void CDECL MSVCP__String_base_Xran(void)
+static void MSVCP__String_base_Xran(void)
 {
     static const char msg[] = "invalid string position";
 
@@ -328,16 +328,6 @@ const char* MSVCP_basic_string_char_c_str(const basic_string_char *this)
     return basic_string_char_const_ptr(this);
 }
 
-/* ??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@XZ */
-/* ??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@XZ */
-basic_string_char* MSVCP_basic_string_char_ctor(basic_string_char *this)
-{
-    TRACE("%p\n", this);
-
-    basic_string_char_tidy(this, FALSE, 0);
-    return this;
-}
-
 /* ??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@ABV01@@Z */
 /* ??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@AEBV01@@Z */
 basic_string_char* MSVCP_basic_string_char_copy_ctor(
@@ -359,18 +349,6 @@ basic_string_char* MSVCP_basic_string_char_ctor_cstr(
 
     basic_string_char_tidy(this, FALSE, 0);
     MSVCP_basic_string_char_assign_cstr(this, str);
-    return this;
-}
-
-/* ??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@PBDI@Z */
-/* ??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@PEBD_K@Z */
-basic_string_char* MSVCP_basic_string_char_ctor_cstr_len(
-        basic_string_char *this, const char *str, MSVCP_size_t len)
-{
-    TRACE("%p %s %ld\n", this, debugstr_an(str, len), len);
-
-    basic_string_char_tidy(this, FALSE, 0);
-    MSVCP_basic_string_char_assign_cstr_len(this, str, len);
     return this;
 }
 
@@ -610,18 +588,6 @@ const wchar_t* MSVCP_basic_string_wchar_c_str(const basic_string_wchar *this)
     return basic_string_wchar_const_ptr(this);
 }
 
-/* ??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE@XZ */
-/* ??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAA@XZ */
-/* ??0?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAE@XZ */
-/* ??0?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEAA@XZ */
-basic_string_wchar* MSVCP_basic_string_wchar_ctor(basic_string_wchar *this)
-{
-    TRACE("%p\n", this);
-
-    basic_string_wchar_tidy(this, FALSE, 0);
-    return this;
-}
-
 /* ??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE@PB_W@Z */
 /* ??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAA@PEB_W@Z */
 /* ??0?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAE@PBG@Z */
@@ -633,20 +599,6 @@ basic_string_wchar* MSVCP_basic_string_wchar_ctor_cstr(
 
     basic_string_wchar_tidy(this, FALSE, 0);
     MSVCP_basic_string_wchar_assign_cstr(this, str);
-    return this;
-}
-
-/* ??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE@PB_WI@Z */
-/* ??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAA@PEB_W_K@Z */
-/* ??0?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAE@PBGI@Z */
-/* ??0?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEAA@PEBG_K@Z */
-basic_string_wchar* MSVCP_basic_string_wchar_ctor_cstr_len(
-        basic_string_wchar *this, const wchar_t *str, MSVCP_size_t len)
-{
-    TRACE("%p %s %ld\n", this, debugstr_wn(str, len), len);
-
-    basic_string_wchar_tidy(this, FALSE, 0);
-    MSVCP_basic_string_wchar_assign_cstr_len(this, str, len);
     return this;
 }
 

@@ -188,7 +188,7 @@ static const cxx_exception_type exception_cxx_type = {
 /* bad_alloc class data */
 typedef exception bad_alloc;
 
-bad_alloc* MSVCP_bad_alloc_ctor(bad_alloc *this, const char **name)
+static bad_alloc* MSVCP_bad_alloc_ctor(bad_alloc *this, const char **name)
 {
     TRACE("%p %s\n", this, *name);
     MSVCP_exception_ctor(this, name);

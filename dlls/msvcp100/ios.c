@@ -1905,7 +1905,7 @@ streamsize __thiscall basic_streambuf_wchar_sputn(basic_streambuf_wchar *this, c
 
 /* ?_Stinit@?1??_Init@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IAEXPAU_iobuf@@W4_Initfl@23@@Z@4HA */
 /* ?_Stinit@?1??_Init@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IEAAXPEAU_iobuf@@W4_Initfl@23@@Z@4HA */
-int basic_filebuf_char__Init__Stinit = 0;
+static int basic_filebuf_char__Init__Stinit = 0;
 
 /* ?_Init@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IAEXPAU_iobuf@@W4_Initfl@12@@Z */
 /* ?_Init@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IEAAXPEAU_iobuf@@W4_Initfl@12@@Z */
@@ -2373,11 +2373,11 @@ void __thiscall basic_filebuf_char_imbue(basic_filebuf_char *this, const locale 
 
 /* ?_Stinit@?1??_Init@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@IAEXPAU_iobuf@@W4_Initfl@23@@Z@4HA */
 /* ?_Stinit@?1??_Init@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@IEAAXPEAU_iobuf@@W4_Initfl@23@@Z@4HA */
-int basic_filebuf_wchar__Init__Stinit = 0;
+static int basic_filebuf_wchar__Init__Stinit = 0;
 
 /* ?_Stinit@?1??_Init@?$basic_filebuf@GU?$char_traits@G@std@@@std@@IAEXPAU_iobuf@@W4_Initfl@23@@Z@4HA */
 /* ?_Stinit@?1??_Init@?$basic_filebuf@GU?$char_traits@G@std@@@std@@IEAAXPEAU_iobuf@@W4_Initfl@23@@Z@4HA */
-int basic_filebuf_short__Init__Stinit = 0;
+static int basic_filebuf_short__Init__Stinit = 0;
 
 /* ?_Init@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@IAEXPAU_iobuf@@W4_Initfl@12@@Z */
 /* ?_Init@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@IEAAXPEAU_iobuf@@W4_Initfl@12@@Z */

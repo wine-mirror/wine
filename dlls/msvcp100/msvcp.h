@@ -48,9 +48,7 @@ typedef struct
     MSVCP_size_t res;
 } basic_string_char;
 
-basic_string_char* MSVCP_basic_string_char_ctor(basic_string_char*);
 basic_string_char* MSVCP_basic_string_char_ctor_cstr(basic_string_char*, const char*);
-basic_string_char* MSVCP_basic_string_char_ctor_cstr_len(basic_string_char*, const char*, MSVCP_size_t);
 basic_string_char* MSVCP_basic_string_char_copy_ctor(basic_string_char*, const basic_string_char*);
 void MSVCP_basic_string_char_dtor(basic_string_char*);
 const char* MSVCP_basic_string_char_c_str(const basic_string_char*);
@@ -68,19 +66,15 @@ typedef struct
     MSVCP_size_t res;
 } basic_string_wchar;
 
-basic_string_wchar* MSVCP_basic_string_wchar_ctor(basic_string_wchar*);
 basic_string_wchar* MSVCP_basic_string_wchar_ctor_cstr(basic_string_wchar*, const wchar_t*);
-basic_string_wchar* MSVCP_basic_string_wchar_ctor_cstr_len(basic_string_wchar*, const wchar_t*, MSVCP_size_t);
 void MSVCP_basic_string_wchar_dtor(basic_string_wchar*);
 const wchar_t* MSVCP_basic_string_wchar_c_str(const basic_string_wchar*);
 MSVCP_size_t MSVCP_basic_string_wchar_length(const basic_string_wchar*);
 
 char* MSVCP_allocator_char_allocate(void*, MSVCP_size_t);
 void MSVCP_allocator_char_deallocate(void*, char*, MSVCP_size_t);
-MSVCP_size_t MSVCP_allocator_char_max_size(void*);
 wchar_t* MSVCP_allocator_wchar_allocate(void*, MSVCP_size_t);
 void MSVCP_allocator_wchar_deallocate(void*, wchar_t*, MSVCP_size_t);
-MSVCP_size_t MSVCP_allocator_wchar_max_size(void*);
 
 /* class locale::facet */
 typedef struct {
