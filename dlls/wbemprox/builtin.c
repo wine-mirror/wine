@@ -782,9 +782,17 @@ static void get_processor_name( WCHAR *name )
 }
 static UINT get_processor_maxclockspeed( void )
 {
-    PROCESSOR_POWER_INFORMATION info;
-    if (!NtPowerInformation( ProcessorInformation, NULL, 0, &info, sizeof(info) )) return info.MaxMhz;
-    return 1000000;
+    PROCESSOR_POWER_INFORMATION *info;
+    UINT ret = 1000000, size = get_processor_count() * sizeof(PROCESSOR_POWER_INFORMATION);
+    NTSTATUS status;
+
+    if ((info = heap_alloc( size )))
+    {
+        status = NtPowerInformation( ProcessorInformation, NULL, 0, info, size );
+        if (!status) ret = info[0].MaxMhz;
+        heap_free( info );
+    }
+    return ret;
 }
 
 static void fill_processor( struct table *table )
