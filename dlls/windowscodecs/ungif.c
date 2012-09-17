@@ -272,7 +272,7 @@ FreeSavedImages(GifFileType * GifFile) {
 static int
 DGifGetScreenDesc(GifFileType * GifFile) {
 
-    int i, BitsPerPixel;
+    int i, BitsPerPixel, SortFlag;
     GifByteType Buf[3];
 
     /* Put the screen descriptor into the file: */
@@ -284,6 +284,7 @@ DGifGetScreenDesc(GifFileType * GifFile) {
         return GIF_ERROR;
     }
     GifFile->SColorResolution = (((Buf[0] & 0x70) + 1) >> 4) + 1;
+    SortFlag = (Buf[0] & 0x08) != 0;
     BitsPerPixel = (Buf[0] & 0x07) + 1;
     GifFile->SBackGroundColor = Buf[1];
     GifFile->SAspectRatio = Buf[2];
@@ -295,6 +296,7 @@ DGifGetScreenDesc(GifFileType * GifFile) {
         }
 
         /* Get the global color map: */
+        GifFile->SColorMap->SortFlag = SortFlag;
         for (i = 0; i < GifFile->SColorMap->ColorCount; i++) {
             if (READ(GifFile, Buf, 3) != 3) {
                 FreeMapObject(GifFile->SColorMap);
@@ -353,7 +355,7 @@ DGifGetRecordType(GifFileType * GifFile,
 static int
 DGifGetImageDesc(GifFileType * GifFile) {
 
-    int i, BitsPerPixel;
+    int i, BitsPerPixel, SortFlag;
     GifByteType Buf[3];
     GifFilePrivateType *Private = GifFile->Private;
     SavedImage *sp;
@@ -367,6 +369,7 @@ DGifGetImageDesc(GifFileType * GifFile) {
         return GIF_ERROR;
     }
     BitsPerPixel = (Buf[0] & 0x07) + 1;
+    SortFlag = (Buf[0] & 0x20) != 0;
     GifFile->Image.Interlace = (Buf[0] & 0x40);
     if (Buf[0] & 0x80) {    /* Does this image have local color map? */
 
@@ -381,6 +384,7 @@ DGifGetImageDesc(GifFileType * GifFile) {
         }
 
         /* Get the image local color map: */
+        GifFile->Image.ColorMap->SortFlag = SortFlag;
         for (i = 0; i < GifFile->Image.ColorMap->ColorCount; i++) {
             if (READ(GifFile, Buf, 3) != 3) {
                 FreeMapObject(GifFile->Image.ColorMap);
@@ -417,6 +421,7 @@ DGifGetImageDesc(GifFileType * GifFile) {
         if (sp->ImageDesc.ColorMap == NULL) {
             return GIF_ERROR;
         }
+        sp->ImageDesc.ColorMap->SortFlag = GifFile->Image.ColorMap->SortFlag;
     }
     sp->RasterBits = NULL;
     sp->ExtensionBlockCount = 0;

@@ -912,7 +912,8 @@ static HRESULT create_IMD_metadata_reader(GifFrameDecode *This, IWICMetadataRead
         IMD_data.packed |= 1 << 7;
         /* local_color_table_size */
         IMD_data.packed |= This->frame->ImageDesc.ColorMap->BitsPerPixel - 1;
-        /* FIXME: sort_flag */
+        /* sort_flag */
+        IMD_data.packed |= This->frame->ImageDesc.ColorMap->SortFlag ? 0x20 : 0;
     }
 
     stream = create_stream(&IMD_data, sizeof(IMD_data));
