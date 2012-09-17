@@ -1415,7 +1415,7 @@ HRESULT jsdisp_delete_idx(jsdisp_t *obj, DWORD idx)
     return delete_prop(prop);
 }
 
-HRESULT jsdisp_is_own_prop(jsdisp_t *obj, BSTR name, VARIANT_BOOL *ret)
+HRESULT jsdisp_is_own_prop(jsdisp_t *obj, BSTR name, BOOL *ret)
 {
     dispex_prop_t *prop;
     HRESULT hres;
@@ -1424,6 +1424,6 @@ HRESULT jsdisp_is_own_prop(jsdisp_t *obj, BSTR name, VARIANT_BOOL *ret)
     if(FAILED(hres))
         return hres;
 
-    *ret = prop && (prop->type == PROP_JSVAL || prop->type == PROP_BUILTIN) ? VARIANT_TRUE : VARIANT_FALSE;
+    *ret = prop && (prop->type == PROP_JSVAL || prop->type == PROP_BUILTIN);
     return S_OK;
 }

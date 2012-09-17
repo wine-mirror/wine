@@ -220,7 +220,7 @@ HRESULT jsdisp_propget_name(jsdisp_t*,LPCWSTR,jsval_t*,jsexcept_t*) DECLSPEC_HID
 HRESULT jsdisp_get_idx(jsdisp_t*,DWORD,jsval_t*,jsexcept_t*) DECLSPEC_HIDDEN;
 HRESULT jsdisp_get_id(jsdisp_t*,const WCHAR*,DWORD,DISPID*) DECLSPEC_HIDDEN;
 HRESULT jsdisp_delete_idx(jsdisp_t*,DWORD) DECLSPEC_HIDDEN;
-HRESULT jsdisp_is_own_prop(jsdisp_t*,BSTR,VARIANT_BOOL*) DECLSPEC_HIDDEN;
+HRESULT jsdisp_is_own_prop(jsdisp_t*,BSTR,BOOL*) DECLSPEC_HIDDEN;
 
 HRESULT create_builtin_function(script_ctx_t*,builtin_invoke_t,const WCHAR*,const builtin_info_t*,DWORD,
         jsdisp_t*,jsdisp_t**) DECLSPEC_HIDDEN;

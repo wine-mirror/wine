@@ -123,7 +123,7 @@ static HRESULT Object_hasOwnProperty(script_ctx_t *ctx, vdisp_t *jsthis, WORD fl
         return hres;
 
     if(is_jsdisp(jsthis)) {
-        VARIANT_BOOL result;
+        BOOL result;
 
         hres = jsdisp_is_own_prop(jsthis->u.jsdisp, name, &result);
         if(FAILED(hres))

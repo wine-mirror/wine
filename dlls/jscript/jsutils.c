@@ -452,7 +452,7 @@ HRESULT to_boolean(jsval_t val, BOOL *ret)
     switch(val.type) {
     case JSV_UNDEFINED:
     case JSV_NULL:
-        *ret = VARIANT_FALSE;
+        *ret = FALSE;
         return S_OK;
     case JSV_OBJECT:
         *ret = get_object(val) != NULL;
