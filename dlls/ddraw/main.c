@@ -46,6 +46,22 @@ static HINSTANCE instance;
 /* value of ForceRefreshRate */
 DWORD force_refresh_rate = 0;
 
+/* Structure for converting DirectDrawEnumerateA to DirectDrawEnumerateExA */
+struct callback_info
+{
+    LPDDENUMCALLBACKA callback;
+    void *context;
+};
+
+/* Enumeration callback for converting DirectDrawEnumerateA to DirectDrawEnumerateExA */
+static HRESULT CALLBACK enum_callback(GUID *guid, char *description, char *driver_name,
+                                      void *context, HMONITOR monitor)
+{
+    const struct callback_info *info = context;
+
+    return info->callback(guid, description, driver_name, info->context);
+}
+
 /* Handle table functions */
 BOOL ddraw_handle_table_init(struct ddraw_handle_table *t, UINT initial_size)
 {
@@ -336,27 +352,15 @@ DirectDrawCreateEx(GUID *guid,
  *
  *
  ***********************************************************************/
-HRESULT WINAPI DirectDrawEnumerateA(LPDDENUMCALLBACKA Callback, void *Context)
+HRESULT WINAPI DirectDrawEnumerateA(LPDDENUMCALLBACKA callback, void *context)
 {
-    TRACE("callback %p, context %p.\n", Callback, Context);
+    struct callback_info info;
 
-    TRACE(" Enumerating default DirectDraw HAL interface\n");
-    /* We only have one driver */
-    __TRY
-    {
-        static CHAR driver_desc[] = "DirectDraw HAL",
-        driver_name[] = "display";
+    TRACE("callback %p, context %p.\n", callback, context);
 
-        Callback(NULL, driver_desc, driver_name, Context);
-    }
-    __EXCEPT_PAGE_FAULT
-    {
-        return DDERR_INVALIDPARAMS;
-    }
-    __ENDTRY
-
-    TRACE(" End of enumeration\n");
-    return DD_OK;
+    info.callback = callback;
+    info.context = context;
+    return DirectDrawEnumerateExA(enum_callback, &info, 0x0);
 }
 
 /***********************************************************************
@@ -368,17 +372,17 @@ HRESULT WINAPI DirectDrawEnumerateA(LPDDENUMCALLBACKA Callback, void *Context)
  * The Flag member is not supported right now.
  *
  ***********************************************************************/
-HRESULT WINAPI DirectDrawEnumerateExA(LPDDENUMCALLBACKEXA Callback, void *Context, DWORD Flags)
+HRESULT WINAPI DirectDrawEnumerateExA(LPDDENUMCALLBACKEXA callback, void *context, DWORD flags)
 {
-    TRACE("callback %p, context %p, flags %#x.\n", Callback, Context, Flags);
+    TRACE("callback %p, context %p, flags %#x.\n", callback, context, flags);
 
-    if (Flags & ~(DDENUM_ATTACHEDSECONDARYDEVICES |
+    if (flags & ~(DDENUM_ATTACHEDSECONDARYDEVICES |
                   DDENUM_DETACHEDSECONDARYDEVICES |
                   DDENUM_NONDISPLAYDEVICES))
         return DDERR_INVALIDPARAMS;
 
-    if (Flags)
-        FIXME("flags 0x%08x not handled\n", Flags);
+    if (flags)
+        FIXME("flags 0x%08x not handled\n", flags);
 
     TRACE("Enumerating default DirectDraw HAL interface\n");
 
@@ -389,7 +393,7 @@ HRESULT WINAPI DirectDrawEnumerateExA(LPDDENUMCALLBACKEXA Callback, void *Contex
         driver_name[] = "display";
 
         /* QuickTime expects the description "DirectDraw HAL" */
-        Callback(NULL, driver_desc, driver_name, Context, 0);
+        callback(NULL, driver_desc, driver_name, context, 0);
     }
     __EXCEPT_PAGE_FAULT
     {
