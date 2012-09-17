@@ -501,29 +501,31 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
         /* Handle declarations. */
         if (ins.handler_idx == WINED3DSIH_DCL)
         {
-            switch (ins.semantic.reg.reg.type)
+            struct wined3d_shader_semantic *semantic = &ins.declaration.semantic;
+
+            switch (semantic->reg.reg.type)
             {
                 /* Mark input registers used. */
                 case WINED3DSPR_INPUT:
-                    reg_maps->input_registers |= 1 << ins.semantic.reg.reg.idx;
-                    shader_signature_from_semantic(&input_signature[ins.semantic.reg.reg.idx], &ins.semantic);
+                    reg_maps->input_registers |= 1 << semantic->reg.reg.idx;
+                    shader_signature_from_semantic(&input_signature[semantic->reg.reg.idx], semantic);
                     break;
 
                 /* Vertex shader: mark 3.0 output registers used, save token. */
                 case WINED3DSPR_OUTPUT:
-                    reg_maps->output_registers |= 1 << ins.semantic.reg.reg.idx;
-                    shader_signature_from_semantic(&output_signature[ins.semantic.reg.reg.idx], &ins.semantic);
-                    if (ins.semantic.usage == WINED3D_DECL_USAGE_FOG)
+                    reg_maps->output_registers |= 1 << semantic->reg.reg.idx;
+                    shader_signature_from_semantic(&output_signature[semantic->reg.reg.idx], semantic);
+                    if (semantic->usage == WINED3D_DECL_USAGE_FOG)
                         reg_maps->fog = 1;
                     break;
 
                 /* Save sampler usage token. */
                 case WINED3DSPR_SAMPLER:
-                    reg_maps->sampler_type[ins.semantic.reg.reg.idx] = ins.semantic.sampler_type;
+                    reg_maps->sampler_type[semantic->reg.reg.idx] = semantic->sampler_type;
                     break;
 
                 default:
-                    TRACE("Not recording DCL register type %#x.\n", ins.semantic.reg.reg.type);
+                    TRACE("Not recording DCL register type %#x.\n", semantic->reg.reg.type);
                     break;
             }
         }
@@ -1314,10 +1316,10 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
 
         if (ins.handler_idx == WINED3DSIH_DCL)
         {
-            shader_dump_decl_usage(&ins.semantic, &shader_version);
-            shader_dump_ins_modifiers(&ins.semantic.reg);
+            shader_dump_decl_usage(&ins.declaration.semantic, &shader_version);
+            shader_dump_ins_modifiers(&ins.declaration.semantic.reg);
             TRACE(" ");
-            shader_dump_dst_param(&ins.semantic.reg, &shader_version);
+            shader_dump_dst_param(&ins.declaration.semantic.reg, &shader_version);
         }
         else if (ins.handler_idx == WINED3DSIH_DEF)
         {

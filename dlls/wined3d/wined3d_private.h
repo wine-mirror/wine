@@ -663,7 +663,10 @@ struct wined3d_shader_instruction
     const struct wined3d_shader_dst_param *dst;
     UINT src_count;
     const struct wined3d_shader_src_param *src;
-    struct wined3d_shader_semantic semantic;
+    union
+    {
+        struct wined3d_shader_semantic semantic;
+    } declaration;
 };
 
 struct wined3d_shader_attribute

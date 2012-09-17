@@ -670,7 +670,7 @@ static void shader_sm1_read_instruction(void *data, const DWORD **ptr, struct wi
 
     if (ins->handler_idx == WINED3DSIH_DCL)
     {
-        shader_sm1_read_semantic(&p, &ins->semantic);
+        shader_sm1_read_semantic(&p, &ins->declaration.semantic);
     }
     else if (ins->handler_idx == WINED3DSIH_DEF)
     {
