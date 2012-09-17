@@ -88,19 +88,19 @@ typedef struct {
     const wchar_t *pos;
 } basic_string_wchar_reverse_iter;
 
-const struct locale* (CDECL *plocale_classic)(void);
-MSVCP_size_t (CDECL *pcollate_char__Getcat)(const struct locale_facet**,const struct locale*);
-MSVCP_size_t (CDECL *pcollate_wchar__Getcat)(const struct locale_facet**,const struct locale*);
-MSVCP_size_t (CDECL *pcollate_short__Getcat)(const struct locale_facet**,const struct locale*);
-MSVCP_size_t (CDECL *pctype_char__Getcat)(const struct locale_facet**,const struct locale*);
-MSVCP_size_t (CDECL *pctype_wchar__Getcat)(const struct locale_facet**,const struct locale*);
-MSVCP_size_t (CDECL *pctype_short__Getcat)(const struct locale_facet**,const struct locale*);
-MSVCP_size_t (CDECL *pcodecvt_char__Getcat)(const struct locale_facet**,const struct locale*);
-MSVCP_size_t (CDECL *pcodecvt_wchar__Getcat)(const struct locale_facet**,const struct locale*);
-MSVCP_size_t (CDECL *pcodecvt_short__Getcat)(const struct locale_facet**,const struct locale*);
-MSVCP_size_t (CDECL *pnumpunct_char__Getcat)(const struct locale_facet**,const struct locale*);
-MSVCP_size_t (CDECL *pnumpunct_wchar__Getcat)(const struct locale_facet**,const struct locale*);
-MSVCP_size_t (CDECL *pnumpunct_short__Getcat)(const struct locale_facet**,const struct locale*);
+static const struct locale* (CDECL *plocale_classic)(void);
+static MSVCP_size_t (CDECL *pcollate_char__Getcat)(const struct locale_facet**,const struct locale*);
+static MSVCP_size_t (CDECL *pcollate_wchar__Getcat)(const struct locale_facet**,const struct locale*);
+static MSVCP_size_t (CDECL *pcollate_short__Getcat)(const struct locale_facet**,const struct locale*);
+static MSVCP_size_t (CDECL *pctype_char__Getcat)(const struct locale_facet**,const struct locale*);
+static MSVCP_size_t (CDECL *pctype_wchar__Getcat)(const struct locale_facet**,const struct locale*);
+static MSVCP_size_t (CDECL *pctype_short__Getcat)(const struct locale_facet**,const struct locale*);
+static MSVCP_size_t (CDECL *pcodecvt_char__Getcat)(const struct locale_facet**,const struct locale*);
+static MSVCP_size_t (CDECL *pcodecvt_wchar__Getcat)(const struct locale_facet**,const struct locale*);
+static MSVCP_size_t (CDECL *pcodecvt_short__Getcat)(const struct locale_facet**,const struct locale*);
+static MSVCP_size_t (CDECL *pnumpunct_char__Getcat)(const struct locale_facet**,const struct locale*);
+static MSVCP_size_t (CDECL *pnumpunct_wchar__Getcat)(const struct locale_facet**,const struct locale*);
+static MSVCP_size_t (CDECL *pnumpunct_short__Getcat)(const struct locale_facet**,const struct locale*);
 
 static BOOL init_funcs(void)
 {
