@@ -2168,7 +2168,7 @@ HRESULT CDECL wined3d_device_get_clip_status(const struct wined3d_device *device
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_set_material(struct wined3d_device *device, const struct wined3d_material *material)
+void CDECL wined3d_device_set_material(struct wined3d_device *device, const struct wined3d_material *material)
 {
     TRACE("device %p, material %p.\n", device, material);
 
@@ -2179,12 +2179,10 @@ HRESULT CDECL wined3d_device_set_material(struct wined3d_device *device, const s
     if (device->isRecordingState)
     {
         TRACE("Recording... not performing anything.\n");
-        return WINED3D_OK;
+        return;
     }
 
     device_invalidate_state(device, STATE_MATERIAL);
-
-    return WINED3D_OK;
 }
 
 HRESULT CDECL wined3d_device_get_material(const struct wined3d_device *device, struct wined3d_material *material)

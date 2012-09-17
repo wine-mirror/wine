@@ -5089,7 +5089,6 @@ static HRESULT WINAPI d3d_device7_GetViewport_FPUPreserve(IDirect3DDevice7 *ifac
 static HRESULT d3d_device7_SetMaterial(IDirect3DDevice7 *iface, D3DMATERIAL7 *material)
 {
     struct d3d_device *device = impl_from_IDirect3DDevice7(iface);
-    HRESULT hr;
 
     TRACE("iface %p, material %p.\n", iface, material);
 
@@ -5098,10 +5097,10 @@ static HRESULT d3d_device7_SetMaterial(IDirect3DDevice7 *iface, D3DMATERIAL7 *ma
 
     wined3d_mutex_lock();
     /* Note: D3DMATERIAL7 is compatible with struct wined3d_material. */
-    hr = wined3d_device_set_material(device->wined3d_device, (struct wined3d_material *)material);
+    wined3d_device_set_material(device->wined3d_device, (struct wined3d_material *)material);
     wined3d_mutex_unlock();
 
-    return hr_ddraw_from_wined3d(hr);
+    return D3D_OK;
 }
 
 static HRESULT WINAPI d3d_device7_SetMaterial_FPUSetup(IDirect3DDevice7 *iface, D3DMATERIAL7 *material)
