@@ -50,6 +50,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_CRS                   */ "crs",
     /* WINED3DSIH_CUT                   */ "cut",
     /* WINED3DSIH_DCL                   */ "dcl",
+    /* WINED3DSIH_DCL_INPUT_PRIMITIVE   */ "dcl_inputPrimitive",
     /* WINED3DSIH_DCL_VERTICES_OUT      */ "dcl_maxOutputVertexCount",
     /* WINED3DSIH_DEF                   */ "def",
     /* WINED3DSIH_DEFB                  */ "defb",
@@ -1241,6 +1242,49 @@ static void shader_dump_ins_modifiers(const struct wined3d_shader_dst_param *dst
     if (mmask) FIXME("_unrecognized_modifier(%#x)", mmask);
 }
 
+static void shader_dump_primitive_type(enum wined3d_primitive_type primitive_type)
+{
+    switch (primitive_type)
+    {
+        case WINED3D_PT_UNDEFINED:
+            TRACE("undefined");
+            break;
+        case WINED3D_PT_POINTLIST:
+            TRACE("pointlist");
+            break;
+        case WINED3D_PT_LINELIST:
+            TRACE("linelist");
+            break;
+        case WINED3D_PT_LINESTRIP:
+            TRACE("linestrip");
+            break;
+        case WINED3D_PT_TRIANGLELIST:
+            TRACE("trianglelist");
+            break;
+        case WINED3D_PT_TRIANGLESTRIP:
+            TRACE("trianglestrip");
+            break;
+        case WINED3D_PT_TRIANGLEFAN:
+            TRACE("trianglefan");
+            break;
+        case WINED3D_PT_LINELIST_ADJ:
+            TRACE("linelist_adj");
+            break;
+        case WINED3D_PT_LINESTRIP_ADJ:
+            TRACE("linestrip_adj");
+            break;
+        case WINED3D_PT_TRIANGLELIST_ADJ:
+            TRACE("trianglelist_adj");
+            break;
+        case WINED3D_PT_TRIANGLESTRIP_ADJ:
+            TRACE("trianglestrip_adj");
+            break;
+        default:
+            TRACE("<unrecognized_primitive_type %#x>", primitive_type);
+            break;
+    }
+}
+
 static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe_data, const DWORD *byte_code)
 {
     struct wined3d_shader_version shader_version;
@@ -1321,6 +1365,11 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
             shader_dump_ins_modifiers(&ins.declaration.semantic.reg);
             TRACE(" ");
             shader_dump_dst_param(&ins.declaration.semantic.reg, &shader_version);
+        }
+        else if (ins.handler_idx == WINED3DSIH_DCL_INPUT_PRIMITIVE)
+        {
+            TRACE("%s ", shader_opcode_names[ins.handler_idx]);
+            shader_dump_primitive_type(ins.declaration.primitive_type);
         }
         else if (ins.handler_idx == WINED3DSIH_DCL_VERTICES_OUT)
         {
