@@ -84,7 +84,7 @@ typedef struct {
     JSRegExp *jsregexp;
     BSTR str;
     INT last_index;
-    VARIANT last_index_var;
+    jsval_t last_index_val;
 } RegExpInstance;
 
 static const WCHAR sourceW[] = {'s','o','u','r','c','e',0};
@@ -3308,8 +3308,8 @@ static inline RegExpInstance *regexp_from_vdisp(vdisp_t *vdisp)
 static void set_last_index(RegExpInstance *This, DWORD last_index)
 {
     This->last_index = last_index;
-    VariantClear(&This->last_index_var);
-    num_set_val(&This->last_index_var, last_index);
+    jsval_release(This->last_index_val);
+    This->last_index_val = jsval_number(last_index);
 }
 
 static HRESULT do_regexp_match_next(script_ctx_t *ctx, RegExpInstance *regexp, DWORD rem_flags,
@@ -3542,13 +3542,13 @@ static HRESULT RegExp_lastIndex(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
     case DISPATCH_PROPERTYGET: {
         RegExpInstance *regexp = regexp_from_vdisp(jsthis);
 
-        return variant_to_jsval(&regexp->last_index_var, r);
+        return jsval_copy(regexp->last_index_val, r);
     }
     case DISPATCH_PROPERTYPUT: {
         RegExpInstance *regexp = regexp_from_vdisp(jsthis);
         HRESULT hres;
 
-        hres = jsval_to_variant(argv[0], &regexp->last_index_var);
+        hres = jsval_copy(argv[0], &regexp->last_index_val);
         if(FAILED(hres))
             return hres;
 
@@ -3765,7 +3765,7 @@ static void RegExp_destructor(jsdisp_t *dispex)
 
     if(This->jsregexp)
         js_DestroyRegExp(This->jsregexp);
-    VariantClear(&This->last_index_var);
+    jsval_release(This->last_index_val);
     SysFreeString(This->str);
     heap_free(This);
 }
@@ -3857,7 +3857,7 @@ HRESULT create_regexp(script_ctx_t *ctx, const WCHAR *exp, int len, DWORD flags,
         return E_FAIL;
     }
 
-    num_set_int(&regexp->last_index_var, 0);
+    regexp->last_index_val = jsval_number(0);
 
     *ret = &regexp->dispex;
     return S_OK;
