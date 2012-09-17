@@ -163,3 +163,10 @@ coclass WICIMDMetadataReader { interface IWICMetadataReader; }
     uuid(b92e345d-f52d-41f3-b562-081bc772e3b9)
 ]
 coclass WICGCEMetadataReader { interface IWICMetadataReader; }
+
+[
+    helpstring("WIC Application Extension Reader"),
+    threading(both),
+    uuid(1767b93a-b021-44ea-920f-863c11f4f768)
+]
+coclass WICAPEMetadataReader { interface IWICMetadataReader; }

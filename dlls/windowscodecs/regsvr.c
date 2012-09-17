@@ -1562,6 +1562,21 @@ static const struct reader_containers gce_containers[] = {
     { NULL } /* list terminator */
 };
 
+static const BYTE ape_magic[] = { 0x21, 0xff, 0x0b };
+
+static const struct metadata_pattern ape_metadata_pattern[] = {
+    { 0, 3, ape_magic, mask_all, 0 },
+    { 0 }
+};
+
+static const struct reader_containers ape_containers[] = {
+    {
+        &GUID_ContainerFormatGif,
+        ape_metadata_pattern
+    },
+    { NULL } /* list terminator */
+};
+
 static struct regsvr_metadatareader const metadatareader_list[] = {
     {   &CLSID_WICUnknownMetadataReader,
         "The Wine Project",
@@ -1622,6 +1637,16 @@ static struct regsvr_metadatareader const metadatareader_list[] = {
         &GUID_MetadataFormatGCE,
         0, 0, 0,
         gce_containers
+    },
+    {   &CLSID_WICAPEMetadataReader,
+        "The Wine Project",
+        "Application Extension Reader",
+        "1.0.0.0",
+        "1.0.0.0",
+        &GUID_VendorMicrosoft,
+        &GUID_MetadataFormatAPE,
+        0, 0, 0,
+        ape_containers
     },
     { NULL }			/* list terminator */
 };

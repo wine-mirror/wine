@@ -325,6 +325,115 @@ HRESULT GCEReader_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void **ppv)
     return MetadataReader_Create(&GCEReader_Vtbl, pUnkOuter, iid, ppv);
 }
 
+static HRESULT load_APE_metadata(IStream *stream, const GUID *vendor, DWORD options,
+                                 MetadataItem **items, DWORD *count)
+{
+#include "pshpack1.h"
+    struct application_extenstion
+    {
+        BYTE extension_introducer;
+        BYTE extension_label;
+        BYTE block_size;
+        BYTE application[11];
+    } ape_data;
+#include "poppack.h"
+    HRESULT hr;
+    ULONG bytesread, data_size, i;
+    MetadataItem *result;
+    BYTE subblock_size;
+    BYTE *data;
+
+    *items = NULL;
+    *count = 0;
+
+    hr = IStream_Read(stream, &ape_data, sizeof(ape_data), &bytesread);
+    if (FAILED(hr) || bytesread != sizeof(ape_data)) return S_OK;
+    if (ape_data.extension_introducer != 0x21 || ape_data.extension_label != 0xff ||
+        ape_data.block_size != 11)
+        return S_OK;
+
+    data = NULL;
+    data_size = 0;
+
+    for (;;)
+    {
+        hr = IStream_Read(stream, &subblock_size, sizeof(subblock_size), &bytesread);
+        if (FAILED(hr) || bytesread != sizeof(subblock_size))
+        {
+            HeapFree(GetProcessHeap(), 0, data);
+            return S_OK;
+        }
+        if (!subblock_size) break;
+
+        if (!data)
+            data = HeapAlloc(GetProcessHeap(), 0, subblock_size + 1);
+        else
+        {
+            BYTE *new_data = HeapReAlloc(GetProcessHeap(), 0, data, data_size + subblock_size + 1);
+            if (!new_data)
+            {
+                HeapFree(GetProcessHeap(), 0, data);
+                return S_OK;
+            }
+            data = new_data;
+        }
+        data[data_size] = subblock_size;
+        hr = IStream_Read(stream, data + data_size + 1, subblock_size, &bytesread);
+        if (FAILED(hr) || bytesread != subblock_size)
+        {
+            HeapFree(GetProcessHeap(), 0, data);
+            return S_OK;
+        }
+        data_size += subblock_size + 1;
+    }
+
+    result = HeapAlloc(GetProcessHeap(), 0, sizeof(MetadataItem) * 2);
+    if (!result)
+    {
+        HeapFree(GetProcessHeap(), 0, data);
+        return E_OUTOFMEMORY;
+    }
+
+    for (i = 0; i < 2; i++)
+    {
+        PropVariantInit(&result[i].schema);
+        PropVariantInit(&result[i].id);
+        PropVariantInit(&result[i].value);
+    }
+
+    result[0].id.vt = VT_LPWSTR;
+    result[0].id.u.pwszVal = strdupAtoW("Application");
+    result[0].value.vt = VT_UI1|VT_VECTOR;
+    result[0].value.u.caub.cElems = sizeof(ape_data.application);
+    result[0].value.u.caub.pElems = HeapAlloc(GetProcessHeap(), 0, sizeof(ape_data.application));
+    memcpy(result[0].value.u.caub.pElems, ape_data.application, sizeof(ape_data.application));
+
+    result[1].id.vt = VT_LPWSTR;
+    result[1].id.u.pwszVal = strdupAtoW("Data");
+    result[1].value.vt = VT_UI1|VT_VECTOR;
+    result[1].value.u.caub.cElems = data_size;
+    result[1].value.u.caub.pElems = HeapAlloc(GetProcessHeap(), 0, data_size);
+    memcpy(result[1].value.u.caub.pElems, data, data_size);
+
+    HeapFree(GetProcessHeap(), 0, data);
+
+    *items = result;
+    *count = 2;
+
+    return S_OK;
+}
+
+static const MetadataHandlerVtbl APEReader_Vtbl = {
+    0,
+    &CLSID_WICAPEMetadataReader,
+    load_APE_metadata
+};
+
+HRESULT APEReader_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void **ppv)
+{
+    return MetadataReader_Create(&APEReader_Vtbl, pUnkOuter, iid, ppv);
+}
+
 static IStream *create_stream(const void *data, int data_size)
 {
     HRESULT hr;
