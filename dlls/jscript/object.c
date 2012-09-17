@@ -228,7 +228,7 @@ static HRESULT ObjectConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
             if(!is_undefined(argv[0]) && !is_null(argv[0]) && (!is_object_instance(argv[0]) || get_object(argv[0]))) {
                 IDispatch *disp;
 
-                hres = to_object_jsval(ctx, argv[0], &disp);
+                hres = to_object(ctx, argv[0], &disp);
                 if(FAILED(hres))
                     return hres;
 

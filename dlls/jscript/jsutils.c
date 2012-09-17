@@ -760,31 +760,30 @@ HRESULT to_string(script_ctx_t *ctx, jsval_t val, jsexcept_t *ei, BSTR *str)
 }
 
 /* ECMA-262 3rd Edition    9.9 */
-HRESULT to_object(script_ctx_t *ctx, VARIANT *v, IDispatch **disp)
+HRESULT to_object(script_ctx_t *ctx, jsval_t val, IDispatch **disp)
 {
     jsdisp_t *dispex;
     HRESULT hres;
 
-    switch(V_VT(v)) {
-    case VT_BSTR:
-        hres = create_string(ctx, V_BSTR(v), SysStringLen(V_BSTR(v)), &dispex);
+    switch(val.type) {
+    case JSV_STRING:
+        hres = create_string(ctx, get_string(val), SysStringLen(get_string(val)), &dispex);
         if(FAILED(hres))
             return hres;
 
         *disp = to_disp(dispex);
         break;
-    case VT_I4:
-    case VT_R8:
-        hres = create_number(ctx, num_val(v), &dispex);
+    case JSV_NUMBER:
+        hres = create_number(ctx, get_number(val), &dispex);
         if(FAILED(hres))
             return hres;
 
         *disp = to_disp(dispex);
         break;
-    case VT_DISPATCH:
-        if(V_DISPATCH(v)) {
-            IDispatch_AddRef(V_DISPATCH(v));
-            *disp = V_DISPATCH(v);
+    case JSV_OBJECT:
+        if(get_object(val)) {
+            *disp = get_object(val);
+            IDispatch_AddRef(*disp);
         }else {
             jsdisp_t *obj;
 
@@ -795,45 +794,34 @@ HRESULT to_object(script_ctx_t *ctx, VARIANT *v, IDispatch **disp)
             *disp = to_disp(obj);
         }
         break;
-    case VT_BOOL:
-        hres = create_bool(ctx, V_BOOL(v), &dispex);
+    case JSV_BOOL:
+        hres = create_bool(ctx, get_bool(val), &dispex);
         if(FAILED(hres))
             return hres;
 
         *disp = to_disp(dispex);
         break;
-    case VT_ARRAY|VT_VARIANT:
-        hres = create_vbarray(ctx, V_ARRAY(v), &dispex);
-        if(FAILED(hres))
-            return hres;
+    case JSV_VARIANT:
+        switch(V_VT(get_variant(val))) {
+        case VT_ARRAY|VT_VARIANT:
+            hres = create_vbarray(ctx, V_ARRAY(get_variant(val)), &dispex);
+            if(FAILED(hres))
+                return hres;
 
-        *disp = to_disp(dispex);
+            *disp = to_disp(dispex);
+            break;
+
+        default:
+            FIXME("Unsupported %s\n", debugstr_variant(get_variant(val)));
+            return E_NOTIMPL;
+        }
         break;
     default:
-        FIXME("unsupported vt %d\n", V_VT(v));
+        FIXME("unsupported %s\n", debugstr_jsval(val));
         return E_NOTIMPL;
     }
 
     return S_OK;
-}
-
-/* ECMA-262 3rd Edition    9.9 */
-HRESULT to_object_jsval(script_ctx_t *ctx, jsval_t v, IDispatch **disp)
-{
-    VARIANT var;
-    HRESULT hres;
-
-    if(is_object_instance(v)) {
-        *disp = get_object(v);
-        IDispatch_AddRef(*disp);
-        return S_OK;
-    }
-
-    hres = jsval_to_variant(v, &var);
-    if(FAILED(hres))
-        return hres;
-
-    return to_object(ctx, &var, disp);
 }
 
 HRESULT variant_change_type(script_ctx_t *ctx, VARIANT *dst, VARIANT *src, VARTYPE vt)

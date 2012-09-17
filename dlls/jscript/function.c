@@ -389,7 +389,7 @@ static HRESULT Function_apply(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
 
     if(argc) {
         if(!is_undefined(argv[0]) && !is_null(argv[0])) {
-            hres = to_object_jsval(ctx, argv[0], &this_obj);
+            hres = to_object(ctx, argv[0], &this_obj);
             if(FAILED(hres))
                 return hres;
         }
@@ -442,7 +442,7 @@ static HRESULT Function_call(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
 
     if(argc) {
         if(!is_undefined(argv[0]) && !is_null(argv[0])) {
-            hres = to_object_jsval(ctx, argv[0], &this_obj);
+            hres = to_object(ctx, argv[0], &this_obj);
             if(FAILED(hres))
                 return hres;
         }

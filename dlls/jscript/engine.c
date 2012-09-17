@@ -148,7 +148,7 @@ static HRESULT stack_pop_object(exec_ctx_t *ctx, IDispatch **r)
         return S_OK;
     }
 
-    hres = to_object_jsval(ctx->script, v, r);
+    hres = to_object(ctx->script, v, r);
     jsval_release(v);
     return hres;
 }
@@ -627,7 +627,7 @@ static HRESULT interp_push_scope(exec_ctx_t *ctx)
     TRACE("\n");
 
     v = stack_pop(ctx);
-    hres = to_object_jsval(ctx->script, v, &disp);
+    hres = to_object(ctx->script, v, &disp);
     jsval_release(v);
     if(FAILED(hres))
         return hres;
@@ -878,7 +878,7 @@ static HRESULT interp_memberid(exec_ctx_t *ctx)
     namev = stack_pop(ctx);
     objv = stack_pop(ctx);
 
-    hres = to_object_jsval(ctx->script, objv, &obj);
+    hres = to_object(ctx->script, objv, &obj);
     jsval_release(objv);
     if(SUCCEEDED(hres)) {
         hres = to_string(ctx->script, namev, ctx->ei, &name);
@@ -1578,7 +1578,7 @@ static HRESULT interp_delete(exec_ctx_t *ctx)
     namev = stack_pop(ctx);
     objv = stack_pop(ctx);
 
-    hres = to_object_jsval(ctx->script, objv, &obj);
+    hres = to_object(ctx->script, objv, &obj);
     jsval_release(objv);
     if(FAILED(hres)) {
         jsval_release(namev);
