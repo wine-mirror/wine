@@ -170,3 +170,10 @@ coclass WICGCEMetadataReader { interface IWICMetadataReader; }
     uuid(1767b93a-b021-44ea-920f-863c11f4f768)
 ]
 coclass WICAPEMetadataReader { interface IWICMetadataReader; }
+
+[
+    helpstring("WIC Comment Extension Reader"),
+    threading(both),
+    uuid(32557d3b-69dc-4f95-836e-f5972b2f6159)
+]
+coclass WICGifCommentMetadataReader { interface IWICMetadataReader; }
