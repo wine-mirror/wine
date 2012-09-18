@@ -921,7 +921,8 @@ static BOOL compare_hlsl_types(const struct hlsl_type *t1, const struct hlsl_typ
         return FALSE;
     if (t1->base_type == HLSL_TYPE_SAMPLER && t1->sampler_dim != t2->sampler_dim)
         return FALSE;
-    if (t1->modifiers != t2->modifiers)
+    if ((t1->modifiers & HLSL_MODIFIERS_COMPARISON_MASK)
+            != (t2->modifiers & HLSL_MODIFIERS_COMPARISON_MASK))
         return FALSE;
     if (t1->dimx != t2->dimx)
         return FALSE;

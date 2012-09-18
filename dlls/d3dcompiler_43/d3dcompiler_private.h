@@ -732,6 +732,8 @@ struct hlsl_ir_node
 #define HLSL_MODIFIER_IN             0x00000800
 #define HLSL_MODIFIER_OUT            0x00001000
 
+#define HLSL_MODIFIERS_COMPARISON_MASK (HLSL_MODIFIER_ROW_MAJOR | HLSL_MODIFIER_COLUMN_MAJOR)
+
 struct hlsl_ir_var
 {
     struct hlsl_ir_node node;
