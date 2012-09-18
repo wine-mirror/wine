@@ -4962,8 +4962,8 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
     }
     else
     {
-        caps->VertexShaderVersion          = shader_caps.VertexShaderVersion;
-        caps->MaxVertexShaderConst         = shader_caps.MaxVertexShaderConst;
+        caps->VertexShaderVersion = shader_caps.vs_version;
+        caps->MaxVertexShaderConst = shader_caps.vs_uniform_count;
     }
 
     if (ps_selected_mode == SHADER_NONE)
@@ -4972,8 +4972,8 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
         caps->PixelShaderVersion           = 0;
         caps->PixelShader1xMaxValue        = 0.0f;
     } else {
-        caps->PixelShaderVersion           = shader_caps.PixelShaderVersion;
-        caps->PixelShader1xMaxValue        = shader_caps.PixelShader1xMaxValue;
+        caps->PixelShaderVersion = shader_caps.ps_version;
+        caps->PixelShader1xMaxValue = shader_caps.ps_1x_max_value;
     }
 
     caps->TextureOpCaps                    = fragment_caps.TextureOpCaps;

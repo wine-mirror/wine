@@ -5547,11 +5547,12 @@ HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
     if (device->shader_backend)
     {
         device->shader_backend->shader_get_caps(&adapter->gl_info, &shader_caps);
-        device->vshader_version = shader_caps.VertexShaderVersion;
-        device->pshader_version = shader_caps.PixelShaderVersion;
-        device->d3d_vshader_constantF = shader_caps.MaxVertexShaderConst;
-        device->d3d_pshader_constantF = shader_caps.MaxPixelShaderConst;
-        device->vs_clipping = shader_caps.VSClipping;
+        device->vs_version = shader_caps.vs_version;
+        device->gs_version = shader_caps.gs_version;
+        device->ps_version = shader_caps.ps_version;
+        device->d3d_vshader_constantF = shader_caps.vs_uniform_count;
+        device->d3d_pshader_constantF = shader_caps.ps_uniform_count;
+        device->vs_clipping = shader_caps.vs_clipping;
     }
     fragment_pipeline = adapter->fragment_pipe;
     device->frag_pipe = fragment_pipeline;

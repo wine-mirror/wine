@@ -702,15 +702,17 @@ extern const struct wined3d_shader_frontend sm4_shader_frontend DECLSPEC_HIDDEN;
 
 typedef void (*SHADER_HANDLER)(const struct wined3d_shader_instruction *);
 
-struct shader_caps {
-    DWORD               VertexShaderVersion;
-    DWORD               MaxVertexShaderConst;
+struct shader_caps
+{
+    UINT vs_version;
+    UINT gs_version;
+    UINT ps_version;
 
-    DWORD               PixelShaderVersion;
-    float               PixelShader1xMaxValue;
-    DWORD               MaxPixelShaderConst;
+    DWORD vs_uniform_count;
+    DWORD ps_uniform_count;
+    float ps_1x_max_value;
 
-    BOOL                VSClipping;
+    BOOL vs_clipping;
 };
 
 enum tex_types
@@ -1696,7 +1698,7 @@ struct wined3d_device
     const struct blit_shader *blitter;
 
     unsigned int max_ffp_textures;
-    DWORD vshader_version, pshader_version;
+    UINT vs_version, gs_version, ps_version;
     DWORD d3d_vshader_constantF, d3d_pshader_constantF; /* Advertised d3d caps, not GL ones */
     DWORD vs_clipping;
 

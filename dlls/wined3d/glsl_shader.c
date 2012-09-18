@@ -4964,27 +4964,25 @@ static void shader_glsl_context_destroyed(void *shader_priv, const struct wined3
 
 static void shader_glsl_get_caps(const struct wined3d_gl_info *gl_info, struct shader_caps *caps)
 {
+    UINT shader_model;
+
     if (gl_info->supported[EXT_GPU_SHADER4] && gl_info->supported[ARB_GEOMETRY_SHADER4]
             && gl_info->glsl_version >= MAKEDWORD_VERSION(1, 50))
-    {
-        caps->VertexShaderVersion = 4;
-        caps->PixelShaderVersion = 4;
-    }
+        shader_model = 4;
     /* ARB_shader_texture_lod or EXT_gpu_shader4 is required for the SM3
      * texldd and texldl instructions. */
     else if (gl_info->supported[ARB_SHADER_TEXTURE_LOD] || gl_info->supported[EXT_GPU_SHADER4])
-    {
-        caps->VertexShaderVersion = 3;
-        caps->PixelShaderVersion = 3;
-    }
+        shader_model = 3;
     else
-    {
-        caps->VertexShaderVersion = 2;
-        caps->PixelShaderVersion = 2;
-    }
+        shader_model = 2;
+    TRACE("Shader model %u.\n", shader_model);
 
-    caps->MaxVertexShaderConst = gl_info->limits.glsl_vs_float_constants;
-    caps->MaxPixelShaderConst = gl_info->limits.glsl_ps_float_constants;
+    caps->vs_version = shader_model;
+    caps->gs_version = shader_model;
+    caps->ps_version = shader_model;
+
+    caps->vs_uniform_count = gl_info->limits.glsl_vs_float_constants;
+    caps->ps_uniform_count = gl_info->limits.glsl_ps_float_constants;
 
     /* FIXME: The following line is card dependent. -8.0 to 8.0 is the
      * Direct3D minimum requirement.
@@ -4998,12 +4996,9 @@ static void shader_glsl_get_caps(const struct wined3d_gl_info *gl_info, struct s
      * the shader will generate incorrect results too. Unfortunately, GL deliberately doesn't
      * offer a way to query this.
      */
-    caps->PixelShader1xMaxValue = 8.0;
+    caps->ps_1x_max_value = 8.0;
 
-    caps->VSClipping = TRUE;
-
-    TRACE("Hardware vertex shader version %u enabled (GLSL).\n", caps->VertexShaderVersion);
-    TRACE("Hardware pixel shader version %u enabled (GLSL).\n", caps->PixelShaderVersion);
+    caps->vs_clipping = TRUE;
 }
 
 static BOOL shader_glsl_color_fixup_supported(struct color_fixup_desc fixup)

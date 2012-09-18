@@ -1482,12 +1482,13 @@ static void shader_none_context_destroyed(void *shader_priv, const struct wined3
 static void shader_none_get_caps(const struct wined3d_gl_info *gl_info, struct shader_caps *caps)
 {
     /* Set the shader caps to 0 for the none shader backend */
-    caps->VertexShaderVersion = 0;
-    caps->MaxVertexShaderConst = 0;
-    caps->PixelShaderVersion = 0;
-    caps->PixelShader1xMaxValue = 0.0f;
-    caps->MaxPixelShaderConst = 0;
-    caps->VSClipping = FALSE;
+    caps->vs_version = 0;
+    caps->gs_version = 0;
+    caps->ps_version = 0;
+    caps->vs_uniform_count = 0;
+    caps->ps_uniform_count = 0;
+    caps->ps_1x_max_value = 0.0f;
+    caps->vs_clipping = FALSE;
 }
 
 static BOOL shader_none_color_fixup_supported(struct color_fixup_desc fixup)
@@ -1581,10 +1582,13 @@ static HRESULT shader_set_function(struct wined3d_shader *shader, const DWORD *b
     switch (type)
     {
         case WINED3D_SHADER_TYPE_VERTEX:
-            backend_version = shader->device->vshader_version;
+            backend_version = shader->device->vs_version;
+            break;
+        case WINED3D_SHADER_TYPE_GEOMETRY:
+            backend_version = shader->device->gs_version;
             break;
         case WINED3D_SHADER_TYPE_PIXEL:
-            backend_version = shader->device->pshader_version;
+            backend_version = shader->device->ps_version;
             break;
         default:
             FIXME("No backend version-checking for this shader type\n");
