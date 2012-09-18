@@ -1285,15 +1285,18 @@ static HRESULT WINAPI GifDecoder_Block_GetContainerFormat(IWICMetadataBlockReade
 static HRESULT WINAPI GifDecoder_Block_GetCount(IWICMetadataBlockReader *iface,
     UINT *count)
 {
+    GifDecoder *This = impl_from_IWICMetadataBlockReader(iface);
+
     TRACE("%p,%p\n", iface, count);
 
     if (!count) return E_INVALIDARG;
 
-    *count = 1;
+    *count = This->gif->Extensions.ExtensionBlockCount + 1;
     return S_OK;
 }
 
-static HRESULT create_LSD_metadata_reader(GifDecoder *This, IWICMetadataReader **reader)
+static HRESULT create_metadata_reader(const void *data, int data_size,
+                                      const CLSID *clsid, IWICMetadataReader **reader)
 {
     HRESULT hr;
     IWICMetadataReader *metadata_reader;
@@ -1302,7 +1305,7 @@ static HRESULT create_LSD_metadata_reader(GifDecoder *This, IWICMetadataReader *
 
     /* FIXME: Use IWICComponentFactory_CreateMetadataReader once it's implemented */
 
-    hr = CoCreateInstance(&CLSID_WICLSDMetadataReader, NULL, CLSCTX_INPROC_SERVER,
+    hr = CoCreateInstance(clsid, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IWICMetadataReader, (void **)&metadata_reader);
     if (FAILED(hr)) return hr;
 
@@ -1313,7 +1316,7 @@ static HRESULT create_LSD_metadata_reader(GifDecoder *This, IWICMetadataReader *
         return hr;
     }
 
-    stream = create_stream(This->LSD_data, sizeof(This->LSD_data));
+    stream = create_stream(data, data_size);
     IWICPersistStream_LoadEx(persist, stream, NULL, WICPersistOptionsDefault);
     IStream_Release(stream);
 
@@ -1327,12 +1330,35 @@ static HRESULT WINAPI GifDecoder_Block_GetReaderByIndex(IWICMetadataBlockReader 
     UINT index, IWICMetadataReader **reader)
 {
     GifDecoder *This = impl_from_IWICMetadataBlockReader(iface);
+    int i;
 
     TRACE("(%p,%u,%p)\n", iface, index, reader);
 
-    if (!reader || index != 0) return E_INVALIDARG;
+    if (!reader) return E_INVALIDARG;
 
-    return create_LSD_metadata_reader(This, reader);
+    if (index == 0)
+        return create_metadata_reader(&This->LSD_data, sizeof(This->LSD_data),
+                                      &CLSID_WICLSDMetadataReader, reader);
+
+    for (i = 0; i < This->gif->Extensions.ExtensionBlockCount; i++)
+    {
+        const CLSID *clsid;
+
+        if (index != i + 1) continue;
+
+        if (This->gif->Extensions.ExtensionBlocks[i].Function == APPLICATION_EXT_FUNC_CODE)
+            clsid = &CLSID_WICAPEMetadataReader;
+        else if (This->gif->Extensions.ExtensionBlocks[i].Function == COMMENT_EXT_FUNC_CODE)
+            clsid = &CLSID_WICGifCommentMetadataReader;
+        else
+            clsid = &CLSID_WICUnknownMetadataReader;
+
+        return create_metadata_reader(This->gif->Extensions.ExtensionBlocks[i].Bytes,
+                                      This->gif->Extensions.ExtensionBlocks[i].ByteCount,
+                                      clsid, reader);
+    }
+
+    return E_INVALIDARG;
 }
 
 static HRESULT WINAPI GifDecoder_Block_GetEnumerator(IWICMetadataBlockReader *iface,

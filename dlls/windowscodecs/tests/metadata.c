@@ -1204,7 +1204,6 @@ static void test_metadata_gif(void)
 
         hr = IWICMetadataBlockReader_GetCount(blockreader, &count);
         ok(hr == S_OK, "GetCount error %#x\n", hr);
-todo_wine
         ok(count == 4, "expected 4, got %u\n", count);
 
         hr = IWICMetadataBlockReader_GetReaderByIndex(blockreader, 0, &reader);
@@ -1226,7 +1225,6 @@ todo_wine
         }
 
         hr = IWICMetadataBlockReader_GetReaderByIndex(blockreader, 1, &reader);
-todo_wine
         ok(hr == S_OK, "GetReaderByIndex error %#x\n", hr);
 
         if (SUCCEEDED(hr))
@@ -1245,7 +1243,6 @@ todo_wine
         }
 
         hr = IWICMetadataBlockReader_GetReaderByIndex(blockreader, 2, &reader);
-todo_wine
         ok(hr == S_OK, "GetReaderByIndex error %#x\n", hr);
 
         if (SUCCEEDED(hr))
@@ -1264,7 +1261,6 @@ todo_wine
         }
 
         hr = IWICMetadataBlockReader_GetReaderByIndex(blockreader, 3, &reader);
-todo_wine
         ok(hr == S_OK, "GetReaderByIndex error %#x\n", hr);
 
         if (SUCCEEDED(hr))
