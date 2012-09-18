@@ -582,8 +582,8 @@ static void test_urlcacheA(void)
     memset(lpCacheEntryInfo, 0, cbCacheEntryInfo);
     ret = GetUrlCacheEntryInfo(TEST_URL, lpCacheEntryInfo, &cbCacheEntryInfo);
     ok(ret, "GetUrlCacheEntryInfo failed with error %d\n", GetLastError());
-    ok(lpCacheEntryInfo->CacheEntryType & DELETED_CACHE_ENTRY,
-        "CacheEntryType hasn't DELETED_CACHE_ENTRY set, (flags %08x)\n",
+    ok(lpCacheEntryInfo->CacheEntryType & 0x400000,
+        "CacheEntryType hasn't PENDING_DELETE_CACHE_ENTRY set, (flags %08x)\n",
         lpCacheEntryInfo->CacheEntryType);
     HeapFree(GetProcessHeap(), 0, lpCacheEntryInfo);
 

@@ -79,6 +79,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 #define HASHTABLE_REDR          5
 #define HASHTABLE_FLAG_BITS     5
 
+#define PENDING_DELETE_CACHE_ENTRY  0x00400000
+
 #define DWORD_SIG(a,b,c,d)  (a | (b << 8) | (c << 16) | (d << 24))
 #define URL_SIGNATURE   DWORD_SIG('U','R','L',' ')
 #define REDR_SIGNATURE  DWORD_SIG('R','E','D','R')
@@ -2193,7 +2195,7 @@ static BOOL DeleteUrlCacheEntryInternal(LPURLCACHE_HEADER pHeader,
     {
         /* FIXME: implement timeout object unlocking */
         TRACE("Trying to delete locked entry\n");
-        pUrlEntry->CacheEntryType |= DELETED_CACHE_ENTRY;
+        pUrlEntry->CacheEntryType |= PENDING_DELETE_CACHE_ENTRY;
         SetLastError(ERROR_SHARING_VIOLATION);
         return FALSE;
     }
@@ -2294,7 +2296,7 @@ BOOL WINAPI UnlockUrlCacheEntryFileA(
     if (!pUrlEntry->dwUseCount)
     {
         URLCache_HashEntrySetFlags(pHashEntry, HASHTABLE_URL);
-        if (pUrlEntry->CacheEntryType & DELETED_CACHE_ENTRY)
+        if (pUrlEntry->CacheEntryType & PENDING_DELETE_CACHE_ENTRY)
             DeleteUrlCacheEntryInternal(pHeader, pHashEntry);
     }
 
