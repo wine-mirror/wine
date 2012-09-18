@@ -175,6 +175,76 @@ static BOOL declare_variable(struct hlsl_ir_var *decl, BOOL local)
 
 static DWORD add_modifier(DWORD modifiers, DWORD mod, const struct YYLTYPE *loc);
 
+BOOL add_type_to_scope(struct hlsl_scope *scope, struct hlsl_type *def)
+{
+    if (get_type(scope, def->name, FALSE))
+        return FALSE;
+
+    list_add_tail(&scope->types, &def->scope_entry);
+    return TRUE;
+}
+
+static void declare_predefined_types(struct hlsl_scope *scope)
+{
+    struct hlsl_type *type;
+    unsigned int x, y, bt;
+    static const char *names[] =
+    {
+        "float",
+        "half",
+        "double",
+        "int",
+        "uint",
+        "bool",
+    };
+    char name[10];
+
+    for (bt = 0; bt <= HLSL_TYPE_LAST_SCALAR; ++bt)
+    {
+        for (y = 1; y <= 4; ++y)
+        {
+            for (x = 1; x <= 4; ++x)
+            {
+                sprintf(name, "%s%ux%u", names[bt], x, y);
+                type = new_hlsl_type(d3dcompiler_strdup(name), HLSL_CLASS_MATRIX, bt, x, y);
+                add_type_to_scope(scope, type);
+
+                if (y == 1)
+                {
+                    sprintf(name, "%s%u", names[bt], x);
+                    type = new_hlsl_type(d3dcompiler_strdup(name), HLSL_CLASS_VECTOR, bt, x, y);
+                    add_type_to_scope(scope, type);
+
+                    if (x == 1)
+                    {
+                        sprintf(name, "%s", names[bt]);
+                        type = new_hlsl_type(d3dcompiler_strdup(name), HLSL_CLASS_SCALAR, bt, x, y);
+                        add_type_to_scope(scope, type);
+                    }
+                }
+            }
+        }
+    }
+
+    /* DX8 effects predefined types */
+    type = new_hlsl_type(d3dcompiler_strdup("DWORD"), HLSL_CLASS_SCALAR, HLSL_TYPE_INT, 1, 1);
+    add_type_to_scope(scope, type);
+    type = new_hlsl_type(d3dcompiler_strdup("FLOAT"), HLSL_CLASS_SCALAR, HLSL_TYPE_FLOAT, 1, 1);
+    add_type_to_scope(scope, type);
+    type = new_hlsl_type(d3dcompiler_strdup("VECTOR"), HLSL_CLASS_VECTOR, HLSL_TYPE_FLOAT, 4, 1);
+    add_type_to_scope(scope, type);
+    type = new_hlsl_type(d3dcompiler_strdup("MATRIX"), HLSL_CLASS_MATRIX, HLSL_TYPE_FLOAT, 4, 4);
+    add_type_to_scope(scope, type);
+    type = new_hlsl_type(d3dcompiler_strdup("STRING"), HLSL_CLASS_OBJECT, HLSL_TYPE_STRING, 1, 1);
+    add_type_to_scope(scope, type);
+    type = new_hlsl_type(d3dcompiler_strdup("TEXTURE"), HLSL_CLASS_OBJECT, HLSL_TYPE_TEXTURE, 1, 1);
+    add_type_to_scope(scope, type);
+    type = new_hlsl_type(d3dcompiler_strdup("PIXELSHADER"), HLSL_CLASS_OBJECT, HLSL_TYPE_PIXELSHADER, 1, 1);
+    add_type_to_scope(scope, type);
+    type = new_hlsl_type(d3dcompiler_strdup("VERTEXSHADER"), HLSL_CLASS_OBJECT, HLSL_TYPE_VERTEXSHADER, 1, 1);
+    add_type_to_scope(scope, type);
+}
+
 static unsigned int components_count_expr_list(struct list *list)
 {
     struct hlsl_ir_node *node;
@@ -1486,6 +1556,7 @@ struct bwriter_shader *parse_hlsl(enum shader_type type, DWORD major, DWORD mino
 
     push_scope(&hlsl_ctx);
     hlsl_ctx.globals = hlsl_ctx.cur_scope;
+    declare_predefined_types(hlsl_ctx.globals);
 
     hlsl_parse();
 

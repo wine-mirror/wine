@@ -860,7 +860,15 @@ struct hlsl_type *new_array_type(struct hlsl_type *basic_type, unsigned int arra
 
 struct hlsl_type *get_type(struct hlsl_scope *scope, const char *name, BOOL recursive)
 {
-    FIXME("stub.\n");
+    struct hlsl_type *type;
+
+    LIST_FOR_EACH_ENTRY(type, &scope->types, struct hlsl_type, scope_entry)
+    {
+        if (strcmp(type->name, name) == 0)
+            return type;
+    }
+    if (recursive && scope->upper)
+        return get_type(scope->upper, name, recursive);
     return NULL;
 }
 
