@@ -236,7 +236,6 @@ struct _exec_ctx_t {
     except_frame_t *except_frame;
 
     unsigned ip;
-    jsexcept_t *ei;
 };
 
 static inline void exec_addref(exec_ctx_t *ctx)

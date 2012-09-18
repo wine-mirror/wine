@@ -685,8 +685,8 @@ static HRESULT interp_throw(exec_ctx_t *ctx)
 {
     TRACE("\n");
 
-    jsval_release(ctx->ei->val);
-    ctx->ei->val = stack_pop(ctx);
+    jsval_release(ctx->script->ei.val);
+    ctx->script->ei.val = stack_pop(ctx);
     return DISP_E_EXCEPTION;
 }
 
@@ -778,7 +778,7 @@ static HRESULT interp_end_finally(exec_ctx_t *ctx)
         jsval_release(v);
         stack_popn(ctx, 1);
 
-        ctx->ei->val = stack_pop(ctx);
+        ctx->script->ei.val = stack_pop(ctx);
         return SUCCEEDED(hres) ? DISP_E_EXCEPTION : hres;
     }
 
@@ -2395,8 +2395,9 @@ static HRESULT unwind_exception(exec_ctx_t *ctx)
 
     ctx->ip = except_frame->catch_off;
 
-    except_val = ctx->ei->val;
-    memset(ctx->ei, 0, sizeof(*ctx->ei));
+    except_val = ctx->script->ei.val;
+    ctx->script->ei.val = jsval_undefined();
+    clear_ei(ctx->script);
 
     ident = except_frame->ident;
     heap_free(except_frame);
@@ -2431,7 +2432,7 @@ static HRESULT unwind_exception(exec_ctx_t *ctx)
     return hres;
 }
 
-static HRESULT enter_bytecode(script_ctx_t *ctx, bytecode_t *code, function_code_t *func, jsexcept_t *ei, jsval_t *ret)
+static HRESULT enter_bytecode(script_ctx_t *ctx, bytecode_t *code, function_code_t *func, jsval_t *ret)
 {
     exec_ctx_t *exec_ctx = ctx->exec_ctx;
     except_frame_t *prev_except_frame;
@@ -2439,7 +2440,6 @@ static HRESULT enter_bytecode(script_ctx_t *ctx, bytecode_t *code, function_code
     unsigned prev_ip, prev_top;
     scope_chain_t *prev_scope;
     bytecode_t *prev_code;
-    jsexcept_t *prev_ei;
     jsop_t op;
     HRESULT hres = S_OK;
 
@@ -2449,11 +2449,9 @@ static HRESULT enter_bytecode(script_ctx_t *ctx, bytecode_t *code, function_code
     prev_scope = exec_ctx->scope_chain;
     prev_except_frame = exec_ctx->except_frame;
     prev_ip = exec_ctx->ip;
-    prev_ei = exec_ctx->ei;
     prev_code = exec_ctx->code;
     prev_func = exec_ctx->func_code;
     exec_ctx->ip = func->instr_off;
-    exec_ctx->ei = ei;
     exec_ctx->except_frame = NULL;
     exec_ctx->code = code;
     exec_ctx->func_code = func;
@@ -2477,7 +2475,6 @@ static HRESULT enter_bytecode(script_ctx_t *ctx, bytecode_t *code, function_code
     }
 
     exec_ctx->ip = prev_ip;
-    exec_ctx->ei = prev_ei;
     exec_ctx->except_frame = prev_except_frame;
     exec_ctx->code = prev_code;
     exec_ctx->func_code = prev_func;
@@ -2535,7 +2532,7 @@ HRESULT exec_source(exec_ctx_t *ctx, bytecode_t *code, function_code_t *func, BO
     prev_ctx = ctx->script->exec_ctx;
     ctx->script->exec_ctx = ctx;
 
-    hres = enter_bytecode(ctx->script, code, func, &ctx->script->ei, &val);
+    hres = enter_bytecode(ctx->script, code, func, &val);
     assert(ctx->script->exec_ctx == ctx);
     ctx->script->exec_ctx = prev_ctx;
     if(FAILED(hres))
