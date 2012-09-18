@@ -2363,11 +2363,11 @@ void CDECL wined3d_device_set_sampler_state(struct wined3d_device *device,
     device_invalidate_state(device, STATE_SAMPLER(sampler_idx));
 }
 
-HRESULT CDECL wined3d_device_get_sampler_state(const struct wined3d_device *device,
-        UINT sampler_idx, enum wined3d_sampler_state state, DWORD *value)
+DWORD CDECL wined3d_device_get_sampler_state(const struct wined3d_device *device,
+        UINT sampler_idx, enum wined3d_sampler_state state)
 {
-    TRACE("device %p, sampler_idx %u, state %s, value %p.\n",
-            device, sampler_idx, debug_d3dsamplerstate(state), value);
+    TRACE("device %p, sampler_idx %u, state %s.\n",
+            device, sampler_idx, debug_d3dsamplerstate(state));
 
     if (sampler_idx >= WINED3DVERTEXTEXTURESAMPLER0 && sampler_idx <= WINED3DVERTEXTEXTURESAMPLER3)
         sampler_idx -= (WINED3DVERTEXTEXTURESAMPLER0 - MAX_FRAGMENT_SAMPLERS);
@@ -2376,13 +2376,10 @@ HRESULT CDECL wined3d_device_get_sampler_state(const struct wined3d_device *devi
             / sizeof(*device->stateBlock->state.sampler_states))
     {
         WARN("Invalid sampler %u.\n", sampler_idx);
-        return WINED3D_OK; /* Windows accepts overflowing this array ... we do not. */
+        return 0; /* Windows accepts overflowing this array ... we do not. */
     }
 
-    *value = device->stateBlock->state.sampler_states[sampler_idx][state];
-    TRACE("Returning %#x.\n", *value);
-
-    return WINED3D_OK;
+    return device->stateBlock->state.sampler_states[sampler_idx][state];
 }
 
 HRESULT CDECL wined3d_device_set_scissor_rect(struct wined3d_device *device, const RECT *rect)
