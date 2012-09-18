@@ -564,8 +564,11 @@ static BOOL hide_icon( struct tray_icon *icon )
     if (!icon->window) return TRUE;  /* already hidden */
 
     /* make sure we don't try to unmap it, it confuses some systray docks */
-    if ((data = X11DRV_get_win_data( icon->window )) && data->embedded) data->mapped = FALSE;
-
+    if ((data = get_win_data( icon->window )))
+    {
+        if (data->embedded) data->mapped = FALSE;
+        release_win_data( data );
+    }
     DestroyWindow(icon->window);
     DestroyWindow(icon->tooltip);
     icon->window = 0;
@@ -613,8 +616,8 @@ static BOOL modify_icon( struct tray_icon *icon, NOTIFYICONDATAW *nid )
             if (icon->display != -1) InvalidateRect( icon->window, NULL, TRUE );
             else
             {
-                struct x11drv_win_data *data = X11DRV_get_win_data( icon->window );
-                if (data) XClearArea( gdi_display, data->whole_window, 0, 0, 0, 0, True );
+                Window win = X11DRV_get_whole_window( icon->window );
+                if (win) XClearArea( gdi_display, win, 0, 0, 0, 0, True );
             }
         }
     }
