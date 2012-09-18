@@ -36,6 +36,20 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
+#ifdef _WIN64
+
+#define IActiveScriptParse_Release IActiveScriptParse64_Release
+#define IActiveScriptParse_InitNew IActiveScriptParse64_InitNew
+#define IActiveScriptParse_ParseScriptText IActiveScriptParse64_ParseScriptText
+
+#else
+
+#define IActiveScriptParse_Release IActiveScriptParse32_Release
+#define IActiveScriptParse_InitNew IActiveScriptParse32_InitNew
+#define IActiveScriptParse_ParseScriptText IActiveScriptParse32_ParseScriptText
+
+#endif
+
 static const WCHAR szJScript[] = { 'J','S','c','r','i','p','t',0};
 static const WCHAR szVBScript[] = { 'V','B','S','c','r','i','p','t',0};
 static const WCHAR szSession[] = {'S','e','s','s','i','o','n',0};
@@ -81,8 +95,7 @@ DWORD call_script(MSIHANDLE hPackage, INT type, LPCWSTR script, LPCWSTR function
 {
     HRESULT hr;
     IActiveScript *pActiveScript = NULL;
-    IActiveScriptParse32 *pActiveScriptParse32 = NULL;
-    IActiveScriptParse64 *pActiveScriptParse64 = NULL;
+    IActiveScriptParse *pActiveScriptParse = NULL;
     MsiActiveScriptSite *pActiveScriptSite = NULL;
     IDispatch *pDispatch = NULL;
     DISPPARAMS dispparamsNoArgs = {NULL, NULL, 0, 0};
@@ -124,40 +137,20 @@ DWORD call_script(MSIHANDLE hPackage, INT type, LPCWSTR script, LPCWSTR function
         goto done;
     }
 
-    if (type & msidbCustomActionType64BitScript)
-    {
-        hr = IActiveScript_QueryInterface(pActiveScript, &IID_IActiveScriptParse64, (void **)&pActiveScriptParse64);
-        if (FAILED(hr)) goto done;
+    hr = IActiveScript_QueryInterface(pActiveScript, &IID_IActiveScriptParse, (void **)&pActiveScriptParse);
+    if (FAILED(hr)) goto done;
 
-        hr = IActiveScript_SetScriptSite(pActiveScript, (IActiveScriptSite *)pActiveScriptSite);
-        if (FAILED(hr)) goto done;
+    hr = IActiveScript_SetScriptSite(pActiveScript, (IActiveScriptSite *)pActiveScriptSite);
+    if (FAILED(hr)) goto done;
 
-        hr = IActiveScriptParse64_InitNew(pActiveScriptParse64);
-        if (FAILED(hr)) goto done;
+    hr = IActiveScriptParse_InitNew(pActiveScriptParse);
+    if (FAILED(hr)) goto done;
 
-        hr = IActiveScript_AddNamedItem(pActiveScript, szSession, SCRIPTITEM_GLOBALMEMBERS);
-        if (FAILED(hr)) goto done;
+    hr = IActiveScript_AddNamedItem(pActiveScript, szSession, SCRIPTITEM_GLOBALMEMBERS);
+    if (FAILED(hr)) goto done;
 
-        hr = IActiveScriptParse64_ParseScriptText(pActiveScriptParse64, script, NULL, NULL, NULL, 0, 0, 0L, NULL, NULL);
-        if (FAILED(hr)) goto done;
-    }
-    else
-    {
-        hr = IActiveScript_QueryInterface(pActiveScript, &IID_IActiveScriptParse32, (void **)&pActiveScriptParse32);
-        if (FAILED(hr)) goto done;
-
-        hr = IActiveScript_SetScriptSite(pActiveScript, (IActiveScriptSite *)pActiveScriptSite);
-        if (FAILED(hr)) goto done;
-
-        hr = IActiveScriptParse32_InitNew(pActiveScriptParse32);
-        if (FAILED(hr)) goto done;
-
-        hr = IActiveScript_AddNamedItem(pActiveScript, szSession, SCRIPTITEM_GLOBALMEMBERS);
-        if (FAILED(hr)) goto done;
-
-        hr = IActiveScriptParse32_ParseScriptText(pActiveScriptParse32, script, NULL, NULL, NULL, 0, 0, 0L, NULL, NULL);
-        if (FAILED(hr)) goto done;
-    }
+    hr = IActiveScriptParse_ParseScriptText(pActiveScriptParse, script, NULL, NULL, NULL, 0, 0, 0L, NULL, NULL);
+    if (FAILED(hr)) goto done;
 
     hr = IActiveScript_SetScriptState(pActiveScript, SCRIPTSTATE_CONNECTED);
     if (FAILED(hr)) goto done;
@@ -193,8 +186,7 @@ done:
 
     if (pDispatch) IDispatch_Release(pDispatch);
     if (pActiveScript) IActiveScript_Release(pActiveScript);
-    if (pActiveScriptParse32) IActiveScriptParse32_Release(pActiveScriptParse32);
-    if (pActiveScriptParse64) IActiveScriptParse64_Release(pActiveScriptParse64);
+    if (pActiveScriptParse) IActiveScriptParse_Release(pActiveScriptParse);
     if (pActiveScriptSite)
     {
         if (pActiveScriptSite->pSession) IDispatch_Release(pActiveScriptSite->pSession);
