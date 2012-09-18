@@ -209,13 +209,18 @@ AddExtensionBlock(Extensions *New,
 
     ep = &New->ExtensionBlocks[New->ExtensionBlockCount++];
 
-    ep->ByteCount=Len;
-    ep->Bytes = ungif_alloc(ep->ByteCount);
+    ep->ByteCount=Len + 3;
+    ep->Bytes = ungif_alloc(ep->ByteCount + 3);
     if (ep->Bytes == NULL)
         return (GIF_ERROR);
 
+    /* Extension Header */
+    ep->Bytes[0] = 0x21;
+    ep->Bytes[1] = New->Function;
+    ep->Bytes[2] = Len;
+
     if (ExtData) {
-        memcpy(ep->Bytes, ExtData, Len);
+        memcpy(ep->Bytes + 3, ExtData, Len);
         ep->Function = New->Function;
     }
 
@@ -238,12 +243,12 @@ AppendExtensionBlock(Extensions *New,
     if (ep->Bytes == NULL)
         return (GIF_ERROR);
 
+    ep->Bytes[ep->ByteCount] = Len;
+
     if (ExtData)
-    {
-        ep->Bytes[ep->ByteCount] = Len;
         memcpy(ep->Bytes + ep->ByteCount + 1, ExtData, Len);
-        ep->ByteCount += Len + 1;
-    }
+
+    ep->ByteCount += Len + 1;
 
     return (GIF_OK);
 }

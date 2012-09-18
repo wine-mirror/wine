@@ -857,8 +857,8 @@ static const void *get_GCE_data(GifFrameDecode *This)
     for (i = 0; i < This->frame->Extensions.ExtensionBlockCount; i++)
     {
         if (This->frame->Extensions.ExtensionBlocks[i].Function == GRAPHICS_EXT_FUNC_CODE &&
-            This->frame->Extensions.ExtensionBlocks[i].ByteCount == 4)
-            return This->frame->Extensions.ExtensionBlocks[i].Bytes;
+            This->frame->Extensions.ExtensionBlocks[i].ByteCount == 8)
+            return This->frame->Extensions.ExtensionBlocks[i].Bytes + 3;
     }
     return NULL;
 }
