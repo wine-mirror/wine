@@ -358,6 +358,8 @@ static void test_urlcacheA(void)
 
     ret = CreateUrlCacheEntry(TEST_URL, 0, "html", filenameA1, 0);
     ok(ret, "CreateUrlCacheEntry failed with error %d\n", GetLastError());
+    check_file_exists(filenameA1);
+    DeleteFileA(filenameA1);
 
     ok(lstrcmpiA(filenameA, filenameA1), "expected a different file name\n");
 
