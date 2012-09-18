@@ -516,15 +516,15 @@ DWORD EVENT_x11_time_to_win32_time(Time time)
  */
 static inline BOOL can_activate_window( HWND hwnd )
 {
-    struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
     LONG style = GetWindowLongW( hwnd, GWL_STYLE );
+    RECT rect;
 
     if (!(style & WS_VISIBLE)) return FALSE;
     if ((style & (WS_POPUP|WS_CHILD)) == WS_CHILD) return FALSE;
     if (style & WS_MINIMIZE) return FALSE;
     if (GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_NOACTIVATE) return FALSE;
     if (hwnd == GetDesktopWindow()) return FALSE;
-    if (data && IsRectEmpty( &data->window_rect )) return FALSE;
+    if (GetWindowRect( hwnd, &rect ) && IsRectEmpty( &rect )) return FALSE;
     return !(style & WS_DISABLED);
 }
 
@@ -874,15 +874,15 @@ static void X11DRV_MapNotify( HWND hwnd, XEvent *event )
         clipping_cursor = 1;
         return;
     }
-    if (!(data = X11DRV_get_win_data( hwnd ))) return;
-    if (!data->mapped || data->embedded) return;
+    if (!(data = get_win_data( hwnd ))) return;
 
-    if (!data->managed)
+    if (!data->managed && !data->embedded && data->mapped)
     {
         HWND hwndFocus = GetFocus();
         if (hwndFocus && IsChild( hwnd, hwndFocus ))
             set_input_focus( thread_display(), data->whole_window );
     }
+    release_win_data( data );
 }
 
 
@@ -1277,8 +1277,9 @@ void CDECL X11DRV_SetFocus( HWND hwnd )
     struct x11drv_win_data *data;
 
     if (!(hwnd = GetAncestor( hwnd, GA_ROOT ))) return;
-    if (!(data = X11DRV_get_win_data( hwnd ))) return;
+    if (!(data = get_win_data( hwnd ))) return;
     if (!data->managed) set_input_focus( display, data->whole_window );
+    release_win_data( data );
 }
 
 
