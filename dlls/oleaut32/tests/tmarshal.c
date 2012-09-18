@@ -596,11 +596,11 @@ static HRESULT WINAPI Widget_VarArg(
 }
 
 
-static BOOL mystruct_uint_ordered(UINT uarr[8])
+static BOOL mystruct_uint_ordered(MYSTRUCT *mystruct)
 {
     int i;
-    for (i = 0; i < sizeof(uarr) / sizeof(uarr[0]); i++)
-        if (uarr[i] != i)
+    for (i = 0; i < sizeof(mystruct->uarr)/sizeof(mystruct->uarr[0]); i++)
+        if (mystruct->uarr[i] != i)
             return 0;
 
     return 1;
@@ -615,16 +615,16 @@ static HRESULT WINAPI Widget_StructArgs(
     int i, diff = 0;
     ok(byval.field1 == MYSTRUCT_BYVAL.field1 &&
        byval.field2 == MYSTRUCT_BYVAL.field2 &&
-       mystruct_uint_ordered(byval.uarr),
+       mystruct_uint_ordered(&byval),
        "Struct parameter passed by value corrupted\n");
     ok(byptr->field1 == MYSTRUCT_BYPTR.field1 &&
        byptr->field2 == MYSTRUCT_BYPTR.field2 &&
-       mystruct_uint_ordered(byptr->uarr),
+       mystruct_uint_ordered(byptr),
        "Struct parameter passed by pointer corrupted\n");
     for (i = 0; i < 5; i++)
         if (arr[i].field1 != MYSTRUCT_ARRAY[i].field1 ||
             arr[i].field2 != MYSTRUCT_ARRAY[i].field2 ||
-            ! mystruct_uint_ordered(arr[i].uarr))
+            ! mystruct_uint_ordered(&arr[i]))
             diff++;
     ok(diff == 0, "Array of structs corrupted\n");
     return S_OK;
