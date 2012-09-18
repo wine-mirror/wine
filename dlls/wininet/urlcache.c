@@ -186,6 +186,7 @@ typedef struct _URLCACHECONTAINER
     HANDLE hMapping; /* handle of file mapping */
     DWORD file_size; /* size of file when mapping was opened */
     HANDLE hMutex; /* handle of mutex */
+    DWORD default_entry_type;
 } URLCACHECONTAINER;
 
 
@@ -475,7 +476,8 @@ static void URLCacheContainer_CloseIndex(URLCACHECONTAINER * pContainer)
     pContainer->hMapping = NULL;
 }
 
-static BOOL URLCacheContainers_AddContainer(LPCWSTR cache_prefix, LPCWSTR path, LPWSTR mutex_name)
+static BOOL URLCacheContainers_AddContainer(LPCWSTR cache_prefix,
+        LPCWSTR path, DWORD default_entry_type, LPWSTR mutex_name)
 {
     URLCACHECONTAINER * pContainer = heap_alloc(sizeof(URLCACHECONTAINER));
     int cache_prefix_len = strlenW(cache_prefix);
@@ -487,6 +489,7 @@ static BOOL URLCacheContainers_AddContainer(LPCWSTR cache_prefix, LPCWSTR path, 
 
     pContainer->hMapping = NULL;
     pContainer->file_size = 0;
+    pContainer->default_entry_type = default_entry_type;
 
     pContainer->path = heap_strdupW(path);
     if (!pContainer->path)
@@ -545,11 +548,12 @@ void URLCacheContainers_CreateDefaults(void)
         int nFolder; /* CSIDL_* constant */
         const WCHAR * shpath_suffix; /* suffix on path returned by SHGetSpecialFolderPath */
         const WCHAR * cache_prefix; /* prefix used to reference the container */
+        DWORD default_entry_type;
     } DefaultContainerData[] = 
     {
-        { CSIDL_INTERNET_CACHE, UrlSuffix, UrlPrefix },
-        { CSIDL_HISTORY, HistorySuffix, HistoryPrefix },
-        { CSIDL_COOKIES, CookieSuffix, CookiePrefix },
+        { CSIDL_INTERNET_CACHE, UrlSuffix, UrlPrefix, NORMAL_CACHE_ENTRY },
+        { CSIDL_HISTORY, HistorySuffix, HistoryPrefix, URLHISTORY_CACHE_ENTRY },
+        { CSIDL_COOKIES, CookieSuffix, CookiePrefix, COOKIE_CACHE_ENTRY },
     };
     DWORD i;
 
@@ -585,7 +589,8 @@ void URLCacheContainers_CreateDefaults(void)
             wszCachePath[path_len + suffix_len + 2] = '\0';
         }
 
-        URLCacheContainers_AddContainer(DefaultContainerData[i].cache_prefix, wszCachePath, wszMutexName);
+        URLCacheContainers_AddContainer(DefaultContainerData[i].cache_prefix, wszCachePath,
+                DefaultContainerData[i].default_entry_type, wszMutexName);
     }
 }
 
@@ -2858,7 +2863,7 @@ static BOOL CommitUrlCacheEntryInternal(
     url_entry_offset = (LPBYTE)pUrlEntry - (LPBYTE)pHeader;
     pUrlEntry->CacheFileEntry.dwSignature = URL_SIGNATURE;
     pUrlEntry->CacheDir = cDirectory;
-    pUrlEntry->CacheEntryType = CacheEntryType;
+    pUrlEntry->CacheEntryType = CacheEntryType | pContainer->default_entry_type;
     pUrlEntry->dwHeaderInfoSize = dwHeaderSize;
     if ((CacheEntryType & STICKY_CACHE_ENTRY) && !exempt_delta)
     {

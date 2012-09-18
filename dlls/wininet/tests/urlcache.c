@@ -377,7 +377,6 @@ static void test_urlcacheA(void)
        "expected zero ExpireTime\n");
     ok(!memcmp(&lpCacheEntryInfo->LastModifiedTime, &filetime_zero, sizeof(FILETIME)),
        "expected zero LastModifiedTime\n");
-    todo_wine
     ok(lpCacheEntryInfo->CacheEntryType == (NORMAL_CACHE_ENTRY|URLHISTORY_CACHE_ENTRY) ||
        broken(lpCacheEntryInfo->CacheEntryType == NORMAL_CACHE_ENTRY /* NT4/W2k */),
        "expected type NORMAL_CACHE_ENTRY|URLHISTORY_CACHE_ENTRY, got %08x\n",
@@ -406,7 +405,6 @@ static void test_urlcacheA(void)
        "expected positive ExpireTime\n");
     ok(memcmp(&lpCacheEntryInfo2->LastModifiedTime, &filetime_zero, sizeof(FILETIME)),
        "expected positive LastModifiedTime\n");
-    todo_wine
     ok(lpCacheEntryInfo2->CacheEntryType == (NORMAL_CACHE_ENTRY|URLHISTORY_CACHE_ENTRY) ||
        broken(lpCacheEntryInfo2->CacheEntryType == NORMAL_CACHE_ENTRY /* NT4/W2k */),
        "expected type NORMAL_CACHE_ENTRY|URLHISTORY_CACHE_ENTRY, got %08x\n",
@@ -515,7 +513,6 @@ static void test_urlcacheA(void)
     ret = GetUrlCacheEntryInfo(TEST_URL, lpCacheEntryInfo, &cbCacheEntryInfo);
     ok(ret, "GetUrlCacheEntryInfo failed with error %d\n", GetLastError());
     /* with the previous entry type retained.. */
-    todo_wine
     ok(lpCacheEntryInfo->CacheEntryType & NORMAL_CACHE_ENTRY,
        "expected cache entry type NORMAL_CACHE_ENTRY, got %d (0x%08x)\n",
        lpCacheEntryInfo->CacheEntryType, lpCacheEntryInfo->CacheEntryType);
