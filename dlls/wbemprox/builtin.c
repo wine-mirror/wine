@@ -111,6 +111,8 @@ static const WCHAR prop_handleW[] =
     {'H','a','n','d','l','e',0};
 static const WCHAR prop_interfaceindexW[] =
     {'I','n','t','e','r','f','a','c','e','I','n','d','e','x',0};
+static const WCHAR prop_lastbootuptimeW[] =
+    {'L','a','s','t','B','o','o','t','U','p','T','i','m','e',0};
 static const WCHAR prop_macaddressW[] =
     {'M','A','C','A','d','d','r','e','s','s',0};
 static const WCHAR prop_manufacturerW[] =
@@ -231,6 +233,7 @@ static const struct column col_os[] =
 {
     { prop_captionW,         CIM_STRING },
     { prop_csdversionW,      CIM_STRING },
+    { prop_lastbootuptimeW,  CIM_DATETIME|COL_FLAG_DYNAMIC },
     { prop_osarchitectureW,  CIM_STRING },
     { prop_oslanguageW,      CIM_UINT32, VT_I4 },
     { prop_systemdirectoryW, CIM_STRING|COL_FLAG_DYNAMIC }
@@ -373,6 +376,7 @@ struct record_operatingsystem
 {
     const WCHAR *caption;
     const WCHAR *csdversion;
+    const WCHAR *lastbootuptime;
     const WCHAR *osarchitecture;
     UINT32       oslanguage;
     const WCHAR *systemdirectory;
@@ -831,6 +835,28 @@ static void fill_processor( struct table *table )
     table->num_rows = count;
 }
 
+static WCHAR *get_lastbootuptime(void)
+{
+    static const WCHAR fmtW[] =
+        {'%','0','4','u','%','0','2','u','%','0','2','u','%','0','2','u','%','0','2','u','%','0','2','u',
+         '.','%','0','6','u','+','0','0','0',0};
+    SYSTEMTIME st;
+    FILETIME ft;
+    ULARGE_INTEGER ticks;
+    WCHAR *ret;
+
+    if (!(ret = heap_alloc( 26 * sizeof(WCHAR) ))) return NULL;
+    GetSystemTime( &st );
+    SystemTimeToFileTime( &st, &ft );
+    ticks.u.LowPart  = ft.dwLowDateTime;
+    ticks.u.HighPart = ft.dwHighDateTime;
+    ticks.QuadPart -= GetTickCount64() * 10000;
+    ft.dwLowDateTime  = ticks.u.LowPart;
+    ft.dwHighDateTime = ticks.u.HighPart;
+    FileTimeToSystemTime( &ft, &st );
+    sprintfW( ret, fmtW, st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds * 1000 );
+    return ret;
+}
 static const WCHAR *get_osarchitecture(void)
 {
     SYSTEM_INFO info;
@@ -859,6 +885,7 @@ static void fill_os( struct table *table )
     rec = (struct record_operatingsystem *)table->data;
     rec->caption         = os_captionW;
     rec->csdversion      = os_csdversionW;
+    rec->lastbootuptime  = get_lastbootuptime();
     rec->osarchitecture  = get_osarchitecture();
     rec->oslanguage      = MAKELANGID( LANG_ENGLISH, SUBLANG_ENGLISH_US );
     rec->systemdirectory = get_systemdirectory();
