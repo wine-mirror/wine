@@ -468,6 +468,20 @@ static void test_scriptdisp(void)
     CHECK_CALLED(OnEnterScript);
     CHECK_CALLED(OnLeaveScript);
 
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
+
+    memset(&dp, 0, sizeof(dp));
+    memset(&ei, 0, sizeof(ei));
+    V_VT(&v) = VT_EMPTY;
+    hres = IDispatchEx_Invoke(script_disp, id, &IID_NULL, 0, DISPATCH_PROPERTYGET|DISPATCH_METHOD, &dp, &v, &ei, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_I2, "V_VT(v) = %d\n", V_VT(&v));
+    ok(V_I2(&v) == 5, "V_I2(v) = %d\n", V_I2(&v));
+
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnLeaveScript);
+
     get_disp_id(script_disp, "globalSub", DISP_E_UNKNOWNNAME, &id);
     parse_script(parser, "sub globalSub()\nend sub");
     get_disp_id(script_disp, "globalSub", S_OK, &id);
