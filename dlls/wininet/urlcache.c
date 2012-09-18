@@ -1553,6 +1553,38 @@ static BOOL URLCache_DeleteCacheDirectory(LPCWSTR lpszPath)
 }
 
 /***********************************************************************
+ *           URLCache_IsLocked (Internal)
+ *
+ *  Checks if entry is locked. Unlocks it if possible.
+ */
+static BOOL URLCache_IsLocked(struct _HASH_ENTRY *hash_entry, URL_CACHEFILE_ENTRY *url_entry)
+{
+    FILETIME cur_time;
+    ULARGE_INTEGER acc_time, time;
+
+    if ((hash_entry->dwHashKey & ((1<<HASHTABLE_FLAG_BITS)-1)) != HASHTABLE_LOCK)
+        return FALSE;
+
+    GetSystemTimeAsFileTime(&cur_time);
+    time.u.LowPart = cur_time.dwLowDateTime;
+    time.u.HighPart = cur_time.dwHighDateTime;
+
+    acc_time.u.LowPart = url_entry->LastAccessTime.dwLowDateTime;
+    acc_time.u.HighPart = url_entry->LastAccessTime.dwHighDateTime;
+
+    time.QuadPart -= acc_time.QuadPart;
+
+    /* check if entry was locked for at least a day */
+    if(time.QuadPart > (ULONGLONG)24*60*60*10000000) {
+        URLCache_HashEntrySetFlags(hash_entry, HASHTABLE_URL);
+        url_entry->dwUseCount = 0;
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+/***********************************************************************
  *           FreeUrlCacheSpaceW (WININET.@)
  *
  * Frees up some cache.
@@ -2193,9 +2225,8 @@ static BOOL DeleteUrlCacheEntryInternal(const URLCACHECONTAINER * pContainer,
     }
 
     pUrlEntry = (URL_CACHEFILE_ENTRY *)pEntry;
-    if ((pHashEntry->dwHashKey & ((1<<HASHTABLE_FLAG_BITS)-1)) == HASHTABLE_LOCK)
+    if(URLCache_IsLocked(pHashEntry, pUrlEntry))
     {
-        /* FIXME: implement timeout object unlocking */
         TRACE("Trying to delete locked entry\n");
         pUrlEntry->CacheEntryType |= PENDING_DELETE_CACHE_ENTRY;
         SetLastError(ERROR_SHARING_VIOLATION);
@@ -2736,11 +2767,11 @@ static BOOL CommitUrlCacheEntryInternal(
 
     if (URLCache_FindHash(pHeader, lpszUrlNameA, &pHashEntry))
     {
-        if ((pHashEntry->dwHashKey & ((1<<HASHTABLE_FLAG_BITS)-1)) == HASHTABLE_LOCK)
+        URL_CACHEFILE_ENTRY *pUrlEntry = (URL_CACHEFILE_ENTRY*)((LPBYTE)pHeader + pHashEntry->dwOffsetEntry);
+        if (URLCache_IsLocked(pHashEntry, pUrlEntry))
         {
-            /* FIXME: implement timeout object unlocking */
-            FIXME("Trying to overwrite locked entry\n");
-            SetLastError(ERROR_SHARING_VIOLATION);
+            TRACE("Trying to overwrite locked entry\n");
+            error = ERROR_SHARING_VIOLATION;
             goto cleanup;
         }
 
