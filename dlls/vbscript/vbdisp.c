@@ -783,10 +783,17 @@ static HRESULT WINAPI ScriptDisp_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
         return invoke_variant_prop(&ident->u.var->v, wFlags, pdp, pvarRes);
     }
 
-
-    IActiveScriptSite_OnEnterScript(This->ctx->site);
-    hres = exec_script(This->ctx, ident->u.func, NULL, pdp, pvarRes);
-    IActiveScriptSite_OnLeaveScript(This->ctx->site);
+    switch(wFlags) {
+    case DISPATCH_METHOD:
+    case DISPATCH_METHOD|DISPATCH_PROPERTYGET:
+        IActiveScriptSite_OnEnterScript(This->ctx->site);
+        hres = exec_script(This->ctx, ident->u.func, NULL, pdp, pvarRes);
+        IActiveScriptSite_OnLeaveScript(This->ctx->site);
+        break;
+    default:
+        FIXME("Unsupported flags %x\n", wFlags);
+        hres = E_NOTIMPL;
+    }
 
     return hres;
 }
