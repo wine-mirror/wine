@@ -481,7 +481,6 @@ static void test_urlcacheA(void)
 
     SetLastError(0xdeadbeef);
     ret = DeleteFile(filenameA);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND, "local file should no longer exist\n");
 
     /* Creating two entries with the same URL */
@@ -537,7 +536,6 @@ static void test_urlcacheA(void)
     {
         ret = pDeleteUrlCacheEntryA(TEST_URL);
         ok(ret, "DeleteUrlCacheEntryA failed with error %d\n", GetLastError());
-        todo_wine
         check_file_not_exists(filenameA);
         todo_wine
         check_file_not_exists(filenameA1);
@@ -595,7 +593,6 @@ static void test_urlcacheA(void)
         /* By unlocking the already-deleted cache entry, the file associated
          * with it is deleted..
          */
-        todo_wine
         check_file_not_exists(filenameA);
         /* (just in case, delete file) */
         DeleteFileA(filenameA);
@@ -692,7 +689,6 @@ static void test_urlcacheA(void)
         ret = pDeleteUrlCacheEntryA(TEST_URL);
         ok(ret, "DeleteUrlCacheEntryA failed with error %d\n", GetLastError());
         /* When explicitly deleting the cache entry, the file is also deleted */
-        todo_wine
         check_file_not_exists(filenameA);
     }
     /* Test once again, setting the exempt delta via SetUrlCacheEntryInfo */
@@ -760,7 +756,6 @@ static void test_urlcacheA(void)
     {
         ret = pDeleteUrlCacheEntryA(TEST_URL);
         ok(ret, "DeleteUrlCacheEntryA failed with error %d\n", GetLastError());
-        todo_wine
         check_file_not_exists(filenameA);
     }
 }

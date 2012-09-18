@@ -2175,11 +2175,13 @@ BOOL WINAPI RetrieveUrlCacheEntryFileW(
     return TRUE;
 }
 
-static BOOL DeleteUrlCacheEntryInternal(LPURLCACHE_HEADER pHeader,
-        struct _HASH_ENTRY *pHashEntry)
+static BOOL DeleteUrlCacheEntryInternal(const URLCACHECONTAINER * pContainer,
+        LPURLCACHE_HEADER pHeader, struct _HASH_ENTRY *pHashEntry)
 {
     CACHEFILE_ENTRY * pEntry;
     URL_CACHEFILE_ENTRY * pUrlEntry;
+    WCHAR path[MAX_PATH];
+    LONG path_size = sizeof(path);
 
     pEntry = (CACHEFILE_ENTRY *)((LPBYTE)pHeader + pHashEntry->dwOffsetEntry);
     if (pEntry->dwSignature != URL_SIGNATURE)
@@ -2220,8 +2222,13 @@ static BOOL DeleteUrlCacheEntryInternal(LPURLCACHE_HEADER pHeader,
             pHeader->CacheUsage.QuadPart = 0;
     }
 
-    URLCache_DeleteEntry(pHeader, pEntry);
+    if (pUrlEntry->dwOffsetLocalName && URLCache_LocalFileNameToPathW(pContainer, pHeader,
+                (LPCSTR)pUrlEntry+pUrlEntry->dwOffsetLocalName, pUrlEntry->CacheDir, path, &path_size))
+    {
+        DeleteFileW(path);
+    }
 
+    URLCache_DeleteEntry(pHeader, pEntry);
     URLCache_DeleteEntryFromHash(pHashEntry);
     return TRUE;
 }
@@ -2297,7 +2304,7 @@ BOOL WINAPI UnlockUrlCacheEntryFileA(
     {
         URLCache_HashEntrySetFlags(pHashEntry, HASHTABLE_URL);
         if (pUrlEntry->CacheEntryType & PENDING_DELETE_CACHE_ENTRY)
-            DeleteUrlCacheEntryInternal(pHeader, pHashEntry);
+            DeleteUrlCacheEntryInternal(pContainer, pHeader, pHashEntry);
     }
 
     URLCacheContainer_UnlockIndex(pContainer, pHeader);
@@ -3241,7 +3248,7 @@ BOOL WINAPI DeleteUrlCacheEntryA(LPCSTR lpszUrlName)
         return FALSE;
     }
 
-    ret = DeleteUrlCacheEntryInternal(pHeader, pHashEntry);
+    ret = DeleteUrlCacheEntryInternal(pContainer, pHeader, pHashEntry);
 
     URLCacheContainer_UnlockIndex(pContainer, pHeader);
 
@@ -3301,7 +3308,7 @@ BOOL WINAPI DeleteUrlCacheEntryW(LPCWSTR lpszUrlName)
         return FALSE;
     }
 
-    ret = DeleteUrlCacheEntryInternal(pHeader, pHashEntry);
+    ret = DeleteUrlCacheEntryInternal(pContainer, pHeader, pHashEntry);
 
     URLCacheContainer_UnlockIndex(pContainer, pHeader);
     heap_free(urlA);
