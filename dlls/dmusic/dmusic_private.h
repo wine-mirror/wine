@@ -2,6 +2,7 @@
  * DirectMusic Private Include
  *
  * Copyright (C) 2003-2004 Rok Mandeljc
+ * Copyright (C) 2012 Christian Costa
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -48,14 +49,12 @@ typedef struct IDirectMusic8Impl IDirectMusic8Impl;
 typedef struct IDirectMusicBufferImpl IDirectMusicBufferImpl;
 typedef struct IDirectMusicDownloadedInstrumentImpl IDirectMusicDownloadedInstrumentImpl;
 typedef struct IDirectMusicDownloadImpl IDirectMusicDownloadImpl;
-typedef struct IDirectMusicPortDownloadImpl IDirectMusicPortDownloadImpl;
-typedef struct IDirectMusicPortImpl IDirectMusicPortImpl;
-typedef struct IDirectMusicThruImpl IDirectMusicThruImpl;
 typedef struct IReferenceClockImpl IReferenceClockImpl;
 
 typedef struct IDirectMusicCollectionImpl IDirectMusicCollectionImpl;
 typedef struct IDirectMusicInstrumentImpl IDirectMusicInstrumentImpl;
 
+typedef struct SynthPortImpl SynthPortImpl;
 
 /*****************************************************************************
  * Some stuff to make my life easier :=)
@@ -149,16 +148,16 @@ struct IDirectMusicDownloadImpl {
 };
 
 /*****************************************************************************
- * IDirectMusicPortImpl implementation structure
+ * SynthPortImpl implementation structure
  */
-struct IDirectMusicPortImpl {
+struct SynthPortImpl {
     /* IUnknown fields */
     IDirectMusicPort IDirectMusicPort_iface;
     IDirectMusicPortDownload IDirectMusicPortDownload_iface;
     IDirectMusicThru IDirectMusicThru_iface;
     LONG ref;
 
-    /* IDirectMusicPortImpl fields */
+    /* IDirectMusicPort fields */
     IDirectSound* pDirectSound;
     IReferenceClock* pLatencyClock;
     BOOL fActive;
