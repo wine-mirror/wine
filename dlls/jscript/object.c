@@ -33,7 +33,7 @@ static const WCHAR isPrototypeOfW[] = {'i','s','P','r','o','t','o','t','y','p','
 static const WCHAR default_valueW[] = {'[','o','b','j','e','c','t',' ','O','b','j','e','c','t',']',0};
 
 static HRESULT Object_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     jsdisp_t *jsdisp;
     const WCHAR *str;
@@ -79,7 +79,7 @@ static HRESULT Object_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
 }
 
 static HRESULT Object_toLocaleString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     TRACE("\n");
 
@@ -88,11 +88,11 @@ static HRESULT Object_toLocaleString(script_ctx_t *ctx, vdisp_t *jsthis, WORD fl
         return E_FAIL;
     }
 
-    return jsdisp_call_name(jsthis->u.jsdisp, toStringW, DISPATCH_METHOD, 0, NULL, r, ei);
+    return jsdisp_call_name(jsthis->u.jsdisp, toStringW, DISPATCH_METHOD, 0, NULL, r);
 }
 
 static HRESULT Object_valueOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     TRACE("\n");
 
@@ -104,7 +104,7 @@ static HRESULT Object_valueOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
 }
 
 static HRESULT Object_hasOwnProperty(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     BSTR name;
     DISPID id;
@@ -118,7 +118,7 @@ static HRESULT Object_hasOwnProperty(script_ctx_t *ctx, vdisp_t *jsthis, WORD fl
         return S_OK;
     }
 
-    hres = to_string(ctx, argv[0], ei, &name);
+    hres = to_string(ctx, argv[0], &name);
     if(FAILED(hres))
         return hres;
 
@@ -148,27 +148,27 @@ static HRESULT Object_hasOwnProperty(script_ctx_t *ctx, vdisp_t *jsthis, WORD fl
 }
 
 static HRESULT Object_propertyIsEnumerable(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
 static HRESULT Object_isPrototypeOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
 static HRESULT Object_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     TRACE("\n");
 
     switch(flags) {
     case INVOKE_FUNC:
-        return throw_type_error(ctx, ei, JS_E_FUNCTION_EXPECTED, NULL);
+        return throw_type_error(ctx, JS_E_FUNCTION_EXPECTED, NULL);
     case DISPATCH_PROPERTYGET: {
         BSTR ret = SysAllocString(default_valueW);
         if(!ret)
@@ -216,7 +216,7 @@ static const builtin_info_t ObjectInst_info = {
 };
 
 static HRESULT ObjectConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     HRESULT hres;
 

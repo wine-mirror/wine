@@ -114,169 +114,168 @@ static WCHAR int_to_char(int i)
     return 'A'+i-10;
 }
 
-static HRESULT constructor_call(jsdisp_t *constr, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+static HRESULT constructor_call(jsdisp_t *constr, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
 {
     if(flags != DISPATCH_PROPERTYGET)
-        return jsdisp_call_value(constr, NULL, flags, argc, argv, r, ei);
+        return jsdisp_call_value(constr, NULL, flags, argc, argv, r);
 
     *r = jsval_obj(jsdisp_addref(constr));
     return S_OK;
 }
 
 static HRESULT JSGlobal_Array(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     TRACE("\n");
 
-    return constructor_call(ctx->array_constr, flags, argc, argv, r, ei);
+    return constructor_call(ctx->array_constr, flags, argc, argv, r);
 }
 
 static HRESULT JSGlobal_Boolean(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     TRACE("\n");
 
-    return constructor_call(ctx->bool_constr, flags, argc, argv, r, ei);
+    return constructor_call(ctx->bool_constr, flags, argc, argv, r);
 }
 
 static HRESULT JSGlobal_Date(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     TRACE("\n");
 
-    return constructor_call(ctx->date_constr, flags, argc, argv, r, ei);
+    return constructor_call(ctx->date_constr, flags, argc, argv, r);
 }
 
 static HRESULT JSGlobal_Error(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     TRACE("\n");
 
-    return constructor_call(ctx->error_constr, flags, argc, argv, r, ei);
+    return constructor_call(ctx->error_constr, flags, argc, argv, r);
 }
 
 static HRESULT JSGlobal_EvalError(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     TRACE("\n");
 
-    return constructor_call(ctx->eval_error_constr, flags, argc, argv, r, ei);
+    return constructor_call(ctx->eval_error_constr, flags, argc, argv, r);
 }
 
 static HRESULT JSGlobal_RangeError(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     TRACE("\n");
 
-    return constructor_call(ctx->range_error_constr, flags, argc, argv, r, ei);
+    return constructor_call(ctx->range_error_constr, flags, argc, argv, r);
 }
 
 static HRESULT JSGlobal_RegExpError(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     TRACE("\n");
 
-    return constructor_call(ctx->regexp_error_constr, flags, argc, argv, r, ei);
+    return constructor_call(ctx->regexp_error_constr, flags, argc, argv, r);
 }
 
 static HRESULT JSGlobal_ReferenceError(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     TRACE("\n");
 
-    return constructor_call(ctx->reference_error_constr, flags, argc, argv, r, ei);
+    return constructor_call(ctx->reference_error_constr, flags, argc, argv, r);
 }
 
 static HRESULT JSGlobal_SyntaxError(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     TRACE("\n");
 
-    return constructor_call(ctx->syntax_error_constr, flags, argc, argv, r, ei);
+    return constructor_call(ctx->syntax_error_constr, flags, argc, argv, r);
 }
 
 static HRESULT JSGlobal_TypeError(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     TRACE("\n");
 
-    return constructor_call(ctx->type_error_constr, flags, argc, argv, r, ei);
+    return constructor_call(ctx->type_error_constr, flags, argc, argv, r);
 }
 
 static HRESULT JSGlobal_URIError(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     TRACE("\n");
 
-    return constructor_call(ctx->uri_error_constr, flags, argc, argv, r, ei);
+    return constructor_call(ctx->uri_error_constr, flags, argc, argv, r);
 }
 
 static HRESULT JSGlobal_Function(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     TRACE("\n");
 
-    return constructor_call(ctx->function_constr, flags, argc, argv, r, ei);
+    return constructor_call(ctx->function_constr, flags, argc, argv, r);
 }
 
 static HRESULT JSGlobal_Number(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     TRACE("\n");
 
-    return constructor_call(ctx->number_constr, flags, argc, argv, r, ei);
+    return constructor_call(ctx->number_constr, flags, argc, argv, r);
 }
 
 static HRESULT JSGlobal_Object(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     TRACE("\n");
 
-    return constructor_call(ctx->object_constr, flags, argc, argv, r, ei);
+    return constructor_call(ctx->object_constr, flags, argc, argv, r);
 }
 
 static HRESULT JSGlobal_String(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     TRACE("\n");
 
-    return constructor_call(ctx->string_constr, flags, argc, argv, r, ei);
+    return constructor_call(ctx->string_constr, flags, argc, argv, r);
 }
 
 static HRESULT JSGlobal_RegExp(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     TRACE("\n");
 
-    return constructor_call(ctx->regexp_constr, flags, argc, argv, r, ei);
+    return constructor_call(ctx->regexp_constr, flags, argc, argv, r);
 }
 
 static HRESULT JSGlobal_ActiveXObject(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     TRACE("\n");
 
-    return constructor_call(ctx->activex_constr, flags, argc, argv, r, ei);
+    return constructor_call(ctx->activex_constr, flags, argc, argv, r);
 }
 
 static HRESULT JSGlobal_VBArray(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     TRACE("\n");
 
-    return constructor_call(ctx->vbarray_constr, flags, argc, argv, r, ei);
+    return constructor_call(ctx->vbarray_constr, flags, argc, argv, r);
 }
 
 static HRESULT JSGlobal_Enumerator(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
 static HRESULT JSGlobal_escape(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     BSTR ret, str;
     const WCHAR *ptr;
@@ -297,7 +296,7 @@ static HRESULT JSGlobal_escape(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
         return S_OK;
     }
 
-    hres = to_string(ctx, argv[0], ei, &str);
+    hres = to_string(ctx, argv[0], &str);
     if(FAILED(hres))
         return hres;
 
@@ -346,7 +345,7 @@ static HRESULT JSGlobal_escape(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
 
 /* ECMA-262 3rd Edition    15.1.2.1 */
 static HRESULT JSGlobal_eval(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     bytecode_t *code;
     HRESULT hres;
@@ -374,16 +373,16 @@ static HRESULT JSGlobal_eval(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
     hres = compile_script(ctx, get_string(argv[0]), NULL, TRUE, FALSE, &code);
     if(FAILED(hres)) {
         WARN("parse (%s) failed: %08x\n", debugstr_jsval(argv[0]), hres);
-        return throw_syntax_error(ctx, ei, hres, NULL);
+        return throw_syntax_error(ctx, hres, NULL);
     }
 
-    hres = exec_source(ctx->exec_ctx, code, &code->global_code, TRUE, ei, r);
+    hres = exec_source(ctx->exec_ctx, code, &code->global_code, TRUE, r);
     release_bytecode(code);
     return hres;
 }
 
 static HRESULT JSGlobal_isNaN(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     BOOL ret = TRUE;
     double n;
@@ -392,7 +391,7 @@ static HRESULT JSGlobal_isNaN(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
     TRACE("\n");
 
     if(argc) {
-        hres = to_number(ctx, argv[0], ei, &n);
+        hres = to_number(ctx, argv[0], &n);
         if(FAILED(hres))
             return hres;
 
@@ -406,7 +405,7 @@ static HRESULT JSGlobal_isNaN(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
 }
 
 static HRESULT JSGlobal_isFinite(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     BOOL ret = FALSE;
     HRESULT hres;
@@ -416,7 +415,7 @@ static HRESULT JSGlobal_isFinite(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
     if(argc) {
         double n;
 
-        hres = to_number(ctx, argv[0], ei, &n);
+        hres = to_number(ctx, argv[0], &n);
         if(FAILED(hres))
             return hres;
 
@@ -441,7 +440,7 @@ static INT char_to_int(WCHAR c)
 }
 
 static HRESULT JSGlobal_parseInt(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     BOOL neg = FALSE, empty = TRUE;
     DOUBLE ret = 0.0;
@@ -457,7 +456,7 @@ static HRESULT JSGlobal_parseInt(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
     }
 
     if(argc >= 2) {
-        hres = to_int32(ctx, argv[1], ei, &radix);
+        hres = to_int32(ctx, argv[1], &radix);
         if(FAILED(hres))
             return hres;
 
@@ -469,7 +468,7 @@ static HRESULT JSGlobal_parseInt(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
         }
     }
 
-    hres = to_string(ctx, argv[0], ei, &str);
+    hres = to_string(ctx, argv[0], &str);
     if(FAILED(hres))
         return hres;
 
@@ -521,7 +520,7 @@ static HRESULT JSGlobal_parseInt(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
 }
 
 static HRESULT JSGlobal_parseFloat(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     LONGLONG d = 0, hlp;
     int exp = 0;
@@ -536,7 +535,7 @@ static HRESULT JSGlobal_parseFloat(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
         return S_OK;
     }
 
-    hres = to_string(ctx, argv[0], ei, &val_str);
+    hres = to_string(ctx, argv[0], &val_str);
     if(FAILED(hres))
         return hres;
 
@@ -628,7 +627,7 @@ static inline int hex_to_int(const WCHAR wch) {
 }
 
 static HRESULT JSGlobal_unescape(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     BSTR ret, str;
     const WCHAR *ptr;
@@ -648,7 +647,7 @@ static HRESULT JSGlobal_unescape(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
         return S_OK;
     }
 
-    hres = to_string(ctx, argv[0], ei, &str);
+    hres = to_string(ctx, argv[0], &str);
     if(FAILED(hres))
         return hres;
 
@@ -702,14 +701,14 @@ static HRESULT JSGlobal_unescape(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
 }
 
 static HRESULT JSGlobal_GetObject(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
 static HRESULT JSGlobal_ScriptEngine(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     static const WCHAR JScriptW[] = {'J','S','c','r','i','p','t',0};
 
@@ -729,7 +728,7 @@ static HRESULT JSGlobal_ScriptEngine(script_ctx_t *ctx, vdisp_t *jsthis, WORD fl
 }
 
 static HRESULT JSGlobal_ScriptEngineMajorVersion(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     TRACE("\n");
 
@@ -739,7 +738,7 @@ static HRESULT JSGlobal_ScriptEngineMajorVersion(script_ctx_t *ctx, vdisp_t *jst
 }
 
 static HRESULT JSGlobal_ScriptEngineMinorVersion(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     TRACE("\n");
 
@@ -749,7 +748,7 @@ static HRESULT JSGlobal_ScriptEngineMinorVersion(script_ctx_t *ctx, vdisp_t *jst
 }
 
 static HRESULT JSGlobal_ScriptEngineBuildVersion(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     TRACE("\n");
 
@@ -759,14 +758,14 @@ static HRESULT JSGlobal_ScriptEngineBuildVersion(script_ctx_t *ctx, vdisp_t *jst
 }
 
 static HRESULT JSGlobal_CollectGarbage(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
 static HRESULT JSGlobal_encodeURI(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     const WCHAR *ptr;
     DWORD len = 0, i;
@@ -789,7 +788,7 @@ static HRESULT JSGlobal_encodeURI(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
         return S_OK;
     }
 
-    hres = to_string(ctx, argv[0], ei, &str);
+    hres = to_string(ctx, argv[0], &str);
     if(FAILED(hres))
         return hres;
 
@@ -800,7 +799,7 @@ static HRESULT JSGlobal_encodeURI(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
             i = WideCharToMultiByte(CP_UTF8, 0, ptr, 1, NULL, 0, NULL, NULL)*3;
             if(!i) {
                 SysFreeString(str);
-                return throw_uri_error(ctx, ei, JS_E_INVALID_URI_CHAR, NULL);
+                return throw_uri_error(ctx, JS_E_INVALID_URI_CHAR, NULL);
             }
 
             len += i;
@@ -837,7 +836,7 @@ static HRESULT JSGlobal_encodeURI(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
 }
 
 static HRESULT JSGlobal_decodeURI(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     BSTR str, ret;
     WCHAR *ptr;
@@ -860,7 +859,7 @@ static HRESULT JSGlobal_decodeURI(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
         return S_OK;
     }
 
-    hres = to_string(ctx, argv[0], ei, &str);
+    hres = to_string(ctx, argv[0], &str);
     if(FAILED(hres))
         return hres;
 
@@ -882,7 +881,7 @@ static HRESULT JSGlobal_decodeURI(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
 
             if(!res) {
                 SysFreeString(str);
-                return throw_uri_error(ctx, ei, JS_E_INVALID_URI_CODING, NULL);
+                return throw_uri_error(ctx, JS_E_INVALID_URI_CODING, NULL);
             }
 
             ptr += i*3+2;
@@ -929,7 +928,7 @@ static HRESULT JSGlobal_decodeURI(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
 }
 
 static HRESULT JSGlobal_encodeURIComponent(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     BSTR str, ret;
     char buf[4];
@@ -951,7 +950,7 @@ static HRESULT JSGlobal_encodeURIComponent(script_ctx_t *ctx, vdisp_t *jsthis, W
         return S_OK;
     }
 
-    hres = to_string(ctx, argv[0], ei, &str);
+    hres = to_string(ctx, argv[0], &str);
     if(FAILED(hres))
         return hres;
 
@@ -962,7 +961,7 @@ static HRESULT JSGlobal_encodeURIComponent(script_ctx_t *ctx, vdisp_t *jsthis, W
             size = WideCharToMultiByte(CP_UTF8, 0, ptr, 1, NULL, 0, NULL, NULL);
             if(!size) {
                 SysFreeString(str);
-                return throw_uri_error(ctx, ei, JS_E_INVALID_URI_CHAR, NULL);
+                return throw_uri_error(ctx, JS_E_INVALID_URI_CHAR, NULL);
             }
             len += size*3;
         }
@@ -999,7 +998,7 @@ static HRESULT JSGlobal_encodeURIComponent(script_ctx_t *ctx, vdisp_t *jsthis, W
 
 /* ECMA-262 3rd Edition    15.1.3.2 */
 static HRESULT JSGlobal_decodeURIComponent(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     BSTR str, ret;
     const WCHAR *ptr;
@@ -1021,7 +1020,7 @@ static HRESULT JSGlobal_decodeURIComponent(script_ctx_t *ctx, vdisp_t *jsthis, W
         return S_OK;
     }
 
-    hres = to_string(ctx, argv[0], ei, &str);
+    hres = to_string(ctx, argv[0], &str);
     if(FAILED(hres))
         return hres;
 
@@ -1240,19 +1239,19 @@ HRESULT init_global(script_ctx_t *ctx)
     if(FAILED(hres))
         return hres;
 
-    hres = jsdisp_propput_name(ctx->global, MathW, jsval_obj(math), NULL/*FIXME*/);
+    hres = jsdisp_propput_name(ctx->global, MathW, jsval_obj(math));
     jsdisp_release(math);
     if(FAILED(hres))
         return hres;
 
-    hres = jsdisp_propput_name(ctx->global, undefinedW, jsval_undefined(), NULL/*FIXME*/);
+    hres = jsdisp_propput_name(ctx->global, undefinedW, jsval_undefined());
     if(FAILED(hres))
         return hres;
 
-    hres = jsdisp_propput_name(ctx->global, NaNW, jsval_number(NAN), NULL/*FIXME*/);
+    hres = jsdisp_propput_name(ctx->global, NaNW, jsval_number(NAN));
     if(FAILED(hres))
         return hres;
 
-    hres = jsdisp_propput_name(ctx->global, InfinityW, jsval_number(INFINITY), NULL/*FIXME*/);
+    hres = jsdisp_propput_name(ctx->global, InfinityW, jsval_number(INFINITY));
     return hres;
 }

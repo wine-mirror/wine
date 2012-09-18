@@ -130,7 +130,7 @@ static HRESULT stack_pop_number(exec_ctx_t *ctx, double *r)
     HRESULT hres;
 
     v = stack_pop(ctx);
-    hres = to_number(ctx->script, v, ctx->ei, r);
+    hres = to_number(ctx->script, v, r);
     jsval_release(v);
     return hres;
 }
@@ -143,7 +143,7 @@ static HRESULT stack_pop_object(exec_ctx_t *ctx, IDispatch **r)
     v = stack_pop(ctx);
     if(is_object_instance(v)) {
         if(!get_object(v))
-            return throw_type_error(ctx->script, ctx->ei, JS_E_OBJECT_REQUIRED, NULL);
+            return throw_type_error(ctx->script, JS_E_OBJECT_REQUIRED, NULL);
         *r = get_object(v);
         return S_OK;
     }
@@ -155,12 +155,12 @@ static HRESULT stack_pop_object(exec_ctx_t *ctx, IDispatch **r)
 
 static inline HRESULT stack_pop_int(exec_ctx_t *ctx, INT *r)
 {
-    return to_int32(ctx->script, stack_pop(ctx), ctx->ei, r);
+    return to_int32(ctx->script, stack_pop(ctx), r);
 }
 
 static inline HRESULT stack_pop_uint(exec_ctx_t *ctx, DWORD *r)
 {
-    return to_uint32(ctx->script, stack_pop(ctx), ctx->ei, r);
+    return to_uint32(ctx->script, stack_pop(ctx), r);
 }
 
 static inline IDispatch *stack_pop_objid(exec_ctx_t *ctx, DISPID *id)
@@ -195,7 +195,7 @@ static void exprval_release(exprval_t *val)
 }
 
 /* ECMA-262 3rd Edition    8.7.1 */
-static HRESULT exprval_to_value(script_ctx_t *ctx, exprval_t *val, jsexcept_t *ei, jsval_t *ret)
+static HRESULT exprval_to_value(script_ctx_t *ctx, exprval_t *val, jsval_t *ret)
 {
     switch(val->type) {
     case EXPRVAL_JSVAL:
@@ -208,7 +208,7 @@ static HRESULT exprval_to_value(script_ctx_t *ctx, exprval_t *val, jsexcept_t *e
             return E_FAIL;
         }
 
-        return disp_propget(ctx, val->u.idref.disp, val->u.idref.id, ret, ei);
+        return disp_propget(ctx, val->u.idref.disp, val->u.idref.id, ret);
     case EXPRVAL_INVALID:
         assert(0);
     }
@@ -259,6 +259,13 @@ static void scope_pop(scope_chain_t **scope)
     tmp = *scope;
     *scope = tmp->next;
     scope_release(tmp);
+}
+
+void clear_ei(script_ctx_t *ctx)
+{
+    memset(&ctx->ei.ei, 0, sizeof(ctx->ei.ei));
+    jsval_release(ctx->ei.val);
+    ctx->ei.val = jsval_undefined();
 }
 
 void scope_release(scope_chain_t *scope)
@@ -551,7 +558,7 @@ static HRESULT interp_var_set(exec_ctx_t *ctx)
     TRACE("%s\n", debugstr_w(name));
 
     val = stack_pop(ctx);
-    hres = jsdisp_propput_name(ctx->var_disp, name, val, ctx->ei);
+    hres = jsdisp_propput_name(ctx->var_disp, name, val);
     jsval_release(val);
     return hres;
 }
@@ -605,7 +612,7 @@ static HRESULT interp_forin(exec_ctx_t *ctx)
         stack_pop(ctx);
         stack_push(ctx, jsval_number(id)); /* safe, just after pop() */
 
-        hres = disp_propput(ctx->script, var_obj, var_id, jsval_string(name), ctx->ei);
+        hres = disp_propput(ctx->script, var_obj, var_id, jsval_string(name));
         SysFreeString(name);
         if(FAILED(hres))
             return hres;
@@ -678,6 +685,7 @@ static HRESULT interp_throw(exec_ctx_t *ctx)
 {
     TRACE("\n");
 
+    jsval_release(ctx->ei->val);
     ctx->ei->val = stack_pop(ctx);
     return DISP_E_EXCEPTION;
 }
@@ -688,7 +696,7 @@ static HRESULT interp_throw_ref(exec_ctx_t *ctx)
 
     TRACE("%08x\n", arg);
 
-    return throw_reference_error(ctx->script, ctx->ei, arg, NULL);
+    return throw_reference_error(ctx->script, arg, NULL);
 }
 
 static HRESULT interp_throw_type(exec_ctx_t *ctx)
@@ -698,7 +706,7 @@ static HRESULT interp_throw_type(exec_ctx_t *ctx)
 
     TRACE("%08x %s\n", hres, debugstr_w(str));
 
-    return throw_type_error(ctx->script, ctx->ei, hres, str);
+    return throw_type_error(ctx->script, hres, str);
 }
 
 /* ECMA-262 3rd Edition    12.14 */
@@ -814,7 +822,7 @@ static HRESULT interp_array(exec_ctx_t *ctx)
         return hres;
     }
 
-    hres = to_string(ctx->script, namev, ctx->ei, &name);
+    hres = to_string(ctx->script, namev, &name);
     jsval_release(namev);
     if(FAILED(hres)) {
         IDispatch_Release(obj);
@@ -824,7 +832,7 @@ static HRESULT interp_array(exec_ctx_t *ctx)
     hres = disp_get_id(ctx->script, obj, name, 0, &id);
     SysFreeString(name);
     if(SUCCEEDED(hres)) {
-        hres = disp_propget(ctx->script, obj, id, &v, ctx->ei);
+        hres = disp_propget(ctx->script, obj, id, &v);
     }else if(hres == DISP_E_UNKNOWNNAME) {
         v = jsval_undefined();
         hres = S_OK;
@@ -853,7 +861,7 @@ static HRESULT interp_member(exec_ctx_t *ctx)
 
     hres = disp_get_id(ctx->script, obj, arg, 0, &id);
     if(SUCCEEDED(hres)) {
-        hres = disp_propget(ctx->script, obj, id, &v, ctx->ei);
+        hres = disp_propget(ctx->script, obj, id, &v);
     }else if(hres == DISP_E_UNKNOWNNAME) {
         v = jsval_undefined();
         hres = S_OK;
@@ -883,7 +891,7 @@ static HRESULT interp_memberid(exec_ctx_t *ctx)
     hres = to_object(ctx->script, objv, &obj);
     jsval_release(objv);
     if(SUCCEEDED(hres)) {
-        hres = to_string(ctx->script, namev, ctx->ei, &name);
+        hres = to_string(ctx->script, namev, &name);
         if(FAILED(hres))
             IDispatch_Release(obj);
     }
@@ -919,9 +927,9 @@ static HRESULT interp_refval(exec_ctx_t *ctx)
 
     disp = stack_topn_objid(ctx, 0, &id);
     if(!disp)
-        return throw_reference_error(ctx->script, ctx->ei, JS_E_ILLEGAL_ASSIGN, NULL);
+        return throw_reference_error(ctx->script, JS_E_ILLEGAL_ASSIGN, NULL);
 
-    hres = disp_propget(ctx->script, disp, id, &v, ctx->ei);
+    hres = disp_propget(ctx->script, disp, id, &v);
     if(FAILED(hres))
         return hres;
 
@@ -942,13 +950,13 @@ static HRESULT interp_new(exec_ctx_t *ctx)
     /* NOTE: Should use to_object here */
 
     if(is_null(constr))
-        return throw_type_error(ctx->script, ctx->ei, JS_E_OBJECT_EXPECTED, NULL);
+        return throw_type_error(ctx->script, JS_E_OBJECT_EXPECTED, NULL);
     else if(!is_object_instance(constr))
-        return throw_type_error(ctx->script, ctx->ei, JS_E_INVALID_ACTION, NULL);
+        return throw_type_error(ctx->script, JS_E_INVALID_ACTION, NULL);
     else if(!get_object(constr))
-        return throw_type_error(ctx->script, ctx->ei, JS_E_INVALID_PROPERTY, NULL);
+        return throw_type_error(ctx->script, JS_E_INVALID_PROPERTY, NULL);
 
-    hres = disp_call_value(ctx->script, get_object(constr), NULL, DISPATCH_CONSTRUCT, argc, stack_args(ctx, argc), &r, ctx->ei);
+    hres = disp_call_value(ctx->script, get_object(constr), NULL, DISPATCH_CONSTRUCT, argc, stack_args(ctx, argc), &r);
     if(FAILED(hres))
         return hres;
 
@@ -968,10 +976,10 @@ static HRESULT interp_call(exec_ctx_t *ctx)
 
     obj = stack_topn(ctx, argn);
     if(!is_object_instance(obj))
-        return throw_type_error(ctx->script, ctx->ei, JS_E_INVALID_PROPERTY, NULL);
+        return throw_type_error(ctx->script, JS_E_INVALID_PROPERTY, NULL);
 
     hres = disp_call_value(ctx->script, get_object(obj), NULL, DISPATCH_METHOD, argn, stack_args(ctx, argn),
-            do_ret ? &r : NULL, ctx->ei);
+            do_ret ? &r : NULL);
     if(FAILED(hres))
         return hres;
 
@@ -993,9 +1001,9 @@ static HRESULT interp_call_member(exec_ctx_t *ctx)
 
     obj = stack_topn_objid(ctx, argn, &id);
     if(!obj)
-        return throw_type_error(ctx->script, ctx->ei, id, NULL);
+        return throw_type_error(ctx->script, id, NULL);
 
-    hres = disp_call(ctx->script, obj, id, DISPATCH_METHOD, argn, stack_args(ctx, argn), do_ret ? &r : NULL, ctx->ei);
+    hres = disp_call(ctx->script, obj, id, DISPATCH_METHOD, argn, stack_args(ctx, argn), do_ret ? &r : NULL);
     if(FAILED(hres))
         return hres;
 
@@ -1028,9 +1036,9 @@ static HRESULT interp_ident(exec_ctx_t *ctx)
         return hres;
 
     if(exprval.type == EXPRVAL_INVALID)
-        return throw_type_error(ctx->script, ctx->ei, JS_E_UNDEFINED_VARIABLE, arg);
+        return throw_type_error(ctx->script, JS_E_UNDEFINED_VARIABLE, arg);
 
-    hres = exprval_to_value(ctx->script, &exprval, ctx->ei, &v);
+    hres = exprval_to_value(ctx->script, &exprval, &v);
     exprval_release(&exprval);
     if(FAILED(hres))
         return hres;
@@ -1159,7 +1167,7 @@ static HRESULT interp_carray(exec_ctx_t *ctx)
     i = arg;
     while(i--) {
         val = stack_pop(ctx);
-        hres = jsdisp_propput_idx(array, i, val, ctx->ei);
+        hres = jsdisp_propput_idx(array, i, val);
         jsval_release(val);
         if(FAILED(hres)) {
             jsdisp_release(array);
@@ -1200,7 +1208,7 @@ static HRESULT interp_obj_prop(exec_ctx_t *ctx)
     assert(is_object_instance(stack_top(ctx)));
     obj = as_jsdisp(get_object(stack_top(ctx)));
 
-    hres = jsdisp_propput_name(obj, name, val, ctx->ei);
+    hres = jsdisp_propput_name(obj, name, val);
     jsval_release(val);
     return hres;
 }
@@ -1319,7 +1327,7 @@ static HRESULT interp_instanceof(exec_ctx_t *ctx)
     v = stack_pop(ctx);
     if(!is_object_instance(v) || !get_object(v)) {
         jsval_release(v);
-        return throw_type_error(ctx->script, ctx->ei, JS_E_FUNCTION_EXPECTED, NULL);
+        return throw_type_error(ctx->script, JS_E_FUNCTION_EXPECTED, NULL);
     }
 
     obj = iface_to_jsdisp((IUnknown*)get_object(v));
@@ -1330,9 +1338,9 @@ static HRESULT interp_instanceof(exec_ctx_t *ctx)
     }
 
     if(is_class(obj, JSCLASS_FUNCTION)) {
-        hres = jsdisp_propget_name(obj, prototypeW, &prot, ctx->ei);
+        hres = jsdisp_propget_name(obj, prototypeW, &prot);
     }else {
-        hres = throw_type_error(ctx->script, ctx->ei, JS_E_FUNCTION_EXPECTED, NULL);
+        hres = throw_type_error(ctx->script, JS_E_FUNCTION_EXPECTED, NULL);
     }
     jsdisp_release(obj);
     if(FAILED(hres))
@@ -1378,11 +1386,11 @@ static HRESULT interp_in(exec_ctx_t *ctx)
     obj = stack_pop(ctx);
     if(!is_object_instance(obj) || !get_object(obj)) {
         jsval_release(obj);
-        return throw_type_error(ctx->script, ctx->ei, JS_E_OBJECT_EXPECTED, NULL);
+        return throw_type_error(ctx->script, JS_E_OBJECT_EXPECTED, NULL);
     }
 
     v = stack_pop(ctx);
-    hres = to_string(ctx->script, v, ctx->ei, &str);
+    hres = to_string(ctx->script, v, &str);
     jsval_release(v);
     if(FAILED(hres)) {
         IDispatch_Release(get_object(obj));
@@ -1403,16 +1411,16 @@ static HRESULT interp_in(exec_ctx_t *ctx)
 }
 
 /* ECMA-262 3rd Edition    11.6.1 */
-static HRESULT add_eval(script_ctx_t *ctx, jsval_t lval, jsval_t rval, jsexcept_t *ei, jsval_t *ret)
+static HRESULT add_eval(script_ctx_t *ctx, jsval_t lval, jsval_t rval, jsval_t *ret)
 {
     jsval_t r, l;
     HRESULT hres;
 
-    hres = to_primitive(ctx, lval, ei, &l, NO_HINT);
+    hres = to_primitive(ctx, lval, &l, NO_HINT);
     if(FAILED(hres))
         return hres;
 
-    hres = to_primitive(ctx, rval, ei, &r, NO_HINT);
+    hres = to_primitive(ctx, rval, &r, NO_HINT);
     if(FAILED(hres)) {
         jsval_release(l);
         return hres;
@@ -1424,13 +1432,13 @@ static HRESULT add_eval(script_ctx_t *ctx, jsval_t lval, jsval_t rval, jsexcept_
         if(is_string(l))
             lstr = get_string(l);
         else
-            hres = to_string(ctx, l, ei, &lstr);
+            hres = to_string(ctx, l, &lstr);
 
         if(SUCCEEDED(hres)) {
             if(is_string(r))
                 rstr = get_string(r);
             else
-                hres = to_string(ctx, r, ei, &rstr);
+                hres = to_string(ctx, r, &rstr);
         }
 
         if(SUCCEEDED(hres)) {
@@ -1456,9 +1464,9 @@ static HRESULT add_eval(script_ctx_t *ctx, jsval_t lval, jsval_t rval, jsexcept_
     }else {
         double nl, nr;
 
-        hres = to_number(ctx, l, ei, &nl);
+        hres = to_number(ctx, l, &nl);
         if(SUCCEEDED(hres)) {
-            hres = to_number(ctx, r, ei, &nr);
+            hres = to_number(ctx, r, &nr);
             if(SUCCEEDED(hres))
                 *ret = jsval_number(nl+nr);
         }
@@ -1480,7 +1488,7 @@ static HRESULT interp_add(exec_ctx_t *ctx)
 
     TRACE("%s + %s\n", debugstr_jsval(l), debugstr_jsval(r));
 
-    hres = add_eval(ctx->script, l, r, ctx->ei, &ret);
+    hres = add_eval(ctx->script, l, r, &ret);
     jsval_release(l);
     jsval_release(r);
     if(FAILED(hres))
@@ -1587,7 +1595,7 @@ static HRESULT interp_delete(exec_ctx_t *ctx)
         return hres;
     }
 
-    hres = to_string(ctx->script, namev, ctx->ei, &name);
+    hres = to_string(ctx->script, namev, &name);
     jsval_release(namev);
     if(FAILED(hres)) {
         IDispatch_Release(obj);
@@ -1711,7 +1719,7 @@ static HRESULT interp_typeofid(exec_ctx_t *ctx)
     if(!obj)
         return stack_push_string(ctx, undefinedW);
 
-    hres = disp_propget(ctx->script, obj, id, &v, ctx->ei);
+    hres = disp_propget(ctx->script, obj, id, &v);
     IDispatch_Release(obj);
     if(FAILED(hres))
         return stack_push_string(ctx, unknownW);
@@ -1745,7 +1753,7 @@ static HRESULT interp_typeofident(exec_ctx_t *ctx)
         return hres;
     }
 
-    hres = exprval_to_value(ctx->script, &exprval, ctx->ei, &v);
+    hres = exprval_to_value(ctx->script, &exprval, &v);
     exprval_release(&exprval);
     if(FAILED(hres))
         return hres;
@@ -1801,7 +1809,7 @@ static HRESULT interp_tonum(exec_ctx_t *ctx)
     TRACE("\n");
 
     v = stack_pop(ctx);
-    hres = to_number(ctx->script, v, ctx->ei, &n);
+    hres = to_number(ctx->script, v, &n);
     jsval_release(v);
     if(FAILED(hres))
         return hres;
@@ -1822,15 +1830,15 @@ static HRESULT interp_postinc(exec_ctx_t *ctx)
 
     obj = stack_pop_objid(ctx, &id);
     if(!obj)
-        return throw_type_error(ctx->script, ctx->ei, JS_E_OBJECT_EXPECTED, NULL);
+        return throw_type_error(ctx->script, JS_E_OBJECT_EXPECTED, NULL);
 
-    hres = disp_propget(ctx->script, obj, id, &v, ctx->ei);
+    hres = disp_propget(ctx->script, obj, id, &v);
     if(SUCCEEDED(hres)) {
         double n;
 
-        hres = to_number(ctx->script, v, ctx->ei, &n);
+        hres = to_number(ctx->script, v, &n);
         if(SUCCEEDED(hres))
-            hres = disp_propput(ctx->script, obj, id, jsval_number(n+(double)arg), ctx->ei);
+            hres = disp_propput(ctx->script, obj, id, jsval_number(n+(double)arg));
         if(FAILED(hres))
             jsval_release(v);
     }
@@ -1855,17 +1863,17 @@ static HRESULT interp_preinc(exec_ctx_t *ctx)
 
     obj = stack_pop_objid(ctx, &id);
     if(!obj)
-        return throw_type_error(ctx->script, ctx->ei, JS_E_OBJECT_EXPECTED, NULL);
+        return throw_type_error(ctx->script, JS_E_OBJECT_EXPECTED, NULL);
 
-    hres = disp_propget(ctx->script, obj, id, &v, ctx->ei);
+    hres = disp_propget(ctx->script, obj, id, &v);
     if(SUCCEEDED(hres)) {
         double n;
 
-        hres = to_number(ctx->script, v, ctx->ei, &n);
+        hres = to_number(ctx->script, v, &n);
         jsval_release(v);
         if(SUCCEEDED(hres)) {
             ret = n+(double)arg;
-            hres = disp_propput(ctx->script, obj, id, jsval_number(ret), ctx->ei);
+            hres = disp_propput(ctx->script, obj, id, jsval_number(ret));
         }
     }
     IDispatch_Release(obj);
@@ -1876,16 +1884,16 @@ static HRESULT interp_preinc(exec_ctx_t *ctx)
 }
 
 /* ECMA-262 3rd Edition    11.9.3 */
-static HRESULT equal_values(script_ctx_t *ctx, jsval_t lval, jsval_t rval, jsexcept_t *ei, BOOL *ret)
+static HRESULT equal_values(script_ctx_t *ctx, jsval_t lval, jsval_t rval, BOOL *ret)
 {
     if(jsval_type(lval) == jsval_type(rval) || (is_number(lval) && is_number(rval)))
        return equal2_values(lval, rval, ret);
 
     /* FIXME: NULL disps should be handled in more general way */
     if(is_object_instance(lval) && !get_object(lval))
-        return equal_values(ctx, jsval_null(), rval, ei, ret);
+        return equal_values(ctx, jsval_null(), rval, ret);
     if(is_object_instance(rval) && !get_object(rval))
-        return equal_values(ctx, lval, jsval_null(), ei, ret);
+        return equal_values(ctx, lval, jsval_null(), ret);
 
     if((is_null(lval) && is_undefined(rval)) || (is_undefined(lval) && is_null(rval))) {
         *ret = TRUE;
@@ -1896,42 +1904,42 @@ static HRESULT equal_values(script_ctx_t *ctx, jsval_t lval, jsval_t rval, jsexc
         double n;
         HRESULT hres;
 
-        hres = to_number(ctx, lval, ei, &n);
+        hres = to_number(ctx, lval, &n);
         if(FAILED(hres))
             return hres;
 
         /* FIXME: optimize */
-        return equal_values(ctx, jsval_number(n), rval, ei, ret);
+        return equal_values(ctx, jsval_number(n), rval, ret);
     }
 
     if(is_string(rval) && is_number(lval)) {
         double n;
         HRESULT hres;
 
-        hres = to_number(ctx, rval, ei, &n);
+        hres = to_number(ctx, rval, &n);
         if(FAILED(hres))
             return hres;
 
         /* FIXME: optimize */
-        return equal_values(ctx, lval, jsval_number(n), ei, ret);
+        return equal_values(ctx, lval, jsval_number(n), ret);
     }
 
     if(is_bool(rval))
-        return equal_values(ctx, lval, jsval_number(get_bool(rval) ? 1 : 0), ei, ret);
+        return equal_values(ctx, lval, jsval_number(get_bool(rval) ? 1 : 0), ret);
 
     if(is_bool(lval))
-        return equal_values(ctx, jsval_number(get_bool(lval) ? 1 : 0), rval, ei, ret);
+        return equal_values(ctx, jsval_number(get_bool(lval) ? 1 : 0), rval, ret);
 
 
     if(is_object_instance(rval) && (is_string(lval) || is_number(lval))) {
         jsval_t prim;
         HRESULT hres;
 
-        hres = to_primitive(ctx, rval, ei, &prim, NO_HINT);
+        hres = to_primitive(ctx, rval, &prim, NO_HINT);
         if(FAILED(hres))
             return hres;
 
-        hres = equal_values(ctx, lval, prim, ei, ret);
+        hres = equal_values(ctx, lval, prim, ret);
         jsval_release(prim);
         return hres;
     }
@@ -1941,11 +1949,11 @@ static HRESULT equal_values(script_ctx_t *ctx, jsval_t lval, jsval_t rval, jsexc
         jsval_t prim;
         HRESULT hres;
 
-        hres = to_primitive(ctx, lval, ei, &prim, NO_HINT);
+        hres = to_primitive(ctx, lval, &prim, NO_HINT);
         if(FAILED(hres))
             return hres;
 
-        hres = equal_values(ctx, prim, rval, ei, ret);
+        hres = equal_values(ctx, prim, rval, ret);
         jsval_release(prim);
         return hres;
     }
@@ -1967,7 +1975,7 @@ static HRESULT interp_eq(exec_ctx_t *ctx)
 
     TRACE("%s == %s\n", debugstr_jsval(l), debugstr_jsval(r));
 
-    hres = equal_values(ctx->script, l, r, ctx->ei, &b);
+    hres = equal_values(ctx->script, l, r, &b);
     jsval_release(l);
     jsval_release(r);
     if(FAILED(hres))
@@ -1988,7 +1996,7 @@ static HRESULT interp_neq(exec_ctx_t *ctx)
 
     TRACE("%s != %s\n", debugstr_jsval(l), debugstr_jsval(r));
 
-    hres = equal_values(ctx->script, l, r, ctx->ei, &b);
+    hres = equal_values(ctx->script, l, r, &b);
     jsval_release(l);
     jsval_release(r);
     if(FAILED(hres))
@@ -2040,17 +2048,17 @@ static HRESULT interp_neq2(exec_ctx_t *ctx)
 }
 
 /* ECMA-262 3rd Edition    11.8.5 */
-static HRESULT less_eval(script_ctx_t *ctx, jsval_t lval, jsval_t rval, BOOL greater, jsexcept_t *ei, BOOL *ret)
+static HRESULT less_eval(script_ctx_t *ctx, jsval_t lval, jsval_t rval, BOOL greater, BOOL *ret)
 {
     double ln, rn;
     jsval_t l, r;
     HRESULT hres;
 
-    hres = to_primitive(ctx, lval, ei, &l, NO_HINT);
+    hres = to_primitive(ctx, lval, &l, NO_HINT);
     if(FAILED(hres))
         return hres;
 
-    hres = to_primitive(ctx, rval, ei, &r, NO_HINT);
+    hres = to_primitive(ctx, rval, &r, NO_HINT);
     if(FAILED(hres)) {
         jsval_release(l);
         return hres;
@@ -2063,10 +2071,10 @@ static HRESULT less_eval(script_ctx_t *ctx, jsval_t lval, jsval_t rval, BOOL gre
         return S_OK;
     }
 
-    hres = to_number(ctx, l, ei, &ln);
+    hres = to_number(ctx, l, &ln);
     jsval_release(l);
     if(SUCCEEDED(hres))
-        hres = to_number(ctx, r, ei, &rn);
+        hres = to_number(ctx, r, &rn);
     jsval_release(r);
     if(FAILED(hres))
         return hres;
@@ -2087,7 +2095,7 @@ static HRESULT interp_lt(exec_ctx_t *ctx)
 
     TRACE("%s < %s\n", debugstr_jsval(l), debugstr_jsval(r));
 
-    hres = less_eval(ctx->script, l, r, FALSE, ctx->ei, &b);
+    hres = less_eval(ctx->script, l, r, FALSE, &b);
     jsval_release(l);
     jsval_release(r);
     if(FAILED(hres))
@@ -2108,7 +2116,7 @@ static HRESULT interp_lteq(exec_ctx_t *ctx)
 
     TRACE("%s <= %s\n", debugstr_jsval(l), debugstr_jsval(r));
 
-    hres = less_eval(ctx->script, r, l, TRUE, ctx->ei, &b);
+    hres = less_eval(ctx->script, r, l, TRUE, &b);
     jsval_release(l);
     jsval_release(r);
     if(FAILED(hres))
@@ -2129,7 +2137,7 @@ static HRESULT interp_gt(exec_ctx_t *ctx)
 
     TRACE("%s > %s\n", debugstr_jsval(l), debugstr_jsval(r));
 
-    hres = less_eval(ctx->script, r, l, FALSE, ctx->ei, &b);
+    hres = less_eval(ctx->script, r, l, FALSE, &b);
     jsval_release(l);
     jsval_release(r);
     if(FAILED(hres))
@@ -2150,7 +2158,7 @@ static HRESULT interp_gteq(exec_ctx_t *ctx)
 
     TRACE("%s >= %s\n", debugstr_jsval(l), debugstr_jsval(r));
 
-    hres = less_eval(ctx->script, l, r, TRUE, ctx->ei, &b);
+    hres = less_eval(ctx->script, l, r, TRUE, &b);
     jsval_release(l);
     jsval_release(r);
     if(FAILED(hres))
@@ -2169,7 +2177,7 @@ static HRESULT interp_bneg(exec_ctx_t *ctx)
     TRACE("\n");
 
     v = stack_pop(ctx);
-    hres = to_int32(ctx->script, v, ctx->ei, &i);
+    hres = to_int32(ctx->script, v, &i);
     jsval_release(v);
     if(FAILED(hres))
         return hres;
@@ -2263,10 +2271,10 @@ static HRESULT interp_assign(exec_ctx_t *ctx)
     disp = stack_pop_objid(ctx, &id);
     if(!disp) {
         jsval_release(v);
-        return throw_reference_error(ctx->script, ctx->ei, JS_E_ILLEGAL_ASSIGN, NULL);
+        return throw_reference_error(ctx->script, JS_E_ILLEGAL_ASSIGN, NULL);
     }
 
-    hres = disp_propput(ctx->script, disp, id, v, ctx->ei);
+    hres = disp_propput(ctx->script, disp, id, v);
     IDispatch_Release(disp);
     if(FAILED(hres)) {
         jsval_release(v);
@@ -2289,9 +2297,9 @@ static HRESULT interp_assign_call(exec_ctx_t *ctx)
 
     disp = stack_topn_objid(ctx, argc+1, &id);
     if(!disp)
-        return throw_reference_error(ctx->script, ctx->ei, JS_E_ILLEGAL_ASSIGN, NULL);
+        return throw_reference_error(ctx->script, JS_E_ILLEGAL_ASSIGN, NULL);
 
-    hres = disp_call(ctx->script, disp, id, DISPATCH_PROPERTYPUT, argc+1, stack_args(ctx, argc+1), NULL, ctx->ei);
+    hres = disp_call(ctx->script, disp, id, DISPATCH_PROPERTYPUT, argc+1, stack_args(ctx, argc+1), NULL);
     if(FAILED(hres))
         return hres;
 
@@ -2398,7 +2406,7 @@ static HRESULT unwind_exception(exec_ctx_t *ctx)
 
         hres = create_dispex(ctx->script, NULL, NULL, &scope_obj);
         if(SUCCEEDED(hres)) {
-            hres = jsdisp_propput_name(scope_obj, ident, except_val, ctx->ei);
+            hres = jsdisp_propput_name(scope_obj, ident, except_val);
             if(FAILED(hres))
                 jsdisp_release(scope_obj);
         }
@@ -2491,8 +2499,7 @@ static HRESULT enter_bytecode(script_ctx_t *ctx, bytecode_t *code, function_code
     return S_OK;
 }
 
-HRESULT exec_source(exec_ctx_t *ctx, bytecode_t *code, function_code_t *func, BOOL from_eval,
-        jsexcept_t *ei, jsval_t *ret)
+HRESULT exec_source(exec_ctx_t *ctx, bytecode_t *code, function_code_t *func, BOOL from_eval, jsval_t *ret)
 {
     exec_ctx_t *prev_ctx;
     jsval_t val;
@@ -2509,7 +2516,7 @@ HRESULT exec_source(exec_ctx_t *ctx, bytecode_t *code, function_code_t *func, BO
         if(FAILED(hres))
             return hres;
 
-        hres = jsdisp_propput_name(ctx->var_disp, func->funcs[i].name, jsval_obj(func_obj), ei);
+        hres = jsdisp_propput_name(ctx->var_disp, func->funcs[i].name, jsval_obj(func_obj));
         jsdisp_release(func_obj);
         if(FAILED(hres))
             return hres;
@@ -2528,7 +2535,7 @@ HRESULT exec_source(exec_ctx_t *ctx, bytecode_t *code, function_code_t *func, BO
     prev_ctx = ctx->script->exec_ctx;
     ctx->script->exec_ctx = ctx;
 
-    hres = enter_bytecode(ctx->script, code, func, ei, &val);
+    hres = enter_bytecode(ctx->script, code, func, &ctx->script->ei, &val);
     assert(ctx->script->exec_ctx == ctx);
     ctx->script->exec_ctx = prev_ctx;
     if(FAILED(hres))

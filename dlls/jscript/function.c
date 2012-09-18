@@ -55,15 +55,14 @@ static const WCHAR applyW[] = {'a','p','p','l','y',0};
 static const WCHAR callW[] = {'c','a','l','l',0};
 static const WCHAR argumentsW[] = {'a','r','g','u','m','e','n','t','s',0};
 
-static HRESULT init_parameters(jsdisp_t *var_disp, FunctionInstance *function, unsigned argc, jsval_t *argv,
-        jsexcept_t *ei)
+static HRESULT init_parameters(jsdisp_t *var_disp, FunctionInstance *function, unsigned argc, jsval_t *argv)
 {
     DWORD i=0;
     HRESULT hres;
 
     for(i=0; i < function->func_code->param_cnt; i++) {
         hres = jsdisp_propput_name(var_disp, function->func_code->params[i],
-                i < argc ? argv[i] : jsval_undefined(), ei);
+                i < argc ? argv[i] : jsval_undefined());
         if(FAILED(hres))
             return hres;
     }
@@ -72,7 +71,7 @@ static HRESULT init_parameters(jsdisp_t *var_disp, FunctionInstance *function, u
 }
 
 static HRESULT Arguments_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     FIXME("\n");
     return E_NOTIMPL;
@@ -86,8 +85,7 @@ static const builtin_info_t Arguments_info = {
     NULL
 };
 
-static HRESULT create_arguments(script_ctx_t *ctx, IDispatch *calee, unsigned argc, jsval_t *argv,
-        jsexcept_t *ei, jsdisp_t **ret)
+static HRESULT create_arguments(script_ctx_t *ctx, IDispatch *calee, unsigned argc, jsval_t *argv, jsdisp_t **ret)
 {
     jsdisp_t *args;
     DWORD i;
@@ -106,16 +104,16 @@ static HRESULT create_arguments(script_ctx_t *ctx, IDispatch *calee, unsigned ar
     }
 
     for(i=0; i < argc; i++) {
-        hres = jsdisp_propput_idx(args, i, argv[i], ei);
+        hres = jsdisp_propput_idx(args, i, argv[i]);
         if(FAILED(hres))
             break;
     }
 
     if(SUCCEEDED(hres)) {
-        hres = jsdisp_propput_name(args, lengthW, jsval_number(argc), ei);
+        hres = jsdisp_propput_name(args, lengthW, jsval_number(argc));
 
         if(SUCCEEDED(hres))
-            hres = jsdisp_propput_name(args, caleeW, jsval_disp(calee), ei);
+            hres = jsdisp_propput_name(args, caleeW, jsval_disp(calee));
     }
 
     if(FAILED(hres)) {
@@ -128,7 +126,7 @@ static HRESULT create_arguments(script_ctx_t *ctx, IDispatch *calee, unsigned ar
 }
 
 static HRESULT create_var_disp(script_ctx_t *ctx, FunctionInstance *function, jsdisp_t *arg_disp,
-        unsigned argc, jsval_t *argv, jsexcept_t *ei, jsdisp_t **ret)
+        unsigned argc, jsval_t *argv, jsdisp_t **ret)
 {
     jsdisp_t *var_disp;
     HRESULT hres;
@@ -137,9 +135,9 @@ static HRESULT create_var_disp(script_ctx_t *ctx, FunctionInstance *function, js
     if(FAILED(hres))
         return hres;
 
-    hres = jsdisp_propput_name(var_disp, argumentsW, jsval_obj(arg_disp), ei);
+    hres = jsdisp_propput_name(var_disp, argumentsW, jsval_obj(arg_disp));
     if(SUCCEEDED(hres))
-        hres = init_parameters(var_disp, function, argc, argv, ei);
+        hres = init_parameters(var_disp, function, argc, argv);
     if(FAILED(hres)) {
         jsdisp_release(var_disp);
         return hres;
@@ -150,7 +148,7 @@ static HRESULT create_var_disp(script_ctx_t *ctx, FunctionInstance *function, js
 }
 
 static HRESULT invoke_source(script_ctx_t *ctx, FunctionInstance *function, IDispatch *this_obj, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     jsdisp_t *var_disp, *arg_disp;
     exec_ctx_t *exec_ctx;
@@ -162,11 +160,11 @@ static HRESULT invoke_source(script_ctx_t *ctx, FunctionInstance *function, IDis
         return E_FAIL;
     }
 
-    hres = create_arguments(ctx, to_disp(&function->dispex), argc, argv, ei, &arg_disp);
+    hres = create_arguments(ctx, to_disp(&function->dispex), argc, argv, &arg_disp);
     if(FAILED(hres))
         return hres;
 
-    hres = create_var_disp(ctx, function, arg_disp, argc, argv, ei, &var_disp);
+    hres = create_var_disp(ctx, function, arg_disp, argc, argv, &var_disp);
     if(FAILED(hres)) {
         jsdisp_release(arg_disp);
         return hres;
@@ -183,7 +181,7 @@ static HRESULT invoke_source(script_ctx_t *ctx, FunctionInstance *function, IDis
 
         prev_args = function->arguments;
         function->arguments = arg_disp;
-        hres = exec_source(exec_ctx, function->code, function->func_code, FALSE, ei, r);
+        hres = exec_source(exec_ctx, function->code, function->func_code, FALSE, r);
         function->arguments = prev_args;
     }
 
@@ -193,7 +191,7 @@ static HRESULT invoke_source(script_ctx_t *ctx, FunctionInstance *function, IDis
 }
 
 static HRESULT invoke_constructor(script_ctx_t *ctx, FunctionInstance *function, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     jsdisp_t *this_obj;
     jsval_t var;
@@ -203,7 +201,7 @@ static HRESULT invoke_constructor(script_ctx_t *ctx, FunctionInstance *function,
     if(FAILED(hres))
         return hres;
 
-    hres = invoke_source(ctx, function, to_disp(this_obj), argc, argv, &var, ei);
+    hres = invoke_source(ctx, function, to_disp(this_obj), argc, argv, &var);
     if(FAILED(hres)) {
         jsdisp_release(this_obj);
         return hres;
@@ -219,8 +217,8 @@ static HRESULT invoke_constructor(script_ctx_t *ctx, FunctionInstance *function,
     return S_OK;
 }
 
-static HRESULT invoke_value_proc(script_ctx_t *ctx, FunctionInstance *function, IDispatch *this_disp, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+static HRESULT invoke_value_proc(script_ctx_t *ctx, FunctionInstance *function, IDispatch *this_disp, WORD flags,
+        unsigned argc, jsval_t *argv, jsval_t *r)
 {
     vdisp_t vthis;
     HRESULT hres;
@@ -232,19 +230,19 @@ static HRESULT invoke_value_proc(script_ctx_t *ctx, FunctionInstance *function, 
     else
         set_jsdisp(&vthis, ctx->global);
 
-    hres = function->value_proc(ctx, &vthis, flags, argc, argv, r, ei);
+    hres = function->value_proc(ctx, &vthis, flags, argc, argv, r);
 
     vdisp_release(&vthis);
     return hres;
 }
 
 static HRESULT call_function(script_ctx_t *ctx, FunctionInstance *function, IDispatch *this_obj,
-        unsigned argc, jsval_t *argv, jsval_t *r, jsexcept_t *ei)
+        unsigned argc, jsval_t *argv, jsval_t *r)
 {
     if(function->value_proc)
-        return invoke_value_proc(ctx, function, this_obj, DISPATCH_METHOD, argc, argv, r, ei);
+        return invoke_value_proc(ctx, function, this_obj, DISPATCH_METHOD, argc, argv, r);
 
-    return invoke_source(ctx, function, this_obj, argc, argv, r, ei);
+    return invoke_source(ctx, function, this_obj, argc, argv, r);
 }
 
 static HRESULT function_to_string(FunctionInstance *function, BSTR *ret)
@@ -276,7 +274,7 @@ static HRESULT function_to_string(FunctionInstance *function, BSTR *ret)
     return S_OK;
 }
 
-HRESULT Function_invoke(jsdisp_t *func_this, IDispatch *jsthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r, jsexcept_t *ei)
+HRESULT Function_invoke(jsdisp_t *func_this, IDispatch *jsthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
 {
     FunctionInstance *function;
 
@@ -286,17 +284,17 @@ HRESULT Function_invoke(jsdisp_t *func_this, IDispatch *jsthis, WORD flags, unsi
     function = (FunctionInstance*)func_this;
 
     if(function->value_proc)
-        return invoke_value_proc(function->dispex.ctx, function, jsthis, flags, argc, argv, r, ei);
+        return invoke_value_proc(function->dispex.ctx, function, jsthis, flags, argc, argv, r);
 
     if(flags == DISPATCH_CONSTRUCT)
-        return invoke_constructor(function->dispex.ctx, function, argc, argv, r, ei);
+        return invoke_constructor(function->dispex.ctx, function, argc, argv, r);
 
     assert(flags == DISPATCH_METHOD);
-    return invoke_source(function->dispex.ctx, function, jsthis, argc, argv, r, ei);
+    return invoke_source(function->dispex.ctx, function, jsthis, argc, argv, r);
 }
 
 static HRESULT Function_length(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     FunctionInstance *This = function_from_vdisp(jsthis);
 
@@ -315,7 +313,7 @@ static HRESULT Function_length(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
 }
 
 static HRESULT Function_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     FunctionInstance *function;
     BSTR str;
@@ -324,7 +322,7 @@ static HRESULT Function_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
     TRACE("\n");
 
     if(!(function = function_this(jsthis)))
-        return throw_type_error(ctx, ei, JS_E_FUNCTION_EXPECTED, NULL);
+        return throw_type_error(ctx, JS_E_FUNCTION_EXPECTED, NULL);
 
     hres = function_to_string(function, &str);
     if(FAILED(hres))
@@ -337,17 +335,17 @@ static HRESULT Function_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
     return S_OK;
 }
 
-static HRESULT array_to_args(script_ctx_t *ctx, jsdisp_t *arg_array, jsexcept_t *ei, unsigned *argc, jsval_t **ret)
+static HRESULT array_to_args(script_ctx_t *ctx, jsdisp_t *arg_array, unsigned *argc, jsval_t **ret)
 {
     jsval_t *argv, val;
     DWORD length, i;
     HRESULT hres;
 
-    hres = jsdisp_propget_name(arg_array, lengthW, &val, ei);
+    hres = jsdisp_propget_name(arg_array, lengthW, &val);
     if(FAILED(hres))
         return hres;
 
-    hres = to_uint32(ctx, val, ei, &length);
+    hres = to_uint32(ctx, val, &length);
     jsval_release(val);
     if(FAILED(hres))
         return hres;
@@ -357,7 +355,7 @@ static HRESULT array_to_args(script_ctx_t *ctx, jsdisp_t *arg_array, jsexcept_t 
         return E_OUTOFMEMORY;
 
     for(i=0; i<length; i++) {
-        hres = jsdisp_get_idx(arg_array, i, argv+i, ei);
+        hres = jsdisp_get_idx(arg_array, i, argv+i);
         if(hres == DISP_E_UNKNOWNNAME) {
             argv[i] = jsval_undefined();
         }else if(FAILED(hres)) {
@@ -373,8 +371,7 @@ static HRESULT array_to_args(script_ctx_t *ctx, jsdisp_t *arg_array, jsexcept_t 
     return S_OK;
 }
 
-static HRESULT Function_apply(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+static HRESULT Function_apply(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
 {
     FunctionInstance *function;
     jsval_t *args = NULL;
@@ -385,7 +382,7 @@ static HRESULT Function_apply(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
     TRACE("\n");
 
     if(!(function = function_this(jsthis)))
-        return throw_type_error(ctx, ei, JS_E_FUNCTION_EXPECTED, NULL);
+        return throw_type_error(ctx, JS_E_FUNCTION_EXPECTED, NULL);
 
     if(argc) {
         if(!is_undefined(argv[0]) && !is_null(argv[0])) {
@@ -408,7 +405,7 @@ static HRESULT Function_apply(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
         }
 
         if(arg_array) {
-            hres = array_to_args(ctx, arg_array, ei, &cnt, &args);
+            hres = array_to_args(ctx, arg_array, &cnt, &args);
             jsdisp_release(arg_array);
         }else {
             FIXME("throw TypeError\n");
@@ -417,7 +414,7 @@ static HRESULT Function_apply(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
     }
 
     if(SUCCEEDED(hres))
-        hres = call_function(ctx, function, this_obj, cnt, args, r, ei);
+        hres = call_function(ctx, function, this_obj, cnt, args, r);
 
     if(this_obj)
         IDispatch_Release(this_obj);
@@ -428,7 +425,7 @@ static HRESULT Function_apply(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
 }
 
 static HRESULT Function_call(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     FunctionInstance *function;
     IDispatch *this_obj = NULL;
@@ -438,7 +435,7 @@ static HRESULT Function_call(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
     TRACE("\n");
 
     if(!(function = function_this(jsthis)))
-        return throw_type_error(ctx, ei, JS_E_FUNCTION_EXPECTED, NULL);
+        return throw_type_error(ctx, JS_E_FUNCTION_EXPECTED, NULL);
 
     if(argc) {
         if(!is_undefined(argv[0]) && !is_null(argv[0])) {
@@ -450,7 +447,7 @@ static HRESULT Function_call(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
         cnt = argc-1;
     }
 
-    hres = call_function(ctx, function, this_obj, cnt, argv+1, r, ei);
+    hres = call_function(ctx, function, this_obj, cnt, argv+1, r);
 
     if(this_obj)
         IDispatch_Release(this_obj);
@@ -458,7 +455,7 @@ static HRESULT Function_call(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
 }
 
 HRESULT Function_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     FunctionInstance *function;
 
@@ -474,7 +471,7 @@ HRESULT Function_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned 
     switch(flags) {
     case DISPATCH_METHOD:
         assert(function->value_proc != NULL);
-        return invoke_value_proc(ctx, function, NULL, flags, argc, argv, r, ei);
+        return invoke_value_proc(ctx, function, NULL, flags, argc, argv, r);
 
     case DISPATCH_PROPERTYGET: {
         HRESULT hres;
@@ -490,7 +487,7 @@ HRESULT Function_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned 
 
     case DISPATCH_CONSTRUCT:
         assert(function->value_proc != NULL);
-        return invoke_value_proc(ctx, function, NULL, flags, argc, argv, r, ei);
+        return invoke_value_proc(ctx, function, NULL, flags, argc, argv, r);
 
     default:
         FIXME("not implemented flags %x\n", flags);
@@ -501,7 +498,7 @@ HRESULT Function_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned 
 }
 
 static HRESULT Function_arguments(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
-        unsigned argc, jsval_t *argv, jsval_t *r, jsexcept_t *ei)
+        unsigned argc, jsval_t *argv, jsval_t *r)
 {
     FunctionInstance *function = (FunctionInstance*)jsthis->u.jsdisp;
     HRESULT hres = S_OK;
@@ -591,12 +588,9 @@ static HRESULT create_function(script_ctx_t *ctx, const builtin_info_t *builtin_
     return S_OK;
 }
 
-static HRESULT set_prototype(script_ctx_t *ctx, jsdisp_t *dispex, jsdisp_t *prototype)
+static inline HRESULT set_prototype(script_ctx_t *ctx, jsdisp_t *dispex, jsdisp_t *prototype)
 {
-    jsexcept_t jsexcept;
-
-    memset(&jsexcept, 0, sizeof(jsexcept));
-    return jsdisp_propput_name(dispex, prototypeW, jsval_obj(prototype), &jsexcept);
+    return jsdisp_propput_name(dispex, prototypeW, jsval_obj(prototype));
 }
 
 HRESULT create_builtin_function(script_ctx_t *ctx, builtin_invoke_t value_proc, const WCHAR *name,
@@ -689,7 +683,7 @@ HRESULT create_source_function(script_ctx_t *ctx, bytecode_t *code, function_cod
     return S_OK;
 }
 
-static HRESULT construct_function(script_ctx_t *ctx, unsigned argc, jsval_t *argv, jsexcept_t *ei, IDispatch **ret)
+static HRESULT construct_function(script_ctx_t *ctx, unsigned argc, jsval_t *argv, IDispatch **ret)
 {
     WCHAR *str = NULL, *ptr;
     DWORD len = 0, l;
@@ -711,7 +705,7 @@ static HRESULT construct_function(script_ctx_t *ctx, unsigned argc, jsval_t *arg
         if(argc > 2)
             len = (argc-2)*2; /* separating commas */
         for(i=0; i < argc; i++) {
-            hres = to_string(ctx, argv[i], ei, params+i);
+            hres = to_string(ctx, argv[i], params+i);
             if(FAILED(hres))
                 break;
             len += SysStringLen(params[i]);
@@ -777,7 +771,7 @@ static HRESULT construct_function(script_ctx_t *ctx, unsigned argc, jsval_t *arg
 }
 
 static HRESULT FunctionConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     HRESULT hres;
 
@@ -787,7 +781,7 @@ static HRESULT FunctionConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD fla
     case DISPATCH_CONSTRUCT: {
         IDispatch *ret;
 
-        hres = construct_function(ctx, argc, argv, ei, &ret);
+        hres = construct_function(ctx, argc, argv, &ret);
         if(FAILED(hres))
             return hres;
 
@@ -803,7 +797,7 @@ static HRESULT FunctionConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD fla
 }
 
 static HRESULT FunctionProt_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     FIXME("\n");
     return E_NOTIMPL;

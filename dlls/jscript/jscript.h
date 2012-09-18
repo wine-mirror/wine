@@ -149,7 +149,7 @@ static inline jsdisp_t *get_jsdisp(vdisp_t *vdisp)
     return is_jsdisp(vdisp) ? vdisp->u.jsdisp : NULL;
 }
 
-typedef HRESULT (*builtin_invoke_t)(script_ctx_t*,vdisp_t*,WORD,unsigned,jsval_t*,jsval_t*,jsexcept_t*);
+typedef HRESULT (*builtin_invoke_t)(script_ctx_t*,vdisp_t*,WORD,unsigned,jsval_t*,jsval_t*);
 
 typedef struct {
     const WCHAR *name;
@@ -204,20 +204,20 @@ HRESULT create_dispex(script_ctx_t*,const builtin_info_t*,jsdisp_t*,jsdisp_t**) 
 HRESULT init_dispex(jsdisp_t*,script_ctx_t*,const builtin_info_t*,jsdisp_t*) DECLSPEC_HIDDEN;
 HRESULT init_dispex_from_constr(jsdisp_t*,script_ctx_t*,const builtin_info_t*,jsdisp_t*) DECLSPEC_HIDDEN;
 
-HRESULT disp_call(script_ctx_t*,IDispatch*,DISPID,WORD,unsigned,jsval_t*,jsval_t*,jsexcept_t*) DECLSPEC_HIDDEN;
-HRESULT disp_call_value(script_ctx_t*,IDispatch*,IDispatch*,WORD,unsigned,jsval_t*,jsval_t*,jsexcept_t*) DECLSPEC_HIDDEN;
-HRESULT jsdisp_call_value(jsdisp_t*,IDispatch*,WORD,unsigned,jsval_t*,jsval_t*,jsexcept_t*) DECLSPEC_HIDDEN;
-HRESULT jsdisp_call(jsdisp_t*,DISPID,WORD,unsigned,jsval_t*,jsval_t*,jsexcept_t*) DECLSPEC_HIDDEN;
-HRESULT jsdisp_call_name(jsdisp_t*,const WCHAR*,WORD,unsigned,jsval_t*,jsval_t*,jsexcept_t*) DECLSPEC_HIDDEN;
-HRESULT disp_propget(script_ctx_t*,IDispatch*,DISPID,jsval_t*,jsexcept_t*) DECLSPEC_HIDDEN;
-HRESULT disp_propput(script_ctx_t*,IDispatch*,DISPID,jsval_t,jsexcept_t*) DECLSPEC_HIDDEN;
-HRESULT jsdisp_propget(jsdisp_t*,DISPID,jsval_t*,jsexcept_t*) DECLSPEC_HIDDEN;
-HRESULT jsdisp_propput_name(jsdisp_t*,const WCHAR*,jsval_t,jsexcept_t*) DECLSPEC_HIDDEN;
+HRESULT disp_call(script_ctx_t*,IDispatch*,DISPID,WORD,unsigned,jsval_t*,jsval_t*) DECLSPEC_HIDDEN;
+HRESULT disp_call_value(script_ctx_t*,IDispatch*,IDispatch*,WORD,unsigned,jsval_t*,jsval_t*) DECLSPEC_HIDDEN;
+HRESULT jsdisp_call_value(jsdisp_t*,IDispatch*,WORD,unsigned,jsval_t*,jsval_t*) DECLSPEC_HIDDEN;
+HRESULT jsdisp_call(jsdisp_t*,DISPID,WORD,unsigned,jsval_t*,jsval_t*) DECLSPEC_HIDDEN;
+HRESULT jsdisp_call_name(jsdisp_t*,const WCHAR*,WORD,unsigned,jsval_t*,jsval_t*) DECLSPEC_HIDDEN;
+HRESULT disp_propget(script_ctx_t*,IDispatch*,DISPID,jsval_t*) DECLSPEC_HIDDEN;
+HRESULT disp_propput(script_ctx_t*,IDispatch*,DISPID,jsval_t) DECLSPEC_HIDDEN;
+HRESULT jsdisp_propget(jsdisp_t*,DISPID,jsval_t*) DECLSPEC_HIDDEN;
+HRESULT jsdisp_propput_name(jsdisp_t*,const WCHAR*,jsval_t) DECLSPEC_HIDDEN;
 HRESULT jsdisp_propput_const(jsdisp_t*,const WCHAR*,jsval_t) DECLSPEC_HIDDEN;
 HRESULT jsdisp_propput_dontenum(jsdisp_t*,const WCHAR*,jsval_t) DECLSPEC_HIDDEN;
-HRESULT jsdisp_propput_idx(jsdisp_t*,DWORD,jsval_t,jsexcept_t*) DECLSPEC_HIDDEN;
-HRESULT jsdisp_propget_name(jsdisp_t*,LPCWSTR,jsval_t*,jsexcept_t*) DECLSPEC_HIDDEN;
-HRESULT jsdisp_get_idx(jsdisp_t*,DWORD,jsval_t*,jsexcept_t*) DECLSPEC_HIDDEN;
+HRESULT jsdisp_propput_idx(jsdisp_t*,DWORD,jsval_t) DECLSPEC_HIDDEN;
+HRESULT jsdisp_propget_name(jsdisp_t*,LPCWSTR,jsval_t*) DECLSPEC_HIDDEN;
+HRESULT jsdisp_get_idx(jsdisp_t*,DWORD,jsval_t*) DECLSPEC_HIDDEN;
 HRESULT jsdisp_get_id(jsdisp_t*,const WCHAR*,DWORD,DISPID*) DECLSPEC_HIDDEN;
 HRESULT jsdisp_delete_idx(jsdisp_t*,DWORD) DECLSPEC_HIDDEN;
 HRESULT jsdisp_is_own_prop(jsdisp_t*,BSTR,BOOL*) DECLSPEC_HIDDEN;
@@ -226,17 +226,17 @@ HRESULT create_builtin_function(script_ctx_t*,builtin_invoke_t,const WCHAR*,cons
         jsdisp_t*,jsdisp_t**) DECLSPEC_HIDDEN;
 HRESULT create_builtin_constructor(script_ctx_t*,builtin_invoke_t,const WCHAR*,const builtin_info_t*,DWORD,
         jsdisp_t*,jsdisp_t**) DECLSPEC_HIDDEN;
-HRESULT Function_value(script_ctx_t*,vdisp_t*,WORD,unsigned,jsval_t*,jsval_t*,jsexcept_t*) DECLSPEC_HIDDEN;
-HRESULT Function_invoke(jsdisp_t*,IDispatch*,WORD,unsigned,jsval_t*,jsval_t*,jsexcept_t*) DECLSPEC_HIDDEN;
+HRESULT Function_value(script_ctx_t*,vdisp_t*,WORD,unsigned,jsval_t*,jsval_t*) DECLSPEC_HIDDEN;
+HRESULT Function_invoke(jsdisp_t*,IDispatch*,WORD,unsigned,jsval_t*,jsval_t*) DECLSPEC_HIDDEN;
 
-HRESULT throw_eval_error(script_ctx_t*,jsexcept_t*,HRESULT,const WCHAR*) DECLSPEC_HIDDEN;
-HRESULT throw_generic_error(script_ctx_t*,jsexcept_t*,HRESULT,const WCHAR*) DECLSPEC_HIDDEN;
-HRESULT throw_range_error(script_ctx_t*,jsexcept_t*,HRESULT,const WCHAR*) DECLSPEC_HIDDEN;
-HRESULT throw_reference_error(script_ctx_t*,jsexcept_t*,HRESULT,const WCHAR*) DECLSPEC_HIDDEN;
-HRESULT throw_regexp_error(script_ctx_t*,jsexcept_t*,HRESULT,const WCHAR*) DECLSPEC_HIDDEN;
-HRESULT throw_syntax_error(script_ctx_t*,jsexcept_t*,HRESULT,const WCHAR*) DECLSPEC_HIDDEN;
-HRESULT throw_type_error(script_ctx_t*,jsexcept_t*,HRESULT,const WCHAR*) DECLSPEC_HIDDEN;
-HRESULT throw_uri_error(script_ctx_t*,jsexcept_t*,HRESULT,const WCHAR*) DECLSPEC_HIDDEN;
+HRESULT throw_eval_error(script_ctx_t*,HRESULT,const WCHAR*) DECLSPEC_HIDDEN;
+HRESULT throw_generic_error(script_ctx_t*,HRESULT,const WCHAR*) DECLSPEC_HIDDEN;
+HRESULT throw_range_error(script_ctx_t*,HRESULT,const WCHAR*) DECLSPEC_HIDDEN;
+HRESULT throw_reference_error(script_ctx_t*,HRESULT,const WCHAR*) DECLSPEC_HIDDEN;
+HRESULT throw_regexp_error(script_ctx_t*,HRESULT,const WCHAR*) DECLSPEC_HIDDEN;
+HRESULT throw_syntax_error(script_ctx_t*,HRESULT,const WCHAR*) DECLSPEC_HIDDEN;
+HRESULT throw_type_error(script_ctx_t*,HRESULT,const WCHAR*) DECLSPEC_HIDDEN;
+HRESULT throw_uri_error(script_ctx_t*,HRESULT,const WCHAR*) DECLSPEC_HIDDEN;
 
 HRESULT create_object(script_ctx_t*,jsdisp_t*,jsdisp_t**) DECLSPEC_HIDDEN;
 HRESULT create_math(script_ctx_t*,jsdisp_t**) DECLSPEC_HIDDEN;
@@ -254,13 +254,13 @@ typedef enum {
     HINT_NUMBER
 } hint_t;
 
-HRESULT to_primitive(script_ctx_t*,jsval_t,jsexcept_t*,jsval_t*, hint_t) DECLSPEC_HIDDEN;
+HRESULT to_primitive(script_ctx_t*,jsval_t,jsval_t*, hint_t) DECLSPEC_HIDDEN;
 HRESULT to_boolean(jsval_t,BOOL*) DECLSPEC_HIDDEN;
-HRESULT to_number(script_ctx_t*,jsval_t,jsexcept_t*,double*) DECLSPEC_HIDDEN;
-HRESULT to_integer(script_ctx_t*,jsval_t,jsexcept_t*,double*) DECLSPEC_HIDDEN;
-HRESULT to_int32(script_ctx_t*,jsval_t,jsexcept_t*,INT*) DECLSPEC_HIDDEN;
-HRESULT to_uint32(script_ctx_t*,jsval_t,jsexcept_t*,DWORD*) DECLSPEC_HIDDEN;
-HRESULT to_string(script_ctx_t*,jsval_t,jsexcept_t*,BSTR*) DECLSPEC_HIDDEN;
+HRESULT to_number(script_ctx_t*,jsval_t,double*) DECLSPEC_HIDDEN;
+HRESULT to_integer(script_ctx_t*,jsval_t,double*) DECLSPEC_HIDDEN;
+HRESULT to_int32(script_ctx_t*,jsval_t,INT*) DECLSPEC_HIDDEN;
+HRESULT to_uint32(script_ctx_t*,jsval_t,DWORD*) DECLSPEC_HIDDEN;
+HRESULT to_string(script_ctx_t*,jsval_t,BSTR*) DECLSPEC_HIDDEN;
 HRESULT to_object(script_ctx_t*,jsval_t,IDispatch**) DECLSPEC_HIDDEN;
 
 HRESULT variant_change_type(script_ctx_t*,VARIANT*,VARIANT*,VARTYPE) DECLSPEC_HIDDEN;
@@ -293,6 +293,13 @@ typedef struct {
     script_ctx_t *ctx;
 } JSCaller;
 
+#include "jsval.h"
+
+struct _jsexcept_t {
+    EXCEPINFO ei;
+    jsval_t val;
+};
+
 struct _script_ctx_t {
     LONG ref;
 
@@ -308,6 +315,7 @@ struct _script_ctx_t {
     LCID lcid;
     cc_ctx_t *cc;
     JSCaller *jscaller;
+    jsexcept_t ei;
 
     jsheap_t tmp_heap;
 
@@ -339,6 +347,7 @@ struct _script_ctx_t {
 };
 
 void script_release(script_ctx_t*) DECLSPEC_HIDDEN;
+void clear_ei(script_ctx_t*) DECLSPEC_HIDDEN;
 
 static inline void script_addref(script_ctx_t *ctx)
 {
@@ -375,7 +384,7 @@ HRESULT regexp_match_next(script_ctx_t*,jsdisp_t*,DWORD,const WCHAR*,DWORD,const
         DWORD*,DWORD*,match_result_t*) DECLSPEC_HIDDEN;
 HRESULT regexp_match(script_ctx_t*,jsdisp_t*,const WCHAR*,DWORD,BOOL,match_result_t**,DWORD*) DECLSPEC_HIDDEN;
 HRESULT parse_regexp_flags(const WCHAR*,DWORD,DWORD*) DECLSPEC_HIDDEN;
-HRESULT regexp_string_match(script_ctx_t*,jsdisp_t*,BSTR,jsval_t*,jsexcept_t*) DECLSPEC_HIDDEN;
+HRESULT regexp_string_match(script_ctx_t*,jsdisp_t*,BSTR,jsval_t*) DECLSPEC_HIDDEN;
 
 static inline BOOL is_class(jsdisp_t *jsdisp, jsclass_t class)
 {
@@ -502,10 +511,3 @@ static inline LPWSTR heap_strdupW(LPCWSTR str)
 
     return ret;
 }
-
-#include "jsval.h"
-
-struct _jsexcept_t {
-    EXCEPINFO ei;
-    jsval_t val;
-};

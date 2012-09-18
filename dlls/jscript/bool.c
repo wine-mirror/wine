@@ -38,8 +38,7 @@ static inline BoolInstance *bool_this(vdisp_t *jsthis)
 }
 
 /* ECMA-262 3rd Edition    15.6.4.2 */
-static HRESULT Bool_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+static HRESULT Bool_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
 {
     BoolInstance *bool;
 
@@ -49,7 +48,7 @@ static HRESULT Bool_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
     TRACE("\n");
 
     if(!(bool = bool_this(jsthis)))
-        return throw_type_error(ctx, ei, JS_E_BOOLEAN_EXPECTED, NULL);
+        return throw_type_error(ctx, JS_E_BOOLEAN_EXPECTED, NULL);
 
     if(r) {
         BSTR val;
@@ -67,15 +66,14 @@ static HRESULT Bool_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
 }
 
 /* ECMA-262 3rd Edition    15.6.4.3 */
-static HRESULT Bool_valueOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+static HRESULT Bool_valueOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
 {
     BoolInstance *bool;
 
     TRACE("\n");
 
     if(!(bool = bool_this(jsthis)))
-        return throw_type_error(ctx, ei, JS_E_BOOLEAN_EXPECTED, NULL);
+        return throw_type_error(ctx, JS_E_BOOLEAN_EXPECTED, NULL);
 
     if(r)
         *r = jsval_bool(bool->val);
@@ -83,13 +81,13 @@ static HRESULT Bool_valueOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
 }
 
 static HRESULT Bool_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     TRACE("\n");
 
     switch(flags) {
     case INVOKE_FUNC:
-        return throw_type_error(ctx, ei, JS_E_FUNCTION_EXPECTED, NULL);
+        return throw_type_error(ctx, JS_E_FUNCTION_EXPECTED, NULL);
     default:
         FIXME("unimplemented flags %x\n", flags);
         return E_NOTIMPL;
@@ -122,7 +120,7 @@ static const builtin_info_t BoolInst_info = {
 };
 
 static HRESULT BoolConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     BOOL value = FALSE;
     HRESULT hres;

@@ -344,7 +344,7 @@ static HRESULT convert_params(const DISPPARAMS *dp, jsval_t *buf, unsigned *argc
 }
 
 static HRESULT invoke_prop_func(jsdisp_t *This, IDispatch *jsthis, dispex_prop_t *prop, WORD flags,
-        unsigned argc, jsval_t *argv, jsval_t *r, jsexcept_t *ei, IServiceProvider *caller)
+        unsigned argc, jsval_t *argv, jsval_t *r, IServiceProvider *caller)
 {
     HRESULT hres;
 
@@ -362,17 +362,17 @@ static HRESULT invoke_prop_func(jsdisp_t *This, IDispatch *jsthis, dispex_prop_t
                 set_disp(&vthis, jsthis);
             else
                 set_jsdisp(&vthis, This);
-            hres = prop->u.p->invoke(This->ctx, &vthis, flags, argc, argv, r, ei);
+            hres = prop->u.p->invoke(This->ctx, &vthis, flags, argc, argv, r);
             vdisp_release(&vthis);
         }else {
             /* Function object calls are special case */
-            hres = Function_invoke(This, jsthis, flags, argc, argv, r, ei);
+            hres = Function_invoke(This, jsthis, flags, argc, argv, r);
         }
         return hres;
     }
     case PROP_PROTREF:
         return invoke_prop_func(This->prototype, jsthis, This->prototype->props+prop->u.ref,
-                flags, argc, argv, r, ei, caller);
+                flags, argc, argv, r, caller);
     case PROP_JSVAL: {
         if(!is_object_instance(prop->u.val)) {
             FIXME("invoke %s\n", debugstr_jsval(prop->u.val));
@@ -381,7 +381,7 @@ static HRESULT invoke_prop_func(jsdisp_t *This, IDispatch *jsthis, dispex_prop_t
 
         TRACE("call %s %p\n", debugstr_w(prop->name), get_object(prop->u.val));
 
-        return disp_call_value(This->ctx, get_object(prop->u.val), jsthis, flags, argc, argv, r, ei);
+        return disp_call_value(This->ctx, get_object(prop->u.val), jsthis, flags, argc, argv, r);
     }
     default:
         ERR("type %d\n", prop->type);
@@ -391,7 +391,7 @@ static HRESULT invoke_prop_func(jsdisp_t *This, IDispatch *jsthis, dispex_prop_t
 }
 
 static HRESULT prop_get(jsdisp_t *This, dispex_prop_t *prop, DISPPARAMS *dp,
-        jsval_t *r, jsexcept_t *ei, IServiceProvider *caller)
+        jsval_t *r, IServiceProvider *caller)
 {
     HRESULT hres;
 
@@ -413,12 +413,12 @@ static HRESULT prop_get(jsdisp_t *This, dispex_prop_t *prop, DISPPARAMS *dp,
             vdisp_t vthis;
 
             set_jsdisp(&vthis, This);
-            hres = prop->u.p->invoke(This->ctx, &vthis, DISPATCH_PROPERTYGET, 0, NULL, r, ei);
+            hres = prop->u.p->invoke(This->ctx, &vthis, DISPATCH_PROPERTYGET, 0, NULL, r);
             vdisp_release(&vthis);
         }
         break;
     case PROP_PROTREF:
-        hres = prop_get(This->prototype, This->prototype->props+prop->u.ref, dp, r, ei, caller);
+        hres = prop_get(This->prototype, This->prototype->props+prop->u.ref, dp, r, caller);
         break;
     case PROP_JSVAL:
         hres = jsval_copy(prop->u.val, r);
@@ -437,8 +437,7 @@ static HRESULT prop_get(jsdisp_t *This, dispex_prop_t *prop, DISPPARAMS *dp,
     return hres;
 }
 
-static HRESULT prop_put(jsdisp_t *This, dispex_prop_t *prop, jsval_t val,
-        jsexcept_t *ei, IServiceProvider *caller)
+static HRESULT prop_put(jsdisp_t *This, dispex_prop_t *prop, jsval_t val, IServiceProvider *caller)
 {
     HRESULT hres;
 
@@ -451,7 +450,7 @@ static HRESULT prop_put(jsdisp_t *This, dispex_prop_t *prop, jsval_t val,
             vdisp_t vthis;
 
             set_jsdisp(&vthis, This);
-            hres = prop->u.p->invoke(This->ctx, &vthis, DISPATCH_PROPERTYPUT, 1, &val, NULL, ei);
+            hres = prop->u.p->invoke(This->ctx, &vthis, DISPATCH_PROPERTYPUT, 1, &val, NULL);
             vdisp_release(&vthis);
             return hres;
         }
@@ -655,7 +654,6 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
 {
     jsdisp_t *This = impl_from_IDispatchEx(iface);
     dispex_prop_t *prop;
-    jsexcept_t jsexcept;
     HRESULT hres;
 
     TRACE("(%p)->(%x %x %x %p %p %p %p)\n", This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
@@ -669,7 +667,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
         return DISP_E_MEMBERNOTFOUND;
     }
 
-    memset(&jsexcept, 0, sizeof(jsexcept));
+    clear_ei(This->ctx);
 
     switch(wFlags) {
     case DISPATCH_METHOD|DISPATCH_PROPERTYGET:
@@ -684,7 +682,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
         if(FAILED(hres))
             return hres;
 
-        hres = invoke_prop_func(This, get_this(pdp), prop, wFlags, argc, argv, pvarRes ? &r : NULL, &jsexcept, pspCaller);
+        hres = invoke_prop_func(This, get_this(pdp), prop, wFlags, argc, argv, pvarRes ? &r : NULL, pspCaller);
         if(argv != buf)
             heap_free(argv);
         if(SUCCEEDED(hres) && pvarRes) {
@@ -696,7 +694,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
     case DISPATCH_PROPERTYGET: {
         jsval_t r;
 
-        hres = prop_get(This, prop, pdp, &r, &jsexcept, pspCaller);
+        hres = prop_get(This, prop, pdp, &r, pspCaller);
         if(SUCCEEDED(hres)) {
             hres = jsval_to_variant(r, pvarRes);
             jsval_release(r);
@@ -721,7 +719,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
         if(FAILED(hres))
             return hres;
 
-        hres = prop_put(This, prop, val, &jsexcept, pspCaller);
+        hres = prop_put(This, prop, val, pspCaller);
         jsval_release(val);
         break;
     }
@@ -731,8 +729,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
     }
 
     if(pei)
-        *pei = jsexcept.ei;
-
+        *pei = This->ctx->ei.ei;
     return hres;
 }
 
@@ -942,11 +939,9 @@ HRESULT init_dispex_from_constr(jsdisp_t *dispex, script_ctx_t *ctx, const built
 
     hres = find_prop_name_prot(constr, string_hash(prototypeW), prototypeW, &prop);
     if(SUCCEEDED(hres) && prop && prop->type!=PROP_DELETED) {
-        jsexcept_t jsexcept;
         jsval_t val;
 
-        memset(&jsexcept, 0, sizeof(jsexcept));
-        hres = prop_get(constr, prop, NULL, &val, &jsexcept, NULL/*FIXME*/);
+        hres = prop_get(constr, prop, NULL, &val, NULL);
         if(FAILED(hres)) {
             ERR("Could not get prototype\n");
             return hres;
@@ -997,24 +992,23 @@ HRESULT jsdisp_get_id(jsdisp_t *jsdisp, const WCHAR *name, DWORD flags, DISPID *
     return DISP_E_UNKNOWNNAME;
 }
 
-HRESULT jsdisp_call_value(jsdisp_t *jsfunc, IDispatch *jsthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r,
-        jsexcept_t *ei)
+HRESULT jsdisp_call_value(jsdisp_t *jsfunc, IDispatch *jsthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
 {
     HRESULT hres;
 
     if(is_class(jsfunc, JSCLASS_FUNCTION)) {
-        hres = Function_invoke(jsfunc, jsthis, flags, argc, argv, r, ei);
+        hres = Function_invoke(jsfunc, jsthis, flags, argc, argv, r);
     }else {
         vdisp_t vdisp;
 
         set_disp(&vdisp, jsthis);
-        hres = jsfunc->builtin_info->value_prop.invoke(jsfunc->ctx, &vdisp, flags, argc, argv, r, ei);
+        hres = jsfunc->builtin_info->value_prop.invoke(jsfunc->ctx, &vdisp, flags, argc, argv, r);
         vdisp_release(&vdisp);
     }
     return hres;
 }
 
-HRESULT jsdisp_call(jsdisp_t *disp, DISPID id, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r, jsexcept_t *ei)
+HRESULT jsdisp_call(jsdisp_t *disp, DISPID id, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
 {
     dispex_prop_t *prop;
 
@@ -1022,12 +1016,10 @@ HRESULT jsdisp_call(jsdisp_t *disp, DISPID id, WORD flags, unsigned argc, jsval_
     if(!prop)
         return DISP_E_MEMBERNOTFOUND;
 
-    memset(ei, 0, sizeof(*ei));
-    return invoke_prop_func(disp, to_disp(disp), prop, flags, argc, argv, r, ei, NULL);
+    return invoke_prop_func(disp, to_disp(disp), prop, flags, argc, argv, r, NULL);
 }
 
-HRESULT jsdisp_call_name(jsdisp_t *disp, const WCHAR *name, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r,
-        jsexcept_t *ei)
+HRESULT jsdisp_call_name(jsdisp_t *disp, const WCHAR *name, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
 {
     dispex_prop_t *prop;
     HRESULT hres;
@@ -1036,12 +1028,10 @@ HRESULT jsdisp_call_name(jsdisp_t *disp, const WCHAR *name, WORD flags, unsigned
     if(FAILED(hres))
         return hres;
 
-    memset(ei, 0, sizeof(*ei));
-    return invoke_prop_func(disp, to_disp(disp), prop, flags, argc, argv, r, ei, NULL);
+    return invoke_prop_func(disp, to_disp(disp), prop, flags, argc, argv, r, NULL);
 }
 
-HRESULT disp_call(script_ctx_t *ctx, IDispatch *disp, DISPID id, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *ret, jsexcept_t *ei)
+HRESULT disp_call(script_ctx_t *ctx, IDispatch *disp, DISPID id, WORD flags, unsigned argc, jsval_t *argv, jsval_t *ret)
 {
     IDispatchEx *dispex;
     jsdisp_t *jsdisp;
@@ -1057,12 +1047,11 @@ HRESULT disp_call(script_ctx_t *ctx, IDispatch *disp, DISPID id, WORD flags, uns
             return E_FAIL;
         }
 
-        hres = jsdisp_call(jsdisp, id, flags, argc, argv, ret, ei);
+        hres = jsdisp_call(jsdisp, id, flags, argc, argv, ret);
         jsdisp_release(jsdisp);
         return hres;
     }
 
-    memset(ei, 0, sizeof(*ei));
     if(ret && argc)
         flags |= DISPATCH_PROPERTYGET;
 
@@ -1098,9 +1087,10 @@ HRESULT disp_call(script_ctx_t *ctx, IDispatch *disp, DISPID id, WORD flags, uns
     }
 
     V_VT(&retv) = VT_EMPTY;
+    clear_ei(ctx);
     hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
     if(SUCCEEDED(hres)) {
-        hres = IDispatchEx_InvokeEx(dispex, id, ctx->lcid, flags, &dp, ret ? &retv : NULL, &ei->ei,
+        hres = IDispatchEx_InvokeEx(dispex, id, ctx->lcid, flags, &dp, ret ? &retv : NULL, &ctx->ei.ei,
                 &ctx->jscaller->IServiceProvider_iface);
         IDispatchEx_Release(dispex);
     }else {
@@ -1112,7 +1102,7 @@ HRESULT disp_call(script_ctx_t *ctx, IDispatch *disp, DISPID id, WORD flags, uns
         }
 
         TRACE("using IDispatch\n");
-        hres = IDispatch_Invoke(disp, id, &IID_NULL, ctx->lcid, flags, &dp, ret ? &retv : NULL, &ei->ei, &err);
+        hres = IDispatch_Invoke(disp, id, &IID_NULL, ctx->lcid, flags, &dp, ret ? &retv : NULL, &ctx->ei.ei, &err);
     }
 
     for(i=0; i<argc; i++)
@@ -1130,7 +1120,7 @@ HRESULT disp_call(script_ctx_t *ctx, IDispatch *disp, DISPID id, WORD flags, uns
 }
 
 HRESULT disp_call_value(script_ctx_t *ctx, IDispatch *disp, IDispatch *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r, jsexcept_t *ei)
+        jsval_t *r)
 {
     jsdisp_t *jsdisp;
     IDispatchEx *dispex;
@@ -1146,12 +1136,11 @@ HRESULT disp_call_value(script_ctx_t *ctx, IDispatch *disp, IDispatch *jsthis, W
             return E_FAIL;
         }
 
-        hres = jsdisp_call_value(jsdisp, jsthis, flags, argc, argv, r, ei);
+        hres = jsdisp_call_value(jsdisp, jsthis, flags, argc, argv, r);
         jsdisp_release(jsdisp);
         return hres;
     }
 
-    memset(ei, 0, sizeof(*ei));
     if(r && argc)
         flags |= DISPATCH_PROPERTYGET;
 
@@ -1192,9 +1181,10 @@ HRESULT disp_call_value(script_ctx_t *ctx, IDispatch *disp, IDispatch *jsthis, W
     }
 
     V_VT(&retv) = VT_EMPTY;
+    clear_ei(ctx);
     hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
     if(SUCCEEDED(hres)) {
-        hres = IDispatchEx_InvokeEx(dispex, DISPID_VALUE, ctx->lcid, flags, &dp, r ? &retv : NULL, &ei->ei,
+        hres = IDispatchEx_InvokeEx(dispex, DISPID_VALUE, ctx->lcid, flags, &dp, r ? &retv : NULL, &ctx->ei.ei,
                 &ctx->jscaller->IServiceProvider_iface);
         IDispatchEx_Release(dispex);
     }else {
@@ -1206,7 +1196,7 @@ HRESULT disp_call_value(script_ctx_t *ctx, IDispatch *disp, IDispatch *jsthis, W
         }
 
         TRACE("using IDispatch\n");
-        hres = IDispatch_Invoke(disp, DISPID_VALUE, &IID_NULL, ctx->lcid, flags, &dp, r ? &retv : NULL, &ei->ei, &err);
+        hres = IDispatch_Invoke(disp, DISPID_VALUE, &IID_NULL, ctx->lcid, flags, &dp, r ? &retv : NULL, &ctx->ei.ei, &err);
     }
 
     for(i=0; i<argc; i++)
@@ -1224,7 +1214,7 @@ HRESULT disp_call_value(script_ctx_t *ctx, IDispatch *disp, IDispatch *jsthis, W
     return hres;
 }
 
-HRESULT jsdisp_propput_name(jsdisp_t *obj, const WCHAR *name, jsval_t val, jsexcept_t *ei)
+HRESULT jsdisp_propput_name(jsdisp_t *obj, const WCHAR *name, jsval_t val)
 {
     dispex_prop_t *prop;
     HRESULT hres;
@@ -1233,7 +1223,7 @@ HRESULT jsdisp_propput_name(jsdisp_t *obj, const WCHAR *name, jsval_t val, jsexc
     if(FAILED(hres))
         return hres;
 
-    return prop_put(obj, prop, val, ei, NULL);
+    return prop_put(obj, prop, val, NULL);
 }
 
 HRESULT jsdisp_propput_const(jsdisp_t *obj, const WCHAR *name, jsval_t val)
@@ -1260,17 +1250,17 @@ HRESULT jsdisp_propput_dontenum(jsdisp_t *obj, const WCHAR *name, jsval_t val)
     return jsval_copy(val, &prop->u.val);
 }
 
-HRESULT jsdisp_propput_idx(jsdisp_t *obj, DWORD idx, jsval_t val, jsexcept_t *ei)
+HRESULT jsdisp_propput_idx(jsdisp_t *obj, DWORD idx, jsval_t val)
 {
     WCHAR buf[12];
 
     static const WCHAR formatW[] = {'%','d',0};
 
     sprintfW(buf, formatW, idx);
-    return jsdisp_propput_name(obj, buf, val, ei);
+    return jsdisp_propput_name(obj, buf, val);
 }
 
-HRESULT disp_propput(script_ctx_t *ctx, IDispatch *disp, DISPID id, jsval_t val, jsexcept_t *ei)
+HRESULT disp_propput(script_ctx_t *ctx, IDispatch *disp, DISPID id, jsval_t val)
 {
     jsdisp_t *jsdisp;
     HRESULT hres;
@@ -1281,7 +1271,7 @@ HRESULT disp_propput(script_ctx_t *ctx, IDispatch *disp, DISPID id, jsval_t val,
 
         prop = get_prop(jsdisp, id);
         if(prop)
-            hres = prop_put(jsdisp, prop, val, ei, NULL);
+            hres = prop_put(jsdisp, prop, val, NULL);
         else
             hres = DISP_E_MEMBERNOTFOUND;
 
@@ -1296,16 +1286,17 @@ HRESULT disp_propput(script_ctx_t *ctx, IDispatch *disp, DISPID id, jsval_t val,
         if(FAILED(hres))
             return hres;
 
+        clear_ei(ctx);
         hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
         if(SUCCEEDED(hres)) {
-            hres = IDispatchEx_InvokeEx(dispex, id, ctx->lcid, DISPATCH_PROPERTYPUT, &dp, NULL, &ei->ei,
+            hres = IDispatchEx_InvokeEx(dispex, id, ctx->lcid, DISPATCH_PROPERTYPUT, &dp, NULL, &ctx->ei.ei,
                     &ctx->jscaller->IServiceProvider_iface);
             IDispatchEx_Release(dispex);
         }else {
             ULONG err = 0;
 
             TRACE("using IDispatch\n");
-            hres = IDispatch_Invoke(disp, id, &IID_NULL, ctx->lcid, DISPATCH_PROPERTYPUT, &dp, NULL, &ei->ei, &err);
+            hres = IDispatch_Invoke(disp, id, &IID_NULL, ctx->lcid, DISPATCH_PROPERTYPUT, &dp, NULL, &ctx->ei.ei, &err);
         }
 
         VariantClear(&var);
@@ -1314,7 +1305,7 @@ HRESULT disp_propput(script_ctx_t *ctx, IDispatch *disp, DISPID id, jsval_t val,
     return hres;
 }
 
-HRESULT jsdisp_propget_name(jsdisp_t *obj, const WCHAR *name, jsval_t *val, jsexcept_t *ei)
+HRESULT jsdisp_propget_name(jsdisp_t *obj, const WCHAR *name, jsval_t *val)
 {
     DISPPARAMS dp = {NULL, NULL, 0, 0};
     dispex_prop_t *prop;
@@ -1329,10 +1320,10 @@ HRESULT jsdisp_propget_name(jsdisp_t *obj, const WCHAR *name, jsval_t *val, jsex
         return S_OK;
     }
 
-    return prop_get(obj, prop, &dp, val, ei, NULL);
+    return prop_get(obj, prop, &dp, val, NULL);
 }
 
-HRESULT jsdisp_get_idx(jsdisp_t *obj, DWORD idx, jsval_t *r, jsexcept_t *ei)
+HRESULT jsdisp_get_idx(jsdisp_t *obj, DWORD idx, jsval_t *r)
 {
     WCHAR name[12];
     DISPPARAMS dp = {NULL, NULL, 0, 0};
@@ -1352,10 +1343,10 @@ HRESULT jsdisp_get_idx(jsdisp_t *obj, DWORD idx, jsval_t *r, jsexcept_t *ei)
         return DISP_E_UNKNOWNNAME;
     }
 
-    return prop_get(obj, prop, &dp, r, ei, NULL);
+    return prop_get(obj, prop, &dp, r, NULL);
 }
 
-HRESULT jsdisp_propget(jsdisp_t *jsdisp, DISPID id, jsval_t *val, jsexcept_t *ei)
+HRESULT jsdisp_propget(jsdisp_t *jsdisp, DISPID id, jsval_t *val)
 {
     DISPPARAMS dp  = {NULL,NULL,0,0};
     dispex_prop_t *prop;
@@ -1364,10 +1355,10 @@ HRESULT jsdisp_propget(jsdisp_t *jsdisp, DISPID id, jsval_t *val, jsexcept_t *ei
     if(!prop)
         return DISP_E_MEMBERNOTFOUND;
 
-    return prop_get(jsdisp, prop, &dp, val, ei, NULL);
+    return prop_get(jsdisp, prop, &dp, val, NULL);
 }
 
-HRESULT disp_propget(script_ctx_t *ctx, IDispatch *disp, DISPID id, jsval_t *val, jsexcept_t *ei)
+HRESULT disp_propget(script_ctx_t *ctx, IDispatch *disp, DISPID id, jsval_t *val)
 {
     DISPPARAMS dp  = {NULL,NULL,0,0};
     IDispatchEx *dispex;
@@ -1377,22 +1368,23 @@ HRESULT disp_propget(script_ctx_t *ctx, IDispatch *disp, DISPID id, jsval_t *val
 
     jsdisp = iface_to_jsdisp((IUnknown*)disp);
     if(jsdisp) {
-        hres = jsdisp_propget(jsdisp, id, val, ei);
+        hres = jsdisp_propget(jsdisp, id, val);
         jsdisp_release(jsdisp);
         return hres;
     }
 
     V_VT(&var) = VT_EMPTY;
+    clear_ei(ctx);
     hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
     if(SUCCEEDED(hres)) {
-        hres = IDispatchEx_InvokeEx(dispex, id, ctx->lcid, INVOKE_PROPERTYGET, &dp, &var, &ei->ei,
+        hres = IDispatchEx_InvokeEx(dispex, id, ctx->lcid, INVOKE_PROPERTYGET, &dp, &var, &ctx->ei.ei,
                 &ctx->jscaller->IServiceProvider_iface);
         IDispatchEx_Release(dispex);
     }else {
         ULONG err = 0;
 
         TRACE("using IDispatch\n");
-        hres = IDispatch_Invoke(disp, id, &IID_NULL, ctx->lcid, INVOKE_PROPERTYGET, &dp, &var, &ei->ei, &err);
+        hres = IDispatch_Invoke(disp, id, &IID_NULL, ctx->lcid, INVOKE_PROPERTYGET, &dp, &var, &ctx->ei.ei, &err);
     }
     if(FAILED(hres))
         return hres;

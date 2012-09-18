@@ -68,6 +68,7 @@ void script_release(script_ctx_t *ctx)
     if(--ctx->ref)
         return;
 
+    clear_ei(ctx);
     if(ctx->cc)
         release_cc(ctx->cc);
     jsheap_free(&ctx->tmp_heap);
@@ -99,7 +100,6 @@ static inline BOOL is_started(script_ctx_t *ctx)
 static HRESULT exec_global_code(JScript *This, bytecode_t *code)
 {
     exec_ctx_t *exec_ctx;
-    jsexcept_t jsexcept;
     HRESULT hres;
 
     hres = create_exec_ctx(This->ctx, NULL, This->ctx->global, NULL, TRUE, &exec_ctx);
@@ -108,9 +108,8 @@ static HRESULT exec_global_code(JScript *This, bytecode_t *code)
 
     IActiveScriptSite_OnEnterScript(This->site);
 
-    memset(&jsexcept, 0, sizeof(jsexcept));
-    hres = exec_source(exec_ctx, code, &code->global_code, FALSE, &jsexcept, NULL);
-    jsval_release(jsexcept.val);
+    clear_ei(This->ctx);
+    hres = exec_source(exec_ctx, code, &code->global_code, FALSE, NULL);
     exec_release(exec_ctx);
 
     IActiveScriptSite_OnLeaveScript(This->site);
@@ -716,6 +715,7 @@ static HRESULT WINAPI JScriptParse_InitNew(IActiveScriptParse *iface)
     ctx->active_script = &This->IActiveScript_iface;
     ctx->safeopt = This->safeopt;
     ctx->version = This->version;
+    ctx->ei.val = jsval_undefined();
     jsheap_init(&ctx->tmp_heap);
 
     hres = create_jscaller(ctx);
