@@ -346,6 +346,13 @@ do until false
 loop
 
 x = false
+do
+    if x then exit do
+    x = true
+loop
+call ok(x, "x is false after do..loop?")
+
+x = false
 y = false
 do
     if x then

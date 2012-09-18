@@ -625,6 +625,7 @@ static HRESULT compile_dowhile_statement(compile_ctx_t *ctx, while_statement_t *
 {
     statement_ctx_t loop_ctx = {0};
     unsigned start_addr;
+    vbsop_t jmp_op;
     HRESULT hres;
 
     start_addr = ctx->instr_cnt;
@@ -636,11 +637,17 @@ static HRESULT compile_dowhile_statement(compile_ctx_t *ctx, while_statement_t *
     if(FAILED(hres))
         return hres;
 
-    hres = compile_expression(ctx, stat->expr);
-    if(FAILED(hres))
-        return hres;
+    if(stat->expr) {
+        hres = compile_expression(ctx, stat->expr);
+        if(FAILED(hres))
+            return hres;
 
-    hres = push_instr_addr(ctx, stat->stat.type == STAT_DOUNTIL ? OP_jmp_false : OP_jmp_true, start_addr);
+        jmp_op = stat->stat.type == STAT_DOUNTIL ? OP_jmp_false : OP_jmp_true;
+    }else {
+        jmp_op = OP_jmp;
+    }
+
+    hres = push_instr_addr(ctx, jmp_op, start_addr);
     if(FAILED(hres))
         return hres;
 

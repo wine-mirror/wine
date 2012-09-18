@@ -185,6 +185,7 @@ SimpleStatement
     | tDO tNL StatementsNl_opt tLOOP DoType Expression
                                             { $$ = new_while_statement(ctx, $5 ? STAT_DOWHILE : STAT_DOUNTIL, $6, $3);
                                               CHECK_ERROR; }
+    | tDO tNL StatementsNl_opt tLOOP        { $$ = new_while_statement(ctx, STAT_DOWHILE, NULL, $3); CHECK_ERROR; }
     | FunctionDecl                          { $$ = new_function_statement(ctx, $1); CHECK_ERROR; }
     | tEXIT tDO                             { $$ = new_statement(ctx, STAT_EXITDO, 0); CHECK_ERROR; }
     | tEXIT tFOR                            { $$ = new_statement(ctx, STAT_EXITFOR, 0); CHECK_ERROR; }
