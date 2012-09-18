@@ -222,6 +222,32 @@ AddExtensionBlock(Extensions *New,
     return (GIF_OK);
 }
 
+static int
+AppendExtensionBlock(Extensions *New,
+                     int Len,
+                     const unsigned char ExtData[])
+{
+    ExtensionBlock *ep;
+
+    if (New->ExtensionBlocks == NULL)
+        return (GIF_ERROR);
+
+    ep = &New->ExtensionBlocks[New->ExtensionBlockCount - 1];
+
+    ep->Bytes = ungif_realloc(ep->Bytes, ep->ByteCount + Len + 1);
+    if (ep->Bytes == NULL)
+        return (GIF_ERROR);
+
+    if (ExtData)
+    {
+        ep->Bytes[ep->ByteCount] = Len;
+        memcpy(ep->Bytes + ep->ByteCount + 1, ExtData, Len);
+        ep->ByteCount += Len + 1;
+    }
+
+    return (GIF_OK);
+}
+
 static void
 FreeExtension(Extensions *Extensions)
 {
@@ -898,16 +924,30 @@ DGifSlurp(GifFileType * GifFile) {
 
               Extensions->Function = Function;
 
-              while (ExtData != NULL) {
+              /* Create an extension block with our data */
+              if (AddExtensionBlock(Extensions, ExtData[0], &ExtData[1]) == GIF_ERROR)
+                  return (GIF_ERROR);
 
-                  /* Create an extension block with our data */
-                  if (AddExtensionBlock(Extensions, ExtData[0], &ExtData[1])
-                      == GIF_ERROR)
-                      return (GIF_ERROR);
+              while (ExtData != NULL) {
+                  int Len;
+                  GifByteType *Data;
 
                   if (DGifGetExtensionNext(GifFile, &ExtData) == GIF_ERROR)
                       return (GIF_ERROR);
-                  temp_save.Function = 0;
+
+                  if (ExtData)
+                  {
+                      Len = ExtData[0];
+                      Data = &ExtData[1];
+                  }
+                  else
+                  {
+                      Len = 0;
+                      Data = NULL;
+                  }
+
+                  if (AppendExtensionBlock(Extensions, Len, Data) == GIF_ERROR)
+                      return (GIF_ERROR);
               }
               break;
           }
