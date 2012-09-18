@@ -117,6 +117,7 @@ typedef struct GifFileType {
       SBackGroundColor,         /* I hope you understand this one... */
       SAspectRatio;             /* Pixel aspect ratio, in 1/64 units, starting at 1:4. */
     ColorMapObject *SColorMap;  /* NULL if not exists. */
+    Extensions Extensions;
     int ImageCount;             /* Number of current image */
     GifImageDesc Image;         /* Block describing current image */
     struct SavedImage *SavedImages; /* Use this to accumulate file state */

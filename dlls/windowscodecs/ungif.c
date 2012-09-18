@@ -884,13 +884,21 @@ DGifSlurp(GifFileType * GifFile) {
               break;
 
           case EXTENSION_RECORD_TYPE:
-              if (DGifGetExtension(GifFile, &temp_save.Function, &ExtData) ==
+          {
+              Extensions *Extensions;
+
+              if (GifFile->ImageCount)
+                  Extensions = &temp_save;
+              else
+                  Extensions = &GifFile->Extensions;
+
+              if (DGifGetExtension(GifFile, &Extensions->Function, &ExtData) ==
                   GIF_ERROR)
                   return (GIF_ERROR);
               while (ExtData != NULL) {
 
                   /* Create an extension block with our data */
-                  if (AddExtensionBlock(&temp_save, ExtData[0], &ExtData[1])
+                  if (AddExtensionBlock(Extensions, ExtData[0], &ExtData[1])
                       == GIF_ERROR)
                       return (GIF_ERROR);
 
@@ -899,6 +907,7 @@ DGifSlurp(GifFileType * GifFile) {
                   temp_save.Function = 0;
               }
               break;
+          }
 
           case TERMINATE_RECORD_TYPE:
               break;
@@ -1002,6 +1011,8 @@ DGifCloseFile(GifFileType * GifFile) {
         FreeSavedImages(GifFile);
         GifFile->SavedImages = NULL;
     }
+
+    FreeExtension(&GifFile->Extensions);
 
     ungif_free(GifFile);
 
