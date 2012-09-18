@@ -885,16 +885,19 @@ DGifSlurp(GifFileType * GifFile) {
 
           case EXTENSION_RECORD_TYPE:
           {
+              int Function;
               Extensions *Extensions;
 
-              if (GifFile->ImageCount)
+              if (DGifGetExtension(GifFile, &Function, &ExtData) == GIF_ERROR)
+                  return (GIF_ERROR);
+
+              if (GifFile->ImageCount || Function == GRAPHICS_EXT_FUNC_CODE)
                   Extensions = &temp_save;
               else
                   Extensions = &GifFile->Extensions;
 
-              if (DGifGetExtension(GifFile, &Extensions->Function, &ExtData) ==
-                  GIF_ERROR)
-                  return (GIF_ERROR);
+              Extensions->Function = Function;
+
               while (ExtData != NULL) {
 
                   /* Create an extension block with our data */
