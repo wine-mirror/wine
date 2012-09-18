@@ -191,7 +191,7 @@ FreeMapObject(ColorMapObject * Object) {
 }
 
 static int
-AddExtensionBlock(SavedImage * New,
+AddExtensionBlock(Extensions *New,
                   int Len,
                   const unsigned char ExtData[]) {
 
@@ -223,18 +223,18 @@ AddExtensionBlock(SavedImage * New,
 }
 
 static void
-FreeExtension(SavedImage * Image)
+FreeExtension(Extensions *Extensions)
 {
     ExtensionBlock *ep;
 
-    if ((Image == NULL) || (Image->ExtensionBlocks == NULL)) {
+    if ((Extensions == NULL) || (Extensions->ExtensionBlocks == NULL)) {
         return;
     }
-    for (ep = Image->ExtensionBlocks;
-         ep < (Image->ExtensionBlocks + Image->ExtensionBlockCount); ep++)
+    for (ep = Extensions->ExtensionBlocks;
+         ep < (Extensions->ExtensionBlocks + Extensions->ExtensionBlockCount); ep++)
         ungif_free(ep->Bytes);
-    ungif_free(Image->ExtensionBlocks);
-    Image->ExtensionBlocks = NULL;
+    ungif_free(Extensions->ExtensionBlocks);
+    Extensions->ExtensionBlocks = NULL;
 }
 
 /******************************************************************************
@@ -258,8 +258,8 @@ FreeSavedImages(GifFileType * GifFile) {
 
         ungif_free(sp->RasterBits);
 
-        if (sp->ExtensionBlocks)
-            FreeExtension(sp);
+        if (sp->Extensions.ExtensionBlocks)
+            FreeExtension(&sp->Extensions);
     }
     ungif_free(GifFile->SavedImages);
     GifFile->SavedImages=NULL;
@@ -424,8 +424,8 @@ DGifGetImageDesc(GifFileType * GifFile) {
         sp->ImageDesc.ColorMap->SortFlag = GifFile->Image.ColorMap->SortFlag;
     }
     sp->RasterBits = NULL;
-    sp->ExtensionBlockCount = 0;
-    sp->ExtensionBlocks = NULL;
+    sp->Extensions.ExtensionBlockCount = 0;
+    sp->Extensions.ExtensionBlocks = NULL;
 
     GifFile->ImageCount++;
 
@@ -845,7 +845,7 @@ DGifSlurp(GifFileType * GifFile) {
     GifRecordType RecordType;
     SavedImage *sp;
     GifByteType *ExtData;
-    SavedImage temp_save;
+    Extensions temp_save;
 
     temp_save.ExtensionBlocks = NULL;
     temp_save.ExtensionBlockCount = 0;
@@ -870,8 +870,8 @@ DGifSlurp(GifFileType * GifFile) {
                   GIF_ERROR)
                   return (GIF_ERROR);
               if (temp_save.ExtensionBlocks) {
-                  sp->ExtensionBlocks = temp_save.ExtensionBlocks;
-                  sp->ExtensionBlockCount = temp_save.ExtensionBlockCount;
+                  sp->Extensions.ExtensionBlocks = temp_save.ExtensionBlocks;
+                  sp->Extensions.ExtensionBlockCount = temp_save.ExtensionBlockCount;
 
                   temp_save.ExtensionBlocks = NULL;
                   temp_save.ExtensionBlockCount = 0;
@@ -879,7 +879,7 @@ DGifSlurp(GifFileType * GifFile) {
                   /* FIXME: The following is wrong.  It is left in only for
                    * backwards compatibility.  Someday it should go away. Use
                    * the sp->ExtensionBlocks->Function variable instead. */
-                  sp->Function = sp->ExtensionBlocks[0].Function;
+                  sp->Extensions.Function = sp->Extensions.ExtensionBlocks[0].Function;
               }
               break;
 

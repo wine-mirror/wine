@@ -98,6 +98,19 @@ typedef struct GifImageDesc {
     ColorMapObject *ColorMap;       /* The local color map */
 } GifImageDesc;
 
+/* This is the in-core version of an extension record */
+typedef struct {
+    int Function;   /* Holds the type of the Extension block. */
+    int ByteCount;
+    char *Bytes;
+} ExtensionBlock;
+
+typedef struct {
+    int Function;   /* DEPRECATED: Use ExtensionBlocks[x].Function instead */
+    int ExtensionBlockCount;
+    ExtensionBlock *ExtensionBlocks;
+} Extensions;
+
 typedef struct GifFileType {
     GifWord SWidth, SHeight,        /* Screen dimensions. */
       SColorResolution,         /* How many colors can we generate? */
@@ -152,20 +165,11 @@ int DGifCloseFile(GifFileType * GifFile) DECLSPEC_HIDDEN;
  * Support for the in-core structures allocation (slurp mode).
  *****************************************************************************/
 
-/* This is the in-core version of an extension record */
-typedef struct {
-    int ByteCount;
-    char *Bytes;
-    int Function;   /* Holds the type of the Extension block. */
-} ExtensionBlock;
-
 /* This holds an image header, its unpacked raster bits, and extensions */
 typedef struct SavedImage {
     GifImageDesc ImageDesc;
     unsigned char *RasterBits;
-    int Function;   /* DEPRECATED: Use ExtensionBlocks[x].Function instead */
-    int ExtensionBlockCount;
-    ExtensionBlock *ExtensionBlocks;
+    Extensions Extensions;
 } SavedImage;
 
 #endif /* _UNGIF_H_ */

@@ -699,8 +699,8 @@ static HRESULT WINAPI GifFrameDecode_CopyPalette(IWICBitmapFrameDecode *iface,
     }
 
     /* look for the transparent color extension */
-    for (i = 0; i < This->frame->ExtensionBlockCount; ++i) {
-	eb = This->frame->ExtensionBlocks + i;
+    for (i = 0; i < This->frame->Extensions.ExtensionBlockCount; ++i) {
+	eb = This->frame->Extensions.ExtensionBlocks + i;
 	if (eb->Function == 0xF9 && eb->ByteCount == 4) {
 	    if ((eb->Bytes[0] & 1) == 1) {
 	        trans = (unsigned char)eb->Bytes[3];
@@ -854,11 +854,11 @@ static const void *get_GCE_data(GifFrameDecode *This)
 {
     int i;
 
-    for (i = 0; i < This->frame->ExtensionBlockCount; i++)
+    for (i = 0; i < This->frame->Extensions.ExtensionBlockCount; i++)
     {
-        if (This->frame->ExtensionBlocks[i].Function == GRAPHICS_EXT_FUNC_CODE &&
-            This->frame->ExtensionBlocks[i].ByteCount == 4)
-            return This->frame->ExtensionBlocks[i].Bytes;
+        if (This->frame->Extensions.ExtensionBlocks[i].Function == GRAPHICS_EXT_FUNC_CODE &&
+            This->frame->Extensions.ExtensionBlocks[i].ByteCount == 4)
+            return This->frame->Extensions.ExtensionBlocks[i].Bytes;
     }
     return NULL;
 }
