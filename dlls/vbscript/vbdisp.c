@@ -682,13 +682,22 @@ static HRESULT WINAPI ScriptDisp_GetTypeInfo(IDispatchEx *iface, UINT iTInfo, LC
 }
 
 static HRESULT WINAPI ScriptDisp_GetIDsOfNames(IDispatchEx *iface, REFIID riid,
-                                                LPOLESTR *rgszNames, UINT cNames, LCID lcid,
-                                                DISPID *rgDispId)
+        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
 {
     ScriptDisp *This = ScriptDisp_from_IDispatchEx(iface);
-    FIXME("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
+    UINT i;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
           lcid, rgDispId);
-    return E_NOTIMPL;
+
+    for(i=0; i < cNames; i++) {
+        hres = IDispatchEx_GetDispID(&This->IDispatchEx_iface, rgszNames[i], 0, rgDispId+i);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ScriptDisp_Invoke(IDispatchEx *iface, DISPID dispIdMember,

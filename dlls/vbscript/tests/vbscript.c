@@ -350,13 +350,18 @@ static void parse_script(IActiveScriptParse *parse, const char *src)
 #define get_disp_id(a,b,c,d) _get_disp_id(__LINE__,a,b,c,d)
 static void _get_disp_id(unsigned line, IDispatchEx *dispex, const char *name, HRESULT exhres, DISPID *id)
 {
+    DISPID id2;
     BSTR str;
     HRESULT hres;
 
     str = a2bstr(name);
     hres = IDispatchEx_GetDispID(dispex, str, 0, id);
-    SysFreeString(str);
     ok_(__FILE__,line)(hres == exhres, "GetDispID(%s) returned %08x, expected %08x\n", name, hres, exhres);
+
+    hres = IDispatchEx_GetIDsOfNames(dispex, &IID_NULL, &str, 1, 0, &id2);
+    SysFreeString(str);
+    ok_(__FILE__,line)(hres == exhres, "GetIDsOfNames(%s) returned %08x, expected %08x\n", name, hres, exhres);
+    ok_(__FILE__,line)(*id == id2, "GetIDsOfNames(%s) id != id2\n", name);
 }
 
 static void test_no_script_dispatch(IActiveScript *script)
