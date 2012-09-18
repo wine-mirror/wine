@@ -1112,7 +1112,7 @@ static void test_metadata_gif(void)
         {
             hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
             ok(IsEqualGUID(&format, &GUID_MetadataFormatLSD), /* Logical Screen Descriptor */
-               "wrong container format %s\n", debugstr_guid(&format));
+               "wrong metadata format %s\n", debugstr_guid(&format));
 
             hr = IWICMetadataReader_GetCount(reader, &count);
             ok(hr == S_OK, "GetCount error %#x\n", hr);
@@ -1160,7 +1160,7 @@ static void test_metadata_gif(void)
         {
             hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
             ok(IsEqualGUID(&format, &GUID_MetadataFormatIMD), /* Image Descriptor */
-               "wrong container format %s\n", debugstr_guid(&format));
+               "wrong metadata format %s\n", debugstr_guid(&format));
 
             hr = IWICMetadataReader_GetCount(reader, &count);
             ok(hr == S_OK, "GetCount error %#x\n", hr);
@@ -1213,7 +1213,7 @@ static void test_metadata_gif(void)
         {
             hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
             ok(IsEqualGUID(&format, &GUID_MetadataFormatLSD), /* Logical Screen Descriptor */
-               "wrong container format %s\n", debugstr_guid(&format));
+               "wrong metadata format %s\n", debugstr_guid(&format));
 
             hr = IWICMetadataReader_GetCount(reader, &count);
             ok(hr == S_OK, "GetCount error %#x\n", hr);
@@ -1231,7 +1231,7 @@ static void test_metadata_gif(void)
         {
             hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
             ok(IsEqualGUID(&format, &GUID_MetadataFormatAPE), /* Application Extension */
-               "wrong container format %s\n", debugstr_guid(&format));
+               "wrong metadata format %s\n", debugstr_guid(&format));
 
             hr = IWICMetadataReader_GetCount(reader, &count);
             ok(hr == S_OK, "GetCount error %#x\n", hr);
@@ -1249,7 +1249,7 @@ static void test_metadata_gif(void)
         {
             hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
             ok(IsEqualGUID(&format, &GUID_MetadataFormatGifComment), /* Comment Extension */
-               "wrong container format %s\n", debugstr_guid(&format));
+               "wrong metadata format %s\n", debugstr_guid(&format));
 
             hr = IWICMetadataReader_GetCount(reader, &count);
             ok(hr == S_OK, "GetCount error %#x\n", hr);
@@ -1267,7 +1267,7 @@ static void test_metadata_gif(void)
         {
             hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
             ok(IsEqualGUID(&format, &GUID_MetadataFormatUnknown),
-               "wrong container format %s\n", debugstr_guid(&format));
+               "wrong metadata format %s\n", debugstr_guid(&format));
 
             hr = IWICMetadataReader_GetCount(reader, &count);
             ok(hr == S_OK, "GetCount error %#x\n", hr);
@@ -1315,7 +1315,7 @@ static void test_metadata_gif(void)
         {
             hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
             ok(IsEqualGUID(&format, &GUID_MetadataFormatIMD), /* Image Descriptor */
-               "wrong container format %s\n", debugstr_guid(&format));
+               "wrong metadata format %s\n", debugstr_guid(&format));
 
             hr = IWICMetadataReader_GetCount(reader, &count);
             ok(hr == S_OK, "GetCount error %#x\n", hr);
@@ -1333,7 +1333,7 @@ static void test_metadata_gif(void)
         {
             hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
             ok(IsEqualGUID(&format, &GUID_MetadataFormatGifComment), /* Comment Extension */
-               "wrong container format %s\n", debugstr_guid(&format));
+                "wrong metadata format %s\n", debugstr_guid(&format));
 
             hr = IWICMetadataReader_GetCount(reader, &count);
             ok(hr == S_OK, "GetCount error %#x\n", hr);
@@ -1352,7 +1352,7 @@ static void test_metadata_gif(void)
         {
             hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
             ok(IsEqualGUID(&format, &GUID_MetadataFormatUnknown),
-               "wrong container format %s\n", debugstr_guid(&format));
+               "wrong metadata format %s\n", debugstr_guid(&format));
 
             hr = IWICMetadataReader_GetCount(reader, &count);
             ok(hr == S_OK, "GetCount error %#x\n", hr);
@@ -1370,7 +1370,7 @@ static void test_metadata_gif(void)
         {
             hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
             ok(IsEqualGUID(&format, &GUID_MetadataFormatGCE), /* Graphic Control Extension */
-               "wrong container format %s\n", debugstr_guid(&format));
+               "wrong metadata format %s\n", debugstr_guid(&format));
 
             hr = IWICMetadataReader_GetCount(reader, &count);
             ok(hr == S_OK, "GetCount error %#x\n", hr);
