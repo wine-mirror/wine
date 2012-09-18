@@ -363,7 +363,7 @@ static void test_urlcacheA(void)
 
     create_and_write_file(filenameA, &zero_byte, sizeof(zero_byte));
 
-    ret = CommitUrlCacheEntry(TEST_URL1, NULL, filetime_zero, filetime_zero, NORMAL_CACHE_ENTRY|URLHISTORY_CACHE_ENTRY, NULL, 0, "html", NULL);
+    ret = CommitUrlCacheEntry(TEST_URL1, NULL, filetime_zero, filetime_zero, NORMAL_CACHE_ENTRY, NULL, 0, "html", NULL);
     ok(ret, "CommitUrlCacheEntry failed with error %d\n", GetLastError());
     cbCacheEntryInfo = 0;
     ret = GetUrlCacheEntryInfo(TEST_URL1, NULL, &cbCacheEntryInfo);
@@ -377,6 +377,7 @@ static void test_urlcacheA(void)
        "expected zero ExpireTime\n");
     ok(!memcmp(&lpCacheEntryInfo->LastModifiedTime, &filetime_zero, sizeof(FILETIME)),
        "expected zero LastModifiedTime\n");
+    todo_wine
     ok(lpCacheEntryInfo->CacheEntryType == (NORMAL_CACHE_ENTRY|URLHISTORY_CACHE_ENTRY) ||
        broken(lpCacheEntryInfo->CacheEntryType == NORMAL_CACHE_ENTRY /* NT4/W2k */),
        "expected type NORMAL_CACHE_ENTRY|URLHISTORY_CACHE_ENTRY, got %08x\n",
@@ -401,32 +402,27 @@ static void test_urlcacheA(void)
     ret = GetUrlCacheEntryInfo(TEST_URL1, lpCacheEntryInfo2, &cbCacheEntryInfo);
     ok(ret, "GetUrlCacheEntryInfo failed with error %d\n", GetLastError());
     /* but it does change the time.. */
-    todo_wine
     ok(memcmp(&lpCacheEntryInfo2->ExpireTime, &filetime_zero, sizeof(FILETIME)),
        "expected positive ExpireTime\n");
-    todo_wine
     ok(memcmp(&lpCacheEntryInfo2->LastModifiedTime, &filetime_zero, sizeof(FILETIME)),
        "expected positive LastModifiedTime\n");
+    todo_wine
     ok(lpCacheEntryInfo2->CacheEntryType == (NORMAL_CACHE_ENTRY|URLHISTORY_CACHE_ENTRY) ||
        broken(lpCacheEntryInfo2->CacheEntryType == NORMAL_CACHE_ENTRY /* NT4/W2k */),
        "expected type NORMAL_CACHE_ENTRY|URLHISTORY_CACHE_ENTRY, got %08x\n",
        lpCacheEntryInfo2->CacheEntryType);
     /* and set the headers. */
-    todo_wine
     ok(lpCacheEntryInfo2->dwHeaderInfoSize == 19,
         "expected headers size 19, got %d\n",
         lpCacheEntryInfo2->dwHeaderInfoSize);
     /* Hit rate gets incremented by 1 */
-    todo_wine
     ok((lpCacheEntryInfo->dwHitRate + 1) == lpCacheEntryInfo2->dwHitRate,
         "HitRate not incremented by one on commit\n");
     /* Last access time should be updated */
-    todo_wine
     ok(!(lpCacheEntryInfo->LastAccessTime.dwHighDateTime == lpCacheEntryInfo2->LastAccessTime.dwHighDateTime &&
         lpCacheEntryInfo->LastAccessTime.dwLowDateTime == lpCacheEntryInfo2->LastAccessTime.dwLowDateTime),
         "Last accessed time was not updated by commit\n");
     /* File extension should be unset */
-    todo_wine
     ok(lpCacheEntryInfo2->lpszFileExtension == NULL,
         "Fileextension isn't unset: %s\n",
         lpCacheEntryInfo2->lpszFileExtension);
@@ -519,16 +515,15 @@ static void test_urlcacheA(void)
     ret = GetUrlCacheEntryInfo(TEST_URL, lpCacheEntryInfo, &cbCacheEntryInfo);
     ok(ret, "GetUrlCacheEntryInfo failed with error %d\n", GetLastError());
     /* with the previous entry type retained.. */
+    todo_wine
     ok(lpCacheEntryInfo->CacheEntryType & NORMAL_CACHE_ENTRY,
        "expected cache entry type NORMAL_CACHE_ENTRY, got %d (0x%08x)\n",
        lpCacheEntryInfo->CacheEntryType, lpCacheEntryInfo->CacheEntryType);
     /* and the headers overwritten.. */
-    todo_wine
     ok(!lpCacheEntryInfo->dwHeaderInfoSize, "expected headers size 0, got %d\n",
        lpCacheEntryInfo->dwHeaderInfoSize);
     HeapFree(GetProcessHeap(), 0, lpCacheEntryInfo);
     /* and the previous filename shouldn't exist. */
-    todo_wine
     check_file_not_exists(filenameA);
     check_file_exists(filenameA1);
 
@@ -537,7 +532,6 @@ static void test_urlcacheA(void)
         ret = pDeleteUrlCacheEntryA(TEST_URL);
         ok(ret, "DeleteUrlCacheEntryA failed with error %d\n", GetLastError());
         check_file_not_exists(filenameA);
-        todo_wine
         check_file_not_exists(filenameA1);
         /* Just in case, clean up files */
         DeleteFileA(filenameA1);

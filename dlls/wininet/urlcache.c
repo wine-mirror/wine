@@ -2693,6 +2693,8 @@ static BOOL CommitUrlCacheEntryInternal(
     LPSTR lpszUrlNameA = NULL;
     LPSTR lpszFileExtensionA = NULL;
     char *pchLocalFileName = 0;
+    DWORD hit_rate = 0;
+    DWORD exempt_delta = 0;
     DWORD error;
 
     TRACE("(%s, %s, ..., ..., %x, %p, %d, %s, %s)\n",
@@ -2775,12 +2777,9 @@ static BOOL CommitUrlCacheEntryInternal(
             goto cleanup;
         }
 
-        FIXME("entry already in cache - don't know what to do!\n");
-/*
- *        SetLastError(ERROR_FILE_NOT_FOUND);
- *        return FALSE;
- */
-        goto cleanup;
+        hit_rate = pUrlEntry->dwHitRate;
+        exempt_delta = pUrlEntry->dwExemptDelta;
+        DeleteUrlCacheEntryInternal(pContainer, pHeader, pHashEntry);
     }
 
     if (lpszLocalFileName)
@@ -2861,14 +2860,13 @@ static BOOL CommitUrlCacheEntryInternal(
     pUrlEntry->CacheDir = cDirectory;
     pUrlEntry->CacheEntryType = CacheEntryType;
     pUrlEntry->dwHeaderInfoSize = dwHeaderSize;
-    if (CacheEntryType & STICKY_CACHE_ENTRY)
+    if ((CacheEntryType & STICKY_CACHE_ENTRY) && !exempt_delta)
     {
         /* Sticky entries have a default exempt time of one day */
-        pUrlEntry->dwExemptDelta = 86400;
+        exempt_delta = 86400;
     }
-    else
-        pUrlEntry->dwExemptDelta = 0;
-    pUrlEntry->dwHitRate = 0;
+    pUrlEntry->dwExemptDelta = exempt_delta;
+    pUrlEntry->dwHitRate = hit_rate+1;
     pUrlEntry->dwOffsetFileExtension = dwOffsetFileExtension;
     pUrlEntry->dwOffsetHeaderInfo = dwOffsetHeader;
     pUrlEntry->dwOffsetLocalName = dwOffsetLocalFileName;
