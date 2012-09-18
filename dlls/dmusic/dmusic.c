@@ -352,7 +352,7 @@ static void create_system_ports_list(IDirectMusic8Impl* object)
 
     /* Fill midi mapper port info */
     port->device = MIDI_MAPPER;
-    port->create = DMUSIC_CreateDirectMusicPortImpl; /* FIXME: The same for all ports for now */
+    port->create = DMUSIC_CreateMidiOutPortImpl;
     midiOutGetDevCapsW(MIDI_MAPPER, &caps_out, sizeof(caps_out));
     strcpyW(port->caps.wszDescription, caps_out.szPname);
     strcatW(port->caps.wszDescription, emulated);
@@ -364,7 +364,7 @@ static void create_system_ports_list(IDirectMusic8Impl* object)
     for (i = 0; i < nb_midi_out; i++)
     {
         port->device = i;
-        port->create = DMUSIC_CreateDirectMusicPortImpl; /* FIXME: The same for all ports for now */
+        port->create = DMUSIC_CreateMidiOutPortImpl;
         midiOutGetDevCapsW(i, &caps_out, sizeof(caps_out));
         strcpyW(port->caps.wszDescription, caps_in.szPname);
         strcatW(port->caps.wszDescription, emulated);
@@ -377,7 +377,7 @@ static void create_system_ports_list(IDirectMusic8Impl* object)
     for (i = 0; i < nb_midi_in; i++)
     {
         port->device = i;
-        port->create = DMUSIC_CreateDirectMusicPortImpl; /* FIXME: The same for all ports for now */
+        port->create = DMUSIC_CreateMidiInPortImpl;
         midiInGetDevCapsW(i, &caps_in, sizeof(caps_in));
         strcpyW(port->caps.wszDescription, caps_in.szPname);
         strcatW(port->caps.wszDescription, emulated);
@@ -387,7 +387,7 @@ static void create_system_ports_list(IDirectMusic8Impl* object)
     }
 
     /* Fill synth port info */
-    port->create = DMUSIC_CreateDirectMusicPortImpl; /* FIXME: The same for all ports for now */
+    port->create = DMUSIC_CreateSynthPortImpl;
     hr = CoCreateInstance(&CLSID_DirectMusicSynth, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicSynth8, (void**)&synth);
     if (SUCCEEDED(hr))
     {

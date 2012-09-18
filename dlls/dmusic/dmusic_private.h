@@ -169,7 +169,9 @@ struct IDirectMusicPortImpl {
 };
 
 /** Internal factory */
-extern HRESULT DMUSIC_CreateDirectMusicPortImpl(LPCGUID lpcGUID, LPVOID *ppobj, LPUNKNOWN pUnkOuter, LPDMUS_PORTPARAMS pPortParams, LPDMUS_PORTCAPS pPortCaps, DWORD device) DECLSPEC_HIDDEN;
+extern HRESULT DMUSIC_CreateSynthPortImpl(LPCGUID guid, LPVOID *object, LPUNKNOWN unkouter, LPDMUS_PORTPARAMS port_params, LPDMUS_PORTCAPS port_caps, DWORD device) DECLSPEC_HIDDEN;
+extern HRESULT DMUSIC_CreateMidiOutPortImpl(LPCGUID guid, LPVOID *object, LPUNKNOWN unkouter, LPDMUS_PORTPARAMS port_params, LPDMUS_PORTCAPS port_caps, DWORD device) DECLSPEC_HIDDEN;
+extern HRESULT DMUSIC_CreateMidiInPortImpl(LPCGUID guid, LPVOID *object, LPUNKNOWN unkouter, LPDMUS_PORTPARAMS port_params, LPDMUS_PORTCAPS port_caps, DWORD device) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * IReferenceClockImpl implementation structure

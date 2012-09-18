@@ -472,7 +472,7 @@ static const IDirectMusicThruVtbl DirectMusicThru_Vtbl = {
 	IDirectMusicThruImpl_ThruChannel
 };
 
-HRESULT DMUSIC_CreateDirectMusicPortImpl(LPCGUID lpcGUID, LPVOID *ppobj, LPUNKNOWN pUnkOuter, LPDMUS_PORTPARAMS pPortParams, LPDMUS_PORTCAPS pPortCaps, DWORD device)
+HRESULT DMUSIC_CreateSynthPortImpl(LPCGUID lpcGUID, LPVOID *ppobj, LPUNKNOWN pUnkOuter, LPDMUS_PORTPARAMS pPortParams, LPDMUS_PORTCAPS pPortCaps, DWORD device)
 {
 	IDirectMusicPortImpl *obj;
 	HRESULT hr = E_FAIL;
@@ -529,4 +529,18 @@ if(0)
 }
 
 	return IDirectMusicPortImpl_QueryInterface ((LPDIRECTMUSICPORT)obj, lpcGUID, ppobj);
+}
+
+HRESULT DMUSIC_CreateMidiOutPortImpl(LPCGUID guid, LPVOID *object, LPUNKNOWN unkouter, LPDMUS_PORTPARAMS port_params, LPDMUS_PORTCAPS port_caps, DWORD device)
+{
+    TRACE("(%p,%p,%p,%p,%p,%d): stub\n", guid, object, unkouter, port_params, port_caps, device);
+
+    return E_NOTIMPL;
+}
+
+HRESULT DMUSIC_CreateMidiInPortImpl(LPCGUID guid, LPVOID *object, LPUNKNOWN unkouter, LPDMUS_PORTPARAMS port_params, LPDMUS_PORTCAPS port_caps, DWORD device)
+{
+    TRACE("(%p,%p,%p,%p,%p,%d): stub\n", guid, object, unkouter, port_params, port_caps, device);
+
+    return E_NOTIMPL;
 }
