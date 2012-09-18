@@ -706,6 +706,7 @@ enum hlsl_ir_node_type
     HLSL_IR_DEREF,
     HLSL_IR_EXPR,
     HLSL_IR_FUNCTION_DECL,
+    HLSL_IR_JUMP,
     HLSL_IR_SWIZZLE,
 };
 
@@ -835,6 +836,21 @@ struct hlsl_ir_expr
     enum hlsl_ir_expr_op op;
     struct hlsl_ir_node *operands[3];
     struct list *subexpressions;
+};
+
+enum hlsl_ir_jump_type
+{
+    HLSL_IR_JUMP_BREAK,
+    HLSL_IR_JUMP_CONTINUE,
+    HLSL_IR_JUMP_DISCARD,
+    HLSL_IR_JUMP_RETURN,
+};
+
+struct hlsl_ir_jump
+{
+    struct hlsl_ir_node node;
+    enum hlsl_ir_jump_type type;
+    struct hlsl_ir_node *return_value;
 };
 
 struct hlsl_ir_swizzle
@@ -1001,6 +1017,12 @@ static inline struct hlsl_ir_constant *constant_from_node(const struct hlsl_ir_n
 {
     assert(node->type == HLSL_IR_CONSTANT);
     return CONTAINING_RECORD(node, struct hlsl_ir_constant, node);
+}
+
+static inline struct hlsl_ir_jump *jump_from_node(const struct hlsl_ir_node *node)
+{
+    assert(node->type == HLSL_IR_JUMP);
+    return CONTAINING_RECORD(node, struct hlsl_ir_jump, node);
 }
 
 static inline struct hlsl_ir_assignment *assignment_from_node(const struct hlsl_ir_node *node)

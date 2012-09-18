@@ -497,6 +497,7 @@ static struct hlsl_ir_swizzle *get_swizzle(struct hlsl_ir_node *value, const cha
 %type <list> statement
 %type <list> statement_list
 %type <list> compound_statement
+%type <list> jump_statement
 %type <function> func_declaration
 %type <function> func_prototype
 %type <parameter> parameter
@@ -990,16 +991,32 @@ statement_list:           statement
                             }
 
 statement:                declaration_statement
-                            {
-                                $$ = $1;
-                            }
                         | expr_statement
-                            {
-                                $$ = $1;
-                            }
                         | compound_statement
+                        | jump_statement
+
+                          /* FIXME: add rule for return with no value */
+jump_statement:           KW_RETURN expr ';'
                             {
-                                $$ = $1;
+                                struct hlsl_ir_jump *jump = d3dcompiler_alloc(sizeof(*jump));
+                                if (!jump)
+                                {
+                                    ERR("Out of memory\n");
+                                    return -1;
+                                }
+                                jump->node.type = HLSL_IR_JUMP;
+                                set_location(&jump->node.loc, &@1);
+                                jump->type = HLSL_IR_JUMP_RETURN;
+                                jump->node.data_type = $2->data_type;
+                                jump->return_value = $2;
+
+                                FIXME("Check for valued return on void function.\n");
+                                FIXME("Implicit conversion to the return type if needed, "
+				        "error out if conversion not possible.\n");
+
+                                $$ = d3dcompiler_alloc(sizeof(*$$));
+                                list_init($$);
+                                list_add_tail($$, &jump->node.entry);
                             }
 
 expr_statement:           ';'

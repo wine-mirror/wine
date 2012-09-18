@@ -1742,6 +1742,8 @@ static const char *debug_node_type(enum hlsl_ir_node_type type)
         "HLSL_IR_DEREF",
         "HLSL_IR_EXPR",
         "HLSL_IR_FUNCTION_DECL",
+        "HLSL_IR_JUMP",
+        "HLSL_IR_SWIZZLE",
     };
 
     if (type >= sizeof(names) / sizeof(names[0]))
@@ -1973,6 +1975,28 @@ static void debug_dump_ir_swizzle(const struct hlsl_ir_swizzle *swizzle)
     }
 }
 
+static void debug_dump_ir_jump(const struct hlsl_ir_jump *jump)
+{
+    switch (jump->type)
+    {
+        case HLSL_IR_JUMP_BREAK:
+            TRACE("break");
+            break;
+        case HLSL_IR_JUMP_CONTINUE:
+            TRACE("continue");
+            break;
+        case HLSL_IR_JUMP_DISCARD:
+            TRACE("discard");
+            break;
+        case HLSL_IR_JUMP_RETURN:
+            TRACE("return ");
+            if (jump->return_value)
+                debug_dump_instr(jump->return_value);
+            TRACE(";");
+            break;
+    }
+}
+
 static void debug_dump_instr(const struct hlsl_ir_node *instr)
 {
     switch (instr->type)
@@ -1994,6 +2018,9 @@ static void debug_dump_instr(const struct hlsl_ir_node *instr)
             break;
         case HLSL_IR_CONSTRUCTOR:
             debug_dump_ir_constructor(constructor_from_node(instr));
+            break;
+        case HLSL_IR_JUMP:
+            debug_dump_ir_jump(jump_from_node(instr));
             break;
         default:
             TRACE("No dump function for %s\n", debug_node_type(instr->type));
@@ -2132,6 +2159,13 @@ static void free_ir_assignment(struct hlsl_ir_assignment *assignment)
     d3dcompiler_free(assignment);
 }
 
+static void free_ir_jump(struct hlsl_ir_jump *jump)
+{
+    if (jump->type == HLSL_IR_JUMP_RETURN)
+        free_instr(jump->return_value);
+    d3dcompiler_free(jump);
+}
+
 void free_instr(struct hlsl_ir_node *node)
 {
     switch (node->type)
@@ -2156,6 +2190,9 @@ void free_instr(struct hlsl_ir_node *node)
             break;
         case HLSL_IR_ASSIGNMENT:
             free_ir_assignment(assignment_from_node(node));
+            break;
+        case HLSL_IR_JUMP:
+            free_ir_jump(jump_from_node(node));
             break;
         default:
             FIXME("Unsupported node type %s\n", debug_node_type(node->type));
