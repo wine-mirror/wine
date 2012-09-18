@@ -1286,23 +1286,24 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
     unsigned long	aux_long;
     unsigned char*	p_data = NULL;
     Atom atom_aux;
-    int			x, y, dummy;
+    int			x, y, cx, cy, dummy;
     BOOL	        bAccept;
     Window		win, w_aux_root, w_aux_child;
 
-    win = X11DRV_get_whole_window(hWnd);
+    if (!(data = get_win_data( hWnd ))) return;
+    cx = data->whole_rect.right - data->whole_rect.left;
+    cy = data->whole_rect.bottom - data->whole_rect.top;
+    win = data->whole_window;
+    release_win_data( data );
+
     XQueryPointer( event->display, win, &w_aux_root, &w_aux_child,
                    &x, &y, &dummy, &dummy, (unsigned int*)&aux_long);
     x += virtual_screen_rect.left;
     y += virtual_screen_rect.top;
 
-    if (!(data = X11DRV_get_win_data( hWnd ))) return;
-
     /* find out drop point and drop window */
-    if( x < 0 || y < 0 ||
-        x > (data->whole_rect.right - data->whole_rect.left) ||
-        y > (data->whole_rect.bottom - data->whole_rect.top) )
-    {   
+    if (x < 0 || y < 0 || x > cx || y > cy)
+    {
 	bAccept = GetWindowLongW( hWnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES;
 	x = 0;
 	y = 0; 
@@ -1439,7 +1440,7 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
       hDrop = GlobalAlloc( GMEM_SHARE, drop_len );
       lpDrop = GlobalLock( hDrop );
 
-      if( lpDrop && (win_data = X11DRV_get_win_data( hWnd )))
+      if( lpDrop && (win_data = get_win_data( hWnd )))
       {
 	  lpDrop->pFiles = sizeof(DROPFILES);
 	  lpDrop->pt.x = x;
@@ -1451,6 +1452,7 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
 	      y > (win_data->client_rect.bottom - win_data->whole_rect.top) );
 	  lpDrop->fWide = FALSE;
 	  p_drop = (char*)(lpDrop + 1);
+          release_win_data( win_data );
       }
 
       /* create message content */
