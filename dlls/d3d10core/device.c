@@ -1091,7 +1091,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateSamplerState(ID3D10Device *i
     struct d3d10_sampler_state *object;
     HRESULT hr;
 
-    FIXME("iface %p, desc %p, sampler_state %p.\n", iface, desc, sampler_state);
+    TRACE("iface %p, desc %p, sampler_state %p.\n", iface, desc, sampler_state);
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
