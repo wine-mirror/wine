@@ -744,12 +744,8 @@ static void vs_1_x_header(struct bc_writer *This, const struct bwriter_shader *s
         return;
     }
 
-    /* Declare the shader type and version */
-    put_dword(buffer, This->version);
-
     write_declarations(This, buffer, FALSE, shader->inputs, shader->num_inputs, BWRITERSPR_INPUT);
     write_constF(shader, buffer, FALSE);
-    return;
 }
 
 static HRESULT find_ps_builtin_semantics(struct bc_writer *This,
@@ -826,8 +822,6 @@ static void ps_1_x_header(struct bc_writer *This, const struct bwriter_shader *s
         return;
     }
 
-    /* Declare the shader type and version */
-    put_dword(buffer, This->version);
     write_constF(shader, buffer, FALSE);
 }
 
@@ -847,8 +841,6 @@ static void ps_1_4_header(struct bc_writer *This, const struct bwriter_shader *s
         return;
     }
 
-    /* Declare the shader type and version */
-    put_dword(buffer, This->version);
     write_constF(shader, buffer, FALSE);
 }
 
@@ -1595,14 +1587,10 @@ static void vs_2_header(struct bc_writer *This,
         return;
     }
 
-    /* Declare the shader type and version */
-    put_dword(buffer, This->version);
-
     write_declarations(This, buffer, TRUE, shader->inputs, shader->num_inputs, BWRITERSPR_INPUT);
     write_constF(shader, buffer, TRUE);
     write_constB(shader, buffer, TRUE);
     write_constI(shader, buffer, TRUE);
-    return;
 }
 
 static void vs_2_srcreg(struct bc_writer *This,
@@ -1875,8 +1863,6 @@ static void ps_2_header(struct bc_writer *This, const struct bwriter_shader *sha
         return;
     }
 
-    /* Declare the shader type and version */
-    put_dword(buffer, This->version);
     write_declarations(This, buffer, TRUE, shader->inputs, shader->num_inputs, BWRITERSPR_INPUT);
     write_samplers(shader, buffer);
     write_constF(shader, buffer, TRUE);
@@ -2112,16 +2098,12 @@ static const struct bytecode_backend ps_2_x_backend = {
 };
 
 static void sm_3_header(struct bc_writer *This, const struct bwriter_shader *shader, struct bytecode_buffer *buffer) {
-    /* Declare the shader type and version */
-    put_dword(buffer, This->version);
-
     write_declarations(This, buffer, TRUE, shader->inputs, shader->num_inputs, BWRITERSPR_INPUT);
     write_declarations(This, buffer, TRUE, shader->outputs, shader->num_outputs, BWRITERSPR_OUTPUT);
     write_constF(shader, buffer, TRUE);
     write_constB(shader, buffer, TRUE);
     write_constI(shader, buffer, TRUE);
     write_samplers(shader, buffer);
-    return;
 }
 
 static void sm_3_srcreg(struct bc_writer *This,
@@ -2570,6 +2552,9 @@ HRESULT SlWriteBytecode(const struct bwriter_shader *shader, int dxversion, DWOR
         hr = E_FAIL;
         goto error;
     }
+
+    /* Write shader type and version */
+    put_dword(buffer, shader->version);
 
     writer->funcs->header(writer, shader, buffer);
     if(FAILED(writer->state)) {
