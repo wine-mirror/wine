@@ -93,7 +93,7 @@ static IDirect3DDevice9 *init_d3d9(IDirect3DVertexDeclaration9 **vdeclaration,
         return NULL;
     }
 
-    hr = IDirect3D9_CheckDeviceFormat(d3d9_ptr, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, D3DFMT_A32B32G32R32F,
+    hr = IDirect3D9_CheckDeviceFormat(d3d9_ptr, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
             0, D3DRTYPE_SURFACE, D3DFMT_A32B32G32R32F);
     if (FAILED(hr))
     {
