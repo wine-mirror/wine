@@ -13935,7 +13935,7 @@ static void test_layered_window(void)
         "wrong window rect %d,%d,%d,%d\n", rect.left, rect.top, rect.right, rect.bottom );
     GetClientRect( hwnd, &rect );
     ok( (rect.right == 250 && rect.bottom == 300) ||
-        broken(rect.right == client.right - 100 && rect.bottom == client.bottom - 50),
+        broken(rect.right == client.right - 50 && rect.bottom == client.bottom),
         "wrong client rect %d,%d,%d,%d\n", rect.left, rect.top, rect.right, rect.bottom );
 
     DestroyWindow( hwnd );
