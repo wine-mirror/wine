@@ -348,7 +348,8 @@ static HRESULT load_APE_metadata(IStream *stream, const GUID *vendor, DWORD opti
 
     hr = IStream_Read(stream, &ape_data, sizeof(ape_data), &bytesread);
     if (FAILED(hr) || bytesread != sizeof(ape_data)) return S_OK;
-    if (ape_data.extension_introducer != 0x21 || ape_data.extension_label != 0xff ||
+    if (ape_data.extension_introducer != 0x21 ||
+        ape_data.extension_label != APPLICATION_EXT_FUNC_CODE ||
         ape_data.block_size != 11)
         return S_OK;
 
@@ -455,7 +456,8 @@ static HRESULT load_GifComment_metadata(IStream *stream, const GUID *vendor, DWO
 
     hr = IStream_Read(stream, &ext_data, sizeof(ext_data), &bytesread);
     if (FAILED(hr) || bytesread != sizeof(ext_data)) return S_OK;
-    if (ext_data.extension_introducer != 0x21 || ext_data.extension_label != 0xfe)
+    if (ext_data.extension_introducer != 0x21 ||
+        ext_data.extension_label != COMMENT_EXT_FUNC_CODE)
         return S_OK;
 
     data = NULL;
