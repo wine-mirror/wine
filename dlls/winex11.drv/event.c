@@ -530,6 +530,31 @@ static inline BOOL can_activate_window( HWND hwnd )
 
 
 /**********************************************************************
+ *              set_input_focus
+ *
+ * Try to force focus for non-managed windows.
+ */
+static void set_input_focus( Display *display, Window window )
+{
+    XWindowChanges changes;
+    DWORD timestamp;
+
+    if (!window) return;
+
+    if (EVENT_x11_time_to_win32_time(0))
+        /* ICCCM says don't use CurrentTime, so try to use last message time if possible */
+        /* FIXME: this is not entirely correct */
+        timestamp = GetMessageTime() - EVENT_x11_time_to_win32_time(0);
+    else
+        timestamp = CurrentTime;
+
+    /* Set X focus and install colormap */
+    changes.stack_mode = Above;
+    XConfigureWindow( display, window, CWStackMode, &changes );
+    XSetInputFocus( display, window, RevertToParent, timestamp );
+}
+
+/**********************************************************************
  *              set_focus
  */
 static void set_focus( Display *display, HWND hwnd, Time time )
@@ -855,7 +880,8 @@ static void X11DRV_MapNotify( HWND hwnd, XEvent *event )
     if (!data->managed)
     {
         HWND hwndFocus = GetFocus();
-        if (hwndFocus && IsChild( hwnd, hwndFocus )) X11DRV_SetFocus(hwndFocus);  /* FIXME */
+        if (hwndFocus && IsChild( hwnd, hwndFocus ))
+            set_input_focus( thread_display(), data->whole_window );
     }
 }
 
@@ -1237,6 +1263,22 @@ void wait_for_withdrawn_state( HWND hwnd, BOOL set )
         }
     }
     TRACE( "window %p/%lx state now %d\n", data->hwnd, data->whole_window, data->wm_state );
+}
+
+
+/*****************************************************************
+ *		SetFocus   (X11DRV.@)
+ *
+ * Set the X focus.
+ */
+void CDECL X11DRV_SetFocus( HWND hwnd )
+{
+    Display *display = thread_display();
+    struct x11drv_win_data *data;
+
+    if (!(hwnd = GetAncestor( hwnd, GA_ROOT ))) return;
+    if (!(data = X11DRV_get_win_data( hwnd ))) return;
+    if (!data->managed) set_input_focus( display, data->whole_window );
 }
 
 
