@@ -547,6 +547,37 @@ static IStream *create_stream(const void *data, int data_size)
     return FAILED(hr) ? NULL : stream;
 }
 
+static HRESULT create_metadata_reader(const void *data, int data_size,
+                                      const CLSID *clsid, IWICMetadataReader **reader)
+{
+    HRESULT hr;
+    IWICMetadataReader *metadata_reader;
+    IWICPersistStream *persist;
+    IStream *stream;
+
+    /* FIXME: Use IWICComponentFactory_CreateMetadataReader once it's implemented */
+
+    hr = CoCreateInstance(clsid, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IWICMetadataReader, (void **)&metadata_reader);
+    if (FAILED(hr)) return hr;
+
+    hr = IWICMetadataReader_QueryInterface(metadata_reader, &IID_IWICPersistStream, (void **)&persist);
+    if (FAILED(hr))
+    {
+        IWICMetadataReader_Release(metadata_reader);
+        return hr;
+    }
+
+    stream = create_stream(data, data_size);
+    IWICPersistStream_LoadEx(persist, stream, NULL, WICPersistOptionsDefault);
+    IStream_Release(stream);
+
+    IWICPersistStream_Release(persist);
+
+    *reader = metadata_reader;
+    return S_OK;
+}
+
 typedef struct {
     IWICBitmapDecoder IWICBitmapDecoder_iface;
     IWICMetadataBlockReader IWICMetadataBlockReader_iface;
@@ -850,19 +881,6 @@ static HRESULT WINAPI GifFrameDecode_Block_GetContainerFormat(IWICMetadataBlockR
     return S_OK;
 }
 
-static const void *get_GCE_data(GifFrameDecode *This)
-{
-    int i;
-
-    for (i = 0; i < This->frame->Extensions.ExtensionBlockCount; i++)
-    {
-        if (This->frame->Extensions.ExtensionBlocks[i].Function == GRAPHICS_EXT_FUNC_CODE &&
-            This->frame->Extensions.ExtensionBlocks[i].ByteCount == 8)
-            return This->frame->Extensions.ExtensionBlocks[i].Bytes + 3;
-    }
-    return NULL;
-}
-
 static HRESULT WINAPI GifFrameDecode_Block_GetCount(IWICMetadataBlockReader *iface,
     UINT *count)
 {
@@ -872,8 +890,7 @@ static HRESULT WINAPI GifFrameDecode_Block_GetCount(IWICMetadataBlockReader *ifa
 
     if (!count) return E_INVALIDARG;
 
-    *count = 1;
-    if (get_GCE_data(This)) *count += 1;
+    *count = This->frame->Extensions.ExtensionBlockCount + 1;
     return S_OK;
 }
 
@@ -926,64 +943,56 @@ static HRESULT create_IMD_metadata_reader(GifFrameDecode *This, IWICMetadataRead
     return S_OK;
 }
 
-static HRESULT create_GCE_metadata_reader(const void *GCE_data, IWICMetadataReader **reader)
-{
-    HRESULT hr;
-    IWICMetadataReader *metadata_reader;
-    IWICPersistStream *persist;
-    IStream *stream;
-
-    /* FIXME: Use IWICComponentFactory_CreateMetadataReader once it's implemented */
-
-    hr = CoCreateInstance(&CLSID_WICGCEMetadataReader, NULL, CLSCTX_INPROC_SERVER,
-                          &IID_IWICMetadataReader, (void **)&metadata_reader);
-    if (FAILED(hr)) return hr;
-
-    hr = IWICMetadataReader_QueryInterface(metadata_reader, &IID_IWICPersistStream, (void **)&persist);
-    if (FAILED(hr))
-    {
-        IWICMetadataReader_Release(metadata_reader);
-        return hr;
-    }
-
-    stream = create_stream(GCE_data, 4);
-    IWICPersistStream_LoadEx(persist, stream, NULL, WICPersistOptionsDefault);
-    IStream_Release(stream);
-
-    IWICPersistStream_Release(persist);
-
-    *reader = metadata_reader;
-    return S_OK;
-}
-
 static HRESULT WINAPI GifFrameDecode_Block_GetReaderByIndex(IWICMetadataBlockReader *iface,
     UINT index, IWICMetadataReader **reader)
 {
     GifFrameDecode *This = frame_from_IWICMetadataBlockReader(iface);
-    UINT block_count = 1;
-    const void *GCE_data;
+    int i, gce_index = -1, gce_skipped = 0;
 
     TRACE("(%p,%u,%p)\n", iface, index, reader);
 
-    GCE_data = get_GCE_data(This);
-    if (GCE_data) block_count++;
-    /* FIXME: add support for Application Extension metadata block
-    APE_data = get_APE_data(This);
-    if (APE_data) block_count++;
-    */
-    if (!reader || index >= block_count) return E_INVALIDARG;
+    if (!reader) return E_INVALIDARG;
 
     if (index == 0)
         return create_IMD_metadata_reader(This, reader);
 
-    if (index == 1 && GCE_data)
-        return create_GCE_metadata_reader(GCE_data, reader);
+    if (index >= This->frame->Extensions.ExtensionBlockCount + 1)
+        return E_INVALIDARG;
 
-    /* FIXME: add support for Application Extension metadata block
-    if (APE_data)
-        return create_APE_metadata_reader(APE_data, reader);
-    */
-    return E_INVALIDARG;
+    for (i = 0; i < This->frame->Extensions.ExtensionBlockCount; i++)
+    {
+        const CLSID *clsid;
+        const void *data;
+        int data_size;
+
+        if (index != i + 1 - gce_skipped) continue;
+
+        if (This->frame->Extensions.ExtensionBlocks[i].Function == GRAPHICS_EXT_FUNC_CODE)
+        {
+            gce_index = i;
+            gce_skipped = 1;
+            continue;
+        }
+        else if (This->frame->Extensions.ExtensionBlocks[i].Function == COMMENT_EXT_FUNC_CODE)
+        {
+            clsid = &CLSID_WICGifCommentMetadataReader;
+            data = This->frame->Extensions.ExtensionBlocks[i].Bytes;
+            data_size = This->frame->Extensions.ExtensionBlocks[i].ByteCount;
+        }
+        else
+        {
+            clsid = &CLSID_WICUnknownMetadataReader;
+            data = This->frame->Extensions.ExtensionBlocks[i].Bytes;
+            data_size = This->frame->Extensions.ExtensionBlocks[i].ByteCount;
+        }
+        return create_metadata_reader(data, data_size, clsid, reader);
+    }
+
+    if (gce_index == -1) return E_INVALIDARG;
+
+    return create_metadata_reader(This->frame->Extensions.ExtensionBlocks[gce_index].Bytes + 3,
+                                  This->frame->Extensions.ExtensionBlocks[gce_index].ByteCount - 4,
+                                  &CLSID_WICGCEMetadataReader, reader);
 }
 
 static HRESULT WINAPI GifFrameDecode_Block_GetEnumerator(IWICMetadataBlockReader *iface,
@@ -1292,37 +1301,6 @@ static HRESULT WINAPI GifDecoder_Block_GetCount(IWICMetadataBlockReader *iface,
     if (!count) return E_INVALIDARG;
 
     *count = This->gif->Extensions.ExtensionBlockCount + 1;
-    return S_OK;
-}
-
-static HRESULT create_metadata_reader(const void *data, int data_size,
-                                      const CLSID *clsid, IWICMetadataReader **reader)
-{
-    HRESULT hr;
-    IWICMetadataReader *metadata_reader;
-    IWICPersistStream *persist;
-    IStream *stream;
-
-    /* FIXME: Use IWICComponentFactory_CreateMetadataReader once it's implemented */
-
-    hr = CoCreateInstance(clsid, NULL, CLSCTX_INPROC_SERVER,
-                          &IID_IWICMetadataReader, (void **)&metadata_reader);
-    if (FAILED(hr)) return hr;
-
-    hr = IWICMetadataReader_QueryInterface(metadata_reader, &IID_IWICPersistStream, (void **)&persist);
-    if (FAILED(hr))
-    {
-        IWICMetadataReader_Release(metadata_reader);
-        return hr;
-    }
-
-    stream = create_stream(data, data_size);
-    IWICPersistStream_LoadEx(persist, stream, NULL, WICPersistOptionsDefault);
-    IStream_Release(stream);
-
-    IWICPersistStream_Release(persist);
-
-    *reader = metadata_reader;
     return S_OK;
 }
 

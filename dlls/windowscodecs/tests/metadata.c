@@ -1306,7 +1306,6 @@ static void test_metadata_gif(void)
 
         hr = IWICMetadataBlockReader_GetCount(blockreader, &count);
         ok(hr == S_OK, "GetCount error %#x\n", hr);
-todo_wine
         ok(count == 4, "expected 4, got %u\n", count);
 
         hr = IWICMetadataBlockReader_GetReaderByIndex(blockreader, 0, &reader);
@@ -1333,13 +1332,11 @@ todo_wine
         if (SUCCEEDED(hr))
         {
             hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
-todo_wine
             ok(IsEqualGUID(&format, &GUID_MetadataFormatGifComment), /* Comment Extension */
                "wrong container format %s\n", debugstr_guid(&format));
 
             hr = IWICMetadataReader_GetCount(reader, &count);
             ok(hr == S_OK, "GetCount error %#x\n", hr);
-todo_wine
             ok(count == sizeof(animated_gif_comment_2)/sizeof(animated_gif_comment_2[0]), "unexpected count %u\n", count);
 
             if (count == 1)
@@ -1349,7 +1346,6 @@ todo_wine
         }
 
         hr = IWICMetadataBlockReader_GetReaderByIndex(blockreader, 2, &reader);
-todo_wine
         ok(hr == S_OK, "GetReaderByIndex error %#x\n", hr);
 
         if (SUCCEEDED(hr))
@@ -1368,7 +1364,6 @@ todo_wine
         }
 
         hr = IWICMetadataBlockReader_GetReaderByIndex(blockreader, 3, &reader);
-todo_wine
         ok(hr == S_OK, "GetReaderByIndex error %#x\n", hr);
 
         if (SUCCEEDED(hr))
