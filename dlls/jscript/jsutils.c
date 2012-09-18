@@ -239,8 +239,8 @@ HRESULT jsval_variant(jsval_t *val, VARIANT *var)
     VARIANT *v;
     HRESULT hres;
 
-    val->type = JSV_VARIANT;
-    val->u.v = v = heap_alloc(sizeof(VARIANT));
+    __JSVAL_TYPE(*val) = JSV_VARIANT;
+    __JSVAL_VAR(*val) = v = heap_alloc(sizeof(VARIANT));
     if(!v)
         return E_OUTOFMEMORY;
 
