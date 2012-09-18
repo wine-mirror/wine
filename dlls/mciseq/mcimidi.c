@@ -797,6 +797,10 @@ static DWORD MIDI_mciOpen(WINE_MCIMIDI* wmm, DWORD dwFlags, LPMCI_OPEN_PARMSW lp
 	if (wmm->hFile != 0)
 	    mmioClose(wmm->hFile, 0);
 	wmm->hFile = 0;
+	HeapFree(GetProcessHeap(), 0, wmm->tracks);
+	HeapFree(GetProcessHeap(), 0, wmm->lpstrElementName);
+	HeapFree(GetProcessHeap(), 0, wmm->lpstrCopyright);
+	HeapFree(GetProcessHeap(), 0, wmm->lpstrName);
     } else {
 	wmm->dwPositionMS = 0;
 	wmm->dwStatus = MCI_MODE_STOP;
