@@ -468,8 +468,28 @@ static HRESULT Global_RGB(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIA
 
 static HRESULT Global_Len(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    DWORD len;
+    HRESULT hres;
+
+    TRACE("%s\n", debugstr_variant(arg));
+
+    if(V_VT(arg) == VT_NULL)
+        return return_null(res);
+
+    if(V_VT(arg) != VT_BSTR) {
+        BSTR str;
+
+        hres = to_string(arg, &str);
+        if(FAILED(hres))
+            return hres;
+
+        len = SysStringLen(str);
+        SysFreeString(str);
+    }else {
+        len = SysStringLen(V_BSTR(arg));
+    }
+
+    return return_int(res, len);
 }
 
 static HRESULT Global_LenB(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)

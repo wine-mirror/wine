@@ -173,4 +173,10 @@ TestLCase 0.123, doubleAsString(0.123)
 TestLCase Empty, ""
 Call ok(getVT(LCase(Null)) = "VT_NULL", "getVT(LCase(Null)) = " & getVT(LCase(Null)))
 
+Call ok(Len("abc") = 3, "Len(abc) = " & Len("abc"))
+Call ok(Len("") = 0, "Len() = " & Len(""))
+Call ok(Len(1) = 1, "Len(1) = " & Len(1))
+Call ok(isNull(Len(null)), "Len(null) = " & Len(null))
+Call ok(Len(empty) = 0, "Len(empty) = " & Len(empty))
+
 Call reportSuccess()
