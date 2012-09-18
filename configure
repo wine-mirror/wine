@@ -15593,6 +15593,7 @@ wine_fn_config_dll objsel enable_objsel
 wine_fn_config_dll odbc32 enable_odbc32 implib
 wine_fn_config_dll odbccp32 enable_odbccp32 implib
 wine_fn_config_test dlls/odbccp32/tests odbccp32_test
+wine_fn_config_dll odbccu32 enable_odbccu32
 wine_fn_config_dll ole2.dll16 enable_win16
 wine_fn_config_dll ole2conv.dll16 enable_win16
 wine_fn_config_dll ole2disp.dll16 enable_win16
