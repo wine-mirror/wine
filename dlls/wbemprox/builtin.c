@@ -831,31 +831,37 @@ static void fill_processor( struct table *table )
     table->num_rows = count;
 }
 
+static const WCHAR *get_osarchitecture(void)
+{
+    SYSTEM_INFO info;
+    GetNativeSystemInfo( &info );
+    if (info.u.s.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64) return os_64bitW;
+    return os_32bitW;
+}
+static WCHAR *get_systemdirectory(void)
+{
+    void *redir;
+    WCHAR *ret;
+
+    if (!(ret = heap_alloc( MAX_PATH * sizeof(WCHAR) ))) return NULL;
+    Wow64DisableWow64FsRedirection( &redir );
+    GetSystemDirectoryW( ret, MAX_PATH );
+    Wow64RevertWow64FsRedirection( redir );
+    return ret;
+}
+
 static void fill_os( struct table *table )
 {
     struct record_operatingsystem *rec;
-    WCHAR path[MAX_PATH];
-    SYSTEM_INFO info;
-    void *redir;
 
     if (!(table->data = heap_alloc( sizeof(*rec) ))) return;
 
     rec = (struct record_operatingsystem *)table->data;
-    rec->caption    = os_captionW;
-    rec->csdversion = os_csdversionW;
-
-    GetNativeSystemInfo( &info );
-    if (info.u.s.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
-        rec->osarchitecture = os_64bitW;
-    else
-        rec->osarchitecture = os_32bitW;
-
-    rec->oslanguage = MAKELANGID( LANG_ENGLISH, SUBLANG_ENGLISH_US );
-
-    Wow64DisableWow64FsRedirection( &redir );
-    GetSystemDirectoryW( path, MAX_PATH );
-    Wow64RevertWow64FsRedirection( redir );
-    rec->systemdirectory = heap_strdupW( path );
+    rec->caption         = os_captionW;
+    rec->csdversion      = os_csdversionW;
+    rec->osarchitecture  = get_osarchitecture();
+    rec->oslanguage      = MAKELANGID( LANG_ENGLISH, SUBLANG_ENGLISH_US );
+    rec->systemdirectory = get_systemdirectory();
 
     TRACE("created 1 row\n");
     table->num_rows = 1;
