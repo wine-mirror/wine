@@ -233,7 +233,7 @@ static const struct column col_os[] =
     { prop_csdversionW,      CIM_STRING },
     { prop_osarchitectureW,  CIM_STRING },
     { prop_oslanguageW,      CIM_UINT32, VT_I4 },
-    { prop_systemdirectoryW, CIM_STRING }
+    { prop_systemdirectoryW, CIM_STRING|COL_FLAG_DYNAMIC }
 };
 static const struct column col_params[] =
 {
