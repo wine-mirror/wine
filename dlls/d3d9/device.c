@@ -1809,15 +1809,14 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH d3d9_device_SetSamplerState(IDirect3DDev
         DWORD sampler, D3DSAMPLERSTATETYPE state, DWORD value)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
-    HRESULT hr;
 
     TRACE("iface %p, sampler %u, state %#x, value %#x.\n", iface, sampler, state, value);
 
     wined3d_mutex_lock();
-    hr = wined3d_device_set_sampler_state(device->wined3d_device, sampler, state, value);
+    wined3d_device_set_sampler_state(device->wined3d_device, sampler, state, value);
     wined3d_mutex_unlock();
 
-    return hr;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI d3d9_device_ValidateDevice(IDirect3DDevice9Ex *iface, DWORD *pass_count)

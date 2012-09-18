@@ -2325,7 +2325,7 @@ DWORD CDECL wined3d_device_get_render_state(const struct wined3d_device *device,
     return device->stateBlock->state.render_states[state];
 }
 
-HRESULT CDECL wined3d_device_set_sampler_state(struct wined3d_device *device,
+void CDECL wined3d_device_set_sampler_state(struct wined3d_device *device,
         UINT sampler_idx, enum wined3d_sampler_state state, DWORD value)
 {
     DWORD old_value;
@@ -2340,7 +2340,7 @@ HRESULT CDECL wined3d_device_set_sampler_state(struct wined3d_device *device,
             / sizeof(*device->stateBlock->state.sampler_states))
     {
         WARN("Invalid sampler %u.\n", sampler_idx);
-        return WINED3D_OK; /* Windows accepts overflowing this array ... we do not. */
+        return; /* Windows accepts overflowing this array ... we do not. */
     }
 
     old_value = device->stateBlock->state.sampler_states[sampler_idx][state];
@@ -2351,18 +2351,16 @@ HRESULT CDECL wined3d_device_set_sampler_state(struct wined3d_device *device,
     if (device->isRecordingState)
     {
         TRACE("Recording... not performing anything.\n");
-        return WINED3D_OK;
+        return;
     }
 
     if (old_value == value)
     {
         TRACE("Application is setting the old value over, nothing to do.\n");
-        return WINED3D_OK;
+        return;
     }
 
     device_invalidate_state(device, STATE_SAMPLER(sampler_idx));
-
-    return WINED3D_OK;
 }
 
 HRESULT CDECL wined3d_device_get_sampler_state(const struct wined3d_device *device,
