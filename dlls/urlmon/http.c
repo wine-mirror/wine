@@ -215,10 +215,9 @@ static HRESULT handle_http_error(HttpProtocol *This, DWORD error)
 
             hres = IWindowForBindingUI_GetWindow(wfb_ui, iid_reason, &hwnd);
             IWindowForBindingUI_Release(wfb_ui);
-            if(FAILED(hres))
-                hwnd = NULL;
         }
 
+        if(FAILED(hres)) hwnd = NULL;
 
         dlg_flags = FLAGS_ERROR_UI_FLAGS_CHANGE_OPTIONS | FLAGS_ERROR_UI_FLAGS_GENERATE_DATA;
         if(This->base.bindf & BINDF_NO_UI)
