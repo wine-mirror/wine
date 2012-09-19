@@ -104,10 +104,28 @@ static ULONG WINAPI SynthPortImpl_IDirectMusicPort_Release(LPDIRECTMUSICPORT ifa
 static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_PlayBuffer(LPDIRECTMUSICPORT iface, LPDIRECTMUSICBUFFER buffer)
 {
     SynthPortImpl *This = impl_from_SynthPortImpl_IDirectMusicPort(iface);
+    HRESULT hr;
+    REFERENCE_TIME time;
+    LPBYTE data;
+    DWORD size;
 
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, buffer);
+    TRACE("(%p/%p)->(%p)\n", iface, This, buffer);
 
-    return S_OK;
+    if (!buffer)
+        return E_POINTER;
+
+    hr = IDirectMusicBuffer_GetStartTime(buffer, &time);
+
+    if (SUCCEEDED(hr))
+        hr = IDirectMusicBuffer_GetRawBufferPtr(buffer, &data);
+
+    if (SUCCEEDED(hr))
+        hr = IDirectMusicBuffer_GetUsedBytes(buffer, &size);
+
+    if (SUCCEEDED(hr))
+        hr = IDirectMusicSynth_PlayBuffer(This->synth, time, data, size);
+
+    return hr;
 }
 
 static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_SetReadNotificationHandle(LPDIRECTMUSICPORT iface, HANDLE event)
