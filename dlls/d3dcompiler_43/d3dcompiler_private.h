@@ -706,6 +706,7 @@ enum hlsl_ir_node_type
     HLSL_IR_DEREF,
     HLSL_IR_EXPR,
     HLSL_IR_FUNCTION_DECL,
+    HLSL_IR_IF,
     HLSL_IR_JUMP,
     HLSL_IR_SWIZZLE,
 };
@@ -753,6 +754,14 @@ struct hlsl_ir_function_decl
     const char *semantic;
     struct list *parameters;
     struct list *body;
+};
+
+struct hlsl_ir_if
+{
+    struct hlsl_ir_node node;
+    struct hlsl_ir_node *condition;
+    struct list *then_instrs;
+    struct list *else_instrs;
 };
 
 struct hlsl_ir_assignment
@@ -939,6 +948,12 @@ struct parse_variable_def
     struct list *initializer;
 };
 
+struct parse_if_body
+{
+    struct list *then_instrs;
+    struct list *else_instrs;
+};
+
 enum parse_unary_op
 {
     UNARY_OP_PLUS,
@@ -1041,6 +1056,12 @@ static inline struct hlsl_ir_constructor *constructor_from_node(const struct hls
 {
     assert(node->type == HLSL_IR_CONSTRUCTOR);
     return CONTAINING_RECORD(node, struct hlsl_ir_constructor, node);
+}
+
+static inline struct hlsl_ir_if *if_from_node(const struct hlsl_ir_node *node)
+{
+    assert(node->type == HLSL_IR_IF);
+    return CONTAINING_RECORD(node, struct hlsl_ir_if, node);
 }
 
 BOOL add_declaration(struct hlsl_scope *scope, struct hlsl_ir_var *decl, BOOL local_var) DECLSPEC_HIDDEN;

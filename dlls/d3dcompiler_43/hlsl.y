@@ -358,6 +358,7 @@ static struct hlsl_ir_swizzle *get_swizzle(struct hlsl_ir_node *value, const cha
 
 %locations
 %error-verbose
+%expect 1
 
 %union
 {
@@ -373,6 +374,7 @@ static struct hlsl_ir_swizzle *get_swizzle(struct hlsl_ir_node *value, const cha
     struct hlsl_ir_function_decl *function;
     struct parse_parameter parameter;
     struct parse_variable_def *variable_def;
+    struct parse_if_body if_body;
     enum parse_unary_op unary_op;
     enum parse_assign_op assign_op;
 }
@@ -498,12 +500,14 @@ static struct hlsl_ir_swizzle *get_swizzle(struct hlsl_ir_node *value, const cha
 %type <list> statement_list
 %type <list> compound_statement
 %type <list> jump_statement
+%type <list> selection_statement
 %type <function> func_declaration
 %type <function> func_prototype
 %type <parameter> parameter
 %type <name> semantic
 %type <variable_def> variable_def
 %type <list> variables_def
+%type <if_body> if_body
 %type <instr> primary_expr
 %type <instr> postfix_expr
 %type <instr> unary_expr
@@ -994,6 +998,7 @@ statement:                declaration_statement
                         | expr_statement
                         | compound_statement
                         | jump_statement
+                        | selection_statement
 
                           /* FIXME: add rule for return with no value */
 jump_statement:           KW_RETURN expr ';'
@@ -1017,6 +1022,41 @@ jump_statement:           KW_RETURN expr ';'
                                 $$ = d3dcompiler_alloc(sizeof(*$$));
                                 list_init($$);
                                 list_add_tail($$, &jump->node.entry);
+                            }
+
+selection_statement:      KW_IF '(' expr ')' if_body
+                            {
+                                struct hlsl_ir_if *instr = d3dcompiler_alloc(sizeof(*instr));
+                                if (!instr)
+                                {
+                                    ERR("Out of memory\n");
+                                    return -1;
+                                }
+                                instr->node.type = HLSL_IR_IF;
+                                set_location(&instr->node.loc, &@1);
+                                instr->condition = $3;
+                                instr->then_instrs = $5.then_instrs;
+                                instr->else_instrs = $5.else_instrs;
+                                if ($3->data_type->dimx > 1 || $3->data_type->dimy > 1)
+                                {
+                                    hlsl_report_message(instr->node.loc.file, instr->node.loc.line,
+                                            instr->node.loc.col, HLSL_LEVEL_ERROR,
+                                            "if condition requires a scalar");
+                                }
+                                $$ = d3dcompiler_alloc(sizeof(*$$));
+                                list_init($$);
+                                list_add_head($$, &instr->node.entry);
+                            }
+
+if_body:                  statement
+                            {
+                                $$.then_instrs = $1;
+                                $$.else_instrs = NULL;
+                            }
+                        | statement KW_ELSE statement
+                            {
+                                $$.then_instrs = $1;
+                                $$.else_instrs = $3;
                             }
 
 expr_statement:           ';'

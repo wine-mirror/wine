@@ -1742,6 +1742,7 @@ static const char *debug_node_type(enum hlsl_ir_node_type type)
         "HLSL_IR_DEREF",
         "HLSL_IR_EXPR",
         "HLSL_IR_FUNCTION_DECL",
+        "HLSL_IR_IF",
         "HLSL_IR_JUMP",
         "HLSL_IR_SWIZZLE",
     };
@@ -1752,6 +1753,17 @@ static const char *debug_node_type(enum hlsl_ir_node_type type)
 }
 
 static void debug_dump_instr(const struct hlsl_ir_node *instr);
+
+static void debug_dump_instr_list(const struct list *list)
+{
+    struct hlsl_ir_node *instr;
+
+    LIST_FOR_EACH_ENTRY(instr, list, struct hlsl_ir_node, entry)
+    {
+        debug_dump_instr(instr);
+        TRACE("\n");
+    }
+}
 
 static void debug_dump_ir_var(const struct hlsl_ir_var *var)
 {
@@ -1997,6 +2009,21 @@ static void debug_dump_ir_jump(const struct hlsl_ir_jump *jump)
     }
 }
 
+static void debug_dump_ir_if(const struct hlsl_ir_if *if_node)
+{
+    TRACE("if (");
+    debug_dump_instr(if_node->condition);
+    TRACE(")\n{\n");
+    debug_dump_instr_list(if_node->then_instrs);
+    TRACE("}\n");
+    if (if_node->else_instrs)
+    {
+        TRACE("else\n{\n");
+        debug_dump_instr_list(if_node->else_instrs);
+        TRACE("}\n");
+    }
+}
+
 static void debug_dump_instr(const struct hlsl_ir_node *instr)
 {
     switch (instr->type)
@@ -2022,19 +2049,11 @@ static void debug_dump_instr(const struct hlsl_ir_node *instr)
         case HLSL_IR_JUMP:
             debug_dump_ir_jump(jump_from_node(instr));
             break;
+        case HLSL_IR_IF:
+            debug_dump_ir_if(if_from_node(instr));
+            break;
         default:
             TRACE("No dump function for %s\n", debug_node_type(instr->type));
-    }
-}
-
-static void debug_dump_instr_list(const struct list *list)
-{
-    struct hlsl_ir_node *instr;
-
-    LIST_FOR_EACH_ENTRY(instr, list, struct hlsl_ir_node, entry)
-    {
-        debug_dump_instr(instr);
-        TRACE("\n");
     }
 }
 
@@ -2159,6 +2178,14 @@ static void free_ir_assignment(struct hlsl_ir_assignment *assignment)
     d3dcompiler_free(assignment);
 }
 
+static void free_ir_if(struct hlsl_ir_if *if_node)
+{
+    free_instr(if_node->condition);
+    free_instr_list(if_node->then_instrs);
+    free_instr_list(if_node->else_instrs);
+    d3dcompiler_free(if_node);
+}
+
 static void free_ir_jump(struct hlsl_ir_jump *jump)
 {
     if (jump->type == HLSL_IR_JUMP_RETURN)
@@ -2190,6 +2217,9 @@ void free_instr(struct hlsl_ir_node *node)
             break;
         case HLSL_IR_ASSIGNMENT:
             free_ir_assignment(assignment_from_node(node));
+            break;
+        case HLSL_IR_IF:
+            free_ir_if(if_from_node(node));
             break;
         case HLSL_IR_JUMP:
             free_ir_jump(jump_from_node(node));
