@@ -947,6 +947,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateGeometryShader(ID3D10Device 
     {
         WARN("Failed to initialize geometry shader, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
+        return hr;
     }
 
     TRACE("Created geometry shader %p.\n", object);
