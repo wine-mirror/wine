@@ -821,7 +821,7 @@ static void X11DRV_Expose( HWND hwnd, XEvent *xev )
     TRACE( "win %p (%lx) %d,%d %dx%d\n",
            hwnd, event->window, event->x, event->y, event->width, event->height );
 
-    if (!(data = X11DRV_get_win_data( hwnd ))) return;
+    if (!(data = get_win_data( hwnd ))) return;
 
     rect.left   = event->x;
     rect.top    = event->y;
@@ -858,7 +858,10 @@ static void X11DRV_Expose( HWND hwnd, XEvent *xev )
     }
     else OffsetRect( &rect, virtual_screen_rect.left, virtual_screen_rect.top );
 
-    if (!data->surface) RedrawWindow( hwnd, &rect, 0, flags );
+    if (data->surface) flags = 0;
+    release_win_data( data );
+
+    if (flags) RedrawWindow( hwnd, &rect, 0, flags );
 }
 
 
