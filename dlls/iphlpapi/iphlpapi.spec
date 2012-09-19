@@ -112,7 +112,7 @@
 @ stub GetIpNetTableFromStack
 #@ stub GetIpPathEntry
 #@ stub GetIpPathTable
-#@ stub GetIpStatisticsEx
+@ stdcall GetIpStatisticsEx( ptr long )
 @ stdcall GetIpStatistics( ptr )
 @ stub GetIpStatsFromStack
 #@ stub GetMulticastIpAddressEntry

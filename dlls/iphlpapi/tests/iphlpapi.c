@@ -574,13 +574,17 @@ static void testGetIpStatisticsEx(void)
 
     if (!pGetIpStatisticsEx)
     {
-        skip( "GetIpStatisticsEx not available\n" );
+        win_skip( "GetIpStatisticsEx not available\n" );
         return;
     }
 
     apiReturn = pGetIpStatisticsEx(NULL, AF_INET);
     ok(apiReturn == ERROR_INVALID_PARAMETER,
        "GetIpStatisticsEx(NULL, AF_INET) returned %d, expected ERROR_INVALID_PARAMETER\n", apiReturn);
+
+    apiReturn = pGetIpStatisticsEx(&stats, AF_BAN);
+    ok(apiReturn == ERROR_INVALID_PARAMETER,
+       "GetIpStatisticsEx(&stats, AF_BAN) returned %d, expected ERROR_INVALID_PARAMETER\n", apiReturn);
 
     apiReturn = pGetIpStatisticsEx(&stats, AF_INET);
     ok(apiReturn == NO_ERROR, "GetIpStatisticsEx returned %d, expected NO_ERROR\n", apiReturn);

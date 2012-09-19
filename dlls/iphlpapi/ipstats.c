@@ -553,23 +553,25 @@ DWORD WINAPI GetIcmpStatistics(PMIB_ICMP stats)
 
 
 /******************************************************************
- *    GetIpStatistics (IPHLPAPI.@)
+ *    GetIpStatisticsEx (IPHLPAPI.@)
  *
- * Get the IP statistics for the local computer.
+ * Get the IPv4 and IPv6 statistics for the local computer.
  *
  * PARAMS
  *  stats [Out] buffer for IP statistics
+ *  family [In] specifies wether IPv4 or IPv6 statistics are returned
  *
  * RETURNS
  *  Success: NO_ERROR
  *  Failure: error code from winerror.h
  */
-DWORD WINAPI GetIpStatistics(PMIB_IPSTATS stats)
+DWORD WINAPI GetIpStatisticsEx(PMIB_IPSTATS stats, DWORD family)
 {
     DWORD ret = ERROR_NOT_SUPPORTED;
     MIB_IPFORWARDTABLE *fwd_table;
 
     if (!stats) return ERROR_INVALID_PARAMETER;
+    if (family != WS_AF_INET && family != WS_AF_INET6) return ERROR_INVALID_PARAMETER;
     memset( stats, 0, sizeof(*stats) );
 
     stats->dwNumIf = stats->dwNumAddr = getNumInterfaces();
@@ -577,6 +579,72 @@ DWORD WINAPI GetIpStatistics(PMIB_IPSTATS stats)
     {
         stats->dwNumRoutes = fwd_table->dwNumEntries;
         HeapFree( GetProcessHeap(), 0, fwd_table );
+    }
+
+    if (family == WS_AF_INET6)
+    {
+#ifdef __linux__
+        {
+            FILE *fp;
+
+            if ((fp = fopen("/proc/net/snmp6", "r")))
+            {
+                struct {
+                    const char *name;
+                    DWORD *elem;
+                } ipstatlist[] = {
+                    { "Ip6InReceives",       &stats->dwInReceives },
+                    { "Ip6InHdrErrors",      &stats->dwInHdrErrors },
+                    { "Ip6InAddrErrors",     &stats->dwInAddrErrors },
+                    { "Ip6OutForwDatagrams", &stats->dwForwDatagrams },
+                    { "Ip6InUnknownProtos",  &stats->dwInUnknownProtos },
+                    { "Ip6InDiscards",       &stats->dwInDiscards },
+                    { "Ip6InDelivers",       &stats->dwInDelivers },
+                    { "Ip6OutRequests",      &stats->dwOutRequests },
+                    { "Ip6OutDiscards",      &stats->dwOutDiscards },
+                    { "Ip6OutNoRoutes",      &stats->dwOutNoRoutes },
+                    { "Ip6ReasmTimeout",     &stats->dwReasmTimeout },
+                    { "Ip6ReasmReqds",       &stats->dwReasmReqds },
+                    { "Ip6ReasmOKs",         &stats->dwReasmOks },
+                    { "Ip6ReasmFails",       &stats->dwReasmFails },
+                    { "Ip6FragOKs",          &stats->dwFragOks },
+                    { "Ip6FragFails",        &stats->dwFragFails },
+                    { "Ip6FragCreates",      &stats->dwFragCreates },
+                    /* hmm, no routingDiscards, defaultTTL and forwarding? */
+                };
+                char buf[512], *ptr, *value;
+                DWORD res, i;
+
+                while ((ptr = fgets(buf, sizeof(buf), fp)))
+                {
+                    if (!(value = strchr(buf, ' ')))
+                        continue;
+
+                    /* terminate the valuename */
+                    ptr = value - 1;
+                    *(ptr + 1) = '\0';
+
+                    /* and strip leading spaces from value */
+                    value += 1;
+                    while (*value==' ') value++;
+                    if ((ptr = strchr(value, '\n')))
+                        *ptr='\0';
+
+                    for (i = 0; i < sizeof(ipstatlist)/sizeof(ipstatlist[0]); i++)
+                        if (!strcasecmp(buf, ipstatlist[i].name))
+                        {
+                            if (sscanf(value, "%d", &res)) *ipstatlist[i].elem = res;
+                            continue;
+                        }
+                }
+                fclose(fp);
+                ret = NO_ERROR;
+            }
+        }
+#else
+        FIXME( "unimplemented for IPv6\n" );
+#endif
+        return ret;
     }
 
 #ifdef __linux__
@@ -712,11 +780,27 @@ DWORD WINAPI GetIpStatistics(PMIB_IPSTATS stats)
         ret = NO_ERROR;
     }
 #else
-    FIXME( "unimplemented\n" );
+    FIXME( "unimplemented for IPv4\n" );
 #endif
     return ret;
 }
 
+/******************************************************************
+ *    GetIpStatistics (IPHLPAPI.@)
+ *
+ * Get the IP statistics for the local computer.
+ *
+ * PARAMS
+ *  stats [Out] buffer for IP statistics
+ *
+ * RETURNS
+ *  Success: NO_ERROR
+ *  Failure: error code from winerror.h
+ */
+DWORD WINAPI GetIpStatistics(PMIB_IPSTATS stats)
+{
+    return GetIpStatisticsEx(stats, WS_AF_INET);
+}
 
 /******************************************************************
  *    GetTcpStatistics (IPHLPAPI.@)
