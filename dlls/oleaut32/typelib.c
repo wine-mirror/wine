@@ -6022,6 +6022,42 @@ static HRESULT typedescvt_to_variantvt(ITypeInfo *tinfo, const TYPEDESC *tdesc, 
     return hr;
 }
 
+static HRESULT get_iface_guid(ITypeInfo *tinfo, const TYPEDESC *tdesc, GUID *guid)
+{
+    ITypeInfo *tinfo2;
+    TYPEATTR *tattr;
+    HRESULT hres;
+
+    hres = ITypeInfo_GetRefTypeInfo(tinfo, tdesc->u.hreftype, &tinfo2);
+    if(FAILED(hres))
+        return hres;
+
+    hres = ITypeInfo_GetTypeAttr(tinfo2, &tattr);
+    if(FAILED(hres)) {
+        ITypeInfo_Release(tinfo2);
+        return hres;
+    }
+
+    switch(tattr->typekind) {
+    case TKIND_ALIAS:
+        hres = get_iface_guid(tinfo2, &tattr->tdescAlias, guid);
+        break;
+
+    case TKIND_INTERFACE:
+    case TKIND_DISPATCH:
+        *guid = tattr->guid;
+        break;
+
+    default:
+        ERR("Unexpected typekind %d\n", tattr->typekind);
+        hres = E_UNEXPECTED;
+    }
+
+    ITypeInfo_ReleaseTypeAttr(tinfo2, tattr);
+    ITypeInfo_Release(tinfo2);
+    return hres;
+}
+
 /***********************************************************************
  *		DispCallFunc (OLEAUT32.@)
  *
@@ -6515,30 +6551,18 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                     }
 
                     if((tdesc->vt == VT_USERDEFINED || (tdesc->vt == VT_PTR && tdesc->u.lptdesc->vt == VT_USERDEFINED))
-                       && (V_VT(prgpvarg[i]) == VT_DISPATCH || V_VT(prgpvarg[i]) == VT_UNKNOWN)) {
-                        const TYPEDESC *userdefined_tdesc = tdesc;
+                       && (V_VT(prgpvarg[i]) == VT_DISPATCH || V_VT(prgpvarg[i]) == VT_UNKNOWN)
+                       && V_UNKNOWN(prgpvarg[i])) {
                         IUnknown *userdefined_iface;
-                        ITypeInfo *tinfo2;
-                        TYPEATTR *tattr;
+                        GUID guid;
 
-                        if(tdesc->vt == VT_PTR)
-                            userdefined_tdesc = tdesc->u.lptdesc;
-
-                        hres = ITypeInfo2_GetRefTypeInfo(iface, userdefined_tdesc->u.hreftype, &tinfo2);
+                        hres = get_iface_guid((ITypeInfo*)iface, tdesc->vt == VT_PTR ? tdesc->u.lptdesc : tdesc, &guid);
                         if(FAILED(hres))
                             break;
 
-                        hres = ITypeInfo_GetTypeAttr(tinfo2, &tattr);
+                        hres = IUnknown_QueryInterface(V_UNKNOWN(prgpvarg[i]), &guid, (void**)&userdefined_iface);
                         if(FAILED(hres)) {
-                            ITypeInfo_Release(tinfo2);
-                            return hres;
-                        }
-
-                        hres = IUnknown_QueryInterface(V_UNKNOWN(prgpvarg[i]), &tattr->guid, (void**)&userdefined_iface);
-                        ITypeInfo_ReleaseTypeAttr(tinfo2, tattr);
-                        ITypeInfo_Release(tinfo2);
-                        if(FAILED(hres)) {
-                            ERR("argument does not support %s interface\n", debugstr_guid(&tattr->guid));
+                            ERR("argument does not support %s interface\n", debugstr_guid(&guid));
                             break;
                         }
 
