@@ -347,10 +347,7 @@ static DWORD MIDI_mciReadMTrk(WINE_MCIMIDI* wmm, MCI_MIDITRACK* mmt)
 	switch (LOWORD(mmt->dwEventData)) {
 	case 0x02FF:
 	case 0x03FF:
-	    /* position after meta data header */
-	    mmioSeek(wmm->hFile, mmt->dwIndex + HIWORD(mmt->dwEventData), SEEK_SET);
 	    len = mmt->wEventLength - HIWORD(mmt->dwEventData);
-
 	    if (len >= sizeof(buf)) {
 		WARN("Buffer for text is too small (%u are needed)\n", len);
 		len = sizeof(buf) - 1;
@@ -361,20 +358,20 @@ static DWORD MIDI_mciReadMTrk(WINE_MCIMIDI* wmm, MCI_MIDITRACK* mmt)
 		case 0x02:
 		    if (wmm->lpstrCopyright) {
 			WARN("Two copyright notices (%s|%s)\n", debugstr_w(wmm->lpstrCopyright), buf);
-		    } else {
-                        len = MultiByteToWideChar( CP_ACP, 0, buf, -1, NULL, 0 );
-                        wmm->lpstrCopyright = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
-                        MultiByteToWideChar( CP_ACP, 0, buf, -1, wmm->lpstrCopyright, len );
+			HeapFree(GetProcessHeap(), 0, wmm->lpstrCopyright);
 		    }
+		    len = MultiByteToWideChar( CP_ACP, 0, buf, -1, NULL, 0 );
+		    wmm->lpstrCopyright = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+		    MultiByteToWideChar( CP_ACP, 0, buf, -1, wmm->lpstrCopyright, len );
 		    break;
 		case 0x03:
 		    if (wmm->lpstrName) {
 			WARN("Two names (%s|%s)\n", debugstr_w(wmm->lpstrName), buf);
-		    } else {
-                        len = MultiByteToWideChar( CP_ACP, 0, buf, -1, NULL, 0 );
-                        wmm->lpstrName = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
-                        MultiByteToWideChar( CP_ACP, 0, buf, -1, wmm->lpstrName, len );
-		    }
+			HeapFree(GetProcessHeap(), 0, wmm->lpstrName);
+		    } /* last name or name from last track wins */
+		    len = MultiByteToWideChar( CP_ACP, 0, buf, -1, NULL, 0 );
+		    wmm->lpstrName = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+		    MultiByteToWideChar( CP_ACP, 0, buf, -1, wmm->lpstrName, len );
 		    break;
 		}
 	    }
@@ -1524,7 +1521,7 @@ static DWORD MIDI_mciInfo(WINE_MCIMIDI* wmm, DWORD dwFlags, LPMCI_INFO_PARMSW lp
     case MCI_INFO_NAME:         str = wmm->lpstrName; break;
     default:
 	WARN("Don't know this info command (%u)\n", dwFlags);
-	return MCIERR_UNRECOGNIZED_COMMAND;
+	return MCIERR_MISSING_PARAMETER; /* not MCIERR_FLAGS_... */
     }
     if (!ret) {
 	if (lpParms->dwRetSize) {
