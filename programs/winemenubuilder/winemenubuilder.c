@@ -3096,7 +3096,7 @@ static BOOL InvokeShellLinkerForURL( IUniformResourceLocatorW *url, LPCWSTR link
     }
     else
         r = !write_menu_entry(unix_link, link_name, start_path, escaped_urlPath, NULL, NULL, icon_name);
-    ret = (r != 0);
+    ret = (r == 0);
     ReleaseSemaphore(hSem, 1, NULL);
 
 cleanup:
