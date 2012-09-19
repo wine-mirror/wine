@@ -83,7 +83,7 @@
 @ stdcall GetExtendedTcpTable( ptr ptr long long long long )
 @ stdcall GetExtendedUdpTable( ptr ptr long long long long )
 @ stdcall GetFriendlyIfIndex( long )
-#@ stub GetIcmpStatisticsEx
+@ stdcall GetIcmpStatisticsEx( ptr long )
 @ stdcall GetIcmpStatistics( ptr )
 @ stub GetIcmpStatsFromStack
 @ stdcall GetIfEntry( ptr )

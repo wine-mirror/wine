@@ -551,6 +551,178 @@ DWORD WINAPI GetIcmpStatistics(PMIB_ICMP stats)
     return ret;
 }
 
+/******************************************************************
+ *    GetIcmpStatisticsEx (IPHLPAPI.@)
+ *
+ * Get the IPv4 and IPv6 ICMP statistics for the local computer.
+ *
+ * PARAMS
+ *  stats [Out] buffer for ICMP statistics
+ *  family [In] specifies wether IPv4 or IPv6 statistics are returned
+ *
+ * RETURNS
+ *  Success: NO_ERROR
+ *  Failure: error code from winerror.h
+ */
+DWORD WINAPI GetIcmpStatisticsEx(PMIB_ICMP_EX stats, DWORD family)
+{
+    DWORD ret = ERROR_NOT_SUPPORTED;
+    MIB_ICMP ipv4stats;
+
+    if (!stats) return ERROR_INVALID_PARAMETER;
+    if (family != WS_AF_INET && family != WS_AF_INET6) return ERROR_INVALID_PARAMETER;
+    memset( stats, 0, sizeof(MIB_ICMP_EX) );
+
+    if (family == WS_AF_INET6)
+    {
+#ifdef __linux__
+        {
+            FILE *fp;
+
+            if ((fp = fopen("/proc/net/snmp6", "r")))
+            {
+                struct icmpstatstruct{
+                    const char *name;
+                    DWORD pos;
+                };
+                static const struct icmpstatstruct icmpinstatlist[] = {
+                    { "Icmp6InDestUnreachs",           ICMP6_DST_UNREACH },
+                    { "Icmp6InPktTooBigs",             ICMP6_PACKET_TOO_BIG },
+                    { "Icmp6InTimeExcds",              ICMP6_TIME_EXCEEDED },
+                    { "Icmp6InParmProblems",           ICMP6_PARAM_PROB },
+                    { "Icmp6InEchos",                  ICMP6_ECHO_REQUEST },
+                    { "Icmp6InEchoReplies",            ICMP6_ECHO_REPLY },
+                    { "Icmp6InGroupMembQueries",       ICMP6_MEMBERSHIP_QUERY },
+                    { "Icmp6InGroupMembResponses",     ICMP6_MEMBERSHIP_REPORT },
+                    { "Icmp6InGroupMembReductions",    ICMP6_MEMBERSHIP_REDUCTION },
+                    { "Icmp6InRouterSolicits",         ND_ROUTER_SOLICIT },
+                    { "Icmp6InRouterAdvertisements",   ND_ROUTER_ADVERT },
+                    { "Icmp6InNeighborSolicits",       ND_NEIGHBOR_SOLICIT },
+                    { "Icmp6InNeighborAdvertisements", ND_NEIGHBOR_ADVERT },
+                    { "Icmp6InRedirects",              ND_REDIRECT },
+                    { "Icmp6InMLDv2Reports",           ICMP6_V2_MEMBERSHIP_REPORT },
+                };
+                static const struct icmpstatstruct icmpoutstatlist[] = {
+                    { "Icmp6OutDestUnreachs",           ICMP6_DST_UNREACH },
+                    { "Icmp6OutPktTooBigs",             ICMP6_PACKET_TOO_BIG },
+                    { "Icmp6OutTimeExcds",              ICMP6_TIME_EXCEEDED },
+                    { "Icmp6OutParmProblems",           ICMP6_PARAM_PROB },
+                    { "Icmp6OutEchos",                  ICMP6_ECHO_REQUEST },
+                    { "Icmp6OutEchoReplies",            ICMP6_ECHO_REPLY },
+                    { "Icmp6OutGroupMembQueries",       ICMP6_MEMBERSHIP_QUERY },
+                    { "Icmp6OutGroupMembResponses",     ICMP6_MEMBERSHIP_REPORT },
+                    { "Icmp6OutGroupMembReductions",    ICMP6_MEMBERSHIP_REDUCTION },
+                    { "Icmp6OutRouterSolicits",         ND_ROUTER_SOLICIT },
+                    { "Icmp6OutRouterAdvertisements",   ND_ROUTER_ADVERT },
+                    { "Icmp6OutNeighborSolicits",       ND_NEIGHBOR_SOLICIT },
+                    { "Icmp6OutNeighborAdvertisements", ND_NEIGHBOR_ADVERT },
+                    { "Icmp6OutRedirects",              ND_REDIRECT },
+                    { "Icmp6OutMLDv2Reports",           ICMP6_V2_MEMBERSHIP_REPORT },
+                };
+                char buf[512], *ptr, *value;
+                DWORD res, i;
+
+                while ((ptr = fgets(buf, sizeof(buf), fp)))
+                {
+                    if (!(value = strchr(buf, ' ')))
+                        continue;
+
+                    /* terminate the valuename */
+                    ptr = value - 1;
+                    *(ptr + 1) = '\0';
+
+                    /* and strip leading spaces from value */
+                    value += 1;
+                    while (*value==' ') value++;
+                    if ((ptr = strchr(value, '\n')))
+                        *ptr='\0';
+
+                    if (!strcasecmp(buf, "Icmp6InMsgs"))
+                    {
+                        if (sscanf(value, "%d", &res)) stats->icmpInStats.dwMsgs = res;
+                        continue;
+                    }
+
+                    if (!strcasecmp(buf, "Icmp6InErrors"))
+                    {
+                        if (sscanf(value, "%d", &res)) stats->icmpInStats.dwErrors = res;
+                        continue;
+                    }
+
+                    for (i = 0; i < sizeof(icmpinstatlist)/sizeof(icmpinstatlist[0]); i++)
+                    {
+                        if (!strcasecmp(buf, icmpinstatlist[i].name))
+                        {
+                            if (sscanf(value, "%d", &res))
+                                stats->icmpInStats.rgdwTypeCount[icmpinstatlist[i].pos] = res;
+                            break;
+                        }
+                    }
+
+                    if (!strcasecmp(buf, "Icmp6OutMsgs"))
+                    {
+                        if (sscanf(value, "%d", &res)) stats->icmpOutStats.dwMsgs = res;
+                        continue;
+                    }
+
+                    if (!strcasecmp(buf, "Icmp6OutErrors"))
+                    {
+                        if (sscanf(value, "%d", &res)) stats->icmpOutStats.dwErrors = res;
+                        continue;
+                    }
+
+                    for (i = 0; i < sizeof(icmpoutstatlist)/sizeof(icmpoutstatlist[0]); i++)
+                    {
+                        if (!strcasecmp(buf, icmpoutstatlist[i].name))
+                        {
+                            if (sscanf(value, "%d", &res))
+                                stats->icmpOutStats.rgdwTypeCount[icmpoutstatlist[i].pos] = res;
+                            break;
+                        }
+                    }
+
+                }
+                fclose(fp);
+                ret = NO_ERROR;
+            }
+        }
+#else
+        FIXME( "unimplemented for IPv6\n" );
+#endif
+        return ret;
+    }
+
+    ret = GetIcmpStatistics(&ipv4stats);
+    if SUCCEEDED(ret)
+    {
+        stats->icmpInStats.dwMsgs = ipv4stats.stats.icmpInStats.dwMsgs;
+        stats->icmpInStats.dwErrors = ipv4stats.stats.icmpInStats.dwErrors;
+        stats->icmpInStats.rgdwTypeCount[ICMP4_DST_UNREACH] = ipv4stats.stats.icmpInStats.dwDestUnreachs;
+        stats->icmpInStats.rgdwTypeCount[ICMP4_SOURCE_QUENCH] = ipv4stats.stats.icmpInStats.dwSrcQuenchs;
+        stats->icmpInStats.rgdwTypeCount[ICMP4_REDIRECT] = ipv4stats.stats.icmpInStats.dwRedirects;
+        stats->icmpInStats.rgdwTypeCount[ICMP4_ECHO_REQUEST] = ipv4stats.stats.icmpInStats.dwEchos;
+        stats->icmpInStats.rgdwTypeCount[ICMP4_TIME_EXCEEDED] = ipv4stats.stats.icmpInStats.dwTimeExcds;
+        stats->icmpInStats.rgdwTypeCount[ICMP4_PARAM_PROB] = ipv4stats.stats.icmpInStats.dwParmProbs;
+        stats->icmpInStats.rgdwTypeCount[ICMP4_TIMESTAMP_REQUEST] = ipv4stats.stats.icmpInStats.dwTimestamps;
+        stats->icmpInStats.rgdwTypeCount[ICMP4_TIMESTAMP_REPLY] = ipv4stats.stats.icmpInStats.dwTimestampReps;
+        stats->icmpInStats.rgdwTypeCount[ICMP4_MASK_REQUEST] = ipv4stats.stats.icmpInStats.dwAddrMasks;
+        stats->icmpInStats.rgdwTypeCount[ICMP4_MASK_REPLY] = ipv4stats.stats.icmpInStats.dwAddrMaskReps;
+
+        stats->icmpOutStats.dwMsgs = ipv4stats.stats.icmpOutStats.dwMsgs;
+        stats->icmpOutStats.dwErrors = ipv4stats.stats.icmpOutStats.dwErrors;
+        stats->icmpOutStats.rgdwTypeCount[ICMP4_DST_UNREACH] = ipv4stats.stats.icmpOutStats.dwDestUnreachs;
+        stats->icmpOutStats.rgdwTypeCount[ICMP4_SOURCE_QUENCH] = ipv4stats.stats.icmpOutStats.dwSrcQuenchs;
+        stats->icmpOutStats.rgdwTypeCount[ICMP4_REDIRECT] = ipv4stats.stats.icmpOutStats.dwRedirects;
+        stats->icmpOutStats.rgdwTypeCount[ICMP4_ECHO_REQUEST] = ipv4stats.stats.icmpOutStats.dwEchos;
+        stats->icmpOutStats.rgdwTypeCount[ICMP4_TIME_EXCEEDED] = ipv4stats.stats.icmpOutStats.dwTimeExcds;
+        stats->icmpOutStats.rgdwTypeCount[ICMP4_PARAM_PROB] = ipv4stats.stats.icmpOutStats.dwParmProbs;
+        stats->icmpOutStats.rgdwTypeCount[ICMP4_TIMESTAMP_REQUEST] = ipv4stats.stats.icmpOutStats.dwTimestamps;
+        stats->icmpOutStats.rgdwTypeCount[ICMP4_TIMESTAMP_REPLY] = ipv4stats.stats.icmpOutStats.dwTimestampReps;
+        stats->icmpOutStats.rgdwTypeCount[ICMP4_MASK_REQUEST] = ipv4stats.stats.icmpOutStats.dwAddrMasks;
+        stats->icmpOutStats.rgdwTypeCount[ICMP4_MASK_REPLY] = ipv4stats.stats.icmpOutStats.dwAddrMaskReps;
+    }
+    return ret;
+}
 
 /******************************************************************
  *    GetIpStatisticsEx (IPHLPAPI.@)

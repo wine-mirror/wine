@@ -192,6 +192,42 @@ typedef struct _MIB_ICMP
     MIBICMPINFO stats;
 } MIB_ICMP, *PMIB_ICMP;
 
+typedef enum
+{
+    ICMP4_ECHO_REPLY        =  0,
+    ICMP4_DST_UNREACH       =  3,
+    ICMP4_SOURCE_QUENCH     =  4,
+    ICMP4_REDIRECT          =  5,
+    ICMP4_ECHO_REQUEST      =  8,
+    ICMP4_ROUTER_ADVERT     =  9,
+    ICMP4_ROUTER_SOLICIT    = 10,
+    ICMP4_TIME_EXCEEDED     = 11,
+    ICMP4_PARAM_PROB        = 12,
+    ICMP4_TIMESTAMP_REQUEST = 13,
+    ICMP4_TIMESTAMP_REPLY   = 14,
+    ICMP4_MASK_REQUEST      = 17,
+    ICMP4_MASK_REPLY        = 18,
+} ICMP4_TYPE, *PICMP4_TYPE;
+
+typedef enum
+{
+    ICMP6_DST_UNREACH          =   1,
+    ICMP6_PACKET_TOO_BIG       =   2,
+    ICMP6_TIME_EXCEEDED        =   3,
+    ICMP6_PARAM_PROB           =   4,
+    ICMP6_ECHO_REQUEST         = 128,
+    ICMP6_ECHO_REPLY           = 129,
+    ICMP6_MEMBERSHIP_QUERY     = 130,
+    ICMP6_MEMBERSHIP_REPORT    = 131,
+    ICMP6_MEMBERSHIP_REDUCTION = 132,
+    ND_ROUTER_SOLICIT          = 133,
+    ND_ROUTER_ADVERT           = 134,
+    ND_NEIGHBOR_SOLICIT        = 135,
+    ND_NEIGHBOR_ADVERT         = 136,
+    ND_REDIRECT                = 137,
+    ICMP6_V2_MEMBERSHIP_REPORT = 143,
+} ICMP6_TYPE, *PICMP6_TYPE;
+
 typedef struct _MIBICMPSTATS_EX
 {
     DWORD dwMsgs;

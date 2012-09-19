@@ -530,7 +530,7 @@ static void testGetIcmpStatisticsEx(void)
 
     if (!pGetIcmpStatisticsEx)
     {
-        skip( "GetIcmpStatisticsEx not available\n" );
+        win_skip( "GetIcmpStatisticsEx not available\n" );
         return;
     }
 
@@ -540,6 +540,10 @@ static void testGetIcmpStatisticsEx(void)
         ok(apiReturn == ERROR_INVALID_PARAMETER,
          "GetIcmpStatisticsEx(NULL, AF_INET) returned %d, expected ERROR_INVALID_PARAMETER\n", apiReturn);
     }
+
+    apiReturn = pGetIcmpStatisticsEx(&stats, AF_BAN);
+    ok(apiReturn == ERROR_INVALID_PARAMETER,
+       "GetIcmpStatisticsEx(&stats, AF_BAN) returned %d, expected ERROR_INVALID_PARAMETER\n", apiReturn);
 
     apiReturn = pGetIcmpStatisticsEx(&stats, AF_INET);
     ok(apiReturn == NO_ERROR, "GetIcmpStatisticsEx returned %d, expected NO_ERROR\n", apiReturn);
