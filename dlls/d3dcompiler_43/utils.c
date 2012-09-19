@@ -860,13 +860,10 @@ struct hlsl_type *new_array_type(struct hlsl_type *basic_type, unsigned int arra
 
 struct hlsl_type *get_type(struct hlsl_scope *scope, const char *name, BOOL recursive)
 {
-    struct hlsl_type *type;
+    struct wine_rb_entry *entry = wine_rb_get(&scope->types, name);
+    if (entry)
+        return WINE_RB_ENTRY_VALUE(entry, struct hlsl_type, scope_entry);
 
-    LIST_FOR_EACH_ENTRY(type, &scope->types, struct hlsl_type, scope_entry)
-    {
-        if (strcmp(type->name, name) == 0)
-            return type;
-    }
     if (recursive && scope->upper)
         return get_type(scope->upper, name, recursive);
     return NULL;
@@ -1599,6 +1596,44 @@ struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *left, enum parse_assig
     return &assign->node;
 }
 
+int compare_hlsl_types_rb(const void *key, const struct wine_rb_entry *entry)
+{
+    const char *name = (const char *)key;
+    const struct hlsl_type *type = WINE_RB_ENTRY_VALUE(entry, const struct hlsl_type, scope_entry);
+
+    if (name == type->name)
+        return 0;
+
+    if (!name || !type->name)
+    {
+        ERR("hlsl_type without a name in a scope?\n");
+        return -1;
+    }
+    return strcmp(name, type->name);
+}
+
+static inline void *d3dcompiler_alloc_rb(size_t size)
+{
+    return d3dcompiler_alloc(size);
+}
+
+static inline void *d3dcompiler_realloc_rb(void *ptr, size_t size)
+{
+    return d3dcompiler_realloc(ptr, size);
+}
+
+static inline void d3dcompiler_free_rb(void *ptr)
+{
+    d3dcompiler_free(ptr);
+}
+static const struct wine_rb_functions hlsl_type_rb_funcs =
+{
+    d3dcompiler_alloc_rb,
+    d3dcompiler_realloc_rb,
+    d3dcompiler_free_rb,
+    compare_hlsl_types_rb,
+};
+
 void push_scope(struct hlsl_parse_ctx *ctx)
 {
     struct hlsl_scope *new_scope = d3dcompiler_alloc(sizeof(*new_scope));
@@ -1610,7 +1645,12 @@ void push_scope(struct hlsl_parse_ctx *ctx)
     }
     TRACE("Pushing a new scope\n");
     list_init(&new_scope->vars);
-    list_init(&new_scope->types);
+    if (wine_rb_init(&new_scope->types, &hlsl_type_rb_funcs) == -1)
+    {
+        ERR("Failed to initialize types rbtree.\n");
+        d3dcompiler_free(new_scope);
+        return;
+    }
     new_scope->upper = ctx->cur_scope;
     ctx->cur_scope = new_scope;
     list_add_tail(&ctx->scopes, &new_scope->entry);

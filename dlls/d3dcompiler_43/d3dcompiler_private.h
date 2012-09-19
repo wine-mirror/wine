@@ -662,7 +662,7 @@ enum hlsl_matrix_majority
 struct hlsl_type
 {
     struct list entry;
-    struct list scope_entry;
+    struct wine_rb_entry scope_entry;
     enum hlsl_type_class type;
     enum hlsl_base_type base_type;
     enum hlsl_sampler_dim sampler_dim;
@@ -924,7 +924,7 @@ struct hlsl_scope
 {
     struct list entry;
     struct list vars;
-    struct list types;
+    struct wine_rb_tree types;
     struct hlsl_scope *upper;
 };
 

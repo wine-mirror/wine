@@ -180,7 +180,7 @@ BOOL add_type_to_scope(struct hlsl_scope *scope, struct hlsl_type *def)
     if (get_type(scope, def->name, FALSE))
         return FALSE;
 
-    list_add_tail(&scope->types, &def->scope_entry);
+    wine_rb_put(&scope->types, def->name, &def->scope_entry);
     return TRUE;
 }
 
@@ -1658,6 +1658,7 @@ struct bwriter_shader *parse_hlsl(enum shader_type type, DWORD major, DWORD mino
         {
             free_declaration(var);
         }
+        wine_rb_destroy(&scope->types, NULL, NULL);
         d3dcompiler_free(scope);
     }
 
