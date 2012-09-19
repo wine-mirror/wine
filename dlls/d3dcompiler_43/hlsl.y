@@ -186,7 +186,7 @@ static BOOL check_type_modifiers(DWORD modifiers, struct source_location *loc)
     return TRUE;
 }
 
-BOOL add_type_to_scope(struct hlsl_scope *scope, struct hlsl_type *def)
+static BOOL add_type_to_scope(struct hlsl_scope *scope, struct hlsl_type *def)
 {
     if (get_type(scope, def->name, FALSE))
         return FALSE;
