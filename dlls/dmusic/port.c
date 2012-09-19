@@ -146,16 +146,16 @@ static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_Read(LPDIRECTMUSICPORT ifac
     return S_OK;
 }
 
-static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_DownloadInstrument(LPDIRECTMUSICPORT iface, IDirectMusicInstrument* pInstrument, IDirectMusicDownloadedInstrument** ppDownloadedInstrument, DMUS_NOTERANGE* pNoteRanges, DWORD dwNumNoteRanges)
+static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_DownloadInstrument(LPDIRECTMUSICPORT iface, IDirectMusicInstrument* instrument, IDirectMusicDownloadedInstrument** downloaded_instrument, DMUS_NOTERANGE* note_ranges, DWORD num_note_ranges)
 {
-	SynthPortImpl *This = impl_from_SynthPortImpl_IDirectMusicPort(iface);
+    SynthPortImpl *This = impl_from_SynthPortImpl_IDirectMusicPort(iface);
 
-	FIXME("(%p, %p, %p, %p, %d): stub\n", This, pInstrument, ppDownloadedInstrument, pNoteRanges, dwNumNoteRanges);
+    FIXME("(%p/%p)->(%p, %p, %p, %d): stub\n", iface, This, instrument, downloaded_instrument, note_ranges, num_note_ranges);
 
-	if (!pInstrument || !ppDownloadedInstrument || (dwNumNoteRanges && !pNoteRanges))
-		return E_POINTER;
+    if (!instrument || !downloaded_instrument || (num_note_ranges && !note_ranges))
+        return E_POINTER;
 
-	return DMUSIC_CreateDirectMusicDownloadedInstrumentImpl(&IID_IDirectMusicDownloadedInstrument, (LPVOID*)ppDownloadedInstrument, NULL);
+    return DMUSIC_CreateDirectMusicDownloadedInstrumentImpl(&IID_IDirectMusicDownloadedInstrument, (LPVOID*)downloaded_instrument, NULL);
 }
 
 static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_UnloadInstrument(LPDIRECTMUSICPORT iface, IDirectMusicDownloadedInstrument *downloaded_instrument)
