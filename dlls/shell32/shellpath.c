@@ -2722,6 +2722,7 @@ static void _SHCreateSymbolicLinks(void)
 static HRESULT create_extra_folders(void)
 {
     static const WCHAR environW[] = {'E','n','v','i','r','o','n','m','e','n','t',0};
+    static const WCHAR microsoftW[] = {'M','i','c','r','o','s','o','f','t',0};
     static const WCHAR TempW[]    = {'T','e','m','p',0};
     static const WCHAR TEMPW[]    = {'T','E','M','P',0};
     static const WCHAR TMPW[]     = {'T','M','P',0};
@@ -2746,6 +2747,12 @@ static HRESULT create_extra_folders(void)
             RegSetValueExW( hkey, TMPW, 0, REG_SZ, (LPBYTE)path, (strlenW(path) + 1) * sizeof(WCHAR) );
     }
     RegCloseKey( hkey );
+
+    if (SUCCEEDED(hr))
+    {
+        hr = SHGetFolderPathAndSubDirW( 0, CSIDL_COMMON_APPDATA | CSIDL_FLAG_CREATE, NULL,
+                                        SHGFP_TYPE_DEFAULT, microsoftW, path );
+    }
     return hr;
 }
 
