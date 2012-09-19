@@ -2382,7 +2382,7 @@ DWORD CDECL wined3d_device_get_sampler_state(const struct wined3d_device *device
     return device->stateBlock->state.sampler_states[sampler_idx][state];
 }
 
-HRESULT CDECL wined3d_device_set_scissor_rect(struct wined3d_device *device, const RECT *rect)
+void CDECL wined3d_device_set_scissor_rect(struct wined3d_device *device, const RECT *rect)
 {
     TRACE("device %p, rect %s.\n", device, wine_dbgstr_rect(rect));
 
@@ -2390,19 +2390,17 @@ HRESULT CDECL wined3d_device_set_scissor_rect(struct wined3d_device *device, con
     if (EqualRect(&device->updateStateBlock->state.scissor_rect, rect))
     {
         TRACE("App is setting the old scissor rectangle over, nothing to do.\n");
-        return WINED3D_OK;
+        return;
     }
     CopyRect(&device->updateStateBlock->state.scissor_rect, rect);
 
     if (device->isRecordingState)
     {
         TRACE("Recording... not performing anything.\n");
-        return WINED3D_OK;
+        return;
     }
 
     device_invalidate_state(device, STATE_SCISSORRECT);
-
-    return WINED3D_OK;
 }
 
 HRESULT CDECL wined3d_device_get_scissor_rect(const struct wined3d_device *device, RECT *rect)
