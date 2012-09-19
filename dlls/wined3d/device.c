@@ -2403,14 +2403,12 @@ void CDECL wined3d_device_set_scissor_rect(struct wined3d_device *device, const 
     device_invalidate_state(device, STATE_SCISSORRECT);
 }
 
-HRESULT CDECL wined3d_device_get_scissor_rect(const struct wined3d_device *device, RECT *rect)
+void CDECL wined3d_device_get_scissor_rect(const struct wined3d_device *device, RECT *rect)
 {
     TRACE("device %p, rect %p.\n", device, rect);
 
     *rect = device->updateStateBlock->state.scissor_rect;
     TRACE("Returning rect %s.\n", wine_dbgstr_rect(rect));
-
-    return WINED3D_OK;
 }
 
 HRESULT CDECL wined3d_device_set_vertex_declaration(struct wined3d_device *device,
