@@ -260,6 +260,11 @@ static int propvar_cmp(const PROPVARIANT *v1, const PROPVARIANT *v2)
         return lstrcmpA(v1->u.pszVal, v2->u.pszVal);
     }
 
+    if (v1->vt == VT_LPWSTR && v2->vt == VT_LPWSTR)
+    {
+        return lstrcmpiW(v1->u.pwszVal, v2->u.pwszVal);
+    }
+
     if (!get_int_value(v1, &value1)) return -1;
     if (!get_int_value(v2, &value2)) return -1;
 

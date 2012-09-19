@@ -1636,15 +1636,17 @@ static void test_metadata_APE(void)
         { VT_UI1|VT_VECTOR, 0, 11, { 'H','e','l','l','o',' ','W','o','r','l','d' }, NULL, { 'A','p','p','l','i','c','a','t','i','o','n',0 } },
         { VT_UI1|VT_VECTOR, 0, 10, { 1,0x11,2,0x22,0x33,4,0x44,0x55,0x66,0x77 }, NULL, { 'D','a','t','a',0 } }
     };
+    WCHAR dataW[] = { 'd','a','t','a',0 };
     HRESULT hr;
     IStream *stream;
     IWICPersistStream *persist;
     IWICMetadataReader *reader;
     IWICMetadataHandlerInfo *info;
     WCHAR name[64];
-    UINT count, dummy;
+    UINT count, dummy, i;
     GUID format;
-    CLSID id;
+    CLSID clsid;
+    PROPVARIANT id, value;
 
     hr = CoCreateInstance(&CLSID_WICAPEMetadataReader, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IWICMetadataReader, (void **)&reader);
@@ -1676,12 +1678,24 @@ static void test_metadata_APE(void)
         ok(hr == S_OK, "GetMetadataFormat error %#x\n", hr);
         ok(IsEqualGUID(&format, &GUID_MetadataFormatAPE), "wrong format %s\n", debugstr_guid(&format));
 
+        PropVariantInit(&value);
+        id.vt = VT_LPWSTR;
+        U(id).pwszVal = dataW;
+
+        hr = IWICMetadataReader_GetValue(reader, NULL, &id, &value);
+        ok(hr == S_OK, "GetValue error %#x\n", hr);
+        ok(value.vt == (VT_UI1|VT_VECTOR), "unexpected vt: %i\n", id.vt);
+        ok(td[1].count == U(value).caub.cElems, "expected cElems %d, got %d\n", td[1].count, U(value).caub.cElems);
+        for (i = 0; i < U(value).caub.cElems; i++)
+            ok(td[1].value[i] == U(value).caub.pElems[i], "%u: expected value %#x/%#x, got %#x\n", i, (ULONG)td[1].value[i], (ULONG)(td[1].value[i] >> 32), U(value).caub.pElems[i]);
+        PropVariantClear(&value);
+
         hr = IWICMetadataReader_GetMetadataHandlerInfo(reader, &info);
         ok(hr == S_OK, "GetMetadataHandlerInfo error %#x\n", hr);
 
-        hr = IWICMetadataHandlerInfo_GetCLSID(info, &id);
+        hr = IWICMetadataHandlerInfo_GetCLSID(info, &clsid);
         ok(hr == S_OK, "GetCLSID error %#x\n", hr);
-        ok(IsEqualGUID(&id, &CLSID_WICAPEMetadataReader), "wrong CLSID %s\n", debugstr_guid(&id));
+        ok(IsEqualGUID(&clsid, &CLSID_WICAPEMetadataReader), "wrong CLSID %s\n", debugstr_guid(&clsid));
 
         hr = IWICMetadataHandlerInfo_GetFriendlyName(info, 64, name, &dummy);
         ok(hr == S_OK, "GetFriendlyName error %#x\n", hr);
@@ -1706,6 +1720,7 @@ static void test_metadata_GIF_comment(void)
     {
         { VT_LPSTR, 0, 12, { 0 }, "Hello World!", { 'T','e','x','t','E','n','t','r','y',0 } }
     };
+    WCHAR text_entryW[] = { 'T','E','X','T','E','N','T','R','Y',0 };
     HRESULT hr;
     IStream *stream;
     IWICPersistStream *persist;
@@ -1714,7 +1729,8 @@ static void test_metadata_GIF_comment(void)
     WCHAR name[64];
     UINT count, dummy;
     GUID format;
-    CLSID id;
+    CLSID clsid;
+    PROPVARIANT id, value;
 
     hr = CoCreateInstance(&CLSID_WICGifCommentMetadataReader, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IWICMetadataReader, (void **)&reader);
@@ -1746,12 +1762,22 @@ static void test_metadata_GIF_comment(void)
         ok(hr == S_OK, "GetMetadataFormat error %#x\n", hr);
         ok(IsEqualGUID(&format, &GUID_MetadataFormatGifComment), "wrong format %s\n", debugstr_guid(&format));
 
+        PropVariantInit(&value);
+        id.vt = VT_LPWSTR;
+        U(id).pwszVal = text_entryW;
+
+        hr = IWICMetadataReader_GetValue(reader, NULL, &id, &value);
+        ok(hr == S_OK, "GetValue error %#x\n", hr);
+        ok(value.vt == VT_LPSTR, "unexpected vt: %i\n", id.vt);
+        ok(!strcmp(U(value).pszVal, "Hello World!"), "unexpected value: %s\n", U(value).pszVal);
+        PropVariantClear(&value);
+
         hr = IWICMetadataReader_GetMetadataHandlerInfo(reader, &info);
         ok(hr == S_OK, "GetMetadataHandlerInfo error %#x\n", hr);
 
-        hr = IWICMetadataHandlerInfo_GetCLSID(info, &id);
+        hr = IWICMetadataHandlerInfo_GetCLSID(info, &clsid);
         ok(hr == S_OK, "GetCLSID error %#x\n", hr);
-        ok(IsEqualGUID(&id, &CLSID_WICGifCommentMetadataReader), "wrong CLSID %s\n", debugstr_guid(&id));
+        ok(IsEqualGUID(&clsid, &CLSID_WICGifCommentMetadataReader), "wrong CLSID %s\n", debugstr_guid(&clsid));
 
         hr = IWICMetadataHandlerInfo_GetFriendlyName(info, 64, name, &dummy);
         ok(hr == S_OK, "GetFriendlyName error %#x\n", hr);
