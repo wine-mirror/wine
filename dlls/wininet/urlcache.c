@@ -127,8 +127,8 @@ typedef struct _URL_CACHEFILE_ENTRY
     WORD wLastSyncTime; /* last sync time in dos format */
     DWORD dwHitRate; /* see INTERNET_CACHE_ENTRY_INFO::dwHitRate */
     DWORD dwUseCount; /* see INTERNET_CACHE_ENTRY_INFO::dwUseCount */
-    WORD wUnknownDate; /* usually same as wLastSyncDate */
-    WORD wUnknownTime; /* usually same as wLastSyncTime */
+    WORD LastWriteDate;
+    WORD LastWriteTime;
     DWORD dwUnknown7; /* usually zero */
     DWORD dwUnknown8; /* usually zero */
     /* packing to dword align start of next field */
@@ -960,15 +960,29 @@ static BOOL URLCache_LocalFileNameToPathA(
     return FALSE;
 }
 
+/* Just like FileTimeToDosDateTime, except that it also maps the special
+ * case of a filetime of (0,0) to a DOS date/time of (0,0).
+ */
+static void URLCache_FileTimeToDosDateTime(const FILETIME *ft, WORD *fatdate,
+                                           WORD *fattime)
+{
+    if (!ft->dwLowDateTime && !ft->dwHighDateTime)
+        *fatdate = *fattime = 0;
+    else
+        FileTimeToDosDateTime(ft, fatdate, fattime);
+}
+
 /***********************************************************************
  *           URLCache_DeleteFile (Internal)
  */
 static DWORD URLCache_DeleteFile(const URLCACHECONTAINER *container,
         URLCACHE_HEADER *header, URL_CACHEFILE_ENTRY *url_entry)
 {
+    WIN32_FILE_ATTRIBUTE_DATA attr;
     WCHAR path[MAX_PATH];
     LONG path_size = sizeof(path);
     DWORD err;
+    WORD date, time;
 
     if(!url_entry->dwOffsetLocalName)
         goto succ;
@@ -976,6 +990,12 @@ static DWORD URLCache_DeleteFile(const URLCACHECONTAINER *container,
     if(!URLCache_LocalFileNameToPathW(container, header,
                 (LPCSTR)url_entry+url_entry->dwOffsetLocalName,
                 url_entry->CacheDir, path, &path_size))
+        goto succ;
+
+    if(!GetFileAttributesExW(path, GetFileExInfoStandard, &attr))
+        goto succ;
+    URLCache_FileTimeToDosDateTime(&attr.ftLastWriteTime, &date, &time);
+    if(date != url_entry->LastWriteDate || time != url_entry->LastWriteTime)
         goto succ;
 
     err = (DeleteFileW(path) ? ERROR_SUCCESS : GetLastError());
@@ -1201,18 +1221,6 @@ static DWORD URLCache_CopyEntry(
     }
     *lpdwBufferSize = dwRequiredSize;
     return ERROR_SUCCESS;
-}
-
-/* Just like FileTimeToDosDateTime, except that it also maps the special
- * case of a filetime of (0,0) to a DOS date/time of (0,0).
- */
-static void URLCache_FileTimeToDosDateTime(const FILETIME *ft, WORD *fatdate,
-                                           WORD *fattime)
-{
-    if (!ft->dwLowDateTime && !ft->dwHighDateTime)
-        *fatdate = *fattime = 0;
-    else
-        FileTimeToDosDateTime(ft, fatdate, fattime);
 }
 
 /***********************************************************************
@@ -2741,6 +2749,7 @@ static BOOL CommitUrlCacheEntryInternal(
     DWORD dwOffsetLocalFileName = 0;
     DWORD dwOffsetHeader = 0;
     DWORD dwOffsetFileExtension = 0;
+    WIN32_FILE_ATTRIBUTE_DATA file_attr;
     LARGE_INTEGER file_size;
     BYTE cDirectory = 0;
     char achFile[MAX_PATH];
@@ -2768,28 +2777,14 @@ static BOOL CommitUrlCacheEntryInternal(
     if (lpszOriginalUrl)
         WARN(": lpszOriginalUrl ignored\n");
 
-    file_size.QuadPart = 0;
+    memset(&file_attr, 0, sizeof(file_attr));
     if (lpszLocalFileName)
     {
-        HANDLE hFile;
-
-        hFile = CreateFileW(lpszLocalFileName, FILE_READ_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, 0, NULL);
-        if (hFile == INVALID_HANDLE_VALUE)
-        {
-            ERR("couldn't open file %s (error is %d)\n", debugstr_w(lpszLocalFileName), GetLastError());
+        if(!GetFileAttributesExW(lpszLocalFileName, GetFileExInfoStandard, &file_attr))
             return FALSE;
-        }
-
-        /* Get file size */
-        if (!GetFileSizeEx(hFile, &file_size))
-        {
-            ERR("couldn't get file size (error is %d)\n", GetLastError());
-            CloseHandle(hFile);
-            return FALSE;
-        }
-
-        CloseHandle(hFile);
     }
+    file_size.u.LowPart = file_attr.nFileSizeLow;
+    file_size.u.HighPart = file_attr.nFileSizeHigh;
 
     error = URLCacheContainers_FindContainerW(lpszUrlName, &pContainer);
     if (error != ERROR_SUCCESS)
@@ -2931,8 +2926,7 @@ static BOOL CommitUrlCacheEntryInternal(
     pUrlEntry->LastModifiedTime = LastModifiedTime;
     URLCache_FileTimeToDosDateTime(&pUrlEntry->LastAccessTime, &pUrlEntry->wLastSyncDate, &pUrlEntry->wLastSyncTime);
     URLCache_FileTimeToDosDateTime(&ExpireTime, &pUrlEntry->wExpiredDate, &pUrlEntry->wExpiredTime);
-    pUrlEntry->wUnknownDate = pUrlEntry->wLastSyncDate;
-    pUrlEntry->wUnknownTime = pUrlEntry->wLastSyncTime;
+    URLCache_FileTimeToDosDateTime(&file_attr.ftLastWriteTime, &pUrlEntry->LastWriteDate, &pUrlEntry->LastWriteTime);
 
     /*** Unknowns ***/
     pUrlEntry->dwUnknown1 = 0;
