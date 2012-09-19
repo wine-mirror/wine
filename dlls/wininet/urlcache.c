@@ -82,6 +82,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 
 #define PENDING_DELETE_CACHE_ENTRY  0x00400000
 
+#define CACHE_HEADER_DATA_ROOT_LEAK_OFFSET 0x16
+
 #define DWORD_SIG(a,b,c,d)  (a | (b << 8) | (c << 16) | (d << 24))
 #define URL_SIGNATURE   DWORD_SIG('U','R','L',' ')
 #define REDR_SIGNATURE  DWORD_SIG('R','E','D','R')
@@ -752,44 +754,6 @@ static BOOL URLCacheContainer_UnlockIndex(URLCACHECONTAINER * pContainer, LPURLC
     return UnmapViewOfFile(pHeader);
 }
 
-/***********************************************************************
- *           URLCacheContainer_CleanIndex (Internal)
- *
- * This function is meant to make place in index file by removing old
- * entries and resizing the file.
- *
- * CAUTION: file view may get mapped to new memory
- * TODO: implement entries cleaning
- *
- * RETURNS
- *     ERROR_SUCCESS when new memory is available
- *     error code otherwise
- */
-static DWORD URLCacheContainer_CleanIndex(URLCACHECONTAINER *container, URLCACHE_HEADER **file_view)
-{
-    URLCACHE_HEADER *header = *file_view;
-    DWORD ret;
-
-    FIXME("(%s %s) semi-stub\n", debugstr_w(container->cache_prefix), debugstr_w(container->path));
-
-    if(header->dwFileSize >= ALLOCATION_TABLE_SIZE*8*BLOCKSIZE + ENTRY_START_OFFSET) {
-        WARN("index file has maximal size\n");
-        return ERROR_NOT_ENOUGH_MEMORY;
-    }
-
-    URLCacheContainer_CloseIndex(container);
-    ret = URLCacheContainer_OpenIndex(container, header->dwIndexCapacityInBlocks*2);
-    if(ret != ERROR_SUCCESS)
-        return ret;
-    header = MapViewOfFile(container->hMapping, FILE_MAP_WRITE, 0, 0, 0);
-    if(!header)
-        return GetLastError();
-
-    UnmapViewOfFile(*file_view);
-    *file_view = header;
-    return ERROR_SUCCESS;
-}
-
 #ifndef CHAR_BIT
 #define CHAR_BIT    (8 * sizeof(CHAR))
 #endif
@@ -994,6 +958,107 @@ static BOOL URLCache_LocalFileNameToPathA(
     }
     *lpBufferSize = nRequired;
     return FALSE;
+}
+
+/***********************************************************************
+ *           URLCache_DeleteFile (Internal)
+ */
+static DWORD URLCache_DeleteFile(const URLCACHECONTAINER *container,
+        URLCACHE_HEADER *header, URL_CACHEFILE_ENTRY *url_entry)
+{
+    WCHAR path[MAX_PATH];
+    LONG path_size = sizeof(path);
+    DWORD err;
+
+    if(!url_entry->dwOffsetLocalName)
+        goto succ;
+
+    if(!URLCache_LocalFileNameToPathW(container, header,
+                (LPCSTR)url_entry+url_entry->dwOffsetLocalName,
+                url_entry->CacheDir, path, &path_size))
+        goto succ;
+
+    err = (DeleteFileW(path) ? ERROR_SUCCESS : GetLastError());
+    if(err == ERROR_ACCESS_DENIED || err == ERROR_SHARING_VIOLATION)
+        return err;
+
+succ:
+    if (url_entry->CacheDir < header->DirectoryCount)
+    {
+        if (header->directory_data[url_entry->CacheDir].dwNumFiles)
+            header->directory_data[url_entry->CacheDir].dwNumFiles--;
+    }
+    if (url_entry->CacheEntryType & STICKY_CACHE_ENTRY)
+    {
+        if (url_entry->size.QuadPart < header->ExemptUsage.QuadPart)
+            header->ExemptUsage.QuadPart -= url_entry->size.QuadPart;
+        else
+            header->ExemptUsage.QuadPart = 0;
+    }
+    else
+    {
+        if (url_entry->size.QuadPart < header->CacheUsage.QuadPart)
+            header->CacheUsage.QuadPart -= url_entry->size.QuadPart;
+        else
+            header->CacheUsage.QuadPart = 0;
+    }
+
+    return ERROR_SUCCESS;
+}
+
+/***********************************************************************
+ *           URLCacheContainer_CleanIndex (Internal)
+ *
+ * This function is meant to make place in index file by removing leaked
+ * files entries and resizing the file.
+ *
+ * CAUTION: file view may get mapped to new memory
+ *
+ * RETURNS
+ *     ERROR_SUCCESS when new memory is available
+ *     error code otherwise
+ */
+static DWORD URLCacheContainer_CleanIndex(URLCACHECONTAINER *container, URLCACHE_HEADER **file_view)
+{
+    URLCACHE_HEADER *header = *file_view;
+    DWORD ret;
+    DWORD *leak_off;
+    BOOL freed = FALSE;
+
+    TRACE("(%s %s)\n", debugstr_w(container->cache_prefix), debugstr_w(container->path));
+
+    leak_off = &(*file_view)->options[CACHE_HEADER_DATA_ROOT_LEAK_OFFSET];
+    while(*leak_off) {
+        URL_CACHEFILE_ENTRY *url_entry = (URL_CACHEFILE_ENTRY*)((LPBYTE)(*file_view) + *leak_off);
+
+        if(SUCCEEDED(URLCache_DeleteFile(container, *file_view, url_entry))) {
+            *leak_off = url_entry->dwExemptDelta;
+            URLCache_DeleteEntry(*file_view, &url_entry->CacheFileEntry);
+            freed = TRUE;
+        }else {
+            leak_off = &url_entry->dwExemptDelta;
+        }
+    }
+
+    if(freed)
+        return ERROR_SUCCESS;
+
+    if(header->dwFileSize >= ALLOCATION_TABLE_SIZE*8*BLOCKSIZE + ENTRY_START_OFFSET) {
+        WARN("index file has maximal size\n");
+        return ERROR_NOT_ENOUGH_MEMORY;
+    }
+
+    URLCacheContainer_CloseIndex(container);
+    ret = URLCacheContainer_OpenIndex(container, header->dwIndexCapacityInBlocks*2);
+    if(ret != ERROR_SUCCESS)
+        return ret;
+    header = MapViewOfFile(container->hMapping, FILE_MAP_WRITE, 0, 0, 0);
+    if(!header)
+        return GetLastError();
+
+    UnmapViewOfFile(*file_view);
+    *file_view = header;
+    return ERROR_SUCCESS;
 }
 
 /* Just like DosDateTimeToFileTime, except that it also maps the special
@@ -2218,8 +2283,6 @@ static BOOL DeleteUrlCacheEntryInternal(const URLCACHECONTAINER * pContainer,
 {
     CACHEFILE_ENTRY * pEntry;
     URL_CACHEFILE_ENTRY * pUrlEntry;
-    WCHAR path[MAX_PATH];
-    LONG path_size = sizeof(path);
 
     pEntry = (CACHEFILE_ENTRY *)((LPBYTE)pHeader + pHashEntry->dwOffsetEntry);
     if (pEntry->dwSignature != URL_SIGNATURE)
@@ -2239,33 +2302,18 @@ static BOOL DeleteUrlCacheEntryInternal(const URLCACHECONTAINER * pContainer,
         return FALSE;
     }
 
-    if (pUrlEntry->CacheDir < pHeader->DirectoryCount)
+    if(!URLCache_DeleteFile(pContainer, pHeader, pUrlEntry))
     {
-        if (pHeader->directory_data[pUrlEntry->CacheDir].dwNumFiles)
-            pHeader->directory_data[pUrlEntry->CacheDir].dwNumFiles--;
-    }
-    if (pUrlEntry->CacheEntryType & STICKY_CACHE_ENTRY)
-    {
-        if (pUrlEntry->size.QuadPart < pHeader->ExemptUsage.QuadPart)
-            pHeader->ExemptUsage.QuadPart -= pUrlEntry->size.QuadPart;
-        else
-            pHeader->ExemptUsage.QuadPart = 0;
+        URLCache_DeleteEntry(pHeader, pEntry);
     }
     else
     {
-        if (pUrlEntry->size.QuadPart < pHeader->CacheUsage.QuadPart)
-            pHeader->CacheUsage.QuadPart -= pUrlEntry->size.QuadPart;
-        else
-            pHeader->CacheUsage.QuadPart = 0;
+        /* Add entry to leaked files list */
+        pUrlEntry->CacheFileEntry.dwSignature = LEAK_SIGNATURE;
+        pUrlEntry->dwExemptDelta = pHeader->options[CACHE_HEADER_DATA_ROOT_LEAK_OFFSET];
+        pHeader->options[CACHE_HEADER_DATA_ROOT_LEAK_OFFSET] = pHashEntry->dwOffsetEntry;
     }
 
-    if (pUrlEntry->dwOffsetLocalName && URLCache_LocalFileNameToPathW(pContainer, pHeader,
-                (LPCSTR)pUrlEntry+pUrlEntry->dwOffsetLocalName, pUrlEntry->CacheDir, path, &path_size))
-    {
-        DeleteFileW(path);
-    }
-
-    URLCache_DeleteEntry(pHeader, pEntry);
     URLCache_DeleteEntryFromHash(pHashEntry);
     return TRUE;
 }
