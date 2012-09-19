@@ -62,6 +62,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 
 #define ENTRY_START_OFFSET      0x4000
 #define DIR_LENGTH              8
+#define MAX_DIR_NO              0x20
 #define BLOCKSIZE               128
 #define HASHTABLE_SIZE          448
 #define HASHTABLE_NUM_ENTRIES   64 /* this needs to be power of 2, that divides HASHTABLE_SIZE */
@@ -167,8 +168,10 @@ typedef struct _URLCACHE_HEADER
     ULARGE_INTEGER CacheLimit;
     ULARGE_INTEGER CacheUsage;
     ULARGE_INTEGER ExemptUsage;
-    DWORD DirectoryCount; /* number of directory_data's */
-    DIRECTORY_DATA directory_data[1]; /* first directory entry */
+    DWORD DirectoryCount;
+    DIRECTORY_DATA directory_data[MAX_DIR_NO];
+    DWORD options[0x21];
+    BYTE allocation_table[ALLOCATION_TABLE_SIZE];
 } URLCACHE_HEADER, *LPURLCACHE_HEADER;
 typedef const URLCACHE_HEADER *LPCURLCACHE_HEADER;
 
@@ -850,7 +853,6 @@ static inline void URLCache_Allocation_BlockAllocate(BYTE * AllocationTable, DWO
  */
 static DWORD URLCache_FindFirstFreeEntry(URLCACHE_HEADER * pHeader, DWORD dwBlocksNeeded, CACHEFILE_ENTRY ** ppEntry)
 {
-    LPBYTE AllocationTable = (LPBYTE)pHeader + ALLOCATION_TABLE_OFFSET;
     DWORD dwBlockNumber;
     DWORD dwFreeCounter;
     for (dwBlockNumber = 0; dwBlockNumber < pHeader->dwIndexCapacityInBlocks; dwBlockNumber++)
@@ -858,7 +860,7 @@ static DWORD URLCache_FindFirstFreeEntry(URLCACHE_HEADER * pHeader, DWORD dwBloc
         for (dwFreeCounter = 0; 
             dwFreeCounter < dwBlocksNeeded &&
               dwFreeCounter + dwBlockNumber < pHeader->dwIndexCapacityInBlocks &&
-              URLCache_Allocation_BlockIsFree(AllocationTable, dwBlockNumber + dwFreeCounter);
+              URLCache_Allocation_BlockIsFree(pHeader->allocation_table, dwBlockNumber + dwFreeCounter);
             dwFreeCounter++)
                 TRACE("Found free block at no. %d (0x%x)\n", dwBlockNumber, ENTRY_START_OFFSET + dwBlockNumber * BLOCKSIZE);
 
@@ -867,7 +869,7 @@ static DWORD URLCache_FindFirstFreeEntry(URLCACHE_HEADER * pHeader, DWORD dwBloc
             DWORD index;
             TRACE("Found free blocks starting at no. %d (0x%x)\n", dwBlockNumber, ENTRY_START_OFFSET + dwBlockNumber * BLOCKSIZE);
             for (index = 0; index < dwBlocksNeeded; index++)
-                URLCache_Allocation_BlockAllocate(AllocationTable, dwBlockNumber + index);
+                URLCache_Allocation_BlockAllocate(pHeader->allocation_table, dwBlockNumber + index);
             *ppEntry = (CACHEFILE_ENTRY *)((LPBYTE)pHeader + ENTRY_START_OFFSET + dwBlockNumber * BLOCKSIZE);
             for (index = 0; index < dwBlocksNeeded * BLOCKSIZE / sizeof(DWORD); index++)
                 ((DWORD*)*ppEntry)[index] = 0xdeadbeef;
@@ -893,12 +895,11 @@ static BOOL URLCache_DeleteEntry(LPURLCACHE_HEADER pHeader, CACHEFILE_ENTRY * pE
 {
     DWORD dwStartBlock;
     DWORD dwBlock;
-    BYTE * AllocationTable = (LPBYTE)pHeader + ALLOCATION_TABLE_OFFSET;
 
     /* update allocation table */
     dwStartBlock = ((DWORD)((BYTE *)pEntry - (BYTE *)pHeader) - ENTRY_START_OFFSET) / BLOCKSIZE;
     for (dwBlock = dwStartBlock; dwBlock < dwStartBlock + pEntry->dwBlocksUsed; dwBlock++)
-        URLCache_Allocation_BlockFree(AllocationTable, dwBlock);
+        URLCache_Allocation_BlockFree(pHeader->allocation_table, dwBlock);
 
     return TRUE;
 }
