@@ -1042,7 +1042,7 @@ static void fire_event_obj(HTMLDocumentNode *doc, eventid_t eid, HTMLEventObj *e
 
     window = doc->window;
     prev_event = window->event;
-    window->event = &event_obj->IHTMLEventObj_iface;
+    window->event = event_obj ? &event_obj->IHTMLEventObj_iface : NULL;
 
     nsIDOMNode_GetNodeType(target, &node_type);
     nsnode = target;
