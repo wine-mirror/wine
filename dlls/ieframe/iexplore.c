@@ -475,6 +475,7 @@ static void create_rebar(HWND hwnd)
     bandinf.fMask = RBBIM_STYLE | RBBIM_CHILD | RBBIM_CHILDSIZE | RBBIM_SIZE;
     bandinf.fStyle = RBBS_CHILDEDGE;
     bandinf.cx = 100;
+    bandinf.cxMinChild = 0;
     bandinf.cyMinChild = 52;
     bandinf.hwndChild = hwndToolbar;
 
