@@ -175,6 +175,17 @@ static BOOL declare_variable(struct hlsl_ir_var *decl, BOOL local)
 
 static DWORD add_modifier(DWORD modifiers, DWORD mod, const struct YYLTYPE *loc);
 
+static BOOL check_type_modifiers(DWORD modifiers, struct source_location *loc)
+{
+    if (modifiers & ~HLSL_TYPE_MODIFIERS_MASK)
+    {
+        hlsl_report_message(loc->file, loc->line, loc->col, HLSL_LEVEL_ERROR,
+                "modifier not allowed on typedefs");
+        return FALSE;
+    }
+    return TRUE;
+}
+
 BOOL add_type_to_scope(struct hlsl_scope *scope, struct hlsl_type *def)
 {
     if (get_type(scope, def->name, FALSE))
@@ -354,6 +365,51 @@ static struct hlsl_ir_swizzle *get_swizzle(struct hlsl_ir_node *value, const cha
     return NULL;
 }
 
+static BOOL add_typedef(DWORD modifiers, struct hlsl_type *orig_type, struct list *list,
+        struct source_location *loc)
+{
+    BOOL ret;
+    struct hlsl_type *type;
+    struct parse_variable_def *v, *v_next;
+
+    if (!check_type_modifiers(modifiers, loc))
+    {
+        LIST_FOR_EACH_ENTRY_SAFE(v, v_next, list, struct parse_variable_def, entry)
+            d3dcompiler_free(v);
+        d3dcompiler_free(list);
+        return FALSE;
+    }
+
+    LIST_FOR_EACH_ENTRY_SAFE(v, v_next, list, struct parse_variable_def, entry)
+    {
+        if (v->array_size)
+            type = new_array_type(orig_type, v->array_size);
+        else
+            type = clone_hlsl_type(orig_type);
+        if (!type)
+        {
+            ERR("Out of memory\n");
+            return FALSE;
+        }
+        d3dcompiler_free((void *)type->name);
+        type->name = v->name;
+        type->modifiers |= modifiers;
+
+        if (type->type != HLSL_CLASS_MATRIX)
+            check_invalid_matrix_modifiers(type->modifiers, &v->loc);
+
+        ret = add_type_to_scope(hlsl_ctx.cur_scope, type);
+        if (!ret)
+        {
+            hlsl_report_message(v->loc.file, v->loc.line, v->loc.col, HLSL_LEVEL_ERROR,
+                    "redefinition of custom type '%s'", v->name);
+        }
+        d3dcompiler_free(v);
+    }
+    d3dcompiler_free(list);
+    return TRUE;
+}
+
 %}
 
 %locations
@@ -487,6 +543,8 @@ static struct hlsl_ir_swizzle *get_swizzle(struct hlsl_ir_node *value, const cha
 %type <type> base_type
 %type <type> type
 %type <list> declaration_statement
+%type <list> type_specs
+%type <variable_def> type_spec
 %type <list> complex_initializer
 %type <list> initializer_expr_list
 %type <instr> initializer_expr
@@ -801,6 +859,45 @@ declaration_statement:    declaration
                             {
                                 $$ = d3dcompiler_alloc(sizeof(*$$));
                                 list_init($$);
+                            }
+                        | typedef
+                            {
+                                $$ = d3dcompiler_alloc(sizeof(*$$));
+                                if (!$$)
+                                {
+                                    ERR("Out of memory\n");
+                                    return -1;
+                                }
+                                list_init($$);
+                            }
+
+typedef:                  KW_TYPEDEF var_modifiers type type_specs ';'
+                            {
+                                struct source_location loc;
+
+                                set_location(&loc, &@1);
+                                if (!add_typedef($2, $3, $4, &loc))
+                                    return 1;
+                            }
+
+type_specs:               type_spec
+                            {
+                                $$ = d3dcompiler_alloc(sizeof(*$$));
+                                list_init($$);
+                                list_add_head($$, &$1->entry);
+                            }
+                        | type_specs ',' type_spec
+                            {
+                                $$ = $1;
+                                list_add_tail($$, &$3->entry);
+                            }
+
+type_spec:                any_identifier array
+                            {
+                                $$ = d3dcompiler_alloc(sizeof(*$$));
+                                set_location(&$$->loc, &@1);
+                                $$->name = $1;
+                                $$->array_size = $2;
                             }
 
 declaration:              var_modifiers type variables_def ';'
