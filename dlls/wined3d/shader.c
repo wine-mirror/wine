@@ -1037,7 +1037,7 @@ static void shader_dump_register(const struct wined3d_shader_register *reg,
                                 reg->immconst_data[2], reg->immconst_data[3]);
                         break;
                     default:
-                        TRACE("<unhandled data type %#x>\n", reg->data_type);
+                        TRACE("<unhandled data type %#x>", reg->data_type);
                         break;
                 }
                 break;
