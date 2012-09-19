@@ -2161,7 +2161,7 @@ static void debug_dump_instr(const struct hlsl_ir_node *instr)
             debug_dump_ir_if(if_from_node(instr));
             break;
         default:
-            TRACE("No dump function for %s\n", debug_node_type(instr->type));
+            TRACE("<No dump function for %s>", debug_node_type(instr->type));
     }
 }
 
