@@ -938,8 +938,13 @@ static void X11DRV_ReparentNotify( HWND hwnd, XEvent *xev )
     HWND parent, old_parent;
     DWORD style;
 
-    if (!(data = X11DRV_get_win_data( hwnd ))) return;
-    if (!data->embedded) return;
+    if (!(data = get_win_data( hwnd ))) return;
+
+    if (!data->embedded)
+    {
+        release_win_data( data );
+        return;
+    }
 
     if (data->whole_window)
     {
@@ -947,6 +952,7 @@ static void X11DRV_ReparentNotify( HWND hwnd, XEvent *xev )
         {
             TRACE( "%p/%lx reparented to root\n", hwnd, data->whole_window );
             data->embedder = 0;
+            release_win_data( data );
             SendMessageW( hwnd, WM_CLOSE, 0, 0 );
             return;
         }
@@ -954,6 +960,7 @@ static void X11DRV_ReparentNotify( HWND hwnd, XEvent *xev )
     }
 
     TRACE( "%p/%lx reparented to %lx\n", hwnd, data->whole_window, event->parent );
+    release_win_data( data );
 
     style = GetWindowLongW( hwnd, GWL_STYLE );
     if (event->parent == root_window)
