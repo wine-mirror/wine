@@ -2978,6 +2978,7 @@ static BOOL InvokeShellLinkerForURL( IUniformResourceLocatorW *url, LPCWSTR link
     PROPSPEC ps[2];
     PROPVARIANT pv[2];
     char *start_path = NULL;
+    BOOL has_icon = FALSE;
 
     if ( !link )
     {
@@ -3041,8 +3042,9 @@ static BOOL InvokeShellLinkerForURL( IUniformResourceLocatorW *url, LPCWSTR link
             hr = IPropertyStorage_ReadMultiple(pPropStg, 2, ps, pv);
             if (SUCCEEDED(hr))
             {
-                if (pv[0].vt == VT_LPWSTR && pv[0].u.pwszVal)
+                if (pv[0].vt == VT_LPWSTR && pv[0].u.pwszVal && pv[0].u.pwszVal[0])
                 {
+                    has_icon = TRUE;
                     icon_name = extract_icon( pv[0].u.pwszVal, pv[1].u.iVal, NULL, bWait );
 
                     WINE_TRACE("URL icon path: %s icon index: %d icon name: %s\n", wine_dbgstr_w(pv[0].u.pwszVal), pv[1].u.iVal, icon_name);
@@ -3056,7 +3058,7 @@ static BOOL InvokeShellLinkerForURL( IUniformResourceLocatorW *url, LPCWSTR link
     }
 
     /* fail - try once again after parent process exit */
-    if( !icon_name )
+    if( has_icon && !icon_name )
     {
         if (bWait)
         {
