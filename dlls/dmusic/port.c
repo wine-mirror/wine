@@ -332,9 +332,11 @@ static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_GetFormat(LPDIRECTMUSICPORT
 }
 
 static const IDirectMusicPortVtbl SynthPortImpl_DirectMusicPort_Vtbl = {
+    /**** IDirectMusicPort IUnknown part methods ***/
     SynthPortImpl_IDirectMusicPort_QueryInterface,
     SynthPortImpl_IDirectMusicPort_AddRef,
     SynthPortImpl_IDirectMusicPort_Release,
+    /**** IDirectMusicPort methods ***/
     SynthPortImpl_IDirectMusicPort_PlayBuffer,
     SynthPortImpl_IDirectMusicPort_SetReadNotificationHandle,
     SynthPortImpl_IDirectMusicPort_Read,
@@ -441,9 +443,11 @@ static HRESULT WINAPI SynthPortImpl_IDirectMusicPortDownload_Unload(LPDIRECTMUSI
 }
 
 static const IDirectMusicPortDownloadVtbl SynthPortImpl_DirectMusicPortDownload_Vtbl = {
+    /*** IDirectMusicPortDownload IUnknown part methods ***/
     SynthPortImpl_IDirectMusicPortDownload_QueryInterface,
     SynthPortImpl_IDirectMusicPortDownload_AddRef,
     SynthPortImpl_IDirectMusicPortDownload_Release,
+    /*** IDirectMusicPortDownload methods ***/
     SynthPortImpl_IDirectMusicPortDownload_GetBuffer,
     SynthPortImpl_IDirectMusicPortDownload_AllocateBuffer,
     SynthPortImpl_IDirectMusicPortDownload_GetDLId,
@@ -492,9 +496,11 @@ static HRESULT WINAPI SynthPortImpl_IDirectMusicThru_ThruChannel(LPDIRECTMUSICTH
 }
 
 static const IDirectMusicThruVtbl SynthPortImpl_DirectMusicThru_Vtbl = {
+    /*** IDirectMusicThru IUnknown part methods */
     SynthPortImpl_IDirectMusicThru_QueryInterface,
     SynthPortImpl_IDirectMusicThru_AddRef,
     SynthPortImpl_IDirectMusicThru_Release,
+    /*** IDirectMusicThru methods ***/
     SynthPortImpl_IDirectMusicThru_ThruChannel
 };
 
