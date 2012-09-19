@@ -142,7 +142,7 @@
 @ stub GetTcpTableFromStack
 #@ stub GetTeredoPort
 #@ stub GetUdp6Table
-#@ stub GetUdpStatisticsEx
+@ stdcall GetUdpStatisticsEx( ptr long )
 @ stdcall GetUdpStatistics( ptr )
 @ stub GetUdpStatsFromStack
 @ stdcall GetUdpTable( ptr ptr long )

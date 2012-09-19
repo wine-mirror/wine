@@ -943,21 +943,77 @@ DWORD WINAPI GetTcpStatistics(PMIB_TCPSTATS stats)
 /******************************************************************
  *    GetUdpStatistics (IPHLPAPI.@)
  *
- * Get the UDP statistics for the local computer.
+ * Get the IPv4 and IPv6 UDP statistics for the local computer.
  *
  * PARAMS
  *  stats [Out] buffer for UDP statistics
+ *  family [In] specifies wether IPv4 or IPv6 statistics are returned
  *
  * RETURNS
  *  Success: NO_ERROR
  *  Failure: error code from winerror.h
  */
-DWORD WINAPI GetUdpStatistics(PMIB_UDPSTATS stats)
+DWORD WINAPI GetUdpStatisticsEx(PMIB_UDPSTATS stats, DWORD family)
 {
     DWORD ret = ERROR_NOT_SUPPORTED;
 
     if (!stats) return ERROR_INVALID_PARAMETER;
+    if (family != WS_AF_INET && family != WS_AF_INET6) return ERROR_INVALID_PARAMETER;
     memset( stats, 0, sizeof(*stats) );
+
+    stats->dwNumAddrs = getNumInterfaces();
+
+    if (family == WS_AF_INET6)
+    {
+#ifdef __linux__
+        {
+            FILE *fp;
+
+            if ((fp = fopen("/proc/net/snmp6", "r")))
+            {
+                struct {
+                    const char *name;
+                    DWORD *elem;
+                } udpstatlist[] = {
+                    { "Udp6InDatagrams",  &stats->dwInDatagrams },
+                    { "Udp6NoPorts",      &stats->dwNoPorts },
+                    { "Udp6InErrors",     &stats->dwInErrors },
+                    { "Udp6OutDatagrams", &stats->dwOutDatagrams },
+                };
+                char buf[512], *ptr, *value;
+                DWORD res, i;
+
+                while ((ptr = fgets(buf, sizeof(buf), fp)))
+                {
+                    if (!(value = strchr(buf, ' ')))
+                        continue;
+
+                    /* terminate the valuename */
+                    ptr = value - 1;
+                    *(ptr + 1) = '\0';
+
+                    /* and strip leading spaces from value */
+                    value += 1;
+                    while (*value==' ') value++;
+                    if ((ptr = strchr(value, '\n')))
+                        *ptr='\0';
+
+                    for (i = 0; i < sizeof(udpstatlist)/sizeof(udpstatlist[0]); i++)
+                        if (!strcasecmp(buf, udpstatlist[i].name))
+                        {
+                            if (sscanf(value, "%d", &res)) *udpstatlist[i].elem = res;
+                            continue;
+                        }
+                }
+                fclose(fp);
+                ret = NO_ERROR;
+            }
+        }
+#else
+        FIXME( "unimplemented for IPv6\n" );
+#endif
+        return ret;
+    }
 
 #ifdef __linux__
     {
@@ -1035,11 +1091,27 @@ DWORD WINAPI GetUdpStatistics(PMIB_UDPSTATS stats)
         else ERR ("failed to get udpstat\n");
     }
 #else
-    FIXME( "unimplemented\n" );
+    FIXME( "unimplemented for IPv4\n" );
 #endif
     return ret;
 }
 
+/******************************************************************
+ *    GetUdpStatistics (IPHLPAPI.@)
+ *
+ * Get the UDP statistics for the local computer.
+ *
+ * PARAMS
+ *  stats [Out] buffer for UDP statistics
+ *
+ * RETURNS
+ *  Success: NO_ERROR
+ *  Failure: error code from winerror.h
+ */
+DWORD WINAPI GetUdpStatistics(PMIB_UDPSTATS stats)
+{
+    return GetUdpStatisticsEx(stats, WS_AF_INET);
+}
 
 static MIB_IPFORWARDTABLE *append_ipforward_row( HANDLE heap, DWORD flags, MIB_IPFORWARDTABLE *table,
                                                  DWORD *count, const MIB_IPFORWARDROW *row )

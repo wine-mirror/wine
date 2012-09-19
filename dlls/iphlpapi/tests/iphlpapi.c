@@ -546,7 +546,7 @@ static void testGetIcmpStatisticsEx(void)
     if (apiReturn == NO_ERROR && winetest_debug > 1)
     {
         INT i;
-        trace( "ICMP Ex stats:           %8s %8s\n", "in", "out" );
+        trace( "ICMP IPv4 Ex stats:           %8s %8s\n", "in", "out" );
         trace( "    dwMsgs:              %8u %8u\n", stats.icmpInStats.dwMsgs, stats.icmpOutStats.dwMsgs );
         trace( "    dwErrors:            %8u %8u\n", stats.icmpInStats.dwErrors, stats.icmpOutStats.dwErrors );
         for (i = 0; i < 256; i++)
@@ -559,7 +559,7 @@ static void testGetIcmpStatisticsEx(void)
     if (apiReturn == NO_ERROR && winetest_debug > 1)
     {
         INT i;
-        trace( "ICMP Ex stats:           %8s %8s\n", "in", "out" );
+        trace( "ICMP IPv6 Ex stats:           %8s %8s\n", "in", "out" );
         trace( "    dwMsgs:              %8u %8u\n", stats.icmpInStats.dwMsgs, stats.icmpOutStats.dwMsgs );
         trace( "    dwErrors:            %8u %8u\n", stats.icmpInStats.dwErrors, stats.icmpOutStats.dwErrors );
         for (i = 0; i < 256; i++)
@@ -590,7 +590,7 @@ static void testGetIpStatisticsEx(void)
     ok(apiReturn == NO_ERROR, "GetIpStatisticsEx returned %d, expected NO_ERROR\n", apiReturn);
     if (apiReturn == NO_ERROR && winetest_debug > 1)
     {
-        trace( "IP Ex stats:\n" );
+        trace( "IP IPv4 Ex stats:\n" );
         trace( "    dwForwarding:      %u\n", U(stats).dwForwarding );
         trace( "    dwDefaultTTL:      %u\n", stats.dwDefaultTTL );
         trace( "    dwInReceives:      %u\n", stats.dwInReceives );
@@ -621,7 +621,7 @@ static void testGetIpStatisticsEx(void)
        "GetIpStatisticsEx returned %d, expected NO_ERROR\n", apiReturn);
     if (apiReturn == NO_ERROR && winetest_debug > 1)
     {
-        trace( "IP Ex stats:\n" );
+        trace( "IP IPv6 Ex stats:\n" );
         trace( "    dwForwarding:      %u\n", U(stats).dwForwarding );
         trace( "    dwDefaultTTL:      %u\n", stats.dwDefaultTTL );
         trace( "    dwInReceives:      %u\n", stats.dwInReceives );
@@ -667,7 +667,7 @@ static void testGetTcpStatisticsEx(void)
     ok(apiReturn == NO_ERROR, "GetTcpStatisticsEx returned %d, expected NO_ERROR\n", apiReturn);
     if (apiReturn == NO_ERROR && winetest_debug > 1)
     {
-        trace( "TCP stats:\n" );
+        trace( "TCP IPv4 Ex stats:\n" );
         trace( "    dwRtoAlgorithm: %u\n", U(stats).dwRtoAlgorithm );
         trace( "    dwRtoMin:       %u\n", stats.dwRtoMin );
         trace( "    dwRtoMax:       %u\n", stats.dwRtoMax );
@@ -690,7 +690,7 @@ static void testGetTcpStatisticsEx(void)
        "GetTcpStatisticsEx returned %d, expected NO_ERROR\n", apiReturn);
     if (apiReturn == NO_ERROR && winetest_debug > 1)
     {
-        trace( "TCP stats:\n" );
+        trace( "TCP IPv6 Ex stats:\n" );
         trace( "    dwRtoAlgorithm: %u\n", U(stats).dwRtoAlgorithm );
         trace( "    dwRtoMin:       %u\n", stats.dwRtoMin );
         trace( "    dwRtoMax:       %u\n", stats.dwRtoMax );
@@ -716,7 +716,7 @@ static void testGetUdpStatisticsEx(void)
 
     if (!pGetUdpStatisticsEx)
     {
-        skip( "GetUdpStatisticsEx not available\n" );
+        win_skip( "GetUdpStatisticsEx not available\n" );
         return;
     }
 
@@ -724,11 +724,15 @@ static void testGetUdpStatisticsEx(void)
     ok(apiReturn == ERROR_INVALID_PARAMETER,
        "GetUdpStatisticsEx(NULL, AF_INET); returned %d, expected ERROR_INVALID_PARAMETER\n", apiReturn);
 
+    apiReturn = pGetUdpStatisticsEx(&stats, AF_BAN);
+    ok(apiReturn == ERROR_INVALID_PARAMETER || apiReturn == ERROR_NOT_SUPPORTED,
+       "GetUdpStatisticsEx(&stats, AF_BAN) returned %d, expected ERROR_INVALID_PARAMETER\n", apiReturn);
+
     apiReturn = pGetUdpStatisticsEx(&stats, AF_INET);
     ok(apiReturn == NO_ERROR, "GetUdpStatisticsEx returned %d, expected NO_ERROR\n", apiReturn);
     if (apiReturn == NO_ERROR && winetest_debug > 1)
     {
-        trace( "UDP stats:\n" );
+        trace( "UDP IPv4 Ex stats:\n" );
         trace( "    dwInDatagrams:  %u\n", stats.dwInDatagrams );
         trace( "    dwNoPorts:      %u\n", stats.dwNoPorts );
         trace( "    dwInErrors:     %u\n", stats.dwInErrors );
@@ -741,7 +745,7 @@ static void testGetUdpStatisticsEx(void)
        "GetUdpStatisticsEx returned %d, expected NO_ERROR\n", apiReturn);
     if (apiReturn == NO_ERROR && winetest_debug > 1)
     {
-        trace( "UDP stats:\n" );
+        trace( "UDP IPv6 Ex stats:\n" );
         trace( "    dwInDatagrams:  %u\n", stats.dwInDatagrams );
         trace( "    dwNoPorts:      %u\n", stats.dwNoPorts );
         trace( "    dwInErrors:     %u\n", stats.dwInErrors );
