@@ -160,6 +160,8 @@ struct SynthPortImpl {
     /* IDirectMusicPort fields */
     IDirectSound* pDirectSound;
     IReferenceClock* pLatencyClock;
+    IDirectMusicSynth* synth;
+    IDirectMusicSynthSink* synth_sink;
     BOOL fActive;
     DMUS_PORTCAPS caps;
     DMUS_PORTPARAMS params;

@@ -2,6 +2,7 @@
  * IDirectMusicPort Implementation
  *
  * Copyright (C) 2003-2004 Rok Mandeljc
+ * Copyright (C) 2012 Christian Costa
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -85,7 +86,14 @@ static ULONG WINAPI SynthPortImpl_IDirectMusicPort_Release(LPDIRECTMUSICPORT ifa
     TRACE("(%p)->(): new ref = %u\n", This, ref);
 
     if (!ref)
+    {
+        IDirectMusicSynth_Activate(This->synth, FALSE);
+        IDirectMusicSynth_Close(This->synth);
+        IDirectMusicSynth_Release(This->synth);
+        IDirectMusicSynthSink_Release(This->synth_sink);
+        IReferenceClock_Release(This->pLatencyClock);
         HeapFree(GetProcessHeap(), 0, This);
+    }
 
     DMUSIC_UnlockModule();
 
@@ -480,11 +488,11 @@ HRESULT DMUSIC_CreateSynthPortImpl(LPCGUID guid, LPVOID *object, LPUNKNOWN unkou
 
     TRACE("(%p,%p,%p,%p,%p%d)\n", guid, object, unkouter, port_params, port_caps, device);
 
+    *object = NULL;
+
     obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(SynthPortImpl));
-    if (!obj) {
-        *object = NULL;
+    if (!obj)
         return E_OUTOFMEMORY;
-    }
 
     obj->IDirectMusicPort_iface.lpVtbl = &SynthPortImpl_DirectMusicPort_Vtbl;
     obj->IDirectMusicPortDownload_iface.lpVtbl = &SynthPortImpl_DirectMusicPortDownload_Vtbl;
@@ -493,15 +501,31 @@ HRESULT DMUSIC_CreateSynthPortImpl(LPCGUID guid, LPVOID *object, LPUNKNOWN unkou
     obj->fActive = FALSE;
     obj->params = *port_params;
     obj->caps = *port_caps;
-    obj->pDirectSound = NULL;
-    obj->pLatencyClock = NULL;
+
     hr = DMUSIC_CreateReferenceClockImpl(&IID_IReferenceClock, (LPVOID*)&obj->pLatencyClock, NULL);
     if (hr != S_OK)
     {
         HeapFree(GetProcessHeap(), 0, obj);
-        *object = NULL;
         return hr;
     }
+
+    if (SUCCEEDED(hr))
+        hr = CoCreateInstance(&CLSID_DirectMusicSynth, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicSynth, (void**)&obj->synth);
+
+    if (SUCCEEDED(hr))
+        hr = CoCreateInstance(&CLSID_DirectMusicSynthSink, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicSynthSink, (void**)&obj->synth_sink);
+
+    if (SUCCEEDED(hr))
+        hr = IDirectMusicSynth_SetMasterClock(obj->synth, obj->pLatencyClock);
+
+    if (SUCCEEDED(hr))
+        hr = IDirectMusicSynthSink_SetMasterClock(obj->synth_sink, obj->pLatencyClock);
+
+    if (SUCCEEDED(hr))
+        hr = IDirectMusicSynth_SetSynthSink(obj->synth, obj->synth_sink);
+
+    if (SUCCEEDED(hr))
+        hr = IDirectMusicSynth_Open(obj->synth, port_params);
 
     if (0)
     {
@@ -530,7 +554,18 @@ HRESULT DMUSIC_CreateSynthPortImpl(LPCGUID guid, LPVOID *object, LPUNKNOWN unkou
         }
     }
 
-    return IDirectMusicPort_QueryInterface((LPDIRECTMUSICPORT)obj, guid, object);
+    if (SUCCEEDED(hr))
+        return IDirectMusicPort_QueryInterface((LPDIRECTMUSICPORT)obj, guid, object);
+
+    if (obj->synth)
+        IDirectMusicSynth_Release(obj->synth);
+    if (obj->synth_sink)
+        IDirectMusicSynthSink_Release(obj->synth_sink);
+    if (obj->pLatencyClock)
+        IReferenceClock_Release(obj->pLatencyClock);
+    HeapFree(GetProcessHeap(), 0, obj);
+
+    return hr;
 }
 
 HRESULT DMUSIC_CreateMidiOutPortImpl(LPCGUID guid, LPVOID *object, LPUNKNOWN unkouter, LPDMUS_PORTPARAMS port_params, LPDMUS_PORTCAPS port_caps, DWORD device)
