@@ -1472,6 +1472,35 @@ unary_expr:               postfix_expr
                                     $$ = &new_expr(ops[$1], operands, &loc)->node;
                                 }
                             }
+                          /* var_modifiers just to avoid shift/reduce conflicts */
+                        | '(' var_modifiers type array ')' unary_expr
+                            {
+                                struct hlsl_ir_expr *expr;
+                                struct hlsl_type *src_type = $6->data_type;
+                                struct hlsl_type *dst_type;
+                                struct source_location loc;
+
+                                set_location(&loc, &@3);
+                                if ($2)
+                                {
+                                    hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_ERROR,
+                                            "unexpected modifier in a cast");
+                                    return 1;
+                                }
+
+                                dst_type = $3;
+
+                                if (!compatible_data_types(src_type, dst_type))
+                                {
+                                    hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_ERROR,
+                                            "can't cast from %s to %s",
+                                            debug_hlsl_type(src_type), debug_hlsl_type(dst_type));
+                                    return 1;
+                                }
+
+                                expr = new_cast($6, dst_type, &loc);
+                                $$ = expr ? &expr->node : NULL;
+                            }
 
 unary_op:                 '+'
                             {

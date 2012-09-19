@@ -1080,8 +1080,11 @@ struct hlsl_type *clone_hlsl_type(struct hlsl_type *old) DECLSPEC_HIDDEN;
 struct hlsl_type *get_type(struct hlsl_scope *scope, const char *name, BOOL recursive) DECLSPEC_HIDDEN;
 BOOL find_function(const char *name) DECLSPEC_HIDDEN;
 unsigned int components_count_type(struct hlsl_type *type) DECLSPEC_HIDDEN;
+BOOL compatible_data_types(struct hlsl_type *s1, struct hlsl_type *s2) DECLSPEC_HIDDEN;
 struct hlsl_ir_expr *new_expr(enum hlsl_ir_expr_op op, struct hlsl_ir_node **operands,
         struct source_location *loc) DECLSPEC_HIDDEN;
+struct hlsl_ir_expr *new_cast(struct hlsl_ir_node *node, struct hlsl_type *type,
+	struct source_location *loc) DECLSPEC_HIDDEN;
 struct hlsl_ir_expr *hlsl_mul(struct hlsl_ir_node *op1, struct hlsl_ir_node *op2,
         struct source_location *loc) DECLSPEC_HIDDEN;
 struct hlsl_ir_expr *hlsl_div(struct hlsl_ir_node *op1, struct hlsl_ir_node *op2,

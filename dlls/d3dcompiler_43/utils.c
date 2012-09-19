@@ -1031,6 +1031,60 @@ static BOOL convertible_data_type(struct hlsl_type *type)
     return type->type != HLSL_CLASS_OBJECT;
 }
 
+BOOL compatible_data_types(struct hlsl_type *t1, struct hlsl_type *t2)
+{
+   if (!convertible_data_type(t1) || !convertible_data_type(t2))
+        return FALSE;
+
+    if (t1->type <= HLSL_CLASS_LAST_NUMERIC)
+    {
+        /* Scalar vars can be cast to pretty much everything */
+        if (t1->dimx == 1 && t1->dimy == 1)
+            return TRUE;
+
+        if (t1->type == HLSL_CLASS_VECTOR && t2->type == HLSL_CLASS_VECTOR)
+            return t1->dimx >= t2->dimx;
+    }
+
+    /* The other way around is true too i.e. whatever to scalar */
+    if (t2->type <= HLSL_CLASS_LAST_NUMERIC && t2->dimx == 1 && t2->dimy == 1)
+        return TRUE;
+
+    if (t1->type == HLSL_CLASS_ARRAY)
+    {
+        if (compare_hlsl_types(t1->e.array.type, t2))
+            /* e.g. float4[3] to float4 is allowed */
+            return TRUE;
+
+        if (t2->type == HLSL_CLASS_ARRAY || t2->type == HLSL_CLASS_STRUCT)
+            return components_count_type(t1) >= components_count_type(t2);
+        else
+            return components_count_type(t1) == components_count_type(t2);
+    }
+
+    if (t1->type == HLSL_CLASS_STRUCT)
+        return components_count_type(t1) >= components_count_type(t2);
+
+    if (t2->type == HLSL_CLASS_ARRAY || t2->type == HLSL_CLASS_STRUCT)
+        return components_count_type(t1) == components_count_type(t2);
+
+    if (t1->type == HLSL_CLASS_MATRIX || t2->type == HLSL_CLASS_MATRIX)
+    {
+        if (t1->type == HLSL_CLASS_MATRIX && t2->type == HLSL_CLASS_MATRIX && t1->dimx >= t2->dimx && t1->dimy >= t2->dimy)
+            return TRUE;
+
+        /* Matrix-vector conversion is apparently allowed if they have the same components count */
+        if ((t1->type == HLSL_CLASS_VECTOR || t2->type == HLSL_CLASS_VECTOR)
+                && components_count_type(t1) == components_count_type(t2))
+            return TRUE;
+        return FALSE;
+    }
+
+    if (components_count_type(t1) >= components_count_type(t2))
+        return TRUE;
+    return FALSE;
+}
+
 static BOOL implicit_compatible_data_types(struct hlsl_type *t1, struct hlsl_type *t2)
 {
     if (!convertible_data_type(t1) || !convertible_data_type(t2))
@@ -1320,6 +1374,20 @@ struct hlsl_ir_expr *new_expr(enum hlsl_ir_expr_op op, struct hlsl_ir_node **ope
     expr->operands[2] = operands[2];
 
     return expr;
+}
+
+struct hlsl_ir_expr *new_cast(struct hlsl_ir_node *node, struct hlsl_type *type,
+        struct source_location *loc)
+{
+    struct hlsl_ir_expr *cast;
+    struct hlsl_ir_node *operands[3];
+
+    operands[0] = node;
+    operands[1] = operands[2] = NULL;
+    cast = new_expr(HLSL_IR_UNOP_CAST, operands, loc);
+    if (cast)
+        cast->node.data_type = type;
+    return cast;
 }
 
 struct hlsl_ir_expr *hlsl_mul(struct hlsl_ir_node *op1, struct hlsl_ir_node *op2,
