@@ -272,7 +272,7 @@ static void format_add_char(struct _format_message_data *fmd, WCHAR c)
 {
     *fmd->t++ = c;
     if ((DWORD)(fmd->t - fmd->formatted) == fmd->size) {
-        fmd->formatted = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, fmd->formatted, (fmd->size * 2) * sizeof(WCHAR));
+        fmd->formatted = HeapReAlloc(GetProcessHeap(), 0, fmd->formatted, (fmd->size * 2) * sizeof(WCHAR));
         fmd->t = fmd->formatted + fmd->size;
         fmd->size *= 2;
     }
@@ -290,7 +290,7 @@ static LPWSTR format_message( BOOL unicode_caller, DWORD dwFlags, LPCWSTR fmtstr
     BOOL eos = FALSE;
 
     fmd.size = 100;
-    fmd.formatted = fmd.t = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, fmd.size * sizeof(WCHAR) );
+    fmd.formatted = fmd.t = HeapAlloc( GetProcessHeap(), 0, fmd.size * sizeof(WCHAR) );
 
     f = fmtstr;
     while (*f && !eos) {
