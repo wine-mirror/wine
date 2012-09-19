@@ -26,8 +26,6 @@
 #include "winbase.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(msvcp);
-
 #ifdef __i386__
 
 #define DEFINE_VTBL_WRAPPER(off)            \
