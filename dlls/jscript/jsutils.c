@@ -234,7 +234,7 @@ void jsval_release(jsval_t val)
     }
 }
 
-HRESULT jsval_variant(jsval_t *val, VARIANT *var)
+static HRESULT jsval_variant(jsval_t *val, VARIANT *var)
 {
     VARIANT *v;
     HRESULT hres;
