@@ -144,22 +144,20 @@ struct glsl_ps_compiled_shader
     GLhandleARB                     prgId;
 };
 
-struct glsl_pshader_private
-{
-    struct glsl_ps_compiled_shader  *gl_shaders;
-    UINT                            num_gl_shaders, shader_array_size;
-};
-
 struct glsl_vs_compiled_shader
 {
     struct vs_compile_args          args;
     GLhandleARB                     prgId;
 };
 
-struct glsl_vshader_private
+struct glsl_shader_private
 {
-    struct glsl_vs_compiled_shader  *gl_shaders;
-    UINT                            num_gl_shaders, shader_array_size;
+    union
+    {
+        struct glsl_vs_compiled_shader *vs;
+        struct glsl_ps_compiled_shader *ps;
+    } gl_shaders;
+    UINT num_gl_shaders, shader_array_size;
 };
 
 static const char *debug_gl_shader_type(GLenum type)
@@ -4192,11 +4190,11 @@ static GLhandleARB find_glsl_pshader(const struct wined3d_context *context,
         const struct ps_compile_args *args, const struct ps_np2fixup_info **np2fixup_info)
 {
     struct wined3d_state *state = &shader->device->stateBlock->state;
+    struct glsl_ps_compiled_shader *gl_shaders, *new_array;
+    struct glsl_shader_private *shader_data;
+    struct ps_np2fixup_info *np2fixup;
     UINT i;
     DWORD new_size;
-    struct glsl_ps_compiled_shader *new_array;
-    struct glsl_pshader_private    *shader_data;
-    struct ps_np2fixup_info        *np2fixup = NULL;
     GLhandleARB ret;
 
     if (!shader->backend_data)
@@ -4209,6 +4207,7 @@ static GLhandleARB find_glsl_pshader(const struct wined3d_context *context,
         }
     }
     shader_data = shader->backend_data;
+    gl_shaders = shader_data->gl_shaders.ps;
 
     /* Usually we have very few GL shaders for each d3d shader(just 1 or maybe 2),
      * so a linear search is more performant than a hashmap or a binary search
@@ -4216,10 +4215,11 @@ static GLhandleARB find_glsl_pshader(const struct wined3d_context *context,
      */
     for (i = 0; i < shader_data->num_gl_shaders; ++i)
     {
-        if (!memcmp(&shader_data->gl_shaders[i].args, args, sizeof(*args)))
+        if (!memcmp(&gl_shaders[i].args, args, sizeof(*args)))
         {
-            if (args->np2_fixup) *np2fixup_info = &shader_data->gl_shaders[i].np2fixup;
-            return shader_data->gl_shaders[i].prgId;
+            if (args->np2_fixup)
+                *np2fixup_info = &gl_shaders[i].np2fixup;
+            return gl_shaders[i].prgId;
         }
     }
 
@@ -4228,10 +4228,12 @@ static GLhandleARB find_glsl_pshader(const struct wined3d_context *context,
         if (shader_data->num_gl_shaders)
         {
             new_size = shader_data->shader_array_size + max(1, shader_data->shader_array_size / 2);
-            new_array = HeapReAlloc(GetProcessHeap(), 0, shader_data->gl_shaders,
-                                    new_size * sizeof(*shader_data->gl_shaders));
-        } else {
-            new_array = HeapAlloc(GetProcessHeap(), 0, sizeof(*shader_data->gl_shaders));
+            new_array = HeapReAlloc(GetProcessHeap(), 0, shader_data->gl_shaders.ps,
+                    new_size * sizeof(*gl_shaders));
+        }
+        else
+        {
+            new_array = HeapAlloc(GetProcessHeap(), 0, sizeof(*gl_shaders));
             new_size = 1;
         }
 
@@ -4239,21 +4241,22 @@ static GLhandleARB find_glsl_pshader(const struct wined3d_context *context,
             ERR("Out of memory\n");
             return 0;
         }
-        shader_data->gl_shaders = new_array;
+        shader_data->gl_shaders.ps = new_array;
         shader_data->shader_array_size = new_size;
+        gl_shaders = new_array;
     }
 
-    shader_data->gl_shaders[shader_data->num_gl_shaders].args = *args;
+    gl_shaders[shader_data->num_gl_shaders].args = *args;
 
-    memset(&shader_data->gl_shaders[shader_data->num_gl_shaders].np2fixup, 0, sizeof(struct ps_np2fixup_info));
-    if (args->np2_fixup) np2fixup = &shader_data->gl_shaders[shader_data->num_gl_shaders].np2fixup;
+    np2fixup = &gl_shaders[shader_data->num_gl_shaders].np2fixup;
+    memset(np2fixup, 0, sizeof(*np2fixup));
+    *np2fixup_info = args->np2_fixup ? np2fixup : NULL;
 
     pixelshader_update_samplers(&shader->reg_maps, state->textures);
 
     shader_buffer_clear(buffer);
     ret = shader_glsl_generate_pshader(context, buffer, shader, args, np2fixup);
-    shader_data->gl_shaders[shader_data->num_gl_shaders++].prgId = ret;
-    *np2fixup_info = np2fixup;
+    gl_shaders[shader_data->num_gl_shaders++].prgId = ret;
 
     return ret;
 }
@@ -4271,9 +4274,9 @@ static GLhandleARB find_glsl_vshader(const struct wined3d_context *context,
 {
     UINT i;
     DWORD new_size;
-    struct glsl_vs_compiled_shader *new_array;
     DWORD use_map = shader->device->strided_streams.use_map;
-    struct glsl_vshader_private *shader_data;
+    struct glsl_vs_compiled_shader *gl_shaders, *new_array;
+    struct glsl_shader_private *shader_data;
     GLhandleARB ret;
 
     if (!shader->backend_data)
@@ -4286,15 +4289,16 @@ static GLhandleARB find_glsl_vshader(const struct wined3d_context *context,
         }
     }
     shader_data = shader->backend_data;
+    gl_shaders = shader_data->gl_shaders.vs;
 
     /* Usually we have very few GL shaders for each d3d shader(just 1 or maybe 2),
      * so a linear search is more performant than a hashmap or a binary search
      * (cache coherency etc)
      */
-    for(i = 0; i < shader_data->num_gl_shaders; i++) {
-        if(vs_args_equal(&shader_data->gl_shaders[i].args, args, use_map)) {
-            return shader_data->gl_shaders[i].prgId;
-        }
+    for (i = 0; i < shader_data->num_gl_shaders; ++i)
+    {
+        if (vs_args_equal(&gl_shaders[i].args, args, use_map))
+            return gl_shaders[i].prgId;
     }
 
     TRACE("No matching GL shader found for shader %p, compiling a new shader.\n", shader);
@@ -4303,10 +4307,12 @@ static GLhandleARB find_glsl_vshader(const struct wined3d_context *context,
         if (shader_data->num_gl_shaders)
         {
             new_size = shader_data->shader_array_size + max(1, shader_data->shader_array_size / 2);
-            new_array = HeapReAlloc(GetProcessHeap(), 0, shader_data->gl_shaders,
-                                    new_size * sizeof(*shader_data->gl_shaders));
-        } else {
-            new_array = HeapAlloc(GetProcessHeap(), 0, sizeof(*shader_data->gl_shaders));
+            new_array = HeapReAlloc(GetProcessHeap(), 0, shader_data->gl_shaders.vs,
+                    new_size * sizeof(*gl_shaders));
+        }
+        else
+        {
+            new_array = HeapAlloc(GetProcessHeap(), 0, sizeof(*gl_shaders));
             new_size = 1;
         }
 
@@ -4314,15 +4320,16 @@ static GLhandleARB find_glsl_vshader(const struct wined3d_context *context,
             ERR("Out of memory\n");
             return 0;
         }
-        shader_data->gl_shaders = new_array;
+        shader_data->gl_shaders.vs = new_array;
         shader_data->shader_array_size = new_size;
+        gl_shaders = new_array;
     }
 
-    shader_data->gl_shaders[shader_data->num_gl_shaders].args = *args;
+    gl_shaders[shader_data->num_gl_shaders].args = *args;
 
     shader_buffer_clear(buffer);
     ret = shader_glsl_generate_vshader(context, buffer, shader, args);
-    shader_data->gl_shaders[shader_data->num_gl_shaders++].prgId = ret;
+    gl_shaders[shader_data->num_gl_shaders++].prgId = ret;
 
     return ret;
 }
@@ -4721,6 +4728,7 @@ static void shader_glsl_deselect_depth_blt(void *shader_priv, const struct wined
 
 static void shader_glsl_destroy(struct wined3d_shader *shader)
 {
+    struct glsl_shader_private *shader_data = shader->backend_data;
     struct wined3d_device *device = shader->device;
     struct shader_glsl_priv *priv = device->shader_priv;
     const struct wined3d_gl_info *gl_info;
@@ -4729,47 +4737,22 @@ static void shader_glsl_destroy(struct wined3d_shader *shader)
 
     char pshader = shader_is_pshader_version(shader->reg_maps.shader_version.type);
 
-    if (pshader)
+    if (!shader_data || !shader_data->num_gl_shaders)
     {
-        struct glsl_pshader_private *shader_data = shader->backend_data;
-
-        if (!shader_data || !shader_data->num_gl_shaders)
-        {
-            HeapFree(GetProcessHeap(), 0, shader_data);
-            shader->backend_data = NULL;
-            return;
-        }
-
-        context = context_acquire(device, NULL);
-        gl_info = context->gl_info;
-
-        if (priv->glsl_program && priv->glsl_program->pshader == shader)
-        {
-            ENTER_GL();
-            shader_glsl_select(context, FALSE, FALSE);
-            LEAVE_GL();
-        }
+        HeapFree(GetProcessHeap(), 0, shader_data);
+        shader->backend_data = NULL;
+        return;
     }
-    else
+
+    context = context_acquire(device, NULL);
+    gl_info = context->gl_info;
+
+    if (priv->glsl_program && (priv->glsl_program->vshader == shader
+            || priv->glsl_program->pshader == shader))
     {
-        struct glsl_vshader_private *shader_data = shader->backend_data;
-
-        if (!shader_data || !shader_data->num_gl_shaders)
-        {
-            HeapFree(GetProcessHeap(), 0, shader_data);
-            shader->backend_data = NULL;
-            return;
-        }
-
-        context = context_acquire(device, NULL);
-        gl_info = context->gl_info;
-
-        if (priv->glsl_program && priv->glsl_program->vshader == shader)
-        {
-            ENTER_GL();
-            shader_glsl_select(context, FALSE, FALSE);
-            LEAVE_GL();
-        }
+        ENTER_GL();
+        shader_glsl_select(context, FALSE, FALSE);
+        LEAVE_GL();
     }
 
     linked_programs = &shader->linked_programs;
@@ -4793,31 +4776,33 @@ static void shader_glsl_destroy(struct wined3d_shader *shader)
 
     if (pshader)
     {
-        struct glsl_pshader_private *shader_data = shader->backend_data;
+        struct glsl_ps_compiled_shader *gl_shaders = shader_data->gl_shaders.ps;
         UINT i;
 
         ENTER_GL();
-        for(i = 0; i < shader_data->num_gl_shaders; i++) {
-            TRACE("deleting pshader %u\n", shader_data->gl_shaders[i].prgId);
-            GL_EXTCALL(glDeleteObjectARB(shader_data->gl_shaders[i].prgId));
+        for (i = 0; i < shader_data->num_gl_shaders; ++i)
+        {
+            TRACE("Deleting pixel shader %u.\n", gl_shaders[i].prgId);
+            GL_EXTCALL(glDeleteObjectARB(gl_shaders[i].prgId));
             checkGLcall("glDeleteObjectARB");
         }
         LEAVE_GL();
-        HeapFree(GetProcessHeap(), 0, shader_data->gl_shaders);
+        HeapFree(GetProcessHeap(), 0, shader_data->gl_shaders.ps);
     }
     else
     {
-        struct glsl_vshader_private *shader_data = shader->backend_data;
+        struct glsl_vs_compiled_shader *gl_shaders = shader_data->gl_shaders.vs;
         UINT i;
 
         ENTER_GL();
-        for(i = 0; i < shader_data->num_gl_shaders; i++) {
-            TRACE("deleting vshader %u\n", shader_data->gl_shaders[i].prgId);
-            GL_EXTCALL(glDeleteObjectARB(shader_data->gl_shaders[i].prgId));
+        for (i = 0; i < shader_data->num_gl_shaders; ++i)
+        {
+            TRACE("Deleting vertex shader %u.\n", gl_shaders[i].prgId);
+            GL_EXTCALL(glDeleteObjectARB(gl_shaders[i].prgId));
             checkGLcall("glDeleteObjectARB");
         }
         LEAVE_GL();
-        HeapFree(GetProcessHeap(), 0, shader_data->gl_shaders);
+        HeapFree(GetProcessHeap(), 0, shader_data->gl_shaders.vs);
     }
 
     HeapFree(GetProcessHeap(), 0, shader->backend_data);
