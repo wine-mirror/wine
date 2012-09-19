@@ -1100,10 +1100,16 @@ done:
 static void X11DRV_GravityNotify( HWND hwnd, XEvent *xev )
 {
     XGravityEvent *event = &xev->xgravity;
-    struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
-    RECT rect;
+    struct x11drv_win_data *data = get_win_data( hwnd );
+    RECT rect, window_rect;
 
-    if (!data || data->whole_window) return;  /* only handle this for foreign windows */
+    if (!data) return;
+
+    if (data->whole_window)  /* only handle this for foreign windows */
+    {
+        release_win_data( data );
+        return;
+    }
 
     rect.left   = event->x;
     rect.top    = event->y;
@@ -1115,8 +1121,10 @@ static void X11DRV_GravityNotify( HWND hwnd, XEvent *xev )
            event->x, event->y );
 
     X11DRV_X_to_window_rect( data, &rect );
+    window_rect = data->window_rect;
+    release_win_data( data );
 
-    if (data->window_rect.left != rect.left || data ->window_rect.top != rect.top)
+    if (window_rect.left != rect.left || window_rect.top != rect.top)
         SetWindowPos( hwnd, 0, rect.left, rect.top, 0, 0,
                       SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOCOPYBITS );
 }
