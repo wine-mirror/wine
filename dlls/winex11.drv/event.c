@@ -1566,7 +1566,7 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
  */
 static void handle_xembed_protocol( HWND hwnd, XClientMessageEvent *event )
 {
-    struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
+    struct x11drv_win_data *data = get_win_data( hwnd );
 
     if (!data) return;
 
@@ -1581,6 +1581,7 @@ static void handle_xembed_protocol( HWND hwnd, XClientMessageEvent *event )
                hwnd, event->window, event->data.l[1], event->data.l[2] );
         break;
     }
+    release_win_data( data );
 }
 
 
