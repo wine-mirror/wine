@@ -993,17 +993,17 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
     int cx, cy, x = event->x, y = event->y;
 
     if (!hwnd) return;
-    if (!(data = X11DRV_get_win_data( hwnd ))) return;
-    if (!data->mapped || data->iconic) return;
-    if (data->whole_window && !data->managed) return;
+    if (!(data = get_win_data( hwnd ))) return;
+    if (!data->mapped || data->iconic) goto done;
+    if (data->whole_window && !data->managed) goto done;
     /* ignore synthetic events on foreign windows */
-    if (event->send_event && !data->whole_window) return;
+    if (event->send_event && !data->whole_window) goto done;
     if (data->configure_serial && (long)(data->configure_serial - event->serial) > 0)
     {
         TRACE( "win %p/%lx event %d,%d,%dx%d ignoring old serial %lu/%lu\n",
                hwnd, data->whole_window, event->x, event->y, event->width, event->height,
                event->serial, data->configure_serial );
-        return;
+        goto done;
     }
 
     /* Get geometry */
@@ -1059,6 +1059,7 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
         if (!IsZoomed( data->hwnd ))
         {
             TRACE( "win %p/%lx is maximized\n", data->hwnd, data->whole_window );
+            release_win_data( data );
             SendMessageW( data->hwnd, WM_SYSCOMMAND, SC_MAXIMIZE, 0 );
             return;
         }
@@ -1068,13 +1069,21 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
         if (IsZoomed( data->hwnd ))
         {
             TRACE( "window %p/%lx is no longer maximized\n", data->hwnd, data->whole_window );
+            release_win_data( data );
             SendMessageW( data->hwnd, WM_SYSCOMMAND, SC_RESTORE, 0 );
             return;
         }
     }
 
     if ((flags & (SWP_NOSIZE | SWP_NOMOVE)) != (SWP_NOSIZE | SWP_NOMOVE))
+    {
+        release_win_data( data );
         SetWindowPos( hwnd, 0, x, y, cx, cy, flags );
+        return;
+    }
+
+done:
+    release_win_data( data );
 }
 
 
