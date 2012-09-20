@@ -250,18 +250,17 @@ INT WINAPI SelectClipRgn( HDC hdc, HRGN hrgn )
  */
 INT WINAPI ExtSelectClipRgn( HDC hdc, HRGN hrgn, INT fnMode )
 {
-    INT retval = ERROR;
+    PHYSDEV physdev;
+    INT retval;
     DC * dc = get_dc_ptr( hdc );
 
     TRACE("%p %p %d\n", hdc, hrgn, fnMode );
 
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pExtSelectClipRgn );
-        update_dc( dc );
-        retval = physdev->funcs->pExtSelectClipRgn( physdev, hrgn, fnMode );
-        release_dc_ptr( dc );
-    }
+    if (!dc) return ERROR;
+    update_dc( dc );
+    physdev = GET_DC_PHYSDEV( dc, pExtSelectClipRgn );
+    retval = physdev->funcs->pExtSelectClipRgn( physdev, hrgn, fnMode );
+    release_dc_ptr( dc );
     return retval;
 }
 
@@ -298,18 +297,17 @@ void CDECL __wine_set_visible_region( HDC hdc, HRGN hrgn, const RECT *vis_rect, 
  */
 INT WINAPI OffsetClipRgn( HDC hdc, INT x, INT y )
 {
-    INT ret = ERROR;
+    PHYSDEV physdev;
+    INT ret;
     DC *dc = get_dc_ptr( hdc );
 
     TRACE("%p %d,%d\n", hdc, x, y );
 
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pOffsetClipRgn );
-        update_dc( dc );
-        ret = physdev->funcs->pOffsetClipRgn( physdev, x, y );
-        release_dc_ptr( dc );
-    }
+    if (!dc) return ERROR;
+    update_dc( dc );
+    physdev = GET_DC_PHYSDEV( dc, pOffsetClipRgn );
+    ret = physdev->funcs->pOffsetClipRgn( physdev, x, y );
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -320,18 +318,17 @@ INT WINAPI OffsetClipRgn( HDC hdc, INT x, INT y )
 INT WINAPI ExcludeClipRect( HDC hdc, INT left, INT top,
                                 INT right, INT bottom )
 {
-    INT ret = ERROR;
+    PHYSDEV physdev;
+    INT ret;
     DC *dc = get_dc_ptr( hdc );
 
     TRACE("%p %d,%d-%d,%d\n", hdc, left, top, right, bottom );
 
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pExcludeClipRect );
-        update_dc( dc );
-        ret = physdev->funcs->pExcludeClipRect( physdev, left, top, right, bottom );
-        release_dc_ptr( dc );
-    }
+    if (!dc) return ERROR;
+    update_dc( dc );
+    physdev = GET_DC_PHYSDEV( dc, pExcludeClipRect );
+    ret = physdev->funcs->pExcludeClipRect( physdev, left, top, right, bottom );
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -341,18 +338,17 @@ INT WINAPI ExcludeClipRect( HDC hdc, INT left, INT top,
  */
 INT WINAPI IntersectClipRect( HDC hdc, INT left, INT top, INT right, INT bottom )
 {
-    INT ret = ERROR;
+    PHYSDEV physdev;
+    INT ret;
     DC *dc = get_dc_ptr( hdc );
 
     TRACE("%p %d,%d - %d,%d\n", hdc, left, top, right, bottom );
 
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pIntersectClipRect );
-        update_dc( dc );
-        ret = physdev->funcs->pIntersectClipRect( physdev, left, top, right, bottom );
-        release_dc_ptr( dc );
-    }
+    if (!dc) return ERROR;
+    update_dc( dc );
+    physdev = GET_DC_PHYSDEV( dc, pIntersectClipRect );
+    ret = physdev->funcs->pIntersectClipRect( physdev, left, top, right, bottom );
+    release_dc_ptr( dc );
     return ret;
 }
 

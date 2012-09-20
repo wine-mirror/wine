@@ -282,16 +282,15 @@ BOOL WINAPI Arc( HDC hdc, INT left, INT top, INT right,
                      INT bottom, INT xstart, INT ystart,
                      INT xend, INT yend )
 {
-    BOOL ret = FALSE;
+    PHYSDEV physdev;
+    BOOL ret;
     DC * dc = get_dc_ptr( hdc );
 
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pArc );
-        update_dc( dc );
-        ret = physdev->funcs->pArc( physdev, left, top, right, bottom, xstart, ystart, xend, yend );
-        release_dc_ptr( dc );
-    }
+    if (!dc) return FALSE;
+    update_dc( dc );
+    physdev = GET_DC_PHYSDEV( dc, pArc );
+    ret = physdev->funcs->pArc( physdev, left, top, right, bottom, xstart, ystart, xend, yend );
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -396,16 +395,15 @@ BOOL WINAPI Ellipse( HDC hdc, INT left, INT top,
 BOOL WINAPI Rectangle( HDC hdc, INT left, INT top,
                            INT right, INT bottom )
 {
-    BOOL ret = FALSE;
+    PHYSDEV physdev;
+    BOOL ret;
     DC * dc = get_dc_ptr( hdc );
 
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pRectangle );
-        update_dc( dc );
-        ret = physdev->funcs->pRectangle( physdev, left, top, right, bottom );
-        release_dc_ptr( dc );
-    }
+    if (!dc) return FALSE;
+    update_dc( dc );
+    physdev = GET_DC_PHYSDEV( dc, pRectangle );
+    ret = physdev->funcs->pRectangle( physdev, left, top, right, bottom );
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -416,16 +414,15 @@ BOOL WINAPI Rectangle( HDC hdc, INT left, INT top,
 BOOL WINAPI RoundRect( HDC hdc, INT left, INT top, INT right,
                            INT bottom, INT ell_width, INT ell_height )
 {
-    BOOL ret = FALSE;
+    PHYSDEV physdev;
+    BOOL ret;
     DC *dc = get_dc_ptr( hdc );
 
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pRoundRect );
-        update_dc( dc );
-        ret = physdev->funcs->pRoundRect( physdev, left, top, right, bottom, ell_width, ell_height );
-        release_dc_ptr( dc );
-    }
+    if (!dc) return FALSE;
+    update_dc( dc );
+    physdev = GET_DC_PHYSDEV( dc, pRoundRect );
+    ret = physdev->funcs->pRoundRect( physdev, left, top, right, bottom, ell_width, ell_height );
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -434,16 +431,15 @@ BOOL WINAPI RoundRect( HDC hdc, INT left, INT top, INT right,
  */
 COLORREF WINAPI SetPixel( HDC hdc, INT x, INT y, COLORREF color )
 {
-    COLORREF ret = 0;
+    PHYSDEV physdev;
+    COLORREF ret;
     DC * dc = get_dc_ptr( hdc );
 
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetPixel );
-        update_dc( dc );
-        ret = physdev->funcs->pSetPixel( physdev, x, y, color );
-        release_dc_ptr( dc );
-    }
+    if (!dc) return 0;
+    update_dc( dc );
+    physdev = GET_DC_PHYSDEV( dc, pSetPixel );
+    ret = physdev->funcs->pSetPixel( physdev, x, y, color );
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -452,18 +448,15 @@ COLORREF WINAPI SetPixel( HDC hdc, INT x, INT y, COLORREF color )
  */
 BOOL WINAPI SetPixelV( HDC hdc, INT x, INT y, COLORREF color )
 {
-    BOOL ret = FALSE;
+    PHYSDEV physdev;
     DC * dc = get_dc_ptr( hdc );
 
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetPixel );
-        update_dc( dc );
-        physdev->funcs->pSetPixel( physdev, x, y, color );
-        ret = TRUE;
-        release_dc_ptr( dc );
-    }
-    return ret;
+    if (!dc) return FALSE;
+    update_dc( dc );
+    physdev = GET_DC_PHYSDEV( dc, pSetPixel );
+    physdev->funcs->pSetPixel( physdev, x, y, color );
+    release_dc_ptr( dc );
+    return TRUE;
 }
 
 /***********************************************************************
@@ -471,16 +464,15 @@ BOOL WINAPI SetPixelV( HDC hdc, INT x, INT y, COLORREF color )
  */
 COLORREF WINAPI GetPixel( HDC hdc, INT x, INT y )
 {
-    COLORREF ret = CLR_INVALID;
+    PHYSDEV physdev;
+    COLORREF ret;
     DC * dc = get_dc_ptr( hdc );
 
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pGetPixel );
-        update_dc( dc );
-        ret = physdev->funcs->pGetPixel( physdev, x, y );
-        release_dc_ptr( dc );
-    }
+    if (!dc) return CLR_INVALID;
+    update_dc( dc );
+    physdev = GET_DC_PHYSDEV( dc, pGetPixel );
+    ret = physdev->funcs->pGetPixel( physdev, x, y );
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -535,16 +527,15 @@ BOOL WINAPI GdiSwapBuffers( HDC hdc )
  */
 BOOL WINAPI PaintRgn( HDC hdc, HRGN hrgn )
 {
-    BOOL ret = FALSE;
+    PHYSDEV physdev;
+    BOOL ret;
     DC * dc = get_dc_ptr( hdc );
 
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pPaintRgn );
-        update_dc( dc );
-        ret = physdev->funcs->pPaintRgn( physdev, hrgn );
-        release_dc_ptr( dc );
-    }
+    if (!dc) return FALSE;
+    update_dc( dc );
+    physdev = GET_DC_PHYSDEV( dc, pPaintRgn );
+    ret = physdev->funcs->pPaintRgn( physdev, hrgn );
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -554,16 +545,15 @@ BOOL WINAPI PaintRgn( HDC hdc, HRGN hrgn )
  */
 BOOL WINAPI FillRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush )
 {
-    BOOL retval = FALSE;
+    PHYSDEV physdev;
+    BOOL retval;
     DC * dc = get_dc_ptr( hdc );
 
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pFillRgn );
-        update_dc( dc );
-        retval = physdev->funcs->pFillRgn( physdev, hrgn, hbrush );
-        release_dc_ptr( dc );
-    }
+    if (!dc) return FALSE;
+    update_dc( dc );
+    physdev = GET_DC_PHYSDEV( dc, pFillRgn );
+    retval = physdev->funcs->pFillRgn( physdev, hrgn, hbrush );
+    release_dc_ptr( dc );
     return retval;
 }
 
@@ -574,16 +564,15 @@ BOOL WINAPI FillRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush )
 BOOL WINAPI FrameRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush,
                           INT nWidth, INT nHeight )
 {
-    BOOL ret = FALSE;
+    PHYSDEV physdev;
+    BOOL ret;
     DC *dc = get_dc_ptr( hdc );
 
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pFrameRgn );
-        update_dc( dc );
-        ret = physdev->funcs->pFrameRgn( physdev, hrgn, hbrush, nWidth, nHeight );
-        release_dc_ptr( dc );
-    }
+    if (!dc) return FALSE;
+    update_dc( dc );
+    physdev = GET_DC_PHYSDEV( dc, pFrameRgn );
+    ret = physdev->funcs->pFrameRgn( physdev, hrgn, hbrush, nWidth, nHeight );
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -593,16 +582,15 @@ BOOL WINAPI FrameRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush,
  */
 BOOL WINAPI InvertRgn( HDC hdc, HRGN hrgn )
 {
-    BOOL ret = FALSE;
+    PHYSDEV physdev;
+    BOOL ret;
     DC *dc = get_dc_ptr( hdc );
 
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pInvertRgn );
-        update_dc( dc );
-        ret = physdev->funcs->pInvertRgn( physdev, hrgn );
-        release_dc_ptr( dc );
-    }
+    if (!dc) return FALSE;
+    update_dc( dc );
+    physdev = GET_DC_PHYSDEV( dc, pInvertRgn );
+    ret = physdev->funcs->pInvertRgn( physdev, hrgn );
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -612,16 +600,15 @@ BOOL WINAPI InvertRgn( HDC hdc, HRGN hrgn )
  */
 BOOL WINAPI Polyline( HDC hdc, const POINT* pt, INT count )
 {
-    BOOL ret = FALSE;
+    PHYSDEV physdev;
+    BOOL ret;
     DC * dc = get_dc_ptr( hdc );
 
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pPolyline );
-        update_dc( dc );
-        ret = physdev->funcs->pPolyline( physdev, pt, count );
-        release_dc_ptr( dc );
-    }
+    if (!dc) return FALSE;
+    update_dc( dc );
+    physdev = GET_DC_PHYSDEV( dc, pPolyline );
+    ret = physdev->funcs->pPolyline( physdev, pt, count );
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -655,16 +642,15 @@ BOOL WINAPI PolylineTo( HDC hdc, const POINT* pt, DWORD cCount )
  */
 BOOL WINAPI Polygon( HDC hdc, const POINT* pt, INT count )
 {
-    BOOL ret = FALSE;
+    PHYSDEV physdev;
+    BOOL ret;
     DC * dc = get_dc_ptr( hdc );
 
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pPolygon );
-        update_dc( dc );
-        ret = physdev->funcs->pPolygon( physdev, pt, count );
-        release_dc_ptr( dc );
-    }
+    if (!dc) return FALSE;
+    update_dc( dc );
+    physdev = GET_DC_PHYSDEV( dc, pPolygon );
+    ret = physdev->funcs->pPolygon( physdev, pt, count );
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -675,16 +661,15 @@ BOOL WINAPI Polygon( HDC hdc, const POINT* pt, INT count )
 BOOL WINAPI PolyPolygon( HDC hdc, const POINT* pt, const INT* counts,
                              UINT polygons )
 {
-    BOOL ret = FALSE;
+    PHYSDEV physdev;
+    BOOL ret;
     DC * dc = get_dc_ptr( hdc );
 
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pPolyPolygon );
-        update_dc( dc );
-        ret = physdev->funcs->pPolyPolygon( physdev, pt, counts, polygons );
-        release_dc_ptr( dc );
-    }
+    if (!dc) return FALSE;
+    update_dc( dc );
+    physdev = GET_DC_PHYSDEV( dc, pPolyPolygon );
+    ret = physdev->funcs->pPolyPolygon( physdev, pt, counts, polygons );
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -694,16 +679,15 @@ BOOL WINAPI PolyPolygon( HDC hdc, const POINT* pt, const INT* counts,
 BOOL WINAPI PolyPolyline( HDC hdc, const POINT* pt, const DWORD* counts,
                             DWORD polylines )
 {
-    BOOL ret = FALSE;
+    PHYSDEV physdev;
+    BOOL ret;
     DC * dc = get_dc_ptr( hdc );
 
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pPolyPolyline );
-        update_dc( dc );
-        ret = physdev->funcs->pPolyPolyline( physdev, pt, counts, polylines );
-        release_dc_ptr( dc );
-    }
+    if (!dc) return FALSE;
+    update_dc( dc );
+    physdev = GET_DC_PHYSDEV( dc, pPolyPolyline );
+    ret = physdev->funcs->pPolyPolyline( physdev, pt, counts, polylines );
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -713,17 +697,15 @@ BOOL WINAPI PolyPolyline( HDC hdc, const POINT* pt, const DWORD* counts,
 BOOL WINAPI ExtFloodFill( HDC hdc, INT x, INT y, COLORREF color,
                               UINT fillType )
 {
-    BOOL ret = FALSE;
+    PHYSDEV physdev;
+    BOOL ret;
     DC * dc = get_dc_ptr( hdc );
 
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pExtFloodFill );
-
-        update_dc( dc );
-        ret = physdev->funcs->pExtFloodFill( physdev, x, y, color, fillType );
-        release_dc_ptr( dc );
-    }
+    if (!dc) return FALSE;
+    update_dc( dc );
+    physdev = GET_DC_PHYSDEV( dc, pExtFloodFill );
+    ret = physdev->funcs->pExtFloodFill( physdev, x, y, color, fillType );
+    release_dc_ptr( dc );
     return ret;
 }
 

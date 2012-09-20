@@ -603,6 +603,7 @@ INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst, INT heightDs
 {
     char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
     BITMAPINFO *info = (BITMAPINFO *)buffer;
+    PHYSDEV physdev;
     DC *dc;
     INT ret = 0;
 
@@ -615,8 +616,8 @@ INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst, INT heightDs
 
     if ((dc = get_dc_ptr( hdc )))
     {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pStretchDIBits );
         update_dc( dc );
+        physdev = GET_DC_PHYSDEV( dc, pStretchDIBits );
         ret = physdev->funcs->pStretchDIBits( physdev, xDst, yDst, widthDst, heightDst,
                                               xSrc, ySrc, widthSrc, heightSrc, bits, info, coloruse, rop );
         release_dc_ptr( dc );
@@ -875,6 +876,7 @@ INT WINAPI SetDIBitsToDevice(HDC hdc, INT xDest, INT yDest, DWORD cx,
 {
     char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
     BITMAPINFO *info = (BITMAPINFO *)buffer;
+    PHYSDEV physdev;
     INT ret = 0;
     DC *dc;
 
@@ -887,8 +889,8 @@ INT WINAPI SetDIBitsToDevice(HDC hdc, INT xDest, INT yDest, DWORD cx,
 
     if ((dc = get_dc_ptr( hdc )))
     {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetDIBitsToDevice );
         update_dc( dc );
+        physdev = GET_DC_PHYSDEV( dc, pSetDIBitsToDevice );
         ret = physdev->funcs->pSetDIBitsToDevice( physdev, xDest, yDest, cx, cy, xSrc,
                                                   ySrc, startscan, lines, bits, info, coloruse );
         release_dc_ptr( dc );

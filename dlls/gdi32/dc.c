@@ -537,14 +537,15 @@ INT WINAPI SaveDC( HDC hdc )
  */
 BOOL WINAPI RestoreDC( HDC hdc, INT level )
 {
+    PHYSDEV physdev;
     DC *dc;
     BOOL success = FALSE;
 
     TRACE("%p %d\n", hdc, level );
     if ((dc = get_dc_ptr( hdc )))
     {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pRestoreDC );
         update_dc( dc );
+        physdev = GET_DC_PHYSDEV( dc, pRestoreDC );
         success = physdev->funcs->pRestoreDC( physdev, level );
         release_dc_ptr( dc );
     }

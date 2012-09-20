@@ -1121,16 +1121,15 @@ INT WINAPI Escape( HDC hdc, INT escape, INT in_count, LPCSTR in_data, LPVOID out
 INT WINAPI ExtEscape( HDC hdc, INT nEscape, INT cbInput, LPCSTR lpszInData,
                       INT cbOutput, LPSTR lpszOutData )
 {
-    INT ret = 0;
+    PHYSDEV physdev;
+    INT ret;
     DC * dc = get_dc_ptr( hdc );
 
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pExtEscape );
-        update_dc( dc );
-        ret = physdev->funcs->pExtEscape( physdev, nEscape, cbInput, lpszInData, cbOutput, lpszOutData );
-        release_dc_ptr( dc );
-    }
+    if (!dc) return 0;
+    update_dc( dc );
+    physdev = GET_DC_PHYSDEV( dc, pExtEscape );
+    ret = physdev->funcs->pExtEscape( physdev, nEscape, cbInput, lpszInData, cbOutput, lpszOutData );
+    release_dc_ptr( dc );
     return ret;
 }
 
