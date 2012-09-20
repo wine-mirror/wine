@@ -90,7 +90,7 @@ static void strcat_param(char* str, const char* param)
 }
 
 static char shell_call[2048]="";
-static int shell_execute(LPCSTR operation, LPCSTR file, LPCSTR parameters, LPCSTR directory)
+static INT_PTR shell_execute(LPCSTR operation, LPCSTR file, LPCSTR parameters, LPCSTR directory)
 {
     INT_PTR rc, rcEmpty = 0;
 
@@ -149,8 +149,8 @@ static int shell_execute(LPCSTR operation, LPCSTR file, LPCSTR parameters, LPCST
     return rc;
 }
 
-static int shell_execute_ex(DWORD mask, LPCSTR operation, LPCSTR file,
-                            LPCSTR parameters, LPCSTR directory)
+static INT_PTR shell_execute_ex(DWORD mask, LPCSTR operation, LPCSTR file,
+                                LPCSTR parameters, LPCSTR directory)
 {
     SHELLEXECUTEINFO sei;
     BOOL success;
@@ -901,11 +901,9 @@ static void test_lpFile_parsed(void)
 {
     /* basename tmpdir */
     const char* shorttmpdir;
-
     const char *testfile;
     char fileA[MAX_PATH];
-
-    int rc;
+    INT_PTR rc;
 
     GetTempPathA(sizeof(fileA), fileA);
     shorttmpdir = tmpdir + strlen(fileA);
@@ -919,7 +917,7 @@ static void test_lpFile_parsed(void)
     rc=shell_execute(NULL, fileA, NULL, NULL);
     todo_wine {
         ok(rc>32,
-            "expected success (33), got %s (%d), lpFile: %s\n",
+            "expected success (33), got %s (%lu), lpFile: %s\n",
             rc > 32 ? "success" : "failure", rc, fileA
             );
     }
@@ -929,7 +927,7 @@ static void test_lpFile_parsed(void)
     sprintf(fileA, testfile, tmpdir);
     rc=shell_execute(NULL, fileA, NULL, NULL);
     ok(rc>32 || broken(rc == 2) /* Win95/NT4 */,
-        "expected success (33), got %s (%d), lpFile: %s\n",
+        "expected success (33), got %s (%lu), lpFile: %s\n",
         rc > 32 ? "success" : "failure", rc, fileA
         );
 
@@ -938,7 +936,7 @@ static void test_lpFile_parsed(void)
     sprintf(fileA, testfile, tmpdir);
     rc=shell_execute(NULL, fileA, NULL, NULL);
     ok(rc==2,
-        "expected failure (2), got %s (%d), lpFile: %s\n",
+        "expected failure (2), got %s (%lu), lpFile: %s\n",
         rc > 32 ? "success" : "failure", rc, fileA
         );
 
@@ -948,7 +946,7 @@ static void test_lpFile_parsed(void)
     rc=shell_execute(NULL, fileA, NULL, NULL);
     todo_wine {
         ok(rc>32 || broken(rc == 2) /* Win9x/2000 */,
-            "expected success (33), got %s (%d), lpFile: %s\n",
+            "expected success (33), got %s (%lu), lpFile: %s\n",
             rc > 32 ? "success" : "failure", rc, fileA
             );
     }
@@ -958,7 +956,7 @@ static void test_lpFile_parsed(void)
     sprintf(fileA, testfile, tmpdir);
     rc=shell_execute(NULL, fileA, NULL, NULL);
     ok(rc>32,
-        "expected success (33), got %s (%d), lpFile: %s\n",
+        "expected success (33), got %s (%lu), lpFile: %s\n",
         rc > 32 ? "success" : "failure", rc, fileA
         );
 
@@ -968,7 +966,7 @@ static void test_lpFile_parsed(void)
     rc=shell_execute(NULL, fileA, NULL, NULL);
     todo_wine {
         ok(rc==2,
-            "expected failure (2), got %s (%d), lpFile: %s\n",
+            "expected failure (2), got %s (%lu), lpFile: %s\n",
             rc > 32 ? "success" : "failure", rc, fileA
             );
     }
@@ -979,7 +977,7 @@ static void test_lpFile_parsed(void)
     rc=shell_execute(NULL, fileA, NULL, NULL);
     todo_wine {
         ok(rc==2,
-            "expected failure (2), got %s (%d), lpFile: %s\n",
+            "expected failure (2), got %s (%lu), lpFile: %s\n",
             rc > 32 ? "success" : "failure", rc, fileA
             );
     }
@@ -989,7 +987,7 @@ static void test_lpFile_parsed(void)
     sprintf(fileA, testfile, shorttmpdir);
     rc=shell_execute_ex(SEE_MASK_DOENVSUBST | SEE_MASK_FLAG_NO_UI, NULL, fileA, NULL, NULL);
     ok(rc>32,
-        "expected success (33), got %s (%d), lpFile: %s\n",
+        "expected success (33), got %s (%lu), lpFile: %s\n",
         rc > 32 ? "success" : "failure", rc, fileA
         );
 
@@ -998,7 +996,7 @@ static void test_lpFile_parsed(void)
     sprintf(fileA, testfile, shorttmpdir);
     rc=shell_execute_ex(SEE_MASK_DOENVSUBST | SEE_MASK_FLAG_NO_UI, NULL, fileA, NULL, NULL);
     ok(rc>32 || broken(rc == 2) /* Win95/NT4 */,
-        "expected success (33), got %s (%d), lpFile: %s\n",
+        "expected success (33), got %s (%lu), lpFile: %s\n",
         rc > 32 ? "success" : "failure", rc, fileA
         );
 
@@ -1007,15 +1005,14 @@ static void test_lpFile_parsed(void)
 static void test_argify(void)
 {
     char fileA[MAX_PATH];
-
-    int rc;
+    INT_PTR rc;
 
     sprintf(fileA, "%s\\test file.shlexec", tmpdir);
 
     /* %2 */
     rc=shell_execute("NoQuotesParam2", fileA, "a b", NULL);
     ok(rc>32,
-        "expected success (33), got %s (%d), lpFile: %s\n",
+        "expected success (33), got %s (%lu), lpFile: %s\n",
         rc > 32 ? "success" : "failure", rc, fileA
         );
     if (rc>32)
@@ -1028,7 +1025,7 @@ static void test_argify(void)
     /* '"a"""'   -> 'a"' */
     rc=shell_execute("NoQuotesParam2", fileA, "\"a:\"\"some string\"\"\"", NULL);
     ok(rc>32,
-        "expected success (33), got %s (%d), lpFile: %s\n",
+        "expected success (33), got %s (%lu), lpFile: %s\n",
         rc > 32 ? "success" : "failure", rc, fileA
         );
     if (rc>32)
@@ -1044,7 +1041,7 @@ static void test_argify(void)
      * '"a\""'   -> '"a\""' */
     rc=shell_execute("NoQuotesParam2", fileA, "\"a:\\\"some string\\\"\"", NULL);
     ok(rc>32,
-        "expected success (33), got %s (%d), lpFile: %s\n",
+        "expected success (33), got %s (%lu), lpFile: %s\n",
         rc > 32 ? "success" : "failure", rc, fileA
         );
     if (rc>32)
@@ -1059,7 +1056,7 @@ static void test_argify(void)
     /* \t isn't whitespace */
     rc=shell_execute("QuotedParam2", fileA, "a\tb c", NULL);
     ok(rc>32,
-        "expected success (33), got %s (%d), lpFile: %s\n",
+        "expected success (33), got %s (%lu), lpFile: %s\n",
         rc > 32 ? "success" : "failure", rc, fileA
         );
     if (rc>32)
@@ -1073,7 +1070,7 @@ static void test_argify(void)
     /* %* */
     rc=shell_execute("NoQuotesAllParams", fileA, "a b c d e f g h", NULL);
     ok(rc>32,
-        "expected success (33), got %s (%d), lpFile: %s\n",
+        "expected success (33), got %s (%lu), lpFile: %s\n",
         rc > 32 ? "success" : "failure", rc, fileA
         );
     if (rc>32)
@@ -1088,7 +1085,7 @@ static void test_argify(void)
     /* %* can sometimes contain only whitespaces and no args */
     rc=shell_execute("QuotedAllParams", fileA, "   ", NULL);
     ok(rc>32,
-        "expected success (33), got %s (%d), lpFile: %s\n",
+        "expected success (33), got %s (%lu), lpFile: %s\n",
         rc > 32 ? "success" : "failure", rc, fileA
         );
     if (rc>32)
@@ -1102,7 +1099,7 @@ static void test_argify(void)
     /* %~3 */
     rc=shell_execute("NoQuotesParams345etc", fileA, "a b c d e f g h", NULL);
     ok(rc>32,
-        "expected success (33), got %s (%d), lpFile: %s\n",
+        "expected success (33), got %s (%lu), lpFile: %s\n",
         rc > 32 ? "success" : "failure", rc, fileA
         );
     if (rc>32)
@@ -1117,7 +1114,7 @@ static void test_argify(void)
     /* %~3 is rest of command line starting with whitespaces after 2nd arg */
     rc=shell_execute("QuotedParams345etc", fileA, "a    ", NULL);
     ok(rc>32,
-        "expected success (33), got %s (%d), lpFile: %s\n",
+        "expected success (33), got %s (%lu), lpFile: %s\n",
         rc > 32 ? "success" : "failure", rc, fileA
         );
     if (rc>32)
@@ -1178,12 +1175,12 @@ static void test_filename(void)
         {
             ok(rc==test->rc ||
                broken(quotedfile && rc == 2), /* NT4 */
-               "%s failed: rc=%d err=%d\n", shell_call,
+               "%s failed: rc=%d err=%u\n", shell_call,
                rc, GetLastError());
         }
         else todo_wine
         {
-            ok(rc==test->rc, "%s failed: rc=%d err=%d\n", shell_call,
+            ok(rc==test->rc, "%s failed: rc=%d err=%u\n", shell_call,
                rc, GetLastError());
         }
         if (rc == 33)
@@ -1227,12 +1224,12 @@ static void test_filename(void)
             rc=33;
         if ((test->todo & 0x1)==0)
         {
-            ok(rc==test->rc, "%s failed: rc=%d err=%d\n", shell_call,
+            ok(rc==test->rc, "%s failed: rc=%d err=%u\n", shell_call,
                rc, GetLastError());
         }
         else todo_wine
         {
-            ok(rc==test->rc, "%s failed: rc=%d err=%d\n", shell_call,
+            ok(rc==test->rc, "%s failed: rc=%d err=%u\n", shell_call,
                rc, GetLastError());
         }
         if (rc==0)
@@ -1296,7 +1293,7 @@ static void test_filename(void)
          */
         sprintf(filename, "\"%s\\test file.shlexec\"", tmpdir);
         rc=shell_execute(NULL, filename, NULL, NULL);
-        ok(rc > 32, "%s failed: rc=%d err=%d\n", shell_call, rc,
+        ok(rc > 32, "%s failed: rc=%d err=%u\n", shell_call, rc,
            GetLastError());
         okChildInt("argcA", 5);
         okChildString("argvA3", "Open");
@@ -1464,11 +1461,11 @@ static void test_lnks(void)
     char filename[MAX_PATH];
     char params[MAX_PATH];
     const filename_tests_t* test;
-    int rc;
+    INT_PTR rc;
 
     sprintf(filename, "%s\\test_shortcut_shlexec.lnk", tmpdir);
     rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, filename, NULL, NULL);
-    ok(rc > 32, "%s failed: rc=%d err=%d\n", shell_call, rc,
+    ok(rc > 32, "%s failed: rc=%lu err=%u\n", shell_call, rc,
        GetLastError());
     okChildInt("argcA", 5);
     okChildString("argvA3", "Open");
@@ -1478,7 +1475,7 @@ static void test_lnks(void)
 
     sprintf(filename, "%s\\test_shortcut_exe.lnk", tmpdir);
     rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, filename, NULL, NULL);
-    ok(rc > 32, "%s failed: rc=%d err=%d\n", shell_call, rc,
+    ok(rc > 32, "%s failed: rc=%lu err=%u\n", shell_call, rc,
        GetLastError());
     okChildInt("argcA", 4);
     okChildString("argvA3", "Lnk");
@@ -1498,7 +1495,7 @@ static void test_lnks(void)
             c++;
         }
         rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, filename, NULL, NULL);
-        ok(rc > 32, "%s failed: rc=%d err=%d\n", shell_call, rc,
+        ok(rc > 32, "%s failed: rc=%lu err=%u\n", shell_call, rc,
            GetLastError());
         okChildInt("argcA", 4);
         okChildString("argvA3", "Lnk");
@@ -1517,12 +1514,12 @@ static void test_lnks(void)
             rc=33;
         if ((test->todo & 0x1)==0)
         {
-            ok(rc==test->rc, "%s failed: rc=%d err=%d\n", shell_call,
+            ok(rc==test->rc, "%s failed: rc=%lu err=%u\n", shell_call,
                rc, GetLastError());
         }
         else todo_wine
         {
-            ok(rc==test->rc, "%s failed: rc=%d err=%d\n", shell_call,
+            ok(rc==test->rc, "%s failed: rc=%lu err=%u\n", shell_call,
                rc, GetLastError());
         }
         if (rc==0)
@@ -1562,14 +1559,14 @@ static void test_exes(void)
 {
     char filename[MAX_PATH];
     char params[1024];
-    int rc;
+    INT_PTR rc;
 
     sprintf(params, "shlexec \"%s\" Exec", child_file);
 
     /* We need NOZONECHECKS on Win2003 to block a dialog */
     rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, argv0, params,
                         NULL);
-    ok(rc > 32, "%s returned %d\n", shell_call, rc);
+    ok(rc > 32, "%s returned %lu\n", shell_call, rc);
     okChildInt("argcA", 4);
     okChildString("argvA3", "Exec");
 
@@ -1580,7 +1577,7 @@ static void test_exes(void)
         {
             rc=shell_execute(NULL, filename, params, NULL);
             todo_wine {
-                ok(rc==SE_ERR_NOASSOC, "%s succeeded: rc=%d\n", shell_call, rc);
+                ok(rc==SE_ERR_NOASSOC, "%s succeeded: rc=%lu\n", shell_call, rc);
             }
         }
     }
@@ -1595,7 +1592,7 @@ static void test_exes_long(void)
     char filename[MAX_PATH];
     char params[2024];
     char longparam[MAX_PATH];
-    int rc;
+    INT_PTR rc;
 
     for (rc = 0; rc < MAX_PATH; rc++)
         longparam[rc]='a'+rc%26;
@@ -1607,7 +1604,7 @@ static void test_exes_long(void)
     /* We need NOZONECHECKS on Win2003 to block a dialog */
     rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, argv0, params,
                         NULL);
-    ok(rc > 32, "%s returned %d\n", shell_call, rc);
+    ok(rc > 32, "%s returned %lu\n", shell_call, rc);
     okChildInt("argcA", 4);
     okChildString("argvA3", longparam);
 
@@ -1618,7 +1615,7 @@ static void test_exes_long(void)
         {
             rc=shell_execute(NULL, filename, params, NULL);
             todo_wine {
-                ok(rc==SE_ERR_NOASSOC, "%s succeeded: rc=%d\n", shell_call, rc);
+                ok(rc==SE_ERR_NOASSOC, "%s succeeded: rc=%lu\n", shell_call, rc);
             }
         }
     }
@@ -1743,7 +1740,7 @@ static void test_dde(void)
     char filename[MAX_PATH], defApplication[MAX_PATH];
     const dde_tests_t* test;
     char params[1024];
-    int rc;
+    INT_PTR rc;
     HANDLE map;
     char *shared_block;
 
@@ -1787,12 +1784,12 @@ static void test_dde(void)
         CloseHandle(dde_ready_event);
         if ((test->todo & 0x1)==0)
         {
-            ok(32 < rc, "%s failed: rc=%d err=%d\n", shell_call,
+            ok(32 < rc, "%s failed: rc=%lu err=%u\n", shell_call,
                rc, GetLastError());
         }
         else todo_wine
         {
-            ok(32 < rc, "%s failed: rc=%d err=%d\n", shell_call,
+            ok(32 < rc, "%s failed: rc=%lu err=%u\n", shell_call,
                rc, GetLastError());
         }
         if (32 < rc)
@@ -1914,7 +1911,8 @@ static void test_dde_default_app(void)
     char params[1024];
     DWORD threadId;
     MSG msg;
-    int rc, which = 0;
+    INT_PTR rc;
+    int which = 0;
 
     post_quit_on_execute = FALSE;
     ddeInst = 0;
@@ -1971,12 +1969,12 @@ static void test_dde_default_app(void)
 
         if ((test->todo & 0x1)==0)
         {
-            ok(rc==test->rc[which], "%s failed: rc=%d err=%d\n", shell_call,
+            ok(rc==test->rc[which], "%s failed: rc=%lu err=%u\n", shell_call,
                rc, GetLastError());
         }
         else todo_wine
         {
-            ok(rc==test->rc[which], "%s failed: rc=%d err=%d\n", shell_call,
+            ok(rc==test->rc[which], "%s failed: rc=%lu err=%u\n", shell_call,
                rc, GetLastError());
         }
         if (rc == 33)
@@ -2066,7 +2064,7 @@ static void init_test(void)
                      FILE_ATTRIBUTE_NORMAL, NULL);
         if (hfile==INVALID_HANDLE_VALUE)
         {
-            trace("unable to create '%s': err=%d\n", filename, GetLastError());
+            trace("unable to create '%s': err=%u\n", filename, GetLastError());
             assert(0);
         }
         CloseHandle(hfile);
@@ -2191,11 +2189,11 @@ static void test_commandline(void)
     SetLastError(0xdeadbeef);
     args=CommandLineToArgvW(cmdline,NULL);
     lerror=GetLastError();
-    ok(args == NULL && lerror == ERROR_INVALID_PARAMETER, "expected NULL with ERROR_INVALID_PARAMETER got %p with %d\n",args,lerror);
+    ok(args == NULL && lerror == ERROR_INVALID_PARAMETER, "expected NULL with ERROR_INVALID_PARAMETER got %p with %u\n",args,lerror);
     SetLastError(0xdeadbeef);
     args=CommandLineToArgvW(NULL,NULL);
     lerror=GetLastError();
-    ok(args == NULL && lerror == ERROR_INVALID_PARAMETER, "expected NULL with ERROR_INVALID_PARAMETER got %p with %d\n",args,lerror);
+    ok(args == NULL && lerror == ERROR_INVALID_PARAMETER, "expected NULL with ERROR_INVALID_PARAMETER got %p with %u\n",args,lerror);
 
     wsprintfW(cmdline,fmt2,one,two,three,four);
     args=CommandLineToArgvW(cmdline,&numargs);
@@ -2248,7 +2246,7 @@ static void test_directory(void)
 {
     char path[MAX_PATH], newdir[MAX_PATH];
     char params[1024];
-    int rc;
+    INT_PTR rc;
 
     /* copy this executable to a new folder and cd to it */
     sprintf(newdir, "%s\\newfolder", tmpdir);
@@ -2262,11 +2260,11 @@ static void test_directory(void)
 
     rc=shell_execute_ex(SEE_MASK_NOZONECHECKS|SEE_MASK_FLAG_NO_UI,
                         NULL, path_find_file_name(argv0), params, NULL);
-    todo_wine ok(rc == SE_ERR_FNF, "%s returned %d\n", shell_call, rc);
+    todo_wine ok(rc == SE_ERR_FNF, "%s returned %lu\n", shell_call, rc);
 
     rc=shell_execute_ex(SEE_MASK_NOZONECHECKS|SEE_MASK_FLAG_NO_UI,
                         NULL, path_find_file_name(argv0), params, newdir);
-    ok(rc > 32, "%s returned %d\n", shell_call, rc);
+    ok(rc > 32, "%s returned %lu\n", shell_call, rc);
     okChildInt("argcA", 4);
     okChildString("argvA3", "Exec");
     todo_wine okChildPath("longPath", path);
