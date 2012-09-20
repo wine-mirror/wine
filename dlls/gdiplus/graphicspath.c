@@ -1806,14 +1806,15 @@ static void widen_open_figure(GpPath *path, GpPen *pen, int start, int end,
     path_list_node_t **last_point)
 {
     int i;
+    path_list_node_t *prev_point;
 
     if (end <= start)
         return;
 
+    prev_point = *last_point;
+
     widen_cap(&path->pathdata.Points[start], &path->pathdata.Points[start+1],
         pen, pen->startcap, pen->customstart, FALSE, TRUE, last_point);
-
-    (*last_point)->type = PathPointTypeStart;
 
     for (i=start+1; i<end; i++)
         widen_joint(&path->pathdata.Points[i-1], &path->pathdata.Points[i],
@@ -1829,6 +1830,7 @@ static void widen_open_figure(GpPath *path, GpPen *pen, int start, int end,
     widen_cap(&path->pathdata.Points[start], &path->pathdata.Points[start+1],
         pen, pen->startcap, pen->customstart, TRUE, FALSE, last_point);
 
+    prev_point->next->type = PathPointTypeStart;
     (*last_point)->type |= PathPointTypeCloseSubpath;
 }
 
