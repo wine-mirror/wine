@@ -1513,8 +1513,7 @@ BOOL WINAPI CheckRadioButton( HWND hwndDlg, int firstID,
     radioGroup.lastID = lastID;
     radioGroup.checkID = checkID;
 
-    return EnumChildWindows(hwndDlg, (WNDENUMPROC)CheckRB,
-                            (LPARAM)&radioGroup);
+    return EnumChildWindows(hwndDlg, CheckRB, (LPARAM)&radioGroup);
 }
 
 

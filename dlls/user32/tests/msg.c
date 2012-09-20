@@ -11268,8 +11268,7 @@ static void test_EndDialog(void)
     ok(GetClassInfo(0, "#32770", &cls), "GetClassInfo failed\n");
     cls.lpszClassName = "MyDialogClass";
     cls.hInstance = GetModuleHandle(0);
-    /* need a cast since a dlgproc is used as a wndproc */
-    cls.lpfnWndProc = (WNDPROC)test_dlg_proc;
+    cls.lpfnWndProc = test_dlg_proc;
     if (!RegisterClass(&cls)) assert(0);
 
     flush_sequence();
