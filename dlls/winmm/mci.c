@@ -1099,7 +1099,7 @@ static	DWORD	MCI_ParseOptArgs(DWORD* data, int _offset, LPCWSTR lpCmd,
 		break;
 	    case MCI_RETURN:
 		if (offset != _offset) {
-		    ERR("MCI_RETURN not in first position\n");
+		    FIXME("MCI_RETURN not in first position\n");
 		    return MCIERR_PARSER_INTERNAL;
 		}
 	    }
@@ -1186,7 +1186,7 @@ static	DWORD	MCI_ParseOptArgs(DWORD* data, int _offset, LPCWSTR lpCmd,
 	    return MCIERR_UNRECOGNIZED_COMMAND;
 	}
 	if (offset == MCI_DATA_SIZE) {
-	    ERR("Internal data[] buffer overflow\n");
+	    FIXME("Internal data[] buffer overflow\n");
 	    return MCIERR_PARSER_INTERNAL;
 	}
     }
@@ -1304,7 +1304,7 @@ static	DWORD	MCI_HandleReturnValues(DWORD dwRet, LPWINE_MCIDRIVER wmd, DWORD ret
 	    snprintfW(lpstrRet, uRetLen, fmt_d4, data[0], data[1], data[2], data[3]);
 	    break;
         }
-	default:		ERR("oops\n");
+	default:		FIXME("Unknown MCI return type %d\n", retType);
 	}
     }
     return LOWORD(dwRet);
@@ -1507,7 +1507,9 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
         break;
 #endif
     default:
-	ERR("oops\n");
+	FIXME("Unknown MCI return type %d\n", retType);
+	dwRet = MCIERR_PARSER_INTERNAL;
+	goto errCleanUp;
     }
 
     TRACE("verb=%s on dev=%s; offset=%d\n", 
@@ -1536,7 +1538,7 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
     case MCI_OPEN:
 	if (strcmpW(verb, wszOpen)) {
 	    FIXME("Cannot open with command %s\n", debugstr_w(verb));
-	    dwRet = MCIERR_INTERNAL;
+	    dwRet = MCIERR_DRIVER_INTERNAL;
 	    wMsg = 0;
 	    goto errCleanUp;
 	}
