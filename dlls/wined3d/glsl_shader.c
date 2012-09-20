@@ -4735,8 +4735,6 @@ static void shader_glsl_destroy(struct wined3d_shader *shader)
     const struct list *linked_programs;
     struct wined3d_context *context;
 
-    char pshader = shader_is_pshader_version(shader->reg_maps.shader_version.type);
-
     if (!shader_data || !shader_data->num_gl_shaders)
     {
         HeapFree(GetProcessHeap(), 0, shader_data);
@@ -4755,54 +4753,65 @@ static void shader_glsl_destroy(struct wined3d_shader *shader)
         LEAVE_GL();
     }
 
+    TRACE("Deleting linked programs.\n");
     linked_programs = &shader->linked_programs;
-
-    TRACE("Deleting linked programs\n");
-    if (linked_programs->next) {
+    if (linked_programs->next)
+    {
         struct glsl_shader_prog_link *entry, *entry2;
-
-        ENTER_GL();
-        if(pshader) {
-            LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, linked_programs, struct glsl_shader_prog_link, pshader_entry) {
-                delete_glsl_program_entry(priv, gl_info, entry);
-            }
-        } else {
-            LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, linked_programs, struct glsl_shader_prog_link, vshader_entry) {
-                delete_glsl_program_entry(priv, gl_info, entry);
-            }
-        }
-        LEAVE_GL();
-    }
-
-    if (pshader)
-    {
-        struct glsl_ps_compiled_shader *gl_shaders = shader_data->gl_shaders.ps;
         UINT i;
 
         ENTER_GL();
-        for (i = 0; i < shader_data->num_gl_shaders; ++i)
-        {
-            TRACE("Deleting pixel shader %u.\n", gl_shaders[i].prgId);
-            GL_EXTCALL(glDeleteObjectARB(gl_shaders[i].prgId));
-            checkGLcall("glDeleteObjectARB");
-        }
-        LEAVE_GL();
-        HeapFree(GetProcessHeap(), 0, shader_data->gl_shaders.ps);
-    }
-    else
-    {
-        struct glsl_vs_compiled_shader *gl_shaders = shader_data->gl_shaders.vs;
-        UINT i;
 
-        ENTER_GL();
-        for (i = 0; i < shader_data->num_gl_shaders; ++i)
+        switch (shader->reg_maps.shader_version.type)
         {
-            TRACE("Deleting vertex shader %u.\n", gl_shaders[i].prgId);
-            GL_EXTCALL(glDeleteObjectARB(gl_shaders[i].prgId));
-            checkGLcall("glDeleteObjectARB");
+            case WINED3D_SHADER_TYPE_PIXEL:
+            {
+                struct glsl_ps_compiled_shader *gl_shaders = shader_data->gl_shaders.ps;
+
+                LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, linked_programs,
+                        struct glsl_shader_prog_link, pshader_entry)
+                {
+                    delete_glsl_program_entry(priv, gl_info, entry);
+                }
+
+                for (i = 0; i < shader_data->num_gl_shaders; ++i)
+                {
+                    TRACE("Deleting pixel shader %u.\n", gl_shaders[i].prgId);
+                    GL_EXTCALL(glDeleteObjectARB(gl_shaders[i].prgId));
+                    checkGLcall("glDeleteObjectARB");
+                }
+                HeapFree(GetProcessHeap(), 0, shader_data->gl_shaders.ps);
+
+                break;
+            }
+
+            case WINED3D_SHADER_TYPE_VERTEX:
+            {
+                struct glsl_vs_compiled_shader *gl_shaders = shader_data->gl_shaders.vs;
+
+                LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, linked_programs,
+                        struct glsl_shader_prog_link, vshader_entry)
+                {
+                    delete_glsl_program_entry(priv, gl_info, entry);
+                }
+
+                for (i = 0; i < shader_data->num_gl_shaders; ++i)
+                {
+                    TRACE("Deleting vertex shader %u.\n", gl_shaders[i].prgId);
+                    GL_EXTCALL(glDeleteObjectARB(gl_shaders[i].prgId));
+                    checkGLcall("glDeleteObjectARB");
+                }
+                HeapFree(GetProcessHeap(), 0, shader_data->gl_shaders.vs);
+
+                break;
+            }
+
+            default:
+                ERR("Unhandled shader type %#x.\n", shader->reg_maps.shader_version.type);
+                break;
         }
+
         LEAVE_GL();
-        HeapFree(GetProcessHeap(), 0, shader_data->gl_shaders.vs);
     }
 
     HeapFree(GetProcessHeap(), 0, shader->backend_data);
