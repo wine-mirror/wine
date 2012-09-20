@@ -2117,6 +2117,35 @@ static HRESULT d3d10_effect_object_apply(struct d3d10_effect_object *o)
     }
 }
 
+static void d3d10_effect_shader_variable_destroy(struct d3d10_effect_shader_variable *s,
+        D3D10_SHADER_VARIABLE_TYPE type)
+{
+    shader_free_signature(&s->input_signature);
+    shader_free_signature(&s->output_signature);
+
+    switch (type)
+    {
+        case D3D10_SVT_VERTEXSHADER:
+            if (s->shader.vs)
+                ID3D10VertexShader_Release(s->shader.vs);
+            break;
+
+        case D3D10_SVT_PIXELSHADER:
+            if (s->shader.ps)
+                ID3D10PixelShader_Release(s->shader.ps);
+            break;
+
+        case D3D10_SVT_GEOMETRYSHADER:
+            if (s->shader.gs)
+                ID3D10GeometryShader_Release(s->shader.gs);
+            break;
+
+        default:
+            FIXME("Unhandled shader type %s.\n", debug_d3d10_shader_variable_type(type));
+            break;
+    }
+}
+
 static void d3d10_effect_variable_destroy(struct d3d10_effect_variable *v)
 {
     unsigned int i;
@@ -2159,8 +2188,7 @@ static void d3d10_effect_variable_destroy(struct d3d10_effect_variable *v)
             case D3D10_SVT_VERTEXSHADER:
             case D3D10_SVT_PIXELSHADER:
             case D3D10_SVT_GEOMETRYSHADER:
-                shader_free_signature(&((struct d3d10_effect_shader_variable *)v->data)->input_signature);
-                shader_free_signature(&((struct d3d10_effect_shader_variable *)v->data)->output_signature);
+                d3d10_effect_shader_variable_destroy(v->data, v->type->basetype);
                 break;
 
             default:
