@@ -88,7 +88,7 @@
 @ cdecl wined3d_device_get_texture(ptr long ptr)
 @ cdecl wined3d_device_get_texture_stage_state(ptr long long ptr)
 @ cdecl wined3d_device_get_transform(ptr long ptr)
-@ cdecl wined3d_device_get_vertex_declaration(ptr ptr)
+@ cdecl wined3d_device_get_vertex_declaration(ptr)
 @ cdecl wined3d_device_get_vertex_shader(ptr)
 @ cdecl wined3d_device_get_viewport(ptr ptr)
 @ cdecl wined3d_device_get_vs_consts_b(ptr long ptr long)

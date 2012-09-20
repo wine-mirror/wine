@@ -2442,16 +2442,11 @@ void CDECL wined3d_device_set_vertex_declaration(struct wined3d_device *device,
     device_invalidate_state(device, STATE_VDECL);
 }
 
-HRESULT CDECL wined3d_device_get_vertex_declaration(const struct wined3d_device *device,
-        struct wined3d_vertex_declaration **declaration)
+struct wined3d_vertex_declaration * CDECL wined3d_device_get_vertex_declaration(const struct wined3d_device *device)
 {
-    TRACE("device %p, declaration %p.\n", device, declaration);
+    TRACE("device %p.\n", device);
 
-    *declaration = device->stateBlock->state.vertex_declaration;
-    if (*declaration)
-        wined3d_vertex_declaration_incref(*declaration);
-
-    return WINED3D_OK;
+    return device->stateBlock->state.vertex_declaration;
 }
 
 HRESULT CDECL wined3d_device_set_vertex_shader(struct wined3d_device *device, struct wined3d_shader *shader)

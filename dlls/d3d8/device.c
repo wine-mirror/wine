@@ -2153,33 +2153,24 @@ static HRESULT WINAPI d3d8_device_GetVertexShader(IDirect3DDevice8 *iface, DWORD
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
     struct wined3d_vertex_declaration *wined3d_declaration;
     struct d3d8_vertex_declaration *d3d8_declaration;
-    HRESULT hr;
 
     TRACE("iface %p, shader %p.\n", iface, shader);
 
     wined3d_mutex_lock();
-    if (FAILED(hr = wined3d_device_get_vertex_declaration(device->wined3d_device, &wined3d_declaration)))
+    if ((wined3d_declaration = wined3d_device_get_vertex_declaration(device->wined3d_device)))
     {
-        wined3d_mutex_unlock();
-        WARN("Failed to get wined3d vertex declaration, hr %#x.\n", hr);
-        return hr;
+        d3d8_declaration = wined3d_vertex_declaration_get_parent(wined3d_declaration);
+        *shader = d3d8_declaration->shader_handle;
     }
-
-    if (!wined3d_declaration)
+    else
     {
-        wined3d_mutex_unlock();
         *shader = 0;
-        return D3D_OK;
     }
-
-    d3d8_declaration = wined3d_vertex_declaration_get_parent(wined3d_declaration);
-    wined3d_vertex_declaration_decref(wined3d_declaration);
     wined3d_mutex_unlock();
-    *shader = d3d8_declaration->shader_handle;
 
     TRACE("Returning %#x.\n", *shader);
 
-    return hr;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI d3d8_device_DeleteVertexShader(IDirect3DDevice8 *iface, DWORD shader)
