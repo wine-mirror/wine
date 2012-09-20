@@ -299,6 +299,11 @@ typedef struct {
     jsval_t val;
 } jsexcept_t;
 
+typedef struct {
+    const WCHAR *str;
+    DWORD len;
+} match_result_t;
+
 struct _script_ctx_t {
     LONG ref;
 
@@ -321,6 +326,7 @@ struct _script_ctx_t {
     IDispatch *host_global;
 
     BSTR last_match;
+    match_result_t match_parens[9];
     DWORD last_match_index;
     DWORD last_match_length;
 
@@ -370,11 +376,6 @@ HRESULT create_vbarray_constr(script_ctx_t*,jsdisp_t*,jsdisp_t**) DECLSPEC_HIDDE
 
 IUnknown *create_ax_site(script_ctx_t*) DECLSPEC_HIDDEN;
 HRESULT create_jscaller(script_ctx_t*) DECLSPEC_HIDDEN;
-
-typedef struct {
-    const WCHAR *str;
-    DWORD len;
-} match_result_t;
 
 #define REM_CHECK_GLOBAL   0x0001
 #define REM_RESET_INDEX    0x0002

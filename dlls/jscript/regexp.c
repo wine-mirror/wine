@@ -101,6 +101,16 @@ static const WCHAR leftContextW[] =
 static const WCHAR rightContextW[] =
     {'r','i','g','h','t','C','o','n','t','e','x','t',0};
 
+static const WCHAR idx1W[] = {'$','1',0};
+static const WCHAR idx2W[] = {'$','2',0};
+static const WCHAR idx3W[] = {'$','3',0};
+static const WCHAR idx4W[] = {'$','4',0};
+static const WCHAR idx5W[] = {'$','5',0};
+static const WCHAR idx6W[] = {'$','6',0};
+static const WCHAR idx7W[] = {'$','7',0};
+static const WCHAR idx8W[] = {'$','8',0};
+static const WCHAR idx9W[] = {'$','9',0};
+
 static const WCHAR undefinedW[] = {'u','n','d','e','f','i','n','e','d',0};
 static const WCHAR emptyW[] = {0};
 
@@ -3388,6 +3398,23 @@ static HRESULT do_regexp_match_next(script_ctx_t *ctx, RegExpInstance *regexp, D
         }
     }
 
+    if(!(rem_flags & REM_NO_CTX_UPDATE)) {
+        DWORD i, n = min(sizeof(ctx->match_parens)/sizeof(ctx->match_parens[0]), regexp->jsregexp->parenCount);
+
+        for(i=0; i < n; i++) {
+            if(result->parens[i].index == -1) {
+                ctx->match_parens[i].str = NULL;
+                ctx->match_parens[i].len = 0;
+            }else {
+                ctx->match_parens[i].str = ctx->last_match + result->parens[i].index;
+                ctx->match_parens[i].len = result->parens[i].length;
+            }
+        }
+
+        if(n < sizeof(ctx->match_parens)/sizeof(ctx->match_parens[0]))
+            memset(ctx->match_parens+n, 0, sizeof(ctx->match_parens) - n*sizeof(ctx->match_parens[0]));
+    }
+
     matchlen = (result->cp-*cp) - gData.skipped;
     *cp = result->cp;
     ret->str = result->cp-matchlen;
@@ -4000,6 +4027,92 @@ HRESULT regexp_string_match(script_ctx_t *ctx, jsdisp_t *re, BSTR str, jsval_t *
     return hres;
 }
 
+static HRESULT global_idx(script_ctx_t *ctx, DWORD flags, DWORD idx, jsval_t *r)
+{
+    switch(flags) {
+    case DISPATCH_PROPERTYGET: {
+        BSTR ret = NULL;
+
+        ret = SysAllocStringLen(ctx->match_parens[idx].str, ctx->match_parens[idx].len);
+        if(!ret)
+            return E_OUTOFMEMORY;
+
+        *r = jsval_string(ret);
+        break;
+    }
+    case DISPATCH_PROPERTYPUT:
+        break;
+    default:
+        FIXME("unsupported flags\n");
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
+}
+
+static HRESULT RegExpConstr_idx1(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
+         unsigned argc, jsval_t *argv, jsval_t *r)
+{
+    TRACE("\n");
+    return global_idx(ctx, flags, 0, r);
+}
+
+static HRESULT RegExpConstr_idx2(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
+         unsigned argc, jsval_t *argv, jsval_t *r)
+{
+    TRACE("\n");
+    return global_idx(ctx, flags, 1, r);
+}
+
+static HRESULT RegExpConstr_idx3(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
+         unsigned argc, jsval_t *argv, jsval_t *r)
+{
+    TRACE("\n");
+    return global_idx(ctx, flags, 2, r);
+}
+
+static HRESULT RegExpConstr_idx4(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
+         unsigned argc, jsval_t *argv, jsval_t *r)
+{
+    TRACE("\n");
+    return global_idx(ctx, flags, 3, r);
+}
+
+static HRESULT RegExpConstr_idx5(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
+         unsigned argc, jsval_t *argv, jsval_t *r)
+{
+    TRACE("\n");
+    return global_idx(ctx, flags, 4, r);
+}
+
+static HRESULT RegExpConstr_idx6(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
+         unsigned argc, jsval_t *argv, jsval_t *r)
+{
+    TRACE("\n");
+    return global_idx(ctx, flags, 5, r);
+}
+
+static HRESULT RegExpConstr_idx7(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
+         unsigned argc, jsval_t *argv, jsval_t *r)
+{
+    TRACE("\n");
+    return global_idx(ctx, flags, 6, r);
+}
+
+static HRESULT RegExpConstr_idx8(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
+         unsigned argc, jsval_t *argv, jsval_t *r)
+{
+    TRACE("\n");
+    return global_idx(ctx, flags, 7, r);
+}
+
+static HRESULT RegExpConstr_idx9(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
+         unsigned argc, jsval_t *argv, jsval_t *r)
+{
+    TRACE("\n");
+    return global_idx(ctx, flags, 8, r);
+}
+
 static HRESULT RegExpConstr_leftContext(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
          unsigned argc, jsval_t *argv, jsval_t *r)
 {
@@ -4108,6 +4221,15 @@ static HRESULT RegExpConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
 }
 
 static const builtin_prop_t RegExpConstr_props[] = {
+    {idx1W,           RegExpConstr_idx1,           0},
+    {idx2W,           RegExpConstr_idx2,           0},
+    {idx3W,           RegExpConstr_idx3,           0},
+    {idx4W,           RegExpConstr_idx4,           0},
+    {idx5W,           RegExpConstr_idx5,           0},
+    {idx6W,           RegExpConstr_idx6,           0},
+    {idx7W,           RegExpConstr_idx7,           0},
+    {idx8W,           RegExpConstr_idx8,           0},
+    {idx9W,           RegExpConstr_idx9,           0},
     {leftContextW,    RegExpConstr_leftContext,    0},
     {rightContextW,   RegExpConstr_rightContext,   0}
 };

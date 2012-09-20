@@ -598,4 +598,27 @@ ok(tmp === "x*y", '"x/y".replace(/[/]/, "*") = ' + tmp);
 tmp = "x/y".replace(/[xy/]/g, "*");
 ok(tmp === "***", '"x/y".replace(/[xy/]/, "*") = ' + tmp);
 
+/(b)/.exec("abc");
+ok(RegExp.$1 === "b", "RegExp.$1 = " + RegExp.$1);
+ok("$2" in RegExp, "RegExp.$2 doesn't exist");
+ok(RegExp.$2 === "", "RegExp.$2 = " + RegExp.$2);
+ok(RegExp.$9 === "", "RegExp.$9 = " + RegExp.$9);
+ok(!("$10" in RegExp), "RegExp.$10 exists");
+
+/(b)(b)(b)(b)(b)(b)(b)(b)(b)(b)(b)/.exec("abbbbbbbbbbbc");
+ok(RegExp.$1 === "b", "RegExp.$1 = " + RegExp.$1);
+ok(RegExp.$2 === "b", "[2] RegExp.$2 = " + RegExp.$2);
+ok(RegExp.$9 === "b", "RegExp.$9 = " + RegExp.$9);
+ok(!("$10" in RegExp), "RegExp.$10 exists");
+
+/(b)/.exec("abc");
+ok(RegExp.$1 === "b", "RegExp.$1 = " + RegExp.$1);
+ok("$2" in RegExp, "RegExp.$2 doesn't exist");
+ok(RegExp.$2 === "", "RegExp.$2 = " + RegExp.$2);
+ok(RegExp.$9 === "", "RegExp.$9 = " + RegExp.$9);
+ok(!("$10" in RegExp), "RegExp.$10 exists");
+
+RegExp.$1 = "a";
+ok(RegExp.$1 === "b", "RegExp.$1 = " + RegExp.$1);
+
 reportSuccess();
