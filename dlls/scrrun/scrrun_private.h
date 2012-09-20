@@ -19,10 +19,12 @@
 #define _SCRRUN_PRIVATE_H
 
 extern HRESULT WINAPI FileSystem_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI Dictionary_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
 
 typedef enum tid_t
 {
     NULL_tid,
+    IDictionary_tid,
     IFileSystem3_tid,
     LAST_tid
 } tid_t;

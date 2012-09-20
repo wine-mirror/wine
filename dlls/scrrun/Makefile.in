@@ -2,6 +2,7 @@ MODULE    = scrrun.dll
 IMPORTS   = uuid oleaut32
 
 C_SRCS = \
+	dictionary.c \
 	filesystem.c \
 	scrrun.c
 
