@@ -898,6 +898,13 @@ static DWORD MCI_SendCommandFrom32(MCIDEVICEID wDevID, UINT16 wMsg, DWORD_PTR dw
 
 /**************************************************************************
  * 			MCI_FinishOpen				[internal]
+ *
+ * Three modes of operation:
+ * 1 open foo.ext ...        -> OPEN_ELEMENT with lpstrElementName=foo.ext
+ *   open sequencer!foo.ext     same         with lpstrElementName=foo.ext
+ * 2 open new type waveaudio -> OPEN_ELEMENT with empty ("") lpstrElementName
+ * 3 open sequencer          -> OPEN_ELEMENT unset, and
+ *   capability sequencer       (auto-open)  likewise
  */
 static	DWORD	MCI_FinishOpen(LPWINE_MCIDRIVER wmd, LPMCI_OPEN_PARMSW lpParms,
 			       DWORD dwParam)
@@ -1371,6 +1378,8 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
 		dwRet = MCIERR_MISSING_DEVICE_NAME;
 		goto errCleanUp;
 	    }
+	    dwFlags |= MCI_OPEN_ELEMENT;
+	    data.open.lpstrElementName = &wszNull[0];
 	} else if ((devType = strchrW(dev, '!')) != NULL) {
 	    *devType++ = '\0';
 	    tmp = devType; devType = dev; dev = tmp;
