@@ -134,7 +134,7 @@
 #@ stub GetSessionCompartmentId
 @ stdcall GetTcp6Table( ptr ptr long )
 @ stdcall GetTcp6Table2( ptr ptr long )
-#@ stub GetTcpStatisticsEx
+@ stdcall GetTcpStatisticsEx( ptr long )
 @ stdcall GetTcpStatistics( ptr )
 @ stub GetTcpStatsFromStack
 @ stdcall GetTcpTable( ptr ptr long )

@@ -659,13 +659,17 @@ static void testGetTcpStatisticsEx(void)
 
     if (!pGetTcpStatisticsEx)
     {
-        skip( "GetTcpStatisticsEx not available\n" );
+        win_skip( "GetTcpStatisticsEx not available\n" );
         return;
     }
 
     apiReturn = pGetTcpStatisticsEx(NULL, AF_INET);
     ok(apiReturn == ERROR_INVALID_PARAMETER,
        "GetTcpStatisticsEx(NULL, AF_INET); returned %d, expected ERROR_INVALID_PARAMETER\n", apiReturn);
+
+    apiReturn = pGetTcpStatisticsEx(&stats, AF_BAN);
+    ok(apiReturn == ERROR_INVALID_PARAMETER || apiReturn == ERROR_NOT_SUPPORTED,
+       "GetTcpStatisticsEx(&stats, AF_BAN) returned %d, expected ERROR_INVALID_PARAMETER\n", apiReturn);
 
     apiReturn = pGetTcpStatisticsEx(&stats, AF_INET);
     ok(apiReturn == NO_ERROR, "GetTcpStatisticsEx returned %d, expected NO_ERROR\n", apiReturn);
@@ -690,8 +694,8 @@ static void testGetTcpStatisticsEx(void)
     }
 
     apiReturn = pGetTcpStatisticsEx(&stats, AF_INET6);
-    ok(apiReturn == NO_ERROR || broken(apiReturn == ERROR_NOT_SUPPORTED),
-       "GetTcpStatisticsEx returned %d, expected NO_ERROR\n", apiReturn);
+    todo_wine ok(apiReturn == NO_ERROR || broken(apiReturn == ERROR_NOT_SUPPORTED),
+                 "GetTcpStatisticsEx returned %d, expected NO_ERROR\n", apiReturn);
     if (apiReturn == NO_ERROR && winetest_debug > 1)
     {
         trace( "TCP IPv6 Ex stats:\n" );

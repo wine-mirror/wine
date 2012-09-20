@@ -975,23 +975,31 @@ DWORD WINAPI GetIpStatistics(PMIB_IPSTATS stats)
 }
 
 /******************************************************************
- *    GetTcpStatistics (IPHLPAPI.@)
+ *    GetTcpStatisticsEx (IPHLPAPI.@)
  *
- * Get the TCP statistics for the local computer.
+ * Get the IPv4 and IPv6 TCP statistics for the local computer.
  *
  * PARAMS
  *  stats [Out] buffer for TCP statistics
+ *  family [In] specifies wether IPv4 or IPv6 statistics are returned
  *
  * RETURNS
  *  Success: NO_ERROR
  *  Failure: error code from winerror.h
  */
-DWORD WINAPI GetTcpStatistics(PMIB_TCPSTATS stats)
+DWORD WINAPI GetTcpStatisticsEx(PMIB_TCPSTATS stats, DWORD family)
 {
     DWORD ret = ERROR_NOT_SUPPORTED;
 
     if (!stats) return ERROR_INVALID_PARAMETER;
+    if (family != WS_AF_INET && family != WS_AF_INET6) return ERROR_INVALID_PARAMETER;
     memset( stats, 0, sizeof(*stats) );
+
+    if (family == WS_AF_INET6)
+    {
+        FIXME( "unimplemented for IPv6\n" );
+        return ret;
+    }
 
 #ifdef __linux__
     {
@@ -1111,6 +1119,22 @@ DWORD WINAPI GetTcpStatistics(PMIB_TCPSTATS stats)
     return ret;
 }
 
+/******************************************************************
+ *    GetTcpStatistics (IPHLPAPI.@)
+ *
+ * Get the TCP statistics for the local computer.
+ *
+ * PARAMS
+ *  stats [Out] buffer for TCP statistics
+ *
+ * RETURNS
+ *  Success: NO_ERROR
+ *  Failure: error code from winerror.h
+ */
+DWORD WINAPI GetTcpStatistics(PMIB_TCPSTATS stats)
+{
+    return GetTcpStatisticsEx(stats, WS_AF_INET);
+}
 
 /******************************************************************
  *    GetUdpStatistics (IPHLPAPI.@)
