@@ -2138,10 +2138,9 @@ static HRESULT WINAPI d3d8_device_SetVertexShader(IDirect3DDevice8 *iface, DWORD
         return D3DERR_INVALIDCALL;
     }
 
-    hr = wined3d_device_set_vertex_declaration(device->wined3d_device,
+    wined3d_device_set_vertex_declaration(device->wined3d_device,
             shader_impl->vertex_declaration->wined3d_vertex_declaration);
-    if (SUCCEEDED(hr))
-        hr = wined3d_device_set_vertex_shader(device->wined3d_device, shader_impl->wined3d_shader);
+    hr = wined3d_device_set_vertex_shader(device->wined3d_device, shader_impl->wined3d_shader);
     wined3d_mutex_unlock();
 
     TRACE("Returning hr %#x\n", hr);

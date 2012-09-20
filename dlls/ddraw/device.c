@@ -3406,16 +3406,8 @@ static HRESULT d3d_device7_DrawPrimitive(IDirect3DDevice7 *iface,
     /* Get the stride */
     stride = get_flexible_vertex_size(fvf);
 
-    /* Set the FVF */
     wined3d_mutex_lock();
-    hr = wined3d_device_set_vertex_declaration(device->wined3d_device, ddraw_find_decl(device->ddraw, fvf));
-    if (hr != D3D_OK)
-    {
-        wined3d_mutex_unlock();
-        return hr;
-    }
-
-    /* This method translates to the user pointer draw of WineD3D */
+    wined3d_device_set_vertex_declaration(device->wined3d_device, ddraw_find_decl(device->ddraw, fvf));
     wined3d_device_set_primitive_type(device->wined3d_device, primitive_type);
     hr = wined3d_device_draw_primitive_up(device->wined3d_device, vertex_count, vertices, stride);
     wined3d_mutex_unlock();
@@ -3518,14 +3510,7 @@ static HRESULT d3d_device7_DrawIndexedPrimitive(IDirect3DDevice7 *iface,
 
     /* Set the D3DDevice's FVF */
     wined3d_mutex_lock();
-    hr = wined3d_device_set_vertex_declaration(device->wined3d_device, ddraw_find_decl(device->ddraw, fvf));
-    if (FAILED(hr))
-    {
-        WARN("Failed to set vertex declaration, hr %#x.\n", hr);
-        wined3d_mutex_unlock();
-        return hr;
-    }
-
+    wined3d_device_set_vertex_declaration(device->wined3d_device, ddraw_find_decl(device->ddraw, fvf));
     wined3d_device_set_primitive_type(device->wined3d_device, primitive_type);
     hr = wined3d_device_draw_indexed_primitive_up(device->wined3d_device, index_count, indices,
             WINED3DFMT_R16_UINT, vertices, get_flexible_vertex_size(fvf));
@@ -3992,15 +3977,7 @@ static HRESULT d3d_device7_DrawPrimitiveVB(IDirect3DDevice7 *iface, D3DPRIMITIVE
     stride = get_flexible_vertex_size(vb->fvf);
 
     wined3d_mutex_lock();
-    hr = wined3d_device_set_vertex_declaration(device->wined3d_device, vb->wineD3DVertexDeclaration);
-    if (FAILED(hr))
-    {
-        WARN("Failed to set vertex declaration, hr %#x.\n", hr);
-        wined3d_mutex_unlock();
-        return hr;
-    }
-
-    /* Set the vertex stream source */
+    wined3d_device_set_vertex_declaration(device->wined3d_device, vb->wineD3DVertexDeclaration);
     hr = wined3d_device_set_stream_source(device->wined3d_device, 0, vb->wineD3DVertexBuffer, 0, stride);
     if (FAILED(hr))
     {
@@ -4091,13 +4068,7 @@ static HRESULT d3d_device7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
 
     wined3d_mutex_lock();
 
-    hr = wined3d_device_set_vertex_declaration(This->wined3d_device, vb->wineD3DVertexDeclaration);
-    if (FAILED(hr))
-    {
-        ERR(" (%p) Setting the FVF failed, hr = %x!\n", This, hr);
-        wined3d_mutex_unlock();
-        return hr;
-    }
+    wined3d_device_set_vertex_declaration(This->wined3d_device, vb->wineD3DVertexDeclaration);
 
     /* check that the buffer is large enough to hold the indices,
      * reallocate if necessary. */

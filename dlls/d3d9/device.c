@@ -2073,16 +2073,15 @@ static HRESULT WINAPI d3d9_device_SetVertexDeclaration(IDirect3DDevice9Ex *iface
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
     struct d3d9_vertex_declaration *decl_impl = unsafe_impl_from_IDirect3DVertexDeclaration9(declaration);
-    HRESULT hr;
 
     TRACE("iface %p, declaration %p.\n", iface, declaration);
 
     wined3d_mutex_lock();
-    hr = wined3d_device_set_vertex_declaration(device->wined3d_device,
+    wined3d_device_set_vertex_declaration(device->wined3d_device,
             decl_impl ? decl_impl->wined3d_declaration : NULL);
     wined3d_mutex_unlock();
 
-    return hr;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI d3d9_device_GetVertexDeclaration(IDirect3DDevice9Ex *iface,
@@ -2188,7 +2187,6 @@ static HRESULT WINAPI d3d9_device_SetFVF(IDirect3DDevice9Ex *iface, DWORD fvf)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
     struct wined3d_vertex_declaration *decl;
-    HRESULT hr;
 
     TRACE("iface %p, fvf %#x.\n", iface, fvf);
 
@@ -2206,12 +2204,10 @@ static HRESULT WINAPI d3d9_device_SetFVF(IDirect3DDevice9Ex *iface, DWORD fvf)
         return D3DERR_DRIVERINTERNALERROR;
     }
 
-    hr = wined3d_device_set_vertex_declaration(device->wined3d_device, decl);
-    if (FAILED(hr))
-        ERR("Failed to set vertex declaration.\n");
+    wined3d_device_set_vertex_declaration(device->wined3d_device, decl);
     wined3d_mutex_unlock();
 
-    return hr;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI d3d9_device_GetFVF(IDirect3DDevice9Ex *iface, DWORD *fvf)

@@ -2411,7 +2411,7 @@ void CDECL wined3d_device_get_scissor_rect(const struct wined3d_device *device, 
     TRACE("Returning rect %s.\n", wine_dbgstr_rect(rect));
 }
 
-HRESULT CDECL wined3d_device_set_vertex_declaration(struct wined3d_device *device,
+void CDECL wined3d_device_set_vertex_declaration(struct wined3d_device *device,
         struct wined3d_vertex_declaration *declaration)
 {
     struct wined3d_vertex_declaration *prev = device->updateStateBlock->state.vertex_declaration;
@@ -2429,17 +2429,17 @@ HRESULT CDECL wined3d_device_set_vertex_declaration(struct wined3d_device *devic
     if (device->isRecordingState)
     {
         TRACE("Recording... not performing anything.\n");
-        return WINED3D_OK;
+        return;
     }
-    else if (declaration == prev)
+
+    if (declaration == prev)
     {
         /* Checked after the assignment to allow proper stateblock recording. */
         TRACE("Application is setting the old declaration over, nothing to do.\n");
-        return WINED3D_OK;
+        return;
     }
 
     device_invalidate_state(device, STATE_VDECL);
-    return WINED3D_OK;
 }
 
 HRESULT CDECL wined3d_device_get_vertex_declaration(const struct wined3d_device *device,
