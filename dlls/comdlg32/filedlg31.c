@@ -1069,7 +1069,7 @@ static LONG FD31_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
   return TRUE;
 }
 
-int FD31_GetFldrHeight(void)
+static int FD31_GetFldrHeight(void)
 {
   return fldrHeight;
 }
