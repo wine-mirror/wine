@@ -90,6 +90,7 @@ static void strcat_param(char* str, const char* param)
 }
 
 static char shell_call[2048]="";
+static int bad_shellexecute = 0;
 static INT_PTR shell_execute(LPCSTR operation, LPCSTR file, LPCSTR parameters, LPCSTR directory)
 {
     INT_PTR rc, rcEmpty = 0;
@@ -133,7 +134,7 @@ static INT_PTR shell_execute(LPCSTR operation, LPCSTR file, LPCSTR parameters, L
                 rc = SE_ERR_NOASSOC;
             }
         }
-        ok(wait_rc==WAIT_OBJECT_0 || rc <= 32, "WaitForSingleObject returned %d\n", wait_rc);
+        ok(wait_rc==WAIT_OBJECT_0 || rc <= 32, "%s WaitForSingleObject returned %d\n", shell_call, wait_rc);
     }
     /* The child process may have changed the result file, so let profile
      * functions know about it
@@ -143,8 +144,12 @@ static INT_PTR shell_execute(LPCSTR operation, LPCSTR file, LPCSTR parameters, L
         dump_child();
 
     if(!operation)
-        ok(rc == rcEmpty || broken(rc > 32 && rcEmpty == SE_ERR_NOASSOC) /* NT4 */,
-                "Got different return value with empty string: %lu %lu\n", rc, rcEmpty);
+    {
+        if (rc != rcEmpty && rcEmpty == SE_ERR_NOASSOC) /* NT4 */
+            bad_shellexecute = 1;
+        ok(rc == rcEmpty || broken(rc != rcEmpty && rcEmpty == SE_ERR_NOASSOC) /* NT4 */,
+           "%s Got different return value with empty string: %lu %lu\n", shell_call, rc, rcEmpty);
+    }
 
     return rc;
 }
@@ -1302,6 +1307,124 @@ static void test_filename(void)
     }
 }
 
+typedef struct
+{
+    const char* urlprefix;
+    const char* basename;
+    int flags;
+    int todo;
+} fileurl_tests_t;
+
+#define URL_SUCCESS  0x1
+#define USE_COLON    0x2
+#define USE_BSLASH   0x4
+
+static fileurl_tests_t fileurl_tests[]=
+{
+    {"file:///", "%s\\nonexistent.shlexec", 0, 0x1},
+    {"file:/", "%s\\test file.shlexec", URL_SUCCESS, 0x1},
+    {"file://", "%s\\test file.shlexec", URL_SUCCESS, 0x1},
+    {"file:///", "%s\\test file.shlexec", URL_SUCCESS, 0x1},
+    {"File:///", "%s\\test file.shlexec", URL_SUCCESS, 0x1},
+    {"file:///", "%s\\test file.shlexec", URL_SUCCESS | USE_COLON, 0x1},
+    {"file:///", "%s\\test file.shlexec", URL_SUCCESS | USE_BSLASH, 0x1},
+    {"file:////", "%s\\test file.shlexec", URL_SUCCESS, 0x1},
+    {"file://///", "%s\\test file.shlexec", 0, 0x1},
+    {"file://localhost/", "%s\\test file.shlexec", URL_SUCCESS, 0x1},
+    {"file://localhost:80/", "%s\\test file.shlexec", 0, 0x1},
+    {"file://LocalHost/", "%s\\test file.shlexec", URL_SUCCESS, 0x1},
+    {"file://127.0.0.1/", "%s\\test file.shlexec", 0, 0x1},
+    {"file://::1/", "%s\\test file.shlexec", 0, 0x1},
+    {"file://notahost/", "%s\\test file.shlexec", 0, 0x1},
+    {"file://www.winehq.org/", "%s\\test file.shlexec", 0, 0x1},
+
+    {NULL, NULL, 0, 0}
+};
+
+static void test_fileurl(void)
+{
+    char filename[MAX_PATH], fileurl[MAX_PATH], longtmpdir[MAX_PATH];
+    char command[MAX_PATH];
+    const fileurl_tests_t* test;
+    char *s;
+    INT_PTR rc;
+
+    rc = (INT_PTR)ShellExecute(NULL, NULL, "file:///nosuchfile.shlexec", NULL, NULL, SW_SHOWNORMAL);
+    if (rc > 32)
+    {
+        win_skip("shell32 is too old (likely < 4.72). Skipping the file URL tests\n");
+        return;
+    }
+
+    get_long_path_name(tmpdir, longtmpdir, sizeof(longtmpdir)/sizeof(*longtmpdir));
+
+    test=fileurl_tests;
+    while (test->basename)
+    {
+        /* Build the file URL */
+        sprintf(filename, test->basename, longtmpdir);
+        strcpy(fileurl, test->urlprefix);
+        strcat(fileurl, filename);
+        s = fileurl + strlen(test->urlprefix);
+        while (*s)
+        {
+            if (!(test->flags & USE_COLON) && *s == ':')
+                *s = '|';
+            else if (!(test->flags & USE_BSLASH) && *s == '\\')
+                *s = '/';
+            s++;
+        }
+
+        /* Test it first with FindExecutable() */
+        rc = (INT_PTR)FindExecutableA(fileurl, NULL, command);
+        ok(rc == SE_ERR_FNF, "FindExecutable(%s) failed: bad rc=%lu\n", fileurl, rc);
+
+        /* Then ShellExecute() */
+        rc = shell_execute(NULL, fileurl, NULL, NULL);
+        if (bad_shellexecute)
+        {
+            win_skip("shell32 is too old (likely 4.72). Skipping the file URL tests\n");
+            break;
+        }
+        if (test->flags & URL_SUCCESS)
+        {
+            if ((test->todo & 0x1) == 0)
+                ok(rc > 32, "%s failed: bad rc=%lu\n", shell_call, rc);
+            else todo_wine
+                ok(rc > 32, "%s failed: bad rc=%lu\n", shell_call, rc);
+        }
+        else
+        {
+            if ((test->todo & 0x1) == 0)
+                ok(rc == SE_ERR_FNF || rc == SE_ERR_PNF ||
+                   broken(rc == SE_ERR_ACCESSDENIED) /* win2000 */,
+                   "%s failed: bad rc=%lu\n", shell_call, rc);
+            else todo_wine
+                ok(rc == SE_ERR_FNF || rc == SE_ERR_PNF ||
+                   broken(rc == SE_ERR_ACCESSDENIED) /* win2000 */,
+                   "%s failed: bad rc=%lu\n", shell_call, rc);
+        }
+        if (rc == 33)
+        {
+            if ((test->todo & 0x2) == 0)
+                okChildInt("argcA", 5);
+            else todo_wine
+                okChildInt("argcA", 5);
+
+            if ((test->todo & 0x4) == 0)
+                okChildString("argvA3", "Open");
+            else todo_wine
+                okChildString("argvA3", "Open");
+
+            if ((test->todo & 0x8) == 0)
+                okChildPath("argvA4", filename);
+            else todo_wine
+                okChildPath("argvA4", filename);
+        }
+        test++;
+    }
+}
+
 static void test_find_executable(void)
 {
     char notepad_path[MAX_PATH];
@@ -2288,6 +2411,7 @@ START_TEST(shlexec)
     test_argify();
     test_lpFile_parsed();
     test_filename();
+    test_fileurl();
     test_find_executable();
     test_lnks();
     test_exes();
