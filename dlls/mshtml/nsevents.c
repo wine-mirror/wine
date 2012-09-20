@@ -288,6 +288,11 @@ static nsresult NSAPI handle_htmlevent(nsIDOMEventListener *iface, nsIDOMEvent *
 
     TRACE("%p\n", This->This);
 
+    if(!doc) {
+        WARN("NULL doc\n");
+        return NS_OK;
+    }
+
     nsAString_Init(&type_str, NULL);
     nsIDOMEvent_GetType(event, &type_str);
     nsAString_GetData(&type_str, &type);
