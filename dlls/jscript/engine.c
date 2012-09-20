@@ -771,15 +771,13 @@ static HRESULT interp_end_finally(exec_ctx_t *ctx)
 
     assert(is_bool(stack_top(ctx)));
     if(!get_bool(stack_top(ctx))) {
-        HRESULT hres;
-
         TRACE("passing exception\n");
 
         jsval_release(v);
         stack_popn(ctx, 1);
 
         ctx->script->ei.val = stack_pop(ctx);
-        return SUCCEEDED(hres) ? DISP_E_EXCEPTION : hres;
+        return DISP_E_EXCEPTION;
     }
 
     stack_popn(ctx, 2);
