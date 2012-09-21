@@ -527,7 +527,7 @@ failed:
 /***********************************************************************
  *              create_icon_pixmaps
  */
-static BOOL create_icon_pixmaps( HDC hdc, const ICONINFO *icon, struct x11drv_win_data *data )
+static BOOL create_icon_pixmaps( HDC hdc, const ICONINFO *icon, Pixmap *icon_ret, Pixmap *mask_ret )
 {
     char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
     BITMAPINFO *info = (BITMAPINFO *)buffer;
@@ -573,8 +573,8 @@ static BOOL create_icon_pixmaps( HDC hdc, const ICONINFO *icon, struct x11drv_wi
     bits.ptr = NULL;
     if (!mask_pixmap) goto failed;
 
-    data->icon_pixmap = color_pixmap;
-    data->icon_mask = mask_pixmap;
+    *icon_ret = color_pixmap;
+    *mask_ret = mask_pixmap;
     return TRUE;
 
 failed:
@@ -586,18 +586,16 @@ failed:
 
 
 /***********************************************************************
- *              set_icon_hints
- *
- * Set the icon wm hints
+ *              fetch_icon_data
  */
-static void set_icon_hints( HWND hwnd, HICON icon_big, HICON icon_small )
+static void fetch_icon_data( HWND hwnd, HICON icon_big, HICON icon_small )
 {
-    Display *display = thread_display();
     struct x11drv_win_data *data;
     ICONINFO ii, ii_small;
     HDC hDC;
     unsigned int size;
     unsigned long *bits;
+    Pixmap icon_pixmap, mask_pixmap;
 
     if (!icon_big)
     {
@@ -610,13 +608,6 @@ static void set_icon_hints( HWND hwnd, HICON icon_big, HICON icon_small )
         icon_small = (HICON)SendMessageW( hwnd, WM_GETICON, ICON_SMALL, 0 );
         if (!icon_small) icon_small = (HICON)GetClassLongPtrW( hwnd, GCLP_HICONSM );
     }
-
-    if (!(data = X11DRV_get_win_data( hwnd ))) return;
-
-    if (data->icon_pixmap) XFreePixmap( gdi_display, data->icon_pixmap );
-    if (data->icon_mask) XFreePixmap( gdi_display, data->icon_mask );
-    data->icon_pixmap = data->icon_mask = 0;
-    data->wm_hints->flags &= ~(IconPixmapHint | IconMaskHint);
 
     if (!GetIconInfo(icon_big, &ii)) return;
 
@@ -642,22 +633,30 @@ static void set_icon_hints( HWND hwnd, HICON icon_big, HICON icon_small )
         DeleteObject( ii_small.hbmColor );
         DeleteObject( ii_small.hbmMask );
     }
-    if (bits)
-        XChangeProperty( display, data->whole_window, x11drv_atom(_NET_WM_ICON),
-                         XA_CARDINAL, 32, PropModeReplace, (unsigned char *)bits, size );
-    else
-        XDeleteProperty( display, data->whole_window, x11drv_atom(_NET_WM_ICON) );
-    HeapFree( GetProcessHeap(), 0, bits );
 
-    if (create_icon_pixmaps( hDC, &ii, data ))
-    {
-        data->wm_hints->icon_pixmap = data->icon_pixmap;
-        data->wm_hints->icon_mask = data->icon_mask;
-        data->wm_hints->flags |= IconPixmapHint | IconMaskHint;
-    }
+    if (!create_icon_pixmaps( hDC, &ii, &icon_pixmap, &mask_pixmap )) icon_pixmap = mask_pixmap = 0;
+
     DeleteObject( ii.hbmColor );
     DeleteObject( ii.hbmMask );
     DeleteDC(hDC);
+
+    if ((data = get_win_data( hwnd )))
+    {
+        if (data->icon_pixmap) XFreePixmap( gdi_display, data->icon_pixmap );
+        if (data->icon_mask) XFreePixmap( gdi_display, data->icon_mask );
+        HeapFree( GetProcessHeap(), 0, data->icon_bits );
+        data->icon_pixmap = icon_pixmap;
+        data->icon_mask = mask_pixmap;
+        data->icon_bits = bits;
+        data->icon_size = size;
+        release_win_data( data );
+    }
+    else
+    {
+        if (icon_pixmap) XFreePixmap( gdi_display, icon_pixmap );
+        if (mask_pixmap) XFreePixmap( gdi_display, mask_pixmap );
+        HeapFree( GetProcessHeap(), 0, bits );
+    }
 }
 
 
@@ -746,6 +745,7 @@ static void set_style_hints( Display *display, struct x11drv_win_data *data, DWO
     Window group_leader = data->whole_window;
     HWND owner = GetWindow( data->hwnd, GW_OWNER );
     Window owner_win = X11DRV_get_whole_window( owner );
+    XWMHints *wm_hints;
     Atom window_type;
 
     if (owner_win)
@@ -766,15 +766,29 @@ static void set_style_hints( Display *display, struct x11drv_win_data *data, DWO
     XChangeProperty(display, data->whole_window, x11drv_atom(_NET_WM_WINDOW_TYPE),
 		    XA_ATOM, 32, PropModeReplace, (unsigned char*)&window_type, 1);
 
-    /* wm hints */
-    if (data->wm_hints)
+    if ((wm_hints = XAllocWMHints()))
     {
-        data->wm_hints->flags |= InputHint | StateHint | WindowGroupHint;
-        data->wm_hints->input = !use_take_focus && !(style & WS_DISABLED);
-        data->wm_hints->initial_state = (style & WS_MINIMIZE) ? IconicState : NormalState;
-        data->wm_hints->window_group = group_leader;
-        XSetWMHints( display, data->whole_window, data->wm_hints );
+        wm_hints->flags = InputHint | StateHint | WindowGroupHint;
+        wm_hints->input = !use_take_focus && !(style & WS_DISABLED);
+        wm_hints->initial_state = (style & WS_MINIMIZE) ? IconicState : NormalState;
+        wm_hints->window_group = group_leader;
+        if (data->icon_pixmap)
+        {
+            wm_hints->icon_pixmap = data->icon_pixmap;
+            wm_hints->icon_mask = data->icon_mask;
+            wm_hints->flags |= IconPixmapHint | IconMaskHint;
+        }
+        XSetWMHints( display, data->whole_window, wm_hints );
+        XFree( wm_hints );
     }
+
+    if (data->icon_bits)
+        XChangeProperty( display, data->whole_window, x11drv_atom(_NET_WM_ICON),
+                         XA_CARDINAL, 32, PropModeReplace,
+                         (unsigned char *)data->icon_bits, data->icon_size );
+    else
+        XDeleteProperty( display, data->whole_window, x11drv_atom(_NET_WM_ICON) );
+
 }
 
 
@@ -858,13 +872,6 @@ static void set_initial_wm_hints( HWND hwnd )
     if (user_time_window)
         XChangeProperty( display, data->whole_window, x11drv_atom(_NET_WM_USER_TIME_WINDOW),
                          XA_WINDOW, 32, PropModeReplace, (unsigned char *)&user_time_window, 1 );
-
-    data->wm_hints = XAllocWMHints();
-    if (data->wm_hints)
-    {
-        data->wm_hints->flags = 0;
-        set_icon_hints( hwnd, 0, 0 );
-    }
 }
 
 
@@ -1378,6 +1385,7 @@ static Window create_whole_window( HWND hwnd )
     if (!data->whole_window) goto done;
 
     set_initial_wm_hints( hwnd );
+    fetch_icon_data( hwnd, 0, 0 );
     set_wm_hints( hwnd );
 
     XSaveContext( display, data->whole_window, winContext, (char *)data->hwnd );
@@ -1444,8 +1452,6 @@ static void destroy_whole_window( Display *display, struct x11drv_win_data *data
     }
     /* Outlook stops processing messages after destroying a dialog, so we need an explicit flush */
     XFlush( display );
-    XFree( data->wm_hints );
-    data->wm_hints = NULL;
     if (data->surface) window_surface_release( data->surface );
     data->surface = NULL;
     RemovePropA( data->hwnd, whole_window_prop );
@@ -1507,6 +1513,7 @@ void CDECL X11DRV_DestroyWindow( HWND hwnd )
     if (thread_data->last_xic_hwnd == hwnd) thread_data->last_xic_hwnd = 0;
     if (data->icon_pixmap) XFreePixmap( gdi_display, data->icon_pixmap );
     if (data->icon_mask) XFreePixmap( gdi_display, data->icon_mask );
+    HeapFree( GetProcessHeap(), 0, data->icon_bits );
     XDeleteContext( gdi_display, (XID)hwnd, win_data_context );
     release_win_data( data );
     HeapFree( GetProcessHeap(), 0, data );
@@ -2245,26 +2252,16 @@ UINT CDECL X11DRV_ShowWindow( HWND hwnd, INT cmd, RECT *rect, UINT swp )
  * hIcon or hIconSm has changed (or is being initialised for the
  * first time). Complete the X11 driver-specific initialisation
  * and set the window hints.
- *
- * This is not entirely correct, may need to create
- * an icon window and set the pixmap as a background
  */
 void CDECL X11DRV_SetWindowIcon( HWND hwnd, UINT type, HICON icon )
 {
-    Display *display = thread_display();
     struct x11drv_win_data *data;
-
 
     if (!(data = X11DRV_get_win_data( hwnd ))) return;
     if (!data->whole_window) return;
-    if (!data->managed) return;
-
-    if (data->wm_hints)
-    {
-        if (type == ICON_BIG) set_icon_hints( hwnd, icon, 0 );
-        else set_icon_hints( hwnd, 0, icon );
-        XSetWMHints( display, data->whole_window, data->wm_hints );
-    }
+    if (type == ICON_BIG) fetch_icon_data( hwnd, icon, 0 );
+    else fetch_icon_data( hwnd, 0, icon );
+    set_wm_hints( hwnd );
 }
 
 

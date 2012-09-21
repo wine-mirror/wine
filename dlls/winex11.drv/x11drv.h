@@ -538,7 +538,6 @@ struct x11drv_win_data
     RECT        whole_rect;     /* X window rectangle for the whole window relative to parent */
     RECT        client_rect;    /* client area relative to parent */
     XIC         xic;            /* X input context */
-    XWMHints   *wm_hints;       /* window manager hints */
     BOOL        managed : 1;    /* is window managed? */
     BOOL        mapped : 1;     /* is window mapped? (in either normal or iconic state) */
     BOOL        iconic : 1;     /* is window in iconic state? */
@@ -549,8 +548,10 @@ struct x11drv_win_data
     Window      embedder;       /* window id of embedder */
     unsigned long configure_serial; /* serial number of last configure request */
     struct window_surface *surface;
-    Pixmap      icon_pixmap;
-    Pixmap      icon_mask;
+    Pixmap         icon_pixmap;
+    Pixmap         icon_mask;
+    unsigned long *icon_bits;
+    unsigned int   icon_size;
 };
 
 extern struct x11drv_win_data *get_win_data( HWND hwnd ) DECLSPEC_HIDDEN;
