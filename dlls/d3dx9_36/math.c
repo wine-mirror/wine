@@ -1588,7 +1588,6 @@ D3DXVECTOR2* WINAPI D3DXVec2Hermite(D3DXVECTOR2 *pout, CONST D3DXVECTOR2 *pv1, C
 
 D3DXVECTOR2* WINAPI D3DXVec2Normalize(D3DXVECTOR2 *pout, CONST D3DXVECTOR2 *pv)
 {
-    D3DXVECTOR2 out;
     FLOAT norm;
 
     TRACE("(%p, %p)\n", pout, pv);
@@ -1596,15 +1595,15 @@ D3DXVECTOR2* WINAPI D3DXVec2Normalize(D3DXVECTOR2 *pout, CONST D3DXVECTOR2 *pv)
     norm = D3DXVec2Length(pv);
     if ( !norm )
     {
-     out.x = 0.0f;
-     out.y = 0.0f;
+        pout->x = 0.0f;
+        pout->y = 0.0f;
     }
     else
     {
-     out.x = pv->x / norm;
-     out.y = pv->y / norm;
+        pout->x = pv->x / norm;
+        pout->y = pv->y / norm;
     }
-    *pout=out;
+
     return pout;
 }
 
@@ -1729,7 +1728,6 @@ D3DXVECTOR3* WINAPI D3DXVec3Hermite(D3DXVECTOR3 *pout, CONST D3DXVECTOR3 *pv1, C
 
 D3DXVECTOR3* WINAPI D3DXVec3Normalize(D3DXVECTOR3 *pout, CONST D3DXVECTOR3 *pv)
 {
-    D3DXVECTOR3 out;
     FLOAT norm;
 
     TRACE("(%p, %p)\n", pout, pv);
@@ -1737,17 +1735,17 @@ D3DXVECTOR3* WINAPI D3DXVec3Normalize(D3DXVECTOR3 *pout, CONST D3DXVECTOR3 *pv)
     norm = D3DXVec3Length(pv);
     if ( !norm )
     {
-     out.x = 0.0f;
-     out.y = 0.0f;
-     out.z = 0.0f;
+        pout->x = 0.0f;
+        pout->y = 0.0f;
+        pout->z = 0.0f;
     }
     else
     {
-     out.x = pv->x / norm;
-     out.y = pv->y / norm;
-     out.z = pv->z / norm;
+        pout->x = pv->x / norm;
+        pout->y = pv->y / norm;
+        pout->z = pv->z / norm;
     }
-    *pout = out;
+
     return pout;
 }
 
@@ -1965,19 +1963,17 @@ D3DXVECTOR4* WINAPI D3DXVec4Hermite(D3DXVECTOR4 *pout, CONST D3DXVECTOR4 *pv1, C
 
 D3DXVECTOR4* WINAPI D3DXVec4Normalize(D3DXVECTOR4 *pout, CONST D3DXVECTOR4 *pv)
 {
-    D3DXVECTOR4 out;
     FLOAT norm;
 
     TRACE("(%p, %p)\n", pout, pv);
 
     norm = D3DXVec4Length(pv);
 
-    out.x = pv->x / norm;
-    out.y = pv->y / norm;
-    out.z = pv->z / norm;
-    out.w = pv->w / norm;
+    pout->x = pv->x / norm;
+    pout->y = pv->y / norm;
+    pout->z = pv->z / norm;
+    pout->w = pv->w / norm;
 
-    *pout = out;
     return pout;
 }
 
