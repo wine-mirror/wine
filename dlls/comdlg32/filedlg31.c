@@ -804,6 +804,12 @@ static void FD31_MapOfnStructA(const OPENFILENAMEA *ofnA, LPOPENFILENAMEW ofnW, 
         else /* numbered resource */
             ofnW->lpTemplateName = (LPCWSTR) ofnA->lpTemplateName;
     }
+    if (ofnW->lStructSize > OPENFILENAME_SIZE_VERSION_400W)
+    {
+        ofnW->pvReserved = ofnA->pvReserved;
+        ofnW->dwReserved = ofnA->dwReserved;
+        ofnW->FlagsEx    = ofnA->FlagsEx;
+    }
 }
 
 
