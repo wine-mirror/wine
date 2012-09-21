@@ -54,7 +54,7 @@ static HRESULT WINAPI scrruncf_QueryInterface(IClassFactory *iface, REFIID riid,
         return S_OK;
     }
 
-    FIXME("(%p)->(%s %p)\n", iface, debugstr_guid(riid), ppv);
+    WARN("(%p)->(%s %p)\n", iface, debugstr_guid(riid), ppv);
     return E_NOINTERFACE;
 }
 

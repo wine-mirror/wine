@@ -70,7 +70,7 @@ static HRESULT WINAPI dictionary_QueryInterface(IDictionary *iface, REFIID riid,
     }
     else
     {
-        FIXME("interface %s not implemented\n", debugstr_guid(riid));
+        WARN("interface %s not implemented\n", debugstr_guid(riid));
         return E_NOINTERFACE;
     }
 
