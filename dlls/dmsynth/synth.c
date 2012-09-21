@@ -2,6 +2,7 @@
  * IDirectMusicSynth8 Implementation
  *
  * Copyright (C) 2003-2004 Rok Mandeljc
+ * Copyright (C) 2012 Christian Costa
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -415,9 +416,52 @@ static ULONG WINAPI DMSynthImpl_IKsControl_Release(IKsControl* iface)
 static HRESULT WINAPI DMSynthImpl_IKsControl_KsProperty(IKsControl* iface, PKSPROPERTY Property, ULONG PropertyLength, LPVOID PropertyData,
                                                         ULONG DataLength, ULONG* BytesReturned)
 {
-    FIXME("(%p)->(%p, %u, %p, %u, %p): stub\n", iface, Property, PropertyLength, PropertyData, DataLength, BytesReturned);
+    TRACE("(%p)->(%p, %u, %p, %u, %p)\n", iface, Property, PropertyLength, PropertyData, DataLength, BytesReturned);
 
-    return E_NOTIMPL;
+    TRACE("Property = %s - %u - %u\n", debugstr_guid(&Property->Set), Property->Id, Property->Flags);
+
+    if (Property->Flags != KSPROPERTY_TYPE_GET)
+    {
+        FIXME("Property flags %u not yet supported\n", Property->Flags);
+        return S_FALSE;
+    }
+
+    if (DataLength <  sizeof(DWORD))
+        return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
+
+    if (IsEqualGUID(&Property->Set, &GUID_DMUS_PROP_INSTRUMENT2))
+    {
+        *(DWORD*)PropertyData = TRUE;
+        *BytesReturned = sizeof(DWORD);
+    }
+    else if (IsEqualGUID(&Property->Set, &GUID_DMUS_PROP_DLS2))
+    {
+        *(DWORD*)PropertyData = TRUE;
+        *BytesReturned = sizeof(DWORD);
+    }
+    else if (IsEqualGUID(&Property->Set, &GUID_DMUS_PROP_GM_Hardware))
+    {
+        *(DWORD*)PropertyData = FALSE;
+        *BytesReturned = sizeof(DWORD);
+    }
+    else if (IsEqualGUID(&Property->Set, &GUID_DMUS_PROP_GS_Hardware))
+    {
+        *(DWORD*)PropertyData = FALSE;
+        *BytesReturned = sizeof(DWORD);
+    }
+    else if (IsEqualGUID(&Property->Set, &GUID_DMUS_PROP_XG_Hardware))
+    {
+        *(DWORD*)PropertyData = FALSE;
+        *BytesReturned = sizeof(DWORD);
+    }
+    else
+    {
+        FIXME("Unknown property %s\n", debugstr_guid(&Property->Set));
+        *(DWORD*)PropertyData = FALSE;
+        *BytesReturned = sizeof(DWORD);
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI DMSynthImpl_IKsControl_KsMethod(IKsControl* iface, PKSMETHOD Method, ULONG MethodLength, LPVOID MethodData,

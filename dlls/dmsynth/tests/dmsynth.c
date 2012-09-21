@@ -39,6 +39,9 @@ static void test_dmsynth(void)
     IKsControl* control_synth = NULL;
     IKsControl* control_sink = NULL;
     HRESULT hr;
+    KSPROPERTY property;
+    ULONG value;
+    ULONG bytes;
 
     hr = CoCreateInstance(&CLSID_DirectMusicSynth, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicSynth, (LPVOID*)&dmsynth);
     if (hr != S_OK)
@@ -52,8 +55,44 @@ static void test_dmsynth(void)
 
     hr = IDirectMusicSynth_QueryInterface(dmsynth, &IID_IKsControl, (LPVOID*)&control_synth);
     ok(hr == S_OK, "IDirectMusicSynth_QueryInterface returned: %x\n", hr);
+
+    property.Id = 0;
+    property.Flags = KSPROPERTY_TYPE_GET;
+
+    property.Set = GUID_DMUS_PROP_INSTRUMENT2;
+    hr = IKsControl_KsProperty(control_synth, &property, sizeof(property), &value, sizeof(value), &bytes);
+    ok(hr == S_OK, "IKsControl_KsProperty returned: %x\n", hr);
+    ok(bytes == sizeof(DWORD), "Returned bytes: %u, should be 4\n", bytes);
+    ok(value == TRUE, "Return value: %u, should be 1\n", value);
+    property.Set = GUID_DMUS_PROP_DLS2;
+    hr = IKsControl_KsProperty(control_synth, &property, sizeof(property), &value, sizeof(value), &bytes);
+    ok(hr == S_OK, "IKsControl_KsProperty returned: %x\n", hr);
+    ok(bytes == sizeof(DWORD), "Returned bytes: %u, should be 4\n", bytes);
+    ok(value == TRUE, "Return value: %u, should be 1\n", value);
+    property.Set = GUID_DMUS_PROP_GM_Hardware;
+    hr = IKsControl_KsProperty(control_synth, &property, sizeof(property), &value, sizeof(value), &bytes);
+    ok(hr == S_OK, "IKsControl_KsProperty returned: %x\n", hr);
+    ok(bytes == sizeof(DWORD), "Returned bytes: %u, should be 4\n", bytes);
+    ok(value == FALSE, "Return value: %u, should be 0\n", value);
+    property.Set = GUID_DMUS_PROP_GS_Hardware;
+    hr = IKsControl_KsProperty(control_synth, &property, sizeof(property), &value, sizeof(value), &bytes);
+    ok(hr == S_OK, "IKsControl_KsProperty returned: %x\n", hr);
+    ok(bytes == sizeof(DWORD), "Returned bytes: %u, should be 4\n", bytes);
+    ok(value == FALSE, "Return value: %u, should be 0\n", value);
+    property.Set = GUID_DMUS_PROP_XG_Hardware;
+    hr = IKsControl_KsProperty(control_synth, &property, sizeof(property), &value, sizeof(value), &bytes);
+    ok(hr == S_OK, "IKsControl_KsProperty returned: %x\n", hr);
+    ok(bytes == sizeof(DWORD), "Returned bytes: %u, should be 4\n", bytes);
+    ok(value == FALSE, "Return value: %u, should be 0\n", value);
+
     hr = IDirectMusicSynthSink_QueryInterface(dmsynth_sink, &IID_IKsControl, (LPVOID*)&control_sink);
     ok(hr == S_OK, "IDirectMusicSynthSink_QueryInterface returned: %x\n", hr);
+
+    property.Set = GUID_DMUS_PROP_SinkUsesDSound;
+    hr = IKsControl_KsProperty(control_sink, &property, sizeof(property), &value, sizeof(value), &bytes);
+    ok(hr == S_OK, "IKsControl_KsProperty returned: %x\n", hr);
+    ok(bytes == sizeof(DWORD), "Returned bytes: %u, should be 4\n", bytes);
+    ok(value == TRUE, "Return value: %u, should be 1\n", value);
 
     /* Synth has no default clock */
     hr = IDirectMusicSynth_GetLatencyClock(dmsynth, &clock_synth);
