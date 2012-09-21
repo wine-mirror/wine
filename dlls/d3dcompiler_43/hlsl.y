@@ -1391,6 +1391,17 @@ loop_statement:           KW_WHILE '(' expr ')' statement
                                 $$ = create_loop(LOOP_FOR, $4, $5, $6, $8, &loc);
                                 pop_scope(&hlsl_ctx);
                             }
+                        | KW_FOR '(' scope_start declaration expr_statement expr_statement ')' statement
+                            {
+                                struct source_location loc;
+
+                                set_location(&loc, &@1);
+                                if (!$4)
+                                    hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_WARNING,
+                                            "no expressions in for loop initializer");
+                                $$ = create_loop(LOOP_FOR, $4, $5, $6, $8, &loc);
+                                pop_scope(&hlsl_ctx);
+                            }
 
 expr_statement:           ';'
                             {
