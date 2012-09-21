@@ -2270,6 +2270,7 @@ static BOOL DeleteUrlCacheEntryInternal(const URLCACHECONTAINER * pContainer,
 }
 
 static HANDLE free_cache_running;
+static HANDLE dll_unload_event;
 static DWORD WINAPI handle_full_cache_worker(void *param)
 {
     FreeUrlCacheSpaceW(NULL, 20, 0);
@@ -2523,6 +2524,10 @@ BOOL WINAPI FreeUrlCacheSpaceW(LPCWSTR cache_path, DWORD size, DWORD filter)
 
                 /* Allow other threads to use cache while cleaning */
                 URLCacheContainer_UnlockIndex(container, header);
+                if(WaitForSingleObject(dll_unload_event, 0) == WAIT_OBJECT_0) {
+                    TRACE("got dll_unload_event - finishing\n");
+                    return TRUE;
+                }
                 Sleep(0);
                 header = URLCacheContainer_LockIndex(container);
             }
@@ -4342,9 +4347,15 @@ DWORD WINAPI RunOnceUrlCache(HWND hwnd, HINSTANCE hinst, LPSTR cmd, int cmdshow)
 
 BOOL init_urlcache(void)
 {
-    free_cache_running = CreateSemaphoreW(NULL, 1, 1, NULL);
-    if(!free_cache_running)
+    dll_unload_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    if(!dll_unload_event)
         return FALSE;
+
+    free_cache_running = CreateSemaphoreW(NULL, 1, 1, NULL);
+    if(!free_cache_running) {
+        CloseHandle(dll_unload_event);
+        return FALSE;
+    }
 
     URLCacheContainers_CreateDefaults();
     return TRUE;
@@ -4352,9 +4363,11 @@ BOOL init_urlcache(void)
 
 void free_urlcache(void)
 {
+    SetEvent(dll_unload_event);
     WaitForSingleObject(free_cache_running, INFINITE);
     ReleaseSemaphore(free_cache_running, 1, NULL);
     CloseHandle(free_cache_running);
+    CloseHandle(dll_unload_event);
 
     URLCacheContainers_DeleteAll();
 }
