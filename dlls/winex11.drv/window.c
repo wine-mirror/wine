@@ -160,15 +160,21 @@ struct has_popup_result
     BOOL found;
 };
 
+static BOOL is_managed( HWND hwnd )
+{
+    struct x11drv_win_data *data = get_win_data( hwnd );
+    BOOL ret = data && data->managed;
+    release_win_data( data );
+    return ret;
+}
+
 static BOOL CALLBACK has_managed_popup( HWND hwnd, LPARAM lparam )
 {
     struct has_popup_result *result = (struct has_popup_result *)lparam;
-    struct x11drv_win_data *data;
 
     if (hwnd == result->hwnd) return FALSE;  /* popups are always above owner */
-    if (!(data = X11DRV_get_win_data( hwnd ))) return TRUE;
     if (GetWindow( hwnd, GW_OWNER ) != result->hwnd) return TRUE;
-    result->found = data->managed;
+    result->found = is_managed( hwnd );
     return !result->found;
 }
 
@@ -733,6 +739,46 @@ static void set_mwm_hints( Display *display, struct x11drv_win_data *data, DWORD
 
 
 /***********************************************************************
+ *              set_style_hints
+ */
+static void set_style_hints( Display *display, struct x11drv_win_data *data, DWORD style, DWORD ex_style )
+{
+    Window group_leader = data->whole_window;
+    HWND owner = GetWindow( data->hwnd, GW_OWNER );
+    Window owner_win = X11DRV_get_whole_window( owner );
+    Atom window_type;
+
+    if (owner_win)
+    {
+        XSetTransientForHint( display, data->whole_window, owner_win );
+        group_leader = owner_win;
+    }
+
+    /* Only use dialog type for owned popups. Metacity allows making fullscreen
+     * only normal windows, and doesn't handle correctly TRANSIENT_FOR hint for
+     * dialogs owned by fullscreen windows.
+     */
+    if (((style & WS_POPUP) || (ex_style & WS_EX_DLGMODALFRAME)) && owner)
+        window_type = x11drv_atom(_NET_WM_WINDOW_TYPE_DIALOG);
+    else
+        window_type = x11drv_atom(_NET_WM_WINDOW_TYPE_NORMAL);
+
+    XChangeProperty(display, data->whole_window, x11drv_atom(_NET_WM_WINDOW_TYPE),
+		    XA_ATOM, 32, PropModeReplace, (unsigned char*)&window_type, 1);
+
+    /* wm hints */
+    if (data->wm_hints)
+    {
+        data->wm_hints->flags |= InputHint | StateHint | WindowGroupHint;
+        data->wm_hints->input = !use_take_focus && !(style & WS_DISABLED);
+        data->wm_hints->initial_state = (style & WS_MINIMIZE) ? IconicState : NormalState;
+        data->wm_hints->window_group = group_leader;
+        XSetWMHints( display, data->whole_window, data->wm_hints );
+    }
+}
+
+
+/***********************************************************************
  *              get_process_name
  *
  * get the name of the current process for setting class hints
@@ -823,83 +869,50 @@ static void set_initial_wm_hints( HWND hwnd )
 
 
 /***********************************************************************
- *              get_owner_whole_window
+ *              make_owner_managed
  *
- * Retrieve an owner's window, creating it if necessary.
+ * If the window is managed, make sure its owner window is too.
  */
-static Window get_owner_whole_window( HWND owner, BOOL force_managed )
+static void make_owner_managed( HWND hwnd )
 {
-    struct x11drv_win_data *data;
+    HWND owner;
 
-    if (!owner) return 0;
+    if (!(owner = GetWindow( hwnd, GW_OWNER ))) return;
+    if (is_managed( owner )) return;
+    if (!is_managed( hwnd )) return;
 
-    if (!(data = X11DRV_get_win_data( owner ))) return (Window)GetPropA( owner, whole_window_prop );
-
-    if (!data->managed && force_managed)  /* make it managed */
-    {
-        SetWindowPos( owner, 0, 0, 0, 0, 0,
-                      SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOSIZE | SWP_NOMOVE |
-                      SWP_NOREDRAW | SWP_DEFERERASE | SWP_NOSENDCHANGING | SWP_STATECHANGED );
-    }
-    return data->whole_window;
+    SetWindowPos( owner, 0, 0, 0, 0, 0,
+                  SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOSIZE | SWP_NOMOVE |
+                  SWP_NOREDRAW | SWP_DEFERERASE | SWP_NOSENDCHANGING | SWP_STATECHANGED );
 }
 
 
 /***********************************************************************
  *              set_wm_hints
  *
- * Set the window manager hints for a newly-created window
+ * Set all the window manager hints for a window.
  */
 static void set_wm_hints( HWND hwnd )
 {
     Display *display = thread_display();
     struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
-    Window group_leader = data->whole_window;
-    Window owner_win = 0;
-    Atom window_type;
     DWORD style, ex_style;
-    HWND owner;
 
     if (hwnd == GetDesktopWindow())
     {
         /* force some styles for the desktop to get the correct decorations */
         style = WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
         ex_style = WS_EX_APPWINDOW;
-        owner = 0;
     }
     else
     {
         style = GetWindowLongW( hwnd, GWL_STYLE );
         ex_style = GetWindowLongW( hwnd, GWL_EXSTYLE );
-        owner = GetWindow( hwnd, GW_OWNER );
-        if ((owner_win = get_owner_whole_window( owner, data->managed ))) group_leader = owner_win;
     }
 
-    if (owner_win) XSetTransientForHint( display, data->whole_window, owner_win );
-
-    /* size hints */
     set_size_hints( display, data, style );
     set_mwm_hints( display, data, style, ex_style );
-
-    /* Only use dialog type for owned popups. Metacity allows making fullscreen
-     * only normal windows, and doesn't handle correctly TRANSIENT_FOR hint for
-     * dialogs owned by fullscreen windows.
-     */
-    if (((style & WS_POPUP) || (ex_style & WS_EX_DLGMODALFRAME)) && owner) window_type = x11drv_atom(_NET_WM_WINDOW_TYPE_DIALOG);
-    else window_type = x11drv_atom(_NET_WM_WINDOW_TYPE_NORMAL);
-
-    XChangeProperty(display, data->whole_window, x11drv_atom(_NET_WM_WINDOW_TYPE),
-		    XA_ATOM, 32, PropModeReplace, (unsigned char*)&window_type, 1);
-
-    /* wm hints */
-    if (data->wm_hints)
-    {
-        data->wm_hints->flags |= InputHint | StateHint | WindowGroupHint;
-        data->wm_hints->input = !use_take_focus && !(style & WS_DISABLED);
-        data->wm_hints->initial_state = (style & WS_MINIMIZE) ? IconicState : NormalState;
-        data->wm_hints->window_group = group_leader;
-        XSetWMHints( display, data->whole_window, data->wm_hints );
-    }
+    set_style_hints( display, data, style, ex_style );
 }
 
 
@@ -2157,6 +2170,8 @@ void CDECL X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags
     if ((new_style & WS_VISIBLE) &&
         ((new_style & WS_MINIMIZE) || is_window_rect_mapped( rectWindow )))
     {
+        if (!data->mapped) make_owner_managed( hwnd );
+
         if (!data->mapped || (swp_flags & (SWP_FRAMECHANGED|SWP_STATECHANGED))) set_wm_hints( hwnd );
 
         if (!data->mapped)
