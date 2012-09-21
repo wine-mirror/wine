@@ -248,29 +248,30 @@ static HRESULT WINAPI IDirectMusic8Impl_Activate(LPDIRECTMUSIC8 iface, BOOL enab
     return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusic8Impl_GetDefaultPort(LPDIRECTMUSIC8 iface, LPGUID pguidPort)
+static HRESULT WINAPI IDirectMusic8Impl_GetDefaultPort(LPDIRECTMUSIC8 iface, LPGUID guid_port)
 {
-	IDirectMusic8Impl *This = impl_from_IDirectMusic8(iface);
-	HKEY hkGUID;
-	DWORD returnTypeGUID, sizeOfReturnBuffer = 50;
-	char returnBuffer[51];
-	GUID defaultPortGUID;
-	WCHAR buff[51];
+    IDirectMusic8Impl *This = impl_from_IDirectMusic8(iface);
+    HKEY hkGUID;
+    DWORD returnTypeGUID, sizeOfReturnBuffer = 50;
+    char returnBuffer[51];
+    GUID defaultPortGUID;
+    WCHAR buff[51];
 
-	TRACE("(%p, %p)\n", This, pguidPort);
-	if ((RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\DirectMusic\\Defaults" , 0, KEY_READ, &hkGUID) != ERROR_SUCCESS) || 
-	    (RegQueryValueExA(hkGUID, "DefaultOutputPort", NULL, &returnTypeGUID, (LPBYTE)returnBuffer, &sizeOfReturnBuffer) != ERROR_SUCCESS))
-	{
-		WARN(": registry entry missing\n" );
-		*pguidPort = CLSID_DirectMusicSynth;
-		return S_OK;
-	}
-	/* FIXME: Check return types to ensure we're interpreting data right */
-	MultiByteToWideChar(CP_ACP, 0, returnBuffer, -1, buff, sizeof(buff) / sizeof(WCHAR));
-	CLSIDFromString(buff, &defaultPortGUID);
-	*pguidPort = defaultPortGUID;
-	
-	return S_OK;
+    TRACE("(%p)->(%p)\n", This, guid_port);
+
+    if ((RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\DirectMusic\\Defaults" , 0, KEY_READ, &hkGUID) != ERROR_SUCCESS) ||
+        (RegQueryValueExA(hkGUID, "DefaultOutputPort", NULL, &returnTypeGUID, (LPBYTE)returnBuffer, &sizeOfReturnBuffer) != ERROR_SUCCESS))
+    {
+        WARN(": registry entry missing\n" );
+        *guid_port = CLSID_DirectMusicSynth;
+        return S_OK;
+    }
+    /* FIXME: Check return types to ensure we're interpreting data right */
+    MultiByteToWideChar(CP_ACP, 0, returnBuffer, -1, buff, sizeof(buff) / sizeof(WCHAR));
+    CLSIDFromString(buff, &defaultPortGUID);
+    *guid_port = defaultPortGUID;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusic8Impl_SetDirectSound(LPDIRECTMUSIC8 iface, LPDIRECTSOUND dsound, HWND wnd)
