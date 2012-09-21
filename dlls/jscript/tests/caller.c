@@ -168,6 +168,7 @@ static void test_change_type(IVariantChangeType *change_type, VARIANT *src, cons
 static void test_change_types(IVariantChangeType *change_type, IDispatch *obj_disp)
 {
     VARIANT v, dst;
+    BSTR str;
     HRESULT hres;
 
     static const conv_results_t bool_results[] = {
@@ -214,6 +215,15 @@ static void test_change_types(IVariantChangeType *change_type, IDispatch *obj_di
     hres = IVariantChangeType_ChangeType(change_type, &dst, &v, 0, VT_I4);
     ok(hres == DISP_E_BADVARTYPE, "ChangeType failed: %08x, expected DISP_E_BADVARTYPE\n", hres);
     ok(V_VT(&dst) == 0xdead, "V_VT(dst) = %d\n", V_VT(&dst));
+
+    /* Test conversion in place */
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = str = a2bstr("test");
+    hres = IVariantChangeType_ChangeType(change_type, &v, &v, 0, VT_BSTR);
+    ok(hres == S_OK, "ChangeType failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(v) = %d\n", V_VT(&v));
+    ok(V_BSTR(&v) != str, "V_BSTR(v) == str\n");
+    ok(!strcmp_wa(V_BSTR(&v), "test"), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
 }
 
 static void test_caller(IServiceProvider *caller, IDispatch *arg_obj)
