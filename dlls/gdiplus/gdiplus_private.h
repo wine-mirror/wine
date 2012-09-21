@@ -311,6 +311,8 @@ struct GpBitmap{
     BYTE *own_bits; /* image bits that need to be freed with this object */
     INT lockx, locky; /* X and Y coordinates of the rect when a bitmap is locked for writing. */
     IWICMetadataReader *metadata_reader; /* NULL if there is no metadata */
+    UINT prop_count;
+    PropertyItem *prop_item; /* cached image properties */
 };
 
 struct GpCachedBitmap{

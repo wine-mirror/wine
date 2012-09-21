@@ -1911,6 +1911,8 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
     (*bitmap)->stride = stride;
     (*bitmap)->own_bits = own_bits;
     (*bitmap)->metadata_reader = NULL;
+    (*bitmap)->prop_count = 0;
+    (*bitmap)->prop_item = NULL;
 
     /* set format-related flags */
     if (format & (PixelFormatAlpha|PixelFormatPAlpha|PixelFormatIndexed))
@@ -2123,6 +2125,9 @@ static void move_bitmap(GpBitmap *dst, GpBitmap *src, BOOL clobber_palette)
     if (dst->metadata_reader)
         IWICMetadataReader_Release(dst->metadata_reader);
     dst->metadata_reader = src->metadata_reader;
+    GdipFree(dst->prop_item);
+    dst->prop_item = src->prop_item;
+    dst->prop_count = src->prop_count;
     if (dst->image.stream)
         IStream_Release(dst->image.stream);
     dst->image.stream = src->image.stream;
@@ -2147,6 +2152,7 @@ static GpStatus free_image_data(GpImage *image)
         DeleteObject(((GpBitmap*)image)->hbitmap);
         if (((GpBitmap*)image)->metadata_reader)
             IWICMetadataReader_Release(((GpBitmap*)image)->metadata_reader);
+        GdipFree(((GpBitmap*)image)->prop_item);
     }
     else if (image->type == ImageTypeMetafile)
     {
@@ -2509,6 +2515,12 @@ GpStatus WINGDIPAPI GdipGetPropertyCount(GpImage *image, UINT *num)
 
     if (image->type == ImageTypeBitmap)
     {
+        if (((GpBitmap *)image)->prop_item)
+        {
+            *num = ((GpBitmap *)image)->prop_count;
+            return Ok;
+        }
+
         if (((GpBitmap *)image)->metadata_reader)
             IWICMetadataReader_GetCount(((GpBitmap *)image)->metadata_reader, num);
     }
@@ -2531,6 +2543,18 @@ GpStatus WINGDIPAPI GdipGetPropertyIdList(GpImage *image, UINT num, PROPID *list
     {
         FIXME("Not implemented for type %d\n", image->type);
         return NotImplemented;
+    }
+
+    if (((GpBitmap *)image)->prop_item)
+    {
+        if (num != ((GpBitmap *)image)->prop_count) return InvalidParameter;
+
+        for (i = 0; i < num; i++)
+        {
+            list[i] = ((GpBitmap *)image)->prop_item[i].id;
+        }
+
+        return Ok;
     }
 
     reader = ((GpBitmap *)image)->metadata_reader;
@@ -2619,6 +2643,22 @@ GpStatus WINGDIPAPI GdipGetPropertyItemSize(GpImage *image, PROPID propid, UINT 
     {
         FIXME("Not implemented for type %d\n", image->type);
         return NotImplemented;
+    }
+
+    if (((GpBitmap *)image)->prop_item)
+    {
+        UINT i;
+
+        for (i = 0; i < ((GpBitmap *)image)->prop_count; i++)
+        {
+            if (propid == ((GpBitmap *)image)->prop_item[i].id)
+            {
+                *size = sizeof(PropertyItem) + ((GpBitmap *)image)->prop_item[i].length;
+                return Ok;
+            }
+        }
+
+        return PropertyNotFound;
     }
 
     reader = ((GpBitmap *)image)->metadata_reader;
@@ -2753,6 +2793,27 @@ GpStatus WINGDIPAPI GdipGetPropertyItem(GpImage *image, PROPID propid, UINT size
         return NotImplemented;
     }
 
+    if (((GpBitmap *)image)->prop_item)
+    {
+        UINT i;
+
+        for (i = 0; i < ((GpBitmap *)image)->prop_count; i++)
+        {
+            if (propid == ((GpBitmap *)image)->prop_item[i].id)
+            {
+                if (size != sizeof(PropertyItem) + ((GpBitmap *)image)->prop_item[i].length)
+                    return InvalidParameter;
+
+                *buffer = ((GpBitmap *)image)->prop_item[i];
+                buffer->value = buffer + 1;
+                memcpy(buffer->value, ((GpBitmap *)image)->prop_item[i].value, buffer->length);
+                return Ok;
+            }
+        }
+
+        return PropertyNotFound;
+    }
+
     reader = ((GpBitmap *)image)->metadata_reader;
     if (!reader) return PropertyNotFound;
 
@@ -2783,6 +2844,19 @@ GpStatus WINGDIPAPI GdipGetPropertySize(GpImage *image, UINT *size, UINT *count)
     {
         FIXME("Not implemented for type %d\n", image->type);
         return NotImplemented;
+    }
+
+    if (((GpBitmap *)image)->prop_item)
+    {
+        *count = ((GpBitmap *)image)->prop_count;
+        *size = 0;
+
+        for (i = 0; i < ((GpBitmap *)image)->prop_count; i++)
+        {
+            *size += sizeof(PropertyItem) + ((GpBitmap *)image)->prop_item[i].length;
+        }
+
+        return Ok;
     }
 
     reader = ((GpBitmap *)image)->metadata_reader;
@@ -2849,6 +2923,21 @@ GpStatus WINGDIPAPI GdipGetAllPropertyItems(GpImage *image, UINT size,
     if (status != Ok) return status;
 
     if (prop_count != count || prop_size != size) return InvalidParameter;
+
+    if (((GpBitmap *)image)->prop_item)
+    {
+        memcpy(buf, ((GpBitmap *)image)->prop_item, prop_size);
+
+        item_value = (char *)(buf + prop_count);
+
+        for (i = 0; i < prop_count; i++)
+        {
+            buf[i].value = item_value;
+            item_value += buf[i].length;
+        }
+
+        return Ok;
+    }
 
     reader = ((GpBitmap *)image)->metadata_reader;
     if (!reader) return PropertyNotFound;
@@ -3011,7 +3100,14 @@ GpStatus WINGDIPAPI GdipLoadImageFromFileICM(GDIPCONST WCHAR* filename,GpImage *
     return GdipLoadImageFromFile(filename, image);
 }
 
-static GpStatus decode_image_wic(IStream* stream, REFCLSID clsid, UINT active_frame, GpImage **image)
+static void gif_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UINT frame)
+{
+}
+
+typedef void (*metadata_reader_func)(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UINT frame);
+
+static GpStatus decode_image_wic(IStream *stream, GDIPCONST CLSID *clsid,
+    UINT active_frame, metadata_reader_func metadata_reader, GpImage **image)
 {
     GpStatus status=Ok;
     GpBitmap *bitmap;
@@ -3126,7 +3222,10 @@ static GpStatus decode_image_wic(IStream* stream, REFCLSID clsid, UINT active_fr
 
         if (SUCCEEDED(hr)) {
             bitmap->metadata_reader = NULL;
-            if (IWICBitmapFrameDecode_QueryInterface(frame, &IID_IWICMetadataBlockReader, (void **)&block_reader) == S_OK)
+
+            if (metadata_reader)
+                metadata_reader(bitmap, decoder, active_frame);
+            else if (IWICBitmapFrameDecode_QueryInterface(frame, &IID_IWICMetadataBlockReader, (void **)&block_reader) == S_OK)
             {
                 UINT block_count = 0;
                 if (IWICMetadataBlockReader_GetCount(block_reader, &block_count) == S_OK && block_count)
@@ -3172,7 +3271,7 @@ end:
 
 static GpStatus decode_image_icon(IStream* stream, REFCLSID clsid, UINT active_frame, GpImage **image)
 {
-    return decode_image_wic(stream, &CLSID_WICIcoDecoder, active_frame, image);
+    return decode_image_wic(stream, &CLSID_WICIcoDecoder, active_frame, NULL, image);
 }
 
 static GpStatus decode_image_bmp(IStream* stream, REFCLSID clsid, UINT active_frame, GpImage **image)
@@ -3180,7 +3279,7 @@ static GpStatus decode_image_bmp(IStream* stream, REFCLSID clsid, UINT active_fr
     GpStatus status;
     GpBitmap* bitmap;
 
-    status = decode_image_wic(stream, &CLSID_WICBmpDecoder, active_frame, image);
+    status = decode_image_wic(stream, &CLSID_WICBmpDecoder, active_frame, NULL, image);
 
     bitmap = (GpBitmap*)*image;
 
@@ -3195,22 +3294,22 @@ static GpStatus decode_image_bmp(IStream* stream, REFCLSID clsid, UINT active_fr
 
 static GpStatus decode_image_jpeg(IStream* stream, REFCLSID clsid, UINT active_frame, GpImage **image)
 {
-    return decode_image_wic(stream, &CLSID_WICJpegDecoder, active_frame, image);
+    return decode_image_wic(stream, &CLSID_WICJpegDecoder, active_frame, NULL, image);
 }
 
 static GpStatus decode_image_png(IStream* stream, REFCLSID clsid, UINT active_frame, GpImage **image)
 {
-    return decode_image_wic(stream, &CLSID_WICPngDecoder, active_frame, image);
+    return decode_image_wic(stream, &CLSID_WICPngDecoder, active_frame, NULL, image);
 }
 
 static GpStatus decode_image_gif(IStream* stream, REFCLSID clsid, UINT active_frame, GpImage **image)
 {
-    return decode_image_wic(stream, &CLSID_WICGifDecoder, active_frame, image);
+    return decode_image_wic(stream, &CLSID_WICGifDecoder, active_frame, gif_metadata_reader, image);
 }
 
 static GpStatus decode_image_tiff(IStream* stream, REFCLSID clsid, UINT active_frame, GpImage **image)
 {
-    return decode_image_wic(stream, &CLSID_WICTiffDecoder, active_frame, image);
+    return decode_image_wic(stream, &CLSID_WICTiffDecoder, active_frame, NULL, image);
 }
 
 static GpStatus decode_image_olepicture_metafile(IStream* stream, REFCLSID clsid, UINT active_frame, GpImage **image)
