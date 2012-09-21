@@ -854,8 +854,15 @@ struct hlsl_type *new_hlsl_type(const char *name, enum hlsl_type_class type_clas
 
 struct hlsl_type *new_array_type(struct hlsl_type *basic_type, unsigned int array_size)
 {
-    FIXME("stub.\n");
-    return NULL;
+    struct hlsl_type *type = new_hlsl_type(NULL, HLSL_CLASS_ARRAY, HLSL_TYPE_FLOAT, 1, 1);
+
+    if (!type)
+        return NULL;
+
+    type->modifiers = basic_type->modifiers;
+    type->e.array.elements_count = array_size;
+    type->e.array.type = basic_type;
+    return type;
 }
 
 struct hlsl_type *get_type(struct hlsl_scope *scope, const char *name, BOOL recursive)
@@ -1790,6 +1797,12 @@ const char *debug_hlsl_type(const struct hlsl_type *type)
 
     if (type->type == HLSL_CLASS_STRUCT)
         return "<anonymous struct>";
+
+    if (type->type == HLSL_CLASS_ARRAY)
+    {
+        name = debug_base_type(type->e.array.type);
+        return wine_dbg_sprintf("%s[%u]", name, type->e.array.elements_count);
+    }
 
     name = debug_base_type(type);
 

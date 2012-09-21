@@ -1488,7 +1488,10 @@ unary_expr:               postfix_expr
                                     return 1;
                                 }
 
-                                dst_type = $3;
+                                if ($4)
+                                    dst_type = new_array_type($3, $4);
+                                else
+                                    dst_type = $3;
 
                                 if (!compatible_data_types(src_type, dst_type))
                                 {
