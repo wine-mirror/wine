@@ -292,7 +292,11 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             if (g_dwTlsErrIndex == TLS_OUT_OF_INDEXES)
                 return FALSE;
 
-            URLCacheContainers_CreateDefaults();
+            if(!init_urlcache())
+            {
+                TlsFree(g_dwTlsErrIndex);
+                return FALSE;
+            }
 
             WININET_hModule = hinstDLL;
             break;
@@ -310,7 +314,7 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         case DLL_PROCESS_DETACH:
             collect_connections(COLLECT_CLEANUP);
             NETCON_unload();
-            URLCacheContainers_DeleteAll();
+            free_urlcache();
 
             if (g_dwTlsErrIndex != TLS_OUT_OF_INDEXES)
             {

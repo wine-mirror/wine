@@ -2326,6 +2326,22 @@ static BOOL DeleteUrlCacheEntryInternal(const URLCACHECONTAINER * pContainer,
     return TRUE;
 }
 
+static HANDLE free_cache_running;
+static DWORD WINAPI handle_full_cache_worker(void *param)
+{
+    FreeUrlCacheSpaceW(NULL, 20, 0);
+    ReleaseSemaphore(free_cache_running, 1, NULL);
+    return 0;
+}
+
+static void handle_full_cache(void)
+{
+    if(WaitForSingleObject(free_cache_running, 0) == WAIT_OBJECT_0) {
+        if(!QueueUserWorkItem(handle_full_cache_worker, NULL, 0))
+            ReleaseSemaphore(free_cache_running, 1, NULL);
+    }
+}
+
 /***********************************************************************
  *           UnlockUrlCacheEntryFileA (WININET.@)
  *
@@ -2712,7 +2728,6 @@ BOOL WINAPI CreateUrlCacheEntryW(
     return FALSE;
 }
 
-
 /***********************************************************************
  *           CommitUrlCacheEntryInternal (Compensates for an MS bug)
  *
@@ -2969,7 +2984,7 @@ static BOOL CommitUrlCacheEntryInternal(
             pHeader->CacheUsage.QuadPart += file_size.QuadPart;
         if (pHeader->CacheUsage.QuadPart + pHeader->ExemptUsage.QuadPart >
             pHeader->CacheLimit.QuadPart)
-            FIXME("file of size %s bytes fills cache\n", wine_dbgstr_longlong(file_size.QuadPart));
+            handle_full_cache();
     }
 
 cleanup:
@@ -4113,4 +4128,23 @@ DWORD WINAPI RunOnceUrlCache(HWND hwnd, HINSTANCE hinst, LPSTR cmd, int cmdshow)
 {
     FIXME("(%p, %p, %s, %d): stub\n", hwnd, hinst, debugstr_a(cmd), cmdshow);
     return 0;
+}
+
+BOOL init_urlcache(void)
+{
+    free_cache_running = CreateSemaphoreW(NULL, 1, 1, NULL);
+    if(!free_cache_running)
+        return FALSE;
+
+    URLCacheContainers_CreateDefaults();
+    return TRUE;
+}
+
+void free_urlcache(void)
+{
+    WaitForSingleObject(free_cache_running, INFINITE);
+    ReleaseSemaphore(free_cache_running, 1, NULL);
+    CloseHandle(free_cache_running);
+
+    URLCacheContainers_DeleteAll();
 }

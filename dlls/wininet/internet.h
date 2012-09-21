@@ -551,8 +551,8 @@ int sock_get_error(int) DECLSPEC_HIDDEN;
 
 server_t *get_server(const WCHAR*,INTERNET_PORT,BOOL);
 
-extern void URLCacheContainers_CreateDefaults(void) DECLSPEC_HIDDEN;
-extern void URLCacheContainers_DeleteAll(void) DECLSPEC_HIDDEN;
+BOOL init_urlcache(void) DECLSPEC_HIDDEN;
+void free_urlcache(void) DECLSPEC_HIDDEN;
 
 #define MAX_REPLY_LEN	 	0x5B4
 
