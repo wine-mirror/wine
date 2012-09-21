@@ -2867,7 +2867,7 @@ static nsresult create_nsuri(IUri *iuri, HTMLOuterWindow *window, NSContainer *c
     return NS_OK;
 }
 
-HRESULT create_doc_uri(HTMLOuterWindow *window, WCHAR *url, nsWineURI **ret)
+HRESULT create_doc_uri(HTMLOuterWindow *window, const WCHAR *url, nsWineURI **ret)
 {
     nsWineURI *uri;
     IUri *iuri;

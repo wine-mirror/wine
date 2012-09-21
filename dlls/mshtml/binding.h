@@ -103,7 +103,7 @@ HRESULT create_redirect_nschannel(const WCHAR*,nsChannel*,nsChannel**) DECLSPEC_
 
 nsresult on_start_uri_open(NSContainer*,nsIURI*,cpp_bool*) DECLSPEC_HIDDEN;
 HRESULT hlink_frame_navigate(HTMLDocument*,LPCWSTR,nsChannel*,DWORD,BOOL*) DECLSPEC_HIDDEN;
-HRESULT create_doc_uri(HTMLOuterWindow*,WCHAR*,nsWineURI**) DECLSPEC_HIDDEN;
+HRESULT create_doc_uri(HTMLOuterWindow*,const WCHAR*,nsWineURI**) DECLSPEC_HIDDEN;
 HRESULT load_nsuri(HTMLOuterWindow*,nsWineURI*,nsChannelBSC*,DWORD) DECLSPEC_HIDDEN;
 HRESULT set_moniker(HTMLDocument*,IMoniker*,IBindCtx*,nsChannelBSC*,BOOL) DECLSPEC_HIDDEN;
 void prepare_for_binding(HTMLDocument*,IMoniker*,BOOL) DECLSPEC_HIDDEN;

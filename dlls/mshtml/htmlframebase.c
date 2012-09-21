@@ -135,7 +135,7 @@ static HRESULT WINAPI HTMLFrameBase_put_src(IHTMLFrameBase *iface, BSTR v)
         return E_FAIL;
     }
 
-    return navigate_url(This->content_window, v, This->element.node.doc->basedoc.window->url);
+    return navigate_url(This->content_window, v, This->element.node.doc->basedoc.window->uri);
 }
 
 static HRESULT WINAPI HTMLFrameBase_get_src(IHTMLFrameBase *iface, BSTR *p)

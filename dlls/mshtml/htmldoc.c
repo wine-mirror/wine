@@ -609,7 +609,7 @@ static HRESULT WINAPI HTMLDocument_put_URL(IHTMLDocument2 *iface, BSTR v)
         return E_FAIL;
     }
 
-    return navigate_url(This->window, v, This->window->url);
+    return navigate_url(This->window, v, This->window->uri);
 }
 
 static HRESULT WINAPI HTMLDocument_get_URL(IHTMLDocument2 *iface, BSTR *p)

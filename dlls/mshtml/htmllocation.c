@@ -170,7 +170,7 @@ static HRESULT WINAPI HTMLLocation_put_href(IHTMLLocation *iface, BSTR v)
         return E_FAIL;
     }
 
-    return navigate_url(This->window->base.outer_window, v, This->window->base.outer_window->url);
+    return navigate_url(This->window->base.outer_window, v, This->window->base.outer_window->uri);
 }
 
 static HRESULT WINAPI HTMLLocation_get_href(IHTMLLocation *iface, BSTR *p)
@@ -570,7 +570,7 @@ static HRESULT WINAPI HTMLLocation_replace(IHTMLLocation *iface, BSTR bstr)
         return E_FAIL;
     }
 
-    return navigate_url(This->window->base.outer_window, bstr, This->window->base.outer_window->url);
+    return navigate_url(This->window->base.outer_window, bstr, This->window->base.outer_window->uri);
 }
 
 static HRESULT WINAPI HTMLLocation_assign(IHTMLLocation *iface, BSTR bstr)

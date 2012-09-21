@@ -775,7 +775,7 @@ void init_node_cc(void);
 HRESULT nsuri_to_url(LPCWSTR,BOOL,BSTR*) DECLSPEC_HIDDEN;
 BOOL compare_ignoring_frag(IUri*,IUri*) DECLSPEC_HIDDEN;
 
-HRESULT navigate_url(HTMLOuterWindow*,const WCHAR*,const WCHAR*) DECLSPEC_HIDDEN;
+HRESULT navigate_url(HTMLOuterWindow*,const WCHAR*,IUri*) DECLSPEC_HIDDEN;
 HRESULT set_frame_doc(HTMLFrameBase*,nsIDOMDocument*) DECLSPEC_HIDDEN;
 
 void call_property_onchanged(ConnectionPoint*,DISPID) DECLSPEC_HIDDEN;

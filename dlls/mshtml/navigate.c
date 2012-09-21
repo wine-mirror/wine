@@ -2245,61 +2245,28 @@ HRESULT hlink_frame_navigate(HTMLDocument *doc, LPCWSTR url, nsChannel *nschanne
     return hres;
 }
 
-HRESULT navigate_url(HTMLOuterWindow *window, const WCHAR *new_url, const WCHAR *base_url)
+HRESULT navigate_uri(HTMLOuterWindow *window, IUri *uri, const WCHAR *display_uri)
 {
-    WCHAR url[INTERNET_MAX_URL_LENGTH];
-    nsWineURI *uri;
+    nsWineURI *nsuri;
     HRESULT hres;
-
-    if(!new_url) {
-        *url = 0;
-    }else if(base_url) {
-        DWORD len = 0;
-
-        hres = CoInternetCombineUrl(base_url, new_url, URL_ESCAPE_SPACES_ONLY|URL_DONT_ESCAPE_EXTRA_INFO,
-                url, sizeof(url)/sizeof(WCHAR), &len, 0);
-        if(FAILED(hres))
-            return hres;
-    }else {
-        strcpyW(url, new_url);
-    }
-
-    if(window->doc_obj && window->doc_obj->hostui) {
-        OLECHAR *translated_url = NULL;
-
-        hres = IDocHostUIHandler_TranslateUrl(window->doc_obj->hostui, 0, url,
-                &translated_url);
-        if(hres == S_OK) {
-            TRACE("%08x %s -> %s\n", hres, debugstr_w(url), debugstr_w(translated_url));
-            strcpyW(url, translated_url);
-            CoTaskMemFree(translated_url);
-        }
-    }
 
     if(window->doc_obj && window->doc_obj->is_webbrowser && window == window->doc_obj->basedoc.window) {
         BOOL cancel = FALSE;
-        IUri *uri;
 
-        hres = IDocObjectService_FireBeforeNavigate2(window->doc_obj->doc_object_service, NULL, url, 0x40,
+        hres = IDocObjectService_FireBeforeNavigate2(window->doc_obj->doc_object_service, NULL, display_uri, 0x40,
                 NULL, NULL, 0, NULL, TRUE, &cancel);
         if(SUCCEEDED(hres) && cancel) {
             TRACE("Navigation canceled\n");
             return S_OK;
         }
 
-        hres = CreateUri(url, 0, 0, &uri);
-        if(FAILED(hres))
-            return hres;
-
-        hres = super_navigate(window, uri, NULL, NULL, 0);
-        IUri_Release(uri);
-        return hres;
+        return super_navigate(window, uri, NULL, NULL, 0);
     }
 
     if(window->doc_obj && window == window->doc_obj->basedoc.window) {
         BOOL cancel;
 
-        hres = hlink_frame_navigate(&window->base.inner_window->doc->basedoc, url, NULL, 0, &cancel);
+        hres = hlink_frame_navigate(&window->base.inner_window->doc->basedoc, display_uri, NULL, 0, &cancel);
         if(FAILED(hres))
             return hres;
 
@@ -2309,11 +2276,60 @@ HRESULT navigate_url(HTMLOuterWindow *window, const WCHAR *new_url, const WCHAR 
         }
     }
 
-    hres = create_doc_uri(window, url, &uri);
+    hres = create_doc_uri(window, display_uri, &nsuri);
     if(FAILED(hres))
         return hres;
 
-    hres = load_nsuri(window, uri, NULL, LOAD_FLAGS_NONE);
-    nsISupports_Release((nsISupports*)uri);
+    hres = load_nsuri(window, nsuri, NULL, LOAD_FLAGS_NONE);
+    nsISupports_Release((nsISupports*)nsuri);
+    return hres;
+}
+
+HRESULT navigate_url(HTMLOuterWindow *window, const WCHAR *new_url, IUri *base_uri)
+{
+    BSTR display_uri;
+    IUri *uri;
+    HRESULT hres;
+
+    if(new_url && base_uri)
+        hres = CoInternetCombineUrlEx(base_uri, new_url, URL_ESCAPE_SPACES_ONLY|URL_DONT_ESCAPE_EXTRA_INFO,
+                &uri, 0);
+    else
+        hres = CreateUri(new_url, 0, 0, &uri);
+    if(FAILED(hres))
+        return hres;
+
+    hres = IUri_GetDisplayUri(uri, &display_uri);
+    if(FAILED(hres)) {
+        IUri_Release(uri);
+        return hres;
+    }
+
+    if(window->doc_obj && window->doc_obj->hostui) {
+        OLECHAR *translated_url = NULL;
+
+        hres = IDocHostUIHandler_TranslateUrl(window->doc_obj->hostui, 0, display_uri,
+                &translated_url);
+        if(hres == S_OK) {
+            TRACE("%08x %s -> %s\n", hres, debugstr_w(display_uri), debugstr_w(translated_url));
+            SysFreeString(display_uri);
+            IUri_Release(uri);
+            hres = CreateUri(translated_url, 0, 0, &uri);
+            CoTaskMemFree(translated_url);
+            if(FAILED(hres))
+                return hres;
+
+            hres = IUri_GetDisplayUri(uri, &display_uri);
+            if(FAILED(hres)) {
+                IUri_Release(uri);
+                return hres;
+            }
+        }
+    }
+
+    hres = navigate_uri(window, uri, display_uri);
+
+    IUri_Release(uri);
+    SysFreeString(display_uri);
     return hres;
 }
