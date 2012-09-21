@@ -93,7 +93,7 @@ static void test_DialogCancel(void)
 
     ZeroMemory(&ofn, sizeof(ofn));
 
-    ofn.lStructSize = sizeof(ofn);
+    ofn.lStructSize = OPENFILENAME_SIZE_VERSION_400A;
     ofn.hwndOwner = NULL;
     ofn.lpstrFilter = "Text Files (*.txt)\0*.txt\0All Files (*.*)\0*.*\0";
     ofn.lpstrFile = szFileName;
@@ -266,7 +266,7 @@ static void test_create_view_window2(void)
     char filename[1024] = {0};
     DWORD ret;
 
-    ofn.lStructSize = sizeof(ofn);
+    ofn.lStructSize = OPENFILENAME_SIZE_VERSION_400A;
     ofn.lpstrFile = filename;
     ofn.nMaxFile = 1024;
     ofn.lpfnHook = create_view_window2_hook;
@@ -283,7 +283,7 @@ static void test_create_view_template(void)
     char filename[1024] = {0};
     DWORD ret;
 
-    ofn.lStructSize = sizeof(ofn);
+    ofn.lStructSize = OPENFILENAME_SIZE_VERSION_400A;
     ofn.lpstrFile = filename;
     ofn.nMaxFile = 1024;
     ofn.lpfnHook = (LPOFNHOOKPROC)template_hook;
@@ -531,7 +531,7 @@ todo_wine
 
 static void test_resize(void)
 {
-    OPENFILENAME ofn = { sizeof(OPENFILENAME)};
+    OPENFILENAME ofn = { OPENFILENAME_SIZE_VERSION_400 };
     char filename[1024] = {0};
     DWORD ret;
     int i;
@@ -633,7 +633,7 @@ static LONG_PTR WINAPI ok_template_hook(HWND dlg, UINT msg, WPARAM wParam, LPARA
 
 static void test_ok(void)
 {
-    OPENFILENAME ofn = { sizeof(OPENFILENAME)};
+    OPENFILENAME ofn = { OPENFILENAME_SIZE_VERSION_400 };
     char filename[1024] = {0};
     char tmpfilename[ MAX_PATH];
     char curdir[MAX_PATH];
@@ -843,7 +843,7 @@ static void test_arrange(void)
         return;
     }
 
-    ofn.lStructSize = sizeof(ofn);
+    ofn.lStructSize = OPENFILENAME_SIZE_VERSION_400A;
     ofn.lpstrFile = filename;
     ofn.nMaxFile = 1024;
     ofn.lpfnHook = (LPOFNHOOKPROC)template_hook_arrange;
@@ -916,7 +916,7 @@ static void test_getfolderpath(void)
 
     ZeroMemory(&ofn, sizeof(ofn));
 
-    ofn.lStructSize = sizeof(ofn);
+    ofn.lStructSize = OPENFILENAME_SIZE_VERSION_400A;
     ofn.hwndOwner = NULL;
     ofn.lpstrFilter = "Text Files (*.txt)\0*.txt\0All Files (*.*)\0*.*\0";
     ofn.lpstrFile = szFileName;
@@ -948,7 +948,7 @@ static void test_resizable2(void)
         skip( "some interactive resizable dialog tests (set WINETEST_INTERACTIVE=1)\n");
         return;
     }
-    ofn.lStructSize = sizeof(ofn);
+    ofn.lStructSize = OPENFILENAME_SIZE_VERSION_400A;
     ofn.lpstrFile = filename;
     ofn.nMaxFile = 1024;
     ofn.lpfnHook = NULL;
@@ -983,7 +983,7 @@ static void test_resizable2(void)
 static void test_mru(void)
 {
     ok_wndproc_testcase testcase = {0};
-    OPENFILENAME ofn = {sizeof(OPENFILENAME)};
+    OPENFILENAME ofn = { OPENFILENAME_SIZE_VERSION_400 };
     const char *test_dir_name = "C:\\mru_test";
     const char *test_file_name = "test.txt";
     const char *test_full_path = "C:\\mru_test\\test.txt";
@@ -1069,7 +1069,7 @@ static void test_extension_helper(OPENFILENAME* ofn, const char *filter,
 
 static void test_extension(void)
 {
-    OPENFILENAME ofn = { sizeof(OPENFILENAME)};
+    OPENFILENAME ofn = { OPENFILENAME_SIZE_VERSION_400 };
     char filename[1024] = {0};
     char curdir[MAX_PATH];
     unsigned int i;
@@ -1093,7 +1093,6 @@ static void test_extension(void)
     boolret = GetCurrentDirectoryA(sizeof(curdir), curdir);
     ok(boolret, "Failed to get current dir err %d\n", GetLastError());
 
-    ofn.lStructSize = sizeof(ofn);
     ofn.hwndOwner = NULL;
     ofn.lpstrFile = filename;
     ofn.nMaxFile = MAX_PATH;
@@ -1176,7 +1175,7 @@ static void test_null_filename(void)
                        'A','l','l','\0','*','\0','\0'};
     DWORD ret;
 
-    ofnA.lStructSize = sizeof(ofnA);
+    ofnA.lStructSize = OPENFILENAME_SIZE_VERSION_400A;
     ofnA.lpstrFile = NULL;
     ofnA.nMaxFile = 0;
     ofnA.nFileOffset = 0xdead;
@@ -1207,7 +1206,7 @@ static void test_null_filename(void)
     ok(ofnA.nFileExtension == 0, "ofnA.nFileExtension is 0x%x, should be 0\n", ofnA.nFileExtension);
 
     /* unicode tests */
-    ofnW.lStructSize = sizeof(ofnW);
+    ofnW.lStructSize = OPENFILENAME_SIZE_VERSION_400W;
     ofnW.lpstrFile = NULL;
     ofnW.nMaxFile = 0;
     ofnW.nFileOffset = 0xdead;
