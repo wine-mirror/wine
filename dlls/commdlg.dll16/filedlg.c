@@ -73,7 +73,7 @@ BOOL16 WINAPI GetOpenFileName16( SEGPTR ofn ) /* [in/out] address of structure w
 
     if (!lpofn) return FALSE;
 
-    ofn32.lStructSize       = sizeof(ofn32);
+    ofn32.lStructSize       = OPENFILENAME_SIZE_VERSION_400A;
     ofn32.hwndOwner         = HWND_32( lpofn->hwndOwner );
     ofn32.lpstrFilter       = MapSL( lpofn->lpstrFilter );
     ofn32.lpstrCustomFilter = MapSL( lpofn->lpstrCustomFilter );
@@ -126,7 +126,7 @@ BOOL16 WINAPI GetSaveFileName16( SEGPTR ofn ) /* [in/out] address of structure w
 
     if (!lpofn) return FALSE;
 
-    ofn32.lStructSize       = sizeof(ofn32);
+    ofn32.lStructSize       = OPENFILENAME_SIZE_VERSION_400A;
     ofn32.hwndOwner         = HWND_32( lpofn->hwndOwner );
     ofn32.lpstrFilter       = MapSL( lpofn->lpstrFilter );
     ofn32.lpstrCustomFilter = MapSL( lpofn->lpstrCustomFilter );
