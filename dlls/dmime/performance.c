@@ -684,34 +684,37 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_AssignPChannelBlock(IDirectMu
 }
 
 static HRESULT WINAPI IDirectMusicPerformance8Impl_AssignPChannel(IDirectMusicPerformance8 *iface,
-        DWORD dwPChannel, IDirectMusicPort *pPort, DWORD dwGroup, DWORD dwMChannel)
+        DWORD PChannel, IDirectMusicPort *port, DWORD group, DWORD MChannel)
 {
-        IDirectMusicPerformance8Impl *This = impl_from_IDirectMusicPerformance8(iface);
+    IDirectMusicPerformance8Impl *This = impl_from_IDirectMusicPerformance8(iface);
 
-	TRACE("(%p, %d, %p, %d, %d)\n", This, dwPChannel, pPort, dwGroup, dwMChannel);
-	if (NULL == pPort) return E_POINTER;
-	This->PChannel[dwPChannel].port = pPort; 
-	This->PChannel[dwPChannel].group = dwGroup; 
-	This->PChannel[dwPChannel].channel = dwMChannel;
+    TRACE("(%p)->(%d, %p, %d, %d)\n", This, PChannel, port, group, MChannel);
 
-	return S_OK;
+    if (!port)
+        return E_POINTER;
+
+    This->PChannel[PChannel].port = port;
+    This->PChannel[PChannel].group = group;
+    This->PChannel[PChannel].channel = MChannel;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicPerformance8Impl_PChannelInfo(IDirectMusicPerformance8 *iface,
-        DWORD dwPChannel, IDirectMusicPort **ppPort, DWORD *pdwGroup, DWORD *pdwMChannel)
+        DWORD PChannel, IDirectMusicPort **port, DWORD *group, DWORD *MChannel)
 {
-        IDirectMusicPerformance8Impl *This = impl_from_IDirectMusicPerformance8(iface);
-	DMUS_PORTPARAMS8 dmusportparams;
-	GUID def;
+    IDirectMusicPerformance8Impl *This = impl_from_IDirectMusicPerformance8(iface);
+    DMUS_PORTPARAMS8 port_params;
+    GUID default_port;
 
-	FIXME("(%p, %d, %p, %p, %p): stub\n", This, dwPChannel, ppPort, pdwGroup, pdwMChannel);
+    FIXME("(%p)->(%d, %p, %p, %p): stub\n", This, PChannel, port, group, MChannel);
 
-	dmusportparams.dwSize = sizeof(DMUS_PORTPARAMS8);
-	dmusportparams.dwValidParams = 0;
-	IDirectMusic8_GetDefaultPort(This->pDirectMusic, &def);
-	IDirectMusic8_CreatePort(This->pDirectMusic, &def, &dmusportparams, ppPort, NULL);
+    port_params.dwSize = sizeof(DMUS_PORTPARAMS8);
+    port_params.dwValidParams = 0;
+    IDirectMusic8_GetDefaultPort(This->pDirectMusic, &default_port);
+    IDirectMusic8_CreatePort(This->pDirectMusic, &default_port, &port_params, port, NULL);
 
-	return S_OK;
+    return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicPerformance8Impl_DownloadInstrument(IDirectMusicPerformance8 *iface,
