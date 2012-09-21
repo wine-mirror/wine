@@ -519,6 +519,7 @@ SRCDIR_INCLUDES = \
 	traffic.h \
 	twain.h \
 	udpmib.h \
+	uiautomation.h \
 	userenv.h \
 	usp10.h \
 	uuids.h \
