@@ -153,7 +153,7 @@ static HRESULT WINAPI dictionary_Invoke(IDictionary *iface, DISPID dispIdMember,
     hr = get_typeinfo(IDictionary_tid, &typeinfo);
     if(SUCCEEDED(hr))
     {
-        hr = ITypeInfo_Invoke(typeinfo, &iface, dispIdMember, wFlags,
+        hr = ITypeInfo_Invoke(typeinfo, &This->IDictionary_iface, dispIdMember, wFlags,
                 pDispParams, pVarResult, pExcepInfo, puArgErr);
         ITypeInfo_Release(typeinfo);
     }
