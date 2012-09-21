@@ -3920,18 +3920,42 @@ static void test_DrawImage_scale(void)
     expect(Ok, status);
 }
 
+static const BYTE animatedgif[] = {
+'G','I','F','8','9','a',0x01,0x00,0x01,0x00,0xA1,0x02,0x00,
+0x6F,0x6F,0x6F,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+/*0x21,0xFF,0x0B,'A','N','I','M','E','X','T','S','1','.','0',*/
+0x21,0xFF,0x0B,'N','E','T','S','C','A','P','E','2','.','0',
+0x03,0x01,0x05,0x00,0x00,
+0x21,0xFE,0x0C,'H','e','l','l','o',' ','W','o','r','l','d','!',0x00,
+0x21,0x01,0x0D,'a','n','i','m','a','t','i','o','n','.','g','i','f',0x00,
+0x21,0xF9,0x04,0xff,0x0A,0x00,0x08,0x00,
+0x2C,0x00,0x00,0x00,0x00,0x01,0x00,0x01,0x00,0x81,
+0xDE,0xDE,0xDE,0x00,0x00,0x00,
+0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x02,0x4C,0x01,0x00,
+0x21,0xFE,0x08,'i','m','a','g','e',' ','#','1',0x00,
+0x21,0x01,0x0C,'p','l','a','i','n','t','e','x','t',' ','#','1',0x00,
+0x21,0xF9,0x04,0x00,0x14,0x00,0x01,0x00,
+0x2C,0x00,0x00,0x00,0x00,0x01,0x00,0x01,0x00,0x81,
+0x4D,0x4D,0x4D,0x00,0x00,0x00,
+0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x02,0x44,0x01,0x00,
+0x21,0xFE,0x08,'i','m','a','g','e',' ','#','2',0x00,
+0x21,0x01,0x0C,'p','l','a','i','n','t','e','x','t',' ','#','2',0x00,0x3B
+};
+
 static void test_gif_properties(void)
 {
     static const struct test_data
     {
         ULONG type, id, length;
-        const BYTE value[12];
+        const BYTE value[13];
     } td[] =
     {
-        { PropertyTagTypeLong, PropertyTagFrameDelay, 8, { 10,0,0,0,10,0,0,0 } },
-        { PropertyTagTypeShort, PropertyTagLoopCount, 2, { 1 } },
-        { PropertyTagTypeByte, PropertyTagGlobalPalette, 12, { 0,0,0,0xff,0xff,0xff,0,0,0,0,0 } },
-        { PropertyTagTypeByte, PropertyTagIndexBackground, 1, { 0 } }
+        { PropertyTagTypeLong, PropertyTagFrameDelay, 8, { 10,0,0,0,20,0,0,0 } },
+        { PropertyTagTypeASCII, PropertyTagExifUserComment, 13, { 'H','e','l','l','o',' ','W','o','r','l','d','!',0 } },
+        { PropertyTagTypeShort, PropertyTagLoopCount, 2, { 5,0 } },
+        { PropertyTagTypeByte, PropertyTagGlobalPalette, 12, { 0x6f,0x6f,0x6f,0,0,0,0,0,0,0,0,0 } },
+        { PropertyTagTypeByte, PropertyTagIndexBackground, 1, { 2 } },
+        { PropertyTagTypeByte, PropertyTagIndexTransparent, 1, { 8 } }
     };
     GpStatus status;
     GpImage *image;
@@ -3940,9 +3964,12 @@ static void test_gif_properties(void)
     PROPID *prop_id;
     PropertyItem *prop_item;
 
-    image = load_image(gifanimation, sizeof(gifanimation));
-    ok(image != 0, "Failed to load GIF image data\n");
-    if (!image) return;
+    image = load_image(animatedgif, sizeof(animatedgif));
+    if (!image) /* XP fails to load this GIF image */
+    {
+        trace("Failed to load GIF image data\n");
+        return;
+    }
 
     status = GdipImageGetFrameDimensionsCount(image, &dim_count);
     expect(Ok, status);
@@ -3955,6 +3982,9 @@ static void test_gif_properties(void)
     status = GdipImageGetFrameCount(image, &guid, &frame_count);
     expect(Ok, status);
     expect(2, frame_count);
+
+    status = GdipImageSelectActiveFrame(image, &guid, 1);
+    expect(Ok, status);
 
     status = GdipGetPropertyCount(image, &prop_count);
     expect(Ok, status);
@@ -3994,7 +4024,7 @@ todo_wine
         if (td[i].length == prop_item->length)
         {
             int match = memcmp(td[i].value, prop_item->value, td[i].length) == 0;
-            ok(match || broken(td[i].length <= 4 && !match), "%u: data mismatch\n", i);
+            ok(match, "%u: data mismatch\n", i);
             if (!match)
             {
                 UINT j;
