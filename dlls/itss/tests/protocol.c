@@ -87,6 +87,8 @@ static const WCHAR blank_url7[] = {'m','k',':','@','M','S','I','T','S','t','o','
     't','e','s','t','.','c','h','m',':',':','\\','b','l','a','n','k','.','h','t','m','l',0};
 static const WCHAR blank_url8[] = {'m','k',':','@','M','S','I','T','S','t','o','r','e',':',
     't','e','s','t','.','c','h','m',':',':','/','b','l','a','n','k','.','h','t','m','l','/',0};
+static const WCHAR blank_url9[] = {'i','t','s',':',
+    't','e','s','t','.','c','h','m',':',':','/','d','i','r','/','.','.','/','b','l','a','n','k','.','h','t','m','l',0};
 
 static enum {
     ITS_PROTOCOL,
@@ -612,6 +614,7 @@ static void test_its_protocol(void)
             test_protocol_url(factory, blank_url5, TRUE);
             test_protocol_url(factory, blank_url6, TRUE);
             test_protocol_url(factory, blank_url8, TRUE);
+            test_protocol_url(factory, blank_url9, TRUE);
             bindf = BINDF_FROMURLMON | BINDF_NEEDFILE;
             test_protocol_url(factory, blank_url1, TRUE);
         }

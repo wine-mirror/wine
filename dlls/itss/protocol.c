@@ -134,6 +134,55 @@ static LPCWSTR skip_schema(LPCWSTR url)
     return NULL;
 }
 
+/* Adopted from urlmon */
+static void remove_dot_segments(WCHAR *path) {
+    const WCHAR *in = path;
+    WCHAR *out = path;
+
+    while(1) {
+        /* Move the first path segment in the input buffer to the end of
+         * the output buffer, and any subsequent characters up to, including
+         * the next "/" character (if any) or the end of the input buffer.
+         */
+        while(*in != '/') {
+            if(!(*out++ = *in++))
+                return;
+        }
+
+        *out++ = *in++;
+
+        while(*in) {
+            if(*in != '.')
+                break;
+
+            /* Handle ending "/." */
+            if(!in[1]) {
+                ++in;
+                break;
+            }
+
+            /* Handle "/./" */
+            if(in[1] == '/') {
+                in += 2;
+                continue;
+            }
+
+            /* If we don't have "/../" or ending "/.." */
+            if(in[1] != '.' || (in[2] && in[2] != '/'))
+                break;
+
+            in += *in ? 3 : 2;
+
+            /* Find the slash preceding out pointer and move out pointer to it */
+            if(out > path+1 && *--out == '/')
+                --out;
+            while(out > path && *(--out) != '/');
+            if(*out == '/')
+                ++out;
+        }
+    }
+}
+
 static HRESULT report_result(IInternetProtocolSink *sink, HRESULT hres)
 {
     IInternetProtocolSink_ReportResult(sink, hres, 0, NULL);
@@ -214,6 +263,8 @@ static HRESULT WINAPI ITSProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
         if(*p == '\\')
             *p = '/';
     }
+
+    remove_dot_segments(object_name);
 
     TRACE("Resolving %s\n", debugstr_w(object_name));
 
