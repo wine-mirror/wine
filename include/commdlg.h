@@ -130,7 +130,7 @@ DECL_WINELIB_TYPE_AW(OPENFILENAME)
 DECL_WINELIB_TYPE_AW(LPOPENFILENAME)
 
 #ifndef CDSIZEOF_STRUCT
-#define CDSIZEOF_STRUCT(type,field) ((int)&(((type *)0)->field) + sizeof(((type*)0)->field))
+#define CDSIZEOF_STRUCT(type,field) ((INT_PTR)&(((type *)0)->field) + sizeof(((type*)0)->field))
 #endif
 
 #define OPENFILENAME_SIZE_VERSION_400A CDSIZEOF_STRUCT(OPENFILENAMEA,lpTemplateName)
