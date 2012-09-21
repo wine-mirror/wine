@@ -2269,9 +2269,10 @@ int CDECL X11DRV_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
 {
     struct x11drv_win_data *data;
 
-    if ((data = X11DRV_get_win_data( hwnd )))
+    if ((data = get_win_data( hwnd )))
     {
         sync_window_region( thread_display(), data, hrgn );
+        release_win_data( data );
     }
     else if (X11DRV_get_whole_window( hwnd ))
     {
@@ -2324,7 +2325,11 @@ LRESULT CDECL X11DRV_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
     case WM_X11DRV_SET_WIN_FORMAT:
         return set_win_format( hwnd, (XID)wp );
     case WM_X11DRV_SET_WIN_REGION:
-        if ((data = X11DRV_get_win_data( hwnd ))) sync_window_region( thread_display(), data, (HRGN)1 );
+        if ((data = get_win_data( hwnd )))
+        {
+            sync_window_region( thread_display(), data, (HRGN)1 );
+            release_win_data( data );
+        }
         return 0;
     case WM_X11DRV_RESIZE_DESKTOP:
         X11DRV_resize_desktop( LOWORD(lp), HIWORD(lp) );
