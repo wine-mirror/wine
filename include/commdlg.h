@@ -95,6 +95,9 @@ typedef struct tagOFNA {
 	LPARAM		lCustData;
 	LPOFNHOOKPROC	lpfnHook;
 	LPCSTR		lpTemplateName;
+        void           *pvReserved;
+        DWORD           dwReserved;
+        DWORD           FlagsEx;
 } OPENFILENAMEA,*LPOPENFILENAMEA;
 
 typedef struct tagOFNW {
@@ -118,6 +121,9 @@ typedef struct tagOFNW {
 	LPARAM		lCustData;
 	LPOFNHOOKPROC	lpfnHook;
 	LPCWSTR		lpTemplateName;
+        void           *pvReserved;
+        DWORD           dwReserved;
+        DWORD           FlagsEx;
 } OPENFILENAMEW,*LPOPENFILENAMEW;
 
 DECL_WINELIB_TYPE_AW(OPENFILENAME)
