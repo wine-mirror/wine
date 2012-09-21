@@ -758,7 +758,6 @@ static void FD31_MapOfnStructA(const OPENFILENAMEA *ofnA, LPOPENFILENAMEW ofnW, 
 {
     UNICODE_STRING usBuffer;
 
-    ofnW->lStructSize = sizeof(OPENFILENAMEW);
     ofnW->hwndOwner = ofnA->hwndOwner;
     ofnW->hInstance = ofnA->hInstance;
     if (ofnA->lpstrFilter)
@@ -935,7 +934,8 @@ static PFD31_DATA FD31_AllocPrivate(LPARAM lParam, UINT dlgType, BOOL IsUnicode)
         if (lfs->ofnA->Flags & OFN_ENABLEHOOK)
             if (lfs->ofnA->lpfnHook)
                 lfs->hook = TRUE;
-        lfs->ofnW = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*lfs->ofnW));
+        lfs->ofnW = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, lfs->ofnA->lStructSize);
+        lfs->ofnW->lStructSize = lfs->ofnA->lStructSize;
         FD31_MapOfnStructA(lfs->ofnA, lfs->ofnW, lfs->open);
     }
 
