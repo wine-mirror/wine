@@ -39,31 +39,33 @@ static inline SynthPortImpl *impl_from_SynthPortImpl_IDirectMusicThru(IDirectMus
 }
 
 /* SynthPortImpl IDirectMusicPort IUnknown part follows: */
-static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_QueryInterface(LPDIRECTMUSICPORT iface, REFIID riid, LPVOID *ppobj)
+static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_QueryInterface(LPDIRECTMUSICPORT iface, REFIID riid, LPVOID *ret_iface)
 {
-	SynthPortImpl *This = impl_from_SynthPortImpl_IDirectMusicPort(iface);
+    SynthPortImpl *This = impl_from_SynthPortImpl_IDirectMusicPort(iface);
 
-	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
+    TRACE("(%p/%p)->(%s, %p)\n", iface, This, debugstr_dmguid(riid), ret_iface);
 
-	if (IsEqualIID (riid, &IID_IUnknown) ||
-	    IsEqualGUID(riid, &IID_IDirectMusicPort) ||
-	    IsEqualGUID(riid, &IID_IDirectMusicPort8)) {
-		*ppobj = &This->IDirectMusicPort_iface;
-		IDirectMusicPort_AddRef((LPDIRECTMUSICPORT)*ppobj);
-		return S_OK;
-	} else if (IsEqualGUID(riid, &IID_IDirectMusicPortDownload) ||
-		   IsEqualGUID(riid, &IID_IDirectMusicPortDownload8)) {
-		*ppobj = &This->IDirectMusicPortDownload_iface;
-		IDirectMusicPortDownload_AddRef((LPDIRECTMUSICPORTDOWNLOAD)*ppobj);
-		return S_OK;
-	} else if (IsEqualGUID(riid, &IID_IDirectMusicThru) ||
-		   IsEqualGUID(riid, &IID_IDirectMusicThru8)) {
-		*ppobj = &This->IDirectMusicThru_iface;
-		IDirectMusicThru_AddRef((LPDIRECTMUSICTHRU)*ppobj);
-		return S_OK;
-	}
-	WARN("(%p, %s, %p): not found\n", This, debugstr_dmguid(riid), ppobj);
-	return E_NOINTERFACE;
+    if (IsEqualIID (riid, &IID_IUnknown) ||
+        IsEqualGUID(riid, &IID_IDirectMusicPort) ||
+        IsEqualGUID(riid, &IID_IDirectMusicPort8)) {
+        *ret_iface = &This->IDirectMusicPort_iface;
+        IDirectMusicPort_AddRef((LPDIRECTMUSICPORT)*ret_iface);
+        return S_OK;
+    } else if (IsEqualGUID(riid, &IID_IDirectMusicPortDownload) ||
+               IsEqualGUID(riid, &IID_IDirectMusicPortDownload8)) {
+        *ret_iface = &This->IDirectMusicPortDownload_iface;
+        IDirectMusicPortDownload_AddRef((LPDIRECTMUSICPORTDOWNLOAD)*ret_iface);
+        return S_OK;
+    } else if (IsEqualGUID(riid, &IID_IDirectMusicThru) ||
+               IsEqualGUID(riid, &IID_IDirectMusicThru8)) {
+        *ret_iface = &This->IDirectMusicThru_iface;
+        IDirectMusicThru_AddRef((LPDIRECTMUSICTHRU)*ret_iface);
+        return S_OK;
+    }
+
+    WARN("(%p, %s, %p): not found\n", This, debugstr_dmguid(riid), ret_iface);
+
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI SynthPortImpl_IDirectMusicPort_AddRef(LPDIRECTMUSICPORT iface)
