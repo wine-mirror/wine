@@ -1802,7 +1802,7 @@ static DWORD WINAPI hooked_WaitForInputIdle(HANDLE process, DWORD timeout)
  * by changing the entry for WaitForInputIdle() in the shell32 import address
  * table.
  */
-static void hook_WaitForInputIdle(void *new_func)
+static void hook_WaitForInputIdle(DWORD (WINAPI *new_func)(HANDLE, DWORD))
 {
     char *base;
     PIMAGE_NT_HEADERS nt_headers;
@@ -1867,7 +1867,7 @@ static void test_dde(void)
     HANDLE map;
     char *shared_block;
 
-    hook_WaitForInputIdle((void *) hooked_WaitForInputIdle);
+    hook_WaitForInputIdle(hooked_WaitForInputIdle);
 
     sprintf(filename, "%s\\test file.sde", tmpdir);
 
