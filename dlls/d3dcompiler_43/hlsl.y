@@ -1383,6 +1383,14 @@ loop_statement:           KW_WHILE '(' expr ')' statement
                                 set_location(&loc, &@1);
                                 $$ = create_loop(LOOP_DO_WHILE, NULL, cond, NULL, $2, &loc);
                             }
+                        | KW_FOR '(' scope_start expr_statement expr_statement expr_statement ')' statement
+                            {
+                                struct source_location loc;
+
+                                set_location(&loc, &@1);
+                                $$ = create_loop(LOOP_FOR, $4, $5, $6, $8, &loc);
+                                pop_scope(&hlsl_ctx);
+                            }
 
 expr_statement:           ';'
                             {
