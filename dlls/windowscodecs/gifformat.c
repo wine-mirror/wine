@@ -413,10 +413,7 @@ static HRESULT load_APE_metadata(IStream *stream, const GUID *vendor, DWORD opti
     result[1].id.u.pwszVal = strdupAtoW("Data");
     result[1].value.vt = VT_UI1|VT_VECTOR;
     result[1].value.u.caub.cElems = data_size;
-    result[1].value.u.caub.pElems = HeapAlloc(GetProcessHeap(), 0, data_size);
-    memcpy(result[1].value.u.caub.pElems, data, data_size);
-
-    HeapFree(GetProcessHeap(), 0, data);
+    result[1].value.u.caub.pElems = data;
 
     *items = result;
     *count = 2;
@@ -449,7 +446,7 @@ static HRESULT load_GifComment_metadata(IStream *stream, const GUID *vendor, DWO
     ULONG bytesread, data_size;
     MetadataItem *result;
     BYTE subblock_size;
-    BYTE *data;
+    char *data;
 
     *items = NULL;
     *count = 0;
@@ -474,10 +471,10 @@ static HRESULT load_GifComment_metadata(IStream *stream, const GUID *vendor, DWO
         if (!subblock_size) break;
 
         if (!data)
-            data = HeapAlloc(GetProcessHeap(), 0, subblock_size);
+            data = HeapAlloc(GetProcessHeap(), 0, subblock_size + 1);
         else
         {
-            BYTE *new_data = HeapReAlloc(GetProcessHeap(), 0, data, data_size + subblock_size);
+            char *new_data = HeapReAlloc(GetProcessHeap(), 0, data, data_size + subblock_size + 1);
             if (!new_data)
             {
                 HeapFree(GetProcessHeap(), 0, data);
@@ -494,6 +491,8 @@ static HRESULT load_GifComment_metadata(IStream *stream, const GUID *vendor, DWO
         data_size += subblock_size;
     }
 
+    data[data_size] = 0;
+
     result = HeapAlloc(GetProcessHeap(), 0, sizeof(MetadataItem));
     if (!result)
     {
@@ -508,11 +507,7 @@ static HRESULT load_GifComment_metadata(IStream *stream, const GUID *vendor, DWO
     result->id.vt = VT_LPWSTR;
     result->id.u.pwszVal = strdupAtoW("TextEntry");
     result->value.vt = VT_LPSTR;
-    result->value.u.pszVal = HeapAlloc(GetProcessHeap(), 0, data_size + 1);
-    memcpy(result->value.u.pszVal, data, data_size);
-    result->value.u.pszVal[data_size] = 0;
-
-    HeapFree(GetProcessHeap(), 0, data);
+    result->value.u.pszVal = data;
 
     *items = result;
     *count = 1;
