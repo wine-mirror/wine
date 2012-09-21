@@ -240,6 +240,7 @@ include/structuredquerycondition.h
 include/textstor.h
 include/tlogstg.h
 include/tom.h
+include/uiautomationcore.h
 include/unknwn.h
 include/urlhist.h
 include/urlmon.h
