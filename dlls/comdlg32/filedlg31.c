@@ -556,8 +556,9 @@ static LRESULT FD31_Validate( const FD31_DATA *lfs, LPCWSTR path, UINT control, 
     OPENFILENAMEW ofnsav;
     LPOPENFILENAMEW ofnW = lfs->ofnW;
     WCHAR filename[BUFFILE];
+    int copied_size = min( ofnW->lStructSize, sizeof(ofnsav) );
 
-    ofnsav = *ofnW; /* for later restoring */
+    memcpy( &ofnsav, ofnW, copied_size ); /* for later restoring */
 
     /* get current file name */
     if (path)
@@ -591,7 +592,7 @@ static LRESULT FD31_Validate( const FD31_DATA *lfs, LPCWSTR path, UINT control, 
                   0, lfs->lParam );
         if (lRet)
         {
-            *ofnW = ofnsav; /* restore old state */
+            memcpy( ofnW, &ofnsav, copied_size ); /* restore old state */
             return FALSE;
         }
     }
