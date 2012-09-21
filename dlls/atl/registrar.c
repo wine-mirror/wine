@@ -543,7 +543,9 @@ static HRESULT WINAPI Registrar_QueryInterface(IRegistrar *iface, REFIID riid, v
 {
     TRACE("(%p)->(%s %p\n", iface, debugstr_guid(riid), ppvObject);
 
-    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IRegistrar, riid)) {
+    if(IsEqualGUID(&IID_IUnknown, riid)
+       || IsEqualGUID(&IID_IRegistrar, riid)
+       || IsEqualGUID(&IID_IRegistrarBase, riid)) {
         IRegistrar_AddRef(iface);
         *ppvObject = iface;
         return S_OK;
