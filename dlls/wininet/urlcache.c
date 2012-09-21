@@ -781,6 +781,9 @@ static inline BYTE URLCache_Allocation_BlockIsFree(BYTE * AllocationTable, DWORD
  *
  *  Marks the specified block as free
  *
+ * CAUTION
+ *    this function is not updating used blocks count
+ *
  * RETURNS
  *    nothing
  *
@@ -795,6 +798,9 @@ static inline void URLCache_Allocation_BlockFree(BYTE * AllocationTable, DWORD d
  *           URLCache_Allocation_BlockAllocate (Internal)
  *
  *  Marks the specified block as allocated
+ *
+ * CAUTION
+ *     this function is not updating used blocks count
  *
  * RETURNS
  *    nothing
@@ -840,6 +846,7 @@ static DWORD URLCache_FindFirstFreeEntry(URLCACHE_HEADER * pHeader, DWORD dwBloc
             for (index = 0; index < dwBlocksNeeded * BLOCKSIZE / sizeof(DWORD); index++)
                 ((DWORD*)*ppEntry)[index] = 0xdeadbeef;
             (*ppEntry)->dwBlocksUsed = dwBlocksNeeded;
+            pHeader->dwBlocksInUse += dwBlocksNeeded;
             return ERROR_SUCCESS;
         }
     }
@@ -867,6 +874,7 @@ static BOOL URLCache_DeleteEntry(LPURLCACHE_HEADER pHeader, CACHEFILE_ENTRY * pE
     for (dwBlock = dwStartBlock; dwBlock < dwStartBlock + pEntry->dwBlocksUsed; dwBlock++)
         URLCache_Allocation_BlockFree(pHeader->allocation_table, dwBlock);
 
+    pHeader->dwBlocksInUse -= pEntry->dwBlocksUsed;
     return TRUE;
 }
 
