@@ -883,7 +883,7 @@ static void X11DRV_MapNotify( HWND hwnd, XEvent *event )
     {
         HWND hwndFocus = GetFocus();
         if (hwndFocus && IsChild( hwnd, hwndFocus ))
-            set_input_focus( thread_display(), data->whole_window );
+            set_input_focus( data->display, data->whole_window );
     }
     release_win_data( data );
 }
@@ -1300,12 +1300,11 @@ void wait_for_withdrawn_state( HWND hwnd, BOOL set )
  */
 void CDECL X11DRV_SetFocus( HWND hwnd )
 {
-    Display *display = thread_display();
     struct x11drv_win_data *data;
 
     if (!(hwnd = GetAncestor( hwnd, GA_ROOT ))) return;
     if (!(data = get_win_data( hwnd ))) return;
-    if (!data->managed) set_input_focus( display, data->whole_window );
+    if (!data->managed) set_input_focus( data->display, data->whole_window );
     release_win_data( data );
 }
 

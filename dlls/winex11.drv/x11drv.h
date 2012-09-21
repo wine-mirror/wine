@@ -532,6 +532,7 @@ enum x11drv_net_wm_state
 /* x11drv private window data */
 struct x11drv_win_data
 {
+    Display    *display;        /* display connection for the thread owning the window */
     HWND        hwnd;           /* hwnd that this private data belongs to */
     Window      whole_window;   /* X window for the complete window */
     RECT        window_rect;    /* USER window rectangle relative to parent */
@@ -568,7 +569,7 @@ extern void destroy_gl_drawable( HWND hwnd ) DECLSPEC_HIDDEN;
 extern void wait_for_withdrawn_state( HWND hwnd, BOOL set ) DECLSPEC_HIDDEN;
 extern Window init_clip_window(void) DECLSPEC_HIDDEN;
 extern void update_user_time( Time time ) DECLSPEC_HIDDEN;
-extern void update_net_wm_states( Display *display, struct x11drv_win_data *data ) DECLSPEC_HIDDEN;
+extern void update_net_wm_states( struct x11drv_win_data *data ) DECLSPEC_HIDDEN;
 extern void make_window_embedded( HWND hwnd ) DECLSPEC_HIDDEN;
 extern void change_systray_owner( Display *display, Window systray_window ) DECLSPEC_HIDDEN;
 extern void update_systray_balloon_position(void) DECLSPEC_HIDDEN;

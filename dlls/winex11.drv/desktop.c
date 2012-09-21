@@ -174,14 +174,13 @@ struct desktop_resize_data
 static BOOL CALLBACK update_windows_on_desktop_resize( HWND hwnd, LPARAM lparam )
 {
     struct x11drv_win_data *data;
-    Display *display = thread_display();
     struct desktop_resize_data *resize_data = (struct desktop_resize_data *)lparam;
     int mask = 0;
 
     if (!(data = X11DRV_get_win_data( hwnd ))) return TRUE;
 
     /* update the full screen state */
-    update_net_wm_states( display, data );
+    update_net_wm_states( data );
 
     if (resize_data->old_virtual_rect.left != virtual_screen_rect.left) mask |= CWX;
     if (resize_data->old_virtual_rect.top != virtual_screen_rect.top) mask |= CWY;
@@ -191,8 +190,8 @@ static BOOL CALLBACK update_windows_on_desktop_resize( HWND hwnd, LPARAM lparam 
 
         changes.x = data->whole_rect.left - virtual_screen_rect.left;
         changes.y = data->whole_rect.top - virtual_screen_rect.top;
-        XReconfigureWMWindow( display, data->whole_window,
-                              DefaultScreen(display), mask, &changes );
+        XReconfigureWMWindow( data->display, data->whole_window,
+                              DefaultScreen(data->display), mask, &changes );
     }
     if (hwnd == GetForegroundWindow()) clip_fullscreen_window( hwnd, TRUE );
     return TRUE;
