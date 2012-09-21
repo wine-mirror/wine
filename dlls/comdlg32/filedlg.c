@@ -4024,6 +4024,12 @@ static void MemFree(void *mem)
     HeapFree(GetProcessHeap(),0,mem);
 }
 
+static inline BOOL valid_struct_size( DWORD size )
+{
+    return (size == OPENFILENAME_SIZE_VERSION_400W) ||
+        (size == sizeof( OPENFILENAMEW ));
+}
+
 static inline BOOL is_win16_looks(DWORD flags)
 {
     return (flags & (OFN_ALLOWMULTISELECT|OFN_ENABLEHOOK|OFN_ENABLETEMPLATE) &&
@@ -4046,6 +4052,12 @@ BOOL WINAPI GetOpenFileNameA(
 	LPOPENFILENAMEA ofn) /* [in/out] address of init structure */
 {
     TRACE("flags %08x\n", ofn->Flags);
+
+    if (!valid_struct_size( ofn->lStructSize ))
+    {
+        COMDLG32_SetCommDlgExtendedError( CDERR_STRUCTSIZE );
+        return FALSE;
+    }
 
     /* OFN_FILEMUSTEXIST implies OFN_PATHMUSTEXIST */
     if (ofn->Flags & OFN_FILEMUSTEXIST)
@@ -4072,6 +4084,12 @@ BOOL WINAPI GetOpenFileNameW(
 {
     TRACE("flags %08x\n", ofn->Flags);
 
+    if (!valid_struct_size( ofn->lStructSize ))
+    {
+        COMDLG32_SetCommDlgExtendedError( CDERR_STRUCTSIZE );
+        return FALSE;
+    }
+
     /* OFN_FILEMUSTEXIST implies OFN_PATHMUSTEXIST */
     if (ofn->Flags & OFN_FILEMUSTEXIST)
         ofn->Flags |= OFN_PATHMUSTEXIST;
@@ -4096,6 +4114,12 @@ BOOL WINAPI GetOpenFileNameW(
 BOOL WINAPI GetSaveFileNameA(
 	LPOPENFILENAMEA ofn) /* [in/out] address of init structure */
 {
+    if (!valid_struct_size( ofn->lStructSize ))
+    {
+        COMDLG32_SetCommDlgExtendedError( CDERR_STRUCTSIZE );
+        return FALSE;
+    }
+
     if (is_win16_looks(ofn->Flags))
         return GetFileName31A(ofn, SAVE_DIALOG);
     else
@@ -4115,6 +4139,12 @@ BOOL WINAPI GetSaveFileNameA(
 BOOL WINAPI GetSaveFileNameW(
 	LPOPENFILENAMEW ofn) /* [in/out] address of init structure */
 {
+    if (!valid_struct_size( ofn->lStructSize ))
+    {
+        COMDLG32_SetCommDlgExtendedError( CDERR_STRUCTSIZE );
+        return FALSE;
+    }
+
     if (is_win16_looks(ofn->Flags))
         return GetFileName31W(ofn, SAVE_DIALOG);
     else
