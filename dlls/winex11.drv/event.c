@@ -1163,7 +1163,7 @@ static int get_window_wm_state( Display *display, Window window )
  */
 static void handle_wm_state_notify( HWND hwnd, XPropertyEvent *event, BOOL update_window )
 {
-    struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
+    struct x11drv_win_data *data = get_win_data( hwnd );
     DWORD style;
 
     if (!data) return;
@@ -1185,13 +1185,13 @@ static void handle_wm_state_notify( HWND hwnd, XPropertyEvent *event, BOOL updat
                 data->wm_state = new_state;
                 /* ignore the initial state transition out of withdrawn state */
                 /* metacity does Withdrawn->NormalState->IconicState when mapping an iconic window */
-                if (!old_state) return;
+                if (!old_state) goto done;
             }
         }
         break;
     }
 
-    if (!update_window || !data->managed || !data->mapped) return;
+    if (!update_window || !data->managed || !data->mapped) goto done;
 
     style = GetWindowLongW( data->hwnd, GWL_STYLE );
 
@@ -1203,17 +1203,20 @@ static void handle_wm_state_notify( HWND hwnd, XPropertyEvent *event, BOOL updat
             if ((style & WS_MAXIMIZEBOX) && !(style & WS_DISABLED))
             {
                 TRACE( "restoring to max %p/%lx\n", data->hwnd, data->whole_window );
-                SendMessageW( data->hwnd, WM_SYSCOMMAND, SC_MAXIMIZE, 0 );
+                release_win_data( data );
+                SendMessageW( hwnd, WM_SYSCOMMAND, SC_MAXIMIZE, 0 );
+                return;
             }
-            else TRACE( "not restoring to max win %p/%lx style %08x\n",
-                        data->hwnd, data->whole_window, style );
+            TRACE( "not restoring to max win %p/%lx style %08x\n", data->hwnd, data->whole_window, style );
         }
         else if (style & (WS_MINIMIZE | WS_MAXIMIZE))
         {
             TRACE( "restoring win %p/%lx\n", data->hwnd, data->whole_window );
-            SendMessageW( data->hwnd, WM_SYSCOMMAND, SC_RESTORE, 0 );
+            release_win_data( data );
+            SendMessageW( hwnd, WM_SYSCOMMAND, SC_RESTORE, 0 );
+            return;
         }
-        else TRACE( "not restoring win %p/%lx style %08x\n", data->hwnd, data->whole_window, style );
+        TRACE( "not restoring win %p/%lx style %08x\n", data->hwnd, data->whole_window, style );
     }
     else if (!data->iconic && data->wm_state == IconicState)
     {
@@ -1221,10 +1224,14 @@ static void handle_wm_state_notify( HWND hwnd, XPropertyEvent *event, BOOL updat
         if ((style & WS_MINIMIZEBOX) && !(style & WS_DISABLED))
         {
             TRACE( "minimizing win %p/%lx\n", data->hwnd, data->whole_window );
-            SendMessageW( data->hwnd, WM_SYSCOMMAND, SC_MINIMIZE, 0 );
+            release_win_data( data );
+            SendMessageW( hwnd, WM_SYSCOMMAND, SC_MINIMIZE, 0 );
+            return;
         }
-        else TRACE( "not minimizing win %p/%lx style %08x\n", data->hwnd, data->whole_window, style );
+        TRACE( "not minimizing win %p/%lx style %08x\n", data->hwnd, data->whole_window, style );
     }
+done:
+    release_win_data( data );
 }
 
 
@@ -1254,20 +1261,33 @@ static Bool is_wm_state_notify( Display *display, XEvent *event, XPointer arg )
 void wait_for_withdrawn_state( HWND hwnd, BOOL set )
 {
     Display *display = thread_display();
-    struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
+    struct x11drv_win_data *data;
     DWORD end = GetTickCount() + 2000;
 
-    if (!data || !data->managed) return;
+    TRACE( "waiting for window %p to become %swithdrawn\n", hwnd, set ? "" : "not " );
 
-    TRACE( "waiting for window %p/%lx to become %swithdrawn\n",
-           data->hwnd, data->whole_window, set ? "" : "not " );
-
-    while (data->whole_window && ((data->wm_state == WithdrawnState) == !set))
+    for (;;)
     {
         XEvent event;
+        Window window;
         int count = 0;
 
-        while (XCheckIfEvent( display, &event, is_wm_state_notify, (char *)data->whole_window ))
+        if (!(data = get_win_data( hwnd ))) break;
+        if (!data->managed || data->embedded || data->display != display) break;
+        if (!(window = data->whole_window)) break;
+        if (!data->mapped == !set)
+        {
+            TRACE( "window %p/%lx now %smapped\n", hwnd, window, data->mapped ? "" : "un" );
+            break;
+        }
+        if ((data->wm_state == WithdrawnState) != !set)
+        {
+            TRACE( "window %p/%lx state now %d\n", hwnd, window, data->wm_state );
+            break;
+        }
+        release_win_data( data );
+
+        while (XCheckIfEvent( display, &event, is_wm_state_notify, (char *)window ))
         {
             count++;
             if (XFilterEvent( &event, None )) continue;  /* filtered, ignore it */
@@ -1284,12 +1304,12 @@ void wait_for_withdrawn_state( HWND hwnd, BOOL set )
             pfd.events = POLLIN;
             if (timeout <= 0 || poll( &pfd, 1, timeout ) != 1)
             {
-                FIXME( "window %p/%lx wait timed out\n", data->hwnd, data->whole_window );
-                break;
+                FIXME( "window %p/%lx wait timed out\n", hwnd, window );
+                return;
             }
         }
     }
-    TRACE( "window %p/%lx state now %d\n", data->hwnd, data->whole_window, data->wm_state );
+    release_win_data( data );
 }
 
 

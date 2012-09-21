@@ -1068,24 +1068,31 @@ static void set_xembed_flags( struct x11drv_win_data *data, unsigned long flags 
  */
 static void map_window( HWND hwnd, DWORD new_style )
 {
-    struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
-
-    TRACE( "win %p/%lx\n", data->hwnd, data->whole_window );
-
-    remove_startup_notification( data->display, data->whole_window );
+    struct x11drv_win_data *data;
 
     wait_for_withdrawn_state( hwnd, TRUE );
 
-    if (!data->embedded)
-    {
-        update_net_wm_states( data );
-        sync_window_style( data );
-        XMapWindow( data->display, data->whole_window );
-    }
-    else set_xembed_flags( data, XEMBED_MAPPED );
+    if (!(data = get_win_data( hwnd ))) return;
 
-    data->mapped = TRUE;
-    data->iconic = (new_style & WS_MINIMIZE) != 0;
+    if (data->whole_window && !data->mapped)
+    {
+        TRACE( "win %p/%lx\n", data->hwnd, data->whole_window );
+
+        remove_startup_notification( data->display, data->whole_window );
+        set_wm_hints( data );
+
+        if (!data->embedded)
+        {
+            update_net_wm_states( data );
+            sync_window_style( data );
+            XMapWindow( data->display, data->whole_window );
+        }
+        else set_xembed_flags( data, XEMBED_MAPPED );
+
+        data->mapped = TRUE;
+        data->iconic = (new_style & WS_MINIMIZE) != 0;
+    }
+    release_win_data( data );
 }
 
 
@@ -1094,20 +1101,24 @@ static void map_window( HWND hwnd, DWORD new_style )
  */
 static void unmap_window( HWND hwnd )
 {
-    struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
+    struct x11drv_win_data *data;
 
-    TRACE( "win %p/%lx\n", data->hwnd, data->whole_window );
+    wait_for_withdrawn_state( hwnd, FALSE );
 
-    if (!data->embedded)
+    if (!(data = get_win_data( hwnd ))) return;
+
+    if (data->mapped)
     {
-        wait_for_withdrawn_state( hwnd, FALSE );
-        if (!data->managed) XUnmapWindow( data->display, data->whole_window );
-        else XWithdrawWindow( data->display, data->whole_window, DefaultScreen(data->display) );
-    }
-    else set_xembed_flags( data, 0 );
+        TRACE( "win %p/%lx\n", data->hwnd, data->whole_window );
 
-    data->mapped = FALSE;
-    data->net_wm_state = 0;
+        if (data->embedded) set_xembed_flags( data, 0 );
+        else if (!data->managed) XUnmapWindow( data->display, data->whole_window );
+        else XWithdrawWindow( data->display, data->whole_window, DefaultScreen(data->display) );
+
+        data->mapped = FALSE;
+        data->net_wm_state = 0;
+    }
+    release_win_data( data );
 }
 
 
@@ -1116,21 +1127,23 @@ static void unmap_window( HWND hwnd )
  */
 void make_window_embedded( HWND hwnd )
 {
-    struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
-    BOOL was_mapped = data->mapped;
+    struct x11drv_win_data *data = get_win_data( hwnd );
+
+    if (!data) return;
 
     /* the window cannot be mapped before being embedded */
-    if (data->mapped) unmap_window( hwnd );
-
+    if (data->mapped)
+    {
+        if (data->managed) XUnmapWindow( data->display, data->whole_window );
+        else XWithdrawWindow( data->display, data->whole_window, DefaultScreen(data->display) );
+        data->net_wm_state = 0;
+    }
     data->embedded = TRUE;
     data->managed = TRUE;
     SetPropA( hwnd, managed_prop, (HANDLE)1 );
     sync_window_style( data );
-
-    if (was_mapped)
-        map_window( hwnd, 0 );
-    else
-        set_xembed_flags( data, 0 );
+    set_xembed_flags( data, data->mapped ? XEMBED_MAPPED : 0 );
+    release_win_data( data );
 }
 
 
@@ -2161,7 +2174,6 @@ void CDECL X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags
         {
             make_owner_managed( hwnd );
             if (!data->icon_pixmap) fetch_icon_data( hwnd, 0, 0 );
-            set_wm_hints( data );
             map_window( hwnd, new_style );
         }
         else if ((swp_flags & SWP_STATECHANGED) && (!data->iconic != !(new_style & WS_MINIMIZE)))
