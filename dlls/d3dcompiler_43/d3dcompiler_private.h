@@ -707,6 +707,7 @@ enum hlsl_ir_node_type
     HLSL_IR_EXPR,
     HLSL_IR_FUNCTION_DECL,
     HLSL_IR_IF,
+    HLSL_IR_LOOP,
     HLSL_IR_JUMP,
     HLSL_IR_SWIZZLE,
 };
@@ -766,6 +767,13 @@ struct hlsl_ir_if
     struct hlsl_ir_node *condition;
     struct list *then_instrs;
     struct list *else_instrs;
+};
+
+struct hlsl_ir_loop
+{
+    struct hlsl_ir_node node;
+    /* loop condition is stored in the body (as "if (!condition) break;") */
+    struct list *body;
 };
 
 struct hlsl_ir_assignment
@@ -1066,6 +1074,12 @@ static inline struct hlsl_ir_if *if_from_node(const struct hlsl_ir_node *node)
 {
     assert(node->type == HLSL_IR_IF);
     return CONTAINING_RECORD(node, struct hlsl_ir_if, node);
+}
+
+static inline struct hlsl_ir_loop *loop_from_node(const struct hlsl_ir_node *node)
+{
+    assert(node->type == HLSL_IR_LOOP);
+    return CONTAINING_RECORD(node, struct hlsl_ir_loop, node);
 }
 
 BOOL add_declaration(struct hlsl_scope *scope, struct hlsl_ir_var *decl, BOOL local_var) DECLSPEC_HIDDEN;

@@ -256,6 +256,130 @@ static void declare_predefined_types(struct hlsl_scope *scope)
     add_type_to_scope(scope, type);
 }
 
+static struct hlsl_ir_if *loop_condition(struct list *cond_list)
+{
+    struct hlsl_ir_if *out_cond;
+    struct hlsl_ir_expr *not_cond;
+    struct hlsl_ir_node *cond, *operands[3];
+    struct hlsl_ir_jump *jump;
+    unsigned int count = list_count(cond_list);
+
+    if (!count)
+        return NULL;
+    if (count != 1)
+        ERR("Got multiple expressions in a for condition.\n");
+
+    cond = LIST_ENTRY(list_head(cond_list), struct hlsl_ir_node, entry);
+    out_cond = d3dcompiler_alloc(sizeof(*out_cond));
+    if (!out_cond)
+    {
+        ERR("Out of memory.\n");
+        return NULL;
+    }
+    out_cond->node.type = HLSL_IR_IF;
+    operands[0] = cond;
+    operands[1] = operands[2] = NULL;
+    not_cond = new_expr(HLSL_IR_UNOP_LOGIC_NOT, operands, &cond->loc);
+    if (!not_cond)
+    {
+        ERR("Out of memory.\n");
+        d3dcompiler_free(out_cond);
+        return NULL;
+    }
+    out_cond->condition = &not_cond->node;
+    jump = d3dcompiler_alloc(sizeof(*jump));
+    if (!jump)
+    {
+        ERR("Out of memory.\n");
+        d3dcompiler_free(out_cond);
+        d3dcompiler_free(not_cond);
+        return NULL;
+    }
+    jump->node.type = HLSL_IR_JUMP;
+    jump->type = HLSL_IR_JUMP_BREAK;
+    out_cond->then_instrs = d3dcompiler_alloc(sizeof(*out_cond->then_instrs));
+    if (!out_cond->then_instrs)
+    {
+        ERR("Out of memory.\n");
+        d3dcompiler_free(out_cond);
+        d3dcompiler_free(not_cond);
+        d3dcompiler_free(jump);
+        return NULL;
+    }
+    list_init(out_cond->then_instrs);
+    list_add_head(out_cond->then_instrs, &jump->node.entry);
+
+    return out_cond;
+}
+
+enum loop_type
+{
+    LOOP_FOR,
+    LOOP_WHILE,
+    LOOP_DO_WHILE
+};
+
+static struct list *create_loop(enum loop_type type, struct list *init, struct list *cond,
+        struct list *iter, struct list *body, struct source_location *loc)
+{
+    struct list *list = NULL;
+    struct hlsl_ir_loop *loop = NULL;
+    struct hlsl_ir_if *cond_jump = NULL;
+
+    list = d3dcompiler_alloc(sizeof(*list));
+    if (!list)
+        goto oom;
+    list_init(list);
+
+    if (init)
+        list_move_head(list, init);
+
+    loop = d3dcompiler_alloc(sizeof(*loop));
+    if (!loop)
+        goto oom;
+    loop->node.type = HLSL_IR_LOOP;
+    loop->node.loc = *loc;
+    list_add_tail(list, &loop->node.entry);
+    loop->body = d3dcompiler_alloc(sizeof(*loop->body));
+    if (!loop->body)
+        goto oom;
+    list_init(loop->body);
+
+    cond_jump = loop_condition(cond);
+    if (!cond_jump)
+        goto oom;
+
+    if (type != LOOP_DO_WHILE)
+        list_add_tail(loop->body, &cond_jump->node.entry);
+
+    list_move_tail(loop->body, body);
+
+    if (iter)
+        list_move_tail(loop->body, iter);
+
+    if (type == LOOP_DO_WHILE)
+        list_add_tail(loop->body, &cond_jump->node.entry);
+
+    d3dcompiler_free(init);
+    d3dcompiler_free(cond);
+    d3dcompiler_free(iter);
+    d3dcompiler_free(body);
+    return list;
+
+oom:
+    ERR("Out of memory.\n");
+    if (loop)
+        d3dcompiler_free(loop->body);
+    d3dcompiler_free(loop);
+    d3dcompiler_free(cond_jump);
+    d3dcompiler_free(list);
+    free_instr_list(init);
+    free_instr_list(cond);
+    free_instr_list(iter);
+    free_instr_list(body);
+    return NULL;
+}
+
 static unsigned int initializer_size(struct list *initializer)
 {
     unsigned int count = 0;
@@ -573,6 +697,7 @@ static BOOL add_typedef(DWORD modifiers, struct hlsl_type *orig_type, struct lis
 %type <list> compound_statement
 %type <list> jump_statement
 %type <list> selection_statement
+%type <list> loop_statement
 %type <function> func_declaration
 %type <function> func_prototype
 %type <parameter> parameter
@@ -1167,6 +1292,7 @@ statement:                declaration_statement
                         | compound_statement
                         | jump_statement
                         | selection_statement
+                        | loop_statement
 
                           /* FIXME: add rule for return with no value */
 jump_statement:           KW_RETURN expr ';'
@@ -1225,6 +1351,22 @@ if_body:                  statement
                             {
                                 $$.then_instrs = $1;
                                 $$.else_instrs = $3;
+                            }
+
+loop_statement:           KW_WHILE '(' expr ')' statement
+                            {
+                                struct source_location loc;
+                                struct list *cond = d3dcompiler_alloc(sizeof(*cond));
+
+                                if (!cond)
+                                {
+                                    ERR("Out of memory.\n");
+                                    return -1;
+                                }
+                                list_init(cond);
+                                list_add_head(cond, &$3->entry);
+                                set_location(&loc, &@1);
+                                $$ = create_loop(LOOP_WHILE, NULL, cond, NULL, $5, &loc);
                             }
 
 expr_statement:           ';'
