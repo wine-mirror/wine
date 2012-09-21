@@ -1368,6 +1368,21 @@ loop_statement:           KW_WHILE '(' expr ')' statement
                                 set_location(&loc, &@1);
                                 $$ = create_loop(LOOP_WHILE, NULL, cond, NULL, $5, &loc);
                             }
+                        | KW_DO statement KW_WHILE '(' expr ')' ';'
+                            {
+                                struct source_location loc;
+                                struct list *cond = d3dcompiler_alloc(sizeof(*cond));
+
+                                if (!cond)
+                                {
+                                    ERR("Out of memory.\n");
+                                    return -1;
+                                }
+                                list_init(cond);
+                                list_add_head(cond, &$5->entry);
+                                set_location(&loc, &@1);
+                                $$ = create_loop(LOOP_DO_WHILE, NULL, cond, NULL, $2, &loc);
+                            }
 
 expr_statement:           ';'
                             {
