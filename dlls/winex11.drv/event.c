@@ -1209,14 +1209,17 @@ static void handle_wm_state_notify( HWND hwnd, XPropertyEvent *event, BOOL updat
             }
             TRACE( "not restoring to max win %p/%lx style %08x\n", data->hwnd, data->whole_window, style );
         }
-        else if (style & (WS_MINIMIZE | WS_MAXIMIZE))
+        else
         {
-            TRACE( "restoring win %p/%lx\n", data->hwnd, data->whole_window );
-            release_win_data( data );
-            SendMessageW( hwnd, WM_SYSCOMMAND, SC_RESTORE, 0 );
-            return;
+            if (style & (WS_MINIMIZE | WS_MAXIMIZE))
+            {
+                TRACE( "restoring win %p/%lx\n", data->hwnd, data->whole_window );
+                release_win_data( data );
+                SendMessageW( hwnd, WM_SYSCOMMAND, SC_RESTORE, 0 );
+                return;
+            }
+            TRACE( "not restoring win %p/%lx style %08x\n", data->hwnd, data->whole_window, style );
         }
-        TRACE( "not restoring win %p/%lx style %08x\n", data->hwnd, data->whole_window, style );
     }
     else if (!data->iconic && data->wm_state == IconicState)
     {
