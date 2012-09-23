@@ -3431,65 +3431,59 @@ msgstr "Высокий"
 
 #: joy.rc:33
 msgid "Joysticks"
-msgstr ""
+msgstr "Джойстики"
 
 #: joy.rc:36 winecfg.rc:204
 msgid "&Disable"
-msgstr "&Блокировать загрузку"
+msgstr "&Отключить"
 
 #: joy.rc:37
-#, fuzzy
-#| msgid "&enable"
 msgid "&Enable"
-msgstr "&включить"
+msgstr "&Включить"
 
 #: joy.rc:38
-#, fuzzy
-#| msgid "Disconnected"
 msgid "Connected"
-msgstr "Отключено"
+msgstr "Подключено"
 
 #: joy.rc:40
-#, fuzzy
-#| msgid "&Disable"
 msgid "Disabled"
-msgstr "&Блокировать загрузку"
+msgstr "Выключено"
 
 #: joy.rc:42
 msgid ""
 "After disabling or enabling a device, the connected joysticks won't be "
 "updated here until you restart this applet."
 msgstr ""
+"Список подключенных джойстиков не обновляется автоматически при подключении/"
+"отключении устройств, требуется перезапуск этой программы."
 
 #: joy.rc:47
 msgid "Test Joystick"
-msgstr ""
+msgstr "Проверить джойстик"
 
 #: joy.rc:51
 msgid "Buttons"
-msgstr ""
+msgstr "Кнопки"
 
 #: joy.rc:60
 msgid "Test Force Feedback"
-msgstr ""
+msgstr "Проверить отдачу"
 
 #: joy.rc:64
-#, fuzzy
-#| msgid "Available formats"
 msgid "Available Effects"
-msgstr "Доступные форматы"
+msgstr "Доступные эффекты"
 
 #: joy.rc:66
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."
 msgstr ""
+"Нажмите любую кнопку на контроллере, чтобы активировать выбранный эффект. "
+"Направление эффекта может быть изменено с помощью осей контроллера."
 
 #: joy.rc:28
-#, fuzzy
-#| msgid "Create Control"
 msgid "Game Controllers"
-msgstr "Создать элемент управления"
+msgstr "Игровые контроллеры"
 
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
@@ -13661,22 +13655,16 @@ msgid "Help topics: "
 msgstr "Содержание: "
 
 #: wmic.rc:25
-#, fuzzy
-#| msgid "Error: Invalid command line parameters\n"
 msgid "Error: Command line not supported\n"
-msgstr "Ошибка: неправильные параметры командной строки\n"
+msgstr "Ошибка: командная строка не поддерживается\n"
 
 #: wmic.rc:26
-#, fuzzy
-#| msgid "Property set not found.\n"
 msgid "Error: Alias not found\n"
-msgstr "Набор свойств не найден.\n"
+msgstr "Ошибка: псевдоним не найден\n"
 
 #: wmic.rc:27
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "Error: Invalid query\n"
-msgstr "Ошибка: неправильное имя раздела\n"
+msgstr "Ошибка: некорректный запрос\n"
 
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
