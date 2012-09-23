@@ -5641,9 +5641,25 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_shader_variable_GetVertexShader(
 static HRESULT STDMETHODCALLTYPE d3d10_effect_shader_variable_GetGeometryShader(
         ID3D10EffectShaderVariable *iface, UINT index, ID3D10GeometryShader **shader)
 {
-    FIXME("iface %p, index %u, shader %p stub!\n", iface, index, shader);
+    struct d3d10_effect_variable *v = impl_from_ID3D10EffectVariable((ID3D10EffectVariable *)iface);
+    struct d3d10_effect_shader_variable *s;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, index %u, shader %p.\n", iface, index, shader);
+
+    if (v->type->element_count)
+        v = impl_from_ID3D10EffectVariable(iface->lpVtbl->GetElement(iface, index));
+
+    if (v->type->basetype != D3D10_SVT_GEOMETRYSHADER)
+    {
+        WARN("Shader is not a geometry shader.\n");
+        return E_FAIL;
+    }
+
+    s = v->data;
+    if ((*shader = s->shader.gs))
+        ID3D10GeometryShader_AddRef(*shader);
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_shader_variable_GetPixelShader(
