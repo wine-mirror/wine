@@ -47,6 +47,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mlang);
 #define CP_UNICODE 1200
 
 static HRESULT MultiLanguage_create(IUnknown *pUnkOuter, LPVOID *ppObj);
+static HRESULT MLangConvertCharset_create(IUnknown *outer, void **obj);
 static HRESULT EnumRfc1766_create(LANGID LangId, IEnumRfc1766 **ppEnum);
 
 static HINSTANCE instance;
@@ -1297,6 +1298,7 @@ struct object_creation_info
 static const struct object_creation_info object_creation[] =
 {
     { &CLSID_CMultiLanguage, "CLSID_CMultiLanguage", MultiLanguage_create },
+    { &CLSID_CMLangConvertCharset, "CLSID_CMLangConvertCharset", MLangConvertCharset_create }
 };
 
 static HRESULT WINAPI MLANGCF_QueryInterface(IClassFactory *iface, REFIID riid, void **ppobj)
@@ -2583,13 +2585,13 @@ static HRESULT WINAPI fnIMultiLanguage_GetRfc1766Info(
 
 static HRESULT WINAPI fnIMultiLanguage_CreateConvertCharset(
     IMultiLanguage* iface,
-    UINT uiSrcCodePage,
-    UINT uiDstCodePage,
-    DWORD dwProperty,
-    IMLangConvertCharset** ppMLangConvertCharset)
+    UINT src_cp,
+    UINT dst_cp,
+    DWORD prop,
+    IMLangConvertCharset** convert_charset)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    MLang_impl *This = impl_from_IMultiLanguage(iface);
+    return IMultiLanguage3_CreateConvertCharset(&This->IMultiLanguage3_iface, src_cp, dst_cp, prop, convert_charset);
 }
 
 static const IMultiLanguageVtbl IMultiLanguage_vtbl =
@@ -2955,13 +2957,19 @@ static HRESULT WINAPI fnIMultiLanguage2_GetRfc1766Info(
 
 static HRESULT WINAPI fnIMultiLanguage2_CreateConvertCharset(
     IMultiLanguage3* iface,
-    UINT uiSrcCodePage,
-    UINT uiDstCodePage,
-    DWORD dwProperty,
-    IMLangConvertCharset** ppMLangConvertCharset)
+    UINT src_cp,
+    UINT dst_cp,
+    DWORD prop,
+    IMLangConvertCharset** convert_charset)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    HRESULT hr;
+
+    TRACE("(%u %u 0x%08x %p)\n", src_cp, dst_cp, prop, convert_charset);
+
+    hr = MLangConvertCharset_create(NULL, (void**)convert_charset);
+    if (FAILED(hr)) return hr;
+
+    return IMLangConvertCharset_Initialize(*convert_charset, src_cp, dst_cp, prop);
 }
 
 static HRESULT WINAPI fnIMultiLanguage2_ConvertStringInIStream(
@@ -3552,6 +3560,123 @@ static const IMLangLineBreakConsoleVtbl IMLangLineBreakConsole_vtbl =
     fnIMLangLineBreakConsole_BreakLineA
 };
 
+struct convert_charset {
+    IMLangConvertCharset IMLangConvertCharset_iface;
+    LONG ref;
+};
+
+static inline struct convert_charset *impl_from_IMLangConvertCharset(IMLangConvertCharset *iface)
+{
+    return CONTAINING_RECORD(iface, struct convert_charset, IMLangConvertCharset_iface);
+}
+
+static HRESULT WINAPI MLangConvertCharset_QueryInterface(IMLangConvertCharset *iface, REFIID riid, void **obj)
+{
+    struct convert_charset *This = impl_from_IMLangConvertCharset(iface);
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IMLangConvertCharset))
+    {
+        *obj = &This->IMLangConvertCharset_iface;
+        IMLangConvertCharset_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI MLangConvertCharset_AddRef(IMLangConvertCharset *iface)
+{
+    struct convert_charset *This = impl_from_IMLangConvertCharset(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+    TRACE("(%p)->(%u)\n", This, ref);
+    return ref;
+}
+
+static ULONG WINAPI MLangConvertCharset_Release(IMLangConvertCharset *iface)
+{
+    struct convert_charset *This = impl_from_IMLangConvertCharset(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p)->(%u)\n", This, ref);
+    if (!ref)
+    {
+        HeapFree(GetProcessHeap(), 0, This);
+        UnlockModule();
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI MLangConvertCharset_Initialize(IMLangConvertCharset *iface,
+    UINT src_cp, UINT dst_cp, DWORD prop)
+{
+    struct convert_charset *This = impl_from_IMLangConvertCharset(iface);
+    FIXME("(%p)->(%u %u 0x%08x): stub\n", This, src_cp, dst_cp, prop);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MLangConvertCharset_GetSourceCodePage(IMLangConvertCharset *iface, UINT *src_cp)
+{
+    struct convert_charset *This = impl_from_IMLangConvertCharset(iface);
+    FIXME("(%p)->(%p): stub\n", This, src_cp);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MLangConvertCharset_GetDestinationCodePage(IMLangConvertCharset *iface, UINT *dst_cp)
+{
+    struct convert_charset *This = impl_from_IMLangConvertCharset(iface);
+    FIXME("(%p)->(%p): stub\n", This, dst_cp);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MLangConvertCharset_GetProperty(IMLangConvertCharset *iface, DWORD *prop)
+{
+    struct convert_charset *This = impl_from_IMLangConvertCharset(iface);
+    FIXME("(%p)->(%p): stub\n", This, prop);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MLangConvertCharset_DoConversion(IMLangConvertCharset *iface, BYTE *src,
+    UINT *src_size, BYTE *dest, UINT *dest_size)
+{
+    struct convert_charset *This = impl_from_IMLangConvertCharset(iface);
+    FIXME("(%p)->(%p %p %p %p): stub\n", This, src, src_size, dest, dest_size);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MLangConvertCharset_DoConversionToUnicode(IMLangConvertCharset *iface, CHAR *src,
+    UINT *src_size, WCHAR *dest, UINT *dest_size)
+{
+    struct convert_charset *This = impl_from_IMLangConvertCharset(iface);
+    FIXME("(%p)->(%p %p %p %p): stub\n", This, src, src_size, dest, dest_size);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MLangConvertCharset_DoConversionFromUnicode(IMLangConvertCharset *iface,
+    WCHAR *src, UINT *src_size, CHAR *dest, UINT *dest_size)
+{
+    struct convert_charset *This = impl_from_IMLangConvertCharset(iface);
+    FIXME("(%p)->(%p %p %p %p): stub\n", This, src, src_size, dest, dest_size);
+    return E_NOTIMPL;
+}
+
+static const IMLangConvertCharsetVtbl MLangConvertCharsetVtbl =
+{
+    MLangConvertCharset_QueryInterface,
+    MLangConvertCharset_AddRef,
+    MLangConvertCharset_Release,
+    MLangConvertCharset_Initialize,
+    MLangConvertCharset_GetSourceCodePage,
+    MLangConvertCharset_GetDestinationCodePage,
+    MLangConvertCharset_GetProperty,
+    MLangConvertCharset_DoConversion,
+    MLangConvertCharset_DoConversionToUnicode,
+    MLangConvertCharset_DoConversionFromUnicode
+};
+
 static HRESULT MultiLanguage_create(IUnknown *pUnkOuter, LPVOID *ppObj)
 {
     MLang_impl *mlang;
@@ -3579,6 +3704,28 @@ static HRESULT MultiLanguage_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     mlang->ref = 1;
     *ppObj = mlang;
     TRACE("returning %p\n", mlang);
+
+    LockModule();
+
+    return S_OK;
+}
+
+static HRESULT MLangConvertCharset_create(IUnknown *outer, void **obj)
+{
+    struct convert_charset *convert;
+
+    if (outer)
+        return CLASS_E_NOAGGREGATION;
+
+    *obj = NULL;
+
+    convert = HeapAlloc(GetProcessHeap(), 0, sizeof(struct convert_charset));
+    if (!convert) return E_OUTOFMEMORY;
+
+    convert->IMLangConvertCharset_iface.lpVtbl = &MLangConvertCharsetVtbl;
+    convert->ref = 1;
+
+    *obj = &convert->IMLangConvertCharset_iface;
 
     LockModule();
 
