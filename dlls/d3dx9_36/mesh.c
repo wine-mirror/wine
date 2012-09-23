@@ -3818,6 +3818,14 @@ cleanup:
     return hr;
 }
 
+HRESULT WINAPI D3DXCleanMesh(D3DXCLEANTYPE clean_type, LPD3DXMESH mesh_in, const DWORD *adjacency_in,
+                             LPD3DXMESH *mesh_out, DWORD *adjacency_out, LPD3DXBUFFER *errors_and_warnings)
+{
+    FIXME("(%u, %p, %p, %p, %p, %p)\n", clean_type, mesh_in, adjacency_in, mesh_out, adjacency_out, errors_and_warnings);
+
+    return E_NOTIMPL;
+}
+
 HRESULT WINAPI D3DXFrameDestroy(LPD3DXFRAME frame, LPD3DXALLOCATEHIERARCHY alloc_hier)
 {
     HRESULT hr;

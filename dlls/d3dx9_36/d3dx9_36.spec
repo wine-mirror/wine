@@ -8,7 +8,7 @@
 @ stdcall D3DXCheckTextureRequirements(ptr ptr ptr ptr long ptr ptr)
 @ stdcall D3DXCheckVersion(long long)
 @ stdcall D3DXCheckVolumeTextureRequirements(ptr ptr ptr ptr ptr long ptr ptr)
-@ stub D3DXCleanMesh(ptr ptr ptr ptr ptr)
+@ stdcall D3DXCleanMesh(long ptr ptr ptr ptr ptr)
 @ stdcall D3DXColorAdjustContrast(ptr ptr float)
 @ stdcall D3DXColorAdjustSaturation(ptr ptr float)
 @ stdcall D3DXCompileShader(ptr long ptr ptr str str long ptr ptr ptr)
