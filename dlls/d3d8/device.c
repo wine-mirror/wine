@@ -2110,7 +2110,6 @@ static HRESULT WINAPI d3d8_device_SetVertexShader(IDirect3DDevice8 *iface, DWORD
 {
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
     struct d3d8_vertex_shader *shader_impl;
-    HRESULT hr;
 
     TRACE("iface %p, shader %#x.\n", iface, shader);
 
@@ -2140,12 +2139,10 @@ static HRESULT WINAPI d3d8_device_SetVertexShader(IDirect3DDevice8 *iface, DWORD
 
     wined3d_device_set_vertex_declaration(device->wined3d_device,
             shader_impl->vertex_declaration->wined3d_vertex_declaration);
-    hr = wined3d_device_set_vertex_shader(device->wined3d_device, shader_impl->wined3d_shader);
+    wined3d_device_set_vertex_shader(device->wined3d_device, shader_impl->wined3d_shader);
     wined3d_mutex_unlock();
 
-    TRACE("Returning hr %#x\n", hr);
-
-    return hr;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI d3d8_device_GetVertexShader(IDirect3DDevice8 *iface, DWORD *shader)
