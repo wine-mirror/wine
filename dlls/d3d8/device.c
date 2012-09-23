@@ -2174,7 +2174,6 @@ static HRESULT WINAPI d3d8_device_DeleteVertexShader(IDirect3DDevice8 *iface, DW
 {
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
     struct d3d8_vertex_shader *shader_impl;
-    struct wined3d_shader *cur;
 
     TRACE("iface %p, shader %#x.\n", iface, shader);
 
@@ -2187,12 +2186,9 @@ static HRESULT WINAPI d3d8_device_DeleteVertexShader(IDirect3DDevice8 *iface, DW
         return D3DERR_INVALIDCALL;
     }
 
-    if ((cur = wined3d_device_get_vertex_shader(device->wined3d_device)))
-    {
-        if (cur == shader_impl->wined3d_shader)
-            IDirect3DDevice8_SetVertexShader(iface, 0);
-        wined3d_shader_decref(cur);
-    }
+    if (shader_impl->wined3d_shader
+            && wined3d_device_get_vertex_shader(device->wined3d_device) == shader_impl->wined3d_shader)
+        IDirect3DDevice8_SetVertexShader(iface, 0);
 
     wined3d_mutex_unlock();
 

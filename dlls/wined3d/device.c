@@ -2480,16 +2480,9 @@ void CDECL wined3d_device_set_vertex_shader(struct wined3d_device *device, struc
 
 struct wined3d_shader * CDECL wined3d_device_get_vertex_shader(const struct wined3d_device *device)
 {
-    struct wined3d_shader *shader;
-
     TRACE("device %p.\n", device);
 
-    shader = device->stateBlock->state.vertex_shader;
-    if (shader)
-        wined3d_shader_incref(shader);
-
-    TRACE("Returning %p.\n", shader);
-    return shader;
+    return device->stateBlock->state.vertex_shader;
 }
 
 HRESULT CDECL wined3d_device_set_vs_consts_b(struct wined3d_device *device,
