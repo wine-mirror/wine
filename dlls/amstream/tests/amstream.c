@@ -235,8 +235,8 @@ static void test_media_streams(void)
         IDirectDrawStreamSample *ddraw_sample = NULL;
 
         hr = IMediaStream_QueryInterface(video_stream, &IID_IAMMediaStream, (LPVOID*)&am_media_stream);
-        todo_wine ok(hr == S_OK, "IMediaStream_QueryInterface returned: %x\n", hr);
-        todo_wine ok((void*)am_media_stream == (void*)video_stream, "Not same interface, got %p expected %p\n", am_media_stream, video_stream);
+        ok(hr == S_OK, "IMediaStream_QueryInterface returned: %x\n", hr);
+        ok((void*)am_media_stream == (void*)video_stream, "Not same interface, got %p expected %p\n", am_media_stream, video_stream);
         if (hr == S_OK)
             IAMMediaStream_Release(am_media_stream);
 
