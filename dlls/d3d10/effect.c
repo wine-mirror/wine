@@ -5665,9 +5665,25 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_shader_variable_GetGeometryShader(
 static HRESULT STDMETHODCALLTYPE d3d10_effect_shader_variable_GetPixelShader(
         ID3D10EffectShaderVariable *iface, UINT index, ID3D10PixelShader **shader)
 {
-    FIXME("iface %p, index %u, shader %p stub!\n", iface, index, shader);
+    struct d3d10_effect_variable *v = impl_from_ID3D10EffectVariable((ID3D10EffectVariable *)iface);
+    struct d3d10_effect_shader_variable *s;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, index %u, shader %p.\n", iface, index, shader);
+
+    if (v->type->element_count)
+        v = impl_from_ID3D10EffectVariable(iface->lpVtbl->GetElement(iface, index));
+
+    if (v->type->basetype != D3D10_SVT_PIXELSHADER)
+    {
+        WARN("Shader is not a pixel shader.\n");
+        return E_FAIL;
+    }
+
+    s = v->data;
+    if ((*shader = s->shader.ps))
+        ID3D10PixelShader_AddRef(*shader);
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_shader_variable_GetInputSignatureElementDesc(
