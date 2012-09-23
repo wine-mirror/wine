@@ -956,6 +956,10 @@ static void test_get_set_unicodeformat(void)
     hTree = create_treeview_control(0);
     fill_tree(hTree);
 
+    /* Check that an invalid format returned by NF_QUERY defaults to ANSI */
+    bPreviousSetting = (BOOL)SendMessage( hTree, TVM_GETUNICODEFORMAT, 0, 0 );
+    ok(bPreviousSetting == 0, "Format should be ANSI.\n");
+
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
     /* Set to Unicode */
@@ -1007,10 +1011,17 @@ static LRESULT CALLBACK parent_wnd_proc(HWND hWnd, UINT message, WPARAM wParam, 
     }
 
     switch(message) {
+    case WM_NOTIFYFORMAT:
+    {
+        /* Make NF_QUERY return an invalid format to show that it defaults to ANSI */
+        if (lParam == NF_QUERY) return 0;
+        break;
+    }
+
     case WM_NOTIFY:
     {
         NMHDR *pHdr = (NMHDR *)lParam;
-    
+
         ok(pHdr->code != NM_TOOLTIPSCREATED, "Treeview should not send NM_TOOLTIPSCREATED\n");
         if (pHdr->idFrom == 100)
         {

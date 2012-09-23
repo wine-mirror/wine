@@ -848,7 +848,9 @@ static INT TREEVIEW_NotifyFormat (TREEVIEW_INFO *infoPtr, HWND hwndFrom, UINT nC
     format = SendMessageW(hwndFrom, WM_NOTIFYFORMAT, (WPARAM)infoPtr->hwnd, NF_QUERY);
     TRACE("format=%d\n", format);
 
-    if (format != NFR_ANSI && format != NFR_UNICODE) return 0;
+    /* Invalid format returned by NF_QUERY defaults to ANSI*/
+    if (format != NFR_ANSI && format != NFR_UNICODE)
+        format = NFR_ANSI;
 
     infoPtr->bNtfUnicode = (format == NFR_UNICODE);
 
@@ -5067,10 +5069,7 @@ TREEVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
     infoPtr->hwndNotify = lpcs->hwndParent;
     infoPtr->hwndToolTip = 0;
 
-    infoPtr->bNtfUnicode = IsWindowUnicode (hwnd);
-
-    /* Determine what type of notify should be issued */
-    /* sets infoPtr->bNtfUnicode */
+    /* Determine what type of notify should be issued (sets infoPtr->bNtfUnicode) */
     TREEVIEW_NotifyFormat(infoPtr, infoPtr->hwndNotify, NF_REQUERY);
 
     if (!(infoPtr->dwStyle & TVS_NOTOOLTIPS))
