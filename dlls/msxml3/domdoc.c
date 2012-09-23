@@ -3248,12 +3248,43 @@ static HRESULT WINAPI ConnectionPoint_GetConnectionPointContainer(IConnectionPoi
     return S_OK;
 }
 
-static HRESULT WINAPI ConnectionPoint_Advise(IConnectionPoint *iface, IUnknown *pUnkSink,
-                                             DWORD *pdwCookie)
+static HRESULT WINAPI ConnectionPoint_Advise(IConnectionPoint *iface, IUnknown *unk_sink,
+                                             DWORD *cookie)
 {
     ConnectionPoint *This = impl_from_IConnectionPoint(iface);
-    FIXME("(%p)->(%p %p): stub\n", This, pUnkSink, pdwCookie);
-    return E_NOTIMPL;
+    IUnknown *sink;
+    HRESULT hr;
+    int i;
+
+    TRACE("(%p)->(%p %p)\n", This, unk_sink, cookie);
+
+    hr = IUnknown_QueryInterface(unk_sink, This->iid, (void**)&sink);
+    if(FAILED(hr) && !IsEqualGUID(&IID_IPropertyNotifySink, This->iid))
+        hr = IUnknown_QueryInterface(unk_sink, &IID_IDispatch, (void**)&sink);
+    if(FAILED(hr))
+        return CONNECT_E_CANNOTCONNECT;
+
+    if(This->sinks)
+    {
+        for (i = 0; i < This->sinks_size; i++)
+            if (!This->sinks[i].unk)
+                break;
+
+        if (i == This->sinks_size)
+            This->sinks = heap_realloc(This->sinks,(++This->sinks_size)*sizeof(*This->sinks));
+    }
+    else
+    {
+        This->sinks = heap_alloc(sizeof(*This->sinks));
+        This->sinks_size = 1;
+        i = 0;
+    }
+
+    This->sinks[i].unk = sink;
+    if (cookie)
+        *cookie = i+1;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ConnectionPoint_Unadvise(IConnectionPoint *iface, DWORD cookie)
