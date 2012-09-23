@@ -3563,6 +3563,9 @@ static const IMLangLineBreakConsoleVtbl IMLangLineBreakConsole_vtbl =
 struct convert_charset {
     IMLangConvertCharset IMLangConvertCharset_iface;
     LONG ref;
+
+    UINT src_cp;
+    UINT dst_cp;
 };
 
 static inline struct convert_charset *impl_from_IMLangConvertCharset(IMLangConvertCharset *iface)
@@ -3614,8 +3617,16 @@ static HRESULT WINAPI MLangConvertCharset_Initialize(IMLangConvertCharset *iface
     UINT src_cp, UINT dst_cp, DWORD prop)
 {
     struct convert_charset *This = impl_from_IMLangConvertCharset(iface);
-    FIXME("(%p)->(%u %u 0x%08x): stub\n", This, src_cp, dst_cp, prop);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%u %u 0x%08x)\n", This, src_cp, dst_cp, prop);
+
+    if (prop)
+        FIXME("property 0x%08x not supported\n", prop);
+
+    This->src_cp = src_cp;
+    This->dst_cp = dst_cp;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI MLangConvertCharset_GetSourceCodePage(IMLangConvertCharset *iface, UINT *src_cp)
