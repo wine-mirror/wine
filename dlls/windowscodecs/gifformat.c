@@ -729,9 +729,9 @@ static HRESULT WINAPI GifFrameDecode_CopyPalette(IWICBitmapFrameDecode *iface,
     /* look for the transparent color extension */
     for (i = 0; i < This->frame->Extensions.ExtensionBlockCount; ++i) {
 	eb = This->frame->Extensions.ExtensionBlocks + i;
-	if (eb->Function == 0xF9 && eb->ByteCount == 4) {
-	    if ((eb->Bytes[0] & 1) == 1) {
-	        trans = (unsigned char)eb->Bytes[3];
+	if (eb->Function == GRAPHICS_EXT_FUNC_CODE && eb->ByteCount == 8) {
+	    if (eb->Bytes[3] & 1) {
+	        trans = (unsigned char)eb->Bytes[6];
 	        colors[trans] &= 0xffffff; /* set alpha to 0 */
 	        break;
 	    }
