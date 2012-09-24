@@ -25,6 +25,7 @@
 #include <png.h>
 #endif
 
+#define NONAMELESSUNION
 #define COBJMACROS
 
 #include "windef.h"
@@ -129,9 +130,9 @@ static HRESULT LoadTextMetadata(IStream *stream, const GUID *preferred_vendor,
     value[value_len] = 0;
 
     result[0].id.vt = VT_LPSTR;
-    result[0].id.pszVal = name;
+    result[0].id.u.pszVal = name;
     result[0].value.vt = VT_LPSTR;
-    result[0].value.pszVal = value;
+    result[0].value.u.pszVal = value;
 
     *items = result;
     *item_count = 1;
