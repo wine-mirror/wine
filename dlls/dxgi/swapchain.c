@@ -192,9 +192,44 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetFullscreenState(IDXGISwapChai
 
 static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetDesc(IDXGISwapChain *iface, DXGI_SWAP_CHAIN_DESC *desc)
 {
-    FIXME("iface %p, desc %p stub!\n", iface, desc);
+    struct dxgi_swapchain *swapchain = impl_from_IDXGISwapChain(iface);
+    struct wined3d_swapchain_desc wined3d_desc;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    FIXME("iface %p, desc %p partial stub!\n", iface, desc);
+
+    if (desc == NULL)
+        return E_INVALIDARG;
+
+    EnterCriticalSection(&dxgi_cs);
+
+    hr = wined3d_swapchain_get_desc(swapchain->wined3d_swapchain, &wined3d_desc);
+    if (FAILED(hr))
+    {
+        LeaveCriticalSection(&dxgi_cs);
+        return hr;
+    }
+
+    LeaveCriticalSection(&dxgi_cs);
+
+    FIXME("Ignoring ScanlineOrdering, Scaling, SwapEffect and Flags\n");
+
+    desc->BufferDesc.Width = wined3d_desc.backbuffer_width;
+    desc->BufferDesc.Height = wined3d_desc.backbuffer_height;
+    desc->BufferDesc.RefreshRate.Numerator = wined3d_desc.refresh_rate;
+    desc->BufferDesc.RefreshRate.Denominator = 1;
+    desc->BufferDesc.Format = dxgi_format_from_wined3dformat(wined3d_desc.backbuffer_format);
+    desc->BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+    desc->BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+    desc->SampleDesc.Count = wined3d_desc.multisample_type;
+    desc->SampleDesc.Quality = wined3d_desc.multisample_quality;
+    desc->BufferCount = wined3d_desc.backbuffer_count;
+    desc->OutputWindow = wined3d_desc.device_window;
+    desc->Windowed = wined3d_desc.windowed;
+    desc->SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+    desc->Flags = 0;
+
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_swapchain_ResizeBuffers(IDXGISwapChain *iface,
