@@ -1169,7 +1169,7 @@ static HRESULT WINAPI GifDecoder_CopyPalette(IWICBitmapDecoder *iface,
     IWICPalette *pIPalette)
 {
     TRACE("(%p,%p)\n", iface, pIPalette);
-    return WINCODEC_ERR_PALETTEUNAVAILABLE;
+    return WINCODEC_ERR_FRAMEMISSING;
 }
 
 static HRESULT WINAPI GifDecoder_GetMetadataQueryReader(IWICBitmapDecoder *iface,

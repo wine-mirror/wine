@@ -95,7 +95,6 @@ static void test_local_gif_palette(void)
 
     /* global palette */
     hr = IWICBitmapDecoder_CopyPalette(decoder, palette);
-todo_wine
     ok(hr == WINCODEC_ERR_FRAMEMISSING,
        "expected WINCODEC_ERR_FRAMEMISSING, got %#x\n", hr);
 
