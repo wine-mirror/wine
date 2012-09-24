@@ -98,6 +98,10 @@
 static inline int ptrace(int req, ...) { errno = EPERM; return -1; /*FAIL*/ }
 #endif  /* HAVE_SYS_PTRACE_H */
 
+#ifndef __WALL
+#define __WALL 0
+#endif
+
 /* handle a status returned by waitpid */
 static int handle_child_status( struct thread *thread, int pid, int status, int want_sig )
 {
@@ -130,23 +134,6 @@ static int handle_child_status( struct thread *thread, int pid, int status, int 
     return 0;
 }
 
-/* waitpid wrapper to handle missing __WALL flag in older kernels */
-static inline pid_t waitpid_wrapper( pid_t pid, int *status, int options )
-{
-#ifdef __WALL
-    static int wall_flag = __WALL;
-
-    for (;;)
-    {
-        pid_t ret = waitpid( pid, status, options | wall_flag );
-        if (ret != -1 || !wall_flag || errno != EINVAL) return ret;
-        wall_flag = 0;
-    }
-#else
-    return waitpid( pid, status, options );
-#endif
-}
-
 /* handle a SIGCHLD signal */
 void sigchld_callback(void)
 {
@@ -154,7 +141,7 @@ void sigchld_callback(void)
 
     for (;;)
     {
-        if (!(pid = waitpid_wrapper( -1, &status, WUNTRACED | WNOHANG ))) break;
+        if (!(pid = waitpid( -1, &status, WUNTRACED | WNOHANG | __WALL ))) break;
         if (pid != -1)
         {
             struct thread *thread = get_thread_from_tid( pid );
@@ -189,7 +176,7 @@ static int waitpid_thread( struct thread *thread, int signal )
     start_watchdog();
     for (;;)
     {
-        if ((res = waitpid_wrapper( get_ptrace_pid(thread), &status, WUNTRACED )) == -1)
+        if ((res = waitpid( get_ptrace_pid(thread), &status, WUNTRACED | __WALL )) == -1)
         {
             if (errno == EINTR)
             {
