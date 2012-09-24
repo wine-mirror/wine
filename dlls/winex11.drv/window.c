@@ -2208,20 +2208,20 @@ UINT CDECL X11DRV_ShowWindow( HWND hwnd, INT cmd, RECT *rect, UINT swp )
     Window root, top;
     DWORD style = GetWindowLongW( hwnd, GWL_STYLE );
     struct x11drv_thread_data *thread_data = x11drv_thread_data();
-    struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
+    struct x11drv_win_data *data = get_win_data( hwnd );
 
-    if (!data || !data->whole_window || !data->managed || !data->mapped || data->iconic) return swp;
-    if (style & WS_MINIMIZE) return swp;
-    if (IsRectEmpty( rect )) return swp;
+    if (!data || !data->whole_window || !data->managed || !data->mapped || data->iconic) goto done;
+    if (style & WS_MINIMIZE) goto done;
+    if (IsRectEmpty( rect )) goto done;
 
     /* only fetch the new rectangle if the ShowWindow was a result of a window manager event */
 
     if (!thread_data->current_event || thread_data->current_event->xany.window != data->whole_window)
-        return swp;
+        goto done;
 
     if (thread_data->current_event->type != ConfigureNotify &&
         thread_data->current_event->type != PropertyNotify)
-        return swp;
+        goto done;
 
     TRACE( "win %p/%lx cmd %d at %s flags %08x\n",
            hwnd, data->whole_window, cmd, wine_dbgstr_rect(rect), swp );
@@ -2235,7 +2235,11 @@ UINT CDECL X11DRV_ShowWindow( HWND hwnd, INT cmd, RECT *rect, UINT swp )
     rect->bottom = y + height;
     OffsetRect( rect, virtual_screen_rect.left, virtual_screen_rect.top );
     X11DRV_X_to_window_rect( data, rect );
-    return swp & ~(SWP_NOMOVE | SWP_NOCLIENTMOVE | SWP_NOSIZE | SWP_NOCLIENTSIZE);
+    swp &= ~(SWP_NOMOVE | SWP_NOCLIENTMOVE | SWP_NOSIZE | SWP_NOCLIENTSIZE);
+
+done:
+    release_win_data( data );
+    return swp;
 }
 
 
