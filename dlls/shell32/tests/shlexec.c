@@ -1321,22 +1321,30 @@ typedef struct
 
 static fileurl_tests_t fileurl_tests[]=
 {
-    {"file:///", "%s\\nonexistent.shlexec", 0, 0x1},
+    /* How many slashes does it take... */
+    {"file:", "%s\\test file.shlexec", URL_SUCCESS, 0x1},
     {"file:/", "%s\\test file.shlexec", URL_SUCCESS, 0x1},
     {"file://", "%s\\test file.shlexec", URL_SUCCESS, 0x1},
     {"file:///", "%s\\test file.shlexec", URL_SUCCESS, 0x1},
     {"File:///", "%s\\test file.shlexec", URL_SUCCESS, 0x1},
-    {"file:///", "%s\\test file.shlexec", URL_SUCCESS | USE_COLON, 0x1},
-    {"file:///", "%s\\test file.shlexec", URL_SUCCESS | USE_BSLASH, 0x1},
     {"file:////", "%s\\test file.shlexec", URL_SUCCESS, 0x1},
     {"file://///", "%s\\test file.shlexec", 0, 0x1},
+
+    /* Test with Windows-style paths */
+    {"file:///", "%s\\test file.shlexec", URL_SUCCESS | USE_COLON, 0x1},
+    {"file:///", "%s\\test file.shlexec", URL_SUCCESS | USE_BSLASH, 0x1},
+
+    /* Check handling of hostnames */
     {"file://localhost/", "%s\\test file.shlexec", URL_SUCCESS, 0x1},
     {"file://localhost:80/", "%s\\test file.shlexec", 0, 0x1},
     {"file://LocalHost/", "%s\\test file.shlexec", URL_SUCCESS, 0x1},
     {"file://127.0.0.1/", "%s\\test file.shlexec", 0, 0x1},
     {"file://::1/", "%s\\test file.shlexec", 0, 0x1},
     {"file://notahost/", "%s\\test file.shlexec", 0, 0x1},
-    {"file://www.winehq.org/", "%s\\test file.shlexec", 0, 0x1},
+
+    /* Environment variables are not expanded in URLs */
+    {"%urlprefix%", "%s\\test file.shlexec", 0, 0x1},
+    {"file:///", "%s\\%%urlenvvar%% file.shlexec", 0, 0x1},
 
     {NULL, NULL, 0, 0}
 };
@@ -1357,6 +1365,8 @@ static void test_fileurl(void)
     }
 
     get_long_path_name(tmpdir, longtmpdir, sizeof(longtmpdir)/sizeof(*longtmpdir));
+    SetEnvironmentVariable("urlprefix", "file:///");
+    SetEnvironmentVariable("urlenvvar", "test");
 
     test=fileurl_tests;
     while (test->basename)
@@ -1423,6 +1433,9 @@ static void test_fileurl(void)
         }
         test++;
     }
+
+    SetEnvironmentVariable("urlprefix", NULL);
+    SetEnvironmentVariable("urlenvvar", NULL);
 }
 
 static void test_find_executable(void)
