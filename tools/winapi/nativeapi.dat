@@ -251,7 +251,6 @@ utime
 vfprintf
 vsnprintf
 vsprintf
-wait4
 write
 y0
 y1

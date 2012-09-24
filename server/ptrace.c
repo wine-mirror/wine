@@ -98,7 +98,7 @@
 static inline int ptrace(int req, ...) { errno = EPERM; return -1; /*FAIL*/ }
 #endif  /* HAVE_SYS_PTRACE_H */
 
-/* handle a status returned by wait4 */
+/* handle a status returned by waitpid */
 static int handle_child_status( struct thread *thread, int pid, int status, int want_sig )
 {
     if (WIFSTOPPED(status))
@@ -130,20 +130,20 @@ static int handle_child_status( struct thread *thread, int pid, int status, int 
     return 0;
 }
 
-/* wait4 wrapper to handle missing __WALL flag in older kernels */
-static inline pid_t wait4_wrapper( pid_t pid, int *status, int options, struct rusage *usage )
+/* waitpid wrapper to handle missing __WALL flag in older kernels */
+static inline pid_t waitpid_wrapper( pid_t pid, int *status, int options )
 {
 #ifdef __WALL
     static int wall_flag = __WALL;
 
     for (;;)
     {
-        pid_t ret = wait4( pid, status, options | wall_flag, usage );
+        pid_t ret = waitpid( pid, status, options | wall_flag );
         if (ret != -1 || !wall_flag || errno != EINVAL) return ret;
         wall_flag = 0;
     }
 #else
-    return wait4( pid, status, options, usage );
+    return waitpid( pid, status, options );
 #endif
 }
 
@@ -154,7 +154,7 @@ void sigchld_callback(void)
 
     for (;;)
     {
-        if (!(pid = wait4_wrapper( -1, &status, WUNTRACED | WNOHANG, NULL ))) break;
+        if (!(pid = waitpid_wrapper( -1, &status, WUNTRACED | WNOHANG ))) break;
         if (pid != -1)
         {
             struct thread *thread = get_thread_from_tid( pid );
@@ -182,26 +182,26 @@ static int get_ptrace_tid( struct thread *thread )
 }
 
 /* wait for a ptraced child to get a certain signal */
-static int wait4_thread( struct thread *thread, int signal )
+static int waitpid_thread( struct thread *thread, int signal )
 {
     int res, status;
 
     start_watchdog();
     for (;;)
     {
-        if ((res = wait4_wrapper( get_ptrace_pid(thread), &status, WUNTRACED, NULL )) == -1)
+        if ((res = waitpid_wrapper( get_ptrace_pid(thread), &status, WUNTRACED )) == -1)
         {
             if (errno == EINTR)
             {
                 if (!watchdog_triggered()) continue;
-                if (debug_level) fprintf( stderr, "%04x: *watchdog* wait4 aborted\n", thread->id );
+                if (debug_level) fprintf( stderr, "%04x: *watchdog* waitpid aborted\n", thread->id );
             }
             else if (errno == ECHILD)  /* must have died */
             {
                 thread->unix_pid = -1;
                 thread->unix_tid = -1;
             }
-            else perror( "wait4" );
+            else perror( "waitpid" );
             stop_watchdog();
             return 0;
         }
@@ -292,7 +292,7 @@ static int suspend_for_ptrace( struct thread *thread )
         if (errno == ESRCH) thread->unix_pid = thread->unix_tid = -1;  /* thread got killed */
         goto error;
     }
-    if (wait4_thread( thread, SIGSTOP )) return 1;
+    if (waitpid_thread( thread, SIGSTOP )) return 1;
     resume_after_ptrace( thread );
  error:
     set_error( STATUS_ACCESS_DENIED );

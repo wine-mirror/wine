@@ -801,7 +801,7 @@ void open_master_socket(void)
             if (read( sync_pipe[0], &dummy, 1 ) == 1) _exit(0);
 
             /* child terminated, propagate exit status */
-            wait4( pid, &status, 0, NULL );
+            waitpid( pid, &status, 0 );
             if (WIFEXITED(status)) _exit( WEXITSTATUS(status) );
             _exit(1);
         }

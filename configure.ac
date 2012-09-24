@@ -2046,9 +2046,7 @@ AC_CHECK_FUNCS(\
 	thr_kill2 \
 	timegm \
 	usleep \
-	vsnprintf \
-	wait4 \
-	waitpid \
+	vsnprintf
 )
 CFLAGS="$ac_save_CFLAGS"
 
