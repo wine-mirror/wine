@@ -81,6 +81,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 #define HASHTABLE_FLAG_BITS     6
 
 #define PENDING_DELETE_CACHE_ENTRY  0x00400000
+#define CACHE_CONTAINER_NO_SUBDIR   0xFE
 
 #define CACHE_HEADER_DATA_ROOT_LEAK_OFFSET 0x16
 
@@ -340,7 +341,7 @@ static DWORD URLCacheContainer_OpenIndex(URLCACHECONTAINER * pContainer, DWORD b
 		    /* 127MB - taken from default for Windows 2000 */
                     pHeader->CacheLimit.QuadPart = 0x07ff5400;
 		    /* Copied from a Windows 2000 cache index */
-		    pHeader->DirectoryCount = 4;
+		    pHeader->DirectoryCount = pContainer->default_entry_type==NORMAL_CACHE_ENTRY ? 4 : 0;
 		
 		    /* If the registry has a cache size set, use the registry value */
 		    if (RegOpenKeyA(HKEY_CURRENT_USER, szCacheContent, &key) == ERROR_SUCCESS)
@@ -901,21 +902,31 @@ static BOOL URLCache_LocalFileNameToPathW(
     LONG nRequired;
     int path_len = strlenW(pContainer->path);
     int file_name_len = MultiByteToWideChar(CP_ACP, 0, szLocalFileName, -1, NULL, 0);
-    if (Directory >= pHeader->DirectoryCount)
+    if (Directory!=CACHE_CONTAINER_NO_SUBDIR && Directory>=pHeader->DirectoryCount)
     {
         *lpBufferSize = 0;
         return FALSE;
     }
 
-    nRequired = (path_len + DIR_LENGTH + file_name_len + 1) * sizeof(WCHAR);
+    nRequired = (path_len + file_name_len) * sizeof(WCHAR);
+    if(Directory != CACHE_CONTAINER_NO_SUBDIR)
+        nRequired += (DIR_LENGTH + 1) * sizeof(WCHAR);
     if (nRequired <= *lpBufferSize)
     {
         int dir_len;
 
         memcpy(wszPath, pContainer->path, path_len * sizeof(WCHAR));
-        dir_len = MultiByteToWideChar(CP_ACP, 0, pHeader->directory_data[Directory].filename, DIR_LENGTH, wszPath + path_len, DIR_LENGTH);
-        wszPath[dir_len + path_len] = '\\';
-        MultiByteToWideChar(CP_ACP, 0, szLocalFileName, -1, wszPath + dir_len + path_len + 1, file_name_len);
+        if (Directory != CACHE_CONTAINER_NO_SUBDIR)
+        {
+            dir_len = MultiByteToWideChar(CP_ACP, 0, pHeader->directory_data[Directory].filename, DIR_LENGTH, wszPath + path_len, DIR_LENGTH);
+            wszPath[dir_len + path_len] = '\\';
+            dir_len++;
+        }
+        else
+        {
+            dir_len = 0;
+        }
+        MultiByteToWideChar(CP_ACP, 0, szLocalFileName, -1, wszPath + dir_len + path_len, file_name_len);
         *lpBufferSize = nRequired;
         return TRUE;
     }
@@ -946,7 +957,7 @@ static BOOL URLCache_LocalFileNameToPathA(
     LONG nRequired;
     int path_len, file_name_len, dir_len;
 
-    if (Directory >= pHeader->DirectoryCount)
+    if (Directory!=CACHE_CONTAINER_NO_SUBDIR && Directory>=pHeader->DirectoryCount)
     {
         *lpBufferSize = 0;
         return FALSE;
@@ -954,15 +965,20 @@ static BOOL URLCache_LocalFileNameToPathA(
 
     path_len = WideCharToMultiByte(CP_ACP, 0, pContainer->path, -1, NULL, 0, NULL, NULL) - 1;
     file_name_len = strlen(szLocalFileName) + 1 /* for nul-terminator */;
-    dir_len = DIR_LENGTH;
+    if (Directory!=CACHE_CONTAINER_NO_SUBDIR)
+        dir_len = DIR_LENGTH+1;
+    else
+        dir_len = 0;
 
-    nRequired = (path_len + dir_len + 1 + file_name_len) * sizeof(char);
+    nRequired = (path_len + dir_len + file_name_len) * sizeof(char);
     if (nRequired < *lpBufferSize)
     {
         WideCharToMultiByte(CP_ACP, 0, pContainer->path, -1, szPath, path_len, NULL, NULL);
-        memcpy(szPath+path_len, pHeader->directory_data[Directory].filename, dir_len);
-        szPath[path_len + dir_len] = '\\';
-        memcpy(szPath + path_len + dir_len + 1, szLocalFileName, file_name_len);
+        if(dir_len) {
+            memcpy(szPath+path_len, pHeader->directory_data[Directory].filename, dir_len-1);
+            szPath[path_len + dir_len-1] = '\\';
+        }
+        memcpy(szPath + path_len + dir_len, szLocalFileName, file_name_len);
         *lpBufferSize = nRequired;
         return TRUE;
     }
@@ -2885,7 +2901,10 @@ BOOL WINAPI CreateUrlCacheEntryW(
     if (!(pHeader = URLCacheContainer_LockIndex(pContainer)))
         return FALSE;
 
-    CacheDir = (BYTE)(rand() % pHeader->DirectoryCount);
+    if(pHeader->DirectoryCount)
+        CacheDir = (BYTE)(rand() % pHeader->DirectoryCount);
+    else
+        CacheDir = CACHE_CONTAINER_NO_SUBDIR;
 
     lBufferSize = MAX_PATH * sizeof(WCHAR);
     if (!URLCache_LocalFileNameToPathW(pContainer, pHeader, szFile, CacheDir, lpszFileName, &lBufferSize))
@@ -3001,7 +3020,7 @@ static BOOL CommitUrlCacheEntryInternal(
     DWORD dwOffsetFileExtension = 0;
     WIN32_FILE_ATTRIBUTE_DATA file_attr;
     LARGE_INTEGER file_size;
-    BYTE cDirectory = 0;
+    BYTE cDirectory;
     char achFile[MAX_PATH];
     LPSTR lpszUrlNameA = NULL;
     LPSTR lpszFileExtensionA = NULL;
@@ -3081,6 +3100,11 @@ static BOOL CommitUrlCacheEntryInternal(
         DeleteUrlCacheEntryInternal(pContainer, pHeader, pHashEntry);
     }
 
+    if (pHeader->DirectoryCount)
+        cDirectory = 0;
+    else
+        cDirectory = CACHE_CONTAINER_NO_SUBDIR;
+
     if (lpszLocalFileName)
     {
         BOOL bFound = FALSE;
@@ -3098,24 +3122,27 @@ static BOOL CommitUrlCacheEntryInternal(
         WideCharToMultiByte(CP_ACP, 0, lpszLocalFileName, -1, achFile, MAX_PATH, NULL, NULL);
 	pchLocalFileName = achFile;
 
-        for (cDirectory = 0; cDirectory < pHeader->DirectoryCount; cDirectory++)
+        if(pHeader->DirectoryCount)
         {
-            if (!strncmp(pHeader->directory_data[cDirectory].filename, pchLocalFileName, DIR_LENGTH))
+            for (cDirectory = 0; cDirectory < pHeader->DirectoryCount; cDirectory++)
             {
-                bFound = TRUE;
-                break;
+                if (!strncmp(pHeader->directory_data[cDirectory].filename, pchLocalFileName, DIR_LENGTH))
+                {
+                    bFound = TRUE;
+                    break;
+                }
             }
-        }
 
-        if (!bFound)
-        {
-            ERR("cache directory not found in path %s\n", debugstr_w(lpszLocalFileName));
-            error = ERROR_INVALID_PARAMETER;
-            goto cleanup;
-        }
+            if (!bFound)
+            {
+                ERR("cache directory not found in path %s\n", debugstr_w(lpszLocalFileName));
+                error = ERROR_INVALID_PARAMETER;
+                goto cleanup;
+            }
 
-        lpszLocalFileName += DIR_LENGTH + 1;
-        pchLocalFileName += DIR_LENGTH + 1;
+            lpszLocalFileName += DIR_LENGTH + 1;
+            pchLocalFileName += DIR_LENGTH + 1;
+        }
     }
 
     dwBytesNeeded = DWORD_ALIGN(dwBytesNeeded + strlen(lpszUrlNameA) + 1);
