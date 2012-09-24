@@ -1160,6 +1160,24 @@ next_tests:
 
     hr = D3DXSaveSurfaceToFileA("saved_surface.dds", D3DXIFF_DDS, surface, NULL, NULL);
     ok(hr == D3D_OK, "D3DXSaveSurfaceToFileA returned %#x, expected %#x\n", hr, D3D_OK);
+    if (SUCCEEDED(hr)) {
+        hr = D3DXLoadSurfaceFromFileA(surface, NULL, NULL, "saved_surface.dds", NULL, D3DX_FILTER_NONE, 0, &image_info);
+        ok(hr == D3D_OK, "Couldn't load saved surface %#x\n", hr);
+
+        if (SUCCEEDED(hr)) {
+            ok(image_info.Width == 2, "Wrong width %u\n", image_info.Width);
+            ok(image_info.Format == D3DFMT_R8G8B8, "Wrong format %#x\n", image_info.Format);
+            ok(image_info.ImageFileFormat == D3DXIFF_DDS, "Wrong file format %u\n", image_info.ImageFileFormat);
+
+            hr = IDirect3DSurface9_LockRect(surface, &lock_rect, NULL, D3DLOCK_READONLY);
+            ok(hr == D3D_OK, "Couldn't lock surface %#x\n", hr);
+            if (SUCCEEDED(hr)) {
+                ok(!memcmp(lock_rect.pBits, pixels, pitch), "Pixel data mismatch in first row\n");
+                ok(!memcmp((BYTE *)lock_rect.pBits + lock_rect.Pitch, pixels + pitch, pitch), "Pixel data mismatch in second row\n");
+                IDirect3DSurface9_UnlockRect(surface);
+            }
+        }
+    } else skip("Couldn't save surface\n");
 
     hr = D3DXSaveSurfaceToFileA("saved_surface", D3DXIFF_PFM + 1, surface, NULL, NULL);
     ok(hr == D3DERR_INVALIDCALL, "D3DXSaveSurfaceToFileA returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
