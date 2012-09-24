@@ -2413,7 +2413,7 @@ static int dword_cmp(const void *p1, const void *p2)
 BOOL WINAPI FreeUrlCacheSpaceW(LPCWSTR cache_path, DWORD size, DWORD filter)
 {
     URLCACHECONTAINER *container;
-    DWORD err;
+    DWORD path_len, err;
 
     TRACE("(%s, %x, %x)\n", debugstr_w(cache_path), size, filter);
 
@@ -2423,16 +2423,20 @@ BOOL WINAPI FreeUrlCacheSpaceW(LPCWSTR cache_path, DWORD size, DWORD filter)
     }
 
     if(cache_path) {
-        FIXME("cache_path != NULL not supported yet\n");
-        SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-        return FALSE;
+        path_len = strlenW(cache_path);
+        if(cache_path[path_len-1] == '\\')
+            path_len--;
+    }else {
+        path_len = 0;
     }
 
     if(size==100 && !filter) {
         LIST_FOR_EACH_ENTRY(container, &UrlContainers, URLCACHECONTAINER, entry)
         {
-            /* The URL cache has prefix L"" (unlike Cookies and History) */
-            if (container->cache_prefix[0] == 0)
+            /* When cache_path==NULL only clean Temporary Internet Files */
+            if((!path_len && container->cache_prefix[0]==0) ||
+                    (path_len && !strncmpiW(container->path, cache_path, path_len) &&
+                     (container->path[path_len]=='\0' || container->path[path_len]=='\\')))
             {
                 BOOL ret_del;
 
@@ -2444,9 +2448,12 @@ BOOL WINAPI FreeUrlCacheSpaceW(LPCWSTR cache_path, DWORD size, DWORD filter)
                 err = URLCacheContainer_OpenIndex(container, MIN_BLOCK_NO);
 
                 ReleaseMutex(container->hMutex);
-                return ret_del && (err == ERROR_SUCCESS);
+                if(!ret_del || (err != ERROR_SUCCESS))
+                    return FALSE;
             }
         }
+
+        return TRUE;
     }
 
     LIST_FOR_EACH_ENTRY(container, &UrlContainers, URLCACHECONTAINER, entry)
@@ -2459,6 +2466,11 @@ BOOL WINAPI FreeUrlCacheSpaceW(LPCWSTR cache_path, DWORD size, DWORD filter)
         DWORD delete_factor, hash_table_off, hash_table_entry;
         DWORD rate[100], rate_no;
         FILETIME cur_time;
+
+        if((path_len || container->cache_prefix[0]!=0) &&
+                (!path_len || strncmpiW(container->path, cache_path, path_len) ||
+                 (container->path[path_len]!='\0' && container->path[path_len]!='\\')))
+            continue;
 
         err = URLCacheContainer_OpenIndex(container, MIN_BLOCK_NO);
         if(err != ERROR_SUCCESS)
@@ -2555,12 +2567,12 @@ BOOL WINAPI FreeUrlCacheSpaceW(LPCWSTR cache_path, DWORD size, DWORD filter)
  *
  * See FreeUrlCacheSpaceW.
  */
-BOOL WINAPI FreeUrlCacheSpaceA(LPCSTR lpszCachePath, DWORD dwSize, DWORD dwSizeType)
+BOOL WINAPI FreeUrlCacheSpaceA(LPCSTR lpszCachePath, DWORD dwSize, DWORD dwFilter)
 {
     BOOL ret = FALSE;
     LPWSTR path = heap_strdupAtoW(lpszCachePath);
     if (lpszCachePath == NULL || path != NULL)
-        ret = FreeUrlCacheSpaceW(path, dwSize, dwSizeType);
+        ret = FreeUrlCacheSpaceW(path, dwSize, dwFilter);
     heap_free(path);
     return ret;
 }
