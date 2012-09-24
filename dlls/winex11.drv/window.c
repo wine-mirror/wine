@@ -1070,6 +1070,7 @@ static void map_window( HWND hwnd, DWORD new_style )
 {
     struct x11drv_win_data *data;
 
+    make_owner_managed( hwnd );
     wait_for_withdrawn_state( hwnd, TRUE );
 
     if (!(data = get_win_data( hwnd ))) return;
@@ -1086,6 +1087,7 @@ static void map_window( HWND hwnd, DWORD new_style )
             update_net_wm_states( data );
             sync_window_style( data );
             XMapWindow( data->display, data->whole_window );
+            XFlush( data->display );
         }
         else set_xembed_flags( data, XEMBED_MAPPED );
 
@@ -1277,10 +1279,10 @@ static void sync_window_position( struct x11drv_win_data *data,
  *
  * Move the window bits when a window is moved.
  */
-static void move_window_bits( HWND hwnd, const RECT *old_rect, const RECT *new_rect,
-                              const RECT *old_client_rect )
+static void move_window_bits( HWND hwnd, Window window, const RECT *old_rect, const RECT *new_rect,
+                              const RECT *old_client_rect, const RECT *new_client_rect,
+                              const RECT *new_window_rect )
 {
-    struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
     RECT src_rect = *old_rect;
     RECT dst_rect = *new_rect;
     HDC hdc_src, hdc_dst;
@@ -1288,32 +1290,32 @@ static void move_window_bits( HWND hwnd, const RECT *old_rect, const RECT *new_r
     HRGN rgn;
     HWND parent = 0;
 
-    if (!data->whole_window)
+    if (!window)
     {
-        OffsetRect( &dst_rect, -data->window_rect.left, -data->window_rect.top );
-        parent = GetAncestor( data->hwnd, GA_PARENT );
+        OffsetRect( &dst_rect, -new_window_rect->left, -new_window_rect->top );
+        parent = GetAncestor( hwnd, GA_PARENT );
         hdc_src = GetDCEx( parent, 0, DCX_CACHE );
-        hdc_dst = GetDCEx( data->hwnd, 0, DCX_CACHE | DCX_WINDOW );
+        hdc_dst = GetDCEx( hwnd, 0, DCX_CACHE | DCX_WINDOW );
     }
     else
     {
-        OffsetRect( &dst_rect, -data->client_rect.left, -data->client_rect.top );
+        OffsetRect( &dst_rect, -new_client_rect->left, -new_client_rect->top );
         /* make src rect relative to the old position of the window */
         OffsetRect( &src_rect, -old_client_rect->left, -old_client_rect->top );
         if (dst_rect.left == src_rect.left && dst_rect.top == src_rect.top) return;
-        hdc_src = hdc_dst = GetDCEx( data->hwnd, 0, DCX_CACHE );
+        hdc_src = hdc_dst = GetDCEx( hwnd, 0, DCX_CACHE );
     }
 
     rgn = CreateRectRgnIndirect( &dst_rect );
     SelectClipRgn( hdc_dst, rgn );
     DeleteObject( rgn );
-    ExcludeUpdateRgn( hdc_dst, data->hwnd );
+    ExcludeUpdateRgn( hdc_dst, hwnd );
 
     code = X11DRV_START_EXPOSURES;
     ExtEscape( hdc_dst, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code, 0, NULL );
 
     TRACE( "copying bits for win %p/%lx %s -> %s\n",
-           data->hwnd, data->whole_window, wine_dbgstr_rect(&src_rect), wine_dbgstr_rect(&dst_rect) );
+           hwnd, window, wine_dbgstr_rect(&src_rect), wine_dbgstr_rect(&dst_rect) );
     BitBlt( hdc_dst, dst_rect.left, dst_rect.top,
             dst_rect.right - dst_rect.left, dst_rect.bottom - dst_rect.top,
             hdc_src, src_rect.left, src_rect.top, SRCCOPY );
@@ -1322,20 +1324,20 @@ static void move_window_bits( HWND hwnd, const RECT *old_rect, const RECT *new_r
     code = X11DRV_END_EXPOSURES;
     ExtEscape( hdc_dst, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code, sizeof(rgn), (LPSTR)&rgn );
 
-    ReleaseDC( data->hwnd, hdc_dst );
+    ReleaseDC( hwnd, hdc_dst );
     if (hdc_src != hdc_dst) ReleaseDC( parent, hdc_src );
 
     if (rgn)
     {
-        if (!data->whole_window)
+        if (!window)
         {
             /* map region to client rect since we are using DCX_WINDOW */
-            OffsetRgn( rgn, data->window_rect.left - data->client_rect.left,
-                       data->window_rect.top - data->client_rect.top );
-            RedrawWindow( data->hwnd, NULL, rgn,
+            OffsetRgn( rgn, new_window_rect->left - new_client_rect->left,
+                       new_window_rect->top - new_client_rect->top );
+            RedrawWindow( hwnd, NULL, rgn,
                           RDW_INVALIDATE | RDW_FRAME | RDW_ERASE | RDW_ALLCHILDREN );
         }
-        else RedrawWindow( data->hwnd, NULL, rgn, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN );
+        else RedrawWindow( hwnd, NULL, rgn, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN );
         DeleteObject( rgn );
     }
 }
@@ -1718,7 +1720,6 @@ static struct x11drv_win_data *X11DRV_create_win_data( HWND hwnd, const RECT *wi
                hwnd, data->whole_window, wine_dbgstr_rect( &data->window_rect ),
                wine_dbgstr_rect( &data->whole_rect ), wine_dbgstr_rect( &data->client_rect ));
     }
-    release_win_data( data );
     return data;
 }
 
@@ -2026,7 +2027,7 @@ void CDECL X11DRV_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flag
                                      const RECT *window_rect, const RECT *client_rect, RECT *visible_rect,
                                      struct window_surface **surface )
 {
-    struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
+    struct x11drv_win_data *data = get_win_data( hwnd );
     RECT surface_rect;
     XVisualInfo vis;
     DWORD flags;
@@ -2039,7 +2040,9 @@ void CDECL X11DRV_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flag
     if (!data->managed && data->whole_window && is_window_managed( hwnd, swp_flags, window_rect ))
     {
         TRACE( "making win %p/%lx managed\n", hwnd, data->whole_window );
-        if (data->mapped) unmap_window( hwnd );
+        release_win_data( data );
+        unmap_window( hwnd );
+        if (!(data = get_win_data( hwnd ))) return;
         data->managed = TRUE;
         SetPropA( hwnd, managed_prop, (HANDLE)1 );
     }
@@ -2048,12 +2051,12 @@ void CDECL X11DRV_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flag
     X11DRV_window_to_X_rect( data, visible_rect );
 
     /* create the window surface if necessary */
-    if (!data->whole_window) return;
-    if (data->embedded) return;
-    if (swp_flags & SWP_HIDEWINDOW) return;
-    if (data->whole_window == root_window) return;
-    if (has_gl_drawable( hwnd )) return;
-    if (!client_side_graphics && !layered) return;
+    if (!data->whole_window) goto done;
+    if (data->embedded) goto done;
+    if (swp_flags & SWP_HIDEWINDOW) goto done;
+    if (data->whole_window == root_window) goto done;
+    if (has_gl_drawable( hwnd )) goto done;
+    if (!client_side_graphics && !layered) goto done;
 
     surface_rect = get_surface_rect( visible_rect );
     if (data->surface)
@@ -2063,10 +2066,10 @@ void CDECL X11DRV_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flag
             /* existing surface is good enough */
             window_surface_add_ref( data->surface );
             *surface = data->surface;
-            return;
+            goto done;
         }
     }
-    else if (!(swp_flags & SWP_SHOWWINDOW) && !(GetWindowLongW( hwnd, GWL_STYLE ) & WS_VISIBLE)) return;
+    else if (!(swp_flags & SWP_SHOWWINDOW) && !(GetWindowLongW( hwnd, GWL_STYLE ) & WS_VISIBLE)) goto done;
 
     memset( &vis, 0, sizeof(vis) );
     vis.visual     = visual;
@@ -2079,6 +2082,9 @@ void CDECL X11DRV_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flag
         key = CLR_INVALID;
 
     *surface = create_surface( data->whole_window, &vis, &surface_rect, key );
+
+done:
+    release_win_data( data );
 }
 
 
@@ -2091,12 +2097,12 @@ void CDECL X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags
                                     struct window_surface *surface )
 {
     struct x11drv_thread_data *thread_data;
-    struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
+    struct x11drv_win_data *data;
     DWORD new_style = GetWindowLongW( hwnd, GWL_STYLE );
     RECT old_window_rect, old_whole_rect, old_client_rect;
     int event_type;
 
-    if (!data) return;
+    if (!(data = get_win_data( hwnd ))) return;
 
     thread_data = x11drv_thread_data();
 
@@ -2115,6 +2121,7 @@ void CDECL X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags
 
     if (!IsRectEmpty( &valid_rects[0] ))
     {
+        Window window = data->whole_window;
         int x_offset = old_whole_rect.left - data->whole_rect.left;
         int y_offset = old_whole_rect.top - data->whole_rect.top;
 
@@ -2129,27 +2136,40 @@ void CDECL X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags
             !memcmp( &valid_rects[0], &data->client_rect, sizeof(RECT) ))
         {
             /* if we have an X window the bits will be moved by the X server */
-            if (!data->whole_window && (x_offset != 0 || y_offset != 0))
-                move_window_bits( hwnd, &old_whole_rect, &data->whole_rect, &old_client_rect );
+            if (!window && (x_offset != 0 || y_offset != 0))
+            {
+                release_win_data( data );
+                move_window_bits( hwnd, window, &old_whole_rect, visible_rect,
+                                  &old_client_rect, rectClient, rectWindow );
+                if (!(data = get_win_data( hwnd ))) return;
+            }
         }
         else
-            move_window_bits( hwnd, &valid_rects[1], &valid_rects[0], &old_client_rect );
+        {
+            release_win_data( data );
+            move_window_bits( hwnd, window, &valid_rects[1], &valid_rects[0],
+                              &old_client_rect, rectClient, rectWindow );
+            if (!(data = get_win_data( hwnd ))) return;
+        }
     }
 
     XFlush( gdi_display );  /* make sure painting is done before we move the window */
 
     sync_gl_drawable( data->hwnd, visible_rect, rectClient );
 
-    if (!data->whole_window) return;
+    if (!data->whole_window) goto done;
 
     /* check if we are currently processing an event relevant to this window */
     event_type = 0;
-    if (thread_data->current_event && thread_data->current_event->xany.window == data->whole_window)
+    if (thread_data &&
+        thread_data->current_event &&
+        thread_data->current_event->xany.window == data->whole_window)
+    {
         event_type = thread_data->current_event->type;
-
-    if (event_type != ConfigureNotify && event_type != PropertyNotify &&
-        event_type != GravityNotify && event_type != ReparentNotify)
-        event_type = 0;  /* ignore other events */
+        if (event_type != ConfigureNotify && event_type != PropertyNotify &&
+            event_type != GravityNotify && event_type != ReparentNotify)
+            event_type = 0;  /* ignore other events */
+    }
 
     if (data->mapped && event_type != ReparentNotify)
     {
@@ -2157,8 +2177,10 @@ void CDECL X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags
             (!event_type &&
              !is_window_rect_mapped( rectWindow ) && is_window_rect_mapped( &old_window_rect )))
         {
+            release_win_data( data );
             unmap_window( hwnd );
             if (is_window_rect_fullscreen( &old_window_rect )) reset_clipping_window();
+            if (!(data = get_win_data( hwnd ))) return;
         }
     }
 
@@ -2172,9 +2194,12 @@ void CDECL X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags
     {
         if (!data->mapped)
         {
-            make_owner_managed( hwnd );
-            if (!data->icon_pixmap) fetch_icon_data( hwnd, 0, 0 );
+            BOOL needs_icon = !data->icon_pixmap;
+
+            release_win_data( data );
+            if (needs_icon) fetch_icon_data( hwnd, 0, 0 );
             map_window( hwnd, new_style );
+            return;
         }
         else if ((swp_flags & SWP_STATECHANGED) && (!data->iconic != !(new_style & WS_MINIMIZE)))
         {
@@ -2195,6 +2220,8 @@ void CDECL X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags
     }
 
     XFlush( data->display );  /* make sure changes are done before we start painting again */
+done:
+    release_win_data( data );
 }
 
 
