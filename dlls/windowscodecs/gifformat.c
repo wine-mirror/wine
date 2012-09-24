@@ -739,9 +739,7 @@ static HRESULT WINAPI GifFrameDecode_CopyPalette(IWICBitmapFrameDecode *iface,
 	}
     }
 
-    IWICPalette_InitializeCustom(pIPalette, colors, cm->ColorCount);
-
-    return S_OK;
+    return IWICPalette_InitializeCustom(pIPalette, colors, cm->ColorCount);
 }
 
 static HRESULT copy_interlaced_pixels(const BYTE *srcbuffer,
