@@ -5,6 +5,7 @@ C_SRCS = \
 	bitmap.c \
 	bmpformat.c \
 	converter.c \
+	gifformat.c \
 	icoformat.c \
 	info.c \
 	metadata.c \
