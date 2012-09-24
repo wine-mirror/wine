@@ -542,7 +542,8 @@ HRESULT load_texture_from_dds(IDirect3DTexture9 *texture, const void *src_data, 
     const struct dds_header *header = src_data;
     const BYTE *pixels = (BYTE *)(header + 1);
 
-    if (src_info->ResourceType != D3DRTYPE_TEXTURE)
+    /* Loading a cube texture as a simple texture is also supported (only first face texture is taken) */
+    if ((src_info->ResourceType != D3DRTYPE_TEXTURE) && (src_info->ResourceType != D3DRTYPE_CUBETEXTURE))
         return D3DXERR_INVALIDDATA;
 
     width = src_info->Width;
