@@ -1156,9 +1156,10 @@ next_tests:
     ok(hr == D3D_OK, "D3DXSaveSurfaceToFileA returned %#x, expected %#x\n", hr, D3D_OK);
     hr = D3DXSaveSurfaceToFileA("saved_surface.tga", D3DXIFF_TGA, surface, NULL, NULL);
     ok(hr == D3D_OK, "D3DXSaveSurfaceToFileA returned %#x, expected %#x\n", hr, D3D_OK);
+    }
+
     hr = D3DXSaveSurfaceToFileA("saved_surface.dds", D3DXIFF_DDS, surface, NULL, NULL);
     ok(hr == D3D_OK, "D3DXSaveSurfaceToFileA returned %#x, expected %#x\n", hr, D3D_OK);
-    }
 
     hr = D3DXSaveSurfaceToFileA("saved_surface", D3DXIFF_PFM + 1, surface, NULL, NULL);
     ok(hr == D3DERR_INVALIDCALL, "D3DXSaveSurfaceToFileA returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
