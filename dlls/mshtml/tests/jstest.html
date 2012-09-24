@@ -103,13 +103,32 @@ function test_getter_call() {
 
     var e = document.getElementById("divid");
 
-    e.myfunc = function(x) { this.myfinc_called = x; };
+    e.myfunc = function(x) { this.myfunc_called = x; };
     e.myfunc("test");
-    ok(e.myfinc_called === "test", "e.myfinc_called = " + e.myfinc_called);
+    ok(e.myfunc_called === "test", "e.myfunc_called = " + e.myfunc_called);
 
     e.onmousedown = function(x) { this.onmousedown_called = x; };
     e.onmousedown("test");
     ok(e.onmousedown_called === "test", "e.onmousedown_called = " + e.onmousedown_called);
+}
+
+function test_override_functions() {
+    function override_func() { return "test"; }
+
+    ok(typeof(window.showModalDialog) === "object", "typeof(window.showModalDialog) = " + typeof(window.showModalDialog));
+    window.showModalDialog = override_func;
+    ok(window.showModalDialog === override_func, "window.showModalDialog != override_func");
+    ok(typeof(window.showModalDialog) === "function", "typeof(window.showModalDialog) = " + typeof(window.showModalDialog));
+
+    document.body.innerHTML = '<div id="divid"></div>';
+    var div = document.getElementById("divid");
+    ok(typeof(div.addBehavior) === "object", "typeof(div.addBehavior) = " + typeof(div.addBehavior));
+    div.addBehavior = override_func;
+    ok(div.addBehavior === override_func, "div.addBehavior != override_func");
+    ok(typeof(div.addBehavior) === "function", "typeof(div.addBehavior) = " + typeof(div.addBehavior));
+
+    var tmp = div.addBehavior();
+    ok(tmp === "test", "div.addBehavior() = " + tmp);
 }
 
 var globalVar = false;
@@ -128,6 +147,7 @@ function runTest() {
     test_document_name_as_index();
     test_remove_style_attribute();
     test_getter_call();
+    test_override_functions();
 
     var r = window.execScript("globalVar = true;");
     ok(r === undefined, "execScript returned " + r);
