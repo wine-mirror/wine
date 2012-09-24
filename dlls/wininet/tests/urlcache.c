@@ -31,6 +31,8 @@
 
 #define TEST_URL    "http://urlcachetest.winehq.org/index.html"
 #define TEST_URL1   "Visited: user@http://urlcachetest.winehq.org/index.html"
+#define TEST_HASH_COLLISIONS1 "Visited: http://winehq.org/doc0.html"
+#define TEST_HASH_COLLISIONS2 "Visited: http://winehq.org/doc75651909.html"
 
 static BOOL (WINAPI *pDeleteUrlCacheEntryA)(LPCSTR);
 static BOOL (WINAPI *pUnlockUrlCacheEntryFileA)(LPCSTR,DWORD);
@@ -750,6 +752,43 @@ static void test_urlcacheA(void)
         ret = pDeleteUrlCacheEntryA(TEST_URL);
         ok(ret, "DeleteUrlCacheEntryA failed with error %d\n", GetLastError());
         check_file_not_exists(filenameA);
+    }
+
+    /* Test if files with identical hash keys are handled correctly */
+    ret = CommitUrlCacheEntryA(TEST_HASH_COLLISIONS1, NULL, filetime_zero, filetime_zero, NORMAL_CACHE_ENTRY, NULL, 0, "html", NULL);
+    ok(ret, "CommitUrlCacheEntry failed with error %d\n", GetLastError());
+    ret = CommitUrlCacheEntryA(TEST_HASH_COLLISIONS2, NULL, filetime_zero, filetime_zero, NORMAL_CACHE_ENTRY, NULL, 0, "html", NULL);
+    ok(ret, "CommitUrlCacheEntry failed with error %d\n", GetLastError());
+
+    cbCacheEntryInfo = 0;
+    ret = GetUrlCacheEntryInfo(TEST_HASH_COLLISIONS1, NULL, &cbCacheEntryInfo);
+    ok(!ret, "GetUrlCacheEntryInfo should have failed\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+            "expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+    lpCacheEntryInfo = HeapAlloc(GetProcessHeap(), 0, cbCacheEntryInfo);
+    ret = GetUrlCacheEntryInfo(TEST_HASH_COLLISIONS1, lpCacheEntryInfo, &cbCacheEntryInfo);
+    ok(ret, "GetUrlCacheEntryInfo failed with error %d\n", GetLastError());
+    ok(!strcmp(lpCacheEntryInfo->lpszSourceUrlName, TEST_HASH_COLLISIONS1),
+            "got incorrect entry: %s\n", lpCacheEntryInfo->lpszSourceUrlName);
+    HeapFree(GetProcessHeap(), 0, lpCacheEntryInfo);
+
+    cbCacheEntryInfo = 0;
+    ret = GetUrlCacheEntryInfo(TEST_HASH_COLLISIONS2, NULL, &cbCacheEntryInfo);
+    ok(!ret, "GetUrlCacheEntryInfo should have failed\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+            "expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+    lpCacheEntryInfo = HeapAlloc(GetProcessHeap(), 0, cbCacheEntryInfo);
+    ret = GetUrlCacheEntryInfo(TEST_HASH_COLLISIONS2, lpCacheEntryInfo, &cbCacheEntryInfo);
+    ok(ret, "GetUrlCacheEntryInfo failed with error %d\n", GetLastError());
+    ok(!strcmp(lpCacheEntryInfo->lpszSourceUrlName, TEST_HASH_COLLISIONS2),
+            "got incorrect entry: %s\n", lpCacheEntryInfo->lpszSourceUrlName);
+    HeapFree(GetProcessHeap(), 0, lpCacheEntryInfo);
+
+    if (pDeleteUrlCacheEntryA) {
+        ret = pDeleteUrlCacheEntryA(TEST_HASH_COLLISIONS1);
+        ok(ret, "DeleteUrlCacheEntry failed: %d\n", GetLastError());
+        ret = pDeleteUrlCacheEntryA(TEST_HASH_COLLISIONS2);
+        ok(ret, "DeleteUrlCacheEntry failed: %d\n", GetLastError());
     }
 }
 
