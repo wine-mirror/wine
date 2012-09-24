@@ -27,6 +27,7 @@
 #include "winbase.h"
 #include "ole2.h"
 #include "rpcproxy.h"
+#include "msdasc.h"
 
 #include "initguid.h"
 #include "msdaguid.h"
@@ -127,6 +128,7 @@ static const IClassFactoryVtbl CF_Vtbl =
 };
 
 static cf oledb_convert_cf = { { &CF_Vtbl }, create_oledb_convert };
+static cf oledb_datainit_cf = { { &CF_Vtbl }, create_data_init };
 
 /******************************************************************
  * DllGetClassObject
@@ -138,6 +140,11 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **obj)
     if ( IsEqualCLSID (rclsid, &CLSID_OLEDB_CONVERSIONLIBRARY) )
     {
         *obj = &oledb_convert_cf;
+        return S_OK;
+    }
+    else if ( IsEqualCLSID (rclsid, &CLSID_MSDAINITIALIZE) )
+    {
+        *obj = &oledb_datainit_cf;
         return S_OK;
     }
 

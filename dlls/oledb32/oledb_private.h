@@ -18,3 +18,4 @@
  */
 
 HRESULT create_oledb_convert(IUnknown *outer, void **obj) DECLSPEC_HIDDEN;
+HRESULT create_data_init(IUnknown *outer, void **obj) DECLSPEC_HIDDEN;
