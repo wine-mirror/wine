@@ -378,6 +378,19 @@ ok(r[2] === "3", "r[2] = " + r[2]);
 ok(RegExp.leftContext === "1,,2", "RegExp.leftContext = " + RegExp.leftContext);
 ok(RegExp.rightContext === "3", "RegExp.rightContext = " + RegExp.rightContext);
 
+r = "1,,2,3".split(/,+/g, 2);
+ok(r.length === 2, "r.length = " + r.length);
+ok(r[0] === "1", "r[0] = " + r[0]);
+ok(r[1] === "2", "r[1] = " + r[1]);
+ok(RegExp.leftContext === "1,,2", "RegExp.leftContext = " + RegExp.leftContext);
+ok(RegExp.rightContext === "3", "RegExp.rightContext = " + RegExp.rightContext);
+
+r = "1,,2,3".split(/,+/g, 1);
+ok(r.length === 1, "r.length = " + r.length);
+ok(r[0] === "1", "r[0] = " + r[0]);
+ok(RegExp.leftContext === "1", "RegExp.leftContext = " + RegExp.leftContext);
+ok(RegExp.rightContext === "2,3", "RegExp.rightContext = " + RegExp.rightContext);
+
 r = "1,,2,3".split(/,+/);
 ok(r.length === 3, "r.length = " + r.length);
 ok(r[0] === "1", "r[0] = " + r[0]);
@@ -410,6 +423,15 @@ ok(re.lastIndex === 6, "re.lastIndex = " + re.lastIndex);
 r = "123".split(re = /\s+/).join(";");
 ok(r === "123", "r = " + r);
 ok(re.lastIndex === 0, "re.lastIndex = " + re.lastIndex);
+
+r = "1ab2aab3".split(/(a+)b/);
+ok(r.length === 3, "r.length = " + r.length);
+ok(r[0] === "1", "r[0] = " + r[0]);
+ok(r[1] === "2", "r[1] = " + r[1]);
+ok(r[2] === "3", "r[2] = " + r[2]);
+
+r = "A<B>bold</B>and<CODE>coded</CODE>".split(/<(\/)?([^<>]+)>/) ;
+ok(r.length === 4, "r.length = " + r.length);
 
 /* another standard violation */
 r = "1 12 \t3".split(re = /(\s)+/g).join(";");
