@@ -2245,7 +2245,7 @@ HRESULT hlink_frame_navigate(HTMLDocument *doc, LPCWSTR url, nsChannel *nschanne
     return hres;
 }
 
-HRESULT navigate_uri(HTMLOuterWindow *window, IUri *uri, const WCHAR *display_uri)
+static HRESULT navigate_uri(HTMLOuterWindow *window, IUri *uri, const WCHAR *display_uri)
 {
     nsWineURI *nsuri;
     HRESULT hres;
