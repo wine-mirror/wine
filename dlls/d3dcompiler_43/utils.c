@@ -1671,7 +1671,7 @@ struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *left, enum parse_assig
     return &assign->node;
 }
 
-int compare_hlsl_types_rb(const void *key, const struct wine_rb_entry *entry)
+static int compare_hlsl_types_rb(const void *key, const struct wine_rb_entry *entry)
 {
     const char *name = (const char *)key;
     const struct hlsl_type *type = WINE_RB_ENTRY_VALUE(entry, const struct hlsl_type, scope_entry);
