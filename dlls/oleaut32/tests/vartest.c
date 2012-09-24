@@ -3375,10 +3375,10 @@ static void test_VarRound(void)
                 i, S(U(V_DECIMAL(&vDst))).sign, ptr->ret.sign);
             ok(V_DECIMAL(&vDst).Hi32 == ptr->ret.Hi32, "%d: got Hi32 %d, expected %d\n",
                 i, V_DECIMAL(&vDst).Hi32, ptr->ret.Hi32);
-            ok(S(U(V_DECIMAL(&vDst))).Mid32 == ptr->ret.Mid32, "%d: got Mid32 %d, expected %d\n",
-                i, S(U(V_DECIMAL(&vDst))).Mid32, ptr->ret.Mid32);
-            ok(S(U(V_DECIMAL(&vDst))).Lo32 == ptr->ret.Lo32, "%d: got Lo32 %d, expected %d\n",
-                i, S(U(V_DECIMAL(&vDst))).Lo32, ptr->ret.Lo32);
+            ok(S1(U1(V_DECIMAL(&vDst))).Mid32 == ptr->ret.Mid32, "%d: got Mid32 %d, expected %d\n",
+               i, S1(U1(V_DECIMAL(&vDst))).Mid32,  ptr->ret.Mid32);
+            ok(S1(U1(V_DECIMAL(&vDst))).Lo32 == ptr->ret.Lo32, "%d: got Lo32 %d, expected %d\n",
+                i, S1(U1(V_DECIMAL(&vDst))).Lo32, ptr->ret.Lo32);
         }
     }
 
