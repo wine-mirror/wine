@@ -2325,7 +2325,7 @@ int CDECL X11DRV_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
  */
 void CDECL X11DRV_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWORD flags )
 {
-    struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
+    struct x11drv_win_data *data = get_win_data( hwnd );
 
     if (data)
     {
@@ -2333,6 +2333,7 @@ void CDECL X11DRV_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alph
             sync_window_opacity( data->display, data->whole_window, key, alpha, flags );
         if (data->surface)
             set_surface_color_key( data->surface, (flags & LWA_COLORKEY) ? key : CLR_INVALID );
+        release_win_data( data );
     }
     else
     {
@@ -2341,7 +2342,7 @@ void CDECL X11DRV_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alph
         {
             sync_window_opacity( gdi_display, win, key, alpha, flags );
             if (flags & LWA_COLORKEY)
-                FIXME( "LWA_COLORKEY not supported on foreign thread window %p\n", hwnd );
+                FIXME( "LWA_COLORKEY not supported on foreign process window %p\n", hwnd );
         }
     }
 }
