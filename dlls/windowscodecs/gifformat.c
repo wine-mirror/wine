@@ -582,6 +582,7 @@ typedef struct {
     LONG ref;
     BOOL initialized;
     GifFileType *gif;
+    UINT current_frame;
     CRITICAL_SECTION lock;
 } GifDecoder;
 
@@ -1170,7 +1171,8 @@ static HRESULT WINAPI GifDecoder_CopyPalette(IWICBitmapDecoder *iface, IWICPalet
     GifDecoder *This = impl_from_IWICBitmapDecoder(iface);
     WICColor colors[256];
     ColorMapObject *cm;
-    int i;
+    int i, trans;
+    ExtensionBlock *eb;
 
     TRACE("(%p,%p)\n", iface, palette);
 
@@ -1191,7 +1193,21 @@ static HRESULT WINAPI GifDecoder_CopyPalette(IWICBitmapDecoder *iface, IWICPalet
                     cm->Colors[i].Blue;
     }
 
-    /* FIXME: transparent color? */
+    /* look for the transparent color extension */
+    for (i = 0; i < This->gif->SavedImages[This->current_frame].Extensions.ExtensionBlockCount; i++)
+    {
+        eb = This->gif->SavedImages[This->current_frame].Extensions.ExtensionBlocks + i;
+        if (eb->Function == GRAPHICS_EXT_FUNC_CODE && eb->ByteCount == 8)
+        {
+            if (eb->Bytes[3] & 1)
+            {
+                trans = (unsigned char)eb->Bytes[6];
+                colors[trans] &= 0xffffff; /* set alpha to 0 */
+                break;
+            }
+        }
+    }
+
     return IWICPalette_InitializeCustom(palette, colors, cm->ColorCount);
 }
 
@@ -1258,6 +1274,7 @@ static HRESULT WINAPI GifDecoder_GetFrame(IWICBitmapDecoder *iface,
     result->frame = &This->gif->SavedImages[index];
     IWICBitmapDecoder_AddRef(iface);
     result->parent = This;
+    This->current_frame = index;
 
     *ppIBitmapFrame = &result->IWICBitmapFrameDecode_iface;
 
@@ -1396,6 +1413,7 @@ HRESULT GifDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     This->ref = 1;
     This->initialized = FALSE;
     This->gif = NULL;
+    This->current_frame = 0;
     InitializeCriticalSection(&This->lock);
     This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": GifDecoder.lock");
 

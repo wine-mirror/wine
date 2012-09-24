@@ -127,7 +127,6 @@ static void test_global_gif_palette(void)
     ok(hr == S_OK, "GetColors error %#x\n", hr);
     ok(ret == count, "expected %u, got %u\n", count, ret);
     ok(color[0] == 0xff010203, "expected 0xff010203, got %#x\n", color[0]);
-todo_wine
     ok(color[1] == 0x00040506, "expected 0x00040506, got %#x\n", color[1]);
     ok(color[2] == 0xff070809, "expected 0xff070809, got %#x\n", color[2]);
     ok(color[3] == 0xff0a0b0c, "expected 0xff0a0b0c, got %#x\n", color[3]);
@@ -193,7 +192,6 @@ static void test_global_gif_palette_2frames(void)
     ok(hr == S_OK, "GetColors error %#x\n", hr);
     ok(ret == count, "expected %u, got %u\n", count, ret);
     ok(color[0] == 0xff010203, "expected 0xff010203, got %#x\n", color[0]);
-todo_wine
     ok(color[1] == 0x00040506, "expected 0x00040506, got %#x\n", color[1]);
     ok(color[2] == 0xff070809, "expected 0xff070809, got %#x\n", color[2]);
     ok(color[3] == 0xff0a0b0c, "expected 0xff0a0b0c, got %#x\n", color[3]);
@@ -238,7 +236,6 @@ todo_wine
     ok(ret == count, "expected %u, got %u\n", count, ret);
     ok(color[0] == 0xff010203, "expected 0xff010203, got %#x\n", color[0]);
     ok(color[1] == 0xff040506 || broken(color[1] == 0x00040506) /* XP */, "expected 0xff040506, got %#x\n", color[1]);
-todo_wine
     ok(color[2] == 0x00070809 || broken(color[2] == 0xff070809) /* XP */, "expected 0x00070809, got %#x\n", color[2]);
     ok(color[3] == 0xff0a0b0c, "expected 0xff0a0b0c, got %#x\n", color[3]);
 
