@@ -78,7 +78,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 #define HASHTABLE_LOCK          2
 #define HASHTABLE_FREE          3
 #define HASHTABLE_REDR          5
-#define HASHTABLE_FLAG_BITS     5
+#define HASHTABLE_FLAG_BITS     6
 
 #define PENDING_DELETE_CACHE_ENTRY  0x00400000
 
