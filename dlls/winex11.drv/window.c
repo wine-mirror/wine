@@ -2397,8 +2397,8 @@ LRESULT CDECL X11DRV_SysCommand( HWND hwnd, WPARAM wparam, LPARAM lparam )
     int dir;
     struct x11drv_win_data *data;
 
-    if (!(data = X11DRV_get_win_data( hwnd ))) return -1;
-    if (!data->whole_window || !data->managed || !data->mapped) return -1;
+    if (!(data = get_win_data( hwnd ))) return -1;
+    if (!data->whole_window || !data->managed || !data->mapped) goto failed;
 
     switch (wparam & 0xfff0)
     {
@@ -2408,7 +2408,7 @@ LRESULT CDECL X11DRV_SysCommand( HWND hwnd, WPARAM wparam, LPARAM lparam )
         break;
     case SC_SIZE:
         /* windows without WS_THICKFRAME are not resizable through the window manager */
-        if (!(GetWindowLongW( hwnd, GWL_STYLE ) & WS_THICKFRAME)) return -1;
+        if (!(GetWindowLongW( hwnd, GWL_STYLE ) & WS_THICKFRAME)) goto failed;
 
         switch (hittest)
         {
@@ -2427,24 +2427,30 @@ LRESULT CDECL X11DRV_SysCommand( HWND hwnd, WPARAM wparam, LPARAM lparam )
     case SC_KEYMENU:
         /* prevent a simple ALT press+release from activating the system menu,
          * as that can get confusing on managed windows */
-        if ((WCHAR)lparam) return -1;  /* got an explicit char */
-        if (GetMenu( hwnd )) return -1;  /* window has a real menu */
-        if (!(GetWindowLongW( hwnd, GWL_STYLE ) & WS_SYSMENU)) return -1;  /* no system menu */
+        if ((WCHAR)lparam) goto failed;  /* got an explicit char */
+        if (GetMenu( hwnd )) goto failed;  /* window has a real menu */
+        if (!(GetWindowLongW( hwnd, GWL_STYLE ) & WS_SYSMENU)) goto failed;  /* no system menu */
         TRACE( "ignoring SC_KEYMENU wp %lx lp %lx\n", wparam, lparam );
+        release_win_data( data );
         return 0;
 
     default:
-        return -1;
+        goto failed;
     }
 
-    if (IsZoomed(hwnd)) return -1;
+    if (IsZoomed(hwnd)) goto failed;
 
     if (!is_netwm_supported( data->display, x11drv_atom(_NET_WM_MOVERESIZE) ))
     {
         TRACE( "_NET_WM_MOVERESIZE not supported\n" );
-        return -1;
+        goto failed;
     }
 
+    release_win_data( data );
     move_resize_window( hwnd, dir );
     return 0;
+
+failed:
+    release_win_data( data );
+    return -1;
 }
