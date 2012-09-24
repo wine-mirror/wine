@@ -1671,24 +1671,6 @@ void release_win_data( struct x11drv_win_data *data )
 
 
 /***********************************************************************
- *		X11DRV_get_win_data
- *
- * Return the X11 data structure associated with a window.
- */
-struct x11drv_win_data *X11DRV_get_win_data( HWND hwnd )
-{
-    struct x11drv_win_data *data = get_win_data( hwnd );
-
-    if (data)
-    {
-        release_win_data( data );
-        if (GetWindowThreadProcessId( hwnd, NULL ) != GetCurrentThreadId()) data = NULL;
-    }
-    return data;
-}
-
-
-/***********************************************************************
  *		X11DRV_create_win_data
  *
  * Create an X11 data window structure for an existing window.
@@ -1882,7 +1864,6 @@ void CDECL X11DRV_GetDC( HDC hdc, HWND hwnd, HWND top, const RECT *win_rect,
                          const RECT *top_rect, DWORD flags )
 {
     struct x11drv_escape_set_drawable escape;
-    struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
     HWND parent;
 
     escape.code        = X11DRV_SET_DRAWABLE;
@@ -1897,10 +1878,13 @@ void CDECL X11DRV_GetDC( HDC hdc, HWND hwnd, HWND top, const RECT *win_rect,
 
     if (top == hwnd)
     {
+        struct x11drv_win_data *data = get_win_data( hwnd );
+
         escape.drawable = data ? data->whole_window : X11DRV_get_whole_window( hwnd );
 
         /* special case: when repainting the root window, clip out top-level windows */
         if (data && data->whole_window == root_window) escape.mode = ClipByChildren;
+        release_win_data( data );
     }
     else
     {
@@ -2372,8 +2356,11 @@ LRESULT CDECL X11DRV_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
         X11DRV_resize_desktop( LOWORD(lp), HIWORD(lp) );
         return 0;
     case WM_X11DRV_SET_CURSOR:
-        if ((data = X11DRV_get_win_data( hwnd )) && data->whole_window)
-            set_window_cursor( data->whole_window, (HCURSOR)lp );
+        if ((data = get_win_data( hwnd )))
+        {
+            if (data->whole_window) set_window_cursor( data->whole_window, (HCURSOR)lp );
+            release_win_data( data );
+        }
         else if (hwnd == x11drv_thread_data()->clip_hwnd)
             set_window_cursor( x11drv_thread_data()->clip_window, (HCURSOR)lp );
         return 0;

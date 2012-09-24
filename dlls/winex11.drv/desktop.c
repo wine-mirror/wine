@@ -177,7 +177,7 @@ static BOOL CALLBACK update_windows_on_desktop_resize( HWND hwnd, LPARAM lparam 
     struct desktop_resize_data *resize_data = (struct desktop_resize_data *)lparam;
     int mask = 0;
 
-    if (!(data = X11DRV_get_win_data( hwnd ))) return TRUE;
+    if (!(data = get_win_data( hwnd ))) return TRUE;
 
     /* update the full screen state */
     update_net_wm_states( data );
@@ -193,6 +193,7 @@ static BOOL CALLBACK update_windows_on_desktop_resize( HWND hwnd, LPARAM lparam 
         XReconfigureWMWindow( data->display, data->whole_window,
                               DefaultScreen(data->display), mask, &changes );
     }
+    release_win_data( data );
     if (hwnd == GetForegroundWindow()) clip_fullscreen_window( hwnd, TRUE );
     return TRUE;
 }
