@@ -1165,11 +1165,34 @@ static HRESULT WINAPI GifDecoder_GetDecoderInfo(IWICBitmapDecoder *iface,
     return hr;
 }
 
-static HRESULT WINAPI GifDecoder_CopyPalette(IWICBitmapDecoder *iface,
-    IWICPalette *pIPalette)
+static HRESULT WINAPI GifDecoder_CopyPalette(IWICBitmapDecoder *iface, IWICPalette *palette)
 {
-    TRACE("(%p,%p)\n", iface, pIPalette);
-    return WINCODEC_ERR_FRAMEMISSING;
+    GifDecoder *This = impl_from_IWICBitmapDecoder(iface);
+    WICColor colors[256];
+    ColorMapObject *cm;
+    int i;
+
+    TRACE("(%p,%p)\n", iface, palette);
+
+    cm = This->gif->SColorMap;
+    if (!cm) return WINCODEC_ERR_FRAMEMISSING;
+
+    if (cm->ColorCount > 256)
+    {
+        ERR("GIF contains invalid number of colors: %d\n", cm->ColorCount);
+        return E_FAIL;
+    }
+
+    for (i = 0; i < cm->ColorCount; i++)
+    {
+        colors[i] = 0xff000000 | /* alpha */
+                    cm->Colors[i].Red << 16 |
+                    cm->Colors[i].Green << 8 |
+                    cm->Colors[i].Blue;
+    }
+
+    /* FIXME: transparent color? */
+    return IWICPalette_InitializeCustom(palette, colors, cm->ColorCount);
 }
 
 static HRESULT WINAPI GifDecoder_GetMetadataQueryReader(IWICBitmapDecoder *iface,
