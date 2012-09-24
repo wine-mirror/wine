@@ -11199,7 +11199,7 @@ msgid "&DWORD Value"
 msgstr "&Duplaszó (32 bites)"
 
 #: regedit.rc:51 regedit.rc:102
-msgid "&Multi String Value"
+msgid "&Multi-String Value"
 msgstr "K&arakterláncsoros érték"
 
 #: regedit.rc:52 regedit.rc:103
@@ -11319,7 +11319,7 @@ msgid "Edit Binary"
 msgstr "Bináris szerkesztése"
 
 #: regedit.rc:303
-msgid "Edit Multi String"
+msgid "Edit Multi-String"
 msgstr "Többsoros szöveg szerkesztése"
 
 #: regedit.rc:134
@@ -11513,7 +11513,7 @@ msgid "Can't query key '%s'"
 msgstr "Nem tudom lekérni a kulcsot: '%s'"
 
 #: regedit.rc:149
-msgid "Adds a new multi string value"
+msgid "Adds a new multi-string value"
 msgstr "Hozzáad egy új karakterláncsoros értéket"
 
 #: regedit.rc:171

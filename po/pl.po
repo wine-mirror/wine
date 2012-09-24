@@ -11195,7 +11195,7 @@ msgid "&DWORD Value"
 msgstr "Wartość &DWORD"
 
 #: regedit.rc:51 regedit.rc:102
-msgid "&Multi String Value"
+msgid "&Multi-String Value"
 msgstr "&Dana wielotekstowa (MULTISZ)"
 
 #: regedit.rc:52 regedit.rc:103
@@ -11315,7 +11315,7 @@ msgid "Edit Binary"
 msgstr "Edycja danej binarnej"
 
 #: regedit.rc:303
-msgid "Edit Multi String"
+msgid "Edit Multi-String"
 msgstr "Edycja danej wielotekstowej"
 
 #: regedit.rc:134
@@ -11505,7 +11505,7 @@ msgid "Can't query key '%s'"
 msgstr "Nie udało się przeczytać klucza '%s'"
 
 #: regedit.rc:149
-msgid "Adds a new multi string value"
+msgid "Adds a new multi-string value"
 msgstr "Dodaje nową wartość ciągu rozwijalnego"
 
 #: regedit.rc:171

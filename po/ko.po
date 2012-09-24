@@ -11130,7 +11130,7 @@ msgid "&DWORD Value"
 msgstr "DWORD 값(&D)"
 
 #: regedit.rc:51 regedit.rc:102
-msgid "&Multi String Value"
+msgid "&Multi-String Value"
 msgstr "다중 문자열 값(&M)"
 
 #: regedit.rc:52 regedit.rc:103
@@ -11250,7 +11250,7 @@ msgid "Edit Binary"
 msgstr "이진 값 편집"
 
 #: regedit.rc:303
-msgid "Edit Multi String"
+msgid "Edit Multi-String"
 msgstr "다중 문자열 편집"
 
 #: regedit.rc:134
@@ -11439,7 +11439,7 @@ msgid "Can't query key '%s'"
 msgstr "키 '%s'를 질의할 수 없습니다"
 
 #: regedit.rc:149
-msgid "Adds a new multi string value"
+msgid "Adds a new multi-string value"
 msgstr "새 다중 문자열 값 더하기"
 
 #: regedit.rc:171

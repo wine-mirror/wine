@@ -11197,7 +11197,7 @@ msgid "&DWORD Value"
 msgstr "Valor &DWORD"
 
 #: regedit.rc:51 regedit.rc:102
-msgid "&Multi String Value"
+msgid "&Multi-String Value"
 msgstr "Valor de palavras &múltiplas"
 
 #: regedit.rc:52 regedit.rc:103
@@ -11317,7 +11317,7 @@ msgid "Edit Binary"
 msgstr "Editar Binário"
 
 #: regedit.rc:303
-msgid "Edit Multi String"
+msgid "Edit Multi-String"
 msgstr "Editar Multi-frase"
 
 #: regedit.rc:134
@@ -11509,7 +11509,7 @@ msgid "Can't query key '%s'"
 msgstr "Não é possível consultar a chave '%s'"
 
 #: regedit.rc:149
-msgid "Adds a new multi string value"
+msgid "Adds a new multi-string value"
 msgstr "Adiciona um novo valor de múltiplas strings"
 
 #: regedit.rc:171

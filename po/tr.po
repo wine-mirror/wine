@@ -10906,7 +10906,7 @@ msgid "&DWORD Value"
 msgstr "&Çift Sözcük Değeri"
 
 #: regedit.rc:51 regedit.rc:102
-msgid "&Multi String Value"
+msgid "&Multi-String Value"
 msgstr ""
 
 #: regedit.rc:52 regedit.rc:103
@@ -11026,7 +11026,7 @@ msgid "Edit Binary"
 msgstr "İkiliyi Düzenle"
 
 #: regedit.rc:303
-msgid "Edit Multi String"
+msgid "Edit Multi-String"
 msgstr ""
 
 #: regedit.rc:134
@@ -11217,7 +11217,7 @@ msgstr "'%s' anahtarı sorgulanamadı"
 
 #: regedit.rc:149
 #, fuzzy
-msgid "Adds a new multi string value"
+msgid "Adds a new multi-string value"
 msgstr "Yeni bir dize değeri ekler"
 
 #: regedit.rc:171

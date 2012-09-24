@@ -11449,7 +11449,7 @@ msgid "&DWORD Value"
 msgstr "&DWORD-verdi"
 
 #: regedit.rc:51 regedit.rc:102
-msgid "&Multi String Value"
+msgid "&Multi-String Value"
 msgstr "&Flerstrengverdi"
 
 #: regedit.rc:52 regedit.rc:103
@@ -11576,7 +11576,7 @@ msgid "Edit Binary"
 msgstr "Rediger binær"
 
 #: regedit.rc:303
-msgid "Edit Multi String"
+msgid "Edit Multi-String"
 msgstr "Rediger flerstreng"
 
 #: regedit.rc:134
@@ -11768,7 +11768,7 @@ msgid "Can't query key '%s'"
 msgstr "Klarte ikke lese nøkkelen «%s»"
 
 #: regedit.rc:149
-msgid "Adds a new multi string value"
+msgid "Adds a new multi-string value"
 msgstr "Legger til en ny flerstrengverdi"
 
 #: regedit.rc:171

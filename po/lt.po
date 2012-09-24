@@ -11189,7 +11189,7 @@ msgid "&DWORD Value"
 msgstr "&DWORD reikšmė"
 
 #: regedit.rc:51 regedit.rc:102
-msgid "&Multi String Value"
+msgid "&Multi-String Value"
 msgstr "&Kelių eilučių reikšmė"
 
 #: regedit.rc:52 regedit.rc:103
@@ -11309,7 +11309,7 @@ msgid "Edit Binary"
 msgstr "Redaguoti dvejetainę reikšmę"
 
 #: regedit.rc:303
-msgid "Edit Multi String"
+msgid "Edit Multi-String"
 msgstr "Redaguoti kelių eilučių reikšmę"
 
 #: regedit.rc:134
@@ -11499,7 +11499,7 @@ msgid "Can't query key '%s'"
 msgstr "Nepavyko perskaityti rakto „%s“"
 
 #: regedit.rc:149
-msgid "Adds a new multi string value"
+msgid "Adds a new multi-string value"
 msgstr "Prideda naują kelių eilučių reikšmę"
 
 #: regedit.rc:171

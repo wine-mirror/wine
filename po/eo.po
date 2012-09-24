@@ -10629,7 +10629,7 @@ msgid "&DWORD Value"
 msgstr "&Entjera valoro"
 
 #: regedit.rc:51 regedit.rc:102
-msgid "&Multi String Value"
+msgid "&Multi-String Value"
 msgstr "&Plurĉena valoro"
 
 #: regedit.rc:52 regedit.rc:103
@@ -10749,7 +10749,7 @@ msgid "Edit Binary"
 msgstr "Redakti duuman"
 
 #: regedit.rc:303
-msgid "Edit Multi String"
+msgid "Edit Multi-String"
 msgstr "Redakti plurĉenon"
 
 #: regedit.rc:134
@@ -10939,7 +10939,7 @@ msgid "Can't query key '%s'"
 msgstr "Ne eblas trovi ŝlosilon '%s'"
 
 #: regedit.rc:149
-msgid "Adds a new multi string value"
+msgid "Adds a new multi-string value"
 msgstr "Aldonis novan ĉenan valoron"
 
 #: regedit.rc:171

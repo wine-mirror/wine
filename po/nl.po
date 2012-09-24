@@ -11345,7 +11345,7 @@ msgid "&DWORD Value"
 msgstr "&DWORD-waarde"
 
 #: regedit.rc:51 regedit.rc:102
-msgid "&Multi String Value"
+msgid "&Multi-String Value"
 msgstr "&Multi-Tekenreekswaarde"
 
 #: regedit.rc:52 regedit.rc:103
@@ -11466,7 +11466,7 @@ msgid "Edit Binary"
 msgstr "Binaire waarde bewerken"
 
 #: regedit.rc:303
-msgid "Edit Multi String"
+msgid "Edit Multi-String"
 msgstr "Multi-tekenreeks bewerken"
 
 #: regedit.rc:134
@@ -11656,7 +11656,7 @@ msgid "Can't query key '%s'"
 msgstr "Kan sleutel '%s' niet opvragen"
 
 #: regedit.rc:149
-msgid "Adds a new multi string value"
+msgid "Adds a new multi-string value"
 msgstr "Een nieuwe multi-tekenreekswaarde toevoegen"
 
 #: regedit.rc:171

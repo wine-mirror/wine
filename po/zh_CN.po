@@ -10695,7 +10695,7 @@ msgid "&DWORD Value"
 msgstr "整数值(&D)"
 
 #: regedit.rc:51 regedit.rc:102
-msgid "&Multi String Value"
+msgid "&Multi-String Value"
 msgstr "多字符串值(&M)"
 
 #: regedit.rc:52 regedit.rc:103
@@ -10815,7 +10815,7 @@ msgid "Edit Binary"
 msgstr "编辑二进制"
 
 #: regedit.rc:303
-msgid "Edit Multi String"
+msgid "Edit Multi-String"
 msgstr "编辑多个字符串"
 
 #: regedit.rc:134
@@ -11004,7 +11004,7 @@ msgid "Can't query key '%s'"
 msgstr "不能查询键'%s'"
 
 #: regedit.rc:149
-msgid "Adds a new multi string value"
+msgid "Adds a new multi-string value"
 msgstr "添加新多字符串值"
 
 #: regedit.rc:171
