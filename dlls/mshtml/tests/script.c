@@ -2028,6 +2028,62 @@ static void test_arg_conv(IHTMLWindow2 *window)
     IDispatchEx_Release(dispex);
 }
 
+#define test_elem_disabled(a,b) _test_elem_disabled(__LINE__,a,b)
+static void _test_elem_disabled(unsigned line, IHTMLElement *elem, VARIANT_BOOL exb)
+{
+    IHTMLElement3 *elem3;
+    VARIANT_BOOL b = 100;
+    HRESULT hres;
+
+    hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLElement3, (void**)&elem3);
+    ok_(__FILE__,line)(hres == S_OK, "Could not get IHTMLElement3 iface: %08x\n", hres);
+
+    hres = IHTMLElement3_get_disabled(elem3, &b);
+    ok_(__FILE__,line)(hres == S_OK, "get_disabled failed: %08x\n", hres);
+    ok_(__FILE__,line)(b == exb, "disabled = %x, expected %x\n", b, exb);
+
+    IHTMLElement3_Release(elem3);
+}
+
+static void test_default_arg_conv(IHTMLWindow2 *window)
+{
+    IHTMLDocument2 *doc;
+    IDispatchEx *dispex;
+    IHTMLElement *elem;
+    VARIANT v;
+    HRESULT hres;
+
+    hres = IHTMLWindow2_get_document(window, &doc);
+    ok(hres == S_OK, "get_document failed: %08x\n", hres);
+
+    hres = IHTMLDocument2_get_body(doc, &elem);
+    IHTMLDocument2_Release(doc);
+    ok(hres == S_OK, "get_body failed: %08x\n", hres);
+
+    hres = IHTMLElement_QueryInterface(elem, &IID_IDispatchEx, (void**)&dispex);
+    ok(hres == S_OK, "Could not get IDispatchEx iface: %08x\n", hres);
+
+    test_elem_disabled(elem, VARIANT_FALSE);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = a2bstr("test");
+    hres = dispex_propput(dispex, DISPID_IHTMLELEMENT3_DISABLED, 0, &v, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    SysFreeString(V_BSTR(&v));
+
+    test_elem_disabled(elem, VARIANT_TRUE);
+
+    V_VT(&v) = VT_I4;
+    V_BSTR(&v) = 0;
+    hres = dispex_propput(dispex, DISPID_IHTMLELEMENT3_DISABLED, 0, &v, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+
+    test_elem_disabled(elem, VARIANT_FALSE);
+
+    IHTMLElement_Release(elem);
+    IDispatchEx_Release(dispex);
+}
+
 static void test_script_run(void)
 {
     IDispatchEx *document, *dispex;
@@ -2198,6 +2254,7 @@ static void test_script_run(void)
     test_nextdispid(dispex);
 
     test_arg_conv(window);
+    test_default_arg_conv(window);
     IHTMLWindow2_Release(window);
 
     tmp = a2bstr("test");

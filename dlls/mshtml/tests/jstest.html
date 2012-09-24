@@ -98,6 +98,24 @@ function test_clone_node() {
     ok(cloned.style.filter === "alpha(opacity=50)", "cloned.style.filter = " + cloned.style.filter);
 }
 
+function test_setAttribute() {
+    var input;
+
+    document.body.innerHTML = '<input id="inputid"></input>';
+    input = document.getElementById("inputid");
+    ok(input.checked === false, "input.checked = " + input.checked);
+
+    input.setAttribute("checked", "test");
+    ok(input.checked === true, "input.checked = " + input.checked);
+
+    input.setAttribute("checked", 0);
+    ok(input.checked === false, "input.checked = " + input.checked);
+
+    input.setAttribute("checked", "");
+    ok(input.checked === false, "input.checked = " + input.checked);
+
+}
+
 function test_getter_call() {
     document.body.innerHTML = '<div id="divid"></div>';
 
@@ -133,7 +151,7 @@ function test_override_functions() {
 
 var globalVar = false;
 
-function runTest() {
+function runTests() {
     obj = new Object();
     ok(obj === window.obj, "obj !== window.obj");
 
@@ -147,11 +165,20 @@ function runTest() {
     test_document_name_as_index();
     test_remove_style_attribute();
     test_getter_call();
+    test_setAttribute();
     test_override_functions();
 
     var r = window.execScript("globalVar = true;");
     ok(r === undefined, "execScript returned " + r);
     ok(globalVar === true, "globalVar = " + globalVar);
+}
+
+function runTest() {
+    try {
+        runTests();
+    }catch(e) {
+        ok(false, "got exception");
+    }
 
     external.reportSuccess();
 }
