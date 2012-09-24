@@ -337,58 +337,58 @@ static UINT calculate_dds_file_size(D3DFORMAT format, UINT width, UINT height, U
 */
 static HRESULT get_image_info_from_dds(const void *buffer, UINT length, D3DXIMAGE_INFO *info)
 {
-   UINT faces = 1;
-   UINT expected_length;
-   const struct dds_header *header = buffer;
+    UINT faces = 1;
+    UINT expected_length;
+    const struct dds_header *header = buffer;
 
-   if (length < sizeof(*header) || !info)
-       return D3DXERR_INVALIDDATA;
+    if (length < sizeof(*header) || !info)
+        return D3DXERR_INVALIDDATA;
 
-   if (header->pixel_format.size != sizeof(header->pixel_format))
-       return D3DXERR_INVALIDDATA;
+    if (header->pixel_format.size != sizeof(header->pixel_format))
+        return D3DXERR_INVALIDDATA;
 
-   info->Width = header->width;
-   info->Height = header->height;
-   info->Depth = 1;
-   info->MipLevels = (header->flags & DDS_MIPMAPCOUNT) ?  header->miplevels : 1;
+    info->Width = header->width;
+    info->Height = header->height;
+    info->Depth = 1;
+    info->MipLevels = (header->flags & DDS_MIPMAPCOUNT) ?  header->miplevels : 1;
 
-   info->Format = dds_pixel_format_to_d3dformat(&header->pixel_format);
-   if (info->Format == D3DFMT_UNKNOWN)
-       return D3DXERR_INVALIDDATA;
+    info->Format = dds_pixel_format_to_d3dformat(&header->pixel_format);
+    if (info->Format == D3DFMT_UNKNOWN)
+        return D3DXERR_INVALIDDATA;
 
-   TRACE("Pixel format is %#x\n", info->Format);
+    TRACE("Pixel format is %#x\n", info->Format);
 
-   if (header->caps2 & DDS_CAPS2_VOLUME)
-   {
-       info->Depth = header->depth;
-       info->ResourceType = D3DRTYPE_VOLUMETEXTURE;
-   }
-   else if (header->caps2 & DDS_CAPS2_CUBEMAP)
-   {
-       DWORD face;
-       faces = 0;
-       for (face = DDS_CAPS2_CUBEMAP_POSITIVEX; face <= DDS_CAPS2_CUBEMAP_NEGATIVEZ; face <<= 1)
-       {
-           if (header->caps2 & face)
-               faces++;
-       }
-       info->ResourceType = D3DRTYPE_CUBETEXTURE;
-   }
-   else
-   {
-       info->ResourceType = D3DRTYPE_TEXTURE;
-   }
+    if (header->caps2 & DDS_CAPS2_VOLUME)
+    {
+        info->Depth = header->depth;
+        info->ResourceType = D3DRTYPE_VOLUMETEXTURE;
+    }
+    else if (header->caps2 & DDS_CAPS2_CUBEMAP)
+    {
+        DWORD face;
+        faces = 0;
+        for (face = DDS_CAPS2_CUBEMAP_POSITIVEX; face <= DDS_CAPS2_CUBEMAP_NEGATIVEZ; face <<= 1)
+        {
+            if (header->caps2 & face)
+                faces++;
+        }
+        info->ResourceType = D3DRTYPE_CUBETEXTURE;
+    }
+    else
+    {
+        info->ResourceType = D3DRTYPE_TEXTURE;
+    }
 
-   expected_length = calculate_dds_file_size(info->Format, info->Width, info->Height, info->Depth,
+    expected_length = calculate_dds_file_size(info->Format, info->Width, info->Height, info->Depth,
         info->MipLevels, faces);
-   if (length < expected_length)
-   {
-       WARN("File is too short %u, expected at least %u bytes\n", length, expected_length);
-       return D3DXERR_INVALIDDATA;
-   }
+    if (length < expected_length)
+    {
+        WARN("File is too short %u, expected at least %u bytes\n", length, expected_length);
+        return D3DXERR_INVALIDDATA;
+    }
 
-   info->ImageFileFormat = D3DXIFF_DDS;
-   return D3D_OK;
+    info->ImageFileFormat = D3DXIFF_DDS;
+    return D3D_OK;
 }
 
 static HRESULT load_surface_from_dds(IDirect3DSurface9 *dst_surface, const PALETTEENTRY *dst_palette,
