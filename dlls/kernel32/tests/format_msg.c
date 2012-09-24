@@ -1012,42 +1012,42 @@ static void test_message_wrap(void)
     /* Wrap the last word */
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | 11,
                          "short long line", 0, 0, out, sizeof(out), NULL);
-    todo_wine ok(ret == 16, "Expected FormatMessageW to return 16, got %d\n", ret);
-    todo_wine ok(!strcmp("short long\r\nline", out),"failed out=[%s]\n",out);
+    ok(ret == 16, "Expected FormatMessageW to return 16, got %d\n", ret);
+    ok(!strcmp("short long\r\nline", out),"failed out=[%s]\n",out);
 
     /* Wrap the very last word */
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | 20,
                          "short long long line", 0, 0, out, sizeof(out), NULL);
-    todo_wine ok(ret == 21, "Expected FormatMessageW to return 21, got %d\n", ret);
-    todo_wine ok(!strcmp("short long long\r\nline", out),"failed out=[%s]\n",out);
+    ok(ret == 21, "Expected FormatMessageW to return 21, got %d\n", ret);
+    ok(!strcmp("short long long\r\nline", out),"failed out=[%s]\n",out);
 
     /* Strictly less than 10 characters per line! */
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | 10,
                          "short long line", 0, 0, out, sizeof(out), NULL);
-    todo_wine ok(ret == 16, "Expected FormatMessageW to return 16, got %d\n", ret);
-    todo_wine ok(!strcmp("short\r\nlong line", out),"failed out=[%s]\n",out);
+    ok(ret == 16, "Expected FormatMessageW to return 16, got %d\n", ret);
+    ok(!strcmp("short\r\nlong line", out),"failed out=[%s]\n",out);
 
     /* Handling of duplicate spaces */
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | 16,
                          "short long    line", 0, 0, out, sizeof(out), NULL);
-    todo_wine ok(ret == 16, "Expected FormatMessageW to return 16, got %d\n", ret);
-    todo_wine ok(!strcmp("short long\r\nline", out),"failed out=[%s]\n",out);
+    ok(ret == 16, "Expected FormatMessageW to return 16, got %d\n", ret);
+    ok(!strcmp("short long\r\nline", out),"failed out=[%s]\n",out);
 
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | 16,
                          "short long    wordlongerthanaline", 0, 0, out, sizeof(out), NULL);
     ok(ret == 33, "Expected FormatMessageW to return 33, got %d\n", ret);
-    todo_wine ok(!strcmp("short long\r\nwordlongerthanal\r\nine", out),"failed out=[%s]\n",out);
+    ok(!strcmp("short long\r\nwordlongerthanal\r\nine", out),"failed out=[%s]\n",out);
 
     /* Breaking in the middle of spaces */
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | 12,
                          "short long    line", 0, 0, out, sizeof(out), NULL);
     ok(ret == 18, "Expected FormatMessageW to return 18, got %d\n", ret);
-    todo_wine ok(!strcmp("short long\r\n  line", out),"failed out=[%s]\n",out);
+    ok(!strcmp("short long\r\n  line", out),"failed out=[%s]\n",out);
 
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | 12,
                          "short long    wordlongerthanaline", 0, 0, out, sizeof(out), NULL);
-    todo_wine ok(ret == 35, "Expected FormatMessageW to return 35, got %d\n", ret);
-    todo_wine ok(!strcmp("short long\r\n\r\nwordlongerth\r\nanaline", out),"failed out=[%s]\n",out);
+    ok(ret == 35, "Expected FormatMessageW to return 35, got %d\n", ret);
+    ok(!strcmp("short long\r\n\r\nwordlongerth\r\nanaline", out),"failed out=[%s]\n",out);
 
     /* Handling of start-of-string spaces */
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | 15,
@@ -1058,55 +1058,55 @@ static void test_message_wrap(void)
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | 11,
                          "   shortlong line", 0, 0, out, sizeof(out), NULL);
     ok(ret == 17, "Expected FormatMessageW to return 17, got %d\n", ret);
-    todo_wine ok(!strcmp("\r\nshortlong\r\nline", out),"failed out=[%s]\n",out);
+    ok(!strcmp("\r\nshortlong\r\nline", out),"failed out=[%s]\n",out);
 
     /* Handling of start-of-line spaces */
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | 11,
                          "l1%n   shortlong line", 0, 0, out, sizeof(out), NULL);
     ok(ret == 21, "Expected FormatMessageW to return 21, got %d\n", ret);
-    todo_wine ok(!strcmp("l1\r\n\r\nshortlong\r\nline", out),"failed out=[%s]\n",out);
+    ok(!strcmp("l1\r\n\r\nshortlong\r\nline", out),"failed out=[%s]\n",out);
 
     /* Pure space wrapping */
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | 5,
                          "                ", 0, 0, out, sizeof(out), NULL);
-    todo_wine ok(ret == 7, "Expected FormatMessageW to return 7, got %d\n", ret);
-    todo_wine ok(!strcmp("\r\n\r\n\r\n ", out),"failed out=[%s]\n",out);
+    ok(ret == 7, "Expected FormatMessageW to return 7, got %d\n", ret);
+    ok(!strcmp("\r\n\r\n\r\n ", out),"failed out=[%s]\n",out);
 
     /* Handling of trailing spaces */
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | 5,
                          "l1               ", 0, 0, out, sizeof(out), NULL);
-    todo_wine ok(ret == 10, "Expected FormatMessageW to return 10, got %d\n", ret);
-    todo_wine ok(!strcmp("l1\r\n\r\n\r\n  ", out),"failed out=[%s]\n",out);
+    ok(ret == 10, "Expected FormatMessageW to return 10, got %d\n", ret);
+    ok(!strcmp("l1\r\n\r\n\r\n  ", out),"failed out=[%s]\n",out);
 
     /* Word that just fills the line */
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | 8,
                          "shortlon", 0, 0, out, sizeof(out), NULL);
-    todo_wine ok(ret == 10, "Expected FormatMessageW to return 10, got %d\n", ret);
-    todo_wine ok(!strcmp("shortlon\r\n", out),"failed out=[%s]\n",out);
+    ok(ret == 10, "Expected FormatMessageW to return 10, got %d\n", ret);
+    ok(!strcmp("shortlon\r\n", out),"failed out=[%s]\n",out);
 
     /* Word longer than the line */
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | 8,
                          "shortlongline", 0, 0, out, sizeof(out), NULL);
-    todo_wine ok(ret == 15, "Expected FormatMessageW to return 15, got %d\n", ret);
-    todo_wine ok(!strcmp("shortlon\r\ngline", out),"failed out=[%s]\n",out);
+    ok(ret == 15, "Expected FormatMessageW to return 15, got %d\n", ret);
+    ok(!strcmp("shortlon\r\ngline", out),"failed out=[%s]\n",out);
 
     /* Wrap the line multiple times */
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | 7,
                          "short long line", 0, 0, out, sizeof(out), NULL);
-    todo_wine ok(ret == 17, "Expected FormatMessageW to return 17, got %d\n", ret);
-    todo_wine ok(!strcmp("short\r\nlong\r\nline", out),"failed out=[%s]\n",out);
+    ok(ret == 17, "Expected FormatMessageW to return 17, got %d\n", ret);
+    ok(!strcmp("short\r\nlong\r\nline", out),"failed out=[%s]\n",out);
 
     /* '\n's in the source are ignored */
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | 11,
                          "short\nlong line", 0, 0, out, sizeof(out), NULL);
-    todo_wine ok(ret == 16, "Expected FormatMessageW to return 16, got %d\n", ret);
-    todo_wine ok(!strcmp("short long\r\nline", out),"failed out=[%s]\n",out);
+    ok(ret == 16, "Expected FormatMessageW to return 16, got %d\n", ret);
+    ok(!strcmp("short long\r\nline", out),"failed out=[%s]\n",out);
 
     /* Wrap even before a '%n' */
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | 8,
                          "shortlon%n", 0, 0, out, sizeof(out), NULL);
-    todo_wine ok(ret == 12, "Expected FormatMessageW to return 12, got %d\n", ret);
-    todo_wine ok(!strcmp("shortlon\r\n\r\n", out),"failed out=[%s]\n",out);
+    ok(ret == 12, "Expected FormatMessageW to return 12, got %d\n", ret);
+    ok(!strcmp("shortlon\r\n\r\n", out),"failed out=[%s]\n",out);
 
     /* '%n's count as starting a new line and combine with line wrapping */
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | 10,
@@ -1116,8 +1116,8 @@ static void test_message_wrap(void)
 
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | 8,
                          "short%nlong line", 0, 0, out, sizeof(out), NULL);
-    todo_wine ok(ret == 17, "Expected FormatMessageW to return 17, got %d\n", ret);
-    todo_wine ok(!strcmp("short\r\nlong\r\nline", out),"failed out=[%s]\n",out);
+    ok(ret == 17, "Expected FormatMessageW to return 17, got %d\n", ret);
+    ok(!strcmp("short\r\nlong\r\nline", out),"failed out=[%s]\n",out);
 
     /* '%r's also count as starting a new line and all */
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | 10,
@@ -1127,14 +1127,14 @@ static void test_message_wrap(void)
 
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | 8,
                          "short%rlong line", 0, 0, out, sizeof(out), NULL);
-    todo_wine ok(ret == 16, "Expected FormatMessageW to return 16, got %d\n", ret);
-    todo_wine ok(!strcmp("short\rlong\r\nline", out),"failed out=[%s]\n",out);
+    ok(ret == 16, "Expected FormatMessageW to return 16, got %d\n", ret);
+    ok(!strcmp("short\rlong\r\nline", out),"failed out=[%s]\n",out);
 
     /* IGNORE_INSERTS does not prevent line wrapping or disable '%n' */
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS | 8,
                          "short%nlong line%1", 0, 0, out, sizeof(out), NULL);
-    todo_wine ok(ret == 19, "Expected FormatMessageW to return 19, got %d\n", ret);
-    todo_wine ok(!strcmp("short\r\nlong\r\nline%1", out),"failed out=[%s]\n",out);
+    ok(ret == 19, "Expected FormatMessageW to return 19, got %d\n", ret);
+    ok(!strcmp("short\r\nlong\r\nline%1", out),"failed out=[%s]\n",out);
 
     /* MAX_WIDTH_MASK is the same as specifying an infinite line width */
     strcpy(in, "first line%n");
@@ -1152,38 +1152,38 @@ static void test_message_wrap(void)
     /* Wrapping and non-space characters */
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | 11,
                          "short long\tline", 0, 0, out, sizeof(out), NULL);
-    todo_wine ok(ret == 16, "Expected FormatMessageW to return 16, got %d\n", ret);
-    todo_wine ok(!strcmp("short\r\nlong\tline", out),"failed out=[%s]\n",out);
+    ok(ret == 16, "Expected FormatMessageW to return 16, got %d\n", ret);
+    ok(!strcmp("short\r\nlong\tline", out),"failed out=[%s]\n",out);
 
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | 11,
                          "short long-line", 0, 0, out, sizeof(out), NULL);
-    todo_wine ok(ret == 16, "Expected FormatMessageW to return 16, got %d\n", ret);
-    todo_wine ok(!strcmp("short\r\nlong-line", out),"failed out=[%s]\n",out);
+    ok(ret == 16, "Expected FormatMessageW to return 16, got %d\n", ret);
+    ok(!strcmp("short\r\nlong-line", out),"failed out=[%s]\n",out);
 
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | 11,
                          "short long_line", 0, 0, out, sizeof(out), NULL);
-    todo_wine ok(ret == 16, "Expected FormatMessageW to return 16, got %d\n", ret);
-    todo_wine ok(!strcmp("short\r\nlong_line", out),"failed out=[%s]\n",out);
+    ok(ret == 16, "Expected FormatMessageW to return 16, got %d\n", ret);
+    ok(!strcmp("short\r\nlong_line", out),"failed out=[%s]\n",out);
 
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | 11,
                          "short long.line", 0, 0, out, sizeof(out), NULL);
-    todo_wine ok(ret == 16, "Expected FormatMessageW to return 16, got %d\n", ret);
-    todo_wine ok(!strcmp("short\r\nlong.line", out),"failed out=[%s]\n",out);
+    ok(ret == 16, "Expected FormatMessageW to return 16, got %d\n", ret);
+    ok(!strcmp("short\r\nlong.line", out),"failed out=[%s]\n",out);
 
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | 11,
                          "short long,line", 0, 0, out, sizeof(out), NULL);
-    todo_wine ok(ret == 16, "Expected FormatMessageW to return 16, got %d\n", ret);
-    todo_wine ok(!strcmp("short\r\nlong,line", out),"failed out=[%s]\n",out);
+    ok(ret == 16, "Expected FormatMessageW to return 16, got %d\n", ret);
+    ok(!strcmp("short\r\nlong,line", out),"failed out=[%s]\n",out);
 
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | 11,
                          "short long!line", 0, 0, out, sizeof(out), NULL);
-    todo_wine ok(ret == 16, "Expected FormatMessageW to return 16, got %d\n", ret);
-    todo_wine ok(!strcmp("short\r\nlong!line", out),"failed out=[%s]\n",out);
+    ok(ret == 16, "Expected FormatMessageW to return 16, got %d\n", ret);
+    ok(!strcmp("short\r\nlong!line", out),"failed out=[%s]\n",out);
 
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | 11,
                          "short long?line", 0, 0, out, sizeof(out), NULL);
-    todo_wine ok(ret == 16, "Expected FormatMessageW to return 16, got %d\n", ret);
-    todo_wine ok(!strcmp("short\r\nlong?line", out),"failed out=[%s]\n",out);
+    ok(ret == 16, "Expected FormatMessageW to return 16, got %d\n", ret);
+    ok(!strcmp("short\r\nlong?line", out),"failed out=[%s]\n",out);
 }
 
 static void test_message_insufficient_buffer(void)

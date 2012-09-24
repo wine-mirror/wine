@@ -266,14 +266,59 @@ struct _format_message_data
     LPWSTR formatted;
     DWORD size;
     LPWSTR t;
+    LPWSTR space;
+    BOOL inspace;
+    DWORD width, w;
 };
 
 static void format_add_char(struct _format_message_data *fmd, WCHAR c)
 {
     *fmd->t++ = c;
+    if (fmd->width && fmd->width != FORMAT_MESSAGE_MAX_WIDTH_MASK)
+    {
+        switch (c) {
+        case '\r':
+        case '\n':
+            fmd->space = NULL;
+            fmd->inspace = FALSE;
+            fmd->w = 0;
+            break;
+        case ' ':
+            if (!fmd->inspace)
+                fmd->space = fmd->t - 1;
+            fmd->inspace = TRUE;
+            fmd->w++;
+            break;
+        default:
+            fmd->inspace = FALSE;
+            fmd->w++;
+        }
+        if (fmd->w == fmd->width) {
+            LPWSTR notspace;
+            if (fmd->space) {
+                notspace = fmd->space;
+                while (*notspace == ' ' && notspace != fmd->t)
+                    notspace++;
+            } else
+                notspace = fmd->space = fmd->t;
+            fmd->w = fmd->t - notspace;
+            memmove(fmd->space+2, notspace, fmd->w * sizeof(*fmd->t));
+            *fmd->space++ = '\r';
+            *fmd->space++ = '\n';
+            fmd->t = fmd->space + fmd->w;
+            fmd->space = NULL;
+            fmd->inspace = FALSE;
+        }
+    }
     if ((DWORD)(fmd->t - fmd->formatted) == fmd->size) {
-        fmd->formatted = HeapReAlloc(GetProcessHeap(), 0, fmd->formatted, (fmd->size * 2) * sizeof(WCHAR));
+        DWORD_PTR ispace = fmd->space - fmd->formatted;
+        /* Allocate two extra characters so we can insert a '\r\n' in
+         * the middle of a word.
+         */
+        fmd->formatted = HeapReAlloc(GetProcessHeap(), 0, fmd->formatted, (fmd->size * 2 + 2) * sizeof(WCHAR));
         fmd->t = fmd->formatted + fmd->size;
+        if (fmd->space)
+            fmd->space = fmd->formatted + ispace;
         fmd->size *= 2;
     }
 }
@@ -286,12 +331,15 @@ static LPWSTR format_message( BOOL unicode_caller, DWORD dwFlags, LPCWSTR fmtstr
 {
     struct _format_message_data fmd;
     LPCWSTR f;
-    DWORD width = dwFlags & FORMAT_MESSAGE_MAX_WIDTH_MASK;
     BOOL eos = FALSE;
 
     fmd.size = 100;
-    fmd.formatted = fmd.t = HeapAlloc( GetProcessHeap(), 0, fmd.size * sizeof(WCHAR) );
+    fmd.formatted = fmd.t = HeapAlloc( GetProcessHeap(), 0, (fmd.size + 2) * sizeof(WCHAR) );
 
+    fmd.width = dwFlags & FORMAT_MESSAGE_MAX_WIDTH_MASK;
+    fmd.w = 0;
+    fmd.inspace = FALSE;
+    fmd.space = NULL;
     f = fmtstr;
     while (*f && !eos) {
         if (*f=='%') {
@@ -362,7 +410,7 @@ static LPWSTR format_message( BOOL unicode_caller, DWORD dwFlags, LPCWSTR fmtstr
             if (ch == '\r') {
                 if (*f == '\n')
                     f++;
-                if(width)
+                if(fmd.width)
                     format_add_char(&fmd, ' ');
                 else
                 {
@@ -372,7 +420,7 @@ static LPWSTR format_message( BOOL unicode_caller, DWORD dwFlags, LPCWSTR fmtstr
             } else {
                 if (ch == '\n')
                 {
-                    if(width)
+                    if(fmd.width)
                         format_add_char(&fmd, ' ');
                     else
                     {
@@ -392,7 +440,6 @@ static LPWSTR format_message( BOOL unicode_caller, DWORD dwFlags, LPCWSTR fmtstr
 
 /***********************************************************************
  *           FormatMessageA   (KERNEL32.@)
- * FIXME: missing wrap,
  */
 DWORD WINAPI FormatMessageA(
 	DWORD	dwFlags,
@@ -408,7 +455,6 @@ DWORD WINAPI FormatMessageA(
     LPWSTR	target;
     DWORD	destlength;
     LPWSTR	from;
-    DWORD	width = dwFlags & FORMAT_MESSAGE_MAX_WIDTH_MASK;
 
     TRACE("(0x%x,%p,%d,0x%x,%p,%d,%p)\n",
           dwFlags,lpSource,dwMessageId,dwLanguageId,lpBuffer,nSize,args);
@@ -437,8 +483,6 @@ DWORD WINAPI FormatMessageA(
         format_args.last = 0;
     }
 
-    if (width && width != FORMAT_MESSAGE_MAX_WIDTH_MASK)
-        FIXME("line wrapping (%u) not supported.\n", width);
     from = NULL;
     if (dwFlags & FORMAT_MESSAGE_FROM_STRING)
     {
@@ -514,7 +558,6 @@ DWORD WINAPI FormatMessageW(
     LPWSTR target;
     DWORD talloced;
     LPWSTR from;
-    DWORD width = dwFlags & FORMAT_MESSAGE_MAX_WIDTH_MASK;
 
     TRACE("(0x%x,%p,%d,0x%x,%p,%d,%p)\n",
           dwFlags,lpSource,dwMessageId,dwLanguageId,lpBuffer,nSize,args);
@@ -541,8 +584,6 @@ DWORD WINAPI FormatMessageW(
         format_args.last = 0;
     }
 
-    if (width && width != FORMAT_MESSAGE_MAX_WIDTH_MASK)
-        FIXME("line wrapping not supported.\n");
     from = NULL;
     if (dwFlags & FORMAT_MESSAGE_FROM_STRING) {
         from = HeapAlloc( GetProcessHeap(), 0, (strlenW(lpSource) + 1) *
