@@ -3632,15 +3632,21 @@ static HRESULT WINAPI MLangConvertCharset_Initialize(IMLangConvertCharset *iface
 static HRESULT WINAPI MLangConvertCharset_GetSourceCodePage(IMLangConvertCharset *iface, UINT *src_cp)
 {
     struct convert_charset *This = impl_from_IMLangConvertCharset(iface);
-    FIXME("(%p)->(%p): stub\n", This, src_cp);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, src_cp);
+
+    *src_cp = This->src_cp;
+    return S_OK;
 }
 
 static HRESULT WINAPI MLangConvertCharset_GetDestinationCodePage(IMLangConvertCharset *iface, UINT *dst_cp)
 {
     struct convert_charset *This = impl_from_IMLangConvertCharset(iface);
-    FIXME("(%p)->(%p): stub\n", This, dst_cp);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, dst_cp);
+
+    *dst_cp = This->dst_cp;
+    return S_OK;
 }
 
 static HRESULT WINAPI MLangConvertCharset_GetProperty(IMLangConvertCharset *iface, DWORD *prop)
