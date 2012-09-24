@@ -446,6 +446,11 @@ typedef wchar_t         WCHAR,      *PWCHAR;
 typedef unsigned short  WCHAR,      *PWCHAR;
 #endif
 
+typedef ULONG           UCSCHAR;
+#define MIN_UCSCHAR                 (0)
+#define MAX_UCSCHAR                 (0x0010ffff)
+#define UCSCHAR_INVALID_CHARACTER   (0xffffffff)
+
 /* 'Extended/Wide' numerical types */
 #ifndef _ULONGLONG_
 # define _ULONGLONG_
@@ -468,20 +473,25 @@ typedef ULONGLONG   DECLSPEC_ALIGN(8) DWORDLONG,   *PDWORDLONG;
 #endif
 
 /* ANSI string types */
-typedef CHAR           *PCH,        *LPCH;
-typedef const CHAR     *PCCH,       *LPCCH;
+typedef CHAR           *PCH,        *LPCH,      *PNZCH;
+typedef const CHAR     *PCCH,       *LPCCH,     *PCNZCH;
 typedef CHAR           *PSTR,       *LPSTR,     *NPSTR;
 typedef const CHAR     *PCSTR,      *LPCSTR;
 typedef CHAR           *PZZSTR;
 typedef const CHAR     *PCZZSTR;
 
 /* Unicode string types */
+typedef const WCHAR    *PCWCHAR,    *LPCUWCHAR, *PCUWCHAR;
 typedef WCHAR          *PWCH,       *LPWCH;
 typedef const WCHAR    *PCWCH,      *LPCWCH;
+typedef WCHAR          *PNZWCH,     *PUNZWCH;
+typedef const WCHAR    *PCNZWCH,    *PCUNZWCH;
 typedef WCHAR          *PWSTR,      *LPWSTR,    *NWPSTR;
 typedef const WCHAR    *PCWSTR,     *LPCWSTR;
-typedef WCHAR          *PZZWSTR;
-typedef const WCHAR    *PCZZWSTR;
+typedef WCHAR          *PZZWSTR,    *PUZZWSTR;
+typedef const WCHAR    *PCZZWSTR,   *PCUZZWSTR;
+typedef PWSTR          *PZPWSTR;
+typedef PCWSTR         *PZPCWSTR;
 
 /* Neutral character and string types */
 /* These are only defined for Winelib, i.e. _not_ defined for
@@ -494,21 +504,41 @@ typedef const WCHAR    *PCZZWSTR;
 typedef WCHAR           TCHAR,      *PTCHAR;
 # define _TCHAR_DEFINED
 #endif
+typedef LPWCH           PTCH,        LPTCH;
+typedef LPCWCH          PCTCH,       LPCTCH;
 typedef LPWSTR          PTSTR,       LPTSTR;
 typedef LPCWSTR         PCTSTR,      LPCTSTR;
-typedef PZZSTR          PZZTSTR;
-typedef PCZZSTR         PCZZTSTR;
+typedef LPWSTR          PUTSTR,      LPUTSTR;
+typedef LPCWSTR         PCUTSTR,     LPCUTSTR;
+typedef PNZWCH          PNZTCH;
+typedef PUNZWCH         PUNZTCH;
+typedef PCNZWCH         PCNZTCH;
+typedef PCUNZWCH        PCUNZTCH;
+typedef PZZWSTR         PZZTSTR;
+typedef PCZZWSTR        PCZZTSTR;
+typedef PUZZWSTR        PUZZTSTR;
+typedef PUCZZWSTR       PCUZZTSTR;
 # else  /* UNICODE */
 # ifndef _TCHAR_DEFINED
 typedef CHAR            TCHAR,      *PTCHAR;
 # define _TCHAR_DEFINED
 # endif
+typedef LPCH            PTCH,        LPTCH;
+typedef LPCCH           PCTCH,       LPCTCH;
 typedef LPSTR           PTSTR,       LPTSTR;
 typedef LPCSTR          PCTSTR,      LPCTSTR;
-typedef PZZWSTR         PZZTSTR;
-typedef PCZZWSTR        PCZZTSTR;
+typedef PNZCH           PNZTCH,      PUNZTCH;
+typedef PCNZCH          PCNZTCH,     PCUNZTCH;
+typedef PZZSTR          PZZTSTR,     PUZZTSTR;
+typedef PCZZSTR         PCZZTSTR,    PCUZZTSTR;
 # endif /* UNICODE */
 #endif   /* WINE_NO_UNICODE_MACROS */
+
+/* UCS string types */
+typedef UCSCHAR         *PUCSCHAR,  *PUUCSCHAR;
+typedef const UCSCHAR   *PCUCSCHAR, *PCUUCSCHAR;
+typedef UCSCHAR         *PUCSSTR,   *PUUCSSTR;
+typedef const UCSCHAR   *PCUCSSTR,  *PCUUCSSTR;
 
 /* Misc common WIN32 types */
 typedef char            CCHAR;
