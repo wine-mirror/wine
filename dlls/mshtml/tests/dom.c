@@ -4745,6 +4745,7 @@ static void test_defaults(IHTMLDocument2 *doc)
     IHTMLElement2 *elem2;
     IHTMLElement *elem;
     IHTMLStyle *style;
+    BSTR str;
     LONG l;
     HRESULT hres;
     IHTMLElementCollection *collection;
@@ -4818,6 +4819,12 @@ static void test_defaults(IHTMLDocument2 *doc)
     test_disp((IUnknown*)style, &DIID_DispHTMLStyle, "[object]");
     test_ifaces((IUnknown*)style, style_iids);
     IHTMLStyle_Release(style);
+
+    str = NULL;
+    hres = IHTMLDocument2_get_charset(doc, &str);
+    ok(hres == S_OK, "get_charset failed: %08x\n", hres);
+    ok(str && *str, "charset is empty"); /* FIXME: better tests */
+    SysFreeString(str);
 
     test_window(doc);
     test_compatmode(doc);
