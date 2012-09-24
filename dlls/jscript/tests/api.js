@@ -512,6 +512,23 @@ ok(r[0] === "1", "r[0] = " + r[0]);
 ok(r[1] === "2", "r[1] = " + r[1]);
 ok(r[2] === "", "r[2] = " + r[2]);
 
+r = "1,2,3".split(",", 2);
+ok(typeof(r) === "object", "typeof(r) = " + typeof(r));
+ok(r.length === 2, "r.length = " + r.length);
+ok(r[0] === "1", "r[0] = " + r[0]);
+ok(r[1] === "2", "r[1] = " + r[1]);
+
+r = "1,2,3".split(",", 0);
+ok(typeof(r) === "object", "typeof(r) = " + typeof(r));
+ok(r.length === 0, "r.length = " + r.length);
+
+r = "1,2,3".split(",", -1);
+ok(typeof(r) === "object", "typeof(r) = " + typeof(r));
+ok(r.length === 3, "r.length = " + r.length);
+ok(r[0] === "1", "r[0] = " + r[0]);
+ok(r[1] === "2", "r[1] = " + r[1]);
+ok(r[2] === "3", "r[1] = " + r[1]);
+
 tmp = "abcd".indexOf("bc",0);
 ok(tmp === 1, "indexOf = " + tmp);
 tmp = "abcd".indexOf("bc",1);

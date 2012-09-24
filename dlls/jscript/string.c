@@ -25,6 +25,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 
+#define UINT32_MAX 0xffffffff
+
 typedef struct {
     jsdisp_t dispex;
 
@@ -1082,6 +1084,7 @@ static HRESULT String_split(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
     match_result_t *match_result = NULL;
     DWORD length, match_cnt, i, match_len = 0;
     const WCHAR *str, *ptr, *ptr2;
+    unsigned limit = UINT32_MAX;
     BOOL use_regexp = FALSE;
     jsdisp_t *array;
     BSTR val_str, match_str = NULL, tmp_str;
@@ -1089,14 +1092,22 @@ static HRESULT String_split(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
 
     TRACE("\n");
 
-    if(argc != 1) {
-        FIXME("unsupported args\n");
+    if(argc != 1 && argc != 2) {
+        FIXME("unsupported argc %u\n", argc);
         return E_NOTIMPL;
     }
 
     hres = get_string_val(ctx, jsthis, &str, &length, &val_str);
     if(FAILED(hres))
         return hres;
+
+    if(argc > 1 && !is_undefined(argv[1])) {
+        hres = to_uint32(ctx, argv[1], &limit);
+        if(FAILED(hres)) {
+            SysFreeString(val_str);
+            return hres;
+        }
+    }
 
     if(is_object_instance(argv[0])) {
         jsdisp_t *regexp;
@@ -1133,7 +1144,7 @@ static HRESULT String_split(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
 
     if(SUCCEEDED(hres)) {
         ptr = str;
-        for(i=0;; i++) {
+        for(i=0; i<limit; i++) {
             if(use_regexp) {
                 if(i == match_cnt)
                     break;
@@ -1168,7 +1179,7 @@ static HRESULT String_split(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
         }
     }
 
-    if(SUCCEEDED(hres) && (match_str || use_regexp)) {
+    if(SUCCEEDED(hres) && (match_str || use_regexp) && i<limit) {
         DWORD len = (str+length) - ptr;
 
         if(len || match_str) {
