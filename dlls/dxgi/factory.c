@@ -161,6 +161,14 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_GetWindowAssociation(IWineDXGIFact
     return E_NOTIMPL;
 }
 
+static UINT dxgi_rational_to_uint(const DXGI_RATIONAL *rational)
+{
+    if (rational->Denominator)
+        return rational->Numerator / rational->Denominator;
+    else
+        return rational->Numerator;
+}
+
 static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChain(IWineDXGIFactory *iface,
         IUnknown *device, DXGI_SWAP_CHAIN_DESC *desc, IDXGISwapChain **swapchain)
 {
@@ -218,7 +226,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChain(IWineDXGIFactory *
     wined3d_desc.enable_auto_depth_stencil = FALSE;
     wined3d_desc.auto_depth_stencil_format = 0;
     wined3d_desc.flags = 0; /* WINED3DPRESENTFLAG_DISCARD_DEPTHSTENCIL? */
-    wined3d_desc.refresh_rate = desc->BufferDesc.RefreshRate.Numerator / desc->BufferDesc.RefreshRate.Denominator;
+    wined3d_desc.refresh_rate = dxgi_rational_to_uint(&desc->BufferDesc.RefreshRate);
     wined3d_desc.swap_interval = WINED3DPRESENT_INTERVAL_DEFAULT;
 
     hr = wined3d_device_init_3d(wined3d_device, &wined3d_desc);
