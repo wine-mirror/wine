@@ -1480,13 +1480,12 @@ void CDECL X11DRV_SetWindowText( HWND hwnd, LPCWSTR text )
  */
 void CDECL X11DRV_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style )
 {
-    struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
-    DWORD changed;
+    struct x11drv_win_data *data;
+    DWORD changed = style->styleNew ^ style->styleOld;
 
     if (hwnd == GetDesktopWindow()) return;
-    if (!data || !data->whole_window) return;
-
-    changed = style->styleNew ^ style->styleOld;
+    if (!(data = get_win_data( hwnd ))) return;
+    if (!data->whole_window) goto done;
 
     if (offset == GWL_STYLE && (changed & WS_DISABLED)) set_wm_hints( data );
 
@@ -1495,6 +1494,8 @@ void CDECL X11DRV_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style )
         sync_window_opacity( data->display, data->whole_window, 0, 0, 0 );
         if (data->surface) set_surface_color_key( data->surface, CLR_INVALID );
     }
+done:
+    release_win_data( data );
 }
 
 
