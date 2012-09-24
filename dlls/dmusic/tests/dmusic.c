@@ -58,6 +58,8 @@ static void test_dmusic(void)
     DMUS_PORTPARAMS port_params;
     IDirectMusicPort *port = NULL;
     DMUS_CLOCKINFO clock_info;
+    GUID guid_clock;
+    IReferenceClock *clock = NULL;
 
     hr = CoCreateInstance(&CLSID_DirectMusic, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusic, (LPVOID*)&dmusic);
     if (hr != S_OK)
@@ -65,6 +67,13 @@ static void test_dmusic(void)
         skip("Cannot create DirectMusic object (%x)\n", hr);
         return;
     }
+
+    hr = IDirectMusic_GetMasterClock(dmusic, &guid_clock, &clock);
+    ok(hr == S_OK, "IDirectMusic_GetMasterClock returned: %x\n", hr);
+    ok(clock != NULL, "No clock returned\n");
+    trace("  guidPort = %s\n", debugstr_guid(&guid_clock));
+    if (clock)
+        IReferenceClock_Release(clock);
 
     port_params.dwSize = sizeof(port_params);
     port_params.dwValidParams = DMUS_PORTPARAMS_CHANNELGROUPS | DMUS_PORTPARAMS_AUDIOCHANNELS;
