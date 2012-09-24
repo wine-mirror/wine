@@ -266,8 +266,8 @@ HRESULT WINAPI UrlCanonicalizeA(LPCSTR pszUrl, LPSTR pszCanonicalized,
 
     ret = UrlCanonicalizeW(url, canonical, pcchCanonicalized, dwFlags);
     if(ret == S_OK)
-        WideCharToMultiByte(0, 0, canonical, -1, pszCanonicalized,
-                *pcchCanonicalized+1, 0, 0);
+        WideCharToMultiByte(CP_ACP, 0, canonical, -1, pszCanonicalized,
+                            *pcchCanonicalized+1, NULL, NULL);
 
     HeapFree(GetProcessHeap(), 0, url);
     HeapFree(GetProcessHeap(), 0, canonical);
@@ -627,8 +627,8 @@ HRESULT WINAPI UrlCombineA(LPCSTR pszBase, LPCSTR pszRelative,
     relative = base + INTERNET_MAX_URL_LENGTH;
     combined = relative + INTERNET_MAX_URL_LENGTH;
 
-    MultiByteToWideChar(0, 0, pszBase, -1, base, INTERNET_MAX_URL_LENGTH);
-    MultiByteToWideChar(0, 0, pszRelative, -1, relative, INTERNET_MAX_URL_LENGTH);
+    MultiByteToWideChar(CP_ACP, 0, pszBase, -1, base, INTERNET_MAX_URL_LENGTH);
+    MultiByteToWideChar(CP_ACP, 0, pszRelative, -1, relative, INTERNET_MAX_URL_LENGTH);
     len = *pcchCombined;
 
     ret = UrlCombineW(base, relative, pszCombined?combined:NULL, &len, dwFlags);
@@ -638,14 +638,14 @@ HRESULT WINAPI UrlCombineA(LPCSTR pszBase, LPCSTR pszRelative,
 	return ret;
     }
 
-    len2 = WideCharToMultiByte(0, 0, combined, len, 0, 0, 0, 0);
+    len2 = WideCharToMultiByte(CP_ACP, 0, combined, len, NULL, 0, NULL, NULL);
     if (len2 > *pcchCombined) {
 	*pcchCombined = len2;
 	HeapFree(GetProcessHeap(), 0, base);
 	return E_POINTER;
     }
-    WideCharToMultiByte(0, 0, combined, len+1, pszCombined, (*pcchCombined)+1,
-			0, 0);
+    WideCharToMultiByte(CP_ACP, 0, combined, len+1, pszCombined, (*pcchCombined)+1,
+			NULL, NULL);
     *pcchCombined = len2;
     HeapFree(GetProcessHeap(), 0, base);
     return S_OK;
@@ -1597,7 +1597,7 @@ HRESULT WINAPI UrlHashW(LPCWSTR pszUrl, unsigned char *lpDest, DWORD nDestLen)
   /* Win32 hashes the data as an ASCII string, presumably so that both A+W
    * return the same digests for the same URL.
    */
-  WideCharToMultiByte(0, 0, pszUrl, -1, szUrl, MAX_PATH, 0, 0);
+  WideCharToMultiByte(CP_ACP, 0, pszUrl, -1, szUrl, MAX_PATH, NULL, NULL);
   HashData((const BYTE*)szUrl, (int)strlen(szUrl), lpDest, nDestLen);
   return S_OK;
 }
@@ -1666,7 +1666,7 @@ static HRESULT URL_GuessScheme(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut)
     WCHAR value[MAX_PATH], data[MAX_PATH];
     WCHAR Wxx, Wyy;
 
-    MultiByteToWideChar(0, 0,
+    MultiByteToWideChar(CP_ACP, 0,
 	      "Software\\Microsoft\\Windows\\CurrentVersion\\URL\\Prefixes",
 			-1, reg_path, MAX_PATH);
     RegOpenKeyExW(HKEY_LOCAL_MACHINE, reg_path, 0, 1, &newkey);
@@ -2195,7 +2195,7 @@ HRESULT WINAPI UrlGetPartA(LPCSTR pszIn, LPSTR pszOut, LPDWORD pcchOut,
 			      (2*INTERNET_MAX_URL_LENGTH) * sizeof(WCHAR));
     out = in + INTERNET_MAX_URL_LENGTH;
 
-    MultiByteToWideChar(0, 0, pszIn, -1, in, INTERNET_MAX_URL_LENGTH);
+    MultiByteToWideChar(CP_ACP, 0, pszIn, -1, in, INTERNET_MAX_URL_LENGTH);
 
     len = INTERNET_MAX_URL_LENGTH;
     ret = UrlGetPartW(in, out, &len, dwPart, dwFlags);
@@ -2205,13 +2205,13 @@ HRESULT WINAPI UrlGetPartA(LPCSTR pszIn, LPSTR pszOut, LPDWORD pcchOut,
 	return ret;
     }
 
-    len2 = WideCharToMultiByte(0, 0, out, len, 0, 0, 0, 0);
+    len2 = WideCharToMultiByte(CP_ACP, 0, out, len, NULL, 0, NULL, NULL);
     if (len2 > *pcchOut) {
 	*pcchOut = len2+1;
 	HeapFree(GetProcessHeap(), 0, in);
 	return E_POINTER;
     }
-    len2 = WideCharToMultiByte(0, 0, out, len+1, pszOut, *pcchOut, 0, 0);
+    len2 = WideCharToMultiByte(CP_ACP, 0, out, len+1, pszOut, *pcchOut, NULL, NULL);
     *pcchOut = len2-1;
     HeapFree(GetProcessHeap(), 0, in);
     return ret;
@@ -2525,7 +2525,7 @@ HRESULT WINAPI MLBuildResURLA(LPCSTR lpszLibName, HMODULE hMod, DWORD dwFlags,
   hRet = MLBuildResURLW(lpszLibName ? szLibName : NULL, hMod, dwFlags,
                         lpszRes ? szRes : NULL, lpszDest ? szDest : NULL, dwDestLen);
   if (SUCCEEDED(hRet) && lpszDest)
-    WideCharToMultiByte(CP_ACP, 0, szDest, -1, lpszDest, dwDestLen, 0, 0);
+    WideCharToMultiByte(CP_ACP, 0, szDest, -1, lpszDest, dwDestLen, NULL, NULL);
 
   return hRet;
 }

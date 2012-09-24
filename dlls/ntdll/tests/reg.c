@@ -208,7 +208,7 @@ static NTSTATUS WINAPI QueryRoutine (IN PCWSTR ValueName, IN ULONG ValueType, IN
 
         ValName = pRtlAllocateHeap(GetProcessHeap(), 0, ValueNameLength);
 
-        WideCharToMultiByte(0, 0, ValueName, ValueNameLength+1,ValName, ValueNameLength, 0, 0);
+        WideCharToMultiByte(CP_ACP, 0, ValueName, ValueNameLength+1, ValName, ValueNameLength, NULL, NULL);
 
         trace("ValueName: %s\n", ValName);
     }

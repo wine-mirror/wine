@@ -1887,7 +1887,7 @@ HRESULT WINAPI SHStrDupA(LPCSTR lpszStr, LPWSTR * lppszDest)
 
   if (lpszStr)
   {
-    len = MultiByteToWideChar(0, 0, lpszStr, -1, 0, 0) * sizeof(WCHAR);
+    len = MultiByteToWideChar(CP_ACP, 0, lpszStr, -1, NULL, 0) * sizeof(WCHAR);
     *lppszDest = CoTaskMemAlloc(len);
   }
   else
@@ -1895,7 +1895,7 @@ HRESULT WINAPI SHStrDupA(LPCSTR lpszStr, LPWSTR * lppszDest)
 
   if (*lppszDest)
   {
-    MultiByteToWideChar(0, 0, lpszStr, -1, *lppszDest, len/sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, lpszStr, -1, *lppszDest, len/sizeof(WCHAR));
     hRet = S_OK;
   }
   else

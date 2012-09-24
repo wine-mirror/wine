@@ -274,7 +274,7 @@ static void getNotepadPath(WCHAR *notepadPathW, DWORD size)
     /* Workaround missing W-functions for win9x */
     GetWindowsDirectoryA(notepadPath, MAX_PATH);
     lstrcatA(notepadPath, notepad);
-    MultiByteToWideChar(0, 0, notepadPath, -1, notepadPathW, size);
+    MultiByteToWideChar(CP_ACP, 0, notepadPath, -1, notepadPathW, size);
 }
 
 /* Creates a test file and returns a handle to it.  The file's path is returned

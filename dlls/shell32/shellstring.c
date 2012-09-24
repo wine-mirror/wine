@@ -147,7 +147,7 @@ static int StrToOleStrA (LPWSTR lpWideCharStr, LPCSTR lpMultiByteString)
 	TRACE("(%p, %p %s)\n",
 	lpWideCharStr, lpMultiByteString, debugstr_a(lpMultiByteString));
 
-	return MultiByteToWideChar(0, 0, lpMultiByteString, -1, lpWideCharStr, MAX_PATH);
+	return MultiByteToWideChar(CP_ACP, 0, lpMultiByteString, -1, lpWideCharStr, MAX_PATH);
 
 }
 static int StrToOleStrW (LPWSTR lpWideCharStr, LPCWSTR lpWString)
@@ -174,7 +174,7 @@ BOOL WINAPI StrToOleStrAW (LPWSTR lpWideCharStr, LPCVOID lpString)
 static BOOL StrToOleStrNA (LPWSTR lpWide, INT nWide, LPCSTR lpStrA, INT nStr)
 {
 	TRACE("(%p, %x, %s, %x)\n", lpWide, nWide, debugstr_an(lpStrA,nStr), nStr);
-	return MultiByteToWideChar (0, 0, lpStrA, nStr, lpWide, nWide);
+	return MultiByteToWideChar (CP_ACP, 0, lpStrA, nStr, lpWide, nWide);
 }
 static BOOL StrToOleStrNW (LPWSTR lpWide, INT nWide, LPCWSTR lpStrW, INT nStr)
 {
@@ -199,7 +199,7 @@ BOOL WINAPI StrToOleStrNAW (LPWSTR lpWide, INT nWide, LPCVOID lpStr, INT nStr)
 static BOOL OleStrToStrNA (LPSTR lpStr, INT nStr, LPCWSTR lpOle, INT nOle)
 {
 	TRACE("(%p, %x, %s, %x)\n", lpStr, nStr, debugstr_wn(lpOle,nOle), nOle);
-	return WideCharToMultiByte (0, 0, lpOle, nOle, lpStr, nStr, NULL, NULL);
+	return WideCharToMultiByte (CP_ACP, 0, lpOle, nOle, lpStr, nStr, NULL, NULL);
 }
 
 static BOOL OleStrToStrNW (LPWSTR lpwStr, INT nwStr, LPCWSTR lpOle, INT nOle)

@@ -459,7 +459,7 @@ static LPWSTR GetWideString(const char* szString)
 {
   LPWSTR wszString = HeapAlloc(GetProcessHeap(), 0, (2*INTERNET_MAX_URL_LENGTH) * sizeof(WCHAR));
 
-  MultiByteToWideChar(0, 0, szString, -1, wszString, INTERNET_MAX_URL_LENGTH);
+  MultiByteToWideChar(CP_ACP, 0, szString, -1, wszString, INTERNET_MAX_URL_LENGTH);
 
   return wszString;
 }
@@ -1062,7 +1062,7 @@ static void test_UrlCanonicalizeW(void)
         BOOL choped;
         int pos;
 
-        MultiByteToWideChar(CP_ACP, 0, "http://www.winehq.org/X", -1, szUrl, 128);
+        MultiByteToWideChar(CP_ACP, 0, "http://www.winehq.org/X", -1, szUrl, sizeof(szUrl));
         pos = lstrlenW(szUrl) - 1;
         szUrl[pos] = i;
         urllen = INTERNET_MAX_URL_LENGTH;
@@ -1219,7 +1219,7 @@ static void test_UrlIs(void)
     test_UrlIs_null(URLIS_URL);
 
     for(i = 0; i < sizeof(TEST_PATH_IS_URL) / sizeof(TEST_PATH_IS_URL[0]); i++) {
-	MultiByteToWideChar(CP_ACP, 0, TEST_PATH_IS_URL[i].path, -1, wurl, 80);
+	MultiByteToWideChar(CP_ACP, 0, TEST_PATH_IS_URL[i].path, -1, wurl, sizeof(wurl)/sizeof(*wurl));
 
         ret = pUrlIsA( TEST_PATH_IS_URL[i].path, URLIS_URL );
         ok( ret == TEST_PATH_IS_URL[i].expect,
@@ -1234,7 +1234,7 @@ static void test_UrlIs(void)
         }
     }
     for(i = 0; i < sizeof(TEST_URLIS_ATTRIBS) / sizeof(TEST_URLIS_ATTRIBS[0]); i++) {
-	MultiByteToWideChar(CP_ACP, 0, TEST_URLIS_ATTRIBS[i].url, -1, wurl, 80);
+	MultiByteToWideChar(CP_ACP, 0, TEST_URLIS_ATTRIBS[i].url, -1, wurl, sizeof(wurl)/sizeof(*wurl));
 
         ret = pUrlIsA( TEST_URLIS_ATTRIBS[i].url, URLIS_OPAQUE);
 	ok( ret == TEST_URLIS_ATTRIBS[i].expectOpaque,

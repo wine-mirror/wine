@@ -526,7 +526,7 @@ static void test_CryptCATAdminAddRemoveCatalog(void)
     ok(hcatinfo == NULL, "CryptCATAdminAddCatalog succeeded\n");
     ok(error == ERROR_INVALID_PARAMETER, "got %u expected ERROR_INVALID_PARAMETER\n", GetLastError());
 
-    MultiByteToWideChar(0, 0, tmpfile, -1, tmpfileW, MAX_PATH);
+    MultiByteToWideChar(CP_ACP, 0, tmpfile, -1, tmpfileW, MAX_PATH);
 
     SetLastError(0xdeadbeef);
     hcatinfo = pCryptCATAdminAddCatalog(hcatadmin, tmpfileW, basenameW, 0);
@@ -573,10 +573,10 @@ static void test_CryptCATAdminAddRemoveCatalog(void)
     ok(ret, "CryptCATCatalogInfoFromContext failed %u\n", GetLastError());
     ok(info.wszCatalogFile[0] != 0, "Expected a filename\n");
     }
-    WideCharToMultiByte(CP_ACP, 0, info.wszCatalogFile, -1, catfile, MAX_PATH, 0, 0);
+    WideCharToMultiByte(CP_ACP, 0, info.wszCatalogFile, -1, catfile, MAX_PATH, NULL, NULL);
     if ((p = strrchr(catfile, '\\'))) p++;
     memset(catfileW, 0, sizeof(catfileW));
-    MultiByteToWideChar(0, 0, p, -1, catfileW, MAX_PATH);
+    MultiByteToWideChar(CP_ACP, 0, p, -1, catfileW, MAX_PATH);
 
     /* Set the file attributes so we can check what happens with them during the 'copy' */
     attrs = FILE_ATTRIBUTE_READONLY;
@@ -601,7 +601,7 @@ static void test_CryptCATAdminAddRemoveCatalog(void)
     ret = pCryptCATCatalogInfoFromContext(hcatinfo, &info, 0);
     ok(ret, "CryptCATCatalogInfoFromContext failed %u\n", GetLastError());
     ok(info.wszCatalogFile[0] != 0, "Expected a filename\n");
-    WideCharToMultiByte(CP_ACP, 0, info.wszCatalogFile, -1, catfile, MAX_PATH, 0, 0);
+    WideCharToMultiByte(CP_ACP, 0, info.wszCatalogFile, -1, catfile, MAX_PATH, NULL, NULL);
     if ((p = strrchr(catfile, '\\'))) p++;
     ok(!lstrcmpA(basename, p), "Expected %s, got %s\n", basename, p);
 

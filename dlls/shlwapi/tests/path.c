@@ -128,7 +128,7 @@ static LPWSTR GetWideString(const char* szString)
 {
   LPWSTR wszString = HeapAlloc(GetProcessHeap(), 0, (2*INTERNET_MAX_URL_LENGTH) * sizeof(WCHAR));
   
-  MultiByteToWideChar(0, 0, szString, -1, wszString, INTERNET_MAX_URL_LENGTH);
+  MultiByteToWideChar(CP_ACP, 0, szString, -1, wszString, INTERNET_MAX_URL_LENGTH);
 
   return wszString;
 }
@@ -231,7 +231,7 @@ static void test_PathCreateFromUrl(void)
             pathW = GetWideString(TEST_PATHFROMURL[i].path);
             urlW = GetWideString(TEST_PATHFROMURL[i].url);
             ret = pPathCreateFromUrlW(urlW, ret_pathW, &len, 0);
-            WideCharToMultiByte(CP_ACP, 0, ret_pathW, -1, ret_path, sizeof(ret_path),0,0);
+            WideCharToMultiByte(CP_ACP, 0, ret_pathW, -1, ret_path, sizeof(ret_path),NULL,NULL);
             ok(ret == TEST_PATHFROMURL[i].ret, "ret %08x from url L\"%s\"\n", ret, TEST_PATHFROMURL[i].url);
             if(TEST_PATHFROMURL[i].path) {
                 ok(!lstrcmpiW(ret_pathW, pathW), "got %s expected %s from url L\"%s\"\n",
