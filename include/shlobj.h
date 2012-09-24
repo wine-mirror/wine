@@ -83,6 +83,8 @@ VOID         WINAPI SHUpdateImageW(LPCWSTR,INT,UINT,INT);
 int          WINAPI RestartDialog(HWND,LPCWSTR,DWORD);
 int          WINAPI RestartDialogEx(HWND,LPCWSTR,DWORD,DWORD);
 int          WINAPI DriveType(int);
+int          WINAPI RealDriveType(int, BOOL);
+int          WINAPI IsNetDrive(int);
 BOOL         WINAPI IsUserAnAdmin(void);
 UINT         WINAPI Shell_MergeMenus(HMENU,HMENU,UINT,UINT,UINT,ULONG);
 BOOL         WINAPI Shell_GetImageLists(HIMAGELIST*,HIMAGELIST*);
@@ -1636,10 +1638,13 @@ BOOL WINAPI WriteCabinetState(CABINETSTATE *);
 #define PRF_TRYPROGRAMEXTENSIONS 0x03
 #define PRF_FIRSTDIRDEF          0x04
 #define PRF_DONTFINDLINK         0x08
+#define PRF_REQUIREABSOLUTE      0x10
 
 VOID WINAPI PathGetShortPath(LPWSTR pszPath);
 LONG WINAPI PathProcessCommand(LPCWSTR, LPWSTR, int, DWORD);
+int  WINAPI PathResolve(LPWSTR, PZPCWSTR, UINT);
 BOOL WINAPI PathYetAnotherMakeUniqueName(LPWSTR, LPCWSTR, LPCWSTR, LPCWSTR);
+BOOL WINAPI Win32DeleteFile(LPCWSTR);
 
 /****************************************************************************
  * Drag And Drop Routines

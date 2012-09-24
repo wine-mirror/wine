@@ -1708,7 +1708,7 @@ DWORD WINAPI SheChangeDirW(LPWSTR path)
 /*************************************************************************
  * IsNetDrive			[SHELL32.66]
  */
-BOOL WINAPI IsNetDrive(DWORD drive)
+int WINAPI IsNetDrive(int drive)
 {
 	char root[4];
 	strcpy(root, "A:\\");
@@ -1720,7 +1720,7 @@ BOOL WINAPI IsNetDrive(DWORD drive)
 /*************************************************************************
  * RealDriveType                [SHELL32.524]
  */
-INT WINAPI RealDriveType(INT drive, BOOL bQueryNet)
+int WINAPI RealDriveType(int drive, BOOL bQueryNet)
 {
     char root[] = "A:\\";
     root[0] += (char)drive;
