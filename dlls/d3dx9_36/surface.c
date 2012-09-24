@@ -275,10 +275,10 @@ static D3DFORMAT dds_pixel_format_to_d3dformat(const struct dds_pixel_format *pi
     return D3DFMT_UNKNOWN;
 }
 
-static HRESULT calculate_dds_surface_size(const D3DXIMAGE_INFO *img_info,
-    UINT width, UINT height, UINT *pitch, UINT *size)
+static HRESULT calculate_dds_surface_size(D3DFORMAT format, UINT width, UINT height,
+    UINT *pitch, UINT *size)
 {
-    const struct pixel_format_desc *format_desc = get_format_info(img_info->Format);
+    const struct pixel_format_desc *format_desc = get_format_info(format);
     if (format_desc->format == D3DFMT_UNKNOWN)
         return E_NOTIMPL;
 
@@ -296,6 +296,27 @@ static HRESULT calculate_dds_surface_size(const D3DXIMAGE_INFO *img_info,
     }
 
     return D3D_OK;
+}
+
+static UINT calculate_dds_file_size(D3DFORMAT format, UINT width, UINT height, UINT depth,
+    UINT miplevels, UINT faces)
+{
+    UINT i, file_size = 0;
+
+    for (i = 0; i < miplevels; i++)
+    {
+        UINT pitch, size = 0;
+        calculate_dds_surface_size(format, width, height, &pitch, &size);
+        size *= depth;
+        file_size += size;
+        width = max(1, width / 2);
+        height = max(1, height / 2);
+        depth = max(1, depth / 2);
+    }
+
+    file_size *= faces;
+    file_size += sizeof(struct dds_header);
+    return file_size;
 }
 
 /************************************************************
@@ -316,11 +337,9 @@ static HRESULT calculate_dds_surface_size(const D3DXIMAGE_INFO *img_info,
 */
 static HRESULT get_image_info_from_dds(const void *buffer, UINT length, D3DXIMAGE_INFO *info)
 {
-   UINT i;
    UINT faces = 1;
-   UINT width, height, depth;
+   UINT expected_length;
    const struct dds_header *header = buffer;
-   UINT expected_length = 0;
 
    if (length < sizeof(*header) || !info)
        return D3DXERR_INVALIDDATA;
@@ -360,23 +379,8 @@ static HRESULT get_image_info_from_dds(const void *buffer, UINT length, D3DXIMAG
        info->ResourceType = D3DRTYPE_TEXTURE;
    }
 
-   /* calculate the expected length */
-   width = info->Width;
-   height = info->Height;
-   depth = info->Depth;
-   for (i = 0; i < info->MipLevels; i++)
-   {
-       UINT pitch, size = 0;
-       calculate_dds_surface_size(info, width, height, &pitch, &size);
-       size *= depth;
-       expected_length += size;
-       width = max(1, width / 2);
-       height = max(1, height / 2);
-       depth = max(1, depth / 2);
-   }
-
-   expected_length *= faces;
-   expected_length += sizeof(*header);
+   expected_length = calculate_dds_file_size(info->Format, info->Width, info->Height, info->Depth,
+        info->MipLevels, faces);
    if (length < expected_length)
    {
        WARN("File is too short %u, expected at least %u bytes\n", length, expected_length);
@@ -384,7 +388,6 @@ static HRESULT get_image_info_from_dds(const void *buffer, UINT length, D3DXIMAG
    }
 
    info->ImageFileFormat = D3DXIFF_DDS;
-
    return D3D_OK;
 }
 
@@ -400,7 +403,7 @@ static HRESULT load_surface_from_dds(IDirect3DSurface9 *dst_surface, const PALET
     if (src_info->ResourceType != D3DRTYPE_TEXTURE)
         return D3DXERR_INVALIDDATA;
 
-    if (FAILED(calculate_dds_surface_size(src_info, src_info->Width, src_info->Height, &src_pitch, &size)))
+    if (FAILED(calculate_dds_surface_size(src_info->Format, src_info->Width, src_info->Height, &src_pitch, &size)))
         return E_NOTIMPL;
 
     return D3DXLoadSurfaceFromMemory(dst_surface, dst_palette, dst_rect, pixels, src_info->Format,
@@ -418,7 +421,7 @@ HRESULT load_volume_from_dds(IDirect3DVolume9 *dst_volume, const PALETTEENTRY *d
     if (src_info->ResourceType != D3DRTYPE_VOLUMETEXTURE)
         return D3DXERR_INVALIDDATA;
 
-    if (FAILED(calculate_dds_surface_size(src_info, src_info->Width, src_info->Height, &row_pitch, &slice_pitch)))
+    if (FAILED(calculate_dds_surface_size(src_info->Format, src_info->Width, src_info->Height, &row_pitch, &slice_pitch)))
         return E_NOTIMPL;
 
     return D3DXLoadVolumeFromMemory(dst_volume, dst_palette, dst_box, pixels, src_info->Format,
@@ -448,7 +451,7 @@ HRESULT load_texture_from_dds(IDirect3DTexture9 *texture, const void *src_data, 
     mip_levels = min(src_info->MipLevels, IDirect3DTexture9_GetLevelCount(texture));
     for (mip_level = 0; mip_level < mip_levels; mip_level++)
     {
-        hr = calculate_dds_surface_size(src_info, width, height, &src_pitch, &mip_level_size);
+        hr = calculate_dds_surface_size(src_info->Format, width, height, &src_pitch, &mip_level_size);
         if (FAILED(hr)) return hr;
 
         SetRect(&src_rect, 0, 0, width, height);
@@ -497,7 +500,7 @@ HRESULT load_cube_texture_from_dds(IDirect3DCubeTexture9 *cube_texture, const vo
         size = src_info->Width;
         for (mip_level = 0; mip_level < src_info->MipLevels; mip_level++)
         {
-            hr = calculate_dds_surface_size(src_info, size, size, &src_pitch, &mip_level_size);
+            hr = calculate_dds_surface_size(src_info->Format, size, size, &src_pitch, &mip_level_size);
             if (FAILED(hr)) return hr;
 
             /* if texture has fewer mip levels than DDS file, skip excessive mip levels */
@@ -544,7 +547,7 @@ HRESULT load_volume_texture_from_dds(IDirect3DVolumeTexture9 *volume_texture, co
 
     for (mip_level = 0; mip_level < mip_levels; mip_level++)
     {
-        hr = calculate_dds_surface_size(src_info, width, height, &src_row_pitch, &src_slice_pitch);
+        hr = calculate_dds_surface_size(src_info->Format, width, height, &src_row_pitch, &src_slice_pitch);
         if (FAILED(hr)) return hr;
 
         hr = IDirect3DVolumeTexture9_GetVolumeLevel(volume_texture, mip_level, &volume);
