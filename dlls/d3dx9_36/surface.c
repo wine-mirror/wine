@@ -166,33 +166,34 @@ static D3DFORMAT dds_fourcc_to_d3dformat(DWORD fourcc)
     return D3DFMT_UNKNOWN;
 }
 
+static const struct {
+    DWORD bpp;
+    DWORD rmask;
+    DWORD gmask;
+    DWORD bmask;
+    DWORD amask;
+    D3DFORMAT format;
+} rgb_pixel_formats[] = {
+    { 8, 0xe0, 0x1c, 0x03, 0, D3DFMT_R3G3B2 },
+    { 16, 0xf800, 0x07e0, 0x001f, 0x0000, D3DFMT_R5G6B5 },
+    { 16, 0x7c00, 0x03e0, 0x001f, 0x8000, D3DFMT_A1R5G5B5 },
+    { 16, 0x7c00, 0x03e0, 0x001f, 0x0000, D3DFMT_X1R5G5B5 },
+    { 16, 0x0f00, 0x00f0, 0x000f, 0xf000, D3DFMT_A4R4G4B4 },
+    { 16, 0x0f00, 0x00f0, 0x000f, 0x0000, D3DFMT_X4R4G4B4 },
+    { 16, 0x00e0, 0x001c, 0x0003, 0xff00, D3DFMT_A8R3G3B2 },
+    { 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000, D3DFMT_R8G8B8 },
+    { 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000, D3DFMT_A8R8G8B8 },
+    { 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0x00000000, D3DFMT_X8R8G8B8 },
+    { 32, 0x3ff00000, 0x000ffc00, 0x000003ff, 0xc0000000, D3DFMT_A2B10G10R10 },
+    { 32, 0x000003ff, 0x000ffc00, 0x3ff00000, 0xc0000000, D3DFMT_A2R10G10B10 },
+    { 32, 0x0000ffff, 0xffff0000, 0x00000000, 0x00000000, D3DFMT_G16R16 },
+    { 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000, D3DFMT_A8B8G8R8 },
+    { 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0x00000000, D3DFMT_X8B8G8R8 },
+};
+
 static D3DFORMAT dds_rgb_to_d3dformat(const struct dds_pixel_format *pixel_format)
 {
     int i;
-    static const struct {
-        DWORD bpp;
-        DWORD rmask;
-        DWORD gmask;
-        DWORD bmask;
-        DWORD amask;
-        D3DFORMAT format;
-    } rgb_pixel_formats[] = {
-        { 8, 0xe0, 0x1c, 0x03, 0, D3DFMT_R3G3B2 },
-        { 16, 0xf800, 0x07e0, 0x001f, 0x0000, D3DFMT_R5G6B5 },
-        { 16, 0x7c00, 0x03e0, 0x001f, 0x8000, D3DFMT_A1R5G5B5 },
-        { 16, 0x7c00, 0x03e0, 0x001f, 0x0000, D3DFMT_X1R5G5B5 },
-        { 16, 0x0f00, 0x00f0, 0x000f, 0xf000, D3DFMT_A4R4G4B4 },
-        { 16, 0x0f00, 0x00f0, 0x000f, 0x0000, D3DFMT_X4R4G4B4 },
-        { 16, 0x00e0, 0x001c, 0x0003, 0xff00, D3DFMT_A8R3G3B2 },
-        { 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000, D3DFMT_R8G8B8 },
-        { 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000, D3DFMT_A8R8G8B8 },
-        { 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0x00000000, D3DFMT_X8R8G8B8 },
-        { 32, 0x3ff00000, 0x000ffc00, 0x000003ff, 0xc0000000, D3DFMT_A2B10G10R10 },
-        { 32, 0x000003ff, 0x000ffc00, 0x3ff00000, 0xc0000000, D3DFMT_A2R10G10B10 },
-        { 32, 0x0000ffff, 0xffff0000, 0x00000000, 0x00000000, D3DFMT_G16R16 },
-        { 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000, D3DFMT_A8B8G8R8 },
-        { 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0x00000000, D3DFMT_X8B8G8R8 },
-    };
 
     for (i = 0; i < sizeof(rgb_pixel_formats) / sizeof(rgb_pixel_formats[0]); i++)
     {
@@ -277,19 +278,25 @@ static D3DFORMAT dds_pixel_format_to_d3dformat(const struct dds_pixel_format *pi
 
 static HRESULT d3dformat_to_dds_pixel_format(struct dds_pixel_format *pixel_format, D3DFORMAT d3dformat)
 {
+    int i;
+
     memset(pixel_format, 0, sizeof(*pixel_format));
 
     pixel_format->size = sizeof(*pixel_format);
 
-    if (d3dformat == D3DFMT_R8G8B8)
+    for (i = 0; i < sizeof(rgb_pixel_formats) / sizeof(rgb_pixel_formats[0]); i++)
     {
-        pixel_format->flags = DDS_PF_RGB;
-        pixel_format->bpp = 24;
-        pixel_format->rmask = 0xff0000;
-        pixel_format->gmask = 0x00ff00;
-        pixel_format->bmask = 0x0000ff;
-        pixel_format->amask = 0x000000;
-        return D3D_OK;
+        if (rgb_pixel_formats[i].format == d3dformat)
+        {
+            pixel_format->flags |= DDS_PF_RGB;
+            pixel_format->bpp = rgb_pixel_formats[i].bpp;
+            pixel_format->rmask = rgb_pixel_formats[i].rmask;
+            pixel_format->gmask = rgb_pixel_formats[i].gmask;
+            pixel_format->bmask = rgb_pixel_formats[i].bmask;
+            pixel_format->amask = rgb_pixel_formats[i].amask;
+            if (pixel_format->amask) pixel_format->flags |= DDS_PF_ALPHA;
+            return D3D_OK;
+        }
     }
 
     WARN("Unknown pixel format %#x\n", d3dformat);
