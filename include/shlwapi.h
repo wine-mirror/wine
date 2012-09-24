@@ -701,7 +701,7 @@ BOOL    WINAPI UrlIsOpaqueW(LPCWSTR);
 #define UrlIsOpaque WINELIB_NAME_AW(UrlIsOpaque)
 
 #define UrlIsFileUrlA(x) UrlIsA(x, URLIS_FILEURL)
-#define UrlIsFileUrlW(y) UrlIsW(x, URLIS_FILEURL)
+#define UrlIsFileUrlW(x) UrlIsW(x, URLIS_FILEURL)
 #define UrlIsFileUrl WINELIB_NAME_AW(UrlIsFileUrl)
 
 HRESULT WINAPI UrlUnescapeA(LPSTR,LPSTR,LPDWORD,DWORD);
