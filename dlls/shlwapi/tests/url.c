@@ -1288,7 +1288,7 @@ static void test_UrlUnescape(void)
         ok(strcmp(szReturnUrl,TEST_URL_UNESCAPE[i].expect)==0, "Expected \"%s\", but got \"%s\" from \"%s\"\n", TEST_URL_UNESCAPE[i].expect, szReturnUrl, TEST_URL_UNESCAPE[i].url);
 
         ZeroMemory(szReturnUrl, sizeof(szReturnUrl));
-        /* if we set the bufferpointer to NULL here UrlUnescape  fails and string gets not converted */
+        /* if we set the buffer pointer to NULL here, UrlUnescape fails and the string is not converted */
         res = pUrlUnescapeA(TEST_URL_UNESCAPE[i].url, szReturnUrl, NULL, 0);
         ok(res == E_INVALIDARG,
             "UrlUnescapeA returned 0x%x (expected E_INVALIDARG) for \"%s\"\n",
@@ -1319,7 +1319,7 @@ static void test_UrlUnescape(void)
     ok(!strcmp(inplace, expected), "got %s expected %s\n", inplace, expected);
     ok(dwEscaped == 27, "got %d expected 27\n", dwEscaped);
 
-    /* if we set the bufferpointer to NULL, the string apparently still gets converted (Google Lively does this)) */
+    /* if we set the buffer pointer to NULL, the string apparently still gets converted (Google Lively does this) */
     res = pUrlUnescapeA(another_inplace, NULL, NULL, URL_UNESCAPE_INPLACE);
     ok(res == S_OK, "UrlUnescapeA returned 0x%x (expected S_OK)\n", res);
     ok(!strcmp(another_inplace, expected), "got %s expected %s\n", another_inplace, expected);
@@ -1330,7 +1330,7 @@ static void test_UrlUnescape(void)
         ok(res == S_OK, "UrlUnescapeW returned 0x%x (expected S_OK)\n", res);
         ok(dwEscaped == 50, "got %d expected 50\n", dwEscaped);
 
-        /* if we set the bufferpointer to NULL, the string apparently still gets converted (Google Lively does this)) */
+        /* if we set the buffer pointer to NULL, the string apparently still gets converted (Google Lively does this) */
         res = pUrlUnescapeW(another_inplaceW, NULL, NULL, URL_UNESCAPE_INPLACE);
         ok(res == S_OK, "UrlUnescapeW returned 0x%x (expected S_OK)\n", res);
 

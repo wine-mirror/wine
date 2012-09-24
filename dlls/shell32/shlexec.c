@@ -1911,7 +1911,7 @@ static BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
     /* Check if file specified is in the form www.??????.*** */
     else if (!strncmpiW(lpFile, wWww, 3))
     {
-        /* if so, append lpFile http:// and call ShellExecute */
+        /* if so, prefix lpFile with http:// and call ShellExecute */
         WCHAR lpstrTmpFile[256];
         strcpyW(lpstrTmpFile, wHttp);
         strcatW(lpstrTmpFile, lpFile);

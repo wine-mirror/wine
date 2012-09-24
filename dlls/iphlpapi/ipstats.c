@@ -558,7 +558,7 @@ DWORD WINAPI GetIcmpStatistics(PMIB_ICMP stats)
  *
  * PARAMS
  *  stats [Out] buffer for ICMP statistics
- *  family [In] specifies wether IPv4 or IPv6 statistics are returned
+ *  family [In] specifies whether IPv4 or IPv6 statistics are returned
  *
  * RETURNS
  *  Success: NO_ERROR
@@ -731,7 +731,7 @@ DWORD WINAPI GetIcmpStatisticsEx(PMIB_ICMP_EX stats, DWORD family)
  *
  * PARAMS
  *  stats [Out] buffer for IP statistics
- *  family [In] specifies wether IPv4 or IPv6 statistics are returned
+ *  family [In] specifies whether IPv4 or IPv6 statistics are returned
  *
  * RETURNS
  *  Success: NO_ERROR
@@ -981,7 +981,7 @@ DWORD WINAPI GetIpStatistics(PMIB_IPSTATS stats)
  *
  * PARAMS
  *  stats [Out] buffer for TCP statistics
- *  family [In] specifies wether IPv4 or IPv6 statistics are returned
+ *  family [In] specifies whether IPv4 or IPv6 statistics are returned
  *
  * RETURNS
  *  Success: NO_ERROR
@@ -1143,7 +1143,7 @@ DWORD WINAPI GetTcpStatistics(PMIB_TCPSTATS stats)
  *
  * PARAMS
  *  stats [Out] buffer for UDP statistics
- *  family [In] specifies wether IPv4 or IPv6 statistics are returned
+ *  family [In] specifies whether IPv4 or IPv6 statistics are returned
  *
  * RETURNS
  *  Success: NO_ERROR

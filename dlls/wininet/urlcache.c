@@ -2384,7 +2384,7 @@ static DWORD urlcache_rate_entry(URL_CACHEFILE_ENTRY *url_entry, FILETIME *cur_t
     time.u.LowPart = cur_time->dwLowDateTime;
     time.u.HighPart = cur_time->dwHighDateTime;
 
-    /* Don't touch entries that were added less then 10 minutes ago */
+    /* Don't touch entries that were added less than 10 minutes ago */
     if(time.QuadPart < access_time.QuadPart + (ULONGLONG)10*60*FILETIME_SECOND)
         return -1;
 

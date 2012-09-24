@@ -1338,7 +1338,7 @@ static void test_condvars(void)
 
     ok(totalconsumed == totalproduced,
        "consumed %d != produced %d\n", totalconsumed, totalproduced);
-    ok (!condvar_sleeperr, "error occured during SleepConditionVariableCS\n");
+    ok (!condvar_sleeperr, "error occurred during SleepConditionVariableCS\n");
 
     /* Checking cnt1 - cnt2 for non-0 would be not good, the case where
      * one consumer does not get anything to do is possible. */

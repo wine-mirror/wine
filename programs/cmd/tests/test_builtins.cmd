@@ -644,7 +644,7 @@ echo --- basic wildcards
 for %%i in (ba*) do echo %%i
 echo --- for /d
 for /d %%i in (baz foo bar) do echo %%i 2>&1
-rem Confirm we dont match files:
+rem Confirm we don't match files:
 for /d %%i in (bazb*) do echo %%i 2>&1
 for /d %%i in (bazb2*) do echo %%i 2>&1
 rem Show we pass through non wildcards

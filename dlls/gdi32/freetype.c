@@ -6563,7 +6563,7 @@ static BOOL get_outline_text_metrics(GdiFont *font)
         style_nameW = get_face_name( ft_face, TT_NAME_ID_FONT_SUBFAMILY, TT_MS_LANGID_ENGLISH_UNITED_STATES );
     if (!style_nameW)
     {
-        FIXME("failed to read sytle_nameW for font %s!\n", wine_dbgstr_w(font->name));
+        FIXME("failed to read style_nameW for font %s!\n", wine_dbgstr_w(font->name));
         lensty = MultiByteToWideChar(CP_ACP, 0, ft_face->style_name, -1, NULL, 0) * sizeof(WCHAR);
         style_nameW = HeapAlloc(GetProcessHeap(), 0, lensty);
         MultiByteToWideChar(CP_ACP, 0, ft_face->style_name, -1, style_nameW, lensty/sizeof(WCHAR));
