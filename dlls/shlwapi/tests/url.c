@@ -1062,7 +1062,7 @@ static void test_UrlCanonicalizeW(void)
         BOOL choped;
         int pos;
 
-        MultiByteToWideChar(CP_ACP, 0, "http://www.winehq.org/X", -1, szUrl, sizeof(szUrl));
+        MultiByteToWideChar(CP_ACP, 0, "http://www.winehq.org/X", -1, szUrl, sizeof(szUrl)/sizeof(szUrl[0]));
         pos = lstrlenW(szUrl) - 1;
         szUrl[pos] = i;
         urllen = INTERNET_MAX_URL_LENGTH;
