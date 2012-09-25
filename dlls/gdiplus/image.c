@@ -3144,6 +3144,33 @@ static void add_property(GpBitmap *bitmap, PropertyItem *item)
     bitmap->prop_count++;
 }
 
+static BOOL get_bool_property(IWICMetadataReader *reader, const GUID *guid, const WCHAR *prop_name)
+{
+    HRESULT hr;
+    GUID format;
+    PROPVARIANT id, value;
+    BOOL ret = FALSE;
+
+    IWICMetadataReader_GetMetadataFormat(reader, &format);
+    if (!IsEqualGUID(&format, guid)) return FALSE;
+
+    PropVariantInit(&id);
+    PropVariantInit(&value);
+
+    id.vt = VT_LPWSTR;
+    id.u.pwszVal = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(prop_name) + 1) * sizeof(WCHAR));
+    if (!id.u.pwszVal) return FALSE;
+    lstrcpyW(id.u.pwszVal, prop_name);
+    hr = IWICMetadataReader_GetValue(reader, NULL, &id, &value);
+    if (hr == S_OK && value.vt == VT_BOOL)
+        ret = value.u.boolVal;
+
+    PropVariantClear(&id);
+    PropVariantClear(&value);
+
+    return ret;
+}
+
 static PropertyItem *get_property(IWICMetadataReader *reader, const GUID *guid, const WCHAR *prop_name)
 {
     HRESULT hr;
@@ -3207,6 +3234,21 @@ static PropertyItem *get_gif_background(IWICMetadataReader *reader)
     return background;
 }
 
+static PropertyItem *get_gif_transparent_idx(IWICMetadataReader *reader)
+{
+    static const WCHAR transparency_flagW[] = { 'T','r','a','n','s','p','a','r','e','n','c','y','F','l','a','g',0 };
+    static const WCHAR colorW[] = { 'T','r','a','n','s','p','a','r','e','n','t','C','o','l','o','r','I','n','d','e','x',0 };
+    PropertyItem *index = NULL;
+
+    if (get_bool_property(reader, &GUID_MetadataFormatGCE, transparency_flagW))
+    {
+        index = get_property(reader, &GUID_MetadataFormatGCE, colorW);
+        if (index)
+            index->id = PropertyTagIndexTransparent;
+    }
+    return index;
+}
+
 static LONG get_gif_frame_delay(IWICBitmapFrameDecode *frame)
 {
     static const WCHAR delayW[] = { 'D','e','l','a','y',0 };
@@ -3254,6 +3296,7 @@ static void gif_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UI
     IWICMetadataReader *reader;
     UINT frame_count, block_count, i;
     PropertyItem *delay = NULL, *comment = NULL, *background = NULL;
+    PropertyItem *transparent_idx = NULL;
 
     IWICBitmapDecoder_GetFrameCount(decoder, &frame_count);
     if (frame_count > 1)
@@ -3314,6 +3357,36 @@ static void gif_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UI
     GdipFree(delay);
     GdipFree(comment);
     GdipFree(background);
+
+    /* Win7 gdiplus always returns transparent color index from frame 0 */
+    hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame);
+    if (hr != S_OK) return;
+
+    hr = IWICBitmapFrameDecode_QueryInterface(frame, &IID_IWICMetadataBlockReader, (void **)&block_reader);
+    if (hr == S_OK)
+    {
+        hr = IWICMetadataBlockReader_GetCount(block_reader, &block_count);
+        if (hr == S_OK)
+        {
+            for (i = 0; i < block_count; i++)
+            {
+                hr = IWICMetadataBlockReader_GetReaderByIndex(block_reader, i, &reader);
+                if (hr == S_OK)
+                {
+                    if (!transparent_idx)
+                        transparent_idx = get_gif_transparent_idx(reader);
+
+                    IWICMetadataReader_Release(reader);
+                }
+            }
+        }
+        IWICMetadataBlockReader_Release(block_reader);
+    }
+
+    if (transparent_idx) add_property(bitmap, transparent_idx);
+    GdipFree(transparent_idx);
+
+    IWICBitmapFrameDecode_Release(frame);
 }
 
 typedef void (*metadata_reader_func)(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UINT frame);
