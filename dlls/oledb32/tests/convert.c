@@ -35,7 +35,6 @@
 
 #include "wine/test.h"
 
-DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
 static void test_dcinfo(void)
 {

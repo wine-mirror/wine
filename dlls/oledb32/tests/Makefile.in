@@ -1,8 +1,9 @@
 TESTDLL   = oledb32.dll
-IMPORTS   = oleaut32 ole32 user32 gdi32 advapi32
+IMPORTS   = uuid oleaut32 ole32 user32 gdi32 advapi32
 
 C_SRCS = \
 	convert.c \
+	database.c \
 	marshal.c
 
 IDL_I_SRCS = convert.idl
