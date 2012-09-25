@@ -2187,18 +2187,8 @@ static HRESULT WINAPI fnIMultiLanguage_GetRfc1766FromLcid(
     LCID lcid,
     BSTR* pbstrRfc1766)
 {
-    WCHAR buf[MAX_RFC1766_NAME];
-
-    TRACE("%p %04x %p\n", iface, lcid, pbstrRfc1766);
-    if (!pbstrRfc1766)
-        return E_INVALIDARG;
-
-    if (!lcid_to_rfc1766W( lcid, buf, MAX_RFC1766_NAME ))
-    {
-        *pbstrRfc1766 = SysAllocString( buf );
-        return S_OK;
-    }
-    return E_FAIL;
+    MLang_impl *This = impl_from_IMultiLanguage(iface);
+    return IMultiLanguage3_GetRfc1766FromLcid(&This->IMultiLanguage3_iface, lcid, pbstrRfc1766);
 }
 
 static HRESULT WINAPI fnIMultiLanguage_GetLcidFromRfc1766(
