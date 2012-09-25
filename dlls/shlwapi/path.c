@@ -3242,6 +3242,9 @@ HRESULT WINAPI PathCreateFromUrlA(LPCSTR pszUrl, LPSTR pszPath,
     HRESULT ret;
     DWORD lenW = sizeof(bufW)/sizeof(WCHAR), lenA;
 
+    if (!pszUrl || !pszPath || !pcchPath || !*pcchPath)
+        return E_INVALIDARG;
+
     if(!RtlCreateUnicodeStringFromAsciiz(&urlW, pszUrl))
         return E_INVALIDARG;
     if((ret = PathCreateFromUrlW(urlW.Buffer, pathW, &lenW, dwReserved)) == E_POINTER) {

@@ -73,10 +73,10 @@ static const struct {
     {"file://c%3a/foo/../bar", "\\\\c:\\foo\\..\\bar", S_OK, 0},
     {"file://c%7c/foo/../bar", "\\\\c|\\foo\\..\\bar", S_OK, 0x2},
     {"file://foo%20ba%2fr", "\\\\foo ba/r", S_OK, 0x2},
-    {"file://localhost/c:/foo/bar", "c:\\foo\\bar", S_OK, 0x2},
-    {"file://localhost/c:/foo%20ba%5Cr", "c:\\foo ba\\r", S_OK, 0x2},
-    {"file://LocalHost/c:/foo/bar", "c:\\foo\\bar", S_OK, 0x2},
-    {"file:\\\\localhost\\c:\\foo\\bar", "c:\\foo\\bar", S_OK, 0x2},
+    {"file://localhost/c:/foo/bar", "c:\\foo\\bar", S_OK, 0x6},
+    {"file://localhost/c:/foo%20ba%5Cr", "c:\\foo ba\\r", S_OK, 0x6},
+    {"file://LocalHost/c:/foo/bar", "c:\\foo\\bar", S_OK, 0x6},
+    {"file:\\\\localhost\\c:\\foo\\bar", "c:\\foo\\bar", S_OK, 0x6},
     {"file://incomplete", "\\\\incomplete", S_OK, 0},
 
     /* 3 leading (back)slashes (omitting hostname) */
@@ -103,16 +103,16 @@ static const struct {
     {"file:%5C%5Clocalhost%5Cc:/foo/bar", "\\\\localhost\\c:\\foo\\bar", S_OK, 0},
 
     /* Hostname handling */
-    {"file://l%6fcalhost/c:/foo/bar", "\\\\localhostc:\\foo\\bar", S_OK, 0},
-    {"file://localhost:80/c:/foo/bar", "\\\\localhost:80c:\\foo\\bar", S_OK, 0},
-    {"file://host/c:/foo/bar", "\\\\hostc:\\foo\\bar", S_OK, 0},
+    {"file://l%6fcalhost/c:/foo/bar", "\\\\localhostc:\\foo\\bar", S_OK, 0x4},
+    {"file://localhost:80/c:/foo/bar", "\\\\localhost:80c:\\foo\\bar", S_OK, 0x4},
+    {"file://host/c:/foo/bar", "\\\\hostc:\\foo\\bar", S_OK, 0x4},
     {"file://host//c:/foo/bar", "\\\\host\\\\c:\\foo\\bar", S_OK, 0},
     {"file://host/\\c:/foo/bar", "\\\\host\\\\c:\\foo\\bar", S_OK, 0},
     {"file://host/c:foo/bar", "\\\\hostc:foo\\bar", S_OK, 0x2},
     {"file://host/foo/bar", "\\\\host\\foo\\bar", S_OK, 0},
-    {"file:\\\\host\\c:\\foo\\bar", "\\\\hostc:\\foo\\bar", S_OK, 0},
+    {"file:\\\\host\\c:\\foo\\bar", "\\\\hostc:\\foo\\bar", S_OK, 0x4},
     {"file:\\\\host\\ca\\foo\\bar", "\\\\host\\ca\\foo\\bar", S_OK, 0},
-    {"file:\\\\host\\c|\\foo\\bar", "\\\\hostc|\\foo\\bar", S_OK, 0},
+    {"file:\\\\host\\c|\\foo\\bar", "\\\\hostc|\\foo\\bar", S_OK, 0x4},
     {"file:\\%5Chost\\c:\\foo\\bar", "\\\\host\\c:\\foo\\bar", S_OK, 0},
     {"file:\\\\host\\cx:\\foo\\bar", "\\\\host\\cx:\\foo\\bar", S_OK, 0},
     {"file:///host/c:/foo/bar", "\\host\\c:\\foo\\bar", S_OK, 0},
@@ -257,21 +257,22 @@ static void test_PathCreateFromUrl(void)
 {
     size_t i;
     char ret_path[INTERNET_MAX_URL_LENGTH];
-    DWORD len, ret;
+    DWORD len, len2, ret;
     WCHAR ret_pathW[INTERNET_MAX_URL_LENGTH];
     WCHAR *pathW, *urlW;
-    static const char url[] = "http://www.winehq.org";
 
     if (!pPathCreateFromUrlA) {
         win_skip("PathCreateFromUrlA not found\n");
         return;
     }
 
-    /* Check ret_path = NULL */
-    len = sizeof(url);
-    ret = pPathCreateFromUrlA(url, NULL, &len, 0);
-    ok ( ret == E_INVALIDARG, "got 0x%08x expected E_INVALIDARG\n", ret);
+    /* Won't say how much is needed without a buffer */
+    len = 0xdeca;
+    ret = pPathCreateFromUrlA("file://foo", NULL, &len, 0);
+    ok(ret == E_INVALIDARG, "got 0x%08x expected E_INVALIDARG\n", ret);
+    ok(len == 0xdeca, "got %x expected 0xdeca\n", len);
 
+    /* Test the decoding itself */
     for(i = 0; i < sizeof(TEST_PATHFROMURL) / sizeof(TEST_PATHFROMURL[0]); i++) {
         len = INTERNET_MAX_URL_LENGTH;
         ret = pPathCreateFromUrlA(TEST_PATHFROMURL[i].url, ret_path, &len, 0);
@@ -287,6 +288,7 @@ static void test_PathCreateFromUrl(void)
                 /* Wrong string, don't bother checking the length */
                 ok(!lstrcmpi(ret_path, TEST_PATHFROMURL[i].path), "got %s expected %s from url %s\n", ret_path, TEST_PATHFROMURL[i].path,  TEST_PATHFROMURL[i].url);
         }
+
         if (pPathCreateFromUrlW) {
             len = INTERNET_MAX_URL_LENGTH;
             pathW = GetWideString(TEST_PATHFROMURL[i].path);
@@ -307,6 +309,19 @@ static void test_PathCreateFromUrl(void)
                     ok(!lstrcmpiW(ret_pathW, pathW), "got %s expected %s from url L\"%s\"\n",
                        ret_path, TEST_PATHFROMURL[i].path, TEST_PATHFROMURL[i].url);
             }
+
+            if (SUCCEEDED(ret))
+            {
+                /* Check what happens if the buffer is too small */
+                len2 = 2;
+                ret = pPathCreateFromUrlW(urlW, ret_pathW, &len2, 0);
+                ok(ret == E_POINTER, "ret %08x, expected E_POINTER from url %s\n", ret, TEST_PATHFROMURL[i].url);
+                if(!(TEST_PATHFROMURL[i].todo & 0x4))
+                    ok(len2 == len + 1, "got len = %d expected %d from url %s\n", len2, len + 1, TEST_PATHFROMURL[i].url);
+                else todo_wine
+                    ok(len2 == len + 1, "got len = %d expected %d from url %s\n", len2, len + 1, TEST_PATHFROMURL[i].url);
+            }
+
             FreeWideString(urlW);
             FreeWideString(pathW);
         }
