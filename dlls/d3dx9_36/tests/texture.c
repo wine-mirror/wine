@@ -1314,9 +1314,9 @@ static void test_D3DXCreateTextureFromFileInMemory(IDirect3DDevice9 *device)
         hr = IDirect3DTexture9_GetLevelDesc(texture, 0, &desc);
         ok(hr == D3D_OK, "IDirect3DTexture9_GetLevelDesc returned %#x, expected %#x\n", hr, D3D_OK);
         ok(desc.Width == 4, "Width is %u, expected 4\n", desc.Width);
-        ok(desc.Height == 4, "Width is %u, expected 4\n", desc.Height);
+        ok(desc.Height == 4, "Height is %u, expected 4\n", desc.Height);
         hr = IDirect3DTexture9_LockRect(texture, 0, &lock_rect, NULL, D3DLOCK_READONLY);
-        ok(hr == D3D_OK, "IDirect3DTexture9_LockTexture returned %#x, expected %#x\n", hr, D3D_OK);
+        ok(hr == D3D_OK, "IDirect3DTexture9_LockRect returned %#x, expected %#x\n", hr, D3D_OK);
         if (SUCCEEDED(hr))
         {
             for (i = 0; i < 16; i++)
