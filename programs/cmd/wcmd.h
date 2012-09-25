@@ -107,7 +107,7 @@ static inline BOOL WCMD_is_console_handle(HANDLE h)
     return (((DWORD_PTR)h) & 3) == 3;
 }
 WCHAR *WCMD_fgets (WCHAR *buf, DWORD n, HANDLE stream);
-WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **start, WCHAR **end);
+WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **start, WCHAR **end, BOOL raw);
 WCHAR *WCMD_skip_leading_spaces (WCHAR *string);
 BOOL WCMD_keyword_ws_found(const WCHAR *keyword, int len, const WCHAR *ptr);
 void WCMD_HandleTildaModifiers(WCHAR **start, const WCHAR *forVariable, const WCHAR *forValue, BOOL justFors);

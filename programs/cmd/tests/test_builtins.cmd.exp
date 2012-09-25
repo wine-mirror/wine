@@ -116,6 +116,20 @@ foo
 bar
 foo2
 bar2
+------------ Testing parameterization ------------
+'a', 'b', 'c'
+'"a b c"', '', ''
+'"a b"\c', '', ''
+'a', '~`+', '.{}!+b'
+'a', 'b', ''
+'"a;b"', '', ''
+@todo_wine@'a', 'b', ''
+'a[b]{c}(d)e', '', ''
+'a', '', ''
+second line
+'a', 'b', 'c'
+'a', 'b', 'c'
+'a', 'b', ''
 ------------ Testing rem ------------
 
 @pwd@>rem Hello@space@
@@ -145,6 +159,9 @@ foo9@space@@or_broken@foo@tab@
 foo1
 foo11
 foo12
+foo13
+foo14
+foo15
 --- stdout appending
 foo
 foo@space@
@@ -257,7 +274,7 @@ e@or_broken@qwerty
 r@or_broken@qwerty
 ------------ Testing variable substitution ------------
 --- in FOR variables
-@todo_wine@"A B"
+"A B"
 C
 'A B'@or_broken@''
 'C'@or_broken@''
@@ -291,19 +308,19 @@ N
 ''
 '.eh'
 --- in parameters
-@todo_wine@"A B"
+"A B"
 C
-@todo_wine@'A B'@or_broken@''
+'A B'@or_broken@''
 'C'@or_broken@''
-@todo_wine@@pwd@\C D
+@pwd@\C D
 @pwd@\E
 @drive@
 @drive@
 @path@
 @path@
-@todo_wine@L M
+L M
 N
-@todo_wine@'.OOL'
+'.OOL'
 '.TABC'
 ''
 @todo_wine@'@drive@@shortpath@R S'@or_broken@''
@@ -364,6 +381,8 @@ Current dir: @pwd@\foobar@or_broken@Current dir:@space@
 @pwd@\foobar\bar bak
 @pwd@\foobar\bar bak
 @pwd@\foobar\bar bak
+@pwd@\foobar\bar bak
+@pwd@\foobar\bar bak
 @pwd@
 @pwd@\foobar
 ------------ Testing type ------------
@@ -374,7 +393,11 @@ bar
 @pwd@>echo ---@space@
 ---
 bar
----
+---1
+bar
+---2
+bar
+---3
 ------------ Testing NUL ------------
 bar
 bar
@@ -438,8 +461,8 @@ B`
 'echo
 A
 B'
-@todo_wine@"echo A B"
-@todo_wine@"A B"
+"echo A B"
+"A B"
 C
 --- imbricated FORs
 @todo_wine@X Y
@@ -565,11 +588,11 @@ ErrorLevel 0
 
 --- for /F
 ------ string argument
+@todo_wine@a
+@todo_wine@a
 a
-a
-a
-a
-a
+@todo_wine@a
+@todo_wine@a
 ------ fileset argument
 --------- basic blank handling
 a
@@ -682,6 +705,8 @@ foo created
 bar created
 foobar created
 bar\baz created
+bazbaz created
+zabzab created
 mkdir foo\* errorlevel 1
 ok, foo created
 ------------ Testing rmdir ------------
@@ -764,16 +789,16 @@ foo@space@
 foo 8
 foo@space@@space@
 foo bar@space@
-@todo_wine@foo ""@space@
-@todo_wine@"" bar@space@
+foo ""@space@
+"" bar@space@
 foo ''@space@
 '' bar@space@
 --- internal routines
 bar :testRoutine
 foo@space@
 foo bar
-@todo_wine@foo ""
-@todo_wine@"" bar
+foo ""
+"" bar
 foo ''
 '' bar
 --- with builtins
