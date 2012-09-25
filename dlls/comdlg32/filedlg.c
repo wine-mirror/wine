@@ -1546,10 +1546,10 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
             TRACE("Value in Filename includes path, overriding InitialDir: %s, %s\n",
                     debugstr_w(fodInfos->filename), debugstr_w(fodInfos->initdir));
          }
-         SetDlgItemTextW(hwnd, IDC_FILENAME, fodInfos->filename);
+         SetWindowTextW( fodInfos->DlgInfos.hwndFileName, fodInfos->filename );
 
       } else {
-         SetDlgItemTextW(hwnd, IDC_FILENAME, fodInfos->filename);
+         SetWindowTextW( fodInfos->DlgInfos.hwndFileName, fodInfos->filename );
       }
   }
 
@@ -1623,7 +1623,7 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
             TRACE("Value in Filename includes path, overriding initdir: %s, %s\n",
                  debugstr_w(fodInfos->filename), debugstr_w(fodInfos->initdir));
          }
-         SetDlgItemTextW(hwnd, IDC_FILENAME, fodInfos->filename);
+         SetWindowTextW( fodInfos->DlgInfos.hwndFileName, fodInfos->filename );
       }
 
       /* 4. Win2000+: Recently used */
@@ -1707,7 +1707,7 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
           TRACE("No initial dir specified, using current dir of %s\n", debugstr_w(fodInfos->initdir));
       }
   }
-  SetFocus(GetDlgItem(hwnd, IDC_FILENAME));
+  SetFocus( fodInfos->DlgInfos.hwndFileName );
   TRACE("After manipulation, file = %s, dir = %s\n", debugstr_w(fodInfos->filename), debugstr_w(fodInfos->initdir));
 
   /* Must the open as read only check box be checked ?*/
@@ -3740,10 +3740,10 @@ static int FILEDLG95_FILENAME_GetFileNames (HWND hwnd, LPWSTR * lpstrFileList, U
 
 	TRACE("\n");
 
-	/* get the filenames from the edit control */
-	nStrLen = SendMessageW(fodInfos->DlgInfos.hwndFileName, WM_GETTEXTLENGTH, 0, 0);
+	/* get the filenames from the filename control */
+	nStrLen = GetWindowTextLengthW( fodInfos->DlgInfos.hwndFileName );
 	lpstrEdit = MemAlloc( (nStrLen+1)*sizeof(WCHAR) );
-	GetDlgItemTextW(hwnd, IDC_FILENAME, lpstrEdit, nStrLen+1);
+	GetWindowTextW( fodInfos->DlgInfos.hwndFileName, lpstrEdit, nStrLen+1);
 
 	TRACE("nStrLen=%u str=%s\n", nStrLen, debugstr_w(lpstrEdit));
 
