@@ -235,8 +235,8 @@ FOOBAR =  baz
   baz2
 0
  bar
-@todo_wine@FOOBAR= bar
-@todo_wine@FOOBAR =  baz2
+FOOBAR= bar
+FOOBAR =  baz2
 FOOBAR =  baz2
 FOOBAR not defined
 1
