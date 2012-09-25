@@ -2064,16 +2064,11 @@ static ULONG WINAPI fnIMultiLanguage_Release( IMultiLanguage* iface )
 
 static HRESULT WINAPI fnIMultiLanguage_GetNumberOfCodePageInfo(
     IMultiLanguage* iface,
-    UINT* pcCodePage)
+    UINT* cp)
 {
     MLang_impl *This = impl_from_IMultiLanguage( iface );
-
-    TRACE("(%p, %p)\n", This, pcCodePage);
-
-    if (!pcCodePage) return E_INVALIDARG;
-
-    *pcCodePage = This->total_cp;
-    return S_OK;
+    TRACE("(%p, %p)\n", This, cp);
+    return IMultiLanguage3_GetNumberOfCodePageInfo(&This->IMultiLanguage3_iface, cp);
 }
 
 static HRESULT WINAPI fnIMultiLanguage_GetCodePageInfo(
